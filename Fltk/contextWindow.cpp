@@ -687,7 +687,7 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       for(int i = 0; i < 3; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
       }
-      butt[0] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, IW, BH,
+      butt[0] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, width - 4 * WB, BH,
                                     "Apply operation on copy");
       butt[0]->value(0);
       group[0]->end();
@@ -720,7 +720,7 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       for(int i = 3; i < 10; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
       }
-      butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 8 * BH, IW, BH,
+      butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 8 * BH, width - 4 * WB, BH,
                                     "Apply operation on copy");
       butt[1]->value(0);
       group[1]->end();
@@ -744,7 +744,7 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       for(int i = 10; i < 14; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
       }
-      butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, IW, BH,
+      butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, width - 4 * WB, BH,
                                     "Apply operation on copy");
       butt[2]->value(0);
       group[2]->end();
@@ -764,7 +764,7 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       for(int i = 14; i < 18; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
       }
-      butt[3] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, IW, BH,
+      butt[3] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, width - 4 * WB, BH,
                                     "Apply operation on copy");
       butt[3]->value(0);
       group[3]->end();
@@ -773,9 +773,11 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
     {
       group[4] = new Fl_Group
         (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Boolean");
-      butt[4] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, IW, BH, "Delete object");
+      butt[4] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, width - 4 * WB, BH,
+                                    "Delete object");
       butt[4]->value(1);
-      butt[5] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, IW, BH, "Delete tool");
+      butt[5] = new Fl_Check_Button(2 * WB, 2 * WB + 2 * BH, width - 4 * WB, BH,
+                                    "Delete tool");
       butt[5]->value(1);
       group[4]->end();
     }
@@ -792,7 +794,8 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
     {
       group[6] = new Fl_Group
         (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Delete");
-      butt[6] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, IW, BH, "Recursive");
+      butt[6] = new Fl_Check_Button(2 * WB, 2 * WB + 1 * BH, width - 4 * WB, BH,
+                                    "Recursive");
       butt[6]->value(1);
       group[6]->end();
     }
