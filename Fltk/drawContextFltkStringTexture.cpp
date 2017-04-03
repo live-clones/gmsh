@@ -44,6 +44,8 @@ class drawContextFltkStringTexture::queueString {
   }
   void flush()
   {
+    if(_elements.empty()) return;
+
     //1000 should be _totalWidth but it does not work
     int w = 1000, h = _maxHeight;
     Fl_Offscreen offscreen = fl_create_offscreen(w, h);
