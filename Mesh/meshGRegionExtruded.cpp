@@ -143,6 +143,23 @@ static void extrudeMesh(GFace *from, GRegion *to, MVertexRTree &pos)
   std::vector<MVertex*> embedded = from->getEmbeddedMeshVertices();
   mesh_vertices.insert(mesh_vertices.end(), embedded.begin(), embedded.end());
 
+  // add all vertices on surface seams
+  std::set<MVertex*> seam;
+  std::list<GEdge*> l_edges = from->edges();
+  for (std::list<GEdge*>::const_iterator it = l_edges.begin();
+       it != l_edges.end(); ++it){
+    if ((*it)->isSeam(from)){
+      seam.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
+      if((*it)->getBeginVertex())
+        seam.insert((*it)->getBeginVertex()->mesh_vertices.begin(),
+                    (*it)->getBeginVertex()->mesh_vertices.end());
+      if((*it)->getEndVertex())
+        seam.insert((*it)->getEndVertex()->mesh_vertices.begin(),
+                    (*it)->getEndVertex()->mesh_vertices.end());
+    }
+  }
+  mesh_vertices.insert(mesh_vertices.end(), seam.begin(), seam.end());
+
   // create extruded vertices
   for(unsigned int i = 0; i < mesh_vertices.size(); i++){
     MVertex *v = mesh_vertices[i];
