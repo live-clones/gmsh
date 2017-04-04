@@ -73,6 +73,14 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
   else(SLEPC_FRAMEWORK)
     message(SEND_ERROR "Could not find slepc.framework")
   endif(SLEPC_FRAMEWORK)
+  # OpenCASCADE framework
+  find_path(OCCT_FRAMEWORK OCCT.framework)
+  if(OCCT_FRAMEWORK)
+    set(OCCT_FRAMEWORK ${OCCT_FRAMEWORK}/OCCT.framework)
+    message(STATUS "Found framework " ${OCCT_FRAMEWORK})
+  else(OCCT_FRAMEWORK)
+    message(SEND_ERROR "Could not find OCCT.framework")
+  endif(OCCT_FRAMEWORK)
   # add target
   add_custom_target(xcodeProject
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/models/
@@ -99,6 +107,7 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     COMMAND ${CMAKE_COMMAND} -E create_symlink . ${GMSH_FRAMEWORK}/Headers/gmsh
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${PETSC_FRAMEWORK}/ ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/frameworks/petsc.framework/
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${SLEPC_FRAMEWORK}/ ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/frameworks/slepc.framework/
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${OCCT_FRAMEWORK}/ ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/frameworks/OCCT.framework/
   )
   add_custom_command(TARGET xcodeProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove_directory
                     ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/files)
@@ -191,7 +200,8 @@ if(ENABLE_BUILD_ANDROID)
   add_custom_target(androidProject
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/models/
-    COMMAND ${CMAKE_COMMAND} -E copy_directory  ${CMAKE_CURRENT_SOURCE_DIR}/Android/ ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/Android/ ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/res/raw
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/libs/armeabi-v7a/
     COMMAND ${CMAKE_COMMAND} -E copy ${GMSH_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/libs/armeabi-v7a/
     COMMAND ${CMAKE_COMMAND} -E copy ${GETDP_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/libs/armeabi-v7a/
