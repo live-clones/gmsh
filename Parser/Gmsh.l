@@ -15,6 +15,7 @@
 #include "Parser.h"
 #include "Gmsh.tab.hpp"
 #include "GmshIO.h"
+#include "Geo.h" // for NEWPOINT(), etc.
 
 void   parsestring(char endchar);
 char  *strsave(char *ptr);

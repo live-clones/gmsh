@@ -453,14 +453,4 @@ extern NameSpaces nameSpaces;
 
 void PrintParserSymbols(bool help, std::vector<std::string> &vec);
 
-int NEWPOINT();
-int NEWLINE();
-int NEWLINELOOP();
-int NEWSURFACE();
-int NEWSURFACELOOP();
-int NEWVOLUME();
-int NEWREG();
-int NEWFIELD();
-int NEWPHYSICAL();
-
 #endif

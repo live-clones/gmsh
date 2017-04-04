@@ -18,6 +18,7 @@
 #include "Context.h"
 #include "Options.h"
 #include "MallocUtils.h"
+#include "Geo.h"
 
 static void elementary_add_parameter_cb(Fl_Widget *w, void *data)
 {

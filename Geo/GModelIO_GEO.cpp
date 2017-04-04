@@ -23,10 +23,7 @@
 #include "gmshRegion.h"
 #include "Field.h"
 #include "Context.h"
-
-#if defined(HAVE_PARSER)
 #include "Parser.h"
-#endif
 
 void GEO_Internals::_allocateAll()
 {
