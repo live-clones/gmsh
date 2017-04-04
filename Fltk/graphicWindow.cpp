@@ -2352,7 +2352,113 @@ static void mesh_define_transfinite_volume_cb(Fl_Widget *w, void *data)
 
 static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
 {
-  // TODO
+  if(!data) return;
+  std::string what((const char*)data);
+  std::vector<int> entities;
+  bool selectEntities = true;
+
+  int type; const char *str = "";
+  if(what == "Surface"){
+    type = ENT_SURFACE; str = "surfaces";
+    opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else if(what == "Line"){
+    type = ENT_LINE; str = "lines";
+    opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else if(what == "Point"){
+    type = ENT_POINT; str = "points";
+    opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
+  }
+  else{
+    Msg::Error("Unknown type of entity to embed: %s", what.c_str());
+    return;
+  }
+  while(1) {
+    if(entities.empty())
+      Msg::StatusGl("Select %s\n"
+                    "[Press 'e' to end selection or 'q' to abort]", str);
+    else if(selectEntities)
+      Msg::StatusGl("Select %s\n"
+                    "[Press 'e' to end selection, 'u' to undo last selection or "
+                    "'q' to abort]", str);
+    else
+      Msg::StatusGl("Select entity in which to embed the %s\n"
+                    "[Press 'e' to end selection or 'q' to abort]", str);
+    int t = type;
+    if(!selectEntities){
+      switch(FlGui::instance()->transformContext->choice->value()){
+      case 2: t = ENT_LINE; break;
+      case 3: t = ENT_SURFACE; break;
+      case 4: t = ENT_VOLUME; break;
+      default: t = ENT_ALL; break;
+      }
+    }
+    char ib = FlGui::instance()->selectEntity(t);
+    if(ib == 'l') {
+      if(selectEntities && what == "Point"){
+        for(unsigned int i = 0; i < FlGui::instance()->selectedVertices.size(); i++){
+          if(FlGui::instance()->selectedVertices[i]->getSelection() != 1){
+            FlGui::instance()->selectedVertices[i]->setSelection(1);
+            entities.push_back(FlGui::instance()->selectedVertices[i]->tag());
+          }
+        }
+      }
+      else if(selectEntities && what == "Line"){
+        for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
+          if(FlGui::instance()->selectedEdges[i]->getSelection() != 1){
+            FlGui::instance()->selectedEdges[i]->setSelection(1);
+            entities.push_back(FlGui::instance()->selectedEdges[i]->tag());
+          }
+        }
+      }
+      else if(selectEntities && what == "Surface"){
+        for(unsigned int i = 0; i < FlGui::instance()->selectedFaces.size(); i++){
+          if(FlGui::instance()->selectedFaces[i]->getSelection() != 1){
+            FlGui::instance()->selectedFaces[i]->setSelection(1);
+            entities.push_back(FlGui::instance()->selectedFaces[i]->tag());
+          }
+        }
+      }
+      else if(!selectEntities && (FlGui::instance()->selectedFaces.size() ||
+                                  FlGui::instance()->selectedRegions.size())){
+        int dim = FlGui::instance()->selectedFaces.size() ? 2 : 3;
+        int tag = (dim == 2) ? FlGui::instance()->selectedFaces[0]->tag() :
+          FlGui::instance()->selectedRegions[0]->tag();
+        add_embedded(GModel::current()->getFileName(), what, entities, dim, tag);
+        GModel::current()->setSelection(0);
+        selectEntities = true;
+        entities.clear();
+      }
+    }
+    if(ib == 'r') {
+      Msg::Warning("Entity de-selection not supported yet during boolean operation");
+    }
+    if(ib == 'u') {
+      if(selectEntities && entities.size()){
+        int dim = (what == "Surface") ? 2 : (what == "Line") ? 1 : 0;
+        GEntity *ge = GModel::current()->getEntityByTag(dim, entities.back());
+        if(ge) ge->setSelection(0);
+        entities.pop_back();
+      }
+    }
+    if(ib == 'e') {
+      if(selectEntities){
+        if(entities.empty())
+          Msg::Error("At least one entity must be selected");
+        else
+          selectEntities = false;
+      }
+    }
+    if(ib == 'q') {
+      GModel::current()->setSelection(0);
+      break;
+    }
+  }
+
+  FlGui::instance()->transformContext->hide();
+  drawContext::global()->draw();
+  Msg::StatusGl("");
 }
 
 static void mesh_define_compound_entity_cb(Fl_Widget *w, void *data)
@@ -4084,14 +4190,12 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_define_length_cb  } ,
   {"0Modules/Mesh/Define/Size fields",
    (Fl_Callback *)field_cb},
-  /* TODO:
   {"0Modules/Mesh/Define/Embedded/Point",
    (Fl_Callback *)mesh_define_embedded_cb, (void*)"Point" } ,
   {"0Modules/Mesh/Define/Embedded/Line",
    (Fl_Callback *)mesh_define_embedded_cb, (void*)"Line" } ,
   {"0Modules/Mesh/Define/Embedded/Surface",
    (Fl_Callback *)mesh_define_embedded_cb, (void*)"Surface" } ,
-  */
   {"0Modules/Mesh/Define/Transfinite/Line",
    (Fl_Callback *)mesh_define_transfinite_line_cb} ,
   {"0Modules/Mesh/Define/Transfinite/Surface",

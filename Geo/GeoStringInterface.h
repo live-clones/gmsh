@@ -20,8 +20,8 @@ void add_trsfline(std::vector<int> &l, const std::string &fileName,
 void add_trsfsurf(std::vector<int> &l, const std::string &fileName,
                   const std::string &dir);
 void add_trsfvol(std::vector<int> &l, const std::string &fileName);
-void add_embedded(const std::string &what, std::vector<int> &l,
-                  const std::string &fileName);
+void add_embedded(const std::string &fileName, const std::string &what,
+                  std::vector<int> &l, int dim, int tag);
 void add_param(const std::string &par, const std::string &value,
                const std::string &label, const std::string &path,
                const std::string &fileName);

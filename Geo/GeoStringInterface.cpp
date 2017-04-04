@@ -249,16 +249,14 @@ void add_trsfvol(std::vector<int> &l, const std::string &fileName)
   add_infile(sstream.str(), fileName);
 }
 
-void add_embedded(const std::string &what, std::vector<int> &l,
-                  const std::string &fileName)
+void add_embedded(const std::string &fileName, const std::string &what,
+                  std::vector<int> &l, int dim, int tag)
 {
   std::ostringstream sstream;
-  sstream << "Point{";
-  for(unsigned int i = 1; i < l.size(); i++) {
-    if(i > 1) sstream << ", ";
-    sstream << l[i];
-  }
-  sstream << "} In Surface{" << l[0] << "};";
+  sstream << what << "{" << vector2String(l) << "} In ";
+  if(dim == 2) sstream << "Surface{";
+  else sstream << "Volume{";
+  sstream << tag << "};";
   add_infile(sstream.str(), fileName);
 }
 
