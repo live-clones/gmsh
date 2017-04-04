@@ -2384,7 +2384,7 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
                     "'q' to abort]", str);
     else
       Msg::StatusGl("Select entity in which to embed the %s\n"
-                    "[Press 'e' to end selection or 'q' to abort]", str);
+                    "[Press 'q' to abort]", str);
     int t = type;
     if(!selectEntities){
       switch(FlGui::instance()->transformContext->choice->value()){
@@ -2423,6 +2423,11 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
       else if(!selectEntities && (FlGui::instance()->selectedFaces.size() ||
                                   FlGui::instance()->selectedRegions.size())){
         int dim = FlGui::instance()->selectedFaces.size() ? 2 : 3;
+        if(dim == 2)
+          FlGui::instance()->selectedFaces[0]->setSelection(1);
+        else
+          FlGui::instance()->selectedRegions[0]->setSelection(1);
+        drawContext::global()->draw();
         int tag = (dim == 2) ? FlGui::instance()->selectedFaces[0]->tag() :
           FlGui::instance()->selectedRegions[0]->tag();
         add_embedded(GModel::current()->getFileName(), what, entities, dim, tag);
