@@ -81,6 +81,19 @@ Physical Surface("My surface") = {1} ;
 // label "My third line (physical id 5)". And finally, all the triangular
 // elements resulting from the discretization of surface 6 will be given an
 // automatic physical id associated with the label "My surface").
-
+//
 // Note that if no physical entities are defined, then all the elements in the
 // mesh will be saved "as is", with their default orientation.
+
+// Starting with Gmsh 3.0, models can also be built using constructive solid
+// geometry. Instead of the built-in geometry kernel, you need to use the
+// OpenCASCADE kernel:
+//
+//   SetFactory("OpenCASCADE");
+//
+// In addition to the "bottom-up" geometry commands, you can now use "top-down"
+// commands, like e.g.
+//
+//   Rectangle(2) = {.2, 0, 0, 0.1, 0.3};
+//
+// See tutorial/t16.geo for an example, and demos/boolean for more.
