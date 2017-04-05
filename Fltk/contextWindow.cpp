@@ -605,7 +605,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[10] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Center Z");
       input[10]->value("0");
       input[11] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Radius");
-      input[11]->value("1");
+      input[11]->value("0.5");
       input[12] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Angle 1");
       input[12]->value("0");
       input[13] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Angle 2");
@@ -633,9 +633,9 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[16] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Center Z");
       input[16]->value("0");
       input[17] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Radius X");
-      input[17]->value("1");
+      input[17]->value("0.5");
       input[18] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Radius Y");
-      input[18]->value("0.5");
+      input[18]->value("0.25");
       input[19] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Angle 1");
       input[19]->value("0");
       input[20] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Angle 2");
@@ -663,9 +663,9 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[23] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Center Z");
       input[23]->value("0");
       input[24] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Radius X");
-      input[24]->value("1");
+      input[24]->value("0.5");
       input[25] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Radius Y");
-      input[25]->value("0.5");
+      input[25]->value("0.25");
       for(int i = 21; i < 26; i++){
         input[i]->align(FL_ALIGN_RIGHT);
         input[i]->callback(elementary_draw_disk_cb);
@@ -721,7 +721,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[34] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Center Z");
       input[34]->value("0");
       input[35] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Radius");
-      input[35]->value("1");
+      input[35]->value("0.5");
       input[36] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Angle 1");
       input[36]->value("-Pi/2");
       input[37] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Angle 2");
@@ -757,7 +757,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[44] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Axis DZ");
       input[44]->value("0");
       input[45] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Radius");
-      input[45]->value("1");
+      input[45]->value("0.5");
       input[46] = new Fl_Input(2 * WB, 2 * WB + 8 * BH, IW, BH, "Angle");
       input[46]->value("2*Pi");
       for(int i = 39; i < 47; i++){
@@ -812,9 +812,9 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[55] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Center Z");
       input[55]->value("0");
       input[56] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Radius 1");
-      input[56]->value("1");
+      input[56]->value("0.5");
       input[57] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Radius 2");
-      input[57]->value("0.3");
+      input[57]->value("0.2");
       input[58] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Angle");
       input[58]->value("2*Pi");
       for(int i = 53; i < 59; i++){
@@ -841,7 +841,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[61] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Center base Z");
       input[61]->value("0");
       input[62] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Axis DX");
-      input[62]->value("0.5");
+      input[62]->value("1");
       input[63] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Axis DY");
       input[63]->value("0");
       input[64] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Axis DZ");
