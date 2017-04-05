@@ -105,6 +105,36 @@ static void elementary_add_point_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void draw_circle(void *context)
+{
+  if(!GModel::current()->getOCCInternals()) GModel::current()->createOCCInternals();
+  double xc, yc, zc, r, angle1, angle2;
+  if(!getval(FlGui::instance()->elementaryContext->input[8]->value(), xc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[9]->value(), yc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[10]->value(), zc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[11]->value(), r)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[12]->value(), angle1)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[13]->value(), angle2)) return;
+
+  if(angle2 <= angle1) return;
+  glColor4ubv((GLubyte *) & CTX::instance()->color.geom.highlight[0]);
+  glBegin(GL_LINE_STRIP);
+  const int N = 30;
+  for(int i = 0; i < N; i++) {
+    double t = angle1 + (double)i / (double)(N - 1) * (angle2 - angle1);
+    double x = xc + r * cos(t);
+    double y = yc + r * sin(t);
+    double z = zc;
+    glVertex3d(x, y, z);
+  }
+  glEnd();
+}
+
+static void elementary_draw_circle_cb(Fl_Widget *w, void *data)
+{
+  drawContext::setDrawGeomTransientFunction(draw_circle);
+}
+
 static void elementary_add_circle_cb(Fl_Widget *w, void *data)
 {
   add_circle(GModel::current()->getFileName(),
@@ -118,6 +148,36 @@ static void elementary_add_circle_cb(Fl_Widget *w, void *data)
   GModel::current()->setSelection(0);
   SetBoundingBox();
   drawContext::global()->draw();
+}
+
+static void draw_ellipse(void *context)
+{
+  if(!GModel::current()->getOCCInternals()) GModel::current()->createOCCInternals();
+  double xc, yc, zc, rx, ry, angle1, angle2;
+  if(!getval(FlGui::instance()->elementaryContext->input[14]->value(), xc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[15]->value(), yc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[16]->value(), zc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[17]->value(), rx)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[18]->value(), ry)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[19]->value(), angle1)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[20]->value(), angle2)) return;
+  if(angle2 <= angle1) return;
+  glColor4ubv((GLubyte *) & CTX::instance()->color.geom.highlight[0]);
+  glBegin(GL_LINE_STRIP);
+  const int N = 30;
+  for(int i = 0; i < N; i++) {
+    double t = angle1 + (double)i / (double)(N - 1) * (angle2 - angle1);
+    double x = xc + rx * cos(t);
+    double y = yc + ry * sin(t);
+    double z = zc;
+    glVertex3d(x, y, z);
+  }
+  glEnd();
+}
+
+static void elementary_draw_ellipse_cb(Fl_Widget *w, void *data)
+{
+  drawContext::setDrawGeomTransientFunction(draw_ellipse);
 }
 
 static void elementary_add_ellipse_cb(Fl_Widget *w, void *data)
@@ -550,8 +610,11 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[12]->value("0");
       input[13] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Angle 2");
       input[13]->value("2*Pi");
-      for(int i = 8; i < 14; i++)
+      for(int i = 8; i < 14; i++){
         input[i]->align(FL_ALIGN_RIGHT);
+        input[i]->callback(elementary_draw_circle_cb);
+        input[i]->when(FL_WHEN_CHANGED);
+      }
       {
         Fl_Return_Button *o = new Fl_Return_Button
           (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
@@ -571,14 +634,17 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[16]->value("0");
       input[17] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Radius X");
       input[17]->value("1");
-      input[18] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Radius Y");
+      input[18] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Radius Y");
       input[18]->value("0.5");
-      input[19] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Angle 1");
+      input[19] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Angle 1");
       input[19]->value("0");
-      input[20] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Angle 2");
+      input[20] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Angle 2");
       input[20]->value("2*Pi");
-      for(int i = 14; i < 21; i++)
+      for(int i = 14; i < 21; i++){
         input[i]->align(FL_ALIGN_RIGHT);
+        input[i]->callback(elementary_draw_ellipse_cb);
+        input[i]->when(FL_WHEN_CHANGED);
+      }
       {
         Fl_Return_Button *o = new Fl_Return_Button
           (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");

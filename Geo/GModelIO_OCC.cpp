@@ -743,11 +743,15 @@ bool OCC_Internals::addCircle(int &tag, double x, double y, double z, double r,
   return true;
 }
 
-bool OCC_Internals::addEllipse(int &tag, double x, double y, double z, double r1,
-                               double r2, double angle1, double angle2)
+bool OCC_Internals::addEllipse(int &tag, double x, double y, double z, double rx,
+                               double ry, double angle1, double angle2)
 {
   if(tag >= 0 && _tagEdge.IsBound(tag)){
     Msg::Error("OpenCASCADE edge with tag %d already exists", tag);
+    return false;
+  }
+  if(ry > rx){
+    Msg::Error("Major radius rx should be larger than minor radius ry");
     return false;
   }
 
@@ -757,7 +761,7 @@ bool OCC_Internals::addEllipse(int &tag, double x, double y, double z, double r1
     gp_Dir x_dir(1., 0., 0.);
     gp_Pnt center(x, y, z);
     gp_Ax2 axis(center, N_dir, x_dir);
-    gp_Elips elips(axis, r1, r2);
+    gp_Elips elips(axis, rx, ry);
     if(angle1 == 0 && angle2 == 2 * M_PI){
       result = BRepBuilderAPI_MakeEdge(elips);
     }
