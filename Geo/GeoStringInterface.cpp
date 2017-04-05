@@ -23,8 +23,15 @@
 #include "onelab.h"
 #endif
 
-void add_infile(const std::string &text, const std::string &fileName)
+void add_infile(const std::string &text, const std::string &fileNameOrEmpty)
 {
+  std::string fileName = fileNameOrEmpty;
+  if(fileName.empty()){
+    fileName = CTX::instance()->defaultFileName;
+    GModel::current()->setFileName(fileName);
+    GModel::current()->setName("");
+  }
+
   Msg::Debug("Adding `%s' to file `%s'", text.c_str(), fileName.c_str());
   std::vector<std::string> split = SplitFileName(fileName);
   std::string noExt = split[0] + split[1], ext = split[2];
@@ -185,6 +192,11 @@ static std::string dimTags2String(const std::vector<std::pair<int, int> > &l)
     }
   }
   return sstream.str();
+}
+
+static void check_occ(std::ostringstream &sstream)
+{
+  if(gmsh_yyfactory != "OpenCASCADE") sstream << "SetFactory(\"OpenCASCADE\");\n";
 }
 
 void add_charlength(const std::string &fileName, const std::vector<int> &l,
@@ -443,6 +455,7 @@ void add_circle(const std::string &fileName, const std::string &x, const std::st
                 const std::string &alpha2)
 {
   std::ostringstream sstream;
+  check_occ(sstream);
   sstream << "Circle(" << GModel::current()->getMaxElementaryNumber(1) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << r;
   if(alpha1.size())
@@ -458,6 +471,7 @@ void add_ellipse(const std::string &fileName, const std::string &x, const std::s
                  const std::string &alpha1, const std::string &alpha2)
 {
   std::ostringstream sstream;
+  check_occ(sstream);
   sstream << "Ellipse(" << GModel::current()->getMaxElementaryNumber(1) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << rx << ", " << ry;
   if(alpha1.size())
@@ -472,6 +486,7 @@ void add_disk(const std::string &fileName, const std::string &x, const std::stri
                 const std::string &z, const std::string &rx, const std::string &ry)
 {
   std::ostringstream sstream;
+  check_occ(sstream);
   sstream << "Disk(" << GModel::current()->getMaxElementaryNumber(2) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << rx << ", " << ry << "};";
   add_infile(sstream.str(), fileName);
@@ -482,6 +497,7 @@ void add_rectangle(const std::string &fileName, const std::string &x, const std:
                    const std::string &roundedRadius)
 {
   std::ostringstream sstream;
+  check_occ(sstream);
   sstream << "Rectangle(" << GModel::current()->getMaxElementaryNumber(2) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy;
   if(roundedRadius.size())
@@ -495,6 +511,7 @@ void add_sphere(const std::string &fileName, const std::string &x, const std::st
                 const std::string &alpha2, const std::string &alpha3)
 {
   std::ostringstream sstream;
+  check_occ(sstream);
   sstream << "Sphere(" << GModel::current()->getMaxElementaryNumber(3) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << r;
   if(alpha1.size())
@@ -512,6 +529,7 @@ void add_cylinder(const std::string &fileName, const std::string &x, const std::
                   const std::string &dz, const std::string &r, const std::string &alpha)
 {
   std::ostringstream sstream;
+  check_occ(sstream);
   sstream << "Cylinder(" << GModel::current()->getMaxElementaryNumber(3) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy
           << ", " << dz << ", " << r;
@@ -526,6 +544,7 @@ void add_block(const std::string &fileName, const std::string &x, const std::str
                const std::string &dz)
 {
   std::ostringstream sstream;
+  check_occ(sstream);
   sstream << "Block(" << GModel::current()->getMaxElementaryNumber(3) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", "
           << dy << ", " << dz << "};";
@@ -537,6 +556,7 @@ void add_torus(const std::string &fileName, const std::string &x, const std::str
                const std::string &alpha)
 {
   std::ostringstream sstream;
+  check_occ(sstream);
   sstream << "Torus(" << GModel::current()->getMaxElementaryNumber(3) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << r1 << ", " << r2;
   if(alpha.size())
@@ -551,6 +571,7 @@ void add_cone(const std::string &fileName, const std::string &x, const std::stri
               const std::string &alpha)
 {
   std::ostringstream sstream;
+  check_occ(sstream);
   sstream << "Cone(" << GModel::current()->getMaxElementaryNumber(3) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", "
           << dy << ", " << dz << ", " << r1 << ", " << r2;
@@ -565,6 +586,7 @@ void add_wedge(const std::string &fileName, const std::string &x, const std::str
                const std::string &dz, const std::string &ltx)
 {
   std::ostringstream sstream;
+  check_occ(sstream);
   sstream << "Wedge(" << GModel::current()->getMaxElementaryNumber(3) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", " << dy
           << ", " << dz << ", " << ltx << "};";
@@ -659,6 +681,7 @@ void apply_boolean(const std::string &fileName, const std::string &op,
                    int deleteObject, int deleteTool)
 {
   std::ostringstream sstream;
+  check_occ(sstream);
   sstream << op << "{ " << dimTags2String(object);
   if(deleteObject) sstream << "Delete; ";
   sstream << "}{ " << dimTags2String(tool);
@@ -671,6 +694,7 @@ void apply_fillet(const std::string &fileName, const std::vector<int> &regions,
                   const std::vector<int> &edges, const std::string &radius)
 {
   std::ostringstream sstream;
+  check_occ(sstream);
   sstream << "Fillet{" << vector2String(regions) << "}{"
           << vector2String(edges) << "}{" << radius << "}";
   add_infile(sstream.str(), fileName);

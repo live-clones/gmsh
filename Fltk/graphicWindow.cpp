@@ -631,6 +631,7 @@ void geometry_reload_cb(Fl_Widget *w, void *data)
 void geometry_remove_last_command_cb(Fl_Widget *w, void *data)
 {
   std::string fileName = GModel::current()->getFileName();
+  if(StatFile(fileName)) return;
   // FIXME: make this work with compressed files
   std::ifstream t;
   t.open(fileName.c_str(), std::ifstream::in);
@@ -659,6 +660,7 @@ void geometry_remove_last_command_cb(Fl_Widget *w, void *data)
 
 static void add_new_point_based_entity(const std::string &what, int pane)
 {
+  opt_general_axes(0, GMSH_SET | GMSH_GUI, 3);
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   drawContext::global()->draw();
 
@@ -793,6 +795,7 @@ static void add_new_point_based_entity(const std::string &what, int pane)
   }
 
   FlGui::instance()->elementaryContext->hide();
+  drawContext::setDrawGeomTransientFunction(0);
 
   // at the end, not during creation to avoid having things jumping around
   SetBoundingBox();

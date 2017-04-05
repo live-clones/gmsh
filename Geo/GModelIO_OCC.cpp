@@ -23,6 +23,7 @@
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
 #include <BRepAlgoAPI_Section.hxx>
+#include <BRepBndLib.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
@@ -37,6 +38,7 @@
 #include <BRepFilletAPI_MakeFillet.hxx>
 #include <BRepGProp.hxx>
 #include <BRepLib.hxx>
+#include <BRepMesh_FastDiscret.hxx>
 #include <BRepOffsetAPI_MakeFilling.hxx>
 #include <BRepOffsetAPI_MakePipe.hxx>
 #include <BRepOffsetAPI_MakeThickSolid.hxx>
@@ -893,14 +895,9 @@ bool OCC_Internals::addLineLoop(int &tag, const std::vector<int> &edgeTags)
   return addWire(tag, edgeTags, true);
 }
 
-bool OCC_Internals::addRectangle(int &tag, double x, double y, double z,
-                                 double dx, double dy,  double roundedRadius)
+bool OCC_Internals::_makeRectangle(TopoDS_Face &result, double x, double y, double z,
+                                   double dx, double dy, double roundedRadius)
 {
-  if(tag >= 0 && _tagFace.IsBound(tag)){
-    Msg::Error("OpenCASCADE face with tag %d already exists", tag);
-    return false;
-  }
-  TopoDS_Face result;
   try{
     TopoDS_Wire wire;
     double x1 = x, y1 = y, z1 = z, x2 = x1 + dx, y2 = y1 + dy;
@@ -961,20 +958,31 @@ bool OCC_Internals::addRectangle(int &tag, double x, double y, double z,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag < 0) tag = getMaxTag(2) + 1;
-  bind(result, tag, true);
   return true;
 }
 
-bool OCC_Internals::addDisk(int &tag, double xc, double yc, double zc,
-                            double rx, double ry)
+bool OCC_Internals::addRectangle(int &tag, double x, double y, double z,
+                                 double dx, double dy, double roundedRadius)
 {
   if(tag >= 0 && _tagFace.IsBound(tag)){
     Msg::Error("OpenCASCADE face with tag %d already exists", tag);
     return false;
   }
-
   TopoDS_Face result;
+  if(!_makeRectangle(result, x, y, z, dx, dy, roundedRadius))
+    return false;
+  if(tag < 0) tag = getMaxTag(2) + 1;
+  bind(result, tag, true);
+  return true;
+}
+
+bool OCC_Internals::_makeDisk(TopoDS_Face &result, double xc, double yc, double zc,
+                              double rx, double ry)
+{
+  if(ry > rx){
+    Msg::Error("Major radius rx should be larger than minor radius ry");
+    return false;
+  }
   try{
     gp_Dir N_dir(0., 0., 1.);
     gp_Dir x_dir(1., 0., 0.);
@@ -989,6 +997,19 @@ bool OCC_Internals::addDisk(int &tag, double xc, double yc, double zc,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
+  return true;
+}
+
+bool OCC_Internals::addDisk(int &tag, double xc, double yc, double zc,
+                            double rx, double ry)
+{
+  if(tag >= 0 && _tagFace.IsBound(tag)){
+    Msg::Error("OpenCASCADE face with tag %d already exists", tag);
+    return false;
+  }
+  TopoDS_Face result;
+  if(!_makeDisk(result, xc, yc, zc, rx, ry))
+    return false;
   if(tag < 0) tag = getMaxTag(2) + 1;
   bind(result, tag, true);
   return true;
@@ -1197,16 +1218,10 @@ bool OCC_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
   return true;
 }
 
-bool OCC_Internals::addSphere(int &tag, double xc, double yc, double zc,
-                              double radius, double angle1, double angle2,
-                              double angle3)
+bool OCC_Internals::_makeSphere(TopoDS_Solid &result, double xc, double yc, double zc,
+                                double radius, double angle1, double angle2,
+                                double angle3)
 {
-  if(tag >= 0 && _tagSolid.IsBound(tag)){
-    Msg::Error("OpenCASCADE region with tag %d already exists", tag);
-    return false;
-  }
-
-  TopoDS_Solid result;
   try{
     gp_Pnt p(xc, yc, zc);
     BRepPrimAPI_MakeSphere s(p, radius, angle1, angle2, angle3);
@@ -1221,20 +1236,28 @@ bool OCC_Internals::addSphere(int &tag, double xc, double yc, double zc,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag < 0) tag = getMaxTag(3) + 1;
-  bind(result, tag, true);
   return true;
 }
 
-bool OCC_Internals::addBlock(int &tag, double x, double y, double z,
-                             double dx, double dy, double dz)
+bool OCC_Internals::addSphere(int &tag, double xc, double yc, double zc,
+                              double radius, double angle1, double angle2,
+                              double angle3)
 {
   if(tag >= 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
     return false;
   }
-
   TopoDS_Solid result;
+  if(!_makeSphere(result, xc, yc, zc, radius, angle1, angle2, angle3))
+    return false;
+  if(tag < 0) tag = getMaxTag(3) + 1;
+  bind(result, tag, true);
+  return true;
+}
+
+bool OCC_Internals::_makeBlock(TopoDS_Solid &result, double x, double y, double z,
+                               double dx, double dy, double dz)
+{
   try{
     gp_Pnt P1(x, y, z);
     gp_Pnt P2(x + dx, y + dy, z + dz);
@@ -1250,25 +1273,32 @@ bool OCC_Internals::addBlock(int &tag, double x, double y, double z,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag < 0) tag = getMaxTag(3) + 1;
-  bind(result, tag, true);
   return true;
 }
 
-bool OCC_Internals::addCylinder(int &tag, double x, double y, double z,
-                                double dx, double dy, double dz, double r,
-                                double angle)
+bool OCC_Internals::addBlock(int &tag, double x, double y, double z,
+                             double dx, double dy, double dz)
 {
   if(tag >= 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
     return false;
   }
+  TopoDS_Solid result;
+  if(!_makeBlock(result, x, y, z, dx, dy, dz))
+    return false;
+  if(tag < 0) tag = getMaxTag(3) + 1;
+  bind(result, tag, true);
+  return true;
+}
+
+bool OCC_Internals::_makeCylinder(TopoDS_Solid &result, double x, double y, double z,
+                                  double dx, double dy, double dz, double r, double angle)
+{
   const double H = sqrt(dx * dx + dy * dy + dz * dz);
   if(!H){
     Msg::Error("Cannot build cylinder of zero height");
     return false;
   }
-  TopoDS_Solid result;
   try{
     gp_Pnt aP(x, y, z);
     gp_Vec aV(dx / H, dy / H, dz / H);
@@ -1285,19 +1315,28 @@ bool OCC_Internals::addCylinder(int &tag, double x, double y, double z,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag < 0) tag = getMaxTag(3) + 1;
-  bind(result, tag, true);
   return true;
 }
 
-bool OCC_Internals::addTorus(int &tag, double x, double y, double z,
-                             double r1, double r2, double angle)
+bool OCC_Internals::addCylinder(int &tag, double x, double y, double z,
+                                double dx, double dy, double dz, double r,
+                                double angle)
 {
   if(tag >= 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
     return false;
   }
   TopoDS_Solid result;
+  if(!_makeCylinder(result, x, y, z, dx, dy, dz, r, angle))
+    return false;
+  if(tag < 0) tag = getMaxTag(3) + 1;
+  bind(result, tag, true);
+  return true;
+}
+
+bool OCC_Internals::_makeTorus(TopoDS_Solid &result, double x, double y, double z,
+                               double r1, double r2, double angle)
+{
   try{
     gp_Pnt aP(x, y, z);
     gp_Vec aV(0, 0, 1);
@@ -1314,26 +1353,33 @@ bool OCC_Internals::addTorus(int &tag, double x, double y, double z,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag < 0) tag = getMaxTag(3) + 1;
-  bind(result, tag, true);
   return true;
 }
 
-bool OCC_Internals::addCone(int &tag, double x, double y, double z,
-                            double dx, double dy, double dz, double r1,
-                            double r2, double angle)
+bool OCC_Internals::addTorus(int &tag, double x, double y, double z,
+                             double r1, double r2, double angle)
 {
   if(tag >= 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
     return false;
   }
+  TopoDS_Solid result;
+  if(!_makeTorus(result, x, y, z, r1, r2, angle))
+    return false;
+  if(tag < 0) tag = getMaxTag(3) + 1;
+  bind(result, tag, true);
+  return true;
+}
 
+bool OCC_Internals::_makeCone(TopoDS_Solid &result, double x, double y, double z,
+                              double dx, double dy, double dz, double r1, double r2,
+                              double angle)
+{
   const double H = sqrt(dx * dx + dy * dy + dz * dz);
   if(!H){
     Msg::Error("Cannot build cone of zero height");
     return false;
   }
-  TopoDS_Solid result;
   try{
     gp_Pnt aP(x, y, z);
     gp_Vec aV(dx / H, dy / H, dz / H);
@@ -1350,20 +1396,28 @@ bool OCC_Internals::addCone(int &tag, double x, double y, double z,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-  if(tag < 0) tag = getMaxTag(3) + 1;
-  bind(result, tag, true);
   return true;
 }
 
-bool OCC_Internals::addWedge(int &tag, double x, double y, double z,
-                             double dx, double dy, double dz, double ltx)
+bool OCC_Internals::addCone(int &tag, double x, double y, double z,
+                            double dx, double dy, double dz, double r1,
+                            double r2, double angle)
 {
   if(tag >= 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
     return false;
   }
-
   TopoDS_Solid result;
+  if(!_makeCone(result, x, y, z, dx, dy, dz, r1, r2, angle))
+    return false;
+  if(tag < 0) tag = getMaxTag(3) + 1;
+  bind(result, tag, true);
+  return true;
+}
+
+bool OCC_Internals::_makeWedge(TopoDS_Solid &result, double x, double y, double z,
+                               double dx, double dy, double dz, double ltx)
+{
   try{
     gp_Pnt aP(x, y, z);
     gp_Vec aV(0, 0, 1);
@@ -1380,6 +1434,19 @@ bool OCC_Internals::addWedge(int &tag, double x, double y, double z,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
+  return true;
+}
+
+bool OCC_Internals::addWedge(int &tag, double x, double y, double z,
+                             double dx, double dy, double dz, double ltx)
+{
+  if(tag >= 0 && _tagSolid.IsBound(tag)){
+    Msg::Error("OpenCASCADE region with tag %d already exists", tag);
+    return false;
+  }
+  TopoDS_Solid result;
+  if(!_makeWedge(result, x, y, z, dx, dy, dz, ltx))
+    return false;
   if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
   return true;
@@ -1399,7 +1466,6 @@ bool OCC_Internals::addThruSections(int tag, const std::vector<int> &wireTags,
     Msg::Error("ThruSections require at least 2 wires");
     return false;
   }
-
   TopoDS_Shape result;
   try{
     BRepOffsetAPI_ThruSections ts(makeSolid, makeRuled);
@@ -1427,7 +1493,6 @@ bool OCC_Internals::addThruSections(int tag, const std::vector<int> &wireTags,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-
   bind(result, tag, outDimTags, true, true);
   return true;
 }
@@ -1441,7 +1506,6 @@ bool OCC_Internals::addThickSolid(int tag, int solidTag,
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
     return false;
   }
-
   if(!isBound(3, solidTag)){
     Msg::Error("Unknown OpenCASCADE region with tag %d", solidTag);
     return false;
@@ -1470,7 +1534,6 @@ bool OCC_Internals::addThickSolid(int tag, int solidTag,
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
     return false;
   }
-
   bind(result, tag, outDimTags, true, true);
   return true;
 }
@@ -2914,6 +2977,198 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   Msg::Info("Vertices           : %d (%d)", nnrv, nrv );
   Msg::Info("Totol surface area : %g (%g)", newsurfacecont, surfacecont);
   Msg::Info("-----------------------------------");
+}
+
+bool OCC_Internals::_makeFaceSTL(TopoDS_Face s,
+                                 std::vector<SPoint2> *verticesUV,
+                                 std::vector<SPoint3> *verticesXYZ,
+                                 std::vector<SVector3> *normals,
+                                 std::vector<int> &triangles)
+{
+  Bnd_Box aBox;
+  BRepBndLib::Add(s, aBox);
+
+#if (OCC_VERSION_MAJOR >= 7)
+  BRepMesh_FastDiscret::Parameters parameters;
+  parameters.Deflection = 0.1;
+  parameters.Angle = 0.35;
+  parameters.Relative = Standard_True;
+  BRepMesh_FastDiscret aMesher(aBox, parameters);
+#else
+  BRepMesh_FastDiscret aMesher(0.1, 0.35, aBox, Standard_False, Standard_False,
+                               Standard_True, Standard_False);
+#endif
+#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 5)
+  aMesher.Add(s);
+#else
+  aMesher.Perform(s);
+#endif
+
+  TopLoc_Location loc;
+  Handle(Poly_Triangulation) triangulation = BRep_Tool::Triangulation(s, loc);
+
+  if(triangulation.IsNull())
+    return false;
+
+  if(verticesUV && !triangulation->HasUVNodes())
+    return false;
+
+  int start = 0;
+  if(verticesUV) start = verticesUV->size();
+  if(verticesXYZ) start = verticesXYZ->size();
+  for(int i = 1; i <= triangulation->NbNodes(); i++){
+    gp_Pnt2d p = (triangulation->UVNodes())(i);
+    if(verticesUV){
+      verticesUV->push_back(SPoint2(p.X(), p.Y()));
+    }
+    if(verticesXYZ){
+      gp_Pnt pp = (triangulation->Nodes())(i);
+      verticesXYZ->push_back(SPoint3(pp.X(), pp.Y(), pp.Z()));
+    }
+    if(normals){
+      Handle(Geom_Surface) sur = BRep_Tool::Surface(s);
+      gp_Pnt pnt;
+      gp_Vec du, dv;
+      sur->D1(p.X(), p.Y(), pnt, du, dv);
+      SVector3 t1(du.X(), du.Y(), du.Z());
+      SVector3 t2(dv.X(), dv.Y(), dv.Z());
+      SVector3 n(crossprod(t1, t2));
+      n.normalize();
+      if(s.Orientation() == TopAbs_REVERSED) return n * (-1.);
+      normals->push_back(n);
+    }
+  }
+  for(int i = 1; i <= triangulation->NbTriangles(); i++){
+    Poly_Triangle triangle = (triangulation->Triangles())(i);
+    int p1, p2, p3;
+    triangle.Get(p1, p2, p3);
+    triangles.push_back(start + p1 - 1);
+    triangles.push_back(start + p2 - 1);
+    triangles.push_back(start + p3 - 1);
+  }
+  return true;
+}
+
+bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint2> &vertices,
+                                std::vector<int> &triangles)
+{
+  return _makeFaceSTL(s, &vertices, 0, 0, triangles);
+}
+
+bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint3> &vertices,
+                                std::vector<SVector3> &normals, std::vector<int> &triangles)
+{
+  return _makeFaceSTL(s, 0, &vertices, &normals, triangles);
+}
+
+bool OCC_Internals::makeSolidSTL(TopoDS_Solid s, std::vector<SPoint3> &vertices,
+                                 std::vector<SVector3> &normals, std::vector<int> &triangles)
+{
+  bool ret = true;
+  TopExp_Explorer exp0;
+  for(exp0.Init(s, TopAbs_FACE); exp0.More(); exp0.Next()){
+    TopoDS_Face face = TopoDS::Face(exp0.Current());
+    bool tmp = _makeFaceSTL(TopoDS::Face(face.Oriented(TopAbs_FORWARD)),
+                            0, &vertices, &normals, triangles);
+    if(!tmp) ret = false;
+  }
+  return ret;
+}
+
+bool OCC_Internals::makeRectangleSTL(double x, double y, double z, double dx, double dy,
+                                     double roundedRadius, std::vector<SPoint3> &vertices,
+                                     std::vector<SVector3> &normals, std::vector<int> &triangles)
+{
+  TopoDS_Face result;
+  if(!_makeRectangle(result, x, y, z, dx, dy, roundedRadius))
+    return false;
+  if(!makeFaceSTL(result, vertices, normals, triangles))
+    return false;
+  return true;
+}
+
+bool OCC_Internals::makeDiskSTL(double xc, double yc, double zc, double rx, double ry,
+                                std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+                                std::vector<int> &triangles)
+{
+  TopoDS_Face result;
+  if(!_makeDisk(result, xc, yc, zc, rx, ry))
+    return false;
+  if(!makeFaceSTL(result, vertices, normals, triangles))
+    return false;
+  return true;
+}
+
+bool OCC_Internals::makeSphereSTL(double xc, double yc, double zc, double radius, double angle1,
+                                  double angle2, double angle3, std::vector<SPoint3> &vertices,
+                                  std::vector<SVector3> &normals, std::vector<int> &triangles)
+{
+  TopoDS_Solid result;
+  if(!_makeSphere(result, xc, yc, zc, radius, angle1, angle2, angle3))
+    return false;
+  if(!makeSolidSTL(result, vertices, normals, triangles))
+    return false;
+  return true;
+}
+
+bool OCC_Internals::makeBlockSTL(double x, double y, double z, double dx, double dy, double dz,
+                                 std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+                                 std::vector<int> &triangles)
+{
+  TopoDS_Solid result;
+  if(!_makeBlock(result, x, y, z, dx, dy, dz))
+    return false;
+  if(!makeSolidSTL(result, vertices, normals, triangles))
+    return false;
+  return true;
+}
+
+bool OCC_Internals::makeCylinderSTL(double x, double y, double z, double dx, double dy, double dz,
+                                    double r, double angle, std::vector<SPoint3> &vertices,
+                                    std::vector<SVector3> &normals, std::vector<int> &triangles)
+{
+  TopoDS_Solid result;
+  if(!_makeCylinder(result, x, y, z, dx, dy, dz, r, angle))
+    return false;
+  if(!makeSolidSTL(result, vertices, normals, triangles))
+    return false;
+  return true;
+}
+
+bool OCC_Internals::makeConeSTL(double x, double y, double z, double dx, double dy, double dz,
+                                double r1, double r2, double angle, std::vector<SPoint3> &vertices,
+                                std::vector<SVector3> &normals, std::vector<int> &triangles)
+{
+  TopoDS_Solid result;
+  if(!_makeCone(result, x, y, z, dx, dy, dz, r1, r2, angle))
+    return false;
+  if(!makeSolidSTL(result, vertices, normals, triangles))
+    return false;
+  return true;
+}
+
+bool OCC_Internals::makeWedgeSTL(double x, double y, double z, double dx, double dy, double dz,
+                                 double ltx, std::vector<SPoint3> &vertices,
+                                 std::vector<SVector3> &normals, std::vector<int> &triangles)
+{
+  TopoDS_Solid result;
+  if(!_makeWedge(result, x, y, z, dx, dy, dz, ltx))
+    return false;
+  if(!makeSolidSTL(result, vertices, normals, triangles))
+    return false;
+  return true;
+}
+
+bool OCC_Internals::makeTorusSTL(double x, double y, double z, double r1, double r2, double angle,
+                                 std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+                                 std::vector<int> &triangles)
+{
+  TopoDS_Solid result;
+  if(!_makeTorus(result, x, y, z, r1, r2, angle))
+    return false;
+  if(!makeSolidSTL(result, vertices, normals, triangles))
+    return false;
+  return true;
 }
 
 // FIXME ***************** BEGIN WILL BE REMOVED ************************

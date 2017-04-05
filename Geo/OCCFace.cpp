@@ -18,7 +18,6 @@
 
 #include <BRepBndLib.hxx>
 #include <BRepLProp_SLProps.hxx>
-#include <BRepMesh_FastDiscret.hxx>
 #include <BRep_Builder.hxx>
 #include <Bnd_Box.hxx>
 #include <GeomAPI_ProjectPointOnSurf.hxx>
@@ -424,34 +423,8 @@ bool OCCFace::buildSTLTriangulation(bool force)
     else
       return true;
   }
-
-  Bnd_Box aBox;
-  BRepBndLib::Add(s, aBox);
-
-#if (OCC_VERSION_MAJOR >= 7)
-  BRepMesh_FastDiscret::Parameters parameters;
-  parameters.Deflection = 0.1;
-  parameters.Angle = 0.5;
-  parameters.Relative = Standard_True;
-  BRepMesh_FastDiscret aMesher(aBox, parameters);
-#else
-  BRepMesh_FastDiscret aMesher(0.1, 0.5, aBox, Standard_False, Standard_False,
-                               Standard_True, Standard_False);
-#endif
-#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 5)
-  aMesher.Add(s);
-#else
-  aMesher.Perform(s);
-#endif
-
-  TopLoc_Location loc;
-  Handle(Poly_Triangulation) triangulation = BRep_Tool::Triangulation(s, loc);
-
-  if(triangulation.IsNull() || !triangulation->HasUVNodes()){
-    if(triangulation.IsNull())
-      Msg::Warning("OCC STL triangulation of surface %d failed", tag());
-    else
-      Msg::Warning("OCC STL triangulation of surface %d has no u,v coordinates", tag());
+  if(!model()->getOCCInternals()->makeFaceSTL(s, stl_vertices, stl_triangles)){
+    Msg::Warning("OpenCASCADE triangulation of surface %d failed", tag());
     // add a dummy triangle so that we won't try again
     stl_vertices.push_back(SPoint2(0., 0.));
     stl_triangles.push_back(0);
@@ -460,29 +433,18 @@ bool OCCFace::buildSTLTriangulation(bool force)
     return false;
   }
 
-  for(int i = 1; i <= triangulation->NbNodes(); i++){
-    gp_Pnt2d p = (triangulation->UVNodes())(i);
-    stl_vertices.push_back(SPoint2(p.X(), p.Y()));
-  }
-
   bool reverse = false;
-  for(int i = 1; i <= triangulation->NbTriangles(); i++){
-    Poly_Triangle triangle = (triangulation->Triangles())(i);
-    int p1, p2, p3;
-    triangle.Get(p1, p2, p3);
-
-    // orient STL mesh to get normal right
-    if(i == 1){
-      gp_Pnt2d gp1 = (triangulation->UVNodes())(p1);
-      gp_Pnt2d gp2 = (triangulation->UVNodes())(p2);
-      gp_Pnt2d gp3 = (triangulation->UVNodes())(p3);
-      SPoint2 b = SPoint2(gp1.X(), gp1.Y()) + SPoint2(gp2.X(), gp2.Y()) +
-        SPoint2(gp3.X(), gp3.Y());
+  for(unsigned int i = 0; i < stl_triangles.size(); i += 3){
+    if(i == 0){
+      SPoint2 gp1 = stl_vertices[stl_triangles[i]];
+      SPoint2 gp2 = stl_vertices[stl_triangles[i + 1]];
+      SPoint2 gp3 = stl_vertices[stl_triangles[i + 2]];
+      SPoint2 b = gp1 + gp2 + gp2;
       b *= 1. / 3.;
       SVector3 nf = normal(b);
-      GPoint sp1 = point(gp1.X(), gp1.Y());
-      GPoint sp2 = point(gp2.X(), gp2.Y());
-      GPoint sp3 = point(gp3.X(), gp3.Y());
+      GPoint sp1 = point(gp1.x(), gp1.y());
+      GPoint sp2 = point(gp2.x(), gp2.y());
+      GPoint sp3 = point(gp3.x(), gp3.y());
       double n[3];
       normal3points(sp1.x(), sp1.y(), sp1.z(),
                     sp2.x(), sp2.y(), sp2.z(),
@@ -493,19 +455,12 @@ bool OCCFace::buildSTLTriangulation(bool force)
         reverse = true;
       }
     }
-
-    if(!reverse){
-      stl_triangles.push_back(p1 - 1);
-      stl_triangles.push_back(p2 - 1);
-      stl_triangles.push_back(p3 - 1);
-    }
-    else{
-      stl_triangles.push_back(p1 - 1);
-      stl_triangles.push_back(p3 - 1);
-      stl_triangles.push_back(p2 - 1);
+    if(reverse){
+      int tmp = stl_triangles[i + 1];
+      stl_triangles[i + 1] = stl_triangles[i + 2];
+      stl_triangles[i + 2] = tmp;
     }
   }
-
   return true;
 }
 

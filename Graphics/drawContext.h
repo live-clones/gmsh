@@ -255,6 +255,9 @@ class drawContext {
                               double xmax, double ymax, double zmax,
                               double a, double b, double c, double d,
                               int shade=0);
+  // dynamic pointer to a transient geometry drawing function
+  static void setDrawGeomTransientFunction(void (*fct)(void *));
+  static void (*drawGeomTransient)(void*);
 };
 
 class mousePosition {

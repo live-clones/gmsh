@@ -68,7 +68,8 @@ int gmsh_yyerrorstate = 0;
 int gmsh_yyviewindex = 0;
 std::map<std::string, gmsh_yysymbol> gmsh_yysymbols;
 std::map<std::string, std::vector<std::string> > gmsh_yystringsymbols;
-NameSpaces nameSpaces;
+std::string gmsh_yyfactory;
+NameSpaces gmsh_yynamespaces;
 
 // static parser variables (accessible only in this file)
 #if defined(HAVE_POST)
@@ -85,7 +86,6 @@ static gmshfpos_t yyposImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static int yylinenoImbricatedLoopsTab[MAX_RECUR_LOOPS];
 static double LoopControlVariablesTab[MAX_RECUR_LOOPS][3];
 static std::string LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
-static std::string factory;
 static std::string struct_name, struct_namespace;
 static int flag_tSTRING_alloc = 0;
 
@@ -279,8 +279,8 @@ GeoFormatItem :
   | Affectation { return 1; }
   | tSetFactory '(' StringExprVar ')' tEND
     {
-      factory = $3;
-      if(factory == "OpenCASCADE"){
+      gmsh_yyfactory = $3;
+      if(gmsh_yyfactory == "OpenCASCADE"){
         if(!GModel::current()->getOCCInternals())
           GModel::current()->createOCCInternals();
         for(int dim = -2; dim <= 3; dim++)
@@ -1616,7 +1616,7 @@ Shape :
       double lc = CTX::instance()->geom.scalingFactor * $6[3];
       if(lc == 0.) lc = MAX_LC; // no mesh size given at the point
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         r = GModel::current()->getOCCInternals()->addVertex(num, x, y, z, lc);
       }
       else{
@@ -1636,7 +1636,7 @@ Shape :
       int num = (int)$3;
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         r = GModel::current()->getOCCInternals()->addLine(num, tags);
       }
       else{
@@ -1652,7 +1652,7 @@ Shape :
       int num = (int)$3;
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         r = GModel::current()->getOCCInternals()->addSpline(num, tags);
       }
       else{
@@ -1669,7 +1669,7 @@ Shape :
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
       std::vector<double> param; ListOfDouble2Vector($6, param);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(tags.size() == 3){
           r = GModel::current()->getOCCInternals()->addCircleArc
             (num, tags[0], tags[1], tags[2]);
@@ -1706,7 +1706,7 @@ Shape :
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
       std::vector<double> param; ListOfDouble2Vector($6, param);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(tags.size() == 3){
           r = GModel::current()->getOCCInternals()->addEllipseArc
             (num, tags[0], tags[1], tags[2]);
@@ -1745,8 +1745,8 @@ Shape :
       int num = (int)$3;
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(0, "BSpline not yet available with OpenCASCADE factory");
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        yymsg(0, "BSpline not yet available with OpenCASCADE geometry kernel");
       }
       else{
         r = GModel::current()->getGEOInternals()->addBSpline(num, tags);
@@ -1761,7 +1761,7 @@ Shape :
       int num = (int)$3;
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         r = GModel::current()->getOCCInternals()->addBezier(num, tags);
       }
       else{
@@ -1779,8 +1779,8 @@ Shape :
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
       std::vector<double> knots; ListOfDouble2Vector($8, knots);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(0, "Nurbs not available yet with OpenCASCADE factory");
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        yymsg(0, "Nurbs not available yet with OpenCASCADE geometry kernel");
       }
       else{
         int order = knots.size() - tags.size() - 1;
@@ -1809,11 +1809,11 @@ Shape :
       int num = (int)$3;
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         r = GModel::current()->getOCCInternals()->addWire(num, tags, false);
       }
       else{
-        yymsg(0, "Wire only available using OpenCASCADE factory");
+        yymsg(0, "Wire only available with OpenCASCADE geometry kernel");
       }
       if(!r) yymsg(0, "Could not add wire");
       List_Delete($6);
@@ -1825,7 +1825,7 @@ Shape :
       int num = (int)$4;
       std::vector<int> tags; ListOfDouble2Vector($7, tags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         for(unsigned int i = 0; i < tags.size(); i++)
           tags[i] = std::abs(tags[i]); // all edge tags > 0 for OCC
         r = GModel::current()->getOCCInternals()->addLineLoop(num, tags);
@@ -1844,7 +1844,7 @@ Shape :
       int num = (int)$4;
       std::vector<int> tags; ListOfDouble2Vector($7, tags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         r = GModel::current()->getOCCInternals()->addPlaneSurface(num, tags);
       }
       else{
@@ -1860,7 +1860,7 @@ Shape :
       int num = (int)$3;
       std::vector<int> wires; ListOfDouble2Vector($6, wires);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(wires.size() != 1){
           yymsg(0, "OpenCASCADE face filling requires a single line loop");
         }
@@ -1914,7 +1914,7 @@ Shape :
       $$.Type = 0;
       bool r = true;
       if(param.size() >= 4 && param.size() <= 7){
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
           double a1 = (param.size() >= 5) ? param[4] : -M_PI/2;
           double a2 = (param.size() >= 6) ? param[5] : M_PI/2;
           double a3 = (param.size() >= 7) ? param[6] : 2.*M_PI;
@@ -1922,7 +1922,7 @@ Shape :
             (num, param[0], param[1], param[2], param[3], a1, a2, a3);
         }
         else{
-          yymsg(0, "Sphere only available with OpenCASCADE factory");
+          yymsg(0, "Sphere only available with OpenCASCADE geometry kernel");
         }
         $$.Type = MSH_VOLUME;
       }
@@ -1957,7 +1957,7 @@ Shape :
       int num = (int)$3;
       std::vector<double> param; ListOfDouble2Vector($6, param);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(param.size() == 6){
           r = GModel::current()->getOCCInternals()->addBlock
             (num, param[0], param[1], param[2], param[3], param[4], param[5]);
@@ -1967,7 +1967,7 @@ Shape :
         }
       }
       else{
-        yymsg(0, "Block only available with OpenCASCADE factory");
+        yymsg(0, "Block only available with OpenCASCADE geometry kernel");
       }
       if(!r) yymsg(0, "Could not add block");
       List_Delete($6);
@@ -1979,7 +1979,7 @@ Shape :
       int num = (int)$3;
       std::vector<double> param; ListOfDouble2Vector($6, param);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(param.size() == 5 || param.size() == 6){
           double alpha = (param.size() == 6) ? param[5] : 2*M_PI;
           r = GModel::current()->getOCCInternals()->addTorus
@@ -1990,7 +1990,7 @@ Shape :
         }
       }
       else{
-        yymsg(0, "Torus only available with OpenCASCADE factory");
+        yymsg(0, "Torus only available with OpenCASCADE geometry kernel");
       }
       if(!r) yymsg(0, "Could not add torus");
       List_Delete($6);
@@ -2002,7 +2002,7 @@ Shape :
       int num = (int)$3;
       std::vector<double> param; ListOfDouble2Vector($6, param);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(param.size() == 5 || param.size() == 6){
           double r = (param.size() == 6) ? param[5] : 0.;
           r = GModel::current()->getOCCInternals()->addRectangle
@@ -2013,7 +2013,7 @@ Shape :
         }
       }
       else{
-        yymsg(0, "Rectangle only available with OpenCASCADE factory");
+        yymsg(0, "Rectangle only available with OpenCASCADE geometry kernel");
       }
       if(!r) yymsg(0, "Could not add rectangle");
       List_Delete($6);
@@ -2025,7 +2025,7 @@ Shape :
       int num = (int)$3;
       std::vector<double> param; ListOfDouble2Vector($6, param);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(param.size() == 4 || param.size() == 5){
           double ry = (param.size() == 5) ? param[4] : param[3];
           r = GModel::current()->getOCCInternals()->addDisk
@@ -2036,7 +2036,7 @@ Shape :
         }
       }
       else{
-        yymsg(0, "Disk only available with OpenCASCADE factory");
+        yymsg(0, "Disk only available with OpenCASCADE geometry kernel");
       }
       if(!r) yymsg(0, "Could not add disk");
       List_Delete($6);
@@ -2048,7 +2048,7 @@ Shape :
       int num = (int)$3;
       std::vector<double> param; ListOfDouble2Vector($6, param);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(param.size() == 7 || param.size() == 8){
           double angle = (param.size() == 8) ? param[7] : 2*M_PI;
           r = GModel::current()->getOCCInternals()->addCylinder
@@ -2060,7 +2060,7 @@ Shape :
         }
       }
       else{
-        yymsg(0, "Cylinder only available with OpenCASCADE factory");
+        yymsg(0, "Cylinder only available with OpenCASCADE geometry kernel");
       }
       if(!r) yymsg(0, "Could not add cylinder");
       List_Delete($6);
@@ -2072,7 +2072,7 @@ Shape :
       int num = (int)$3;
       std::vector<double> param; ListOfDouble2Vector($6, param);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(param.size() == 8 || param.size() == 9){
           double alpha = (param.size() == 9) ? param[8] : 2*M_PI;
           r = GModel::current()->getOCCInternals()->addCone
@@ -2084,7 +2084,7 @@ Shape :
         }
       }
       else{
-        yymsg(0, "Cone only available with OpenCASCADE factory");
+        yymsg(0, "Cone only available with OpenCASCADE geometry kernel");
       }
       if(!r) yymsg(0, "Could not add cone");
       List_Delete($6);
@@ -2096,7 +2096,7 @@ Shape :
       int num = (int)$3;
       std::vector<double> param; ListOfDouble2Vector($6, param);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(param.size() == 6 || param.size() == 7){
           double ltx = (param.size() == 7) ? param[6] : 0.;
           r = GModel::current()->getOCCInternals()->addWedge
@@ -2108,7 +2108,7 @@ Shape :
         }
       }
       else{
-        yymsg(0, "Wedge only available with OpenCASCADE factory");
+        yymsg(0, "Wedge only available with OpenCASCADE geometry kernel");
       }
       if(!r) yymsg(0, "Could not add wedge");
       List_Delete($6);
@@ -2120,7 +2120,7 @@ Shape :
       int num = (int)$3;
       std::vector<double> param; ListOfDouble2Vector($6, param);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(param.size() >= 2){
           int in = (int)param[0];
           double offset = param[1];
@@ -2136,7 +2136,7 @@ Shape :
         }
       }
       else{
-        yymsg(0, "ThickSolid only available with OpenCASCADE factory");
+        yymsg(0, "ThickSolid only available with OpenCASCADE geometry kernel");
       }
       if(!r) yymsg(0, "Could not add thick solid");
       List_Delete($6);
@@ -2179,7 +2179,7 @@ Shape :
       int num = (int)$4;
       std::vector<int> tags; ListOfDouble2Vector($7, tags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         r = GModel::current()->getOCCInternals()->addSurfaceLoop(num, tags);
       }
       else{
@@ -2196,7 +2196,7 @@ Shape :
       int num = (int)$3;
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         r = GModel::current()->getOCCInternals()->addVolume(num, tags);
       }
       else{
@@ -2212,13 +2212,13 @@ Shape :
       int num = (int)$3;
       std::vector<int> wires; ListOfDouble2Vector($6, wires);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<std::pair<int, int> > outDimTags;
         r = GModel::current()->getOCCInternals()->addThruSections
           (num, wires, true, false, outDimTags);
       }
       else{
-        yymsg(0, "ThruSections only available with OpenCASCADE factory");
+        yymsg(0, "ThruSections only available with OpenCASCADE geometry kernel");
       }
       if(!r) yymsg(0, "Could not add thrusections");
       List_Delete($6);
@@ -2230,13 +2230,13 @@ Shape :
       int num = (int)$4;
       std::vector<int> wires; ListOfDouble2Vector($7, wires);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<std::pair<int, int> > outDimTags;
         r = GModel::current()->getOCCInternals()->addThruSections
           (num, wires, true, true, outDimTags);
       }
       else{
-        yymsg(0, "ThruSections only available with OpenCASCADE factory");
+        yymsg(0, "ThruSections only available with OpenCASCADE geometry kernel");
       }
       if(!r) yymsg(0, "Could not add ruled thrusections");
       List_Delete($7);
@@ -2311,7 +2311,7 @@ Transform :
       std::vector<std::pair<int, int> > dimTags;
       ListOfShapes2VectorOfPairs($4, dimTags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         r = GModel::current()->getOCCInternals()->translate
           (dimTags, $2[0], $2[1], $2[2]);
       }
@@ -2327,7 +2327,7 @@ Transform :
       std::vector<std::pair<int, int> > dimTags;
       ListOfShapes2VectorOfPairs($10, dimTags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         r = GModel::current()->getOCCInternals()->rotate
           (dimTags, $5[0], $5[1], $5[2], $3[0], $3[1], $3[2], $7);
       }
@@ -2343,8 +2343,8 @@ Transform :
       std::vector<std::pair<int, int> > dimTags;
       ListOfShapes2VectorOfPairs($4, dimTags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        Msg::Error("Symmetry not implemented yet with OpenCASCADE factory");
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        Msg::Error("Symmetry not implemented yet with OpenCASCADE geometry kernel");
       }
       else{
         r = GModel::current()->getGEOInternals()->symmetry
@@ -2358,7 +2358,7 @@ Transform :
       std::vector<std::pair<int, int> > dimTags;
       ListOfShapes2VectorOfPairs($8, dimTags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         yymsg(1, "Warning Dilate OCC: Dilatation (second argument) + Translation (first argument) ");
         r = GModel::current()->getOCCInternals()->dilate
           (dimTags, $3[0], $3[1], $3[2], $5, $5, $5);
@@ -2375,7 +2375,7 @@ Transform :
       std::vector<std::pair<int, int> > dimTags;
       ListOfShapes2VectorOfPairs($8, dimTags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         yymsg(1, "Warning Dilate OCC: Dilatation (second argument) + Translation (first argument) ");
         r = GModel::current()->getOCCInternals()->dilate
           (dimTags, $3[0], $3[1], $3[2], $5[0], $5[1], $5[2]);
@@ -2396,7 +2396,7 @@ Transform :
       std::string action($1);
       bool r = true;
       if(action == "Duplicata"){
-        if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
           r = GModel::current()->getOCCInternals()->copy(inDimTags, outDimTags);
         }
         else{
@@ -2426,7 +2426,7 @@ Transform :
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         yymsg(0, "Intersect line not available with OpenCASCADE");
       }
       else{
@@ -2448,7 +2448,7 @@ Transform :
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         yymsg(0, "Split Line not available with OpenCASCADE");
       }
       else{
@@ -2896,7 +2896,7 @@ Delete :
     {
       std::vector<std::pair<int, int> > dimTags;
       ListOfShapes2VectorOfPairs($3, dimTags);
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         GModel::current()->getOCCInternals()->remove(dimTags);
       }
       GModel::current()->getGEOInternals()->remove(dimTags);
@@ -2907,7 +2907,7 @@ Delete :
     {
       std::vector<std::pair<int, int> > dimTags;
       ListOfShapes2VectorOfPairs($4, dimTags);
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         GModel::current()->getOCCInternals()->remove(dimTags, true);
       }
       GModel::current()->getGEOInternals()->remove(dimTags, true);
@@ -2977,7 +2977,7 @@ Delete :
     }
   | tDelete tDefineStruct tEND
     {
-      nameSpaces.clear();
+      gmsh_yynamespaces.clear();
     }
 ;
 
@@ -3630,7 +3630,7 @@ Extrude :
       std::vector<std::pair<int, int> > inDimTags, outDimTags;
       ListOfShapes2VectorOfPairs($4, inDimTags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         r = GModel::current()->getOCCInternals()->extrude
           (inDimTags, $2[0], $2[1], $2[2], outDimTags);
       }
@@ -3648,7 +3648,7 @@ Extrude :
       std::vector<std::pair<int, int> > inDimTags, outDimTags;
       ListOfShapes2VectorOfPairs($10, inDimTags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         r = GModel::current()->getOCCInternals()->revolve
           (inDimTags, $5[0], $5[1], $5[2], $3[0], $3[1], $3[2], $7, outDimTags);
       }
@@ -3666,8 +3666,8 @@ Extrude :
       std::vector<std::pair<int, int> > inDimTags, outDimTags;
       ListOfShapes2VectorOfPairs($12, inDimTags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(0, "Twisting extrude not available with OpenCASCADE factory");
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        yymsg(0, "Twisting extrude not available with OpenCASCADE geometry kernel");
       }
       else{
         r = GModel::current()->getGEOInternals()->twist
@@ -3690,7 +3690,7 @@ Extrude :
       std::vector<std::pair<int, int> > inDimTags, outDimTags;
       ListOfShapes2VectorOfPairs($4, inDimTags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         r = GModel::current()->getOCCInternals()->extrude
           (inDimTags, $2[0], $2[1], $2[2], outDimTags, &extr);
       }
@@ -3714,7 +3714,7 @@ Extrude :
       std::vector<std::pair<int, int> > inDimTags, outDimTags;
       ListOfShapes2VectorOfPairs($10, inDimTags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         r = GModel::current()->getOCCInternals()->revolve
           (inDimTags, $5[0], $5[1], $5[2], $3[0], $3[1], $3[2], $7, outDimTags,
            &extr);
@@ -3740,8 +3740,8 @@ Extrude :
       std::vector<std::pair<int, int> > inDimTags, outDimTags;
       ListOfShapes2VectorOfPairs($12, inDimTags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(0, "Twisting extrude not available with OpenCASCADE factory");
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        yymsg(0, "Twisting extrude not available with OpenCASCADE geometry kernel");
       }
       else{
         r = GModel::current()->getGEOInternals()->twist
@@ -3764,8 +3764,8 @@ Extrude :
       std::vector<std::pair<int, int> > inDimTags, outDimTags;
       ListOfShapes2VectorOfPairs($3, inDimTags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(0, "Boundary layer extrusion not available with OpenCASCADE factory");
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        yymsg(0, "Boundary layer extrusion not available with OpenCASCADE geometry kernel");
       }
       else{
         r = GModel::current()->getGEOInternals()->boundaryLayer
@@ -3781,11 +3781,11 @@ Extrude :
       std::vector<std::pair<int, int> > inDimTags, outDimTags;
       ListOfShapes2VectorOfPairs($3, inDimTags);
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         r = GModel::current()->getOCCInternals()->addPipe(inDimTags, (int)$8, outDimTags);
       }
       else{
-        yymsg(0, "Pipe only available with OpenCASCADE factory");
+        yymsg(0, "Pipe only available with OpenCASCADE geometry kernel");
       }
       if(!r) yymsg(0, "Could not extrude shapes");
       $$ = $3;
@@ -3796,7 +3796,7 @@ Extrude :
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<int> wires; ListOfDouble2Vector($2, wires);
         std::vector<std::pair<int, int> > outDimTags;
         r = GModel::current()->getOCCInternals()->addThruSections
@@ -3804,7 +3804,7 @@ Extrude :
         VectorOfPairs2ListOfShapes(outDimTags, $$);
       }
       else{
-        yymsg(0, "ThruSections only available with OpenCASCADE factory");
+        yymsg(0, "ThruSections only available with OpenCASCADE geometry kernel");
       }
       if(!r) yymsg(0, "Could not add thrusections");
       List_Delete($2);
@@ -3813,7 +3813,7 @@ Extrude :
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<int> wires; ListOfDouble2Vector($3, wires);
         std::vector<std::pair<int, int> > outDimTags;
         r = GModel::current()->getOCCInternals()->addThruSections
@@ -3821,7 +3821,7 @@ Extrude :
         VectorOfPairs2ListOfShapes(outDimTags, $$);
       }
       else{
-        yymsg(0, "ThruSections only available with OpenCASCADE factory");
+        yymsg(0, "ThruSections only available with OpenCASCADE geometry kernel");
       }
       if(!r) yymsg(0, "Could not add ruled thrusections");
       List_Delete($3);
@@ -3830,7 +3830,7 @@ Extrude :
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         double radius = $9;
         std::vector<int> regions, edges;
         ListOfDouble2Vector($3, regions); ListOfDouble2Vector($6, edges);
@@ -3840,7 +3840,7 @@ Extrude :
         VectorOfPairs2ListOfShapes(outDimTags, $$);
       }
       else{
-        yymsg(0, "Fillet only available with OpenCASCADE factory");
+        yymsg(0, "Fillet only available with OpenCASCADE geometry kernel");
       }
       if(!r) yymsg(0, "Could not fillet shapes");
       List_Delete($3);
@@ -3960,7 +3960,7 @@ Boolean :
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<std::pair<int, int > > object, tool, out;
         ListOfShapes2VectorOfPairs($3, object);
         ListOfShapes2VectorOfPairs($7, tool);
@@ -3972,7 +3972,7 @@ Boolean :
         VectorOfPairs2ListOfShapes(out, $$);
       }
       else{
-        yymsg(0, "Boolean operators only available with OpenCASCADE factory");
+        yymsg(0, "Boolean operators only available with OpenCASCADE geometry kernel");
       }
       if(!r) yymsg(0, "Could not apply boolean operator");
       List_Delete($3);
@@ -3982,14 +3982,14 @@ Boolean :
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<std::pair<int, int> > out;
         std::string tmp = FixRelativePath(gmsh_yyname, $3);
         GModel::current()->getOCCInternals()->importShapes(tmp, true, out);
         VectorOfPairs2ListOfShapes(out, $$);
       }
       else{
-        yymsg(0, "ShapeFromFile only available with OpenCASCADE factory");
+        yymsg(0, "ShapeFromFile only available with OpenCASCADE geometry kernel");
       }
       if(!r) yymsg(0, "Could import shape");
       Free($3);
@@ -4001,7 +4001,7 @@ BooleanShape :
                                           '{' ListOfShapes BooleanOption '}' tEND
     {
       bool r = true;
-      if(factory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<std::pair<int, int> > object, tool, out;
         ListOfShapes2VectorOfPairs($7, object);
         ListOfShapes2VectorOfPairs($11, tool);
@@ -4948,13 +4948,13 @@ FExpr_Single :
   | tDimNameSpace LP String__Index RP
     {
       std::string struct_namespace($3);
-      $$ = (double)nameSpaces[struct_namespace].size();
+      $$ = (double)gmsh_yynamespaces[struct_namespace].size();
       Free($3);
     }
   | tDimNameSpace LP RP
     {
       std::string struct_namespace(std::string(""));
-      $$ = (double)nameSpaces[struct_namespace].size();
+      $$ = (double)gmsh_yynamespaces[struct_namespace].size();
     }
 
   | String__Index NumericIncrement
@@ -5162,7 +5162,7 @@ DefineStruct :
       std::string struct_namespace($2.char1? $2.char1 : std::string("")),
         struct_name($2.char2);
       init_options
-        (nameSpaces.getMember_ValMax(struct_namespace, struct_name));
+        (gmsh_yynamespaces.getMember_ValMax(struct_namespace, struct_name));
     }
     '[' FloatParameterOptionsOrNone_NoComma ']'
     {
@@ -5170,9 +5170,9 @@ DefineStruct :
         struct_name($2.char2);
       Free($2.char1); Free($2.char2);
       int tag_out;
-      if (nameSpaces.defStruct(struct_namespace, struct_name,
-                               floatOptions, charOptions,
-                               tag_out, member_ValMax, $3))
+      if (gmsh_yynamespaces.defStruct(struct_namespace, struct_name,
+                                      floatOptions, charOptions,
+                                      tag_out, member_ValMax, $3))
         yymsg(0, "Redefinition of Struct '%s::%s'",
               struct_namespace.c_str(), struct_name.c_str());
       $$ = (double)tag_out;
@@ -6100,8 +6100,8 @@ StringExpr :
     {
       std::string out;
       const std::string * key_struct = NULL;
-      switch (nameSpaces.get_key_struct_from_tag(struct_namespace,
-                                                 (int)$3, key_struct)) {
+      switch (gmsh_yynamespaces.get_key_struct_from_tag(struct_namespace,
+                                                        (int)$3, key_struct)) {
       case 0:
         out = *key_struct;
         break;
@@ -6429,14 +6429,14 @@ void PrintParserSymbols(bool help, std::vector<std::string> &vec)
       vec.push_back(s);
     }
   }
-  if (nameSpaces.size()){
+  if (gmsh_yynamespaces.size()){
     if(help){
       vec.push_back("//");
       vec.push_back("// Structures");
       vec.push_back("//");
     }
     std::vector<std::string> strs;
-    nameSpaces.sprint(strs);
+    gmsh_yynamespaces.sprint(strs);
     vec.insert(vec.end(), strs.begin(), strs.end());
   }
 }
@@ -6856,7 +6856,7 @@ double treat_Struct_FullName_Float
   else{
     if (type_var == 1) {
       std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
-      if(nameSpaces.getTag(struct_namespace, struct_name, out)) {
+      if(gmsh_yynamespaces.getTag(struct_namespace, struct_name, out)) {
         out = val_default;
         if (type_treat == 0) yymsg(0, "Unknown variable '%s'", struct_name.c_str());
       }
@@ -6876,7 +6876,7 @@ double treat_Struct_FullName_dot_tSTRING_Float
   double out;
   std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
   std::string key_member(c3);
-  switch (nameSpaces.getMember
+  switch (gmsh_yynamespaces.getMember
           (struct_namespace, struct_name, key_member, out, index)) {
   case 0:
     if (type_treat == 1) out = 1.; // Exists (type_treat == 1)
@@ -6888,7 +6888,7 @@ double treat_Struct_FullName_dot_tSTRING_Float
   case 2:
     if (type_treat != 0) {
       const std::string * out_dummy = NULL;
-      out = (nameSpaces.getMember
+      out = (gmsh_yynamespaces.getMember
              (struct_namespace, struct_name, key_member, out_dummy))?
         val_default : 1.;
     }
@@ -6916,7 +6916,7 @@ List_T * treat_Struct_FullName_dot_tSTRING_ListOfFloat
   const std::vector<double> * out_vector; double val_;
   std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
   std::string key_member(c3);
-  switch (nameSpaces.getMember_Vector
+  switch (gmsh_yynamespaces.getMember_Vector
           (struct_namespace, struct_name, key_member, out_vector)) {
   case 0:
     out = List_Create(out_vector->size(), 1, sizeof(double));
@@ -6945,7 +6945,7 @@ int treat_Struct_FullName_dot_tSTRING_Float_getDim
   int out;
   std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
   std::string key_member(c3);
-  switch (nameSpaces.getMember_Dim
+  switch (gmsh_yynamespaces.getMember_Dim
           (struct_namespace, struct_name, key_member, out)) {
   case 0:
     break;
@@ -6998,7 +6998,7 @@ char* treat_Struct_FullName_dot_tSTRING_String
   std::string out_tmp; // PD: we should avoid that -> StringOption() to be changed
   std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
   std::string key_member(c3);
-  switch (nameSpaces.getMember
+  switch (gmsh_yynamespaces.getMember
           (struct_namespace, struct_name, key_member, out, index)) {
   case 0:
     break;
@@ -7033,7 +7033,7 @@ List_T * treat_Struct_FullName_dot_tSTRING_ListOfString
   const std::vector<std::string> * out_vector; char * val_;
   std::string struct_namespace(c1? c1 : std::string("")), struct_name(c2);
   std::string key_member(c3);
-  switch (nameSpaces.getMember_Vector
+  switch (gmsh_yynamespaces.getMember_Vector
           (struct_namespace, struct_name, key_member, out_vector)) {
   case 0:
     out = List_Create(out_vector->size(), 1, sizeof(char *));

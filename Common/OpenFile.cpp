@@ -639,7 +639,8 @@ void ClearProject()
 #if defined(HAVE_PARSER)
   gmsh_yysymbols.clear();
   gmsh_yystringsymbols.clear();
-  nameSpaces.clear();
+  gmsh_yyfactory.clear();
+  gmsh_yynamespaces.clear();
 #endif
   for(int i = GModel::list.size() - 1; i >= 0; i--)
     delete GModel::list[i];
@@ -701,7 +702,8 @@ void OpenProject(const std::string &fileName)
   for(std::map<std::string, std::string>::iterator it = cls.begin();
       it != cls.end(); it++)
     gmsh_yystringsymbols[it->first] = std::vector<std::string>(1, it->second);
-  nameSpaces.clear();
+  gmsh_yyfactory.clear();
+  gmsh_yynamespaces.clear();
   FunctionManager::Instance()->clear();
 #endif
 

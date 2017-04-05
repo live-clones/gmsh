@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
+#include <stdlib.h>
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Return_Button.H>
 #include "FlGui.h"
@@ -12,6 +13,7 @@
 #include "graphicWindow.h"
 #include "openglWindow.h"
 #include "GModel.h"
+#include "GModelIO_OCC.h"
 #include "Parser.h"
 #include "GeoStringInterface.h"
 #include "OpenFile.h"
@@ -19,6 +21,65 @@
 #include "Options.h"
 #include "MallocUtils.h"
 #include "Geo.h"
+#include "VertexArray.h"
+#include "mathEvaluator.h"
+
+static bool getval(const char *str, double &val)
+{
+  // TODO: we should parse using the .geo parser instead (would allow to
+  // correctly take into account previously defined parameters) - or we could
+  // add all parser parameters in the mathEvaluator vars...
+  std::vector<std::string> expr(1), var;
+  std::vector<double> res(1), valVar;
+  expr[0] = str;
+  mathEvaluator f(expr, var);
+  if(expr.empty()) return false;
+  if(!f.eval(valVar, res)) return false;
+  val = res[0];
+  return true;
+}
+
+static void draw_stl(std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+                     std::vector<int> &triangles)
+{
+  GLint mode[2];
+  glGetIntegerv(GL_POLYGON_MODE, mode);
+  if(CTX::instance()->geom.surfaceType > 1)
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  else
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  glEnable(GL_LIGHTING);
+  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+  glColor4ubv((GLubyte *) & CTX::instance()->color.geom.highlight[0]);
+
+  VertexArray va(3, triangles.size());
+  for(unsigned int i = 0; i < triangles.size(); i+=3){
+    SPoint3 p1 = vertices[triangles[i]];
+    SPoint3 p2 = vertices[triangles[i + 1]];
+    SPoint3 p3 = vertices[triangles[i + 2]];
+    SVector3 n1 = normals[triangles[i]];
+    SVector3 n2 = normals[triangles[i + 1]];
+    SVector3 n3 = normals[triangles[i + 2]];
+    double x[3] = {p1.x(), p2.x(), p3.x()};
+    double y[3] = {p1.y(), p2.y(), p3.y()};
+    double z[3] = {p1.z(), p2.z(), p3.z()};
+    SVector3 nn[3] = {n1, n2, n3};
+    va.add(x, y, z, nn);
+  }
+  va.finalize();
+
+  glVertexPointer(3, GL_FLOAT, 0, va.getVertexArray());
+  glEnableClientState(GL_VERTEX_ARRAY);
+  glNormalPointer(GL_BYTE, 0, va.getNormalArray());
+  glEnableClientState(GL_NORMAL_ARRAY);
+  glDisableClientState(GL_COLOR_ARRAY);
+  glDrawArrays(GL_TRIANGLES, 0, va.getNumVertices());
+  glDisableClientState(GL_VERTEX_ARRAY);
+  glDisableClientState(GL_NORMAL_ARRAY);
+
+  glDisable(GL_LIGHTING);
+  glPolygonMode(GL_FRONT_AND_BACK, mode[1]);
+}
 
 static void elementary_add_parameter_cb(Fl_Widget *w, void *data)
 {
@@ -75,6 +136,29 @@ static void elementary_add_ellipse_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void draw_disk(void *context)
+{
+  if(!GModel::current()->getOCCInternals()) GModel::current()->createOCCInternals();
+  double xc, yc, zc, rx, ry;
+  if(!getval(FlGui::instance()->elementaryContext->input[21]->value(), xc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[22]->value(), yc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[23]->value(), zc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[24]->value(), rx)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[25]->value(), ry)) return;
+  std::vector<SPoint3> vertices;
+  std::vector<SVector3> normals;
+  std::vector<int> triangles;
+  if(!GModel::current()->getOCCInternals()->makeDiskSTL
+     (xc, yc, zc, rx, ry, vertices, normals, triangles))
+    return;
+  draw_stl(vertices, normals, triangles);
+}
+
+static void elementary_draw_disk_cb(Fl_Widget *w, void *data)
+{
+  drawContext::setDrawGeomTransientFunction(draw_disk);
+}
+
 static void elementary_add_disk_cb(Fl_Widget *w, void *data)
 {
   add_disk(GModel::current()->getFileName(),
@@ -87,6 +171,30 @@ static void elementary_add_disk_cb(Fl_Widget *w, void *data)
   GModel::current()->setSelection(0);
   SetBoundingBox();
   drawContext::global()->draw();
+}
+
+static void draw_rectangle(void *context)
+{
+  if(!GModel::current()->getOCCInternals()) GModel::current()->createOCCInternals();
+  double x, y, z, dx, dy, r;
+  if(!getval(FlGui::instance()->elementaryContext->input[26]->value(), x)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[27]->value(), y)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[28]->value(), z)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[29]->value(), dx)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[30]->value(), dy)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[31]->value(), r)) return;
+  std::vector<SPoint3> vertices;
+  std::vector<SVector3> normals;
+  std::vector<int> triangles;
+  if(!GModel::current()->getOCCInternals()->makeRectangleSTL
+     (x, y, z, dx, dy, r, vertices, normals, triangles))
+    return;
+  draw_stl(vertices, normals, triangles);
+}
+
+static void elementary_draw_rectangle_cb(Fl_Widget *w, void *data)
+{
+  drawContext::setDrawGeomTransientFunction(draw_rectangle);
 }
 
 static void elementary_add_rectangle_cb(Fl_Widget *w, void *data)
@@ -104,6 +212,31 @@ static void elementary_add_rectangle_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void draw_sphere(void *context)
+{
+  if(!GModel::current()->getOCCInternals()) GModel::current()->createOCCInternals();
+  double xc, yc, zc, r, angle1, angle2, angle3;
+  if(!getval(FlGui::instance()->elementaryContext->input[32]->value(), xc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[33]->value(), yc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[34]->value(), zc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[35]->value(), r)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[36]->value(), angle1)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[37]->value(), angle2)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[38]->value(), angle3)) return;
+  std::vector<SPoint3> vertices;
+  std::vector<SVector3> normals;
+  std::vector<int> triangles;
+  if(!GModel::current()->getOCCInternals()->makeSphereSTL
+     (xc, yc, zc, r, angle1, angle2, angle3, vertices, normals, triangles))
+    return;
+  draw_stl(vertices, normals, triangles);
+}
+
+static void elementary_draw_sphere_cb(Fl_Widget *w, void *data)
+{
+  drawContext::setDrawGeomTransientFunction(draw_sphere);
+}
+
 static void elementary_add_sphere_cb(Fl_Widget *w, void *data)
 {
   add_sphere(GModel::current()->getFileName(),
@@ -116,8 +249,35 @@ static void elementary_add_sphere_cb(Fl_Widget *w, void *data)
              FlGui::instance()->elementaryContext->input[38]->value());
   FlGui::instance()->resetVisibility();
   GModel::current()->setSelection(0);
+  drawContext::setDrawGeomTransientFunction(0);
   SetBoundingBox();
   drawContext::global()->draw();
+}
+
+static void draw_cylinder(void *context)
+{
+  if(!GModel::current()->getOCCInternals()) GModel::current()->createOCCInternals();
+  double xc, yc, zc, dx, dy, dz, r, angle;
+  if(!getval(FlGui::instance()->elementaryContext->input[39]->value(), xc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[40]->value(), yc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[41]->value(), zc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[42]->value(), dx)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[43]->value(), dy)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[44]->value(), dz)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[45]->value(), r)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[46]->value(), angle)) return;
+  std::vector<SPoint3> vertices;
+  std::vector<SVector3> normals;
+  std::vector<int> triangles;
+  if(!GModel::current()->getOCCInternals()->makeCylinderSTL
+     (xc, yc, zc, dx, dy, dz, r, angle, vertices, normals, triangles))
+    return;
+  draw_stl(vertices, normals, triangles);
+}
+
+static void elementary_draw_cylinder_cb(Fl_Widget *w, void *data)
+{
+  drawContext::setDrawGeomTransientFunction(draw_cylinder);
 }
 
 static void elementary_add_cylinder_cb(Fl_Widget *w, void *data)
@@ -137,6 +297,30 @@ static void elementary_add_cylinder_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void draw_block(void *context)
+{
+  if(!GModel::current()->getOCCInternals()) GModel::current()->createOCCInternals();
+  double x, y, z, dx, dy, dz;
+  if(!getval(FlGui::instance()->elementaryContext->input[47]->value(), x)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[48]->value(), y)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[49]->value(), z)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[50]->value(), dx)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[51]->value(), dy)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[52]->value(), dz)) return;
+  std::vector<SPoint3> vertices;
+  std::vector<SVector3> normals;
+  std::vector<int> triangles;
+  if(!GModel::current()->getOCCInternals()->makeBlockSTL
+     (x, y, z, dx, dy, dz, vertices, normals, triangles))
+    return;
+  draw_stl(vertices, normals, triangles);
+}
+
+static void elementary_draw_block_cb(Fl_Widget *w, void *data)
+{
+  drawContext::setDrawGeomTransientFunction(draw_block);
+}
+
 static void elementary_add_block_cb(Fl_Widget *w, void *data)
 {
   add_block(GModel::current()->getFileName(),
@@ -152,6 +336,30 @@ static void elementary_add_block_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void draw_torus(void *context)
+{
+  if(!GModel::current()->getOCCInternals()) GModel::current()->createOCCInternals();
+  double xc, yc, zc, r1, r2, angle;
+  if(!getval(FlGui::instance()->elementaryContext->input[53]->value(), xc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[54]->value(), yc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[55]->value(), zc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[56]->value(), r1)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[57]->value(), r2)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[58]->value(), angle)) return;
+  std::vector<SPoint3> vertices;
+  std::vector<SVector3> normals;
+  std::vector<int> triangles;
+  if(!GModel::current()->getOCCInternals()->makeTorusSTL
+     (xc, yc, zc, r1, r2, angle, vertices, normals, triangles))
+    return;
+  draw_stl(vertices, normals, triangles);
+}
+
+static void elementary_draw_torus_cb(Fl_Widget *w, void *data)
+{
+  drawContext::setDrawGeomTransientFunction(draw_torus);
+}
+
 static void elementary_add_torus_cb(Fl_Widget *w, void *data)
 {
   add_torus(GModel::current()->getFileName(),
@@ -165,6 +373,33 @@ static void elementary_add_torus_cb(Fl_Widget *w, void *data)
   GModel::current()->setSelection(0);
   SetBoundingBox();
   drawContext::global()->draw();
+}
+
+static void draw_cone(void *context)
+{
+  if(!GModel::current()->getOCCInternals()) GModel::current()->createOCCInternals();
+  double xc, yc, zc, dx, dy, dz, r1, r2, angle;
+  if(!getval(FlGui::instance()->elementaryContext->input[59]->value(), xc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[60]->value(), yc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[61]->value(), zc)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[62]->value(), dx)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[63]->value(), dy)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[64]->value(), dz)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[65]->value(), r1)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[66]->value(), r2)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[67]->value(), angle)) return;
+  std::vector<SPoint3> vertices;
+  std::vector<SVector3> normals;
+  std::vector<int> triangles;
+  if(!GModel::current()->getOCCInternals()->makeConeSTL
+     (xc, yc, zc, dx, dy, dz, r1, r2, angle, vertices, normals, triangles))
+    return;
+  draw_stl(vertices, normals, triangles);
+}
+
+static void elementary_draw_cone_cb(Fl_Widget *w, void *data)
+{
+  drawContext::setDrawGeomTransientFunction(draw_cone);
 }
 
 static void elementary_add_cone_cb(Fl_Widget *w, void *data)
@@ -183,6 +418,31 @@ static void elementary_add_cone_cb(Fl_Widget *w, void *data)
   GModel::current()->setSelection(0);
   SetBoundingBox();
   drawContext::global()->draw();
+}
+
+static void draw_wedge(void *context)
+{
+  if(!GModel::current()->getOCCInternals()) GModel::current()->createOCCInternals();
+  double x, y, z, dx, dy, dz, ltx;
+  if(!getval(FlGui::instance()->elementaryContext->input[68]->value(), x)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[69]->value(), y)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[70]->value(), z)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[71]->value(), dx)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[72]->value(), dy)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[73]->value(), dz)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[74]->value(), ltx)) return;
+  std::vector<SPoint3> vertices;
+  std::vector<SVector3> normals;
+  std::vector<int> triangles;
+  if(!GModel::current()->getOCCInternals()->makeWedgeSTL
+     (x, y, z, dx, dy, dz, ltx, vertices, normals, triangles))
+    return;
+  draw_stl(vertices, normals, triangles);
+}
+
+static void elementary_draw_wedge_cb(Fl_Widget *w, void *data)
+{
+  drawContext::setDrawGeomTransientFunction(draw_wedge);
 }
 
 static void elementary_add_wedge_cb(Fl_Widget *w, void *data)
@@ -224,18 +484,18 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int width = 31 * FL_NORMAL_SIZE;
-  int height = 4 * WB + 10 * BH;
+  int width = 33 * FL_NORMAL_SIZE;
+  int height = 5 * WB + 10 * BH;
 
   win = new paletteWindow(width, height, CTX::instance()->nonModalWindows ? true : false,
                           "Elementary Entity Context");
   win->box(GMSH_WINDOW_BOX);
   {
-    tab1 = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
+    tab1 = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
     // 0: Parameter
     {
       group[0] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Parameter");
+        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Parameter");
       input[0] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Name");
       input[0]->value("lc");
       input[1] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Value");
@@ -247,7 +507,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       for(int i = 0; i < 4; i++)   input[i]->align(FL_ALIGN_RIGHT);
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_parameter_cb);
       }
       group[0]->end();
@@ -255,7 +515,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     // 1: Point
     {
       group[1] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Point");
+        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Point");
       input[4] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X");
       input[4]->value("0");
       input[5] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y");
@@ -267,22 +527,9 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[7]->value("1.0");
       for(int i = 4; i < 8; i++)
         input[i]->align(FL_ALIGN_RIGHT);
-
-      for(int i = 0; i < 3; i++)
-        butt[i] = new Fl_Check_Button
-          (width - 2 * WB - IW, 2 * WB + (i+1) * BH, IW, BH, "Freeze");
-
-      value[0] = new Fl_Value_Input(2 * WB, 2 * WB + 5 * BH, IW/3, BH);
-      value[1] = new Fl_Value_Input(2 * WB + IW/3, 2 * WB + 5 * BH, IW/3, BH);
-      value[2] = new Fl_Value_Input(2 * WB + 2*IW/3, 2 * WB + 5 * BH, IW/3, BH,
-                                    "Snapping grid spacing");
-      for(int i = 0; i < 3; i++) {
-        value[i]->align(FL_ALIGN_RIGHT);
-        value[i]->callback(elementary_snap_cb);
-      }
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_point_cb);
       }
       group[1]->end();
@@ -290,7 +537,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     // 2: Circle
     {
       group[2] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Circle");
+        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Circle");
       input[8] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Center X");
       input[8]->value("0");
       input[9] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Center Y");
@@ -300,14 +547,14 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[11] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Radius");
       input[11]->value("1");
       input[12] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Angle 1");
-      input[12]->value("");
+      input[12]->value("0");
       input[13] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Angle 2");
-      input[13]->value("");
+      input[13]->value("2*Pi");
       for(int i = 8; i < 14; i++)
         input[i]->align(FL_ALIGN_RIGHT);
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_circle_cb);
       }
       group[2]->end();
@@ -315,7 +562,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     // 3: Ellipse
     {
       group[3] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Ellipse");
+        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Ellipse");
       input[14] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Center X");
       input[14]->value("0");
       input[15] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Center Y");
@@ -327,14 +574,14 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[18] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Radius Y");
       input[18]->value("0.5");
       input[19] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Angle 1");
-      input[19]->value("");
+      input[19]->value("0");
       input[20] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Angle 2");
-      input[20]->value("");
+      input[20]->value("2*Pi");
       for(int i = 14; i < 21; i++)
         input[i]->align(FL_ALIGN_RIGHT);
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_ellipse_cb);
       }
       group[3]->end();
@@ -342,7 +589,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     // 4: Disk
     {
       group[4] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Disk");
+        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Disk");
       input[21] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Center X");
       input[21]->value("0");
       input[22] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Center Y");
@@ -353,11 +600,14 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[24]->value("1");
       input[25] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Radius Y");
       input[25]->value("0.5");
-      for(int i = 21; i < 26; i++)
+      for(int i = 21; i < 26; i++){
         input[i]->align(FL_ALIGN_RIGHT);
+        input[i]->callback(elementary_draw_disk_cb);
+        input[i]->when(FL_WHEN_CHANGED);
+      }
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_disk_cb);
       }
       group[4]->end();
@@ -365,7 +615,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     // 5: Rectangle
     {
       group[5] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Rectangle");
+        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Rectangle");
       input[26] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X");
       input[26]->value("0");
       input[27] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y");
@@ -377,12 +627,15 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[30] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "DY");
       input[30]->value("0.5");
       input[31] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Rounded radius");
-      input[31]->value("");
-      for(int i = 26; i < 32; i++)
+      input[31]->value("0");
+      for(int i = 26; i < 32; i++){
         input[i]->align(FL_ALIGN_RIGHT);
+        input[i]->callback(elementary_draw_rectangle_cb);
+        input[i]->when(FL_WHEN_CHANGED);
+      }
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_rectangle_cb);
       }
       group[5]->end();
@@ -390,11 +643,11 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     tab1->end();
   }
   {
-    tab2 = new Fl_Tabs(WB, WB, width - 2 * WB, height - 2 * WB);
+    tab2 = new Fl_Tabs(WB, WB, width - 2 * WB, height - 3 * WB - BH);
     // 6: Sphere
     {
       group[6] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Sphere");
+        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Sphere");
       input[32] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Center X");
       input[32]->value("0");
       input[33] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Center Y");
@@ -404,16 +657,19 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[35] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Radius");
       input[35]->value("1");
       input[36] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Angle 1");
-      input[36]->value("");
+      input[36]->value("-Pi/2");
       input[37] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Angle 2");
-      input[37]->value("");
+      input[37]->value("Pi/2");
       input[38] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Angle 3");
-      input[38]->value("");
-      for(int i = 32; i < 39; i++)
+      input[38]->value("2*Pi");
+      for(int i = 32; i < 39; i++){
         input[i]->align(FL_ALIGN_RIGHT);
+        input[i]->callback(elementary_draw_sphere_cb);
+        input[i]->when(FL_WHEN_CHANGED);
+      }
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_sphere_cb);
       }
       group[6]->end();
@@ -421,7 +677,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     // 7: Cylinder
     {
       group[7] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Cylinder");
+        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Cylinder");
       input[39] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Center base X");
       input[39]->value("0");
       input[40] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Center base Y");
@@ -437,12 +693,15 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[45] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Radius");
       input[45]->value("1");
       input[46] = new Fl_Input(2 * WB, 2 * WB + 8 * BH, IW, BH, "Angle");
-      input[46]->value("");
-      for(int i = 39; i < 47; i++)
+      input[46]->value("2*Pi");
+      for(int i = 39; i < 47; i++){
         input[i]->align(FL_ALIGN_RIGHT);
+        input[i]->callback(elementary_draw_cylinder_cb);
+        input[i]->when(FL_WHEN_CHANGED);
+      }
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_cylinder_cb);
       }
       group[7]->end();
@@ -450,7 +709,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     // 8: Block
     {
       group[8] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Block");
+        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Block");
       input[47] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X");
       input[47]->value("0");
       input[48] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y");
@@ -463,11 +722,14 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[51]->value("1");
       input[52] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "DZ");
       input[52]->value("1");
-      for(int i = 47; i < 53; i++)
+      for(int i = 47; i < 53; i++){
         input[i]->align(FL_ALIGN_RIGHT);
+        input[i]->callback(elementary_draw_block_cb);
+        input[i]->when(FL_WHEN_CHANGED);
+      }
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_block_cb);
       }
       group[8]->end();
@@ -476,7 +738,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     // 9: Torus
     {
       group[9] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Torus");
+        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Torus");
       input[53] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Center X");
       input[53]->value("0");
       input[54] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Center Y");
@@ -488,12 +750,15 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[57] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Radius 2");
       input[57]->value("0.3");
       input[58] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Angle");
-      input[58]->value("");
-      for(int i = 53; i < 59; i++)
+      input[58]->value("2*Pi");
+      for(int i = 53; i < 59; i++){
         input[i]->align(FL_ALIGN_RIGHT);
+        input[i]->callback(elementary_draw_torus_cb);
+        input[i]->when(FL_WHEN_CHANGED);
+      }
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_torus_cb);
       }
       group[9]->end();
@@ -502,7 +767,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     // 10: Cone
     {
       group[10] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Cone");
+        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Cone");
       input[59] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Center base X");
       input[59]->value("0");
       input[60] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Center base Y");
@@ -515,17 +780,20 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[63]->value("0");
       input[64] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Axis DZ");
       input[64]->value("0");
-      input[65] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Radius 1");
+      input[65] = new Fl_Input(2 * WB + (width - 2 * WB)/2, 2 * WB + 4 * BH, IW, BH, "Radius 1");
       input[65]->value("0.5");
-      input[66] = new Fl_Input(2 * WB, 2 * WB + 8 * BH, IW, BH, "Radius 2");
+      input[66] = new Fl_Input(2 * WB + (width - 2 * WB)/2, 2 * WB + 5 * BH, IW, BH, "Radius 2");
       input[66]->value("0.1");
-      input[67] = new Fl_Input(2 * WB, 2 * WB + 9 * BH, IW, BH, "Angle");
-      input[67]->value("");
-      for(int i = 59; i < 68; i++)
+      input[67] = new Fl_Input(2 * WB + (width - 2 * WB)/2, 2 * WB + 6 * BH, IW, BH, "Angle");
+      input[67]->value("2*Pi");
+      for(int i = 59; i < 68; i++){
         input[i]->align(FL_ALIGN_RIGHT);
+        input[i]->callback(elementary_draw_cone_cb);
+        input[i]->when(FL_WHEN_CHANGED);
+      }
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_cone_cb);
       }
       group[10]->end();
@@ -533,7 +801,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
     // 11: Wedge
     {
       group[11] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Wedge");
+        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Wedge");
       input[68] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X");
       input[68]->value("0");
       input[69] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y");
@@ -548,11 +816,14 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[73]->value("0.5");
       input[74] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Top DX");
       input[74]->value("0");
-      for(int i = 68; i < 75; i++)
+      for(int i = 68; i < 75; i++){
         input[i]->align(FL_ALIGN_RIGHT);
+        input[i]->callback(elementary_draw_wedge_cb);
+        input[i]->when(FL_WHEN_CHANGED);
+      }
       {
         Fl_Return_Button *o = new Fl_Return_Button
-          (width - BB - 2 * WB, height - 2 * WB - BH, BB, BH, "Add");
+          (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_wedge_cb);
       }
       group[11]->end();
@@ -563,6 +834,18 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
   {
     Fl_Button *o = new Fl_Button(width - 4 * WB, WB, 3*WB, 3*WB, "...");
     o->callback(elementary_switch_tabs_cb);
+  }
+  {
+    value[0] = new Fl_Value_Input(WB, height - WB - BH, IW/3, BH, "X");
+    value[1] = new Fl_Value_Input(WB + IW/2, height - WB - BH, IW/3, BH, "Y");
+    value[2] = new Fl_Value_Input(WB + IW, height - WB - BH, IW/3, BH, "Z snap");
+    for(int i = 0; i < 3; i++) {
+      value[i]->align(FL_ALIGN_RIGHT);
+      value[i]->callback(elementary_snap_cb);
+    }
+    butt[0] = new Fl_Check_Button(width - 6 * BH, height - WB - BH, 1.2 * BH, BH, "X");
+    butt[1] = new Fl_Check_Button(width - 6 * BH + 1.2 * BH, height - WB - BH, 1.2*BH, BH, "Y");
+    butt[2] = new Fl_Check_Button(width - 6 * BH + 2.4 * BH, height - WB - BH, (6 - 2*1.2) * BH - WB, BH, "Z freeze");
   }
 
   tab1->show();
@@ -587,17 +870,13 @@ void elementaryContextWindow::updatePoint(double pt[3], int which)
       char str[32];
       sprintf(str, "%g", pt[i]);
       if(which == 1){
-        input[4 + i]->value(str);
-        input[8 + i]->value(str);
-        input[14 + i]->value(str);
-        input[21 + i]->value(str);
-        input[26 + i]->value(str);
-        input[32 + i]->value(str);
-        input[39 + i]->value(str);
-        input[47 + i]->value(str);
-        input[53 + i]->value(str);
-        input[59 + i]->value(str);
-        input[68 + i]->value(str);
+        int start[11] = {4, 8, 14, 21, 26, 32, 39, 47, 53, 59, 68};
+        for(int k = 0; k < 11; k++){
+          input[start[k] + i]->value(str);
+          if(input[start[k] + i]->parent()->active()){
+            input[start[k] + i]->do_callback();
+          }
+        }
       }
     }
   }

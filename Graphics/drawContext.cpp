@@ -33,6 +33,12 @@
 #endif
 
 drawContextGlobal *drawContext::_global = 0;
+void (*drawContext::drawGeomTransient)(void*) = 0;
+
+void drawContext::setDrawGeomTransientFunction(void (*fct)(void *))
+{
+  drawGeomTransient = fct;
+}
 
 extern SPoint2 getGraph2dDataPointForTag(unsigned int);
 

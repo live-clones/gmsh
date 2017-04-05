@@ -533,6 +533,9 @@ void drawContext::drawGeom()
 {
   if(!CTX::instance()->geom.draw) return;
 
+  // draw any transient geometry stuff
+  if(drawGeomTransient) (*drawGeomTransient)(this);
+
   for(int i = 0; i < 6; i++)
     if(CTX::instance()->geom.clip & (1 << i))
       glEnable((GLenum)(GL_CLIP_PLANE0 + i));

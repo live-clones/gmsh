@@ -449,7 +449,8 @@ extern std::string gmsh_yyname;
 extern int gmsh_yyerrorstate;
 extern std::map<std::string, gmsh_yysymbol> gmsh_yysymbols;
 extern std::map<std::string, std::vector<std::string> > gmsh_yystringsymbols;
-extern NameSpaces nameSpaces;
+extern std::string gmsh_yyfactory;
+extern NameSpaces gmsh_yynamespaces;
 
 void PrintParserSymbols(bool help, std::vector<std::string> &vec);
 
