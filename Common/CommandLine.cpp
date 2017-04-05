@@ -177,10 +177,15 @@ std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::s
   s.push_back(mp("2 or F2",        "Mesh surfaces"));
   s.push_back(mp("3 or F3",        "Mesh volumes"));
   s.push_back(mp("Escape",         "Cancel lasso zoom/selection, toggle mouse selection ON/OFF"));
+  s.push_back(mp("e",              "End/accept selection in geometry creation mode"));
   s.push_back(mp("g",              "Go to geometry module"));
   s.push_back(mp("m",              "Go to mesh module"));
   s.push_back(mp("p",              "Go to post-processing module"));
+  s.push_back(mp("q",              "Abort selection in geometry creation mode"));
   s.push_back(mp("s",              "Go to solver module"));
+  s.push_back(mp("x",              "Freeze x coordinate in geometry creation mode"));
+  s.push_back(mp("y",              "Freeze y coordinate in geometry creation mode"));
+  s.push_back(mp("z",              "Freeze z coordinate in geometry creation mode"));
   s.push_back(mp("Shift+a",        "Bring all windows to front"));
   s.push_back(mp("Shift+g",        "Show geometry options"));
   s.push_back(mp("Shift+m",        "Show mesh options"));

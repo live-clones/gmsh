@@ -629,6 +629,18 @@ int FlGui::testGlobalShortcuts(int event)
         graph[i]->gl[j]->invertSelection = 1;
     status = 0; // trick: do as if we didn't use it
   }
+  else if(Fl::test_shortcut('x')) {
+    elementaryContext->butt[0]->value(!elementaryContext->butt[0]->value());
+    status = 1; // trick: do as if we didn't use it
+  }
+  else if(Fl::test_shortcut('y')) {
+    elementaryContext->butt[1]->value(!elementaryContext->butt[1]->value());
+    status = 1; // trick: do as if we didn't use it
+  }
+  else if(Fl::test_shortcut('z')) {
+    elementaryContext->butt[2]->value(!elementaryContext->butt[2]->value());
+    status = 1; // trick: do as if we didn't use it
+  }
   else if(Fl::test_shortcut(FL_Escape) ||
           Fl::test_shortcut(FL_META + FL_Escape) ||
           Fl::test_shortcut(FL_SHIFT + FL_Escape) ||

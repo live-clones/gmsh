@@ -2759,10 +2759,8 @@ void quick_access_cb(Fl_Widget *w, void *data)
     status_xyz1p_cb(0, (void *)"z");
   }
   else if(what == "axes"){
-    opt_general_axes(0, GMSH_SET|GMSH_GUI, !opt_general_axes(0, GMSH_GET, 0));
-    for(unsigned int i = 0; i < PView::list.size(); i++)
-      if(opt_view_visible(i, GMSH_GET, 0))
-        opt_view_axes(i, GMSH_SET | GMSH_GUI, !opt_view_axes(i, GMSH_GET, 0));
+    opt_general_axes(0, GMSH_SET|GMSH_GUI,
+                     opt_general_axes(0, GMSH_GET, 0) ? 0 : 3);
   }
   else if(what == "orthographic")
     opt_general_orthographic(0, GMSH_SET | GMSH_GUI, 1);
