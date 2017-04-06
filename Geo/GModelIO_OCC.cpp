@@ -19,6 +19,7 @@
 
 #if defined(HAVE_OCC)
 
+#include <Bnd_Box.hxx>
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
@@ -64,6 +65,8 @@
 #include <Geom_TrimmedCurve.hxx>
 #include <IGESControl_Reader.hxx>
 #include <IGESControl_Writer.hxx>
+#include <Poly_Triangulation.hxx>
+#include <Poly_Triangle.hxx>
 #include <STEPControl_Reader.hxx>
 #include <STEPControl_Writer.hxx>
 #include <ShapeBuild_ReShape.hxx>

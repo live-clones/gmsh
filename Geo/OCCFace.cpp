@@ -16,10 +16,10 @@
 
 #if defined(HAVE_OCC)
 
+#include <Bnd_Box.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepLProp_SLProps.hxx>
 #include <BRep_Builder.hxx>
-#include <Bnd_Box.hxx>
 #include <GeomAPI_ProjectPointOnSurf.hxx>
 #include <Geom_BSplineSurface.hxx>
 #include <Geom_BezierSurface.hxx>
@@ -29,8 +29,6 @@
 #include <Geom_SphericalSurface.hxx>
 #include <Geom_SurfaceOfRevolution.hxx>
 #include <Geom_ToroidalSurface.hxx>
-#include <Poly_Triangulation.hxx>
-#include <Poly_Triangle.hxx>
 #include <ShapeAnalysis.hxx>
 #include <Standard_Version.hxx>
 #include <TColgp_Array1OfPnt2d.hxx>
