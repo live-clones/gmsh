@@ -63,6 +63,11 @@ class openglWindow : public Fl_Gl_Window {
   double frequency;
   void moveWithGamepad();
   Navigator *Nautilus;
+  void setPoint(double x, double y, double z)
+  {
+    _point[0] = x; _point[1] = y; _point[2] = z;
+  }
+
 };
 
 #endif

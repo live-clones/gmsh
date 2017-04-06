@@ -26,12 +26,21 @@
 
 static bool getval(const char *str, double &val)
 {
-  // TODO: we should parse using the .geo parser instead (would allow to
-  // correctly take into account previously defined parameters) - or we could
-  // add all parser parameters in the mathEvaluator vars...
-  std::vector<std::string> expr(1), var;
-  std::vector<double> res(1), valVar;
+  std::vector<std::string> var;
+  std::vector<double> valVar;
+
+  // we should probably use the actual .geo parser instead...
+  for(std::map<std::string, gmsh_yysymbol>::iterator it = gmsh_yysymbols.begin();
+      it != gmsh_yysymbols.end(); it++){
+    if(it->second.value.size() == 1){
+      var.push_back(it->first);
+      valVar.push_back(it->second.value[0]);
+    }
+  }
+
+  std::vector<std::string> expr(1);
   expr[0] = str;
+  std::vector<double> res(1);
   mathEvaluator f(expr, var);
   if(expr.empty()) return false;
   if(!f.eval(valVar, res)) return false;
@@ -92,6 +101,17 @@ static void elementary_add_parameter_cb(Fl_Widget *w, void *data)
   FlGui::instance()->rebuildTree(true);
 }
 
+static void elementary_draw_point_cb(Fl_Widget *w, void *data)
+{
+  if(data) return; // we are here from do_callback()
+  double x, y, z;
+  if(!getval(FlGui::instance()->elementaryContext->input[4]->value(), x)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[5]->value(), y)) return;
+  if(!getval(FlGui::instance()->elementaryContext->input[6]->value(), z)) return;
+  FlGui::instance()->getCurrentOpenglWindow()->setPoint(x, y, z);
+  drawContext::global()->draw();
+}
+
 static void elementary_add_point_cb(Fl_Widget *w, void *data)
 {
   add_point(GModel::current()->getFileName(),
@@ -133,6 +153,7 @@ static void draw_circle(void *context)
 static void elementary_draw_circle_cb(Fl_Widget *w, void *data)
 {
   drawContext::setDrawGeomTransientFunction(draw_circle);
+  if(!data) drawContext::global()->draw();
 }
 
 static void elementary_add_circle_cb(Fl_Widget *w, void *data)
@@ -178,6 +199,7 @@ static void draw_ellipse(void *context)
 static void elementary_draw_ellipse_cb(Fl_Widget *w, void *data)
 {
   drawContext::setDrawGeomTransientFunction(draw_ellipse);
+  if(!data) drawContext::global()->draw();
 }
 
 static void elementary_add_ellipse_cb(Fl_Widget *w, void *data)
@@ -217,6 +239,7 @@ static void draw_disk(void *context)
 static void elementary_draw_disk_cb(Fl_Widget *w, void *data)
 {
   drawContext::setDrawGeomTransientFunction(draw_disk);
+  if(!data) drawContext::global()->draw();
 }
 
 static void elementary_add_disk_cb(Fl_Widget *w, void *data)
@@ -255,6 +278,7 @@ static void draw_rectangle(void *context)
 static void elementary_draw_rectangle_cb(Fl_Widget *w, void *data)
 {
   drawContext::setDrawGeomTransientFunction(draw_rectangle);
+  if(!data) drawContext::global()->draw();
 }
 
 static void elementary_add_rectangle_cb(Fl_Widget *w, void *data)
@@ -295,6 +319,7 @@ static void draw_sphere(void *context)
 static void elementary_draw_sphere_cb(Fl_Widget *w, void *data)
 {
   drawContext::setDrawGeomTransientFunction(draw_sphere);
+  if(!data) drawContext::global()->draw();
 }
 
 static void elementary_add_sphere_cb(Fl_Widget *w, void *data)
@@ -338,6 +363,7 @@ static void draw_cylinder(void *context)
 static void elementary_draw_cylinder_cb(Fl_Widget *w, void *data)
 {
   drawContext::setDrawGeomTransientFunction(draw_cylinder);
+  if(!data) drawContext::global()->draw();
 }
 
 static void elementary_add_cylinder_cb(Fl_Widget *w, void *data)
@@ -379,6 +405,7 @@ static void draw_block(void *context)
 static void elementary_draw_block_cb(Fl_Widget *w, void *data)
 {
   drawContext::setDrawGeomTransientFunction(draw_block);
+  if(!data) drawContext::global()->draw();
 }
 
 static void elementary_add_block_cb(Fl_Widget *w, void *data)
@@ -418,6 +445,7 @@ static void draw_torus(void *context)
 static void elementary_draw_torus_cb(Fl_Widget *w, void *data)
 {
   drawContext::setDrawGeomTransientFunction(draw_torus);
+  if(!data) drawContext::global()->draw();
 }
 
 static void elementary_add_torus_cb(Fl_Widget *w, void *data)
@@ -460,6 +488,7 @@ static void draw_cone(void *context)
 static void elementary_draw_cone_cb(Fl_Widget *w, void *data)
 {
   drawContext::setDrawGeomTransientFunction(draw_cone);
+  if(!data) drawContext::global()->draw();
 }
 
 static void elementary_add_cone_cb(Fl_Widget *w, void *data)
@@ -503,6 +532,7 @@ static void draw_wedge(void *context)
 static void elementary_draw_wedge_cb(Fl_Widget *w, void *data)
 {
   drawContext::setDrawGeomTransientFunction(draw_wedge);
+  if(!data) drawContext::global()->draw();
 }
 
 static void elementary_add_wedge_cb(Fl_Widget *w, void *data)
@@ -564,9 +594,11 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[2]->value("");
       input[3] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Path");
       input[3]->value("Parameters");
-      for(int i = 0; i < 4; i++)   input[i]->align(FL_ALIGN_RIGHT);
+      for(int i = 0; i < 4; i++){
+        input[i]->align(FL_ALIGN_RIGHT);
+      }
       {
-        Fl_Return_Button *o = new Fl_Return_Button
+        Fl_Button *o = new Fl_Button
           (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_parameter_cb);
       }
@@ -585,10 +617,12 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[7] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH,
                               "Prescribed mesh element size at point");
       input[7]->value("1.0");
-      for(int i = 4; i < 8; i++)
+      for(int i = 4; i < 8; i++){
         input[i]->align(FL_ALIGN_RIGHT);
+        input[i]->callback(elementary_draw_point_cb);
+      }
       {
-        Fl_Return_Button *o = new Fl_Return_Button
+        Fl_Button *o = new Fl_Button
           (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_point_cb);
       }
@@ -613,10 +647,9 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       for(int i = 8; i < 14; i++){
         input[i]->align(FL_ALIGN_RIGHT);
         input[i]->callback(elementary_draw_circle_cb);
-        input[i]->when(FL_WHEN_CHANGED);
       }
       {
-        Fl_Return_Button *o = new Fl_Return_Button
+        Fl_Button *o = new Fl_Button
           (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_circle_cb);
       }
@@ -643,10 +676,9 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       for(int i = 14; i < 21; i++){
         input[i]->align(FL_ALIGN_RIGHT);
         input[i]->callback(elementary_draw_ellipse_cb);
-        input[i]->when(FL_WHEN_CHANGED);
       }
       {
-        Fl_Return_Button *o = new Fl_Return_Button
+        Fl_Button *o = new Fl_Button
           (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_ellipse_cb);
       }
@@ -669,10 +701,9 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       for(int i = 21; i < 26; i++){
         input[i]->align(FL_ALIGN_RIGHT);
         input[i]->callback(elementary_draw_disk_cb);
-        input[i]->when(FL_WHEN_CHANGED);
       }
       {
-        Fl_Return_Button *o = new Fl_Return_Button
+        Fl_Button *o = new Fl_Button
           (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_disk_cb);
       }
@@ -697,10 +728,9 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       for(int i = 26; i < 32; i++){
         input[i]->align(FL_ALIGN_RIGHT);
         input[i]->callback(elementary_draw_rectangle_cb);
-        input[i]->when(FL_WHEN_CHANGED);
       }
       {
-        Fl_Return_Button *o = new Fl_Return_Button
+        Fl_Button *o = new Fl_Button
           (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_rectangle_cb);
       }
@@ -731,10 +761,9 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       for(int i = 32; i < 39; i++){
         input[i]->align(FL_ALIGN_RIGHT);
         input[i]->callback(elementary_draw_sphere_cb);
-        input[i]->when(FL_WHEN_CHANGED);
       }
       {
-        Fl_Return_Button *o = new Fl_Return_Button
+        Fl_Button *o = new Fl_Button
           (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_sphere_cb);
       }
@@ -763,10 +792,9 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       for(int i = 39; i < 47; i++){
         input[i]->align(FL_ALIGN_RIGHT);
         input[i]->callback(elementary_draw_cylinder_cb);
-        input[i]->when(FL_WHEN_CHANGED);
       }
       {
-        Fl_Return_Button *o = new Fl_Return_Button
+        Fl_Button *o = new Fl_Button
           (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_cylinder_cb);
       }
@@ -791,16 +819,14 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       for(int i = 47; i < 53; i++){
         input[i]->align(FL_ALIGN_RIGHT);
         input[i]->callback(elementary_draw_block_cb);
-        input[i]->when(FL_WHEN_CHANGED);
       }
       {
-        Fl_Return_Button *o = new Fl_Return_Button
+        Fl_Button *o = new Fl_Button
           (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_block_cb);
       }
       group[8]->end();
     }
-
     // 9: Torus
     {
       group[9] = new Fl_Group
@@ -820,16 +846,14 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       for(int i = 53; i < 59; i++){
         input[i]->align(FL_ALIGN_RIGHT);
         input[i]->callback(elementary_draw_torus_cb);
-        input[i]->when(FL_WHEN_CHANGED);
       }
       {
-        Fl_Return_Button *o = new Fl_Return_Button
+        Fl_Button *o = new Fl_Button
           (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_torus_cb);
       }
       group[9]->end();
     }
-
     // 10: Cone
     {
       group[10] = new Fl_Group
@@ -855,10 +879,9 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       for(int i = 59; i < 68; i++){
         input[i]->align(FL_ALIGN_RIGHT);
         input[i]->callback(elementary_draw_cone_cb);
-        input[i]->when(FL_WHEN_CHANGED);
       }
       {
-        Fl_Return_Button *o = new Fl_Return_Button
+        Fl_Button *o = new Fl_Button
           (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_cone_cb);
       }
@@ -885,10 +908,9 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       for(int i = 68; i < 75; i++){
         input[i]->align(FL_ALIGN_RIGHT);
         input[i]->callback(elementary_draw_wedge_cb);
-        input[i]->when(FL_WHEN_CHANGED);
       }
       {
-        Fl_Return_Button *o = new Fl_Return_Button
+        Fl_Button *o = new Fl_Button
           (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
         o->callback(elementary_add_wedge_cb);
       }
@@ -943,7 +965,7 @@ void elementaryContextWindow::updatePoint(double pt[3], int which)
         for(int k = 0; k < 11; k++){
           input[start[k] + i]->value(str);
           if(input[start[k] + i]->parent()->active()){
-            input[start[k] + i]->do_callback();
+            input[start[k] + i]->do_callback(0, (void*)"no_redraw");
           }
         }
       }
