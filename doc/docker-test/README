@@ -1,0 +1,7 @@
+# build image
+docker build -t immc/gmsh:v0.4 .
+
+# push image to docker-hub
+docker login
+docker push immc/dg-valid
+
