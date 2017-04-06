@@ -622,11 +622,13 @@ void rotate(const std::string &fileName, const std::vector<std::pair<int, int> >
 }
 
 void dilate(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
-            const std::string &dx, const std::string &dy, const std::string &dz,
-            const std::string &df, bool duplicata)
+            const std::string &cx, const std::string &cy, const std::string &cz,
+            const std::string &sx, const std::string &sy, const std::string &sz,
+            bool duplicata)
 {
   std::ostringstream sstream;
-  sstream << "Dilate {{" << dx << ", " << dy << ", " << dz << "}, " << df << "} {\n  ";
+  sstream << "Dilate {{" << cx << ", " << cy << ", " << cz << "}, {"
+          << sx << ", " << sy << ", " << sz << "}} {\n  ";
   if(duplicata) sstream << "Duplicata { ";
   sstream << dimTags2String(l);
   if(duplicata) sstream << "}";

@@ -110,8 +110,7 @@ class OCC_Internals {
 
   // apply a geometrical transformation
   bool _transform(const std::vector<std::pair<int, int> > &inDimTags,
-                  BRepBuilderAPI_Transform *tfo,
-                  BRepBuilderAPI_GTransform *gtfo);
+                  BRepBuilderAPI_Transform *tfo, BRepBuilderAPI_GTransform *gtfo);
 
   // add circle or ellipse arc
   bool _addArc(int &tag, int startTag, int centerTag, int endTag, int mode);
@@ -254,6 +253,8 @@ class OCC_Internals {
   bool dilate(const std::vector<std::pair<int, int> > &inDimTags,
               double x, double y, double z,
               double a, double b, double c);
+  bool symmetry(const std::vector<std::pair<int, int> > &inDimTags,
+                double a, double b, double c, double d);
 
   // copy and remove
   bool copy(const std::vector<std::pair<int, int> > &inDimTags,
@@ -530,6 +531,11 @@ public:
               double a, double b, double c)
   {
     return _error("apply dilatation");
+  }
+  bool symmetry(const std::vector<std::pair<int, int> > &inDimTags,
+                double a, double b, double c, double d)
+  {
+    return _error("apply symmetry");
   }
   bool copy(const std::vector<std::pair<int, int> > &inDimTags,
             std::vector<std::pair<int, int> > &outDimTags)

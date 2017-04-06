@@ -1049,11 +1049,11 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
     {
       group[0] = new Fl_Group
         (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Translate");
-      input[0] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X component");
+      input[0] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "DX");
       input[0]->value("0");
-      input[1] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y component");
+      input[1] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "DY");
       input[1]->value("0");
-      input[2] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z component");
+      input[2] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "DZ");
       input[2]->value("1");
       for(int i = 0; i < 3; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
@@ -1065,28 +1065,20 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
     }
     // 1: Rotate
     {
-      group[1] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Rotate");
-      input[3] = new Fl_Input
-        (2 * WB, 2 * WB + 1 * BH, IW, BH, "X coordinate of an axis point");
+      group[1] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Rotate");
+      input[3] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Axis point X");
       input[3]->value("0");
-      input[4] = new Fl_Input
-        (2 * WB, 2 * WB + 2 * BH, IW, BH, "Y coordinate of an axis point");
+      input[4] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Axis point Y");
       input[4]->value("0");
-      input[5] = new Fl_Input
-        (2 * WB, 2 * WB + 3 * BH, IW, BH, "Z coordinate of an axis point");
+      input[5] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Axis point Z");
       input[5]->value("0");
-      input[6] = new Fl_Input
-        (2 * WB, 2 * WB + 4 * BH, IW, BH, "X component of axis direction");
+      input[6] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Axis DX");
       input[6]->value("0");
-      input[7] = new Fl_Input
-        (2 * WB, 2 * WB + 5 * BH, IW, BH, "Y component of axis direction");
+      input[7] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Axis DY");
       input[7]->value("1");
-      input[8] = new Fl_Input
-        (2 * WB, 2 * WB + 6 * BH, IW, BH, "Z component of axis direction");
+      input[8] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Axis DZ");
       input[8]->value("0");
-      input[9] = new Fl_Input
-        (2 * WB, 2 * WB + 7 * BH, IW, BH, "Angle in radians");
+      input[9] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Angle");
       input[9]->value("Pi/4");
       for(int i = 3; i < 10; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
@@ -1098,24 +1090,23 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
     }
     // 2: Scale
     {
-      group[2] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Scale");
-      input[10] = new Fl_Input
-        (2 * WB, 2 * WB + 1 * BH, IW, BH, "X component of direction");
+      group[2] = new Fl_Group(WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Scale");
+      input[10] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Center X");
       input[10]->value("0");
-      input[11] = new Fl_Input
-        (2 * WB, 2 * WB + 2 * BH, IW, BH, "Y component of direction");
+      input[11] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Center Y");
       input[11]->value("0");
-      input[12] = new Fl_Input
-        (2 * WB, 2 * WB + 3 * BH, IW, BH, "Z component of direction");
+      input[12] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Center Z");
       input[12]->value("0");
-      input[13] = new Fl_Input
-        (2 * WB, 2 * WB + 4 * BH, IW, BH, "Factor");
+      input[13] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Scale X");
       input[13]->value("0.5");
-      for(int i = 10; i < 14; i++) {
+      input[14] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Scale Y");
+      input[14]->value("0.5");
+      input[15] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Scale Z");
+      input[15]->value("0.5");
+      for(int i = 10; i < 16; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
       }
-      butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, width - 4 * WB, BH,
+      butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 7 * BH, width - 4 * WB, BH,
                                     "Apply operation on copy");
       butt[2]->value(0);
       group[2]->end();
@@ -1124,15 +1115,15 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
     {
       group[3] = new Fl_Group
         (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Symmetry");
-      input[14] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "A");
-      input[14]->value("1");
-      input[15] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "B");
-      input[15]->value("0");
-      input[16] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "C");
-      input[16]->value("0");
-      input[17] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "D");
-      input[17]->value("1");
-      for(int i = 14; i < 18; i++) {
+      input[16] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Plane A");
+      input[16]->value("1");
+      input[17] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Plane B");
+      input[17]->value("0");
+      input[18] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Plane C");
+      input[18]->value("0");
+      input[19] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Plane D");
+      input[19]->value("1");
+      for(int i = 16; i < 20; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
       }
       butt[3] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, width - 4 * WB, BH,
@@ -1156,9 +1147,9 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
     {
       group[5] = new Fl_Group
         (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Fillet");
-      input[18] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Radius");
-      input[18]->value("0.1");
-      input[18]->align(FL_ALIGN_RIGHT);
+      input[20] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Radius");
+      input[20]->value("0.1");
+      input[20]->align(FL_ALIGN_RIGHT);
       group[5]->end();
     }
     // 6: Delete

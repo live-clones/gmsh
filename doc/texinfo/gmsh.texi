@@ -2342,7 +2342,14 @@ below). The syntax of the transformation commands is:
 @item Dilate @{ @{ @var{expression-list} @}, @var{expression} @} @{ @var{transform-list} @}
 Scales all elementary entities in @var{transform-list} by a factor
 @var{expression}. The @var{expression-list} should contain three
-@w{@var{expression}s} giving the X, Y and Z direction of the homothetic
+@w{@var{expression}s} giving the X, Y, and Z coordinates of the center
+of the homothetic transformation.
+
+@item Dilate @{ @{ @var{expression-list} @}, @{ @var{expression}, @var{expression}, @var{expression} @} @} @{ @var{transform-list} @}
+Scales all elementary entities in @var{transform-list} using different
+factors along X, Y and Z (the three @var{expression}s). The
+@var{expression-list} should contain three @w{@var{expression}s} giving
+the X, Y, and Z coordinates of the center of the homothetic
 transformation.
 
 @item Rotate @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @}  @{ @var{transform-list} @}

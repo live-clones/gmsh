@@ -2344,7 +2344,8 @@ Transform :
       ListOfShapes2VectorOfPairs($4, dimTags);
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        Msg::Error("Symmetry not implemented yet with OpenCASCADE geometry kernel");
+        r = GModel::current()->getOCCInternals()->symmetry
+          (dimTags, $2[0], $2[1], $2[2], $2[3]);
       }
       else{
         r = GModel::current()->getGEOInternals()->symmetry
@@ -2359,7 +2360,6 @@ Transform :
       ListOfShapes2VectorOfPairs($8, dimTags);
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(1, "Warning Dilate OCC: Dilatation (second argument) + Translation (first argument) ");
         r = GModel::current()->getOCCInternals()->dilate
           (dimTags, $3[0], $3[1], $3[2], $5, $5, $5);
       }
@@ -2376,7 +2376,6 @@ Transform :
       ListOfShapes2VectorOfPairs($8, dimTags);
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(1, "Warning Dilate OCC: Dilatation (second argument) + Translation (first argument) ");
         r = GModel::current()->getOCCInternals()->dilate
           (dimTags, $3[0], $3[1], $3[2], $5[0], $5[1], $5[2]);
       }

@@ -2124,10 +2124,25 @@ bool OCC_Internals::dilate(const std::vector<std::pair<int, int> > &inDimTags,
                            double x, double y, double z,
                            double a, double b, double c)
 {
-  gp_GTrsf t;
-  t.SetTranslationPart(gp_XYZ(x,y,z));
-  t.SetVectorialPart(gp_Mat(a, 0, 0, 0, b, 0, 0, 0, c));
-  BRepBuilderAPI_GTransform gtfo(t);
+  gp_GTrsf gt;
+  gt.SetVectorialPart(gp_Mat(a, 0, 0, 0, b, 0, 0, 0, c));
+  gt.SetTranslationPart(gp_XYZ(x * (1 - a), y * (1 - b), z * (1 - c)));
+  BRepBuilderAPI_GTransform gtfo(gt);
+  return _transform(inDimTags, 0, &gtfo);
+}
+
+bool OCC_Internals::symmetry(const std::vector<std::pair<int, int> > &inDimTags,
+                             double a, double b, double c, double d)
+{
+  gp_GTrsf gt;
+  double p = (a * a + b * b + c * c);
+  if(!p) p = 1e-12;
+  double f = -2.0 / p;
+  gt.SetVectorialPart(gp_Mat(1 + a * a * f, a * b * f,      a * c * f,
+                             a * b * f,     1. + b * b * f, b * c * f,
+                             a * c * f,     b * c * f,      1. + c * c * f));
+  gt.SetTranslationPart(gp_XYZ(a * d * f, b * d * f, c * d * f));
+  BRepBuilderAPI_GTransform gtfo(gt);
   return _transform(inDimTags, 0, &gtfo);
 }
 

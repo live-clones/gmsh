@@ -1242,7 +1242,9 @@ static void SetTranslationMatrix(double matrix[4][4], double T[3])
 static void SetSymmetryMatrix(double matrix[4][4], double A, double B, double C,
                               double D)
 {
-  double F = -2.0 / (A * A + B * B + C * C);
+  double p = (A * A + B * B + C * C);
+  if(!p) p = 1e-12;
+  double F = -2.0 / p;
   matrix[0][0] = 1. + A * A * F;
   matrix[0][1] = A * B * F;
   matrix[0][2] = A * C * F;

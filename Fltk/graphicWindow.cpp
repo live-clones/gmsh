@@ -1416,14 +1416,16 @@ static void action_point_line_surface_volume(int action, const std::string &what
                  FlGui::instance()->transformContext->input[11]->value(),
                  FlGui::instance()->transformContext->input[12]->value(),
                  FlGui::instance()->transformContext->input[13]->value(),
+                 FlGui::instance()->transformContext->input[14]->value(),
+                 FlGui::instance()->transformContext->input[15]->value(),
                  FlGui::instance()->transformContext->butt[2]->value());
           break;
         case 3:
           symmetry(GModel::current()->getFileName(), dimTags,
-                   FlGui::instance()->transformContext->input[14]->value(),
-                   FlGui::instance()->transformContext->input[15]->value(),
                    FlGui::instance()->transformContext->input[16]->value(),
                    FlGui::instance()->transformContext->input[17]->value(),
+                   FlGui::instance()->transformContext->input[18]->value(),
+                   FlGui::instance()->transformContext->input[19]->value(),
                    FlGui::instance()->transformContext->butt[3]->value());
           break;
         case 4:
@@ -1754,7 +1756,7 @@ static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
       }
       else{
         apply_fillet(GModel::current()->getFileName(), regions, edges,
-                     FlGui::instance()->transformContext->input[18]->value());
+                     FlGui::instance()->transformContext->input[20]->value());
         GModel::current()->setSelection(0);
         selectRegions = true;
         regions.clear();

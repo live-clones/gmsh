@@ -1,4 +1,4 @@
-Include "raccord.phy";
+//Include "raccord.phy";
 r1 = 30.; h1 = 100.; h2 = 150.; al0 = 30.;
 al1 = al0 / 180. * 3.1415;
 dd1 = 3.;

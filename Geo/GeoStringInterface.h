@@ -85,8 +85,9 @@ void rotate(const std::string &fileName, const std::vector<std::pair<int, int> >
             const std::string &px, const std::string &py, const std::string &pz,
             const std::string &angle, bool duplicata);
 void dilate(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
-            const std::string &dx, const std::string &dy, const std::string &dz,
-            const std::string &df, bool duplicata);
+            const std::string &cx, const std::string &cy, const std::string &cz,
+            const std::string &sx, const std::string &sy, const std::string &sz,
+            bool duplicata);
 void symmetry(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
               const std::string &sa, const std::string &sb, const std::string &sc,
               const std::string &sd, bool duplicata);
