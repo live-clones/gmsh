@@ -1921,7 +1921,8 @@ bool OCC_Internals::applyBooleanOperator
   }
 
   TopoDS_Shape result;
-  std::vector<TopTools_ListOfShape> mapInOut;
+  bool hasModified = false, hasGenerated = false;
+  std::vector<TopTools_ListOfShape> mapModified, mapGenerated;
   std::vector<bool> mapDeleted;
   try{
     switch(op){
@@ -1939,15 +1940,19 @@ bool OCC_Internals::applyBooleanOperator
           return false;
         }
         result = fuse.Shape();
+        hasGenerated = fuse.HasGenerated();
+        hasModified = fuse.HasModified();
         TopTools_ListIteratorOfListOfShape it(objectShapes);
         for(; it.More(); it.Next()){
-          mapInOut.push_back(fuse.Modified(it.Value()));
+          mapModified.push_back(fuse.Modified(it.Value()));
           mapDeleted.push_back(fuse.IsDeleted(it.Value()));
+          mapGenerated.push_back(fuse.Generated(it.Value()));
         }
         TopTools_ListIteratorOfListOfShape it2(toolShapes);
         for(; it2.More(); it2.Next()){
-          mapInOut.push_back(fuse.Modified(it2.Value()));
+          mapModified.push_back(fuse.Modified(it2.Value()));
           mapDeleted.push_back(fuse.IsDeleted(it2.Value()));
+          mapGenerated.push_back(fuse.Generated(it2.Value()));
         }
       }
       break;
@@ -1965,15 +1970,19 @@ bool OCC_Internals::applyBooleanOperator
           return false;
         }
         result = common.Shape();
+        hasGenerated = common.HasGenerated();
+        hasModified = common.HasModified();
         TopTools_ListIteratorOfListOfShape it(objectShapes);
         for(; it.More(); it.Next()){
-          mapInOut.push_back(common.Modified(it.Value()));
+          mapModified.push_back(common.Modified(it.Value()));
           mapDeleted.push_back(common.IsDeleted(it.Value()));
+          mapGenerated.push_back(common.Generated(it.Value()));
         }
         TopTools_ListIteratorOfListOfShape it2(toolShapes);
         for(; it2.More(); it2.Next()){
-          mapInOut.push_back(common.Modified(it2.Value()));
+          mapModified.push_back(common.Modified(it2.Value()));
           mapDeleted.push_back(common.IsDeleted(it2.Value()));
+          mapGenerated.push_back(common.Generated(it2.Value()));
         }
       }
       break;
@@ -1993,38 +2002,45 @@ bool OCC_Internals::applyBooleanOperator
           return false;
         }
         result = cut.Shape();
+        hasGenerated = cut.HasGenerated();
+        hasModified = cut.HasModified();
         TopTools_ListIteratorOfListOfShape it(objectShapes);
         for(; it.More(); it.Next()){
-          mapInOut.push_back(cut.Modified(it.Value()));
+          mapModified.push_back(cut.Modified(it.Value()));
           mapDeleted.push_back(cut.IsDeleted(it.Value()));
+          mapGenerated.push_back(cut.Generated(it.Value()));
         }
         TopTools_ListIteratorOfListOfShape it2(toolShapes);
         for(; it2.More(); it2.Next()){
-          mapInOut.push_back(cut.Modified(it2.Value()));
+          mapModified.push_back(cut.Modified(it2.Value()));
           mapDeleted.push_back(cut.IsDeleted(it2.Value()));
+          mapGenerated.push_back(cut.Generated(it2.Value()));
         }
       }
       break;
 
     case OCC_Internals::Fragments :
       {
-        BRepAlgoAPI_BuilderAlgo generalFuse;
-        generalFuse.SetRunParallel(parallel);
+        BRepAlgoAPI_BuilderAlgo fragments;
+        fragments.SetRunParallel(parallel);
         objectShapes.Append(toolShapes);
         toolShapes.Clear();
-        generalFuse.SetArguments(objectShapes);
+        fragments.SetArguments(objectShapes);
         if(tolerance > 0.0)
-          generalFuse.SetFuzzyValue(tolerance);
-        generalFuse.Build();
-        if(!generalFuse.IsDone()){
+          fragments.SetFuzzyValue(tolerance);
+        fragments.Build();
+        if(!fragments.IsDone()){
           Msg::Error("Boolean fragments failed");
           return false;
         }
-        result = generalFuse.Shape();
+        result = fragments.Shape();
+        hasGenerated = fragments.HasGenerated();
+        hasModified = fragments.HasModified();
         TopTools_ListIteratorOfListOfShape it(objectShapes);
         for(; it.More(); it.Next()){
-          mapInOut.push_back(generalFuse.Modified(it.Value()));
-          mapDeleted.push_back(generalFuse.IsDeleted(it.Value()));
+          mapModified.push_back(fragments.Modified(it.Value()));
+          mapDeleted.push_back(fragments.IsDeleted(it.Value()));
+          mapGenerated.push_back(fragments.Generated(it.Value()));
         }
       }
       break;
@@ -2035,10 +2051,16 @@ bool OCC_Internals::applyBooleanOperator
     return false;
   }
 
-  // if we specify the tag explicitly, or if there is a problem, don't try to
-  // preserve numbering
-  if(tag >= 0 || objectDimTags.size() + toolDimTags.size() != mapInOut.size()){
-    if(tag < 0) Msg::Error("Wrong shape count in boolean operation");
+  int numModified = 0;
+  for(unsigned int i = 0; i < mapModified.size(); i++)
+    numModified += mapModified[i].Extent();
+
+  // don't try to preserve numbering if we specify the tag explicitly, or if
+  // there is a problem
+  bool bug1 = (objectDimTags.size() + toolDimTags.size() != mapModified.size());
+  bool bug2 = (numModified == 0) && hasModified; // happens for some fuse cases!?
+  if(tag >= 0 || bug1 || bug2){
+    if(bug1) Msg::Error("Wrong shape count in boolean operation");
     if(removeObject){
       for(unsigned int i = 0; i < objectDimTags.size(); i++){
         int d = objectDimTags[i].first;
@@ -2062,33 +2084,38 @@ bool OCC_Internals::applyBooleanOperator
   for(unsigned int i = 0; i < objectDimTags.size(); i++){
     int dim = objectDimTags[i].first;
     int tag = objectDimTags[i].second;
-    if(mapDeleted[i]){
+    if(mapDeleted[i] && !mapGenerated[i].Extent()){
       if(removeObject && isBound(dim, tag)){
         unbind(find(dim, tag), dim, tag, true); // recursive
       }
     }
-    else if(mapInOut[i].Extent() == 0){
+    else if(mapModified[i].Extent() == 0){
       // the shape has not been modified, don't touch it
       outDimTags.push_back(std::pair<int, int>(dim, tag));
     }
-    else if(mapInOut[i].Extent() == 1){
+    else if(mapModified[i].Extent() == 1){
       if(removeObject){
         // the shape has been replaced by a single shape, keep the same tag
         if(isBound(dim, tag)){
           unbind(find(dim, tag), dim, tag, true); // recursive
         }
-        bind(mapInOut[i].First(), dim, tag, true); // recursive
+        bind(mapModified[i].First(), dim, tag, true); // recursive
         outDimTags.push_back(std::pair<int, int>(dim, tag));
       }
       else{
-        toBind.push_back(mapInOut[i].First());
+        toBind.push_back(mapModified[i].First());
       }
     }
     else{
       if(removeObject && isBound(dim, tag)){
         unbind(find(dim, tag), dim, tag, true); // recursive
       }
-      TopTools_ListIteratorOfListOfShape it(mapInOut[i]);
+      TopTools_ListIteratorOfListOfShape it(mapModified[i]);
+      for(; it.More(); it.Next())
+        toBind.push_back(it.Value());
+    }
+    {
+      TopTools_ListIteratorOfListOfShape it(mapGenerated[i]);
       for(; it.More(); it.Next())
         toBind.push_back(it.Value());
     }
@@ -2098,33 +2125,38 @@ bool OCC_Internals::applyBooleanOperator
     int k = objectDimTags.size() + i;
     int dim = toolDimTags[i].first;
     int tag = toolDimTags[i].second;
-    if(mapDeleted[k]){
+    if(mapDeleted[k] && !mapGenerated[k].Extent()){
       if(removeTool && isBound(dim, tag)){
         unbind(find(dim, tag), dim, tag, true); // recursive
       }
     }
-    else if(mapInOut[k].Extent() == 0){
+    else if(mapModified[k].Extent() == 0){
       // the shape has not been modified, don't touch it
       outDimTags.push_back(std::pair<int, int>(dim, tag));
     }
-    else if(mapInOut[k].Extent() == 1){
+    else if(mapModified[k].Extent() == 1){
       if(removeTool){
         // the shape has been replaced by a single shape, keep the same tag
         if(isBound(dim, tag)){
           unbind(find(dim, tag), dim, tag, true); // recursive
         }
-        bind(mapInOut[k].First(), dim, tag, true); // recursive
+        bind(mapModified[k].First(), dim, tag, true); // recursive
         outDimTags.push_back(std::pair<int, int>(dim, tag));
       }
       else{
-        toBind.push_back(mapInOut[k].First());
+        toBind.push_back(mapModified[k].First());
       }
     }
     else{
       if(removeTool && isBound(dim, tag)){
         unbind(find(dim, tag), dim, tag, true); // recursive
       }
-      TopTools_ListIteratorOfListOfShape it(mapInOut[k]);
+      TopTools_ListIteratorOfListOfShape it(mapModified[k]);
+      for(; it.More(); it.Next())
+        toBind.push_back(it.Value());
+    }
+    {
+      TopTools_ListIteratorOfListOfShape it(mapGenerated[k]);
       for(; it.More(); it.Next())
         toBind.push_back(it.Value());
     }
