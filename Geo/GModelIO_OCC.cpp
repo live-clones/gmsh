@@ -1921,7 +1921,6 @@ bool OCC_Internals::applyBooleanOperator
   }
 
   TopoDS_Shape result;
-  bool hasModified = false, hasGenerated = false;
   std::vector<TopTools_ListOfShape> mapModified, mapGenerated;
   std::vector<bool> mapDeleted;
   try{
@@ -1940,8 +1939,6 @@ bool OCC_Internals::applyBooleanOperator
           return false;
         }
         result = fuse.Shape();
-        hasGenerated = fuse.HasGenerated();
-        hasModified = fuse.HasModified();
         TopTools_ListIteratorOfListOfShape it(objectShapes);
         for(; it.More(); it.Next()){
           mapModified.push_back(fuse.Modified(it.Value()));
@@ -1970,8 +1967,6 @@ bool OCC_Internals::applyBooleanOperator
           return false;
         }
         result = common.Shape();
-        hasGenerated = common.HasGenerated();
-        hasModified = common.HasModified();
         TopTools_ListIteratorOfListOfShape it(objectShapes);
         for(; it.More(); it.Next()){
           mapModified.push_back(common.Modified(it.Value()));
@@ -2002,8 +1997,6 @@ bool OCC_Internals::applyBooleanOperator
           return false;
         }
         result = cut.Shape();
-        hasGenerated = cut.HasGenerated();
-        hasModified = cut.HasModified();
         TopTools_ListIteratorOfListOfShape it(objectShapes);
         for(; it.More(); it.Next()){
           mapModified.push_back(cut.Modified(it.Value()));
@@ -2034,8 +2027,6 @@ bool OCC_Internals::applyBooleanOperator
           return false;
         }
         result = fragments.Shape();
-        hasGenerated = fragments.HasGenerated();
-        hasModified = fragments.HasModified();
         TopTools_ListIteratorOfListOfShape it(objectShapes);
         for(; it.More(); it.Next()){
           mapModified.push_back(fragments.Modified(it.Value()));
@@ -2051,14 +2042,10 @@ bool OCC_Internals::applyBooleanOperator
     return false;
   }
 
-  int numModified = 0;
-  for(unsigned int i = 0; i < mapModified.size(); i++)
-    numModified += mapModified[i].Extent();
-
   // don't try to preserve numbering if we specify the tag explicitly, or if
   // there is a problem
   bool bug1 = (objectDimTags.size() + toolDimTags.size() != mapModified.size());
-  bool bug2 = (numModified == 0) && hasModified; // happens for some fuse cases!?
+  bool bug2 = (op == OCC_Internals::Union); // steange fuse behavior in OCC 7.1
   if(tag >= 0 || bug1 || bug2){
     if(bug1) Msg::Error("Wrong shape count in boolean operation");
     if(removeObject){
