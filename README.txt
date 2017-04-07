@@ -12,7 +12,9 @@ http://gmsh.info for additional examples.
 
 Building Gmsh from its source code requires a C++ compiler and CMake
 (http://cmake.org). Building the graphical user interface requires FLTK 1.3.2 or
-higher (http://fltk.org), configured with OpenGL support.
+higher (http://fltk.org), configured with OpenGL support. Support for
+constructive solid geometry requires OpenCASCADE 6.9.0 or higher
+(http://www.opencascade.com).
 
 
 Build Gmsh from the command line
@@ -64,10 +66,11 @@ Build Gmsh from the command line
     make
     make install
 
-  and minimal static and dynamic libraries in a "lib" subdirectory with
+  and configure a fairly minimal static library (with only the geometry and
+  post-processing modules and the parser) in a "lib" subdirectory with
 
     cd lib
-    cmake -DDEFAULT=0 -DENABLE_BUILD_LIB=1 -DENABLE_BUILD_SHARED=1 ..
+    cmake -DDEFAULT=0 -DENABLE_BUILD_LIB=1 -DENABLE_POST=1 -DENABLE_PARSER=1 ..
     make lib
     make shared
     make install/fast
