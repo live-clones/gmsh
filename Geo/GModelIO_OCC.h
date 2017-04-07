@@ -165,7 +165,8 @@ class OCC_Internals {
   // highestDimOnly is true, only return the entities of the highest dimension
   void bind(TopoDS_Shape shape, int tag,
             std::vector<std::pair<int, int> > &outDimTags,
-            bool highestDimOnly, bool recursive=false);
+            bool returnHighestDimOnly, bool recursive=false,
+            bool returnNewOnly=false);
 
   // is the entity of a given dimension and tag bound?
   bool isBound(int dim, int tag);

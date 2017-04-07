@@ -87,6 +87,10 @@
 #include <gce_MakeElips.hxx>
 #include <gce_MakePln.hxx>
 
+#if OCC_VERSION_HEX < 0x060900
+#error "Gmsh requires OpenCASCADE >= 6.9"
+#endif
+
 OCC_Internals::OCC_Internals()
 {
   for(int i = 0; i < 6; i++) _maxTag[i] = 0;
@@ -139,23 +143,26 @@ void OCC_Internals::bind(TopoDS_Vertex vertex, int tag, bool recursive)
 {
   if(_vertexTag.IsBound(vertex) && _vertexTag.Find(vertex) != tag){
     Msg::Debug("OpenCASCADE vertex %d is already bound to another tag", tag);
-    return;
   }
-  _vertexTag.Bind(vertex, tag);
-  _tagVertex.Bind(tag, vertex);
-  setMaxTag(0, tag);
-  _changed = true;
+  else{
+    _vertexTag.Bind(vertex, tag);
+    _tagVertex.Bind(tag, vertex);
+    setMaxTag(0, tag);
+    _changed = true;
+  }
 }
 
 void OCC_Internals::bind(TopoDS_Edge edge, int tag, bool recursive)
 {
   if(_edgeTag.IsBound(edge) && _edgeTag.Find(edge) != tag){
     Msg::Debug("OpenCASCADE edge %d is already bound to another tag", tag);
-    return;
   }
-  _edgeTag.Bind(edge, tag);
-  _tagEdge.Bind(tag, edge);
-  setMaxTag(1, tag);
+  else{
+    _edgeTag.Bind(edge, tag);
+    _tagEdge.Bind(tag, edge);
+    setMaxTag(1, tag);
+    _changed = true;
+  }
   if(recursive){
     TopExp_Explorer exp0;
     for(exp0.Init(edge, TopAbs_VERTEX); exp0.More(); exp0.Next()){
@@ -166,19 +173,19 @@ void OCC_Internals::bind(TopoDS_Edge edge, int tag, bool recursive)
       }
     }
   }
-
-  _changed = true;
 }
 
 void OCC_Internals::bind(TopoDS_Wire wire, int tag, bool recursive)
 {
   if(_wireTag.IsBound(wire) && _wireTag.Find(wire) != tag){
     Msg::Debug("OpenCASCADE wire %d is already bound to anthor tag", tag);
-    return;
   }
-  _wireTag.Bind(wire, tag);
-  _tagWire.Bind(tag, wire);
-  setMaxTag(-1, tag);
+  else{
+    _wireTag.Bind(wire, tag);
+    _tagWire.Bind(tag, wire);
+    setMaxTag(-1, tag);
+    _changed = true;
+  }
   if(recursive){
     TopExp_Explorer exp0;
     for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()){
@@ -189,18 +196,19 @@ void OCC_Internals::bind(TopoDS_Wire wire, int tag, bool recursive)
       }
     }
   }
-  _changed = true;
 }
 
 void OCC_Internals::bind(TopoDS_Face face, int tag, bool recursive)
 {
   if(_faceTag.IsBound(face) && _faceTag.Find(face) != tag){
     Msg::Debug("OpenCASCADE face %d is already bound to another tag", tag);
-    return;
   }
-  _faceTag.Bind(face, tag);
-  _tagFace.Bind(tag, face);
-  setMaxTag(2, tag);
+  else{
+    _faceTag.Bind(face, tag);
+    _tagFace.Bind(tag, face);
+    setMaxTag(2, tag);
+    _changed = true;
+  }
   if(recursive){
     TopExp_Explorer exp0;
     for(exp0.Init(face, TopAbs_WIRE); exp0.More(); exp0.Next()){
@@ -218,18 +226,19 @@ void OCC_Internals::bind(TopoDS_Face face, int tag, bool recursive)
       }
     }
   }
-  _changed = true;
 }
 
 void OCC_Internals::bind(TopoDS_Shell shell, int tag, bool recursive)
 {
   if(_shellTag.IsBound(shell) && _shellTag.Find(shell) != tag){
     Msg::Debug("OpenCASCADE shell %d is already bound to another tag", tag);
-    return;
   }
-  _shellTag.Bind(shell, tag);
-  _tagShell.Bind(tag, shell);
-  setMaxTag(-2, tag);
+  else{
+    _shellTag.Bind(shell, tag);
+    _tagShell.Bind(tag, shell);
+    setMaxTag(-2, tag);
+    _changed = true;
+  }
   if(recursive){
     TopExp_Explorer exp0;
     for(exp0.Init(shell, TopAbs_FACE); exp0.More(); exp0.Next()){
@@ -240,18 +249,19 @@ void OCC_Internals::bind(TopoDS_Shell shell, int tag, bool recursive)
       }
     }
   }
-  _changed = true;
 }
 
 void OCC_Internals::bind(TopoDS_Solid solid, int tag, bool recursive)
 {
   if(_solidTag.IsBound(solid) && _solidTag.Find(solid) != tag){
     Msg::Debug("OpenCASCADE solid %d is already bound to another tag", tag);
-    return;
   }
-  _solidTag.Bind(solid, tag);
-  _tagSolid.Bind(tag, solid);
-  setMaxTag(3, tag);
+  else{
+    _solidTag.Bind(solid, tag);
+    _tagSolid.Bind(tag, solid);
+    setMaxTag(3, tag);
+    _changed = true;
+  }
   if(recursive){
     TopExp_Explorer exp0;
     for(exp0.Init(solid, TopAbs_SHELL); exp0.More(); exp0.Next()){
@@ -269,7 +279,6 @@ void OCC_Internals::bind(TopoDS_Solid solid, int tag, bool recursive)
       }
     }
   }
-  _changed = true;
 }
 
 void OCC_Internals::bind(TopoDS_Shape shape, int dim, int tag, bool recursive)
@@ -452,10 +461,11 @@ void OCC_Internals::unbind(TopoDS_Shape shape, int dim, int tag, bool recursive)
 
 void OCC_Internals::bind(TopoDS_Shape shape, int tag,
                          std::vector<std::pair<int, int> > &outDimTags,
-                         bool highestDimOnly, bool recursive)
+                         bool returnHighestDimOnly, bool recursive,
+                         bool returnNewOnly)
 {
   TopExp_Explorer exp0;
-  bool first = true;
+  int count = 0;
   for(exp0.Init(shape, TopAbs_SOLID); exp0.More(); exp0.Next()){
     TopoDS_Solid solid = TopoDS::Solid(exp0.Current());
     bool exists = false;
@@ -468,12 +478,17 @@ void OCC_Internals::bind(TopoDS_Shape shape, int tag,
       else
         t = getMaxTag(3) + 1;
     }
-    else if(first){ first = false; }
-    else{ Msg::Error("Cannot bind multiple regions to single tag %d", t); return; }
-    if(!exists) bind(solid, t, recursive);
-    outDimTags.push_back(std::pair<int, int>(3, t));
+    else if(count){
+      Msg::Error("Cannot bind multiple regions to single tag %d", t);
+      return;
+    }
+    if(!exists)
+      bind(solid, t, recursive);
+    if(!exists || !returnNewOnly)
+      outDimTags.push_back(std::pair<int, int>(3, t));
+    count++;
   }
-  if(highestDimOnly && outDimTags.size()) return;
+  if(returnHighestDimOnly && count) return;
   for(exp0.Init(shape, TopAbs_FACE); exp0.More(); exp0.Next()){
     TopoDS_Face face = TopoDS::Face(exp0.Current());
     bool exists = false;
@@ -486,12 +501,17 @@ void OCC_Internals::bind(TopoDS_Shape shape, int tag,
       else
         t = getMaxTag(2) + 1;
     }
-    else if(first){ first = false; }
-    else{ Msg::Error("Cannot bind multiple faces to single tag %d", t); return; }
-    if(!exists) bind(face, t, recursive);
-    outDimTags.push_back(std::pair<int, int>(2, t));
+    else if(count){
+      Msg::Error("Cannot bind multiple faces to single tag %d", t);
+      return;
+    }
+    if(!exists)
+      bind(face, t, recursive);
+    if(!exists || !returnNewOnly)
+      outDimTags.push_back(std::pair<int, int>(2, t));
+    count++;
   }
-  if(highestDimOnly && outDimTags.size()) return;
+  if(returnHighestDimOnly && count) return;
   for(exp0.Init(shape, TopAbs_EDGE); exp0.More(); exp0.Next()){
     TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
     bool exists = false;
@@ -504,12 +524,17 @@ void OCC_Internals::bind(TopoDS_Shape shape, int tag,
       else
         t = getMaxTag(1) + 1;
     }
-    else if(first){ first = false; }
-    else{ Msg::Error("Cannot bind multiple edges to single tag %d", t); return; }
-    if(!exists) bind(edge, t, recursive);
-    outDimTags.push_back(std::pair<int, int>(1, t));
+    else if(count){
+      Msg::Error("Cannot bind multiple edges to single tag %d", t);
+      return;
+    }
+    if(!exists)
+      bind(edge, t, recursive);
+    if(!exists || !returnNewOnly)
+      outDimTags.push_back(std::pair<int, int>(1, t));
+    count++;
   }
-  if(highestDimOnly && outDimTags.size()) return;
+  if(returnHighestDimOnly && count) return;
   for(exp0.Init(shape, TopAbs_VERTEX); exp0.More(); exp0.Next()){
     TopoDS_Vertex vertex = TopoDS::Vertex(exp0.Current());
     bool exists = false;
@@ -521,10 +546,15 @@ void OCC_Internals::bind(TopoDS_Shape shape, int tag,
       }
       t = getMaxTag(0) + 1;
     }
-    else if(first){ first = false; }
-    else{ Msg::Error("Cannot bind multiple vertices to single tag %d", t); return; }
-    if(!exists) bind(vertex, t, recursive);
-    outDimTags.push_back(std::pair<int, int>(0, t));
+    else if(count){
+      Msg::Error("Cannot bind multiple vertices to single tag %d", t);
+      return;
+    }
+    if(!exists)
+      bind(vertex, t, recursive);
+    if(!exists || !returnNewOnly)
+      outDimTags.push_back(std::pair<int, int>(0, t));
+    count++;
   }
 }
 
@@ -1864,7 +1894,7 @@ bool OCC_Internals::applyBooleanOperator
     return false;
   }
 
-  std::vector<TopoDS_Shape> objects[4], tools[4];
+  TopTools_ListOfShape objectShapes, toolShapes;
   for(unsigned int i = 0; i < objectDimTags.size(); i++){
     int dim = objectDimTags[i].first;
     int t = objectDimTags[i].second;
@@ -1874,8 +1904,7 @@ bool OCC_Internals::applyBooleanOperator
     }
     else{
       TopoDS_Shape object = find(dim, t);
-      objects[dim].push_back(object);
-      if(removeObject) unbind(object, dim, t, true); // recursive
+      objectShapes.Append(object);
     }
   }
   for(unsigned int i = 0; i < toolDimTags.size(); i++){
@@ -1887,66 +1916,17 @@ bool OCC_Internals::applyBooleanOperator
     }
     else{
       TopoDS_Shape tool = find(dim, t);
-      tools[dim].push_back(tool);
-      if(removeTool) unbind(tool, dim, t, true); // recursive
+      toolShapes.Append(tool);
     }
   }
 
   TopoDS_Shape result;
-
-#if OCC_VERSION_HEX >= 0x060900
-  // if we remove the tool or object, we should act on copies, so that syncing
-  // with GModel is not confused if the boolean operation does not modify some
-  // of the shapes that would already have been imported before
-  TopTools_ListOfShape objectShapes, toolShapes;
-  for(int dim = 0; dim < 4; dim++){
-    for(unsigned int i = 0; i < objects[dim].size(); i++){
-      if(removeObject || tolerance > 0.)
-        objectShapes.Append(BRepBuilderAPI_Copy(objects[dim][i], false).Shape());
-      else
-        objectShapes.Append(objects[dim][i]);
-    }
-    for(unsigned int i = 0; i < tools[dim].size(); i++){
-      if(removeTool || tolerance > 0.)
-        toolShapes.Append(BRepBuilderAPI_Copy(tools[dim][i], false).Shape());
-      else
-        toolShapes.Append(tools[dim][i]);
-    }
-  }
-#endif
-
+  std::vector<TopTools_ListOfShape> mapInOut;
+  std::vector<bool> mapDeleted;
   try{
     switch(op){
     case OCC_Internals::Union :
       {
-#if OCC_VERSION_HEX < 0x060900
-        for(int dim = 0; dim < 4; dim++){
-          if(objects[dim].empty() || tools[dim].empty()) continue;
-          result = objects[dim][0];
-          for(int i = 1; i < objects[dim].size(); i++){
-            BRepAlgoAPI_Fuse fuse(result, objects[dim][i]);
-            fuse.Build();
-            if(!fuse.IsDone()) {
-              Msg::Error("Fuse operation cannot be performed");
-              return false;
-            }
-            else{
-              result = fuse.Shape();
-            }
-          }
-          for(int i = 0; i < tools[dim].size(); i++){
-            BRepAlgoAPI_Fuse fuse(result, tools[dim][i]);
-            fuse.Build();
-            if(!fuse.IsDone()) {
-              Msg::Error("Fuse operation cannot be performed");
-              return false;
-            }
-            else{
-              result = fuse.Shape();
-            }
-          }
-        }
-#else
         BRepAlgoAPI_Fuse fuse;
         fuse.SetRunParallel(parallel);
         fuse.SetArguments(objectShapes);
@@ -1959,28 +1939,20 @@ bool OCC_Internals::applyBooleanOperator
           return false;
         }
         result = fuse.Shape();
-#endif
+        TopTools_ListIteratorOfListOfShape it(objectShapes);
+        for(; it.More(); it.Next()){
+          mapInOut.push_back(fuse.Modified(it.Value()));
+          mapDeleted.push_back(fuse.IsDeleted(it.Value()));
+        }
+        TopTools_ListIteratorOfListOfShape it2(toolShapes);
+        for(; it2.More(); it2.Next()){
+          mapInOut.push_back(fuse.Modified(it2.Value()));
+          mapDeleted.push_back(fuse.IsDeleted(it2.Value()));
+        }
       }
       break;
     case OCC_Internals::Intersection :
       {
-#if OCC_VERSION_HEX < 0x060900
-        for(int dim = 0; dim < 4; dim++){
-          if(objects[dim].empty() || tools[dim].empty()) continue;
-          if(objects[dim].size() != 1 || tools[dim].size() != 1){
-            Msg::Error("Multi-intersection requires OCC >= 6.9");
-            return false;
-          }
-          else{
-            BRepAlgoAPI_Common common(objects[dim][0], tools[dim][0]);
-            common.Build();
-            if(!common.IsDone()) {
-              Msg::Error("Intersection operation cannot be performed");
-            }
-            result = common.Shape();
-          }
-        }
-#else
         BRepAlgoAPI_Common common;
         common.SetRunParallel(parallel);
         common.SetArguments(objectShapes);
@@ -1993,30 +1965,22 @@ bool OCC_Internals::applyBooleanOperator
           return false;
         }
         result = common.Shape();
-#endif
+        TopTools_ListIteratorOfListOfShape it(objectShapes);
+        for(; it.More(); it.Next()){
+          mapInOut.push_back(common.Modified(it.Value()));
+          mapDeleted.push_back(common.IsDeleted(it.Value()));
+        }
+        TopTools_ListIteratorOfListOfShape it2(toolShapes);
+        for(; it2.More(); it2.Next()){
+          mapInOut.push_back(common.Modified(it2.Value()));
+          mapDeleted.push_back(common.IsDeleted(it2.Value()));
+        }
       }
       break;
 
     case OCC_Internals::Difference :
     default:
       {
-#if OCC_VERSION_HEX < 0x060900
-        for(int dim = 0; dim < 4; dim++){
-          if(objects[dim].empty() || tools[dim].empty()) continue;
-          if(objects[dim].size() != 1 || tools[dim].size() != 1){
-            Msg::Error("Multi-difference requires OCC >= 6.9");
-            return false;
-          }
-          else{
-            BRepAlgoAPI_Cut cut(objects[dim][0], tools[dim][0]);
-            cut.Build();
-            if(!cut.IsDone()) {
-              Msg::Error("Cut operation cannot be performed");
-            }
-            result = cut.Shape();
-          }
-        }
-#else
         BRepAlgoAPI_Cut cut;
         cut.SetRunParallel(parallel);
         cut.SetArguments(objectShapes);
@@ -2029,29 +1993,39 @@ bool OCC_Internals::applyBooleanOperator
           return false;
         }
         result = cut.Shape();
-#endif
+        TopTools_ListIteratorOfListOfShape it(objectShapes);
+        for(; it.More(); it.Next()){
+          mapInOut.push_back(cut.Modified(it.Value()));
+          mapDeleted.push_back(cut.IsDeleted(it.Value()));
+        }
+        TopTools_ListIteratorOfListOfShape it2(toolShapes);
+        for(; it2.More(); it2.Next()){
+          mapInOut.push_back(cut.Modified(it2.Value()));
+          mapDeleted.push_back(cut.IsDeleted(it2.Value()));
+        }
       }
       break;
 
     case OCC_Internals::Fragments :
       {
-#if OCC_VERSION_HEX < 0x060900
-        Msg::Error("Boolean fragments only available with OpenCASCADE >= 6.9");
-        return false;
-#else
         BRepAlgoAPI_BuilderAlgo generalFuse;
         generalFuse.SetRunParallel(parallel);
         objectShapes.Append(toolShapes);
+        toolShapes.Clear();
         generalFuse.SetArguments(objectShapes);
-        if (tolerance > 0.0)
+        if(tolerance > 0.0)
           generalFuse.SetFuzzyValue(tolerance);
         generalFuse.Build();
-        if (!generalFuse.IsDone()){
+        if(!generalFuse.IsDone()){
           Msg::Error("Boolean fragments failed");
           return false;
         }
         result = generalFuse.Shape();
-#endif
+        TopTools_ListIteratorOfListOfShape it(objectShapes);
+        for(; it.More(); it.Next()){
+          mapInOut.push_back(generalFuse.Modified(it.Value()));
+          mapDeleted.push_back(generalFuse.IsDeleted(it.Value()));
+        }
       }
       break;
     }
@@ -2061,7 +2035,107 @@ bool OCC_Internals::applyBooleanOperator
     return false;
   }
 
-  bind(result, tag, outDimTags, true, true);
+  // if we specify the tag explicitly, or if there is a problem, don't try to
+  // preserve numbering
+  if(tag >= 0 || objectDimTags.size() + toolDimTags.size() != mapInOut.size()){
+    if(tag < 0) Msg::Error("Wrong shape count in boolean operation");
+    if(removeObject){
+      for(unsigned int i = 0; i < objectDimTags.size(); i++){
+        int d = objectDimTags[i].first;
+        int t = objectDimTags[i].second;
+        if(isBound(d, t)) unbind(find(d, t), d, t, true); // recursive
+      }
+    }
+    if(removeTool){
+      for(unsigned int i = 0; i < toolDimTags.size(); i++){
+        int d = toolDimTags[i].first;
+        int t = toolDimTags[i].second;
+        if(isBound(d, t)) unbind(find(d, t), d, t, true); // recursive
+      }
+    }
+    bind(result, tag, outDimTags, true, true);
+    return true;
+  }
+
+  // otherwise, try to preserve the numbering
+  std::vector<TopoDS_Shape> toBind;
+  for(unsigned int i = 0; i < objectDimTags.size(); i++){
+    int dim = objectDimTags[i].first;
+    int tag = objectDimTags[i].second;
+    if(mapDeleted[i]){
+      if(removeObject && isBound(dim, tag)){
+        unbind(find(dim, tag), dim, tag, true); // recursive
+      }
+    }
+    else if(mapInOut[i].Extent() == 0){
+      // the shape has not been modified, don't touch it
+      outDimTags.push_back(std::pair<int, int>(dim, tag));
+    }
+    else if(mapInOut[i].Extent() == 1){
+      if(removeObject){
+        // the shape has been replaced by a single shape, keep the same tag
+        if(isBound(dim, tag)){
+          unbind(find(dim, tag), dim, tag, true); // recursive
+        }
+        bind(mapInOut[i].First(), dim, tag, true); // recursive
+        outDimTags.push_back(std::pair<int, int>(dim, tag));
+      }
+      else{
+        toBind.push_back(mapInOut[i].First());
+      }
+    }
+    else{
+      if(removeObject && isBound(dim, tag)){
+        unbind(find(dim, tag), dim, tag, true); // recursive
+      }
+      TopTools_ListIteratorOfListOfShape it(mapInOut[i]);
+      for(; it.More(); it.Next())
+        toBind.push_back(it.Value());
+    }
+  }
+
+  for(unsigned int i = 0; i < toolDimTags.size(); i++){
+    int k = objectDimTags.size() + i;
+    int dim = toolDimTags[i].first;
+    int tag = toolDimTags[i].second;
+    if(mapDeleted[k]){
+      if(removeTool && isBound(dim, tag)){
+        unbind(find(dim, tag), dim, tag, true); // recursive
+      }
+    }
+    else if(mapInOut[k].Extent() == 0){
+      // the shape has not been modified, don't touch it
+      outDimTags.push_back(std::pair<int, int>(dim, tag));
+    }
+    else if(mapInOut[k].Extent() == 1){
+      if(removeTool){
+        // the shape has been replaced by a single shape, keep the same tag
+        if(isBound(dim, tag)){
+          unbind(find(dim, tag), dim, tag, true); // recursive
+        }
+        bind(mapInOut[k].First(), dim, tag, true); // recursive
+        outDimTags.push_back(std::pair<int, int>(dim, tag));
+      }
+      else{
+        toBind.push_back(mapInOut[k].First());
+      }
+    }
+    else{
+      if(removeTool && isBound(dim, tag)){
+        unbind(find(dim, tag), dim, tag, true); // recursive
+      }
+      TopTools_ListIteratorOfListOfShape it(mapInOut[k]);
+      for(; it.More(); it.Next())
+        toBind.push_back(it.Value());
+    }
+  }
+
+  for(unsigned int i = 0; i < toBind.size(); i++){
+    // bind all remaining entities (and only return the new ones, as modified
+    // entities can appear as "Modified()" subshapes of both object and tool)
+    bind(toBind[i], -1, outDimTags, true, true, true);
+  }
+
   return true;
 }
 
@@ -3022,11 +3096,7 @@ bool OCC_Internals::_makeFaceSTL(TopoDS_Face s,
   BRepMesh_FastDiscret aMesher(0.1, 0.35, aBox, Standard_False, Standard_False,
                                Standard_True, Standard_False);
 #endif
-#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 5)
-  aMesher.Add(s);
-#else
   aMesher.Perform(s);
-#endif
 
   TopLoc_Location loc;
   Handle(Poly_Triangulation) triangulation = BRep_Tool::Triangulation(s, loc);

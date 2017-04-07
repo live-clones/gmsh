@@ -16,10 +16,12 @@
 
 #if defined(HAVE_OCC)
 
-#include <Bnd_Box.hxx>
+#include <BOPTools_AlgoTools.hxx>
+#include <BOPTools_AlgoTools2D.hxx>
 #include <BRepBndLib.hxx>
 #include <BRepLProp_SLProps.hxx>
 #include <BRep_Builder.hxx>
+#include <Bnd_Box.hxx>
 #include <GeomAPI_ProjectPointOnSurf.hxx>
 #include <Geom_BSplineSurface.hxx>
 #include <Geom_BezierSurface.hxx>
@@ -29,25 +31,12 @@
 #include <Geom_SphericalSurface.hxx>
 #include <Geom_SurfaceOfRevolution.hxx>
 #include <Geom_ToroidalSurface.hxx>
+#include <IntTools_Context.hxx>
 #include <ShapeAnalysis.hxx>
 #include <Standard_Version.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
 #include <gp_Pln.hxx>
-
-#if ((OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR >= 6)) || (OCC_VERSION_MAJOR >= 7)
-#if ((OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 8))
-#include <BOPInt_Context.hxx>
-#else
-#include <IntTools_Context.hxx>
-#endif
-#include <BOPTools_AlgoTools2D.hxx>
-#include <BOPTools_AlgoTools.hxx>
-#else
-#include <BOPTools_Tools2D.hxx>
-#include <BOPTools_Tools3D.hxx>
-#include <IntTools_Context.hxx>
-#endif
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
   : GFace(m, num), s(_s)
@@ -463,16 +452,8 @@ bool OCCFace::buildSTLTriangulation(bool force)
 
 void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
 {
-
-#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR >= 6) && (OCC_VERSION_MINOR < 8)
-  Handle(BOPInt_Context) myContext = new BOPInt_Context;
-#elif defined(OCC_VERSION_HEX) && OCC_VERSION_HEX >= 0x060503
-  Handle(IntTools_Context) myContext = new IntTools_Context;
-#else
-  IntTools_Context myContext;
-#endif
-
   // we simply replace old edges by new edges in the structure
+  Handle(IntTools_Context) myContext = new IntTools_Context;
 
   // make a copy of s
   TopoDS_Face copy_of_s_forward = s;
@@ -530,11 +511,7 @@ void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
 	      continue;
 	    }
 	    else{
-#if ((OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR >= 6)) || (OCC_VERSION_MAJOR >= 7)
 	      aTx = BOPTools_AlgoTools2D::IntermediatePoint(aT1, aT2);
-#else
-	      aTx = BOPTools_Tools2D::IntermediatePoint(aT1, aT2);
-#endif
 	      gp_Pnt2d aP2D;
 	      aC2D->D0(aTx, aP2D);
 	      aUx=aP2D.X();
@@ -546,18 +523,10 @@ void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
 	    }
 	  }
 	}
-#if ((OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR >= 6)) || (OCC_VERSION_MAJOR >= 7)
 	BOPTools_AlgoTools2D::BuildPCurveForEdgeOnFace(aER, copy_of_s_forward);
-#else
-	BOPTools_Tools2D::BuildPCurveForEdgeOnFace(aER, copy_of_s_forward);
-#endif
 	// orient image
 	Standard_Boolean bIsToReverse =
-#if ((OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR >= 6)) || (OCC_VERSION_MAJOR >= 7)
           BOPTools_AlgoTools::IsSplitToReverse(aER, aE, myContext);
-#else
-          BOPTools_Tools3D::IsSplitToReverse1(aER, aE, myContext);
-#endif
 	if (bIsToReverse) {
 	  aER.Reverse();
 	}
