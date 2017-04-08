@@ -88,6 +88,7 @@ static double LoopControlVariablesTab[MAX_RECUR_LOOPS][3];
 static std::string LoopControlVariablesNameTab[MAX_RECUR_LOOPS];
 static std::string struct_name, struct_namespace;
 static int flag_tSTRING_alloc = 0;
+static int dim_entity;
 
 static std::map<std::string, std::vector<double> > floatOptions;
 static std::map<std::string, std::vector<std::string> > charOptions;
@@ -192,7 +193,7 @@ struct doubleXstring{
 %token tDefineString tSetNumber tSetString
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
 %token tBlock tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
-%token tRectangle tDisk tWire
+%token tRectangle tDisk tWire tGeoEntity
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tRelocateMesh tSetFactory tThruSections tWedge tFillet tChamfer
 %token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic
@@ -218,7 +219,7 @@ struct doubleXstring{
 %type <d> FExpr FExpr_Single DefineStruct NameStruct_Arg GetForced_Default
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
 %type <i> NumericAffectation NumericIncrement BooleanOperator BooleanOption
-%type <i> PhysicalId0 PhysicalId1 PhysicalId2 PhysicalId3
+%type <i> PhysicalId_per_dim_entity GeoEntity GeoEntity123 GeoEntity12 GeoEntity02
 %type <i> TransfiniteArrangement RecombineAngle InSphereCenter
 %type <i> Append AppendOrNot
 %type <u> ColorExpr
@@ -1509,7 +1510,7 @@ CharParameterOption :
 
 //  S H A P E
 
-PhysicalId0 :
+PhysicalId_per_dim_entity :
     FExpr
     {
       $$ = (int)$1;
@@ -1518,69 +1519,12 @@ PhysicalId0 :
     {
       int t = GModel::current()->getGEOInternals()->getMaxPhysicalTag();
       GModel::current()->getGEOInternals()->setMaxPhysicalTag(t + 1);
-      $$ = GModel::current()->setPhysicalName(std::string($1), 0, t + 1);
+      $$ = GModel::current()->setPhysicalName(std::string($1), dim_entity, t + 1);
       Free($1);
     }
   | StringExpr ',' FExpr
     {
-      $$ = GModel::current()->setPhysicalName(std::string($1), 0, $3);
-      Free($1);
-    }
-;
-
-PhysicalId1 :
-    FExpr
-    {
-      $$ = (int)$1;
-    }
-  | StringExpr
-    {
-      int t = GModel::current()->getGEOInternals()->getMaxPhysicalTag();
-      GModel::current()->getGEOInternals()->setMaxPhysicalTag(t + 1);
-      $$ = GModel::current()->setPhysicalName(std::string($1), 1, t + 1);
-      Free($1);
-    }
-  | StringExpr ',' FExpr
-    {
-      $$ = GModel::current()->setPhysicalName(std::string($1), 1, $3);
-      Free($1);
-    }
-;
-
-PhysicalId2 :
-    FExpr
-    {
-      $$ = (int)$1;
-    }
-  | StringExpr
-    {
-      int t = GModel::current()->getGEOInternals()->getMaxPhysicalTag();
-      GModel::current()->getGEOInternals()->setMaxPhysicalTag(t + 1);
-      $$ = GModel::current()->setPhysicalName(std::string($1), 2, t + 1);
-      Free($1);
-    }
-  | StringExpr ',' FExpr
-    {
-      $$ = GModel::current()->setPhysicalName(std::string($1), 2, $3);
-      Free($1);
-    }
-;
-
-PhysicalId3 :
-    FExpr
-    {
-      $$ = (int)$1;
-    }
-  | StringExpr
-    {
-      int t = GModel::current()->getGEOInternals()->getMaxPhysicalTag();
-      GModel::current()->getGEOInternals()->setMaxPhysicalTag(t + 1);
-      $$ = GModel::current()->setPhysicalName(std::string($1), 3, t + 1);
-      Free($1);
-    }
-  | StringExpr ',' FExpr
-    {
-      $$ = GModel::current()->setPhysicalName(std::string($1), 3, $3);
+      $$ = GModel::current()->setPhysicalName(std::string($1), dim_entity, $3);
       Free($1);
     }
 ;
@@ -1792,16 +1736,6 @@ Shape :
       List_Delete($6);
       List_Delete($8);
       $$.Type = MSH_SEGM_NURBS;
-      $$.Num = num;
-    }
-  | tCompound tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
-    {
-      int num = (int)$4;
-      std::vector<int> tags; ListOfDouble2Vector($7, tags);
-      bool r = GModel::current()->getGEOInternals()->addCompoundLine(num, tags);
-      if(!r) yymsg(0, "Could not add compound line");
-      List_Delete($7);
-      $$.Type = MSH_SEGM_COMPOUND;
       $$.Num = num;
     }
   | tWire '(' FExpr ')' tAFFECT ListOfDouble tEND
@@ -2141,39 +2075,6 @@ Shape :
       if(!r) yymsg(0, "Could not add thick solid");
       List_Delete($6);
     }
-  | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tEND
-    {
-      int num = (int)$4;
-      std::vector<int> tags; ListOfDouble2Vector($7, tags);
-      bool r = GModel::current()->getGEOInternals()->addCompoundSurface(num, tags);
-      if(!r) yymsg(0, "Could not add compound surface");
-      List_Delete($7);
-      $$.Type = MSH_SURF_COMPOUND;
-      $$.Num = num;
-    }
-  | tCompound tSurface '(' FExpr ')' tAFFECT ListOfDouble tSTRING
-      '{' RecursiveListOfListOfDouble '}' tEND
-    {
-      int num = (int)$4;
-      std::vector<int> tags; ListOfDouble2Vector($7, tags);
-      std::vector<int> bndTags[4];
-      for(int i = 0; i < List_Nbr($10); i++){
-        if(i < 4)
-          ListOfDouble2Vector(*(List_T**)List_Pointer($10, i), bndTags[i]);
-        else
-          break;
-      }
-      bool r = GModel::current()->getGEOInternals()->addCompoundSurface
-        (num, tags, bndTags);
-      if(!r) yymsg(0, "Could not add compound surface");
-      List_Delete($7);
-      Free($8);
-      for (int i = 0; i < List_Nbr($10); i++)
-        List_Delete(*(List_T**)List_Pointer($10, i));
-      List_Delete($10);
-      $$.Type = MSH_SURF_COMPOUND;
-      $$.Num = num;
-    }
   | tSurface tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
@@ -2243,65 +2144,153 @@ Shape :
       $$.Type = MSH_VOLUME;
       $$.Num = num;
     }
-  | tCompound tVolume '(' FExpr ')' tAFFECT ListOfDouble tEND
+
+  | tCompound GeoEntity123 '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
       std::vector<int> tags; ListOfDouble2Vector($7, tags);
-      bool r = GModel::current()->getGEOInternals()->addCompoundVolume(num, tags);
-      if(!r) yymsg(0, "Could not add compound volume");
+      switch ($2) {
+      case 1:
+        {
+          bool r = GModel::current()->getGEOInternals()->addCompoundLine(num, tags);
+          if(!r) yymsg(0, "Could not add compound line");
+        }
+        $$.Type = MSH_SEGM_COMPOUND;
+        break;
+      case 2:
+        {
+          bool r = GModel::current()->getGEOInternals()->addCompoundSurface(num, tags);
+          if(!r) yymsg(0, "Could not add compound surface");
+        }
+        $$.Type = MSH_SURF_COMPOUND;
+        break;
+      case 3:
+        {
+          bool r = GModel::current()->getGEOInternals()->addCompoundVolume(num, tags);
+          if(!r) yymsg(0, "Could not add compound volume");
+        }
+        $$.Type = MSH_VOLUME_COMPOUND;
+        break;
+      }
       List_Delete($7);
-      $$.Type = MSH_VOLUME_COMPOUND;
       $$.Num = num;
     }
-  | tPhysical tPoint '(' PhysicalId0 ')' NumericAffectation ListOfDouble tEND
+  | tCompound GeoEntity123 '(' FExpr ')' tAFFECT ListOfDouble tSTRING
+      '{' RecursiveListOfListOfDouble '}' tEND
     {
-      int num = (int)$4;
-      int op = $6;
-      std::vector<int> tags; ListOfDouble2Vector($7, tags);
-      bool r = GModel::current()->getGEOInternals()->modifyPhysicalGroup
-        (0, num, op, tags);
-      if(!r) yymsg(0, "Could not modify physical point");
-      List_Delete($7);
-      $$.Type = MSH_PHYSICAL_POINT;
-      $$.Num = num;
+      // Particular case only for dim 2 (Surface)
+      if ($2 == 2) {
+        int num = (int)$4;
+        std::vector<int> tags; ListOfDouble2Vector($7, tags);
+        std::vector<int> bndTags[4];
+        for(int i = 0; i < List_Nbr($10); i++){
+          if(i < 4)
+            ListOfDouble2Vector(*(List_T**)List_Pointer($10, i), bndTags[i]);
+          else
+            break;
+        }
+        bool r = GModel::current()->getGEOInternals()->addCompoundSurface
+          (num, tags, bndTags);
+        if(!r) yymsg(0, "Could not add compound surface");
+        List_Delete($7);
+        Free($8);
+        for (int i = 0; i < List_Nbr($10); i++)
+          List_Delete(*(List_T**)List_Pointer($10, i));
+        List_Delete($10);
+        $$.Type = MSH_SURF_COMPOUND;
+        $$.Num = num;
+      }
+      else {
+        yymsg(0, "GeoEntity dim out of range [2,2]");
+      }
     }
-  | tPhysical tLine '(' PhysicalId1 ')' NumericAffectation ListOfDouble tEND
+
+  | tPhysical GeoEntity
     {
-      int num = (int)$4;
-      int op = $6;
-      std::vector<int> tags; ListOfDouble2Vector($7, tags);
-      bool r = GModel::current()->getGEOInternals()->modifyPhysicalGroup
-        (1, num, op, tags);
-      if(!r) yymsg(0, "Could not modify physical line");
-      List_Delete($7);
-      $$.Type = MSH_PHYSICAL_LINE;
-      $$.Num = num;
+      dim_entity = $2;
     }
-  | tPhysical tSurface '(' PhysicalId2 ')' NumericAffectation ListOfDouble tEND
+    '(' PhysicalId_per_dim_entity ')' NumericAffectation ListOfDouble tEND
     {
-      int num = (int)$4;
-      int op = $6;
-      std::vector<int> tags; ListOfDouble2Vector($7, tags);
+      int num = (int)$5;
+      int op = $7;
+      std::vector<int> tags; ListOfDouble2Vector($8, tags);
       bool r = GModel::current()->getGEOInternals()->modifyPhysicalGroup
-        (2, num, op, tags);
-      if(!r) yymsg(0, "Could not modify physical surface");
-      List_Delete($7);
-      $$.Type = MSH_PHYSICAL_SURFACE;
-      $$.Num = num;
-    }
-  | tPhysical tVolume '(' PhysicalId3 ')' NumericAffectation ListOfDouble tEND
-    {
-      int num = (int)$4;
-      int op = $6;
-      std::vector<int> tags; ListOfDouble2Vector($7, tags);
-      bool r = GModel::current()->getGEOInternals()->modifyPhysicalGroup
-        (3, num, op, tags);
-      if(!r) yymsg(0, "Could not modify physical volume");
-      List_Delete($7);
-      $$.Type = MSH_PHYSICAL_VOLUME;
+        ($2, num, op, tags);
+      if(!r)
+        switch ($2) {
+        case 0: yymsg(0, "Could not modify physical point"); break;
+        case 1: yymsg(0, "Could not modify physical line"); break;
+        case 2: yymsg(0, "Could not modify physical surface"); break;
+        case 3: yymsg(0, "Could not modify physical volume"); break;
+        }
+      List_Delete($8);
+      switch ($2) {
+      case 0: $$.Type = MSH_PHYSICAL_POINT  ; break;
+      case 1: $$.Type = MSH_PHYSICAL_LINE   ; break;
+      case 2: $$.Type = MSH_PHYSICAL_SURFACE; break;
+      case 3: $$.Type = MSH_PHYSICAL_VOLUME ; break;
+      }
       $$.Num = num;
     }
 ;
+
+
+GeoEntity :
+    tPoint
+    { $$ = 0; }
+  | tLine
+    { $$ = 1; }
+  | tSurface
+    { $$ = 2; }
+  | tVolume
+    { $$ = 3; }
+  | tGeoEntity '{' FExpr '}'
+    {
+      $$ = (int)$3;
+      if ($$<0 || $$>3) yymsg(0, "GeoEntity dim out of range [0,3]");
+    }
+;
+
+GeoEntity123 :
+    tLine
+    { $$ = 1; }
+  | tSurface
+    { $$ = 2; }
+  | tVolume
+    { $$ = 3; }
+  | tGeoEntity '{' FExpr '}'
+    {
+      $$ = (int)$3;
+      if ($$<1 || $$>3) yymsg(0, "GeoEntity dim out of range [1,3]");
+    }
+;
+
+GeoEntity12 :
+    tLine
+    { $$ = 1; }
+  | tSurface
+    { $$ = 2; }
+  | tGeoEntity '{' FExpr '}'
+    {
+      $$ = (int)$3;
+      if ($$<1 || $$>2) yymsg(0, "GeoEntity dim out of range [1,2]");
+    }
+;
+
+GeoEntity02 :
+    tPoint
+    { $$ = 0; }
+  | tLine
+    { $$ = 1; }
+  | tSurface
+    { $$ = 2; }
+  | tGeoEntity '{' FExpr '}'
+    {
+      $$ = (int)$3;
+      if ($$<0 || $$>2) yymsg(0, "GeoEntity dim out of range [0,2]");
+    }
+;
+
 
 //  T R A N S F O R M
 
@@ -2480,47 +2469,19 @@ ListOfShapes :
     {
       List_Add($$, &$2);
     }
-  | ListOfShapes tPoint '{' RecursiveListOfDouble '}' tEND
+  | ListOfShapes GeoEntity '{' RecursiveListOfDouble '}' tEND
     {
       for(int i = 0; i < List_Nbr($4); i++){
 	double d;
 	List_Read($4, i, &d);
 	Shape s;
 	s.Num = (int)d;
-        s.Type = MSH_POINT;
-        List_Add($$, &s);
-      }
-    }
-  | ListOfShapes tLine '{' RecursiveListOfDouble '}' tEND
-    {
-      for(int i = 0; i < List_Nbr($4); i++){
-	double d;
-	List_Read($4, i, &d);
-	Shape s;
-	s.Num = (int)d;
-        s.Type = MSH_SEGM_LINE;
-        List_Add($$, &s);
-      }
-    }
-  | ListOfShapes tSurface '{' RecursiveListOfDouble '}' tEND
-    {
-      for(int i = 0; i < List_Nbr($4); i++){
-	double d;
-	List_Read($4, i, &d);
-	Shape s;
-	s.Num = (int)d;
-        s.Type = MSH_SURF_PLAN; // we don't care about the actual type
-        List_Add($$, &s);
-      }
-    }
-  | ListOfShapes tVolume '{' RecursiveListOfDouble '}' tEND
-    {
-      for(int i = 0; i < List_Nbr($4); i++){
-	double d;
-	List_Read($4, i, &d);
-	Shape s;
-	s.Num = (int)d;
-        s.Type = MSH_VOLUME;
+        switch ($2) {
+        case 0: s.Type = MSH_POINT    ; break;
+        case 1: s.Type = MSH_SEGM_LINE; break;
+        case 2: s.Type = MSH_SURF_PLAN; break; // we don't care about the actual type
+        case 3: s.Type = MSH_VOLUME   ; break;
+        }
         List_Add($$, &s);
       }
     }
@@ -4528,37 +4489,18 @@ Constraints :
       List_Delete($5);
       List_Delete($10);
     }
-  | tPoint '{' RecursiveListOfDouble '}' tIn tSurface '{' FExpr '}' tEND
+  | GeoEntity '{' RecursiveListOfDouble '}' tIn GeoEntity '{' FExpr '}' tEND
     {
-      std::vector<int> tags; ListOfDouble2Vector($3, tags);
-      addEmbedded(0, tags, 2, (int)$8);
+      if (($6==2 || $6==3) && $1<$6 ) {
+        std::vector<int> tags; ListOfDouble2Vector($3, tags);
+        addEmbedded($1, tags, $6, (int)$8);
+      }
+      else {
+        yymsg(0, "GeoEntity of dim %d In GeoEntity of dim %d not allowed", $1, $6);
+      }
       List_Delete($3);
     }
-  | tLine '{' RecursiveListOfDouble '}' tIn tSurface '{' FExpr '}' tEND
-    {
-      std::vector<int> tags; ListOfDouble2Vector($3, tags);
-      addEmbedded(1, tags, 2, (int)$8);
-      List_Delete($3);
-    }
-  | tPoint '{' RecursiveListOfDouble '}' tIn tVolume '{' FExpr '}' tEND
-    {
-      std::vector<int> tags; ListOfDouble2Vector($3, tags);
-      addEmbedded(0, tags, 3, (int)$8);
-      List_Delete($3);
-    }
-  | tLine '{' RecursiveListOfDouble '}' tIn tVolume '{' FExpr '}' tEND
-    {
-      std::vector<int> tags; ListOfDouble2Vector($3, tags);
-      addEmbedded(1, tags, 3, (int)$8);
-      List_Delete($3);
-    }
-  | tSurface '{' RecursiveListOfDouble '}' tIn tVolume '{' FExpr '}' tEND
-    {
-      std::vector<int> tags; ListOfDouble2Vector($3, tags);
-      addEmbedded(2, tags, 3, (int)$8);
-      List_Delete($3);
-    }
-  | tReverse tSurface ListOfDoubleOrAll tEND
+  | tReverse GeoEntity12 ListOfDoubleOrAll tEND
     {
       // reverse mesh constraints are stored in GEO internals in addition to
       // GModel, as they can be copied around during GEO operations
@@ -4566,10 +4508,20 @@ Constraints :
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(!$3){
-        GModel::current()->getGEOInternals()->setReverseMesh(2, 0);
-        for(GModel::fiter it = GModel::current()->firstFace();
-            it != GModel::current()->lastFace(); it++){
-          (*it)->meshAttributes.reverseMesh = 1;
+        GModel::current()->getGEOInternals()->setReverseMesh($2, 0);
+        switch ($2) {
+        case 1:
+          for(GModel::eiter it = GModel::current()->firstEdge();
+              it != GModel::current()->lastEdge(); it++){
+            (*it)->meshAttributes.reverseMesh = 1;
+          }
+          break;
+        case 2:
+          for(GModel::fiter it = GModel::current()->firstFace();
+              it != GModel::current()->lastFace(); it++){
+            (*it)->meshAttributes.reverseMesh = 1;
+          }
+          break;
         }
       }
       else{
@@ -4577,86 +4529,70 @@ Constraints :
           double d;
           List_Read($3, i, &d);
           int num = (int)d;
-          GModel::current()->getGEOInternals()->setReverseMesh(2, num);
-          GFace *gf = GModel::current()->getFaceByTag(num);
-          if(gf) gf->meshAttributes.reverseMesh = 1;
+          GModel::current()->getGEOInternals()->setReverseMesh($2, num);
+          switch ($2) {
+          case 1:
+            {
+              GEdge *ge = GModel::current()->getEdgeByTag(num);
+              if(ge) ge->meshAttributes.reverseMesh = 1;
+            }
+            break;
+          case 2:
+            {
+              GFace *gf = GModel::current()->getFaceByTag(num);
+              if(gf) gf->meshAttributes.reverseMesh = 1;
+            }
+            break;
+          }
         }
         List_Delete($3);
       }
     }
-  | tReverse tLine ListOfDoubleOrAll tEND
+  | tRelocateMesh GeoEntity02 ListOfDoubleOrAll tEND
     {
-      // reverse mesh constraints are stored in GEO internals in addition to
-      // GModel, as they can be copied around during GEO operations
-      if(GModel::current()->getOCCInternals() &&
-         GModel::current()->getOCCInternals()->getChanged())
-        GModel::current()->getOCCInternals()->synchronize(GModel::current());
       if(!$3){
-        GModel::current()->getGEOInternals()->setReverseMesh(1, 0);
-        for(GModel::eiter it = GModel::current()->firstEdge();
-            it != GModel::current()->lastEdge(); it++){
-          (*it)->meshAttributes.reverseMesh = 1;
+        switch ($2) {
+        case 0:
+          for(GModel::viter it = GModel::current()->firstVertex();
+              it != GModel::current()->lastVertex(); it++)
+            (*it)->relocateMeshVertices();
+          break;
+        case 1:
+          for(GModel::eiter it = GModel::current()->firstEdge();
+              it != GModel::current()->lastEdge(); it++)
+            (*it)->relocateMeshVertices();
+          break;
+        case 2:
+          for(GModel::fiter it = GModel::current()->firstFace();
+              it != GModel::current()->lastFace(); it++)
+            (*it)->relocateMeshVertices();
+          break;
         }
       }
       else{
         for(int i = 0; i < List_Nbr($3); i++){
           double d;
           List_Read($3, i, &d);
-          int num = (int)d;
-          GModel::current()->getGEOInternals()->setReverseMesh(1, num);
-          GEdge *ge = GModel::current()->getEdgeByTag(num);
-          if(ge) ge->meshAttributes.reverseMesh = 1;
-        }
-        List_Delete($3);
-      }
-    }
-  | tRelocateMesh tPoint ListOfDoubleOrAll tEND
-    {
-      if(!$3){
-        for(GModel::viter it = GModel::current()->firstVertex();
-            it != GModel::current()->lastVertex(); it++)
-          (*it)->relocateMeshVertices();
-      }
-      else{
-        for(int i = 0; i < List_Nbr($3); i++){
-          double d;
-          List_Read($3, i, &d);
-          GVertex *gv = GModel::current()->getVertexByTag((int)d);
-          if(gv) gv->relocateMeshVertices();
-        }
-        List_Delete($3);
-      }
-    }
-  | tRelocateMesh tLine ListOfDoubleOrAll tEND
-    {
-      if(!$3){
-        for(GModel::eiter it = GModel::current()->firstEdge();
-            it != GModel::current()->lastEdge(); it++)
-          (*it)->relocateMeshVertices();
-      }
-      else{
-        for(int i = 0; i < List_Nbr($3); i++){
-          double d;
-          List_Read($3, i, &d);
-          GEdge *ge = GModel::current()->getEdgeByTag((int)d);
-          if(ge) ge->relocateMeshVertices();
-        }
-        List_Delete($3);
-      }
-    }
-  | tRelocateMesh tSurface ListOfDoubleOrAll tEND
-    {
-      if(!$3){
-        for(GModel::fiter it = GModel::current()->firstFace();
-            it != GModel::current()->lastFace(); it++)
-          (*it)->relocateMeshVertices();
-      }
-      else{
-        for(int i = 0; i < List_Nbr($3); i++){
-          double d;
-          List_Read($3, i, &d);
-          GFace *gf = GModel::current()->getFaceByTag((int)d);
-          if(gf) gf->relocateMeshVertices();
+          switch ($2) {
+          case 0:
+            {
+              GVertex *gv = GModel::current()->getVertexByTag((int)d);
+              if(gv) gv->relocateMeshVertices();
+            }
+            break;
+          case 1:
+            {
+              GEdge *ge = GModel::current()->getEdgeByTag((int)d);
+              if(ge) ge->relocateMeshVertices();
+            }
+            break;
+          case 2:
+            {
+              GFace *gf = GModel::current()->getFaceByTag((int)d);
+              if(gf) gf->relocateMeshVertices();
+            }
+            break;
+          }
         }
         List_Delete($3);
       }
@@ -4673,22 +4609,10 @@ Constraints :
       }
       List_Delete($3);
     }
-  | tCompound tLine ListOfDouble tEND
+  | tCompound GeoEntity123 ListOfDouble tEND
     {
       std::vector<int> tags; ListOfDouble2Vector($3, tags);
-      GModel::current()->getGEOInternals()->setCompoundMesh(1, tags);
-      List_Delete($3);
-    }
-  | tCompound tSurface ListOfDouble tEND
-    {
-      std::vector<int> tags; ListOfDouble2Vector($3, tags);
-      GModel::current()->getGEOInternals()->setCompoundMesh(2, tags);
-      List_Delete($3);
-    }
-  | tCompound tVolume ListOfDouble tEND
-    {
-      std::vector<int> tags; ListOfDouble2Vector($3, tags);
-      GModel::current()->getGEOInternals()->setCompoundMesh(3, tags);
+      GModel::current()->getGEOInternals()->setCompoundMesh($2, tags);
       List_Delete($3);
     }
 ;
@@ -5373,97 +5297,28 @@ FExpr_Multi :
       List_Add($$, &y);
       List_Add($$, &z);
     }
-  | tPoint tBIGSTR
+  | GeoEntity tBIGSTR
     {
       $$ = List_Create(10, 10, sizeof(double));
-      getAllElementaryTags(0, $$);
+      getAllElementaryTags($1, $$);
       Free($2);
     }
-  | tLine tBIGSTR
-    {
-      $$ = List_Create(10, 10, sizeof(double));
-      getAllElementaryTags(1, $$);
-      Free($2);
-    }
-  | tSurface tBIGSTR
-    {
-      $$ = List_Create(10, 10, sizeof(double));
-      getAllElementaryTags(2, $$);
-      Free($2);
-    }
-  | tVolume tBIGSTR
-    {
-      $$ = List_Create(10, 10, sizeof(double));
-      getAllElementaryTags(3, $$);
-      Free($2);
-    }
-  | tPhysical tPoint ListOfDoubleOrAll
+  | tPhysical GeoEntity ListOfDoubleOrAll
     {
       $$ = List_Create(10, 10, sizeof(double));
       if(!$3){
-        getAllPhysicalTags(0, $$);
+        getAllPhysicalTags($2, $$);
       }
       else{
-        getElementaryTagsForPhysicalGroups(0, $3, $$);
+        getElementaryTagsForPhysicalGroups($2, $3, $$);
         List_Delete($3);
       }
     }
-  | tPhysical tLine ListOfDoubleOrAll
-    {
-      $$ = List_Create(10, 10, sizeof(double));
-      if(!$3){
-        getAllPhysicalTags(1, $$);
-      }
-      else{
-        getElementaryTagsForPhysicalGroups(1, $3, $$);
-        List_Delete($3);
-      }
-    }
-  | tPhysical tSurface ListOfDoubleOrAll
-    {
-      $$ = List_Create(10, 10, sizeof(double));
-      if(!$3){
-        getAllPhysicalTags(2, $$);
-      }
-      else{
-        getElementaryTagsForPhysicalGroups(2, $3, $$);
-        List_Delete($3);
-      }
-    }
-  | tPhysical tVolume ListOfDoubleOrAll
-    {
-      $$ = List_Create(10, 10, sizeof(double));
-      if(!$3){
-        getAllPhysicalTags(3, $$);
-      }
-      else{
-        getElementaryTagsForPhysicalGroups(3, $3, $$);
-        List_Delete($3);
-      }
-    }
-  | tPoint tIn tBoundingBox
+  | GeoEntity tIn tBoundingBox
       '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
     {
       $$ = List_Create(10, 10, sizeof(double));
-      getElementaryTagsInBoundingBox(0, $5, $7, $9, $11, $13, $15, $$);
-    }
-  | tLine tIn tBoundingBox
-      '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
-    {
-      $$ = List_Create(10, 10, sizeof(double));
-      getElementaryTagsInBoundingBox(1, $5, $7, $9, $11, $13, $15, $$);
-    }
-  | tSurface tIn tBoundingBox
-      '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
-    {
-      $$ = List_Create(10, 10, sizeof(double));
-      getElementaryTagsInBoundingBox(2, $5, $7, $9, $11, $13, $15, $$);
-    }
-  | tVolume tIn tBoundingBox
-      '{' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr ',' FExpr '}'
-    {
-      $$ = List_Create(10, 10, sizeof(double));
-      getElementaryTagsInBoundingBox(3, $5, $7, $9, $11, $13, $15, $$);
+      getElementaryTagsInBoundingBox($1, $5, $7, $9, $11, $13, $15, $$);
     }
   | Transform
     {

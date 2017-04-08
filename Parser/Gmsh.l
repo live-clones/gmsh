@@ -202,6 +202,7 @@ Function                return tMacro;
 GMSH_MAJOR_VERSION      return tGMSH_MAJOR_VERSION;
 GMSH_MINOR_VERSION      return tGMSH_MINOR_VERSION;
 GMSH_PATCH_VERSION      return tGMSH_PATCH_VERSION;
+GeoEntity               return tGeoEntity;
 GetEnv                  return tGetEnv;
 GetForced               return tGetForced;
 GetForcedStr            return tGetForcedStr;
