@@ -27,8 +27,8 @@ void add_infile(const std::string &text, const std::string &fileNameOrEmpty)
 {
   std::string fileName = fileNameOrEmpty;
   if(fileName.empty()){
-    fileName = CTX::instance()->defaultFileName;
-    GModel::current()->setFileName(fileName);
+    std::string base = (getenv("PWD") ? "" : CTX::instance()->homeDir);
+    GModel::current()->setFileName(base + CTX::instance()->defaultFileName);
     GModel::current()->setName("");
   }
 

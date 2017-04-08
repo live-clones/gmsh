@@ -654,7 +654,8 @@ void ClearProject()
   Msg::Info("Done clearing all models and views");
 
   new GModel();
-  GModel::current()->setFileName(CTX::instance()->defaultFileName);
+  std::string base = (getenv("PWD") ? "" : CTX::instance()->homeDir);
+  GModel::current()->setFileName(base + CTX::instance()->defaultFileName);
   GModel::current()->setName("");
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
