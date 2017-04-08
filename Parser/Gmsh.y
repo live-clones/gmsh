@@ -2144,7 +2144,6 @@ Shape :
       $$.Type = MSH_VOLUME;
       $$.Num = num;
     }
-
   | tCompound GeoEntity123 '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
@@ -2204,7 +2203,6 @@ Shape :
         yymsg(0, "GeoEntity dim out of range [2,2]");
       }
     }
-
   | tPhysical GeoEntity
     {
       dim_entity = $2;
@@ -2233,7 +2231,6 @@ Shape :
       $$.Num = num;
     }
 ;
-
 
 GeoEntity :
     tPoint
@@ -2290,7 +2287,6 @@ GeoEntity02 :
       if ($$<0 || $$>2) yymsg(0, "GeoEntity dim out of range [0,2]");
     }
 ;
-
 
 //  T R A N S F O R M
 
@@ -3581,7 +3577,6 @@ Loop :
     }
 ;
 
-
 //  E X T R U D E
 
 Extrude :
@@ -4617,7 +4612,6 @@ Constraints :
     }
 ;
 
-
 //  C O H E R E N C E
 
 Coherence :
@@ -5131,7 +5125,6 @@ AppendOrNot :
   | '(' Append ')'
     { $$ = $2; }
   ;
-
 
 VExpr :
     VExpr_Single
@@ -6036,21 +6029,17 @@ MultiStringExprVar :
       }
       Free($1);
     }
-
   | String__Index '.' tSTRING_Member '(' ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_ListOfString(NULL, $1, $3);
     }
-
   | String__Index tSCOPE String__Index '.' tSTRING_Member '(' ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_ListOfString($1, $3, $5);
     }
 ;
 
-
 StringIndex :
-
     tSTRING '~' '{' FExpr '}'
     {
       char tmpstr[256];
@@ -6059,7 +6048,6 @@ StringIndex :
       strcpy($$, $1); strcat($$, tmpstr);
       Free($1);
     }
-
   | StringIndex '~' '{' FExpr '}'
     {
       char tmpstr[256];
@@ -6068,7 +6056,6 @@ StringIndex :
       strcpy($$, $1) ; strcat($$, tmpstr) ;
       Free($1);
     }
-
   | tStringToName '[' StringExprVar ']' '~' '{' FExpr '}'
     {
       char tmpstr[256];
@@ -6080,13 +6067,10 @@ StringIndex :
  ;
 
 String__Index :
-
     tSTRING
     { $$ = $1; }
-
   | StringIndex
     { $$ = $1; }
-
   // Create a name from any string
   | tStringToName '[' StringExprVar ']'
     { $$ = $3; }

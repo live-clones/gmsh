@@ -72,12 +72,11 @@ Build Gmsh from the command line
     cd lib
     cmake -DDEFAULT=0 -DENABLE_BUILD_LIB=1 -DENABLE_POST=1 -DENABLE_PARSER=1 ..
     make lib
-    make shared
     make install/fast
 
-  (Note that "make install/fast" allows you to install only the targets that you
-  just built--i.e. "lib" and "shared", and will not trigger the recompilation of
-  the default target "gmsh".)
+  (Note that "make install/fast" allows you to install only the target that you
+  just built, i.e. "lib", and will not trigger the recompilation of the default
+  target "gmsh".)
 
 * To see a detailed compilation log use
 
