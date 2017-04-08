@@ -220,7 +220,7 @@ void openglWindow::draw()
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
     _ctx->draw3d();
-    glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
+    glColor4ubv((GLubyte *) & CTX::instance()->color.geom.highlight[0]);
     float ps = CTX::instance()->geom.pointSize;
     if(_ctx->isHighResolution())
       ps *= CTX::instance()->highResolutionPointSizeFactor;
