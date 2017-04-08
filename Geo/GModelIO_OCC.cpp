@@ -301,7 +301,7 @@ void OCC_Internals::unbind(TopoDS_Vertex vertex, int tag, bool recursive)
     TopoDS_Edge edge = TopoDS::Edge(exp0.Value());
     TopExp_Explorer exp1;
     for(exp1.Init(edge, TopAbs_VERTEX); exp1.More(); exp1.Next()){
-      if(exp1.Current().IsSame(vertex)) return;
+      if(exp1.Current().IsEqual(vertex)) return;
     }
   }
   _vertexTag.UnBind(vertex);
@@ -317,7 +317,7 @@ void OCC_Internals::unbind(TopoDS_Edge edge, int tag, bool recursive)
     TopoDS_Face face = TopoDS::Face(exp2.Value());
     TopExp_Explorer exp1;
     for(exp1.Init(face, TopAbs_EDGE); exp1.More(); exp1.Next()){
-      if(exp1.Current().IsSame(edge)) return;
+      if(exp1.Current().IsEqual(edge)) return;
     }
   }
   _edgeTag.UnBind(edge);
@@ -343,7 +343,7 @@ void OCC_Internals::unbind(TopoDS_Wire wire, int tag, bool recursive)
     TopoDS_Face face = TopoDS::Face(exp0.Value());
     TopExp_Explorer exp1;
     for(exp1.Init(face, TopAbs_WIRE); exp1.More(); exp1.Next()){
-      if(exp1.Current().IsSame(wire)) return;
+      if(exp1.Current().IsEqual(wire)) return;
     }
   }
   _wireTag.UnBind(wire);
@@ -369,7 +369,7 @@ void OCC_Internals::unbind(TopoDS_Face face, int tag, bool recursive)
     TopoDS_Solid solid = TopoDS::Solid(exp2.Value());
     TopExp_Explorer exp1;
     for(exp1.Init(solid, TopAbs_FACE); exp1.More(); exp1.Next()){
-      if(exp1.Current().IsSame(face)) return;
+      if(exp1.Current().IsEqual(face)) return;
     }
   }
   _faceTag.UnBind(face);
@@ -402,7 +402,7 @@ void OCC_Internals::unbind(TopoDS_Shell shell, int tag, bool recursive)
     TopoDS_Solid solid = TopoDS::Solid(exp0.Value());
     TopExp_Explorer exp1;
     for(exp1.Init(solid, TopAbs_SHELL); exp1.More(); exp1.Next()){
-      if(exp1.Current().IsSame(shell)) return;
+      if(exp1.Current().IsEqual(shell)) return;
     }
   }
   _shellTag.UnBind(shell);
@@ -2434,15 +2434,16 @@ void OCC_Internals::synchronize(GModel *model)
     if((*it)->getNativeType() == GEntity::OpenCascadeModel){
       OCCVertex *occ = (OCCVertex*)(*it);
       TopoDS_Vertex v = *(TopoDS_Vertex*)occ->getNativePtr();
-      if(!_vertexTag.IsBound(v))
+      if(!_vertexTag.IsBound(v) || _vertexTag.Find(v) != occ->tag()){
         toRemove.push_back(std::pair<int, int>(0, occ->tag()));
+      }
     }
   }
   for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
     if((*it)->getNativeType() == GEntity::OpenCascadeModel){
       OCCEdge *occ = (OCCEdge*)(*it);
       TopoDS_Edge v = *(TopoDS_Edge*)occ->getNativePtr();
-      if(!_edgeTag.IsBound(v))
+      if(!_edgeTag.IsBound(v) || _edgeTag.Find(v) != occ->tag())
         toRemove.push_back(std::pair<int, int>(1, occ->tag()));
     }
   }
@@ -2450,7 +2451,7 @@ void OCC_Internals::synchronize(GModel *model)
     if((*it)->getNativeType() == GEntity::OpenCascadeModel){
       OCCFace *occ = (OCCFace*)(*it);
       TopoDS_Face v = *(TopoDS_Face*)occ->getNativePtr();
-      if(!_faceTag.IsBound(v))
+      if(!_faceTag.IsBound(v) || _faceTag.Find(v) != occ->tag())
         toRemove.push_back(std::pair<int, int>(2, occ->tag()));
     }
   }
@@ -2458,7 +2459,7 @@ void OCC_Internals::synchronize(GModel *model)
     if((*it)->getNativeType() == GEntity::OpenCascadeModel){
       OCCRegion *occ = (OCCRegion*)(*it);
       TopoDS_Solid v = *(TopoDS_Solid*)occ->getNativePtr();
-      if(!_solidTag.IsBound(v))
+      if(!_solidTag.IsBound(v) || _solidTag.Find(v) != occ->tag())
         toRemove.push_back(std::pair<int, int>(3, occ->tag()));
     }
   }

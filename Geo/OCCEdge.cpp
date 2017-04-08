@@ -85,7 +85,6 @@ void OCCEdge::setTrimmed(OCCFace *f)
 
 SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
 {
-
   if (face->getNativeType() != GEntity::OpenCascadeModel){
     const GPoint pt = point(epar);
     SPoint3 sp(pt.x(), pt.y(), pt.z());
