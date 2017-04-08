@@ -1,5 +1,7 @@
 SetFactory("OpenCASCADE");
 
+Geometry.SurfaceNumbers = 1;
+
 DefineConstant[
   w = {0.05, Name "Width"}
   N = {10, Name "Number of disks"}
