@@ -10490,7 +10490,7 @@ yyreduce:
         // currently we don't distinguish between Delete and Recursive Delete:
         // we always delete recursively. Let us know if you have examples where
         // having the choice would be interesting
-        r = GModel::current()->getOCCInternals()->applyBooleanOperator
+        r = GModel::current()->getOCCInternals()->booleanOperator
           (-1, (OCC_Internals::BooleanOperator)(yyvsp[(1) - (9)].i), object, tool, out, (yyvsp[(4) - (9)].i), (yyvsp[(8) - (9)].i));
         VectorOfPairs2ListOfShapes(out, (yyval.l));
       }
@@ -10533,7 +10533,7 @@ yyreduce:
         // currently we don't distinguish between Delete and Recursive Delete:
         // we always delete recursively. Let us know if you have examples where
         // having the choice would be interesting
-        r = GModel::current()->getOCCInternals()->applyBooleanOperator
+        r = GModel::current()->getOCCInternals()->booleanOperator
           ((int)(yyvsp[(3) - (14)].d), (OCC_Internals::BooleanOperator)(yyvsp[(1) - (14)].i), object, tool, out, (yyvsp[(8) - (14)].i), (yyvsp[(12) - (14)].i));
       }
       if(!r) yymsg(0, "Could not apply boolean operator");

@@ -1877,12 +1877,11 @@ bool OCC_Internals::fillet(const std::vector<int> &regionTags,
   return true;
 }
 
-bool OCC_Internals::applyBooleanOperator
-                    (int tag, BooleanOperator op,
-                     const std::vector<std::pair<int, int> > &objectDimTags,
-                     const std::vector<std::pair<int, int> > &toolDimTags,
-                     std::vector<std::pair<int, int> > &outDimTags,
-                     bool removeObject, bool removeTool)
+bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
+                                    const std::vector<std::pair<int, int> > &objectDimTags,
+                                    const std::vector<std::pair<int, int> > &toolDimTags,
+                                    std::vector<std::pair<int, int> > &outDimTags,
+                                    bool removeObject, bool removeTool)
 {
   double tolerance = CTX::instance()->geom.toleranceBoolean;
   bool parallel = CTX::instance()->geom.occParallel;
@@ -2156,6 +2155,46 @@ bool OCC_Internals::applyBooleanOperator
   }
 
   return true;
+}
+
+bool OCC_Internals::booleanUnion(int tag,
+                                 const std::vector<std::pair<int, int> > &objectDimTags,
+                                 const std::vector<std::pair<int, int> > &toolDimTags,
+                                 std::vector<std::pair<int, int> > &outDimTags,
+                                 bool removeObject, bool removeTool)
+{
+  return booleanOperator(tag, OCC_Internals::Union, objectDimTags, toolDimTags,
+                         outDimTags, removeObject, removeTool);
+}
+
+bool OCC_Internals::booleanIntersection(int tag,
+                                        const std::vector<std::pair<int, int> > &objectDimTags,
+                                        const std::vector<std::pair<int, int> > &toolDimTags,
+                                        std::vector<std::pair<int, int> > &outDimTags,
+                                        bool removeObject, bool removeTool)
+{
+  return booleanOperator(tag, OCC_Internals::Intersection, objectDimTags, toolDimTags,
+                         outDimTags, removeObject, removeTool);
+}
+
+bool OCC_Internals::booleanDifference(int tag,
+                                      const std::vector<std::pair<int, int> > &objectDimTags,
+                                      const std::vector<std::pair<int, int> > &toolDimTags,
+                                      std::vector<std::pair<int, int> > &outDimTags,
+                                      bool removeObject, bool removeTool)
+{
+  return booleanOperator(tag, OCC_Internals::Difference, objectDimTags, toolDimTags,
+                         outDimTags, removeObject, removeTool);
+}
+
+bool OCC_Internals::booleanFragments(int tag,
+                                     const std::vector<std::pair<int, int> > &objectDimTags,
+                                     const std::vector<std::pair<int, int> > &toolDimTags,
+                                     std::vector<std::pair<int, int> > &outDimTags,
+                                     bool removeObject, bool removeTool)
+{
+  return booleanOperator(tag, OCC_Internals::Fragments, objectDimTags, toolDimTags,
+                         outDimTags, removeObject, removeTool);
 }
 
 bool OCC_Internals::_transform(const std::vector<std::pair<int, int> > &inDimTags,

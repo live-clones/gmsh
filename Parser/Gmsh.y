@@ -3922,7 +3922,7 @@ Boolean :
         // currently we don't distinguish between Delete and Recursive Delete:
         // we always delete recursively. Let us know if you have examples where
         // having the choice would be interesting
-        r = GModel::current()->getOCCInternals()->applyBooleanOperator
+        r = GModel::current()->getOCCInternals()->booleanOperator
           (-1, (OCC_Internals::BooleanOperator)$1, object, tool, out, $4, $8);
         VectorOfPairs2ListOfShapes(out, $$);
       }
@@ -3963,7 +3963,7 @@ BooleanShape :
         // currently we don't distinguish between Delete and Recursive Delete:
         // we always delete recursively. Let us know if you have examples where
         // having the choice would be interesting
-        r = GModel::current()->getOCCInternals()->applyBooleanOperator
+        r = GModel::current()->getOCCInternals()->booleanOperator
           ((int)$3, (OCC_Internals::BooleanOperator)$1, object, tool, out, $8, $12);
       }
       if(!r) yymsg(0, "Could not apply boolean operator");
