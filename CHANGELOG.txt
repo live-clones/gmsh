@@ -1,12 +1,12 @@
 3.0.0 (?): new constructive solid geometry features and boolean operations using
-OpenCASCADE (6.9 or higher); improved graphical user interface for interactive,
-parametric geometry construction; new or modified commands in .geo files:
-SetFactory, Circle, Ellipse, Wire, Surface, Sphere, Block, Torus, Rectangle,
-Disk, Cylinder, Cone, Wedge, ThickSolid, ThruSections, Ruled ThruSections,
-Fillet, Extrude, BooleanUnion, BooleanIntersection, BooleanDifference,
-BooleanFragments, ShapeFromFile, Recursive Delete, Unique; "Surface" replaces
-the deprecated "Ruled Surface" command; faster 3D tetrahedral mesh optimization
-enabled by default ; major code refactoring and numerous bug fixes.
+OpenCASCADE; improved graphical user interface for interactive, parametric
+geometry construction; new or modified commands in .geo files: SetFactory,
+Circle, Ellipse, Wire, Surface, Sphere, Block, Torus, Rectangle, Disk, Cylinder,
+Cone, Wedge, ThickSolid, ThruSections, Ruled ThruSections, Fillet, Extrude,
+BooleanUnion, BooleanIntersection, BooleanDifference, BooleanFragments,
+ShapeFromFile, Recursive Delete, Unique; "Surface" replaces the deprecated
+"Ruled Surface" command; faster 3D tetrahedral mesh optimization enabled by
+default; major code refactoring and numerous bug fixes.
 
 2.16.0 (January 3, 2017): small improvements (list functions, second order hexes
 for MED, GUI) and bug fixes.
