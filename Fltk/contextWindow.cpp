@@ -4,6 +4,8 @@
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <stdlib.h>
+#include "GModel.h"
+#include "GModelIO_OCC.h" // include before Xlib to avoid clashes with OCC
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Return_Button.H>
 #include "FlGui.h"
@@ -12,8 +14,6 @@
 #include "paletteWindow.h"
 #include "graphicWindow.h"
 #include "openglWindow.h"
-#include "GModel.h"
-#include "GModelIO_OCC.h"
 #include "Parser.h"
 #include "GeoStringInterface.h"
 #include "OpenFile.h"
@@ -1059,7 +1059,7 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
         input[i]->align(FL_ALIGN_RIGHT);
       }
       butt[0] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, width - 4 * WB, BH,
-                                    "Apply operation on copy");
+                                    "Apply translation on copy");
       butt[0]->value(0);
       butt[7] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, width - 4 * WB, BH,
                                     "Extrude mesh");
@@ -1093,7 +1093,7 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
         input[i]->align(FL_ALIGN_RIGHT);
       }
       butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, width - 4 * WB, BH,
-                                    "Apply operation on copy");
+                                    "Apply rotation on copy");
       butt[1]->value(0);
       butt[9] = new Fl_Check_Button(2 * WB, 2 * WB + 6 * BH, width - 4 * WB, BH,
                                     "Extrude mesh");
@@ -1125,7 +1125,7 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
         input[i]->align(FL_ALIGN_RIGHT);
       }
       butt[2] = new Fl_Check_Button(2 * WB, 2 * WB + 7 * BH, width - 4 * WB, BH,
-                                    "Apply operation on copy");
+                                    "Apply scaling on copy");
       butt[2]->value(0);
       group[2]->end();
     }
@@ -1145,7 +1145,7 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
         input[i]->align(FL_ALIGN_RIGHT);
       }
       butt[3] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, width - 4 * WB, BH,
-                                    "Apply operation on copy");
+                                    "Apply symmetry on copy");
       butt[3]->value(0);
       group[3]->end();
     }
