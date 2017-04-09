@@ -1257,10 +1257,11 @@ static void geometry_elementary_add_new_cb(Fl_Widget *w, void *data)
     Msg::Error("Unknown entity to create: %s", str.c_str());
 }
 
-static void action_point_line_surface_volume(int action, const std::string &what="")
+static void action_point_line_surface_volume(int action, const std::string &onwhat="")
 {
   drawContext::global()->draw();
 
+  std::string what(onwhat);
   if(what == "Point")
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   else if(what == "Line")
@@ -1270,7 +1271,7 @@ static void action_point_line_surface_volume(int action, const std::string &what
   else if(what == "Volume")
     opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
 
-  std::vector<std::pair<int, int> > dimTags;
+  std::vector<std::pair<int, int> > dimTags, dimTagsSaved;
   std::vector<std::pair<int, int> >::iterator it;
   while(1) {
     std::string str;
@@ -1510,6 +1511,22 @@ static void action_point_line_surface_volume(int action, const std::string &what
             add_compound(GModel::current()->getFileName(), what, tags);
           }
           break;
+        case 12:
+          if(dimTagsSaved.empty()){
+            dimTagsSaved = dimTags;
+            dimTags.clear();
+            what = "Line";
+            continue;
+          }
+          else{
+            std::vector<int> l;
+            for(unsigned int i = 0; i < dimTags.size(); i++){
+              if(dimTags[i].first == 1) l.push_back(dimTags[i].second);
+            }
+            add_pipe(GModel::current()->getFileName(), dimTagsSaved, l);
+            dimTagsSaved.clear();
+          }
+          break;
         default:
           Msg::Error("Unknown action on selected entities");
           break;
@@ -1517,7 +1534,7 @@ static void action_point_line_surface_volume(int action, const std::string &what
         dimTags.clear();
         FlGui::instance()->resetVisibility();
         GModel::current()->setSelection(0);
-        if(action <= 6) SetBoundingBox();
+        if(action <= 6 || action >= 12) SetBoundingBox();
         drawContext::global()->draw();
       }
     }
@@ -1570,6 +1587,13 @@ static void geometry_elementary_extrude_rotate_cb(Fl_Widget *w, void *data)
 {
   FlGui::instance()->transformContext->show(1, true);
   action_point_line_surface_volume(5);
+  FlGui::instance()->transformContext->hide();
+}
+
+static void geometry_elementary_pipe_cb(Fl_Widget *w, void *data)
+{
+  FlGui::instance()->transformContext->show(-1, true);
+  action_point_line_surface_volume(12);
   FlGui::instance()->transformContext->hide();
 }
 
@@ -4162,6 +4186,8 @@ static menuItem static_modules[] = {
    (Fl_Callback *)geometry_elementary_extrude_translate_cb} ,
   {"0Modules/Geometry/Elementary entities/Extrude/Rotate",
    (Fl_Callback *)geometry_elementary_extrude_rotate_cb} ,
+  {"0Modules/Geometry/Elementary entities/Extrude/Pipe",
+   (Fl_Callback *)geometry_elementary_pipe_cb} ,
   {"0Modules/Geometry/Elementary entities/Boolean/Intersection",
    (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanIntersection"} ,
   {"0Modules/Geometry/Elementary entities/Boolean/Union",

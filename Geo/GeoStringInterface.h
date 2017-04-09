@@ -99,6 +99,8 @@ void protude(const std::string &fileName, const std::vector<std::pair<int, int> 
              const std::string &px, const std::string &py, const std::string &pz,
              const std::string &angle, bool extrudeMesh, const std::string &layers,
              bool recombineMesh);
+void add_pipe(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
+              const std::vector<int> &l2);
 void split_edge(int edge_id, List_T *vertices, const std::string &fileName);
 void apply_boolean(const std::string &fileName, const std::string &op,
                    const std::vector<std::pair<int, int> > &object,

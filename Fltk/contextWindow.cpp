@@ -1195,7 +1195,6 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
 
 void transformContextWindow::show(int pane, bool extrude, bool selection)
 {
-  if(pane < 0 || pane > 6) return;
   for(int i = 0; i < 7; i++){
     group[i]->hide();
     group[i]->deactivate();
@@ -1214,8 +1213,12 @@ void transformContextWindow::show(int pane, bool extrude, bool selection)
   }
   if(selection) choice->activate();
   else choice->deactivate();
-  group[pane]->show();
-  group[pane]->activate();
+  if(pane < 0 || pane > 6){
+  }
+  else{
+    group[pane]->show();
+    group[pane]->activate();
+  }
   win->show();
 }
 

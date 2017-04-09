@@ -682,6 +682,19 @@ void protude(const std::string &fileName, const std::vector<std::pair<int, int> 
   add_infile(sstream.str(), fileName);
 }
 
+void add_pipe(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
+              const std::vector<int> &l2)
+{
+  std::ostringstream sstream;
+  check_occ(sstream);
+  int wire = GModel::current()->getGEOInternals()->getMaxTag(-1) + 1;
+  if(GModel::current()->getOCCInternals())
+    wire = std::max(wire, GModel::current()->getOCCInternals()->getMaxTag(-1) + 1);
+  sstream << "Wire(" << wire << ") = {" << vector2String(l2) << "};\n";
+  sstream << "Extrude { " << dimTags2String(l) << "} Using Wire {" << wire << "}\n";
+  add_infile(sstream.str(), fileName);
+}
+
 void split_edge(int edge_id, List_T *vertices, const std::string &fileName)
 {
   std::ostringstream sstream;
