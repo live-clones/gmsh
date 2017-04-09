@@ -974,7 +974,7 @@ void discreteFace::crossField()
 {
 #if defined(HAVE_SOLVER) && defined(HAVE_ANN)
   // linear system
-  linearSystem<double> * lsys;
+  linearSystem<double> * lsys = 0;
 
 #ifdef HAVE_PETSC
   lsys = new linearSystemPETSc<double>;
