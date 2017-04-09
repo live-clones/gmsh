@@ -3,6 +3,6 @@ makegmsh:
   script:
     - mkdir build
     - cd build
-    - cmake .. -DENABLE_CXX11=1
+    - cmake ..
     - make -j4
     - ctest --output-on-failure
