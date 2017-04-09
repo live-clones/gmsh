@@ -580,6 +580,7 @@ void drawContext::drawPost()
 
   for(unsigned int i = 0; i < PView::list.size(); i++){
     bool changed = PView::list[i]->fillVertexArrays();
+    if(changed) Msg::Debug("post-pro vertex arrays have changed");
 #if defined(HAVE_FLTK) && defined(__APPLE__)
     // FIXME: resetting texture pile fixes bug with recent MacOS versions
     if(changed) gl_texture_pile_height(gl_texture_pile_height());
