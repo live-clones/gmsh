@@ -1432,7 +1432,10 @@ static void action_point_line_surface_volume(int action, const std::string &what
           extrude(GModel::current()->getFileName(), dimTags,
                   FlGui::instance()->transformContext->input[0]->value(),
                   FlGui::instance()->transformContext->input[1]->value(),
-                  FlGui::instance()->transformContext->input[2]->value());
+                  FlGui::instance()->transformContext->input[2]->value(),
+                  FlGui::instance()->transformContext->butt[7]->value(),
+                  FlGui::instance()->transformContext->input[21]->value(),
+                  FlGui::instance()->transformContext->butt[8]->value());
           break;
         case 5:
           protude(GModel::current()->getFileName(), dimTags,
@@ -1442,7 +1445,10 @@ static void action_point_line_surface_volume(int action, const std::string &what
                   FlGui::instance()->transformContext->input[3]->value(),
                   FlGui::instance()->transformContext->input[4]->value(),
                   FlGui::instance()->transformContext->input[5]->value(),
-                  FlGui::instance()->transformContext->input[9]->value());
+                  FlGui::instance()->transformContext->input[9]->value(),
+                  FlGui::instance()->transformContext->butt[9]->value(),
+                  FlGui::instance()->transformContext->input[22]->value(),
+                  FlGui::instance()->transformContext->butt[10]->value());
           break;
         case 6:
           delete_entities(GModel::current()->getFileName(), dimTags,

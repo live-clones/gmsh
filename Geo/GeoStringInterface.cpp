@@ -650,23 +650,35 @@ void symmetry(const std::string &fileName, const std::vector<std::pair<int, int>
 }
 
 void extrude(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
-             const std::string &tx, const std::string &ty, const std::string &tz)
+             const std::string &tx, const std::string &ty, const std::string &tz,
+             bool extrudeMesh, const std::string &layers, bool recombineMesh)
 {
   std::ostringstream sstream;
   sstream << "Extrude {" << tx << ", " << ty << ", " << tz << "} {\n  "
-          << dimTags2String(l) << "\n}";
+          << dimTags2String(l);
+  if(extrudeMesh){
+    sstream << "Layers{" << layers << "}; ";
+    if(recombineMesh) sstream << "Recombine;";
+  }
+  sstream << "\n}";
   add_infile(sstream.str(), fileName);
 }
 
 void protude(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
              const std::string &ax, const std::string &ay, const std::string &az,
              const std::string &px, const std::string &py, const std::string &pz,
-             const std::string &angle)
+             const std::string &angle, bool extrudeMesh, const std::string &layers,
+             bool recombineMesh)
 {
   std::ostringstream sstream;
   sstream << "Extrude {{" << ax << ", " << ay << ", " << az << "}, {"
           << px << ", " << py << ", " << pz << "}, " << angle << "} {\n  "
-          << dimTags2String(l) << "\n}";
+          << dimTags2String(l);
+  if(extrudeMesh){
+    sstream << "Layers{" << layers << "}; ";
+    if(recombineMesh) sstream << "Recombine;";
+  }
+  sstream << "\n}";
   add_infile(sstream.str(), fileName);
 }
 

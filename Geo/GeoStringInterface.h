@@ -92,11 +92,13 @@ void symmetry(const std::string &fileName, const std::vector<std::pair<int, int>
               const std::string &sa, const std::string &sb, const std::string &sc,
               const std::string &sd, bool duplicata);
 void extrude(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
-             const std::string &tx, const std::string &ty, const std::string &tz);
+             const std::string &tx, const std::string &ty, const std::string &tz,
+             bool extrudeMesh, const std::string &layers, bool recombineMesh);
 void protude(const std::string &fileName, const std::vector<std::pair<int, int> > &l,
              const std::string &ax, const std::string &ay, const std::string &az,
              const std::string &px, const std::string &py, const std::string &pz,
-             const std::string &angle);
+             const std::string &angle, bool extrudeMesh, const std::string &layers,
+             bool recombineMesh);
 void split_edge(int edge_id, List_T *vertices, const std::string &fileName);
 void apply_boolean(const std::string &fileName, const std::string &op,
                    const std::vector<std::pair<int, int> > &object,

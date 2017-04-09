@@ -37,7 +37,7 @@ class transformContextWindow{
   Fl_Input *input[30];
   Fl_Value_Input *value[10];
   Fl_Group *group[10];
-  Fl_Check_Button *butt[10];
+  Fl_Check_Button *butt[20];
   Fl_Choice *choice;
  public:
   transformContextWindow(int deltaFontSize=0);

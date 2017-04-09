@@ -574,7 +574,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
 {
   FL_NORMAL_SIZE -= deltaFontSize;
 
-  int width = 33 * FL_NORMAL_SIZE;
+  int width = 34 * FL_NORMAL_SIZE;
   int height = 5 * WB + 10 * BH;
 
   win = new paletteWindow(width, height, CTX::instance()->nonModalWindows ? true : false,
@@ -615,7 +615,7 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[6] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Z");
       input[6]->value("0");
       input[7] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH,
-                              "Prescribed mesh element size at point");
+                              "Prescribed mesh size at point");
       input[7]->value("1.0");
       for(int i = 4; i < 8; i++){
         input[i]->align(FL_ALIGN_RIGHT);
@@ -1061,6 +1061,15 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       butt[0] = new Fl_Check_Button(2 * WB, 2 * WB + 4 * BH, width - 4 * WB, BH,
                                     "Apply operation on copy");
       butt[0]->value(0);
+      butt[7] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, width - 4 * WB, BH,
+                                    "Extrude mesh");
+      butt[7]->value(0);
+      input[21] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Mesh layers");
+      input[21]->value("5");
+      input[21]->align(FL_ALIGN_RIGHT);
+      butt[8] = new Fl_Check_Button
+        (width / 2 + 2 * WB, 2 * WB + 6 * BH, width / 2 - 4 * WB, BH, "Recombine");
+      butt[8]->value(1);
       group[0]->end();
     }
     // 1: Rotate
@@ -1072,20 +1081,29 @@ transformContextWindow::transformContextWindow(int deltaFontSize)
       input[4]->value("0");
       input[5] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Axis point Z");
       input[5]->value("0");
-      input[6] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Axis DX");
+      input[6] = new Fl_Input(width / 2 + 2 * WB, 2 * WB + 1 * BH, IW, BH, "Axis DX");
       input[6]->value("0");
-      input[7] = new Fl_Input(2 * WB, 2 * WB + 5 * BH, IW, BH, "Axis DY");
+      input[7] = new Fl_Input(width / 2 + 2 * WB, 2 * WB + 2 * BH, IW, BH, "Axis DY");
       input[7]->value("1");
-      input[8] = new Fl_Input(2 * WB, 2 * WB + 6 * BH, IW, BH, "Axis DZ");
+      input[8] = new Fl_Input(width / 2 + 2 * WB, 2 * WB + 3 * BH, IW, BH, "Axis DZ");
       input[8]->value("0");
-      input[9] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Angle");
+      input[9] = new Fl_Input(2 * WB, 2 * WB + 4 * BH, IW, BH, "Angle");
       input[9]->value("Pi/4");
       for(int i = 3; i < 10; i++) {
         input[i]->align(FL_ALIGN_RIGHT);
       }
-      butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 8 * BH, width - 4 * WB, BH,
+      butt[1] = new Fl_Check_Button(2 * WB, 2 * WB + 5 * BH, width - 4 * WB, BH,
                                     "Apply operation on copy");
       butt[1]->value(0);
+      butt[9] = new Fl_Check_Button(2 * WB, 2 * WB + 6 * BH, width - 4 * WB, BH,
+                                    "Extrude mesh");
+      butt[9]->value(0);
+      input[22] = new Fl_Input(2 * WB, 2 * WB + 7 * BH, IW, BH, "Mesh layers");
+      input[22]->value("5");
+      input[22]->align(FL_ALIGN_RIGHT);
+      butt[10] = new Fl_Check_Button
+        (width / 2 + 2 * WB, 2 * WB + 7 * BH, width / 2 - 4 * WB, BH, "Recombine");
+      butt[10]->value(1);
       group[1]->end();
     }
     // 2: Scale
@@ -1185,6 +1203,14 @@ void transformContextWindow::show(int pane, bool extrude, bool selection)
   for(int i = 0; i < 4; i++){
     if(extrude) butt[i]->deactivate();
     else butt[i]->activate();
+  }
+  for(int i = 7; i < 11; i++){
+    if(!extrude) butt[i]->deactivate();
+    else butt[i]->activate();
+  }
+  for(int i = 21; i < 23; i++){
+    if(!extrude) input[i]->deactivate();
+    else input[i]->activate();
   }
   if(selection) choice->activate();
   else choice->deactivate();
