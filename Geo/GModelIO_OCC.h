@@ -125,15 +125,15 @@ class OCC_Internals {
                 std::vector<std::pair<int, int> > &outDimTags,
                 ExtrudeParams *e=0);
 
-  // set mesh attributes for extruded meshes
-  void _setMeshAttr(const TopoDS_Compound &c, BRepSweep_Prism *p,
-                    BRepSweep_Revol *r, ExtrudeParams *e,
-                    double x, double y, double z,
-                    double dx, double dy, double dz,
-                    double ax, double ay, double az, double angle);
-  void _copyMeshAttr(TopoDS_Edge edge, GEdge *ge);
-  void _copyMeshAttr(TopoDS_Face face, GFace *gf);
-  void _copyMeshAttr(TopoDS_Solid solid, GRegion *gr);
+  // set extruded mesh attributes
+  void _setExtrudedMeshAttr(const TopoDS_Compound &c, BRepSweep_Prism *p,
+                            BRepSweep_Revol *r, ExtrudeParams *e,
+                            double x, double y, double z,
+                            double dx, double dy, double dz,
+                            double ax, double ay, double az, double angle);
+  void _copyExtrudedMeshAttr(TopoDS_Edge edge, GEdge *ge);
+  void _copyExtrudedMeshAttr(TopoDS_Face face, GFace *gf);
+  void _copyExtrudedMeshAttr(TopoDS_Solid solid, GRegion *gr);
 
  public:
   OCC_Internals();

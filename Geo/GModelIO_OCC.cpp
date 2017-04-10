@@ -1577,13 +1577,14 @@ bool OCC_Internals::addThickSolid(int tag, int solidTag,
   return true;
 }
 
-void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c,
-                                 BRepSweep_Prism *p,
-                                 BRepSweep_Revol *r,
-                                 ExtrudeParams *e,
-                                 double x, double y, double z,
-                                 double dx, double dy, double dz,
-                                 double ax, double ay, double az, double angle)
+void OCC_Internals::_setExtrudedMeshAttr(const TopoDS_Compound &c,
+                                         BRepSweep_Prism *p,
+                                         BRepSweep_Revol *r,
+                                         ExtrudeParams *e,
+                                         double x, double y, double z,
+                                         double dx, double dy, double dz,
+                                         double ax, double ay, double az,
+                                         double angle)
 {
   if(!p && !r) return;
 
@@ -1658,7 +1659,7 @@ void OCC_Internals::_setMeshAttr(const TopoDS_Compound &c,
   }
 }
 
-void OCC_Internals::_copyMeshAttr(TopoDS_Edge edge, GEdge *ge)
+void OCC_Internals::_copyExtrudedMeshAttr(TopoDS_Edge edge, GEdge *ge)
 {
   if(!_meshAttr.IsBound(edge)) return;
   meshAttr m = _meshAttr.Find(edge);
@@ -1679,7 +1680,7 @@ void OCC_Internals::_copyMeshAttr(TopoDS_Edge edge, GEdge *ge)
   }
 }
 
-void OCC_Internals::_copyMeshAttr(TopoDS_Face face, GFace *gf)
+void OCC_Internals::_copyExtrudedMeshAttr(TopoDS_Face face, GFace *gf)
 {
   if(!_meshAttr.IsBound(face)) return;
   meshAttr m = _meshAttr.Find(face);
@@ -1700,7 +1701,7 @@ void OCC_Internals::_copyMeshAttr(TopoDS_Face face, GFace *gf)
   }
 }
 
-void OCC_Internals::_copyMeshAttr(TopoDS_Solid solid, GRegion *gr)
+void OCC_Internals::_copyExtrudedMeshAttr(TopoDS_Solid solid, GRegion *gr)
 {
   if(!_meshAttr.IsBound(solid)) return;
   meshAttr m = _meshAttr.Find(solid);
@@ -1748,8 +1749,8 @@ bool OCC_Internals::_extrude(int mode,
       result = p.Shape();
       if(e){
         const BRepSweep_Prism &prism(p.Prism());
-        _setMeshAttr(c, (BRepSweep_Prism*)&prism, 0, e,
-                     0., 0., 0., dx, dy, dz, 0., 0., 0., 0.);
+        _setExtrudedMeshAttr(c, (BRepSweep_Prism*)&prism, 0, e,
+                             0., 0., 0., dx, dy, dz, 0., 0., 0., 0.);
       }
     }
     else if(mode == 1){ // revolve
@@ -1763,8 +1764,8 @@ bool OCC_Internals::_extrude(int mode,
       result = r.Shape();
       if(e){
         const BRepSweep_Revol &revol(r.Revol());
-        _setMeshAttr(c, 0, (BRepSweep_Revol*)&revol, e,
-                     x, y, z, 0., 0., 0., ax, ay, az, angle);
+        _setExtrudedMeshAttr(c, 0, (BRepSweep_Revol*)&revol, e,
+                             x, y, z, 0., 0., 0., ax, ay, az, angle);
       }
     }
     else if(mode == 2){ // pipe
@@ -2559,7 +2560,7 @@ void OCC_Internals::synchronize(GModel *model)
       }
       OCCEdge *occe = new OCCEdge(model, edge, tag, v1, v2);
       model->add(occe);
-      _copyMeshAttr(edge, occe);
+      _copyExtrudedMeshAttr(edge, occe);
     }
   }
   for(int i = 1; i <= _fmap.Extent(); i++){
@@ -2574,7 +2575,7 @@ void OCC_Internals::synchronize(GModel *model)
       }
       OCCFace *occf = new OCCFace(model, face, tag);
       model->add(occf);
-      _copyMeshAttr(face, occf);
+      _copyExtrudedMeshAttr(face, occf);
     }
   }
   for(int i = 1; i <= _somap.Extent(); i++){
@@ -2589,7 +2590,7 @@ void OCC_Internals::synchronize(GModel *model)
       }
       OCCRegion *occr = new OCCRegion(model, region, tag);
       model->add(occr);
-      _copyMeshAttr(region, occr);
+      _copyExtrudedMeshAttr(region, occr);
     }
   }
 
