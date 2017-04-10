@@ -2852,22 +2852,44 @@ Delete :
     {
       std::vector<std::pair<int, int> > dimTags;
       ListOfShapes2VectorOfPairs($3, dimTags);
+      bool changed = false;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         GModel::current()->getOCCInternals()->remove(dimTags);
+        changed = GModel::current()->getOCCInternals()->getChanged();
+        if(changed)
+          GModel::current()->getOCCInternals()->synchronize(GModel::current());
       }
-      GModel::current()->getGEOInternals()->remove(dimTags);
-      GModel::current()->remove(dimTags);
+      else{
+        GModel::current()->getGEOInternals()->remove(dimTags);
+        changed = GModel::current()->getGEOInternals()->getChanged();
+        if(changed)
+          GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      }
+      if(!changed){
+        GModel::current()->remove(dimTags);
+      }
       List_Delete($3);
     }
   | tRecursive tDelete '{' ListOfShapes '}'
     {
       std::vector<std::pair<int, int> > dimTags;
       ListOfShapes2VectorOfPairs($4, dimTags);
+      bool changed = false;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         GModel::current()->getOCCInternals()->remove(dimTags, true);
+        changed = GModel::current()->getOCCInternals()->getChanged();
+        if(changed)
+          GModel::current()->getOCCInternals()->synchronize(GModel::current());
       }
-      GModel::current()->getGEOInternals()->remove(dimTags, true);
-      GModel::current()->remove(dimTags, true);
+      else{
+        GModel::current()->getGEOInternals()->remove(dimTags, true);
+        changed = GModel::current()->getGEOInternals()->getChanged();
+        if(changed)
+          GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      }
+      if(!changed){
+        GModel::current()->remove(dimTags, true);
+      }
       List_Delete($4);
     }
   | tDelete tField '[' FExpr ']' tEND

@@ -2466,9 +2466,7 @@ void OCC_Internals::synchronize(GModel *model)
 
   // remove all OCC entities in the model that are not bound to tags (because
   // they have been deleted in OCC_Internals after being previously added to
-  // GModel). This can currently only happen when doing boolean operations when
-  // we remove the object and/or tool; all other removals are explicit and done
-  // both in the internal CAD data and the GModel
+  // GModel)
   std::vector<std::pair<int, int> > toRemove;
   for(GModel::viter it = model->firstVertex(); it != model->lastVertex(); ++it){
     if((*it)->getNativeType() == GEntity::OpenCascadeModel){
