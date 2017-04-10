@@ -1217,6 +1217,7 @@ void transformContextWindow::show(int pane, bool extrude, bool selection)
   if(selection) choice->activate();
   else choice->deactivate();
   if(pane < 0 || pane > 6){
+    group[0]->show();
   }
   else{
     group[pane]->show();
