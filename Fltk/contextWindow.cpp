@@ -4,8 +4,6 @@
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <stdlib.h>
-#include "GModel.h"
-#include "GModelIO_OCC.h" // include before Xlib to avoid clashes with OCC
 #include <FL/Fl_Tabs.H>
 #include <FL/Fl_Return_Button.H>
 #include "FlGui.h"
@@ -15,6 +13,11 @@
 #include "graphicWindow.h"
 #include "openglWindow.h"
 #include "Parser.h"
+#include "GModel.h"
+#ifdef Convex // can be defined by Xlib
+#undef Convex
+#endif
+#include "GModelIO_OCC.h"
 #include "GeoStringInterface.h"
 #include "OpenFile.h"
 #include "Context.h"
