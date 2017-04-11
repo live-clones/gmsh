@@ -306,6 +306,7 @@ void OCC_Internals::unbind(TopoDS_Vertex vertex, int tag, bool recursive)
   }
   _vertexTag.UnBind(vertex);
   _tagVertex.UnBind(tag);
+  _toRemove.insert(std::pair<int, int>(0, tag));
   _recomputeMaxTag(0);
   _changed = true;
 }
@@ -322,6 +323,7 @@ void OCC_Internals::unbind(TopoDS_Edge edge, int tag, bool recursive)
   }
   _edgeTag.UnBind(edge);
   _tagEdge.UnBind(tag);
+  _toRemove.insert(std::pair<int, int>(1, tag));
   _recomputeMaxTag(1);
   if(recursive){
     TopExp_Explorer exp0;
@@ -348,6 +350,7 @@ void OCC_Internals::unbind(TopoDS_Wire wire, int tag, bool recursive)
   }
   _wireTag.UnBind(wire);
   _tagWire.UnBind(tag);
+  _toRemove.insert(std::pair<int, int>(-1, tag));
   _recomputeMaxTag(-1);
   if(recursive){
     TopExp_Explorer exp0;
@@ -374,6 +377,7 @@ void OCC_Internals::unbind(TopoDS_Face face, int tag, bool recursive)
   }
   _faceTag.UnBind(face);
   _tagFace.UnBind(tag);
+  _toRemove.insert(std::pair<int, int>(2, tag));
   _recomputeMaxTag(2);
   if(recursive){
     TopExp_Explorer exp0;
@@ -407,6 +411,7 @@ void OCC_Internals::unbind(TopoDS_Shell shell, int tag, bool recursive)
   }
   _shellTag.UnBind(shell);
   _tagShell.UnBind(tag);
+  _toRemove.insert(std::pair<int, int>(-2, tag));
   _recomputeMaxTag(-2);
   if(recursive){
     TopExp_Explorer exp0;
@@ -425,6 +430,7 @@ void OCC_Internals::unbind(TopoDS_Solid solid, int tag, bool recursive)
 {
   _solidTag.UnBind(solid);
   _tagSolid.UnBind(tag);
+  _toRemove.insert(std::pair<int, int>(3, tag));
   _recomputeMaxTag(3);
   if(recursive){
     TopExp_Explorer exp0;
@@ -1983,7 +1989,6 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
       break;
 
     case OCC_Internals::Difference :
-    default:
       {
         BRepAlgoAPI_Cut cut;
         cut.SetRunParallel(parallel);
@@ -2013,6 +2018,7 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
       break;
 
     case OCC_Internals::Fragments :
+    default:
       {
         BRepAlgoAPI_BuilderAlgo fragments;
         fragments.SetRunParallel(parallel);
@@ -2072,21 +2078,30 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
     int dim = objectDimTags[i].first;
     int tag = objectDimTags[i].second;
     if(mapDeleted[i] && !mapGenerated[i].Extent()){
+      // the shape has been deleted
       if(removeObject && isBound(dim, tag)){
-        unbind(find(dim, tag), dim, tag, true); // recursive
+        unbind(find(dim, tag), dim, tag, true);
       }
     }
     else if(mapModified[i].Extent() == 0){
-      // the shape has not been modified, don't touch it
+      // the shape has not been modified
       outDimTags.push_back(std::pair<int, int>(dim, tag));
+      // FIXME: since we currently don't guarantee that the tags of the entities
+      // on the boundary will be preserved, we must force a re-sync of the
+      // shape, by unbinding (which will add it in _toRemove) and re-binding it
+      if(removeObject && isBound(dim, tag)){
+        TopoDS_Shape shape = find(dim, tag);
+        unbind(shape, dim, tag, true);
+        bind(shape, dim, tag, true);
+      }
     }
     else if(mapModified[i].Extent() == 1){
       if(removeObject){
         // the shape has been replaced by a single shape, keep the same tag
         if(isBound(dim, tag)){
-          unbind(find(dim, tag), dim, tag, true); // recursive
+          unbind(find(dim, tag), dim, tag, true);
         }
-        bind(mapModified[i].First(), dim, tag, true); // recursive
+        bind(mapModified[i].First(), dim, tag, true);
         outDimTags.push_back(std::pair<int, int>(dim, tag));
       }
       else{
@@ -2095,7 +2110,7 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
     }
     else{
       if(removeObject && isBound(dim, tag)){
-        unbind(find(dim, tag), dim, tag, true); // recursive
+        unbind(find(dim, tag), dim, tag, true);
       }
       TopTools_ListIteratorOfListOfShape it(mapModified[i]);
       for(; it.More(); it.Next())
@@ -2113,13 +2128,22 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
     int dim = toolDimTags[i].first;
     int tag = toolDimTags[i].second;
     if(mapDeleted[k] && !mapGenerated[k].Extent()){
+      // the shape has been deleted
       if(removeTool && isBound(dim, tag)){
         unbind(find(dim, tag), dim, tag, true); // recursive
       }
     }
     else if(mapModified[k].Extent() == 0){
-      // the shape has not been modified, don't touch it
+      // the shape has not been modified
       outDimTags.push_back(std::pair<int, int>(dim, tag));
+      // FIXME: since we currently don't guarantee that the tags of the entities
+      // on the boundary will be preserved, we must force a re-sync of the
+      // shape, by unbinding (which will add it in _toRemove) and re-binding it
+      if(removeTool && isBound(dim, tag)){
+        TopoDS_Shape shape = find(dim, tag);
+        unbind(shape, dim, tag, true);
+        bind(shape, dim, tag, true);
+      }
     }
     else if(mapModified[k].Extent() == 1){
       if(removeTool){
@@ -2464,45 +2488,13 @@ void OCC_Internals::synchronize(GModel *model)
 {
   Msg::Debug("Syncing OCC_Internals with GModel");
 
-  // remove all OCC entities in the model that are not bound to tags (because
-  // they have been deleted in OCC_Internals after being previously added to
-  // GModel)
+  // make sure to remove from GModel all entities that have been deleted in
+  // OCC_Internals since the last synchronization
   std::vector<std::pair<int, int> > toRemove;
-  for(GModel::viter it = model->firstVertex(); it != model->lastVertex(); ++it){
-    if((*it)->getNativeType() == GEntity::OpenCascadeModel){
-      OCCVertex *occ = (OCCVertex*)(*it);
-      TopoDS_Vertex v = *(TopoDS_Vertex*)occ->getNativePtr();
-      if(!_vertexTag.IsBound(v) || _vertexTag.Find(v) != occ->tag()){
-        toRemove.push_back(std::pair<int, int>(0, occ->tag()));
-      }
-    }
-  }
-  for(GModel::eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
-    if((*it)->getNativeType() == GEntity::OpenCascadeModel){
-      OCCEdge *occ = (OCCEdge*)(*it);
-      TopoDS_Edge v = *(TopoDS_Edge*)occ->getNativePtr();
-      if(!_edgeTag.IsBound(v) || _edgeTag.Find(v) != occ->tag())
-        toRemove.push_back(std::pair<int, int>(1, occ->tag()));
-    }
-  }
-  for(GModel::fiter it = model->firstFace(); it != model->lastFace(); ++it){
-    if((*it)->getNativeType() == GEntity::OpenCascadeModel){
-      OCCFace *occ = (OCCFace*)(*it);
-      TopoDS_Face v = *(TopoDS_Face*)occ->getNativePtr();
-      if(!_faceTag.IsBound(v) || _faceTag.Find(v) != occ->tag())
-        toRemove.push_back(std::pair<int, int>(2, occ->tag()));
-    }
-  }
-  for(GModel::riter it = model->firstRegion(); it != model->lastRegion(); ++it){
-    if((*it)->getNativeType() == GEntity::OpenCascadeModel){
-      OCCRegion *occ = (OCCRegion*)(*it);
-      TopoDS_Solid v = *(TopoDS_Solid*)occ->getNativePtr();
-      if(!_solidTag.IsBound(v) || _solidTag.Find(v) != occ->tag())
-        toRemove.push_back(std::pair<int, int>(3, occ->tag()));
-    }
-  }
+  toRemove.insert(toRemove.end(), _toRemove.begin(), _toRemove.end());
   Msg::Debug("Sync is removing %d model entities", toRemove.size());
   model->remove(toRemove);
+  _toRemove.clear();
 
   // iterate over all shapes with tags, and import them into the (sub)shape _maps
   _somap.Clear();
@@ -2597,7 +2589,6 @@ void OCC_Internals::synchronize(GModel *model)
   Msg::Debug("%d edges", model->getNumEdges());
   Msg::Debug("%d faces", model->getNumFaces());
   Msg::Debug("%d regions", model->getNumRegions());
-
   _changed = false;
 }
 

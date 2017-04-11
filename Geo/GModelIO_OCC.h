@@ -59,6 +59,10 @@ class OCC_Internals {
   TopTools_DataMapOfShapeInteger _wireTag, _shellTag;
   TopTools_DataMapOfIntegerShape _tagWire, _tagShell;
 
+  // cache of <dim,tag> pairs corresponding to entities that will need to be
+  // remove from the model at the next synchronization
+  std::set<std::pair<int, int> > _toRemove;
+
   // internal mesh attributes
   class meshAttr {
   public:
