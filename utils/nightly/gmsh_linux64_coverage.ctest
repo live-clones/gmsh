@@ -3,7 +3,7 @@
 # See the LICENSE.txt file for license information. Please report all
 # bugs and problems to the public mailing list <gmsh@onelab.info>.
 
-set(CTEST_CMAKE_COMMAND "/usr/bin/cmake")
+set(CTEST_CMAKE_COMMAND "/usr/local/bin/cmake")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 
 set(WITH_TEST TRUE)      # run the tests?
