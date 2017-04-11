@@ -7,7 +7,3 @@ set(CTEST_NIGHTLY_START_TIME "22:00:00 UTC")
 set(CDASH_MODEL "Nightly")
 set(EXTRA_VERSION "-git")
 include(gmsh_win64.ctest)
-
-set(EXTRA_VERSION "-dynamic-git")
-set(BUILD_DYNAMIC true)
-include(gmsh_win64.ctest)
