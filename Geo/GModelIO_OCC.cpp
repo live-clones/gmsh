@@ -301,7 +301,7 @@ void OCC_Internals::unbind(TopoDS_Vertex vertex, int tag, bool recursive)
     TopoDS_Edge edge = TopoDS::Edge(exp0.Value());
     TopExp_Explorer exp1;
     for(exp1.Init(edge, TopAbs_VERTEX); exp1.More(); exp1.Next()){
-      if(exp1.Current().IsEqual(vertex)) return;
+      if(exp1.Current().IsSame(vertex)) return;
     }
   }
   _vertexTag.UnBind(vertex);
@@ -318,7 +318,7 @@ void OCC_Internals::unbind(TopoDS_Edge edge, int tag, bool recursive)
     TopoDS_Face face = TopoDS::Face(exp2.Value());
     TopExp_Explorer exp1;
     for(exp1.Init(face, TopAbs_EDGE); exp1.More(); exp1.Next()){
-      if(exp1.Current().IsEqual(edge)) return;
+      if(exp1.Current().IsSame(edge)) return;
     }
   }
   _edgeTag.UnBind(edge);
@@ -345,7 +345,7 @@ void OCC_Internals::unbind(TopoDS_Wire wire, int tag, bool recursive)
     TopoDS_Face face = TopoDS::Face(exp0.Value());
     TopExp_Explorer exp1;
     for(exp1.Init(face, TopAbs_WIRE); exp1.More(); exp1.Next()){
-      if(exp1.Current().IsEqual(wire)) return;
+      if(exp1.Current().IsSame(wire)) return;
     }
   }
   _wireTag.UnBind(wire);
@@ -372,7 +372,7 @@ void OCC_Internals::unbind(TopoDS_Face face, int tag, bool recursive)
     TopoDS_Solid solid = TopoDS::Solid(exp2.Value());
     TopExp_Explorer exp1;
     for(exp1.Init(solid, TopAbs_FACE); exp1.More(); exp1.Next()){
-      if(exp1.Current().IsEqual(face)) return;
+      if(exp1.Current().IsSame(face)) return;
     }
   }
   _faceTag.UnBind(face);
@@ -406,7 +406,7 @@ void OCC_Internals::unbind(TopoDS_Shell shell, int tag, bool recursive)
     TopoDS_Solid solid = TopoDS::Solid(exp0.Value());
     TopExp_Explorer exp1;
     for(exp1.Init(solid, TopAbs_SHELL); exp1.More(); exp1.Next()){
-      if(exp1.Current().IsEqual(shell)) return;
+      if(exp1.Current().IsSame(shell)) return;
     }
   }
   _shellTag.UnBind(shell);
