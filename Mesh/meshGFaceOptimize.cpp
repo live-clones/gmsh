@@ -307,7 +307,7 @@ void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
       // orient the bignou
       if(pp < 0) t->reverse();
     }
-}
+  }
   splitEquivalentTriangles(gf, data);
   computeEquivalences(gf, data);
 }
@@ -1005,14 +1005,19 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
                           std::min(lc1, lcBGM1) : lcBGM1, 0, &data, gf);
   MTri3 *t2b3 = new MTri3(t2b, Extend1dMeshIn2dSurfaces() ?
                           std::min(lc2, lcBGM2) : lcBGM2, 0, &data, gf);
-
-  cavity.push_back(t1b3);
+  //  printf("%d %d %d -- %d %d %d edge %d\n",t1->tri()->getVertex(0)->getNum(),t1->tri()->getVertex(1)->getNum(),t1->tri()->getVertex(2)->getNum(),
+  //	 t2->tri()->getVertex(0)->getNum(),t2->tri()->getVertex(1)->getNum(),t2->tri()->getVertex(2)->getNum(),iLocalEdge);
+  //  printf("%d %d %d \n",v2->getNum(),v3->getNum(),v4->getNum());
+  //  printf("%d %d %d \n",v4->getNum(),v3->getNum(),v1->getNum());
+  
   cavity.push_back(t2b3);
+  cavity.push_back(t1b3);
   t1->setDeleted(true);
   t2->setDeleted(true);
   connectTriangles(cavity);
-  newTris.push_back(t1b3);
   newTris.push_back(t2b3);
+  newTris.push_back(t1b3);
+  //  printf("%d %d\n",t1b3->isDeleted(),t2b3->isDeleted());
 
   return true;
 }
@@ -1024,27 +1029,40 @@ int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
   
   int nbSwapTot = 0;
   std::set<swapquad> configs;
-  for(int iter = 0; iter < 1200; iter++){
+
+  std::set<MTri3*, compareTri3Ptr> allTris2;
+    
+  for(int iter = 0; iter < 10; iter++){
     int nbSwap = 0;
     std::vector<MTri3*> newTris;
-    for(CONTAINER::iterator it = allTris.begin(); it != allTris.end(); ++it){
-      if(!(*it)->isDeleted()){
+    CONTAINER::iterator it = allTris.begin();
+    while(it != allTris.end()){
+      CONTAINER::iterator current = it++;
+      if(!(*current)->isDeleted()){
 	for(int i = 0; i < 3; i++){
-	  if(edgeSwap(configs, *it, gf, i, newTris, cr, data)){
+	  if(edgeSwap(configs, *current, gf, i, newTris, cr, data)){
 	    nbSwap++;
 	    break;
 	  }
 	}
       }
       else{
-	delete *it;
-	CONTAINER::iterator itb = it;
-	++it;
-	allTris.erase(itb);
-	if(it == allTris.end()) break;
+	delete (*current)->tri();
+	delete *current;
+	allTris.erase(current);
       }
     }
+
+    //    allTris = allTris2;
+        
     allTris.insert(newTris.begin(), newTris.end());
+
+    // for(CONTAINER::iterator it = allTris.begin(); it != allTris.end(); ++it){
+    //   printf("---> %d %d %d (%d)\n",(*it)->tri()->getVertex(0)->getNum(),
+    // 	     (*it)->tri()->getVertex(1)->getNum(),
+    // 	     (*it)->tri()->getVertex(2)->getNum(),(*it)->isDeleted() );
+    // }
+    
     nbSwapTot += nbSwap;
     if(nbSwap == 0) break;
   }
