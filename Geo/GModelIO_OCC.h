@@ -78,6 +78,25 @@ class OCC_Internals {
   // iterate on all bound entities and recompute the maximum tag
   void _recomputeMaxTag(int dim);
 
+  // bind (potentially) mutliple entities in shape and return the tags in
+  // outTags. If tag > 0 and a single entity if found, use that; if
+  // highestDimOnly is true, only return the entities of the highest dimension
+  void _multiBind(TopoDS_Shape shape, int tag,
+                  std::vector<std::pair<int, int> > &outDimTags,
+                  bool returnHighestDimOnly, bool recursive=false,
+                  bool returnNewOnly=false);
+  // is the entity of a given dimension and tag bound?
+  bool _isBound(int dim, int tag);
+
+  // is the entity of a given dimension and shape bound?
+  bool _isBound(int dim, TopoDS_Shape shape);
+
+  // get the entity of a given dimension and tag
+  TopoDS_Shape _find(int dim, int tag);
+
+  // get the tag of a shape of a given dimension
+  int _find(int dim, TopoDS_Shape shape);
+
   // make shapes
   bool _makeRectangle(TopoDS_Face &result, double x, double y, double z,
                     double dx, double dy, double roundedRadius=0.);
@@ -138,25 +157,6 @@ class OCC_Internals {
   void _copyExtrudedMeshAttr(TopoDS_Edge edge, GEdge *ge);
   void _copyExtrudedMeshAttr(TopoDS_Face face, GFace *gf);
   void _copyExtrudedMeshAttr(TopoDS_Solid solid, GRegion *gr);
-
-  // bind (potentially) mutliple entities in shape and return the tags in
-  // outTags. If tag > 0 and a single entity if found, use that; if
-  // highestDimOnly is true, only return the entities of the highest dimension
-  void _multiBind(TopoDS_Shape shape, int tag,
-                  std::vector<std::pair<int, int> > &outDimTags,
-                  bool returnHighestDimOnly, bool recursive=false,
-                  bool returnNewOnly=false);
-  // is the entity of a given dimension and tag bound?
-  bool _isBound(int dim, int tag);
-
-  // is the entity of a given dimension and shape bound?
-  bool _isBound(int dim, TopoDS_Shape shape);
-
-  // get the entity of a given dimension and tag
-  TopoDS_Shape _find(int dim, int tag);
-
-  // get the tag of a shape of a given dimension
-  int _find(int dim, TopoDS_Shape shape);
  public:
   OCC_Internals();
 
