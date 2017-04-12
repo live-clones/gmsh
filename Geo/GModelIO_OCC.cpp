@@ -1179,7 +1179,11 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag)
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
     TopExp_Explorer exp0;
     for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()){
-      f.Add(TopoDS::Edge(exp0.Current()), GeomAbs_C0);
+      TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
+      f.Add(edge, GeomAbs_C0);
+      // face filling will duplicate the edge
+      if(_edgeTag.IsBound(edge))
+        unbind(edge, _edgeTag.Find(edge), true);
     }
     // TODO: add optional point constraints using
     // f.Add(gp_Pnt(x, y, z);
