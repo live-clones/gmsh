@@ -1806,7 +1806,7 @@ if(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
   if(PACKAGER STREQUAL "geuzaine - removed: we sign on a separate machine")
     # codesigning requires CMake >= 3.2
     set(CPACK_BUNDLE_APPLE_CERT_APP "Developer ID Application: Christophe Geuzaine")
-  endif(PACKAGER STREQUAL "geuzaine")
+  endif(PACKAGER STREQUAL "geuzaine - removed: we sign on a separate machine")
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsGeo.icns DESTINATION .
           RENAME GmshGeo.icns)
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsMsh.icns DESTINATION .
