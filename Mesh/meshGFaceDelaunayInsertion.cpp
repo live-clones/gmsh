@@ -1380,22 +1380,15 @@ void bowyerWatsonFrontal(GFace *gf,
   int ITERATION = 0;
   while (1){
     ++ITERATION;
-    /* if(ITERATION % 10== 0 && CTX::instance()->mesh.saveAll){
+    /*
+      if(ITERATION % 10== 0 && CTX::instance()->mesh.saveAll){
       char name[245];
       sprintf(name,"delFrontal_GFace_%d_Layer_%d.pos",gf->tag(),ITERATION);
       _printTris (name, AllTris.begin(), AllTris.end(), &DATA);
       sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
       _printTris (name, ActiveTris.begin(), ActiveTris.end(), &DATA);
-      }*/
-    /* if(ITER % 100== 0){
-          char name[245];
-          sprintf(name,"delfr2d%d-ITER%d.pos",gf->tag(),ITER);
-          _printTris (name, AllTris, Us,Vs,true);
-	  //          sprintf(name,"delfr2dA%d-ITER%d.pos",gf->tag(),ITER);
-	  //          _printTris (name, ActiveTris, Us,Vs,false);
-        }
+      }
     */
-    //    printf("active_tris.size = %d\n",ActiveTris.size());
     if (!ActiveTris.size())break;
     MTri3 *worst = (*ActiveTris.begin());
     ActiveTris.erase(ActiveTris.begin());
@@ -1410,24 +1403,11 @@ void bowyerWatsonFrontal(GFace *gf,
       if (optimalPointFrontalB (gf,worst,active_edge,DATA,newPoint,metric)){
 	insertAPoint(gf, AllTris.end(), newPoint, metric, DATA, AllTris, &ActiveTris, worst);
       }
-    }
-
-    /*   if(ITER % 1== 0){
-       char name[245];
-       sprintf(name,"frontal%d-ITER%d.pos",gf->tag(),ITER);
-       _printTris (name, AllTris, Us,Vs,false);
-     }
-    */
+    }    
   }
 
   nbSwaps = edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
-  /*
-  char name[245];
-  sprintf(name,"frontal%d-real.pos", gf->tag());
-  _printTris (name, AllTris.begin(), AllTris.end(), DATA,false);
-  sprintf(name,"frontal%d-param.pos", gf->tag());
-  _printTris (name, AllTris.begin(), AllTris.end(), DATA,true);
-  */
+  
   transferDataStructure(gf, AllTris, DATA);
   //  removeThreeTrianglesNodes(gf);
 
