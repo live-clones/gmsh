@@ -139,6 +139,24 @@ class OCC_Internals {
   void _copyExtrudedMeshAttr(TopoDS_Face face, GFace *gf);
   void _copyExtrudedMeshAttr(TopoDS_Solid solid, GRegion *gr);
 
+  // bind (potentially) mutliple entities in shape and return the tags in
+  // outTags. If tag > 0 and a single entity if found, use that; if
+  // highestDimOnly is true, only return the entities of the highest dimension
+  void _multiBind(TopoDS_Shape shape, int tag,
+                  std::vector<std::pair<int, int> > &outDimTags,
+                  bool returnHighestDimOnly, bool recursive=false,
+                  bool returnNewOnly=false);
+  // is the entity of a given dimension and tag bound?
+  bool _isBound(int dim, int tag);
+
+  // is the entity of a given dimension and shape bound?
+  bool _isBound(int dim, TopoDS_Shape shape);
+
+  // get the entity of a given dimension and tag
+  TopoDS_Shape _find(int dim, int tag);
+
+  // get the tag of a shape of a given dimension
+  int _find(int dim, TopoDS_Shape shape);
  public:
   OCC_Internals();
 
@@ -148,7 +166,8 @@ class OCC_Internals {
   // reset all maps
   void reset();
 
-  // bind and unbind OpenCASCADE shapes to tags
+  // bind and unbind OpenCASCADE shapes to tags (these methods will become
+  // private)
   void bind(TopoDS_Vertex vertex, int tag, bool recursive=false);
   void bind(TopoDS_Edge edge, int tag, bool recursive=false);
   void bind(TopoDS_Wire wire, int tag, bool recursive=false);
@@ -163,20 +182,6 @@ class OCC_Internals {
   void unbind(TopoDS_Shell shell, int tag, bool recursive=false);
   void unbind(TopoDS_Solid solid, int tag, bool recursive=false);
   void unbind(TopoDS_Shape shape, int dim, int tag, bool recursive=false);
-
-  // bind (potentially) mutliple entities in shape and return the tags in
-  // outTags. If tag > 0 and a single entity if found, use that; if
-  // highestDimOnly is true, only return the entities of the highest dimension
-  void bind(TopoDS_Shape shape, int tag,
-            std::vector<std::pair<int, int> > &outDimTags,
-            bool returnHighestDimOnly, bool recursive=false,
-            bool returnNewOnly=false);
-
-  // is the entity of a given dimension and tag bound?
-  bool isBound(int dim, int tag);
-
-  // get the entity of a given dimension and tag
-  TopoDS_Shape find(int dim, int tag);
 
   // set/get max tag of entity for each dimension (0, 1, 2, 3), as well as
   // -2 for shells and -1 for wires
