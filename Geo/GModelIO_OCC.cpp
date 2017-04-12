@@ -1111,7 +1111,13 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
     return false;
   }
   else if(wires.size() == 1){
-    result = BRepBuilderAPI_MakeFace(wires[0]);
+    BRepBuilderAPI_MakeFace f(wires[0]);
+    f.Build();
+    if(!f.IsDone()){
+      Msg::Error("Could not create face");
+      return false;
+    }
+    result = f.Face();
   }
   else{
     // compute mean plane
