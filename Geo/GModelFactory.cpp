@@ -886,7 +886,7 @@ GEntity *OCCFactory::addSphere(GModel *gm, double xc, double yc, double zc, doub
   gm->destroy();
   gm->_occ_internals->buildLists();
   gm->_occ_internals->buildGModel(gm);
-  return gm->_occ_internals->getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
+  return gm->_occ_internals->getRegionForOCCShape(gm, TopoDS::Solid(shape));
 }
 
 GRegion* OCCFactory::addVolume (GModel *gm, std::vector<std::vector<GFace *> > faces)
@@ -924,7 +924,7 @@ GEntity *OCCFactory::addCylinder(GModel *gm, std::vector<double> p1,
   gm->destroy();
   gm->_occ_internals->buildLists();
   gm->_occ_internals->buildGModel(gm);
-  return gm->_occ_internals->getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
+  return gm->_occ_internals->getRegionForOCCShape(gm, TopoDS::Solid(shape));
 }
 
 GEntity *OCCFactory::addTorus(GModel *gm, std::vector<double> p1,
@@ -956,7 +956,7 @@ GEntity *OCCFactory::addTorus(GModel *gm, std::vector<double> p1,
   gm->destroy();
   gm->_occ_internals->buildLists();
   gm->_occ_internals->buildGModel(gm);
-  return gm->_occ_internals->getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
+  return gm->_occ_internals->getRegionForOCCShape(gm, TopoDS::Solid(shape));
 }
 
 GEntity *OCCFactory::addCone(GModel *gm,  std::vector<double> p1,
@@ -989,7 +989,7 @@ GEntity *OCCFactory::addCone(GModel *gm,  std::vector<double> p1,
   gm->destroy();
   gm->_occ_internals->buildLists();
   gm->_occ_internals->buildGModel(gm);
-  return gm->_occ_internals->getOCCRegionByNativePtr(gm,TopoDS::Solid(shape));
+  return gm->_occ_internals->getRegionForOCCShape(gm,TopoDS::Solid(shape));
 }
 
 GEntity *OCCFactory::addBlock(GModel *gm, std::vector<double> p1,
@@ -1011,7 +1011,7 @@ GEntity *OCCFactory::addBlock(GModel *gm, std::vector<double> p1,
   gm->destroy();
   gm->_occ_internals->buildLists();
   gm->_occ_internals->buildGModel(gm);
-  return gm->_occ_internals->getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
+  return gm->_occ_internals->getRegionForOCCShape(gm, TopoDS::Solid(shape));
 }
 
 GEntity *OCCFactory::add3DBlock(GModel *gm,std::vector<double> p1,
@@ -1032,7 +1032,7 @@ GEntity *OCCFactory::add3DBlock(GModel *gm,std::vector<double> p1,
   gm->destroy();
   gm->_occ_internals->buildLists();
   gm->_occ_internals->buildGModel(gm);
-  return gm->_occ_internals->getOCCRegionByNativePtr(gm, TopoDS::Solid(shape));
+  return gm->_occ_internals->getRegionForOCCShape(gm, TopoDS::Solid(shape));
 }
 
 GModel *OCCFactory::computeBooleanUnion(GModel* obj, GModel* tool,
@@ -1174,8 +1174,8 @@ void OCCFactory::setPeriodicAllFaces(GModel *gm, std::vector<double> FaceTransla
          && IsEqualG(BarycenterFace1.X()+FaceTranslationVector[0],BarycenterFace2.X())
          && IsEqualG(BarycenterFace1.Y()+FaceTranslationVector[1],BarycenterFace2.Y())
          && IsEqualG(BarycenterFace1.Z()+FaceTranslationVector[2],BarycenterFace2.Z())){
-        numFaceMaster = gm->getOCCInternals()->getOCCFaceByNativePtr(gm,aFace1)->tag();
-        numFaceSlave  = gm->getOCCInternals()->getOCCFaceByNativePtr(gm,aFace2)->tag();
+        numFaceMaster = gm->getOCCInternals()->getFaceForOCCShape(gm,aFace1)->tag();
+        numFaceSlave  = gm->getOCCInternals()->getFaceForOCCShape(gm,aFace2)->tag();
         //Msg::Info("Face %d (slave) is most likely Face %d (master) translated by (%.2e,%.2e,%.2e)!",
         //           numFaceSlave,numFaceMaster,FaceTranslationVector[0],FaceTranslationVector[1],
         //           FaceTranslationVector[2]);
@@ -1188,7 +1188,7 @@ void OCCFactory::setPeriodicAllFaces(GModel *gm, std::vector<double> FaceTransla
         for (TopExp_Explorer aEdgeExplorer1(aFace1,TopAbs_EDGE); aEdgeExplorer1.More();
              aEdgeExplorer1.Next()) {
           TopoDS_Edge aEdge1 = TopoDS::Edge(aEdgeExplorer1.Current());
-          int numEdgeMaster  = gm->getOCCInternals()->getOCCEdgeByNativePtr(gm,aEdge1)->tag();
+          int numEdgeMaster  = gm->getOCCInternals()->getEdgeForOCCShape(gm,aEdge1)->tag();
           EdgeListMaster[i1] = numEdgeMaster;
           //i2=0;
           for (TopExp_Explorer aEdgeExplorer2(aFace2,TopAbs_EDGE); aEdgeExplorer2.More();
@@ -1206,7 +1206,7 @@ void OCCFactory::setPeriodicAllFaces(GModel *gm, std::vector<double> FaceTransla
                && IsEqualG(BarycenterEdge1.X()+FaceTranslationVector[0],BarycenterEdge2.X())
                && IsEqualG(BarycenterEdge1.Y()+FaceTranslationVector[1],BarycenterEdge2.Y())
                && IsEqualG(BarycenterEdge1.Z()+FaceTranslationVector[2],BarycenterEdge2.Z())){
-              int numEdgeSlave   = gm->getOCCInternals()->getOCCEdgeByNativePtr(gm,aEdge2)->tag();
+              int numEdgeSlave   = gm->getOCCInternals()->getEdgeForOCCShape(gm,aEdge2)->tag();
               EdgeListSlave[i1]  = numEdgeSlave;
             }
           }
@@ -1326,7 +1326,7 @@ void OCCFactory::rotate(GModel *gm, std::vector<double> p1, std::vector<double> 
   gm->_occ_internals->buildGModel(gm);
 }
 
-void OCCFactory::dilate(GModel *gm, std::vector<double> p, std::vector<double> s, 
+void OCCFactory::dilate(GModel *gm, std::vector<double> p, std::vector<double> s,
                         int addToTheModel)
 {
   if (!gm->_occ_internals)

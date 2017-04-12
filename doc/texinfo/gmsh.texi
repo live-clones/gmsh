@@ -21,7 +21,7 @@
 @c =========================================================================
 @c %**start of header
 @setfilename gmsh.info
-@set GMSH-VERSION 2.16
+@set GMSH-VERSION 3.0
 @set COPYRIGHT @copyright{} 1997-2017 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @settitle Gmsh @value{GMSH-VERSION}
 @footnotestyle separate
@@ -128,145 +128,6 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 * License::                     Complete copy of the license
 * Concept index::               Index of concepts
 * Syntax index::                Index of reserved keywords in the Gmsh language
-
-@ifnothtml
-@detailmenu
- --- The Detailed Node Listing ---
-
-Overview
-
-* Geometry::
-* Mesh::
-* Solver::
-* Post-processing::
-* What Gmsh is pretty good at::
-* and what Gmsh is not so good at::
-* Bug reports::
-
-How to read this reference manual?
-
-* Syntactic rules::
-
-Running Gmsh on your system
-
-* Interactive mode::
-* Non-interactive mode::
-* Command-line options::
-* Mouse actions::
-* Keyboard shortcuts::
-
-General tools
-
-* Comments::
-* Expressions::
-* Operators::
-* Built-in functions::
-* User-defined macros::
-* Loops and conditionals::
-* General commands::
-* General options::
-
-Expressions 
-
-* Floating point expressions::
-* Character expressions::
-* Color expressions::
-
-Geometry module
-
-* Geometry commands::
-* Geometry options::
-
-Geometry commands
-
-* Points::
-* Lines::
-* Surfaces::
-* Volumes::
-* Extrusions::
-* Transformations::
-* Miscellaneous geometry commands::
-
-Mesh module
-
-* Choosing the right unstructured algorithm::
-* Elementary vs physical entities::
-* Mesh commands::
-* Mesh options::
-
-Mesh commands
-
-* Specifying mesh element sizes::
-* Structured grids::
-* Miscellaneous mesh commands::
-
-Solver module
-
-* Solver options::
-
-Post-processing module
-
-* Post-processing commands::
-* Post-processing plugins::
-* Post-processing options::
-
-File formats
-
-* MSH ASCII file format::
-* MSH binary file format::
-* Node ordering::
-* Legacy formats::
-
-Legacy formats
-
-* MSH file format version 1.0::
-* POS ASCII file format::
-* POS binary file format::
-
-Tutorial
-
-* t1.geo::
-* t2.geo::
-* t3.geo::
-* t4.geo::
-* t5.geo::
-* t6.geo::
-* t7.geo::
-* t8.geo::
-* t9.geo::
-* t10.geo::
-* t11.geo::
-* t12.geo::
-* t13.geo::
-* t14.geo::
-* t15.geo::
-
-Options
-
-* General options list::
-* Geometry options list::
-* Mesh options list::
-* Solver options list::
-* Post-processing options list::
-
-Information for developers
-
-* Source code structure::
-* Coding style::
-* Adding a new option::
-
-Frequently asked questions
-
-* The basics::
-* Installation problems::
-* General questions::
-* Geometry module questions::
-* Mesh module questions::
-* Solver module questions::
-* Post-processing module questions::
-
-@end detailmenu
-@end ifnothtml
 @end menu
 
 @c =========================================================================
@@ -496,7 +357,9 @@ commands});
 @item
 parametrize these geometries. Gmsh's scripting language enables all
 commands and command arguments to depend on previous calculations (see
-@ref{Expressions}, and @ref{Geometry commands});
+@ref{Expressions}, and @ref{Geometry commands}). Using the OpenCASCADE
+geometry kernel, Gmsh gives access to all usual constructive solid
+geometry operations;
 @item
 generate 1D, 2D and 3D simplicial (i.e., using line segments, triangles
 and tetrahedra) finite element meshes for CAD models in their native
@@ -545,22 +408,9 @@ small but powerful GUI.
 @node and what Gmsh is not so good at, Bug reports, What Gmsh is pretty good at, Overview
 @section @dots{} and what Gmsh is not so good at
 
-As of version 2.8, here are some known weaknesses of Gmsh:
+As of version 3.0, here are some known weaknesses of Gmsh:
 
 @itemize @bullet
-@item
-the BRep approach for describing geometries can become
-inconvenient/inefficient for large models. For complex models, or if you
-want to use a solid-modeler approach, you should link Gmsh with an
-external CAD kernel and import native files directly. (The binary
-versions available on @uref{http://gmsh.info} are linked with the
-free CAD kernel OpenCASCADE, which enables native BREP import as well as
-STEP and IGES import.)
-@item
-Gmsh's internal CAD engine is fairly limited: it only handles simple
-primitives and does not perform any complex geometrical operations
-(e.g. no calculation of intersections). For such features you should
-link Gmsh with an external CAD kernel (see above).
 @item
 Gmsh is not a multi-bloc mesh generator: all meshes produced by Gmsh are
 conforming in the sense of finite element meshes;
@@ -569,11 +419,10 @@ Gmsh's user interface is only exposing a limited number of the available
 features, and many aspects of the interface could be enhanced
 (especially manipulators).
 @item
-Gmsh's scripting language is fairly limited, providing only very crude
-loop controls and user-defined macros, with no local variables.
-@item
-there is no global ``undo'' capability. You will often need to edit a
-text file to correct mistakes.
+Gmsh's scripting language is quite limited, providing only very crude
+loop controls and user-defined macros, with no local variables. We will
+at some point create a C API so that you can access Gmsh features with
+your language of choice.
 @end itemize
 
 If you have the skills and some free time, feel free to join the
@@ -651,7 +500,7 @@ post-processor for your own software, you will also want to learn about
 the non-scripting input/output files that Gmsh can read/write. In
 addition to Gmsh's native ``MSH'' file format (@pxref{File formats}),
 Gmsh can read/write many standard mesh files, depending on how it was
-built: check the `File->Save As' menu for a list of available formats.
+built: check the `File->Export' menu for a list of available formats.
 
 Finally, to use Gmsh at the third level (i.e., to link the Gmsh library
 with your own code), you will need to learn the internal Gmsh
@@ -758,7 +607,7 @@ lines; `2D' will mesh all the surfaces---as well as all the lines if
 `1D' was not called before; `3D' will mesh all the volumes---and all the
 surfaces if `2D' was not called before). To save the resulting mesh in
 the current mesh format click on `Save', or select the appropriate
-format and file name with the `File->Save As' menu. The default mesh
+format and file name with the `File->Export' menu. The default mesh
 file name is based on the name of the current active model, with an
 appended extension depending on the mesh format@footnote{Nearly all the
 interactive commands have keyboard shortcuts: see @ref{Keyboard
@@ -809,7 +658,7 @@ model, the associated options will be automatically loaded, too.  To
 save the current options as your default preferences for all future Gmsh
 sessions, use the `File->Save Options As Default' menu instead. Finally,
 you can also save the current options in an arbitrary file by choosing
-the `Gmsh options' format in `File->Save As'.
+the `Gmsh options' format in `File->Export'.
 
 For more information about available options (and how to reset them to
 their default values), see @ref{Options}. A full list of options with
@@ -1095,7 +944,8 @@ List of expressions are also widely used, and are defined as:
   @var{string} [ @{ @var{expression-list} @} ] | 
   Point @{ @var{expression} @} |
   @var{transform} |
-  @var{extrude}
+  @var{extrude} |
+  @var{boolean} |
   Point @{ @var{expression} @} |
   <Physical> Point|Line|Surface|Volume "*" |
   Point|Line|Surface|Volume In BoundingBox @{ @var{expression-list} @} |
@@ -1802,6 +1652,11 @@ the `File->Merge' menu in the GUI. If the path in @var{char-expression}
 is not absolute, @var{char-expression} is appended to the path of the
 current file.
 
+@item ShapeFromFile( @var{char-expression} );
+Merges a BREP or STEP file and returns the identification numbers of the
+highest-dimensional entities. Only available with the OpenCASCADE
+geometry kernel.
+
 @item Draw;
 Redraws the scene.
 
@@ -1869,6 +1724,10 @@ arguement is the command line).
 
 @item SetName @var{char-expression};
 Changes the name of the current model.
+
+@item SetFactory(@var{char-expression});
+Changes the current geometry kernel. Currently available kernels:
+@code{"Built-in"} and @code{"OpenCASCADE"}.
 
 @item SyncModel;
 Forces an immediate transfer from the old geometrical database into the
@@ -1975,6 +1834,7 @@ previously defined entity, it is enclosed between braces.''
 * Surfaces::
 * Volumes::
 * Extrusions::
+* Boolean operations::
 * Transformations::
 * Miscellaneous geometry commands::
 @end menu
@@ -2028,43 +1888,6 @@ automatically created).
 @cindex Lines, physical
 
 @ftable @code
-@c @item Bezier ( @var{expression} ) = @{ @var{expression-list} @};
-@c Creates a Bezier curve. The @var{expression} inside the parentheses is the
-@c Bezier curve's identification number; the @var{expression-list} on the right
-@c hand side should contain the identification numbers of all the curve's
-@c control points.
-
-@item BSpline ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a B-spline curve. The @var{expression} inside the parentheses is the
-B-spline curve's identification number; the @var{expression-list} on the
-right hand side should contain the identification numbers of all the
-B-spline's control points. Repeating control points has the expected effect.
-
-@item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} @};
-Creates a circle arc (strictly) smaller than Pi. The @var{expression} inside
-the parentheses is the circle arc's identification number; the first
-@var{expression} inside the braces on the right hand side gives the
-identification number of the start point of the arc; the second
-@var{expression} gives the identification number of the center of the
-circle; the last @var{expression} gives the identification number of the end
-point of the arc.
-
-@c todo:
-@c @item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} @} Plane @{ @var{expression}, @var{expression}, @var{expression} @};
-
-@item CatmullRom ( @var{expression} ) = @{ @var{expression-list} @};
-@code{CatmullRom} is a synonym for @code{Spline}.
-
-@item Ellipse ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression}, @var{expression} @};
-Creates an ellipse arc. The @var{expression} inside the parentheses is the
-ellipse arc's identification number; the first @var{expression} inside the
-braces on the right hand side gives the identification number of the start
-point of the arc; the second @var{expression} gives the identification
-number of the center of the ellipse; the third @var{expression} gives the
-identification number of any point located on the major axis of the ellipse;
-the last @var{expression} gives the identification number of the end point
-of the arc.
-
 @item Line ( @var{expression} ) = @{ @var{expression}, @var{expression} @};
 Creates a straight line segment. The @var{expression} inside the parentheses
 is the line segment's identification number; the two @w{@var{expression}s}
@@ -2072,17 +1895,41 @@ inside the braces on the right hand side give identification numbers of the
 start and end points of the segment.
 @c todo: multi-lines not authorized yet
 
-@c todo:
-@c @item Nurbs ( @var{expression} ) = @{ @var{expression-list} @};
+@item Bezier ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a Bezier curve. The @var{expression-list} contains the
+identification numbers of the control points.
 
-@c todo:
-@c @item Parametric ( @var{expression} ) = @{ @var{expression}, @var{expression}, "@var{string}", "@var{string}", "@var{string}" @};
+@item BSpline ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a BSpline. The @var{expression-list} contains the identification
+numbers of the control points. BSplines are currently only available
+with the built-in kernel.
 
 @item Spline ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a spline curve. The @var{expression} inside the parentheses is the
-spline's identification number; the @var{expression-list} on the right hand
-side should contain the identification numbers of all the spline's control
-points.
+Creates a spline going through the points in @var{expression-list}. With
+the built-in geometry kernel this constructs a Catmull-Rom spline. With
+the OpenCASCADE kernel, this constructs a BSpline passing through the
+points with a given tolerance.
+
+@item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} <, ...> @};
+Creates a circle arc. The three @var{expression}s on the right-hand-side
+define the start point, the center and the end point of the arc. With
+the built-in geometry kernel the arc should be strictly smaller than Pi.
+With the OpenCASCADE kernel additional @var{expression}s can be provided
+to define a full circle (4th expression is the radius) or a circle arc
+between two angles (next 2 expressions).
+@c todo: document < Plane @{ @var{expression}, @var{expression}, @var{expression} @}; >
+
+@item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} @};
+Creates a circle. 
+
+@item Ellipse ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression}, @var{expression} <, ...> @};
+Creates an ellipse arc. The four @var{expression}s on the
+right-hand-side define the start point, the center point, a major axis
+point and the end point of the ellipse. The third point can be omitted
+with the OpenCASCADE kernel. With the OpenCASCADE kernel additional
+@var{expression}s can be provided to define a full ellipse (4th and 5th
+expressions define the radii along X and Y) or en ellipse arc (next 2
+expressions).
 
 @item Line Loop ( @var{expression} ) = @{ @var{expression-list} @};
 Creates an oriented line loop. The @var{expression} inside the parentheses
@@ -2096,6 +1943,11 @@ reorder the list internally to create a consistent loop. Although Gmsh
 supports it, it is not recommended to specify multiple line loops (or
 subloops) in a single @code{Line Loop} command. (Line loops are used to
 create surfaces: see @ref{Surfaces}.)
+
+@item Wire ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a path made of lines. Wires are only available with the
+OpenCASCADE kernel. They are used to create @code{ThruSections} and
+extrusions along paths.
 
 @item Compound Line ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a compound line from several elementary lines.  When meshed, a
@@ -2149,13 +2001,23 @@ not have any lines in common with another line loop defining a hole in the
 same surface (in which case the two line loops should be combined).
 
 @item Surface ( @var{expression} ) = @{ @var{expression-list} @} < In Sphere @{ @var{expression} @} >;
-Creates a surface filling. The @var{expression} inside the parentheses
-is the surface's identification number; the first
-@var{expression-list} on the right hand side should contain the
-identification number of a line loop composed of either three or four
-elementary lines. The optional @code{In Sphere} argument forces the
+Creates a surface filling. With the built-in kernel, the first line loop
+should be composed of either three or four elementary lines. With the
+built-in kernel, the optional @code{In Sphere} argument forces the
 surface to be a spherical patch (the extra parameter gives the
 identification number of the center of the sphere).
+
+@item Disk ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a disk. When four expressions are provided on the right hand
+side (3 coordinates of the center and the radius), the disk is circular.
+A fifth expression defines the radius along Y, leading to an ellipse.
+Disk is only available with the OpenCASCADE kernel.
+
+@item Rectangle ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a rectangle. The 3 first expressions define the lower-left
+corner; the next 2 define the width and height. If a 6th expression is
+provided, it defines a radius to round the rectangle corners. Rectangle
+is only available with the OpenCASCADE kernel.
 
 @item Surface Loop ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a surface loop (a shell). The @var{expression} inside the
@@ -2166,7 +2028,6 @@ surface loop. A surface loop must always represent a closed shell, and the
 elementary surfaces should be oriented consistently (using negative
 identification numbers to specify reverse orientation). (Surface loops are
 used to create volumes: see @ref{Volumes}.)
-
 
 @item Compound Surface ( @var{expression} ) = @{ @var{expression-list} @} < Boundary @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @} @} > ;
 Creates a compound surface from several elementary surfaces.  When
@@ -2223,6 +2084,51 @@ should not have any surfaces in common with another surface loop defining a
 hole in the same volume (in which case the two surface loops should be
 combined).
 
+@item Sphere ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a sphere, defined by the 3 coordinates of its center and a
+radius. Additional expressions define 3 angle limits. Sphere is only
+available with the OpenCASCADE kernel.
+
+@item Block ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a block, defined by the 3 coordinates of a point and the 3
+extents. Block is only available with the OpenCASCADE kernel.
+
+@item Cylinder ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a cylinder, defined by the 3 coordinates of the center of the
+first circular face and the 3 components of the vector defining its
+axis. An additional expression defines the angular opening. Cylinder is
+only available with the OpenCASCADE kernel.
+
+@item Torus ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a torus, defined by the 3 coordinates of its center and 2 radii.
+An additional expression defines the angular opening. Torus is only
+available with the OpenCASCADE kernel.
+
+@item Cone ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a cone, defined by the 3 coordinates of the center of the first
+circular face, the 3 components of the vector defining its axis and the
+two radii of the faces (these radii can be zero). An additional
+expression defines the angular opening. Cone is only available with the
+OpenCASCADE kernel.
+
+@item Wedge ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a right angular wedge, defined by the 3 coordinates of the
+right-angle point and the 3 extends. An additional parameter defines the
+top X extent (zero by default). Wedge is only available with the
+OpenCASCADE kernel.
+
+@item ThruSections ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a volume defined through line loops.  ThruSections is only
+available with the OpenCASCADE kernel.
+
+@item Ruled ThruSections ( @var{expression} ) = @{ @var{expression-list} @};
+Same as @code{ThruSections}, but the surfaces creates on the boundary
+are forced to be ruled. Ruled ThruSections is only available with the
+OpenCASCADE kernel.
+
+@c @item ThickSolid ( @var{expression} ) = @{ @var{expression-list} @};
+@c todo: ThickSolid is only available with the OpenCASCADE kernel.
+
 @item Compound Volume ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a compound volume from several elementary volumes.  When meshed,
 a compound volume will be reparametrized as a single volume, whose mesh
@@ -2250,7 +2156,7 @@ unique identification number is automatically created).
 @c Extrusions
 @c .........................................................................
 
-@node Extrusions, Transformations, Volumes, Geometry commands
+@node Extrusions, Boolean operations, Volumes, Geometry commands
 @subsection Extrusions
 
 @cindex Extrusion, geometry
@@ -2289,6 +2195,26 @@ the X, Y and Z direction of the rotation axis; the third
 @var{expression-list} should contain three @w{@var{expression}s} giving
 the X, Y and Z components of any point on this axis; the last
 @var{expression} should contain the rotation angle (in radians).
+
+@item Extrude @{ @var{extrude-list} @}
+Extrudes entities in @var{extrude-list} using a translation along their
+normal. Only available with the built-in geometry kernel.
+
+@item Extrude @{ @var{extrude-list} @} Using Wire @{ @var{expression-list} @}
+Extrudes entities in @var{extrude-list} along the give wire. Only
+available with the OpenCASCADE geometry kernel.
+
+@item ThruSections @{ @var{expression-list} @}
+Creates surfaces through the given line loops or wires. ThruSection are
+only available with the OpenCASCADE kernel.
+
+@item Ruled ThruSections @{ @var{expression-list} @}
+Creates ruled surfaces through the given line loops or
+wires. ThruSections are only available with the OpenCASCADE kernel.
+
+@item Fillet @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression} @}
+Fillets volumes (first list) on some edges (second list), using the
+provided radius.  Fillet is only available with the OpenCASCADE kernel.
 @end ftable
 
 @noindent with
@@ -2319,10 +2245,84 @@ This behaviour can be changed with the
 options list}).
 
 @c .........................................................................
+@c Boolean operations
+@c .........................................................................
+
+@node Boolean operations, Transformations, Extrusions, Geometry commands
+@subsection Boolean operations
+
+@cindex Boolean operations, geometry
+@cindex Geometry, boolean operations
+@cindex Geometry, intersection
+@cindex Geometry, difference
+@cindex Geometry, union
+@cindex Geometry, fragments
+@findex @var{boolean}
+
+Boolean operations can be applied on lines, surfaces and volumes. All
+boolean operation act on two lists of elementary entities. The first
+list represents the object; the second represents the tool. The general
+syntax for boolean operations is as follows:
+
+@var{boolean}:
+@ftable @code
+@item BooleanIntersection @{ @var{boolean-list} @} @{ @var{boolean-list} @}
+Computes the intersection of the object and the tool.
+@item BooleanUnion @{ @var{boolean-list} @} @{ @var{boolean-list} @}
+Computes the union of the object and the tool.
+@item BooleanDifference @{ @var{boolean-list} @} @{ @var{boolean-list} @}
+Subtract the tool from the object.
+@item BooleanFramgments @{ @var{boolean-list} @} @{ @var{boolean-list} @}
+Computes all the fragments resulting from the intersection of the object
+and the tool.
+@end ftable
+
+with
+
+@example
+@var{boolean-list}: 
+  Line | Surface | Volume @{ @var{expression-list} @}; @dots{} |
+  Delete ;
+@end example
+
+If @code{Delete} is specified in the @var{boolean-list}, the tool and/or
+the object is deleted.  
+
+As explained in @ref{Floating point expressions}, @var{boolean} can be
+used in an expression, in which case it returns the list of
+identification numbers of the highest dimensional entities created by
+the boolean operation.  See
+@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/boolean/,demos/boolean}
+for examples.
+
+An alternative syntax exists for boolean operations, which can be used
+when it is known beforehand that the operation will result in a single
+(highest-dimensional) entity:
+
+@var{boolean-explicit}:
+@ftable @code
+@item BooleanIntersection ( @var{expression} ) = @{ @var{boolean-list} @} @{ @var{boolean-list} @};
+Computes the intersection of the object and the tool and assign the
+result the identification number @var{expression}.
+@item BooleanUnion @{ @var{boolean-list} @} @{ @var{boolean-list} @}
+Computes the union of the object and the tool and assign the result
+the identification number @var{expression}.
+@item BooleanDifference @{ @var{boolean-list} @} @{ @var{boolean-list} @}
+Subtract the tool from the object and assign the result the
+identification number @var{expression}.
+@end ftable
+
+Again, see
+@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/boolean/,demos/boolean}
+for examples.
+
+Boolean operations are only available with the OpenCASCADE geometry kernel.
+
+@c .........................................................................
 @c Transformations
 @c .........................................................................
 
-@node Transformations, Miscellaneous geometry commands, Extrusions, Geometry commands
+@node Transformations, Miscellaneous geometry commands, Boolean operations, Geometry commands
 @subsection Transformations
 
 @cindex Transformations, geometry
@@ -2342,7 +2342,14 @@ below). The syntax of the transformation commands is:
 @item Dilate @{ @{ @var{expression-list} @}, @var{expression} @} @{ @var{transform-list} @}
 Scales all elementary entities in @var{transform-list} by a factor
 @var{expression}. The @var{expression-list} should contain three
-@w{@var{expression}s} giving the X, Y and Z direction of the homothetic
+@w{@var{expression}s} giving the X, Y, and Z coordinates of the center
+of the homothetic transformation.
+
+@item Dilate @{ @{ @var{expression-list} @}, @{ @var{expression}, @var{expression}, @var{expression} @} @} @{ @var{transform-list} @}
+Scales all elementary entities in @var{transform-list} using different
+factors along X, Y and Z (the three @var{expression}s). The
+@var{expression-list} should contain three @w{@var{expression}s} giving
+the X, Y, and Z coordinates of the center of the homothetic
 transformation.
 
 @item Rotate @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @}  @{ @var{transform-list} @}
@@ -4612,6 +4619,7 @@ system}. Screencasts that show how to use the GUI are available on
 * t13.geo::
 * t14.geo::
 * t15.geo::
+* t16.geo::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -4744,10 +4752,19 @@ system}. Screencasts that show how to use the GUI are available on
 @c t15.geo
 @c -------------------------------------------------------------------------
 
-@node t15.geo,  , t14.geo, Tutorial
+@node t15.geo, t16.geo, t14.geo, Tutorial
 @section @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t15.geo,t15.geo}
 
 @verbatiminclude ../../tutorial/t15.geo
+
+@c -------------------------------------------------------------------------
+@c t16.geo
+@c -------------------------------------------------------------------------
+
+@node t16.geo,  , t15.geo, Tutorial
+@section @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t16.geo,t16.geo}
+
+@verbatiminclude ../../tutorial/t16.geo
 
 @c =========================================================================
 @c Options
@@ -4766,7 +4783,7 @@ the `File->Save Options->As Default' menu) in a per-user ``option'' file
 (cf. ``Saved in: @code{General.OptionsFileName}'' in the lists below),
 automatically loaded by Gmsh every time it starts up. Finally, other
 options are only saved to disk manually, either by explicitely saving an
-option file with `File->Save As', or when saving per-model options with
+option file with `File->Export', or when saving per-model options with
 `File->Save Options->For Current File' (cf. ``Saved in: @code{-}'' in
 the lists below).
 
@@ -5272,7 +5289,7 @@ ghost triangulation in the printed output (on paper).
 
 @item How can I save GIF, JPEG, ..., images?
 
-Just choose the appropriate format in `File->Save As'. By default Gmsh
+Just choose the appropriate format in `File->Export'. By default Gmsh
 guesses the format from the file extension, so you can just type
 @file{myfile.jpg} in the dialog and Gmsh will automatically create a JPEG
 image file.
@@ -5280,7 +5297,7 @@ image file.
 @item How can I save MPEG, AVI, ..., animations?
 
 You can create simple MPEG animations by choosing MPEG as the format in
-`File->Save As': this allows you to loop over time steps or
+`File->Export': this allows you to loop over time steps or
 post-processing data sets, or to change parameters according to
 @code{Print.Parameter}. To create fully customized animations or to use
 different output formats (AVI, MP4, etc.) you should write a
@@ -5590,7 +5607,7 @@ Evaluate plugin.
 
 @item Is there a way to save animations?
 
-You can save simple MPEG animations directly from the `File->Save As'
+You can save simple MPEG animations directly from the `File->Export'
 menu. For other formats you should write a script. Have a look at
 @ref{t8.geo} or
 @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/anim.script,demos/anim.script}

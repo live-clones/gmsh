@@ -36,7 +36,7 @@ class GEntity {
 
   // gives the number of the master entity in periodic mesh, gives _tag
   // if non-periodic
-  GEntity* _meshMaster;
+  GEntity *_meshMaster;
 
   // the visibility and the selection flag
   char _visible, _selection;
@@ -181,7 +181,6 @@ class GEntity {
 
   virtual ~GEntity(){}
 
-
   // mesh generation of the entity
   virtual void mesh(bool verbose) {}
 
@@ -206,20 +205,25 @@ class GEntity {
   // vertices that bound this entity.
   virtual std::list<GVertex*> vertices() const { return std::list<GVertex*>(); }
 
-  // for python, temporary solution while iterator are not binded
-  std::vector<GRegion*> bindingsGetRegions() {
-    std::list<GRegion*> r = regions();  // NOTE : two-line to dont create two different lists with diff pointers
+  // for Python, temporary solution while iterator are not binded
+  std::vector<GRegion*> bindingsGetRegions()
+  {
+    // NOTE: two-line to not create two different lists with diff pointers
+    std::list<GRegion*> r = regions();
     return std::vector<GRegion*> (r.begin(), r.end());
   }
-  std::vector<GFace*> bindingsGetFaces() {
+  std::vector<GFace*> bindingsGetFaces()
+  {
     std::list<GFace*> f = faces();
     return std::vector<GFace*> (f.begin(), f.end());
   }
-  std::vector<GEdge*> bindingsGetEdges() {
+  std::vector<GEdge*> bindingsGetEdges()
+  {
     std::list<GEdge*> e = edges();
     return std::vector<GEdge*> (e.begin(), e.end());
   }
-  std::vector<GVertex*> bindingsGetVertices() {
+  std::vector<GVertex*> bindingsGetVertices()
+  {
     std::list<GVertex*> v = vertices();
     return std::vector<GVertex*> (v.begin(), v.end());
   }

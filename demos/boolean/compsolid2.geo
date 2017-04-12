@@ -16,7 +16,8 @@ Sphere(2) = {xx, 1, 1, rr};
 Block(3) = {2,0,0, 2,2,2};
 
 f() = BooleanFragments { Volume{1}; Delete; }{ Volume{2,3}; Delete; };
-
+Printf("f()", f());
 If(sph)
-  BooleanUnion { Volume{f[1]}; Delete; }{ Volume{f[{2:#f()-2}]}; Delete; }
+  //BooleanUnion { Volume{f(1)}; Delete; }{ Volume{f(2)}; Delete; }
+  BooleanUnion { Volume{2}; Delete; }{ Volume{3}; Delete; }
 EndIf

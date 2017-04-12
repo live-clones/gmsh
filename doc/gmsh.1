@@ -1,4 +1,4 @@
-.TH Gmsh 1 "17 July 2015" "2.10" "Gmsh Manual Pages"
+.TH Gmsh 1 "1 April 2017" "3.0" "Gmsh Manual Pages"
 .UC 4
 .\" ********************************************************************
 .SH NAME
@@ -22,48 +22,39 @@ ASCII text files using \fIGmsh\fR's own scripting language.
 .SH GEOMETRY OPTIONS
 .TP 4
 .B \-0
-parse all input files, output unrolled geometry, and exit. 
+Output model, then exit. 
 .TP 4
 .B \-tol float
 set geometrical tolerance. 
 .\" ********************************************************************
 .SH MESH OPTIONS
 .TP 4
-.B \-1
-perform the one-dimensional mesh, i.e., discretize all the curves in
-the geometry.
-.TP 4
-.B \-2
-perform the two-dimensional mesh, i.e., discretize all the surfaces in
-the geometry.
-.TP 4
-.B \-3
-perform the three-dimensional mesh, i.e., discretize all the volumes in
-the geometry.
-.TP 4
-.B \-part int
-partition the mesh after batch mesh generation.
-.TP 4
-.B \-saveall
-save all elements (and discard all physical group definitions).
+.B \-1, \-2, \-3
+perform 1D, 2D or 3D mesh generation, then exit.
 .TP 4
 .B \-o file
-specify mesh output file name.
+specify output file name.
 .TP 4
 .B \-format string
-set output mesh format (msh, msh1, msh2, unv, vrml, stl, mesh, bdf, p3d, cgns, med, fea).
+set output mesh format (auto, msh, msh1, msh2, unv, vrml, stl, mesh, bdf, med, ...).
 .TP 4
 .B \-bin
 use binary format when available.
 .TP 4
+.B \-saveall
+save all elements (discard physical group definitions)
+.TP 4
 .B \-algo string
-select mesh algorithm (meshadapt, del2d, front2d, del3d, front3d).
+select mesh algorithm (meshadapt, del2d, front2d, del3d, front3d, ...).
+.TP 4
+.B \-parametric
+save vertices with their parametric coordinates.
+.TP 4
+.B \-part int
+partition the mesh after batch mesh generation.
 .TP 4
 .B \-smooth int
 set number of mesh smoothing steps.
-.TP 4
-.B \-optimize[_netgen]
-optimize quality of tetrahedral elements.
 .TP 4
 .B \-order int
 set mesh order.
@@ -78,9 +69,6 @@ Set minimum characteristic length.
 .B \-clmax float
 Set maximum characteristic length.
 .TP 4
-.B \-clcurv
-Compute characteristic lengths from curvatures.
-.TP 4
 .B \-rand float
 set random perturbation factor.
 .TP 4
@@ -92,26 +80,16 @@ perform various consistency checks on mesh.
 .\" ********************************************************************
 .SH POST-PROCESSING OPTIONS
 .TP 4
-.B \-noview
-hide all views at startup.
-.TP 4
-.B \-link int
-choose link mode between post-processing views (0, 1, 2, 3, 4).
-.TP 4
 .B \-combine
 combine input views into multi-time-step ones.
 .\" ********************************************************************
 .SH DISPLAY OPTIONS
 .TP 4
-.B \-nodb
-suppress the double buffer. Use this options if you use \fIGmsh\fR on
-a remote host without GLX.
+.B \-n
+hide all meshes and post-processing views on startup.
 .TP 4
 .B \-fontsize int
 specify the font size for the GUI.
-.TP 4
-.B \-theme string
-specify the FLTK GUI scheme.
 .TP 4
 .B \-display string
 specify display.
@@ -120,6 +98,15 @@ specify display.
 .TP 4
 .B \-
 parse input files, then exit.
+.TP 4
+.B \-new
+create new model before merge next file.
+.TP 4
+.B \-merge
+merge next files.
+.TP 4
+.B \-open
+ppen next files.
 .TP 4
 .B \-a, \-g, \-m, \-s, \-p
 start in automatic, geometry, mesh, solver or post-processing mode.
@@ -135,6 +122,12 @@ set verbosity level.
 .TP 4
 .B \-nopopup
 don't popup dialog windows in scripts.
+.TP 4
+.B \-setnumber "name" value
+set constant number name=value
+.TP 4
+.B \-setstring "name" "value"
+set constant string name=value
 .TP 4
 .B \-string "string"
 parse option string at startup.

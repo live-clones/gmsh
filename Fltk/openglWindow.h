@@ -47,7 +47,7 @@ class openglWindow : public Fl_Gl_Window {
   double response_frequency;
   int addPointMode;
   bool lassoMode, selectionMode;
-  int endSelection, undoSelection, invertSelection, quitSelection;
+  int endSelection, undoSelection, invertSelection, quitSelection, changeSelection;
   std::string screenMessage[2];
   openglWindow(int x, int y, int w, int h);
   ~openglWindow();
@@ -63,6 +63,11 @@ class openglWindow : public Fl_Gl_Window {
   double frequency;
   void moveWithGamepad();
   Navigator *Nautilus;
+  void setPoint(double x, double y, double z)
+  {
+    _point[0] = x; _point[1] = y; _point[2] = z;
+  }
+
 };
 
 #endif

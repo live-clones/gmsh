@@ -19,7 +19,7 @@ Torus(newv) = {x++,y,0, 0.3, 0.1, Pi/3};
 Cone(newv) = {x++,y,0, 0.5,0,0, 0.5,0};
 Cone(newv) = {x++,y,0, 0.5,0,0, 0.5,0, Pi/3};
 Cone(newv) = {x++,y,0, 0.5,0,0, 0.5,0.2, Pi/3};
-Wedge(newv) = {x++,y,0, 0.5,0.5,0.5, 0};
+Wedge(newv) = {x++,y,0, 0.5,0.5,0.5};
 Wedge(newv) = {x++,y,0, 0.5,0.5,0.5, 0.8};
 
 // 2D
@@ -69,7 +69,7 @@ Ellipse(newl) = {x++,y,0, 0.4,0.1, Pi/3};
 Ellipse(newl) = {x++,y,0, 0.4,0.1, -Pi/3, Pi/3};
 
 p = newp; Point(p) = {x++,y,0}; Point(p+1) = {x-0.5,y+0.3,0}; Point(p+2) = {x-0.2,y,0};
-BSpline(newl) = {p:p+2};
+Spline(newl) = {p:p+2};
 
 p = newp; Point(p) = {x++,y,0}; Point(p+1) = {x-0.5,y+0.3,0}; Point(p+2) = {x-0.2,y,0};
 Bezier(newl) = {p:p+2};

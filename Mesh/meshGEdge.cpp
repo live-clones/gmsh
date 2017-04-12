@@ -646,7 +646,7 @@ void meshGEdge::operator() (GEdge *ge)
     return;
   }
   else if(ge->getBeginVertex() == ge->getEndVertex() &&
-     ge->getBeginVertex()->edges().size() == 1){
+          ge->getBeginVertex()->edges().size() == 1){
     end_p = beg_p = ge->point(t_begin);
     Msg::Debug("Meshing periodic closed curve");
   }

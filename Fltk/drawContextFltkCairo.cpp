@@ -56,6 +56,7 @@ class drawContextFltkCairo::queueString {
 
   void flush()
   {
+    if(_elements.empty()) return;
     cairo_surface_t *surface = cairo_image_surface_create(CAIRO_FORMAT_A8, _totalWidth, _maxHeight);
     cairo_t *cr = cairo_create(surface);
     int pos = 0;

@@ -11,6 +11,7 @@
 #include <FL/Fl_Shared_Image.H>
 #include <FL/Fl_File_Icon.H>
 #include <FL/fl_draw.H>
+#include <FL/fl_ask.H>
 #include "FlGui.h"
 #include "drawContextFltk.h"
 #include "drawContextFltkCairo.h"
@@ -398,6 +399,9 @@ FlGui::FlGui(int argc, char **argv)
   fl_mac_set_about(help_about_cb, 0);
 #endif
 
+  // don't move input dialogs to follow mouse
+  fl_message_hotspot(0);
+
   // create main graphic window (note that we create all the windows even if
   // some are not displayed, since the shortcuts should be valid even for hidden
   // windows, and we don't want to test for widget existence every time)
@@ -624,6 +628,18 @@ int FlGui::testGlobalShortcuts(int event)
       for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
         graph[i]->gl[j]->invertSelection = 1;
     status = 0; // trick: do as if we didn't use it
+  }
+  else if(Fl::test_shortcut('x')) {
+    elementaryContext->butt[0]->value(!elementaryContext->butt[0]->value());
+    status = 1; // trick: do as if we didn't use it
+  }
+  else if(Fl::test_shortcut('y')) {
+    elementaryContext->butt[1]->value(!elementaryContext->butt[1]->value());
+    status = 1; // trick: do as if we didn't use it
+  }
+  else if(Fl::test_shortcut('z')) {
+    elementaryContext->butt[2]->value(!elementaryContext->butt[2]->value());
+    status = 1; // trick: do as if we didn't use it
   }
   else if(Fl::test_shortcut(FL_Escape) ||
           Fl::test_shortcut(FL_META + FL_Escape) ||

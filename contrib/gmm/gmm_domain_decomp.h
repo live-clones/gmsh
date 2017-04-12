@@ -66,7 +66,7 @@ namespace gmm {
 	pmin[k] = std::min(pmin[k], pts[i][k]);
 	pmax[k] = std::max(pmax[k], pts[i][k]);
       }
-    
+
     std::vector<size_type> nbsub(dim), mult(dim);
     std::vector<int> pts1(dim), pts2(dim);
     size_type nbtotsub = 1;
@@ -74,13 +74,13 @@ namespace gmm {
       nbsub[k] = size_type((pmax[k] - pmin[k]) / msize)+1;
       mult[k] = nbtotsub; nbtotsub *= nbsub[k];
     }
-    
+
     std::vector<map_type> subs(nbtotsub);
     // points ventilation
     std::vector<size_type> ns(dim), na(dim), nu(dim);
     for (size_type i = 0; i < nbpts; ++i) {
       for (int k = 0; k < dim; ++k) {
-	register double a = (pts[i][k] - pmin[k]) / msize;
+	double a = (pts[i][k] - pmin[k]) / msize;
 	ns[k] = size_type(a) - 1; na[k] = 0;
 	pts1[k] = int(a + overlap); pts2[k] = int(ceil(a-1.0-overlap));
       }
@@ -105,19 +105,19 @@ namespace gmm {
     size_type nbmaxinsub = 0;
     for (size_type i = 0; i < nbtotsub; ++i)
       nbmaxinsub = std::max(nbmaxinsub, subs[i].size());
-    
+
     std::fill(ns.begin(), ns.end(), size_type(0));
     for (size_type i = 0; i < nbtotsub; ++i) {
       if (subs[i].size() > 0 && subs[i].size() < nbmaxinsub / 10) {
-	
+
 	for (int k = 0; k < dim; ++k) nu[k] = ns[k];
 	size_type nbmax = 0, imax = 0;
-	
+
 	for (int l = 0; l < dim; ++l) {
 	  nu[l]--;
 	  for (int m = 0; m < 2; ++m, nu[l]+=2) {
 	    bool ok = true;
-	    for (int k = 0; k < dim && ok; ++k) 
+	    for (int k = 0; k < dim && ok; ++k)
 	      if (nu[k] >= nbsub[k]) ok = false;
 	    if (ok) {
 	      size_type ind = ns[0];
@@ -128,7 +128,7 @@ namespace gmm {
 	  }
 	  nu[l]--;
 	}
-	
+
 	if (nbmax > subs[i].size()) {
 	  for (map_type::iterator it=subs[i].begin(); it!=subs[i].end(); ++it)
 	    subs[imax][it->first] = void_type();
@@ -138,7 +138,7 @@ namespace gmm {
       for (int k = 0; k < dim; ++k)
 	{ ns[k]++; if (ns[k] < nbsub[k]) break; ns[k] = 0; }
     }
-    
+
     // delete empty domains.
     size_type effnb = 0;
     for (size_type i = 0; i < nbtotsub; ++i) {
@@ -156,7 +156,7 @@ namespace gmm {
 	vB[i](it->first, j) = value_type(1);
     }
   }
-  
+
 
 }
 

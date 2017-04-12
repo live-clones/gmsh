@@ -14,7 +14,6 @@ v_ = v_out;
 f_[] = Abs(Boundary{ Volume{v_}; });
 e_[] = Unique( Abs(Boundary{ Surface{f_[]}; }) );
 v_out = Fillet{v_}{e_[2-1], e_[4-1], e_[6-1], e_[8-1]}{r_out};
-Recursive Delete{ Volume{v_}; }
 
 v_in = newv;
 Block(v_in) = {
@@ -25,6 +24,5 @@ v_ = v_in;
 f_[] = Abs(Boundary{ Volume{v_}; });
 e_[] = Unique( Abs(Boundary{ Surface{f_[]}; }) );
 v_in = Fillet{v_}{e_[2-1], e_[4-1], e_[6-1], e_[8-1]}{r_in};
-Recursive Delete{ Volume{v_}; }
 
 BooleanDifference { Volume{v_out}; Delete; }{ Volume{v_in}; Delete; }

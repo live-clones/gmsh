@@ -34,11 +34,7 @@
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRep_Builder.hxx>
-#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 6)
-#include <BOPTools_Tools.hxx>
-#else
 #include <BOPTools_AlgoTools.hxx>
-#endif
 
 OCCEdge::OCCEdge(GModel *m, TopoDS_Edge edge, int num, GVertex *v1, GVertex *v2)
   : GEdge(m, num, v1, v2), c(edge), trimmed(0)
@@ -89,7 +85,6 @@ void OCCEdge::setTrimmed(OCCFace *f)
 
 SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
 {
-
   if (face->getNativeType() != GEntity::OpenCascadeModel){
     const GPoint pt = point(epar);
     SPoint3 sp(pt.x(), pt.y(), pt.z());
@@ -369,11 +364,7 @@ void OCCEdge::replaceEndingPointsInternals(GVertex *g0, GVertex *g1)
     _replacement=E;
   }
   else {
-#if (OCC_VERSION_MAJOR == 6) && (OCC_VERSION_MINOR < 6)
-    BOPTools_Tools::MakeSplitEdge(aEx, aVR1, t1, aVR2, t2, _replacement);
-#else
     BOPTools_AlgoTools::MakeSplitEdge(aEx, aVR1, t1, aVR2, t2, _replacement);
-#endif
   }
   TopoDS_Edge temp = c;
   c = _replacement;

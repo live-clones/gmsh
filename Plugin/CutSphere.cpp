@@ -65,7 +65,7 @@ double GMSH_CutSpherePlugin::callback(int num, int action, double value, double 
 double GMSH_CutSpherePlugin::callbackX(int num, int action, double value)
 {
   return callback(num, action, value, &CutSphereOptions_Number[0].def,
-                  CTX::instance()->lc / 100., - 2 * CTX::instance()->lc, 
+                  CTX::instance()->lc / 100., - 2 * CTX::instance()->lc,
                   2 * CTX::instance()->lc);
 }
 
@@ -79,7 +79,7 @@ double GMSH_CutSpherePlugin::callbackY(int num, int action, double value)
 double GMSH_CutSpherePlugin::callbackZ(int num, int action, double value)
 {
   return callback(num, action, value, &CutSphereOptions_Number[2].def,
-                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc, 
+                  CTX::instance()->lc / 100., -2 * CTX::instance()->lc,
                   2 * CTX::instance()->lc);
 }
 

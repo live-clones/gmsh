@@ -59,6 +59,10 @@ class OCC_Internals {
   TopTools_DataMapOfShapeInteger _wireTag, _shellTag;
   TopTools_DataMapOfIntegerShape _tagWire, _tagShell;
 
+  // cache of <dim,tag> pairs corresponding to entities that will need to be
+  // remove from the model at the next synchronization
+  std::set<std::pair<int, int> > _toRemove;
+
   // internal mesh attributes
   class meshAttr {
   public:
@@ -74,6 +78,51 @@ class OCC_Internals {
   // iterate on all bound entities and recompute the maximum tag
   void _recomputeMaxTag(int dim);
 
+  // bind (potentially) mutliple entities in shape and return the tags in
+  // outTags. If tag > 0 and a single entity if found, use that; if
+  // highestDimOnly is true, only return the entities of the highest dimension
+  void _multiBind(TopoDS_Shape shape, int tag,
+                  std::vector<std::pair<int, int> > &outDimTags,
+                  bool returnHighestDimOnly, bool recursive=false,
+                  bool returnNewOnly=false);
+  // is the entity of a given dimension and tag bound?
+  bool _isBound(int dim, int tag);
+
+  // is the entity of a given dimension and shape bound?
+  bool _isBound(int dim, TopoDS_Shape shape);
+
+  // get the entity of a given dimension and tag
+  TopoDS_Shape _find(int dim, int tag);
+
+  // get the tag of a shape of a given dimension
+  int _find(int dim, TopoDS_Shape shape);
+
+  // make shapes
+  bool _makeRectangle(TopoDS_Face &result, double x, double y, double z,
+                    double dx, double dy, double roundedRadius=0.);
+  bool _makeDisk(TopoDS_Face &result, double xc, double yc, double zc,
+                 double rx, double ry);
+  bool _makeSphere(TopoDS_Solid &result, double xc, double yc, double zc,
+                   double radius, double angle1, double angle2, double angle3);
+  bool _makeBlock(TopoDS_Solid &result, double x, double y, double z,
+                  double dx, double dy, double dz);
+  bool _makeCylinder(TopoDS_Solid &result, double x, double y, double z,
+                   double dx, double dy, double dz, double r, double angle);
+  bool _makeCone(TopoDS_Solid &result, double x, double y, double z,
+                 double dx, double dy, double dz, double r1, double r2,
+                 double angle);
+  bool _makeWedge(TopoDS_Solid &result, double x, double y, double z,
+                  double dx, double dy, double dz, double ltx);
+  bool _makeTorus(TopoDS_Solid &result, double x, double y, double z,
+                  double r1, double r2, double angle);
+
+  // make STL triangulation of a face
+  bool _makeFaceSTL(TopoDS_Face s,
+                    std::vector<SPoint2> *verticesUV,
+                    std::vector<SPoint3> *verticesXYZ,
+                    std::vector<SVector3> *normalsXYZ,
+                    std::vector<int> &triangles);
+
   // add a shape and all its subshapes to _vmap, _emap, ..., _somap
   void _addShapeToMaps(TopoDS_Shape shape);
 
@@ -84,14 +133,13 @@ class OCC_Internals {
 
   // apply a geometrical transformation
   bool _transform(const std::vector<std::pair<int, int> > &inDimTags,
-                  BRepBuilderAPI_Transform *tfo,
-                  BRepBuilderAPI_GTransform *gtfo);
+                  BRepBuilderAPI_Transform *tfo, BRepBuilderAPI_GTransform *gtfo);
 
   // add circle or ellipse arc
-  bool _addArc(int tag, int startTag, int centerTag, int endTag, int mode);
+  bool _addArc(int &tag, int startTag, int centerTag, int endTag, int mode);
 
   // add bezier or bspline
-  bool _addSpline(int tag, const std::vector<int> &vertexTags, int mode);
+  bool _addSpline(int &tag, const std::vector<int> &vertexTags, int mode);
 
   // apply extrusion-like operations
   bool _extrude(int mode, const std::vector<std::pair<int, int> > &inDimTags,
@@ -100,16 +148,15 @@ class OCC_Internals {
                 std::vector<std::pair<int, int> > &outDimTags,
                 ExtrudeParams *e=0);
 
-  // set mesh attributes for extruded meshes
-  void _setMeshAttr(const TopoDS_Compound &c, BRepSweep_Prism *p,
-                    BRepSweep_Revol *r, ExtrudeParams *e,
-                    double x, double y, double z,
-                    double dx, double dy, double dz,
-                    double ax, double ay, double az, double angle);
-  void _copyMeshAttr(TopoDS_Edge edge, GEdge *ge);
-  void _copyMeshAttr(TopoDS_Face face, GFace *gf);
-  void _copyMeshAttr(TopoDS_Solid solid, GRegion *gr);
-
+  // set extruded mesh attributes
+  void _setExtrudedMeshAttr(const TopoDS_Compound &c, BRepSweep_Prism *p,
+                            BRepSweep_Revol *r, ExtrudeParams *e,
+                            double x, double y, double z,
+                            double dx, double dy, double dz,
+                            double ax, double ay, double az, double angle);
+  void _copyExtrudedMeshAttr(TopoDS_Edge edge, GEdge *ge);
+  void _copyExtrudedMeshAttr(TopoDS_Face face, GFace *gf);
+  void _copyExtrudedMeshAttr(TopoDS_Solid solid, GRegion *gr);
  public:
   OCC_Internals();
 
@@ -119,7 +166,8 @@ class OCC_Internals {
   // reset all maps
   void reset();
 
-  // bind and unbind OpenCASCADE shapes to tags
+  // bind and unbind OpenCASCADE shapes to tags (these methods will become
+  // private)
   void bind(TopoDS_Vertex vertex, int tag, bool recursive=false);
   void bind(TopoDS_Edge edge, int tag, bool recursive=false);
   void bind(TopoDS_Wire wire, int tag, bool recursive=false);
@@ -135,62 +183,52 @@ class OCC_Internals {
   void unbind(TopoDS_Solid solid, int tag, bool recursive=false);
   void unbind(TopoDS_Shape shape, int dim, int tag, bool recursive=false);
 
-  // bind (potentially) mutliple entities in shape and return the tags in
-  // outTags. If tag > 0 and a single entity if found, use that; if
-  // highestDimOnly is true, only return the entities of the highest dimension
-  void bind(TopoDS_Shape shape, int tag,
-            std::vector<std::pair<int, int> > &outDimTags,
-            bool highestDimOnly, bool recursive=false);
-
-  // is the entity of a given dimension and tag bound?
-  bool isBound(int dim, int tag);
-
-  // get the entity of a given dimension and tag
-  TopoDS_Shape find(int dim, int tag);
-
   // set/get max tag of entity for each dimension (0, 1, 2, 3), as well as
   // -2 for shells and -1 for wires
   void setMaxTag(int dim, int val);
   int getMaxTag(int dim) const;
 
-  // add shapes
-  bool addVertex(int tag, double x, double y, double z, double meshSize=MAX_LC);
-  bool addLine(int tag, int startTag, int endTag);
-  bool addLine(int tag, const std::vector<int> &vertexTags);
-  bool addCircleArc(int tag, int startTag, int centerTag, int endTag);
-  bool addCircle(int tag, double x, double y, double z, double r, double angle1,
+  // add shapes (if tag is < 0, a new tag is automatically created and returned)
+  bool addVertex(int &tag, double x, double y, double z, double meshSize=MAX_LC);
+  bool addLine(int &tag, int startTag, int endTag);
+  bool addLine(int &tag, const std::vector<int> &vertexTags);
+  bool addCircleArc(int &tag, int startTag, int centerTag, int endTag);
+  bool addCircle(int &tag, double x, double y, double z, double r, double angle1,
                  double angle2);
-  bool addEllipseArc(int tag, int startTag, int centerTag, int endTag);
-  bool addEllipse(int tag, double x, double y, double z, double r1, double r2,
+  bool addEllipseArc(int &tag, int startTag, int centerTag, int endTag);
+  bool addEllipse(int &tag, double x, double y, double z, double r1, double r2,
                   double angle1, double angle2);
-  bool addBezier(int tag, const std::vector<int> &vertexTags);
-  bool addBSpline(int tag, const std::vector<int> &vertexTags);
-  bool addWire(int tag, const std::vector<int> &edgeTags, bool checkClosed);
-  bool addLineLoop(int tag, const std::vector<int> &edgeTags);
-  bool addRectangle(int tag, double x, double y, double z,
+  bool addSpline(int &tag, const std::vector<int> &vertexTags);
+  bool addBezier(int &tag, const std::vector<int> &vertexTags);
+  bool addBSpline(int &tag, const std::vector<int> &vertexTags);
+  bool addWire(int &tag, const std::vector<int> &edgeTags, bool checkClosed);
+  bool addLineLoop(int &tag, const std::vector<int> &edgeTags);
+  bool addRectangle(int &tag, double x, double y, double z,
                     double dx, double dy, double roundedRadius=0.);
-  bool addDisk(int tag, double xc, double yc, double zc, double rx, double ry);
-  bool addPlaneSurface(int tag, const std::vector<int> &wireTags);
-  bool addSurfaceFilling(int tag, int wireTag);
-  bool addSurfaceLoop(int tag, const std::vector<int> &faceTags);
-  bool addVolume(int tag, const std::vector<int> &shellTags);
-  bool addSphere(int tag, double xc, double yc, double zc, double radius,
+  bool addDisk(int &tag, double xc, double yc, double zc, double rx, double ry);
+  bool addPlaneSurface(int &tag, const std::vector<int> &wireTags);
+  bool addSurfaceFilling(int &tag, int wireTag);
+  bool addSurfaceLoop(int &tag, const std::vector<int> &faceTags);
+  bool addVolume(int &tag, const std::vector<int> &shellTags);
+  bool addSphere(int &tag, double xc, double yc, double zc, double radius,
                  double angle1, double angle2, double angle3);
-  bool addBlock(int tag, double x, double y, double z,
+  bool addBlock(int &tag, double x, double y, double z,
                 double dx, double dy, double dz);
-  bool addCylinder(int tag, double x, double y, double z,
+  bool addCylinder(int &tag, double x, double y, double z,
                    double dx, double dy, double dz, double r, double angle);
-  bool addCone(int tag, double x, double y, double z,
+  bool addCone(int &tag, double x, double y, double z,
                double dx, double dy, double dz, double r1, double r2, double angle);
-  bool addWedge(int tag, double x, double y, double z, double dx, double dy,
+  bool addWedge(int &tag, double x, double y, double z, double dx, double dy,
                 double dz, double ltx);
-  bool addTorus(int tag, double x, double y, double z, double r1, double r2,
+  bool addTorus(int &tag, double x, double y, double z, double r1, double r2,
                 double angle);
+
+  // thrusections and thick solids (can create multiple entities)
   bool addThruSections(int tag, const std::vector<int> &wireTags,
-                       std::vector<std::pair<int, int> > &outDimTags,
-                       bool makeSolid, bool makeRuled);
+                       bool makeSolid, bool makeRuled,
+                       std::vector<std::pair<int, int> > &outDimTags);
   bool addThickSolid(int tag, int solidTag, const std::vector<int> &excludeFaceTags,
-                     double offset);
+                     double offset, std::vector<std::pair<int, int> > &outDimTags);
 
   // extrude and revolve
   bool extrude(const std::vector<std::pair<int, int> > &inDimTags,
@@ -206,14 +244,35 @@ class OCC_Internals {
 
   // fillet
   bool fillet(const std::vector<int> &regionTags, const std::vector<int> &edgeTags,
-              double radius, std::vector<std::pair<int, int> > &ouDimTags);
+              double radius, std::vector<std::pair<int, int> > &outDimTags,
+              bool removeRegion);
 
   // apply boolean operator
-  bool applyBooleanOperator(int tag, BooleanOperator op,
-                            const std::vector<std::pair<int, int> > &objectDimTags,
-                            const std::vector<std::pair<int, int> > &toolDimTags,
-                            std::vector<std::pair<int, int> > &outDimTags,
-                            bool removeObject, bool removeTool);
+  bool booleanOperator(int tag, BooleanOperator op,
+                       const std::vector<std::pair<int, int> > &objectDimTags,
+                       const std::vector<std::pair<int, int> > &toolDimTags,
+                       std::vector<std::pair<int, int> > &outDimTags,
+                       bool removeObject, bool removeTool);
+  bool booleanUnion(int tag,
+                    const std::vector<std::pair<int, int> > &objectDimTags,
+                    const std::vector<std::pair<int, int> > &toolDimTags,
+                    std::vector<std::pair<int, int> > &outDimTags,
+                    bool removeObject, bool removeTool);
+  bool booleanIntersection(int tag,
+                           const std::vector<std::pair<int, int> > &objectDimTags,
+                           const std::vector<std::pair<int, int> > &toolDimTags,
+                           std::vector<std::pair<int, int> > &outDimTags,
+                           bool removeObject, bool removeTool);
+  bool booleanDifference(int tag,
+                         const std::vector<std::pair<int, int> > &objectDimTags,
+                         const std::vector<std::pair<int, int> > &toolDimTags,
+                         std::vector<std::pair<int, int> > &outDimTags,
+                         bool removeObject, bool removeTool);
+  bool booleanFragments(int tag,
+                        const std::vector<std::pair<int, int> > &objectDimTags,
+                        const std::vector<std::pair<int, int> > &toolDimTags,
+                        std::vector<std::pair<int, int> > &outDimTags,
+                        bool removeObject, bool removeTool);
 
   // apply transformations
   bool translate(const std::vector<std::pair<int, int> > &inDimTags,
@@ -224,6 +283,8 @@ class OCC_Internals {
   bool dilate(const std::vector<std::pair<int, int> > &inDimTags,
               double x, double y, double z,
               double a, double b, double c);
+  bool symmetry(const std::vector<std::pair<int, int> > &inDimTags,
+                double a, double b, double c, double d);
 
   // copy and remove
   bool copy(const std::vector<std::pair<int, int> > &inDimTags,
@@ -251,11 +312,42 @@ class OCC_Internals {
 
   // queries
   bool getVertex(int tag, double &x, double &y, double &z);
+  GVertex *getVertexForOCCShape(GModel *model, TopoDS_Vertex toFind);
+  GEdge *getEdgeForOCCShape(GModel *model, TopoDS_Edge toFind);
+  GFace *getFaceForOCCShape(GModel *model, TopoDS_Face toFind);
+  GRegion *getRegionForOCCShape(GModel *model, TopoDS_Solid toFind);
 
-  GVertex *getOCCVertexByNativePtr(GModel *model, TopoDS_Vertex toFind);
-  GEdge *getOCCEdgeByNativePtr(GModel *model, TopoDS_Edge toFind);
-  GFace *getOCCFaceByNativePtr(GModel *model, TopoDS_Face toFind);
-  GRegion *getOCCRegionByNativePtr(GModel *model, TopoDS_Solid toFind);
+  // STL utilities
+  bool makeFaceSTL(TopoDS_Face s, std::vector<SPoint2> &vertices,
+                   std::vector<int> &triangles);
+  bool makeFaceSTL(TopoDS_Face s, std::vector<SPoint3> &vertices,
+                   std::vector<SVector3> &normals, std::vector<int> &triangles);
+  bool makeSolidSTL(TopoDS_Solid s, std::vector<SPoint3> &vertices,
+                    std::vector<SVector3> &normals, std::vector<int> &triangles);
+  bool makeRectangleSTL(double x, double y, double z, double dx, double dy,
+                        double roundedRadius, std::vector<SPoint3> &vertices,
+                        std::vector<SVector3> &normals, std::vector<int> &triangles);
+  bool makeDiskSTL(double xc, double yc, double zc, double rx, double ry,
+                   std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+                   std::vector<int> &triangles);
+  bool makeSphereSTL(double xc, double yc, double zc, double radius, double angle1,
+                     double angle2, double angle3, std::vector<SPoint3> &vertices,
+                     std::vector<SVector3> &normals, std::vector<int> &triangles);
+  bool makeBlockSTL(double x, double y, double z, double dx, double dy, double dz,
+                    std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+                    std::vector<int> &triangles);
+  bool makeCylinderSTL(double x, double y, double z, double dx, double dy, double dz,
+                       double r, double angle, std::vector<SPoint3> &vertices,
+                       std::vector<SVector3> &normals, std::vector<int> &triangles);
+  bool makeConeSTL(double x, double y, double z, double dx, double dy, double dz,
+                   double r1, double r2, double angle, std::vector<SPoint3> &vertices,
+                   std::vector<SVector3> &normals, std::vector<int> &triangles);
+  bool makeWedgeSTL(double x, double y, double z, double dx, double dy, double dz,
+                    double ltx, std::vector<SPoint3> &vertices,
+                    std::vector<SVector3> &normals, std::vector<int> &triangles);
+  bool makeTorusSTL(double x, double y, double z, double r1, double r2, double angle,
+                    std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+                    std::vector<int> &triangles);
 
   // *** FIXME what follows will be removed ***
  private:
@@ -304,115 +396,119 @@ public:
   void reset(){}
   void setMaxTag(int dim, int val){}
   int getMaxTag(int dim) const { return 0; }
-  bool addVertex(int tag, double x, double y, double z, double meshSize=MAX_LC)
+  bool addVertex(int &tag, double x, double y, double z, double meshSize=MAX_LC)
   {
     return _error("add vertex");
   }
-  bool addLine(int tag, int startTag, int endTag)
+  bool addLine(int &tag, int startTag, int endTag)
   {
     return _error("add line");
   }
-  bool addLine(int tag, const std::vector<int> &vertexTags)
+  bool addLine(int &tag, const std::vector<int> &vertexTags)
   {
     return _error("add line");
   }
-  bool addCircleArc(int tag, int startTag, int centerTag, int endTag)
+  bool addCircleArc(int &tag, int startTag, int centerTag, int endTag)
   {
     return _error("add circle arc");
   }
-  bool addCircle(int tag, double x, double y, double z, double r, double angle1,
+  bool addCircle(int &tag, double x, double y, double z, double r, double angle1,
                  double angle2)
   {
     return _error("add circle");
   }
-  bool addEllipseArc(int tag, int startTag, int centerTag, int endTag)
+  bool addEllipseArc(int &tag, int startTag, int centerTag, int endTag)
   {
     return _error("add ellipse arc");
   }
-  bool addEllipse(int tag, double x, double y, double z, double r1, double r2,
+  bool addEllipse(int &tag, double x, double y, double z, double r1, double r2,
                   double angle1, double angle2)
   {
     return _error("add ellipse");
   }
-  bool addBezier(int tag, const std::vector<int> &vertexTags)
+  bool addSpline(int &tag, const std::vector<int> &vertexTags)
+  {
+    return _error("add spline");
+  }
+  bool addBezier(int &tag, const std::vector<int> &vertexTags)
   {
     return _error("add Bezier");
   }
-  bool addBSpline(int tag, const std::vector<int> &vertexTags)
+  bool addBSpline(int &tag, const std::vector<int> &vertexTags)
   {
     return _error("add BSpline");
   }
-  bool addWire(int tag, const std::vector<int> &edgeTags, bool closed)
+  bool addWire(int &tag, const std::vector<int> &edgeTags, bool closed)
   {
     return _error("add wire");
   }
-  bool addLineLoop(int tag, const std::vector<int> &edgeTags)
+  bool addLineLoop(int &tag, const std::vector<int> &edgeTags)
   {
     return _error("add line loop");
   }
-  bool addRectangle(int tag, double x, double y, double z,
+  bool addRectangle(int &tag, double x, double y, double z,
                     double dx, double dy, double roundedRadius=0.)
   {
     return _error("add rectangle");
   }
-  bool addDisk(int tag, double xc, double yc, double zc, double rx, double ry)
+  bool addDisk(int &tag, double xc, double yc, double zc, double rx, double ry)
   {
     return _error("add disk");
   }
-  bool addPlaneSurface(int tag, const std::vector<int> &wireTags)
+  bool addPlaneSurface(int &tag, const std::vector<int> &wireTags)
   {
     return _error("add plane surface");
   }
-  bool addSurfaceFilling(int tag, int wireTag)
+  bool addSurfaceFilling(int &tag, int wireTag)
   {
     return _error("add surface filling");
   }
-  bool addSurfaceLoop(int tag, const std::vector<int> &faceTags)
+  bool addSurfaceLoop(int &tag, const std::vector<int> &faceTags)
   {
     return _error("add surface loop");
   }
-  bool addVolume(int tag, const std::vector<int> &shellTags)
+  bool addVolume(int &tag, const std::vector<int> &shellTags)
   {
     return _error("add volume");
   }
-  bool addSphere(int tag, double xc, double yc, double zc, double radius,
+  bool addSphere(int &tag, double xc, double yc, double zc, double radius,
                  double angle1, double angle2, double angle3)
   {
     return _error("add sphere");
   }
-  bool addBlock(int tag, double x, double y, double z,
+  bool addBlock(int &tag, double x, double y, double z,
                 double dx, double dy, double dz)
   {
     return _error("add block");
   }
-  bool addCylinder(int tag, double x, double y, double z,
+  bool addCylinder(int &tag, double x, double y, double z,
                    double dx, double dy, double dz, double r, double angle)
   {
     return _error("add cylinder");
   }
-  bool addCone(int tag, double x, double y, double z,
+  bool addCone(int &tag, double x, double y, double z,
                double dx, double dy, double dz, double r1, double r2, double angle)
   {
     return _error("add cone");
   }
-  bool addWedge(int tag, double x, double y, double z, double dx, double dy,
+  bool addWedge(int &tag, double x, double y, double z, double dx, double dy,
                 double dz, double ltx)
 
   { return _error("add wedge");
   }
-  bool addTorus(int tag, double x, double y, double z, double r1, double r2,
+  bool addTorus(int &tag, double x, double y, double z, double r1, double r2,
                 double angle)
   {
     return _error("add torus");
   }
   bool addThruSections(int tag, const std::vector<int> &wireTags,
-                       std::vector<std::pair<int, int> > &outDimTags,
-                       bool makeSolid, bool makeRuled)
+                       bool makeSolid, bool makeRuled,
+                       std::vector<std::pair<int, int> > &outDimTags)
   {
     return _error("add thrusection");
   }
   bool addThickSolid(int tag, int solidTag, const std::vector<int> &excludeFaceTags,
-                     double offset)
+                     double offset, std::vector<std::pair<int, int> > &outDimTags)
   {
     return _error("add thick solid");
   }
@@ -436,17 +532,50 @@ public:
     return _error("add pipe");
   }
   bool fillet(const std::vector<int> &regionTags, const std::vector<int> &edgeTags,
-              double radius, std::vector<std::pair<int, int> > &outDimTags)
+              double radius, std::vector<std::pair<int, int> > &outDimTags,
+              bool removeRegion)
   {
     return _error("create fillet");
   }
-  bool applyBooleanOperator(int tag, BooleanOperator op,
-                            const std::vector<std::pair<int, int> > &objectDimTags,
-                            const std::vector<std::pair<int, int> > &toolDimTags,
-                            std::vector<std::pair<int, int> > &outDimTags,
-                            bool removeObject, bool removeTool)
+  bool booleanOperator(int tag, BooleanOperator op,
+                       const std::vector<std::pair<int, int> > &objectDimTags,
+                       const std::vector<std::pair<int, int> > &toolDimTags,
+                       std::vector<std::pair<int, int> > &outDimTags,
+                       bool removeObject, bool removeTool)
   {
     return _error("apply boolean operator");
+  }
+  bool booleanUnion(int tag,
+                    const std::vector<std::pair<int, int> > &objectDimTags,
+                    const std::vector<std::pair<int, int> > &toolDimTags,
+                    std::vector<std::pair<int, int> > &outDimTags,
+                    bool removeObject, bool removeTool)
+  {
+    return _error("apply boolean union");
+  }
+  bool booleanIntersection(int tag,
+                           const std::vector<std::pair<int, int> > &objectDimTags,
+                           const std::vector<std::pair<int, int> > &toolDimTags,
+                           std::vector<std::pair<int, int> > &outDimTags,
+                           bool removeObject, bool removeTool)
+  {
+    return _error("apply boolean intersection");
+  }
+  bool booleanDifference(int tag,
+                         const std::vector<std::pair<int, int> > &objectDimTags,
+                         const std::vector<std::pair<int, int> > &toolDimTags,
+                         std::vector<std::pair<int, int> > &outDimTags,
+                         bool removeObject, bool removeTool)
+  {
+    return _error("apply boolean difference");
+  }
+  bool booleanFragments(int tag,
+                        const std::vector<std::pair<int, int> > &objectDimTags,
+                        const std::vector<std::pair<int, int> > &toolDimTags,
+                        std::vector<std::pair<int, int> > &outDimTags,
+                        bool removeObject, bool removeTool)
+  {
+    return _error("apply boolean fragments");
   }
   bool translate(const std::vector<std::pair<int, int> > &inDimTags,
                  double dx, double dy, double dz)
@@ -464,6 +593,11 @@ public:
               double a, double b, double c)
   {
     return _error("apply dilatation");
+  }
+  bool symmetry(const std::vector<std::pair<int, int> > &inDimTags,
+                double a, double b, double c, double d)
+  {
+    return _error("apply symmetry");
   }
   bool copy(const std::vector<std::pair<int, int> > &inDimTags,
             std::vector<std::pair<int, int> > &outDimTags)
@@ -491,6 +625,54 @@ public:
   void setMeshSize(int dim, int tag, double size){}
   void synchronize(GModel *model){}
   bool getVertex(int tag, double &x, double &y, double &z){ return false; }
+  bool makeRectangleSTL(double x, double y, double z, double dx, double dy,
+                        double roundedRadius, std::vector<SPoint3> &vertices,
+                        std::vector<SVector3> &normals, std::vector<int> &triangles)
+  {
+    return false;
+  }
+  bool makeDiskSTL(double xc, double yc, double zc, double rx, double ry,
+                   std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+                   std::vector<int> &triangles)
+  {
+    return false;
+  }
+  bool makeSphereSTL(double xc, double yc, double zc, double radius, double angle1,
+                     double angle2, double angle3, std::vector<SPoint3> &vertices,
+                     std::vector<SVector3> &normals, std::vector<int> &triangles)
+  {
+    return false;
+  }
+  bool makeBlockSTL(double x, double y, double z, double dx, double dy, double dz,
+                    std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+                    std::vector<int> &triangles)
+  {
+    return false;
+  }
+  bool makeCylinderSTL(double x, double y, double z, double dx, double dy, double dz,
+                       double r, double angle, std::vector<SPoint3> &vertices,
+                       std::vector<SVector3> &normals, std::vector<int> &triangles)
+  {
+    return false;
+  }
+  bool makeConeSTL(double x, double y, double z, double dx, double dy, double dz,
+                   double r1, double r2, double angle, std::vector<SPoint3> &vertices,
+                   std::vector<SVector3> &normals, std::vector<int> &triangles)
+  {
+    return false;
+  }
+  bool makeWedgeSTL(double x, double y, double z, double dx, double dy, double dz,
+                    double ltx, std::vector<SPoint3> &vertices,
+                    std::vector<SVector3> &normals, std::vector<int> &triangles)
+  {
+    return false;
+  }
+  bool makeTorusSTL(double x, double y, double z, double r1, double r2, double angle,
+                    std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+                    std::vector<int> &triangles)
+  {
+    return false;
+  }
 };
 
 #endif

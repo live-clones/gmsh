@@ -39,11 +39,6 @@ Copy meshing method (unstructured or transfinite) when duplicating geometrical e
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.CopyDisplayAttributes
-Copy display attributes (visibiliy, color) when duplicating geometrical entities?@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Geometry.DoubleClickedEntityTag
 Tag of last double-clicked geometrical entity@*
 Default value: @code{0}@*
@@ -149,8 +144,8 @@ Sew faces in STEP, IGES and BRep models@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.OCCConnectFaces
-Cut and connect faces in STEP, IGES and BRep models (0=no, 1=internal, 2=Salome)@*
+@item Geometry.OCCParallel
+Use multi-threaded OCC boolean operators@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -262,6 +257,11 @@ Saved in: @code{General.OptionsFileName}
 @item Geometry.Tolerance
 Geometrical tolerance@*
 Default value: @code{1e-08}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.ToleranceBoolean
+Geometrical tolerance for boolean operations@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Transform

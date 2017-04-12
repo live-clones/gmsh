@@ -24,14 +24,24 @@ Mesh surfaces
 Mesh volumes
 @item Escape
 Cancel lasso zoom/selection, toggle mouse selection ON/OFF
+@item e
+End/accept selection in geometry creation mode
 @item g
 Go to geometry module
 @item m
 Go to mesh module
 @item p
 Go to post-processing module
+@item q
+Abort selection in geometry creation mode
 @item s
 Go to solver module
+@item x
+Freeze x coordinate in geometry creation mode
+@item y
+Freeze y coordinate in geometry creation mode
+@item z
+Freeze z coordinate in geometry creation mode
 @item Shift+a
 Bring all windows to front
 @item Shift+g
@@ -52,6 +62,8 @@ Show post-processing view options
 Enable full mouse selection
 @item Ctrl+d
 Attach/detach menu
+@item Ctrl+e
+Export project
 @item Ctrl+f
 Enter full screen
 @item Ctrl+i
@@ -71,7 +83,7 @@ Quit
 @item Ctrl+r
 Rename project file
 @item Ctrl+s
-Save file as
+Save mesh in default format
 @item Shift+Ctrl+c
 Show clipping plane window
 @item Shift+Ctrl+h
@@ -84,8 +96,6 @@ Show manipulator window
 Show option window
 @item Shift+Ctrl+o
 Merge file(s)
-@item Shift+Ctrl+s
-Save mesh in default format
 @item Shift+Ctrl+u
 Show plugin window
 @item Shift+Ctrl+v

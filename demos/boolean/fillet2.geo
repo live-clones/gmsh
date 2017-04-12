@@ -9,5 +9,3 @@ f() = Abs(Boundary{ Volume{a()}; });
 e() = Unique(Abs(Boundary{ Surface{f()}; }));
 
 Fillet{a()}{e()}{1}
-
-Recursive Delete{ Volume{a()}; }

@@ -237,4 +237,14 @@ void SortEdgesInLoop(int num, List_T *edges, bool orient=false);
 void SetSurfaceGeneratrices(Surface *s, List_T *loops);
 void SetVolumeSurfaces(Volume *v, List_T *loops);
 
+int NEWPOINT();
+int NEWLINE();
+int NEWLINELOOP();
+int NEWSURFACE();
+int NEWSURFACELOOP();
+int NEWVOLUME();
+int NEWREG();
+int NEWFIELD();
+int NEWPHYSICAL();
+
 #endif

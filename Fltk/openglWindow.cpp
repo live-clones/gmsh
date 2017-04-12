@@ -76,6 +76,7 @@ openglWindow::openglWindow(int x, int y, int w, int h)
   addPointMode = 0;
   lassoMode = selectionMode = false;
   endSelection = undoSelection = invertSelection = quitSelection = 0;
+  changeSelection = 0;
 
   if(CTX::instance()->gamepad) Fl::add_timeout(.5, navigator_handler, (void*)this);
 }
@@ -219,7 +220,7 @@ void openglWindow::draw()
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
     _ctx->draw3d();
-    glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
+    glColor4ubv((GLubyte *) & CTX::instance()->color.geom.highlight[0]);
     float ps = CTX::instance()->geom.pointSize;
     if(_ctx->isHighResolution())
       ps *= CTX::instance()->highResolutionPointSizeFactor;
@@ -774,6 +775,7 @@ char openglWindow::selectEntity(int type,
   _trySelection = 0;
   selectionMode = true;
   quitSelection = 0;
+  changeSelection = 0;
   endSelection = 0;
   undoSelection = 0;
   invertSelection = 0;
@@ -785,6 +787,11 @@ char openglWindow::selectEntity(int type,
     regions.clear();
     elements.clear();
     FlGui::instance()->wait();
+    if(changeSelection) {
+      Msg::Debug("Changing selection mode to %d", changeSelection);
+      _selection = changeSelection;
+      changeSelection = 0;
+    }
     if(quitSelection) {
       _selection = ENT_NONE;
       selectionMode = false;

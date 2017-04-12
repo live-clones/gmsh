@@ -285,10 +285,12 @@ std::vector<MVertex*> GFace::getEmbeddedMeshVertices() const
   for(std::list<GEdge *>::const_iterator it = embedded_edges.begin();
       it != embedded_edges.end(); it++){
     tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
-    tmp.insert((*it)->getBeginVertex()->mesh_vertices.begin(),
-               (*it)->getBeginVertex()->mesh_vertices.end());
-    tmp.insert((*it)->getEndVertex()->mesh_vertices.begin(),
-               (*it)->getEndVertex()->mesh_vertices.end());
+    if((*it)->getBeginVertex())
+      tmp.insert((*it)->getBeginVertex()->mesh_vertices.begin(),
+                 (*it)->getBeginVertex()->mesh_vertices.end());
+    if((*it)->getEndVertex())
+      tmp.insert((*it)->getEndVertex()->mesh_vertices.begin(),
+                 (*it)->getEndVertex()->mesh_vertices.end());
   }
   for(std::list<GVertex *>::const_iterator it = embedded_vertices.begin();
       it != embedded_vertices.end(); it++){
@@ -694,7 +696,7 @@ void GFace::computeMeshSizeFieldAccuracy(double &avg,double &max_e, double &min_
   double oneoversqr2 = 1. / sqrt(2.);
   double sqr2 = sqrt(2.);
   for (std::set<MEdge, Less_Edge>::const_iterator it = es.begin();
-       it != es.end();++it){
+       it != es.end(); ++it){
     double u1,v1,u2,v2;
     MVertex *vert1 =  it->getVertex(0);
     vert1->getParameter(0, u1);
@@ -1327,7 +1329,7 @@ int GFace::genusGeom() const
   int nSeams = 0;
   std::set<GEdge*> single_seams;
   for (std::list<GEdge*>::const_iterator it = l_edges.begin();
-       it!=l_edges.end();++it){
+       it != l_edges.end(); ++it){
     if ((*it)->isSeam(this)){
       nSeams++;
       std::set<GEdge*>::iterator it2 = single_seams.find(*it);
@@ -1390,8 +1392,8 @@ bool GFace::fillPointCloud(double maxDist,
 
 
 #if defined(HAVE_MESH)
-static void meshCompound (GFace* gf, bool verbose) {
-
+static void meshCompound (GFace* gf, bool verbose)
+{
   discreteFace *df = new discreteFace (gf->model(), gf->tag() + 100000);
 
   std::set<int> ec;
@@ -1403,8 +1405,10 @@ static void meshCompound (GFace* gf, bool verbose) {
       if (found == ec.end())ec.insert((*it)->tag());
       else ec.erase(found);
     }
-    df->triangles.insert(df->triangles.end(), c->triangles.begin(),c->triangles.end());
-    df->mesh_vertices.insert(df->mesh_vertices.end(), c->mesh_vertices.begin(),c->mesh_vertices.end());
+    df->triangles.insert(df->triangles.end(), c->triangles.begin(),
+                         c->triangles.end());
+    df->mesh_vertices.insert(df->mesh_vertices.end(), c->mesh_vertices.begin(),
+                             c->mesh_vertices.end());
     for (unsigned int j=0;j<c->triangles.size();j++)df->_CAD.push_back(c);
     c->triangles.clear();
     c->mesh_vertices.clear();
@@ -1426,7 +1430,7 @@ void GFace::mesh(bool verbose)
   if (!_compound.empty()){ // Some faces are meshed together
     if (_compound[0] == this){ //  I'm the one that makes the compound job
       bool ok = true;
-      for (unsigned int i=0;i<_compound.size();i++){
+      for (unsigned int i = 0; i < _compound.size(); i++){
 	GFace *gf = (GFace*)_compound[i];
 	ok &= (gf->meshStatistics.status == GFace::DONE);
       }
@@ -1516,7 +1520,7 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
   std::set<GVertex*> l_vertices;
   std::map<std::pair<GVertex*,GVertex*>,GEdge* > l_vtxToEdge;
 
-  for (eIter=l_edges.begin();eIter!=l_edges.end();++eIter) {
+  for (eIter=l_edges.begin();eIter!=l_edges.end(); ++eIter) {
     GVertex* v0 = (*eIter)->getBeginVertex();
     GVertex* v1 = (*eIter)->getEndVertex();
     l_vertices.insert(v0);
@@ -1524,7 +1528,7 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
     l_vtxToEdge[std::make_pair(v0,v1)] = (*eIter);
   }
 
-  for (eIter=embedded_edges.begin();eIter!=embedded_edges.end();++eIter) {
+  for (eIter=embedded_edges.begin();eIter!=embedded_edges.end(); ++eIter) {
     GVertex* v0 = (*eIter)->getBeginVertex();
     GVertex* v1 = (*eIter)->getEndVertex();
     l_vertices.insert(v0);
@@ -1539,7 +1543,7 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
   std::list<GEdge*> m_edges = master->edges();
   std::set<GVertex*> m_vertices;
   std::map<std::pair<GVertex*,GVertex*>,GEdge* > m_vtxToEdge;
-  for (eIter=m_edges.begin();eIter!=m_edges.end();++eIter) {
+  for (eIter=m_edges.begin();eIter!=m_edges.end(); ++eIter) {
     GVertex* v0 = (*eIter)->getBeginVertex();
     GVertex* v1 = (*eIter)->getEndVertex();
     m_vertices.insert(v0);
@@ -1581,7 +1585,7 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
   std::map<GVertex*,GVertex*> gVertexCounterparts;
 
   std::set<GVertex*>::iterator mvIter;
-  for (mvIter=m_vertices.begin();mvIter!=m_vertices.end();++mvIter) {
+  for (mvIter=m_vertices.begin();mvIter!=m_vertices.end(); ++mvIter) {
 
     GVertex* m_vertex = *mvIter;
 
@@ -1597,7 +1601,7 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
     GVertex* l_vertex = NULL;
 
     std::set<GVertex*>::iterator lvIter = l_vertices.begin();
-    for (;lvIter!=l_vertices.end();++lvIter) {
+    for (;lvIter!=l_vertices.end(); ++lvIter) {
 
       SPoint3 xyz((*lvIter)->x(),(*lvIter)->y(),(*lvIter)->z());
       SVector3 dist = xyz - xyzTfo;
@@ -1743,8 +1747,7 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies)
 {
   std::map<GVertex*,GVertex*> vs2vt;
 
-  for (std::list<GEdge*>::iterator it=l_edges.begin();it!=l_edges.end();++it){
-
+  for (std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it){
     // slave edge
     GEdge* le = *it;
 

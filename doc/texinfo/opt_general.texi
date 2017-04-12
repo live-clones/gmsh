@@ -595,17 +595,17 @@ Default value: @code{0}@*
 Saved in: @code{General.SessionFileName}
 
 @item General.FontSize
-Size of the font in the user interface (-1=automatic)@*
+Size of the font in the user interface, in pixels (-1: automatic)@*
 Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.GraphicsFontSize
-Size of the font in the graphic window@*
+Size of the font in the graphic window, in pixels@*
 Default value: @code{15}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.GraphicsFontSizeTitle
-Size of the font in the graphic window for titles@*
+Size of the font in the graphic window for titles, in pixels@*
 Default value: @code{18}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -860,7 +860,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.MessageFontSize
-Size of the font in the message window (-1=automatic)@*
+Size of the font in the message window, in pixels (-1: automatic)@*
 Default value: @code{-1}@*
 Saved in: @code{General.OptionsFileName}
 

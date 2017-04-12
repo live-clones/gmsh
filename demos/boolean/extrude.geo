@@ -39,5 +39,6 @@ If(order == 0)
   BooleanFragments{ Volume{1}; Delete; }{ Volume{2:3}; Delete; }
 Else
   BooleanFragments{ Surface{1}; Delete; }{ Surface{2:3}; Delete; }
-  Extrude{0,0,0.3}{ Surface{1:5}; }
+  a() = Extrude{0,0,0.3}{ Surface{1:5}; };
+  Printf("returned entities (top, body, laterals, etc.) = ", a());
 EndIf

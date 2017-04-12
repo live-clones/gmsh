@@ -7,6 +7,8 @@
 //   Koen Hillewaert
 //
 
+#include <sstream>
+#include "GmshConfig.h"
 #include "HighOrder.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -22,9 +24,10 @@
 #include "fullMatrix.h"
 #include "BasisFactory.h"
 #include "MVertexRTree.h"
-#include "OptHomFastCurving.h"
 
-#include <sstream>
+#if defined(HAVE_OPTHOM)
+#include "OptHomFastCurving.h"
+#endif
 
 // --------- Functions that help optimizing placement of points on geometry -----------
 
@@ -1654,6 +1657,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     updateHighOrderVertices(*it, newHOVert[*it], onlyVisible);
 
+#if defined(HAVE_OPTHOM)
   // Determine mesh dimension and curve BL elements
   FastCurvingParameters p;
   p.dim = 0;
@@ -1662,8 +1666,9 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
   if (p.dim == 0)
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
         if ((*it)->getNumMeshElements() > 0) { p.dim = 2; break; }
-  //  if (p.dim > 0)
-  //    HighOrderMeshFastCurving(GModel::current(), p);
+  // if(p.dim > 0)
+  //   HighOrderMeshFastCurving(GModel::current(), p);
+#endif
 
   updatePeriodicEdgesAndFaces(m);
 

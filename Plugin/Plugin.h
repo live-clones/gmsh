@@ -28,10 +28,10 @@ class GMSH_Plugin
  public :
   // 4 kinds of plugins
   typedef enum {
-    GMSH_CAD_PLUGIN, 
-    GMSH_MESH_PLUGIN, 
-    GMSH_POST_PLUGIN, 
-    GMSH_SOLVER_PLUGIN 
+    GMSH_CAD_PLUGIN,
+    GMSH_MESH_PLUGIN,
+    GMSH_POST_PLUGIN,
+    GMSH_SOLVER_PLUGIN
   } GMSH_PLUGIN_TYPE;
 
   // a dialog box for the user interface
@@ -118,7 +118,7 @@ class GMSH_SolverPlugin : public GMSH_Plugin
   virtual void receiveNewPhysicalGroup(int dim, int id) = 0;
   // load the solver input file related to the gmsh geo file
   virtual void readSolverFile(const char *) = 0;
-  // save the solver file  
+  // save the solver file
   virtual void writeSolverFile(const char *) const = 0;
   // enhance graphics for a giver geo point
   virtual bool GL_enhancePoint(Vertex *v) { return false; }

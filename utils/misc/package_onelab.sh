@@ -88,63 +88,6 @@ if [ $# -lt 1 ] || [ $1 == "win64" ]; then
   rm -rf onelab-Windows64
 fi
 
-if [ $# -lt 1 ] || [ $1 == "win32" ]; then
-  rm -rf onelab-Windows32*
-  mkdir onelab-Windows32
-  curl -O http://gmsh.info/bin/Windows/gmsh-${GMSH}-Windows32.zip
-  curl -O http://getdp.info/bin/Windows/getdp-${GETDP}-Windows32c.zip
-  mv gmsh-${GMSH}-Windows32.zip /tmp
-  mv getdp-${GETDP}-Windows32c.zip /tmp
-  unzip -q -o /tmp/gmsh-${GMSH}-Windows32.zip -d /tmp
-  unzip -q -o /tmp/getdp-${GETDP}-Windows32c.zip -d /tmp
-  cp /tmp/README.txt onelab-Windows32
-  perl -pi -e 's/\n/\r\n/' onelab-Windows32/README.txt
-  mv /tmp/gmsh-*${GMSH}-Windows/gmsh.exe onelab-Windows32
-  mv /tmp/gmsh-*${GMSH}-Windows/onelab.py onelab-Windows32
-  mv /tmp/getdp-*${GETDP}-Windows/getdp.exe onelab-Windows32
-  mv /tmp/gmsh-*${GMSH}-Windows/LICENSE.txt onelab-Windows32/LICENSE.txt
-  echo "\n\n" >> onelab-Windows32/LICENSE.txt
-  cat /tmp/getdp-*${GETDP}-Windows/LICENSE.txt >> onelab-Windows32/LICENSE.txt
-  mv /tmp/gmsh-*${GMSH}-Windows/CREDITS.txt onelab-Windows32/CREDITS.txt
-  echo "\n\n" >> onelab-Windows32/CREDITS.txt
-  cat /tmp/getdp-*${GETDP}-Windows/CREDITS.txt >> onelab-Windows32/CREDITS.txt
-  mv /tmp/getdp-*${GETDP}-Windows/templates onelab-Windows32
-  mv /tmp/gmsh-*${GMSH}-Windows/tutorial onelab-Windows32
-  cp -R /tmp/models onelab-Windows32
-  rm -rf /tmp/gmsh-*
-  rm -rf /tmp/getdp-*
-  zip -r onelab-Windows32.zip onelab-Windows32
-  rm -rf onelab-Windows32
-fi
-
-if [ $# -lt 1 ] || [ $1 == "linux32" ]; then
-  rm -rf onelab-Linux32*
-  mkdir onelab-Linux32
-  curl -O http://gmsh.info/bin/Linux/gmsh-${GMSH}-Linux32.tgz
-  curl -O http://getdp.info/bin/Linux/getdp-${GETDP}-Linux32c.tgz
-  mv gmsh-${GMSH}-Linux32.tgz /tmp
-  mv getdp-${GETDP}-Linux32c.tgz /tmp
-  tar zxvf /tmp/gmsh-${GMSH}-Linux32.tgz -C /tmp
-  tar zxvf /tmp/getdp-${GETDP}-Linux32c.tgz -C /tmp
-  cp /tmp/README.txt onelab-Linux32
-  mv /tmp/gmsh-*${GMSH}-Linux/bin/gmsh onelab-Linux32
-  mv /tmp/gmsh-*${GMSH}-Linux/bin/onelab.py onelab-Linux32
-  mv /tmp/getdp-*${GETDP}-Linux/bin/getdp onelab-Linux32
-  mv /tmp/gmsh-*${GMSH}-Linux/share/doc/gmsh/LICENSE.txt onelab-Linux32/LICENSE.txt
-  echo "\n\n" >> onelab-Linux32/LICENSE.txt
-  cat /tmp/getdp-*${GETDP}-Linux/share/doc/getdp/LICENSE.txt >> onelab-Linux32/LICENSE.txt
-  mv /tmp/gmsh-*${GMSH}-Linux/share/doc/gmsh/CREDITS.txt onelab-Linux32/CREDITS.txt
-  echo "\n\n" >> onelab-Linux32/CREDITS.txt
-  cat /tmp/getdp-*${GETDP}-Linux/share/doc/getdp/CREDITS.txt >> onelab-Linux32/CREDITS.txt
-  mv /tmp/getdp-*${GETDP}-Linux/share/doc/getdp/templates onelab-Linux32
-  mv /tmp/gmsh-*${GMSH}-Linux/share/doc/gmsh/tutorial onelab-Linux32
-  cp -R /tmp/models onelab-Linux32
-  rm -rf /tmp/gmsh-*
-  rm -rf /tmp/getdp-*
-  zip -r onelab-Linux32.zip onelab-Linux32
-  rm -rf onelab-Linux32
-fi
-
 if [ $# -lt 1 ] || [ $1 == "linux64" ]; then
   rm -rf onelab-Linux64*
   mkdir onelab-Linux64

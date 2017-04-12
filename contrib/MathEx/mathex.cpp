@@ -51,24 +51,24 @@
 
    namespace smlib {
       using namespace std;
-   
-   
+
+
    ////////////////////////////////////
    // local variables, functions, etc
    ////////////////////////////////////
       namespace {
-      
+
       //////////////////////////////////
       // C function with one parameter
       //--------------------------------
-      
+
           double fac(double x)
          // Function return the factorial of integer belong to range 0..170.
          // in future, will implement aproximation for gamma function to evaluate for x > 170
          {
             double p;
             unsigned n;
-         
+
             if((x <0) || (x>170)) // maximum admited where
                throw mathex::error("Error [fac()]: range error");
             else {
@@ -82,52 +82,52 @@
                return p;
             }
          } // fac()
-      
+
       // convert radian to degree
           double deg(double x)
          {
             return( x * 180.0 / M_PI);
          } // deg()
-      
+
       // convert degree to radian
           double rad(double x)
          {
             return(x * M_PI / 180.0);
          } // rad()
-      
+
       // return square
       /*    double sqr(double x)
       {
          return (x*x);
       } */
       // sqr()
-      
+
       // return real part
           double trunc(double x)
          {
             return static_cast<long>(x);
          } // trunc()
-      
+
       // return rounded value to int
           double round(double x)
          {
             return static_cast<long>(x+0.5);
          } // round
-      
+
       // return 0 if x negative, 1 otherwise
           double step(double x)
          {
            if ( x < 0 ) return static_cast<long>(0.);
            return static_cast<long>(1.);
          } // step
-      
+
       // return -1 if x negative, 1 otherwise
           double sign(double x)
          {
            if ( x < 0 ) return static_cast<long>(-1.);
            return static_cast<long>(1.);
          } // sign
-      
+
       //////////////////////////////////////////////////////////
       // arithmetic operators
       //////////////////////////////////////////////////////////
@@ -147,34 +147,34 @@
       //   "^" -> binary_power
       //   "%" -> fmod (defined in math.h)
       ///////////////////////////////////////////////////////////
-      
+
       //////////////////////
       // C unary operator
-      
+
           double unary_minus(double x)
          {
             return -x;
          } // unary_minus()
-      
+
       //////////////////////////////////////////
       // C binary operators
       //----------------------------------------
-      
+
           double binary_plus(double x, double y)
          {
             return x + y;
-         } // binary_plus() 
-      
+         } // binary_plus()
+
           double binary_minus(double x, double y)
          {
             return x - y;
          } // binary_minus()
-      
+
           double binary_times(double x, double y)
          {
             return x * y;
          } // binary_timess()
-      
+
           double binary_divide(double x, double y)
          // in future, put more precisery checking, for overflow ?
          {
@@ -183,16 +183,16 @@
             else
                return (x/y);
          } // binary_divide()
-      
+
           double binary_power(double x, double y)
          {
             return pow(x,y);
          } // binary_power()
-      
+
       /////////////////////////////////////////
       // pre-defined user defined functions
       //---------------------------------------
-      
+
           double p_rand(vector <double> const &x)
          // rand() return value between [0,1)
          {
@@ -200,53 +200,53 @@
                throw mathex::error("Error [p_rand()]: can not use argument");
             return rand()/(RAND_MAX+1.0);
          } // p_rand()
-      
+
       // maximum
           double p_max(vector <double> const & x)
          {
-         
+
             double maxval=0;
-         
+
             if(x.size() == 0)
                throw mathex::error("Error [p_max()]: No arguments");
             maxval = x[0];
             for(unsigned i=0; i<x.size(); i++)
                if(x[i] > maxval)
                   maxval = x[i];
-         
+
             return maxval;
          } // p_max
-      
+
       // minimum
           double p_min(vector <double> const & x)
          {
-         
+
             double minval=0;
-         
+
             if(x.size() == 0)
                throw mathex::error("Error [p_min()]: No arguments");
             minval = x[0];
             for(unsigned i=0; i<x.size(); i++)
                if(x[i] < minval)
                   minval = x[i];
-         
+
             return minval;
          } // p_min
-      
+
       // sum
           double p_sum(vector <double> const & x)
          {
-         
+
             double sumval=0;
-         
+
             if(x.size() == 0)
                throw mathex::error("Error [p_sum()]: No arguments");
             for(unsigned i=0; i<x.size(); i++)
                sumval += x[i];
-         
+
             return sumval;
          } // p_sum
-      
+
       // average
           double p_med(vector <double> const & x)
          {
@@ -254,28 +254,28 @@
                throw mathex::error("Error [p_med()]: No arguments");
             return p_sum(x)/x.size();
          } // p_med()
-      
+
       ////////////////////////////////
       // function/constant tables
       ////////////////////////////////
-      
+
       //////////////////////////////////
       // One parameter C function table
-      
+
       // Record for one parameter C functions
-         typedef 
+         typedef
              struct
             {
                const char *name;
                double  (*f)(double x); // one parameter function
             } CFUNCREC;
-      	
-      ///////////////////////////////////////////////////////////   
+
+      ///////////////////////////////////////////////////////////
       // One parameter internal C defined functions
       // the unary operator are stored on first part of table
       //---------------------------------------------------------
       // CAUTION:
-      // if add unary operator, adjust the definiftion of NUM_UNARY_OP 
+      // if add unary operator, adjust the definiftion of NUM_UNARY_OP
       #define NUM_UNARY_OP 1
          CFUNCREC cfunctable[] =
          {
@@ -308,7 +308,7 @@
          { "log10",   log10 },
          { "Log10",   log10 },
          // { "pow10",   pow10 } // in future, add it?
-         { "rad",     rad },   // added 
+         { "rad",     rad },   // added
          { "Rad",     rad },
          { "round",   round }, // added
          { "Round",   round },
@@ -337,20 +337,20 @@
          { "Floor",   floor },
          { "ceil",    ceil }, // smallest integer not less than x
          { "Ceil",    ceil },
-         
+
          { 0, 0 } // 0 mark the end of table
          };
-      
+
       /////////////////////
       // binary operators
-      
+
       // binary operator's record
           class BINOPREC {
          public:
             char name;
             double (*f)(double, double);
          };
-      
+
       ////////////////////
       // binary operators
          BINOPREC binoptable[] =
@@ -362,43 +362,44 @@
          { '/',  binary_divide},
          { '^',  binary_power},
          { '%',  fmod},
-         
+
          { '\0' , 0 } // '\0' mark the end of table
          };
-      
+
       //////////////
       // constants
-      
+
       // constants record
           class CONSTREC {
          public:
             const char *name;
             double value;
          };
-      
+
       /////////////
       // constants
          CONSTREC consttable[] =
          {
          // name, value
+         { "Pi",  M_PI },
          { "pi",  M_PI },
          { "e",   M_E },
-         
+
          { NULL, 0 } // NULL mark the end of table
          };
-      
+
       } // namespace {
-   
-   
+
+
    ////////////////////////////
    // implementations
    ///////////////////////////
-   
+
    ///////////////
    // constatnts
    /// undefined number of arguments (for user defined functions
-      const int mathex::UNDEFARGS = -1; // for user function arguments   
-   
+      const int mathex::UNDEFARGS = -1; // for user function arguments
+
    ////////////////
    // methods
        void mathex::addstdfunc()
@@ -414,7 +415,7 @@
          addfunc("med", p_med, UNDEFARGS);
          addfunc("Med", p_med, UNDEFARGS);
       } // addstdfunc()
-   
+
        void mathex::reset()
       {
          delvar();
@@ -423,17 +424,17 @@
          expr = "";
          bytecode.clear();
          pos = 0;
-         addstdfunc();  
+         addstdfunc();
       } // reset
-   
+
    /////////////////////////////////
    // varibles table manipulations
-   
+
        bool mathex::addvar(string const &name, double *var)
       // register the program internal variable
       {
          unsigned i;
-      
+
          for(i=0; (i<vartable.size()) && (vartable[i].name != name);i++);
          if(i<vartable.size()) { // found! overwrite
             vartable[i].var = var;
@@ -444,12 +445,12 @@
          vartable.push_back(VARREC(name, var));
          return true;
       } // addvar()
-   
+
        bool mathex::delvar(string const &name)
       // delete one variable
       {
          unsigned i;
-      
+
          for(i=0; (i<vartable.size()) && (vartable[i].name != name);i++);
          if(i < vartable.size())  {
          // how to use erase?
@@ -463,16 +464,16 @@
          else
             return false;
       } // delvar()
-   
+
    //////////////////////////////////////////////
    // user defined function table manipulation
    //////////////////////////////////////////////
-   
+
        bool mathex::addfunc(string const &name, double (*f)(vector<double> const &), int NumArgs)
       // register the user defined function
       {
          unsigned i;
-      
+
          for(i=0; (i<functable.size()) && (functable[i].name != name);i++);
          if(i<functable.size()) { // found! overwrite
             functable[i].f = f;
@@ -484,12 +485,12 @@
          functable.push_back(FUNCREC(name, f, NumArgs));
          return true;
       } // addfunc()
-   
+
        bool mathex::delfunc(string const &name)
       // delete the user defined function
       {
          unsigned i;
-      
+
          for(i=0; (i<functable.size()) && (functable[i].name != name);i++);
          if(i < functable.size())  {
          // how to use erase?
@@ -502,14 +503,14 @@
          else
             return false;
       } // delfunc()
-   
+
    ////////////////////////////////////////////////////
    // get the index of variables/constants/functions/
    //     binary operator/user defined functions
    //--------------------------------------------------
    // return -1 if not found
    ////////////////////////////////////////////////////
-   
+
        int mathex::getconst(string const &name)
       // get index of const
       // return -1 if not found
@@ -522,14 +523,14 @@
          else
             return -1;
       } // getconst
-   
-   
+
+
        int mathex::getvar(string const &name)
       // get index of variable
       // return -1 if not found
       {
          unsigned i;
-      
+
       // look up the table
          for(i=0;(i<vartable.size()) && strcmp(name.c_str(), vartable[i].name.c_str());i++);
          if(i<vartable.size()) // if found
@@ -537,8 +538,8 @@
          else
             return -1;
       } // getvar
-   
-   
+
+
        int mathex::getcfunc(string const &name)
       // get index of one parameter function
       // return -1 if not found
@@ -551,7 +552,7 @@
          else
             return -1;
       } // getcfunc
-   
+
        int mathex::getunaryop(string const &name)
       // get index of unary operator
       // return -1 if not found
@@ -564,7 +565,7 @@
          else
             return -1;
       } // getunaryop
-   
+
        int mathex::getbinop(char name)
       // get index of one parameter function
       // return -1 if not found
@@ -577,8 +578,8 @@
          else
             return -1;
       } // getbinop
-   
-   
+
+
        int mathex::getuserfunc(string const &name)
       // get index of variable
       // return -1 if not found
@@ -591,8 +592,8 @@
          else
             return -1;
       } // getuserfunc
-   
-   
+
+
        bool mathex::isnewvalidname(string const &name)
       // Name validation.
       {
@@ -602,26 +603,26 @@
          for(unsigned j=0; j<name.size(); j++)
             if(!isalnum(name[j]) && (name[j] != '-'))
                return false;
-         return (getcfunc(name) < 0) && (getconst(name) < 0) 
+         return (getcfunc(name) < 0) && (getconst(name) < 0)
             && (getuserfunc(name) < 0) && (getvar(name) < 0);
       } // isnewvalidname
-   
-   
+
+
    //////////////////
-   //  Evaluation 
-   
+   //  Evaluation
+
    // main evaluator: internal use only
-   
+
    // main evaluation function
        double mathex::eval()
       //  Eval the parsed stack and return
       {
          static vector <double> x; // suppose that eval does not eval
          evalstack.clear();
-      
+
          if(status == notparsed) parse();
          if(status == invalid) throw error("eval()", "invalid expression");
-      
+
          for(unsigned i=0; i<bytecode.size(); i++)
          {
             switch(bytecode[i].state) {
@@ -646,7 +647,7 @@
                   evalstack[evalstack.size()-2] = binoptable[bytecode[i].idx].f
                      (evalstack[evalstack.size()-2], evalstack.back());
                   evalstack.pop_back(); // delete last
-                  break;				
+                  break;
                case CODETOKEN::USERFUNC: // Call the user defined functions
                #ifdef _DEBUG_
                if(bytecode[i].numargs > evalstack.size())
@@ -657,53 +658,53 @@
                      for(unsigned j=0; j<static_cast<unsigned>(bytecode[i].numargs); j++)
                         x[bytecode[i].numargs-1-j] = evalstack[evalstack.size()-1-j];
                      evalstack.resize(evalstack.size()-bytecode[i].numargs+1);
-							
+
                      evalstack.back() = functable[bytecode[i].idx].f(x);
                   }
 						else // Fixing bug pointed by  Hugh Denman <denmanh@tcd.ie> November 06, 2003
 						   evalstack.push_back(functable[bytecode[i].idx].f(x));
-                  break;         
+                  break;
                default: // invarid stack. It does not occur if currect parsed
                   throw  error("eval()", "invalid code token");
             }
          } // for(i=0; ByteCode[i].state != EMPTY;i++);
-      
+
       #ifdef _DEBUG_
       if(evalstack.size() != 1)
-         throw error("eval()", "stack error");  
+         throw error("eval()", "stack error");
       #endif
          return evalstack[0];
       } // eval()
-   
+
    /////////////////
    // parser
    //---------------
-   
+
    /////////////////
    // get the token
-   
+
    // get the number token
        bool mathex::getnumber(double &x)
       {
          unsigned long i = pos;
          bool decimal;
-      
+
       // is a number?
          if((i >= expr.size()) || !strchr("0123456789.", expr[i])) // not a number
             return false;
-      
+
       // getting the number
          for(decimal=false; i<expr.size(); i++) {
             if(!isdigit(expr[i]) && ((expr[i] != '.') || decimal) )
                break;
             if(expr[i] == '.') decimal = true;
          }
-      
+
          if((i==(pos+1)) && (expr[i]=='.')) // is not a number
             return false;
-      
+
       // if scientific notation
-         if((toupper(expr[i])=='E') && (i<expr.size())) { // cientific notation 
+         if((toupper(expr[i])=='E') && (i<expr.size())) { // cientific notation
          // decimal = true; // turn on to detect that are double
             i++; // skip this
             if((i<expr.size()) && ((expr[i]=='+') || (expr[i]=='-')) ) { // if sign
@@ -717,43 +718,43 @@
       // if decimal is true, the number is double. otherwise, number is integer
       // for this detection, cientific notation need to enable decimal too.
       // The integer value are not used for this package
-      
+
          x = strtod(expr.substr(pos, i-pos).c_str(), 0);
          pos = i;
          return true;
       } // getnumber()
-   
+
        bool mathex::getidentifier(string &name)
       {
          unsigned i = pos;
-      
+
          name.erase();
          if((i>=expr.size()) || (!isalpha(expr[i]) && (expr[i] != '_'))) // not a identifier
             return false;
-      
+
       // identifier
          for(;(i<expr.size()) &&(isalnum(expr[i]) || (expr[i] == '_')); i++);
-      
+
          name = expr.substr(pos, i-pos);
          pos = i; // advance the input
-      
+
          return true;
       } // getidentifier()
-   
-   
+
+
        mathex::PARSERTOKEN::type mathex::nexttoken()
       // Gets the next token from the expr
       {
          string identifier;
-      
+
          while((pos<expr.size()) && isspace(expr[pos]) )
             pos++;
-      
+
          if(pos == expr.size()) {
             curtok.state = PARSERTOKEN::END;
             return curtok.state;
          }
-      
+
          if(getnumber(curtok.value)) {
             curtok.state = PARSERTOKEN::VALUE;
             return curtok.state;
@@ -797,18 +798,18 @@
                case ')' : curtok.state = PARSERTOKEN::CPAREN;
                   break;
                default  : curtok.state = PARSERTOKEN::INVALID;
-            } // switch 
+            } // switch
             if(curtok.state != PARSERTOKEN::INVALID) {
                curtok.idx = getbinop(expr[pos]);
                pos++;
             }
          } // else
-      
+
          return curtok.state;
       } // nexttoken()
-   
+
    ////////////////////////////
-   // CodeStack operations 
+   // CodeStack operations
    ////////////////////////////
    #ifdef _DEBUG_
     void mathex::printcoderec(CODETOKEN const &token)
@@ -824,7 +825,7 @@
             cout << "VARIABLE: " << vartable[token.idx].name << endl;
             break;
          case CODETOKEN::FUNCTION:
-            if(token.idx <NUM_UNARY_OP) 
+            if(token.idx <NUM_UNARY_OP)
                cout << "unary operator: " << cfunctable[token.idx].name << endl;
             else
                cout << "FUNCTION: " << cfunctable[token.idx].name << endl;
@@ -837,9 +838,9 @@
             break;
          default: printf("INVALID\n");
       }
-   
+
    } // printcoderec()
-   
+
     void mathex::printbytecode()
    {
       cout << "codesize = "<< bytecode.size() << endl;
@@ -847,7 +848,7 @@
          printcoderec(bytecode[i]);
    }
    #endif
-   
+
        void mathex::parse()
       // Parse the expression
       {
@@ -864,39 +865,39 @@
             throw error("parse()", "End of expression expected");
          status = parsed;
       } // parse()
-   
+
        void mathex::parsearithmetic1(void)
       // level 1 arithmetic operator: binary plus/minus
       {
-         unsigned savedidx; 
+         unsigned savedidx;
          parsearithmetic2();
          while((curtok.state == PARSERTOKEN::PLUS) || (curtok.state == PARSERTOKEN::MINUS)) {
             savedidx = curtok.idx;
             nexttoken();
-            if((curtok.state == PARSERTOKEN::PLUS) || (curtok.state == PARSERTOKEN::MINUS)) 
+            if((curtok.state == PARSERTOKEN::PLUS) || (curtok.state == PARSERTOKEN::MINUS))
                throw error("parse()", "Invalid expression");
-            parsearithmetic2();      
+            parsearithmetic2();
             bytecode.push_back(CODETOKEN(CODETOKEN::BINOP, savedidx));
          } // while
       } // parsearithmetic1
-   
-   
+
+
        void mathex::parsearithmetic2(void)
       // level 2 arithmetic operator: multiplication, division, module
       {
          unsigned savedidx;
-         parsearithmetic3();   
+         parsearithmetic3();
          while( (curtok.state == PARSERTOKEN::TIMES) || (curtok.state == PARSERTOKEN::DIVIDE)
            || (curtok.state == PARSERTOKEN::MODULE) ) {
             savedidx = curtok.idx;
             nexttoken();
-            if((curtok.state == PARSERTOKEN::PLUS) || (curtok.state == PARSERTOKEN::MINUS)) 
+            if((curtok.state == PARSERTOKEN::PLUS) || (curtok.state == PARSERTOKEN::MINUS))
                throw error("parse()", "Invalid expression");
             parsearithmetic3();
             bytecode.push_back(CODETOKEN(CODETOKEN::BINOP, savedidx));
          }
       } // parsearithmetic3
-   
+
        void mathex::parsearithmetic3(void)
       // level 3 arithmetic operator: power
       {
@@ -905,43 +906,43 @@
          if(curtok.state == PARSERTOKEN::POWER) {
             savedidx = curtok.idx;
             nexttoken();
-            if((curtok.state == PARSERTOKEN::PLUS) || (curtok.state == PARSERTOKEN::MINUS)) 
+            if((curtok.state == PARSERTOKEN::PLUS) || (curtok.state == PARSERTOKEN::MINUS))
                throw error("parse()", "Invalid expression");
             parsearithmetic4();
             bytecode.push_back(CODETOKEN(CODETOKEN::BINOP, savedidx));
          }
       } // parsearithmetic3()
-   
+
        void mathex::parsearithmetic4(void)
       // level 4 arithmetic operator: unary plus/minus
       {
          PARSERTOKEN::type state;
          if(((state=curtok.state) == PARSERTOKEN::PLUS) || (state == PARSERTOKEN::MINUS))
             nexttoken();
-         if((curtok.state == PARSERTOKEN::PLUS) || (curtok.state == PARSERTOKEN::MINUS)) 
+         if((curtok.state == PARSERTOKEN::PLUS) || (curtok.state == PARSERTOKEN::MINUS))
             throw error("parse()", "Invalid expression");
          parseatom();
-      
+
          if(state == PARSERTOKEN::MINUS) // stored index are for binary operator. Get correct index
-            bytecode.push_back(CODETOKEN(CODETOKEN::FUNCTION, getunaryop("-"))); 
+            bytecode.push_back(CODETOKEN(CODETOKEN::FUNCTION, getunaryop("-")));
       	// unary minus are on function table
       } // parsearithmetic5()
-   
+
        void mathex::parseatom(void)
       // level 6: literal numbers, variables and functions
       {
          unsigned i;
-      
+
       // parentesis expression
          if(curtok.state == PARSERTOKEN::OPAREN) {
             nexttoken();
             if(curtok.state == PARSERTOKEN::CPAREN)
                throw error("parseatom()", "No expression inside parentesis");
             parsearithmetic1();
-         
+
             if(curtok.state != PARSERTOKEN::CPAREN)
                throw error("parseatom()", "\")\" expected");
-            nexttoken();  // Added by Hugh Denman (<denmanh@tcd.ie> or hdenman@cantab.net) Oct/03/2003     
+            nexttoken();  // Added by Hugh Denman (<denmanh@tcd.ie> or hdenman@cantab.net) Oct/03/2003
          }
          // Number
          else if(curtok.state == PARSERTOKEN::VALUE) { // numbers
@@ -960,7 +961,7 @@
             if(curtok.state != PARSERTOKEN::OPAREN)
                throw error("parseatom()", "\"(\" expected");
             nexttoken();
-            if(curtok.state == PARSERTOKEN::CPAREN) 
+            if(curtok.state == PARSERTOKEN::CPAREN)
                throw error("parseatom()", "invalid number of arguments");
             parsearithmetic1();
             if(curtok.state != PARSERTOKEN::CPAREN)
@@ -989,7 +990,7 @@
                      nexttoken();
                      i++;
                   }
-                  else 
+                  else
                      throw error("parseatom()", "unknow error");
                   parsearithmetic1();
                } // while
@@ -998,15 +999,15 @@
             } // else
             curtok = parserstack.back();
             parserstack.pop_back();
-         
+
             if ((curtok.numargs != UNDEFARGS) && (i != static_cast<unsigned>(curtok.numargs)))
             // i is current number of parameters
                throw error("parseatom()", "invalid number of arguments");
-         
+
          // number of parameters is correct. Now, put the function
-         // i is number of arguments    
+         // i is number of arguments
             bytecode.push_back(CODETOKEN(CODETOKEN::USERFUNC, curtok.idx, i));
-         
+
             nexttoken();
          } // user defined functions
          // End of buffer
@@ -1017,11 +1018,11 @@
             throw error("parseatom()", "invalid token on expression");
          // unknow error
          else // it not occur
-            throw error("parseatom()", "unknow error");  
+            throw error("parseatom()", "unknow error");
       } // parseatom()
-   
-   
-   
+
+
+
    } // namespace smlib {
 
 

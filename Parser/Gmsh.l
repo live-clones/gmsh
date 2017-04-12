@@ -15,6 +15,7 @@
 #include "Parser.h"
 #include "Gmsh.tab.hpp"
 #include "GmshIO.h"
+#include "Geo.h" // for NEWPOINT(), etc.
 
 void   parsestring(char endchar);
 char  *strsave(char *ptr);
@@ -201,6 +202,7 @@ Function                return tMacro;
 GMSH_MAJOR_VERSION      return tGMSH_MAJOR_VERSION;
 GMSH_MINOR_VERSION      return tGMSH_MINOR_VERSION;
 GMSH_PATCH_VERSION      return tGMSH_PATCH_VERSION;
+GeoEntity               return tGeoEntity;
 GetEnv                  return tGetEnv;
 GetForced               return tGetForced;
 GetForcedStr            return tGetForcedStr;

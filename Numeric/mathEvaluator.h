@@ -24,11 +24,11 @@ class mathEvaluator{
   // variables. If an error occurs the vector of expressions is
   // cleared.
   mathEvaluator(std::vector<std::string> &expressions,
-                std::vector<std::string> &variables);
+                const std::vector<std::string> &variables);
   ~mathEvaluator();
   // evaluate the expression(s) using the given values and fill the
   // result vector. Returns true if the evaluation succeeded.
-  bool eval(std::vector<double> &values, std::vector<double> &res);
+  bool eval(const std::vector<double> &values, std::vector<double> &res);
 };
 
 #else
@@ -36,14 +36,14 @@ class mathEvaluator{
 class mathEvaluator{
  public:
   mathEvaluator(std::vector<std::string> &expressions,
-                std::vector<std::string> &variables)
+                const std::vector<std::string> &variables)
   {
     Msg::Error("Gmsh must be compiled with MathEx support to evaluate math "
                "expressions");
     expressions.clear();
   }
   ~mathEvaluator(){}
-  bool eval(std::vector<double> &values, std::vector<double> &res)
+  bool eval(const std::vector<double> &values, std::vector<double> &res)
   {
     return false;
   }

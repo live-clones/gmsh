@@ -3,7 +3,7 @@
 # See the LICENSE.txt file for license information. Please report all
 # bugs and problems to the public mailing list <gmsh@onelab.info>.
 
-set(CTEST_CMAKE_COMMAND "/usr/bin/cmake")
+set(CTEST_CMAKE_COMMAND "/usr/local/bin/cmake")
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 
 set(WITH_TEST TRUE)      # run the tests?
@@ -21,9 +21,9 @@ set(OPT "${OPT} -DENABLE_FLTK=0")
 #set(OPT "${OPT} -DENABLE_VORO3D=0")
 set(OPT "${OPT} -DCMAKE_PREFIX_PATH:path=/usr/local/opencascade;/usr/local")
 set(OPT "${OPT} -DENABLE_NATIVE_FILE_CHOOSER:bool=FALSE")
-set(OPT "${OPT} -DPETSC_ARCH=linux_complex_mumps_seq")
-set(OPT "${OPT} -DPETSC_DIR=$ENV{HOME}/src/petsc-3.5.2")
-set(OPT "${OPT} -DSLEPC_DIR=$ENV{HOME}/src/slepc-3.5.2")
+set(OPT "${OPT} -DPETSC_ARCH=complex_mumps_seq")
+set(OPT "${OPT} -DPETSC_DIR=$ENV{HOME}/src/petsc-3.7.5")
+set(OPT "${OPT} -DSLEPC_DIR=$ENV{HOME}/src/slepc-3.7.3")
 set(CTEST_BUILD_OPTIONS ${OPT})
 include(gmsh.ctest)
 # also remove build files here to save space

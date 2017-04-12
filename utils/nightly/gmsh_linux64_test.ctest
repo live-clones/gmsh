@@ -5,7 +5,3 @@
 
 set(EXTRA_VERSION "-git")
 include(gmsh_linux64.ctest)
-
-set(EXTRA_VERSION "-dynamic-git")
-set(BUILD_DYNAMIC true)
-include(gmsh_linux64.ctest)

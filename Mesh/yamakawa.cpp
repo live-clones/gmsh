@@ -74,9 +74,9 @@ namespace {
   }
 
   // Is this vertex in that hex?
-  bool inclusion(MVertex* vertex, const Hex& hex) {
-    return hex.contains(vertex);
-  }
+  //bool inclusion(MVertex* vertex, const Hex& hex) {
+  //  return hex.contains(vertex);
+  //}
 
   // Is that vertex in that tet?
   bool tet_contains_vertex(MElement* tet, MVertex* v) {
@@ -131,6 +131,7 @@ namespace {
     return is_combinatorially_sliver(tet, hex);
   }
 
+  /*
   double distance(MVertex* v1, MVertex* v2) {
     double val;
     double x, y, z;
@@ -142,6 +143,7 @@ namespace {
     val = sqrt(x*x + y*y + z*z);
     return val;
   }
+  */
 
   double distance(MVertex* v, MVertex* v1, MVertex* v2) {
     double val;
@@ -261,10 +263,12 @@ namespace {
     return true;
   }
 
+  /*
   bool is_vertex_on_gmodel_boundary(MVertex* v) {
     return v->onWhat()->dim() < 3;
   }
-
+  */
+  /*
   bool is_hex_facet_on_gmodel_boundary(const Hex& hex, unsigned int f) {
     int count_boundary_vertices = 0;
     for (unsigned int i = 0; i < 4; ++i) {
@@ -276,7 +280,8 @@ namespace {
     }
     return count_boundary_vertices == 4;
   }
-
+  */
+  /*
   bool is_hex_facet_planar(const Hex& hex, unsigned int facet_id, double max_angle = 15.) {
     std::vector<SPoint3> points(4);
     for (unsigned int v = 0; v < 4; ++v) {
@@ -296,7 +301,7 @@ namespace {
       return true;
     }
   }
-
+  */
   unsigned int nb_tets_sharing_vertices(MVertex* v1, MVertex* v2, MVertex* v3,
     TetMeshConnectivity& tet_mesh)
   {
@@ -3233,13 +3238,13 @@ void PostOp::matchQuadFace(MFace &f, MVertex* v1, MVertex* v2, MVertex* v3)
 {
   MVertex* vertices[3] = { v1, v2, v3 };
   int n = 0, ind = -1;
-  MVertex *v;
+  //MVertex *v;
   for (int i = 0; i < 4; ++i) {
     if (f.getVertex(i) != v1 &&
       f.getVertex(i) != v2 &&
       f.getVertex(i) != v3) {
       ++n;
-      v = f.getVertex(i);
+      //v = f.getVertex(i);
       ind = i;
     }
   }
@@ -6422,7 +6427,7 @@ void Recombinator_Graph::merge_clique(GRegion* gr, cliques_losses_graph<Hex*> &c
   multimap<int, set<Hex*> >::reverse_iterator it_allen = cl.allQ.rend();
   int clique_counter = 0;
   std::set<MElement*> parts;
-  int clique_size = 0;
+  //int clique_size = 0;
 
   for (int i = 0; i < clique_number; i++) {
     it_all++;
@@ -6432,7 +6437,7 @@ void Recombinator_Graph::merge_clique(GRegion* gr, cliques_losses_graph<Hex*> &c
     if (clique_counter >= 1) break;
 
     //cout << "--------------------- clique " << clique_counter << " made of ";
-    clique_size = it_all->second.size();
+    //clique_size = it_all->second.size();
     set<Hex*>::iterator ithex = it_all->second.begin();
     set<Hex*>::iterator ithexen = it_all->second.end();
     double quality = 0.;

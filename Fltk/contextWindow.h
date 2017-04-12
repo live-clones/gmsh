@@ -22,10 +22,11 @@ class elementaryContextWindow{
   Fl_Input *input[80];
   Fl_Value_Input *value[10];
   Fl_Group *group[20];
-  Fl_Check_Button *_butt[3];
+  Fl_Check_Button *butt[3];
  public:
   elementaryContextWindow(int deltaFontSize=0);
   void show(int pane);
+  void hide(){ win->hide(); }
   void updatePoint(double pt[3], int which);
   bool frozenPointCoord(int coord);
 };
@@ -36,10 +37,12 @@ class transformContextWindow{
   Fl_Input *input[30];
   Fl_Value_Input *value[10];
   Fl_Group *group[10];
-  Fl_Check_Button *_butt[3];
+  Fl_Check_Button *butt[20];
+  Fl_Choice *choice;
  public:
   transformContextWindow(int deltaFontSize=0);
-  void show(int pane);
+  void show(int pane, bool extrude=false, bool selection=true);
+  void hide(){ win->hide(); }
 };
 
 class physicalContextWindow{
@@ -54,6 +57,7 @@ class physicalContextWindow{
 public:
   physicalContextWindow(int deltaFontSize=0);
   void show(bool remove);
+  void hide(){ win->hide(); }
 };
 
 class meshContextWindow{
@@ -65,6 +69,7 @@ class meshContextWindow{
  public:
   meshContextWindow(int deltaFontSize=0);
   void show(int pane);
+  void hide(){ win->hide(); }
 };
 
 #endif

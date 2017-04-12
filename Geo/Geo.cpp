@@ -9,10 +9,12 @@
 #include "Numeric.h"
 #include "GModel.h"
 #include "GModelIO_GEO.h"
+#include "GModelIO_OCC.h"
 #include "Geo.h"
 #include "GeoInterpolation.h"
 #include "Context.h"
 #include "MVertexRTree.h"
+#include "Field.h"
 #include "Parser.h"
 
 static List_T *ListOfTransformedPoints = NULL;
@@ -1240,7 +1242,9 @@ static void SetTranslationMatrix(double matrix[4][4], double T[3])
 static void SetSymmetryMatrix(double matrix[4][4], double A, double B, double C,
                               double D)
 {
-  double F = -2.0 / (A * A + B * B + C * C);
+  double p = (A * A + B * B + C * C);
+  if(!p) p = 1e-12;
+  double F = -2.0 / p;
   matrix[0][0] = 1. + A * A * F;
   matrix[0][1] = A * B * F;
   matrix[0][2] = A * C * F;
@@ -3772,4 +3776,108 @@ void SetVolumeSurfaces(Volume *v, List_T *loops)
       }
     }
   }
+}
+
+// the following routines should be renamed and moved elsewhere
+
+int NEWPOINT()
+{
+  int tag = GModel::current()->getGEOInternals()->getMaxTag(0) + 1;
+  if(GModel::current()->getOCCInternals())
+    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(0) + 1);
+  return tag;
+}
+
+int NEWLINE()
+{
+  int tag = 0;
+  if(CTX::instance()->geom.oldNewreg)
+    tag = NEWREG();
+  else
+    tag = GModel::current()->getGEOInternals()->getMaxTag(1) + 1;
+  if(GModel::current()->getOCCInternals())
+    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(1) + 1);
+  return tag;
+}
+
+int NEWLINELOOP()
+{
+  int tag = 0;
+  if(CTX::instance()->geom.oldNewreg)
+    tag = NEWREG();
+  else
+    tag = GModel::current()->getGEOInternals()->getMaxTag(-1) + 1;
+  if(GModel::current()->getOCCInternals())
+    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(-1) + 1);
+  return tag;
+}
+
+int NEWSURFACE()
+{
+  int tag = 0;
+  if(CTX::instance()->geom.oldNewreg)
+    tag = NEWREG();
+  else
+    tag = GModel::current()->getGEOInternals()->getMaxTag(2) + 1;
+  if(GModel::current()->getOCCInternals())
+    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(2) + 1);
+  return tag;
+}
+
+int NEWSURFACELOOP()
+{
+  int tag = 0;
+  if(CTX::instance()->geom.oldNewreg)
+    tag = NEWREG();
+  else
+    tag = GModel::current()->getGEOInternals()->getMaxTag(-2) + 1;
+  if(GModel::current()->getOCCInternals())
+    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(-2) + 1);
+  return tag;
+}
+
+int NEWVOLUME()
+{
+  int tag = 0;
+  if(CTX::instance()->geom.oldNewreg)
+    tag = NEWREG();
+  else
+    tag = GModel::current()->getGEOInternals()->getMaxTag(3) + 1;
+  if(GModel::current()->getOCCInternals())
+    tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(3) + 1);
+  return tag;
+}
+
+int NEWREG()
+{
+  int tag = 0;
+  for(int dim = -2; dim <= 3; dim++){
+    if(dim)
+      tag = std::max(tag, GModel::current()->getGEOInternals()->getMaxTag(dim) + 1);
+  }
+  tag = std::max(tag, GModel::current()->getGEOInternals()->getMaxPhysicalTag() + 1);
+  if(GModel::current()->getOCCInternals()){
+    for(int dim = -2; dim <= 3; dim++){
+      if(dim)
+        tag = std::max(tag, GModel::current()->getOCCInternals()->getMaxTag(dim) + 1);
+    }
+  }
+  return tag;
+}
+
+int NEWFIELD()
+{
+#if defined(HAVE_MESH)
+  return (GModel::current()->getFields()->maxId() + 1);
+#else
+  return 0;
+#endif
+}
+
+int NEWPHYSICAL()
+{
+  if(CTX::instance()->geom.oldNewreg)
+    return NEWREG();
+  else
+    return GModel::current()->getGEOInternals()->getMaxPhysicalTag() + 1;
 }

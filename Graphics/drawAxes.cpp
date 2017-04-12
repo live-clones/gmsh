@@ -326,7 +326,7 @@ void drawContext::drawAxes()
                CTX::instance()->axesForceValue ? CTX::instance()->axesValue :
                CTX::instance()->axesPosition);
     }
-    else if(geometryExists){
+    else{
       double bb[6] =
         {CTX::instance()->min[0], CTX::instance()->max[0], CTX::instance()->min[1],
          CTX::instance()->max[1], CTX::instance()->min[2], CTX::instance()->max[2]};

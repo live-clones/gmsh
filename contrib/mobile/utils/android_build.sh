@@ -6,15 +6,15 @@ if [ $# -eq 1 ] ; then
   echo "Rebranding Onelab app as ${appname}"
 fi
 
-gmsh_svn="${HOME}/src/gmsh"
-getdp_svn="${HOME}/src/getdp"
+gmsh_git="${HOME}/src/gmsh"
+getdp_git="${HOME}/src/getdp"
 frameworks_dir="${HOME}/src/gmsh/contrib/mobile/frameworks_android"
 
-if [ -f ${getdp_svn}/benchmarks/cleanup.sh ]; then
-  cd ${getdp_svn}/benchmarks && ./cleanup.sh
+if [ -f ${getdp_git}/benchmarks/cleanup.sh ]; then
+  cd ${getdp_git}/benchmarks && ./cleanup.sh
 fi
-if [ -f ${getdp_svn}/benchmarks_private/cleanup.sh ]; then
-  cd ${getdp_svn}/benchmarks_private && ./cleanup.sh
+if [ -f ${getdp_git}/benchmarks_private/cleanup.sh ]; then
+  cd ${getdp_git}/benchmarks_private && ./cleanup.sh
 fi
 
 petsc_lib="$frameworks_dir/petsc"
@@ -34,12 +34,12 @@ function check {
 }
 
 # Gmsh
-cd $gmsh_svn
-svn up
-if [ ! -d "$gmsh_svn/build_android" ] || [ ! -f "$gmsh_svn/build_android/CMakeCache.txt" ]; then
-  mkdir $gmsh_svn/build_android
+cd $gmsh_git
+git pull
+if [ ! -d "$gmsh_git/build_android" ] || [ ! -f "$gmsh_git/build_android/CMakeCache.txt" ]; then
+  mkdir $gmsh_git/build_android
 fi
-cd $gmsh_svn/build_android
+cd $gmsh_git/build_android
 cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_MATHEX=1 -DENABLE_MESH=1 -DENABLE_ONELAB=1 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_PLUGINS=1 -DENABLE_ANN=1 -DENABLE_TETGEN=1 -DENABLE_KBIPACK=1 -DENABLE_GMP=0 -DENABLE_ZIPPER=1 -DBLAS_LAPACK_LIBRARIES="$petsc_lib/libf2cblas.so;$petsc_lib/libf2clapack.so" ..
 check
 make androidGmsh -j$cmake_thread
@@ -48,13 +48,13 @@ make get_headers
 check
 
 # GetDP
-cd $getdp_svn
-svn up
-if [ ! -d "$getdp_svn/build_android" ] || [ ! -f "$getdp_svn/build_android/CMakeCache.txt" ]; then
-  mkdir $getdp_svn/build_android
+cd $getdp_git
+git pull
+if [ ! -d "$getdp_git/build_android" ] || [ ! -f "$getdp_git/build_android/CMakeCache.txt" ]; then
+  mkdir $getdp_git/build_android
 fi
-cd $getdp_svn/build_android
-PETSC_DIR= PETSC_ARCH= SLEPC_DIR= cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_GMSH=1 -DENABLE_KERNEL=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_lib/Headers;$petsc_lib/Headers/mpiuni" -DPETSC_LIBS="$petsc_lib/libpetsc.so" -DENABLE_SLEPC=1 -DSLEPC_INC="$slepc_lib/Headers/" -DSLEPC_LIB="$slepc_lib/libslepc.so" -DGMSH_INC="$gmsh_svn/build_android/Headers/" -DGMSH_LIB="$gmsh_svn/build_android/libs/libGmsh.so" -DBLAS_LAPACK_LIBRARIES="$petsc_lib/libf2cblas.so;$petsc_lib/libf2clapack.so" ..
+cd $getdp_git/build_android
+PETSC_DIR= PETSC_ARCH= SLEPC_DIR= cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_GMSH=1 -DENABLE_KERNEL=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_lib/Headers;$petsc_lib/Headers/mpiuni" -DPETSC_LIBS="$petsc_lib/libpetsc.so" -DENABLE_SLEPC=1 -DSLEPC_INC="$slepc_lib/Headers/" -DSLEPC_LIB="$slepc_lib/libslepc.so" -DGMSH_INC="$gmsh_git/build_android/Headers/" -DGMSH_LIB="$gmsh_git/build_android/libs/libGmsh.so" -DBLAS_LAPACK_LIBRARIES="$petsc_lib/libf2cblas.so;$petsc_lib/libf2clapack.so" ..
 check
 make androidGetdp -j$cmake_thread
 check
@@ -62,18 +62,18 @@ make get_headers
 check
 
 # Onelab/Mobile interface
-if [ ! -d "$gmsh_svn/contrib/mobile/build_android_${appname}" ]; then
-  mkdir $gmsh_svn/contrib/mobile/build_android_${appname}
+if [ ! -d "$gmsh_git/contrib/mobile/build_android_${appname}" ]; then
+  mkdir $gmsh_git/contrib/mobile/build_android_${appname}
 fi
-cd $gmsh_svn/contrib/mobile/build_android_${appname}
+cd $gmsh_git/contrib/mobile/build_android_${appname}
 
 cmake $cmake_default -DAPPNAME:STRING=${appname} \
-      -DCMAKE_INCLUDE_PATH="$getdp_svn/" \
+      -DCMAKE_INCLUDE_PATH="$getdp_git/" \
       -DBLAS_LIB="$petsc_lib/libf2cblas.so" -DLAPACK_LIB="$petsc_lib/libf2clapack.so" \
       -DPETSC_LIB="$petsc_lib/libpetsc.so" -DSLEPC_LIB="$slepc_lib/libslepc.so" \
-      -DGMSH_INC="$gmsh_svn/build_android/Headers" -DGMSH_LIB="$gmsh_svn/build_android/libs/libGmsh.so" \
-      -DBENCHMARKSDIR="$getdp_svn/" \
-      -DGETDP_INC="$getdp_svn/build_android/Headers" -DGETDP_LIB="$getdp_svn/build_android/libs/libGetDP.so" ..
+      -DGMSH_INC="$gmsh_git/build_android/Headers" -DGMSH_LIB="$gmsh_git/build_android/libs/libGmsh.so" \
+      -DBENCHMARKSDIR="$getdp_git/" \
+      -DGETDP_INC="$getdp_git/build_android/Headers" -DGETDP_LIB="$getdp_git/build_android/libs/libGetDP.so" ..
 check
 make androidOnelab -j$cmake_thread
 check
@@ -109,7 +109,7 @@ fi
 
 check
 if [ ! -f "ant.properties" ]; then
-    cp $gmsh_svn/contrib/mobile/utils/ant.properties .
+    cp $gmsh_git/contrib/mobile/utils/ant.properties .
 fi
 ant release
 check

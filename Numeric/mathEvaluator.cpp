@@ -8,8 +8,10 @@
 #if defined(HAVE_MATHEX)
 
 mathEvaluator::mathEvaluator(std::vector<std::string> &expressions,
-                             std::vector<std::string> &variables)
+                             const std::vector<std::string> &variables)
 {
+  static std::string lastError;
+
   _expressions.resize(expressions.size());
   _variables.resize(variables.size(), 0.);
   bool error = false;
@@ -22,11 +24,14 @@ mathEvaluator::mathEvaluator(std::vector<std::string> &expressions,
       _expressions[i]->parse();
     }
     catch(smlib::mathex::error e) {
-      Msg::Error(e.what());
-      std::string pos(_expressions[i]->stopposition(), ' ');
-      pos.push_back('^');
-      Msg::Error(expressions[i].c_str());
-      Msg::Error(pos.c_str());
+      if(e.what() + expressions[i] != lastError){
+        lastError = e.what() + expressions[i];
+        Msg::Error(e.what());
+        std::string pos(_expressions[i]->stopposition(), ' ');
+        pos.push_back('^');
+        Msg::Error(expressions[i].c_str());
+        Msg::Error(pos.c_str());
+      }
       error = true;
     }
   }
@@ -34,6 +39,7 @@ mathEvaluator::mathEvaluator(std::vector<std::string> &expressions,
     for(unsigned int i = 0; i < _expressions.size(); i++)
       delete(_expressions[i]);
     _expressions.clear();
+    expressions.clear();
   }
 }
 
@@ -43,7 +49,7 @@ mathEvaluator::~mathEvaluator()
     delete(_expressions[i]);
 }
 
-bool mathEvaluator::eval(std::vector<double> &values, std::vector<double> &res)
+bool mathEvaluator::eval(const std::vector<double> &values, std::vector<double> &res)
 {
   if(values.size() != _variables.size()){
     Msg::Error("Given %d value(s) for %d variable(s)", values.size(), _variables.size());
