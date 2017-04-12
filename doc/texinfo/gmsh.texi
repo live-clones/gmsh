@@ -2200,7 +2200,7 @@ the X, Y and Z components of any point on this axis; the last
 Extrudes entities in @var{extrude-list} using a translation along their
 normal. Only available with the built-in geometry kernel.
 
-@item Extrude @{ @var{extrude-list} @} Using Wire { @var{expression-list} }
+@item Extrude @{ @var{extrude-list} @} Using Wire @{ @var{expression-list} @}
 Extrudes entities in @var{extrude-list} along the give wire. Only
 available with the OpenCASCADE geometry kernel.
 
