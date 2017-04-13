@@ -945,7 +945,8 @@ void lpcvt::step3(DocRecord& triangulator,GFace* gf){
   for(i=0;i<triangulator.numPoints;i++){
     if(!interior(triangulator,gf,i) && !invisible(triangulator,gf,i)){
 	  num = triangulator._adjacencies[i].t_length;
-	  s1 = borders[i].get_segment(0);
+          if(borders[i].get_number_segments() < 2) continue;
+          s1 = borders[i].get_segment(0);
 	  s2 = borders[i].get_segment(1);
 	  angle = angles[i];
 	  for(j=0;j<num;j++){
