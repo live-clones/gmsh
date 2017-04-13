@@ -18,11 +18,11 @@ http://onelab.info. The 'template' directory contains GetDP templates. The
 See http://onelab.info, http://gmsh.info and http://getdp.info for additional
 examples, up-to-date versions and documentation." > /tmp/README.txt
 
-GMSH=svn
-GETDP=svn
+GMSH=git
+GETDP=git
 
-#GMSH=2.13.2
-#GETDP=2.9.1
+#GMSH=3.0.0
+#GETDP=2.11.0
 
 MODELS='machines relay inductor indheat magnetometer antennas acoustic_scattering time_reversal shielding waveguides transfo_simple ddm_waves bloch_periodic_waveguides magnets thermal_conduction magnetostriction superconductors'
 
@@ -46,12 +46,12 @@ if [ $# -lt 1 ] || [ $1 == "source" ]; then
   cp /tmp/README.txt onelab-source
   mv /tmp/gmsh-*${GMSH}*-source onelab-source
   mv /tmp/getdp-*${GETDP}*-source onelab-source
-  cp onelab-source/gmsh-*${GMSH}*-source/doc/LICENSE.txt onelab-source/LICENSE.txt
+  cp onelab-source/gmsh-*${GMSH}*-source/LICENSE.txt onelab-source/LICENSE.txt
   echo "\n\n" >> onelab-source/LICENSE.txt
-  cat onelab-source/getdp-*${GETDP}*-source/doc/LICENSE.txt >> onelab-source/LICENSE.txt
-  cp onelab-source/gmsh-*${GMSH}*-source/doc/CREDITS.txt onelab-source/CREDITS.txt
+  cat onelab-source/getdp-*${GETDP}*-source/LICENSE.txt >> onelab-source/LICENSE.txt
+  cp onelab-source/gmsh-*${GMSH}*-source/CREDITS.txt onelab-source/CREDITS.txt
   echo "\n\n" >> onelab-source/CREDITS.txt
-  cat onelab-source/getdp-*${GETDP}*-source/doc/CREDITS.txt >> onelab-source/CREDITS.txt
+  cat onelab-source/getdp-*${GETDP}*-source/CREDITS.txt >> onelab-source/CREDITS.txt
   cp -R /tmp/models onelab-source
   rm -rf /tmp/gmsh-*
   rm -rf /tmp/getdp-*
@@ -143,8 +143,7 @@ if [ $# -lt 1 ] || [ $1 == "mac" ]; then
   umount gmsh_mount
   rm -rf /tmp/gmsh-*
   rm -rf /tmp/getdp-*
-  # if we use a zip file we need to move onelab.py from MacOS/ to Resources/, as zip
-  # does not preserve extended file attributes; dmg does
+  # cannot use zip file: it destroys the signature for onelab.py
   hdiutil create -srcfolder onelab-MacOSX onelab-MacOSX.dmg
   codesign -v --sign "Developer ID Application: Christophe Geuzaine" onelab-MacOSX.dmg
   rm -rf onelab-MacOSX
