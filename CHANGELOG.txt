@@ -1,4 +1,4 @@
-3.0.1: small bug fixes.
+3.0.1 (April 14, 2017): fixed OpenCASCADE plane surfaces with holes.
 
 3.0.0 (April 13, 2017): new constructive solid geometry features and boolean
 operations using OpenCASCADE; improved graphical user interface for interactive,
