@@ -1919,9 +1919,6 @@ to define a full circle (4th expression is the radius) or a circle arc
 between two angles (next 2 expressions).
 @c todo: document < Plane @{ @var{expression}, @var{expression}, @var{expression} @}; >
 
-@item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} @};
-Creates a circle. 
-
 @item Ellipse ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression}, @var{expression} <, ...> @};
 Creates an ellipse arc. The four @var{expression}s on the
 right-hand-side define the start point, the center point, a major axis
@@ -2187,13 +2184,14 @@ rotation angle (in radians).
 
 @item Extrude @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{extrude-list} @}
 Extrudes all elementary entities (points, lines or surfaces) in
-@var{extrude-list} using a translation combined with a rotation. The
-first @var{expression-list} should contain three @w{@var{expression}s}
-giving the X, Y and Z components of the translation vector; the second
-@var{expression-list} should contain three @w{@var{expression}s} giving
-the X, Y and Z direction of the rotation axis; the third
-@var{expression-list} should contain three @w{@var{expression}s} giving
-the X, Y and Z components of any point on this axis; the last
+@var{extrude-list} using a translation combined with a rotation (to
+produce a ``twist''). The first @var{expression-list} should contain
+three @w{@var{expression}s} giving the X, Y and Z components of the
+translation vector; the second @var{expression-list} should contain
+three @w{@var{expression}s} giving the X, Y and Z direction of the
+rotation axis, which should match the direction of the translation; the
+third @var{expression-list} should contain three @w{@var{expression}s}
+giving the X, Y and Z components of any point on this axis; the last
 @var{expression} should contain the rotation angle (in radians).
 
 @item Extrude @{ @var{extrude-list} @}
