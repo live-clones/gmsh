@@ -63,58 +63,65 @@ The colorbar widget (Fltk/Colorbar_Window.cpp) was inspired by code from the
 Vis5d program for visualizing five dimensional gridded data sets, copyright (C)
 1990-1995, Bill Hibbard, Brian Paul, Dave Santek, and Andre Battaiola.
 
-This version of Gmsh may contain code (in the contrib/ANN subdirectory)
-copyright (C) 1997-2005 University of Maryland and Sunil Arya and David Mount:
-check the configuration options.
+In addition, this this version of Gmsh may contain the following contributed
+codes in the contrib/ directory, each govenern by their own license:
 
-This version of Gmsh may contain code (in the contrib/Chaco subdirectory)
-written by Bruce Hendrickson and Robert Leland at Sandia National Laboratories
-under US Department of Energy contract DE-AC04-76DP00789 and is copyrighted by
-Sandia Corporation: check the configuration options.
+* contrib/ANN copyright (C) 1997-2005 University of Maryland and Sunil Arya and
+  David Mount;
 
-This version of Gmsh may contain code (in the contrib/gmm subdirectory)
-copyright (C) 2002-2008 Yves Renard: check the configuration options.
+* contrib/Chaco written by Bruce Hendrickson and Robert Leland at Sandia
+  National Laboratories under US Department of Energy contract DE-AC04-76DP00789
+  and is copyrighted by Sandia Corporation.
 
-This version of Gmsh may contain code (in the contrib/kbipack subdirectory)
-copyright (C) 2005 Saku Suuriniemi: check the configuration options.
+* contrib/gmm copyright (C) 2002-2008 Yves Renard;
 
-This version of Gmsh may contain code (in the contrib/MathEx subdirectory) based
-in part on the work of the SSCILIB Library, copyright (C) 2000-2003 Sadao
-Massago: check the configuration options.
+* contrib/kbipack copyright (C) 2005 Saku Suuriniemi;
 
-This version of Gmsh may contain code (in the contrib/Metis subdirectory)
-written by George Karypis (karypis at cs.umn.edu), copyright (C) 1998 Regents of
-the University of Minnesota: check the configuration options.
+* contrib/MathEx based in part on the work of the SSCILIB Library, copyright (C)
+  2000-2003 Sadao Massago;
 
-This version of Gmsh may contain code (in the contrib/mpeg_encode subdirectory)
-copyright (c) 1995 The Regents of the University of California: check the
-configuration options.
+* contrib/Metis written by George Karypis (karypis at cs.umn.edu), copyright (C)
+  1998 Regents of the University of Minnesota;
 
-This version of Gmsh may contain code (in the contrib/Netgen subdirectory)
-copyright (C) 1994-2004 Joachim Sch"oberl: check the configuration options.
+* contrib/mpeg_encode copyright (c) 1995 The Regents of the University of
+  California;
 
-This version of Gmsh may contain code (in the contrib/Tetgen1.5 subdirectory)
-copyright (C) 2002-2007 Hang Si: check the configuration options.
+* contrib/Netgen subdirectory copyright (C) 1994-2004 Joachim Sch"oberl;
 
-This version of Gmsh may contain code (in the contrib/bamg subdirectory) from
-Freefem++ copyright (C) Frederic Hecht: check the configuration options.
+* contrib/Tetgen1.5 subdirectory) copyright (C) 2002-2007 Hang Si;
 
-This version of Gmsh may contain code (in the contrib/lbfgs subdirectory) (C)
-Sergey Bochkanov (ALGLIB project): check the configuration options.
+* contrib/bamg subdirectory) from Freefem++ copyright (C) Frederic Hecht;
 
-This version of Gmsh may contain code (in the contrib/mmg3d subdirectory) from
-MMG3D Version 4.0 (C) 2004-2011 Cecile Dobrzynski and Pascal Frey (IPB - UPMC -
-INRIA): check the configuration options.
+* contrib/lbfgs subdirectory) (C) Sergey Bochkanov (ALGLIB project);
 
-This version of Gmsh may contain code (in the contrib/Blossom subdirectory)
-copyright (C) 1995-1997 Bill Cook et al.: check the configuration options.
+* contrib/mmg3d subdirectory) from MMG3D Version 4.0 (C) 2004-2011 Cecile
+  Dobrzynski and Pascal Frey (IPB - UPMC - INRIA);
+
+* contrib/blossom subdirectory) copyright (C) 1995-1997 Bill Cook et al.;
+
+* contrib/bamg subdirectory) from Freefem++ copyright (C) Frederic Hecht;
+
+* contrib/taucs subdirectory) from TAUCS Version 2.0, November 29, 2001,
+  Copyright (c) 2001, 2002, 2003 by Sivan Toledo, Tel-Aviv Univesity,
+  stoledo@tau.ac.il. All Rights Reserved.
+
+* contrib/voro++ subdirectory) from Voro++ Copyright (c) 2008, The Regents of
+  the University of California, through Lawrence Berkeley National Laboratory
+  (subject to receipt of any required approvals from the U.S. Dept. of
+  Energy). All rights reserved;
+
+* contrib/zipper subdirectory) from MiniZip - Copyright (c) 1998-2010 - by
+  Gilles Vollant - version 1.1 64 bits from Mathias Svensson.
+
+Check the configuration options to see which has been enabled.
 
 Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher, Greg Ercolano
 and others for the Fast Light Tool Kit on which Gmsh's GUI is based. See
 http://www.fltk.org for more info on this excellent object-oriented,
 cross-platform toolkit.
 
-Special thanks also to EDF for funding the OpenCASCADE and MED integration.
+Special thanks also to EDF for funding the original OpenCASCADE and MED
+integration in 2006-2007.
 
 Thanks to the following folks who have contributed by providing fresh ideas on
 theoretical or programming topics, who have sent patches, requests for changes
