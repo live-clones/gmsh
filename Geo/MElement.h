@@ -43,6 +43,8 @@ class MElement
                    int faceIndex=-1);
   void _getFaceRep(MVertex *v0, MVertex *v1, MVertex *v2,
                    double *x, double *y, double *z, SVector3 *n);
+  void _getFaceRepQuad(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
+                       double *x, double *y, double *z, SVector3 *n);
  public :
   MElement(int num=0, int part=0);
   virtual ~MElement(){}

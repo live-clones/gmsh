@@ -92,17 +92,31 @@ class MPrism : public MElement {
                    _v[faces_prism(num, 2)],
                    _v[faces_prism(num, 3)]);
   }
-  virtual int getNumFacesRep(bool curved){ return 8; }
+  virtual int getNumFacesRep(bool curved){ return 14; }
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
-    static const int f[8][3] = {
-      {0, 2, 1},
-      {3, 4, 5},
-      {0, 1, 4}, {0, 4, 3},
-      {0, 3, 5}, {0, 5, 2},
-      {1, 2, 5}, {1, 5, 4}
+//    static const int f[8][3] = {
+//      {0, 2, 1},
+//      {3, 4, 5},
+//      {0, 1, 4}, {0, 4, 3},
+//      {0, 3, 5}, {0, 5, 2},
+//      {1, 2, 5}, {1, 5, 4}
+//    };
+//    _getFaceRep(_v[f[num][0]], _v[f[num][1]], _v[f[num][2]], x, y, z, n);
+    static const int f[14][4] = {
+      {0, 2, 1, -1},
+      {3, 4, 5, -1},
+      {0, 1, 4, 3}, {1, 4, 3, 0}, {4, 3, 0, 1}, {3, 0, 1, 4},
+      {1, 2, 5, 4}, {2, 5, 4, 1}, {5, 4, 1, 2}, {4, 1, 2, 5},
+      {2, 0, 3, 5}, {0, 3, 5, 2}, {3, 5, 2, 0}, {5, 2, 0, 3}
     };
-    _getFaceRep(_v[f[num][0]], _v[f[num][1]], _v[f[num][2]], x, y, z, n);
+    if (num < 2)
+      _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
+                  x, y, z, n);
+    else
+      _getFaceRepQuad(getVertex(f[num][0]), getVertex(f[num][1]),
+                      getVertex(f[num][2]), getVertex(f[num][3]),
+                      x, y, z, n);
   }
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {

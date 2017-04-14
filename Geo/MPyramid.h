@@ -97,7 +97,7 @@ class MPyramid : public MElement {
     else
       return MFace(_v[0], _v[3], _v[2], _v[1]);
   }
-  virtual int getNumFacesRep(bool curved){ return 6; }
+  virtual int getNumFacesRep(bool curved){ return 8; }
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n)
   {
@@ -110,6 +110,20 @@ class MPyramid : public MElement {
     };
     _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
                 x, y, z, n);
+//    static const int f[8][4] = {
+//      {0, 1, 4, -1},
+//      {1, 2, 4, -1},
+//      {2, 3, 4, -1},
+//      {3, 0, 4, -1},
+//      {0, 3, 2, 1}, {3, 2, 1, 0}, {2, 1, 0, 3}, {1, 0, 3, 2}
+//    };
+//    if (num < 4)
+//      _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
+//                  x, y, z, n);
+//    else
+//      _getFaceRepQuad(getVertex(f[num][0]), getVertex(f[num][1]),
+//                      getVertex(f[num][2]), getVertex(f[num][3]),
+//                      x, y, z, n);
   }
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
