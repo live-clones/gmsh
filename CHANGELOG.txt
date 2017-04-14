@@ -1,3 +1,5 @@
+3.0.1: small bug fixes.
+
 3.0.0 (April 13, 2017): new constructive solid geometry features and boolean
 operations using OpenCASCADE; improved graphical user interface for interactive,
 parametric geometry construction; new or modified commands in .geo files:
@@ -141,7 +143,7 @@ fixes and improvements all over the place.
 2.3.1 (Mar 18, 2009): removed GSL dependency (Gmsh now simply uses Blas and
 Lapack); new per-window visibility; added support for composite window printing
 and background images; fixed string option affectation in parser; fixed surface
-mesh orientation for Open CASCADE models; fixed random triangle orientations in
+mesh orientation for OpenCASCADE models; fixed random triangle orientations in
 Delaunay and Frontal algorithms.
 
 2.3.0 (Jan 23, 2009): major graphics and GUI code refactoring; new
@@ -206,7 +208,7 @@ are now added at the end of the list returned by extrusion commands; fixed
 various bugs.
 
 2.0.0 (Feb 5, 2007): new geometry and mesh databases, with support for STEP and
-IGES import via Open CASCADE; complete rewrite of geometry and mesh drawing
+IGES import via OpenCASCADE; complete rewrite of geometry and mesh drawing
 code; complete rewrite of mesh I/O layer (with new native binary MSH format and
 support for import/export of I-deas UNV, Nastran BDF, STL, Medit MESH and VRML
 1.0 files); added support for incomplete second order elements; new 2D and 3D
