@@ -1120,29 +1120,12 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
     result = f.Face();
   }
   else{
-    // compute mean plane
-    TopTools_IndexedMapOfShape vmap;
-    for(unsigned int i = 0; i < wires.size(); i++){
-      TopExp_Explorer exp0;
-      for(exp0.Init(wires[i], TopAbs_VERTEX); exp0.More(); exp0.Next()){
-        TopoDS_Vertex vertex = TopoDS::Vertex(exp0.Current());
-        if(vmap.FindIndex(vertex) < 1)
-          vmap.Add(vertex);
-      }
-    }
-    std::vector<SPoint3> points;
-    for(int i = 1; i <= vmap.Extent(); i++){
-      gp_Pnt pnt = BRep_Tool::Pnt(TopoDS::Vertex(vmap(i)));
-      points.push_back(SPoint3(pnt.X(), pnt.Y(), pnt.Z()));
-    }
-    // FIXME: should check that points are not colinear; if so, add more
-    mean_plane meanPlane;
-    computeMeanPlaneSimple(points, meanPlane);
     try{
-      gp_Pln aPlane(-meanPlane.a, -meanPlane.b, -meanPlane.c, meanPlane.d);
-      BRepBuilderAPI_MakeFace f(aPlane, wires[0]);
+      BRepBuilderAPI_MakeFace f(wires[0]);
       for(unsigned int i = 1; i < wires.size(); i++){
-        f.Add(wires[i]);
+        TopoDS_Wire w = wires[i];
+        w.Orientation(TopAbs_REVERSED);
+        f.Add(w);
       }
       f.Build();
       if(!f.IsDone()){
