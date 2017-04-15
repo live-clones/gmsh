@@ -1039,6 +1039,16 @@ Material shininess exponent (between 0 and 128)@*
 Default value: @code{40}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.ShowOptionsOnStartup
+Show option window on startup@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.ShowMessagesOnStartup
+Show message window on startup@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.SmallAxes
 Display the small axes@*
 Default value: @code{1}@*
