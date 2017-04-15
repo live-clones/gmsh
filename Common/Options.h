@@ -140,6 +140,8 @@ std::string opt_print_parameter_command(OPT_ARGS_STR);
 // NUMBERS
 
 double opt_general_initial_context(OPT_ARGS_NUM);
+double opt_general_show_options_on_startup(OPT_ARGS_NUM);
+double opt_general_show_messages_on_startup(OPT_ARGS_NUM);
 double opt_general_fontsize(OPT_ARGS_NUM);
 double opt_general_gui_color_scheme(OPT_ARGS_NUM);
 double opt_general_graphics_fontsize(OPT_ARGS_NUM);

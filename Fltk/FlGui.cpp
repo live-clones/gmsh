@@ -494,6 +494,11 @@ FlGui::FlGui(int argc, char **argv)
   for(unsigned int i = 0; i < graph.size(); i++)
     for(unsigned int j = 0; j < graph[i]->gl.size(); j++)
       graph[i]->gl[j]->redraw();
+
+  if(CTX::instance()->showOptionsOnStartup)
+    options->win->show();
+  if(CTX::instance()->showMessagesOnStartup)
+    graph[0]->showMessages();
 }
 
 FlGui *FlGui::_instance = 0;

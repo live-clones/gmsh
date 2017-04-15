@@ -146,6 +146,8 @@ class CTX {
   int meshDiscrete;
   // initial menu (0: automatic, 1: geom, 2: mesh, 3: solver, 4: post)
   int initialContext;
+  // show some windows on startup?
+  int showOptionsOnStartup, showMessagesOnStartup;
   // never popup dialogs in scripts (use default values instead)?
   int noPopup;
   // make all windows "non modal"?

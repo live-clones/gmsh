@@ -2095,6 +2095,20 @@ double opt_general_initial_context(OPT_ARGS_NUM)
   return CTX::instance()->initialContext;
 }
 
+double opt_general_show_options_on_startup(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->showOptionsOnStartup = (int)val;
+  return CTX::instance()->showOptionsOnStartup;
+}
+
+double opt_general_show_messages_on_startup(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->showMessagesOnStartup = (int)val;
+  return CTX::instance()->showMessagesOnStartup;
+}
+
 double opt_general_fontsize(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
