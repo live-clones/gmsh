@@ -1110,41 +1110,33 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
     Msg::Error("Plane surface requires at least one line loop");
     return false;
   }
-  else if(wires.size() == 1){
+
+  try{
     BRepBuilderAPI_MakeFace f(wires[0]);
+    for(unsigned int i = 1; i < wires.size(); i++){
+      // holes
+      TopoDS_Wire w = wires[i];
+      w.Orientation(TopAbs_REVERSED);
+      f.Add(w);
+    }
     f.Build();
     if(!f.IsDone()){
       Msg::Error("Could not create face");
       return false;
     }
     result = f.Face();
-  }
-  else{
-    try{
-      BRepBuilderAPI_MakeFace f(wires[0]);
-      for(unsigned int i = 1; i < wires.size(); i++){
-        TopoDS_Wire w = wires[i];
-        w.Orientation(TopAbs_REVERSED);
-        f.Add(w);
-      }
-      f.Build();
-      if(!f.IsDone()){
-        Msg::Error("Could not create face");
-        return false;
-      }
-      result = f.Face();
-      if(autoFix){
-        // make sure wires are oriented correctly
-        ShapeFix_Face fix(result);
-        fix.Perform();
-        result = fix.Face();
-      }
-    }
-    catch(Standard_Failure &err){
-      Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
-      return false;
+    if(autoFix){
+      // make sure wires are oriented correctly
+      ShapeFix_Face fix(result);
+      fix.Perform();
+      result = fix.Face();
     }
   }
+  catch(Standard_Failure &err){
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
+
   if(tag < 0) tag = getMaxTag(2) + 1;
   bind(result, tag, true);
   return true;
@@ -1174,9 +1166,7 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag)
       if(_edgeTag.IsBound(edge))
         unbind(edge, _edgeTag.Find(edge), true);
     }
-    // TODO: add optional point constraints using
-    // f.Add(gp_Pnt(x, y, z);
-
+    // TODO: add optional point constraints using f.Add(gp_Pnt(x, y, z);
     f.Build();
     if(!f.IsDone()){
       Msg::Error("Could not build surface filling");
