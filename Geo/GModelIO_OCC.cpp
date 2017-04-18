@@ -971,8 +971,8 @@ bool OCC_Internals::_makeRectangle(TopoDS_Face &result, double x, double y, doub
 {
   try{
     TopoDS_Wire wire;
-    double x1 = x, y1 = y, z1 = z, x2 = x1 + dx, y2 = y1 + dy;
     if(roundedRadius <= 0.){
+      double x1 = x, y1 = y, z1 = z, x2 = x1 + dx, y2 = y1 + dy;
       TopoDS_Vertex v1 = BRepBuilderAPI_MakeVertex(gp_Pnt(x1, y1, z1));
       TopoDS_Vertex v2 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2, y1, z1));
       TopoDS_Vertex v3 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2, y2, z1));
@@ -984,7 +984,10 @@ bool OCC_Internals::_makeRectangle(TopoDS_Face &result, double x, double y, doub
       wire = BRepBuilderAPI_MakeWire(e1, e2, e3, e4);
     }
     else{
+      double x1, y1, z1 = z, x2, y2;
       double r = roundedRadius;
+      if(dx > 0.){ x1 = x; x2 = x1 + dx; } else{ x2 = x; x1 = x2 + dx; }
+      if(dy > 0.){ y1 = y; y2 = y1 + dy; } else{ y2 = y; y1 = y2 + dy; }
       TopoDS_Vertex v1 = BRepBuilderAPI_MakeVertex(gp_Pnt(x1 + r, y1, z1));
       TopoDS_Vertex v2 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2 - r, y1, z1));
       TopoDS_Vertex v3 = BRepBuilderAPI_MakeVertex(gp_Pnt(x2, y1 + r, z1));
