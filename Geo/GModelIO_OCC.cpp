@@ -659,7 +659,10 @@ bool OCC_Internals::addLine(int &tag, int startTag, int endTag)
     Msg::Error("Unknown OpenCASCADE vertex with tag %d", endTag);
     return false;
   }
-
+  if(startTag == endTag){
+    Msg::Error("Start and end vertices of edge should be different");
+    return false;
+  }
   TopoDS_Edge result;
   try{
     TopoDS_Vertex start = TopoDS::Vertex(_tagVertex.Find(startTag));
@@ -779,6 +782,10 @@ bool OCC_Internals::addCircle(int &tag, double x, double y, double z, double r,
     Msg::Error("OpenCASCADE edge with tag %d already exists", tag);
     return false;
   }
+  if(r <= 0){
+    Msg::Error("Circle radius should be positive");
+    return false;
+  }
 
   TopoDS_Edge result;
   try{
@@ -819,6 +826,10 @@ bool OCC_Internals::addEllipse(int &tag, double x, double y, double z, double rx
   }
   if(ry > rx){
     Msg::Error("Major radius rx should be larger than minor radius ry");
+    return false;
+  }
+  if(ry <= 0 || rx <= 0){
+    Msg::Error("Ellipse radii should be positive");
     return false;
   }
 
@@ -969,6 +980,10 @@ bool OCC_Internals::addLineLoop(int &tag, const std::vector<int> &edgeTags)
 bool OCC_Internals::_makeRectangle(TopoDS_Face &result, double x, double y, double z,
                                    double dx, double dy, double roundedRadius)
 {
+  if(!dx || !dy){
+    Msg::Error("Rectangle with zero width or height");
+    return false;
+  }
   try{
     TopoDS_Wire wire;
     if(roundedRadius <= 0.){
@@ -1055,6 +1070,10 @@ bool OCC_Internals::_makeDisk(TopoDS_Face &result, double xc, double yc, double 
 {
   if(ry > rx){
     Msg::Error("Major radius rx should be larger than minor radius ry");
+    return false;
+  }
+  if(ry <= 0 || rx <= 0){
+    Msg::Error("Disk radius should be positive");
     return false;
   }
   try{
@@ -1279,6 +1298,10 @@ bool OCC_Internals::_makeSphere(TopoDS_Solid &result, double xc, double yc, doub
                                 double radius, double angle1, double angle2,
                                 double angle3)
 {
+  if(radius <= 0){
+    Msg::Error("Sphere radius should be positive");
+    return false;
+  }
   try{
     gp_Pnt p(xc, yc, zc);
     BRepPrimAPI_MakeSphere s(p, radius, angle1, angle2, angle3);
@@ -1315,6 +1338,10 @@ bool OCC_Internals::addSphere(int &tag, double xc, double yc, double zc,
 bool OCC_Internals::_makeBlock(TopoDS_Solid &result, double x, double y, double z,
                                double dx, double dy, double dz)
 {
+  if(!dx || !dy || !dz){
+    Msg::Error("Degenerate block");
+    return false;
+  }
   try{
     gp_Pnt P1(x, y, z);
     gp_Pnt P2(x + dx, y + dy, z + dz);
@@ -1394,6 +1421,10 @@ bool OCC_Internals::addCylinder(int &tag, double x, double y, double z,
 bool OCC_Internals::_makeTorus(TopoDS_Solid &result, double x, double y, double z,
                                double r1, double r2, double angle)
 {
+  if(r1 <= 0 || r2 <= 0){
+    Msg::Error("Torus radii should be positive");
+    return false;
+  }
   try{
     gp_Pnt aP(x, y, z);
     gp_Vec aV(0, 0, 1);
@@ -1435,6 +1466,10 @@ bool OCC_Internals::_makeCone(TopoDS_Solid &result, double x, double y, double z
   const double H = sqrt(dx * dx + dy * dy + dz * dz);
   if(!H){
     Msg::Error("Cannot build cone of zero height");
+    return false;
+  }
+  if(angle <= 0){
+    Msg::Error("Cone angle should be positive");
     return false;
   }
   try{
