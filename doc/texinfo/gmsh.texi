@@ -2270,9 +2270,9 @@ Computes the intersection of the object and the tool.
 Computes the union of the object and the tool.
 @item BooleanDifference @{ @var{boolean-list} @} @{ @var{boolean-list} @}
 Subtract the tool from the object.
-@item BooleanFramgments @{ @var{boolean-list} @} @{ @var{boolean-list} @}
-Computes all the fragments resulting from the intersection of the object
-and the tool.
+@item BooleanFragments @{ @var{boolean-list} @} @{ @var{boolean-list} @}
+Computes all the fragments resulting from the intersection of the
+entities in the object and in the tool, and makes all interfaces unique.
 @end ftable
 
 with
