@@ -21,12 +21,39 @@ discreteRegion::discreteRegion(GModel *model, int num) : GRegion(model, num)
   Tree_Add(model->getGEOInternals()->Volumes, &v);
 }
 
-void discreteRegion::setBoundFaces(std::set<int> tagFaces)
+void discreteRegion::setBoundFaces(const std::set<int> &tagFaces)
 {
-  for (std::set<int>::iterator it = tagFaces.begin() ; it != tagFaces.end();++it){
+  for (std::set<int>::const_iterator it = tagFaces.begin() ; it != tagFaces.end();++it){
     GFace *face = model()->getFaceByTag(*it);
-    l_faces.push_back(face);
-    face->addRegion(this);
+    if(face){
+      l_faces.push_back(face);
+      face->addRegion(this);
+    }
+    else{
+      Msg::Error("Unknown model face %d", *it);
+    }
+  }
+}
+
+void discreteRegion::setBoundFaces(const std::vector<int> &tagFaces,
+                                   const std::vector<int> &signFaces)
+{
+  if(tagFaces.size() != signFaces.size()){
+    Msg::Error("Wrong number of face signs in setBoundFaces");
+    std::set<int> tags;
+    tags.insert(tagFaces.begin(), tagFaces.end());
+    setBoundFaces(tags);
+  }
+  for (unsigned int i = 0; i != tagFaces.size(); i++){
+    GFace *face = model()->getFaceByTag(tagFaces[i]);
+    if(face){
+      l_faces.push_back(face);
+      face->addRegion(this);
+      l_dirs.push_back(signFaces[i]);
+    }
+    else{
+      Msg::Error("Unknown model face %d", tagFaces[i]);
+    }
   }
 }
 

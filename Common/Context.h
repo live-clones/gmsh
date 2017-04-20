@@ -49,7 +49,8 @@ struct contextMeshOptions {
   int minCircPoints, minCurvPoints;
   int hoOptimize, hoNLayers, hoOptPrimSurfMesh;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
-  int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat, saveParametric;
+  int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat;
+  int saveParametric, saveTopology;
   int smoothNormals, zoneDefinition, clip;
   int saveElementTagType;
   int switchElementTags;

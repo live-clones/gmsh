@@ -2837,7 +2837,7 @@ void GModel::createTopologyFromFaces(std::vector<discreteFace*> &discFaces, int 
     std::map<int, std::vector<int> >::iterator ite = face2Edges.find((*it)->tag());
     if (ite != face2Edges.end()){
       std::vector<int> bcEdges = ite->second;
-      (*it)->setBoundEdges(this, bcEdges);
+      (*it)->setBoundEdges(bcEdges);
     }
   }
 
@@ -4023,7 +4023,7 @@ void GModel::classifyFaces(std::set<GFace*> &_faces)
 
   std::map<discreteFace*,std::vector<int> >::iterator itFT =  newFaceTopology.begin();
   for (;itFT != newFaceTopology.end();++itFT){
-    itFT->first->setBoundEdges(this, itFT->second);
+    itFT->first->setBoundEdges(itFT->second);
   }
 
   for (std::map<std::pair<int, int>, GEdge*>::iterator it = newEdges.begin();

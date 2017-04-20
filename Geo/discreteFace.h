@@ -44,7 +44,9 @@ class discreteFace : public GFace {
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &param,
                          SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const;
-  void setBoundEdges(GModel *gm, std::vector<int> tagEdges);
+  void setBoundEdges(const std::vector<int> &tagEdges);
+  void setBoundEdges(const std::vector<int> &tagEdges,
+                     const std::vector<int> &signEdges);
   void findEdges(std::map<MEdge, std::vector<int>, Less_Edge > &map_edges);
   void writeGEO(FILE *fp);
   void createGeometry();

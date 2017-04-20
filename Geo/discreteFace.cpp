@@ -65,21 +65,15 @@ static inline double getAlpha(MTriangle* tri, int edj)
 
 }
 
-
-static inline void crouzeixRaviart(const std::vector<double> &U,std::vector<double> &F){
-
+static inline void crouzeixRaviart(const std::vector<double> &U,std::vector<double> &F)
+{
   F.resize(3);
 
   double xsi[3] = {0.,1.,0.};
   double eta[3] = {0.,0.,1.};
-
   for(int i=0; i<3; i++)
     F[i] =  U[0] * (1.-2.*eta[i]) + U[1] * (2.*(xsi[i]+eta[i])-1.) + U[2] * (1-2.*xsi[i]);
-
 }
-
-
-
 
 discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
 {
@@ -88,13 +82,38 @@ discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
   meshStatistics.status = GFace::DONE;
 }
 
-void discreteFace::setBoundEdges(GModel *gm, std::vector<int> tagEdges)
+void discreteFace::setBoundEdges(const std::vector<int> &tagEdges)
 {
-  for (std::vector<int>::iterator it = tagEdges.begin(); it != tagEdges.end(); it++){
-    GEdge *ge = gm->getEdgeByTag(*it);
-    l_edges.push_back(ge);
-    l_dirs.push_back(1);
-    ge->addFace(this);
+  for (unsigned int i = 0; i != tagEdges.size(); i++){
+    GEdge *ge = model()->getEdgeByTag(tagEdges[i]);
+    if(ge){
+      l_edges.push_back(ge);
+      l_dirs.push_back(1);
+      ge->addFace(this);
+    }
+    else{
+      Msg::Error("Unknown model edge %d", tagEdges[i]);
+    }
+  }
+}
+
+void discreteFace::setBoundEdges(const std::vector<int> &tagEdges,
+                                 const std::vector<int> &signEdges)
+{
+  if(signEdges.size() != tagEdges.size()){
+    Msg::Error("Wrong number of edge signs in setBoundEdges");
+    setBoundEdges(tagEdges);
+  }
+  for (unsigned int i = 0; i != tagEdges.size(); i++){
+    GEdge *ge = model()->getEdgeByTag(tagEdges[i]);
+    if(ge){
+      l_edges.push_back(ge);
+      l_dirs.push_back(signEdges[i]);
+      ge->addFace(this);
+    }
+    else{
+      Msg::Error("Unknown model edge %d", tagEdges[i]);
+    }
   }
 }
 
@@ -525,14 +544,16 @@ void discreteFace::splitDiscreteEdge(GEdge *de , GVertex *gv, discreteEdge* newE
 	  else tagEdges.push_back (geit2->tag());
 	}
 	df->l_edges.clear();
-	df->setBoundEdges (df->model(), tagEdges);
+	df->setBoundEdges(tagEdges);
       }
-      else Msg::Fatal("discreteFace::splitDiscreteEdge, This only applies to discrete geometries");
+      else{
+        Msg::Error("splitDiscreteEdge only applies to discrete geometries");
+        return;
+      }
     }
   }
   de->model()->remove(de);
 }
-
 
 void discreteFace::split(triangulation* trian,std::vector<triangulation*> &partition,
                          int nPartitions)
@@ -979,7 +1000,8 @@ void discreteFace::crossField()
 #ifdef HAVE_PETSC
   lsys = new linearSystemPETSc<double>;
 #else
-  Msg::Fatal("Petsc is required ");
+  Msg::Error("Petsc is required for cross fields");
+  return;
 #endif
 
   dofManager<double> myAssembler(lsys);
@@ -996,7 +1018,6 @@ void discreteFace::crossField()
       if (iTri.size()>1)
 	mini = iTri[0] < iTri[1] ? iTri[0] : iTri[1];
       else{
-	//printf("CL: ed[%f,%f]--[%f,%f]\t Theta: %f \n",ed.getSortedVertex(0)->x(),ed.getSortedVertex(0)->y(),ed.getSortedVertex(1)->x(),ed.getSortedVertex(1)->y(),alpha*180./M_PI);
 	myAssembler.fixDof(3*mini+j,0,1.); // setting theta and not Theta
 	myAssembler.fixDof(3*mini+j,1,0.);
       }

@@ -84,8 +84,9 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-part int",          "Partition after batch mesh generation"));
   s.push_back(mp("-partWeight tri|quad|tet|prism|hex int", "Weight of a triangle/quad/etc. "
                                                            "during partitioning"));
-  s.push_back(mp("-saveall",           "Save all elements (discard physical group definitions)"));
-  s.push_back(mp("-parametric",        "Save vertices with their parametric coordinates"));
+  s.push_back(mp("-save_all",          "Save all elements (discard physical group definitions)"));
+  s.push_back(mp("-save_parametric",   "Save vertices with their parametric coordinates"));
+  s.push_back(mp("-save_topology",     "Save model topology"));
   s.push_back(mp("-algo string",       "Select mesh algorithm (meshadapt, del2d, front2d, "
                                         "delquad, del3d, front3d, mmg3d, pack)"));
   s.push_back(mp("-smooth int",        "Set number of mesh smoothing steps"));
@@ -839,9 +840,15 @@ void GetOptions(int argc, char *argv[])
         i++;
         CTX::instance()->mesh.binary = 1;
       }
-      else if(!strcmp(argv[i] + 1, "parametric")) {
+      else if(!strcmp(argv[i] + 1, "save_parametric") ||
+              !strcmp(argv[i] + 1, "parametric")) {
         i++;
         CTX::instance()->mesh.saveParametric = 1;
+      }
+      else if(!strcmp(argv[i] + 1, "save_topology") ||
+              !strcmp(argv[i] + 1, "save_entities")) {
+        i++;
+        CTX::instance()->mesh.saveTopology = 1;
       }
       else if(!strcmp(argv[i] + 1, "algo")) {
         i++;

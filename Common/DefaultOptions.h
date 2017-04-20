@@ -1240,6 +1240,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "SaveElementTagType" , opt_mesh_save_element_tag_type , 1. ,
     "Type of the element tag saved in mesh formats that don't support saving "
     "physical or partition ids (1=elementary, 2=physical, 3=partition)" },
+  { F|O, "SaveTopology" , opt_mesh_save_topology, 0. ,
+    "Save model topology in MSH2 output files (this is always saved in MSH3)" },
   { F|O, "SaveParametric" , opt_mesh_save_parametric , 0. ,
     "Save parametric coordinates of nodes" },
   { F|O, "SaveGroupsOfNodes" , opt_mesh_save_groups_of_nodes , 0. ,
