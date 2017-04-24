@@ -16,6 +16,7 @@
 #include <Bnd_Box.hxx>
 #include <BRepBndLib.hxx>
 #include <TopoDS_Shape.hxx>
+#include <BRepTools.hxx>
 
 class OCCMeshAttributes {
  private:
@@ -88,6 +89,11 @@ class OCCMeshAttributesRTree{
     if(v->getDim() < 0 || v->getDim() > 3) return;
     Bnd_Box box;
     BRepBndLib::Add(v->getShape(), box);
+    if(box.IsVoid()){
+      Msg::Debug("Inserting (null or degenerate) shape with void bounding box");
+      //BRepTools::Dump(v->getShape(), std::cout);
+      return;
+    }
     double xmin, ymin, zmin, xmax, ymax, zmax;
     box.Get(xmin, ymin, zmin, xmax, ymax, zmax);
     double x = 0.5 * (xmin + xmax);
@@ -104,6 +110,10 @@ class OCCMeshAttributesRTree{
     if(dim < 0 || dim > 3) return;
     Bnd_Box box;
     BRepBndLib::Add(shape, box);
+    if(box.IsVoid()){
+      Msg::Debug("Searching for (null or degenerate) shape with void bounding box");
+      return;
+    }
     double xmin, ymin, zmin, xmax, ymax, zmax;
     box.Get(xmin, ymin, zmin, xmax, ymax, zmax);
     double x = 0.5 * (xmin + xmax);

@@ -141,6 +141,7 @@ void OCC_Internals::_recomputeMaxTag(int dim)
 
 void OCC_Internals::bind(TopoDS_Vertex vertex, int tag, bool recursive)
 {
+  if(vertex.IsNull()) return;
   if(_vertexTag.IsBound(vertex) && _vertexTag.Find(vertex) != tag){
     Msg::Debug("OpenCASCADE vertex %d is already bound to another tag", tag);
   }
@@ -155,6 +156,7 @@ void OCC_Internals::bind(TopoDS_Vertex vertex, int tag, bool recursive)
 
 void OCC_Internals::bind(TopoDS_Edge edge, int tag, bool recursive)
 {
+  if(edge.IsNull()) return;
   if(_edgeTag.IsBound(edge) && _edgeTag.Find(edge) != tag){
     Msg::Debug("OpenCASCADE edge %d is already bound to another tag", tag);
   }
@@ -179,6 +181,7 @@ void OCC_Internals::bind(TopoDS_Edge edge, int tag, bool recursive)
 
 void OCC_Internals::bind(TopoDS_Wire wire, int tag, bool recursive)
 {
+  if(wire.IsNull()) return;
   if(_wireTag.IsBound(wire) && _wireTag.Find(wire) != tag){
     Msg::Debug("OpenCASCADE wire %d is already bound to anthor tag", tag);
   }
@@ -202,6 +205,7 @@ void OCC_Internals::bind(TopoDS_Wire wire, int tag, bool recursive)
 
 void OCC_Internals::bind(TopoDS_Face face, int tag, bool recursive)
 {
+  if(face.IsNull()) return;
   if(_faceTag.IsBound(face) && _faceTag.Find(face) != tag){
     Msg::Debug("OpenCASCADE face %d is already bound to another tag", tag);
   }
@@ -233,6 +237,7 @@ void OCC_Internals::bind(TopoDS_Face face, int tag, bool recursive)
 
 void OCC_Internals::bind(TopoDS_Shell shell, int tag, bool recursive)
 {
+  if(shell.IsNull()) return;
   if(_shellTag.IsBound(shell) && _shellTag.Find(shell) != tag){
     Msg::Debug("OpenCASCADE shell %d is already bound to another tag", tag);
   }
@@ -256,6 +261,7 @@ void OCC_Internals::bind(TopoDS_Shell shell, int tag, bool recursive)
 
 void OCC_Internals::bind(TopoDS_Solid solid, int tag, bool recursive)
 {
+  if(solid.IsNull()) return;
   if(_solidTag.IsBound(solid) && _solidTag.Find(solid) != tag){
     Msg::Debug("OpenCASCADE solid %d is already bound to another tag", tag);
   }
