@@ -27,8 +27,7 @@ class ExtrudeParams;
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <TopTools_DataMapOfShapeInteger.hxx>
 #include <TopTools_DataMapOfIntegerShape.hxx>
-#include <TopTools_ShapeMapHasher.hxx>
-#include <NCollection_DataMap.hxx>
+#include "OCCMeshAttributes.h"
 
 class BRepSweep_Prism;
 class BRepSweep_Revol;
@@ -63,17 +62,8 @@ class OCC_Internals {
   // remove from the model at the next synchronization
   std::set<std::pair<int, int> > _toRemove;
 
-  // internal mesh attributes
-  class meshAttr {
-  public:
-    meshAttr() : size(MAX_LC), extrude(0) {}
-    meshAttr(double s) : size(s), extrude(0) {}
-    meshAttr(ExtrudeParams *e) : size(MAX_LC), extrude(e) {}
-    double size;
-    ExtrudeParams *extrude;
-    TopoDS_Shape source;
-  };
-  NCollection_DataMap<TopoDS_Shape, meshAttr, TopTools_ShapeMapHasher> _meshAttr;
+  // mesh attributes
+  OCCMeshAttributes _meshAttributes;
 
   // iterate on all bound entities and recompute the maximum tag
   void _recomputeMaxTag(int dim);
@@ -149,14 +139,14 @@ class OCC_Internals {
                 ExtrudeParams *e=0);
 
   // set extruded mesh attributes
-  void _setExtrudedMeshAttr(const TopoDS_Compound &c, BRepSweep_Prism *p,
-                            BRepSweep_Revol *r, ExtrudeParams *e,
-                            double x, double y, double z,
-                            double dx, double dy, double dz,
-                            double ax, double ay, double az, double angle);
-  void _copyExtrudedMeshAttr(TopoDS_Edge edge, GEdge *ge);
-  void _copyExtrudedMeshAttr(TopoDS_Face face, GFace *gf);
-  void _copyExtrudedMeshAttr(TopoDS_Solid solid, GRegion *gr);
+  void _setExtrudedMeshAttributes(const TopoDS_Compound &c, BRepSweep_Prism *p,
+                                  BRepSweep_Revol *r, ExtrudeParams *e,
+                                  double x, double y, double z,
+                                  double dx, double dy, double dz,
+                                  double ax, double ay, double az, double angle);
+  void _copyExtrudedMeshAttributes(TopoDS_Edge edge, GEdge *ge);
+  void _copyExtrudedMeshAttributes(TopoDS_Face face, GFace *gf);
+  void _copyExtrudedMeshAttributes(TopoDS_Solid solid, GRegion *gr);
  public:
   OCC_Internals();
 
