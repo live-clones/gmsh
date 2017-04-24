@@ -63,7 +63,11 @@ class OCC_Internals {
   std::set<std::pair<int, int> > _toRemove;
 
   // mesh attributes
-  OCCMeshAttributes _meshAttributes;
+  OCCMeshAttributesRTree _meshAttributes;
+
+  // get tag of shape, but search for other candidates at the same location if
+  // the actual shape is not found
+  int _getFuzzyTag(int dim, TopoDS_Shape s);
 
   // iterate on all bound entities and recompute the maximum tag
   void _recomputeMaxTag(int dim);
