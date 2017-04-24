@@ -1713,7 +1713,8 @@ int OCC_Internals::_getFuzzyTag(int dim, TopoDS_Shape s)
 
   std::vector<TopoDS_Shape> candidates;
   _meshAttributes.getSimilarShapes(dim, s, candidates);
-  printf("found %d candidates\n", candidates.size());
+  Msg::Info("Extruded mesh constraint fuzzy search: found %d candidates",
+            (int)candidates.size());
   for(unsigned int i = 0; i < candidates.size(); i++){
     if(_isBound(dim, candidates[i])){
       return _find(dim, candidates[i]);

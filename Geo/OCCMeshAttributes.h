@@ -21,43 +21,29 @@ class OCCMeshAttributes {
  private:
   int _dim;
   TopoDS_Shape _shape;
-  Bnd_Box _box;
   double _meshSize;
   ExtrudeParams *_extrude;
   int _sourceDim;
   TopoDS_Shape _sourceShape;
-  Bnd_Box _sourceBox;
  public:
   OCCMeshAttributes()
     : _dim(-1), _meshSize(MAX_LC), _extrude(0), _sourceDim(-1) {}
   OCCMeshAttributes(int dim, TopoDS_Shape shape)
-    : _dim(dim), _shape(shape), _meshSize(MAX_LC), _extrude(0), _sourceDim(-1)
-  {
-    BRepBndLib::Add(shape, _box);
-  }
+    : _dim(dim), _shape(shape), _meshSize(MAX_LC), _extrude(0), _sourceDim(-1) {}
   OCCMeshAttributes(int dim, TopoDS_Shape shape, double size)
     : _dim(dim), _shape(shape), _meshSize(size), _extrude(0),
-      _sourceDim(-1)
-  {
-    BRepBndLib::Add(shape, _box);
-  }
+      _sourceDim(-1) {}
   OCCMeshAttributes(int dim, TopoDS_Shape shape, ExtrudeParams *e,
               int sourceDim, TopoDS_Shape sourceShape)
     : _dim(dim), _shape(shape), _meshSize(MAX_LC), _extrude(e),
-      _sourceDim(sourceDim), _sourceShape(sourceShape)
-  {
-    BRepBndLib::Add(shape, _box);
-    BRepBndLib::Add(sourceShape, _sourceBox);
-  }
+      _sourceDim(sourceDim), _sourceShape(sourceShape) {}
   ~OCCMeshAttributes(){}
   int getDim(){ return _dim; }
   TopoDS_Shape getShape(){ return _shape; }
-  Bnd_Box getShapeBox(){ return _box; }
   double getMeshSize(){ return _meshSize; }
   ExtrudeParams *getExtrudeParams(){ return _extrude; }
   int getSourceDim(){ return _sourceDim; }
   TopoDS_Shape getSourceShape(){ return _sourceShape; }
-  Bnd_Box getSourceShapeBox(){ return _sourceBox; }
 };
 
 // mesh attributes are stored according to the center of their bounding box;
@@ -100,8 +86,10 @@ class OCCMeshAttributesRTree{
   {
     _all.push_back(v);
     if(v->getDim() < 0 || v->getDim() > 3) return;
+    Bnd_Box box;
+    BRepBndLib::Add(v->getShape(), box);
     double xmin, ymin, zmin, xmax, ymax, zmax;
-    v->getShapeBox().Get(xmin, ymin, zmin, xmax, ymax, zmax);
+    box.Get(xmin, ymin, zmin, xmax, ymax, zmax);
     double x = 0.5 * (xmin + xmax);
     double y = 0.5 * (ymin + ymax);
     double z = 0.5 * (zmin + zmax);
@@ -125,7 +113,8 @@ class OCCMeshAttributesRTree{
     double bmax[3] = {x + _tol, y + _tol, z + _tol};
     std::vector<OCCMeshAttributes*> tmp;
     _rtree[dim]->Search(bmin, bmax, rtree_callback, &tmp);
-    printf("found %d matches in rtree of size %d\n", tmp.size(), _all.size());
+    Msg::Debug("OCCRTree found %d matches in tree of size %d",
+               (int)tmp.size(), (int)_all.size());
     if(tmp.empty()){ // no match
       return;
     }
@@ -137,7 +126,7 @@ class OCCMeshAttributesRTree{
           continue;
         if(shape.IsSame(tmp[i]->getShape())){ // exact match: same shape
           attr.push_back(tmp[i]);
-          printf("-> exact match\n");
+          Msg::Debug("OCCRTree exact match");
           return;
         }
       }
@@ -156,7 +145,8 @@ class OCCMeshAttributesRTree{
         attr.push_back(tmp[i]);
       }
     }
-    printf("-> %d bbox matches after filtering", attr.size());
+    Msg::Debug("OCCRtree %d matches after bounding box filtering",
+               (int)attr.size());
   }
   double getMeshSize(int dim, TopoDS_Shape shape)
   {
