@@ -110,7 +110,7 @@ class OCCMeshAttributesRTree{
     _rtree[v->getDim()]->Insert(bmin, bmax, v);
   }
   void find(int dim, TopoDS_Shape shape, std::vector<OCCMeshAttributes*> &attr,
-            bool excludeSame)
+            bool requireMeshSize, bool requireExtrudeParams, bool excludeSame)
   {
     attr.clear();
     if(dim < 0 || dim > 3) return;
@@ -131,6 +131,10 @@ class OCCMeshAttributesRTree{
     }
     if(!excludeSame){
       for(unsigned int i = 0; i < tmp.size(); i++){
+        if(requireMeshSize && tmp[i]->getMeshSize() == MAX_LC)
+          continue;
+        if(requireExtrudeParams && !tmp[i]->getExtrudeParams())
+          continue;
         if(shape.IsSame(tmp[i]->getShape())){ // exact match: same shape
           attr.push_back(tmp[i]);
           printf("-> exact match\n");
@@ -141,6 +145,10 @@ class OCCMeshAttributesRTree{
     // potential matches based on bounding box
     gp_Pnt pmin1 = box.CornerMin(), pmax1 = box.CornerMax();
     for(unsigned int i = 0; i < tmp.size(); i++){
+      if(requireMeshSize && tmp[i]->getMeshSize() == MAX_LC)
+        continue;
+      if(requireExtrudeParams && !tmp[i]->getExtrudeParams())
+        continue;
       Bnd_Box box2;
       BRepBndLib::Add(tmp[i]->getShape(), box2);
       gp_Pnt pmin2 = box2.CornerMin(), pmax2 = box2.CornerMax();
@@ -153,7 +161,7 @@ class OCCMeshAttributesRTree{
   double getMeshSize(int dim, TopoDS_Shape shape)
   {
     std::vector<OCCMeshAttributes*> attr;
-    find(dim, shape, attr, false);
+    find(dim, shape, attr, true, false, false);
     for(unsigned int i = 0; i < attr.size(); i++){
       if(attr[i]->getMeshSize() < MAX_LC)
         return attr[i]->getMeshSize();
@@ -164,7 +172,7 @@ class OCCMeshAttributesRTree{
                                   int &sourceDim, TopoDS_Shape &sourceShape)
   {
     std::vector<OCCMeshAttributes*> attr;
-    find(dim, shape, attr, false);
+    find(dim, shape, attr, false, true, false);
     for(unsigned int i = 0; i < attr.size(); i++){
       if(attr[i]->getExtrudeParams()){
         sourceDim = attr[i]->getSourceDim();
@@ -177,7 +185,7 @@ class OCCMeshAttributesRTree{
   void getSimilarShapes(int dim, TopoDS_Shape shape, std::vector<TopoDS_Shape> &other)
   {
     std::vector<OCCMeshAttributes*> attr;
-    find(dim, shape, attr, true);
+    find(dim, shape, attr, false, false, true);
     for(unsigned int i = 0; i < attr.size(); i++){
       TopoDS_Shape s = attr[i]->getShape();
       if(!s.IsNull()) other.push_back(s);
