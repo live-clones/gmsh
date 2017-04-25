@@ -503,11 +503,14 @@ static void Mesh2D(GModel *m)
   PrintMesh2dStatistics(m);
 }
 
-static void FindConnectedRegions(std::vector<GRegion*> &delaunay,
+static void FindConnectedRegions(const std::vector<GRegion*> &del,
                                  std::vector<std::vector<GRegion*> > &connected)
 {
+  std::vector<GRegion*> delaunay = del;
+  // test: connected.resize(1); connected[0] = delaunay; return;
+
   const unsigned int nbVolumes = delaunay.size();
-  if (!nbVolumes)return;
+  if (!nbVolumes) return;
   while (delaunay.size()){
     std::set<GRegion*> oneDomain;
     std::stack<GRegion*> _stack;
@@ -518,24 +521,24 @@ static void FindConnectedRegions(std::vector<GRegion*> &delaunay,
       _stack.pop();
       oneDomain.insert(r);
       std::list<GFace*> faces = r->faces();
-      for (std::list<GFace*> :: iterator it = faces.begin(); it != faces.end() ; ++it){
+      for (std::list<GFace*>::iterator it = faces.begin(); it != faces.end() ; ++it){
         GFace *gf = *it;
-        GRegion *other = gf->getRegion(0) == r ? gf->getRegion(1) : gf->getRegion(0);
-        if (other != 0 && oneDomain.find(other) == oneDomain.end())
-          _stack.push (other);
+        GRegion *other = (gf->getRegion(0) == r) ? gf->getRegion(1) : gf->getRegion(0);
+        if(other != 0 && oneDomain.find(other) == oneDomain.end())
+          _stack.push(other);
       }
     }
-    std::vector<GRegion*> temp1,temp2;
-    for (unsigned int i=0;i<delaunay.size();i++){
+    std::vector<GRegion*> temp1, temp2;
+    for (unsigned int i = 0; i < delaunay.size(); i++){
       r = delaunay[i];
-      if (oneDomain.find(r) == oneDomain.end())temp1.push_back(r);
+      if (oneDomain.find(r) == oneDomain.end()) temp1.push_back(r);
       else temp2.push_back(r);
     }
     connected.push_back(temp2);
-    delaunay=temp1;
+    delaunay = temp1;
   }
   Msg::Info("Delaunay Meshing %d volumes with %d connected components",
-            nbVolumes,connected.size());
+            nbVolumes, connected.size());
 }
 
 template <class ITERATOR>
