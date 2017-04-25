@@ -87,6 +87,8 @@
 #include <gce_MakeElips.hxx>
 #include <gce_MakePln.hxx>
 
+#include "OCCMeshAttributes.h"
+
 #if OCC_VERSION_HEX < 0x060900
 #error "Gmsh requires OpenCASCADE >= 6.9"
 #endif
@@ -95,12 +97,18 @@ OCC_Internals::OCC_Internals()
 {
   for(int i = 0; i < 6; i++) _maxTag[i] = 0;
   _changed = true;
+  _meshAttributes = new OCCMeshAttributesRTree(CTX::instance()->geom.tolerance);
+}
+
+OCC_Internals::~OCC_Internals()
+{
+  delete _meshAttributes;
 }
 
 void OCC_Internals::reset()
 {
   for(int i = 0; i < 6; i++) _maxTag[i] = 0;
-  _meshAttributes.clear();
+  _meshAttributes->clear();
   _somap.Clear(); _shmap.Clear(); _fmap.Clear(); _wmap.Clear(); _emap.Clear();
   _vmap.Clear();
   _vertexTag.Clear(); _edgeTag.Clear(); _faceTag.Clear(); _solidTag.Clear();
@@ -150,7 +158,7 @@ void OCC_Internals::bind(TopoDS_Vertex vertex, int tag, bool recursive)
     _tagVertex.Bind(tag, vertex);
     setMaxTag(0, tag);
     _changed = true;
-    _meshAttributes.insert(new OCCMeshAttributes(0, vertex));
+    _meshAttributes->insert(new OCCMeshAttributes(0, vertex));
   }
 }
 
@@ -165,7 +173,7 @@ void OCC_Internals::bind(TopoDS_Edge edge, int tag, bool recursive)
     _tagEdge.Bind(tag, edge);
     setMaxTag(1, tag);
     _changed = true;
-    _meshAttributes.insert(new OCCMeshAttributes(1, edge));
+    _meshAttributes->insert(new OCCMeshAttributes(1, edge));
   }
   if(recursive){
     TopExp_Explorer exp0;
@@ -214,7 +222,7 @@ void OCC_Internals::bind(TopoDS_Face face, int tag, bool recursive)
     _tagFace.Bind(tag, face);
     setMaxTag(2, tag);
     _changed = true;
-    _meshAttributes.insert(new OCCMeshAttributes(2, face));
+    _meshAttributes->insert(new OCCMeshAttributes(2, face));
   }
   if(recursive){
     TopExp_Explorer exp0;
@@ -270,7 +278,7 @@ void OCC_Internals::bind(TopoDS_Solid solid, int tag, bool recursive)
     _tagSolid.Bind(tag, solid);
     setMaxTag(3, tag);
     _changed = true;
-    _meshAttributes.insert(new OCCMeshAttributes(3, solid));
+    _meshAttributes->insert(new OCCMeshAttributes(3, solid));
   }
   if(recursive){
     TopExp_Explorer exp0;
@@ -649,7 +657,7 @@ bool OCC_Internals::addVertex(int &tag, double x, double y, double z,
     return false;
   }
   if(meshSize > 0 && meshSize < MAX_LC)
-    _meshAttributes.insert(new OCCMeshAttributes(0, result, meshSize));
+    _meshAttributes->insert(new OCCMeshAttributes(0, result, meshSize));
   if(tag < 0) tag = getMaxTag(0) + 1;
   bind(result, tag, true);
   return true;
@@ -1668,14 +1676,14 @@ void OCC_Internals::_setExtrudedMeshAttributes(const TopoDS_Compound &c,
       ExtrudeParams *ee = new ExtrudeParams(COPIED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
-      _meshAttributes.insert(new OCCMeshAttributes(2, top, ee, 2, bot));
+      _meshAttributes->insert(new OCCMeshAttributes(2, top, ee, 2, bot));
     }
     TopoDS_Shape vol = p ? p->Shape(face) : r->Shape(face);
     {
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
-      _meshAttributes.insert(new OCCMeshAttributes(3, vol, ee, 2, bot));
+      _meshAttributes->insert(new OCCMeshAttributes(3, vol, ee, 2, bot));
     }
   }
 
@@ -1687,14 +1695,14 @@ void OCC_Internals::_setExtrudedMeshAttributes(const TopoDS_Compound &c,
       ExtrudeParams *ee = new ExtrudeParams(COPIED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
-      _meshAttributes.insert(new OCCMeshAttributes(1, top, ee, 1, bot));
+      _meshAttributes->insert(new OCCMeshAttributes(1, top, ee, 1, bot));
     }
     TopoDS_Shape sur = p ? p->Shape(edge) : r->Shape(edge);
     {
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
-      _meshAttributes.insert(new OCCMeshAttributes(2, sur, ee, 1, bot));
+      _meshAttributes->insert(new OCCMeshAttributes(2, sur, ee, 1, bot));
     }
   }
 
@@ -1707,7 +1715,7 @@ void OCC_Internals::_setExtrudedMeshAttributes(const TopoDS_Compound &c,
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
-      _meshAttributes.insert(new OCCMeshAttributes(1, lin, ee, 0, bot));
+      _meshAttributes->insert(new OCCMeshAttributes(1, lin, ee, 0, bot));
     }
   }
 }
@@ -1718,7 +1726,7 @@ int OCC_Internals::_getFuzzyTag(int dim, TopoDS_Shape s)
     return _find(dim, s);
 
   std::vector<TopoDS_Shape> candidates;
-  _meshAttributes.getSimilarShapes(dim, s, candidates);
+  _meshAttributes->getSimilarShapes(dim, s, candidates);
   Msg::Info("Extruded mesh constraint fuzzy search: found %d candidates",
             (int)candidates.size());
   for(unsigned int i = 0; i < candidates.size(); i++){
@@ -1734,7 +1742,7 @@ void OCC_Internals::_copyExtrudedMeshAttributes(TopoDS_Edge edge, GEdge *ge)
 {
   int sourceDim = -1;
   TopoDS_Shape sourceShape;
-  ExtrudeParams *e = _meshAttributes.getExtrudeParams
+  ExtrudeParams *e = _meshAttributes->getExtrudeParams
     (1, edge, sourceDim, sourceShape);
   if(!e) return;
   ge->meshAttributes.extrude = e;
@@ -1752,7 +1760,7 @@ void OCC_Internals::_copyExtrudedMeshAttributes(TopoDS_Face face, GFace *gf)
 {
   int sourceDim = -1;
   TopoDS_Shape sourceShape;
-  ExtrudeParams *e = _meshAttributes.getExtrudeParams
+  ExtrudeParams *e = _meshAttributes->getExtrudeParams
     (2, face, sourceDim, sourceShape);
   if(!e) return;
   gf->meshAttributes.extrude = e;
@@ -1770,7 +1778,7 @@ void OCC_Internals::_copyExtrudedMeshAttributes(TopoDS_Solid solid, GRegion *gr)
 {
   int sourceDim = -1;
   TopoDS_Shape sourceShape;
-  ExtrudeParams *e = _meshAttributes.getExtrudeParams
+  ExtrudeParams *e = _meshAttributes->getExtrudeParams
     (3, solid, sourceDim, sourceShape);
   if(!e) return;
   gr->meshAttributes.extrude = e;
@@ -2593,7 +2601,7 @@ void OCC_Internals::setMeshSize(int dim, int tag, double size)
 {
   if(dim != 0) return;
   if(_tagVertex.IsBound(tag)){
-    _meshAttributes.insert(new OCCMeshAttributes(0, _tagVertex.Find(tag), size));
+    _meshAttributes->insert(new OCCMeshAttributes(0, _tagVertex.Find(tag), size));
   }
 }
 
@@ -2653,7 +2661,7 @@ void OCC_Internals::synchronize(GModel *model)
         tag = ++vTagMax;
         Msg::Info("Binding unbound OpenCASCADE vertex to tag %d", tag);
       }
-      double lc = _meshAttributes.getMeshSize(0, vertex);
+      double lc = _meshAttributes->getMeshSize(0, vertex);
       occv = new OCCVertex(model, tag, vertex, lc);
       model->add(occv);
     }

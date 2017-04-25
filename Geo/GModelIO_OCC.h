@@ -27,12 +27,12 @@ class ExtrudeParams;
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <TopTools_DataMapOfShapeInteger.hxx>
 #include <TopTools_DataMapOfIntegerShape.hxx>
-#include "OCCMeshAttributes.h"
 
 class BRepSweep_Prism;
 class BRepSweep_Revol;
 class BRepBuilderAPI_Transform;
 class BRepBuilderAPI_GTransform;
+class OCCMeshAttributesRTree;
 
 class OCC_Internals {
  public:
@@ -63,7 +63,7 @@ class OCC_Internals {
   std::set<std::pair<int, int> > _toRemove;
 
   // mesh attributes
-  OCCMeshAttributesRTree _meshAttributes;
+  OCCMeshAttributesRTree *_meshAttributes;
 
   // get tag of shape, but search for other candidates at the same location if
   // the actual shape is not found
@@ -153,6 +153,7 @@ class OCC_Internals {
   void _copyExtrudedMeshAttributes(TopoDS_Solid solid, GRegion *gr);
  public:
   OCC_Internals();
+  ~OCC_Internals();
 
   // have the internals changed since the last synchronisation?
   bool getChanged() const { return _changed; }

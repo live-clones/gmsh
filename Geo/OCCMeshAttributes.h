@@ -47,9 +47,10 @@ class OCCMeshAttributes {
   TopoDS_Shape getSourceShape(){ return _sourceShape; }
 };
 
-// mesh attributes are stored according to the center of their bounding box;
-// this allows to efficiently search for potential matches, even if the actual
-// underlying entity has been changed (e.g. through boolean fragments)
+// mesh attributes are stored according to the center of their associated shape
+// bounding box; this allows to efficiently search for potential matches, even
+// if the actual underlying shape has been changed (e.g. through boolean
+// fragments)
 class OCCMeshAttributesRTree{
  private:
   RTree<OCCMeshAttributes*, double, 3, double> *_rtree[4];
