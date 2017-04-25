@@ -481,8 +481,16 @@ static void midpointsphere(GFace *gf, double u1, double v1, double u2, double v2
 
 bool edges_sort(std::pair<double, BDS_Edge*> a, std::pair<double, BDS_Edge*> b)
 {
-  if (a.first == b.first)
-    return ((*a.second) < (*b.second));
+  // don't compare pointers: it leads to non-deterministic behavior
+  // if (a.first == b.first){
+  //   return ((*a.second) < (*b.second));
+  // }
+  if (std::abs(a.first - b.first) < 1e-10){
+    if (a.second->p1->iD == b.second->p1->iD)
+      return (a.second->p2->iD < b.second->p2->iD);
+    else
+      return (a.second->p1->iD < b.second->p1->iD);
+  }
   else
     return (a.first < b.first);
 }
