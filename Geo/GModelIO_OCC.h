@@ -27,13 +27,12 @@ class ExtrudeParams;
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <TopTools_DataMapOfShapeInteger.hxx>
 #include <TopTools_DataMapOfIntegerShape.hxx>
-#include <TopTools_ShapeMapHasher.hxx>
-#include <NCollection_DataMap.hxx>
 
 class BRepSweep_Prism;
 class BRepSweep_Revol;
 class BRepBuilderAPI_Transform;
 class BRepBuilderAPI_GTransform;
+class OCCMeshAttributesRTree;
 
 class OCC_Internals {
  public:
@@ -63,17 +62,12 @@ class OCC_Internals {
   // remove from the model at the next synchronization
   std::set<std::pair<int, int> > _toRemove;
 
-  // internal mesh attributes
-  class meshAttr {
-  public:
-    meshAttr() : size(MAX_LC), extrude(0) {}
-    meshAttr(double s) : size(s), extrude(0) {}
-    meshAttr(ExtrudeParams *e) : size(MAX_LC), extrude(e) {}
-    double size;
-    ExtrudeParams *extrude;
-    TopoDS_Shape source;
-  };
-  NCollection_DataMap<TopoDS_Shape, meshAttr, TopTools_ShapeMapHasher> _meshAttr;
+  // mesh attributes
+  OCCMeshAttributesRTree *_meshAttributes;
+
+  // get tag of shape, but search for other candidates at the same location if
+  // the actual shape is not found
+  int _getFuzzyTag(int dim, TopoDS_Shape s);
 
   // iterate on all bound entities and recompute the maximum tag
   void _recomputeMaxTag(int dim);
@@ -149,16 +143,17 @@ class OCC_Internals {
                 ExtrudeParams *e=0);
 
   // set extruded mesh attributes
-  void _setExtrudedMeshAttr(const TopoDS_Compound &c, BRepSweep_Prism *p,
-                            BRepSweep_Revol *r, ExtrudeParams *e,
-                            double x, double y, double z,
-                            double dx, double dy, double dz,
-                            double ax, double ay, double az, double angle);
-  void _copyExtrudedMeshAttr(TopoDS_Edge edge, GEdge *ge);
-  void _copyExtrudedMeshAttr(TopoDS_Face face, GFace *gf);
-  void _copyExtrudedMeshAttr(TopoDS_Solid solid, GRegion *gr);
+  void _setExtrudedMeshAttributes(const TopoDS_Compound &c, BRepSweep_Prism *p,
+                                  BRepSweep_Revol *r, ExtrudeParams *e,
+                                  double x, double y, double z,
+                                  double dx, double dy, double dz,
+                                  double ax, double ay, double az, double angle);
+  void _copyExtrudedMeshAttributes(TopoDS_Edge edge, GEdge *ge);
+  void _copyExtrudedMeshAttributes(TopoDS_Face face, GFace *gf);
+  void _copyExtrudedMeshAttributes(TopoDS_Solid solid, GRegion *gr);
  public:
   OCC_Internals();
+  ~OCC_Internals();
 
   // have the internals changed since the last synchronisation?
   bool getChanged() const { return _changed; }
