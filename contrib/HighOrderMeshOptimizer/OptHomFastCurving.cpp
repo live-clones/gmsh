@@ -47,6 +47,8 @@
 #include "OS.h"
 #include "SVector3.h"
 #include "BasisFactory.h"
+#include "bezierBasis.h"
+#include "JacobianBasis.h"
 #include "MetaEl.h"
 #include "qualityMeasuresJacobian.h"
 #include "CADDistances.h"
@@ -932,13 +934,512 @@ void curveColumn(const FastCurvingParameters &p, GEntity *geomEnt,
     curveElement(metaElt, movedVert, blob[iEl]);
 }
 
+void computeFirstAndLastIdealBezierCoeff(const std::vector<MVertex*> &baseVert,
+                                         const std::vector<MVertex*> &topVert,
+                                         std::vector<double> &bezierCoeffIdeal,
+                                         double &thickness0, double &thickness1)
+{
+  int tag = ElementType::getTag(TYPE_LIN, baseVert.size()-1);
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
+
+  if (fs->getNumShapeFunctions() != baseVert.size()) {
+    Msg::Fatal("TODO This should never happen, remove it when it is ok");
+  }
+
+  double sf[100][3];
+  fs->df(-1, 0, 0, sf);
+  double dxa = 0, dya = 0, dza = 0;
+  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+    const MVertex *v = baseVert[j];
+    dxa += sf[j][0] * v->x();
+    dya += sf[j][0] * v->y();
+    dza += sf[j][0] * v->z();
+  }
+
+  SVector3 da = SVector3(dxa, dya, dza);
+  SVector3 db = SVector3(topVert[0]->x() - baseVert[0]->x(),
+                         topVert[0]->y() - baseVert[0]->y(),
+                         topVert[0]->z() - baseVert[0]->z());
+  db *= .5; // edge length of the reference quad is 2...
+  bezierCoeffIdeal.push_back(norm(crossprod(da, db)));
+  thickness0 = bezierCoeffIdeal[0] / norm(da);
+
+
+  fs->df(1, 0, 0, sf);
+  dxa = 0;
+  dya = 0;
+  dza = 0;
+  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+    const MVertex *v = baseVert[j];
+    dxa += sf[j][0] * v->x();
+    dya += sf[j][0] * v->y();
+    dza += sf[j][0] * v->z();
+  }
+
+  da = SVector3(dxa, dya, dza);
+  db = SVector3(topVert[1]->x() - baseVert[1]->x(),
+                topVert[1]->y() - baseVert[1]->y(),
+                topVert[1]->z() - baseVert[1]->z());
+  db *= .5; // edge length of the reference quad is 2...
+  bezierCoeffIdeal.push_back(norm(crossprod(da, db)));
+  thickness1 = bezierCoeffIdeal[1] / norm(da);
+  double thickness12 = thickness1;
+}
+
+double linearThickness(const double &thickness0,
+                       const double &thickness1,
+                       const double &xhi)
+{
+  return thickness0 * (1-xhi) + thickness1 * xhi;
+}
+
+void computeOtherIdealBezierCoeff(const std::vector<MVertex*> &baseVert,
+                                  std::vector<double> &bezierCoeffIdeal,
+                                  double &thickness0, double &thickness1)
+{
+  // Find the polynomial curve that fit the best J_ideal = D_xhi(x) * e(xhi)
+  // where x(xhi) is the mapping, D_xhi the derivative with respect to xhi
+  // and e is the thickness: e(xhi) = thickness0 * (1-xhi) + thickness1 * xhi
+  //
+  // -> We use Remez's algorithm
+
+  int bezierOrder = 2*baseVert.size()-3;
+  int sizeSystem = bezierOrder;
+  std::vector<double> xhi(sizeSystem);
+  for (int i = 0; i < sizeSystem; ++i) {
+    // initial guess
+    xhi[i] = 2*(static_cast<double>(i+1)/(sizeSystem+1))-1;
+  }
+
+  fullMatrix<double> A(sizeSystem, sizeSystem);
+  fullVector<double> b(sizeSystem), x(sizeSystem);
+
+  int tag = ElementType::getTag(TYPE_LIN, baseVert.size()-1);
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
+
+  int tagBez = ElementType::getTag(TYPE_LIN, bezierOrder);
+  const bezierBasis *bfs = BasisFactory::getBezierBasis(tagBez);
+
+  // Construct system to solve
+  for (int i = 0; i < sizeSystem; ++i) {
+    double sf[100][3];
+    fs->df(xhi[i], 0, 0, sf);
+    double dx = 0, dy = 0, dz = 0;
+    for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+      const MVertex *v = baseVert[j];
+      dx += sf[j][0] * v->x();
+      dy += sf[j][0] * v->y();
+      dz += sf[j][0] * v->z();
+    }
+    double bsf[100];
+    bfs->f(xhi[i], 0, 0, bsf);
+    b(i) = std::sqrt(dx*dx + dy*dy + dz*dz)
+            * linearThickness(thickness0, thickness1, xhi[i])
+            - bezierCoeffIdeal[0] * bsf[0]
+            - bezierCoeffIdeal[1] * bsf[1];
+    for (int j = 0; j < sizeSystem-1; ++j) {
+      A(i, j) = bsf[j+2];
+    }
+    A(i, sizeSystem-1) = i % 2 ? 1 : -1;
+  }
+
+  A.luSolve(b, x);
+  for (int i = 0; i < sizeSystem-1; ++i) {
+    bezierCoeffIdeal.push_back(x(i));
+  }
+}
+
+
+void computeIdealJacobian(const std::vector<MVertex*> &baseVert,
+                          const std::vector<MVertex*> &topVert,
+                          std::vector<double> &bezierCoeffIdeal)
+{
+  double thickness0, thickness1;
+  // order_element = baseVert.size - 1
+  // order_jacobian = 2 * order_element - 1
+  // number_of_bezier_coeff = order_jacobian + 1
+  bezierCoeffIdeal.reserve(2*baseVert.size()-2);
+  computeFirstAndLastIdealBezierCoeff(baseVert, topVert, bezierCoeffIdeal,
+                                      thickness0, thickness1);
+  computeOtherIdealBezierCoeff(baseVert, bezierCoeffIdeal, thickness0, thickness1);
+}
+
+void replaceIntermediateNode(const MElement *element, int iBaseEdge)
+{
+  bool intermediateAlongY = true;
+  if (iBaseEdge == 1 || iBaseEdge == 3) intermediateAlongY = false;
+
+  int order = element->getPolynomialOrder();
+
+  // Create a map of discrete coordinate to the number of node
+  // This is really really inefficient.. (could be done only one time per element type)
+  const nodalBasis *fs = BasisFactory::getNodalBasis(element->getTypeForMSH());
+  std::map<std::pair<int, int>, int> coordinate2num;
+  std::map<int, std::pair<int, int>> num2coordinate;
+  for (int i = 0; i < element->getNumVertices(); ++i) {
+    const int x = std::lround((fs->points(i, 0) + 1) / 2. * order);
+    const int y = std::lround((fs->points(i, 1) + 1) / 2. * order);
+    coordinate2num[std::make_pair(x, y)] = i;
+    num2coordinate[i] = std::make_pair(x, y);
+  }
+
+  if (intermediateAlongY) {
+    for (int i = 0; i < element->getNumVertices(); ++i) {
+      MVertex *v = const_cast<MVertex*>(element->getVertex(i));
+      const std::pair<int, int> coordinates(num2coordinate[i]);
+      const int &x = coordinates.first;
+      const int &y = coordinates.second;
+      const std::pair<int, int> coordinates0(x, 0);
+      const std::pair<int, int> coordinates1(x, order);
+      const MVertex *v0 = element->getVertex(coordinate2num[coordinates0]);
+      const MVertex *v1 = element->getVertex(coordinate2num[coordinates1]);
+      double factor = static_cast<double>(y) / order;
+      v->x() = v0->x() * (1-factor) + v1->x() * factor;
+      v->y() = v0->y() * (1-factor) + v1->y() * factor;
+      v->z() = v0->z() * (1-factor) + v1->z() * factor;
+    }
+  }
+  else {
+    for (int i = 0; i < element->getNumVertices(); ++i) {
+      MVertex *v = const_cast<MVertex*>(element->getVertex(i));
+      const std::pair<int, int> coordinates(num2coordinate[i]);
+      const int &x = coordinates.first;
+      const int &y = coordinates.second;
+      const std::pair<int, int> coordinates0(0, y);
+      const std::pair<int, int> coordinates1(order, y);
+      const MVertex *v0 = element->getVertex(coordinate2num[coordinates0]);
+      const MVertex *v1 = element->getVertex(coordinate2num[coordinates1]);
+      double factor = static_cast<double>(x) / order;
+      v->x() = v0->x() * (1-factor) + v1->x() * factor;
+      v->y() = v0->y() * (1-factor) + v1->y() * factor;
+      v->z() = v0->z() * (1-factor) + v1->z() * factor;
+    }
+  }
+}
+
+void computeBezierCoefficientsOfJacobian(const MElement *element,
+                                         fullVector<double> &bezierCoefficients,
+                                         fullMatrix<double> *normals)
+{
+  const JacobianBasis *jfs;
+  jfs = BasisFactory::getJacobianBasis(element->getTypeForMSH());
+
+  fullMatrix<double> nodesXYZ(element->getNumVertices(), 3);
+  element->getNodesCoord(nodesXYZ);
+
+  fullVector<double> coeffLag(jfs->getNumJacNodes());
+  bezierCoefficients.resize(jfs->getNumJacNodes());
+  jfs->getSignedJacobian(nodesXYZ, coeffLag, normals);
+  jfs->lag2Bez(coeffLag, bezierCoefficients);
+}
+
+double computeFunctional(const MElement *element,
+                         const fullVector<double> &bezierCoefficients,
+                         const std::vector<double> &bezierCoeffIdeal,
+                         int iBaseEdge)
+{
+  bool intermediateAlongY = true;
+  if (iBaseEdge == 1 || iBaseEdge == 3) intermediateAlongY = false;
+
+  int order = element->getPolynomialOrder();
+
+  // Create a map of discrete coordinate to the number of node
+  // This is really really inefficient.. (could be done only one time per element type)
+  int tag = ElementType::getTag(element->getType(), 2*order-1);
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
+  int numCoeff = fs->getNumShapeFunctions();
+  std::vector<int> num2ideal(numCoeff);
+  for (int i = 0; i < numCoeff; ++i) {
+    const int x = std::lround((fs->points(i, 0) + 1) / 2. * order);
+    const int y = std::lround((fs->points(i, 1) + 1) / 2. * order);
+    switch (iBaseEdge) {
+      case 0: num2ideal[i] = x; break;
+      case 1: num2ideal[i] = y; break;
+      case 2: num2ideal[i] = order-x; break;
+      case 3: num2ideal[i] = order-y; break;
+    }
+    if (num2ideal[i] > 0) ++num2ideal[i];
+    if (num2ideal[i] == order+1) num2ideal[i] = 1;
+  }
+
+  double functional = 0;
+  for (int i = 0; i < numCoeff; ++i) {
+    double bezCoeff = bezierCoefficients(i);
+    double ideal = bezierCoeffIdeal[num2ideal[i]];
+    const double tmp = bezierCoefficients(i)/bezierCoeffIdeal[num2ideal[i]] - 1;
+    functional += tmp*tmp;
+  }
+  return functional;
+}
+
+void computeDirections(const MElement *element,
+                       const std::vector<MVertex*> &baseVert,
+                       const std::vector<MVertex*> &topVert,
+                       const std::vector<double> &bezierCoeffIdeal,
+                       int iBaseEdge,
+                       std::vector<double> &direction,
+                       fullMatrix<double> *normals)
+{
+  fullVector<double> bezierCoefficients;
+  replaceIntermediateNode(element, iBaseEdge);
+  computeBezierCoefficientsOfJacobian(element, bezierCoefficients, normals);
+  double F = computeFunctional(element, bezierCoefficients,
+                               bezierCoeffIdeal, iBaseEdge);
+
+  const double dx = topVert[0]->x()-baseVert[0]->x();
+  const double dy = topVert[0]->y()-baseVert[0]->y();
+  const double dz = topVert[0]->z()-baseVert[0]->z();
+  const double d = std::sqrt(dx*dx + dy*dy + dz*dz) / 100; //characteristicLength
+
+  double maxsumdf = 0;
+  for (int i = 2; i < topVert.size(); ++i) {
+    const double x = topVert[i]->x();
+    const double y = topVert[i]->y();
+    const double z = topVert[i]->z();
+    topVert[i]->x() += d;
+    replaceIntermediateNode(element, iBaseEdge);
+    computeBezierCoefficientsOfJacobian(element, bezierCoefficients, normals);
+    const double fx = computeFunctional(element, bezierCoefficients,
+                                        bezierCoeffIdeal, iBaseEdge);
+    topVert[i]->x() = x;
+    topVert[i]->y() += d;
+    replaceIntermediateNode(element, iBaseEdge);
+    computeBezierCoefficientsOfJacobian(element, bezierCoefficients, normals);
+    const double fy = computeFunctional(element, bezierCoefficients,
+                                        bezierCoeffIdeal, iBaseEdge);
+    topVert[i]->y() = y;
+    topVert[i]->z() += d;
+    replaceIntermediateNode(element, iBaseEdge);
+    computeBezierCoefficientsOfJacobian(element, bezierCoefficients, normals);
+    const double fz = computeFunctional(element, bezierCoefficients,
+                                        bezierCoeffIdeal, iBaseEdge);
+    topVert[i]->z() = z;
+    direction[3*(i-2)] = (fx-F)/d;
+    direction[3*(i-2)+1] = (fy-F)/d;
+    direction[3*(i-2)+2] = (fy-F)/d;
+    const double &dfx = direction[3*(i-2)];
+    const double &dfy = direction[3*(i-2)+1];
+    const double &dfz = direction[3*(i-2)+2];
+    maxsumdf = std::max(maxsumdf, dfx*dfx + dfy*dfy + dfz*dfz);
+  }
+
+  const double factor = -200 * d / std::sqrt(maxsumdf);
+  for (int i = 0; i < direction.size(); ++i) {
+    direction[i] *= factor;
+  }
+}
+
+double objectiveFunction(double xi, MElement *element,
+                         std::vector<MVertex*> &topVert,
+                         std::vector<double> &direction,
+                         std::vector<double> &bezierCoeffIdeal,
+                         int iBaseEdge,
+                         fullMatrix<double> *normals)
+{
+  std::vector<double> coordinate(direction.size());
+
+  fullVector<double> bezierCoefficients;
+  for (int i = 2; i < topVert.size(); ++i) {
+    double j0 = 3*(i-2);
+    coordinate[j0] = topVert[i]->x();
+    coordinate[j0+1] = topVert[i]->y();
+    coordinate[j0+2] = topVert[i]->z();
+    topVert[i]->x() += direction[j0] * xi;
+    topVert[i]->y() += direction[j0+1] * xi;
+    topVert[i]->z() += direction[j0+2] * xi;
+  }
+
+  replaceIntermediateNode(element, iBaseEdge);
+  computeBezierCoefficientsOfJacobian(element, bezierCoefficients, normals);
+  const double f = computeFunctional(element, bezierCoefficients,
+                                     bezierCoeffIdeal, iBaseEdge);
+
+  for (int i = 2; i < topVert.size(); ++i) {
+    double j0 = 3*(i-2);
+    topVert[i]->x() = coordinate[j0];
+    topVert[i]->y() = coordinate[j0+1];
+    topVert[i]->z() = coordinate[j0+2];
+  }
+  return f;
+}
+
+void moveTopVertAfterGoldenSection(MElement *element,
+                                   double xi, std::vector<MVertex*> &topVert,
+                                   std::vector<double> &direction,
+                                   int iBaseEdge)
+{
+  for (int i = 2; i < topVert.size(); ++i) {
+    double j0 = 3*(i-2);
+    topVert[i]->x() += direction[j0] * xi;
+    topVert[i]->y() += direction[j0+1] * xi;
+    topVert[i]->z() += direction[j0+2] * xi;
+  }
+  replaceIntermediateNode(element, iBaseEdge);
+}
+
+void optimizeTopVertices(MElement *element,
+                         std::vector<MVertex*> &baseVert,
+                         std::vector<MVertex*> &topVert,
+                         std::vector<double> &bezierCoeffIdeal,
+                         std::set<MVertex*> &movedVert,
+                         int iBaseEdge,
+                         fullMatrix<double> *normals)
+{
+  std::vector<double> direction((topVert.size()-2)*3);
+  computeDirections(element, baseVert, topVert, bezierCoeffIdeal,
+                    iBaseEdge, direction, normals);
+
+  // Golden section
+  double tol = .001;
+
+  static const double lambda = 0.5 * (std::sqrt(5) - 1.0);
+  //static const double mu = 0.5 * (3.0 - std::sqrt(5)); // = 1 - lambda
+  double a = 0;
+  double b = 1;
+
+  double xi1 = b - lambda * (b - a);
+  double xi2 = a + lambda * (b - a);
+  double f1 = objectiveFunction(xi1, element, topVert, direction,
+                                bezierCoeffIdeal, iBaseEdge, normals);
+  double f2 = objectiveFunction(xi2, element, topVert, direction,
+                                bezierCoeffIdeal, iBaseEdge, normals);
+
+  while (fabs(xi2 - xi1) > tol) {
+    if (f1 < f2) {
+      b = xi2;
+      xi2 = xi1;
+      f2 = f1;
+      xi1 = b - lambda * (b - a);
+      f1 = objectiveFunction(xi1, element, topVert, direction,
+                             bezierCoeffIdeal, iBaseEdge, normals);
+    }
+    else {
+      a = xi1;
+      xi1 = xi2;
+      f1 = f2;
+      xi2 = a + lambda * (b - a);
+      f2 = objectiveFunction(xi2, element, topVert, direction,
+                             bezierCoeffIdeal, iBaseEdge, normals);
+    }
+  }
+
+  moveTopVertAfterGoldenSection(element, .5*(a+b), topVert, direction, iBaseEdge);
+
+//  double min;
+//  double max;
+//  jacobianBasedQuality::minMaxJacobianDeterminant(element, min, max);
+//  std::cout << min << "<" << max << std::endl;
+}
+
+void curveColumnRobustRecursive(int metaElType, std::vector<MVertex*> &baseVert,
+                                std::vector<MElement*> &blob,
+                                std::set<MVertex*> &movedVert,
+                                DbgOutputMeta &dbgOut,
+                                fullMatrix<double> *normals)
+{
+  MElement *el = blob[0];
+
+  MEdge baseEdge(baseVert[0], baseVert[1]);
+  int dummy, sign;
+  el->getEdgeInfo(baseEdge, dummy, sign);
+  if (sign == -1) {
+    std::reverse(baseVert.begin(), baseVert.begin()+2);
+    std::reverse(baseVert.begin()+2, baseVert.end());
+  }
+
+  MEdge topEdge;
+  double minDummy, maxDummy;
+  getOppositeEdgeQuad(el, baseEdge, topEdge, minDummy, maxDummy);
+  std::vector<MVertex*> topVert;
+  int iEdgeInElement;
+  el->getEdgeInfo(topEdge, iEdgeInElement, dummy);
+  el->getEdgeVertices(iEdgeInElement, topVert);
+  std::reverse(topVert.begin(), topVert.begin()+2);
+  std::reverse(topVert.begin()+2, topVert.end());
+
+  std::vector<double> bezierCoeffIdeal;
+  computeIdealJacobian(baseVert, topVert, bezierCoeffIdeal);
+
+  std::cout << "bezierCoeffIdeal:";
+  for (int i = 0; i < bezierCoeffIdeal.size(); ++i) {
+    std::cout << " " << bezierCoeffIdeal[i];
+  }
+  std::cout << std::endl;
+
+  optimizeTopVertices(el, baseVert, topVert, bezierCoeffIdeal, movedVert,
+                      (iEdgeInElement+2) % 4, normals);
+
+  if (blob.size() > 1) {
+    blob.erase(blob.begin());
+    baseVert = topVert;
+    curveColumnRobustRecursive(metaElType, baseVert, blob, movedVert, dbgOut,
+                               normals);
+  }
+}
+
+
+
+void curveColumnRobust(const FastCurvingParameters &p, GEntity *geomEnt,
+                       int metaElType, std::vector<MVertex*> &baseVert,
+                       const std::vector<MVertex*> &topPrimVert, MElement *aboveElt,
+                       std::vector<MElement*> &blob, std::set<MVertex*> &movedVert,
+                       DbgOutputMeta &dbgOut,
+                       fullMatrix<double> *normals)
+{
+  /*static const double MINQUAL = 0.01, TOL = 0.01, MAXITER = 10;*/
+
+  // Order
+  const int order = blob[0]->getPolynomialOrder();
+
+  // If 2D P2 and allowed, modify base vertices to minimize distance between wall edge and CAD
+  if ((p.optimizeGeometry) && (metaElType == TYPE_QUA) && (order == 2))
+    optimizeCADDist2DP2(geomEnt, baseVert);
+
+  curveColumnRobustRecursive(metaElType, baseVert, blob, movedVert, dbgOut,
+                             normals);
+
+  /*// Create meta-element
+  MetaEl metaElt(metaElType, order, baseVert, topPrimVert);
+
+  // If allowed, curve top face of meta-element while avoiding breaking the element above
+  if (p.curveOuterBL) {
+    MElement* &lastElt = blob.back();
+    double minJacDet, maxJacDet;
+    double deformMin = 0., qualDeformMin = 1.;
+    double deformMax = 1.;
+    double qualDeformMax = curveAndMeasureAboveEl(metaElt, lastElt, aboveElt,
+                                                  deformMax);
+    if (qualDeformMax < MINQUAL) {                                                // Max deformation makes element above invalid
+      for (int iter = 0; iter < MAXITER; iter++) {                                // Bisection to find max. deformation that makes element above valid
+        const double deformMid = 0.5 * (deformMin + deformMax);
+        const double qualDeformMid = curveAndMeasureAboveEl(metaElt, lastElt,
+                                                            aboveElt, deformMid);
+        if (std::abs(deformMax-deformMin) < TOL) break;
+        const bool signDeformMax = (qualDeformMax < MINQUAL);
+        const bool signDeformMid = (qualDeformMid < MINQUAL);
+        if (signDeformMid == signDeformMax) deformMax = deformMid;
+        else deformMin = deformMid;
+      }
+      metaElt.setFlatTop();
+    }
+    for (int iV = 0; iV < lastElt->getNumVertices(); iV++)
+      movedVert.insert(lastElt->getVertex(iV));
+  }
+
+  // Curve elements
+  dbgOut.addMetaEl(metaElt);
+  for (int iEl = 0; iEl < blob.size(); iEl++)
+    curveElement(metaElt, movedVert, blob[iEl]);*/
+}
+
 
 
 void curveMeshFromBndElt(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
                          GEntity *bndEnt, MElement *bndElt,
                          std::set<MVertex*> movedVert,
                          const FastCurvingParameters &p,
-                         DbgOutputMeta &dbgOut)
+                         DbgOutputMeta &dbgOut,
+                         fullMatrix<double> *normals)
 {
   const int bndType = bndElt->getType();
   int metaElType;
@@ -976,15 +1477,20 @@ void curveMeshFromBndElt(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
   dbgOutCol.addBlob(blob);
   dbgOutCol.write("col_KO", bndElt->getNum());
   if (aboveElt == 0) std::cout << "DBGTT: aboveElt = 0 for bnd. elt. " << bndElt->getNum() << std::endl;
-  curveColumn(p, bndEnt, metaElType, baseVert, topPrimVert, aboveElt, blob,
-              movedVert, dbgOut);
+  if (p.robust)
+    curveColumnRobust(p, bndEnt, metaElType, baseVert, topPrimVert, aboveElt, blob,
+                      movedVert, dbgOut, normals);
+  else
+    curveColumn(p, bndEnt, metaElType, baseVert, topPrimVert, aboveElt, blob,
+                movedVert, dbgOut);
   dbgOutCol.write("col_OK", bndElt->getNum());
 }
 
 
 
 void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
-                      GEntity *bndEnt, const FastCurvingParameters &p)
+                      GEntity *bndEnt, const FastCurvingParameters &p,
+                      fullMatrix<double> *normals)
 {
   // Build list of bnd. elements to consider
   std::list<MElement*> bndEl;
@@ -1009,7 +1515,8 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
   std::set<MVertex*> movedVert;
   for(std::list<MElement*>::iterator itBE = bndEl.begin();
       itBE != bndEl.end(); itBE++) // Loop over bnd. elements
-    curveMeshFromBndElt(ed2el, face2el, bndEnt, *itBE, movedVert, p, dbgOut);
+    curveMeshFromBndElt(ed2el, face2el, bndEnt, *itBE, movedVert, p, dbgOut,
+                        normals);
   dbgOut.write("meta-elements", bndEnt->tag());
 }
 
@@ -1034,6 +1541,31 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p)
     // Retrive entity
     GEntity* &gEnt = allGEnt[iEnt];
     if (gEnt->dim() != p.dim) continue;
+
+    // Compute normal if planar surface
+    fullMatrix<double> *normals = NULL;
+    if (p.dim == 2) {
+      if (gEnt->geomType() == GEntity::Plane &&
+              gEnt->haveParametrization()) {
+        double u = gEnt->parBounds(0).low();
+        double v = gEnt->parBounds(1).low();
+        SVector3 n = dynamic_cast<GFace*>(gEnt)->normal(SPoint2(u, v));
+        normals = new fullMatrix<double>(1, 3);
+        normals->set(0, 0, n[0]);
+        normals->set(0, 1, n[1]);
+        normals->set(0, 2, n[2]);
+      }
+      else if (gEnt->geomType() == GEntity::DiscreteSurface) {
+        SBoundingBox3d bb = gEnt->bounds();
+        // If we don't have the CAD, check if the mesh is 2D:
+        if (!bb.empty() && bb.max().z() - bb.min().z() == .0) {
+          normals = new fullMatrix<double>(1, 3);
+          normals->set(0, 0, 0);
+          normals->set(0, 1, 0);
+          normals->set(0, 2, 1);
+        }
+      }
+    }
 
     // Compute edge/face -> elt. connectivity
     Msg::Info("Computing connectivity for entity %i...", gEnt->tag());
@@ -1061,7 +1593,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p)
       if ((bndType == GEntity::Line) || (bndType == GEntity::Plane)) continue;
       Msg::Info("Curving elements in entity %d for boundary entity %d...",
                 gEnt->tag(), bndEnt->tag());
-      curveMeshFromBnd(ed2el, face2el, bndEnt, p);
+      curveMeshFromBnd(ed2el, face2el, bndEnt, p, normals);
     }
   }
 

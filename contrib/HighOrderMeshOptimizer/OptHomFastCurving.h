@@ -34,6 +34,7 @@ class GModel;
 
 struct FastCurvingParameters {
   int dim ;                       // Spatial dimension of the mesh to curve
+  bool robust;                    // Optimize the robust way (experimental)
   bool onlyVisible ;              // Apply curving to visible entities ONLY?
   bool optimizeGeometry;          // Optimize boundary edges/faces to fit geometry?
   bool curveOuterBL;              // Curve also the outer surface of the boundary layer?
