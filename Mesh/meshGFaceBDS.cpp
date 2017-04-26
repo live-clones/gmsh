@@ -279,7 +279,7 @@ bool evalSwapForOptimize(BDS_Edge *e, GFace *gf, BDS_Mesh &m)
   // if (LB > .3 && distanceIndicator > 0 && qb > .025) return true;
 
   // if swap enhances both criterion, the do it!
-  if (distanceIndicator > 0 && qualIndicator > 0) return true;
+  if (distanceIndicator > 1e-12 && qualIndicator > 1e-12) return true;
   if (distanceShouldSwap && qualCouldSwap) return true;
   if (distanceCouldSwap && qualShouldSwap) return true;
   // if (smoothIndicator > 0 && qualIndicator > 0) return true;
