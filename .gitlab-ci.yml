@@ -6,3 +6,12 @@ makegmsh:
     - cmake ..
     - make -j4
     - ctest --output-on-failure
+
+makegmsh-test:
+  image : onelab/gmsh
+  script:
+    - mkdir build
+    - cd build
+    - cmake ..
+    - make
+    - ctest --output-on-failure
