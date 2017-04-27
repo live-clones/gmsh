@@ -895,7 +895,7 @@ Affectation :
     }
   | String__Index '[' FExpr ']' NumericIncrement tEND
     {
-      incrementVariable($1, $3, $5);
+      incrementVariable($1, (int)$3, $5);
       Free($1);
     }
 
@@ -4858,6 +4858,14 @@ FExpr_Single :
   | tGetForced '(' Struct_FullName '.' tSTRING_Member GetForced_Default ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($3.char1, $3.char2, $5, 0, $6, 2);
+    }
+  | tGetForced '(' Struct_FullName LP FExpr RP GetForced_Default ')'
+    {
+      $$ = treat_Struct_FullName_Float($3.char1, $3.char2, 2, (int)$5, $7, 2);
+    }
+  | tGetForced '(' Struct_FullName '.' tSTRING_Member LP FExpr RP GetForced_Default ')'
+    {
+      $$ = treat_Struct_FullName_dot_tSTRING_Float($3.char1, $3.char2, $5, (int)$7, $9, 2);
     }
   | tFileExists '(' StringExpr ')'
     {

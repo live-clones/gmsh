@@ -1,6 +1,6 @@
-#line 2 "Gmsh.yy.cpp"
+#line 1 "Gmsh.yy.cpp"
 
-#line 4 "Gmsh.yy.cpp"
+#line 3 "Gmsh.yy.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -27,11 +27,89 @@
 
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
-#define YY_FLEX_MINOR_VERSION 5
-#define YY_FLEX_SUBMINOR_VERSION 35
+#define YY_FLEX_MINOR_VERSION 6
+#define YY_FLEX_SUBMINOR_VERSION 3
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
 #endif
+
+    #define yy_create_buffer gmsh_yy_create_buffer
+
+    #define yy_delete_buffer gmsh_yy_delete_buffer
+
+    #define yy_scan_buffer gmsh_yy_scan_buffer
+
+    #define yy_scan_string gmsh_yy_scan_string
+
+    #define yy_scan_bytes gmsh_yy_scan_bytes
+
+    #define yy_init_buffer gmsh_yy_init_buffer
+
+    #define yy_flush_buffer gmsh_yy_flush_buffer
+
+    #define yy_load_buffer_state gmsh_yy_load_buffer_state
+
+    #define yy_switch_to_buffer gmsh_yy_switch_to_buffer
+
+    #define yypush_buffer_state gmsh_yypush_buffer_state
+
+    #define yypop_buffer_state gmsh_yypop_buffer_state
+
+    #define yyensure_buffer_stack gmsh_yyensure_buffer_stack
+
+    #define yylex gmsh_yylex
+
+    #define yyrestart gmsh_yyrestart
+
+    #define yylex_init gmsh_yylex_init
+
+    #define yylex_init_extra gmsh_yylex_init_extra
+
+    #define yylex_destroy gmsh_yylex_destroy
+
+    #define yyget_debug gmsh_yyget_debug
+
+    #define yyset_debug gmsh_yyset_debug
+
+    #define yyget_extra gmsh_yyget_extra
+
+    #define yyset_extra gmsh_yyset_extra
+
+    #define yyget_in gmsh_yyget_in
+
+    #define yyset_in gmsh_yyset_in
+
+    #define yyget_out gmsh_yyget_out
+
+    #define yyset_out gmsh_yyset_out
+
+    #define yyget_leng gmsh_yyget_leng
+
+    #define yyget_text gmsh_yyget_text
+
+    #define yyget_lineno gmsh_yyget_lineno
+
+    #define yyset_lineno gmsh_yyset_lineno
+
+    #define yywrap gmsh_yywrap
+
+    #define yyalloc gmsh_yyalloc
+
+    #define yyrealloc gmsh_yyrealloc
+
+    #define yyfree gmsh_yyfree
+
+    #define yytext gmsh_yytext
+
+    #define yyleng gmsh_yyleng
+
+    #define yyin gmsh_yyin
+
+    #define yyout gmsh_yyout
+
+    #define yy_flex_debug gmsh_yy_flex_debug
+
+    #define yylineno gmsh_yylineno
 
 /* First, we deal with  platform-specific or compiler-specific issues. */
 
@@ -66,7 +144,6 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
-typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -74,7 +151,6 @@ typedef int flex_int32_t;
 typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
-#endif /* ! C99 */
 
 /* Limits of integral types. */
 #ifndef INT8_MIN
@@ -105,63 +181,55 @@ typedef unsigned int flex_uint32_t;
 #define UINT32_MAX             (4294967295U)
 #endif
 
+#endif /* ! C99 */
+
 #endif /* ! FLEXINT_H */
 
-#ifdef __cplusplus
-
-/* The "const" storage-class-modifier is valid. */
-#define YY_USE_CONST
-
-#else	/* ! __cplusplus */
-
-/* C99 requires __STDC__ to be defined as 1. */
-#if defined (__STDC__)
-
-#define YY_USE_CONST
-
-#endif	/* defined (__STDC__) */
-#endif	/* ! __cplusplus */
-
-#ifdef YY_USE_CONST
+/* TODO: this is always defined, so inline it */
 #define yyconst const
+
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define yynoreturn __attribute__((__noreturn__))
 #else
-#define yyconst
+#define yynoreturn
 #endif
 
 /* Returned upon end-of-file. */
 #define YY_NULL 0
 
-/* Promotes a possibly negative, possibly signed char to an unsigned
- * integer for use as an array index.  If the signed char is negative,
- * we want to instead treat it as an 8-bit unsigned char, hence the
- * double cast.
+/* Promotes a possibly negative, possibly signed char to an
+ *   integer in range [0..255] for use as an array index.
  */
-#define YY_SC_TO_UI(c) ((unsigned int) (unsigned char) c)
+#define YY_SC_TO_UI(c) ((YY_CHAR) (c))
 
 /* Enter a start condition.  This macro really ought to take a parameter,
  * but we do it the disgusting crufty way forced on us by the ()-less
  * definition of BEGIN.
  */
 #define BEGIN (yy_start) = 1 + 2 *
-
 /* Translate the current start state into a value that can be later handed
  * to BEGIN to return to the state.  The YYSTATE alias is for lex
  * compatibility.
  */
 #define YY_START (((yy_start) - 1) / 2)
 #define YYSTATE YY_START
-
 /* Action number for EOF rule of a given start state. */
 #define YY_STATE_EOF(state) (YY_END_OF_BUFFER + state + 1)
-
 /* Special action meaning "start processing a new file". */
 #define YY_NEW_FILE gmsh_yyrestart(gmsh_yyin  )
-
 #define YY_END_OF_BUFFER_CHAR 0
 
 /* Size of default input buffer. */
 #ifndef YY_BUF_SIZE
+#ifdef __ia64__
+/* On IA-64, the buffer size is 16k, not 8k.
+ * Moreover, YY_BUF_SIZE is 2*YY_READ_BUF_SIZE in the general case.
+ * Ditto for the __ia64__ case accordingly.
+ */
+#define YY_BUF_SIZE 32768
+#else
 #define YY_BUF_SIZE 16384
+#endif /* __ia64__ */
 #endif
 
 /* The state buf must be large enough to hold one state per character in the main buffer.
@@ -178,15 +246,16 @@ typedef struct yy_buffer_state *YY_BUFFER_STATE;
 typedef size_t yy_size_t;
 #endif
 
-extern yy_size_t gmsh_yyleng;
+extern int gmsh_yyleng;
 
 extern FILE *gmsh_yyin, *gmsh_yyout;
 
 #define EOB_ACT_CONTINUE_SCAN 0
 #define EOB_ACT_END_OF_FILE 1
 #define EOB_ACT_LAST_MATCH 2
-
+    
     #define YY_LESS_LINENO(n)
+    #define YY_LINENO_REWIND_TO(ptr)
     
 /* Return all but the first "n" matched characters back to the input stream. */
 #define yyless(n) \
@@ -201,7 +270,6 @@ extern FILE *gmsh_yyin, *gmsh_yyout;
 		YY_DO_BEFORE_ACTION; /* set up gmsh_yytext again */ \
 		} \
 	while ( 0 )
-
 #define unput(c) yyunput( c, (yytext_ptr)  )
 
 #ifndef YY_STRUCT_YY_BUFFER_STATE
@@ -216,12 +284,12 @@ struct yy_buffer_state
 	/* Size of input buffer in bytes, not including room for EOB
 	 * characters.
 	 */
-	yy_size_t yy_buf_size;
+	int yy_buf_size;
 
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	yy_size_t yy_n_chars;
+	int yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -244,7 +312,7 @@ struct yy_buffer_state
 
     int yy_bs_lineno; /**< The line count. */
     int yy_bs_column; /**< The column count. */
-    
+
 	/* Whether to try to fill the input buffer when we reach the
 	 * end of it.
 	 */
@@ -272,7 +340,7 @@ struct yy_buffer_state
 /* Stack of input buffers. */
 static size_t yy_buffer_stack_top = 0; /**< index of top of stack. */
 static size_t yy_buffer_stack_max = 0; /**< capacity of stack. */
-static YY_BUFFER_STATE * yy_buffer_stack = 0; /**< Stack as an array. */
+static YY_BUFFER_STATE * yy_buffer_stack = NULL; /**< Stack as an array. */
 
 /* We provide macros for accessing buffer states in case in the
  * future we want to put the buffer states in a more general
@@ -283,7 +351,6 @@ static YY_BUFFER_STATE * yy_buffer_stack = 0; /**< Stack as an array. */
 #define YY_CURRENT_BUFFER ( (yy_buffer_stack) \
                           ? (yy_buffer_stack)[(yy_buffer_stack_top)] \
                           : NULL)
-
 /* Same as previous macro, but useful when we know that the buffer stack is not
  * NULL or when we need an lvalue. For internal use only.
  */
@@ -291,11 +358,11 @@ static YY_BUFFER_STATE * yy_buffer_stack = 0; /**< Stack as an array. */
 
 /* yy_hold_char holds the character lost when gmsh_yytext is formed. */
 static char yy_hold_char;
-static yy_size_t yy_n_chars;		/* number of characters read into yy_ch_buf */
-yy_size_t gmsh_yyleng;
+static int yy_n_chars;		/* number of characters read into yy_ch_buf */
+int gmsh_yyleng;
 
 /* Points to current character in buffer. */
-static char *yy_c_buf_p = (char *) 0;
+static char *yy_c_buf_p = NULL;
 static int yy_init = 0;		/* whether we need to initialize */
 static int yy_start = 0;	/* start state number */
 
@@ -304,30 +371,28 @@ static int yy_start = 0;	/* start state number */
  */
 static int yy_did_buffer_switch_on_eof;
 
-void gmsh_yyrestart (FILE *input_file  );
-void gmsh_yy_switch_to_buffer (YY_BUFFER_STATE new_buffer  );
-YY_BUFFER_STATE gmsh_yy_create_buffer (FILE *file,int size  );
-void gmsh_yy_delete_buffer (YY_BUFFER_STATE b  );
-void gmsh_yy_flush_buffer (YY_BUFFER_STATE b  );
-void gmsh_yypush_buffer_state (YY_BUFFER_STATE new_buffer  );
-void gmsh_yypop_buffer_state (void );
+void gmsh_yyrestart ( FILE *input_file  );
+void gmsh_yy_switch_to_buffer ( YY_BUFFER_STATE new_buffer  );
+YY_BUFFER_STATE gmsh_yy_create_buffer ( FILE *file, int size  );
+void gmsh_yy_delete_buffer ( YY_BUFFER_STATE b  );
+void gmsh_yy_flush_buffer ( YY_BUFFER_STATE b  );
+void gmsh_yypush_buffer_state ( YY_BUFFER_STATE new_buffer  );
+void gmsh_yypop_buffer_state ( void );
 
-static void gmsh_yyensure_buffer_stack (void );
-static void gmsh_yy_load_buffer_state (void );
-static void gmsh_yy_init_buffer (YY_BUFFER_STATE b,FILE *file  );
-
+static void gmsh_yyensure_buffer_stack ( void );
+static void gmsh_yy_load_buffer_state ( void );
+static void gmsh_yy_init_buffer ( YY_BUFFER_STATE b, FILE *file  );
 #define YY_FLUSH_BUFFER gmsh_yy_flush_buffer(YY_CURRENT_BUFFER )
 
-YY_BUFFER_STATE gmsh_yy_scan_buffer (char *base,yy_size_t size  );
-YY_BUFFER_STATE gmsh_yy_scan_string (yyconst char *yy_str  );
-YY_BUFFER_STATE gmsh_yy_scan_bytes (yyconst char *bytes,yy_size_t len  );
+YY_BUFFER_STATE gmsh_yy_scan_buffer ( char *base, yy_size_t size  );
+YY_BUFFER_STATE gmsh_yy_scan_string ( const char *yy_str  );
+YY_BUFFER_STATE gmsh_yy_scan_bytes ( const char *bytes, int len  );
 
-void *gmsh_yyalloc (yy_size_t  );
-void *gmsh_yyrealloc (void *,yy_size_t  );
-void gmsh_yyfree (void *  );
+void *gmsh_yyalloc ( yy_size_t  );
+void *gmsh_yyrealloc ( void *, yy_size_t  );
+void gmsh_yyfree ( void *  );
 
 #define yy_new_buffer gmsh_yy_create_buffer
-
 #define yy_set_interactive(is_interactive) \
 	{ \
 	if ( ! YY_CURRENT_BUFFER ){ \
@@ -337,7 +402,6 @@ void gmsh_yyfree (void *  );
 	} \
 	YY_CURRENT_BUFFER_LVALUE->yy_is_interactive = is_interactive; \
 	}
-
 #define yy_set_bol(at_bol) \
 	{ \
 	if ( ! YY_CURRENT_BUFFER ){\
@@ -347,39 +411,38 @@ void gmsh_yyfree (void *  );
 	} \
 	YY_CURRENT_BUFFER_LVALUE->yy_at_bol = at_bol; \
 	}
-
 #define YY_AT_BOL() (YY_CURRENT_BUFFER_LVALUE->yy_at_bol)
 
 /* Begin user sect3 */
+typedef flex_uint8_t YY_CHAR;
 
-typedef unsigned char YY_CHAR;
-
-FILE *gmsh_yyin = (FILE *) 0, *gmsh_yyout = (FILE *) 0;
+FILE *gmsh_yyin = NULL, *gmsh_yyout = NULL;
 
 typedef int yy_state_type;
 
 extern int gmsh_yylineno;
-
 int gmsh_yylineno = 1;
 
 extern char *gmsh_yytext;
+#ifdef yytext_ptr
+#undef yytext_ptr
+#endif
 #define yytext_ptr gmsh_yytext
 
-static yy_state_type yy_get_previous_state (void );
-static yy_state_type yy_try_NUL_trans (yy_state_type current_state  );
-static int yy_get_next_buffer (void );
-static void yy_fatal_error (yyconst char msg[]  );
+static yy_state_type yy_get_previous_state ( void );
+static yy_state_type yy_try_NUL_trans ( yy_state_type current_state  );
+static int yy_get_next_buffer ( void );
+static void yynoreturn yy_fatal_error ( const char* msg  );
 
 /* Done after the current pattern has been matched and before the
  * corresponding action - sets up gmsh_yytext.
  */
 #define YY_DO_BEFORE_ACTION \
 	(yytext_ptr) = yy_bp; \
-	gmsh_yyleng = (yy_size_t) (yy_cp - yy_bp); \
+	gmsh_yyleng = (int) (yy_cp - yy_bp); \
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
-
 #define YY_NUM_RULES 251
 #define YY_END_OF_BUFFER 252
 /* This struct is not used in this scanner,
@@ -389,7 +452,7 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static yyconst flex_int16_t yy_accept[1280] =
+static const flex_int16_t yy_accept[1280] =
     {   0,
         0,    0,  252,  250,    1,    1,  250,    5,  250,    6,
       250,  250,  250,  250,  250,  245,   21,    2,  250,   16,
@@ -533,7 +596,7 @@ static yyconst flex_int16_t yy_accept[1280] =
       130,  249,   56,  249,  249,  249,  135,   81,    0
     } ;
 
-static yyconst flex_int32_t yy_ec[256] =
+static const YY_CHAR yy_ec[256] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    2,    3,
         1,    2,    2,    1,    1,    1,    1,    1,    1,    1,
@@ -565,7 +628,7 @@ static yyconst flex_int32_t yy_ec[256] =
         1,    1,    1,    1,    1
     } ;
 
-static yyconst flex_int32_t yy_meta[74] =
+static const YY_CHAR yy_meta[74] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    2,    2,    2,    2,    2,    1,    1,    1,
@@ -577,7 +640,7 @@ static yyconst flex_int32_t yy_meta[74] =
         2,    2,    1
     } ;
 
-static yyconst flex_int16_t yy_base[1281] =
+static const flex_int16_t yy_base[1281] =
     {   0,
         0,    0, 1409, 1410, 1410, 1410, 1387, 1410, 1401, 1410,
      1385,   65,   66,   64,   76,   78, 1387, 1410,   62, 1383,
@@ -721,7 +784,7 @@ static yyconst flex_int16_t yy_base[1281] =
         0,  871,    0,  855,  881,  844,    0,    0, 1410,  908
     } ;
 
-static yyconst flex_int16_t yy_def[1281] =
+static const flex_int16_t yy_def[1281] =
     {   0,
      1279,    1, 1279, 1279, 1279, 1279, 1279, 1279, 1279, 1279,
      1279, 1279, 1279, 1279, 1279, 1279, 1279, 1279, 1279, 1279,
@@ -865,7 +928,7 @@ static yyconst flex_int16_t yy_def[1281] =
      1280, 1280, 1280, 1280, 1280, 1280, 1280, 1280,    0, 1279
     } ;
 
-static yyconst flex_int16_t yy_nxt[1484] =
+static const flex_int16_t yy_nxt[1484] =
     {   0,
         4,    5,    6,    7,    8,    9,   10,   11,   12,   13,
        14,   15,   16,   16,   16,   16,   16,   17,   18,   19,
@@ -1032,7 +1095,7 @@ static yyconst flex_int16_t yy_nxt[1484] =
      1279, 1279, 1279
     } ;
 
-static yyconst flex_int16_t yy_chk[1484] =
+static const flex_int16_t yy_chk[1484] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -1243,15 +1306,15 @@ void   skipline(void);
      {                                                                  \
        int c = '*', n;                                                  \
        for ( n = 0; n < (int) max_size &&                               \
-               (c = gzgetc( gmsh_yyin )) != EOF && c != '\n'; ++n )          \
+               (c = gzgetc( yyin )) != EOF && c != '\n'; ++n )          \
          buf[n] = (char) c;                                             \
        if ( c == '\n' ){                                                \
          buf[n++] = (char) c;                                           \
-         gmsh_yylineno++;                                                    \
+         yylineno++;                                                    \
        }                                                                \
        if ( c == EOF )  {                                               \
          int ernum;                                                     \
-         const char *msg=gzerror(gmsh_yyin,&ernum);                          \
+         const char *msg=gzerror(yyin,&ernum);                          \
          if (ernum)                                                     \
             Msg::Fatal("Input in flex scanner failed");                 \
        }                                                                \
@@ -1262,13 +1325,13 @@ void   skipline(void);
      {									\
        int c = '*', n;							\
        for ( n = 0; n < (int) max_size &&                               \
-	       (c = fgetc( gmsh_yyin )) != EOF && c != '\n'; ++n )		\
+	       (c = fgetc( yyin )) != EOF && c != '\n'; ++n )		\
 	 buf[n] = (char) c;                                             \
        if ( c == '\n' ){                                                \
 	 buf[n++] = (char) c;                                           \
-	 gmsh_yylineno++;							\
+	 yylineno++;							\
        }                                                                \
-       if ( c == EOF && ferror( gmsh_yyin ) )				\
+       if ( c == EOF && ferror( yyin ) )				\
 	 Msg::Fatal("Input in flex scanner failed");			\
        result = n;							\
      }
@@ -1283,7 +1346,8 @@ void   skipline(void);
 // versions of flex/bison
 #define register
 
-#line 1287 "Gmsh.yy.cpp"
+#line 1349 "Gmsh.yy.cpp"
+#line 1350 "Gmsh.yy.cpp"
 
 #define INITIAL 0
 
@@ -1299,36 +1363,36 @@ void   skipline(void);
 #define YY_EXTRA_TYPE void *
 #endif
 
-static int yy_init_globals (void );
+static int yy_init_globals ( void );
 
 /* Accessor methods to globals.
    These are made visible to non-reentrant scanners for convenience. */
 
-int gmsh_yylex_destroy (void );
+int gmsh_yylex_destroy ( void );
 
-int gmsh_yyget_debug (void );
+int gmsh_yyget_debug ( void );
 
-void gmsh_yyset_debug (int debug_flag  );
+void gmsh_yyset_debug ( int debug_flag  );
 
-YY_EXTRA_TYPE gmsh_yyget_extra (void );
+YY_EXTRA_TYPE gmsh_yyget_extra ( void );
 
-void gmsh_yyset_extra (YY_EXTRA_TYPE user_defined  );
+void gmsh_yyset_extra ( YY_EXTRA_TYPE user_defined  );
 
-FILE *gmsh_yyget_in (void );
+FILE *gmsh_yyget_in ( void );
 
-void gmsh_yyset_in  (FILE * in_str  );
+void gmsh_yyset_in  ( FILE * _in_str  );
 
-FILE *gmsh_yyget_out (void );
+FILE *gmsh_yyget_out ( void );
 
-void gmsh_yyset_out  (FILE * out_str  );
+void gmsh_yyset_out  ( FILE * _out_str  );
 
-yy_size_t gmsh_yyget_leng (void );
+			int gmsh_yyget_leng ( void );
 
-char *gmsh_yyget_text (void );
+char *gmsh_yyget_text ( void );
 
-int gmsh_yyget_lineno (void );
+int gmsh_yyget_lineno ( void );
 
-void gmsh_yyset_lineno (int line_number  );
+void gmsh_yyset_lineno ( int _line_number  );
 
 /* Macros after this point can all be overridden by user definitions in
  * section 1.
@@ -1336,35 +1400,43 @@ void gmsh_yyset_lineno (int line_number  );
 
 #ifndef YY_SKIP_YYWRAP
 #ifdef __cplusplus
-extern "C" int gmsh_yywrap (void );
+extern "C" int gmsh_yywrap ( void );
 #else
-extern int gmsh_yywrap (void );
+extern int gmsh_yywrap ( void );
 #endif
 #endif
 
-    static void yyunput (int c,char *buf_ptr  );
+#ifndef YY_NO_UNPUT
     
+    static void yyunput ( int c, char *buf_ptr  );
+    
+#endif
+
 #ifndef yytext_ptr
-static void yy_flex_strncpy (char *,yyconst char *,int );
+static void yy_flex_strncpy ( char *, const char *, int );
 #endif
 
 #ifdef YY_NEED_STRLEN
-static int yy_flex_strlen (yyconst char * );
+static int yy_flex_strlen ( const char * );
 #endif
 
 #ifndef YY_NO_INPUT
-
 #ifdef __cplusplus
-static int yyinput (void );
+static int yyinput ( void );
 #else
-static int input (void );
+static int input ( void );
 #endif
 
 #endif
 
 /* Amount of stuff to slurp up with each read. */
 #ifndef YY_READ_BUF_SIZE
+#ifdef __ia64__
+/* On IA-64, the buffer size is 16k, not 8k */
+#define YY_READ_BUF_SIZE 16384
+#else
 #define YY_READ_BUF_SIZE 8192
+#endif /* __ia64__ */
 #endif
 
 /* Copy whatever the last rule matched to the standard output. */
@@ -1372,7 +1444,7 @@ static int input (void );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO fwrite( gmsh_yytext, gmsh_yyleng, 1, gmsh_yyout )
+#define ECHO do { if (fwrite( gmsh_yytext, (size_t) gmsh_yyleng, 1, gmsh_yyout )) {} } while (0)
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -1383,7 +1455,7 @@ static int input (void );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		yy_size_t n; \
+		int n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( gmsh_yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -1396,7 +1468,7 @@ static int input (void );
 	else \
 		{ \
 		errno=0; \
-		while ( (result = fread(buf, 1, max_size, gmsh_yyin))==0 && ferror(gmsh_yyin)) \
+		while ( (result = (int) fread(buf, 1, (yy_size_t) max_size, gmsh_yyin)) == 0 && ferror(gmsh_yyin)) \
 			{ \
 			if( errno != EINTR) \
 				{ \
@@ -1451,7 +1523,7 @@ extern int gmsh_yylex (void);
 
 /* Code executed at the end of each rule. */
 #ifndef YY_BREAK
-#define YY_BREAK break;
+#define YY_BREAK /*LINTED*/break;
 #endif
 
 #define YY_RULE_SETUP \
@@ -1461,15 +1533,10 @@ extern int gmsh_yylex (void);
  */
 YY_DECL
 {
-	register yy_state_type yy_current_state;
-	register char *yy_cp, *yy_bp;
-	register int yy_act;
+	yy_state_type yy_current_state;
+	char *yy_cp, *yy_bp;
+	int yy_act;
     
-#line 79 "Gmsh.l"
-
-
-#line 1472 "Gmsh.yy.cpp"
-
 	if ( !(yy_init) )
 		{
 		(yy_init) = 1;
@@ -1496,7 +1563,13 @@ YY_DECL
 		gmsh_yy_load_buffer_state( );
 		}
 
-	while ( 1 )		/* loops until end-of-file is reached */
+	{
+#line 79 "Gmsh.l"
+
+
+#line 1570 "Gmsh.yy.cpp"
+
+	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
 		yy_cp = (yy_c_buf_p);
 
@@ -1512,7 +1585,7 @@ YY_DECL
 yy_match:
 		do
 			{
-			register YY_CHAR yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)];
+			YY_CHAR yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)] ;
 			if ( yy_accept[yy_current_state] )
 				{
 				(yy_last_accepting_state) = yy_current_state;
@@ -1522,9 +1595,9 @@ yy_match:
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
 				if ( yy_current_state >= 1280 )
-					yy_c = yy_meta[(unsigned int) yy_c];
+					yy_c = yy_meta[yy_c];
 				}
-			yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
+			yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 			++yy_cp;
 			}
 		while ( yy_base[yy_current_state] != 1410 );
@@ -2781,24 +2854,24 @@ case 247:
 case 248:
 YY_RULE_SETUP
 #line 351 "Gmsh.l"
-{ gmsh_yylval.d = atof((char *)gmsh_yytext); return tDOUBLE; }
+{ gmsh_yylval.d = atof((char *)yytext); return tDOUBLE; }
 	YY_BREAK
 case 249:
 YY_RULE_SETUP
 #line 353 "Gmsh.l"
-{ gmsh_yylval.c = strsave((char*)gmsh_yytext); return tSTRING; }
+{ gmsh_yylval.c = strsave((char*)yytext); return tSTRING; }
 	YY_BREAK
 case 250:
 YY_RULE_SETUP
 #line 355 "Gmsh.l"
-return gmsh_yytext[0];
+return yytext[0];
 	YY_BREAK
 case 251:
 YY_RULE_SETUP
 #line 357 "Gmsh.l"
 ECHO;
 	YY_BREAK
-#line 2802 "Gmsh.yy.cpp"
+#line 2874 "Gmsh.yy.cpp"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2929,6 +3002,7 @@ case YY_STATE_EOF(INITIAL):
 			"fatal flex scanner internal error--no action found" );
 	} /* end of action switch */
 		} /* end of scanning one token */
+	} /* end of user's declarations */
 } /* end of gmsh_yylex */
 
 /* yy_get_next_buffer - try to read in a new buffer
@@ -2940,9 +3014,9 @@ case YY_STATE_EOF(INITIAL):
  */
 static int yy_get_next_buffer (void)
 {
-    	register char *dest = YY_CURRENT_BUFFER_LVALUE->yy_ch_buf;
-	register char *source = (yytext_ptr);
-	register int number_to_move, i;
+    	char *dest = YY_CURRENT_BUFFER_LVALUE->yy_ch_buf;
+	char *source = (yytext_ptr);
+	int number_to_move, i;
 	int ret_val;
 
 	if ( (yy_c_buf_p) > &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[(yy_n_chars) + 1] )
@@ -2971,7 +3045,7 @@ static int yy_get_next_buffer (void)
 	/* Try to read more data. */
 
 	/* First move last chars to start of buffer. */
-	number_to_move = (int) ((yy_c_buf_p) - (yytext_ptr)) - 1;
+	number_to_move = (int) ((yy_c_buf_p) - (yytext_ptr) - 1);
 
 	for ( i = 0; i < number_to_move; ++i )
 		*(dest++) = *(source++);
@@ -2984,21 +3058,21 @@ static int yy_get_next_buffer (void)
 
 	else
 		{
-			yy_size_t num_to_read =
+			int num_to_read =
 			YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
 
 		while ( num_to_read <= 0 )
 			{ /* Not enough room in the buffer - grow it. */
 
 			/* just a shorter name for the current buffer */
-			YY_BUFFER_STATE b = YY_CURRENT_BUFFER;
+			YY_BUFFER_STATE b = YY_CURRENT_BUFFER_LVALUE;
 
 			int yy_c_buf_p_offset =
 				(int) ((yy_c_buf_p) - b->yy_ch_buf);
 
 			if ( b->yy_is_our_buffer )
 				{
-				yy_size_t new_size = b->yy_buf_size * 2;
+				int new_size = b->yy_buf_size * 2;
 
 				if ( new_size <= 0 )
 					b->yy_buf_size += b->yy_buf_size / 8;
@@ -3007,11 +3081,11 @@ static int yy_get_next_buffer (void)
 
 				b->yy_ch_buf = (char *)
 					/* Include room in for 2 EOB chars. */
-					gmsh_yyrealloc((void *) b->yy_ch_buf,b->yy_buf_size + 2  );
+					gmsh_yyrealloc((void *) b->yy_ch_buf,(yy_size_t) (b->yy_buf_size + 2)  );
 				}
 			else
 				/* Can't grow it, we don't own it. */
-				b->yy_ch_buf = 0;
+				b->yy_ch_buf = NULL;
 
 			if ( ! b->yy_ch_buf )
 				YY_FATAL_ERROR(
@@ -3053,10 +3127,10 @@ static int yy_get_next_buffer (void)
 	else
 		ret_val = EOB_ACT_CONTINUE_SCAN;
 
-	if ((yy_size_t) ((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
+	if (((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
 		/* Extend the array by 50%, plus the number we really need. */
-		yy_size_t new_size = (yy_n_chars) + number_to_move + ((yy_n_chars) >> 1);
-		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) gmsh_yyrealloc((void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf,new_size  );
+		int new_size = (yy_n_chars) + number_to_move + ((yy_n_chars) >> 1);
+		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) gmsh_yyrealloc((void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf,(yy_size_t) new_size  );
 		if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
 			YY_FATAL_ERROR( "out of dynamic memory in yy_get_next_buffer()" );
 	}
@@ -3074,14 +3148,14 @@ static int yy_get_next_buffer (void)
 
     static yy_state_type yy_get_previous_state (void)
 {
-	register yy_state_type yy_current_state;
-	register char *yy_cp;
+	yy_state_type yy_current_state;
+	char *yy_cp;
     
 	yy_current_state = (yy_start);
 
 	for ( yy_cp = (yytext_ptr) + YY_MORE_ADJ; yy_cp < (yy_c_buf_p); ++yy_cp )
 		{
-		register YY_CHAR yy_c = (*yy_cp ? yy_ec[YY_SC_TO_UI(*yy_cp)] : 1);
+		YY_CHAR yy_c = (*yy_cp ? yy_ec[YY_SC_TO_UI(*yy_cp)] : 1);
 		if ( yy_accept[yy_current_state] )
 			{
 			(yy_last_accepting_state) = yy_current_state;
@@ -3091,9 +3165,9 @@ static int yy_get_next_buffer (void)
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
 			if ( yy_current_state >= 1280 )
-				yy_c = yy_meta[(unsigned int) yy_c];
+				yy_c = yy_meta[yy_c];
 			}
-		yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
+		yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 		}
 
 	return yy_current_state;
@@ -3106,10 +3180,10 @@ static int yy_get_next_buffer (void)
  */
     static yy_state_type yy_try_NUL_trans  (yy_state_type yy_current_state )
 {
-	register int yy_is_jam;
-    	register char *yy_cp = (yy_c_buf_p);
+	int yy_is_jam;
+    	char *yy_cp = (yy_c_buf_p);
 
-	register YY_CHAR yy_c = 1;
+	YY_CHAR yy_c = 1;
 	if ( yy_accept[yy_current_state] )
 		{
 		(yy_last_accepting_state) = yy_current_state;
@@ -3119,17 +3193,19 @@ static int yy_get_next_buffer (void)
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
 		if ( yy_current_state >= 1280 )
-			yy_c = yy_meta[(unsigned int) yy_c];
+			yy_c = yy_meta[yy_c];
 		}
-	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
+	yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 	yy_is_jam = (yy_current_state == 1279);
 
-	return yy_is_jam ? 0 : yy_current_state;
+		return yy_is_jam ? 0 : yy_current_state;
 }
 
-    static void yyunput (int c, register char * yy_bp )
+#ifndef YY_NO_UNPUT
+
+    static void yyunput (int c, char * yy_bp )
 {
-	register char *yy_cp;
+	char *yy_cp;
     
     yy_cp = (yy_c_buf_p);
 
@@ -3139,10 +3215,10 @@ static int yy_get_next_buffer (void)
 	if ( yy_cp < YY_CURRENT_BUFFER_LVALUE->yy_ch_buf + 2 )
 		{ /* need to shift things up to make room */
 		/* +2 for EOB chars. */
-		register yy_size_t number_to_move = (yy_n_chars) + 2;
-		register char *dest = &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[
+		int number_to_move = (yy_n_chars) + 2;
+		char *dest = &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[
 					YY_CURRENT_BUFFER_LVALUE->yy_buf_size + 2];
-		register char *source =
+		char *source =
 				&YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[number_to_move];
 
 		while ( source > YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
@@ -3151,7 +3227,7 @@ static int yy_get_next_buffer (void)
 		yy_cp += (int) (dest - source);
 		yy_bp += (int) (dest - source);
 		YY_CURRENT_BUFFER_LVALUE->yy_n_chars =
-			(yy_n_chars) = YY_CURRENT_BUFFER_LVALUE->yy_buf_size;
+			(yy_n_chars) = (int) YY_CURRENT_BUFFER_LVALUE->yy_buf_size;
 
 		if ( yy_cp < YY_CURRENT_BUFFER_LVALUE->yy_ch_buf + 2 )
 			YY_FATAL_ERROR( "flex scanner push-back overflow" );
@@ -3163,6 +3239,8 @@ static int yy_get_next_buffer (void)
 	(yy_hold_char) = *yy_cp;
 	(yy_c_buf_p) = yy_cp;
 }
+
+#endif
 
 #ifndef YY_NO_INPUT
 #ifdef __cplusplus
@@ -3188,7 +3266,7 @@ static int yy_get_next_buffer (void)
 
 		else
 			{ /* need more input */
-			yy_size_t offset = (yy_c_buf_p) - (yytext_ptr);
+			int offset = (int) ((yy_c_buf_p) - (yytext_ptr));
 			++(yy_c_buf_p);
 
 			switch ( yy_get_next_buffer(  ) )
@@ -3318,7 +3396,7 @@ static void gmsh_yy_load_buffer_state  (void)
 	/* yy_ch_buf has to be 2 characters longer than the size given because
 	 * we need to put in 2 end-of-buffer characters.
 	 */
-	b->yy_ch_buf = (char *) gmsh_yyalloc(b->yy_buf_size + 2  );
+	b->yy_ch_buf = (char *) gmsh_yyalloc((yy_size_t) (b->yy_buf_size + 2)  );
 	if ( ! b->yy_ch_buf )
 		YY_FATAL_ERROR( "out of dynamic memory in gmsh_yy_create_buffer()" );
 
@@ -3348,10 +3426,6 @@ static void gmsh_yy_load_buffer_state  (void)
 	gmsh_yyfree((void *) b  );
 }
 
-#ifndef __cplusplus
-extern int isatty (int );
-#endif /* __cplusplus */
-    
 /* Initializes or reinitializes a buffer.
  * This function is sometimes called more than once on the same buffer,
  * such as during a gmsh_yyrestart() or at EOF.
@@ -3472,15 +3546,15 @@ static void gmsh_yyensure_buffer_stack (void)
 		 * scanner will even need a stack. We use 2 instead of 1 to avoid an
 		 * immediate realloc on the next call.
          */
-		num_to_alloc = 1;
+      num_to_alloc = 1; /* After all that talk, this was set to 1 anyways... */
 		(yy_buffer_stack) = (struct yy_buffer_state**)gmsh_yyalloc
 								(num_to_alloc * sizeof(struct yy_buffer_state*)
 								);
 		if ( ! (yy_buffer_stack) )
 			YY_FATAL_ERROR( "out of dynamic memory in gmsh_yyensure_buffer_stack()" );
-								  
+
 		memset((yy_buffer_stack), 0, num_to_alloc * sizeof(struct yy_buffer_state*));
-				
+
 		(yy_buffer_stack_max) = num_to_alloc;
 		(yy_buffer_stack_top) = 0;
 		return;
@@ -3489,7 +3563,7 @@ static void gmsh_yyensure_buffer_stack (void)
 	if ((yy_buffer_stack_top) >= ((yy_buffer_stack_max)) - 1){
 
 		/* Increase the buffer to prepare for a possible push. */
-		int grow_size = 8 /* arbitrary grow size */;
+		yy_size_t grow_size = 8 /* arbitrary grow size */;
 
 		num_to_alloc = (yy_buffer_stack_max) + grow_size;
 		(yy_buffer_stack) = (struct yy_buffer_state**)gmsh_yyrealloc
@@ -3509,7 +3583,7 @@ static void gmsh_yyensure_buffer_stack (void)
  * @param base the character buffer
  * @param size the size in bytes of the character buffer
  * 
- * @return the newly allocated buffer state object. 
+ * @return the newly allocated buffer state object.
  */
 YY_BUFFER_STATE gmsh_yy_scan_buffer  (char * base, yy_size_t  size )
 {
@@ -3519,16 +3593,16 @@ YY_BUFFER_STATE gmsh_yy_scan_buffer  (char * base, yy_size_t  size )
 	     base[size-2] != YY_END_OF_BUFFER_CHAR ||
 	     base[size-1] != YY_END_OF_BUFFER_CHAR )
 		/* They forgot to leave room for the EOB's. */
-		return 0;
+		return NULL;
 
 	b = (YY_BUFFER_STATE) gmsh_yyalloc(sizeof( struct yy_buffer_state )  );
 	if ( ! b )
 		YY_FATAL_ERROR( "out of dynamic memory in gmsh_yy_scan_buffer()" );
 
-	b->yy_buf_size = size - 2;	/* "- 2" to take care of EOB's */
+	b->yy_buf_size = (int) (size - 2);	/* "- 2" to take care of EOB's */
 	b->yy_buf_pos = b->yy_ch_buf = base;
 	b->yy_is_our_buffer = 0;
-	b->yy_input_file = 0;
+	b->yy_input_file = NULL;
 	b->yy_n_chars = b->yy_buf_size;
 	b->yy_is_interactive = 0;
 	b->yy_at_bol = 1;
@@ -3548,27 +3622,28 @@ YY_BUFFER_STATE gmsh_yy_scan_buffer  (char * base, yy_size_t  size )
  * @note If you want to scan bytes that may contain NUL values, then use
  *       gmsh_yy_scan_bytes() instead.
  */
-YY_BUFFER_STATE gmsh_yy_scan_string (yyconst char * yystr )
+YY_BUFFER_STATE gmsh_yy_scan_string (const char * yystr )
 {
     
-	return gmsh_yy_scan_bytes(yystr,strlen(yystr) );
+	return gmsh_yy_scan_bytes(yystr,(int) strlen(yystr) );
 }
 
 /** Setup the input buffer state to scan the given bytes. The next call to gmsh_yylex() will
  * scan from a @e copy of @a bytes.
- * @param bytes the byte buffer to scan
- * @param len the number of bytes in the buffer pointed to by @a bytes.
+ * @param yybytes the byte buffer to scan
+ * @param _yybytes_len the number of bytes in the buffer pointed to by @a bytes.
  * 
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE gmsh_yy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_len )
+YY_BUFFER_STATE gmsh_yy_scan_bytes  (const char * yybytes, int  _yybytes_len )
 {
 	YY_BUFFER_STATE b;
 	char *buf;
-	yy_size_t n, i;
+	yy_size_t n;
+	int i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
-	n = _yybytes_len + 2;
+	n = (yy_size_t) (_yybytes_len + 2);
 	buf = (char *) gmsh_yyalloc(n  );
 	if ( ! buf )
 		YY_FATAL_ERROR( "out of dynamic memory in gmsh_yy_scan_bytes()" );
@@ -3594,9 +3669,9 @@ YY_BUFFER_STATE gmsh_yy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes
 #define YY_EXIT_FAILURE 2
 #endif
 
-static void yy_fatal_error (yyconst char* msg )
+static void yynoreturn yy_fatal_error (const char* msg )
 {
-    	(void) fprintf( stderr, "%s\n", msg );
+			(void) fprintf( stderr, "%s\n", msg );
 	exit( YY_EXIT_FAILURE );
 }
 
@@ -3624,7 +3699,7 @@ static void yy_fatal_error (yyconst char* msg )
  */
 int gmsh_yyget_lineno  (void)
 {
-        
+    
     return gmsh_yylineno;
 }
 
@@ -3647,7 +3722,7 @@ FILE *gmsh_yyget_out  (void)
 /** Get the length of the current token.
  * 
  */
-yy_size_t gmsh_yyget_leng  (void)
+int gmsh_yyget_leng  (void)
 {
         return gmsh_yyleng;
 }
@@ -3662,29 +3737,29 @@ char *gmsh_yyget_text  (void)
 }
 
 /** Set the current line number.
- * @param line_number
+ * @param _line_number line number
  * 
  */
-void gmsh_yyset_lineno (int  line_number )
+void gmsh_yyset_lineno (int  _line_number )
 {
     
-    gmsh_yylineno = line_number;
+    gmsh_yylineno = _line_number;
 }
 
 /** Set the input stream. This does not discard the current
  * input buffer.
- * @param in_str A readable stream.
+ * @param _in_str A readable stream.
  * 
  * @see gmsh_yy_switch_to_buffer
  */
-void gmsh_yyset_in (FILE *  in_str )
+void gmsh_yyset_in (FILE *  _in_str )
 {
-        gmsh_yyin = in_str ;
+        gmsh_yyin = _in_str ;
 }
 
-void gmsh_yyset_out (FILE *  out_str )
+void gmsh_yyset_out (FILE *  _out_str )
 {
-        gmsh_yyout = out_str ;
+        gmsh_yyout = _out_str ;
 }
 
 int gmsh_yyget_debug  (void)
@@ -3692,9 +3767,9 @@ int gmsh_yyget_debug  (void)
         return gmsh_yy_flex_debug;
 }
 
-void gmsh_yyset_debug (int  bdebug )
+void gmsh_yyset_debug (int  _bdebug )
 {
-        gmsh_yy_flex_debug = bdebug ;
+        gmsh_yy_flex_debug = _bdebug ;
 }
 
 static int yy_init_globals (void)
@@ -3703,10 +3778,10 @@ static int yy_init_globals (void)
      * This function is called from gmsh_yylex_destroy(), so don't allocate here.
      */
 
-    (yy_buffer_stack) = 0;
+    (yy_buffer_stack) = NULL;
     (yy_buffer_stack_top) = 0;
     (yy_buffer_stack_max) = 0;
-    (yy_c_buf_p) = (char *) 0;
+    (yy_c_buf_p) = NULL;
     (yy_init) = 0;
     (yy_start) = 0;
 
@@ -3715,8 +3790,8 @@ static int yy_init_globals (void)
     gmsh_yyin = stdin;
     gmsh_yyout = stdout;
 #else
-    gmsh_yyin = (FILE *) 0;
-    gmsh_yyout = (FILE *) 0;
+    gmsh_yyin = NULL;
+    gmsh_yyout = NULL;
 #endif
 
     /* For future reference: Set errno on error, since we are called by
@@ -3752,18 +3827,19 @@ int gmsh_yylex_destroy  (void)
  */
 
 #ifndef yytext_ptr
-static void yy_flex_strncpy (char* s1, yyconst char * s2, int n )
+static void yy_flex_strncpy (char* s1, const char * s2, int n )
 {
-	register int i;
+		
+	int i;
 	for ( i = 0; i < n; ++i )
 		s1[i] = s2[i];
 }
 #endif
 
 #ifdef YY_NEED_STRLEN
-static int yy_flex_strlen (yyconst char * s )
+static int yy_flex_strlen (const char * s )
 {
-	register int n;
+	int n;
 	for ( n = 0; s[n]; ++n )
 		;
 
@@ -3773,11 +3849,12 @@ static int yy_flex_strlen (yyconst char * s )
 
 void *gmsh_yyalloc (yy_size_t  size )
 {
-	return (void *) malloc( size );
+			return malloc(size);
 }
 
 void *gmsh_yyrealloc  (void * ptr, yy_size_t  size )
 {
+		
 	/* The cast to (char *) in the following accommodates both
 	 * implementations that use char* generic pointers, and those
 	 * that use void* generic pointers.  It works with the latter
@@ -3785,18 +3862,17 @@ void *gmsh_yyrealloc  (void * ptr, yy_size_t  size )
 	 * any pointer type to void*, and deal with argument conversions
 	 * as though doing an assignment.
 	 */
-	return (void *) realloc( (char *) ptr, size );
+	return realloc(ptr, size);
 }
 
 void gmsh_yyfree (void * ptr )
 {
-	free( (char *) ptr );	/* see gmsh_yyrealloc() for (char *) cast */
+			free( (char *) ptr );	/* see gmsh_yyrealloc() for (char *) cast */
 }
 
 #define YYTABLES_NAME "yytables"
 
 #line 357 "Gmsh.l"
-
 
 
 #undef gmsh_yywrap
@@ -3809,7 +3885,7 @@ void skipcomments(void)
 
   while (1) {
     while ((c = yyinput()) != '*'){
-      // Test on YY_END_OF_BUFFER_CHAR (0), not on gmsheof(gmsh_yyin) because whole line in buffer
+      // Test on YY_END_OF_BUFFER_CHAR (0), not on gmsheof(yyin) because whole line in buffer
       if(c=='\0'){
 	Msg::Error("End of file in commented region");
         return;
@@ -3830,7 +3906,7 @@ void parsestring(char endchar)
   // etc.) "as is" in the output string: see yyinput() above
   int i = 0;
   while ((c = yyinput()) != endchar) {
-    // Test on YY_END_OF_BUFFER_CHAR (0), not on gmsheof(gmsh_yyin) because whole line in buffer
+    // Test on YY_END_OF_BUFFER_CHAR (0), not on gmsheof(yyin) because whole line in buffer
     if(c=='\0'){
       Msg::Error("End of file in string");
       break;
@@ -3884,7 +3960,7 @@ void skip(const char *skip, const char *until)
     while (1){
       chars[0] = yyinput();
       // TOFIX: do another test
-      if(gmsheof(gmsh_yyin)){
+      if(gmsheof(yyin)){
 	Msg::Error("Unexpected end of file");
 	return;
       }
@@ -3905,7 +3981,7 @@ void skip(const char *skip, const char *until)
 
     for(i=1; i<l; i++){
       chars[i] = yyinput();
-      if(gmsheof(gmsh_yyin)){
+      if(gmsheof(yyin)){
 	l = i;
 	break;
       }
@@ -3963,7 +4039,7 @@ void skipTest(const char *skip, const char *until,
   while(1){
     while (1){
       chars[0] = yyinput();
-      if(gmsheof(gmsh_yyin)){
+      if(gmsheof(yyin)){
 	Msg::Error("Unexpected end of file");
 	return;
       }
@@ -3991,7 +4067,7 @@ void skipTest(const char *skip, const char *until,
         unput(chars[i]); chars[i] = 0; l = i; flag_EOL_EOF = 1;
         break;
       }
-      if(gmsheof(gmsh_yyin)){
+      if(gmsheof(yyin)){
 	l = i; flag_EOL_EOF = 1;
 	break;
       }
