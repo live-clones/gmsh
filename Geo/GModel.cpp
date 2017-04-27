@@ -481,7 +481,7 @@ class AbsIntLessThan{
 
 bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
                              std::vector<std::pair<int, int> > &outDimTags,
-                             bool combined, bool oriented)
+                             bool combined, bool oriented, bool recursive)
 {
   bool ret = true;
   for(unsigned int i = 0; i < inDimTags.size(); i++){
@@ -491,16 +491,23 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
     if(dim == 3){
       GRegion *gr = getRegionByTag(tag);
       if(gr){
-        std::list<GFace*> faces(gr->faces());
-        std::list<int> orientations(gr->faceOrientations());
-        std::list<int>::iterator ito = orientations.begin();
-        for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
-          int t = (*it)->tag();
-          if(oriented && ito != orientations.end()){
-            t *= *ito;
-            ito++;
+        if(recursive){
+          std::list<GVertex*> vert(gr->vertices());
+          for(std::list<GVertex*>::iterator it = vert.begin(); it != vert.end(); it++)
+            outDimTags.push_back(std::pair<int, int>(0, (*it)->tag()));
+        }
+        else{
+          std::list<GFace*> faces(gr->faces());
+          std::list<int> orientations(gr->faceOrientations());
+          std::list<int>::iterator ito = orientations.begin();
+          for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
+            int t = (*it)->tag();
+            if(oriented && ito != orientations.end()){
+              t *= *ito;
+              ito++;
+            }
+            outDimTags.push_back(std::pair<int, int>(2, t));
           }
-          outDimTags.push_back(std::pair<int, int>(2, t));
         }
       }
       else{
@@ -511,16 +518,23 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
     else if(dim == 2){
       GFace *gf = getFaceByTag(tag);
       if(gf){
-        std::list<GEdge*> edges(gf->edges());
-        std::list<int> orientations(gf->edgeOrientations());
-        std::list<int>::iterator ito = orientations.begin();
-        for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
-          int t = (*it)->tag();
-          if(oriented && ito != orientations.end()){
-            t *= *ito;
-            ito++;
+        if(recursive){
+          std::list<GVertex*> vert(gf->vertices());
+          for(std::list<GVertex*>::iterator it = vert.begin(); it != vert.end(); it++)
+            outDimTags.push_back(std::pair<int, int>(0, (*it)->tag()));
+        }
+        else{
+          std::list<GEdge*> edges(gf->edges());
+          std::list<int> orientations(gf->edgeOrientations());
+          std::list<int>::iterator ito = orientations.begin();
+          for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
+            int t = (*it)->tag();
+            if(oriented && ito != orientations.end()){
+              t *= *ito;
+              ito++;
+            }
+            outDimTags.push_back(std::pair<int, int>(1, t));
           }
-          outDimTags.push_back(std::pair<int, int>(1, t));
         }
       }
       else{
@@ -549,9 +563,15 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
         ret = false;
       }
     }
+    else if(dim == 0){
+      GVertex *gv = getVertexByTag(tag);
+      if(gv && recursive){
+        outDimTags.push_back(std::pair<int, int>(0, gv->tag()));
+      }
+    }
   }
 
-  if(combined){
+  if(combined || recursive){
     // compute boundary of the combined shapes
     std::set<int, AbsIntLessThan> c[3];
     for(unsigned int i = 0; i < outDimTags.size(); i++){

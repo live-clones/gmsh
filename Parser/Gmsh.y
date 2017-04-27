@@ -2387,7 +2387,8 @@ Transform :
           r = GModel::current()->getGEOInternals()->copy(inDimTags, outDimTags);
         }
       }
-      else if(action == "Boundary" || action == "CombinedBoundary"){
+      else if(action == "Boundary" || action == "CombinedBoundary" ||
+              action == "PointsOf"){
         // boundary operations are performed directly on GModel, which enables
         // to compute the boundary of hybrid CAD models; this also automatically
         // binds all boundary entities for OCC models
@@ -2397,7 +2398,8 @@ Transform :
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
         r = GModel::current()->getBoundaryTags
-          (inDimTags, outDimTags, action == "CombinedBoundary");
+          (inDimTags, outDimTags, action == "CombinedBoundary", true,
+           action == "PointsOf");
       }
       else{
         yymsg(0, "Unknown action on multiple shapes '%s'", $1);
@@ -5377,7 +5379,6 @@ FExpr_Multi :
       }
       Free($1);
     }
-
   | String__Index '.' tSTRING_Member LP RP
     {
       $$ = treat_Struct_FullName_dot_tSTRING_ListOfFloat(NULL, $1, $3);
@@ -5386,7 +5387,6 @@ FExpr_Multi :
     {
       $$ = treat_Struct_FullName_dot_tSTRING_ListOfFloat($1, $3, $5);
     }
-
    // for compatibility with GetDP
   | tList '[' String__Index ']'
     {
@@ -5648,7 +5648,6 @@ StringExprVar :
       strcpy($$, val.c_str());
       Free($1);
     }
-
 // PD: TO FIX (to avoid shift/reduce conflict)
 //  | Struct_FullName '.' String__Index //tSTRING//_Member_Float
   | String__Index '.' tSTRING_Member
@@ -5659,7 +5658,6 @@ StringExprVar :
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String($1, $3, $5);
     }
-
   | String__Index '.' tSTRING_Member '(' FExpr ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String(NULL, $1, $3, (int)$5);
@@ -5668,7 +5666,6 @@ StringExprVar :
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String($1, $3, $5, (int)$7);
     }
-
   | String__Index '[' FExpr ']' '.' tSTRING
     {
       std::string out;
@@ -5767,18 +5764,15 @@ StringExpr :
       Free($3);
       Free($5);
     }
-
     //+++ No need to extend to Struct_FullName (a Tag is not a String), but...
   | tGetForcedStr '(' Struct_FullName GetForcedStr_Default ')'
     {
       $$ = treat_Struct_FullName_String(NULL, $3.char2, 1, 0, $4, 2);
     }
-
   | tGetForcedStr '(' Struct_FullName '.' tSTRING_Member GetForcedStr_Default ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String($3.char1, $3.char2, $5, 0, $6, 2);
     }
-
   | tStrCat LP RecursiveListOfStringExprVar RP
     {
       int size = 1;

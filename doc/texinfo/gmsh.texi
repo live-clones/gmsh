@@ -2380,6 +2380,11 @@ returned list.
 entities, combined as if a single entity, in
 @var{transform-list}. Useful to compute the boundary of a complex part.
 
+@item PointsOf @{ @var{transform-list} @}
+(Not a transformation per-se.) Returns all the geometrical points on the
+boundary of the elementary entities. Useful to compute the boundary of a
+complex part.
+
 @c @item Intersect Line @{ @var{expression-list} @} Surface @{ @var{expression} @}
 @c (Not a transformation per-se.) Returns the intersections of the lines
 @c given in @var{expression-list} with the specified surface.
