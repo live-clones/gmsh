@@ -1,17 +1,8 @@
-makegmsh:
-  image : immc/gmsh:v0.4
-  script:
-    - mkdir build
-    - cd build
-    - cmake ..
-    - make -j4
-    - ctest --output-on-failure
-
 ubuntu16.04:
   image : onelab/ubuntu16.04
   script:
     - mkdir build
     - cd build
     - cmake ..
-    - make
+    - make -j 4
     - ctest --output-on-failure
