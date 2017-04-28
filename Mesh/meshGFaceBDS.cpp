@@ -619,7 +619,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_c
         collapseP1Allowed = std::abs(lone2-1.0) < std::abs(edges[i].first - 1.0);
       }
 
-      BDS_Point *p = nullptr;
+      BDS_Point *p = 0;
       if (collapseP1Allowed && collapseP2Allowed)
         p = std::abs(lone1 - 1.0) < std::abs(lone2 - 1.0) ? e->p1 : e->p2;
       else if (collapseP1Allowed && !collapseP2Allowed)
@@ -628,7 +628,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_c
         p = e->p2;
 
       bool res = false;
-      if(p != nullptr)
+      if(p)
         res = m.collapse_edge_parametric(e, p);
       if(res)
         nb_collaps++;
