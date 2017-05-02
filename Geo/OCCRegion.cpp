@@ -97,7 +97,13 @@ void OCCRegion::setup()
 SBoundingBox3d OCCRegion::bounds() const
 {
   Bnd_Box b;
-  BRepBndLib::Add(s, b);
+  try{
+    BRepBndLib::Add(s, b);
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return SBoundingBox3d();
+  }
   double xmin, ymin, zmin, xmax, ymax, zmax;
   b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
   SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);

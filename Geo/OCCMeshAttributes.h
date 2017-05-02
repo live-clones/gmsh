@@ -89,10 +89,16 @@ class OCCMeshAttributesRTree{
     _all.push_back(v);
     if(v->getDim() < 0 || v->getDim() > 3) return;
     Bnd_Box box;
-    BRepBndLib::Add(v->getShape(), box);
-    if(box.IsVoid()){
-      Msg::Debug("Inserting (null or degenerate) shape with void bounding box");
-      //BRepTools::Dump(v->getShape(), std::cout);
+    try{
+      BRepBndLib::Add(v->getShape(), box);
+      if(box.IsVoid()){
+        Msg::Debug("Inserting (null or degenerate) shape with void bounding box");
+        //BRepTools::Dump(v->getShape(), std::cout);
+        return;
+      }
+    }
+    catch(Standard_Failure &err){
+      Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
       return;
     }
     double xmin, ymin, zmin, xmax, ymax, zmax;
@@ -110,9 +116,15 @@ class OCCMeshAttributesRTree{
     attr.clear();
     if(dim < 0 || dim > 3) return;
     Bnd_Box box;
-    BRepBndLib::Add(shape, box);
-    if(box.IsVoid()){
-      Msg::Debug("Searching for (null or degenerate) shape with void bounding box");
+    try{
+      BRepBndLib::Add(shape, box);
+      if(box.IsVoid()){
+        Msg::Debug("Searching for (null or degenerate) shape with void bounding box");
+        return;
+      }
+    }
+    catch(Standard_Failure &err){
+      Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
       return;
     }
     double xmin, ymin, zmin, xmax, ymax, zmax;
