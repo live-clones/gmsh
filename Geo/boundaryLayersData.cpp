@@ -32,7 +32,7 @@ edgeColumn BoundaryLayerColumns::getColumns(MVertex *v1, MVertex *v2 , int side)
 
 #include "Field.h"
 
-const int FANSIZE__ = 4;
+const int FANSIZE__ = 5;
 
 
 /*

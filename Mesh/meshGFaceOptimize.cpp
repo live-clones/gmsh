@@ -478,7 +478,8 @@ static int _removeTwoQuadsNodes(GFace *gf)
   std::set<MElement*>  touched;
   std::set<MVertex*>  vtouched;
   while (it != adj.end()) {
-    if(it->second.size()==2 && it->first->onWhat()->dim() == 2) {
+    MVertex *v = it->first;
+    if(it->second.size()==2 && v->onWhat()->dim() == 2) {
       MElement *q1 = it->second[0];
       MElement *q2 = it->second[1];
       if (q1->getNumVertices() == 4 &&
@@ -486,7 +487,7 @@ static int _removeTwoQuadsNodes(GFace *gf)
           touched.find(q1) == touched.end() && touched.find(q2) == touched.end()){
         int comm = 0;
         for (int i=0;i<4;i++){
-          if (q1->getVertex(i) == it->first){
+          if (q1->getVertex(i) == v){
             comm = i;
             break;
           }
@@ -495,12 +496,19 @@ static int _removeTwoQuadsNodes(GFace *gf)
         MVertex *v2 = q1->getVertex((comm+2)%4);
         MVertex *v3 = q1->getVertex((comm+3)%4);
         MVertex *v4 = 0;
+        int cnt = 0;
         for (int i=0;i<4;i++){
-          if (q2->getVertex(i) != v1 && q2->getVertex(i) != v2 &&
-              q2->getVertex(i) != v3 && q2->getVertex(i) != it->first){
+          if (q2->getVertex(i) != v1 && q2->getVertex(i) != v3 &&
+              q2->getVertex(i) != v){
             v4 = q2->getVertex(i);
-            break;
+            ++cnt;
           }
+        }
+        if (cnt != 1) {
+          // The two quads do not actually share two edges. This can happen if the
+          // boundary layer mesh inserted to the surface only after this routine
+          ++it;
+          continue;
         }
         if (!v4){
           Msg::Error("BUG DISCOVERED IN _removeTwoQuadsNodes ,%p,%p,%p",v1,v2,v3);
@@ -518,13 +526,14 @@ static int _removeTwoQuadsNodes(GFace *gf)
           touched.insert(q1);
           touched.insert(q2);
           gf->quadrangles.push_back(q);
-          vtouched.insert(it->first);
+          vtouched.insert(v);
         }
       }
     }
     it++;
   }
   std::vector<MQuadrangle*> quadrangles2;
+  quadrangles2.reserve(gf->quadrangles.size() - touched.size());
   for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
     if(touched.find(gf->quadrangles[i]) == touched.end()){
       quadrangles2.push_back(gf->quadrangles[i]);
@@ -536,6 +545,7 @@ static int _removeTwoQuadsNodes(GFace *gf)
   gf->quadrangles = quadrangles2;
 
   std::vector<MVertex*> mesh_vertices2;
+  mesh_vertices2.reserve(gf->mesh_vertices.size() - vtouched.size());
   for(unsigned int i = 0; i < gf->mesh_vertices.size(); i++){
     if(vtouched.find(gf->mesh_vertices[i]) == vtouched.end()){
       mesh_vertices2.push_back(gf->mesh_vertices[i]);
@@ -707,7 +717,7 @@ static int _removeDiamonds(GFace *gf)
           v2->onWhat()->dim() == 2 &&
           v3->onWhat()->dim() == 2 &&
           v4->onWhat()->dim() == 2 &&
-          it1->second.size() ==3 &&  it3->second.size() == 3 &&
+          it1->second.size() == 3 && it3->second.size() == 3 &&
           _tryToCollapseThatVertex (gf, it1->second, it3->second,
                                       q, v1, v3)){
         touched.insert(v1);

@@ -1595,10 +1595,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing, infty);
   }
 
-  gf->quadrangles.insert(gf->quadrangles.begin(),blQuads.begin(),blQuads.end());
-  gf->triangles.insert(gf->triangles.begin(),blTris.begin(),blTris.end());
-  gf->mesh_vertices.insert(gf->mesh_vertices.begin(),verts.begin(),verts.end());
-
   if(debug){
     char name[256];
     sprintf(name, "real%d.pos", gf->tag());
@@ -1612,6 +1608,10 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
      !CTX::instance()->mesh.optimizeLloyd && !onlyInitialMesh && CTX::instance()->mesh.algoRecombine != 2)
     recombineIntoQuads(gf);
+
+  gf->quadrangles.insert(gf->quadrangles.begin(),blQuads.begin(),blQuads.end());
+  gf->triangles.insert(gf->triangles.begin(),blTris.begin(),blTris.end());
+  gf->mesh_vertices.insert(gf->mesh_vertices.begin(),verts.begin(),verts.end());
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
                        gf->meshStatistics.average_element_shape,
