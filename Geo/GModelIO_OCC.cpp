@@ -2214,12 +2214,9 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
     return false;
   }
 
-  // don't try to preserve numbering if we specify the tag explicitly, or if
-  // there is a problem
-  bool bug1 = (objectDimTags.size() + toolDimTags.size() != mapModified.size());
-  bool bug2 = (op == OCC_Internals::Union); // strange fuse behavior in OCC 7.1
-  if(tag >= 0 || bug1 || bug2){
-    if(bug1) Msg::Error("Wrong shape count in boolean operation");
+  // if we specify the tag explicitly, just go ahead and bind the resulting
+  // shape (and sub-shapes)
+  if(tag >= 0){
     if(removeObject){
       for(unsigned int i = 0; i < objectDimTags.size(); i++){
         int d = objectDimTags[i].first;
@@ -2239,26 +2236,22 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
     return true;
   }
 
-  // otherwise, try to preserve the numbering
+  // otherwise, preserve the numbering of the input shapes that did not change,
+  // or that were replaced by a single shape
   for(unsigned int i = 0; i < objectDimTags.size(); i++){
     int dim = objectDimTags[i].first;
     int tag = objectDimTags[i].second;
-    if(mapDeleted[i] && !mapGenerated[i].Extent()){
-      // the shape has been deleted
-      if(removeObject && _isBound(dim, mapOriginal[i])){
-        unbind(mapOriginal[i], dim, tag, true);
-      }
+    if(mapDeleted[i]){ // object deleted
+      if(removeObject) unbind(mapOriginal[i], dim, tag, true);
     }
-    else if(mapModified[i].Extent() == 0){
-      // the shape has not been modified
+    else if(mapModified[i].Extent() == 0){ // object not modified
       outDimTags.push_back(std::pair<int, int>(dim, tag));
+      unbind(mapOriginal[i], dim, tag, false); // not recursive!
+      bind(mapOriginal[i], dim, tag, false); // not recursive!
     }
-    else if(mapModified[i].Extent() == 1){
+    else if(mapModified[i].Extent() == 1){ // object replaced by single one
       if(removeObject){
-        // the shape has been replaced by a single shape, keep the same tag
-        if(_isBound(dim, mapOriginal[i])){
-          unbind(mapOriginal[i], dim, tag, true);
-        }
+        unbind(mapOriginal[i], dim, tag, true);
         bind(mapModified[i].First(), dim, tag, false); // not recursive!
         int t = _find(dim, mapModified[i].First());
         if(tag != t)
@@ -2267,32 +2260,24 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
       }
     }
     else{
-      if(removeObject && _isBound(dim, mapOriginal[i])){
-        unbind(mapOriginal[i], dim, tag, true);
-      }
+      if(removeObject) unbind(mapOriginal[i], dim, tag, true);
     }
   }
-
   for(unsigned int i = 0; i < toolDimTags.size(); i++){
     int k = objectDimTags.size() + i;
     int dim = toolDimTags[i].first;
     int tag = toolDimTags[i].second;
-    if(mapDeleted[k] && !mapGenerated[k].Extent()){
-      // the shape has been deleted
-      if(removeTool && _isBound(dim, mapOriginal[k])){
-        unbind(mapOriginal[k], dim, tag, true);
-      }
+    if(mapDeleted[k]){ // tool deleted
+      if(removeTool) unbind(mapOriginal[k], dim, tag, true);
     }
-    else if(mapModified[k].Extent() == 0){
-      // the shape has not been modified
+    else if(mapModified[k].Extent() == 0){ // tool not modified
       outDimTags.push_back(std::pair<int, int>(dim, tag));
+      unbind(mapOriginal[k], dim, tag, false); // not recursive!
+      bind(mapOriginal[k], dim, tag, false); // not recursive!
     }
     else if(mapModified[k].Extent() == 1){
-      if(removeTool){
-        // the shape has been replaced by a single shape, keep the same tag
-        if(_isBound(dim, mapOriginal[k])){
-          unbind(mapOriginal[k], dim, tag, true);
-        }
+      if(removeTool){ // tool replaced by single one
+        unbind(mapOriginal[k], dim, tag, true);
         bind(mapModified[k].First(), dim, tag, false); // not recursive!
         int t = _find(dim, mapModified[k].First());
         if(tag != t)
@@ -2301,14 +2286,12 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
       }
     }
     else{
-      if(removeTool && _isBound(dim, mapOriginal[k])){
-        unbind(mapOriginal[k], dim, tag, true);
-      }
+      if(removeTool) unbind(mapOriginal[k], dim, tag, true);
     }
   }
 
-  // bind all remaining entities and add (only) new one to the returned list
-  _multiBind(result, tag, outDimTags, false, true, true);
+  // bind all remaining entities and add the new ones to the returned list
+  _multiBind(result, -1, outDimTags, false, true, true);
   _filterTags(outDimTags, minDim);
 
   return true;
@@ -2383,6 +2366,8 @@ bool OCC_Internals::_transform(const std::vector<std::pair<int, int> > &inDimTag
       }
       result = gtfo->Shape();
     }
+    // FIXME we should implement rebind(object, result, dim) which would
+    // unbind/bind all subshapes to the same tags
     unbind(object, dim, tag, true);
     bind(result, dim, tag, true);
   }
