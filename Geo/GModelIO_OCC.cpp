@@ -151,7 +151,8 @@ void OCC_Internals::bind(TopoDS_Vertex vertex, int tag, bool recursive)
 {
   if(vertex.IsNull()) return;
   if(_vertexTag.IsBound(vertex) && _vertexTag.Find(vertex) != tag){
-    Msg::Debug("OpenCASCADE vertex %d is already bound to another tag", tag);
+    Msg::Info("Cannot bind existing OpenCASCADE vertex %d to second tag %d",
+               _vertexTag.Find(vertex), tag);
   }
   else{
     _vertexTag.Bind(vertex, tag);
@@ -166,7 +167,8 @@ void OCC_Internals::bind(TopoDS_Edge edge, int tag, bool recursive)
 {
   if(edge.IsNull()) return;
   if(_edgeTag.IsBound(edge) && _edgeTag.Find(edge) != tag){
-    Msg::Debug("OpenCASCADE edge %d is already bound to another tag", tag);
+    Msg::Info("Cannot bind existing OpenCASCADE edge %d to second tag %d",
+              _edgeTag.Find(edge), tag);
   }
   else{
     _edgeTag.Bind(edge, tag);
@@ -191,7 +193,8 @@ void OCC_Internals::bind(TopoDS_Wire wire, int tag, bool recursive)
 {
   if(wire.IsNull()) return;
   if(_wireTag.IsBound(wire) && _wireTag.Find(wire) != tag){
-    Msg::Debug("OpenCASCADE wire %d is already bound to anthor tag", tag);
+    Msg::Info("Cannot bind existing OpenCASCADE wire %d to second tag %d",
+              _wireTag.Find(wire), tag);
   }
   else{
     _wireTag.Bind(wire, tag);
@@ -215,7 +218,8 @@ void OCC_Internals::bind(TopoDS_Face face, int tag, bool recursive)
 {
   if(face.IsNull()) return;
   if(_faceTag.IsBound(face) && _faceTag.Find(face) != tag){
-    Msg::Debug("OpenCASCADE face %d is already bound to another tag", tag);
+    Msg::Info("Cannot bind existing OpenCASCADE face %d to second tag %d",
+              _faceTag.Find(face), tag);
   }
   else{
     _faceTag.Bind(face, tag);
@@ -247,7 +251,8 @@ void OCC_Internals::bind(TopoDS_Shell shell, int tag, bool recursive)
 {
   if(shell.IsNull()) return;
   if(_shellTag.IsBound(shell) && _shellTag.Find(shell) != tag){
-    Msg::Debug("OpenCASCADE shell %d is already bound to another tag", tag);
+    Msg::Info("Cannot bind existing OpenCASCADE shell %d to second tag %d",
+              _shellTag.Find(shell), tag);
   }
   else{
     _shellTag.Bind(shell, tag);
@@ -271,7 +276,8 @@ void OCC_Internals::bind(TopoDS_Solid solid, int tag, bool recursive)
 {
   if(solid.IsNull()) return;
   if(_solidTag.IsBound(solid) && _solidTag.Find(solid) != tag){
-    Msg::Debug("OpenCASCADE solid %d is already bound to another tag", tag);
+    Msg::Info("Cannot bind existing OpenCASCADE solid %d to second tag %d",
+              _solidTag.Find(solid), tag);
   }
   else{
     _solidTag.Bind(solid, tag);
@@ -485,7 +491,7 @@ void OCC_Internals::unbind(TopoDS_Shape shape, int dim, int tag, bool recursive)
 
 void OCC_Internals::_multiBind(TopoDS_Shape shape, int tag,
                                std::vector<std::pair<int, int> > &outDimTags,
-                               bool returnHighestDimOnly, bool recursive,
+                               bool highestDimOnly, bool recursive,
                                bool returnNewOnly)
 {
   TopExp_Explorer exp0;
@@ -512,7 +518,7 @@ void OCC_Internals::_multiBind(TopoDS_Shape shape, int tag,
       outDimTags.push_back(std::pair<int, int>(3, t));
     count++;
   }
-  if(returnHighestDimOnly && count) return;
+  if(highestDimOnly && count) return;
   for(exp0.Init(shape, TopAbs_FACE); exp0.More(); exp0.Next()){
     TopoDS_Face face = TopoDS::Face(exp0.Current());
     bool exists = false;
@@ -535,7 +541,7 @@ void OCC_Internals::_multiBind(TopoDS_Shape shape, int tag,
       outDimTags.push_back(std::pair<int, int>(2, t));
     count++;
   }
-  if(returnHighestDimOnly && count) return;
+  if(highestDimOnly && count) return;
   for(exp0.Init(shape, TopAbs_EDGE); exp0.More(); exp0.Next()){
     TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
     bool exists = false;
@@ -558,7 +564,7 @@ void OCC_Internals::_multiBind(TopoDS_Shape shape, int tag,
       outDimTags.push_back(std::pair<int, int>(1, t));
     count++;
   }
-  if(returnHighestDimOnly && count) return;
+  if(highestDimOnly && count) return;
   for(exp0.Init(shape, TopAbs_VERTEX); exp0.More(); exp0.Next()){
     TopoDS_Vertex vertex = TopoDS::Vertex(exp0.Current());
     bool exists = false;
@@ -566,7 +572,7 @@ void OCC_Internals::_multiBind(TopoDS_Shape shape, int tag,
     if(t <= 0){
       if(_vertexTag.IsBound(vertex)){
         t = _vertexTag.Find(vertex);
-        exists = false;
+        exists = true;
       }
       t = getMaxTag(0) + 1;
     }
@@ -1994,7 +2000,7 @@ bool OCC_Internals::fillet(const std::vector<int> &regionTags,
     }
     TopoDS_Shape shape = _find(3, regionTags[i]);
     b.Add(c, shape);
-    if(removeRegion) unbind(shape, 3, regionTags[i], true); // recursive
+    if(removeRegion) unbind(shape, 3, regionTags[i], true);
   }
   TopoDS_Shape result;
   try{
@@ -2023,6 +2029,16 @@ bool OCC_Internals::fillet(const std::vector<int> &regionTags,
   return true;
 }
 
+static void _filterTags(std::vector<std::pair<int, int> > &outDimTags, int minDim)
+{
+  std::vector<std::pair<int, int> > tmp(outDimTags);
+  outDimTags.clear();
+  for(unsigned int i = 0; i < tmp.size(); i++){
+    if(tmp[i].first >= minDim)
+      outDimTags.push_back(tmp[i]);
+  }
+}
+
 bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
                                     const std::vector<std::pair<int, int> > &objectDimTags,
                                     const std::vector<std::pair<int, int> > &toolDimTags,
@@ -2039,6 +2055,7 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
     return false;
   }
 
+  int minDim = 3;
   TopTools_ListOfShape objectShapes, toolShapes;
   for(unsigned int i = 0; i < objectDimTags.size(); i++){
     int dim = objectDimTags[i].first;
@@ -2051,6 +2068,7 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
       TopoDS_Shape object = _find(dim, t);
       objectShapes.Append(object);
     }
+    minDim = std::min(minDim, dim);
   }
   for(unsigned int i = 0; i < toolDimTags.size(); i++){
     int dim = toolDimTags[i].first;
@@ -2063,9 +2081,11 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
       TopoDS_Shape tool = _find(dim, t);
       toolShapes.Append(tool);
     }
+    minDim = std::min(minDim, dim);
   }
 
   TopoDS_Shape result;
+  std::vector<TopoDS_Shape> mapOriginal;
   std::vector<TopTools_ListOfShape> mapModified, mapGenerated;
   std::vector<bool> mapDeleted;
   try{
@@ -2086,12 +2106,14 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
         result = fuse.Shape();
         TopTools_ListIteratorOfListOfShape it(objectShapes);
         for(; it.More(); it.Next()){
+          mapOriginal.push_back(it.Value());
           mapModified.push_back(fuse.Modified(it.Value()));
           mapDeleted.push_back(fuse.IsDeleted(it.Value()));
           mapGenerated.push_back(fuse.Generated(it.Value()));
         }
         TopTools_ListIteratorOfListOfShape it2(toolShapes);
         for(; it2.More(); it2.Next()){
+          mapOriginal.push_back(it2.Value());
           mapModified.push_back(fuse.Modified(it2.Value()));
           mapDeleted.push_back(fuse.IsDeleted(it2.Value()));
           mapGenerated.push_back(fuse.Generated(it2.Value()));
@@ -2114,12 +2136,14 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
         result = common.Shape();
         TopTools_ListIteratorOfListOfShape it(objectShapes);
         for(; it.More(); it.Next()){
+          mapOriginal.push_back(it.Value());
           mapModified.push_back(common.Modified(it.Value()));
           mapDeleted.push_back(common.IsDeleted(it.Value()));
           mapGenerated.push_back(common.Generated(it.Value()));
         }
         TopTools_ListIteratorOfListOfShape it2(toolShapes);
         for(; it2.More(); it2.Next()){
+          mapOriginal.push_back(it2.Value());
           mapModified.push_back(common.Modified(it2.Value()));
           mapDeleted.push_back(common.IsDeleted(it2.Value()));
           mapGenerated.push_back(common.Generated(it2.Value()));
@@ -2143,12 +2167,14 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
         result = cut.Shape();
         TopTools_ListIteratorOfListOfShape it(objectShapes);
         for(; it.More(); it.Next()){
+          mapOriginal.push_back(it.Value());
           mapModified.push_back(cut.Modified(it.Value()));
           mapDeleted.push_back(cut.IsDeleted(it.Value()));
           mapGenerated.push_back(cut.Generated(it.Value()));
         }
         TopTools_ListIteratorOfListOfShape it2(toolShapes);
         for(; it2.More(); it2.Next()){
+          mapOriginal.push_back(it2.Value());
           mapModified.push_back(cut.Modified(it2.Value()));
           mapDeleted.push_back(cut.IsDeleted(it2.Value()));
           mapGenerated.push_back(cut.Generated(it2.Value()));
@@ -2174,6 +2200,7 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
         result = fragments.Shape();
         TopTools_ListIteratorOfListOfShape it(objectShapes);
         for(; it.More(); it.Next()){
+          mapOriginal.push_back(it.Value());
           mapModified.push_back(fragments.Modified(it.Value()));
           mapDeleted.push_back(fragments.IsDeleted(it.Value()));
           mapGenerated.push_back(fragments.Generated(it.Value()));
@@ -2187,136 +2214,59 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
     return false;
   }
 
-  // don't try to preserve numbering if we specify the tag explicitly, or if
-  // there is a problem
-  bool bug1 = (objectDimTags.size() + toolDimTags.size() != mapModified.size());
-  bool bug2 = (op == OCC_Internals::Union); // steange fuse behavior in OCC 7.1
-  if(tag >= 0 || bug1 || bug2){
-    if(bug1) Msg::Error("Wrong shape count in boolean operation");
-    if(removeObject){
-      for(unsigned int i = 0; i < objectDimTags.size(); i++){
-        int d = objectDimTags[i].first;
-        int t = objectDimTags[i].second;
-        if(_isBound(d, t)) unbind(_find(d, t), d, t, true); // recursive
-      }
-    }
-    if(removeTool){
-      for(unsigned int i = 0; i < toolDimTags.size(); i++){
-        int d = toolDimTags[i].first;
-        int t = toolDimTags[i].second;
-        if(_isBound(d, t)) unbind(_find(d, t), d, t, true); // recursive
+  int numObjects = objectDimTags.size();
+  std::vector<std::pair<int, int> > dimTags(objectDimTags);
+  dimTags.insert(dimTags.end(), toolDimTags.begin(), toolDimTags.end());
+
+  // if we specify the tag explicitly, just go ahead and bind the resulting
+  // shape (and sub-shapes)
+  if(tag >= 0){
+    for(unsigned int i = 0; i < dimTags.size(); i++){
+      bool remove = (i < numObjects) ? removeObject : removeTool;
+      if(remove){
+        int d = dimTags[i].first;
+        int t = dimTags[i].second;
+        if(_isBound(d, t)) unbind(_find(d, t), d, t, true);
       }
     }
     _multiBind(result, tag, outDimTags, true, true);
+    _filterTags(outDimTags, minDim);
     return true;
   }
 
-  // otherwise, try to preserve the numbering
-  std::vector<TopoDS_Shape> toBind;
-  for(unsigned int i = 0; i < objectDimTags.size(); i++){
-    int dim = objectDimTags[i].first;
-    int tag = objectDimTags[i].second;
-    if(mapDeleted[i] && !mapGenerated[i].Extent()){
-      // the shape has been deleted
-      if(removeObject && _isBound(dim, tag)){
-        unbind(_find(dim, tag), dim, tag, true);
-      }
+  // otherwise, preserve the numbering of the input shapes that did not change,
+  // or that were replaced by a single shape. (This is handy for simple models,
+  // but it's not clear if it's actually a good idea... We should maybe just
+  // apply the simple algorithm (as above), and return the correspondance maps
+  // betwen input and output (list of) entities. Or we could do both?
+  for(unsigned int i = 0; i < dimTags.size(); i++){
+    int dim = dimTags[i].first;
+    int tag = dimTags[i].second;
+    bool remove = (i < numObjects) ? removeObject : removeTool;
+    if(mapDeleted[i]){ // deleted
+      if(remove) unbind(mapOriginal[i], dim, tag, true);
     }
-    else if(mapModified[i].Extent() == 0){
-      // the shape has not been modified
+    else if(mapModified[i].Extent() == 0){ // not modified
       outDimTags.push_back(std::pair<int, int>(dim, tag));
-      // FIXME: since we currently don't guarantee that the tags of the entities
-      // on the boundary will be preserved, we must force a re-sync of the
-      // shape, by unbinding (which will add it in _toRemove) and re-binding it
-      if(removeObject && _isBound(dim, tag)){
-        TopoDS_Shape shape = _find(dim, tag);
-        unbind(shape, dim, tag, true);
-        bind(shape, dim, tag, true);
-      }
     }
-    else if(mapModified[i].Extent() == 1){
-      if(removeObject){
-        // the shape has been replaced by a single shape, keep the same tag
-        if(_isBound(dim, tag)){
-          unbind(_find(dim, tag), dim, tag, true);
-        }
-        bind(mapModified[i].First(), dim, tag, true);
-        outDimTags.push_back(std::pair<int, int>(dim, tag));
-      }
-      else{
-        toBind.push_back(mapModified[i].First());
+    else if(mapModified[i].Extent() == 1){ // replaced by single one
+      if(remove){
+        unbind(mapOriginal[i], dim, tag, true);
+        bind(mapModified[i].First(), dim, tag, false); // not recursive!
+        int t = _find(dim, mapModified[i].First());
+        if(tag != t)
+          Msg::Info("Could not preserve tag of %dD object %d (->%d)", dim, tag, t);
+        outDimTags.push_back(std::pair<int, int>(dim, t));
       }
     }
     else{
-      if(removeObject && _isBound(dim, tag)){
-        unbind(_find(dim, tag), dim, tag, true);
-      }
-      TopTools_ListIteratorOfListOfShape it(mapModified[i]);
-      for(; it.More(); it.Next())
-        toBind.push_back(it.Value());
-    }
-    {
-      TopTools_ListIteratorOfListOfShape it(mapGenerated[i]);
-      for(; it.More(); it.Next())
-        toBind.push_back(it.Value());
+      if(remove) unbind(mapOriginal[i], dim, tag, true);
     }
   }
-
-  for(unsigned int i = 0; i < toolDimTags.size(); i++){
-    int k = objectDimTags.size() + i;
-    int dim = toolDimTags[i].first;
-    int tag = toolDimTags[i].second;
-    if(mapDeleted[k] && !mapGenerated[k].Extent()){
-      // the shape has been deleted
-      if(removeTool && _isBound(dim, tag)){
-        unbind(_find(dim, tag), dim, tag, true); // recursive
-      }
-    }
-    else if(mapModified[k].Extent() == 0){
-      // the shape has not been modified
-      outDimTags.push_back(std::pair<int, int>(dim, tag));
-      // FIXME: since we currently don't guarantee that the tags of the entities
-      // on the boundary will be preserved, we must force a re-sync of the
-      // shape, by unbinding (which will add it in _toRemove) and re-binding it
-      if(removeTool && _isBound(dim, tag)){
-        TopoDS_Shape shape = _find(dim, tag);
-        unbind(shape, dim, tag, true);
-        bind(shape, dim, tag, true);
-      }
-    }
-    else if(mapModified[k].Extent() == 1){
-      if(removeTool){
-        // the shape has been replaced by a single shape, keep the same tag
-        if(_isBound(dim, tag)){
-          unbind(_find(dim, tag), dim, tag, true); // recursive
-        }
-        bind(mapModified[k].First(), dim, tag, true); // recursive
-        outDimTags.push_back(std::pair<int, int>(dim, tag));
-      }
-      else{
-        toBind.push_back(mapModified[k].First());
-      }
-    }
-    else{
-      if(removeTool && _isBound(dim, tag)){
-        unbind(_find(dim, tag), dim, tag, true); // recursive
-      }
-      TopTools_ListIteratorOfListOfShape it(mapModified[k]);
-      for(; it.More(); it.Next())
-        toBind.push_back(it.Value());
-    }
-    {
-      TopTools_ListIteratorOfListOfShape it(mapGenerated[k]);
-      for(; it.More(); it.Next())
-        toBind.push_back(it.Value());
-    }
-  }
-
-  for(unsigned int i = 0; i < toBind.size(); i++){
-    // bind all remaining entities (and only return the new ones, as modified
-    // entities can appear as "Modified()" subshapes of both object and tool)
-    _multiBind(toBind[i], -1, outDimTags, true, true, true);
-  }
+  for(int dim = -2; dim <= 3; dim++) _recomputeMaxTag(dim);
+  // bind all remaining entities and add the new ones to the returned list
+  _multiBind(result, -1, outDimTags, false, true, true);
+  _filterTags(outDimTags, minDim);
 
   return true;
 }
@@ -2390,6 +2340,8 @@ bool OCC_Internals::_transform(const std::vector<std::pair<int, int> > &inDimTag
       }
       result = gtfo->Shape();
     }
+    // FIXME we should implement rebind(object, result, dim) which would
+    // unbind/bind all subshapes to the same tags
     unbind(object, dim, tag, true);
     bind(result, dim, tag, true);
   }

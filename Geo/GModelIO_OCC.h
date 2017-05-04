@@ -74,11 +74,14 @@ class OCC_Internals {
 
   // bind (potentially) mutliple entities in shape and return the tags in
   // outTags. If tag > 0 and a single entity if found, use that; if
-  // highestDimOnly is true, only return the entities of the highest dimension
+  // highestDimOnly is true, only bind the entities (and sub-entities, if
+  // recursive is set) of the highest dimension; if returnNewOnly is set, only
+  // return newly bound entities in outDimTags.
   void _multiBind(TopoDS_Shape shape, int tag,
                   std::vector<std::pair<int, int> > &outDimTags,
                   bool returnHighestDimOnly, bool recursive=false,
                   bool returnNewOnly=false);
+
   // is the entity of a given dimension and tag bound?
   bool _isBound(int dim, int tag);
 
