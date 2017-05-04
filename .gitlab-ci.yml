@@ -5,4 +5,4 @@ ubuntu16.04:
     - cd build
     - cmake ..
     - make -j 4
-    - ctest --output-on-failure
+    - ctest -j 4 --output-on-failure
