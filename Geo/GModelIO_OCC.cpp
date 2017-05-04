@@ -2214,20 +2214,18 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
     return false;
   }
 
+  int numObjects = objectDimTags.size();
+  std::vector<std::pair<int, int> > dimTags(objectDimTags);
+  dimTags.insert(dimTags.end(), toolDimTags.begin(), toolDimTags.end());
+
   // if we specify the tag explicitly, just go ahead and bind the resulting
   // shape (and sub-shapes)
   if(tag >= 0){
-    if(removeObject){
-      for(unsigned int i = 0; i < objectDimTags.size(); i++){
-        int d = objectDimTags[i].first;
-        int t = objectDimTags[i].second;
-        if(_isBound(d, t)) unbind(_find(d, t), d, t, true);
-      }
-    }
-    if(removeTool){
-      for(unsigned int i = 0; i < toolDimTags.size(); i++){
-        int d = toolDimTags[i].first;
-        int t = toolDimTags[i].second;
+    for(unsigned int i = 0; i < dimTags.size(); i++){
+      bool remove = (i < numObjects) ? removeObject : removeTool;
+      if(remove){
+        int d = dimTags[i].first;
+        int t = dimTags[i].second;
         if(_isBound(d, t)) unbind(_find(d, t), d, t, true);
       }
     }
@@ -2238,19 +2236,23 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
 
   // otherwise, preserve the numbering of the input shapes that did not change,
   // or that were replaced by a single shape
-  for(unsigned int i = 0; i < objectDimTags.size(); i++){
-    int dim = objectDimTags[i].first;
-    int tag = objectDimTags[i].second;
+
+  // TODO: it's not clear if this is a good idea. We should maybe just apply the
+  // simple algorithm (above), and just return the correspondance maps betwen
+  // input[] and output[] entities. Or keep this, but still add a way to get the
+  // mapping.
+  for(unsigned int i = 0; i < dimTags.size(); i++){
+    int dim = dimTags[i].first;
+    int tag = dimTags[i].second;
+    bool remove = (i < numObjects) ? removeObject : removeTool;
     if(mapDeleted[i]){ // object deleted
-      if(removeObject) unbind(mapOriginal[i], dim, tag, true);
+      if(remove) unbind(mapOriginal[i], dim, tag, true);
     }
     else if(mapModified[i].Extent() == 0){ // object not modified
       outDimTags.push_back(std::pair<int, int>(dim, tag));
-      unbind(mapOriginal[i], dim, tag, false); // not recursive!
-      bind(mapOriginal[i], dim, tag, false); // not recursive!
     }
     else if(mapModified[i].Extent() == 1){ // object replaced by single one
-      if(removeObject){
+      if(remove){
         unbind(mapOriginal[i], dim, tag, true);
         bind(mapModified[i].First(), dim, tag, false); // not recursive!
         int t = _find(dim, mapModified[i].First());
@@ -2260,35 +2262,12 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
       }
     }
     else{
-      if(removeObject) unbind(mapOriginal[i], dim, tag, true);
+      if(remove) unbind(mapOriginal[i], dim, tag, true);
     }
   }
-  for(unsigned int i = 0; i < toolDimTags.size(); i++){
-    int k = objectDimTags.size() + i;
-    int dim = toolDimTags[i].first;
-    int tag = toolDimTags[i].second;
-    if(mapDeleted[k]){ // tool deleted
-      if(removeTool) unbind(mapOriginal[k], dim, tag, true);
-    }
-    else if(mapModified[k].Extent() == 0){ // tool not modified
-      outDimTags.push_back(std::pair<int, int>(dim, tag));
-      unbind(mapOriginal[k], dim, tag, false); // not recursive!
-      bind(mapOriginal[k], dim, tag, false); // not recursive!
-    }
-    else if(mapModified[k].Extent() == 1){
-      if(removeTool){ // tool replaced by single one
-        unbind(mapOriginal[k], dim, tag, true);
-        bind(mapModified[k].First(), dim, tag, false); // not recursive!
-        int t = _find(dim, mapModified[k].First());
-        if(tag != t)
-          Msg::Info("Could not preserve tag of %dD tool %d (->%d)", dim, tag, t);
-        outDimTags.push_back(std::pair<int, int>(dim, t));
-      }
-    }
-    else{
-      if(removeTool) unbind(mapOriginal[k], dim, tag, true);
-    }
-  }
+
+  for(int dim = -2; dim <= 3; dim++)
+    _recomputeMaxTag(dim);
 
   // bind all remaining entities and add the new ones to the returned list
   _multiBind(result, -1, outDimTags, false, true, true);
