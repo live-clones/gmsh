@@ -702,6 +702,22 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
                     v22->x(),v22->y(),v22->z(),
                     v21->x(),v21->y(),v21->z(),l+1,l+1,l+1,l+1);
         }
+        if (c1._column.size() != c2._column.size()) {
+          MVertex *v11,*v12,*v;
+          v11 = c1._column[N-1];
+          v12 = c2._column[N-1];
+          v = c1._column.size() > c2._column.size() ?
+              c1._column[N] : c2._column[N];
+          MTriangle *qq = new MTriangle(v11,v12,v);
+          qq->setPartition (N+1);
+          myCol.push_back(qq);
+          blTris.push_back(qq);
+          if(ff2)
+            fprintf(ff2,"ST (%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+                    v11->x(),v11->y(),v11->z(),
+                    v12->x(),v12->y(),v12->z(),
+                    v->x(),v->y(),v->z(),N+1,N+1,N+1);
+        }
         // int M = std::max(c1._column.size(),c2._column.size());
         for (unsigned int l=0;l<myCol.size();l++)_columns->_toFirst[myCol[l]] = myCol[0];
         _columns->_elemColumns[myCol[0]] = myCol;
