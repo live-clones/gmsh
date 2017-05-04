@@ -646,7 +646,10 @@ static void addOrRemove(MVertex *v1, MVertex *v2, std::set<MEdge,Less_Edge> & be
   }
 }
 
-static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
+static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf,
+                                                                std::vector<MQuadrangle*> &blQuads,
+                                                                std::vector<MTriangle*> &blTris,
+                                                                std::set<MVertex*> &verts)
 {
   if (!buildAdditionalPoints2D (gf))return;
   BoundaryLayerColumns* _columns = gf->getColumns();
@@ -654,15 +657,15 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
   std::set<MEdge,Less_Edge> bedges;
   std::set<MEdge,Less_Edge> removed;
 
-  std::vector<MQuadrangle*> blQuads;
-  std::vector<MTriangle*> blTris;
+//  std::vector<MQuadrangle*> blQuads;
+//  std::vector<MTriangle*> blTris;
   std::list<GEdge*> edges = gf->edges();
   std::list<GEdge*> embedded_edges = gf->embeddedEdges();
   edges.insert(edges.begin(), embedded_edges.begin(),embedded_edges.end());
   std::list<GEdge*>::iterator ite = edges.begin();
   FILE *ff2 = Fopen ("tato.pos","w");
   if(ff2) fprintf(ff2,"View \" \"{\n");
-  std::set<MVertex*> verts;
+//  std::set<MVertex*> verts;
 
   std::vector<MLine*> _lines;
 
@@ -825,9 +828,9 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf)
   kil_(gf);
   meshGenerator(gf, 0, 0, true , false, &hop);
 
-  gf->quadrangles = blQuads;
-  gf->triangles.insert(gf->triangles.begin(),blTris.begin(),blTris.end());
-  gf->mesh_vertices.insert(gf->mesh_vertices.begin(),verts.begin(),verts.end());
+//  gf->quadrangles = blQuads;
+//  gf->triangles.insert(gf->triangles.begin(),blTris.begin(),blTris.end());
+//  gf->mesh_vertices.insert(gf->mesh_vertices.begin(),verts.begin(),verts.end());
 }
 
 static bool inside_domain(MElementOctree* octree,double x,double y)
@@ -1548,6 +1551,10 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   // fill the small gmsh structures
   BDS2GMSH(m, gf, recoverMap);
 
+  std::vector<MQuadrangle*> blQuads;
+  std::vector<MTriangle*> blTris;
+  std::set<MVertex*> verts;
+
   bool infty = false;
   if (gf->getMeshingAlgo() == ALGO_2D_FRONTAL_QUAD ||
       gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS ||
@@ -1557,7 +1564,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     if (infty)
       buildBackGroundMesh (gf);
     // BOUNDARY LAYER
-    modifyInitialMeshForTakingIntoAccountBoundaryLayers(gf);
+    modifyInitialMeshForTakingIntoAccountBoundaryLayers(gf, blQuads, blTris, verts);
   }
 
   // the delaunay algo is based directly on internal gmsh structures
@@ -1587,6 +1594,10 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     if (!infty || !(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine))
       laplaceSmoothing(gf, CTX::instance()->mesh.nbSmoothing, infty);
   }
+
+  gf->quadrangles.insert(gf->quadrangles.begin(),blQuads.begin(),blQuads.end());
+  gf->triangles.insert(gf->triangles.begin(),blTris.begin(),blTris.end());
+  gf->mesh_vertices.insert(gf->mesh_vertices.begin(),verts.begin(),verts.end());
 
   if(debug){
     char name[256];
@@ -2350,7 +2361,13 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   if (infty)
     buildBackGroundMesh (gf, &equivalence, &parametricCoordinates);
   // BOUNDARY LAYER
-  modifyInitialMeshForTakingIntoAccountBoundaryLayers(gf);
+  std::vector<MQuadrangle*> blQuads;
+  std::vector<MTriangle*> blTris;
+  std::set<MVertex*> verts;
+  modifyInitialMeshForTakingIntoAccountBoundaryLayers(gf, blQuads, blTris, verts);
+  gf->quadrangles.insert(gf->quadrangles.begin(),blQuads.begin(),blQuads.end());
+  gf->triangles.insert(gf->triangles.begin(),blTris.begin(),blTris.end());
+  gf->mesh_vertices.insert(gf->mesh_vertices.begin(),verts.begin(),verts.end());
 
 
   if(algoDelaunay2D(gf)){
