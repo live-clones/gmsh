@@ -2235,23 +2235,21 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
   }
 
   // otherwise, preserve the numbering of the input shapes that did not change,
-  // or that were replaced by a single shape
-
-  // TODO: it's not clear if this is a good idea. We should maybe just apply the
-  // simple algorithm (above), and just return the correspondance maps betwen
-  // input[] and output[] entities. Or keep this, but still add a way to get the
-  // mapping.
+  // or that were replaced by a single shape. (This is handy for simple models,
+  // but it's not clear if it's actually a good idea... We should maybe just
+  // apply the simple algorithm (as above), and return the correspondance maps
+  // betwen input and output (list of) entities. Or we could do both?
   for(unsigned int i = 0; i < dimTags.size(); i++){
     int dim = dimTags[i].first;
     int tag = dimTags[i].second;
     bool remove = (i < numObjects) ? removeObject : removeTool;
-    if(mapDeleted[i]){ // object deleted
+    if(mapDeleted[i]){ // deleted
       if(remove) unbind(mapOriginal[i], dim, tag, true);
     }
-    else if(mapModified[i].Extent() == 0){ // object not modified
+    else if(mapModified[i].Extent() == 0){ // not modified
       outDimTags.push_back(std::pair<int, int>(dim, tag));
     }
-    else if(mapModified[i].Extent() == 1){ // object replaced by single one
+    else if(mapModified[i].Extent() == 1){ // replaced by single one
       if(remove){
         unbind(mapOriginal[i], dim, tag, true);
         bind(mapModified[i].First(), dim, tag, false); // not recursive!
@@ -2265,10 +2263,7 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
       if(remove) unbind(mapOriginal[i], dim, tag, true);
     }
   }
-
-  for(int dim = -2; dim <= 3; dim++)
-    _recomputeMaxTag(dim);
-
+  for(int dim = -2; dim <= 3; dim++) _recomputeMaxTag(dim);
   // bind all remaining entities and add the new ones to the returned list
   _multiBind(result, -1, outDimTags, false, true, true);
   _filterTags(outDimTags, minDim);
