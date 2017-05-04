@@ -80,26 +80,26 @@ edgeColumn BoundaryLayerColumns::getColumns(MVertex *v1, MVertex *v2 , int side)
   if (nbSides == 1){
     if (it1 != _fans.end() && it2 == _fans.end() ){
       if (aaa(it1->second._e1,e))
-	return edgeColumn(getColumn (v1,0),getColumn(v2,0));
+        return edgeColumn(getColumn (v1,0),getColumn(v2,0));
       else
-	return edgeColumn(getColumn (v1,N1-1),getColumn(v2,0));
+        return edgeColumn(getColumn (v1,N1-1),getColumn(v2,0));
     }
     if (it2 != _fans.end() && it1 == _fans.end() ){
       if (aaa(it2->second._e1,e))
-	return edgeColumn(getColumn (v1,0),getColumn(v2,0));
+        return edgeColumn(getColumn (v1,0),getColumn(v2,0));
       else
-	return edgeColumn(getColumn (v1,0),getColumn(v2,N2-1));
+        return edgeColumn(getColumn (v1,0),getColumn(v2,N2-1));
     }
     if (it2 != _fans.end() && it1 != _fans.end() ){
       int c1, c2;
       if (aaa(it1->second._e1,e))
-	c1 =  0;
+        c1 =  0;
       else
-	c1 = N1-1;
+        c1 = N1-1;
       if (aaa(it2->second._e1,e))
-	c2 =  0;
+        c2 =  0;
       else
-	c2 = N2-1;
+        c2 = N2-1;
       return edgeColumn(getColumn (v1,c1),getColumn(v2,c2));
     }
     // fan on the right
@@ -169,56 +169,56 @@ static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
 {
   std::vector<SVector3> N1,N2;
   for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
-	 _columns->_normals.lower_bound(e1);
+          _columns->_normals.lower_bound(e1);
        itm != _columns->_normals.upper_bound(e1); ++itm) N1.push_back(itm->second);
   for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
-	 _columns->_normals.lower_bound(e2);
+          _columns->_normals.lower_bound(e2);
        itm != _columns->_normals.upper_bound(e2); ++itm) N2.push_back(itm->second);
   if (N1.size() == N2.size()){
     for (unsigned int SIDE = 0; SIDE < N1.size() ; SIDE++){
       if (!fan){
-	SVector3 x = N1[SIDE]*1.01+N2[SIDE];
-	x.normalize();
-	_dirs.push_back(x);
+        SVector3 x = N1[SIDE]*1.01+N2[SIDE];
+        x.normalize();
+        _dirs.push_back(x);
       }
       else if (fan){
 
-	//	printf("fan \n");
-	
-	int fanSize = FANSIZE__;
-	// if the angle is greater than PI, than reverse the sense
-	double alpha1 = atan2(N1[SIDE].y(),N1[SIDE].x());
-	double alpha2 = atan2(N2[SIDE].y(),N2[SIDE].x());
-	double AMAX = std::max(alpha1,alpha2);
-	double AMIN = std::min(alpha1,alpha2);
-	MEdge ee[2];
-	if (alpha1 > alpha2){
-	  ee[0] = e2;ee[1] = e1;
-	}
-	else {
-	  ee[0] = e1;ee[1] = e2;
-	}
-	if ( AMAX - AMIN >= M_PI){
-	  double temp = AMAX;
-	  AMAX = AMIN + 2*M_PI;
-	  AMIN = temp;
-	  MEdge eee0 = ee[0];
-	  ee[0] = ee[1];ee[1] = eee0;
-	}
-	_columns->addFan (_myVert,ee[0],ee[1],true);
-	for (int i=-1; i<=fanSize; i++){
-	  double t = (double)(i+1)/ (fanSize+1);
-	  double alpha = t * AMAX + (1.-t)* AMIN;
-	  SVector3 x (cos(alpha),sin(alpha),0);
-	  x.normalize();
-	  _dirs.push_back(x);
-	}
+        // printf("fan \n");
+        
+        int fanSize = FANSIZE__;
+        // if the angle is greater than PI, than reverse the sense
+        double alpha1 = atan2(N1[SIDE].y(),N1[SIDE].x());
+        double alpha2 = atan2(N2[SIDE].y(),N2[SIDE].x());
+        double AMAX = std::max(alpha1,alpha2);
+        double AMIN = std::min(alpha1,alpha2);
+        MEdge ee[2];
+        if (alpha1 > alpha2){
+          ee[0] = e2;ee[1] = e1;
+        }
+        else {
+          ee[0] = e1;ee[1] = e2;
+        }
+        if ( AMAX - AMIN >= M_PI){
+          double temp = AMAX;
+          AMAX = AMIN + 2*M_PI;
+          AMIN = temp;
+          MEdge eee0 = ee[0];
+          ee[0] = ee[1];ee[1] = eee0;
+        }
+        _columns->addFan (_myVert,ee[0],ee[1],true);
+        for (int i=-1; i<=fanSize; i++){
+          double t = (double)(i+1)/ (fanSize+1);
+          double alpha = t * AMAX + (1.-t)* AMIN;
+          SVector3 x (cos(alpha),sin(alpha),0);
+          x.normalize();
+          _dirs.push_back(x);
+        }
       }
       /*
       else {
-	_dirs.push_back(N1[SIDE]);
-	_dirs.push_back(N2[SIDE]);
-	}
+        _dirs.push_back(N1[SIDE]);
+        _dirs.push_back(N2[SIDE]);
+        }
       */
     }
   }
@@ -231,13 +231,13 @@ static void treat3Connections(GFace *gf, MVertex *_myVert, MEdge &e1,
 {
   std::vector<SVector3> N1,N2,N3;
   for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
-	 _columns->_normals.lower_bound(e1);
+         _columns->_normals.lower_bound(e1);
        itm != _columns->_normals.upper_bound(e1); ++itm) N1.push_back(itm->second);
   for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
-	 _columns->_normals.lower_bound(e2);
+         _columns->_normals.lower_bound(e2);
        itm != _columns->_normals.upper_bound(e2); ++itm) N2.push_back(itm->second);
   for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
-	 _columns->_normals.lower_bound(e3);
+         _columns->_normals.lower_bound(e3);
        itm != _columns->_normals.upper_bound(e3); ++itm) N3.push_back(itm->second);
 
   SVector3 x1,x2;
@@ -319,13 +319,13 @@ static void getEdgesData(GFace *gf,
     // check if this edge generates a boundary layer
     if (isEdgeOfFaceBL (gf,*ite,blf)){
       for(unsigned int i = 0; i< (*ite)->lines.size(); i++){
-	MVertex *v1 = (*ite)->lines[i]->getVertex(0);
-	MVertex *v2 = (*ite)->lines[i]->getVertex(1);
-	allEdges.insert(MEdge(v1,v2));
-	_columns->_non_manifold_edges.insert(std::make_pair(v1,v2));
-	_columns->_non_manifold_edges.insert(std::make_pair(v2,v1));
-	_vertices.insert(v1);
-	_vertices.insert(v2);
+        MVertex *v1 = (*ite)->lines[i]->getVertex(0);
+        MVertex *v2 = (*ite)->lines[i]->getVertex(1);
+        allEdges.insert(MEdge(v1,v2));
+        _columns->_non_manifold_edges.insert(std::make_pair(v1,v2));
+        _columns->_non_manifold_edges.insert(std::make_pair(v2,v1));
+        _vertices.insert(v1);
+        _vertices.insert(v2);
       }
     }
     else {
@@ -476,8 +476,8 @@ bool buildAdditionalPoints2D(GFace *gf)
       MEdge e1 (*it,_connections[0]);
       std::vector<SVector3> N1;
       for (std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
-             _columns->_normals.lower_bound(e1);
-	    itm != _columns->_normals.upper_bound(e1); ++itm) N1.push_back(itm->second);
+              _columns->_normals.lower_bound(e1);
+           itm != _columns->_normals.upper_bound(e1); ++itm) N1.push_back(itm->second);
       // one point has only one side and one normal : it has to be at the end of the BL
       // then, we have the tangent to the connecting edge
 
@@ -486,57 +486,58 @@ bool buildAdditionalPoints2D(GFace *gf)
       //   NO BL          BL
 
       if (N1.size() == 1){
-	std::vector<MVertex*> Ts;
-	for (std::multimap<MVertex*,MVertex*>::iterator itm =
-	       tangents.lower_bound(*it);
-	     itm != tangents.upper_bound(*it); ++itm) Ts.push_back(itm->second);
-	// end of the BL --> let's add a column that correspond to the
-	// model edge that lies after the end of teh BL
-	if (Ts.size() == 1){
-	  //	  printf("HERE WE ARE IN FACE %d %d\n",gf->tag(),Ts.size());
-	  //	  printf("Classif dim %d %d\n",(*it)->onWhat()->dim(),Ts[0]->onWhat()->dim());
-	  GEdge *ge = dynamic_cast<GEdge*>(Ts[0]->onWhat());
-	  GVertex *gv = dynamic_cast<GVertex*>((*it)->onWhat());
-	  if (ge && gv){
-	    addColumnAtTheEndOfTheBL (ge,gv,_columns,blf);
-	  }
-	}
-	else {
-	  Msg::Error("Impossible BL Configuration -- One Edge -- Tscp.size() = %d",Ts.size());
-	}
+        std::vector<MVertex*> Ts;
+        for (std::multimap<MVertex*,MVertex*>::iterator itm =
+               tangents.lower_bound(*it);
+             itm != tangents.upper_bound(*it); ++itm) Ts.push_back(itm->second);
+        // end of the BL --> let's add a column that correspond to the
+        // model edge that lies after the end of teh BL
+        if (Ts.size() == 1){
+          // printf("HERE WE ARE IN FACE %d %d\n",gf->tag(),Ts.size());
+          // printf("Classif dim %d %d\n",(*it)->onWhat()->dim(),Ts[0]->onWhat()->dim());
+          GEdge *ge = dynamic_cast<GEdge*>(Ts[0]->onWhat());
+          GVertex *gv = dynamic_cast<GVertex*>((*it)->onWhat());
+          if (ge && gv){
+            addColumnAtTheEndOfTheBL (ge,gv,_columns,blf);
+          }
+        }
+        else {
+          Msg::Error("Impossible BL Configuration -- One Edge -- Tscp.size() = %d",Ts.size());
+        }
       }
       else if (N1.size() == 2){
-	//	printf("%g %g --> %g %g \n",e1.getVertex(0)->x(),e1.getVertex(0)->y(),
-	//	       e1.getVertex(1)->x(),e1.getVertex(1)->y());
-      //	printf("N1.size = %d %g %g %g %g\n",N1.size(),N1[0].x(),N1[0].y(),N1[1].x(),N1[1].y());
-	SPoint2 p0,p1;
-	reparamMeshEdgeOnFace(*it,_connections[0], gf, p0, p1);
+        // printf("%g %g --> %g %g \n",e1.getVertex(0)->x(),e1.getVertex(0)->y(),
+        //        e1.getVertex(1)->x(),e1.getVertex(1)->y());
+        // printf("N1.size = %d %g %g %g %g\n",N1.size(),N1[0].x(),N1[0].y(),N1[1].x(),N1[1].y());
+        SPoint2 p0,p1;
+        reparamMeshEdgeOnFace(_connections[0], *it, gf, p0, p1);
 
-	int fanSize = FANSIZE__;
-	double alpha1 = atan2(N1[0].y(),N1[0].x());
-	double alpha2 = atan2(N1[1].y(),N1[1].x());
-	double alpha3 = atan2(p1.y()-p0.y(),p1.x()-p0.x());
-	double AMAX = std::max(alpha1,alpha2);
-	double AMIN = std::min(alpha1,alpha2);
-	if (alpha3 > AMAX){
-	  AMIN += M_PI;
-	  AMAX += M_PI;
-	}
-	if ( AMAX - AMIN >= M_PI){
-	  double temp = AMAX;
-	  AMAX = AMIN + 2*M_PI;
-	  AMIN = temp;
-	}
-	_columns->addFan (*it,e1,e1,true);
-	//	printf("%g %g --> %g %g\n",N1[0].x(),N1[0].y(),N1[1].x(),N1[1].y());
-	for (int i=-1; i<=fanSize; i++){
-	  double t = (double)(i+1)/ (fanSize+1);
-	  double alpha = t * AMAX + (1.-t)* AMIN;
-	  SVector3 x (cos(alpha),sin(alpha),0);
-	  //	  printf("%d %g %g %g\n",i,x.x(),x.y(),alpha);
-	  x.normalize();
-	  _dirs.push_back(x);
-	}
+        int fanSize = FANSIZE__;
+        double alpha1 = atan2(N1[0].y(),N1[0].x());
+        double alpha2 = atan2(N1[1].y(),N1[1].x());
+        double alpha3 = atan2(p1.y()-p0.y(),p1.x()-p0.x());
+        double AMAX = std::max(alpha1,alpha2);
+        double AMIN = std::min(alpha1,alpha2);
+        if (alpha3 > AMAX){
+          double temp = AMAX;
+          AMAX = AMIN + 2*M_PI;
+          AMIN = temp;
+        }
+        if (alpha3 < AMIN) {
+          double temp = AMIN;
+          AMIN = AMAX - 2 * M_PI;
+          AMAX = temp;
+        }
+        _columns->addFan (*it,e1,e1,true);
+        // printf("%g %g --> %g %g\n",N1[0].x(),N1[0].y(),N1[1].x(),N1[1].y());
+        for (int i=-1; i<=fanSize; i++){
+          double t = (double)(i+1)/ (fanSize+1);
+          double alpha = t * AMAX + (1.-t)* AMIN;
+          SVector3 x (cos(alpha),sin(alpha),0);
+          // printf("%d %g %g %g\n",i,x.x(),x.y(),alpha);
+          x.normalize();
+          _dirs.push_back(x);
+        }
       }
     }
 
@@ -552,33 +553,33 @@ bool buildAdditionalPoints2D(GFace *gf)
       // < ------------------------------- > //
 
       /*      if (endOfTheBL){
-	printf("%g %g %d %d %g\n", (*it)->x(), (*it)->y(), DIR, (int)_dirs.size(),
+        printf("%g %g %d %d %g\n", (*it)->x(), (*it)->y(), DIR, (int)_dirs.size(),
                dot(n, dirEndOfBL));
       }
       */
       if (endOfTheBL && dot(n,dirEndOfBL) > .99){
-	//	printf( "coucou c'est moi\n");
+        // printf( "coucou c'est moi\n");
       }
       else {
-	MVertex *first = *it;
-	double hwall;
-	getLocalInfoAtNode (first, blf, hwall);  
-	std::vector<MVertex*> _column;
-	SPoint2 par = gf->parFromPoint(SPoint3(first->x(),first->y(),first->z()));
-	double L = hwall;
-	while(1){
-	  //	  printf("L = %g\n",L);
-	  if (L > blf->thickness) break;
-	  SPoint2 pnew  (par.x() + L * n.x(),
-			 par.y() + L * n.y());
-	  GPoint pp = gf->point(pnew);
-	  MFaceVertex *_current = new MFaceVertex (pp.x(),pp.y(),pp.z(),gf,pnew.x(),pnew.y());
-	  _current->bl_data = new MVertexBoundaryLayerData;
-	  _column.push_back(_current);
-	  int ith = _column.size() ;
-	  L+= hwall * pow (blf->ratio, ith);
-	}
-	_columns->addColumn(n,*it, _column /*,_metrics*/);
+        MVertex *first = *it;
+        double hwall;
+        getLocalInfoAtNode (first, blf, hwall);  
+        std::vector<MVertex*> _column;
+        SPoint2 par = gf->parFromPoint(SPoint3(first->x(),first->y(),first->z()));
+        double L = hwall;
+        while(1){
+          // printf("L = %g\n",L);
+          if (L > blf->thickness) break;
+          SPoint2 pnew  (par.x() + L * n.x(),
+                         par.y() + L * n.y());
+          GPoint pp = gf->point(pnew);
+          MFaceVertex *_current = new MFaceVertex (pp.x(),pp.y(),pp.z(),gf,pnew.x(),pnew.y());
+          _current->bl_data = new MVertexBoundaryLayerData;
+          _column.push_back(_current);
+          int ith = _column.size() ;
+          L+= hwall * pow (blf->ratio, ith);
+        }
+        _columns->addColumn(n,*it, _column /*,_metrics*/);
       }
     }
   }
