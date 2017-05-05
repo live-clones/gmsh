@@ -62,6 +62,10 @@ class OCC_Internals {
   // remove from the model at the next synchronization
   std::set<std::pair<int, int> > _toRemove;
 
+  // cache of <dim,tag> pairs corresponding to entities that should not be
+  // unbound during boolean operations
+  std::set<std::pair<int, int> > _toPreserve;
+
   // mesh attributes
   OCCMeshAttributesRTree *_meshAttributes;
 

@@ -328,9 +328,11 @@ void OCC_Internals::unbind(TopoDS_Vertex vertex, int tag, bool recursive)
       if(exp1.Current().IsSame(vertex)) return;
     }
   }
+  std::pair<int, int> dimTag(0, tag);
+  if(_toPreserve.find(dimTag) != _toPreserve.end()) return;
   _vertexTag.UnBind(vertex);
   _tagVertex.UnBind(tag);
-  _toRemove.insert(std::pair<int, int>(0, tag));
+  _toRemove.insert(dimTag);
   _recomputeMaxTag(0);
   _changed = true;
 }
@@ -345,9 +347,11 @@ void OCC_Internals::unbind(TopoDS_Edge edge, int tag, bool recursive)
       if(exp1.Current().IsSame(edge)) return;
     }
   }
+  std::pair<int, int> dimTag(1, tag);
+  if(_toPreserve.find(dimTag) != _toPreserve.end()) return;
   _edgeTag.UnBind(edge);
   _tagEdge.UnBind(tag);
-  _toRemove.insert(std::pair<int, int>(1, tag));
+  _toRemove.insert(dimTag);
   _recomputeMaxTag(1);
   if(recursive){
     TopExp_Explorer exp0;
@@ -372,9 +376,11 @@ void OCC_Internals::unbind(TopoDS_Wire wire, int tag, bool recursive)
       if(exp1.Current().IsSame(wire)) return;
     }
   }
+  std::pair<int, int> dimTag(-1, tag);
+  if(_toPreserve.find(dimTag) != _toPreserve.end()) return;
   _wireTag.UnBind(wire);
   _tagWire.UnBind(tag);
-  _toRemove.insert(std::pair<int, int>(-1, tag));
+  _toRemove.insert(dimTag);
   _recomputeMaxTag(-1);
   if(recursive){
     TopExp_Explorer exp0;
@@ -399,9 +405,11 @@ void OCC_Internals::unbind(TopoDS_Face face, int tag, bool recursive)
       if(exp1.Current().IsSame(face)) return;
     }
   }
+  std::pair<int, int> dimTag(2, tag);
+  if(_toPreserve.find(dimTag) != _toPreserve.end()) return;
   _faceTag.UnBind(face);
   _tagFace.UnBind(tag);
-  _toRemove.insert(std::pair<int, int>(2, tag));
+  _toRemove.insert(dimTag);
   _recomputeMaxTag(2);
   if(recursive){
     TopExp_Explorer exp0;
@@ -433,9 +441,11 @@ void OCC_Internals::unbind(TopoDS_Shell shell, int tag, bool recursive)
       if(exp1.Current().IsSame(shell)) return;
     }
   }
+  std::pair<int, int> dimTag(-2, tag);
+  if(_toPreserve.find(dimTag) != _toPreserve.end()) return;
   _shellTag.UnBind(shell);
   _tagShell.UnBind(tag);
-  _toRemove.insert(std::pair<int, int>(-2, tag));
+  _toRemove.insert(dimTag);
   _recomputeMaxTag(-2);
   if(recursive){
     TopExp_Explorer exp0;
@@ -452,9 +462,11 @@ void OCC_Internals::unbind(TopoDS_Shell shell, int tag, bool recursive)
 
 void OCC_Internals::unbind(TopoDS_Solid solid, int tag, bool recursive)
 {
+  std::pair<int, int> dimTag(3, tag);
+  if(_toPreserve.find(dimTag) != _toPreserve.end()) return;
   _solidTag.UnBind(solid);
   _tagSolid.UnBind(tag);
-  _toRemove.insert(std::pair<int, int>(3, tag));
+  _toRemove.insert(dimTag);
   _recomputeMaxTag(3);
   if(recursive){
     TopExp_Explorer exp0;
@@ -2214,7 +2226,7 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
     return false;
   }
 
-  int numObjects = objectDimTags.size();
+  unsigned int numObjects = objectDimTags.size();
   std::vector<std::pair<int, int> > dimTags(objectDimTags);
   dimTags.insert(dimTags.end(), toolDimTags.begin(), toolDimTags.end());
 
@@ -2235,32 +2247,43 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
   }
 
   // otherwise, preserve the numbering of the input shapes that did not change,
-  // or that were replaced by a single shape. (This is handy for simple models,
-  // but it's not clear if it's actually a good idea... We should maybe just
-  // apply the simple algorithm (as above), and return the correspondance maps
-  // betwen input and output (list of) entities. Or we could do both?
+  // or that were replaced by a single shape. Note that to preserve the
+  // numbering of smaller dimension entities (on boundaries) they should appear
+  // *before* higher dimensional entities in the object/tool lists.
+  //
+  // This mechanism is handy for simple models, but it's not clear if it's
+  // actually a good idea. We should maybe just apply the simple algorithm (as
+  // above), and return the correspondance maps betwen input and output (list
+  // of) entities. Or should we do both?
+  _toPreserve.clear();
   for(unsigned int i = 0; i < dimTags.size(); i++){
-    int dim = dimTags[i].first;
-    int tag = dimTags[i].second;
     bool remove = (i < numObjects) ? removeObject : removeTool;
-    if(mapDeleted[i]){ // deleted
-      if(remove) unbind(mapOriginal[i], dim, tag, true);
-    }
-    else if(mapModified[i].Extent() == 0){ // not modified
-      outDimTags.push_back(std::pair<int, int>(dim, tag));
-    }
-    else if(mapModified[i].Extent() == 1){ // replaced by single one
-      if(remove){
+    if(remove){
+      int dim = dimTags[i].first;
+      int tag = dimTags[i].second;
+      if(mapDeleted[i]){ // deleted
+        unbind(mapOriginal[i], dim, tag, true);
+        Msg::Debug("BOOL dim=%d tag=%d deleted", dim, tag);
+      }
+      else if(mapModified[i].Extent() == 0){ // not modified
+        outDimTags.push_back(std::pair<int, int>(dim, tag));
+        _toPreserve.insert(std::pair<int, int>(dim, tag));
+        Msg::Debug("BOOL dim=%d tag=%d not modified", dim, tag);
+      }
+      else if(mapModified[i].Extent() == 1){ // replaced by single one
         unbind(mapOriginal[i], dim, tag, true);
         bind(mapModified[i].First(), dim, tag, false); // not recursive!
         int t = _find(dim, mapModified[i].First());
         if(tag != t)
           Msg::Info("Could not preserve tag of %dD object %d (->%d)", dim, tag, t);
         outDimTags.push_back(std::pair<int, int>(dim, t));
+        _toPreserve.insert(std::pair<int, int>(dim, t));
+        Msg::Debug("BOOL dim=%d tag=%d replaced by 1", dim, tag);
       }
-    }
-    else{
-      if(remove) unbind(mapOriginal[i], dim, tag, true);
+      else{
+        unbind(mapOriginal[i], dim, tag, true);
+        Msg::Debug("BOOL dim=%d tag=%d other", dim, tag);
+      }
     }
   }
   for(int dim = -2; dim <= 3; dim++) _recomputeMaxTag(dim);

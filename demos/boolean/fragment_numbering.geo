@@ -1,5 +1,6 @@
 SetFactory("OpenCASCADE");
 
+//Geometry.LineNumbers = 1;
 Geometry.SurfaceNumbers = 1;
 
 DefineConstant[
@@ -17,6 +18,10 @@ Translate {2*w, 0, 0} { Duplicata { Surface{4}; } }
 
 Rectangle(6) = {-6*w, 0, 0, 12*w, 5*w, 0};
 
+b() = Boundary{ Surface{6}; };
+t = b(2);
+Printf("top line tag: ", t);
+
 b() = {};
 For i In {1:N}
   s = news; b() += s; Disk(s) = {-w-R-spacing, (2*R+spacing)*i, 0, R};
@@ -24,6 +29,6 @@ EndFor
 
 Printf("disk tags: ", b());
 
-c() = BooleanFragments{ Surface{1:6}; Delete; }{ Surface{b()}; Delete; };
+c() = BooleanFragments{ Line{t}; Surface{1:6}; Delete; }{ Surface{b()}; Delete; };
 
-Printf("all tags (disk tags should be unchanged!): ", c());
+Printf("all tags (disk and top line tags should be unchanged!): ", c());
