@@ -411,8 +411,15 @@ void getLocalInfoAtNode (MVertex *v, BoundaryLayerField *blf, double &hwall) {
     double t;
     v->getParameter(0,t);
     double hwall_beg = blf->hwall (ge->getBeginVertex()->tag());    
-    double hwall_end = blf->hwall (ge->getEndVertex()->tag());    
-    hwall = hwall_beg + (t-t_begin)/(t_end-t_begin) * (hwall_end - hwall_beg);
+    double hwall_end = blf->hwall (ge->getEndVertex()->tag());
+    double x = (t-t_begin)/(t_end-t_begin);
+    double hwallLin = hwall_beg + x * (hwall_end - hwall_beg);
+    double hwall_mid = std::min(hwall_beg, hwall_end);
+    double hwallQuad = hwall_beg * (1-x)*(1-x) +
+                       hwall_mid * 2*x*(1-x) +
+                       hwall_end * x*x;
+    // we prefer a quadratic growing:
+    hwall = 0*hwallLin + 1*hwallQuad;
   } 
 }
 
