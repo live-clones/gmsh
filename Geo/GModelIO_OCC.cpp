@@ -2055,10 +2055,12 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
                                     const std::vector<std::pair<int, int> > &objectDimTags,
                                     const std::vector<std::pair<int, int> > &toolDimTags,
                                     std::vector<std::pair<int, int> > &outDimTags,
+                                    std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                                     bool removeObject, bool removeTool)
 {
   double tolerance = CTX::instance()->geom.toleranceBoolean;
   bool parallel = CTX::instance()->geom.occParallel;
+  bool preserveNumbering = CTX::instance()->geom.occBooleanPreserveNumbering;
 
   if(objectDimTags.empty()) return true;
 
@@ -2226,70 +2228,101 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
     return false;
   }
 
+  std::vector<std::pair<int, int> > inDimTags;
+  inDimTags.insert(inDimTags.end(), objectDimTags.begin(), objectDimTags.end());
+  inDimTags.insert(inDimTags.end(), toolDimTags.begin(), toolDimTags.end());
   unsigned int numObjects = objectDimTags.size();
-  std::vector<std::pair<int, int> > dimTags(objectDimTags);
-  dimTags.insert(dimTags.end(), toolDimTags.begin(), toolDimTags.end());
 
-  // if we specify the tag explicitly, just go ahead and bind the resulting
-  // shape (and sub-shapes)
-  if(tag >= 0){
-    for(unsigned int i = 0; i < dimTags.size(); i++){
+  if(tag >= 0 || !preserveNumbering){
+    // if we specify the tag explicitly, or if we don't care about preserving
+    // the numering, just go ahead and bind the resulting shape (and sub-shapes)
+    for(unsigned int i = 0; i < inDimTags.size(); i++){
       bool remove = (i < numObjects) ? removeObject : removeTool;
       if(remove){
-        int d = dimTags[i].first;
-        int t = dimTags[i].second;
+        int d = inDimTags[i].first;
+        int t = inDimTags[i].second;
         if(_isBound(d, t)) unbind(_find(d, t), d, t, true);
       }
     }
     _multiBind(result, tag, outDimTags, true, true);
     _filterTags(outDimTags, minDim);
-    return true;
   }
-
-  // otherwise, preserve the numbering of the input shapes that did not change,
-  // or that were replaced by a single shape. Note that to preserve the
-  // numbering of smaller dimension entities (on boundaries) they should appear
-  // *before* higher dimensional entities in the object/tool lists.
-  //
-  // This mechanism is handy for simple models, but it's not clear if it's
-  // actually a good idea. We should maybe just apply the simple algorithm (as
-  // above), and return the correspondance maps betwen input and output (list
-  // of) entities. Or should we do both?
-  _toPreserve.clear();
-  for(unsigned int i = 0; i < dimTags.size(); i++){
-    bool remove = (i < numObjects) ? removeObject : removeTool;
-    if(remove){
-      int dim = dimTags[i].first;
-      int tag = dimTags[i].second;
+  else{
+    // otherwise, try to preserve the numbering of the input shapes that did not
+    // change, or that were replaced by a single shape. Note that to preserve
+    // the numbering of smaller dimension entities (on boundaries) they should
+    // appear *before* higher dimensional entities in the object/tool lists.
+    _toPreserve.clear();
+    for(unsigned int i = 0; i < inDimTags.size(); i++){
+      int dim = inDimTags[i].first;
+      int tag = inDimTags[i].second;
+      bool remove = (i < numObjects) ? removeObject : removeTool;
       if(mapDeleted[i]){ // deleted
-        unbind(mapOriginal[i], dim, tag, true);
-        Msg::Debug("BOOL dim=%d tag=%d deleted", dim, tag);
+        if(remove) unbind(mapOriginal[i], dim, tag, true);
+        Msg::Debug("BOOL (%d,%d) deleted", dim, tag);
       }
       else if(mapModified[i].Extent() == 0){ // not modified
         outDimTags.push_back(std::pair<int, int>(dim, tag));
         _toPreserve.insert(std::pair<int, int>(dim, tag));
-        Msg::Debug("BOOL dim=%d tag=%d not modified", dim, tag);
+        Msg::Debug("BOOL (%d,%d) not modified", dim, tag);
       }
       else if(mapModified[i].Extent() == 1){ // replaced by single one
-        unbind(mapOriginal[i], dim, tag, true);
-        bind(mapModified[i].First(), dim, tag, false); // not recursive!
-        int t = _find(dim, mapModified[i].First());
-        if(tag != t)
-          Msg::Info("Could not preserve tag of %dD object %d (->%d)", dim, tag, t);
-        outDimTags.push_back(std::pair<int, int>(dim, t));
-        _toPreserve.insert(std::pair<int, int>(dim, t));
-        Msg::Debug("BOOL dim=%d tag=%d replaced by 1", dim, tag);
+        if(remove){
+          unbind(mapOriginal[i], dim, tag, true);
+          bind(mapModified[i].First(), dim, tag, false); // not recursive!
+          int t = _find(dim, mapModified[i].First());
+          if(tag != t)
+            Msg::Info("Could not preserve tag of %dD object %d (->%d)", dim, tag, t);
+          outDimTags.push_back(std::pair<int, int>(dim, t));
+          _toPreserve.insert(std::pair<int, int>(dim, t));
+        }
+        Msg::Debug("BOOL (%d,%d) replaced by 1", dim, tag);
       }
       else{
-        unbind(mapOriginal[i], dim, tag, true);
-        Msg::Debug("BOOL dim=%d tag=%d other", dim, tag);
+        if(remove) unbind(mapOriginal[i], dim, tag, true);
+        Msg::Debug("BOOL (%d,%d) other", dim, tag);
       }
     }
+    for(int dim = -2; dim <= 3; dim++) _recomputeMaxTag(dim);
+    // bind all remaining entities and add the new ones to the returned list
+    _multiBind(result, -1, outDimTags, false, true, true);
+    _filterTags(outDimTags, minDim);
   }
-  for(int dim = -2; dim <= 3; dim++) _recomputeMaxTag(dim);
-  // bind all remaining entities and add the new ones to the returned list
-  _multiBind(result, -1, outDimTags, false, true, true);
-  _filterTags(outDimTags, minDim);
+
+  // return input/output correspondance maps
+  for(unsigned int i = 0; i < inDimTags.size(); i++){
+    int dim = inDimTags[i].first;
+    int tag = inDimTags[i].second;
+    std::pair<int, int> dimTag(dim, tag);
+    std::vector<std::pair<int, int> > dimTags;
+    if(mapDeleted[i]){ // deleted
+    }
+    else if(mapModified[i].Extent() == 0){ // not modified
+      dimTags.push_back(dimTag);
+    }
+    else{
+      TopTools_ListIteratorOfListOfShape it(mapModified[i]);
+      for(; it.More(); it.Next()){
+        if(_isBound(dim, it.Value())){
+          int t = _find(dim, it.Value());
+          dimTags.push_back(std::pair<int, int>(dim, t));
+        }
+      }
+      TopTools_ListIteratorOfListOfShape it2(mapGenerated[i]);
+      for(; it2.More(); it2.Next()){
+        if(_isBound(dim, it2.Value())){
+          int t = _find(dim, it2.Value());
+          dimTags.push_back(std::pair<int, int>(dim, t));
+        }
+      }
+    }
+    std::ostringstream sstream;
+    sstream << "BOOL in (" << dim << "," << tag << ") -> out";
+    for(unsigned int j = 0; j < dimTags.size(); j++)
+      sstream << " (" << dimTags[j].first << "," << dimTags[j].second << ")";
+    Msg::Debug("%s", sstream.str().c_str());
+    outDimTagsMap.push_back(dimTags);
+  }
 
   return true;
 }
@@ -2298,40 +2331,44 @@ bool OCC_Internals::booleanUnion(int tag,
                                  const std::vector<std::pair<int, int> > &objectDimTags,
                                  const std::vector<std::pair<int, int> > &toolDimTags,
                                  std::vector<std::pair<int, int> > &outDimTags,
+                                 std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                                  bool removeObject, bool removeTool)
 {
   return booleanOperator(tag, OCC_Internals::Union, objectDimTags, toolDimTags,
-                         outDimTags, removeObject, removeTool);
+                         outDimTags, outDimTagsMap, removeObject, removeTool);
 }
 
 bool OCC_Internals::booleanIntersection(int tag,
                                         const std::vector<std::pair<int, int> > &objectDimTags,
                                         const std::vector<std::pair<int, int> > &toolDimTags,
                                         std::vector<std::pair<int, int> > &outDimTags,
+                                        std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                                         bool removeObject, bool removeTool)
 {
   return booleanOperator(tag, OCC_Internals::Intersection, objectDimTags, toolDimTags,
-                         outDimTags, removeObject, removeTool);
+                         outDimTags, outDimTagsMap, removeObject, removeTool);
 }
 
 bool OCC_Internals::booleanDifference(int tag,
                                       const std::vector<std::pair<int, int> > &objectDimTags,
                                       const std::vector<std::pair<int, int> > &toolDimTags,
                                       std::vector<std::pair<int, int> > &outDimTags,
+                                      std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                                       bool removeObject, bool removeTool)
 {
   return booleanOperator(tag, OCC_Internals::Difference, objectDimTags, toolDimTags,
-                         outDimTags, removeObject, removeTool);
+                         outDimTags, outDimTagsMap, removeObject, removeTool);
 }
 
 bool OCC_Internals::booleanFragments(int tag,
                                      const std::vector<std::pair<int, int> > &objectDimTags,
                                      const std::vector<std::pair<int, int> > &toolDimTags,
                                      std::vector<std::pair<int, int> > &outDimTags,
+                                     std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                                      bool removeObject, bool removeTool)
 {
   return booleanOperator(tag, OCC_Internals::Fragments, objectDimTags, toolDimTags,
-                         outDimTags, removeObject, removeTool);
+                         outDimTags, outDimTagsMap, removeObject, removeTool);
 }
 
 bool OCC_Internals::_transform(const std::vector<std::pair<int, int> > &inDimTags,

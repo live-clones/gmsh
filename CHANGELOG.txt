@@ -1,5 +1,6 @@
 3.0.2: improved handling of meshing constraints and entity numbering after
-boolean operations.
+boolean operations; improved handling of fast coarseness transitions in
+MeshAdapt.
 
 3.0.1 (April 14, 2017): fixed OpenCASCADE plane surfaces with holes.
 

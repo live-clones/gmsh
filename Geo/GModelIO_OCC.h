@@ -254,26 +254,31 @@ class OCC_Internals {
                        const std::vector<std::pair<int, int> > &objectDimTags,
                        const std::vector<std::pair<int, int> > &toolDimTags,
                        std::vector<std::pair<int, int> > &outDimTags,
+                       std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                        bool removeObject, bool removeTool);
   bool booleanUnion(int tag,
                     const std::vector<std::pair<int, int> > &objectDimTags,
                     const std::vector<std::pair<int, int> > &toolDimTags,
                     std::vector<std::pair<int, int> > &outDimTags,
+                    std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                     bool removeObject, bool removeTool);
   bool booleanIntersection(int tag,
                            const std::vector<std::pair<int, int> > &objectDimTags,
                            const std::vector<std::pair<int, int> > &toolDimTags,
                            std::vector<std::pair<int, int> > &outDimTags,
+                           std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                            bool removeObject, bool removeTool);
   bool booleanDifference(int tag,
                          const std::vector<std::pair<int, int> > &objectDimTags,
                          const std::vector<std::pair<int, int> > &toolDimTags,
                          std::vector<std::pair<int, int> > &outDimTags,
+                         std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                          bool removeObject, bool removeTool);
   bool booleanFragments(int tag,
                         const std::vector<std::pair<int, int> > &objectDimTags,
                         const std::vector<std::pair<int, int> > &toolDimTags,
                         std::vector<std::pair<int, int> > &outDimTags,
+                        std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                         bool removeObject, bool removeTool);
 
   // apply transformations

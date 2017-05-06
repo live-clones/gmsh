@@ -3941,13 +3941,14 @@ Boolean :
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<std::pair<int, int > > object, tool, out;
+        std::vector<std::vector<std::pair<int, int > > > outMap;
         ListOfShapes2VectorOfPairs($3, object);
         ListOfShapes2VectorOfPairs($7, tool);
         // currently we don't distinguish between Delete and Recursive Delete:
         // we always delete recursively. Let us know if you have examples where
         // having the choice would be interesting
         r = GModel::current()->getOCCInternals()->booleanOperator
-          (-1, (OCC_Internals::BooleanOperator)$1, object, tool, out, $4, $8);
+          (-1, (OCC_Internals::BooleanOperator)$1, object, tool, out, outMap, $4, $8);
         VectorOfPairs2ListOfShapes(out, $$);
       }
       else{
@@ -3982,13 +3983,14 @@ BooleanShape :
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<std::pair<int, int> > object, tool, out;
+        std::vector<std::vector<std::pair<int, int > > > outMap;
         ListOfShapes2VectorOfPairs($7, object);
         ListOfShapes2VectorOfPairs($11, tool);
         // currently we don't distinguish between Delete and Recursive Delete:
         // we always delete recursively. Let us know if you have examples where
         // having the choice would be interesting
         r = GModel::current()->getOCCInternals()->booleanOperator
-          ((int)$3, (OCC_Internals::BooleanOperator)$1, object, tool, out, $8, $12);
+          ((int)$3, (OCC_Internals::BooleanOperator)$1, object, tool, out, outMap, $8, $12);
       }
       if(!r) yymsg(0, "Could not apply boolean operator");
       List_Delete($7);
