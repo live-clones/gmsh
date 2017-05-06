@@ -318,7 +318,7 @@ bool edgeSwapTestDelaunay(BDS_Edge *e, GFace *gf)
   fourthPoint(p1x, p2x, op1x, fourth);
   double result = robustPredicates::insphere(p1x, p2x, op1x, fourth, op2x) *
     robustPredicates::orient3d(p1x, p2x, op1x, fourth);
-  return result > 0.;
+  return result > 1e-12;
 }
 
 bool edgeSwapTestHighOrder(BDS_Edge *e,GFace *gf)
