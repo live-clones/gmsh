@@ -548,6 +548,7 @@ public:
                        const std::vector<std::pair<int, int> > &objectDimTags,
                        const std::vector<std::pair<int, int> > &toolDimTags,
                        std::vector<std::pair<int, int> > &outDimTags,
+                       std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                        bool removeObject, bool removeTool)
   {
     return _error("apply boolean operator");
@@ -556,6 +557,7 @@ public:
                     const std::vector<std::pair<int, int> > &objectDimTags,
                     const std::vector<std::pair<int, int> > &toolDimTags,
                     std::vector<std::pair<int, int> > &outDimTags,
+                    std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                     bool removeObject, bool removeTool)
   {
     return _error("apply boolean union");
@@ -564,6 +566,7 @@ public:
                            const std::vector<std::pair<int, int> > &objectDimTags,
                            const std::vector<std::pair<int, int> > &toolDimTags,
                            std::vector<std::pair<int, int> > &outDimTags,
+                           std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                            bool removeObject, bool removeTool)
   {
     return _error("apply boolean intersection");
@@ -572,6 +575,7 @@ public:
                          const std::vector<std::pair<int, int> > &objectDimTags,
                          const std::vector<std::pair<int, int> > &toolDimTags,
                          std::vector<std::pair<int, int> > &outDimTags,
+                         std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                          bool removeObject, bool removeTool)
   {
     return _error("apply boolean difference");
@@ -580,6 +584,7 @@ public:
                         const std::vector<std::pair<int, int> > &objectDimTags,
                         const std::vector<std::pair<int, int> > &toolDimTags,
                         std::vector<std::pair<int, int> > &outDimTags,
+                        std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                         bool removeObject, bool removeTool)
   {
     return _error("apply boolean fragments");
