@@ -38,6 +38,7 @@
 #include <algorithm>
 #include <sstream>
 #include "GmshSocket.h"
+#include "picojson.h"
 
 namespace onelab{
 
@@ -1030,6 +1031,29 @@ namespace onelab{
     {
       _parameterSpace.toJSON(json, client);
     }
+    void fromJSON(const std::string &json, const std::string &client="")
+    {
+      picojson::value v;
+      std::string err = picojson::parse(v, json);
+      if(err.size()){
+        printf("%s\n", err.c_str());
+        return;
+      }
+      // check if the type of the value is "object"
+      if(v.is<picojson::object>()) {
+        const picojson::value::object& obj = v.get<picojson::object>();
+        for (picojson::value::object::const_iterator i = obj.begin(); i != obj.end(); ++i) {
+          printf("json object %s -> %s\n", i->first.c_str(), i->second.to_str().c_str());
+          if(i->second.is<picojson::array>()){
+            const picojson::value::array& arr = i->second.get<picojson::array>();
+            for(unsigned int j = 0; j < arr.size(); j++){
+              printf(" ele %d = %s\n", j, arr[j].to_str().c_str());
+            }
+          }
+        }
+      }
+    }
+
   };
 
   // A local client, which lives in the same memory space as the server.

@@ -1204,6 +1204,9 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
     for(unsigned int i = 0; i < delStrings.size(); i++)
       free(delStrings[i]);
   }
+
+  // FIXME test
+  //onelab::server::instance()->fromJSON("{ \"key\" : [ \"hello\" , \"hello2\" ] }");
 }
 
 void onelabGroup::openTreeItem(const std::string &name)
