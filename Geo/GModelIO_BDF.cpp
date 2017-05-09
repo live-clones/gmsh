@@ -80,8 +80,8 @@ static int readVertexBDF(FILE *fp, char *buffer, int keySize,
       char buffer2[256];
       if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
       j = 0;
-      while(j < (int)strlen(buffer2) && buffer[j] != ',') j++;
-      strncpy(tmp[4], &buffer2[j], 16);
+      while(j < (int)strlen(buffer2) && buffer2[j] != ',') j++;
+      strncpy(tmp[4], &buffer2[j + 1], 16);
     }
     break;
   case 1: // small field
