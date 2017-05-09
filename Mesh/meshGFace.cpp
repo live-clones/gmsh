@@ -657,15 +657,12 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf,
   std::set<MEdge,Less_Edge> bedges;
   std::set<MEdge,Less_Edge> removed;
 
-//  std::vector<MQuadrangle*> blQuads;
-//  std::vector<MTriangle*> blTris;
   std::list<GEdge*> edges = gf->edges();
   std::list<GEdge*> embedded_edges = gf->embeddedEdges();
   edges.insert(edges.begin(), embedded_edges.begin(),embedded_edges.end());
   std::list<GEdge*>::iterator ite = edges.begin();
   FILE *ff2 = Fopen ("tato.pos","w");
   if(ff2) fprintf(ff2,"View \" \"{\n");
-//  std::set<MVertex*> verts;
 
   std::vector<MLine*> _lines;
 
@@ -827,10 +824,6 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf,
   deMeshGFace kil_;
   kil_(gf);
   meshGenerator(gf, 0, 0, true , false, &hop);
-
-//  gf->quadrangles = blQuads;
-//  gf->triangles.insert(gf->triangles.begin(),blTris.begin(),blTris.end());
-//  gf->mesh_vertices.insert(gf->mesh_vertices.begin(),verts.begin(),verts.end());
 }
 
 static bool inside_domain(MElementOctree* octree,double x,double y)
@@ -1610,8 +1603,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   gf->quadrangles.insert(gf->quadrangles.begin(),blQuads.begin(),blQuads.end());
   gf->triangles.insert(gf->triangles.begin(),blTris.begin(),blTris.end());
   gf->mesh_vertices.insert(gf->mesh_vertices.begin(),verts.begin(),verts.end());
-
-  gf->model()->writeMSH("AAA.msh");
 
   
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&

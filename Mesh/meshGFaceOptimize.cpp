@@ -496,19 +496,12 @@ static int _removeTwoQuadsNodes(GFace *gf)
         MVertex *v2 = q1->getVertex((comm+2)%4);
         MVertex *v3 = q1->getVertex((comm+3)%4);
         MVertex *v4 = 0;
-        int cnt = 0;
         for (int i=0;i<4;i++){
           if (q2->getVertex(i) != v1 && q2->getVertex(i) != v3 &&
               q2->getVertex(i) != v){
             v4 = q2->getVertex(i);
-            ++cnt;
+            break;
           }
-        }
-        if (cnt != 1) {
-          // The two quads do not actually share two edges. This can happen if the
-          // boundary layer mesh inserted to the surface only after this routine
-          ++it;
-          continue;
         }
         if (!v4){
           Msg::Error("BUG DISCOVERED IN _removeTwoQuadsNodes ,%p,%p,%p",v1,v2,v3);
@@ -1247,9 +1240,7 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
       sprintf(MATCHFILE,".face.match");
       if(perfect_match(ncount, NULL, ecount, &elist, &elen, NULL, MATCHFILE,
                        0, 0, 0, 0, &matzeit)){
-	printf("coucou x\n");
         Msg::Error("Perfect Match failed in Quadrangulation, try something else");
-	printf("coucou x\n");
         free(elist);
         pairs.clear();
       }
@@ -1433,7 +1424,6 @@ void recombineIntoQuads(GFace *gf,
   // simple recombination algo
   for (int IT=0;IT<2;IT++){
     _recombineIntoQuads(gf, 0);
-    printf("done\n");
     if(haveParam)     RelocateVertices (gf,CTX::instance()->mesh.nbSmoothing);
   }
 
