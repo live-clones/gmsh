@@ -17,9 +17,19 @@
 
 static int getFormatBDF(char *buffer, int &keySize)
 {
+  for(unsigned int i = 0; i < strlen(buffer); i++){
+    if(buffer[i] == ','){ // free fields
+      if(buffer[keySize] == '*'){ // will contine on next line
+        keySize = i;
+        return -1;
+      }
+      else{
+        keySize = i;
+        return 0;
+      }
+    }
+  }
   if(buffer[keySize] == '*'){ keySize++; return 2; } // long fields
-  for(unsigned int i = 0; i < strlen(buffer); i++)
-    if(buffer[i] == ',') return 0; // free fields
   return 1; // small fields;
 }
 
@@ -54,16 +64,24 @@ static int readVertexBDF(FILE *fp, char *buffer, int keySize,
                          int *num, double *x, double *y, double *z)
 {
   char tmp[5][32];
+  int format = getFormatBDF(buffer, keySize);
   int j = keySize;
-
-  switch(getFormatBDF(buffer, keySize)){
+  switch(format){
   case 0: // free field
+  case -1: // free field with continuation
     for(int i = 0; i < 5; i++){
       tmp[i][16] = '\0';
       strncpy(tmp[i], &buffer[j + 1], 16);
       for(int k = 0; k < 16; k++){ if(tmp[i][k] == ',') tmp[i][k] = '\0'; }
       j++;
       while(j < (int)strlen(buffer) && buffer[j] != ',') j++;
+    }
+    if(format == -1){ // continued on next line
+      char buffer2[256];
+      if(!fgets(buffer2, sizeof(buffer2), fp)) return 0;
+      j = 0;
+      while(j < (int)strlen(buffer2) && buffer[j] != ',') j++;
+      strncpy(tmp[4], &buffer2[j], 16);
     }
     break;
   case 1: // small field
@@ -105,7 +123,7 @@ static void readLineBDF(char *buffer, int format, std::vector<char*> &fields)
   int cmax = (format == 2) ? 16 : 8; // max char per (center) field
   int nmax = (format == 2) ? 4 : 8; // max num of (center) fields per line
 
-  if(format == 0){ // free fields
+  if(format <= 0){ // free fields
     for(unsigned int i = 0; i < strlen(buffer); i++){
       if(buffer[i] == ',') fields.push_back(&buffer[i + 1]);
     }
