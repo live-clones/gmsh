@@ -1605,13 +1605,20 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   delete m;
 
-  if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-     !CTX::instance()->mesh.optimizeLloyd && !onlyInitialMesh && CTX::instance()->mesh.algoRecombine != 2)
-    recombineIntoQuads(gf);
+
 
   gf->quadrangles.insert(gf->quadrangles.begin(),blQuads.begin(),blQuads.end());
   gf->triangles.insert(gf->triangles.begin(),blTris.begin(),blTris.end());
   gf->mesh_vertices.insert(gf->mesh_vertices.begin(),verts.begin(),verts.end());
+
+  gf->model()->writeMSH("AAA.msh");
+
+  
+  if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
+     !CTX::instance()->mesh.optimizeLloyd && !onlyInitialMesh && CTX::instance()->mesh.algoRecombine != 2)
+    recombineIntoQuads(gf);
+  
+
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
                        gf->meshStatistics.average_element_shape,

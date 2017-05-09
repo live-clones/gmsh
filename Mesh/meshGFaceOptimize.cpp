@@ -119,7 +119,7 @@ void buildMeshGenerationDataStructures(GFace *gf,
     std::cout << "***************************************** NULL" << std::endl;
     throw;
   }
-
+  
   for(unsigned int i = 0;i < gf->triangles.size(); i++)
     setLcs(gf->triangles[i], vSizesMap, data);
 
@@ -857,14 +857,11 @@ void getAllBoundaryLayerVertices (GFace *gf, std::set<MVertex*> &vs){
   vs.clear();
   BoundaryLayerColumns* _columns = gf->getColumns();
   if (!_columns)return;
-  for ( std::map<MElement*,std::vector<MElement*> >::iterator it = _columns->_elemColumns.begin();
-	it != _columns->_elemColumns.end();it++){
-    std::vector<MElement *> &e = it->second;
-    for (unsigned int i=0;i<e.size();i++){
-      for (int j=0;j<e[i]->getNumVertices();j++){
-	vs.insert(e[i]->getVertex(j));
-      }
-    }
+  for ( std::multimap<MVertex*, BoundaryLayerData>::iterator it = _columns->_data.begin();
+	it != _columns->_data.end();it++){
+    BoundaryLayerData &data = it->second;
+    for (size_t i = 0;i<data._column.size();i++)
+      vs.insert(data._column[i]);
   }
 }
 
@@ -1197,6 +1194,7 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
   std::sort(pairs.begin(),pairs.end());
   std::set<MElement*> touched;
 
+  
   if(CTX::instance()->mesh.algoRecombine != 0){
 #if defined(HAVE_BLOSSOM)
     int ncount = gf->triangles.size();
@@ -1243,12 +1241,15 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
         }
       }
 
+      
       double matzeit = 0.0;
       char MATCHFILE[256];
       sprintf(MATCHFILE,".face.match");
       if(perfect_match(ncount, NULL, ecount, &elist, &elen, NULL, MATCHFILE,
                        0, 0, 0, 0, &matzeit)){
+	printf("coucou x\n");
         Msg::Error("Perfect Match failed in Quadrangulation, try something else");
+	printf("coucou x\n");
         free(elist);
         pairs.clear();
       }
@@ -1304,6 +1305,7 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
 #endif
   }
 
+  
   std::vector<RecombineTriangle>::iterator itp = pairs.begin();
   while(itp != pairs.end()){
     // recombine if difference between max quad angle and right
@@ -1312,6 +1314,7 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
     if(itp->angle < gf->meshAttributes.recombineAngle){
       MElement *t1 = itp->t1;
       MElement *t2 = itp->t2;
+
       if(touched.find(t1) == touched.end() &&
           touched.find(t2) == touched.end()){
         touched.insert(t1);
@@ -1349,6 +1352,7 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
   }
   gf->triangles = triangles2;
 
+  
   if(CTX::instance()->mesh.algoRecombine != 1){
     quadsToTriangles(gf, minqual);
   }
@@ -1384,7 +1388,7 @@ void recombineIntoQuads(GFace *gf,
   double t1 = Cpu();
 
   bool haveParam = true;
-  bool saveAll = false; //CTX::instance()->mesh.saveAll;
+  bool saveAll = CTX::instance()->mesh.saveAll;
   if(gf->geomType() == GEntity::DiscreteSurface && !gf->getCompound())
     haveParam = false;
 
@@ -1392,10 +1396,10 @@ void recombineIntoQuads(GFace *gf,
   int success = _recombineIntoQuads(gf, minqual);
 
   if (saveAll) gf->model()->writeMSH("raw.msh");
+
   if(haveParam && nodeRepositioning){
     RelocateVertices (gf,CTX::instance()->mesh.nbSmoothing);
   }
-
   // blossom-quad algo
   if(success && CTX::instance()->mesh.algoRecombine != 0){
     if(topologicalOpti){
@@ -1429,6 +1433,7 @@ void recombineIntoQuads(GFace *gf,
   // simple recombination algo
   for (int IT=0;IT<2;IT++){
     _recombineIntoQuads(gf, 0);
+    printf("done\n");
     if(haveParam)     RelocateVertices (gf,CTX::instance()->mesh.nbSmoothing);
   }
 

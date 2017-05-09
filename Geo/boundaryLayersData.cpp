@@ -506,13 +506,13 @@ bool buildAdditionalPoints2D(GFace *gf)
         }
       }
       else if (N1.size() == 2){
-        // printf("%g %g --> %g %g \n",e1.getVertex(0)->x(),e1.getVertex(0)->y(),
-        //        e1.getVertex(1)->x(),e1.getVertex(1)->y());
-        // printf("N1.size = %d %g %g %g %g\n",N1.size(),N1[0].x(),N1[0].y(),N1[1].x(),N1[1].y());
+	//	printf("%g %g --> %g %g \n",e1.getVertex(0)->x(),e1.getVertex(0)->y(),
+	//	       e1.getVertex(1)->x(),e1.getVertex(1)->y());
+	//	printf("N1.size = %d %g %g %g %g\n",N1.size(),N1[0].x(),N1[0].y(),N1[1].x(),N1[1].y());
         SPoint2 p0,p1;
         reparamMeshEdgeOnFace(_connections[0], *it, gf, p0, p1);
 
-        int fanSize = FANSIZE__;
+        int fanSize = fan ? FANSIZE__ : 0 ;
         double alpha1 = atan2(N1[0].y(),N1[0].x());
         double alpha2 = atan2(N1[1].y(),N1[1].x());
         double alpha3 = atan2(p1.y()-p0.y(),p1.x()-p0.x());
@@ -528,7 +528,7 @@ bool buildAdditionalPoints2D(GFace *gf)
           AMIN = AMAX - 2 * M_PI;
           AMAX = temp;
         }
-        _columns->addFan (*it,e1,e1,true);
+	if (fan) _columns->addFan (*it,e1,e1,true);
         // printf("%g %g --> %g %g\n",N1[0].x(),N1[0].y(),N1[1].x(),N1[1].y());
         for (int i=-1; i<=fanSize; i++){
           double t = (double)(i+1)/ (fanSize+1);
