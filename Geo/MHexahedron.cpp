@@ -411,6 +411,40 @@ int MHexahedronN::getNumFacesRep(bool curved)
                        CTX::instance()->mesh.numSubEdges * 2) : 12;
 }
 
+int MHexahedron::getNumFacesRep(bool curved)
+{
+  return 6 * (CTX::instance()->mesh.numSubEdges *
+              CTX::instance()->mesh.numSubEdges * 2);
+}
+
+void MHexahedron::getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
+{
+//    static const int f[12][3] = {
+//      {0, 3, 2}, {0, 2, 1},
+//      {0, 1, 5}, {0, 5, 4},
+//      {0, 4, 7}, {0, 7, 3},
+//      {1, 2, 6}, {1, 6, 5},
+//      {2, 3, 7}, {2, 7, 6},
+//      {4, 5, 6}, {4, 6, 7}
+//    };
+//    _getFaceRep(_v[f[num][0]], _v[f[num][1]], _v[f[num][2]], x, y, z, n);
+  if (CTX::instance()->mesh.numSubEdges > 1) {
+    _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+    return;
+  }
+  static const int f[24][4] = {
+          {0, 3, 2, 1}, {3, 2, 1, 0}, {2, 1, 0, 3}, {1, 0, 3, 2},
+          {0, 1, 5, 4}, {1, 5, 4, 0}, {5, 4, 0, 1}, {4, 0, 1, 5},
+          {0, 4, 7, 3}, {4, 7, 3, 0}, {7, 3, 0, 4}, {3, 0, 4, 7},
+          {1, 2, 6, 5}, {2, 6, 5, 1}, {6, 5, 1, 2}, {5, 1, 2, 6},
+          {2, 3, 7, 6}, {3, 7, 6, 2}, {7, 6, 2, 3}, {6, 2, 3, 7},
+          {4, 5, 6, 7}, {5, 6, 7, 4}, {6, 7, 4, 5}, {7, 4, 5, 6}
+  };
+  _getFaceRepQuad(getVertex(f[num][0]), getVertex(f[num][1]),
+                  getVertex(f[num][2]), getVertex(f[num][3]),
+                  x, y, z, n);
+}
+
 void _getIndicesReversedHex(int order, indicesReversed &indices)
 {
   fullMatrix<double> ref = gmshGenerateMonomialsHexahedron(order);
