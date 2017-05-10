@@ -838,8 +838,7 @@ static void addScalarPyramid(PView *p, double **xyz,
   PViewOptions *opt = p->getOptions();
 
   const int it[4][3] = {{0, 1, 4}, {3, 0, 4}, {1, 2, 4}, {2, 3, 4}};
-  //const int is[2][4] = {{0, 1, 2, 4}, {2, 3, 0, 4}};
-  const int is[2][4] = {{0,1,3,4}, {1,2,3,4}};
+  const int is[2][4] = {{0, 1, 3, 4}, {1, 2, 3, 4}};
 
   if(opt->boundary > 0){
     opt->boundary--;
