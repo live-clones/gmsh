@@ -345,8 +345,9 @@ void EndCurve(Curve *c)
     }
     else if(!v[3] && fabs((R - R2) / (R + R2)) > 0.1){
       // check cocircular pts (allow 10% error)
-      Msg::Error("Control points of circle with tag %d are not cocircular (%g, %g)",
-                 c->Num, R, R2);
+      Msg::Error("Control points of circle with tag %d are not cocircular: "
+                 "R1=%g, R2=%g, n=[%g,%g,%g]",
+                 c->Num, R, R2, n[0], n[1], n[2]);
     }
     // A1 = angle first pt
     // A3 = angle last pt
