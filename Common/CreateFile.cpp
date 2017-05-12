@@ -71,6 +71,7 @@ int GetFileFormatFromExtension(const std::string &ext)
   else if(ext == ".pdf")  return FORMAT_PDF;
   else if(ext == ".tex")  return FORMAT_TEX;
   else if(ext == ".svg")  return FORMAT_SVG;
+  else if(ext == ".tikz") return FORMAT_TIKZ;
   else if(ext == ".ppm")  return FORMAT_PPM;
   else if(ext == ".yuv")  return FORMAT_YUV;
   else if(ext == ".brep") return FORMAT_BREP;
@@ -120,12 +121,13 @@ std::string GetDefaultFileName(int format)
   case FORMAT_JPEG: name += ".jpg"; break;
   case FORMAT_MPEG: name += ".mpg"; break;
   case FORMAT_PNG:  name += ".png"; break;
-  case FORMAT_PGF:  name += ".todo"; break;
+  case FORMAT_PGF:  name += ".pgf"; break;
   case FORMAT_PS:   name += ".ps"; break;
   case FORMAT_EPS:  name += ".eps"; break;
   case FORMAT_PDF:  name += ".pdf"; break;
   case FORMAT_TEX:  name += ".tex"; break;
   case FORMAT_SVG:  name += ".svg"; break;
+  case FORMAT_TIKZ: name += ".tikz"; break;
   case FORMAT_PPM:  name += ".ppm"; break;
   case FORMAT_YUV:  name += ".yuv"; break;
   case FORMAT_BREP: name += ".brep"; break;
@@ -437,6 +439,7 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_EPS:
   case FORMAT_PDF:
   case FORMAT_SVG:
+  case FORMAT_TIKZ:
     {
       if(!FlGui::available()) break;
 
@@ -460,6 +463,7 @@ void CreateOutputFile(const std::string &fileName, int format,
         (format == FORMAT_PDF) ? GL2PS_PDF :
         (format == FORMAT_PS) ? GL2PS_PS :
         (format == FORMAT_SVG) ? GL2PS_SVG :
+        (format == FORMAT_TIKZ) ? GL2PS_PGF :
         GL2PS_EPS;
       int pssort =
         (CTX::instance()->print.epsQuality == 3) ? GL2PS_NO_SORT :
