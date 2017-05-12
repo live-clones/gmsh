@@ -2287,6 +2287,7 @@ bool OCC_Internals::booleanOperator(int tag, BooleanOperator op,
     // bind all remaining entities and add the new ones to the returned list
     _multiBind(result, -1, outDimTags, false, true, true);
     _filterTags(outDimTags, minDim);
+    _toPreserve.clear();
   }
 
   // return input/output correspondance maps
