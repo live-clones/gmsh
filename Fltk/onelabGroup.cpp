@@ -10,6 +10,8 @@
 #elif defined(HAVE_NO_INTPTR_T)
 typedef unsigned long intptr_t;
 #endif
+#include <fstream>
+#include <streambuf>
 #include <ctype.h>
 #include "GmshMessage.h"
 #include "onelab.h"
@@ -1204,6 +1206,12 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
     for(unsigned int i = 0; i < delStrings.size(); i++)
       free(delStrings[i]);
   }
+
+#if 0 // test
+  std::ifstream t("test.db.json");
+  std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+  onelab::server::instance()->fromJSON(str);
+#endif
 }
 
 void onelabGroup::openTreeItem(const std::string &name)

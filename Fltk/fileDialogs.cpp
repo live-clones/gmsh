@@ -688,26 +688,23 @@ static void activate_gl2ps_choices(int format, int quality, Fl_Check_Button *b[5
     b[1]->deactivate();
     b[2]->deactivate();
     b[3]->deactivate();
-    b[4]->deactivate();
     break;
   case 1: // simple sort
   case 3: // unsorted
     b[1]->activate();
-    b[2]->activate();
-    b[3]->deactivate();
-    if(format == FORMAT_PDF || format == FORMAT_SVG)
-      b[4]->deactivate();
+    b[2]->deactivate();
+    if(format == FORMAT_PS || format == FORMAT_EPS)
+      b[3]->activate();
     else
-      b[4]->activate();
+      b[3]->deactivate();
     break;
   case 2: // bsp sort
     b[1]->activate();
     b[2]->activate();
-    b[3]->activate();
-    if(format == FORMAT_PDF || format == FORMAT_SVG)
-      b[4]->deactivate();
+    if(format == FORMAT_PS || format == FORMAT_EPS)
+      b[3]->activate();
     else
-      b[4]->activate();
+      b[3]->deactivate();
     break;
   }
 }

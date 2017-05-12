@@ -42,6 +42,25 @@ specific, written prior permission. The University of California makes no
 representations about the suitability of this software for any purpose. It is
 provided "as is" without express or implied warranty.
 
+The picojson code (Common/picojson.h) is Copyright 2009-2010 Cybozu Labs, Inc.,
+Copyright 2011-2014 Kazuho Oku, All rights reserved. Redistribution and use in
+source and binary forms, with or without modification, are permitted provided
+that the following conditions are met: 1. Redistributions of source code must
+retain the above copyright notice, this list of conditions and the following
+disclaimer. 2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution. THIS
+SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 The trackball code (Graphics/Trackball.{cpp.h}) is copyright (C) 1993, 1994,
 Silicon Graphics, Inc. ALL RIGHTS RESERVED. Permission to use, copy, modify, and
 distribute this software for any purpose and without fee is hereby granted,

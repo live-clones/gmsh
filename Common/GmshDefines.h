@@ -54,6 +54,7 @@
 #define FORMAT_PVTU  45
 #define FORMAT_X3D   46
 #define FORMAT_TOCHNOG 47
+#define FORMAT_TIKZ  48
 
 // Element types
 #define TYPE_PNT     1

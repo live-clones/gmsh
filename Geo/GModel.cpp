@@ -571,7 +571,7 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
     }
   }
 
-  if(combined || recursive){
+  if(combined){
     // compute boundary of the combined shapes
     std::set<int, AbsIntLessThan> c[3];
     for(unsigned int i = 0; i < outDimTags.size(); i++){

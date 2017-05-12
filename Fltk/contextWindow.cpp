@@ -935,11 +935,11 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       value[i]->callback(elementary_snap_cb);
     }
     butt[0] = new Fl_Check_Button(width - 6 * BH, height - WB - BH, 1.2 * BH, BH, "X");
-    butt[0]->tooltip("(x)");
+    butt[0]->tooltip("Toggle (x) or exclusive unselect (Shift+x)");
     butt[1] = new Fl_Check_Button(width - 6 * BH + 1.2 * BH, height - WB - BH, 1.2*BH, BH, "Y");
-    butt[1]->tooltip("(y)");
+    butt[1]->tooltip("Toggle (y) or exclusive unselect (Shift+y)");
     butt[2] = new Fl_Check_Button(width - 6 * BH + 2.4 * BH, height - WB - BH, (6 - 2*1.2) * BH - WB, BH, "Z freeze");
-    butt[2]->tooltip("(z)");
+    butt[2]->tooltip("Toggle (z) or exclusive unselect (Shift+z)");
   }
 
   tab1->show();
