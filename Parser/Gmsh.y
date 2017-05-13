@@ -6702,12 +6702,13 @@ double treat_Struct_FullName_Float
       }
       else if (type_var == 2) {
         gmsh_yysymbol &s(gmsh_yysymbols[c2]);
-        if((int)s.value.size() < index + 1){
+        if(index < 0 || (int)s.value.size() < index + 1){
           out = val_default;
           if (type_treat == 0) yymsg(0, "Uninitialized variable '%s[%d]'", c2, index);
         }
-        else
+        else{
           out = s.value[index];
+        }
       }
       else {
         out = val_default;
