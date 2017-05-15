@@ -1180,50 +1180,67 @@ void computeDirections(const MElement *element,
                        std::vector<double> &direction,
                        fullMatrix<double> *normals)
 {
+  std::vector<double> distances(baseVert.size());
+  for (int i = 0; i < topVert.size(); ++i) {
+    const double dx = topVert[i]->x() - baseVert[i]->x();
+    const double dy = topVert[i]->y() - baseVert[i]->y();
+    const double dz = topVert[i]->z() - baseVert[i]->z();
+    distances[i] = std::sqrt(dx*dx + dy*dy + dz*dz);
+  }
+  const double delta = std::min(distances[0], distances[1])/100;
+  const double characteristicLength = 2 * *(std::max_element(distances.begin(),
+                                                               distances.end()));
+
   fullVector<double> bezierCoefficients;
-  replaceIntermediateNode(element, iBaseEdge);
-  computeBezierCoefficientsOfJacobian(element, bezierCoefficients, normals);
-  double F = computeFunctional(element, bezierCoefficients,
-                               bezierCoeffIdeal, iBaseEdge);
-
-  const double dx = topVert[0]->x()-baseVert[0]->x();
-  const double dy = topVert[0]->y()-baseVert[0]->y();
-  const double dz = topVert[0]->z()-baseVert[0]->z();
-  const double d = std::sqrt(dx*dx + dy*dy + dz*dz) / 100; //characteristicLength
-
-  double maxsumdf = 0;
+  double maxNormDfSqr = 0;
   for (int i = 2; i < topVert.size(); ++i) {
     const double x = topVert[i]->x();
     const double y = topVert[i]->y();
     const double z = topVert[i]->z();
-    topVert[i]->x() += d;
+
+    topVert[i]->x() += delta;
     replaceIntermediateNode(element, iBaseEdge);
     computeBezierCoefficientsOfJacobian(element, bezierCoefficients, normals);
-    const double fx = computeFunctional(element, bezierCoefficients,
-                                        bezierCoeffIdeal, iBaseEdge);
+    const double fxRight = computeFunctional(element, bezierCoefficients,
+                                             bezierCoeffIdeal, iBaseEdge);
+    topVert[i]->x() -= 2*delta;
+    replaceIntermediateNode(element, iBaseEdge);
+    computeBezierCoefficientsOfJacobian(element, bezierCoefficients, normals);
+    const double fxLeft = computeFunctional(element, bezierCoefficients,
+                                            bezierCoeffIdeal, iBaseEdge);
     topVert[i]->x() = x;
-    topVert[i]->y() += d;
+
+    topVert[i]->y() += delta;
     replaceIntermediateNode(element, iBaseEdge);
     computeBezierCoefficientsOfJacobian(element, bezierCoefficients, normals);
-    const double fy = computeFunctional(element, bezierCoefficients,
-                                        bezierCoeffIdeal, iBaseEdge);
+    const double fyRight = computeFunctional(element, bezierCoefficients,
+                                             bezierCoeffIdeal, iBaseEdge);
+    topVert[i]->y() -= 2*delta;
+    replaceIntermediateNode(element, iBaseEdge);
+    computeBezierCoefficientsOfJacobian(element, bezierCoefficients, normals);
+    const double fyLeft = computeFunctional(element, bezierCoefficients,
+                                            bezierCoeffIdeal, iBaseEdge);
     topVert[i]->y() = y;
-    topVert[i]->z() += d;
+
+    topVert[i]->z() += delta;
     replaceIntermediateNode(element, iBaseEdge);
     computeBezierCoefficientsOfJacobian(element, bezierCoefficients, normals);
-    const double fz = computeFunctional(element, bezierCoefficients,
-                                        bezierCoeffIdeal, iBaseEdge);
+    const double fzRight = computeFunctional(element, bezierCoefficients,
+                                             bezierCoeffIdeal, iBaseEdge);
+    topVert[i]->z() -= 2*delta;
+    replaceIntermediateNode(element, iBaseEdge);
+    computeBezierCoefficientsOfJacobian(element, bezierCoefficients, normals);
+    const double fzLeft = computeFunctional(element, bezierCoefficients,
+                                            bezierCoeffIdeal, iBaseEdge);
     topVert[i]->z() = z;
-    direction[3*(i-2)] = (fx-F)/d;
-    direction[3*(i-2)+1] = (fy-F)/d;
-    direction[3*(i-2)+2] = (fy-F)/d;
-    const double &dfx = direction[3*(i-2)];
-    const double &dfy = direction[3*(i-2)+1];
-    const double &dfz = direction[3*(i-2)+2];
-    maxsumdf = std::max(maxsumdf, dfx*dfx + dfy*dfy + dfz*dfz);
+
+    const double &dfx = direction[3*(i-2)]   = (fxLeft-fxRight)/2/delta;
+    const double &dfy = direction[3*(i-2)+1] = (fyLeft-fyRight)/2/delta;
+    const double &dfz = direction[3*(i-2)+2] = (fzLeft-fzRight)/2/delta;
+    maxNormDfSqr = std::max(maxNormDfSqr, dfx*dfx + dfy*dfy + dfz*dfz);
   }
 
-  const double factor = -200 * d / std::sqrt(maxsumdf);
+  const double factor = characteristicLength / std::sqrt(maxNormDfSqr);
   for (int i = 0; i < direction.size(); ++i) {
     direction[i] *= factor;
   }
