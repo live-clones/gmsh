@@ -1238,7 +1238,6 @@ double objectiveFunction(double xi, MElement *element,
 {
   std::vector<double> coordinate(direction.size());
 
-  fullVector<double> bezierCoefficients;
   for (int i = 2; i < topVert.size(); ++i) {
     double j0 = 3*(i-2);
     coordinate[j0] = topVert[i]->x();
@@ -1249,6 +1248,7 @@ double objectiveFunction(double xi, MElement *element,
     topVert[i]->z() += direction[j0+2] * xi;
   }
 
+  fullVector<double> bezierCoefficients;
   replaceIntermediateNode(element, iBaseEdge);
   computeBezierCoefficientsOfJacobian(element, bezierCoefficients, normals);
   const double f = computeFunctional(element, bezierCoefficients,
@@ -1277,24 +1277,26 @@ void moveTopVertAfterGoldenSection(MElement *element,
   replaceIntermediateNode(element, iBaseEdge);
 }
 
-void optimizeTopVertices(MElement *element,
-                         std::vector<MVertex*> &baseVert,
-                         std::vector<MVertex*> &topVert,
-                         std::vector<double> &bezierCoeffIdeal,
-                         std::set<MVertex*> &movedVert,
-                         int iBaseEdge,
-                         fullMatrix<double> *normals)
+double optimizeTopVertices(MElement *element,
+                           std::vector<MVertex*> &baseVert,
+                           std::vector<MVertex*> &topVert,
+                           std::vector<double> &bezierCoeffIdeal,
+                           std::set<MVertex*> &movedVert,
+                           int iBaseEdge,
+                           fullMatrix<double> *normals)
 {
   std::vector<double> direction((topVert.size()-2)*3);
   computeDirections(element, baseVert, topVert, bezierCoeffIdeal,
                     iBaseEdge, direction, normals);
 
   // Golden section
-  double tol = .001;
+  const double tol = .001;
+  const double astart = 0;
+  const double fstart = objectiveFunction(0, element, topVert, direction,
+                                          bezierCoeffIdeal, iBaseEdge, normals);
 
   static const double lambda = 0.5 * (std::sqrt(5) - 1.0);
-  //static const double mu = 0.5 * (3.0 - std::sqrt(5)); // = 1 - lambda
-  double a = 0;
+  double a = astart;
   double b = 1;
 
   double xi1 = b - lambda * (b - a);
@@ -1323,12 +1325,15 @@ void optimizeTopVertices(MElement *element,
     }
   }
 
-  moveTopVertAfterGoldenSection(element, .5*(a+b), topVert, direction, iBaseEdge);
 
-//  double min;
-//  double max;
-//  jacobianBasedQuality::minMaxJacobianDeterminant(element, min, max);
-//  std::cout << min << "<" << max << std::endl;
+  double xi = f1 < f2 ? xi1 : xi2;
+  double f = std::min(f1, f2);
+  if (fstart < f ) {
+    xi = astart;
+    f = fstart;
+  }
+  moveTopVertAfterGoldenSection(element, xi, topVert, direction, iBaseEdge);
+  return (fstart - f) / fstart;
 }
 
 void curveColumnRobustRecursive(int metaElType, std::vector<MVertex*> &baseVert,
@@ -1360,14 +1365,17 @@ void curveColumnRobustRecursive(int metaElType, std::vector<MVertex*> &baseVert,
   std::vector<double> bezierCoeffIdeal;
   computeIdealJacobian(baseVert, topVert, bezierCoeffIdeal);
 
-  std::cout << "bezierCoeffIdeal:";
+  std::cout << "bezierCoeffIdeal el " << el->getNum() << ":";
   for (int i = 0; i < bezierCoeffIdeal.size(); ++i) {
     std::cout << " " << bezierCoeffIdeal[i];
   }
   std::cout << std::endl;
 
-  optimizeTopVertices(el, baseVert, topVert, bezierCoeffIdeal, movedVert,
-                      (iEdgeInElement+2) % 4, normals);
+  double gain = 1;
+  while (gain > 1e-3) {
+    gain = optimizeTopVertices(el, baseVert, topVert, bezierCoeffIdeal,
+                               movedVert, (iEdgeInElement + 2) % 4, normals);
+  }
 
   if (blob.size() > 1) {
     blob.erase(blob.begin());
