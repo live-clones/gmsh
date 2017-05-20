@@ -723,7 +723,7 @@ void saveDb(const std::string &fileName)
   fp = Fopen((fileName + ".json").c_str(), "wb");
   if(fp){
     std::string json;
-    onelab::server::instance()->toJSON(json);
+    onelab::server::instance()->toJSON(json, "Gmsh");
     fwrite(json.c_str(), sizeof(char), json.size(), fp);
     fclose(fp);
   }
