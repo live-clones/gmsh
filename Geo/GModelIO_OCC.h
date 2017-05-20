@@ -105,8 +105,8 @@ class OCC_Internals {
                  double rx, double ry);
   bool _makeSphere(TopoDS_Solid &result, double xc, double yc, double zc,
                    double radius, double angle1, double angle2, double angle3);
-  bool _makeBlock(TopoDS_Solid &result, double x, double y, double z,
-                  double dx, double dy, double dz);
+  bool _makeBox(TopoDS_Solid &result, double x, double y, double z,
+                double dx, double dy, double dz);
   bool _makeCylinder(TopoDS_Solid &result, double x, double y, double z,
                    double dx, double dy, double dz, double r, double angle);
   bool _makeCone(TopoDS_Solid &result, double x, double y, double z,
@@ -214,8 +214,8 @@ class OCC_Internals {
   bool addVolume(int &tag, const std::vector<int> &shellTags);
   bool addSphere(int &tag, double xc, double yc, double zc, double radius,
                  double angle1, double angle2, double angle3);
-  bool addBlock(int &tag, double x, double y, double z,
-                double dx, double dy, double dz);
+  bool addBox(int &tag, double x, double y, double z,
+              double dx, double dy, double dz);
   bool addCylinder(int &tag, double x, double y, double z,
                    double dx, double dy, double dz, double r, double angle);
   bool addCone(int &tag, double x, double y, double z,
@@ -340,9 +340,9 @@ class OCC_Internals {
   bool makeSphereSTL(double xc, double yc, double zc, double radius, double angle1,
                      double angle2, double angle3, std::vector<SPoint3> &vertices,
                      std::vector<SVector3> &normals, std::vector<int> &triangles);
-  bool makeBlockSTL(double x, double y, double z, double dx, double dy, double dz,
-                    std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
-                    std::vector<int> &triangles);
+  bool makeBoxSTL(double x, double y, double z, double dx, double dy, double dz,
+                  std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+                  std::vector<int> &triangles);
   bool makeCylinderSTL(double x, double y, double z, double dx, double dy, double dz,
                        double r, double angle, std::vector<SPoint3> &vertices,
                        std::vector<SVector3> &normals, std::vector<int> &triangles);
@@ -483,8 +483,8 @@ public:
   {
     return _error("add sphere");
   }
-  bool addBlock(int &tag, double x, double y, double z,
-                double dx, double dy, double dz)
+  bool addBox(int &tag, double x, double y, double z,
+              double dx, double dy, double dz)
   {
     return _error("add block");
   }
@@ -655,9 +655,9 @@ public:
   {
     return false;
   }
-  bool makeBlockSTL(double x, double y, double z, double dx, double dy, double dz,
-                    std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
-                    std::vector<int> &triangles)
+  bool makeBoxSTL(double x, double y, double z, double dx, double dy, double dz,
+                  std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+                  std::vector<int> &triangles)
   {
     return false;
   }

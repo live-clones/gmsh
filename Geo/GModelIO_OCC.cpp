@@ -1371,8 +1371,8 @@ bool OCC_Internals::addSphere(int &tag, double xc, double yc, double zc,
   return true;
 }
 
-bool OCC_Internals::_makeBlock(TopoDS_Solid &result, double x, double y, double z,
-                               double dx, double dy, double dz)
+bool OCC_Internals::_makeBox(TopoDS_Solid &result, double x, double y, double z,
+                             double dx, double dy, double dz)
 {
   if(!dx || !dy || !dz){
     Msg::Error("Degenerate block");
@@ -1396,15 +1396,15 @@ bool OCC_Internals::_makeBlock(TopoDS_Solid &result, double x, double y, double 
   return true;
 }
 
-bool OCC_Internals::addBlock(int &tag, double x, double y, double z,
-                             double dx, double dy, double dz)
+bool OCC_Internals::addBox(int &tag, double x, double y, double z,
+                           double dx, double dy, double dz)
 {
   if(tag >= 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
     return false;
   }
   TopoDS_Solid result;
-  if(!_makeBlock(result, x, y, z, dx, dy, dz))
+  if(!_makeBox(result, x, y, z, dx, dy, dz))
     return false;
   if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
@@ -3406,12 +3406,12 @@ bool OCC_Internals::makeSphereSTL(double xc, double yc, double zc, double radius
   return true;
 }
 
-bool OCC_Internals::makeBlockSTL(double x, double y, double z, double dx, double dy, double dz,
-                                 std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
-                                 std::vector<int> &triangles)
+bool OCC_Internals::makeBoxSTL(double x, double y, double z, double dx, double dy, double dz,
+                               std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+                               std::vector<int> &triangles)
 {
   TopoDS_Solid result;
-  if(!_makeBlock(result, x, y, z, dx, dy, dz))
+  if(!_makeBox(result, x, y, z, dx, dy, dz))
     return false;
   if(!makeSolidSTL(result, vertices, normals, triangles))
     return false;
