@@ -1104,6 +1104,13 @@ Affectation :
 #endif
       Free($6);
     }
+  | tField '[' FExpr ']' tAFFECT tBox tEND
+    {
+#if defined(HAVE_MESH)
+      if(!GModel::current()->getFields()->newField((int)$3, "Box"))
+	yymsg(0, "Cannot create field %i of type '%s'", (int)$3, "Box");
+#endif
+    }
   | tField '[' FExpr ']' tAFFECT tCylinder tEND
     {
 #if defined(HAVE_MESH)
