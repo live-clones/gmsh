@@ -983,14 +983,38 @@ void computeFirstAndLastIdealBezierCoeff(const std::vector<MVertex*> &baseVert,
   db *= .5; // edge length of the reference quad is 2...
   bezierCoeffIdeal.push_back(norm(crossprod(da, db)));
   thickness1 = bezierCoeffIdeal[1] / norm(da);
-  double thickness12 = thickness1;
 }
 
 double linearThickness(const double &thickness0,
                        const double &thickness1,
                        const double &xhi)
 {
-  return thickness0 * (1-xhi) + thickness1 * xhi;
+  return thickness0 * (.5-xhi/2) + thickness1 * (xhi/2+.5);
+}
+
+void idealJacobianDeterminant(const std::vector<MVertex*> &baseVert,
+                              double &thickness0, double &thickness1,
+                              std::vector<double> &xi,
+                              std::vector<double> &idealJacDet)
+{
+  int tag = ElementType::getTag(TYPE_LIN, baseVert.size()-1);
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
+
+  for (int i = 0; i < xi.size(); ++i) {
+    double sf[100][3];
+    fs->df(xi[i], 0, 0, sf);
+    double dx = 0, dy = 0, dz = 0;
+    for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+      const MVertex *v = baseVert[j];
+      dx += sf[j][0] * v->x();
+      dy += sf[j][0] * v->y();
+      dz += sf[j][0] * v->z();
+    }
+//    std::cout << " |" << xi[i] << ", " << std::sqrt(dx*dx + dy*dy + dz*dz);
+//    std::cout << ", " << linearThickness(thickness0, thickness1, xi[i]) << "|";
+    idealJacDet[i] = std::sqrt(dx*dx + dy*dy + dz*dz)
+           * linearThickness(thickness0, thickness1, xi[i]);
+  }
 }
 
 void computeOtherIdealBezierCoeff(const std::vector<MVertex*> &baseVert,
@@ -1011,34 +1035,20 @@ void computeOtherIdealBezierCoeff(const std::vector<MVertex*> &baseVert,
     xhi[i] = 2*(static_cast<double>(i+1)/(sizeSystem+1))-1;
   }
 
+  // Construct system to solve
   fullMatrix<double> A(sizeSystem, sizeSystem);
   fullVector<double> b(sizeSystem), x(sizeSystem);
-
-  int tag = ElementType::getTag(TYPE_LIN, baseVert.size()-1);
-  const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
-
   int tagBez = ElementType::getTag(TYPE_LIN, bezierOrder);
   const bezierBasis *bfs = BasisFactory::getBezierBasis(tagBez);
 
-  // Construct system to solve
   for (int i = 0; i < sizeSystem; ++i) {
-    double sf[100][3];
-    fs->df(xhi[i], 0, 0, sf);
-    double dx = 0, dy = 0, dz = 0;
-    for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
-      const MVertex *v = baseVert[j];
-      dx += sf[j][0] * v->x();
-      dy += sf[j][0] * v->y();
-      dz += sf[j][0] * v->z();
-    }
+    std::vector<double> f(sizeSystem);
+    idealJacobianDeterminant(baseVert, thickness0, thickness1, xi, f);
     double bsf[100];
     bfs->f(xhi[i], 0, 0, bsf);
-    b(i) = std::sqrt(dx*dx + dy*dy + dz*dz)
-            * linearThickness(thickness0, thickness1, xhi[i])
-            - bezierCoeffIdeal[0] * bsf[0]
-            - bezierCoeffIdeal[1] * bsf[1];
-    for (int j = 0; j < sizeSystem-1; ++j) {
-      A(i, j) = bsf[j+2];
+    b(i) = f[i] - bezierCoeffIdeal[0] * bsf[0] - bezierCoeffIdeal[1] * bsf[1];
+    for (int j = 0; j < sizeSystem - 1; ++j) {
+      A(i, j) = bsf[j + 2];
     }
     A(i, sizeSystem-1) = i % 2 ? 1 : -1;
   }
