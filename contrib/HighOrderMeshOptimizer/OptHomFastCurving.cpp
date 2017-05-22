@@ -1363,6 +1363,27 @@ double optimizeTopVertices(MElement *element,
   return (fstart - f) / fstart;
 }
 
+void initialGuessTopVertices(std::vector<MVertex*> &baseVert,
+                             std::vector<MVertex*> &topVert,
+                             std::set<MVertex*> &movedVert)
+{
+  std::vector<double> v0(3),  v1(3);
+  v0[0] = topVert[0]->x() - baseVert[0]->x();
+  v0[1] = topVert[0]->y() - baseVert[0]->y();
+  v0[2] = topVert[0]->z() - baseVert[0]->z();
+  v1[0] = topVert[1]->x() - baseVert[1]->x();
+  v1[1] = topVert[1]->y() - baseVert[1]->y();
+  v1[2] = topVert[1]->z() - baseVert[1]->z();
+
+  for (int i = 2; i < baseVert.size(); ++i) {
+    double xi = (i-1)/(baseVert.size()-1);
+    topVert[i]->x() = baseVert[i]->x() + (1-xi) * v0[0] + xi * v1[0];
+    topVert[i]->y() = baseVert[i]->y() + (1-xi) * v0[1] + xi * v1[1];
+    topVert[i]->z() = baseVert[i]->z() + (1-xi) * v0[2] + xi * v1[2];
+    movedVert.insert(topVert[i]);
+  }
+}
+
 void curveColumnRobustRecursive(int metaElType, std::vector<MVertex*> &baseVert,
                                 std::vector<MElement*> &blob,
                                 std::set<MVertex*> &movedVert,
@@ -1397,6 +1418,8 @@ void curveColumnRobustRecursive(int metaElType, std::vector<MVertex*> &baseVert,
     std::cout << " " << bezierCoeffIdeal[i];
   }
   std::cout << std::endl;
+
+  initialGuessTopVertices(baseVert, topVert, movedVert);
 
   double gain = 1;
   while (gain > 1e-3) {
