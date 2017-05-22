@@ -32,6 +32,7 @@
 #include <fstream>
 #include <string>
 #include <cmath>
+#include <iomanip>
 #include "OptHomFastCurving.h"
 #include "GmshConfig.h"
 #include "GModel.h"
@@ -1261,8 +1262,8 @@ double computeFunctional(const MElement *element,
 
   double functional = 0;
   for (int i = 0; i < numCoeff; ++i) {
-    double bezCoeff = bezierCoefficients(i);
-    double ideal = bezierCoeffIdeal[num2ideal[i]];
+//    double bezCoeff = bezierCoefficients(i);
+//    double ideal = bezierCoeffIdeal[num2ideal[i]];
     const double tmp = bezierCoefficients(i)/bezierCoeffIdeal[num2ideal[i]] - 1;
     functional += tmp*tmp;
   }
@@ -1275,7 +1276,8 @@ void computeDirections(const MElement *element,
                        const std::vector<double> &bezierCoeffIdeal,
                        int iBaseEdge,
                        std::vector<double> &direction,
-                       fullMatrix<double> *normals)
+                       fullMatrix<double> *normals,
+                       double lambda)
 {
   std::vector<double> distances(baseVert.size());
   for (int i = 0; i < topVert.size(); ++i) {
@@ -1284,7 +1286,7 @@ void computeDirections(const MElement *element,
     const double dz = topVert[i]->z() - baseVert[i]->z();
     distances[i] = std::sqrt(dx*dx + dy*dy + dz*dz);
   }
-  const double delta = std::min(distances[0], distances[1])/100;
+  const double delta = std::min(distances[0], distances[1])/1000;
   const double characteristicLength = 2 * *(std::max_element(distances.begin(),
                                                                distances.end()));
 
@@ -1337,7 +1339,7 @@ void computeDirections(const MElement *element,
     maxNormDfSqr = std::max(maxNormDfSqr, dfx*dfx + dfy*dfy + dfz*dfz);
   }
 
-  const double factor = characteristicLength / std::sqrt(maxNormDfSqr);
+  const double factor = lambda * characteristicLength / std::sqrt(maxNormDfSqr);
   for (int i = 0; i < direction.size(); ++i) {
     direction[i] *= factor;
   }
@@ -1391,17 +1393,26 @@ void moveTopVertAfterGoldenSection(MElement *element,
   replaceIntermediateNode(element, iBaseEdge);
 }
 
-double optimizeTopVertices(MElement *element,
-                           std::vector<MVertex*> &baseVert,
-                           std::vector<MVertex*> &topVert,
-                           std::vector<double> &bezierCoeffIdeal,
-                           std::set<MVertex*> &movedVert,
-                           int iBaseEdge,
-                           fullMatrix<double> *normals)
+struct GoldenSectionSearchData {
+  double factor;
+  double functionalBefore;
+  double functionalAfter;
+  double xi;
+};
+
+void optimizeTopVertices(MElement *element,
+                         std::vector<MVertex*> &baseVert,
+                         std::vector<MVertex*> &topVert,
+                         std::vector<double> &bezierCoeffIdeal,
+                         std::set<MVertex*> &movedVert,
+                         int iBaseEdge,
+                         fullMatrix<double> *normals,
+                         GoldenSectionSearchData &data)
 {
+  // TODO update movedVert
   std::vector<double> direction((topVert.size()-2)*3);
   computeDirections(element, baseVert, topVert, bezierCoeffIdeal,
-                    iBaseEdge, direction, normals);
+                    iBaseEdge, direction, normals, data.factor);
 
   // Golden section
   const double tol = .001;
@@ -1440,14 +1451,16 @@ double optimizeTopVertices(MElement *element,
   }
 
 
-  double xi = f1 < f2 ? xi1 : xi2;
+  double &xi = data.xi = f1 < f2 ? xi1 : xi2;
   double f = std::min(f1, f2);
   if (fstart < f ) {
     xi = astart;
     f = fstart;
   }
   moveTopVertAfterGoldenSection(element, xi, topVert, direction, iBaseEdge);
-  return (fstart - f) / fstart;
+  //std::cout << " (" << f << "/" << fstart << ")";
+  data.functionalBefore = fstart;
+  data.functionalAfter = f;
 }
 
 void initialGuessTopVertices(std::vector<MVertex*> &baseVert,
@@ -1508,11 +1521,21 @@ void curveColumnRobustRecursive(int metaElType, std::vector<MVertex*> &baseVert,
 
   initialGuessTopVertices(baseVert, topVert, movedVert);
 
+  GoldenSectionSearchData data;
+  data.factor = 1;
+  data.functionalAfter = 1;
   double gain = 1;
-  while (gain > 1e-3) {
-    gain = optimizeTopVertices(el, baseVert, topVert, bezierCoeffIdeal,
-                               movedVert, (iEdgeInElement + 2) % 4, normals);
+  static double max = 0;
+  while (gain > 1e-4 && data.functionalAfter > 1e-4) {
+    optimizeTopVertices(el, baseVert, topVert, bezierCoeffIdeal, movedVert,
+                        (iEdgeInElement + 2) % 4, normals, data);
+    gain = (data.functionalBefore-data.functionalAfter)/data.functionalBefore;
+    //std::cout << " " << data.functionalAfter << ":" << gain << ":" << data.factor;
+    data.factor *= std::sqrt(data.xi/.5);
   }
+  max = std::max(data.functionalAfter, max);
+  std::cout << "<<" << data.functionalAfter << ":" << gain << ">> " << max;
+  std::cout << std::endl;
 
   if (blob.size() > 1) {
     blob.erase(blob.begin());
