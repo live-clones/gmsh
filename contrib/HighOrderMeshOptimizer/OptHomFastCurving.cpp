@@ -987,9 +987,9 @@ void computeFirstAndLastIdealBezierCoeff(const std::vector<MVertex*> &baseVert,
 
 double linearThickness(const double &thickness0,
                        const double &thickness1,
-                       const double &xhi)
+                       const double &xi)
 {
-  return thickness0 * (.5-xhi/2) + thickness1 * (xhi/2+.5);
+  return thickness0 * (.5-xi/2) + thickness1 * (xi/2+.5);
 }
 
 void idealJacobianDeterminant(const std::vector<MVertex*> &baseVert,
@@ -1021,18 +1021,19 @@ void computeOtherIdealBezierCoeff(const std::vector<MVertex*> &baseVert,
                                   std::vector<double> &bezierCoeffIdeal,
                                   double &thickness0, double &thickness1)
 {
-  // Find the polynomial curve that fit the best J_ideal = D_xhi(x) * e(xhi)
-  // where x(xhi) is the mapping, D_xhi the derivative with respect to xhi
-  // and e is the thickness: e(xhi) = thickness0 * (1-xhi) + thickness1 * xhi
+  // Find the polynomial curve that fit the best J_ideal = D_xi(x) * e(xi)
+  // where x(xi) is the mapping, D_xi the derivative with respect to xi
+  // and e is the thickness: e(xi) = thickness0 * (1-xi) + thickness1 * xi
   //
   // -> We use Remez's algorithm
 
   int bezierOrder = 2*baseVert.size()-3;
   int sizeSystem = bezierOrder;
-  std::vector<double> xhi(sizeSystem);
+  std::vector<double> xi(sizeSystem);
   for (int i = 0; i < sizeSystem; ++i) {
     // initial guess
-    xhi[i] = 2*(static_cast<double>(i+1)/(sizeSystem+1))-1;
+    // TODO use extrema of the Chebyshev polynomial
+    xi[i] = 2*(static_cast<double>(i+1)/(sizeSystem+1))-1;
   }
 
   // Construct system to solve
@@ -1041,22 +1042,108 @@ void computeOtherIdealBezierCoeff(const std::vector<MVertex*> &baseVert,
   int tagBez = ElementType::getTag(TYPE_LIN, bezierOrder);
   const bezierBasis *bfs = BasisFactory::getBezierBasis(tagBez);
 
-  for (int i = 0; i < sizeSystem; ++i) {
+  for (int cnt = 0; cnt < 4; ++cnt) {
     std::vector<double> f(sizeSystem);
     idealJacobianDeterminant(baseVert, thickness0, thickness1, xi, f);
-    double bsf[100];
-    bfs->f(xhi[i], 0, 0, bsf);
-    b(i) = f[i] - bezierCoeffIdeal[0] * bsf[0] - bezierCoeffIdeal[1] * bsf[1];
-    for (int j = 0; j < sizeSystem - 1; ++j) {
-      A(i, j) = bsf[j + 2];
+    for (int i = 0; i < sizeSystem; ++i) {
+      double bsf[100];
+      bfs->f(xi[i], 0, 0, bsf);
+      b(i) = f[i] - bezierCoeffIdeal[0] * bsf[0] - bezierCoeffIdeal[1] * bsf[1];
+      for (int j = 0; j < sizeSystem - 1; ++j) {
+        A(i, j) = bsf[j + 2];
+      }
+      A(i, sizeSystem - 1) = i % 2 ? 1 : -1;
     }
-    A(i, sizeSystem-1) = i % 2 ? 1 : -1;
+
+    A.luSolve(b, x);
+    double debug_epsilon = x(sizeSystem - 1);
+
+
+//    std::cout << std::setprecision(10);
+//    std::cout << std::endl;
+//    std::cout << "b_i " << bezierCoeffIdeal[0];
+//    std::vector<double> debug_x = {bezierCoeffIdeal[0]};
+//    for (int i = 0; i < sizeSystem - 1; ++i) {
+//      debug_x.push_back(x(i));
+//      std::cout << " " << x(i);
+//    }
+//    std::cout << " " << bezierCoeffIdeal[1] << std::endl;
+//    double step = .01;
+//    int N = 200;
+//    std::vector<double> xiDebug = {-1};
+//    for (int i = 0; i < N; ++i) {
+//      xiDebug.push_back(xiDebug.back() + step);
+//    }
+//    std::vector<double> fDebug(xiDebug.size());
+//    idealJacobianDeterminant(baseVert, thickness0, thickness1, xiDebug, fDebug);
+//    std::cout << "f(x)";
+//    for (int i = 0; i < fDebug.size(); ++i) {
+//      std::cout << " " << fDebug[i];
+//    }
+//    std::cout << std::endl;
+
+//    std::cout << std::endl;
+    double dxi = 1. / sizeSystem / 100;
+    for (int i = 0; i < sizeSystem; ++i) {
+      std::vector<double> xi2 = {xi[i] - dxi, xi[i] + dxi};
+      std::vector<double> f(2);
+      idealJacobianDeterminant(baseVert, thickness0, thickness1, xi2, f);
+
+      double bsfl[100];
+      double bsfr[100];
+      bfs->f(xi2[0], 0, 0, bsfl);
+      bfs->f(xi2[1], 0, 0, bsfr);
+      double Fleft = bezierCoeffIdeal[0] * bsfl[0] + bezierCoeffIdeal[1] * bsfl[1];
+      double Fright = bezierCoeffIdeal[0] * bsfr[0] + bezierCoeffIdeal[1] * bsfr[1];
+      for (int j = 0; j < sizeSystem - 1; ++j) {
+        Fleft += x(j) * bsfl[j + 2];
+        Fright += x(j) * bsfr[j + 2];
+      }
+      double stop = 1;
+      Fleft -= f[0];
+      Fright -= f[1];
+
+
+      double Fm = std::abs(x(sizeSystem - 1));
+      if (Fright + Fleft < 0) Fm = -Fm;
+      double dF = (Fright - Fleft) / dxi / 2;
+      //double ddF = (Fright + Fleft - 2*Fm)/dxi/dxi;
+      //xi[i] -= dF/ddF; // does not work since can be on the opposite than the top
+      int direction = (Fm > 0 && dF > 0) || (Fm < 0 && dF < 0) ? 1 : -1;
+      double step = 1. / sizeSystem / 100;
+      double previousF, F = Fm;
+      std::vector<double> newxi = {xi[i]};
+      do {
+        previousF = F;
+        newxi[0] += direction * step;
+        std::vector<double> newf(1);
+        idealJacobianDeterminant(baseVert, thickness0, thickness1, newxi, newf);
+        double bsf[100];
+        bfs->f(newxi[0], 0, 0, bsf);
+        double shouldBeOne = bsf[0] + bsf[1];
+        F = bezierCoeffIdeal[0] * bsf[0] + bezierCoeffIdeal[1] * bsf[1];
+        for (int j = 0; j < sizeSystem - 1; ++j) {
+          F += x(j) * bsf[j + 2];
+          shouldBeOne += bsf[j+2];
+        }
+        double debug_F = F-newf[0];
+        F -= newf[0];
+      } while ((Fm > 0 && F > previousF) || (Fm < 0 && F < previousF));
+
+      xi[i] = newxi[0];
+
+      //std::cout << xi[i] << ":" << dF << ":" << ddF << " ";
+    }
+//    std::cout << std::endl << std::endl;
   }
 
-  A.luSolve(b, x);
+
+  double minCoeff = x(0);
   for (int i = 0; i < sizeSystem-1; ++i) {
     bezierCoeffIdeal.push_back(x(i));
+    minCoeff = std::min(minCoeff, x(i));
   }
+  std::cout << "epsilon: " << -x(sizeSystem-1) << " [" << -x(sizeSystem-1)/minCoeff << "] ";
 }
 
 
