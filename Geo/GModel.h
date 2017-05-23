@@ -669,6 +669,9 @@ class GModel {
   // Actran mesh
   int readACTRAN(const std::string &name);
 
+  // Sameced mesh
+  int readSAMCEF(const std::string &name);
+
   // Plot3D structured mesh format
   int readP3D(const std::string &name);
   int writeP3D(const std::string &name,
