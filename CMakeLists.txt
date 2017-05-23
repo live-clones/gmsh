@@ -107,6 +107,7 @@ set(GMSH_API
     Common/VertexArray.h Common/Octree.h Common/OctreeInternals.h
     Common/OS.h Common/StringUtils.h Common/OpenFile.h Common/Hash.h
     Common/onelab.h Common/GmshSocket.h Common/onelabUtils.h Common/Options.h
+    Common/picojson.h
   Numeric/Numeric.h Numeric/GaussIntegration.h Numeric/polynomialBasis.h
     Numeric/JacobianBasis.h Numeric/bezierBasis.h Numeric/fullMatrix.h
     Numeric/FuncSpaceData.h Numeric/pointsGenerators.h
