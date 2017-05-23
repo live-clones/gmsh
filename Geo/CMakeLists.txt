@@ -31,7 +31,7 @@ set(SRC
       GModelIO_PLY.cpp GModelIO_VRML.cpp GModelIO_UNV.cpp GModelIO_BDF.cpp 
       GModelIO_IR3.cpp GModelIO_DIFF.cpp GModelIO_GEOM.cpp GModelIO_INP.cpp
       GModelIO_MAIL.cpp GModelIO_P3D.cpp GModelIO_CELUM.cpp
-      GModelIO_ACTRAN.cpp GModelIO_SU2.cpp
+      GModelIO_ACTRAN.cpp GModelIO_SU2.cpp GModelIO_SAMCEF.cpp
   ExtrudeParams.cpp
   Geo.cpp
   GeoStringInterface.cpp GeoInterpolation.cpp
