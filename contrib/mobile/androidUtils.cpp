@@ -121,8 +121,11 @@ void getBitmapFromString(const char *text, int textsize, unsigned char **map,
   mid = env->GetStaticMethodID(jClass, "getBytesFromString", "(Ljava/lang/String;I)[B");
   jobject jbuffer = env->CallStaticObjectMethod(jClass, mid, jtext, textsize);
   jbyteArray *jarray = reinterpret_cast<jbyteArray*>(&jbuffer);
-  *map = (unsigned char *) malloc((*height)*(*width));
-  env->GetByteArrayRegion(*jarray, 0, (*height)*(*width), (jbyte*)*map);
+  int ms = (*height) * (*width);
+  if(ms){
+    *map = (unsigned char *)malloc(ms);
+    env->GetByteArrayRegion(*jarray, 0, ms, (jbyte*)*map);
+  }
   env->DeleteLocalRef(jClass);
   env->DeleteLocalRef(jtext);
 }
