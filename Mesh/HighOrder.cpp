@@ -1661,6 +1661,8 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
   // Determine mesh dimension and curve BL elements
   FastCurvingParameters p;
   p.dim = 0;
+  // p.curveOuterBL = true;
+  // p.optimizeGeometry = true;
   for (GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     if ((*it)->getNumMeshElements() > 0) { p.dim = 3; break; }
   if (p.dim == 0)

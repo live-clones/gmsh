@@ -727,28 +727,69 @@ double calcCADDistSq2D(GEntity *geomEnt, MElement *bndElt)
 
 
 
+double moveAndGetDistSq2DP2(GEdge *ge, MLine3 *bndMetaElt,
+                           MVertex* vert, double u)
+{
+  vert->setParameter(0, u);
+  GPoint gp = ge->point(u);
+  vert->setXYZ(gp.x(), gp.y(), gp.z());
+  return calcCADDistSq2D(ge, bndMetaElt);
+}
+
+
+
 void optimizeCADDist2DP2(GEntity *geomEnt, std::vector<MVertex*> &baseVert)
 {
-  static const int NPTS = 1000;
+  // Parameters for secant method
+  static const int MAXIT = 20;
+  static const double TOL = 1e-3;
+
+  // Boundary geometric and mesh entities, parametrization
   MLine3 bndMetaElt(baseVert);
   MVertex* &vert = baseVert[2];
-  const double xS = vert->x(), yS = vert->y();
-  const GEdge *ge = geomEnt->cast2Edge();
+  GEdge *ge = geomEnt->cast2Edge();
   const Range<double> parBounds = ge->parBounds(0);
-  const double du = (parBounds.high()-parBounds.low())/double(NPTS-1);
-  double uMin = 0., distSqMin = 1e300;
-  double uDbg;
-  vert->getParameter(0, uDbg);
-  for (double u = parBounds.low(); u < parBounds.high(); u += du) {
+  double uBV0, uBV1, uMin, uMax;
+  reparamMeshVertexOnEdge(baseVert[0], ge, uBV0);
+  reparamMeshVertexOnEdge(baseVert[1], ge, uBV1);
+  if (uBV0 < uBV1) { uMin = uBV0; uMax = uBV1; }
+  else { uMin = uBV1; uMax = uBV0; }
+  const double du = uMax - uMin;
+  
+  // First initial value for secant method
+  double u00 = uMin + 0.5*du;
+  double distSq00 = moveAndGetDistSq2DP2(ge, &bndMetaElt, vert, u00);
+  const double edLen = bndMetaElt.getLength();
+
+  // Second initial value for secant method
+  const double u0A = uMin + 0.45*du, u0B = uMin + 0.55*du;
+  const double distSq0A = moveAndGetDistSq2DP2(ge, &bndMetaElt, vert, u0A);
+  const double distSq0B = moveAndGetDistSq2DP2(ge, &bndMetaElt, vert, u0B);
+  double u0, distSq0;
+  if (distSq0A < distSq0B) {
+    u0 = u0A; distSq0 = distSq0A;
+  }
+  else {
+    u0 = u0B; distSq0 = distSq0B;
+  }
+
+  // Secant method iteration
+  double u;
+  bool converged = false;
+  for (int it = 0; it < MAXIT; it++) {
+    u = (u00*distSq0 - u0*distSq00) / (distSq0 - distSq00);
+    const double distSq = moveAndGetDistSq2DP2(ge, &bndMetaElt, vert, u);
+    if (std::abs(u-u0)/du < TOL) { converged = true; break; }
+    u00 = u0; distSq00 = distSq0;
+    u0 = u; distSq0 = distSq;
+  }
+
+  if (!converged || (u < uMin+TOL) || (u > uMax-TOL)) {                         // Set to mid-point if not converged
+    u = uMin + 0.5*du;
     vert->setParameter(0, u);
     GPoint gp = ge->point(u);
     vert->setXYZ(gp.x(), gp.y(), gp.z());
-    const double distSq = calcCADDistSq2D(geomEnt, &bndMetaElt);
-    if (distSq < distSqMin) { uMin = u; distSqMin = distSq; }
   }
-  vert->setParameter(0, uMin);
-  GPoint gp = ge->point(uMin);
-  vert->setXYZ(gp.x(), gp.y(), gp.z());
 }
 
 
