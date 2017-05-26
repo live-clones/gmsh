@@ -50,6 +50,8 @@
 #include "MetaEl.h"
 #include "qualityMeasuresJacobian.h"
 #include "CADDistances.h"
+#include "Field.h"
+#include "boundaryLayersData.h"
 
 
 
@@ -1020,20 +1022,41 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
 
 
 // Main function for fast curving
-void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p)
+void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
+                              bool requireBLInfo)
 {
   double t1 = Cpu();
   Msg::StatusBar(true, "Curving high order boundary layer mesh...");
 
-  // Retrieve geometric entities
+  // Retrieve geometric entities and boundary layer field
   std::vector<GEntity*> allGEnt;
   gm->getEntities(allGEnt);
+  BoundaryLayerField *blField = getBLField(gm);
 
   // Curve mesh for non-straight boundary entities
   for (int iEnt = 0; iEnt < allGEnt.size(); ++iEnt) {
-    // Retrive entity
+    // Retrieve entity
     GEntity* &gEnt = allGEnt[iEnt];
     if (gEnt->dim() != p.dim) continue;
+
+    // Retrieve boundary entities and test if boundary layer
+    std::vector<GEntity*> bndEnts;
+    std::set<GEntity*> blBndEnts;
+    if (p.dim == 2) {
+      std::list<GEdge*> gEds = gEnt->edges();
+      bndEnts = std::vector<GEntity*>(gEds.begin(), gEds.end());
+      for (int iBndEnt = 0; iBndEnt < bndEnts.size(); iBndEnt++) {
+        GEntity* &bndEnt = bndEnts[iBndEnt];
+        if ((blField != 0) && blField->isEdgeBL(bndEnt->tag())) {
+          blBndEnts.insert(bndEnt);
+        }
+      }
+    }
+    else {
+      std::list<GFace*> gFaces = gEnt->faces();
+      bndEnts = std::vector<GEntity*>(gFaces.begin(), gFaces.end());
+    }
+    if (requireBLInfo && blBndEnts.empty()) continue;                           // Skip if BL info is required but there is none
 
     // Compute edge/face -> elt. connectivity
     Msg::Info("Computing connectivity for entity %i...", gEnt->tag());
@@ -1042,23 +1065,14 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p)
     if (p.dim == 2) calcEdge2Elements(allGEnt[iEnt], ed2el);
     else calcFace2Elements(allGEnt[iEnt], face2el);
 
-    // Retrieve boundary entities
-    std::vector<GEntity*> bndEnts;
-    if (p.dim == 2) {
-      std::list<GEdge*> gEds = gEnt->edges();
-      bndEnts = std::vector<GEntity*>(gEds.begin(), gEds.end());
-    }
-    else {
-      std::list<GFace*> gFaces = gEnt->faces();
-      bndEnts = std::vector<GEntity*>(gFaces.begin(), gFaces.end());
-    }
-
     // Curve mesh from each boundary entity
     for (int iBndEnt = 0; iBndEnt < bndEnts.size(); iBndEnt++) {
       GEntity* &bndEnt = bndEnts[iBndEnt];
-      if (p.onlyVisible && !bndEnt->getVisibility()) continue;
+      if (p.onlyVisible && !bndEnt->getVisibility()) continue;                  // Skip if "only visible" required and entity is invisible
+      if (!blBndEnts.empty() &&                                                 // Skip if there is BL info but not on this boundary
+          (blBndEnts.find(bndEnt) == blBndEnts.end())) continue;
       const GEntity::GeomType bndType = bndEnt->geomType();
-      if ((bndType == GEntity::Line) || (bndType == GEntity::Plane)) continue;
+      if ((bndType == GEntity::Line) || (bndType == GEntity::Plane)) continue;  // Skip if boundary is straight
       Msg::Info("Curving elements in entity %d for boundary entity %d...",
                 gEnt->tag(), bndEnt->tag());
       curveMeshFromBnd(ed2el, face2el, bndEnt, p);
