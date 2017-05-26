@@ -1090,6 +1090,10 @@ if(HAVE_SOLVER)
 endif(HAVE_SOLVER)
 
 if(ENABLE_OCC)
+
+  set (OCC_VERSION "")
+  set (OCC_MINIMAL_VERSION "6.9.1")
+				
   if(WIN32 OR CYGWIN)
     if(HAVE_64BIT_SIZE_T)
       set(OCC_SYS_NAME win64)
@@ -1099,39 +1103,62 @@ if(ENABLE_OCC)
   else(WIN32 OR CYGWIN)
     set(OCC_SYS_NAME ${CMAKE_SYSTEM_NAME})
   endif(WIN32 OR CYGWIN)
-  set(OCC_LIBS_REQUIRED
-      # subset of DataExchange
-      TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKXSBase
-      # ModelingAlgorithms
-      TKOffset TKFeat TKFillet TKBool TKShHealing TKMesh TKHLR TKBO TKPrim
-      TKTopAlgo TKGeomAlgo
-      # ModelingData
-      TKBRep TKGeomBase TKG3d TKG2d
-      # FoundationClasses
-      # TKAdvTools -- not necessary? (and removed from OCC 6.8)
-      TKMath TKernel)
-  list(LENGTH OCC_LIBS_REQUIRED NUM_OCC_LIBS_REQUIRED)
-  if(OCC_LIBS)
-    message(STATUS "OCC libraries specified explicitly: " ${OCC_LIBS})
-    list(LENGTH OCC_LIBS_REQUIRED NUM_OCC_LIBS)
-  else(OCC_LIBS)
-    set(OCC_LIBS)
-    foreach(OCC ${OCC_LIBS_REQUIRED})
-      find_library(OCC_LIB ${OCC} HINTS ENV CASROOT PATH_SUFFIXES lib
-                   ${OCC_SYS_NAME}/lib ${OCC_SYS_NAME}/vc8/lib)
-      if(OCC_LIB)
-        list(APPEND OCC_LIBS ${OCC_LIB})
-      else(OCC_LIB)
-        message(STATUS "OCC lib " ${OCC} " not Found")
-      endif(OCC_LIB)
-      unset(OCC_LIB CACHE)
-    endforeach(OCC)
-    list(LENGTH OCC_LIBS NUM_OCC_LIBS)
-  endif(OCC_LIBS)      
-  if(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
-    find_path(OCC_INC "BRep_Tool.hxx" PATHS ENV CASROOT PATH_SUFFIXES inc
-              include include/oce opencascade)
-    if(OCC_INC)
+
+  find_path(OCC_INC "Standard_Version.hxx" HINTS ENV CASROOT PATH_SUFFIXES inc
+            include include/oce opencascade include/opencascade)
+						
+  if(OCC_INC)
+
+    file(STRINGS ${OCC_INC}/Standard_Version.hxx OCC_MAJOR REGEX "#define OCC_VERSION_MAJOR.*")
+    string(REGEX MATCH "[0-9]+" OCC_MAJOR ${OCC_MAJOR})
+    file(STRINGS ${OCC_INC}/Standard_Version.hxx OCC_MINOR REGEX "#define OCC_VERSION_MINOR.*")
+    string(REGEX MATCH "[0-9]+" OCC_MINOR ${OCC_MINOR})
+    file(STRINGS ${OCC_INC}/Standard_Version.hxx OCC_MAINT REGEX "#define OCC_VERSION_MAINTENANCE.*")
+    string(REGEX MATCH "[0-9]+" OCC_MAINT ${OCC_MAINT})
+
+    set(OCC_VERSION "${OCC_MAJOR}.${OCC_MINOR}.${OCC_MAINT}")
+    message(STATUS "Found OpenCascade version ${OCC_VERSION} in ${OCC_INC}")
+		
+  endif(OCC_INC)
+
+  if (OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
+
+    message(WARNING "Recent version of OpenCascade (>= ${OCC_MINIMAL_VERSION}) is required")
+    message(WARNING "Installation directory of OpenCascade can be specified in environment variable CASROOT")
+
+  else (OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
+
+     set(OCC_LIBS_REQUIRED
+	# subset of DataExchange
+      	TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKXSBase
+      	# ModelingAlgorithms
+      	TKOffset TKFeat TKFillet TKBool TKShHealing TKMesh TKHLR TKBO TKPrim
+      	TKTopAlgo TKGeomAlgo
+      	# ModelingData
+      	TKBRep TKGeomBase TKG3d TKG2d
+      	# FoundationClasses
+      	# TKAdvTools -- not necessary? (and removed from OCC 6.8)
+      	TKMath TKernel)
+    list(LENGTH OCC_LIBS_REQUIRED NUM_OCC_LIBS_REQUIRED)
+
+    if(OCC_LIBS)
+      message(STATUS "OCC libraries specified explicitly: " ${OCC_LIBS})
+      list(LENGTH OCC_LIBS_REQUIRED NUM_OCC_LIBS)
+    else(OCC_LIBS)
+      set(OCC_LIBS)
+      foreach(OCC ${OCC_LIBS_REQUIRED})
+        find_library(OCC_LIB ${OCC} HINTS ENV CASROOT PATH_SUFFIXES lib ${OCC_SYS_NAME}/lib ${OCC_SYS_NAME}/vc8/lib)
+        if(OCC_LIB)
+	  list(APPEND OCC_LIBS ${OCC_LIB})
+        else(OCC_LIB)
+	  message(STATUS "OCC lib " ${OCC} " not Found")
+        endif(OCC_LIB)
+        unset(OCC_LIB CACHE)
+      endforeach(OCC)
+      list(LENGTH OCC_LIBS NUM_OCC_LIBS)
+    endif(OCC_LIBS)      
+
+    if(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
       set_config_option(HAVE_OCC "OpenCascade")
       list(APPEND EXTERNAL_LIBRARIES ${OCC_LIBS})
       list(APPEND EXTERNAL_INCLUDES ${OCC_INC})
@@ -1139,13 +1166,13 @@ if(ENABLE_OCC)
         add_definitions(-D_OCC64)
       endif(HAVE_64BIT_SIZE_T)
       if(CYGWIN)
-        list(APPEND EXTERNAL_LIBRARIES "winspool")
+	list(APPEND EXTERNAL_LIBRARIES "winspool")
         add_definitions(-DOCC_CONVERT_SIGNALS)
       elseif(MSVC)
-        add_definitions(-DWNT)
+	add_definitions(-DWNT)
       endif(CYGWIN)
-    endif(OCC_INC)
-  endif(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
+    endif(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
+  endif(OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
 endif(ENABLE_OCC)
 
 if(ENABLE_ACIS)
