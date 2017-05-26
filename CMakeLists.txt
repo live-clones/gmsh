@@ -67,7 +67,7 @@ opt(NATIVE_FILE_CHOOSER "Enable native file chooser in GUI" ${DEFAULT})
 opt(NETGEN "Enable Netgen 3D frontal mesh generator" ${DEFAULT})
 opt(NUMPY "Enable conversion between fullMatrix and numpy array (requires SWIG)" OFF)
 opt(PETSC4PY "Enable petsc4py wrappers for petsc matrices" ON)
-opt(OCC "Enable Open CASCADE geometrical models" ${DEFAULT})
+opt(OCC "Enable OpenCASCADE geometrical models" ${DEFAULT})
 opt(ONELAB "Enable ONELAB solver interface" ${DEFAULT})
 opt(ONELAB_METAMODEL "Enable ONELAB metamodels (experimental)" ${DEFAULT})
 opt(OPENMP "Enable OpenMP (experimental)" OFF)
@@ -1090,10 +1090,8 @@ if(HAVE_SOLVER)
 endif(HAVE_SOLVER)
 
 if(ENABLE_OCC)
-
-  set (OCC_VERSION "")
-  set (OCC_MINIMAL_VERSION "6.9.1")
-				
+  set(OCC_VERSION "")
+  set(OCC_MINIMAL_VERSION "6.9.1")
   if(WIN32 OR CYGWIN)
     if(HAVE_64BIT_SIZE_T)
       set(OCC_SYS_NAME win64)
@@ -1103,32 +1101,27 @@ if(ENABLE_OCC)
   else(WIN32 OR CYGWIN)
     set(OCC_SYS_NAME ${CMAKE_SYSTEM_NAME})
   endif(WIN32 OR CYGWIN)
-
   find_path(OCC_INC "Standard_Version.hxx" HINTS ENV CASROOT PATH_SUFFIXES inc
             include include/oce opencascade include/opencascade)
-						
   if(OCC_INC)
-
-    file(STRINGS ${OCC_INC}/Standard_Version.hxx OCC_MAJOR REGEX "#define OCC_VERSION_MAJOR.*")
+    file(STRINGS ${OCC_INC}/Standard_Version.hxx
+         OCC_MAJOR REGEX "#define OCC_VERSION_MAJOR.*")
     string(REGEX MATCH "[0-9]+" OCC_MAJOR ${OCC_MAJOR})
-    file(STRINGS ${OCC_INC}/Standard_Version.hxx OCC_MINOR REGEX "#define OCC_VERSION_MINOR.*")
+    file(STRINGS ${OCC_INC}/Standard_Version.hxx
+         OCC_MINOR REGEX "#define OCC_VERSION_MINOR.*")
     string(REGEX MATCH "[0-9]+" OCC_MINOR ${OCC_MINOR})
-    file(STRINGS ${OCC_INC}/Standard_Version.hxx OCC_MAINT REGEX "#define OCC_VERSION_MAINTENANCE.*")
+    file(STRINGS ${OCC_INC}/Standard_Version.hxx
+         OCC_MAINT REGEX "#define OCC_VERSION_MAINTENANCE.*")
     string(REGEX MATCH "[0-9]+" OCC_MAINT ${OCC_MAINT})
-
     set(OCC_VERSION "${OCC_MAJOR}.${OCC_MINOR}.${OCC_MAINT}")
-    message(STATUS "Found OpenCascade version ${OCC_VERSION} in ${OCC_INC}")
-		
+    message(STATUS "Found OpenCASCADE version ${OCC_VERSION} in ${OCC_INC}")
   endif(OCC_INC)
-
-  if (OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
-
-    message(WARNING "Recent version of OpenCascade (>= ${OCC_MINIMAL_VERSION}) is required")
-    message(WARNING "Installation directory of OpenCascade can be specified in environment variable CASROOT")
-
+  if(OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
+    message(WARNING "Gmsh requires OpenCASCADE >= ${OCC_MINIMAL_VERSION}")
+    message(WARNING "Use CMAKE_PREFIX_PATH or the CASROOT environment variable "
+            "to explicitely specify the installation path of OpenCASCADE")
   else (OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
-
-     set(OCC_LIBS_REQUIRED
+    set(OCC_LIBS_REQUIRED
 	# subset of DataExchange
       	TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKXSBase
       	# ModelingAlgorithms
@@ -1140,7 +1133,6 @@ if(ENABLE_OCC)
       	# TKAdvTools -- not necessary? (and removed from OCC 6.8)
       	TKMath TKernel)
     list(LENGTH OCC_LIBS_REQUIRED NUM_OCC_LIBS_REQUIRED)
-
     if(OCC_LIBS)
       message(STATUS "OCC libraries specified explicitly: " ${OCC_LIBS})
       list(LENGTH OCC_LIBS_REQUIRED NUM_OCC_LIBS)
@@ -1157,9 +1149,8 @@ if(ENABLE_OCC)
       endforeach(OCC)
       list(LENGTH OCC_LIBS NUM_OCC_LIBS)
     endif(OCC_LIBS)      
-
     if(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
-      set_config_option(HAVE_OCC "OpenCascade")
+      set_config_option(HAVE_OCC "OpenCASCADE")
       list(APPEND EXTERNAL_LIBRARIES ${OCC_LIBS})
       list(APPEND EXTERNAL_INCLUDES ${OCC_INC})
       if(HAVE_64BIT_SIZE_T)
