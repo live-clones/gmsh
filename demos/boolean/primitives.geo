@@ -1,8 +1,8 @@
 SetFactory("OpenCASCADE");
 
 //Mesh.Algorithm = 6;
-Mesh.CharacteristicLengthMin = 0.1;
-Mesh.CharacteristicLengthMax = 0.1;
+Mesh.CharacteristicLengthMin = 0.09;
+Mesh.CharacteristicLengthMax = 0.09;
 
 // 3D
 x = 0; y = 0;
@@ -13,7 +13,7 @@ Sphere(newv) = {x++,y,0, 0.3, -Pi/4, Pi/4, Pi/2};
 Sphere(newv) = {x++,y,0, 0.3, -Pi/2, Pi/2, Pi/4};
 Cylinder(newv) = {x++,y,0, 0.5,0,0, 0.5};
 Cylinder(newv) = {x++,y,0, 0.5,0,0, 0.5, Pi/3};
-Block(newv) = {x++,y,0, 0.5,0.5,0.5};
+Box(newv) = {x++,y,0, 0.5,0.5,0.5};
 Torus(newv) = {x++,y,0, 0.3, 0.1};
 Torus(newv) = {x++,y,0, 0.3, 0.1, Pi/3};
 Cone(newv) = {x++,y,0, 0.5,0,0, 0.5,0};

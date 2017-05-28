@@ -386,7 +386,7 @@ static void elementary_add_cylinder_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
-static void draw_block(void *context)
+static void draw_box(void *context)
 {
   if(!GModel::current()->getOCCInternals()) GModel::current()->createOCCInternals();
   double x, y, z, dx, dy, dz;
@@ -399,27 +399,27 @@ static void draw_block(void *context)
   std::vector<SPoint3> vertices;
   std::vector<SVector3> normals;
   std::vector<int> triangles;
-  if(!GModel::current()->getOCCInternals()->makeBlockSTL
+  if(!GModel::current()->getOCCInternals()->makeBoxSTL
      (x, y, z, dx, dy, dz, vertices, normals, triangles))
     return;
   draw_stl(vertices, normals, triangles);
 }
 
-static void elementary_draw_block_cb(Fl_Widget *w, void *data)
+static void elementary_draw_box_cb(Fl_Widget *w, void *data)
 {
-  drawContext::setDrawGeomTransientFunction(draw_block);
+  drawContext::setDrawGeomTransientFunction(draw_box);
   if(!data) drawContext::global()->draw();
 }
 
-static void elementary_add_block_cb(Fl_Widget *w, void *data)
+static void elementary_add_box_cb(Fl_Widget *w, void *data)
 {
-  add_block(GModel::current()->getFileName(),
-            FlGui::instance()->elementaryContext->input[47]->value(),
-            FlGui::instance()->elementaryContext->input[48]->value(),
-            FlGui::instance()->elementaryContext->input[49]->value(),
-            FlGui::instance()->elementaryContext->input[50]->value(),
-            FlGui::instance()->elementaryContext->input[51]->value(),
-            FlGui::instance()->elementaryContext->input[52]->value());
+  add_box(GModel::current()->getFileName(),
+          FlGui::instance()->elementaryContext->input[47]->value(),
+          FlGui::instance()->elementaryContext->input[48]->value(),
+          FlGui::instance()->elementaryContext->input[49]->value(),
+          FlGui::instance()->elementaryContext->input[50]->value(),
+          FlGui::instance()->elementaryContext->input[51]->value(),
+          FlGui::instance()->elementaryContext->input[52]->value());
   FlGui::instance()->resetVisibility();
   GModel::current()->setSelection(0);
   SetBoundingBox();
@@ -803,10 +803,10 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       }
       group[7]->end();
     }
-    // 8: Block
+    // 8: Box
     {
       group[8] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Block");
+        (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Box");
       input[47] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "X");
       input[47]->value("0");
       input[48] = new Fl_Input(2 * WB, 2 * WB + 2 * BH, IW, BH, "Y");
@@ -821,12 +821,12 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       input[52]->value("1");
       for(int i = 47; i < 53; i++){
         input[i]->align(FL_ALIGN_RIGHT);
-        input[i]->callback(elementary_draw_block_cb);
+        input[i]->callback(elementary_draw_box_cb);
       }
       {
         Fl_Button *o = new Fl_Button
           (width - BB - 2 * WB, height - 3 * WB - 2 * BH, BB, BH, "Add");
-        o->callback(elementary_add_block_cb);
+        o->callback(elementary_add_box_cb);
       }
       group[8]->end();
     }
@@ -935,11 +935,11 @@ elementaryContextWindow::elementaryContextWindow(int deltaFontSize)
       value[i]->callback(elementary_snap_cb);
     }
     butt[0] = new Fl_Check_Button(width - 6 * BH, height - WB - BH, 1.2 * BH, BH, "X");
-    butt[0]->tooltip("(x)");
+    butt[0]->tooltip("Toggle (x) or exclusive unselect (Shift+x)");
     butt[1] = new Fl_Check_Button(width - 6 * BH + 1.2 * BH, height - WB - BH, 1.2*BH, BH, "Y");
-    butt[1]->tooltip("(y)");
+    butt[1]->tooltip("Toggle (y) or exclusive unselect (Shift+y)");
     butt[2] = new Fl_Check_Button(width - 6 * BH + 2.4 * BH, height - WB - BH, (6 - 2*1.2) * BH - WB, BH, "Z freeze");
-    butt[2]->tooltip("(z)");
+    butt[2]->tooltip("Toggle (z) or exclusive unselect (Shift+z)");
   }
 
   tab1->show();

@@ -29,9 +29,9 @@
 
 #define FAST_ELEMENTS 1
 
-extern void writeMSHPeriodicNodes (FILE *fp, std::vector<GEntity*> &entities, bool renumber);
-
+extern void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities, bool renumber);
 extern void readMSHPeriodicNodes(FILE *fp, GModel *gm);
+extern void writeMSHEntities(FILE *fp, GModel *gm);
 
 static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
                         std::vector<MVertex*> &vertices)
@@ -926,6 +926,9 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
       }
       fprintf(fp, "$EndPhysicalNames\n");
     }
+
+    if (CTX::instance()->mesh.saveTopology)
+      writeMSHEntities(fp, this);
 
     if (saveParametric)
       fprintf(fp, "$ParametricNodes\n");

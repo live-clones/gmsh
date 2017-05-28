@@ -100,7 +100,7 @@ vsub(const double *src1, const double *src2, double *dst)
 void
 vcopy(const double *v1, double *v2)
 {
-    register int i;
+    int i;
     for (i = 0 ; i < 3 ; i++)
         v2[i] = v1[i];
 }
@@ -187,7 +187,7 @@ trackball(double q[4], double p1x, double p1y, double p2x, double p2y)
    *  Now, we want the cross product of P1 and P2
    */
   vcross(p2,p1,a);
-   
+
   /*
    *  Figure out how much to rotate around that axis.
    */
@@ -196,7 +196,7 @@ trackball(double q[4], double p1x, double p1y, double p2x, double p2y)
     t = vlength(d) / (2.0*TRACKBALLSIZE);
   else
     t = vlength(d);
-    
+
   /*
    * Avoid problems with out-of-control values...
    */
@@ -230,20 +230,20 @@ tb_project_to_sphere(double r, double x, double y)
   d = sqrt(x*x + y*y);
 
   if (CTX::instance()->trackballHyperbolicSheet) {
-    if (d < r * 0.70710678118654752440) {    
-      // Inside sphere 
+    if (d < r * 0.70710678118654752440) {
+      // Inside sphere
       z = sqrt(r*r - d*d);
     }
-    else {     
-      // On hyperbola 
+    else {
+      // On hyperbola
       t = r / 1.41421356237309504880;
       z = t*t / d;
     }
   }
   else{
-    if (d < r ) {    
+    if (d < r ) {
       z = sqrt(r*r - d*d);
-    } else {           
+    } else {
       z = 0.;
     }
   }

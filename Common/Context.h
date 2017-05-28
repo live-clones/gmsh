@@ -49,7 +49,8 @@ struct contextMeshOptions {
   int minCircPoints, minCurvPoints;
   int hoOptimize, hoNLayers, hoOptPrimSurfMesh;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
-  int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat, saveParametric;
+  int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat;
+  int saveParametric, saveTopology;
   int smoothNormals, zoneDefinition, clip;
   int saveElementTagType;
   int switchElementTags;
@@ -74,7 +75,7 @@ struct contextGeometryOptions {
   int autoCoherence, highlightOrphans, clip, useTransform;
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
   int occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
-  int occSewFaces, occParallel;
+  int occSewFaces, occParallel, occBooleanPreserveNumbering;
   double occScaling;
   int copyMeshingMethod, exactExtrusion;
   int matchGeomAndMesh;

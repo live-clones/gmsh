@@ -192,7 +192,7 @@ struct doubleXstring{
 %token tDefineNumber tDefineStruct tNameStruct tDimNameSpace tAppend
 %token tDefineString tSetNumber tSetString
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
-%token tBlock tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
+%token tBox tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
 %token tRectangle tDisk tWire tGeoEntity
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tRelocateMesh tSetFactory tThruSections tWedge tFillet tChamfer
@@ -895,7 +895,7 @@ Affectation :
     }
   | String__Index '[' FExpr ']' NumericIncrement tEND
     {
-      incrementVariable($1, $3, $5);
+      incrementVariable($1, (int)$3, $5);
       Free($1);
     }
 
@@ -1103,6 +1103,20 @@ Affectation :
 	yymsg(0, "Cannot create field %i of type '%s'", (int)$3, $6);
 #endif
       Free($6);
+    }
+  | tField '[' FExpr ']' tAFFECT tBox tEND
+    {
+#if defined(HAVE_MESH)
+      if(!GModel::current()->getFields()->newField((int)$3, "Box"))
+	yymsg(0, "Cannot create field %i of type '%s'", (int)$3, "Box");
+#endif
+    }
+  | tField '[' FExpr ']' tAFFECT tCylinder tEND
+    {
+#if defined(HAVE_MESH)
+      if(!GModel::current()->getFields()->newField((int)$3, "Cylinder"))
+	yymsg(0, "Cannot create field %i of type '%s'", (int)$3, "Cylinder");
+#endif
     }
   | tField '[' FExpr ']' '.' tSTRING  tAFFECT FExpr tEND
     {
@@ -1886,22 +1900,22 @@ Shape :
       $$.Type = 0;
       $$.Num = num;
     }
-  | tBlock '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tBox '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
       std::vector<double> param; ListOfDouble2Vector($6, param);
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(param.size() == 6){
-          r = GModel::current()->getOCCInternals()->addBlock
+          r = GModel::current()->getOCCInternals()->addBox
             (num, param[0], param[1], param[2], param[3], param[4], param[5]);
         }
         else{
-          yymsg(0, "Block requires 6 parameters");
+          yymsg(0, "Box requires 6 parameters");
         }
       }
       else{
-        yymsg(0, "Block only available with OpenCASCADE geometry kernel");
+        yymsg(0, "Box only available with OpenCASCADE geometry kernel");
       }
       if(!r) yymsg(0, "Could not add block");
       List_Delete($6);
@@ -2387,7 +2401,8 @@ Transform :
           r = GModel::current()->getGEOInternals()->copy(inDimTags, outDimTags);
         }
       }
-      else if(action == "Boundary" || action == "CombinedBoundary"){
+      else if(action == "Boundary" || action == "CombinedBoundary" ||
+              action == "PointsOf"){
         // boundary operations are performed directly on GModel, which enables
         // to compute the boundary of hybrid CAD models; this also automatically
         // binds all boundary entities for OCC models
@@ -2397,7 +2412,8 @@ Transform :
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
         r = GModel::current()->getBoundaryTags
-          (inDimTags, outDimTags, action == "CombinedBoundary");
+          (inDimTags, outDimTags, action == "CombinedBoundary", true,
+           action == "PointsOf");
       }
       else{
         yymsg(0, "Unknown action on multiple shapes '%s'", $1);
@@ -3939,13 +3955,14 @@ Boolean :
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<std::pair<int, int > > object, tool, out;
+        std::vector<std::vector<std::pair<int, int > > > outMap;
         ListOfShapes2VectorOfPairs($3, object);
         ListOfShapes2VectorOfPairs($7, tool);
         // currently we don't distinguish between Delete and Recursive Delete:
         // we always delete recursively. Let us know if you have examples where
         // having the choice would be interesting
         r = GModel::current()->getOCCInternals()->booleanOperator
-          (-1, (OCC_Internals::BooleanOperator)$1, object, tool, out, $4, $8);
+          (-1, (OCC_Internals::BooleanOperator)$1, object, tool, out, outMap, $4, $8);
         VectorOfPairs2ListOfShapes(out, $$);
       }
       else{
@@ -3980,13 +3997,14 @@ BooleanShape :
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         std::vector<std::pair<int, int> > object, tool, out;
+        std::vector<std::vector<std::pair<int, int > > > outMap;
         ListOfShapes2VectorOfPairs($7, object);
         ListOfShapes2VectorOfPairs($11, tool);
         // currently we don't distinguish between Delete and Recursive Delete:
         // we always delete recursively. Let us know if you have examples where
         // having the choice would be interesting
         r = GModel::current()->getOCCInternals()->booleanOperator
-          ((int)$3, (OCC_Internals::BooleanOperator)$1, object, tool, out, $8, $12);
+          ((int)$3, (OCC_Internals::BooleanOperator)$1, object, tool, out, outMap, $8, $12);
       }
       if(!r) yymsg(0, "Could not apply boolean operator");
       List_Delete($7);
@@ -4857,6 +4875,14 @@ FExpr_Single :
     {
       $$ = treat_Struct_FullName_dot_tSTRING_Float($3.char1, $3.char2, $5, 0, $6, 2);
     }
+  | tGetForced '(' Struct_FullName LP FExpr RP GetForced_Default ')'
+    {
+      $$ = treat_Struct_FullName_Float($3.char1, $3.char2, 2, (int)$5, $7, 2);
+    }
+  | tGetForced '(' Struct_FullName '.' tSTRING_Member LP FExpr RP GetForced_Default ')'
+    {
+      $$ = treat_Struct_FullName_dot_tSTRING_Float($3.char1, $3.char2, $5, (int)$7, $9, 2);
+    }
   | tFileExists '(' StringExpr ')'
     {
       std::string tmp = FixRelativePath(gmsh_yyname, $3);
@@ -5377,7 +5403,6 @@ FExpr_Multi :
       }
       Free($1);
     }
-
   | String__Index '.' tSTRING_Member LP RP
     {
       $$ = treat_Struct_FullName_dot_tSTRING_ListOfFloat(NULL, $1, $3);
@@ -5386,7 +5411,6 @@ FExpr_Multi :
     {
       $$ = treat_Struct_FullName_dot_tSTRING_ListOfFloat($1, $3, $5);
     }
-
    // for compatibility with GetDP
   | tList '[' String__Index ']'
     {
@@ -5648,7 +5672,6 @@ StringExprVar :
       strcpy($$, val.c_str());
       Free($1);
     }
-
 // PD: TO FIX (to avoid shift/reduce conflict)
 //  | Struct_FullName '.' String__Index //tSTRING//_Member_Float
   | String__Index '.' tSTRING_Member
@@ -5659,7 +5682,6 @@ StringExprVar :
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String($1, $3, $5);
     }
-
   | String__Index '.' tSTRING_Member '(' FExpr ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String(NULL, $1, $3, (int)$5);
@@ -5668,7 +5690,6 @@ StringExprVar :
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String($1, $3, $5, (int)$7);
     }
-
   | String__Index '[' FExpr ']' '.' tSTRING
     {
       std::string out;
@@ -5767,18 +5788,15 @@ StringExpr :
       Free($3);
       Free($5);
     }
-
     //+++ No need to extend to Struct_FullName (a Tag is not a String), but...
   | tGetForcedStr '(' Struct_FullName GetForcedStr_Default ')'
     {
       $$ = treat_Struct_FullName_String(NULL, $3.char2, 1, 0, $4, 2);
     }
-
   | tGetForcedStr '(' Struct_FullName '.' tSTRING_Member GetForcedStr_Default ')'
     {
       $$ = treat_Struct_FullName_dot_tSTRING_String($3.char1, $3.char2, $5, 0, $6, 2);
     }
-
   | tStrCat LP RecursiveListOfStringExprVar RP
     {
       int size = 1;
@@ -6698,12 +6716,13 @@ double treat_Struct_FullName_Float
       }
       else if (type_var == 2) {
         gmsh_yysymbol &s(gmsh_yysymbols[c2]);
-        if((int)s.value.size() < index + 1){
+        if(index < 0 || (int)s.value.size() < index + 1){
           out = val_default;
           if (type_treat == 0) yymsg(0, "Uninitialized variable '%s[%d]'", c2, index);
         }
-        else
+        else{
           out = s.value[index];
+        }
       }
       else {
         out = val_default;

@@ -97,8 +97,8 @@ extern Real8 Grafh;
 
 Icoor2 inline det(const I2 &a,const I2 & b,const I2 &c)
 {
-  register  Icoor2 bax = b.x - a.x ,bay = b.y - a.y;
-  register  Icoor2 cax = c.x - a.x ,cay = c.y - a.y;
+    Icoor2 bax = b.x - a.x ,bay = b.y - a.y;
+    Icoor2 cax = c.x - a.x ,cay = c.y - a.y;
   return  bax*cay - bay*cax;}
 
 
@@ -429,9 +429,9 @@ class Triangle {
 
   void SetAdjAdj(Int1 a)
   { a &= 3;
-   register  Triangle *tt=at[a];
+     Triangle *tt=at[a];
    aa [a] &= 55; // remove MarkUnSwap
-   register Int1 aatt = aa[a] & 3;
+    Int1 aatt = aa[a] & 3;
    if(tt){
      tt->at[aatt]=this;
      tt->aa[aatt]=a + (aa[a] & 60 ) ;}// Copy all the mark
@@ -460,11 +460,11 @@ class Triangle {
   void SetAllFlag(int a,int f){aa[a] = (aa[a] &3) + (1020 & f);}
 
   void SetHidden(int a){
-   register Triangle * t = at[a];
+    Triangle * t = at[a];
     if(t) t->aa[aa[a] & 3] |=16;
     aa[a] |= 16;}
   void SetCracked(int a){
-   register Triangle * t = at[a];
+    Triangle * t = at[a];
     if(t) t->aa[aa[a] & 3] |=32;
     aa[a] |= 32;}
 
@@ -472,18 +472,18 @@ class Triangle {
   Triangle * Quadrangle(Vertex * & v0,Vertex * & v1,Vertex * & v2,Vertex * & v3) const ;
 
   void SetLocked(int a){
-    register Triangle * t = at[a];
+     Triangle * t = at[a];
     t->aa[aa[a] & 3] |=4;
     aa[a] |= 4;}
 
   void SetMarkUnSwap(int a){
-    register Triangle * t = at[a];
+     Triangle * t = at[a];
     t->aa[aa[a] & 3] |=8;
     aa[a] |=8 ;}
 
 
   void SetUnMarkUnSwap(int a){
-    register Triangle * t = at[a];
+     Triangle * t = at[a];
     t->aa[aa[a] & 3] &=55; // 23 + 32
     aa[a] &=55 ;}
 
@@ -581,7 +581,7 @@ class SegInterpolation {
 //  void CopyMetric(const Metric & mm,int j){ lIntTria[j].m=mm;}
 
   void ReShape() {
-    register int newsize = MaxSize*2;
+     int newsize = MaxSize*2;
     IntersectionTriangles * nw = new IntersectionTriangles[newsize];
     assert(nw);
     for (int i=0;i<MaxSize;i++) // recopy
@@ -630,8 +630,8 @@ class VertexOnGeom {  public:
     GeometricalEdge * ge;  // if abscisse in [0..1]
   };
   inline void Set(const VertexOnGeom&,const Triangles &,Triangles &);
-  int OnGeomVertex()const {return this? abscisse <0 :0;}
-  int OnGeomEdge() const {return this? abscisse >=0 :0;}
+  int OnGeomVertex()const {return abscisse <0;}
+  int OnGeomEdge() const {return abscisse >=0;}
   VertexOnGeom(): mv(0),abscisse(0){gv=0;}
   VertexOnGeom(Vertex & m,GeometricalVertex &g) : mv(&m),abscisse(-1){gv=&g;}
    //  cout << "        mv = " <<mv << " gv = "  << gv << endl;}
@@ -642,7 +642,7 @@ class VertexOnGeom {  public:
   operator GeometricalEdge * () const  {return ge;}
 //  operator Real8 & () {return abscisse;}
   operator const Real8 & () const {return abscisse;}
-  int IsRequiredVertex(){ return this? (( abscisse<0 ? (gv?gv->Required():0):0 )) : 0;}
+  int IsRequiredVertex(){ return (( abscisse<0 ? (gv?gv->Required():0):0 ));}
   void SetOn(){mv->on=this;mv->vint=IsVertexOnGeom;}
   friend ostream& operator <<(ostream& f, const  VertexOnGeom & vog){
     f << vog.abscisse << " " << vog.mv << " " << vog.gv << " ; ";
@@ -1160,7 +1160,7 @@ inline Real8 Edge::MetricLength() const
 
 inline  void  Triangles::ReMakeTriangleContainingTheVertex()
  {
-  register Int4 i;
+   Int4 i;
   for ( i=0;i<nbv;i++)
     {
 	vertices[i].vint = 0;
@@ -1172,7 +1172,7 @@ inline  void  Triangles::ReMakeTriangleContainingTheVertex()
 
 inline  void  Triangles::UnMarkUnSwapTriangle()
  {
-  register Int4 i;
+   Int4 i;
   for ( i=0;i<nbt;i++)
     for(int  j=0;j<3;j++)
       triangles[i].SetUnMarkUnSwap(j);
@@ -1308,8 +1308,8 @@ Int4 inline  Vertex::Optim(int i,int koption)
 
 Icoor2 inline det(const Vertex & a,const Vertex & b,const Vertex & c)
 {
-  register  Icoor2 bax = b.i.x - a.i.x ,bay = b.i.y - a.i.y;
-  register  Icoor2 cax = c.i.x - a.i.x ,cay = c.i.y - a.i.y;
+    Icoor2 bax = b.i.x - a.i.x ,bay = b.i.y - a.i.y;
+    Icoor2 cax = c.i.x - a.i.x ,cay = c.i.y - a.i.y;
   return  bax*cay - bay*cax;}
 
 
@@ -1485,9 +1485,3 @@ inline void Line(R2 x) {rlineto(x.x,x.y);}
 #endif
 
 }
-
-
-
-
-
-

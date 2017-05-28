@@ -539,13 +539,13 @@ void add_cylinder(const std::string &fileName, const std::string &x, const std::
   add_infile(sstream.str(), fileName);
 }
 
-void add_block(const std::string &fileName, const std::string &x, const std::string &y,
-               const std::string &z, const std::string &dx, const std::string &dy,
-               const std::string &dz)
+void add_box(const std::string &fileName, const std::string &x, const std::string &y,
+             const std::string &z, const std::string &dx, const std::string &dy,
+             const std::string &dz)
 {
   std::ostringstream sstream;
   check_occ(sstream);
-  sstream << "Block(" << GModel::current()->getMaxElementaryNumber(3) + 1
+  sstream << "Box(" << GModel::current()->getMaxElementaryNumber(3) + 1
           << ") = {" << x << ", " << y << ", " << z << ", " << dx << ", "
           << dy << ", " << dz << "};";
   add_infile(sstream.str(), fileName);

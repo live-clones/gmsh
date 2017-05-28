@@ -413,6 +413,10 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingB
   else if(ext == ".dat" || ext == ".DAT"){
     if(!strncmp(header, "BEGIN ACTRAN", 12))
       status = GModel::current()->readACTRAN(fileName);
+    else if(!strncmp(header, "!", 1) ||
+            !strncmp(header, ";ECHO", 5) ||
+            !strncmp(header, ".NOE", 4))
+      status = GModel::current()->readSAMCEF(fileName);
     else
       status = GModel::current()->readBDF(fileName);
   }
@@ -589,10 +593,7 @@ int MergePostProcessingFile(const std::string &fileName, int showViews,
     GModel *m = new GModel();
     GModel::setCurrent(m);
   }
-  // FIXME: disabled onelab physical group import for now, as the number of
-  // groups in mesh-based post-pro files can be different from the # in the
-  // model, which will trigger setChanged(Gmsh), leading undesirable remeshing
-  int ret = MergeFile(fileName, warnIfMissing, old->bounds().empty() ? true : false, false);
+  int ret = MergeFile(fileName, warnIfMissing, old->bounds().empty() ? true : false);
   GModel::setCurrent(old);
   old->setVisibility(1);
 

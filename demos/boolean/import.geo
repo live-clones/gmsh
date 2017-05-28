@@ -11,7 +11,7 @@ DefineConstant[
 a() = ShapeFromFile("component8.step");
 
 b() = 2;
-Block(b(0)) = {0,156,z, 10,14,10};
+Box(b(0)) = {0,156,z, 10,14,10};
 
 If(sph)
   b() += 3;

@@ -84,8 +84,9 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-part int",          "Partition after batch mesh generation"));
   s.push_back(mp("-partWeight tri|quad|tet|prism|hex int", "Weight of a triangle/quad/etc. "
                                                            "during partitioning"));
-  s.push_back(mp("-saveall",           "Save all elements (discard physical group definitions)"));
-  s.push_back(mp("-parametric",        "Save vertices with their parametric coordinates"));
+  s.push_back(mp("-save_all",          "Save all elements (discard physical group definitions)"));
+  s.push_back(mp("-save_parametric",   "Save vertices with their parametric coordinates"));
+  s.push_back(mp("-save_topology",     "Save model topology"));
   s.push_back(mp("-algo string",       "Select mesh algorithm (meshadapt, del2d, front2d, "
                                         "delquad, del3d, front3d, mmg3d, pack)"));
   s.push_back(mp("-smooth int",        "Set number of mesh smoothing steps"));
@@ -183,9 +184,9 @@ std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::s
   s.push_back(mp("p",              "Go to post-processing module"));
   s.push_back(mp("q",              "Abort selection in geometry creation mode"));
   s.push_back(mp("s",              "Go to solver module"));
-  s.push_back(mp("x",              "Freeze x coordinate in geometry creation mode"));
-  s.push_back(mp("y",              "Freeze y coordinate in geometry creation mode"));
-  s.push_back(mp("z",              "Freeze z coordinate in geometry creation mode"));
+  s.push_back(mp("x",              "Toogle x coordinate freeze in geometry creation mode"));
+  s.push_back(mp("y",              "Toogle y coordinate freeze in geometry creation mode"));
+  s.push_back(mp("z",              "Toogle z coordinate freeze in geometry creation mode"));
   s.push_back(mp("Shift+a",        "Bring all windows to front"));
   s.push_back(mp("Shift+g",        "Show geometry options"));
   s.push_back(mp("Shift+m",        "Show mesh options"));
@@ -194,6 +195,9 @@ std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::s
   s.push_back(mp("Shift+s",        "Show solver options"));
   s.push_back(mp("Shift+u",        "Show post-processing view plugins"));
   s.push_back(mp("Shift+w",        "Show post-processing view options"));
+  s.push_back(mp("Shift+x",        "Move only along x coordinate in geometry creation mode"));
+  s.push_back(mp("Shift+y",        "Move only along y coordinate in geometry creation mode"));
+  s.push_back(mp("Shift+z",        "Move only along z coordinate in geometry creation mode"));
   s.push_back(mp("Shift+Escape",   "Enable full mouse selection"));
   s.push_back(mp(cc + "d",         "Attach/detach menu"));
   s.push_back(mp(cc + "e",         "Export project"));
@@ -839,9 +843,15 @@ void GetOptions(int argc, char *argv[])
         i++;
         CTX::instance()->mesh.binary = 1;
       }
-      else if(!strcmp(argv[i] + 1, "parametric")) {
+      else if(!strcmp(argv[i] + 1, "save_parametric") ||
+              !strcmp(argv[i] + 1, "parametric")) {
         i++;
         CTX::instance()->mesh.saveParametric = 1;
+      }
+      else if(!strcmp(argv[i] + 1, "save_topology") ||
+              !strcmp(argv[i] + 1, "save_entities")) {
+        i++;
+        CTX::instance()->mesh.saveTopology = 1;
       }
       else if(!strcmp(argv[i] + 1, "algo")) {
         i++;

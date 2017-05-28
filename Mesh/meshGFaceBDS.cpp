@@ -148,10 +148,18 @@ static double correctLC_(BDS_Point *p1,BDS_Point *p2, GFace *f,
   double l2 = NewGetLc(p2);
   double l = 0.5 * (l1 + l2);
 
+  const double coord = 0.5;
+  double U = coord * p1->u + (1 - coord) * p2->u;
+  double V = coord * p1->v + (1 - coord) * p2->v;
+
+  GPoint gpp = f->point(SCALINGU*U, SCALINGV*V);
+  double lmid = BGM_MeshSize(f, U, V, gpp.x(), gpp.y(), gpp.z());
+  l = std::min(l, lmid);
+
   if(CTX::instance()->mesh.lcFromCurvature){
-    //      GPoint GP = f->point(SPoint2(0.5 * (p1->u + p2->u) * SCALINGU,
-    //                                   0.5 * (p1->v + p2->v) * SCALINGV));
-    //      double l3 = BGM_MeshSize(f,GP.u(),GP.v(),GP.x(),GP.y(),GP.z());
+    // GPoint GP = f->point(SPoint2(0.5 * (p1->u + p2->u) * SCALINGU,
+    //                              0.5 * (p1->v + p2->v) * SCALINGV));
+    // double l3 = BGM_MeshSize(f,GP.u(),GP.v(),GP.x(),GP.y(),GP.z());
     double l3 = l;
     double lcmin = std::min(std::min(l1, l2), l3);
     l1 = std::min(lcmin*1.2,l1);
@@ -279,7 +287,7 @@ bool evalSwapForOptimize(BDS_Edge *e, GFace *gf, BDS_Mesh &m)
   // if (LB > .3 && distanceIndicator > 0 && qb > .025) return true;
 
   // if swap enhances both criterion, the do it!
-  if (distanceIndicator > 0 && qualIndicator > 0) return true;
+  if (distanceIndicator > 1e-12 && qualIndicator > 1e-12) return true;
   if (distanceShouldSwap && qualCouldSwap) return true;
   if (distanceCouldSwap && qualShouldSwap) return true;
   // if (smoothIndicator > 0 && qualIndicator > 0) return true;
@@ -308,9 +316,12 @@ bool edgeSwapTestDelaunay(BDS_Edge *e, GFace *gf)
   double op2x[3] = {op[1]->X, op[1]->Y, op[1]->Z};
   double fourth[3];
   fourthPoint(p1x, p2x, op1x, fourth);
-  double result = robustPredicates::insphere(p1x, p2x, op1x, fourth, op2x) *
-    robustPredicates::orient3d(p1x, p2x, op1x, fourth);
-  return result > 0.;
+  const double inSphere = robustPredicates::insphere(p1x, p2x, op1x, fourth, op2x);
+  if (std::abs(inSphere) < 1e-12){
+    return false;
+  }
+  double result = inSphere * robustPredicates::orient3d(p1x, p2x, op1x, fourth);
+  return result > 1e-12;
 }
 
 bool edgeSwapTestHighOrder(BDS_Edge *e,GFace *gf)
@@ -481,8 +492,16 @@ static void midpointsphere(GFace *gf, double u1, double v1, double u2, double v2
 
 bool edges_sort(std::pair<double, BDS_Edge*> a, std::pair<double, BDS_Edge*> b)
 {
-  if (a.first == b.first)
-    return ((*a.second) < (*b.second));
+  // don't compare pointers: it leads to non-deterministic behavior
+  // if (a.first == b.first){
+  //   return ((*a.second) < (*b.second));
+  // }
+  if (std::abs(a.first - b.first) < 1e-10){
+    if (a.second->p1->iD == b.second->p1->iD)
+      return (a.second->p2->iD < b.second->p2->iD);
+    else
+      return (a.second->p1->iD < b.second->p1->iD);
+  }
   else
     return (a.first < b.first);
 }
@@ -493,7 +512,7 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
   std::vector<std::pair<double, BDS_Edge*> > edges;
 
   while (it != m.edges.end()){
-    if(!(*it)->deleted && (*it)->numfaces() == 2){
+    if(!(*it)->deleted && (*it)->numfaces() == 2 && (*it)->g->classif_degree == 2){
       double lone = NewGetLc(*it, gf, m.scalingU, m.scalingV);
       if(lone > MAXE_){
         edges.push_back(std::make_pair(-lone, *it));
@@ -540,13 +559,42 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
   }
 }
 
+double getMaxLcWhenCollapsingEdge(GFace *gf, BDS_Mesh &m, BDS_Edge *e, BDS_Point *p)
+{
+  BDS_Point *o = e->othervertex(p);
+
+  double maxLc = 0.0;
+  std::list<BDS_Edge*> edges(p->edges);
+  std::list<BDS_Edge*>::iterator eit = edges.begin();
+  std::list<BDS_Edge*>::iterator eite = edges.end();
+  while (eit != eite) {
+    BDS_Point *newP1 = 0, *newP2 = 0;
+    if ((*eit)->p1 == p){
+      newP1 = o;
+      newP2 = (*eit)->p2;
+    }
+    else if ((*eit)->p2 == p){
+      newP1 = (*eit)->p1;
+      newP2 = o;
+    }
+    if(!newP1 || !newP2) break; // error
+    BDS_Edge collapsedEdge = BDS_Edge(newP1, newP2);
+    maxLc = std::max(maxLc, NewGetLc(&collapsedEdge, gf, m.scalingU, m.scalingV));
+    newP1->del(&collapsedEdge);
+    newP2->del(&collapsedEdge);
+    ++eit;
+  }
+
+  return maxLc;
+}
+
 void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_collaps)
 {
   std::list<BDS_Edge*>::iterator it = m.edges.begin();
   std::vector<std::pair<double, BDS_Edge*> > edges;
 
   while (it != m.edges.end()){
-    if(!(*it)->deleted && (*it)->numfaces() == 2){
+    if(!(*it)->deleted && (*it)->numfaces() == 2 && (*it)->g->classif_degree == 2){
       double lone = NewGetLc(*it, gf,m.scalingU,m.scalingV);
       if(lone < MINE_){
         edges.push_back (std::make_pair(lone, *it));
@@ -560,11 +608,35 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_c
   for (unsigned int i = 0; i < edges.size(); i++){
     BDS_Edge *e = edges[i].second;
     if(!e->deleted){
+      double lone1 = 0.;
+      bool collapseP1Allowed = false;
+      if (e->p1->iD > MAXNP){
+        lone1 = getMaxLcWhenCollapsingEdge(gf, m, e, e->p1);
+        collapseP1Allowed = std::abs(lone1-1.0) < std::abs(edges[i].first - 1.0);
+      }
+
+      double lone2 = 0.;
+      bool collapseP2Allowed = false;
+      if (e->p2->iD > MAXNP){
+        lone2 = getMaxLcWhenCollapsingEdge(gf, m, e, e->p2);
+        collapseP2Allowed = std::abs(lone2-1.0) < std::abs(edges[i].first - 1.0);
+      }
+
+      BDS_Point *p = 0;
+      if (collapseP1Allowed && collapseP2Allowed){
+        if (std::abs(lone1 - lone2) < 1e-12)
+          p = e->p1->iD < e->p2->iD ? e->p1 : e->p2;
+        else
+          p = std::abs(lone1 - 1.0) < std::abs(lone2 - 1.0) ? e->p1 : e->p2;
+      }
+      else if (collapseP1Allowed && !collapseP2Allowed)
+        p = e->p1;
+      else if (collapseP1Allowed && !collapseP2Allowed)
+        p = e->p2;
+
       bool res = false;
-      if(e->p1->iD > MAXNP)
-        res = m.collapse_edge_parametric(e, e->p1);
-      else if(e->p2->iD > MAXNP)
-        res = m.collapse_edge_parametric(e, e->p2);
+      if(p)
+        res = m.collapse_edge_parametric(e, p);
       if(res)
         nb_collaps++;
     }

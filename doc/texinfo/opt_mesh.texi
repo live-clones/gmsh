@@ -599,6 +599,11 @@ Type of the element tag saved in mesh formats that don't support saving physical
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.SaveTopology
+Save model topology in MSH2 output files (this is always saved in MSH3)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.SaveParametric
 Save parametric coordinates of nodes@*
 Default value: @code{0}@*

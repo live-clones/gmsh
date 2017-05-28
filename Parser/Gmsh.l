@@ -63,6 +63,10 @@ void   skipline(void);
 #define YY_NO_UNISTD_H
 #endif
 
+// undefine register for C++11 compatibility of files generated with old
+// versions of flex/bison
+#define register
+
 %}
 
 alpha	[a-zA-Z\_]
@@ -128,7 +132,8 @@ Atan2                   return tAtan2;
 BSpline			return tBSpline;
 Betti                   return tBetti;
 Bezier			return tBezier;
-Block                   return tBlock;
+Box                     return tBox;
+Block                   return tBox;
 BooleanDifference       return tBooleanDifference;
 BooleanFragments        return tBooleanFragments;
 BooleanIntersection     return tBooleanIntersection;

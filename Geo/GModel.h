@@ -293,7 +293,7 @@ class GModel {
   // get tags of entities of the boundary of the given input entities
   bool getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
                        std::vector<std::pair<int, int> > &outDimTags,
-                       bool combined, bool oriented=true);
+                       bool combined, bool oriented=true, bool recursive=false);
 
   // return the highest number associated with an elementary entity of
   // a given dimension (or the highest overall if dim < 0)
@@ -668,6 +668,9 @@ class GModel {
 
   // Actran mesh
   int readACTRAN(const std::string &name);
+
+  // Sameced mesh
+  int readSAMCEF(const std::string &name);
 
   // Plot3D structured mesh format
   int readP3D(const std::string &name);

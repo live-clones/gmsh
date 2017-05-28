@@ -2086,9 +2086,9 @@ Creates a sphere, defined by the 3 coordinates of its center and a
 radius. Additional expressions define 3 angle limits. Sphere is only
 available with the OpenCASCADE kernel.
 
-@item Block ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a block, defined by the 3 coordinates of a point and the 3
-extents. Block is only available with the OpenCASCADE kernel.
+@item Box ( @var{expression} ) = @{ @var{expression-list} @};
+Creates a box, defined by the 3 coordinates of a point and the 3
+extents. Box is only available with the OpenCASCADE kernel.
 
 @item Cylinder ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a cylinder, defined by the 3 coordinates of the center of the
@@ -2270,9 +2270,9 @@ Computes the intersection of the object and the tool.
 Computes the union of the object and the tool.
 @item BooleanDifference @{ @var{boolean-list} @} @{ @var{boolean-list} @}
 Subtract the tool from the object.
-@item BooleanFramgments @{ @var{boolean-list} @} @{ @var{boolean-list} @}
-Computes all the fragments resulting from the intersection of the object
-and the tool.
+@item BooleanFragments @{ @var{boolean-list} @} @{ @var{boolean-list} @}
+Computes all the fragments resulting from the intersection of the
+entities in the object and in the tool, and makes all interfaces unique.
 @end ftable
 
 with
@@ -2379,6 +2379,11 @@ returned list.
 (Not a transformation per-se.) Returns the boundary of the elementary
 entities, combined as if a single entity, in
 @var{transform-list}. Useful to compute the boundary of a complex part.
+
+@item PointsOf @{ @var{transform-list} @}
+(Not a transformation per-se.) Returns all the geometrical points on the
+boundary of the elementary entities. Useful to compute the boundary of a
+complex part.
 
 @c @item Intersect Line @{ @var{expression-list} @} Surface @{ @var{expression} @}
 @c (Not a transformation per-se.) Returns the intersections of the lines

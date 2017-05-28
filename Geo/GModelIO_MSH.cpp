@@ -75,13 +75,15 @@ static void readMSHEntities(FILE *fp, GModel *gm)
     GFace *gf = gm->getFaceByTag(tag);
     if (!gf){
       discreteFace *df = new discreteFace(gm, tag);
-      std::vector<int> edges;
+      std::vector<int> edges, signs;
       for (int j = 0; j < n; j++){
 	int tage;
 	if(fscanf(fp, "%d", &tage) != 1) return;
-	edges.push_back(tage);
+	edges.push_back(std::abs(tage));
+        int sign = tage > 0 ? 1 : -1;
+        signs.push_back(sign);
       }
-      df->setBoundEdges(gm, edges);
+      df->setBoundEdges(edges, signs);
       gm->add(df);
       gf = df;
     }
@@ -93,13 +95,15 @@ static void readMSHEntities(FILE *fp, GModel *gm)
     GRegion *gr = gm->getRegionByTag(tag);
     if (!gr){
       discreteRegion *dr = new discreteRegion(gm, tag);
-      std::set<int> faces;
+      std::vector<int> faces, signs;
       for (int j = 0; j < n; j++){
 	int tagf;
 	if(fscanf(fp, "%d", &tagf) != 1) return;
-	faces.insert(tagf);
+	faces.push_back(tagf);
+        int sign = tagf > 0 ? 1 : -1;
+        signs.push_back(sign);
       }
-      dr->setBoundFaces(faces);
+      dr->setBoundFaces(faces, signs);
       gm->add(dr);
       gr = dr;
     }
@@ -482,7 +486,7 @@ static void writeMSHPhysicals(FILE *fp, GEntity *ge)
     fprintf(fp, "%d ", *itp);
 }
 
-static void writeMSHEntities(FILE *fp, GModel *gm)
+void writeMSHEntities(FILE *fp, GModel *gm)
 {
   fprintf(fp, "$Entities\n");
   fprintf (fp, "%d %d %d %d\n", gm->getNumVertices(), gm->getNumEdges(),
@@ -505,19 +509,37 @@ static void writeMSHEntities(FILE *fp, GModel *gm)
   }
   for (GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
     std::list<GEdge*> edges = (*it)->edges();
+    std::list<int> ori = (*it)->edgeOrientations();
     fprintf(fp, "%d %d ", (*it)->tag(), (int)edges.size());
-    for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++){
-      fprintf(fp, "%d ", (*ite)->tag());
+    std::vector<int> tags, signs;
+    for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++)
+      tags.push_back((*ite)->tag());
+    for(std::list<int>::iterator ite = ori.begin(); ite != ori.end(); ite++)
+      signs.push_back(*ite);
+    if(tags.size() == signs.size()){
+      for(unsigned int i = 0; i < tags.size(); i++)
+        tags[i] *= (signs[i] > 0 ? 1 : -1);
     }
+    for(unsigned int i = 0; i < tags.size(); i++)
+      fprintf(fp, "%d ", tags[i]);
     writeMSHPhysicals(fp, *it);
     fprintf(fp, "\n");
   }
   for (GModel::riter it = gm->firstRegion(); it != gm->lastRegion(); ++it) {
     std::list<GFace*> faces = (*it)->faces();
+    std::list<int> ori = (*it)->faceOrientations();
     fprintf(fp, "%d %d ", (*it)->tag(), (int)faces.size());
-    for(std::list<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++){
-      fprintf(fp, "%d ", (*itf)->tag());
+    std::vector<int> tags, signs;
+    for(std::list<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++)
+      tags.push_back((*itf)->tag());
+    for(std::list<int>::iterator itf = ori.begin(); itf != ori.end(); itf++)
+      signs.push_back(*itf);
+    if(tags.size() == signs.size()){
+      for(unsigned int i = 0; i < tags.size(); i++)
+        tags[i] *= (signs[i] > 0 ? 1 : -1);
     }
+    for(unsigned int i = 0; i < tags.size(); i++)
+      fprintf(fp, "%d ", tags[i]);
     writeMSHPhysicals(fp, *it);
     fprintf(fp, "\n");
   }

@@ -1,7 +1,6 @@
 # build image
-docker build -t immc/gmsh:v0.4 .
+docker build -t onelab/ubuntu16.04 .
 
 # push image to docker-hub
 docker login
-docker push immc/dg-valid
-
+docker push onelab/ubuntu16.04

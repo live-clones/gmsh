@@ -1392,7 +1392,7 @@ bool GFace::fillPointCloud(double maxDist,
 
 
 #if defined(HAVE_MESH)
-static void meshCompound (GFace* gf, bool verbose)
+static void meshCompound(GFace* gf, bool verbose)
 {
   discreteFace *df = new discreteFace (gf->model(), gf->tag() + 100000);
 
@@ -1415,7 +1415,7 @@ static void meshCompound (GFace* gf, bool verbose)
   }
   std::vector<int> cedges;
   cedges.insert(cedges.begin(), ec.begin(), ec.end());
-  df->setBoundEdges(gf->model(), cedges);
+  df->setBoundEdges(cedges);
   df->createGeometry();
   df->mesh(verbose);
   delete df;
