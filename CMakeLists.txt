@@ -1478,6 +1478,8 @@ if(ENABLE_BUILD_ANDROID)
   add_library(androidGmsh SHARED ${GMSH_SRC})
   set_target_properties(androidGmsh PROPERTIES OUTPUT_NAME Gmsh)
   target_link_libraries(androidGmsh ${EXTERNAL_LIBRARIES} ${LAPACK_LIBRARIES})
+  add_custom_command(TARGET androidGmsh POST_BUILD COMMAND
+                     ${CMAKE_STRIP} ${LIBRARY_OUTPUT_PATH}/libGmsh.so)
 endif(ENABLE_BUILD_ANDROID)
 
 # shared library target
