@@ -3,8 +3,8 @@ SetFactory("OpenCASCADE");
 // from http://en.wikipedia.org/wiki/Constructive_solid_geometry
 
 Mesh.Algorithm = 6;
-Mesh.CharacteristicLengthMin = 0.4;
-Mesh.CharacteristicLengthMax = 0.4;
+//Mesh.CharacteristicLengthMin = 0.4;
+//Mesh.CharacteristicLengthMax = 0.4;
 
 R = DefineNumber[ 1.4 , Min 0.1, Max 2, Step 0.01,
   Name "Parameters/Block dimension" ];
