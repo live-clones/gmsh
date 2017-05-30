@@ -193,16 +193,18 @@ struct faceXtet{
   }
 };
 
-void connectTets_vector2(std::vector<MTet4*> &t, std::vector<faceXtet> &conn)
+template <class ITER>
+void connectTets_vector2_templ(size_t _size, ITER beg, ITER end, std::vector<faceXtet> &conn)
 {
   conn.clear();
-  conn.reserve(4*t.size());
+  conn.reserve(4*_size);
   //  unsigned int k = 0;
   //  printf("COUCOU1 %d tets\n",t.size());
-  for (unsigned int i=0;i<t.size();i++){
-    if (!t[i]->isDeleted()){
+  for (ITER IT = beg; IT != end; ++IT){
+    MTet4* t = *IT;
+    if (!t->isDeleted()){
       for (int j = 0; j < 4; j++){
-	conn.push_back(faceXtet(t[i], j));
+	conn.push_back(faceXtet(t, j));
       }
     }
   }
@@ -253,6 +255,8 @@ void connectTets(ITER beg, ITER end, std::set<MFace, Less_Face> *allEmbeddedFace
 
 void connectTets(std::list<MTet4*> &l) { connectTets(l.begin(), l.end()); }
 void connectTets(std::vector<MTet4*> &l) { connectTets(l.begin(), l.end()); }
+void connectTets_vector2(std::list<MTet4*> &l,  std::vector<faceXtet> &conn) { connectTets_vector2_templ(l.size(), l.begin(), l.end(), conn); }
+void connectTets_vector2(std::vector<MTet4*> &l,  std::vector<faceXtet> &conn) { connectTets_vector2_templ(l.size(), l.begin(), l.end(), conn); }
 
 // Ensure the star-shapeness of the delaunay cavity
 // We use the visibility criterion : the vertex should be visible
@@ -865,7 +869,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   while (1){
     //    printf("coucou\n");
     std::vector<MTet4*> newTets;
-    for (CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it){
+    /*    for (CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it){
       if (!(*it)->isDeleted()){
         double qq = (*it)->getQuality();
         if (qq < qMin){
@@ -878,6 +882,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
         }
       }
     }
+    */
     //    printf("coucou\n");
 
     illegals.clear();
@@ -1188,6 +1193,11 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
   }
 
   gr->tetrahedra.clear();
+  {
+    std::vector<faceXtet> conn;
+    //  connectTets_vector2_templ(allTets.size(), allTets.begin(), allTets.end() , conn);
+  }
+  // SLOW
   connectTets(allTets.begin(), allTets.end());
 
   // classify the tets on the right region

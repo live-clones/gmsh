@@ -142,19 +142,9 @@ void saturateEdge(Edge &e, std::vector<Vert*> &S, std::stack<IPT> &temp)
     bgm = fields->get(fields->getBackgroundField());
   }  
 
-  if (0){
-    const double length = p1.distance(p2);
-    const double lc_avg = (e.first->lc() + e.second->lc())*.5;
-    const double l_adim_approx =   length / lc_avg;
-    if (l_adim_approx > 10.){
-      SPoint3 pmid = (p1+p2)*0.5;
-      const double lc = GMSHSIZE(pmid, bgm, lc_avg);
-      S.push_back(new Vert(pmid.x(),pmid.y(),pmid.z(),lc));
-      return;
-    }
-  }
-  
   //  double _a = Cpu();
+  
+  //  printf("%g %g \n",e.first->lc(), e.second->lc());
   
   const double dN = adaptiveTrapezoidalRule(p1,p2,e.first->lc(), e.second->lc(),
                                             _result, dl, temp, bgm);
@@ -449,15 +439,25 @@ void computeMeshSizes (GRegion *gr, std::map<MVertex*, double> &s){
 	updateSize ((*it)->triangles[i]->getVertex((j+1)%3), s, d);
       }
     }
-  }    
+  }
+  // there may be steiner points
+  for (unsigned int i=0;i<gr->tetrahedra.size();i++){
+    for (unsigned int j = 0; j < 4; j++){
+      MVertex *v = gr->tetrahedra[i]->getVertex(j);
+      if (s.find(v) == s.end()){
+	s[v] = 1.0;
+      }
+    }
+  }
 }
+
+extern double tetQuality (Tet* t, double *volume);
 
 void edgeBasedRefinement(const int numThreads,
                          const int nptsatonce,
                          GRegion *gr)
 {
   // fill up old Datastructures
-
   edgeContainer embeddedEdges (10000);
   
   std::map<MVertex*, double> sizes;
@@ -525,7 +525,6 @@ void edgeBasedRefinement(const int numThreads,
     }
   }
 
-
   // do not allow to saturate boundary edges
   {
     for (unsigned int i=0;i< allocator.size(0);i++) {
@@ -550,7 +549,6 @@ void edgeBasedRefinement(const int numThreads,
     for (unsigned int i=0;i<_vertices.size();i++){
       _filter.insert( _vertices[i] );
     }
-
     int iter = 1;
     Msg::Info("------------------------------------- SATUR FILTR SORTH DELNY TIME  TETS");
 
@@ -561,10 +559,10 @@ void edgeBasedRefinement(const int numThreads,
       double t1 = Cpu();
       //      C_COUNT = 0;
       saturateEdges (ec, allocator, numThreads, add);
-      //      printf("%d calls %d points added",C_COUNT,add.size());
+      //      printf("%d points added",add.size());
       double t2 = Cpu();
       filterVertices (numThreads, _filter, add);
-      //      printf(" %d points remain\n",add.size());
+      //            printf(" %d points remain\n",add.size());
       double t3 = Cpu();
       if (add.empty())break;
       // randomize vertices (EXTREMELY IMPORTANT FOR NOT DETERIORATING PERFORMANCE)
@@ -572,6 +570,7 @@ void edgeBasedRefinement(const int numThreads,
       // sort them using BRIO
       std::vector<int> indices;
       SortHilbert(add, indices);
+      //      printf("%d indices\n",indices.size());
       double t4 = Cpu();
       delaunayTrgl (1,1,add.size(), &add,allocator,embeddedEdges.empty() ? NULL : &embeddedEdges);
       double t5 = Cpu();
@@ -588,12 +587,45 @@ void edgeBasedRefinement(const int numThreads,
     }
   }
 
+  std::vector<Vert*> vv;
+  for (int myThread=0; myThread < numThreads; myThread++) 
+    for (unsigned int i=0;i<allocator.size(myThread);i++)
+      for (unsigned int j=0;j<4;j++)
+	if (allocator(myThread,i)->V[j])
+   	  allocator(myThread,i)->V[j]->setNum(0);  
+    
+  for (int myThread=0; myThread < numThreads; myThread++) 
+    for (unsigned int i=0;i<allocator.size(myThread);i++)
+      for (unsigned int j=0;j<4;j++)
+	if (allocator(myThread,i)->V[j] && allocator(myThread,i)->V[j]->getNum() == 0){	  
+	  allocator(myThread,i)->V[j]->setNum(1);
+	  std::map<Vert*,MVertex*>::iterator it = _ma.find(allocator(myThread,i)->V[j]);
+   	  if (it == _ma.end())vv.push_back(allocator(myThread,i)->V[j]);
+	}
+  
+  double t6 = Cpu();
+  Msg::Info("Optimizing");
+  edgeSwapPass (numThreads, allocator, embeddedEdges);
+  vertexRelocationPass (numThreads,vv);
+  edgeSwapPass (numThreads, allocator, embeddedEdges);
+  vertexRelocationPass (numThreads,vv);
+  edgeSwapPass (numThreads, allocator, embeddedEdges);
+  vertexRelocationPass (numThreads,vv);
+  double t7 = Cpu();
 
+  Msg::Info("Optimization done (%g seconds)",t7-t6);
 
+  int cat [10] = {0,0,0,0,0,0,0,0,0,0};
+  double MIN = 1.0;
+  
   for (unsigned int i=0; i< allocator.size(0);i++){
     Tet  *tt = allocator (0,i);
     MVertex *mvs[4];
     if (tt->V[0]){
+      double vol;
+      double q = tetQuality (tt,&vol);
+      cat [(int)(q*10)] ++;
+      MIN = std::min(MIN,q);
       for (int j=0;j<4;j++){
 	Vert *v = tt->V[j];
 	std::map<Vert*,MVertex*>::iterator it = _ma.find(v);
@@ -609,6 +641,11 @@ void edgeBasedRefinement(const int numThreads,
     }
   }
 
+  Msg::Info ("Min Tet Quality %22.15E",MIN);
+  for (int i=0;i<10;i++){
+    Msg::Info ("Tet Quality [%4.3f,%4.3f] %8d",0.1*i,0.1*(i+1),cat[i]);
+  }
+  
   if (Msg::GetVerbosity() == 99) {
     std::map<Edge,double> _sizes;
     for (unsigned int i=0; i< allocator.size(0);i++){
@@ -638,4 +675,6 @@ void edgeBasedRefinement(const int numThreads,
     Msg::Info("MESH EFFICIENCY : %22.15E %6d edges among %d are out of range",
               exp (sum / _sizes.size()),nbBad,_sizes.size());
   }
+
+  
 }

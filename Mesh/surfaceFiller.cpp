@@ -691,11 +691,11 @@ void packingOfParallelogramsSmoothness(GFace* gf,  std::vector<MVertex*> &packed
 
   // add the vertices as additional vertices in the
   // surface mesh
-  char ccc[256]; sprintf(ccc,"points%d.pos",gf->tag());
-  FILE *f = Fopen(ccc,"w");
-  if(f) fprintf(f, "View \"\"{\n");
+  //  char ccc[256]; sprintf(ccc,"points%d.pos",gf->tag());
+  //  FILE *f = Fopen(ccc,"w");
+  //  if(f) fprintf(f, "View \"\"{\n");
   for (unsigned int i=0;i<vertices.size();i++){
-    if(f) vertices[i]->print(f,i);
+    //    if(f) vertices[i]->print(f,i);
     if(vertices[i]->_v->onWhat() == gf) {
       packed.push_back(vertices[i]->_v);
       metrics.push_back(vertices[i]->_meshMetric);
@@ -704,10 +704,10 @@ void packingOfParallelogramsSmoothness(GFace* gf,  std::vector<MVertex*> &packed
     }
     delete  vertices[i];
   }
-  if(f){
-    fprintf(f,"};");
-    fclose(f);
-  }
+  //  if(f){
+  //    fprintf(f,"};");
+  //    fclose(f);
+  //  }
 }
 
 

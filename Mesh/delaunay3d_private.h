@@ -20,13 +20,17 @@
 #endif
 
 typedef unsigned char CHECKTYPE;
+struct Tet;
 
 struct Vert {
 private :
   double _x[3];
   double _lc;
   unsigned int _num;
+  Tet *_t;
 public :
+  inline void setT(Tet*t) { _t = t;}
+  inline Tet* getT() const { return _t;}
   inline unsigned int getNum () const {return _num;}
   inline void setNum (unsigned int n)  {_num=n;}
   unsigned char _thread;
@@ -40,7 +44,7 @@ public :
   inline double &lc() {return _lc;}
   inline operator double *() { return _x; }
   Vert (double X=0, double Y=0, double Z=0, double lc=0, int num = 0)
-    : _num(num), _thread(0)
+  :  _num(num),_t(NULL), _thread(0)
   {
     _x[0] = X; _x[1] = Y; _x[2] = Z; _lc = lc;
   }
@@ -223,6 +227,7 @@ struct Tet {
   {
     _modified=true;
     V[0] = v0; V[1] = v1; V[2] = v2; V[3] = v3;
+    for (int i=0;i<4;i++)if (V[i])V[i]->setT(this);
     //    for (int i=0;i<4;i++)_copy[i] = *V[i];
     return 1;
   }
@@ -232,6 +237,7 @@ struct Tet {
     double val = robustPredicates::orient3d((double*)v0, (double*)v1,
                                             (double*)v2, (double*)v3);
     V[0] = v0; V[1] = v1; V[2] = v2; V[3] = v3;
+    for (int i=0;i<4;i++)if (V[i])V[i]->setT(this);
     if (val > 0){
       // for (int i=0;i<4;i++)_copy[i] = *V[i];
       return 1;
@@ -397,6 +403,7 @@ void delaunayTrgl(const unsigned int numThreads,
                   unsigned int Npts,
                   std::vector<Vert*> assignTo[],
                   tetContainer &allocator, edgeContainer *embedded = 0);
-bool edgeSwap(Tet *tet, int iLocalEdge,  tetContainer &T, int myThread);
+void edgeSwapPass (int numThreads, tetContainer &allocator, edgeContainer &embeddedEdges);
+void vertexRelocationPass (int numThreads,   std::vector<Vert*> &v);
 
 #endif
