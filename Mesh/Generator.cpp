@@ -982,7 +982,7 @@ void RecombineMesh(GModel *m)
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
     GFace *gf = *it;
-    recombineIntoQuads(gf);
+    recombineIntoQuads(gf,true,true,.01);
   }
 
   CTX::instance()->mesh.changed = ENT_ALL;
