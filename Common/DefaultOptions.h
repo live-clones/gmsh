@@ -870,6 +870,8 @@ StringXNumber GeometryOptions_Number[] = {
     "Sew faces in STEP, IGES and BRep models" },
   { F|O, "OCCParallel" , opt_geometry_occ_parallel , 0. ,
     "Use multi-threaded OCC boolean operators" },
+  { F|O, "OCCBooleanPreserveNumbering" , opt_geometry_occ_boolean_preserve_numbering , 1. ,
+    "Try to preserve numbering of entities through OCC boolean operations" },
   { F|O, "OCCScaling" , opt_geometry_occ_scaling , 1. ,
     "Scale STEP, IGES and BRep model by given factor" },
   { F,   "OffsetX" , opt_geometry_offset0 , 0. ,

@@ -1,3 +1,7 @@
+3.0.2 (May 13, 2017): improved handling of meshing constraints and entity
+numbering after boolean operations; improved handling of fast coarseness
+transitions in MeshAdapt; new TIKZ export; small bug fixes.
+
 3.0.1 (April 14, 2017): fixed OpenCASCADE plane surfaces with holes.
 
 3.0.0 (April 13, 2017): new constructive solid geometry features and boolean

@@ -86,7 +86,8 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
             (CTX::instance()->print.fileFormat == FORMAT_PS ||
              CTX::instance()->print.fileFormat == FORMAT_EPS ||
              CTX::instance()->print.fileFormat == FORMAT_PDF ||
-             CTX::instance()->print.fileFormat == FORMAT_SVG)){
+             CTX::instance()->print.fileFormat == FORMAT_SVG ||
+             CTX::instance()->print.fileFormat == FORMAT_TIKZ)){
       gl2psText(s.c_str(), font_name.c_str(), font_size);
     }
     else{

@@ -149,6 +149,11 @@ Use multi-threaded OCC boolean operators@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCBooleanPreserveNumbering
+Try to preserve numbering of entities through OCC boolean operations@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.OCCScaling
 Scale STEP, IGES and BRep model by given factor@*
 Default value: @code{1}@*

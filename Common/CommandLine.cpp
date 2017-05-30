@@ -184,9 +184,9 @@ std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::s
   s.push_back(mp("p",              "Go to post-processing module"));
   s.push_back(mp("q",              "Abort selection in geometry creation mode"));
   s.push_back(mp("s",              "Go to solver module"));
-  s.push_back(mp("x",              "Freeze x coordinate in geometry creation mode"));
-  s.push_back(mp("y",              "Freeze y coordinate in geometry creation mode"));
-  s.push_back(mp("z",              "Freeze z coordinate in geometry creation mode"));
+  s.push_back(mp("x",              "Toogle x coordinate freeze in geometry creation mode"));
+  s.push_back(mp("y",              "Toogle y coordinate freeze in geometry creation mode"));
+  s.push_back(mp("z",              "Toogle z coordinate freeze in geometry creation mode"));
   s.push_back(mp("Shift+a",        "Bring all windows to front"));
   s.push_back(mp("Shift+g",        "Show geometry options"));
   s.push_back(mp("Shift+m",        "Show mesh options"));
@@ -195,6 +195,9 @@ std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::s
   s.push_back(mp("Shift+s",        "Show solver options"));
   s.push_back(mp("Shift+u",        "Show post-processing view plugins"));
   s.push_back(mp("Shift+w",        "Show post-processing view options"));
+  s.push_back(mp("Shift+x",        "Move only along x coordinate in geometry creation mode"));
+  s.push_back(mp("Shift+y",        "Move only along y coordinate in geometry creation mode"));
+  s.push_back(mp("Shift+z",        "Move only along z coordinate in geometry creation mode"));
   s.push_back(mp("Shift+Escape",   "Enable full mouse selection"));
   s.push_back(mp(cc + "d",         "Attach/detach menu"));
   s.push_back(mp(cc + "e",         "Export project"));

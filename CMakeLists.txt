@@ -67,7 +67,7 @@ opt(NATIVE_FILE_CHOOSER "Enable native file chooser in GUI" ${DEFAULT})
 opt(NETGEN "Enable Netgen 3D frontal mesh generator" ${DEFAULT})
 opt(NUMPY "Enable conversion between fullMatrix and numpy array (requires SWIG)" OFF)
 opt(PETSC4PY "Enable petsc4py wrappers for petsc matrices" ON)
-opt(OCC "Enable Open CASCADE geometrical models" ${DEFAULT})
+opt(OCC "Enable OpenCASCADE geometrical models" ${DEFAULT})
 opt(ONELAB "Enable ONELAB solver interface" ${DEFAULT})
 opt(ONELAB_METAMODEL "Enable ONELAB metamodels (experimental)" ${DEFAULT})
 opt(OPENMP "Enable OpenMP (experimental)" OFF)
@@ -107,6 +107,7 @@ set(GMSH_API
     Common/VertexArray.h Common/Octree.h Common/OctreeInternals.h
     Common/OS.h Common/StringUtils.h Common/OpenFile.h Common/Hash.h
     Common/onelab.h Common/GmshSocket.h Common/onelabUtils.h Common/Options.h
+    Common/picojson.h
   Numeric/Numeric.h Numeric/GaussIntegration.h Numeric/polynomialBasis.h
     Numeric/JacobianBasis.h Numeric/bezierBasis.h Numeric/fullMatrix.h
     Numeric/FuncSpaceData.h Numeric/pointsGenerators.h
@@ -1089,6 +1090,8 @@ if(HAVE_SOLVER)
 endif(HAVE_SOLVER)
 
 if(ENABLE_OCC)
+  set(OCC_VERSION "")
+  set(OCC_MINIMAL_VERSION "6.9.1")
   if(WIN32 OR CYGWIN)
     if(HAVE_64BIT_SIZE_T)
       set(OCC_SYS_NAME win64)
@@ -1098,53 +1101,69 @@ if(ENABLE_OCC)
   else(WIN32 OR CYGWIN)
     set(OCC_SYS_NAME ${CMAKE_SYSTEM_NAME})
   endif(WIN32 OR CYGWIN)
-  set(OCC_LIBS_REQUIRED
-      # subset of DataExchange
-      TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKXSBase
-      # ModelingAlgorithms
-      TKOffset TKFeat TKFillet TKBool TKShHealing TKMesh TKHLR TKBO TKPrim
-      TKTopAlgo TKGeomAlgo
-      # ModelingData
-      TKBRep TKGeomBase TKG3d TKG2d
-      # FoundationClasses
-      # TKAdvTools -- not necessary? (and removed from OCC 6.8)
-      TKMath TKernel)
-  list(LENGTH OCC_LIBS_REQUIRED NUM_OCC_LIBS_REQUIRED)
-  if(OCC_LIBS)
-    message(STATUS "OCC libraries specified explicitly: " ${OCC_LIBS})
-    list(LENGTH OCC_LIBS_REQUIRED NUM_OCC_LIBS)
-  else(OCC_LIBS)
-    set(OCC_LIBS)
-    foreach(OCC ${OCC_LIBS_REQUIRED})
-      find_library(OCC_LIB ${OCC} HINTS ENV CASROOT PATH_SUFFIXES lib
-                   ${OCC_SYS_NAME}/lib ${OCC_SYS_NAME}/vc8/lib)
-      if(OCC_LIB)
-        list(APPEND OCC_LIBS ${OCC_LIB})
-      else(OCC_LIB)
-        message(STATUS "OCC lib " ${OCC} " not Found")
-      endif(OCC_LIB)
-      unset(OCC_LIB CACHE)
-    endforeach(OCC)
-    list(LENGTH OCC_LIBS NUM_OCC_LIBS)
-  endif(OCC_LIBS)      
-  if(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
-    find_path(OCC_INC "BRep_Tool.hxx" PATHS ENV CASROOT PATH_SUFFIXES inc
-              include include/oce opencascade)
-    if(OCC_INC)
-      set_config_option(HAVE_OCC "OpenCascade")
+  find_path(OCC_INC "Standard_Version.hxx" HINTS ENV CASROOT PATH_SUFFIXES inc
+            include include/oce opencascade include/opencascade)
+  if(OCC_INC)
+    file(STRINGS ${OCC_INC}/Standard_Version.hxx
+         OCC_MAJOR REGEX "#define OCC_VERSION_MAJOR.*")
+    string(REGEX MATCH "[0-9]+" OCC_MAJOR ${OCC_MAJOR})
+    file(STRINGS ${OCC_INC}/Standard_Version.hxx
+         OCC_MINOR REGEX "#define OCC_VERSION_MINOR.*")
+    string(REGEX MATCH "[0-9]+" OCC_MINOR ${OCC_MINOR})
+    file(STRINGS ${OCC_INC}/Standard_Version.hxx
+         OCC_MAINT REGEX "#define OCC_VERSION_MAINTENANCE.*")
+    string(REGEX MATCH "[0-9]+" OCC_MAINT ${OCC_MAINT})
+    set(OCC_VERSION "${OCC_MAJOR}.${OCC_MINOR}.${OCC_MAINT}")
+    message(STATUS "Found OpenCASCADE version ${OCC_VERSION} in ${OCC_INC}")
+  endif(OCC_INC)
+  if(OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
+    message(WARNING "Gmsh requires OpenCASCADE >= ${OCC_MINIMAL_VERSION}")
+    message(WARNING "Use CMAKE_PREFIX_PATH or the CASROOT environment variable "
+            "to explicitely specify the installation path of OpenCASCADE")
+  else (OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
+    set(OCC_LIBS_REQUIRED
+	# subset of DataExchange
+      	TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKXSBase
+      	# ModelingAlgorithms
+      	TKOffset TKFeat TKFillet TKBool TKShHealing TKMesh TKHLR TKBO TKPrim
+      	TKTopAlgo TKGeomAlgo
+      	# ModelingData
+      	TKBRep TKGeomBase TKG3d TKG2d
+      	# FoundationClasses
+      	# TKAdvTools -- not necessary? (and removed from OCC 6.8)
+      	TKMath TKernel)
+    list(LENGTH OCC_LIBS_REQUIRED NUM_OCC_LIBS_REQUIRED)
+    if(OCC_LIBS)
+      message(STATUS "OCC libraries specified explicitly: " ${OCC_LIBS})
+      list(LENGTH OCC_LIBS_REQUIRED NUM_OCC_LIBS)
+    else(OCC_LIBS)
+      set(OCC_LIBS)
+      foreach(OCC ${OCC_LIBS_REQUIRED})
+        find_library(OCC_LIB ${OCC} HINTS ENV CASROOT PATH_SUFFIXES lib ${OCC_SYS_NAME}/lib ${OCC_SYS_NAME}/vc8/lib)
+        if(OCC_LIB)
+	  list(APPEND OCC_LIBS ${OCC_LIB})
+        else(OCC_LIB)
+	  message(STATUS "OCC lib " ${OCC} " not Found")
+        endif(OCC_LIB)
+        unset(OCC_LIB CACHE)
+      endforeach(OCC)
+      list(LENGTH OCC_LIBS NUM_OCC_LIBS)
+    endif(OCC_LIBS)      
+    if(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
+      set_config_option(HAVE_OCC "OpenCASCADE")
       list(APPEND EXTERNAL_LIBRARIES ${OCC_LIBS})
       list(APPEND EXTERNAL_INCLUDES ${OCC_INC})
       if(HAVE_64BIT_SIZE_T)
         add_definitions(-D_OCC64)
       endif(HAVE_64BIT_SIZE_T)
       if(CYGWIN)
-        list(APPEND EXTERNAL_LIBRARIES "winspool")
+	list(APPEND EXTERNAL_LIBRARIES "winspool")
         add_definitions(-DOCC_CONVERT_SIGNALS)
       elseif(MSVC)
-        add_definitions(-DWNT)
+	add_definitions(-DWNT)
       endif(CYGWIN)
-    endif(OCC_INC)
-  endif(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
+    endif(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
+  endif(OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
 endif(ENABLE_OCC)
 
 if(ENABLE_ACIS)
@@ -1455,9 +1474,12 @@ if(ENABLE_BUILD_ANDROID)
   set(LIBRARY_OUTPUT_PATH_ROOT ${CMAKE_CURRENT_BINARY_DIR})
   set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/libs/)
   add_definitions(-DBUILD_ANDROID)
+  add_definitions(-DPICOJSON_USE_LOCALE=0)
   add_library(androidGmsh SHARED ${GMSH_SRC})
   set_target_properties(androidGmsh PROPERTIES OUTPUT_NAME Gmsh)
   target_link_libraries(androidGmsh ${EXTERNAL_LIBRARIES} ${LAPACK_LIBRARIES})
+  add_custom_command(TARGET androidGmsh POST_BUILD COMMAND
+                     ${CMAKE_STRIP} ${LIBRARY_OUTPUT_PATH}/libGmsh.so)
 endif(ENABLE_BUILD_ANDROID)
 
 # shared library target

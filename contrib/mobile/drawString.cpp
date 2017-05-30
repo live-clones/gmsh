@@ -12,6 +12,9 @@ drawString::drawString(std::string text, int size, float color[4])
 {
   _map = 0;
   _size = size;
+  _height = 0;
+  _width = 0;
+  _realWidth = 0;
   if(color == NULL)
     setColor(0.0f, 0.0f, 0.0f, 1.0f);
   else
@@ -44,6 +47,7 @@ void drawString::setColor(float r, float g, float b, float a)
 
 void drawString::draw(float x, float y, float z, float w, float h, bool center)
 {
+  if(!_map || !_width || !_height) return;
   GLuint textureId;
   glGenTextures(1, &textureId);
   glBindTexture(GL_TEXTURE_2D, textureId);
@@ -52,7 +56,7 @@ void drawString::draw(float x, float y, float z, float w, float h, bool center)
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glColor4f(_color[0], _color[1], _color[2], _color[3]);
   if(center)
-    x-=(float)_realWidth/w/2;
+    x -= (float)_realWidth/w/2;
   GLfloat vertex[] = {
     x, y-_height/h+_size/h, z, // bottom left
     x, y+(float)_height/h-_height/h+_size/h, z, // top left

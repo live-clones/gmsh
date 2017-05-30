@@ -4741,6 +4741,13 @@ double opt_geometry_occ_parallel(OPT_ARGS_NUM)
   return CTX::instance()->geom.occParallel;
 }
 
+double opt_geometry_occ_boolean_preserve_numbering(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occBooleanPreserveNumbering = (int)val;
+  return CTX::instance()->geom.occBooleanPreserveNumbering;
+}
+
 double opt_geometry_occ_scaling(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

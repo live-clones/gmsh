@@ -61,7 +61,13 @@ OCCEdge::~OCCEdge()
 SBoundingBox3d OCCEdge::bounds() const
 {
   Bnd_Box b;
-  BRepBndLib::Add(c, b);
+  try{
+    BRepBndLib::Add(c, b);
+  }
+  catch(Standard_Failure &err){
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return SBoundingBox3d();
+  }
   double xmin, ymin, zmin, xmax, ymax, zmax;
   b.Get(xmin, ymin, zmin, xmax, ymax, zmax);
   SBoundingBox3d bbox(xmin, ymin, zmin, xmax, ymax, zmax);

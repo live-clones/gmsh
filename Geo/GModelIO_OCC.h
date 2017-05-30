@@ -62,6 +62,10 @@ class OCC_Internals {
   // remove from the model at the next synchronization
   std::set<std::pair<int, int> > _toRemove;
 
+  // cache of <dim,tag> pairs corresponding to entities that should not be
+  // unbound during boolean operations
+  std::set<std::pair<int, int> > _toPreserve;
+
   // mesh attributes
   OCCMeshAttributesRTree *_meshAttributes;
 
@@ -74,11 +78,14 @@ class OCC_Internals {
 
   // bind (potentially) mutliple entities in shape and return the tags in
   // outTags. If tag > 0 and a single entity if found, use that; if
-  // highestDimOnly is true, only return the entities of the highest dimension
+  // highestDimOnly is true, only bind the entities (and sub-entities, if
+  // recursive is set) of the highest dimension; if returnNewOnly is set, only
+  // return newly bound entities in outDimTags.
   void _multiBind(TopoDS_Shape shape, int tag,
                   std::vector<std::pair<int, int> > &outDimTags,
                   bool returnHighestDimOnly, bool recursive=false,
                   bool returnNewOnly=false);
+
   // is the entity of a given dimension and tag bound?
   bool _isBound(int dim, int tag);
 
@@ -98,8 +105,8 @@ class OCC_Internals {
                  double rx, double ry);
   bool _makeSphere(TopoDS_Solid &result, double xc, double yc, double zc,
                    double radius, double angle1, double angle2, double angle3);
-  bool _makeBlock(TopoDS_Solid &result, double x, double y, double z,
-                  double dx, double dy, double dz);
+  bool _makeBox(TopoDS_Solid &result, double x, double y, double z,
+                double dx, double dy, double dz);
   bool _makeCylinder(TopoDS_Solid &result, double x, double y, double z,
                    double dx, double dy, double dz, double r, double angle);
   bool _makeCone(TopoDS_Solid &result, double x, double y, double z,
@@ -207,8 +214,8 @@ class OCC_Internals {
   bool addVolume(int &tag, const std::vector<int> &shellTags);
   bool addSphere(int &tag, double xc, double yc, double zc, double radius,
                  double angle1, double angle2, double angle3);
-  bool addBlock(int &tag, double x, double y, double z,
-                double dx, double dy, double dz);
+  bool addBox(int &tag, double x, double y, double z,
+              double dx, double dy, double dz);
   bool addCylinder(int &tag, double x, double y, double z,
                    double dx, double dy, double dz, double r, double angle);
   bool addCone(int &tag, double x, double y, double z,
@@ -247,26 +254,31 @@ class OCC_Internals {
                        const std::vector<std::pair<int, int> > &objectDimTags,
                        const std::vector<std::pair<int, int> > &toolDimTags,
                        std::vector<std::pair<int, int> > &outDimTags,
+                       std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                        bool removeObject, bool removeTool);
   bool booleanUnion(int tag,
                     const std::vector<std::pair<int, int> > &objectDimTags,
                     const std::vector<std::pair<int, int> > &toolDimTags,
                     std::vector<std::pair<int, int> > &outDimTags,
+                    std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                     bool removeObject, bool removeTool);
   bool booleanIntersection(int tag,
                            const std::vector<std::pair<int, int> > &objectDimTags,
                            const std::vector<std::pair<int, int> > &toolDimTags,
                            std::vector<std::pair<int, int> > &outDimTags,
+                           std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                            bool removeObject, bool removeTool);
   bool booleanDifference(int tag,
                          const std::vector<std::pair<int, int> > &objectDimTags,
                          const std::vector<std::pair<int, int> > &toolDimTags,
                          std::vector<std::pair<int, int> > &outDimTags,
+                         std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                          bool removeObject, bool removeTool);
   bool booleanFragments(int tag,
                         const std::vector<std::pair<int, int> > &objectDimTags,
                         const std::vector<std::pair<int, int> > &toolDimTags,
                         std::vector<std::pair<int, int> > &outDimTags,
+                        std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                         bool removeObject, bool removeTool);
 
   // apply transformations
@@ -328,9 +340,9 @@ class OCC_Internals {
   bool makeSphereSTL(double xc, double yc, double zc, double radius, double angle1,
                      double angle2, double angle3, std::vector<SPoint3> &vertices,
                      std::vector<SVector3> &normals, std::vector<int> &triangles);
-  bool makeBlockSTL(double x, double y, double z, double dx, double dy, double dz,
-                    std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
-                    std::vector<int> &triangles);
+  bool makeBoxSTL(double x, double y, double z, double dx, double dy, double dz,
+                  std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+                  std::vector<int> &triangles);
   bool makeCylinderSTL(double x, double y, double z, double dx, double dy, double dz,
                        double r, double angle, std::vector<SPoint3> &vertices,
                        std::vector<SVector3> &normals, std::vector<int> &triangles);
@@ -471,8 +483,8 @@ public:
   {
     return _error("add sphere");
   }
-  bool addBlock(int &tag, double x, double y, double z,
-                double dx, double dy, double dz)
+  bool addBox(int &tag, double x, double y, double z,
+              double dx, double dy, double dz)
   {
     return _error("add block");
   }
@@ -536,6 +548,7 @@ public:
                        const std::vector<std::pair<int, int> > &objectDimTags,
                        const std::vector<std::pair<int, int> > &toolDimTags,
                        std::vector<std::pair<int, int> > &outDimTags,
+                       std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                        bool removeObject, bool removeTool)
   {
     return _error("apply boolean operator");
@@ -544,6 +557,7 @@ public:
                     const std::vector<std::pair<int, int> > &objectDimTags,
                     const std::vector<std::pair<int, int> > &toolDimTags,
                     std::vector<std::pair<int, int> > &outDimTags,
+                    std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                     bool removeObject, bool removeTool)
   {
     return _error("apply boolean union");
@@ -552,6 +566,7 @@ public:
                            const std::vector<std::pair<int, int> > &objectDimTags,
                            const std::vector<std::pair<int, int> > &toolDimTags,
                            std::vector<std::pair<int, int> > &outDimTags,
+                           std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                            bool removeObject, bool removeTool)
   {
     return _error("apply boolean intersection");
@@ -560,6 +575,7 @@ public:
                          const std::vector<std::pair<int, int> > &objectDimTags,
                          const std::vector<std::pair<int, int> > &toolDimTags,
                          std::vector<std::pair<int, int> > &outDimTags,
+                         std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                          bool removeObject, bool removeTool)
   {
     return _error("apply boolean difference");
@@ -568,6 +584,7 @@ public:
                         const std::vector<std::pair<int, int> > &objectDimTags,
                         const std::vector<std::pair<int, int> > &toolDimTags,
                         std::vector<std::pair<int, int> > &outDimTags,
+                        std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                         bool removeObject, bool removeTool)
   {
     return _error("apply boolean fragments");
@@ -638,9 +655,9 @@ public:
   {
     return false;
   }
-  bool makeBlockSTL(double x, double y, double z, double dx, double dy, double dz,
-                    std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
-                    std::vector<int> &triangles)
+  bool makeBoxSTL(double x, double y, double z, double dx, double dy, double dz,
+                  std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+                  std::vector<int> &triangles)
   {
     return false;
   }
