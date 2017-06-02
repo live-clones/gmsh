@@ -325,6 +325,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
     double initial, time = initial = Cpu();
     unsigned int percentage = 0, nextCheck = 0;
 
+    _data.reserve(_data.size()+num);
     for (unsigned i = 0; i < num; ++i) {
       MElement *el = entity->getMeshElement(i);
       double min, max;
@@ -335,14 +336,14 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
       }
 
       if (i >= nextCheck) {
-        nextCheck += _data.size() / 100;
+        nextCheck += num / 100;
         double curTime = Cpu();
-        unsigned int curPercentage = i*100/_data.size();
+        unsigned int curPercentage = i*100/num;
         if ((curTime - time > 10. && curPercentage > percentage + 4) ||
             (curTime - time > 15. && curPercentage < 5)) {
           percentage = curPercentage;
           time = curTime;
-          const double remaining = (time-initial) / (i+1) * (_data.size() - i-1);
+          const double remaining = (time-initial) / (i+1) * (num - i-1);
           if (remaining < 60*2)
             Msg::StatusBar(true, "%d%% (remaining time ~%g seconds)",
                 percentage, remaining);
