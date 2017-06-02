@@ -1221,8 +1221,8 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag)
       TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
       f.Add(edge, GeomAbs_C0);
       // face filling will duplicate the edge
-      if(_edgeTag.IsBound(edge))
-        unbind(edge, _edgeTag.Find(edge), true);
+      //if(_edgeTag.IsBound(edge))
+      //  unbind(edge, _edgeTag.Find(edge), true);
     }
     // TODO: add optional point constraints using f.Add(gp_Pnt(x, y, z);
     f.Build();
