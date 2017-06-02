@@ -6,15 +6,15 @@
 #ifndef _GMODELIO_GEO_H_
 #define _GMODELIO_GEO_H_
 
-#include "ListUtils.h"
-#include "TreeUtils.h"
-
 class GModel;
 class ExtrudeParams;
 class gmshSurface;
+class List_T;
+class Tree_T;
 
 class GEO_Internals{
  public:
+  // this will become private
   Tree_T *Points, *Curves, *EdgeLoops, *Surfaces, *SurfaceLoops, *Volumes;
   Tree_T *DelPoints, *DelCurves, *DelSurfaces, *DelVolumes;
   List_T *PhysicalGroups, *DelPhysicalGroups;

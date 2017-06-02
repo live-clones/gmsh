@@ -9,10 +9,11 @@
 #include "avl.h"
 #include "ListUtils.h"
 
-typedef struct {
+class Tree_T {
+ public:
   int size;
   avl_tree *root;
-} Tree_T;
+};
 
 Tree_T *Tree_Create(int size, int (*fcmp)(const void *a, const void *b));
 void    Tree_Delete(Tree_T *Tree);
