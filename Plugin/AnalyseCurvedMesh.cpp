@@ -361,18 +361,6 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
   _computedJ[dim-1] = true;
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(MElement *const*el, int numEl)
-{
-  for (int k = 0; k < numEl; ++k) {
-    double min, max;
-    jacobianBasedQuality::minMaxJacobianDeterminant(el[k], min, max);
-    _data.push_back(data_elementMinMax(el[k], min, max));
-    if (min < 0 && max < 0) {
-      Msg::Warning("Element %d is completely inverted", el[k]->getNum());
-    }
-  }
-}
-
 void GMSH_AnalyseCurvedMeshPlugin::_computeMinScaledJac(int dim)
 {
   if (_computedS[dim-1]) return;
@@ -389,12 +377,6 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinScaledJac(int dim)
     else {
       _data[i].setMinS(jacobianBasedQuality::minScaledJacobian(el, true));
     }
-//    Msg::Info("Scaled Jac");
-//    Msg::Info("==========");
-//    for (int k = 1; k < 30; ++k) {
-//      Msg::Info("%.10g", jacobianBasedQuality::minSampledScaledJacobian(el, k));
-//    }
-//    Msg::Info(" ");
     if (i >= nextCheck) {
       nextCheck += _data.size() / 100;
       double curTime = Cpu();
@@ -436,12 +418,6 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinIsotropy(int dim)
     else {
       _data[i].setMinI(jacobianBasedQuality::minIsotropyMeasure(el, true));
     }
-//    Msg::Info("Isotropy");
-//    Msg::Info("========");
-//    for (int k = 1; k < 30; ++k) {
-//      Msg::Info("%.10g", jacobianBasedQuality::minSampledIsotropyMeasure(el, k));
-//    }
-//    Msg::Info(" ");
     if (i >= nextCheck) {
       nextCheck += _data.size() / 100;
       double curTime = Cpu();
@@ -584,30 +560,6 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatIsotropy()
 
   Msg::Info("Isotropy            : %6.3f, %6.3f, %6.3f (= worst, avg, best)",
       infminI, avgminI, supminI);
-}
-
-// For testing
-void GMSH_AnalyseCurvedMeshPlugin::computeMinR(MElement *const *el,
-                                               int numEl,
-                                               double *minR,
-                                               bool *straight)
-{
-  _computedJ[el[0]->getDim()-1] = false;
-  _computedI[el[0]->getDim()-1] = false;
-  _data.clear();
-
-  _computeMinMaxJandValidity(el, numEl);
-  _computeMinIsotropy(el[0]->getDim());
-  if (minR) {
-    for (unsigned int i = 0; i < _data.size(); ++i) {
-      minR[i] = _data[i].minI();
-    }
-  }
-  if (straight) {
-    for (unsigned int i = 0; i < _data.size(); ++i) {
-      straight[i] = 0;
-    }
-  }
 }
 
 #endif
