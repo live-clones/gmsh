@@ -137,6 +137,11 @@ if [ "$appname" != "Onelab" ] ; then
   fi
 fi
 
+# we should generate this here:
+#echo "ndk.dir=${android_ndk}" > local.properties
+#echo "sdk.dir=${android_sdk}" >> local.properties
+# as well as the keystore config in app/build.gradle
+
 check
 gradle assembleRelease
 check
