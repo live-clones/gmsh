@@ -36,6 +36,7 @@ class gmshFace : public GFace {
   virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface=true) const;
   virtual void resetMeshAttributes();
   void resetNativePtr(Surface *_s);
+  bool degenerate(int dim) const;
 };
 
 #endif
