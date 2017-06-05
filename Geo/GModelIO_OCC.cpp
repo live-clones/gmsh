@@ -905,8 +905,8 @@ bool OCC_Internals::_addSpline(int &tag, const std::vector<int> &vertexTags, int
     Msg::Error("OpenCASCADE edge with tag %d already exists", tag);
     return false;
   }
-  if(vertexTags.size() < 2 || vertexTags.size() > 20){
-    Msg::Error("Number of control points should be in [2,20]");
+  if(vertexTags.size() < 2){
+    Msg::Error("Number of control points should be at least 2");
     return false;
   }
 
@@ -1221,8 +1221,8 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag)
       TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
       f.Add(edge, GeomAbs_C0);
       // face filling will duplicate the edge
-      if(_edgeTag.IsBound(edge))
-        unbind(edge, _edgeTag.Find(edge), true);
+      //if(_edgeTag.IsBound(edge))
+      //  unbind(edge, _edgeTag.Find(edge), true);
     }
     // TODO: add optional point constraints using f.Add(gp_Pnt(x, y, z);
     f.Build();

@@ -202,20 +202,18 @@ if(ENABLE_BUILD_ANDROID)
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/models/
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/Android/ ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/res/raw
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/libs/armeabi-v7a/
-    COMMAND ${CMAKE_COMMAND} -E copy ${GMSH_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/libs/armeabi-v7a/
-    COMMAND ${CMAKE_COMMAND} -E copy ${GETDP_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/libs/armeabi-v7a/
-    COMMAND ${CMAKE_COMMAND} -E copy ${ONELAB_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/libs/armeabi-v7a/
-    COMMAND ${CMAKE_COMMAND} -E copy ${PETSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/libs/armeabi-v7a/
-    COMMAND ${CMAKE_COMMAND} -E copy ${SLEPC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/libs/armeabi-v7a/
-    COMMAND ${CMAKE_COMMAND} -E copy ${LAPACK_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/libs/armeabi-v7a/
-    COMMAND ${CMAKE_COMMAND} -E copy ${BLAS_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/libs/armeabi-v7a/
+    COMMAND ${CMAKE_COMMAND} -E copy ${GMSH_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/armeabi-v7a/
+    COMMAND ${CMAKE_COMMAND} -E copy ${GETDP_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/armeabi-v7a/
+    COMMAND ${CMAKE_COMMAND} -E copy ${ONELAB_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/armeabi-v7a/
+    COMMAND ${CMAKE_COMMAND} -E copy ${PETSC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/armeabi-v7a/
+    COMMAND ${CMAKE_COMMAND} -E copy ${SLEPC_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/armeabi-v7a/
+    COMMAND ${CMAKE_COMMAND} -E copy ${LAPACK_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/armeabi-v7a/
+    COMMAND ${CMAKE_COMMAND} -E copy ${BLAS_LIB} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/jniLibs/armeabi-v7a/
   )
   add_custom_command(TARGET androidProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove_directory
                     ${CMAKE_CURRENT_BINARY_DIR}/models)
   add_custom_command(TARGET androidProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove
-                    ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/res/raw/models.zip)
+                    ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/res/raw/models.zip)
   foreach(DIR ${BENCHMARKS})
     get_filename_component(DIRNAME ${DIR} NAME)
     add_custom_command(TARGET androidProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -231,11 +229,10 @@ if(ENABLE_BUILD_ANDROID)
   endforeach(DIR)
   find_program(ZIP_COMMAND zip)
   add_custom_command(TARGET androidProject POST_BUILD COMMAND cd ${CMAKE_CURRENT_BINARY_DIR}/models/ && zip -r
-                     ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/res/raw/models.zip * --exclude=*.svn*)
+                     ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/res/raw/models.zip * --exclude=*.svn*)
   message(STATUS "")
   message(STATUS "ONELAB for Android successfully configured:")
   message(STATUS " * Run 'make androidProject' to create the project")
-  message(STATUS " * Then update android project with 'android update project --name ${APPNAME} --path ${APPNAME} --target [id] --subprojects'")
-  message(STATUS " * Finally build the app with ant 'ant debug'")
+  message(STATUS " * Finally build the app with gradle 'gradle assembleRelease'")
   message(STATUS "")
 endif(ENABLE_BUILD_ANDROID)
