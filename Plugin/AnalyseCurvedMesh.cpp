@@ -22,6 +22,39 @@
 
 class bezierBasis;
 
+ProgressStatus::ProgressStatus(int num)
+        : totalElementToTreat_(num), currentI_(0), nextIToCheck_(0),
+          initialTime_(Cpu()), lastTime_(initialTime_), lastPercentage_(0)
+{}
+
+void ProgressStatus::check()
+{
+  ++currentI_;
+  if (currentI_ < nextIToCheck_) return;
+
+  unsigned int currentPercentage = currentI_*100/totalElementToTreat_;
+  nextIToCheck_ = (currentPercentage+1) * totalElementToTreat_ / 100 + 1;
+  //nextIToCheck_ += totalElementToTreat_ / 100;
+
+  double currentTime = Cpu();
+  if ((currentPercentage < 5                   && currentTime - lastTime_ > 15.) ||
+      (currentPercentage > lastPercentage_ + 4 && currentTime - lastTime_ > 10.)) {
+    lastPercentage_ = currentPercentage;
+    lastTime_ = currentTime;
+    const double remaining = (currentTime-initialTime_) / (currentI_+1) *
+                             (totalElementToTreat_ - currentI_-1);
+    if (remaining < 60*2)
+      Msg::StatusBar(true, "%d%% (remaining time ~%g seconds)",
+                     currentPercentage, remaining);
+    else if (remaining < 60*60*2)
+      Msg::StatusBar(true, "%d%% (remaining time ~%g minutes)",
+                     currentPercentage, remaining/60);
+    else
+      Msg::StatusBar(true, "%d%% (remaining time ~%g hours)",
+                     currentPercentage, remaining/3600);
+  }
+}
+
 StringXNumber CurvedMeshOptions_Number[] = {
   {GMSH_FULLRC, "Jacobian determinant", NULL, 1},
   {GMSH_FULLRC, "Scaled Jacobian", NULL, 0},
@@ -322,8 +355,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
       default: break;
     }
 
-    double initial, time = initial = Cpu();
-    unsigned int percentage = 0, nextCheck = 0;
+    ProgressStatus progress(num);
 
     _data.reserve(_data.size()+num);
     for (unsigned i = 0; i < num; ++i) {
@@ -334,27 +366,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
       if (min < 0 && max < 0) {
         Msg::Warning("Element %d is completely inverted", el->getNum());
       }
-
-      if (i >= nextCheck) {
-        nextCheck += num / 100;
-        double curTime = Cpu();
-        unsigned int curPercentage = i*100/num;
-        if ((curTime - time > 10. && curPercentage > percentage + 4) ||
-            (curTime - time > 15. && curPercentage < 5)) {
-          percentage = curPercentage;
-          time = curTime;
-          const double remaining = (time-initial) / (i+1) * (num - i-1);
-          if (remaining < 60*2)
-            Msg::StatusBar(true, "%d%% (remaining time ~%g seconds)",
-                percentage, remaining);
-          else if (remaining < 60*60*2)
-            Msg::StatusBar(true, "%d%% (remaining time ~%g minutes)",
-                percentage, remaining/60);
-          else
-            Msg::StatusBar(true, "%d%% (remaining time ~%g hours)",
-                percentage, remaining/3600);
-        }
-      }
+      progress.check();
     }
     delete normals;
   }
@@ -365,8 +377,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinScaledJac(int dim)
 {
   if (_computedS[dim-1]) return;
 
-  double initial, time = initial = Cpu();
-  unsigned int percentage = 0, nextCheck = 0;
+  ProgressStatus progress(_data.size());
 
   for (unsigned int i = 0; i < _data.size(); ++i) {
     MElement *const el = _data[i].element();
@@ -377,26 +388,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinScaledJac(int dim)
     else {
       _data[i].setMinS(jacobianBasedQuality::minScaledJacobian(el, true));
     }
-    if (i >= nextCheck) {
-      nextCheck += _data.size() / 100;
-      double curTime = Cpu();
-      unsigned int curPercentage = i*100/_data.size();
-      if ((curTime - time > 10. && curPercentage > percentage + 4) ||
-          (curTime - time > 15. && curPercentage < 5)) {
-        percentage = curPercentage;
-        time = curTime;
-        const double remaining = (time-initial) / (i+1) * (_data.size() - i-1);
-        if (remaining < 60*2)
-          Msg::StatusBar(true, "%d%% (remaining time ~%g seconds)",
-              percentage, remaining);
-        else if (remaining < 60*60*2)
-          Msg::StatusBar(true, "%d%% (remaining time ~%g minutes)",
-              percentage, remaining/60);
-        else
-          Msg::StatusBar(true, "%d%% (remaining time ~%g hours)",
-              percentage, remaining/3600);
-      }
-    }
+    progress.check();
   }
 
   _computedS[dim-1] = true;
@@ -406,8 +398,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinIsotropy(int dim)
 {
   if (_computedI[dim-1]) return;
 
-  double initial, time = initial = Cpu();
-  unsigned int percentage = 0, nextCheck = 0;
+  ProgressStatus progress(_data.size());
 
   for (unsigned int i = 0; i < _data.size(); ++i) {
     MElement *const el = _data[i].element();
@@ -418,26 +409,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinIsotropy(int dim)
     else {
       _data[i].setMinI(jacobianBasedQuality::minIsotropyMeasure(el, true));
     }
-    if (i >= nextCheck) {
-      nextCheck += _data.size() / 100;
-      double curTime = Cpu();
-      unsigned int curPercentage = i*100/_data.size();
-      if ((curTime - time > 10. && curPercentage > percentage + 4) ||
-          (curTime - time > 15. && curPercentage < 5)) {
-        percentage = curPercentage;
-        time = curTime;
-        const double remaining = (time-initial) / (i+1) * (_data.size() - i-1);
-        if (remaining < 60*2)
-          Msg::StatusBar(true, "%d%% (remaining time ~%g seconds)",
-              percentage, remaining);
-        else if (remaining < 60*60*2)
-          Msg::StatusBar(true, "%d%% (remaining time ~%g minutes)",
-              percentage, remaining/60);
-        else
-          Msg::StatusBar(true, "%d%% (remaining time ~%g hours)",
-              percentage, remaining/3600);
-      }
-    }
+    progress.check();
   }
 
   _computedI[dim-1] = true;

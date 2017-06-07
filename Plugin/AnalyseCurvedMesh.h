@@ -36,6 +36,18 @@ public:
   double minI() { return _minI; }
 };
 
+class ProgressStatus
+{
+private:
+  int totalElementToTreat_, currentI_, nextIToCheck_;
+  double initialTime_, lastTime_;
+  int lastPercentage_;
+public:
+  ProgressStatus(int num);
+  void setInitialTime(double time) {initialTime_ = time;}
+  void check();
+};
+
 class GMSH_AnalyseCurvedMeshPlugin : public GMSH_PostPlugin
 {
 private :
