@@ -1563,8 +1563,19 @@ int Msg::GetThreadNum(){ return 0; }
 
 MsgProgressStatus::MsgProgressStatus(int num)
         : totalElementToTreat_(num), currentI_(0), nextIToCheck_(0),
-          initialTime_(Cpu()), lastTime_(initialTime_), lastPercentage_(0)
-{}
+          initialTime_(Cpu()), lastTime_(initialTime_), lastPercentage_(0),
+          progressMeterStep_(Msg::GetProgressMeterStep())
+{
+
+  Msg::SetProgressMeterStep(1);
+  Msg::ResetProgressMeter();
+}
+
+MsgProgressStatus::~MsgProgressStatus()
+{
+  Msg::ProgressMeter(totalElementToTreat_, totalElementToTreat_, true, "done");
+  Msg::SetProgressMeterStep(progressMeterStep_);
+}
 
 void MsgProgressStatus::next()
 {
@@ -1583,13 +1594,13 @@ void MsgProgressStatus::next()
     const double remaining = (currentTime-initialTime_) / (currentI_+1) *
                              (totalElementToTreat_ - currentI_-1);
     if (remaining < 60*2)
-      Msg::StatusBar(true, "%d%% (remaining time ~%g seconds)",
+      Msg::ProgressMeter(currentI_, totalElementToTreat_, true, "%d%% (remaining time ~%g seconds)",
                      currentPercentage, remaining);
     else if (remaining < 60*60*2)
-      Msg::StatusBar(true, "%d%% (remaining time ~%g minutes)",
+      Msg::ProgressMeter(currentI_, totalElementToTreat_, true, "%d%% (remaining time ~%g minutes)",
                      currentPercentage, remaining/60);
     else
-      Msg::StatusBar(true, "%d%% (remaining time ~%g hours)",
+      Msg::ProgressMeter(currentI_, totalElementToTreat_, true, "%d%% (remaining time ~%g hours)",
                      currentPercentage, remaining/3600);
   }
 }
