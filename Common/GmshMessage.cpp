@@ -749,6 +749,8 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
   double percent = 100. * (double)n/(double)N;
 
   if(percent >= _progressMeterCurrent || n > N - 1){
+    while(_progressMeterCurrent < percent)
+      _progressMeterCurrent += _progressMeterStep;
     char str[5000], str2[5000];
     va_list args;
     va_start(args, fmt);
@@ -775,10 +777,6 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
-    {
-      while(_progressMeterCurrent < percent)
-        _progressMeterCurrent += _progressMeterStep;
-    }
   }
 }
 
@@ -1594,13 +1592,13 @@ void MsgProgressStatus::next()
     const double remaining = (currentTime-initialTime_) / (currentI_+1) *
                              (totalElementToTreat_ - currentI_-1);
     if (remaining < 60*2)
-      Msg::ProgressMeter(currentI_, totalElementToTreat_, true, "%d%% (remaining time ~%g seconds)",
+      Msg::ProgressMeter(currentI_-1, totalElementToTreat_, true, "%d%% (remaining time ~%g seconds)",
                      currentPercentage, remaining);
     else if (remaining < 60*60*2)
-      Msg::ProgressMeter(currentI_, totalElementToTreat_, true, "%d%% (remaining time ~%g minutes)",
+      Msg::ProgressMeter(currentI_-1, totalElementToTreat_, true, "%d%% (remaining time ~%g minutes)",
                      currentPercentage, remaining/60);
     else
-      Msg::ProgressMeter(currentI_, totalElementToTreat_, true, "%d%% (remaining time ~%g hours)",
+      Msg::ProgressMeter(currentI_-1, totalElementToTreat_, true, "%d%% (remaining time ~%g hours)",
                      currentPercentage, remaining/3600);
   }
 }
