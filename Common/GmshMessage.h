@@ -152,4 +152,20 @@ class Msg {
   static void ImportPhysicalGroupsInOnelab();
 };
 
+// a class to print the progression and estimated remaining time
+class MsgProgressStatus
+{
+private:
+  int totalElementToTreat_, currentI_, nextIToCheck_;
+  double initialTime_, lastTime_;
+  int lastPercentage_;
+  int progressMeterStep_;
+public:
+  MsgProgressStatus(int numElementToTreat);
+  ~MsgProgressStatus();
+
+  void setInitialTime(double time) {initialTime_ = time;}
+  void next();
+};
+
 #endif

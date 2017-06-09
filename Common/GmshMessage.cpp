@@ -1560,3 +1560,36 @@ int Msg::GetMaxThreads(){ return 1; }
 int Msg::GetThreadNum(){ return 0; }
 
 #endif
+
+MsgProgressStatus::MsgProgressStatus(int num)
+        : totalElementToTreat_(num), currentI_(0), nextIToCheck_(0),
+          initialTime_(Cpu()), lastTime_(initialTime_), lastPercentage_(0)
+{}
+
+void MsgProgressStatus::next()
+{
+  ++currentI_;
+  if (currentI_ < nextIToCheck_) return;
+
+  unsigned int currentPercentage = currentI_*100/totalElementToTreat_;
+  // check every percentage only
+  nextIToCheck_ = (currentPercentage+1) * totalElementToTreat_ / 100 + 1;
+
+  double currentTime = Cpu();
+  if ((currentPercentage < 5                   && currentTime - lastTime_ > 15.) ||
+      (currentPercentage > lastPercentage_ + 4 && currentTime - lastTime_ > 10.)) {
+    lastPercentage_ = currentPercentage;
+    lastTime_ = currentTime;
+    const double remaining = (currentTime-initialTime_) / (currentI_+1) *
+                             (totalElementToTreat_ - currentI_-1);
+    if (remaining < 60*2)
+      Msg::StatusBar(true, "%d%% (remaining time ~%g seconds)",
+                     currentPercentage, remaining);
+    else if (remaining < 60*60*2)
+      Msg::StatusBar(true, "%d%% (remaining time ~%g minutes)",
+                     currentPercentage, remaining/60);
+    else
+      Msg::StatusBar(true, "%d%% (remaining time ~%g hours)",
+                     currentPercentage, remaining/3600);
+  }
+}
