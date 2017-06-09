@@ -27,6 +27,25 @@ gmshFace::gmshFace(GModel *m, Surface *face)
   resetMeshAttributes();
 }
 
+// a face is degenerate if 
+bool gmshFace::degenerate(int dim) const {
+  std::list<GEdge*> eds = edges();
+  int numNonDegenerate = 0;
+  std::set<GEdge*> t;
+  for(std::list<GEdge*>::iterator it = eds.begin(); it != eds.end(); ++it){
+    GEdge *e = *it;
+    GVertex *start = e->getBeginVertex();
+    GVertex *next  = e->getEndVertex();
+    if (start != next && t.find(e) == t.end()){
+      numNonDegenerate++;
+    }
+    t.insert(e);
+  }
+  //  printf("%d \n",numNonDegenerate);
+  return numNonDegenerate <= 1;
+}
+
+
 void gmshFace::resetNativePtr(Surface *face)
 {
   s = face;

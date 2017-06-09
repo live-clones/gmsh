@@ -181,7 +181,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
 
   bool haveCells = true;
   bool haveLines = false;
-  if( !strcmp(buffer, "CELLS") && numElements > 0)
+  if(!strcmp(buffer, "CELLS") && numElements > 0)
     Msg::Info("Reading %d cells", numElements);
   else if (!strcmp(buffer, "POLYGONS") && numElements > 0)
     Msg::Info("Reading %d polygons", numElements);
@@ -249,11 +249,13 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
 	case 13: elements[6][1].push_back(new MPrism(cells[i])); break;
 	case 14: elements[7][1].push_back(new MPyramid(cells[i])); break;
 	// second order elements
-	case 21: elements[1][1].push_back(new MLine(cells[i])); break;
-	case 22: elements[2][1].push_back(new MTriangle(cells[i])); break;
-	case 23: elements[3][1].push_back(new MQuadrangle(cells[i])); break;
-	case 24: elements[4][1].push_back(new MTetrahedron(cells[i])); break;
-	case 25: elements[5][1].push_back(new MHexahedron(cells[i])); break;
+	case 21: elements[1][1].push_back(new MLine3(cells[i])); break;
+	case 22: elements[2][1].push_back(new MTriangle6(cells[i])); break;
+	case 23: elements[3][1].push_back(new MQuadrangle8(cells[i])); break;
+	case 28: elements[3][1].push_back(new MQuadrangle9(cells[i])); break;
+	case 24: elements[4][1].push_back(new MTetrahedron10(cells[i])); break;
+	case 25: elements[5][1].push_back(new MHexahedron20(cells[i])); break;
+        case 29: elements[5][1].push_back(new MHexahedron27(cells[i])); break;
 	default:
 	  Msg::Error("Unknown type of cell %d", type);
 	  break;
@@ -297,7 +299,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
       }
     }
     else{
-      Msg::Error("TODO: implement reading lines for binary files \n");
+      Msg::Error("Line import not done for binary VTK files");
     }
   }
 

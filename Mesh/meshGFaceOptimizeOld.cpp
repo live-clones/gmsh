@@ -119,7 +119,7 @@ void buildMeshGenerationDataStructures(GFace *gf,
     std::cout << "***************************************** NULL" << std::endl;
     throw;
   }
-  
+
   for(unsigned int i = 0;i < gf->triangles.size(); i++)
     setLcs(gf->triangles[i], vSizesMap, data);
 
@@ -478,8 +478,7 @@ static int _removeTwoQuadsNodes(GFace *gf)
   std::set<MElement*>  touched;
   std::set<MVertex*>  vtouched;
   while (it != adj.end()) {
-    MVertex *v = it->first;
-    if(it->second.size()==2 && v->onWhat()->dim() == 2) {
+    if(it->second.size()==2 && it->first->onWhat()->dim() == 2) {
       MElement *q1 = it->second[0];
       MElement *q2 = it->second[1];
       if (q1->getNumVertices() == 4 &&
@@ -487,7 +486,7 @@ static int _removeTwoQuadsNodes(GFace *gf)
           touched.find(q1) == touched.end() && touched.find(q2) == touched.end()){
         int comm = 0;
         for (int i=0;i<4;i++){
-          if (q1->getVertex(i) == v){
+          if (q1->getVertex(i) == it->first){
             comm = i;
             break;
           }
@@ -497,8 +496,8 @@ static int _removeTwoQuadsNodes(GFace *gf)
         MVertex *v3 = q1->getVertex((comm+3)%4);
         MVertex *v4 = 0;
         for (int i=0;i<4;i++){
-          if (q2->getVertex(i) != v1 && q2->getVertex(i) != v3 &&
-              q2->getVertex(i) != v){
+          if (q2->getVertex(i) != v1 && q2->getVertex(i) != v2 &&
+              q2->getVertex(i) != v3 && q2->getVertex(i) != it->first){
             v4 = q2->getVertex(i);
             break;
           }
@@ -510,8 +509,8 @@ static int _removeTwoQuadsNodes(GFace *gf)
           return 0;
         }
         MQuadrangle *q = new MQuadrangle(v1,v2,v3,v4);
-        double s1 = 0;//surfaceFaceUV(q,gf);
-        double s2 = 1;//surfaceFaceUV(q1,gf) + surfaceFaceUV(q2,gf);;
+        double s1 = surfaceFaceUV(q,gf);
+        double s2 = surfaceFaceUV(q1,gf) + surfaceFaceUV(q2,gf);;
         if (s1 > s2){
           delete q;
         }
@@ -519,14 +518,13 @@ static int _removeTwoQuadsNodes(GFace *gf)
           touched.insert(q1);
           touched.insert(q2);
           gf->quadrangles.push_back(q);
-          vtouched.insert(v);
+          vtouched.insert(it->first);
         }
       }
     }
     it++;
   }
   std::vector<MQuadrangle*> quadrangles2;
-  quadrangles2.reserve(gf->quadrangles.size() - touched.size());
   for(unsigned int i = 0; i < gf->quadrangles.size(); i++){
     if(touched.find(gf->quadrangles[i]) == touched.end()){
       quadrangles2.push_back(gf->quadrangles[i]);
@@ -538,7 +536,6 @@ static int _removeTwoQuadsNodes(GFace *gf)
   gf->quadrangles = quadrangles2;
 
   std::vector<MVertex*> mesh_vertices2;
-  mesh_vertices2.reserve(gf->mesh_vertices.size() - vtouched.size());
   for(unsigned int i = 0; i < gf->mesh_vertices.size(); i++){
     if(vtouched.find(gf->mesh_vertices[i]) == vtouched.end()){
       mesh_vertices2.push_back(gf->mesh_vertices[i]);
@@ -564,66 +561,6 @@ int removeTwoQuadsNodes(GFace *gf)
   return nbRemove;
 }
 
-
-static bool _tryToCollapseThatVertex2 (GFace *gf,
-				       std::vector<MElement*> &e1,
-				       std::vector<MElement*> &e2,
-				       MElement *q,
-				       MVertex *v1,
-				       MVertex *v2)
-{
-  std::vector<MElement*> e = e1;
-  e.insert(e.end(), e2.begin(), e2.end());
-
-  double x1 = v1->x();
-  double y1 = v1->y();
-  double z1 = v1->z();
-
-  double x2 = v2->x();
-  double y2 = v2->y();
-  double z2 = v2->z();
-
-  // new position of v1 && v2
-  double initialGuess[2]={0,0};
-  GPoint pp = gf->closestPoint(SPoint3(0.5*(x1+x2),0.5*(y1+y2),0.5*(z1+z2)),initialGuess);
-
-  //  double surface_old = 0;
-  //  double surface_new = 0;
-  double worst_quality_old = 1.0;
-  double worst_quality_new = 1.0;
-
-  //  surface_old = surfaceFaceUV(q,gf,false);
-  int count=0;
-  for (unsigned int j=0;j<e.size();++j){
-    if (e[j] != q){
-      count++;
-      worst_quality_old = std::min(worst_quality_old,e[j]-> etaShapeMeasure());
-      v1->x() = pp.x();v1->y() = pp.y();v1->z() = pp.z();
-      v2->x() = pp.x();v2->y() = pp.y();v2->z() = pp.z();
-      worst_quality_new = std::min(worst_quality_new,e[j]-> etaShapeMeasure());
-      v1->x() = x1;v1->y() = y1;v1->z() = z1;
-      v2->x() = x2;v2->y() = y2;v2->z() = z2;
-    }
-  }
-  
-  //  printf("%d %g %g %g %g\n", count, surface_old, surface_new, worst_quality_old , worst_quality_new);
-
-  if (worst_quality_new >  worst_quality_old ) {
-    v1->x() = pp.x();v1->y() = pp.y();v1->z() = pp.z();
-    for (unsigned int j=0;j<e.size();++j){
-      if (e[j] != q){
-        for (int k=0;k<4;k++){
-          if (e[j]->getVertex(k) == v2){
-            e[j]->setVertex(k,v1);
-          }
-        }
-      }
-    }
-    return true;
-  }
-  return false;
-}
-
 // collapse v1 & v2 to their middle and replace into e1 & e2
 static bool _tryToCollapseThatVertex (GFace *gf,
                                       std::vector<MElement*> &e1,
@@ -636,9 +573,7 @@ static bool _tryToCollapseThatVertex (GFace *gf,
   e.insert(e.end(), e2.begin(), e2.end());
 
   double uu1,vv1;
-  if (!v1->getParameter(0,uu1)){
-    return _tryToCollapseThatVertex2 (gf,e1,e2,q,v1,v2);
-  }
+  v1->getParameter(0,uu1);
   v1->getParameter(1,vv1);
   double x1 = v1->x();
   double y1 = v1->y();
@@ -772,7 +707,7 @@ static int _removeDiamonds(GFace *gf)
           v2->onWhat()->dim() == 2 &&
           v3->onWhat()->dim() == 2 &&
           v4->onWhat()->dim() == 2 &&
-          it1->second.size() == 3 && it3->second.size() == 3 &&
+          it1->second.size() ==3 &&  it3->second.size() == 3 &&
           _tryToCollapseThatVertex (gf, it1->second, it3->second,
                                       q, v1, v3)){
         touched.insert(v1);
@@ -912,11 +847,14 @@ void getAllBoundaryLayerVertices (GFace *gf, std::set<MVertex*> &vs){
   vs.clear();
   BoundaryLayerColumns* _columns = gf->getColumns();
   if (!_columns)return;
-  for ( std::multimap<MVertex*, BoundaryLayerData>::iterator it = _columns->_data.begin();
-	it != _columns->_data.end();it++){
-    BoundaryLayerData &data = it->second;
-    for (size_t i = 0;i<data._column.size();i++)
-      vs.insert(data._column[i]);
+  for ( std::map<MElement*,std::vector<MElement*> >::iterator it = _columns->_elemColumns.begin();
+	it != _columns->_elemColumns.end();it++){
+    std::vector<MElement *> &e = it->second;
+    for (unsigned int i=0;i<e.size();i++){
+      for (int j=0;j<e[i]->getNumVertices();j++){
+	vs.insert(e[i]->getVertex(j));
+      }
+    }
   }
 }
 
@@ -1210,7 +1148,7 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
       ++ite;
     }
   }
-
+  
   e2t_cont adj;
   buildEdgeToElement(gf->triangles, adj);
 
@@ -1249,7 +1187,6 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
   std::sort(pairs.begin(),pairs.end());
   std::set<MElement*> touched;
 
-  
   if(CTX::instance()->mesh.algoRecombine != 0){
 #if defined(HAVE_BLOSSOM)
     int ncount = gf->triangles.size();
@@ -1283,6 +1220,7 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
         if (pairs[i].n4->onWhat()->dim() < 2) NB++;
         if (elen[i] > (int)1000*exp(.1) && NB > 2) { elen[i] = 5000; }
         else if (elen[i] >= 1000 && NB > 2) { elen[i] = 10000; }
+	//	printf("%d %d %d\n", elist[2*i],elist[2*i+1],elen [i] );
       }
 
       if (cubicGraph){
@@ -1296,7 +1234,6 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
         }
       }
 
-      
       double matzeit = 0.0;
       char MATCHFILE[256];
       sprintf(MATCHFILE,".face.match");
@@ -1358,7 +1295,6 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
 #endif
   }
 
-  
   std::vector<RecombineTriangle>::iterator itp = pairs.begin();
   while(itp != pairs.end()){
     // recombine if difference between max quad angle and right
@@ -1367,7 +1303,6 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
     if(itp->angle < gf->meshAttributes.recombineAngle){
       MElement *t1 = itp->t1;
       MElement *t2 = itp->t2;
-
       if(touched.find(t1) == touched.end() &&
           touched.find(t2) == touched.end()){
         touched.insert(t1);
@@ -1405,7 +1340,6 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
   }
   gf->triangles = triangles2;
 
-  
   if(CTX::instance()->mesh.algoRecombine != 1){
     quadsToTriangles(gf, minqual);
   }
@@ -1440,19 +1374,20 @@ void recombineIntoQuads(GFace *gf,
 {
   double t1 = Cpu();
 
+  
   bool haveParam = true;
-  bool saveAll = CTX::instance()->mesh.saveAll;
+  bool saveAll = false; //CTX::instance()->mesh.saveAll;
   if(gf->geomType() == GEntity::DiscreteSurface && !gf->getCompound())
     haveParam = false;
 
   if (saveAll) gf->model()->writeMSH("before.msh");
   int success = _recombineIntoQuads(gf, minqual);
-  
-  if (saveAll) gf->model()->writeMSH("raw.msh");
 
+  if (saveAll) gf->model()->writeMSH("raw.msh");
   if(haveParam && nodeRepositioning){
     RelocateVertices (gf,CTX::instance()->mesh.nbSmoothing);
   }
+
   // blossom-quad algo
   if(success && CTX::instance()->mesh.algoRecombine != 0){
     if(topologicalOpti){
@@ -1469,7 +1404,7 @@ void recombineIntoQuads(GFace *gf,
           //          printStats (gf, "toto");
           if (ITER > 20) break;
           ITER ++;
-	}
+        }
       }
     }
     quadsToTriangles(gf, minqual);
@@ -1510,12 +1445,12 @@ void quadsToTriangles(GFace *gf, double minqual)
       double qual1 = std::min(t11->gammaShapeMeasure(),t12->gammaShapeMeasure());
       double qual2 = std::min(t21->gammaShapeMeasure(),t22->gammaShapeMeasure());
 
-      //      double surf1 = surfaceFaceUV(t11,gf) + surfaceFaceUV(t12,gf);
-      //      double surf2 = surfaceFaceUV(t21,gf) + surfaceFaceUV(t22,gf);
+      double surf1 = surfaceFaceUV(t11,gf) + surfaceFaceUV(t12,gf);
+      double surf2 = surfaceFaceUV(t21,gf) + surfaceFaceUV(t22,gf);
 
       int option = 0;
-      //      if (surf1 > surf2 * (1.+1.e-8))option = 2;
-      //      else if (surf2 > surf1 * (1.+1.e-8))option = 1;
+      if (surf1 > surf2 * (1.+1.e-8))option = 2;
+      else if (surf2 > surf1 * (1.+1.e-8))option = 1;
 
       if (option == 1 || (option == 0 && qual1 > qual2)){
         gf->triangles.push_back(t11);

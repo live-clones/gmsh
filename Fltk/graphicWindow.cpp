@@ -2187,6 +2187,13 @@ static void mesh_smooth_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+
+static void mesh_recombine_cb(Fl_Widget *w, void *data)
+{
+  RecombineMesh(GModel::current());
+  drawContext::global()->draw();
+}
+
 static void mesh_optimize_netgen_cb(Fl_Widget *w, void *data)
 {
   if(CTX::instance()->lock) {
@@ -4284,6 +4291,8 @@ static menuItem static_modules[] = {
 #endif
   {"0Modules/Mesh/Smooth 2D",
    (Fl_Callback *)mesh_smooth_cb} ,
+  {"0Modules/Mesh/Recombine 2D",
+   (Fl_Callback *)mesh_recombine_cb} ,
   {"0Modules/Mesh/Reclassify 2D",
    (Fl_Callback *)mesh_classify_cb} ,
 #if defined(HAVE_FOURIER_MODEL)

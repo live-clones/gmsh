@@ -1006,6 +1006,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     if (isMeshed) return true;
   }
 
+  //  if (gf->degenerate(0))return 0;
+  
   // build a set with all points of the boundaries
   std::set<MVertex*, MVertexLessThanNum> all_vertices, boundary;
   std::list<GEdge*>::iterator ite = edges.begin();

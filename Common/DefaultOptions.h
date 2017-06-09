@@ -913,7 +913,7 @@ StringXNumber GeometryOptions_Number[] = {
     "Display geometry surfaces?" },
   { F|O, "SurfaceNumbers" , opt_geometry_surfaces_num , 0. ,
     "Display surface numbers?" },
-  { F|O, "SurfaceType" , opt_geometry_surface_type , 2. ,
+  { F|O, "SurfaceType" , opt_geometry_surface_type , 0. ,
     "Surface display type (0=cross, 1=wireframe, 2=solid)" },
 
   { F|O, "Tangents" , opt_geometry_tangents , 0. ,

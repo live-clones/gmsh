@@ -17,7 +17,7 @@ private:
 
 public:
   drawString(std::string text, int size=12, float *color=NULL);
-  ~drawString(){if(_map)free(_map);}
+  ~drawString(){ if(_map) free(_map); }
 
   void setText(std::string text);
   void setColor(float *color);

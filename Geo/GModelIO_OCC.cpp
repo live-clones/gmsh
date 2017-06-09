@@ -905,8 +905,8 @@ bool OCC_Internals::_addSpline(int &tag, const std::vector<int> &vertexTags, int
     Msg::Error("OpenCASCADE edge with tag %d already exists", tag);
     return false;
   }
-  if(vertexTags.size() < 2 || vertexTags.size() > 20){
-    Msg::Error("Number of control points should be in [2,20]");
+  if(vertexTags.size() < 2){
+    Msg::Error("Number of control points should be at least 2");
     return false;
   }
 

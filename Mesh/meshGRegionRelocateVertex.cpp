@@ -60,6 +60,34 @@ static double objective_function (double xi, MVertex *ver, GFace *gf,
 }
 
 
+static double objective_function (double xi, MVertex *ver, GFace *gf,
+                                  SPoint3 &p1, SPoint3 &p2,
+                                  const std::vector<MElement*> &lt){
+  double x = ver->x();
+  double y = ver->y();
+  double z = ver->z();
+  SPoint3 p = p1 * (1.-xi) + p2 * xi;
+
+  double initialGuess[2]={0,0};
+
+  GPoint pp = gf->closestPoint(p,initialGuess);
+  ver->x() = pp.x();
+  ver->y() = pp.y();
+  ver->z() = pp.z();
+  double minQual = 1.0;
+  for(unsigned int i = 0; i < lt.size(); i++){
+    if (lt[i]->getNumVertices () == 4)
+      minQual = std::min((lt[i]->etaShapeMeasure()), minQual);
+    else
+      minQual = std::min(fabs(lt[i]->gammaShapeMeasure()), minQual);
+  }
+  ver->x() = x;
+  ver->y() = y;
+  ver->z() = z;
+  return minQual;
+}
+
+
 
 
 #define sqrt5 2.236067977499789696
@@ -158,6 +186,55 @@ double Maximize_Quality_Golden_Section( MVertex *ver, GFace *gf,
   return a;
 }
 
+
+double Maximize_Quality_Golden_Section( MVertex *ver, GFace *gf, 
+                                        SPoint3 &p1, SPoint3 &p2,
+                                        const std::vector<MElement*> &lt ,
+                                        double tol, double &worst)
+{
+  
+  static const double lambda = 0.5 * (sqrt5 - 1.0);
+  static const double mu = 0.5 * (3.0 - sqrt5);         // = 1 - lambda
+  double a = 0.0;
+  double b = 1.0;
+
+  worst = objective_function (0.0, ver, gf, p1, p2, lt );
+  
+  if (worst > 0.5) return 0.0;
+  
+  double x1 = b - lambda * (b - a);                            
+  double x2 = a + lambda * (b - a);                         
+  double fx1 = objective_function (x1, ver, gf, p1, p2, lt );  
+  double fx2 = objective_function (x2, ver, gf, p1, p2, lt );
+
+  if (tol < 0.0)return fx1 > fx2 ? x1 : x2;
+
+  while ( ! Stopping_Rule( a, b , tol) ) {
+    //    printf("GOLDEN : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
+    if (fx1 < fx2) {
+      a = x1;
+      if ( Stopping_Rule( a, b , tol) ) break;
+      x1 = x2;
+      fx1 = fx2;
+      x2 = b - mu * (b - a);
+      fx2 = objective_function (x2, ver, gf, p1, p2, lt );
+    } else {
+      b = x2;
+      if ( Stopping_Rule( a, b , tol) ) break;
+      x2 = x1;
+      fx2 = fx1;
+      x1 = a + mu * (b - a);
+      fx1 = objective_function (x1, ver, gf, p1, p2, lt );
+    }
+  }
+  double final = objective_function (a, ver, gf, p1, p2, lt );
+  if (final < worst) return 0.0;
+  worst = final;
+  //  printf("finally : %g %g (%12.5E,%12.5E)\n",a,b,fa,fb);
+  return a;
+}
+
+
 void _relocateVertexGolden(MVertex *ver,
 			   const std::vector<MElement*> &lt, double relax , double tol)
 {
@@ -184,6 +261,37 @@ void _relocateVertexGolden(MVertex *ver,
   ver->z() = (1.-xi) * ver->z() + xi * z/N;
 }
 
+
+// use real space + projection at the end
+static double _relocateVertex2(GFace* gf, MVertex *ver,
+			       const std::vector<MElement*> &lt,
+			       double tol) {
+
+  SPoint3 p1(0,0,0);
+  int counter = 0;
+  for(unsigned int i = 0; i < lt.size(); i++){
+    for (int j=0;j<lt[i]->getNumVertices();j++){
+      MVertex* v = lt[i]->getVertex(j);
+      p1 += SPoint3(v->x(),v->y(),v->z());
+      counter++;
+    }
+  }
+  p1 *= 1./(double)counter;
+  SPoint3 p2(ver->x(),ver->y(),ver->z());  
+  double worst;
+  double xi = Maximize_Quality_Golden_Section( ver, gf, p1, p2, lt , tol, worst);
+  
+  SPoint3 p = p1*(1-xi) + p2*xi;
+  double initialGuess[2]={0,0};
+  GPoint pp = gf->closestPoint(p,initialGuess);
+  if (!pp.succeeded())return 2.0;
+  ver->x() = pp.x();
+  ver->y() = pp.y();
+  ver->z() = pp.z();
+  return worst;
+  
+}
+
 static double _relocateVertex(GFace* gf, MVertex *ver,
 		       const std::vector<MElement*> &lt,
 		       double tol) {
@@ -191,15 +299,19 @@ static double _relocateVertex(GFace* gf, MVertex *ver,
   
   SPoint2 p1(0,0);
   SPoint2 p2;
-  ver->getParameter(0,p2[0]);
-  ver->getParameter(1,p2[1]);
+  if (ver->getParameter(0,p2[0])){
+    ver->getParameter(1,p2[1]);
+  }
+  else {
+    return _relocateVertex2(gf,ver,lt,tol);
+  }
   
   int counter=0;
   for(unsigned int i = 0; i < lt.size(); i++){
     for (int j=0;j<lt[i]->getNumVertices();j++){
       MVertex* v = lt[i]->getVertex(j);
       SPoint2 pp;
-      reparamMeshVertexOnFace(v, gf, pp);
+      reparamMeshVertexOnFace(v, gf, pp);      
       counter++;
       if (v->onWhat()->dim() == 1) {
         GEdge *ge = dynamic_cast<GEdge*> (v->onWhat());
@@ -230,7 +342,7 @@ void getAllBoundaryLayerVertices (GFace *gf, std::set<MVertex*> &vs);
 void RelocateVertices (GFace* gf, int niter, double tol) {
   std::set<MVertex*> vs;
   getAllBoundaryLayerVertices (gf, vs);
-
+  
   v2t_cont adj;
   buildVertexToElement(gf->triangles, adj);
   buildVertexToElement(gf->quadrangles, adj);

@@ -54,7 +54,7 @@ struct HilbertSort
     bbox *= 1.01;
     MVertex**pv = &v[0];
     int depth;
-    MultiscaleSortHilbert(pv, (int)v.size(), 64, 0.125,&depth);
+    MultiscaleSortHilbert(pv, (int)v.size(), 10, 0.125,&depth);
   }
 };
 
@@ -269,7 +269,7 @@ void HilbertSort::Sort(MVertex** vertices, int arraysize, int e, int d,
 
 void SortHilbert (std::vector<MVertex*>& v)
 {
-  //HilbertSort h(1000);
-  HilbertSort h;
+  HilbertSort h(1000);
+  //HilbertSort h;
   h.Apply(v);
 }
