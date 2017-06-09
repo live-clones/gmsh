@@ -73,40 +73,8 @@ public :
   StringXNumber* getOption(int);
   PView* execute(PView *);
 
-  // For testing
-  void computeMinJ(MElement *const *el, int numEl, double *minJ, bool *straight)
-  {
-    std::vector<data_elementMinMax> save(_data);
-    _data.clear();
-    _computeMinMaxJandValidity(el, numEl);
-    if (minJ) {
-      for (unsigned int i = 0; i < _data.size(); ++i) {
-        minJ[i] = _data[i].minJ();
-      }
-    }
-    if (straight) {
-      for (unsigned int i = 0; i < _data.size(); ++i) {
-        straight[i] = _data[i].maxJ() - _data[i].minJ() < 1e-5;
-      }
-    }
-    _data = save;
-  }
-  void computeMinR(MElement *const *el, int numEl, double *minR, bool *straight);
-  void test(MElement *const *el, int numEl, int dim)
-  {
-    std::vector<data_elementMinMax> save(_data);
-    _data.clear();
-    _computeMinMaxJandValidity(el, numEl);
-
-    Msg::Info("aaa");
-    Msg::Info("aaa");
-    _computeMinIsotropy(dim);
-    _data = save;
-  }
-
 private :
   void _computeMinMaxJandValidity(int dim);
-  void _computeMinMaxJandValidity(MElement *const *, int numEl);
   void _computeMinScaledJac(int dim);
   void _computeMinIsotropy(int dim);
   int _hideWithThreshold(int askedDim, int whichMeasure);
