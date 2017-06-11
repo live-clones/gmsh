@@ -4,7 +4,7 @@ Mesh.CharacteristicLengthMin = 3;
 Mesh.CharacteristicLengthMax = 3;
 
 DefineConstant[
-  z = {16, Name "Parameters/z position of block"}
+  z = {16, Name "Parameters/z position of box"}
   sph = {0, Choices{0,1}, Name "Parameters/Add sphere?"}
 ];
 
