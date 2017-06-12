@@ -1,9 +1,11 @@
 #/usr/bin/env bash
 
 appname=Onelab
+enable_occt=1
 if [ $# -eq 1 ] ; then
   appname=${1}
   echo "Rebranding Onelab app as ${appname}"
+  enable_occt=0
 fi
 
 gmsh_git="${HOME}/src/gmsh/"
@@ -40,7 +42,7 @@ function check {
 cd $gmsh_git && git pull
 mkdir -p $gmsh_git/build_ios
 cd $gmsh_git/build_ios
-cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_MATHEX=1 -DENABLE_MESH=1 -DENABLE_ONELAB=1 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_PLUGINS=1 -DENABLE_ANN=1 -DENABLE_TETGEN=1 -DENABLE_KBIPACK=1 -DENABLE_GMP=0 -DENABLE_ZIPPER=1 -DENABLE_OCC=1 -DOCC_LIBS="$occt_framework/OCCT" -DOCC_INC="$occt_framework/Headers/" ..
+cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_MATHEX=1 -DENABLE_MESH=1 -DENABLE_ONELAB=1 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_PLUGINS=1 -DENABLE_ANN=1 -DENABLE_TETGEN=1 -DENABLE_KBIPACK=1 -DENABLE_GMP=0 -DENABLE_ZIPPER=1 -DENABLE_OCC=$enable_occt -DOCC_LIBS="$occt_framework/OCCT" -DOCC_INC="$occt_framework/Headers/" ..
 check
 $build_cmd OTHER_CFLAGS="-miphoneos-version-min=8.0 -fembed-bitcode" OTHER_CPLUSPLUSFLAGS="-miphoneos-version-min=8.0 -fembed-bitcode -std=c++11"
 check

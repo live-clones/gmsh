@@ -413,6 +413,10 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingB
   else if(ext == ".dat" || ext == ".DAT"){
     if(!strncmp(header, "BEGIN ACTRAN", 12))
       status = GModel::current()->readACTRAN(fileName);
+    else if(!strncmp(header, "!", 1) ||
+            !strncmp(header, ";ECHO", 5) ||
+            !strncmp(header, ".NOE", 4))
+      status = GModel::current()->readSAMCEF(fileName);
     else
       status = GModel::current()->readBDF(fileName);
   }

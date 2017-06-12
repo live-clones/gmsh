@@ -1,6 +1,6 @@
 SetFactory("OpenCASCADE");
 
-Block(1) = {-0, 0, 0, 1, 1, 1};
+Box(1) = {-0, 0, 0, 1, 1, 1};
 
 p() = PointsOf{ Volume{1}; };
 Characteristic Length{p()} = 0.2;

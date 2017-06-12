@@ -64,9 +64,9 @@ void add_sphere(const std::string &fileName, const std::string &x,
 void add_cylinder(const std::string &fileName, const std::string &x, const std::string &y,
                   const std::string &z, const std::string &dx, const std::string &dy,
                   const std::string &dz, const std::string &r, const std::string &alpha);
-void add_block(const std::string &fileName, const std::string &x, const std::string &y,
-               const std::string &z, const std::string &dx, const std::string &dy,
-               const std::string &dz);
+void add_box(const std::string &fileName, const std::string &x, const std::string &y,
+             const std::string &z, const std::string &dx, const std::string &dy,
+             const std::string &dz);
 void add_torus(const std::string &fileName, const std::string &x, const std::string &y,
                const std::string &z, const std::string &r1, const std::string &r2,
                const std::string &alpha);

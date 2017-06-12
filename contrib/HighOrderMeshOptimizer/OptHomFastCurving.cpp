@@ -53,6 +53,8 @@
 #include "MetaEl.h"
 #include "qualityMeasuresJacobian.h"
 #include "CADDistances.h"
+#include "Field.h"
+#include "boundaryLayersData.h"
 
 
 
@@ -728,28 +730,69 @@ double calcCADDistSq2D(GEntity *geomEnt, MElement *bndElt)
 
 
 
+double moveAndGetDistSq2DP2(GEdge *ge, MLine3 *bndMetaElt,
+                           MVertex* vert, double u)
+{
+  vert->setParameter(0, u);
+  GPoint gp = ge->point(u);
+  vert->setXYZ(gp.x(), gp.y(), gp.z());
+  return calcCADDistSq2D(ge, bndMetaElt);
+}
+
+
+
 void optimizeCADDist2DP2(GEntity *geomEnt, std::vector<MVertex*> &baseVert)
 {
-  static const int NPTS = 1000;
+  // Parameters for secant method
+  static const int MAXIT = 20;
+  static const double TOL = 1e-3;
+
+  // Boundary geometric and mesh entities, parametrization
   MLine3 bndMetaElt(baseVert);
   MVertex* &vert = baseVert[2];
-  const double xS = vert->x(), yS = vert->y();
-  const GEdge *ge = geomEnt->cast2Edge();
+  GEdge *ge = geomEnt->cast2Edge();
   const Range<double> parBounds = ge->parBounds(0);
-  const double du = (parBounds.high()-parBounds.low())/double(NPTS-1);
-  double uMin = 0., distSqMin = 1e300;
-  double uDbg;
-  vert->getParameter(0, uDbg);
-  for (double u = parBounds.low(); u < parBounds.high(); u += du) {
+  double uBV0, uBV1, uMin, uMax;
+  reparamMeshVertexOnEdge(baseVert[0], ge, uBV0);
+  reparamMeshVertexOnEdge(baseVert[1], ge, uBV1);
+  if (uBV0 < uBV1) { uMin = uBV0; uMax = uBV1; }
+  else { uMin = uBV1; uMax = uBV0; }
+  const double du = uMax - uMin;
+  
+  // First initial value for secant method
+  double u00 = uMin + 0.5*du;
+  double distSq00 = moveAndGetDistSq2DP2(ge, &bndMetaElt, vert, u00);
+  const double edLen = bndMetaElt.getLength();
+
+  // Second initial value for secant method
+  const double u0A = uMin + 0.45*du, u0B = uMin + 0.55*du;
+  const double distSq0A = moveAndGetDistSq2DP2(ge, &bndMetaElt, vert, u0A);
+  const double distSq0B = moveAndGetDistSq2DP2(ge, &bndMetaElt, vert, u0B);
+  double u0, distSq0;
+  if (distSq0A < distSq0B) {
+    u0 = u0A; distSq0 = distSq0A;
+  }
+  else {
+    u0 = u0B; distSq0 = distSq0B;
+  }
+
+  // Secant method iteration
+  double u;
+  bool converged = false;
+  for (int it = 0; it < MAXIT; it++) {
+    u = (u00*distSq0 - u0*distSq00) / (distSq0 - distSq00);
+    const double distSq = moveAndGetDistSq2DP2(ge, &bndMetaElt, vert, u);
+    if (std::abs(u-u0)/du < TOL) { converged = true; break; }
+    u00 = u0; distSq00 = distSq0;
+    u0 = u; distSq0 = distSq;
+  }
+
+  if (!converged || (u < uMin+TOL) || (u > uMax-TOL)) {                         // Set to mid-point if not converged
+    u = uMin + 0.5*du;
     vert->setParameter(0, u);
     GPoint gp = ge->point(u);
     vert->setXYZ(gp.x(), gp.y(), gp.z());
-    const double distSq = calcCADDistSq2D(geomEnt, &bndMetaElt);
-    if (distSq < distSqMin) { uMin = u; distSqMin = distSq; }
   }
-  vert->setParameter(0, uMin);
-  GPoint gp = ge->point(uMin);
-  vert->setXYZ(gp.x(), gp.y(), gp.z());
 }
 
 
@@ -1695,18 +1738,20 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
 
 
 // Main function for fast curving
-void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p)
+void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
+                              bool requireBLInfo)
 {
   double t1 = Cpu();
   Msg::StatusBar(true, "Curving high order boundary layer mesh...");
 
-  // Retrieve geometric entities
+  // Retrieve geometric entities and boundary layer field
   std::vector<GEntity*> allGEnt;
   gm->getEntities(allGEnt);
+  BoundaryLayerField *blField = getBLField(gm);
 
   // Curve mesh for non-straight boundary entities
   for (int iEnt = 0; iEnt < allGEnt.size(); ++iEnt) {
-    // Retrive entity
+    // Retrieve entity
     GEntity* &gEnt = allGEnt[iEnt];
     if (gEnt->dim() != p.dim) continue;
 
@@ -1742,23 +1787,40 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p)
     if (p.dim == 2) calcEdge2Elements(allGEnt[iEnt], ed2el);
     else calcFace2Elements(allGEnt[iEnt], face2el);
 
-    // Retrieve boundary entities
+    // Retrieve boundary entities and test if boundary layer
     std::vector<GEntity*> bndEnts;
+    std::set<GEntity*> blBndEnts;
     if (p.dim == 2) {
       std::list<GEdge*> gEds = gEnt->edges();
       bndEnts = std::vector<GEntity*>(gEds.begin(), gEds.end());
+      for (int iBndEnt = 0; iBndEnt < bndEnts.size(); iBndEnt++) {
+        GEntity* &bndEnt = bndEnts[iBndEnt];
+        if ((blField != 0) && blField->isEdgeBL(bndEnt->tag())) {
+          blBndEnts.insert(bndEnt);
+        }
+      }
     }
     else {
       std::list<GFace*> gFaces = gEnt->faces();
       bndEnts = std::vector<GEntity*>(gFaces.begin(), gFaces.end());
     }
+    if (requireBLInfo && blBndEnts.empty()) continue;                           // Skip if BL info is required but there is none
+
+    // Compute edge/face -> elt. connectivity
+    Msg::Info("Computing connectivity for entity %i...", gEnt->tag());
+    MEdgeVecMEltMap ed2el;
+    MFaceVecMEltMap face2el;
+    if (p.dim == 2) calcEdge2Elements(allGEnt[iEnt], ed2el);
+    else calcFace2Elements(allGEnt[iEnt], face2el);
 
     // Curve mesh from each boundary entity
     for (int iBndEnt = 0; iBndEnt < bndEnts.size(); iBndEnt++) {
       GEntity* &bndEnt = bndEnts[iBndEnt];
-      if (p.onlyVisible && !bndEnt->getVisibility()) continue;
+      if (p.onlyVisible && !bndEnt->getVisibility()) continue;                  // Skip if "only visible" required and entity is invisible
+      if (!blBndEnts.empty() &&                                                 // Skip if there is BL info but not on this boundary
+          (blBndEnts.find(bndEnt) == blBndEnts.end())) continue;
       const GEntity::GeomType bndType = bndEnt->geomType();
-      if ((bndType == GEntity::Line) || (bndType == GEntity::Plane)) continue;
+      if ((bndType == GEntity::Line) || (bndType == GEntity::Plane)) continue;  // Skip if boundary is straight
       Msg::Info("Curving elements in entity %d for boundary entity %d...",
                 gEnt->tag(), bndEnt->tag());
       curveMeshFromBnd(ed2el, face2el, bndEnt, p, normals);

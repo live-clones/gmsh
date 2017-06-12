@@ -747,13 +747,13 @@ static void add_new_point_based_entity(const std::string &what, int pane)
                      FlGui::instance()->elementaryContext->input[46]->value());
         break;
       case 8:
-        add_block(GModel::current()->getFileName(),
-                  FlGui::instance()->elementaryContext->input[47]->value(),
-                  FlGui::instance()->elementaryContext->input[48]->value(),
-                  FlGui::instance()->elementaryContext->input[49]->value(),
-                  FlGui::instance()->elementaryContext->input[50]->value(),
-                  FlGui::instance()->elementaryContext->input[51]->value(),
-                  FlGui::instance()->elementaryContext->input[52]->value());
+        add_box(GModel::current()->getFileName(),
+                FlGui::instance()->elementaryContext->input[47]->value(),
+                FlGui::instance()->elementaryContext->input[48]->value(),
+                FlGui::instance()->elementaryContext->input[49]->value(),
+                FlGui::instance()->elementaryContext->input[50]->value(),
+                FlGui::instance()->elementaryContext->input[51]->value(),
+                FlGui::instance()->elementaryContext->input[52]->value());
         break;
       case 9:
         add_torus(GModel::current()->getFileName(),
@@ -1243,7 +1243,7 @@ static void geometry_elementary_add_new_cb(Fl_Widget *w, void *data)
     add_new_point_based_entity(str, 6);
   else if(str == "Cylinder")
     add_new_point_based_entity(str, 7);
-  else if(str == "Block")
+  else if(str == "Box")
     add_new_point_based_entity(str, 8);
   else if(str == "Torus")
     add_new_point_based_entity(str, 9);
@@ -4168,8 +4168,8 @@ static menuItem static_modules[] = {
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Sphere"} ,
   {"0Modules/Geometry/Elementary entities/Add/Cylinder",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Cylinder"} ,
-  {"0Modules/Geometry/Elementary entities/Add/Block",
-   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Block"} ,
+  {"0Modules/Geometry/Elementary entities/Add/Box",
+   (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Box"} ,
   {"0Modules/Geometry/Elementary entities/Add/Torus",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Torus"} ,
   {"0Modules/Geometry/Elementary entities/Add/Cone",

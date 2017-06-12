@@ -316,8 +316,11 @@ bool edgeSwapTestDelaunay(BDS_Edge *e, GFace *gf)
   double op2x[3] = {op[1]->X, op[1]->Y, op[1]->Z};
   double fourth[3];
   fourthPoint(p1x, p2x, op1x, fourth);
-  double result = robustPredicates::insphere(p1x, p2x, op1x, fourth, op2x) *
-    robustPredicates::orient3d(p1x, p2x, op1x, fourth);
+  const double inSphere = robustPredicates::insphere(p1x, p2x, op1x, fourth, op2x);
+  if (std::abs(inSphere) < 1e-12){
+    return false;
+  }
+  double result = inSphere * robustPredicates::orient3d(p1x, p2x, op1x, fourth);
   return result > 1e-12;
 }
 
@@ -616,12 +619,16 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_c
       bool collapseP2Allowed = false;
       if (e->p2->iD > MAXNP){
         lone2 = getMaxLcWhenCollapsingEdge(gf, m, e, e->p2);
-        collapseP1Allowed = std::abs(lone2-1.0) < std::abs(edges[i].first - 1.0);
+        collapseP2Allowed = std::abs(lone2-1.0) < std::abs(edges[i].first - 1.0);
       }
 
       BDS_Point *p = 0;
-      if (collapseP1Allowed && collapseP2Allowed)
-        p = std::abs(lone1 - 1.0) < std::abs(lone2 - 1.0) ? e->p1 : e->p2;
+      if (collapseP1Allowed && collapseP2Allowed){
+        if (std::abs(lone1 - lone2) < 1e-12)
+          p = e->p1->iD < e->p2->iD ? e->p1 : e->p2;
+        else
+          p = std::abs(lone1 - 1.0) < std::abs(lone2 - 1.0) ? e->p1 : e->p2;
+      }
       else if (collapseP1Allowed && !collapseP2Allowed)
         p = e->p1;
       else if (collapseP1Allowed && !collapseP2Allowed)

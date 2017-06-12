@@ -192,7 +192,7 @@ struct doubleXstring{
 %token tDefineNumber tDefineStruct tNameStruct tDimNameSpace tAppend
 %token tDefineString tSetNumber tSetString
 %token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
-%token tBlock tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
+%token tBox tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
 %token tRectangle tDisk tWire tGeoEntity
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
 %token tRelocateMesh tSetFactory tThruSections tWedge tFillet tChamfer
@@ -1104,6 +1104,20 @@ Affectation :
 #endif
       Free($6);
     }
+  | tField '[' FExpr ']' tAFFECT tBox tEND
+    {
+#if defined(HAVE_MESH)
+      if(!GModel::current()->getFields()->newField((int)$3, "Box"))
+	yymsg(0, "Cannot create field %i of type '%s'", (int)$3, "Box");
+#endif
+    }
+  | tField '[' FExpr ']' tAFFECT tCylinder tEND
+    {
+#if defined(HAVE_MESH)
+      if(!GModel::current()->getFields()->newField((int)$3, "Cylinder"))
+	yymsg(0, "Cannot create field %i of type '%s'", (int)$3, "Cylinder");
+#endif
+    }
   | tField '[' FExpr ']' '.' tSTRING  tAFFECT FExpr tEND
     {
 #if defined(HAVE_MESH)
@@ -1886,22 +1900,22 @@ Shape :
       $$.Type = 0;
       $$.Num = num;
     }
-  | tBlock '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tBox '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
       std::vector<double> param; ListOfDouble2Vector($6, param);
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(param.size() == 6){
-          r = GModel::current()->getOCCInternals()->addBlock
+          r = GModel::current()->getOCCInternals()->addBox
             (num, param[0], param[1], param[2], param[3], param[4], param[5]);
         }
         else{
-          yymsg(0, "Block requires 6 parameters");
+          yymsg(0, "Box requires 6 parameters");
         }
       }
       else{
-        yymsg(0, "Block only available with OpenCASCADE geometry kernel");
+        yymsg(0, "Box only available with OpenCASCADE geometry kernel");
       }
       if(!r) yymsg(0, "Could not add block");
       List_Delete($6);

@@ -7,13 +7,13 @@ Mesh.CharacteristicLengthMin = 0.4;
 Mesh.CharacteristicLengthMax = 0.4;
 
 R = DefineNumber[ 1.4 , Min 0.1, Max 2, Step 0.01,
-  Name "Parameters/Block dimension" ];
+  Name "Parameters/Box dimension" ];
 Rs = DefineNumber[ R*.7 , Min 0.1, Max 2, Step 0.01,
   Name "Parameters/Cylinder radius" ];
 Rt = DefineNumber[ R*1.25, Min 0.1, Max 2, Step 0.01,
   Name "Parameters/Sphere radius" ];
 
-Block(1) = {-R,-R,-R, 2*R,2*R,2*R};
+Box(1) = {-R,-R,-R, 2*R,2*R,2*R};
 
 Sphere(2) = {0,0,0,Rt};
 

@@ -136,7 +136,7 @@
      tSurface = 352,
      tSpline = 353,
      tVolume = 354,
-     tBlock = 355,
+     tBox = 355,
      tCylinder = 356,
      tCone = 357,
      tTorus = 358,
@@ -363,7 +363,7 @@
 #define tSurface 352
 #define tSpline 353
 #define tVolume 354
-#define tBlock 355
+#define tBox 355
 #define tCylinder 356
 #define tCone 357
 #define tTorus 358
