@@ -15,15 +15,6 @@
 #include <iomanip>
 #include "pointsGenerators.h"
 #include "OS.h"
-#define TMBEG(n, what) static int I##n = 0, IND##n = _CoeffDataAnisotropy::mytimes.size(); \
-if (++I##n == 1) { \
-  Msg::Info("Time%d = "#what, IND##n); \
-  _CoeffDataAnisotropy::mytimes.push_back(0); \
-  _CoeffDataAnisotropy::mynumbers.push_back(0); \
-} \
-_CoeffDataAnisotropy::mynumbers[IND##n] += 1; \
-double TM##n = Cpu();
-#define TMEND(n) _CoeffDataAnisotropy::mytimes[IND##n] += Cpu() - TM##n;
 
 namespace jacobianBasedQuality {
 
@@ -263,25 +254,7 @@ double minICNMeasure(MElement *el,
   return min;
 }
 
-//double minSampledAnisotropyMeasure(MElement *el, int deg, bool writeInFile)//fordebug
-//{
-//  fullMatrix<double> samplingPoints;
-//  bool serendip = false;
-//  gmshGeneratePoints(FuncSpaceData(el, deg, &serendip), samplingPoints);
-//
-//  double values[3];
-//  double min = std::numeric_limits<double>::infinity();
-//  for (int i = 0; i < samplingPoints.size1(); ++i) {
-//    min = std::min(min, el->getEigenvaluesMetric(samplingPoints(i, 0),
-//                                                 samplingPoints(i, 1),
-//                                                 samplingPoints(i, 2),
-//                                                 values));
-//  }
-//
-//  return min;
-//}
-
-double minSampledICNMeasure(MElement *el, int deg, bool writeInFile)//fordebug
+double minSampledICNMeasure(MElement *el, int deg)//fordebug
 {
   fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
   el->getNodesCoord(nodesXYZ);
@@ -340,7 +313,7 @@ double minSampledICNMeasure(MElement *el, int deg, bool writeInFile)//fordebug
   return min;
 }
 
-double minSampledIGEMeasure(MElement *el, int deg, bool writeInFile)//fordebug
+double minSampledIGEMeasure(MElement *el, int deg)//fordebug
 {
   fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
   el->getNodesCoord(nodesXYZ);

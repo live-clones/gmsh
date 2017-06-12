@@ -23,12 +23,8 @@ double minIGEMeasure(MElement *el,
 double minICNMeasure(MElement *el,
                      bool knownValid = false,
                      bool reversedOk = false);
-//double minSampledAnisotropyMeasure(MElement *el, int order,//fordebug
-//                                   bool writeInFile = false);
-double minSampledICNMeasure(MElement *el, int order,//fordebug
-                            bool writeInFile = false);
-double minSampledIGEMeasure(MElement *el, int order,//fordebug
-                            bool writeInFile = false);
+double minSampledICNMeasure(MElement *el, int order);//fordebug
+double minSampledIGEMeasure(MElement *el, int order);//fordebug
 
 class _CoeffData
 {
