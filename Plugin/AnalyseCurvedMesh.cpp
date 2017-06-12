@@ -356,7 +356,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinIGE(int dim)
       _data[i].setMinS(0);
     }
     else {
-      _data[i].setMinS(jacobianBasedQuality::minScaledJacobian(el, true));
+      _data[i].setMinS(jacobianBasedQuality::minIGEMeasure(el, true));
     }
     progress.next();
   }
@@ -377,7 +377,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinICN(int dim)
       _data[i].setMinI(0);
     }
     else {
-      _data[i].setMinI(jacobianBasedQuality::minIsotropyMeasure(el, true));
+      _data[i].setMinI(jacobianBasedQuality::minICNMeasure(el, true));
     }
     progress.next();
   }

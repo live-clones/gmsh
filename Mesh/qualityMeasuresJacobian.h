@@ -17,18 +17,18 @@ namespace jacobianBasedQuality {
 
 void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
                                const fullMatrix<double> *normals = NULL);
-double minScaledJacobian(MElement *el,
-                         bool knownValid = false,
-                         bool reversedOk = false);
-double minIsotropyMeasure(MElement *el,
-                          bool knownValid = false,
-                          bool reversedOk = false);
+double minIGEMeasure(MElement *el,
+                     bool knownValid = false,
+                     bool reversedOk = false);
+double minICNMeasure(MElement *el,
+                     bool knownValid = false,
+                     bool reversedOk = false);
 //double minSampledAnisotropyMeasure(MElement *el, int order,//fordebug
 //                                   bool writeInFile = false);
-double minSampledIsotropyMeasure(MElement *el, int order,//fordebug
-                                 bool writeInFile = false);
-double minSampledScaledJacobian(MElement *el, int order,//fordebug
-                                bool writeInFile = false);
+double minSampledICNMeasure(MElement *el, int order,//fordebug
+                            bool writeInFile = false);
+double minSampledIGEMeasure(MElement *el, int order,//fordebug
+                            bool writeInFile = false);
 
 class _CoeffData
 {
@@ -75,7 +75,7 @@ public:
   int getNumMeasure() const {return 1;}//fordebug
 };
 
-class _CoeffDataScaledJac: public _CoeffData
+class _CoeffDataIGE: public _CoeffData
 {
 private:
   const fullVector<double> _coeffsJacDet;
@@ -87,12 +87,12 @@ private:
   static double cPyr;
 
 public:
-  _CoeffDataScaledJac(fullVector<double> &det,
+  _CoeffDataIGE(fullVector<double> &det,
                      fullMatrix<double> &mat,
                      const bezierBasis *bfsDet,
                      const bezierBasis *bfsMat,
                      int depth, int type);
-  ~_CoeffDataScaledJac() {}
+  ~_CoeffDataIGE() {}
 
   bool boundsOk(double minL, double maxL) const;
   void getSubCoeff(std::vector<_CoeffData*>&) const;
@@ -106,7 +106,7 @@ private:
                                fullMatrix<double> &coeffScaledJacobian) const;
 };
 
-class _CoeffDataIsotropy: public _CoeffData
+class _CoeffDataICN: public _CoeffData
 {
 private:
   const fullVector<double> _coeffsJacDet;
@@ -114,12 +114,12 @@ private:
   const bezierBasis *_bfsDet, *_bfsMat;
 
 public:
-  _CoeffDataIsotropy(fullVector<double> &det,
+  _CoeffDataICN(fullVector<double> &det,
                      fullMatrix<double> &metric,
                      const bezierBasis *bfsDet,
                      const bezierBasis *bfsMet,
                      int depth);
-  ~_CoeffDataIsotropy() {}
+  ~_CoeffDataICN() {}
 
   bool boundsOk(double minL, double maxL) const;
   void getSubCoeff(std::vector<_CoeffData*>&) const;

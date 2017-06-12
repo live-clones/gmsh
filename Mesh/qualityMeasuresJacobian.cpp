@@ -27,9 +27,9 @@ double TM##n = Cpu();
 
 namespace jacobianBasedQuality {
 
-double _CoeffDataScaledJac::cTri = 2/std::sqrt(3);
-double _CoeffDataScaledJac::cTet = std::sqrt(2);
-double _CoeffDataScaledJac::cPyr = std::sqrt(2);
+double _CoeffDataIGE::cTri = 2/std::sqrt(3);
+double _CoeffDataIGE::cTet = std::sqrt(2);
+double _CoeffDataIGE::cPyr = std::sqrt(2);
 
 void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
                                const fullMatrix<double> *normals)
@@ -65,10 +65,12 @@ void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
   }
 }
 
-double minScaledJacobian(MElement *el, bool knownValid, bool reversedOk)
+double minIGEMeasure(MElement *el, bool knownValid, bool reversedOk)
 {
   bool isReversed = false;
   if (!knownValid) {
+    // Computation of the measure should never
+    // be performed to invalid elements (for which the measure is 0).
     double jmin, jmax;
     minMaxJacobianDeterminant(el, jmin, jmax);
     if (jmax < 0) {
@@ -77,8 +79,6 @@ double minScaledJacobian(MElement *el, bool knownValid, bool reversedOk)
     }
     else if (jmin <= 0) return 0;
   }
-  // Computation of the minimum (or maximum) of the scaled Jacobian should never
-  // be performed to invalid elements (for which the measure is 0).
 
   fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
   el->getNodesCoord(nodesXYZ);
@@ -113,7 +113,7 @@ double minScaledJacobian(MElement *el, bool knownValid, bool reversedOk)
     jacDetSpace = FuncSpaceData(el, false, jacOrder, jacOrder-3, &serendipFalse);
     break;
   default:
-    Msg::Error("Scaled Jacobian not implemented for type of element %d", el->getType());
+    Msg::Error("IGE measure not implemented for type of element %d", el->getType());
     return -1;
   }
   gradBasis = BasisFactory::getGradientBasis(jacMatSpace);
@@ -142,7 +142,7 @@ double minScaledJacobian(MElement *el, bool knownValid, bool reversedOk)
 
   std::vector<_CoeffData*> domains;
   domains.push_back(
-      new _CoeffDataScaledJac(coeffDetBez, coeffMatBez, jacBasis->getBezier(),
+      new _CoeffDataIGE(coeffDetBez, coeffMatBez, jacBasis->getBezier(),
                               gradBasis->getBezier(), 0, el->getType())
   );
 
@@ -164,12 +164,14 @@ double minScaledJacobian(MElement *el, bool knownValid, bool reversedOk)
   return min;
 }
 
-double minIsotropyMeasure(MElement *el,
-                          bool knownValid,
-                          bool reversedOk)
+double minICNMeasure(MElement *el,
+                     bool knownValid,
+                     bool reversedOk)
 {
   bool isReversed = false;
   if (!knownValid) {
+    // Computation of the measure should never
+    // be performed to invalid elements (for which the measure is 0).
     double jmin, jmax;
     minMaxJacobianDeterminant(el, jmin, jmax);
     if (jmax < 0) {
@@ -178,8 +180,6 @@ double minIsotropyMeasure(MElement *el,
     }
     else if (jmin <= 0) return 0;
   }
-  // Computation of the minimum (or maximum) of the scaled Jacobian should never
-  // be performed to invalid elements (for which the measure is 0).
 
   fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
   el->getNodesCoord(nodesXYZ);
@@ -214,7 +214,7 @@ double minIsotropyMeasure(MElement *el,
     jacDetSpace = FuncSpaceData(el, false, jacOrder, jacOrder-3, &serendipFalse);
     break;
   default:
-    Msg::Error("Isotropy not implemented for type of element %d", el->getType());
+    Msg::Error("ICN not implemented for type of element %d", el->getType());
     return -1;
   }
   gradBasis = BasisFactory::getGradientBasis(jacMatSpace);
@@ -243,7 +243,7 @@ double minIsotropyMeasure(MElement *el,
 
   std::vector<_CoeffData*> domains;
   domains.push_back(
-      new _CoeffDataIsotropy(coeffDetBez, coeffMatBez, jacBasis->getBezier(),
+      new _CoeffDataICN(coeffDetBez, coeffMatBez, jacBasis->getBezier(),
                              gradBasis->getBezier(), 0)
   );
 
@@ -281,7 +281,7 @@ double minIsotropyMeasure(MElement *el,
 //  return min;
 //}
 
-double minSampledIsotropyMeasure(MElement *el, int deg, bool writeInFile)//fordebug
+double minSampledICNMeasure(MElement *el, int deg, bool writeInFile)//fordebug
 {
   fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
   el->getNodesCoord(nodesXYZ);
@@ -310,7 +310,7 @@ double minSampledIsotropyMeasure(MElement *el, int deg, bool writeInFile)//forde
 //    jacDetSpace = FuncSpaceData(el, false, jacOrder, jacOrder-3, &serendipFalse);
     break;
   default:
-    Msg::Error("Isotropy not implemented for type of element %d", el->getType());
+    Msg::Error("ICN not implemented for type of element %d", el->getType());
     return -1;
   }
   gradBasis = BasisFactory::getGradientBasis(jacMatSpace);
@@ -340,7 +340,7 @@ double minSampledIsotropyMeasure(MElement *el, int deg, bool writeInFile)//forde
   return min;
 }
 
-double minSampledScaledJacobian(MElement *el, int deg, bool writeInFile)//fordebug
+double minSampledIGEMeasure(MElement *el, int deg, bool writeInFile)//fordebug
 {
   fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
   el->getNodesCoord(nodesXYZ);
@@ -369,7 +369,7 @@ double minSampledScaledJacobian(MElement *el, int deg, bool writeInFile)//fordeb
 //    jacDetSpace = FuncSpaceData(el, false, jacOrder, jacOrder-3, &serendipFalse);
     break;
   default:
-    Msg::Error("Isotropy not implemented for type of element %d", el->getType());
+    Msg::Error("ICN not implemented for type of element %d", el->getType());
     return -1;
   }
   gradBasis = BasisFactory::getGradientBasis(jacMatSpace);
@@ -469,8 +469,8 @@ void _CoeffDataJac::getSubCoeff(std::vector<_CoeffData*> &v) const
   }
 }
 
-// Scaled Jacobian (quality of quads and hexes)
-_CoeffDataScaledJac::_CoeffDataScaledJac(fullVector<double> &det,
+// IGE measure (Inverse Gradient Error)
+_CoeffDataIGE::_CoeffDataIGE(fullVector<double> &det,
                                          fullMatrix<double> &mat,
                                          const bezierBasis *bfsDet,
                                          const bezierBasis *bfsMat,
@@ -480,7 +480,7 @@ _CoeffDataScaledJac::_CoeffDataScaledJac(fullVector<double> &det,
   _bfsDet(bfsDet), _bfsMat(bfsMat), _type(type)
 {
   if (!det.getOwnData() || !mat.getOwnData()) {
-    Msg::Fatal("Cannot create an instance of _CoeffDataScaledJac from a "
+    Msg::Fatal("Cannot create an instance of _CoeffDataIGE from a "
                "fullVector or a fullMatrix that does not own its data.");
   }
   // _coeffsJacDet and _coeffsJacMat reuse data, this avoid to allocate new
@@ -499,13 +499,13 @@ _CoeffDataScaledJac::_CoeffDataScaledJac(fullVector<double> &det,
   // computation of _maxB not implemented for now
 }
 
-bool _CoeffDataScaledJac::boundsOk(double minL, double maxL) const
+bool _CoeffDataIGE::boundsOk(double minL, double maxL) const
 {
   static double tol = 1e-3;
   return minL - _minB < tol;
 }
 
-void _CoeffDataScaledJac::getSubCoeff(std::vector<_CoeffData*> &v) const
+void _CoeffDataIGE::getSubCoeff(std::vector<_CoeffData*> &v) const
 {
   v.clear();
   v.reserve(_bfsDet->getNumDivision());
@@ -522,14 +522,14 @@ void _CoeffDataScaledJac::getSubCoeff(std::vector<_CoeffData*> &v) const
     fullMatrix<double> coeffM(szM1, szM2);
     coeffD.copy(subCoeffD, i * szD, szD, 0);
     coeffM.copy(subCoeffM, i * szM1, szM1, 0, szM2, 0, 0);
-    _CoeffDataScaledJac *newData;
-    newData = new _CoeffDataScaledJac(coeffD, coeffM, _bfsDet, _bfsMat,
+    _CoeffDataIGE *newData;
+    newData = new _CoeffDataIGE(coeffD, coeffM, _bfsDet, _bfsMat,
                                       _depth+1, _type);
     v.push_back(newData);
   }
 }
 
-void _CoeffDataScaledJac::_computeAtCorner(double &min, double &max) const
+void _CoeffDataIGE::_computeAtCorner(double &min, double &max) const
 {
   min = std::numeric_limits<double>::infinity();
   max = -min;
@@ -581,7 +581,7 @@ void _CoeffDataScaledJac::_computeAtCorner(double &min, double &max) const
                                       1/v(i,4)/v(i,5)/v(i,3)  ) / 8;
       break;
     default:
-      Msg::Error("Unkown type for scaled jac computation");
+      Msg::Error("Unkown type for IGE computation");
       return;
     }
     min = std::min(min, sJ);
@@ -589,7 +589,7 @@ void _CoeffDataScaledJac::_computeAtCorner(double &min, double &max) const
   }
 }
 
-double _CoeffDataScaledJac::_computeLowerBound() const
+double _CoeffDataIGE::_computeLowerBound() const
 {
   // Speedup: If one coeff _coeffsJacDet is negative, without bounding
   // J^2/(a^2+b^2), we would get with certainty a negative lower bound.
@@ -706,12 +706,12 @@ double _CoeffDataScaledJac::_computeLowerBound() const
   }
 
   default:
-    Msg::Info("Unknown type for scaled Jacobian (%d)", _type);
+    Msg::Info("Unknown type for IGE (%d)", _type);
     return -1;
   }
 }
 
-void _CoeffDataScaledJac::_getCoeffLengthVectors(fullMatrix<double> &coeff,
+void _CoeffDataIGE::_getCoeffLengthVectors(fullMatrix<double> &coeff,
                                                  bool corners) const
 {
   int sz1 = corners ? _bfsDet->getNumLagCoeff() : _coeffsJacMat.size1();
@@ -724,7 +724,7 @@ void _CoeffDataScaledJac::_getCoeffLengthVectors(fullMatrix<double> &coeff,
     case TYPE_TET: coeff.resize(sz1, 6); break;
     case TYPE_PYR: coeff.resize(sz1, 6); break;
     default:
-      Msg::Error("Unkown type for scaled jac computation");
+      Msg::Error("Unkown type for IGE computation");
       coeff.resize(0, 0);
       return;
   }
@@ -798,8 +798,8 @@ void _CoeffDataScaledJac::_getCoeffLengthVectors(fullMatrix<double> &coeff,
   }
 }
 
-// Isotropy measure
-_CoeffDataIsotropy::_CoeffDataIsotropy(fullVector<double> &det,
+// ICN measure (Inverse Condition Number)
+_CoeffDataICN::_CoeffDataICN(fullVector<double> &det,
                                        fullMatrix<double> &mat,
                                        const bezierBasis *bfsDet,
                                        const bezierBasis *bfsMat,
@@ -809,7 +809,7 @@ _CoeffDataIsotropy::_CoeffDataIsotropy(fullVector<double> &det,
   _bfsDet(bfsDet), _bfsMat(bfsMat)
 {
   if (!det.getOwnData() || !mat.getOwnData()) {
-    Msg::Fatal("Cannot create an instance of _CoeffDataScaledJac from a "
+    Msg::Fatal("Cannot create an instance of _CoeffDataIGE from a "
                "fullVector or a fullMatrix that does not own its data.");
   }
   // _coeffsJacDet and _coeffsMetric reuse data, this avoid to allocate new
@@ -832,13 +832,13 @@ _CoeffDataIsotropy::_CoeffDataIsotropy(fullVector<double> &det,
   // _maxB not used for now
 }
 
-bool _CoeffDataIsotropy::boundsOk(double minL, double maxL) const
+bool _CoeffDataICN::boundsOk(double minL, double maxL) const
 {
   static double tol = 1e-3;
   return minL < tol*1e-3 || (_minB > minL-tol && _minB > minL*(1-100*tol));
 }
 
-void _CoeffDataIsotropy::getSubCoeff(std::vector<_CoeffData*> &v) const
+void _CoeffDataICN::getSubCoeff(std::vector<_CoeffData*> &v) const
 {
   v.clear();
   v.reserve(_bfsMat->getNumDivision());
@@ -855,13 +855,13 @@ void _CoeffDataIsotropy::getSubCoeff(std::vector<_CoeffData*> &v) const
     fullMatrix<double> coeffM(szM1, szM2);
     coeffD.copy(subCoeffD, i * szD, szD, 0);
     coeffM.copy(subCoeffM, i * szM1, szM1, 0, szM2, 0, 0);
-    _CoeffDataIsotropy *newData
-        = new _CoeffDataIsotropy(coeffD, coeffM, _bfsDet, _bfsMat, _depth+1);
+    _CoeffDataICN *newData
+        = new _CoeffDataICN(coeffD, coeffM, _bfsDet, _bfsMat, _depth+1);
     v.push_back(newData);
   }
 }
 
-void _CoeffDataIsotropy::_computeAtCorner(double &min, double &max) const
+void _CoeffDataICN::_computeAtCorner(double &min, double &max) const
 {
   min = std::numeric_limits<double>::infinity();
   max = -min;
@@ -881,7 +881,7 @@ void _CoeffDataIsotropy::_computeAtCorner(double &min, double &max) const
   }
 }
 
-double _CoeffDataIsotropy::_computeLowerBound() const
+double _CoeffDataICN::_computeLowerBound() const
 {
   // Speedup: If one coeff _coeffsJacDet is negative, we would get
   // a negative lower bound. For now, returning 0.

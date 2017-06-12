@@ -152,7 +152,7 @@ double MElement::maxDistToStraight() const
 double MElement::minIsotropyMeasure(bool knownValid, bool reversedOK)
 {
 #if defined(HAVE_MESH)
-  return jacobianBasedQuality::minIsotropyMeasure(this, knownValid, reversedOK);
+  return jacobianBasedQuality::minICNMeasure(this, knownValid, reversedOK);
 #else
   return 0.;
 #endif
@@ -161,7 +161,7 @@ double MElement::minIsotropyMeasure(bool knownValid, bool reversedOK)
 double MElement::minScaledJacobian(bool knownValid, bool reversedOK)
 {
 #if defined(HAVE_MESH)
-  return jacobianBasedQuality::minScaledJacobian(this, knownValid, reversedOK);
+  return jacobianBasedQuality::minIGEMeasure(this, knownValid, reversedOK);
 #else
   return 0.;
 #endif
@@ -175,7 +175,7 @@ double MElement::specialQuality()
   if (minJ <= 0.) return minJ;
 //  if (minJ < 0 && maxJ >= 0) return minJ/maxJ; // accept -inf as an answer
 //  if (minJ < 0 && maxJ < 0) return -std::numeric_limits<double>::infinity();
-  return jacobianBasedQuality::minIsotropyMeasure(this, true);
+  return jacobianBasedQuality::minICNMeasure(this, true);
 #else
   return 0;
 #endif
@@ -189,7 +189,7 @@ double MElement::specialQuality2()
   if (minJ <= 0.) return minJ;
 //  if (minJ < 0 && maxJ >= 0) return minJ/maxJ; // accept -inf as an answer
 //  if (minJ < 0 && maxJ < 0) return -std::numeric_limits<double>::infinity();
-  return jacobianBasedQuality::minScaledJacobian(this, true);
+  return jacobianBasedQuality::minIGEMeasure(this, true);
 #else
   return 0;
 #endif

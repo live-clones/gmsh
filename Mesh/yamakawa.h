@@ -40,7 +40,7 @@ class Hex {
   void compute_quality()
   {
     MHexahedron elt(vertices_);
-    quality = jacobianBasedQuality::minScaledJacobian(&elt, false, true);
+    quality = jacobianBasedQuality::minIGEMeasure(&elt, false, true);
   }
   void initialize()
   {
