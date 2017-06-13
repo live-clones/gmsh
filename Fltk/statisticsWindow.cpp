@@ -102,7 +102,7 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
 
   int num = 0;
   int width = 26 * FL_NORMAL_SIZE;
-  int height = 5 * WB + 19 * BH;
+  int height = 5 * WB + 18 * BH;
 
   win = new paletteWindow
     (width, height, CTX::instance()->nonModalWindows ? true : false, "Statistics");
@@ -139,14 +139,12 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
 
       value[num] = new Fl_Output(2 * WB, 2 * WB + 14 * BH, IW, BH, "SICN");
       value[num]->tooltip("~ signed inverse condition number"); num++;
-      value[num] = new Fl_Output(2 * WB, 2 * WB + 15 * BH, IW, BH, "SIGE");
-      value[num]->tooltip("~ signed inverse error on gradient FE solution"); num++;
-      value[num] = new Fl_Output(2 * WB, 2 * WB + 16 * BH, IW, BH, "Gamma");
+      value[num] = new Fl_Output(2 * WB, 2 * WB + 15 * BH, IW, BH, "Gamma");
       value[num]->tooltip("~ inscribed_radius / circumscribed_radius (simplices)"); num++;
-      value[num] = new Fl_Output(2 * WB, 2 * WB + 17 * BH, IW, BH, "Rho");
-      value[num]->tooltip("~ min_edge_length / max_edge_length"); num++;
+      value[num] = new Fl_Output(2 * WB, 2 * WB + 16 * BH, IW, BH, "SIGE");
+      value[num]->tooltip("~ signed inverse error on gradient FE solution"); num++;
 
-      for(int i = 0; i < 4; i++){
+      for(int i = 0; i < 3; i++){
         int ww = 3 * FL_NORMAL_SIZE;
         new Fl_Box
           (FL_NO_BOX, width - 3 * ww - 2 * WB, 2 * WB + (14 + i) * BH, ww, BH, "Plot");
@@ -156,16 +154,13 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
           (width - ww - 2 * WB, 2 * WB + (14 + i) * BH, ww, BH, "3D");
       }
       static const QM_HISTO qmh0 = QMH_SICN_XY, qmh1 = QMH_SICN_3D, qmh2 = QMH_GAMMA_XY,
-                            qmh3 = QMH_GAMMA_3D, qmh4 = QMH_RHO_XY, qmh5 = QMH_RHO_3D,
-                            qmh6 = QMH_SIGE_XY, qmh7 = QMH_SIGE_3D;
+                            qmh3 = QMH_GAMMA_3D, qmh4 = QMH_SIGE_XY, qmh5 = QMH_SIGE_3D;
       butt[0]->callback(statistics_histogram_cb, (void*) &qmh0);
       butt[1]->callback(statistics_histogram_cb, (void*) &qmh1);
       butt[2]->callback(statistics_histogram_cb, (void*) &qmh2);
       butt[3]->callback(statistics_histogram_cb, (void*) &qmh3);
       butt[4]->callback(statistics_histogram_cb, (void*) &qmh4);
       butt[5]->callback(statistics_histogram_cb, (void*) &qmh5);
-      butt[6]->callback(statistics_histogram_cb, (void*) &qmh6);
-      butt[7]->callback(statistics_histogram_cb, (void*) &qmh7);
 
       group[1]->end();
     }
@@ -243,10 +238,7 @@ void statisticsWindow::compute(bool elementQuality)
   sprintf(label[num], "%g", s[16]); value[num]->value(label[num]); num++;
 
   if(!elementQuality){
-    for(int i = 0; i < 8; i += 2) butt[i]->deactivate();
-    sprintf(label[num], "Press Update");
-    value[num]->deactivate();
-    value[num]->value(label[num]); num++;
+    for(int i = 0; i < 6; i += 2) butt[i]->deactivate();
     sprintf(label[num], "Press Update");
     value[num]->deactivate();
     value[num]->value(label[num]); num++;
@@ -258,7 +250,7 @@ void statisticsWindow::compute(bool elementQuality)
     value[num]->value(label[num]); num++;
   }
   else{
-    for(int i = 0; i < 8; i += 2) butt[i]->activate();
+    for(int i = 0; i < 6; i += 2) butt[i]->activate();
     sprintf(label[num], "%.4g (%.4g->%.4g)", s[18], s[19], s[20]);
     value[num]->activate();
     value[num]->value(label[num]); num++;
