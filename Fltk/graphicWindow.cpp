@@ -2101,6 +2101,14 @@ static std::vector<std::string> getInfoStrings(MElement *ele)
   {
     std::ostringstream sstream;
     sstream.precision(12);
+    double sIGEMin, sIGEMax;
+    ele->signedInvGradErrorRange(sIGEMin, sIGEMax);
+    sstream << " SIGE range: " << sIGEMin << " " << sIGEMax;
+    info.push_back(sstream.str());
+  }
+  {
+    std::ostringstream sstream;
+    sstream.precision(12);
     sstream << " Inner / outer radius: "
             << ele->getInnerRadius() << " / " << ele->getOuterRadius();
     info.push_back(sstream.str());

@@ -202,17 +202,23 @@ class MElement
   virtual double rhoShapeMeasure();
   virtual double gammaShapeMeasure(){ return 0.; }
   virtual double etaShapeMeasure(){ return 0.; }
-  double distoShapeMeasure()
-  {
-    double jmin, jmax;
-    scaledJacRange(jmin, jmax);
-    return jmin;
-  }
   double minSICNShapeMeasure()
   {
     double sICNMin, sICNMax;
     signedInvCondNumRange(sICNMin, sICNMax);
     return sICNMin;
+  }
+  double minSIGEShapeMeasure()
+  {
+    double minSIGE, maxSIGE;
+    signedInvGradErrorRange(minSIGE, maxSIGE);
+    return minSIGE;
+  }
+  double distoShapeMeasure()
+  {
+    double jmin, jmax;
+    scaledJacRange(jmin, jmax);
+    return jmin;
   }
   double minIsotropyMeasure(bool knownValid = false, bool reversedOk = false);
   double minScaledJacobian(bool knownValid = false, bool reversedOk = false);
@@ -222,6 +228,7 @@ class MElement
   virtual void scaledJacRange(double &jmin, double &jmax, GEntity *ge = 0) const;
   virtual void idealJacRange(double &jmin, double &jmax, GEntity *ge = 0);
   virtual void signedInvCondNumRange(double &iCNMin, double &iCNMax, GEntity *ge = 0);
+  virtual void signedInvGradErrorRange(double &minSIGE, double &maxSIGE, GEntity *ge = 0);
 
   // get the radius of the inscribed circle/sphere if it exists,
   // otherwise get the minimum radius of all the circles/spheres

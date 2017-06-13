@@ -334,6 +334,14 @@ void MElement::signedInvCondNumRange(double &iCNMin, double &iCNMax, GEntity *ge
 #endif
 }
 
+void MElement::signedInvGradErrorRange(double &minSIGE, double &maxSIGE,
+                                       GEntity *ge)
+{
+  minSIGE = jacobianBasedQuality::minSampledICNMeasure(this, getPolynomialOrder());
+  maxSIGE = 1;
+  return;
+}
+
 void MElement::getNode(int num, double &u, double &v, double &w) const
 {
   // only for MElements that don't have a lookup table for this
