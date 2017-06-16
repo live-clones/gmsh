@@ -105,34 +105,21 @@ void getBitmapFromString(const char *text, int textsize, unsigned char **map,
   JNIEnv *env;
   if(gJavaVM->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK ||
      !gCallbackObject || (gJavaVM->AttachCurrentThread(&env, NULL)) < 0) return;
-
   jclass jClass = env->FindClass("org/geuz/onelab/StringTexture");
   if(jClass == 0)
     return;
   jstring jtext = env->NewStringUTF(text);
-  jmethodID mid = env->GetMethodID(jClass, "getHeightFromString",
-                                   "(Ljava/lang/String;I)I");
-  if(mid == 0)
-    return;
-  *height = env->CallIntMethod(jClass, mid, jtext, textsize);
-
-  jmethodID mid2 = env->GetMethodID(jClass, "getWidthFromString",
-                                    "(Ljava/lang/String;I)I");
-  if(mid2 == 0)
-    return;
-  *width = env->CallIntMethod(jClass, mid2, jtext, textsize);
+  jmethodID mid = env->GetStaticMethodID(jClass, "getHeightFromString",
+                                         "(Ljava/lang/String;I)I");
+  *height = env->CallStaticIntMethod(jClass, mid, jtext, textsize);
+  mid = env->GetStaticMethodID(jClass, "getWidthFromString", "(Ljava/lang/String;I)I");
+  *width = env->CallStaticIntMethod(jClass, mid, jtext, textsize);
   if(realWidth != NULL){
-    jmethodID mid3 = env->GetMethodID(jClass, "getRealWidthFromString",
-                                      "(Ljava/lang/String;I)I");
-    if(mid3 == 0)
-      return;
-    *realWidth = env->CallIntMethod(jClass, mid3, jtext, textsize);
+    mid = env->GetStaticMethodID(jClass, "getRealWidthFromString", "(Ljava/lang/String;I)I");
+    *realWidth = env->CallStaticIntMethod(jClass, mid, jtext, textsize);
   }
-  jmethodID mid4 = env->GetMethodID(jClass, "getBytesFromString",
-                                    "(Ljava/lang/String;I)[B");
-  if(mid4 == 0)
-    return;
-  jobject jbuffer = env->CallObjectMethod(jClass, mid, jtext, textsize);
+  mid = env->GetStaticMethodID(jClass, "getBytesFromString", "(Ljava/lang/String;I)[B");
+  jobject jbuffer = env->CallStaticObjectMethod(jClass, mid, jtext, textsize);
   jbyteArray *jarray = reinterpret_cast<jbyteArray*>(&jbuffer);
   int ms = (*height) * (*width);
   if(ms){
@@ -260,14 +247,12 @@ extern "C" {
   (JNIEnv *env, jobject obj)
   {
     jclass stringClass = env->FindClass("java/lang/String");
-    //if(stringClass == 0)
-    //  return TODO;
-    std::vector<std::string> tmp = onelab::server::instance()->toChar();
+    std::vector<std::string> tmp =  onelab::server::instance()->toChar();
     for(unsigned int i = 0; i < tmp.size(); i++)
       for(unsigned int j = 0; j < tmp[i].size(); j++)
         if(tmp[i][j] == '\0') tmp[i][j] = 0x03;
     jobjectArray params = env->NewObjectArray(tmp.size(), stringClass, 0);
-    for(int i = 0; i < tmp.size();i++){
+    for(int i=0; i<tmp.size();i++){
       jstring s = env->NewStringUTF(tmp[i].c_str());
       env->SetObjectArrayElement(params, i, s);
       env->DeleteLocalRef(s);
@@ -299,7 +284,7 @@ extern "C" {
   JNIEXPORT jint JNICALL Java_org_geuz_onelab_Gmsh_onelabCB
   (JNIEnv *env, jobject obj, jstring jaction)
   {
-    const char* action = env->GetStringUTFChars(jaction, NULL);
+    const char*  action = env->GetStringUTFChars(jaction, NULL);
     return onelab_cb(action);
   }
 

@@ -105,7 +105,7 @@ public class StringTexture {
     gl.glDisable(GL10.GL_TEXTURE_2D);
   }
 
-  public byte[] getBytesFromString(String s, int textSize)
+  public static byte[] getBytesFromString(String s, int textSize)
   {
     // Generate the bitmap
     int textColor = Color.BLACK;
@@ -136,7 +136,7 @@ public class StringTexture {
     buffer.get(b);
     return b;
   }
-  public int getWidthFromString(String s, int textSize)
+  public static int getWidthFromString(String s, int textSize)
   {
     Paint paint = new Paint();
     paint.setTextSize(textSize);
@@ -146,14 +146,14 @@ public class StringTexture {
     for(i=2;i<=ret;i*=2); ret = i;
     return ret;
   }
-  public int getRealWidthFromString(String s, int textSize)
+  public static int getRealWidthFromString(String s, int textSize)
   {
     Paint paint = new Paint();
     paint.setTextSize(textSize);
     paint.setTextAlign(Paint.Align.LEFT);
     return (int) (paint.measureText(s) + 0.5f);
   }
-  public int getHeightFromString(String s, int textSize)
+  public static int getHeightFromString(String s, int textSize)
   {
     Paint paint = new Paint();
     paint.setTextSize(textSize);
