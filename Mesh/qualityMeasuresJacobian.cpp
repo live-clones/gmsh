@@ -168,54 +168,6 @@ static inline void computeIGE_(const fullVector<double> &det,
       }
       break;
   }
-//  for (int i = 0; i < sz; i++) {
-//    double sJ;
-//    switch (type) {
-//      case TYPE_QUA:
-//        ige(i) = det(i) / v(i, 0) / v(i, 1);
-//        break;
-//      case TYPE_HEX:
-//        ige(i) = det(i) / v(i, 0) / v(i, 1) / v(i, 2);
-//        break;
-//      case TYPE_TRI:
-//        ige(i) = cTri * det(i) * (1 / v(i, 0) / v(i, 1) +
-//                                  1 / v(i, 0) / v(i, 2) +
-//                                  1 / v(i, 1) / v(i, 2)) / 3;
-//        break;
-//      case TYPE_TET:
-//        ige(i) = cTet * det(i) * (1 / v(i, 0) / v(i, 5) / v(i, 1) +
-//                                  1 / v(i, 0) / v(i, 5) / v(i, 2) +
-//                                  1 / v(i, 0) / v(i, 5) / v(i, 3) +
-//                                  1 / v(i, 0) / v(i, 5) / v(i, 4) +
-//                                  1 / v(i, 1) / v(i, 4) / v(i, 0) +
-//                                  1 / v(i, 1) / v(i, 4) / v(i, 2) +
-//                                  1 / v(i, 1) / v(i, 4) / v(i, 3) +
-//                                  1 / v(i, 1) / v(i, 4) / v(i, 5) +
-//                                  1 / v(i, 2) / v(i, 3) / v(i, 0) +
-//                                  1 / v(i, 2) / v(i, 3) / v(i, 1) +
-//                                  1 / v(i, 2) / v(i, 3) / v(i, 4) +
-//                                  1 / v(i, 2) / v(i, 3) / v(i, 5)) / 12;
-//        break;
-//      case TYPE_PRI:
-//        ige(i) = cTri * det(i) * (1 / v(i, 0) / v(i, 1) / v(i, 2) +
-//                                  1 / v(i, 0) / v(i, 3) / v(i, 2) +
-//                                  1 / v(i, 1) / v(i, 3) / v(i, 2)) / 3;
-//        break;
-//      case TYPE_PYR:
-//        ige(i) = cPyr * det(i) * (1 / v(i, 0) / v(i, 1) / v(i, 2) +
-//                                  1 / v(i, 0) / v(i, 1) / v(i, 3) +
-//                                  1 / v(i, 0) / v(i, 1) / v(i, 4) +
-//                                  1 / v(i, 0) / v(i, 1) / v(i, 5) +
-//                                  1 / v(i, 2) / v(i, 3) / v(i, 4) +
-//                                  1 / v(i, 2) / v(i, 3) / v(i, 5) +
-//                                  1 / v(i, 4) / v(i, 5) / v(i, 2) +
-//                                  1 / v(i, 4) / v(i, 5) / v(i, 3)) / 8;
-//        break;
-//      default:
-//        Msg::Error("Unkown type for IGE computation");
-//        return;
-//    }
-//  }
 }
 
 namespace jacobianBasedQuality {
@@ -471,8 +423,8 @@ void sampleIGEMeasure(MElement *el, int deg, double &min, double &max)
     jacDetSpace = FuncSpaceData(el, deg, &serendipFalse);
     break;
   case TYPE_PYR:
-//    jacMatSpace = FuncSpaceData(el, false, order, order-1, &serendipFalse);
-//    jacDetSpace = FuncSpaceData(el, false, jacOrder, jacOrder-3, &serendipFalse);
+    jacMatSpace = FuncSpaceData(el, true, deg-1, 1, &serendipFalse);
+    jacDetSpace = FuncSpaceData(el, true, deg-1, 1, &serendipFalse);
     break;
   default:
     Msg::Error("ICN not implemented for type of element %d", el->getType());
