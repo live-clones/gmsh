@@ -337,8 +337,8 @@ void MElement::signedInvCondNumRange(double &iCNMin, double &iCNMax, GEntity *ge
 void MElement::signedInvGradErrorRange(double &minSIGE, double &maxSIGE,
                                        GEntity *ge)
 {
-  minSIGE = jacobianBasedQuality::minSampledICNMeasure(this, getPolynomialOrder());
-  maxSIGE = 1;
+  jacobianBasedQuality::sampleIGEMeasure(this, getPolynomialOrder(),
+                                         minSIGE, maxSIGE);
   return;
 }
 

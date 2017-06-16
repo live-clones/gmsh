@@ -16,11 +16,156 @@
 #include "pointsGenerators.h"
 #include "OS.h"
 
-namespace jacobianBasedQuality {
+static const double cTri = 2/std::sqrt(3);
+static const double cTet = std::sqrt(2);
+static const double cPyr = std::sqrt(2);
 
-double _CoeffDataIGE::cTri = 2/std::sqrt(3);
-double _CoeffDataIGE::cTet = std::sqrt(2);
-double _CoeffDataIGE::cPyr = std::sqrt(2);
+static void computeCoeffLengthVectors_(const fullMatrix<double> &mat,
+                                       fullMatrix<double> &coeff,
+                                       int type, int numCoeff = -1)
+{
+  int sz1 = numCoeff > -1 ? numCoeff : mat.size1();
+
+  switch (type) {
+    case TYPE_QUA: coeff.resize(sz1, 2); break;
+    case TYPE_TRI: coeff.resize(sz1, 3); break;
+    case TYPE_HEX: coeff.resize(sz1, 3); break;
+    case TYPE_PRI: coeff.resize(sz1, 4); break;
+    case TYPE_TET: coeff.resize(sz1, 6); break;
+    case TYPE_PYR: coeff.resize(sz1, 6); break;
+    default:
+      Msg::Error("Unkown type for IGE computation");
+      coeff.resize(0, 0);
+      return;
+  }
+
+  if (type != TYPE_PYR) {
+    for (int i = 0; i < sz1; i++) {
+      coeff(i, 0) = std::sqrt(pow_int(mat(i, 0), 2) +
+                              pow_int(mat(i, 1), 2) +
+                              pow_int(mat(i, 2), 2)  );
+      coeff(i, 1) = std::sqrt(pow_int(mat(i, 3), 2) +
+                              pow_int(mat(i, 4), 2) +
+                              pow_int(mat(i, 5), 2)  );
+    }
+    if (mat.size2() > 6) { // if 3D
+      for (int i = 0; i < sz1; i++) {
+        coeff(i, 2) = std::sqrt(pow_int(mat(i, 6), 2) +
+                                pow_int(mat(i, 7), 2) +
+                                pow_int(mat(i, 8), 2)  );
+      }
+    }
+    else if (type == TYPE_TRI) {
+      for (int i = 0; i < sz1; i++) {
+        coeff(i, 2) = std::sqrt(pow_int(mat(i, 3) - mat(i, 0), 2) +
+                                pow_int(mat(i, 4) - mat(i, 1), 2) +
+                                pow_int(mat(i, 5) - mat(i, 2), 2)  );
+      }
+    }
+    switch (type) {
+      case TYPE_TET:
+      case TYPE_PRI:
+        for (int i = 0; i < sz1; i++) {
+          coeff(i, 3) = std::sqrt(pow_int(mat(i, 3) - mat(i, 0), 2) +
+                                  pow_int(mat(i, 4) - mat(i, 1), 2) +
+                                  pow_int(mat(i, 5) - mat(i, 2), 2)  );
+        }
+    }
+    if (type == TYPE_TET) {
+      for (int i = 0; i < sz1; i++) {
+        coeff(i, 4) = std::sqrt(pow_int(mat(i, 6) - mat(i, 0), 2) +
+                                pow_int(mat(i, 7) - mat(i, 1), 2) +
+                                pow_int(mat(i, 8) - mat(i, 2), 2)  );
+        coeff(i, 5) = std::sqrt(pow_int(mat(i, 6) - mat(i, 3), 2) +
+                                pow_int(mat(i, 7) - mat(i, 4), 2) +
+                                pow_int(mat(i, 8) - mat(i, 5), 2)  );
+      }
+    }
+  }
+  else {
+    for (int i = 0; i < sz1; i++) {
+      coeff(i, 0) = std::sqrt(pow_int(2*mat(i, 0), 2) +
+                              pow_int(2*mat(i, 1), 2) +
+                              pow_int(2*mat(i, 2), 2)  );
+      coeff(i, 1) = std::sqrt(pow_int(2*mat(i, 3), 2) +
+                              pow_int(2*mat(i, 4), 2) +
+                              pow_int(2*mat(i, 5), 2)  );
+      coeff(i, 2) = std::sqrt(pow_int(mat(i, 6) + mat(i, 0) + mat(i, 3), 2) +
+                              pow_int(mat(i, 7) + mat(i, 1) + mat(i, 4), 2) +
+                              pow_int(mat(i, 8) + mat(i, 2) + mat(i, 5), 2)  );
+      coeff(i, 3) = std::sqrt(pow_int(mat(i, 6) - mat(i, 0) + mat(i, 3), 2) +
+                              pow_int(mat(i, 7) - mat(i, 1) + mat(i, 4), 2) +
+                              pow_int(mat(i, 8) - mat(i, 2) + mat(i, 5), 2)  );
+      coeff(i, 4) = std::sqrt(pow_int(mat(i, 6) - mat(i, 0) - mat(i, 3), 2) +
+                              pow_int(mat(i, 7) - mat(i, 1) - mat(i, 4), 2) +
+                              pow_int(mat(i, 8) - mat(i, 2) - mat(i, 5), 2)  );
+      coeff(i, 5) = std::sqrt(pow_int(mat(i, 6) + mat(i, 0) - mat(i, 3), 2) +
+                              pow_int(mat(i, 7) + mat(i, 1) - mat(i, 4), 2) +
+                              pow_int(mat(i, 8) + mat(i, 2) - mat(i, 5), 2)  );
+    }
+  }
+}
+
+static void computeIGE_(const fullVector<double> &det,
+                        const fullMatrix<double> &v,
+                        fullVector<double> &ige,
+                        int type)
+{
+  int sz = std::min(det.size(), v.size1());
+  ige.resize(sz);
+
+  switch(type) {
+    case TYPE_QUA:
+      for (int i = 0; i < sz; i++) {
+        ige(i) = det(i)/v(i, 0)/v(i, 1);
+      }
+      break;
+    case TYPE_HEX:
+      for (int i = 0; i < sz; i++) {
+        ige(i) = det(i)/v(i, 0)/v(i, 1)/v(i, 2);
+      }
+    case TYPE_TRI:
+      for (int i = 0; i < sz; i++) {
+        ige(i) = cTri * det(i) * (1/v(i,0)/v(i,1) +
+                                  1/v(i,0)/v(i,2) +
+                                  1/v(i,1)/v(i,2)) / 3;
+      }
+    case TYPE_PRI:
+      for (int i = 0; i < sz; i++) {
+        ige(i) = cTri * det(i) * (1/v(i,0)/v(i,1)/v(i,2) +
+                                  1/v(i,0)/v(i,3)/v(i,2) +
+                                  1/v(i,1)/v(i,3)/v(i,2)) / 3;
+      }
+    case TYPE_TET:
+      for (int i = 0; i < sz; i++) {
+        ige(i) = cTet * det(i) * (1/v(i,0)/v(i,5)/v(i,1) +
+                                  1/v(i,0)/v(i,5)/v(i,2) +
+                                  1/v(i,0)/v(i,5)/v(i,3) +
+                                  1/v(i,0)/v(i,5)/v(i,4) +
+                                  1/v(i,1)/v(i,4)/v(i,0) +
+                                  1/v(i,1)/v(i,4)/v(i,2) +
+                                  1/v(i,1)/v(i,4)/v(i,3) +
+                                  1/v(i,1)/v(i,4)/v(i,5) +
+                                  1/v(i,2)/v(i,3)/v(i,0) +
+                                  1/v(i,2)/v(i,3)/v(i,1) +
+                                  1/v(i,2)/v(i,3)/v(i,4) +
+                                  1/v(i,2)/v(i,3)/v(i,5)) / 12;
+      }
+    case TYPE_PYR:
+      for (int i = 0; i < sz; i++) {
+        ige(i) = cPyr * det(i) * (1/v(i,0)/v(i,1)/v(i,2) +
+                                  1/v(i,0)/v(i,1)/v(i,3) +
+                                  1/v(i,0)/v(i,1)/v(i,4) +
+                                  1/v(i,0)/v(i,1)/v(i,5) +
+                                  1/v(i,2)/v(i,3)/v(i,4) +
+                                  1/v(i,2)/v(i,3)/v(i,5) +
+                                  1/v(i,4)/v(i,5)/v(i,2) +
+                                  1/v(i,4)/v(i,5)/v(i,3)  ) / 8;
+      }
+  }
+}
+
+namespace jacobianBasedQuality {
 
 void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
                                const fullMatrix<double> *normals)
@@ -252,6 +397,58 @@ double minICNMeasure(MElement *el,
     delete domains[i];
   }
   return min;
+}
+
+void sampleIGEMeasure(MElement *el, int deg, double &min, double &max)
+{
+  fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
+  el->getNodesCoord(nodesXYZ);
+
+  const bool serendipFalse = false;
+  FuncSpaceData jacMatSpace, jacDetSpace;
+
+  const int type = el->getType();
+  switch(type) {
+  case TYPE_TRI:
+  case TYPE_TET:
+  case TYPE_QUA:
+  case TYPE_HEX:
+  case TYPE_PRI:
+    jacMatSpace = FuncSpaceData(el, deg, &serendipFalse);
+    jacDetSpace = FuncSpaceData(el, deg, &serendipFalse);
+    break;
+  case TYPE_PYR:
+//    jacMatSpace = FuncSpaceData(el, false, order, order-1, &serendipFalse);
+//    jacDetSpace = FuncSpaceData(el, false, jacOrder, jacOrder-3, &serendipFalse);
+    break;
+  default:
+    Msg::Error("ICN not implemented for type of element %d", el->getType());
+    return;
+  }
+
+  const GradientBasis *gradBasis = BasisFactory::getGradientBasis(jacMatSpace);
+  const JacobianBasis *jacBasis = BasisFactory::getJacobianBasis(jacDetSpace);
+
+  fullVector<double> coeffDeterminant(jacBasis->getNumJacNodes());
+  jacBasis->getSignedIdealJacobian(nodesXYZ, coeffDeterminant);
+
+  fullMatrix<double> coeffMatLag(gradBasis->getNumSamplingPoints(), 9);
+  gradBasis->getAllIdealGradientsFromNodes(nodesXYZ, coeffMatLag);
+
+  fullMatrix<double> v;
+  computeCoeffLengthVectors_(coeffMatLag, v, type);
+
+  fullVector<double> ige;
+  computeIGE_(coeffDeterminant, v, ige, type);
+
+  min = std::numeric_limits<double>::infinity();
+  max = -min;
+  for (int i = 0; i < ige.size(); ++i) {
+    min = std::min(min, ige(i));
+    max = std::max(max, ige(i));
+  }
+
+  return;
 }
 
 double minSampledICNMeasure(MElement *el, int deg)//fordebug
@@ -504,61 +701,17 @@ void _CoeffDataIGE::getSubCoeff(std::vector<_CoeffData*> &v) const
 
 void _CoeffDataIGE::_computeAtCorner(double &min, double &max) const
 {
+  fullMatrix<double> v;
+  computeCoeffLengthVectors_(_coeffsJacMat, v, _type, _bfsDet->getNumLagCoeff());
+
+  fullVector<double> ige;
+  computeIGE_(_coeffsJacDet, v, ige, _type);
+
   min = std::numeric_limits<double>::infinity();
   max = -min;
-
-  fullMatrix<double> v;
-  _getCoeffLengthVectors(v, true);
-
-  for (int i = 0; i < _bfsDet->getNumLagCoeff(); i++) {
-    double sJ;
-    switch(_type) {
-    case TYPE_QUA:
-      sJ =  _coeffsJacDet(i)/v(i, 0)/v(i,1);
-      break;
-    case TYPE_HEX:
-      sJ = _coeffsJacDet(i)/v(i,0)/v(i,1)/v(i,2);
-      break;
-    case TYPE_TRI:
-      sJ = cTri * _coeffsJacDet(i) * (1/v(i,0)/v(i,1) +
-                                      1/v(i,0)/v(i,2) +
-                                      1/v(i,1)/v(i,2)) / 3;
-      break;
-    case TYPE_TET:
-      sJ = cTet * _coeffsJacDet(i) * (1/v(i,0)/v(i,5)/v(i,1) +
-                                      1/v(i,0)/v(i,5)/v(i,2) +
-                                      1/v(i,0)/v(i,5)/v(i,3) +
-                                      1/v(i,0)/v(i,5)/v(i,4) +
-                                      1/v(i,1)/v(i,4)/v(i,0) +
-                                      1/v(i,1)/v(i,4)/v(i,2) +
-                                      1/v(i,1)/v(i,4)/v(i,3) +
-                                      1/v(i,1)/v(i,4)/v(i,5) +
-                                      1/v(i,2)/v(i,3)/v(i,0) +
-                                      1/v(i,2)/v(i,3)/v(i,1) +
-                                      1/v(i,2)/v(i,3)/v(i,4) +
-                                      1/v(i,2)/v(i,3)/v(i,5)) / 12;
-      break;
-    case TYPE_PRI:
-      sJ = cTri * _coeffsJacDet(i) * (1/v(i,0)/v(i,1)/v(i,2) +
-                                      1/v(i,0)/v(i,3)/v(i,2) +
-                                      1/v(i,1)/v(i,3)/v(i,2)) / 3;
-      break;
-    case TYPE_PYR:
-      sJ = cPyr * _coeffsJacDet(i) * (1/v(i,0)/v(i,1)/v(i,2) +
-                                      1/v(i,0)/v(i,1)/v(i,3) +
-                                      1/v(i,0)/v(i,1)/v(i,4) +
-                                      1/v(i,0)/v(i,1)/v(i,5) +
-                                      1/v(i,2)/v(i,3)/v(i,4) +
-                                      1/v(i,2)/v(i,3)/v(i,5) +
-                                      1/v(i,4)/v(i,5)/v(i,2) +
-                                      1/v(i,4)/v(i,5)/v(i,3)  ) / 8;
-      break;
-    default:
-      Msg::Error("Unkown type for IGE computation");
-      return;
-    }
-    min = std::min(min, sJ);
-    max = std::max(max, sJ);
+  for (int i = 0; i < ige.size(); ++i) {
+    min = std::min(min, ige(i));
+    max = std::max(max, ige(i));
   }
 }
 

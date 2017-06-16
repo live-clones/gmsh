@@ -23,6 +23,7 @@ double minIGEMeasure(MElement *el,
 double minICNMeasure(MElement *el,
                      bool knownValid = false,
                      bool reversedOk = false);
+void sampleIGEMeasure(MElement *el, int order, double &min, double &max);
 double minSampledICNMeasure(MElement *el, int order);//fordebug
 double minSampledIGEMeasure(MElement *el, int order);//fordebug
 
@@ -78,9 +79,6 @@ private:
   const fullMatrix<double> _coeffsJacMat;
   const bezierBasis *_bfsDet, *_bfsMat;
   int _type;
-  static double cTri;
-  static double cTet;
-  static double cPyr;
 
 public:
   _CoeffDataIGE(fullVector<double> &det,
@@ -98,8 +96,6 @@ private:
   void _computeAtCorner(double &min, double &max) const;
   double _computeLowerBound() const;
   void _getCoeffLengthVectors(fullMatrix<double> &, bool corners = false) const;
-  void _getCoeffScaledJacobian(const fullMatrix<double> &coeffLengthVectors,
-                               fullMatrix<double> &coeffScaledJacobian) const;
 };
 
 class _CoeffDataICN: public _CoeffData
