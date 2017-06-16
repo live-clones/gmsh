@@ -20,9 +20,9 @@ static const double cTri = 2/std::sqrt(3);
 static const double cTet = std::sqrt(2);
 static const double cPyr = std::sqrt(2);
 
-static void computeCoeffLengthVectors_(const fullMatrix<double> &mat,
-                                       fullMatrix<double> &coeff,
-                                       int type, int numCoeff = -1)
+static inline void computeCoeffLengthVectors_(const fullMatrix<double> &mat,
+                                              fullMatrix<double> &coeff,
+                                              int type, int numCoeff = -1)
 {
   int sz1 = numCoeff > -1 ? numCoeff : mat.size1();
 
@@ -106,10 +106,10 @@ static void computeCoeffLengthVectors_(const fullMatrix<double> &mat,
   }
 }
 
-static void computeIGE_(const fullVector<double> &det,
-                        const fullMatrix<double> &v,
-                        fullVector<double> &ige,
-                        int type)
+static inline void computeIGE_(const fullVector<double> &det,
+                               const fullMatrix<double> &v,
+                               fullVector<double> &ige,
+                               int type)
 {
   int sz = std::min(det.size(), v.size1());
   ige.resize(sz);
@@ -124,18 +124,21 @@ static void computeIGE_(const fullVector<double> &det,
       for (int i = 0; i < sz; i++) {
         ige(i) = det(i)/v(i, 0)/v(i, 1)/v(i, 2);
       }
+      break;
     case TYPE_TRI:
       for (int i = 0; i < sz; i++) {
         ige(i) = cTri * det(i) * (1/v(i,0)/v(i,1) +
                                   1/v(i,0)/v(i,2) +
                                   1/v(i,1)/v(i,2)) / 3;
       }
+      break;
     case TYPE_PRI:
       for (int i = 0; i < sz; i++) {
         ige(i) = cTri * det(i) * (1/v(i,0)/v(i,1)/v(i,2) +
                                   1/v(i,0)/v(i,3)/v(i,2) +
                                   1/v(i,1)/v(i,3)/v(i,2)) / 3;
       }
+      break;
     case TYPE_TET:
       for (int i = 0; i < sz; i++) {
         ige(i) = cTet * det(i) * (1/v(i,0)/v(i,5)/v(i,1) +
@@ -149,8 +152,9 @@ static void computeIGE_(const fullVector<double> &det,
                                   1/v(i,2)/v(i,3)/v(i,0) +
                                   1/v(i,2)/v(i,3)/v(i,1) +
                                   1/v(i,2)/v(i,3)/v(i,4) +
-                                  1/v(i,2)/v(i,3)/v(i,5)) / 12;
+                                  1/v(i,2)/v(i,3)/v(i,5))/ 12;
       }
+      break;
     case TYPE_PYR:
       for (int i = 0; i < sz; i++) {
         ige(i) = cPyr * det(i) * (1/v(i,0)/v(i,1)/v(i,2) +
@@ -162,7 +166,56 @@ static void computeIGE_(const fullVector<double> &det,
                                   1/v(i,4)/v(i,5)/v(i,2) +
                                   1/v(i,4)/v(i,5)/v(i,3)  ) / 8;
       }
+      break;
   }
+//  for (int i = 0; i < sz; i++) {
+//    double sJ;
+//    switch (type) {
+//      case TYPE_QUA:
+//        ige(i) = det(i) / v(i, 0) / v(i, 1);
+//        break;
+//      case TYPE_HEX:
+//        ige(i) = det(i) / v(i, 0) / v(i, 1) / v(i, 2);
+//        break;
+//      case TYPE_TRI:
+//        ige(i) = cTri * det(i) * (1 / v(i, 0) / v(i, 1) +
+//                                  1 / v(i, 0) / v(i, 2) +
+//                                  1 / v(i, 1) / v(i, 2)) / 3;
+//        break;
+//      case TYPE_TET:
+//        ige(i) = cTet * det(i) * (1 / v(i, 0) / v(i, 5) / v(i, 1) +
+//                                  1 / v(i, 0) / v(i, 5) / v(i, 2) +
+//                                  1 / v(i, 0) / v(i, 5) / v(i, 3) +
+//                                  1 / v(i, 0) / v(i, 5) / v(i, 4) +
+//                                  1 / v(i, 1) / v(i, 4) / v(i, 0) +
+//                                  1 / v(i, 1) / v(i, 4) / v(i, 2) +
+//                                  1 / v(i, 1) / v(i, 4) / v(i, 3) +
+//                                  1 / v(i, 1) / v(i, 4) / v(i, 5) +
+//                                  1 / v(i, 2) / v(i, 3) / v(i, 0) +
+//                                  1 / v(i, 2) / v(i, 3) / v(i, 1) +
+//                                  1 / v(i, 2) / v(i, 3) / v(i, 4) +
+//                                  1 / v(i, 2) / v(i, 3) / v(i, 5)) / 12;
+//        break;
+//      case TYPE_PRI:
+//        ige(i) = cTri * det(i) * (1 / v(i, 0) / v(i, 1) / v(i, 2) +
+//                                  1 / v(i, 0) / v(i, 3) / v(i, 2) +
+//                                  1 / v(i, 1) / v(i, 3) / v(i, 2)) / 3;
+//        break;
+//      case TYPE_PYR:
+//        ige(i) = cPyr * det(i) * (1 / v(i, 0) / v(i, 1) / v(i, 2) +
+//                                  1 / v(i, 0) / v(i, 1) / v(i, 3) +
+//                                  1 / v(i, 0) / v(i, 1) / v(i, 4) +
+//                                  1 / v(i, 0) / v(i, 1) / v(i, 5) +
+//                                  1 / v(i, 2) / v(i, 3) / v(i, 4) +
+//                                  1 / v(i, 2) / v(i, 3) / v(i, 5) +
+//                                  1 / v(i, 4) / v(i, 5) / v(i, 2) +
+//                                  1 / v(i, 4) / v(i, 5) / v(i, 3)) / 8;
+//        break;
+//      default:
+//        Msg::Error("Unkown type for IGE computation");
+//        return;
+//    }
+//  }
 }
 
 namespace jacobianBasedQuality {
@@ -727,7 +780,7 @@ double _CoeffDataIGE::_computeLowerBound() const
   }
 
   fullMatrix<double> v;
-  _getCoeffLengthVectors(v, false);
+  computeCoeffLengthVectors_(_coeffsJacMat, v, _type);
 
   fullVector<double> prox[6];
   for (int i = 0; i < v.size2(); ++i) {

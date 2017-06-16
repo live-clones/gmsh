@@ -32,7 +32,7 @@ class _CoeffData
 protected:
   double _minL, _maxL; //Extremum of Jac at corners
   double _minB, _maxB; //Extremum of bezier coefficients
-  int _depth;
+  const int _depth;
 
 public:
   _CoeffData(int depth) : _minL(0), _maxL(0), _minB(0), _maxB(0),
@@ -78,7 +78,7 @@ private:
   const fullVector<double> _coeffsJacDet;
   const fullMatrix<double> _coeffsJacMat;
   const bezierBasis *_bfsDet, *_bfsMat;
-  int _type;
+  const int _type;
 
 public:
   _CoeffDataIGE(fullVector<double> &det,

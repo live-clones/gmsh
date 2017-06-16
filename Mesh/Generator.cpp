@@ -144,7 +144,7 @@ static void GetQualityMeasure(std::vector<T*> &ele,
       if(s > (2*j-100) / 100. && s <= (2*j-98) / 100.) quality[0][j]++;
       if(g > j / 100. && g <= (j + 1) / 100.) quality[1][j]++;
       if(r > j / 100. && r <= (j + 1) / 100.) quality[2][j]++;
-      if(e > (2*j-100) / 100. && e <= (2*j-98) / 100.) quality[4][j]++;
+      if(e > (2*j-100) / 100. && e <= (2*j-98) / 100.) quality[3][j]++;
     }
   }
 }
