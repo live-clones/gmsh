@@ -435,10 +435,10 @@ void sampleIGEMeasure(MElement *el, int deg, double &min, double &max)
   const JacobianBasis *jacBasis = BasisFactory::getJacobianBasis(jacDetSpace);
 
   fullVector<double> coeffDeterminant(jacBasis->getNumJacNodes());
-  jacBasis->getSignedIdealJacobian(nodesXYZ, coeffDeterminant);
+  jacBasis->getSignedJacobian(nodesXYZ, coeffDeterminant);
 
   fullMatrix<double> coeffMatLag(gradBasis->getNumSamplingPoints(), 9);
-  gradBasis->getAllIdealGradientsFromNodes(nodesXYZ, coeffMatLag);
+  gradBasis->getAllGradientsFromNodes(nodesXYZ, coeffMatLag);
 
   fullMatrix<double> v;
   computeCoeffLengthVectors_(coeffMatLag, v, type);

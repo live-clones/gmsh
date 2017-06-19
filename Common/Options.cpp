@@ -5158,7 +5158,7 @@ double opt_mesh_quality_type(OPT_ARGS_NUM)
     if(CTX::instance()->mesh.qualityType != val)
       CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     CTX::instance()->mesh.qualityType = (int)val;
-    if(CTX::instance()->mesh.qualityType < 0 || CTX::instance()->mesh.qualityType > 3)
+    if(CTX::instance()->mesh.qualityType < 0 || CTX::instance()->mesh.qualityType > 4)
       CTX::instance()->mesh.qualityType = 0;
   }
 #if defined(HAVE_FLTK)
