@@ -9,8 +9,8 @@
 #include "MElement.h"
 
 int GModel::writePOS(const std::string &name, bool printElementary,
-                     bool printElementNumber, bool printSICN, bool printGamma,
-                     bool printRho, bool printDisto,
+                     bool printElementNumber, bool printSICN, bool printSIGE,
+                     bool printGamma, bool printDisto,
                      bool saveAll, double scalingFactor)
 {
   FILE *fp = Fopen(name.c_str(), "w");
@@ -36,32 +36,29 @@ int GModel::writePOS(const std::string &name, bool printElementary,
   }
   */
 
-  bool f[6] = {printElementary, printElementNumber, printSICN, printGamma, printRho,
-               printDisto};
-
   bool first = true;
   std::string names;
-  if(f[0]){
+  if(printElementary){
     if(first) first = false; else names += ",";
     names += "\"Elementary Entity\"";
   }
-  if(f[1]){
+  if(printElementNumber){
     if(first) first = false; else names += ",";
     names += "\"Element Number\"";
   }
-  if(f[2]){
+  if(printSICN){
     if(first) first = false; else names += ",";
     names += "\"SICN\"";
   }
-  if(f[3]){
+  if(printSIGE){
+    if(first) first = false; else names += ",";
+    names += "\"SIGE\"";
+  }
+  if(printGamma){
     if(first) first = false; else names += ",";
     names += "\"Gamma\"";
   }
-  if(f[4]){
-    if(first) first = false; else names += ",";
-    names += "\"Rho\"";
-  }
-  if(f[5]){
+  if(printDisto){
     if(first) first = false; else names += ",";
     names += "\"Disto\"";
   }
@@ -79,7 +76,8 @@ int GModel::writePOS(const std::string &name, bool printElementary,
     if(saveAll || entities[i]->physicals.size())
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
         entities[i]->getMeshElement(j)->writePOS
-          (fp, f[0], f[1], f[2], f[3], f[4], f[5], scalingFactor, entities[i]->tag());
+          (fp, printElementary, printElementNumber, printSICN, printSIGE,
+           printGamma, printDisto, scalingFactor, entities[i]->tag());
   fprintf(fp, "};\n");
 
   fclose(fp);

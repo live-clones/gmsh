@@ -116,16 +116,6 @@ double MElement::maxEdge()
   return m;
 }
 
-double MElement::rhoShapeMeasure()
-{
-  double min = minEdge();
-  double max = maxEdge();
-  if(max)
-    return min / max;
-  else
-    return 0.;
-}
-
 double MElement::maxDistToStraight() const
 {
   const nodalBasis *lagBasis = getFunctionSpace();
@@ -334,8 +324,7 @@ void MElement::signedInvCondNumRange(double &iCNMin, double &iCNMax, GEntity *ge
 #endif
 }
 
-void MElement::signedInvGradErrorRange(double &minSIGE, double &maxSIGE,
-                                       GEntity *ge)
+void MElement::signedInvGradErrorRange(double &minSIGE, double &maxSIGE)
 {
   jacobianBasedQuality::sampleIGEMeasure(this, getPolynomialOrder(),
                                          minSIGE, maxSIGE);
@@ -1143,7 +1132,7 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
 }
 
 void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
-                        bool printSICN, bool printGamma, bool printRho,
+                        bool printSICN, bool printSIGE, bool printGamma,
                         bool printDisto, double scalingFactor, int elementary)
 {
   const char *str = getStringForPOS();
@@ -1177,19 +1166,19 @@ void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
       fprintf(fp, "%g", sICNMin);
     }
   }
+  if(printSIGE){
+    double sIGEMin = minSIGEShapeMeasure();
+    for(int i = 0; i < n; i++){
+      if(first) first = false; else fprintf(fp, ",");
+      fprintf(fp, "%g", sIGEMin);
+    }
+  }
   if(printGamma){
     double gamma = gammaShapeMeasure();
     for(int i = 0; i < n; i++){
       if(first) first = false; else fprintf(fp, ",");
       fprintf(fp, "%g", gamma);
       //fprintf(fp, "%d", getVertex(i)->getNum());
-    }
-  }
-  if(printRho){
-    double rho = rhoShapeMeasure();
-    for(int i = 0; i < n; i++){
-      if(first) first = false; else fprintf(fp, ",");
-      fprintf(fp, "%g", rho);
     }
   }
   if(printDisto){

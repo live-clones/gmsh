@@ -199,7 +199,6 @@ class MElement
 
   // get the quality measures
   double skewness();
-  virtual double rhoShapeMeasure();
   virtual double gammaShapeMeasure(){ return 0.; }
   virtual double etaShapeMeasure(){ return 0.; }
   double minSICNShapeMeasure()
@@ -228,7 +227,7 @@ class MElement
   virtual void scaledJacRange(double &jmin, double &jmax, GEntity *ge = 0) const;
   virtual void idealJacRange(double &jmin, double &jmax, GEntity *ge = 0);
   virtual void signedInvCondNumRange(double &iCNMin, double &iCNMax, GEntity *ge = 0);
-  virtual void signedInvGradErrorRange(double &minSIGE, double &maxSIGE, GEntity *ge = 0);
+  virtual void signedInvGradErrorRange(double &minSIGE, double &maxSIGE);
 
   // get the radius of the inscribed circle/sphere if it exists,
   // otherwise get the minimum radius of all the circles/spheres
@@ -376,7 +375,7 @@ class MElement
                          int parentNum=0, int dom1Num = 0, int dom2Num = 0,
                          std::vector<short> *ghosts=0);
   virtual void writePOS(FILE *fp, bool printElementary, bool printElementNumber,
-                        bool printSICN, bool printGamma, bool printRho,
+                        bool printSICN, bool printSIGE, bool printGamma,
                         bool printDisto,double scalingFactor=1.0, int elementary=1);
   virtual void writeSTL(FILE *fp, bool binary=false, double scalingFactor=1.0);
   virtual void writeVRML(FILE *fp);

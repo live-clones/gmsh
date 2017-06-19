@@ -2520,7 +2520,6 @@ optionWindow::optionWindow(int deltaFontSize)
         {"SICN", 0, 0, 0},
         {"SIGE", 0, 0, 0},
         {"Gamma", 0, 0, 0},
-        {"Rho", 0, 0, 0},
         {"Disto", 0, 0, 0},
         {0}
       };

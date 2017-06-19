@@ -396,7 +396,7 @@ void printTets (const char *fn, std::list<MTet4*> &cavity, bool force = false )
       MTet4 *tet = *ittet;
       if (force || !tet->isDeleted()){
         MTetrahedron *t = tet->tet();
-        t->writePOS (f, false,false,false,true,false,false);
+        t->writePOS (f, false,false,false,false,true,false);
       }
       ittet++;
     }

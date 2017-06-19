@@ -20,7 +20,6 @@
 
 enum QM_HISTO {QMH_SICN_XY, QMH_SICN_3D,
                QMH_GAMMA_XY, QMH_GAMMA_3D,
-               QMH_RHO_XY, QMH_RHO_3D,
                QMH_SIGE_XY, QMH_SIGE_3D};
 
 void statistics_cb(Fl_Widget *w, void *data)
@@ -53,13 +52,6 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
     }
     new PView("Gamma", "# Elements", x, y);
   }
-  else if (qmh == QMH_RHO_XY) {
-    for(int i = 0; i < 100; i++){
-      x.push_back((double)i / 99);
-      y.push_back(FlGui::instance()->stats->quality[2][i]);
-    }
-    new PView("Rho", "# Elements", x, y);
-  }
   else if (qmh == QMH_SIGE_XY) {
     for(int i = 0; i < 100; i++){
       x.push_back((double)(2*i-99) / 99);
@@ -79,15 +71,12 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
           d[e->getNum()].push_back(e->minSICNShapeMeasure());
         else if (qmh == QMH_GAMMA_3D)
           d[e->getNum()].push_back(e->gammaShapeMeasure());
-        else if (qmh == QMH_RHO_3D)
-          d[e->getNum()].push_back(e->rhoShapeMeasure());
         else if (qmh == QMH_SIGE_3D)
           d[e->getNum()].push_back(e->minSIGEShapeMeasure());
       }
     }
     std::string name = (qmh == QMH_SICN_3D) ? "SICN" :
                        (qmh == QMH_GAMMA_3D) ? "Gamma" :
-                       (qmh == QMH_RHO_3D) ? "Rho" :
                        (qmh == QMH_SIGE_3D) ? "SIGE" : "";
     new PView(name, "ElementData", GModel::current(), d);
   }

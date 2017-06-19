@@ -1189,8 +1189,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "QualitySup" , opt_mesh_quality_sup , 0.0 ,
     "Only display elements whose quality measure is smaller than QualitySup" },
   { F|O, "QualityType" , opt_mesh_quality_type , 2. ,
-    "Type of quality measure (0=gamma~vol/sum_face/max_edge, "
-    "1=eta~vol^(2/3)/sum_edge^2, 2=rho~min_edge/max_edge)" },
+    "Type of quality measure (0=SICN~signed inverse condition number, "
+    "1=SIGE~signed inverse gradient error, 2=gamma~vol/sum_face/max_edge, "
+    "3=Disto~minJ/maxJ"},
 
   { F|O, "RadiusInf" , opt_mesh_radius_inf , 0.0 ,
     "Only display elements whose longest edge is greater than RadiusInf" },
@@ -1756,9 +1757,12 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "PostEta" , opt_print_pos_eta , 0. ,
     "Save Eta quality measure in mesh statistics exported as "
     "post-processing views" },
-  { F|O, "PostRho" , opt_print_pos_rho , 0. ,
-    "Save Rho quality measure in mesh statistics exported as "
-    "post-processing views" },
+  { F|O, "PostSICN" , opt_print_pos_SICN , 0. ,
+    "Save SICN (signed inverse condition number) quality measure in mesh "
+    "statistics exported as post-processing views" },
+  { F|O, "PostSICN" , opt_print_pos_SIGE , 0. ,
+    "Save SIGE (signed inverse gradient error) quality measure in mesh "
+    "statistics exported as post-processing views" },
   { F|O, "PostDisto" , opt_print_pos_disto , 0. ,
     "Save Disto quality measure in mesh statistics exported as "
     "post-processing views" },

@@ -5158,7 +5158,7 @@ double opt_mesh_quality_type(OPT_ARGS_NUM)
     if(CTX::instance()->mesh.qualityType != val)
       CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     CTX::instance()->mesh.qualityType = (int)val;
-    if(CTX::instance()->mesh.qualityType < 0 || CTX::instance()->mesh.qualityType > 4)
+    if(CTX::instance()->mesh.qualityType < 0 || CTX::instance()->mesh.qualityType > 3)
       CTX::instance()->mesh.qualityType = 0;
   }
 #if defined(HAVE_FLTK)
@@ -9174,11 +9174,18 @@ double opt_print_pos_eta(OPT_ARGS_NUM)
   return CTX::instance()->print.posEta;
 }
 
-double opt_print_pos_rho(OPT_ARGS_NUM)
+double opt_print_pos_SICN(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->print.posRho = (int)val;
-  return CTX::instance()->print.posRho;
+    CTX::instance()->print.posSICN = (int)val;
+  return CTX::instance()->print.posSICN;
+}
+
+double opt_print_pos_SIGE(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.posSIGE = (int)val;
+  return CTX::instance()->print.posSIGE;
 }
 
 double opt_print_pos_disto(OPT_ARGS_NUM)
