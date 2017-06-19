@@ -73,7 +73,9 @@ std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
     "Parameters:\n"
     "\n"
     "- Jacobian determinant = {0, 1}\n"
+    "\n"
     "- IGE measure = {0, 1}\n"
+    "\n"
     "- ICN measure = {0, 1}\n"
     "\n"
     "- Hidding threshold = [0, 1]: Hides all element for which min(mu) is "
@@ -454,14 +456,14 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatJacobian()
   avgratJ /= count;
   avgratJc /= countc;
 
-  Msg::Info("Min Jac. det. (minJ): %6.3g, %6.3g, %6.3g (= min, avg, max)",
+  Msg::Info("minJ      = %8.3g, %8.3g, %8.3g (min, avg, max)",
             infminJ, avgminJ, supminJ);
-  Msg::Info("Ratio minJ/maxJ     : %6.3f, %6.3f, %6.3f (= worst, avg, best)",
-            infratJ, avgratJ, supratJ);
   if (countc && countc < count)
-    Msg::Info("                      (avg = %.3f"
-              " on the %d non-constant elements)",
+    Msg::Info("minJ/maxJ =           %8.3f           (avg on the %d "
+                      "non-constant elements)",
               avgratJc, countc);
+  Msg::Info("minJ/maxJ = %8.3f, %8.3f, %8.3f (worst, avg, best)",
+            infratJ, avgratJ, supratJ);
 }
 
 void GMSH_AnalyseCurvedMeshPlugin::_printStatIGE()
@@ -480,8 +482,8 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatIGE()
   }
   avgminS /= _data.size();
 
-  Msg::Info("IGE                  : %6.3f, %6.3f, %6.3f (= worst, avg, best)",
-      infminS, avgminS, supminS);
+  Msg::Info("IGE       = %8.3f, %8.3f, %8.3f (worst, avg, best)",
+            infminS, avgminS, supminS);
 }
 
 void GMSH_AnalyseCurvedMeshPlugin::_printStatICN()
@@ -500,8 +502,8 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatICN()
   }
   avgminI /= _data.size();
 
-  Msg::Info("ICN                  : %6.3f, %6.3f, %6.3f (= worst, avg, best)",
-      infminI, avgminI, supminI);
+  Msg::Info("ICN       = %8.3f, %8.3f, %8.3f (worst, avg, best)",
+            infminI, avgminI, supminI);
 }
 
 #endif
