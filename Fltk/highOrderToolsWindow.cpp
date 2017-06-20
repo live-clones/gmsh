@@ -197,6 +197,7 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     FastCurvingParameters p;
     p.onlyVisible = onlyVisible;
     p.dim = dim;
+    p.curveOuterBL = FastCurvingParameters::OUTER_CURVE;
     HighOrderMeshFastCurving(GModel::current(), p);
     break;
   }

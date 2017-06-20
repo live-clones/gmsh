@@ -944,15 +944,17 @@ void curveColumn(const FastCurvingParameters &p, GEntity *geomEnt,
   // Create meta-element
   MetaEl metaElt(metaElType, order, baseVert, topPrimVert);
 
-  // If allowed, curve top face of meta-element while avoiding breaking the element above
-  if (p.curveOuterBL) {
+  // If required, curve top face of meta-element
+  if (p.curveOuterBL != FastCurvingParameters::OUTER_NOCURVE) {
     MElement* &lastElt = blob.back();
     double minJacDet, maxJacDet;
     double deformMin = 0., qualDeformMin = 1.;
     double deformMax = 1.;
     double qualDeformMax = curveAndMeasureAboveEl(metaElt, lastElt, aboveElt,
                                                   deformMax);
-    if (qualDeformMax < MINQUAL) {                                                // Max deformation makes element above invalid
+    // Bisection on displacement to avoid breaking the element above if required
+    if ((p.curveOuterBL == FastCurvingParameters::OUTER_CURVECONSERVATIVE) &&
+        (qualDeformMax < MINQUAL)) {                                              // Max deformation makes element above invalid
       for (int iter = 0; iter < MAXITER; iter++) {                                // Bisection to find max. deformation that makes element above valid
         const double deformMid = 0.5 * (deformMin + deformMax);
         const double qualDeformMid = curveAndMeasureAboveEl(metaElt, lastElt,
