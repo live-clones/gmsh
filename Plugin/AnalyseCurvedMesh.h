@@ -19,21 +19,21 @@ class data_elementMinMax
 {
 private:
   MElement *_el;
-  double _minJ, _maxJ, _minS, _minI;
+  double _minJac, _maxJac, _minIGE, _minICN;
 public:
   data_elementMinMax(MElement *e,
                      double minJ = 2,
                      double maxJ = 0,
-                     double minS = -1,
-                     double minI = -1)
-    : _el(e), _minJ(minJ), _maxJ(maxJ), _minS(minS), _minI(minI) {}
-  void setMinS(double r) { _minS = r; }
-  void setMinI(double r) { _minI = r; }
+                     double minIGE = -1,
+                     double minICN = -1)
+    : _el(e), _minJac(minJ), _maxJac(maxJ), _minIGE(minIGE), _minICN(minICN) {}
+  void setMinS(double r) { _minIGE = r; }
+  void setMinI(double r) { _minICN = r; }
   MElement* element() { return _el; }
-  double minJ() { return _minJ; }
-  double maxJ() { return _maxJ; }
-  double minS() { return _minS; }
-  double minI() { return _minI; }
+  double minJ() { return _minJac; }
+  double maxJ() { return _maxJac; }
+  double minS() { return _minIGE; }
+  double minI() { return _minICN; }
 };
 
 class GMSH_AnalyseCurvedMeshPlugin : public GMSH_PostPlugin
@@ -43,8 +43,8 @@ private :
   double _threshold;
 
   // for 1d, 2d, 3d
-  bool _computedJ[3], _computedS[3], _computedI[3];
-  bool _PViewJ[3], _PViewS[3], _PViewI[3];
+  bool _computedJac[3], _computedIGE[3], _computedICN[3];
+  bool _PViewJac[3], _PViewIGE[3], _PViewICN[3];
 
   std::vector<data_elementMinMax> _data;
 
@@ -54,18 +54,18 @@ public :
     _m = NULL;
     _threshold = -1;
     for (int i = 0; i < 3; ++i) {
-      _computedJ[i] = false;
-      _computedS[i] = false;
-      _computedI[i] = false;
-      _PViewJ[i] = false;
-      _PViewS[i] = false;
-      _PViewI[i] = false;
+      _computedJac[i] = false;
+      _computedIGE[i] = false;
+      _computedICN[i] = false;
+      _PViewJac[i] = false;
+      _PViewIGE[i] = false;
+      _PViewICN [i] = false;
     }
   }
   std::string getName() const { return "AnalyseCurvedMesh"; }
   std::string getShortHelp() const
   {
-    return "Compute bounds on Jacobian and metric quality.";
+    return "Compute validity and quality of curved elements.";
   }
   std::string getHelp() const;
   std::string getAuthor() const { return "Amaury Johnen"; }
@@ -75,12 +75,12 @@ public :
 
 private :
   void _computeMinMaxJandValidity(int dim);
-  void _computeMinScaledJac(int dim);
-  void _computeMinIsotropy(int dim);
+  void _computeMinIGE(int dim);
+  void _computeMinICN(int dim);
   int _hideWithThreshold(int askedDim, int whichMeasure);
   void _printStatJacobian();
-  void _printStatScaledJac();
-  void _printStatIsotropy();
+  void _printStatIGE();
+  void _printStatICN();
 };
 
 #endif

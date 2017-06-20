@@ -1477,7 +1477,7 @@ double Recombinator::min_scaled_jacobian(Hex &hex) {
   /*MHexahedron *h1 = new MHexahedron(a, b, c, d, e, f, g, h);
   MHexahedron *h2 = new MHexahedron(e, f, g, h, a, b, c, d);
   double min1 = jacobianBasedQuality::minScaledJacobian(h1);
-  double min2 = jacobianBasedQuality::minScaledJacobian(h2);
+  double min2 = jacobianBasedQuality::minIGEMeasure(h2);
   for(i=0;i<8;i++){
     file << jacobians[i] << " ";
   }
@@ -2980,7 +2980,7 @@ double Supplementary::min_scaled_jacobian(Prism prism) {
   /*MPrism *p1 = new MPrism(a, b, c, d, e, f);
   MPrism *p2 = new MPrism(d, e, f, a, b, c);
   double min1 = jacobianBasedQuality::minScaledJacobian(p1);
-  double min2 = jacobianBasedQuality::minScaledJacobian(p2);
+  double min2 = jacobianBasedQuality::minIGEMeasure(p2);
   for(i=0;i<6;i++){
     file << jacobians[i] << " ";
   }

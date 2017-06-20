@@ -119,7 +119,7 @@ template<class T>
 static void GetQualityMeasure(std::vector<T*> &ele,
                               double &gamma, double &gammaMin, double &gammaMax,
                               double &minSICN, double &minSICNMin, double &minSICNMax,
-                              double &rho, double &rhoMin, double &rhoMax,
+                              double &minSIGE, double &minSIGEMin, double &minSIGEMax,
                               double quality[3][100])
 {
   for(unsigned int i = 0; i < ele.size(); i++){
@@ -131,14 +131,14 @@ static void GetQualityMeasure(std::vector<T*> &ele,
     minSICN += s;
     minSICNMin = std::min(minSICNMin, s);
     minSICNMax = std::max(minSICNMax, s);
-    double r = ele[i]->rhoShapeMeasure();
-    rho += r;
-    rhoMin = std::min(rhoMin, r);
-    rhoMax = std::max(rhoMax, r);
+    double e = ele[i]->minSIGEShapeMeasure();
+    minSIGE += e;
+    minSIGEMin = std::min(minSIGEMin, e);
+    minSIGEMax = std::max(minSIGEMax, e);
     for(int j = 0; j < 100; j++){
       if(s > (2*j-100) / 100. && s <= (2*j-98) / 100.) quality[0][j]++;
       if(g > j / 100. && g <= (j + 1) / 100.) quality[1][j]++;
-      if(r > j / 100. && r <= (j + 1) / 100.) quality[2][j]++;
+      if(e > (2*j-100) / 100. && e <= (2*j-98) / 100.) quality[2][j]++;
     }
   }
 }
@@ -186,39 +186,45 @@ void GetStatistics(double stat[50], double quality[3][100])
   stat[16] = CTX::instance()->meshTimer[2];
 
   if(quality){
-    for(int i = 0; i < 3; i++)
+    for(int i = 0; i < 4; i++)
       for(int j = 0; j < 100; j++)
         quality[i][j] = 0.;
     double minSICN = 0., minSICNMin = 1., minSICNMax = -1.;
+    double minSIGE = 0., minSIGEMin = 1., minSIGEMax = -1.;
     double gamma = 0., gammaMin = 1., gammaMax = 0.;
-    double rho = 0., rhoMin = 1., rhoMax = 0.;
 
     double N = stat[9] + stat[10] + stat[11] + stat[12] + stat[13];
     if(N){ // if we have 3D elements
       for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
         GetQualityMeasure((*it)->tetrahedra, gamma, gammaMin, gammaMax,
-                          minSICN, minSICNMin, minSICNMax, rho, rhoMin, rhoMax, quality);
+                          minSICN, minSICNMin, minSICNMax,
+                          minSIGE, minSIGEMin, minSIGEMax, quality);
         GetQualityMeasure((*it)->hexahedra, gamma, gammaMin, gammaMax,
-                          minSICN, minSICNMin, minSICNMax, rho, rhoMin, rhoMax, quality);
+                          minSICN, minSICNMin, minSICNMax,
+                          minSIGE, minSIGEMin, minSIGEMax, quality);
         GetQualityMeasure((*it)->prisms, gamma, gammaMin, gammaMax,
-                          minSICN, minSICNMin, minSICNMax, rho, rhoMin, rhoMax, quality);
+                          minSICN, minSICNMin, minSICNMax,
+                          minSIGE, minSIGEMin, minSIGEMax, quality);
         GetQualityMeasure((*it)->pyramids, gamma, gammaMin, gammaMax,
-                          minSICN, minSICNMin, minSICNMax, rho, rhoMin, rhoMax, quality);
+                          minSICN, minSICNMin, minSICNMax,
+                          minSIGE, minSIGEMin, minSIGEMax, quality);
       }
     }
     else{ // 2D elements
       N = stat[7] + stat[8];
       for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
         GetQualityMeasure((*it)->quadrangles, gamma, gammaMin, gammaMax,
-                          minSICN, minSICNMin, minSICNMax, rho, rhoMin, rhoMax, quality);
+                          minSICN, minSICNMin, minSICNMax,
+                          minSIGE, minSIGEMin, minSIGEMax, quality);
         GetQualityMeasure((*it)->triangles, gamma, gammaMin, gammaMax,
-                          minSICN, minSICNMin, minSICNMax, rho, rhoMin, rhoMax, quality);
+                          minSICN, minSICNMin, minSICNMax,
+                          minSIGE, minSIGEMin, minSIGEMax, quality);
       }
     }
     if(N){
       stat[18] = minSICN / N; stat[19] = minSICNMin; stat[20] = minSICNMax;
       stat[21] = gamma / N;   stat[22] = gammaMin;   stat[23] = gammaMax;
-      stat[25] = rho / N;     stat[25] = rhoMin;     stat[26] = rhoMax;
+      stat[24] = minSIGE / N; stat[25] = minSIGEMin; stat[26] = minSIGEMax;
     }
   }
 
