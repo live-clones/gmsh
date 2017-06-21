@@ -727,7 +727,7 @@ struct HOPatchDefParameters : public MeshOptPatchDef
 private:
   double jacMin, jacMax;
   double distanceFactor;
-  bool optCAD;
+  bool optCAD, lockCurvedBLElts;
   double optCADDistMax, optCADWeight;
 };
 
@@ -751,6 +751,7 @@ HOPatchDefParameters::HOPatchDefParameters(const OptHomParameters &p)
   optCAD = p.optCAD;
   optCADDistMax = p.optCADDistMax;
   optCADWeight = p.optCADWeight;
+  lockCurvedBLElts = p.lockCurvedBLElts;
 }
 
 
@@ -791,6 +792,10 @@ int HOPatchDefParameters::inPatch(const SPoint3 &badBary,
                                   double limDist, MElement *el,
                                   GEntity* gEnt) const
 {
+  if (lockCurvedBLElts && (gEnt != 0)) {
+    const std::set<MElement*> &lockedElts = gEnt->curvedBLElements;
+    if (lockedElts.find(el) != lockedElts.end()) return -1;
+  }
   return testElInDist(badBary, limDist, el) ? 1 : 0;
 }
 
@@ -803,7 +808,7 @@ void HighOrderMeshOptimizerNew(std::vector<GEntity*> &entities, OptHomParameters
   par.dim = p.dim;
   par.onlyVisible = p.onlyVisible;
   par.fixBndNodes = p.fixBndNodes;
-  par.useGeomForPatches = false;
+  par.useGeomForPatches = p.lockCurvedBLElts;
   par.useGeomForOpt = false;
   par.useBoundaries = p.optCAD;
   HOPatchDefParameters patchDef(p);

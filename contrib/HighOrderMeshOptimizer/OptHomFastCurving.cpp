@@ -926,8 +926,9 @@ double curveAndMeasureAboveEl(MetaEl &metaElt, MElement *lastElt,
 
 
 
-void curveColumn(const FastCurvingParameters &p, GEntity *geomEnt,
-                 int metaElType, std::vector<MVertex*> &baseVert,
+void curveColumn(const FastCurvingParameters &p, GEntity *ent,
+                 GEntity *bndEnt, int metaElType,
+                 std::vector<MVertex*> &baseVert,
                  const std::vector<MVertex*> &topPrimVert, MElement *aboveElt,
                  std::vector<MElement*> &blob, std::set<MVertex*> &movedVert,
                  DbgOutputMeta &dbgOut)
@@ -939,7 +940,7 @@ void curveColumn(const FastCurvingParameters &p, GEntity *geomEnt,
 
   // If 2D P2 and allowed, modify base vertices to minimize distance between wall edge and CAD
   if ((p.optimizeGeometry) && (metaElType == TYPE_QUA) && (order == 2))
-    optimizeCADDist2DP2(geomEnt, baseVert);
+    optimizeCADDist2DP2(bndEnt, baseVert);
 
   // Create meta-element
   MetaEl metaElt(metaElType, order, baseVert, topPrimVert);
@@ -973,15 +974,17 @@ void curveColumn(const FastCurvingParameters &p, GEntity *geomEnt,
 
   // Curve elements
   dbgOut.addMetaEl(metaElt);
-  for (int iEl = 0; iEl < blob.size(); iEl++)
+  for (int iEl = 0; iEl < blob.size(); iEl++) {
     curveElement(metaElt, movedVert, blob[iEl]);
+    ent->curvedBLElements.insert(blob[iEl]);
+  }
 }
 
 
 
 void curveMeshFromBndElt(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
-                         GEntity *bndEnt, MElement *bndElt,
-                         std::set<MVertex*> movedVert,
+                         GEntity *ent, GEntity *bndEnt,
+                         MElement *bndElt, std::set<MVertex*> movedVert,
                          const FastCurvingParameters &p,
                          DbgOutputMeta &dbgOut)
 {
@@ -1021,15 +1024,16 @@ void curveMeshFromBndElt(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
   dbgOutCol.addBlob(blob);
   dbgOutCol.write("col_KO", bndElt->getNum());
   if (aboveElt == 0) std::cout << "DBGTT: aboveElt = 0 for bnd. elt. " << bndElt->getNum() << std::endl;
-  curveColumn(p, bndEnt, metaElType, baseVert, topPrimVert, aboveElt, blob,
-              movedVert, dbgOut);
+  curveColumn(p, ent, bndEnt, metaElType, baseVert, topPrimVert,
+              aboveElt, blob, movedVert, dbgOut);
   dbgOutCol.write("col_OK", bndElt->getNum());
 }
 
 
 
 void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
-                      GEntity *bndEnt, const FastCurvingParameters &p)
+                      GEntity *ent, GEntity *bndEnt,
+                      const FastCurvingParameters &p)
 {
   // Build list of bnd. elements to consider
   std::list<MElement*> bndEl;
@@ -1054,7 +1058,8 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
   std::set<MVertex*> movedVert;
   for(std::list<MElement*>::iterator itBE = bndEl.begin();
       itBE != bndEl.end(); itBE++) // Loop over bnd. elements
-    curveMeshFromBndElt(ed2el, face2el, bndEnt, *itBE, movedVert, p, dbgOut);
+    curveMeshFromBndElt(ed2el, face2el, ent, bndEnt,
+                        *itBE, movedVert, p, dbgOut);
   dbgOut.write("meta-elements", bndEnt->tag());
 }
 
@@ -1118,7 +1123,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
       if ((bndType == GEntity::Line) || (bndType == GEntity::Plane)) continue;  // Skip if boundary is straight
       Msg::Info("Curving elements in entity %d for boundary entity %d...",
                 gEnt->tag(), bndEnt->tag());
-      curveMeshFromBnd(ed2el, face2el, bndEnt, p);
+      curveMeshFromBnd(ed2el, face2el, allGEnt[iEnt], bndEnt, p);
     }
   }
 

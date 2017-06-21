@@ -186,7 +186,8 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     p.adaptBlobLayerFact = (int) o->value[10]->value();
     p.adaptBlobDistFact = o->value[11]->value();
     p.optPrimSurfMesh = false;
-    HighOrderMeshOptimizer(GModel::current(), p);
+    // HighOrderMeshOptimizer(GModel::current(), p);
+    HighOrderMeshOptimizerNew(GModel::current(), p);
     break;
   }
   case 1: {                                                               // Elastic analogy

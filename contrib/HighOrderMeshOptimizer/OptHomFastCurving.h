@@ -45,7 +45,7 @@ struct FastCurvingParameters {
 
   FastCurvingParameters () :
     dim(3), onlyVisible(true), optimizeGeometry(false),
-    curveOuterBL(OUTER_NOCURVE), maxNumLayers(100), maxRho(0.5),
+    curveOuterBL(OUTER_NOCURVE), maxNumLayers(100), maxRho(0.3),
     maxAngle(3.1415927*10./180.), maxAngleInner(3.1415927*30./180.)
   {
   }
