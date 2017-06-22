@@ -818,11 +818,15 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   std::set<MEdge, Less_Edge> allEmbeddedEdges;
   createAllEmbeddedEdges (gr, allEmbeddedEdges);
 
-  // daaaaaaamn slow !!!
-  //  connectTets(allTets.begin(),allTets.end(),allEmbeddedFaces.empty() ? NULL : &allEmbeddedFaces);
+  if (allEmbeddedFaces.empty())
   {
     std::vector<faceXtet> conn;
     connectTets_vector2(allTets, conn);
+  }
+  else
+  {
+    // daaaaaaamn slow !!!
+    connectTets(allTets.begin(),allTets.end(),&allEmbeddedFaces);
   }
 
   double t1 = Cpu();
