@@ -500,7 +500,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.QualityType
-Type of quality measure (0=gamma~vol/sum_face/max_edge, 1=eta~vol^(2/3)/sum_edge^2, 2=rho~min_edge/max_edge)@*
+Type of quality measure (0=SICN~signed inverse condition number, 1=SIGE~signed inverse gradient error, 2=gamma~vol/sum_face/max_edge, 3=Disto~minJ/maxJ@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
