@@ -443,6 +443,7 @@ class MQuadrangleN : public MQuadrangle {
     if(_order== 9 && _vs.size() + 4 == 36) return MSH_QUA_36I;
     if(_order==10 && _vs.size() + 4 == 40) return MSH_QUA_40;
     Msg::Error("no tag matches a p%d quadrangle with %d vertices", _order, 4+_vs.size());
+    throw;
     return 0;
   }
   virtual int getTypeForVTK() const

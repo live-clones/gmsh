@@ -137,6 +137,7 @@ fullMatrix<double> gmshGeneratePointsPyramid(int order, bool serendip)
     points(i, 0) = duv + points(i, 0) * 2. / order;
     points(i, 1) = duv + points(i, 1) * 2. / order;
   }
+
   return points;
 }
 
