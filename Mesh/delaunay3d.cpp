@@ -26,10 +26,6 @@
 #include "qualityMeasures.h"
 #include "meshGRegionLocalMeshMod.h"
 
-#if defined(_HAVE_NUMA)
-#include <numa.h>
-#endif
-
 //int Tet::in_sphere_counter = 0;
 
 #define SQR(X) (X)*(X)
@@ -874,10 +870,11 @@ static bool fixDelaunayCavity (Vert *v,
 
   if (_negatives.empty())return false;
   
-  //  return true;
   // unset all tets of the cavity
   for (unsigned int i=0; i< cavity.size(); i++)cavity[i]->unset(myThread,K);
   for (unsigned int i=0; i<bndK.size(); i++)if(bndK[i].t)bndK[i].t->unset(myThread,K);
+
+  //  return true;
 
   Msg::Debug("Fixing cavity (%3ld,%3ld) : %ld negatives",
 	     cavity.size(),bndK.size(), _negatives.size());
@@ -885,15 +882,16 @@ static bool fixDelaunayCavity (Vert *v,
   Tet *containsV = tetContainsV (v,cavity);
 
   if (! containsV) return true;
-
+  
   while (!_negatives.empty()) {
     for (unsigned int i=0;i<_negatives.size();i++){
       conn &c = bndK[_negatives[i] ];
       Tet *toRemove = tetInsideCavityWithFAce (c.f, cavity);
       if (toRemove){
 	std::vector<Tet*>::iterator it = std::find(cavity.begin(), cavity.end(), toRemove);
-	if (it != cavity.end())
+	if (it != cavity.end()){
 	  cavity.erase(it);
+	}
 	else
 	  Msg::Fatal("Datastructure Broken in %s line %5d",__FILE__,__LINE__);
       }
@@ -902,6 +900,8 @@ static bool fixDelaunayCavity (Vert *v,
     buildDelaunayBall (cavity,bndK);
     starShapeness (v, bndK, _negatives);
   }
+  for (unsigned int i=0; i< cavity.size(); i++)cavity[i]->set(myThread,K);
+  for (unsigned int i=0; i<bndK.size(); i++)if(bndK[i].t)bndK[i].t->set(myThread,K);
   return false;
 }
 
@@ -1131,6 +1131,8 @@ void delaunayTrgl (const unsigned int numThreads,
   double totCavityGlob=0;
 #endif
 
+  //  printf("%d threads for inserting %d points\n",numThreads,Npts);
+
   //  double t1,t2=0,t3=0,t4=0;
 
   //  checkLocalDelaunayness(allocator, 0, "initial");
@@ -1163,7 +1165,7 @@ void delaunayTrgl (const unsigned int numThreads,
     std::vector<bool> ok(NPTS_AT_ONCE);
     connContainer faceToTet;
     std::vector<Tet*> Choice(NPTS_AT_ONCE);
-    for (unsigned int K=0;K<NPTS_AT_ONCE;K++)Choice[K] = randomTet (myThread, allocator);
+    for (unsigned int K=0;K<NPTS_AT_ONCE;K++)Choice[K] = randomTet (0, allocator);
 
 
     invalidCavities [myThread] = 0;
@@ -1173,12 +1175,7 @@ void delaunayTrgl (const unsigned int numThreads,
     for (unsigned int K=0;K<NPTS_AT_ONCE;K++){
       locSizeK[K] = assignTo[K+myThread*NPTS_AT_ONCE].size();
       locSize += locSizeK[K];
-#if defined(_HAVE_NUMA)
-      allocatedVerts [K] = (Vert*)numa_alloc_local (locSizeK[K]*sizeof(Vert));
-#else
-      //      allocatedVerts [K] = (Vert*)calloc (locSizeK[K],sizeof(Vert));
       allocatedVerts [K] = new Vert [locSizeK[K]];
-#endif
       for (unsigned int iP=0 ; iP < locSizeK[K] ; iP++){
 	allocatedVerts[K][iP] = *(assignTo[K+myThread*NPTS_AT_ONCE][iP]);
 	if (numThreads!=1) allocatedVerts[K][iP]._thread = myThread;
@@ -1187,6 +1184,8 @@ void delaunayTrgl (const unsigned int numThreads,
 
     std::vector<Vert*> vToAdd(NPTS_AT_ONCE);
 
+    //    printf("reaching parallel section\n");
+    
 #if defined(_OPENMP)
 #pragma omp barrier
 #endif
@@ -1208,7 +1207,7 @@ void delaunayTrgl (const unsigned int numThreads,
 	vToAdd[K] = iPGlob <  locSizeK[K] ? &allocatedVerts[K][iPGlob] : NULL;
 	if(vToAdd[K]){
 	  // In 3D, insertion of a point may lead to deletion of tets !!
-	  if (!Choice[K]->V[0])Choice[K] = randomTet (myThread, allocator);
+	  if (!Choice[K]->V[0])Choice[K] = randomTet (0, allocator);
 	  //	  int nbCoucou=0;
 	  while(1){
 	    t[K] = walk ( Choice[K] , vToAdd[K], Npts, totSearch, myThread);
@@ -1216,7 +1215,7 @@ void delaunayTrgl (const unsigned int numThreads,
 	    //	    printf("coucou %d\n",nbCoucou++);
 	    // the domain may not be convex. we then start from a random tet and
 	    // walk from there
-	    Choice[K] = randomTet(rand() % numThreads, allocator);
+	    Choice[K] = randomTet(0, allocator);
 	  }
 	}
       }
@@ -1311,12 +1310,6 @@ void delaunayTrgl (const unsigned int numThreads,
 
   if (invalidCavities[0])Msg::Warning("%d invalid cavities",invalidCavities[0]);
 
-  //checkLocalDelaunayness(T,"final");
-
-  
-  
-  //  printf(" %12.5E %12.5E  %12.5E tot  %12.5E \n",t2,t3,t4,t2+t3+t4);
-
 #if defined(_VERBOSE)
   printf("average searches per point  %12.5E\n",totSearchGlob/Npts);
   printf("average size for del cavity %12.5E\n",totCavityGlob/Npts);
@@ -1328,6 +1321,10 @@ void delaunayTrgl (const unsigned int numThreads,
 
 #endif
 
+  for (unsigned int myThread=0; myThread < numThreads;myThread++)
+    for (unsigned int i=0;i<allocator.size(myThread);i++)allocator(myThread,i)->setAllDeleted();
+
+  
 }
 
 static void initialCube (std::vector<Vert*> &v,

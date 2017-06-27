@@ -899,6 +899,10 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "PointType" , opt_geometry_point_type , 0. ,
     "Display points as solid color dots (0) or 3D spheres (1)" },
 
+  { F|O, "ReparamOnFaceRobust" , opt_geometry_reparam_on_face_robust, 0 ,
+    "Use projection for reparametrization of a point classified on GEdge on a GFace" },
+
+  
   { F|O, "ScalingFactor" , opt_geometry_scaling_factor , 1.0 ,
     "Global geometry scaling factor" },
   { F|O, "OrientedPhysicals" , opt_geometry_oriented_physicals, 1. ,

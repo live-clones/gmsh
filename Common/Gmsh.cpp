@@ -55,6 +55,8 @@ typedef unsigned long intptr_t;
 
 int GmshInitialize(int argc, char **argv)
 {
+  Msg::SetNumThreads(1);
+
   static bool isInitialized = false;
   if(isInitialized) return 1;
   isInitialized = true;

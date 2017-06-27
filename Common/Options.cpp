@@ -2830,6 +2830,14 @@ double opt_general_display_border_factor(OPT_ARGS_NUM)
   return CTX::instance()->displayBorderFactor;
 }
 
+double opt_geometry_reparam_on_face_robust(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.reparamOnFaceRobust = val;
+  return CTX::instance()->geom.reparamOnFaceRobust;
+}
+
+
 double opt_general_point_size(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

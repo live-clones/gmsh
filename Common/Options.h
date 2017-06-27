@@ -376,6 +376,7 @@ double opt_geometry_label_type(OPT_ARGS_NUM);
 double opt_geometry_point_size(OPT_ARGS_NUM);
 double opt_geometry_point_sel_size(OPT_ARGS_NUM);
 double opt_geometry_point_type(OPT_ARGS_NUM);
+double opt_geometry_reparam_on_face_robust(OPT_ARGS_NUM);
 double opt_geometry_line_width(OPT_ARGS_NUM);
 double opt_geometry_line_sel_width(OPT_ARGS_NUM);
 double opt_geometry_line_type(OPT_ARGS_NUM);

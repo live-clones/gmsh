@@ -746,13 +746,13 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
   }
   else{
     void edgeBasedRefinement(const int numThreads,
-                             const int nptsatonce,
-                             GRegion *gr);
+			     const int nptsatonce,
+			     GRegion *gr);
     // just to remove tets that are not to be meshed
     insertVerticesInRegion(gr, 0);
     for(unsigned int i = 0; i < regions.size(); i++){
-      Msg::Info("Refining volume %d",regions[i]->tag());
-      edgeBasedRefinement(1, 1, regions[i]);
+      Msg::Info("Refining volume %d with %d threads",regions[i]->tag(),Msg::GetMaxThreads());
+      edgeBasedRefinement(Msg::GetMaxThreads(), 1, regions[i]);
     }
     // RelocateVertices (regions,-1);
   }

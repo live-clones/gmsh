@@ -16,7 +16,7 @@
 #endif
 
 #ifndef MAX_NUM_THREADS_
-#define MAX_NUM_THREADS_ 1
+#define MAX_NUM_THREADS_ 8
 #endif
 
 typedef unsigned char CHECKTYPE;
@@ -360,7 +360,10 @@ public:
 class tetContainer {
   std::vector<aBunchOfStuff<Tet> *> _perThread;
  public:
-  unsigned int size(int thread) const { return _perThread[thread]->size(); }
+  unsigned int size(int thread) const {
+    if (_perThread.size() <= thread)return 0;
+    return _perThread[thread]->size();
+  }
   inline Tet    * operator () (int thread, int j) const
   {
     return (*_perThread[thread])(j);
@@ -368,7 +371,7 @@ class tetContainer {
   tetContainer (int nbThreads, int preallocSizePerThread)
   {
     // FIXME !!!
-    if (nbThreads != 1) throw;
+    //    if (nbThreads != 1) throw;
     _perThread.resize(nbThreads);
 #if defined(_OPENMP)
 #pragma omp parallel num_threads(nbThreads)

@@ -37,6 +37,10 @@
 #include "meshGRegionRelocateVertex.h"
 #include "pointInsertion.h"
 
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
+
 #if defined(HAVE_OPTHOM)
 #include "OptHomRun.h"
 #include "OptHomElastic.h"
@@ -278,6 +282,9 @@ static bool CancelDelaunayHybrid(GModel *m)
 
 static void Mesh0D(GModel *m)
 {
+
+  m->getFields()->initialize();
+
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it){
     GVertex *gv = *it;
     if(gv->mesh_vertices.empty())
@@ -299,26 +306,43 @@ static void Mesh0D(GModel *m)
 
 static void Mesh1D(GModel *m)
 {
+
+  m->getFields()->initialize();
+
   if(TooManyElements(m, 1)) return;
   Msg::StatusBar(true, "Meshing 1D...");
   double t1 = Cpu();
 
-  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
+  
+  std::vector<GEdge*> temp;
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
     (*it)->meshStatistics.status = GEdge::PENDING;
-
+    temp.push_back(*it);
+  }
+  
   Msg::ResetProgressMeter();
 
   int nIter = 0, nTot = m->getNumEdges();
   while(1){
-    //    meshGEdge mesher;
     int nPending = 0;
-    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
-      if ((*it)->meshStatistics.status == GEdge::PENDING){
-        (*it)->mesh(true);
-        nPending++;
+    const size_t sss = temp.size();
+#if defined(_OPENMP)
+#pragma omp parallel for schedule (dynamic)
+#endif
+    for(size_t K = 0 ; K < sss ; K++){
+      GEdge *ed = temp[K];
+      if (ed->meshStatistics.status == GEdge::PENDING){
+	ed->mesh(true);
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+	{
+	  nPending++;
+	}
       }
-      if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 1D...");
+      //      if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 1D...");
     }
+    
     if(!nPending) break;
     if(nIter++ > 10) break;
   }
@@ -394,9 +418,11 @@ static void PrintMesh2dStatistics(GModel *m)
 
 static void Mesh2D(GModel *m)
 {
+  m->getFields()->initialize();
+
   if(TooManyElements(m, 2)) return;
   Msg::StatusBar(true, "Meshing 2D...");
-  double t1 = GetTimeInSeconds();
+  double t1 = Cpu();
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
     (*it)->meshStatistics.status = GFace::PENDING;
@@ -454,7 +480,7 @@ static void Mesh2D(GModel *m)
             nPending++;
           }
         }
-        if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
+	//        if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
       }
 #if defined(_OPENMP)
 #pragma omp master
@@ -487,7 +513,7 @@ static void Mesh2D(GModel *m)
 #endif
           nPending++;
         }
-        if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
+	//        if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
       }
       if(!nPending) break;
       if(nIter++ > 10) break;
@@ -496,7 +522,7 @@ static void Mesh2D(GModel *m)
 
   // collapseSmallEdges(*m);
 
-  double t2 = GetTimeInSeconds();
+  double t2 = Cpu();
   CTX::instance()->meshTimer[1] = t2 - t1;
   Msg::StatusBar(true, "Done meshing 2D (%g s)", CTX::instance()->meshTimer[1]);
 
@@ -787,6 +813,8 @@ void TestConformity(GModel *gm)
 
 static void Mesh3D(GModel *m)
 {
+  m->getFields()->initialize();
+
   if(TooManyElements(m, 3)) return;
   Msg::StatusBar(true, "Meshing 3D...");
   double t1 = Cpu();

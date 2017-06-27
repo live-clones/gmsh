@@ -23,6 +23,43 @@
 
 int MTet4::radiusNorm = 2;
 
+
+void TEST_IF_BOUNDARY_IS_RECOVERED (GRegion *gr) {
+  std::list<GEdge*> e = gr->edges();
+  std::list<GFace*> f = gr->faces();
+  std::map<MEdge,GEdge*,Less_Edge> edges;
+  std::map<MFace,GFace*,Less_Face> faces;
+  std::list<GEdge*>::iterator it = e.begin();
+  std::list<GFace*>::iterator itf = f.begin();
+  for ( ; it != e.end() ; ++it){
+    for (unsigned int i=0;i<(*it)->lines.size(); ++i){
+      if (distance ((*it)->lines[i]->getVertex(0),(*it)->lines[i]->getVertex(1)) > 1.e-12)
+	edges.insert(std::make_pair(MEdge((*it)->lines[i]->getVertex(0),(*it)->lines[i]->getVertex(1)),*it));
+    }
+  }
+  for ( ; itf != f.end() ; ++itf){
+    for (unsigned int i=0;i<(*itf)->triangles.size(); ++i){
+      faces.insert(std::make_pair(MFace((*itf)->triangles[i]->getVertex(0),(*itf)->triangles[i]->getVertex(1),(*itf)->triangles[i]->getVertex(2)),*itf));
+    }
+  }
+  Msg::Info ("Searching for %d mesh edges and %d mesh faces among %d elements in region %d", edges.size(),  faces.size(), gr->getNumMeshElements(), gr->tag());
+  for (unsigned int k=0;k<gr->getNumMeshElements();k++){
+    for (int j=0;j<gr->getMeshElement(k)->getNumEdges();j++){
+      edges.erase (gr->getMeshElement(k)->getEdge(j));
+    }
+    for (int j=0;j<gr->getMeshElement(k)->getNumFaces();j++){
+      faces.erase (gr->getMeshElement(k)->getFace(j));
+    }
+  }
+  if (edges.empty() && faces.empty()) {
+    Msg::Info ("All edges and faces are present in the initial mesh");
+  }
+  else {
+    Msg::Error ("All edges and faces are NOT present in the initial mesh");
+  }
+};
+
+
 struct edgeContainerB
 {
   std::vector<std::vector<MEdge> > _hash;
@@ -1139,6 +1176,9 @@ int isCavityCompatibleWithEmbeddedEdges(std::list<MTet4*> &cavity,
 void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
 {
 
+  //  TEST_IF_BOUNDARY_IS_RECOVERED (gr);
+
+  
   //printf("sizeof MTet4 = %d sizeof MTetrahedron %d sizeof(MVertex) %d\n",
   //       sizeof(MTet4), sizeof(MTetrahedron), sizeof(MVertex));
 

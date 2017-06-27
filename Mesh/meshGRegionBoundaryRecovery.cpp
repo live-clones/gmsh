@@ -825,9 +825,9 @@ bool tetgenmesh::reconstructmesh(void *p)
             MVertex *v1 = pointmark(p[0]) >= _vertices.size() ? _extras[pointmark(p[0])] : _vertices[pointmark(p[0])];
             MVertex *v2 = pointmark(p[1]) >= _vertices.size() ? _extras[pointmark(p[1])] : _vertices[pointmark(p[1])];
             MVertex *v3 = pointmark(p[2]) >= _vertices.size() ? _extras[pointmark(p[2])] : _vertices[pointmark(p[2])];
-	    if (pointmark(p[0]) >= _vertices.size())printf("F %d %d\n",v1->getIndex(),pointmark(p[0]));
-	    if (pointmark(p[1]) >= _vertices.size())printf("F %d %d\n",v2->getIndex(),pointmark(p[1]));
-	    if (pointmark(p[2]) >= _vertices.size())printf("F %d %d\n",v3->getIndex(),pointmark(p[2]));
+	    //	    if (pointmark(p[0]) >= _vertices.size())printf("F %d %d\n",v1->getIndex(),pointmark(p[0]));
+	    //	    if (pointmark(p[1]) >= _vertices.size())printf("F %d %d\n",v2->getIndex(),pointmark(p[1]));
+	    //	    if (pointmark(p[2]) >= _vertices.size())printf("F %d %d\n",v3->getIndex(),pointmark(p[2]));
 	    //            MVertex *v1 = _vertices[pointmark(p[0])];
 	    //            MVertex *v2 = _vertices[pointmark(p[1])];
 	    //            MVertex *v3 = _vertices[pointmark(p[2])];

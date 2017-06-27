@@ -775,7 +775,7 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
     }
 
 #if defined(_OPENMP)
-#pragma omp critical
+#pragma omp barrier
 #endif
   }
 }

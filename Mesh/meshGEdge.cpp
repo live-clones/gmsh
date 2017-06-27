@@ -508,8 +508,6 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
 
 void meshGEdge::operator() (GEdge *ge)
 {
-  ge->model()->setCurrentMeshEntity(ge);
-
   // if(ge->geomType() == GEntity::DiscreteCurve) return;
   if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
   if(ge->meshAttributes.method == MESH_NONE) return;
@@ -534,7 +532,19 @@ void meshGEdge::operator() (GEdge *ge)
     return;
   }
 
-  if(ge->model()->getNumEdges() > 1000){
+  if(ge->model()->getNumEdges() > 100000){
+    if (ge->tag() % 100000 == 1){
+      Msg::Info("Meshing curve %d/%d (%s)", ge->tag(), ge->model()->getNumEdges(),
+                ge->getTypeString().c_str());
+    }
+  }
+  else if(ge->model()->getNumEdges() > 10000){
+    if (ge->tag() % 10000 == 1){
+      Msg::Info("Meshing curve %d/%d (%s)", ge->tag(), ge->model()->getNumEdges(),
+                ge->getTypeString().c_str());
+    }
+  }
+  else if(ge->model()->getNumEdges() > 1000){
     if (ge->tag() % 1000 == 1){
       Msg::Info("Meshing curve %d/%d (%s)", ge->tag(), ge->model()->getNumEdges(),
                 ge->getTypeString().c_str());

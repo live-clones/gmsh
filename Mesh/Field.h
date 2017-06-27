@@ -91,6 +91,7 @@ class Field {
  public:
   Field() : update_needed(false) {}
   virtual ~Field();
+  virtual void update() {}
   int id;
   std::map<std::string, FieldOption *> options;
   std::map<std::string, FieldCallback*> callbacks;
@@ -124,6 +125,7 @@ class FieldManager : public std::map<int, Field*> {
   int _boundaryLayer_field;
  public:
   std::map<std::string, FieldFactory*> map_type_name;
+  void initialize();
   void reset();
   Field *get(int id);
   Field *newField(int id, std::string type_name);
