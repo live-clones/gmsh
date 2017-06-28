@@ -9,8 +9,12 @@
 
 
 
-BergotBasis::BergotBasis(int p): order(p)
+BergotBasis::BergotBasis(int p,bool incpl): order(p),incomplete(incpl)
 {
+  
+  if (incomplete && order > 2) {
+    Msg::Error("Incomplete pyramids of order %i not yet implemented",order);
+  }
 }
 
 
@@ -20,6 +24,13 @@ BergotBasis::~BergotBasis()
 }
 
 
+bool BergotBasis::validIJ(int i,int j) const {
+
+  if (!incomplete)    return (i<=order) && (j<=order);
+  if (i+j <= order)   return true;
+  if (i+j == order+1) return i==1 || j==1;
+  return false;
+}
 
 // Values of Bergot basis functions for coordinates (u,v,w) in the unit pyramid:
 // f = L_i(uhat)*L_j(vhat)*(1-w)^max(i,j)*P_k^{2*max(i,j)+2,0}(what)
@@ -55,13 +66,14 @@ void BergotBasis::f(double u, double v, double w, double* val) const
   int index = 0;
   for (int i=0;i<=order;i++) {
     for (int j=0;j<=order;j++) {
-      int mIJ = std::max(i,j);
-      double fact = pow(1.-w, mIJ);
-      std::vector<double> &wf = wFcts[mIJ];
-      for (int k=0; k<=order-mIJ; k++,index++) val[index] = uFcts[i] * vFcts[j] * wf[k] * fact;
+      if (validIJ(i,j)) {
+        int mIJ = std::max(i,j);
+        double fact = pow(1.-w, mIJ);
+        std::vector<double> &wf = wFcts[mIJ];
+        for (int k=0; k<=order-mIJ; k++,index++) val[index] = uFcts[i] * vFcts[j] * wf[k] * fact;
+      }
     }
   }
-
 }
 
 
@@ -107,50 +119,52 @@ void BergotBasis::df(double u, double v, double w, double grads[][3]) const
   int index = 0;
   for (int i=0;i<=order;i++) {
     for (int j=0;j<=order;j++) {
-      int mIJ = std::max(i,j);
-      std::vector<double> &wf = wFcts[mIJ], &wg = wGrads[mIJ];
-      if (mIJ == 0) {                                                     // Indeterminate form for mIJ = 0
-        for (int k=0; k<=order-mIJ; k++,index++) {
-          grads[index][0] = 0.;
-          grads[index][1] = 0.;
-          grads[index][2] = 2.*wg[k];
-        }
-      }
-      else if (mIJ == 1) {                                                // Indeterminate form for mIJ = 1
-        if (i == 0) {
+      if (validIJ(i,j)) {
+        int mIJ = std::max(i,j);
+        std::vector<double> &wf = wFcts[mIJ], &wg = wGrads[mIJ];
+        if (mIJ == 0) {                                                     // Indeterminate form for mIJ = 0
           for (int k=0; k<=order-mIJ; k++,index++) {
             grads[index][0] = 0.;
-            grads[index][1] = wf[k];
-            grads[index][2] = 2.*v*wg[k];
-          }
-        }
-        else if (j == 0) {
-          for (int k=0; k<=order-mIJ; k++,index++) {
-            grads[index][0] = wf[k];
             grads[index][1] = 0.;
-            grads[index][2] = 2.*u*wg[k];
+            grads[index][2] = 2.*wg[k];
           }
         }
-        else {
+        else if (mIJ == 1) {                                                // Indeterminate form for mIJ = 1
+          if (i == 0) {
+            for (int k=0; k<=order-mIJ; k++,index++) {
+              grads[index][0] = 0.;
+              grads[index][1] = wf[k];
+              grads[index][2] = 2.*v*wg[k];
+            }
+          }
+          else if (j == 0) {
+            for (int k=0; k<=order-mIJ; k++,index++) {
+              grads[index][0] = wf[k];
+              grads[index][1] = 0.;
+              grads[index][2] = 2.*u*wg[k];
+            }
+          }
+          else {
+            for (int k=0; k<=order-mIJ; k++,index++) {
+              grads[index][0] = vhat*wf[k];
+              grads[index][1] = uhat*wf[k];
+              grads[index][2] = uhat*vhat*wf[k]+2.*uhat*v*wg[k];
+            }
+          }
+        }
+        else {                                                              // General formula
+          double oMW = 1.-w;
+          double powM2 = pow(oMW, mIJ-2);
+          double powM1 = powM2*oMW;
           for (int k=0; k<=order-mIJ; k++,index++) {
-            grads[index][0] = vhat*wf[k];
-            grads[index][1] = uhat*wf[k];
-            grads[index][2] = uhat*vhat*wf[k]+2.*uhat*v*wg[k];
+            grads[index][0] = uGrads[i] * vFcts[j]  * wf[k] * powM1;
+            grads[index][1] = uFcts[i]  * vGrads[j] * wf[k] * powM1;
+            grads[index][2] = wf[k]*powM2*(u*uGrads[i]*vFcts[j]+v*uFcts[i]*vGrads[j])
+              + uFcts[i]*vFcts[j]*powM1*(2.*oMW*wg[k]-mIJ*wf[k]);
           }
-        }
-      }
-      else {                                                              // General formula
-        double oMW = 1.-w;
-        double powM2 = pow(oMW, mIJ-2);
-        double powM1 = powM2*oMW;
-        for (int k=0; k<=order-mIJ; k++,index++) {
-          grads[index][0] = uGrads[i] * vFcts[j]  * wf[k] * powM1;
-          grads[index][1] = uFcts[i]  * vGrads[j] * wf[k] * powM1;
-          grads[index][2] = wf[k]*powM2*(u*uGrads[i]*vFcts[j]+v*uFcts[i]*vGrads[j])
-                                    + uFcts[i]*vFcts[j]*powM1*(2.*oMW*wg[k]-mIJ*wf[k]);
         }
       }
     }
-  }
-
+  }  
 }
+  

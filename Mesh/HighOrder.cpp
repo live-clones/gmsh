@@ -516,7 +516,7 @@ static int getNewFacePointsInVolume(MElement *incomplete, int nPts,
   case TYPE_PYR:
     switch (nPts){
     case 0:
-    case 1: return -1;
+    case 1: points = BasisFactory::getNodalBasis(MSH_PYR_14)->points; break;
     case 2: points = BasisFactory::getNodalBasis(MSH_PYR_30)->points; break;
     case 3: points = BasisFactory::getNodalBasis(MSH_PYR_55)->points; break;
     case 4: points = BasisFactory::getNodalBasis(MSH_PYR_91)->points; break;
@@ -1224,10 +1224,10 @@ static MPyramid *setHighOrder(MPyramid *p, GRegion *gr,
 {
   std::vector<MVertex*> ve, vf, vr;
   getEdgeVertices(gr, p, ve, newHOVert, edgeVertices, linear, nPts);
-//  MPyramidN incpl(p->getVertex(0), p->getVertex(1), p->getVertex(2),
-//                  p->getVertex(3), p->getVertex(4), ve, nPts + 1, 0, p->getPartition());
-//  getFaceVertices(gr, &incpl, p, vf, faceVertices, edgeVertices, linear, nPts);
-  getFaceVertices(gr, 0, p, vf, newHOVert, faceVertices, edgeVertices, linear, nPts);
+  MPyramidN incpl(p->getVertex(0), p->getVertex(1), p->getVertex(2),
+                  p->getVertex(3), p->getVertex(4), ve, nPts + 1, 0, p->getPartition());
+  getFaceVertices(gr, &incpl, p, vf, newHOVert, faceVertices, edgeVertices, linear, nPts);
+  // getFaceVertices(gr, 0, p, vf, newHOVert, faceVertices, edgeVertices, linear, nPts);
   ve.insert(ve.end(), vf.begin(), vf.end());
   getVolumeVerticesPyramid(gr, p, ve, vr, newHOVert, linear, nPts);
   ve.insert(ve.end(), vr.begin(), vr.end());
