@@ -2086,8 +2086,7 @@ static std::vector<std::string> getInfoStrings(MElement *ele)
     std::ostringstream sstream;
     sstream.precision(12);
     sstream << " Quality: "
-            << "gamma = " << ele->gammaShapeMeasure() << " "
-            << "rho = " << ele->rhoShapeMeasure();
+            << "gamma = " << ele->gammaShapeMeasure();
     info.push_back(sstream.str());
   }
   {
@@ -2096,6 +2095,14 @@ static std::vector<std::string> getInfoStrings(MElement *ele)
     double sICNMin, sICNMax;
     ele->signedInvCondNumRange(sICNMin, sICNMax);
     sstream << " SICN range: " << sICNMin << " " << sICNMax;
+    info.push_back(sstream.str());
+  }
+  {
+    std::ostringstream sstream;
+    sstream.precision(12);
+    double sIGEMin, sIGEMax;
+    ele->signedInvGradErrorRange(sIGEMin, sIGEMax);
+    sstream << " SIGE range: " << sIGEMin << " " << sIGEMax;
     info.push_back(sstream.str());
   }
   {

@@ -433,7 +433,7 @@ void printTets (const char *fn, std::list<MTet4*> &cavity, bool force = false )
       MTet4 *tet = *ittet;
       if (force || !tet->isDeleted()){
         MTetrahedron *t = tet->tet();
-        t->writePOS (f, false,false,false,true,false,false);
+        t->writePOS (f, false,false,false,false,true,false);
       }
       ittet++;
     }
@@ -855,11 +855,15 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   std::set<MEdge, Less_Edge> allEmbeddedEdges;
   createAllEmbeddedEdges (gr, allEmbeddedEdges);
 
-  // daaaaaaamn slow !!!
-  //  connectTets(allTets.begin(),allTets.end(),allEmbeddedFaces.empty() ? NULL : &allEmbeddedFaces);
+  if (allEmbeddedFaces.empty())
   {
     std::vector<faceXtet> conn;
     connectTets_vector2(allTets, conn);
+  }
+  else
+  {
+    // daaaaaaamn slow !!!
+    connectTets(allTets.begin(),allTets.end(),&allEmbeddedFaces);
   }
 
   double t1 = Cpu();

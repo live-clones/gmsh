@@ -1124,7 +1124,8 @@ void delaunayTrgl (const unsigned int numThreads,
 		   unsigned int Npts,
 		   std::vector<Vert*> assignTo[],
 		   tetContainer &allocator,
-		   edgeContainer *embeddedEdges)
+		   edgeContainer *embeddedEdges,
+		   bool filter)
 {
 #if defined(_VERBOSE)
   double totSearchGlob=0;

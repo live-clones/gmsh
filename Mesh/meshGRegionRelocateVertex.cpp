@@ -27,7 +27,6 @@ static double objective_function (double xi, MVertex *ver,
     else
       //  minQual = std::min((lt[i]->specialQuality()), minQual);
       minQual = std::min(fabs(lt[i]->minSICNShapeMeasure())*.2, minQual);
-//    minQual = std::min(lt[i]->minAnisotropyMeasure(), minQual);
   }
   ver->x() = x;
   ver->y() = y;

@@ -2429,6 +2429,7 @@ static void RemoveDegenerateSurfaces()
 	List_Delete (ll);
 	List_Delete (ll2);
       }
+      printf("Deleting Surface %d\n",s->Num);
       DeleteSurface(s->Num);
     }
   }

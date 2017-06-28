@@ -405,7 +405,8 @@ void delaunayTrgl(const unsigned int numThreads,
                   const unsigned int NPTS_AT_ONCE,
                   unsigned int Npts,
                   std::vector<Vert*> assignTo[],
-                  tetContainer &allocator, edgeContainer *embedded = 0);
+                  tetContainer &allocator, edgeContainer *embedded = 0,
+		  bool filter = false);
 void edgeSwapPass (int numThreads, tetContainer &allocator, edgeContainer &embeddedEdges);
 void vertexRelocationPass (int numThreads,   std::vector<Vert*> &v);
 

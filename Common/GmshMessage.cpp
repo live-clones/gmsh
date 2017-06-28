@@ -773,10 +773,9 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
               (n > N - 1) ? "" : str2);
       fflush(stdout);
     }
-
-#if defined(_OPENMP)
-#pragma omp barrier
-#endif
+    //#if defined(_OPENMP)
+    //#pragma omp barrier
+    //#endif
   }
 }
 

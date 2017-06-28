@@ -912,7 +912,7 @@ int meshStatFileDialog(const char *name)
 {
   struct _meshStatFileDialog{
     Fl_Window *window;
-    Fl_Check_Button *b[7];
+    Fl_Check_Button *b[8];
     Fl_Button *ok, *cancel;
   };
   static _meshStatFileDialog *dialog = NULL;
@@ -921,7 +921,7 @@ int meshStatFileDialog(const char *name)
 
   if(!dialog){
     dialog = new _meshStatFileDialog;
-    int h = 3 * WB + 8 * BH, w = 2 * BBB + 3 * WB, y = WB;
+    int h = 3 * WB + 9 * BH, w = 2 * BBB + 3 * WB, y = WB;
     dialog->window = new Fl_Double_Window(w, h, "POS Options");
     dialog->window->box(GMSH_WINDOW_BOX);
     dialog->window->set_modal();
@@ -932,12 +932,14 @@ int meshStatFileDialog(const char *name)
     dialog->b[2] = new Fl_Check_Button
       (WB, y, 2 * BBB + WB, BH, "Print element numbers"); y += BH;
     dialog->b[3] = new Fl_Check_Button
-      (WB, y, 2 * BBB + WB, BH, "Print Gamma quality measure"); y += BH;
+      (WB, y, 2 * BBB + WB, BH, "Print SICN quality measure"); y += BH;
     dialog->b[4] = new Fl_Check_Button
-      (WB, y, 2 * BBB + WB, BH, "Print Eta quality measure"); y += BH;
+      (WB, y, 2 * BBB + WB, BH, "Print SIGE quality measure"); y += BH;
     dialog->b[5] = new Fl_Check_Button
-      (WB, y, 2 * BBB + WB, BH, "Print Rho quality measure"); y += BH;
+      (WB, y, 2 * BBB + WB, BH, "Print Gamma quality measure"); y += BH;
     dialog->b[6] = new Fl_Check_Button
+      (WB, y, 2 * BBB + WB, BH, "Print Eta quality measure"); y += BH;
+    dialog->b[7] = new Fl_Check_Button
       (WB, y, 2 * BBB + WB, BH, "Print Disto quality measure"); y += BH;
     for(int i = 0; i < 6; i++)
       dialog->b[i]->type(FL_TOGGLE_BUTTON);
@@ -950,9 +952,10 @@ int meshStatFileDialog(const char *name)
   dialog->b[0]->value(CTX::instance()->mesh.saveAll ? 1 : 0);
   dialog->b[1]->value(CTX::instance()->print.posElementary ? 1 : 0);
   dialog->b[2]->value(CTX::instance()->print.posElement ? 1 : 0);
-  dialog->b[3]->value(CTX::instance()->print.posGamma ? 1 : 0);
-  dialog->b[4]->value(CTX::instance()->print.posEta ? 1 : 0);
-  dialog->b[5]->value(CTX::instance()->print.posRho ? 1 : 0);
+  dialog->b[3]->value(CTX::instance()->print.posSICN ? 1 : 0);
+  dialog->b[4]->value(CTX::instance()->print.posSIGE ? 1 : 0);
+  dialog->b[5]->value(CTX::instance()->print.posGamma ? 1 : 0);
+  dialog->b[6]->value(CTX::instance()->print.posEta ? 1 : 0);
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -964,10 +967,13 @@ int meshStatFileDialog(const char *name)
         opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
         opt_print_pos_elementary(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value() ? 1 : 0);
         opt_print_pos_element(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value() ? 1 : 0);
-        opt_print_pos_gamma(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value() ? 1 : 0);
-        opt_print_pos_eta(0, GMSH_SET | GMSH_GUI, dialog->b[4]->value() ? 1 : 0);
-        opt_print_pos_rho(0, GMSH_SET | GMSH_GUI, dialog->b[5]->value() ? 1 : 0);
-        opt_print_pos_disto(0, GMSH_SET | GMSH_GUI, dialog->b[6]->value() ? 1 : 0);
+        opt_print_pos_SICN(0, GMSH_SET | GMSH_GUI,
+                           dialog->b[3]->value() ? 1 : 0);
+        opt_print_pos_SIGE(0, GMSH_SET | GMSH_GUI,
+                           dialog->b[4]->value() ? 1 : 0);
+        opt_print_pos_gamma(0, GMSH_SET | GMSH_GUI, dialog->b[5]->value() ? 1 : 0);
+        opt_print_pos_eta(0, GMSH_SET | GMSH_GUI, dialog->b[6]->value() ? 1 : 0);
+        opt_print_pos_disto(0, GMSH_SET | GMSH_GUI, dialog->b[7]->value() ? 1 : 0);
         CreateOutputFile(name, FORMAT_POS);
         dialog->window->hide();
         return 1;

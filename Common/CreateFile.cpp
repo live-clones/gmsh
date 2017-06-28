@@ -377,10 +377,10 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_POS:
     GModel::current()->writePOS
       (name, CTX::instance()->print.posElementary,
-       CTX::instance()->print.posElement, CTX::instance()->print.posGamma,
-       CTX::instance()->print.posEta, CTX::instance()->print.posRho,
-       CTX::instance()->print.posDisto, CTX::instance()->mesh.saveAll,
-       CTX::instance()->mesh.scalingFactor);
+       CTX::instance()->print.posElement,
+       CTX::instance()->print.posSICN, CTX::instance()->print.posSIGE,
+       CTX::instance()->print.posGamma, CTX::instance()->print.posDisto,
+       CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_GEO:

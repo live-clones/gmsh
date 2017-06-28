@@ -9182,11 +9182,18 @@ double opt_print_pos_eta(OPT_ARGS_NUM)
   return CTX::instance()->print.posEta;
 }
 
-double opt_print_pos_rho(OPT_ARGS_NUM)
+double opt_print_pos_SICN(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->print.posRho = (int)val;
-  return CTX::instance()->print.posRho;
+    CTX::instance()->print.posSICN = (int)val;
+  return CTX::instance()->print.posSICN;
+}
+
+double opt_print_pos_SIGE(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.posSIGE = (int)val;
+  return CTX::instance()->print.posSIGE;
 }
 
 double opt_print_pos_disto(OPT_ARGS_NUM)

@@ -106,9 +106,9 @@ bool isElementVisible(MElement *ele)
     if(CTX::instance()->mesh.qualityType == 3)
       q = ele->distoShapeMeasure();
     else if(CTX::instance()->mesh.qualityType == 2)
-      q = ele->rhoShapeMeasure();
-    else if(CTX::instance()->mesh.qualityType == 1)
       q = ele->gammaShapeMeasure();
+    else if(CTX::instance()->mesh.qualityType == 1)
+      q = ele->minSIGEShapeMeasure();
     else
       q = ele->minSICNShapeMeasure();
     if(q < CTX::instance()->mesh.qualityInf ||

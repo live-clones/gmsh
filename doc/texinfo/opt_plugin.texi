@@ -5,31 +5,36 @@
 
 @ftable @code
 @item Plugin(AnalyseCurvedMesh)
-Plugin(AnalyseCurvedMesh) analyse all elements of a given dimension. According to what is asked, it computes the minimum of the Jacobian determinant (J), of the scaled Jacobian and/or of the isotropy measure. Statistics are printed and if asked a Pview is created for each measure. The plugin hides elements for which the measure mu > 'Hidding threshold', where mu is the isotropy measure if asked otherwise the scaled Jacobian if asked otherwise the Jacobian determinant.@*
+Plugin(AnalyseCurvedMesh) analyse all elements of a given dimension. According to what is asked, it computes the minimum of the Jacobian determinant (J), the IGE quality measure (Inverse Gradient Error) and/or the ICN quality measure (Inverse Condition Number). Statistics are printed and, if asked, a Pview is created for each measure. The plugin hides elements for which the measure mu > 'Hidding threshold', where mu is the ICN measure if asked otherwise the IGE measure if asked otherwise the Jacobian determinant.@*
 @*
-J is faster to compute but gives informations only on validity while the other measure gives also informations on quality.@*
-Warning: the scaled Jacobian is experimental for triangles, tetrahedra, prisms and pyramids. Computation may take a lot of time for those elements!@*
+J is faster to compute but gives information only on validity while the other measure gives also information on quality.@*
+The IGE measure is related to the error on the gradient of the finite element solution. It is the scaled Jacobian for quads and hexes and a new measure for triangles and tetrahedra.@*
+The ICN measure is related to the condition number of the stiffness matrix.@*
+(See article "Efficient computation of the minimum of shape quality measures on curvilinear finite elements" for details.)@*
 @*
 Parameters:@*
 @*
 - Jacobian determinant = @{0, 1@}@*
-- Scaled Jacobian = @{0, 1@}@*
-- Isotropy = @{0, 1@}@*
 @*
-- Hidding threshold = [0, 1]: Does nothing if Isotropy == 0 and Scaled Jacobian == 0. Otherwise, hides all element for which min(mu) is strictly greater than the threshold, where mu is the isotropy if Isotropy == 1, otherwise it is the Scaled Jacobian. If threshold == 1, no effect, if == 0 hide all elements except invalid.@*
+- IGE measure = @{0, 1@}@*
 @*
-- Draw PView = @{0, 1@}: Creates a PView of min(J)/max(J), min(scaled Jac) and/or min(isotropy) according to what is asked. If 'Recompute' = 1, a new PView is redrawed.@*
+- ICN measure = @{0, 1@}@*
 @*
-- Recompute = @{0,1@}: If the mesh has changed, set to 1 to recompute the bounds.@*
+- Hidding threshold = [0, 1]: Hides all element for which min(mu) is strictly greater than the threshold, where mu is the ICN if ICN measure == 1, otherwise mu is the IGE it IGE measure == 1, otherwise mu is the Jacobian determinant.@*
+If threshold == 0, hides all elements except invalid.@*
+@*
+- Draw PView = @{0, 1@}: Creates a PView of min(J)/max(J), min(IGE) and/or min(ICN) according to what is asked. If 'Recompute' = 1, new PViews are created.@*
+@*
+- Recompute = @{0,1@}: Should be 1 if the mesh has changed.@*
 @*
 - Dimension = @{-1, 1, 2, 3, 4@}: If == -1, analyse element of the greater dimension. If == 4, analyse 2D and 3D elements.
 Numeric options:
 @table @code
 @item Jacobian determinant
 Default value: @code{1}
-@item Scaled Jacobian
-Default value: @code{0}
-@item Isotropy
+@item IGE measure
+Default value: @code{1}
+@item ICN measure
 Default value: @code{1}
 @item Hidding threshold
 Default value: @code{9}

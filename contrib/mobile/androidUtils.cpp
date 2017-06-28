@@ -48,10 +48,10 @@ public:
          !gCallbackObject || (gJavaVM->AttachCurrentThread(&env, NULL)) < 0) return;
       jstring jstr = env->NewStringUTF(message.c_str());
       jclass jClass = env->FindClass("org/geuz/onelab/Gmsh");
-      if(jClass == 0)
+      if(jClass == 0 || env->ExceptionCheck())
         return;
       jmethodID mid = env->GetMethodID(jClass, "ShowPopup", "(Ljava/lang/String;)V");
-      if (mid == 0)
+      if (mid == 0 || env->ExceptionCheck())
         return;
       env->CallVoidMethod(gCallbackObject, mid, jstr);
       env->DeleteLocalRef(jstr);
@@ -64,10 +64,10 @@ public:
          !gCallbackObject || (gJavaVM->AttachCurrentThread(&env, NULL)) < 0) return;
       jstring jstr = env->NewStringUTF(message.c_str());
       jclass jClass = env->FindClass("org/geuz/onelab/Gmsh");
-      if(jClass == 0)
+      if(jClass == 0 || env->ExceptionCheck())
         return;
       jmethodID mid = env->GetMethodID(jClass, "SetLoading", "(Ljava/lang/String;)V");
-      if (mid == 0)
+      if (mid == 0 || env->ExceptionCheck())
         return;
       env->CallVoidMethod(gCallbackObject, mid, jstr);
       env->DeleteLocalRef(jstr);
@@ -90,10 +90,10 @@ void requestRender()
   if(gJavaVM->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK ||
      !gCallbackObject || (gJavaVM->AttachCurrentThread(&env, NULL)) < 0) return;
   jclass jClass = env->FindClass("org/geuz/onelab/Gmsh");
-  if(jClass == 0)
+  if(jClass == 0 || env->ExceptionCheck())
     return;
   jmethodID mid = env->GetMethodID(jClass, "RequestRender", "()V");
-  if (mid == 0)
+  if (mid == 0 || env->ExceptionCheck())
     return;
   env->CallVoidMethod(gCallbackObject, mid);
   env->DeleteLocalRef(jClass);
@@ -106,19 +106,27 @@ void getBitmapFromString(const char *text, int textsize, unsigned char **map,
   if(gJavaVM->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK ||
      !gCallbackObject || (gJavaVM->AttachCurrentThread(&env, NULL)) < 0) return;
   jclass jClass = env->FindClass("org/geuz/onelab/StringTexture");
-  if(jClass == 0)
+  if(jClass == 0 || env->ExceptionCheck())
     return;
   jstring jtext = env->NewStringUTF(text);
   jmethodID mid = env->GetStaticMethodID(jClass, "getHeightFromString",
                                          "(Ljava/lang/String;I)I");
+  if(mid == 0 || env->ExceptionCheck())
+    return;
   *height = env->CallStaticIntMethod(jClass, mid, jtext, textsize);
   mid = env->GetStaticMethodID(jClass, "getWidthFromString", "(Ljava/lang/String;I)I");
+  if(mid == 0 || env->ExceptionCheck())
+    return;
   *width = env->CallStaticIntMethod(jClass, mid, jtext, textsize);
   if(realWidth != NULL){
     mid = env->GetStaticMethodID(jClass, "getRealWidthFromString", "(Ljava/lang/String;I)I");
+    if(mid == 0 || env->ExceptionCheck())
+      return;
     *realWidth = env->CallStaticIntMethod(jClass, mid, jtext, textsize);
   }
   mid = env->GetStaticMethodID(jClass, "getBytesFromString", "(Ljava/lang/String;I)[B");
+  if(mid == 0 || env->ExceptionCheck())
+    return;
   jobject jbuffer = env->CallStaticObjectMethod(jClass, mid, jtext, textsize);
   jbyteArray *jarray = reinterpret_cast<jbyteArray*>(&jbuffer);
   int ms = (*height) * (*width);

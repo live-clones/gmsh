@@ -279,7 +279,7 @@ class CTX {
     int jpegQuality, jpegSmoothing, geoLabels, geoOnlyPhysicals;
     int text, texAsEquation;
     int gifDither, gifSort, gifInterlace, gifTransparent;
-    int posElementary, posElement, posGamma, posEta, posRho, posDisto;
+    int posElementary, posElement, posGamma, posEta, posSICN, posSIGE, posDisto;
     int compositeWindows, deleteTmpFiles, background;
     int width, height;
     double parameter, parameterFirst, parameterLast, parameterSteps;

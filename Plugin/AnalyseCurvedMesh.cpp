@@ -24,8 +24,8 @@ class bezierBasis;
 
 StringXNumber CurvedMeshOptions_Number[] = {
   {GMSH_FULLRC, "Jacobian determinant", NULL, 1},
-  {GMSH_FULLRC, "Scaled Jacobian", NULL, 0},
-  {GMSH_FULLRC, "Isotropy", NULL, 1},
+  {GMSH_FULLRC, "IGE measure", NULL, 1},
+  {GMSH_FULLRC, "ICN measure", NULL, 1},
   {GMSH_FULLRC, "Hidding threshold", NULL, 9},
   {GMSH_FULLRC, "Draw PView", NULL, 0},
   {GMSH_FULLRC, "Recompute", NULL, 0},
@@ -54,36 +54,41 @@ std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
 {
   return "Plugin(AnalyseCurvedMesh) analyse all elements of a given dimension. "
     "According to what is asked, it computes the minimum of the Jacobian "
-    "determinant (J), of the scaled Jacobian and/or of the isotropy measure. "
-    "Statistics are printed and if asked a Pview is created for each measure. "
+    "determinant (J), the IGE quality measure (Inverse Gradient Error) and/or "
+    "the ICN quality measure (Inverse Condition Number). "
+    "Statistics are printed and, if asked, a Pview is created for each measure. "
     "The plugin hides elements for which the measure mu > 'Hidding threshold', "
-    "where mu is the isotropy measure if asked otherwise the scaled Jacobian if "
+    "where mu is the ICN measure if asked otherwise the IGE measure if "
     "asked otherwise the Jacobian determinant.\n"
     "\n"
-    "J is faster to compute but gives informations only on validity while the "
-    "other measure gives also informations on quality.\n"
-    "Warning: the scaled Jacobian is experimental for triangles, tetrahedra, "
-    "prisms and pyramids. Computation may take a lot of time for those "
-    "elements!\n"
+    "J is faster to compute but gives information only on validity while the "
+    "other measure gives also information on quality.\n"
+    "The IGE measure is related to the error on the gradient of the finite "
+    "element solution. It is the scaled Jacobian for quads and hexes and a new "
+    "measure for triangles and tetrahedra.\n"
+    "The ICN measure is related to the condition number of the stiffness matrix.\n"
+    "(See article \"Efficient computation of the minimum of shape quality "
+    "measures on curvilinear finite elements\" for details.)\n"
     "\n"
     "Parameters:\n"
     "\n"
     "- Jacobian determinant = {0, 1}\n"
-    "- Scaled Jacobian = {0, 1}\n"
-    "- Isotropy = {0, 1}\n"
     "\n"
-    "- Hidding threshold = [0, 1]: Does nothing if Isotropy == 0 and Scaled "
-    "Jacobian == 0. Otherwise, hides all element for which min(mu) is "
-    "strictly greater than the threshold, where mu is the isotropy if Isotropy "
-    "== 1, otherwise it is the Scaled Jacobian. If threshold == 1, no effect, "
-    "if == 0 hide all elements except invalid.\n"
+    "- IGE measure = {0, 1}\n"
     "\n"
-    "- Draw PView = {0, 1}: Creates a PView of min(J)/max(J), min(scaled Jac) "
-    "and/or min(isotropy) according to what is asked. If 'Recompute' = 1, a "
-    "new PView is redrawed.\n"
+    "- ICN measure = {0, 1}\n"
     "\n"
-    "- Recompute = {0,1}: If the mesh has changed, set to 1 to recompute the "
-    "bounds.\n"
+    "- Hidding threshold = [0, 1]: Hides all element for which min(mu) is "
+    "strictly greater than the threshold, where mu is the ICN if ICN measure == 1, "
+    "otherwise mu is the IGE it IGE measure == 1, "
+    "otherwise mu is the Jacobian determinant.\n"
+    "If threshold == 0, hides all elements except invalid.\n"
+    "\n"
+    "- Draw PView = {0, 1}: Creates a PView of min(J)/max(J), min(IGE) "
+    "and/or min(ICN) according to what is asked. If 'Recompute' = 1, "
+    "new PViews are created.\n"
+    "\n"
+    "- Recompute = {0,1}: Should be 1 if the mesh has changed.\n"
     "\n"
     "- Dimension = {-1, 1, 2, 3, 4}: If == -1, analyse element of the greater "
     "dimension. If == 4, analyse 2D and 3D elements.";
@@ -92,33 +97,33 @@ std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
 PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
 {
   _m = GModel::current();
-  bool computeJac       = static_cast<int>(CurvedMeshOptions_Number[0].def);
-  bool computeScaledJac = static_cast<int>(CurvedMeshOptions_Number[1].def);
-  bool computeIsotropy  = static_cast<int>(CurvedMeshOptions_Number[2].def);
-  _threshold     = static_cast<double>(CurvedMeshOptions_Number[3].def);
-  bool drawPView = static_cast<int>(CurvedMeshOptions_Number[4].def);
-  bool recompute = static_cast<bool>(CurvedMeshOptions_Number[5].def);
-  int askedDim   = static_cast<int>(CurvedMeshOptions_Number[6].def);
+  bool computeJac = static_cast<int>(CurvedMeshOptions_Number[0].def);
+  bool computeIGE = static_cast<int>(CurvedMeshOptions_Number[1].def);
+  bool computeICN = static_cast<int>(CurvedMeshOptions_Number[2].def);
+  _threshold      = static_cast<double>(CurvedMeshOptions_Number[3].def);
+  bool drawPView  = static_cast<int>(CurvedMeshOptions_Number[4].def);
+  bool recompute  = static_cast<bool>(CurvedMeshOptions_Number[5].def);
+  int askedDim    = static_cast<int>(CurvedMeshOptions_Number[6].def);
 
   if (askedDim < 0 || askedDim > 4) askedDim = _m->getDim();
 
   if (recompute) {
     _data.clear();
     if (askedDim < 4) {
-      _computedJ[askedDim-1] = false;
-      _computedS[askedDim-1] = false;
-      _computedI[askedDim-1] = false;
-      _PViewJ[askedDim-1] = false;
-      _PViewS[askedDim-1] = false;
-      _PViewI[askedDim-1] = false;
+      _computedJac[askedDim-1] = false;
+      _computedIGE[askedDim-1] = false;
+      _computedICN[askedDim-1] = false;
+      _PViewJac[askedDim-1] = false;
+      _PViewIGE[askedDim-1] = false;
+      _PViewICN[askedDim-1] = false;
     }
     else {
-      _computedJ[1] = _computedJ[2] = false;
-      _computedS[1] = _computedS[2] = false;
-      _computedI[1] = _computedI[2] = false;
-      _PViewJ[1] = _PViewJ[2] = false;
-      _PViewS[1] = _PViewS[2] = false;
-      _PViewI[1] = _PViewI[2] = false;
+      _computedJac[1] = _computedJac[2] = false;
+      _computedIGE[1] = _computedIGE[2] = false;
+      _computedICN[1] = _computedICN[2] = false;
+      _PViewJac[1] = _PViewJac[2] = false;
+      _PViewIGE[1] = _PViewIGE[2] = false;
+      _PViewICN[1] = _PViewICN[2] = false;
     }
   }
 
@@ -128,7 +133,7 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
   bool printStatI = false;
   for (int dim = 1; dim <= 3 && dim <= _m->getDim(); ++dim) {
     if ((askedDim == 4 && dim > 1) || dim == askedDim) {
-      if (!_computedJ[dim-1]) {
+      if (!_computedJac[dim-1]) {
         double time = Cpu();
         Msg::StatusBar(true, "Computing Jacobian for %dD elements...", dim);
         _computeMinMaxJandValidity(dim);
@@ -136,34 +141,34 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
                        dim, Cpu()-time);
         printStatJ = true;
       }
-      if (computeScaledJac && !_computedS[dim-1]) {
+      if (computeIGE && !_computedIGE[dim-1]) {
         double time = Cpu();
-        Msg::StatusBar(true, "Computing scaled Jacobian for %dD elements...", dim);
-        _computeMinScaledJac(dim);
-        Msg::StatusBar(true, "Done computing scaled Jacobian for %dD elements (%g s)",
+        Msg::StatusBar(true, "Computing IGE for %dD elements...", dim);
+        _computeMinIGE(dim);
+        Msg::StatusBar(true, "Done computing IGE for %dD elements (%g s)",
                        dim, Cpu()-time);
         printStatS = true;
       }
-      if (computeIsotropy && !_computedI[dim-1]) {
+      if (computeICN && !_computedICN[dim-1]) {
         double time = Cpu();
-        Msg::StatusBar(true, "Computing isotropy for %dD elements...", dim);
-        _computeMinIsotropy(dim);
-        Msg::StatusBar(true, "Done computing isotropy for %dD elements (%g s)",
+        Msg::StatusBar(true, "Computing ICN for %dD elements...", dim);
+        _computeMinICN(dim);
+        Msg::StatusBar(true, "Done computing ICN for %dD elements (%g s)",
                        dim, Cpu()-time);
         printStatI = true;
       }
     }
   }
   if (printStatJ) _printStatJacobian();
-  if (printStatS) _printStatScaledJac();
-  if (printStatI) _printStatIsotropy();
+  if (printStatS) _printStatIGE();
+  if (printStatI) _printStatICN();
 
   // Create PView
   if (drawPView)
   for (int dim = 1; dim <= 3; ++dim) {
     if ((askedDim == 4 && dim > 1) || dim == askedDim) {
-      if (!_PViewJ[dim-1] && computeJac) {
-        _PViewJ[dim-1] = true;
+      if (!_PViewJac[dim-1] && computeJac) {
+        _PViewJac[dim-1] = true;
         std::map<int, std::vector<double> > dataPV;
         for (unsigned int i = 0; i < _data.size(); ++i) {
           MElement *const el = _data[i].element();
@@ -176,8 +181,8 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
           new PView(name.str().c_str(), "ElementData", _m, dataPV);
         }
       }
-      if (!_PViewS[dim-1] && computeScaledJac) {
-        _PViewS[dim-1] = true;
+      if (!_PViewIGE[dim-1] && computeIGE) {
+        _PViewIGE[dim-1] = true;
         std::map<int, std::vector<double> > dataPV;
         for (unsigned int i = 0; i < _data.size(); ++i) {
           MElement *const el = _data[i].element();
@@ -186,12 +191,12 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
         }
         if (dataPV.size()) {
           std::stringstream name;
-          name << "Scaled Jacobian " << dim << "D";
+          name << "IGE " << dim << "D";
           new PView(name.str().c_str(), "ElementData", _m, dataPV);
         }
       }
-      if (!_PViewI[dim-1] && computeIsotropy) {
-        _PViewI[dim-1] = true;
+      if (!_PViewICN[dim-1] && computeICN) {
+        _PViewICN[dim-1] = true;
         std::map<int, std::vector<double> > dataPV;
         for (unsigned int i = 0; i < _data.size(); ++i) {
           MElement *const el = _data[i].element();
@@ -200,7 +205,7 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
         }
         if (dataPV.size()) {
           std::stringstream name;
-          name << "Isotropy " << dim << "D";
+          name << "ICN " << dim << "D";
           new PView(name.str().c_str(), "ElementData", _m, dataPV);
         }
       }
@@ -210,8 +215,8 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
   // Hide elements
 #if defined(HAVE_OPENGL)
   _hideWithThreshold(askedDim,
-      computeIsotropy ? 2 :
-          computeScaledJac ? 1 :
+      computeICN ? 2 :
+          computeIGE ? 1 :
               computeJac ? 0 : -1);
   CTX::instance()->mesh.changed = (ENT_ALL);
   drawContext::global()->draw();
@@ -222,7 +227,7 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
 
 void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
 {
-  if (_computedJ[dim-1]) return;
+  if (_computedJac[dim-1]) return;
 
   std::set<GEntity*, GEntityLessThan> entities;
   switch (dim) {
@@ -337,12 +342,12 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
     }
     delete normals;
   }
-  _computedJ[dim-1] = true;
+  _computedJac[dim-1] = true;
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_computeMinScaledJac(int dim)
+void GMSH_AnalyseCurvedMeshPlugin::_computeMinIGE(int dim)
 {
-  if (_computedS[dim-1]) return;
+  if (_computedIGE[dim-1]) return;
 
   MsgProgressStatus progress(_data.size());
 
@@ -353,17 +358,17 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinScaledJac(int dim)
       _data[i].setMinS(0);
     }
     else {
-      _data[i].setMinS(jacobianBasedQuality::minScaledJacobian(el, true));
+      _data[i].setMinS(jacobianBasedQuality::minIGEMeasure(el, true));
     }
     progress.next();
   }
 
-  _computedS[dim-1] = true;
+  _computedIGE[dim-1] = true;
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_computeMinIsotropy(int dim)
+void GMSH_AnalyseCurvedMeshPlugin::_computeMinICN(int dim)
 {
-  if (_computedI[dim-1]) return;
+  if (_computedICN[dim-1]) return;
 
   MsgProgressStatus progress(_data.size());
 
@@ -374,12 +379,12 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinIsotropy(int dim)
       _data[i].setMinI(0);
     }
     else {
-      _data[i].setMinI(jacobianBasedQuality::minIsotropyMeasure(el, true));
+      _data[i].setMinI(jacobianBasedQuality::minICNMeasure(el, true));
     }
     progress.next();
   }
 
-  _computedI[dim-1] = true;
+  _computedICN[dim-1] = true;
 }
 
 int GMSH_AnalyseCurvedMeshPlugin::_hideWithThreshold(int askedDim, int whichMeasure)
@@ -451,17 +456,17 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatJacobian()
   avgratJ /= count;
   avgratJc /= countc;
 
-  Msg::Info("Min Jac. det. (minJ): %6.3g, %6.3g, %6.3g (= min, avg, max)",
+  Msg::Info("minJ      = %8.3g, %8.3g, %8.3g (min, avg, max)",
             infminJ, avgminJ, supminJ);
-  Msg::Info("Ratio minJ/maxJ     : %6.3f, %6.3f, %6.3f (= worst, avg, best)",
-            infratJ, avgratJ, supratJ);
   if (countc && countc < count)
-    Msg::Info("                      (avg = %.3f"
-              " on the %d non-constant elements)",
+    Msg::Info("minJ/maxJ =           %8.3f           (avg on the %d "
+                      "non-constant elements)",
               avgratJc, countc);
+  Msg::Info("minJ/maxJ = %8.3f, %8.3f, %8.3f (worst, avg, best)",
+            infratJ, avgratJ, supratJ);
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_printStatScaledJac()
+void GMSH_AnalyseCurvedMeshPlugin::_printStatIGE()
 {
   if (_data.empty()) {
     Msg::Info("No stat to print.");
@@ -477,11 +482,11 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatScaledJac()
   }
   avgminS /= _data.size();
 
-  Msg::Info("Scaled Jacobian     : %6.3f, %6.3f, %6.3f (= worst, avg, best)",
-      infminS, avgminS, supminS);
+  Msg::Info("IGE       = %8.3f, %8.3f, %8.3f (worst, avg, best)",
+            infminS, avgminS, supminS);
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_printStatIsotropy()
+void GMSH_AnalyseCurvedMeshPlugin::_printStatICN()
 {
   if (_data.empty()) {
     Msg::Info("No stat to print.");
@@ -497,8 +502,8 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatIsotropy()
   }
   avgminI /= _data.size();
 
-  Msg::Info("Isotropy            : %6.3f, %6.3f, %6.3f (= worst, avg, best)",
-      infminI, avgminI, supminI);
+  Msg::Info("ICN       = %8.3f, %8.3f, %8.3f (worst, avg, best)",
+            infminI, avgminI, supminI);
 }
 
 #endif

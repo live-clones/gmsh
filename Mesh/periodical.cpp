@@ -215,9 +215,9 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,std::vector<double>& ra
       *pointer = cell;
       pointers.push_back(pointer);
       generators.push_back(SPoint3(x,y,z));
-	  printf("%d %d (%f,%f,%f)\n",loopA.pid()+1,number+1,x,y,z);
-	  table.insert(std::pair<int,int>(loopA.pid(),number));
-	  number++;
+      //      printf("%d %d (%f,%f,%f)\n",loopA.pid()+1,number+1,x,y,z);
+      table.insert(std::pair<int,int>(loopA.pid(),number));
+      number++;
     }while(loopA.inc());
   }
   else{
@@ -229,9 +229,9 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,std::vector<double>& ra
       *pointer = cell;
       pointers.push_back(pointer);
       generators.push_back(SPoint3(x,y,z));
-	  printf("%d %d (%f,%f,%f)\n",loopB.pid()+1,number+1,x,y,z);
-	  table.insert(std::pair<int,int>(loopB.pid(),number));
-	  number++;
+      //	  printf("%d %d (%f,%f,%f)\n",loopB.pid()+1,number+1,x,y,z);
+      table.insert(std::pair<int,int>(loopB.pid(),number));
+      number++;
     }while(loopB.inc());
   }
 
@@ -257,7 +257,7 @@ void voroMetal3D::execute(std::vector<SPoint3>& vertices,std::vector<double>& ra
     }
   }
 
-  printf("\nSquared root of smallest face area : %.9f\n\n",sqrt(min_area));
+  //  printf("\nSquared root of smallest face area : %.9f\n\n",sqrt(min_area));
 
   std::ofstream file("MicrostructurePolycrystal3D.pos");
   file << "View \"test\" {\n";
@@ -407,6 +407,8 @@ int voroMetal3D::get_counter(){
 }
 
 void voroMetal3D::print_geo_point(int index,double x,double y,double z,std::ofstream& file){
+  file.precision(17);
+
   file << "Point(" << index << ")={"
   << x << "," << y << "," << z
   << ",c};\n";
@@ -707,11 +709,12 @@ void voroMetal3D::correspondance(double e, double xMax, double yMax, double zMax
 
   file << "};\n";
 
-  printf("\nNumber of exterior face periodicities : %d\n",2*count);
-  printf("Total number of exterior faces : %zu\n\n",faces.size());
+  //  printf("\nNumber of exterior face periodicities : %d\n",2*count);
+  //  printf("Total number of exterior faces : %zu\n\n",faces.size());
 
   std::ofstream file3;
   file3.open("MicrostructurePolycrystal3D.geo",std::ios::out | std::ios::app);
+  file3.precision(17);
 
   std::ofstream file4("MicrostructurePolycrystal3D2.pos");
   file4 << "View \"test\" {\n";
@@ -733,6 +736,24 @@ void voroMetal3D::correspondance(double e, double xMax, double yMax, double zMax
     gf1 = pairs[i].first;
     gf2 = pairs[i].second;
 
+    std::list<GVertex*> gv1 = gf1->vertices(); 
+    std::list<GVertex*> gv2 = gf2->vertices(); 
+
+    std::list<GVertex*>::iterator it1 = gv1.begin();
+    std::list<GVertex*>::iterator it2 = gv2.begin();
+
+    SPoint3 cg1 (0,0,0);
+    SPoint3 cg2 (0,0,0);
+    
+    for (; it1 != gv1.end(); it1++,it2++){
+      cg1 += SPoint3((*it1)->x(),(*it1)->y(),(*it1)->z());
+      cg2 += SPoint3((*it2)->x(),(*it2)->y(),(*it2)->z());
+    }
+
+    SVector3 dx = (cg2-cg1) * (1./gv1.size());
+    
+    //    printf("%g %g %g\n",dx.x(),dx.y(),dx.z());
+        
     edges1 = gf1->edges();
     edges2 = gf2->edges();
 
@@ -837,7 +858,7 @@ void voroMetal3D::correspondance(double e, double xMax, double yMax, double zMax
     if(indices1.size()!=indices2.size()){
       printf("Error\n\n");
     }
-
+    /*
     file3 << "Periodic Surface " << gf1->tag() << " {";
 
     for(j=0;j<indices1.size();j++){
@@ -852,6 +873,12 @@ void voroMetal3D::correspondance(double e, double xMax, double yMax, double zMax
     }
 
     file3 << "};\n";
+    */
+
+    
+    file3 << "Periodic Surface {" << gf1->tag() << " }={ " << gf2->tag() << " } Translate { " << -dx.x() << "," << -dx.y() << "," << -dx.z() << "};\n"; 
+
+    
   }
 
   file4 << "};\n";
