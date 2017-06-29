@@ -1545,7 +1545,7 @@ void Msg::Barrier()
 #include <omp.h>
 
 int Msg::GetNumThreads(){ return omp_get_num_threads(); }
-void Msg::SetNumThreads(int num){ printf("Setting num threads = %d", num); omp_set_num_threads(num); }
+void Msg::SetNumThreads(int num){ omp_set_num_threads(num); }
 int Msg::GetMaxThreads(){ return omp_get_max_threads(); }
 int Msg::GetThreadNum(){ return omp_get_thread_num(); }
 
