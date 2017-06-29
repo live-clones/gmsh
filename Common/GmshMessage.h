@@ -156,15 +156,14 @@ class Msg {
 class MsgProgressStatus
 {
 private:
-  int totalElementToTreat_, currentI_, nextIToCheck_;
-  double initialTime_, lastTime_;
-  int lastPercentage_;
-  int progressMeterStep_;
+  int _totalElementToTreat, _currentI, _nextIToCheck;
+  double _initialTime, _lastTime;
+  int _lastPercentage;
+  int _progressMeterStep;
 public:
   MsgProgressStatus(int numElementToTreat);
   ~MsgProgressStatus();
-
-  void setInitialTime(double time) {initialTime_ = time;}
+  void setInitialTime(double time) { _initialTime = time; }
   void next();
 };
 
