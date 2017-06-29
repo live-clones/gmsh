@@ -45,10 +45,6 @@
 #include "PView.h"
 #endif
 
-#if defined(HAVE_MESH)
-#include "periodical.h"
-#endif
-
 #if defined(HAVE_PARSER)
 #include "Parser.h"
 #endif
@@ -541,16 +537,6 @@ void GetOptions(int argc, char *argv[])
         else
           Msg::Fatal("Missing number of lloyd iterations");
       }
-#if defined(HAVE_MESH)
-      else if(!strcmp(argv[i] + 1, "microstructure")) {
-        i++;
-        if(argv[i]) microstructure(argv[i++]);
-      }
-      else if(!strcmp(argv[i] + 1, "computeBestSeeds")) {
-        i++;
-        if(argv[i]) computeBestSeeds(argv[i++]);
-      }
-#endif
       else if(!strcmp(argv[i] + 1, "nopopup")) {
         CTX::instance()->noPopup = 1;
         i++;

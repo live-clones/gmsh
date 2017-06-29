@@ -43,7 +43,6 @@ set(SRC
   DivideAndConquer.cpp
     Voronoi3D.cpp
     Levy3D.cpp
-    periodical.cpp
     directions3D.cpp
     filterElements.cpp
     yamakawa.cpp
