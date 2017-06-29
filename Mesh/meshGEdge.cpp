@@ -710,7 +710,8 @@ void meshGEdge::operator() (GEdge *ge)
     mesh_vertices = vv;
   }
 
-  if (_addBegin.empty() && _addEnd.empty())
+  if (CTX::instance()->mesh.algo2d != ALGO_2D_BAMG &&
+      _addBegin.empty() && _addEnd.empty())
     filterPoints(ge, filterMinimumN - 2);
 
   for(unsigned int i = 0; i < mesh_vertices.size() + 1; i++){
