@@ -67,6 +67,7 @@
 #include "CVTRemesh.h"
 #include "ShowNeighborElements.h"
 #include "GaussPoints.h"
+#include "VoroMetal.h"
 
 // for testing purposes only :-)
 #undef HAVE_DLOPEN
@@ -272,6 +273,8 @@ void PluginManager::registerDefaultPlugins()
 #if defined(HAVE_MESH)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("AnalyseCurvedMesh", GMSH_RegisterAnalyseCurvedMeshPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("VoroMetal", GMSH_RegisterVoroMetalPlugin()));
 #endif
 #if defined(HAVE_REVOROPT)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>

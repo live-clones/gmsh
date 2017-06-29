@@ -1559,45 +1559,47 @@ int Msg::GetThreadNum(){ return 0; }
 #endif
 
 MsgProgressStatus::MsgProgressStatus(int num)
-        : totalElementToTreat_(num), currentI_(0), nextIToCheck_(0),
-          initialTime_(Cpu()), lastTime_(initialTime_), lastPercentage_(0),
-          progressMeterStep_(Msg::GetProgressMeterStep())
+  : _totalElementToTreat(num), _currentI(0), _nextIToCheck(0),
+    _initialTime(Cpu()), _lastTime(_initialTime), _lastPercentage(0),
+    _progressMeterStep(Msg::GetProgressMeterStep())
 {
-
   Msg::SetProgressMeterStep(1);
   Msg::ResetProgressMeter();
 }
 
 MsgProgressStatus::~MsgProgressStatus()
 {
-  Msg::ProgressMeter(totalElementToTreat_, totalElementToTreat_, true, "done");
-  Msg::SetProgressMeterStep(progressMeterStep_);
+  Msg::ProgressMeter(_totalElementToTreat, _totalElementToTreat, true, "done");
+  Msg::SetProgressMeterStep(_progressMeterStep);
 }
 
 void MsgProgressStatus::next()
 {
-  ++currentI_;
-  if (currentI_ < nextIToCheck_) return;
+  ++_currentI;
+  if (_currentI < _nextIToCheck) return;
 
-  unsigned int currentPercentage = currentI_*100/totalElementToTreat_;
+  int currentPercentage = _currentI * 100 / _totalElementToTreat;
   // check every percentage only
-  nextIToCheck_ = (currentPercentage+1) * totalElementToTreat_ / 100 + 1;
+  _nextIToCheck = (currentPercentage + 1) * _totalElementToTreat / 100 + 1;
 
   double currentTime = Cpu();
-  if ((currentPercentage < 5                   && currentTime - lastTime_ > 15.) ||
-      (currentPercentage > lastPercentage_ + 4 && currentTime - lastTime_ > 10.)) {
-    lastPercentage_ = currentPercentage;
-    lastTime_ = currentTime;
-    const double remaining = (currentTime-initialTime_) / (currentI_+1) *
-                             (totalElementToTreat_ - currentI_-1);
+  if ((currentPercentage < 5                   && currentTime - _lastTime > 15.) ||
+      (currentPercentage > _lastPercentage + 4 && currentTime - _lastTime > 10.)) {
+    _lastPercentage = currentPercentage;
+    _lastTime = currentTime;
+    const double remaining = (currentTime - _initialTime) / (_currentI + 1) *
+                             (_totalElementToTreat - _currentI - 1);
     if (remaining < 60*2)
-      Msg::ProgressMeter(currentI_-1, totalElementToTreat_, true, "%d%% (remaining time ~%g seconds)",
-                     currentPercentage, remaining);
+      Msg::ProgressMeter(_currentI - 1, _totalElementToTreat, true,
+                         "%d%% (remaining time ~%g seconds)",
+                         currentPercentage, remaining);
     else if (remaining < 60*60*2)
-      Msg::ProgressMeter(currentI_-1, totalElementToTreat_, true, "%d%% (remaining time ~%g minutes)",
-                     currentPercentage, remaining/60);
+      Msg::ProgressMeter(_currentI - 1, _totalElementToTreat, true,
+                         "%d%% (remaining time ~%g minutes)",
+                         currentPercentage, remaining / 60);
     else
-      Msg::ProgressMeter(currentI_-1, totalElementToTreat_, true, "%d%% (remaining time ~%g hours)",
-                     currentPercentage, remaining/3600);
+      Msg::ProgressMeter(_currentI - 1, _totalElementToTreat, true,
+                         "%d%% (remaining time ~%g hours)",
+                         currentPercentage, remaining / 3600);
   }
 }

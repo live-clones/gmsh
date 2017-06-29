@@ -4,4 +4,6 @@ build*
 contrib/mobile/frameworks_*
 contrib/3M
 contrib/Parasolid
+*.db
+.DS_Store
 *~
