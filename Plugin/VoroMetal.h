@@ -2,18 +2,42 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
-//
-// Contributor(s):
-//   Tristan Carrier Maxime Melchior
 
-#include "GRegion.h"
+#ifndef _VOROMETAL_H_
+#define _VOROMETAL_H_
+
+#include <vector>
+#include "Plugin.h"
+
+class geo_cell{
+ public:
+  std::vector<std::pair<int,int> > lines;
+  std::vector<std::vector<int> > line_loops;
+  std::vector<std::vector<int> > orientations;
+  std::vector<int> points2;
+  std::vector<int> lines2;
+  std::vector<int> line_loops2;
+  std::vector<int> faces2;
+  int face_loops2;
+  geo_cell(){}
+  ~geo_cell(){}
+  int search_line(std::pair<int,int> line)
+  {
+    unsigned int i;
+    for(i=0;i<lines.size();i++){
+      if(lines[i].first==line.first && lines[i].second==line.second) return i;
+      if(lines[i].first==line.second && lines[i].second==line.first) return i;
+    }
+    return -1;
+  }
+};
 
 class voroMetal3D{
  private:
   int counter;
  public:
-  voroMetal3D();
-  ~voroMetal3D();
+  voroMetal3D(){}
+  ~voroMetal3D(){}
   void execute(double);
   void execute(GRegion*,double);
   void execute(std::vector<SPoint3>&,std::vector<double>&,int,double,double,double,double);
@@ -36,8 +60,27 @@ class voroMetal3D{
   bool equal(double,double,double);
 };
 
+extern "C"
+{
+  GMSH_Plugin *GMSH_RegisterVoroMetalPlugin();
+}
 
-void microstructure(const char *filename);
-void computeBestSeeds(const char *filename);
+class GMSH_VoroMetalPlugin : public GMSH_PostPlugin
+{
+ public:
+  GMSH_VoroMetalPlugin(){}
+  std::string getName() const { return "VoroMetal"; }
+  std::string getShortHelp() const
+  {
+    return "Voronoi microstructures";
+  }
+  std::string getHelp() const;
+  std::string getAuthor() const { return "Tristan Carrier & Maxime Melchior"; }
+  int getNbOptions() const;
+  StringXNumber* getOption(int iopt);
+  int getNbOptionsStr() const;
+  StringXString *getOptionStr(int iopt);
+  PView *execute(PView *);
+};
 
-
+#endif
