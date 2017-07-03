@@ -38,6 +38,7 @@ set(SRC
   CVTRemesh.cpp
   ShowNeighborElements.cpp
   GaussPoints.cpp
+  VoroMetal.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

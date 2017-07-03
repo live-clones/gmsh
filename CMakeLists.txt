@@ -93,7 +93,7 @@ opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 3)
 set(GMSH_MINOR_VERSION 0)
-set(GMSH_PATCH_VERSION 3)
+set(GMSH_PATCH_VERSION 4)
 set(GMSH_EXTRA_VERSION "" CACHE STRING "Gmsh extra version string")
 
 set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
@@ -131,7 +131,7 @@ set(GMSH_API
   Mesh/meshGEdge.h Mesh/meshGFace.h Mesh/meshGFaceOptimize.h
     Mesh/meshPartition.h Mesh/meshGFaceDelaunayInsertion.h
     Mesh/simple3D.h Mesh/meshPartitionOptions.h Mesh/directions3D.h Mesh/yamakawa.h
-    Mesh/Voronoi3D.h Mesh/Levy3D.h Mesh/periodical.h Mesh/meshMetric.h Mesh/ThinLayer.h
+    Mesh/Voronoi3D.h Mesh/Levy3D.h Mesh/meshMetric.h Mesh/ThinLayer.h
   Numeric/mathEvaluator.h
   Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h
     Solver/crossConfTerm.h Solver/orthogonalTerm.h
