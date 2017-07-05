@@ -1008,7 +1008,10 @@ static bool insertAPoint(GFace *gf,
     int index1 = data.getIndex(ptin->tri()->getVertex(1));
     int index2 = data.getIndex(ptin->tri()->getVertex(2));
     lc1 = (1. - uv[0] - uv[1]) * data.vSizes[index0] + uv[0] * data.vSizes[index1] + uv[1] * data.vSizes[index2];
-    lc = BGM_MeshSize(gf, center[0], center[1], p.x(), p.y(), p.z());
+    if (CTX::instance()->mesh.algo2d == ALGO_2D_BAMG)
+      lc = 1.;
+    else
+      lc = BGM_MeshSize(gf, center[0], center[1], p.x(), p.y(), p.z());
 
     //SMetric3 metr = BGM_MeshMetric(gf, center[0], center[1], p.x(), p.y(), p.z());
     //                               vMetricsBGM.push_back(metr);
