@@ -1499,6 +1499,7 @@ class PostViewField : public Field
   }
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
+
     PView *v = getView();
     if(!v) return MAX_LC;
     if(update_needed){
@@ -1528,7 +1529,7 @@ class PostViewField : public Field
     // of finding an element
     if(!octree->searchTensorWithTol(x, y, z, l, 0, 0, 0.05))
       Msg::Info("No tensor element found containing point (%g,%g,%g)", x, y, z);
-    if(crop_negative_values){
+    if(0 && crop_negative_values){
       if(l[0] <= 0 && l[1] <= 0 && l[2] <= 0 &&
          l[3] <= 0 && l[4] <= 0 && l[5] <= 0 &&
          l[6] <= 0 && l[7] <= 0 && l[8] <= 0){
@@ -1540,6 +1541,7 @@ class PostViewField : public Field
         }
       }
     }
+    //    printf("%g %g %g %g %g %g %g %g %g\n",l[0],l[1], l[2],l[3],l[4], l[5],l[6],l[7], l[8]);
     metr(0, 0) = l[0]; metr(0, 1) = l[1]; metr(0, 2) = l[2];
     metr(1, 0) = l[3]; metr(1, 1) = l[4]; metr(1, 2) = l[5];
     metr(2, 0) = l[6]; metr(2, 1) = l[7]; metr(2, 2) = l[8];

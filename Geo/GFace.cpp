@@ -1600,12 +1600,13 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
 
     GVertex* l_vertex = NULL;
 
+    double dist_min = 1.e22;
     std::set<GVertex*>::iterator lvIter = l_vertices.begin();
     for (;lvIter!=l_vertices.end(); ++lvIter) {
 
       SPoint3 xyz((*lvIter)->x(),(*lvIter)->y(),(*lvIter)->z());
       SVector3 dist = xyz - xyzTfo;
-
+      dist_min = std::min(dist_min,dist.norm());
       if (dist.norm() < CTX::instance()->geom.tolerance * CTX::instance()->lc) {
         l_vertex = *lvIter;
         break;
@@ -1615,8 +1616,9 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
     if (l_vertex==NULL) {
       Msg::Error("Was not able to find corresponding node %d "
                  "for periodic connection of surface %d to %d "
-                 "using the specified transformation",
-                 m_vertex->tag(),master->tag(),tag());
+                 "using the specified transformation"
+                 "Minimum distance is %g with a tolerance of %g",
+                 m_vertex->tag(),master->tag(),tag(),dist_min, CTX::instance()->geom.tolerance * CTX::instance()->lc);
       return;
     }
     gVertexCounterparts[l_vertex] = m_vertex;
