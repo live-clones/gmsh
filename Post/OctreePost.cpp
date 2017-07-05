@@ -430,6 +430,10 @@ bool OctreePost::_getValue(void *in, int dim, int nbNod, int nbComp,
 
   double *X = (double*)in, *Y = &X[nbNod], *Z = &X[2*nbNod], *V = &X[3*nbNod], U[3];
 
+  //  for (int i=0;i<3*9*3;i++)printf("%g ", X[i]);
+  //  printf("\n");
+
+  
   elementFactory factory;
   element *e = factory.create(nbNod, dim, X, Y, Z);
   if(!e) return false;
@@ -451,9 +455,10 @@ bool OctreePost::_getValue(void *in, int dim, int nbNod, int nbComp,
   }
   else{
     for(int j = 0; j < nbComp; j++){
-      if(!grad)
-        values[j] = e->interpolate(&V[nbNod * nbComp * step + j],
-                                   U[0], U[1], U[2], nbComp);
+      if(!grad){
+	values[j] = e->interpolate(&V[nbNod * nbComp * step + j],
+				   U[0], U[1], U[2], nbComp);
+      }
       else
         e->interpolateGrad(&V[nbNod * nbComp * step + j], U[0], U[1], U[2],
                            &values[3 * j], nbComp);

@@ -145,9 +145,6 @@ static double F_Lc_aniso(GEdge *ge, double t)
   bool blf = false;
 #endif
 
-  //printf("coucou\n");
-
-
   GPoint p = ge->point(t);
   SMetric3 lc_here;
 
@@ -617,7 +614,8 @@ void meshGEdge::operator() (GEdge *ge)
       SVector3 der = ge->firstDer(pt.t);
       pt.xp = der.norm();
     }
-    a = smoothPrimitive(ge, sqrt(CTX::instance()->mesh.smoothRatio), Points);
+    if (CTX::instance()->mesh.algo2d != ALGO_2D_BAMG)
+      a = smoothPrimitive(ge, sqrt(CTX::instance()->mesh.smoothRatio), Points);
     filterMinimumN = ge->minimumMeshSegments() + 1;
     N = std::max(filterMinimumN, (int)(a + 1.99));
   }
@@ -709,10 +707,10 @@ void meshGEdge::operator() (GEdge *ge)
     //    vv.insert(vv.end(), _addEnd.rend(), _addEnd.rbegin());
     mesh_vertices = vv;
   }
-
-  if (CTX::instance()->mesh.algo2d != ALGO_2D_BAMG &&
-      _addBegin.empty() && _addEnd.empty())
-    filterPoints(ge, filterMinimumN - 2);
+  
+  if (CTX::instance()->mesh.algo2d != ALGO_2D_BAMG)
+    if (_addBegin.empty() && _addEnd.empty())
+      filterPoints(ge, filterMinimumN - 2);
 
   for(unsigned int i = 0; i < mesh_vertices.size() + 1; i++){
     MVertex *v0 = (i == 0) ?
