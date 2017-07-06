@@ -18,6 +18,8 @@ Box(3) = {2,0,0, 2,2,2};
 f() = BooleanFragments { Volume{1}; Delete; }{ Volume{2,3}; Delete; };
 Printf("f()", f());
 If(sph)
-  //BooleanUnion { Volume{f(1)}; Delete; }{ Volume{f(2)}; Delete; }
-  BooleanUnion { Volume{2}; Delete; }{ Volume{3}; Delete; }
+  tol = 1e-3;
+  s() = Volume In BoundingBox {xx-rr-tol, 1-rr-tol, 1-rr-tol, xx+rr+tol,1+rr+tol,1+rr+tol};
+  Printf("sphere parts = ", s());
+  BooleanUnion { Volume{s(0)}; Delete; }{ Volume{s({1:#s()-1})}; Delete; }
 EndIf
