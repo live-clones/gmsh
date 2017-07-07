@@ -326,9 +326,10 @@ void MElement::signedInvCondNumRange(double &iCNMin, double &iCNMax, GEntity *ge
 
 void MElement::signedInvGradErrorRange(double &minSIGE, double &maxSIGE)
 {
+#if defined(HAVE_MESH)
   jacobianBasedQuality::sampleIGEMeasure(this, getPolynomialOrder(),
                                          minSIGE, maxSIGE);
-  return;
+#endif
 }
 
 void MElement::getNode(int num, double &u, double &v, double &w) const
