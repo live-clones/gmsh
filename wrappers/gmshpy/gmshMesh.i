@@ -31,7 +31,6 @@
   #include "simple3D.h"
   #include "Voronoi3D.h"
   #include "Levy3D.h"
-  #include "periodical.h"
   #include "directions3D.h"
   #include "yamakawa.h"
 #endif
@@ -85,7 +84,6 @@ namespace std {
 %include "simple3D.h"
 %include "Voronoi3D.h"
 %include "Levy3D.h"
-%include "periodical.h"
 %include "directions3D.h"
 %include "yamakawa.h"
 #endif
