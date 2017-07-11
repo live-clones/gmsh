@@ -18,6 +18,7 @@
 
 extern "C"
 {
+  /* Gmsh */
   int gmshInitialize(int argc, char **argv)
   {
     return !GmshInitialize(argc, argv);
@@ -40,61 +41,78 @@ extern "C"
 
   int gmshExport(const char *fileName)
   {
+    return 1;
   }
 
   int gmshClear()
   {
+    return 1;
   }
 
+  /* Gmsh Options */
   int gmshOptionsSetNumber(const char *name, double value)
   {
+    return 1;
   }
 
   int gmshOptionsGetNumber(const char *name, double *value)
   {
+    return 1;
   }
 
+  /* Gmsh Model */
   int gmshModelCreate(const char *name)
   {
+    return 1;
   }
 
   int gmshModelSetCurrent(const char *name)
   {
+    return 1;
   }
 
   int gmshModelDestroy()
   {
+    return 1;
   }
 
   int gmshModelMesh(int dim)
   {
+    return 1;
   }
 
-  int gmshModelGeoCreate()
+  int gmshModelAddEmbeddedVertex(int tag, int inDim, int inTag)
   {
+    return 1;
   }
+
+  /* Gmsh Model Geo Internals */
 
   int gmshModelGeoAddPoint(int *tag, double x, double y, double z, double lc)
   {
+    return 1;
   }
 
   int gmshModelGeoAddLine(int *tag, int startVertexTag, int endVertexTag)
   {
+    return 1;
   }
 
   int gmshModelGeoSynchronize()
   {
+    return 1;
   }
 
-  int gmshModelOCCCreate()
-  {
-  }
+  /* Gmsh Model OCC Internals */
 
   int gmshModelOCCAddPoint(int *tag, double x, double y, double z, double lc)
   {
+    return 1;
   }
 
   int gmshModelOCCSynchronize()
   {
+    return 1;
   }
+
 }
