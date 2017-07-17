@@ -947,6 +947,18 @@ int FlGui::testArrowShortcuts()
     drawContext::global()->draw();
     return 1;
   }
+  else if(Fl::test_shortcut(FL_Page_Up)) {
+    gmshPopplerWrapper::setCurrentPageDown();
+    drawContext::global()->draw();
+    drawContext::global()->draw();
+    return 1;
+  }
+  else if(Fl::test_shortcut(FL_Page_Down)) {
+    gmshPopplerWrapper::setCurrentPageUp();
+    drawContext::global()->draw();
+    drawContext::global()->draw();
+    return 1;
+  }
 #endif
   return 0;
 }
