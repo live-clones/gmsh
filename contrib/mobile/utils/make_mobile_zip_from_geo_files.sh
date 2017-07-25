@@ -5,24 +5,26 @@ if [ $# -lt 1 ]; then
   exit 1;
 fi
 
-files=$*
-rm -rf Archive
-mkdir Archive
+name=demos_boolean
 
-cp *.step Archive/
-cat <<EOT >> Archive/infos.xml
+files=$*
+rm -rf ${name}
+mkdir ${name}
+
+cp *.step ${name}/
+cat <<EOT >> ${name}/infos.xml
 <?xml version="1.0" encoding="utf-8"?>
 <models>
 EOT
 
 for file in $files ; do
-    cp $file Archive/
-    echo "<model>" >> Archive/infos.xml
-    echo "<title>$file</title>" >> Archive/infos.xml
-    echo "<summary>$file</summary>" >> Archive/infos.xml
-    echo "<file type=\"geo\">$file</file>" >> Archive/infos.xml
-    echo "</model>" >> Archive/infos.xml
-    cat <<EOT > Archive/${file%.geo}.pro
+    cp $file ${name}/
+    echo "<model>" >> ${name}/infos.xml
+    echo "<title>$file</title>" >> ${name}/infos.xml
+    echo "<summary>$file</summary>" >> ${name}/infos.xml
+    echo "<file type=\"geo\">$file</file>" >> ${name}/infos.xml
+    echo "</model>" >> ${name}/infos.xml
+    cat <<EOT > ${name}/${file%.geo}.pro
 DefineConstant[
   R_ = {"", Name "GetDP/1ResolutionChoices", Visible 0},
   C_ = {"", Name "GetDP/9ComputeCommand", Visible 0},
@@ -31,8 +33,8 @@ DefineConstant[
 EOT
 done
 
-cat <<EOT >> Archive/infos.xml
+cat <<EOT >> ${name}/infos.xml
 </models>
 EOT
 
-zip -r Archive.zip Archive
+zip -r ${name}.zip ${name}
