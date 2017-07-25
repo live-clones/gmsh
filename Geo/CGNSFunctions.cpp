@@ -182,6 +182,29 @@ void addHOTriPointsCGNS(const SVector3 p0,
   }
 }
 
+
+
+void addHOQuaPointsCGNS(int order,std::vector<SVector3>& points) {
+  
+  if (order > 2) {
+    
+    double scale = double (order -2) / double(order);
+    
+    SVector3 corner[4] = {SVector3(-1,-1,0),
+                          SVector3( 1,-1,0),
+                          SVector3( 1, 1,0),
+                          SVector3(-1, 1,0)};
+
+    for (int i=0;i<4;i++) {
+      SVector3 c1 = corner[i];
+      SVector3 c2 = corner[(i+1)%4];
+      double ds = 1./(order-2);
+      for (int i=0;i<order-2;i++) points.push_back((c1*(1.-i*ds) + c2*(i*ds))*scale);
+    }
+  }
+  if (order == 2 || order == 4) points.push_back(SVector3(0,0,0));
+}
+
 void addHOQuaPointsCGNS(const SVector3 p0,
                         const SVector3 p1,
                         const SVector3 p2,
@@ -190,32 +213,14 @@ void addHOQuaPointsCGNS(const SVector3 p0,
                         bool equidistant,
                         std::vector<SVector3>& points) {
   
-  std::vector<SVector3> quaPoints = generatePointsCGNS(TYPE_QUA,
-                                                       order-2,
-                                                       true,
-                                                       equidistant);
+  std::vector<SVector3> quaPoints;
 
-  std::vector<SVector3> tmp;
-  
-  if (order > 2) {
-    size_t j = 0;
-    for (int i=0;i<4;i++) {
-      tmp.push_back(quaPoints[i]);
-      for (int o=0;o<order-3;o++) tmp.push_back(quaPoints[4+j++]);
-    }
-    tmp.push_back(quaPoints[4+j]);
-    quaPoints = tmp;
-  }
-  
-  
-  
-  double scale = double (order-2) / double(order);
-  SVector3 offset(1./order,1./order,0); 
+  addHOQuaPointsCGNS(order,quaPoints);
   
   for (size_t i=0;i<quaPoints.size();i++) {
     SVector3 ip = quaPoints[i];
-    double u = ip[0] * scale;
-    double v = ip[1] * scale;
+    double u = ip[0];
+    double v = ip[1];
     SVector3 pt = ((1.-u)*(1.-v)*p0 + 
                    (1.+u)*(1.-v)*p1 + 
                    (1.+u)*(1.+v)*p2 + 
@@ -223,6 +228,30 @@ void addHOQuaPointsCGNS(const SVector3 p0,
     points.push_back(pt);
   }
 }
+
+void addHOHexPointsCGNS(int order,std::vector<SVector3>& points) {
+    
+  if (order == 2) {
+    points.push_back(SVector3(0,0,0));
+    return;
+  }
+  
+  double scale = double (order-2) / double(order);
+  
+  std::vector<SVector3> quaPoints;
+  addHOQuaPointsCGNS(order,quaPoints);
+
+  for (int iLevel=0;iLevel<=order-2;iLevel++) {
+
+    double level = double (2*iLevel - order + 2) * scale/double(order-2);
+    std::vector<SVector3>::iterator qIter=quaPoints.begin();
+    for(;qIter!=quaPoints.end();qIter++) {
+      SVector3& qp = *qIter;
+      points.push_back(SVector3(qp[0],qp[1],level));
+    }
+  }
+}
+
 
 void print(std::vector<SVector3>& points,const char* title,int iStart,int iEnd=-1) {
 
@@ -420,15 +449,7 @@ std::vector<SVector3> generatePointsCGNS(int parentType,
                              points[7],
                              order,equidistant,points);
           
-          std::vector<SVector3> ip = generatePointsCGNS(TYPE_HEX,order-2,true,true);
-          
-          double scale = double (order-2)/double (order);
-
-          for (size_t i=0;i<ip.size();i++) {
-            SVector3 hoPoint = ip[i];
-            hoPoint *= scale;
-            points.push_back(hoPoint);
-          }
+          addHOHexPointsCGNS(order,points);
         }
     
         break;
@@ -505,6 +526,9 @@ int* getRenumberingToGmsh(ElementType_t cgnsType) {
   
   int* renum = new int[points.size()];
   nb->forwardRenumbering(cgnsPoints,renum);
+
+
+  // for (int i=0;i<points.size();i++) std::cout << i << " -> " << renum[i] << std::endl;
   return renum;
 }
 
