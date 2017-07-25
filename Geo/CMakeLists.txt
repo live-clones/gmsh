@@ -49,6 +49,7 @@ set(SRC
   Cell.cpp CellComplex.cpp ChainComplex.cpp Homology.cpp Chain.cpp
   Curvature.cpp
   MVertexBoundaryLayerData.cpp
+  CGNSFunctions.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h) 
