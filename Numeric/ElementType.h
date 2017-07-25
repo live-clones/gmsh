@@ -12,6 +12,7 @@ namespace ElementType
   // corresponding to any element type.
   int ParentTypeFromTag(int tag);
   int OrderFromTag(int tag);
+  int NbNodesFromTag(int tag);
   int DimensionFromTag(int tag);
 
   // Gives > 0 if element tag is in Serendipity Family.
