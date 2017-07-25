@@ -282,7 +282,6 @@ std::vector<SVector3> generatePointsCGNS(int parentType,
         }
         
         if (complete && order > 1) {
-          
           addHOQuaPointsCGNS(points[0],
                              points[1],
                              points[2],
@@ -385,7 +384,7 @@ std::vector<SVector3> generatePointsCGNS(int parentType,
       
 
         // insert internal hex of order p-2
-        if (complete && order > 2) {
+        if (complete && order > 1) {
           
           addHOQuaPointsCGNS(points[0],
                              points[1],
