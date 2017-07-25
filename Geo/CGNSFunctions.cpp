@@ -194,6 +194,20 @@ void addHOQuaPointsCGNS(const SVector3 p0,
                                                        order-2,
                                                        true,
                                                        equidistant);
+
+  std::vector<SVector3> tmp;
+  
+  if (order > 2) {
+    size_t j = 0;
+    for (int i=0;i<4;i++) {
+      tmp.push_back(quaPoints[i]);
+      for (int o=0;o<order-3;o++) tmp.push_back(quaPoints[4+j++]);
+    }
+    tmp.push_back(quaPoints[4+j]);
+    quaPoints = tmp;
+  }
+  
+  
   
   double scale = double (order-2) / double(order);
   SVector3 offset(1./order,1./order,0); 
