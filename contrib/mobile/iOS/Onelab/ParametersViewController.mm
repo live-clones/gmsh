@@ -2,7 +2,7 @@
 #import "ModelViewController.h"
 #import "OptionsViewController.h"
 #import "AppDelegate.h"
-#import "parameter.h"
+#import "Parameter.h"
 #import "Utils.h"
 
 @interface ParametersViewController () {
