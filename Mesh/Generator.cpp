@@ -825,6 +825,11 @@ static void Mesh3D(GModel *m)
   Msg::StatusBar(true, "Meshing 3D...");
   double t1 = Cpu();
 
+  Msg::ResetProgressMeter();
+
+  if(m->getNumRegions())
+    Msg::ProgressMeter(0, 100, false, "Meshing 3D...");
+
   // mesh the extruded volumes first
   std::for_each(m->firstRegion(), m->lastRegion(), meshGRegionExtruded());
 
@@ -939,12 +944,16 @@ static void Mesh3D(GModel *m)
   m->setAllVolumesPositive();
 
   //  std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionNetgen());
-  if (Msg::GetVerbosity() > 98)
-    std::for_each(m->firstRegion(), m->lastRegion(), TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES ());
+  if(Msg::GetVerbosity() > 98)
+    std::for_each(m->firstRegion(), m->lastRegion(),
+                  TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES());
 
   CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
   CTX::instance()->meshTimer[2] = t2 - t1;
+
+  if(m->getNumRegions())
+    Msg::ProgressMeter(100, 100, false, "Meshing 3D...");
   Msg::StatusBar(true, "Done meshing 3D (%g s)", CTX::instance()->meshTimer[2]);
 }
 

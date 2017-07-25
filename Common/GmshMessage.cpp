@@ -666,7 +666,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
   }
 
   if(_logFile) fprintf(_logFile, "Info: %s\n", str);
-  if(_callback && log) (*_callback)("Progress", str);
+  if(_callback && log) (*_callback)("Info", str);
   if(_client && log) _client->Info(str);
 
 #if defined(HAVE_FLTK)
