@@ -721,6 +721,23 @@ class GModel {
 
   // SU2 mesh file
   int writeSU2(const std::string &name, bool saveAll, double scalingFactor);
+
+protected:
+  
+  int readCGNSBase(const std::string& name,int& nbases) const;
+  int readCGNSStructured  (const std::string& name);
+  int readCGNSUnstructured(const std::string& name);
+  int addCGNSPoints(const std::string&,
+                    int fileIndex,
+                    int baseIndex,
+                    int zoneIndex,
+                    int nbPoints,
+                    int dim,
+                    GEntity* ge,
+                    int& pointIndex, 
+                    std::map<int,MVertex*>& vertices);
+  
+
 };
 
 #endif
