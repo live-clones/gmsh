@@ -937,14 +937,14 @@ int openCGNSFile(const std::string& name,int& index_file,int& nbBasis) {
   
   // Open the CGNS file
   if (cg_open(name.c_str(), CG_MODE_READ, &index_file)) {
-    Msg::Error("Could not open CGNS file %s!",name.c_str());
+    Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+               __FILE__,__LINE__,fileName.c_str(),cg_get_error());
     return 0;
   }
   
   cg_nbases(index_file, &nbBasis);
   return 1;
 }
-
 
 int GModel::addCGNSPoints(const string& fileName,
                           int fileIndex,
