@@ -319,13 +319,13 @@ static void Mesh1D(GModel *m)
   Msg::StatusBar(true, "Meshing 1D...");
   double t1 = Cpu();
 
-  
+
   std::vector<GEdge*> temp;
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
     (*it)->meshStatistics.status = GEdge::PENDING;
     temp.push_back(*it);
   }
-  
+
   Msg::ResetProgressMeter();
 
   int nIter = 0, nTot = m->getNumEdges();
@@ -346,9 +346,9 @@ static void Mesh1D(GModel *m)
 	  nPending++;
 	}
       }
-      //      if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 1D...");
+      if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 1D...");
     }
-    
+
     if(!nPending) break;
     if(nIter++ > 10) break;
   }
@@ -486,7 +486,7 @@ static void Mesh2D(GModel *m)
             nPending++;
           }
         }
-	//        if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
+        if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
       }
 #if defined(_OPENMP)
 #pragma omp master
@@ -519,7 +519,7 @@ static void Mesh2D(GModel *m)
 #endif
           nPending++;
         }
-	//        if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
+        if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
       }
       if(!nPending) break;
       if(nIter++ > 10) break;
