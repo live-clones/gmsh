@@ -933,16 +933,16 @@ typedef set<CGNSPeriodic,CGNSPeriodicLess> CGNSPeriodicSet;
 
 // -----------------------------------------------------------------------------
 
-int openCGNSFile(const std::string& name,int& index_file,int& nbBasis) {
+int openCGNSFile(const std::string& fileName,int& fileIndex,int& nbBasis) {
   
   // Open the CGNS file
-  if (cg_open(name.c_str(), CG_MODE_READ, &index_file)) {
+  if (cg_open(fileName.c_str(), CG_MODE_READ, &fileIndex)) {
     Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
                __FILE__,__LINE__,fileName.c_str(),cg_get_error());
     return 0;
   }
   
-  cg_nbases(index_file, &nbBasis);
+  cg_nbases(fileIndex, &nbBasis);
   return 1;
 }
 
@@ -1058,9 +1058,10 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
     char familyName[maxLenCGNS];
     int nbBC;
     int nbGeo;
-    if (!cg_family_read(fileIndex,baseIndex,familyIndex,familyName,&nbBC,&nbGeo)) {
-      Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
-                 __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+    int ierr = cg_family_read(fileIndex,baseIndex,familyIndex,familyName,&nbBC,&nbGeo);
+    if (ierr != CG_OK) {
+      Msg::Error("%s (%i) : Error reading family %i in CGNS file %s : %s",
+                 __FILE__,__LINE__,familyIndex,fileName.c_str(),cg_get_error());
       return 0;
     }
     Msg::Info("Read boundary condition patch %s on classification %i in file %s",
@@ -1197,32 +1198,18 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
       // --- topological information 
 
       int eltType = tagFromCGNSType(cgnsType);
-      // int eltDim  = ElementType::DimensionFromTag(eltType);
       int eltSize = ElementType::NbNodesFromTag(eltType);
 
-      std::cout << "Have an element of type " 
-                << eltType << ", size " << eltSize << std::endl;
       
       int* renum =  getRenumberingToGmsh(cgnsType);
-      // for (int i=0;i<eltSize;i++) {
-      //   std::cout << i << " -> " << renum[i] << std::endl;
-      // }
       
       // --- read connections
 
       cgsize_t connSize;
-      if( cg_ElementDataSize(fileIndex, baseIndex, zoneIndex, connIndex, &connSize) != CG_OK ) {
+      if(cg_ElementDataSize(fileIndex,baseIndex,zoneIndex,connIndex,&connSize)!=CG_OK) {
         Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
                    __FILE__,__LINE__,fileName.c_str(),cg_get_error());
         return 0;
-      }
-
-      
-      // --- check connectivity size
-      
-      if (connSize / nbElt != eltSize) {
-        
-        std::cout << "Inconsistency in connection data size " << std::endl;
       }
       
       // --- read elements
@@ -1230,7 +1217,7 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
       cgsize_t* connElts = new cgsize_t[connSize];
       
 
-      if( cg_elements_read(fileIndex,baseIndex,zoneIndex,connIndex,connElts,NULL) != CG_OK ) { 
+      if(cg_elements_read(fileIndex,baseIndex,zoneIndex,connIndex,connElts,NULL)!=CG_OK) { 
         Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
                    __FILE__,__LINE__,fileName.c_str(),cg_get_error());
         return 0;

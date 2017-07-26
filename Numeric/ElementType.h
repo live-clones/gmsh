@@ -6,6 +6,8 @@
 #ifndef _ELEMENTTYPE_H_
 #define _ELEMENTTYPE_H_
 
+#include <string>
+
 namespace ElementType
 {
   // Give parent type, order & dimension
@@ -25,6 +27,8 @@ namespace ElementType
 
   // Give first order element tag
   int getPrimaryTag(int tag);
+
+  std::string nameOfParentType(int type);
 }
 
 #endif
