@@ -52,9 +52,12 @@
 #include "MZone.h"
 #include "MZoneBoundary.h"
 
+namespace CGNS {
 #include <cgnslib.h>
+}
 
 using namespace std;
+  using namespace CGNS;
 
 #define maxLenCGNS 32
 
@@ -950,7 +953,7 @@ int GModel::addCGNSPoints(const string& fileName,
                           int fileIndex,
                           int baseIndex,
                           int zoneIndex,
-                          int nbPoints,int dim,
+                          cgsize_t nbPoints,int dim,
                           GEntity* entity,
                           int& index,
                           std::map<int,MVertex*>& vertices) {
@@ -972,12 +975,10 @@ int GModel::addCGNSPoints(const string& fileName,
   double* xyz = new double[nbPoints*3];
   for (int i=0;i<3*nbPoints;i++) xyz[i] = 0;
 
-  std::cout << "Reading " << nbPoints << " points " << std::endl;
-
   for (int iCoord=0;iCoord<dim;iCoord++) {
 
     char coordName[maxLenCGNS];
-    int indBeg(1);
+    cgsize_t indBeg(1);
     
     DataType_t dataType;
     if (cg_coord_info(fileIndex,baseIndex,zoneIndex, 
@@ -994,10 +995,7 @@ int GModel::addCGNSPoints(const string& fileName,
                  __FILE__,__LINE__,fileName.c_str(),cg_get_error());
       delete [] xyz;
       return 0;
-    }
-
-    std::cout << "Read coordinate " << iCoord << std::endl;
-    
+    }    
   }
   
   const double* x = xyz;
@@ -1008,17 +1006,9 @@ int GModel::addCGNSPoints(const string& fileName,
     vertices[index] = new MVertex(x[i],y[i],z[i],entity,index);
     index++;
   }
-
-  std::cout << "Created all points " << std::endl;
-  
   delete [] xyz;
-
-  std::cout << "Cleaned coordinates " << std::endl;
-  
   return 1;
 }
-
-
 
 // -----------------------------------------------------------------------------
 
@@ -1159,9 +1149,6 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
       strcpy(familyName,familyString.str().c_str());
       family[familyName] = familyIndex;
     }
-
-    std::cout << "Reading zone " << zoneIndex << " on family " << familyIndex 
-              << std::endl;
     
     // --- read coordinates and create vertices
     
@@ -1188,15 +1175,13 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
     }
 
     // connectivity corresponds to a given element type 
-
-    std::cout << "Read number of sections" << std::endl;
-
+    
     for (int sectIndex=1;sectIndex<=nbSections;sectIndex++) {
       
       char sectName[maxLenCGNS];
       ElementType_t cgnsType;
-      int eltBeg;
-      int eltEnd;
+      cgsize_t eltBeg;
+      cgsize_t eltEnd;
       int nbBound;
       int parentFlag;
       
@@ -1210,12 +1195,6 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
       }
       
       int nbElt = eltEnd - eltBeg + 1;
-
-      std::cout << "Have " << nbElt << " elements of type " << cgnsType << " in section " << std::endl;
-      
-      // --- topological information 
-      
-      std::cout << "Got renumbering " << std::endl;
       
       // --- read connections
 
@@ -1241,8 +1220,6 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
         return 0;
       }
       
-      std::cout << "Read elements " << std::endl;
-
       cgsize_t* pElt = elts;
       for (int iElt=0;iElt<nbElt;iElt++) {
         
@@ -2570,7 +2547,7 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
             // In the first zone
             if(cg_conn_write
                (cgIndexFile, cgIndexBase, zoneInfo[gCIt->first.zone1].cgIndex,
-                interfaceName.c_str(), Vertex, Abutting1to1, PointList, nVert,
+                interfaceName.c_str(), CGNS::Vertex, Abutting1to1, PointList, nVert,
                 &iBuffer1[0], zoneInfo[gCIt->first.zone2].name.c_str(),
                 Unstructured, PointListDonor, Integer, nVert, &iBuffer2[0],
                 &cgIndexInterface))
@@ -2580,7 +2557,7 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
             // In the second zone
             if(cg_conn_write
                (cgIndexFile, cgIndexBase, zoneInfo[gCIt->first.zone2].cgIndex,
-                interfaceName.c_str(), Vertex, Abutting1to1, PointList, nVert,
+                interfaceName.c_str(), CGNS::Vertex, Abutting1to1, PointList, nVert,
                 &iBuffer2[0], zoneInfo[gCIt->first.zone1].name.c_str(),
                 Unstructured, PointListDonor, Integer, nVert, &iBuffer1[0],
                 &cgIndexInterface))

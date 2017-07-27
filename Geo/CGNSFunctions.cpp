@@ -17,7 +17,11 @@
 #include "fullMatrix.h"
 #include "GmshDefines.h"
 
+namespace CGNS {
 #include <cgnslib.h>
+};
+
+  using namespace CGNS;
 
 #include <vector>
 // -----------------------------------------------------------------------------
