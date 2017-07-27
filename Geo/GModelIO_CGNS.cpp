@@ -957,7 +957,11 @@ int GModel::addCGNSPoints(const string& fileName,
 
   
   int nbDim;
-  cg_ncoords(fileIndex,baseIndex,zoneIndex,&nbDim);
+  if (cg_ncoords(fileIndex,baseIndex,zoneIndex,&nbDim) != CG_OK) {
+    Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+               __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+    return 0;
+  }
   
   if (nbDim != dim) {
     Msg::Error("%s (%i) : Error reading CGNS file %s: incoherent coordinate count",
@@ -968,6 +972,8 @@ int GModel::addCGNSPoints(const string& fileName,
   double* xyz = new double[nbPoints*3];
   for (int i=0;i<3*nbPoints;i++) xyz[i] = 0;
 
+  std::cout << "Reading " << nbPoints << " points " << std::endl;
+
   for (int iCoord=0;iCoord<dim;iCoord++) {
 
     char coordName[maxLenCGNS];
@@ -976,7 +982,7 @@ int GModel::addCGNSPoints(const string& fileName,
     DataType_t dataType;
     if (cg_coord_info(fileIndex,baseIndex,zoneIndex, 
                       iCoord+1, &dataType, coordName) != CG_OK) {
-      Msg::Error("%s (%i) : Error reading CGNS file %s",
+      Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
                  __FILE__,__LINE__,fileName.c_str(),cg_get_error());
       delete [] xyz;
       return 0;
@@ -989,6 +995,9 @@ int GModel::addCGNSPoints(const string& fileName,
       delete [] xyz;
       return 0;
     }
+
+    std::cout << "Read coordinate " << iCoord << std::endl;
+    
   }
   
   const double* x = xyz;
@@ -999,8 +1008,12 @@ int GModel::addCGNSPoints(const string& fileName,
     vertices[index] = new MVertex(x[i],y[i],z[i],entity,index);
     index++;
   }
+
+  std::cout << "Created all points " << std::endl;
   
   delete [] xyz;
+
+  std::cout << "Cleaned coordinates " << std::endl;
   
   return 1;
 }
@@ -1081,7 +1094,8 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
 
   int classIndex = 1;
   
-  
+  std::map<ElementType_t,int*> renumbering;
+
   for (int zoneIndex=1;zoneIndex<=nbZones;zoneIndex++) {
     
     // --- node numbering is implicit in the zone, therefore offset required
@@ -1165,9 +1179,9 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
 
     // --- read different connectivities 
     
-    int nbConnectivities;
+    int nbSections;
     
-    if (cg_nsections(fileIndex,baseIndex,zoneIndex,&nbConnectivities) != CG_OK) {
+    if (cg_nsections(fileIndex,baseIndex,zoneIndex,&nbSections) != CG_OK) {
       Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
                  __FILE__,__LINE__,fileName.c_str(),cg_get_error());
       return 0;
@@ -1175,59 +1189,79 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
 
     // connectivity corresponds to a given element type 
 
-    for (int connIndex=1;connIndex<=nbConnectivities;connIndex++) {
+    std::cout << "Read number of sections" << std::endl;
+
+    for (int sectIndex=1;sectIndex<=nbSections;sectIndex++) {
       
-      char connName[maxLenCGNS];
+      char sectName[maxLenCGNS];
       ElementType_t cgnsType;
       int eltBeg;
       int eltEnd;
       int nbBound;
-      int parent;
+      int parentFlag;
       
       // --- read connection block size
 
-      if (cg_section_read(fileIndex,baseIndex,zoneIndex,connIndex,connName, 
-                          &cgnsType,&eltBeg,&eltEnd,&nbBound,&parent) != CG_OK ){
+      if (cg_section_read(fileIndex,baseIndex,zoneIndex,sectIndex,sectName, 
+                          &cgnsType,&eltBeg,&eltEnd,&nbBound,&parentFlag) != CG_OK ){
         Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
                    __FILE__,__LINE__,fileName.c_str(),cg_get_error());
         return 0;
       }
       
       int nbElt = eltEnd - eltBeg + 1;
+
+      std::cout << "Have " << nbElt << " elements of type " << cgnsType << " in section " << std::endl;
       
       // --- topological information 
-
-      int eltType = tagFromCGNSType(cgnsType);
-      int eltSize = ElementType::NbNodesFromTag(eltType);
-
       
-      int* renum =  getRenumberingToGmsh(cgnsType);
+      std::cout << "Got renumbering " << std::endl;
       
       // --- read connections
 
-      cgsize_t connSize;
-      if(cg_ElementDataSize(fileIndex,baseIndex,zoneIndex,connIndex,&connSize)!=CG_OK) {
+      cgsize_t sectSize;
+      if(cg_ElementDataSize(fileIndex,baseIndex,zoneIndex,
+                            sectIndex,&sectSize)!=CG_OK) {
         Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
                    __FILE__,__LINE__,fileName.c_str(),cg_get_error());
         return 0;
       }
+
+      
       
       // --- read elements
 
-      cgsize_t* connElts = new cgsize_t[connSize];
+      cgsize_t* elts = new cgsize_t[sectSize];
       
 
-      if(cg_elements_read(fileIndex,baseIndex,zoneIndex,connIndex,connElts,NULL)!=CG_OK) { 
+      if(cg_elements_read(fileIndex,baseIndex,zoneIndex,sectIndex,
+                          elts,NULL)!=CG_OK) { 
         Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
                    __FILE__,__LINE__,fileName.c_str(),cg_get_error());
         return 0;
       }
       
-      cgsize_t* pElt = connElts;
-      for (int iElt=0;iElt<nbElt;iElt++,pElt+=eltSize) {
+      std::cout << "Read elements " << std::endl;
+
+      cgsize_t* pElt = elts;
+      for (int iElt=0;iElt<nbElt;iElt++) {
         
         vector<MVertex*> vtcs;
         
+        ElementType_t myType = cgnsType;
+        if (cgnsType == MIXED) myType = (ElementType_t) *pElt++;
+
+        int eltType = tagFromCGNSType(myType);
+        int eltSize = ElementType::NbNodesFromTag(eltType);
+        int* renum = NULL;
+        
+        std::map<ElementType_t,int*>::iterator rIter = renumbering.find(myType);
+        if (rIter == renumbering.end()) {
+          renum = getRenumberingToGmsh(myType);
+          renumbering[myType] = renum;
+        }
+        else renum = rIter->second;
+
         for (int iVtx=0;iVtx<eltSize;iVtx++) {
           int id = vtxOffset + pElt[renum[iVtx]] - 1;
           
@@ -1241,15 +1275,20 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
           }
           vtcs.push_back(vtxIter->second);
         }
+
+        pElt += eltSize;
         int partition(0);
         createElementMSH(this,eltIndex++,eltType,classIndex,partition,vtcs,eltMap);
       }
 
       classIndex++;
-      delete [] connElts;
+      delete [] elts;
     }
   }
 
+  for (std::map<ElementType_t,int*>::iterator rIter=renumbering.begin();
+       rIter!=renumbering.end();++rIter) delete [] rIter->second;
+  
   for(int i = 0; i < 10 ; i++) _storeElementsInEntities(eltMap[i]);
 
   _associateEntityWithMeshVertices();
@@ -1348,7 +1387,9 @@ int GModel::readCGNSStructured(const std::string &name)
   opt_mesh_cgns_import_order(0, GMSH_SET, max_order);
 
   int order = CTX::instance()->mesh.cgnsImportOrder;
-  if (CTX::instance()->batch == 0 &&  FlGui::instance()->available() && CTX::instance()->expertMode) {
+  if (CTX::instance()->batch == 0 &&  
+      FlGui::instance()->available() && 
+      CTX::instance()->expertMode) {
     order = cgnsImport();
     CTX::instance()->mesh.order = order;
   } 
@@ -1731,7 +1772,7 @@ int GModel::readCGNSStructured(const std::string &name)
     //createTopologyFromMesh();
 
     if ( cg_close (index_file) ) {
-      Msg::Error("Couldnt close the file !");
+      Msg::Error("Couldn't close the file !");
       return 0;
     }
     return 1;

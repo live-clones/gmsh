@@ -132,7 +132,7 @@ bool completeCGNSType(ElementType_t cgnsType) {
   case TETRA_34: case PYRA_50:  case PENTA_66: case HEXA_98: 
                                                 
   default:
-    exit(1);
+    return false;
   }
   return false;
 }
