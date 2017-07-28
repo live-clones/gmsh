@@ -3812,6 +3812,16 @@ GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
 
 #if defined(HAVE_MESH)
 
+void GModel::classifyAllFaces()
+{
+  std::set<GFace*> faces;
+  for(GModel::fiter it = this->firstFace();
+      it != this->lastFace(); ++it) {
+    faces.insert(*it);
+  }
+  this->classifyFaces(faces);
+}
+
 void recurClassifyEdges(MTri3 *t, std::map<MTriangle*, GFace*> &reverse,
                         std::map<MLine*, GEdge*, compareMLinePtr> &lines,
                         std::set<MLine*> &touched, std::set<MTri3*> &trisTouched,
@@ -3864,7 +3874,6 @@ void recurClassify(MTri3 *t, GFace *gf,
 }
 
 #endif
-
 
 void GModel::classifyFaces(std::set<GFace*> &_faces)
 {
