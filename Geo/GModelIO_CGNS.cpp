@@ -72,6 +72,9 @@ extern bool completeCGNSType  (ElementType_t cgnsType);
 // get the gmsh tag for this element type
 extern int  tagFromCGNSType   (ElementType_t cgnsType);
 
+// get the name for a grid location
+extern std::string gridLocationCGNS(GridLocation_t location);
+
 // // generate the projection matrix from cgns to gmsh control points
 // // equidistant corresponds to gmsh/equidistant, else strict cgns standard
 // extern fullMatrix<double> projectionFromCGNS(int parentType,
@@ -971,13 +974,11 @@ int GModel::addCGNSPoints(const string& fileName,
   
   double* xyz = new double[nbPoints*3];
   for (int i=0;i<3*nbPoints;i++) xyz[i] = 0;
-
-  std::cout << "Reading " << nbPoints << " points " << std::endl;
-
+  
   for (int iCoord=0;iCoord<dim;iCoord++) {
 
     char coordName[maxLenCGNS];
-    int indBeg(1);
+    cgsize_t indBeg(1);
     
     DataType_t dataType;
     if (cg_coord_info(fileIndex,baseIndex,zoneIndex, 
@@ -994,10 +995,7 @@ int GModel::addCGNSPoints(const string& fileName,
                  __FILE__,__LINE__,fileName.c_str(),cg_get_error());
       delete [] xyz;
       return 0;
-    }
-
-    std::cout << "Read coordinate " << iCoord << std::endl;
-    
+    }    
   }
   
   const double* x = xyz;
@@ -1008,17 +1006,9 @@ int GModel::addCGNSPoints(const string& fileName,
     vertices[index] = new MVertex(x[i],y[i],z[i],entity,index);
     index++;
   }
-
-  std::cout << "Created all points " << std::endl;
-  
   delete [] xyz;
-
-  std::cout << "Cleaned coordinates " << std::endl;
-  
   return 1;
 }
-
-
 
 // -----------------------------------------------------------------------------
 
@@ -1083,7 +1073,15 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
     family[familyName] = familyIndex;
   }
   
+  // ---------------------------------------------------------------------------
   // --- read the zones containing the elements --------------------------------
+  // ---------------------------------------------------------------------------
+  
+  // keep renumbering table once generated 
+
+  std::map<ElementType_t,int*> renumbering;
+
+  // --- read mesh zones -------------------------------------------------------
   
   int nbZones(0);
   if (cg_nzones(fileIndex,baseIndex,&nbZones) != CG_OK) {
@@ -1094,11 +1092,9 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
 
   int classIndex = 1;
   
-  std::map<ElementType_t,int*> renumbering;
-
   for (int zoneIndex=1;zoneIndex<=nbZones;zoneIndex++) {
     
-    // --- node numbering is implicit in the zone, therefore offset required
+    // --- node numbering is implicit in the zone, therefore offset required 
 
     int vtxOffset = vtxIndex;
 
@@ -1112,7 +1108,9 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
                  __FILE__,__LINE__,fileName.c_str(),cg_get_error());
       return 0;
     }
-      
+
+    if (zoneType != Unstructured) return 0;
+    
     // --- get element counts
 
     cgsize_t sizes[3];
@@ -1123,21 +1121,23 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
                  __FILE__,__LINE__,fileName.c_str(),cg_get_error());
       return 0;
     }
+
+    Msg::Info("Reading zone %s",zoneName);
     
     cgsize_t nbPoints = sizes[0];
 
-    // --- check whether this is a classified zone
+    // --- read the family attached to the zone
     
     if(cg_goto(fileIndex, baseIndex, "Zone_t", zoneIndex, "end") != CG_OK ) {
       Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
                  __FILE__,__LINE__,fileName.c_str(),cg_get_error());
       return 0;
     }
-
-    char familyName[maxLenCGNS];
-    int familyIndex(-1);
     
-    int ierr = cg_famname_read(familyName);
+    char zoneFamilyName[maxLenCGNS];
+    int  zoneFamilyIndex(-1);
+    
+    int ierr = cg_famname_read(zoneFamilyName);
 
     if (ierr == CG_ERROR) {
       Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
@@ -1146,22 +1146,106 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
     }
     
     if (ierr == CG_OK) {
-      map<string,int>::iterator fIter = family.find(familyName);
-      if (fIter != family.end()) familyIndex = fIter->second;
+      map<string,int>::iterator fIter = family.find(zoneFamilyName);
+      if (fIter != family.end()) zoneFamilyIndex = fIter->second;
       else Msg::Error("%s (%i) : Error reading CGNS file %s : "
                       "cannot find CGNS family in available list",
                       __FILE__,__LINE__,fileName.c_str());
     }
     else {
-      familyIndex = family.size();
-      ostringstream familyString;
-      familyString << "family_" << familyIndex;
-      strcpy(familyName,familyString.str().c_str());
-      family[familyName] = familyIndex;
+      zoneFamilyIndex = family.size();
+      ostringstream zoneFamilyString;
+      zoneFamilyString << "zoneFamily_" << zoneFamilyIndex;
+      strcpy(zoneFamilyName,zoneFamilyString.str().c_str());
+      family[zoneFamilyName] = zoneFamilyIndex;
     }
 
-    std::cout << "Reading zone " << zoneIndex << " on family " << familyIndex 
-              << std::endl;
+    
+    // --- read boundary conditions 
+
+    int nbBoCos;
+    if(cg_nbocos(fileIndex, baseIndex, zoneIndex, &nbBoCos) != CG_OK ) { 
+      Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+                 __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+      return 0;
+    }
+    
+
+    for (int boCoIndex=1;boCoIndex<=nbBoCos;boCoIndex++) {
+      
+      char boCoName[maxLenCGNS];
+
+      BCType_t bcType;
+      PointSetType_t ptSetType;
+      cgsize_t nbElements;
+      int normalIndex; 
+      cgsize_t normalSize;
+      DataType_t normalType;
+      int nbDataSet;
+      
+      if (cg_boco_info(fileIndex,baseIndex,zoneIndex,boCoIndex,boCoName,
+                       &bcType,&ptSetType,&nbElements,&normalIndex,&normalSize,
+                       &normalType, &nbDataSet) != CG_OK ) {
+        
+        Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+                   __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+        return 0;
+      }
+      
+      GridLocation_t location;
+
+      if (cg_boco_gridlocation_read(fileIndex,baseIndex,zoneIndex,boCoIndex,&location) != CG_OK) { 
+        Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+                   __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+        return 0;
+      }
+
+      Msg::Info("Reading boundary condition %s",boCoName);
+      
+      if (meshDim == 3 && location!=FaceCenter) {
+        Msg::Info("Boundary condition location %s not supported for classification of unstructured mesh",
+                  gridLocationCGNS(location).c_str());
+      }
+      
+      if (meshDim == 2 && location!=EdgeCenter) {
+        Msg::Info("Boundary condition location %s not supported for classification of unstructured mesh",
+                  gridLocationCGNS(location).c_str());
+      }
+      
+      char boCoFamilyName[maxLenCGNS];
+      int  boCoFamilyIndex;
+      
+      if (cg_goto(fileIndex,baseIndex,"Zone_t",zoneIndex,"ZoneBC_t",1,"BC_t",boCoIndex,"end")!=CG_OK) {
+        Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+                   __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+        return 0;
+      }
+      
+      int ierr = cg_famname_read(boCoFamilyName);
+      
+      if (ierr == CG_ERROR) {
+        Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+                   __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+        return 0;
+      }
+      
+      if (ierr == CG_OK) {
+        Msg::Info("Boundary condition is associated to family %s",boCoFamilyName);
+        map<string,int>::iterator fIter = family.find(boCoFamilyName);
+        if (fIter != family.end()) boCoFamilyIndex = fIter->second;
+        else Msg::Error("%s (%i) : Error reading CGNS file %s : "
+                        "cannot find CGNS family in available list",
+                        __FILE__,__LINE__,fileName.c_str());
+      }
+      // else {
+      //   boCoFamilyIndex = zoneFamily.size();
+      //     ostringstream boCoFamilyString;
+      //     zoneFamilyString << "boCoFamily_" << boCoFamilyIndex;
+      //     strcpy(boCoName,boCoFamilyString.str().c_str());
+      //     boCoFamily[boCoFamilyName] = boCoFamilyIndex;
+      //   }
+    }
+    
     
     // --- read coordinates and create vertices
     
@@ -1174,10 +1258,10 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
                   NULL,
                   vtxIndex,
                   vtxMap);
-    
-    // in case multiple zones are read, renumbering will be required
 
-    // --- read different connectivities 
+    Msg::Info("Read %i points",nbPoints);
+
+    // --- read sections 
     
     int nbSections;
     
@@ -1187,18 +1271,18 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
       return 0;
     }
 
-    // connectivity corresponds to a given element type 
-
-    std::cout << "Read number of sections" << std::endl;
-
+    // connectivity 
+    
     for (int sectIndex=1;sectIndex<=nbSections;sectIndex++) {
       
       char sectName[maxLenCGNS];
       ElementType_t cgnsType;
-      int eltBeg;
-      int eltEnd;
+      cgsize_t eltBeg;
+      cgsize_t eltEnd;
       int nbBound;
       int parentFlag;
+
+      std::map<ElementType_t,int> elementCount;
       
       // --- read connection block size
 
@@ -1210,12 +1294,6 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
       }
       
       int nbElt = eltEnd - eltBeg + 1;
-
-      std::cout << "Have " << nbElt << " elements of type " << cgnsType << " in section " << std::endl;
-      
-      // --- topological information 
-      
-      std::cout << "Got renumbering " << std::endl;
       
       // --- read connections
 
@@ -1226,8 +1304,6 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
                    __FILE__,__LINE__,fileName.c_str(),cg_get_error());
         return 0;
       }
-
-      
       
       // --- read elements
 
@@ -1240,9 +1316,9 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
                    __FILE__,__LINE__,fileName.c_str(),cg_get_error());
         return 0;
       }
-      
-      std::cout << "Read elements " << std::endl;
 
+      // --- create elements
+      
       cgsize_t* pElt = elts;
       for (int iElt=0;iElt<nbElt;iElt++) {
         
@@ -1250,6 +1326,10 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
         
         ElementType_t myType = cgnsType;
         if (cgnsType == MIXED) myType = (ElementType_t) *pElt++;
+
+        if (elementCount.find(myType) == elementCount.end()) elementCount[myType] = 0;
+        elementCount[myType]++;
+        
 
         int eltType = tagFromCGNSType(myType);
         int eltSize = ElementType::NbNodesFromTag(eltType);
@@ -1279,17 +1359,34 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
         pElt += eltSize;
         int partition(0);
         createElementMSH(this,eltIndex++,eltType,classIndex,partition,vtcs,eltMap);
-      }
 
-      classIndex++;
+      }
+      
+      std::ostringstream elementList;
+      std::map<ElementType_t,int>::iterator ecIter = elementCount.begin();
+      for (;ecIter!=elementCount.end();++ecIter) {
+        elementList << ecIter->second << " " 
+                    << ElementType::nameOfParentType(parentFromCGNSType(ecIter->first))
+                    << "s ";
+      }
+      
+      Msg::Info("Section %i of zone %i has %s",sectIndex,zoneIndex,elementList.str().c_str());
+      
       delete [] elts;
+      classIndex++;
     }
+    
+    // classIndex++;
   }
 
   for (std::map<ElementType_t,int*>::iterator rIter=renumbering.begin();
        rIter!=renumbering.end();++rIter) delete [] rIter->second;
   
+  removeDuplicateMeshVertices(1e-8);
+
   for(int i = 0; i < 10 ; i++) _storeElementsInEntities(eltMap[i]);
+
+  // createTopologyFromMeshNew();
 
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vtxMap);

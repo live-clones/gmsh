@@ -549,5 +549,40 @@ int* getRenumberingToGmsh(ElementType_t cgnsType) {
   return renum;
 }
 
+std::string gridLocationCGNS(GridLocation_t lt) {
+
+  switch (lt) {
+  case Vertex:
+    return "vertices";
+    break;
+  case CellCenter:
+    return "regions";
+    break;
+  case FaceCenter:
+    return "faces";
+    break;
+  case IFaceCenter:
+    return "i-faces";
+    break;
+  case JFaceCenter:
+    return "j-faces";
+    break;
+  case KFaceCenter:
+    return "k-faces";
+    break;
+  case EdgeCenter:
+    return "edges";
+    break;
+  case GridLocationNull:
+    return "undefined";
+    break;
+  case GridLocationUserDefined:
+    return "user defined";
+    break;
+  }
+}
+
+  
+
 
 #endif
