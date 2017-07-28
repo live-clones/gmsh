@@ -505,7 +505,7 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
 
 void meshGEdge::operator() (GEdge *ge)
 {
-  gf->model()->setCurrentMeshEntity(ge);
+  ge->model()->setCurrentMeshEntity(ge);
 
   // if(ge->geomType() == GEntity::DiscreteCurve) return;
   if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
