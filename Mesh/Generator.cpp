@@ -190,7 +190,7 @@ void GetStatistics(double stat[50], double quality[3][100])
   stat[16] = CTX::instance()->meshTimer[2];
 
   if(quality){
-    for(int i = 0; i < 4; i++)
+    for(int i = 0; i < 3; i++)
       for(int j = 0; j < 100; j++)
         quality[i][j] = 0.;
     double minSICN = 0., minSICNMin = 1., minSICNMax = -1.;
