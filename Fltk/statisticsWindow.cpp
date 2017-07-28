@@ -179,7 +179,7 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
 
   {
     memUsage = new Fl_Box(WB, height - BH - WB, width / 2, BH, "");
-    memUsage->align(FL_ALIGN_INSIDE);
+    memUsage->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
     Fl_Return_Button *o = new Fl_Return_Button
       (width - BB - WB, height - BH - WB, BB, BH, "Update");
