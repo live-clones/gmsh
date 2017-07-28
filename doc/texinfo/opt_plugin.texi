@@ -1302,6 +1302,23 @@ Default value: @code{0}
 Default value: @code{-1}
 @end table
 
+@item Plugin(VoroMetal)
+Plugin(VoroMetal) creates microstructures using Voronoi diagrams.@*
+@*
+
+String options:
+@table @code
+@item SeedsFile
+Default value: @code{"seeds.txt"}
+@end table
+Numeric options:
+@table @code
+@item ComputeBestSeeds
+Default value: @code{0}
+@item ComputeMicrostructure
+Default value: @code{1}
+@end table
+
 @item Plugin(Warp)
 Plugin(Warp) transforms the elements in the view `View' by adding to their node coordinates the vector field stored in the `TimeStep'-th time step of the view `OtherView', scaled by `Factor'.@*
 @*
