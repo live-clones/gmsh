@@ -18,6 +18,12 @@
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
 
+#ifdef HAVE_LIBCGNS
+namespace CGNS {
+#include <cgnslib.h>
+}
+#endif
+
 template <class scalar> class simpleFunction;
 
 class FM_Internals;
@@ -722,6 +728,7 @@ class GModel {
   // SU2 mesh file
   int writeSU2(const std::string &name, bool saveAll, double scalingFactor);
 
+#if defined HAVE_LIBCGNS 
 protected:
   
   int readCGNSBase(const std::string& name,int& nbases) const;
@@ -731,12 +738,13 @@ protected:
                     int fileIndex,
                     int baseIndex,
                     int zoneIndex,
-                    int nbPoints,
+                    CGNS::cgsize_t nbPoints,
                     int dim,
                     GEntity* ge,
                     int& pointIndex, 
-                    std::map<int,MVertex*>& vertices);
+                    std::vector<MVertex*>& vertices);
   
+#endif
 
 };
 

@@ -17,7 +17,11 @@
 #include "fullMatrix.h"
 #include "GmshDefines.h"
 
+namespace CGNS {
 #include <cgnslib.h>
+};
+
+using namespace CGNS;
 
 #include <vector>
 // -----------------------------------------------------------------------------
@@ -413,7 +417,7 @@ std::vector<SVector3> generatePointsCGNS(int parentType,
         // internal points in edges of top triangle
         for (int i=0;i<3;i++) addEdgePointsCGNS(pp[i+3],pp[(i+1)%3+3],order,pp);
         
-        if (complete && order > 2) {
+        if (complete) {
           
           // internal vertices for base triangle
           addTriPointsCGNS(pp[0],pp[1],pp[2],order,true,pp);
@@ -549,7 +553,7 @@ int* getRenumberingToGmsh(ElementType_t cgnsType) {
   return renum;
 }
 
-std::string gridLocationCGNS(GridLocation_t lt) {
+std::string gridLocationNameCGNS(GridLocation_t lt) {
 
   switch (lt) {
   case Vertex:
@@ -574,13 +578,62 @@ std::string gridLocationCGNS(GridLocation_t lt) {
     return "edges";
     break;
   case GridLocationNull:
-    return "undefined";
+    return "null";
     break;
   case GridLocationUserDefined:
     return "user defined";
     break;
   }
+  return "unknown";
 }
+
+int gridLocationDimCGNS(GridLocation_t lt) {
+  
+  switch (lt) {
+  case CellCenter:
+    return 3;
+    break;
+  case FaceCenter:
+  case IFaceCenter:
+  case JFaceCenter:
+  case KFaceCenter:
+    return 2;
+    break;
+  case EdgeCenter:
+    return 1;
+    break;
+  case Vertex:
+    return 0;
+    break;
+  case GridLocationNull:
+  case GridLocationUserDefined:
+    return -1;
+    break;
+  }
+  return -1;
+}
+
+
+GridLocation_t unstructuredGridLocationCGNS(int dim) {
+
+  switch (dim) {
+  case 3:
+    return CellCenter;
+    break;
+  case 2:
+    return FaceCenter;
+    break;
+  case 1:
+    return EdgeCenter;
+    break;
+  case 0:
+    return Vertex;
+    break;
+  }
+  
+  return GridLocationNull;
+}
+
 
   
 
