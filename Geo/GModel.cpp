@@ -54,6 +54,8 @@
 #include "meshMetric.h"
 #include "meshGRegionMMG3D.h"
 #include "meshGFaceBamg.h"
+
+static const float EDGE_ANGLE_THRESHOLD = 0.698132;
 #endif
 
 #if defined(HAVE_KBIPACK)
@@ -3816,10 +3818,8 @@ void GModel::classifyAllFaces()
 {
   std::set<GFace*> faces;
   std::vector<MElement*> elements;
-  for(GModel::fiter it = this->firstFace();
-      it != this->lastFace(); ++it) {
+  for(GModel::fiter it = this->firstFace(); it != this->lastFace(); ++it) {
     faces.insert(*it);
-
     elements.insert(elements.end(), (*it)->triangles.begin(),
                        (*it)->triangles.end());
     elements.insert(elements.end(), (*it)->quadrangles.begin(),
@@ -3836,7 +3836,7 @@ void GModel::classifyAllFaces()
   buildListOfEdgeAngle(adj, edges_detected, edges_lonly);
   for(unsigned int i = 0; i < edges_detected.size(); i++){
     edge_angle ea = edges_detected[i];
-    if (ea.angle <= 0.698132) break;
+    if (ea.angle <= EDGE_ANGLE_THRESHOLD) break;
     edge->lines.push_back(new MLine(ea.v1, ea.v2));
   }
 
