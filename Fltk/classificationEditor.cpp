@@ -20,9 +20,6 @@
 #include "discreteEdge.h"
 #include "discreteFace.h"
 
-extern GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
-                              std::map<std::pair<int, int>, GEdge*> &newEdges);
-
 static void NoElementsSelectedMode(classificationEditor *e)
 {
   e->buttons[CLASS_BUTTON_SELECT_ELEMENTS]->activate();
