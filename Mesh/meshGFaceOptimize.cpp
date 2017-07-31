@@ -119,7 +119,7 @@ void buildMeshGenerationDataStructures(GFace *gf,
     std::cout << "***************************************** NULL" << std::endl;
     throw;
   }
-  
+
   for(unsigned int i = 0;i < gf->triangles.size(); i++)
     setLcs(gf->triangles[i], vSizesMap, data);
 
@@ -128,8 +128,10 @@ void buildMeshGenerationDataStructures(GFace *gf,
     std::list<GVertex*> emb_vertx = gf->embeddedVertices();
     std::list<GVertex*>::iterator itvx = emb_vertx.begin();
     while(itvx != emb_vertx.end()){
-      MVertex *v = *((*itvx)->mesh_vertices.begin());
-      vSizesMap[v] = std::min(vSizesMap[v], (*itvx)->prescribedMeshSizeAtVertex());
+      if((*itvx)->mesh_vertices.size()){
+        MVertex *v = *((*itvx)->mesh_vertices.begin());
+        vSizesMap[v] = std::min(vSizesMap[v], (*itvx)->prescribedMeshSizeAtVertex());
+      }
       ++itvx;
     }
   }
@@ -262,12 +264,12 @@ void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
   // first place)
 
   // if BL triangles are considered, then all that is WRONG !
- 
-  
+
+
   if(gf->triangles.size() > 1){
 
     bool BL = !gf->getColumns()->_toFirst.empty();
-  
+
     double n1[3], n2[3];
     MTriangle *t = gf->triangles[0];
     MVertex *v0 = t->getVertex(0), *v1 = t->getVertex(1), *v2 = t->getVertex(2);
@@ -605,7 +607,7 @@ static bool _tryToCollapseThatVertex2 (GFace *gf,
       v2->x() = x2;v2->y() = y2;v2->z() = z2;
     }
   }
-  
+
   //  printf("%d %g %g %g %g\n", count, surface_old, surface_new, worst_quality_old , worst_quality_new);
 
   if (worst_quality_new >  worst_quality_old ) {
@@ -1071,7 +1073,7 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
   //	 t2->tri()->getVertex(0)->getNum(),t2->tri()->getVertex(1)->getNum(),t2->tri()->getVertex(2)->getNum(),iLocalEdge);
   //  printf("%d %d %d \n",v2->getNum(),v3->getNum(),v4->getNum());
   //  printf("%d %d %d \n",v4->getNum(),v3->getNum(),v1->getNum());
-  
+
   cavity.push_back(t2b3);
   cavity.push_back(t1b3);
   t1->setDeleted(true);
@@ -1088,12 +1090,12 @@ int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
 		 const swapCriterion &cr,bidimMeshData & data)
 {
   typedef std::set<MTri3*, compareTri3Ptr> CONTAINER;
-  
+
   int nbSwapTot = 0;
   std::set<swapquad> configs;
 
   std::set<MTri3*, compareTri3Ptr> allTris2;
-    
+
   for(int iter = 0; iter < 10; iter++){
     int nbSwap = 0;
     std::vector<MTri3*> newTris;
@@ -1116,7 +1118,7 @@ int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
     }
 
     //    allTris = allTris2;
-        
+
     allTris.insert(newTris.begin(), newTris.end());
 
     // for(CONTAINER::iterator it = allTris.begin(); it != allTris.end(); ++it){
@@ -1124,7 +1126,7 @@ int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
     // 	     (*it)->tri()->getVertex(1)->getNum(),
     // 	     (*it)->tri()->getVertex(2)->getNum(),(*it)->isDeleted() );
     // }
-    
+
     nbSwapTot += nbSwap;
     if(nbSwap == 0) break;
   }
@@ -1249,7 +1251,7 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
   std::sort(pairs.begin(),pairs.end());
   std::set<MElement*> touched;
 
-  
+
   if(CTX::instance()->mesh.algoRecombine != 0){
 #if defined(HAVE_BLOSSOM)
     int ncount = gf->triangles.size();
@@ -1296,7 +1298,7 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
         }
       }
 
-      
+
       double matzeit = 0.0;
       char MATCHFILE[256];
       sprintf(MATCHFILE,".face.match");
@@ -1358,7 +1360,7 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
 #endif
   }
 
-  
+
   std::vector<RecombineTriangle>::iterator itp = pairs.begin();
   while(itp != pairs.end()){
     // recombine if difference between max quad angle and right
@@ -1405,7 +1407,7 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
   }
   gf->triangles = triangles2;
 
-  
+
   if(CTX::instance()->mesh.algoRecombine != 1){
     quadsToTriangles(gf, minqual);
   }
@@ -1447,7 +1449,7 @@ void recombineIntoQuads(GFace *gf,
 
   if (saveAll) gf->model()->writeMSH("before.msh");
   int success = _recombineIntoQuads(gf, minqual);
-  
+
   if (saveAll) gf->model()->writeMSH("raw.msh");
 
   if(haveParam && nodeRepositioning){
