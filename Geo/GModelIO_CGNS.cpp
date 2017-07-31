@@ -1034,11 +1034,19 @@ bool readCGNSBoundaryConditions(int fileIndex,
     }
     
     classToName[classIndex] = bcName;
-    if (nbElts == 2) for (cgsize_t i=elt[0];i<=elt[1];i++) eltToClass[i] = classIndex;
-    else             for (cgsize_t i=0;i<nbElts;i++) eltToClass[elt[i]] = classIndex;
     
+    switch (ptSetType) {
+    case PointRange:
+      for (cgsize_t i=elt[0];i<=elt[1];i++) eltToClass[i] = classIndex;
+      break;
+    case PointList:
+      for (cgsize_t i=0;i<nbElts;i++) eltToClass[elt[i]] = classIndex;
+      break;
+    default:
+      Msg::Error("Specification format of boundary conditions is currently not supported");
+      break;
+    }
   }
-  
   return true;
 }
 
