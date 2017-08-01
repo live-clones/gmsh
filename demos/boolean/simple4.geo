@@ -31,4 +31,4 @@ Surface Loop(1) = {1,2,3,4,5};
 Volume(1) = {1};
 
 Cylinder(2) = {0.5,0.5,-0.5, 0,0,2, 0.2};
-BooleanFragments{ Volume{1}; Delete; }{ Volume{2}; Delete; }
+BooleanFragments{ Volume{1,2}; Delete; }{}

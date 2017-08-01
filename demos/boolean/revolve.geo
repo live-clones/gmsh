@@ -32,5 +32,5 @@ DefineConstant[
   angle = {90, Min 1, Max 360, Step 1,
     Name "Parameters/Angle"}
 ];
-BooleanFragments{ Surface{1}; Delete; }{ Surface{2:3}; Delete; }
+BooleanFragments{ Surface{1:3}; Delete; }{}
 a() = Extrude{ {0,1,0}, {0,0,0}, angle*2*Pi/360 }{ Surface{1:5}; };

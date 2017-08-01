@@ -27,4 +27,4 @@ Line Loop(2) = {5,6,7,8};
 Plane Surface(2) = {2};
 
 Disk(3) = {0.6, 0.6, 0, 0.5, 0.3};
-BooleanFragments{ Surface{1}; Delete; }{ Surface{2,3}; Delete; }
+BooleanFragments{ Surface{1:3}; Delete; }{}

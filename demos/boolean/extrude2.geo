@@ -28,7 +28,7 @@ Plane Surface(2) = {2};
 
 Disk(3) = {0.6, 0.6, 0, 0.5, 0.3};
 
-BooleanFragments{ Surface{1}; Delete; }{ Surface{2:3}; Delete; }
+BooleanFragments{ Surface{1:3}; Delete; }{}
 
 rec = DefineNumber[1, Choices{0,1}, Name "recombine into prisms?"];
 Extrude{0,0,0.3}{ Surface{1:5}; Layers{5}; Recombine rec; }
