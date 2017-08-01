@@ -155,15 +155,15 @@ struct edgeContainer
   {
     _size = 0;
     _hash.resize(N);
-    _size_obj = sizeof(Edge); 
+    _size_obj = sizeof(Edge);
   }
 
   inline size_t H (const Edge &e) const {
     const size_t h = ((size_t)e.first) ;
     //    printf("%lu %lu %lu %lu\n",h,(h/2)%_hash.size(),h/64,h>>6);
-    return (h/_size_obj) %_hash.size();  
+    return (h/_size_obj) %_hash.size();
   }
-  
+
   inline bool find (const Edge &e) const {
     const std::vector<Edge> &v = _hash[H(e)];
     for (unsigned int i=0; i< v.size();i++)if (e == v[i]) {return true;}
@@ -171,7 +171,7 @@ struct edgeContainer
   }
 
   bool empty () const {return _size == 0;}
-  
+
   bool addNewEdge (const Edge &e)
   {
     std::vector<Edge> &v = _hash[H(e)];
@@ -360,8 +360,9 @@ public:
 class tetContainer {
   std::vector<aBunchOfStuff<Tet> *> _perThread;
  public:
-  unsigned int size(int thread) const {
-    if (_perThread.size() <= thread)return 0;
+  unsigned int size(int thread) const
+  {
+    if ((int)_perThread.size() <= thread)return 0;
     return _perThread[thread]->size();
   }
   inline Tet    * operator () (int thread, int j) const

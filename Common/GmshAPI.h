@@ -17,52 +17,54 @@
 #ifndef _GMSH_API_H_
 #define _GMSH_API_H_
 
+#if defined(WIN32)
+#define GMSH_API __declspec(dllexport) int
+#else
+#define GMSH_API int
+#endif
+
 typedef struct gmshEntity{ int dim, tag; };
 typedef struct gmshIntVector{ int n; int *v; };
 typedef struct gmshDoubleVector{ int n; double *v; };
 typedef struct gmshEntityVector{ int n; gmshEntity *v; };
 
-// all functions return 0 on successful completion
+/* all functions return 0 on successful completion */
 
 extern "C"
 {
-  // initialize Gmsh (argc and argv are processed like command line arguments);
-  // no other API function should be called before this one
-  int gmshInitialize(int argc, char **argv);
-  // finalize Gmsh; no other API function should be called after this one
-  int gmshFinalize();
+  /* Gmsh */
+  GMSH_API gmshInitialize(int argc, char **argv);
+  GMSH_API gmshFinalize();
+  GMSH_API gmshOpen(const char *fileName);
+  GMSH_API gmshMerge(const char *fileName);
+  GMSH_API gmshExport(const char *fileName);
+  GMSH_API gmshClear();
 
-  // open a new project (same as File->Open in the interactive version)
-  int gmshOpen(const char *fileName);
-  // merge a file (same as File->Merge in the interactive version)
-  int gmshMerge(const char *fileName);
-  // export a file
-  int gmshExport(const char *fileName);
-  // clears everything (models, post-processing views)
-  int gmshClear();
+  /* Gmsh Options */
+  GMSH_API gmshOptionsSetNumber(const char *name, double value);
+  GMSH_API gmshOptionsGetNumber(const char *name, double *value);
 
-  int gmshOptionsSetNumber(const char *name, double value);
-  int gmshOptionsGetNumber(const char *name, double *value);
+  /* Gmsh Model */
+  GMSH_API gmshModelCreate(const char *name);
+  GMSH_API gmshModelSetCurrent(const char *name);
+  GMSH_API gmshModelDestroy();
+  GMSH_API gmshModelMesh(int dim);
+  GMSH_API gmshModelAddEmbeddedVertex(int tag, int inDim, int inTag);
 
-  int gmshModelCreate(const char *name);
-  int gmshModelSetCurrent(const char *name);
-  int gmshModelDestroy();
-  int gmshModelMesh(int dim);
+  /* Gmsh Model Geo Internals */
+  GMSH_API gmshModelGeoAddVertex(int *tag, double x, double y, double z, double lc);
+  GMSH_API gmshModelGeoAddLine(int *tag, int startVertexTag, int endVertexTag);
+  GMSH_API gmshModelGeoAddPolyLine(int *tag, const gmshIntVector *vertexTags);
+  GMSH_API gmshModelGeoExtrude(const gmshEntityVector *in, double dx, double dy,
+                               double dz, gmshEntityVector *out);
+  GMSH_API gmshModelGeoSynchronize();
 
-  int gmshModelGeoCreate();
-  int gmshModelGeoAddPoint(int *tag, double x, double y, double z, double lc);
-  int gmshModelGeoAddLine(int *tag, int startVertexTag, int endVertexTag);
-  int gmshModelGeoAddPolyLine(int *tag, const gmshIntVector *vertexTags);
-  int gmshModelGeoExtrude(gmshEntityVector *in, double dx, double dy, double dz,
-                          gmshEntityVector *out);
-  int gmshModelGeoSynchronize();
-
-  int gmshModelOCCCreate();
-  int gmshModelOCCAddPoint(int *tag, double x, double y, double z, double lc);
-  int gmshModelOCCAddLine(int *tag, int startVertexTag, int endVertexTag);
-  int gmshModelOCCExtrude(const gmshEntityVector *in, double dx, double dy, double dz,
-                          gmshEntityVector *out);
-  int gmshModelOCCSynchronize();
+  /* Gmsh Model OCC Internals */
+  GMSH_API gmshModelOCCAddVertex(int *tag, double x, double y, double z, double lc);
+  GMSH_API gmshModelOCCAddLine(int *tag, int startVertexTag, int endVertexTag);
+  GMSH_API gmshModelOCCExtrude(const gmshEntityVector *in, double dx, double dy,
+                               double dz, gmshEntityVector *out);
+  GMSH_API gmshModelOCCSynchronize();
 }
 
 #endif

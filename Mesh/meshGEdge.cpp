@@ -505,6 +505,8 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
 
 void meshGEdge::operator() (GEdge *ge)
 {
+  ge->model()->setCurrentMeshEntity(ge);
+
   // if(ge->geomType() == GEntity::DiscreteCurve) return;
   if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
   if(ge->meshAttributes.method == MESH_NONE) return;
@@ -707,7 +709,7 @@ void meshGEdge::operator() (GEdge *ge)
     //    vv.insert(vv.end(), _addEnd.rend(), _addEnd.rbegin());
     mesh_vertices = vv;
   }
-  
+
   if (CTX::instance()->mesh.algo2d != ALGO_2D_BAMG)
     if (_addBegin.empty() && _addEnd.empty())
       filterPoints(ge, filterMinimumN - 2);

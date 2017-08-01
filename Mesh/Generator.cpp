@@ -190,7 +190,7 @@ void GetStatistics(double stat[50], double quality[3][100])
   stat[16] = CTX::instance()->meshTimer[2];
 
   if(quality){
-    for(int i = 0; i < 4; i++)
+    for(int i = 0; i < 3; i++)
       for(int j = 0; j < 100; j++)
         quality[i][j] = 0.;
     double minSICN = 0., minSICNMin = 1., minSICNMax = -1.;
@@ -319,13 +319,13 @@ static void Mesh1D(GModel *m)
   Msg::StatusBar(true, "Meshing 1D...");
   double t1 = Cpu();
 
-  
+
   std::vector<GEdge*> temp;
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
     (*it)->meshStatistics.status = GEdge::PENDING;
     temp.push_back(*it);
   }
-  
+
   Msg::ResetProgressMeter();
 
   int nIter = 0, nTot = m->getNumEdges();
@@ -346,9 +346,9 @@ static void Mesh1D(GModel *m)
 	  nPending++;
 	}
       }
-      //      if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 1D...");
+      if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 1D...");
     }
-    
+
     if(!nPending) break;
     if(nIter++ > 10) break;
   }
@@ -486,7 +486,7 @@ static void Mesh2D(GModel *m)
             nPending++;
           }
         }
-	//        if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
+        if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
       }
 #if defined(_OPENMP)
 #pragma omp master
@@ -519,7 +519,7 @@ static void Mesh2D(GModel *m)
 #endif
           nPending++;
         }
-	//        if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
+        if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
       }
       if(!nPending) break;
       if(nIter++ > 10) break;
@@ -825,6 +825,11 @@ static void Mesh3D(GModel *m)
   Msg::StatusBar(true, "Meshing 3D...");
   double t1 = Cpu();
 
+  Msg::ResetProgressMeter();
+
+  if(m->getNumRegions())
+    Msg::ProgressMeter(0, 100, false, "Meshing 3D...");
+
   // mesh the extruded volumes first
   std::for_each(m->firstRegion(), m->lastRegion(), meshGRegionExtruded());
 
@@ -939,12 +944,16 @@ static void Mesh3D(GModel *m)
   m->setAllVolumesPositive();
 
   //  std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionNetgen());
-  if (Msg::GetVerbosity() > 98)
-    std::for_each(m->firstRegion(), m->lastRegion(), TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES ());
+  if(Msg::GetVerbosity() > 98)
+    std::for_each(m->firstRegion(), m->lastRegion(),
+                  TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES());
 
   CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
   CTX::instance()->meshTimer[2] = t2 - t1;
+
+  if(m->getNumRegions())
+    Msg::ProgressMeter(100, 100, false, "Meshing 3D...");
   Msg::StatusBar(true, "Done meshing 3D (%g s)", CTX::instance()->meshTimer[2]);
 }
 

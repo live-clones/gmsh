@@ -47,7 +47,7 @@ static double GMSHSIZE (const SPoint3 &p, Field *f, double lc_nodal) {
   if (!CTX::instance()->mesh.lcExtendFromBoundary) lc_nodal = 1.e22;
   //  double _a = Cpu();
   if (f)f_field = (*f)(p.x(), p.y(), p.z());
-  //  _C3 += Cpu() - _a;  
+  //  _C3 += Cpu() - _a;
 
   double lc = std::min (lc_nodal,f_field);
   lc = std::max(lc, CTX::instance()->mesh.lcMin);
@@ -74,13 +74,13 @@ double adaptiveTrapezoidalRule(SPoint3 p1 , SPoint3 p2 ,
 
   // value of f on both sides
   double f1 = lc1;//GMSHSIZE(p1, bgm, lc1); //f(p1 + dp*t1,data);
-  double f2 = lc2;//GMSHSIZE(p2, bgm, lc2); //f(p1 + dp*t2,data);  
-  
+  double f2 = lc2;//GMSHSIZE(p2, bgm, lc2); //f(p1 + dp*t2,data);
+
   dl = p1.distance(p2);
 
   //     adim_lenght of half the edge should be bigger than EXCLUSION_FACTOR
   // +------x--------+
-  
+
   if (dl / (2*std::min(lc1,lc2))  <= EXCLUSION_FACTOR){
     //    printf ("edge length %g lc %g %g\n",dl,f1,f2);
     return EXCLUSION_FACTOR;
@@ -140,15 +140,15 @@ void saturateEdge(Edge &e, std::vector<Vert*> &S, std::stack<IPT> &temp)
   Field *bgm = NULL;
   if(fields->getBackgroundField() > 0){
     bgm = fields->get(fields->getBackgroundField());
-  }  
+  }
 
   //  double _a = Cpu();
-  
+
   //  printf("%g %g \n",e.first->lc(), e.second->lc());
-  
+
   const double dN = adaptiveTrapezoidalRule(p1,p2,e.first->lc(), e.second->lc(),
                                             _result, dl, temp, bgm);
-  //  _C1 += Cpu() - _a;  
+  //  _C1 += Cpu() - _a;
   //  _a = Cpu();
 
   const int N = (int) (dN+0.1);
@@ -191,7 +191,7 @@ void saturateEdge(Edge &e, std::vector<Vert*> &S, std::stack<IPT> &temp)
       }
     }
   }
-  //  _C2 += Cpu() - _a;  
+  //  _C2 += Cpu() - _a;
   //  printf(" press enter\n");
   //  getchar();
   //  printf("%d points added\n",S.size());
@@ -199,12 +199,13 @@ void saturateEdge(Edge &e, std::vector<Vert*> &S, std::stack<IPT> &temp)
   //  exit(1);
 }
 
-inline bool distributeEdgeThroughThreads ( int nbThreads , int myThread ,
-					   const Edge &ed){
+inline bool distributeEdgeThroughThreads(int nbThreads, int myThread,
+                                         const Edge &ed)
+{
   //  const size_t h = ((size_t)ed.first->getNum());
   const size_t h = ((size_t)ed.first) >> 3;
   //  printf("%lu %d %d %d\n",h,nbThreads,myThread,h % nbThreads);
-  return h % nbThreads == myThread;
+  return (int)(h % nbThreads) == myThread;
 }
 
 void saturateEdges(edgeContainer &ec,
@@ -212,8 +213,9 @@ void saturateEdges(edgeContainer &ec,
                    int nbThreads,
                    std::vector<Vert*> &S)
 {
-
-#pragma omp parallel 
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
   {
     std::vector<Vert*> Sloc;
     std::stack<IPT> temp;
@@ -222,7 +224,7 @@ void saturateEdges(edgeContainer &ec,
     //    nbThreads =  omp_get_num_threads();
 #else
     int  myThread = 0;
-#endif  
+#endif
     for (int iThread = 0; iThread<nbThreads;iThread++){
       const int N = T.size(iThread);
       for (int i=0;i<N;i++){
@@ -241,9 +243,13 @@ void saturateEdges(edgeContainer &ec,
 	}
       }
     }
+#ifdef _OPENMP
 #pragma omp critical
-    S.insert (S.end(),Sloc.begin(), Sloc.end()); 
+#endif
+    S.insert (S.end(),Sloc.begin(), Sloc.end());
+#ifdef _OPENMP
 #pragma omp barrier
+#endif
   }
 
   for (int iThread = 0; iThread<nbThreads;iThread++){
@@ -439,7 +445,7 @@ void disconnectEmbeddedFaces (GRegion *gr, connSet &faceToTet, std::vector<Vert 
 	Tet *t1 = itf->t;
 	Tet *t2 = itf->t->T[itf->i];
 	//	if (!(f == t1->getFace(itf->i)))printf("aie\n");
-	for (int k=0;k<4;k++){	  
+	for (int k=0;k<4;k++){
 	  if (t1 && t1->T[k] == t2){t1->T[k]=NULL;ok1=true;}
 	  if (t2 && t2->T[k] == t1){t2->T[k]=NULL;ok2=true;}
 	}
@@ -455,8 +461,8 @@ void computeMeshSizes (GRegion *gr, std::map<MVertex*, double> &s){
   for (std::list<GEdge*>::iterator it = e.begin() ; it != e.end(); ++it){
     for (unsigned int i = 0; i < (*it)->lines.size(); i++){
       double d = distance((*it)->lines[i]->getVertex(0), (*it)->lines[i]->getVertex(1));
-      updateSize ((*it)->lines[i]->getVertex(0), s, d);      
-      updateSize ((*it)->lines[i]->getVertex(1), s, d);      
+      updateSize ((*it)->lines[i]->getVertex(0), s, d);
+      updateSize ((*it)->lines[i]->getVertex(1), s, d);
     }
   }
   std::list<GFace*> f ;
@@ -485,31 +491,31 @@ void computeMeshSizes (GRegion *gr, std::map<MVertex*, double> &s){
 }
 
 
-void parallelDelaunay (int NT, std::vector<Vert*> &S, 
-		       tetContainer &allocator, 
-		       int iter, 
-		       bool explicitFiltering, 
+void parallelDelaunay (int NT, std::vector<Vert*> &S,
+		       tetContainer &allocator,
+		       int iter,
+		       bool explicitFiltering,
 		       std::vector<int> &indices,
-		       edgeContainer *embeddedEdges){ 
+		       edgeContainer *embeddedEdges){
   //  Msg::Info ("Parallel Delaunay with %d threads",NT);
   int N = S.size();
   NT = std::min(NT, MAX_NUM_THREADS_);
 
   std::vector<Vert*> assignTo0[1];
   std::vector<std::vector<Vert*> > assignTo (NT);
-  
-  for (int i=1;i<indices.size();i++){
+
+  for (unsigned int i = 1; i < indices.size(); i++){
     int start = indices[i-1];
     int end = indices[i];
     int sizePerBlock = (NT*((end-start) / NT))/NT;
     int currentBlock = 0;
     int localCounter = 0;
-    //    printf("sizePerBlock[%d] = %d (%d,%d)\n",i,sizePerBlock, start, end);
+    // printf("sizePerBlock[%d] = %d (%d,%d)\n",i,sizePerBlock, start, end);
 
     if (i < 2){
       for (int jPt=start;jPt<end;jPt++){
         assignTo0[0].push_back(S[jPt]);
-      }       
+      }
     }
     else {
       for (int jPt=start;jPt<end;jPt++){
@@ -534,10 +540,10 @@ void edgeBasedRefinement(const int numThreads,
 {
   // fill up old Datastructures
   edgeContainer embeddedEdges (10000);
-  
+
   std::map<MVertex*, double> sizes;
-  computeMeshSizes (gr, sizes);  
-  
+  computeMeshSizes (gr, sizes);
+
   tetContainer allocator (numThreads,1000000);
 
   SBoundingBox3d bb;
@@ -655,7 +661,7 @@ void edgeBasedRefinement(const int numThreads,
       add_all.insert (add_all.end(), add.begin(), add.end());
       size_t sss = 0;
       for (int myThread=0; myThread < numThreads; myThread++)sss+= allocator.size(myThread);
-	
+
 	Msg::Info("IT %3d %8d points added, timings %5.2f %5.2f %5.2f %5.2f %5.2f %5d",
                 iter,add.size(),
 		(t2-t1),
@@ -669,21 +675,21 @@ void edgeBasedRefinement(const int numThreads,
   }
 
   std::vector<Vert*> vv;
-  for (int myThread=0; myThread < numThreads; myThread++) 
+  for (int myThread=0; myThread < numThreads; myThread++)
     for (unsigned int i=0;i<allocator.size(myThread);i++)
       for (unsigned int j=0;j<4;j++)
 	if (allocator(myThread,i)->V[j])
-   	  allocator(myThread,i)->V[j]->setNum(0);  
-    
-  for (int myThread=0; myThread < numThreads; myThread++) 
+   	  allocator(myThread,i)->V[j]->setNum(0);
+
+  for (int myThread=0; myThread < numThreads; myThread++)
     for (unsigned int i=0;i<allocator.size(myThread);i++)
       for (unsigned int j=0;j<4;j++)
-	if (allocator(myThread,i)->V[j] && allocator(myThread,i)->V[j]->getNum() == 0){	  
+	if (allocator(myThread,i)->V[j] && allocator(myThread,i)->V[j]->getNum() == 0){
 	  allocator(myThread,i)->V[j]->setNum(1);
 	  std::map<Vert*,MVertex*>::iterator it = _ma.find(allocator(myThread,i)->V[j]);
    	  if (it == _ma.end())vv.push_back(allocator(myThread,i)->V[j]);
 	}
-  
+
   double t6 = Cpu();
   Msg::Info("Optimizing");
   edgeSwapPass (numThreads, allocator, embeddedEdges);
@@ -698,7 +704,7 @@ void edgeBasedRefinement(const int numThreads,
 
   int cat [10] = {0,0,0,0,0,0,0,0,0,0};
   double MIN = 1.0;
-  
+
   for (int myThread=0; myThread < numThreads; myThread++) {
     for (unsigned int i=0; i< allocator.size(myThread);i++){
       Tet  *tt = allocator (myThread,i);
@@ -728,7 +734,7 @@ void edgeBasedRefinement(const int numThreads,
   for (int i=0;i<10;i++){
     Msg::Info ("Tet Quality [%4.3f,%4.3f] %8d",0.1*i,0.1*(i+1),cat[i]);
   }
-  
+
   if (Msg::GetVerbosity() == 99) {
     std::map<Edge,double> _sizes;
     for (unsigned int i=0; i< allocator.size(0);i++){
@@ -759,5 +765,5 @@ void edgeBasedRefinement(const int numThreads,
               exp (sum / _sizes.size()),nbBad,_sizes.size());
   }
 
-  
+
 }

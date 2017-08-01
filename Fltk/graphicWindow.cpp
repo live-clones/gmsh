@@ -1698,13 +1698,14 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
         else
           selectObject = false;
       }
-      else if(tool.empty()){
+      else if(tool.empty() && mode != "BooleanFragments"){
         Msg::Error("At least one tool must be selected");
       }
       else{
         apply_boolean(GModel::current()->getFileName(), mode, object, tool,
                       FlGui::instance()->transformContext->butt[4]->value(),
-                      FlGui::instance()->transformContext->butt[5]->value());
+                      tool.size() ?
+                      FlGui::instance()->transformContext->butt[5]->value() : 0);
         GModel::current()->setSelection(0);
         selectObject = true;
         object.clear();
@@ -4206,13 +4207,13 @@ static menuItem static_modules[] = {
    (Fl_Callback *)geometry_elementary_extrude_rotate_cb} ,
   {"0Modules/Geometry/Elementary entities/Extrude/Pipe",
    (Fl_Callback *)geometry_elementary_pipe_cb} ,
-  {"0Modules/Geometry/Elementary entities/Boolean/Intersection",
+  {"0Modules/Geometry/Elementary entities/Boolean/Intersection (Common)",
    (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanIntersection"} ,
-  {"0Modules/Geometry/Elementary entities/Boolean/Union",
+  {"0Modules/Geometry/Elementary entities/Boolean/Union (Fuse)",
    (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanUnion"} ,
-  {"0Modules/Geometry/Elementary entities/Boolean/Difference",
+  {"0Modules/Geometry/Elementary entities/Boolean/Difference (Cut)",
    (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanDifference"} ,
-  {"0Modules/Geometry/Elementary entities/Boolean/Fragments",
+  {"0Modules/Geometry/Elementary entities/Boolean/Fragments (Coherence)",
    (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanFragments"} ,
   {"0Modules/Geometry/Elementary entities/Fillet",
    (Fl_Callback *)geometry_elementary_fillet_cb},

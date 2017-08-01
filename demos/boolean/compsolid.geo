@@ -1,8 +1,8 @@
 SetFactory("OpenCASCADE");
 
 //Mesh.Algorithm = 6;
-Mesh.CharacteristicLengthMin = 0.1;
-Mesh.CharacteristicLengthMax = 0.1;
+Mesh.CharacteristicLengthMin = 0.2;
+Mesh.CharacteristicLengthMax = 0.2;
 
 DefineConstant[
   x = {0, Min -5, Max 5, Step 0.1, Name "Bloc 1/0x"}
@@ -22,7 +22,7 @@ DefineConstant[
 Box(1) = {x,y,z, dx,dy,dz};
 Box(2) = {x2,y2,z2, dx2,dy2,dz2};
 
-f() = BooleanFragments { Volume{1}; Delete; }{ Volume{2}; Delete; };
+f() = BooleanFragments { Volume{1,2}; Delete; }{};
 
 Printf("Resulting elementary entities:");
 For i In {0:#f()-1}

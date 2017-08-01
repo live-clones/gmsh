@@ -5,24 +5,47 @@ if [ $# -lt 1 ]; then
   exit 1;
 fi
 
-files=$*
-rm -rf Archive
-mkdir Archive
+name=demos_boolean
 
-cp *.step Archive/
-cat <<EOT >> Archive/infos.xml
+files=$*
+rm -rf ${name}
+mkdir ${name}
+cd $name
+
+cp ../*.step .
+cat <<EOT >> infos.xml
 <?xml version="1.0" encoding="utf-8"?>
 <models>
 EOT
 
+cat <<EOT >> screenshot.geo
+Print.Width = 1014;
+Print.Height = 1014;
+Print.Background = 1;
+General.TrackballQuaternion0 = -0.09134439936266693;
+General.TrackballQuaternion1 = 0.09382793879350552;
+General.TrackballQuaternion2 = 0.02293507983466721;
+General.TrackballQuaternion3 = 0.9911238574062343;
+General.Orthographic = 0;
+Mesh 2;
+Draw;
+Save StrCat("screenshot_", StrPrefix(StrRelative(General.FileName)), ".png") ;
+SystemCall StrCat("convert -scale 128 screenshot_", StrPrefix(StrRelative(General.FileName)),
+  ".png screenshot_", StrPrefix(StrRelative(General.FileName)), "_128.png");
+Exit;
+EOT
+
 for file in $files ; do
-    cp $file Archive/
-    echo "<model>" >> Archive/infos.xml
-    echo "<title>$file</title>" >> Archive/infos.xml
-    echo "<summary>$file</summary>" >> Archive/infos.xml
-    echo "<file type=\"geo\">$file</file>" >> Archive/infos.xml
-    echo "</model>" >> Archive/infos.xml
-    cat <<EOT > Archive/${file%.geo}.pro
+    cp ../$file .
+    /Applications/Gmsh.app/Contents/MacOS/gmsh ${file} screenshot.geo
+    echo "<model>" >> infos.xml
+    echo "<title>OpenCASCADE demo: ${file%.geo}</title>" >> infos.xml
+    echo "<summary>gmsh/demos/boolean/${file}</summary>" >> infos.xml
+    echo "<file type=\"geo\">$file</file>" >> infos.xml
+    echo "<preview type=\"png\">screenshot_${file%.geo}_128.png</preview>" >> infos.xml
+    echo "</model>" >> infos.xml
+    rm -f screenshot_${file%.geo}.png
+    cat <<EOT > ${file%.geo}.pro
 DefineConstant[
   R_ = {"", Name "GetDP/1ResolutionChoices", Visible 0},
   C_ = {"", Name "GetDP/9ComputeCommand", Visible 0},
@@ -31,8 +54,10 @@ DefineConstant[
 EOT
 done
 
-cat <<EOT >> Archive/infos.xml
+cat <<EOT >> infos.xml
 </models>
 EOT
 
-zip -r Archive.zip Archive
+cd ..
+rm ${name}.zip 
+zip -r ${name}.zip ${name}
