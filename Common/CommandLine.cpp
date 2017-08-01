@@ -105,7 +105,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-rand float",        "Set random perturbation factor"));
   s.push_back(mp("-bgm file",          "Load background mesh from file"));
   s.push_back(mp("-check",             "Perform various consistency checks on mesh"));
-  s.push_back(mp("-ignorePartBound",   "Ignore partitions boundaries"));
+  s.push_back(mp("-ignorePartBound",   "Ignore partition boundaries")); 
+  s.push_back(mp("-ignorePeriocity",   "Ignore periodic boundaries"));
   s.push_back(mp("-oneFilePerPart",    "Save mesh partitions in separate files"));
 #if defined(HAVE_FLTK)
   s.push_back(mp("Post-processing options:", ""));
@@ -754,6 +755,10 @@ void GetOptions(int argc, char *argv[])
         i++;
         opt_mesh_msh_file_partitioned(0, GMSH_SET, 1);
       }
+      else if(!strcmp(argv[i] + 1, "ignorePeriodicity")) {
+        i++;
+        opt_mesh_ignore_periodicity(0, GMSH_SET, 1);
+      }
       else if(!strcmp(argv[i] + 1, "edgelmin")) {
         i++;
         if(argv[i]) {
@@ -1154,3 +1159,5 @@ void GetOptions(int argc, char *argv[])
   if(CTX::instance()->terminal == 99)
     CTX::instance()->terminal = terminal;
 }
+
+
