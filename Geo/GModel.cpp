@@ -54,6 +54,8 @@
 #include "meshMetric.h"
 #include "meshGRegionMMG3D.h"
 #include "meshGFaceBamg.h"
+
+static const float EDGE_ANGLE_THRESHOLD = 0.698132;
 #endif
 
 #if defined(HAVE_KBIPACK)
@@ -3812,6 +3814,42 @@ GEdge *getNewModelEdge(GFace *gf1, GFace *gf2,
 
 #if defined(HAVE_MESH)
 
+void GModel::classifyAllFaces()
+{
+  std::set<GFace*> faces;
+  std::vector<MElement*> elements;
+  for(GModel::fiter it = this->firstFace(); it != this->lastFace(); ++it) {
+    faces.insert(*it);
+    elements.insert(elements.end(), (*it)->triangles.begin(),
+                       (*it)->triangles.end());
+    elements.insert(elements.end(), (*it)->quadrangles.begin(),
+                       (*it)->quadrangles.end());
+  }
+
+  discreteEdge* edge = new discreteEdge
+    (GModel::current(), GModel::current()->getMaxElementaryNumber(1) + 1, 0, 0);
+  GModel::current()->add(edge);
+
+  e2t_cont adj;
+  buildEdgeToElements(elements, adj);
+  std::vector<edge_angle> edges_detected, edges_lonly;
+  buildListOfEdgeAngle(adj, edges_detected, edges_lonly);
+  for(unsigned int i = 0; i < edges_detected.size(); i++){
+    edge_angle ea = edges_detected[i];
+    if (ea.angle <= EDGE_ANGLE_THRESHOLD) break;
+    edge->lines.push_back(new MLine(ea.v1, ea.v2));
+  }
+
+  this->classifyFaces(faces);
+
+  GModel::current()->remove(edge);
+  edge->lines.clear();
+  delete edge;
+  elements.clear();
+  edges_detected.clear();
+  edges_lonly.clear();
+}
+
 void recurClassifyEdges(MTri3 *t, std::map<MTriangle*, GFace*> &reverse,
                         std::map<MLine*, GEdge*, compareMLinePtr> &lines,
                         std::set<MLine*> &touched, std::set<MTri3*> &trisTouched,
@@ -3864,7 +3902,6 @@ void recurClassify(MTri3 *t, GFace *gf,
 }
 
 #endif
-
 
 void GModel::classifyFaces(std::set<GFace*> &_faces)
 {
