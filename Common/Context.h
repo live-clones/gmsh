@@ -140,7 +140,7 @@ class CTX {
   int highResolutionGraphics;
   // batch mode (-4: lua session, -3: server daemon, -2: check coherence, -1: write
   // geo, 0: full gfx, 1: 1D mesh, 2: 2D mesh, 3: 3D mesh, 4: adapt
-  // mesh, 5: refine mesh)
+  // mesh, 5: refine mesh, 6: reclassify mesh)
   int batch;
   // batch operations to apply after meshing (1: partition mesh)
   int batchAfterMesh;

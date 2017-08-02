@@ -486,6 +486,9 @@ class GModel {
   // reclassify a mesh i.e. use an angle threshold to tag edges faces and regions
   void classifyFaces(std::set<GFace*> &_faces);
 
+  // classify a mesh for all faces on the current model
+  void classifyAllFaces();
+
   // glue entities in the model (assume a tolerance eps and merge
   // vertices that are too close, then merge edges, faces and
   // regions). Warning: the gluer changes the geometric model, so that

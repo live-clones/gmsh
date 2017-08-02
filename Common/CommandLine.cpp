@@ -77,6 +77,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                                        "p3d, diff, med, ...)"));
   s.push_back(mp("-bin",               "Use binary format when available"));
   s.push_back(mp("-refine",            "Perform uniform mesh refinement, then exit"));
+  s.push_back(mp("-reclassify",        "Reclassify mesh, then exit"));
   s.push_back(mp("-part int",          "Partition after batch mesh generation"));
   s.push_back(mp("-partWeight tri|quad|tet|prism|hex int", "Weight of a triangle/quad/etc. "
                                                            "during partitioning"));
@@ -380,6 +381,10 @@ void GetOptions(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "refine")) {
         CTX::instance()->batch = 5;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "reclassify")) {
+        CTX::instance()->batch = 6;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "renumber")) {
