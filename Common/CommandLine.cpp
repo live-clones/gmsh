@@ -503,7 +503,8 @@ void GetOptions(int argc, char *argv[])
         i++;
         if(argv[i])
           opt_mesh_optimize_threshold(0, GMSH_SET, atof(argv[i++]));
-        i++;
+        else
+          Msg::Fatal("Missing number");
       }
       else if(!strcmp(argv[i] + 1, "optimize_netgen")) {
         CTX::instance()->mesh.optimizeNetgen = 1;
@@ -1083,8 +1084,6 @@ void GetOptions(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "stereo")) {
         opt_general_stereo_mode(0, GMSH_SET, 1.);
-	//        CTX::instance()->camera = 1;
-	//	CTX::instance()->stereo = 1;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "gamepad")) {
