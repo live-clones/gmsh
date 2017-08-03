@@ -935,25 +935,13 @@ int FlGui::testArrowShortcuts()
     return 1;
   }
 #if defined(HAVE_POPPLER)
-  else if(Fl::test_shortcut('u')) {
+  else if(Fl::test_shortcut('u') || Fl::test_shortcut(FL_Page_Up)) {
     gmshPopplerWrapper::setCurrentPageDown();
     drawContext::global()->draw();
     drawContext::global()->draw();
     return 1;
   }
-  else if(Fl::test_shortcut('d')) {
-    gmshPopplerWrapper::setCurrentPageUp();
-    drawContext::global()->draw();
-    drawContext::global()->draw();
-    return 1;
-  }
-  else if(Fl::test_shortcut(FL_Page_Up)) {
-    gmshPopplerWrapper::setCurrentPageDown();
-    drawContext::global()->draw();
-    drawContext::global()->draw();
-    return 1;
-  }
-  else if(Fl::test_shortcut(FL_Page_Down)) {
+  else if(Fl::test_shortcut('d') || Fl::test_shortcut(FL_Page_Down)) {
     gmshPopplerWrapper::setCurrentPageUp();
     drawContext::global()->draw();
     drawContext::global()->draw();
