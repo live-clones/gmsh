@@ -2598,7 +2598,7 @@ bool OCC_Internals::exportShapes(const std::string &fileName,
             split[2] == ".step" || split[2] == ".stp" ||
             split[2] == ".STEP" || split[2] == ".STP"){
       STEPControl_Writer writer;
-      if(writer.Transfer(c, STEPControl_ManifoldSolidBrep) == IFSelect_RetDone){
+      if(writer.Transfer(c, STEPControl_AsIs) == IFSelect_RetDone){
         if(writer.Write(fileName.c_str()) != IFSelect_RetDone){
           Msg::Error("Could not create file '%s'", fileName.c_str());
           return false;
