@@ -860,6 +860,9 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "NumSubEdges" , opt_geometry_num_sub_edges , 20. ,
     "Number of edge subdivisions between control points when displaying curves" },
 
+  { F|O, "OCCAutoFix" , opt_geometry_occ_auto_fix , 1. ,
+    "Automatically fix orientation of wires, faces, shells and volumes when creating"
+    " new entities" },
   { F|O, "OCCFixDegenerated" , opt_geometry_occ_fix_degenerated , 0. ,
     "Fix degenerated edges/faces in STEP, IGES and BRep models" },
   { F|O, "OCCFixSmallEdges" , opt_geometry_occ_fix_small_edges , 0. ,
@@ -902,7 +905,7 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "ReparamOnFaceRobust" , opt_geometry_reparam_on_face_robust, 0 ,
     "Use projection for reparametrization of a point classified on GEdge on a GFace" },
 
-  
+
   { F|O, "ScalingFactor" , opt_geometry_scaling_factor , 1.0 ,
     "Global geometry scaling factor" },
   { F|O, "OrientedPhysicals" , opt_geometry_oriented_physicals, 1. ,

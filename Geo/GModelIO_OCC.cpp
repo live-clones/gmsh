@@ -1146,8 +1146,6 @@ bool OCC_Internals::addDisk(int &tag, double xc, double yc, double zc,
 
 bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
 {
-  const bool autoFix = true;
-
   if(tag >= 0 && _tagFace.IsBound(tag)){
     Msg::Error("OpenCASCADE face with tag %d already exists", tag);
     return false;
@@ -1183,7 +1181,7 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
       return false;
     }
     result = f.Face();
-    if(autoFix){
+    if(CTX::instance()->geom.occAutoFix){
       // make sure wires are oriented correctly
       ShapeFix_Face fix(result);
       fix.Perform();
@@ -1244,8 +1242,6 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag)
 
 bool OCC_Internals::addSurfaceLoop(int &tag, const std::vector<int> &faceTags)
 {
-  const bool autoFix = true;
-
   if(tag >= 0 && _tagShell.IsBound(tag)){
     Msg::Error("OpenCASCADE surface loop with tag %d already exists", tag);
     return false;
@@ -1274,7 +1270,7 @@ bool OCC_Internals::addSurfaceLoop(int &tag, const std::vector<int> &faceTags)
   TopExp_Explorer exp0;
   for(exp0.Init(result, TopAbs_SHELL); exp0.More(); exp0.Next()){
     TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
-    if(autoFix){
+    if(CTX::instance()->geom.occAutoFix){
       // make sure faces in shell are oriented correctly
       ShapeFix_Shell fix(shell);
       fix.Perform();
@@ -1295,8 +1291,6 @@ bool OCC_Internals::addSurfaceLoop(int &tag, const std::vector<int> &faceTags)
 
 bool OCC_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
 {
-  const bool autoFix = true;
-
   if(tag >= 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
     return false;
@@ -1314,7 +1308,7 @@ bool OCC_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
       s.Add(shell);
     }
     result = s.Solid();
-    if(autoFix){
+    if(CTX::instance()->geom.occAutoFix){
       // make sure the volume is finite
       ShapeFix_Solid fix(result);
       fix.Perform();
