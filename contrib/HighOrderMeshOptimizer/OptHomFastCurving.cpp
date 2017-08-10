@@ -1786,13 +1786,6 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
       }
     }
 
-    // Compute edge/face -> elt. connectivity
-    Msg::Info("Computing connectivity for entity %i...", gEnt->tag());
-    MEdgeVecMEltMap ed2el;
-    MFaceVecMEltMap face2el;
-    if (p.dim == 2) calcEdge2Elements(allGEnt[iEnt], ed2el);
-    else calcFace2Elements(allGEnt[iEnt], face2el);
-
     // Retrieve boundary entities and test if boundary layer
     std::vector<GEntity*> bndEnts;
     std::set<GEntity*> blBndEnts;
