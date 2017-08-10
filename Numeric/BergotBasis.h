@@ -20,7 +20,7 @@
 class BergotBasis {
  public:
 
-  BergotBasis(int p);
+  BergotBasis(int p,bool incpl=false);
   virtual ~BergotBasis();
 
   int size() const { const int n = order+1; return n*(n+1)*(2*n+1)/6; }
@@ -31,9 +31,12 @@ class BergotBasis {
 
   void initialize() {};
 
+  bool validIJ(int i,int j) const;
+
  private:
 
   int order; //!< maximal order of surrounding functional spaces (on triangle / quad)
+  bool incomplete; //!< serendipity interpolation
 
 };
 

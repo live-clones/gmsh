@@ -55,6 +55,8 @@ typedef unsigned long intptr_t;
 
 int GmshInitialize(int argc, char **argv)
 {
+  Msg::SetNumThreads(1);
+
   static bool isInitialized = false;
   if(isInitialized) return 1;
   isInitialized = true;
@@ -314,6 +316,8 @@ int GmshBatch()
       AdaptMesh(GModel::current());
     else if(CTX::instance()->batch == 5)
       RefineMesh(GModel::current(), CTX::instance()->mesh.secondOrderLinear);
+    else if(CTX::instance()->batch == 6)
+      GModel::current()->classifyAllFaces();
 #if defined(HAVE_CHACO) || defined(HAVE_METIS)
     if(CTX::instance()->batchAfterMesh == 1){
       if (CTX::instance()->partitionOptions.num_partitions > 1)

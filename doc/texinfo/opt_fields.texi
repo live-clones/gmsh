@@ -263,6 +263,40 @@ type: float@*
 default value: @code{0}
 @end table
 
+@item Distance
+Compute the distance from the nearest node in a list. It can also be used to compute the distance from curves, in which case each curve is replaced by NNodesByEdge equidistant nodes and the distance from those nodes is computed.@*
+Options:@*
+@table @code
+@item EdgesList
+Indices of curves in the geometric model@*
+type: list@*
+default value: @code{@{@}}
+@item FacesList
+Indices of surfaces in the geometric model (Warning, this feature is still experimental. It might (read: will probably) give wrong results for complex surfaces)@*
+type: list@*
+default value: @code{@{@}}
+@item FieldX
+Id of the field to use as x coordinate.@*
+type: integer@*
+default value: @code{-1}
+@item FieldY
+Id of the field to use as y coordinate.@*
+type: integer@*
+default value: @code{-1}
+@item FieldZ
+Id of the field to use as z coordinate.@*
+type: integer@*
+default value: @code{-1}
+@item NNodesByEdge
+Number of nodes used to discretized each curve@*
+type: integer@*
+default value: @code{20}
+@item NodesList
+Indices of nodes in the geometric model@*
+type: list@*
+default value: @code{@{@}}
+@end table
+
 @item ExternalProcess
 **This Field is experimental**@*
 Call an external process that received coordinates triple (x,y,z) as binary double precision numbers on stdin and is supposed to write the field value on stdout as a binary double precision number.@*
@@ -391,7 +425,7 @@ default value: @code{1}
 @item Z2
 Z coordinate of endpoint 2@*
 type: float@*
-default value: @code{2.53244204493764e-86}
+default value: @code{1.455171629957881e-152}
 @end table
 
 @item Gradient

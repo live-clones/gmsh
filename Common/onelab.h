@@ -38,7 +38,11 @@
 #include <algorithm>
 #include <sstream>
 #include "GmshSocket.h"
+
+#define HAVE_PICOJSON
+#if defined(HAVE_PICOJSON)
 #include "picojson.h"
+#endif
 
 namespace onelab{
 
@@ -362,6 +366,7 @@ namespace onelab{
       }
       return sstream.str();
     }
+#if defined(HAVE_PICOJSON)
     virtual bool fromJSON(const picojson::value::object& par)
     {
       for(picojson::value::object::const_iterator it = par.begin(); it != par.end(); ++it){
@@ -410,6 +415,7 @@ namespace onelab{
       }
       return true;
     }
+#endif
   };
 
   class parameterLessThan{
@@ -579,6 +585,7 @@ namespace onelab{
       sstream << " }";
       return sstream.str();
     }
+#if defined(HAVE_PICOJSON)
     bool fromJSON(const picojson::value::object& par)
     {
       if(!parameter::fromJSON(par)) return false;
@@ -628,6 +635,7 @@ namespace onelab{
       }
       return true;
     }
+#endif
   };
 
   // The string class. A string has a mutable "kind", that can be changed at
@@ -727,6 +735,7 @@ namespace onelab{
       sstream << " }";
       return sstream.str();
     }
+#if defined(HAVE_PICOJSON)
     bool fromJSON(const picojson::value::object& par)
     {
       if(!parameter::fromJSON(par)) return false;
@@ -756,6 +765,7 @@ namespace onelab{
       }
       return true;
     }
+#endif
   };
 
   // The parameter space, i.e., the set of parameters stored and handled by the
@@ -1014,6 +1024,7 @@ namespace onelab{
       json += "\n  ] }\n}\n";
       return true;
     }
+#if defined(HAVE_PICOJSON)
     bool fromJSON(const std::string &json, const std::string &client="")
     {
       picojson::value v;
@@ -1051,6 +1062,7 @@ namespace onelab{
       }
       return true;
     }
+#endif
   };
 
   // The onelab client: a class that communicates with the onelab server. Each
@@ -1215,10 +1227,12 @@ namespace onelab{
     {
       return _parameterSpace.toJSON(json, client);
     }
+#if defined(HAVE_PICOJSON)
     bool fromJSON(const std::string &json, const std::string &client="")
     {
       return _parameterSpace.fromJSON(json, client);
     }
+#endif
   };
 
   // A local client, which lives in the same memory space as the server.

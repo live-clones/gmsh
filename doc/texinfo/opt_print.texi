@@ -164,8 +164,13 @@ Save Eta quality measure in mesh statistics exported as post-processing views@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Print.PostRho
-Save Rho quality measure in mesh statistics exported as post-processing views@*
+@item Print.PostSICN
+Save SICN (signed inverse condition number) quality measure in mesh statistics exported as post-processing views@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.PostSICN
+Save SIGE (signed inverse gradient error) quality measure in mesh statistics exported as post-processing views@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

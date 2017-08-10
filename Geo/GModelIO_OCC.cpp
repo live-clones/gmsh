@@ -905,8 +905,8 @@ bool OCC_Internals::_addSpline(int &tag, const std::vector<int> &vertexTags, int
     Msg::Error("OpenCASCADE edge with tag %d already exists", tag);
     return false;
   }
-  if(vertexTags.size() < 2 || vertexTags.size() > 20){
-    Msg::Error("Number of control points should be in [2,20]");
+  if(vertexTags.size() < 2){
+    Msg::Error("Number of control points should be at least 2");
     return false;
   }
 
@@ -1146,8 +1146,6 @@ bool OCC_Internals::addDisk(int &tag, double xc, double yc, double zc,
 
 bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
 {
-  const bool autoFix = true;
-
   if(tag >= 0 && _tagFace.IsBound(tag)){
     Msg::Error("OpenCASCADE face with tag %d already exists", tag);
     return false;
@@ -1183,7 +1181,7 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
       return false;
     }
     result = f.Face();
-    if(autoFix){
+    if(CTX::instance()->geom.occAutoFix){
       // make sure wires are oriented correctly
       ShapeFix_Face fix(result);
       fix.Perform();
@@ -1244,8 +1242,6 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag)
 
 bool OCC_Internals::addSurfaceLoop(int &tag, const std::vector<int> &faceTags)
 {
-  const bool autoFix = true;
-
   if(tag >= 0 && _tagShell.IsBound(tag)){
     Msg::Error("OpenCASCADE surface loop with tag %d already exists", tag);
     return false;
@@ -1274,7 +1270,7 @@ bool OCC_Internals::addSurfaceLoop(int &tag, const std::vector<int> &faceTags)
   TopExp_Explorer exp0;
   for(exp0.Init(result, TopAbs_SHELL); exp0.More(); exp0.Next()){
     TopoDS_Shell shell = TopoDS::Shell(exp0.Current());
-    if(autoFix){
+    if(CTX::instance()->geom.occAutoFix){
       // make sure faces in shell are oriented correctly
       ShapeFix_Shell fix(shell);
       fix.Perform();
@@ -1295,8 +1291,6 @@ bool OCC_Internals::addSurfaceLoop(int &tag, const std::vector<int> &faceTags)
 
 bool OCC_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
 {
-  const bool autoFix = true;
-
   if(tag >= 0 && _tagSolid.IsBound(tag)){
     Msg::Error("OpenCASCADE region with tag %d already exists", tag);
     return false;
@@ -1314,7 +1308,7 @@ bool OCC_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
       s.Add(shell);
     }
     result = s.Solid();
-    if(autoFix){
+    if(CTX::instance()->geom.occAutoFix){
       // make sure the volume is finite
       ShapeFix_Solid fix(result);
       fix.Perform();
@@ -1941,15 +1935,16 @@ bool OCC_Internals::_extrude(int mode,
   _multiBind(result, -1, outDimTags, true, true);
 
   // return entities in the same order as the built-in kernel extrusion
-  if(dim >= 1 && dim <= 3 && top.size() == inDimTags.size() &&
-     top.size() == body.size() && top.size() == lateral.size()){
+  if(dim >= 1 && dim <= 3 &&
+     top.size() == inDimTags.size() && top.size() == body.size()){
     outDimTags.clear();
     for(unsigned int i = 0; i < top.size(); i++){
       if(_isBound(dim - 1, top[i]))
         outDimTags.push_back(std::pair<int, int>(dim - 1, _find(dim - 1, top[i])));
       if(_isBound(dim, body[i]))
         outDimTags.push_back(std::pair<int, int>(dim, _find(dim, body[i])));
-      if(CTX::instance()->geom.extrudeReturnLateral){
+      if(CTX::instance()->geom.extrudeReturnLateral &&
+         top.size() == lateral.size()){
         for(unsigned int j = 0; j < lateral[i].size(); j++){
           if(_isBound(dim - 1, lateral[i][j]))
             outDimTags.push_back
@@ -2597,7 +2592,7 @@ bool OCC_Internals::exportShapes(const std::string &fileName,
             split[2] == ".step" || split[2] == ".stp" ||
             split[2] == ".STEP" || split[2] == ".STP"){
       STEPControl_Writer writer;
-      if(writer.Transfer(c, STEPControl_ManifoldSolidBrep) == IFSelect_RetDone){
+      if(writer.Transfer(c, STEPControl_AsIs) == IFSelect_RetDone){
         if(writer.Write(fileName.c_str()) != IFSelect_RetDone){
           Msg::Error("Could not create file '%s'", fileName.c_str());
           return false;

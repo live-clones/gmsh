@@ -18,6 +18,10 @@
 #include "StringUtils.h"
 #include "Context.h"
 
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
+
 #if defined(HAVE_ZIPPER)
 #include <iostream>
 #include <fstream>
@@ -336,10 +340,14 @@ void CheckResources()
 
 double Cpu()
 {
+#if defined(_OPENMP)
+  return omp_get_wtime();
+#else
   long mem = 0;
   double s = 0.;
   GetResources(&s, &mem);
   return s;
+#endif
 }
 
 double TotalRam()

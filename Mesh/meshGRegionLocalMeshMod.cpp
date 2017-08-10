@@ -128,10 +128,22 @@ void BuildSwapPattern3(SwapPattern *sc)
   sc->trianguls = trgul ;
 }
 
+/*
+   0             1
+   +------------+
+   |            |
+   |            |
+   |            |
+   +------------+ 
+   3            2
+
+*/
+
+
 void BuildSwapPattern4(SwapPattern *sc)
 {
   static int trgl[][3] =
-    { {0,1,2}, {0,2,3}, {0,1,3}, {1,2,3} };
+    { {0,1,2}, {2,3,0}, {1,2,3}, {3,0,1} };
   static int trgul[][5] =
     { {0,1,-1,-1,-1}, {2,3,-1,-1,-1} };
 
@@ -282,6 +294,7 @@ bool edgeSwap(std::vector<MTet4 *> &newTets,
 
   // if there exist no swap that enhance the quality
   if (best <= tetQualityRef) return false;
+  // does random swaps  if (best < .01) return false;
 
   // we have the best configuration, so we swap
   // printf("outside size = %d\n",outside.size());

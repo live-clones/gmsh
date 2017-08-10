@@ -324,9 +324,9 @@ SMetric3 BGM_MeshMetric(GEntity *ge,
     Field *f = fields->get(fields->getBackgroundField());
     if(f) {
       SMetric3 l4;
-      if (!f->isotropic()) (*f)(X, Y, Z, l4, ge);
+      if (!f->isotropic()){(*f)(X, Y, Z, l4, ge);}
       else {
-        const double L = (*f)(X, Y, Z, ge);
+	const double L = (*f)(X, Y, Z, ge);
         l4 = SMetric3(1/(L*L));
       }
       m1 = intersection(l4, m0);

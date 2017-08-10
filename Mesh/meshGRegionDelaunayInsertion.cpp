@@ -23,6 +23,43 @@
 
 int MTet4::radiusNorm = 2;
 
+
+void TEST_IF_BOUNDARY_IS_RECOVERED (GRegion *gr) {
+  std::list<GEdge*> e = gr->edges();
+  std::list<GFace*> f = gr->faces();
+  std::map<MEdge,GEdge*,Less_Edge> edges;
+  std::map<MFace,GFace*,Less_Face> faces;
+  std::list<GEdge*>::iterator it = e.begin();
+  std::list<GFace*>::iterator itf = f.begin();
+  for ( ; it != e.end() ; ++it){
+    for (unsigned int i=0;i<(*it)->lines.size(); ++i){
+      if (distance ((*it)->lines[i]->getVertex(0),(*it)->lines[i]->getVertex(1)) > 1.e-12)
+	edges.insert(std::make_pair(MEdge((*it)->lines[i]->getVertex(0),(*it)->lines[i]->getVertex(1)),*it));
+    }
+  }
+  for ( ; itf != f.end() ; ++itf){
+    for (unsigned int i=0;i<(*itf)->triangles.size(); ++i){
+      faces.insert(std::make_pair(MFace((*itf)->triangles[i]->getVertex(0),(*itf)->triangles[i]->getVertex(1),(*itf)->triangles[i]->getVertex(2)),*itf));
+    }
+  }
+  Msg::Info ("Searching for %d mesh edges and %d mesh faces among %d elements in region %d", edges.size(),  faces.size(), gr->getNumMeshElements(), gr->tag());
+  for (unsigned int k=0;k<gr->getNumMeshElements();k++){
+    for (int j=0;j<gr->getMeshElement(k)->getNumEdges();j++){
+      edges.erase (gr->getMeshElement(k)->getEdge(j));
+    }
+    for (int j=0;j<gr->getMeshElement(k)->getNumFaces();j++){
+      faces.erase (gr->getMeshElement(k)->getFace(j));
+    }
+  }
+  if (edges.empty() && faces.empty()) {
+    Msg::Info ("All edges and faces are present in the initial mesh");
+  }
+  else {
+    Msg::Error ("All edges and faces are NOT present in the initial mesh");
+  }
+};
+
+
 struct edgeContainerB
 {
   std::vector<std::vector<MEdge> > _hash;
@@ -193,16 +230,18 @@ struct faceXtet{
   }
 };
 
-void connectTets_vector2(std::vector<MTet4*> &t, std::vector<faceXtet> &conn)
+template <class ITER>
+void connectTets_vector2_templ(size_t _size, ITER beg, ITER end, std::vector<faceXtet> &conn)
 {
   conn.clear();
-  conn.reserve(4*t.size());
+  conn.reserve(4*_size);
   //  unsigned int k = 0;
   //  printf("COUCOU1 %d tets\n",t.size());
-  for (unsigned int i=0;i<t.size();i++){
-    if (!t[i]->isDeleted()){
+  for (ITER IT = beg; IT != end; ++IT){
+    MTet4* t = *IT;
+    if (!t->isDeleted()){
       for (int j = 0; j < 4; j++){
-	conn.push_back(faceXtet(t[i], j));
+	conn.push_back(faceXtet(t, j));
       }
     }
   }
@@ -253,6 +292,8 @@ void connectTets(ITER beg, ITER end, std::set<MFace, Less_Face> *allEmbeddedFace
 
 void connectTets(std::list<MTet4*> &l) { connectTets(l.begin(), l.end()); }
 void connectTets(std::vector<MTet4*> &l) { connectTets(l.begin(), l.end()); }
+void connectTets_vector2(std::list<MTet4*> &l,  std::vector<faceXtet> &conn) { connectTets_vector2_templ(l.size(), l.begin(), l.end(), conn); }
+void connectTets_vector2(std::vector<MTet4*> &l,  std::vector<faceXtet> &conn) { connectTets_vector2_templ(l.size(), l.begin(), l.end(), conn); }
 
 // Ensure the star-shapeness of the delaunay cavity
 // We use the visibility criterion : the vertex should be visible
@@ -392,7 +433,7 @@ void printTets (const char *fn, std::list<MTet4*> &cavity, bool force = false )
       MTet4 *tet = *ittet;
       if (force || !tet->isDeleted()){
         MTetrahedron *t = tet->tet();
-        t->writePOS (f, false,false,false,true,false,false);
+        t->writePOS (f, false,false,false,false,true,false);
       }
       ittet++;
     }
@@ -814,11 +855,15 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   std::set<MEdge, Less_Edge> allEmbeddedEdges;
   createAllEmbeddedEdges (gr, allEmbeddedEdges);
 
-  // daaaaaaamn slow !!!
-  //  connectTets(allTets.begin(),allTets.end(),allEmbeddedFaces.empty() ? NULL : &allEmbeddedFaces);
+  if (allEmbeddedFaces.empty())
   {
     std::vector<faceXtet> conn;
     connectTets_vector2(allTets, conn);
+  }
+  else
+  {
+    // daaaaaaamn slow !!!
+    connectTets(allTets.begin(),allTets.end(),&allEmbeddedFaces);
   }
 
   double t1 = Cpu();
@@ -865,7 +910,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   while (1){
     //    printf("coucou\n");
     std::vector<MTet4*> newTets;
-    for (CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it){
+    /*    for (CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it){
       if (!(*it)->isDeleted()){
         double qq = (*it)->getQuality();
         if (qq < qMin){
@@ -878,6 +923,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
         }
       }
     }
+    */
     //    printf("coucou\n");
 
     illegals.clear();
@@ -1134,6 +1180,9 @@ int isCavityCompatibleWithEmbeddedEdges(std::list<MTet4*> &cavity,
 void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
 {
 
+  //  TEST_IF_BOUNDARY_IS_RECOVERED (gr);
+
+  
   //printf("sizeof MTet4 = %d sizeof MTetrahedron %d sizeof(MVertex) %d\n",
   //       sizeof(MTet4), sizeof(MTetrahedron), sizeof(MVertex));
 
@@ -1188,6 +1237,11 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
   }
 
   gr->tetrahedra.clear();
+  {
+    std::vector<faceXtet> conn;
+    //  connectTets_vector2_templ(allTets.size(), allTets.begin(), allTets.end() , conn);
+  }
+  // SLOW
   connectTets(allTets.begin(), allTets.end());
 
   // classify the tets on the right region

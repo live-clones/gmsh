@@ -4,7 +4,7 @@ Mesh.CharacteristicLengthMin = 3;
 Mesh.CharacteristicLengthMax = 3;
 
 DefineConstant[
-  z = {16, Name "Parameters/z position of block"}
+  z = {16, Name "Parameters/z position of box"}
   sph = {0, Choices{0,1}, Name "Parameters/Add sphere?"}
 ];
 
@@ -19,7 +19,7 @@ If(sph)
 EndIf
 
 
-r() = BooleanFragments{ Volume{a()}; Delete; }{ Volume{b()}; Delete; };
+r() = BooleanFragments{ Volume{a(),b()}; Delete; }{};
 
 //Recursive Color SteelBlue { Volume{r()}; }
 

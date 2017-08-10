@@ -230,9 +230,7 @@ std::map<std::string, std::string> &Msg::GetCommandLineStrings()
 
 void Msg::SetProgressMeterStep(int step)
 {
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
+  if(GetCommRank() || GetNumThreads() > 1) return;
   _progressMeterStep = step;
 }
 
@@ -243,7 +241,8 @@ int Msg::GetProgressMeterStep()
 
 void Msg::ResetProgressMeter()
 {
-  if (!_commRank) _progressMeterCurrent = 0;
+  if(GetCommRank() || GetNumThreads() > 1) return;
+  _progressMeterCurrent = 0;
 }
 
 void Msg::SetInfoCpu(bool val)
@@ -295,10 +294,13 @@ onelab::client *Msg::GetOnelabClient()
 
 void Msg::Exit(int level)
 {
-  if (GModel::current())
+  if(GModel::current())
     delete GModel::current();
+
   // delete the temp file
-  if(!_commRank) UnlinkFile(CTX::instance()->homeDir + CTX::instance()->tmpFileName);
+  if(!GetCommRank())
+    UnlinkFile(CTX::instance()->homeDir + CTX::instance()->tmpFileName);
+
   if(_logFile){
     fclose(_logFile);
     _logFile = 0;
@@ -330,7 +332,7 @@ void Msg::Exit(int level)
 #if defined(HAVE_FLTK)
   // if we exit cleanly (level==0) and we are in full GUI mode, save
   // the persistent info to disk
-  if(FlGui::available() && !_commRank) {
+  if(FlGui::available() && !GetCommRank()) {
     if(CTX::instance()->sessionSave)
       PrintOptions(0, GMSH_SESSIONRC, 0, 0,
                    (CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str());
@@ -479,7 +481,7 @@ void Msg::Fatal(const char *fmt, ...)
       c0 = "\33[1m\33[31m"; c1 = "\33[0m";  // bold red
     }
     if(_commSize > 1)
-      fprintf(stderr, "%sFatal   : [rank %3d] %s%s\n", c0, _commRank, str, c1);
+      fprintf(stderr, "%sFatal   : [rank %3d] %s%s\n", c0, GetCommRank(), str, c1);
     else
       fprintf(stderr, "%sFatal   : %s%s\n", c0, str, c1);
     fflush(stderr);
@@ -494,7 +496,7 @@ void Msg::Error(const char *fmt, ...)
   _errorCount++;
   _atLeastOneErrorInRun = 1;
 
-  if(_verbosity < 1) return;
+  if(GetVerbosity() < 1) return;
 
   char str[5000];
   va_list args;
@@ -524,7 +526,7 @@ void Msg::Error(const char *fmt, ...)
       c0 = "\33[1m\33[31m"; c1 = "\33[0m";  // bold red
     }
     if(_commSize > 1)
-      fprintf(stderr, "%sError   : [rank %3d] %s%s\n", c0, _commRank, str, c1);
+      fprintf(stderr, "%sError   : [rank %3d] %s%s\n", c0, GetCommRank(), str, c1);
     else
       fprintf(stderr, "%sError   : %s%s\n", c0, str, c1);
     fflush(stderr);
@@ -535,7 +537,7 @@ void Msg::Warning(const char *fmt, ...)
 {
   _warningCount++;
 
-  if(_verbosity < 2) return;
+  if(GetVerbosity() < 2) return;
 
   char str[5000];
   va_list args;
@@ -564,7 +566,7 @@ void Msg::Warning(const char *fmt, ...)
       c0 = "\33[35m"; c1 = "\33[0m";  // magenta
     }
     if(_commSize > 1)
-      fprintf(stderr, "%sWarning : [rank %3d] %s%s\n", c0, _commRank, str, c1);
+      fprintf(stderr, "%sWarning : [rank %3d] %s%s\n", c0, GetCommRank(), str, c1);
     else
       fprintf(stderr, "%sWarning : %s%s\n", c0, str, c1);
     fflush(stderr);
@@ -573,7 +575,7 @@ void Msg::Warning(const char *fmt, ...)
 
 void Msg::Info(const char *fmt, ...)
 {
-  if(_verbosity < 4) return;
+  if(GetVerbosity() < 4) return;
 
   char str[5000];
   va_list args;
@@ -600,7 +602,7 @@ void Msg::Info(const char *fmt, ...)
 
   if(CTX::instance()->terminal){
     if(_commSize > 1)
-      fprintf(stdout, "Info    : [rank %3d] %s\n", _commRank, str);
+      fprintf(stdout, "Info    : [rank %3d] %s\n", GetCommRank(), str);
     else
       fprintf(stdout, "Info    : %s\n", str);
     fflush(stdout);
@@ -614,7 +616,7 @@ void Msg::RequestRender()
 
 void Msg::Direct(const char *fmt, ...)
 {
-  if(_verbosity < 3) return;
+  if(GetVerbosity() < 3) return;
 
   char str[5000];
   va_list args;
@@ -641,7 +643,7 @@ void Msg::Direct(const char *fmt, ...)
       c0 = "\33[34m"; c1 = "\33[0m";  // blue
     }
     if(_commSize > 1)
-      fprintf(stdout, "%s[rank %3d] %s%s\n", c0, _commRank, str, c1);
+      fprintf(stdout, "%s[rank %3d] %s%s\n", c0, GetCommRank(), str, c1);
     else
       fprintf(stdout, "%s%s%s\n", c0, str, c1);
     fflush(stdout);
@@ -650,7 +652,7 @@ void Msg::Direct(const char *fmt, ...)
 
 void Msg::StatusBar(bool log, const char *fmt, ...)
 {
-  if(_verbosity < 4) return;
+  if(GetVerbosity() < 4) return;
 
   char str[5000];
   va_list args;
@@ -670,7 +672,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
     if(log) FlGui::instance()->check();
-    if(!log || _verbosity > 4)
+    if(!log || GetVerbosity() > 4)
       FlGui::instance()->setStatus(str);
     if(log){
       std::string tmp = std::string("Info    : ") + str;
@@ -681,7 +683,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
 
   if(log && CTX::instance()->terminal){
     if(_commSize > 1)
-      fprintf(stdout, "Info    : [rank %3d] %s\n", _commRank, str);
+      fprintf(stdout, "Info    : [rank %3d] %s\n", GetCommRank(), str);
     else
       fprintf(stdout, "Info    : %s\n", str);
     fflush(stdout);
@@ -691,7 +693,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
 void Msg::StatusGl(const char *fmt, ...)
 {
 #if defined(HAVE_FLTK)
-  if(_commRank) return;
+  if(GetCommRank()) return;
   char str[5000];
   va_list args;
   va_start(args, fmt);
@@ -713,7 +715,7 @@ void Msg::SetWindowTitle(const std::string &title)
 
 void Msg::Debug(const char *fmt, ...)
 {
-  if(_verbosity < 99) return;
+  if(GetVerbosity() < 99) return;
 
   char str[5000];
   va_list args;
@@ -734,7 +736,7 @@ void Msg::Debug(const char *fmt, ...)
 
   if(CTX::instance()->terminal){
     if(_commSize > 1)
-      fprintf(stdout, "Debug   : [rank %3d] %s\n", _commRank, str);
+      fprintf(stdout, "Debug   : [rank %3d] %s\n", GetCommRank(), str);
     else
       fprintf(stdout, "Debug   : %s\n", str);
     fflush(stdout);
@@ -743,12 +745,14 @@ void Msg::Debug(const char *fmt, ...)
 
 void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
 {
-  if(_commRank || _verbosity < 4 ||
+  if(GetCommRank() || GetNumThreads() > 1 || GetVerbosity() < 4 ||
      _progressMeterStep <= 0 || _progressMeterStep >= 100) return;
 
   double percent = 100. * (double)n/(double)N;
 
   if(percent >= _progressMeterCurrent || n > N - 1){
+    while(_progressMeterCurrent < percent)
+      _progressMeterCurrent += _progressMeterStep;
     char str[5000], str2[5000];
     va_list args;
     va_start(args, fmt);
@@ -759,7 +763,7 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
     if(_client) _client->Progress(str2);
 
 #if defined(HAVE_FLTK)
-    if(FlGui::available() && _verbosity > 4){
+    if(FlGui::available() && GetVerbosity() > 4){
       FlGui::instance()->check();
       FlGui::instance()->setProgress(str, (n > N - 1) ? 0 : n, 0, N);
     }
@@ -770,14 +774,6 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
       fprintf(stdout, "%s                                          \r",
               (n > N - 1) ? "" : str2);
       fflush(stdout);
-    }
-
-#if defined(_OPENMP)
-#pragma omp critical
-#endif
-    {
-      while(_progressMeterCurrent < percent)
-        _progressMeterCurrent += _progressMeterStep;
     }
   }
 }
@@ -797,7 +793,7 @@ void Msg::PrintTimers()
 
   if(CTX::instance()->terminal){
     if(_commSize > 1)
-      fprintf(stdout, "Timers  : [rank %3d] %s\n", _commRank, str.c_str());
+      fprintf(stdout, "Timers  : [rank %3d] %s\n", GetCommRank(), str.c_str());
     else
       fprintf(stdout, "Timers  : %s\n", str.c_str());
     fflush(stdout);
@@ -815,19 +811,19 @@ void Msg::ResetErrorCounter()
 
 void Msg::PrintErrorCounter(const char *title)
 {
-  if(_commRank || _verbosity < 1) return;
-  if(!_warningCount && !_errorCount) return;
+  if(GetCommRank() || GetVerbosity() < 1) return;
+  if(!GetWarningCount() && !GetErrorCount()) return;
 
-  std::string prefix = _errorCount ? "Error   : " : "Warning : ";
+  std::string prefix = GetErrorCount() ? "Error   : " : "Warning : ";
   std::string help("Check the full log for details");
   std::string line(std::max(strlen(title), help.size()), '-');
   char warn[128], err[128];
-  sprintf(warn, "%5d warning%s", _warningCount, _warningCount == 1 ? "" : "s");
-  sprintf(err, "%5d error%s", _errorCount, _errorCount == 1 ? "" : "s");
+  sprintf(warn, "%5d warning%s", GetWarningCount(), GetWarningCount() == 1 ? "" : "s");
+  sprintf(err, "%5d error%s", GetErrorCount(), GetErrorCount() == 1 ? "" : "s");
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    std::string col = _errorCount ?
+    std::string col = GetErrorCount() ?
       std::string(CTX::instance()->guiColorScheme ? "@B72@." : "@C1@.") :
       std::string(CTX::instance()->guiColorScheme ? "@B152@." : "@C5@.");
     FlGui::instance()->addMessage((col + prefix + line).c_str());
@@ -836,14 +832,14 @@ void Msg::PrintErrorCounter(const char *title)
     FlGui::instance()->addMessage((col + prefix + err).c_str());
     FlGui::instance()->addMessage((col + prefix + help).c_str());
     FlGui::instance()->addMessage((col + prefix + line).c_str());
-    if(_errorCount) fl_beep();
+    if(GetErrorCount()) fl_beep();
   }
 #endif
 
   if(CTX::instance()->terminal){
     const char *c0 = "", *c1 = "";
     if(!streamIsFile(stderr) && streamIsVT100(stderr)){
-      c0 = _errorCount ? "\33[1m\33[31m" : "\33[35m"; // bold red or magenta
+      c0 = GetErrorCount() ? "\33[1m\33[31m" : "\33[35m"; // bold red or magenta
       c1 = "\33[0m";
     }
     fprintf(stderr, "%s%s\n%s\n%s\n%s\n%s\n%s%s\n", c0, (prefix + line).c_str(),
@@ -1548,7 +1544,7 @@ void Msg::Barrier()
 #include <omp.h>
 
 int Msg::GetNumThreads(){ return omp_get_num_threads(); }
-void Msg::SetNumThreads(int num){ printf("Setting num threads = %d", num); omp_set_num_threads(num); }
+void Msg::SetNumThreads(int num){ omp_set_num_threads(num); }
 int Msg::GetMaxThreads(){ return omp_get_max_threads(); }
 int Msg::GetThreadNum(){ return omp_get_thread_num(); }
 
@@ -1560,3 +1556,51 @@ int Msg::GetMaxThreads(){ return 1; }
 int Msg::GetThreadNum(){ return 0; }
 
 #endif
+
+MsgProgressStatus::MsgProgressStatus(int num)
+  : _totalElementToTreat(num), _currentI(0), _nextIToCheck(0),
+    _initialTime(Cpu()), _lastTime(_initialTime), _lastPercentage(0),
+    _progressMeterStep(Msg::GetProgressMeterStep())
+{
+  Msg::SetProgressMeterStep(1);
+  Msg::ResetProgressMeter();
+}
+
+MsgProgressStatus::~MsgProgressStatus()
+{
+  Msg::ProgressMeter(_totalElementToTreat, _totalElementToTreat, true, "done");
+  Msg::SetProgressMeterStep(_progressMeterStep);
+}
+
+void MsgProgressStatus::next()
+{
+  if(Msg::GetCommRank() || Msg::GetNumThreads() > 1) return;
+
+  ++_currentI;
+  if (_currentI < _nextIToCheck) return;
+
+  int currentPercentage = _currentI * 100 / _totalElementToTreat;
+  // check every percentage only
+  _nextIToCheck = (currentPercentage + 1) * _totalElementToTreat / 100 + 1;
+
+  double currentTime = Cpu();
+  if ((currentPercentage < 5                   && currentTime - _lastTime > 15.) ||
+      (currentPercentage > _lastPercentage + 4 && currentTime - _lastTime > 10.)) {
+    _lastPercentage = currentPercentage;
+    _lastTime = currentTime;
+    const double remaining = (currentTime - _initialTime) / (_currentI + 1) *
+                             (_totalElementToTreat - _currentI - 1);
+    if (remaining < 60*2)
+      Msg::ProgressMeter(_currentI - 1, _totalElementToTreat, true,
+                         "%d%% (remaining time ~%g seconds)",
+                         currentPercentage, remaining);
+    else if (remaining < 60*60*2)
+      Msg::ProgressMeter(_currentI - 1, _totalElementToTreat, true,
+                         "%d%% (remaining time ~%g minutes)",
+                         currentPercentage, remaining / 60);
+    else
+      Msg::ProgressMeter(_currentI - 1, _totalElementToTreat, true,
+                         "%d%% (remaining time ~%g hours)",
+                         currentPercentage, remaining / 3600);
+  }
+}

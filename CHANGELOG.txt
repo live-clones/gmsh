@@ -1,3 +1,8 @@
+3.0.4 (July 28, 2017): moved vorometal code to plugin; openmp improvements; bug
+fixes.
+
+3.0.3 (June 27, 2017): new element quality measures; Block->Box; minor fixes.
+
 3.0.2 (May 13, 2017): improved handling of meshing constraints and entity
 numbering after boolean operations; improved handling of fast coarseness
 transitions in MeshAdapt; new TIKZ export; small bug fixes.

@@ -152,7 +152,7 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
 
 PView *GMSH_TetrahedralizePlugin::execute(PView *v)
 {
-  Msg::Error("Plugin(Tetrahedralize requires mesh module");
+  Msg::Error("Plugin(Tetrahedralize) requires mesh module");
   return v;
 }
 

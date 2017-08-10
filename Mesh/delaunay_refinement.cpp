@@ -47,7 +47,7 @@ static double GMSHSIZE (const SPoint3 &p, Field *f, double lc_nodal) {
   if (!CTX::instance()->mesh.lcExtendFromBoundary) lc_nodal = 1.e22;
   //  double _a = Cpu();
   if (f)f_field = (*f)(p.x(), p.y(), p.z());
-  //  _C3 += Cpu() - _a;  
+  //  _C3 += Cpu() - _a;
 
   double lc = std::min (lc_nodal,f_field);
   lc = std::max(lc, CTX::instance()->mesh.lcMin);
@@ -74,13 +74,13 @@ double adaptiveTrapezoidalRule(SPoint3 p1 , SPoint3 p2 ,
 
   // value of f on both sides
   double f1 = lc1;//GMSHSIZE(p1, bgm, lc1); //f(p1 + dp*t1,data);
-  double f2 = lc2;//GMSHSIZE(p2, bgm, lc2); //f(p1 + dp*t2,data);  
-  
+  double f2 = lc2;//GMSHSIZE(p2, bgm, lc2); //f(p1 + dp*t2,data);
+
   dl = p1.distance(p2);
 
   //     adim_lenght of half the edge should be bigger than EXCLUSION_FACTOR
   // +------x--------+
-  
+
   if (dl / (2*std::min(lc1,lc2))  <= EXCLUSION_FACTOR){
     //    printf ("edge length %g lc %g %g\n",dl,f1,f2);
     return EXCLUSION_FACTOR;
@@ -140,25 +140,15 @@ void saturateEdge(Edge &e, std::vector<Vert*> &S, std::stack<IPT> &temp)
   Field *bgm = NULL;
   if(fields->getBackgroundField() > 0){
     bgm = fields->get(fields->getBackgroundField());
-  }  
-
-  if (0){
-    const double length = p1.distance(p2);
-    const double lc_avg = (e.first->lc() + e.second->lc())*.5;
-    const double l_adim_approx =   length / lc_avg;
-    if (l_adim_approx > 10.){
-      SPoint3 pmid = (p1+p2)*0.5;
-      const double lc = GMSHSIZE(pmid, bgm, lc_avg);
-      S.push_back(new Vert(pmid.x(),pmid.y(),pmid.z(),lc));
-      return;
-    }
   }
-  
+
   //  double _a = Cpu();
-  
+
+  //  printf("%g %g \n",e.first->lc(), e.second->lc());
+
   const double dN = adaptiveTrapezoidalRule(p1,p2,e.first->lc(), e.second->lc(),
                                             _result, dl, temp, bgm);
-  //  _C1 += Cpu() - _a;  
+  //  _C1 += Cpu() - _a;
   //  _a = Cpu();
 
   const int N = (int) (dN+0.1);
@@ -201,7 +191,7 @@ void saturateEdge(Edge &e, std::vector<Vert*> &S, std::stack<IPT> &temp)
       }
     }
   }
-  //  _C2 += Cpu() - _a;  
+  //  _C2 += Cpu() - _a;
   //  printf(" press enter\n");
   //  getchar();
   //  printf("%d points added\n",S.size());
@@ -209,30 +199,69 @@ void saturateEdge(Edge &e, std::vector<Vert*> &S, std::stack<IPT> &temp)
   //  exit(1);
 }
 
+inline bool distributeEdgeThroughThreads(int nbThreads, int myThread,
+                                         const Edge &ed)
+{
+  //  const size_t h = ((size_t)ed.first->getNum());
+  const size_t h = ((size_t)ed.first) >> 3;
+  //  printf("%lu %d %d %d\n",h,nbThreads,myThread,h % nbThreads);
+  return (int)(h % nbThreads) == myThread;
+}
+
 void saturateEdges(edgeContainer &ec,
                    tetContainer &T,
                    int nbThreads,
                    std::vector<Vert*> &S)
 {
-  //  _C1 = 0;
-  //  _C2 = 0;
-  std::stack<IPT> temp;
-  // FIXME
-  const int N = T.size(0);
-  for (int i=0;i<N;i++){
-    Tet *t = T(0,i);
-    if (t->V[0] && t->_modified){
-      t->_modified = false;
-      for (int iEdge=0;iEdge<6;iEdge++){
-	Edge ed = t->getEdge(iEdge);
-	bool isNew = ec.addNewEdge(ed);
-	if (isNew){
-	  //	  saturateEdge_A_LA_FACON_PaulLouis(ed, S);
-	  saturateEdge (ed, S, temp);
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+  {
+    std::vector<Vert*> Sloc;
+    std::stack<IPT> temp;
+#ifdef _OPENMP
+    int  myThread = omp_get_thread_num();
+    //    nbThreads =  omp_get_num_threads();
+#else
+    int  myThread = 0;
+#endif
+    for (int iThread = 0; iThread<nbThreads;iThread++){
+      const int N = T.size(iThread);
+      for (int i=0;i<N;i++){
+	Tet *t = T(iThread,i);
+	if (t->V[0] && t->_modified){
+	  //	t->_modified = false;
+	  for (int iEdge=0;iEdge<6;iEdge++){
+	    Edge ed = t->getEdge(iEdge);
+	    if (distributeEdgeThroughThreads (nbThreads,myThread, ed)){
+	      bool isNew = ec.addNewEdge(ed);
+	      if (isNew){
+		saturateEdge (ed, Sloc, temp);
+	      }
+	    }
+	  }
 	}
       }
     }
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+    S.insert (S.end(),Sloc.begin(), Sloc.end());
+#ifdef _OPENMP
+#pragma omp barrier
+#endif
   }
+
+  for (int iThread = 0; iThread<nbThreads;iThread++){
+    const int N = T.size(iThread);
+    for (int i=0;i<N;i++){
+      Tet *t = T(iThread,i);
+      if (t->V[0] && t->_modified){
+	t->_modified = false;
+      }
+    }
+  }
+
   //  printf("timings %12.5E  %12.5E\n",_C1,_C2);
 }
 
@@ -416,7 +445,7 @@ void disconnectEmbeddedFaces (GRegion *gr, connSet &faceToTet, std::vector<Vert 
 	Tet *t1 = itf->t;
 	Tet *t2 = itf->t->T[itf->i];
 	//	if (!(f == t1->getFace(itf->i)))printf("aie\n");
-	for (int k=0;k<4;k++){	  
+	for (int k=0;k<4;k++){
 	  if (t1 && t1->T[k] == t2){t1->T[k]=NULL;ok1=true;}
 	  if (t2 && t2->T[k] == t1){t2->T[k]=NULL;ok2=true;}
 	}
@@ -432,8 +461,8 @@ void computeMeshSizes (GRegion *gr, std::map<MVertex*, double> &s){
   for (std::list<GEdge*>::iterator it = e.begin() ; it != e.end(); ++it){
     for (unsigned int i = 0; i < (*it)->lines.size(); i++){
       double d = distance((*it)->lines[i]->getVertex(0), (*it)->lines[i]->getVertex(1));
-      updateSize ((*it)->lines[i]->getVertex(0), s, d);      
-      updateSize ((*it)->lines[i]->getVertex(1), s, d);      
+      updateSize ((*it)->lines[i]->getVertex(0), s, d);
+      updateSize ((*it)->lines[i]->getVertex(1), s, d);
     }
   }
   std::list<GFace*> f ;
@@ -449,20 +478,72 @@ void computeMeshSizes (GRegion *gr, std::map<MVertex*, double> &s){
 	updateSize ((*it)->triangles[i]->getVertex((j+1)%3), s, d);
       }
     }
-  }    
+  }
+  // there may be steiner points
+  for (unsigned int i=0;i<gr->tetrahedra.size();i++){
+    for (unsigned int j = 0; j < 4; j++){
+      MVertex *v = gr->tetrahedra[i]->getVertex(j);
+      if (s.find(v) == s.end()){
+	s[v] = 1.0;
+      }
+    }
+  }
 }
+
+
+void parallelDelaunay (int NT, std::vector<Vert*> &S,
+		       tetContainer &allocator,
+		       int iter,
+		       bool explicitFiltering,
+		       std::vector<int> &indices,
+		       edgeContainer *embeddedEdges){
+  //  Msg::Info ("Parallel Delaunay with %d threads",NT);
+  int N = S.size();
+  NT = std::min(NT, MAX_NUM_THREADS_);
+
+  std::vector<Vert*> assignTo0[1];
+  std::vector<std::vector<Vert*> > assignTo (NT);
+
+  for (unsigned int i = 1; i < indices.size(); i++){
+    int start = indices[i-1];
+    int end = indices[i];
+    int sizePerBlock = (NT*((end-start) / NT))/NT;
+    int currentBlock = 0;
+    int localCounter = 0;
+    // printf("sizePerBlock[%d] = %d (%d,%d)\n",i,sizePerBlock, start, end);
+
+    if (i < 2){
+      for (int jPt=start;jPt<end;jPt++){
+        assignTo0[0].push_back(S[jPt]);
+      }
+    }
+    else {
+      for (int jPt=start;jPt<end;jPt++){
+        if (localCounter++ >= sizePerBlock && currentBlock != NT-1){
+          localCounter = 0;
+          currentBlock++;
+        }
+        assignTo[currentBlock].push_back(S[jPt]);
+      }
+    }
+  }
+  //  delaunayTrgl (numThreads,1,add.size(), &add,allocator,embeddedEdges.empty() ? NULL : &embeddedEdges);
+  delaunayTrgl(1,1, assignTo0[0].size(),assignTo0,allocator,embeddedEdges);
+  delaunayTrgl(NT,1, N,&assignTo[0], allocator,embeddedEdges);
+}
+
+extern double tetQuality (Tet* t, double *volume);
 
 void edgeBasedRefinement(const int numThreads,
                          const int nptsatonce,
                          GRegion *gr)
 {
   // fill up old Datastructures
-
   edgeContainer embeddedEdges (10000);
-  
+
   std::map<MVertex*, double> sizes;
-  computeMeshSizes (gr, sizes);  
-  
+  computeMeshSizes (gr, sizes);
+
   tetContainer allocator (numThreads,1000000);
 
   SBoundingBox3d bb;
@@ -525,7 +606,6 @@ void edgeBasedRefinement(const int numThreads,
     }
   }
 
-
   // do not allow to saturate boundary edges
   {
     for (unsigned int i=0;i< allocator.size(0);i++) {
@@ -550,7 +630,6 @@ void edgeBasedRefinement(const int numThreads,
     for (unsigned int i=0;i<_vertices.size();i++){
       _filter.insert( _vertices[i] );
     }
-
     int iter = 1;
     Msg::Info("------------------------------------- SATUR FILTR SORTH DELNY TIME  TETS");
 
@@ -559,12 +638,12 @@ void edgeBasedRefinement(const int numThreads,
     while(1){
       std::vector<Vert*> add;
       double t1 = Cpu();
-      //      C_COUNT = 0;
+      //  PARALLEL DONE
       saturateEdges (ec, allocator, numThreads, add);
-      //      printf("%d calls %d points added",C_COUNT,add.size());
+      //      printf("%d points added",add.size());
       double t2 = Cpu();
       filterVertices (numThreads, _filter, add);
-      //      printf(" %d points remain\n",add.size());
+      //            printf(" %d points remain\n",add.size());
       double t3 = Cpu();
       if (add.empty())break;
       // randomize vertices (EXTREMELY IMPORTANT FOR NOT DETERIORATING PERFORMANCE)
@@ -572,41 +651,88 @@ void edgeBasedRefinement(const int numThreads,
       // sort them using BRIO
       std::vector<int> indices;
       SortHilbert(add, indices);
+      //      printf("%d indices\n",indices.size());
       double t4 = Cpu();
-      delaunayTrgl (1,1,add.size(), &add,allocator,embeddedEdges.empty() ? NULL : &embeddedEdges);
+
+      parallelDelaunay ( numThreads, add, allocator, iter, false, indices,embeddedEdges.empty() ? NULL : &embeddedEdges);
+
+      //      delaunayTrgl (2 ,1,add.size(), &add,allocator,embeddedEdges.empty() ? NULL : &embeddedEdges);
       double t5 = Cpu();
       add_all.insert (add_all.end(), add.begin(), add.end());
-      Msg::Info("IT %3d %8d points added, timings %5.2f %5.2f %5.2f %5.2f %5.2f %5d",
+      size_t sss = 0;
+      for (int myThread=0; myThread < numThreads; myThread++)sss+= allocator.size(myThread);
+
+	Msg::Info("IT %3d %8d points added, timings %5.2f %5.2f %5.2f %5.2f %5.2f %5d",
                 iter,add.size(),
 		(t2-t1),
 		(t3-t2),
 		(t4-t3),
 		(t5-t4),
 		(t5-__t__),
-		allocator.size(0));
+		sss);
       iter++;
     }
   }
 
+  std::vector<Vert*> vv;
+  for (int myThread=0; myThread < numThreads; myThread++)
+    for (unsigned int i=0;i<allocator.size(myThread);i++)
+      for (unsigned int j=0;j<4;j++)
+	if (allocator(myThread,i)->V[j])
+   	  allocator(myThread,i)->V[j]->setNum(0);
 
-
-  for (unsigned int i=0; i< allocator.size(0);i++){
-    Tet  *tt = allocator (0,i);
-    MVertex *mvs[4];
-    if (tt->V[0]){
-      for (int j=0;j<4;j++){
-	Vert *v = tt->V[j];
-	std::map<Vert*,MVertex*>::iterator it = _ma.find(v);
-	if (it == _ma.end()){
-	  MVertex *mv = new MVertex (v->x(),v->y(),v->z(),gr);
-	  gr->mesh_vertices.push_back(mv);
-	  _ma[v] = mv;
-	  mvs[j] = mv;
+  for (int myThread=0; myThread < numThreads; myThread++)
+    for (unsigned int i=0;i<allocator.size(myThread);i++)
+      for (unsigned int j=0;j<4;j++)
+	if (allocator(myThread,i)->V[j] && allocator(myThread,i)->V[j]->getNum() == 0){
+	  allocator(myThread,i)->V[j]->setNum(1);
+	  std::map<Vert*,MVertex*>::iterator it = _ma.find(allocator(myThread,i)->V[j]);
+   	  if (it == _ma.end())vv.push_back(allocator(myThread,i)->V[j]);
 	}
-	else mvs[j] = it->second;
+
+  double t6 = Cpu();
+  Msg::Info("Optimizing");
+  edgeSwapPass (numThreads, allocator, embeddedEdges);
+  vertexRelocationPass (numThreads,vv);
+  edgeSwapPass (numThreads, allocator, embeddedEdges);
+  vertexRelocationPass (numThreads,vv);
+  edgeSwapPass (numThreads, allocator, embeddedEdges);
+  vertexRelocationPass (numThreads,vv);
+  double t7 = Cpu();
+
+  Msg::Info("Optimization done (%g seconds)",t7-t6);
+
+  int cat [10] = {0,0,0,0,0,0,0,0,0,0};
+  double MIN = 1.0;
+
+  for (int myThread=0; myThread < numThreads; myThread++) {
+    for (unsigned int i=0; i< allocator.size(myThread);i++){
+      Tet  *tt = allocator (myThread,i);
+      MVertex *mvs[4];
+      if (tt->V[0]){
+	double vol;
+	double q = tetQuality (tt,&vol);
+	cat [(int)(q*10)] ++;
+	MIN = std::min(MIN,q);
+	for (int j=0;j<4;j++){
+	  Vert *v = tt->V[j];
+	  std::map<Vert*,MVertex*>::iterator it = _ma.find(v);
+	  if (it == _ma.end()){
+	    MVertex *mv = new MVertex (v->x(),v->y(),v->z(),gr);
+	    gr->mesh_vertices.push_back(mv);
+	    _ma[v] = mv;
+	    mvs[j] = mv;
+	  }
+	  else mvs[j] = it->second;
+	}
+	gr->tetrahedra.push_back(new MTetrahedron(mvs[0],mvs[1],mvs[2],mvs[3]));
       }
-      gr->tetrahedra.push_back(new MTetrahedron(mvs[0],mvs[1],mvs[2],mvs[3]));
     }
+  }
+
+  Msg::Info ("Min Tet Quality %22.15E",MIN);
+  for (int i=0;i<10;i++){
+    Msg::Info ("Tet Quality [%4.3f,%4.3f] %8d",0.1*i,0.1*(i+1),cat[i]);
   }
 
   if (Msg::GetVerbosity() == 99) {
@@ -638,4 +764,6 @@ void edgeBasedRefinement(const int numThreads,
     Msg::Info("MESH EFFICIENCY : %22.15E %6d edges among %d are out of range",
               exp (sum / _sizes.size()),nbBad,_sizes.size());
   }
+
+
 }

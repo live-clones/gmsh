@@ -53,6 +53,14 @@ def path(dirname, inp):
 # ONELAB models usually directly use "value=val" assignments when creating
 # parameters; brutally changing value to a list would mean changing all the
 # existing models.
+#
+# 14/07/2017: last idea would be:
+# 1) add a member ('values', ('list', 'float'), []) with an empty initial value
+# 2) add a test
+#     - in tochar to send value if values is empty, and values otherwise
+#     - in fromchar to fill value if the received string when parsing 'value'
+#       is of size 1, or fill values if the received string when parsing 'value'
+#       AND skip the other member parsing
 
 class _parameter() :
   _membersbase = [

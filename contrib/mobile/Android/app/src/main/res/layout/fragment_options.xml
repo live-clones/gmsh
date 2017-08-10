@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:padding="4dip"
+              android:gravity="center_horizontal"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+  
+  <FrameLayout android:id="@+id/options_fragment"
+               android:name="org.geuz.onelab.OptionsModelFragment"
+               android:layout_width="match_parent"
+               android:layout_height="0px"
+               android:layout_weight="1" />
+  
+  <View android:layout_width="fill_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/darker_gray" />
+  <LinearLayout android:orientation="horizontal"
+		android:gravity="center" android:measureWithLargestChild="true"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_weight="0">
+    <Button android:id="@+id/goto_options_model"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Model">
+    </Button>
+    <Button android:id="@+id/goto_options_display"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Display">
+    </Button>
+  </LinearLayout>
+  
+</LinearLayout>

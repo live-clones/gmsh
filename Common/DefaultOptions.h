@@ -860,6 +860,9 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "NumSubEdges" , opt_geometry_num_sub_edges , 20. ,
     "Number of edge subdivisions between control points when displaying curves" },
 
+  { F|O, "OCCAutoFix" , opt_geometry_occ_auto_fix , 1. ,
+    "Automatically fix orientation of wires, faces, shells and volumes when creating"
+    " new entities" },
   { F|O, "OCCFixDegenerated" , opt_geometry_occ_fix_degenerated , 0. ,
     "Fix degenerated edges/faces in STEP, IGES and BRep models" },
   { F|O, "OCCFixSmallEdges" , opt_geometry_occ_fix_small_edges , 0. ,
@@ -899,6 +902,10 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "PointType" , opt_geometry_point_type , 0. ,
     "Display points as solid color dots (0) or 3D spheres (1)" },
 
+  { F|O, "ReparamOnFaceRobust" , opt_geometry_reparam_on_face_robust, 0 ,
+    "Use projection for reparametrization of a point classified on GEdge on a GFace" },
+
+
   { F|O, "ScalingFactor" , opt_geometry_scaling_factor , 1.0 ,
     "Global geometry scaling factor" },
   { F|O, "OrientedPhysicals" , opt_geometry_oriented_physicals, 1. ,
@@ -913,7 +920,7 @@ StringXNumber GeometryOptions_Number[] = {
     "Display geometry surfaces?" },
   { F|O, "SurfaceNumbers" , opt_geometry_surfaces_num , 0. ,
     "Display surface numbers?" },
-  { F|O, "SurfaceType" , opt_geometry_surface_type , 2. ,
+  { F|O, "SurfaceType" , opt_geometry_surface_type , 0. ,
     "Surface display type (0=cross, 1=wireframe, 2=solid)" },
 
   { F|O, "Tangents" , opt_geometry_tangents , 0. ,
@@ -1189,8 +1196,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "QualitySup" , opt_mesh_quality_sup , 0.0 ,
     "Only display elements whose quality measure is smaller than QualitySup" },
   { F|O, "QualityType" , opt_mesh_quality_type , 2. ,
-    "Type of quality measure (0=gamma~vol/sum_face/max_edge, "
-    "1=eta~vol^(2/3)/sum_edge^2, 2=rho~min_edge/max_edge)" },
+    "Type of quality measure (0=SICN~signed inverse condition number, "
+    "1=SIGE~signed inverse gradient error, 2=gamma~vol/sum_face/max_edge, "
+    "3=Disto~minJ/maxJ"},
 
   { F|O, "RadiusInf" , opt_mesh_radius_inf , 0.0 ,
     "Only display elements whose longest edge is greater than RadiusInf" },
@@ -1756,9 +1764,12 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "PostEta" , opt_print_pos_eta , 0. ,
     "Save Eta quality measure in mesh statistics exported as "
     "post-processing views" },
-  { F|O, "PostRho" , opt_print_pos_rho , 0. ,
-    "Save Rho quality measure in mesh statistics exported as "
-    "post-processing views" },
+  { F|O, "PostSICN" , opt_print_pos_SICN , 0. ,
+    "Save SICN (signed inverse condition number) quality measure in mesh "
+    "statistics exported as post-processing views" },
+  { F|O, "PostSICN" , opt_print_pos_SIGE , 0. ,
+    "Save SIGE (signed inverse gradient error) quality measure in mesh "
+    "statistics exported as post-processing views" },
   { F|O, "PostDisto" , opt_print_pos_disto , 0. ,
     "Save Disto quality measure in mesh statistics exported as "
     "post-processing views" },

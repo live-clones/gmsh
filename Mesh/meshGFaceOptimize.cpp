@@ -119,7 +119,7 @@ void buildMeshGenerationDataStructures(GFace *gf,
     std::cout << "***************************************** NULL" << std::endl;
     throw;
   }
-  
+
   for(unsigned int i = 0;i < gf->triangles.size(); i++)
     setLcs(gf->triangles[i], vSizesMap, data);
 
@@ -128,8 +128,10 @@ void buildMeshGenerationDataStructures(GFace *gf,
     std::list<GVertex*> emb_vertx = gf->embeddedVertices();
     std::list<GVertex*>::iterator itvx = emb_vertx.begin();
     while(itvx != emb_vertx.end()){
-      MVertex *v = *((*itvx)->mesh_vertices.begin());
-      vSizesMap[v] = std::min(vSizesMap[v], (*itvx)->prescribedMeshSizeAtVertex());
+      if((*itvx)->mesh_vertices.size()){
+        MVertex *v = *((*itvx)->mesh_vertices.begin());
+        vSizesMap[v] = std::min(vSizesMap[v], (*itvx)->prescribedMeshSizeAtVertex());
+      }
       ++itvx;
     }
   }
@@ -262,12 +264,12 @@ void transferDataStructure(GFace *gf, std::set<MTri3*, compareTri3Ptr> &AllTris,
   // first place)
 
   // if BL triangles are considered, then all that is WRONG !
- 
-  
+
+
   if(gf->triangles.size() > 1){
 
     bool BL = !gf->getColumns()->_toFirst.empty();
-  
+
     double n1[3], n2[3];
     MTriangle *t = gf->triangles[0];
     MVertex *v0 = t->getVertex(0), *v1 = t->getVertex(1), *v2 = t->getVertex(2);
@@ -510,8 +512,8 @@ static int _removeTwoQuadsNodes(GFace *gf)
           return 0;
         }
         MQuadrangle *q = new MQuadrangle(v1,v2,v3,v4);
-        double s1 = surfaceFaceUV(q,gf);
-        double s2 = surfaceFaceUV(q1,gf) + surfaceFaceUV(q2,gf);;
+        double s1 = 0;//surfaceFaceUV(q,gf);
+        double s2 = 1;//surfaceFaceUV(q1,gf) + surfaceFaceUV(q2,gf);;
         if (s1 > s2){
           delete q;
         }
@@ -564,6 +566,66 @@ int removeTwoQuadsNodes(GFace *gf)
   return nbRemove;
 }
 
+
+static bool _tryToCollapseThatVertex2 (GFace *gf,
+				       std::vector<MElement*> &e1,
+				       std::vector<MElement*> &e2,
+				       MElement *q,
+				       MVertex *v1,
+				       MVertex *v2)
+{
+  std::vector<MElement*> e = e1;
+  e.insert(e.end(), e2.begin(), e2.end());
+
+  double x1 = v1->x();
+  double y1 = v1->y();
+  double z1 = v1->z();
+
+  double x2 = v2->x();
+  double y2 = v2->y();
+  double z2 = v2->z();
+
+  // new position of v1 && v2
+  double initialGuess[2]={0,0};
+  GPoint pp = gf->closestPoint(SPoint3(0.5*(x1+x2),0.5*(y1+y2),0.5*(z1+z2)),initialGuess);
+
+  //  double surface_old = 0;
+  //  double surface_new = 0;
+  double worst_quality_old = 1.0;
+  double worst_quality_new = 1.0;
+
+  //  surface_old = surfaceFaceUV(q,gf,false);
+  int count=0;
+  for (unsigned int j=0;j<e.size();++j){
+    if (e[j] != q){
+      count++;
+      worst_quality_old = std::min(worst_quality_old,e[j]-> etaShapeMeasure());
+      v1->x() = pp.x();v1->y() = pp.y();v1->z() = pp.z();
+      v2->x() = pp.x();v2->y() = pp.y();v2->z() = pp.z();
+      worst_quality_new = std::min(worst_quality_new,e[j]-> etaShapeMeasure());
+      v1->x() = x1;v1->y() = y1;v1->z() = z1;
+      v2->x() = x2;v2->y() = y2;v2->z() = z2;
+    }
+  }
+
+  //  printf("%d %g %g %g %g\n", count, surface_old, surface_new, worst_quality_old , worst_quality_new);
+
+  if (worst_quality_new >  worst_quality_old ) {
+    v1->x() = pp.x();v1->y() = pp.y();v1->z() = pp.z();
+    for (unsigned int j=0;j<e.size();++j){
+      if (e[j] != q){
+        for (int k=0;k<4;k++){
+          if (e[j]->getVertex(k) == v2){
+            e[j]->setVertex(k,v1);
+          }
+        }
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
 // collapse v1 & v2 to their middle and replace into e1 & e2
 static bool _tryToCollapseThatVertex (GFace *gf,
                                       std::vector<MElement*> &e1,
@@ -576,7 +638,9 @@ static bool _tryToCollapseThatVertex (GFace *gf,
   e.insert(e.end(), e2.begin(), e2.end());
 
   double uu1,vv1;
-  v1->getParameter(0,uu1);
+  if (!v1->getParameter(0,uu1)){
+    return _tryToCollapseThatVertex2 (gf,e1,e2,q,v1,v2);
+  }
   v1->getParameter(1,vv1);
   double x1 = v1->x();
   double y1 = v1->y();
@@ -1009,7 +1073,7 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
   //	 t2->tri()->getVertex(0)->getNum(),t2->tri()->getVertex(1)->getNum(),t2->tri()->getVertex(2)->getNum(),iLocalEdge);
   //  printf("%d %d %d \n",v2->getNum(),v3->getNum(),v4->getNum());
   //  printf("%d %d %d \n",v4->getNum(),v3->getNum(),v1->getNum());
-  
+
   cavity.push_back(t2b3);
   cavity.push_back(t1b3);
   t1->setDeleted(true);
@@ -1026,12 +1090,12 @@ int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
 		 const swapCriterion &cr,bidimMeshData & data)
 {
   typedef std::set<MTri3*, compareTri3Ptr> CONTAINER;
-  
+
   int nbSwapTot = 0;
   std::set<swapquad> configs;
 
   std::set<MTri3*, compareTri3Ptr> allTris2;
-    
+
   for(int iter = 0; iter < 10; iter++){
     int nbSwap = 0;
     std::vector<MTri3*> newTris;
@@ -1054,7 +1118,7 @@ int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
     }
 
     //    allTris = allTris2;
-        
+
     allTris.insert(newTris.begin(), newTris.end());
 
     // for(CONTAINER::iterator it = allTris.begin(); it != allTris.end(); ++it){
@@ -1062,7 +1126,7 @@ int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
     // 	     (*it)->tri()->getVertex(1)->getNum(),
     // 	     (*it)->tri()->getVertex(2)->getNum(),(*it)->isDeleted() );
     // }
-    
+
     nbSwapTot += nbSwap;
     if(nbSwap == 0) break;
   }
@@ -1187,7 +1251,7 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
   std::sort(pairs.begin(),pairs.end());
   std::set<MElement*> touched;
 
-  
+
   if(CTX::instance()->mesh.algoRecombine != 0){
 #if defined(HAVE_BLOSSOM)
     int ncount = gf->triangles.size();
@@ -1234,7 +1298,7 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
         }
       }
 
-      
+
       double matzeit = 0.0;
       char MATCHFILE[256];
       sprintf(MATCHFILE,".face.match");
@@ -1296,7 +1360,7 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
 #endif
   }
 
-  
+
   std::vector<RecombineTriangle>::iterator itp = pairs.begin();
   while(itp != pairs.end()){
     // recombine if difference between max quad angle and right
@@ -1343,7 +1407,7 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
   }
   gf->triangles = triangles2;
 
-  
+
   if(CTX::instance()->mesh.algoRecombine != 1){
     quadsToTriangles(gf, minqual);
   }
@@ -1407,7 +1471,7 @@ void recombineIntoQuads(GFace *gf,
           //          printStats (gf, "toto");
           if (ITER > 20) break;
           ITER ++;
-        }
+	}
       }
     }
     quadsToTriangles(gf, minqual);
@@ -1448,12 +1512,12 @@ void quadsToTriangles(GFace *gf, double minqual)
       double qual1 = std::min(t11->gammaShapeMeasure(),t12->gammaShapeMeasure());
       double qual2 = std::min(t21->gammaShapeMeasure(),t22->gammaShapeMeasure());
 
-      double surf1 = surfaceFaceUV(t11,gf) + surfaceFaceUV(t12,gf);
-      double surf2 = surfaceFaceUV(t21,gf) + surfaceFaceUV(t22,gf);
+      //      double surf1 = surfaceFaceUV(t11,gf) + surfaceFaceUV(t12,gf);
+      //      double surf2 = surfaceFaceUV(t21,gf) + surfaceFaceUV(t22,gf);
 
       int option = 0;
-      if (surf1 > surf2 * (1.+1.e-8))option = 2;
-      else if (surf2 > surf1 * (1.+1.e-8))option = 1;
+      //      if (surf1 > surf2 * (1.+1.e-8))option = 2;
+      //      else if (surf2 > surf1 * (1.+1.e-8))option = 1;
 
       if (option == 1 || (option == 0 && qual1 > qual2)){
         gf->triangles.push_back(t11);

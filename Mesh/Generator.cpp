@@ -37,6 +37,10 @@
 #include "meshGRegionRelocateVertex.h"
 #include "pointInsertion.h"
 
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
+
 #if defined(HAVE_OPTHOM)
 #include "OptHomRun.h"
 #include "OptHomElastic.h"
@@ -119,7 +123,7 @@ template<class T>
 static void GetQualityMeasure(std::vector<T*> &ele,
                               double &gamma, double &gammaMin, double &gammaMax,
                               double &minSICN, double &minSICNMin, double &minSICNMax,
-                              double &rho, double &rhoMin, double &rhoMax,
+                              double &minSIGE, double &minSIGEMin, double &minSIGEMax,
                               double quality[3][100])
 {
   for(unsigned int i = 0; i < ele.size(); i++){
@@ -131,14 +135,14 @@ static void GetQualityMeasure(std::vector<T*> &ele,
     minSICN += s;
     minSICNMin = std::min(minSICNMin, s);
     minSICNMax = std::max(minSICNMax, s);
-    double r = ele[i]->rhoShapeMeasure();
-    rho += r;
-    rhoMin = std::min(rhoMin, r);
-    rhoMax = std::max(rhoMax, r);
+    double e = ele[i]->minSIGEShapeMeasure();
+    minSIGE += e;
+    minSIGEMin = std::min(minSIGEMin, e);
+    minSIGEMax = std::max(minSIGEMax, e);
     for(int j = 0; j < 100; j++){
       if(s > (2*j-100) / 100. && s <= (2*j-98) / 100.) quality[0][j]++;
       if(g > j / 100. && g <= (j + 1) / 100.) quality[1][j]++;
-      if(r > j / 100. && r <= (j + 1) / 100.) quality[2][j]++;
+      if(e > (2*j-100) / 100. && e <= (2*j-98) / 100.) quality[2][j]++;
     }
   }
 }
@@ -190,35 +194,41 @@ void GetStatistics(double stat[50], double quality[3][100])
       for(int j = 0; j < 100; j++)
         quality[i][j] = 0.;
     double minSICN = 0., minSICNMin = 1., minSICNMax = -1.;
+    double minSIGE = 0., minSIGEMin = 1., minSIGEMax = -1.;
     double gamma = 0., gammaMin = 1., gammaMax = 0.;
-    double rho = 0., rhoMin = 1., rhoMax = 0.;
 
     double N = stat[9] + stat[10] + stat[11] + stat[12] + stat[13];
     if(N){ // if we have 3D elements
       for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
         GetQualityMeasure((*it)->tetrahedra, gamma, gammaMin, gammaMax,
-                          minSICN, minSICNMin, minSICNMax, rho, rhoMin, rhoMax, quality);
+                          minSICN, minSICNMin, minSICNMax,
+                          minSIGE, minSIGEMin, minSIGEMax, quality);
         GetQualityMeasure((*it)->hexahedra, gamma, gammaMin, gammaMax,
-                          minSICN, minSICNMin, minSICNMax, rho, rhoMin, rhoMax, quality);
+                          minSICN, minSICNMin, minSICNMax,
+                          minSIGE, minSIGEMin, minSIGEMax, quality);
         GetQualityMeasure((*it)->prisms, gamma, gammaMin, gammaMax,
-                          minSICN, minSICNMin, minSICNMax, rho, rhoMin, rhoMax, quality);
+                          minSICN, minSICNMin, minSICNMax,
+                          minSIGE, minSIGEMin, minSIGEMax, quality);
         GetQualityMeasure((*it)->pyramids, gamma, gammaMin, gammaMax,
-                          minSICN, minSICNMin, minSICNMax, rho, rhoMin, rhoMax, quality);
+                          minSICN, minSICNMin, minSICNMax,
+                          minSIGE, minSIGEMin, minSIGEMax, quality);
       }
     }
     else{ // 2D elements
       N = stat[7] + stat[8];
       for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
         GetQualityMeasure((*it)->quadrangles, gamma, gammaMin, gammaMax,
-                          minSICN, minSICNMin, minSICNMax, rho, rhoMin, rhoMax, quality);
+                          minSICN, minSICNMin, minSICNMax,
+                          minSIGE, minSIGEMin, minSIGEMax, quality);
         GetQualityMeasure((*it)->triangles, gamma, gammaMin, gammaMax,
-                          minSICN, minSICNMin, minSICNMax, rho, rhoMin, rhoMax, quality);
+                          minSICN, minSICNMin, minSICNMax,
+                          minSIGE, minSIGEMin, minSIGEMax, quality);
       }
     }
     if(N){
       stat[18] = minSICN / N; stat[19] = minSICNMin; stat[20] = minSICNMax;
       stat[21] = gamma / N;   stat[22] = gammaMin;   stat[23] = gammaMax;
-      stat[25] = rho / N;     stat[25] = rhoMin;     stat[26] = rhoMax;
+      stat[24] = minSIGE / N; stat[25] = minSIGEMin; stat[26] = minSIGEMax;
     }
   }
 
@@ -278,6 +288,9 @@ static bool CancelDelaunayHybrid(GModel *m)
 
 static void Mesh0D(GModel *m)
 {
+
+  m->getFields()->initialize();
+
   for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it){
     GVertex *gv = *it;
     if(gv->mesh_vertices.empty())
@@ -299,26 +312,43 @@ static void Mesh0D(GModel *m)
 
 static void Mesh1D(GModel *m)
 {
+
+  m->getFields()->initialize();
+
   if(TooManyElements(m, 1)) return;
   Msg::StatusBar(true, "Meshing 1D...");
   double t1 = Cpu();
 
-  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
+
+  std::vector<GEdge*> temp;
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
     (*it)->meshStatistics.status = GEdge::PENDING;
+    temp.push_back(*it);
+  }
 
   Msg::ResetProgressMeter();
 
   int nIter = 0, nTot = m->getNumEdges();
   while(1){
-    //    meshGEdge mesher;
     int nPending = 0;
-    for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
-      if ((*it)->meshStatistics.status == GEdge::PENDING){
-        (*it)->mesh(true);
-        nPending++;
+    const size_t sss = temp.size();
+#if defined(_OPENMP)
+#pragma omp parallel for schedule (dynamic)
+#endif
+    for(size_t K = 0 ; K < sss ; K++){
+      GEdge *ed = temp[K];
+      if (ed->meshStatistics.status == GEdge::PENDING){
+	ed->mesh(true);
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+	{
+	  nPending++;
+	}
       }
       if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 1D...");
     }
+
     if(!nPending) break;
     if(nIter++ > 10) break;
   }
@@ -394,9 +424,11 @@ static void PrintMesh2dStatistics(GModel *m)
 
 static void Mesh2D(GModel *m)
 {
+  m->getFields()->initialize();
+
   if(TooManyElements(m, 2)) return;
   Msg::StatusBar(true, "Meshing 2D...");
-  double t1 = GetTimeInSeconds();
+  double t1 = Cpu();
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
     (*it)->meshStatistics.status = GFace::PENDING;
@@ -496,7 +528,7 @@ static void Mesh2D(GModel *m)
 
   // collapseSmallEdges(*m);
 
-  double t2 = GetTimeInSeconds();
+  double t2 = Cpu();
   CTX::instance()->meshTimer[1] = t2 - t1;
   Msg::StatusBar(true, "Done meshing 2D (%g s)", CTX::instance()->meshTimer[1]);
 
@@ -787,9 +819,16 @@ void TestConformity(GModel *gm)
 
 static void Mesh3D(GModel *m)
 {
+  m->getFields()->initialize();
+
   if(TooManyElements(m, 3)) return;
   Msg::StatusBar(true, "Meshing 3D...");
   double t1 = Cpu();
+
+  Msg::ResetProgressMeter();
+
+  if(m->getNumRegions())
+    Msg::ProgressMeter(0, 100, false, "Meshing 3D...");
 
   // mesh the extruded volumes first
   std::for_each(m->firstRegion(), m->lastRegion(), meshGRegionExtruded());
@@ -905,12 +944,16 @@ static void Mesh3D(GModel *m)
   m->setAllVolumesPositive();
 
   //  std::for_each(m->firstRegion(), m->lastRegion(), optimizeMeshGRegionNetgen());
-  if (Msg::GetVerbosity() > 98)
-    std::for_each(m->firstRegion(), m->lastRegion(), TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES ());
+  if(Msg::GetVerbosity() > 98)
+    std::for_each(m->firstRegion(), m->lastRegion(),
+                  TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES());
 
   CTX::instance()->mesh.changed = ENT_ALL;
   double t2 = Cpu();
   CTX::instance()->meshTimer[2] = t2 - t1;
+
+  if(m->getNumRegions())
+    Msg::ProgressMeter(100, 100, false, "Meshing 3D...");
   Msg::StatusBar(true, "Done meshing 3D (%g s)", CTX::instance()->meshTimer[2]);
 }
 
@@ -982,7 +1025,7 @@ void RecombineMesh(GModel *m)
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
     GFace *gf = *it;
-    recombineIntoQuads(gf);
+    recombineIntoQuads(gf,true,true,.01);
   }
 
   CTX::instance()->mesh.changed = ENT_ALL;

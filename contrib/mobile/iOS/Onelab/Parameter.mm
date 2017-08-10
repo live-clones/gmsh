@@ -1,4 +1,4 @@
-#import "parameter.h"
+#import "Parameter.h"
 #import "Utils.h"
 
 @implementation Parameter

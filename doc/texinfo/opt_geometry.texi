@@ -214,6 +214,11 @@ Display points as solid color dots (0) or 3D spheres (1)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.ReparamOnFaceRobust
+Use projection for reparametrization of a point classified on GEdge on a GFace@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.ScalingFactor
 Global geometry scaling factor@*
 Default value: @code{1}@*
@@ -251,7 +256,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.SurfaceType
 Surface display type (0=cross, 1=wireframe, 2=solid)@*
-Default value: @code{2}@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Tangents

@@ -2518,8 +2518,8 @@ optionWindow::optionWindow(int deltaFontSize)
 
       static Fl_Menu_Item menu_quality_type[] = {
         {"SICN", 0, 0, 0},
+        {"SIGE", 0, 0, 0},
         {"Gamma", 0, 0, 0},
-        {"Rho", 0, 0, 0},
         {"Disto", 0, 0, 0},
         {0}
       };

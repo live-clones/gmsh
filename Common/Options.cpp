@@ -2574,9 +2574,10 @@ double opt_general_rotation0(OPT_ARGS_NUM)
     CTX::instance()->tmpRotation[0] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(action & GMSH_SET)
-      FlGui::instance()->graph[0]->gl[0]->getDrawContext()->r[0] = val;
-    return FlGui::instance()->graph[0]->gl[0]->getDrawContext()->r[0];
+    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
+      FlGui::instance()->fullscreen : FlGui::instance()->graph[0]->gl[0];
+    if(action & GMSH_SET) gl->getDrawContext()->r[0] = val;
+    return gl->getDrawContext()->r[0];
   }
 #endif
   return CTX::instance()->tmpRotation[0];
@@ -2588,9 +2589,10 @@ double opt_general_rotation1(OPT_ARGS_NUM)
     CTX::instance()->tmpRotation[1] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(action & GMSH_SET)
-      FlGui::instance()->graph[0]->gl[0]->getDrawContext()->r[1] = val;
-    return FlGui::instance()->graph[0]->gl[0]->getDrawContext()->r[1];
+    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
+      FlGui::instance()->fullscreen : FlGui::instance()->graph[0]->gl[0];
+    if(action & GMSH_SET) gl->getDrawContext()->r[1] = val;
+    return gl->getDrawContext()->r[1];
   }
 #endif
   return CTX::instance()->tmpRotation[1];
@@ -2602,9 +2604,10 @@ double opt_general_rotation2(OPT_ARGS_NUM)
     CTX::instance()->tmpRotation[2] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(action & GMSH_SET)
-      FlGui::instance()->graph[0]->gl[0]->getDrawContext()->r[2] = val;
-    return FlGui::instance()->graph[0]->gl[0]->getDrawContext()->r[2];
+    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
+      FlGui::instance()->fullscreen : FlGui::instance()->graph[0]->gl[0];
+    if(action & GMSH_SET) gl->getDrawContext()->r[2] = val;
+    return gl->getDrawContext()->r[2];
   }
 #endif
   return CTX::instance()->tmpRotation[2];
@@ -2652,11 +2655,11 @@ double opt_general_quaternion0(OPT_ARGS_NUM)
     CTX::instance()->tmpQuaternion[0] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(action & GMSH_SET)
-      FlGui::instance()->graph[0]->gl[0]->getDrawContext()->quaternion[0] = val;
-    if(action & GMSH_GUI)
-      FlGui::instance()->manip->update();
-    return FlGui::instance()->graph[0]->gl[0]->getDrawContext()->quaternion[0];
+    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
+      FlGui::instance()->fullscreen : FlGui::instance()->graph[0]->gl[0];
+    if(action & GMSH_SET) gl->getDrawContext()->quaternion[0] = val;
+    if(action & GMSH_GUI) FlGui::instance()->manip->update();
+    return gl->getDrawContext()->quaternion[0];
   }
 #endif
   return CTX::instance()->tmpQuaternion[0];
@@ -2668,11 +2671,11 @@ double opt_general_quaternion1(OPT_ARGS_NUM)
     CTX::instance()->tmpQuaternion[1] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(action & GMSH_SET)
-      FlGui::instance()->graph[0]->gl[0]->getDrawContext()->quaternion[1] = val;
-    if(action & GMSH_GUI)
-      FlGui::instance()->manip->update();
-    return FlGui::instance()->graph[0]->gl[0]->getDrawContext()->quaternion[1];
+    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
+      FlGui::instance()->fullscreen : FlGui::instance()->graph[0]->gl[0];
+    if(action & GMSH_SET) gl->getDrawContext()->quaternion[1] = val;
+    if(action & GMSH_GUI) FlGui::instance()->manip->update();
+    return gl->getDrawContext()->quaternion[1];
   }
 #endif
   return CTX::instance()->tmpQuaternion[1];
@@ -2684,11 +2687,11 @@ double opt_general_quaternion2(OPT_ARGS_NUM)
     CTX::instance()->tmpQuaternion[2] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(action & GMSH_SET)
-      FlGui::instance()->graph[0]->gl[0]->getDrawContext()->quaternion[2] = val;
-    if(action & GMSH_GUI)
-      FlGui::instance()->manip->update();
-    return FlGui::instance()->graph[0]->gl[0]->getDrawContext()->quaternion[2];
+    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
+      FlGui::instance()->fullscreen : FlGui::instance()->graph[0]->gl[0];
+    if(action & GMSH_SET) gl->getDrawContext()->quaternion[2] = val;
+    if(action & GMSH_GUI) FlGui::instance()->manip->update();
+    return gl->getDrawContext()->quaternion[2];
   }
 #endif
   return CTX::instance()->tmpQuaternion[2];
@@ -2700,11 +2703,11 @@ double opt_general_quaternion3(OPT_ARGS_NUM)
     CTX::instance()->tmpQuaternion[3] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(action & GMSH_SET)
-      FlGui::instance()->graph[0]->gl[0]->getDrawContext()->quaternion[3] = val;
-    if(action & GMSH_GUI)
-      FlGui::instance()->manip->update();
-    return FlGui::instance()->graph[0]->gl[0]->getDrawContext()->quaternion[3];
+    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
+      FlGui::instance()->fullscreen : FlGui::instance()->graph[0]->gl[0];
+    if(action & GMSH_SET) gl->getDrawContext()->quaternion[3] = val;
+    if(action & GMSH_GUI) FlGui::instance()->manip->update();
+    return gl->getDrawContext()->quaternion[3];
   }
 #endif
   return CTX::instance()->tmpQuaternion[3];
@@ -2716,11 +2719,11 @@ double opt_general_translation0(OPT_ARGS_NUM)
     CTX::instance()->tmpTranslation[0] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(action & GMSH_SET)
-      FlGui::instance()->graph[0]->gl[0]->getDrawContext()->t[0] = val;
-    if(action & GMSH_GUI)
-      FlGui::instance()->manip->update();
-    return FlGui::instance()->graph[0]->gl[0]->getDrawContext()->t[0];
+    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
+      FlGui::instance()->fullscreen : FlGui::instance()->graph[0]->gl[0];
+    if(action & GMSH_SET) gl->getDrawContext()->t[0] = val;
+    if(action & GMSH_GUI) FlGui::instance()->manip->update();
+    return gl->getDrawContext()->t[0];
   }
 #endif
   return CTX::instance()->tmpTranslation[0];
@@ -2732,11 +2735,11 @@ double opt_general_translation1(OPT_ARGS_NUM)
     CTX::instance()->tmpTranslation[1] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(action & GMSH_SET)
-      FlGui::instance()->graph[0]->gl[0]->getDrawContext()->t[1] = val;
-    if(action & GMSH_GUI)
-      FlGui::instance()->manip->update();
-    return FlGui::instance()->graph[0]->gl[0]->getDrawContext()->t[1];
+    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
+      FlGui::instance()->fullscreen : FlGui::instance()->graph[0]->gl[0];
+    if(action & GMSH_SET) gl->getDrawContext()->t[1] = val;
+    if(action & GMSH_GUI) FlGui::instance()->manip->update();
+    return gl->getDrawContext()->t[1];
   }
 #endif
   return CTX::instance()->tmpTranslation[1];
@@ -2748,11 +2751,11 @@ double opt_general_translation2(OPT_ARGS_NUM)
     CTX::instance()->tmpTranslation[2] = val;
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(action & GMSH_SET)
-      FlGui::instance()->graph[0]->gl[0]->getDrawContext()->t[2] = val;
-    if(action & GMSH_GUI)
-      FlGui::instance()->manip->update();
-    return FlGui::instance()->graph[0]->gl[0]->getDrawContext()->t[2];
+    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
+      FlGui::instance()->fullscreen : FlGui::instance()->graph[0]->gl[0];
+    if(action & GMSH_SET) gl->getDrawContext()->t[2] = val;
+    if(action & GMSH_GUI) FlGui::instance()->manip->update();
+    return gl->getDrawContext()->t[2];
   }
 #endif
   return CTX::instance()->tmpTranslation[2];
@@ -2764,11 +2767,11 @@ double opt_general_scale0(OPT_ARGS_NUM)
     CTX::instance()->tmpScale[0] = val ? val : 1.0;
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(action & GMSH_SET)
-      FlGui::instance()->graph[0]->gl[0]->getDrawContext()->s[0] = val ? val : 1.0;
-    if(action & GMSH_GUI)
-      FlGui::instance()->manip->update();
-    return FlGui::instance()->graph[0]->gl[0]->getDrawContext()->s[0];
+    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
+      FlGui::instance()->fullscreen : FlGui::instance()->graph[0]->gl[0];
+    if(action & GMSH_SET) gl->getDrawContext()->s[0] = val ? val : 1.0;
+    if(action & GMSH_GUI) FlGui::instance()->manip->update();
+    return gl->getDrawContext()->s[0];
   }
 #endif
   return CTX::instance()->tmpScale[0];
@@ -2780,11 +2783,11 @@ double opt_general_scale1(OPT_ARGS_NUM)
     CTX::instance()->tmpScale[1] = val ? val : 1.0;
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(action & GMSH_SET)
-      FlGui::instance()->graph[0]->gl[0]->getDrawContext()->s[1] = val ? val : 1.0;
-    if(action & GMSH_GUI)
-      FlGui::instance()->manip->update();
-    return FlGui::instance()->graph[0]->gl[0]->getDrawContext()->s[1];
+    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
+      FlGui::instance()->fullscreen : FlGui::instance()->graph[0]->gl[0];
+    if(action & GMSH_SET) gl->getDrawContext()->s[1] = val ? val : 1.0;
+    if(action & GMSH_GUI) FlGui::instance()->manip->update();
+    return gl->getDrawContext()->s[1];
   }
 #endif
   return CTX::instance()->tmpScale[1];
@@ -2796,11 +2799,11 @@ double opt_general_scale2(OPT_ARGS_NUM)
     CTX::instance()->tmpScale[2] = val ? val : 1.0;
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
-    if(action & GMSH_SET)
-      FlGui::instance()->graph[0]->gl[0]->getDrawContext()->s[2] = val ? val : 1.0;
-    if(action & GMSH_GUI)
-      FlGui::instance()->manip->update();
-    return FlGui::instance()->graph[0]->gl[0]->getDrawContext()->s[2];
+    openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
+      FlGui::instance()->fullscreen : FlGui::instance()->graph[0]->gl[0];
+    if(action & GMSH_SET) gl->getDrawContext()->s[2] = val ? val : 1.0;
+    if(action & GMSH_GUI) FlGui::instance()->manip->update();
+    return gl->getDrawContext()->s[2];
   }
 #endif
   return CTX::instance()->tmpScale[2];
@@ -2829,6 +2832,14 @@ double opt_general_display_border_factor(OPT_ARGS_NUM)
     CTX::instance()->displayBorderFactor = val;
   return CTX::instance()->displayBorderFactor;
 }
+
+double opt_geometry_reparam_on_face_robust(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.reparamOnFaceRobust = val;
+  return CTX::instance()->geom.reparamOnFaceRobust;
+}
+
 
 double opt_general_point_size(OPT_ARGS_NUM)
 {
@@ -4237,15 +4248,16 @@ double opt_geometry_transform(OPT_ARGS_NUM)
       FlGui::instance()->options->geo.choice[3]->value
         (CTX::instance()->geom.useTransform);
     if(action & GMSH_SET){
+      openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
+        FlGui::instance()->fullscreen : FlGui::instance()->graph[0]->gl[0];
       if(CTX::instance()->geom.useTransform == 1){
         drawTransform *tr = new drawTransformScaled
           (CTX::instance()->geom.transform, CTX::instance()->geom.offset);
-        FlGui::instance()->graph[0]->gl[0]->getDrawContext()->setTransform(tr);
+        gl->getDrawContext()->setTransform(tr);
       }
       else{
-        drawTransform *tr = FlGui::instance()->graph[0]->gl[0]->
-          getDrawContext()->getTransform();
-        FlGui::instance()->graph[0]->gl[0]->getDrawContext()->setTransform(0);
+        drawTransform *tr = gl->getDrawContext()->getTransform();
+        gl->getDrawContext()->setTransform(0);
         if(tr) delete tr;
       }
     }
@@ -4265,8 +4277,9 @@ static double _opt_geometry_transform(OPT_ARGS_NUM, int ii, int jj, int nn)
       FlGui::instance()->options->geo.value[nn]->value
         (CTX::instance()->geom.transform[ii][jj]);
     if(action & GMSH_SET){
-      drawTransform *tr = FlGui::instance()->graph[0]->gl[0]->
-        getDrawContext()->getTransform();
+      openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
+        FlGui::instance()->fullscreen : FlGui::instance()->graph[0]->gl[0];
+      drawTransform *tr = gl->getDrawContext()->getTransform();
       if(tr) tr->setMatrix(CTX::instance()->geom.transform,
                            CTX::instance()->geom.offset);
     }
@@ -4330,8 +4343,9 @@ static double _opt_geometry_offset(OPT_ARGS_NUM, int ii, int nn)
       FlGui::instance()->options->geo.value[nn]->value
         (CTX::instance()->geom.offset[ii]);
     if(action & GMSH_SET){
-      drawTransform *tr = FlGui::instance()->graph[0]->gl[0]->
-        getDrawContext()->getTransform();
+      openglWindow *gl = FlGui::instance()->fullscreen->shown() ?
+        FlGui::instance()->fullscreen : FlGui::instance()->graph[0]->gl[0];
+      drawTransform *tr = gl->getDrawContext()->getTransform();
       if(tr) tr->setMatrix(CTX::instance()->geom.transform,
                            CTX::instance()->geom.offset);
     }
@@ -4679,6 +4693,13 @@ double opt_geometry_light_two_side(OPT_ARGS_NUM)
       (CTX::instance()->geom.lightTwoSide);
 #endif
   return CTX::instance()->geom.lightTwoSide;
+}
+
+double opt_geometry_occ_auto_fix(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occAutoFix = val ? 1 : 0;
+  return CTX::instance()->geom.occAutoFix;
 }
 
 double opt_geometry_occ_fix_degenerated(OPT_ARGS_NUM)
@@ -9174,11 +9195,18 @@ double opt_print_pos_eta(OPT_ARGS_NUM)
   return CTX::instance()->print.posEta;
 }
 
-double opt_print_pos_rho(OPT_ARGS_NUM)
+double opt_print_pos_SICN(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->print.posRho = (int)val;
-  return CTX::instance()->print.posRho;
+    CTX::instance()->print.posSICN = (int)val;
+  return CTX::instance()->print.posSICN;
+}
+
+double opt_print_pos_SIGE(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->print.posSIGE = (int)val;
+  return CTX::instance()->print.posSIGE;
 }
 
 double opt_print_pos_disto(OPT_ARGS_NUM)

@@ -16,17 +16,21 @@
 #endif
 
 #ifndef MAX_NUM_THREADS_
-#define MAX_NUM_THREADS_ 1
+#define MAX_NUM_THREADS_ 8
 #endif
 
 typedef unsigned char CHECKTYPE;
+struct Tet;
 
 struct Vert {
 private :
   double _x[3];
   double _lc;
   unsigned int _num;
+  Tet *_t;
 public :
+  inline void setT(Tet*t) { _t = t;}
+  inline Tet* getT() const { return _t;}
   inline unsigned int getNum () const {return _num;}
   inline void setNum (unsigned int n)  {_num=n;}
   unsigned char _thread;
@@ -40,7 +44,7 @@ public :
   inline double &lc() {return _lc;}
   inline operator double *() { return _x; }
   Vert (double X=0, double Y=0, double Z=0, double lc=0, int num = 0)
-    : _num(num), _thread(0)
+  :  _num(num),_t(NULL), _thread(0)
   {
     _x[0] = X; _x[1] = Y; _x[2] = Z; _lc = lc;
   }
@@ -151,15 +155,15 @@ struct edgeContainer
   {
     _size = 0;
     _hash.resize(N);
-    _size_obj = sizeof(Edge); 
+    _size_obj = sizeof(Edge);
   }
 
   inline size_t H (const Edge &e) const {
     const size_t h = ((size_t)e.first) ;
     //    printf("%lu %lu %lu %lu\n",h,(h/2)%_hash.size(),h/64,h>>6);
-    return (h/_size_obj) %_hash.size();  
+    return (h/_size_obj) %_hash.size();
   }
-  
+
   inline bool find (const Edge &e) const {
     const std::vector<Edge> &v = _hash[H(e)];
     for (unsigned int i=0; i< v.size();i++)if (e == v[i]) {return true;}
@@ -167,7 +171,7 @@ struct edgeContainer
   }
 
   bool empty () const {return _size == 0;}
-  
+
   bool addNewEdge (const Edge &e)
   {
     std::vector<Edge> &v = _hash[H(e)];
@@ -223,6 +227,7 @@ struct Tet {
   {
     _modified=true;
     V[0] = v0; V[1] = v1; V[2] = v2; V[3] = v3;
+    for (int i=0;i<4;i++)if (V[i])V[i]->setT(this);
     //    for (int i=0;i<4;i++)_copy[i] = *V[i];
     return 1;
   }
@@ -232,6 +237,7 @@ struct Tet {
     double val = robustPredicates::orient3d((double*)v0, (double*)v1,
                                             (double*)v2, (double*)v3);
     V[0] = v0; V[1] = v1; V[2] = v2; V[3] = v3;
+    for (int i=0;i<4;i++)if (V[i])V[i]->setT(this);
     if (val > 0){
       // for (int i=0;i<4;i++)_copy[i] = *V[i];
       return 1;
@@ -354,7 +360,11 @@ public:
 class tetContainer {
   std::vector<aBunchOfStuff<Tet> *> _perThread;
  public:
-  unsigned int size(int thread) const { return _perThread[thread]->size(); }
+  unsigned int size(int thread) const
+  {
+    if ((int)_perThread.size() <= thread)return 0;
+    return _perThread[thread]->size();
+  }
   inline Tet    * operator () (int thread, int j) const
   {
     return (*_perThread[thread])(j);
@@ -362,7 +372,7 @@ class tetContainer {
   tetContainer (int nbThreads, int preallocSizePerThread)
   {
     // FIXME !!!
-    if (nbThreads != 1) throw;
+    //    if (nbThreads != 1) throw;
     _perThread.resize(nbThreads);
 #if defined(_OPENMP)
 #pragma omp parallel num_threads(nbThreads)
@@ -396,7 +406,9 @@ void delaunayTrgl(const unsigned int numThreads,
                   const unsigned int NPTS_AT_ONCE,
                   unsigned int Npts,
                   std::vector<Vert*> assignTo[],
-                  tetContainer &allocator, edgeContainer *embedded = 0);
-bool edgeSwap(Tet *tet, int iLocalEdge,  tetContainer &T, int myThread);
+                  tetContainer &allocator, edgeContainer *embedded = 0,
+		  bool filter = false);
+void edgeSwapPass (int numThreads, tetContainer &allocator, edgeContainer &embeddedEdges);
+void vertexRelocationPass (int numThreads,   std::vector<Vert*> &v);
 
 #endif

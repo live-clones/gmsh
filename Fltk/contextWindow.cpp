@@ -56,10 +56,10 @@ static void draw_stl(std::vector<SPoint3> &vertices, std::vector<SVector3> &norm
 {
   GLint mode[2];
   glGetIntegerv(GL_POLYGON_MODE, mode);
-  if(CTX::instance()->geom.surfaceType > 1)
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  else
+  if(CTX::instance()->geom.surfaceType == 1)
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  else
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glEnable(GL_LIGHTING);
   glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
   glColor4ubv((GLubyte *) & CTX::instance()->color.geom.highlight[0]);

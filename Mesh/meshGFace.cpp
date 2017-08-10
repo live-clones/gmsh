@@ -1006,6 +1006,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     if (isMeshed) return true;
   }
 
+  //  if (gf->degenerate(0))return 0;
+  
   // build a set with all points of the boundaries
   std::set<MVertex*, MVertexLessThanNum> all_vertices, boundary;
   std::list<GEdge*>::iterator ite = edges.begin();
@@ -1409,7 +1411,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
 
   // compute characteristic lengths at vertices
-  if (!onlyInitialMesh){
+  if (CTX::instance()->mesh.algo2d != ALGO_2D_BAMG && !onlyInitialMesh){
       Msg::Debug("Computing mesh size field at mesh vertices %d",
                  edgesToRecover.size());
       std::set<BDS_Point*, PointLessThan>::iterator it = m->points.begin();

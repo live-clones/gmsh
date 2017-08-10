@@ -136,13 +136,14 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
 
 // --------- Creation of high-order edge vertices -----------
 
-static bool getEdgeVerticesonGeo(GEdge *ge, MVertex *v0, MVertex *v1,
+static bool getEdgeVerticesOnGeo(GEdge *ge, MVertex *v0, MVertex *v1,
                                  std::vector<MVertex*> &ve, int nPts = 1)
 {
   static const double relaxFail = 1e-2;
   double u0 = 0., u1 = 0., US[100];
   bool reparamOK = reparamMeshVertexOnEdge(v0, ge, u0);
-  if(ge->periodic(0) && ge->getEndVertex()->getNumMeshVertices() > 0 &&
+  if(ge->periodic(0) && ge->getEndVertex() &&
+     ge->getEndVertex()->getNumMeshVertices() > 0 &&
      v1 == ge->getEndVertex()->mesh_vertices[0])
     u1 = ge->parBounds(0).high();
   else
@@ -182,7 +183,7 @@ static bool getEdgeVerticesonGeo(GEdge *ge, MVertex *v0, MVertex *v1,
   return true;
 }
 
-static bool getEdgeVerticesonGeo(GFace *gf, MVertex *v0, MVertex *v1,
+static bool getEdgeVerticesOnGeo(GFace *gf, MVertex *v0, MVertex *v1,
                                  std::vector<MVertex*> &ve, int nPts = 1)
 {
   SPoint2 p0, p1;
@@ -248,7 +249,8 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
 {
   if(ge->geomType() == GEntity::DiscreteCurve ||
      ge->geomType() == GEntity::BoundaryLayerCurve ||
-     ge->geomType() == GEntity::CompoundCurve)
+     ge->geomType() == GEntity::CompoundCurve ||
+     ge->geomType() == GEntity::PartitionCurve)
     linear = true;
 
   std::vector<MVertex*> veOld;
@@ -259,7 +261,7 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
   std::vector<MVertex*> veEdge;
   // Get vertices on geometry if asked
   bool gotVertOnGeo = linear ? false :
-    getEdgeVerticesonGeo(ge, veOld[0], veOld[1], veEdge, nPts);
+    getEdgeVerticesOnGeo(ge, veOld[0], veOld[1], veEdge, nPts);
   // If not on geometry, create from mesh interpolation
   if (!gotVertOnGeo)
     interpVerticesInExistingEdge(ge, ele, veEdge, nPts);
@@ -283,7 +285,8 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
 {
   if(gf->geomType() == GEntity::DiscreteSurface ||
      gf->geomType() == GEntity::BoundaryLayerSurface ||
-     gf->geomType() == GEntity::CompoundSurface)
+     gf->geomType() == GEntity::CompoundSurface ||
+     gf->geomType() == GEntity::PartitionSurface)
     linear = true;
 
   for(int i = 0; i < ele->getNumEdges(); i++) {
@@ -302,7 +305,7 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
     else { // Vertices do not exist, create them
       // Get vertices on geometry if asked
       bool gotVertOnGeo = linear ? false :
-        getEdgeVerticesonGeo(gf, veOld[0], veOld[1], veEdge, nPts);
+        getEdgeVerticesOnGeo(gf, veOld[0], veOld[1], veEdge, nPts);
       if (!gotVertOnGeo) {
         // If not on geometry, create from mesh interpolation
         const MLineN edgeEl(veOld, ele->getPolynomialOrder());
@@ -516,7 +519,7 @@ static int getNewFacePointsInVolume(MElement *incomplete, int nPts,
   case TYPE_PYR:
     switch (nPts){
     case 0:
-    case 1: return -1;
+    case 1: points = BasisFactory::getNodalBasis(MSH_PYR_14)->points; break;
     case 2: points = BasisFactory::getNodalBasis(MSH_PYR_30)->points; break;
     case 3: points = BasisFactory::getNodalBasis(MSH_PYR_55)->points; break;
     case 4: points = BasisFactory::getNodalBasis(MSH_PYR_91)->points; break;
@@ -1224,10 +1227,10 @@ static MPyramid *setHighOrder(MPyramid *p, GRegion *gr,
 {
   std::vector<MVertex*> ve, vf, vr;
   getEdgeVertices(gr, p, ve, newHOVert, edgeVertices, linear, nPts);
-//  MPyramidN incpl(p->getVertex(0), p->getVertex(1), p->getVertex(2),
-//                  p->getVertex(3), p->getVertex(4), ve, nPts + 1, 0, p->getPartition());
-//  getFaceVertices(gr, &incpl, p, vf, faceVertices, edgeVertices, linear, nPts);
-  getFaceVertices(gr, 0, p, vf, newHOVert, faceVertices, edgeVertices, linear, nPts);
+  MPyramidN incpl(p->getVertex(0), p->getVertex(1), p->getVertex(2),
+                  p->getVertex(3), p->getVertex(4), ve, nPts + 1, 0, p->getPartition());
+  getFaceVertices(gr, &incpl, p, vf, newHOVert, faceVertices, edgeVertices, linear, nPts);
+  // getFaceVertices(gr, 0, p, vf, newHOVert, faceVertices, edgeVertices, linear, nPts);
   ve.insert(ve.end(), vf.begin(), vf.end());
   getVolumeVerticesPyramid(gr, p, ve, vr, newHOVert, linear, nPts);
   ve.insert(ve.end(), vr.begin(), vr.end());

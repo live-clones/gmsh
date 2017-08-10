@@ -1698,13 +1698,14 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
         else
           selectObject = false;
       }
-      else if(tool.empty()){
+      else if(tool.empty() && mode != "BooleanFragments"){
         Msg::Error("At least one tool must be selected");
       }
       else{
         apply_boolean(GModel::current()->getFileName(), mode, object, tool,
                       FlGui::instance()->transformContext->butt[4]->value(),
-                      FlGui::instance()->transformContext->butt[5]->value());
+                      tool.size() ?
+                      FlGui::instance()->transformContext->butt[5]->value() : 0);
         GModel::current()->setSelection(0);
         selectObject = true;
         object.clear();
@@ -2086,8 +2087,7 @@ static std::vector<std::string> getInfoStrings(MElement *ele)
     std::ostringstream sstream;
     sstream.precision(12);
     sstream << " Quality: "
-            << "gamma = " << ele->gammaShapeMeasure() << " "
-            << "rho = " << ele->rhoShapeMeasure();
+            << "gamma = " << ele->gammaShapeMeasure();
     info.push_back(sstream.str());
   }
   {
@@ -2096,6 +2096,14 @@ static std::vector<std::string> getInfoStrings(MElement *ele)
     double sICNMin, sICNMax;
     ele->signedInvCondNumRange(sICNMin, sICNMax);
     sstream << " SICN range: " << sICNMin << " " << sICNMax;
+    info.push_back(sstream.str());
+  }
+  {
+    std::ostringstream sstream;
+    sstream.precision(12);
+    double sIGEMin, sIGEMax;
+    ele->signedInvGradErrorRange(sIGEMin, sIGEMax);
+    sstream << " SIGE range: " << sIGEMin << " " << sIGEMax;
     info.push_back(sstream.str());
   }
   {
@@ -2184,6 +2192,13 @@ static void mesh_refine_cb(Fl_Widget *w, void *data)
 static void mesh_smooth_cb(Fl_Widget *w, void *data)
 {
   SmoothMesh(GModel::current());
+  drawContext::global()->draw();
+}
+
+
+static void mesh_recombine_cb(Fl_Widget *w, void *data)
+{
+  RecombineMesh(GModel::current());
   drawContext::global()->draw();
 }
 
@@ -4192,13 +4207,13 @@ static menuItem static_modules[] = {
    (Fl_Callback *)geometry_elementary_extrude_rotate_cb} ,
   {"0Modules/Geometry/Elementary entities/Extrude/Pipe",
    (Fl_Callback *)geometry_elementary_pipe_cb} ,
-  {"0Modules/Geometry/Elementary entities/Boolean/Intersection",
+  {"0Modules/Geometry/Elementary entities/Boolean/Intersection (Common)",
    (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanIntersection"} ,
-  {"0Modules/Geometry/Elementary entities/Boolean/Union",
+  {"0Modules/Geometry/Elementary entities/Boolean/Union (Fuse)",
    (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanUnion"} ,
-  {"0Modules/Geometry/Elementary entities/Boolean/Difference",
+  {"0Modules/Geometry/Elementary entities/Boolean/Difference (Cut)",
    (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanDifference"} ,
-  {"0Modules/Geometry/Elementary entities/Boolean/Fragments",
+  {"0Modules/Geometry/Elementary entities/Boolean/Fragments (Coherence)",
    (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanFragments"} ,
   {"0Modules/Geometry/Elementary entities/Fillet",
    (Fl_Callback *)geometry_elementary_fillet_cb},
@@ -4284,6 +4299,8 @@ static menuItem static_modules[] = {
 #endif
   {"0Modules/Mesh/Smooth 2D",
    (Fl_Callback *)mesh_smooth_cb} ,
+  {"0Modules/Mesh/Recombine 2D",
+   (Fl_Callback *)mesh_recombine_cb} ,
   {"0Modules/Mesh/Reclassify 2D",
    (Fl_Callback *)mesh_classify_cb} ,
 #if defined(HAVE_FOURIER_MODEL)

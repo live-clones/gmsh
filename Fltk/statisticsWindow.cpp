@@ -18,7 +18,9 @@
 #include "OS.h"
 #include "Field.h"
 
-enum QM_HISTO {QMH_SICN_XY, QMH_SICN_3D, QMH_GAMMA_XY, QMH_GAMMA_3D, QMH_RHO_XY, QMH_RHO_3D};
+enum QM_HISTO {QMH_SICN_XY, QMH_SICN_3D,
+               QMH_GAMMA_XY, QMH_GAMMA_3D,
+               QMH_SIGE_XY, QMH_SIGE_3D};
 
 void statistics_cb(Fl_Widget *w, void *data)
 {
@@ -50,12 +52,12 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
     }
     new PView("Gamma", "# Elements", x, y);
   }
-  else if (qmh == QMH_RHO_XY) {
+  else if (qmh == QMH_SIGE_XY) {
     for(int i = 0; i < 100; i++){
-      x.push_back((double)i / 99);
-      y.push_back(FlGui::instance()->stats->quality[2][i]);
+      x.push_back((double)(2*i-99) / 99);
+      y.push_back(FlGui::instance()->stats->quality[3][i]);
     }
-    new PView("Rho", "# Elements", x, y);
+    new PView("SIGE", "# Elements", x, y);
   }
   else {
     std::vector<GEntity*> entities_;
@@ -69,13 +71,13 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
           d[e->getNum()].push_back(e->minSICNShapeMeasure());
         else if (qmh == QMH_GAMMA_3D)
           d[e->getNum()].push_back(e->gammaShapeMeasure());
-        else if (qmh == QMH_RHO_3D)
-          d[e->getNum()].push_back(e->rhoShapeMeasure());
+        else if (qmh == QMH_SIGE_3D)
+          d[e->getNum()].push_back(e->minSIGEShapeMeasure());
       }
     }
     std::string name = (qmh == QMH_SICN_3D) ? "SICN" :
                        (qmh == QMH_GAMMA_3D) ? "Gamma" :
-                       (qmh == QMH_RHO_3D) ? "Rho" : "";
+                       (qmh == QMH_SIGE_3D) ? "SIGE" : "";
     new PView(name, "ElementData", GModel::current(), d);
   }
 
@@ -128,8 +130,8 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
       value[num]->tooltip("~ signed inverse condition number"); num++;
       value[num] = new Fl_Output(2 * WB, 2 * WB + 15 * BH, IW, BH, "Gamma");
       value[num]->tooltip("~ inscribed_radius / circumscribed_radius (simplices)"); num++;
-      value[num] = new Fl_Output(2 * WB, 2 * WB + 16 * BH, IW, BH, "Rho");
-      value[num]->tooltip("~ min_edge_length / max_edge_length"); num++;
+      value[num] = new Fl_Output(2 * WB, 2 * WB + 16 * BH, IW, BH, "SIGE");
+      value[num]->tooltip("~ signed inverse error on gradient FE solution"); num++;
 
       for(int i = 0; i < 3; i++){
         int ww = 3 * FL_NORMAL_SIZE;
@@ -141,7 +143,7 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
           (width - ww - 2 * WB, 2 * WB + (14 + i) * BH, ww, BH, "3D");
       }
       static const QM_HISTO qmh0 = QMH_SICN_XY, qmh1 = QMH_SICN_3D, qmh2 = QMH_GAMMA_XY,
-                            qmh3 = QMH_GAMMA_3D, qmh4 = QMH_RHO_XY, qmh5 = QMH_RHO_3D;
+                            qmh3 = QMH_GAMMA_3D, qmh4 = QMH_SIGE_XY, qmh5 = QMH_SIGE_3D;
       butt[0]->callback(statistics_histogram_cb, (void*) &qmh0);
       butt[1]->callback(statistics_histogram_cb, (void*) &qmh1);
       butt[2]->callback(statistics_histogram_cb, (void*) &qmh2);
@@ -177,7 +179,7 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
 
   {
     memUsage = new Fl_Box(WB, height - BH - WB, width / 2, BH, "");
-    memUsage->align(FL_ALIGN_INSIDE);
+    memUsage->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
 
     Fl_Return_Button *o = new Fl_Return_Button
       (width - BB - WB, height - BH - WB, BB, BH, "Update");

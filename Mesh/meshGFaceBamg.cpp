@@ -63,6 +63,7 @@ static void computeMeshMetricsForBamg(GFace *gf, int numV,
     J.mult(M,W);
     W.mult(JT,R);
     bamg::Metric M1(R(0,0),R(1,0),R(1,1));
+    //    printf("%12.5E %12.5E %12.5E vs %12.5E %12.5E %12.5E \n",m(0,0),m(1,0),m(1,1),M1.a11,M1.a21,M1.a22);
     mm11[i] = M1.a11;
     mm12[i] = M1.a21;
     mm22[i] = M1.a22;

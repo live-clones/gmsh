@@ -1041,8 +1041,10 @@ void DeleteSurface(int is, bool recursive)
       if(c->beg) vv.insert(c->beg->Num);
       if(c->end) vv.insert(c->end->Num);
     }
-    for(std::set<int>::iterator it = cc.begin(); it != cc.end(); it++)
+    for(std::set<int>::iterator it = cc.begin(); it != cc.end(); it++){
       DeleteCurve(*it);
+      DeleteCurve(-*it);
+    }
     for(std::set<int>::iterator it = vv.begin(); it != vv.end(); it++)
       DeletePoint(*it);
   }
@@ -1078,8 +1080,10 @@ void DeleteVolume(int iv, bool recursive)
     }
     for(std::set<int>::iterator it = ss.begin(); it != ss.end(); it++)
       DeleteSurface(*it);
-    for(std::set<int>::iterator it = cc.begin(); it != cc.end(); it++)
+    for(std::set<int>::iterator it = cc.begin(); it != cc.end(); it++){
       DeleteCurve(*it);
+      DeleteCurve(-*it);
+    }
     for(std::set<int>::iterator it = vv.begin(); it != vv.end(); it++)
       DeletePoint(*it);
   }
@@ -2331,7 +2335,7 @@ static void RemoveDegenerateCurves()
       List_Read(All, i, &c);
       if(c->degenerate()) {
 	DeleteCurve(c->Num);
-	// DeleteCurve(-c->Num);
+        DeleteCurve(-c->Num);
       }
     }
   }
