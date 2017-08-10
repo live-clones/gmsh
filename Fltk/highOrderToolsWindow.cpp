@@ -201,7 +201,8 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     p.adaptBlobLayerFact = (int) o->value[10]->value();
     p.adaptBlobDistFact = o->value[11]->value();
     p.optPrimSurfMesh = false;
-    HighOrderMeshOptimizer(GModel::current(), p);
+    // HighOrderMeshOptimizer(GModel::current(), p);
+    HighOrderMeshOptimizerNew(GModel::current(), p);
     break;
   }
   case 1: {                                                               // Elastic analogy
@@ -212,6 +213,7 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     FastCurvingParameters p;
     p.onlyVisible = onlyVisible;
     p.dim = dim;
+    p.curveOuterBL = FastCurvingParameters::OUTER_CURVE;
     p.robust = false;
     HighOrderMeshFastCurving(GModel::current(), p);
     break;
