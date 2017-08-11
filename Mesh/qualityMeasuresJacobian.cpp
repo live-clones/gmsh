@@ -406,6 +406,32 @@ double minICNMeasure(MElement *el,
 
 void sampleIGEMeasure(MElement *el, int deg, double &min, double &max)
 {
+  fullVector<double> ige;
+  sampleIGEMeasure(el, deg, ige);
+
+  min = std::numeric_limits<double>::infinity();
+  max = -min;
+  for (int i = 0; i < ige.size(); ++i) {
+    min = std::min(min, ige(i));
+    max = std::max(max, ige(i));
+  }
+}
+
+void sampleJacobian(MElement *el, int deg, fullVector<double> &jac,
+                    const fullMatrix<double> *normals)
+{
+  FuncSpaceData sampleSpace = FuncSpaceData(el, deg);
+  const JacobianBasis *jacBasis = BasisFactory::getJacobianBasis(sampleSpace);
+
+  fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
+  el->getNodesCoord(nodesXYZ);
+
+  jac.resize(jacBasis->getNumJacNodes());
+  jacBasis->getSignedJacobian(nodesXYZ, jac, normals);
+}
+
+void sampleIGEMeasure(MElement *el, int deg, fullVector<double> &ige)
+{
   fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
   el->getNodesCoord(nodesXYZ);
 
@@ -427,7 +453,7 @@ void sampleIGEMeasure(MElement *el, int deg, double &min, double &max)
     jacDetSpace = FuncSpaceData(el, true, deg-1, 1, &serendipFalse);
     break;
   default:
-    Msg::Error("ICN not implemented for type of element %d", el->getType());
+    Msg::Error("IGE not implemented for type of element %d", el->getType());
     return;
   }
 
@@ -443,17 +469,7 @@ void sampleIGEMeasure(MElement *el, int deg, double &min, double &max)
   fullMatrix<double> v;
   computeCoeffLengthVectors_(coeffMatLag, v, type);
 
-  fullVector<double> ige;
   computeIGE_(coeffDeterminant, v, ige, type);
-
-  min = std::numeric_limits<double>::infinity();
-  max = -min;
-  for (int i = 0; i < ige.size(); ++i) {
-    min = std::min(min, ige(i));
-    max = std::max(max, ige(i));
-  }
-
-  return;
 }
 
 double minSampledICNMeasure(MElement *el, int deg)//fordebug

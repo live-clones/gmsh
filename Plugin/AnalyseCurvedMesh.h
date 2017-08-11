@@ -42,6 +42,12 @@ private :
   GModel *_m;
   double _threshold;
 
+  // Element to scan
+  int _numElementToScan;
+  MElement *_elementToScan, *_hoElement;
+  int _viewOrder;
+  std::vector<double> _jacElementToScan;
+
   // for 1d, 2d, 3d
   bool _computedJac[3], _computedIGE[3], _computedICN[3];
   bool _PViewJac[3], _PViewIGE[3], _PViewICN[3];
@@ -81,6 +87,7 @@ private :
   void _printStatJacobian();
   void _printStatIGE();
   void _printStatICN();
+  void _addElementInEntity(MElement*, GEntity*);
 };
 
 #endif

@@ -19,6 +19,12 @@
 #include <sstream>
 #include <fstream>
 #include "qualityMeasuresJacobian.h"
+#include "MLine.h"
+#include "MTriangle.h"
+#include "MQuadrangle.h"
+#include "MHexahedron.h"
+#include "MTetrahedron.h"
+#include "MPrism.h"
 
 class bezierBasis;
 
@@ -29,7 +35,9 @@ StringXNumber CurvedMeshOptions_Number[] = {
   {GMSH_FULLRC, "Hiding threshold", NULL, 9},
   {GMSH_FULLRC, "Draw PView", NULL, 0},
   {GMSH_FULLRC, "Recompute", NULL, 0},
-  {GMSH_FULLRC, "Dimension of elements", NULL, -1}
+  {GMSH_FULLRC, "Dimension of elements", NULL, -1},
+  //{GMSH_FULLRC, "Element to print quality", NULL, 2485}
+  {GMSH_FULLRC, "Element to print quality", NULL, 2555}
 };
 
 extern "C"
@@ -104,6 +112,11 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
   bool drawPView  = static_cast<int>(CurvedMeshOptions_Number[4].def);
   bool recompute  = static_cast<bool>(CurvedMeshOptions_Number[5].def);
   int askedDim    = static_cast<int>(CurvedMeshOptions_Number[6].def);
+  _numElementToScan = static_cast<int>(CurvedMeshOptions_Number[7].def);
+
+  _viewOrder = 10;
+  _elementToScan = NULL;
+  _hoElement = NULL;
 
   if (askedDim < 0 || askedDim > 4) askedDim = _m->getDim();
 
@@ -162,6 +175,14 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
   if (printStatJ) _printStatJacobian();
   if (printStatS) _printStatIGE();
   if (printStatI) _printStatICN();
+
+  if (_hoElement) {
+    std::map<int, std::vector<double>> dataPVelement;
+    dataPVelement[_hoElement->getNum()] = _jacElementToScan;
+    std::stringstream name;
+    name << "Jacobian elem " << _numElementToScan;
+    new PView(name.str().c_str(), "ElementNodeData", _m, dataPVelement, 0, 1);
+  }
 
   // Create PView
   if (drawPView)
@@ -342,6 +363,33 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
       _data.push_back(data_elementMinMax(el, min, max));
       if (min < 0 && max < 0) ++cntInverted;
       progress.next();
+
+      if (el->getNum() == _numElementToScan) {
+        _elementToScan = el;
+        fullMatrix<double> points =
+                _elementToScan->getFunctionSpace(_viewOrder)->points;
+        int tag = ElementType::getTag(_elementToScan->getType(), _viewOrder);
+        std::vector<MVertex *> v;
+        for (int k = 0; k < points.size1(); k++) {
+          double t1 = points(k, 0);
+          double t2 = points(k, 1);
+          double t3 = points(k, 2);
+          SPoint3 pos;
+          _elementToScan->pnt(t1, t2, t3, pos);
+          v.push_back(new MVertex(pos.x(), pos.y(), pos.z()));
+        }
+        MElementFactory factory;
+        _hoElement = factory.create(tag, v);
+
+        _addElementInEntity(_hoElement, entity);
+
+        fullVector<double> jac;
+        jacobianBasedQuality::sampleJacobian(_elementToScan, _viewOrder,
+                                             jac, normals);
+        for (int j = 0; j < jac.size(); ++j) {
+          _jacElementToScan.push_back(jac(j));
+        }
+      }
     }
     delete normals;
   }
@@ -513,6 +561,55 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatICN()
 
   Msg::Info("ICN       = %8.3f, %8.3f, %8.3f (worst, avg, best)",
             infminI, avgminI, supminI);
+}
+
+void GMSH_AnalyseCurvedMeshPlugin::_addElementInEntity(MElement *element,
+                                                       GEntity *entity)
+{
+  int dim = entity->dim();
+  switch (dim) {
+  case 1:
+    {
+      GEdge *gedge = dynamic_cast<GEdge*>(entity);
+      int type = element->getType();
+      switch (type) {
+        case TYPE_LIN:
+          gedge->lines.push_back(dynamic_cast<MLine*>(element));
+      }
+    }
+    break;
+  case 2:
+    {
+      GFace *gface = dynamic_cast<GFace*>(entity);
+      int type = element->getType();
+      switch (type) {
+        case TYPE_TRI:
+          gface->triangles.push_back(dynamic_cast<MTriangle*>(element));
+          break;
+        case TYPE_QUA:
+          gface->quadrangles.push_back(dynamic_cast<MQuadrangle*>(element));
+          break;
+      }
+    }
+    break;
+  case 3:
+    {
+      GRegion *gregion = dynamic_cast<GRegion*>(entity);
+      int type = element->getType();
+      switch (type) {
+        case TYPE_TET:
+          gregion->tetrahedra.push_back(dynamic_cast<MTetrahedron*>(element));
+          break;
+        case TYPE_HEX:
+          gregion->hexahedra.push_back(dynamic_cast<MHexahedron*>(element));
+          break;
+        case TYPE_PRI:
+          gregion->prisms.push_back(dynamic_cast<MPrism*>(element));
+          break;
+      }
+    }
+    break;
+  }
 }
 
 #endif
