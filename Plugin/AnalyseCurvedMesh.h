@@ -91,6 +91,7 @@ private :
   void _computeJacobianToScan(MElement*, GEntity*,
                               const fullMatrix<double> *normals);
   void _addElementInEntity(MElement*, GEntity*);
+  void _createPViewElementToScan();
 };
 
 #endif

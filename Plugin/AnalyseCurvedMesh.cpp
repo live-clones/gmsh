@@ -113,8 +113,8 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
   bool drawPView  = static_cast<int>(CurvedMeshOptions_Number[4].def);
   bool recompute  = static_cast<bool>(CurvedMeshOptions_Number[5].def);
   int askedDim    = static_cast<int>(CurvedMeshOptions_Number[6].def);
-  _numElementToScan = static_cast<int>(CurvedMeshOptions_Number[7].def);
 
+  _numElementToScan = static_cast<int>(CurvedMeshOptions_Number[7].def);
   _viewOrder = 10;
   _elementToScan = NULL;
   _hoElement = NULL;
@@ -177,21 +177,7 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
   if (printStatS) _printStatIGE();
   if (printStatI) _printStatICN();
 
-  if (_hoElement) {
-    std::map<int, std::vector<double>> dataPVelement;
-    dataPVelement[_hoElement->getNum()] = _jacElementToScan;
-    std::stringstream name;
-    name << "Jacobian elem " << _numElementToScan;
-    PView *view = new PView(name.str().c_str(), "ElementNodeData",
-                            _m, dataPVelement, 0, 1);
-    const nodalBasis *fs = BasisFactory::getNodalBasis(_hoElement->getTypeForMSH());
-    const polynomialBasis *pfs = dynamic_cast<const polynomialBasis*>(fs);
-    PViewData *viewData = view->getData();
-    viewData->deleteInterpolationMatrices(_hoElement->getType());
-    viewData->setInterpolationMatrices(_hoElement->getType(),
-                                       pfs->coefficients, pfs->monomials,
-                                       pfs->coefficients, pfs->monomials);
-  }
+  _createPViewElementToScan();
 
   // Create PView
   if (drawPView)
@@ -373,7 +359,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
       if (min < 0 && max < 0) ++cntInverted;
       progress.next();
 
-      _computeJacobianToScan(el, normals);
+      _computeJacobianToScan(el, entity, normals);
     }
     delete normals;
   }
@@ -627,6 +613,26 @@ void GMSH_AnalyseCurvedMeshPlugin::_addElementInEntity(MElement *element,
     }
     break;
   }
+}
+
+void GMSH_AnalyseCurvedMeshPlugin::_createPViewElementToScan()
+{
+  if (!_hoElement) return;
+
+  // Jacobian determinant
+  std::map<int, std::vector<double>> dataPView;
+  dataPView[_hoElement->getNum()] = _jacElementToScan;
+  std::stringstream name;
+  name << "Jacobian elem " << _numElementToScan;
+  PView *view = new PView(name.str().c_str(), "ElementNodeData",
+                          _m, dataPView, 0, 1);
+  const nodalBasis *fs = BasisFactory::getNodalBasis(_hoElement->getTypeForMSH());
+  const polynomialBasis *pfs = dynamic_cast<const polynomialBasis*>(fs);
+  PViewData *viewData = view->getData();
+  viewData->deleteInterpolationMatrices(_hoElement->getType());
+  viewData->setInterpolationMatrices(_hoElement->getType(),
+                                     pfs->coefficients, pfs->monomials,
+                                     pfs->coefficients, pfs->monomials);
 }
 
 #endif
