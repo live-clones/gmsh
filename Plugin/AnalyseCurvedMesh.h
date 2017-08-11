@@ -87,6 +87,9 @@ private :
   void _printStatJacobian();
   void _printStatIGE();
   void _printStatICN();
+
+  void _computeJacobianToScan(MElement*, GEntity*,
+                              const fullMatrix<double> *normals);
   void _addElementInEntity(MElement*, GEntity*);
 };
 

@@ -25,6 +25,7 @@
 #include "MHexahedron.h"
 #include "MTetrahedron.h"
 #include "MPrism.h"
+#include "BasisFactory.h"
 
 class bezierBasis;
 
@@ -34,10 +35,10 @@ StringXNumber CurvedMeshOptions_Number[] = {
   {GMSH_FULLRC, "ICN measure", NULL, 1},
   {GMSH_FULLRC, "Hiding threshold", NULL, 9},
   {GMSH_FULLRC, "Draw PView", NULL, 0},
-  {GMSH_FULLRC, "Recompute", NULL, 0},
+  {GMSH_FULLRC, "Recompute", NULL, 1},
   {GMSH_FULLRC, "Dimension of elements", NULL, -1},
   //{GMSH_FULLRC, "Element to print quality", NULL, 2485}
-  {GMSH_FULLRC, "Element to print quality", NULL, 2555}
+  {GMSH_FULLRC, "Element to print quality", NULL, 2901}
 };
 
 extern "C"
@@ -181,7 +182,15 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
     dataPVelement[_hoElement->getNum()] = _jacElementToScan;
     std::stringstream name;
     name << "Jacobian elem " << _numElementToScan;
-    new PView(name.str().c_str(), "ElementNodeData", _m, dataPVelement, 0, 1);
+    PView *view = new PView(name.str().c_str(), "ElementNodeData",
+                            _m, dataPVelement, 0, 1);
+    const nodalBasis *fs = BasisFactory::getNodalBasis(_hoElement->getTypeForMSH());
+    const polynomialBasis *pfs = dynamic_cast<const polynomialBasis*>(fs);
+    PViewData *viewData = view->getData();
+    viewData->deleteInterpolationMatrices(_hoElement->getType());
+    viewData->setInterpolationMatrices(_hoElement->getType(),
+                                       pfs->coefficients, pfs->monomials,
+                                       pfs->coefficients, pfs->monomials);
   }
 
   // Create PView
@@ -364,32 +373,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
       if (min < 0 && max < 0) ++cntInverted;
       progress.next();
 
-      if (el->getNum() == _numElementToScan) {
-        _elementToScan = el;
-        fullMatrix<double> points =
-                _elementToScan->getFunctionSpace(_viewOrder)->points;
-        int tag = ElementType::getTag(_elementToScan->getType(), _viewOrder);
-        std::vector<MVertex *> v;
-        for (int k = 0; k < points.size1(); k++) {
-          double t1 = points(k, 0);
-          double t2 = points(k, 1);
-          double t3 = points(k, 2);
-          SPoint3 pos;
-          _elementToScan->pnt(t1, t2, t3, pos);
-          v.push_back(new MVertex(pos.x(), pos.y(), pos.z()));
-        }
-        MElementFactory factory;
-        _hoElement = factory.create(tag, v);
-
-        _addElementInEntity(_hoElement, entity);
-
-        fullVector<double> jac;
-        jacobianBasedQuality::sampleJacobian(_elementToScan, _viewOrder,
-                                             jac, normals);
-        for (int j = 0; j < jac.size(); ++j) {
-          _jacElementToScan.push_back(jac(j));
-        }
-      }
+      _computeJacobianToScan(el, normals);
     }
     delete normals;
   }
@@ -561,6 +545,39 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatICN()
 
   Msg::Info("ICN       = %8.3f, %8.3f, %8.3f (worst, avg, best)",
             infminI, avgminI, supminI);
+}
+
+void GMSH_AnalyseCurvedMeshPlugin::_computeJacobianToScan(MElement *el,
+                                                          GEntity *entity,
+                                                          const fullMatrix<double> *normals)
+{
+  if (el->getNum() != _numElementToScan) return;
+
+  _elementToScan = el;
+  fullMatrix<double> points =
+          _elementToScan->getFunctionSpace(_viewOrder)->points;
+  int tag = ElementType::getTag(_elementToScan->getType(), _viewOrder);
+  std::vector<MVertex *> v;
+  for (int k = 0; k < points.size1(); k++) {
+    double t1 = points(k, 0);
+    double t2 = points(k, 1);
+    double t3 = points(k, 2);
+    SPoint3 pos;
+    _elementToScan->pnt(t1, t2, t3, pos);
+    v.push_back(new MVertex(pos.x(), pos.y(), pos.z()));
+  }
+  MElementFactory factory;
+  _hoElement = factory.create(tag, v);
+
+  _addElementInEntity(_hoElement, entity);
+
+  fullVector<double> jac;
+  jacobianBasedQuality::sampleJacobian(_elementToScan, _viewOrder,
+                                       jac, normals);
+  _jacElementToScan.clear();
+  for (int j = 0; j < jac.size(); ++j) {
+    _jacElementToScan.push_back(jac(j));
+  }
 }
 
 void GMSH_AnalyseCurvedMeshPlugin::_addElementInEntity(MElement *element,
