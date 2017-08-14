@@ -37,8 +37,7 @@ StringXNumber CurvedMeshOptions_Number[] = {
   {GMSH_FULLRC, "Draw PView", NULL, 0},
   {GMSH_FULLRC, "Recompute", NULL, 1},
   {GMSH_FULLRC, "Dimension of elements", NULL, -1},
-  //{GMSH_FULLRC, "Element to print quality", NULL, 2485}
-  {GMSH_FULLRC, "Element to print quality", NULL, 2901}
+  {GMSH_FULLRC, "Element to print quality", NULL, -7}
 };
 
 extern "C"
@@ -118,6 +117,8 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
   _viewOrder = 10;
   _elementToScan = NULL;
   _hoElement = NULL;
+  _allHoElements.clear();
+  _jacAllElements.clear();
 
   if (askedDim < 0 || askedDim > 4) askedDim = _m->getDim();
 
@@ -537,8 +538,9 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeJacobianToScan(MElement *el,
                                                           GEntity *entity,
                                                           const fullMatrix<double> *normals)
 {
-  if (el->getNum() != _numElementToScan) return;
+  if (_numElementToScan != -7 && el->getNum() != _numElementToScan) return;
 
+  _entity = entity;
   _elementToScan = el;
   fullMatrix<double> points =
           _elementToScan->getFunctionSpace(_viewOrder)->points;
@@ -555,14 +557,17 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeJacobianToScan(MElement *el,
   MElementFactory factory;
   _hoElement = factory.create(tag, v);
 
-  _addElementInEntity(_hoElement, entity);
-
   fullVector<double> jac;
   jacobianBasedQuality::sampleJacobian(_elementToScan, _viewOrder,
                                        jac, normals);
   _jacElementToScan.clear();
   for (int j = 0; j < jac.size(); ++j) {
     _jacElementToScan.push_back(jac(j));
+  }
+
+  if (_numElementToScan == -7) {
+    _jacAllElements.push_back(_jacElementToScan);
+    _allHoElements.push_back(_hoElement);
   }
 }
 
@@ -618,14 +623,25 @@ void GMSH_AnalyseCurvedMeshPlugin::_addElementInEntity(MElement *element,
 void GMSH_AnalyseCurvedMeshPlugin::_createPViewElementToScan()
 {
   if (!_hoElement) return;
+
   const nodalBasis *fs = BasisFactory::getNodalBasis(_hoElement->getTypeForMSH());
   const polynomialBasis *pfs = dynamic_cast<const polynomialBasis*>(fs);
 
   // Jacobian determinant
   std::map<int, std::vector<double>> dataPView;
-  dataPView[_hoElement->getNum()] = _jacElementToScan;
   std::stringstream name;
-  name << "Jacobian elem " << _numElementToScan;
+  if (_numElementToScan != -7) {
+    dataPView[_hoElement->getNum()] = _jacElementToScan;
+    name << "Jacobian elem " << _numElementToScan;
+    _addElementInEntity(_hoElement, _entity);
+  }
+  else {
+    for (int i = 0; i < _allHoElements.size(); ++i) {
+      dataPView[_allHoElements[i]->getNum()] = _jacAllElements[i];
+      _addElementInEntity(_allHoElements[i], _entity);
+    }
+    name << "Jacobian all elem";
+  }
   PView *view = new PView(name.str().c_str(), "ElementNodeData",
                           _m, dataPView, 0, 1);
   PViewData *viewData = view->getData();
@@ -633,21 +649,27 @@ void GMSH_AnalyseCurvedMeshPlugin::_createPViewElementToScan()
   viewData->setInterpolationMatrices(_hoElement->getType(),
                                      pfs->coefficients, pfs->monomials,
                                      pfs->coefficients, pfs->monomials);
-//  PView *view;
-//  PViewData *viewData;
 
   // Quality measures
   fullVector<double> ige;
-  jacobianBasedQuality::sampleIGEMeasure(_elementToScan, _viewOrder, ige);
-
-  //std::map<int, std::vector<double>> dataPView2;
   dataPView[_hoElement->getNum()].clear();
-  for (int j = 0; j < ige.size(); ++j) {
-    dataPView[_hoElement->getNum()].push_back(ige(j));
-  }
   name.str(std::string());
-  name << "IGE elem " << _numElementToScan;
-//  BUG, essayer en créant de nouveau dataPView
+  if (_numElementToScan != -7) {
+    jacobianBasedQuality::sampleIGEMeasure(_elementToScan, _viewOrder, ige);
+    for (int j = 0; j < ige.size(); ++j) {
+      dataPView[_hoElement->getNum()].push_back(ige(j));
+    }
+    name << "IGE elem " << _numElementToScan;
+  }
+  else {
+    for (int i = 0; i < _allHoElements.size(); ++i) {
+      jacobianBasedQuality::sampleIGEMeasure(_data[i].element(), _viewOrder, ige);
+      for (int j = 0; j < ige.size(); ++j) {
+        dataPView[_allHoElements[i]->getNum()].push_back(ige(j));
+      }
+    }
+    name << "IGE all elem";
+  }
   view = new PView(name.str().c_str(), "ElementNodeData", _m, dataPView, 0, 1);
   viewData = view->getData();
   viewData->deleteInterpolationMatrices(_hoElement->getType());

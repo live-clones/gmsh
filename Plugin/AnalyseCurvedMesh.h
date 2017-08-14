@@ -47,6 +47,9 @@ private :
   MElement *_elementToScan, *_hoElement;
   int _viewOrder;
   std::vector<double> _jacElementToScan;
+  std::vector<std::vector<double>> _jacAllElements;
+  std::vector<MElement*> _allHoElements;
+  GEntity *_entity;
 
   // for 1d, 2d, 3d
   bool _computedJac[3], _computedIGE[3], _computedICN[3];
