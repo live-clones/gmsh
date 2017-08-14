@@ -618,6 +618,8 @@ void GMSH_AnalyseCurvedMeshPlugin::_addElementInEntity(MElement *element,
 void GMSH_AnalyseCurvedMeshPlugin::_createPViewElementToScan()
 {
   if (!_hoElement) return;
+  const nodalBasis *fs = BasisFactory::getNodalBasis(_hoElement->getTypeForMSH());
+  const polynomialBasis *pfs = dynamic_cast<const polynomialBasis*>(fs);
 
   // Jacobian determinant
   std::map<int, std::vector<double>> dataPView;
@@ -626,9 +628,28 @@ void GMSH_AnalyseCurvedMeshPlugin::_createPViewElementToScan()
   name << "Jacobian elem " << _numElementToScan;
   PView *view = new PView(name.str().c_str(), "ElementNodeData",
                           _m, dataPView, 0, 1);
-  const nodalBasis *fs = BasisFactory::getNodalBasis(_hoElement->getTypeForMSH());
-  const polynomialBasis *pfs = dynamic_cast<const polynomialBasis*>(fs);
   PViewData *viewData = view->getData();
+  viewData->deleteInterpolationMatrices(_hoElement->getType());
+  viewData->setInterpolationMatrices(_hoElement->getType(),
+                                     pfs->coefficients, pfs->monomials,
+                                     pfs->coefficients, pfs->monomials);
+//  PView *view;
+//  PViewData *viewData;
+
+  // Quality measures
+  fullVector<double> ige;
+  jacobianBasedQuality::sampleIGEMeasure(_elementToScan, _viewOrder, ige);
+
+  //std::map<int, std::vector<double>> dataPView2;
+  dataPView[_hoElement->getNum()].clear();
+  for (int j = 0; j < ige.size(); ++j) {
+    dataPView[_hoElement->getNum()].push_back(ige(j));
+  }
+  name.str(std::string());
+  name << "IGE elem " << _numElementToScan;
+//  BUG, essayer en créant de nouveau dataPView
+  view = new PView(name.str().c_str(), "ElementNodeData", _m, dataPView, 0, 1);
+  viewData = view->getData();
   viewData->deleteInterpolationMatrices(_hoElement->getType());
   viewData->setInterpolationMatrices(_hoElement->getType(),
                                      pfs->coefficients, pfs->monomials,

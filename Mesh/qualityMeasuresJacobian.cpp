@@ -465,6 +465,7 @@ void sampleIGEMeasure(MElement *el, int deg, fullVector<double> &ige)
 
   fullMatrix<double> coeffMatLag(gradBasis->getNumSamplingPoints(), 9);
   gradBasis->getAllGradientsFromNodes(nodesXYZ, coeffMatLag);
+  if (el->getDim() == 2) coeffMatLag.resize(coeffMatLag.size1(), 6, false);
 
   fullMatrix<double> v;
   computeCoeffLengthVectors_(coeffMatLag, v, type);
