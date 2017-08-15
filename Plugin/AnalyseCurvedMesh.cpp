@@ -652,10 +652,10 @@ void GMSH_AnalyseCurvedMeshPlugin::_createPViewElementToScan()
 
   // Quality measures
   fullVector<double> ige;
-  dataPView[_hoElement->getNum()].clear();
   name.str(std::string());
   if (_numElementToScan != -7) {
     jacobianBasedQuality::sampleIGEMeasure(_elementToScan, _viewOrder, ige);
+    dataPView[_hoElement->getNum()].clear();
     for (int j = 0; j < ige.size(); ++j) {
       dataPView[_hoElement->getNum()].push_back(ige(j));
     }
@@ -664,6 +664,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_createPViewElementToScan()
   else {
     for (int i = 0; i < _allHoElements.size(); ++i) {
       jacobianBasedQuality::sampleIGEMeasure(_data[i].element(), _viewOrder, ige);
+      dataPView[_allHoElements[i]->getNum()].clear();
       for (int j = 0; j < ige.size(); ++j) {
         dataPView[_allHoElements[i]->getNum()].push_back(ige(j));
       }
