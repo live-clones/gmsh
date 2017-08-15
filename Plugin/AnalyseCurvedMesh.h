@@ -47,8 +47,10 @@ private :
   MElement *_elementToScan, *_hoElement;
   int _viewOrder;
   std::vector<double> _jacElementToScan;
-  std::vector<std::vector<double>> _jacAllElements;
-  std::vector<MElement*> _allHoElements;
+
+  // All elements to scan
+  std::vector<std::pair<MElement*, MElement*>> _allElem[20];
+  std::map<int, std::vector<double>> _dataPViewJacAllElements[20];
   GEntity *_entity;
 
   // for 1d, 2d, 3d

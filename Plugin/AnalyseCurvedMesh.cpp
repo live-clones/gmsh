@@ -117,8 +117,10 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
   _viewOrder = 10;
   _elementToScan = NULL;
   _hoElement = NULL;
-  _allHoElements.clear();
-  _jacAllElements.clear();
+  for (int type = 0; type < 20; ++type) {
+    _allElem[type].clear();
+    _dataPViewJacAllElements[type].clear();
+  }
 
   if (askedDim < 0 || askedDim > 4) askedDim = _m->getDim();
 
@@ -566,8 +568,10 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeJacobianToScan(MElement *el,
   }
 
   if (_numElementToScan == -7) {
-    _jacAllElements.push_back(_jacElementToScan);
-    _allHoElements.push_back(_hoElement);
+    const int type = el->getType();
+//    _jacAllElem[type].push_back(_jacElementToScan);
+    _allElem[type].push_back(std::make_pair(el, _hoElement));
+    _dataPViewJacAllElements[type][_hoElement->getNum()] = _jacElementToScan;
   }
 }
 
@@ -632,51 +636,99 @@ void GMSH_AnalyseCurvedMeshPlugin::_createPViewElementToScan()
   std::stringstream name;
   if (_numElementToScan != -7) {
     dataPView[_hoElement->getNum()] = _jacElementToScan;
+    name.str(std::string());
     name << "Jacobian elem " << _numElementToScan;
     _addElementInEntity(_hoElement, _entity);
+    PView *view = new PView(name.str().c_str(), "ElementNodeData",
+                            _m, dataPView, 0, 1);
+    PViewData *viewData = view->getData();
+    viewData->deleteInterpolationMatrices(_hoElement->getType());
+    viewData->setInterpolationMatrices(_hoElement->getType(),
+                                       pfs->coefficients, pfs->monomials,
+                                       pfs->coefficients, pfs->monomials);
   }
   else {
-    for (int i = 0; i < _allHoElements.size(); ++i) {
-      dataPView[_allHoElements[i]->getNum()] = _jacAllElements[i];
-      _addElementInEntity(_allHoElements[i], _entity);
+    for (int type = 0; type < 20; ++type) {
+      if (_dataPViewJacAllElements[type].empty()) continue;
+      for (int i = 0; i < _allElem[type].size(); ++i) {
+        _addElementInEntity(_allElem[type][i].second, _entity);
+      }
+      name.str(std::string());
+      name << "Jacobian all ";
+      switch (type) {
+        case TYPE_TRI: name << "triangles"; break;
+        case TYPE_QUA: name << "quadrangles"; break;
+        default: name << "?"; break;
+      }
+      PView *view = new PView(name.str().c_str(), "ElementNodeData",
+                              _m, _dataPViewJacAllElements[type], 0, 1);
+      PViewData *viewData = view->getData();
+      viewData->deleteInterpolationMatrices(type);
+
+      const int hoTag = _allElem[type][0].second->getTypeForMSH();
+      const nodalBasis *fs = BasisFactory::getNodalBasis(hoTag);
+      const polynomialBasis *pfs = dynamic_cast<const polynomialBasis*>(fs);
+      viewData->setInterpolationMatrices(type,
+                                         pfs->coefficients, pfs->monomials,
+                                         pfs->coefficients, pfs->monomials);
     }
-    name << "Jacobian all elem";
   }
-  PView *view = new PView(name.str().c_str(), "ElementNodeData",
-                          _m, dataPView, 0, 1);
-  PViewData *viewData = view->getData();
-  viewData->deleteInterpolationMatrices(_hoElement->getType());
-  viewData->setInterpolationMatrices(_hoElement->getType(),
-                                     pfs->coefficients, pfs->monomials,
-                                     pfs->coefficients, pfs->monomials);
 
   // Quality measures
   fullVector<double> ige;
-  name.str(std::string());
   if (_numElementToScan != -7) {
     jacobianBasedQuality::sampleIGEMeasure(_elementToScan, _viewOrder, ige);
-    dataPView[_hoElement->getNum()].clear();
+    dataPView.clear();
     for (int j = 0; j < ige.size(); ++j) {
       dataPView[_hoElement->getNum()].push_back(ige(j));
     }
+    name.str(std::string());
     name << "IGE elem " << _numElementToScan;
+    PView *view = new PView(name.str().c_str(), "ElementNodeData",
+                            _m, dataPView, 0, 1);
+    PViewData *viewData = view->getData();
+    viewData->deleteInterpolationMatrices(_hoElement->getType());
+    viewData->setInterpolationMatrices(_hoElement->getType(),
+                                       pfs->coefficients, pfs->monomials,
+                                       pfs->coefficients, pfs->monomials);
   }
   else {
-    for (int i = 0; i < _allHoElements.size(); ++i) {
-      jacobianBasedQuality::sampleIGEMeasure(_data[i].element(), _viewOrder, ige);
-      dataPView[_allHoElements[i]->getNum()].clear();
-      for (int j = 0; j < ige.size(); ++j) {
-        dataPView[_allHoElements[i]->getNum()].push_back(ige(j));
+    for (int type = 0; type < 20; ++type) {
+      if (_allElem[type].empty()) continue;
+      dataPView.clear();
+
+      for (int i = 0; i < _allElem[type].size(); ++i) {
+        MElement *loElement = _allElem[type][i].first;
+        MElement *hoElement = _allElem[type][i].second;
+        jacobianBasedQuality::sampleIGEMeasure(loElement, _viewOrder, ige);
+        for (int j = 0; j < ige.size(); ++j) {
+          dataPView[hoElement->getNum()].push_back(ige(j));
+        }
       }
+
+      name.str(std::string());
+      name << "IGE all ";
+      switch (type) {
+        case TYPE_TRI: name << "triangles"; break;
+        case TYPE_QUA: name << "quadrangles"; break;
+        default: name << "?"; break;
+      }
+      PView *view = new PView(name.str().c_str(), "ElementNodeData",
+                              _m, dataPView, 0, 1);
+      PViewData *viewData = view->getData();
+      viewData->deleteInterpolationMatrices(type);
+
+      const int hoTag = _allElem[type][0].second->getTypeForMSH();
+      const nodalBasis *fs = BasisFactory::getNodalBasis(hoTag);
+      const polynomialBasis *pfs = dynamic_cast<const polynomialBasis*>(fs);
+      viewData->setInterpolationMatrices(type,
+                                         pfs->coefficients, pfs->monomials,
+                                         pfs->coefficients, pfs->monomials);
     }
+
+
     name << "IGE all elem";
   }
-  view = new PView(name.str().c_str(), "ElementNodeData", _m, dataPView, 0, 1);
-  viewData = view->getData();
-  viewData->deleteInterpolationMatrices(_hoElement->getType());
-  viewData->setInterpolationMatrices(_hoElement->getType(),
-                                     pfs->coefficients, pfs->monomials,
-                                     pfs->coefficients, pfs->monomials);
 }
 
 #endif
