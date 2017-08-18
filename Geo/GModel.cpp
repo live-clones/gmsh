@@ -195,6 +195,7 @@ void GModel::destroy(bool keepName)
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     delete *it;
   regions.clear();
+  std::set<GRegion*, GEntityLessThan>().swap(regions);
 
   std::vector<GFace*> to_keep;
   for(fiter it = firstFace(); it != lastFace(); ++it){
@@ -206,15 +207,18 @@ void GModel::destroy(bool keepName)
       delete *it;
   }
   faces.clear();
+  std::set<GFace*, GEntityLessThan>().swap(faces);
   faces.insert(to_keep.begin(), to_keep.end());
 
   for(eiter it = firstEdge(); it != lastEdge(); ++it)
     delete *it;
   edges.clear();
+  std::set<GEdge*, GEntityLessThan>().swap(edges);
 
   for(viter it = firstVertex(); it != lastVertex(); ++it)
     delete *it;
   vertices.clear();
+  std::set<GVertex*, GEntityLessThan>().swap(vertices);
 
   destroyMeshCaches();
 
@@ -232,10 +236,15 @@ void GModel::destroy(bool keepName)
 void GModel::destroyMeshCaches()
 {
   _vertexVectorCache.clear();
+  std::vector<MVertex*>().swap(_vertexVectorCache);
   _vertexMapCache.clear();
+  std::map<int, MVertex*>().swap(_vertexMapCache);
   _elementVectorCache.clear();
+  std::vector<MElement*>().swap(_elementVectorCache);
   _elementMapCache.clear();
+  std::map<int, MElement*>().swap(_elementMapCache);
   _elementIndexCache.clear();
+  std::map<int, int>().swap(_elementIndexCache);
   delete _octree;
   _octree = 0;
 }

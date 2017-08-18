@@ -462,18 +462,22 @@ class globalVTKData {
       it->clear();
     }
     vtkGlobalConnectivity.clear();
+    std::vector<vectInt>().swap(vtkGlobalConnectivity);
   }
   static void clearGlobalCellType()
   {
     vtkGlobalCellType.clear();
+    std::vector<int>().swap(vtkGlobalCellType);
   }
   static void clearGlobalCoords()
   {
     vtkGlobalCoords.clear();
+    std::vector<PCoords>().swap(vtkGlobalCoords);
   }
   static void clearGlobalValues()
   {
     vtkGlobalValues.clear();
+    std::vector<PValues>().swap(vtkGlobalValues);
   }
   static void clearGlobalData()
   {
