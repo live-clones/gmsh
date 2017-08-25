@@ -240,18 +240,16 @@ int GmshFinalize()
 {
 #if defined(HAVE_POST)
   // Delete all PViewData stored in static list of PView class
-  for(unsigned int i = 0; i < PView::list.size(); i++) {
-    delete PView::list[i];
-  }
-  PView::list.clear();
+  while(PView::list.size()>0) delete PView::list[PView::list.size()-1];
+  std::vector<PView*>().swap(PView::list);
 
   // Delete static _interpolationSchemes of PViewData class
   PViewData::removeAllInterpolationSchemes();
 #endif
+  
   // Delete all Gmodels
-  for(unsigned int i = 0; i < GModel::list.size(); i++)
-    delete GModel::list[i];
-  GModel::list.clear();
+  while(GModel::list.size()>0) delete GModel::list[GModel::list.size()-1];
+  std::vector<GModel*>().swap(GModel::list);
 
   return 1;
 }
