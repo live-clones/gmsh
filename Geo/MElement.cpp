@@ -1338,6 +1338,19 @@ void MElement::writeMESH(FILE *fp, int elementTagType, int elementary,
   if(physical < 0) reverse();
 }
 
+void MElement::writeNEU(FILE *fp, unsigned gambitType, int idAdjust, int phys)
+{
+  if(phys < 0) reverse();
+
+  fprintf(fp, "%8d %2d %2d ", _num-idAdjust, gambitType, getNumVertices());
+  for(int i = 0; i < getNumVertices(); ++i) {
+    fprintf(fp, "%8d", getVertex(i)->getIndex());
+  }
+  fprintf(fp, "\n");
+
+  if(phys < 0) reverse();
+}
+
 void MElement::writeIR3(FILE *fp, int elementTagType, int num, int elementary,
                         int physical)
 {
