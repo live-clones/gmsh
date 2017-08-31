@@ -473,8 +473,11 @@ class MHexahedron27 : public MHexahedron {
  *
  */
 
+typedef std::vector<int> indicesReversed;
 
 class MHexahedronN : public MHexahedron {
+  static std::map<int, indicesReversed> _order2indicesReversed;
+
  protected:
   const char _order;
   std::vector<MVertex*> _vs;
@@ -579,10 +582,7 @@ class MHexahedronN : public MHexahedron {
   }
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
-  virtual void reverse()
-  {
-    Msg::Error("Reverse not implemented yet for MHexahedronN");
-  }
+  virtual void reverse();
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 8 ? MHexahedron::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
