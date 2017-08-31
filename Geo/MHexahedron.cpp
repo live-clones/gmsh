@@ -16,7 +16,7 @@
 #include "qualityMeasures.h"
 #endif
 
-std::map<int, indicesReversed> MHexahedronN::_order2indicesReversed;
+std::map<int, indicesReversed> MHexahedronN::_order2indicesReversedHex;
 
 void MHexahedron::getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                              SVector3 *n)
@@ -411,7 +411,7 @@ int MHexahedronN::getNumFacesRep(bool curved)
                        CTX::instance()->mesh.numSubEdges * 2) : 12;
 }
 
-void _getIndicesReversed(int order, indicesReversed &indices)
+void _getIndicesReversedHex(int order, indicesReversed &indices)
 {
   fullMatrix<double> ref = gmshGenerateMonomialsHexahedron(order);
 
@@ -432,12 +432,12 @@ void _getIndicesReversed(int order, indicesReversed &indices)
 void MHexahedronN::reverse()
 {
   std::map<int, indicesReversed>::iterator it;
-  it = _order2indicesReversed.find(_order);
-  if (it == _order2indicesReversed.end()) {
+  it = _order2indicesReversedHex.find(_order);
+  if (it == _order2indicesReversedHex.end()) {
     indicesReversed indices;
-    _getIndicesReversed(_order, indices);
-    _order2indicesReversed[_order] = indices;
-    it = _order2indicesReversed.find(_order);
+    _getIndicesReversedHex(_order, indices);
+    _order2indicesReversedHex[_order] = indices;
+    it = _order2indicesReversedHex.find(_order);
   }
 
   indicesReversed &indices = it->second;

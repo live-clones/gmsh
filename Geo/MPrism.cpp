@@ -13,7 +13,7 @@
 #include "qualityMeasures.h"
 #endif
 
-std::map<int, indicesReversed> MPrismN::_order2indicesReversed;
+std::map<int, indicesReversed> MPrismN::_order2indicesReversedPri;
 
 void MPrism::getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                         SVector3 *n)
@@ -550,7 +550,7 @@ double MPrism::gammaShapeMeasure()
 #endif
 }
 
-void _getIndicesReversed(int order, indicesReversed &indices)
+void _getIndicesReversedPri(int order, indicesReversed &indices)
 {
   fullMatrix<double> ref = gmshGenerateMonomialsPrism(order);
 
@@ -571,12 +571,12 @@ void _getIndicesReversed(int order, indicesReversed &indices)
 void MPrismN::reverse()
 {
   std::map<int, indicesReversed>::iterator it;
-  it = _order2indicesReversed.find(_order);
-  if (it == _order2indicesReversed.end()) {
+  it = _order2indicesReversedPri.find(_order);
+  if (it == _order2indicesReversedPri.end()) {
     indicesReversed indices;
-    _getIndicesReversed(_order, indices);
-    _order2indicesReversed[_order] = indices;
-    it = _order2indicesReversed.find(_order);
+    _getIndicesReversedPri(_order, indices);
+    _order2indicesReversedPri[_order] = indices;
+    it = _order2indicesReversedPri.find(_order);
   }
 
   indicesReversed &indices = it->second;

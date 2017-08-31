@@ -401,7 +401,7 @@ class MPrism18 : public MPrism {
 typedef std::vector<int> indicesReversed;
 
 class MPrismN : public MPrism {
-  static std::map<int, indicesReversed> _order2indicesReversed;
+  static std::map<int, indicesReversed> _order2indicesReversedPri;
 
  protected:
   std::vector<MVertex *> _vs;

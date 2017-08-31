@@ -476,7 +476,7 @@ class MHexahedron27 : public MHexahedron {
 typedef std::vector<int> indicesReversed;
 
 class MHexahedronN : public MHexahedron {
-  static std::map<int, indicesReversed> _order2indicesReversed;
+  static std::map<int, indicesReversed> _order2indicesReversedHex;
 
  protected:
   const char _order;

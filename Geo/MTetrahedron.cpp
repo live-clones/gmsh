@@ -18,7 +18,7 @@
 
 #define SQU(a)      ((a)*(a))
 
-std::map<int, indicesReversed> MTetrahedronN::_order2indicesReversed;
+std::map<int, indicesReversed> MTetrahedronN::_order2indicesReversedTet;
 
 void MTetrahedron::getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                               SVector3 *n)
@@ -318,7 +318,7 @@ void MTetrahedron::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &
   Msg::Error("Could not get face information for tetrahedron %d", getNum());
 }
 
-void _getIndicesReversed(int order, indicesReversed &indices)
+void _getIndicesReversedTet(int order, indicesReversed &indices)
 {
   fullMatrix<double> ref = gmshGenerateMonomialsTetrahedron(order);
 
@@ -339,12 +339,12 @@ void _getIndicesReversed(int order, indicesReversed &indices)
 void MTetrahedronN::reverse()
 {
   std::map<int, indicesReversed>::iterator it;
-  it = _order2indicesReversed.find(_order);
-  if (it == _order2indicesReversed.end()) {
+  it = _order2indicesReversedTet.find(_order);
+  if (it == _order2indicesReversedTet.end()) {
     indicesReversed indices;
-    _getIndicesReversed(_order, indices);
-    _order2indicesReversed[_order] = indices;
-    it = _order2indicesReversed.find(_order);
+    _getIndicesReversedTet(_order, indices);
+    _order2indicesReversedTet[_order] = indices;
+    it = _order2indicesReversedTet.find(_order);
   }
 
   indicesReversed &indices = it->second;

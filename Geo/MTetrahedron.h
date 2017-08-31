@@ -312,7 +312,7 @@ class MTetrahedron10 : public MTetrahedron {
 typedef std::vector<int> indicesReversed;
 
 class MTetrahedronN : public MTetrahedron {
-  static std::map<int, indicesReversed> _order2indicesReversed;
+  static std::map<int, indicesReversed> _order2indicesReversedTet;
 
  protected:
   std::vector<MVertex *> _vs;

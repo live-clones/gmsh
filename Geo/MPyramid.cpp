@@ -10,7 +10,7 @@
 #include "BasisFactory.h"
 #include "pointsGenerators.h"
 
-std::map<int, indicesReversed> MPyramidN::_order2indicesReversed;
+std::map<int, indicesReversed> MPyramidN::_order2indicesReversedPyr;
 
 int MPyramid::getVolumeSign()
 {
@@ -335,7 +335,7 @@ void MPyramidN::getFaceRep(bool curved, int num,
   else MPyramid::getFaceRep(false, num, x, y, z, n);
 }
 
-void _getIndicesReversed(int order, indicesReversed &indices)
+void _getIndicesReversedPyr(int order, indicesReversed &indices)
 {
   fullMatrix<double> ref = gmshGenerateMonomialsPyramid(order);
 
@@ -356,12 +356,12 @@ void _getIndicesReversed(int order, indicesReversed &indices)
 void MPyramidN::reverse()
 {
   std::map<int, indicesReversed>::iterator it;
-  it = _order2indicesReversed.find(_order);
-  if (it == _order2indicesReversed.end()) {
+  it = _order2indicesReversedPyr.find(_order);
+  if (it == _order2indicesReversedPyr.end()) {
     indicesReversed indices;
-    _getIndicesReversed(_order, indices);
-    _order2indicesReversed[_order] = indices;
-    it = _order2indicesReversed.find(_order);
+    _getIndicesReversedPyr(_order, indices);
+    _order2indicesReversedPyr[_order] = indices;
+    it = _order2indicesReversedPyr.find(_order);
   }
 
   indicesReversed &indices = it->second;
