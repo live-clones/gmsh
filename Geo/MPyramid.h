@@ -219,7 +219,10 @@ class MPyramid : public MElement {
 
 //------------------------------------------------------------------------------
 
+typedef std::vector<int> indicesReversed;
+
 class MPyramidN : public MPyramid {
+  static std::map<int, indicesReversed> _order2indicesReversed;
 
  protected:
   std::vector<MVertex*> _vs;
@@ -317,19 +320,7 @@ class MPyramidN : public MPyramid {
     Msg::Error("no tag matches a p%d pyramid with %d vertices", _order, 5+_vs.size());
     return 0;
   }
-  virtual void reverse()
-  {
-    /*
-    MVertex *tmp;
-    tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
-    std::vector<MVertex*> inv(_vs.size());
-    std::vector<int> reverseIndices = _getReverseIndices(_order);
-    for (unsigned int i = 0; i< _vs.size(); i++)
-      inv[i] = _vs[reverseIndices[i + 4] - 4];
-    _vs = inv;
-    */
-    Msg::Error("Reverse not implemented yet for MPyramidN");
-  }
+  virtual void reverse();
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
   virtual int getNumEdgesRep(bool curved);

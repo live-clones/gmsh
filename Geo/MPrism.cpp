@@ -7,10 +7,13 @@
 #include "Numeric.h"
 #include "BasisFactory.h"
 #include "Context.h"
+#include "pointsGenerators.h"
 
 #if defined(HAVE_MESH)
 #include "qualityMeasures.h"
 #endif
+
+std::map<int, indicesReversed> MPrismN::_order2indicesReversed;
 
 void MPrism::getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                         SVector3 *n)
@@ -546,3 +549,49 @@ double MPrism::gammaShapeMeasure()
   return 0.;
 #endif
 }
+
+void _getIndicesReversed(int order, indicesReversed &indices)
+{
+  fullMatrix<double> ref = gmshGenerateMonomialsPrism(order);
+
+  indices.resize(ref.size1());
+  for (int i = 0; i < ref.size1(); ++i) {
+    const double u = ref(i, 0);
+    const double v = ref(i, 1);
+    const double w = ref(i, 2);
+    for (int j = 0; j < ref.size1(); ++j) {
+      if (u == ref(j, 1) && v == ref(j, 0) && w == ref(j, 2)) {
+        indices[i] = j;
+        break;
+      }
+    }
+  }
+}
+
+void MPrismN::reverse()
+{
+  std::map<int, indicesReversed>::iterator it;
+  it = _order2indicesReversed.find(_order);
+  if (it == _order2indicesReversed.end()) {
+    indicesReversed indices;
+    _getIndicesReversed(_order, indices);
+    _order2indicesReversed[_order] = indices;
+    it = _order2indicesReversed.find(_order);
+  }
+
+  indicesReversed &indices = it->second;
+
+  // copy vertices
+  std::vector<MVertex*> oldv(6 + _vs.size());
+  std::copy(_v, _v+6, oldv.begin());
+  std::copy(_vs.begin(), _vs.end(), oldv.begin()+6);
+
+  // reverse
+  for (int i = 0; i < 6; ++i) {
+    _v[i] = oldv[indices[i]];
+  }
+  for (int i = 0; i < _vs.size(); ++i) {
+    _vs[i] = oldv[indices[6+i]];
+  }
+}
+

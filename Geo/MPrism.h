@@ -397,7 +397,12 @@ class MPrism18 : public MPrism {
 /*
  * MPrismN
  */
+
+typedef std::vector<int> indicesReversed;
+
 class MPrismN : public MPrism {
+  static std::map<int, indicesReversed> _order2indicesReversed;
+
  protected:
   std::vector<MVertex *> _vs;
   const char _order;
@@ -504,10 +509,7 @@ class MPrismN : public MPrism {
     }
     return "";
   }
-  virtual void reverse()
-  {
-    Msg::Error("Reverse not implemented yet for MPrismN");
-  }
+  virtual void reverse();
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
     const fullMatrix<double> &p = getFunctionSpace()->points;
