@@ -340,14 +340,7 @@ class MTriangleN : public MTriangle {
   {
     return (_order == 2) ? 22 : MTriangle::getTypeForVTK();
   }
-  virtual void reverse()
-  {
-    MVertex *tmp;
-    tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
-    std::vector<MVertex*> inv;
-    inv.insert(inv.begin(), _vs.rbegin(), _vs.rend());
-    _vs = inv;
-  }
+  virtual void reverse();
   virtual void getNode(int num, double &u, double &v, double &w) const
   {
     num < 3 ? MTriangle::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
