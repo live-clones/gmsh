@@ -451,14 +451,7 @@ class MQuadrangleN : public MQuadrangle {
     if(_order== 2 && _vs.size() + 4 == 8) return 23;
     return MQuadrangle::getTypeForVTK();
   }
-  virtual void reverse()
-  {
-    MVertex *tmp;
-    tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;
-    std::vector<MVertex*> inv;
-    inv.insert(inv.begin(), _vs.rbegin(), _vs.rend());
-    _vs = inv;
-  }
+  virtual void reverse();
 
   // reorient the quadrangle to conform with other face
   // orientation computed with MFace based on this face with respect to other

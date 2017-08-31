@@ -8,6 +8,9 @@
 #include "Context.h"
 #include "BergotBasis.h"
 #include "BasisFactory.h"
+#include "pointsGenerators.h"
+
+std::map<int, indicesReversed> MPyramidN::_order2indicesReversedPyr;
 
 int MPyramid::getVolumeSign()
 {
@@ -331,3 +334,49 @@ void MPyramidN::getFaceRep(bool curved, int num,
     _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
   else MPyramid::getFaceRep(false, num, x, y, z, n);
 }
+
+void _getIndicesReversedPyr(int order, indicesReversed &indices)
+{
+  fullMatrix<double> ref = gmshGenerateMonomialsPyramid(order);
+
+  indices.resize(ref.size1());
+  for (int i = 0; i < ref.size1(); ++i) {
+    const double u = ref(i, 0);
+    const double v = ref(i, 1);
+    const double w = ref(i, 2);
+    for (int j = 0; j < ref.size1(); ++j) {
+      if (u == ref(j, 1) && v == ref(j, 0) && w == ref(j, 2)) {
+        indices[i] = j;
+        break;
+      }
+    }
+  }
+}
+
+void MPyramidN::reverse()
+{
+  std::map<int, indicesReversed>::iterator it;
+  it = _order2indicesReversedPyr.find(_order);
+  if (it == _order2indicesReversedPyr.end()) {
+    indicesReversed indices;
+    _getIndicesReversedPyr(_order, indices);
+    _order2indicesReversedPyr[_order] = indices;
+    it = _order2indicesReversedPyr.find(_order);
+  }
+
+  indicesReversed &indices = it->second;
+
+  // copy vertices
+  std::vector<MVertex*> oldv(5 + _vs.size());
+  std::copy(_v, _v+5, oldv.begin());
+  std::copy(_vs.begin(), _vs.end(), oldv.begin()+5);
+
+  // reverse
+  for (int i = 0; i < 5; ++i) {
+    _v[i] = oldv[indices[i]];
+  }
+  for (int i = 0; i < _vs.size(); ++i) {
+    _vs[i] = oldv[indices[5+i]];
+  }
+}
+
