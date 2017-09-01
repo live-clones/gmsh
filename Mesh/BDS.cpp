@@ -103,13 +103,10 @@ void outputScalarField(std::list<BDS_Face*> t, const char *iii, int param, GFace
                     gf->curvatureDiv(SPoint2(pts[3]->u, pts[3]->v)));
           }
           else{
-            fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+            fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
                     pts[0]->X, pts[0]->Y, pts[0]->Z,
                     pts[1]->X, pts[1]->Y, pts[1]->Z,
-                    pts[2]->X, pts[2]->Y, pts[2]->Z,
-                    gf->curvatureDiv(SPoint2(pts[0]->u, pts[0]->v)),
-                    gf->curvatureDiv(SPoint2(pts[1]->u, pts[1]->v)),
-                    gf->curvatureDiv(SPoint2(pts[2]->u, pts[2]->v)));
+                    pts[2]->X, pts[2]->Y, pts[2]->Z,pts[0]->iD, pts[1]->iD, pts[2]->iD);
           }
         }
       }
@@ -202,7 +199,7 @@ BDS_Point *BDS_Mesh::add_point(int num, double x, double y, double z)
 
 BDS_Point *BDS_Mesh::add_point(int num, double u, double v, GFace *gf)
 {
-  GPoint gp = gf->point(u*scalingU,v*scalingV);
+  GPoint gp = gf->point(u,v);
   BDS_Point *pp = new BDS_Point(num, gp.x(), gp.y(), gp.z());
   pp->u = u;
   pp->v = v;
@@ -1227,7 +1224,9 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
   }
 
   /*    TEST    */
-  bool isSphere = gf->geomType() == GEntity::Sphere;
+  double radius;
+  SPoint3 center;
+  bool isSphere = gf->isSphere(radius, center);
   double XX=0,YY=0,ZZ=0;
 
   double U = 0;
@@ -1269,11 +1268,13 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
     V = gp.v();
   }
   else
-    gp = gf->point(U * scalingU, V * scalingV);
+    gp = gf->point(U , V );
 
   if (!gp.succeeded()){
     return false;
   }
+  //  if (!gf->containsParam(SPoint2(U,V)))return false;
+  
   const double oldX = p->X;
   const double oldY = p->Y;
   const double oldZ = p->Z;
@@ -1299,23 +1300,30 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
     // printf("%22.15E %22.15E\n", snew, sold);
     if(snew < .1 * sold) return false;
 
-    if(1 || test_quality){
-      p->X = gp.x();
-      p->Y = gp.y();
-      p->Z = gp.z();
-      newWorst = std::min(newWorst, qmTriangle::gamma(*it));
-      double norm1[3],norm2[3];
-      normal_triangle(n[0], n[1], n[2], norm1);
-      p->X = oldX;
-      p->Y = oldY;
-      p->Z = oldZ;
-      normal_triangle(n[0], n[1], n[2], norm2);
-      oldWorst = std::min(oldWorst, qmTriangle::gamma(*it));
-      double ps;
+    p->X = gp.x();
+    p->Y = gp.y();
+    p->Z = gp.z();
+    newWorst = std::min(newWorst, qmTriangle::gamma(*it));
+    double norm1[3],norm2[3];
+    normal_triangle(n[0], n[1], n[2], norm1);
+    p->X = oldX;
+    p->Y = oldY;
+    p->Z = oldZ;
+    normal_triangle(n[0], n[1], n[2], norm2);
+    oldWorst = std::min(oldWorst, qmTriangle::gamma(*it));
+    double ps;
+    if (isSphere){
+      double dx = center.x() - gp.x();
+      double dy = center.y() - gp.y();
+      double dz = center.z() - gp.z();
+      ps = dx*norm1[0]+dy*norm1[1]+dz*norm1[2];
+      if (ps < 0)return false;
+    }
+    else{
       prosca(norm1, norm2, &ps);
-      double threshold = (isSphere ? 0.95 : 0.5);
+      double threshold = 0.5;
       if(ps < threshold){
-        return false;
+	return false;
       }
     }
     ++it;
@@ -1386,7 +1394,7 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point *p, GFace *gf)
     ++it;
   }
 
-  GPoint gp = gf->point(U * scalingU, V * scalingV);
+  GPoint gp = gf->point(U, V);
   if (!gp.succeeded())return false;
 
   p->u = U;

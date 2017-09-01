@@ -13,6 +13,7 @@
 #include "OCCFace.h"
 #include "Numeric.h"
 #include "Context.h"
+#include "robustPredicates.h"
 
 #if defined(HAVE_OCC)
 
@@ -37,9 +38,10 @@
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
 #include <gp_Pln.hxx>
+#include <gp_Sphere.hxx>
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
-  : GFace(m, num), s(_s)
+: GFace(m, num), s(_s),_radius(-1)
 {
   setup();
   if(model()->getOCCInternals())
@@ -111,7 +113,11 @@ void OCCFace::setup()
   BRepAdaptor_Surface surface(s);
   _periodic[0] = surface.IsUPeriodic();
   _periodic[1] = surface.IsVPeriodic();
+  if (_periodic[0])  _period[0]=surface.UPeriod();
+  if (_periodic[1])  _period[1]=surface.VPeriod();
 
+
+  
   ShapeAnalysis::GetFaceUVBounds(s, umin, umax, vmin, vmax);
   Msg::Debug("OCC Face %d with %d parameter bounds (%g,%g)(%g,%g)",
              tag(), l_edges.size(), umin, umax, vmin, vmax);
@@ -137,6 +143,14 @@ void OCCFace::setup()
       Msg::Debug("Adding embedded vertex %d in face %d", v->tag(), tag());
       embedded_vertices.push_back(v);
     }
+  }
+
+  if (geomType()==GEntity::Sphere){
+    BRepAdaptor_Surface surface(s);
+    gp_Sphere sphere = surface.Sphere();
+    _radius = sphere.Radius();
+    gp_Pnt loc = sphere.Location();
+    _center = SPoint3(loc.X(),loc.Y(),loc.Z());
   }
 }
 
@@ -389,24 +403,9 @@ bool OCCFace::containsPoint(const SPoint3 &pt) const
   return false;
 }
 
-surface_params OCCFace::getSurfaceParams() const
-{
-  surface_params p;
-  switch(geomType()){
-  case GEntity::Cylinder:
-    p.radius = Handle(Geom_CylindricalSurface)::DownCast(occface)->Radius();
-    break;
-  case GEntity::Sphere:
-    p.radius = Handle(Geom_SphericalSurface)::DownCast(occface)->Radius();
-    break;
-  default:
-    break;
-  }
-  return p;
-}
-
 bool OCCFace::buildSTLTriangulation(bool force)
 {
+  
   if(stl_triangles.size()){
     if(force){
       stl_vertices.clear();
@@ -456,117 +455,62 @@ bool OCCFace::buildSTLTriangulation(bool force)
   return true;
 }
 
-void OCCFace::replaceEdgesInternal(std::list<GEdge*> &new_edges)
-{
-  // we simply replace old edges by new edges in the structure
-  Handle(IntTools_Context) myContext = new IntTools_Context;
-
-  // make a copy of s
-  TopoDS_Face copy_of_s_forward = s;
-  copy_of_s_forward.Orientation(TopAbs_FORWARD);
-  // make a copy of occface
-  TopLoc_Location location;
-  Handle(Geom_Surface) copy_of_occface = BRep_Tool::Surface(copy_of_s_forward, location);
-  // check periodicity
-  bool bIsUPeriodic = _periodic[0];
-  // get tolerance
-  double tolerance = BRep_Tool::Tolerance(copy_of_s_forward);
-
-  BRep_Builder aBB;
-  TopoDS_Face newFace;
-  aBB.MakeFace(newFace, copy_of_occface, location, tolerance);
-  // expolore the face
-  TopExp_Explorer aExpW, aExpE;
-  aExpW.Init(copy_of_s_forward, TopAbs_WIRE);
-  for (; aExpW.More(); aExpW.Next()) {
-    TopoDS_Wire newWire;
-    aBB.MakeWire(newWire);
-    const TopoDS_Wire& aW=TopoDS::Wire(aExpW.Current());
-    aExpE.Init(aW, TopAbs_EDGE);
-    for (; aExpE.More(); aExpE.Next()) {
-      const TopoDS_Edge& aE=TopoDS::Edge(aExpE.Current());
-      std::list<GEdge*>::iterator it  = l_edges.begin();
-      std::list<GEdge*>::iterator it2 = new_edges.begin();
-      TopoDS_Edge aER;
-      Msg::Debug("trying to replace %d by %d",(*it)->tag(),(*it2)->tag());
-      for ( ; it != l_edges.end(); ++it, ++it2){
-	OCCEdge *occEd = dynamic_cast<OCCEdge*>(*it);
-	TopoDS_Edge olde = occEd->getTopoDS_Edge();
-	if (olde.IsSame(aE)){
-	  aER = *((TopoDS_Edge*)(*it2)->getNativePtr());
-	}
-	else {
-	  olde = occEd->getTopoDS_EdgeOld();
-	  if (olde.IsSame(aE)){
-	    aER = *((TopoDS_Edge*)(*it2)->getNativePtr());
-	  }
-	}
-      }
-      if (aER.IsNull()){
-	Msg::Error("cannot find an edge for gluing a face");
-      }
-      aER.Orientation(TopAbs_FORWARD);
-      if (!BRep_Tool::Degenerated(aER)) {
-	if (bIsUPeriodic) {
-	  Standard_Real aT1, aT2, aTx, aUx;
-	  BRep_Builder aBB_;
-	  Handle(Geom2d_Curve) aC2D =
-            BRep_Tool::CurveOnSurface(aER, copy_of_s_forward, aT1, aT2);
-	  if (!aC2D.IsNull()) {
-	    if (BRep_Tool::IsClosed(aER, copy_of_s_forward)) {
-	      continue;
-	    }
-	    else{
-	      aTx = BOPTools_AlgoTools2D::IntermediatePoint(aT1, aT2);
-	      gp_Pnt2d aP2D;
-	      aC2D->D0(aTx, aP2D);
-	      aUx=aP2D.X();
-	      if (aUx < umin || aUx > umax) {
-		// need to rebuild
-		Handle(Geom2d_Curve) aC2Dx;
-		aBB_.UpdateEdge(aER, aC2Dx, copy_of_s_forward , BRep_Tool::Tolerance(aE));
-	      }
-	    }
-	  }
-	}
-	BOPTools_AlgoTools2D::BuildPCurveForEdgeOnFace(aER, copy_of_s_forward);
-	// orient image
-	Standard_Boolean bIsToReverse =
-          BOPTools_AlgoTools::IsSplitToReverse(aER, aE, myContext);
-	if (bIsToReverse) {
-	  aER.Reverse();
-	}
-      }
-      else {
-	aER.Orientation(aE.Orientation());
-      }
-      aBB.Add(newWire, aER);
-    }
-    aBB.Add(newFace, newWire);
-  }
-  _replaced = s;
-  s = newFace;
-
-  setup();
-  if(model()->getOCCInternals())
-    model()->getOCCInternals()->bind(_replaced, tag());
-}
 
 bool OCCFace::isSphere (double &radius, SPoint3 &center) const
 {
   switch(geomType()){
   case GEntity::Sphere:
     {
-      radius = Handle(Geom_SphericalSurface)::DownCast(occface)->Radius();
-      gp_Ax3 pos  = Handle(Geom_SphericalSurface)::DownCast(occface)->Position();
-      gp_Ax1 axis = pos.Axis();
-      gp_Pnt loc = axis.Location();
-      center = SPoint3(loc.X(),loc.Y(),loc.Z());
+      radius = _radius;
+      center = _center;
     }
     return true;
   default:
     return false;
   }
 }
+
+bool OCCFace::containsParam(const SPoint2 &pt)  {
+  //  return GFace::containsParam(pt);
+  if (! buildSTLTriangulation(false) ) {
+    Msg::Warning ("Inacurate computation in OCCFace::containsParam");
+    return GFace::containsParam(pt);        
+  }
+  //  FILE *F = fopen("HOP.pos","w");
+  //  fprintf(F,"View \" \"{\n");
+  ///  fprintf(F,"SP(%g,%g,%g){2,2,2};\n",pt.x(),pt.y(),1.0);
+  SPoint2 mine = pt;
+
+  //  bool ok = false;
+  
+  for(unsigned int i = 0; i < stl_triangles.size(); i += 3){
+    SPoint2 gp1 = stl_vertices[stl_triangles[i]];
+    SPoint2 gp2 = stl_vertices[stl_triangles[i + 1]];
+    SPoint2 gp3 = stl_vertices[stl_triangles[i + 2]];    
+
+    double s1 = robustPredicates::orient2d (gp1,gp2,mine);
+    double s2 = robustPredicates::orient2d (gp2,gp3,mine);
+    double s3 = robustPredicates::orient2d (gp3,gp1,mine);
+    /*
+    fprintf(F,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1};\n",
+	    gp1.x(),gp1.y(),0.0,
+	    gp2.x(),gp2.y(),0.0,
+	    gp3.x(),gp3.y(),0.0);
+    
+    printf("%g %g %g\n",s1,s2,s3);
+    */
+    if (s1*s2 >= 0 && s1*s3 >=0){
+      //ok = true;
+      return true;
+    }
+  }
+  //  printf("gasp\n");
+  //  fprintf(F,"};\n");
+  //  fclose(F);
+  //  return ok;
+  return false;
+  
+}
+
 
 #endif

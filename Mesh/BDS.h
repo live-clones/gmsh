@@ -405,8 +405,7 @@ class BDS_Mesh
  public:
   int MAXPOINTNUMBER, SNAP_SUCCESS, SNAP_FAILURE;
   double Min[3], Max[3], LC;
-  double scalingU, scalingV;
-  BDS_Mesh(int _MAXX = 0) :  MAXPOINTNUMBER(_MAXX),scalingU(1),scalingV(1){}
+  BDS_Mesh(int _MAXX = 0) :  MAXPOINTNUMBER(_MAXX){}
   void load(GVertex *gv); // load in BDS all the meshes of the vertex
   void load(GEdge *ge); // load in BDS all the meshes of the edge
   void load(GFace *gf); // load in BDS all the meshes of the surface

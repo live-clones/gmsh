@@ -599,7 +599,7 @@ void BDS2GMSH(BDS_Mesh *m, GFace *gf,
       BDS_Point *p = *itp;
       if(recoverMap.find(p) == recoverMap.end()){
         MVertex *v = new MFaceVertex
-          (p->X, p->Y, p->Z, gf, m->scalingU * p->u, m->scalingV * p->v);
+          (p->X, p->Y, p->Z, gf, p->u, p->v);
         recoverMap[p] = v;
         gf->mesh_vertices.push_back(v);
       }
@@ -1097,8 +1097,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   // Buid a BDS_Mesh structure that is convenient for doing the actual
   // meshing procedure
   BDS_Mesh *m = new BDS_Mesh;
-  m->scalingU = 1;
-  m->scalingV = 1;
 
   std::vector<BDS_Point*> points(all_vertices.size());
   SBoundingBox3d bbox;
@@ -1858,8 +1856,8 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
       if(pp == 0){
         double U, V;
         SPoint2 param = coords[i];
-        U = param.x() / m->scalingU;
-        V = param.y() / m->scalingV;
+        U = param.x();
+        V = param.y();
         pp = m->add_point(count + countTot, U, V, gf);
         if (ge->dim() == 0){
           pp->lcBGM() = BGM_MeshSize(ge, 0, 0, here->x(), here->y(), here->z());
@@ -1912,8 +1910,6 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   // Buid a BDS_Mesh structure that is convenient for doing the actual
   // meshing procedure
   BDS_Mesh *m = new BDS_Mesh;
-  m->scalingU = 1;
-  m->scalingV = 1;
 
   std::vector<std::vector<BDS_Point*> > edgeLoops_BDS;
   SBoundingBox3d bbox;
@@ -2306,7 +2302,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
       BDS_Point *p = *itp;
       if(recoverMap.find(p) == recoverMap.end()){
         MVertex *v = new MFaceVertex
-          (p->X, p->Y, p->Z, gf, m->scalingU * p->u, m->scalingV * p->v);
+          (p->X, p->Y, p->Z, gf, p->u, p->v);
         recoverMap[p] = v;
         gf->mesh_vertices.push_back(v);
       }
