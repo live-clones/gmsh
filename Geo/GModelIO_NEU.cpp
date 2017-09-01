@@ -71,7 +71,6 @@ namespace
     {"VELOCITY_INLET", 49},
     {"VENT", 50},
     {"WALL", 51},
-    {"SIDE", 51},
     {"SPRING", 52},
   };
 
