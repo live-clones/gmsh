@@ -316,6 +316,8 @@ static int _save_vrml(const char *name){ return genericMeshFileDialog
     (name, "VRML Options", FORMAT_VRML, false, false); }
 static int _save_ply2(const char *name){ return genericMeshFileDialog
     (name, "PLY2 Options", FORMAT_PLY2, false, false); }
+static int _save_neu(const char *name){ return genericMeshFileDialog
+    (name, "NEU Options", FORMAT_NEU, false, false); }
 static int _save_eps(const char *name){ return gl2psFileDialog
     (name, "EPS Options", FORMAT_EPS); }
 static int _save_gif(const char *name){ return gifFileDialog(name); }
@@ -380,6 +382,7 @@ static int _save_auto(const char *name)
   case FORMAT_STL  : return _save_stl(name);
   case FORMAT_VRML : return _save_vrml(name);
   case FORMAT_PLY2 : return _save_ply2(name);
+  case FORMAT_NEU  : return _save_neu(name);
   case FORMAT_EPS  : return _save_eps(name);
   case FORMAT_GIF  : return _save_gif(name);
   case FORMAT_JPEG : return _save_jpeg(name);
@@ -436,6 +439,7 @@ static void file_export_cb(Fl_Widget *w, void *data)
     {"Mesh - Tochnog" TT "*.dat", _save_tochnog},
     {"Mesh - PLY2 Surface" TT "*.ply2", _save_ply2},
     {"Mesh - SU2" TT "*.su2", _save_su2},
+    {"Mesh - GAMBIT Neutral File" TT "*.neu", _save_neu},
     {"Post-processing - Gmsh POS" TT "*.pos", _save_view_pos},
     {"Post-processing - X3D (X3D)" TT "*.x3d", _save_view_x3d},
 #if defined(HAVE_MED)
