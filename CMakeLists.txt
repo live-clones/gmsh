@@ -148,7 +148,7 @@ set(GMSH_API
   contrib/DiscreteIntegration/Integration3D.h
   contrib/HighOrderMeshOptimizer/OptHOM.h contrib/HighOrderMeshOptimizer/OptHomMesh.h
   contrib/HighOrderMeshOptimizer/OptHomRun.h contrib/HighOrderMeshOptimizer/ParamCoord.h
-  contrib/HighOrderMeshOptimizer/OptHomFastCurving.h 
+  contrib/HighOrderMeshOptimizer/OptHomFastCurving.h
   contrib/HighOrderMeshOptimizer/OptHomIntegralBoundaryDist.h
   contrib/HighOrderMeshOptimizer/CADDistances.h
   contrib/HighOrderMeshOptimizer/OptHomObjContribScaledJac.h
@@ -250,14 +250,14 @@ if(ENABLE_OPENMP)
   endif(OPENMP_FOUND)
 endif(ENABLE_OPENMP)
 
-if(ENABLE_CXX11)
+if(CXX11)
   # in recent cmake versions we could do e.g. set(CMAKE_CXX_STANDARD 11)
   check_cxx_compiler_flag("-std=c++11" STDCXX11)
   if(STDCXX11)
     set_config_option(HAVE_CXX11 "C++11")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
   endif(STDCXX11)
-endif(ENABLE_CXX11)
+endif(CXX11)
 
 macro(append_gmsh_src DIRNAME FILES)
   foreach(FILE ${FILES})
@@ -1054,7 +1054,7 @@ if(HAVE_SOLVER)
       message(STATUS "Warning: Disabling Taucs (requires METIS)")
     endif(HAVE_METIS)
   endif(ENABLE_TAUCS AND HAVE_BLAS AND HAVE_LAPACK)
-  
+
   if(ENABLE_MUMPS AND HAVE_BLAS AND HAVE_LAPACK)
     set(MUMPS_LIBS_REQUIRED smumps dmumps cmumps zmumps mumps_common pord)
     if(NOT ENABLE_MPI)
@@ -1154,7 +1154,7 @@ if(ENABLE_OCC)
         unset(OCC_LIB CACHE)
       endforeach(OCC)
       list(LENGTH OCC_LIBS NUM_OCC_LIBS)
-    endif(OCC_LIBS)      
+    endif(OCC_LIBS)
     if(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
       set_config_option(HAVE_OCC "OpenCASCADE")
       list(APPEND EXTERNAL_LIBRARIES ${OCC_LIBS})

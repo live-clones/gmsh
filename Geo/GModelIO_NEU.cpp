@@ -5,7 +5,11 @@
 
 #include <algorithm>
 #include <limits>
+#if __cplusplus >= 201103L
 #include <unordered_map>
+#else
+#include <map>
+#endif
 #include "GModel.h"
 #include "OS.h"
 #include "MTriangle.h"
@@ -13,66 +17,78 @@
 
 namespace
 {
-  static const auto GAMBIT_TYPE_EDGE = 1;
-  static const auto GAMBIT_TYPE_QUAD = 2;
-  static const auto GAMBIT_TYPE_TRI  = 3;
-  static const auto GAMBIT_TYPE_TET  = 6;
+  static const unsigned GAMBIT_TYPE_EDGE = 1;
+  static const unsigned GAMBIT_TYPE_QUAD = 2;
+  static const unsigned GAMBIT_TYPE_TRI  = 3;
+  static const unsigned GAMBIT_TYPE_TET  = 6;
 
-  static const std::unordered_map<std::string, unsigned> BOUNDARY_CODES {
-    {"UNSPECIFIED", 0},
-    {"AXIS", 1},
-    {"CONJUGATE", 2},
-    {"CONVECTION", 3},
-    {"CYCLIC", 4},
-    {"DEAD", 5},
-    {"ELEMENT_SID", 6},
-    {"ESPECIES", 7},
-    {"EXHAUST_FAN", 8},
-    {"FAN", 9},
-    {"FREE_SURFACE", 10},
-    {"GAP", 11},
-    {"INFLOW", 12},
-    {"INLET", 13},
-    {"INLET_VENT", 14},
-    {"INTAKE_FAN", 15},
-    {"INTERFACE", 16},
-    {"INTERIOR", 17},
-    {"INTERNAL", 18},
-    {"LIVE", 19},
-    {"MASS_FLOW_INLET", 20},
-    {"MELT", 21},
-    {"MELT_INTERFACE", 22},
-    {"MOVING_BOUNDARY", 23},
-    {"NODE", 24},
-    {"OUTFLOW", 25},
-    {"OUTLET", 26},
-    {"OUTLET_VENT", 27},
-    {"PERIODIC", 28},
-    {"PLOT", 29},
-    {"POROUS", 30},
-    {"POROUS_JUMP", 31},
-    {"PRESSURE", 32},
-    {"PRESSURE_FAR_FIELD", 33},
-    {"PRESSURE_INFLOW", 34},
-    {"PRESSURE_INLET", 35},
-    {"PRESSURE_OUTFLOW", 36},
-    {"PRESSURE_OUTLET", 37},
-    {"RADIATION", 38},
-    {"RADIATOR", 39},
-    {"RECIRCULATION_INLET", 40},
-    {"RECIRCULATION_OUTLET", 41},
-    {"SLIP", 42},
-    {"SREACTION", 43},
-    {"SURFACE", 44},
-    {"SYMMETRY", 45},
-    {"TRACTION", 46},
-    {"TRAJECTORY", 47},
-    {"VELOCITY", 48},
-    {"VELOCITY_INLET", 49},
-    {"VENT", 50},
-    {"WALL", 51},
-    {"SPRING", 52},
+  // This struct allows us to take advantage of C++11 unordered_map while
+  // maintaining backwards compatibility with C++03
+  template<typename Key, typename Value>
+  struct hashMap {
+    #if __cplusplus >= 201103L
+    typedef std::unordered_map<Key, Value> _;
+    #else
+    typedef std::map<Key, Value> _;
+    #endif
   };
+
+  const hashMap<std::string, unsigned>::_::value_type rawData[] = {
+    hashMap<std::string, unsigned>::_::value_type("UNSPECIFIED", 0),
+    hashMap<std::string, unsigned>::_::value_type("AXIS", 1),
+    hashMap<std::string, unsigned>::_::value_type("CONJUGATE", 2),
+    hashMap<std::string, unsigned>::_::value_type("CONVECTION", 3),
+    hashMap<std::string, unsigned>::_::value_type("CYCLIC", 4),
+    hashMap<std::string, unsigned>::_::value_type("DEAD", 5),
+    hashMap<std::string, unsigned>::_::value_type("ELEMENT_SID", 6),
+    hashMap<std::string, unsigned>::_::value_type("ESPECIES", 7),
+    hashMap<std::string, unsigned>::_::value_type("EXHAUST_FAN", 8),
+    hashMap<std::string, unsigned>::_::value_type("FAN", 9),
+    hashMap<std::string, unsigned>::_::value_type("FREE_SURFACE", 10),
+    hashMap<std::string, unsigned>::_::value_type("GAP", 11),
+    hashMap<std::string, unsigned>::_::value_type("INFLOW", 12),
+    hashMap<std::string, unsigned>::_::value_type("INLET", 13),
+    hashMap<std::string, unsigned>::_::value_type("INLET_VENT", 14),
+    hashMap<std::string, unsigned>::_::value_type("INTAKE_FAN", 15),
+    hashMap<std::string, unsigned>::_::value_type("INTERFACE", 16),
+    hashMap<std::string, unsigned>::_::value_type("INTERIOR", 17),
+    hashMap<std::string, unsigned>::_::value_type("INTERNAL", 18),
+    hashMap<std::string, unsigned>::_::value_type("LIVE", 19),
+    hashMap<std::string, unsigned>::_::value_type("MASS_FLOW_INLET", 20),
+    hashMap<std::string, unsigned>::_::value_type("MELT", 21),
+    hashMap<std::string, unsigned>::_::value_type("MELT_INTERFACE", 22),
+    hashMap<std::string, unsigned>::_::value_type("MOVING_BOUNDARY", 23),
+    hashMap<std::string, unsigned>::_::value_type("NODE", 24),
+    hashMap<std::string, unsigned>::_::value_type("OUTFLOW", 25),
+    hashMap<std::string, unsigned>::_::value_type("OUTLET", 26),
+    hashMap<std::string, unsigned>::_::value_type("OUTLET_VENT", 27),
+    hashMap<std::string, unsigned>::_::value_type("PERIODIC", 28),
+    hashMap<std::string, unsigned>::_::value_type("PLOT", 29),
+    hashMap<std::string, unsigned>::_::value_type("POROUS", 30),
+    hashMap<std::string, unsigned>::_::value_type("POROUS_JUMP", 31),
+    hashMap<std::string, unsigned>::_::value_type("PRESSURE", 32),
+    hashMap<std::string, unsigned>::_::value_type("PRESSURE_FAR_FIELD", 33),
+    hashMap<std::string, unsigned>::_::value_type("PRESSURE_INFLOW", 34),
+    hashMap<std::string, unsigned>::_::value_type("PRESSURE_INLET", 35),
+    hashMap<std::string, unsigned>::_::value_type("PRESSURE_OUTFLOW", 36),
+    hashMap<std::string, unsigned>::_::value_type("PRESSURE_OUTLET", 37),
+    hashMap<std::string, unsigned>::_::value_type("RADIATION", 38),
+    hashMap<std::string, unsigned>::_::value_type("RADIATOR", 39),
+    hashMap<std::string, unsigned>::_::value_type("RECIRCULATION_INLET", 40),
+    hashMap<std::string, unsigned>::_::value_type("RECIRCULATION_OUTLET", 41),
+    hashMap<std::string, unsigned>::_::value_type("SLIP", 42),
+    hashMap<std::string, unsigned>::_::value_type("SREACTION", 43),
+    hashMap<std::string, unsigned>::_::value_type("SURFACE", 44),
+    hashMap<std::string, unsigned>::_::value_type("SYMMETRY", 45),
+    hashMap<std::string, unsigned>::_::value_type("TRACTION", 46),
+    hashMap<std::string, unsigned>::_::value_type("TRAJECTORY", 47),
+    hashMap<std::string, unsigned>::_::value_type("VELOCITY", 48),
+    hashMap<std::string, unsigned>::_::value_type("VELOCITY_INLET", 49),
+    hashMap<std::string, unsigned>::_::value_type("VENT", 50),
+    hashMap<std::string, unsigned>::_::value_type("WALL", 51),
+    hashMap<std::string, unsigned>::_::value_type("SPRING", 52),
+  };
+  static const hashMap<std::string, unsigned>::_ boundaryCodeMap(rawData, rawData + (sizeof rawData / sizeof rawData[0]));
 
   // Gambit numbers its faces slightly differently
   static const unsigned GAMBIT_FACE_MAP[4] = {1,2,4,3};
@@ -80,12 +96,12 @@ namespace
   unsigned const gambitBoundaryCode(std::string name)
   {
     std::transform(name.begin(), name.end(),name.begin(), ::toupper);
-    auto code = BOUNDARY_CODES.find(name);
-    return code == BOUNDARY_CODES.end() ? 0 : code->second;
+    hashMap<std::string, unsigned>::_::const_iterator code = boundaryCodeMap.find(name);
+    return code == boundaryCodeMap.end() ? 0 : code->second;
   }
 
   typedef std::pair<unsigned, unsigned> TetFacePair;
-  typedef std::unordered_map<unsigned, std::vector<TetFacePair> > IDTetFaceMap;
+  typedef hashMap<unsigned, std::vector<TetFacePair> >::_ IDTetFaceMap;
 
   bool const sortBCs(TetFacePair const& lhs, TetFacePair const& rhs)
   {
@@ -95,24 +111,26 @@ namespace
   IDTetFaceMap const gatherBC(GModel* gm)
   {
     // create association map for vertices and faces
-    std::unordered_map<unsigned, std::vector<unsigned> > vertmap;
-    for (auto it = gm->firstFace(); it != gm->lastFace(); ++it) {
-      for (auto const& tri: (*it)->triangles) {
-        for (auto i = 0; i < tri->getNumVertices(); ++i) {
-          vertmap[tri->getVertex(i)->getNum()].push_back(tri->getNum());
+    hashMap<unsigned, std::vector<unsigned> >::_ vertmap;
+    for (GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+      for (unsigned i = 0; i < (*it)->triangles.size(); ++i) {
+        MTriangle* tri = (*it)->triangles[i];
+        for (int j = 0; j < tri->getNumVertices(); ++j) {
+          vertmap[tri->getVertex(j)->getNum()].push_back(tri->getNum());
         }
       }
     }
 
     // determine which faces belong to which tetrahedra by comparing vertices
     IDTetFaceMap tetfacemap;
-    for (auto it = gm->firstRegion(); it != gm->lastRegion(); ++it) {
-      for (auto const& tet: (*it)->tetrahedra) {
-        for (auto faceNum = 0; faceNum < tet->getNumFaces(); ++faceNum) {
+    for (GModel::riter it = gm->firstRegion(); it != gm->lastRegion(); ++it) {
+      for (unsigned i = 0; i < (*it)->tetrahedra.size(); ++i) {
+        MTetrahedron* tet = (*it)->tetrahedra[i];
+        for (int faceNum = 0; faceNum < tet->getNumFaces(); ++faceNum) {
           std::vector<MVertex*> verts;
           tet->getFaceVertices(faceNum, verts);
 
-          auto current = vertmap[verts[0]->getNum()];
+          std::vector<unsigned> current = vertmap[verts[0]->getNum()];
           for (unsigned j = 1; j < verts.size() && current.size() != 0; ++j) {
             std::vector<unsigned> common_data;
             set_intersection(current.begin(), current.end(),
@@ -131,14 +149,16 @@ namespace
 
     // populate boundary conditions for tetrahedra given triangle physicals
     IDTetFaceMap boundaryConditions;
-    for (auto it = gm->firstFace(); it != gm->lastFace(); ++it) {
+    for (GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
       if ((*it)->physicals.size()) {
-        for (auto const& phys: (*it)->physicals) {
-          for (auto const& tri: (*it)->triangles) {
-            auto tets = tetfacemap.find(tri->getNum());
+        for (unsigned i = 0; i < (*it)->physicals.size(); ++i) {
+          unsigned phys = (*it)->physicals[i];
+          for (unsigned j = 0; j < (*it)->triangles.size(); ++j) {
+            MTriangle* tri = (*it)->triangles[j];
+            IDTetFaceMap::iterator tets = tetfacemap.find(tri->getNum());
             if (tets != tetfacemap.end()) {
-              for (auto const& tet: tets->second) {
-                boundaryConditions[phys].push_back(tet);
+              for (unsigned tet = 0; tet < tets->second.size(); ++tet) {
+                boundaryConditions[phys].push_back(tets->second[tet]);
               }
             }
           }
@@ -155,23 +175,24 @@ namespace
 int GModel::writeNEU(const std::string &name, bool saveAll,
                      double scalingFactor)
 {
-  auto fp = Fopen(name.c_str(), "w");
+  FILE* fp = Fopen(name.c_str(), "w");
   if (!fp) {
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
 
   // gather tetrahedra and id normalization information
-  auto numTetrahedra = 0;
-  auto lowestId = std::numeric_limits<int>::max();
-  std::unordered_map<unsigned, std::vector<unsigned> > elementGroups;
+  unsigned numTetrahedra = 0;
+  int lowestId = std::numeric_limits<int>::max();
+  hashMap<unsigned, std::vector<unsigned> >::_ elementGroups;
   for (riter it = firstRegion(); it != lastRegion(); ++it) {
     if (saveAll || (*it)->physicals.size()) {
       numTetrahedra += (*it)->tetrahedra.size();
 
-      for (auto const& phys: (*it)->physicals) {
-        for (auto const& tet: (*it)->tetrahedra) {
-          elementGroups[phys].push_back(tet->getNum());
+      for (unsigned phys = 0; phys < (*it)->physicals.size(); ++phys) {
+        for (unsigned i = 0; i < (*it)->tetrahedra.size(); ++i) {
+          MTetrahedron* tet = (*it)->tetrahedra[i];
+          elementGroups[(*it)->physicals[phys]].push_back(tet->getNum());
 
           if (tet->getNum() < lowestId) lowestId = tet->getNum()-1;
         }
@@ -179,7 +200,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
     }
   }
 
-  auto boundaryConditions = gatherBC(this);
+  IDTetFaceMap boundaryConditions = gatherBC(this);
 
   // Metadata
   fprintf(fp, "        CONTROL INFO 2.0.0\n");
@@ -215,7 +236,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   // Elements
   fprintf(fp, "      ELEMENTS/CELLS 2.0.0\n");
   for (riter it = firstRegion(); it != lastRegion(); ++it) {
-    auto numPhys = (*it)->physicals.size();
+    unsigned numPhys = (*it)->physicals.size();
     if (saveAll || numPhys) {
       for (unsigned i = 0; i < (*it)->tetrahedra.size(); ++i) {
         (*it)->tetrahedra[i]->writeNEU(fp, GAMBIT_TYPE_TET, lowestId,
@@ -226,32 +247,35 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   fprintf(fp, "ENDOFSECTION\n");
 
   // Element Groups
-  for (auto const& kv: elementGroups) {
+
+  for (hashMap<unsigned, std::vector<unsigned> >::_::const_iterator
+        it = elementGroups.begin(); it != elementGroups.end(); ++it) {
     fprintf(fp, "       ELEMENT GROUP 2.0.0\n");
-    fprintf(fp, "GROUP: %10d ELEMENTS: %10lu MATERIAL: 0 NFLAGS: %10d\n", kv.first, kv.second.size(), 1);
-    fprintf(fp, "Material group %d\n", kv.first);
+    fprintf(fp, "GROUP: %10d ELEMENTS: %10lu MATERIAL: 0 NFLAGS: %10d\n", it->first, it->second.size(), 1);
+    fprintf(fp, "Material group %d\n", it->first);
     fprintf(fp, "       0");
 
-    unsigned i = 0;
-    for (auto const& elem: kv.second) {
-      if (i++ % 10 == 0) {
+    for (unsigned i = 0; i < it->second.size(); ++i) {
+      if (i % 10 == 0) {
         fprintf(fp, "\n");
       }
-      fprintf(fp, "%8d", elem-lowestId);
+      fprintf(fp, "%8d", it->second[i] - lowestId);
     }
     fprintf(fp, "\n");
     fprintf(fp, "ENDOFSECTION\n");
   }
 
   // Boundary Conditions
-  for (auto &kv: boundaryConditions) {
+  for (IDTetFaceMap::iterator it = boundaryConditions.begin();
+        it != boundaryConditions.end(); ++it) {
     fprintf(fp, "       BOUNDARY CONDITIONS 2.0.0\n");
 
-    auto regionName = getPhysicalName(2, kv.first);
-    fprintf(fp, "%32s%8d%8lu%8d%8d\n", regionName.c_str(), 1, kv.second.size(), 0, gambitBoundaryCode(regionName));
-    std::sort(kv.second.begin(), kv.second.end(), sortBCs);
-    for (auto const& boundary: kv.second) {
-      fprintf(fp, "%10d %5d %5d\n", boundary.first-lowestId, GAMBIT_TYPE_TET, boundary.second);
+    std::string const regionName = getPhysicalName(2, it->first);
+    fprintf(fp, "%32s%8d%8lu%8d%8d\n", regionName.c_str(), 1, it->second.size(), 0, gambitBoundaryCode(regionName));
+    std::sort(it->second.begin(), it->second.end(), sortBCs);
+    std::vector<TetFacePair>::iterator tfp = it->second.begin();
+    for (std::vector<TetFacePair>::iterator tfp = it->second.begin(); tfp != it->second.end(); ++tfp) {
+      fprintf(fp, "%10d %5d %5d\n", tfp->first-lowestId, GAMBIT_TYPE_TET, tfp->second);
     }
 
     fprintf(fp, "ENDOFSECTION\n");
