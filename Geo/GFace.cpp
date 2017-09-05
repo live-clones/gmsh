@@ -452,7 +452,10 @@ void GFace::computeMeanPlane()
       for(unsigned int i = 2; i < pts.size(); i++){
         SVector3 d0i(pts[0], pts[i]);
         SVector3 n = crossprod(d01, d0i);
-        if(norm(n) > 1e-6){
+        // if too small, the points are almost colinear; tolerance is relatively
+        // high so that we don't accept points on plane surfaces defined by
+        // lines that are not exactly co-planar
+        if(norm(n) > sqrt(CTX::instance()->geom.tolerance) * CTX::instance()->lc){
           res[0] = n.x(); res[1] = n.y(); res[2] = n.z();
           xm = pts[0].x(); ym = pts[0].y(); zm = pts[0].z();
           ok = true;
