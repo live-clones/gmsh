@@ -124,6 +124,11 @@ Number of edge subdivisions between control points when displaying curves@*
 Default value: @code{20}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCAutoFix
+Automatically fix orientation of wires, faces, shells and volumes when creating new entities@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.OCCFixDegenerated
 Fix degenerated edges/faces in STEP, IGES and BRep models@*
 Default value: @code{0}@*
