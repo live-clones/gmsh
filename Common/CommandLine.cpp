@@ -74,7 +74,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-o file",            "Specify output file name"));
   s.push_back(mp("-format string",     "Select output mesh format (auto (default), msh, "
                                        "msh1, msh2, unv, vrml, ply2, stl, mesh, bdf, cgns, "
-                                       "p3d, diff, med, ...)"));
+                                       "p3d, diff, med, neu, ...)"));
   s.push_back(mp("-bin",               "Use binary format when available"));
   s.push_back(mp("-refine",            "Perform uniform mesh refinement, then exit"));
   s.push_back(mp("-reclassify",        "Reclassify mesh, then exit"));
@@ -106,7 +106,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-rand float",        "Set random perturbation factor"));
   s.push_back(mp("-bgm file",          "Load background mesh from file"));
   s.push_back(mp("-check",             "Perform various consistency checks on mesh"));
-  s.push_back(mp("-ignorePartBound",   "Ignore partition boundaries")); 
+  s.push_back(mp("-ignorePartBound",   "Ignore partition boundaries"));
   s.push_back(mp("-ignorePeriocity",   "Ignore periodic boundaries"));
   s.push_back(mp("-oneFilePerPart",    "Save mesh partitions in separate files"));
 #if defined(HAVE_FLTK)
@@ -1163,5 +1163,3 @@ void GetOptions(int argc, char *argv[])
   if(CTX::instance()->terminal == 99)
     CTX::instance()->terminal = terminal;
 }
-
-

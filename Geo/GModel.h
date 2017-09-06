@@ -724,6 +724,9 @@ class GModel {
 
   // SU2 mesh file
   int writeSU2(const std::string &name, bool saveAll, double scalingFactor);
+
+  // GAMBIT neutral mesh file (.neu)
+  int writeNEU(const std::string &name, bool saveAll, double scalingFactor);
 };
 
 #endif
