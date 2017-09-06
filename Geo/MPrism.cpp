@@ -590,8 +590,7 @@ void MPrismN::reverse()
   for (int i = 0; i < 6; ++i) {
     _v[i] = oldv[indices[i]];
   }
-  for (int i = 0; i < _vs.size(); ++i) {
+  for (unsigned int i = 0; i < _vs.size(); ++i) {
     _vs[i] = oldv[indices[6+i]];
   }
 }
-
