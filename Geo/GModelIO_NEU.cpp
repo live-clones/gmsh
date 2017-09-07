@@ -88,7 +88,8 @@ namespace
     hashMap<std::string, unsigned>::_::value_type("WALL", 51),
     hashMap<std::string, unsigned>::_::value_type("SPRING", 52),
   };
-  static const hashMap<std::string, unsigned>::_ boundaryCodeMap(rawData, rawData + (sizeof rawData / sizeof rawData[0]));
+  static const hashMap<std::string, unsigned>::_ boundaryCodeMap
+  (rawData, rawData + (sizeof rawData / sizeof rawData[0]));
 
   // Gambit numbers its faces slightly differently
   static const unsigned GAMBIT_FACE_MAP[4] = {1,2,4,3};
@@ -208,13 +209,9 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   fprintf(fp, "Gmsh mesh in GAMBIT neutral file format\n");
   fprintf(fp, "PROGRAM:                Gambit     VERSION:  2.0.0\n");
 
-  char datestring[256];
   time_t rawtime;
-  struct tm* timeinfo;
   time(&rawtime);
-  timeinfo = localtime(&rawtime);
-  strftime(datestring, sizeof(datestring), "%c", timeinfo);
-  fprintf(fp, "%s\n", datestring);
+  fprintf(fp, "%s", ctime(&rawtime));
 
   fprintf(fp, "     NUMNP     NELEM     NGRPS    NBSETS     NDFCD     NDFVL\n");
   fprintf(fp, " %9d %9d %9lu %9lu %9d %9d\n", indexMeshVertices(saveAll), numTetrahedra,
@@ -251,7 +248,8 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   for (hashMap<unsigned, std::vector<unsigned> >::_::const_iterator
         it = elementGroups.begin(); it != elementGroups.end(); ++it) {
     fprintf(fp, "       ELEMENT GROUP 2.0.0\n");
-    fprintf(fp, "GROUP: %10d ELEMENTS: %10lu MATERIAL: 0 NFLAGS: %10d\n", it->first, it->second.size(), 1);
+    fprintf(fp, "GROUP: %10d ELEMENTS: %10lu MATERIAL: 0 NFLAGS: %10d\n",
+            it->first, it->second.size(), 1);
     fprintf(fp, "Material group %d\n", it->first);
     fprintf(fp, "       0");
 
@@ -271,10 +269,11 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
     fprintf(fp, "       BOUNDARY CONDITIONS 2.0.0\n");
 
     std::string const regionName = getPhysicalName(2, it->first);
-    fprintf(fp, "%32s%8d%8lu%8d%8d\n", regionName.c_str(), 1, it->second.size(), 0, gambitBoundaryCode(regionName));
+    fprintf(fp, "%32s%8d%8lu%8d%8d\n", regionName.c_str(), 1, it->second.size(), 0,
+            gambitBoundaryCode(regionName));
     std::sort(it->second.begin(), it->second.end(), sortBCs);
-    std::vector<TetFacePair>::iterator tfp = it->second.begin();
-    for (std::vector<TetFacePair>::iterator tfp = it->second.begin(); tfp != it->second.end(); ++tfp) {
+    for (std::vector<TetFacePair>::iterator tfp = it->second.begin();
+         tfp != it->second.end(); ++tfp) {
       fprintf(fp, "%10d %5d %5d\n", tfp->first-lowestId, GAMBIT_TYPE_TET, tfp->second);
     }
 
