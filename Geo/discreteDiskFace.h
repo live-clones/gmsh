@@ -226,6 +226,7 @@ class discreteDiskFace : public GFace {
   virtual ~discreteDiskFace();
   void getTriangleUV(const double u,const double v,discreteDiskFaceTriangle **mt,
                      double &_u, double &_v) const;
+  using GFace::point;
   GPoint point(double par1, double par2) const;
   SPoint2 parFromVertex(MVertex *v) const;
   SVector3 normal(const SPoint2&) const;

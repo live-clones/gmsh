@@ -220,6 +220,7 @@ class GeoFactory : public GModelFactory {
   GFace *addPlanarFace(GModel *gm, std::vector<std::vector<GEdge *> > edges);
   GFace *addPlanarFace(GModel *gm, const std::vector<std::vector<GEdgeSigned> > &edges);
   GRegion *addVolume(GModel *gm, std::vector<std::vector<GFace *> > faces);
+  using GModelFactory::addCircleArc;
   GEdge *addCircleArc(GModel *gm,GVertex *begin, GVertex *center, GVertex *end);
   std::vector<GFace *> addRuledFaces(GModel *gm, std::vector<std::vector<GEdge *> > edges);
   std::vector<GEntity*> extrudeBoundaryLayer(GModel *gm, GEntity *e, int nbLayers,

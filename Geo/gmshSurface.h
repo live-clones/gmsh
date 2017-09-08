@@ -72,6 +72,7 @@ class gmshSphere : public gmshSurface
       return Range<double>(0., M_PI);
   }
   virtual gmshSurface::gmshSurfaceType geomType() const { return gmshSurface::Sphere; }
+  using gmshSurface::point;
   virtual SPoint3 point(double par1, double par2) const;
   virtual SVector3 normal(const SPoint2 &param) const
   {
@@ -100,6 +101,7 @@ class gmshPolarSphere : public gmshSurface
       return Range<double>(-M_PI, M_PI);
   }
   virtual gmshSurface::gmshSurfaceType geomType() const { return gmshSurface::PolarSphere; }
+  using gmshSurface::point;
   virtual SPoint3 point(double par1, double par2) const;
   virtual SVector3 normal(const SPoint2 &param) const
   {
@@ -130,6 +132,7 @@ class gmshParametricSurface : public gmshSurface
   { 
     return gmshSurface::ParametricSurface; 
   }
+  using gmshSurface::point;
   virtual SPoint3 point(double par1, double par2) const;
 };
 

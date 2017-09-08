@@ -784,6 +784,7 @@ protected:
   }
 
   // Throw an assertion
+  using Recombinator::merge;
   void merge(GRegion*);
 
   // ------- exports --------
@@ -802,6 +803,7 @@ protected:
 public:
   Recombinator_Graph(unsigned int max_nb_cliques, string filename=string());
   virtual ~Recombinator_Graph();
+  using Recombinator::execute;
   virtual void execute(GRegion*);
 
   virtual void buildGraphOnly(unsigned int max_nb_cliques, string filename=string());
