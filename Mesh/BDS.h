@@ -403,12 +403,9 @@ struct EdgeToRecover
 class BDS_Mesh
 {
  public:
-  int MAXPOINTNUMBER, SNAP_SUCCESS, SNAP_FAILURE;
+  int MAXPOINTNUMBER;
   double Min[3], Max[3], LC;
   BDS_Mesh(int _MAXX = 0) :  MAXPOINTNUMBER(_MAXX){}
-  void load(GVertex *gv); // load in BDS all the meshes of the vertex
-  void load(GEdge *ge); // load in BDS all the meshes of the edge
-  void load(GFace *gf); // load in BDS all the meshes of the surface
   virtual ~BDS_Mesh();
   BDS_Mesh(const BDS_Mesh &other);
   std::set<BDS_GeomEntity*, GeomLessThan> geom;
@@ -429,9 +426,9 @@ class BDS_Mesh
   BDS_Edge *find_edge(BDS_Point *p1, BDS_Point *p2, BDS_Face *t) const;
   // Triangles & Quadrangles
   BDS_Face *add_triangle(int p1, int p2, int p3);
-  BDS_Face *add_quadrangle(int p1, int p2, int p3, int p4);
+  //  BDS_Face *add_quadrangle(int p1, int p2, int p3, int p4);
   BDS_Face *add_triangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3);
-  BDS_Face *add_quadrangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3, BDS_Edge *e4);
+  //  BDS_Face *add_quadrangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3, BDS_Edge *e4);
   void del_face(BDS_Face *t);
   BDS_Face *find_triangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3);
   BDS_Face *find_quadrangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3, BDS_Edge *e4);
@@ -444,13 +441,9 @@ class BDS_Mesh
   BDS_Edge *recover_edge_fast(BDS_Point *p1, BDS_Point *p2);
   bool swap_edge(BDS_Edge*, const BDS_SwapEdgeTest &theTest);
   bool collapse_edge_parametric(BDS_Edge*, BDS_Point*);
-  void snap_point(BDS_Point*, BDS_Mesh *geom = 0);
-  bool smooth_point(BDS_Point*, BDS_Mesh *geom = 0);
   bool smooth_point_parametric(BDS_Point *p, GFace *gf);
   bool smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality=false);
-  bool move_point(BDS_Point *p , double X, double Y, double Z);
   bool split_edge(BDS_Edge *, BDS_Point *);
-  bool split_face(BDS_Face *, BDS_Point *);
   bool edge_constraint(BDS_Point *p1, BDS_Point *p2);
   // Global operators
   void cleanup();

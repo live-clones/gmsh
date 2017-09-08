@@ -483,14 +483,6 @@ BDS_Face *BDS_Mesh::add_triangle(BDS_Edge *e1, BDS_Edge *e2, BDS_Edge *e3)
   return t;
 }
 
-BDS_Face *BDS_Mesh::add_quadrangle(BDS_Edge *e1, BDS_Edge *e2,
-                                   BDS_Edge *e3, BDS_Edge *e4)
-{
-  BDS_Face *t = new BDS_Face(e1, e2, e3, e4);
-  triangles.push_back(t);
-  return t;
-}
-
 void BDS_Mesh::del_face(BDS_Face *t)
 {
   t->e1->del(t);
@@ -624,46 +616,6 @@ BDS_Mesh::~BDS_Mesh()
   DESTROOOY(triangles.begin(), triangles.end());
 }
 
-bool BDS_Mesh::split_face(BDS_Face *f, BDS_Point *mid)
-{
-  BDS_Point *p1 = f->e1->commonvertex(f->e2);
-  BDS_Point *p2 = f->e3->commonvertex(f->e2);
-  BDS_Point *p3 = f->e1->commonvertex(f->e3);
-  BDS_Edge *p1_mid = new BDS_Edge(p1, mid);
-  edges.push_back(p1_mid);
-  BDS_Edge *p2_mid = new BDS_Edge(p2, mid);
-  edges.push_back(p2_mid);
-  BDS_Edge *p3_mid = new BDS_Edge(p3, mid);
-  edges.push_back(p2_mid);
-  BDS_Face *t1, *t2, *t3;
-  t1 = new BDS_Face(f->e1, p1_mid, p3_mid);
-  t2 = new BDS_Face(f->e2, p2_mid, p1_mid);
-  t3 = new BDS_Face(f->e3, p3_mid, p2_mid);
-
-  t1->g = f->g;
-  t2->g = f->g;
-  t3->g = f->g;
-
-  p1_mid->g = f->g;
-  p2_mid->g = f->g;
-  p3_mid->g = f->g;
-
-  mid->g = f->g;
-
-  triangles.push_back(t1);
-  triangles.push_back(t2);
-  triangles.push_back(t3);
-
-  // config has changed
-  p1->config_modified = true;
-  p2->config_modified = true;
-  p3->config_modified = true;
-
-  // delete the face
-  del_face(f);
-
-  return true;
-}
 
 bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid)
 {
@@ -1273,7 +1225,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
   if (!gp.succeeded()){
     return false;
   }
-  //  if (!gf->containsParam(SPoint2(U,V)))return false;
+  //    if (!gf->containsParam(SPoint2(U,V)))return false;
   
   const double oldX = p->X;
   const double oldY = p->Y;

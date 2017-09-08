@@ -2246,6 +2246,13 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
                                  gf->meshStatistics.nbGoodLength);*/
     gf->meshStatistics.status = GFace::DONE;
 
+
+    if(debug){
+      char name[245];
+      sprintf(name, "surface%d-just-real.pos", gf->tag());
+      outputScalarField(m->triangles, name, 0);
+    }
+
     //    if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
     //            backgroundMesh::unset();
     //    }
@@ -2293,7 +2300,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     }
     // recoverMap.insert(new_relations.begin(), new_relations.end());
   }
-  Msg::Info("%d points that are duplicated for Delaunay meshing", equivalence.size());
+  //  Msg::Info("%d points that are duplicated for Delaunay meshing", equivalence.size());
 
   // fill the small gmsh structures
   {
