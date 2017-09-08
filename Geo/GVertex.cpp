@@ -85,6 +85,11 @@ unsigned int GVertex::getNumMeshElements()
   return points.size();
 }
 
+void GVertex::getNumMeshElements(unsigned *const c) const
+{
+  c[0] += points.size();  
+}
+
 MElement *GVertex::getMeshElement(unsigned int index)
 {
   if(index < points.size())
