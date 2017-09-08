@@ -3,6 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
+#include <time.h>
 #include <algorithm>
 #include <limits>
 #if __cplusplus >= 201103L
