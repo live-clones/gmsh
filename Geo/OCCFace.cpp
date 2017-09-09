@@ -116,8 +116,6 @@ void OCCFace::setup()
   if (_periodic[0])  _period[0]=surface.UPeriod();
   if (_periodic[1])  _period[1]=surface.VPeriod();
 
-
-  
   ShapeAnalysis::GetFaceUVBounds(s, umin, umax, vmin, vmax);
   Msg::Debug("OCC Face %d with %d parameter bounds (%g,%g)(%g,%g)",
              tag(), l_edges.size(), umin, umax, vmin, vmax);
@@ -405,7 +403,6 @@ bool OCCFace::containsPoint(const SPoint3 &pt) const
 
 bool OCCFace::buildSTLTriangulation(bool force)
 {
-  
   if(stl_triangles.size()){
     if(force){
       stl_vertices.clear();
@@ -455,7 +452,6 @@ bool OCCFace::buildSTLTriangulation(bool force)
   return true;
 }
 
-
 bool OCCFace::isSphere (double &radius, SPoint3 &center) const
 {
   switch(geomType()){
@@ -470,11 +466,12 @@ bool OCCFace::isSphere (double &radius, SPoint3 &center) const
   }
 }
 
-bool OCCFace::containsParam(const SPoint2 &pt)  {
+bool OCCFace::containsParam(const SPoint2 &pt)
+{
   //  return GFace::containsParam(pt);
-  if (! buildSTLTriangulation(false) ) {
+  if(!buildSTLTriangulation(false)){
     Msg::Warning ("Inacurate computation in OCCFace::containsParam");
-    return GFace::containsParam(pt);        
+    return GFace::containsParam(pt);
   }
   //  FILE *F = fopen("HOP.pos","w");
   //  fprintf(F,"View \" \"{\n");
@@ -482,11 +479,11 @@ bool OCCFace::containsParam(const SPoint2 &pt)  {
   SPoint2 mine = pt;
 
   //  bool ok = false;
-  
+
   for(unsigned int i = 0; i < stl_triangles.size(); i += 3){
     SPoint2 gp1 = stl_vertices[stl_triangles[i]];
     SPoint2 gp2 = stl_vertices[stl_triangles[i + 1]];
-    SPoint2 gp3 = stl_vertices[stl_triangles[i + 2]];    
+    SPoint2 gp3 = stl_vertices[stl_triangles[i + 2]];
 
     double s1 = robustPredicates::orient2d (gp1,gp2,mine);
     double s2 = robustPredicates::orient2d (gp2,gp3,mine);
@@ -496,7 +493,7 @@ bool OCCFace::containsParam(const SPoint2 &pt)  {
 	    gp1.x(),gp1.y(),0.0,
 	    gp2.x(),gp2.y(),0.0,
 	    gp3.x(),gp3.y(),0.0);
-    
+
     printf("%g %g %g\n",s1,s2,s3);
     */
     if (s1*s2 >= 0 && s1*s3 >=0){
@@ -509,8 +506,6 @@ bool OCCFace::containsParam(const SPoint2 &pt)  {
   //  fclose(F);
   //  return ok;
   return false;
-  
 }
-
 
 #endif
