@@ -109,13 +109,95 @@ int cgnsErr(const int cgIndexFile = -1)
 }
 
 
+// --- computation of affine transformations
+
+template <class FLOAT>
+bool computeAffineTransformation(const FLOAT* rc,const FLOAT* ra,const FLOAT *tr,
+                                 std::vector<double>& tfo) {
+  
+  tfo.clear();
+  tfo.reserve(16);
+
+  fullMatrix<double> compoundRotation(3,3);
+  for (int i=0;i<3;i++) compoundRotation(i,i) = 1;
+  
+  for (int i=0;i<3;i++) {
+    
+    if (ra[i] != 0) {
+      
+      fullMatrix<double> tmp(compoundRotation);
+      
+      fullMatrix<double> rotation(3,3);
+      rotation(i,i) = 1;
+
+      int ii = (i+1)%3;
+      int jj = (i+2)%3;
+
+      double ca = cos(ra[i]);
+      double sa = sin(ra[i]);
+        
+      // rotation with alpha
+        
+      rotation(ii,ii) = ca;
+      rotation(ii,jj) = sa;
+      rotation(jj,ii) = -sa;
+      rotation(jj,jj) = ca;
+        
+      compoundRotation.gemm(rotation,tmp,1,0);
+    }
+  }
+    
+  // compute displacement from rotation center
+    
+  fullVector<double> disp(3);
+
+  fullVector<double> center(3);
+  for (int i=0;i<3;i++) center(i) = rc[i];
+  compoundRotation.mult(center,disp);
+    
+  // add specified translation
+
+  for (int i=0;i<3;i++) disp(i) = - tr[i];
+
+  // copy to tfo
+
+  tfo.clear();
+    
+  for (int i=0;i<3;i++) {
+    for (int j=0;j<3;j++) tfo.push_back(compoundRotation(i,j));
+    tfo.push_back(disp(i));
+  }
+  for (int i=0;i<3;i++) tfo.push_back(0);
+  tfo.push_back(1);
+    
+  return true;
+}
+
+bool invertAffineTransformation(const std::vector<double>& tfo,
+                                std::vector<double>& newTfo) {
+  
+  fullMatrix<double> inv(4,4);
+  for (int i=0;i<4;i++) for (int j=0;j<4;j++) inv(i,j) = tfo[i*4+j];    
+  inv.invertInPlace();
+  newTfo.clear();
+  for (int i=0;i<4;i++) for (int j=0;j<4;j++) newTfo.push_back(inv(i,j));
+  return true;
+} 
+
+
+bool setUnitAffineTransformation(std::vector<double>& tfo) {
+  tfo.resize(16,0);
+  for (int i=0;i<16;i+=5) tfo[i] = 1;
+  return true;
+}
+
 /*==============================================================================
  * Required types
  *============================================================================*/
 
 // typedef std::map<int, std::vector<GEntity*> > PhysGroupMap;
-                                        // Type providing a vector of entities
-                                        // for a physical group index
+// Type providing a vector of entities
+// for a physical group index
 
 //--Class to gather elements that belong to a partition.  This class mimics a
 //--GEntity class.
@@ -272,11 +354,11 @@ static MElement *createElementMSH(GModel *m, int num, int typeMSH, int reg, int 
                                   std::map<int, std::vector<MElement*> > elements[10])
 {
   /*
-  if(CTX::instance()->mesh.switchElementTags) {
+    if(CTX::instance()->mesh.switchElementTags) {
     int tmp = reg;
     reg = physical;
     physical = reg;
-  }
+    }
   */
   MElementFactory factory;
   MElement *e = factory.create(typeMSH, v, num, part, false, 0, 0, 0);
@@ -288,6 +370,7 @@ static MElement *createElementMSH(GModel *m, int num, int typeMSH, int reg, int 
 
   switch(e->getType()){
   case TYPE_PNT :
+    std::cout << "Adding a point " << std::endl;
     elements[0][reg].push_back(e); break;
   case TYPE_LIN :
     elements[1][reg].push_back(e); break;
@@ -311,8 +394,8 @@ static MElement *createElementMSH(GModel *m, int num, int typeMSH, int reg, int 
   }
 
   /*
-  int dim = e->getDim();
-  if(physical && (!physicals[dim].count(reg) || !physicals[dim][reg].count(physical)))
+    int dim = e->getDim();
+    if(physical && (!physicals[dim].count(reg) || !physicals[dim][reg].count(physical)))
     physicals[dim][reg][physical] = "unnamed";
   */
   if(part) m->getMeshPartitions().insert(part);
@@ -324,9 +407,9 @@ static int to1D(int i, int j, int k, int max_i, int max_j, int max_k) {
 }
 
 static int getIndicesQuad(int i1, int i2, int i3, int i4,
-			  int j1, int j2, int j3, int j4,
-			  int k1, int k2, int k3, int k4,
-			  std::vector<int>& ind_i, std::vector<int>& ind_j, std::vector<int>& ind_k, int order, int f) {
+                          int j1, int j2, int j3, int j4,
+                          int k1, int k2, int k3, int k4,
+                          std::vector<int>& ind_i, std::vector<int>& ind_j, std::vector<int>& ind_k, int order, int f) {
 
   static const int offset[6][4][3] = {
     {{ 1, 1, 0}, { 1,-1, 0}, {-1,-1, 0}, {-1, 1, 0}},
@@ -386,16 +469,16 @@ static int getIndicesQuad(int i1, int i2, int i3, int i4,
       added++;
     }
 
-  /*
-  int ioffset = (i3-i1)/abs(i2-i1);
-  int joffset = (j3-j1)/abs(j2-j1);
-  int koffset = (k3-k1)/abs(k2-k1);
-  */
-  added += getIndicesQuad(i1+offset[f][0][0], i2+offset[f][1][0], i3+offset[f][2][0], i4+offset[f][3][0],
-                          j1+offset[f][0][1], j2+offset[f][1][1], j3+offset[f][2][1], j4+offset[f][3][1],
-                          k1+offset[f][0][2], k2+offset[f][1][2], k3+offset[f][2][2], k4+offset[f][3][2],
-                          ind_i, ind_j, ind_k, order-2, f);
-  /**/
+    /*
+      int ioffset = (i3-i1)/abs(i2-i1);
+      int joffset = (j3-j1)/abs(j2-j1);
+      int koffset = (k3-k1)/abs(k2-k1);
+    */
+    added += getIndicesQuad(i1+offset[f][0][0], i2+offset[f][1][0], i3+offset[f][2][0], i4+offset[f][3][0],
+                            j1+offset[f][0][1], j2+offset[f][1][1], j3+offset[f][2][1], j4+offset[f][3][1],
+                            k1+offset[f][0][2], k2+offset[f][1][2], k3+offset[f][2][2], k4+offset[f][3][2],
+                            ind_i, ind_j, ind_k, order-2, f);
+    /**/
   }
   return added;
 }
@@ -468,14 +551,14 @@ static int getIndicesFace(int i1, int i2, int i3, int i4,
     }
   }
   /*
-  int ioffset = (i3-i1)/abs(i2-i1);
-  int joffset = (j3-j1)/abs(j2-j1);
-  int koffset = (k3-k1)/abs(k2-k1);
+    int ioffset = (i3-i1)/abs(i2-i1);
+    int joffset = (j3-j1)/abs(j2-j1);
+    int koffset = (k3-k1)/abs(k2-k1);
   */
   added += getIndicesFace(i1+offset[f][0][0], i2-offset[f][1][0], i3-offset[f][2][0], i4+offset[f][3][0],
-			  j1+offset[f][0][1], j2-offset[f][1][1], j3-offset[f][2][1], j4+offset[f][3][1],
-			  k1+offset[f][0][2], k2-offset[f][1][2], k3-offset[f][2][2], k4+offset[f][3][2],
-			  ind_i, ind_j, ind_k, order-2, f);
+                          j1+offset[f][0][1], j2-offset[f][1][1], j3-offset[f][2][1], j4+offset[f][3][1],
+                          k1+offset[f][0][2], k2-offset[f][1][2], k3-offset[f][2][2], k4+offset[f][3][2],
+                          ind_i, ind_j, ind_k, order-2, f);
   /**/
   return added;
 }
@@ -522,8 +605,8 @@ static void getIndices(int i, int j, int k,
 
 
   if (order == 0) {
-      ind_i.push_back(i); ind_j.push_back(j); ind_k.push_back(k);
-      return;
+    ind_i.push_back(i); ind_j.push_back(j); ind_k.push_back(k);
+    return;
   }
 
   // 8 principal points
@@ -630,12 +713,12 @@ int computeCGNSFace(const cgsize_t* range) {
 
 // --- structure for storing periodic connections ------------------------------
 
-struct CGNSPeriodic {
+struct CGNSStruPeriodic {
 
   
-  // the data that are modified on the fly by looping on the CGNSPeriodicSet
+  // the data that are modified on the fly by looping on the CGNSStruPeriodicSet
   // 
-  // - should not affect the ordering in CGNSPeriodicLess 
+  // - should not affect the ordering in CGNSStruPeriodicLess 
   // - should be modified with a const operation (STL only returns const data)
   // - should hence be mutable
   //
@@ -643,7 +726,7 @@ struct CGNSPeriodic {
   // 
   // All ordering data should only be modified in constructor-like operations
   
-  friend class CGNSPeriodicLess;
+  friend class CGNSStruPeriodicLess;
   
 public:
 
@@ -666,20 +749,20 @@ public:
 
   };
 
-  string targetZone;           // cgns name of the block
-  int targetFace;              // index of the face in the block
-  mutable int targetFaceId;    // elementary tag corresponding to the face
+  string tgtZone;           // cgns name of the block
+  int tgtFace;              // index of the face in the block
+  mutable int tgtFaceId;    // elementary tag corresponding to the face
   mutable
-  vector<MVertex*> targetVertices; // ordered vertices in the target
-  vector<IJK>   targetIJK;    // ijk indices of the face points in the block
+  vector<MVertex*> tgtVertices; // ordered vertices in the tgt
+  vector<IJK>   tgtIJK;    // ijk indices of the face points in the block
 
 
-  string sourceZone;           // cgns name of the block
-  int sourceFace;              // index of the face in the block
-  mutable int sourceFaceId;    // elementary tag corresponding to the face  
+  string srcName;           // cgns name of the block
+  int srcFace;              // index of the face in the block
+  mutable int srcFaceId;    // elementary tag corresponding to the face  
   mutable 
-  vector<MVertex*> sourceVertices; // ordered vertices in the source
-  vector<IJK>   sourceIJK;  // ijk indices in the source face, ordered following target
+  vector<MVertex*> srcVertices; // ordered vertices in the src
+  vector<IJK>   srcIJK;  // ijk indices in the source face, ordered following tgt
 
   std::vector<double> tfo;     // transformation 
 
@@ -687,10 +770,10 @@ public:
   
   void print(ostream& out) const {
 
-    out << "Connection of face " << targetFace << " (" << targetFaceId << ")"
-        << " of domain " << targetZone << " to " 
-        << sourceFace << " (" << sourceFaceId << ")" << " of " 
-        << sourceZone << std::endl;
+    out << "Connection of face " << tgtFace << " (" << tgtFaceId << ")"
+        << " of domain " << tgtZone << " to " 
+        << srcFace << " (" << srcFaceId << ")" << " of " 
+        << srcName << std::endl;
   }
       
 
@@ -699,19 +782,19 @@ public: // constructors
   
   // -- empty constructor
 
-  CGNSPeriodic() { setUnitTransformation(); }
+  CGNSStruPeriodic() { setUnitAffineTransformation(tfo); }
 
   // -- standard constructor
 
-  CGNSPeriodic(const char* tn,const cgsize_t* tr,
-               const char* sn,const cgsize_t* sr,const int* iTfo,int o,
-               int tfid,
-               const float* rotationCenter,
-               const float* rotationAngle,
-               const float* translation):
+  CGNSStruPeriodic(const char* tn,const cgsize_t* tr,
+                   const char* sn,const cgsize_t* sr,const int* iTfo,int o,
+                   int tfid,
+                   const float* rotationCenter,
+                   const float* rotationAngle,
+                   const float* translation):
     
-    targetZone(tn),targetFace(computeCGNSFace(tr)),targetFaceId(tfid),
-    sourceZone(sn),sourceFace(computeCGNSFace(sr)),sourceFaceId(-1) {
+    tgtZone(tn),tgtFace(computeCGNSFace(tr)),tgtFaceId(tfid),
+    srcName(sn),srcFace(computeCGNSFace(sr)),srcFaceId(-1) {
     
     // compute the structured grid indices 
 
@@ -730,11 +813,11 @@ public: // constructors
     for (int k=0;k<3;k++) nbIJK[k] = (tr[k]==tr[k+3])?1:((abs(tr[k]-tr[k+3]))/o +1);
     for (int k=0;k<3;k++) nbPoints *= nbIJK[k];
     
-    targetIJK.reserve(nbPoints);
-    sourceIJK.reserve(nbPoints);
+    tgtIJK.reserve(nbPoints);
+    srcIJK.reserve(nbPoints);
 
-    targetVertices.resize(nbPoints,NULL);
-    sourceVertices.resize(nbPoints,NULL);
+    tgtVertices.resize(nbPoints,NULL);
+    srcVertices.resize(nbPoints,NULL);
     
     IJK src(sr[idx[0]],sr[idx[1]],sr[idx[2]]);
     IJK tgt(tr[0],tr[1],tr[2]);
@@ -751,8 +834,8 @@ public: // constructors
         
         for (int k=0;k<nbIJK[2];k++) {
           
-          targetIJK.push_back(tgt);
-          sourceIJK.push_back(src);
+          tgtIJK.push_back(tgt);
+          srcIJK.push_back(src);
           
           tgt[2]      += dIJKTgt[2];
           src[idx[2]] += dIJKSrc[idx[2]];
@@ -766,55 +849,55 @@ public: // constructors
    
     // now compute the transformation
     
-    computeTransformation(rotationCenter,rotationAngle,translation);
+    computeAffineTransformation(rotationCenter,rotationAngle,translation,tfo);
   }
 
   
   // -- copy constructor
 
-  CGNSPeriodic(const CGNSPeriodic& old) {
+  CGNSStruPeriodic(const CGNSStruPeriodic& old) {
     
-    targetVertices.resize(old.getNbPoints(),NULL);
-    sourceVertices.resize(old.getNbPoints(),NULL);
+    tgtVertices.resize(old.getNbPoints(),NULL);
+    srcVertices.resize(old.getNbPoints(),NULL);
 
-    targetZone     = old.targetZone;
-    targetFace     = old.targetFace;
-    targetFaceId   = old.targetFaceId;
-    targetIJK      = old.targetIJK;
-    targetVertices = old.targetVertices;
+    tgtZone     = old.tgtZone;
+    tgtFace     = old.tgtFace;
+    tgtFaceId   = old.tgtFaceId;
+    tgtIJK      = old.tgtIJK;
+    tgtVertices = old.tgtVertices;
 
-    sourceZone     = old.sourceZone;
-    sourceFace     = old.sourceFace;
-    sourceFaceId   = old.sourceFaceId;
-    sourceIJK      = old.sourceIJK;
-    sourceVertices = old.sourceVertices;
+    srcName     = old.srcName;
+    srcFace     = old.srcFace;
+    srcFaceId   = old.srcFaceId;
+    srcIJK      = old.srcIJK;
+    srcVertices = old.srcVertices;
     
     tfo = old.tfo;
   }
 
   // -- constructor of the inverse connection
 
-  CGNSPeriodic getInverse() const {
+  CGNSStruPeriodic getInverse() const {
 
-    CGNSPeriodic inv;
+    CGNSStruPeriodic inv;
 
-    inv.targetVertices.resize(getNbPoints(),NULL);
-    inv.sourceVertices.resize(getNbPoints(),NULL);
+    inv.tgtVertices.resize(getNbPoints(),NULL);
+    inv.srcVertices.resize(getNbPoints(),NULL);
 
-    inv.targetZone     = sourceZone;
-    inv.targetFace     = sourceFace;
-    inv.targetFaceId   = sourceFaceId;
-    inv.targetIJK      = sourceIJK;
-    inv.targetVertices = sourceVertices;
+    inv.tgtZone     = srcName;
+    inv.tgtFace     = srcFace;
+    inv.tgtFaceId   = srcFaceId;
+    inv.tgtIJK      = srcIJK;
+    inv.tgtVertices = srcVertices;
 
-    inv.sourceZone     = targetZone;
-    inv.sourceFace     = targetFace;
-    inv.sourceFaceId   = targetFaceId;
-    inv.sourceIJK      = targetIJK;
-    inv.sourceVertices = targetVertices;
+    inv.srcName     = tgtZone;
+    inv.srcFace     = tgtFace;
+    inv.srcFaceId   = tgtFaceId;
+    inv.srcIJK      = tgtIJK;
+    inv.srcVertices = tgtVertices;
     
     inv.tfo = tfo;
-    invertTransformation(inv.tfo);
+    invertAffineTransformation(tfo,inv.tfo);
     
     return inv;
   }
@@ -822,126 +905,279 @@ public: // constructors
 public: // vertex functions 
 
   
-  size_t getNbPoints() const {return targetIJK.size();}
+  size_t getNbPoints() const {return tgtIJK.size();}
   
 
-  bool getTargetIJK(size_t ip,int& i,int& j,int& k) const {
-    if (ip > targetIJK.size())  return false;
-    i = targetIJK[ip][0] - 1;
-    j = targetIJK[ip][1] - 1;
-    k = targetIJK[ip][2] - 1;
+  bool getTgtIJK(size_t ip,int& i,int& j,int& k) const {
+    if (ip > tgtIJK.size())  return false;
+    i = tgtIJK[ip][0] - 1;
+    j = tgtIJK[ip][1] - 1;
+    k = tgtIJK[ip][2] - 1;
     return true;
   }
 
-  bool getSourceIJK(size_t ip,int& i,int& j,int& k) const {
-    if (ip > sourceIJK.size())  return false;
-    i = sourceIJK[ip][0] - 1;
-    j = sourceIJK[ip][1] - 1;
-    k = sourceIJK[ip][2] - 1;
+  bool getSrcIJK(size_t ip,int& i,int& j,int& k) const {
+    if (ip > srcIJK.size())  return false;
+    i = srcIJK[ip][0] - 1;
+    j = srcIJK[ip][1] - 1;
+    k = srcIJK[ip][2] - 1;
     return true;
   }
 
-  bool insertTargetVertex(size_t ip,MVertex* v) const {
-    if (ip > targetVertices.size()) return false;
-    targetVertices[ip] = v;
+  bool insertTgtVertex(size_t ip,MVertex* v) const {
+    if (ip > tgtVertices.size()) return false;
+    tgtVertices[ip] = v;
     return true;
   }
 
-  bool insertSourceVertex(size_t ip,MVertex* v) const {
-    if (ip > sourceVertices.size()) return false;
-    sourceVertices[ip] = v;
+  bool insertSrcVertex(size_t ip,MVertex* v) const {
+    if (ip > srcVertices.size()) return false;
+    srcVertices[ip] = v;
     return true;
   }
   
 
 public: // transformation operations
 
-  bool setUnitTransformation() {
-    tfo.resize(16,0);
-    for (int i=0;i<16;i+=5) tfo[i] = 1;
-    return true;
-  }
-
-  bool computeTransformation(const float* rc,const float* ra,const float *tr) {
-    
-    fullMatrix<double> compoundRotation(3,3);
-    for (int i=0;i<3;i++) compoundRotation(i,i) = 1;
-
-    for (int i=0;i<3;i++) {
-      
-      if (ra[i] != 0) {
-        
-        fullMatrix<double> tmp(compoundRotation);
-        
-        fullMatrix<double> rotation(3,3);
-        rotation(i,i) = 1;
-
-        int ii = (i+1)%3;
-        int jj = (i+2)%3;
-
-        double ca = cos(ra[i]);
-        double sa = sin(ra[i]);
-        
-        // rotation with alpha
-        
-        rotation(ii,ii) = ca;
-        rotation(ii,jj) = sa;
-        rotation(jj,ii) = -sa;
-        rotation(jj,jj) = ca;
-        
-        compoundRotation.gemm(rotation,tmp,1,0);
-      }
-    }
-    
-    // compute displacement from rotation center
-    
-    fullVector<double> disp(3);
-
-    fullVector<double> center(3);
-    for (int i=0;i<3;i++) center(i) = rc[i];
-    compoundRotation.mult(center,disp);
-    
-    // add specified translation
-
-    for (int i=0;i<3;i++) disp(i) = - tr[i];
-
-    // copy to tfo
-
-    tfo.clear();
-    
-    for (int i=0;i<3;i++) {
-      for (int j=0;j<3;j++) tfo.push_back(compoundRotation(i,j));
-      tfo.push_back(disp(i));
-    }
-    for (int i=0;i<3;i++) tfo.push_back(0);
-    tfo.push_back(1);
-    
-    return true;
-  }
   
-  bool invertTransformation(std::vector<double>& newTfo) const {
-
-    fullMatrix<double> inv(4,4);
-    for (int i=0;i<4;i++) for (int j=0;j<4;j++) inv(i,j) = tfo[i*4+j];    
-    inv.invertInPlace();
-    newTfo.clear();
-    for (int i=0;i<4;i++) for (int j=0;j<4;j++) newTfo.push_back(inv(i,j));
-    return true;
-  } 
 };
 
 // --- definition of a set for storing periodic connections --------------------
 
-struct CGNSPeriodicLess {
+struct CGNSStruPeriodicLess {
 
-  bool operator() (const CGNSPeriodic& f,const CGNSPeriodic& d) {
-    int s = f.sourceZone.compare(d.sourceZone);
+  bool operator() (const CGNSStruPeriodic& f,const CGNSStruPeriodic& d) {
+    int s = f.srcName.compare(d.srcName);
     if (s != 0) return (s < 0);
-    return (f.sourceFace < d.sourceFace);
+    return (f.srcFace < d.srcFace);
   }
 };
 
-typedef set<CGNSPeriodic,CGNSPeriodicLess> CGNSPeriodicSet;
+typedef set<CGNSStruPeriodic,CGNSStruPeriodicLess> CGNSStruPeriodicSet;
+
+// --- structure for storing periodic connections ------------------------------
+
+class CGNSUnstPeriodic {
+
+  
+  // the data that are modified on the fly by looping on the CGNSUnstPeriodicSet
+  // 
+  // - should not affect the ordering in CGNSUnstPeriodicLess 
+  // - should be modified with a const operation (STL only returns const data)
+  // - should hence be mutable
+  //
+  // Currently this data includes the vectors of source and tgt vertices 
+  // 
+  // All ordering data should only be modified in constructor-like operations
+  
+  friend class CGNSUnstPeriodicLess;
+  
+public:
+
+  std::string name;    // cgns name of the connection 
+
+  std::string tgtZone; // cgns name of the unstructured zone
+  std::string srcZone; // cgns name of the unstructured zone
+
+  std::map<int,int> srcToTgtPts;
+  std::map<int,int> tgtToSrcPts;
+  
+  std::vector<double> tfo;  // transformation 
+  
+  std::map<std::set<int>,GEntity*> tgtEnts[3];
+  std::map<std::set<int>,GEntity*> srcEnts[3];
+  
+  std::map<GEntity*,GEntity*>      tgtToSrcEnts[3];
+    
+protected:
+
+  void addPoints(PointSetType_t setType,cgsize_t size,
+                 const cgsize_t* ptsList,
+                 std::vector<int>& pts) {
+    
+    switch (setType) {
+    case PointRange:
+    case PointRangeDonor:
+      for (int i=ptsList[0];i<=ptsList[1];i++) pts.push_back(i-1);
+      break;
+    case PointList:
+    case PointListDonor:
+      for (int i=0;i<size;i++)                 pts.push_back(ptsList[i]-1);
+      break;
+    }
+  }
+  
+
+public: // constructors 
+  
+  // -- empty constructor
+
+  CGNSUnstPeriodic() { setUnitAffineTransformation(tfo); }
+
+  // -- standard constructor
+
+  CGNSUnstPeriodic(const char* n,
+                   const char* tn,const cgsize_t* tPts,
+                   PointSetType_t tType,cgsize_t tSize,
+                   const char* sn,const cgsize_t* sPts,
+                   PointSetType_t sType,cgsize_t sSize,
+                   const float* rotationCenter,
+                   const float* rotationAngle,
+                   const float* translation):
+    name(n),tgtZone(tn),srcZone(sn) {
+    
+    // compute the structured grid indices 
+    
+    computeAffineTransformation(rotationCenter,rotationAngle,translation,tfo);
+
+    std::vector<int> srcPts;
+    addPoints(sType,sSize,sPts,srcPts);
+    
+    std::vector<int> tgtPts;
+    addPoints(tType,tSize,tPts,tgtPts);
+    
+    if (tgtPts.size() != srcPts.size()) throw;
+    
+    for (unsigned i=0;i<tgtPts.size();i++) {
+      tgtToSrcPts[tgtPts[i]] = srcPts[i];
+      srcToTgtPts[srcPts[i]] = tgtPts[i];
+    }
+  }
+
+  // // -- constructor of the inverse connection
+
+  // CGNSUnstPeriodic getInverse() const {
+
+  //   CGNSUnstPeriodic inv;
+
+  //   inv.tgtZone = srcZone;
+  //   inv.srcZone = tgtZone;
+    
+  //   inv.tgtToSrcPts = srcToTgtPts;
+  //   inv.srcToTgtPts = tgtToSrcPts;
+
+  //   inv.tgtEntities = inv.srcEntities;
+  //   inv.sr
+    
+  //   inv.tfo = tfo;
+  //   invertAffineTransformation(tfo,inv.tfo);
+    
+  //   return inv;
+  // }
+
+public: // vertex functions 
+  
+  size_t nbPoints() const {return tgtToSrcPts.size();}
+
+};
+
+/*
+bool matchGEntities(GModel* model,int dim) {
+
+  // provide an exhaustive list of all the points
+  
+  if (dim == 3) return false;
+  
+  std::set<int> myPts;
+  for (unsigned iElmt=0;iElmt<ge->getNumMeshElements();iElmt++) {
+    MElement* elt = ge->getMeshElement(iElmt);
+    switch(elt->getType()) {
+    case TYPE_QUA:
+      myPts.insert(elt->getVertex(3)->getNum());
+    case TYPE_TRI:
+      myPts.insert(elt->getVertex(2)->getNum()); 
+    case TYPE_LIN:
+      myPts.insert(elt->getVertex(1)->getNum());
+    case TYPE_PNT:
+      myPts.insert(elt->getVertex(0)->getNum());
+      break;
+    default:
+      abort();
+    } 
+  }
+  
+  // see whether a source or target is already present
+
+    std::map<std::set<int>,GEntity*>::iterator tIter = tgtEnts.find(myPts);
+    if (tIter!=tgtEnts.end()) {
+      tgtToSrcEnts[dim][tIter->second] = ge;
+      tgtEnts[dim].erase(tIter);
+      std::cout << "Coupled " << dim << "D entity " << ge->tag() 
+                << " to " << tIter->second->tag() << std::endl;
+      return true;
+    }
+      
+    std::map<std::set<int>,GEntity*>::iterator sIter = srcEnts.find(myPts);
+    if (sIter!=srcEnts.end()) {
+      tgtToSrcEnts[ge] = sIter->second;
+      srcEnts.erase(sIter);
+      
+      std::cout << "Coupled " << dim << "D entity" 
+                << tIter->second->tag() << " to " << ge->tag() << std::endl;
+
+      return true;
+    }
+
+    std::map<int,int> s2t;
+    std::map<int,int> t2s;
+
+    // locate entity on target or source side and put in wait
+
+    std::map<int,int>::iterator it;
+
+    for (std::set<int>::iterator mIter=myPts.begin();mIter!=myPts.end();++mIter) {
+      int id = *mIter;
+      it=tgtToSrcPts.find(id);
+      if (it!=tgtToSrcPts.end()) t2s[id] = it->second;
+      it=srcToTgtPts.find(id);
+      if (it!=srcToTgtPts.end()) s2t[id] = it->second;
+    }
+    
+    if (t2s.size() == myPts.size()) {
+      std::set<int> srcPoints;
+      for (it=t2s.begin();it!=t2s.end();++it) srcPoints.insert(it->second);
+      tgtEnts[srcPoints] = ge;
+      std::cout << "Added " << ge->tag() << " to the targets " << std::endl;
+      return true;
+    }
+    
+    if (s2t.size() == myPts.size()) {
+      std::set<int> tgtPoints;
+      for (it=s2t.begin();it!=s2t.end();++it) tgtPoints.insert(it->second);
+      srcEnts[tgtPoints] = ge;
+      std::cout << "Added " << ge->tag() << " to the sources " << std::endl;
+      return true;
+    }
+    return false;
+  } 
+};*/
+
+// -----------------------------------------------------------------------------
+
+struct CGNSUnstPeriodicLess {
+
+  bool operator() (const CGNSUnstPeriodic& f,const CGNSUnstPeriodic& d) {
+    
+    if (f.nbPoints() == d.nbPoints()) {
+
+      if (f.tgtZone == d.tgtZone) {
+        if (f.srcZone == d.srcZone) return f.tgtToSrcPts < d.tgtToSrcPts;
+        return (f.srcZone.compare(d.srcZone) < 0);
+      }
+      if (f.tgtZone == d.srcZone) {
+        if (f.srcZone == d.tgtZone) return f.tgtToSrcPts < d.srcToTgtPts;
+        return (f.srcZone.compare(d.tgtZone) < 0);
+      }
+      return (f.srcZone.compare(d.srcZone) < 0);
+    }
+    return (f.nbPoints() < d.nbPoints());
+  }
+};
+
+// -----------------------------------------------------------------------------
+
+typedef std::set<CGNSUnstPeriodic,
+                 CGNSUnstPeriodicLess> CGNSUnstPeriodicSet;
 
 // -----------------------------------------------------------------------------
 
@@ -964,6 +1200,7 @@ bool readCGNSBoundaryConditions(int fileIndex,
                                 int baseIndex,
                                 int zoneIndex,
                                 int classIndex,
+                                int meshDim,
                                 std::map<int,int>& eltToClass,
                                 std::map<int,std::string>& classToName) {
   
@@ -1001,6 +1238,17 @@ bool readCGNSBoundaryConditions(int fileIndex,
       Msg::Error("%s (%i) : %s",__FILE__,__LINE__,cg_get_error());
       return false;
     }
+
+    if (meshDim == 2 && location != EdgeCenter) {
+      Msg::Error("Boundary conditions need to be specified on edges for 2D zone");
+      return false;
+    }
+    
+    if (meshDim == 3 && location != FaceCenter) {
+      Msg::Error("Boundary conditions need to be specified on faces for 3D zones");
+      return false;
+    }
+
       
     cgsize_t* elt = new cgsize_t[nbElts];
     
@@ -1052,6 +1300,70 @@ bool readCGNSBoundaryConditions(int fileIndex,
   return true;
 }
 
+bool readCGNSPeriodicConnections(int fileIndex,
+                                 int baseIndex,
+                                 int zoneIndex,
+                                 char* zoneName,
+                                 ZoneType_t zoneType,
+                                 CGNSUnstPeriodicSet& connections)  {
+  
+  
+  int nbConn(0);
+  cg_nconns(fileIndex,baseIndex,zoneIndex,&nbConn);	
+  
+  
+  for (int connIndex=0;connIndex<nbConn;connIndex++){ 
+    
+    GridLocation_t tgtLocation;
+    
+    GridConnectivityType_t connType;
+    PointSetType_t tgtSetType;
+    PointSetType_t srcSetType;
+    ZoneType_t srcZoneType;
+    DataType_t srcDataType;
+    
+    cgsize_t tgtSize;
+    cgsize_t srcSize;
+      
+    char connName[maxLenCGNS];
+    char tgtName[maxLenCGNS];
+    std::memcpy(tgtName,zoneName,maxLenCGNS*sizeof(char));
+    char srcName[maxLenCGNS];
+      
+    cg_conn_info(fileIndex,baseIndex,zoneIndex,connIndex,
+                 connName,&tgtLocation,&connType,&tgtSetType,&tgtSize,
+                 srcName,&srcZoneType,&srcSetType,&srcDataType,&srcSize);
+
+    if (connType != Abutting1to1) {
+      Msg::Error("Non-conformal connection not supported");
+    }
+    
+    cgsize_t* tgtPts = new cgsize_t[tgtSize];
+    cgsize_t* srcPts = new cgsize_t[srcSize];
+
+    cg_conn_read(fileIndex,baseIndex,zoneIndex,connIndex,tgtPts,srcDataType,srcPts);
+    
+    if (srcZoneType == Structured) break;
+    
+    float center[3] = {0,0,0};
+    float angle[3]  = {0,0,0};
+    float disp[3]   = {0,0,0};
+    
+    cg_conn_periodic_read(fileIndex,baseIndex,zoneIndex,connIndex,
+                          center,angle,disp);
+    
+    connections.insert(CGNSUnstPeriodic(connName,
+                                        srcName,srcPts,srcSetType,srcSize,
+                                        tgtName,tgtPts,tgtSetType,tgtSize,
+                                        center,angle,disp));
+    
+    
+    delete [] tgtPts;
+    delete [] srcPts;
+    
+  }
+}
+
 // -----------------------------------------------------------------------------
 
 int GModel::addCGNSPoints(const string& fileName,
@@ -1063,6 +1375,8 @@ int GModel::addCGNSPoints(const string& fileName,
                           int& index,
                           std::vector<MVertex*>& vertices) {
 
+
+  std::cout << "Adding points, starting from " << index << std::endl;
   
   int nbDim;
   if (cg_ncoords(fileIndex,baseIndex,zoneIndex,&nbDim) != CG_OK) {
@@ -1124,6 +1438,10 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
 
   std::map<int, std::vector<MElement*> > eltMap[10];
   std::vector<MVertex*> vertices;
+
+  // --- keep connectivity information
+
+  CGNSUnstPeriodicSet periodic;
   
   // --- open file and read generic information
 
@@ -1191,16 +1509,23 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
 
   // provide a global numbering
 
-  int vtxIndex(0);
+  int vtxIndex(1);
 
   // classify zones following their index, and start new numbering beyond
 
   std::map<int,std::string> classNames;
+  
+  // retain global zone information
+
+  std::map<std::string,int> zoneIndices;
+  std::map<std::string,int> zoneOffsets;
 
   int classIndex = nbZones + 1;
   
   for (int zoneIndex=1;zoneIndex<=nbZones;zoneIndex++) {
 
+    std::cout << "Reading zone " << zoneIndex << " on " << nbZones << std::endl;
+    
     // --- using an offset to translate zone local numbering to global numbering
 
     int vtxOffset = vertices.size();
@@ -1228,6 +1553,9 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
                  __FILE__,__LINE__,fileName.c_str(),cg_get_error());
       return 0;
     }
+
+    zoneIndices[zoneName] = zoneIndex;
+    zoneOffsets[zoneName] = vtxOffset;
 
     Msg::Info("Reading unstructured zone %s",zoneName);
     
@@ -1281,7 +1609,9 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
     std::map<int,int> eltToBC;
     std::map<int,std::string> bcToName;
 
-    readCGNSBoundaryConditions(fileIndex,baseIndex,zoneIndex,classIndex,eltToBC,bcToName);
+    bool topologyDefined = readCGNSBoundaryConditions(fileIndex,baseIndex,
+                                                      zoneIndex,classIndex,
+                                                      meshDim,eltToBC,bcToName);
     
     // --- create element using the sections 
     
@@ -1365,13 +1695,13 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
         else renum = rIter->second;
 
         for (int iVtx=0;iVtx<eltSize;iVtx++) {
-          int id = vtxOffset + pElt[renum[iVtx]]-1;
-          vtcs.push_back(vertices[id]);
+          int num = vtxOffset + pElt[renum[iVtx]]-1;
+          vtcs.push_back(vertices[num]);
         }
 
         int topoIndex = zoneIndex;
         std::map<int,int>::iterator tIter = eltToBC.find(eltIndex);
-        if (tIter!=eltToBC.end()) topoIndex = tIter->second;
+        if (tIter!=eltToBC.end() && topologyDefined) topoIndex = tIter->second;
         
         pElt += eltSize;
         int partition(0);
@@ -1396,6 +1726,12 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
       
       delete [] elts;
     }
+
+    // 
+
+    readCGNSPeriodicConnections(fileIndex,baseIndex,zoneIndex,zoneName,zoneType,periodic);
+                                
+
   }
 
   for (std::map<ElementType_t,int*>::iterator rIter=renumbering.begin();
@@ -1409,6 +1745,11 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
 
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertices);
+
+  
+  
+  
+
 
   return 1;
 }
@@ -1452,12 +1793,13 @@ int GModel::readCGNSStructured(const std::string &name)
   int* sizeIJK = new int[nZones*3];
   
   for (int index_zone = 1; index_zone <= nZones; index_zone++) {
+    
     Msg::Debug("Reading zone to compute MG level %i.", index_zone);
 
     ZoneType_t zoneType;
     cg_zone_type(index_file, index_base, index_zone, &zoneType);
     if ( zoneType == Unstructured ) {
-      Msg::Warning("Unstructured zone detected");
+      Msg::Info("Unstructured zone detected");
       return 0;
     }
     // cgsize_t irmin[3];
@@ -1539,7 +1881,7 @@ int GModel::readCGNSStructured(const std::string &name)
     // int elementary_edge = getNumEdges();
     // int elementary_vertex = getNumVertices();
 
-    CGNSPeriodicSet periodicConnections;
+    CGNSStruPeriodicSet periodicConnections;
 
     // Read the zones
     for (int index_zone = 1; index_zone <= nZones ; index_zone++) {
@@ -1705,35 +2047,35 @@ int GModel::readCGNSStructured(const std::string &name)
                                   RotationAngle, 
                                   Translation) != CG_NODE_NOT_FOUND) {
           
-          CGNSPeriodic pnew(zoneName,range,
-                            DonorName,donor_range,transform,order,faceIndex,
-                            RotationCenter,RotationAngle,Translation);
+          CGNSStruPeriodic pnew(zoneName,range,
+                                DonorName,donor_range,transform,order,faceIndex,
+                                RotationCenter,RotationAngle,Translation);
           
-          CGNSPeriodic pinv(pnew.getInverse());
-          CGNSPeriodicSet::iterator pIter = periodicConnections.find(pinv);
+          CGNSStruPeriodic pinv(pnew.getInverse());
+          CGNSStruPeriodicSet::iterator pIter = periodicConnections.find(pinv);
           
           // create a new connection if inverse not found
           if (pIter == periodicConnections.end()) {          
             for (size_t ip=0;ip<pnew.getNbPoints();ip++) {
               int i(0),j(0),k(0);
-              pnew.getTargetIJK(ip,i,j,k);
-              pnew.insertTargetVertex(ip,vertexMap[offset+to1D(i,j,k,
-                                                               irmax[0],
-                                                               irmax[1],
-                                                               irmax[2])]);
+              pnew.getTgtIJK(ip,i,j,k);
+              pnew.insertTgtVertex(ip,vertexMap[offset+to1D(i,j,k,
+                                                            irmax[0],
+                                                            irmax[1],
+                                                            irmax[2])]);
             } 
             periodicConnections.insert(pnew);
           }
           // if inverse is found, we need to complete
           else { 
-            pIter->sourceFaceId = faceIndex;
+            pIter->srcFaceId = faceIndex;
             for (size_t ip=0;ip<pIter->getNbPoints();ip++) {
               int i(0),j(0),k(0);
-              pIter->getSourceIJK(ip,i,j,k);
-              pIter->insertSourceVertex(ip,vertexMap[offset+to1D(i,j,k,
-                                                                 irmax[0],
-                                                                 irmax[1],
-                                                                 irmax[2])]);
+              pIter->getSrcIJK(ip,i,j,k);
+              pIter->insertSrcVertex(ip,vertexMap[offset+to1D(i,j,k,
+                                                              irmax[0],
+                                                              irmax[1],
+                                                              irmax[2])]);
             }
           }
         }
@@ -1867,20 +2209,20 @@ int GModel::readCGNSStructured(const std::string &name)
     
     // --- now encode the periodic boundaries 
   
-    CGNSPeriodicSet::iterator pIter = periodicConnections.begin();
+    CGNSStruPeriodicSet::iterator pIter = periodicConnections.begin();
     
     for (;pIter!=periodicConnections.end();++pIter) {
       
-      GFace* target = getFaceByTag(pIter->targetFaceId);
-      GFace* source = getFaceByTag(pIter->sourceFaceId);
+      GFace* tgt = getFaceByTag(pIter->tgtFaceId);
+      GFace* src = getFaceByTag(pIter->srcFaceId);
       
-      target->setMeshMaster(source,pIter->tfo);
+      tgt->setMeshMaster(src,pIter->tfo);
       
-      std::vector<MVertex*>::const_iterator tIter = pIter->targetVertices.begin();
-      std::vector<MVertex*>::const_iterator sIter = pIter->sourceVertices.begin();
+      std::vector<MVertex*>::const_iterator tIter = pIter->tgtVertices.begin();
+      std::vector<MVertex*>::const_iterator sIter = pIter->srcVertices.begin();
     
-      for (;tIter!=pIter->targetVertices.end();++tIter,++sIter) {
-        target->correspondingVertices[*tIter] = *sIter;
+      for (;tIter!=pIter->tgtVertices.end();++tIter,++sIter) {
+        tgt->correspondingVertices[*tIter] = *sIter;
       }
     }
     
@@ -1929,193 +2271,193 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
                       const CGNSOptions &options, double scalingFactor)
 {
 
-//   enum {
-//     vertex = 0,
-//     edge   = 1,
-//     face   = 2,
-//     region = 3
-//   };
+  //   enum {
+  //     vertex = 0,
+  //     edge   = 1,
+  //     face   = 2,
+  //     region = 3
+  //   };
 
-//   PhysGroupMap groups[4];               // vector of entities that belong to
-//                                         // each physical group (in each
-//                                         // dimension)
-//   std::vector<DummyPartitionEntity> partitions;
-//                                         // Dummy entities that store the
-//                                         // elements in each partition
-//   int numZone(0);
-//   int meshDim(0);
+  //   PhysGroupMap groups[4];               // vector of entities that belong to
+  //                                         // each physical group (in each
+  //                                         // dimension)
+  //   std::vector<DummyPartitionEntity> partitions;
+  //                                         // Dummy entities that store the
+  //                                         // elements in each partition
+  //   int numZone(0);
+  //   int meshDim(0);
 
-//   Msg::Warning("CGNS I/O is at an \"alpha\" software stage");
+  //   Msg::Warning("CGNS I/O is at an \"alpha\" software stage");
 
-//   switch(zoneDefinition) {
-//   case 1:  // By partition
+  //   switch(zoneDefinition) {
+  //   case 1:  // By partition
 
-// //--Group the elements of each partition into a dummy entity.  Pointers to the
-// //--entities are then made available in groups[DIM][0].
+  // //--Group the elements of each partition into a dummy entity.  Pointers to the
+  // //--entities are then made available in groups[DIM][0].
 
-//     {
-//       numZone = meshPartitions.size();
-//       if(numZone == 0) zoneDefinition = 0;
-//       else {
-//         partitions.resize(numZone);
-//         for(int i = 0; i != numZone; ++i)
-//           partitions[i].elements.reserve(getMaxPartitionSize());
-//         unsigned numElem[5];
-//         meshDim = getNumMeshElements(numElem);
-//         // Load the dummy entities with the elements in each partition
-//         switch(meshDim) {
-//         case 3:
-//           for(riter it = firstRegion(); it != lastRegion(); ++it) {
-//             numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
-//             numElem[4] = 0;
-//             (*it)->getNumMeshElements(numElem);
-//             const int nType = (*it)->getNumElementTypes();
-//             for(int iType = 0; iType != nType; ++iType) {
-//               MElement *const *element = (*it)->getStartElementType(iType);
-//               const int nElem = numElem[iType];
-//               for(int iElem = 0; iElem != nElem; ++iElem) {
-//                 partitions[element[iElem]->getPartition() - 1].elements
-//                   .push_back(element[iElem]);
-//               }
-//             }
-//           }
-//           break;
-//         case 2:
-//           for(fiter it = firstFace(); it != lastFace(); ++it) {
-//             numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
-//             numElem[4] = 0;
-//             (*it)->getNumMeshElements(numElem);
-//             const int nType = (*it)->getNumElementTypes();
-//             for(int iType = 0; iType != nType; ++iType) {
-//               MElement *const *element = (*it)->getStartElementType(iType);
-//               const int nElem = numElem[iType];
-//               for(int iElem = 0; iElem != nElem; ++iElem) {
-//                 partitions[element[iElem]->getPartition() - 1].elements
-//                   .push_back(element[iElem]);
-//               }
-//             }
-//           }
-//           break;
-//         default:
-//           Msg::Error("No mesh elements were found");
-//           return 0;
-//         }
-//         // Place pointers to the entities in the 'groups' object
-//         std::vector<GEntity*> &ents = groups[meshDim][0];
-//         ents.resize(numZone);
-//         for(int iPart = 0; iPart != numZone; ++iPart)
-//           ents[iPart] = &partitions[iPart];
-//       }
-//     }
-//     break;
-//   case 2:  // By physical
+  //     {
+  //       numZone = meshPartitions.size();
+  //       if(numZone == 0) zoneDefinition = 0;
+  //       else {
+  //         partitions.resize(numZone);
+  //         for(int i = 0; i != numZone; ++i)
+  //           partitions[i].elements.reserve(getMaxPartitionSize());
+  //         unsigned numElem[5];
+  //         meshDim = getNumMeshElements(numElem);
+  //         // Load the dummy entities with the elements in each partition
+  //         switch(meshDim) {
+  //         case 3:
+  //           for(riter it = firstRegion(); it != lastRegion(); ++it) {
+  //             numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
+  //             numElem[4] = 0;
+  //             (*it)->getNumMeshElements(numElem);
+  //             const int nType = (*it)->getNumElementTypes();
+  //             for(int iType = 0; iType != nType; ++iType) {
+  //               MElement *const *element = (*it)->getStartElementType(iType);
+  //               const int nElem = numElem[iType];
+  //               for(int iElem = 0; iElem != nElem; ++iElem) {
+  //                 partitions[element[iElem]->getPartition() - 1].elements
+  //                   .push_back(element[iElem]);
+  //               }
+  //             }
+  //           }
+  //           break;
+  //         case 2:
+  //           for(fiter it = firstFace(); it != lastFace(); ++it) {
+  //             numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0;
+  //             numElem[4] = 0;
+  //             (*it)->getNumMeshElements(numElem);
+  //             const int nType = (*it)->getNumElementTypes();
+  //             for(int iType = 0; iType != nType; ++iType) {
+  //               MElement *const *element = (*it)->getStartElementType(iType);
+  //               const int nElem = numElem[iType];
+  //               for(int iElem = 0; iElem != nElem; ++iElem) {
+  //                 partitions[element[iElem]->getPartition() - 1].elements
+  //                   .push_back(element[iElem]);
+  //               }
+  //             }
+  //           }
+  //           break;
+  //         default:
+  //           Msg::Error("No mesh elements were found");
+  //           return 0;
+  //         }
+  //         // Place pointers to the entities in the 'groups' object
+  //         std::vector<GEntity*> &ents = groups[meshDim][0];
+  //         ents.resize(numZone);
+  //         for(int iPart = 0; iPart != numZone; ++iPart)
+  //           ents[iPart] = &partitions[iPart];
+  //       }
+  //     }
+  //     break;
+  //   case 2:  // By physical
 
-// //--Get a list of groups in each dimension and each of the entities in that
-// //--group.
+  // //--Get a list of groups in each dimension and each of the entities in that
+  // //--group.
 
-//     getPhysicalGroups(groups);
-//     if(groups[region].size()) {
-//       numZone = groups[region].size();
-//       meshDim = 3;
-//     }
-//     else if(groups[face].size()) {
-//       numZone = groups[face].size();
-//       meshDim = 2;
-//     }
-//     else {
-//       zoneDefinition = 0;  // Use single zone
-//     }
-//     break;
-//   }
+  //     getPhysicalGroups(groups);
+  //     if(groups[region].size()) {
+  //       numZone = groups[region].size();
+  //       meshDim = 3;
+  //     }
+  //     else if(groups[face].size()) {
+  //       numZone = groups[face].size();
+  //       meshDim = 2;
+  //     }
+  //     else {
+  //       zoneDefinition = 0;  // Use single zone
+  //     }
+  //     break;
+  //   }
 
-// //--For a single zone, put all the entities for a dimension into groups[DIM][0]
+  // //--For a single zone, put all the entities for a dimension into groups[DIM][0]
 
-//   if(zoneDefinition == 0) {
-//     numZone = 1;
-//     unsigned numElem[5];
-//     numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0; numElem[4] = 0;
-//     meshDim = getNumMeshElements(numElem);
-//     switch(meshDim) {
-//     case 3:
-//       {
-//         groups[region].clear();
-//         std::vector<GEntity*> &ents = groups[region][0];
-//         ents.resize(getNumRegions());
-//         int iEnt = 0;
-//         for(riter it = firstRegion(); it != lastRegion(); ++it)
-//           ents[iEnt++] = *it;
-//       }
-//       break;
-//     case 2:
-//       {
-//         groups[face].clear();
-//         std::vector<GEntity*> &ents = groups[face][0];
-//         ents.resize(getNumFaces());
-//         int iEnt = 0;
-//         for(fiter it = firstFace(); it != lastFace(); ++it)
-//           ents[iEnt++] = *it;
-//       }
-//       break;
-//     default:
-//       Msg::Error("No mesh elements were found");
-//       return 0;
-//     }
-//   }
+  //   if(zoneDefinition == 0) {
+  //     numZone = 1;
+  //     unsigned numElem[5];
+  //     numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0; numElem[4] = 0;
+  //     meshDim = getNumMeshElements(numElem);
+  //     switch(meshDim) {
+  //     case 3:
+  //       {
+  //         groups[region].clear();
+  //         std::vector<GEntity*> &ents = groups[region][0];
+  //         ents.resize(getNumRegions());
+  //         int iEnt = 0;
+  //         for(riter it = firstRegion(); it != lastRegion(); ++it)
+  //           ents[iEnt++] = *it;
+  //       }
+  //       break;
+  //     case 2:
+  //       {
+  //         groups[face].clear();
+  //         std::vector<GEntity*> &ents = groups[face][0];
+  //         ents.resize(getNumFaces());
+  //         int iEnt = 0;
+  //         for(fiter it = firstFace(); it != lastFace(); ++it)
+  //           ents[iEnt++] = *it;
+  //       }
+  //       break;
+  //     default:
+  //       Msg::Error("No mesh elements were found");
+  //       return 0;
+  //     }
+  //   }
 
-// /*--------------------------------------------------------------------*
-//  * Summary of three possibilities for the 'zoneDefinition':
-//  * 0) single zone: all the entities are placed in physical 0.  All the
-//  *    entities form the zone.
-//  * 1) defined by partitions:  all the entities are place in physical
-//  *    0.  Each entity is a zone.
-//  * 2) defined by physicals:  all the entities in a physical form a
-//  *    zone.
-//  *--------------------------------------------------------------------*/
+  // /*--------------------------------------------------------------------*
+  //  * Summary of three possibilities for the 'zoneDefinition':
+  //  * 0) single zone: all the entities are placed in physical 0.  All the
+  //  *    entities form the zone.
+  //  * 1) defined by partitions:  all the entities are place in physical
+  //  *    0.  Each entity is a zone.
+  //  * 2) defined by physicals:  all the entities in a physical form a
+  //  *    zone.
+  //  *--------------------------------------------------------------------*/
 
-// //--Open the file and get ready to write the zones
+  // //--Open the file and get ready to write the zones
 
-//   // Get the dimension of a vector in the mesh
-//   int vectorDim = 3;
-//   if(meshDim == 2) vectorDim = options.vectorDim;
+  //   // Get the dimension of a vector in the mesh
+  //   int vectorDim = 3;
+  //   if(meshDim == 2) vectorDim = options.vectorDim;
 
-//   // open the file
-//   int cgIndexFile=0;
-//   if(cg_open(name.c_str(), CG_MODE_WRITE, &cgIndexFile)) return cgnsErr();
+  //   // open the file
+  //   int cgIndexFile=0;
+  //   if(cg_open(name.c_str(), CG_MODE_WRITE, &cgIndexFile)) return cgnsErr();
 
-//   // write the base node
-//   int cgIndexBase=0;
-//   if(cg_base_write(cgIndexFile, options.baseName.c_str(), meshDim, meshDim,
-//                    &cgIndexBase))
-//     return cgnsErr();
+  //   // write the base node
+  //   int cgIndexBase=0;
+  //   if(cg_base_write(cgIndexFile, options.baseName.c_str(), meshDim, meshDim,
+  //                    &cgIndexBase))
+  //     return cgnsErr();
 
-//   // write information about who generated the mesh
-//   if(cg_goto(cgIndexFile, cgIndexBase, "end")) return(cgnsErr());
-//   if(cg_descriptor_write("About", "Created by Gmsh")) return cgnsErr();
+  //   // write information about who generated the mesh
+  //   if(cg_goto(cgIndexFile, cgIndexBase, "end")) return(cgnsErr());
+  //   if(cg_descriptor_write("About", "Created by Gmsh")) return cgnsErr();
 
-//   switch(meshDim) {
-//   case 2:
-//     MZone<2>::preInit();
-//     MZoneBoundary<2>::preInit();
-//     write_CGNS_zones<2>(*this, zoneDefinition, numZone, options,
-//                         scalingFactor, vectorDim, groups[face],
-//                         cgIndexFile, cgIndexBase);
-//     MZone<2>::postDestroy();
-//     MZoneBoundary<2>::postDestroy();
-//     break;
-//   case 3:
-//     MZone<3>::preInit();
-//     MZoneBoundary<3>::preInit();
-//     write_CGNS_zones<3>(*this, zoneDefinition, numZone, options,
-//                         scalingFactor, vectorDim, groups[region],
-//                         cgIndexFile, cgIndexBase);
-//     MZone<3>::postDestroy();
-//     MZoneBoundary<3>::postDestroy();
-//     break;
-//   }
+  //   switch(meshDim) {
+  //   case 2:
+  //     MZone<2>::preInit();
+  //     MZoneBoundary<2>::preInit();
+  //     write_CGNS_zones<2>(*this, zoneDefinition, numZone, options,
+  //                         scalingFactor, vectorDim, groups[face],
+  //                         cgIndexFile, cgIndexBase);
+  //     MZone<2>::postDestroy();
+  //     MZoneBoundary<2>::postDestroy();
+  //     break;
+  //   case 3:
+  //     MZone<3>::preInit();
+  //     MZoneBoundary<3>::preInit();
+  //     write_CGNS_zones<3>(*this, zoneDefinition, numZone, options,
+  //                         scalingFactor, vectorDim, groups[region],
+  //                         cgIndexFile, cgIndexBase);
+  //     MZone<3>::postDestroy();
+  //     MZoneBoundary<3>::postDestroy();
+  //     break;
+  //   }
 
-// //--Close the file
+  // //--Close the file
 
-//   if(cg_close(cgIndexFile)) return cgnsErr();
+  //   if(cg_close(cgIndexFile)) return cgnsErr();
 
   return 0;
 }

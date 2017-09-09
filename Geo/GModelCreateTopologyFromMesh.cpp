@@ -409,8 +409,7 @@ protected:
 
   MElement* parent;
   int edgeIndex;
-  int id0;
-  int id1;
+  std::pair<int,int> ids;
 
 public:
   
@@ -420,13 +419,11 @@ public:
   
   inline bool operator == (const topoEdge &f) const
   {
-    return (id0 == f.id0 && f.id1 == id1);
+    return ids == f.ids;
   }
   inline bool operator < (const topoEdge &f) const
   {
-    if (id0 < f.id0) return true;
-    if (id0 > f.id0) return false;
-    return id1 < f.id1;
+    return ids < f.ids;
   }
   
   topoEdge (MElement* elt,int num) {
@@ -435,10 +432,14 @@ public:
     edgeIndex = num;
     MEdge edge = elt->getEdge(num);
 
-    id0 = edge.getVertex(0)->getNum();
-    id1 = edge.getVertex(1)->getNum();
+    int id0 = edge.getVertex(0)->getNum();
+    int id1 = edge.getVertex(1)->getNum();
     
     if (id0 > id1) std::swap(id0,id1);
+      
+    ids.first = id0;
+    ids.second = id1;
+    
   }
 };
 
@@ -472,12 +473,14 @@ void createTopologyFromMesh2D(GModel *gm, int &num)
     GFace* gf = *it;
     for (unsigned int i=0;i<(*it)->getNumMeshElements();i++){
       MElement *e = (*it)->getMeshElement(i);
-      for (int j=0;j<e->getNumEdges();j++){
-        topoEdge te(e,j);
-        TEdgeToGEdgeMap::iterator eIter = tEdgeToGEdge.find(te);
-        if (eIter != tEdgeToGEdge.end()) gFaceToGEdges[gf].insert(eIter->second);
-        else                            tEdgeToGFaces[te].insert(gf);
-      }
+      if (e->getDim() == 2) {
+        for (int j=0;j<e->getNumEdges();j++){
+          topoEdge te(e,j);
+          TEdgeToGEdgeMap::iterator eIter = tEdgeToGEdge.find(te);
+          if (eIter != tEdgeToGEdge.end()) gFaceToGEdges[gf].insert(eIter->second);
+          else                            tEdgeToGFaces[te].insert(gf);
+        }
+      } 
     }
   }
 
