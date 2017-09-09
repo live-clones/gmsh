@@ -24,6 +24,7 @@ set(SRC
   onelabUtils.cpp
   GamePad.cpp
   GmshRemote.cpp
+  GmshAPI.cpp
 )
 
 if(ENABLE_ONELAB AND NOT ENABLE_ONELAB2)

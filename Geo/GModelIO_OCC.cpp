@@ -1941,15 +1941,16 @@ bool OCC_Internals::_extrude(int mode,
   _multiBind(result, -1, outDimTags, true, true);
 
   // return entities in the same order as the built-in kernel extrusion
-  if(dim >= 1 && dim <= 3 && top.size() == inDimTags.size() &&
-     top.size() == body.size() && top.size() == lateral.size()){
+  if(dim >= 1 && dim <= 3 &&
+     top.size() == inDimTags.size() && top.size() == body.size()){
     outDimTags.clear();
     for(unsigned int i = 0; i < top.size(); i++){
       if(_isBound(dim - 1, top[i]))
         outDimTags.push_back(std::pair<int, int>(dim - 1, _find(dim - 1, top[i])));
       if(_isBound(dim, body[i]))
         outDimTags.push_back(std::pair<int, int>(dim, _find(dim, body[i])));
-      if(CTX::instance()->geom.extrudeReturnLateral){
+      if(CTX::instance()->geom.extrudeReturnLateral &&
+         top.size() == lateral.size()){
         for(unsigned int j = 0; j < lateral[i].size(); j++){
           if(_isBound(dim - 1, lateral[i][j]))
             outDimTags.push_back

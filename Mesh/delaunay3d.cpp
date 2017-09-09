@@ -370,14 +370,14 @@ static void computeNeighboringTetsOfACavity(const std::vector<Tet*> &cavity,
 
 void printtet (const char *c, Tet *t){
   printf("%s ",c);
-  
+
   if (t->V[0])
     printf("%7d %7d %7d %7d \n",
 	   t->V[0]->getNum(),
 	   t->V[1]->getNum(),
 	   t->V[2]->getNum(),
 	   t->V[3]->getNum());
-  
+
 }
 
 static bool buildVertexCavity(Vert *v, std::vector<Tet*> &cavity, std::stack<Tet*> &_stack)
@@ -421,12 +421,12 @@ static bool buildVertexCavity(Vert *v, std::vector<Tet*> &cavity, std::stack<Tet
 	    return false;
 	  }
 	}
-      }          
+      }
     }
   }
   return true;
 }
-  
+
 
 static bool buildEdgeCavity(Tet *t, int iLocalEdge,
 			    Vert **v1, Vert **v2,
@@ -439,16 +439,16 @@ static bool buildEdgeCavity(Tet *t, int iLocalEdge,
 
   *v1 = t->V[edges[iLocalEdge][0]];
   *v2 = t->V[edges[iLocalEdge][1]];
-  
+
   // the 5 - i th edge contains the other 2 points of the tet
   Vert *lastinring = t->V[edges[5 - iLocalEdge][0]];
-  
+
   ring.push_back(lastinring);
   cavity.push_back(t);
 
   //  printf("edge %d %d \n",(*v1)->getNum(),(*v2)->getNum());
   ///  printtet ("first", t);
-  
+
   while (1){
     Vert *ov1 = t->V[edges[5 - iLocalEdge][0]];
     Vert *ov2 = t->V[edges[5 - iLocalEdge][1]];
@@ -543,9 +543,9 @@ static bool edgeSwap(Tet *tet, int iLocalEdge,  tetContainer &T, int myThread)
     int p2 = sp.triangles[i][1];
     int p3 = sp.triangles[i][2];
     tetQuality1[i] = tetQuality (ring[p1],ring[p2],ring[p3],v1,&volume1[i]);
-    tetQuality2[i] = tetQuality (ring[p3],ring[p2],ring[p1],v2,&volume2[i]);    
+    tetQuality2[i] = tetQuality (ring[p3],ring[p2],ring[p1],v2,&volume2[i]);
   }
-  
+
   // look for the best triangulation, i.e. the one that maximize the
   // minimum element quality
   double minQuality[100];
@@ -612,7 +612,7 @@ static bool edgeSwap(Tet *tet, int iLocalEdge,  tetContainer &T, int myThread)
       computeAdjacencies (outside[i],j,ctnr);
     }
   }
-  
+
   return true;
 }
 
@@ -651,7 +651,7 @@ static bool relocateVertex (Vert* v, std::vector<Tet*> &cavity){
   }
   v->x()=oldX, v->y()=oldY, v->z()=oldZ;
   return false;
-  
+
 }
 
 static bool relocateVertex (Vert* v, std::stack<Tet*> &_work, std::vector<Tet*> &cavity){
@@ -676,7 +676,7 @@ void vertexRelocationPass (int numThreads,   std::vector<Vert*> &v){
     if (!N)break;
     if (iter++ >= 0)break;
   }
-  
+
 }
 
 
@@ -687,14 +687,14 @@ void edgeSwapPass (int numThreads, tetContainer &allocator, edgeContainer &embed
     int N = 0;
     for (int myThread=0; myThread < numThreads; myThread++) {
       int NNN = allocator.size(myThread);
-      for (unsigned int i=0;i<NNN;i++){
-	//	printf("%d %d\n",NNN,i);
+      for (int i=0;i<NNN;i++){
+	// printf("%d %d\n",NNN,i);
 	Tet *t =  allocator(myThread,i);
 	if (t->V[0]){
 	  double vol;
 	  if (tetQuality (t,&vol) < 0.3){
 	    for (int j=0;j<6;j++){
-	      int iLocalEdge = j;	      
+	      int iLocalEdge = j;
 	      Edge e (t->V[edges[iLocalEdge][0]], t->V[edges[iLocalEdge][1]]);
 	      if (! embeddedEdges.find(e) && !ec.find(e)){
 		ec.addNewEdge(e);
@@ -706,7 +706,7 @@ void edgeSwapPass (int numThreads, tetContainer &allocator, edgeContainer &embed
 		}
 	      }
 	      else{
-		//		printf("cannot swop\n");
+		// printf("cannot swap\n");
 	      }
 	    }
 	  }
@@ -869,7 +869,7 @@ static bool fixDelaunayCavity (Vert *v,
   starShapeness (v, bndK, _negatives);
 
   if (_negatives.empty())return false;
-  
+
   // unset all tets of the cavity
   for (unsigned int i=0; i< cavity.size(); i++)cavity[i]->unset(myThread,K);
   for (unsigned int i=0; i<bndK.size(); i++)if(bndK[i].t)bndK[i].t->unset(myThread,K);
@@ -882,7 +882,7 @@ static bool fixDelaunayCavity (Vert *v,
   Tet *containsV = tetContainsV (v,cavity);
 
   if (! containsV) return true;
-  
+
   while (!_negatives.empty()) {
     for (unsigned int i=0;i<_negatives.size();i++){
       conn &c = bndK[_negatives[i] ];
@@ -1091,11 +1091,11 @@ static Tet* randomTet (int thread,  tetContainer &allocator)
 }
 
 
-int isCavityCompatibleWithEmbeddedEdges(cavityContainer &cavity, 
-					connContainer &bndK,   
+int isCavityCompatibleWithEmbeddedEdges(cavityContainer &cavity,
+					connContainer &bndK,
 					edgeContainer &allEmbeddedEdges){
   //  return true;
-  
+
   const unsigned int bSize = bndK.size();
   std::vector<Edge> ed;
   for (unsigned int i=0; i<bSize; i++) {
@@ -1105,7 +1105,7 @@ int isCavityCompatibleWithEmbeddedEdges(cavityContainer &cavity,
       }
     }
   }
-  
+
   for (unsigned int i=0; i<cavity.size(); i++){
     for (int j=0;j<6;j++){
       Edge e = cavity[i]->getEdge(j);
@@ -1115,7 +1115,7 @@ int isCavityCompatibleWithEmbeddedEdges(cavityContainer &cavity,
     }
   }
   return 1;
-} 
+}
 
 
 //#define _VERBOSE 1
@@ -1186,7 +1186,7 @@ void delaunayTrgl (const unsigned int numThreads,
     std::vector<Vert*> vToAdd(NPTS_AT_ONCE);
 
     //    printf("reaching parallel section\n");
-    
+
 #if defined(_OPENMP)
 #pragma omp barrier
 #endif
@@ -1325,7 +1325,7 @@ void delaunayTrgl (const unsigned int numThreads,
   for (unsigned int myThread=0; myThread < numThreads;myThread++)
     for (unsigned int i=0;i<allocator.size(myThread);i++)allocator(myThread,i)->setAllDeleted();
 
-  
+
 }
 
 static void initialCube (std::vector<Vert*> &v,

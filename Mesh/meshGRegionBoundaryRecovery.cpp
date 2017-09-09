@@ -742,7 +742,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 
     if (!_extras.empty())Msg::Info("We add %d steiner points...",_extras.size());
 
-    
+
     if (l_edges.size() > 0) {
 
 
@@ -761,7 +761,7 @@ bool tetgenmesh::reconstructmesh(void *p)
           }
         }
         assert(ge != NULL);
-	//	Msg::Info("Steiner points exist on GEdge %d", ge->tag());
+	// Msg::Info("Steiner points exist on GEdge %d", ge->tag());
         // Delete the old triangles.
         for(unsigned int i = 0; i < ge->lines.size(); i++)
           delete ge->lines[i];
@@ -775,11 +775,13 @@ bool tetgenmesh::reconstructmesh(void *p)
           if (shellmark(segloop) == etag) {
             p[0] = sorg(segloop);
             p[1] = sdest(segloop);
-            MVertex *v1 = pointmark(p[0]) >= _vertices.size() ? _extras[pointmark(p[0])] : _vertices[pointmark(p[0])];
-            MVertex *v2 = pointmark(p[1]) >= _vertices.size() ? _extras[pointmark(p[1])] : _vertices[pointmark(p[1])];
-	    //            MVertex *v2 = _vertices[pointmark(p[1])];
-	    //	    printf("%d %d %d\n",pointmark(p[0]),pointmark(p[1]),_vertices.size());
-	    //	    printf("%g %g %g %g\n",v1->x(),v1->y(),v2->x(),v2->y());
+            MVertex *v1 = pointmark(p[0]) >= (int)_vertices.size() ?
+              _extras[pointmark(p[0])] : _vertices[pointmark(p[0])];
+            MVertex *v2 = pointmark(p[1]) >= (int)_vertices.size() ?
+              _extras[pointmark(p[1])] : _vertices[pointmark(p[1])];
+	    // MVertex *v2 = _vertices[pointmark(p[1])];
+	    // printf("%d %d %d\n",pointmark(p[0]),pointmark(p[1]),_vertices.size());
+	    // printf("%g %g %g %g\n",v1->x(),v1->y(),v2->x(),v2->y());
             MLine *t = new MLine(v1, v2);
             ge->lines.push_back(t);
           }
@@ -822,15 +824,21 @@ bool tetgenmesh::reconstructmesh(void *p)
             p[0] = sorg(subloop);
             p[1] = sdest(subloop);
             p[2] = sapex(subloop);
-            MVertex *v1 = pointmark(p[0]) >= _vertices.size() ? _extras[pointmark(p[0])] : _vertices[pointmark(p[0])];
-            MVertex *v2 = pointmark(p[1]) >= _vertices.size() ? _extras[pointmark(p[1])] : _vertices[pointmark(p[1])];
-            MVertex *v3 = pointmark(p[2]) >= _vertices.size() ? _extras[pointmark(p[2])] : _vertices[pointmark(p[2])];
-	    //	    if (pointmark(p[0]) >= _vertices.size())printf("F %d %d\n",v1->getIndex(),pointmark(p[0]));
-	    //	    if (pointmark(p[1]) >= _vertices.size())printf("F %d %d\n",v2->getIndex(),pointmark(p[1]));
-	    //	    if (pointmark(p[2]) >= _vertices.size())printf("F %d %d\n",v3->getIndex(),pointmark(p[2]));
-	    //            MVertex *v1 = _vertices[pointmark(p[0])];
-	    //            MVertex *v2 = _vertices[pointmark(p[1])];
-	    //            MVertex *v3 = _vertices[pointmark(p[2])];
+            MVertex *v1 = pointmark(p[0]) >= (int)_vertices.size() ?
+              _extras[pointmark(p[0])] : _vertices[pointmark(p[0])];
+            MVertex *v2 = pointmark(p[1]) >= (int)_vertices.size() ?
+              _extras[pointmark(p[1])] : _vertices[pointmark(p[1])];
+            MVertex *v3 = pointmark(p[2]) >= (int)_vertices.size() ?
+              _extras[pointmark(p[2])] : _vertices[pointmark(p[2])];
+	    // if (pointmark(p[0]) >= _vertices.size())
+            //   printf("F %d %d\n",v1->getIndex(),pointmark(p[0]));
+	    // if (pointmark(p[1]) >= _vertices.size())
+            //   printf("F %d %d\n",v2->getIndex(),pointmark(p[1]));
+	    // if (pointmark(p[2]) >= _vertices.size())
+            //   printf("F %d %d\n",v3->getIndex(),pointmark(p[2]));
+	    // MVertex *v1 = _vertices[pointmark(p[0])];
+	    // MVertex *v2 = _vertices[pointmark(p[1])];
+	    // MVertex *v3 = _vertices[pointmark(p[2])];
             MTriangle *t = new MTriangle(v1, v2, v3);
             gf->triangles.push_back(t);
           }
@@ -851,20 +859,26 @@ bool tetgenmesh::reconstructmesh(void *p)
       p[2] = apex(tetloop);
       p[3] = oppo(tetloop);
 
-      MVertex *v1 = pointmark(p[0]) >= _vertices.size() ? _extras[pointmark(p[0])] : _vertices[pointmark(p[0])];
-      MVertex *v2 = pointmark(p[1]) >= _vertices.size() ? _extras[pointmark(p[1])] : _vertices[pointmark(p[1])];
-      MVertex *v3 = pointmark(p[2]) >= _vertices.size() ? _extras[pointmark(p[2])] : _vertices[pointmark(p[2])];
-      MVertex *v4 = pointmark(p[3]) >= _vertices.size() ? _extras[pointmark(p[3])] : _vertices[pointmark(p[3])];
-      
-      //      if (pointmark(p[0]) >= _vertices.size())printf("%d %d\n",v1->getIndex(),pointmark(p[0]));
-      //      if (pointmark(p[1]) >= _vertices.size())printf("%d %d\n",v2->getIndex(),pointmark(p[1]));
-      //      if (pointmark(p[2]) >= _vertices.size())printf("%d %d\n",v3->getIndex(),pointmark(p[2]));
-      //      if (pointmark(p[3]) >= _vertices.size())printf("%d %d\n",v4->getIndex(),pointmark(p[3]));
-
-      //      MVertex *v1 = _vertices[pointmark(p[0])];
-      //      MVertex *v2 = _vertices[pointmark(p[1])];
-      //      MVertex *v3 = _vertices[pointmark(p[2])];
-      //      MVertex *v4 = _vertices[pointmark(p[3])];
+      MVertex *v1 = pointmark(p[0]) >= (int)_vertices.size() ?
+        _extras[pointmark(p[0])] : _vertices[pointmark(p[0])];
+      MVertex *v2 = pointmark(p[1]) >= (int)_vertices.size() ?
+        _extras[pointmark(p[1])] : _vertices[pointmark(p[1])];
+      MVertex *v3 = pointmark(p[2]) >= (int)_vertices.size() ?
+        _extras[pointmark(p[2])] : _vertices[pointmark(p[2])];
+      MVertex *v4 = pointmark(p[3]) >= (int)_vertices.size() ?
+        _extras[pointmark(p[3])] : _vertices[pointmark(p[3])];
+      // if (pointmark(p[0]) >= _vertices.size())
+      //   printf("%d %d\n",v1->getIndex(),pointmark(p[0]));
+      // if (pointmark(p[1]) >= _vertices.size())
+      //   printf("%d %d\n",v2->getIndex(),pointmark(p[1]));
+      // if (pointmark(p[2]) >= _vertices.size())
+      //   printf("%d %d\n",v3->getIndex(),pointmark(p[2]));
+      // if (pointmark(p[3]) >= _vertices.size())
+      ///   printf("%d %d\n",v4->getIndex(),pointmark(p[3]));
+      // MVertex *v1 = _vertices[pointmark(p[0])];
+      // MVertex *v2 = _vertices[pointmark(p[1])];
+      // MVertex *v3 = _vertices[pointmark(p[2])];
+      // MVertex *v4 = _vertices[pointmark(p[3])];
       MTetrahedron *t = new  MTetrahedron(v1, v2, v3, v4);
       _gr->tetrahedra.push_back(t);
       tetloop.tet = tetrahedrontraverse();
