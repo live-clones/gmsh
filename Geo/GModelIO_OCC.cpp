@@ -3285,8 +3285,9 @@ bool OCC_Internals::_makeFaceSTL(TopoDS_Face s,
 #if (OCC_VERSION_MAJOR >= 7)
   BRepMesh_FastDiscret::Parameters parameters;
   parameters.Deflection = 0.1;
-  parameters.Angle = 0.35;
-  parameters.Relative = Standard_True;
+  parameters.Angle = 0.1;
+  //  parameters.InternalVerticesMode = Standard_False;
+  parameters.Relative = Standard_False;
   BRepMesh_FastDiscret aMesher(aBox, parameters);
 #else
   BRepMesh_FastDiscret aMesher(0.1, 0.35, aBox, Standard_False, Standard_False,

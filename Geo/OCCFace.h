@@ -22,10 +22,10 @@ class OCCFace : public GFace {
   Handle(Geom_Surface) occface;
   double umin, umax, vmin, vmax;
   bool _periodic[2];
+  double _period[2];
   bool buildSTLTriangulation(bool force=false);
-  void replaceEdgesInternal (std::list<GEdge*> &);
+  //  void replaceEdgesInternal (std::list<GEdge*> &);
   void setup();
-  bool _isSphere;
   double _radius;
   SPoint3 _center;
  public:
@@ -47,11 +47,14 @@ class OCCFace : public GFace {
   virtual double curvatureMax(const SPoint2 &param) const;
   virtual double curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
                             double *curvMax, double *curvMin) const;
-  surface_params getSurfaceParams() const;
   TopoDS_Face getTopoDS_Face () { return s; }
   TopoDS_Face getTopoDS_FaceOld () { return _replaced; }
   // tells if it's a sphere, and if it is, returns parameters
   virtual bool isSphere (double &radius, SPoint3 &center) const;
+  virtual bool periodic(int dim) const { return _periodic[dim]; }
+  virtual double period(int dim) const { return _period[dim]; }
+  // true if the parameter value is interior to the face (taking into account boundaries)
+  virtual bool containsParam(const SPoint2 &pt) ;
 };
 
 #endif

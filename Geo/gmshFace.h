@@ -13,9 +13,6 @@ class Surface;
 class gmshFace : public GFace {
  protected:
   Surface *s;
-  bool isSphere;
-  SPoint3 center;
-  double radius;
   bool buildSTLTriangulation(bool force);
  public:
   gmshFace(GModel *m, Surface *face);

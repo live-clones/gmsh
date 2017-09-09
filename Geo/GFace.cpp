@@ -271,14 +271,6 @@ SOrientedBoundingBox GFace::getOBB()
   return SOrientedBoundingBox(_obb);
 }
 
-surface_params GFace::getSurfaceParams() const
-{
-  surface_params p;
-  p.radius = p.radius2 = p.height = p.cx = p.cy = p.cz = 0.;
-  Msg::Error("Empty surface parameters for this type of surface");
-  return p;
-}
-
 std::vector<MVertex*> GFace::getEmbeddedMeshVertices() const
 {
   std::set<MVertex*> tmp;
@@ -1109,7 +1101,7 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[
 #endif
 }
 
-bool GFace::containsParam(const SPoint2 &pt) const
+bool GFace::containsParam(const SPoint2 &pt) 
 {
   Range<double> uu = parBounds(0);
   Range<double> vv = parBounds(1);
@@ -1282,51 +1274,6 @@ bool GFace::fillVertexArray(bool force)
   return true;
 }
 
-// by default we assume that straight lines are geodesics
-SPoint2 GFace::geodesic(const SPoint2 &pt1, const SPoint2 &pt2, double t)
-{
-  if(CTX::instance()->mesh.secondOrderExperimental && geomType() != GEntity::Plane ){
-    // FIXME: this is buggy -- remove the CTX option once we do it in
-    // a robust manner
-    GPoint gp1 = point(pt1.x(), pt1.y());
-    GPoint gp2 = point(pt2.x(), pt2.y());
-    SPoint2 guess = pt1 + (pt2 - pt1) * t;
-    GPoint gp = closestPoint(SPoint3(gp1.x() + t * (gp2.x() - gp1.x()),
-                                     gp1.y() + t * (gp2.y() - gp1.y()),
-                                     gp1.z() + t * (gp2.z() - gp1.z())),
-                             (double*)guess);
-    if (gp.g())
-      return SPoint2(gp.u(), gp.v());
-    else
-      return pt1 + (pt2 - pt1) * t;
-  }
-  else{
-    return pt1 + (pt2 - pt1) * t;
-  }
-}
-
-
-// length of a curve drawn on a surface
-// S = (X(u,v), Y(u,v), Z(u,v) );
-// u = u(t) , v = v(t)
-// C = C ( u(t), v(t) )
-// dC/dt = dC/du du/dt + dC/dv dv/dt
-double GFace::length(const SPoint2 &pt1, const SPoint2 &pt2, int nbQuadPoints)
-{
-  double *t = 0, *w = 0;
-  double L = 0.0;
-  gmshGaussLegendre1D(nbQuadPoints, &t, &w);
-  for (int i = 0; i < nbQuadPoints; i++){
-    const double ti = 0.5 * (1. + t[i]);
-    SPoint2 pi = geodesic(pt1, pt2, ti);
-    Pair<SVector3, SVector3> der2 = firstDer(pi);
-    SVector3 der = der2.left() * (pt2.x() - pt1.x()) + der2.right() * (pt2.y() - pt1.y());
-    const double d = norm(der);
-    L += d * w[i] ;
-  }
-  return L;
-}
-
 int GFace::genusGeom() const
 {
   int nSeams = 0;
@@ -1459,7 +1406,7 @@ void GFace::lloyd(int nbiter, int infn)
 
 void GFace::replaceEdges(std::list<GEdge*> &new_edges)
 {
-  replaceEdgesInternal(new_edges);
+  //  replaceEdgesInternal(new_edges);
   std::list<GEdge*>::iterator it  = l_edges.begin();
   std::list<GEdge*>::iterator it2 = new_edges.begin();
   std::list<int>::iterator it3 = l_dirs.begin();
