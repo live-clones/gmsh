@@ -1004,8 +1004,6 @@ bool readCGNSBoundaryConditions(int fileIndex,
       
     cgsize_t* elt = new cgsize_t[nbElts];
     
-    Msg::Info("Boundary condition %s is defined on %i %s",
-              bcName,nbElts,gridLocationNameCGNS(location).c_str());
   
 
     ierr = cg_boco_read(fileIndex,baseIndex,zoneIndex,boCoIndex,elt,NULL);
@@ -1037,9 +1035,13 @@ bool readCGNSBoundaryConditions(int fileIndex,
     
     switch (ptSetType) {
     case PointRange:
+      Msg::Info("Boundary condition %s is defined on %i %s",
+                bcName,elt[1]-elt[0]+1,gridLocationNameCGNS(location).c_str());
       for (cgsize_t i=elt[0];i<=elt[1];i++) eltToClass[i] = classIndex;
       break;
     case PointList:
+      Msg::Info("Boundary condition %s is defined on %i %s",
+                bcName,nbElts,gridLocationNameCGNS(location).c_str());
       for (cgsize_t i=0;i<nbElts;i++) eltToClass[elt[i]] = classIndex;
       break;
     default:
