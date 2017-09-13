@@ -108,11 +108,58 @@ int cgnsErr(const int cgIndexFile = -1)
   return 0;
 }
 
+// --- read length scale in the file
+
+double readCGNSScale() {
+
+  double scale = 1;
+  
+  MassUnits_t mass;
+  LengthUnits_t length;
+  TimeUnits_t time;
+  TemperatureUnits_t temperature;
+  AngleUnits_t angle;
+  
+  cg_units_read(&mass,&length,&time,&temperature,&angle);
+  
+  switch (length) {
+    
+  case Centimeter:
+    Msg::Info("Length unit in CGNS file is cm, rescaling");
+    scale = 0.01;
+    break;
+  case Millimeter:
+    Msg::Info("Length unit in CGNS file is mm, rescaling");
+    scale = 0.001;
+    break;
+  case Foot:
+    Msg::Info("Length unit in CGNS file is feet, rescaling");
+    scale = 0.3048;
+    break;
+  case Inch:
+    Msg::Info("Length unit in CGNS file is inch, rescaling");
+    scale = 0.0254;
+    break;
+  case Meter:
+    Msg::Info("Length unit in CGNS file is meter, not rescaling");
+    break;
+  case CG_Null:
+  case CG_UserDefined:
+  default:
+    Msg::Info("Length unit in CGNS file not defined, therefore not rescaling");
+    break;
+  } 
+
+  return scale;
+}
+
 
 // --- computation of affine transformations
 
 template <class FLOAT>
-bool computeAffineTransformation(const FLOAT* rc,const FLOAT* ra,const FLOAT *tr,
+bool computeAffineTransformation(const FLOAT* rc,
+                                 const FLOAT* ra,
+                                 const FLOAT *tr,
                                  std::vector<double>& tfo) {
   
   tfo.clear();
@@ -349,9 +396,11 @@ bool setUnitAffineTransformation(std::vector<double>& tfo) {
 
 
 
-static MElement *createElementMSH(GModel *m, int num, int typeMSH, int reg, int part,
-                                  std::vector<MVertex*> &v, 
-                                  std::map<int, std::vector<MElement*> > elements[10])
+static MElement *
+createElementMSH(GModel *m, int num, 
+                 int typeMSH, int reg, int part,
+                 std::vector<MVertex*> &v, 
+                 std::map<int, std::vector<MElement*> > elements[10])
 {
   /*
     if(CTX::instance()->mesh.switchElementTags) {
@@ -1044,27 +1093,6 @@ public: // constructors
     }
   }
 
-  // // -- constructor of the inverse connection
-
-  // CGNSUnstPeriodic getInverse() const {
-
-  //   CGNSUnstPeriodic inv;
-
-  //   inv.tgtZone = srcZone;
-  //   inv.srcZone = tgtZone;
-    
-  //   inv.tgtToSrcPts = srcToTgtPts;
-  //   inv.srcToTgtPts = tgtToSrcPts;
-
-  //   inv.tgtEntities = inv.srcEntities;
-  //   inv.sr
-    
-  //   inv.tfo = tfo;
-  //   invertAffineTransformation(tfo,inv.tfo);
-    
-  //   return inv;
-  // }
-
 public: // vertex functions 
   
   size_t nbPoints() const {return tgtToSrcPts.size();}
@@ -1181,7 +1209,8 @@ typedef std::set<CGNSUnstPeriodic,
 
 // -----------------------------------------------------------------------------
 
-int openCGNSFile(const std::string& fileName,int& fileIndex,int& nbBasis) {
+int openCGNSFile(const std::string& fileName,int& fileIndex,int& nbBasis,
+                 double& scale) {
   
   // Open the CGNS file
   if (cg_open(fileName.c_str(), CG_MODE_READ, &fileIndex)) {
@@ -1189,6 +1218,8 @@ int openCGNSFile(const std::string& fileName,int& fileIndex,int& nbBasis) {
                __FILE__,__LINE__,fileName.c_str(),cg_get_error());
     return 0;
   }
+  
+  scale = readCGNSScale();
   
   cg_nbases(fileIndex, &nbBasis);
   return 1;
@@ -1371,6 +1402,7 @@ int GModel::addCGNSPoints(const string& fileName,
                           int baseIndex,
                           int zoneIndex,
                           cgsize_t nbPoints,int dim,
+                          double scale,
                           GEntity* entity,
                           int& index,
                           std::vector<MVertex*>& vertices) {
@@ -1422,7 +1454,7 @@ int GModel::addCGNSPoints(const string& fileName,
   const double* z = xyz + nbPoints*2;
 
   for (int i=0;i<nbPoints;i++) {
-    vertices.push_back(new MVertex(x[i],y[i],z[i],entity,index));
+    vertices.push_back(new MVertex(x[i]*scale,y[i]*scale,z[i]*scale,entity,index));
     index++;
   }
   delete [] xyz;
@@ -1433,6 +1465,7 @@ int GModel::addCGNSPoints(const string& fileName,
 
 int GModel::readCGNSUnstructured(const std::string& fileName) 
 {
+
 
   // --- global containers and indices for points and elements
 
@@ -1447,8 +1480,10 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
 
   int fileIndex(-1);
   int nbBases(0);
+  double scale;
   
-  if (!openCGNSFile(fileName,fileIndex,nbBases)) return 0;
+  if (!openCGNSFile(fileName,fileIndex,nbBases,scale)) return 0;
+  
 
   int baseIndex = 1;
   int topoDim(0);
@@ -1598,6 +1633,7 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
                   zoneIndex,
                   nbPoints,
                   meshDim,
+                  scale,
                   NULL,
                   vtxIndex,
                   vertices);
@@ -1766,8 +1802,10 @@ int GModel::readCGNSStructured(const std::string &name)
   
   int index_file(-1);
   int nBases(0);
+  double scale;
 
-  if (!openCGNSFile(name,index_file,nBases)) return 0;
+  if (!openCGNSFile(name,index_file,nBases,scale)) return 0;
+
   
   Msg::Debug("Found %i base(s).", nBases);
   if (nBases > 1) {
@@ -1952,7 +1990,7 @@ int GModel::readCGNSStructured(const std::string &name)
             return 0;
           }
           for (int iNode = 0; iNode < nnodesZone; iNode++) {
-            nodes[iNode][iCoord] = (double)((float*)coord)[iNode];
+            nodes[iNode][iCoord] = (double)((float*)coord)[iNode] * scale;
           }
           delete [] (float*)coord;
           break;
@@ -1966,7 +2004,7 @@ int GModel::readCGNSStructured(const std::string &name)
             return 0;
           }
           for (int iNode = 0; iNode < nnodesZone; iNode++) {
-            nodes[iNode][iCoord] = ((double*) coord)[iNode];
+            nodes[iNode][iCoord] = ((double*) coord)[iNode] * scale;
           }
           delete [] (double*)coord;
           break;

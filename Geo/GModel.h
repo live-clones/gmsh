@@ -740,6 +740,7 @@ protected:
                     int zoneIndex,
                     CGNS::cgsize_t nbPoints,
                     int dim,
+                    double scale,
                     GEntity* ge,
                     int& pointIndex, 
                     std::vector<MVertex*>& vertices);

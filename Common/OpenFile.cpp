@@ -456,7 +456,17 @@ int MergeFile(const std::string &fileName, bool warnIfMissing, bool setBoundingB
   }
 #if defined(HAVE_LIBCGNS)
   else if(ext == ".cgns" || ext == ".CGNS"){
-    status = GModel::current()->readCGNS(fileName);
+    if(CTX::instance()->geom.matchGeomAndMesh && !GModel::current()->empty()) {
+      GModel* tmp2 = GModel::current();
+      GModel* tmp = new GModel();
+      tmp->readCGNS(fileName);
+      status = GeomMeshMatcher::instance()->match(tmp2, tmp);
+      delete tmp;
+      GModel::setCurrent(tmp2);
+      tmp2->setVisibility(1);
+    }
+    else
+      status = GModel::current()->readCGNS(fileName);
   }
 #endif
 #if defined(HAVE_3M)

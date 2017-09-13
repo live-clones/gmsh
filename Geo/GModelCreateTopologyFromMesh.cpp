@@ -38,11 +38,6 @@ bool topoExists(GModel *gm)
   return true;
 }
 
-typedef std::map<MVertex*,std::set<GEdge*> > MVertexToGEdgesMap;
-typedef std::map<MVertex*,GVertex*>          MVertexToGVertexMap;
-typedef std::map<GEdge*,std::set<GVertex*> > GEdgeToGVerticesMap;
-typedef std::map<std::pair<MVertex*,std::set<GEdge*> >, GVertex* > GEdgesToGVertexMap;
-
 
 // FIXME : To TIMES THE SAME MLINE IN EACH CONNECTED PART IF PERIODIC
 std::vector<GEdge*> ensureSimplyConnectedEdge(GEdge *ge)
@@ -77,7 +72,7 @@ std::vector<GEdge*> ensureSimplyConnectedEdge(GEdge *ge)
       _lines.erase (l);
       // avoid adding twice the last one
       if (!_part.size()  || _part[_part.size() - 1] != l){
-	_part.push_back(l);
+        _part.push_back(l);
       }
       for (int j=0;j<2;j++){
 	std::map<MVertex*, std::pair<MLine*,MLine*> >::iterator it =
@@ -95,7 +90,7 @@ std::vector<GEdge*> ensureSimplyConnectedEdge(GEdge *ge)
     _parts.push_back(_part);
   }
 
-  if (_parts.size() == 1) return _all;
+  if (_parts.size() <= 1) return _all;
 
   Msg::Info ("Edge %d is not simply connected: splitting it in %d parts",
              ge->tag(),_parts.size());
@@ -112,6 +107,102 @@ std::vector<GEdge*> ensureSimplyConnectedEdge(GEdge *ge)
   }
   return _all;
 }
+
+void assignFace (GFace *gf, std::set<MElement*> &_f)
+{
+  gf->triangles.clear();
+  gf->quadrangles.clear();
+  for (std::set<MElement*> :: iterator it = _f.begin() ; it != _f.end() ; ++it) {
+    if ((*it)->getNumVertices () == 3) gf->triangles.push_back ((MTriangle*) *it);
+    else if ((*it)->getNumVertices () == 4) gf->quadrangles.push_back ((MQuadrangle*) *it);
+  }
+}
+
+void ensureManifoldFace(GFace *gf)
+{
+  std::map<MEdge, std::pair<MElement*,MElement*>, Less_Edge > _pairs;
+  std::set<MEdge,Less_Edge> _nonManifold;
+
+  std::set<MElement*> _allFaces;
+
+  for (unsigned int i = 0; i < gf->getNumMeshElements(); i++){
+    MElement *e = gf->getMeshElement(i);
+    _allFaces.insert(e);
+    for (int j = 0; j < e->getNumEdges(); j++){
+      MEdge ed = e->getEdge(j);
+      if (_nonManifold.find (ed) == _nonManifold.end() ){
+	std::map<MEdge, std::pair<MElement*,MElement*>, Less_Edge >::iterator it =
+	  _pairs.find (ed);
+	if (it == _pairs.end()){
+	  _pairs[ed] = std::make_pair ( e , (MElement*) NULL);
+	}
+	else {
+	  if (it->second.second == NULL){
+	    it->second.second = e;
+	  }
+	  else {
+	    _nonManifold.insert (ed);
+	    _pairs.erase (it);
+	  }
+	}
+      }
+    }
+  }
+  if (_nonManifold.empty())return;
+
+  std::vector<std::set<MElement *> > _sub;
+  while (!_allFaces.empty()) {
+    std::stack <MElement*> _stack;
+    _stack.push (*_allFaces.begin());
+    std::set<MElement*> _f;
+    while (!_stack.empty()){
+      MElement *e = _stack.top();
+      _allFaces.erase(e);
+      _stack.pop();
+      _f.insert (e);
+      for (int j=0;j<e->getNumEdges();j++){
+	MEdge ed = e->getEdge(j);
+	if (_nonManifold.find (ed) == _nonManifold.end() ){
+	  std::map<MEdge, std::pair<MElement*,MElement*>, Less_Edge >::iterator it =
+	    _pairs.find (ed);
+	  if (it->second.second != NULL){
+	    MElement *other = it->second.second == e ?
+              it->second.first : it->second.second;
+	    if (_f.find (other) == _f.end())_stack.push(other);
+	  }
+	}
+      }
+    }
+    _sub.push_back (_f);
+  }
+
+  Msg::Info ("Face %d is non-manifold: splitting it in %d parts",
+             gf->tag(), _sub.size());
+
+  for (unsigned int i=0 ; i<_sub.size() ; i++){
+    if (i == 0) assignFace (gf, _sub[i]);
+    else {
+      discreteFace *newF = new discreteFace
+        (gf->model(), gf->model()->getMaxElementaryNumber(2) + 1);
+      gf->model()->add (newF);
+      assignFace (newF, _sub[i]);
+    }
+  }
+}
+
+void ensureManifoldFaces(GModel *gm)
+{
+  std::vector<GFace*> f;
+  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++)
+    f.push_back(*it);
+  for(unsigned int i = 0; i < f.size(); i++)
+    ensureManifoldFace (f[i]);
+}
+
+typedef std::map<MVertex*,std::set<GEdge*> > MVertexToGEdgesMap;
+typedef std::map<MVertex*,GVertex*>          MVertexToGVertexMap;
+typedef std::map<GEdge*,std::set<GVertex*> > GEdgeToGVerticesMap;
+typedef std::map<std::set<GEdge*> , GVertex* > GEdgesToGVertexMap;
 
 void createTopologyFromMesh1D(GModel *gm, int &num)
 {
@@ -168,7 +259,7 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
                   << " geometric edges " << std::endl;
       }
     
-      if (gEdgesToGVertex.find(*mvIter) == gEdgesToGVertex.end()) {
+      if (gEdgesToGVertex.find(gEdges) == gEdgesToGVertex.end()) {
         num++;
         std::cout << "Creating a vertex " << gm->getMaxElementaryNumber(0) + 1 
                   << " for connection of edges ";
@@ -185,7 +276,7 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
         MPoint *mp = new MPoint(mv);
         dv->points.push_back(mp);
         
-        gEdgesToGVertex[*mvIter] = dv;
+        gEdgesToGVertex[gEdges] = dv;
         
         for (std::set<GEdge*>::iterator gEIter = gEdges.begin();gEIter!=gEdges.end();++gEIter) {
           GEdge* ge = *gEIter;
@@ -251,157 +342,6 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
     }
   }
 }
-
-// void assignFace (GFace *gf, std::set<MElement*> &_f)
-// {
-//   gf->triangles.clear();
-//   gf->quadrangles.clear();
-//   for (std::set<MElement*> :: iterator it = _f.begin() ; it != _f.end() ; ++it) {
-//     if ((*it)->getNumVertices () == 3) gf->triangles.push_back ((MTriangle*) *it);
-//     else if ((*it)->getNumVertices () == 4) gf->quadrangles.push_back ((MQuadrangle*) *it);
-//   }
-// }
-
-// void ensureManifoldFace(GFace *gf)
-// {
-//   std::map<MEdge, std::pair<MElement*,MElement*>, Less_Edge > _pairs;
-//   std::set<MEdge,Less_Edge> _nonManifold;
-
-//   std::set<MElement*> _allFaces;
-
-//   for (unsigned int i = 0; i < gf->getNumMeshElements(); i++){
-//     MElement *e = gf->getMeshElement(i);
-//     _allFaces.insert(e);
-//     for (int j = 0; j < e->getNumEdges(); j++){
-//       MEdge ed = e->getEdge(j);
-//       if (_nonManifold.find (ed) == _nonManifold.end() ){
-// 	std::map<MEdge, std::pair<MElement*,MElement*>, Less_Edge >::iterator it =
-// 	  _pairs.find (ed);
-// 	if (it == _pairs.end()){
-// 	  _pairs[ed] = std::make_pair ( e , (MElement*) NULL);
-// 	}
-// 	else {
-// 	  if (it->second.second == NULL){
-// 	    it->second.second = e;
-// 	  }
-// 	  else {
-// 	    _nonManifold.insert (ed);
-// 	    _pairs.erase (it);
-// 	  }
-// 	}
-//       }
-//     }
-//   }
-//   if (_nonManifold.empty())return;
-
-//   std::vector<std::set<MElement *> > _sub;
-//   while (!_allFaces.empty()) {
-//     std::stack <MElement*> _stack;
-//     _stack.push (*_allFaces.begin());
-//     std::set<MElement*> _f;
-//     while (!_stack.empty()){
-//       MElement *e = _stack.top();
-//       _allFaces.erase(e);
-//       _stack.pop();
-//       _f.insert (e);
-//       for (int j=0;j<e->getNumEdges();j++){
-// 	MEdge ed = e->getEdge(j);
-// 	if (_nonManifold.find (ed) == _nonManifold.end() ){
-// 	  std::map<MEdge, std::pair<MElement*,MElement*>, Less_Edge >::iterator it =
-// 	    _pairs.find (ed);
-// 	  if (it->second.second != NULL){
-// 	    MElement *other = it->second.second == e ?
-//               it->second.first : it->second.second;
-// 	    if (_f.find (other) == _f.end())_stack.push(other);
-// 	  }
-// 	}
-//       }
-//     }
-//     _sub.push_back (_f);
-//   }
-
-//   Msg::Info ("Face %d is non-manifold: splitting it in %d parts",
-//              gf->tag(), _sub.size());
-
-//   for (unsigned int i=0 ; i<_sub.size() ; i++){
-//     if (i == 0) assignFace (gf, _sub[i]);
-//     else {
-//       discreteFace *newF = new discreteFace
-//         (gf->model(), gf->model()->getMaxElementaryNumber(2) + 1);
-//       gf->model()->add (newF);
-//       assignFace (newF, _sub[i]);
-//     }
-//   }
-// }
-
-// void ensureManifoldFaces(GModel *gm)
-// {
-//   std::vector<GFace*> f;
-//   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++)
-//     f.push_back(*it);
-//   for(unsigned int i = 0; i < f.size(); i++)
-//     ensureManifoldFace (f[i]);
-// }
-
-
-// template<unsigned>
-// class OrderedBoundary {
-
-// protected:
-  
-//   MElement* parent;
-//   int boundary;
-//   std::set<int> vtcs;
-
-// public:
-
-//   const MElement* getParent() const {return parent;}
-//   int getBoundaryIndex() const {return boundary;}
-//   int getType() const;
-  
-//   inline bool operator == (const OrderedBoundary& f) const {return vtcs == f.vtcs;}
-//   inline bool operator <  (const OrderedBoundary& f) const {return vtcs < f.vtcs;}
-
-//   OrderedBoundary(MElement*,int);
-// };
-
-// template<> 
-// OrderedBoundary<2>::OrderedBoundary(MElement* elt, int num) {
-//   parent    = elt;
-//   boundary  = num;
-//   MFace face = elt->getFace(num);
-//   for (int i=0;i<face.getNumVertices();i++) vtcs.insert(face.getVertex(i)->getNum()); 
-// }
-
-
-// template<> 
-// OrderedBoundary<1>::OrderedBoundary(MElement* elt, int num) {
-//   parent    = elt;
-//   boundary  = num;
-//   MEdge edge = elt->getEdge(num);
-//   vtcs.insert(edge.getVertex(0)->getNum());
-//   vtcs.insert(edge.getVertex(1)->getNum());
-// }
-    
-// template<> 
-// int OrderedBoundary<2>::getType() const {
-
-//   switch (vtcs.size()) {
-//   case 3:
-//     return TYPE_TRI;
-//     break;
-//   case 4:
-//     return TYPE_QUA;
-//     break;
-//   default:
-//     return (vtcs.size() > 4) ? TYPE_POLYG : -1;
-//   }
-// }
-
-// template<> 
-// int OrderedBoundary<1>::getType() const {
-//   return vtcs.size() == 2 ? TYPE_LIN : -1;
-// }
 
 class topoEdge {
 
@@ -774,7 +714,7 @@ void GModel::createTopologyFromMeshNew()
   Msg::Info("createTopologyFromMeshNew --> creating a topology from the mesh");
   int numF=0,numE=0,numV=0;
   if (dim >= 3) createTopologyFromMesh3D (this,numF);
-  // else ensureManifoldFaces ( this );
+  else ensureManifoldFaces ( this );
   if (dim >= 2) createTopologyFromMesh2D (this,numE);
   if (dim >= 1) createTopologyFromMesh1D (this,numV);
 
