@@ -1697,11 +1697,6 @@ void GModel::_storePhysicalTagsInEntities(int dim,
         }
       }
     }
-
-    else {
-      std::cout << "Could not find entity " << std::endl;
-    }
-
   }
 }
 
