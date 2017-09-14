@@ -1207,7 +1207,7 @@ void computeIdealJacobian(const std::vector<MVertex*> &baseVert,
                                thickness1);
 }
 
-void idealPositionTopVert(const std::vector<MVertex*> &baseVert,
+void idealPositionTopEdge(const std::vector<MVertex *> &baseVert,
                           double &thickness0, double &thickness1,
                           double &tanAngle0, double &tanAngle1,
                           std::vector<double> &xi,
@@ -1218,19 +1218,32 @@ void idealPositionTopVert(const std::vector<MVertex*> &baseVert,
   const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
 
   for (int i = 0; i < xi.size(); ++i) {
+    double f[100];
     double sf[100][3];
+    fs->f(xi[i], 0, 0, f);
     fs->df(xi[i], 0, 0, sf);
+    double x = 0, y = 0, z = 0;
     double dx = 0, dy = 0, dz = 0;
     for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
       const MVertex *v = baseVert[j];
+      x += f[j] * v->x();
+      y += f[j] * v->y();
+      z += f[j] * v->z();
       dx += sf[j][0] * v->x();
       dy += sf[j][0] * v->y();
       dz += sf[j][0] * v->z();
     }
 //    std::cout << " |" << xi[i] << ", " << std::sqrt(dx*dx + dy*dy + dz*dz);
 //    std::cout << ", " << linearInterp(thickness0, thickness1, xi[i]) << "|";
-    idealJacDet[i] = std::sqrt(dx*dx + dy*dy + dz*dz)
-           * linearInterp(thickness0, thickness1, xi[i]);
+    double coeff = linearInterp(thickness0, thickness1, xi[i])
+                       / std::sqrt(dx*dx + dy*dy + dz*dz);
+    double b = linearInterp(tanAngle0, tanAngle1, xi[i]);
+    if (nComponent == 0) {
+      idealPosition[i] = x + coeff * (-dy - b * dx);
+    }
+    if (nComponent == 1) {
+      idealPosition[i] = y + coeff * (dx - b * dy);
+    }
   }
 }
 
@@ -1241,6 +1254,8 @@ void computeThicknessAngle(const std::vector<MVertex*> &baseVert,
 {
   int tag = ElementType::getTag(TYPE_LIN, baseVert.size()-1);
   const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
+
+  SVector3 r(0,0,1);
 
   double sf[100][3];
   fs->df(-1, 0, 0, sf);
@@ -1257,13 +1272,12 @@ void computeThicknessAngle(const std::vector<MVertex*> &baseVert,
   SVector3 db = SVector3(topVert[0]->x() - baseVert[0]->x(),
                          topVert[0]->y() - baseVert[0]->y(),
                          topVert[0]->z() - baseVert[0]->z());
-  db *= .5; // edge length of the reference quad is 2...
   SVector3 dc = crossprod(da, db);
-  thickness0 = norm(dc);
+  thickness0 = dot(dc, r);
 
   SVector3 n = crossprod(dc, da); // n is of length thickness0
   SVector3 diff = n - db;
-  tanAngle0 = dot(diff, da);
+  tanAngle0 = dot(diff, da) / thickness0;
 
   fs->df(1, 0, 0, sf);
   dxa = 0;
@@ -1281,13 +1295,12 @@ void computeThicknessAngle(const std::vector<MVertex*> &baseVert,
   db = SVector3(topVert[1]->x() - baseVert[1]->x(),
                 topVert[1]->y() - baseVert[1]->y(),
                 topVert[1]->z() - baseVert[1]->z());
-  db *= .5; // edge length of the reference quad is 2...
   dc = crossprod(da, db);
-  thickness1 = norm(dc);
+  thickness1 = dot(dc, r);
 
   n = crossprod(dc, da); // n is of length thickness1
   diff = n - db;
-  tanAngle1 = dot(diff, da);
+  tanAngle1 = dot(diff, da) / thickness1;
 }
 
 void computePositionTopVert(const std::vector<MVertex*> &baseVert,
@@ -1306,124 +1319,146 @@ void computePositionTopVert(const std::vector<MVertex*> &baseVert,
 
   int order = baseVert.size()-1;
   int sizeSystem = order;
-  std::vector<double> xi(sizeSystem);
-  // initial guess
-  for (int i = 0; i < sizeSystem; ++i) {
-    // TODO use extrema of the Chebyshev polynomial
-    xi[i] = 2*(static_cast<double>(i+1)/(sizeSystem+1))-1;
-  }
 
-  // Construct system to solve
+  std::vector<double> xi(sizeSystem);
   fullMatrix<double> A(sizeSystem, sizeSystem);
   fullVector<double> b(sizeSystem), x(sizeSystem);
   int tagBez = ElementType::getTag(TYPE_LIN, order);
   const bezierBasis *fs = BasisFactory::getBezierBasis(tagBez);
 
-  // TODO better thing that cnt = 0->3
-  for (int cnt = 0; cnt < 4; ++cnt) {
-    std::vector<double> f(sizeSystem);
-    idealJacobianDeterminant(baseVert, thickness0, thickness1, xi, f);
-    idealPositionTopVert(baseVert, thickness0, thickness1,
-                         tanAngle0, tanAngle1, xi, 0, f);
+  double xy0[2] = {topVert[0]->x(), topVert[0]->y()};
+  double xy1[2] = {topVert[1]->x(), topVert[1]->y()};
+
+  // Solve for x and y separately
+  for (int iComp = 0; iComp < 2; ++iComp) {
+
+    // initial guess
     for (int i = 0; i < sizeSystem; ++i) {
-      double bsf[100];
-      fs->f(xi[i], 0, 0, bsf);
-      b(i) = f[i] - bezierCoeffIdeal[0] * bsf[0] - bezierCoeffIdeal[1] * bsf[1];
-      for (int j = 0; j < sizeSystem - 1; ++j) {
-        A(i, j) = bsf[j + 2];
-      }
-      A(i, sizeSystem - 1) = i % 2 ? 1 : -1;
+      // TODO use extrema of the Chebyshev polynomial
+      xi[i] = 2 * (static_cast<double>(i + 1) / (sizeSystem + 1)) - 1;
     }
 
-    A.luSolve(b, x);
-    double debug_epsilon = x(sizeSystem - 1);
-
-
-//    std::cout << std::setprecision(10);
-//    std::cout << std::endl;
-//    std::cout << "b_i " << bezierCoeffIdeal[0];
-//    std::vector<double> debug_x = {bezierCoeffIdeal[0]};
-//    for (int i = 0; i < sizeSystem - 1; ++i) {
-//      debug_x.push_back(x(i));
-//      std::cout << " " << x(i);
-//    }
-//    std::cout << " " << bezierCoeffIdeal[1] << std::endl;
-//    double step = .01;
-//    int N = 200;
-//    std::vector<double> xiDebug = {-1};
-//    for (int i = 0; i < N; ++i) {
-//      xiDebug.push_back(xiDebug.back() + step);
-//    }
-//    std::vector<double> fDebug(xiDebug.size());
-//    idealJacobianDeterminant(baseVert, thickness0, thickness1, xiDebug, fDebug);
-//    std::cout << "f(x)";
-//    for (int i = 0; i < fDebug.size(); ++i) {
-//      std::cout << " " << fDebug[i];
-//    }
-//    std::cout << std::endl;
-
-//    std::cout << std::endl;
-    double dxi = 1. / sizeSystem / 100;
-    for (int i = 0; i < sizeSystem; ++i) {
-      std::vector<double> xi2 = {xi[i] - dxi, xi[i] + dxi};
-      std::vector<double> f(2);
-      idealJacobianDeterminant(baseVert, thickness0, thickness1, xi2, f);
-
-      double bsfl[100];
-      double bsfr[100];
-      fs->f(xi2[0], 0, 0, bsfl);
-      fs->f(xi2[1], 0, 0, bsfr);
-      double Fleft = bezierCoeffIdeal[0] * bsfl[0] + bezierCoeffIdeal[1] * bsfl[1];
-      double Fright = bezierCoeffIdeal[0] * bsfr[0] + bezierCoeffIdeal[1] * bsfr[1];
-      for (int j = 0; j < sizeSystem - 1; ++j) {
-        Fleft += x(j) * bsfl[j + 2];
-        Fright += x(j) * bsfr[j + 2];
-      }
-      double stop = 1;
-      Fleft -= f[0];
-      Fright -= f[1];
-
-
-      double Fm = std::abs(x(sizeSystem - 1));
-      if (Fright + Fleft < 0) Fm = -Fm;
-      double dF = (Fright - Fleft) / dxi / 2;
-      //double ddF = (Fright + Fleft - 2*Fm)/dxi/dxi;
-      //xi[i] -= dF/ddF; // does not work since can be on the opposite than the top
-      int direction = (Fm > 0 && dF > 0) || (Fm < 0 && dF < 0) ? 1 : -1;
-      double step = 1. / sizeSystem / 100;
-      double previousF, F = Fm;
-      std::vector<double> newxi = {xi[i]};
-      do {
-        previousF = F;
-        newxi[0] += direction * step;
-        std::vector<double> newf(1);
-        idealJacobianDeterminant(baseVert, thickness0, thickness1, newxi, newf);
+    // TODO better thing that cnt = 0->3
+    for (int cnt = 0; cnt < 4; ++cnt) {
+      // Construct system to solve
+      std::vector<double> f(sizeSystem);
+      idealPositionTopEdge(baseVert, thickness0, thickness1,
+                           tanAngle0, tanAngle1, xi, iComp, f);
+      for (int i = 0; i < sizeSystem; ++i) {
         double bsf[100];
-        fs->f(newxi[0], 0, 0, bsf);
-        double shouldBeOne = bsf[0] + bsf[1];
-        F = bezierCoeffIdeal[0] * bsf[0] + bezierCoeffIdeal[1] * bsf[1];
+        fs->f(xi[i], 0, 0, bsf);
+        b(i) = f[i] - xy0[iComp] * bsf[0] - xy1[iComp] * bsf[1];
         for (int j = 0; j < sizeSystem - 1; ++j) {
-          F += x(j) * bsf[j + 2];
-          shouldBeOne += bsf[j+2];
+          A(i, j) = bsf[j + 2];
         }
-        double debug_F = F-newf[0];
-        F -= newf[0];
-      } while ((Fm > 0 && F > previousF) || (Fm < 0 && F < previousF));
+        A(i, sizeSystem - 1) = i % 2 ? 1 : -1;
+      }
 
-      xi[i] = newxi[0];
+      A.luSolve(b, x);
 
-      //std::cout << xi[i] << ":" << dF << ":" << ddF << " ";
+      //    double debug_epsilon = x(sizeSystem - 1);
+      //    std::cout << std::setprecision(10);
+      //    std::cout << std::endl;
+      //    std::cout << "b_i " << xy0[iComp];
+      //    std::vector<double> debug_x = {xy0[iComp]};
+      //    for (int i = 0; i < sizeSystem - 1; ++i) {
+      //      debug_x.push_back(x(i));
+      //      std::cout << " " << x(i);
+      //    }
+      //    std::cout << " " << xy1[iComp] << std::endl;
+      //    int N = 24;
+      //    double step = 2. / N;
+      //    std::vector<double> xiDebug = {-1};
+      //    for (int i = 0; i < N; ++i) {
+      //      xiDebug.push_back(xiDebug.back() + step);
+      //    }
+      //    std::vector<double> fDebug(xiDebug.size());
+      //    idealPositionTopEdge(baseVert, thickness0, thickness1,
+      //                         tanAngle0, tanAngle1, xiDebug, iComp, fDebug);
+      //    std::cout << "eps " << debug_epsilon << std::endl;
+      //    std::cout << "f(x)";
+      //    for (int i = 0; i < fDebug.size(); ++i) {
+      //      double bsf[100];
+      //      fs->f(xiDebug[i], 0, 0, bsf);
+      ////      double shouldBeOne = bsf[0] + bsf[1];
+      //      double P = xy0[iComp] * bsf[0] + xy1[iComp] * bsf[1];
+      ////      std::cout << "[" << bsf[0] << ", " << bsf[1];
+      //      for (int j = 0; j < sizeSystem - 1; ++j) {
+      //        P += x(j) * bsf[j + 2];
+      ////        std::cout << ", " << bsf[j + 2];
+      ////        shouldBeOne += bsf[j+2];
+      //      }
+      ////      std::cout << "]";
+      //      std::cout << " " << (P - fDebug[i]) / debug_epsilon;
+      ////      std::cout << " (" << P << " - " << fDebug[i] << ") ";
+      //    }
+      //    std::cout << std::endl;
+      //    std::cout << std::endl;
+
+
+      double dxi = 1. / sizeSystem / 100;
+      for (int i = 0; i < sizeSystem; ++i) {
+        std::vector<double> xi2 = {xi[i] - dxi, xi[i] + dxi};
+        std::vector<double> f(2);
+        idealPositionTopEdge(baseVert, thickness0, thickness1,
+                             tanAngle0, tanAngle1, xi2, iComp, f);
+
+        double bsfl[100];
+        double bsfr[100];
+        fs->f(xi2[0], 0, 0, bsfl);
+        fs->f(xi2[1], 0, 0, bsfr);
+        double Fleft = xy0[iComp] * bsfl[0] + xy1[iComp] * bsfl[1];
+        double Fright = xy0[iComp] * bsfr[0] + xy1[iComp] * bsfr[1];
+        for (int j = 0; j < sizeSystem - 1; ++j) {
+          Fleft += x(j) * bsfl[j + 2];
+          Fright += x(j) * bsfr[j + 2];
+        }
+        Fleft -= f[0];
+        Fright -= f[1];
+
+        double Fm = std::abs(x(sizeSystem - 1)); // the last is epsilon
+        if (Fright + Fleft < 0) Fm = -Fm;
+        double dF = (Fright - Fleft) / dxi / 2;
+        //double ddF = (Fright + Fleft - 2*Fm)/dxi/dxi;
+        //xi[i] -= dF/ddF; // does not work since can be on the opposite than the top
+        int direction = (Fm * dF > 0) ? 1 : -1;
+        double step = 1. / sizeSystem / 100;
+        double previousF, F = Fm;
+        std::vector<double> newxi = {xi[i]};
+        do {
+          previousF = F;
+          newxi[0] += direction * step;
+          std::vector<double> newf(1);
+          idealPositionTopEdge(baseVert, thickness0, thickness1,
+                               tanAngle0, tanAngle1, newxi, iComp, newf);
+          double bsf[100];
+          fs->f(newxi[0], 0, 0, bsf);
+          //        double shouldBeOne = bsf[0] + bsf[1];
+          F = xy0[iComp] * bsf[0] + xy1[iComp] * bsf[1];
+          for (int j = 0; j < sizeSystem - 1; ++j) {
+            F += x(j) * bsf[j + 2];
+            //          shouldBeOne += bsf[j+2];
+          }
+          //        double debug_F = F-newf[0];
+          F -= newf[0];
+        } while ((Fm > 0 && F > previousF) || (Fm < 0 && F < previousF));
+
+        xi[i] = newxi[0];
+      }
     }
-//    std::cout << std::endl << std::endl;
-  }
 
-
-  double minCoeff = x(0);
-  for (int i = 0; i < sizeSystem-1; ++i) {
-    bezierCoeffIdeal.push_back(x(i));
-    minCoeff = std::min(minCoeff, x(i));
+    for (int i = 1; i < order; ++i) {
+      double bsf[100];
+      double xi = -1 + 2. * i / order;
+      fs->f(xi, 0, 0, bsf);
+      double P = xy0[iComp] * bsf[0] + xy1[iComp] * bsf[1];
+      for (int j = 0; j < sizeSystem - 1; ++j) {
+        P += x(j) * bsf[j + 2];
+      }
+      if (iComp == 0) topVert[i + 1]->x() = P;
+      else            topVert[i + 1]->y() = P;
+    }
   }
-  std::cout << "epsilon: " << -x(sizeSystem-1) << " [" << -x(sizeSystem-1)/minCoeff << "] ";
 }
 
 void replaceIntermediateNode(const MElement *element, int iBaseEdge)
@@ -1776,6 +1811,7 @@ void curveColumnRobustRecursive(int metaElType, std::vector<MVertex*> &baseVert,
 
   bool newAlgo = true;
   if (newAlgo) {
+    std::cout << "EL " << el->getNum() << std::endl;
     double thickness0, thickness1, tanAngle0, tanAngle1;
     computeThicknessAngle(baseVert, topVert, thickness0,
                           thickness1, tanAngle0, tanAngle1);
