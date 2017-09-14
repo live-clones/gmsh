@@ -188,7 +188,7 @@ int GModel::_readMSH2(const std::string &name)
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
-
+  
   char str[256] = "XXX";
   double version = 1.0;
   bool binary = false, swap = false, postpro = false;

@@ -854,6 +854,8 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "MatchGeomAndMesh" , opt_geometry_match_geom_and_mesh, 0 ,
     "Matches geometries and meshes" },
+  { F|O, "MatchMeshScaleFactor" , opt_geometry_match_mesh_scale_factor, 1 ,
+    "Rescaling factor for the mesh to correspond to size of the geometry" },
 
   { F|O, "Normals" , opt_geometry_normals , 0. ,
     "Display size of normal vectors (in pixels)" },

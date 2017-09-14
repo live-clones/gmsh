@@ -79,6 +79,7 @@ struct contextGeometryOptions {
   double occScaling;
   int copyMeshingMethod, exactExtrusion;
   int matchGeomAndMesh;
+  double matchMeshScaleFactor;
   int hideCompounds, orientedPhysicals, doubleClickedEntityTag;
   int reparamOnFaceRobust;
   std::string doubleClickedPointCommand, doubleClickedLineCommand;

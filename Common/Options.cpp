@@ -4902,6 +4902,13 @@ double opt_geometry_match_geom_and_mesh(OPT_ARGS_NUM)
   return CTX::instance()->geom.matchGeomAndMesh;
 }
 
+double opt_geometry_match_mesh_scale_factor(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.matchMeshScaleFactor = (double) val;
+  return CTX::instance()->geom.matchMeshScaleFactor;
+}
+
 double opt_mesh_optimize(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){

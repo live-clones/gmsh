@@ -23,6 +23,8 @@
 #include "discreteEdge.h"
 #include "discreteFace.h"
 #include "discreteRegion.h"
+#include "Context.h"
+
 
 static int readMSHPhysicals(FILE *fp, GEntity *ge)
 {
@@ -630,6 +632,12 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
                      double scalingFactor, int elementStartNum,
                      int saveSinglePartition, bool multipleView)
 {
+  
+  // correct for the rescaling we applied to match to the geometry
+  if (CTX::instance()->geom.matchGeomAndMesh == 1) {
+    scalingFactor /= CTX::instance()->geom.matchMeshScaleFactor;
+  }
+  
   if(version < 3)
     return _writeMSH2(name, version, binary, saveAll, saveParametric,
                       scalingFactor, elementStartNum, saveSinglePartition,
