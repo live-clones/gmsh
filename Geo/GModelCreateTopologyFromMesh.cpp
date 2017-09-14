@@ -252,21 +252,9 @@ void createTopologyFromMesh1D(GModel *gm, int &num)
 
     if (gEdges.size() > 1) {
 
-
-      if (gEdges.size() > 3) {
-        std::cout << "Vertex " << mv->getNum() 
-                  << " is connected to " << gEdges.size() 
-                  << " geometric edges " << std::endl;
-      }
-    
+      
       if (gEdgesToGVertex.find(gEdges) == gEdgesToGVertex.end()) {
         num++;
-        std::cout << "Creating a vertex " << gm->getMaxElementaryNumber(0) + 1 
-                  << " for connection of edges ";
-        for (std::set<GEdge*>::iterator gg = gEdges.begin();gg!=gEdges.end();++gg) {
-          std::cout << " " << (*gg)->tag();
-        }
-        std::cout << std::endl;
 
         discreteVertex *dv = new discreteVertex(gm, gm->getMaxElementaryNumber(0) + 1);
         gm->add(dv);
@@ -630,10 +618,12 @@ void createTopologyFromMesh3D(GModel *gm, int &num)
     
     if (!r1) {
       const std::set<int>& vtx = it->first.getVertices();
-      std::cout << "Could not find pair of regions for face ";
-      for (std::set<int>::const_iterator vIter=vtx.begin();vIter!=vtx.end();++vIter) {
-        std::cout << " " << *vIter;
-      }
+      std::ostringstream faceVtcs;
+      std::set<int>::const_iterator vIt=vtx.begin();
+      for (;vIt!=vtx.end();++vIt) faceVtcs << " " << *vIt;
+      Msg::Error("Could not find pair of regions for face %s",
+                 faceVtcs.str().c_str());
+      
     }
 
     else if (r1 != r2) {

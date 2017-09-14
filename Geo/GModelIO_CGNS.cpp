@@ -419,7 +419,6 @@ createElementMSH(GModel *m, int num,
 
   switch(e->getType()){
   case TYPE_PNT :
-    std::cout << "Adding a point " << std::endl;
     elements[0][reg].push_back(e); break;
   case TYPE_LIN :
     elements[1][reg].push_back(e); break;
@@ -1555,6 +1554,11 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
   std::map<std::string,int> zoneIndices;
   std::map<std::string,int> zoneOffsets;
 
+  // retain boundary conditions
+  
+  std::map<int,std::string> bcToName;
+  std::map<int,std::string> zoneToName;
+
   int classIndex = nbZones + 1;
   
   for (int zoneIndex=1;zoneIndex<=nbZones;zoneIndex++) {
@@ -1589,6 +1593,7 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
       return 0;
     }
 
+    zoneToName[zoneIndex] = zoneName;
     zoneIndices[zoneName] = zoneIndex;
     zoneOffsets[zoneName] = vtxOffset;
 
@@ -1643,7 +1648,6 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
     // --- provide a finer classification based on boundary conditions 
     
     std::map<int,int> eltToBC;
-    std::map<int,std::string> bcToName;
 
     bool topologyDefined = readCGNSBoundaryConditions(fileIndex,baseIndex,
                                                       zoneIndex,classIndex,
@@ -1762,7 +1766,6 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
       
       delete [] elts;
     }
-
     // 
 
     readCGNSPeriodicConnections(fileIndex,baseIndex,zoneIndex,zoneName,zoneType,periodic);
@@ -1782,11 +1785,32 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertices);
 
+  // add physical entities corresponding to the bc and zones
   
-  
-  
+  std::map<int,std::map<int,std::string> > physicalSurfaces;
 
+  std::map<int,std::string>::iterator bIter = bcToName.begin();
+  for (;bIter!=bcToName.end();bIter++) {
+    int tag = bIter->first;
+    std::string name = bIter->second;
+    physicalSurfaces[tag][tag] = name;
+  }
+  
+  _storePhysicalTagsInEntities(meshDim-1,physicalSurfaces);
 
+  std::map<int,std::map<int,std::string> > physicalZones;
+
+  std::map<int,std::string>::iterator zIter = zoneToName.begin();
+  for (;zIter!=zoneToName.end();zIter++) {
+    int tag = zIter->first;
+    std::string name = zIter->second;
+    physicalZones[tag][tag] = name;
+  }
+  
+  _storePhysicalTagsInEntities(meshDim,physicalZones);
+
+  //_createGeometryOfDiscreteEntities();
+  
   return 1;
 }
 
