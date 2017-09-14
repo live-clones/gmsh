@@ -1819,6 +1819,7 @@ void curveColumnRobustRecursive(int metaElType, std::vector<MVertex*> &baseVert,
     computePositionTopVert(baseVert, topVert, thickness0,
                            thickness1, tanAngle0, tanAngle1);
 
+    replaceIntermediateNode(el, (iEdgeInElement + 2) % 4);
     return;
   }
 
