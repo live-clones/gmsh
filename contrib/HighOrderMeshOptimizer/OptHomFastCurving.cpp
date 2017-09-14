@@ -1811,7 +1811,7 @@ void curveColumnRobustRecursive(int metaElType, std::vector<MVertex*> &baseVert,
 
   bool newAlgo = true;
   if (newAlgo) {
-    std::cout << "EL " << el->getNum() << std::endl;
+//    std::cout << "EL " << el->getNum() << std::endl;
     double thickness0, thickness1, tanAngle0, tanAngle1;
     computeThicknessAngle(baseVert, topVert, thickness0,
                           thickness1, tanAngle0, tanAngle1);
@@ -1820,35 +1820,36 @@ void curveColumnRobustRecursive(int metaElType, std::vector<MVertex*> &baseVert,
                            thickness1, tanAngle0, tanAngle1);
 
     replaceIntermediateNode(el, (iEdgeInElement + 2) % 4);
-    return;
   }
+  else {
+    std::vector<double> bezierCoeffIdeal;
+    computeIdealJacobian(baseVert, topVert, bezierCoeffIdeal);
 
-  std::vector<double> bezierCoeffIdeal;
-  computeIdealJacobian(baseVert, topVert, bezierCoeffIdeal);
+    std::cout << "bezierCoeffIdeal el " << el->getNum() << ":";
+    for (int i = 0; i < bezierCoeffIdeal.size(); ++i) {
+      std::cout << " " << bezierCoeffIdeal[i];
+    }
+    std::cout << std::endl;
 
-  std::cout << "bezierCoeffIdeal el " << el->getNum() << ":";
-  for (int i = 0; i < bezierCoeffIdeal.size(); ++i) {
-    std::cout << " " << bezierCoeffIdeal[i];
+    initialGuessTopVertices(baseVert, topVert, movedVert);
+
+    GoldenSectionSearchData data;
+    data.factor = 1;
+    data.functionalAfter = 1;
+    double gain = 1;
+    static double max = 0;
+    while (gain > 1e-4 && data.functionalAfter > 1e-4) {
+      optimizeTopVertices(el, baseVert, topVert, bezierCoeffIdeal, movedVert,
+                          (iEdgeInElement + 2) % 4, normals, data);
+      gain = (data.functionalBefore - data.functionalAfter) /
+             data.functionalBefore;
+      //std::cout << " " << data.functionalAfter << ":" << gain << ":" << data.factor;
+      data.factor *= std::sqrt(data.xi / .5);
+    }
+    max = std::max(data.functionalAfter, max);
+    std::cout << "<<" << data.functionalAfter << ":" << gain << ">> " << max;
+    std::cout << std::endl;
   }
-  std::cout << std::endl;
-
-  initialGuessTopVertices(baseVert, topVert, movedVert);
-
-  GoldenSectionSearchData data;
-  data.factor = 1;
-  data.functionalAfter = 1;
-  double gain = 1;
-  static double max = 0;
-  while (gain > 1e-4 && data.functionalAfter > 1e-4) {
-    optimizeTopVertices(el, baseVert, topVert, bezierCoeffIdeal, movedVert,
-                        (iEdgeInElement + 2) % 4, normals, data);
-    gain = (data.functionalBefore-data.functionalAfter)/data.functionalBefore;
-    //std::cout << " " << data.functionalAfter << ":" << gain << ":" << data.factor;
-    data.factor *= std::sqrt(data.xi/.5);
-  }
-  max = std::max(data.functionalAfter, max);
-  std::cout << "<<" << data.functionalAfter << ":" << gain << ">> " << max;
-  std::cout << std::endl;
 
   if (blob.size() > 1) {
     blob.erase(blob.begin());
