@@ -2972,7 +2972,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
       for(exp1.Init(myshape, TopAbs_EDGE); exp1.More(); exp1.Next()){
         TopoDS_Edge edge = TopoDS::Edge(exp1.Current());
         if(BRep_Tool::Degenerated(edge))
-          rebuild->Remove(edge, false);
+          rebuild->Remove(edge);
       }
       myshape = rebuild->Apply(myshape);
     }
@@ -3016,7 +3016,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
               Msg::Info("  (natural bounds added)");
             TopoDS_Face newface = sff->Face();
 
-            rebuild->Replace(face, newface, Standard_False);
+            rebuild->Replace(face, newface);
           }
       }
       myshape = rebuild->Apply(myshape);
@@ -3028,7 +3028,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
       for(exp1.Init(myshape, TopAbs_EDGE); exp1.More(); exp1.Next()){
         TopoDS_Edge edge = TopoDS::Edge(exp1.Current());
         if(BRep_Tool::Degenerated(edge))
-          rebuild->Remove(edge, false);
+          rebuild->Remove(edge);
       }
       myshape = rebuild->Apply(myshape);
     }
@@ -3080,7 +3080,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
         replace = sfw->FixLacking(Standard_True) || replace;
         if(replace){
           TopoDS_Wire newwire = sfw->Wire();
-          rebuild->Replace(oldwire, newwire, Standard_False);
+          rebuild->Replace(oldwire, newwire);
         }
       }
     }
@@ -3108,7 +3108,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
             Msg::Info("  removing degenerated edge %d from vertex %d to vertex %d",
                       _emap.FindIndex(edge), _vmap.FindIndex(TopExp::FirstVertex(edge)),
                       _vmap.FindIndex(TopExp::LastVertex(edge)));
-            rebuild->Remove(edge, false);
+            rebuild->Remove(edge);
           }
         }
       }
@@ -3120,8 +3120,8 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
       rebuild->Apply(myshape);
       for(exp1.Init(myshape, TopAbs_EDGE); exp1.More(); exp1.Next()){
         TopoDS_Edge edge = TopoDS::Edge(exp1.Current());
-        if(BRep_Tool::Degenerated(edge) )
-          rebuild->Remove(edge, false);
+        if(BRep_Tool::Degenerated(edge))
+          rebuild->Remove(edge);
       }
       myshape = rebuild->Apply(myshape);
     }
@@ -3194,7 +3194,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
     for(exp1.Init(myshape, TopAbs_EDGE); exp1.More(); exp1.Next()){
       TopoDS_Edge edge = TopoDS::Edge(exp1.Current());
       if(BRep_Tool::Degenerated(edge))
-        rebuild->Remove(edge, false);
+        rebuild->Remove(edge);
     }
     myshape = rebuild->Apply(myshape);
   }
@@ -3228,7 +3228,7 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
           BRepLib::OrientClosedSolid(newsolid);
           Handle_ShapeBuild_ReShape rebuild = new ShapeBuild_ReShape;
           // rebuild->Apply(myshape);
-          rebuild->Replace(solid, newsolid, Standard_False);
+          rebuild->Replace(solid, newsolid);
           TopoDS_Shape newshape = rebuild->Apply(myshape, TopAbs_COMPSOLID);//, 1);
           // TopoDS_Shape newshape = rebuild->Apply(myshape);
           myshape = newshape;
@@ -3285,8 +3285,9 @@ bool OCC_Internals::_makeFaceSTL(TopoDS_Face s,
 #if (OCC_VERSION_MAJOR >= 7)
   BRepMesh_FastDiscret::Parameters parameters;
   parameters.Deflection = 0.1;
-  parameters.Angle = 0.35;
-  parameters.Relative = Standard_True;
+  parameters.Angle = 0.1;
+  //  parameters.InternalVerticesMode = Standard_False;
+  parameters.Relative = Standard_False;
   BRepMesh_FastDiscret aMesher(aBox, parameters);
 #else
   BRepMesh_FastDiscret aMesher(0.1, 0.35, aBox, Standard_False, Standard_False,

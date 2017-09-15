@@ -182,6 +182,7 @@ class StructuredField : public Field
   {
     if(data) delete[]data;
   }
+  using Field::operator();
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     if(update_needed) {
@@ -370,6 +371,7 @@ class LonLatField : public Field
   {
     return "LonLat";
   }
+  using Field::operator();
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     Field *field = GModel::current()->getFields()->get(iField);
@@ -423,6 +425,7 @@ class BoxField : public Field
   {
     return "Box";
   }
+  using Field::operator();
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     return (x <= x_max && x >= x_min && y <= y_max && y >= y_min && z <= z_max
@@ -479,6 +482,7 @@ class CylinderField : public Field
   {
     return "Cylinder";
   }
+  using Field::operator();
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     double dx = x-xc;
@@ -532,6 +536,7 @@ class BallField : public Field
   {
     return "Ball";
   }
+  using Field::operator();
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     double dx = x-xc;
@@ -610,6 +615,7 @@ class FrustumField : public Field
   {
     return "Frustum";
   }
+  using Field::operator();
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     double dx = x-x1;
@@ -680,6 +686,7 @@ class ThresholdField : public Field
       (stopAtDistMax, "True to not impose element size outside DistMax (i.e., "
        "F = a very big value if Field[IField] > DistMax)");
   }
+  using Field::operator();
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     Field *field = GModel::current()->getFields()->get(iField);
@@ -729,6 +736,7 @@ class GradientField : public Field
     options["Delta"] = new FieldOptionDouble
       (delta, "Finite difference step");
   }
+  using Field::operator();
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     Field *field = GModel::current()->getFields()->get(iField);
@@ -796,6 +804,7 @@ class CurvatureField : public Field
     g[1] /= n;
     g[2] /= n;
   }
+  using Field::operator();
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     Field *field = GModel::current()->getFields()->get(iField);
@@ -836,6 +845,7 @@ class MaxEigenHessianField : public Field
     options["Delta"] = new FieldOptionDouble
       (delta, "Step used for the finite differences");
   }
+  using Field::operator();
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     Field *field = GModel::current()->getFields()->get(iField);
@@ -888,6 +898,7 @@ class LaplacianField : public Field
     options["Delta"] = new FieldOptionDouble
       (delta, "Finite difference step");
   }
+  using Field::operator();
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     Field *field = GModel::current()->getFields()->get(iField);
@@ -924,6 +935,7 @@ class MeanField : public Field
     options["Delta"] = new FieldOptionDouble
       (delta, "Distance used to compute the mean value");
   }
+  using Field::operator();
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     Field *field = GModel::current()->getFields()->get(iField);
@@ -1089,6 +1101,7 @@ class MathEvalField : public Field
       (f, "Mathematical function to evaluate.", &update_needed);
     f = "F2 + Sin(z)";
   }
+  using Field::operator();
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     if(update_needed) {
@@ -1320,6 +1333,7 @@ class ExternalProcessField : public Field
   ~ExternalProcessField() {
     closePipes();
   }
+  using Field::operator();
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     double xyz[3] = {x, y, z};
@@ -1430,6 +1444,7 @@ class ParametricField : public Field
       "See the MathEval Field help to get a description of valid FX, FY "
       "and FZ expressions.";
   }
+  using Field::operator();
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     if(update_needed) {
@@ -1705,6 +1720,7 @@ class MinField : public Field
   {
     return "Take the minimum value of a list of fields.";
   }
+  using Field::operator();
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     double v = MAX_LC;
@@ -1744,6 +1760,7 @@ class MaxField : public Field
   {
     return "Take the maximum value of a list of fields.";
   }
+  using Field::operator();
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     double v = -MAX_LC;
@@ -1789,6 +1806,7 @@ class RestrictField : public Field
     return "Restrict the application of a field to a given list of geometrical "
       "points, curves, surfaces or volumes.";
   }
+  using Field::operator();
   double operator() (double x, double y, double z, GEntity *ge=0)
   {
     Field *f = (GModel::current()->getFields()->get(iField));
@@ -2175,6 +2193,7 @@ public:
     }
   }
 
+  using Field::operator();
   virtual double operator() (double X, double Y, double Z, GEntity *ge=0)
   {
 #if defined(_OPENMP)
@@ -2363,6 +2382,7 @@ public:
     }
   }
   
+  using Field::operator();
   virtual double operator() (double X, double Y, double Z, GEntity *ge=0)
   {
     double query_pt[3] = {X,Y,Z};
@@ -2521,6 +2541,7 @@ class OctreeField : public Field {
       _root->init(bounds.min().x(), bounds.min().y(), bounds.min().z(), _l0, *_inField, 4);
     }
   }
+  using Field::operator();
   virtual double operator() (double X, double Y, double Z, GEntity *ge=0)
   {
     SPoint3 xmin = bounds.min();

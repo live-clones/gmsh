@@ -288,6 +288,25 @@ void MTriangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *pts = getGQTPts(pOrder);
 }
 
+void MTriangleN::reverse()
+{
+  MVertex *tmp;
+  tmp = _v[1]; _v[1] = _v[2]; _v[2] = tmp;
+
+  int npts = _order-1, base = 0;
+  std::vector<MVertex*>::iterator begin = _vs.begin() + base;
+
+  while (npts > 0) {
+    std::reverse(begin, begin + 3 * npts);
+    base += 3 * npts;
+    if (npts > 2) {
+      tmp = _vs[base+1]; _vs[base+1] = _vs[base+2]; _vs[base+2] = tmp;
+    }
+    npts -= 3;
+    begin = _vs.begin() + base + 3;
+  }
+}
+
 void MTriangle::reorient(int rot,bool swap)
 {
   if (rot == 0 && !swap) return;
@@ -337,7 +356,7 @@ void MTriangleN::reorient(int rot, bool swap)
 
   idx += 3*nbEdge;
 
-  if (_vs.size() > idx ) {
+  if (_vs.size() > idx) {
     if (order == 3) tmp.push_back(_vs[idx]);
     if (order == 4) {
       if (swap) for(int i=0;i<3;i++) tmp.push_back(_vs[idx+(3+rot-i)%3]);

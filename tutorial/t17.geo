@@ -32,4 +32,7 @@ Merge "t17.pos";
 Background Mesh View[0];
 
 // Use bamg
+Mesh.SmoothRatio = 3;
+Mesh.AnisoMax = 1000;
+
 Mesh.Algorithm=7;

@@ -93,7 +93,7 @@ opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 3)
 set(GMSH_MINOR_VERSION 0)
-set(GMSH_PATCH_VERSION 5)
+set(GMSH_PATCH_VERSION 6)
 set(GMSH_EXTRA_VERSION "" CACHE STRING "Gmsh extra version string")
 
 set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
@@ -148,7 +148,7 @@ set(GMSH_API
   contrib/DiscreteIntegration/Integration3D.h
   contrib/HighOrderMeshOptimizer/OptHOM.h contrib/HighOrderMeshOptimizer/OptHomMesh.h
   contrib/HighOrderMeshOptimizer/OptHomRun.h contrib/HighOrderMeshOptimizer/ParamCoord.h
-  contrib/HighOrderMeshOptimizer/OptHomFastCurving.h 
+  contrib/HighOrderMeshOptimizer/OptHomFastCurving.h
   contrib/HighOrderMeshOptimizer/OptHomIntegralBoundaryDist.h
   contrib/HighOrderMeshOptimizer/CADDistances.h
   contrib/HighOrderMeshOptimizer/OptHomObjContribScaledJac.h
@@ -1054,7 +1054,7 @@ if(HAVE_SOLVER)
       message(STATUS "Warning: Disabling Taucs (requires METIS)")
     endif(HAVE_METIS)
   endif(ENABLE_TAUCS AND HAVE_BLAS AND HAVE_LAPACK)
-  
+
   if(ENABLE_MUMPS AND HAVE_BLAS AND HAVE_LAPACK)
     set(MUMPS_LIBS_REQUIRED smumps dmumps cmumps zmumps mumps_common pord)
     if(NOT ENABLE_MPI)
@@ -1154,7 +1154,7 @@ if(ENABLE_OCC)
         unset(OCC_LIB CACHE)
       endforeach(OCC)
       list(LENGTH OCC_LIBS NUM_OCC_LIBS)
-    endif(OCC_LIBS)      
+    endif(OCC_LIBS)
     if(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
       set_config_option(HAVE_OCC "OpenCASCADE")
       list(APPEND EXTERNAL_LIBRARIES ${OCC_LIBS})
@@ -1339,10 +1339,10 @@ check_cxx_compiler_flag("-O0" NOOPT)
 if(NOOPT OR ENABLE_BUILD_IOS)
   if(ENABLE_BUILD_IOS) # optimized iOS 10 64 bits screws somewhere in Geo
     file(GLOB_RECURSE NOOPT_SRC Geo/G*.cpp Mesh/BDS.cpp Parser/Gmsh.tab.cpp
-         contrib/Tetgen1.5/predicates.cxx)
+         contrib/Tetgen1.5/predicates.cxx contrib/blossom/*)
   else(ENABLE_BUILD_IOS)
     file(GLOB_RECURSE NOOPT_SRC Mesh/BDS.cpp Parser/Gmsh.tab.cpp
-         contrib/Tetgen1.5/predicates.cxx)
+         contrib/Tetgen1.5/predicates.cxx contrib/blossom/*)
   endif(ENABLE_BUILD_IOS)
   set_compile_flags(NOOPT_SRC "-O0")
 endif(NOOPT OR ENABLE_BUILD_IOS)

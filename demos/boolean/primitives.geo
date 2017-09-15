@@ -1,8 +1,8 @@
 SetFactory("OpenCASCADE");
 
 //Mesh.Algorithm = 6;
-Mesh.CharacteristicLengthMin = 0.09;
-Mesh.CharacteristicLengthMax = 0.09;
+Mesh.CharacteristicLengthMin = 0.1;
+Mesh.CharacteristicLengthMax = 0.1;
 
 // 3D
 x = 0; y = 0;

@@ -419,38 +419,39 @@ static void reorientQuadPoints(std::vector<MVertex*> &vtcs, int orientation,
       for (int i = 0; i < 4; i++) vtcs[start + i] = tmp[i];
 
       // EDGES
+      start += 4;
       for (int iEdge=0;iEdge<4;iEdge++){
         int p1 = indices[iEdge];
         int p2 = indices[(iEdge+1)%4];
         int nbP = order-1;
         if      (p1 == 0 && p2 == 1){
-          for (int i = 4+0*nbP; i < 4+1*nbP; i++) tmp[index++] = vtcs[i];
+          for (int i = start+0*nbP; i < start+1*nbP; i++) tmp[index++] = vtcs[i];
         }
         else if (p1 == 1 && p2 == 2){
-          for (int i = 4+1*nbP; i< 4+2*nbP; i++) tmp[index++] = vtcs[i];
+          for (int i = start+1*nbP; i< start+2*nbP; i++) tmp[index++] = vtcs[i];
         }
         else if (p1 == 2 && p2 == 3){
-          for (int i = 4+2*nbP; i< 4+3*nbP; i++) tmp[index++] = vtcs[i];
+          for (int i = start+2*nbP; i< start+3*nbP; i++) tmp[index++] = vtcs[i];
         }
         else if (p1 == 3 && p2 == 0){
-          for (int i = 4+3*nbP; i< 4+4*nbP; i++) tmp[index++] = vtcs[i];
+          for (int i = start+3*nbP; i< start+4*nbP; i++) tmp[index++] = vtcs[i];
         }
         else if (p1 == 1 && p2 == 0){
-          for (int i = 4+1*nbP-1; i >= 4+0*nbP; i--) tmp[index++] = vtcs[i];
+          for (int i = start+1*nbP-1; i >= start+0*nbP; i--) tmp[index++] = vtcs[i];
         }
         else if (p1 == 2 && p2 == 1){
-          for (int i = 4+2*nbP-1; i >= 4+1*nbP; i--) tmp[index++] = vtcs[i];
+          for (int i = start+2*nbP-1; i >= start+1*nbP; i--) tmp[index++] = vtcs[i];
         }
         else if (p1 == 3 && p2 == 2){
-          for (int i = 4+3*nbP-1; i >= 4+2*nbP; i--) tmp[index++] = vtcs[i];
+          for (int i = start+3*nbP-1; i >= start+2*nbP; i--) tmp[index++] = vtcs[i];
         }
         else if (p1 == 0 && p2 == 3){
-          for (int i = 4+4*nbP-1; i >= 4+3*nbP; i--) tmp[index++] = vtcs[i];
+          for (int i = start+4*nbP-1; i >= start+3*nbP; i--) tmp[index++] = vtcs[i];
         }
         else Msg::Error("Something wrong in reorientQuadPoints");
       }
-      for (int i = 0; i < index; i++)vtcs[start+4+i] = tmp[i];
-      start += (4 + index);
+      for (int i = 0; i < index; i++)vtcs[start+i] = tmp[i];
+      start += index;
     }
 
     order -= 2;

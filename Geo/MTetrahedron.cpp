@@ -8,6 +8,7 @@
 #include "Numeric.h"
 #include "Context.h"
 #include "BasisFactory.h"
+#include "pointsGenerators.h"
 
 #if defined(HAVE_MESH)
 #include "qualityMeasures.h"
@@ -16,6 +17,8 @@
 #endif
 
 #define SQU(a)      ((a)*(a))
+
+std::map<int, indicesReversed> MTetrahedronN::_order2indicesReversedTet;
 
 void MTetrahedron::getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                               SVector3 *n)
@@ -315,104 +318,47 @@ void MTetrahedron::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &
   Msg::Error("Could not get face information for tetrahedron %d", getNum());
 }
 
-static std::vector<std::vector<int> > tetReverseIndices(20);
-
-const std::vector<int> &MTetrahedronN::_getReverseIndices (int order)
+void _getIndicesReversedTet(int order, indicesReversed &indices)
 {
-  if(order >= (int)tetReverseIndices.size())
-    tetReverseIndices.resize(order + 1);
-  std::vector<int> &r = tetReverseIndices[order];
-  if (r.size() != 0) return r;
-  //
-  // not the funniest code ever ... (guaranteed correct only up to order 5)
-  //
-  int nb = (order+1)*(order+2)*(order+3)/6;
-  r.resize(nb);
-  int p=0;
-  for (int layerOrder = order; layerOrder>=0; layerOrder-=4) {
-    //principal vertices
-    r[p+0] = p+0;
-    if (layerOrder ==0) break;
-    r[p+1] = p+2;
-    r[p+2] = p+1;
-    r[p+3] = p+3;
-    p+=4;
-    for (int i = 0; i<layerOrder-1; i++) {
-      //E2 reversed switches with E0
-      r[p+i] = p+3*(layerOrder-1)-(i+1);
-      r[p+3*(layerOrder-1)-(i+1)] = p+i;
-      //E1 is reversed
-      r[p+(layerOrder-1)+i] = p+2*(layerOrder-1)-(i+1);
-      //E3 is preserved
-      r[p+3*(layerOrder-1)+i] = p+3*(layerOrder-1)+i;
-      //E4 switches with E5
-      r[p+4*(layerOrder-1)+i] = p+5*(layerOrder-1)+i;
-      r[p+5*(layerOrder-1)+i] = p+4*(layerOrder-1)+i;
-    }
-    p+=6*(layerOrder-1);
-    //F0(=012) switches its nodes 1 and 2
-    for (int of = layerOrder-3; of >= 0; of -= 3) {
-      r[p] = p;
-      if (of == 0) {
-        p+=1;
-        break;
-      }
-      r[p+1] = p+2;
-      r[p+2] = p+1;
-      for (int i = 0; i < of-1; i++) {
-        //switch edges 0 and 2
-        r[p+3+i] = p+3+3*(of-1)-(i+1);
-        r[p+3+3*(of-1)-(i+1)] = p+3+i;
-        //reverse edge 1
-        r[p+3+(of-1)+i] = p+3+2*(of-1)-(i+1);
-      }
-      p += 3*of;
-    }
-    //F1 (=013) reversed switches with F2 (=032)
-    int nf = (layerOrder-2)*(layerOrder-1)/2;
-    for (int of = layerOrder-3; of >= 0; of -= 3) {
-      r[p] = p+nf;
-      r[p+nf] = p;
-      if (of == 0) {
-        p += 1;
-        break;
-      }
-      r[p+1] = p+nf+2;
-      r[p+nf+2] = p+1;
-      r[p+2] = p+nf+1;
-      r[p+nf+1] = p+2;
-      for (int i = 0; i < of-1; i++) {
-        //switch edges 0 and 2
-        r[p+3+i] = p+3+3*(of-1)-(i+1)+nf;
-        r[p+3+3*(of-1)-(i+1)] = p+3+i+nf;
-        r[p+3+i+nf] = p+3+3*(of-1)-(i+1);
-        r[p+3+3*(of-1)-(i+1)+nf] = p+3+i;
-        //reverse edge 1
-        r[p+3+(of-1)+i] = p+3+2*(of-1)-(i+1)+nf;
-        r[p+3+(of-1)+i+nf] = p+3+2*(of-1)-(i+1);
-      }
-      p += 3*of;
-    }
-    p+=nf;
+  fullMatrix<double> ref = gmshGenerateMonomialsTetrahedron(order);
 
-    //F3(=312) switches its nodes 1 and 2
-    for (int of = layerOrder-3; of >= 0; of -= 3) {
-      r[p] = p;
-      if (of == 0) {
-        p += 1;
+  indices.resize(ref.size1());
+  for (int i = 0; i < ref.size1(); ++i) {
+    const double u = ref(i, 0);
+    const double v = ref(i, 1);
+    const double w = ref(i, 2);
+    for (int j = 0; j < ref.size1(); ++j) {
+      if (u == ref(j, 1) && v == ref(j, 0) && w == ref(j, 2)) {
+        indices[i] = j;
         break;
       }
-      r[p+1] = p+2;
-      r[p+2] = p+1;
-      for (int i = 0; i < of-1; i++) {
-        //switch edges 0 and 2
-        r[p+3+i] = p+3+3*(of-1)-(i+1);
-        r[p+3+3*(of-1)-(i+1)] = p+3+i;
-        //reverse edge 1
-        r[p+3+(of-1)+i] = p+3+2*(of-1)-(i+1);
-      }
-      p += 3*of;
     }
   }
-  return r;
+}
+
+void MTetrahedronN::reverse()
+{
+  std::map<int, indicesReversed>::iterator it;
+  it = _order2indicesReversedTet.find(_order);
+  if (it == _order2indicesReversedTet.end()) {
+    indicesReversed indices;
+    _getIndicesReversedTet(_order, indices);
+    _order2indicesReversedTet[_order] = indices;
+    it = _order2indicesReversedTet.find(_order);
+  }
+
+  indicesReversed &indices = it->second;
+
+  // copy vertices
+  std::vector<MVertex*> oldv(4 + _vs.size());
+  std::copy(_v, _v+4, oldv.begin());
+  std::copy(_vs.begin(), _vs.end(), oldv.begin()+4);
+
+  // reverse
+  for (int i = 0; i < 4; ++i) {
+    _v[i] = oldv[indices[i]];
+  }
+  for (unsigned int i = 0; i < _vs.size(); ++i) {
+    _vs[i] = oldv[indices[4+i]];
+  }
 }

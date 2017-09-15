@@ -52,10 +52,7 @@ enum meshGenerationStatus {PENDING, DONE, FAILED};
 extern int GModel::indexMeshVertices(bool all, int singlePartition);
 extern int GmshInitialize(int argc, char **argv);
 extern int GmshFinalize();
-extern Vertex *Create_Vertex(int Num, double X, double Y, double Z, double lc, double u);
-extern void add_physical(std::string type, List_T *list, std::string fileName,
-                         const std::string &name, int forceTag, bool append,
-                         const std::string &mode);
+
 //use the Vector object defined in Java language to wrap the std vector.
 %include "std_vector.i"
 namespace std {

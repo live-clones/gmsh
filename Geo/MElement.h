@@ -385,6 +385,7 @@ class MElement
   virtual void writeTOCHNOG(FILE *fp, int num);
   virtual void writeMESH(FILE *fp, int elementTagType=1, int elementary=1,
                          int physical=0);
+  virtual void writeNEU(FILE *fp, unsigned gambitType, int adjust, int phys=0);
   virtual void writeIR3(FILE *fp, int elementTagType, int num, int elementary,
                         int physical);
   virtual void writeBDF(FILE *fp, int format=0, int elementTagType=1,

@@ -493,7 +493,7 @@ class GModel {
   // vertices that are too close, then merge edges, faces and
   // regions). Warning: the gluer changes the geometric model, so that
   // some pointers could become invalid.
-  void glue(double eps);
+  //  void glue(double eps);
 
   // change the entity creation factory
   void setFactory(std::string name);
@@ -724,6 +724,9 @@ class GModel {
 
   // SU2 mesh file
   int writeSU2(const std::string &name, bool saveAll, double scalingFactor);
+
+  // GAMBIT neutral mesh file (.neu)
+  int writeNEU(const std::string &name, bool saveAll, double scalingFactor);
 };
 
 #endif
