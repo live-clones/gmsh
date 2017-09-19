@@ -20,6 +20,8 @@ class meshPartitionOptions
   bool createPartitionBoundaries;
   bool createGhostCells;
   bool createAllDims;
+  bool createPartitionEntities;
+  bool createTopologyFile;
 
   // Chaco
   int global_method;                    // 1 - Multilevel-KL
@@ -126,6 +128,8 @@ class meshPartitionOptions
     createPartitionBoundaries = true;
     createGhostCells = true;
     createAllDims = false;
+    createPartitionEntities = true;
+    createTopologyFile = true;
     triWeight = 1;
     quaWeight = 1;
     tetWeight = 1;

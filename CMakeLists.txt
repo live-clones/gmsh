@@ -43,7 +43,7 @@ opt(BUILD_ANDROID "Enable Android NDK library target (experimental)" OFF)
 opt(BUILD_IOS "Enable iOS (ARM) library target (experimental)" OFF)
 opt(CGNS "Enable CGNS mesh export (experimental)" OFF)
 opt(CAIRO "Enable Cairo to render fonts (experimental)" ${DEFAULT})
-opt(CHACO "Enable Chaco mesh partitioner (alternative to Metis)" ${DEFAULT})
+opt(CHACO "Enable Chaco mesh partitioner (alternative to Metis)" OFF)
 opt(COMPRESSED_IO "Enable compressed (gzip) input/output using zlib" OFF)
 opt(CXX11 "Enable C++11" ${DEFAULT})
 opt(DINTEGRATION "Enable discrete integration (needed for levelsets)" ${DEFAULT})
@@ -749,14 +749,15 @@ endif(ENABLE_POPPLER)
 
 if(HAVE_MESH OR HAVE_SOLVER)
   if(ENABLE_METIS)
-    # Gmsh currently uses Metis 4 - we should switch to Metis 5 and use the
-    # system lib if available
-    add_subdirectory(contrib/Metis)
+    # Use of Metis 5
+    add_subdirectory(contrib/Metis5/GKlib)
+    add_subdirectory(contrib/Metis5)
     # make sure to include path before any (system) Metis 5 directories
-    include_directories(BEFORE contrib/Metis)
-    set_config_option(HAVE_METIS "Metis")
+    include_directories(BEFORE contrib/Metis5/GKlib)
+    include_directories(BEFORE contrib/Metis5)
+    set_config_option(HAVE_METIS "Metis5")
     message(STATUS "Note: By including Metis you have to comply with Metis' "
-            "special licensing requirements stated in contrib/Metis/README.txt.")
+            "special licensing requirements stated in contrib/Metis5/README.txt.")
   endif(ENABLE_METIS)
 
   if(ENABLE_CHACO)
