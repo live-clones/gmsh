@@ -413,6 +413,7 @@ int MHexahedronN::getNumFacesRep(bool curved)
 
 int MHexahedron::getNumFacesRep(bool curved)
 {
+  if (CTX::instance()->mesh.numSubEdges == 1) return 24;
   return 6 * (CTX::instance()->mesh.numSubEdges *
               CTX::instance()->mesh.numSubEdges * 2);
 }
