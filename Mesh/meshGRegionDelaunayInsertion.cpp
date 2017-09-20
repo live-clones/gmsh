@@ -574,18 +574,28 @@ static void setLcs(MTetrahedron *t, std::map<MVertex*, double,MVertexLessThanNum
   }
 }
 
+#include "ExtrudeParams.h"
+
 GRegion *getRegionFromBoundingFaces(GModel *model,
                                     std::set<GFace *> &faces_bound)
 {
   GModel::riter git = model->firstRegion();
   while (git != model->lastRegion()){
-    std::list <GFace *> _faces = (*git)->faces();
-    if(_faces.size() == faces_bound.size()){
-      bool ok = true;
-      for (std::list<GFace *>::iterator it = _faces.begin(); it != _faces.end(); ++it){
-        if(faces_bound.find (*it) == faces_bound.end()) ok = false;
+    GRegion *gr = *git;
+    ExtrudeParams *ep = gr->meshAttributes.extrude;
+    if((ep && ep->mesh.ExtrudeMesh) ||
+       gr->meshAttributes.method == MESH_TRANSFINITE){
+      // extruded meshes or transfinite should be considered as "void"
+    }
+    else{
+      std::list <GFace *> _faces = (*git)->faces();
+      if(_faces.size() == faces_bound.size()){
+        bool ok = true;
+        for (std::list<GFace *>::iterator it = _faces.begin(); it != _faces.end(); ++it){
+          if(faces_bound.find (*it) == faces_bound.end()) ok = false;
+        }
+        if (ok) return *git;
       }
-      if (ok) return *git;
     }
     ++git;
   }
@@ -1182,7 +1192,7 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
 
   //  TEST_IF_BOUNDARY_IS_RECOVERED (gr);
 
-  
+
   //printf("sizeof MTet4 = %d sizeof MTetrahedron %d sizeof(MVertex) %d\n",
   //       sizeof(MTet4), sizeof(MTetrahedron), sizeof(MVertex));
 
