@@ -478,7 +478,7 @@ class GModel {
   int partitionMesh(int num);
 
   // create partition boundaries
-  void createPartitionBoundaries(int createGhostCells, int createAllDims = 0);
+  void createPartitionBoundaries(int createGhostCells);
 
   // fill the vertex arrays, given the current option and data
   bool fillVertexArrays();

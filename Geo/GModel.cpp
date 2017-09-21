@@ -4081,10 +4081,10 @@ void GModel::classifyFaces(std::set<GFace*> &_faces)
 #endif
 }
 
-void GModel::createPartitionBoundaries(int createGhostCells, int createAllDims)
+void GModel::createPartitionBoundaries(int createGhostCells)
 {
 #if (defined(HAVE_CHACO) || defined(HAVE_METIS)) && defined(HAVE_MESH)
-  CreatePartitionBoundaries(this, createGhostCells, createAllDims);
+  CreatePartitionBoundaries(this, createGhostCells);
 #endif
 }
 

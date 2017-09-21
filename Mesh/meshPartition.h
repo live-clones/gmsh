@@ -48,7 +48,7 @@ template <class ITERATOR>
 void assignElementsToEntities(GModel *model, std::vector<GVertex *> &newVertices, GVertex *vertex, std::vector<discreteVertex *> &dVertices, ITERATOR it_beg, ITERATOR it_end);
 void addPhysical(GModel *model, GEntity *newEntity, GEntity *oldEntity, int partition);
 
-int CreatePartitionBoundaries(GModel *model, bool createGhostCells, bool createAllDims = false);
+int CreatePartitionBoundaries(GModel *model, bool createGhostCells);
 template <class ITERATOR>
 void fillit_(std::unordered_map<MFace, std::vector<MElement*> , Hash_Face, Equal_Face> &faceToElement, ITERATOR it_beg, ITERATOR it_end);
 template <class ITERATOR>

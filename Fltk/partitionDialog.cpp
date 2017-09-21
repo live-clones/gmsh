@@ -36,6 +36,7 @@ void partition_opt_chaco_globalalg_cb(Fl_Widget *widget, void *data);
 void partition_opt_architecture_cb(Fl_Widget *widget, void *data);
 void partition_opt_num_partitions_cb(Fl_Widget *widget, void *data);
 void partition_opt_spectralcheck_cb(Fl_Widget *widget, void *data);
+void partition_opt_booleans_cb(Fl_Widget *widget, void *data);
 void partition_select_groups_cb(Fl_Widget *widget, void *data);
 
 // Pointers to required widgets
@@ -45,6 +46,10 @@ struct PartitionDialog
   // Group 0
   Fl_Choice *choicePartitioner;
   Fl_Value_Input *inputNumPartition;
+  Fl_Check_Button *setPartitionEntities;
+  Fl_Check_Button *setGhostCells;
+  Fl_Check_Button *setPartitionBoundaries;
+  Fl_Check_Button *setTopologyFile;
   // Group 1
   Fl_Choice *choiceChacoAlg;
   Fl_Toggle_Button *toggleButtonAdvChaco;
@@ -83,6 +88,10 @@ struct PartitionDialog
     CTX::instance()->partitionOptions.partitioner = choicePartitioner->value() + 1;
     CTX::instance()->partitionOptions.num_partitions =
       static_cast<int>(inputNumPartition->value());
+    CTX::instance()->partitionOptions.createPartitionEntities = setPartitionEntities->value();
+    CTX::instance()->partitionOptions.createGhostCells = setGhostCells->value();
+    CTX::instance()->partitionOptions.createPartitionBoundaries = setPartitionBoundaries->value();
+    CTX::instance()->partitionOptions.createTopologyFile = setTopologyFile->value();
 
     // Group 1
     CTX::instance()->partitionOptions.global_method = choiceChacoAlg->value() + 1;
@@ -137,6 +146,10 @@ struct PartitionDialog
     // Group 0
     choicePartitioner->value(CTX::instance()->partitionOptions.partitioner - 1);
     inputNumPartition->value(CTX::instance()->partitionOptions.num_partitions);
+    setPartitionEntities->value(CTX::instance()->partitionOptions.createPartitionEntities);
+    setGhostCells->value(CTX::instance()->partitionOptions.createGhostCells);
+    setPartitionBoundaries->value(CTX::instance()->partitionOptions.createPartitionBoundaries);
+    setTopologyFile->value(CTX::instance()->partitionOptions.createTopologyFile);
 
     // Group 1
     choiceChacoAlg->value(CTX::instance()->partitionOptions.global_method - 1);
@@ -323,6 +336,25 @@ void partition_opt_spectralcheck_cb(Fl_Widget *widget, void *data)
   }
 }
 
+// Option considerations for the booleans
+void partition_opt_booleans_cb(Fl_Widget *widget, void *data)
+{
+  PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
+  if(dlg->setTopologyFile->value() == 1)
+  {
+    dlg->setPartitionEntities->value(1);
+    dlg->setPartitionEntities->deactivate();
+    dlg->setPartitionBoundaries->value(1);
+    dlg->setPartitionBoundaries->deactivate();
+  }
+  else
+  {
+    dlg->setPartitionEntities->activate();
+    dlg->setPartitionBoundaries->activate();
+  }
+}
+
+
 void partition_defaults_cb(Fl_Widget *widget, void *data)
 {
   PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
@@ -485,7 +517,7 @@ void partition_dialog()
     {0}
   };
 
-  const int h = 6 * WB + 3 * BH + 4;    // This will be resized based on groups
+  const int h = 8 * WB + 5 * BH + 4;    // This will be resized based on groups
                                         // that are displayed
   const int w = 3 * BB + IW + 3 * WB;   // Window width
   int y = 0;
@@ -497,7 +529,7 @@ void partition_dialog()
 
   // Main options group [0]
   {
-    const int GH = BH + 2 + 3*WB;
+    const int GH = 3*BH + 2 + 5*WB;
     y += WB;
     Fl_Group *g = new Fl_Group(0, y, w, GH);
     // Partitioner
@@ -524,6 +556,29 @@ void partition_dialog()
       o->callback((Fl_Callback *)partition_opt_num_partitions_cb, &dlg);
       o->step(1);
       o->align(FL_ALIGN_RIGHT);
+    }
+    y += BH + WB;
+    // Booleans options
+    {
+      Fl_Check_Button *const o = new Fl_Check_Button (WB, y, 2*BB, BH, "Create partition entities");
+      dlg.setPartitionEntities = o;
+      o->callback((Fl_Callback *)partition_opt_booleans_cb, &dlg);
+    }
+    {
+      Fl_Check_Button *const o = new Fl_Check_Button (2*WB + 2*BB, y, 2*BB, BH, "Create ghost cells");
+      dlg.setGhostCells = o;
+      o->callback((Fl_Callback *)partition_opt_booleans_cb, &dlg);
+    }
+    y += BH + WB;
+    {
+      Fl_Check_Button *const o = new Fl_Check_Button (WB, y, 2*BB, BH, "Create partition boundaries");
+      dlg.setPartitionBoundaries = o;
+      o->callback((Fl_Callback *)partition_opt_booleans_cb, &dlg);
+    }
+    {
+      Fl_Check_Button *const o = new Fl_Check_Button (2*WB + 2*BB, y, 2*BB, BH, "Create a totpology file");
+      dlg.setTopologyFile = o;
+      o->callback((Fl_Callback *)partition_opt_booleans_cb, &dlg);
     }
     y += BH + WB;
     // Box (line)

@@ -84,10 +84,10 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
   
   if (options.createPartitionBoundaries || options.createGhostCells)
   {
-    CreatePartitionBoundaries(model, options.createGhostCells, options.createAllDims);
+    CreatePartitionBoundaries(model, options.createGhostCells);
   }
   
-  if (options.createTopologyFile && options.createPartitionEntities)
+  if (options.createTopologyFile && options.createPartitionEntities && (options.createPartitionBoundaries || options.createGhostCells))
   {
     CreateTopologyFile(model, options.num_partitions);
   }
@@ -828,7 +828,7 @@ void addPhysical(GModel *model, GEntity *newEntity, GEntity *oldEntity, int part
  *
  ******************************************************************************/
 
-int CreatePartitionBoundaries(GModel *model, bool createGhostCells, bool createAllDims)
+int CreatePartitionBoundaries(GModel *model, bool createGhostCells)
 {
   unsigned int numElem[6];
   const int meshDim = model->getNumMeshElements(numElem);

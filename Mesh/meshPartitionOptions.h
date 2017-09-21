@@ -19,7 +19,6 @@ class meshPartitionOptions
   int renumber;
   bool createPartitionBoundaries;
   bool createGhostCells;
-  bool createAllDims;
   bool createPartitionEntities;
   bool createTopologyFile;
 
@@ -126,10 +125,9 @@ class meshPartitionOptions
     edge_matching = 3;
     refine_algorithm = 3;
     createPartitionBoundaries = true;
-    createGhostCells = true;
-    createAllDims = false;
+    createGhostCells = false;
     createPartitionEntities = true;
-    createTopologyFile = true;
+    createTopologyFile = false;
     triWeight = 1;
     quaWeight = 1;
     tetWeight = 1;
