@@ -465,6 +465,7 @@
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Onelab/Onelab-Prefix.pch";
+                                GCC_PREPROCESSOR_DEFINITIONS = (BUILD_IOS, "DEBUG=1", "$(inherited)");
 				INFOPLIST_FILE = "Onelab/Onelab-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = (
@@ -493,6 +494,7 @@
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Onelab/Onelab-Prefix.pch";
+                                GCC_PREPROCESSOR_DEFINITIONS = BUILD_IOS;
 				INFOPLIST_FILE = "Onelab/Onelab-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = (

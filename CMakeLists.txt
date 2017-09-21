@@ -579,6 +579,7 @@ if(ENABLE_BUILD_IOS)
   if(NOT CMAKE_TOOLCHAIN_FILE)
     message(FATAL_ERROR "Cannot compile Gmsh for iOS without a toolchain")
   endif(NOT CMAKE_TOOLCHAIN_FILE)
+  add_definitions(-DBUILD_IOS)
 endif(ENABLE_BUILD_IOS)
 
 if(HAVE_FLTK OR HAVE_QT OR ENABLE_GRAPHICS)

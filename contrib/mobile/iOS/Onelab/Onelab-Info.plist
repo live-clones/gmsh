@@ -44,6 +44,8 @@
     <true/>
     <key>UIFileSharingEnabled</key>
     <true/>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
     <key>UIMainStoryboardFile</key>
     <string>iPhoneiPodStoryboard</string>
     <key>UIMainStoryboardFile~ipad</key>

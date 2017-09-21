@@ -579,6 +579,8 @@ int SystemCallExe(const std::string &exe, const std::string &argsOrCommand,
 		    &suInfo, &prInfo);
     }
   }
+#elif(BUILD_IOS)
+  Msg::Warning("SystemCall is not supported on iOS");
 #else
   std::string cmd(command);
   if(isPython || isOctave || isExe){
