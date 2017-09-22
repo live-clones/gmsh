@@ -27,6 +27,8 @@ Please report all bugs and problems to the public mailing list
 <gmsh@onelab.info>.
 """
 
+#!/usr/bin/env python
+
 import socket, struct, os, sys, subprocess, time
 _VERSION = '1.3'
 
