@@ -28,7 +28,9 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options);
 
 int MakeGraph(GModel *const model, Graph &graph);
 template <class ITERATOR>
-void fillElementsToNodesMap(std::multimap<MElement*, int> &elementsToNodes, ITERATOR it_beg, ITERATOR it_end);
+void fillElementsToNodesMap(Graph &graph, int &eptrIndex, int &eindIndex, ITERATOR it_beg, ITERATOR it_end);
+int getSizeOfEind(GModel *const model);
+int getNumVertices(MElement *const element);
 
 int PartitionGraph(Graph &graph, meshPartitionOptions &options);
 
@@ -37,7 +39,7 @@ int RenumberMeshElements(std::vector<MElement*> &elements, meshPartitionOptions 
 int RenumberMesh(GModel *const model, meshPartitionOptions &options, std::vector<MElement*> &numbered);
 int RenumberGraph(Graph &graph, meshPartitionOptions &options);
 
-int CreateNewEntities(GModel *model, meshPartitionOptions &options);
+std::multimap<int, GEntity*> CreateNewEntities(GModel *model, meshPartitionOptions &options);
 template <class ITERATOR>
 void assignElementsToEntities(GModel *model, std::vector<GRegion *> &newRegions, GRegion *region, std::vector<discreteRegion *> &dRegions, ITERATOR it_beg, ITERATOR it_end);
 template <class ITERATOR>
@@ -48,7 +50,7 @@ template <class ITERATOR>
 void assignElementsToEntities(GModel *model, std::vector<GVertex *> &newVertices, GVertex *vertex, std::vector<discreteVertex *> &dVertices, ITERATOR it_beg, ITERATOR it_end);
 void addPhysical(GModel *model, GEntity *newEntity, GEntity *oldEntity, int partition);
 
-int CreatePartitionBoundaries(GModel *model, bool createGhostCells);
+std::multimap<int, GEntity*> CreatePartitionBoundaries(GModel *model, bool createGhostCells);
 template <class ITERATOR>
 void fillit_(std::unordered_map<MFace, std::vector<MElement*> , Hash_Face, Equal_Face> &faceToElement, ITERATOR it_beg, ITERATOR it_end);
 template <class ITERATOR>

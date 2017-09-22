@@ -279,6 +279,7 @@ class GModel {
   void remove(GVertex *v);
   void remove(int dim, int tag, bool recursive=false);
   void remove(const std::vector<std::pair<int, int> > &dimTags, bool recursive=false);
+  void remove();
 
   // snap vertices on model edges by using geometry tolerance
   void snapVertices();
@@ -486,11 +487,14 @@ class GModel {
   // reclassify a mesh i.e. use an angle threshold to tag edges faces and regions
   void classifyFaces(std::set<GFace*> &_faces);
 
+  // classify a mesh for all faces on the current model
+  void classifyAllFaces();
+
   // glue entities in the model (assume a tolerance eps and merge
   // vertices that are too close, then merge edges, faces and
   // regions). Warning: the gluer changes the geometric model, so that
   // some pointers could become invalid.
-  void glue(double eps);
+  //  void glue(double eps);
 
   // change the entity creation factory
   void setFactory(std::string name);
@@ -721,6 +725,9 @@ class GModel {
 
   // SU2 mesh file
   int writeSU2(const std::string &name, bool saveAll, double scalingFactor);
+
+  // GAMBIT neutral mesh file (.neu)
+  int writeNEU(const std::string &name, bool saveAll, double scalingFactor);
 };
 
 #endif

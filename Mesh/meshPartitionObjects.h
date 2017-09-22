@@ -67,7 +67,7 @@ class Graph
   void fillDefaultWeights()
   {
     vwgt = new int[ne];
-    for(unsigned int i = 0; i < ne; i++)
+    for(int i = 0; i < ne; i++)
     {
       switch (element[i]->getType())
       {
