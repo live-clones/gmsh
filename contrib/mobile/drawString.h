@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <string>
 
 #if defined(BUILD_ANDROID)
