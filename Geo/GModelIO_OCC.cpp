@@ -121,7 +121,7 @@ void OCC_Internals::reset()
 void OCC_Internals::setMaxTag(int dim, int val)
 {
   if(dim < -2 || dim > 3) return;
-  _maxTag[dim + 2] = val;
+  _maxTag[dim + 2] = std::max(_maxTag[dim + 2], val);
 }
 
 int OCC_Internals::getMaxTag(int dim) const
