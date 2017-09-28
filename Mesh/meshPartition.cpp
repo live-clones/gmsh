@@ -111,7 +111,6 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
       tmp->setPhysicalName(it->second, it->first.first, it->first.second);
     }
     
-    int numI = 0;
     for(std::multimap<int, GEntity*>::iterator it = newPartitionEntities.begin(); it != newPartitionEntities.end(); ++it)
     {
       if(it->first == i)
@@ -131,12 +130,9 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
             tmp->add(static_cast<GRegion*>(it->second));
             break;
         }
-        numI ++;
       }
     }
-    Msg::Info("Partition %d Omega %d", i, numI);
     
-    numI = 0;
     for(std::multimap<int, GEntity*>::iterator it = newPartitionBoundaries.begin(); it != newPartitionBoundaries.end(); ++it)
     {
       if(it->first == i)
@@ -153,10 +149,8 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
             tmp->add(static_cast<GFace*>(it->second));
             break;
         }
-        numI ++;
       }
     }
-    Msg::Info("Partition %d Sigma %d", i, numI);
     
     std::ostringstream name;
     name << "mesh_" << i << ".msh";
@@ -1194,7 +1188,7 @@ void assignPartitionBoundary(GModel *model, MFace &me, std::set<partitionFace*, 
       {
         name += ",";
       }
-      name += std::to_string(ppf->_partitions[j]);
+      name += std::to_string(ppf->_partitions[j]-1);
     }
     name += "}";
     
@@ -1236,7 +1230,7 @@ void assignPartitionBoundary(GModel *model, MFace &me, std::set<partitionFace*, 
     
     for(int i = 0; i < verts.size(); i++)
     {
-      ppf->addMeshVertex(verts[i]);
+      verts[i]->setEntity(ppf);
     }
   }
   else if(me.getNumVertices() == 4)
@@ -1330,7 +1324,7 @@ void assignPartitionBoundary(GModel *model, MEdge &me, std::set<partitionEdge*, 
       {
         name += ",";
       }
-      name += std::to_string(ppe->_partitions[j]);
+      name += std::to_string(ppe->_partitions[j]-1);
     }
     name += "}";
     
@@ -1447,7 +1441,7 @@ void assignPartitionBoundary(GModel *model, MVertex *ve, std::set<partitionVerte
       {
         name += ",";
       }
-      name += std::to_string(ppv->_partitions[j]);
+      name += std::to_string(ppv->_partitions[j]-1);
     }
     name += "}";
     
