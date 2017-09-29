@@ -196,7 +196,9 @@ static std::string dimTags2String(const std::vector<std::pair<int, int> > &l)
 
 static void check_occ(std::ostringstream &sstream)
 {
+#if defined(HAVE_PARSER)
   if(gmsh_yyfactory != "OpenCASCADE") sstream << "SetFactory(\"OpenCASCADE\");\n";
+#endif
 }
 
 void add_charlength(const std::string &fileName, const std::vector<int> &l,
