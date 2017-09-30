@@ -25,6 +25,7 @@ test:
   script:
     - md build
     - cd build
-    - c:\cygwin64\bin\bash -c "cmake .."
-    - c:\cygwin64\bin\bash -c "make"
+    - cmake ..
+    - nmake
+    
     
