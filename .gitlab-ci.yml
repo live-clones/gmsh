@@ -23,7 +23,9 @@ test:
   tags:
     - windows
   script:
-    - bash -c "mkdir build"
-    - bash -c "cmake .."
+    - chdir C:\cygwin64\bin
+    - bash
+    - mkdir build
+    
     
     
