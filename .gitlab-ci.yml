@@ -1,5 +1,7 @@
 full:
-  image : onelab/ubuntu16.04
+  image: onelab/ubuntu16.04
+  tags:
+    - linux
   script:
     - mkdir build
     - cd build
@@ -8,9 +10,17 @@ full:
     - ctest -j 4 --output-on-failure
 
 minimal:
-  image : onelab/ubuntu16.04
+  image: onelab/ubuntu16.04
+  tags:
+    - linux
   script:
     - mkdir build
     - cd build
     - cmake -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 ..
     - make -j 4
+    
+test:
+  tags:
+    - windows
+  script:
+    - chdir C:\cygwin64\bin
