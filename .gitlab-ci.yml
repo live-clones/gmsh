@@ -23,9 +23,7 @@ test:
   tags:
     - windows
   script:
-    - chdir C:\cygwin64\bin
-    - bash
-    - mkdir build
+    - call utils\nighlty\gmsh_win64_nightly.bat
     
     
     
