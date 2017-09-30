@@ -23,4 +23,5 @@ test:
   tags:
     - windows
   script:
-    - chdir C:\cygwin64\bin
+    - c:\cygwin64\home\geuzaine\src\gmsh\utils\nightly\gmsh_win64_nightly.bat
+    
