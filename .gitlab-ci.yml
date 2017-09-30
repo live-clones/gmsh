@@ -23,7 +23,7 @@ test:
   tags:
     - windows
   script:
-    - call utils\nighlty\gmsh_win64_nightly.bat
+    - call utils\nightly\gmsh_win64_nightly.bat
     
     
     
