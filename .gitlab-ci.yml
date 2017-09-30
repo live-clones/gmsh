@@ -1,4 +1,4 @@
-full:
+linux64_gcc:
   image: onelab/ubuntu16.04
   tags:
     - linux
@@ -9,7 +9,7 @@ full:
     - make -j 4
     - ctest -j 4 --output-on-failure
 
-minimal:
+linux64_gcc_minimal:
   image: onelab/ubuntu16.04
   tags:
     - linux
@@ -19,7 +19,7 @@ minimal:
     - cmake -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 ..
     - make -j 4
     
-test:
+windows64_msvc:
   tags:
     - windows
   script:
