@@ -23,7 +23,7 @@ test:
   tags:
     - windows
   script:
-    - c:\cygwin64\bin\bash -c "cd utils/nightly && ctest -S gmsh_win64_nightly.ctest -VV"
+    - c:\cygwin64\bin\bash -c "export HOME=$PWD; cd utils/nightly && ctest -S gmsh_win64.ctest -VV"
     - call utils\nightly\gmsh_win64_nightly.bat
     
     
