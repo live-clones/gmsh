@@ -26,6 +26,5 @@ test:
     - md build
     - cd build
     - cmake ..
-    - nmake
     
     
