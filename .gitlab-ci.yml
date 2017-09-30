@@ -26,5 +26,6 @@ test:
     - md build
     - cd build
     - cmake ..
+    - MSBuild package.vcxproj
     
     
