@@ -26,6 +26,6 @@ windows64_msvc:
     - md build
     - cd build
     - cmake ..
-    - msbuild package
+    - msbuild package.vcxproj
     
     
