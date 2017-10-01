@@ -23,9 +23,11 @@ windows64_msvc:
   tags:
     - windows
   script:
+    - bash -c "echo $PWD"
+    - bash --login -c "echo $PWD"
     - md build
     - cd build
-    - cmake ..
-    - msbuild package.vcxproj
+    #- cmake ..
+    #- msbuild package.vcxproj
     
     
