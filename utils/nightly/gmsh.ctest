@@ -23,7 +23,7 @@ else(WITH_COVERAGE AND CTEST_COVERAGE_COMMAND)
 endif(WITH_COVERAGE AND CTEST_COVERAGE_COMMAND)
 
 set(CTEST_SOURCE_DIRECTORY "$ENV{HOME}/src/gmsh")
-set(CTEST_GIT_REPOS http://gitlab.onelab.info/gmsh/gmsh.git)
+set(CTEST_GIT_REPOS https://gitlab.onelab.info/gmsh/gmsh.git)
 
 if(NOT EXISTS "${CTEST_SOURCE_DIRECTORY}")
   set(CTEST_CHECKOUT_COMMAND 
