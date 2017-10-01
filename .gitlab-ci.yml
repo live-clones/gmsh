@@ -23,7 +23,7 @@ windows64_msvc:
   tags:
     - windows
   script:
-    - bash -c "echo $PWD; mkdir aaa; cd aaa; /usr/local/bin/cmake .."
+    - bash -c "echo $PWD; mkdir aaa; cd aaa; /usr/bin/cmake .."
     - bash --login -c "echo $PWD"
     - md build
     - cd build
