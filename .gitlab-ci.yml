@@ -19,6 +19,8 @@ test_docker_linux64_gcc:
   image: onelab/ubuntu16.04
   tags:
     - linux
+  dependencies:
+    - build_docker_linux64_gcc
   script:
     - cd build
     - ctest -j 4 --output-on-failure
@@ -61,6 +63,8 @@ test_official_windows64_gcc:
   tags:
     - windows
     - official
+  dependencies:
+    - build_official_windows64_gcc
   script:
     - cd build
     - bash -c "ctest -j 2"
