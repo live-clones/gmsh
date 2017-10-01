@@ -23,10 +23,9 @@ windows64_msvc:
   tags:
     - windows
   script:
-     - mkdir build
-#    - md build
-#    - cd build
-#    - cmake ..
-#    - msbuild package.vcxproj
+    - md build
+    - cd build
+    - cmake ..
+    - msbuild package.vcxproj
     
     
