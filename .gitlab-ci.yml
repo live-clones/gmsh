@@ -23,7 +23,7 @@ windows64_msvc:
   tags:
     - windows
   script:
-    - bash -c "echo $PWD; mkdir aaa; cd aaa && /usr/bin/cmake -DCMAKE_PREFIX_PATH=/usr/local/opencascade;/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DPETSC_ARCH=win64_complex_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc-3.7.5 -DSLEPC_DIR=/home/geuzaine/src/slepc-3.7.3 .."
+    - bash -c "echo $PWD; mkdir aaa; cd aaa && /usr/bin/cmake -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DPETSC_ARCH=win64_complex_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc-3.7.5 -DSLEPC_DIR=/home/geuzaine/src/slepc-3.7.3 .."
     - md build
     - cd build
     #- cmake ..
