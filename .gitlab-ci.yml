@@ -1,5 +1,6 @@
 stages:
   - build
+  - test
   - deploy
   
 build_docker_linux64_gcc:
@@ -12,6 +13,14 @@ build_docker_linux64_gcc:
     - cd build
     - cmake ..
     - make -j 4
+
+test_docker_linux64_gcc:
+  stage: test
+  image: onelab/ubuntu16.04
+  tags:
+    - linux
+  script:
+    - cd build
     - ctest -j 4 --output-on-failure
 
 build_docker_linux64_gcc_minimal:
@@ -20,15 +29,15 @@ build_docker_linux64_gcc_minimal:
   tags:
     - linux
   script:
-    - mkdir build
-    - cd build
+    - mkdir build_minimal
+    - cd build_minimal
     - cmake -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 ..
     - make -j 4
     
 build_windows64_msvc:
   stage: build
   tags:
-    - windows_removed
+    - windows
   script:
     - md build
     - cd build
@@ -47,9 +56,22 @@ build_official_windows64_gcc:
     - bash -c "make package -j 2"
     - bash -c "ctest -j 2"
 
+test_official_windows64_gcc:
+  stage: test
+  tags:
+    - windows
+    - official
+  script:
+    - cd build
+    - bash -c "ctest -j 2"
+
 deploy_official_windows64_gcc:
   stage: deploy
+  tags:
+    - windows
+    - official
   when: manual
   script:
-     - bash -c "echo 'Copying build to gmsh.info...'"
-     
+    - bash -c "echo 'Copying build to gmsh.info...'"
+    - cd build
+    - bash -c "scp gmsh-*.zip gmsh.info:.wwwgmsh/beta/"
