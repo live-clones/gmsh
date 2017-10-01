@@ -28,11 +28,3 @@ windows64_msvc:
     - cd build
     #- cmake ..
     #- msbuild package.vcxproj
-    .."
-    - bash --login -c "echo $PWD"
-    - md build
-    - cd build
-    #- cmake ..
-    #- msbuild package.vcxproj
-    
-    
