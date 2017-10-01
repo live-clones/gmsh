@@ -1,6 +1,5 @@
 stages:
   - build
-  - test
   - deploy
   
 build_docker_linux64_gcc:
@@ -13,17 +12,7 @@ build_docker_linux64_gcc:
     - cd build
     - cmake ..
     - make -j 4
-
-test_docker_linux64_gcc:
-  stage: test
-  image: onelab/ubuntu16.04
-  tags:
-    - linux
-  dependencies:
-    - build_docker_linux64_gcc
-  script:
-    - cd build
-    - ctest -j 4 --output-on-failure
+    - ctest -j 4
 
 build_docker_linux64_gcc_minimal:
   stage: build
@@ -55,20 +44,13 @@ build_official_windows64_gcc:
     - md build
     - cd build
     - bash -c "/usr/bin/cmake -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DPETSC_ARCH=win64_complex_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc-3.7.5 -DSLEPC_DIR=/home/geuzaine/src/slepc-3.7.3 .."
-    - bash -c "make package -j 2"
+    - bash -c "make -j 2"
     - bash -c "ctest -j 2"
-
-test_official_windows64_gcc:
-  stage: test
-  tags:
-    - windows
-    - official
-  dependencies:
-    - build_official_windows64_gcc
-  script:
-    - cd build
-    - bash -c "ctest -j 2"
-
+    - bash -c "make package"
+  artifacts:
+    paths:
+      - build/gmsh-*.zip
+      
 deploy_official_windows64_gcc:
   stage: deploy
   tags:
@@ -76,6 +58,4 @@ deploy_official_windows64_gcc:
     - official
   when: manual
   script:
-    - bash -c "echo 'Copying build to gmsh.info...'"
-    - cd build
-    - bash -c "scp gmsh-*.zip gmsh.info:.wwwgmsh/beta/"
+    - bash -c "echo 'Copying build to gmsh.info...'; ls -al"
