@@ -58,4 +58,4 @@ deploy_official_windows64_gcc:
     - official
   when: manual
   script:
-    - bash -c "scp -i /home/geuzaine/.ssh/id_rsa build/gmsh-*.zip gmsh.info:.wwwgmsh/beta/"
+    - bash -c "scp -i /home/geuzaine/.ssh/id_rsa build/gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/beta/"
