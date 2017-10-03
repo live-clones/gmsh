@@ -42,7 +42,7 @@ build_windows64_msvc:
     - msbuild package.vcxproj
 
 variables:
-  EXTRA_VERSION="-git"
+  EXTRA_VERSION: "-git"
 
 build_official_windows64_gcc: &anchor_build_official_windows64_gcc
   stage: build
