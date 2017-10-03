@@ -7,8 +7,6 @@ build_docker_linux64_gcc:
   image: onelab/ubuntu16.04
   tags:
     - linux
-  except:
-    - schedules
   script:
     - mkdir build
     - cd build
@@ -21,8 +19,6 @@ build_docker_linux64_gcc_minimal:
   image: onelab/ubuntu16.04
   tags:
     - linux
-  except:
-    - schedules
   script:
     - mkdir build_minimal
     - cd build_minimal
@@ -33,8 +29,6 @@ build_windows64_msvc:
   stage: build
   tags:
     - windows
-  except:
-    - schedules
   script:
     - md build
     - cd build
@@ -52,17 +46,17 @@ build_official_windows64_gcc: &anchor_build_official_windows64_gcc
   script:
     - md build
     - cd build
-    - echo %EXTRA_VERSION%
-    - bash -c "echo %EXTRA_VERSION%"
-    - bash -c "echo $EXTRA_VERSION"
     - bash -c "/usr/bin/cmake -DGMSH_EXTRA_VERSION=$EXTRA_VERSION -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DPETSC_ARCH=win64_complex_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc-3.7.5 -DSLEPC_DIR=/home/geuzaine/src/slepc-3.7.3 .."
     - bash -c "/usr/bin/make package -j 2"
     - bash -c "/usr/bin/ctest -j 2"
-    - bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa build/gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/beta/"
+    - bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/beta/"
+  only:
+    - master
 
 tag_build_official_windows64_gcc:
   variables:
     EXTRA_VERSION: ""
-  only:
-    - tags
   <<: *anchor_build_official_windows64_gcc
+  only:
+    - master
+    - tags

@@ -209,6 +209,23 @@ include(CheckFunctionExists)
 include(CheckIncludeFile)
 include(CheckCXXCompilerFlag)
 
+# check if the machine is 64 bits (this is more reliable than using
+# CMAKE_SIZEOF_VOID_P, which does not seem to work e.g. on some Suse
+# machines)
+check_type_size("void*" SIZEOF_VOID_P)
+if(SIZEOF_VOID_P EQUAL 8)
+  set(HAVE_64BIT_SIZE_T TRUE)
+endif(SIZEOF_VOID_P EQUAL 8)
+
+# append 32/64 to the build name on Linux and Windows
+if(NOT APPLE)
+  if(HAVE_64BIT_SIZE_T)
+    set(GMSH_OS "${GMSH_OS}64")
+  else(HAVE_64BIT_SIZE_T)
+    set(GMSH_OS "${GMSH_OS}32")
+  endif(HAVE_64BIT_SIZE_T)
+endif(NOT APPLE)
+
 if(ENABLE_WRAP_PYTHON AND NOT ENABLE_BUILD_SHARED)
   set(ENABLE_BUILD_DYNAMIC ON)
 endif(ENABLE_WRAP_PYTHON AND NOT ENABLE_BUILD_SHARED)
@@ -297,14 +314,6 @@ macro(set_compile_flags LISTNAME FLAGS)
     endif(PROP)
   endforeach(FILE)
 endmacro(set_compile_flags)
-
-# check if the machine is 64 bits (this is more reliable than using
-# CMAKE_SIZEOF_VOID_P, which does not seem to work e.g. on some Suse
-# machines)
-check_type_size("void*" SIZEOF_VOID_P)
-if(SIZEOF_VOID_P EQUAL 8)
-  set(HAVE_64BIT_SIZE_T TRUE)
-endif(SIZEOF_VOID_P EQUAL 8)
 
 if(ENABLE_BLAS_LAPACK)
   if(BLAS_LAPACK_LIBRARIES)
@@ -1805,7 +1814,11 @@ set(CPACK_PACKAGE_VERSION_PATCH ${GMSH_PATCH_VERSION})
 set(CPACK_PACKAGE_DESCRIPTION_FILE ${WELCOME_FILE})
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
     "3D finite element mesh generator with built-in CAD engine and post-processor")
-set(CPACK_PACKAGE_FILE_NAME gmsh-${GMSH_VERSION}-${GMSH_OS})
+if(GMSH_EXTRA_VERSION MATCHES "-git") # so that we'll overwrite the archives
+  set(CPACK_PACKAGE_FILE_NAME gmsh-git-${GMSH_OS})
+else(GMSH_EXTRA_VERSION MATCHES "-git")
+  set(CPACK_PACKAGE_FILE_NAME gmsh-${GMSH_VERSION}-${GMSH_OS})      
+endif(GMSH_EXTRA_VERSION MATCHES "-git")      
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "Gmsh")
 set(CPACK_RESOURCE_FILE_LICENSE ${LICENSE_FILE})
 set(CPACK_RESOURCE_FILE_README ${WELCOME_FILE})
