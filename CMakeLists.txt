@@ -209,12 +209,18 @@ include(CheckFunctionExists)
 include(CheckIncludeFile)
 include(CheckCXXCompilerFlag)
 
+macro(set_config_option VARNAME STRING)
+  set(${VARNAME} TRUE)
+  list(APPEND CONFIG_OPTIONS ${STRING})
+  message(STATUS "Found " ${STRING})
+endmacro(set_config_option)
+
 # check if the machine is 64 bits (this is more reliable than using
 # CMAKE_SIZEOF_VOID_P, which does not seem to work e.g. on some Suse
 # machines)
 check_type_size("void*" SIZEOF_VOID_P)
 if(SIZEOF_VOID_P EQUAL 8)
-  set(HAVE_64BIT_SIZE_T TRUE)
+  set_config_option(HAVE_64BIT_SIZE_T "64Bit")
 endif(SIZEOF_VOID_P EQUAL 8)
 
 # append 32/64 to the build name on Linux and Windows
@@ -251,12 +257,6 @@ if(MSVC)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
   endif(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
 endif(MSVC)
-
-macro(set_config_option VARNAME STRING)
-  set(${VARNAME} TRUE)
-  list(APPEND CONFIG_OPTIONS ${STRING})
-  message(STATUS "Found " ${STRING})
-endmacro(set_config_option)
 
 if(ENABLE_OPENMP)
   find_package(OpenMP)
