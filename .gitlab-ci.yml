@@ -58,5 +58,4 @@ tag_build_official_windows64_gcc:
     EXTRA_VERSION: ""
   <<: *anchor_build_official_windows64_gcc
   only:
-    - master
     - tags
