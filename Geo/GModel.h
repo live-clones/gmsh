@@ -260,6 +260,12 @@ class GModel {
   fiter lastFace() { return faces.end(); }
   eiter lastEdge() { return edges.end(); }
   viter lastVertex() { return vertices.end(); }
+  
+  // get the set of entities
+  std::set<GRegion*, GEntityLessThan> getGRegions() const { return regions; };
+  std::set<GFace*, GEntityLessThan> getGFaces() const { return faces; };
+  std::set<GEdge*, GEntityLessThan> getGEdges() const { return edges; };
+  std::set<GVertex*, GEntityLessThan> getGVertices() const { return vertices; };
 
   // find the entity with the given tag
   GRegion *getRegionByTag(int n) const;

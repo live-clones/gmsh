@@ -14,6 +14,7 @@
 class partitionEdge : public discreteEdge {
  public:
   std::vector<int> _partitions;
+  GEdge *_parentEntity;
  public:
   partitionEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1,
                 std::vector<int> &partitions)
@@ -23,6 +24,9 @@ class partitionEdge : public discreteEdge {
   }
   virtual ~partitionEdge() {}
   virtual GeomType geomType() const { return PartitionCurve; }
+  
+  virtual void setParentEntity(GEdge* e) { _parentEntity = e; }
+  virtual GEdge* getParentEntity() const { return _parentEntity; }
 };
 
 struct Less_partitionEdge :

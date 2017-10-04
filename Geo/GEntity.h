@@ -117,7 +117,8 @@ class GEntity {
     CompoundVolume,
     PartitionVertex,
     PartitionCurve,
-    PartitionSurface
+    PartitionSurface,
+    PartitionVolume
   };
 
   enum MeshGenerationStatus {
@@ -168,7 +169,8 @@ class GEntity {
       "Compound Volume",
       "Partition vertex",
       "Partition curve",
-      "Partition surface"
+      "Partition surface",
+      "Partition volume"
     };
     unsigned int type = (unsigned int)geomType();
     if(type >= sizeof(name) / sizeof(name[0]))

@@ -3,32 +3,32 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
-#ifndef _PARTITION_FACE_H_
-#define _PARTITION_FACE_H_
+#ifndef _PARTITION_REGION_H_
+#define _PARTITION_REGION_H_
 
 #include "GModel.h"
-#include "discreteFace.h"
+#include "discreteRegion.h"
 
-class partitionFace : public discreteFace {
+class partitionRegion : public discreteRegion {
  public:
   std::vector<int> _partitions;
-  GFace *_parentEntity;
+  GRegion *_parentEntity;
  public:
-  partitionFace(GModel *model, int num, std::vector<int> &partitions) 
-    : discreteFace(model, num), _partitions(partitions)
+  partitionRegion(GModel *model, int num, std::vector<int> &partitions)
+    : discreteRegion(model, num), _partitions(partitions)
   {
     std::sort(_partitions.begin(), _partitions.end());
   }
-  virtual ~partitionFace() {}
-  virtual GeomType geomType() const { return PartitionSurface; }
+  virtual ~partitionRegion() {}
+  virtual GeomType geomType() const { return PartitionVolume; }
   
-  virtual void setParentEntity(GFace* f) { _parentEntity = f; }
-  virtual GFace* getParentEntity() const { return _parentEntity; }
+  virtual void setParentEntity(GRegion* r) { _parentEntity = r; }
+  virtual GRegion* getParentEntity() const { return _parentEntity; }
 };
 
-struct Less_partitionFace : 
-  public std::binary_function<partitionFace*, partitionFace*, bool> {
-  bool operator()(const partitionFace* e1, const partitionFace* e2) const
+struct Less_partitionRegion :
+  public std::binary_function<partitionRegion*, partitionRegion*, bool> {
+  bool operator()(const partitionRegion* e1, const partitionRegion* e2) const
   {
     if (e1->_partitions.size() < e2->_partitions.size()) return true; 
     if (e1->_partitions.size() > e2->_partitions.size()) return false;
