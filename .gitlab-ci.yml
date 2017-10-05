@@ -1,7 +1,10 @@
-build_docker_linux_gcc:
+variables:
+  EXTRA_VERSION: "-git"
+
+linux64_docker:
   image: onelab/ubuntu16.04
   tags:
-    - linux
+    - linux64
   script:
     - mkdir build
     - cd build
@@ -9,32 +12,26 @@ build_docker_linux_gcc:
     - make -j 4
     - ctest -j 4 --output-on-failure
 
-build_docker_linux_gcc_minimal:
+linux64_docker_minimal:
   image: onelab/ubuntu16.04
   tags:
-    - linux
+    - linux64
   script:
     - mkdir build_minimal
     - cd build_minimal
     - cmake -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 ..
     - make -j 4
     
-build_windows_msvc:
+windows64_msvc:
   tags:
-    - windows
+    - windows64
   script:
     - md build
     - cd build
     - cmake ..
     - msbuild package.vcxproj
 
-variables:
-  EXTRA_VERSION: "-git"
-
-build_official_linux_gcc: &anchor_build_official_linux_gcc
-  tags:
-    - linux
-    - official
+linux_official: &ref_linux_official
   only:
     - master
   script:
@@ -45,17 +42,19 @@ build_official_linux_gcc: &anchor_build_official_linux_gcc
     - /usr/local/bin/ctest -D Experimental -j 2 --output-on-failure
     - PKG=`ls gmsh-*.tar*`; scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/beta/${PKG/\.tar\.gz/\.tgz}
 
-tag_build_official_linux_gcc:
-  variables:
-    EXTRA_VERSION: ""
-  <<: *anchor_build_official_linux_gcc
-  only:
-    - tags
-
-build_official_windows_gcc: &anchor_build_official_windows_gcc
+linux64_official:
+  <<: *ref_linux_official
   tags:
-    - windows
+    - linux64
     - official
+
+linux32_official:
+  <<: *ref_linux_official
+  tags:
+    - linux32
+    - official
+
+windows_official: &ref_windows_official
   only:
     - master
   script:
@@ -66,9 +65,14 @@ build_official_windows_gcc: &anchor_build_official_windows_gcc
     - bash -c "/usr/bin/ctest -D Experimental -j 2 --output-on-failure"
     - bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/beta/"
 
-tag_build_official_windows_gcc:
-  variables:
-    EXTRA_VERSION: ""
-  <<: *anchor_build_official_windows_gcc
-  only:
-    - tags
+windows64_official:
+  <<: *ref_windows_official
+  tags:
+    - windows64
+    - official
+
+windows32_official:
+  <<: *ref_windows_official
+  tags:
+    - windows32
+    - official
