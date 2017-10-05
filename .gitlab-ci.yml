@@ -1,4 +1,4 @@
-build_docker_linux64_gcc:
+build_docker_linux_gcc:
   image: onelab/ubuntu16.04
   tags:
     - linux
@@ -9,7 +9,7 @@ build_docker_linux64_gcc:
     - make -j 4
     - ctest -j 4 --output-on-failure
 
-build_docker_linux64_gcc_minimal:
+build_docker_linux_gcc_minimal:
   image: onelab/ubuntu16.04
   tags:
     - linux
@@ -31,7 +31,7 @@ build_windows_msvc:
 variables:
   EXTRA_VERSION: "-git"
 
-build_official_linux64_gcc: &anchor_build_official_linux64_gcc
+build_official_linux_gcc: &anchor_build_official_linux_gcc
   tags:
     - linux
     - official
@@ -45,10 +45,10 @@ build_official_linux64_gcc: &anchor_build_official_linux64_gcc
     - /usr/local/bin/ctest -j 2 --output-on-failure
     - PKG=`ls gmsh-*.tar*`; scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/beta/${PKG/\.tar\.gz/\.tgz}
 
-tag_build_official_linux64_gcc:
+tag_build_official_linux_gcc:
   variables:
     EXTRA_VERSION: ""
-  <<: *anchor_build_official_linux64_gcc
+  <<: *anchor_build_official_linux_gcc
   only:
     - tags
 
