@@ -48,7 +48,7 @@ linux64_official:
     - linux64
     - official
 
-linux32_official:
+.linux32_official:
   <<: *ref_linux_official
   tags:
     - linux32
