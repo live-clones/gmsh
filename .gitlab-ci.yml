@@ -31,7 +31,7 @@ windows64_msvc:
     - cmake ..
     - msbuild package.vcxproj
 
-linux_official: &ref_linux_official
+.linux_official: &ref_linux_official
   only:
     - master
   script:
@@ -54,7 +54,7 @@ linux32_official:
     - linux32
     - official
 
-windows_official: &ref_windows_official
+.windows_official: &ref_windows_official
   only:
     - master
   script:
