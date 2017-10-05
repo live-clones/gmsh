@@ -7,39 +7,39 @@ variables:
 
 linux64_docker:
   image: onelab/ubuntu16.04
-  tags:
-    - linux64
   script:
     - mkdir build
     - cd build
     - cmake ..
     - make -j 4
     - ctest -j 4 --output-on-failure
+  tags:
+    - linux64
 
 linux64_docker_minimal:
   image: onelab/ubuntu16.04
-  tags:
-    - linux64
   script:
     - mkdir build_minimal
     - cd build_minimal
     - cmake -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 ..
     - make -j 4
+  tags:
+    - linux64
     
 windows64_msvc:
-  tags:
-    - windows64
   script:
     - md build
     - cd build
     - cmake ..
     - msbuild package.vcxproj
+  tags:
+    - windows64
 
 # ------------------------------------------
 # Official Linux builds (master branch only)
 # ------------------------------------------
 
-.linux_official: &ref_linux_official
+linux64_official:
   only:
     - master
   script:
@@ -49,17 +49,8 @@ windows64_msvc:
     - make package -j 2
     - /usr/local/bin/ctest -D Experimental -j 2 --output-on-failure
     - PKG=`ls gmsh-*.tar*`; scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/beta/${PKG/\.tar\.gz/\.tgz}
-
-linux64_official:
-  <<: *ref_linux_official
   tags:
     - linux64
-    - official
-
-.linux32_official:
-  <<: *ref_linux_official
-  tags:
-    - linux32
     - official
 
 # --------------------------------------------
@@ -89,4 +80,21 @@ windows32_official:
     - windows32
     - official
   allow_failure: true
-  
+
+# ------------------------------------------
+# Official MacOS builds (master branch only)
+# ------------------------------------------
+
+macos64_official:
+  only:
+    - master
+  script:
+    - mkdir build
+    - cd build
+    - /usr/local/bin/cmake -DGMSH_EXTRA_VERSION=$EXTRA_VERSION -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DENABLE_CAIRO=0 -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc-3.7.5 -DSLEPC_DIR=/home/geuzaine/src/slepc-3.7.3 -DBLAS_LAPACK_LIBRARIES=/usr/local/lib/libopenblas.a ..
+    - make package -j 2
+    - /usr/local/bin/ctest -D Experimental -j 2 --output-on-failure
+    - PKG=`ls gmsh-*.dmg`; scp -o StrictHostKeyChecking=no -i /Users/geuzaine/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/beta/${PKG}
+  tags:
+    - macos64
+    - official
