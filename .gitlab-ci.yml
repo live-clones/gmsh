@@ -1,6 +1,10 @@
 variables:
   EXTRA_VERSION: "-git"
 
+# ------------------------------
+# Docker builds for all branches
+# ------------------------------
+
 linux64_docker:
   image: onelab/ubuntu16.04
   tags:
@@ -31,6 +35,10 @@ windows64_msvc:
     - cmake ..
     - msbuild package.vcxproj
 
+# ------------------------------------------
+# Official Linux builds (master branch only)
+# ------------------------------------------
+
 .linux_official: &ref_linux_official
   only:
     - master
@@ -54,6 +62,10 @@ linux64_official:
     - linux32
     - official
 
+# --------------------------------------------
+# Official Windows builds (master branch only)
+# --------------------------------------------
+
 .windows_official: &ref_windows_official
   only:
     - master
@@ -76,3 +88,5 @@ windows32_official:
   tags:
     - windows32
     - official
+  allow_failure: true
+  
