@@ -39,9 +39,10 @@ void assignToParent(std::set<MVertex*> &verts, partitionVertex *vertex, ITERATOR
 
 int MakeGraph(GModel *const model, Graph &graph);
 template <class ITERATOR>
-void fillElementsToNodesMap(Graph &graph, int &eptrIndex, int &eindIndex, ITERATOR it_beg, ITERATOR it_end);
+void fillElementsToNodesMap(Graph &graph, const GEntity* entity, int &eptrIndex, int &eindIndex, ITERATOR it_beg, ITERATOR it_end);
 int getSizeOfEind(GModel *const model);
 int getNumVertices(MElement *const element);
+int getNumPeriodicLink(GModel* model);
 
 int PartitionGraph(Graph &graph, meshPartitionOptions &options);
 

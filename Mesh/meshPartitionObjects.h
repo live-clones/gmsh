@@ -69,6 +69,11 @@ class Graph
     vwgt = new int[ne];
     for(int i = 0; i < ne; i++)
     {
+      if(element[i] == NULL)
+      {
+        vwgt[i] = 1;
+        continue;
+      }
       switch (element[i]->getType())
       {
         case TYPE_TRI:

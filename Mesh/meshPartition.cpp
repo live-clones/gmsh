@@ -68,7 +68,7 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
 
   for(int i = 0; i < graph.ne; i++)
   {
-    graph.element[i]->setPartition(partition[i]+1);
+    if(graph.element[i] != NULL) graph.element[i]->setPartition(partition[i]+1);
   }
 
   model->recomputeMeshPartitions();
@@ -439,12 +439,13 @@ void assignToParent(std::set<MVertex*> &verts, partitionVertex *vertex, ITERATOR
 
 int MakeGraph(GModel *const model, Graph &graph)
 {
-  graph.ne = model->getNumMeshElements();
+  const int numOfPeriodicLink = getNumPeriodicLink(model);
+  graph.ne = model->getNumMeshElements() + numOfPeriodicLink;
   graph.nn = model->getNumMeshVertices();
   graph.dim = model->getDim();
   graph.eptr = new int[graph.ne+1];
   graph.eptr[0] = 0;
-  graph.eind = new int[getSizeOfEind(model)];
+  graph.eind = new int[getSizeOfEind(model) + 2*numOfPeriodicLink];
   graph.element.resize(graph.ne);
   
   int eptrIndex = 0;
@@ -466,12 +467,26 @@ int MakeGraph(GModel *const model, Graph &graph)
   {
     const GRegion *r = *it;
     
-    fillElementsToNodesMap(graph, eptrIndex, eindIndex, r->tetrahedra.begin(), r->tetrahedra.end());
-    fillElementsToNodesMap(graph, eptrIndex, eindIndex, r->hexahedra.begin(), r->hexahedra.end());
-    fillElementsToNodesMap(graph, eptrIndex, eindIndex, r->prisms.begin(), r->prisms.end());
-    fillElementsToNodesMap(graph, eptrIndex, eindIndex, r->pyramids.begin(), r->pyramids.end());
-    fillElementsToNodesMap(graph, eptrIndex, eindIndex, r->trihedra.begin(), r->trihedra.end());
-    fillElementsToNodesMap(graph, eptrIndex, eindIndex, r->polyhedra.begin(), r->polyhedra.end());
+    fillElementsToNodesMap(graph, r, eptrIndex, eindIndex, r->tetrahedra.begin(), r->tetrahedra.end());
+    fillElementsToNodesMap(graph, r, eptrIndex, eindIndex, r->hexahedra.begin(), r->hexahedra.end());
+    fillElementsToNodesMap(graph, r, eptrIndex, eindIndex, r->prisms.begin(), r->prisms.end());
+    fillElementsToNodesMap(graph, r, eptrIndex, eindIndex, r->pyramids.begin(), r->pyramids.end());
+    fillElementsToNodesMap(graph, r, eptrIndex, eindIndex, r->trihedra.begin(), r->trihedra.end());
+    fillElementsToNodesMap(graph, r, eptrIndex, eindIndex, r->polyhedra.begin(), r->polyhedra.end());
+    
+    //Take into account the periodic node in the graph
+    if(r->correspondingVertices.size() != 0)
+    {
+      for(std::map<MVertex*, MVertex*>::const_iterator itP = r->correspondingVertices.begin(); itP != r->correspondingVertices.end(); ++itP)
+      {
+        graph.element[eptrIndex] = NULL;
+        eptrIndex++;
+        graph.eptr[eptrIndex] = graph.eptr[eptrIndex-1] + 2;
+        graph.eind[eindIndex] = itP->first->getNum()-1;
+        graph.eind[eindIndex+1] = itP->second->getNum()-1;
+        eindIndex += 2;
+      }
+    }
   }
   
   //Loop over faces
@@ -479,9 +494,23 @@ int MakeGraph(GModel *const model, Graph &graph)
   {
     const GFace *f = *it;
     
-    fillElementsToNodesMap(graph, eptrIndex, eindIndex, f->triangles.begin(), f->triangles.end());
-    fillElementsToNodesMap(graph, eptrIndex, eindIndex, f->quadrangles.begin(), f->quadrangles.end());
-    fillElementsToNodesMap(graph, eptrIndex, eindIndex, f->polygons.begin(), f->polygons.end());
+    fillElementsToNodesMap(graph, f, eptrIndex, eindIndex, f->triangles.begin(), f->triangles.end());
+    fillElementsToNodesMap(graph, f, eptrIndex, eindIndex, f->quadrangles.begin(), f->quadrangles.end());
+    fillElementsToNodesMap(graph, f, eptrIndex, eindIndex, f->polygons.begin(), f->polygons.end());
+    
+    //Take into account the periodic node in the graph
+    if(f->correspondingVertices.size() != 0)
+    {
+      for(std::map<MVertex*, MVertex*>::const_iterator itP = f->correspondingVertices.begin(); itP != f->correspondingVertices.end(); ++itP)
+      {
+        graph.element[eptrIndex] = NULL;
+        eptrIndex++;
+        graph.eptr[eptrIndex] = graph.eptr[eptrIndex-1] + 2;
+        graph.eind[eindIndex] = itP->first->getNum()-1;
+        graph.eind[eindIndex+1] = itP->second->getNum()-1;
+        eindIndex += 2;
+      }
+    }
   }
   
   //Loop over edges
@@ -489,7 +518,21 @@ int MakeGraph(GModel *const model, Graph &graph)
   {
     const GEdge *e = *it;
     
-    fillElementsToNodesMap(graph, eptrIndex, eindIndex, e->lines.begin(), e->lines.end());
+    fillElementsToNodesMap(graph, e, eptrIndex, eindIndex, e->lines.begin(), e->lines.end());
+    
+    //Take into account the periodic node in the graph
+    if(e->correspondingVertices.size() != 0)
+    {
+      for(std::map<MVertex*, MVertex*>::const_iterator itP = e->correspondingVertices.begin(); itP != e->correspondingVertices.end(); ++itP)
+      {
+        graph.element[eptrIndex] = NULL;
+        eptrIndex++;
+        graph.eptr[eptrIndex] = graph.eptr[eptrIndex-1] + 2;
+        graph.eind[eindIndex] = itP->first->getNum()-1;
+        graph.eind[eindIndex+1] = itP->second->getNum()-1;
+        eindIndex += 2;
+      }
+    }
   }
   
   //Loop over vertices
@@ -497,14 +540,28 @@ int MakeGraph(GModel *const model, Graph &graph)
   {
     GVertex *v = *it;
     
-    fillElementsToNodesMap(graph, eptrIndex, eindIndex, v->points.begin(), v->points.end());
+    fillElementsToNodesMap(graph, v, eptrIndex, eindIndex, v->points.begin(), v->points.end());
+    
+    //Take into account the periodic node in the graph
+    if(v->correspondingVertices.size() != 0)
+    {
+      for(std::map<MVertex*, MVertex*>::const_iterator itP = v->correspondingVertices.begin(); itP != v->correspondingVertices.end(); ++itP)
+      {
+        graph.element[eptrIndex] = NULL;
+        eptrIndex++;
+        graph.eptr[eptrIndex] = graph.eptr[eptrIndex-1] + 2;
+        graph.eind[eindIndex] = itP->first->getNum()-1;
+        graph.eind[eindIndex+1] = itP->second->getNum()-1;
+        eindIndex += 2;
+      }
+    }
   }
   
   return 0;
 }
 
 template <class ITERATOR>
-void fillElementsToNodesMap(Graph &graph, int &eptrIndex, int &eindIndex, ITERATOR it_beg, ITERATOR it_end)
+void fillElementsToNodesMap(Graph &graph, const GEntity* entity, int &eptrIndex, int &eindIndex, ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it)
   {
@@ -570,6 +627,20 @@ int getNumVertices(MElement *const element)
     case TYPE_TRIH : return 4;
     default : return 0;
   }
+}
+
+int getNumPeriodicLink(GModel* model)
+{
+  int numOfPeriodicLink = 0;
+  std::vector<GEntity*> entities;
+  model->getEntities(entities);
+  
+  for(unsigned int i = 0; i < entities.size(); i++)
+  {
+    numOfPeriodicLink += entities[i]->correspondingVertices.size();
+  }
+  
+  return numOfPeriodicLink;
 }
 
 /*******************************************************************************
