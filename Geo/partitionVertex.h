@@ -15,7 +15,7 @@ class partitionVertex : public discreteVertex {
   GVertex *_parentEntity;
  public:
   partitionVertex(GModel *model, int num, std::vector<int> &partitions) 
-    : discreteVertex(model, num), _partitions(partitions)
+    : discreteVertex(model, num), _partitions(partitions), _parentEntity(NULL)
   {
     std::sort(_partitions.begin(), _partitions.end());
   }

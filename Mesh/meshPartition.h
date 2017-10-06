@@ -9,6 +9,7 @@
 #include <vector>
 #include <unordered_map>
 
+#include "partitionRegion.h"
 #include "partitionFace.h"
 #include "partitionEdge.h"
 #include "partitionVertex.h"
@@ -25,6 +26,16 @@ class Graph;
 class meshPartitionOptions;
 
 int PartitionMesh(GModel *const model, meshPartitionOptions &options);
+
+int UnpartitionMesh(GModel *const model);
+template <class ITERATOR>
+void assignToParent(std::set<MVertex*> &verts, partitionRegion *region, ITERATOR it_beg, ITERATOR it_end);
+template <class ITERATOR>
+void assignToParent(std::set<MVertex*> &verts, partitionFace *face, ITERATOR it_beg, ITERATOR it_end);
+template <class ITERATOR>
+void assignToParent(std::set<MVertex*> &verts, partitionEdge *edge, ITERATOR it_beg, ITERATOR it_end);
+template <class ITERATOR>
+void assignToParent(std::set<MVertex*> &verts, partitionVertex *vertex, ITERATOR it_beg, ITERATOR it_end);
 
 int MakeGraph(GModel *const model, Graph &graph);
 template <class ITERATOR>
@@ -50,15 +61,15 @@ template <class ITERATOR>
 void assignElementsToEntities(GModel *model, std::vector<GVertex *> &newVertices, ITERATOR it_beg, ITERATOR it_end);
 void addPhysical(GModel *model, GEntity *entity, int partition);
 
-std::multimap<int, GEntity*> CreatePartitionBoundaries(GModel *model, std::map<MElement*, std::vector<MElement*> > &boundaryEntitiesToNeighbor, bool createGhostCells);
+std::multimap<int, GEntity*> CreatePartitionBoundaries(GModel *model, bool createGhostCells);
 template <class ITERATOR>
 void fillit_(std::unordered_map<MFace, std::vector<MElement*> , Hash_Face, Equal_Face> &faceToElement, ITERATOR it_beg, ITERATOR it_end);
 template <class ITERATOR>
 void fillit_(std::unordered_map<MEdge, std::vector<MElement*> , Hash_Edge, Equal_Edge> &edgeToElement, ITERATOR it_beg, ITERATOR it_end);
 template <class ITERATOR>
 void fillit_(std::unordered_map<MVertex*, std::vector<MElement*> > &vertexToElement, ITERATOR it_beg, ITERATOR it_end);
-void assignPartitionBoundary(GModel *model, std::map<MElement*, std::vector<MElement*> > &boundaryEntitiesToNeighbor, MFace &me, std::set<partitionFace*, Less_partitionFace> &pfaces, std::vector<MElement*> &v);
-void assignPartitionBoundary(GModel *model, std::map<MElement*, std::vector<MElement*> > &boundaryEntitiesToNeighbor, MEdge &me, std::set<partitionEdge*, Less_partitionEdge> &pedges, std::vector<MElement*> &v, std::set<partitionFace*, Less_partitionFace> &pfaces, std::set<partitionEdge*, Less_partitionEdge> &bndedges);
+void assignPartitionBoundary(GModel *model, MFace &me, std::set<partitionFace*, Less_partitionFace> &pfaces, std::vector<MElement*> &v);
+void assignPartitionBoundary(GModel *model, MEdge &me, std::set<partitionEdge*, Less_partitionEdge> &pedges, std::vector<MElement*> &v, std::set<partitionFace*, Less_partitionFace> &pfaces, std::set<partitionEdge*, Less_partitionEdge> &bndedges);
 void assignPartitionBoundary(GModel *model, MVertex *ve, std::set<partitionVertex*, Less_partitionVertex> &pvertices, std::vector<MElement*> &v, std::set<partitionEdge*, Less_partitionEdge> &pedges, std::set<partitionFace*, Less_partitionFace> &pfaces, std::set<partitionEdge*, Less_partitionEdge> &bndedges, std::set<partitionVertex*, Less_partitionVertex> &bndvertices);
 
 void AssignMeshVertices(GModel *model);
@@ -68,10 +79,6 @@ void setVerticesToEntity(std::set<MVertex *> &verts, ITERATOR it_beg, ITERATOR i
 void CreateTopologyFile(GModel* model, const int npart);
 std::vector<int> getNumFromString(std::string name);
 bool commonPhysicals(const std::vector<int> vec1, const std::vector<int> vec2, std::vector<int>* vecCommon);
-
-void OrientMesh(GModel* model, std::map<MElement*, std::vector<MElement*> > &boundaryEntitiesToNeighbor, int partition);
-template <class ITERATOR>
-void checkDirection(std::map<MElement*, std::vector<MElement*> > &boundaryEntitiesToNeighbor, int partition, ITERATOR it_beg, ITERATOR it_end);
 
 int PartitionMeshFace(std::list<GFace*> &cFaces, meshPartitionOptions &options);
 int PartitionMeshElements(std::vector<MElement*> &elements,

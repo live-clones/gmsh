@@ -462,22 +462,22 @@ void GRegion::addElement(int type, MElement *e)
 {
   switch (type){
   case TYPE_TET:
-    addTetrahedron((MTetrahedron*) e);
+    addTetrahedron(reinterpret_cast<MTetrahedron*>(e));
     break;
   case TYPE_HEX:
-    addHexahedron((MHexahedron*) e);
+    addHexahedron(reinterpret_cast<MHexahedron*>(e));
     break;
   case TYPE_PRI:
-    addPrism((MPrism*) e);
+    addPrism(reinterpret_cast<MPrism*>(e));
     break;
   case TYPE_PYR:
-    addPyramid((MPyramid*) e);
+    addPyramid(reinterpret_cast<MPyramid*>(e));
     break;
   case TYPE_TRIH:
-    addTrihedron((MTrihedron*) e);
+    addTrihedron(reinterpret_cast<MTrihedron*>(e));
     break;
   case TYPE_POLYH:
-    addPolyhedron((MPolyhedron*) e);
+    addPolyhedron(reinterpret_cast<MPolyhedron*>(e));
     break;
   default:
     Msg::Error("Trying to add unsupported element in region");

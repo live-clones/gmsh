@@ -312,10 +312,12 @@ class GModel {
   // return all physical groups (one map per dimension: 0-D to 3-D)
   void getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4]) const;
   void getPhysicalGroups(int dim, std::map<int, std::vector<GEntity*> > &groups) const;
+  std::map<std::pair<int, int>, std::string> getAllPhysical() const { return physicalNames; }
 
   // delete physical groups in the model
   void deletePhysicalGroups();
   void deletePhysicalGroup(int dim, int num);
+  void erasePhysicalGroup(int dim, int num);
 
   // return the highest number associated with a physical entity of a
   // given dimension (or highest for all dimenions if dim < 0)

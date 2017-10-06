@@ -15,7 +15,7 @@ class partitionRegion : public discreteRegion {
   GRegion *_parentEntity;
  public:
   partitionRegion(GModel *model, int num, std::vector<int> &partitions)
-    : discreteRegion(model, num), _partitions(partitions)
+    : discreteRegion(model, num), _partitions(partitions), _parentEntity(NULL)
   {
     std::sort(_partitions.begin(), _partitions.end());
   }

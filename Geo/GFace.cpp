@@ -1917,3 +1917,20 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies)
 
   setMeshMaster(master, tfo);
 }
+
+void GFace::addElement(int type, MElement *e)
+{
+  switch (type){
+    case TYPE_TRI:
+      addTriangle(reinterpret_cast<MTriangle*>(e));
+      break;
+    case TYPE_QUA:
+      addQuadrangle(reinterpret_cast<MQuadrangle*>(e));
+      break;
+    case TYPE_POLYG:
+      addPolygon(reinterpret_cast<MPolygon*>(e));
+      break;
+    default:
+      Msg::Error("Trying to add unsupported element in face");
+  }
+}

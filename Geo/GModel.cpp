@@ -699,6 +699,13 @@ void GModel::deletePhysicalGroup(int dim, int num)
   }
 }
 
+void GModel::erasePhysicalGroup(int dim, int num)
+{
+  deletePhysicalGroup(dim, num);
+  
+  physicalNames.erase(std::pair<int,int>(dim, num));
+}
+
 int GModel::getMaxPhysicalNumber(int dim)
 {
   std::vector<GEntity*> entities;
@@ -3902,8 +3909,7 @@ void GModel::classifyFaces(std::set<GFace*> &_faces)
 void GModel::createPartitionBoundaries(int createGhostCells)
 {
 #if (defined(HAVE_CHACO) || defined(HAVE_METIS)) && defined(HAVE_MESH)
-  std::map<MElement*, std::vector<MElement*> > boundaryEntitiesToNeighbor;
-  CreatePartitionBoundaries(this, boundaryEntitiesToNeighbor, createGhostCells);
+  CreatePartitionBoundaries(this, createGhostCells);
 #endif
 }
 

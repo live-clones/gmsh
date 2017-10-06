@@ -375,7 +375,7 @@ void partition_partition_cb(Fl_Widget *widget, void *data)
 
   // Update the screen
   if(!ier) {
-    opt_mesh_zone_definition(0, GMSH_SET, 1.);  // Define zone by partition
+    opt_mesh_zone_definition(0, GMSH_SET, 2.);  // Define zone by partition
     opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);
     CTX::instance()->mesh.changed = ENT_ALL;
     drawContext::global()->draw();

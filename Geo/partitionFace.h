@@ -15,7 +15,7 @@ class partitionFace : public discreteFace {
   GFace *_parentEntity;
  public:
   partitionFace(GModel *model, int num, std::vector<int> &partitions) 
-    : discreteFace(model, num), _partitions(partitions)
+    : discreteFace(model, num), _partitions(partitions), _parentEntity(NULL)
   {
     std::sort(_partitions.begin(), _partitions.end());
   }
