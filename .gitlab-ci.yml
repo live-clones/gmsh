@@ -6,9 +6,9 @@
 variables:
   EXTRA_VERSION: "-git"
 
-# ------------------------------
-# Docker builds for all branches
-# ------------------------------
+# -----------------------
+# Builds for all branches
+# -----------------------
 
 linux64_docker:
   image: onelab/ubuntu16.04
@@ -102,4 +102,21 @@ macos64_official:
     - PKG=`ls gmsh-*.dmg`; scp -o StrictHostKeyChecking=no -i /Users/geuzaine/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/MacOSX/${PKG}
   tags:
     - macos64
+    - official
+
+# ----------------------------------------------
+# Official source snapshots (master branch only)
+# ----------------------------------------------
+
+source_official:
+  only:
+    - master
+  script:
+    - mkdir build_src
+    - cd build_src
+    - /usr/local/bin/cmake -DGMSH_EXTRA_VERSION=$EXTRA_VERSION ..
+    - make package_source
+    - PKG=`ls gmsh-*.tar*`; scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/src/${PKG/\.tar\.gz/\.tgz}
+  tags:
+    - linux64
     - official

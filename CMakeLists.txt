@@ -1818,8 +1818,10 @@ set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
     "3D finite element mesh generator with built-in CAD engine and post-processor")
 if(GMSH_EXTRA_VERSION MATCHES "-git") # so that we'll overwrite the archives
   set(CPACK_PACKAGE_FILE_NAME gmsh-git-${GMSH_OS})
+  set(CPACK_SOURCE_PACKAGE_FILE_NAME gmsh-git-source)
 else(GMSH_EXTRA_VERSION MATCHES "-git")
   set(CPACK_PACKAGE_FILE_NAME gmsh-${GMSH_VERSION}-${GMSH_OS})      
+  set(CPACK_SOURCE_PACKAGE_FILE_NAME gmsh-${GMSH_VERSION}-source)
 endif(GMSH_EXTRA_VERSION MATCHES "-git")      
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "Gmsh")
 set(CPACK_RESOURCE_FILE_LICENSE ${LICENSE_FILE})
@@ -1827,7 +1829,6 @@ set(CPACK_RESOURCE_FILE_README ${WELCOME_FILE})
 set(CPACK_RESOURCE_FILE_WELCOME ${WELCOME_FILE})
 set(CPACK_PACKAGE_EXECUTABLE "gmsh;Gmsh")
 set(CPACK_STRIP_FILES TRUE)
-set(CPACK_SOURCE_PACKAGE_FILE_NAME gmsh-${GMSH_VERSION}-source)
 set(CPACK_SOURCE_GENERATOR TGZ)
 set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_CURRENT_BINARY_DIR}" "/CVS/" "/.svn" "/.git"
     "~$" "DS_Store$" "GmshConfig.h$" "GmshVersion.h$" "/benchmarks/" "/tmp/"
