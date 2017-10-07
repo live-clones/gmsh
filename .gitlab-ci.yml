@@ -15,7 +15,7 @@ linux64_docker:
   script:
     - mkdir build
     - cd build
-    - cmake ..
+    - cmake -DGMSH_EXTRA_VERSION=$EXTRA_VERSION ..
     - make -j 4
     - ctest -j 4 --output-on-failure
   tags:
@@ -26,7 +26,7 @@ linux64_docker_minimal:
   script:
     - mkdir build_minimal
     - cd build_minimal
-    - cmake -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 ..
+    - cmake -DGMSH_EXTRA_VERSION=$EXTRA_VERSION -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 ..
     - make -j 4
   tags:
     - linux64
@@ -35,7 +35,7 @@ windows64_msvc:
   script:
     - md build
     - cd build
-    - cmake ..
+    - cmake -DGMSH_EXTRA_VERSION=$EXTRA_VERSION ..
     - msbuild package.vcxproj
   tags:
     - windows64
