@@ -60,18 +60,19 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
   Msg::StatusBar(true, "Building mesh graph...");
   int ier = MakeGraph(model, graph);
   Msg::StatusBar(true, "Partitioning graph...");
-  if(!ier) ier = PartitionGraph(graph, options);
+  if(!ier && options.num_partitions > 1) ier = PartitionGraph(graph, options);
   if(ier) return 1;
 
   // Assign partitions to internal elements
-  int *partition = graph.partition;
-
-  for(int i = 0; i < graph.ne; i++)
+  for(unsigned int i = 0; i < graph.ne(); i++)
   {
-    if(graph.element[i] != NULL) graph.element[i]->setPartition(partition[i]+1);
+    if(graph.element(i) != NULL && options.num_partitions > 1) graph.element(i)->setPartition(graph.partition(i)+1);
+    if(graph.element(i) != NULL && options.num_partitions == 1) graph.element(i)->setPartition(1);
   }
 
   model->recomputeMeshPartitions();
+  
+  //return 1;
   
   std::multimap<int, GEntity*> newPartitionEntities;
   if(options.createPartitionEntities)
@@ -440,23 +441,23 @@ void assignToParent(std::set<MVertex*> &verts, partitionVertex *vertex, ITERATOR
 int MakeGraph(GModel *const model, Graph &graph)
 {
   const int numOfPeriodicLink = getNumPeriodicLink(model);
-  graph.ne = model->getNumMeshElements() + numOfPeriodicLink;
-  graph.nn = model->getNumMeshVertices();
-  graph.dim = model->getDim();
-  graph.eptr = new int[graph.ne+1];
-  graph.eptr[0] = 0;
-  graph.eind = new int[getSizeOfEind(model) + 2*numOfPeriodicLink];
-  graph.element.resize(graph.ne);
+  graph.ne(model->getNumMeshElements() + numOfPeriodicLink);
+  graph.nn(model->getNumMeshVertices());
+  graph.dim(model->getDim());
+  graph.elementResize(graph.ne());
+  graph.eptrResize(graph.ne()+1);
+  graph.eptr(0,0);
+  graph.eindResize(getSizeOfEind(model) + 2*numOfPeriodicLink);
   
   int eptrIndex = 0;
   int eindIndex = 0;
   
-  if(graph.ne == 0)
+  if(graph.ne() == 0)
   {
     Msg::Error("No mesh elements were found");
     return 1;
   }
-  if(graph.dim == 0)
+  if(graph.dim() == 0)
   {
     Msg::Error("Cannot partition a point");
     return 1;
@@ -479,11 +480,11 @@ int MakeGraph(GModel *const model, Graph &graph)
     {
       for(std::map<MVertex*, MVertex*>::const_iterator itP = r->correspondingVertices.begin(); itP != r->correspondingVertices.end(); ++itP)
       {
-        graph.element[eptrIndex] = NULL;
+        graph.element(eptrIndex, NULL);
         eptrIndex++;
-        graph.eptr[eptrIndex] = graph.eptr[eptrIndex-1] + 2;
-        graph.eind[eindIndex] = itP->first->getNum()-1;
-        graph.eind[eindIndex+1] = itP->second->getNum()-1;
+        graph.eptr(eptrIndex, graph.eptr(eptrIndex-1) + 2);
+        graph.eind(eindIndex, itP->first->getNum()-1);
+        graph.eind(eindIndex+1, itP->second->getNum()-1);
         eindIndex += 2;
       }
     }
@@ -503,11 +504,11 @@ int MakeGraph(GModel *const model, Graph &graph)
     {
       for(std::map<MVertex*, MVertex*>::const_iterator itP = f->correspondingVertices.begin(); itP != f->correspondingVertices.end(); ++itP)
       {
-        graph.element[eptrIndex] = NULL;
+        graph.element(eptrIndex, NULL);
         eptrIndex++;
-        graph.eptr[eptrIndex] = graph.eptr[eptrIndex-1] + 2;
-        graph.eind[eindIndex] = itP->first->getNum()-1;
-        graph.eind[eindIndex+1] = itP->second->getNum()-1;
+        graph.eptr(eptrIndex, graph.eptr(eptrIndex-1) + 2);
+        graph.eind(eindIndex, itP->first->getNum()-1);
+        graph.eind(eindIndex+1, itP->second->getNum()-1);
         eindIndex += 2;
       }
     }
@@ -525,11 +526,11 @@ int MakeGraph(GModel *const model, Graph &graph)
     {
       for(std::map<MVertex*, MVertex*>::const_iterator itP = e->correspondingVertices.begin(); itP != e->correspondingVertices.end(); ++itP)
       {
-        graph.element[eptrIndex] = NULL;
+        graph.element(eptrIndex, NULL);
         eptrIndex++;
-        graph.eptr[eptrIndex] = graph.eptr[eptrIndex-1] + 2;
-        graph.eind[eindIndex] = itP->first->getNum()-1;
-        graph.eind[eindIndex+1] = itP->second->getNum()-1;
+        graph.eptr(eptrIndex, graph.eptr(eptrIndex-1) + 2);
+        graph.eind(eindIndex, itP->first->getNum()-1);
+        graph.eind(eindIndex+1, itP->second->getNum()-1);
         eindIndex += 2;
       }
     }
@@ -547,11 +548,11 @@ int MakeGraph(GModel *const model, Graph &graph)
     {
       for(std::map<MVertex*, MVertex*>::const_iterator itP = v->correspondingVertices.begin(); itP != v->correspondingVertices.end(); ++itP)
       {
-        graph.element[eptrIndex] = NULL;
+        graph.element(eptrIndex, NULL);
         eptrIndex++;
-        graph.eptr[eptrIndex] = graph.eptr[eptrIndex-1] + 2;
-        graph.eind[eindIndex] = itP->first->getNum()-1;
-        graph.eind[eindIndex+1] = itP->second->getNum()-1;
+        graph.eptr(eptrIndex, graph.eptr(eptrIndex-1) + 2);
+        graph.eind(eindIndex, itP->first->getNum()-1);
+        graph.eind(eindIndex+1, itP->second->getNum()-1);
         eindIndex += 2;
       }
     }
@@ -566,12 +567,12 @@ void fillElementsToNodesMap(Graph &graph, const GEntity* entity, int &eptrIndex,
   for(ITERATOR it = it_beg; it != it_end; ++it)
   {
     const int numVertices = getNumVertices(*it);
-    graph.element[eptrIndex] = *it;
+    graph.element(eptrIndex, *it);
     eptrIndex++;
-    graph.eptr[eptrIndex] = graph.eptr[eptrIndex-1] + numVertices;
+    graph.eptr(eptrIndex, graph.eptr(eptrIndex-1) + numVertices);
     for(int i = 0; i < numVertices; i++)
     {
-      graph.eind[eindIndex] = (*it)->getVertex(i)->getNum()-1;
+      graph.eind(eindIndex, (*it)->getVertex(i)->getNum()-1);
       eindIndex++;
     }
   }
@@ -720,14 +721,16 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
         metisOptions[METIS_OPTION_NUMBERING] = 0; //C numbering
         metisOptions[METIS_OPTION_OBJTYPE] = METIS_OBJTYPE_CUT; //Specifies the type of objective.
 
-        const int nCommon = graph.dim;
+        const unsigned int nCommon = graph.dim();
         int objval;
-        int *epart = new int[graph.ne];
-        int *npart = new int[graph.nn];
+        unsigned int *epart = new unsigned int[graph.ne()];
+        unsigned int *npart = new unsigned int[graph.nn()];
+        const unsigned int ne = graph.ne();
+        const unsigned int nn = graph.nn();
         
         graph.fillDefaultWeights();
       
-        const int metisError = METIS_PartMeshDual((idx_t *)&graph.ne, (idx_t *)&graph.nn, (idx_t *)graph.eptr, (idx_t *)graph.eind, (idx_t *)graph.vwgt, (idx_t *)NULL, (idx_t *)&nCommon, (idx_t *)&options.num_partitions, (real_t *)NULL, (idx_t *)metisOptions, (idx_t *)&objval, (idx_t *)epart, (idx_t *)npart);
+        const int metisError = METIS_PartMeshDual((idx_t *)&ne, (idx_t *)&nn, (idx_t *)graph.eptr(), (idx_t *)graph.eind(), (idx_t *)graph.vwgt(), (idx_t *)NULL, (idx_t *)&nCommon, (idx_t *)&options.num_partitions, (real_t *)NULL, (idx_t *)metisOptions, (idx_t *)&objval, (idx_t *)epart, (idx_t *)npart);
         
         switch(metisError)
         {
@@ -751,7 +754,7 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
             break;
         }
         
-        graph.partition = epart;
+        graph.partition(epart);
         delete[] npart;
         
         Msg::Info("Total edge cut : %d", objval);
@@ -895,10 +898,10 @@ int RenumberMesh(GModel *const model, meshPartitionOptions &options, std::vector
   
   // create the numbering
   numbered.clear();
-  const int n = graph.nn;
+  const int n = graph.nn();
   numbered.resize(n);
   for(int i = 0; i != n; ++i) {
-    numbered[graph.partition[i]-1] = graph.element[i];
+    numbered[graph.partition(i)-1] = graph.element(i);
   }
   
   Msg::StatusBar(true, "Done renumbering graph");
@@ -913,8 +916,13 @@ int RenumberGraph(Graph &graph, meshPartitionOptions &options)
     Msg::Info("Launching METIS graph renumberer");
     try {
       int numFlag = 0;
-      int nCommon = graph.dim;
-      int metisError = METIS_MeshToDual((idx_t *)&graph.ne, (idx_t *)&graph.nn, (idx_t *)graph.eptr, (idx_t *)graph.eind, (idx_t *)&nCommon, (idx_t *)&numFlag, (idx_t **)&graph.xadj, (idx_t **)&graph.adjncy);
+      int nCommon = graph.dim();
+      unsigned int ne = graph.ne();
+      unsigned int nn = graph.nn();
+      unsigned int *xadj;
+      unsigned int *adjncy;
+      
+      int metisError = METIS_MeshToDual((idx_t *)&ne, (idx_t *)&nn, (idx_t *)graph.eptr(), (idx_t *)graph.eind(), (idx_t *)&nCommon, (idx_t *)&numFlag, (idx_t **)&xadj, (idx_t **)&adjncy);
       
       switch(metisError)
       {
@@ -939,8 +947,8 @@ int RenumberGraph(Graph &graph, meshPartitionOptions &options)
       }
       
       int options = 0;
-      int *perm = new int[graph.ne];
-      metisError = METIS_NodeND((idx_t *)&graph.ne, (idx_t *)graph.xadj, (idx_t *)graph.adjncy, (idx_t *)graph.vwgt, (idx_t *)&options, (idx_t *)perm, (idx_t *)graph.partition);
+      int *perm = new int[graph.ne()];
+      metisError = METIS_NodeND((idx_t *)&ne, (idx_t *)xadj, (idx_t *)adjncy, (idx_t *)graph.vwgt(), (idx_t *)&options, (idx_t *)perm, (idx_t *)graph.partition());
       
       switch(metisError)
       {
@@ -1036,8 +1044,6 @@ std::multimap<int, GEntity*> CreateNewEntities(GModel *model, meshPartitionOptio
     (*it)->polyhedra.clear();
   }
   
-  std::vector<discreteFace *> dFaces;
-  std::vector<GFace *> oldFaces;
   for(GModel::fiter it = faces.begin(); it != faces.end(); ++it)
   {
     GFace *face = *it;
@@ -1065,8 +1071,6 @@ std::multimap<int, GEntity*> CreateNewEntities(GModel *model, meshPartitionOptio
     (*it)->polygons.clear();
   }
   
-  std::vector<discreteEdge *> dEdges;
-  std::vector<GEdge *> oldEdges;
   for(GModel::eiter it = edges.begin(); it != edges.end(); ++it)
   {
     GEdge *edge = *it;
@@ -1090,8 +1094,6 @@ std::multimap<int, GEntity*> CreateNewEntities(GModel *model, meshPartitionOptio
     (*it)->lines.clear();
   }
   
-  std::vector<discreteVertex *> dVertices;
-  std::vector<GVertex *> oldVertices;
   for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it)
   {
     GVertex *vertex = *it;
@@ -1136,30 +1138,8 @@ void assignElementsToEntities(GModel *model, std::vector<GRegion *> &newRegions,
       addPhysical(model, dr, partition);
     }
     
-    switch((*it)->getType())
-    {
-      case TYPE_TET:
-        newRegions[partition]->addTetrahedron(reinterpret_cast<MTetrahedron*>(*it));
-        break;
-      case TYPE_PYR:
-        newRegions[partition]->addPyramid(reinterpret_cast<MPyramid*>(*it));
-        break;
-      case TYPE_PRI:
-        newRegions[partition]->addPrism(reinterpret_cast<MPrism*>(*it));
-        break;
-      case TYPE_HEX:
-        newRegions[partition]->addHexahedron(reinterpret_cast<MHexahedron*>(*it));
-        break;
-      case TYPE_TRIH:
-        newRegions[partition]->addTrihedron(reinterpret_cast<MTrihedron*>(*it));
-        break;
-      case TYPE_POLYH:
-        newRegions[partition]->addPolyhedron(reinterpret_cast<MPolyhedron*>(*it));
-        break;
-      default:
-        break;
-    }
-    
+    newRegions[partition]->addElement((*it)->getType(), *it);
+
     for(unsigned int i = 0; i < (*it)->getNumVertices(); i++)
     {
       (*it)->getVertex(i)->setEntity(newRegions[partition]);
@@ -1185,20 +1165,7 @@ void assignElementsToEntities(GModel *model, std::vector<GFace *> &newFaces, ITE
       addPhysical(model, df, partition);
     }
     
-    switch((*it)->getType())
-    {
-      case TYPE_TRI:
-        newFaces[partition]->addTriangle(reinterpret_cast<MTriangle*>(*it));
-        break;
-      case TYPE_QUA:
-        newFaces[partition]->addQuadrangle(reinterpret_cast<MQuadrangle*>(*it));
-        break;
-      case TYPE_POLYG:
-        newFaces[partition]->addPolygon(reinterpret_cast<MPolygon*>(*it));
-        break;
-      default:
-        break;
-    }
+    newFaces[partition]->addElement((*it)->getType(), *it);
     
     for(unsigned int i = 0; i < (*it)->getNumVertices(); i++)
     {
@@ -1268,7 +1235,6 @@ void addPhysical(GModel *model, GEntity *entity, int partition)
   name += "}";
         
   const int number = model->setPhysicalName(name, entity->dim(), 0);
-  Msg::Info("%d %d", partition, number);
   entity->addPhysicalEntity(number);
 }
 

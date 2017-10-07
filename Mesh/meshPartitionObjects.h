@@ -28,74 +28,68 @@
 
 class Graph
 {
- public:
-  int ne;                                    /*The number of elements*/
+  private:
   
-  int nn;                                    /*The number of nodes*/
+  unsigned int _ne;                           /*The number of elements*/
   
-  int dim;                                   /*The dimension of the mesh*/
+  unsigned int _nn;                           /*The number of nodes*/
   
-  int *eind;                                 /*The list of nodes belonging to the ith element of the
+  unsigned int _dim;                          /*The dimension of the mesh*/
+  
+  unsigned int *_eind;                        /*The list of nodes belonging to the ith element of the
                                               mesh are stored in consecutive locations of eind 
                                               starting at position eptr[i] up to (but not including) 
                                               position eptr[i+1]. The size of the eind array is of
                                               size equal to the sum of the number of nodes in all the 
                                               elements of the mesh.*/
   
-  int *eptr;                                 /*The size of the eptr array is n + 1, where n is 
+  unsigned int *_eptr;                        /*The size of the eptr array is n + 1, where n is
                                               the number of elements in the mesh.*/
   
-  int *adjncy;                               /*The structure that constain the element
-                                              graph (dual graph)*/
-  
-  int *xadj;                                 /*The structure that constain the element 
-                                              graph (dual graph)*/
-  
-  std::vector<MElement*> element;            /*The element corresponding to each graph element
+  std::vector<MElement*> _element;            /*The element corresponding to each graph element
                                               in eptr*/
   
-  int *vwgt;                                 /*The width associated to each elements of eptr*/
+  unsigned int *_vwgt;                        /*The width associated to each elements of eptr*/
   
-  int *partition;                            /*The partitions output from the partitioner*/
-  
- private:
+  unsigned int *_partition;                   /*The partitions output from the partitioner*/
 
- public:
-  Graph() : ne(0), nn(0), dim(0), eind(NULL), eptr(NULL), adjncy(NULL), xadj(NULL), element(), vwgt(NULL), partition(NULL)
+  public:
+  
+  Graph() : _ne(0), _nn(0), _dim(0), _eind(NULL), _eptr(NULL), _element(), _vwgt(NULL), _partition(NULL)
   { }
   
   void fillDefaultWeights()
   {
-    vwgt = new int[ne];
-    for(int i = 0; i < ne; i++)
+    _vwgt = new unsigned int[_ne];
+    for(unsigned int i = 0; i < _ne; i++)
     {
-      if(element[i] == NULL)
+      if(_element[i] == NULL)
       {
-        vwgt[i] = 1;
+        _vwgt[i] = 1;
         continue;
       }
-      switch (element[i]->getType())
+      switch (_element[i]->getType())
       {
         case TYPE_TRI:
-          vwgt[i] = CTX::instance()->partitionOptions.triWeight;
+          _vwgt[i] = CTX::instance()->partitionOptions.triWeight;
           break;
         case TYPE_QUA:
-          vwgt[i] = CTX::instance()->partitionOptions.quaWeight;
+          _vwgt[i] = CTX::instance()->partitionOptions.quaWeight;
           break;
         case TYPE_TET:
-          vwgt[i] = CTX::instance()->partitionOptions.tetWeight;
+          _vwgt[i] = CTX::instance()->partitionOptions.tetWeight;
           break;
         case TYPE_PYR:
-          vwgt[i] = CTX::instance()->partitionOptions.pyrWeight;
+          _vwgt[i] = CTX::instance()->partitionOptions.pyrWeight;
           break;
         case TYPE_PRI:
-          vwgt[i] = CTX::instance()->partitionOptions.priWeight;
+          _vwgt[i] = CTX::instance()->partitionOptions.priWeight;
           break;
         case TYPE_HEX:
-          vwgt[i] = CTX::instance()->partitionOptions.hexWeight;
+          _vwgt[i] = CTX::instance()->partitionOptions.hexWeight;
           break;
         default:
-          vwgt[i] = 1;
+          _vwgt[i] = 1;
           break;
       }
     }
@@ -103,13 +97,36 @@ class Graph
   
   ~Graph()
   {
-    if(eind != NULL) delete[] eind;
-    if(eptr != NULL) delete[] eptr;
-    if(vwgt != NULL) delete[] vwgt;
-    if(partition != NULL) delete[] partition;
-    if(adjncy != NULL) delete[] adjncy;
-    if(xadj != NULL) delete[] xadj;
+    if(_eind != NULL) delete[] _eind;
+    if(_eptr != NULL) delete[] _eptr;
+    if(_vwgt != NULL) delete[] _vwgt;
+    if(_partition != NULL) delete[] _partition;
   }
+  
+  unsigned int ne() const { return _ne; };
+  unsigned int nn() const { return _nn; };
+  unsigned int dim() const { return _dim; };
+  unsigned int eind(unsigned int i) const { return _eind[i]; };
+  unsigned int *eind() const { return _eind; };
+  unsigned int eptr(unsigned int i) const { return _eptr[i]; };
+  unsigned int *eptr() const { return _eptr; };
+  MElement* element(unsigned int i) const { return _element[i]; };
+  unsigned int *vwgt() const { return _vwgt; };
+  unsigned int partition(unsigned int i) const { return _partition[i]; };
+  unsigned int *partition() const { return _partition; };
+  
+  void ne(unsigned int ne) { _ne = ne; };
+  void nn(unsigned int nn) { _nn = nn; };
+  void dim(unsigned int dim) { _dim = dim; };
+  void eindResize(unsigned int size) { _eind = new unsigned int[size]; };
+  void eind(unsigned int i, unsigned int eind) { _eind[i] = eind; };
+  void eptrResize(unsigned int size) { _eptr = new unsigned int[size]; };
+  void eptr(unsigned int i, unsigned int eptr) { _eptr[i] = eptr; };
+  void elementResize(unsigned int size) { _element.resize(size); };
+  void element(unsigned int i, MElement* element) { _element[i] = element; };
+  void vwgt(unsigned int *vwgt) { _vwgt = vwgt; };
+  void partition(unsigned int *partition) { _partition = partition; };
+  
 };
 
 #endif
