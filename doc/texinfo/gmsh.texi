@@ -4869,9 +4869,9 @@ by hand.
 @node Compiling the source code, Information for developers, Options, Top
 @appendix Compiling the source code
 
-Stable releases and nightly source snapshots are available from
-@url{http://gmsh.info/src/}. You can also access the Git
-repository directly:
+Stable releases and source snapshots are available from
+@url{http://gmsh.info/src/}. You can also access the Git repository
+directly:
 
 @enumerate
 @item
