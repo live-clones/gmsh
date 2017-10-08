@@ -107,8 +107,8 @@ make xcodeProject
 
 if [ $enable_simulator != 0 ]; then
   # change blas/lapack for simulator
-  sed -e "s|lastKnownFileType = archive.ar; name = libf2cblas.a; path = Onelab/frameworks/petsc.framework/libf2cblas.a;|lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework;|" -i "" $gmsh_git/contrib/mobile/build_iossimulator_${appname}/${appname}/${appname}.xcodeproj/project.pbxproj;
-  sed -e "s|lastKnownFileType = archive.ar; name = libf2clapack.a; path = Onelab/frameworks/petsc.framework/libf2clapack.a;|lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework;|" -i "" $gmsh_git/contrib/mobile/build_iossimulator_${appname}/${appname}/${appname}.xcodeproj/project.pbxproj;
+  sed -e "s|lastKnownFileType = archive.ar; name = libf2cblas.a; path = ${appname}/frameworks/petsc.framework/libf2cblas.a;|lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework;|" -i "" $gmsh_git/contrib/mobile/build_iossimulator_${appname}/${appname}/${appname}.xcodeproj/project.pbxproj;
+  sed -e "s|lastKnownFileType = archive.ar; name = libf2clapack.a; path = ${appname}/frameworks/petsc.framework/libf2clapack.a;|lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework;|" -i "" $gmsh_git/contrib/mobile/build_iossimulator_${appname}/${appname}/${appname}.xcodeproj/project.pbxproj;
 fi
 
 #TODO
