@@ -20,6 +20,7 @@ linux64_docker:
     - ctest -j 4 --output-on-failure
   tags:
     - linux64
+    - docker
 
 linux64_docker_minimal:
   image: onelab/ubuntu16.04
@@ -30,6 +31,7 @@ linux64_docker_minimal:
     - make -j 4
   tags:
     - linux64
+    - docker
     
 windows64_msvc:
   script:
@@ -39,6 +41,7 @@ windows64_msvc:
     - msbuild package.vcxproj
   tags:
     - windows64
+    - official
 
 # ------------------------------------------
 # Official Linux builds (master branch only)
