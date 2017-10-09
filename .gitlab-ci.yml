@@ -4,7 +4,7 @@
 # bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 variables:
-  EXTRA_VERSION: "-git"
+  EXTRA_VERSION: "-git-$CI_COMMIT_SHA"
 
 # -----------------------
 # Builds for all branches

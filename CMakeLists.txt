@@ -1816,13 +1816,13 @@ set(CPACK_PACKAGE_VERSION_PATCH ${GMSH_PATCH_VERSION})
 set(CPACK_PACKAGE_DESCRIPTION_FILE ${WELCOME_FILE})
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
     "3D finite element mesh generator with built-in CAD engine and post-processor")
-if(GMSH_EXTRA_VERSION MATCHES "-git") # so that we'll overwrite the archives
+if(GMSH_EXTRA_VERSION MATCHES "-git.*") # so that we'll overwrite the archives
   set(CPACK_PACKAGE_FILE_NAME gmsh-git-${GMSH_OS})
   set(CPACK_SOURCE_PACKAGE_FILE_NAME gmsh-git-source)
-else(GMSH_EXTRA_VERSION MATCHES "-git")
+else(GMSH_EXTRA_VERSION MATCHES "-git.*")
   set(CPACK_PACKAGE_FILE_NAME gmsh-${GMSH_VERSION}-${GMSH_OS})      
   set(CPACK_SOURCE_PACKAGE_FILE_NAME gmsh-${GMSH_VERSION}-source)
-endif(GMSH_EXTRA_VERSION MATCHES "-git")      
+endif(GMSH_EXTRA_VERSION MATCHES "-git.*")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "Gmsh")
 set(CPACK_RESOURCE_FILE_LICENSE ${LICENSE_FILE})
 set(CPACK_RESOURCE_FILE_README ${WELCOME_FILE})
