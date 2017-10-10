@@ -37,7 +37,7 @@ windows64_msvc:
   script:
     - md build
     - cd build
-    - cmake -DGMSH_EXTRA_VERSION=$EXTRA_VERSION ..
+    - cmake -DGMSH_EXTRA_VERSION=%EXTRA_VERSION% ..
     - msbuild package.vcxproj
   tags:
     - windows64

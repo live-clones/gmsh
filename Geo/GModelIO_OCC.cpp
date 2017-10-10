@@ -3461,6 +3461,42 @@ bool OCC_Internals::makeTorusSTL(double x, double y, double z, double r1, double
     return false;
   return true;
 }
+/*
+void dumpStepLabels(STEPControl_Reader reader)
+{
+  const Handle(XSControl_WorkSession) &theSession = reader.WS();
+  const Handle(Interface_InterfaceModel) &theModel = theSession->Model();
+  Standard_Integer nb = theModel->NbEntities();
+  for(Standard_Integer i=1; i < ....) {
+    Handle(StepRepr_Representation) entity =
+      Handle(StepRepr_Representation)::DownCast(theModel->Value(i));
+    if(entity.IsNull()){
+      continue;
+    }
+    if(entity->Name().IsNull()){
+      continue;
+    }
+    cout << Name()->ToCString();
+  }
+}
+
+void dumpIgesLabels(IGESControl_Reader reader)
+{
+  const Handle(XSControl_WorkSession) & theSession = reader.WS();
+  const Handle(Interface_InterfaceModel) & theModel = theSession->Model();
+  Standard_Integer nb = theModel->NbEntities();
+  for(Standard_Integer i=1; i<...; i++){
+    Handle(IGESData_IGESEntity) entity =
+      Handle(IGESData_IGESEntity)::DownCast(theModel->Value(i));
+    if(entity.IsNull()){
+      continue;
+    }
+    if(entity->HasName()){
+      cout << NameValue()->String().ToCString();
+    }
+  }
+}
+*/
 
 // FIXME ***************** BEGIN WILL BE REMOVED ************************
 
