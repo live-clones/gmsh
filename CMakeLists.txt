@@ -1142,13 +1142,14 @@ if(ENABLE_OCC)
     set(OCC_LIBS_REQUIRED
 	# subset of DataExchange
       	TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKXSBase
+	# for STEP/IGES naming through XCAF - but this requires FreeType :-(
+        # TKXDESTEP TKXDEIGES TKXCAF TKLCAF TKVCAF TKCAF TKCDF TKService TKV3d 
       	# ModelingAlgorithms
       	TKOffset TKFeat TKFillet TKBool TKShHealing TKMesh TKHLR TKBO TKPrim
       	TKTopAlgo TKGeomAlgo
       	# ModelingData
       	TKBRep TKGeomBase TKG3d TKG2d
       	# FoundationClasses
-      	# TKAdvTools -- not necessary? (and removed from OCC 6.8)
       	TKMath TKernel)
     list(LENGTH OCC_LIBS_REQUIRED NUM_OCC_LIBS_REQUIRED)
     if(OCC_LIBS)
