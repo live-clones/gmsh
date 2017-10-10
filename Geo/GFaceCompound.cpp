@@ -464,7 +464,8 @@ void GFaceCompound::printFillTris() const
 
 void GFaceCompound::fillNeumannBCS_Plane() const
 {
-#if defined(HAVE_MESH)
+#if 0
+//#if defined(HAVE_MESH)
 
   Msg::Debug("Meshing %d interior holes with planes ", _interior_loops.size()-1);
 
