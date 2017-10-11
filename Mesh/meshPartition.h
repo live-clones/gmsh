@@ -75,7 +75,7 @@ void assignPartitionBoundary(GModel *model, MVertex *ve, std::set<partitionVerte
 
 void AssignMeshVertices(GModel *model);
 template <class ITERATOR>
-void setVerticesToEntity(std::set<MVertex *> &verts, ITERATOR it_beg, ITERATOR it_end);
+void setVerticesToEntity(std::set<MVertex *> &verts, GEntity* entity, ITERATOR it_beg, ITERATOR it_end);
 
 void CreateTopologyFile(GModel* model, const int npart);
 std::vector<int> getNumFromString(std::string name);
