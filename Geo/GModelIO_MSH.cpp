@@ -99,7 +99,7 @@ static void readMSHEntities(FILE *fp, GModel *gm)
       for (int j = 0; j < n; j++){
 	int tagf;
 	if(fscanf(fp, "%d", &tagf) != 1) return;
-	faces.push_back(tagf);
+	faces.push_back(std::abs(tagf));
         int sign = tagf > 0 ? 1 : -1;
         signs.push_back(sign);
       }
