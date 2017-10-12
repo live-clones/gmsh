@@ -5412,6 +5412,13 @@ the geometrical details of the model.
 If nothing works, file a bug report with the version of your operating
 system and and the full geometry.
 
+@item How can I only save tetrahedral elements (not triangles and lines)?
+
+If physical entities are defined, the output mesh only contains those
+elements that belong to physical entities. So to save only 3D elements,
+simply define one (or more) physical volume(s) and don't define any
+physical surfaces or lines.
+
 @item My 2D meshes of IGES files present gaps between surfaces
 
 IGES files do not contain the topology of the model, and tolerance
