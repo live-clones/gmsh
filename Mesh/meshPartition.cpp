@@ -72,14 +72,9 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
 
   model->recomputeMeshPartitions();
   
-  //return 1;
-  
+  Msg::StatusBar(true, "Create new entities...");
   std::multimap<int, GEntity*> newPartitionEntities;
-  if(options.createPartitionEntities)
-  {
-    Msg::StatusBar(true, "Create new entities...");
-    newPartitionEntities = CreateNewEntities(model, options);
-  }
+  newPartitionEntities = CreateNewEntities(model, options);
   
   std::multimap<int, GEntity*> newPartitionBoundaries;
   if(options.createPartitionBoundaries || options.createGhostCells)
@@ -88,93 +83,97 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
     newPartitionBoundaries = CreatePartitionBoundaries(model, options.createGhostCells);
   }
   
-  if(options.createTopologyFile && options.createPartitionEntities && (options.createPartitionBoundaries || options.createGhostCells))
+  if(options.writeTopologyFile)
   {
     Msg::StatusBar(true, "Write the topology file...");
     CreateTopologyFile(model, options.num_partitions);
   }
   
-  for(int i = 0; i < options.num_partitions; i++)
+  if(options.writePartitionMeshes)
   {
-    GModel *tmp = new GModel();
-    for(GModel::piter it = model->firstPhysicalName(); it != model->lastPhysicalName(); ++it)
+    Msg::StatusBar(true, "Write partition meshes...");
+    for(int i = 0; i < options.num_partitions; i++)
     {
-      tmp->setPhysicalName(it->second, it->first.first, it->first.second);
-    }
-    
-    std::vector<GEntity*> entities;
-    model->getEntities(entities);
-    for(unsigned int i = 0; i < entities.size(); i++)
-    {
-      if(entities[i]->geomType() != GEntity::PartitionVolume && entities[i]->geomType() != GEntity::PartitionSurface && entities[i]->geomType() != GEntity::PartitionCurve && entities[i]->geomType() != GEntity::PartitionVertex)
+      GModel *tmp = new GModel();
+      for(GModel::piter it = model->firstPhysicalName(); it != model->lastPhysicalName(); ++it)
       {
-        switch(entities[i]->dim())
+        tmp->setPhysicalName(it->second, it->first.first, it->first.second);
+      }
+    
+      std::vector<GEntity*> entities;
+      model->getEntities(entities);
+      for(unsigned int i = 0; i < entities.size(); i++)
+      {
+        if(entities[i]->geomType() != GEntity::PartitionVolume && entities[i]->geomType() != GEntity::PartitionSurface && entities[i]->geomType() != GEntity::PartitionCurve && entities[i]->geomType() != GEntity::PartitionVertex)
         {
-          case 0:
-          tmp->add(static_cast<GVertex*>(entities[i]));
-          break;
-          case 1:
-          tmp->add(static_cast<GEdge*>(entities[i]));
-          break;
-          case 2:
-          tmp->add(static_cast<GFace*>(entities[i]));
-          break;
-          case 3:
-          tmp->add(static_cast<GRegion*>(entities[i]));
-          break;
+          switch(entities[i]->dim())
+          {
+            case 0:
+            tmp->add(static_cast<GVertex*>(entities[i]));
+            break;
+            case 1:
+            tmp->add(static_cast<GEdge*>(entities[i]));
+            break;
+            case 2:
+            tmp->add(static_cast<GFace*>(entities[i]));
+            break;
+            case 3:
+            tmp->add(static_cast<GRegion*>(entities[i]));
+            break;
+          }
         }
       }
-    }
     
-    for(std::multimap<int, GEntity*>::iterator it = newPartitionEntities.begin(); it != newPartitionEntities.end(); ++it)
-    {
-      if(it->first == i)
+      for(std::multimap<int, GEntity*>::iterator it = newPartitionEntities.begin(); it != newPartitionEntities.end(); ++it)
       {
-        switch(it->second->dim())
+        if(it->first == i)
         {
-          case 0:
-            tmp->add(static_cast<GVertex*>(it->second));
-            break;
-          case 1:
-            tmp->add(static_cast<GEdge*>(it->second));
-            break;
-          case 2:
-            tmp->add(static_cast<GFace*>(it->second));
-            break;
-          case 3:
-            tmp->add(static_cast<GRegion*>(it->second));
-            break;
+          switch(it->second->dim())
+          {
+            case 0:
+              tmp->add(static_cast<GVertex*>(it->second));
+              break;
+            case 1:
+              tmp->add(static_cast<GEdge*>(it->second));
+              break;
+            case 2:
+              tmp->add(static_cast<GFace*>(it->second));
+              break;
+            case 3:
+              tmp->add(static_cast<GRegion*>(it->second));
+              break;
+          }
         }
       }
-    }
     
-    for(std::multimap<int, GEntity*>::iterator it = newPartitionBoundaries.begin(); it != newPartitionBoundaries.end(); ++it)
-    {
-      if(it->first == i)
+      for(std::multimap<int, GEntity*>::iterator it = newPartitionBoundaries.begin(); it != newPartitionBoundaries.end(); ++it)
       {
-        switch(it->second->dim())
+        if(it->first == i)
         {
-          case 0:
-            tmp->add(static_cast<GVertex*>(it->second));
-            break;
-          case 1:
-            tmp->add(static_cast<GEdge*>(it->second));
-            break;
-          case 2:
-            tmp->add(static_cast<GFace*>(it->second));
-            break;
+          switch(it->second->dim())
+          {
+            case 0:
+              tmp->add(static_cast<GVertex*>(it->second));
+              break;
+            case 1:
+              tmp->add(static_cast<GEdge*>(it->second));
+              break;
+            case 2:
+              tmp->add(static_cast<GFace*>(it->second));
+              break;
+          }
         }
       }
-    }
     
-    AssignMeshVertices(tmp);
+      AssignMeshVertices(tmp);
         
-    std::ostringstream name;
-    name << "mesh_" << i << ".msh";
-    tmp->writeMSH(name.str().c_str(), 3, false, true);
+      std::ostringstream name;
+      name << "mesh_" << i << ".msh";
+      tmp->writeMSH(name.str().c_str(), 3, false, true);
     
-    tmp->remove();
-    delete tmp;
+      tmp->remove();
+      delete tmp;
+    }
   }
   
   AssignMeshVertices(model);

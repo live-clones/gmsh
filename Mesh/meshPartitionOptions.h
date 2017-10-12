@@ -19,8 +19,8 @@ class meshPartitionOptions
   int renumber;
   bool createPartitionBoundaries;
   bool createGhostCells;
-  bool createPartitionEntities;
-  bool createTopologyFile;
+  bool writePartitionMeshes;
+  bool writeTopologyFile;
 
   // Chaco
   int global_method;                    // 1 - Multilevel-KL
@@ -126,8 +126,8 @@ class meshPartitionOptions
     refine_algorithm = 3;
     createPartitionBoundaries = true;
     createGhostCells = false;
-    createPartitionEntities = true;
-    createTopologyFile = false;
+    writePartitionMeshes = true;
+    writeTopologyFile = true;
     triWeight = 1;
     quaWeight = 1;
     tetWeight = 1;

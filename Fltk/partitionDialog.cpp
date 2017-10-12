@@ -46,7 +46,7 @@ struct PartitionDialog
   // Group 0
   Fl_Choice *choicePartitioner;
   Fl_Value_Input *inputNumPartition;
-  Fl_Check_Button *setPartitionEntities;
+  Fl_Check_Button *setPartitionMeshes;
   Fl_Check_Button *setGhostCells;
   Fl_Check_Button *setPartitionBoundaries;
   Fl_Check_Button *setTopologyFile;
@@ -88,10 +88,10 @@ struct PartitionDialog
     CTX::instance()->partitionOptions.partitioner = choicePartitioner->value() + 1;
     CTX::instance()->partitionOptions.num_partitions =
       static_cast<int>(inputNumPartition->value());
-    CTX::instance()->partitionOptions.createPartitionEntities = setPartitionEntities->value();
+    CTX::instance()->partitionOptions.writePartitionMeshes = setPartitionMeshes->value();
     CTX::instance()->partitionOptions.createGhostCells = setGhostCells->value();
     CTX::instance()->partitionOptions.createPartitionBoundaries = setPartitionBoundaries->value();
-    CTX::instance()->partitionOptions.createTopologyFile = setTopologyFile->value();
+    CTX::instance()->partitionOptions.writeTopologyFile = setTopologyFile->value();
 
     // Group 1
     CTX::instance()->partitionOptions.global_method = choiceChacoAlg->value() + 1;
@@ -146,10 +146,10 @@ struct PartitionDialog
     // Group 0
     choicePartitioner->value(CTX::instance()->partitionOptions.partitioner - 1);
     inputNumPartition->value(CTX::instance()->partitionOptions.num_partitions);
-    setPartitionEntities->value(CTX::instance()->partitionOptions.createPartitionEntities);
+    setPartitionMeshes->value(CTX::instance()->partitionOptions.writePartitionMeshes);
     setGhostCells->value(CTX::instance()->partitionOptions.createGhostCells);
     setPartitionBoundaries->value(CTX::instance()->partitionOptions.createPartitionBoundaries);
-    setTopologyFile->value(CTX::instance()->partitionOptions.createTopologyFile);
+    setTopologyFile->value(CTX::instance()->partitionOptions.writeTopologyFile);
 
     // Group 1
     choiceChacoAlg->value(CTX::instance()->partitionOptions.global_method - 1);
@@ -335,25 +335,6 @@ void partition_opt_spectralcheck_cb(Fl_Widget *widget, void *data)
       dlg->choiceDivisions->value(0);
   }
 }
-
-// Option considerations for the booleans
-void partition_opt_booleans_cb(Fl_Widget *widget, void *data)
-{
-  PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
-  if(dlg->setTopologyFile->value() == 1)
-  {
-    dlg->setPartitionEntities->value(1);
-    dlg->setPartitionEntities->deactivate();
-    dlg->setPartitionBoundaries->value(1);
-    dlg->setPartitionBoundaries->deactivate();
-  }
-  else
-  {
-    dlg->setPartitionEntities->activate();
-    dlg->setPartitionBoundaries->activate();
-  }
-}
-
 
 void partition_defaults_cb(Fl_Widget *widget, void *data)
 {
@@ -560,25 +541,21 @@ void partition_dialog()
     y += BH + WB;
     // Booleans options
     {
-      Fl_Check_Button *const o = new Fl_Check_Button (WB, y, 2*BB, BH, "Create partition entities");
-      dlg.setPartitionEntities = o;
-      o->callback((Fl_Callback *)partition_opt_booleans_cb, &dlg);
+      Fl_Check_Button *const o = new Fl_Check_Button (WB, y, 2*BB, BH, "Write partition meshes");
+      dlg.setPartitionMeshes = o;
     }
     {
       Fl_Check_Button *const o = new Fl_Check_Button (2*WB + 2*BB, y, 2*BB, BH, "Create ghost cells");
       dlg.setGhostCells = o;
-      o->callback((Fl_Callback *)partition_opt_booleans_cb, &dlg);
     }
     y += BH + WB;
     {
       Fl_Check_Button *const o = new Fl_Check_Button (WB, y, 2*BB, BH, "Create partition boundaries");
       dlg.setPartitionBoundaries = o;
-      o->callback((Fl_Callback *)partition_opt_booleans_cb, &dlg);
     }
     {
-      Fl_Check_Button *const o = new Fl_Check_Button (2*WB + 2*BB, y, 2*BB, BH, "Create a totpology file");
+      Fl_Check_Button *const o = new Fl_Check_Button (2*WB + 2*BB, y, 2*BB, BH, "Write a topology file");
       dlg.setTopologyFile = o;
-      o->callback((Fl_Callback *)partition_opt_booleans_cb, &dlg);
     }
     y += BH + WB;
     // Box (line)
