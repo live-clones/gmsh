@@ -93,11 +93,7 @@
 #error "Gmsh requires OpenCASCADE >= 6.9"
 #endif
 
-// FIXME: This will be necessary to read STEP/IGES attributes (labels and
-// colors), through XCAF. However this adds a ridiculous dependency to FreeType;
-// so we cannot include this for now
-#undef XCAF
-#if defined(XCAF)
+#if defined(HAVE_OCC_CAF)
 #include <Quantity_Color.hxx>
 #include <TDocStd_Document.hxx>
 #include <XCAFApp_Application.hxx>
@@ -106,6 +102,7 @@
 #include <XCAFDoc_ColorTool.hxx>
 #include <STEPCAFControl_Reader.hxx>
 #include <IGESCAFControl_Reader.hxx>
+#include <TDataStd_Name.hxx>
 #endif
 
 OCC_Internals::OCC_Internals()
@@ -2523,7 +2520,7 @@ bool OCC_Internals::importShapes(const std::string &fileName, bool highestDimOnl
     else if(format == "step" ||
             split[2] == ".step" || split[2] == ".stp" ||
             split[2] == ".STEP" || split[2] == ".STP"){
-#if defined(XCAF)
+#if defined(HAVE_OCC_CAF)
       // Initiate a dummy XCAF Application to handle the STEP XCAF Document
       static Handle_XCAFApp_Application dummy_app = XCAFApp_Application::GetApplication();
       // Create an XCAF Document to contain the STEP file itself
@@ -2546,6 +2543,18 @@ bool OCC_Internals::importShapes(const std::string &fileName, bool highestDimOnl
       Handle_XCAFDoc_ColorTool step_colour_contents = XCAFDoc_DocumentTool::ColorTool(step_doc->Main());
       TDF_LabelSequence step_shapes;
       step_shape_contents->GetShapes(step_shapes);
+      for(int i = 1; i <= step_shapes.Length(); i++){
+        printf("step shape %d: \n", i);
+        TDF_Label label = step_shapes.Value(i);
+        Handle(TDataStd_Name) N;
+        if(label.FindAttribute(TDataStd_Name::GetID(), N)) {
+          TCollection_ExtendedString name = N->Get();
+          std::string s1 = TCollection_AsciiString(name).ToCString();
+          printf("hey %s\n", s1.c_str());
+        }
+      }
+
+      /*
       // List out the available colours in the STEP File as Colour Names
       TDF_LabelSequence all_colours;
       step_colour_contents->GetColors(all_colours);
@@ -2558,6 +2567,7 @@ bool OCC_Internals::importShapes(const std::string &fileName, bool highestDimOnl
         Msg::Info("Colour [", i, "] = ", col.StringName(col.Name()), col_rgb.str().c_str());
       }
       // For the STEP File Reader in OCC, the 1st Shape contains the entire
+      */
       // compound geometry as one shape
       result = step_shape_contents->GetShape(step_shapes.Value(1));
 #else

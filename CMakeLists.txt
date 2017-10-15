@@ -68,6 +68,7 @@ opt(NETGEN "Enable Netgen 3D frontal mesh generator" ${DEFAULT})
 opt(NUMPY "Enable conversion between fullMatrix and numpy array (requires SWIG)" OFF)
 opt(PETSC4PY "Enable petsc4py wrappers for petsc matrices" ON)
 opt(OCC "Enable OpenCASCADE geometrical models" ${DEFAULT})
+opt(OCC_CAF "Enable OpenCASCADE CAF module" ${DEFAULT})
 opt(ONELAB "Enable ONELAB solver interface" ${DEFAULT})
 opt(ONELAB_METAMODEL "Enable ONELAB metamodels (experimental)" ${DEFAULT})
 opt(OPENMP "Enable OpenMP (experimental)" OFF)
@@ -1142,8 +1143,6 @@ if(ENABLE_OCC)
     set(OCC_LIBS_REQUIRED
 	# subset of DataExchange
       	TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKXSBase
-	# for STEP/IGES naming through XCAF - but this requires FreeType :-(
-        # TKXDESTEP TKXDEIGES TKXCAF TKLCAF TKVCAF TKCAF TKCDF TKService TKV3d 
       	# ModelingAlgorithms
       	TKOffset TKFeat TKFillet TKBool TKShHealing TKMesh TKHLR TKBO TKPrim
       	TKTopAlgo TKGeomAlgo
@@ -1184,6 +1183,33 @@ if(ENABLE_OCC)
       endif(CYGWIN)
     endif(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
   endif(OCC_VERSION AND OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
+
+  # additional OCC libraries to handle reading of STEP/IGES attributes. Oh my...
+  if(HAVE_OCC AND ENABLE_OCC_CAF)
+    find_package(Freetype)
+    if(FREETYPE_FOUND)
+      set(OCC_CAF_LIBS_REQUIRED
+          TKXDESTEP TKXDEIGES TKXCAF TKLCAF TKVCAF TKCAF TKCDF TKService TKV3d)
+      list(LENGTH OCC_CAF_LIBS_REQUIRED NUM_OCC_CAF_LIBS_REQUIRED)
+      set(OCC_CAF_LIBS)
+      foreach(OCC ${OCC_CAF_LIBS_REQUIRED})
+        find_library(OCC_CAF_LIB ${OCC} HINTS ENV CASROOT PATH_SUFFIXES
+                     lib ${OCC_SYS_NAME}/lib ${OCC_SYS_NAME}/vc8/lib)
+        if(OCC_CAF_LIB)
+          list(APPEND OCC_CAF_LIBS ${OCC_CAF_LIB})
+        else(OCC_CAF_LIB)
+          message(STATUS "OCC CAF lib " ${OCC} " not Found")
+        endif(OCC_CAF_LIB)
+        unset(OCC_CAF_LIB CACHE)
+      endforeach(OCC)
+      list(LENGTH OCC_CAF_LIBS NUM_OCC_CAF_LIBS)
+      if(NUM_OCC_CAF_LIBS EQUAL NUM_OCC_CAF_LIBS_REQUIRED)
+        set_config_option(HAVE_OCC_CAF "OpenCASCADE-CAF")
+        list(APPEND EXTERNAL_LIBRARIES ${OCC_CAF_LIBS} ${FREETYPE_LIBRARIES})
+        list(APPEND EXTERNAL_INCLUDES ${FREETYPE_INCLUDE_DIRS})
+      endif(NUM_OCC_CAF_LIBS EQUAL NUM_OCC_CAF_LIBS_REQUIRED)
+    endif(FREETYPE_FOUND)
+  endif(HAVE_OCC AND ENABLE_OCC_CAF)
 endif(ENABLE_OCC)
 
 if(ENABLE_ACIS)
@@ -1887,7 +1913,8 @@ if(NOT DISABLE_GMSH_TESTS)
   # disabling tests is useful when including this CMakeLists in an external project
   include(CTest)
   file(GLOB_RECURSE TESTFILES
-       tutorial/*.geo demos/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo)
+       tutorial/*.geo demos/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo
+       benchmarks/occ/*.geo)
   foreach(TESTFILE ${TESTFILES})
     # use relative path for cygwin/mingw (the pure win exe built with the mingw
     # compilers does not understand a full cygwin-style path)
