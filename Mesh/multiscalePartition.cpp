@@ -307,16 +307,10 @@ multiscalePartition::multiscalePartition(std::vector<MElement *> &elements,
 {
   options = CTX::instance()->partitionOptions;
   options.num_partitions = nbParts;
-  options.partitioner = 1; //1 CHACO, 2 METIS
-  if (options.partitioner == 1){
-    options.global_method = 1;// 1 Multilevel-KL, 2 Spectral
-    options.mesh_dims[0] = nbParts;
-  }
-  else if (options.partitioner == 2){
-    options.algorithm = 2;//1 recursive, 2=kway, 3=nodal weights
-    options.refine_algorithm=2;
-    options.edge_matching = 3;
-  }
+
+  options.algorithm = 2;//1 recursive, 2=kway, 3=nodal weights
+  options.refine_algorithm=2;
+  options.edge_matching = 3;
 
   partitionLevel *level = new partitionLevel;
   level->elements.insert(level->elements.begin(),elements.begin(),elements.end());
@@ -336,15 +330,12 @@ multiscalePartition::multiscalePartition(std::vector<MElement *> &elements,
 void multiscalePartition::setNumberOfPartitions(int &nbParts)
 {
   options.num_partitions = nbParts;
-   if (options.partitioner == 1){
-     options.mesh_dims[0] = nbParts;
-   }
 }
 
 void multiscalePartition::partition(partitionLevel & level, int nbParts,
                                     typeOfPartition method)
 {
-#if defined(HAVE_SOLVER) && defined(HAVE_ANN) && (defined(HAVE_METIS) || defined(HAVE_CHACO))
+#if defined(HAVE_SOLVER) && defined(HAVE_ANN) && defined(HAVE_METIS)
 
   if (method == LAPLACIAN){
     std::map<MVertex*, SPoint3> coordinates;

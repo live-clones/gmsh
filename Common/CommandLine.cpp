@@ -382,11 +382,6 @@ void GetOptions(int argc, char *argv[])
         CTX::instance()->batch = 5;
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "renumber")) {
-        CTX::instance()->batchAfterMesh = 1;
-        CTX::instance()->partitionOptions.renumber = 1;
-        i++;
-      }
       else if(!strcmp(argv[i] + 1, "part")) {
         i++;
         if(argv[i]){
@@ -399,7 +394,6 @@ void GetOptions(int argc, char *argv[])
       else if (!strcmp(argv[i] + 1,"partWeight")) {
         i++;
         bool check = true;
-        opt_mesh_partition_partitioner(0, GMSH_SET, 2); // Metis partitioner
         opt_mesh_partition_metis_algorithm(0, GMSH_SET, 3); // partGraphKWay w/ weights
         while (check) {
           if (argv[i]) {

@@ -14,7 +14,7 @@
 #include "meshPartition.h"
 #include "meshPartitionOptions.h"
 
-#if defined(HAVE_CHACO) || defined(HAVE_METIS)
+#if defined(HAVE_METIS)
 
 #include "GModel.h"
 #include "meshPartitionObjects.h"
@@ -676,7 +676,7 @@ int getNumPeriodicLink(const GModel *const model)
  * Purpose
  * =======
  *
- *   Partition a graph created by MakeGraph using Chaco or Metis library
+ *   Partition a graph created by MakeGraph using Metis library
  *
  * I/O
  * ===
@@ -690,325 +690,109 @@ int getNumPeriodicLink(const GModel *const model)
 
 int PartitionGraph(Graph &graph, meshPartitionOptions &options)
 {
-  switch(options.partitioner){
-    case 1:  // Chaco
-#ifdef HAVE_CHACO
-    {
-      Msg::Info("Chaco not yet implemented");
-    }
-#endif
-      break;
-    case 2:  // Metis
 #ifdef HAVE_METIS
+  Msg::Info("Launching METIS graph partitioner");
+      
+  try {
+    int metisOptions[METIS_NOPTIONS];
+    METIS_SetDefaultOptions((idx_t *)metisOptions);
+        
+    switch(options.algorithm)
     {
-      Msg::Info("Launching METIS graph partitioner");
-      
-      try {
-        int metisOptions[METIS_NOPTIONS];
-        METIS_SetDefaultOptions((idx_t *)metisOptions);
-        
-        switch(options.algorithm)
-        {
-          case 1: //Recursive
-            metisOptions[METIS_OPTION_PTYPE] = METIS_PTYPE_RB;
-            break;
-          case 2: //K-way
-            metisOptions[METIS_OPTION_PTYPE] = METIS_PTYPE_KWAY;
-            break;
-          default:
-            Msg::Info("Unknown partition algorithm");
-            break;
-        }
-        
-        switch(options.edge_matching)
-        {
-          case 1: //Random matching
-            metisOptions[METIS_OPTION_CTYPE] = METIS_CTYPE_RM;
-            break;
-          case 3: //Sorted heavy-edge matching
-            metisOptions[METIS_OPTION_CTYPE] = METIS_CTYPE_SHEM;
-            break;
-          default:
-            Msg::Info("Unknown partition edge matching");
-            break;
-        }
-        
-        switch(options.refine_algorithm)
-        {
-          case 2: //Greedy boundary refinement
-            metisOptions[METIS_OPTION_RTYPE] = METIS_RTYPE_GREEDY;
-            break;
-          default:
-            Msg::Info("Unknown partition refine algorithm");
-            break;
-        }
-        
-        metisOptions[METIS_OPTION_NUMBERING] = 0; //C numbering
-        metisOptions[METIS_OPTION_OBJTYPE] = METIS_OBJTYPE_CUT; //Specifies the type of objective.
-
-        const unsigned int nCommon = graph.dim();
-        int objval;
-        unsigned int *epart = new unsigned int[graph.ne()];
-        unsigned int *npart = new unsigned int[graph.nn()];
-        const unsigned int ne = graph.ne();
-        const unsigned int nn = graph.nn();
-        
-        graph.fillDefaultWeights();
-      
-        const int metisError = METIS_PartMeshDual((idx_t *)&ne, (idx_t *)&nn, (idx_t *)graph.eptr(), (idx_t *)graph.eind(), (idx_t *)graph.vwgt(), (idx_t *)NULL, (idx_t *)&nCommon, (idx_t *)&options.num_partitions, (real_t *)NULL, (idx_t *)metisOptions, (idx_t *)&objval, (idx_t *)epart, (idx_t *)npart);
-        
-        switch(metisError)
-        {
-          case METIS_OK:
-            break;
-          case METIS_ERROR_INPUT:
-            Msg::Error("Metis error (input)!");
-            return 1;
-            break;
-          case METIS_ERROR_MEMORY:
-            Msg::Error("Metis error (memory)!");
-            return 1;
-            break;
-          case METIS_ERROR:
-            Msg::Error("Metis error!");
-            return 1;
-            break;
-          default:
-            Msg::Error("Error!");
-            return 1;
-            break;
-        }
-        
-        graph.partition(epart);
-        delete[] npart;
-        
-        Msg::Info("Total edge-cut : %d", objval);
-      }
-      catch(...) {
-        Msg::Error("METIS threw an exception");
-        return 2;
-      }
+      case 1: //Recursive
+        metisOptions[METIS_OPTION_PTYPE] = METIS_PTYPE_RB;
+        break;
+      case 2: //K-way
+        metisOptions[METIS_OPTION_PTYPE] = METIS_PTYPE_KWAY;
+        break;
+      default:
+        Msg::Info("Unknown partition algorithm");
+        break;
     }
-#endif
-      break;
+        
+    switch(options.edge_matching)
+    {
+      case 1: //Random matching
+        metisOptions[METIS_OPTION_CTYPE] = METIS_CTYPE_RM;
+        break;
+      case 2: //Sorted heavy-edge matching
+        metisOptions[METIS_OPTION_CTYPE] = METIS_CTYPE_SHEM;
+        break;
+      default:
+        Msg::Info("Unknown partition edge matching");
+        break;
+    }
+        
+    switch(options.refine_algorithm)
+    {
+      case 1: //FM-based cut refinement
+        metisOptions[METIS_OPTION_RTYPE] = METIS_RTYPE_FM;
+        break;
+      case 2: //Greedy boundary refinement
+        metisOptions[METIS_OPTION_RTYPE] = METIS_RTYPE_GREEDY;
+        break;
+      case 3: //Two-sided node FM refinement
+        metisOptions[METIS_OPTION_RTYPE] = METIS_RTYPE_SEP2SIDED;
+        break;
+      case 4: //One-sided node FM refinement
+        metisOptions[METIS_OPTION_RTYPE] = METIS_RTYPE_SEP1SIDED;
+        break;
+      default:
+        Msg::Info("Unknown partition refine algorithm");
+        break;
+    }
+    
+    metisOptions[METIS_OPTION_NUMBERING] = 0; //C numbering
+    metisOptions[METIS_OPTION_OBJTYPE] = METIS_OBJTYPE_CUT; //Specifies the type of objective.
+
+    const unsigned int nCommon = graph.dim();
+    int objval;
+    unsigned int *epart = new unsigned int[graph.ne()];
+    unsigned int *npart = new unsigned int[graph.nn()];
+    const unsigned int ne = graph.ne();
+    const unsigned int nn = graph.nn();
+        
+    graph.fillDefaultWeights();
+      
+    const int metisError = METIS_PartMeshDual((idx_t *)&ne, (idx_t *)&nn, (idx_t *)graph.eptr(), (idx_t *)graph.eind(), (idx_t *)graph.vwgt(), (idx_t *)NULL, (idx_t *)&nCommon, (idx_t *)&options.num_partitions, (real_t *)NULL, (idx_t *)metisOptions, (idx_t *)&objval, (idx_t *)epart, (idx_t *)npart);
+        
+    switch(metisError)
+    {
+      case METIS_OK:
+        break;
+      case METIS_ERROR_INPUT:
+        Msg::Error("Metis error (input)!");
+        return 1;
+        break;
+      case METIS_ERROR_MEMORY:
+        Msg::Error("Metis error (memory)!");
+        return 1;
+        break;
+      case METIS_ERROR:
+        Msg::Error("Metis error!");
+        return 1;
+        break;
+      default:
+        Msg::Error("Error!");
+        return 1;
+        break;
+    }
+        
+    graph.partition(epart);
+    delete[] npart;
+        
+    Msg::Info("Total edge-cut : %d", objval);
   }
+  catch(...) {
+    Msg::Error("METIS threw an exception");
+    return 2;
+  }
+#endif
+  
   return 0;
 }
 
-/*******************************************************************************
- *
- * Routine RenumberMesh
- *
- * Purpose
- * =======
- *
- *   Renumber the elements into a mesh
- *
- * I/O
- * ===
- *
- *   returns            - status
- *                        1 = success
- *
- *
- *
- ******************************************************************************/
-
-int RenumberMesh(GModel *const model, meshPartitionOptions &options)
-{
-  for (GModel::fiter it = model->firstFace() ; it != model->lastFace() ; ++it)
-  {
-    std::vector<MElement *> temp;
-    
-    temp.insert(temp.begin(), (*it)->triangles.begin(), (*it)->triangles.end());
-    RenumberMeshElements(temp, options);
-    (*it)->triangles.clear();
-    for(int i = 0; i <temp.size(); i++)
-    {
-      (*it)->triangles.push_back((MTriangle*)temp[i]);
-    }
-    temp.clear();
-    
-    temp.insert(temp.begin(),(*it)->quadrangles.begin(),(*it)->quadrangles.end());
-    RenumberMeshElements (temp, options);
-    (*it)->quadrangles.clear();
-    for(int i = 0; i < temp.size(); i++)
-    {
-      (*it)->quadrangles.push_back((MQuadrangle*)temp[i]);
-    }
-  }
-  
-  for (GModel::riter it = model->firstRegion() ; it != model->lastRegion() ; ++it)
-  {
-    std::vector<MElement *> temp;
-    
-    temp.insert(temp.begin(), (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
-    RenumberMeshElements(temp, options);
-    (*it)->tetrahedra.clear();
-    for (int i = 0; i < temp.size(); i++)
-    {
-      (*it)->tetrahedra.push_back((MTetrahedron*)temp[i]);
-    }
-    temp.clear();
-    
-    temp.insert(temp.begin(),(*it)->hexahedra.begin(),(*it)->hexahedra.end());
-    RenumberMeshElements(temp, options);
-    (*it)->hexahedra.clear();
-    for (int i = 0; i < temp.size(); i++)
-    {
-      (*it)->hexahedra.push_back((MHexahedron*)temp[i]);
-    }
-  }
-  
-  return 1;
-}
-
-int RenumberMeshElements(std::vector<MElement*> &elements, meshPartitionOptions &options)
-{
-  Msg::Warning("Mesh renumbering is still experimental...");
-  if (elements.size() < 3) return 1;
-  GModel *tmp_model = new GModel();
-  std::set<MVertex *> setv;
-  for (unsigned int i = 0; i < elements.size(); ++i)
-    for(int j = 0; j < elements[i]->getNumVertices(); j++)
-      setv.insert(elements[i]->getVertex(j));
-  
-  if (elements[0]->getDim() == 2){
-    GFace *gf = new discreteFace(tmp_model, 1);
-    for (std::set<MVertex* >::iterator it = setv.begin(); it != setv.end(); it++)
-      gf->mesh_vertices.push_back(*it);
-    for (std::vector<MElement* >::iterator it = elements.begin(); it != elements.end(); it++){
-      if ((*it)->getType() == TYPE_TRI)
-        gf->triangles.push_back((MTriangle*)(*it));
-      else if  ((*it)->getType() == TYPE_QUA)
-        gf->quadrangles.push_back((MQuadrangle*)(*it));
-    }
-    tmp_model->add(gf);
-    RenumberMesh(tmp_model, options, elements);
-    tmp_model->remove(gf);
-  }
-  else if (elements[0]->getDim() == 3){
-    GRegion *gr = new discreteRegion(tmp_model, 1);
-    for (std::set<MVertex* >::iterator it = setv.begin(); it != setv.end(); it++)
-      gr->mesh_vertices.push_back(*it);
-    for (std::vector<MElement* >::iterator it = elements.begin(); it != elements.end(); it++){
-      if ((*it)->getType() == TYPE_TET)
-        gr->tetrahedra.push_back((MTetrahedron*)(*it));
-      else if  ((*it)->getType() == TYPE_HEX)
-        gr->hexahedra.push_back((MHexahedron*)(*it));
-      else if  ((*it)->getType() == TYPE_PRI)
-        gr->prisms.push_back((MPrism*)(*it));
-      else if  ((*it)->getType() == TYPE_PYR)
-        gr->pyramids.push_back((MPyramid*)(*it));
-      else if  ((*it)->getType() == TYPE_TRIH)
-        gr->trihedra.push_back((MTrihedron*)(*it));
-    }
-    tmp_model->add(gr);
-    RenumberMesh(tmp_model, options, elements);
-    tmp_model->remove(gr);
-  }
-  delete tmp_model;
-  return 1;
-}
-
-int RenumberMesh(GModel *const model, meshPartitionOptions &options, std::vector<MElement*> &numbered)
-{
-  Graph graph;
-  int ier;
-  Msg::StatusBar(true, "Building graph...");
-  ier = MakeGraph(model, graph);
-  Msg::StatusBar(true, "Renumbering graph...");
-  if(!ier) ier = RenumberGraph(graph, options);
-  if(ier) return 1;
-  
-  // create the numbering
-  numbered.clear();
-  const int n = graph.nn();
-  numbered.resize(n);
-  for(int i = 0; i != n; ++i) {
-    numbered[graph.partition(i)-1] = graph.element(i);
-  }
-  
-  Msg::StatusBar(true, "Done renumbering graph");
-  return 0;
-}
-
-int RenumberGraph(Graph &graph, meshPartitionOptions &options)
-{
-  int ier = 0;
-#ifdef HAVE_METIS
-  {
-    Msg::Info("Launching METIS graph renumberer");
-    try {
-      int numFlag = 0;
-      int nCommon = graph.dim();
-      unsigned int ne = graph.ne();
-      unsigned int nn = graph.nn();
-      unsigned int *xadj;
-      unsigned int *adjncy;
-      
-      int metisError = METIS_MeshToDual((idx_t *)&ne, (idx_t *)&nn, (idx_t *)graph.eptr(), (idx_t *)graph.eind(), (idx_t *)&nCommon, (idx_t *)&numFlag, (idx_t **)&xadj, (idx_t **)&adjncy);
-      
-      switch(metisError)
-      {
-        case METIS_OK:
-          break;
-        case METIS_ERROR_INPUT:
-          Msg::Error("Metis error (input)!");
-          return 1;
-          break;
-        case METIS_ERROR_MEMORY:
-          Msg::Error("Metis error (memory)!");
-          return 1;
-          break;
-        case METIS_ERROR:
-          Msg::Error("Metis error!");
-          return 1;
-          break;
-        default:
-          Msg::Error("Error!");
-          return 1;
-          break;
-      }
-      
-      int options = 0;
-      int *perm = new int[graph.ne()];
-      metisError = METIS_NodeND((idx_t *)&ne, (idx_t *)xadj, (idx_t *)adjncy, (idx_t *)graph.vwgt(), (idx_t *)&options, (idx_t *)perm, (idx_t *)graph.partition());
-      
-      switch(metisError)
-      {
-        case METIS_OK:
-          break;
-        case METIS_ERROR_INPUT:
-          Msg::Error("Metis error (input)!");
-          return 1;
-          break;
-        case METIS_ERROR_MEMORY:
-          Msg::Error("Metis error (memory)!");
-          return 1;
-          break;
-        case METIS_ERROR:
-          Msg::Error("Metis error!");
-          return 1;
-          break;
-        default:
-          Msg::Error("Error!");
-          return 1;
-          break;
-      }
-      
-      delete [] perm;
-    }
-    catch(...) {
-      Msg::Error("METIS threw an exception");
-      ier = 2;
-    }
-  }
-#endif
-  return ier;
-}
-
-/*******************************************************************************
+/******************************************************************************
  *
  * Routine CreateNewEntities
  *
@@ -2337,7 +2121,7 @@ int PartitionMeshElements(std::vector<MElement*> &elements, meshPartitionOptions
 
 int PartitionMesh(GModel *const model, meshPartitionOptions &options)
 {
-  Msg::Error("Gmsh must be compiled with METIS or Chaco support to partition meshes");
+  Msg::Error("Gmsh must be compiled with METIS support to partition meshes");
   return 0;
 }
 

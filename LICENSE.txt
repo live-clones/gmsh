@@ -3,8 +3,7 @@ Gmsh is provided under the terms of the GNU General Public License
 
   The copyright holders of Gmsh give you permission to combine Gmsh
   with code included in the standard release of TetGen (from Hang 
-  Si), Netgen (from Joachim Sch"oberl), Chaco (from Bruce Hendrickson
-  and Robert Leland at Sandia National Laboratories), METIS (from
+  Si), Netgen (from Joachim Sch"oberl), METIS (from
   George Karypis at the University of Minnesota) and OpenCASCADE
   (from Open CASCADE S.A.S) under their respective licenses. You may
   copy and distribute such a system following the terms of the GNU 

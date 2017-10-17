@@ -1120,7 +1120,7 @@ int GModel::optimizeMesh(const std::string &how)
 
 int GModel::partitionMesh(int numPart)
 {
-#if defined(HAVE_MESH) && (defined(HAVE_METIS) || defined(HAVE_CHACO))
+#if defined(HAVE_MESH) && (defined(HAVE_METIS))
   opt_mesh_partition_num(0, GMSH_SET, numPart);
   PartitionMesh(this, CTX::instance()->partitionOptions);
   return 1;
@@ -3908,7 +3908,7 @@ void GModel::classifyFaces(std::set<GFace*> &_faces)
 
 void GModel::createPartitionBoundaries(int createGhostCells)
 {
-#if (defined(HAVE_CHACO) || defined(HAVE_METIS)) && defined(HAVE_MESH)
+#if defined(HAVE_METIS) && defined(HAVE_MESH)
   std::multimap<int, GEntity*> newPartitionBoundaries;
   CreatePartitionBoundaries(this, newPartitionBoundaries, createGhostCells);
 #endif

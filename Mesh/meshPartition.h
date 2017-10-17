@@ -23,7 +23,7 @@
 class GModel;
 class GFace;
 class Graph;
-class meshPartitionOptions;
+struct meshPartitionOptions;
 
 int PartitionMesh(GModel *const model, meshPartitionOptions &options);
 
@@ -45,11 +45,6 @@ int getNumVertices(const MElement *const element);
 int getNumPeriodicLink(const GModel *const model);
 
 int PartitionGraph(Graph &graph, meshPartitionOptions &options);
-
-int RenumberMesh(GModel *const model, meshPartitionOptions &options);
-int RenumberMeshElements(std::vector<MElement*> &elements, meshPartitionOptions &options);
-int RenumberMesh(GModel *const model, meshPartitionOptions &options, std::vector<MElement*> &numbered);
-int RenumberGraph(Graph &graph, meshPartitionOptions &options);
 
 void CreateNewEntities(GModel *const model, std::multimap<int, GEntity*> &newPartitionEntities, meshPartitionOptions &options);
 template <class ITERATOR>
@@ -87,7 +82,6 @@ int PartitionMeshElements(std::vector<MElement*> &elements,
 
 void splitBoundaryEdges(GModel *model,
                         std::set<partitionEdge*, Less_partitionEdge> &newEdges);
-void createPartitionFaces(GModel *model, std::vector<MElement *> &elements, int num_parts,
-                          std::vector<discreteFace*> &pFaces);
+void createPartitionFaces(GModel *model, std::vector<MElement *> &elements, int num_parts, std::vector<discreteFace*> &pFaces);
 
 #endif

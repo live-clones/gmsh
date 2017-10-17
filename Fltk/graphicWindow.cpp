@@ -4306,7 +4306,7 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_inspect_cb} ,
   {"0Modules/Mesh/Refine by splitting",
    (Fl_Callback *)mesh_refine_cb} ,
-#if defined(HAVE_METIS) || defined(HAVE_CHACO)
+#if defined(HAVE_METIS)
   {"0Modules/Mesh/Partition",
    (Fl_Callback *)mesh_partition_cb} ,
   {"0Modules/Mesh/Unpartition",

@@ -22,7 +22,7 @@
   #include "MeshQualityOptimizer.h"
   #include "CADDistances.h"
 #endif
-#if defined(HAVE_METIS) || defined(HAVE_CHACO)
+#if defined(HAVE_METIS)
   #include "meshPartition.h"
 #endif
   #include "Field.h"
@@ -60,7 +60,7 @@ namespace std {
 %include "MeshQualityOptimizer.h"
 %include "CADDistances.h"
 #endif
-#if defined(HAVE_METIS) || defined(HAVE_CHACO)
+#if defined(HAVE_METIS)
 %include "meshPartition.h"
 #endif
 %warnfilter(401) FieldManager;
