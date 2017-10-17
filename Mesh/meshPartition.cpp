@@ -63,14 +63,13 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
   Msg::StatusBar(true, "Building mesh graph...");
   int ier = MakeGraph(model, graph);
   Msg::StatusBar(true, "Partitioning graph...");
-  if(!ier && options.num_partitions > 1) ier = PartitionGraph(graph, options);
+  if(!ier) ier = PartitionGraph(graph, options);
   if(ier) return 1;
 
   // Assign partitions to internal elements
   for(unsigned int i = 0; i < graph.ne(); i++)
   {
     if(graph.element(i) != NULL && options.num_partitions > 1) graph.element(i)->setPartition(graph.partition(i)+1);
-    if(graph.element(i) != NULL && options.num_partitions == 1) graph.element(i)->setPartition(1);
   }
 
   model->recomputeMeshPartitions();
@@ -1058,12 +1057,15 @@ void CreatePartitionBoundaries(GModel *const model, std::multimap<int, GEntity*>
   {
     for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it)
     {
-      fillit_(faceToElement, (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
-      fillit_(faceToElement, (*it)->hexahedra.begin(), (*it)->hexahedra.end());
-      fillit_(faceToElement, (*it)->prisms.begin(), (*it)->prisms.end());
-      fillit_(faceToElement, (*it)->pyramids.begin(), (*it)->pyramids.end());
-      fillit_(faceToElement, (*it)->trihedra.begin(), (*it)->trihedra.end());
-      fillit_(faceToElement, (*it)->polyhedra.begin(), (*it)->polyhedra.end());
+      if((*it)->geomType() == GEntity::PartitionVolume)
+      {
+        fillit_(faceToElement, (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
+        fillit_(faceToElement, (*it)->hexahedra.begin(), (*it)->hexahedra.end());
+        fillit_(faceToElement, (*it)->prisms.begin(), (*it)->prisms.end());
+        fillit_(faceToElement, (*it)->pyramids.begin(), (*it)->pyramids.end());
+        fillit_(faceToElement, (*it)->trihedra.begin(), (*it)->trihedra.end());
+        fillit_(faceToElement, (*it)->polyhedra.begin(), (*it)->polyhedra.end());
+      }
     }
     
     for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it)
@@ -1081,7 +1083,6 @@ void CreatePartitionBoundaries(GModel *const model, std::multimap<int, GEntity*>
       fillit_(edgeToElement, (*it)->quadrangles.begin(), (*it)->quadrangles.end());
       fillit_(edgeToElement, (*it)->polygons.begin(), (*it)->polygons.end());
     }
-    
     
     for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it)
     {

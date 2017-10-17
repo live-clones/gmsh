@@ -499,9 +499,6 @@ class GModel {
   // partition the mesh
   int partitionMesh(int num);
 
-  // create partition boundaries
-  void createPartitionBoundaries(int createGhostCells);
-
   // fill the vertex arrays, given the current option and data
   bool fillVertexArrays();
 

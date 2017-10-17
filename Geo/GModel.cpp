@@ -3906,14 +3906,6 @@ void GModel::classifyFaces(std::set<GFace*> &_faces)
 #endif
 }
 
-void GModel::createPartitionBoundaries(int createGhostCells)
-{
-#if defined(HAVE_METIS) && defined(HAVE_MESH)
-  std::multimap<int, GEntity*> newPartitionBoundaries;
-  CreatePartitionBoundaries(this, newPartitionBoundaries, createGhostCells);
-#endif
-}
-
 void GModel::addHomologyRequest(const std::string &type,
                                 std::vector<int> &domain,
                                 std::vector<int> &subdomain,

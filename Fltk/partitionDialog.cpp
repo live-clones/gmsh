@@ -267,7 +267,7 @@ void partition_dialog()
     {
       Fl_Value_Input *const o = new Fl_Value_Input (2*WB + 2*BB, y, IW, BH, "Number of\nPartitions");
       dlg.inputNumPartition = o;
-      o->minimum(1);
+      o->minimum(2);
       o->maximum(std::numeric_limits<int>::max());
       o->callback((Fl_Callback *)partition_opt_num_partitions_cb, &dlg);
       o->step(1);
