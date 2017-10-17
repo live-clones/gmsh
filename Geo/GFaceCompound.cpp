@@ -894,8 +894,8 @@ bool GFaceCompound::parametrize() const
     }
   }
 
-  fillNeumannBCS_Plane();
-  //fillNeumannBCS();
+  //fillNeumannBCS_Plane();
+  fillNeumannBCS();
 
   // Convex parametrization
   if (_mapping == CONVEX){
