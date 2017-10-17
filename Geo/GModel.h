@@ -250,6 +250,11 @@ class GModel {
   typedef std::set<GFace*, GEntityLessThan>::iterator fiter;
   typedef std::set<GEdge*, GEntityLessThan>::iterator eiter;
   typedef std::set<GVertex*, GEntityLessThan>::iterator viter;
+  
+  typedef std::set<GRegion*, GEntityLessThan>::const_iterator const_riter;
+  typedef std::set<GFace*, GEntityLessThan>::const_iterator const_fiter;
+  typedef std::set<GEdge*, GEntityLessThan>::const_iterator const_eiter;
+  typedef std::set<GVertex*, GEntityLessThan>::const_iterator const_viter;
 
   // get an iterator initialized to the first/last entity in this model
   riter firstRegion() { return regions.begin(); }
@@ -260,6 +265,14 @@ class GModel {
   fiter lastFace() { return faces.end(); }
   eiter lastEdge() { return edges.end(); }
   viter lastVertex() { return vertices.end(); }
+  const_riter firstRegion() const { return regions.begin(); }
+  const_fiter firstFace() const { return faces.begin(); }
+  const_eiter firstEdge() const { return edges.begin(); }
+  const_viter firstVertex() const { return vertices.begin(); }
+  const_riter lastRegion() const { return regions.end(); }
+  const_fiter lastFace() const { return faces.end(); }
+  const_eiter lastEdge() const { return edges.end(); }
+  const_viter lastVertex() const { return vertices.end(); }
   
   // get the set of entities
   std::set<GRegion*, GEntityLessThan> getGRegions() const { return regions; };

@@ -3909,7 +3909,8 @@ void GModel::classifyFaces(std::set<GFace*> &_faces)
 void GModel::createPartitionBoundaries(int createGhostCells)
 {
 #if (defined(HAVE_CHACO) || defined(HAVE_METIS)) && defined(HAVE_MESH)
-  CreatePartitionBoundaries(this, createGhostCells);
+  std::multimap<int, GEntity*> newPartitionBoundaries;
+  CreatePartitionBoundaries(this, newPartitionBoundaries, createGhostCells);
 #endif
 }
 
