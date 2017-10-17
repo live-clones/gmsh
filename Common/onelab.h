@@ -1548,6 +1548,7 @@ namespace onelab{
     }
     void runNonBlockingSubClient(const std::string &name, const std::string &command)
     {
+#if !defined(BUILD_IOS)
       if(!_gmshClient){
         int res = system(command.c_str());
         if(res){
@@ -1555,6 +1556,7 @@ namespace onelab{
         }
         return;
       }
+#endif
       std::string msg = name + parameter::charSep() + command;
       _gmshClient->SendMessage(GmshSocket::GMSH_CONNECT, msg.size(), &msg[0]);
       _numSubClients += 1;

@@ -2010,13 +2010,13 @@ identification number of the center of the sphere).
 Creates a disk. When four expressions are provided on the right hand
 side (3 coordinates of the center and the radius), the disk is circular.
 A fifth expression defines the radius along Y, leading to an ellipse.
-Disk is only available with the OpenCASCADE kernel.
+@code{Disk} is only available with the OpenCASCADE kernel.
 
 @item Rectangle ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a rectangle. The 3 first expressions define the lower-left
 corner; the next 2 define the width and height. If a 6th expression is
-provided, it defines a radius to round the rectangle corners. Rectangle
-is only available with the OpenCASCADE kernel.
+provided, it defines a radius to round the rectangle
+corners. @code{Rectangle} is only available with the OpenCASCADE kernel.
 
 @item Surface Loop ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a surface loop (a shell). The @var{expression} inside the
@@ -2085,48 +2085,48 @@ combined).
 
 @item Sphere ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a sphere, defined by the 3 coordinates of its center and a
-radius. Additional expressions define 3 angle limits. Sphere is only
-available with the OpenCASCADE kernel.
+radius. Additional expressions define 3 angle limits. @code{Sphere} is
+only available with the OpenCASCADE kernel.
 
 @item Box ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a box, defined by the 3 coordinates of a point and the 3
-extents. Box is only available with the OpenCASCADE kernel.
+extents. @code{Box} is only available with the OpenCASCADE kernel.
 
 @item Cylinder ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a cylinder, defined by the 3 coordinates of the center of the
-first circular face and the 3 components of the vector defining its
-axis. An additional expression defines the angular opening. Cylinder is
-only available with the OpenCASCADE kernel.
+first circular face, the 3 components of the vector defining its axis
+and its radius. An additional expression defines the angular
+opening. @code{Cylinder} is only available with the OpenCASCADE kernel.
 
 @item Torus ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a torus, defined by the 3 coordinates of its center and 2 radii.
-An additional expression defines the angular opening. Torus is only
-available with the OpenCASCADE kernel.
+An additional expression defines the angular opening. @code{Torus} is
+only available with the OpenCASCADE kernel.
 
 @item Cone ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a cone, defined by the 3 coordinates of the center of the first
 circular face, the 3 components of the vector defining its axis and the
 two radii of the faces (these radii can be zero). An additional
-expression defines the angular opening. Cone is only available with the
-OpenCASCADE kernel.
+expression defines the angular opening. @code{Cone} is only available
+with the OpenCASCADE kernel.
 
 @item Wedge ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a right angular wedge, defined by the 3 coordinates of the
 right-angle point and the 3 extends. An additional parameter defines the
-top X extent (zero by default). Wedge is only available with the
+top X extent (zero by default). @code{Wedge} is only available with the
 OpenCASCADE kernel.
 
 @item ThruSections ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a volume defined through line loops.  ThruSections is only
+Creates a volume defined through line loops. @code{ThruSections} is only
 available with the OpenCASCADE kernel.
 
 @item Ruled ThruSections ( @var{expression} ) = @{ @var{expression-list} @};
 Same as @code{ThruSections}, but the surfaces creates on the boundary
-are forced to be ruled. Ruled ThruSections is only available with the
-OpenCASCADE kernel.
+are forced to be ruled. @code{Ruled ThruSections} is only available with
+the OpenCASCADE kernel.
 
 @c @item ThickSolid ( @var{expression} ) = @{ @var{expression-list} @};
-@c todo: ThickSolid is only available with the OpenCASCADE kernel.
+@c todo: @code{ThickSolid} is only available with the OpenCASCADE kernel.
 
 @item Compound Volume ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a compound volume from several elementary volumes.  When meshed,
@@ -2205,16 +2205,19 @@ Extrudes entities in @var{extrude-list} along the give wire. Only
 available with the OpenCASCADE geometry kernel.
 
 @item ThruSections @{ @var{expression-list} @}
-Creates surfaces through the given line loops or wires. ThruSection are
-only available with the OpenCASCADE kernel.
+Creates surfaces through the given line loops or
+wires. @code{ThruSections} is only available with the OpenCASCADE
+kernel.
 
 @item Ruled ThruSections @{ @var{expression-list} @}
 Creates ruled surfaces through the given line loops or
-wires. ThruSections are only available with the OpenCASCADE kernel.
+wires. @code{Ruled ThruSections} is only available with the OpenCASCADE
+kernel.
 
 @item Fillet @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @var{expression} @}
 Fillets volumes (first list) on some edges (second list), using the
-provided radius.  Fillet is only available with the OpenCASCADE kernel.
+provided radius. @code{Fillet} is only available with the OpenCASCADE
+kernel.
 @end ftable
 
 @noindent with
@@ -4869,9 +4872,9 @@ by hand.
 @node Compiling the source code, Information for developers, Options, Top
 @appendix Compiling the source code
 
-Stable releases and nightly source snapshots are available from
-@url{http://gmsh.info/src/}. You can also access the Git
-repository directly:
+Stable releases and source snapshots are available from
+@url{http://gmsh.info/src/}. You can also access the Git repository
+directly:
 
 @enumerate
 @item
@@ -5408,6 +5411,13 @@ the geometrical details of the model.
 
 If nothing works, file a bug report with the version of your operating
 system and and the full geometry.
+
+@item How can I only save tetrahedral elements (not triangles and lines)?
+
+If physical entities are defined, the output mesh only contains those
+elements that belong to physical entities. So to save only 3D elements,
+simply define one (or more) physical volume(s) and don't define any
+physical surfaces or lines.
 
 @item My 2D meshes of IGES files present gaps between surfaces
 

@@ -44,6 +44,7 @@
 #cmakedefine HAVE_NO_STDINT_H
 #cmakedefine HAVE_NO_VSNPRINTF
 #cmakedefine HAVE_OCC
+#cmakedefine HAVE_OCC_CAF
 #cmakedefine HAVE_ONELAB
 #cmakedefine HAVE_ONELAB2
 #cmakedefine HAVE_ONELAB_METAMODEL

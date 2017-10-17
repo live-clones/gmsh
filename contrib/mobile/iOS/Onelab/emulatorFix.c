@@ -177,8 +177,3 @@ double strtod$UNIX2003(const char *restrict nptr, char **restrict endptr)
 {
   return strtod(nptr, endptr);
 }
-
-int system$UNIX2003(const char *command)
-{
-  return system(command);
-}
