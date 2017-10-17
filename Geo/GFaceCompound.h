@@ -146,6 +146,7 @@ class GFaceCompound : public GFace {
   Range<double> parBounds(int i) const
   { return trivial() ? (*(_compound.begin()))->parBounds(i) : Range<double>(-1, 1); }
 
+  using GFace::point;
   GPoint point(double par1, double par2) const;
   GPoint pointInRemeshedOctree(double par1, double par2) const;
   SPoint2 parFromPoint(const SPoint3 &p, bool onSurface=true) const;
@@ -216,6 +217,7 @@ class GFaceCompound : public GFace {
   }
   virtual ~GFaceCompound() {}
   virtual void deleteMesh() {}
+  using GFace::point;
   GPoint point(double par1, double par2) const { return GPoint(); }
   Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const
   {

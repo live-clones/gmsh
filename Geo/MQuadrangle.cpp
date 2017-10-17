@@ -350,6 +350,24 @@ double MQuadrangle::getInnerRadius()
 #endif // HAVE_LAPACK
 }
 
+void MQuadrangleN::reverse()
+{
+  MVertex *tmp;
+  tmp = _v[1]; _v[1] = _v[3]; _v[3] = tmp;
+
+  int npts = _order-1, base = 0;
+  std::vector<MVertex*>::iterator begin = _vs.begin() + base;
+
+  while (npts > 0) {
+    std::reverse(begin, begin + 4 * npts);
+    base += 4 * npts;
+    if (npts > 1) {
+      tmp = _vs[base+1]; _vs[base+1] = _vs[base+3]; _vs[base+3] = tmp;
+    }
+    npts -= 2;
+    begin = _vs.begin() + base + 4;
+  }
+}
 
 void MQuadrangle::reorient(int rot, bool swap) {
   MVertex* tmp[4];

@@ -42,6 +42,7 @@ public:
   virtual ~GenericFace();
 
   Range<double> parBounds(int i) const;
+  using GFace::point;
   virtual GPoint point(double par1, double par2) const;
   virtual GPoint closestPoint(const SPoint3 & queryPoint,
                               const double initialGuess[2]) const;

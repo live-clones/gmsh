@@ -13,15 +13,13 @@ class Surface;
 class gmshFace : public GFace {
  protected:
   Surface *s;
-  bool isSphere;
-  SPoint3 center;
-  double radius;
   bool buildSTLTriangulation(bool force);
  public:
   gmshFace(GModel *m, Surface *face);
   virtual ~gmshFace(){}
   Range<double> parBounds(int i) const;
   void setModelEdges(std::list<GEdge*> &);
+  using GFace::point;
   virtual GPoint point(double par1, double par2) const;
   virtual GPoint closestPoint(const SPoint3 &queryPoint,
                               const double initialGuess[2]) const;

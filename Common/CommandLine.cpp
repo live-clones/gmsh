@@ -74,9 +74,10 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-o file",            "Specify output file name"));
   s.push_back(mp("-format string",     "Select output mesh format (auto (default), msh, "
                                        "msh1, msh2, unv, vrml, ply2, stl, mesh, bdf, cgns, "
-                                       "p3d, diff, med, ...)"));
+                                       "p3d, diff, med, neu, ...)"));
   s.push_back(mp("-bin",               "Use binary format when available"));
   s.push_back(mp("-refine",            "Perform uniform mesh refinement, then exit"));
+  s.push_back(mp("-reclassify",        "Reclassify mesh, then exit"));
   s.push_back(mp("-part int",          "Partition after batch mesh generation"));
   s.push_back(mp("-partWeight tri|quad|tet|prism|hex int", "Weight of a triangle/quad/etc. "
                                                            "during partitioning"));
@@ -105,7 +106,9 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-rand float",        "Set random perturbation factor"));
   s.push_back(mp("-bgm file",          "Load background mesh from file"));
   s.push_back(mp("-check",             "Perform various consistency checks on mesh"));
-  s.push_back(mp("-ignorePartBound",   "Ignore partitions boundaries"));
+  s.push_back(mp("-ignorePartBound",   "Ignore partition boundaries"));
+  s.push_back(mp("-ignorePeriocity",   "Ignore periodic boundaries"));
+  s.push_back(mp("-oneFilePerPart",    "Save mesh partitions in separate files"));
 #if defined(HAVE_FLTK)
   s.push_back(mp("Post-processing options:", ""));
   s.push_back(mp("-link int",          "Select link mode between views (0, 1, 2, 3, 4)"));
@@ -382,6 +385,10 @@ void GetOptions(int argc, char *argv[])
         CTX::instance()->batch = 5;
         i++;
       }
+      else if(!strcmp(argv[i] + 1, "reclassify")) {
+        CTX::instance()->batch = 6;
+        i++;
+      }
       else if(!strcmp(argv[i] + 1, "part")) {
         i++;
         if(argv[i]){
@@ -492,7 +499,8 @@ void GetOptions(int argc, char *argv[])
         i++;
         if(argv[i])
           opt_mesh_optimize_threshold(0, GMSH_SET, atof(argv[i++]));
-        i++;
+        else
+          Msg::Fatal("Missing number");
       }
       else if(!strcmp(argv[i] + 1, "optimize_netgen")) {
         CTX::instance()->mesh.optimizeNetgen = 1;
@@ -742,6 +750,14 @@ void GetOptions(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "ignorePartBound")) {
         i++;
         opt_mesh_ignore_part_bound(0, GMSH_SET, 1);
+      }
+      else if(!strcmp(argv[i] + 1, "oneFilePerPart")) {
+        i++;
+        opt_mesh_msh_file_partitioned(0, GMSH_SET, 1);
+      }
+      else if(!strcmp(argv[i] + 1, "ignorePeriodicity")) {
+        i++;
+        opt_mesh_ignore_periodicity(0, GMSH_SET, 1);
       }
       else if(!strcmp(argv[i] + 1, "edgelmin")) {
         i++;
@@ -1072,8 +1088,6 @@ void GetOptions(int argc, char *argv[])
       }
       else if(!strcmp(argv[i] + 1, "stereo")) {
         opt_general_stereo_mode(0, GMSH_SET, 1.);
-	//        CTX::instance()->camera = 1;
-	//	CTX::instance()->stereo = 1;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "gamepad")) {

@@ -1041,8 +1041,10 @@ void DeleteSurface(int is, bool recursive)
       if(c->beg) vv.insert(c->beg->Num);
       if(c->end) vv.insert(c->end->Num);
     }
-    for(std::set<int>::iterator it = cc.begin(); it != cc.end(); it++)
+    for(std::set<int>::iterator it = cc.begin(); it != cc.end(); it++){
       DeleteCurve(*it);
+      DeleteCurve(-*it);
+    }
     for(std::set<int>::iterator it = vv.begin(); it != vv.end(); it++)
       DeletePoint(*it);
   }
@@ -1078,8 +1080,10 @@ void DeleteVolume(int iv, bool recursive)
     }
     for(std::set<int>::iterator it = ss.begin(); it != ss.end(); it++)
       DeleteSurface(*it);
-    for(std::set<int>::iterator it = cc.begin(); it != cc.end(); it++)
+    for(std::set<int>::iterator it = cc.begin(); it != cc.end(); it++){
       DeleteCurve(*it);
+      DeleteCurve(-*it);
+    }
     for(std::set<int>::iterator it = vv.begin(); it != vv.end(); it++)
       DeletePoint(*it);
   }
@@ -1377,8 +1381,7 @@ static void vecmat4x4(double mat[4][4], double vec[4], double res[4])
   }
 }
 
-static void ApplyTransformationToPoint(double matrix[4][4], Vertex *v,
-                                       bool end_curve_surface=false)
+static void ApplyTransformationToPoint(double matrix[4][4], Vertex *v)
 {
   double pos[4], vec[4];
 
@@ -1400,28 +1403,6 @@ static void ApplyTransformationToPoint(double matrix[4][4], Vertex *v,
   v->Pos.Y = pos[1];
   v->Pos.Z = pos[2];
   v->w = pos[3];
-
-  // Warning: in theory we should always redo these checks if
-  // end_curve_surface is true; but in practice this is so slow for
-  // big models that we need to provide a way to bypass it (which is
-  // OK if the guy who builds the geometry knowns what he's
-  // doing). Instead of adding one more option, let's just bypass all
-  // the checks if auto_coherence==0...
-  if(CTX::instance()->geom.autoCoherence && end_curve_surface){
-    List_T *All = Tree2List(GModel::current()->getGEOInternals()->Curves);
-    for(int i = 0; i < List_Nbr(All); i++) {
-      Curve *c;
-      List_Read(All, i, &c);
-      for(int j = 0; j < List_Nbr(c->Control_Points); j++) {
-        Vertex *pv = *(Vertex **)List_Pointer(c->Control_Points, j);
-        if(pv->Num == v->Num){
-          EndCurve(c);
-          break;
-        }
-      }
-    }
-    List_Delete(All);
-  }
 }
 
 static void ApplyTransformationToCurve(double matrix[4][4], Curve *c)
@@ -1478,7 +1459,7 @@ static void ApplicationOnShapes(double matrix[4][4], List_T *shapes)
     case MSH_POINT:
       v = FindPoint(O.Num);
       if(v)
-        ApplyTransformationToPoint(matrix, v, true);
+        ApplyTransformationToPoint(matrix, v);
       else
         Msg::Error("Unknown GEO vertex with tag %d", O.Num);
       break;
@@ -1518,6 +1499,28 @@ static void ApplicationOnShapes(double matrix[4][4], List_T *shapes)
                  O.Type);
       break;
     }
+  }
+
+  // recompute curve parameters if control points have been transformed.
+  // Warning: in theory we should always redo these checks; but in practice this
+  // is so slow for big models that we need to provide a way to bypass it (which
+  // is OK if the guy who builds the geometry knowns what he's doing). Instead
+  // of adding one more option, let's just bypass all the checks if
+  // auto_coherence==0.
+  if(CTX::instance()->geom.autoCoherence){
+    List_T *All = Tree2List(GModel::current()->getGEOInternals()->Curves);
+    for(int i = 0; i < List_Nbr(All); i++) {
+      Curve *c;
+      List_Read(All, i, &c);
+      for(int j = 0; j < List_Nbr(c->Control_Points); j++) {
+        Vertex *pv = *(Vertex **)List_Pointer(c->Control_Points, j);
+        if(List_Search(ListOfTransformedPoints, &pv->Num, fcmp_absint)) {
+          EndCurve(c);
+          break;
+        }
+      }
+    }
+    List_Delete(All);
   }
 
   List_Reset(ListOfTransformedPoints);
@@ -2331,7 +2334,7 @@ static void RemoveDegenerateCurves()
       List_Read(All, i, &c);
       if(c->degenerate()) {
 	DeleteCurve(c->Num);
-	// DeleteCurve(-c->Num);
+        DeleteCurve(-c->Num);
       }
     }
   }
@@ -2429,7 +2432,6 @@ static void RemoveDegenerateSurfaces()
 	List_Delete (ll);
 	List_Delete (ll2);
       }
-      printf("Deleting Surface %d\n",s->Num);
       DeleteSurface(s->Num);
     }
   }

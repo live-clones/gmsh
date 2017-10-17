@@ -949,6 +949,7 @@ List of expressions are also widely used, and are defined as:
   Point @{ @var{expression} @} |
   <Physical> Point|Line|Surface|Volume "*" |
   Point|Line|Surface|Volume In BoundingBox @{ @var{expression-list} @} |
+  BoundingBox Point|Line|Surface|Volume @{ @var{expression} @} |
   Physical Point|Line|Surface|Volume @{ @var{expression-list} @}
 @c  @var{duplicata} - already implemented: should we explain this?
 @end example
@@ -969,11 +970,12 @@ permit to reference an expression sublist (whose elements are those
 corresponding to the indices provided by the @var{expression-list}).
 The next two cases permit to retrieve the indices of entities created
 through geometrical transformations and extrusions (see
-@ref{Transformations}, and @ref{Extrusions}). The last three cases
-permit to retrieve the coordinates of a given geometry point
-(@pxref{Points}), to retrieve the id numbers of all points, lines,
-surfaces or volumes in the model, or to retrieve the elementary entities
-making up physical groups.
+@ref{Transformations}, and @ref{Extrusions}). The next two cases allow
+to retrieve entities in a given bounding box, or get the bounding box of
+a given entity. The last three cases permit to retrieve the coordinates
+of a given geometry point (@pxref{Points}), to retrieve the id numbers
+of all points, lines, surfaces or volumes in the model, or to retrieve
+the elementary entities making up physical groups.
 
 To see the practical use of such expressions, have a look at the first
 couple of examples in @ref{Tutorial}. Note that, in order to lighten the
@@ -1796,15 +1798,15 @@ ways, for example using the @code{Translate}, @code{Rotate},
 references them. Zero or negative identification numbers are reserved by
 the system for special uses: do not use them in your scripts.
 
-Groups of elementary geometrical entities can also be defined and
-are called ``physical'' entities. These physical entities cannot be modified
-by geometry commands: their only purpose is to assemble elementary entities
-into larger groups, possibly modifying their orientation, so that they can
-be referred to by the mesh module as single entities. As is the case with
-elementary entities, each physical point, physical line, physical surface or
-physical volume must be assigned a unique identification number. See
-@ref{Mesh module}, for more information about how physical entities affect
-the way meshes are saved.
+Groups of elementary geometrical entities can also be defined and are
+called ``physical'' entities. These physical entities cannot be modified
+by geometry commands: their only purpose is to assemble elementary
+entities into larger groups so that they can be referred to by the mesh
+module as single entities. As is the case with elementary entities, each
+physical point, physical line, physical surface or physical volume must
+be assigned a unique identification number. See @ref{Mesh module}, for
+more information about how physical entities affect the way meshes are
+saved.
 
 @menu
 * Geometry commands::
@@ -1968,7 +1970,7 @@ the comma) or not (in which case a unique identification number is
 automatically created). Specifying negative identification numbers in
 the @var{expression-list} will reverse the orientation of the mesh
 elements belonging to the corresponding elementary lines in the saved
-mesh.
+mesh file.
 
 @end ftable
 
@@ -2051,7 +2053,7 @@ which can be either provided explicitly (after the comma) or not (in
 which case a unique identification number is automatically created).
 Specifying negative identification numbers in the @var{expression-list}
 will reverse the orientation of the mesh elements belonging to the
-corresponding elementary surfaces in the saved mesh.
+corresponding elementary surfaces in the saved mesh file.
 
 @end ftable
 
@@ -2617,8 +2619,8 @@ inconvenient:
 mesh elements cannot be duplicated;
 @item 
 the orientation of the mesh elements (the ordering of their nodes) is
-determined entirely by the orientation of their ``parent'' elementary
-entities, and cannot be modified;
+determined  by the orientation of their ``parent'' elementary
+entities;
 @item
 elements belonging to different elementary entities cannot be linked as
 being part of a larger group having a physical or mathematical meaning (like
@@ -2629,21 +2631,23 @@ To remedy these problems, the geometry module (@pxref{Geometry module})
 introduces the notion of ``physical'' entities (also called ``physical
 groups''). The purpose of physical entities is to assemble elementary
 entities into larger, possibly overlapping groups, and to control the
-orientation of the elements in these groups. The introduction of
-physical entities in large models usually greatly facilitates the
-manipulation of the model (e.g., using `Tools->Visibility' in the GUI)
-and the interfacing with external solvers.  
+orientation of the elements in these groups when they are save into a
+mesh file. The introduction of physical entities in large models usually
+greatly facilitates the manipulation of the model (e.g., using
+`Tools->Visibility' in the GUI) and the interfacing with external
+solvers.
 
 In the MSH file format (@pxref{File formats}), if physical entities are
 defined, the output mesh only contains those elements that belong to
 physical entities. Other file formats each treat physical entities in
 slightly different ways, depending on their capability to define groups.
 
-In all cases, Gmsh reindexes the mesh vertices and elements so that they
-are numbered in a continuous sequence in the output files. Note that the
-numbers displayed on screen after mesh generation thus usually differ
-from the ones saved in the mesh files. To check the actual numbers saved
-in the output file just load the file back using `File->Open'.
+Note that in some mesh file formats Gmsh reindexes the mesh vertices and
+elements so that they are numbered in a continuous sequence in the
+output files. Note that the numbers displayed on screen after mesh
+generation can thus differ from the ones saved in the mesh files,
+depending on the format. To check the actual numbers saved in the output
+file just load the file back using `File->Open'.
 
 @c -------------------------------------------------------------------------
 @c Mesh commands

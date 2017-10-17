@@ -100,9 +100,6 @@ class Field {
   virtual double operator() (double x, double y, double z, GEntity *ge=0) = 0;
   // anisotropic
   virtual void operator() (double x, double y, double z, SMetric3 &, GEntity *ge=0){}
-  // temporary
-  virtual void operator()(double x, double y, double z, SVector3& v1, SVector3& v2,
-                          SVector3& v3,GEntity* ge=0){}
   bool update_needed;
   virtual const char *getName() = 0;
 #if defined(HAVE_POST)
@@ -388,6 +385,7 @@ class GenericField : public Field{
 
     GenericField();
     ~GenericField();
+    using Field::operator();
     virtual double operator() (double x, double y, double z, GEntity *ge=0);
     virtual const char *getName(){return "GenericField";};
 

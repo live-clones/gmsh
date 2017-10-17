@@ -26,6 +26,6 @@ Translate{0.2,0.2,0.2}{ Volume{1}; }
 Rotate { {1,0,0}, {0,0,0}, Pi/3 } { Volume{1}; }
 Rotate { {0,1,0}, {0,0,0}, Pi/3 } { Volume{1}; }
 
-f() = BooleanFragments { Volume{1}; Delete; }{ Volume{2}; Delete; };
+f() = BooleanFragments { Volume{1,2}; Delete; }{};
 
 Translate{4,0,0}{ Duplicata{ Volume{1/*,2,3*/}; } }

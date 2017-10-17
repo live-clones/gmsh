@@ -146,6 +146,9 @@
       //   "/" -> binary_divide
       //   "^" -> binary_power
       //   "%" -> fmod (defined in math.h)
+      //   ADDED FOR GMSH:
+      //   "<" -> binary_less
+      //   ">" -> binary_greater
       ///////////////////////////////////////////////////////////
 
       //////////////////////
@@ -188,6 +191,16 @@
          {
             return pow(x,y);
          } // binary_power()
+
+          double binary_less(double x, double y)
+         {
+           return (double)(x < y);
+         } // binary_less()
+
+         double binary_greater(double x, double y)
+         {
+           return (double)(x > y);
+         } // binary_greater()
 
       /////////////////////////////////////////
       // pre-defined user defined functions
@@ -362,6 +375,9 @@
          { '/',  binary_divide},
          { '^',  binary_power},
          { '%',  fmod},
+         // ADDED FOR GMSH
+         { '<',  binary_less},
+         { '>',  binary_greater},
 
          { '\0' , 0 } // '\0' mark the end of table
          };

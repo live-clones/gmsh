@@ -26,11 +26,6 @@ class MPolygon;
 class ExtrudeParams;
 class GFaceCompound;
 
-struct surface_params
-{
-  double radius, radius2, height, cx, cy, cz;
-};
-
 class GRegion;
 
 // A model face.
@@ -46,9 +41,6 @@ class GFace : public GEntity {
   std::list<GVertex *> embedded_vertices;
   GFaceCompound *compound; // this model face belongs to a compound
 
-  // replace edges (for gluing) for specific modelers, we have to
-  // re-create internal data
-  virtual void replaceEdgesInternal(std::list<GEdge*> &){}
   BoundaryLayerColumns _columns;
 
  public: // this will become protected or private
@@ -154,9 +146,6 @@ class GFace : public GEntity {
   // get the oriented bounding box
   virtual SOrientedBoundingBox getOBB();
 
-  // retrieve surface params
-  virtual surface_params getSurfaceParams() const;
-
   // compute the genus G of the surface
   virtual int genusGeom() const;
   virtual bool checkTopology() const { return true; }
@@ -164,14 +153,6 @@ class GFace : public GEntity {
   // return the point on the face corresponding to the given parameter
   virtual GPoint point(double par1, double par2) const = 0;
   virtual GPoint point(const SPoint2 &pt) const { return point(pt.x(), pt.y()); }
-
-  // compute, in parametric space, the interpolation from pt1 to pt2
-  // along a geodesic of the surface
-  virtual SPoint2 geodesic(const SPoint2 &pt1, const SPoint2 &pt2, double t);
-
-  // compute the length of a geodesic between two points in parametric
-  // space
-  virtual double length(const SPoint2 &pt1, const SPoint2 &pt2, int n=4);
 
   // if the mapping is a conforming mapping, i.e. a mapping that
   // conserves angles, this function returns the eigenvalue of the
@@ -190,7 +171,7 @@ class GFace : public GEntity {
   virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface=true) const;
 
   // true if the parameter value is interior to the face
-  virtual bool containsParam(const SPoint2 &pt) const;
+  virtual bool containsParam(const SPoint2 &pt);
 
   // return the point on the face closest to the given point
   virtual GPoint closestPoint(const SPoint3 & queryPoint,

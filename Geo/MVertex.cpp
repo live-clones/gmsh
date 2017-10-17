@@ -270,6 +270,26 @@ void MVertex::writeMESH(FILE *fp, double scalingFactor)
           _ge ? _ge->tag() : 0);
 }
 
+void MVertex::writeNEU(FILE *fp, int dim, double scalingFactor)
+{
+  if(_index < 0) return; // negative index vertices are never saved
+
+  switch(dim) {
+  case 3:
+    fprintf(fp, "%10d%20.11e%20.11e%20.11e\n",
+            _index, x() * scalingFactor, y() * scalingFactor,
+            z() * scalingFactor);
+    break;
+  case 2:
+    fprintf(fp, "%10d%20.11e%20.11e\n",
+            _index, x() * scalingFactor, y() * scalingFactor);
+    break;
+  case 1:
+    fprintf(fp, "%10d%20.11e\n", _index, x() * scalingFactor);
+    break;
+  }
+}
+
 static void double_to_char8(double val, char *str)
 {
   if(val >= 1.e6)
@@ -326,7 +346,7 @@ void MVertex::writeINP(FILE *fp, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
-  fprintf(fp, "%d, %.16g, %.16g, %.16g\n", _index, x() * scalingFactor,
+  fprintf(fp, "%d, %.14g, %.14g, %.14g\n", _index, x() * scalingFactor,
           y() * scalingFactor, z() * scalingFactor);
 }
 

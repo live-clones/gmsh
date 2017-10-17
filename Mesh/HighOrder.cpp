@@ -136,13 +136,14 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
 
 // --------- Creation of high-order edge vertices -----------
 
-static bool getEdgeVerticesonGeo(GEdge *ge, MVertex *v0, MVertex *v1,
+static bool getEdgeVerticesOnGeo(GEdge *ge, MVertex *v0, MVertex *v1,
                                  std::vector<MVertex*> &ve, int nPts = 1)
 {
   static const double relaxFail = 1e-2;
   double u0 = 0., u1 = 0., US[100];
   bool reparamOK = reparamMeshVertexOnEdge(v0, ge, u0);
-  if(ge->periodic(0) && ge->getEndVertex()->getNumMeshVertices() > 0 &&
+  if(ge->periodic(0) && ge->getEndVertex() &&
+     ge->getEndVertex()->getNumMeshVertices() > 0 &&
      v1 == ge->getEndVertex()->mesh_vertices[0])
     u1 = ge->parBounds(0).high();
   else
@@ -182,7 +183,7 @@ static bool getEdgeVerticesonGeo(GEdge *ge, MVertex *v0, MVertex *v1,
   return true;
 }
 
-static bool getEdgeVerticesonGeo(GFace *gf, MVertex *v0, MVertex *v1,
+static bool getEdgeVerticesOnGeo(GFace *gf, MVertex *v0, MVertex *v1,
                                  std::vector<MVertex*> &ve, int nPts = 1)
 {
   SPoint2 p0, p1;
@@ -248,7 +249,8 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
 {
   if(ge->geomType() == GEntity::DiscreteCurve ||
      ge->geomType() == GEntity::BoundaryLayerCurve ||
-     ge->geomType() == GEntity::CompoundCurve)
+     ge->geomType() == GEntity::CompoundCurve ||
+     ge->geomType() == GEntity::PartitionCurve)
     linear = true;
 
   std::vector<MVertex*> veOld;
@@ -259,7 +261,7 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
   std::vector<MVertex*> veEdge;
   // Get vertices on geometry if asked
   bool gotVertOnGeo = linear ? false :
-    getEdgeVerticesonGeo(ge, veOld[0], veOld[1], veEdge, nPts);
+    getEdgeVerticesOnGeo(ge, veOld[0], veOld[1], veEdge, nPts);
   // If not on geometry, create from mesh interpolation
   if (!gotVertOnGeo)
     interpVerticesInExistingEdge(ge, ele, veEdge, nPts);
@@ -283,7 +285,8 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
 {
   if(gf->geomType() == GEntity::DiscreteSurface ||
      gf->geomType() == GEntity::BoundaryLayerSurface ||
-     gf->geomType() == GEntity::CompoundSurface)
+     gf->geomType() == GEntity::CompoundSurface ||
+     gf->geomType() == GEntity::PartitionSurface)
     linear = true;
 
   for(int i = 0; i < ele->getNumEdges(); i++) {
@@ -302,7 +305,7 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
     else { // Vertices do not exist, create them
       // Get vertices on geometry if asked
       bool gotVertOnGeo = linear ? false :
-        getEdgeVerticesonGeo(gf, veOld[0], veOld[1], veEdge, nPts);
+        getEdgeVerticesOnGeo(gf, veOld[0], veOld[1], veEdge, nPts);
       if (!gotVertOnGeo) {
         // If not on geometry, create from mesh interpolation
         const MLineN edgeEl(veOld, ele->getPolynomialOrder());
@@ -416,38 +419,39 @@ static void reorientQuadPoints(std::vector<MVertex*> &vtcs, int orientation,
       for (int i = 0; i < 4; i++) vtcs[start + i] = tmp[i];
 
       // EDGES
+      start += 4;
       for (int iEdge=0;iEdge<4;iEdge++){
         int p1 = indices[iEdge];
         int p2 = indices[(iEdge+1)%4];
         int nbP = order-1;
         if      (p1 == 0 && p2 == 1){
-          for (int i = 4+0*nbP; i < 4+1*nbP; i++) tmp[index++] = vtcs[i];
+          for (int i = start+0*nbP; i < start+1*nbP; i++) tmp[index++] = vtcs[i];
         }
         else if (p1 == 1 && p2 == 2){
-          for (int i = 4+1*nbP; i< 4+2*nbP; i++) tmp[index++] = vtcs[i];
+          for (int i = start+1*nbP; i< start+2*nbP; i++) tmp[index++] = vtcs[i];
         }
         else if (p1 == 2 && p2 == 3){
-          for (int i = 4+2*nbP; i< 4+3*nbP; i++) tmp[index++] = vtcs[i];
+          for (int i = start+2*nbP; i< start+3*nbP; i++) tmp[index++] = vtcs[i];
         }
         else if (p1 == 3 && p2 == 0){
-          for (int i = 4+3*nbP; i< 4+4*nbP; i++) tmp[index++] = vtcs[i];
+          for (int i = start+3*nbP; i< start+4*nbP; i++) tmp[index++] = vtcs[i];
         }
         else if (p1 == 1 && p2 == 0){
-          for (int i = 4+1*nbP-1; i >= 4+0*nbP; i--) tmp[index++] = vtcs[i];
+          for (int i = start+1*nbP-1; i >= start+0*nbP; i--) tmp[index++] = vtcs[i];
         }
         else if (p1 == 2 && p2 == 1){
-          for (int i = 4+2*nbP-1; i >= 4+1*nbP; i--) tmp[index++] = vtcs[i];
+          for (int i = start+2*nbP-1; i >= start+1*nbP; i--) tmp[index++] = vtcs[i];
         }
         else if (p1 == 3 && p2 == 2){
-          for (int i = 4+3*nbP-1; i >= 4+2*nbP; i--) tmp[index++] = vtcs[i];
+          for (int i = start+3*nbP-1; i >= start+2*nbP; i--) tmp[index++] = vtcs[i];
         }
         else if (p1 == 0 && p2 == 3){
-          for (int i = 4+4*nbP-1; i >= 4+3*nbP; i--) tmp[index++] = vtcs[i];
+          for (int i = start+4*nbP-1; i >= start+3*nbP; i--) tmp[index++] = vtcs[i];
         }
         else Msg::Error("Something wrong in reorientQuadPoints");
       }
-      for (int i = 0; i < index; i++)vtcs[start+4+i] = tmp[i];
-      start += (4 + index);
+      for (int i = 0; i < index; i++)vtcs[start+i] = tmp[i];
+      start += index;
     }
 
     order -= 2;

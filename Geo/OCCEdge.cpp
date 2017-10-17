@@ -124,20 +124,34 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
     if (CTX::instance()->geom.reparamOnFaceRobust){
       GPoint p1 = point(epar);
       GPoint p2 = face->point(u, v);
-      const double dx = p1.x()-p2.x();
-      const double dy = p1.y()-p2.y();
-      const double dz = p1.z()-p2.z();
+      double dx = p1.x()-p2.x();
+      double dy = p1.y()-p2.y();
+      double dz = p1.z()-p2.z();
       if(sqrt(dx * dx + dy * dy + dz * dz) > CTX::instance()->geom.tolerance){
-	Msg::Warning("Reparam on face was inaccurate for curve %d on surface %d at point %g",
+	Msg::Debug("Reparam on face was inaccurate for curve %d on surface %d at point %g",
 		     tag(), face->tag(), epar);
-	Msg::Warning("On the face %d local (%g %g) global (%g %g %g)",
+	Msg::Debug("On the face %d local (%g %g) global (%g %g %g)",
 		     face->tag(), u, v, p2.x(), p2.y(), p2.z());
-	Msg::Warning("On the edge %d local (%g) global (%g %g %g)",
+	Msg::Debug("On the edge %d local (%g) global (%g %g %g)",
 		     tag(), epar, p1.x(), p1.y(), p1.z());
 	double guess [2] =  {u,v};
 	GPoint pp = face->closestPoint(SPoint3(p1.x(),p1.y(),p1.z()), guess);
 	u = pp.u();
 	v = pp.v();
+
+	GPoint p2 = face->point(u, v);
+	dx = p1.x()-p2.x();
+	dy = p1.y()-p2.y();
+	dz = p1.z()-p2.z();
+	if(sqrt(dx * dx + dy * dy + dz * dz) > CTX::instance()->geom.tolerance){
+	  Msg::Error("Closest Point was inaccurate for curve %d on surface %d at point %g",
+		     tag(), face->tag(), epar);
+	  Msg::Error("On the face %d local (%g %g) global (%g %g %g)",
+		     face->tag(), u, v, p2.x(), p2.y(), p2.z());
+	  Msg::Error("On the edge %d local (%g) global (%g %g %g)",
+		     tag(), epar, p1.x(), p1.y(), p1.z());
+	}
+	else Msg::Info("OK");
       }
     }
     return SPoint2(u, v);

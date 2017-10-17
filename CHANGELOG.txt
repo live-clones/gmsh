@@ -1,4 +1,7 @@
-3.0.4: bug fixes.
+3.0.5 (September 6, 2017): bug fixes.
+
+3.0.4 (July 28, 2017): moved vorometal code to plugin; openmp improvements; bug
+fixes.
 
 3.0.3 (June 27, 2017): new element quality measures; Block->Box; minor fixes.
 

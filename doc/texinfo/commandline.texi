@@ -26,6 +26,8 @@ Select output mesh format (auto (default), msh, msh1, msh2, unv, vrml, ply2, stl
 Use binary format when available
 @item -refine
 Perform uniform mesh refinement, then exit
+@item -reclassify
+Reclassify mesh, then exit
 @item -part int
 Partition after batch mesh generation
 @item -partWeight tri|quad|tet|prism|hex int
@@ -75,7 +77,11 @@ Load background mesh from file
 @item -check
 Perform various consistency checks on mesh
 @item -ignorePartBound
-Ignore partitions boundaries
+Ignore partition boundaries
+@item -ignorePeriocity
+Ignore periodic boundaries
+@item -oneFilePerPart
+Save mesh partitions in separate files
 @end ftable
  Post-processing options:
 @ftable @code

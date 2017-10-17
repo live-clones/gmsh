@@ -79,6 +79,7 @@ int GetFileFormatFromExtension(const std::string &ext)
   else if(ext == ".stp")  return FORMAT_STEP;
   else if(ext == ".iges") return FORMAT_IGES;
   else if(ext == ".igs")  return FORMAT_IGES;
+  else if(ext == ".neu")  return FORMAT_NEU;
   else                           return -1;
 }
 
@@ -133,6 +134,7 @@ std::string GetDefaultFileName(int format)
   case FORMAT_BREP: name += ".brep"; break;
   case FORMAT_IGES: name += ".iges"; break;
   case FORMAT_STEP: name += ".step"; break;
+  case FORMAT_NEU: name += ".neu"; break;
   default: break;
   }
   return name;
@@ -394,6 +396,11 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   case FORMAT_STEP:
     GModel::current()->writeOCCSTEP(name);
+    break;
+
+  case FORMAT_NEU:
+    GModel::current()->writeNEU
+      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
 #if defined(HAVE_FLTK)

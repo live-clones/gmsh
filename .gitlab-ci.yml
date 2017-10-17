@@ -1,4 +1,4 @@
-ubuntu16.04:
+full:
   image : onelab/ubuntu16.04
   script:
     - mkdir build
@@ -6,3 +6,11 @@ ubuntu16.04:
     - cmake ..
     - make -j 4
     - ctest -j 4 --output-on-failure
+
+minimal:
+  image : onelab/ubuntu16.04
+  script:
+    - mkdir build
+    - cd build
+    - cmake -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 ..
+    - make -j 4

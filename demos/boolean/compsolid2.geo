@@ -1,8 +1,8 @@
 SetFactory("OpenCASCADE");
 
 //Mesh.Algorithm = 6;
-Mesh.CharacteristicLengthMin = 0.1;
-Mesh.CharacteristicLengthMax = 0.1;
+Mesh.CharacteristicLengthMin = 0.2;
+Mesh.CharacteristicLengthMax = 0.2;
 
 DefineConstant[
   sph = {0, Choices{0,1}, Name "Make sphere a single volume"}
@@ -15,7 +15,7 @@ Box(1) = {0,0,0, 2,2,2};
 Sphere(2) = {xx, 1, 1, rr};
 Box(3) = {2,0,0, 2,2,2};
 
-f() = BooleanFragments { Volume{1}; Delete; }{ Volume{2,3}; Delete; };
+f() = BooleanFragments { Volume{1:3}; Delete; }{};
 Printf("f()", f());
 If(sph)
   tol = 1e-3;
