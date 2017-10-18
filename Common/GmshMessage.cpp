@@ -1271,7 +1271,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(ps.size()){
     bool useLocalValue = ps[0].getReadOnly();
     if(fopt.count("ReadOnly")) useLocalValue = fopt["ReadOnly"][0];
-    if(useLocalValue){
+    if(useLocalValue)
       ps[0].setValues(val);
     else
       val = ps[0].getValues(); // use value from server
@@ -1377,7 +1377,7 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   if(ps.size()){
     bool useLocalValue = ps[0].getReadOnly();
     if(fopt.count("ReadOnly")) useLocalValue = fopt["ReadOnly"][0];
-    if(useLocalValue){
+    if(useLocalValue)
       ps[0].setValue(val); // use local value
     else
       val = ps[0].getValue(); // use value from server
