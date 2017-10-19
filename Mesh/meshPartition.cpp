@@ -65,18 +65,24 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
   Msg::StatusBar(true, "Partitioning graph...");
   if(!ier) ier = PartitionGraph(graph, options);
   if(ier) return 1;
-
-  // Assign partitions to internal elements
+  
+  // Assign partitions to elements
+  std::unordered_map<MElement*, short> elmToPartition;
   for(unsigned int i = 0; i < graph.ne(); i++)
   {
-    if(graph.element(i) != NULL && options.num_partitions > 1) graph.element(i)->setPartition(graph.partition(i)+1);
+    if(graph.element(i) != NULL)
+    {
+      elmToPartition.insert(std::pair<MElement*, short>(graph.element(i), graph.partition(i)+1));
+      graph.element(i)->setPartition(graph.partition(i)+1);
+    }
   }
-
+  graph.clear();
   model->recomputeMeshPartitions();
   
   Msg::StatusBar(true, "Create new entities...");
   std::multimap<int, GEntity*> newPartitionEntities;
-  CreateNewEntities(model, newPartitionEntities, options);
+  CreateNewEntities(model, elmToPartition, newPartitionEntities, options);
+  elmToPartition.clear();
   
   std::multimap<int, GEntity*> newPartitionBoundaries;
   if(options.createPartitionBoundaries || options.createGhostCells)
@@ -810,7 +816,7 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
  *
  ******************************************************************************/
 
-void CreateNewEntities(GModel *const model, std::multimap<int, GEntity*> &newPartitionEntities, meshPartitionOptions &options)
+void CreateNewEntities(GModel *const model, std::unordered_map<MElement*, short> &elmToPartition, std::multimap<int, GEntity*> &newPartitionEntities, meshPartitionOptions &options)
 {
   std::set<GRegion*, GEntityLessThan> regions = model->getGRegions();
   std::set<GFace*, GEntityLessThan> faces = model->getGFaces();
@@ -821,12 +827,12 @@ void CreateNewEntities(GModel *const model, std::multimap<int, GEntity*> &newPar
   {
     std::vector<GRegion *> newRegions(options.num_partitions, NULL);
     
-    assignElementsToEntities(model, newRegions, (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
-    assignElementsToEntities(model, newRegions, (*it)->hexahedra.begin(), (*it)->hexahedra.end());
-    assignElementsToEntities(model, newRegions, (*it)->prisms.begin(), (*it)->prisms.end());
-    assignElementsToEntities(model, newRegions, (*it)->pyramids.begin(), (*it)->pyramids.end());
-    assignElementsToEntities(model, newRegions, (*it)->trihedra.begin(), (*it)->trihedra.end());
-    assignElementsToEntities(model, newRegions, (*it)->polyhedra.begin(), (*it)->polyhedra.end());
+    assignElementsToEntities(model, elmToPartition, newRegions, (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
+    assignElementsToEntities(model, elmToPartition, newRegions, (*it)->hexahedra.begin(), (*it)->hexahedra.end());
+    assignElementsToEntities(model, elmToPartition, newRegions, (*it)->prisms.begin(), (*it)->prisms.end());
+    assignElementsToEntities(model, elmToPartition, newRegions, (*it)->pyramids.begin(), (*it)->pyramids.end());
+    assignElementsToEntities(model, elmToPartition, newRegions, (*it)->trihedra.begin(), (*it)->trihedra.end());
+    assignElementsToEntities(model, elmToPartition, newRegions, (*it)->polyhedra.begin(), (*it)->polyhedra.end());
     
     for(unsigned int i = 0; i < options.num_partitions; i++)
     {
@@ -849,13 +855,14 @@ void CreateNewEntities(GModel *const model, std::multimap<int, GEntity*> &newPar
     (*it)->polyhedra.clear();
   }
   
+  
   for(GModel::const_fiter it = faces.begin(); it != faces.end(); ++it)
   {
     std::vector<GFace *> newFaces(options.num_partitions, NULL);
     
-    assignElementsToEntities(model, newFaces, (*it)->triangles.begin(), (*it)->triangles.end());
-    assignElementsToEntities(model, newFaces, (*it)->quadrangles.begin(), (*it)->quadrangles.end());
-    assignElementsToEntities(model, newFaces, (*it)->polygons.begin(), (*it)->polygons.end());
+    assignElementsToEntities(model, elmToPartition, newFaces, (*it)->triangles.begin(), (*it)->triangles.end());
+    assignElementsToEntities(model, elmToPartition, newFaces, (*it)->quadrangles.begin(), (*it)->quadrangles.end());
+    assignElementsToEntities(model, elmToPartition, newFaces, (*it)->polygons.begin(), (*it)->polygons.end());
     
     for(unsigned int i = 0; i < options.num_partitions; i++)
     {
@@ -875,11 +882,12 @@ void CreateNewEntities(GModel *const model, std::multimap<int, GEntity*> &newPar
     (*it)->polygons.clear();
   }
   
+  
   for(GModel::const_eiter it = edges.begin(); it != edges.end(); ++it)
   {
     std::vector<GEdge *> newEdges(options.num_partitions, NULL);
     
-    assignElementsToEntities(model, newEdges, (*it)->lines.begin(), (*it)->lines.end());
+    assignElementsToEntities(model, elmToPartition, newEdges, (*it)->lines.begin(), (*it)->lines.end());
     
     for(unsigned int i = 0; i < options.num_partitions; i++)
     {
@@ -897,11 +905,12 @@ void CreateNewEntities(GModel *const model, std::multimap<int, GEntity*> &newPar
     (*it)->lines.clear();
   }
   
+  
   for(GModel::const_viter it = vertices.begin(); it != vertices.end(); ++it)
   {
     std::vector<GVertex *> newVertices(options.num_partitions, NULL);
     
-    assignElementsToEntities(model, newVertices, (*it)->points.begin(), (*it)->points.end());
+    assignElementsToEntities(model, elmToPartition, newVertices, (*it)->points.begin(), (*it)->points.end());
     
     for(unsigned int i = 0; i < options.num_partitions; i++)
     {
@@ -921,11 +930,11 @@ void CreateNewEntities(GModel *const model, std::multimap<int, GEntity*> &newPar
 }
 
 template <class ITERATOR>
-void assignElementsToEntities(GModel *const model, std::vector<GRegion *> &newRegions, ITERATOR it_beg, ITERATOR it_end)
+void assignElementsToEntities(GModel *const model, std::unordered_map<MElement*, short> &elmToPartition, std::vector<GRegion *> &newRegions, ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it)
   {
-    const int partition = (*it)->getPartition()-1;
+    const int partition = elmToPartition[(*it)]-1;
     
     if(newRegions[partition] == NULL)
     {
@@ -943,11 +952,11 @@ void assignElementsToEntities(GModel *const model, std::vector<GRegion *> &newRe
 }
 
 template <class ITERATOR>
-void assignElementsToEntities(GModel *const model, std::vector<GFace *> &newFaces, ITERATOR it_beg, ITERATOR it_end)
+void assignElementsToEntities(GModel *const model, std::unordered_map<MElement*, short> &elmToPartition, std::vector<GFace *> &newFaces, ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it)
   {
-    const int partition = (*it)->getPartition()-1;
+    const int partition = elmToPartition[(*it)]-1;
     
     if(newFaces[partition] == NULL)
     {
@@ -965,11 +974,11 @@ void assignElementsToEntities(GModel *const model, std::vector<GFace *> &newFace
 }
 
 template <class ITERATOR>
-void assignElementsToEntities(GModel *const model, std::vector<GEdge *> &newEdges, ITERATOR it_beg, ITERATOR it_end)
+void assignElementsToEntities(GModel *const model, std::unordered_map<MElement*, short> &elmToPartition, std::vector<GEdge *> &newEdges, ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it)
   {
-    const int partition = (*it)->getPartition()-1;
+    const int partition = elmToPartition[(*it)]-1;
     
     if(newEdges[partition] == NULL)
     {
@@ -987,11 +996,11 @@ void assignElementsToEntities(GModel *const model, std::vector<GEdge *> &newEdge
 }
 
 template <class ITERATOR>
-void assignElementsToEntities(GModel *const model, std::vector<GVertex *> &newVertices, ITERATOR it_beg, ITERATOR it_end)
+void assignElementsToEntities(GModel *const model, std::unordered_map<MElement*, short> &elmToPartition, std::vector<GVertex *> &newVertices, ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it)
   {
-    const int partition = (*it)->getPartition()-1;
+    const int partition = elmToPartition[(*it)]-1;
     
     if(newVertices[partition] == NULL)
     {
@@ -1049,152 +1058,176 @@ void CreatePartitionBoundaries(GModel *const model, std::multimap<int, GEntity*>
   std::set<partitionEdge*, Less_partitionEdge> bndedges;
   std::set<partitionVertex*, Less_partitionVertex> bndvertices;
     
-  std::unordered_map<MFace, std::vector<MElement*>, Hash_Face, Equal_Face> faceToElement;
-  std::unordered_map<MEdge, std::vector<MElement*>, Hash_Edge, Equal_Edge> edgeToElement;
-  std::unordered_map<MVertex*, std::vector<MElement*> > vertexToElement;
+  std::unordered_map<MFace, std::vector< std::pair<MElement*, std::vector<int> > >, Hash_Face, Equal_Face> faceToElement;
+  std::unordered_map<MEdge, std::vector< std::pair<MElement*, std::vector<int> > >, Hash_Edge, Equal_Edge> edgeToElement;
+  std::unordered_map<MVertex*, std::vector< std::pair<MElement*, std::vector<int> > > > vertexToElement;
   
   if (meshDim == 3)//Create partition faces
   {
+    Msg::Info("Creating partition faces... ");
     for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it)
     {
       if((*it)->geomType() == GEntity::PartitionVolume)
       {
-        fillit_(faceToElement, (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
-        fillit_(faceToElement, (*it)->hexahedra.begin(), (*it)->hexahedra.end());
-        fillit_(faceToElement, (*it)->prisms.begin(), (*it)->prisms.end());
-        fillit_(faceToElement, (*it)->pyramids.begin(), (*it)->pyramids.end());
-        fillit_(faceToElement, (*it)->trihedra.begin(), (*it)->trihedra.end());
-        fillit_(faceToElement, (*it)->polyhedra.begin(), (*it)->polyhedra.end());
+        fillit_(faceToElement, static_cast<partitionRegion*>(*it)->_partitions, (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
+        fillit_(faceToElement, static_cast<partitionRegion*>(*it)->_partitions, (*it)->hexahedra.begin(), (*it)->hexahedra.end());
+        fillit_(faceToElement, static_cast<partitionRegion*>(*it)->_partitions, (*it)->prisms.begin(), (*it)->prisms.end());
+        fillit_(faceToElement, static_cast<partitionRegion*>(*it)->_partitions, (*it)->pyramids.begin(), (*it)->pyramids.end());
+        fillit_(faceToElement, static_cast<partitionRegion*>(*it)->_partitions, (*it)->trihedra.begin(), (*it)->trihedra.end());
+        fillit_(faceToElement, static_cast<partitionRegion*>(*it)->_partitions, (*it)->polyhedra.begin(), (*it)->polyhedra.end());
       }
     }
-    
-    for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it)
-    {
-      fillit_(edgeToElement, (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
-      fillit_(edgeToElement, (*it)->hexahedra.begin(), (*it)->hexahedra.end());
-      fillit_(edgeToElement, (*it)->prisms.begin(), (*it)->prisms.end());
-      fillit_(edgeToElement, (*it)->pyramids.begin(), (*it)->pyramids.end());
-      fillit_(edgeToElement, (*it)->trihedra.begin(), (*it)->trihedra.end());
-      fillit_(edgeToElement, (*it)->polyhedra.begin(), (*it)->polyhedra.end());
-    }
-    for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it)
-    {
-      fillit_(edgeToElement, (*it)->triangles.begin(), (*it)->triangles.end());
-      fillit_(edgeToElement, (*it)->quadrangles.begin(), (*it)->quadrangles.end());
-      fillit_(edgeToElement, (*it)->polygons.begin(), (*it)->polygons.end());
-    }
-    
-    for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it)
-    {
-      fillit_(vertexToElement, (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
-      fillit_(vertexToElement, (*it)->hexahedra.begin(), (*it)->hexahedra.end());
-      fillit_(vertexToElement, (*it)->prisms.begin(), (*it)->prisms.end());
-      fillit_(vertexToElement, (*it)->pyramids.begin(), (*it)->pyramids.end());
-      fillit_(vertexToElement, (*it)->trihedra.begin(), (*it)->trihedra.end());
-      fillit_(vertexToElement, (*it)->polyhedra.begin(), (*it)->polyhedra.end());
-    }
-    for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it)
-    {
-      fillit_(vertexToElement, (*it)->triangles.begin(), (*it)->triangles.end());
-      fillit_(vertexToElement, (*it)->quadrangles.begin(), (*it)->quadrangles.end());
-      fillit_(vertexToElement, (*it)->polygons.begin(), (*it)->polygons.end());
-    }
-    for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it)
-    {
-      fillit_(vertexToElement, (*it)->lines.begin(), (*it)->lines.end());
-    }
-    
-    Msg::Info("Creating partition faces... ");
-    for(std::unordered_map<MFace, std::vector<MElement*>, Hash_Face, Equal_Face>::const_iterator it = faceToElement.begin(); it != faceToElement.end(); ++it)
+    for(std::unordered_map<MFace, std::vector< std::pair<MElement*, std::vector<int> > >, Hash_Face, Equal_Face>::const_iterator it = faceToElement.begin(); it != faceToElement.end(); ++it)
     {
       MFace f = it->first;
-      std::vector<MElement*> voe = it->second;
+
+      std::vector<int> partitions;
+      getPartitionInVector(partitions, it->second);
+      if(partitions.size() < 2) continue;
       
-      assignPartitionBoundary(model, f, pfaces, voe);
+      MElement* reference = it->second[0].first;
+      
+      assignPartitionBoundary(model, f, reference, partitions, pfaces);
     }
+    faceToElement.clear();
+    
     
     Msg::Info("Creating partition edges... ");
-    for(std::unordered_map<MEdge, std::vector<MElement*>, Hash_Edge, Equal_Edge>::const_iterator it = edgeToElement.begin(); it != edgeToElement.end(); ++it)
+    for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it)
+    {
+      if((*it)->geomType() == GEntity::PartitionSurface)
+      {
+        fillit_(edgeToElement, static_cast<partitionFace*>(*it)->_partitions, (*it)->triangles.begin(), (*it)->triangles.end());
+        fillit_(edgeToElement, static_cast<partitionFace*>(*it)->_partitions, (*it)->quadrangles.begin(), (*it)->quadrangles.end());
+        fillit_(edgeToElement, static_cast<partitionFace*>(*it)->_partitions, (*it)->polygons.begin(), (*it)->polygons.end());
+      }
+    }
+    for(std::unordered_map<MEdge, std::vector< std::pair<MElement*, std::vector<int> > >, Hash_Edge, Equal_Edge>::const_iterator it = edgeToElement.begin(); it != edgeToElement.end(); ++it)
     {
       MEdge e = it->first;
       
-      std::vector<MElement*> voe = it->second;
+      std::vector<int> partitions;
+      getPartitionInVector(partitions, it->second);
+      if(partitions.size() < 2) continue;
       
-      assignPartitionBoundary(model, e, pedges, voe, pfaces, bndedges);
+      MElement* reference = it->second[0].first;
+      
+      assignPartitionBoundary(model, e, reference, partitions, pedges, pfaces, bndedges);
     }
+    edgeToElement.clear();
+    
     
     Msg::Info("Creating partition vertices... ");
-    for(std::unordered_map<MVertex*, std::vector<MElement*> >::const_iterator it = vertexToElement.begin(); it != vertexToElement.end(); ++it)
+    for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it)
+    {
+      if((*it)->geomType() == GEntity::PartitionSurface)
+      {
+        fillit_(vertexToElement, static_cast<partitionFace*>(*it)->_partitions, (*it)->triangles.begin(), (*it)->triangles.end());
+        fillit_(vertexToElement, static_cast<partitionFace*>(*it)->_partitions, (*it)->quadrangles.begin(), (*it)->quadrangles.end());
+        fillit_(vertexToElement, static_cast<partitionFace*>(*it)->_partitions, (*it)->polygons.begin(), (*it)->polygons.end());
+      }
+    }
+    for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it)
+    {
+      if((*it)->geomType() == GEntity::PartitionCurve)
+      {
+        fillit_(vertexToElement, static_cast<partitionEdge*>(*it)->_partitions, (*it)->lines.begin(), (*it)->lines.end());
+      }
+    }
+    for(std::unordered_map<MVertex*, std::vector< std::pair<MElement*, std::vector<int> > > >::const_iterator it = vertexToElement.begin(); it != vertexToElement.end(); ++it)
     {
       MVertex *v = it->first;
-      std::vector<MElement*> voe = it->second;
       
-      assignPartitionBoundary(model, v, pvertices, voe, pedges, pfaces, bndedges, bndvertices);
+      std::vector<int> partitions;
+      getPartitionInVector(partitions, it->second);
+      if(partitions.size() < 2) continue;
+      
+      MElement* reference = it->second[0].first;
+      
+      assignPartitionBoundary(model, v, reference, partitions, pvertices, pedges, pfaces, bndedges, bndvertices);
     }
+    vertexToElement.clear();
   }
   else if (meshDim == 2)//Create partition edges
   {
-    for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it)
-    {
-      fillit_(edgeToElement, (*it)->triangles.begin(), (*it)->triangles.end());
-      fillit_(edgeToElement, (*it)->quadrangles.begin(), (*it)->quadrangles.end());
-      fillit_(edgeToElement, (*it)->polygons.begin(), (*it)->polygons.end());
-    }
-    
-    for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it)
-    {
-      fillit_(vertexToElement, (*it)->triangles.begin(), (*it)->triangles.end());
-      fillit_(vertexToElement, (*it)->quadrangles.begin(), (*it)->quadrangles.end());
-      fillit_(vertexToElement, (*it)->polygons.begin(), (*it)->polygons.end());
-    }
-    for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it)
-    {
-      fillit_(vertexToElement, (*it)->lines.begin(), (*it)->lines.end());
-    }
-    
     Msg::Info("Creating partition edges... ");
-    for(std::unordered_map<MEdge, std::vector<MElement*>, Hash_Edge, Equal_Edge>::const_iterator it = edgeToElement.begin(); it != edgeToElement.end(); ++it)
+    for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it)
+    {
+      if((*it)->geomType() == GEntity::PartitionSurface)
+      {
+        fillit_(edgeToElement, static_cast<partitionFace*>(*it)->_partitions, (*it)->triangles.begin(), (*it)->triangles.end());
+        fillit_(edgeToElement, static_cast<partitionFace*>(*it)->_partitions, (*it)->quadrangles.begin(), (*it)->quadrangles.end());
+        fillit_(edgeToElement, static_cast<partitionFace*>(*it)->_partitions, (*it)->polygons.begin(), (*it)->polygons.end());
+      }
+    }
+    for(std::unordered_map<MEdge, std::vector< std::pair<MElement*, std::vector<int> > >, Hash_Edge, Equal_Edge>::const_iterator it = edgeToElement.begin(); it != edgeToElement.end(); ++it)
     {
       MEdge e = it->first;
       
-      std::vector<MElement*> voe = it->second;
+      std::vector<int> partitions;
+      getPartitionInVector(partitions, it->second);
+      if(partitions.size() < 2) continue;
       
-      assignPartitionBoundary(model, e, pedges, voe, pfaces, bndedges);
+      MElement* reference = it->second[0].first;
+      
+      assignPartitionBoundary(model, e, reference, partitions, pedges, pfaces, bndedges);
     }
+    edgeToElement.clear();
+    
     
     Msg::Info("Creating partition vertices... ");
-    for(std::unordered_map<MVertex*, std::vector<MElement*> >::const_iterator it = vertexToElement.begin(); it != vertexToElement.end(); ++it)
+    for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it)
+    {
+      if((*it)->geomType() == GEntity::PartitionCurve)
+      {
+        fillit_(vertexToElement, static_cast<partitionEdge*>(*it)->_partitions, (*it)->lines.begin(), (*it)->lines.end());
+      }
+    }
+    for(std::unordered_map<MVertex*, std::vector< std::pair<MElement*, std::vector<int> > > >::const_iterator it = vertexToElement.begin(); it != vertexToElement.end(); ++it)
     {
       MVertex *v = it->first;
-      std::vector<MElement*> voe = it->second;
       
-      assignPartitionBoundary(model, v, pvertices, voe, pedges, pfaces, bndedges, bndvertices);
+      std::vector<int> partitions;
+      getPartitionInVector(partitions, it->second);
+      if(partitions.size() < 2) continue;
+      
+      MElement* reference = it->second[0].first;
+      
+      assignPartitionBoundary(model, v, reference, partitions, pvertices, pedges, pfaces, bndedges, bndvertices);
     }
+    vertexToElement.clear();
   }
   else if (meshDim == 1)//Create partition vertices
   {
+    Msg::Info("Creating partition vertices... ");
     for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it)
     {
-      fillit_(vertexToElement, (*it)->lines.begin(), (*it)->lines.end());
+      if((*it)->geomType() == GEntity::PartitionCurve)
+      {
+        fillit_(vertexToElement, static_cast<partitionEdge*>(*it)->_partitions, (*it)->lines.begin(), (*it)->lines.end());
+      }
     }
-    
-    Msg::Info("Creating partition vertices... ");
-    for(std::unordered_map<MVertex*, std::vector<MElement*> >::const_iterator it = vertexToElement.begin(); it != vertexToElement.end(); ++it)
+    for(std::unordered_map<MVertex*, std::vector< std::pair<MElement*, std::vector<int> > > >::const_iterator it = vertexToElement.begin(); it != vertexToElement.end(); ++it)
     {
       MVertex *v = it->first;
-      std::vector<MElement*> voe = it->second;
-        
-      assignPartitionBoundary(model, v, pvertices, voe, pedges, pfaces, bndedges, bndvertices);
+      
+      std::vector<int> partitions;
+      getPartitionInVector(partitions, it->second);
+      if(partitions.size() < 2) continue;
+      
+      MElement* reference = it->second[0].first;
+      
+      assignPartitionBoundary(model, v, reference, partitions, pvertices, pedges, pfaces, bndedges, bndvertices);
     }
+    vertexToElement.clear();
   }
-  
   
   
   for(std::set<partitionFace*, Less_partitionFace>::const_iterator it = pfaces.begin(); it != pfaces.end(); ++it)
   {
     for(unsigned int i = 0; i < (*it)->_partitions.size(); i++)
     {
-      newPartitionBoundaries.insert(std::pair<int, GEntity*>((*it)->_partitions[i]-1, *it));
+      newPartitionBoundaries.insert(std::pair<int, GEntity*>((*it)->_partitions[i], *it));
     }
   }
   
@@ -1202,7 +1235,7 @@ void CreatePartitionBoundaries(GModel *const model, std::multimap<int, GEntity*>
   {
     for(unsigned int i = 0; i < (*it)->_partitions.size(); i++)
     {
-      newPartitionBoundaries.insert(std::pair<int, GEntity*>((*it)->_partitions[i]-1, *it));
+      newPartitionBoundaries.insert(std::pair<int, GEntity*>((*it)->_partitions[i], *it));
     }
   }
   
@@ -1210,7 +1243,7 @@ void CreatePartitionBoundaries(GModel *const model, std::multimap<int, GEntity*>
   {
     for(unsigned int i = 0; i < (*it)->_partitions.size(); i++)
     {
-      newPartitionBoundaries.insert(std::pair<int, GEntity*>((*it)->_partitions[i]-1, *it));
+      newPartitionBoundaries.insert(std::pair<int, GEntity*>((*it)->_partitions[i], *it));
     }
   }
   
@@ -1218,7 +1251,7 @@ void CreatePartitionBoundaries(GModel *const model, std::multimap<int, GEntity*>
   {
     for(unsigned int i = 0; i < (*it)->_partitions.size(); i++)
     {
-      newPartitionBoundaries.insert(std::pair<int, GEntity*>((*it)->_partitions[i]-1, *it));
+      newPartitionBoundaries.insert(std::pair<int, GEntity*>((*it)->_partitions[i], *it));
     }
   }
   
@@ -1226,78 +1259,66 @@ void CreatePartitionBoundaries(GModel *const model, std::multimap<int, GEntity*>
   {
     for(unsigned int i = 0; i < (*it)->_partitions.size(); i++)
     {
-      newPartitionBoundaries.insert(std::pair<int, GEntity*>((*it)->_partitions[i]-1, *it));
+      newPartitionBoundaries.insert(std::pair<int, GEntity*>((*it)->_partitions[i], *it));
+    }
+  }
+}
+
+void getPartitionInVector(std::vector<int> &partitions, const std::vector< std::pair<MElement*, std::vector<int> > > &boundaryPair)
+{
+  for(unsigned int i = 0; i < boundaryPair.size(); i++)
+  {
+    for(unsigned int j = 0; j < boundaryPair[i].second.size(); j++)
+    {
+      if(std::find(partitions.begin(), partitions.end(), boundaryPair[i].second[j]) == partitions.end())
+      {
+        partitions.push_back(boundaryPair[i].second[j]);
+      }
     }
   }
 }
 
 template <class ITERATOR>
-void fillit_(std::unordered_map<MFace, std::vector<MElement*>, Hash_Face, Equal_Face> &faceToElement, ITERATOR it_beg, ITERATOR it_end)
+void fillit_(std::unordered_map<MFace, std::vector< std::pair<MElement*, std::vector<int> > >, Hash_Face, Equal_Face> &faceToElement, std::vector<int> &partitions, ITERATOR it_beg, ITERATOR it_end)
 {
   for (ITERATOR it = it_beg; it != it_end ; ++it)
   {
     for(unsigned int i = 0; i < (*it)->getNumFaces(); i++)
     {
-      faceToElement[(*it)->getFace(i)].push_back(*it);
+      faceToElement[(*it)->getFace(i)].push_back(std::pair<MElement*, std::vector<int> >(*it,partitions));
     }
   }
 }
 
 template <class ITERATOR>
-void fillit_(std::unordered_map<MEdge, std::vector<MElement*>, Hash_Edge, Equal_Edge> &edgeToElement, ITERATOR it_beg, ITERATOR it_end)
+void fillit_(std::unordered_map<MEdge, std::vector< std::pair<MElement*, std::vector<int> > > , Hash_Edge, Equal_Edge> &edgeToElement, std::vector<int> &partitions, ITERATOR it_beg, ITERATOR it_end)
 {
   for (ITERATOR it = it_beg; it != it_end; ++it)
   {
     for(unsigned int i = 0; i < (*it)->getNumEdges(); i++)
     {
-      edgeToElement[(*it)->getEdge(i)].push_back(*it);
+      edgeToElement[(*it)->getEdge(i)].push_back(std::pair<MElement*, std::vector<int> >(*it,partitions));
     }
   }
 }
 
 template <class ITERATOR>
-void fillit_(std::unordered_map<MVertex*, std::vector<MElement*> > &vertexToElement, ITERATOR it_beg, ITERATOR it_end)
+void fillit_(std::unordered_map<MVertex*, std::vector< std::pair<MElement*, std::vector<int> > > > &vertexToElement, std::vector<int> &partitions, ITERATOR it_beg, ITERATOR it_end)
 {
   for (ITERATOR it = it_beg; it != it_end ; ++it)
   {
     for(unsigned int i = 0; i < (*it)->getNumVertices(); i++)
     {
-      vertexToElement[(*it)->getVertex(i)].push_back((*it));
+      vertexToElement[(*it)->getVertex(i)].push_back(std::pair<MElement*, std::vector<int> >(*it,partitions));
     }
   }
 }
 
-void assignPartitionBoundary(GModel *const model, MFace &me, std::set<partitionFace*, Less_partitionFace> &pfaces, std::vector<MElement*> &v)
+void assignPartitionBoundary(GModel *const model, MFace &me, MElement* reference, std::vector<int> partitions, std::set<partitionFace*, Less_partitionFace> &pfaces)
 {
-  std::vector<int> v2;
-  v2.push_back(v[0]->getPartition());
-  
-  for (unsigned int i = 1; i < v.size(); i++)
-  {
-    bool found = false;
-    for (unsigned int j = 0; j < v2.size(); j++)
-    {
-      if (v[i]->getPartition() == v2[j])
-      {
-        found = true;
-        break;
-      }
-    }
-    
-    if (!found)
-    {
-      v2.push_back(v[i]->getPartition());
-    }
-  }
-  
-  if(v2.size() != 2)
-  {
-    return;
-  }
-  
   const int numPhysical = model->getMaxPhysicalNumber(-1)+1;
   
-  partitionFace pf(model, 1, v2);
+  partitionFace pf(model, 1, partitions);
   std::set<partitionFace*, Less_partitionFace>::iterator it = pfaces.find(&pf);
   
   partitionFace *ppf;
@@ -1305,7 +1326,7 @@ void assignPartitionBoundary(GModel *const model, MFace &me, std::set<partitionF
   if (it == pfaces.end())
   {
     //Create new entity and add them to the model
-    ppf = new partitionFace(model, model->getMaxElementaryNumber(2)+1, v2);
+    ppf = new partitionFace(model, model->getMaxElementaryNumber(2)+1, partitions);
     pfaces.insert(ppf);
     model->add(ppf);
     
@@ -1319,7 +1340,7 @@ void assignPartitionBoundary(GModel *const model, MFace &me, std::set<partitionF
       {
         name += ",";
       }
-      name += std::to_string(ppf->_partitions[j]-1);
+      name += std::to_string(ppf->_partitions[j]);
     }
     name += "}";
     
@@ -1331,20 +1352,20 @@ void assignPartitionBoundary(GModel *const model, MFace &me, std::set<partitionF
   }
   
   int numFace = 0;
-  for(unsigned int i = 0; i < v[0]->getNumFaces(); i++)
+  for(unsigned int i = 0; i < reference->getNumFaces(); i++)
   {
-    const MFace e = v[0]->getFace(i);
-    if(e == me)
+    if(reference->getFace(i) == me)
     {
       numFace = i;
       break;
     }
   }
+
   
   if(me.getNumVertices() == 3)
   {
     std::vector<MVertex*> verts;
-    v[0]->getFaceVertices(numFace, verts);
+    reference->getFaceVertices(numFace, verts);
     
     if(verts.size() == 3)
     {
@@ -1362,7 +1383,7 @@ void assignPartitionBoundary(GModel *const model, MFace &me, std::set<partitionF
   else if(me.getNumVertices() == 4)
   {
     std::vector<MVertex*> verts;
-    v[0]->getFaceVertices(numFace, verts);
+    reference->getFaceVertices(numFace, verts);
     
     if(verts.size() == 4)
     {
@@ -1383,38 +1404,12 @@ void assignPartitionBoundary(GModel *const model, MFace &me, std::set<partitionF
   }
 }
 
-void assignPartitionBoundary(GModel *const model, MEdge &me, std::set<partitionEdge*, Less_partitionEdge> &pedges, std::vector<MElement*> &v, std::set<partitionFace*, Less_partitionFace> &pfaces, std::set<partitionEdge*, Less_partitionEdge> &bndedges)
+void assignPartitionBoundary(GModel *const model, MEdge &me, MElement* reference, std::vector<int> partitions, std::set<partitionEdge*, Less_partitionEdge> &pedges, std::set<partitionFace*, Less_partitionFace> &pfaces, std::set<partitionEdge*, Less_partitionEdge> &bndedges)
 {
-  std::vector<int> v2;
-  v2.push_back(v[0]->getPartition());
-  
-  for (unsigned int i = 1; i < v.size(); i++)
-  {
-    bool found = false;
-    for (unsigned int j = 0; j < v2.size(); j++)
-    {
-      if (v[i]->getPartition() == v2[j])
-      {
-        found = true;
-        break;
-      }
-    }
-    
-    if (!found)
-    {
-      v2.push_back(v[i]->getPartition());
-    }
-  }
-  
-  if(v2.size() < 2)
-  {
-    return;
-  }
-  
-  bool boundariesOfPartition = v2.size() > 2 ? true : false;
+  bool boundariesOfPartition = partitions.size() > 2 ? true : false;
   if(!boundariesOfPartition)
   {
-    partitionFace pf(model, 1, v2);
+    partitionFace pf(model, 1, partitions);
     std::set<partitionFace*, Less_partitionFace>::iterator itf = pfaces.find(&pf);
   
     //If the edge is on a partitionFace
@@ -1426,7 +1421,7 @@ void assignPartitionBoundary(GModel *const model, MEdge &me, std::set<partitionE
   
   const int numPhysical = model->getMaxPhysicalNumber(-1)+1;
   partitionEdge *ppe;
-  partitionEdge pe(model, 1, NULL, NULL, v2);
+  partitionEdge pe(model, 1, NULL, NULL, partitions);
   
   if(boundariesOfPartition)
   {
@@ -1436,7 +1431,7 @@ void assignPartitionBoundary(GModel *const model, MEdge &me, std::set<partitionE
     if (it == bndedges.end())
     {
       //Create new entity and add them to the model
-      ppe = new  partitionEdge(model, model->getMaxElementaryNumber(1)+1, 0, 0, v2);
+      ppe = new  partitionEdge(model, model->getMaxElementaryNumber(1)+1, 0, 0, partitions);
       bndedges.insert(ppe);
       model->add(ppe);
       
@@ -1451,7 +1446,7 @@ void assignPartitionBoundary(GModel *const model, MEdge &me, std::set<partitionE
         {
           name += ",";
         }
-        name += std::to_string(ppe->_partitions[j]-1);
+        name += std::to_string(ppe->_partitions[j]);
       }
       name += "}";
       
@@ -1470,7 +1465,7 @@ void assignPartitionBoundary(GModel *const model, MEdge &me, std::set<partitionE
     if (it == pedges.end())
     {
       //Create new entity and add them to the model
-      ppe = new  partitionEdge(model, model->getMaxElementaryNumber(1)+1, 0, 0, v2);
+      ppe = new  partitionEdge(model, model->getMaxElementaryNumber(1)+1, 0, 0, partitions);
       pedges.insert(ppe);
       model->add(ppe);
     
@@ -1485,7 +1480,7 @@ void assignPartitionBoundary(GModel *const model, MEdge &me, std::set<partitionE
         {
           name += ",";
         }
-        name += std::to_string(ppe->_partitions[j]-1);
+        name += std::to_string(ppe->_partitions[j]);
       }
       name += "}";
     
@@ -1498,10 +1493,9 @@ void assignPartitionBoundary(GModel *const model, MEdge &me, std::set<partitionE
   }
   
   int numEdge = 0;
-  for(unsigned int i = 0; i < v[0]->getNumEdges(); i++)
+  for(unsigned int i = 0; i < reference->getNumEdges(); i++)
   {
-    const MEdge e = v[0]->getEdge(i);
-    if(e == me)
+    if(reference->getEdge(i) == me)
     {
       numEdge = i;
       break;
@@ -1511,7 +1505,7 @@ void assignPartitionBoundary(GModel *const model, MEdge &me, std::set<partitionE
   if(me.getNumVertices() == 2)
   {
     std::vector<MVertex*> verts;
-    v[0]->getEdgeVertices(numEdge, verts);
+    reference->getEdgeVertices(numEdge, verts);
     
     if(verts.size() == 2)
     {
@@ -1528,38 +1522,12 @@ void assignPartitionBoundary(GModel *const model, MEdge &me, std::set<partitionE
   }
 }
 
-void assignPartitionBoundary(GModel *const model, MVertex *ve, std::set<partitionVertex*, Less_partitionVertex> &pvertices, std::vector<MElement*> &v, std::set<partitionEdge*, Less_partitionEdge> &pedges, std::set<partitionFace*, Less_partitionFace> &pfaces, std::set<partitionEdge*, Less_partitionEdge> &bndedges, std::set<partitionVertex*, Less_partitionVertex> &bndvertices)
+void assignPartitionBoundary(GModel *const model, MVertex *ve, MElement* reference, std::vector<int> partitions, std::set<partitionVertex*, Less_partitionVertex> &pvertices, std::set<partitionEdge*, Less_partitionEdge> &pedges, std::set<partitionFace*, Less_partitionFace> &pfaces, std::set<partitionEdge*, Less_partitionEdge> &bndedges, std::set<partitionVertex*, Less_partitionVertex> &bndvertices)
 {
-  std::vector<int> v2;
-  v2.push_back(v[0]->getPartition());
-  
-  for (unsigned int i = 1; i < v.size(); i++)
-  {
-    bool found = false;
-    for (unsigned int j = 0; j < v2.size(); j++)
-    {
-      if (v[i]->getPartition() == v2[j])
-      {
-        found = true;
-        break;
-      }
-    }
-    
-    if (!found)
-    {
-      v2.push_back(v[i]->getPartition());
-    }
-  }
-  
-  if(v2.size() < 2)
-  {
-    return;
-  }
-  
-  bool boundariesOfPartition = v2.size() > 2 ? true : false;
+  bool boundariesOfPartition = partitions.size() > 2 ? true : false;
   if(!boundariesOfPartition)
   {
-    partitionFace pf(model, 1, v2);
+    partitionFace pf(model, 1, partitions);
     std::set<partitionFace*, Less_partitionFace>::iterator itf = pfaces.find(&pf);
   
     //If the vertex is on a partitionFace
@@ -1568,7 +1536,7 @@ void assignPartitionBoundary(GModel *const model, MVertex *ve, std::set<partitio
       return;
     }
   
-    partitionEdge pe(model, 1, 0, 0, v2);
+    partitionEdge pe(model, 1, 0, 0, partitions);
     std::set<partitionEdge*, Less_partitionEdge>::iterator ite = pedges.find(&pe);
   
     //If the vertex is on a partitionEdge
@@ -1579,7 +1547,7 @@ void assignPartitionBoundary(GModel *const model, MVertex *ve, std::set<partitio
   }
   else
   {
-    partitionEdge pe(model, 1, 0, 0, v2);
+    partitionEdge pe(model, 1, 0, 0, partitions);
     std::set<partitionEdge*, Less_partitionEdge>::iterator ite = bndedges.find(&pe);
     
     //If the vertex is on a partitionEdge
@@ -1591,7 +1559,7 @@ void assignPartitionBoundary(GModel *const model, MVertex *ve, std::set<partitio
   
   const int numPhysical = model->getMaxPhysicalNumber(-1)+1;
   partitionVertex *ppv;
-  partitionVertex pv(model, 1, v2);
+  partitionVertex pv(model, 1, partitions);
   
   if(boundariesOfPartition)
   {
@@ -1600,7 +1568,7 @@ void assignPartitionBoundary(GModel *const model, MVertex *ve, std::set<partitio
     //Create the new partition entity for the mesh
     if (it == bndvertices.end())
     {
-      ppv = new partitionVertex(model, model->getMaxElementaryNumber(0)+1,v2);
+      ppv = new partitionVertex(model, model->getMaxElementaryNumber(0)+1, partitions);
       bndvertices.insert(ppv);
       model->add(ppv);
       
@@ -1614,7 +1582,7 @@ void assignPartitionBoundary(GModel *const model, MVertex *ve, std::set<partitio
         {
           name += ",";
         }
-        name += std::to_string(ppv->_partitions[j]-1);
+        name += std::to_string(ppv->_partitions[j]);
       }
       name += "}";
       
@@ -1632,7 +1600,7 @@ void assignPartitionBoundary(GModel *const model, MVertex *ve, std::set<partitio
     //Create the new partition entity for the mesh
     if (it == pvertices.end())
     {
-      ppv = new partitionVertex(model, model->getMaxElementaryNumber(0)+1,v2);
+      ppv = new partitionVertex(model, model->getMaxElementaryNumber(0)+1, partitions);
       pvertices.insert(ppv);
       model->add(ppv);
     
@@ -1646,7 +1614,7 @@ void assignPartitionBoundary(GModel *const model, MVertex *ve, std::set<partitio
         {
           name += ",";
         }
-        name += std::to_string(ppv->_partitions[j]-1);
+        name += std::to_string(ppv->_partitions[j]);
       }
       name += "}";
     

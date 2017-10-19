@@ -97,10 +97,7 @@ class Graph
   
   ~Graph()
   {
-    if(_eind != NULL) delete[] _eind;
-    if(_eptr != NULL) delete[] _eptr;
-    if(_vwgt != NULL) delete[] _vwgt;
-    if(_partition != NULL) delete[] _partition;
+    clear();
   }
   
   unsigned int ne() const { return _ne; };
@@ -126,6 +123,31 @@ class Graph
   void element(unsigned int i, MElement* element) { _element[i] = element; };
   void vwgt(unsigned int *vwgt) { _vwgt = vwgt; };
   void partition(unsigned int *partition) { _partition = partition; };
+  
+  void clear()
+  {
+    if(_eind != NULL)
+    {
+      delete[] _eind;
+      _eind = NULL;
+    }
+    if(_eptr != NULL)
+    {
+      delete[] _eptr;
+      _eptr = NULL;
+    }
+    _element.clear();
+    if(_vwgt != NULL)
+    {
+      delete[] _vwgt;
+      _vwgt = NULL;
+    }
+    if(_partition != NULL)
+    {
+      delete[] _partition;
+      _partition = NULL;
+    }
+  }
   
 };
 
