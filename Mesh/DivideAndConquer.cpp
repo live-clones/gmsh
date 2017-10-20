@@ -333,7 +333,7 @@ int DocRecord::BuildDelaunay()
 
 // This routine insert the point 'newPoint' in the list dlist,
 // respecting the clock-wise orientation
-int DocRecord::DListInsert(DListRecord **dlist, DPoint center, PointNumero newPoint)
+int DocRecord::DListInsert(PointNumero centerPoint, PointNumero newPoint)
 {
   DListRecord *p, *newp;
   double alpha1, alpha, beta, xx, yy;
@@ -342,6 +342,7 @@ int DocRecord::DListInsert(DListRecord **dlist, DPoint center, PointNumero newPo
   newp = new DListRecord;
   newp->point_num = newPoint;
 
+  DListRecord **dlist = &points[centerPoint].adjacent;
   if(*dlist == NULL) {
     *dlist = newp;
     Pred(*dlist) = newp;
@@ -362,6 +363,8 @@ int DocRecord::DListInsert(DListRecord **dlist, DPoint center, PointNumero newPo
   p = *dlist;
   first = p->point_num;
 
+  DPoint center = points[centerPoint].where;
+
   // first, compute polar coord. of the first point
   yy = (double)(points[first].where.v - center.v);
   xx = (double)(points[first].where.h - center.h);
@@ -378,13 +381,37 @@ int DocRecord::DListInsert(DListRecord **dlist, DPoint center, PointNumero newPo
     yy = (double)(points[Succ(p)->point_num].where.v - center.v);
     xx = (double)(points[Succ(p)->point_num].where.h - center.h);
     alpha = atan2(yy, xx) - alpha1;
-    if(alpha <= 1.e-15)
+    if(alpha <= -1.e-15 || Succ(p)->point_num == first)
       alpha += 2. * M_PI;
-    if(alpha >= beta) {
+    else if(abs(alpha) <= 1e-15 && IsRightOf(centerPoint, first, Succ(p)->point_num))
+      alpha += 2. * M_PI;
+    if(alpha >= beta+1e-15) {
       Succ(newp) = Succ(p);
       Succ(p) = newp;
       Pred(newp) = p;
       Pred(Succ(newp)) = newp;
+      return 1;
+    }
+    else if (alpha >= beta - 1e-15)
+    {
+      // Angles more or less the same. To keep consistency with rest of algorithm
+      // check with IsLeftOf to see which point should be first
+      if (IsRightOf(centerPoint, Succ(p)->point_num, newPoint))
+      {
+        // New point should become before Succ(p)
+        Succ(newp) = Succ(p);
+        Succ(p) = newp;
+        Pred(newp) = p;
+        Pred(Succ(newp)) = newp;
+      }
+      else
+      {
+        // New point should become after Succ(p)
+        Succ(newp) = Succ(Succ(p));
+        Succ(Succ(p)) = newp;
+        Pred(newp) = Succ(p);
+        Pred(Succ(newp)) = newp;
+      }
       return 1;
     }
     p = Succ(p);
@@ -398,8 +425,8 @@ int DocRecord::DListInsert(DListRecord **dlist, DPoint center, PointNumero newPo
 // the point 'b' in the adjency list of 'a'
 int DocRecord::Insert(PointNumero a, PointNumero b)
 {
-  int rslt = DListInsert(&points[a].adjacent, points[a].where, b);
-  rslt &= DListInsert(&points[b].adjacent, points[b].where, a);
+  int rslt = DListInsert(a, b);
+  rslt &= DListInsert(b, a);
   return rslt;
 }
 
