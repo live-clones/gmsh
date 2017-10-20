@@ -905,8 +905,8 @@ static bool fixDelaunayCavity (Vert *v,
   return false;
 }
 
-static void delaunayCavity2 (Tet *t,
-			    Tet *prev,
+static void delaunayCavity2 (Tet *tet,
+			    Tet *prevTet,
 			    Vert *v,
 			    cavityContainer &cavity,
 			    connContainer &bnd,
