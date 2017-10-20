@@ -912,21 +912,52 @@ static void delaunayCavity2 (Tet *t,
 			    connContainer &bnd,
 			    int thread, int iPnt)
 {
-  t->set(thread, iPnt); // Mark the triangle
-  cavity.push_back(t);
-  for (int iNeigh=0; iNeigh<4 ; iNeigh++){
-    Tet *neigh = t->T[iNeigh];
-    if (neigh == NULL){
-      bnd.push_back(conn(t->getFace(iNeigh),iNeigh,neigh));
+  std::stack<std::tuple<Tet *, Tet *, std::pair<int, int>>> stack;
+  bool finished = false;
+  Tet *t = tet;
+  Tet *prev = prevTet;
+  int iNeighStart = 0;
+  const int maxNumberNeigh = 4;
+  int iNeighEnd = maxNumberNeigh;
+  while (!finished) {
+    if (iNeighStart == 0){
+      t->set(thread, iPnt); // Mark the triangle
+      cavity.push_back(t);
     }
-    else if (neigh == prev){
+
+    for (int iNeigh = iNeighStart; iNeigh < iNeighEnd; iNeigh++){
+      Tet *neigh = t->T[iNeigh];
+      if (neigh == NULL){
+        bnd.push_back(conn(t->getFace(iNeigh), iNeigh, neigh));
+      }
+      else if (neigh == prev){
+      }
+      else if (!neigh->inSphere(v, thread)){
+        bnd.push_back(conn(t->getFace(iNeigh), iNeigh, neigh));
+        neigh->set(thread, iPnt);
+      }
+      else if (!(neigh->isSet(thread, iPnt))){
+        // First, add rest of neighbours to stack
+        stack.emplace(std::make_tuple(prev, t, std::make_pair(iNeigh + 1, maxNumberNeigh)));
+
+        // Second, add neighbour itself to stack
+        stack.emplace(std::make_tuple(t, neigh, std::make_pair(0, maxNumberNeigh)));
+
+        // Break out loop
+        break;
+      }
     }
-    else if (!neigh->inSphere(v,thread)){
-      bnd.push_back(conn(t->getFace(iNeigh),iNeigh,neigh));
-      neigh->set(thread, iPnt);
+
+    if (stack.empty()){
+      finished = true;
     }
-    else if (!(neigh->isSet(thread, iPnt))) {
-      delaunayCavity2 (neigh, t, v, cavity,bnd,thread, iPnt);
+    else{
+      const std::tuple<Tet *, Tet *, std::pair<int, int>> &next = stack.top();
+      prev = std::get<0>(next);
+      t = std::get<1>(next);
+      iNeighStart = std::get<2>(next).first;
+      iNeighEnd = std::get<2>(next).second;
+      stack.pop();
     }
   }
 }
