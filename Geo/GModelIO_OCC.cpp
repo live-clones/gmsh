@@ -1696,14 +1696,14 @@ void OCC_Internals::_setExtrudedMeshAttributes(const TopoDS_Compound &c,
     TopoDS_Face face = TopoDS::Face(exp0.Current());
     TopoDS_Shape bot = p ? p->FirstShape(face) : r->FirstShape(face);
     TopoDS_Shape top = p ? p->LastShape(face) : r->LastShape(face);
-    {
+    if(e){
       ExtrudeParams *ee = new ExtrudeParams(COPIED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
       _meshAttributes->insert(new OCCMeshAttributes(2, top, ee, 2, bot));
     }
     TopoDS_Shape vol = p ? p->Shape(face) : r->Shape(face);
-    {
+    if(e){
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
@@ -1715,14 +1715,14 @@ void OCC_Internals::_setExtrudedMeshAttributes(const TopoDS_Compound &c,
     TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
     TopoDS_Shape bot = p ? p->FirstShape(edge) : r->FirstShape(edge);
     TopoDS_Shape top = p ? p->LastShape(edge) : r->LastShape(edge);
-    {
+    if(e){
       ExtrudeParams *ee = new ExtrudeParams(COPIED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
       _meshAttributes->insert(new OCCMeshAttributes(1, top, ee, 1, bot));
     }
     TopoDS_Shape sur = p ? p->Shape(edge) : r->Shape(edge);
-    {
+    if(e){
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
@@ -1735,11 +1735,16 @@ void OCC_Internals::_setExtrudedMeshAttributes(const TopoDS_Compound &c,
     TopoDS_Shape bot = p ? p->FirstShape(vertex) : r->FirstShape(vertex);
     TopoDS_Shape top = p ? p->LastShape(vertex) : r->LastShape(vertex);
     TopoDS_Shape lin = p ? p->Shape(vertex) : r->Shape(vertex);
-    {
+    if(e){
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
       _meshAttributes->insert(new OCCMeshAttributes(1, lin, ee, 0, bot));
+    }
+    {
+      double lc = _meshAttributes->getMeshSize(0, bot);
+      if(lc > 0 && lc < MAX_LC)
+        _meshAttributes->insert(new OCCMeshAttributes(0, top, lc));
     }
   }
 }
@@ -1893,10 +1898,8 @@ bool OCC_Internals::_extrude(int mode,
       }
       result = p.Shape();
       const BRepSweep_Prism &prism(p.Prism());
-      if(e){
-        _setExtrudedMeshAttributes(c, (BRepSweep_Prism*)&prism, 0, e,
-                                   0., 0., 0., dx, dy, dz, 0., 0., 0., 0.);
-      }
+      _setExtrudedMeshAttributes(c, (BRepSweep_Prism*)&prism, 0, e,
+                                 0., 0., 0., dx, dy, dz, 0., 0., 0., 0.);
       dim = getReturnedShapes(c, (BRepSweep_Prism*)&prism, top, body, lateral);
     }
     else if(mode == 1){ // revolve
@@ -1909,10 +1912,8 @@ bool OCC_Internals::_extrude(int mode,
       }
       result = r.Shape();
       const BRepSweep_Revol &revol(r.Revol());
-      if(e){
-        _setExtrudedMeshAttributes(c, 0, (BRepSweep_Revol*)&revol, e,
-                                   x, y, z, 0., 0., 0., ax, ay, az, angle);
-      }
+      _setExtrudedMeshAttributes(c, 0, (BRepSweep_Revol*)&revol, e,
+                                 x, y, z, 0., 0., 0., ax, ay, az, angle);
       dim = getReturnedShapes(c, (BRepSweep_Revol*)&revol, top, body, lateral);
     }
     else if(mode == 2){ // pipe

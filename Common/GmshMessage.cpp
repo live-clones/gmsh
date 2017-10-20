@@ -1269,8 +1269,10 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   bool noRange = true, noChoices = true, noLoop = true;
   bool noGraph = true, noClosed = true;
   if(ps.size()){
-    if(fopt.count("ReadOnly") && fopt["ReadOnly"][0])
-      ps[0].setValues(val); // use local value
+    bool useLocalValue = ps[0].getReadOnly();
+    if(fopt.count("ReadOnly")) useLocalValue = fopt["ReadOnly"][0];
+    if(useLocalValue)
+      ps[0].setValues(val);
     else
       val = ps[0].getValues(); // use value from server
     // keep track of these attributes, which can be changed server-side (unless
@@ -1373,7 +1375,9 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   _onelabClient->get(ps, name);
   bool noChoices = true, noClosed = true, noMultipleSelection = true;
   if(ps.size()){
-    if(fopt.count("ReadOnly") && fopt["ReadOnly"][0])
+    bool useLocalValue = ps[0].getReadOnly();
+    if(fopt.count("ReadOnly")) useLocalValue = fopt["ReadOnly"][0];
+    if(useLocalValue)
       ps[0].setValue(val); // use local value
     else
       val = ps[0].getValue(); // use value from server
