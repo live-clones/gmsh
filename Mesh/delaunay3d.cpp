@@ -952,7 +952,7 @@ static void delaunayCavity2 (Tet *tet,
       finished = true;
     }
     else{
-      const std::tuple<Tet *, Tet *, std::pair<int, int>> &next = stack.top();
+      const std::tuple<Tet *, Tet *, std::pair<int, int> > &next = stack.top();
       prev = std::get<0>(next);
       t = std::get<1>(next);
       iNeighStart = std::get<2>(next).first;
