@@ -564,8 +564,6 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
         BDS_Point *p = itp->second;
         m.add_geom(-1, 2);
         p->g = m.get_geom(-1, 2);
-        p->lc() = (*itvx)->prescribedMeshSizeAtVertex();
-        p->lcBGM() = (*itvx)->prescribedMeshSizeAtVertex();
         ++itvx;
       }
     }
