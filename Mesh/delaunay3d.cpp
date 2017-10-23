@@ -938,10 +938,10 @@ static void delaunayCavity2 (Tet *tet,
       }
       else if (!(neigh->isSet(thread, iPnt))){
         // First, add rest of neighbours to stack
-        stack.emplace(std::make_pair(prev, t), std::make_pair(iNeigh + 1, maxNumberNeigh));
+        stack.push(std::make_pair(std::make_pair(prev, t), std::make_pair(iNeigh + 1, maxNumberNeigh)));
 
         // Second, add neighbour itself to stack
-        stack.emplace(std::make_pair(t, neigh), std::make_pair(0, maxNumberNeigh));
+        stack.push(std::make_pair(std::make_pair(t, neigh), std::make_pair(0, maxNumberNeigh)));
 
         // Break out loop
         break;
