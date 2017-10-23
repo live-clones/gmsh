@@ -912,7 +912,7 @@ static void delaunayCavity2 (Tet *tet,
 			    connContainer &bnd,
 			    int thread, int iPnt)
 {
-  std::stack<std::pair<std::pair<Tet *, Tet *>, std::pair<int, int>>> stack;
+  std::stack<std::pair<std::pair<Tet *, Tet *>, std::pair<int, int>> > stack;
   bool finished = false;
   Tet *t = tet;
   Tet *prev = prevTet;
