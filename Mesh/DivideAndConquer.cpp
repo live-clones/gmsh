@@ -642,10 +642,10 @@ void DocRecord::makePosView(std::string fileName, GFace *gf)
       }
       std::vector<PointNumero> adjacentPoints;
       do {
-        adjacentPoints.emplace_back(p->point_num);
+        adjacentPoints.push_back(p->point_num);
         p = Pred(p);
       } while (p != points[iPoint].adjacent);
-      adjacentPoints.emplace_back(p->point_num);
+      adjacentPoints.push_back(p->point_num);
 
       for (size_t iTriangle = 0; iTriangle < adjacentPoints.size() - 1; iTriangle++) {
         const PointNumero jPoint = adjacentPoints[iTriangle];
