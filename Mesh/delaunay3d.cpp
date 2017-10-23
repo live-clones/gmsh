@@ -912,7 +912,7 @@ static void delaunayCavity2 (Tet *tet,
 			    connContainer &bnd,
 			    int thread, int iPnt)
 {
-  std::stack<std::tuple<Tet *, Tet *, std::pair<int, int>>> stack;
+  std::stack<std::pair<std::pair<Tet *, Tet *>, std::pair<int, int>>> stack;
   bool finished = false;
   Tet *t = tet;
   Tet *prev = prevTet;
@@ -938,10 +938,10 @@ static void delaunayCavity2 (Tet *tet,
       }
       else if (!(neigh->isSet(thread, iPnt))){
         // First, add rest of neighbours to stack
-        stack.emplace(std::make_tuple(prev, t, std::make_pair(iNeigh + 1, maxNumberNeigh)));
+        stack.emplace(std::make_pair(prev, t), std::make_pair(iNeigh + 1, maxNumberNeigh));
 
         // Second, add neighbour itself to stack
-        stack.emplace(std::make_tuple(t, neigh, std::make_pair(0, maxNumberNeigh)));
+        stack.emplace(std::make_pair(t, neigh), std::make_pair(0, maxNumberNeigh));
 
         // Break out loop
         break;
@@ -952,11 +952,11 @@ static void delaunayCavity2 (Tet *tet,
       finished = true;
     }
     else{
-      const std::tuple<Tet *, Tet *, std::pair<int, int> > &next = stack.top();
-      prev = std::get<0>(next);
-      t = std::get<1>(next);
-      iNeighStart = std::get<2>(next).first;
-      iNeighEnd = std::get<2>(next).second;
+      const std::pair<std::pair<Tet *, Tet *>, std::pair<int, int> > &next = stack.top();
+      prev = next.first.first;
+      t = next.first.second;
+      iNeighStart = next.second.first;
+      iNeighEnd = next.second.second;
       stack.pop();
     }
   }
