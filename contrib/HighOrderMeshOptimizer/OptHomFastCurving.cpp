@@ -1941,10 +1941,11 @@ void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
                                      GEntity *ent, GEntity *bndEnt,
                                      std::list<MElement*> &bndElts,
                                      const FastCurvingParameters &p,
-                                     fullMatrix<double> *normal)
+                                     fullMatrix<double> *normals)
 {
   // inspired from curveMeshFromBndElt
-  std::map<MElement*, std::vector<MElement*>> bndEl2columns;
+
+  std::vector<std::pair<MElement*, std::vector<MElement*>>> bndEl2column;
 
   auto it = bndElts.begin();
   while (it != bndElts.end()) {
@@ -1958,8 +1959,10 @@ void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
       MVertex *vb0 = bndEl->getVertex(0);
       MVertex *vb1 = bndEl->getVertex(1);
       MEdge baseEd(vb0, vb1);
-      foundCol = getColumn2D(ed2el, p, baseEd, baseVert,
-                             topPrimVert, bndEl2columns[bndEl], aboveElt);
+      std::vector<MElement*> vec;
+      bndEl2column.push_back(std::make_pair(bndEl, std::vector<MElement*>()));
+      foundCol = getColumn2D(ed2el, p, baseEd, baseVert, topPrimVert,
+                             bndEl2column.back().second, aboveElt);
     }
     else { // 2D boundary
       MVertex *vb0 = bndEl->getVertex(0);
@@ -1968,18 +1971,24 @@ void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
       MVertex *vb3 = NULL;
       if (bndType == TYPE_QUA) vb3 = bndEl->getVertex(3);
       MFace baseFace(vb0, vb1, vb2, vb3);
+      bndEl2column.push_back(std::make_pair(bndEl, std::vector<MElement*>()));
       foundCol = getColumn3D(face2el, p, baseFace, baseVert, topPrimVert,
-                             bndEl2columns[bndEl], aboveElt);
+                             bndEl2column.back().second, aboveElt);
     }
-    if (!foundCol || bndEl2columns[bndEl].empty()) {
-      bndEl2columns.erase(bndEl);
+    if (!foundCol || bndEl2column.back().second.empty()) {
+      bndEl2column.pop_back();
     } // Skip bnd. el. if top vertices not found
 
-    curveBoundaryLayer(ed2el, face2el, ent, bndEnt, bndEl2columns, normal);
     ++it;
   }
 
-
+  SVector3 normal;
+  if (normals)
+    normal = SVector3(normals(0, 0), normals(0, 1), normals(0, 2));
+  else
+    normal = SVector3(0, 0, 1);
+  if (p.dim == 2) curve2DBoundaryLayer(bndEl2column, normal);
+  else curve3DBoundaryLayer(bndEl2column);
 }
 
 

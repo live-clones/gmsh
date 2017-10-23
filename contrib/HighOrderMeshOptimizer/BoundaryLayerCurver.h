@@ -41,12 +41,11 @@ class MElement;
 class GEntity;
 class MVertex;
 
-typedef std::map<MEdge, std::vector<MElement*>, Less_Edge> MEdgeVecMEltMap;
-typedef std::map<MFace, std::vector<MElement*>, Less_Face> MFaceVecMEltMap;
+typedef std::vector<std::pair<MElement*, std::vector<MElement*>>> VecPairMElemVecMElem;
 
-void curveBoundaryLayer(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
-                        GEntity *ent, GEntity *bndEnt,
-                        std::map<MElement*, std::vector<MElement*>> &bndEl2columns,
-                        fullMatrix<double> *normal);
+void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal);
+//void curve2DColumn(MElement *bottomEdge, std::vector<MElement*> &column);
+
+void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column);
 
 #endif
