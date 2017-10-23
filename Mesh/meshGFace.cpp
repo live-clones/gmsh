@@ -2506,6 +2506,11 @@ void meshGFace::operator() (GFace *gf, bool print)
              gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
 
   halfmesh.finish();
+
+  if (gf->getNumMeshElements() == 0)
+  {
+    Msg::Warning("Surface %d consists of no elements\n", gf->tag());
+  }
 }
 
 bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges)
