@@ -635,21 +635,21 @@ void DocRecord::makePosView(std::string fileName, GFace *gf)
   else
   {
     fprintf(f, "View \"scalar\" {\n");
-    for (auto iPoint = 0; iPoint < numPoints; iPoint++){
-      auto p = points[iPoint].adjacent;
-      if (p == nullptr){
+    for (PointNumero iPoint = 0; iPoint < numPoints; iPoint++){
+      DListPeek p = points[iPoint].adjacent;
+      if (!p){
         continue;
       }
-      std::vector<size_t> adjacentPoints;
+      std::vector<PointNumero> adjacentPoints;
       do {
         adjacentPoints.emplace_back(p->point_num);
         p = Pred(p);
       } while (p != points[iPoint].adjacent);
       adjacentPoints.emplace_back(p->point_num);
 
-      for (auto iTriangle = 0; iTriangle < adjacentPoints.size() - 1; iTriangle++) {
-        const auto jPoint = adjacentPoints[iTriangle];
-        const auto kPoint = adjacentPoints[iTriangle + 1];
+      for (size_t iTriangle = 0; iTriangle < adjacentPoints.size() - 1; iTriangle++) {
+        const PointNumero jPoint = adjacentPoints[iTriangle];
+        const PointNumero kPoint = adjacentPoints[iTriangle + 1];
         if ((jPoint > iPoint) && (kPoint > iPoint) &&
           (IsRightOf(iPoint, jPoint, kPoint))) {
           fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
