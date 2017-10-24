@@ -28,38 +28,201 @@
 // Contributors: Amaury Johnen
 
 #include "BoundaryLayerCurver.h"
-#include "MElement.h"
-#include "GmshDefines.h"
+//#include "MElement.h"
+#include "MQuadrangle.h"
+#include "BasisFactory.h"
+//#include "MLine.h"
+//#include "GmshDefines.h"
 
-void curve2DTriColumn(MElement *bottomEdge, std::vector<MElement*> &column,
-                      SVector3 u, SVector3 v, SVector3 n)
-{
-  for (int i = 0; i < column.size(); i += 2) {
-    MElement *tri0 = column[i];
-    MElement *tri1 = column[i+1];
+namespace {
+
+
+
+  void computeExtremityCoefficients(const std::vector<MVertex*> &baseVert,
+                                    const std::vector<MVertex*> &topVert,
+                                    parameters2DCurve &parameters,
+                                    SVector3 w)
+  {
+    int tagLine = ElementType::getTag(TYPE_LIN, baseVert.size() - 1);
+    const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
+    double sf[100][3];
+
+    SVector3 t, n, h;
+    {
+      double dx = 0, dy = 0, dz = 0;
+      fs->df(-1, 0, 0, sf);
+      for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+        const MVertex *v = baseVert[j];
+        dx += sf[j][0] * v->x();
+        dy += sf[j][0] * v->y();
+        dz += sf[j][0] * v->z();
+      }
+
+      t = SVector3(dx, dy, dz).normalize();
+      n = crossprod(w, t);
+      h = SVector3(topVert[0]->x() - baseVert[0]->x(),
+                   topVert[0]->y() - baseVert[0]->y(),
+                   topVert[0]->z() - baseVert[0]->z());
+    }
+    parameters.thickness[0] = dot(h, n);
+    parameters.coeffb[0] = dot(h, t);
+
+    {
+      double dx = 0, dy = 0, dz = 0;
+      fs->df(1, 0, 0, sf);
+      for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+        const MVertex *v = baseVert[j];
+        dx += sf[j][0] * v->x();
+        dy += sf[j][0] * v->y();
+        dz += sf[j][0] * v->z();
+      }
+
+      t = SVector3(dx, dy, dz).normalize();
+      n = crossprod(w, t);
+      h = SVector3(topVert[1]->x() - baseVert[1]->x(),
+                   topVert[1]->y() - baseVert[1]->y(),
+                   topVert[1]->z() - baseVert[1]->z());
+    }
+    parameters.thickness[1] = dot(h, n);
+    parameters.coeffb[1] = dot(h, t);
   }
+
+  void idealPositionTopEdge(const std::vector<MVertex *> &baseVert,
+                            parameters2DCurve parameters, SVector3 w,
+                            int nbPoints, const IntPt *points,
+                            double *x, double *y, double *z)
+  {
+    int tagLine = ElementType::getTag(TYPE_LIN, baseVert.size()-1);
+    const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
+
+    for (int i = 0; i < nbPoints; ++i) {
+      double xi = points[i].pt[0];
+      double xc = 0, yc = 0, zc = 0;
+      double dx = 0, dy = 0, dz = 0;
+      {
+        double f[100];
+        double sf[100][3];
+        fs->f(xi, 0, 0, f);
+        fs->df(xi, 0, 0, sf);
+        for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+          const MVertex *v = baseVert[j];
+          xc += f[j] * v->x();
+          yc += f[j] * v->y();
+          zc += f[j] * v->z();
+          dx += sf[j][0] * v->x();
+          dy += sf[j][0] * v->y();
+          dz += sf[j][0] * v->z();
+        }
+      }
+      SVector3 t, n, h;
+      t = SVector3(dx, dy, dz).normalize();
+      n = crossprod(w, t);
+      h = parameters.thicknessAtPoint(xi) * n + parameters.coeffbAtPoint(xi) * t;
+      x[i] = xc + h.x();
+      y[i] = yc + h.y();
+      z[i] = zc + h.z();
+    }
+  }
+
+  void computePositionTopVert(const std::vector<MVertex*> &baseVert,
+                              std::vector<MVertex*> &topVert,
+                              parameters2DCurve &parameters,
+                              SVector3 e3)
+  {
+    // Let (t, n, e3) be the local reference frame
+    // We seek for each component the polynomial function that fit the best
+    //   x1(xi) = x0(xi) + h(xi) * n(xi) + b(xi) * t(xi)
+    // in the least square sense.
+    // where x0(xi) is the position of the base edge
+    //       n(xi) is the unit normal of the base edge
+    //       h(xi) is the linear thickness
+    //       t(xi) is the unit tangent of the base edge
+    //       b(xi) is the linear coefficient
+
+    const int orderCurve = baseVert.size() - 1;
+    const int orderGauss = orderCurve * 2;
+    const int sizeSystem = getNGQLPts(orderGauss);
+    const IntPt *gaussPnts = getGQLPts(orderGauss);
+
+    double *x = new double[sizeSystem];
+    double *y = new double[sizeSystem];
+    double *z = new double[sizeSystem];
+    idealPositionTopEdge(baseVert, parameters, e3, sizeSystem, gaussPnts, x, y, z);
+
+    // Project into a global reference frame {e1, e2, e3}
+    SVector3 e1(0, 0, 0), e2;
+    double *u = new double[sizeSystem];
+    double *v = new double[sizeSystem];
+    {
+      int k = 0;
+      if (std::abs(e3(1)) > std::abs(e3(k))) k = 1;
+      if (std::abs(e3(2)) > std::abs(e3(k))) k = 2;
+      e1((k + 1) % 3) = 1;
+      e2 = crossprod(e3, e1).normalize();
+      e1 = crossprod(e2, e3);
+
+      for (int i = 0; i < sizeSystem; ++i) {
+        SVector3 h(x[i], y[i], z[i]);
+        u[i] = dot(h, e1);
+        v[i] = dot(h, e2);
+      }
+    }
+
+//    for (int i = 0; i < sizeSystem; ++i) {
+//      x[i] =
+//    }
+
+    delete x;
+    delete y;
+    delete z;
+    delete u;
+    delete v;
+  }
+
+  void curve2DTriColumn(MElement *bottomEdge, std::vector<MElement *> &column,
+                        SVector3 w)
+  {
+    for (int i = 0; i < column.size(); i += 2) {
+      MElement *tri0 = column[i];
+      MElement *tri1 = column[i + 1];
+    }
+  }
+
+  void curve2DQuadColumn(MElement *bottomEdge, std::vector<MElement *> &column,
+                         SVector3 w)
+  {
+    MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
+    std::vector<MVertex *> bottomVertices, topVertices;
+    for (int i = 0; i < column.size(); ++i) {
+      MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
+      int iBottom, sign;
+      quad->getEdgeInfo(bottom, iBottom, sign);
+      if (iBottom != 0) {
+        quad->reorient(4 - iBottom, false);
+      }
+      quad->getEdgeVertices(0, bottomVertices);
+      quad->getEdgeVertices(2, topVertices);
+      std::reverse(topVertices.begin(), topVertices.begin() + 2);
+      std::reverse(topVertices.begin() + 2, topVertices.end());
+
+      parameters2DCurve parameters;
+      computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
+    }
+  }
+
 }
 
-void curve2DQuadColumn(MElement *bottomEdge, std::vector<MElement*> &column,
-                       SVector3 u, SVector3 v, SVector3 n)
-{
-  for (int i = 0; i < column.size(); ++i) {
-    MElement *quad = column[i];
-    
-  }
-}
 
 void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 n)
 {
-  // Compute reference frame (handle general planar 2D BL)
-  int k = 0;
-  if (std::abs(n(1)) > std::abs(n(k))) k = 1;
-  if (std::abs(n(2)) > std::abs(n(k))) k = 2;
-  SVector3 u(0, 0, 0);
-  u((k+1) % 3) = 1;
-  SVector3 v = crossprod(n, u);
-  v.normalize();
-  u = crossprod(v, n);
+//  // Compute reference frame (handle general planar 2D BL)
+//  int k = 0;
+//  if (std::abs(n(1)) > std::abs(n(k))) k = 1;
+//  if (std::abs(n(2)) > std::abs(n(k))) k = 2;
+//  SVector3 u(0, 0, 0);
+//  u((k+1) % 3) = 1;
+//  SVector3 v = crossprod(n, u).normalize();
+//  u = crossprod(v, n);
 
 #ifdef _OPENMP
 #pragma omp for
@@ -68,9 +231,9 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 n)
     MElement *bottomEdge = bndEl2column[i].first;
     std::vector<MElement*> &column = bndEl2column[i].second;
     if (column[0]->getType() == TYPE_TRI)
-      curve2DTriColumn(bottomEdge, column, u, v, n);
+      curve2DTriColumn(bottomEdge, column, n);
     else
-      curve2DQuadColumn(bottomEdge, column, u, v, n);
+      curve2DQuadColumn(bottomEdge, column, n);
   }
 }
 

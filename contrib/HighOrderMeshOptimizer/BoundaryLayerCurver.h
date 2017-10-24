@@ -41,6 +41,17 @@ class MElement;
 class GEntity;
 class MVertex;
 
+struct parameters2DCurve {
+  double thickness[2];
+  double coeffb[2];
+  double thicknessAtPoint(double xi) {
+    return thickness[0] * (1-xi)/2 + thickness[1] * (1+xi)/2;
+  }
+  double coeffbAtPoint(double xi) {
+    return coeffb[0] * (1-xi)/2 + coeffb[1] * (1+xi)/2;
+  }
+};
+
 typedef std::vector<std::pair<MElement*, std::vector<MElement*>>> VecPairMElemVecMElem;
 
 void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal);
