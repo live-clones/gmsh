@@ -33,14 +33,70 @@
 #include "BasisFactory.h"
 //#include "MLine.h"
 //#include "GmshDefines.h"
+#include "legendrePolynomials.h"
 
-namespace {
+namespace BoundaryLayerCurver
+{
+  static std::map<std::tuple<int, int, int>, LeastSquareData*> leastSquareData;
 
+  LeastSquareData* constructLeastSquareData(int typeElement, int order,
+                                            int orderGauss)
+  {
+    LeastSquareData *data = new LeastSquareData;
+    if (typeElement == TYPE_LIN) {
+      data->nbPoints = getNGQLPts(orderGauss);
+      data->intPoints = getGQLPts(orderGauss);
+      LegendrePolynomials legendre(order);
 
+      int sz1 = order + 1;
+      int sz2 = data->nbPoints;
+      data->A.resize(sz1, sz2);
+      double *val = new double[sz1];
+      for (int j = 0; j < sz2; ++j) {
+        legendre.f(data->intPoints[j].pt[0], val);
+        for (int i = 0; i < sz1; ++i) {
+          data->A(i, j) = val[i] * data->intPoints[j].weight;
+        }
+      }
+      delete val;
+
+      int sz = sz1 + 2;
+      fullMatrix<double> invB(sz1 + 2, sz1 + 2, true);
+      for (int k = 0; k < sz1; ++k) {
+        const int sign = k % 2 == 0 ? 1 : -1;
+        invB(0, k) = sign;
+        invB(1, k) = 1;
+        invB(k+2, sz-2) = sign;
+        invB(k+2, sz-1) = 1;
+        invB(k+2, k) = 4 / (1 + 2*k);
+      }
+      invB.invert(data->B);
+    }
+    else if (typeElement == TYPE_QUA) {
+      Msg::Error("Implement data for quad");
+    }
+    else if (typeElement == TYPE_TRI) {
+      Msg::Error("Implement data for tri");
+    }
+  }
+
+  LeastSquareData* getLeastSquareData(int typeElement, int order,
+                                      int orderGauss)
+  {
+    std::tuple<int, int, int> typeOrder(typeElement, order, orderGauss);
+    auto it = leastSquareData.find(typeOrder);
+
+    if (it != leastSquareData.end()) return it->second;
+
+    LeastSquareData *data = constructLeastSquareData(typeElement, order,
+                                                     orderGauss);
+    leastSquareData[typeOrder] = data;
+    return data;
+  }
 
   void computeExtremityCoefficients(const std::vector<MVertex*> &baseVert,
                                     const std::vector<MVertex*> &topVert,
-                                    parameters2DCurve &parameters,
+                                    Parameters2DCurve &parameters,
                                     SVector3 w)
   {
     int tagLine = ElementType::getTag(TYPE_LIN, baseVert.size() - 1);
@@ -88,7 +144,7 @@ namespace {
   }
 
   void idealPositionTopEdge(const std::vector<MVertex *> &baseVert,
-                            parameters2DCurve parameters, SVector3 w,
+                            Parameters2DCurve &parameters, SVector3 w,
                             int nbPoints, const IntPt *points,
                             double *x, double *y, double *z)
   {
@@ -126,7 +182,7 @@ namespace {
 
   void computePositionTopVert(const std::vector<MVertex*> &baseVert,
                               std::vector<MVertex*> &topVert,
-                              parameters2DCurve &parameters,
+                              Parameters2DCurve &parameters,
                               SVector3 e3)
   {
     // Let (t, n, e3) be the local reference frame
@@ -205,7 +261,7 @@ namespace {
       std::reverse(topVertices.begin(), topVertices.begin() + 2);
       std::reverse(topVertices.begin() + 2, topVertices.end());
 
-      parameters2DCurve parameters;
+      Parameters2DCurve parameters;
       computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
     }
   }
@@ -231,9 +287,9 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 n)
     MElement *bottomEdge = bndEl2column[i].first;
     std::vector<MElement*> &column = bndEl2column[i].second;
     if (column[0]->getType() == TYPE_TRI)
-      curve2DTriColumn(bottomEdge, column, n);
+      BoundaryLayerCurver::curve2DTriColumn(bottomEdge, column, n);
     else
-      curve2DQuadColumn(bottomEdge, column, n);
+      BoundaryLayerCurver::curve2DQuadColumn(bottomEdge, column, n);
   }
 }
 

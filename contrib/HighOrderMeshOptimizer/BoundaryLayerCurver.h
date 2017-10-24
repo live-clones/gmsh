@@ -40,19 +40,33 @@
 class MElement;
 class GEntity;
 class MVertex;
+struct IntPt;
 
-struct parameters2DCurve {
-  double thickness[2];
-  double coeffb[2];
-  double thicknessAtPoint(double xi) {
-    return thickness[0] * (1-xi)/2 + thickness[1] * (1+xi)/2;
-  }
-  double coeffbAtPoint(double xi) {
-    return coeffb[0] * (1-xi)/2 + coeffb[1] * (1+xi)/2;
-  }
-};
+typedef std::vector<std::pair<MElement *, std::vector<MElement *>>> VecPairMElemVecMElem;
 
-typedef std::vector<std::pair<MElement*, std::vector<MElement*>>> VecPairMElemVecMElem;
+namespace BoundaryLayerCurver
+{
+  struct Parameters2DCurve {
+    double thickness[2];
+    double coeffb[2];
+
+    double thicknessAtPoint(double xi) {
+      return thickness[0] * (1 - xi) / 2 + thickness[1] * (1 + xi) / 2;
+    }
+
+    double coeffbAtPoint(double xi) {
+      return coeffb[0] * (1 - xi) / 2 + coeffb[1] * (1 + xi) / 2;
+    }
+  };
+
+  struct LeastSquareData {
+    fullMatrix<double> A;
+    fullMatrix<double> B;
+    int nbPoints;
+    IntPt *intPoints;
+  };
+
+}
 
 void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal);
 //void curve2DColumn(MElement *bottomEdge, std::vector<MElement*> &column);
