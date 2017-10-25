@@ -65,6 +65,11 @@ class groupOfElements {
     return (_elements.find(e) != _elements.end());
   }
   
+  bool find (MVertex *v) const       
+  {
+    return (_vertices.find(v) != _vertices.end());
+  }
+  
   inline void insert (MElement *e)
   {
     _elements.insert(e);

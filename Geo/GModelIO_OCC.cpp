@@ -93,6 +93,18 @@
 #error "Gmsh requires OpenCASCADE >= 6.9"
 #endif
 
+#if defined(HAVE_OCC_CAF)
+#include <Quantity_Color.hxx>
+#include <TDocStd_Document.hxx>
+#include <XCAFApp_Application.hxx>
+#include <XCAFDoc_ShapeTool.hxx>
+#include <XCAFDoc_DocumentTool.hxx>
+#include <XCAFDoc_ColorTool.hxx>
+#include <STEPCAFControl_Reader.hxx>
+#include <IGESCAFControl_Reader.hxx>
+#include <TDataStd_Name.hxx>
+#endif
+
 OCC_Internals::OCC_Internals()
 {
   for(int i = 0; i < 6; i++) _maxTag[i] = 0;
@@ -121,7 +133,7 @@ void OCC_Internals::reset()
 void OCC_Internals::setMaxTag(int dim, int val)
 {
   if(dim < -2 || dim > 3) return;
-  _maxTag[dim + 2] = val;
+  _maxTag[dim + 2] = std::max(_maxTag[dim + 2], val);
 }
 
 int OCC_Internals::getMaxTag(int dim) const
@@ -1684,14 +1696,14 @@ void OCC_Internals::_setExtrudedMeshAttributes(const TopoDS_Compound &c,
     TopoDS_Face face = TopoDS::Face(exp0.Current());
     TopoDS_Shape bot = p ? p->FirstShape(face) : r->FirstShape(face);
     TopoDS_Shape top = p ? p->LastShape(face) : r->LastShape(face);
-    {
+    if(e){
       ExtrudeParams *ee = new ExtrudeParams(COPIED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
       _meshAttributes->insert(new OCCMeshAttributes(2, top, ee, 2, bot));
     }
     TopoDS_Shape vol = p ? p->Shape(face) : r->Shape(face);
-    {
+    if(e){
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
@@ -1703,14 +1715,14 @@ void OCC_Internals::_setExtrudedMeshAttributes(const TopoDS_Compound &c,
     TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
     TopoDS_Shape bot = p ? p->FirstShape(edge) : r->FirstShape(edge);
     TopoDS_Shape top = p ? p->LastShape(edge) : r->LastShape(edge);
-    {
+    if(e){
       ExtrudeParams *ee = new ExtrudeParams(COPIED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
       _meshAttributes->insert(new OCCMeshAttributes(1, top, ee, 1, bot));
     }
     TopoDS_Shape sur = p ? p->Shape(edge) : r->Shape(edge);
-    {
+    if(e){
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
@@ -1723,11 +1735,16 @@ void OCC_Internals::_setExtrudedMeshAttributes(const TopoDS_Compound &c,
     TopoDS_Shape bot = p ? p->FirstShape(vertex) : r->FirstShape(vertex);
     TopoDS_Shape top = p ? p->LastShape(vertex) : r->LastShape(vertex);
     TopoDS_Shape lin = p ? p->Shape(vertex) : r->Shape(vertex);
-    {
+    if(e){
       ExtrudeParams *ee = new ExtrudeParams(EXTRUDED_ENTITY);
       ee->fill(p ? TRANSLATE : ROTATE, dx, dy, dz, ax, ay, az, x, y, z, angle);
       ee->mesh = e->mesh;
       _meshAttributes->insert(new OCCMeshAttributes(1, lin, ee, 0, bot));
+    }
+    {
+      double lc = _meshAttributes->getMeshSize(0, bot);
+      if(lc > 0 && lc < MAX_LC)
+        _meshAttributes->insert(new OCCMeshAttributes(0, top, lc));
     }
   }
 }
@@ -1881,10 +1898,8 @@ bool OCC_Internals::_extrude(int mode,
       }
       result = p.Shape();
       const BRepSweep_Prism &prism(p.Prism());
-      if(e){
-        _setExtrudedMeshAttributes(c, (BRepSweep_Prism*)&prism, 0, e,
-                                   0., 0., 0., dx, dy, dz, 0., 0., 0., 0.);
-      }
+      _setExtrudedMeshAttributes(c, (BRepSweep_Prism*)&prism, 0, e,
+                                 0., 0., 0., dx, dy, dz, 0., 0., 0., 0.);
       dim = getReturnedShapes(c, (BRepSweep_Prism*)&prism, top, body, lateral);
     }
     else if(mode == 1){ // revolve
@@ -1897,10 +1912,8 @@ bool OCC_Internals::_extrude(int mode,
       }
       result = r.Shape();
       const BRepSweep_Revol &revol(r.Revol());
-      if(e){
-        _setExtrudedMeshAttributes(c, 0, (BRepSweep_Revol*)&revol, e,
-                                   x, y, z, 0., 0., 0., ax, ay, az, angle);
-      }
+      _setExtrudedMeshAttributes(c, 0, (BRepSweep_Revol*)&revol, e,
+                                 x, y, z, 0., 0., 0., ax, ay, az, angle);
       dim = getReturnedShapes(c, (BRepSweep_Revol*)&revol, top, body, lateral);
     }
     else if(mode == 2){ // pipe
@@ -2508,6 +2521,57 @@ bool OCC_Internals::importShapes(const std::string &fileName, bool highestDimOnl
     else if(format == "step" ||
             split[2] == ".step" || split[2] == ".stp" ||
             split[2] == ".STEP" || split[2] == ".STP"){
+#if defined(HAVE_OCC_CAF)
+      // Initiate a dummy XCAF Application to handle the STEP XCAF Document
+      static Handle_XCAFApp_Application dummy_app = XCAFApp_Application::GetApplication();
+      // Create an XCAF Document to contain the STEP file itself
+      Handle_TDocStd_Document step_doc;
+      // Check if a STEP File is already open under this handle, if so, close it
+      // to prevent Segmentation Faults when trying to create a new document
+      if(dummy_app->NbDocuments() > 0){
+         dummy_app->GetDocument(1, step_doc);
+         dummy_app->Close(step_doc);
+      }
+      dummy_app->NewDocument("STEP-XCAF", step_doc);
+      STEPCAFControl_Reader reader;
+      if(reader.ReadFile(fileName.c_str()) != IFSelect_RetDone){
+        Msg::Error("Could not read file '%s'", fileName.c_str());
+        return false;
+      }
+      reader.Transfer(step_doc);
+      // Read in the shape(s) and the colours present in the STEP File
+      Handle_XCAFDoc_ShapeTool step_shape_contents = XCAFDoc_DocumentTool::ShapeTool(step_doc->Main());
+      Handle_XCAFDoc_ColorTool step_colour_contents = XCAFDoc_DocumentTool::ColorTool(step_doc->Main());
+      TDF_LabelSequence step_shapes;
+      step_shape_contents->GetShapes(step_shapes);
+      for(int i = 1; i <= step_shapes.Length(); i++){
+        printf("step shape %d: \n", i);
+        TDF_Label label = step_shapes.Value(i);
+        Handle(TDataStd_Name) N;
+        if(label.FindAttribute(TDataStd_Name::GetID(), N)) {
+          TCollection_ExtendedString name = N->Get();
+          std::string s1 = TCollection_AsciiString(name).ToCString();
+          printf("hey %s\n", s1.c_str());
+        }
+      }
+
+      /*
+      // List out the available colours in the STEP File as Colour Names
+      TDF_LabelSequence all_colours;
+      step_colour_contents->GetColors(all_colours);
+      Msg::Info("Number of colours in STEP File: ", all_colours.Length());
+      for(int i = 1; i <= all_colours.Length(); i++){
+        Quantity_Color col;
+        std::stringstream col_rgb;
+        step_colour_contents->GetColor(all_colours.Value(i),col);
+        col_rgb << " : (" << col.Red() << "," << col.Green() << "," << col.Blue() << ")";
+        Msg::Info("Colour [", i, "] = ", col.StringName(col.Name()), col_rgb.str().c_str());
+      }
+      // For the STEP File Reader in OCC, the 1st Shape contains the entire
+      */
+      // compound geometry as one shape
+      result = step_shape_contents->GetShape(step_shapes.Value(1));
+#else
       STEPControl_Reader reader;
       if(reader.ReadFile(fileName.c_str()) != IFSelect_RetDone){
         Msg::Error("Could not read file '%s'", fileName.c_str());
@@ -2516,6 +2580,7 @@ bool OCC_Internals::importShapes(const std::string &fileName, bool highestDimOnl
       reader.NbRootsForTransfer();
       reader.TransferRoots();
       result = reader.OneShape();
+#endif
     }
     else if(format == "iges" ||
             split[2] == ".iges" || split[2] == ".igs" ||
@@ -3461,6 +3526,42 @@ bool OCC_Internals::makeTorusSTL(double x, double y, double z, double r1, double
     return false;
   return true;
 }
+/*
+void dumpStepLabels(STEPControl_Reader reader)
+{
+  const Handle(XSControl_WorkSession) &theSession = reader.WS();
+  const Handle(Interface_InterfaceModel) &theModel = theSession->Model();
+  Standard_Integer nb = theModel->NbEntities();
+  for(Standard_Integer i=1; i < ....) {
+    Handle(StepRepr_Representation) entity =
+      Handle(StepRepr_Representation)::DownCast(theModel->Value(i));
+    if(entity.IsNull()){
+      continue;
+    }
+    if(entity->Name().IsNull()){
+      continue;
+    }
+    cout << Name()->ToCString();
+  }
+}
+
+void dumpIgesLabels(IGESControl_Reader reader)
+{
+  const Handle(XSControl_WorkSession) & theSession = reader.WS();
+  const Handle(Interface_InterfaceModel) & theModel = theSession->Model();
+  Standard_Integer nb = theModel->NbEntities();
+  for(Standard_Integer i=1; i<...; i++){
+    Handle(IGESData_IGESEntity) entity =
+      Handle(IGESData_IGESEntity)::DownCast(theModel->Value(i));
+    if(entity.IsNull()){
+      continue;
+    }
+    if(entity->HasName()){
+      cout << NameValue()->String().ToCString();
+    }
+  }
+}
+*/
 
 // FIXME ***************** BEGIN WILL BE REMOVED ************************
 

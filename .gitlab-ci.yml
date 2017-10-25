@@ -1,16 +1,141 @@
-full:
-  image : onelab/ubuntu16.04
+# Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+#
+# See the LICENSE.txt file for license information. Please report all
+# bugs and problems to the public mailing list <gmsh@onelab.info>.
+
+variables:
+  EXTRA_VERSION: "-git-$CI_COMMIT_SHA"
+
+# -----------------------
+# Builds for all branches
+# -----------------------
+
+linux64_docker:
+  image: onelab/ubuntu16.04
   script:
     - mkdir build
     - cd build
-    - cmake ..
+    - cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} ..
     - make -j 4
     - ctest -j 4 --output-on-failure
+  tags:
+    - linux64
+    - docker
 
-minimal:
-  image : onelab/ubuntu16.04
+linux64_docker_cxx98_compat:
+  image: onelab/ubuntu16.04
   script:
     - mkdir build
     - cd build
-    - cmake -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 ..
+    - export CXXFLAGS=-std=c++98
+    - cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DENABLE_CXX11=0 -DENABLE_OCC=0 ..
     - make -j 4
+  tags:
+    - linux64
+    - docker
+
+linux64_docker_minimal:
+  image: onelab/ubuntu16.04
+  script:
+    - mkdir build
+    - cd build
+    - cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 ..
+    - make -j 4
+  tags:
+    - linux64
+    - docker
+
+windows64_msvc:
+  script:
+    - md build
+    - cd build
+    - cmake -DGMSH_EXTRA_VERSION=%EXTRA_VERSION:~0,13% ..
+    - msbuild package.vcxproj
+  tags:
+    - windows64
+    - official
+
+# ------------------------------------------
+# Official Linux builds (master branch only)
+# ------------------------------------------
+
+linux64_official:
+  only:
+    - master
+  script:
+    - mkdir build
+    - cd build
+    - /usr/local/bin/cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DENABLE_NATIVE_FILE_CHOOSER:bool=FALSE -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc-3.7.5 -DSLEPC_DIR=/home/geuzaine/src/slepc-3.7.3 ..
+    - make package -j 1
+    - PKG=`ls gmsh-*.tar*`; scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
+    - /usr/local/bin/ctest -D Experimental -j 1 --output-on-failure
+  tags:
+    - linux64
+    - official
+
+# --------------------------------------------
+# Official Windows builds (master branch only)
+# --------------------------------------------
+
+.windows_official: &ref_windows_official
+  only:
+    - master
+  script:
+    - md build
+    - cd build
+    - bash -c "/usr/bin/cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/mingw32-windres.exe -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc-3.7.5 -DSLEPC_DIR=/home/geuzaine/src/slepc-3.7.3 .."
+    - bash -c "/usr/bin/make package -j 1"
+    - bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
+    - bash -c "/usr/bin/ctest -D Experimental -j 1 --output-on-failure"
+
+windows64_official:
+  <<: *ref_windows_official
+  tags:
+    - windows64
+    - official
+
+windows32_official:
+  <<: *ref_windows_official
+  tags:
+    - windows32
+    - official
+  allow_failure: true
+
+# ------------------------------------------
+# Official MacOS builds (master branch only)
+# ------------------------------------------
+
+macos64_official:
+  only:
+    - master
+  script:
+    - mkdir build
+    - cd build
+    - /usr/local/bin/cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DENABLE_CAIRO=0 -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc-3.7.5 -DSLEPC_DIR=/Users/geuzaine/src/slepc-3.7.3 -DBLAS_LAPACK_LIBRARIES=/usr/local/lib/libopenblas.a ..
+    - make package -j 1
+    - PKG=`ls gmsh-*.dmg`
+    - scp ${PKG} ace@ace36.montefiore.ulg.ac.be:/tmp
+    - ssh ace@ace36.montefiore.ulg.ac.be /Users/ace/re-sign.sh /tmp/${PKG}
+    - scp ace@ace36.montefiore.ulg.ac.be:/tmp/${PKG} .
+    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/MacOSX/${PKG}
+    - /usr/local/bin/ctest -D Experimental -j 1 --output-on-failure
+  tags:
+    - macos64
+    - official
+
+# ----------------------------------------------
+# Official source snapshots (master branch only)
+# ----------------------------------------------
+
+source_official:
+  only:
+    - master
+  script:
+    - mkdir build_src
+    - cd build_src
+    - /usr/local/bin/cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} ..
+    - make package_source
+    - PKG=`ls gmsh-*.tar*`; scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/src/${PKG/\.tar\.gz/\.tgz}
+  tags:
+    - linux64
+    - official

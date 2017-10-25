@@ -149,12 +149,12 @@ if [ $# -lt 1 ] || [ $1 == "mac" ]; then
   rm -rf onelab-MacOSX*
   mkdir onelab-MacOSX
   curl -O http://gmsh.info/bin/MacOSX/gmsh-${GMSH}-MacOSX.dmg
-  curl -O http://getdp.info/bin/MacOSX/getdp-${GETDP}-MacOSX64c.tgz
+  curl -O http://getdp.info/bin/MacOSX/getdp-${GETDP}-MacOSXc.tgz
   mv gmsh-${GMSH}-MacOSX.dmg /tmp
-  mv getdp-${GETDP}-MacOSX64c.tgz /tmp
+  mv getdp-${GETDP}-MacOSXc.tgz /tmp
   hdiutil convert /tmp/gmsh-${GMSH}-MacOSX.dmg -format UDTO -o /tmp/gmsh-tmp.cdr
   hdiutil attach -nobrowse -noverify -noautoopen -mountpoint gmsh_mount /tmp/gmsh-tmp.cdr
-  tar zxvf /tmp/getdp-${GETDP}-MacOSX64c.tgz -C /tmp
+  tar zxvf /tmp/getdp-${GETDP}-MacOSXc.tgz -C /tmp
   cp /tmp/README.txt onelab-MacOSX
   cp -R gmsh_mount/Gmsh.app onelab-MacOSX
   mv /tmp/getdp-*${GETDP}-MacOSX/bin/getdp onelab-MacOSX/Gmsh.app/Contents/MacOS/

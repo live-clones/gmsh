@@ -16,6 +16,8 @@ convert -scale 152 ${icon_source} AppIcon.appiconset/icon_app_ipad_retina.png
 convert -scale 76 ${icon_source} AppIcon.appiconset/icon_app_ipad.png
 # App icon (iPhone)
 convert -scale 120 ${icon_source} AppIcon.appiconset/icon_app_iphone_retina.png
+# App icon (iOS marketing)
+cp ${icon_source} AppIcon.appiconset/icon_app_ios_marketing.png
 
 mkdir -p LaunchImage.launchimage
 # iphone 4 scale 2x (retina)
