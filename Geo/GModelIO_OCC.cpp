@@ -2380,40 +2380,88 @@ bool OCC_Internals::booleanFragments(int tag,
                          outDimTags, outDimTagsMap, removeObject, removeTool);
 }
 
+void _addSimpleShapes(TopoDS_Shape shape, std::vector<TopoDS_Shape> &simple)
+{
+  if(shape.ShapeType() != TopAbs_COMPOUND &&
+     shape.ShapeType() != TopAbs_COMPSOLID) {
+    simple.push_back(shape);
+    return;
+  }
+
+  TopTools_MapOfShape mapShape;
+  TopoDS_Iterator It(shape, Standard_True, Standard_True);
+
+  for(; It.More(); It.Next()) {
+    TopoDS_Shape s = It.Value();
+    if(mapShape.Add(s)) {
+      if(s.ShapeType() == TopAbs_COMPOUND ||
+         s.ShapeType() == TopAbs_COMPSOLID) {
+        _addSimpleShapes(s, simple);
+      }
+      else {
+        simple.push_back(s);
+      }
+    }
+  }
+}
+
 bool OCC_Internals::_transform(const std::vector<std::pair<int, int> > &inDimTags,
                                BRepBuilderAPI_Transform *tfo,
                                BRepBuilderAPI_GTransform *gtfo)
 {
+  // build a single compound shape, so that we won't duplicate internal
+  // boundaries
+  BRep_Builder b;
+  TopoDS_Compound c;
+  b.MakeCompound(c);
   for(unsigned int i = 0; i < inDimTags.size(); i++){
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
     if(!_isBound(dim, tag)){
-      Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
-                 dim, tag);
+      Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d", dim, tag);
       return false;
     }
-    TopoDS_Shape object = _find(dim, tag), result;
-    if(tfo){
-      tfo->Perform(object, Standard_False);
-      if(!tfo->IsDone()){
-        Msg::Error("Could not apply transformation");
-        return false;
-      }
-      result = tfo->Shape();
+    TopoDS_Shape shape = _find(dim, tag);
+    b.Add(c, shape);
+  }
+
+  std::vector<TopoDS_Shape> inShapes;
+  _addSimpleShapes(c, inShapes);
+
+  TopoDS_Shape result;
+  if(tfo){
+    tfo->Perform(c, Standard_False);
+    if(!tfo->IsDone()){
+      Msg::Error("Could not apply transformation");
+      return false;
     }
-    else if(gtfo){
-      gtfo->Perform(object, Standard_False);
-      if(!gtfo->IsDone()){
-        Msg::Error("Could not apply transformation");
-        return false;
-      }
-      result = gtfo->Shape();
+    result = tfo->Shape();
+  }
+  else if(gtfo){
+    gtfo->Perform(c, Standard_False);
+    if(!gtfo->IsDone()){
+      Msg::Error("Could not apply transformation");
+      return false;
     }
+    result = gtfo->Shape();
+  }
+
+  std::vector<TopoDS_Shape> outShapes;
+  _addSimpleShapes(result, outShapes);
+
+  if(inShapes.size() != inDimTags.size() || inShapes.size() != outShapes.size()){
+    Msg::Error("OpenCASCADE transform changed the number of shapes");
+    return false;
+  }
+  for(unsigned int i = 0; i < inDimTags.size(); i++){
     // FIXME we should implement rebind(object, result, dim) which would
     // unbind/bind all subshapes to the same tags
-    unbind(object, dim, tag, true);
-    bind(result, dim, tag, true);
+    int dim = inDimTags[i].first;
+    int tag = inDimTags[i].second;
+    unbind(inShapes[i], dim, tag, true);
+    bind(outShapes[i], dim, tag, true);
   }
+
   return true;
 }
 
@@ -3350,8 +3398,8 @@ bool OCC_Internals::_makeFaceSTL(TopoDS_Face s,
 #if (OCC_VERSION_MAJOR >= 7)
   BRepMesh_FastDiscret::Parameters parameters;
   parameters.Deflection = 0.1;
-  parameters.Angle = 0.1;
-  //  parameters.InternalVerticesMode = Standard_False;
+  parameters.Angle = 0.35;
+  // parameters.InternalVerticesMode = Standard_False;
   parameters.Relative = Standard_False;
   BRepMesh_FastDiscret aMesher(aBox, parameters);
 #else
