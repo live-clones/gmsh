@@ -67,7 +67,7 @@ namespace BoundaryLayerCurver
 
 }
 
-void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal);
+void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal, GEntity *bndEnt);
 //void curve2DColumn(MElement *bottomEdge, std::vector<MElement*> &column);
 
 void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column);

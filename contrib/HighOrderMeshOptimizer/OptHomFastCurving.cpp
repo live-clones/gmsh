@@ -1987,7 +1987,7 @@ void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
     normal = SVector3((*normals)(0, 0), (*normals)(0, 1), (*normals)(0, 2));
   else
     normal = SVector3(0, 0, 1);
-  if (p.dim == 2) curve2DBoundaryLayer(bndEl2column, normal);
+  if (p.dim == 2) curve2DBoundaryLayer(bndEl2column, normal, bndEnt);
   else curve3DBoundaryLayer(bndEl2column);
 }
 
