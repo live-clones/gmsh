@@ -1995,8 +1995,10 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     // the domain, use negative number to distinguish those fake
     // vertices
 
-    // FIX A BUG HERE IF THE SIZE OF THE BOX IS ZERO
-    bbox.makeCube();
+    if(du / dv < 1200 && dv / du < 1200){
+      // FIX A BUG HERE IF THE SIZE OF THE BOX IS ZERO
+      bbox.makeCube();
+    }
 
     bbox *= 3.5;
     MVertex *bb[4];
@@ -2506,6 +2508,11 @@ void meshGFace::operator() (GFace *gf, bool print)
              gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
 
   halfmesh.finish();
+
+  if (gf->getNumMeshElements() == 0)
+  {
+    Msg::Warning("Surface %d consists of no elements\n", gf->tag());
+  }
 }
 
 bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges)
