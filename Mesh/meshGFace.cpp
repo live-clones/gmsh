@@ -1007,7 +1007,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
 
   //  if (gf->degenerate(0))return 0;
-  
+
   // build a set with all points of the boundaries
   std::set<MVertex*, MVertexLessThanNum> all_vertices, boundary;
   std::list<GEdge*>::iterator ite = edges.begin();
@@ -1604,11 +1604,11 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   gf->triangles.insert(gf->triangles.begin(),blTris.begin(),blTris.end());
   gf->mesh_vertices.insert(gf->mesh_vertices.begin(),verts.begin(),verts.end());
 
-  
+
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
      !CTX::instance()->mesh.optimizeLloyd && !onlyInitialMesh && CTX::instance()->mesh.algoRecombine != 2)
     recombineIntoQuads(gf);
-  
+
 
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
@@ -2509,9 +2509,8 @@ void meshGFace::operator() (GFace *gf, bool print)
 
   halfmesh.finish();
 
-  if (gf->getNumMeshElements() == 0)
-  {
-    Msg::Warning("Surface %d consists of no elements\n", gf->tag());
+  if(gf->getNumMeshElements() == 0){
+    Msg::Warning("Surface %d consists of no elements", gf->tag());
   }
 }
 
