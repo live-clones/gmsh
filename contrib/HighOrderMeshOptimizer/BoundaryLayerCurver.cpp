@@ -90,25 +90,69 @@ namespace BoundaryLayerCurver
       fullMatrix<double> invM1;
       M1.invert(invM1);
 
-      fullMatrix<double> Leg2Lag(sz1+2, sz1+2, true);
+      fullMatrix<double> Leg2Leg(sz1+2, sz1+2, true);
+      {
+        fullMatrix<double> MM1(sz1+2, sz1+2, true);
+        fullMatrix<double> &MM2 = Leg2Leg;
+        int tagLine = ElementType::getTag(TYPE_LIN, order);
+        const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
+        const fullMatrix<double> &refNodes = fs->getReferenceNodes();
+        double *val = new double[sz1];
+        double *valc = new double[sz1];
+        for (int i = 0; i < sz1; ++i) {
+          legendre.f(refNodes(i, 0), val);
+          legendre.fc(refNodes(i, 0), valc);
+          for (int j = 0; j < sz1; ++j) {
+            MM1(i, j) = val[j];
+            MM2(i, j) = valc[j];
+          }
+        }
+        MM1(sz1, sz1) = MM1(sz1+1, sz1+1) = 1;
+        MM2(sz1, sz1) = MM2(sz1+1, sz1+1) = 1;
+        fullMatrix<double> invMM2(sz1+2, sz1+2, true);
+        MM2.invert(invMM2);
+        invMM2.mult(MM1, Leg2Leg);
+      }
+
+      data->Leg2Lag.resize(sz1, sz1, true);
       {
         int tagLine = ElementType::getTag(TYPE_LIN, order);
         const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
         const fullMatrix<double> &refNodes = fs->getReferenceNodes();
         double *val = new double[sz1];
         for (int i = 0; i < sz1; ++i) {
-          legendre.f(refNodes(i, 0), val);
+          legendre.fc(refNodes(i, 0), val);
           for (int j = 0; j < sz1; ++j) {
-            Leg2Lag(i, j) = val[j];
+            data->Leg2Lag(i, j) = val[j];
           }
+          data->Leg2Lag.print("data->Leg2Lag");
         }
-        Leg2Lag(sz1, sz1) = Leg2Lag(sz1+1, sz1+1) = 1;
+        //data->Leg2Lag(sz1, sz1) = data->Leg2Lag(sz1+1, sz1+1) = 1;
       }
+
+      /*{
+        fullMatrix<double> Leg2Lag(sz1+2, sz1+2, true);
+        {
+          int tagLine = ElementType::getTag(TYPE_LIN, order);
+          const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
+          const fullMatrix<double> &refNodes = fs->getReferenceNodes();
+          double *val = new double[sz1];
+          for (int i = 0; i < sz1; ++i) {
+            legendre.f(refNodes(i, 0), val);
+            for (int j = 0; j < sz1; ++j) {
+              Leg2Lag(i, j) = val[j];
+            }
+          }
+          Leg2Lag(sz1, sz1) = Leg2Lag(sz1+1, sz1+1) = 1;
+        }
+        Leg2Lag.print("Leg2Lag");
+      }*/
 
       M1.print("M1");
       invM1.print("invM1");
       M2.print("M2");
-      Leg2Lag.print("Leg2Lag");
+      Leg2Leg.print("Leg2Leg");
+      data->Leg2Lag.print("data->Leg2Lag");
 
       fullMatrix<double> &tmp = M1;
       tmp.resize(sz1+2, sz2+2, false);
@@ -117,7 +161,7 @@ namespace BoundaryLayerCurver
 
       fullMatrix<double> &tmp2 = M2;
       tmp2.resize(sz1+2, sz2+2, false);
-      Leg2Lag.mult(tmp, tmp2);
+      Leg2Leg.mult(tmp, tmp2);
       tmp2.print("tmp2");
 
       data->invA.resize(sz1, sz2+2, false);
@@ -229,21 +273,21 @@ namespace BoundaryLayerCurver
           dz += sf[j][0] * v->z();
         }
       }
-      SVector3 t, n, h;
-      t = SVector3(dx, dy, dz).unit();
-      n = crossprod(w, t);
-      h = parameters.thicknessAtPoint(xi) * n + parameters.coeffbAtPoint(xi) * t;
-      double x = xc + h.x();
-      double y = yc + h.y();
-      double z = zc + h.z();
-      MVertex *v = new MVertex(x, y, z, bndEnt);
-      MLine *line;
-      if (vh0) {
-        line = new MLine(v, vh0);
-        ((GEdge *) bndEnt)->addLine(line);
-      }
-      ((GEdge *) bndEnt)->addMeshVertex(v);
-      vh0 = v;
+//      SVector3 t, n, h;
+//      t = SVector3(dx, dy, dz).unit();
+//      n = crossprod(w, t);
+//      h = parameters.thicknessAtPoint(xi) * n + parameters.coeffbAtPoint(xi) * t;
+//      double x = xc + h.x();
+//      double y = yc + h.y();
+//      double z = zc + h.z();
+//      MVertex *v = new MVertex(x, y, z, bndEnt);
+//      MLine *line;
+//      if (vh0) {
+//        line = new MLine(v, vh0);
+//        ((GEdge *) bndEnt)->addLine(line);
+//      }
+//      ((GEdge *) bndEnt)->addMeshVertex(v);
+//      vh0 = v;
 
 //      h = parameters.thicknessAtPoint(xi) * n;
 //      x = xc + h.x();
@@ -342,35 +386,43 @@ namespace BoundaryLayerCurver
     */
     fullMatrix<double> xyz(sizeSystem + 2, 12);
     idealPositionTopEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz, bndEnt);
+    double xi[2] = {-1, 1};
     for (int i = 0; i < 2; ++i) {
       xyz(sizeSystem+i, 0) = topVert[i]->x();
       xyz(sizeSystem+i, 1) = topVert[i]->y();
       xyz(sizeSystem+i, 2) = topVert[i]->z();
-      xyz(sizeSystem+i, 3) = baseVert[0]->x();
-      xyz(sizeSystem+i, 4) = baseVert[0]->y();
-      xyz(sizeSystem+i, 5) = baseVert[0]->z();
-      SVector3 t, n, h;
+      xyz(sizeSystem+i, 3) = baseVert[i]->x();
+      xyz(sizeSystem+i, 4) = baseVert[i]->y();
+      xyz(sizeSystem+i, 5) = baseVert[i]->z();
 
-//      double dx = 0, dy = 0, dz = 0;
-//      {
-//        double sf[100][3];
-//        fs->f(xi, 0, 0, f);
-//        fs->df(xi, 0, 0, sf);
-//        for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
-//          const MVertex *v = baseVert[j];
-//          xc += f[j] * v->x();
-//          yc += f[j] * v->y();
-//          zc += f[j] * v->z();
-//          dx += sf[j][0] * v->x();
-//          dy += sf[j][0] * v->y();
-//          dz += sf[j][0] * v->z();
-//        }
-//      }
+      int tagLine = ElementType::getTag(TYPE_LIN, baseVert.size() - 1);
+      const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
 
-
-//      t = SVector3(dx, dy, dz).unit();
-//      n = crossprod(w, t);
-//      h = parameters.thicknessAtPoint(xi) * n + parameters.coeffbAtPoint(xi) * t;
+      double dx = 0, dy = 0, dz = 0;
+      {
+        double sf[100][3];
+        fs->df(xi[i], 0, 0, sf);
+        for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+          const MVertex *v = baseVert[j];
+          dx += sf[j][0] * v->x();
+          dy += sf[j][0] * v->y();
+          dz += sf[j][0] * v->z();
+        }
+        SVector3 t, n, h, nn, tt;
+        t = SVector3(dx, dy, dz).unit();
+        n = crossprod(w, t);
+//        h = SVector3(topVert[i]->x() - baseVert[i]->x(),
+//                     topVert[i]->y() - baseVert[i]->y(),
+//                     topVert[i]->z() - baseVert[i]->z());
+        nn = parameters.thicknessAtPoint(xi[i]) * n;
+        tt = parameters.coeffbAtPoint(xi[i]) * t;
+        xyz(sizeSystem+i, 6) = nn.x();
+        xyz(sizeSystem+i, 7) = nn.y();
+        xyz(sizeSystem+i, 8) = nn.z();
+        xyz(sizeSystem+i, 9) = tt.x();
+        xyz(sizeSystem+i, 10) = tt.y();
+        xyz(sizeSystem+i, 11) = tt.z();
+      }
     }
 
 //    double *x = new double[sizeSystem];
@@ -399,8 +451,24 @@ namespace BoundaryLayerCurver
 
     LeastSquareData *data = getLeastSquareData(TYPE_LIN, orderCurve, orderGauss);
 
-    fullMatrix<double> newxyz(orderCurve + 1, 3);
-    data->invA.mult(xyz, newxyz);
+    fullMatrix<double> coeff(orderCurve + 1, 12);
+    fullMatrix<double> newxyz(orderCurve + 1, 12);
+    data->invA.mult(xyz, coeff);
+    xyz.print("xyz");
+    coeff.print("coeff a");
+    for (int i = 4; i < 7; ++i) {
+      coeff(i, 6) = 0;
+      coeff(i, 7) = 0;
+      coeff(i, 9) = 0;
+      coeff(i, 10) = 0;
+    }
+    for (int i = 0; i < 7; ++i) {
+      coeff(i, 0) = coeff(i, 3) + coeff(i, 6) + coeff(i, 9);
+      coeff(i, 1) = coeff(i, 4) + coeff(i, 7) + coeff(i, 10);
+    }
+    coeff.print("coeff b");
+    data->Leg2Lag.mult(coeff, newxyz);
+    newxyz.print("newxyz");
 
 //    xyz.print("xyz");
 //    newxyz.print("newxyz");
@@ -441,7 +509,8 @@ namespace BoundaryLayerCurver
   void curve2DQuadColumn(MElement *bottomEdge, std::vector<MElement *> &column,
                          SVector3 w, GEntity *bndEnt)
   {
-    if (bottomEdge->getNum() != 1136) return;
+//    if (bottomEdge->getNum() != 1136) return;
+//    if (bottomEdge->getNum() != 1102) return;
 
     {
       int order = bottomEdge->getPolynomialOrder();
@@ -462,16 +531,16 @@ namespace BoundaryLayerCurver
 //        vv->y() = p.y();
 //        vv->z() = p.z();
         std::cout << vv->x()-p.x() << " "  << vv->y()-p.y() << " "  << vv->z()-p.z() << std::endl;
-        MVertex *v = new MVertex(p.x()+.00001, p.y(), p.z(), bndEnt);
-        ((GEdge *) bndEnt)->addMeshVertex(v);
-        MLine *line = new MLine(v, v);
-        ((GEdge *) bndEnt)->addLine(line);
+//        MVertex *v = new MVertex(p.x()+.00001, p.y(), p.z(), bndEnt);
+//        ((GEdge *) bndEnt)->addMeshVertex(v);
+//        MLine *line = new MLine(v, v);
+//        ((GEdge *) bndEnt)->addLine(line);
       }
     }
 
     MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
     std::vector<MVertex *> bottomVertices, topVertices;
-    for (int i = 0; i < 5/*column.size()*/; ++i) {
+    for (int i = 0; i < column.size(); ++i) {
       MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
 //      if (quad->getNum() == 3921) std::cout << bottomEdge->getNum() << std::endl;
       int iBottom, sign;

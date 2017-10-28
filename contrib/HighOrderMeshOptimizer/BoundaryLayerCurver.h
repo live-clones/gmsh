@@ -61,6 +61,7 @@ namespace BoundaryLayerCurver
 
   struct LeastSquareData {
     fullMatrix<double> invA;
+    fullMatrix<double> Leg2Lag;
     int nbPoints;
     IntPt *intPoints;
   };
