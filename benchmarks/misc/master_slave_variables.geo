@@ -4,3 +4,5 @@ DefineConstant[
   c = {a*2, Name "var3", Label "Editable slave (x 2) variable"}
   d = {a*2, Name "var4", Label "Standard (x 2) variable"}
 ];
+
+Printf("a=%g b=%g c=%g d=%g", a, b, c, d);

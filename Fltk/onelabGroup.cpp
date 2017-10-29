@@ -651,7 +651,6 @@ void onelabGroup::openCloseViewButton(int num)
 
 static bool serverAction(const std::string &action)
 {
-  printf("server action %s\n", action.c_str());
   if(action == "ResetDatabase"){ // reset the onelab db
     resetDb(false);
     FlGui::instance()->rebuildTree(false);
