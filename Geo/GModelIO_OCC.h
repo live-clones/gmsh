@@ -98,6 +98,9 @@ class OCC_Internals {
   // get the tag of a shape of a given dimension
   int _find(int dim, TopoDS_Shape shape);
 
+  // get (dim,tag) of all shapes (that will be) bound to tags
+  void _getAllDimTags(std::vector<std::pair<int, int> > &dimTags, int dim=99);
+
   // make shapes
   bool _makeRectangle(TopoDS_Face &result, double x, double y, double z,
                     double dx, double dy, double roundedRadius=0.);
@@ -280,6 +283,10 @@ class OCC_Internals {
                         std::vector<std::pair<int, int> > &outDimTags,
                         std::vector<std::vector<std::pair<int, int> > > &outDimTagsMap,
                         bool removeObject, bool removeTool);
+
+  // coherence (shortcut for booleanFragments)
+  void removeAllDuplicates();
+  bool mergeVertices(const std::vector<int> &tags);
 
   // apply transformations
   bool translate(const std::vector<std::pair<int, int> > &inDimTags,

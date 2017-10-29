@@ -2380,6 +2380,43 @@ bool OCC_Internals::booleanFragments(int tag,
                          outDimTags, outDimTagsMap, removeObject, removeTool);
 }
 
+void OCC_Internals::_getAllDimTags(std::vector<std::pair<int, int> > &dimTags, int dim)
+{
+  for(int d = -2; d < 4; d++){
+    if(dim != 99 && dim != d) continue;
+    TopTools_DataMapIteratorOfDataMapOfIntegerShape exp;
+    switch(d){
+    case 0: exp.Initialize(_tagVertex); break;
+    case 1: exp.Initialize(_tagEdge); break;
+    case 2: exp.Initialize(_tagFace); break;
+    case 3: exp.Initialize(_tagSolid); break;
+    case -1: exp.Initialize(_tagWire); break;
+    case -2: exp.Initialize(_tagShell); break;
+    }
+    for(; exp.More(); exp.Next())
+      dimTags.push_back(std::pair<int, int>(d, exp.Key()));
+  }
+}
+
+void OCC_Internals::removeAllDuplicates()
+{
+  std::vector<std::pair<int, int> > objectDimTags, toolDimTags, outDimTags;
+  std::vector<std::vector<std::pair<int, int> > > outDimTagsMap;
+  _getAllDimTags(objectDimTags); // all shapes (that will be) bound to tags
+  booleanFragments(-1, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
+                   true, true);
+}
+
+bool OCC_Internals::mergeVertices(const std::vector<int> &tags)
+{
+  std::vector<std::pair<int, int> > objectDimTags, toolDimTags, outDimTags;
+  std::vector<std::vector<std::pair<int, int> > > outDimTagsMap;
+  for(unsigned int i = 0; i < tags.size(); i++)
+    objectDimTags.push_back(std::pair<int, int>(0, tags[i]));
+  return booleanFragments(-1, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
+                          true, true);
+}
+
 void _addSimpleShapes(TopoDS_Shape shape, std::vector<TopoDS_Shape> &simple)
 {
   if(shape.ShapeType() != TopAbs_COMPOUND &&
