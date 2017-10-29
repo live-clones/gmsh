@@ -598,7 +598,7 @@ public:
   }
   void removeAllDuplicates()
   {
-    return _error("remove all duplicates");
+    _error("remove all duplicates");
   }
   bool mergeVertices(const std::vector<int> &tags)
   {
