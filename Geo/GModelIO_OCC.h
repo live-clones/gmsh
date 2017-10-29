@@ -596,6 +596,14 @@ public:
   {
     return _error("apply boolean fragments");
   }
+  void removeAllDuplicates()
+  {
+    return _error("remove all duplicates");
+  }
+  bool mergeVertices(const std::vector<int> &tags)
+  {
+    return _error("merge vertices");
+  }
   bool translate(const std::vector<std::pair<int, int> > &inDimTags,
                  double dx, double dy, double dz)
   {
