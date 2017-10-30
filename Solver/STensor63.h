@@ -18,6 +18,16 @@ class STensor63{
     inline double operator()(int i, int j, int k, int l, int m, int n) const{
       return _val[i][j][k][l][m][n];
     };
+    STensor63& operator = (const STensor63 &other){
+      for (int i=0; i<3; i++)
+        for (int j=0; j<3; j++)
+          for (int k=0; k<3; k++)
+            for (int l=0; l<3; l++)
+              for (int m=0; m<3; m++)
+                for (int n=0; n<3; n++)
+                  _val[i][j][k][l][m][n] = other._val[i][j][k][l][m][n];
+      return *this;
+    };
     STensor63& operator += (const STensor63 &other){
       for (int i=0; i<3; i++)
         for (int j=0; j<3; j++)
