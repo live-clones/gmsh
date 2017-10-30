@@ -44,6 +44,7 @@
 namespace BoundaryLayerCurver
 {
   static std::map<std::tuple<int, int, int>, LeastSquareData*> leastSquareData;
+  static std::map<int, InteriorPlacementData*> interiorPlacementData;
 
   LeastSquareData* constructLeastSquareData(int typeElement, int order,
                                             int orderGauss)
@@ -511,7 +512,7 @@ namespace BoundaryLayerCurver
 //        coeff(i, 1) = coeff(i, 4) + coeff(i, 7) + coeff(i, 10);
 //      }
 //    }
-    { // decrease
+    if (false) { // decrease
       const double factorForGettingLinear = .1;
       const double limit = factorForGettingLinear
                            * parameters.characteristicThickness();
@@ -590,6 +591,68 @@ namespace BoundaryLayerCurver
 //    delete z;
 //    delete u;
 //    delete v;
+  }
+
+  InteriorPlacementData* constructInteriorPlacementData(int tag)
+  {
+    const int order = ElementType::OrderFromTag(tag);
+    const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
+    InteriorPlacementData *data = new InteriorPlacementData;
+
+    int type = ElementType::ParentTypeFromTag(tag);
+
+    switch (ElementType::ParentTypeFromTag(tag)) {
+      case TYPE_QUA: {
+        std::map<std::pair<int, int>, int> coordinate2num;
+        std::vector<std::pair<int, int>> num2coordinate;
+        for (int i = 0; i < fs->points.size1(); ++i) {
+          const int x = std::lround((fs->points(i, 0) + 1) / 2. * order);
+          const int y = std::lround((fs->points(i, 1) + 1) / 2. * order);
+          coordinate2num[std::make_pair(x, y)] = i;
+          num2coordinate.push_back(std::make_pair(x, y));
+        }
+
+        for (int i = 0; i < fs->points.size1(); ++i) {
+          const std::pair<int, int> coordinates(num2coordinate[i]);
+          const int &x = coordinates.first;
+          const int &y = coordinates.second;
+          if (y == 0 || y == order || x == 0 || x == order) continue;
+          const std::pair<int, int> coordinates0(x, 0);
+          const std::pair<int, int> coordinates1(x, order);
+          data->iToMove.push_back(i);
+          data->factor.push_back(1 - y / (double) order);
+          data->i0.push_back(coordinate2num[coordinates0]);
+          data->i1.push_back(coordinate2num[coordinates1]);
+        }
+        break;
+      }
+      default:
+        Msg::Error("Need to implement constructInteriorPlacementData for other type");
+    }
+
+    return data;
+  }
+
+  void replaceInteriorNodes(MElement *el)
+  {
+    int tag = el->getTypeForMSH();
+    InteriorPlacementData *data;
+
+    auto it = interiorPlacementData.find(tag);
+    if (it != interiorPlacementData.end()) data = it->second;
+    else {
+      data = constructInteriorPlacementData(tag);
+      interiorPlacementData[tag] = data;
+    }
+
+    for (int i = 0; i < data->iToMove.size(); ++i) {
+      MVertex *v = el->getVertex(data->iToMove[i]);
+      MVertex *v0 = el->getVertex(data->i0[i]);
+      MVertex *v1 = el->getVertex(data->i1[i]);
+      v->x() = data->factor[i] * v0->x() + (1 - data->factor[i]) * v1->x();
+      v->y() = data->factor[i] * v0->y() + (1 - data->factor[i]) * v1->y();
+      v->z() = data->factor[i] * v0->z() + (1 - data->factor[i]) * v1->z();
+    }
   }
 
   void curve2DTriColumn(MElement *bottomEdge, std::vector<MElement *> &column,
@@ -675,6 +738,7 @@ namespace BoundaryLayerCurver
       Parameters2DCurve parameters;
       computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
       computePositionTopVert(bottomVertices, topVertices, parameters, w, bndEnt, i);
+      replaceInteriorNodes(quad);
       bottom = MEdge(topVertices[0], topVertices[1]);
     }
   }

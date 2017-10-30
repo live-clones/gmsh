@@ -69,6 +69,13 @@ namespace BoundaryLayerCurver
     IntPt *intPoints;
   };
 
+  struct InteriorPlacementData {
+    std::vector<int> iToMove;
+    std::vector<double> factor;
+    std::vector<int> i0;
+    std::vector<int> i1;
+  };
+
 }
 
 void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal, GEntity *bndEnt);
