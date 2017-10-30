@@ -148,6 +148,21 @@ namespace BoundaryLayerCurver
         Leg2Lag.print("Leg2Lag");
       }*/
 
+      data->Leg2p.resize(sz2, sz1, true);
+      {
+        int tagLine = ElementType::getTag(TYPE_LIN, order);
+        const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
+        const fullMatrix<double> &refNodes = fs->getReferenceNodes();
+        double *val = new double[sz1];
+        for (int i = 0; i < sz2; ++i) {
+          legendre.fc(data->intPoints[i].pt[0], val);
+          for (int j = 0; j < sz1; ++j) {
+            data->Leg2p(i, j) = val[j];
+          }
+          data->Leg2p.print("data->Leg2Lag");
+        }
+      }
+
       M1.print("M1");
       invM1.print("invM1");
       M2.print("M2");
@@ -357,7 +372,8 @@ namespace BoundaryLayerCurver
 
   void computePositionTopVert(const std::vector<MVertex *> &baseVert,
                               std::vector<MVertex *> &topVert,
-                              Parameters2DCurve &parameters, SVector3 w, GEntity *bndEnt)
+                              Parameters2DCurve &parameters, SVector3 w,
+                              GEntity *bndEnt, int nLayer)
   {
     // Let (t, n, e3) be the local reference frame
     // We seek for each component the polynomial function that fit the best
@@ -368,6 +384,33 @@ namespace BoundaryLayerCurver
     //       h(xi) is the linear thickness
     //       t(xi) is the unit tangent of the base edge
     //       b(xi) is the linear coefficient
+
+
+//    { // draw amplified difference with linear line
+//      MLineN l(baseVert);
+//      MVertex *v0 = baseVert[0];
+//      MVertex *v1 = baseVert[1];
+//      double amp = 100;
+//      int cnt = 100;
+//      for (int i = 0; i < cnt; ++i) {
+//        double xi = -1 + 2 * i / (cnt - 1.);
+//        double c1 = i / (cnt - 1.);
+//        double c0 = 1 - c1;
+//        SPoint3 pLin(v0->x() * c0 + v1->x() * c1,
+//                     v0->y() * c0 + v1->y() * c1,
+//                     v0->z() * c0 + v1->z() * c1);
+//        SPoint3 p;
+//        l.pnt(xi, 0, 0, p);
+//        MVertex *vLin = new MVertex(pLin.x(), pLin.y(), pLin.z(), bndEnt);
+//        MVertex *v = new MVertex(amp * p.x() - (amp - 1) * pLin.x(),
+//                                 amp * p.y() - (amp - 1) * pLin.y(),
+//                                 amp * p.z() - (amp - 1) * pLin.z(), bndEnt);
+//        MLine *line = new MLine(v, vLin);
+//        ((GEdge *) bndEnt)->addLine(line);
+//        ((GEdge *) bndEnt)->addMeshVertex(v);
+//        ((GEdge *) bndEnt)->addMeshVertex(vLin);
+//      }
+//    }
 
     const int orderCurve = baseVert.size() - 1;
     const int orderGauss = orderCurve * 2;
@@ -456,15 +499,67 @@ namespace BoundaryLayerCurver
     data->invA.mult(xyz, coeff);
     xyz.print("xyz");
     coeff.print("coeff a");
-    for (int i = 4; i < 7; ++i) {
-      coeff(i, 6) = 0;
-      coeff(i, 7) = 0;
-      coeff(i, 9) = 0;
-      coeff(i, 10) = 0;
-    }
-    for (int i = 0; i < 7; ++i) {
-      coeff(i, 0) = coeff(i, 3) + coeff(i, 6) + coeff(i, 9);
-      coeff(i, 1) = coeff(i, 4) + coeff(i, 7) + coeff(i, 10);
+//    { // remove some of high order coeff
+//      for (int i = 4; i < 7; ++i) {
+//        coeff(i, 6) = 0;
+//        coeff(i, 7) = 0;
+//        coeff(i, 9) = 0;
+//        coeff(i, 10) = 0;
+//      }
+//      for (int i = 0; i < 7; ++i) {
+//        coeff(i, 0) = coeff(i, 3) + coeff(i, 6) + coeff(i, 9);
+//        coeff(i, 1) = coeff(i, 4) + coeff(i, 7) + coeff(i, 10);
+//      }
+//    }
+    { // decrease
+      const double factorForGettingLinear = .1;
+      const double limit = factorForGettingLinear
+                           * parameters.characteristicThickness();
+      fullMatrix<double> p(sizeSystem, 12);
+      data->Leg2p.mult(coeff, p);
+      double rmse[3] = {0, 0, 0}; // RMSE in x, y and z component
+      for (int i = 0; i < sizeSystem; ++i) {
+        rmse[0] += gaussPnts[i].weight * (p(i, 0) - xyz(i, 0)) * (p(i, 0) - xyz(i, 0));
+        rmse[1] += gaussPnts[i].weight * (p(i, 1) - xyz(i, 1)) * (p(i, 1) - xyz(i, 1));
+        rmse[2] += gaussPnts[i].weight * (p(i, 2) - xyz(i, 2)) * (p(i, 2) - xyz(i, 2));
+      }
+      SVector3 dir(rmse[0], rmse[1], rmse[2]);
+      if (norm(dir) < limit) {
+        SVector3 sumCoeff(0, 0, 0);
+        for (int i = 2; i < orderCurve+1; ++i) {
+          sumCoeff += SVector3(std::abs(coeff(i, 0)), std::abs(coeff(i, 1)), std::abs(coeff(i, 2)));
+        }
+        dir += sumCoeff;
+        dir.normalize();
+        dir *= limit;
+        for (int k = 0; k < 3; ++k) {
+          double scale = dir(k) / sumCoeff(k);
+          if (scale >= 1 || sumCoeff(k) == 0) scale = 1;
+          for (int i = 2; i < orderCurve + 1; ++i) {
+            coeff(i, k) *= (1 - scale);
+          }
+//          double delta = rmse[k];
+//          int i = orderCurve;
+//          while (i > 1 && delta < dir(k)) {
+//            if (std::abs(coeff(i, k)) < dir(k) - delta) {
+//              delta += std::abs(coeff(i, k));
+//              coeff(i, k) = 0;
+//            }
+//            else {
+//              double diff = dir(k) - delta;
+//              coeff(i, k) = coeff(i, k) > 0 ?  coeff(i, k) - diff :
+//                                               coeff(i, k) + diff;
+//              delta = dir(k);
+//            }
+//            --i;
+//          }
+        }
+        // fact^2 * thickness^2 = (a^2 + b^2 + c^2) * d^2
+      }
+//      for (int i = 2; i < 7; ++i) {
+//        coeff(i, 0) *= 1-(nLayer*nLayer/12./12)*i/6;
+//        coeff(i, 1) *= 1-(nLayer*nLayer/12./12)*i/6;
+//      }
     }
     coeff.print("coeff b");
     data->Leg2Lag.mult(coeff, newxyz);
@@ -511,7 +606,6 @@ namespace BoundaryLayerCurver
   {
 //    if (bottomEdge->getNum() != 1136) return;
 //    if (bottomEdge->getNum() != 1102) return;
-
     {
       int order = bottomEdge->getPolynomialOrder();
       for (int i = 0; i < order+1; ++i) {
@@ -531,10 +625,35 @@ namespace BoundaryLayerCurver
 //        vv->y() = p.y();
 //        vv->z() = p.z();
         std::cout << vv->x()-p.x() << " "  << vv->y()-p.y() << " "  << vv->z()-p.z() << std::endl;
-//        MVertex *v = new MVertex(p.x()+.00001, p.y(), p.z(), bndEnt);
+//        MVertex *v = new MVertex(p.x(), p.y(), p.z(), bndEnt);
 //        ((GEdge *) bndEnt)->addMeshVertex(v);
 //        MLine *line = new MLine(v, v);
 //        ((GEdge *) bndEnt)->addLine(line);
+      }
+    }
+
+    if (false) {
+      MVertex *v0 = bottomEdge->getVertex(0);
+      MVertex *v1 = bottomEdge->getVertex(1);
+      double amp = 100;
+      int cnt = 100;
+      for (int i = 0; i < cnt; ++i) {
+        double xi = -1 + 2 * i / (cnt - 1.);
+        double c1 = i / (cnt - 1.);
+        double c0 = 1 - c1;
+        SPoint3 pLin(v0->x() * c0 + v1->x() * c1,
+                     v0->y() * c0 + v1->y() * c1,
+                     v0->z() * c0 + v1->z() * c1);
+        SPoint3 p;
+        bottomEdge->pnt(xi, 0, 0, p);
+        MVertex *vLin = new MVertex(pLin.x(), pLin.y(), pLin.z(), bndEnt);
+        MVertex *v = new MVertex(amp * p.x() - (amp - 1) * pLin.x(),
+                                 amp * p.y() - (amp - 1) * pLin.y(),
+                                 amp * p.z() - (amp - 1) * pLin.z(), bndEnt);
+        MLine *line = new MLine(v, vLin);
+        ((GEdge *) bndEnt)->addLine(line);
+        ((GEdge *) bndEnt)->addMeshVertex(v);
+        ((GEdge *) bndEnt)->addMeshVertex(vLin);
       }
     }
 
@@ -555,7 +674,7 @@ namespace BoundaryLayerCurver
 
       Parameters2DCurve parameters;
       computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
-      computePositionTopVert(bottomVertices, topVertices, parameters, w, bndEnt);
+      computePositionTopVert(bottomVertices, topVertices, parameters, w, bndEnt, i);
       bottom = MEdge(topVertices[0], topVertices[1]);
     }
   }

@@ -53,15 +53,18 @@ namespace BoundaryLayerCurver
     double thicknessAtPoint(double xi) {
       return thickness[0] * (1 - xi) / 2 + thickness[1] * (1 + xi) / 2;
     }
-
     double coeffbAtPoint(double xi) {
       return coeffb[0] * (1 - xi) / 2 + coeffb[1] * (1 + xi) / 2;
+    }
+    double characteristicThickness() {
+      return std::min(thickness[0], thickness[1]);
     }
   };
 
   struct LeastSquareData {
     fullMatrix<double> invA;
     fullMatrix<double> Leg2Lag;
+    fullMatrix<double> Leg2p;
     int nbPoints;
     IntPt *intPoints;
   };
