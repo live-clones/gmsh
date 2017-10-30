@@ -57,7 +57,7 @@ template <class ITERATOR>
 void assignElementsToEntities(GModel *const model, std::unordered_map<MElement*, unsigned short> &elmToPartition, std::vector<GVertex *> &newVertices, ITERATOR it_beg, ITERATOR it_end);
 void addPhysical(GModel *const model, GEntity *const entity, const unsigned short partition);
 
-void CreatePartitionBoundaries(GModel *const model, std::multimap<unsigned short, GEntity*> &newPartitionBoundaries, bool createGhostCells);
+void CreatePartitionBoundaries(GModel *const model, std::multimap<unsigned short, GEntity*> &newPartitionBoundaries, std::multimap<unsigned short, GEntity*> &newBoundariesOfPartitionBoundaries, bool createGhostCells);
 MElement* getReferenceElement(const std::vector< std::pair<MElement*, std::vector<unsigned short> > > &elementPairs);
 void getPartitionInVector(std::vector<unsigned short> &partitions, const std::vector< std::pair<MElement*, std::vector<unsigned short> > > &boundaryPair);
 template <class ITERATOR>
@@ -74,9 +74,8 @@ void AssignMeshVertices(GModel *model);
 template <class ITERATOR>
 void setVerticesToEntity(std::set<MVertex *> &verts, GEntity *const entity, ITERATOR it_beg, ITERATOR it_end);
 
-void CreateTopologyFile(GModel* model, const unsigned short npart);
-std::vector<unsigned short> getNumFromString(std::string name);
-bool commonPhysicals(const std::vector<unsigned short> &vec1, const std::vector<unsigned short> &vec2, std::vector<unsigned short> &vecCommon);
+void CreateTopologyFile(GModel* model, meshPartitionOptions &options, std::multimap<unsigned short, GEntity*> &newPartitionEntities, std::multimap<unsigned short, GEntity*> &newPartitionBoundaries, std::multimap<unsigned short, GEntity*> &newBoundariesOfPartitionBoundaries);
+int getTag(GModel* model, GEntity* entity);
 
 
 int PartitionMeshFace(std::list<GFace*> &cFaces, meshPartitionOptions &options);

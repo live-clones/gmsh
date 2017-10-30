@@ -79,7 +79,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-refine",            "Perform uniform mesh refinement, then exit"));
   s.push_back(mp("-reclassify",        "Reclassify mesh, then exit"));
   s.push_back(mp("-part int",          "Partition after batch mesh generation"));
-  s.push_back(mp("-partWeight tri|quad|tet|prism|hex int", "Weight of a triangle/quad/etc. "
+  s.push_back(mp("-partWeight tri|quad|tet|hex|pri|pyr|trih int", "Weight of a triangle/quad/etc. "
                                                            "during partitioning"));
   s.push_back(mp("-save_all",          "Save all elements (discard physical group definitions)"));
   s.push_back(mp("-save_parametric",   "Save vertices with their parametric coordinates"));
@@ -408,29 +408,29 @@ void GetOptions(int argc, char *argv[])
               i++;
               opt_mesh_partition_tri_weight(0,GMSH_SET,atoi(argv[i]));
             }
-            else if (!strcmp(argv[i],"quad")) {
+            else if (!strcmp(argv[i],"quad") || !strcmp(argv[i],"quadrangle")) {
               i++;
               opt_mesh_partition_qua_weight(0,GMSH_SET,atoi(argv[i]));
             }
-            else if (!strcmp(argv[i],"tet")) {
+            else if (!strcmp(argv[i],"tet") || !strcmp(argv[i],"tetrahedron")) {
               i++;
               opt_mesh_partition_tet_weight(0,GMSH_SET,atoi(argv[i]));
             }
-            else if (!strcmp(argv[i],"prism")) {
+            else if (!strcmp(argv[i],"hex") || !strcmp(argv[i],"hexahedron")) {
+              i++;
+              opt_mesh_partition_hex_weight(0,GMSH_SET,atoi(argv[i]));
+            }
+            else if (!strcmp(argv[i],"pri") || !strcmp(argv[i],"prism")) {
               i++;
               opt_mesh_partition_pri_weight(0,GMSH_SET,atoi(argv[i]));
             }
-            else if (!strcmp(argv[i],"pyramid")) {
+            else if (!strcmp(argv[i],"pyr") || !strcmp(argv[i],"pyramid")) {
               i++;
               opt_mesh_partition_pyr_weight(0,GMSH_SET,atoi(argv[i]));
             }
-            else if (!strcmp(argv[i],"trihedron")) {
+            else if (!strcmp(argv[i],"trih") || !strcmp(argv[i],"trihedron")) {
               i++;
               opt_mesh_partition_trih_weight(0,GMSH_SET,atoi(argv[i]));
-            }
-            else if (!strcmp(argv[i],"hex")) {
-              i++;
-              opt_mesh_partition_hex_weight(0,GMSH_SET,atoi(argv[i]));
             }
             else {
               Msg::Error("Bad argument for 'partWeight' (%s)", argv[i]);
@@ -750,10 +750,6 @@ void GetOptions(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "ignorePartBound")) {
         i++;
         opt_mesh_ignore_part_bound(0, GMSH_SET, 1);
-      }
-      else if(!strcmp(argv[i] + 1, "oneFilePerPart")) {
-        i++;
-        opt_mesh_msh_file_partitioned(0, GMSH_SET, 1);
       }
       else if(!strcmp(argv[i] + 1, "ignorePeriodicity")) {
         i++;

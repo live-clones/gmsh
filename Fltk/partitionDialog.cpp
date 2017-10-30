@@ -28,6 +28,7 @@
 #include "Options.h"
 #include "meshPartition.h"
 #include "Context.h"
+#include "fileDialogs.h"
 
 #if defined(HAVE_METIS)
 
@@ -66,8 +67,9 @@ struct PartitionDialog
   
   void write_all_options()
   {
+    CTX::instance()->partitionOptions.outputDir = CTX::instance()->homeDir;
     // Group 0
-    CTX::instance()->partitionOptions.num_partitions = static_cast<int>(inputNumPartition->value());
+    CTX::instance()->partitionOptions.num_partitions = static_cast<unsigned short>(inputNumPartition->value());
     CTX::instance()->partitionOptions.writePartitionMeshes = setPartitionMeshes->value();
     CTX::instance()->partitionOptions.createGhostCells = setGhostCells->value();
     CTX::instance()->partitionOptions.createPartitionBoundaries = setPartitionBoundaries->value();
@@ -143,17 +145,39 @@ void partition_partition_cb(Fl_Widget *widget, void *data)
 
   // Write all options
   dlg->write_all_options();
-
-  // Partition the mesh
-  int ier = PartitionMesh(GModel::current(), CTX::instance()->partitionOptions);
-
-  // Update the screen
-  if(!ier)
+  
+  if(CTX::instance()->partitionOptions.writePartitionMeshes || CTX::instance()->partitionOptions.writeTopologyFile)
   {
-    opt_mesh_zone_definition(0, GMSH_SET, 2.);  // Define zone by partition
-    opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);
-    CTX::instance()->mesh.changed = ENT_ALL;
-    drawContext::global()->draw();
+    if(fileChooser(FILE_CHOOSER_DIRECTORY, "Output directory", ""))
+    {
+      CTX::instance()->partitionOptions.outputDir = fileChooserGetName(1);
+
+      // Partition the mesh
+      int ier = PartitionMesh(GModel::current(), CTX::instance()->partitionOptions);
+
+      // Update the screen
+      if(!ier)
+      {
+        opt_mesh_zone_definition(0, GMSH_SET, 2.);  // Define zone by partition
+        opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);
+        CTX::instance()->mesh.changed = ENT_ALL;
+        drawContext::global()->draw();
+      }
+    }
+  }
+  else
+  {
+    // Partition the mesh
+    int ier = PartitionMesh(GModel::current(), CTX::instance()->partitionOptions);
+    
+    // Update the screen
+    if(!ier)
+    {
+      opt_mesh_zone_definition(0, GMSH_SET, 2.);  // Define zone by partition
+      opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);
+      CTX::instance()->mesh.changed = ENT_ALL;
+      drawContext::global()->draw();
+    }
   }
 }
 
@@ -268,7 +292,7 @@ void partition_dialog()
       Fl_Value_Input *const o = new Fl_Value_Input (2*WB + 2*BB, y, IW, BH, "Number of\nPartitions");
       dlg.inputNumPartition = o;
       o->minimum(2);
-      o->maximum(std::numeric_limits<int>::max());
+      o->maximum(std::numeric_limits<unsigned short>::max());
       o->callback((Fl_Callback *)partition_opt_num_partitions_cb, &dlg);
       o->step(1);
       o->align(FL_ALIGN_RIGHT);
@@ -276,7 +300,7 @@ void partition_dialog()
     y += BH + WB;
     // Booleans options
     {
-      Fl_Check_Button *const o = new Fl_Check_Button (WB, y, 2*BB, BH, "Write partition meshes");
+      Fl_Check_Button *const o = new Fl_Check_Button (WB, y, 2*BB, BH, "Write partitioned meshes");
       dlg.setPartitionMeshes = o;
     }
     {

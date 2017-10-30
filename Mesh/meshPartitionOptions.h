@@ -10,7 +10,8 @@ struct meshPartitionOptions
 {
   public:
   // General
-  int num_partitions;
+  std::string outputDir;
+  unsigned short num_partitions;
   bool createPartitionBoundaries;
   bool createGhostCells;
   bool writePartitionMeshes;
