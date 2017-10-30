@@ -13,11 +13,11 @@
 
 class partitionEdge : public discreteEdge {
  public:
-  std::vector<int> _partitions;
+  std::vector<unsigned short> _partitions;
   GEdge *_parentEntity;
  public:
   partitionEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1,
-                std::vector<int> &partitions)
+                std::vector<unsigned short> &partitions)
     : discreteEdge(model, num, _v0, _v1), _partitions(partitions), _parentEntity(NULL)
   {
     std::sort(_partitions.begin(), _partitions.end());
