@@ -22,17 +22,29 @@ linux64_docker:
     - linux64
     - docker
 
+linux64_docker_cxx98_compat:
+  image: onelab/ubuntu16.04
+  script:
+    - mkdir build
+    - cd build
+    - export CXXFLAGS=-std=c++98
+    - cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DENABLE_CXX11=0 -DENABLE_OCC=0 ..
+    - make -j 4
+  tags:
+    - linux64
+    - docker
+
 linux64_docker_minimal:
   image: onelab/ubuntu16.04
   script:
-    - mkdir build_minimal
-    - cd build_minimal
+    - mkdir build
+    - cd build
     - cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 ..
     - make -j 4
   tags:
     - linux64
     - docker
-    
+
 windows64_msvc:
   script:
     - md build

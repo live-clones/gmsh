@@ -1,3 +1,6 @@
+3.0.6: improved meshing of spheres; implement "Coherence" for OpenCASCADE
+kernel, as a shortcut to BooleanFragments; bug fixes.
+
 3.0.5 (September 6, 2017): bug fixes.
 
 3.0.4 (July 28, 2017): moved vorometal code to plugin; openmp improvements; bug

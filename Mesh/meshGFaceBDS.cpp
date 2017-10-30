@@ -284,12 +284,12 @@ static int edgeSwapTest(GFace *gf, BDS_Edge *e)
 
   if(!e->p1->config_modified && ! e->p2->config_modified) return 0;
   if(e->numfaces() != 2) return 0;
-  
+
   e->oppositeof (op);
 
   if (!edgeSwapTestAngle(e, cos(CTX::instance()->mesh.allowSwapEdgeAngle * M_PI / 180.)))
     return -1;
-  
+
   double qa1 = qmTriangle::gamma(e->p1, e->p2, op[0]);
   double qa2 = qmTriangle::gamma(e->p1, e->p2, op[1]);
   double qb1 = qmTriangle::gamma(e->p1, op[0], op[1]);
@@ -373,7 +373,7 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 {
   std::list<BDS_Edge*>::iterator it = m.edges.begin();
   std::vector<std::pair<double, BDS_Edge*> > edges;
-  
+
   while (it != m.edges.end()){
     if(!(*it)->deleted && (*it)->numfaces() == 2 && (*it)->g->classif_degree == 2){
       double lone = NewGetLc(*it, gf);
@@ -388,15 +388,15 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
   //  SPoint3 center;
   //  double radius;
   //  bool isSphere = gf->isSphere (radius, center);
-  
+
   for (unsigned int i = 0; i < edges.size(); ++i){
     BDS_Edge *e = edges[i].second;
     if (!e->deleted){
       BDS_Point *mid ;
       double U = 0.5*(e->p1->u+e->p2->u);
       double V = 0.5*(e->p1->v+e->p2->v);
-      GPoint gpp = gf->point(U,V);     
-     
+      GPoint gpp = gf->point(U,V);
+
       if ((!isPeriodic || gf->containsParam(SPoint2(U,V))) && gpp.succeeded()){
         mid  = m.add_point(++m.MAXPOINTNUMBER, gpp.x(),gpp.y(),gpp.z());
         mid->u = U;
@@ -441,7 +441,7 @@ double getMaxLcWhenCollapsingEdge(GFace *gf, BDS_Mesh &m, BDS_Edge *e, BDS_Point
   return maxLc;
 }
 
-static bool revertTriangleSphere (SPoint3 &center, BDS_Point *p, BDS_Point *o){  
+static bool revertTriangleSphere (SPoint3 &center, BDS_Point *p, BDS_Point *o){
   std::list<BDS_Face*> t;
   p->getTriangles(t);
   std::list<BDS_Face*>::iterator it = t.begin();
@@ -477,7 +477,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_c
   double radius;
   SPoint3 center;
   bool isSphere = gf->isSphere (radius, center);
-  
+
   while (it != m.edges.end()){
     if(!(*it)->deleted && (*it)->numfaces() == 2 && (*it)->g->classif_degree == 2){
 
@@ -522,7 +522,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_c
 
       bool flip = false;
       if (p && isSphere)flip = revertTriangleSphere(center, p, e->othervertex(p));
-      
+
       bool res = false;
       if(!flip && p)
         res = m.collapse_edge_parametric(e, p);
@@ -564,8 +564,6 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
         BDS_Point *p = itp->second;
         m.add_geom(-1, 2);
         p->g = m.get_geom(-1, 2);
-        p->lc() = (*itvx)->prescribedMeshSizeAtVertex();
-        p->lcBGM() = (*itvx)->prescribedMeshSizeAtVertex();
         ++itvx;
       }
     }
@@ -768,7 +766,7 @@ int solveInvalidPeriodic(GFace *gf, BDS_Mesh &m,
       mid->lc() = 0.5 * (e->p1->lc() + e->p2->lc());
 
       //      printf("coucou\n");
-      
+
       if(!m.split_edge(e, mid)) m.del_point(mid);
     }
   }
@@ -781,17 +779,19 @@ int solveInvalidPeriodic(GFace *gf, BDS_Mesh &m,
 void TRYTOFIXSPHERES(GFace *gf, BDS_Mesh &m,
 		     std::map<BDS_Point*,MVertex*,PointLessThan> *recoverMap=0)
 {
-  if (!recoverMap)return;
+  if(!recoverMap) return;
   double radius;
   SPoint3 center;
   bool isSphere = gf->isSphere(radius, center);
-  if (!isSphere)return;
+  if(!isSphere) return;
 
-  
-  while(1){
+  int tries = 0;
+
+  while(tries < 10){
     int count = 0;
     std::list<BDS_Edge*>::iterator ite = m.edges.begin();
     while (ite != m.edges.end()){
+      tries++;
       BDS_Edge *e = *ite;
       if(e->numfaces() == 2){
 	double ps[2] = {1,1};
@@ -800,27 +800,25 @@ void TRYTOFIXSPHERES(GFace *gf, BDS_Mesh &m,
 	  double norm[3];
 	  BDS_Point *n[4];
 	  f->getNodes(n);
-	  
+
 	  MVertex *v1 = (recoverMap->find(n[0])==recoverMap->end()) ? NULL : (*recoverMap)[n[0]];
 	  MVertex *v2 = (recoverMap->find(n[1])==recoverMap->end()) ? NULL : (*recoverMap)[n[1]];
 	  MVertex *v3 = (recoverMap->find(n[2])==recoverMap->end()) ? NULL : (*recoverMap)[n[2]];
-	  
-	  if ((!v1 || (v1 != v2 && v1 != v3)) &&
-	      (!v2 || v2 != v3)){      
-	    
+
+	  if ((!v1 || (v1 != v2 && v1 != v3)) && (!v2 || v2 != v3)){
 	    normal_triangle(n[0], n[1], n[2], norm);
 	    double x = (n[0]->X+n[1]->X+n[2]->X)/3.0;
 	    double y = (n[0]->Y+n[1]->Y+n[2]->Y)/3.0;
-	    double z = (n[0]->Z+n[1]->Z+n[2]->Z)/3.0;      	  
+	    double z = (n[0]->Z+n[1]->Z+n[2]->Z)/3.0;
 	    double dx = center.x() - x;
 	    double dy = center.y() - y;
 	    double dz = center.z() - z;
 	    ps[i] = dx*norm[0]+dy*norm[1]+dz*norm[2];
 	  }
 	}
-	if (ps[0]*ps[1] < 0){
-	  printf("Collapsing edge %d %d Because one oof the two triangles is reverted\n",
-		 e->p1->iD,e->p2->iD);
+	if (ps[0] * ps[1] < 0){
+          Msg::Info("Collapsing edge %d %d because one of the two triangles is reverted",
+                    e->p1->iD, e->p2->iD);
 	  count++;
 	  if (recoverMap->find(e->p1) == recoverMap->end()){
 	    m.collapse_edge_parametric(e, e->p1);
@@ -828,14 +826,17 @@ void TRYTOFIXSPHERES(GFace *gf, BDS_Mesh &m,
 	  else if (recoverMap->find(e->p2) == recoverMap->end()){
 	    m.collapse_edge_parametric(e, e->p2);
 	  }
-	}    
+	}
       }
       ++ite;
     }
-    if (!count)break;
+    if(!count) break;
   }
-}
 
+  if(tries == 10)
+    Msg::Warning("Some triangles on sphere could be reverted");
+
+}
 
 void optimizeMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
                      std::map<BDS_Point*,MVertex*,PointLessThan> *recoverMap=0)
