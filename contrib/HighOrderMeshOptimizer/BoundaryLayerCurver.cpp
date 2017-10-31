@@ -878,7 +878,8 @@ namespace BoundaryLayerCurver
     }
   }
 
-  MEdge commonEdge(MTriangle *t0, MTriangle *t1) {
+  MEdge commonEdge(MTriangle *t0, MTriangle *t1)
+  {
     MVertex *v[2] = {NULL, NULL};
     int k = 0;
     for (int i = 0; i < 3; ++i) {
@@ -890,7 +891,25 @@ namespace BoundaryLayerCurver
     Msg::Error("no common edge!!!");
   }
 
-  void curve2DTriColumn(MElement *bottomEdge, MElement *topEdge,
+  MEdge commonEdge(MTriangle *t0, MElement *el)
+  {
+    MVertex *v[2] = {NULL, NULL};
+    int k = 0;
+    for (int i = 0; i < 3; ++i) {
+      bool inOther = false;
+      for (int j = 0; j < el->getNumVertices(); ++j) {
+        if (t0->getVertex(i) == el->getVertex(j)) {
+          inOther = true;
+          break;
+        }
+      }
+      if (inOther) v[k++] = t0->getVertex(i);
+      if (k == 2) return MEdge(v[0], v[1]);
+    }
+    Msg::Error("no common edge!!!");
+  }
+
+  void curve2DTriColumn(MElement *bottomEdge, MElement *extElem,
                         std::vector<MElement *> &column,
                         SVector3 w, GEntity *bndEnt)
   {
@@ -903,7 +922,7 @@ namespace BoundaryLayerCurver
       MEdge common = commonEdge(tri0, tri1);
       MEdge top;
       if (i == column.size() - 2)
-        top = MEdge(topEdge->getVertex(0), topEdge->getVertex(1));
+        top = commonEdge(tri1, extElem);
       else
         top = commonEdge(tri1, dynamic_cast<MTriangle *>(column[i+2]));
 
@@ -911,12 +930,12 @@ namespace BoundaryLayerCurver
       int iBottom, iTop, sign;
       tri0->getEdgeInfo(bottom, iBottom, sign);
       tri0->getEdgeInfo(common, iTop, sign);
-      if (iBottom != 0 && iTop != 0) tri0->reorient(2, false);
-      else if (iBottom != 1 && iTop != 1) tri0->reorient(1, false);
+      if (iBottom != 0 && iTop != 0) tri0->reorient(1, false);
+      else if (iBottom != 1 && iTop != 1) tri0->reorient(2, false);
       tri1->getEdgeInfo(common, iBottom, sign);
       tri1->getEdgeInfo(top, iTop, sign);
-      if (iBottom != 0 && iTop != 0) tri1->reorient(2, false);
-      else if (iBottom != 1 && iTop != 1) tri1->reorient(1, false);
+      if (iBottom != 0 && iTop != 0) tri1->reorient(1, false);
+      else if (iBottom != 1 && iTop != 1) tri1->reorient(2, false);
 
       // Get vertices
       tri0->getEdgeInfo(bottom, iBottom, sign);
@@ -935,9 +954,9 @@ namespace BoundaryLayerCurver
 
       //
       Parameters2DCurve parameters;
-      computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
-      computePositionMidVert(bottomVertices, midVertices, parameters, w, bndEnt, i);
-      computePositionTopVert(bottomVertices, topVertices, parameters, w, bndEnt, i);
+//      computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
+//      computePositionMidVert(bottomVertices, midVertices, parameters, w, bndEnt, i);
+//      computePositionTopVert(bottomVertices, topVertices, parameters, w, bndEnt, i);
       //replaceInteriorNodes(quad);
       bottom = MEdge(topVertices[0], topVertices[1]);
     }
