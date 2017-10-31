@@ -833,8 +833,8 @@ namespace BoundaryLayerCurver
         std::map<std::pair<int, int>, int> coordinate2num;
         std::vector<std::pair<int, int>> num2coordinate;
         for (int i = 0; i < fs->points.size1(); ++i) {
-          const int x = std::lround((fs->points(i, 0) + 1) / 2. * order);
-          const int y = std::lround((fs->points(i, 1) + 1) / 2. * order);
+          const long int x = std::lround((fs->points(i, 0) + 1) / 2. * order);
+          const long int y = std::lround((fs->points(i, 1) + 1) / 2. * order);
           coordinate2num[std::make_pair(x, y)] = i;
           num2coordinate.push_back(std::make_pair(x, y));
         }
@@ -848,6 +848,30 @@ namespace BoundaryLayerCurver
           const std::pair<int, int> coordinates1(x, order);
           data->iToMove.push_back(i);
           data->factor.push_back(1 - y / (double) order);
+          data->i0.push_back(coordinate2num[coordinates0]);
+          data->i1.push_back(coordinate2num[coordinates1]);
+        }
+        break;
+      }
+      case TYPE_TRI: {
+        std::map<std::pair<int, int>, int> coordinate2num;
+        std::vector<std::pair<int, int>> num2coordinate;
+        for (int i = 0; i < fs->points.size1(); ++i) {
+          const long int x = std::lround(fs->points(i, 0) * order);
+          const long int y = std::lround(fs->points(i, 1) * order);
+          coordinate2num[std::make_pair(x, y)] = i;
+          num2coordinate.push_back(std::make_pair(x, y));
+        }
+
+        for (int i = 0; i < fs->points.size1(); ++i) {
+          const std::pair<int, int> coordinates(num2coordinate[i]);
+          const int &x = coordinates.first;
+          const int &y = coordinates.second;
+          if (y == 0 || y == order - x || x == 0) continue;
+          const std::pair<int, int> coordinates0(x, 0);
+          const std::pair<int, int> coordinates1(x, order-x);
+          data->iToMove.push_back(i);
+          data->factor.push_back(1 - y / (double) (order-x));
           data->i0.push_back(coordinate2num[coordinates0]);
           data->i1.push_back(coordinate2num[coordinates1]);
         }
@@ -964,7 +988,8 @@ namespace BoundaryLayerCurver
       computePositionMidVert(bottomVertices, midVertices, parameters, w,
                              bndEnt, i, direction);
       computePositionTopVert(bottomVertices, topVertices, parameters, w, bndEnt, i);
-      //replaceInteriorNodes(quad);
+      replaceInteriorNodes(tri0);
+      replaceInteriorNodes(tri1);
       bottom = MEdge(topVertices[0], topVertices[1]);
     }
   }
