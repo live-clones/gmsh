@@ -257,11 +257,11 @@ namespace BoundaryLayerCurver
     parameters.coeffb[1] = dot(h, t);
   }
 
-  void idealPositionTopEdge(const std::vector<MVertex *> &baseVert,
-                            Parameters2DCurve &parameters, SVector3 w,
-                            int nbPoints, const IntPt *points,
-//                            double *x, double *y, double *z)
-                            fullMatrix<double> &xyz, GEntity *bndEnt)
+  void idealPositionEdge(const std::vector<MVertex *> &baseVert,
+                         Parameters2DCurve &parameters, SVector3 w,
+                         int nbPoints, const IntPt *points,
+                         fullMatrix<double> &xyz, GEntity *bndEnt,
+                         int triDirection = 0)
   {
     int tagLine = ElementType::getTag(TYPE_LIN, baseVert.size()-1);
     const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
@@ -353,9 +353,11 @@ namespace BoundaryLayerCurver
       SVector3 t, n, h, nn, tt;
       t = SVector3(dx, dy, dz).unit();
       n = crossprod(w, t);
-      h = parameters.thicknessAtPoint(xi) * n + parameters.coeffbAtPoint(xi) * t;
-      nn = parameters.thicknessAtPoint(xi) * n;
-      tt = parameters.coeffbAtPoint(xi) * t;
+      int &d = triDirection;
+      h = parameters.thicknessAtPoint(xi, d) * n
+          + parameters.coeffbAtPoint(xi, d) * t;
+      nn = parameters.thicknessAtPoint(xi, d) * n;
+      tt = parameters.coeffbAtPoint(xi, d) * t;
       xyz(i, 0) = xc + h.x();
       xyz(i, 1) = yc + h.y();
       xyz(i, 2) = zc + h.z();
@@ -421,7 +423,7 @@ namespace BoundaryLayerCurver
 
     /*
     fullMatrix<double> xyz(sizeSystem + 2, 3);
-    idealPositionTopEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz, bndEnt);
+    idealPositionEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz, bndEnt);
     xyz(sizeSystem, 0) = topVert[0]->x();
     xyz(sizeSystem, 1) = topVert[0]->y();
     xyz(sizeSystem, 2) = topVert[0]->z();
@@ -430,7 +432,8 @@ namespace BoundaryLayerCurver
     xyz(sizeSystem+1, 2) = topVert[1]->z();
     */
     fullMatrix<double> xyz(sizeSystem + 2, 12);
-    idealPositionTopEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz, bndEnt);
+    idealPositionEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz,
+                      bndEnt);
     double xi[2] = {-1, 1};
     for (int i = 0; i < 2; ++i) {
       xyz(sizeSystem+i, 0) = topVert[i]->x();
@@ -473,7 +476,7 @@ namespace BoundaryLayerCurver
 //    double *x = new double[sizeSystem];
 //    double *y = new double[sizeSystem];
 //    double *z = new double[sizeSystem];
-//    idealPositionTopEdge(baseVert, parameters, e3, sizeSystem, gaussPnts, x, y, z);
+//    idealPositionEdge(baseVert, parameters, e3, sizeSystem, gaussPnts, x, y, z);
 
 //    // Project into a global reference frame {e1, e2, e3}
 //    SVector3 e1(0, 0, 0), e2;
@@ -595,9 +598,9 @@ namespace BoundaryLayerCurver
   }
 
   void computePositionMidVert(const std::vector<MVertex *> &baseVert,
-                              std::vector<MVertex *> &topVert,
+                              std::vector<MVertex *> &midVert,
                               Parameters2DCurve &parameters, SVector3 w,
-                              GEntity *bndEnt, int nLayer)
+                              GEntity *bndEnt, int nLayer, int direction)
   {
     // Let (t, n, e3) be the local reference frame
     // We seek for each component the polynomial function that fit the best
@@ -643,7 +646,7 @@ namespace BoundaryLayerCurver
 
     /*
     fullMatrix<double> xyz(sizeSystem + 2, 3);
-    idealPositionTopEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz, bndEnt);
+    idealPositionEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz, bndEnt);
     xyz(sizeSystem, 0) = topVert[0]->x();
     xyz(sizeSystem, 1) = topVert[0]->y();
     xyz(sizeSystem, 2) = topVert[0]->z();
@@ -652,12 +655,13 @@ namespace BoundaryLayerCurver
     xyz(sizeSystem+1, 2) = topVert[1]->z();
     */
     fullMatrix<double> xyz(sizeSystem + 2, 12);
-    idealPositionTopEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz, bndEnt);
+    idealPositionEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz,
+                      bndEnt, direction);
     double xi[2] = {-1, 1};
     for (int i = 0; i < 2; ++i) {
-      xyz(sizeSystem+i, 0) = topVert[i]->x();
-      xyz(sizeSystem+i, 1) = topVert[i]->y();
-      xyz(sizeSystem+i, 2) = topVert[i]->z();
+      xyz(sizeSystem+i, 0) = midVert[i]->x();
+      xyz(sizeSystem+i, 1) = midVert[i]->y();
+      xyz(sizeSystem+i, 2) = midVert[i]->z();
       xyz(sizeSystem+i, 3) = baseVert[i]->x();
       xyz(sizeSystem+i, 4) = baseVert[i]->y();
       xyz(sizeSystem+i, 5) = baseVert[i]->z();
@@ -681,8 +685,8 @@ namespace BoundaryLayerCurver
 //        h = SVector3(topVert[i]->x() - baseVert[i]->x(),
 //                     topVert[i]->y() - baseVert[i]->y(),
 //                     topVert[i]->z() - baseVert[i]->z());
-        nn = parameters.thicknessAtPoint(xi[i]) * n;
-        tt = parameters.coeffbAtPoint(xi[i]) * t;
+        nn = parameters.thicknessAtPoint(xi[i], direction) * n;
+        tt = parameters.coeffbAtPoint(xi[i], direction) * t;
         xyz(sizeSystem+i, 6) = nn.x();
         xyz(sizeSystem+i, 7) = nn.y();
         xyz(sizeSystem+i, 8) = nn.z();
@@ -695,7 +699,7 @@ namespace BoundaryLayerCurver
 //    double *x = new double[sizeSystem];
 //    double *y = new double[sizeSystem];
 //    double *z = new double[sizeSystem];
-//    idealPositionTopEdge(baseVert, parameters, e3, sizeSystem, gaussPnts, x, y, z);
+//    idealPositionEdge(baseVert, parameters, e3, sizeSystem, gaussPnts, x, y, z);
 
 //    // Project into a global reference frame {e1, e2, e3}
 //    SVector3 e1(0, 0, 0), e2;
@@ -792,17 +796,17 @@ namespace BoundaryLayerCurver
 //    xyz.print("xyz");
 //    newxyz.print("newxyz");
 
-    std::cout << newxyz(0, 0) - topVert[0]->x() << " "
-              << newxyz(0, 1) - topVert[0]->y() << " "
-              << newxyz(0, 2) - topVert[0]->z() << " "
-              << newxyz(1, 0) - topVert[1]->x() << " "
-              << newxyz(1, 1) - topVert[1]->y() << " "
-              << newxyz(1, 2) - topVert[1]->z() << std::endl;
+    std::cout << newxyz(0, 0) - midVert[0]->x() << " "
+              << newxyz(0, 1) - midVert[0]->y() << " "
+              << newxyz(0, 2) - midVert[0]->z() << " "
+              << newxyz(1, 0) - midVert[1]->x() << " "
+              << newxyz(1, 1) - midVert[1]->y() << " "
+              << newxyz(1, 2) - midVert[1]->z() << std::endl;
 
-    for (int i = 2; i < topVert.size(); ++i) {
-      topVert[i]->x() = newxyz(i, 0);
-      topVert[i]->y() = newxyz(i, 1);
-      topVert[i]->z() = newxyz(i, 2);
+    for (int i = 2; i < midVert.size(); ++i) {
+      midVert[i]->x() = newxyz(i, 0);
+      midVert[i]->y() = newxyz(i, 1);
+      midVert[i]->z() = newxyz(i, 2);
     }
 
 //    for (int i = 0; i < sizeSystem; ++i) {
@@ -937,29 +941,31 @@ namespace BoundaryLayerCurver
       if (iBottom != 0 && iTop != 0) tri1->reorient(1, false);
       else if (iBottom != 1 && iTop != 1) tri1->reorient(2, false);
 
-//      // Get vertices
-//      tri0->getEdgeInfo(bottom, iBottom, sign);
-//      tri0->getEdgeVertices(iBottom, bottomVertices);
-//      tri0->getEdgeVertices(1-iBottom, midVertices);
-//      std::reverse(midVertices.begin(), midVertices.begin() + 2);
-//      std::reverse(midVertices.begin() + 2, midVertices.end());
-//
-//      common = MEdge(midVertices[0], midVertices[1]);
-//      tri1->getEdgeInfo(common, iBottom, sign);
-//      tri1->getEdgeVertices(1-iBottom, topVertices);
-//      if (sign > 0) {
-//        std::reverse(topVertices.begin(), topVertices.begin() + 2);
-//        std::reverse(topVertices.begin() + 2, topVertices.end());
-//      }
+      // Get vertices
+      tri0->getEdgeInfo(bottom, iBottom, sign);
+      tri0->getEdgeVertices(iBottom, bottomVertices);
+      tri0->getEdgeVertices(1-iBottom, midVertices);
+      std::reverse(midVertices.begin(), midVertices.begin() + 2);
+      std::reverse(midVertices.begin() + 2, midVertices.end());
+
+      common = MEdge(midVertices[0], midVertices[1]);
+      tri1->getEdgeInfo(common, iBottom, sign);
+      tri1->getEdgeVertices(1-iBottom, topVertices);
+      if (sign > 0) {
+        std::reverse(topVertices.begin(), topVertices.begin() + 2);
+        std::reverse(topVertices.begin() + 2, topVertices.end());
+      }
 
       //
-//      Parameters2DCurve parameters;
-//      computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
-//      computePositionMidVert(bottomVertices, midVertices, parameters, w, bndEnt, i);
-//      computePositionTopVert(bottomVertices, topVertices, parameters, w, bndEnt, i);
+      int direction = 1;
+      if (bottomVertices[1] == midVertices[1]) direction = -1;
+      Parameters2DCurve parameters;
+      computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
+      computePositionMidVert(bottomVertices, midVertices, parameters, w,
+                             bndEnt, i, direction);
+      computePositionTopVert(bottomVertices, topVertices, parameters, w, bndEnt, i);
       //replaceInteriorNodes(quad);
-//      bottom = MEdge(topVertices[0], topVertices[1]);
-      return;
+      bottom = MEdge(topVertices[0], topVertices[1]);
     }
   }
 

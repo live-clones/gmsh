@@ -50,11 +50,21 @@ namespace BoundaryLayerCurver
     double thickness[2];
     double coeffb[2];
 
-    double thicknessAtPoint(double xi) {
-      return thickness[0] * (1 - xi) / 2 + thickness[1] * (1 + xi) / 2;
+    double thicknessAtPoint(double xi, int triDirection = 0) {
+      if (triDirection == 0)
+        return thickness[0] * (1 - xi) / 2 + thickness[1] * (1 + xi) / 2;
+      else if (triDirection > 0)
+        return thickness[1] * (1 + xi) / 2;
+      else
+        return thickness[0] * (1 - xi) / 2;
     }
-    double coeffbAtPoint(double xi) {
-      return coeffb[0] * (1 - xi) / 2 + coeffb[1] * (1 + xi) / 2;
+    double coeffbAtPoint(double xi, int triDirection = 0) {
+      if (triDirection == 0)
+        return coeffb[0] * (1 - xi) / 2 + coeffb[1] * (1 + xi) / 2;
+      else if (triDirection > 0)
+        return coeffb[1] * (1 + xi) / 2;
+      else
+        return coeffb[0] * (1 - xi) / 2;
     }
     double characteristicThickness() {
       return std::min(thickness[0], thickness[1]);
