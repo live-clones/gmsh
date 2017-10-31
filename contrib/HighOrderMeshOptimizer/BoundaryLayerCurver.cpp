@@ -29,6 +29,7 @@
 
 #include "BoundaryLayerCurver.h"
 #include "MQuadrangle.h"
+#include "MTriangle.h"
 #include "BasisFactory.h"
 #include "GFace.h"
 #include "legendrePolynomials.h"
@@ -593,6 +594,228 @@ namespace BoundaryLayerCurver
 //    delete v;
   }
 
+  void computePositionMidVert(const std::vector<MVertex *> &baseVert,
+                              std::vector<MVertex *> &topVert,
+                              Parameters2DCurve &parameters, SVector3 w,
+                              GEntity *bndEnt, int nLayer)
+  {
+    // Let (t, n, e3) be the local reference frame
+    // We seek for each component the polynomial function that fit the best
+    //   x1(xi) = x0(xi) + h(xi) * n(xi) + b(xi) * t(xi)
+    // in the least square sense.
+    // where x0(xi) is the position of the base edge
+    //       n(xi) is the unit normal of the base edge
+    //       h(xi) is the linear thickness
+    //       t(xi) is the unit tangent of the base edge
+    //       b(xi) is the linear coefficient
+
+
+//    { // draw amplified difference with linear line
+//      MLineN l(baseVert);
+//      MVertex *v0 = baseVert[0];
+//      MVertex *v1 = baseVert[1];
+//      double amp = 100;
+//      int cnt = 100;
+//      for (int i = 0; i < cnt; ++i) {
+//        double xi = -1 + 2 * i / (cnt - 1.);
+//        double c1 = i / (cnt - 1.);
+//        double c0 = 1 - c1;
+//        SPoint3 pLin(v0->x() * c0 + v1->x() * c1,
+//                     v0->y() * c0 + v1->y() * c1,
+//                     v0->z() * c0 + v1->z() * c1);
+//        SPoint3 p;
+//        l.pnt(xi, 0, 0, p);
+//        MVertex *vLin = new MVertex(pLin.x(), pLin.y(), pLin.z(), bndEnt);
+//        MVertex *v = new MVertex(amp * p.x() - (amp - 1) * pLin.x(),
+//                                 amp * p.y() - (amp - 1) * pLin.y(),
+//                                 amp * p.z() - (amp - 1) * pLin.z(), bndEnt);
+//        MLine *line = new MLine(v, vLin);
+//        ((GEdge *) bndEnt)->addLine(line);
+//        ((GEdge *) bndEnt)->addMeshVertex(v);
+//        ((GEdge *) bndEnt)->addMeshVertex(vLin);
+//      }
+//    }
+
+    const int orderCurve = baseVert.size() - 1;
+    const int orderGauss = orderCurve * 2;
+    const int sizeSystem = getNGQLPts(orderGauss);
+    const IntPt *gaussPnts = getGQLPts(orderGauss);
+
+    /*
+    fullMatrix<double> xyz(sizeSystem + 2, 3);
+    idealPositionTopEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz, bndEnt);
+    xyz(sizeSystem, 0) = topVert[0]->x();
+    xyz(sizeSystem, 1) = topVert[0]->y();
+    xyz(sizeSystem, 2) = topVert[0]->z();
+    xyz(sizeSystem+1, 0) = topVert[1]->x();
+    xyz(sizeSystem+1, 1) = topVert[1]->y();
+    xyz(sizeSystem+1, 2) = topVert[1]->z();
+    */
+    fullMatrix<double> xyz(sizeSystem + 2, 12);
+    idealPositionTopEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz, bndEnt);
+    double xi[2] = {-1, 1};
+    for (int i = 0; i < 2; ++i) {
+      xyz(sizeSystem+i, 0) = topVert[i]->x();
+      xyz(sizeSystem+i, 1) = topVert[i]->y();
+      xyz(sizeSystem+i, 2) = topVert[i]->z();
+      xyz(sizeSystem+i, 3) = baseVert[i]->x();
+      xyz(sizeSystem+i, 4) = baseVert[i]->y();
+      xyz(sizeSystem+i, 5) = baseVert[i]->z();
+
+      int tagLine = ElementType::getTag(TYPE_LIN, baseVert.size() - 1);
+      const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
+
+      double dx = 0, dy = 0, dz = 0;
+      {
+        double sf[100][3];
+        fs->df(xi[i], 0, 0, sf);
+        for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+          const MVertex *v = baseVert[j];
+          dx += sf[j][0] * v->x();
+          dy += sf[j][0] * v->y();
+          dz += sf[j][0] * v->z();
+        }
+        SVector3 t, n, h, nn, tt;
+        t = SVector3(dx, dy, dz).unit();
+        n = crossprod(w, t);
+//        h = SVector3(topVert[i]->x() - baseVert[i]->x(),
+//                     topVert[i]->y() - baseVert[i]->y(),
+//                     topVert[i]->z() - baseVert[i]->z());
+        nn = parameters.thicknessAtPoint(xi[i]) * n;
+        tt = parameters.coeffbAtPoint(xi[i]) * t;
+        xyz(sizeSystem+i, 6) = nn.x();
+        xyz(sizeSystem+i, 7) = nn.y();
+        xyz(sizeSystem+i, 8) = nn.z();
+        xyz(sizeSystem+i, 9) = tt.x();
+        xyz(sizeSystem+i, 10) = tt.y();
+        xyz(sizeSystem+i, 11) = tt.z();
+      }
+    }
+
+//    double *x = new double[sizeSystem];
+//    double *y = new double[sizeSystem];
+//    double *z = new double[sizeSystem];
+//    idealPositionTopEdge(baseVert, parameters, e3, sizeSystem, gaussPnts, x, y, z);
+
+//    // Project into a global reference frame {e1, e2, e3}
+//    SVector3 e1(0, 0, 0), e2;
+//    double *u = new double[sizeSystem];
+//    double *v = new double[sizeSystem];
+//    {
+//      int k = 0;
+//      if (std::abs(e3(1)) > std::abs(e3(k))) k = 1;
+//      if (std::abs(e3(2)) > std::abs(e3(k))) k = 2;
+//      e1((k + 1) % 3) = 1;
+//      e2 = crossprod(e3, e1).unit();
+//      e1 = crossprod(e2, e3);
+//
+//      for (int i = 0; i < sizeSystem; ++i) {
+//        SVector3 h(x[i], y[i], z[i]);
+//        u[i] = dot(h, e1);
+//        v[i] = dot(h, e2);
+//      }
+//    }
+
+    LeastSquareData *data = getLeastSquareData(TYPE_LIN, orderCurve, orderGauss);
+
+    fullMatrix<double> coeff(orderCurve + 1, 12);
+    fullMatrix<double> newxyz(orderCurve + 1, 12);
+    data->invA.mult(xyz, coeff);
+    xyz.print("xyz");
+    coeff.print("coeff a");
+//    { // remove some of high order coeff
+//      for (int i = 4; i < 7; ++i) {
+//        coeff(i, 6) = 0;
+//        coeff(i, 7) = 0;
+//        coeff(i, 9) = 0;
+//        coeff(i, 10) = 0;
+//      }
+//      for (int i = 0; i < 7; ++i) {
+//        coeff(i, 0) = coeff(i, 3) + coeff(i, 6) + coeff(i, 9);
+//        coeff(i, 1) = coeff(i, 4) + coeff(i, 7) + coeff(i, 10);
+//      }
+//    }
+    if (false) { // decrease
+      const double factorForGettingLinear = .1;
+      const double limit = factorForGettingLinear
+                           * parameters.characteristicThickness();
+      fullMatrix<double> p(sizeSystem, 12);
+      data->Leg2p.mult(coeff, p);
+      double rmse[3] = {0, 0, 0}; // RMSE in x, y and z component
+      for (int i = 0; i < sizeSystem; ++i) {
+        rmse[0] += gaussPnts[i].weight * (p(i, 0) - xyz(i, 0)) * (p(i, 0) - xyz(i, 0));
+        rmse[1] += gaussPnts[i].weight * (p(i, 1) - xyz(i, 1)) * (p(i, 1) - xyz(i, 1));
+        rmse[2] += gaussPnts[i].weight * (p(i, 2) - xyz(i, 2)) * (p(i, 2) - xyz(i, 2));
+      }
+      SVector3 dir(rmse[0], rmse[1], rmse[2]);
+      if (norm(dir) < limit) {
+        SVector3 sumCoeff(0, 0, 0);
+        for (int i = 2; i < orderCurve+1; ++i) {
+          sumCoeff += SVector3(std::abs(coeff(i, 0)), std::abs(coeff(i, 1)), std::abs(coeff(i, 2)));
+        }
+        dir += sumCoeff;
+        dir.normalize();
+        dir *= limit;
+        for (int k = 0; k < 3; ++k) {
+          double scale = dir(k) / sumCoeff(k);
+          if (scale >= 1 || sumCoeff(k) == 0) scale = 1;
+          for (int i = 2; i < orderCurve + 1; ++i) {
+            coeff(i, k) *= (1 - scale);
+          }
+//          double delta = rmse[k];
+//          int i = orderCurve;
+//          while (i > 1 && delta < dir(k)) {
+//            if (std::abs(coeff(i, k)) < dir(k) - delta) {
+//              delta += std::abs(coeff(i, k));
+//              coeff(i, k) = 0;
+//            }
+//            else {
+//              double diff = dir(k) - delta;
+//              coeff(i, k) = coeff(i, k) > 0 ?  coeff(i, k) - diff :
+//                                               coeff(i, k) + diff;
+//              delta = dir(k);
+//            }
+//            --i;
+//          }
+        }
+        // fact^2 * thickness^2 = (a^2 + b^2 + c^2) * d^2
+      }
+//      for (int i = 2; i < 7; ++i) {
+//        coeff(i, 0) *= 1-(nLayer*nLayer/12./12)*i/6;
+//        coeff(i, 1) *= 1-(nLayer*nLayer/12./12)*i/6;
+//      }
+    }
+    coeff.print("coeff b");
+    data->Leg2Lag.mult(coeff, newxyz);
+    newxyz.print("newxyz");
+
+//    xyz.print("xyz");
+//    newxyz.print("newxyz");
+
+    std::cout << newxyz(0, 0) - topVert[0]->x() << " "
+              << newxyz(0, 1) - topVert[0]->y() << " "
+              << newxyz(0, 2) - topVert[0]->z() << " "
+              << newxyz(1, 0) - topVert[1]->x() << " "
+              << newxyz(1, 1) - topVert[1]->y() << " "
+              << newxyz(1, 2) - topVert[1]->z() << std::endl;
+
+    for (int i = 2; i < topVert.size(); ++i) {
+      topVert[i]->x() = newxyz(i, 0);
+      topVert[i]->y() = newxyz(i, 1);
+      topVert[i]->z() = newxyz(i, 2);
+    }
+
+//    for (int i = 0; i < sizeSystem; ++i) {
+//      x[i] =
+//    }
+
+//    delete x;
+//    delete y;
+//    delete z;
+//    delete u;
+//    delete v;
+  }
+
   InteriorPlacementData* constructInteriorPlacementData(int tag)
   {
     const int order = ElementType::OrderFromTag(tag);
@@ -655,12 +878,68 @@ namespace BoundaryLayerCurver
     }
   }
 
-  void curve2DTriColumn(MElement *bottomEdge, std::vector<MElement *> &column,
-                        SVector3 w)
+  MEdge commonEdge(MTriangle *t0, MTriangle *t1) {
+    MVertex *v[2] = {NULL, NULL};
+    int k = 0;
+    for (int i = 0; i < 3; ++i) {
+      if (t0->getVertex(i) == t1->getVertex(0) ||
+          t0->getVertex(i) == t1->getVertex(1) ||
+          t0->getVertex(i) == t1->getVertex(2)) v[k++] = t0->getVertex(i);
+      if (k == 2) return MEdge(v[0], v[1]);
+    }
+    Msg::Error("no common edge!!!");
+  }
+
+  void curve2DTriColumn(MElement *bottomEdge, MElement *topEdge,
+                        std::vector<MElement *> &column,
+                        SVector3 w, GEntity *bndEnt)
   {
+    MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
+    std::vector<MVertex *> bottomVertices, topVertices, midVertices;
+
     for (int i = 0; i < column.size(); i += 2) {
-      MElement *tri0 = column[i];
-      MElement *tri1 = column[i + 1];
+      MTriangle *tri0 = dynamic_cast<MTriangle *>(column[i]);
+      MTriangle *tri1 = dynamic_cast<MTriangle *>(column[i+1]);
+      MEdge common = commonEdge(tri0, tri1);
+      MEdge top;
+      if (i == column.size() - 2)
+        top = MEdge(topEdge->getVertex(0), topEdge->getVertex(1));
+      else
+        top = commonEdge(tri1, dynamic_cast<MTriangle *>(column[i+2]));
+
+      // Reorient if needed
+      int iBottom, iTop, sign;
+      tri0->getEdgeInfo(bottom, iBottom, sign);
+      tri0->getEdgeInfo(common, iTop, sign);
+      if (iBottom != 0 && iTop != 0) tri0->reorient(2, false);
+      else if (iBottom != 1 && iTop != 1) tri0->reorient(1, false);
+      tri1->getEdgeInfo(common, iBottom, sign);
+      tri1->getEdgeInfo(top, iTop, sign);
+      if (iBottom != 0 && iTop != 0) tri1->reorient(2, false);
+      else if (iBottom != 1 && iTop != 1) tri1->reorient(1, false);
+
+      // Get vertices
+      tri0->getEdgeInfo(bottom, iBottom, sign);
+      tri0->getEdgeVertices(iBottom, bottomVertices);
+      tri0->getEdgeVertices(1-iBottom, midVertices);
+      std::reverse(midVertices.begin(), midVertices.begin() + 2);
+      std::reverse(midVertices.begin() + 2, midVertices.end());
+
+      common = MEdge(midVertices[0], midVertices[1]);
+      tri1->getEdgeInfo(common, iBottom, sign);
+      tri1->getEdgeVertices(1-iBottom, topVertices);
+      if (sign > 0) {
+        std::reverse(topVertices.begin(), topVertices.begin() + 2);
+        std::reverse(topVertices.begin() + 2, topVertices.end());
+      }
+
+      //
+      Parameters2DCurve parameters;
+      computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
+      computePositionMidVert(bottomVertices, midVertices, parameters, w, bndEnt, i);
+      computePositionTopVert(bottomVertices, topVertices, parameters, w, bndEnt, i);
+      //replaceInteriorNodes(quad);
+      bottom = MEdge(topVertices[0], topVertices[1]);
     }
   }
 
@@ -669,7 +948,7 @@ namespace BoundaryLayerCurver
   {
 //    if (bottomEdge->getNum() != 1136) return;
 //    if (bottomEdge->getNum() != 1102) return;
-    {
+    if (false) {
       int order = bottomEdge->getPolynomialOrder();
       for (int i = 0; i < order+1; ++i) {
         double xi = -1 + 2 * i / (double)order;
@@ -746,7 +1025,9 @@ namespace BoundaryLayerCurver
 }
 
 
-void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 n, GEntity *bndEnt)
+void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
+                          std::vector<MElement*> aboveElements,
+                          SVector3 n, GEntity *bndEnt)
 {
 //  // Compute reference frame (handle general planar 2D BL)
 //  int k = 0;
@@ -764,7 +1045,8 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 n, GEntit
     MElement *bottomEdge = bndEl2column[i].first;
     std::vector<MElement*> &column = bndEl2column[i].second;
     if (column[0]->getType() == TYPE_TRI)
-      BoundaryLayerCurver::curve2DTriColumn(bottomEdge, column, n);
+      BoundaryLayerCurver::curve2DTriColumn(bottomEdge, aboveElements[i],
+                                            column, n, bndEnt);
     else
       BoundaryLayerCurver::curve2DQuadColumn(bottomEdge, column, n, bndEnt);
   }

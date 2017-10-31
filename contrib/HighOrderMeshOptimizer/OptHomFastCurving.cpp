@@ -1946,6 +1946,7 @@ void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
   // inspired from curveMeshFromBndElt
 
   std::vector<std::pair<MElement*, std::vector<MElement*>>> bndEl2column;
+  std::vector<MElement*> aboveElements;
 
   auto it = bndElts.begin();
   while (it != bndElts.end()) {
@@ -1961,8 +1962,9 @@ void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
       MEdge baseEd(vb0, vb1);
       std::vector<MElement*> vec;
       bndEl2column.push_back(std::make_pair(bndEl, std::vector<MElement*>()));
+      aboveElements.push_back(NULL);
       foundCol = getColumn2D(ed2el, p, baseEd, baseVert, topPrimVert,
-                             bndEl2column.back().second, aboveElt);
+                             bndEl2column.back().second, aboveElements.back());
     }
     else { // 2D boundary
       MVertex *vb0 = bndEl->getVertex(0);
@@ -1972,8 +1974,9 @@ void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
       if (bndType == TYPE_QUA) vb3 = bndEl->getVertex(3);
       MFace baseFace(vb0, vb1, vb2, vb3);
       bndEl2column.push_back(std::make_pair(bndEl, std::vector<MElement*>()));
+      aboveElements.push_back(NULL);
       foundCol = getColumn3D(face2el, p, baseFace, baseVert, topPrimVert,
-                             bndEl2column.back().second, aboveElt);
+                             bndEl2column.back().second, aboveElements.back());
     }
     if (!foundCol || bndEl2column.back().second.empty()) {
       bndEl2column.pop_back();
@@ -1987,7 +1990,7 @@ void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
     normal = SVector3((*normals)(0, 0), (*normals)(0, 1), (*normals)(0, 2));
   else
     normal = SVector3(0, 0, 1);
-  if (p.dim == 2) curve2DBoundaryLayer(bndEl2column, normal, bndEnt);
+  if (p.dim == 2) curve2DBoundaryLayer(bndEl2column, aboveElements, normal, bndEnt);
   else curve3DBoundaryLayer(bndEl2column);
 }
 
