@@ -649,25 +649,49 @@ void onelabGroup::openCloseViewButton(int num)
   }
 }
 
-template <class T>
-static void setGmshOption(T &n)
+static bool serverAction(const std::string &action)
 {
-  std::string opt = n.getAttribute("GmshOption");
-  if(opt.empty()) return;
-  if(opt == "ResetDatabase"){ // special option to reset the onelab db
+  if(action == "ResetDatabase"){ // reset the onelab db
     resetDb(false);
     FlGui::instance()->rebuildTree(false);
-    return;
+    return true;
   }
-  if(opt == "Reset"){ // reset db + models except current one
+  else if(action == "Reset"){ // reset db + models except current one
     resetDb(false);
     for(int i = PView::list.size() - 1; i >= 0; i--)
       delete PView::list[i];
     for(int i = GModel::list.size() - 1; i >= 0; i--)
       if(GModel::list[i] != GModel::current()) delete GModel::list[i];
     FlGui::instance()->rebuildTree(false);
-    return;
+    return true;
   }
+  else if(!action.compare(0, 5, "Reset")){ // reset some variables
+    std::vector<std::string> what = onelab::parameter::split(action.substr(5), ',');
+    for(unsigned int i = 0; i < what.size(); i++){
+      std::string var = onelab::parameter::trim(what[i]);
+      Msg::Debug("Clearing variable '%s'", var.c_str());
+      onelab::server::instance()->clear(var);
+    }
+    FlGui::instance()->rebuildTree(false);
+    return true;
+  }
+  return false;
+}
+
+template <class T>
+static void performServerAction(T &n)
+{
+  std::string opt = n.getAttribute("ServerAction");
+  if(opt.empty()) return;
+  serverAction(opt);
+}
+
+template <class T>
+static void setGmshOption(T &n)
+{
+  std::string opt = n.getAttribute("GmshOption");
+  if(opt.empty()) return;
+  if(serverAction(opt)) return; // for backward compatibility:
   std::string::size_type dot = opt.find('.');
   if(dot == std::string::npos) return;
   GmshSetOption(opt.substr(0, dot), opt.substr(dot + 1), n.getValue());
@@ -685,6 +709,7 @@ static void onelab_number_check_button_cb(Fl_Widget *w, void *data)
     onelab::number old = numbers[0];
     numbers[0].setValue(o->value());
     setGmshOption(numbers[0]);
+    performServerAction(numbers[0]);
     onelab::server::instance()->set(numbers[0]);
     autoCheck(old, numbers[0]);
   }
@@ -702,6 +727,7 @@ static void onelab_number_choice_cb(Fl_Widget *w, void *data)
     onelab::number old = numbers[0];
     if(o->value() < (int)choices.size()) numbers[0].setValue(choices[o->value()]);
     setGmshOption(numbers[0]);
+    performServerAction(numbers[0]);
     onelab::server::instance()->set(numbers[0]);
     autoCheck(old, numbers[0]);
   }
@@ -727,6 +753,7 @@ static void onelab_number_input_range_cb(Fl_Widget *w, void *data)
     numbers[0].setAttribute("Loop", o->loop());
     numbers[0].setAttribute("Graph", o->graph());
     setGmshOption(numbers[0]);
+    performServerAction(numbers[0]);
     onelab::server::instance()->set(numbers[0]);
     updateGraphs();
     autoCheck(old, numbers[0]);
@@ -846,6 +873,7 @@ static void onelab_string_button_cb(Fl_Widget *w, void *data)
       MergeFile(tmp);
     }
     setGmshOption(strings[0]);
+    performServerAction(strings[0]);
     autoCheck(strings[0], strings[0], true);
     drawContext::global()->draw();
   }
@@ -862,6 +890,7 @@ static void onelab_string_input_cb(Fl_Widget *w, void *data)
     onelab::string old = strings[0];
     strings[0].setValue(o->value());
     setGmshOption(strings[0]);
+    performServerAction(strings[0]);
     onelab::server::instance()->set(strings[0]);
     autoCheck(old, strings[0]);
   }
@@ -889,6 +918,7 @@ static void onelab_string_input_choice_cb(Fl_Widget *w, void *data)
     if(choices.size())
       strings[0].setAttribute("MultipleSelection", choices);
     setGmshOption(strings[0]);
+    performServerAction(strings[0]);
     onelab::server::instance()->set(strings[0]);
     autoCheck(old, strings[0]);
   }

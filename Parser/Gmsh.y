@@ -4658,14 +4658,22 @@ Constraints :
 Coherence :
     tCoherence tEND
     {
-      GModel::current()->getGEOInternals()->removeAllDuplicates();
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals())
+        GModel::current()->getOCCInternals()->removeAllDuplicates();
+      else
+        GModel::current()->getGEOInternals()->removeAllDuplicates();
     }
   | tCoherence tSTRING tEND
     {
-      if(!strcmp($2, "Geometry"))
-        GModel::current()->getGEOInternals()->removeAllDuplicates();
-      else if(!strcmp($2, "Mesh"))
+      if(!strcmp($2, "Geometry")){
+        if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals())
+          GModel::current()->getOCCInternals()->removeAllDuplicates();
+        else
+          GModel::current()->getGEOInternals()->removeAllDuplicates();
+      }
+      else if(!strcmp($2, "Mesh")){
         GModel::current()->removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
+      }
       else
         yymsg(0, "Unknown coherence command");
       Free($2);
@@ -4673,7 +4681,10 @@ Coherence :
   | tCoherence tPoint '{' RecursiveListOfDouble '}' tEND
     {
       std::vector<int> tags; ListOfDouble2Vector($4, tags);
-      GModel::current()->getGEOInternals()->mergeVertices(tags);
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals())
+        GModel::current()->getOCCInternals()->mergeVertices(tags);
+      else
+        GModel::current()->getGEOInternals()->mergeVertices(tags);
       List_Delete($4);
     }
 ;

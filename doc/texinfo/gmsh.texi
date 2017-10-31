@@ -2416,10 +2416,12 @@ Here is a list of all other geometry commands currently available:
 @ftable @code
 @item Coherence;
 Removes all duplicate elementary geometrical entities (e.g., points
-having identical coordinates). Note that Gmsh executes the
-@code{Coherence} command automatically after each geometrical
-transformation, unless @code{Geometry.AutoCoherence} is set to zero
-(@pxref{Geometry options list}).
+having identical coordinates). Note that with the built-in geometry
+kernel Gmsh executes the @code{Coherence} command automatically after
+each geometrical transformation, unless @code{Geometry.AutoCoherence} is
+set to zero (@pxref{Geometry options list}). With the OpenCASCADE
+geoemtry kernel, @code{Coherence} is simply a shortcut for a
+@code{BooleanFragments} operation on all entities.
 
 @item < Recursive > Delete @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
 Deletes all elementary entities whose identification numbers are given
