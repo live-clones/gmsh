@@ -235,6 +235,16 @@ namespace onelab{
         out.push_back(getNextToken(msg, first, separator));
       return out;
     }
+    static std::string trim(const std::string &str,
+                            const std::string &whitespace = " \t\n")
+    {
+      std::string::size_type strBegin = str.find_first_not_of(whitespace);
+      if(strBegin == std::string::npos)
+        return ""; // no content
+      std::string::size_type strEnd = str.find_last_not_of(whitespace);
+      std::string::size_type strRange = strEnd - strBegin + 1;
+      return str.substr(strBegin, strRange);
+    }
     std::string sanitize(const std::string &in) const
     {
       std::string out(in);

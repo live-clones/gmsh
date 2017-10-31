@@ -1007,7 +1007,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
 
   //  if (gf->degenerate(0))return 0;
-  
+
   // build a set with all points of the boundaries
   std::set<MVertex*, MVertexLessThanNum> all_vertices, boundary;
   std::list<GEdge*>::iterator ite = edges.begin();
@@ -1598,17 +1598,26 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   delete m;
 
-
-
   gf->quadrangles.insert(gf->quadrangles.begin(),blQuads.begin(),blQuads.end());
   gf->triangles.insert(gf->triangles.begin(),blTris.begin(),blTris.end());
   gf->mesh_vertices.insert(gf->mesh_vertices.begin(),verts.begin(),verts.end());
 
-  
+#if defined(HAVE_ANN)
+  if (!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine){
+    FieldManager *fields = gf->model()->getFields();
+    BoundaryLayerField *blf = 0;
+    if(fields->getBoundaryLayerField() > 0){
+      Field *bl_field = fields->get(fields->getBoundaryLayerField());
+      blf = dynamic_cast<BoundaryLayerField*> (bl_field);
+      if (blf && !blf->iRecombine) quadsToTriangles(gf,10000);
+    }
+  }
+#endif
+
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
      !CTX::instance()->mesh.optimizeLloyd && !onlyInitialMesh && CTX::instance()->mesh.algoRecombine != 2)
     recombineIntoQuads(gf);
-  
+
 
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
@@ -1995,8 +2004,10 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     // the domain, use negative number to distinguish those fake
     // vertices
 
-    // FIX A BUG HERE IF THE SIZE OF THE BOX IS ZERO
-    bbox.makeCube();
+    if(du / dv < 1200 && dv / du < 1200){
+      // FIX A BUG HERE IF THE SIZE OF THE BOX IS ZERO
+      bbox.makeCube();
+    }
 
     bbox *= 3.5;
     MVertex *bb[4];
@@ -2506,6 +2517,10 @@ void meshGFace::operator() (GFace *gf, bool print)
              gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());
 
   halfmesh.finish();
+
+  if(gf->getNumMeshElements() == 0){
+    Msg::Warning("Surface %d consists of no elements", gf->tag());
+  }
 }
 
 bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges)

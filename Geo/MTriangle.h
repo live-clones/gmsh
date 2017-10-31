@@ -246,6 +246,8 @@ class MTriangle6 : public MTriangle {
   virtual void reorient(int rotation, bool swap);
 };
 
+typedef std::vector<int> indicesReoriented;
+
 /*
  * MTriangleN  FIXME: check the plot
  *
@@ -263,6 +265,7 @@ class MTriangle6 : public MTriangle {
  *
  */
 class MTriangleN : public MTriangle {
+  static std::map<std::tuple<int,int,int>, indicesReoriented> _tuple2indicesReoriented;
  protected:
   std::vector<MVertex *> _vs;
   const char _order;

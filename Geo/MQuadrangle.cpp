@@ -402,31 +402,34 @@ void MQuadrangle9::reorient(int rot, bool swap)
 
 std::map<std::tuple<int,int,int>, indicesReoriented> MQuadrangleN::_tuple2indicesReoriented;
 
-void _getIndicesReorientedQuad(int order, int rot, bool swap,
-                               indicesReoriented &indices)
+namespace
 {
-  fullMatrix<double> ref = gmshGenerateMonomialsQuadrangle(order);
-  ref.add(- order / 2.);
+  void _getIndicesReorientedQuad(int order, int rot, bool swap,
+                                 indicesReoriented &indices)
+  {
+    fullMatrix<double> ref = gmshGenerateMonomialsQuadrangle(order);
+    ref.add(- order / 2.);
 
-  indices.resize(ref.size1());
-  for (int i = 0; i < ref.size1(); ++i) {
-    double u = ref(i, 0);
-    double v = ref(i, 1);
-    double tmp = u;
-    switch (rot) {
-      case 1: u =  v; v = -tmp; break;
-      case 2: u = -u; v =   -v; break;
-      case 3: u = -v; v =  tmp; break;
-    }
-    if (swap) {
-      tmp = u;
-      u = v;
-      v = tmp;
-    }
-    for (int j = 0; j < ref.size1(); ++j) {
-      if (u == ref(j, 0) && v == ref(j, 1)) {
-        indices[i] = j;
-        break;
+    indices.resize(ref.size1());
+    for (int i = 0; i < ref.size1(); ++i) {
+      double u = ref(i, 0);
+      double v = ref(i, 1);
+      double tmp = u;
+      switch (rot) {
+        case 1: u =  v; v = -tmp; break;
+        case 2: u = -u; v =   -v; break;
+        case 3: u = -v; v =  tmp; break;
+      }
+      if (swap) {
+        tmp = u;
+        u = v;
+        v = tmp;
+      }
+      for (int j = 0; j < ref.size1(); ++j) {
+        if (u == ref(j, 0) && v == ref(j, 1)) {
+          indices[i] = j;
+          break;
+        }
       }
     }
   }

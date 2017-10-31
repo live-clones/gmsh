@@ -75,7 +75,7 @@ class DocRecord{
   int Qtest(PointNumero h, PointNumero i, PointNumero j, PointNumero k);
   int Merge(DT vl, DT vr);
   DT RecurTrig(PointNumero left, PointNumero right);
-  int DListInsert(DListRecord **dlist, DPoint center, PointNumero newPoint);
+  int DListInsert(PointNumero centerPoint, PointNumero newPoint);
   int Insert(PointNumero a, PointNumero b);
   int DListDelete(DListPeek *dlist, PointNumero oldPoint);
   int Delete(PointNumero a, PointNumero b);
