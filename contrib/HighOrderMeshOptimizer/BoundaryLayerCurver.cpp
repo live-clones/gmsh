@@ -926,57 +926,16 @@ namespace BoundaryLayerCurver
       else
         top = commonEdge(tri1, dynamic_cast<MTriangle *>(column[i+2]));
 
-//      std::cout << "tri0: " << tri0->getVertex(0)->getNum() << " "
-//                            << tri0->getVertex(1)->getNum() << " "
-//                            << tri0->getVertex(2)->getNum() << std::endl;
-//      std::cout << "tri1: " << tri1->getVertex(0)->getNum() << " "
-//                            << tri1->getVertex(1)->getNum() << " "
-//                            << tri1->getVertex(2)->getNum() << std::endl;
-//      std::cout << "bottom: " << bottom.getVertex(0)->getNum() << " "
-//                              << bottom.getVertex(1)->getNum() << std::endl;
-//      std::cout << "middle: " << common.getVertex(0)->getNum() << " "
-//                              << common.getVertex(1)->getNum() << std::endl;
-//      std::cout << "toptop: " << top.getVertex(0)->getNum() << " "
-//                              << top.getVertex(1)->getNum() << std::endl;
-
       // Reorient if needed
       int iBottom, iTop, sign;
       tri0->getEdgeInfo(bottom, iBottom, sign);
       tri0->getEdgeInfo(common, iTop, sign);
-//      std::cout << iBottom << " " << iTop << std::endl;
-      if (false){//(iBottom != 0 && iTop != 0) {
-        for (int i = 0; i < tri0->getNumVertices(); ++i) {
-          std::cout << "a[" << i << "]: " << tri0->getVertex(i)->getNum() << std::endl;
-        }
-        tri0->reorient(1, false);
-        for (int i = 0; i < tri0->getNumVertices(); ++i) {
-          std::cout << "b[" << i << "]: " << tri0->getVertex(i)->getNum() << std::endl;
-        }
-        std::cout << std::endl;
-      }
       if (iBottom != 0 && iTop != 0) tri0->reorient(1, false);
       else if (iBottom != 1 && iTop != 1) tri0->reorient(2, false);
       tri1->getEdgeInfo(common, iBottom, sign);
       tri1->getEdgeInfo(top, iTop, sign);
-//      std::cout << iBottom << " " << iTop << std::endl;
-      if (false){//(iBottom != 0 && iTop != 0) {
-        for (int i = 0; i < tri1->getNumVertices(); ++i) {
-          std::cout << "a[" << i << "]: " << tri1->getVertex(i)->getNum() << std::endl;
-        }
-        tri1->reorient(1, false);
-        for (int i = 0; i < tri1->getNumVertices(); ++i) {
-          std::cout << "b[" << i << "]: " << tri1->getVertex(i)->getNum() << std::endl;
-        }
-      }
       if (iBottom != 0 && iTop != 0) tri1->reorient(1, false);
       else if (iBottom != 1 && iTop != 1) tri1->reorient(2, false);
-
-//      std::cout << "tri0: " << tri0->getVertex(0)->getNum() << " "
-//                << tri0->getVertex(1)->getNum() << " "
-//                << tri0->getVertex(2)->getNum() << std::endl;
-//      std::cout << "tri1: " << tri1->getVertex(0)->getNum() << " "
-//                << tri1->getVertex(1)->getNum() << " "
-//                << tri1->getVertex(2)->getNum() << std::endl;
 
 //      // Get vertices
 //      tri0->getEdgeInfo(bottom, iBottom, sign);
@@ -992,13 +951,6 @@ namespace BoundaryLayerCurver
 //        std::reverse(topVertices.begin(), topVertices.begin() + 2);
 //        std::reverse(topVertices.begin() + 2, topVertices.end());
 //      }
-
-//      std::cout << ">bottom: " << bottomVertices[0]->getNum() << " "
-//                               << bottomVertices[1]->getNum() << std::endl;
-//      std::cout << ">middle: " << midVertices[0]->getNum() << " "
-//                               << midVertices[1]->getNum() << std::endl;
-//      std::cout << ">toptop: " << topVertices[0]->getNum() << " "
-//                               << topVertices[1]->getNum() << std::endl;
 
       //
 //      Parameters2DCurve parameters;
