@@ -33,6 +33,7 @@
 #include "BasisFactory.h"
 #include "GFace.h"
 #include "legendrePolynomials.h"
+#include "bezierBasis.h"
 
 #include "gmshVertex.h"
 #include "Geo.h"
@@ -45,11 +46,13 @@
 namespace
 {
   void drawAmplifiedDiffWithLin(const std::vector<MVertex *> &vertices,
-                                GEntity *entity, double amp = 100, int cnt = 100)
+                                GEntity *entity, double amp = 100,
+                                bool drawBasisLines = false, int cnt = 100)
   {
     MLineN l(vertices);
     MVertex *v0 = vertices[0];
     MVertex *v1 = vertices[1];
+    MVertex *previous = NULL;
     for (int i = 0; i < cnt; ++i) {
       double xi = -1 + 2 * i / (cnt - 1.);
       double c1 = i / (cnt - 1.);
@@ -63,10 +66,49 @@ namespace
       MVertex *v = new MVertex(amp * p.x() - (amp - 1) * pLin.x(),
                                amp * p.y() - (amp - 1) * pLin.y(),
                                amp * p.z() - (amp - 1) * pLin.z(), entity);
-      MLine *line = new MLine(v, vLin);
-      ((GEdge *) entity)->addLine(line);
+      if (previous) {
+        MLine *line = new MLine(v, previous);
+        ((GEdge *) entity)->addLine(line);
+      }
+      if (drawBasisLines) {
+        MLine *line = new MLine(v, vLin);
+        ((GEdge *) entity)->addLine(line);
+        ((GEdge *) entity)->addMeshVertex(vLin);
+      }
       ((GEdge *) entity)->addMeshVertex(v);
-      ((GEdge *) entity)->addMeshVertex(vLin);
+      previous = v;
+    }
+  }
+  void drawBezierControlPolygon(const std::vector<MVertex *> &vertices,
+                                GEntity *entity)
+  {
+    const int nVert = vertices.size();
+    const bezierBasis *fs = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 1);
+    MVertex *previous = NULL;
+
+    fullMatrix<double> xyz(nVert, 3);
+    for (int i = 0; i < nVert; ++i) {
+      xyz(i, 0) = vertices[i]->x();
+      xyz(i, 1) = vertices[i]->y();
+      xyz(i, 2) = vertices[i]->z();
+    }
+    fullMatrix<double> controlPoints(nVert, 3);
+    fs->lag2Bez(xyz, controlPoints);
+
+    std::vector<int> idx(nVert);
+    idx[0] = 0;
+    for (int i = 1; i < nVert-1; ++i) idx[i] = i+1;
+    idx[nVert-1] = 1;
+
+    for (int i = 0; i < nVert; ++i) {
+      MVertex *v = new MVertex(controlPoints(idx[i], 0), controlPoints(idx[i], 1),
+                               controlPoints(idx[i], 2), entity);
+      if (previous) {
+        MLine *line = new MLine(v, previous);
+        ((GEdge *) entity)->addLine(line);
+      }
+      ((GEdge *) entity)->addMeshVertex(v);
+      previous = v;
     }
   }
 
@@ -438,7 +480,10 @@ namespace BoundaryLayerCurver
     //       t(xi) is the unit tangent of the base edge
     //       b(xi) is the linear coefficient
 
-//    drawAmplifiedDiffWithLin(baseVert, bndEnt   );
+    if (nLayer == 0) {
+//      drawAmplifiedDiffWithLin(baseVert, bndEnt, 2);
+      drawBezierControlPolygon(baseVert, bndEnt);
+    }
 
     const int orderCurve = baseVert.size() - 1;
     const int orderGauss = orderCurve * 2;
@@ -572,6 +617,9 @@ namespace BoundaryLayerCurver
       topVert[i]->y() = newxyz(i, 1);
       topVert[i]->z() = newxyz(i, 2);
     }
+
+//    drawAmplifiedDiffWithLin(topVert, bndEnt, 2);
+//    drawBezierControlPolygon(topVert, bndEnt);
   }
 
   void computePositionMidVert(const std::vector<MVertex *> &baseVert,
