@@ -42,6 +42,118 @@
 //#include "MLine.h"
 //#include "GmshDefines.h"
 
+namespace
+{
+  void drawAmplifiedDiffWithLin(const std::vector<MVertex *> &vertices,
+                                GEntity *entity, double amp = 100, int cnt = 100)
+  {
+    MLineN l(vertices);
+    MVertex *v0 = vertices[0];
+    MVertex *v1 = vertices[1];
+    for (int i = 0; i < cnt; ++i) {
+      double xi = -1 + 2 * i / (cnt - 1.);
+      double c1 = i / (cnt - 1.);
+      double c0 = 1 - c1;
+      SPoint3 pLin(v0->x() * c0 + v1->x() * c1,
+                   v0->y() * c0 + v1->y() * c1,
+                   v0->z() * c0 + v1->z() * c1);
+      SPoint3 p;
+      l.pnt(xi, 0, 0, p);
+      MVertex *vLin = new MVertex(pLin.x(), pLin.y(), pLin.z(), entity);
+      MVertex *v = new MVertex(amp * p.x() - (amp - 1) * pLin.x(),
+                               amp * p.y() - (amp - 1) * pLin.y(),
+                               amp * p.z() - (amp - 1) * pLin.z(), entity);
+      MLine *line = new MLine(v, vLin);
+      ((GEdge *) entity)->addLine(line);
+      ((GEdge *) entity)->addMeshVertex(v);
+      ((GEdge *) entity)->addMeshVertex(vLin);
+    }
+  }
+
+  void drawIdealCurve(const std::vector<MVertex *> &baseVert,
+                      BoundaryLayerCurver::Parameters2DCurve &parameters, 
+                      SVector3 w, GEntity *entity, bool drawh = true,
+                      bool drawn = false, bool drawt = false, int cnt = 100)
+  {
+    int tagLine = ElementType::getTag(TYPE_LIN, baseVert.size() - 1);
+    const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
+
+    MVertex *vh0 = NULL;
+    MVertex *vn0 = NULL;
+    MVertex *vt0 = NULL;
+
+    for (int i = 0; i < cnt; ++i) {
+      double xi = -1 + 2 * i / (cnt - 1.);
+      double xc = 0, yc = 0, zc = 0;
+      double dx = 0, dy = 0, dz = 0;
+      {
+        double f[100];
+        double sf[100][3];
+        fs->f(xi, 0, 0, f);
+        fs->df(xi, 0, 0, sf);
+        for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+          const MVertex *v = baseVert[j];
+          xc += f[j] * v->x();
+          yc += f[j] * v->y();
+          zc += f[j] * v->z();
+          dx += sf[j][0] * v->x();
+          dy += sf[j][0] * v->y();
+          dz += sf[j][0] * v->z();
+        }
+      }
+      SVector3 t, n, h;
+      double x, y, z;
+      MVertex *v;
+      MLine *line;
+      t = SVector3(dx, dy, dz).unit();
+      n = crossprod(w, t);
+
+      if (drawh) {
+        h = parameters.thicknessAtPoint(xi) * n +
+            parameters.coeffbAtPoint(xi) * t;
+        x = xc + h.x();
+        y = yc + h.y();
+        z = zc + h.z();
+        v = new MVertex(x, y, z, entity);
+        if (vh0) {
+          line = new MLine(v, vh0);
+          ((GEdge *) entity)->addLine(line);
+        }
+        ((GEdge *) entity)->addMeshVertex(v);
+        vh0 = v;
+      }
+
+      if (drawn) {
+        h = parameters.thicknessAtPoint(xi) * n;
+        x = xc + h.x();
+        y = yc + h.y();
+        z = zc + h.z();
+        v = new MVertex(x, y, z, entity);
+        if (vn0) {
+          line = new MLine(v, vn0);
+          ((GEdge *) entity)->addLine(line);
+        }
+        ((GEdge *) entity)->addMeshVertex(v);
+        vn0 = v;
+      }
+
+      if (drawt) {
+        h = parameters.coeffbAtPoint(xi) * t;
+        x = xc + h.x();
+        y = yc + h.y();
+        z = zc + h.z();
+        v = new MVertex(x, y, z, entity);
+        if (vt0) {
+          line = new MLine(v, vt0);
+          ((GEdge *) entity)->addLine(line);
+        }
+        ((GEdge *) entity)->addMeshVertex(v);
+        vt0 = v;
+      }
+    }
+  }
+}
+
 namespace BoundaryLayerCurver
 {
   static std::map<std::tuple<int, int, int>, LeastSquareData*> leastSquareData;
@@ -266,70 +378,7 @@ namespace BoundaryLayerCurver
     int tagLine = ElementType::getTag(TYPE_LIN, baseVert.size()-1);
     const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
 
-    MVertex *vh0 = NULL;
-    MVertex *vn0 = NULL;
-    MVertex *vt0 = NULL;
-
-    int cnt = 100;
-    for (int i = 0; i < cnt; ++i) {
-      double xi = -1 + 2 * i/(cnt-1.);
-      double xc = 0, yc = 0, zc = 0;
-      double dx = 0, dy = 0, dz = 0;
-      {
-        double f[100];
-        double sf[100][3];
-        fs->f(xi, 0, 0, f);
-        fs->df(xi, 0, 0, sf);
-        for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
-          const MVertex *v = baseVert[j];
-          xc += f[j] * v->x();
-          yc += f[j] * v->y();
-          zc += f[j] * v->z();
-          dx += sf[j][0] * v->x();
-          dy += sf[j][0] * v->y();
-          dz += sf[j][0] * v->z();
-        }
-      }
-//      SVector3 t, n, h;
-//      t = SVector3(dx, dy, dz).unit();
-//      n = crossprod(w, t);
-//      h = parameters.thicknessAtPoint(xi) * n + parameters.coeffbAtPoint(xi) * t;
-//      double x = xc + h.x();
-//      double y = yc + h.y();
-//      double z = zc + h.z();
-//      MVertex *v = new MVertex(x, y, z, bndEnt);
-//      MLine *line;
-//      if (vh0) {
-//        line = new MLine(v, vh0);
-//        ((GEdge *) bndEnt)->addLine(line);
-//      }
-//      ((GEdge *) bndEnt)->addMeshVertex(v);
-//      vh0 = v;
-
-//      h = parameters.thicknessAtPoint(xi) * n;
-//      x = xc + h.x();
-//      y = yc + h.y();
-//      z = zc + h.z();
-//      v = new MVertex(x, y, z, bndEnt);
-//      if (vn0) {
-//        line = new MLine(v, vn0);
-//        ((GEdge *) bndEnt)->addLine(line);
-//      }
-//      ((GEdge *) bndEnt)->addMeshVertex(v);
-//      vn0 = v;
-
-//      h = parameters.coeffbAtPoint(xi) * t;
-//      x = xc + h.x();
-//      y = yc + h.y();
-//      z = zc + h.z();
-//      v = new MVertex(x, y, z, bndEnt);
-//      if (vt0) {
-//        line = new MLine(v, vt0);
-//        ((GEdge *) bndEnt)->addLine(line);
-//      }
-//      ((GEdge *) bndEnt)->addMeshVertex(v);
-//      vt0 = v;
-    }
+//    drawIdealCurve(baseVert, parameters, w, bndEnt);
 
     for (int i = 0; i < nbPoints; ++i) {
       double xi = points[i].pt[0];
@@ -389,32 +438,7 @@ namespace BoundaryLayerCurver
     //       t(xi) is the unit tangent of the base edge
     //       b(xi) is the linear coefficient
 
-
-//    { // draw amplified difference with linear line
-//      MLineN l(baseVert);
-//      MVertex *v0 = baseVert[0];
-//      MVertex *v1 = baseVert[1];
-//      double amp = 100;
-//      int cnt = 100;
-//      for (int i = 0; i < cnt; ++i) {
-//        double xi = -1 + 2 * i / (cnt - 1.);
-//        double c1 = i / (cnt - 1.);
-//        double c0 = 1 - c1;
-//        SPoint3 pLin(v0->x() * c0 + v1->x() * c1,
-//                     v0->y() * c0 + v1->y() * c1,
-//                     v0->z() * c0 + v1->z() * c1);
-//        SPoint3 p;
-//        l.pnt(xi, 0, 0, p);
-//        MVertex *vLin = new MVertex(pLin.x(), pLin.y(), pLin.z(), bndEnt);
-//        MVertex *v = new MVertex(amp * p.x() - (amp - 1) * pLin.x(),
-//                                 amp * p.y() - (amp - 1) * pLin.y(),
-//                                 amp * p.z() - (amp - 1) * pLin.z(), bndEnt);
-//        MLine *line = new MLine(v, vLin);
-//        ((GEdge *) bndEnt)->addLine(line);
-//        ((GEdge *) bndEnt)->addMeshVertex(v);
-//        ((GEdge *) bndEnt)->addMeshVertex(vLin);
-//      }
-//    }
+//    drawAmplifiedDiffWithLin(baseVert, bndEnt   );
 
     const int orderCurve = baseVert.size() - 1;
     const int orderGauss = orderCurve * 2;
@@ -459,9 +483,6 @@ namespace BoundaryLayerCurver
         SVector3 t, n, h, nn, tt;
         t = SVector3(dx, dy, dz).unit();
         n = crossprod(w, t);
-//        h = SVector3(topVert[i]->x() - baseVert[i]->x(),
-//                     topVert[i]->y() - baseVert[i]->y(),
-//                     topVert[i]->z() - baseVert[i]->z());
         nn = parameters.thicknessAtPoint(xi[i]) * n;
         tt = parameters.coeffbAtPoint(xi[i]) * t;
         xyz(sizeSystem+i, 6) = nn.x();
@@ -472,30 +493,6 @@ namespace BoundaryLayerCurver
         xyz(sizeSystem+i, 11) = tt.z();
       }
     }
-
-//    double *x = new double[sizeSystem];
-//    double *y = new double[sizeSystem];
-//    double *z = new double[sizeSystem];
-//    idealPositionEdge(baseVert, parameters, e3, sizeSystem, gaussPnts, x, y, z);
-
-//    // Project into a global reference frame {e1, e2, e3}
-//    SVector3 e1(0, 0, 0), e2;
-//    double *u = new double[sizeSystem];
-//    double *v = new double[sizeSystem];
-//    {
-//      int k = 0;
-//      if (std::abs(e3(1)) > std::abs(e3(k))) k = 1;
-//      if (std::abs(e3(2)) > std::abs(e3(k))) k = 2;
-//      e1((k + 1) % 3) = 1;
-//      e2 = crossprod(e3, e1).unit();
-//      e1 = crossprod(e2, e3);
-//
-//      for (int i = 0; i < sizeSystem; ++i) {
-//        SVector3 h(x[i], y[i], z[i]);
-//        u[i] = dot(h, e1);
-//        v[i] = dot(h, e2);
-//      }
-//    }
 
     LeastSquareData *data = getLeastSquareData(TYPE_LIN, orderCurve, orderGauss);
 
@@ -570,31 +567,11 @@ namespace BoundaryLayerCurver
     data->Leg2Lag.mult(coeff, newxyz);
     newxyz.print("newxyz");
 
-//    xyz.print("xyz");
-//    newxyz.print("newxyz");
-
-    std::cout << newxyz(0, 0) - topVert[0]->x() << " "
-              << newxyz(0, 1) - topVert[0]->y() << " "
-              << newxyz(0, 2) - topVert[0]->z() << " "
-              << newxyz(1, 0) - topVert[1]->x() << " "
-              << newxyz(1, 1) - topVert[1]->y() << " "
-              << newxyz(1, 2) - topVert[1]->z() << std::endl;
-
     for (int i = 2; i < topVert.size(); ++i) {
       topVert[i]->x() = newxyz(i, 0);
       topVert[i]->y() = newxyz(i, 1);
       topVert[i]->z() = newxyz(i, 2);
     }
-
-//    for (int i = 0; i < sizeSystem; ++i) {
-//      x[i] =
-//    }
-
-//    delete x;
-//    delete y;
-//    delete z;
-//    delete u;
-//    delete v;
   }
 
   void computePositionMidVert(const std::vector<MVertex *> &baseVert,
@@ -612,32 +589,7 @@ namespace BoundaryLayerCurver
     //       t(xi) is the unit tangent of the base edge
     //       b(xi) is the linear coefficient
 
-
-//    { // draw amplified difference with linear line
-//      MLineN l(baseVert);
-//      MVertex *v0 = baseVert[0];
-//      MVertex *v1 = baseVert[1];
-//      double amp = 100;
-//      int cnt = 100;
-//      for (int i = 0; i < cnt; ++i) {
-//        double xi = -1 + 2 * i / (cnt - 1.);
-//        double c1 = i / (cnt - 1.);
-//        double c0 = 1 - c1;
-//        SPoint3 pLin(v0->x() * c0 + v1->x() * c1,
-//                     v0->y() * c0 + v1->y() * c1,
-//                     v0->z() * c0 + v1->z() * c1);
-//        SPoint3 p;
-//        l.pnt(xi, 0, 0, p);
-//        MVertex *vLin = new MVertex(pLin.x(), pLin.y(), pLin.z(), bndEnt);
-//        MVertex *v = new MVertex(amp * p.x() - (amp - 1) * pLin.x(),
-//                                 amp * p.y() - (amp - 1) * pLin.y(),
-//                                 amp * p.z() - (amp - 1) * pLin.z(), bndEnt);
-//        MLine *line = new MLine(v, vLin);
-//        ((GEdge *) bndEnt)->addLine(line);
-//        ((GEdge *) bndEnt)->addMeshVertex(v);
-//        ((GEdge *) bndEnt)->addMeshVertex(vLin);
-//      }
-//    }
+//    drawAmplifiedDiffWithLin(baseVert, bndEnt);
 
     const int orderCurve = baseVert.size() - 1;
     const int orderGauss = orderCurve * 2;
@@ -646,7 +598,8 @@ namespace BoundaryLayerCurver
 
     /*
     fullMatrix<double> xyz(sizeSystem + 2, 3);
-    idealPositionEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz, bndEnt);
+    idealPositionEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz,
+                      bndEnt, direction);
     xyz(sizeSystem, 0) = topVert[0]->x();
     xyz(sizeSystem, 1) = topVert[0]->y();
     xyz(sizeSystem, 2) = topVert[0]->z();
@@ -682,9 +635,6 @@ namespace BoundaryLayerCurver
         SVector3 t, n, h, nn, tt;
         t = SVector3(dx, dy, dz).unit();
         n = crossprod(w, t);
-//        h = SVector3(topVert[i]->x() - baseVert[i]->x(),
-//                     topVert[i]->y() - baseVert[i]->y(),
-//                     topVert[i]->z() - baseVert[i]->z());
         nn = parameters.thicknessAtPoint(xi[i], direction) * n;
         tt = parameters.coeffbAtPoint(xi[i], direction) * t;
         xyz(sizeSystem+i, 6) = nn.x();
@@ -695,30 +645,6 @@ namespace BoundaryLayerCurver
         xyz(sizeSystem+i, 11) = tt.z();
       }
     }
-
-//    double *x = new double[sizeSystem];
-//    double *y = new double[sizeSystem];
-//    double *z = new double[sizeSystem];
-//    idealPositionEdge(baseVert, parameters, e3, sizeSystem, gaussPnts, x, y, z);
-
-//    // Project into a global reference frame {e1, e2, e3}
-//    SVector3 e1(0, 0, 0), e2;
-//    double *u = new double[sizeSystem];
-//    double *v = new double[sizeSystem];
-//    {
-//      int k = 0;
-//      if (std::abs(e3(1)) > std::abs(e3(k))) k = 1;
-//      if (std::abs(e3(2)) > std::abs(e3(k))) k = 2;
-//      e1((k + 1) % 3) = 1;
-//      e2 = crossprod(e3, e1).unit();
-//      e1 = crossprod(e2, e3);
-//
-//      for (int i = 0; i < sizeSystem; ++i) {
-//        SVector3 h(x[i], y[i], z[i]);
-//        u[i] = dot(h, e1);
-//        v[i] = dot(h, e2);
-//      }
-//    }
 
     LeastSquareData *data = getLeastSquareData(TYPE_LIN, orderCurve, orderGauss);
 
@@ -793,31 +719,11 @@ namespace BoundaryLayerCurver
     data->Leg2Lag.mult(coeff, newxyz);
     newxyz.print("newxyz");
 
-//    xyz.print("xyz");
-//    newxyz.print("newxyz");
-
-    std::cout << newxyz(0, 0) - midVert[0]->x() << " "
-              << newxyz(0, 1) - midVert[0]->y() << " "
-              << newxyz(0, 2) - midVert[0]->z() << " "
-              << newxyz(1, 0) - midVert[1]->x() << " "
-              << newxyz(1, 1) - midVert[1]->y() << " "
-              << newxyz(1, 2) - midVert[1]->z() << std::endl;
-
     for (int i = 2; i < midVert.size(); ++i) {
       midVert[i]->x() = newxyz(i, 0);
       midVert[i]->y() = newxyz(i, 1);
       midVert[i]->z() = newxyz(i, 2);
     }
-
-//    for (int i = 0; i < sizeSystem; ++i) {
-//      x[i] =
-//    }
-
-//    delete x;
-//    delete y;
-//    delete z;
-//    delete u;
-//    delete v;
   }
 
   InteriorPlacementData* constructInteriorPlacementData(int tag)
@@ -828,13 +734,21 @@ namespace BoundaryLayerCurver
 
     int type = ElementType::ParentTypeFromTag(tag);
 
-    switch (ElementType::ParentTypeFromTag(tag)) {
+    switch (type) {
+      case TYPE_TRI:
       case TYPE_QUA: {
         std::map<std::pair<int, int>, int> coordinate2num;
         std::vector<std::pair<int, int>> num2coordinate;
+        long int x, y;
         for (int i = 0; i < fs->points.size1(); ++i) {
-          const long int x = std::lround((fs->points(i, 0) + 1) / 2. * order);
-          const long int y = std::lround((fs->points(i, 1) + 1) / 2. * order);
+          if (type == TYPE_TRI) {
+            x = std::lround(fs->points(i, 0) * order);
+            y = std::lround(fs->points(i, 1) * order);
+          }
+          else {
+            x = std::lround((fs->points(i, 0) + 1) / 2. * order);
+            y = std::lround((fs->points(i, 1) + 1) / 2. * order);
+          }
           coordinate2num[std::make_pair(x, y)] = i;
           num2coordinate.push_back(std::make_pair(x, y));
         }
@@ -843,35 +757,19 @@ namespace BoundaryLayerCurver
           const std::pair<int, int> coordinates(num2coordinate[i]);
           const int &x = coordinates.first;
           const int &y = coordinates.second;
-          if (y == 0 || y == order || x == 0 || x == order) continue;
+          int y1;
+          if (type == TYPE_TRI) {
+            y1 = order - x;
+            if (y == 0 || y == y1 || x == 0) continue;
+          }
+          else {
+            y1 = order;
+            if (y == 0 || y == y1 || x == 0 || x == order) continue;
+          }
           const std::pair<int, int> coordinates0(x, 0);
-          const std::pair<int, int> coordinates1(x, order);
+          const std::pair<int, int> coordinates1(x, y1);
           data->iToMove.push_back(i);
-          data->factor.push_back(1 - y / (double) order);
-          data->i0.push_back(coordinate2num[coordinates0]);
-          data->i1.push_back(coordinate2num[coordinates1]);
-        }
-        break;
-      }
-      case TYPE_TRI: {
-        std::map<std::pair<int, int>, int> coordinate2num;
-        std::vector<std::pair<int, int>> num2coordinate;
-        for (int i = 0; i < fs->points.size1(); ++i) {
-          const long int x = std::lround(fs->points(i, 0) * order);
-          const long int y = std::lround(fs->points(i, 1) * order);
-          coordinate2num[std::make_pair(x, y)] = i;
-          num2coordinate.push_back(std::make_pair(x, y));
-        }
-
-        for (int i = 0; i < fs->points.size1(); ++i) {
-          const std::pair<int, int> coordinates(num2coordinate[i]);
-          const int &x = coordinates.first;
-          const int &y = coordinates.second;
-          if (y == 0 || y == order - x || x == 0) continue;
-          const std::pair<int, int> coordinates0(x, 0);
-          const std::pair<int, int> coordinates1(x, order-x);
-          data->iToMove.push_back(i);
-          data->factor.push_back(1 - y / (double) (order-x));
+          data->factor.push_back(1 - y / (double) y1);
           data->i0.push_back(coordinate2num[coordinates0]);
           data->i1.push_back(coordinate2num[coordinates1]);
         }
@@ -884,7 +782,7 @@ namespace BoundaryLayerCurver
     return data;
   }
 
-  void replaceInteriorNodes(MElement *el)
+  void repositionInteriorNodes(MElement *el)
   {
     int tag = el->getTypeForMSH();
     InteriorPlacementData *data;
@@ -988,8 +886,8 @@ namespace BoundaryLayerCurver
       computePositionMidVert(bottomVertices, midVertices, parameters, w,
                              bndEnt, i, direction);
       computePositionTopVert(bottomVertices, topVertices, parameters, w, bndEnt, i);
-      replaceInteriorNodes(tri0);
-      replaceInteriorNodes(tri1);
+      repositionInteriorNodes(tri0);
+      repositionInteriorNodes(tri1);
       bottom = MEdge(topVertices[0], topVertices[1]);
     }
   }
@@ -1068,7 +966,7 @@ namespace BoundaryLayerCurver
       Parameters2DCurve parameters;
       computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
       computePositionTopVert(bottomVertices, topVertices, parameters, w, bndEnt, i);
-      replaceInteriorNodes(quad);
+      repositionInteriorNodes(quad);
       bottom = MEdge(topVertices[0], topVertices[1]);
     }
   }
