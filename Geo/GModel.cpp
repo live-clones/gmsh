@@ -745,7 +745,7 @@ int GModel::getPhysicalNumber(const int &dim, const std::string &name)
   for(piter physIt = firstPhysicalName(); physIt != lastPhysicalName(); ++physIt)
     if(dim == physIt->first.first && name == physIt->second)
       return physIt->first.second;
-  Msg::Warning("No physical group found with the name '%s'", name.c_str());
+  //Msg::Warning("No physical group found with the name '%s'", name.c_str());
   return -1;
 }
 

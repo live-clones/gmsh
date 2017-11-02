@@ -1065,8 +1065,10 @@ void addPhysical(GModel *const model, GEntity *const entity, const unsigned shor
   std::string name = "_omega{";
   name += std::to_string(partition);
   name += "}";
-        
-  const int number = model->setPhysicalName(name, entity->dim(), 0);
+  
+  int number = model->getPhysicalNumber(entity->dim(), name);
+  if(number == -1) number = model->numPhysicalNames()+1;
+  model->setPhysicalName(name, entity->dim(), number);
   entity->addPhysicalEntity(number);
 }
 
@@ -1432,8 +1434,10 @@ void assignPartitionBoundary(GModel *const model, MFace &me, MElement* reference
     }
     name += "}";
     
-    const int numPhysical = model->setPhysicalName(name, ppf->dim());
-    ppf->addPhysicalEntity(numPhysical);
+    int number = model->getPhysicalNumber(ppf->dim(), name);
+    if(number == -1) number = model->numPhysicalNames()+1;
+    model->setPhysicalName(name, ppf->dim(), number);
+    ppf->addPhysicalEntity(number);
   }
   else
   {
@@ -1528,8 +1532,10 @@ void assignPartitionBoundary(GModel *const model, MEdge &me, MElement* reference
       }
       name += "}";
       
-      const int numPhysical = model->setPhysicalName(name, ppe->dim());
-      ppe->addPhysicalEntity(numPhysical);
+      int number = model->getPhysicalNumber(ppe->dim(), name);
+      if(number == -1) number = model->numPhysicalNames()+1;
+      model->setPhysicalName(name, ppe->dim(), number);
+      ppe->addPhysicalEntity(number);
     }
     else
     {
@@ -1557,8 +1563,10 @@ void assignPartitionBoundary(GModel *const model, MEdge &me, MElement* reference
       }
       name += "}";
       
-      const int numPhysical = model->setPhysicalName(name, ppe->dim());
-      ppe->addPhysicalEntity(numPhysical);
+      int number = model->getPhysicalNumber(ppe->dim(), name);
+      if(number == -1) number = model->numPhysicalNames()+1;
+      model->setPhysicalName(name, ppe->dim(), number);
+      ppe->addPhysicalEntity(number);
     }
     else
     {
@@ -1645,8 +1653,10 @@ void assignPartitionBoundary(GModel *const model, MVertex *ve, MElement* referen
       }
       name += "}";
       
-      const int numPhysical = model->setPhysicalName(name, ppv->dim());
-      ppv->addPhysicalEntity(numPhysical);
+      int number = model->getPhysicalNumber(ppv->dim(), name);
+      if(number == -1) number = model->numPhysicalNames()+1;
+      model->setPhysicalName(name, ppv->dim(), number);
+      ppv->addPhysicalEntity(number);
     }
     else
     {
@@ -1673,8 +1683,10 @@ void assignPartitionBoundary(GModel *const model, MVertex *ve, MElement* referen
       }
       name += "}";
       
-      const int numPhysical = model->setPhysicalName(name, ppv->dim());
-      ppv->addPhysicalEntity(numPhysical);
+      int number = model->getPhysicalNumber(ppv->dim(), name);
+      if(number == -1) number = model->numPhysicalNames()+1;
+      model->setPhysicalName(name, ppv->dim(), number);
+      ppv->addPhysicalEntity(number);
     }
     else
     {
@@ -1868,15 +1880,77 @@ void CreateTopologyFile(GModel* model, meshPartitionOptions &options, std::multi
   file << std::endl;
   
   //D
-  file << "D() = {";
+  file << "\tD() = {";
   for(unsigned int i = 0; i < npart; i++)
   {
     if(i != 0) file << ", ";
     file << i;
   }
-  file << "};";
-  //D_i
+  file << "};" << std::endl;
   
+  //D_i
+  std::multimap<unsigned short, unsigned short> neighbors;
+  for(std::multimap<unsigned short, GEntity*>::iterator it = newPartitionBoundaries.begin(); it != newPartitionBoundaries.end(); ++it)
+  {
+    if(it->second->geomType() == GEntity::PartitionSurface)
+    {
+      for(unsigned int i = 0; i < static_cast<partitionFace*>(it->second)->_partitions.size(); i++)
+      {
+        neighbors.insert(std::pair<unsigned short, unsigned short>(it->first, static_cast<partitionFace*>(it->second)->_partitions[i]));
+      }
+    }
+    else if(it->second->geomType() == GEntity::PartitionCurve)
+    {
+      for(unsigned int i = 0; i < static_cast<partitionEdge*>(it->second)->_partitions.size(); i++)
+      {
+        neighbors.insert(std::pair<unsigned short, unsigned short>(it->first, static_cast<partitionEdge*>(it->second)->_partitions[i]));
+      }
+    }
+    else if(it->second->geomType() == GEntity::PartitionVertex)
+    {
+      for(unsigned int i = 0; i < static_cast<partitionVertex*>(it->second)->_partitions.size(); i++)
+      {
+        neighbors.insert(std::pair<unsigned short, unsigned short>(it->first, static_cast<partitionVertex*>(it->second)->_partitions[i]));
+      }
+    }
+  }
+  for(std::multimap<unsigned short, GEntity*>::iterator it = newBoundariesOfPartitionBoundaries.begin(); it != newBoundariesOfPartitionBoundaries.end(); ++it)
+  {
+    if(it->second->geomType() == GEntity::PartitionCurve)
+    {
+      for(unsigned int i = 0; i < static_cast<partitionEdge*>(it->second)->_partitions.size(); i++)
+      {
+        neighbors.insert(std::pair<unsigned short, unsigned short>(it->first, static_cast<partitionEdge*>(it->second)->_partitions[i]));
+      }
+    }
+    else if(it->second->geomType() == GEntity::PartitionVertex)
+    {
+      for(unsigned int i = 0; i < static_cast<partitionVertex*>(it->second)->_partitions.size(); i++)
+      {
+        neighbors.insert(std::pair<unsigned short, unsigned short>(it->first, static_cast<partitionVertex*>(it->second)->_partitions[i]));
+      }
+    }
+  }
+  
+  for(unsigned int i = 0; i < npart; i++)
+  {
+    std::pair <std::multimap<unsigned short, unsigned short>::iterator, std::multimap<unsigned short, unsigned short>::iterator> range;
+    range = neighbors.equal_range(i);
+    std::vector<unsigned short> writeNeighbors;
+    file << "\tD_" << i << "() = {";
+    int j = 0;
+    for(std::multimap<unsigned short, unsigned short>::iterator it = range.first; it != range.second; ++it)
+    {
+      if(std::find(writeNeighbors.begin(), writeNeighbors.end(), it->second) == writeNeighbors.end() && i != it->second)
+      {
+        if(j != 0) file << ", ";
+        file << it->second;
+        writeNeighbors.push_back(it->second);
+        j++;
+      }
+    }
+    file << "};" << std::endl;
+  }
   
   file << "}" << std::endl << std::endl;
 }
