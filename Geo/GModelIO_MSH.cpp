@@ -212,6 +212,10 @@ int GModel::readMSH(const std::string &name)
         fclose(fp);
         return _readMSH2(name);
       }
+      if(version == 4.0){
+        fclose(fp);
+        return _readMSH4(name);
+      }
       if(format){
         binary = true;
         Msg::Debug("Mesh is in binary format");
@@ -632,6 +636,10 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
 {
   if(version < 3)
     return _writeMSH2(name, version, binary, saveAll, saveParametric,
+                      scalingFactor, elementStartNum, saveSinglePartition,
+                      multipleView);
+  if(version == 4.0)
+    return _writeMSH4(name, version, binary, saveAll, saveParametric,
                       scalingFactor, elementStartNum, saveSinglePartition,
                       multipleView);
 

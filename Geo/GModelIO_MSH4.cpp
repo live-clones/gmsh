@@ -3,13 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
-#include <stdlib.h>
-#include <string.h>
-#include <map>
-#include <string>
-#include <sstream>
-#include <cassert>
-#include <iomanip>
+#include <fstream>
 #include "GModel.h"
 #include "OS.h"
 #include "GmshDefines.h"
@@ -26,5 +20,19 @@
 #include "GmshMessage.h"
 #include "Context.h"
 #include "OS.h"
+
+int _readMSH4(const std::string &name)
+{
+  
+}
+
+int _writeMSH4(const std::string &name, double version=4.0, bool binary=false,
+               bool saveAll=false, bool saveParametric=false,
+               double scalingFactor=1.0, int elementStartNum=0,
+               int saveSinglePartition=0, bool multipleView=false,
+               bool renumberVertices=true)
+{
+  
+}
 
 
