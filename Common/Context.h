@@ -58,7 +58,6 @@ struct contextMeshOptions {
   int cgnsImportOrder;
   std::map<int,int> algo2d_per_face;
   std::map<int,int> curvature_control_per_face;
-  int ignorePartBound;
   int NewtonConvergenceTestXYZ;
   int preserveNumberingMsh2;
   int ignorePeriodicity;

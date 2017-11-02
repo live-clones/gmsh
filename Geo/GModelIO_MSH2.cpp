@@ -498,7 +498,7 @@ int GModel::_readMSH2(const std::string &name)
 	  }
           delete [] indices;
 
-          if (CTX::instance()->mesh.ignorePartBound && elementary<0) continue;
+          if (elementary<0) continue;
           MElement *e = createElementMSH2(this, num, type, physical, elementary,
                                           partition, vertices, elements, physicals,
                                           own, p, doms[0], doms[1]);

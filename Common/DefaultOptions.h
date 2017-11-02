@@ -1166,8 +1166,6 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "RandomFactor" , opt_mesh_rand_factor , 1.e-9 ,
     "Random factor used in the 2D meshing algorithm (should be increased if "
     "RandomFactor * size(triangle)/size(model) approaches machine accuracy)" },
-  { F|O, "IgnorePartitionBoundary" , opt_mesh_ignore_part_bound , 0. ,
-    "Ignore partitions boundaries (0=no, 1=yes)"},
   { F|O, "PreserveNumberingMsh2" , opt_mesh_preserve_numbering_msh2 , 0. ,
     "Preserve element numbering in MSH2 format (will break meshes with multiple "
     "physical groups for a single elementary entity)"},
