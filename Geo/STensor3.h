@@ -281,8 +281,9 @@ class STensor3 {
     return ithis;
   }
 
-  void operator = (const STensor3 &other){
+  STensor3& operator = (const STensor3 &other){
     for (int i = 0; i < 9; i++) _val[i] = other._val[i];
+    return *this;
   }
 
   STensor3 operator + (const STensor3 &other) const

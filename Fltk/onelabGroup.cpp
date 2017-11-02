@@ -666,10 +666,11 @@ static bool serverAction(const std::string &action)
     return true;
   }
   else if(!action.compare(0, 5, "Reset")){ // reset some variables
-    std::vector<std::string> what = onelab::parameter::split(action, ' ');
-    for(unsigned int i = 1; i < what.size(); i++){
-      Msg::Debug("Clearing variable '%s'", what[i].c_str());
-      onelab::server::instance()->clear(what[i]);
+    std::vector<std::string> what = onelab::parameter::split(action.substr(5), ',');
+    for(unsigned int i = 0; i < what.size(); i++){
+      std::string var = onelab::parameter::trim(what[i]);
+      Msg::Debug("Clearing variable '%s'", var.c_str());
+      onelab::server::instance()->clear(var);
     }
     FlGui::instance()->rebuildTree(false);
     return true;
