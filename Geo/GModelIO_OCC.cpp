@@ -2380,6 +2380,14 @@ bool OCC_Internals::booleanFragments(int tag,
                          outDimTags, outDimTagsMap, removeObject, removeTool);
 }
 
+int OCC_Internals::_getMaxDim()
+{
+  if(_tagSolid.Extent()) return 3;
+  if(_tagFace.Extent()) return 2;
+  if(_tagEdge.Extent()) return 1;
+  return 0;
+}
+
 void OCC_Internals::_getAllDimTags(std::vector<std::pair<int, int> > &dimTags, int dim)
 {
   for(int d = -2; d < 4; d++){
@@ -2402,7 +2410,7 @@ void OCC_Internals::removeAllDuplicates()
 {
   std::vector<std::pair<int, int> > objectDimTags, toolDimTags, outDimTags;
   std::vector<std::vector<std::pair<int, int> > > outDimTagsMap;
-  _getAllDimTags(objectDimTags); // all shapes (that will be) bound to tags
+  _getAllDimTags(objectDimTags, _getMaxDim());
   booleanFragments(-1, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
                    true, true);
 }
@@ -2483,6 +2491,23 @@ bool OCC_Internals::_transform(const std::vector<std::pair<int, int> > &inDimTag
     result = gtfo->Shape();
   }
 
+  // copy vertex-based meshing attributes
+  TopExp_Explorer exp0;
+  for(exp0.Init(c, TopAbs_VERTEX); exp0.More(); exp0.Next()){
+    TopoDS_Vertex vertex = TopoDS::Vertex(exp0.Current());
+    TopoDS_Shape transformed;
+    if(tfo)
+      transformed = tfo->ModifiedShape(vertex);
+    else if(gtfo)
+      transformed = gtfo->ModifiedShape(vertex);
+    if(!transformed.IsNull()){
+      double lc = _meshAttributes->getMeshSize(0, vertex);
+      if(lc > 0 && lc < MAX_LC)
+        _meshAttributes->insert(new OCCMeshAttributes(0, transformed, lc));
+    }
+  }
+
+  // try to re-bind trasnformed shapes to same tags as original shapes
   std::vector<TopoDS_Shape> outShapes;
   _addSimpleShapes(result, outShapes);
 
