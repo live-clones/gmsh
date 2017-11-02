@@ -440,7 +440,7 @@ class GModel {
   void recomputeMeshPartitions();
 
   // delete all the partitions
-  void deleteMeshPartitions();
+  int deleteMeshPartitions();
 
   // store/recall min and max partitions size
   void setMinPartitionSize(const int pSize) { partitionSize[0] = pSize; }
