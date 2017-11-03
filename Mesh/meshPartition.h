@@ -73,8 +73,9 @@ void AssignMeshVertices(GModel *model);
 template <class ITERATOR>
 void setVerticesToEntity(std::set<MVertex *> &verts, GEntity *const entity, ITERATOR it_beg, ITERATOR it_end);
 
-void CreateTopologyFile(GModel* model, std::multimap<unsigned short, GEntity*> &newPartitionEntities, std::multimap<unsigned short, GEntity*> &newPartitionBoundaries, std::multimap<unsigned short, GEntity*> &newBoundariesOfPartitionBoundaries);
+int CreateTopologyFile(GModel* model, std::string name);
 int getTag(GModel* model, GEntity* entity);
+std::vector<int> getPartition(GModel* model, GEntity* entity, std::string &substr);
 
 
 int PartitionMeshFace(std::list<GFace*> &cFaces);

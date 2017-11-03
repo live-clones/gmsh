@@ -1118,18 +1118,6 @@ int GModel::optimizeMesh(const std::string &how)
 #endif
 }
 
-int GModel::partitionMesh(int numPart)
-{
-#if defined(HAVE_MESH) && (defined(HAVE_METIS))
-  opt_mesh_partition_num(0, GMSH_SET, numPart);
-  PartitionMesh(this);
-  return 1;
-#else
-  Msg::Error("Mesh module not compiled");
-  return 0;
-#endif
-}
-
 int GModel::setOrderN(int order, int linear, int incomplete)
 {
 #if defined(HAVE_MESH)
@@ -1465,6 +1453,24 @@ void GModel::deleteMeshPartitions()
     for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
       entities[i]->getMeshElement(j)->setPartition(0);
   meshPartitions.clear();
+}
+
+int GModel::partitionMesh(int numPart)
+{
+#if defined(HAVE_MESH) && (defined(HAVE_METIS))
+  opt_mesh_partition_num(0, GMSH_SET, numPart);
+  PartitionMesh(this);
+  return 1;
+#else
+  Msg::Error("Mesh module not compiled");
+  return 0;
+#endif
+}
+
+int GModel::partitionedTopology(std::string &name)
+{
+  int ier = CreateTopologyFile(this, name);
+  return ier;
 }
 
 void GModel::store(std::vector<MVertex*> &vertices, int dim,

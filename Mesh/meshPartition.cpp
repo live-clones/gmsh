@@ -93,119 +93,7 @@ int PartitionMesh(GModel *const model)
     Msg::StatusBar(true, "Create boundaries...");
     CreatePartitionBoundaries(model, newPartitionBoundaries, newBoundariesOfPartitionBoundaries);
   }
-  /*
-  if(CTX::instance()->mesh.partitionedTopology)
-  {
-    Msg::StatusBar(true, "Write the topology file...");
-    CreateTopologyFile(model, newPartitionEntities, newPartitionBoundaries, newBoundariesOfPartitionBoundaries);
-  }
-  
-  if(CTX::instance()->mesh.mshFilePartitioned)
-  {
-    Msg::StatusBar(true, "Write partition meshes...");
-    std::string base = (getenv("PWD") ? "" : CTX::instance()->homeDir);
-    for(int i = 0; i < CTX::instance()->mesh.num_partitions; i++)
-    {
-      // I create a temporitary model
-      GModel *tmp = new GModel();
-      for(GModel::piter it = model->firstPhysicalName(); it != model->lastPhysicalName(); ++it)
-      {
-        tmp->setPhysicalName(it->second, it->first.first, it->first.second);
-      }
-    
-      std::vector<GEntity*> entities;
-      model->getEntities(entities);
-      for(unsigned int i = 0; i < entities.size(); i++)
-      {
-        if(entities[i]->geomType() != GEntity::PartitionVolume && entities[i]->geomType() != GEntity::PartitionSurface && entities[i]->geomType() != GEntity::PartitionCurve && entities[i]->geomType() != GEntity::PartitionVertex)
-        {
-          switch(entities[i]->dim())
-          {
-            case 0:
-            tmp->add(static_cast<GVertex*>(entities[i]));
-            break;
-            case 1:
-            tmp->add(static_cast<GEdge*>(entities[i]));
-            break;
-            case 2:
-            tmp->add(static_cast<GFace*>(entities[i]));
-            break;
-            case 3:
-            tmp->add(static_cast<GRegion*>(entities[i]));
-            break;
-          }
-        }
-      }
-    
-      for(std::multimap<unsigned short, GEntity*>::const_iterator it = newPartitionEntities.begin(); it != newPartitionEntities.end(); ++it)
-      {
-        if(it->first == i)
-        {
-          switch(it->second->dim())
-          {
-            case 0:
-              tmp->add(static_cast<GVertex*>(it->second));
-              break;
-            case 1:
-              tmp->add(static_cast<GEdge*>(it->second));
-              break;
-            case 2:
-              tmp->add(static_cast<GFace*>(it->second));
-              break;
-            case 3:
-              tmp->add(static_cast<GRegion*>(it->second));
-              break;
-          }
-        }
-      }
-    
-      for(std::multimap<unsigned short, GEntity*>::const_iterator it = newPartitionBoundaries.begin(); it != newPartitionBoundaries.end(); ++it)
-      {
-        if(it->first == i)
-        {
-          switch(it->second->dim())
-          {
-            case 0:
-              tmp->add(static_cast<GVertex*>(it->second));
-              break;
-            case 1:
-              tmp->add(static_cast<GEdge*>(it->second));
-              break;
-            case 2:
-              tmp->add(static_cast<GFace*>(it->second));
-              break;
-          }
-        }
-      }
-      
-      for(std::multimap<unsigned short, GEntity*>::const_iterator it = newBoundariesOfPartitionBoundaries.begin(); it != newBoundariesOfPartitionBoundaries.end(); ++it)
-      {
-        if(it->first == i)
-        {
-          switch(it->second->dim())
-          {
-            case 0:
-              tmp->add(static_cast<GVertex*>(it->second));
-              break;
-            case 1:
-              tmp->add(static_cast<GEdge*>(it->second));
-              break;
-          }
-        }
-      }
-    
-      AssignMeshVertices(tmp);
-        
-      std::ostringstream name;
-      name << "mesh_" << i << ".msh";
-      //To use the 4.0 msh format when it'll be implemented
-      tmp->writeMSH(name.str(), 3, false, true);
-      
-      tmp->remove();
-      delete tmp;
-    }
-  }
-  */
+ 
   AssignMeshVertices(model);
   t = clock() - t;
   Msg::StatusBar(true, "Done partitioning graph in %f seconds", ((float)t)/CLOCKS_PER_SEC);
@@ -1790,16 +1678,149 @@ void setVerticesToEntity(std::set<MVertex *> &verts, GEntity *const entity, ITER
  * ===
  *
  *   returns            - status
- *
- *
+ *                        0 = success
+ *                        1 = error
  *
  *
  ******************************************************************************/
 
-void CreateTopologyFile(GModel* model, std::multimap<unsigned short, GEntity*> &newPartitionEntities, std::multimap<unsigned short, GEntity*> &newPartitionBoundaries, std::multimap<unsigned short, GEntity*> &newBoundariesOfPartitionBoundaries)
+int CreateTopologyFile(GModel* model, std::string name)
 {
+  std::multimap<unsigned short, GEntity*> newPartitionEntities;
+  std::multimap<unsigned short, GEntity*> newPartitionBoundaries;
+  std::multimap<unsigned short, GEntity*> newBoundariesOfPartitionBoundaries;
+  
+  std::vector<GEntity*> entities;
+  model->getEntities(entities);
+  for(unsigned int i = 0; i < entities.size(); i++)
+  {
+    switch(entities[i]->geomType())
+    {
+      case GEntity::PartitionVolume:
+        if(static_cast<partitionRegion*>(entities[i])->_partitions.size() == 0)
+        {
+          continue;
+        }
+        else if(static_cast<partitionRegion*>(entities[i])->_partitions.size() == 1)
+        {
+          newPartitionEntities.insert(std::pair<unsigned short, GEntity*>(static_cast<partitionRegion*>(entities[i])->_partitions[0], entities[i]));
+        }
+        else
+        {
+          std::string substr;
+          std::vector<int> partitions = getPartition(model, entities[i], substr);
+          if(substr == "_Sigma")
+          {
+            for(unsigned int j = 0; j < partitions.size(); j++)
+            {
+              newPartitionBoundaries.insert(std::pair<unsigned short, GEntity*>(partitions[j], entities[i]));
+            }
+          }
+          else if(substr == "_BndSigma")
+          {
+            for(unsigned int j = 0; j < partitions.size(); j++)
+            {
+              newBoundariesOfPartitionBoundaries.insert(std::pair<unsigned short, GEntity*>(partitions[j], entities[i]));
+            }
+          }
+        }
+        break;
+      case GEntity::PartitionSurface:
+        if(static_cast<partitionFace*>(entities[i])->_partitions.size() == 0)
+        {
+          continue;
+        }
+        else if(static_cast<partitionFace*>(entities[i])->_partitions.size() == 1)
+        {
+          newPartitionEntities.insert(std::pair<unsigned short, GEntity*>(static_cast<partitionFace*>(entities[i])->_partitions[0], entities[i]));
+        }
+        else
+        {
+          std::string substr;
+          std::vector<int> partitions = getPartition(model, entities[i], substr);
+          if(substr == "_Sigma")
+          {
+            for(unsigned int j = 0; j < partitions.size(); j++)
+            {
+              newPartitionBoundaries.insert(std::pair<unsigned short, GEntity*>(partitions[j], entities[i]));
+            }
+          }
+          else if(substr == "_BndSigma")
+          {
+            for(unsigned int j = 0; j < partitions.size(); j++)
+            {
+              newBoundariesOfPartitionBoundaries.insert(std::pair<unsigned short, GEntity*>(partitions[j], entities[i]));
+            }
+          }
+        }
+        break;
+      case GEntity::PartitionCurve:
+        if(static_cast<partitionEdge*>(entities[i])->_partitions.size() == 0)
+        {
+          continue;
+        }
+        else if(static_cast<partitionEdge*>(entities[i])->_partitions.size() == 1)
+        {
+          newPartitionEntities.insert(std::pair<unsigned short, GEntity*>(static_cast<partitionEdge*>(entities[i])->_partitions[0], entities[i]));
+        }
+        else
+        {
+          std::string substr;
+          std::vector<int> partitions = getPartition(model, entities[i], substr);
+          if(substr == "_Sigma")
+          {
+            for(unsigned int j = 0; j < partitions.size(); j++)
+            {
+              newPartitionBoundaries.insert(std::pair<unsigned short, GEntity*>(partitions[j], entities[i]));
+            }
+          }
+          else if(substr == "_BndSigma")
+          {
+            for(unsigned int j = 0; j < partitions.size(); j++)
+            {
+              newBoundariesOfPartitionBoundaries.insert(std::pair<unsigned short, GEntity*>(partitions[j], entities[i]));
+            }
+          }
+        }
+        break;
+      case GEntity::PartitionVertex:
+        if(static_cast<partitionVertex*>(entities[i])->_partitions.size() == 0)
+        {
+          continue;
+        }
+        else if(static_cast<partitionVertex*>(entities[i])->_partitions.size() == 1)
+        {
+          newPartitionEntities.insert(std::pair<unsigned short, GEntity*>(static_cast<partitionVertex*>(entities[i])->_partitions[0], entities[i]));
+        }
+        else
+        {
+          std::string substr;
+          std::vector<int> partitions = getPartition(model, entities[i], substr);
+          if(substr == "_Sigma")
+          {
+            for(unsigned int j = 0; j < partitions.size(); j++)
+            {
+              newPartitionBoundaries.insert(std::pair<unsigned short, GEntity*>(partitions[j], entities[i]));
+            }
+          }
+          else if(substr == "_BndSigma")
+          {
+            for(unsigned int j = 0; j < partitions.size(); j++)
+            {
+              newBoundariesOfPartitionBoundaries.insert(std::pair<unsigned short, GEntity*>(partitions[j], entities[i]));
+            }
+          }
+        }
+        break;
+      default:
+        break;
+    }
+  }
+  
   const unsigned short npart = CTX::instance()->mesh.num_partitions;
-  std::ofstream file("topology.pro", std::ofstream::trunc);
+  std::ofstream file(name, std::ofstream::trunc);
+  
+  if(!file.is_open()) return 1;
   
   //-----------Group-----------
   file << "Group{" << std::endl;
@@ -1952,6 +1973,8 @@ void CreateTopologyFile(GModel* model, std::multimap<unsigned short, GEntity*> &
   }
   
   file << "}" << std::endl << std::endl;
+  
+  return 0;
 }
 
 int getTag(GModel* model, GEntity* entity)
@@ -1966,6 +1989,44 @@ int getTag(GModel* model, GEntity* entity)
   }
   
   return -1;
+}
+
+std::vector<int> getPartition(GModel* model, GEntity* entity, std::string &substr)
+{
+  std::vector<int> tags = entity->getPhysicalEntities();
+  std::vector<int> partitions;
+  substr.clear();
+  for(unsigned int i = 0; i < tags.size(); i++)
+  {
+    std::string name = model->getPhysicalName(entity->dim(),tags[i]);
+    
+    bool endSubstr = false;
+    std::string integer;
+    if(name[0] != '_') continue;
+    for(unsigned int i = 0; i < name.length(); i++)
+    {
+      if(name[i] == '{')
+      {
+        endSubstr = true;
+        integer.clear();
+      }
+      else if(name[i] == ',')
+      {
+        partitions.push_back(stoi(integer));
+        integer.clear();
+      }
+      else if(name[i] == ' ') continue;
+      else if(name[i] == '}') break;
+      else
+      {
+        integer += name[i];
+      }
+      
+      if(!endSubstr) substr += name[i];
+    }
+  }
+  
+  return partitions;
 }
 
 

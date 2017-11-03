@@ -34,6 +34,7 @@ void writeMSH4Entities(GModel *const model, std::ofstream &file, bool partition,
 void writeMSH4Physicals(std::ofstream &file, GEntity *const entity, bool binary);
 void writeMSH4Nodes(GModel *const model, std::ofstream &file, bool partitioned, bool binary, bool saveParametric, double scalingFactor);
 void writeMSH4Elements(GModel *const model, std::ofstream &file, bool partitioned, bool binary);
+void writeMSH4PeriodicNodes(GModel *const model, std::ofstream &file, bool partitioned, bool binary);
 
 int GModel::_readMSH4(const std::string &name)
 {
@@ -119,9 +120,8 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary, boo
   
   // periodic
   file << "$Periodic" << std::endl;
-  //Todo
+  writeMSH4PeriodicNodes(this, file, CTX::instance()->mesh.num_partitions != 0 ? false : true, binary);
   file << "$EndPeriodic" << std::endl;
-
   
   return 1;
 }
@@ -464,6 +464,49 @@ void writeMSH4Elements(GModel *const model, std::ofstream &file, bool partitione
   }
 }
 
+void writeMSH4PeriodicNodes(GModel *const model, std::ofstream &file, bool partitioned, bool binary)
+{
+  if(binary)
+  {
+  }
+  else
+  {
+    int count = 0;
+    std::vector<GEntity*> entities;
+    model->getEntities(entities);
+    for(unsigned int i = 0; i < entities.size(); i++)
+      if(entities[i]->meshMaster() != entities[i]) count++;
+    
+    file << count << std::endl;
+    if(!count) return;
+    
+    for(unsigned int i = 0; i < entities.size(); i++)
+    {
+      GEntity *g_slave = entities[i];
+      GEntity *g_master = g_slave->meshMaster();
+      
+      if(g_slave != g_master)
+      {
+        file << g_slave->dim() << " " << g_slave->tag() << " " << g_master->tag() << std::endl;
+        
+        if(g_slave->affineTransform.size() == 16)
+        {
+          file << "Affine ";
+          for(int j = 0; j < 16; j++) file << g_slave->affineTransform[i] << " ";
+          file << std::endl;
+        }
+        
+        file << g_slave->correspondingVertices.size() << std::endl;
+        
+        for (std::map<MVertex*,MVertex*>::iterator it = g_slave->correspondingVertices.begin(); it != g_slave->correspondingVertices.end(); ++it)
+        {
+          file << it->first->getNum() << " " << it->second->getNum() << std::endl;
+        }
+      }
+    }
+  }
+}
+
 /********************************************************
  *
  *    Write partitioned functions
@@ -527,5 +570,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version, b
     tmp->remove();
     delete tmp;
   }
+  
+  return 1;
 }
 

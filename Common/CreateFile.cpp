@@ -265,6 +265,8 @@ void CreateOutputFile(const std::string &fileName, int format,
       GModel::current()->writePartitionedMSH(name, CTX::instance()->mesh.mshFileVersion, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor);
     else
       GModel::current()->writeMSH(name, CTX::instance()->mesh.mshFileVersion, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor);
+      
+    if(CTX::instance()->mesh.partitionedTopology) GModel::current()->partitionedTopology(name);
     break;
 
   case FORMAT_STL:

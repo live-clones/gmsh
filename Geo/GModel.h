@@ -445,6 +445,10 @@ class GModel {
 
   // delete all the partitions
   void deleteMeshPartitions();
+  // partition the mesh
+  int partitionMesh(int num);
+  // create the partitioned topology file
+  int partitionedTopology(std::string &name);
 
   // store/recall min and max partitions size
   void setMinPartitionSize(const int pSize) { partitionSize[0] = pSize; }
@@ -499,9 +503,6 @@ class GModel {
 
   // optimize the mesh
   int optimizeMesh(const std::string &how);
-
-  // partition the mesh
-  int partitionMesh(int num);
 
   // fill the vertex arrays, given the current option and data
   bool fillVertexArrays();
