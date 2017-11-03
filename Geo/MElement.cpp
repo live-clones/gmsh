@@ -1132,6 +1132,26 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
   if(physical < 0) reverse();
 }
 
+void MElement::writeMSH4(std::ofstream &file, bool binary)
+{
+  std::vector<MVertex*> verts;
+  getVertices(verts);
+  
+  if(binary)
+  {
+    file << _num << " ";
+    for(unsigned int i = 0; i < verts.size(); i++)
+    {
+      file << verts[i]->getNum() << " ";
+    }
+    file << std::endl;
+  }
+  else
+  {
+    //Todo
+  }
+}
+
 void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
                         bool printSICN, bool printSIGE, bool printGamma,
                         bool printDisto, double scalingFactor, int elementary)

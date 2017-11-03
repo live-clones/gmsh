@@ -195,6 +195,39 @@ void MVertex::writeMSH2(FILE *fp, bool binary, bool saveParametric, double scali
   }
 }
 
+void MVertex::writeMSH4(std::ofstream &file, bool binary, bool saveParametric, double scalingFactor)
+{
+  if(binary)
+  {
+    //Todo
+  }
+  else
+  {
+    if(saveParametric)
+    {
+      file << _num << " " << _x*scalingFactor << " " << _y*scalingFactor << " " << _z*scalingFactor << " " << _ge->dim() << " " << _ge->tag() << " ";
+      
+      if(_ge->dim() == 1)
+      {
+        double u;
+        getParameter(0, u);
+        file << u << std::endl;
+      }
+      else if(_ge->dim() == 2)
+      {
+        double u, v;
+        getParameter(0, u);
+        getParameter(1, v);
+        file << u << " " << v << std::endl;
+      }
+    }
+    else
+    {
+      file << _num << " " << _x*scalingFactor << " " << _y*scalingFactor << " " << _z*scalingFactor << std::endl;
+    }
+  }
+}
+
 void MVertex::writePLY2(FILE *fp)
 {
   if(_index < 0) return; // negative index vertices are never saved

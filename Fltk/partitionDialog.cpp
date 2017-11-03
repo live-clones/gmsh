@@ -47,10 +47,8 @@ struct PartitionDialog
   // Group 0
   Fl_Choice *choicePartitioner;
   Fl_Value_Input *inputNumPartition;
-  Fl_Check_Button *setPartitionMeshes;
   Fl_Check_Button *setGhostCells;
   Fl_Check_Button *setPartitionBoundaries;
-  Fl_Check_Button *setTopologyFile;
   // Group 1
   Fl_Choice *choiceMetisAlg;
   Fl_Toggle_Button *toggleButtonAdvMetis;
@@ -66,52 +64,46 @@ struct PartitionDialog
   Fl_Value_Input *inputHexWeight;
   
   void write_all_options()
-  {
-    CTX::instance()->partitionOptions.outputDir = CTX::instance()->homeDir;
-    // Group 0
-    CTX::instance()->partitionOptions.num_partitions = static_cast<unsigned short>(inputNumPartition->value());
-    CTX::instance()->partitionOptions.writePartitionMeshes = setPartitionMeshes->value();
-    CTX::instance()->partitionOptions.createGhostCells = setGhostCells->value();
-    CTX::instance()->partitionOptions.createPartitionBoundaries = setPartitionBoundaries->value();
-    CTX::instance()->partitionOptions.writeTopologyFile = setTopologyFile->value();
+  {    // Group 0
+    CTX::instance()->mesh.num_partitions = static_cast<unsigned short>(inputNumPartition->value());
+    CTX::instance()->mesh.createGhostCells = setGhostCells->value();
+    CTX::instance()->mesh.createPartitionBoundaries = setPartitionBoundaries->value();
   
     // Group 1
-    CTX::instance()->partitionOptions.algorithm = choiceMetisAlg->value() + 1;
+    CTX::instance()->mesh.metis_algorithm = choiceMetisAlg->value() + 1;
 
     // Group 2
-    CTX::instance()->partitionOptions.edge_matching = choiceEdgeMatch->value() + 1;
-    CTX::instance()->partitionOptions.refine_algorithm = choiceRefineAlg->value() + 1;
+    CTX::instance()->mesh.metis_edge_matching = choiceEdgeMatch->value() + 1;
+    CTX::instance()->mesh.metis_refine_algorithm = choiceRefineAlg->value() + 1;
 
-    CTX::instance()->partitionOptions.triWeight = (int)inputTriWeight->value();
-    CTX::instance()->partitionOptions.quaWeight = (int)inputQuaWeight->value();
-    CTX::instance()->partitionOptions.tetWeight = (int)inputTetWeight->value();
-    CTX::instance()->partitionOptions.priWeight = (int)inputPriWeight->value();
-    CTX::instance()->partitionOptions.pyrWeight = (int)inputPyrWeight->value();
-    CTX::instance()->partitionOptions.hexWeight = (int)inputHexWeight->value();
+    CTX::instance()->mesh.part_triWeight = (int)inputTriWeight->value();
+    CTX::instance()->mesh.part_quaWeight = (int)inputQuaWeight->value();
+    CTX::instance()->mesh.part_tetWeight = (int)inputTetWeight->value();
+    CTX::instance()->mesh.part_priWeight = (int)inputPriWeight->value();
+    CTX::instance()->mesh.part_pyrWeight = (int)inputPyrWeight->value();
+    CTX::instance()->mesh.part_hexWeight = (int)inputHexWeight->value();
 
   }
   void read_all_options()
   {
     // Group 0
-    inputNumPartition->value(CTX::instance()->partitionOptions.num_partitions);
-    setPartitionMeshes->value(CTX::instance()->partitionOptions.writePartitionMeshes);
-    setGhostCells->value(CTX::instance()->partitionOptions.createGhostCells);
-    setPartitionBoundaries->value(CTX::instance()->partitionOptions.createPartitionBoundaries);
-    setTopologyFile->value(CTX::instance()->partitionOptions.writeTopologyFile);
+    inputNumPartition->value(CTX::instance()->mesh.num_partitions);
+    setGhostCells->value(CTX::instance()->mesh.createGhostCells);
+    setPartitionBoundaries->value(CTX::instance()->mesh.createPartitionBoundaries);
   
     // Group 2
-    choiceMetisAlg->value(CTX::instance()->partitionOptions.algorithm - 1);
+    choiceMetisAlg->value(CTX::instance()->mesh.metis_algorithm - 1);
 
     // Group 3
-    choiceEdgeMatch->value(CTX::instance()->partitionOptions.edge_matching - 1);
-    choiceRefineAlg->value(CTX::instance()->partitionOptions.refine_algorithm - 1);
+    choiceEdgeMatch->value(CTX::instance()->mesh.metis_edge_matching - 1);
+    choiceRefineAlg->value(CTX::instance()->mesh.metis_refine_algorithm - 1);
     
-    inputTriWeight->value(CTX::instance()->partitionOptions.triWeight);
-    inputQuaWeight->value(CTX::instance()->partitionOptions.quaWeight);
-    inputTetWeight->value(CTX::instance()->partitionOptions.tetWeight);
-    inputPriWeight->value(CTX::instance()->partitionOptions.priWeight);
-    inputPyrWeight->value(CTX::instance()->partitionOptions.pyrWeight);
-    inputHexWeight->value(CTX::instance()->partitionOptions.hexWeight);
+    inputTriWeight->value(CTX::instance()->mesh.part_triWeight);
+    inputQuaWeight->value(CTX::instance()->mesh.part_quaWeight);
+    inputTetWeight->value(CTX::instance()->mesh.part_tetWeight);
+    inputPriWeight->value(CTX::instance()->mesh.part_priWeight);
+    inputPyrWeight->value(CTX::instance()->mesh.part_pyrWeight);
+    inputHexWeight->value(CTX::instance()->mesh.part_hexWeight);
     
     // Call all callbacks to ensure consistent options
     partition_opt_num_partitions_cb(inputNumPartition, this);
@@ -134,7 +126,6 @@ void partition_opt_num_partitions_cb(Fl_Widget *widget, void *data)
 void partition_defaults_cb(Fl_Widget *widget, void *data)
 {
   PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
-  CTX::instance()->partitionOptions.setDefaults();
   dlg->read_all_options();
   partition_select_groups_cb(dlg->choicePartitioner, data);
 }
@@ -146,38 +137,16 @@ void partition_partition_cb(Fl_Widget *widget, void *data)
   // Write all options
   dlg->write_all_options();
   
-  if(CTX::instance()->partitionOptions.writePartitionMeshes || CTX::instance()->partitionOptions.writeTopologyFile)
-  {
-    if(fileChooser(FILE_CHOOSER_DIRECTORY, "Output directory", ""))
-    {
-      CTX::instance()->partitionOptions.outputDir = fileChooserGetName(1);
+  // Partition the mesh
+  int ier = PartitionMesh(GModel::current());
 
-      // Partition the mesh
-      int ier = PartitionMesh(GModel::current(), CTX::instance()->partitionOptions);
-
-      // Update the screen
-      if(!ier)
-      {
-        opt_mesh_zone_definition(0, GMSH_SET, 2.);  // Define zone by partition
-        opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);
-        CTX::instance()->mesh.changed = ENT_ALL;
-        drawContext::global()->draw();
-      }
-    }
-  }
-  else
+  // Update the screen
+  if(!ier)
   {
-    // Partition the mesh
-    int ier = PartitionMesh(GModel::current(), CTX::instance()->partitionOptions);
-    
-    // Update the screen
-    if(!ier)
-    {
-      opt_mesh_zone_definition(0, GMSH_SET, 2.);  // Define zone by partition
-      opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);
-      CTX::instance()->mesh.changed = ENT_ALL;
-      drawContext::global()->draw();
-    }
+    opt_mesh_zone_definition(0, GMSH_SET, 2.);  // Define zone by partition
+    opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);
+    CTX::instance()->mesh.changed = ENT_ALL;
+    drawContext::global()->draw();
   }
 }
 
@@ -273,7 +242,7 @@ void partition_dialog()
 
   // Main options group [0]
   {
-    const int GH = 3*BH + 2 + 5*WB;
+    const int GH = 2*BH + 2 + 4*WB;
     y += WB;
     Fl_Group *g = new Fl_Group(0, y, w, GH);
     // Partitioner
@@ -300,21 +269,12 @@ void partition_dialog()
     y += BH + WB;
     // Booleans options
     {
-      Fl_Check_Button *const o = new Fl_Check_Button (WB, y, 2*BB, BH, "Write partitioned meshes");
-      dlg.setPartitionMeshes = o;
-    }
-    {
       Fl_Check_Button *const o = new Fl_Check_Button (2*WB + 2*BB, y, 2*BB, BH, "Create ghost cells");
       dlg.setGhostCells = o;
     }
-    y += BH + WB;
     {
       Fl_Check_Button *const o = new Fl_Check_Button (WB, y, 2*BB, BH, "Create partition boundaries");
       dlg.setPartitionBoundaries = o;
-    }
-    {
-      Fl_Check_Button *const o = new Fl_Check_Button (2*WB + 2*BB, y, 2*BB, BH, "Write a topology file");
-      dlg.setTopologyFile = o;
     }
     y += BH + WB;
     // Box (line)
@@ -467,7 +427,6 @@ void partition_dialog()
 
   dlg.read_all_options();
   // Set the groups to be initally displayed
-  CTX::instance()->partitionOptions.setDefaults();
   dlg.read_all_options();
   partition_select_groups_cb(dlg.window, &dlg);
   dlg.window->show();

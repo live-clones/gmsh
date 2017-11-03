@@ -261,24 +261,10 @@ void CreateOutputFile(const std::string &fileName, int format,
     break;
 
   case FORMAT_MSH:
-    if(GModel::current()->getMeshPartitions().size() &&
-       CTX::instance()->mesh.mshFilePartitioned == 1)
-      GModel::current()->writePartitionedMSH
-        (name, CTX::instance()->mesh.mshFileVersion, CTX::instance()->mesh.binary,
-         CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveParametric,
-         CTX::instance()->mesh.scalingFactor);
-    else if(GModel::current()->getMeshPartitions().size() &&
-            CTX::instance()->mesh.mshFilePartitioned == 2)
-      GModel::current()->writeMSH
-        (name, CTX::instance()->mesh.mshFileVersion,
-         CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
-         CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor,
-         0, -1000);
+    if(CTX::instance()->mesh.num_partitions > 1 && CTX::instance()->mesh.mshFilePartitioned == 1)
+      GModel::current()->writePartitionedMSH(name, CTX::instance()->mesh.mshFileVersion, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor);
     else
-      GModel::current()->writeMSH
-        (name, CTX::instance()->mesh.mshFileVersion,
-         CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
-         CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor);
+      GModel::current()->writeMSH(name, CTX::instance()->mesh.mshFileVersion, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_STL:

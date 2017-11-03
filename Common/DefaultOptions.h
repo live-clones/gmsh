@@ -1095,9 +1095,9 @@ StringXNumber MeshOptions_Number[] = {
     "Weight of tetrahedral element for METIS load balancing" },
   { F|O, "PartitionBoundaries"     , opt_mesh_partition_boundaries , 1 ,
     "Create boundary entities between partitions" },
-  { F|O, "WritePartitionMeshes"     , opt_mesh_partition_writeMeshes , 1 ,
+  { F|O, "PartitionMeshes"     , opt_mesh_msh_file_partitioned , 1 ,
     "Write one mesh file by partition" },
-  { F|O, "WritePartitionTopology"     , opt_mesh_partition_writeTopology , 1 ,
+  { F|O, "PartitionTopology"     , opt_mesh_msh_file_partitioned_topology , 1 ,
     "Write a topology file" },
 
   { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. ,

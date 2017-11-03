@@ -71,22 +71,22 @@ class Graph
       switch (_element[i]->getType())
       {
         case TYPE_TRI:
-          _vwgt[i] = CTX::instance()->partitionOptions.triWeight;
+          _vwgt[i] = CTX::instance()->mesh.part_triWeight;
           break;
         case TYPE_QUA:
-          _vwgt[i] = CTX::instance()->partitionOptions.quaWeight;
+          _vwgt[i] = CTX::instance()->mesh.part_quaWeight;
           break;
         case TYPE_TET:
-          _vwgt[i] = CTX::instance()->partitionOptions.tetWeight;
+          _vwgt[i] = CTX::instance()->mesh.part_tetWeight;
           break;
         case TYPE_PYR:
-          _vwgt[i] = CTX::instance()->partitionOptions.pyrWeight;
+          _vwgt[i] = CTX::instance()->mesh.part_pyrWeight;
           break;
         case TYPE_PRI:
-          _vwgt[i] = CTX::instance()->partitionOptions.priWeight;
+          _vwgt[i] = CTX::instance()->mesh.part_priWeight;
           break;
         case TYPE_HEX:
-          _vwgt[i] = CTX::instance()->partitionOptions.hexWeight;
+          _vwgt[i] = CTX::instance()->mesh.part_hexWeight;
           break;
         default:
           _vwgt[i] = 1;

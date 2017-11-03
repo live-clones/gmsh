@@ -5695,74 +5695,74 @@ double opt_mesh_msh_file_version(OPT_ARGS_NUM)
   return CTX::instance()->mesh.mshFileVersion;
 }
 
+double opt_mesh_msh_file_partitioned(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.mshFilePartitioned = val;
+  return CTX::instance()->mesh.mshFilePartitioned;
+}
+
+double opt_mesh_msh_file_partitioned_topology(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.partitionedTopology = val;
+  return CTX::instance()->mesh.partitionedTopology;
+}
+
 double opt_mesh_partition_hex_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->partitionOptions.hexWeight = (int) val;
-  return CTX::instance()->partitionOptions.hexWeight;
+    CTX::instance()->mesh.part_hexWeight = (int) val;
+  return CTX::instance()->mesh.part_hexWeight;
 }
 
 double opt_mesh_partition_pri_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->partitionOptions.priWeight = (int) val;
-  return CTX::instance()->partitionOptions.priWeight;
+    CTX::instance()->mesh.part_priWeight = (int) val;
+  return CTX::instance()->mesh.part_priWeight;
 }
 
 double opt_mesh_partition_pyr_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->partitionOptions.pyrWeight = (int) val;
-  return CTX::instance()->partitionOptions.pyrWeight;
+    CTX::instance()->mesh.part_pyrWeight = (int) val;
+  return CTX::instance()->mesh.part_pyrWeight;
 }
 
 double opt_mesh_partition_trih_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->partitionOptions.trihWeight = (int) val;
-  return CTX::instance()->partitionOptions.trihWeight;
+    CTX::instance()->mesh.part_trihWeight = (int) val;
+  return CTX::instance()->mesh.part_trihWeight;
 }
 
 double opt_mesh_partition_qua_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->partitionOptions.quaWeight = (int) val;
-  return CTX::instance()->partitionOptions.quaWeight;
+    CTX::instance()->mesh.part_quaWeight = (int) val;
+  return CTX::instance()->mesh.part_quaWeight;
 }
 
 double opt_mesh_partition_tet_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->partitionOptions.tetWeight = (int) val;
-  return CTX::instance()->partitionOptions.tetWeight;
+    CTX::instance()->mesh.part_tetWeight = (int) val;
+  return CTX::instance()->mesh.part_tetWeight;
 }
 
 double opt_mesh_partition_tri_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->partitionOptions.triWeight = (int) val;
-  return CTX::instance()->partitionOptions.triWeight;
+    CTX::instance()->mesh.part_triWeight = (int) val;
+  return CTX::instance()->mesh.part_triWeight;
 }
 
 double opt_mesh_partition_boundaries(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->partitionOptions.createPartitionBoundaries = val;
-  return CTX::instance()->partitionOptions.createPartitionBoundaries;
-}
-
-double opt_mesh_partition_writeMeshes(OPT_ARGS_NUM)
-{
-  if (action & GMSH_SET)
-    CTX::instance()->partitionOptions.writePartitionMeshes = val;
-  return CTX::instance()->partitionOptions.writePartitionMeshes;
-}
-
-double opt_mesh_partition_writeTopology(OPT_ARGS_NUM)
-{
-  if (action & GMSH_SET)
-    CTX::instance()->partitionOptions.writeTopologyFile = val;
-  return CTX::instance()->partitionOptions.writeTopologyFile;
+    CTX::instance()->mesh.createPartitionBoundaries = val;
+  return CTX::instance()->mesh.createPartitionBoundaries;
 }
 
 double opt_mesh_binary(OPT_ARGS_NUM)
@@ -6377,10 +6377,10 @@ double opt_mesh_partition_num(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     const int ival = std::max(1, (int)val);
-    CTX::instance()->partitionOptions.num_partitions = ival;
-    CTX::instance()->partitionOptions.algorithm = (ival <= 8) ? 1 : 2;
+    CTX::instance()->mesh.num_partitions = ival;
+    CTX::instance()->mesh.metis_algorithm = (ival <= 8) ? 1 : 2;
   }
-  return CTX::instance()->partitionOptions.num_partitions;
+  return CTX::instance()->mesh.num_partitions;
 }
 
 double opt_mesh_partition_metis_algorithm(OPT_ARGS_NUM)
@@ -6388,30 +6388,30 @@ double opt_mesh_partition_metis_algorithm(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     int ival = (int)val;
     if(ival < 1 || ival > 2)
-      ival = (CTX::instance()->partitionOptions.num_partitions <= 8) ? 1 : 2;
-    CTX::instance()->partitionOptions.algorithm = ival;
+      ival = (CTX::instance()->mesh.num_partitions <= 8) ? 1 : 2;
+    CTX::instance()->mesh.metis_algorithm = ival;
   }
-  return  CTX::instance()->partitionOptions.algorithm;
+  return  CTX::instance()->mesh.metis_algorithm;
 }
 
 double opt_mesh_partition_metis_edge_matching(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     const int ival = (int)val;
-    CTX::instance()->partitionOptions.edge_matching =
+    CTX::instance()->mesh.metis_edge_matching =
       (ival < 1 || ival > 2) ? 2 : ival;
   }
-  return CTX::instance()->partitionOptions.edge_matching;
+  return CTX::instance()->mesh.metis_edge_matching;
 }
 
 double opt_mesh_partition_metis_refine_algorithm(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     const int ival = (int)val;
-    CTX::instance()->partitionOptions.refine_algorithm =
+    CTX::instance()->mesh.metis_refine_algorithm =
       (ival < 1 || ival > 4) ? 2 : ival;
   }
-  return CTX::instance()->partitionOptions.refine_algorithm;
+  return CTX::instance()->mesh.metis_refine_algorithm;
 }
 
 double opt_mesh_clip(OPT_ARGS_NUM)

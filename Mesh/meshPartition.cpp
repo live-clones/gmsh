@@ -11,9 +11,9 @@
 #include <ctime>
 #include <limits>
 
+#include "Context.h"
 #include "GmshConfig.h"
 #include "meshPartition.h"
-#include "meshPartitionOptions.h"
 
 #if defined(HAVE_METIS)
 
@@ -55,7 +55,7 @@ extern "C" {
  *
  ******************************************************************************/
 
-int PartitionMesh(GModel *const model, meshPartitionOptions &options)
+int PartitionMesh(GModel *const model)
 {
   clock_t t;
   t = clock();
@@ -64,7 +64,7 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
   Msg::StatusBar(true, "Building mesh graph...");
   int ier = MakeGraph(model, graph);
   Msg::StatusBar(true, "Partitioning graph...");
-  if(!ier) ier = PartitionGraph(graph, options);
+  if(!ier) ier = PartitionGraph(graph);
   if(ier) return 1;
   
   // Assign partitions to elements
@@ -83,28 +83,28 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
   
   Msg::StatusBar(true, "Create new entities...");
   std::multimap<unsigned short, GEntity*> newPartitionEntities;
-  CreateNewEntities(model, elmToPartition, newPartitionEntities, options);
+  CreateNewEntities(model, elmToPartition, newPartitionEntities);
   elmToPartition.clear();
   
   std::multimap<unsigned short, GEntity*> newPartitionBoundaries;
   std::multimap<unsigned short, GEntity*> newBoundariesOfPartitionBoundaries;
-  if(options.createPartitionBoundaries || options.createGhostCells)
+  if(CTX::instance()->mesh.createPartitionBoundaries)
   {
     Msg::StatusBar(true, "Create boundaries...");
-    CreatePartitionBoundaries(model, newPartitionBoundaries, newBoundariesOfPartitionBoundaries, options.createGhostCells);
+    CreatePartitionBoundaries(model, newPartitionBoundaries, newBoundariesOfPartitionBoundaries);
   }
-  
-  if(options.writeTopologyFile)
+  /*
+  if(CTX::instance()->mesh.partitionedTopology)
   {
     Msg::StatusBar(true, "Write the topology file...");
-    CreateTopologyFile(model, options, newPartitionEntities, newPartitionBoundaries, newBoundariesOfPartitionBoundaries);
+    CreateTopologyFile(model, newPartitionEntities, newPartitionBoundaries, newBoundariesOfPartitionBoundaries);
   }
   
-  if(options.writePartitionMeshes)
+  if(CTX::instance()->mesh.mshFilePartitioned)
   {
     Msg::StatusBar(true, "Write partition meshes...");
     std::string base = (getenv("PWD") ? "" : CTX::instance()->homeDir);
-    for(int i = 0; i < options.num_partitions; i++)
+    for(int i = 0; i < CTX::instance()->mesh.num_partitions; i++)
     {
       // I create a temporitary model
       GModel *tmp = new GModel();
@@ -197,7 +197,7 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
       AssignMeshVertices(tmp);
         
       std::ostringstream name;
-      name << options.outputDir << "/mesh_" << i << ".msh";
+      name << "mesh_" << i << ".msh";
       //To use the 4.0 msh format when it'll be implemented
       tmp->writeMSH(name.str(), 3, false, true);
       
@@ -205,7 +205,7 @@ int PartitionMesh(GModel *const model, meshPartitionOptions &options)
       delete tmp;
     }
   }
-  
+  */
   AssignMeshVertices(model);
   t = clock() - t;
   Msg::StatusBar(true, "Done partitioning graph in %f seconds", ((float)t)/CLOCKS_PER_SEC);
@@ -715,7 +715,7 @@ int getNumPeriodicLink(const GModel *const model)
  *
  ******************************************************************************/
 
-int PartitionGraph(Graph &graph, meshPartitionOptions &options)
+int PartitionGraph(Graph &graph)
 {
 #ifdef HAVE_METIS
   Msg::Info("Launching METIS graph partitioner");
@@ -724,7 +724,7 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
     int metisOptions[METIS_NOPTIONS];
     METIS_SetDefaultOptions((idx_t *)metisOptions);
         
-    switch(options.algorithm)
+    switch(CTX::instance()->mesh.metis_algorithm)
     {
       case 1: //Recursive
         metisOptions[METIS_OPTION_PTYPE] = METIS_PTYPE_RB;
@@ -737,7 +737,7 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
         break;
     }
         
-    switch(options.edge_matching)
+    switch(CTX::instance()->mesh.metis_edge_matching)
     {
       case 1: //Random matching
         metisOptions[METIS_OPTION_CTYPE] = METIS_CTYPE_RM;
@@ -750,7 +750,7 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
         break;
     }
         
-    switch(options.refine_algorithm)
+    switch(CTX::instance()->mesh.metis_refine_algorithm)
     {
       case 1: //FM-based cut refinement
         metisOptions[METIS_OPTION_RTYPE] = METIS_RTYPE_FM;
@@ -778,7 +778,7 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
     unsigned int *npart = new unsigned int[graph.nn()];
     const unsigned int ne = graph.ne();
     const unsigned int nn = graph.nn();
-    const int numPart = options.num_partitions;
+    const int numPart = CTX::instance()->mesh.num_partitions;
         
     graph.fillDefaultWeights();
       
@@ -839,7 +839,7 @@ int PartitionGraph(Graph &graph, meshPartitionOptions &options)
  *
  ******************************************************************************/
 
-void CreateNewEntities(GModel *const model, std::unordered_map<MElement*, unsigned short> &elmToPartition, std::multimap<unsigned short, GEntity*> &newPartitionEntities, meshPartitionOptions &options)
+void CreateNewEntities(GModel *const model, std::unordered_map<MElement*, unsigned short> &elmToPartition, std::multimap<unsigned short, GEntity*> &newPartitionEntities)
 {
   std::set<GRegion*, GEntityLessThan> regions = model->getGRegions();
   std::set<GFace*, GEntityLessThan> faces = model->getGFaces();
@@ -848,7 +848,7 @@ void CreateNewEntities(GModel *const model, std::unordered_map<MElement*, unsign
   
   for(GModel::const_riter it = regions.begin(); it != regions.end(); ++it)
   {
-    std::vector<GRegion *> newRegions(options.num_partitions, NULL);
+    std::vector<GRegion *> newRegions(CTX::instance()->mesh.num_partitions, NULL);
     
     assignElementsToEntities(model, elmToPartition, newRegions, (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
     assignElementsToEntities(model, elmToPartition, newRegions, (*it)->hexahedra.begin(), (*it)->hexahedra.end());
@@ -857,7 +857,7 @@ void CreateNewEntities(GModel *const model, std::unordered_map<MElement*, unsign
     assignElementsToEntities(model, elmToPartition, newRegions, (*it)->trihedra.begin(), (*it)->trihedra.end());
     assignElementsToEntities(model, elmToPartition, newRegions, (*it)->polyhedra.begin(), (*it)->polyhedra.end());
     
-    for(unsigned int i = 0; i < options.num_partitions; i++)
+    for(unsigned int i = 0; i < CTX::instance()->mesh.num_partitions; i++)
     {
       if(newRegions[i] != NULL)
       {
@@ -886,13 +886,13 @@ void CreateNewEntities(GModel *const model, std::unordered_map<MElement*, unsign
   
   for(GModel::const_fiter it = faces.begin(); it != faces.end(); ++it)
   {
-    std::vector<GFace *> newFaces(options.num_partitions, NULL);
+    std::vector<GFace *> newFaces(CTX::instance()->mesh.num_partitions, NULL);
     
     assignElementsToEntities(model, elmToPartition, newFaces, (*it)->triangles.begin(), (*it)->triangles.end());
     assignElementsToEntities(model, elmToPartition, newFaces, (*it)->quadrangles.begin(), (*it)->quadrangles.end());
     assignElementsToEntities(model, elmToPartition, newFaces, (*it)->polygons.begin(), (*it)->polygons.end());
     
-    for(unsigned int i = 0; i < options.num_partitions; i++)
+    for(unsigned int i = 0; i < CTX::instance()->mesh.num_partitions; i++)
     {
       if(newFaces[i] != NULL)
       {
@@ -918,11 +918,11 @@ void CreateNewEntities(GModel *const model, std::unordered_map<MElement*, unsign
   
   for(GModel::const_eiter it = edges.begin(); it != edges.end(); ++it)
   {
-    std::vector<GEdge *> newEdges(options.num_partitions, NULL);
+    std::vector<GEdge *> newEdges(CTX::instance()->mesh.num_partitions, NULL);
     
     assignElementsToEntities(model, elmToPartition, newEdges, (*it)->lines.begin(), (*it)->lines.end());
     
-    for(unsigned int i = 0; i < options.num_partitions; i++)
+    for(unsigned int i = 0; i < CTX::instance()->mesh.num_partitions; i++)
     {
       if(newEdges[i] != NULL)
       {
@@ -946,11 +946,11 @@ void CreateNewEntities(GModel *const model, std::unordered_map<MElement*, unsign
   
   for(GModel::const_viter it = vertices.begin(); it != vertices.end(); ++it)
   {
-    std::vector<GVertex *> newVertices(options.num_partitions, NULL);
+    std::vector<GVertex *> newVertices(CTX::instance()->mesh.num_partitions, NULL);
     
     assignElementsToEntities(model, elmToPartition, newVertices, (*it)->points.begin(), (*it)->points.end());
     
-    for(unsigned int i = 0; i < options.num_partitions; i++)
+    for(unsigned int i = 0; i < CTX::instance()->mesh.num_partitions; i++)
     {
       if(newVertices[i] != NULL)
       {
@@ -1092,7 +1092,7 @@ void addPhysical(GModel *const model, GEntity *const entity, const unsigned shor
  *
  ******************************************************************************/
 
-void CreatePartitionBoundaries(GModel *const model, std::multimap<unsigned short, GEntity*> &newPartitionBoundaries, std::multimap<unsigned short, GEntity*> &newBoundariesOfPartitionBoundaries, bool createGhostCells)
+void CreatePartitionBoundaries(GModel *const model, std::multimap<unsigned short, GEntity*> &newPartitionBoundaries, std::multimap<unsigned short, GEntity*> &newBoundariesOfPartitionBoundaries)
 {
   const int meshDim = model->getDim();
     
@@ -1796,11 +1796,10 @@ void setVerticesToEntity(std::set<MVertex *> &verts, GEntity *const entity, ITER
  *
  ******************************************************************************/
 
-void CreateTopologyFile(GModel* model, meshPartitionOptions &options, std::multimap<unsigned short, GEntity*> &newPartitionEntities, std::multimap<unsigned short, GEntity*> &newPartitionBoundaries, std::multimap<unsigned short, GEntity*> &newBoundariesOfPartitionBoundaries)
+void CreateTopologyFile(GModel* model, std::multimap<unsigned short, GEntity*> &newPartitionEntities, std::multimap<unsigned short, GEntity*> &newPartitionBoundaries, std::multimap<unsigned short, GEntity*> &newBoundariesOfPartitionBoundaries)
 {
-  const unsigned short npart = options.num_partitions;
-  std::string dir = options.outputDir + "/topology.pro";
-  std::ofstream file(dir, std::ofstream::trunc);
+  const unsigned short npart = CTX::instance()->mesh.num_partitions;
+  std::ofstream file("topology.pro", std::ofstream::trunc);
   
   //-----------Group-----------
   file << "Group{" << std::endl;
@@ -1973,13 +1972,13 @@ int getTag(GModel* model, GEntity* entity)
 
 
 
-int PartitionMeshFace(std::list<GFace*> &cFaces, meshPartitionOptions &options)
+int PartitionMeshFace(std::list<GFace*> &cFaces)
 {
   GModel *tmp_model = new GModel();
   for(std::list<GFace*>::iterator it = cFaces.begin(); it != cFaces.end(); it++)
     tmp_model->add(*it);
   
-  PartitionMesh(tmp_model,options);
+  PartitionMesh(tmp_model);
   
   for(std::list<GFace*>::iterator it = cFaces.begin(); it != cFaces.end(); it++)
     tmp_model->remove(*it);
@@ -2020,7 +2019,7 @@ void createPartitionFaces(GModel *model,  std::vector<MElement *> &elements, int
 #endif
 }
 
-int PartitionMeshElements(std::vector<MElement*> &elements, meshPartitionOptions &options)
+int PartitionMeshElements(std::vector<MElement*> &elements)
 {
   GModel *tmp_model = new GModel();
   GFace *gf = new discreteFace(tmp_model, 1);
@@ -2040,7 +2039,7 @@ int PartitionMeshElements(std::vector<MElement*> &elements, meshPartitionOptions
   }
   tmp_model->add(gf);
   
-  PartitionMesh(tmp_model,options);
+  PartitionMesh(tmp_model);
   
   tmp_model->remove(gf);
   delete tmp_model;
@@ -2050,7 +2049,7 @@ int PartitionMeshElements(std::vector<MElement*> &elements, meshPartitionOptions
 
 #else
 
-int PartitionMesh(GModel *const model, meshPartitionOptions &options)
+int PartitionMesh(GModel *const model)
 {
   Msg::Error("Gmsh must be compiled with METIS support to partition meshes");
   return 0;

@@ -640,8 +640,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
                       multipleView);
   if(version == 4.0)
     return _writeMSH4(name, version, binary, saveAll, saveParametric,
-                      scalingFactor, elementStartNum, saveSinglePartition,
-                      multipleView);
+                      scalingFactor);
 
   FILE *fp;
   if(multipleView)
@@ -753,8 +752,9 @@ int GModel::writePartitionedMSH(const std::string &baseName, double version,
                                 double scalingFactor)
 {
   if(version < 3)
-    return _writePartitionedMSH2(baseName, binary, saveAll, saveParametric,
-                                 scalingFactor);
+    return _writePartitionedMSH2(baseName, binary, saveAll, saveParametric, scalingFactor);
+  else if(version == 4.0)
+    return _writePartitionedMSH4(baseName, version, binary, saveAll, saveParametric, scalingFactor);
 
   for(std::set<int>::iterator it = meshPartitions.begin();
       it != meshPartitions.end(); it++){

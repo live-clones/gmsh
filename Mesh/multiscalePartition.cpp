@@ -305,12 +305,11 @@ multiscalePartition::multiscalePartition(std::vector<MElement *> &elements,
                                          int nbParts, typeOfPartition method,
 					 int allowPartition)
 {
-  options = CTX::instance()->partitionOptions;
-  options.num_partitions = nbParts;
+  CTX::instance()->mesh.num_partitions = nbParts;
 
-  options.algorithm = 2;//1 recursive, 2=kway, 3=nodal weights
-  options.refine_algorithm=2;
-  options.edge_matching = 3;
+  CTX::instance()->mesh.metis_algorithm = 2;//1 recursive, 2=kway
+  CTX::instance()->mesh.metis_refine_algorithm=2;
+  CTX::instance()->mesh.metis_edge_matching = 3;
 
   partitionLevel *level = new partitionLevel;
   level->elements.insert(level->elements.begin(),elements.begin(),elements.end());
@@ -329,7 +328,7 @@ multiscalePartition::multiscalePartition(std::vector<MElement *> &elements,
 
 void multiscalePartition::setNumberOfPartitions(int &nbParts)
 {
-  options.num_partitions = nbParts;
+  CTX::instance()->mesh.num_partitions = nbParts;
 }
 
 void multiscalePartition::partition(partitionLevel & level, int nbParts,
@@ -343,7 +342,7 @@ void multiscalePartition::partition(partitionLevel & level, int nbParts,
   }
   else if (method == MULTILEVEL){
     setNumberOfPartitions(nbParts);
-    PartitionMeshElements(level.elements, options);
+    PartitionMeshElements(level.elements);
   }
 
   std::vector<std::vector<MElement*> > regions(nbParts);

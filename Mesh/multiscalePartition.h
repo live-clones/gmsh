@@ -12,11 +12,9 @@
 #include <vector>
 #include <map>
 #include "linearSystemGMM.h"
-#include "meshPartitionOptions.h"
 #include "meshPartition.h"
 
 class MElement;
-struct meshPartitionOptions;
 
 struct partitionLevel {
   int recur;
@@ -33,7 +31,6 @@ class multiscalePartition{
   void partition(partitionLevel &level, int nbParts,  typeOfPartition method);
   int totalParts;
   bool onlyMultilevel;
-  meshPartitionOptions options;
 
  public:
   multiscalePartition(std::vector<MElement *> &elements, int nbParts, 
