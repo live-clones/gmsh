@@ -87,6 +87,7 @@ opt(SOLVER "Enable built-in finite element solvers (required for compounds)" ${D
 opt(TAUCS "Enable Taucs linear solver" ${DEFAULT})
 opt(TCMALLOC "Enable libtcmalloc, a fast malloc implementation but that does not release memory" OFF)
 opt(TETGEN "Enable Tetgen 3D initial mesh generator" ${DEFAULT})
+opt(VISUDEV "Enable additional visualization capabilities for development purpose" OFF)
 opt(VORO3D "Enable Voro3D (for hex meshing, experimental)" ${DEFAULT})
 opt(WRAP_JAVA "Enable generation of Java wrappers (experimental)" OFF)
 opt(WRAP_PYTHON "Enable generation of Python wrappers" OFF)
@@ -483,6 +484,10 @@ if(ENABLE_PARSER)
   add_subdirectory(Parser)
   set_config_option(HAVE_PARSER "Parser")
 endif(ENABLE_PARSER)
+
+if(ENABLE_VISUDEV)
+  set_config_option(HAVE_VISUDEV "VisuDev")
+endif(ENABLE_VISUDEV)
 
 if(ENABLE_FLTK)
   # first, try to use fltk-config for fltk >= 1.3 (FindFLTK is buggy on Unix,

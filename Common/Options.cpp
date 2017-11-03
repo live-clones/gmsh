@@ -3616,6 +3616,15 @@ double opt_general_expert_mode(OPT_ARGS_NUM)
   return CTX::instance()->expertMode;
 }
 
+#if defined(HAVE_VISUDEV)
+double opt_general_heavy_visualization(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->heavyVisu = (int)val;
+  return CTX::instance()->heavyVisu;
+}
+#endif
+
 double opt_general_stereo_mode(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

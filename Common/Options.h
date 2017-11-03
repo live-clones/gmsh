@@ -283,6 +283,7 @@ double opt_general_zoom_factor(OPT_ARGS_NUM);
 double opt_general_expert_mode(OPT_ARGS_NUM);
 double opt_general_stereo_mode(OPT_ARGS_NUM);
 double opt_general_camera_mode(OPT_ARGS_NUM);
+double opt_general_heavy_visualization(OPT_ARGS_NUM);
 double opt_general_eye_sep_ratio(OPT_ARGS_NUM);
 double opt_general_focallength_ratio(OPT_ARGS_NUM);
 double opt_general_camera_aperture(OPT_ARGS_NUM);
