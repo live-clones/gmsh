@@ -61,7 +61,6 @@ typedef unsigned long intptr_t;
 #include "HighOrder.h"
 #include "OS.h"
 #include "onelabUtils.h"
-#include "meshPartition.h"
 #if defined(HAVE_3M)
 #include "3M.h"
 #endif
@@ -2226,7 +2225,7 @@ static void mesh_partition_cb(Fl_Widget *w, void *data)
 
 static void mesh_unpartition_cb(Fl_Widget *w, void *data)
 {
-  int ier = UnpartitionMesh(GModel::current());
+  int ier = GModel::current()->deleteMeshPartitions();
   
   // Update the screen
   if(!ier) {

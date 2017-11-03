@@ -1445,14 +1445,10 @@ void GModel::recomputeMeshPartitions()
   }
 }
 
-void GModel::deleteMeshPartitions()
+int GModel::deleteMeshPartitions()
 {
-  std::vector<GEntity*> entities;
-  getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
-      entities[i]->getMeshElement(j)->setPartition(0);
   meshPartitions.clear();
+  return UnpartitionMesh(this);
 }
 
 int GModel::partitionMesh(int numPart)

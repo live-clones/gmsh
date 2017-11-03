@@ -444,11 +444,12 @@ class GModel {
   void recomputeMeshPartitions();
 
   // delete all the partitions
-  void deleteMeshPartitions();
+  int deleteMeshPartitions();
   // partition the mesh
   int partitionMesh(int num);
   // create the partitioned topology file
   int partitionedTopology(std::string &name);
+
 
   // store/recall min and max partitions size
   void setMinPartitionSize(const int pSize) { partitionSize[0] = pSize; }
