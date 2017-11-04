@@ -77,6 +77,8 @@ int CreateTopologyFile(GModel* model, std::string name);
 int getTag(GModel* model, GEntity* entity);
 std::vector<int> getPartition(GModel* model, GEntity* entity, std::string &substr);
 
+void ComputePartitionedBREP(GModel* model, std::multimap<unsigned short, GEntity*> &newPartitionEntities, std::multimap<unsigned short, GEntity*> &newPartitionBoundaries, std::multimap<unsigned short, GEntity*> &newBoundariesOfPartitionBoundaries);
+
 
 int PartitionMeshFace(std::list<GFace*> &cFaces);
 int PartitionMeshElements(std::vector<MElement*> &elements);

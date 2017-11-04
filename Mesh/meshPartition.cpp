@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 //
-// Partition.cpp - Copyright (C) 2008 S. Guzik, C. Geuzaine, J.-F. Remacle
+// meshPartition.cpp - Copyright (C) 2008 S. Guzik, C. Geuzaine, J.-F. Remacle
 
 #include <fstream>
 #include <sstream>
@@ -2027,6 +2027,40 @@ std::vector<int> getPartition(GModel* model, GEntity* entity, std::string &subst
   }
   
   return partitions;
+}
+
+/*******************************************************************************
+ *
+ * Routine ComputePartitionedBREP
+ *
+ * Purpose
+ * =======
+ *
+ *   Recompute the BREP of the partition
+ *
+ * I/O
+ * ===
+ *
+ *   returns            - status
+ *
+ *
+ *
+ *
+ ******************************************************************************/
+
+void ComputePartitionedBREP(GModel* model, std::multimap<unsigned short, GEntity*> &newPartitionEntities, std::multimap<unsigned short, GEntity*> &newPartitionBoundaries, std::multimap<unsigned short, GEntity*> &newBoundariesOfPartitionBoundaries)
+{
+  const unsigned short npart = CTX::instance()->mesh.num_partitions;
+  
+  for(unsigned short i = 0; i < npart; i++)
+  {
+    std::pair <std::multimap<unsigned short, GEntity*>::iterator, std::multimap<unsigned short, GEntity*>::iterator> range;
+    range = newPartitionEntities.equal_range(i);
+    
+    for(std::multimap<unsigned short, GEntity*>::iterator it = range.first; it != range.second; ++it)
+    {
+    }
+  }
 }
 
 

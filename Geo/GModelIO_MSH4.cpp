@@ -33,7 +33,7 @@
 void writeMSH4Entities(GModel *const model, std::ofstream &file, bool partition, bool binary, double scalingFactor);
 void writeMSH4Physicals(std::ofstream &file, GEntity *const entity, bool binary);
 void writeMSH4Nodes(GModel *const model, std::ofstream &file, bool partitioned, bool binary, bool saveParametric, double scalingFactor);
-void writeMSH4Elements(GModel *const model, std::ofstream &file, bool partitioned, bool binary);
+void writeMSH4Elements(GModel *const model, std::ofstream &file, bool partitioned, bool binary, bool saveAll);
 void writeMSH4PeriodicNodes(GModel *const model, std::ofstream &file, bool partitioned, bool binary);
 
 int GModel::_readMSH4(const std::string &name)
@@ -52,7 +52,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary, boo
   std::ofstream file;
   if(binary)
   {
-    file.open(name, std::ofstream::binary);
+    file.open(name, std::ios::binary);
   }
   else
   {
@@ -70,13 +70,14 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary, boo
   
   // header
   file << "$MeshFormat" << std::endl;
-  file << version << " " << (binary ? 1 : 0) << " " << (int)sizeof(double) << " ";
-  /*if(binary)
+  file << version << " " << (binary ? 1 : 0) << " " << sizeof(double) << " ";
+  if(binary)
   {
     int one = 1;
-    file.write(&one, sizeof(int));
-  }*/
-  file << "\n$EndMeshFormat" << std::endl;
+    file.write((char *)(&one), sizeof(int));//swapping byte
+  }
+  file << std::endl;
+  file << "$EndMeshFormat" << std::endl;
   
   // physicals
   file << "$PhysicalNames" << std::endl;
@@ -115,13 +116,15 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary, boo
   
   // elements
   file << "$Element" << std::endl;
-  writeMSH4Elements(this, file, CTX::instance()->mesh.num_partitions != 0 ? false : true, binary);
+  writeMSH4Elements(this, file, CTX::instance()->mesh.num_partitions != 0 ? false : true, binary, saveAll);
   file << "$EndElement" << std::endl;
   
   // periodic
   file << "$Periodic" << std::endl;
   writeMSH4PeriodicNodes(this, file, CTX::instance()->mesh.num_partitions != 0 ? false : true, binary);
   file << "$EndPeriodic" << std::endl;
+  
+  file.close();
   
   return 1;
 }
@@ -166,7 +169,182 @@ void writeMSH4Entities(GModel *const model, std::ofstream &file, bool partition,
   
   if(binary)
   {
-    //Todo
+    if(partition) file.write((char*)&CTX::instance()->mesh.num_partitions, sizeof(int));
+    int verticesSize = vertices.size();
+    int edgesSize = edges.size();
+    int facesSize = faces.size();
+    int regionsSize = regions.size();
+    file.write((char*)&verticesSize, sizeof(int));
+    file.write((char*)&edgesSize, sizeof(int));
+    file.write((char*)&facesSize, sizeof(int));
+    file.write((char*)&regionsSize, sizeof(int));
+        
+    for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it)
+    {
+      int entityTag = (*it)->tag();
+      file.write((char*)&entityTag, sizeof(int));
+      if(partition)
+      {
+        int parentEntityTag = static_cast<partitionVertex*>(*it)->getParentEntity()->tag();
+        file.write((char*)&parentEntityTag, sizeof(int));
+      }
+      SBoundingBox3d boundBox = (*it)->bounds();
+      boundBox *= scalingFactor;
+      double minX = boundBox.min().x();
+      double minY = boundBox.min().y();
+      double minZ = boundBox.min().z();
+      double maxX = boundBox.max().x();
+      double maxY = boundBox.max().y();
+      double maxZ = boundBox.max().z();
+      file.write((char*)&minX, sizeof(double));
+      file.write((char*)&minY, sizeof(double));
+      file.write((char*)&minZ, sizeof(double));
+      file.write((char*)&maxX, sizeof(double));
+      file.write((char*)&maxY, sizeof(double));
+      file.write((char*)&maxZ, sizeof(double));
+      writeMSH4Physicals(file, *it, binary);
+    }
+    
+    for(GModel::eiter it = edges.begin(); it != edges.end(); ++it)
+    {
+      std::list<GVertex*> vertices;
+      if((*it)->getBeginVertex()) vertices.push_back((*it)->getBeginVertex());
+      if((*it)->getEndVertex()) vertices.push_back((*it)->getEndVertex());
+      int verticesSize = vertices.size();
+      
+      int entityTag = (*it)->tag();
+      file.write((char*)&entityTag, sizeof(int));
+      if(partition)
+      {
+        int parentEntityTag = static_cast<partitionEdge*>(*it)->getParentEntity()->tag();
+        file.write((char*)&parentEntityTag, sizeof(int));
+      }
+      
+      file.write((char*)&verticesSize, sizeof(int));
+      for(std::list<GVertex*>::iterator itv = vertices.begin(); itv != vertices.end(); itv++)
+      {
+        int brepTag = (*itv)->tag();
+        file.write((char*)&brepTag, sizeof(int));
+      }
+      
+      SBoundingBox3d boundBox = (*it)->bounds();
+      double minX = boundBox.min().x();
+      double minY = boundBox.min().y();
+      double minZ = boundBox.min().z();
+      double maxX = boundBox.max().x();
+      double maxY = boundBox.max().y();
+      double maxZ = boundBox.max().z();
+      file.write((char*)&minX, sizeof(double));
+      file.write((char*)&minY, sizeof(double));
+      file.write((char*)&minZ, sizeof(double));
+      file.write((char*)&maxX, sizeof(double));
+      file.write((char*)&maxY, sizeof(double));
+      file.write((char*)&maxZ, sizeof(double));
+      writeMSH4Physicals(file, *it, binary);
+    }
+    
+    for(GModel::fiter it = faces.begin(); it != faces.end(); ++it)
+    {
+      std::list<GEdge*> edges = (*it)->edges();
+      std::list<int> ori = (*it)->edgeOrientations();
+      int edgesSize = edges.size();
+      
+      int entityTag = (*it)->tag();
+      file.write((char*)&entityTag, sizeof(int));
+      if(partition)
+      {
+        int parentEntityTag = static_cast<partitionFace*>(*it)->getParentEntity()->tag();
+        file.write((char*)&parentEntityTag, sizeof(int));
+      }
+      
+      file.write((char*)&edgesSize, sizeof(int));
+      
+      std::vector<int> tags, signs;
+      for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++)
+        tags.push_back((*ite)->tag());
+      for(std::list<int>::iterator ite = ori.begin(); ite != ori.end(); ite++)
+        signs.push_back(*ite);
+      
+      if(tags.size() == signs.size())
+      {
+        for(unsigned int i = 0; i < tags.size(); i++)
+          tags[i] *= (signs[i] > 0 ? 1 : -1);
+      }
+      
+      for(unsigned int i = 0; i < tags.size(); i++)
+      {
+        int brepTag = tags[i];
+        file.write((char*)&brepTag, sizeof(int));
+      }
+      
+      SBoundingBox3d boundBox = (*it)->bounds();
+      boundBox *= scalingFactor;
+      double minX = boundBox.min().x();
+      double minY = boundBox.min().y();
+      double minZ = boundBox.min().z();
+      double maxX = boundBox.max().x();
+      double maxY = boundBox.max().y();
+      double maxZ = boundBox.max().z();
+      file.write((char*)&minX, sizeof(double));
+      file.write((char*)&minY, sizeof(double));
+      file.write((char*)&minZ, sizeof(double));
+      file.write((char*)&maxX, sizeof(double));
+      file.write((char*)&maxY, sizeof(double));
+      file.write((char*)&maxZ, sizeof(double));
+      
+      writeMSH4Physicals(file, *it, binary);
+    }
+    
+    for(GModel::riter it = regions.begin(); it != regions.end(); ++it)
+    {
+      std::list<GFace*> faces = (*it)->faces();
+      std::list<int> ori = (*it)->faceOrientations();
+      int facesSize = faces.size();
+      
+      int entityTag = (*it)->tag();
+      file.write((char*)&entityTag, sizeof(int));
+      if(partition)
+      {
+        int parentEntityTag = static_cast<partitionRegion*>(*it)->getParentEntity()->tag();
+        file.write((char*)&parentEntityTag, sizeof(int));
+      }
+      
+      file.write((char*)&facesSize, sizeof(int));
+      
+      std::vector<int> tags, signs;
+      for(std::list<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++)
+        tags.push_back((*itf)->tag());
+      for(std::list<int>::iterator itf = ori.begin(); itf != ori.end(); itf++)
+        signs.push_back(*itf);
+      
+      if(tags.size() == signs.size())
+      {
+        for(unsigned int i = 0; i < tags.size(); i++)
+          tags[i] *= (signs[i] > 0 ? 1 : -1);
+      }
+      
+      for(unsigned int i = 0; i < tags.size(); i++)
+      {
+        int brepTag = tags[i];
+        file.write((char*)&brepTag, sizeof(int));
+      }
+      
+      SBoundingBox3d boundBox = (*it)->bounds();
+      double minX = boundBox.min().x();
+      double minY = boundBox.min().y();
+      double minZ = boundBox.min().z();
+      double maxX = boundBox.max().x();
+      double maxY = boundBox.max().y();
+      double maxZ = boundBox.max().z();
+      file.write((char*)&minX, sizeof(double));
+      file.write((char*)&minY, sizeof(double));
+      file.write((char*)&minZ, sizeof(double));
+      file.write((char*)&maxX, sizeof(double));
+      file.write((char*)&maxY, sizeof(double));
+      file.write((char*)&maxZ, sizeof(double));
+      
+      writeMSH4Physicals(file, *it, binary);
+    }
   }
   else
   {
@@ -277,7 +455,14 @@ void writeMSH4Physicals(std::ofstream &file, GEntity *const entity, bool binary)
 {
   if(binary)
   {
-    //Todo
+    std::vector<int> phys = entity->getPhysicalEntities();
+    int phySize = phys.size();
+    file.write((char*)&phySize, sizeof(int));
+    for(unsigned int i = 0; i < phys.size(); i++)
+    {
+      int phy = phys[i];
+      file.write((char*)&phy, sizeof(int));
+    }
   }
   else
   {
@@ -330,7 +515,9 @@ void writeMSH4Nodes(GModel *const model, std::ofstream &file, bool partitioned, 
   
   if(binary)
   {
-    //Todo
+    int numSection = vertices.size() + edges.size() + faces.size() + regions.size();
+    file.write((char*)&numSection, sizeof(int));
+    //Todo : add the global size
   }
   else
   {
@@ -339,34 +526,78 @@ void writeMSH4Nodes(GModel *const model, std::ofstream &file, bool partitioned, 
   
   for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it)
   {
-    file << (*it)->tag() << " " << (*it)->getNumMeshVertices() << std::endl;
+    if(binary)
+    {
+      int entityTag = (*it)->tag();
+      int numVerts = (*it)->getNumMeshVertices();
+      file.write((char*)&entityTag, sizeof(int));
+      file.write((char*)&numVerts, sizeof(int));
+    }
+    else
+    {
+      file << (*it)->tag() << " " << (*it)->getNumMeshVertices() << std::endl;
+    }
+    
     for(unsigned int i = 0; i < (*it)->getNumMeshVertices(); i++)
       (*it)->getMeshVertex(i)->writeMSH4(file, binary, saveParametric, scalingFactor);
   }
     
   for(GModel::eiter it = edges.begin(); it != edges.end(); ++it)
   {
-    file << (*it)->tag() << " " << (*it)->getNumMeshVertices() << std::endl;
+    if(binary)
+    {
+      int entityTag = (*it)->tag();
+      int numVerts = (*it)->getNumMeshVertices();
+      file.write((char*)&entityTag, sizeof(int));
+      file.write((char*)&numVerts, sizeof(int));
+    }
+    else
+    {
+      file << (*it)->tag() << " " << (*it)->getNumMeshVertices() << std::endl;
+    }
+    
     for(unsigned int i = 0; i < (*it)->getNumMeshVertices(); i++)
       (*it)->getMeshVertex(i)->writeMSH4(file, binary, saveParametric, scalingFactor);
   }
     
   for(GModel::fiter it = faces.begin(); it != faces.end(); ++it)
   {
-    file << (*it)->tag() << " " << (*it)->getNumMeshVertices() << std::endl;
+    if(binary)
+    {
+      int entityTag = (*it)->tag();
+      int numVerts = (*it)->getNumMeshVertices();
+      file.write((char*)&entityTag, sizeof(int));
+      file.write((char*)&numVerts, sizeof(int));
+    }
+    else
+    {
+      file << (*it)->tag() << " " << (*it)->getNumMeshVertices() << std::endl;
+    }
+    
     for(unsigned int i = 0; i < (*it)->getNumMeshVertices(); i++)
       (*it)->getMeshVertex(i)->writeMSH4(file, binary, saveParametric, scalingFactor);
   }
     
   for(GModel::riter it = regions.begin(); it != regions.end(); ++it)
   {
-    file << (*it)->tag() << " " << (*it)->getNumMeshVertices() << std::endl;
+    if(binary)
+    {
+      int entityTag = (*it)->tag();
+      int numVerts = (*it)->getNumMeshVertices();
+      file.write((char*)&entityTag, sizeof(int));
+      file.write((char*)&numVerts, sizeof(int));
+    }
+    else
+    {
+      file << (*it)->tag() << " " << (*it)->getNumMeshVertices() << std::endl;
+    }
+    
     for(unsigned int i = 0; i < (*it)->getNumMeshVertices(); i++)
       (*it)->getMeshVertex(i)->writeMSH4(file, binary, saveParametric, scalingFactor);
   }
 }
 
-void writeMSH4Elements(GModel *const model, std::ofstream &file, bool partitioned, bool binary)
+void writeMSH4Elements(GModel *const model, std::ofstream &file, bool partitioned, bool binary, bool saveAll)
 {
   std::set<GRegion*, GEntityLessThan> regions;
   std::set<GFace*, GEntityLessThan> faces;
@@ -408,18 +639,21 @@ void writeMSH4Elements(GModel *const model, std::ofstream &file, bool partitione
   
   for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it)
   {
+    if(!saveAll && (*it)->physicals.size() == 0) continue;
     for(unsigned int i = 0; i < (*it)->points.size(); i++)
       elementsByDegree[(*it)->points[i]->getTypeForMSH()].push_back(std::pair<MElement*, GEntity*>((*it)->points[i], *it));
   }
   
   for(GModel::eiter it = edges.begin(); it != edges.end(); ++it)
   {
+    if(!saveAll && (*it)->physicals.size() == 0) continue;
     for(unsigned int i = 0; i < (*it)->lines.size(); i++)
       elementsByDegree[(*it)->lines[i]->getTypeForMSH()].push_back(std::pair<MElement*, GEntity*>((*it)->lines[i], *it));
   }
   
   for(GModel::fiter it = faces.begin(); it != faces.end(); ++it)
   {
+    if(!saveAll && (*it)->physicals.size() == 0) continue;
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
       elementsByDegree[(*it)->triangles[i]->getTypeForMSH()].push_back(std::pair<MElement*, GEntity*>((*it)->triangles[i], *it));
     
@@ -429,6 +663,7 @@ void writeMSH4Elements(GModel *const model, std::ofstream &file, bool partitione
   
   for(GModel::riter it = regions.begin(); it != regions.end(); ++it)
   {
+    if(!saveAll && (*it)->physicals.size() == 0) continue;
     for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
       elementsByDegree[(*it)->tetrahedra[i]->getTypeForMSH()].push_back(std::pair<MElement*, GEntity*>((*it)->tetrahedra[i], *it));
     
@@ -447,7 +682,9 @@ void writeMSH4Elements(GModel *const model, std::ofstream &file, bool partitione
   
   if(binary)
   {
-    //Todo
+    int numSection = elementsByDegree.size();
+    file.write((char*)&numSection, sizeof(int));
+    //Todo : add the global size
   }
   else
   {
@@ -456,7 +693,20 @@ void writeMSH4Elements(GModel *const model, std::ofstream &file, bool partitione
   
   for(std::map<int, std::vector< std::pair<MElement*, GEntity*> > >::iterator it = elementsByDegree.begin(); it != elementsByDegree.end(); ++it)
   {
-    file << it->second[0].second->tag() << " " << it->first << " " << it->second.size() << std::endl;
+    if(binary)
+    {
+      int entityTag = it->second[0].second->tag();
+      int elmType = it->first;
+      int numElm = it->second.size();
+      file.write((char*)&entityTag, sizeof(int));
+      file.write((char*)&elmType, sizeof(int));
+      file.write((char*)&numElm, sizeof(int));
+    }
+    else
+    {
+      file << it->second[0].second->tag() << " " << it->first << " " << it->second.size() << std::endl;
+    }
+    
     for(unsigned int i = 0; i < it->second.size(); i++)
     {
       it->second[i].first->writeMSH4(file, binary);
@@ -466,38 +716,71 @@ void writeMSH4Elements(GModel *const model, std::ofstream &file, bool partitione
 
 void writeMSH4PeriodicNodes(GModel *const model, std::ofstream &file, bool partitioned, bool binary)
 {
+  int count = 0;
+  std::vector<GEntity*> entities;
+  model->getEntities(entities);
+  for(unsigned int i = 0; i < entities.size(); i++)
+    if(entities[i]->meshMaster() != entities[i]) count++;
+  
   if(binary)
   {
+    file.write((char*)&count, sizeof(int));
   }
   else
   {
-    int count = 0;
-    std::vector<GEntity*> entities;
-    model->getEntities(entities);
-    for(unsigned int i = 0; i < entities.size(); i++)
-      if(entities[i]->meshMaster() != entities[i]) count++;
-    
     file << count << std::endl;
-    if(!count) return;
+  }
+  if(!count) return;
+  
+  for(unsigned int i = 0; i < entities.size(); i++)
+  {
+    GEntity *g_slave = entities[i];
+    GEntity *g_master = g_slave->meshMaster();
     
-    for(unsigned int i = 0; i < entities.size(); i++)
+    if(g_slave != g_master)
     {
-      GEntity *g_slave = entities[i];
-      GEntity *g_master = g_slave->meshMaster();
-      
-      if(g_slave != g_master)
+      if(binary)
       {
-        file << g_slave->dim() << " " << g_slave->tag() << " " << g_master->tag() << std::endl;
+        int gSlaveDim = g_slave->dim();
+        int gSlaveTag = g_slave->tag();
+        int gMasterTag = g_master->tag();
+        file.write((char*)&gSlaveDim, sizeof(int));
+        file.write((char*)&gSlaveTag, sizeof(int));
+        file.write((char*)&gMasterTag, sizeof(int));
         
         if(g_slave->affineTransform.size() == 16)
         {
+          //Todo : In binary?
           file << "Affine ";
           for(int j = 0; j < 16; j++) file << g_slave->affineTransform[i] << " ";
           file << std::endl;
         }
         
-        file << g_slave->correspondingVertices.size() << std::endl;
+        int corrVertSize = g_slave->correspondingVertices.size();
+        file.write((char*)&corrVertSize, sizeof(int));
         
+        for (std::map<MVertex*,MVertex*>::iterator it = g_slave->correspondingVertices.begin(); it != g_slave->correspondingVertices.end(); ++it)
+        {
+          int numFirst = it->first->getNum();
+          int numSecond = it->second->getNum();
+          file.write((char*)&numFirst, sizeof(int));
+          file.write((char*)&numSecond, sizeof(int));
+        }
+      }
+      else
+      {
+        file << g_slave->dim() << " " << g_slave->tag() << " " << g_master->tag() << std::endl;
+      
+        if(g_slave->affineTransform.size() == 16)
+        {
+          //Todo : What is it?
+          file << "Affine ";
+          for(int j = 0; j < 16; j++) file << g_slave->affineTransform[i] << " ";
+          file << std::endl;
+        }
+      
+        file << g_slave->correspondingVertices.size() << std::endl;
+      
         for (std::map<MVertex*,MVertex*>::iterator it = g_slave->correspondingVertices.begin(); it != g_slave->correspondingVertices.end(); ++it)
         {
           file << it->first->getNum() << " " << it->second->getNum() << std::endl;

@@ -199,13 +199,42 @@ void MVertex::writeMSH4(std::ofstream &file, bool binary, bool saveParametric, d
 {
   if(binary)
   {
-    //Todo
+    file.write((char*)&_num, sizeof(int));
+    double xScale = _x*scalingFactor;
+    double yScale = _y*scalingFactor;
+    double zScale = _z*scalingFactor;
+    file.write((char*)&xScale, sizeof(double));
+    file.write((char*)&yScale, sizeof(double));
+    file.write((char*)&zScale, sizeof(double));
+    if(saveParametric)
+    {
+      int geDim = _ge->dim();
+      int geTag = _ge->tag();
+      file.write((char*)&geDim, sizeof(int));
+      file.write((char*)&geTag, sizeof(int));
+      
+      if(_ge->dim() == 1)
+      {
+        double u;
+        getParameter(0, u);
+        file.write((char*)&u, sizeof(double));
+      }
+      else if(_ge->dim() == 2)
+      {
+        double u, v;
+        getParameter(0, u);
+        getParameter(1, v);
+        file.write((char*)&u, sizeof(double));
+        file.write((char*)&v, sizeof(double));
+      }
+    }
   }
   else
   {
+    file << _num << " " << _x*scalingFactor << " " << _y*scalingFactor << " " << _z*scalingFactor;
     if(saveParametric)
     {
-      file << _num << " " << _x*scalingFactor << " " << _y*scalingFactor << " " << _z*scalingFactor << " " << _ge->dim() << " " << _ge->tag() << " ";
+      file << " " << _ge->dim() << " " << _ge->tag() << " ";
       
       if(_ge->dim() == 1)
       {
@@ -223,7 +252,7 @@ void MVertex::writeMSH4(std::ofstream &file, bool binary, bool saveParametric, d
     }
     else
     {
-      file << _num << " " << _x*scalingFactor << " " << _y*scalingFactor << " " << _z*scalingFactor << std::endl;
+      file << std::endl;
     }
   }
 }

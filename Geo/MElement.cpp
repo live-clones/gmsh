@@ -1139,16 +1139,21 @@ void MElement::writeMSH4(std::ofstream &file, bool binary)
   
   if(binary)
   {
+    file.write((char*)&_num, sizeof(int));
+    for(unsigned int i = 0; i < verts.size(); i++)
+    {
+      int vertNum = verts[i]->getNum();
+      file.write((char*)&vertNum, sizeof(int));
+    }
+  }
+  else
+  {
     file << _num << " ";
     for(unsigned int i = 0; i < verts.size(); i++)
     {
       file << verts[i]->getNum() << " ";
     }
     file << std::endl;
-  }
-  else
-  {
-    //Todo
   }
 }
 
