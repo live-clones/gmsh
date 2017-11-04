@@ -1490,7 +1490,7 @@ void delaunayMeshIn3D(std::vector<MVertex*> &v, std::vector<MTetrahedron*> &resu
                       bool removeBox)
 {
   double t1 = Cpu();
-  delaunayTriangulation (1, 1, v, result);
+  delaunayTriangulation(1, 1, v, result);
   double t2 = Cpu();
   Msg::Info("Tetrahedrization of %d points in %g seconds",v.size(),t2-t1);
 }
