@@ -1110,7 +1110,7 @@ StringXNumber MeshOptions_Number[] = {
 
   { F|O, "MaxNumThreads1D" , opt_mesh_max_num_threads_1d , 0. ,
     "Maximum number of threads for 1D meshing (0: use default number of threads)" },
-  { F|O, "MaxNumThreads2D" , opt_mesh_max_num_threads_3d , 0. ,
+  { F|O, "MaxNumThreads2D" , opt_mesh_max_num_threads_2d , 0. ,
     "Maximum number of threads for 2D meshing (0: use default number of threads)" },
   { F|O, "MaxNumThreads3D" , opt_mesh_max_num_threads_3d , 0. ,
     "Maximum number of threads for 3D meshing (0: use default number of threads)" },
