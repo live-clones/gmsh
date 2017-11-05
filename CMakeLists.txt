@@ -68,6 +68,7 @@ opt(NETGEN "Enable Netgen 3D frontal mesh generator" ${DEFAULT})
 opt(NUMPY "Enable conversion between fullMatrix and numpy array (requires SWIG)" OFF)
 opt(PETSC4PY "Enable petsc4py wrappers for petsc matrices" ON)
 opt(OCC "Enable OpenCASCADE geometrical models" ${DEFAULT})
+opt(OCC_CAF "Enable OpenCASCADE CAF module" OFF)
 opt(ONELAB "Enable ONELAB solver interface" ${DEFAULT})
 opt(ONELAB_METAMODEL "Enable ONELAB metamodels (experimental)" ${DEFAULT})
 opt(OPENMP "Enable OpenMP (experimental)" OFF)
@@ -93,7 +94,7 @@ opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 3)
 set(GMSH_MINOR_VERSION 0)
-set(GMSH_PATCH_VERSION 6)
+set(GMSH_PATCH_VERSION 7)
 set(GMSH_EXTRA_VERSION "" CACHE STRING "Gmsh extra version string")
 
 set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
@@ -1148,7 +1149,6 @@ if(ENABLE_OCC)
       	# ModelingData
       	TKBRep TKGeomBase TKG3d TKG2d
       	# FoundationClasses
-      	# TKAdvTools -- not necessary? (and removed from OCC 6.8)
       	TKMath TKernel)
     list(LENGTH OCC_LIBS_REQUIRED NUM_OCC_LIBS_REQUIRED)
     if(OCC_LIBS)
@@ -1183,6 +1183,33 @@ if(ENABLE_OCC)
       endif(CYGWIN)
     endif(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
   endif(OCC_VERSION AND OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
+
+  # additional OCC libraries to handle reading of STEP/IGES attributes. Oh my...
+  if(HAVE_OCC AND ENABLE_OCC_CAF)
+    find_package(Freetype)
+    if(FREETYPE_FOUND)
+      set(OCC_CAF_LIBS_REQUIRED
+          TKXDESTEP TKXDEIGES TKXCAF TKLCAF TKVCAF TKCAF TKCDF TKService TKV3d)
+      list(LENGTH OCC_CAF_LIBS_REQUIRED NUM_OCC_CAF_LIBS_REQUIRED)
+      set(OCC_CAF_LIBS)
+      foreach(OCC ${OCC_CAF_LIBS_REQUIRED})
+        find_library(OCC_CAF_LIB ${OCC} HINTS ENV CASROOT PATH_SUFFIXES
+                     lib ${OCC_SYS_NAME}/lib ${OCC_SYS_NAME}/vc8/lib)
+        if(OCC_CAF_LIB)
+          list(APPEND OCC_CAF_LIBS ${OCC_CAF_LIB})
+        else(OCC_CAF_LIB)
+          message(STATUS "OCC CAF lib " ${OCC} " not Found")
+        endif(OCC_CAF_LIB)
+        unset(OCC_CAF_LIB CACHE)
+      endforeach(OCC)
+      list(LENGTH OCC_CAF_LIBS NUM_OCC_CAF_LIBS)
+      if(NUM_OCC_CAF_LIBS EQUAL NUM_OCC_CAF_LIBS_REQUIRED)
+        set_config_option(HAVE_OCC_CAF "OpenCASCADE-CAF")
+        list(APPEND EXTERNAL_LIBRARIES ${OCC_CAF_LIBS} ${FREETYPE_LIBRARIES})
+        list(APPEND EXTERNAL_INCLUDES ${FREETYPE_INCLUDE_DIRS})
+      endif(NUM_OCC_CAF_LIBS EQUAL NUM_OCC_CAF_LIBS_REQUIRED)
+    endif(FREETYPE_FOUND)
+  endif(HAVE_OCC AND ENABLE_OCC_CAF)
 endif(ENABLE_OCC)
 
 if(ENABLE_ACIS)
@@ -1351,11 +1378,12 @@ endif(NOWARN)
 check_cxx_compiler_flag("-O0" NOOPT)
 if(NOOPT OR ENABLE_BUILD_IOS)
   if(ENABLE_BUILD_IOS) # optimized iOS 10 64 bits screws somewhere in Geo
-    file(GLOB_RECURSE NOOPT_SRC Geo/G*.cpp Mesh/BDS.cpp Parser/Gmsh.tab.cpp
-         contrib/Tetgen1.5/predicates.cxx contrib/blossom/*)
+    file(GLOB_RECURSE NOOPT_SRC Numeric/robustPredicates.cpp Geo/G*.cpp Mesh/BDS.cpp
+         Parser/Gmsh.tab.cpp contrib/Tetgen1.5/predicates.cxx contrib/blossom/*)
   else(ENABLE_BUILD_IOS)
-    file(GLOB_RECURSE NOOPT_SRC Mesh/BDS.cpp Parser/Gmsh.tab.cpp
-         contrib/Tetgen1.5/predicates.cxx contrib/blossom/*)
+    file(GLOB_RECURSE NOOPT_SRC Numeric/robustPredicates.cpp Mesh/BDS.cpp
+         Parser/Gmsh.tab.cpp contrib/Tetgen1.5/predicates.cxx contrib/blossom/*
+         contrib/bamg/*)
   endif(ENABLE_BUILD_IOS)
   set_compile_flags(NOOPT_SRC "-O0")
 endif(NOOPT OR ENABLE_BUILD_IOS)
@@ -1886,7 +1914,8 @@ if(NOT DISABLE_GMSH_TESTS)
   # disabling tests is useful when including this CMakeLists in an external project
   include(CTest)
   file(GLOB_RECURSE TESTFILES
-       tutorial/*.geo demos/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo)
+       tutorial/*.geo demos/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo
+       benchmarks/boolean/*.geo)
   foreach(TESTFILE ${TESTFILES})
     # use relative path for cygwin/mingw (the pure win exe built with the mingw
     # compilers does not understand a full cygwin-style path)

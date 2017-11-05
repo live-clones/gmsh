@@ -1,3 +1,8 @@
+3.0.6 (Novmeber 5, 2017): improved meshing of spheres; improved handling of mesh
+size constraints with OpenCASCADE kernel; implemented "Coherence" for
+OpenCASCADE kernel (shortcut for BooleanFragments); added GAMBIT Neutral File
+export; small improvements and bug fixes.
+
 3.0.5 (September 6, 2017): bug fixes.
 
 3.0.4 (July 28, 2017): moved vorometal code to plugin; openmp improvements; bug

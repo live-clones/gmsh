@@ -130,6 +130,10 @@ class GModel {
   // entity that is currently being meshed (used for error reporting)
   GEntity *_currentMeshEntity;
 
+  // last entities/vertices where a meshing error has been reported
+  std::vector<GEntity*> _lastMeshEntityError;
+  std::vector<MVertex*> _lastMeshVertexError;
+
   // index of the current model (in the static list of all loaded
   // models)
   static int _current;
@@ -407,6 +411,14 @@ class GModel {
   // set/get entity that is currently being meshed (for error reporting)
   void setCurrentMeshEntity(GEntity *e){ _currentMeshEntity = e; }
   GEntity *getCurrentMeshEntity(){ return _currentMeshEntity; }
+
+  // set/get entities/vertices linked meshing errors
+  void clearLastMeshEntityError(){ _lastMeshEntityError.clear(); }
+  void addLastMeshEntityError(GEntity *e){ _lastMeshEntityError.push_back(e); }
+  std::vector<GEntity*> getLastMeshEntityError(){ return _lastMeshEntityError; }
+  void clearLastMeshVertexError(){ _lastMeshVertexError.clear(); }
+  void addLastMeshVertexError(MVertex *v){ _lastMeshVertexError.push_back(v); }
+  std::vector<MVertex*> getLastMeshVertexError(){ return _lastMeshVertexError; }
 
   // delete all invisble mesh elements
   void removeInvisibleElements();

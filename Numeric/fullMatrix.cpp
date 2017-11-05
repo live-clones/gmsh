@@ -23,6 +23,7 @@
 #if defined(HAVE_BLAS)
 extern "C" {
   void F77NAME(daxpy)(int *n, double *alpha, double *x, int *incx, double *y, int *incy);
+  void F77NAME(zaxpy)(int *n, std::complex<double> *alpha, std::complex<double> *x, int *incx, std::complex<double> *y, int *incy);
   void F77NAME(dcopy)(int *n, double *a, int *inca, double *b, int *incb);
   void F77NAME(zcopy)(int *n, std::complex<double> *a, int *inca, std::complex<double> *b, int *incb);
   void F77NAME(dgemm)(const char *transa, const char *transb, int *m, int *n, int *k,
@@ -50,6 +51,14 @@ void fullVector<double>::axpy(const fullVector<double> &x,double alpha)
 {
   int M = _r, INCX = 1, INCY = 1;
   F77NAME(daxpy)(&M, &alpha, x._data,&INCX, _data, &INCY);
+}
+
+template<>
+void fullVector<std::complex<double> >::axpy(const fullVector<std::complex<double> > &x,
+                                             std::complex<double> alpha)
+{
+  int M = _r, INCX = 1, INCY = 1;
+  F77NAME(zaxpy)(&M, &alpha, x._data,&INCX, _data, &INCY);
 }
 
 template<>

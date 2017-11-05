@@ -590,6 +590,7 @@ void meshGEdge::operator() (GEdge *ge)
     N = 1;
   }
   else if(ge->degenerate(0)){
+    Msg::Debug("Curve %d is degenerated", ge->tag());
     a = 0.;
     N = 1;
   }

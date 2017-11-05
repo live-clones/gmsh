@@ -6,10 +6,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <sstream>
 #include "GmshConfig.h"
 #include "meshGRegionBoundaryRecovery.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "robustPredicates.h"
+#include "GModel.h"
 #include "GRegion.h"
 #include "GFace.h"
 #include "MVertex.h"
@@ -23,6 +25,15 @@
 #include <stdint.h>
 #elif defined(HAVE_NO_INTPTR_T)
 typedef unsigned long intptr_t;
+#endif
+
+#if defined(HAVE_POST)
+#include "PView.h"
+#endif
+
+#if defined(HAVE_FLTK)
+#include "FlGui.h"
+#include "drawContext.h"
 #endif
 
 namespace tetgenBR
@@ -92,8 +103,10 @@ static int clock(){ return 0; }
 #if !defined(TETLIBRARY)
 #define TETLIBRARY
 #endif
+#define printf Msg::Info
 #include "tetgenBR.h"
 #include "tetgenBR.cxx"
+#undef printf
 
 bool tetgenmesh::reconstructmesh(void *p)
 {
@@ -425,8 +438,6 @@ bool tetgenmesh::reconstructmesh(void *p)
     // Construct a map from points to subfaces.
     makepoint2submap(subfaces, idx2shlist, shperverlist);
 
-    //    printf("coucou1\n");
-
     // Process the set of PSC edges.
     // Remeber that all segments have default marker '-1'.
     //    int COUNTER = 0;
@@ -525,13 +536,10 @@ bool tetgenmesh::reconstructmesh(void *p)
   // Boundary recovery.
 
   clock_t t;
-  //    printf("coucou2\n");
   Msg::Info("Boundary Recovery...");
   recoverboundary(t);
-  //    printf("coucou3\n");
 
   carveholes();
-  //    printf("coucou4\n");
 
   if (subvertstack->objects > 0l) {
     suppresssteinerpoints();
@@ -539,7 +547,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 
   recoverdelaunay();
 
-  // let's trry
+  // let's try
   optimizemesh();
 
   if ((dupverts > 0l) || (unuverts > 0l)) {
@@ -740,12 +748,10 @@ bool tetgenmesh::reconstructmesh(void *p)
       //      assert((int)_vertices.size() == points->items);
     }
 
-    if (!_extras.empty())Msg::Info("We add %d steiner points...",_extras.size());
-
+    if (!_extras.empty())
+      Msg::Info("We add %d steiner points...", _extras.size());
 
     if (l_edges.size() > 0) {
-
-
       // There are Steiner points on segments!
       face segloop;
       // Re-create the segment mesh in the corresponding GEdges.
@@ -1091,8 +1097,94 @@ void tetgenmesh::outmesh2medit(const char* mfilename)
 
 bool meshGRegionBoundaryRecovery(GRegion *gr)
 {
-  tetgenBR::tetgenmesh *m = new tetgenBR::tetgenmesh();
-  bool ret = m->reconstructmesh((void*)gr);
-  delete m;
+  bool ret = false;
+  try{
+    tetgenBR::tetgenmesh *m = new tetgenBR::tetgenmesh();
+    ret = m->reconstructmesh((void*)gr);
+    delete m;
+  }
+  catch(int err){
+    if(err == 1){
+      Msg::Error("Out of memory in boundary mesh recovery");
+      ret = false;
+    }
+    else if(err == 3){
+      std::string what;
+      bool pnt = true;
+      switch(tetgenBR::sevent.e_type){
+      case 1: what = "segment-segment intersection"; break;
+      case 2: what = "segment-facet intersection"; break;
+      case 3: what = "facet-facet intersection"; break;
+      case 4: what = "overlapping segments"; pnt = false; break;
+      case 5: what = "segment in facet"; pnt = false; break;
+      case 6: what = "overlapping facets"; pnt = false; break;
+      case 7: what = "vertex in segment"; break;
+      case 8: what = "vertex in facet"; break;
+      default: what = "unknown"; break;
+      }
+      int vtags[2][3] = {{tetgenBR::sevent.f_vertices1[0],
+                          tetgenBR::sevent.f_vertices1[1],
+                          tetgenBR::sevent.f_vertices1[2]},
+                         {tetgenBR::sevent.f_vertices2[0],
+                          tetgenBR::sevent.f_vertices2[1],
+                          tetgenBR::sevent.f_vertices2[2]}};
+      int ftags[2] = {tetgenBR::sevent.f_marker1, tetgenBR::sevent.f_marker2};
+      int etags[2] = {tetgenBR::sevent.s_marker1, tetgenBR::sevent.s_marker2};
+      std::ostringstream pb;
+      std::vector<double> x, y, z, val;
+      for(int f = 0; f < 2; f++){
+        if(ftags[f] > 0){
+          GFace *gf = gr->model()->getFaceByTag(ftags[f]);
+          if(gf){
+            gr->model()->addLastMeshEntityError(gf);
+            pb << " surface " << ftags[f];
+          }
+        }
+        if(etags[f] > 0){
+          GEdge *ge = gr->model()->getEdgeByTag(etags[f]);
+          if(ge){
+            gr->model()->addLastMeshEntityError(ge);
+            pb << " curve " << etags[f];
+          }
+        }
+        for(int i = 0; i < 3; i++){
+          if(vtags[f][i]){
+            MVertex *v = gr->model()->getMeshVertexByTag(vtags[f][i]);
+            if(v){
+              gr->model()->addLastMeshVertexError(v);
+              x.push_back(v->x());
+              y.push_back(v->y());
+              z.push_back(v->z());
+              val.push_back(f + 1.);
+            }
+          }
+        }
+      }
+      if(pnt){
+        double px = tetgenBR::sevent.int_point[0];
+        double py = tetgenBR::sevent.int_point[1];
+        double pz = tetgenBR::sevent.int_point[2];
+        pb << ", intersection (" << px << "," << py << "," << pz << ")";
+        x.push_back(px);
+        y.push_back(py);
+        z.push_back(pz);
+        val.push_back(3.);
+      }
+      Msg::Error("Invalid boundary mesh (%s) on%s", what.c_str(), pb.str().c_str());
+#if defined(HAVE_POST)
+      new PView("Boundary mesh issue", x, y, z, val);
+#if defined(HAVE_FLTK)
+      if(FlGui::available())
+        FlGui::instance()->updateViews(true, true);
+      drawContext::global()->draw();
+#endif
+#endif
+      ret = false;
+    }
+    else{
+      Msg::Error("Could not recover boundary mesh: error %d", err);
+      ret = false;
+    }
+  }
   return ret;
 }

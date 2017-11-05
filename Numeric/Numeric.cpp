@@ -762,7 +762,7 @@ void signedDistancePointTriangle(const SPoint3 &p1,const SPoint3 &p2, const SPoi
   v = (inv[1][0] * pp1.x() + inv[1][1] * pp1.y() + inv[1][2] * pp1.z());
   d = (inv[2][0] * pp1.x() + inv[2][1] * pp1.y() + inv[2][2] * pp1.z());
   double sign = (d > 0) ? 1. : -1.;
-  if (d == 0.) sign = 1.e10;
+  if (d == 0.) sign = 1.;
   if (u >= 0. && v >= 0. && 1.-u-v >= 0.0){ //P(p) inside triangle
     closePt = p1 + (p2-p1)*u + (p3-p1)*v;
   }
@@ -842,7 +842,7 @@ void signedDistancesPointsTriangle(std::vector<double> &distances,
     v = (inv[1][0] * pp1.x() + inv[1][1] * pp1.y() + inv[1][2] * pp1.z());
     d = (inv[2][0] * pp1.x() + inv[2][1] * pp1.y() + inv[2][2] * pp1.z());
     double sign = (d > 0) ? 1. : -1.;
-    if (d == 0) sign = 1.e10;
+    if (d == 0.) sign = 1.;
     if (u >= 0 && v >= 0 && 1.-u-v >= 0.0){
       closePt = SPoint3(0.,0.,0.);//TO DO
     }

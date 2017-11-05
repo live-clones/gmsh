@@ -904,6 +904,11 @@ Disable interactive dialog windows in scripts (and use default values instead)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.NumThreads
+Set (maximum) number of threads@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item General.OptionsPositionX
 Horizontal position (in pixels) of the upper left corner of the option window@*
 Default value: @code{650}@*

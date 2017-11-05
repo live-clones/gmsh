@@ -454,6 +454,7 @@ void Msg::Fatal(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
+  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
   if(_logFile) fprintf(_logFile, "Fatal: %s\n", str);
   if(_callback) (*_callback)("Fatal", str);
@@ -503,6 +504,7 @@ void Msg::Error(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
+  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
   if(_logFile) fprintf(_logFile, "Error: %s\n", str);
   if(_callback) (*_callback)("Error", str);
@@ -544,6 +546,7 @@ void Msg::Warning(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
+  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
   if(_logFile) fprintf(_logFile, "Warning: %s\n", str);
   if(_callback) (*_callback)("Warning", str);
@@ -582,6 +585,7 @@ void Msg::Info(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
+  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
   if(_infoCpu){
     std::string res = PrintResources(false, true, true, true);
@@ -623,6 +627,7 @@ void Msg::Direct(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
+  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
   if(_logFile) fprintf(_logFile, "Direct: %s\n", str);
   if(_callback) (*_callback)("Direct", str);
@@ -659,6 +664,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
+  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
   if(_infoCpu){
     std::string res = PrintResources(false, true, true, true);
@@ -699,6 +705,8 @@ void Msg::StatusGl(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
+  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+
   if(FlGui::available())
     FlGui::instance()->setStatus(str, true);
 #endif
@@ -722,6 +730,7 @@ void Msg::Debug(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
+  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
   if(_logFile) fprintf(_logFile, "Debug: %s\n", str);
   if(_callback) (*_callback)("Debug", str);
@@ -758,6 +767,8 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
     va_start(args, fmt);
     vsnprintf(str, sizeof(str), fmt, args);
     va_end(args);
+    int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+
     sprintf(str2, "%3d%%    : %s", _progressMeterCurrent, str);
 
     if(_client) _client->Progress(str2);
@@ -1211,6 +1222,7 @@ static void _setStandardOptions(onelab::parameter *p,
   if(copt.count("Highlight")) p->setAttribute("Highlight", copt["Highlight"][0]);
   if(copt.count("Macro")) p->setAttribute("Macro", copt["Macro"][0]);
   if(copt.count("GmshOption")) p->setAttribute("GmshOption", copt["GmshOption"][0]);
+  if(copt.count("ServerAction")) p->setAttribute("ServerAction", copt["ServerAction"][0]);
   if(copt.count("Units")) p->setAttribute("Units", copt["Units"][0]);
   if(copt.count("AutoCheck")) // for backward compatibility
     p->setAttribute("AutoCheck", copt["AutoCheck"][0]);
@@ -1269,8 +1281,10 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   bool noRange = true, noChoices = true, noLoop = true;
   bool noGraph = true, noClosed = true;
   if(ps.size()){
-    if(fopt.count("ReadOnly") && fopt["ReadOnly"][0])
-      ps[0].setValues(val); // use local value
+    bool useLocalValue = ps[0].getReadOnly();
+    if(fopt.count("ReadOnly")) useLocalValue = fopt["ReadOnly"][0];
+    if(useLocalValue)
+      ps[0].setValues(val);
     else
       val = ps[0].getValues(); // use value from server
     // keep track of these attributes, which can be changed server-side (unless
@@ -1373,7 +1387,9 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
   _onelabClient->get(ps, name);
   bool noChoices = true, noClosed = true, noMultipleSelection = true;
   if(ps.size()){
-    if(fopt.count("ReadOnly") && fopt["ReadOnly"][0])
+    bool useLocalValue = ps[0].getReadOnly();
+    if(fopt.count("ReadOnly")) useLocalValue = fopt["ReadOnly"][0];
+    if(useLocalValue)
       ps[0].setValue(val); // use local value
     else
       val = ps[0].getValue(); // use value from server
