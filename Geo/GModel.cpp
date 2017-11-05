@@ -191,6 +191,9 @@ void GModel::destroy(bool keepName)
 
   _maxVertexNum = _maxElementNum = 0;
   _checkPointedMaxVertexNum = _checkPointedMaxElementNum = 0;
+  _currentMeshEntity = 0;
+  _lastMeshEntityError.clear();
+  _lastMeshVertexError.clear();
 
   for(riter it = firstRegion(); it != lastRegion(); ++it)
     delete *it;
@@ -260,6 +263,9 @@ void GModel::deleteMesh()
   for(viter it = firstVertex(); it != lastVertex();++it)
     (*it)->deleteMesh();
   destroyMeshCaches();
+  _currentMeshEntity = 0;
+  _lastMeshEntityError.clear();
+  _lastMeshVertexError.clear();
 }
 
 bool GModel::empty() const

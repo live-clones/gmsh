@@ -965,7 +965,7 @@ static void Mesh3D(GModel *m)
 
   for (GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
     if ((*it)->getNumMeshElements() == 0) {
-      Msg::Warning("Volume %d consists of no elements\n", (*it)->tag());
+      Msg::Warning("Volume %d consists of no elements", (*it)->tag());
     }
   }
 
@@ -1071,6 +1071,9 @@ void GenerateMesh(GModel *m, int ask)
   CTX::instance()->lock = 1;
 
   Msg::ResetErrorCounter();
+
+  m->clearLastMeshEntityError();
+  m->clearLastMeshVertexError();
 
   int old = m->getMeshStatus(false);
 
