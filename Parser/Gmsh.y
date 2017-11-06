@@ -2416,6 +2416,19 @@ Transform :
           (inDimTags, outDimTags, action == "CombinedBoundary", true,
            action == "PointsOf");
       }
+      else if(action == "DontSaveMesh"){
+        // boundary operations are performed directly on GModel, which enables
+        // to compute the boundary of hybrid CAD models; this also automatically
+        // binds all boundary entities for OCC models
+        if(GModel::current()->getOCCInternals() &&
+           GModel::current()->getOCCInternals()->getChanged())
+          GModel::current()->getOCCInternals()->synchronize(GModel::current());
+        if(GModel::current()->getGEOInternals()->getChanged())
+          GModel::current()->getGEOInternals()->synchronize(GModel::current());
+        r = GModel::current()->getBoundaryTags
+          (inDimTags, outDimTags, action == "CombinedBoundary", true,
+           action == "PointsOf");
+      }
       else{
         yymsg(0, "Unknown action on multiple shapes '%s'", $1);
       }
