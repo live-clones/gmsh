@@ -1,3 +1,6 @@
+3.1.0: generalized handling of "all" entities in geo file (using {:} notation);
+removed GModelFactory.
+
 3.0.6 (Novmeber 5, 2017): improved meshing of spheres; improved handling of mesh
 size constraints with OpenCASCADE kernel; implemented "Coherence" for
 OpenCASCADE kernel (shortcut for BooleanFragments); added GAMBIT Neutral File
