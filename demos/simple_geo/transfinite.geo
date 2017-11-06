@@ -72,9 +72,9 @@ Surface Loop(94) = {27,-71,-45,-73,-75,-69}; Volume(95) = {94};
 Transfinite Line {53, 59, 52, 58, 55, 56, 54, 57} = n Using Progression progr;
 Transfinite Line {42, 44, 30, 32, 36, 41, 29, 31, 9, 1, 8, 4, 11, 3, 10, 2,
                   18, 22, 14, 13, 39, 49, 37, 47} = n2;
-Transfinite Surface "*";
-Recombine Surface "*";
-Transfinite Volume "*";
+Transfinite Surface {:};
+Recombine Surface {:};
+Transfinite Volume {:};
 
 Physical Volume(1) = {85:95:2}; // ext volume
 Physical Surface(100) = {34,35,40,45,50,51}; // int surf

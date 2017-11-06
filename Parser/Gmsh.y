@@ -2416,19 +2416,6 @@ Transform :
           (inDimTags, outDimTags, action == "CombinedBoundary", true,
            action == "PointsOf");
       }
-      else if(action == "DontSaveMesh"){
-        // boundary operations are performed directly on GModel, which enables
-        // to compute the boundary of hybrid CAD models; this also automatically
-        // binds all boundary entities for OCC models
-        if(GModel::current()->getOCCInternals() &&
-           GModel::current()->getOCCInternals()->getChanged())
-          GModel::current()->getOCCInternals()->synchronize(GModel::current());
-        if(GModel::current()->getGEOInternals()->getChanged())
-          GModel::current()->getGEOInternals()->synchronize(GModel::current());
-        r = GModel::current()->getBoundaryTags
-          (inDimTags, outDimTags, action == "CombinedBoundary", true,
-           action == "PointsOf");
-      }
       else{
         yymsg(0, "Unknown action on multiple shapes '%s'", $1);
       }
@@ -2510,6 +2497,10 @@ ListOfShapes :
         }
         List_Add($$, &s);
       }
+    }
+  | ListOfShapes GeoEntity '{' tDOTS '}' tEND
+    {
+      getAllElementaryTags($2, $$);
     }
 ;
 
@@ -3030,15 +3021,21 @@ SetPartition :
 //  V I S I B I L I T Y
 
 Visibility :
-    tShow tBIGSTR tEND
+    tShow '{' tDOTS '}'
     {
-      std::string what = $2;
+      setVisibility(-1, 1, false);
+    }
+  | tShow tBIGSTR tEND // deprecated: use {:} instead
+    {
       setVisibility(-1, 1, false);
       Free($2);
     }
-  | tHide tBIGSTR tEND
+  | tHide '{' tDOTS '}'
     {
-      std::string what = $2;
+      setVisibility(-1, 0, false);
+    }
+  | tHide tBIGSTR tEND // deprecated: use {:} instead
+    {
       setVisibility(-1, 0, false);
       Free($2);
     }
@@ -4096,14 +4093,19 @@ PeriodicTransform :
 ;
 
 Constraints :
-    tCharacteristic tLength ListOfDouble tAFFECT FExpr tEND
+    tCharacteristic tLength ListOfDoubleOrAll tAFFECT FExpr tEND
     {
       // mesh sizes at vertices are stored in internal CAD data, as they can be
       // specified during vertex creation and copied around during CAD
       // operations
-      for(int i = 0; i < List_Nbr($3); i++){
-	double d;
-	List_Read($3, i, &d);
+      List_T *tmp = $3;
+      if(!$3){
+        tmp = List_Create(100, 100, sizeof(double));
+        getAllElementaryTags(0, tmp);
+      }
+      for(int i = 0; i < List_Nbr(tmp); i++){
+        double d;
+        List_Read(tmp, i, &d);
         int tag = (int)d;
         if(GModel::current()->getOCCInternals())
           GModel::current()->getOCCInternals()->setMeshSize(0, tag, $5);
@@ -4111,7 +4113,7 @@ Constraints :
         GVertex *gv = GModel::current()->getVertexByTag(tag);
         if(gv) gv->setPrescribedMeshSizeAtVertex($5);
       }
-      List_Delete($3);
+      List_Delete(tmp);
     }
   | tTransfinite tLine ListOfDoubleOrAll tAFFECT FExpr TransfiniteType tEND
     {
@@ -5295,14 +5297,20 @@ ListOfDoubleOrAll :
     {
       $$ = $1;
     }
-  | tBIGSTR
+  | '{' tDOTS '}'
     {
-      if(!strcmp($1, "*") || !strcmp($1, "all"))
+      $$ = 0;
+    }
+  | tBIGSTR // deprecated: use {:} instead
+    {
+      if(!strcmp($1, "*") || !strcmp($1, "all")){
         $$ = 0;
+      }
       else{
         yyerror("Unknown special string for list replacement");
         $$ = List_Create(2, 1, sizeof(double));
       }
+      Free($1);
     }
 ;
 
@@ -5363,7 +5371,23 @@ FExpr_Multi :
       List_Add($$, &y);
       List_Add($$, &z);
     }
-  | GeoEntity tBIGSTR
+  | tPoint '{' tDOTS '}'
+    {
+      $$ = List_Create(10, 10, sizeof(double));
+      getAllElementaryTags(0, $$);
+    }
+  | tPoint tBIGSTR // deprecated syntax: use {:} instead
+    {
+      $$ = List_Create(10, 10, sizeof(double));
+      getAllElementaryTags(0, $$);
+      Free($2);
+    }
+  | GeoEntity123 '{' tDOTS '}'
+    {
+      $$ = List_Create(10, 10, sizeof(double));
+      getAllElementaryTags($1, $$);
+    }
+  | GeoEntity123 tBIGSTR // deprecated syntax: use {:} instead
     {
       $$ = List_Create(10, 10, sizeof(double));
       getAllElementaryTags($1, $$);
