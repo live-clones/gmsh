@@ -1064,7 +1064,7 @@ StringXNumber MeshOptions_Number[] = {
     "Element shrinking factor (between 0 and 1)" },
 
   { F|O, "FlexibleTransfinite" , opt_mesh_flexible_transfinite , 0 ,
-    "Allow transfinite contraints to be modified for Blossom or by global mesh size factor" },
+    "Allow transfinite constraints to be modified for Blossom or by global mesh size factor" },
   { F|O, "NewtonConvergenceTestXYZ" , opt_mesh_newton_convergence_test_xyz , 0. ,
     "Force inverse surface mapping algorithm (Newton-Raphson) to converge in real "
     "coordinates (experimental)" },
@@ -1221,7 +1221,7 @@ StringXNumber MeshOptions_Number[] = {
     "Preserve element numbering in MSH2 format (will break meshes with multiple "
     "physical groups for a single elementary entity)"},
   { F|O, "IgnorePeriodicity" , opt_mesh_ignore_periodicity , 0. ,
-    "Ignore alignement of periodic boundaries when reading the mesh "
+    "Ignore alignment of periodic boundaries when reading the mesh "
     "(used by ParaView plugin)"},
 #if defined(HAVE_BLOSSOM)
   { F|O, "RecombinationAlgorithm" , opt_mesh_algo_recombine , 1 ,

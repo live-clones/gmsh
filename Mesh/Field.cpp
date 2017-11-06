@@ -1866,7 +1866,7 @@ class AttractorAnisoCurveField : public Field {
       (n_nodes_by_edge, "Number of nodes used to discretized each curve",
        &update_needed);
     options["dMin"] = new FieldOptionDouble
-      (dMin, "Minimum distance, bellow this distance from the curves, "
+      (dMin, "Minimum distance, below this distance from the curves, "
        "prescribe the minimum mesh sizes.");
     options["dMax"] = new FieldOptionDouble
       (dMax, "Maxmium distance, above this distance from the curves, prescribe "
@@ -2218,24 +2218,24 @@ using namespace nanoflann;
 struct PointCloud
 {
   std::vector<SPoint3>  pts;
-}; 
+};
 
 // And this is the "dataset to kd-tree" adaptor class:
 template <typename Derived>
 struct PointCloudAdaptor
 {
-  
+
   const Derived &obj; //!< A const ref to the data set origin
-  
+
   /// The constructor that sets the data set source
   PointCloudAdaptor(const Derived &obj_) : obj(obj_) { }
-  
+
   /// CRTP helper method
   inline const Derived& derived() const { return obj; }
-  
+
   // Must return the number of data points
   inline size_t kdtree_get_point_count() const { return derived().pts.size(); }
-  
+
   // Returns the distance between the vector "p1[0:size-1]" and the data point with index "idx_p2" stored in the class:
   inline double kdtree_distance(const double *p1, const size_t idx_p2,size_t /*size*/) const
   {
@@ -2254,7 +2254,7 @@ struct PointCloudAdaptor
     else if (dim==1) return derived().pts[idx].y();
     else return derived().pts[idx].z();
   }
-  
+
   // Optional bounding-box computation: return false to default to a standard bbox computation loop.
   //   Return true if the BBOX was already computed by the class and returned in "bb" so it can be avoided to redo it again.
   //   Look at bb.size() to find out the expected dimensionality (e.g. 2 or 3 for point clouds)
@@ -2271,7 +2271,7 @@ typedef KDTreeSingleIndexAdaptor<
   PC2KD, 3 > my_kd_tree_t;
 
 class DistanceField : public Field
-{  
+{
   std::list<int> nodes_id, edges_id, faces_id;
   int _xFieldId, _yFieldId, _zFieldId;
   Field *_xField, *_yField, *_zField;
@@ -2344,7 +2344,7 @@ public:
 	  }
 	}
       }
-      
+
       for(std::list<int>::iterator it = nodes_id.begin();
           it != nodes_id.end(); ++it) {
 	GVertex *gv = GModel::current()->getVertexByTag(*it);
@@ -2356,7 +2356,7 @@ public:
 	GEdge *e = GModel::current()->getEdgeByTag(*it);
 	if(e) {
 	  if (e->mesh_vertices.size()){
-	    for(unsigned int i = 0; i < e->mesh_vertices.size(); i++) 
+	    for(unsigned int i = 0; i < e->mesh_vertices.size(); i++)
               points.push_back(SPoint3(e->mesh_vertices[i]->x(),
 				       e->mesh_vertices[i]->y(),
 				       e->mesh_vertices[i]->z()));
@@ -2370,18 +2370,18 @@ public:
 	    points.push_back(SPoint3(gp.x(),gp.y(),gp.z()));
 	  }
 	}
-      }      
-      
+      }
+
       // construct a kd-tree index:
-      
+
       //      printf("Constructing kd-tree with %lu points\n",points.size());
-      
+
       index = new my_kd_tree_t(3 , pc2kd, KDTreeSingleIndexAdaptorParams(10) );
       index->buildIndex();
       update_needed=false;
     }
   }
-  
+
   using Field::operator();
   virtual double operator() (double X, double Y, double Z, GEntity *ge=0)
   {

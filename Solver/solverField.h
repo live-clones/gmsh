@@ -31,8 +31,8 @@ class SolverField : public FunctionSpace<T> // being able to use it instead of a
   virtual int getNumKeys(MVertex *ver) const { return 1;}
   virtual int getNumKeys(MElement *ele)  const { return 1;}
  private:
-  virtual void getKeys(MElement *ele, std::vector<Dof> &keys) const { Msg::Error("getKeys for SolverField should'nt be called");}
-  virtual void getKeys(MVertex *ver, std::vector<Dof> &keys) const {Msg::Error("getKeys for SolverField should'nt be called");}
+  virtual void getKeys(MElement *ele, std::vector<Dof> &keys) const { Msg::Error("getKeys for SolverField shouldn't be called");}
+  virtual void getKeys(MVertex *ver, std::vector<Dof> &keys) const {Msg::Error("getKeys for SolverField shouldn't be called");}
  public:
 
   virtual void f(MElement *ele, double u, double v, double w, ValType &val) const

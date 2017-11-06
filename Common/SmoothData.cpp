@@ -20,7 +20,7 @@ xyzv::xyzv(const xyzv &other)
   scaleValue = other.scaleValue;  // Added by Trevor Strickler 07/10/2013
   scale_numvals = other.scale_numvals;  // Added by Trevor Strickler 07/10/2013
   nbvals = other.nbvals;
-  nboccurences = other.nboccurences;
+  nboccurrences = other.nboccurrences;
   if(other.vals && other.nbvals) {
     vals = new double[other.nbvals];
     for(int i = 0; i < nbvals; i++)
@@ -39,7 +39,7 @@ xyzv &xyzv::operator = (const xyzv &other)
     scaleValue = other.scaleValue;  // Added by Trevor Strickler 07/10/2013
     scale_numvals = other.scale_numvals;  // Added by Trevor Strickler 07/10/2013
     nbvals = other.nbvals;
-    nboccurences = other.nboccurences;
+    nboccurrences = other.nboccurrences;
     if(other.vals && other.nbvals) {
       vals = new double[other.nbvals];
       for(int i = 0; i < nbvals; i++)
@@ -56,15 +56,15 @@ void xyzv::update(int n, double *v)
     for(int i = 0; i < n; i++)
       vals[i] = 0.0;
     nbvals = n;
-    nboccurences = 0;
+    nboccurrences = 0;
   }
   else if(nbvals != n)
     return; // error
-  double x1 = (double)(nboccurences) / (double)(nboccurences + 1);
-  double x2 = 1. / (double)(nboccurences + 1);
+  double x1 = (double)(nboccurrences) / (double)(nboccurrences + 1);
+  double x2 = 1. / (double)(nboccurrences + 1);
   for(int i = 0; i < nbvals; i++)
     vals[i] = (x1 * vals[i] + x2 * v[i]);
-  nboccurences++;
+  nboccurrences++;
 }
 
 // Added by Trevor Strickler
