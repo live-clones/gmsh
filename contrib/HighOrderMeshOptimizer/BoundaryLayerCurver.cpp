@@ -79,12 +79,12 @@ namespace
       previous = v;
     }
   }
+
   void drawBezierControlPolygon(const std::vector<MVertex *> &vertices,
                                 GEntity *entity)
   {
     const int nVert = vertices.size();
     const bezierBasis *fs = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 1);
-    MVertex *previous = NULL;
 
     fullMatrix<double> xyz(nVert, 3);
     for (int i = 0; i < nVert; ++i) {
@@ -100,6 +100,7 @@ namespace
     for (int i = 1; i < nVert-1; ++i) idx[i] = i+1;
     idx[nVert-1] = 1;
 
+    MVertex *previous = NULL;
     for (int i = 0; i < nVert; ++i) {
       MVertex *v = new MVertex(controlPoints(idx[i], 0), controlPoints(idx[i], 1),
                                controlPoints(idx[i], 2), entity);
@@ -109,6 +110,74 @@ namespace
       }
       ((GEdge *) entity)->addMeshVertex(v);
       previous = v;
+    }
+  }
+
+  void drawBezierDerivative(const std::vector<MVertex *> &vertices,
+                            GEntity *entity, SPoint3 p, int *onlyN = NULL,
+                            double fact = 1)
+  {
+    MVertex *v = new MVertex(p.x(), p.y(), p.z(), entity);
+    MLine *line = new MLine(v, v);
+    ((GEdge *) entity)->addLine(line);
+    ((GEdge *) entity)->addMeshVertex(v);
+
+
+    const int nVert = vertices.size();
+
+    fullMatrix<double> controlPoints(nVert, 3);
+    {
+      const bezierBasis *fs = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 1);
+      fullMatrix<double> xyz(nVert, 3);
+      for (int i = 0; i < nVert; ++i) {
+        xyz(i, 0) = vertices[i]->x();
+        xyz(i, 1) = vertices[i]->y();
+        xyz(i, 2) = vertices[i]->z();
+      }
+      fs->lag2Bez(xyz, controlPoints);
+    }
+
+    fullMatrix<double> deriv(nVert, 3);
+    deriv(0, 0) = controlPoints(0, 0);
+    deriv(0, 1) = controlPoints(0, 1);
+    deriv(0, 2) = controlPoints(0, 2);
+    for (int i = 1; i < nVert-1; ++i) {
+      deriv(i, 0) = controlPoints(i+1, 0);
+      deriv(i, 1) = controlPoints(i+1, 1);
+      deriv(i, 2) = controlPoints(i+1, 2);
+    }
+    deriv(nVert-1, 0) = controlPoints(1, 0);
+    deriv(nVert-1, 1) = controlPoints(1, 1);
+    deriv(nVert-1, 2) = controlPoints(1, 2);
+    deriv.scale(fact);
+
+    for (int n = nVert - 1; n > 0; --n) {
+      for (int i = 0; i < n; ++i) {
+        deriv(i, 0) = deriv(i+1, 0) - deriv(i, 0);
+        deriv(i, 1) = deriv(i+1, 1) - deriv(i, 1);
+        deriv(i, 2) = deriv(i+1, 2) - deriv(i, 2);
+      }
+//      if (n > nVert-3) deriv.scale(n);
+      deriv.scale(n);
+      //if (n < nVert-3) continue;
+//      fullMatrix<double> myderiv(n, 3);
+//      myderiv.copy(deriv,0,n,0,3,0,0);
+//      myderiv.print("myderiv");
+      if (!onlyN || *onlyN == n) {
+        MVertex *previous = NULL;
+        for (int i = 0; i < n; ++i) {
+          MVertex *v = new MVertex(p.x() + deriv(i, 0), p.y() + deriv(i, 1),
+                                   p.z() + deriv(i, 2), entity);
+          if (previous) {
+            MLine *line = new MLine(v, previous);
+            ((GEdge *) entity)->addLine(line);
+            ((GEdge *) entity)->addMeshVertex(v);
+          }
+          else if (n == 1)
+            ((GEdge *) entity)->addMeshVertex(v);
+          previous = v;
+        }
+      }
     }
   }
 
@@ -281,7 +350,7 @@ namespace BoundaryLayerCurver
           for (int j = 0; j < sz1; ++j) {
             data->Leg2Lag(i, j) = val[j];
           }
-          data->Leg2Lag.print("data->Leg2Lag");
+//          data->Leg2Lag.print("data->Leg2Lag");
         }
         //data->Leg2Lag(sz1, sz1) = data->Leg2Lag(sz1+1, sz1+1) = 1;
       }
@@ -315,29 +384,29 @@ namespace BoundaryLayerCurver
           for (int j = 0; j < sz1; ++j) {
             data->Leg2p(i, j) = val[j];
           }
-          data->Leg2p.print("data->Leg2Lag");
+//          data->Leg2p.print("data->Leg2Lag");
         }
       }
 
-      M1.print("M1");
-      invM1.print("invM1");
-      M2.print("M2");
-      Leg2Leg.print("Leg2Leg");
-      data->Leg2Lag.print("data->Leg2Lag");
+//      M1.print("M1");
+//      invM1.print("invM1");
+//      M2.print("M2");
+//      Leg2Leg.print("Leg2Leg");
+//      data->Leg2Lag.print("data->Leg2Lag");
 
       fullMatrix<double> &tmp = M1;
       tmp.resize(sz1+2, sz2+2, false);
       invM1.mult(M2, tmp);
-      tmp.print("tmp");
+//      tmp.print("tmp");
 
       fullMatrix<double> &tmp2 = M2;
       tmp2.resize(sz1+2, sz2+2, false);
       Leg2Leg.mult(tmp, tmp2);
-      tmp2.print("tmp2");
+//      tmp2.print("tmp2");
 
       data->invA.resize(sz1, sz2+2, false);
       data->invA.copy(tmp2, 0, sz1, 0, sz2+2, 0, 0);
-      data->invA.print("invA");
+//      data->invA.print("invA");
       return data;
     }
     else if (typeElement == TYPE_QUA) {
@@ -481,8 +550,8 @@ namespace BoundaryLayerCurver
     //       b(xi) is the linear coefficient
 
     if (nLayer == 0) {
-//      drawAmplifiedDiffWithLin(baseVert, bndEnt, 2);
-      drawBezierControlPolygon(baseVert, bndEnt);
+//      drawAmplifiedDiffWithLin(baseVert, bndEnt, 20);
+//      drawBezierControlPolygon(baseVert, bndEnt);
     }
 
     const int orderCurve = baseVert.size() - 1;
@@ -544,8 +613,8 @@ namespace BoundaryLayerCurver
     fullMatrix<double> coeff(orderCurve + 1, 12);
     fullMatrix<double> newxyz(orderCurve + 1, 12);
     data->invA.mult(xyz, coeff);
-    xyz.print("xyz");
-    coeff.print("coeff a");
+//    xyz.print("xyz");
+//    coeff.print("coeff a");
 //    { // remove some of high order coeff
 //      for (int i = 4; i < 7; ++i) {
 //        coeff(i, 6) = 0;
@@ -608,9 +677,9 @@ namespace BoundaryLayerCurver
 //        coeff(i, 1) *= 1-(nLayer*nLayer/12./12)*i/6;
 //      }
     }
-    coeff.print("coeff b");
+//    coeff.print("coeff b");
     data->Leg2Lag.mult(coeff, newxyz);
-    newxyz.print("newxyz");
+//    newxyz.print("newxyz");
 
     for (int i = 2; i < topVert.size(); ++i) {
       topVert[i]->x() = newxyz(i, 0);
@@ -618,8 +687,11 @@ namespace BoundaryLayerCurver
       topVert[i]->z() = newxyz(i, 2);
     }
 
-//    drawAmplifiedDiffWithLin(topVert, bndEnt, 2);
-//    drawBezierControlPolygon(topVert, bndEnt);
+
+    if (nLayer == -1) {
+//      drawAmplifiedDiffWithLin(topVert, bndEnt, 2);
+      drawBezierControlPolygon(topVert, bndEnt);
+    }
   }
 
   void computePositionMidVert(const std::vector<MVertex *> &baseVert,
@@ -699,8 +771,8 @@ namespace BoundaryLayerCurver
     fullMatrix<double> coeff(orderCurve + 1, 12);
     fullMatrix<double> newxyz(orderCurve + 1, 12);
     data->invA.mult(xyz, coeff);
-    xyz.print("xyz");
-    coeff.print("coeff a");
+//    xyz.print("xyz");
+//    coeff.print("coeff a");
 //    { // remove some of high order coeff
 //      for (int i = 4; i < 7; ++i) {
 //        coeff(i, 6) = 0;
@@ -763,9 +835,9 @@ namespace BoundaryLayerCurver
 //        coeff(i, 1) *= 1-(nLayer*nLayer/12./12)*i/6;
 //      }
     }
-    coeff.print("coeff b");
+//    coeff.print("coeff b");
     data->Leg2Lag.mult(coeff, newxyz);
-    newxyz.print("newxyz");
+//    newxyz.print("newxyz");
 
     for (int i = 2; i < midVert.size(); ++i) {
       midVert[i]->x() = newxyz(i, 0);
@@ -943,58 +1015,10 @@ namespace BoundaryLayerCurver
   void curve2DQuadColumn(MElement *bottomEdge, std::vector<MElement *> &column,
                          SVector3 w, GEntity *bndEnt)
   {
-//    if (bottomEdge->getNum() != 1136) return;
-//    if (bottomEdge->getNum() != 1102) return;
-    if (false) {
-      int order = bottomEdge->getPolynomialOrder();
-      for (int i = 0; i < order+1; ++i) {
-        double xi = -1 + 2 * i / (double)order;
-        MVertex *v0 = bottomEdge->getVertex(0);
-        MVertex *v1 = bottomEdge->getVertex(1);
-        double c1 = i/(double)order;
-        double c0 = 1-c1;
-        SPoint3 p(v0->x()*c0+v1->x()*c1, v0->y()*c0+v1->y()*c1, v0->z()*c0+v1->z()*c1);
-        MVertex *vv;
-        switch (i) {
-          case 0: vv = bottomEdge->getVertex(0); break;
-          case 6: vv = bottomEdge->getVertex(1); break;
-          default: vv = bottomEdge->getVertex(i+1); break;
-        }
-//        vv->x() = p.x();
-//        vv->y() = p.y();
-//        vv->z() = p.z();
-        std::cout << vv->x()-p.x() << " "  << vv->y()-p.y() << " "  << vv->z()-p.z() << std::endl;
-//        MVertex *v = new MVertex(p.x(), p.y(), p.z(), bndEnt);
-//        ((GEdge *) bndEnt)->addMeshVertex(v);
-//        MLine *line = new MLine(v, v);
-//        ((GEdge *) bndEnt)->addLine(line);
-      }
-    }
-
-    if (false) {
-      MVertex *v0 = bottomEdge->getVertex(0);
-      MVertex *v1 = bottomEdge->getVertex(1);
-      double amp = 100;
-      int cnt = 100;
-      for (int i = 0; i < cnt; ++i) {
-        double xi = -1 + 2 * i / (cnt - 1.);
-        double c1 = i / (cnt - 1.);
-        double c0 = 1 - c1;
-        SPoint3 pLin(v0->x() * c0 + v1->x() * c1,
-                     v0->y() * c0 + v1->y() * c1,
-                     v0->z() * c0 + v1->z() * c1);
-        SPoint3 p;
-        bottomEdge->pnt(xi, 0, 0, p);
-        MVertex *vLin = new MVertex(pLin.x(), pLin.y(), pLin.z(), bndEnt);
-        MVertex *v = new MVertex(amp * p.x() - (amp - 1) * pLin.x(),
-                                 amp * p.y() - (amp - 1) * pLin.y(),
-                                 amp * p.z() - (amp - 1) * pLin.z(), bndEnt);
-        MLine *line = new MLine(v, vLin);
-        ((GEdge *) bndEnt)->addLine(line);
-        ((GEdge *) bndEnt)->addMeshVertex(v);
-        ((GEdge *) bndEnt)->addMeshVertex(vLin);
-      }
-    }
+//    if (bottomEdge->getNum() != 1156) return; // Strange
+//    if (bottomEdge->getNum() != 1079) return; // Good
+//    if (bottomEdge->getNum() != 1136) return; // Bad
+//    if (bottomEdge->getNum() != 1102) return; // HO
 
     MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
     std::vector<MVertex *> bottomVertices, topVertices;
@@ -1013,9 +1037,21 @@ namespace BoundaryLayerCurver
 
       Parameters2DCurve parameters;
       computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
-      computePositionTopVert(bottomVertices, topVertices, parameters, w, bndEnt, i);
+      computePositionTopVert(bottomVertices, topVertices, parameters, w, bndEnt, column.size()-i-2);
       repositionInteriorNodes(quad);
       bottom = MEdge(topVertices[0], topVertices[1]);
+
+      if (false && i < 16) {
+        double fact = 10;
+        for (int j = 1; j < 7; ++j) {
+          drawBezierDerivative(bottomVertices, bndEnt, SPoint3(fact*j, -10, 0), &j, .01);
+          drawBezierControlPolygon(bottomVertices, bndEnt);
+          if (i == column.size()-1) {
+            drawBezierDerivative(topVertices, bndEnt, SPoint3(fact*(j), -10, 0), &j, .01);
+            drawBezierControlPolygon(topVertices, bndEnt);
+          }
+        }
+      }
     }
   }
 
