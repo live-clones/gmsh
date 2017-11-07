@@ -41,7 +41,7 @@ template <class ITERATOR>
 void fillElementsToNodesMap(Graph &graph, const GEntity *const entity, int &eptrIndex, int &eindIndex, ITERATOR it_beg, ITERATOR it_end);
 int getSizeOfEind(const GModel *const model);
 int getNumVertices(const MElement *const element);
-int getNumPeriodicLink(const GModel *const model);
+bool isPeriodic(const GModel *const model);
 
 int PartitionGraph(Graph &graph);
 

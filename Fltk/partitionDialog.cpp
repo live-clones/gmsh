@@ -65,7 +65,7 @@ struct PartitionDialog
   
   void write_all_options()
   {    // Group 0
-    CTX::instance()->mesh.num_partitions = static_cast<unsigned short>(inputNumPartition->value());
+    CTX::instance()->mesh.num_partitions = static_cast<int>(inputNumPartition->value());
     CTX::instance()->mesh.createGhostCells = setGhostCells->value();
     CTX::instance()->mesh.createPartitionBoundaries = setPartitionBoundaries->value();
   
@@ -136,7 +136,7 @@ void partition_partition_cb(Fl_Widget *widget, void *data)
 
   // Write all options
   dlg->write_all_options();
-  
+    
   // Partition the mesh
   int ier = PartitionMesh(GModel::current());
 

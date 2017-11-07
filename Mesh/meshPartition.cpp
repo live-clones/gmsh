@@ -380,14 +380,14 @@ void assignToParent(std::set<MVertex*> &verts, partitionVertex *vertex, ITERATOR
 
 int MakeGraph(GModel *const model, Graph &graph)
 {
-  const int numOfPeriodicLink = getNumPeriodicLink(model);
-  graph.ne(model->getNumMeshElements() + numOfPeriodicLink);
+  graph.ne(model->getNumMeshElements());
   graph.nn(model->getNumMeshVertices());
   graph.dim(model->getDim());
   graph.elementResize(graph.ne());
   graph.eptrResize(graph.ne()+1);
   graph.eptr(0,0);
-  graph.eindResize(getSizeOfEind(model) + 2*numOfPeriodicLink);
+  const int eindSize = getSizeOfEind(model);
+  graph.eindResize(eindSize);
   
   int eptrIndex = 0;
   int eindIndex = 0;
@@ -414,20 +414,6 @@ int MakeGraph(GModel *const model, Graph &graph)
     fillElementsToNodesMap(graph, r, eptrIndex, eindIndex, r->pyramids.begin(), r->pyramids.end());
     fillElementsToNodesMap(graph, r, eptrIndex, eindIndex, r->trihedra.begin(), r->trihedra.end());
     fillElementsToNodesMap(graph, r, eptrIndex, eindIndex, r->polyhedra.begin(), r->polyhedra.end());
-    
-    //Take into account the periodic node in the graph
-    if(r->correspondingVertices.size() != 0)
-    {
-      for(std::map<MVertex*, MVertex*>::const_iterator itP = r->correspondingVertices.begin(); itP != r->correspondingVertices.end(); ++itP)
-      {
-        graph.element(eptrIndex, NULL);
-        eptrIndex++;
-        graph.eptr(eptrIndex, graph.eptr(eptrIndex-1) + 2);
-        graph.eind(eindIndex, itP->first->getNum()-1);
-        graph.eind(eindIndex+1, itP->second->getNum()-1);
-        eindIndex += 2;
-      }
-    }
   }
   
   //Loop over faces
@@ -438,20 +424,6 @@ int MakeGraph(GModel *const model, Graph &graph)
     fillElementsToNodesMap(graph, f, eptrIndex, eindIndex, f->triangles.begin(), f->triangles.end());
     fillElementsToNodesMap(graph, f, eptrIndex, eindIndex, f->quadrangles.begin(), f->quadrangles.end());
     fillElementsToNodesMap(graph, f, eptrIndex, eindIndex, f->polygons.begin(), f->polygons.end());
-    
-    //Take into account the periodic node in the graph
-    if(f->correspondingVertices.size() != 0)
-    {
-      for(std::map<MVertex*, MVertex*>::const_iterator itP = f->correspondingVertices.begin(); itP != f->correspondingVertices.end(); ++itP)
-      {
-        graph.element(eptrIndex, NULL);
-        eptrIndex++;
-        graph.eptr(eptrIndex, graph.eptr(eptrIndex-1) + 2);
-        graph.eind(eindIndex, itP->first->getNum()-1);
-        graph.eind(eindIndex+1, itP->second->getNum()-1);
-        eindIndex += 2;
-      }
-    }
   }
   
   //Loop over edges
@@ -460,20 +432,6 @@ int MakeGraph(GModel *const model, Graph &graph)
     const GEdge *e = *it;
     
     fillElementsToNodesMap(graph, e, eptrIndex, eindIndex, e->lines.begin(), e->lines.end());
-    
-    //Take into account the periodic node in the graph
-    if(e->correspondingVertices.size() != 0)
-    {
-      for(std::map<MVertex*, MVertex*>::const_iterator itP = e->correspondingVertices.begin(); itP != e->correspondingVertices.end(); ++itP)
-      {
-        graph.element(eptrIndex, NULL);
-        eptrIndex++;
-        graph.eptr(eptrIndex, graph.eptr(eptrIndex-1) + 2);
-        graph.eind(eindIndex, itP->first->getNum()-1);
-        graph.eind(eindIndex+1, itP->second->getNum()-1);
-        eindIndex += 2;
-      }
-    }
   }
   
   //Loop over vertices
@@ -482,18 +440,29 @@ int MakeGraph(GModel *const model, Graph &graph)
     GVertex *v = *it;
     
     fillElementsToNodesMap(graph, v, eptrIndex, eindIndex, v->points.begin(), v->points.end());
-    
-    //Take into account the periodic node in the graph
-    if(v->correspondingVertices.size() != 0)
+  }
+  
+  //Taking into account the periodicity
+  if(isPeriodic(model))
+  {
+    std::map<int,int> correspondingVertices;
+    std::vector<GEntity*> entities;
+    model->getEntities(entities);
+    for(unsigned int i = 0; i < entities.size(); i++)
     {
-      for(std::map<MVertex*, MVertex*>::const_iterator itP = v->correspondingVertices.begin(); itP != v->correspondingVertices.end(); ++itP)
+      for(std::map<MVertex*,MVertex*>::iterator it = entities[i]->correspondingVertices.begin(); it != entities[i]->correspondingVertices.end(); ++it)
       {
-        graph.element(eptrIndex, NULL);
-        eptrIndex++;
-        graph.eptr(eptrIndex, graph.eptr(eptrIndex-1) + 2);
-        graph.eind(eindIndex, itP->first->getNum()-1);
-        graph.eind(eindIndex+1, itP->second->getNum()-1);
-        eindIndex += 2;
+        correspondingVertices.insert(std::pair<int,int>(it->first->getNum()-1, it->second->getNum()-1));
+      }
+    }
+        
+    for(unsigned int i = 0; i < eindSize; i++)
+    {
+      std::map<int,int>::iterator it = correspondingVertices.find(graph.eind(i));
+      if(it != correspondingVertices.end())
+      {
+        Msg::Info("%d %d", it->first, it->second);
+        graph.eind(i,it->second);
       }
     }
   }
@@ -570,18 +539,17 @@ int getNumVertices(const MElement *const element)
   }
 }
 
-int getNumPeriodicLink(const GModel *const model)
+bool isPeriodic(const GModel *const model)
 {
-  int numOfPeriodicLink = 0;
   std::vector<GEntity*> entities;
   model->getEntities(entities);
   
   for(unsigned int i = 0; i < entities.size(); i++)
   {
-    numOfPeriodicLink += entities[i]->correspondingVertices.size();
+    if(entities[i]->correspondingVertices.size() != 0) return true;
   }
   
-  return numOfPeriodicLink;
+  return false;
 }
 
 /*******************************************************************************

@@ -6376,7 +6376,7 @@ double opt_mesh_cpu_time(OPT_ARGS_NUM)
 double opt_mesh_partition_num(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    const int ival = std::max(1, (int)val);
+    const int ival = std::max(2, (int)val);
     CTX::instance()->mesh.num_partitions = ival;
     CTX::instance()->mesh.metis_algorithm = (ival <= 8) ? 1 : 2;
   }

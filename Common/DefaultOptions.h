@@ -1093,6 +1093,8 @@ StringXNumber MeshOptions_Number[] = {
     "Weight of quadrangle for METIS load balancing" },
   { F|O, "PartitionTetWeight"     , opt_mesh_partition_tet_weight , 1 ,
     "Weight of tetrahedral element for METIS load balancing" },
+  { F|O, "PartitionTriWeight"     , opt_mesh_partition_tri_weight , 1 ,
+    "Weight of triangle element for METIS load balancing" },
   { F|O, "PartitionBoundaries"     , opt_mesh_partition_boundaries , 1 ,
     "Create boundary entities between partitions" },
   { F|O, "PartitionMeshes"     , opt_mesh_msh_file_partitioned , 1 ,
