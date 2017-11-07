@@ -535,9 +535,11 @@ namespace BoundaryLayerCurver
   }
 
   void computePositionTopVert(const std::vector<MVertex *> &baseVert,
+                              const std::vector<MVertex *> &firstVert,
                               std::vector<MVertex *> &topVert,
-                              Parameters2DCurve &parameters, SVector3 w,
-                              GEntity *bndEnt, int nLayer)
+                              Parameters2DCurve &parameters,
+                              Parameters2DCurve &parameters2, SVector3 w,
+                              GEntity *bndEnt, int nLayer, bool last = false)
   {
     // Let (t, n, e3) be the local reference frame
     // We seek for each component the polynomial function that fit the best
@@ -570,13 +572,20 @@ namespace BoundaryLayerCurver
     xyz(sizeSystem+1, 2) = topVert[1]->z();
     */
     fullMatrix<double> xyz(sizeSystem + 2, 12);
+    fullMatrix<double> xyz2(sizeSystem + 2, 12);
     idealPositionEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz,
+                      bndEnt);
+    idealPositionEdge(firstVert, parameters2, w, sizeSystem, gaussPnts, xyz2,
                       bndEnt);
     double xi[2] = {-1, 1};
     for (int i = 0; i < 2; ++i) {
       xyz(sizeSystem+i, 0) = topVert[i]->x();
       xyz(sizeSystem+i, 1) = topVert[i]->y();
       xyz(sizeSystem+i, 2) = topVert[i]->z();
+      xyz2(sizeSystem+i, 0) = topVert[i]->x();
+      xyz2(sizeSystem+i, 1) = topVert[i]->y();
+      xyz2(sizeSystem+i, 2) = topVert[i]->z();
+
       xyz(sizeSystem+i, 3) = baseVert[i]->x();
       xyz(sizeSystem+i, 4) = baseVert[i]->y();
       xyz(sizeSystem+i, 5) = baseVert[i]->z();
@@ -677,18 +686,33 @@ namespace BoundaryLayerCurver
 //        coeff(i, 1) *= 1-(nLayer*nLayer/12./12)*i/6;
 //      }
     }
+    if (false) { // forget b
+      for (int i = 0; i < orderCurve + 1; ++i) {
+        coeff(i, 0) = coeff(i, 3) + coeff(i, 6);
+        coeff(i, 1) = coeff(i, 4) + coeff(i, 7);
+        coeff(i, 2) = coeff(i, 5) + coeff(i, 8);
+      }
+    }
 //    coeff.print("coeff b");
     data->Leg2Lag.mult(coeff, newxyz);
 //    newxyz.print("newxyz");
 
+    fullMatrix<double> coeff2(orderCurve + 1, 12);
+    fullMatrix<double> newxyz2(orderCurve + 1, 12);
+    data->invA.mult(xyz2, coeff2);
+    data->Leg2Lag.mult(coeff2, newxyz2);
+
+    double fact = 1;
+
     for (int i = 2; i < topVert.size(); ++i) {
-      topVert[i]->x() = newxyz(i, 0);
-      topVert[i]->y() = newxyz(i, 1);
-      topVert[i]->z() = newxyz(i, 2);
+      topVert[i]->x() = fact * newxyz(i, 0) + (1-fact) * newxyz2(i, 0);
+      topVert[i]->y() = fact * newxyz(i, 1) + (1-fact) * newxyz2(i, 1);
+      topVert[i]->z() = fact * newxyz(i, 2) + (1-fact) * newxyz2(i, 2);
     }
 
-
-    if (nLayer == -1) {
+//    drawAmplifiedDiffWithLin(topVert, bndEnt, 2);
+//    drawBezierControlPolygon(topVert, bndEnt);
+    if (last) {
 //      drawAmplifiedDiffWithLin(topVert, bndEnt, 2);
       drawBezierControlPolygon(topVert, bndEnt);
     }
@@ -1005,7 +1029,7 @@ namespace BoundaryLayerCurver
       computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
       computePositionMidVert(bottomVertices, midVertices, parameters, w,
                              bndEnt, i, direction);
-      computePositionTopVert(bottomVertices, topVertices, parameters, w, bndEnt, i);
+      //computePositionTopVert(bottomVertices, topVertices, parameters, w, bndEnt, i);
       repositionInteriorNodes(tri0);
       repositionInteriorNodes(tri1);
       bottom = MEdge(topVertices[0], topVertices[1]);
@@ -1021,7 +1045,7 @@ namespace BoundaryLayerCurver
 //    if (bottomEdge->getNum() != 1102) return; // HO
 
     MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
-    std::vector<MVertex *> bottomVertices, topVertices;
+    std::vector<MVertex *> bottomVertices, topVertices, firstVertices;
     for (int i = 0; i < column.size(); ++i) {
       MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
 //      if (quad->getNum() == 3921) std::cout << bottomEdge->getNum() << std::endl;
@@ -1034,10 +1058,15 @@ namespace BoundaryLayerCurver
       quad->getEdgeVertices(2, topVertices);
       std::reverse(topVertices.begin(), topVertices.begin() + 2);
       std::reverse(topVertices.begin() + 2, topVertices.end());
+      if (i == 0) {
+        firstVertices = bottomVertices;
+      }
 
-      Parameters2DCurve parameters;
+      Parameters2DCurve parameters, parameters2;
       computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
-      computePositionTopVert(bottomVertices, topVertices, parameters, w, bndEnt, column.size()-i-2);
+      computeExtremityCoefficients(firstVertices, topVertices, parameters2, w);
+      computePositionTopVert(bottomVertices, firstVertices, topVertices,
+                             parameters, parameters2, w, bndEnt, i, i == column.size()-1);
       repositionInteriorNodes(quad);
       bottom = MEdge(topVertices[0], topVertices[1]);
 
