@@ -516,16 +516,6 @@ namespace BoundaryLayerCurver
       xyz(i, 0) = xc + h.x();
       xyz(i, 1) = yc + h.y();
       xyz(i, 2) = zc + h.z();
-      int k = 2;
-      xyz(i, ++k) = xc;
-      xyz(i, ++k) = yc;
-      xyz(i, ++k) = zc;
-      xyz(i, ++k) = nn.x();
-      xyz(i, ++k) = nn.y();
-      xyz(i, ++k) = nn.z();
-      xyz(i, ++k) = tt.x();
-      xyz(i, ++k) = tt.y();
-      xyz(i, ++k) = tt.z();
     }
   }
 
@@ -599,9 +589,9 @@ namespace BoundaryLayerCurver
     //       t(xi) is the unit tangent of the base edge
     //       b(xi) is the linear coefficient
 
-    if (nLayer == 0) {
+    if (nLayer == 0 || nLayer == 1) {
 //      drawAmplifiedDiffWithLin(baseVert, bndEnt, 20);
-//      drawBezierControlPolygon(baseVert, bndEnt);
+      drawBezierControlPolygon(baseVert, bndEnt);
     }
 
     const int orderCurve = baseVert.size() - 1;
@@ -609,135 +599,21 @@ namespace BoundaryLayerCurver
     const int sizeSystem = getNGQLPts(orderGauss);
     const IntPt *gaussPnts = getGQLPts(orderGauss);
 
-    /*
     fullMatrix<double> xyz(sizeSystem + 2, 3);
     idealPositionEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz,
                       bndEnt, direction);
-    xyz(sizeSystem, 0) = topVert[0]->x();
-    xyz(sizeSystem, 1) = topVert[0]->y();
-    xyz(sizeSystem, 2) = topVert[0]->z();
-    xyz(sizeSystem+1, 0) = topVert[1]->x();
-    xyz(sizeSystem+1, 1) = topVert[1]->y();
-    xyz(sizeSystem+1, 2) = topVert[1]->z();
-    */
-    fullMatrix<double> xyz(sizeSystem + 2, 12);
-    idealPositionEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz,
-                      bndEnt, direction);
-    double xi[2] = {-1, 1};
     for (int i = 0; i < 2; ++i) {
       xyz(sizeSystem+i, 0) = topVert[i]->x();
       xyz(sizeSystem+i, 1) = topVert[i]->y();
       xyz(sizeSystem+i, 2) = topVert[i]->z();
-      xyz(sizeSystem+i, 3) = baseVert[i]->x();
-      xyz(sizeSystem+i, 4) = baseVert[i]->y();
-      xyz(sizeSystem+i, 5) = baseVert[i]->z();
-
-      int tagLine = ElementType::getTag(TYPE_LIN, baseVert.size() - 1);
-      const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
-
-      double dx = 0, dy = 0, dz = 0;
-      {
-        double sf[100][3];
-        fs->df(xi[i], 0, 0, sf);
-        for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
-          const MVertex *v = baseVert[j];
-          dx += sf[j][0] * v->x();
-          dy += sf[j][0] * v->y();
-          dz += sf[j][0] * v->z();
-        }
-        SVector3 t, n, h, nn, tt;
-        t = SVector3(dx, dy, dz).unit();
-        n = crossprod(w, t);
-        nn = parameters.thicknessAtPoint(xi[i]) * n;
-        tt = parameters.coeffbAtPoint(xi[i]) * t;
-        xyz(sizeSystem+i, 6) = nn.x();
-        xyz(sizeSystem+i, 7) = nn.y();
-        xyz(sizeSystem+i, 8) = nn.z();
-        xyz(sizeSystem+i, 9) = tt.x();
-        xyz(sizeSystem+i, 10) = tt.y();
-        xyz(sizeSystem+i, 11) = tt.z();
-      }
     }
 
     LeastSquareData *data = getLeastSquareData(TYPE_LIN, orderCurve, orderGauss);
 
-    fullMatrix<double> coeff(orderCurve + 1, 12);
-    fullMatrix<double> newxyz(orderCurve + 1, 12);
+    fullMatrix<double> coeff(orderCurve + 1, 3);
+    fullMatrix<double> newxyz(orderCurve + 1, 3);
     data->invA.mult(xyz, coeff);
-//    xyz.print("xyz");
-//    coeff.print("coeff a");
-//    { // remove some of high order coeff
-//      for (int i = 4; i < 7; ++i) {
-//        coeff(i, 6) = 0;
-//        coeff(i, 7) = 0;
-//        coeff(i, 9) = 0;
-//        coeff(i, 10) = 0;
-//      }
-//      for (int i = 0; i < 7; ++i) {
-//        coeff(i, 0) = coeff(i, 3) + coeff(i, 6) + coeff(i, 9);
-//        coeff(i, 1) = coeff(i, 4) + coeff(i, 7) + coeff(i, 10);
-//      }
-//    }
-    if (false) { // decrease
-      const double factorForGettingLinear = .1;
-      const double limit = factorForGettingLinear
-                           * parameters.characteristicThickness();
-      fullMatrix<double> p(sizeSystem, 12);
-      data->Leg2p.mult(coeff, p);
-      double rmse[3] = {0, 0, 0}; // RMSE in x, y and z component
-      for (int i = 0; i < sizeSystem; ++i) {
-        rmse[0] += gaussPnts[i].weight * (p(i, 0) - xyz(i, 0)) * (p(i, 0) - xyz(i, 0));
-        rmse[1] += gaussPnts[i].weight * (p(i, 1) - xyz(i, 1)) * (p(i, 1) - xyz(i, 1));
-        rmse[2] += gaussPnts[i].weight * (p(i, 2) - xyz(i, 2)) * (p(i, 2) - xyz(i, 2));
-      }
-      SVector3 dir(rmse[0], rmse[1], rmse[2]);
-      if (norm(dir) < limit) {
-        SVector3 sumCoeff(0, 0, 0);
-        for (int i = 2; i < orderCurve+1; ++i) {
-          sumCoeff += SVector3(std::abs(coeff(i, 0)), std::abs(coeff(i, 1)), std::abs(coeff(i, 2)));
-        }
-        dir += sumCoeff;
-        dir.normalize();
-        dir *= limit;
-        for (int k = 0; k < 3; ++k) {
-          double scale = dir(k) / sumCoeff(k);
-          if (scale >= 1 || sumCoeff(k) == 0) scale = 1;
-          for (int i = 2; i < orderCurve + 1; ++i) {
-            coeff(i, k) *= (1 - scale);
-          }
-//          double delta = rmse[k];
-//          int i = orderCurve;
-//          while (i > 1 && delta < dir(k)) {
-//            if (std::abs(coeff(i, k)) < dir(k) - delta) {
-//              delta += std::abs(coeff(i, k));
-//              coeff(i, k) = 0;
-//            }
-//            else {
-//              double diff = dir(k) - delta;
-//              coeff(i, k) = coeff(i, k) > 0 ?  coeff(i, k) - diff :
-//                                               coeff(i, k) + diff;
-//              delta = dir(k);
-//            }
-//            --i;
-//          }
-        }
-        // fact^2 * thickness^2 = (a^2 + b^2 + c^2) * d^2
-      }
-//      for (int i = 2; i < 7; ++i) {
-//        coeff(i, 0) *= 1-(nLayer*nLayer/12./12)*i/6;
-//        coeff(i, 1) *= 1-(nLayer*nLayer/12./12)*i/6;
-//      }
-    }
-    if (false) { // forget b
-      for (int i = 0; i < orderCurve + 1; ++i) {
-        coeff(i, 0) = coeff(i, 3) + coeff(i, 6);
-        coeff(i, 1) = coeff(i, 4) + coeff(i, 7);
-        coeff(i, 2) = coeff(i, 5) + coeff(i, 8);
-      }
-    }
-//    coeff.print("coeff b");
     data->Leg2Lag.mult(coeff, newxyz);
-//    newxyz.print("newxyz");
 
     for (int i = 2; i < topVert.size(); ++i) {
       topVert[i]->x() = newxyz(i, 0);
@@ -745,7 +621,7 @@ namespace BoundaryLayerCurver
       topVert[i]->z() = newxyz(i, 2);
     }
 
-    double factorDamping = 0*.1;
+    double factorDamping = .1;
     damping(topVert, factorDamping*parameters.characteristicThickness());
 
 //    drawAmplifiedDiffWithLin(topVert, bndEnt, 2);
