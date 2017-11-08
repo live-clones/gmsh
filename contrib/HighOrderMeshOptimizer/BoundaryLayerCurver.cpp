@@ -157,12 +157,7 @@ namespace
         deriv(i, 1) = deriv(i+1, 1) - deriv(i, 1);
         deriv(i, 2) = deriv(i+1, 2) - deriv(i, 2);
       }
-//      if (n > nVert-3) deriv.scale(n);
       deriv.scale(n);
-      //if (n < nVert-3) continue;
-//      fullMatrix<double> myderiv(n, 3);
-//      myderiv.copy(deriv,0,n,0,3,0,0);
-//      myderiv.print("myderiv");
       if (!onlyN || *onlyN == n) {
         MVertex *previous = NULL;
         for (int i = 0; i < n; ++i) {
@@ -588,12 +583,13 @@ namespace BoundaryLayerCurver
     }
   }
 
-  void computePositionTopVert(const std::vector<MVertex *> &baseVert,
-                              const std::vector<MVertex *> &firstVert,
-                              std::vector<MVertex *> &topVert,
-                              Parameters2DCurve &parameters,
-                              Parameters2DCurve &parameters2, SVector3 w,
-                              GEntity *bndEnt, int nLayer, bool last = false)
+  void computePositionEdgeVert(const std::vector<MVertex *> &baseVert,
+                               const std::vector<MVertex *> &firstVert,
+                               std::vector<MVertex *> &topVert,
+                               Parameters2DCurve &parameters,
+                               Parameters2DCurve &parameters2, SVector3 w,
+                               GEntity *bndEnt, int nLayer, bool last = false,
+                               int direction = 0)
   {
     // Let (t, n, e3) be the local reference frame
     // We seek for each component the polynomial function that fit the best
@@ -617,7 +613,8 @@ namespace BoundaryLayerCurver
 
     /*
     fullMatrix<double> xyz(sizeSystem + 2, 3);
-    idealPositionEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz, bndEnt);
+    idealPositionEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz,
+                      bndEnt, direction);
     xyz(sizeSystem, 0) = topVert[0]->x();
     xyz(sizeSystem, 1) = topVert[0]->y();
     xyz(sizeSystem, 2) = topVert[0]->z();
@@ -628,9 +625,9 @@ namespace BoundaryLayerCurver
     fullMatrix<double> xyz(sizeSystem + 2, 12);
     fullMatrix<double> xyz2(sizeSystem + 2, 12);
     idealPositionEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz,
-                      bndEnt);
+                      bndEnt, direction);
     idealPositionEdge(firstVert, parameters2, w, sizeSystem, gaussPnts, xyz2,
-                      bndEnt);
+                      bndEnt, direction);
     double xi[2] = {-1, 1};
     for (int i = 0; i < 2; ++i) {
       xyz(sizeSystem+i, 0) = topVert[i]->x();
@@ -764,7 +761,7 @@ namespace BoundaryLayerCurver
       topVert[i]->z() = fact * newxyz(i, 2) + (1-fact) * newxyz2(i, 2);
     }
 
-    double factorDamping = .1;
+    double factorDamping = 0*.1;
     damping(topVert, factorDamping*parameters.characteristicThickness());
 
 //    drawAmplifiedDiffWithLin(topVert, bndEnt, 2);
@@ -772,158 +769,6 @@ namespace BoundaryLayerCurver
     if (last) {
 //      drawAmplifiedDiffWithLin(topVert, bndEnt, 2);
       drawBezierControlPolygon(topVert, bndEnt);
-    }
-  }
-
-  void computePositionMidVert(const std::vector<MVertex *> &baseVert,
-                              std::vector<MVertex *> &midVert,
-                              Parameters2DCurve &parameters, SVector3 w,
-                              GEntity *bndEnt, int nLayer, int direction)
-  {
-    // Let (t, n, e3) be the local reference frame
-    // We seek for each component the polynomial function that fit the best
-    //   x1(xi) = x0(xi) + h(xi) * n(xi) + b(xi) * t(xi)
-    // in the least square sense.
-    // where x0(xi) is the position of the base edge
-    //       n(xi) is the unit normal of the base edge
-    //       h(xi) is the linear thickness
-    //       t(xi) is the unit tangent of the base edge
-    //       b(xi) is the linear coefficient
-
-//    drawAmplifiedDiffWithLin(baseVert, bndEnt);
-
-    const int orderCurve = baseVert.size() - 1;
-    const int orderGauss = orderCurve * 2;
-    const int sizeSystem = getNGQLPts(orderGauss);
-    const IntPt *gaussPnts = getGQLPts(orderGauss);
-
-    /*
-    fullMatrix<double> xyz(sizeSystem + 2, 3);
-    idealPositionEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz,
-                      bndEnt, direction);
-    xyz(sizeSystem, 0) = topVert[0]->x();
-    xyz(sizeSystem, 1) = topVert[0]->y();
-    xyz(sizeSystem, 2) = topVert[0]->z();
-    xyz(sizeSystem+1, 0) = topVert[1]->x();
-    xyz(sizeSystem+1, 1) = topVert[1]->y();
-    xyz(sizeSystem+1, 2) = topVert[1]->z();
-    */
-    fullMatrix<double> xyz(sizeSystem + 2, 12);
-    idealPositionEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz,
-                      bndEnt, direction);
-    double xi[2] = {-1, 1};
-    for (int i = 0; i < 2; ++i) {
-      xyz(sizeSystem+i, 0) = midVert[i]->x();
-      xyz(sizeSystem+i, 1) = midVert[i]->y();
-      xyz(sizeSystem+i, 2) = midVert[i]->z();
-      xyz(sizeSystem+i, 3) = baseVert[i]->x();
-      xyz(sizeSystem+i, 4) = baseVert[i]->y();
-      xyz(sizeSystem+i, 5) = baseVert[i]->z();
-
-      int tagLine = ElementType::getTag(TYPE_LIN, baseVert.size() - 1);
-      const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
-
-      double dx = 0, dy = 0, dz = 0;
-      {
-        double sf[100][3];
-        fs->df(xi[i], 0, 0, sf);
-        for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
-          const MVertex *v = baseVert[j];
-          dx += sf[j][0] * v->x();
-          dy += sf[j][0] * v->y();
-          dz += sf[j][0] * v->z();
-        }
-        SVector3 t, n, h, nn, tt;
-        t = SVector3(dx, dy, dz).unit();
-        n = crossprod(w, t);
-        nn = parameters.thicknessAtPoint(xi[i], direction) * n;
-        tt = parameters.coeffbAtPoint(xi[i], direction) * t;
-        xyz(sizeSystem+i, 6) = nn.x();
-        xyz(sizeSystem+i, 7) = nn.y();
-        xyz(sizeSystem+i, 8) = nn.z();
-        xyz(sizeSystem+i, 9) = tt.x();
-        xyz(sizeSystem+i, 10) = tt.y();
-        xyz(sizeSystem+i, 11) = tt.z();
-      }
-    }
-
-    LeastSquareData *data = getLeastSquareData(TYPE_LIN, orderCurve, orderGauss);
-
-    fullMatrix<double> coeff(orderCurve + 1, 12);
-    fullMatrix<double> newxyz(orderCurve + 1, 12);
-    data->invA.mult(xyz, coeff);
-//    xyz.print("xyz");
-//    coeff.print("coeff a");
-//    { // remove some of high order coeff
-//      for (int i = 4; i < 7; ++i) {
-//        coeff(i, 6) = 0;
-//        coeff(i, 7) = 0;
-//        coeff(i, 9) = 0;
-//        coeff(i, 10) = 0;
-//      }
-//      for (int i = 0; i < 7; ++i) {
-//        coeff(i, 0) = coeff(i, 3) + coeff(i, 6) + coeff(i, 9);
-//        coeff(i, 1) = coeff(i, 4) + coeff(i, 7) + coeff(i, 10);
-//      }
-//    }
-    if (false) { // decrease
-      const double factorForGettingLinear = .1;
-      const double limit = factorForGettingLinear
-                           * parameters.characteristicThickness();
-      fullMatrix<double> p(sizeSystem, 12);
-      data->Leg2p.mult(coeff, p);
-      double rmse[3] = {0, 0, 0}; // RMSE in x, y and z component
-      for (int i = 0; i < sizeSystem; ++i) {
-        rmse[0] += gaussPnts[i].weight * (p(i, 0) - xyz(i, 0)) * (p(i, 0) - xyz(i, 0));
-        rmse[1] += gaussPnts[i].weight * (p(i, 1) - xyz(i, 1)) * (p(i, 1) - xyz(i, 1));
-        rmse[2] += gaussPnts[i].weight * (p(i, 2) - xyz(i, 2)) * (p(i, 2) - xyz(i, 2));
-      }
-      SVector3 dir(rmse[0], rmse[1], rmse[2]);
-      if (norm(dir) < limit) {
-        SVector3 sumCoeff(0, 0, 0);
-        for (int i = 2; i < orderCurve+1; ++i) {
-          sumCoeff += SVector3(std::abs(coeff(i, 0)), std::abs(coeff(i, 1)), std::abs(coeff(i, 2)));
-        }
-        dir += sumCoeff;
-        dir.normalize();
-        dir *= limit;
-        for (int k = 0; k < 3; ++k) {
-          double scale = dir(k) / sumCoeff(k);
-          if (scale >= 1 || sumCoeff(k) == 0) scale = 1;
-          for (int i = 2; i < orderCurve + 1; ++i) {
-            coeff(i, k) *= (1 - scale);
-          }
-//          double delta = rmse[k];
-//          int i = orderCurve;
-//          while (i > 1 && delta < dir(k)) {
-//            if (std::abs(coeff(i, k)) < dir(k) - delta) {
-//              delta += std::abs(coeff(i, k));
-//              coeff(i, k) = 0;
-//            }
-//            else {
-//              double diff = dir(k) - delta;
-//              coeff(i, k) = coeff(i, k) > 0 ?  coeff(i, k) - diff :
-//                                               coeff(i, k) + diff;
-//              delta = dir(k);
-//            }
-//            --i;
-//          }
-        }
-        // fact^2 * thickness^2 = (a^2 + b^2 + c^2) * d^2
-      }
-//      for (int i = 2; i < 7; ++i) {
-//        coeff(i, 0) *= 1-(nLayer*nLayer/12./12)*i/6;
-//        coeff(i, 1) *= 1-(nLayer*nLayer/12./12)*i/6;
-//      }
-    }
-//    coeff.print("coeff b");
-    data->Leg2Lag.mult(coeff, newxyz);
-//    newxyz.print("newxyz");
-
-    for (int i = 2; i < midVert.size(); ++i) {
-      midVert[i]->x() = newxyz(i, 0);
-      midVert[i]->y() = newxyz(i, 1);
-      midVert[i]->z() = newxyz(i, 2);
     }
   }
 
@@ -1007,33 +852,39 @@ namespace BoundaryLayerCurver
 
   MEdge commonEdge(MTriangle *t0, MTriangle *t1)
   {
-    MVertex *v[2] = {NULL, NULL};
+    MVertex *v[3] = {NULL};
     int k = 0;
     for (int i = 0; i < 3; ++i) {
       if (t0->getVertex(i) == t1->getVertex(0) ||
           t0->getVertex(i) == t1->getVertex(1) ||
           t0->getVertex(i) == t1->getVertex(2)) v[k++] = t0->getVertex(i);
-      if (k == 2) return MEdge(v[0], v[1]);
     }
+    if (k == 3) Msg::Error("Multiple common edges!");
+    if (k > 1) return MEdge(v[0], v[1]);
     Msg::Error("no common edge!!!");
+    return MEdge();
   }
 
-  MEdge commonEdge(MTriangle *t0, MElement *el)
+  MEdge commonEdge(MTriangle *t, MElement *el)
   {
-    MVertex *v[2] = {NULL, NULL};
-    int k = 0;
-    for (int i = 0; i < 3; ++i) {
-      bool inOther = false;
-      for (int j = 0; j < el->getNumVertices(); ++j) {
-        if (t0->getVertex(i) == el->getVertex(j)) {
-          inOther = true;
-          break;
-        }
+    MEdge theEdge;
+    for (int i = 0; i < el->getNumEdges(); ++i) {
+      MEdge e = el->getEdge(i);
+      int cntVertInT = 0;
+      for (int j = 0; j < 3; ++j) {
+        if (e.getVertex(0) == t->getVertex(j) ||
+            e.getVertex(1) == t->getVertex(j)) ++cntVertInT;
       }
-      if (inOther) v[k++] = t0->getVertex(i);
-      if (k == 2) return MEdge(v[0], v[1]);
+      if (cntVertInT == 2) {
+        if (theEdge.getVertex(0) || theEdge.getVertex(1)) {
+          Msg::Error("Multiple common edges or error in default creation!");
+        }
+        theEdge = e;
+      }
     }
+    if (theEdge.getVertex(0) && theEdge.getVertex(1)) return theEdge;
     Msg::Error("no common edge!!!");
+    return MEdge();
   }
 
   void curve2DTriColumn(MElement *bottomEdge, MElement *extElem,
@@ -1041,7 +892,7 @@ namespace BoundaryLayerCurver
                         SVector3 w, GEntity *bndEnt)
   {
     MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
-    std::vector<MVertex *> bottomVertices, topVertices, midVertices;
+    std::vector<MVertex *> bottomVertices, topVertices, midVertices, firstVertices;
 
     for (int i = 0; i < column.size(); i += 2) {
       MTriangle *tri0 = dynamic_cast<MTriangle *>(column[i]);
@@ -1070,6 +921,9 @@ namespace BoundaryLayerCurver
       tri0->getEdgeVertices(1-iBottom, midVertices);
       std::reverse(midVertices.begin(), midVertices.begin() + 2);
       std::reverse(midVertices.begin() + 2, midVertices.end());
+      if (i == 0) {
+        firstVertices = bottomVertices;
+      }
 
       common = MEdge(midVertices[0], midVertices[1]);
       tri1->getEdgeInfo(common, iBottom, sign);
@@ -1082,11 +936,15 @@ namespace BoundaryLayerCurver
       //
       int direction = 1;
       if (bottomVertices[1] == midVertices[1]) direction = -1;
-      Parameters2DCurve parameters;
+      Parameters2DCurve parameters, parameters2;
       computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
-      computePositionMidVert(bottomVertices, midVertices, parameters, w,
-                             bndEnt, i, direction);
-      //computePositionTopVert(bottomVertices, topVertices, parameters, w, bndEnt, i);
+      computeExtremityCoefficients(firstVertices, topVertices, parameters2, w);
+      computePositionEdgeVert(bottomVertices, firstVertices, midVertices,
+                              parameters, parameters2, w, bndEnt, i,
+                              i == column.size()-2, direction);
+      computePositionEdgeVert(bottomVertices, firstVertices, topVertices,
+                              parameters, parameters2, w, bndEnt, i,
+                              i == column.size()-2);
       repositionInteriorNodes(tri0);
       repositionInteriorNodes(tri1);
       bottom = MEdge(topVertices[0], topVertices[1]);
@@ -1105,7 +963,6 @@ namespace BoundaryLayerCurver
     std::vector<MVertex *> bottomVertices, topVertices, firstVertices;
     for (int i = 0; i < column.size(); ++i) {
       MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
-//      if (quad->getNum() == 3921) std::cout << bottomEdge->getNum() << std::endl;
       int iBottom, sign;
       quad->getEdgeInfo(bottom, iBottom, sign);
       if (iBottom != 0) {
@@ -1122,8 +979,9 @@ namespace BoundaryLayerCurver
       Parameters2DCurve parameters, parameters2;
       computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
       computeExtremityCoefficients(firstVertices, topVertices, parameters2, w);
-      computePositionTopVert(bottomVertices, firstVertices, topVertices,
-                             parameters, parameters2, w, bndEnt, i, i == column.size()-1);
+      computePositionEdgeVert(bottomVertices, firstVertices, topVertices,
+                              parameters, parameters2, w, bndEnt, i,
+                              i == column.size()-1);
       repositionInteriorNodes(quad);
       bottom = MEdge(topVertices[0], topVertices[1]);
 
@@ -1148,15 +1006,6 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
                           std::vector<MElement*> aboveElements,
                           SVector3 n, GEntity *bndEnt)
 {
-//  // Compute reference frame (handle general planar 2D BL)
-//  int k = 0;
-//  if (std::abs(n(1)) > std::abs(n(k))) k = 1;
-//  if (std::abs(n(2)) > std::abs(n(k))) k = 2;
-//  SVector3 u(0, 0, 0);
-//  u((k+1) % 3) = 1;
-//  SVector3 v = crossprod(n, u).unit();
-//  u = crossprod(v, n);
-
 #ifdef _OPENMP
 #pragma omp for
 #endif
