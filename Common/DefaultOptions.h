@@ -40,6 +40,8 @@ StringXString GeneralOptions_String[] = {
 
   { F|O, "BackgroundImageFileName" , opt_general_background_image_filename , "" ,
     "Background image file in JPEG, PNG or PDF format" },
+  { F,   "BuildOptions" , opt_general_build_options , "" ,
+    "Gmsh build options (read-only)" },
 
   { F|O, "DefaultFileName" , opt_general_default_filename , "untitled.geo" ,
     "Default project file name" },
@@ -122,6 +124,9 @@ StringXString GeneralOptions_String[] = {
     ".gmsh-tmp" ,
 #endif
     "Temporary file used by the geometry module" },
+
+  { F,   "Version" , opt_general_version , "" ,
+    "Gmsh version (read-only)" },
 
   { F, "WatchFilePattern", opt_general_watch_file_pattern , "" ,
      "Pattern of files to merge as they become available"},
