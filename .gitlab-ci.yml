@@ -67,7 +67,7 @@ windows64_msvc:
 # Official Linux builds (master branch only)
 # ------------------------------------------
 
-linux64_official: &ref_linux64_offical
+linux64_official: &ref_linux64_official
   only:
     - master
   script:
@@ -86,7 +86,7 @@ linux64_official: &ref_linux64_offical
 linux64_official_release:
   variables:
     EXTRA_VERSION: ""
-  <<: *ref_linux64_offical
+  <<: *ref_linux64_official
   only:
     - /^gmsh_.*$/
 
@@ -123,14 +123,14 @@ windows32_official: &ref_windows32_official
 windows64_official_release:
   variables:
     EXTRA_VERSION: ""
-  <<: *ref_windows64_offical
+  <<: *ref_windows64_official
   only:
     - /^gmsh_.*$/
 
 windows32_official_release:
   variables:
     EXTRA_VERSION: ""
-  <<: *ref_windows32_offical
+  <<: *ref_windows32_official
   only:
     - /^gmsh_.*$/
 
@@ -161,7 +161,7 @@ macos64_official: &ref_macos64_official
 macos64_official_release:
   variables:
     EXTRA_VERSION: ""
-  <<: *ref_macos64_offical
+  <<: *ref_macos64_official
   only:
     - /^gmsh_.*$/
 
@@ -185,6 +185,6 @@ source_official:
 source_official_release:
   variables:
     EXTRA_VERSION: ""
-  <<: *ref_source_offical
+  <<: *ref_source_official
   only:
     - /^gmsh_.*$/
