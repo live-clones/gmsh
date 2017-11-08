@@ -534,6 +534,60 @@ namespace BoundaryLayerCurver
     }
   }
 
+  void damping(std::vector<MVertex *> &vertices, double limit)
+  {
+    const int nVert = vertices.size();
+    const bezierBasis *fs = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 1);
+
+    fullMatrix<double> xyz(nVert, 3);
+    for (int i = 0; i < nVert; ++i) {
+      xyz(i, 0) = vertices[i]->x();
+      xyz(i, 1) = vertices[i]->y();
+      xyz(i, 2) = vertices[i]->z();
+    }
+    fullMatrix<double> controlPoints(nVert, 3);
+    fs->lag2Bez(xyz, controlPoints);
+
+    std::vector<int> idx(nVert);
+    idx[0] = 0;
+    for (int i = 1; i < nVert-1; ++i) idx[i] = i+1;
+    idx[nVert-1] = 1;
+
+    fullMatrix<double> dCtrlPnts(nVert, 3);
+    dCtrlPnts(idx[0], 0) = 0;
+    dCtrlPnts(idx[0], 1) = 0;
+    dCtrlPnts(idx[0], 2) = 0;
+    dCtrlPnts(idx[nVert-1], 0) = 0;
+    dCtrlPnts(idx[nVert-1], 1) = 0;
+    dCtrlPnts(idx[nVert-1], 2) = 0;
+    for (int i = 1; i < nVert-1; ++i) {
+      for (int j = 0; j < 3; ++j)
+        dCtrlPnts(idx[i], j) = .25 * controlPoints(idx[i-1], j) +
+                               .25 * controlPoints(idx[i+1], j) -
+                               .5 * controlPoints(idx[i], j);
+    }
+
+    double maxDeplacement = 0;
+    for (int i = 0; i < nVert; ++i) {
+      double deplacement = std::sqrt(dCtrlPnts(i, 0) * dCtrlPnts(i, 0) +
+                                     dCtrlPnts(i, 1) * dCtrlPnts(i, 1) +
+                                     dCtrlPnts(i, 2) * dCtrlPnts(i, 2));
+      maxDeplacement = std::max(maxDeplacement, deplacement);
+    }
+
+    if (maxDeplacement > limit)
+      dCtrlPnts.scale(limit / maxDeplacement);
+    // TODO go to linear in other case?? Don't think is good idea
+
+    controlPoints.add(dCtrlPnts);
+    fs->matrixBez2Lag.mult(controlPoints, xyz);
+    for (int i = 0; i < nVert; ++i) {
+      vertices[i]->x() = xyz(i, 0);
+      vertices[i]->y() = xyz(i, 1);
+      vertices[i]->z() = xyz(i, 2);
+    }
+  }
+
   void computePositionTopVert(const std::vector<MVertex *> &baseVert,
                               const std::vector<MVertex *> &firstVert,
                               std::vector<MVertex *> &topVert,
@@ -709,6 +763,9 @@ namespace BoundaryLayerCurver
       topVert[i]->y() = fact * newxyz(i, 1) + (1-fact) * newxyz2(i, 1);
       topVert[i]->z() = fact * newxyz(i, 2) + (1-fact) * newxyz2(i, 2);
     }
+
+    double factorDamping = .1;
+    damping(topVert, factorDamping*parameters.characteristicThickness());
 
 //    drawAmplifiedDiffWithLin(topVert, bndEnt, 2);
 //    drawBezierControlPolygon(topVert, bndEnt);
