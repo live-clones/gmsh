@@ -21,6 +21,8 @@ linux64_docker:
   tags:
     - linux64
     - docker
+  except:
+    - tags
 
 linux64_docker_cxx98_compat:
   image: onelab/ubuntu16.04
@@ -33,6 +35,8 @@ linux64_docker_cxx98_compat:
   tags:
     - linux64
     - docker
+  except:
+    - tags
 
 linux64_docker_minimal:
   image: onelab/ubuntu16.04
@@ -44,6 +48,8 @@ linux64_docker_minimal:
   tags:
     - linux64
     - docker
+  except:
+    - tags
 
 windows64_msvc:
   script:
@@ -54,12 +60,14 @@ windows64_msvc:
   tags:
     - windows64
     - official
+  except:
+    - tags
 
 # ------------------------------------------
 # Official Linux builds (master branch only)
 # ------------------------------------------
 
-linux64_official:
+linux64_official: &ref_linux64_offical
   only:
     - master
   script:
@@ -72,6 +80,15 @@ linux64_official:
   tags:
     - linux64
     - official
+  except:
+    - tags
+
+linux64_official_release:
+  variables:
+    EXTRA_VERSION: ""
+  <<: *ref_linux64_offical
+  only:
+    - /^gmsh_.*$/
 
 # --------------------------------------------
 # Official Windows builds (master branch only)
@@ -87,25 +104,41 @@ linux64_official:
     - bash -c "/usr/bin/make package -j 1"
     - bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
     - bash -c "/usr/bin/ctest -D Experimental -j 1 --output-on-failure"
+  except:
+    - tags
 
-windows64_official:
+windows64_official: &ref_windows64_official
   <<: *ref_windows_official
   tags:
     - windows64
     - official
 
-windows32_official:
+windows32_official: &ref_windows32_official
   <<: *ref_windows_official
   tags:
     - windows32
     - official
   allow_failure: true
 
+windows64_official_release:
+  variables:
+    EXTRA_VERSION: ""
+  <<: *ref_windows64_offical
+  only:
+    - /^gmsh_.*$/
+
+windows32_official_release:
+  variables:
+    EXTRA_VERSION: ""
+  <<: *ref_windows32_offical
+  only:
+    - /^gmsh_.*$/
+
 # ------------------------------------------
 # Official MacOS builds (master branch only)
 # ------------------------------------------
 
-macos64_official:
+macos64_official: &ref_macos64_official
   only:
     - master
   script:
@@ -122,6 +155,15 @@ macos64_official:
   tags:
     - macos64
     - official
+  except:
+    - tags
+
+macos64_official_release:
+  variables:
+    EXTRA_VERSION: ""
+  <<: *ref_macos64_offical
+  only:
+    - /^gmsh_.*$/
 
 # ----------------------------------------------
 # Official source snapshots (master branch only)
@@ -139,3 +181,10 @@ source_official:
   tags:
     - linux64
     - official
+
+source_official_release:
+  variables:
+    EXTRA_VERSION: ""
+  <<: *ref_source_offical
+  only:
+    - /^gmsh_.*$/
