@@ -67,7 +67,7 @@ namespace BoundaryLayerCurver
         return coeffb[0] * (1 - xi) / 2;
     }
     double characteristicThickness() {
-      return std::min(thickness[0], thickness[1]);
+      return std::min(std::abs(thickness[0]), std::abs(thickness[1]));
     }
   };
 
