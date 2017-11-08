@@ -67,7 +67,7 @@ windows64_msvc:
 # Official Linux builds (master branch only)
 # ------------------------------------------
 
-linux64_official: &ref_linux64_official
+.linux64_official: &linux64_official
   only:
     - master
   script:
@@ -80,13 +80,16 @@ linux64_official: &ref_linux64_official
   tags:
     - linux64
     - official
+
+linux64_official_snapshot:
+  <<: *linux64_official
   except:
     - tags
 
 linux64_official_release:
   variables:
     EXTRA_VERSION: ""
-  <<: *ref_linux64_official
+  <<: *linux64_official
   only:
     - /^gmsh_.*$/
 
@@ -94,7 +97,7 @@ linux64_official_release:
 # Official Windows builds (master branch only)
 # --------------------------------------------
 
-.windows_official: &ref_windows_official
+.windows_official: &windows_official
   only:
     - master
   script:
@@ -104,33 +107,41 @@ linux64_official_release:
     - bash -c "/usr/bin/make package -j 1"
     - bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
     - bash -c "/usr/bin/ctest -D Experimental -j 1 --output-on-failure"
-  except:
-    - tags
 
-windows64_official: &ref_windows64_official
-  <<: *ref_windows_official
+windows64_official_snapshot:
+  <<: *windows_official
   tags:
     - windows64
     - official
-
-windows32_official: &ref_windows32_official
-  <<: *ref_windows_official
-  tags:
-    - windows32
-    - official
-  allow_failure: true
+  except:
+    - tags
 
 windows64_official_release:
   variables:
     EXTRA_VERSION: ""
-  <<: *ref_windows64_official
+  <<: *windows_official
+  tags:
+    - windows64
+    - official
   only:
     - /^gmsh_.*$/
+
+windows32_official_snapshot:
+  <<: *windows_official
+  tags:
+    - windows32
+    - official
+  except:
+    - tags
+  allow_failure: true
 
 windows32_official_release:
   variables:
     EXTRA_VERSION: ""
-  <<: *ref_windows32_official
+  <<: *windows_official
+  tags:
+    - windows32
+    - official
   only:
     - /^gmsh_.*$/
 
@@ -138,7 +149,7 @@ windows32_official_release:
 # Official MacOS builds (master branch only)
 # ------------------------------------------
 
-macos64_official: &ref_macos64_official
+.macos64_official: &macos64_official
   only:
     - master
   script:
@@ -155,13 +166,16 @@ macos64_official: &ref_macos64_official
   tags:
     - macos64
     - official
+
+macos64_official_snapshot:
+  <<: *macos64_official
   except:
     - tags
 
 macos64_official_release:
   variables:
     EXTRA_VERSION: ""
-  <<: *ref_macos64_official
+  <<: *macos64_official
   only:
     - /^gmsh_.*$/
 
@@ -169,7 +183,7 @@ macos64_official_release:
 # Official source snapshots (master branch only)
 # ----------------------------------------------
 
-source_official: &ref_source_official
+.source_official: &source_official
   only:
     - master
   script:
@@ -182,9 +196,14 @@ source_official: &ref_source_official
     - linux64
     - official
 
+source_official_snapshot:
+  <<: *source_official
+  except:
+    - tags
+
 source_official_release:
   variables:
     EXTRA_VERSION: ""
-  <<: *ref_source_official
+  <<: *source_official
   only:
     - /^gmsh_.*$/
