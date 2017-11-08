@@ -584,10 +584,8 @@ namespace BoundaryLayerCurver
   }
 
   void computePositionEdgeVert(const std::vector<MVertex *> &baseVert,
-                               const std::vector<MVertex *> &firstVert,
                                std::vector<MVertex *> &topVert,
-                               Parameters2DCurve &parameters,
-                               Parameters2DCurve &parameters2, SVector3 w,
+                               Parameters2DCurve &parameters, SVector3 w,
                                GEntity *bndEnt, int nLayer, bool last = false,
                                int direction = 0)
   {
@@ -623,20 +621,13 @@ namespace BoundaryLayerCurver
     xyz(sizeSystem+1, 2) = topVert[1]->z();
     */
     fullMatrix<double> xyz(sizeSystem + 2, 12);
-    fullMatrix<double> xyz2(sizeSystem + 2, 12);
     idealPositionEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz,
-                      bndEnt, direction);
-    idealPositionEdge(firstVert, parameters2, w, sizeSystem, gaussPnts, xyz2,
                       bndEnt, direction);
     double xi[2] = {-1, 1};
     for (int i = 0; i < 2; ++i) {
       xyz(sizeSystem+i, 0) = topVert[i]->x();
       xyz(sizeSystem+i, 1) = topVert[i]->y();
       xyz(sizeSystem+i, 2) = topVert[i]->z();
-      xyz2(sizeSystem+i, 0) = topVert[i]->x();
-      xyz2(sizeSystem+i, 1) = topVert[i]->y();
-      xyz2(sizeSystem+i, 2) = topVert[i]->z();
-
       xyz(sizeSystem+i, 3) = baseVert[i]->x();
       xyz(sizeSystem+i, 4) = baseVert[i]->y();
       xyz(sizeSystem+i, 5) = baseVert[i]->z();
@@ -748,17 +739,10 @@ namespace BoundaryLayerCurver
     data->Leg2Lag.mult(coeff, newxyz);
 //    newxyz.print("newxyz");
 
-    fullMatrix<double> coeff2(orderCurve + 1, 12);
-    fullMatrix<double> newxyz2(orderCurve + 1, 12);
-    data->invA.mult(xyz2, coeff2);
-    data->Leg2Lag.mult(coeff2, newxyz2);
-
-    double fact = 1;
-
     for (int i = 2; i < topVert.size(); ++i) {
-      topVert[i]->x() = fact * newxyz(i, 0) + (1-fact) * newxyz2(i, 0);
-      topVert[i]->y() = fact * newxyz(i, 1) + (1-fact) * newxyz2(i, 1);
-      topVert[i]->z() = fact * newxyz(i, 2) + (1-fact) * newxyz2(i, 2);
+      topVert[i]->x() = newxyz(i, 0);
+      topVert[i]->y() = newxyz(i, 1);
+      topVert[i]->z() = newxyz(i, 2);
     }
 
     double factorDamping = 0*.1;
@@ -892,7 +876,7 @@ namespace BoundaryLayerCurver
                         SVector3 w, GEntity *bndEnt)
   {
     MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
-    std::vector<MVertex *> bottomVertices, topVertices, midVertices, firstVertices;
+    std::vector<MVertex *> bottomVertices, topVertices, midVertices;
 
     for (int i = 0; i < column.size(); i += 2) {
       MTriangle *tri0 = dynamic_cast<MTriangle *>(column[i]);
@@ -921,9 +905,6 @@ namespace BoundaryLayerCurver
       tri0->getEdgeVertices(1-iBottom, midVertices);
       std::reverse(midVertices.begin(), midVertices.begin() + 2);
       std::reverse(midVertices.begin() + 2, midVertices.end());
-      if (i == 0) {
-        firstVertices = bottomVertices;
-      }
 
       common = MEdge(midVertices[0], midVertices[1]);
       tri1->getEdgeInfo(common, iBottom, sign);
@@ -936,15 +917,12 @@ namespace BoundaryLayerCurver
       //
       int direction = 1;
       if (bottomVertices[1] == midVertices[1]) direction = -1;
-      Parameters2DCurve parameters, parameters2;
+      Parameters2DCurve parameters;
       computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
-      computeExtremityCoefficients(firstVertices, topVertices, parameters2, w);
-      computePositionEdgeVert(bottomVertices, firstVertices, midVertices,
-                              parameters, parameters2, w, bndEnt, i,
-                              i == column.size()-2, direction);
-      computePositionEdgeVert(bottomVertices, firstVertices, topVertices,
-                              parameters, parameters2, w, bndEnt, i,
-                              i == column.size()-2);
+      computePositionEdgeVert(bottomVertices, midVertices, parameters, w,
+                              bndEnt, i, i == column.size()-2, direction);
+      computePositionEdgeVert(bottomVertices, topVertices, parameters, w,
+                              bndEnt, i, i == column.size()-2);
       repositionInteriorNodes(tri0);
       repositionInteriorNodes(tri1);
       bottom = MEdge(topVertices[0], topVertices[1]);
@@ -960,7 +938,7 @@ namespace BoundaryLayerCurver
 //    if (bottomEdge->getNum() != 1102) return; // HO
 
     MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
-    std::vector<MVertex *> bottomVertices, topVertices, firstVertices;
+    std::vector<MVertex *> bottomVertices, topVertices;
     for (int i = 0; i < column.size(); ++i) {
       MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
       int iBottom, sign;
@@ -972,16 +950,11 @@ namespace BoundaryLayerCurver
       quad->getEdgeVertices(2, topVertices);
       std::reverse(topVertices.begin(), topVertices.begin() + 2);
       std::reverse(topVertices.begin() + 2, topVertices.end());
-      if (i == 0) {
-        firstVertices = bottomVertices;
-      }
 
-      Parameters2DCurve parameters, parameters2;
+      Parameters2DCurve parameters;
       computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
-      computeExtremityCoefficients(firstVertices, topVertices, parameters2, w);
-      computePositionEdgeVert(bottomVertices, firstVertices, topVertices,
-                              parameters, parameters2, w, bndEnt, i,
-                              i == column.size()-1);
+      computePositionEdgeVert(bottomVertices, topVertices, parameters, w,
+                              bndEnt, i, i == column.size()-1);
       repositionInteriorNodes(quad);
       bottom = MEdge(topVertices[0], topVertices[1]);
 
