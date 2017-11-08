@@ -169,7 +169,7 @@ macos64_official_release:
 # Official source snapshots (master branch only)
 # ----------------------------------------------
 
-source_official:
+source_official: &ref_source_official
   only:
     - master
   script:
