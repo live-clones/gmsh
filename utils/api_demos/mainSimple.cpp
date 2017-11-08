@@ -1,12 +1,10 @@
 #include <stdio.h>
-#include "Gmsh.h"
-#include "GModel.h"
-#include "MElement.h"
+#include "GmshAPI.h"
 
 int main(int argc, char **argv)
 {
-  GmshInitialize(argc, argv);
-  GmshSetOption("Mesh", "Algorithm", 5.);
+  gmshInitialize(argc, argv);
+  gmshSetOption("Mesh", "Algorithm", 5.);
   GModel *m = new GModel();
   m->readGEO("../../tutorial/t5.geo");
   //GmshMergeFile("../../tutorial/t5.geo"); // will also set the bbox

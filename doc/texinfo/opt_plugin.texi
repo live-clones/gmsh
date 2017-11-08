@@ -366,14 +366,6 @@ Numeric options:
 Default value: @code{-1}
 @end table
 
-@item Plugin(DuplicateBoundaries)
-Plugin(DuplicateBoundaries) is not documented yet.
-Numeric options:
-@table @code
-@item Dummy
-Default value: @code{1}
-@end table
-
 @item Plugin(Eigenvalues)
 Plugin(Eigenvalues) computes the three real eigenvalues of each tensor in the view `View'.@*
 @*
@@ -443,9 +435,7 @@ Plugin(FaultZone) convert all the embedded lines of an existing surfacic mesh to
 @*
 `Thickness' is the thickness of the flat quadrangles. Set a value different to zero can be helpful to check the connectivity. @*
 @*
-`Prefix' is the prefix of the name of physicals containing the new embedded.
-All physicals containing embedded lines are replaced by physicals containing
-the corresponding joint elements.
+`Prefix' is the prefix of the name of physicals containing the new embedded. All physicals containing embedded lines are replaced by physicals containing the corresponding joint elements.
 String options:
 @table @code
 @item Prefix
