@@ -35,7 +35,6 @@ class GModel;
 struct FastCurvingParameters {
   enum OUTERBLCURVE { OUTER_NOCURVE, OUTER_CURVE, OUTER_CURVECONSERVATIVE };
   int dim ;                       // Spatial dimension of the mesh to curve
-  bool robust;                    // Optimize the robust way (experimental)
   bool thickness;                 // Curve boundary layer with new algo (experimental)
   bool onlyVisible ;              // Apply curving to visible entities ONLY?
   bool optimizeGeometry;          // Optimize boundary edges/faces to fit geometry?
