@@ -576,8 +576,8 @@ namespace BoundaryLayerCurver
   void computePositionEdgeVert(const std::vector<MVertex *> &baseVert,
                                std::vector<MVertex *> &topVert,
                                Parameters2DCurve &parameters, SVector3 w,
-                               GEntity *bndEnt, int nLayer, bool last = false,
-                               int direction = 0)
+                               double factorDamping, GEntity *bndEnt,
+                               int nLayer, bool last = false, int direction = 0)
   {
     // Let (t, n, e3) be the local reference frame
     // We seek for each component the polynomial function that fit the best
@@ -621,7 +621,6 @@ namespace BoundaryLayerCurver
       topVert[i]->z() = newxyz(i, 2);
     }
 
-    double factorDamping = .1;
     damping(topVert, factorDamping*parameters.characteristicThickness());
 
 //    drawAmplifiedDiffWithLin(topVert, bndEnt, 2);
@@ -747,9 +746,9 @@ namespace BoundaryLayerCurver
     return MEdge();
   }
 
-  void curve2DTriColumn(MElement *bottomEdge, MElement *extElem,
+  bool curve2DTriColumn(MElement *bottomEdge, MElement *extElem,
                         std::vector<MElement *> &column,
-                        SVector3 w, GEntity *bndEnt)
+                        SVector3 w, double dampingFactor, GEntity *bndEnt)
   {
     MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
     std::vector<MVertex *> bottomVertices, topVertices, midVertices;
@@ -796,17 +795,23 @@ namespace BoundaryLayerCurver
       Parameters2DCurve parameters;
       computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
       computePositionEdgeVert(bottomVertices, midVertices, parameters, w,
-                              bndEnt, i, i == column.size()-2, direction);
+                              dampingFactor, bndEnt, i, i == column.size()-2,
+                              direction);
       computePositionEdgeVert(bottomVertices, topVertices, parameters, w,
-                              bndEnt, i, i == column.size()-2);
+                              dampingFactor, bndEnt, i, i == column.size()-2);
       repositionInteriorNodes(tri0);
       repositionInteriorNodes(tri1);
       bottom = MEdge(topVertices[0], topVertices[1]);
+
+      // Check validity of first and last layer:
+      if ((i == 0 || i == column.size()-2) &&
+          (tri0->getValidity() == 0 || tri1->getValidity() == 0)) return false;
     }
+    return true;
   }
 
-  void curve2DQuadColumn(MElement *bottomEdge, std::vector<MElement *> &column,
-                         SVector3 w, GEntity *bndEnt)
+  bool curve2DQuadColumn(MElement *bottomEdge, std::vector<MElement *> &column,
+                         SVector3 w, double dampingFactor, GEntity *bndEnt)
   {
 //    if (bottomEdge->getNum() != 1156) return; // Strange
 //    if (bottomEdge->getNum() != 1079) return; // Good
@@ -830,22 +835,26 @@ namespace BoundaryLayerCurver
       Parameters2DCurve parameters;
       computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
       computePositionEdgeVert(bottomVertices, topVertices, parameters, w,
-                              bndEnt, i, i == column.size()-1);
+                              dampingFactor, bndEnt, i, i == column.size()-1);
       repositionInteriorNodes(quad);
       bottom = MEdge(topVertices[0], topVertices[1]);
 
-      if (false && i < 16) {
-        double fact = 10;
-        for (int j = 1; j < 7; ++j) {
-          drawBezierDerivative(bottomVertices, bndEnt, SPoint3(fact*j, -10, 0), &j, .01);
-          drawBezierControlPolygon(bottomVertices, bndEnt);
-          if (i == column.size()-1) {
-            drawBezierDerivative(topVertices, bndEnt, SPoint3(fact*(j), -10, 0), &j, .01);
-            drawBezierControlPolygon(topVertices, bndEnt);
-          }
-        }
-      }
+      // Check validity of first and last layer:
+      if ((i == 0 || i == column.size()-1) && quad->getValidity() == 0) return false;
+
+//      if (false && i < 16) {
+//        double fact = 10;
+//        for (int j = 1; j < 7; ++j) {
+//          drawBezierDerivative(bottomVertices, bndEnt, SPoint3(fact*j, -10, 0), &j, .01);
+//          drawBezierControlPolygon(bottomVertices, bndEnt);
+//          if (i == column.size()-1) {
+//            drawBezierDerivative(topVertices, bndEnt, SPoint3(fact*(j), -10, 0), &j, .01);
+//            drawBezierControlPolygon(topVertices, bndEnt);
+//          }
+//        }
+//      }
     }
+    return true;
   }
 
 }
@@ -861,11 +870,23 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
   for (int i = 0; i < bndEl2column.size(); ++i) {
     MElement *bottomEdge = bndEl2column[i].first;
     std::vector<MElement*> &column = bndEl2column[i].second;
-    if (column[0]->getType() == TYPE_TRI)
-      BoundaryLayerCurver::curve2DTriColumn(bottomEdge, aboveElements[i],
-                                            column, n, bndEnt);
-    else
-      BoundaryLayerCurver::curve2DQuadColumn(bottomEdge, column, n, bndEnt);
+//    std::cout << bottomEdge->getNum();
+    double dampingFactor = 0;
+    bool success = false;
+    while (!success && dampingFactor < 1000) {
+      if (column[0]->getType() == TYPE_TRI)
+        success = BoundaryLayerCurver::curve2DTriColumn(bottomEdge,
+                                                        aboveElements[i],
+                                                        column, n,
+                                                        dampingFactor, bndEnt);
+      else
+        success = BoundaryLayerCurver::curve2DQuadColumn(bottomEdge, column,
+                                                         n, dampingFactor,
+                                                         bndEnt);
+      if (dampingFactor == 0) dampingFactor = .01;
+      else dampingFactor *= 2;
+    }
+//    std::cout << " ok for " << dampingFactor << std::endl;
   }
 }
 
