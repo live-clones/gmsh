@@ -10,7 +10,7 @@ variables:
 # Builds for all branches
 # -----------------------
 
-linux64_docker:
+linux64_docker_ci:
   image: onelab/ubuntu16.04
   script:
     - mkdir build
@@ -24,7 +24,7 @@ linux64_docker:
   except:
     - tags
 
-linux64_docker_cxx98_compat:
+linux64_docker_cxx98_compat_ci:
   image: onelab/ubuntu16.04
   script:
     - mkdir build
@@ -38,7 +38,7 @@ linux64_docker_cxx98_compat:
   except:
     - tags
 
-linux64_docker_minimal:
+linux64_docker_minimal_ci:
   image: onelab/ubuntu16.04
   script:
     - mkdir build
@@ -51,7 +51,7 @@ linux64_docker_minimal:
   except:
     - tags
 
-windows64_msvc:
+windows64_msvc_ci:
   script:
     - md build
     - cd build
