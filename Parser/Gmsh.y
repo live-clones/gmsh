@@ -2498,9 +2498,61 @@ ListOfShapes :
         List_Add($$, &s);
       }
     }
+  | ListOfShapes tPhysical GeoEntity '{' RecursiveListOfDouble '}' tEND
+    {
+      List_T *tmp = List_Create(10, 10, sizeof(double));
+      getElementaryTagsForPhysicalGroups($3, $5, tmp);
+      for(int i = 0; i < List_Nbr(tmp); i++){
+	double d;
+	List_Read(tmp, i, &d);
+ 	Shape s;
+	s.Num = (int)d; // FIXME
+        switch ($3) {
+        case 0: s.Type = MSH_POINT    ; break;
+        case 1: s.Type = MSH_SEGM_LINE; break;
+        case 2: s.Type = MSH_SURF_PLAN; break; // we don't care about the actual type
+        case 3: s.Type = MSH_VOLUME   ; break;
+        }
+        List_Add($$, &s);
+      }
+    }
   | ListOfShapes GeoEntity '{' tDOTS '}' tEND
     {
-      getAllElementaryTags($2, $$);
+      List_T *tmp = List_Create(10, 10, sizeof(double));
+      getAllElementaryTags($2, tmp);
+      for(int i = 0; i < List_Nbr(tmp); i++){
+	double d;
+	List_Read(tmp, i, &d);
+	Shape s;
+	s.Num = (int)d;
+        switch ($2) {
+        case 0: s.Type = MSH_POINT    ; break;
+        case 1: s.Type = MSH_SEGM_LINE; break;
+        case 2: s.Type = MSH_SURF_PLAN; break; // we don't care about the actual type
+        case 3: s.Type = MSH_VOLUME   ; break;
+        }
+        List_Add($$, &s);
+      }
+    }
+  | ListOfShapes tPhysical GeoEntity '{' tDOTS '}' tEND
+    {
+      List_T *tmp = List_Create(10, 10, sizeof(double));
+      List_T *tmp2 = List_Create(10, 10, sizeof(double));
+      getAllPhysicalTags($3, tmp2);
+      getElementaryTagsForPhysicalGroups($3, tmp2, tmp);
+      for(int i = 0; i < List_Nbr(tmp); i++){
+	double d;
+	List_Read(tmp, i, &d);
+ 	Shape s;
+	s.Num = (int)d; // FIXME
+        switch ($3) {
+        case 0: s.Type = MSH_POINT    ; break;
+        case 1: s.Type = MSH_SEGM_LINE; break;
+        case 2: s.Type = MSH_SURF_PLAN; break; // we don't care about the actual type
+        case 3: s.Type = MSH_VOLUME   ; break;
+        }
+        List_Add($$, &s);
+      }
     }
 ;
 
@@ -6669,6 +6721,9 @@ void getAllPhysicalTags(int dim, List_T *out)
 
 void getElementaryTagsForPhysicalGroups(int dim, List_T *in, List_T *out)
 {
+  if(GModel::current()->getOCCInternals() &&
+     GModel::current()->getOCCInternals()->getChanged())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
