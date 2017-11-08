@@ -26,7 +26,7 @@ StringXNumber CurvedMeshOptions_Number[] = {
   {GMSH_FULLRC, "Jacobian determinant", NULL, 1},
   {GMSH_FULLRC, "IGE measure", NULL, 1},
   {GMSH_FULLRC, "ICN measure", NULL, 1},
-  {GMSH_FULLRC, "Hidding threshold", NULL, 9},
+  {GMSH_FULLRC, "Hiding threshold", NULL, 9},
   {GMSH_FULLRC, "Draw PView", NULL, 0},
   {GMSH_FULLRC, "Recompute", NULL, 0},
   {GMSH_FULLRC, "Dimension of elements", NULL, -1}
@@ -57,7 +57,7 @@ std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
     "determinant (J), the IGE quality measure (Inverse Gradient Error) and/or "
     "the ICN quality measure (Inverse Condition Number). "
     "Statistics are printed and, if asked, a Pview is created for each measure. "
-    "The plugin hides elements for which the measure mu > 'Hidding threshold', "
+    "The plugin hides elements for which the measure mu > 'Hiding threshold', "
     "where mu is the ICN measure if asked otherwise the IGE measure if "
     "asked otherwise the Jacobian determinant.\n"
     "\n"
@@ -78,7 +78,7 @@ std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
     "\n"
     "- ICN measure = {0, 1}\n"
     "\n"
-    "- Hidding threshold = [0, 1]: Hides all element for which min(mu) is "
+    "- Hiding threshold = [0, 1]: Hides all element for which min(mu) is "
     "strictly greater than the threshold, where mu is the ICN if ICN measure == 1, "
     "otherwise mu is the IGE it IGE measure == 1, "
     "otherwise mu is the Jacobian determinant.\n"

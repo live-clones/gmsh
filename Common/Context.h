@@ -62,6 +62,7 @@ struct contextMeshOptions {
   int NewtonConvergenceTestXYZ;
   int preserveNumberingMsh2;
   int ignorePeriodicity;
+  int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
 };
 
 struct contextGeometryOptions {

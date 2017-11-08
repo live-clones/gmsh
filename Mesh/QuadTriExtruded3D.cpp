@@ -3841,7 +3841,7 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
 }
 
 
-// Remesh the lateral 2D faces of QuadToTri regions using edges in quadToTri_edges as contraints
+// Remesh the lateral 2D faces of QuadToTri regions using edges in quadToTri_edges as constraints
 // Added 2010-01-24
 static bool QuadToTriLateralRemesh(GRegion *gr, std::set<std::pair<MVertex*,MVertex*> > &quadToTri_edges)
 {

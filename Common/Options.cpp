@@ -4234,6 +4234,13 @@ double opt_general_light53(OPT_ARGS_NUM)
   return CTX::instance()->lightPosition[5][3];
 }
 
+double opt_general_num_threads(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    Msg::SetNumThreads(val);
+  return Msg::GetNumThreads();
+}
+
 double opt_geometry_transform(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
@@ -6608,6 +6615,26 @@ double opt_mesh_ignore_periodicity(OPT_ARGS_NUM)
   return CTX::instance()->mesh.ignorePeriodicity;
 }
 
+double opt_mesh_max_num_threads_1d(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.maxNumThreads1D = (int) val;
+  return CTX::instance()->mesh.maxNumThreads1D;
+}
+
+double opt_mesh_max_num_threads_2d(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.maxNumThreads2D = (int) val;
+  return CTX::instance()->mesh.maxNumThreads2D;
+}
+
+double opt_mesh_max_num_threads_3d(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.maxNumThreads3D = (int) val;
+  return CTX::instance()->mesh.maxNumThreads3D;
+}
 
 double opt_solver_listen(OPT_ARGS_NUM)
 {

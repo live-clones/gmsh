@@ -50,10 +50,10 @@ Transfinite Volume{1} = {1,2,3,4,5,6,7,8};
 
 Or automatically:
 */
-Transfinite Line "*" = N+1;
-Transfinite Surface "*";
-Transfinite Volume "*";
-Recombine Surface "*";
+Transfinite Line {:} = N+1;
+Transfinite Surface {:};
+Transfinite Volume {:};
+Recombine Surface {:};
 
 // the same by extruding a transfinite surface mesh
 

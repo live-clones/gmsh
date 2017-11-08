@@ -118,6 +118,8 @@ class PViewDataList : public PViewData {
   bool combineTime(nameData &nd);
   bool combineSpace(nameData &nd);
   void setXY(std::vector<double> &x, std::vector<double> &y);
+  void setXYZV(std::vector<double> &x, std::vector<double> &y, std::vector<double> &z,
+               std::vector<double> &v);
   bool isListBased(){ return true; }
   double getMemoryInMb();
 

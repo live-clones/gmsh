@@ -1406,11 +1406,11 @@ void bowyerWatsonFrontal(GFace *gf,
       if (optimalPointFrontalB (gf,worst,active_edge,DATA,newPoint,metric)){
 	insertAPoint(gf, AllTris.end(), newPoint, metric, DATA, AllTris, &ActiveTris, worst);
       }
-    }    
+    }
   }
 
   nbSwaps = edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
-  
+
   transferDataStructure(gf, AllTris, DATA);
   //  removeThreeTrianglesNodes(gf);
 
@@ -1794,7 +1794,7 @@ void bowyerWatsonParallelograms(GFace *gf,
     double t2 = Cpu();
     double DT = (double)(t2-t1);
     if (packed.size())
-      printf("points inserted DT %12.5E points per minute : %12.5E %d global searchs %d searchs per insertion\n",
+      printf("points inserted DT %12.5E points per minute : %12.5E %d global searches %d searches per insertion\n",
           DT,60.*packed.size()/DT,N_GLOBAL_SEARCH, (int)(N_SEARCH/packed.size()));
     transferDataStructure(gf, AllTris, DATA);
     backgroundMesh::unset();
@@ -1891,7 +1891,7 @@ void bowyerWatsonParallelogramsConstrained(GFace *gf,
   //  printf("%d vertices \n",(int)packed.size());
   //double t2 = Cpu();
   //double DT = t2-t1;
-  //if (packed.size())printf("points inserted DT %12.5E points per minut : %12.5E %d global searchs %d seachs per insertion\n",DT,60.*packed.size()/DT,N_GLOBAL_SEARCH,N_SEARCH / packed.size());
+  //if (packed.size())printf("points inserted DT %12.5E points per minut : %12.5E %d global searches %d seachs per insertion\n",DT,60.*packed.size()/DT,N_GLOBAL_SEARCH,N_SEARCH / packed.size());
   transferDataStructure(gf, AllTris, DATA);
   std::cout<<"out of transferDataStructure"<<std::endl;
   std::cout<<"testing all vertices of gf"<<std::endl;

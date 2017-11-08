@@ -245,6 +245,10 @@ class PViewData {
   // set simple X-Y data
   virtual void setXY(std::vector<double> &x, std::vector<double> &y){}
 
+  // set simple pointwise XYZ data
+  virtual void setXYZV(std::vector<double> &x, std::vector<double> &y,
+                       std::vector<double> &z, std::vector<double> &v){}
+
   // ask to fill vertex arrays remotely
   virtual bool isRemote(){ return false; }
   virtual int fillRemoteVertexArrays(std::string &options){ return 0; }

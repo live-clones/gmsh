@@ -137,9 +137,9 @@ Mesh.SaveGroupsOfNodes = 1;
 
 
 // Get total number of Lines and Surfaces
-// ll[] = Line "*";
-// ss[] = Surface "*" ;
-// pp[] = Point "*";
+// ll[] = Line {:};
+// ss[] = Surface {:} ;
+// pp[] = Point {:};
 // Printf("Number of Lines in the geometry: %g", #ll[]) ;
 // Printf("Number of Surfaces in the geometry : %g", #ss[]) ;
 // Printf("Number of Points in the geometry : %g", #pp[]) ;
