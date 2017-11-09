@@ -351,6 +351,9 @@ class MQuadrangle9 : public MQuadrangle {
   }
 };
 
+typedef std::vector<int> IndicesReoriented;
+typedef std::pair<int, std::pair<int,int> > TupleReorientation;
+
 /*
  * MQuadrangle
  *
@@ -368,6 +371,7 @@ class MQuadrangle9 : public MQuadrangle {
  *
  */
 class MQuadrangleN : public MQuadrangle {
+  static std::map<TupleReorientation, IndicesReoriented> _tuple2indicesReoriented;
  protected:
   std::vector<MVertex *> _vs;
   const char _order;

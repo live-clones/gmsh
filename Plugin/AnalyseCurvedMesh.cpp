@@ -172,8 +172,12 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
         std::map<int, std::vector<double> > dataPV;
         for (unsigned int i = 0; i < _data.size(); ++i) {
           MElement *const el = _data[i].element();
-          if (el->getDim() == dim)
-            dataPV[el->getNum()].push_back(_data[i].minJ()/_data[i].maxJ());
+          if (el->getDim() == dim) {
+            double q = 0;
+            if (_data[i].maxJ() > 0) q = _data[i].minJ() / _data[i].maxJ();
+            else if (_data[i].maxJ() < 0) q = _data[i].maxJ() / _data[i].minJ();
+            dataPV[el->getNum()].push_back(q);
+          }
         }
         if (dataPV.size()) {
           std::stringstream name;
@@ -248,6 +252,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
       return;
   }
 
+  int cntInverted = 0;
   std::set<GEntity*, GEntityLessThan>::iterator it;
   for (it = entities.begin(); it != entities.end(); ++it) {
     GEntity *entity = *it;
@@ -335,12 +340,13 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
       double min, max;
       jacobianBasedQuality::minMaxJacobianDeterminant(el, min, max, normals);
       _data.push_back(data_elementMinMax(el, min, max));
-      if (min < 0 && max < 0) {
-        Msg::Warning("Element %d is completely inverted", el->getNum());
-      }
+      if (min < 0 && max < 0) ++cntInverted;
       progress.next();
     }
     delete normals;
+  }
+  if (cntInverted) {
+    Msg::Warning("%d elements are completely inverted", cntInverted);
   }
   _computedJac[dim-1] = true;
 }
@@ -354,7 +360,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinIGE(int dim)
   for (unsigned int i = 0; i < _data.size(); ++i) {
     MElement *const el = _data[i].element();
     if (el->getDim() != dim) continue;
-    if (_data[i].minJ() <= 0) {
+    if (_data[i].minJ() <= 0 && _data[i].maxJ() > 0) {
       _data[i].setMinS(0);
     }
     else {
@@ -375,7 +381,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinICN(int dim)
   for (unsigned int i = 0; i < _data.size(); ++i) {
     MElement *const el = _data[i].element();
     if (el->getDim() != dim) continue;
-    if (_data[i].minJ() <= 0) {
+    if (_data[i].minJ() <= 0 && _data[i].maxJ() > 0) {
       _data[i].setMinI(0);
     }
     else {
@@ -438,19 +444,22 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatJacobian()
   avgminJ = avgratJ = avgratJc = 0;
 
   for (unsigned int i = 0; i < _data.size(); ++i) {
-    double q = 0;
-    if ( _data[i].minJ() > 0) q = _data[i].minJ() / _data[i].maxJ();
     infminJ = std::min(infminJ, _data[i].minJ());
     supminJ = std::max(supminJ, _data[i].minJ());
     avgminJ += _data[i].minJ();
-    infratJ = std::min(infratJ, _data[i].minJ()/_data[i].maxJ());
-    supratJ = std::max(supratJ, _data[i].minJ()/_data[i].maxJ());
-    avgratJ += _data[i].minJ()/_data[i].maxJ();
-    ++count;
+
+    double q = 0;
+    if (_data[i].maxJ() > 0) q = _data[i].minJ() / _data[i].maxJ();
+    else if (_data[i].maxJ() < 0) q = _data[i].maxJ() / _data[i].minJ();
+    infratJ = std::min(infratJ, q);
+    supratJ = std::max(supratJ, q);
+    avgratJ += q;
     if (q < 1-1e-5) {
       avgratJc += _data[i].minJ()/_data[i].maxJ();
       ++countc;
     }
+
+    ++count;
   }
   avgminJ /= count;
   avgratJ /= count;
