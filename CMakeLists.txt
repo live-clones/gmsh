@@ -88,8 +88,8 @@ opt(TAUCS "Enable Taucs linear solver" ${DEFAULT})
 opt(TCMALLOC "Enable libtcmalloc, a fast malloc implementation but that does not release memory" OFF)
 opt(TETGEN "Enable Tetgen 3D initial mesh generator" ${DEFAULT})
 opt(VORO3D "Enable Voro3D (for hex meshing, experimental)" ${DEFAULT})
-opt(WRAP_JAVA "Enable generation of Java wrappers (experimental)" OFF)
-opt(WRAP_PYTHON "Enable generation of Python wrappers" OFF)
+opt(WRAP_JAVA_DEPRECATED "Enable generation of Java wrappers (deprecated)" OFF)
+opt(WRAP_PYTHON_DEPRECATED "Enable generation of Python wrappers (deprecated)" OFF)
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 3)
@@ -102,6 +102,11 @@ set(GMSH_VERSION "${GMSH_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}")
 set(GMSH_SHORT_LICENSE "GNU General Public License")
 
 set(GMSH_API
+  ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h
+  ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h
+  Common/GmshAPI.h)
+
+set(GMSH_API_DEPRECATED
   ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h
   ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h
   Common/Gmsh.h Common/Context.h Common/GmshDefines.h Common/GmshMessage.h
@@ -165,11 +170,6 @@ set(GMSH_API
   contrib/MeshQualityOptimizer/MeshQualityObjContribInvCond.h
   contrib/MeshQualityOptimizer/MeshQualityOptimizer.h
   contrib/MathEx/mathex.h)
-
-get_property(IAMCHILD DIRECTORY  PROPERTY PARENT_DIRECTORY)
-if(IAMCHILD)
-  set(GMSH_API ${GMSH_API} PARENT_SCOPE)
-endif(IAMCHILD)
 
 if(${CMAKE_MAJOR_VERSION} GREATER 2)
   string(TIMESTAMP DATE "%Y%m%d")
@@ -236,9 +236,9 @@ if(NOT APPLE)
   endif(HAVE_64BIT_SIZE_T)
 endif(NOT APPLE)
 
-if(ENABLE_WRAP_PYTHON AND NOT ENABLE_BUILD_SHARED)
+if(ENABLE_WRAP_PYTHON_DEPRECATED AND NOT ENABLE_BUILD_SHARED)
   set(ENABLE_BUILD_DYNAMIC ON)
-endif(ENABLE_WRAP_PYTHON AND NOT ENABLE_BUILD_SHARED)
+endif(ENABLE_WRAP_PYTHON_DEPRECATED AND NOT ENABLE_BUILD_SHARED)
 
 if(MSVC)
   # remove annoying warning about bool/int cast performance
@@ -1248,7 +1248,7 @@ if(ENABLE_ZIPPER)
   endif(HAVE_LIBZ)
 endif(ENABLE_ZIPPER)
 
-if(ENABLE_WRAP_PYTHON)
+if(ENABLE_WRAP_PYTHON_DEPRECATED)
   find_package(SWIG)
   find_package(PythonLibs)
   find_package(PythonInterp)# ${PYTHONLIBS_VERSION_STRING} EXACT)
@@ -1262,7 +1262,7 @@ if(ENABLE_WRAP_PYTHON)
       mark_as_advanced(CLEAR PYTHON_LIBRARY PYTHON_INCLUDE_DIR)
     endif(SWIG_MAJOR_VERSION EQUAL 1)
   endif(SWIG_FOUND AND PYTHONLIBS_FOUND)
-endif(ENABLE_WRAP_PYTHON)
+endif(ENABLE_WRAP_PYTHON_DEPRECATED)
 
 if(HAVE_PYTHON)
   if(ENABLE_NUMPY)
@@ -1532,7 +1532,7 @@ endif(ENABLE_BUILD_ANDROID)
 
 # shared library target
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC OR
-   ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
+   ENABLE_WRAP_PYTHON_DEPRECATED OR ENABLE_WRAP_JAVA_DEPRECATED)
   add_library(shared SHARED ${GMSH_SRC})
   set_target_properties(shared PROPERTIES OUTPUT_NAME Gmsh)
   set_target_properties(shared PROPERTIES
@@ -1547,7 +1547,7 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC OR
   endif(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
   target_link_libraries(shared ${LINK_LIBRARIES})
 endif(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC OR
-      ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
+      ENABLE_WRAP_PYTHON_DEPRECATED OR ENABLE_WRAP_JAVA_DEPRECATED)
 
 # binary targets
 if(HAVE_FLTK)
@@ -1661,15 +1661,18 @@ if(WIN32 OR CYGWIN)
     set(GMSH_LIB .)
     set(GMSH_DOC .)
     set(GMSH_MAN .)
+    set(GMSH_INC .)
   else(ENABLE_OS_SPECIFIC_INSTALL)
     include(GNUInstallDirs)
     set(GMSH_BIN ${CMAKE_INSTALL_BINDIR})
     set(GMSH_LIB ${CMAKE_INSTALL_LIBDIR})
     set(GMSH_DOC ${CMAKE_INSTALL_DOCDIR})
     set(GMSH_MAN ${CMAKE_INSTALL_MANDIR}/man1)
+    set(GMSH_INC ${CMAKE_INSTALL_INCLUDEDIR})
   endif(ENABLE_OS_SPECIFIC_INSTALL)
   if(CYGWIN)
     unix2dos(GMSH_API)
+    unix2dos(GMSH_API_DEPREATED)
     unix2dos(WELCOME_FILE)
     unix2dos(LICENSE_FILE)
     unix2dos(CREDITS_FILE)
@@ -1687,12 +1690,14 @@ elseif(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
   set(GMSH_LIB ../MacOS)
   set(GMSH_DOC ../../..)
   set(GMSH_MAN ../../..)
+  set(GMSH_INC ../MacOS)
 else(WIN32 OR CYGWIN)
   include(GNUInstallDirs)
   set(GMSH_BIN ${CMAKE_INSTALL_BINDIR})
   set(GMSH_LIB ${CMAKE_INSTALL_LIBDIR})
   set(GMSH_DOC ${CMAKE_INSTALL_DOCDIR})
   set(GMSH_MAN ${CMAKE_INSTALL_MANDIR}/man1)
+  set(GMSH_INC ${CMAKE_INSTALL_INCLUDEDIR})
 endif(WIN32 OR CYGWIN)
 
 # mark targets as optional so we can install them separately if needed
@@ -1743,7 +1748,8 @@ if(ENABLE_ONELAB)
   install(FILES ${ONELAB_PY} DESTINATION ${GMSH_BIN})
 endif(ENABLE_ONELAB)
 if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
-  install(FILES ${GMSH_API} DESTINATION include/gmsh)
+  install(FILES ${GMSH_API} DESTINATION ${GMSH_INC})
+  install(FILES ${GMSH_API_DEPRECATED} DESTINATION ${GMSH_INC}/gmsh)
 endif(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 install(FILES ${WELCOME_FILE} DESTINATION ${GMSH_DOC} RENAME README.txt)
 install(FILES ${LICENSE_FILE} DESTINATION ${GMSH_DOC})
@@ -1763,6 +1769,11 @@ add_custom_target(get_headers
   COMMAND ${CMAKE_COMMAND} -E make_directory Headers/gmsh
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 foreach(FILE ${GMSH_API})
+  add_custom_command(TARGET get_headers POST_BUILD COMMAND ${CMAKE_COMMAND}
+    -E copy_if_different ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Headers/
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+endforeach(FILE)
+foreach(FILE ${GMSH_API_DEPRECATED})
   add_custom_command(TARGET get_headers POST_BUILD COMMAND ${CMAKE_COMMAND}
     -E copy_if_different ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Headers/gmsh/
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
@@ -1837,6 +1848,11 @@ if(APPLE AND ENABLE_BUILD_LIB)
         ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Gmsh.framework/Headers/
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   endforeach(FILE)
+  foreach(FILE ${GMSH_API_DEPRECATED})
+    add_custom_command(TARGET framework POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
+        ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Gmsh.framework/Headers/
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  endforeach(FILE)
 endif(APPLE AND ENABLE_BUILD_LIB)
 
 set(CPACK_PACKAGE_VENDOR "Christophe Geuzaine and Jean-Francois Remacle")
@@ -1903,12 +1919,12 @@ if(HAVE_PYTHON)
   add_subdirectory(wrappers/gmshpy)
 endif(HAVE_PYTHON)
 
-if(ENABLE_WRAP_JAVA)
+if(ENABLE_WRAP_JAVA_DEPRECATED)
   if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
     message(WARNING "Java wrapping samples will not work without BLAS and LAPACK")
   endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
   add_subdirectory(wrappers/java)
-endif(ENABLE_WRAP_JAVA)
+endif(ENABLE_WRAP_JAVA_DEPRECATED)
 
 include(CPack)
 

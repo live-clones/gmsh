@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "GmshConfig.h"
+#include "GmshVersion.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "StringUtils.h"
@@ -1119,6 +1120,16 @@ std::string opt_general_background_image_filename(OPT_ARGS_STR)
     CTX::instance()->bgImageFileName = val;
   }
   return CTX::instance()->bgImageFileName;
+}
+
+std::string opt_general_version(OPT_ARGS_STR)
+{
+  return GMSH_VERSION;
+}
+
+std::string opt_general_build_options(OPT_ARGS_STR)
+{
+  return GMSH_CONFIG_OPTIONS;
 }
 
 std::string opt_general_filename(OPT_ARGS_STR)

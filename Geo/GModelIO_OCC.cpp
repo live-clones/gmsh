@@ -1344,6 +1344,10 @@ bool OCC_Internals::_makeSphere(TopoDS_Solid &result, double xc, double yc, doub
     Msg::Error("Sphere radius should be positive");
     return false;
   }
+  if(angle3 <= 0 || angle3 > 2 * M_PI){
+    Msg::Error("Cannot build sphere with angle <= 0 or angle > 2*Pi");
+    return false;
+  }
   try{
     gp_Pnt p(xc, yc, zc);
     BRepPrimAPI_MakeSphere s(p, radius, angle1, angle2, angle3);
@@ -1423,6 +1427,10 @@ bool OCC_Internals::_makeCylinder(TopoDS_Solid &result, double x, double y, doub
   const double H = sqrt(dx * dx + dy * dy + dz * dz);
   if(!H){
     Msg::Error("Cannot build cylinder of zero height");
+    return false;
+  }
+  if(angle <= 0 || angle > 2 * M_PI){
+    Msg::Error("Cannot build cylinder with angle <= 0 or angle > 2*Pi");
     return false;
   }
   try{

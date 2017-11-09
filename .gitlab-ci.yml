@@ -10,7 +10,7 @@ variables:
 # Builds for all branches
 # -----------------------
 
-linux64_docker:
+linux64_docker_ci:
   image: onelab/ubuntu16.04
   script:
     - mkdir build
@@ -21,8 +21,10 @@ linux64_docker:
   tags:
     - linux64
     - docker
+  except:
+    - tags
 
-linux64_docker_cxx98_compat:
+linux64_docker_cxx98_compat_ci:
   image: onelab/ubuntu16.04
   script:
     - mkdir build
@@ -33,8 +35,10 @@ linux64_docker_cxx98_compat:
   tags:
     - linux64
     - docker
+  except:
+    - tags
 
-linux64_docker_minimal:
+linux64_docker_minimal_ci:
   image: onelab/ubuntu16.04
   script:
     - mkdir build
@@ -44,8 +48,10 @@ linux64_docker_minimal:
   tags:
     - linux64
     - docker
+  except:
+    - tags
 
-windows64_msvc:
+windows64_msvc_ci:
   script:
     - md build
     - cd build
@@ -54,12 +60,14 @@ windows64_msvc:
   tags:
     - windows64
     - official
+  except:
+    - tags
 
 # ------------------------------------------
 # Official Linux builds (master branch only)
 # ------------------------------------------
 
-linux64_official:
+.linux64_official: &linux64_official
   only:
     - master
   script:
@@ -73,11 +81,23 @@ linux64_official:
     - linux64
     - official
 
+linux64_official_snapshot:
+  <<: *linux64_official
+  except:
+    - tags
+
+linux64_official_release:
+  variables:
+    EXTRA_VERSION: ""
+  <<: *linux64_official
+  only:
+    - /^gmsh_.*$/
+
 # --------------------------------------------
 # Official Windows builds (master branch only)
 # --------------------------------------------
 
-.windows_official: &ref_windows_official
+.windows_official: &windows_official
   only:
     - master
   script:
@@ -88,24 +108,48 @@ linux64_official:
     - bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
     - bash -c "/usr/bin/ctest -D Experimental -j 1 --output-on-failure"
 
-windows64_official:
-  <<: *ref_windows_official
+windows64_official_snapshot:
+  <<: *windows_official
   tags:
     - windows64
     - official
+  except:
+    - tags
 
-windows32_official:
-  <<: *ref_windows_official
+windows64_official_release:
+  variables:
+    EXTRA_VERSION: ""
+  <<: *windows_official
+  tags:
+    - windows64
+    - official
+  only:
+    - /^gmsh_.*$/
+
+windows32_official_snapshot:
+  <<: *windows_official
   tags:
     - windows32
     - official
+  except:
+    - tags
   allow_failure: true
+
+windows32_official_release:
+  variables:
+    EXTRA_VERSION: ""
+  <<: *windows_official
+  tags:
+    - windows32
+    - official
+  only:
+    - /^gmsh_.*$/
 
 # ------------------------------------------
 # Official MacOS builds (master branch only)
 # ------------------------------------------
 
-macos64_official:
+.macos64_official: &macos64_official
   only:
     - master
   script:
@@ -123,11 +167,23 @@ macos64_official:
     - macos64
     - official
 
+macos64_official_snapshot:
+  <<: *macos64_official
+  except:
+    - tags
+
+macos64_official_release:
+  variables:
+    EXTRA_VERSION: ""
+  <<: *macos64_official
+  only:
+    - /^gmsh_.*$/
+
 # ----------------------------------------------
 # Official source snapshots (master branch only)
 # ----------------------------------------------
 
-source_official:
+.source_official: &source_official
   only:
     - master
   script:
@@ -139,3 +195,15 @@ source_official:
   tags:
     - linux64
     - official
+
+source_official_snapshot:
+  <<: *source_official
+  except:
+    - tags
+
+source_official_release:
+  variables:
+    EXTRA_VERSION: ""
+  <<: *source_official
+  only:
+    - /^gmsh_.*$/
