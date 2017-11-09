@@ -44,6 +44,7 @@ int getNumVertices(const MElement *const element);
 bool isPeriodic(const GModel *const model);
 
 int PartitionGraph(Graph &graph);
+void createDualGraph(Graph &graph);
 
 void CreateNewEntities(GModel *const model, std::unordered_map<MElement*, unsigned short> &elmToPartition, std::multimap<unsigned short, GEntity*> &newPartitionEntities);
 template <class ITERATOR>

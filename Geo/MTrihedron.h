@@ -157,6 +157,9 @@ class MTrihedron : public MElement {
     };
     return f[face][vert];
   }
+  
+  // Return the number of nodes that this element must have with the other in order to put an edge between them in the dual graph used during the partitioning.
+  virtual int numCommonNodesInDualGraph(const MElement *const other) const;
 };
 
 #endif

@@ -37,7 +37,6 @@
 #include "MElementOctree.h"
 #include "HighOrder.h"
 #include "meshGEdge.h"
-#include "meshPartitionOptions.h"
 #include "meshPartition.h"
 #include "CreateFile.h"
 #include "Context.h"

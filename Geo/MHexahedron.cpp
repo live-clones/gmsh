@@ -130,6 +130,21 @@ void MHexahedron::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &r
   Msg::Error("Could not get face information for hexahedron %d", getNum());
 }
 
+int MHexahedron::numCommonNodesInDualGraph(const MElement *const other) const
+{
+  switch (other->getType())
+  {
+    case TYPE_PNT:
+      return 1;
+    case TYPE_LIN:
+      return 2;
+    case TYPE_TRI:
+      return 3;
+    default:
+      return 4;
+  }
+}
+
 static void _myGetEdgeRep(MHexahedron *hex, int num, double *x, double *y, double *z,
                           SVector3 *n, int numSubEdges) {
 

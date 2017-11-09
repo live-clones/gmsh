@@ -46,6 +46,11 @@ class Graph
   unsigned int *_eptr;                        /*The size of the eptr array is n + 1, where n is
                                               the number of elements in the mesh.*/
   
+  unsigned int *_xadj;                        /*The metis graph structure*/
+  
+  
+  unsigned int *_adjncy;                      /*The metis graph structure*/
+  
   std::vector<MElement*> _element;            /*The element corresponding to each graph element
                                               in eptr*/
   
@@ -55,7 +60,7 @@ class Graph
 
   public:
   
-  Graph() : _ne(0), _nn(0), _dim(0), _eind(NULL), _eptr(NULL), _element(), _vwgt(NULL), _partition(NULL)
+  Graph() : _ne(0), _nn(0), _dim(0), _eind(NULL), _eptr(NULL), _xadj(NULL), _adjncy(NULL), _element(), _vwgt(NULL), _partition(NULL)
   { }
   
   void fillDefaultWeights()
@@ -107,6 +112,10 @@ class Graph
   unsigned int *eind() const { return _eind; };
   unsigned int eptr(unsigned int i) const { return _eptr[i]; };
   unsigned int *eptr() const { return _eptr; };
+  unsigned int xadj(unsigned int i) const { return _xadj[i]; };
+  unsigned int *xadj() const { return _xadj; };
+  unsigned int adjncy(unsigned int i) const { return _adjncy[i]; };
+  unsigned int *adjncy() const { return _adjncy; };
   MElement* element(unsigned int i) const { return _element[i]; };
   unsigned int *vwgt() const { return _vwgt; };
   unsigned int partition(unsigned int i) const { return _partition[i]; };
@@ -115,10 +124,30 @@ class Graph
   void ne(unsigned int ne) { _ne = ne; };
   void nn(unsigned int nn) { _nn = nn; };
   void dim(unsigned int dim) { _dim = dim; };
-  void eindResize(unsigned int size) { _eind = new unsigned int[size]; };
+  void eindResize(unsigned int size)
+  {
+    _eind = new unsigned int[size];
+    for(unsigned int i = 0; i < size; i++) _eind[i] = 0;
+  }
   void eind(unsigned int i, unsigned int eind) { _eind[i] = eind; };
-  void eptrResize(unsigned int size) { _eptr = new unsigned int[size]; };
+  void eptrResize(unsigned int size)
+  {
+    _eptr = new unsigned int[size];
+    for(unsigned int i = 0; i < size; i++) _eptr[i] = 0;
+  }
   void eptr(unsigned int i, unsigned int eptr) { _eptr[i] = eptr; };
+  void xadjResize(unsigned int size)
+  {
+    _xadj = new unsigned int[size];
+    for(unsigned int i = 0; i < size; i++) _xadj[i] = 0;
+  }
+  void xadj(unsigned int i, unsigned int xadj) { _xadj[i] = xadj; };
+  void adjncyResize(unsigned int size)
+  {
+    _adjncy = new unsigned int[size];
+    for(unsigned int i = 0; i < size; i++) _adjncy[i] = 0;
+  }
+  void adjncy(unsigned int i, unsigned int adjncy) { _adjncy[i] = adjncy; };
   void elementResize(unsigned int size) { _element.resize(size); };
   void element(unsigned int i, MElement* element) { _element[i] = element; };
   void vwgt(unsigned int *vwgt) { _vwgt = vwgt; };
@@ -135,6 +164,16 @@ class Graph
     {
       delete[] _eptr;
       _eptr = NULL;
+    }
+    if(_xadj != NULL)
+    {
+      delete[] _xadj;
+      _xadj = NULL;
+    }
+    if(_adjncy != NULL)
+    {
+      delete[] _adjncy;
+      _adjncy = NULL;
     }
     _element.clear();
     if(_vwgt != NULL)

@@ -66,7 +66,7 @@ int PartitionMesh(GModel *const model)
   Msg::StatusBar(true, "Partitioning graph...");
   if(!ier) ier = PartitionGraph(graph);
   if(ier) return 1;
-  
+    
   // Assign partitions to elements
   std::unordered_map<MElement*, unsigned short> elmToPartition;
   for(unsigned int i = 0; i < graph.ne(); i++)
@@ -461,7 +461,6 @@ int MakeGraph(GModel *const model, Graph &graph)
       std::map<int,int>::iterator it = correspondingVertices.find(graph.eind(i));
       if(it != correspondingVertices.end())
       {
-        Msg::Info("%d %d", it->first, it->second);
         graph.eind(i,it->second);
       }
     }
@@ -635,11 +634,22 @@ int PartitionGraph(Graph &graph)
     const unsigned int ne = graph.ne();
     const unsigned int nn = graph.nn();
     const int numPart = CTX::instance()->mesh.num_partitions;
+    int ncon = 1;
         
     graph.fillDefaultWeights();
-      
-    const int metisError = METIS_PartMeshDual((idx_t *)&ne, (idx_t *)&nn, (idx_t *)graph.eptr(), (idx_t *)graph.eind(), (idx_t *)graph.vwgt(), (idx_t *)NULL, (idx_t *)&nCommon, (idx_t *)&numPart, (real_t *)NULL, (idx_t *)metisOptions, (idx_t *)&objval, (idx_t *)epart, (idx_t *)npart);
-        
+    
+    int metisError = 0;
+    createDualGraph(graph);
+    
+    if (metisOptions[METIS_OPTION_PTYPE] == METIS_PTYPE_KWAY)
+    {
+      metisError = METIS_PartGraphKway((idx_t *)&ne, (idx_t *)&ncon, (idx_t *)graph.xadj(), (idx_t *)graph.adjncy(), (idx_t *)graph.vwgt(), (idx_t *)NULL, NULL, (idx_t *)&numPart, NULL, NULL, (idx_t *)metisOptions, (idx_t *)&objval, (idx_t *)epart);
+    }
+    else
+    {
+      metisError = METIS_PartGraphRecursive((idx_t *)&ne, (idx_t *)&ncon, (idx_t *)graph.xadj(), (idx_t *)graph.adjncy(), (idx_t *)graph.vwgt(), (idx_t *)NULL, NULL, (idx_t *)&numPart, NULL, NULL, (idx_t *)metisOptions, (idx_t *)&objval, (idx_t *)epart);
+    }
+
     switch(metisError)
     {
       case METIS_OK:
@@ -661,7 +671,7 @@ int PartitionGraph(Graph &graph)
         return 1;
         break;
     }
-        
+    
     graph.partition(epart);
     delete[] npart;
         
@@ -674,6 +684,107 @@ int PartitionGraph(Graph &graph)
 #endif
   
   return 0;
+}
+
+void createDualGraph(Graph &graph)
+{
+  int *nptr = new int[graph.nn()+1];
+  for(unsigned int i = 0; i < graph.nn()+1; i++) nptr[i] = 0;
+  int *nind = new int[graph.eptr(graph.ne())];
+  for(unsigned int i = 0; i < graph.eptr(graph.ne()); i++) nind[i] = 0;
+  
+  for(unsigned int i = 0; i < graph.ne(); i++)
+  {
+    for(unsigned int j = graph.eptr(i); j < graph.eptr(i+1); j++)
+    {
+      nptr[graph.eind(j)]++;
+    }
+  }
+  
+  for(unsigned int i = 1; i < graph.nn(); i++) nptr[i] += nptr[i-1];
+  for(unsigned int i = graph.nn(); i > 0; i--) nptr[i] = nptr[i-1];
+  nptr[0] = 0;
+  
+  for(unsigned int i = 0; i < graph.ne()-1; i++)
+  {
+    for(unsigned int j = graph.eptr(i); j < graph.eptr(i+1); j++)
+    {
+      nind[nptr[graph.eind(j)]++] = i;
+    }
+  }
+  
+  for(unsigned int i = graph.nn(); i > 0; i--) nptr[i] = nptr[i-1];
+  nptr[0] = 0;
+  
+  graph.xadjResize(graph.ne()+1);
+  int *nbrs = new int[graph.ne()];
+  int *marker = new int[graph.ne()];
+  for(unsigned int i = 0; i < graph.ne(); i++)
+  {
+    nbrs[i] = 0;
+    marker[i] = 0;
+  }
+  
+  for(unsigned int i = 0; i < graph.ne(); i++)
+  {
+    unsigned int l = 0;
+    for(unsigned int j = graph.eptr(i); j < graph.eptr(i+1); j++)
+    {
+      for(unsigned int k = nptr[graph.eind(j)]; k < nptr[graph.eind(j)+1]; k++)
+      {
+        if(nind[k] != i)
+        {
+          if(marker[nind[k]] == 0) nbrs[l++] = nind[k];
+          marker[nind[k]]++;
+        }
+      }
+    }
+    
+    unsigned int nbrsNeighbors = 0;
+    for(unsigned int j = 0; j < l; j++)
+    {
+      if(marker[nbrs[j]] >= graph.element(i)->numCommonNodesInDualGraph(graph.element(nbrs[j]))) nbrsNeighbors++;
+      marker[nbrs[j]] = 0;
+      nbrs[j] = 0;
+    }
+    
+    graph.xadj(i, nbrsNeighbors);
+  }
+  
+  for(unsigned int i = 1; i < graph.ne(); i++) graph.xadj(i,graph.xadj(i)+graph.xadj(i-1));
+  for(unsigned int i = graph.ne(); i > 0; i--) graph.xadj(i,graph.xadj(i-1));
+  graph.xadj(0,0);
+  
+  graph.adjncyResize(graph.xadj(graph.ne()));
+  for(unsigned int i = 0; i < graph.ne(); i++)
+  {
+    unsigned int l = 0;
+    for(unsigned int j = graph.eptr(i); j < graph.eptr(i+1); j++)
+    {
+      for(unsigned int k = nptr[graph.eind(j)]; k < nptr[graph.eind(j)+1]; k++)
+      {
+        if(nind[k] != i)
+        {
+          if (marker[nind[k]] == 0) nbrs[l++] = nind[k];
+          marker[nind[k]]++;
+        }
+      }
+    }
+    
+    for(unsigned int j = 0; j < l; j++)
+    {
+      if(marker[nbrs[j]] >= graph.element(i)->numCommonNodesInDualGraph(graph.element(nbrs[j])))
+      {
+        graph.adjncy(graph.xadj(i), nbrs[j]);
+        graph.xadj(i, graph.xadj(i)+1);
+      }
+      marker[nbrs[j]] = 0;
+      nbrs[j] = 0;
+    }
+  }
+  
+  for(unsigned int i = graph.ne(); i > 0; i--) graph.xadj(i, graph.xadj(i-1));
+  graph.xadj(0, 0);
 }
 
 /******************************************************************************

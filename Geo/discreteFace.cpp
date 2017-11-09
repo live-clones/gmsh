@@ -17,7 +17,6 @@
 #include "Context.h"
 #include "OS.h"
 #include "meshPartitionObjects.h"
-#include "meshPartitionOptions.h"
 #include "meshPartition.h"
 #include "MPoint.h"
 
