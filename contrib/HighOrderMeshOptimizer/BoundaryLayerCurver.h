@@ -33,7 +33,7 @@
 //#include <map>
 #include <list>
 
-#include "Medge.h"
+#include "MEdge.h"
 #include "MFace.h"
 #include "fullMatrix.h"
 

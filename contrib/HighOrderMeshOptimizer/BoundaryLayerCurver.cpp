@@ -27,6 +27,7 @@
 //
 // Contributors: Amaury Johnen
 
+#include <cmath>
 #include "BoundaryLayerCurver.h"
 #include "MQuadrangle.h"
 #include "MTriangle.h"
