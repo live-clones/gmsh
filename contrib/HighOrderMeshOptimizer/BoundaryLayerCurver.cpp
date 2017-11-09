@@ -651,15 +651,15 @@ namespace BoundaryLayerCurver
         int x, y;
         for (int i = 0; i < fs->points.size1(); ++i) {
           if (type == TYPE_TRI) {
-            x = std::rint(fs->points(i, 0) * order);
-            y = std::rint(fs->points(i, 1) * order);
+            x = static_cast<int>(fs->points(i, 0) * order + .5);
+            y = static_cast<int>(fs->points(i, 1) * order + .5);
           }
           else {
-            x = std::rint((fs->points(i, 0) + 1) / 2. * order);
-            y = std::rint((fs->points(i, 1) + 1) / 2. * order);
+            x = static_cast<int>((fs->points(i, 0) + 1) / 2. * order + .5);
+            y = static_cast<int>((fs->points(i, 1) + 1) / 2. * order + .5);
           }
           coordinate2num[std::make_pair(x, y)] = i;
-          num2coordinate.push_back(std::make_pair(x, y));
+          num2coordinate.emplace_back(std::make_pair(x, y));
         }
 
         for (int i = 0; i < fs->points.size1(); ++i) {

@@ -1022,11 +1022,11 @@ void curveMeshFromBndElt(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
   if (!foundCol || blob.empty()) return; // Skip bnd. el. if top vertices not found
   DbgOutputCol dbgOutCol;
   dbgOutCol.addBlob(blob);
-  dbgOutCol.write("col_KO", bndElt->getNum());
+//  dbgOutCol.write("col_KO", bndElt->getNum());
   if (aboveElt == 0) std::cout << "DBGTT: aboveElt = 0 for bnd. elt. " << bndElt->getNum() << std::endl;
   curveColumn(p, ent, bndEnt, metaElType, baseVert, topPrimVert,
               aboveElt, blob, movedVert, dbgOut);
-  dbgOutCol.write("col_OK", bndElt->getNum());
+//  dbgOutCol.write("col_OK", bndElt->getNum());
 }
 
 void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
@@ -1038,10 +1038,10 @@ void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
 {
   // inspired from curveMeshFromBndElt
 
-  std::vector<std::pair<MElement*, std::vector<MElement*>>> bndEl2column;
+  std::vector<std::pair<MElement*, std::vector<MElement*> > > bndEl2column;
   std::vector<MElement*> aboveElements;
 
-  auto it = bndElts.begin();
+  std::list<MElement*>::iterator it = bndElts.begin();
   while (it != bndElts.end()) {
     MElement *bndEl = *it;
     const int bndType = bndEl->getType();
@@ -1127,7 +1127,7 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
       itBE != bndEl.end(); itBE++) // Loop over bnd. elements
     curveMeshFromBndElt(ed2el, face2el, ent, bndEnt,
                         *itBE, movedVert, p, dbgOut);
-  dbgOut.write("meta-elements", bndEnt->tag());
+//  dbgOut.write("meta-elements", bndEnt->tag());
 }
 
 
