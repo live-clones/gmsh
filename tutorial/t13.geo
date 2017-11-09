@@ -23,11 +23,11 @@ CreateTopology;
 
 // We can now define a compound line (resp. surface) for each discrete line
 // (resp. surface) in the model
-ll[] = Line "*";
+ll[] = Line {:};
 For j In {0 : #ll[]-1}
   Compound Line(newl) = ll[j];
 EndFor
-ss[] = Surface "*";
+ss[] = Surface {:};
 s = news;
 For i In {0 : #ss[]-1}
   Compound Surface(s+i) = ss[i];

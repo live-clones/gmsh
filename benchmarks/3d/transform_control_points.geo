@@ -978,6 +978,4 @@ Transfinite Line {375, 374, 377, 376} = 17 Using Progression 1;
 //+
 Transfinite Line {379, 378, 381, 380} = 20 Using Progression 1;
 
-//+
-Show "*";
-//+
+

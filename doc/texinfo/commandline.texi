@@ -21,7 +21,7 @@ Perform 1D, 2D or 3D mesh generation, then exit
 @item -o file
 Specify output file name
 @item -format string
-Select output mesh format (auto (default), msh, msh1, msh2, unv, vrml, ply2, stl, mesh, bdf, cgns, p3d, diff, med, ...)
+Select output mesh format (auto (default), msh, msh1, msh2, unv, vrml, ply2, stl, mesh, bdf, cgns, p3d, diff, med, neu, ...)
 @item -bin
 Use binary format when available
 @item -refine
@@ -154,6 +154,8 @@ Set constant string name=value
 Parse option file at startup
 @item -convert files
 Convert files into latest binary formats, then exit
+@item -nt int
+Set number of threads
 @item -cpu
 Report CPU times for all operations
 @item -version

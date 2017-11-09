@@ -150,6 +150,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-setstring name value", "Set constant string name=value"));
   s.push_back(mp("-option file",       "Parse option file at startup"));
   s.push_back(mp("-convert files",     "Convert files into latest binary formats, then exit"));
+  s.push_back(mp("-nt int",            "Set number of threads"));
   s.push_back(mp("-cpu",               "Report CPU times for all operations"));
   s.push_back(mp("-version",           "Show version number"));
   s.push_back(mp("-info",              "Show detailed version information"));
@@ -1028,7 +1029,7 @@ void GetOptions(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "nt")) {
         i++;
         if(argv[i])
-          Msg::SetNumThreads(atoi(argv[i++]));
+          opt_general_num_threads(0, GMSH_SET, atoi(argv[i++]));
         else
           Msg::Fatal("Missing number");
       }

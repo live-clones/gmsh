@@ -905,28 +905,59 @@ static bool fixDelaunayCavity (Vert *v,
   return false;
 }
 
-static void delaunayCavity2 (Tet *t,
-			    Tet *prev,
+static void delaunayCavity2 (Tet *tet,
+			    Tet *prevTet,
 			    Vert *v,
 			    cavityContainer &cavity,
 			    connContainer &bnd,
 			    int thread, int iPnt)
 {
-  t->set(thread, iPnt); // Mark the triangle
-  cavity.push_back(t);
-  for (int iNeigh=0; iNeigh<4 ; iNeigh++){
-    Tet *neigh = t->T[iNeigh];
-    if (neigh == NULL){
-      bnd.push_back(conn(t->getFace(iNeigh),iNeigh,neigh));
+  std::stack<std::pair<std::pair<Tet *, Tet *>, std::pair<int, int> > > stack;
+  bool finished = false;
+  Tet *t = tet;
+  Tet *prev = prevTet;
+  int iNeighStart = 0;
+  const int maxNumberNeigh = 4;
+  int iNeighEnd = maxNumberNeigh;
+  while (!finished) {
+    if (iNeighStart == 0){
+      t->set(thread, iPnt); // Mark the triangle
+      cavity.push_back(t);
     }
-    else if (neigh == prev){
+
+    for (int iNeigh = iNeighStart; iNeigh < iNeighEnd; iNeigh++){
+      Tet *neigh = t->T[iNeigh];
+      if (neigh == NULL){
+        bnd.push_back(conn(t->getFace(iNeigh), iNeigh, neigh));
+      }
+      else if (neigh == prev){
+      }
+      else if (!neigh->inSphere(v, thread)){
+        bnd.push_back(conn(t->getFace(iNeigh), iNeigh, neigh));
+        neigh->set(thread, iPnt);
+      }
+      else if (!(neigh->isSet(thread, iPnt))){
+        // First, add rest of neighbours to stack
+        stack.push(std::make_pair(std::make_pair(prev, t), std::make_pair(iNeigh + 1, maxNumberNeigh)));
+
+        // Second, add neighbour itself to stack
+        stack.push(std::make_pair(std::make_pair(t, neigh), std::make_pair(0, maxNumberNeigh)));
+
+        // Break out loop
+        break;
+      }
     }
-    else if (!neigh->inSphere(v,thread)){
-      bnd.push_back(conn(t->getFace(iNeigh),iNeigh,neigh));
-      neigh->set(thread, iPnt);
+
+    if (stack.empty()){
+      finished = true;
     }
-    else if (!(neigh->isSet(thread, iPnt))) {
-      delaunayCavity2 (neigh, t, v, cavity,bnd,thread, iPnt);
+    else{
+      const std::pair<std::pair<Tet *, Tet *>, std::pair<int, int> > &next = stack.top();
+      prev = next.first.first;
+      t = next.first.second;
+      iNeighStart = next.second.first;
+      iNeighEnd = next.second.second;
+      stack.pop();
     }
   }
 }

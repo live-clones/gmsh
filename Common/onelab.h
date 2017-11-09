@@ -1400,7 +1400,7 @@ namespace onelab{
         // stop if we have no communications for 5 minutes
         int ret = _gmshClient->Select(500, 0);
         if(!ret){
-          _gmshClient->Info("Timout: aborting remote get");
+          _gmshClient->Info("Timeout: aborting remote get");
           return false;
         }
         else if(ret < 0){
@@ -1454,7 +1454,7 @@ namespace onelab{
       while(_numSubClients > 0){
         int ret = _gmshClient->Select(500, 0);
         if(!ret){
-          _gmshClient->Info("Timout: aborting wait on subclients");
+          _gmshClient->Info("Timeout: aborting wait on subclients");
           return;
         }
         else if(ret < 0){

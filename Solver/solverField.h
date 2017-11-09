@@ -28,14 +28,14 @@ class SolverField : public FunctionSpace<T> // being able to use it instead of a
   FunctionSpace<T> *fs;
  public:
   SolverField(dofManager<double> *dm_, FunctionSpace<T> *fs_) : dm(dm_), fs(fs_) {}
-  virtual int getNumKeys(MVertex *ver) { return 1;}
-  virtual int getNumKeys(MElement *ele) { return 1;}
+  virtual int getNumKeys(MVertex *ver) const { return 1;}
+  virtual int getNumKeys(MElement *ele)  const { return 1;}
  private:
-  virtual void getKeys(MElement *ele, std::vector<Dof> &keys) { Msg::Error("getKeys for SolverField should'nt be called");}
-  virtual void getKeys(MVertex *ver, std::vector<Dof> &keys) {Msg::Error("getKeys for SolverField should'nt be called");}
+  virtual void getKeys(MElement *ele, std::vector<Dof> &keys) const { Msg::Error("getKeys for SolverField shouldn't be called");}
+  virtual void getKeys(MVertex *ver, std::vector<Dof> &keys) const {Msg::Error("getKeys for SolverField shouldn't be called");}
  public:
 
-  virtual void f(MElement *ele, double u, double v, double w, ValType &val)
+  virtual void f(MElement *ele, double u, double v, double w, ValType &val) const
   {
     std::vector<Dof> D;
     std::vector<ValType> SFVals;
@@ -48,14 +48,14 @@ class SolverField : public FunctionSpace<T> // being able to use it instead of a
       val += SFVals[i] * DMVals[i];
   }
 
-  virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals)
+  virtual void f(MElement *ele, double u, double v, double w, std::vector<ValType> &vals) const
   {
     ValType val;
     f(ele, u, v, w, val);
     vals.push_back(val);
   }
 
-  virtual void gradf(MElement *ele, double u, double v, double w, GradType &grad)
+  virtual void gradf(MElement *ele, double u, double v, double w, GradType &grad) const
   {
     std::vector<Dof> D;
     std::vector<GradType> SFGrads;
@@ -84,13 +84,13 @@ class SolverField : public FunctionSpace<T> // being able to use it instead of a
 //      hess += SFHess[i] * DMVals[i];
   }*/
 
-  virtual void gradf(MElement *ele, double u, double v, double w, std::vector<GradType> &grads)
+  virtual void gradf(MElement *ele, double u, double v, double w, std::vector<GradType> &grads) const
   {
     GradType grad;
     gradf(ele, u, v, w, grad);
     grads.push_back(grad);
   }
-    virtual void hessfuvw(MElement *ele, double u, double v, double w, std::vector<HessType> &hess)
+    virtual void hessfuvw(MElement *ele, double u, double v, double w, std::vector<HessType> &hess) const
   {
     //HessType hes;
     fs->hessfuvw(ele, u, v, w, hess);
