@@ -331,19 +331,17 @@ void MTriangle6::reorient(int rot, bool swap)
   else      for (int i=0;i<3;i++) _vs[i] = tmp[(3-rot+i)%3];
 }
 
-std::map<std::tuple<int, int, int>, indicesReoriented> MTriangleN::_tuple2indicesReoriented;
+std::map<TupleReorientation, IndicesReoriented> MTriangleN::_tuple2indicesReoriented;
 
 namespace
 {
   void _getIndicesReorientedTri(int order, int rot, bool swap,
-                                indicesReoriented &indices)
+                                IndicesReoriented &indices)
   {
     fullMatrix<double> ref = gmshGenerateMonomialsTriangle(order);
 
     indices.resize(ref.size1());
     for (int i = 0; i < ref.size1(); ++i) {
-      double u0 = ref(i, 0);
-      double v0 = ref(i, 1);
       double u = ref(i, 0);
       double v = ref(i, 1);
       double tmp;
@@ -357,8 +355,6 @@ namespace
         v = tmp;
       }
       for (int j = 0; j < ref.size1(); ++j) {
-        double u1 = ref(j, 0);
-        double v1 = ref(j, 1);
         if (u == ref(j, 0) && v == ref(j, 1)) {
           indices[i] = j;
           break;
@@ -372,16 +368,17 @@ void MTriangleN::reorient(int rot, bool swap)
 {
   if (rot == 0 && !swap) return;
 
-  std::tuple<int,int,int> mytuple(rot, swap, _order);
-  auto it = _tuple2indicesReoriented.find(mytuple);
+  TupleReorientation mytuple(getTypeForMSH(), std::make_pair(rot, swap));
+  std::map<TupleReorientation, IndicesReoriented>::iterator it;
+  it = _tuple2indicesReoriented.find(mytuple);
   if (it == _tuple2indicesReoriented.end()) {
-    indicesReoriented indices;
+    IndicesReoriented indices;
     _getIndicesReorientedTri(_order, rot, swap, indices);
     _tuple2indicesReoriented[mytuple] = indices;
     it = _tuple2indicesReoriented.find(mytuple);
   }
 
-  indicesReoriented &indices = it->second;
+  IndicesReoriented &indices = it->second;
 
   // copy vertices
   std::vector<MVertex*> oldv(3 + _vs.size());

@@ -400,12 +400,12 @@ void MQuadrangle9::reorient(int rot, bool swap)
   std::memcpy(_vs,tmp,4*sizeof(MVertex*));
 }
 
-std::map<std::tuple<int,int,int>, indicesReoriented> MQuadrangleN::_tuple2indicesReoriented;
+std::map<TupleReorientation, IndicesReoriented> MQuadrangleN::_tuple2indicesReoriented;
 
 namespace
 {
   void _getIndicesReorientedQuad(int order, int rot, bool swap,
-                                 indicesReoriented &indices)
+                                 IndicesReoriented &indices)
   {
     fullMatrix<double> ref = gmshGenerateMonomialsQuadrangle(order);
     ref.add(- order / 2.);
@@ -439,16 +439,17 @@ void MQuadrangleN::reorient(int rot, bool swap)
 {
   if (rot == 0 && !swap) return;
 
-  std::tuple<int,int,int> mytuple(rot, swap, _order);
-  auto it = _tuple2indicesReoriented.find(mytuple);
+  TupleReorientation mytuple(getTypeForMSH(), std::make_pair(rot, swap));
+  std::map<TupleReorientation, IndicesReoriented> it;
+  it = _tuple2indicesReoriented.find(mytuple);
   if (it == _tuple2indicesReoriented.end()) {
-    indicesReoriented indices;
+    IndicesReoriented indices;
     _getIndicesReorientedQuad(_order, rot, swap, indices);
     _tuple2indicesReoriented[mytuple] = indices;
     it = _tuple2indicesReoriented.find(mytuple);
   }
 
-  indicesReoriented &indices = it->second;
+  IndicesReoriented &indices = it->second;
 
   // copy vertices
   std::vector<MVertex*> oldv(4 + _vs.size());
