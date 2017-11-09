@@ -263,7 +263,8 @@ namespace
 
 namespace BoundaryLayerCurver
 {
-  static std::map<std::tuple<int, int, int>, LeastSquareData*> leastSquareData;
+  typedef std::pair<int, std::pair<int, int> > TupleLeastSquareData;
+  static std::map<TupleLeastSquareData, LeastSquareData*> leastSquareData;
   static std::map<int, InteriorPlacementData*> interiorPlacementData;
 
   LeastSquareData* constructLeastSquareData(int typeElement, int order,
@@ -416,8 +417,9 @@ namespace BoundaryLayerCurver
   LeastSquareData* getLeastSquareData(int typeElement, int order,
                                       int orderGauss)
   {
-    std::tuple<int, int, int> typeOrder(typeElement, order, orderGauss);
-    auto it = leastSquareData.find(typeOrder);
+    TupleLeastSquareData typeOrder(typeElement, std::make_pair(order, orderGauss));
+    std::map<TupleLeastSquareData, LeastSquareData*> it;
+    it = leastSquareData.find(typeOrder);
 
     if (it != leastSquareData.end()) return it->second;
 
@@ -646,7 +648,7 @@ namespace BoundaryLayerCurver
       case TYPE_TRI:
       case TYPE_QUA: {
         std::map<std::pair<int, int>, int> coordinate2num;
-        std::vector<std::pair<int, int>> num2coordinate;
+        std::vector<std::pair<int, int> > num2coordinate;
         long int x, y;
         for (int i = 0; i < fs->points.size1(); ++i) {
           if (type == TYPE_TRI) {
@@ -695,7 +697,7 @@ namespace BoundaryLayerCurver
     int tag = el->getTypeForMSH();
     InteriorPlacementData *data;
 
-    auto it = interiorPlacementData.find(tag);
+    std::map<int, InteriorPlacementData*> it = interiorPlacementData.find(tag);
     if (it != interiorPlacementData.end()) data = it->second;
     else {
       data = constructInteriorPlacementData(tag);

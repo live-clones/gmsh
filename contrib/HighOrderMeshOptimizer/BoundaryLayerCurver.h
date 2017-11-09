@@ -42,7 +42,8 @@ class GEntity;
 class MVertex;
 struct IntPt;
 
-typedef std::vector<std::pair<MElement *, std::vector<MElement *>>> VecPairMElemVecMElem;
+typedef std::vector<std::pair<MElement *, std::vector<MElement *> > >
+    VecPairMElemVecMElem;
 
 namespace BoundaryLayerCurver
 {
