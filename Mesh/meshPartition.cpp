@@ -627,12 +627,9 @@ int PartitionGraph(Graph &graph)
     metisOptions[METIS_OPTION_NUMBERING] = 0; //C numbering
     metisOptions[METIS_OPTION_OBJTYPE] = METIS_OBJTYPE_CUT; //Specifies the type of objective.
 
-    const unsigned int nCommon = graph.dim();
     int objval;
     unsigned int *epart = new unsigned int[graph.ne()];
-    unsigned int *npart = new unsigned int[graph.nn()];
     const unsigned int ne = graph.ne();
-    const unsigned int nn = graph.nn();
     const int numPart = CTX::instance()->mesh.num_partitions;
     int ncon = 1;
         
@@ -673,7 +670,6 @@ int PartitionGraph(Graph &graph)
     }
     
     graph.partition(epart);
-    delete[] npart;
         
     Msg::Info("Total edge-cut : %d", objval);
   }
@@ -782,9 +778,14 @@ void createDualGraph(Graph &graph)
       nbrs[j] = 0;
     }
   }
+  delete[] nbrs;
+  delete[] marker;
   
   for(unsigned int i = graph.ne(); i > 0; i--) graph.xadj(i, graph.xadj(i-1));
   graph.xadj(0, 0);
+  
+  delete[] nptr;
+  delete[] nind;
 }
 
 /******************************************************************************

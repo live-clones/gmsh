@@ -1455,11 +1455,13 @@ int GModel::partitionMesh(int numPart)
 {
 #if defined(HAVE_MESH) && (defined(HAVE_METIS))
   opt_mesh_partition_num(0, GMSH_SET, numPart);
-  PartitionMesh(this);
-  return 1;
+  int ier = deleteMeshPartitions();
+  if(ier != 0) return ier;
+  ier = PartitionMesh(this);
+  return ier;
 #else
   Msg::Error("Mesh module not compiled");
-  return 0;
+  return 1;
 #endif
 }
 

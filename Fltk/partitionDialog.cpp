@@ -138,7 +138,7 @@ void partition_partition_cb(Fl_Widget *widget, void *data)
   dlg->write_all_options();
     
   // Partition the mesh
-  int ier = PartitionMesh(GModel::current());
+  int ier = GModel::current()->partitionMesh(CTX::instance()->mesh.num_partitions);
 
   // Update the screen
   if(!ier)
