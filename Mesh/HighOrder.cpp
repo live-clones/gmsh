@@ -1666,7 +1666,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
   FastCurvingParameters p;
   p.dim = 0;
   p.curveOuterBL = FastCurvingParameters::OUTER_CURVE;
-  p.thickness = true;
+  p.thickness = false;
   // p.optimizeGeometry = true;
   for (GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it)
     if ((*it)->getNumMeshElements() > 0) { p.dim = 3; break; }
