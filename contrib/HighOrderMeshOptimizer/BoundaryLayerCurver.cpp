@@ -659,7 +659,7 @@ namespace BoundaryLayerCurver
             y = static_cast<int>((fs->points(i, 1) + 1) / 2. * order + .5);
           }
           coordinate2num[std::make_pair(x, y)] = i;
-          num2coordinate.emplace_back(std::make_pair(x, y));
+          num2coordinate.push_back(std::make_pair(x, y));
         }
 
         for (int i = 0; i < fs->points.size1(); ++i) {
