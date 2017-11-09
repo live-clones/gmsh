@@ -27,7 +27,6 @@
 //
 // Contributors: Amaury Johnen
 
-#include <cmath>
 #include "BoundaryLayerCurver.h"
 #include "MQuadrangle.h"
 #include "MTriangle.h"
@@ -418,7 +417,7 @@ namespace BoundaryLayerCurver
                                       int orderGauss)
   {
     TupleLeastSquareData typeOrder(typeElement, std::make_pair(order, orderGauss));
-    std::map<TupleLeastSquareData, LeastSquareData*> it;
+    std::map<TupleLeastSquareData, LeastSquareData*>::iterator it;
     it = leastSquareData.find(typeOrder);
 
     if (it != leastSquareData.end()) return it->second;
@@ -649,15 +648,15 @@ namespace BoundaryLayerCurver
       case TYPE_QUA: {
         std::map<std::pair<int, int>, int> coordinate2num;
         std::vector<std::pair<int, int> > num2coordinate;
-        long int x, y;
+        int x, y;
         for (int i = 0; i < fs->points.size1(); ++i) {
           if (type == TYPE_TRI) {
-            x = std::lround(fs->points(i, 0) * order);
-            y = std::lround(fs->points(i, 1) * order);
+            x = std::rint(fs->points(i, 0) * order);
+            y = std::rint(fs->points(i, 1) * order);
           }
           else {
-            x = std::lround((fs->points(i, 0) + 1) / 2. * order);
-            y = std::lround((fs->points(i, 1) + 1) / 2. * order);
+            x = std::rint((fs->points(i, 0) + 1) / 2. * order);
+            y = std::rint((fs->points(i, 1) + 1) / 2. * order);
           }
           coordinate2num[std::make_pair(x, y)] = i;
           num2coordinate.push_back(std::make_pair(x, y));
@@ -697,7 +696,8 @@ namespace BoundaryLayerCurver
     int tag = el->getTypeForMSH();
     InteriorPlacementData *data;
 
-    std::map<int, InteriorPlacementData*> it = interiorPlacementData.find(tag);
+    std::map<int, InteriorPlacementData*>::iterator it;
+    it = interiorPlacementData.find(tag);
     if (it != interiorPlacementData.end()) data = it->second;
     else {
       data = constructInteriorPlacementData(tag);
