@@ -352,7 +352,7 @@ class MQuadrangle9 : public MQuadrangle {
 };
 
 typedef std::vector<int> IndicesReoriented;
-typedef std::pair<int, std::pair<int,int>> TupleReorientation;
+typedef std::pair<int, std::pair<int,int> > TupleReorientation;
 
 /*
  * MQuadrangle
