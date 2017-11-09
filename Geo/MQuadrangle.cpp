@@ -440,7 +440,7 @@ void MQuadrangleN::reorient(int rot, bool swap)
   if (rot == 0 && !swap) return;
 
   TupleReorientation mytuple(getTypeForMSH(), std::make_pair(rot, swap));
-  std::map<TupleReorientation, IndicesReoriented> it;
+  std::map<TupleReorientation, IndicesReoriented>::iterator it;
   it = _tuple2indicesReoriented.find(mytuple);
   if (it == _tuple2indicesReoriented.end()) {
     IndicesReoriented indices;
