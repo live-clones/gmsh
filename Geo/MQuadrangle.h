@@ -8,10 +8,6 @@
 
 #include "MElement.h"
 
-#if defined(HAVE_VISUDEV)
-#include <Context.h>
-#endif
-
 /*
  * MQuadrangle
  *
@@ -95,31 +91,8 @@ class MQuadrangle : public MElement {
   }
   virtual int getNumFaces(){ return 1; }
   virtual MFace getFace(int num){ return MFace(_v[0], _v[1], _v[2], _v[3]); }
-  virtual int getNumFacesRep(bool curved)
-  {
-#if defined(HAVE_VISUDEV)
-    if (CTX::instance()->heavyVisu) return 4;
-#endif
-    return 2;
-  }
-  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
-  {
-#if defined(HAVE_VISUDEV)
-    static const int fquad[4][4] = {
-        {0, 1, 2, 3}, {1, 2, 3, 0}, {2, 3, 0, 1}, {3, 0, 1, 2}
-    };
-    if (CTX::instance()->heavyVisu) {
-      _getFaceRepQuad(getVertex(fquad[num][0]), getVertex(fquad[num][1]),
-                      getVertex(fquad[num][2]), getVertex(fquad[num][3]),
-                      x, y, z, n);
-      return;
-    }
-#endif
-    static const int f[2][3] = {
-        {0, 1, 2}, {0, 2, 3}
-    };
-    _getFaceRep(_v[f[num][0]], _v[f[num][1]], _v[f[num][2]], x, y, z, n);
-  }
+  virtual int getNumFacesRep(bool curved);
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(4);

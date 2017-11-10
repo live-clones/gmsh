@@ -430,8 +430,7 @@ int MHexahedron::getNumFacesRep(bool curved)
 #if defined(HAVE_VISUDEV)
   if (CTX::instance()->heavyVisu) {
     if (CTX::instance()->mesh.numSubEdges == 1) return 24;
-    return 6 * 2 * CTX::instance()->mesh.numSubEdges
-           * CTX::instance()->mesh.numSubEdges;
+    return 12 * gmsh_SQU(CTX::instance()->mesh.numSubEdges);
   }
 #endif
   return 12;

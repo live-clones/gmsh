@@ -8,10 +8,6 @@
 
 #include "MElement.h"
 
-#if defined(HAVE_VISUDEV)
-#include <Context.h>
-#endif
-
 /*
  * MPrism
  *
@@ -96,38 +92,8 @@ class MPrism : public MElement {
                    _v[faces_prism(num, 2)],
                    _v[faces_prism(num, 3)]);
   }
-  virtual int getNumFacesRep(bool curved)
-  {
-#if defined(HAVE_VISUDEV)
-    if (CTX::instance()->heavyVisu) return 14;
-#endif
-    return 8;
-  }
-  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
-  {
-#if defined(HAVE_VISUDEV)
-    static const int fquad[12][4] = {
-        {0, 1, 4, 3}, {1, 4, 3, 0}, {4, 3, 0, 1}, {3, 0, 1, 4},
-        {1, 2, 5, 4}, {2, 5, 4, 1}, {5, 4, 1, 2}, {4, 1, 2, 5},
-        {2, 0, 3, 5}, {0, 3, 5, 2}, {3, 5, 2, 0}, {5, 2, 0, 3}
-    };
-    if (CTX::instance()->heavyVisu && num > 1) {
-      int i = num - 2;
-      _getFaceRepQuad(getVertex(fquad[i][0]), getVertex(fquad[i][1]),
-                      getVertex(fquad[i][2]), getVertex(fquad[i][3]),
-                      x, y, z, n);
-      return;
-    }
-#endif
-    static const int f[8][3] = {
-        {0, 2, 1},
-        {3, 4, 5},
-        {0, 1, 4}, {0, 4, 3},
-        {0, 3, 5}, {0, 5, 2},
-        {1, 2, 5}, {1, 5, 4}
-    };
-    _getFaceRep(_v[f[num][0]], _v[f[num][1]], _v[f[num][2]], x, y, z, n);
-  }
+  virtual int getNumFacesRep(bool curved);
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize((num < 2) ? 3 : 4);

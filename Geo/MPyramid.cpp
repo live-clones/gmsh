@@ -82,6 +82,16 @@ void MPyramidN::getEdgeRep(bool curved, int num,
   else MPyramid::getEdgeRep(false, num, x, y, z, n);
 }
 
+int MPyramid::getNumFacesRep(bool curved)
+{
+#if defined(HAVE_VISUDEV)
+  if (CTX::instance()->heavyVisu) {
+    if (CTX::instance()->mesh.numSubEdges == 1) return 8;
+    return 6 * gmsh_SQU(CTX::instance()->mesh.numSubEdges);
+  }
+#endif
+  return 6;
+}
 
 int MPyramidN::getNumFacesRep(bool curved)
 {
@@ -324,6 +334,38 @@ static void _myGetFaceRep(MPyramid *pyr, int num, double *x, double *y, double *
     y[0] = pnt1.y(); y[1] = pnt2.y(); y[2] = pnt3.y();
     z[0] = pnt1.z(); z[1] = pnt2.z(); z[2] = pnt3.z();
   }
+}
+
+void MPyramid::getFaceRep(bool curved, int num,
+                          double *x, double *y, double *z, SVector3 *n)
+{
+#if defined(HAVE_VISUDEV)
+  static const int fquad[4][4] = {
+      {0, 3, 2, 1}, {3, 2, 1, 0}, {2, 1, 0, 3}, {1, 0, 3, 2}
+  };
+  if (CTX::instance()->heavyVisu) {
+    if (CTX::instance()->mesh.numSubEdges > 1) {
+      _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+      return;
+    }
+    if (num > 3) {
+      int i = num - 4;
+      _getFaceRepQuad(getVertex(fquad[i][0]), getVertex(fquad[i][1]),
+                      getVertex(fquad[i][2]), getVertex(fquad[i][3]),
+                      x, y, z, n);
+      return;
+    }
+  }
+#endif
+  static const int f[6][3] = {
+      {0, 1, 4},
+      {3, 0, 4},
+      {1, 2, 4},
+      {2, 3, 4},
+      {0, 3, 2}, {0, 2, 1}
+  };
+  _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
+              x, y, z, n);
 }
 
 void MPyramidN::getFaceRep(bool curved, int num,
