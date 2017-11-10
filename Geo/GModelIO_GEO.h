@@ -53,7 +53,7 @@ class GEO_Internals{
   bool addVertex(int &tag, double x, double y, gmshSurface *s, double lc);
   bool addLine(int &tag, int startTag, int endTag);
   bool addLine(int &tag, const std::vector<int> &vertexTags);
-  bool addCircleArc(int &tag, int startTag, int centerTag, int EndTag,
+  bool addCircleArc(int &tag, int startTag, int centerTag, int endTag,
                     double nx=0., double ny=0., double nz=0.);
   bool addEllipseArc(int &tag, int startTag, int centerTag, int majorTag,
                      int endTag, double nx=0., double ny=0., double nz=0.);
