@@ -382,8 +382,8 @@ void MTriangleN::reorient(int rot, bool swap)
 
   // copy vertices
   std::vector<MVertex*> oldv(3 + _vs.size());
-  std::copy(_v, _v+4, oldv.begin());
-  std::copy(_vs.begin(), _vs.end(), oldv.begin()+4);
+  std::copy(_v, _v+3, oldv.begin());
+  std::copy(_vs.begin(), _vs.end(), oldv.begin()+3);
 
   // reorient
   for (int i = 0; i < 3; ++i) {

@@ -468,6 +468,22 @@ bezierBasis::~bezierBasis()
   delete _raiser;
 }
 
+void bezierBasis::f(double u, double v, double w, double *sf) const
+{
+  const int tag = ElementType::getTag(_data.elementType(), _data.spaceOrder());
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
+  double p[1256];
+  // TODO: change (u,v,w)
+  fs->f(u, v, w, p);
+
+  for (int i = 0; i < matrixBez2Lag.size1(); i++) {
+    sf[i] = 0.0;
+    for (int j = 0; j < matrixBez2Lag.size2(); j++) {
+      sf[i] += matrixBez2Lag(j, i) * p[j];
+    }
+  }
+}
+
 void bezierBasis::generateBezierPoints(fullMatrix<double> &points) const
 {
   gmshGenerateMonomials(_data, points);

@@ -9,6 +9,7 @@
 #include <list>
 #include <string>
 #include <vector>
+#include <set>
 #include "Range.h"
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
@@ -65,6 +66,9 @@ class GEntity {
 
   // vertex arrays to draw the mesh efficiently
   VertexArray *va_lines, *va_triangles;
+
+  // Set of high-order elements fixed by "fast curving"
+  std::set<MElement*> curvedBLElements;
 
  public:
   // all known native model types
