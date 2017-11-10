@@ -950,7 +950,7 @@ List of expressions are also widely used, and are defined as:
   BoundingBox Point|Line|Surface|Volume @{ @var{expression} @}
   Point @{ @var{expression} @} |
   Physical Point|Line|Surface|Volume @{ @var{expression-list} @} |
-  <Physical> Point|Line|Surface|Volume { : } |
+  <Physical> Point|Line|Surface|Volume @{ : @} |
 @c  @var{duplicata} - already implemented: should we explain this?
 @end example
 
