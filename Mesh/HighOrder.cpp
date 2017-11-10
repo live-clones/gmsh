@@ -1673,8 +1673,8 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
   if (p.dim == 0)
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
         if ((*it)->getNumMeshElements() > 0) { p.dim = 2; break; }
-  if (p.dim == 2)
-    HighOrderMeshFastCurving(GModel::current(), p, true);
+//  if (p.dim == 2)
+//    HighOrderMeshFastCurving(GModel::current(), p, true);
 #endif
 
   updatePeriodicEdgesAndFaces(m);
