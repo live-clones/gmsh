@@ -77,6 +77,7 @@ void MElement::_getEdgeRep(MVertex *v0, MVertex *v1,
   }
 }
 
+#if defined(HAVE_VISUDEV)
 void MElement::_getFaceRepQuad(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
                                double *x, double *y, double *z, SVector3 *n)
 {
@@ -89,6 +90,7 @@ void MElement::_getFaceRepQuad(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v
   normal.normalize();
   for(int i = 0; i < 3; i++) n[i] = normal;
 }
+#endif
 
 void MElement::_getFaceRep(MVertex *v0, MVertex *v1, MVertex *v2,
                            double *x, double *y, double *z, SVector3 *n)
