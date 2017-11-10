@@ -131,6 +131,8 @@ static void _myGetFaceRep(MPyramid *pyr, int num, double *x, double *y, double *
     iVertex4 = 3;
   }
 
+  SPoint3 pnt1, pnt2, pnt3;
+
   if (iFace < 4) {
 
     int ix = 0, iy = 0;
@@ -147,7 +149,6 @@ static void _myGetFaceRep(MPyramid *pyr, int num, double *x, double *y, double *
 
     const double d = 1. / numSubEdges;
 
-    SPoint3 pnt1, pnt2, pnt3;
     double u1, v1, u2, v2, u3, v3;
     if (ix % 2 == 0){
       u1 = ix / 2 * d; v1= iy*d;
@@ -175,21 +176,8 @@ static void _myGetFaceRep(MPyramid *pyr, int num, double *x, double *y, double *
     pyr->pnt(U1, V1, W1, pnt1);
     pyr->pnt(U2, V2, W2, pnt2);
     pyr->pnt(U3, V3, W3, pnt3);
-
-    x[0] = pnt1.x(); x[1] = pnt2.x(); x[2] = pnt3.x();
-    y[0] = pnt1.y(); y[1] = pnt2.y(); y[2] = pnt3.y();
-    z[0] = pnt1.z(); z[1] = pnt2.z(); z[2] = pnt3.z();
-
-    SVector3 d1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
-    SVector3 d2(x[2] - x[0], y[2] - y[0], z[2] - z[0]);
-    n[0] = crossprod(d1, d2);
-    n[0].normalize();
-    n[1] = n[0];
-    n[2] = n[0];
-
   }
   else {
-    SPoint3 pnt1, pnt2, pnt3;
 
     /*
     0
@@ -326,14 +314,18 @@ static void _myGetFaceRep(MPyramid *pyr, int num, double *x, double *y, double *
     pyr->pnt(U2,V2,W2, pnt2);
     pyr->pnt(U3,V3,W3, pnt3);
     }
-
-    n[0] = 1;
-    n[1] = 1;
-    n[2] = 1;
-    x[0] = pnt1.x(); x[1] = pnt2.x(); x[2] = pnt3.x();
-    y[0] = pnt1.y(); y[1] = pnt2.y(); y[2] = pnt3.y();
-    z[0] = pnt1.z(); z[1] = pnt2.z(); z[2] = pnt3.z();
   }
+
+  x[0] = pnt1.x(); x[1] = pnt2.x(); x[2] = pnt3.x();
+  y[0] = pnt1.y(); y[1] = pnt2.y(); y[2] = pnt3.y();
+  z[0] = pnt1.z(); z[1] = pnt2.z(); z[2] = pnt3.z();
+
+  SVector3 d1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
+  SVector3 d2(x[2] - x[0], y[2] - y[0], z[2] - z[0]);
+  n[0] = crossprod(d1, d2);
+  n[0].normalize();
+  n[1] = n[0];
+  n[2] = n[0];
 }
 
 void MPyramid::getFaceRep(bool curved, int num,
