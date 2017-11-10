@@ -26,10 +26,10 @@ c9 = newl; Circle(c9) = {p1,p0,p5};
 c10 = newl; Circle(c10) = {p2,p0,p6};
 c11 = newl; Circle(c11) = {p3,p0,p7};
 c12 = newl; Circle(c12) = {p4,p0,p8};
-l1 = newll; Line Loop(l1) = {c1,c2,c3,c4}; 
-l2 = newll; Line Loop(l2) = {c5,c6,c7,c8}; 
-l3 = newll; Line Loop(l3) = {c1,c10,-c5,-c9}; 
-l4 = newll; Line Loop(l4) = {c2,c11,-c6,-c10}; 
+l1 = newll; Line Loop(l1) = {c1,c2,c3,c4};
+l2 = newll; Line Loop(l2) = {c5,c6,c7,c8};
+l3 = newll; Line Loop(l3) = {c1,c10,-c5,-c9};
+l4 = newll; Line Loop(l4) = {c2,c11,-c6,-c10};
 l5 = newll; Line Loop(l5) = {c3,c12,-c7,-c11};
 l6 = newll; Line Loop(l6) = {c4,c9,-c8,-c12};
 s1 = news; Surface(s1) = {l1};
@@ -76,9 +76,9 @@ Surface Loop(5) = {23,-102,-111,106,-47,110}; Volume(5) = {5};
 Surface Loop(6) = {24,-103,-108,107,-48,111}; Volume(6) = {6};
 
 Transfinite Line{100:107} = n_layer;
-Transfinite Surface "*";
-Recombine Surface "*";
-Transfinite Volume "*";
+Transfinite Surface {:};
+Recombine Surface {:};
+Transfinite Volume {:};
 
 Physical Volume(1) = {1:6};
 Physical Surface(2) = {19:24}; // inner

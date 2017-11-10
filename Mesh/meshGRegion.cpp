@@ -705,9 +705,8 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
   std::list<GVertex*> oldEmbVertices = gr->embeddedVertices();
   gr->embeddedVertices() = allEmbVertices;
 
-  try{
-    meshGRegionBoundaryRecovery(gr);
-    /*
+  meshGRegionBoundaryRecovery(gr);
+  /*
     FILE *fp = Fopen("debug.pos", "w");
     if(fp){
       fprintf(fp, "View \"debug\" {\n");
@@ -716,16 +715,7 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
       fprintf(fp, "};\n");
       fclose(fp);
     }
-    */
-  }
-  catch(int err){
-    if(err == 3){
-      Msg::Warning("Self-intersecting surface mesh: TODO!");
-    }
-    else{
-      Msg::Error("Could not recover boundary: error %d", err);
-    }
-  }
+  */
 
   // sort triangles in all model faces in order to be able to search in vectors
   std::list<GFace*>::iterator itf =  allFaces.begin();

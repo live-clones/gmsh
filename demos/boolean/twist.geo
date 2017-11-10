@@ -31,8 +31,6 @@ EndFor
 ThruSections(1) = {1:N};
 Box(2) = {-0.5,-0.5,0, 1,1,1};
 
-Characteristic Length { PointsOf{ Volume{1}; } } = lc2;
 Characteristic Length { PointsOf{ Volume{2}; } } = lc1;
 
 BooleanFragments{ Volume{1,2}; Delete; }{}
-

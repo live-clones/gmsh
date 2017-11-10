@@ -1522,17 +1522,16 @@ void quadsToTriangles(GFace *gf, double minqual)
       if (option == 1 || (option == 0 && qual1 > qual2)){
         gf->triangles.push_back(t11);
         gf->triangles.push_back(t12);
-	change[q] = std::make_pair(t11,t12);
+        change[q] = std::make_pair(t11,t12);
         delete t21; delete t22;
       }
       else {
         gf->triangles.push_back(t21);
         gf->triangles.push_back(t22);
-	change[q] = std::make_pair(t21,t22);
+        change[q] = std::make_pair(t21,t22);
         delete t11; delete t12;
       }
-      delete q; // FIXME this makes gmsh to crash when creating BL with triangles
-      // FIXED (JF)
+      delete q;
     }
     else {
       qds.push_back(q);
@@ -1542,23 +1541,42 @@ void quadsToTriangles(GFace *gf, double minqual)
 
   BoundaryLayerColumns* _columns = gf->getColumns();
   if (!_columns)return;
-  for ( std::map<MElement*,std::vector<MElement*> >::iterator it = _columns->_elemColumns.begin();
-	it != _columns->_elemColumns.end();it++){
-    std::vector<MElement *> &e = it->second;
-    std::vector<MElement *> eOld = e;
-    e.clear();
-    for (unsigned int i=0;i<eOld.size();i++){
-      MElement *ee = eOld[i];
-      std::map<MElement*, std::pair<MElement*,MElement*> >::iterator it2 = change.find(ee);
-      if (it2 == change.end()){
-	e.push_back(ee);
+
+  // Update the data struture for boundary layers
+  // WARNING: First quad element is replaced by one of the two triangles,
+  // without taking care of if it is the truly the first one or not.
+
+//  std::map<MElement*,MElement*> _toFirst;
+  std::map<MElement*,std::vector<MElement*> > newElemColumns;
+  std::map<MElement*,std::vector<MElement*> >::iterator it;
+  std::map<MElement*, std::pair<MElement*,MElement*> >::iterator it2;
+
+  for (it = _columns->_elemColumns.begin();
+       it != _columns->_elemColumns.end(); it++) {
+
+    MElement *firstEl = it->first;
+    it2 = change.find(firstEl);
+    if (it2 != change.end()) firstEl = it2->second.first;
+    // it2->second.first may be the one that touch boundary or not...
+
+    std::vector<MElement *> &newColumn = newElemColumns[firstEl];
+    std::vector<MElement *> &oldColumn = it->second;
+
+    for (unsigned int i = 0; i < oldColumn.size(); i++) {
+      MElement *oldEl = oldColumn[i];
+      it2 = change.find(oldEl);
+      if (it2 == change.end()) {
+        newColumn.push_back(oldEl);
+        _columns->_toFirst[oldEl] = firstEl;
       }
       else {
-	e.push_back(it2->second.first);
-	e.push_back(it2->second.second);
+        newColumn.push_back(it2->second.first);
+        newColumn.push_back(it2->second.second);
+        _columns->_toFirst.erase(oldEl);
+        _columns->_toFirst[it2->second.first] = firstEl;
+        _columns->_toFirst[it2->second.second] = firstEl;
       }
     }
   }
-
-
+  _columns->_elemColumns = newElemColumns;
 }

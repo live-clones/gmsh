@@ -946,11 +946,11 @@ List of expressions are also widely used, and are defined as:
   @var{transform} |
   @var{extrude} |
   @var{boolean} |
-  Point @{ @var{expression} @} |
-  <Physical> Point|Line|Surface|Volume "*" |
   Point|Line|Surface|Volume In BoundingBox @{ @var{expression-list} @} |
-  BoundingBox Point|Line|Surface|Volume @{ @var{expression} @} |
-  Physical Point|Line|Surface|Volume @{ @var{expression-list} @}
+  BoundingBox Point|Line|Surface|Volume @{ @var{expression} @}
+  Point @{ @var{expression} @} |
+  Physical Point|Line|Surface|Volume @{ @var{expression-list} @} |
+  <Physical> Point|Line|Surface|Volume { : } |
 @c  @var{duplicata} - already implemented: should we explain this?
 @end example
 
@@ -968,14 +968,15 @@ a list of numbers from a file. @code{LinSpace} and @code{LogSpace}
 construct lists using linear or logarithmic spacing. The next two cases
 permit to reference an expression sublist (whose elements are those
 corresponding to the indices provided by the @var{expression-list}).
-The next two cases permit to retrieve the indices of entities created
-through geometrical transformations and extrusions (see
-@ref{Transformations}, and @ref{Extrusions}). The next two cases allow
-to retrieve entities in a given bounding box, or get the bounding box of
-a given entity. The last three cases permit to retrieve the coordinates
-of a given geometry point (@pxref{Points}), to retrieve the id numbers
-of all points, lines, surfaces or volumes in the model, or to retrieve
-the elementary entities making up physical groups.
+The next cases permit to retrieve the indices of entities created
+through geometrical transformations, extrusions and boolean operations
+(see @ref{Transformations}, @ref{Extrusions} and @ref{Boolean
+operations}). The next two cases allow to retrieve entities in a given
+bounding box, or get the bounding box of a given entity. The last three
+cases permit to retrieve the coordinates of a given geometry point
+(@pxref{Points}), to retrieve the elementary entities making up physical
+groups, and to retrieve the id numbers of all (physical or elementary)
+points, lines, surfaces or volumes in the model,
 
 To see the practical use of such expressions, have a look at the first
 couple of examples in @ref{Tutorial}. Note that, in order to lighten the
@@ -984,6 +985,20 @@ syntax, you can omit the braces @code{@{@}} enclosing an
 single item. Also note that a braced @var{expression-list} can be
 preceded by a minus sign in order to change the sign of all the
 @w{@var{expression-list-item}s}.
+
+For some commands it makes sense to specify all the possible expressions
+in a list. This is achieved with @var{expression-list-or-all}, defined
+as:
+
+@example
+@var{expression-list-or-all}:
+  @var{expression-list} | :
+@end example
+
+The meaning of ``all'' (@code{:}) depends on context. For example,
+@code{Line @{ : @}} will get the ids of all the existing lines in the
+model, while @code{Surface @{ : @}} will get the ids of all existing
+surfaces.
 
 @c .........................................................................
 @c Character expressions
@@ -2224,7 +2239,7 @@ kernel.
 
 @example
 @var{extrude-list}: 
-  Point | Line | Surface @{ @var{expression-list} @}; @dots{}
+  <Physical> Point | Line | Surface @{ @var{expression-list-or-all} @}; @dots{}
 @end example
 
 As explained in @ref{Floating point expressions}, @var{extrude} can be
@@ -2284,7 +2299,7 @@ with
 
 @example
 @var{boolean-list}: 
-  Line | Surface | Volume @{ @var{expression-list} @}; @dots{} |
+  <Physical> Line | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} |
   Delete ;
 @end example
 
@@ -2399,8 +2414,8 @@ complex part.
 
 @example
 @var{transform-list}: 
-  Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} |
-  Duplicata @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @} |
+  <Physical> Point | Line | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} |
+  Duplicata @{ <Physical> Point | Line | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @} |
   @var{transform}
 @end example
 
@@ -2423,31 +2438,29 @@ set to zero (@pxref{Geometry options list}). With the OpenCASCADE
 geoemtry kernel, @code{Coherence} is simply a shortcut for a
 @code{BooleanFragments} operation on all entities.
 
-@item < Recursive > Delete @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
+@item < Recursive > Delete @{ <Physical> Point | Line | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Deletes all elementary entities whose identification numbers are given
-in @var{expression-list}. If an entity is linked to another entity (for
-example, if a point is used as a control point of a curve),
+in @var{expression-list-or-all}. If an entity is linked to another
+entity (for example, if a point is used as a control point of a curve),
 @code{Delete} has no effect (the line will have to be deleted before the
 point can). The @code{Recursive} variant deletes the entities as well as
 all its sub-entities of lower dimension.
 
-@item < Recursive > Hide @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
-Hide the entities listed in @var{expression-list}, if
+@item < Recursive > Hide @{ <Physical> Point | Line | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
+Hide the entities listed in @var{expression-list-or-all}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{1}.
 
-@item Hide @var{char-expression};
-Hide the entity @var{char-expression}, if @code{General.VisibilityMode} is
-set to @code{0} or @code{1} (@var{char-expression} can for example be
-@code{"*"}).
+@item Hide @{ : @}
+Hide all entities, if @code{General.VisibilityMode} is set to @code{0}
+or @code{1}.
 
-@item < Recursive > Show @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
-Show the entities listed in @var{expression-list}, if
+@item < Recursive > Show @{ <Physical> Point | Line | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
+Show the entities listed in @var{expression-list-or-all}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{1}.
 
-@item Show @var{char-expression};
-Show the entity @var{char-expression}, if @code{General.VisibilityMode} is
-set to @code{0} or @code{1} (@var{char-expression} can for example be
-@code{"*"}).
+@item Show @{ : @}
+Show all entities, if @code{General.VisibilityMode} is set to @code{0}
+or @code{1}.
 
 @end ftable
 
@@ -2914,7 +2927,7 @@ adjacent to elements with an overall average edge length of 5.0 will
 extrude to have a last layer height = (1.6-0.6) * 5.0 = 5.0.
 
 
-@item Transfinite Line @{ @var{expression-list} @} | "*" = @var{expression} < Using Progression | Bump @var{expression} >;
+@item Transfinite Line @{ @var{expression-list-or-all} @} = @var{expression} < Using Progression | Bump @var{expression} >;
 Selects the lines in @var{expression-list} to be meshed with the 1D
 transfinite algorithm. The @var{expression} on the right hand side gives
 the number of nodes that will be created on the line (this overrides any
@@ -2927,7 +2940,7 @@ as the preceding one). The optional argument `@code{Using Bump
 @var{expression}}' instructs the transfinite algorithm to distribute the
 nodes with a refinement at both ends of the line.
 
-@item Transfinite Surface @{ @var{expression-list} @} | "*" < = @{ @var{expression-list} @} > < Left | Right | Alternate | AlternateRight | AlternateLeft > ;
+@item Transfinite Surface @{ @var{expression-list-or-all}  @}  < = @{ @var{expression-list} @} > < Left | Right | Alternate | AlternateRight | AlternateLeft > ;
 Selects surfaces to be meshed with the 2D transfinite algorithm. The
 @var{expression-list} on the right-hand-side should contain the
 identification numbers of three or four points on the boundary of the
@@ -2937,7 +2950,7 @@ find the corners automatically. The optional argument specifies the way
 the triangles are oriented when the mesh is not
 recombined. (@code{Alternate} is a synonym for @code{AlternateRight}).
 
-@item Transfinite Volume @{ @var{expression-list} @} | "*" < = @{ @var{expression-list} @} > ;
+@item Transfinite Volume @{ @var{expression-list} @} < = @{ @var{expression-list} @} > ;
 Selects five- or six-face volumes to be meshed with the 3D transfinite
 algorithm.  The @var{expression-list} on the right-hand-side should
 contain the identification numbers of the six or eight points on the
@@ -2945,11 +2958,10 @@ boundary of the volume that define the corners of the transfinite
 interpolation. If no identification numbers are given, the transfinite
 algorithm will try to find the corners automatically.
 
-@item TransfQuadTri @{ @var{expression-list} @} | "*";
+@item TransfQuadTri @{ @var{expression-list} @} ;
 
 Applies the transfinite QuadTri algorithm on the @var{expression-list}
-list of volumes (@code{"*"} can be used to apply TransfQuadTri to all
-existing volumes).  A transfinite volume with any combination of
+list of volumes.  A transfinite volume with any combination of
 recombined and un-recombined transfinite boundary surfaces is valid when
 meshed with @code{TransfQuadTri}. When applied to non-Transfinite
 volumes, TransfQuadTri has no effect on those volumes.
@@ -2988,7 +3000,7 @@ Optimizes the current mesh with the given algorithm (currently
 @item AdaptMesh @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @{ @var{expression-list} < , @dots{} >  @} @};
 Performs adaptive mesh generation. Documentation not yet available.
 
-@item RelocateMesh Point | Line | Surface @{ @var{expression-list} @} | "*";
+@item RelocateMesh Point | Line | Surface @{ @var{expression-list-or-all} @};
 Relocates the mesh vertices on the given entities using the parametric
 coordinates stored in the vertices. Useful for creating perturbation of
 meshes e.g. for sensitivity analyzes.
@@ -3026,22 +3038,21 @@ specified as in @ref{Transformations}.
 @item Coherence Mesh;
 Removes all duplicate mesh vertices.
 
-@item SetPartition @var{expression} @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
+@item SetPartition @var{expression} @{ <Physical> Point | Line | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Sets the partition tag of the mesh elements in the entities in @var{expression-list} to @var{expression}.
 
-@item < Recursive > Color @var{color-expression} @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
+@item < Recursive > Color @var{color-expression} @{ <Physical> Point | Line | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Sets the mesh color of the entities in @var{expression-list} to @var{color-expression}.
 
-@item < Recursive > Hide @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
+@item < Recursive > Hide @{ <Physical> Point | Line | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Hides the mesh of the entities in @var{expression-list}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{2}.
 
-@item Hide @var{char-expression};
-Hides the mesh of the entity @var{char-expression}, if
-@code{General.VisibilityMode} is set to @code{0} or @code{2}
-(@var{char-expression} can for example be @code{"*"}).
+@item Hide @{ : @}
+Hide the mesh of all entities, if @code{General.VisibilityMode} is set
+to @code{0} or @code{2}.
 
-@item Recombine Surface @{ @var{expression-list} @} | "*" < = @var{expression} >;
+@item Recombine Surface @{ @var{expression-list-or-all} @}  < = @var{expression} >;
 Recombines the triangular meshes of the surfaces listed in
 @var{expression-list} into mixed triangular/quadrangular meshes. The
 optional @var{expression} on the right hand side specifies the maximum
@@ -3053,7 +3064,7 @@ default value is 45).
 @item MeshAlgorithm Surface @{ @var{expression-list} @} = @var{expression};
 Forces the meshing algorithm per surface.
 
-@item Reverse Line | Surface @{ @var{expression-list} @} | "*" ;
+@item Reverse Line | Surface @{ @var{expression-list-or-all} @} ;
 Reverses the mesh of the given line(s) or surface(s).
 
 @item Save @var{char-expression};
@@ -3062,14 +3073,13 @@ Saves the mesh in a file named @var{char-expression}, using the current
 @var{char-expression} is not absolute, @var{char-expression} is appended
 to the path of the current file.
 
-@item < Recursive > Show @{ Point | Line | Surface | Volume @{ @var{expression-list} @}; @dots{} @}
+@item < Recursive > Show @{ <Physical> Point | Line | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Shows the mesh of the entities in @var{expression-list}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{2}.
 
-@item Show @var{char-expression};
-Shows the mesh of the entity @var{char-expression}, if
-@code{General.VisibilityMode} is set to @code{0} or @code{2}
-(@var{char-expression} can for example be @code{"*"}).
+@item Show @{ : @};
+Shows the mesh of all entities, if @code{General.VisibilityMode} is set
+to @code{0} or @code{2}.
 
 @item Smoother Surface @{ @var{expression-list} @} = @var{expression};
 Sets number of elliptic smoothing steps for the surfaces listed in

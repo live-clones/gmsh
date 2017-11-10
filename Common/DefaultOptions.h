@@ -40,6 +40,8 @@ StringXString GeneralOptions_String[] = {
 
   { F|O, "BackgroundImageFileName" , opt_general_background_image_filename , "" ,
     "Background image file in JPEG, PNG or PDF format" },
+  { F,   "BuildOptions" , opt_general_build_options , "" ,
+    "Gmsh build options (read-only)" },
 
   { F|O, "DefaultFileName" , opt_general_default_filename , "untitled.geo" ,
     "Default project file name" },
@@ -122,6 +124,9 @@ StringXString GeneralOptions_String[] = {
     ".gmsh-tmp" ,
 #endif
     "Temporary file used by the geometry module" },
+
+  { F,   "Version" , opt_general_version , "" ,
+    "Gmsh version (read-only)" },
 
   { F, "WatchFilePattern", opt_general_watch_file_pattern , "" ,
      "Pattern of files to merge as they become available"},
@@ -675,6 +680,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "NoPopup" , opt_general_nopopup , 0. ,
     "Disable interactive dialog windows in scripts (and use default values "
     "instead)" },
+  { F|O, "NumThreads" , opt_general_num_threads , 1. ,
+    "Set (maximum) number of threads" },
 
   { F|S, "OptionsPositionX" , opt_general_option_position0 , 650. ,
     "Horizontal position (in pixels) of the upper left corner of the option "
@@ -1062,7 +1069,7 @@ StringXNumber MeshOptions_Number[] = {
     "Element shrinking factor (between 0 and 1)" },
 
   { F|O, "FlexibleTransfinite" , opt_mesh_flexible_transfinite , 0 ,
-    "Allow transfinite contraints to be modified for Blossom or by global mesh size factor" },
+    "Allow transfinite constraints to be modified for Blossom or by global mesh size factor" },
   { F|O, "NewtonConvergenceTestXYZ" , opt_mesh_newton_convergence_test_xyz , 0. ,
     "Force inverse surface mapping algorithm (Newton-Raphson) to converge in real "
     "coordinates (experimental)" },
@@ -1106,6 +1113,12 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "LineWidth" , opt_mesh_line_width , 1.0 ,
     "Display width of mesh lines (in pixels)" },
 
+  { F|O, "MaxNumThreads1D" , opt_mesh_max_num_threads_1d , 0. ,
+    "Maximum number of threads for 1D meshing (0: use default number of threads)" },
+  { F|O, "MaxNumThreads2D" , opt_mesh_max_num_threads_2d , 0. ,
+    "Maximum number of threads for 2D meshing (0: use default number of threads)" },
+  { F|O, "MaxNumThreads3D" , opt_mesh_max_num_threads_3d , 0. ,
+    "Maximum number of threads for 3D meshing (0: use default number of threads)" },
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
     "Mesh only visible entities (experimental: use with caution!)" },
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
@@ -1213,7 +1226,7 @@ StringXNumber MeshOptions_Number[] = {
     "Preserve element numbering in MSH2 format (will break meshes with multiple "
     "physical groups for a single elementary entity)"},
   { F|O, "IgnorePeriodicity" , opt_mesh_ignore_periodicity , 0. ,
-    "Ignore alignement of periodic boundaries when reading the mesh "
+    "Ignore alignment of periodic boundaries when reading the mesh "
     "(used by ParaView plugin)"},
 #if defined(HAVE_BLOSSOM)
   { F|O, "RecombinationAlgorithm" , opt_mesh_algo_recombine , 1 ,

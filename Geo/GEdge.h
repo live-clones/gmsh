@@ -86,7 +86,7 @@ class GEdge : public GEntity {
   // get the oriented bounding box
   virtual SOrientedBoundingBox getOBB();
 
-  // regions that are boundedby this entity
+  // regions that are bounded by this entity
   virtual std::list<GRegion*> regions() const;
 
   // faces that this entity bounds

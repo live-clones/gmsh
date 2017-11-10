@@ -1598,12 +1598,21 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   delete m;
 
-
-
   gf->quadrangles.insert(gf->quadrangles.begin(),blQuads.begin(),blQuads.end());
   gf->triangles.insert(gf->triangles.begin(),blTris.begin(),blTris.end());
   gf->mesh_vertices.insert(gf->mesh_vertices.begin(),verts.begin(),verts.end());
 
+#if defined(HAVE_ANN)
+  if (!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine){
+    FieldManager *fields = gf->model()->getFields();
+    BoundaryLayerField *blf = 0;
+    if(fields->getBoundaryLayerField() > 0){
+      Field *bl_field = fields->get(fields->getBoundaryLayerField());
+      blf = dynamic_cast<BoundaryLayerField*> (bl_field);
+      if (blf && !blf->iRecombine) quadsToTriangles(gf,10000);
+    }
+  }
+#endif
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
      !CTX::instance()->mesh.optimizeLloyd && !onlyInitialMesh && CTX::instance()->mesh.algoRecombine != 2)

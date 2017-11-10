@@ -1,118 +1,117 @@
-/* Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
- *
- * See the LICENSE.txt file for license information. Please report all
- * bugs and problems to the public mailing list <gmsh@onelab.info>.
- */
-
-/*
-  This is the embryo of what will become the Gmsh API.
-
-  Don't use it, it's not ready :-) We plan to release a first version in Gmsh
-  3.1, and something more complete in Gmsh 4.0.
-
-  Your input is welcome: please contribute your ideas on
-  http://gitlab.onelab.info/gmsh/gmsh/issues/188
- */
+// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file for license information. Please report all
+// bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include "Gmsh.h"
+#include "GmshAPI.h"
+#include "GModel.h"
+#include "GModelIO_GEO.h"
+#include "GModelIO_OCC.h"
 
-extern "C"
+// Gmsh
+
+int gmshInitialize(int argc, char **argv)
 {
-  /* Gmsh */
-  int gmshInitialize(int argc, char **argv)
-  {
-    return !GmshInitialize(argc, argv);
+  return !GmshInitialize(argc, argv);
+}
+
+int gmshFinalize()
+{
+  return !GmshFinalize();
+}
+
+int gmshOpen(const std::string &fileName)
+{
+  return !GmshOpenProject(fileName);
+}
+
+int gmshMerge(const std::string &fileName)
+{
+  return !GmshMergeFile(fileName);
+}
+
+int gmshExport(const std::string &fileName)
+{
+  return !GmshWriteFile(fileName);
+}
+
+int gmshClear()
+{
+  return !GmshClearProject();
+}
+
+// GmshOption
+
+static void splitOptionName(const std::string &fullName, std::string &category,
+                            std::string &name, int &index)
+{
+  std::string::size_type d = fullName.find_first_of('.');
+  category = fullName.substr(0, d);
+  std::string::size_type b1 = fullName.find_first_of('[');
+  std::string::size_type b2 = fullName.find_last_of(']');
+  if(b1 != std::string::npos && b2 != std::string::npos){
+    std::string id = fullName.substr(b1, b2 - b1);
+    name = fullName.substr(d, b1 - d);
   }
-
-  int gmshFinalize()
-  {
-    return !GmshFinalize();
+  else{
+    index = 0;
+    name = fullName.substr(d);
   }
+  Msg::Debug("Decoded option name '%s' . '%s' '[%d]'", category.c_str(),
+             name.c_str(), index);
+}
 
-  int gmshOpen(const char *fileName)
-  {
-    return !GmshOpenProject(fileName);
-  }
+int gmshOptionSetNumber(const std::string &name, double value)
+{
+  std::string c, n;
+  int i;
+  splitOptionName(name, c, n, i);
+  return !GmshSetOption(c, n, value, i);
+}
 
-  int gmshMerge(const char *fileName)
-  {
-    return !GmshMergeFile(fileName);
-  }
+int gmshOptionGetNumber(const std::string &name, double &value)
+{
+  std::string c, n;
+  int i;
+  splitOptionName(name, c, n, i);
+  return !GmshGetOption(c, n, value, i);
+}
 
-  int gmshExport(const char *fileName)
-  {
-    return 1;
-  }
+int gmshOptionSetString(const std::string &name, const std::string &value)
+{
+  std::string c, n;
+  int i;
+  splitOptionName(name, c, n, i);
+  return !GmshSetOption(c, n, value, i);
+}
 
-  int gmshClear()
-  {
-    return 1;
-  }
+int gmshOptionGetString(const std::string &name, std::string &value)
+{
+  std::string c, n;
+  int i;
+  splitOptionName(name, c, n, i);
+  return !GmshGetOption(c, n, value, i);
+}
 
-  /* Gmsh Options */
-  int gmshOptionsSetNumber(const char *name, double value)
-  {
-    return 1;
-  }
+// GmshModel
 
-  int gmshOptionsGetNumber(const char *name, double *value)
-  {
-    return 1;
-  }
+int gmshModelCreate(const std::string &name)
+{
+  return 0;
+}
 
-  /* Gmsh Model */
-  int gmshModelCreate(const char *name)
-  {
-    return 1;
-  }
+int gmshModelSetCurrent(const std::string &name)
+{
+  return 0;
+}
 
-  int gmshModelSetCurrent(const char *name)
-  {
-    return 1;
-  }
+int gmshModelDestroy()
+{
+  return 0;
+}
 
-  int gmshModelDestroy()
-  {
-    return 1;
-  }
-
-  int gmshModelMesh(int dim)
-  {
-    return 1;
-  }
-
-  int gmshModelAddEmbeddedVertex(int tag, int inDim, int inTag)
-  {
-    return 1;
-  }
-
-  /* Gmsh Model Geo Internals */
-
-  int gmshModelGeoAddPoint(int *tag, double x, double y, double z, double lc)
-  {
-    return 1;
-  }
-
-  int gmshModelGeoAddLine(int *tag, int startVertexTag, int endVertexTag)
-  {
-    return 1;
-  }
-
-  int gmshModelGeoSynchronize()
-  {
-    return 1;
-  }
-
-  /* Gmsh Model OCC Internals */
-
-  int gmshModelOCCAddPoint(int *tag, double x, double y, double z, double lc)
-  {
-    return 1;
-  }
-
-  int gmshModelOCCSynchronize()
-  {
-    return 1;
-  }
-
+int gmshModelMesh(int dim)
+{
+  return 0;
 }

@@ -55,7 +55,7 @@ Maxmium distance, above this distance from the curves, prescribe the maximum mes
 type: float@*
 default value: @code{0.5}
 @item dMin
-Minimum distance, bellow this distance from the curves, prescribe the minimum mesh sizes.@*
+Minimum distance, below this distance from the curves, prescribe the minimum mesh sizes.@*
 type: float@*
 default value: @code{0.1}
 @item lMaxNormal

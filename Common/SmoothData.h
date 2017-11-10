@@ -15,14 +15,14 @@
 struct xyzv {
   double x, y, z, *vals;
   int nbvals;
-  int nboccurences;
+  int nboccurrences;
   // Added by Trevor Strickler for scaling last element layer in quadtri
   // boundary layer to make better quality interfaces
   double scaleValue;
   int scale_numvals;
   static double eps;
   xyzv(double xx, double yy, double zz)
-    : x(xx), y(yy), z(zz), vals(0), nbvals(0), nboccurences(0),
+    : x(xx), y(yy), z(zz), vals(0), nbvals(0), nboccurrences(0),
       scaleValue(1.0), scale_numvals(0) {}
   ~xyzv(){ if(vals) delete [] vals; }
   // these are needed for set<> operations since the default copy constructor

@@ -456,7 +456,7 @@ Transfinite Line{3000108,-3000111,3000120,3000121,3000112,-3000109} =nbind Using
 Transfinite Line{3000123,3000124,3000171,3000169} = 6 Using Power 1.0;
 Transfinite Line{3000174,3000175,3000176,3000177,3000178,3000168,3000179,3000165} = nbext Using Power pwext;
 
-// COUCHE 4 
+// COUCHE 4
 
 Point(4000001) = { -largint/4 , 0 , h4 , p1 };
 Point(4000002) = {  largint/4 , 0 , h4 , p1 };
@@ -598,7 +598,7 @@ Transfinite Line{4000108,-4000111,4000120,4000121,4000112,-4000109} =nbind Using
 Transfinite Line{4000123,4000124,4000171,4000169} = 6 Using Power 1.0;
 Transfinite Line{4000174,4000175,4000176,4000177,4000178,4000168,4000179,4000165} = nbext Using Power pwext;
 
-// COUCHE 5 
+// COUCHE 5
 
 Point(5000001) = { -largint/4 , 0 , h5 , p1 };
 Point(5000002) = {  largint/4 , 0 , h5 , p1 };
@@ -1487,9 +1487,9 @@ Surface Loop(9000330) = {9000303,9000315,9000317,5000185,-9000307,4000185};
 Volume(9000331) = {9000330};
 //Surface Loop(9000210) = {4000144,4000142,4000140,9000195,5000140,5000142,5000144,-9000199,-9000197,-9000201,-9000203,9000205,-9000207,9000209};
 
-Transfinite Surface "*";
-Recombine Surface "*";
-Transfinite Volume "*";
+Transfinite Surface {:};
+Recombine Surface {:};
+Transfinite Volume {:};
 
 //Entites physiques
 
