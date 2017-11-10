@@ -51,7 +51,7 @@ class Graph
   
   unsigned int *_adjncy;                      /*The metis graph structure*/
   
-  std::vector<MElement*> _element;            /*The element corresponding to each graph element
+  MElement** _element;                        /*The element corresponding to each graph element
                                               in eptr*/
   
   unsigned int *_vwgt;                        /*The width associated to each elements of eptr*/
@@ -60,7 +60,7 @@ class Graph
 
   public:
   
-  Graph() : _ne(0), _nn(0), _dim(0), _eind(NULL), _eptr(NULL), _xadj(NULL), _adjncy(NULL), _element(), _vwgt(NULL), _partition(NULL)
+  Graph() : _ne(0), _nn(0), _dim(0), _eind(NULL), _eptr(NULL), _xadj(NULL), _adjncy(NULL), _element(NULL), _vwgt(NULL), _partition(NULL)
   { }
   
   void fillDefaultWeights()
@@ -148,7 +148,11 @@ class Graph
     for(unsigned int i = 0; i < size; i++) _adjncy[i] = 0;
   }
   void adjncy(unsigned int i, unsigned int adjncy) { _adjncy[i] = adjncy; };
-  void elementResize(unsigned int size) { _element.resize(size); };
+  void elementResize(unsigned int size)
+  {
+    _element = new MElement*[size];
+    for(unsigned int i = 0; i < size; i++) _element[i] = NULL;
+  }
   void element(unsigned int i, MElement* element) { _element[i] = element; };
   void vwgt(unsigned int *vwgt) { _vwgt = vwgt; };
   void partition(unsigned int *partition) { _partition = partition; };
@@ -175,7 +179,11 @@ class Graph
       delete[] _adjncy;
       _adjncy = NULL;
     }
-    _element.clear();
+    if(_element != NULL)
+    {
+      delete[] _element;
+      _element = NULL;
+    }
     if(_vwgt != NULL)
     {
       delete[] _vwgt;
