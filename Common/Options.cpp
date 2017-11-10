@@ -3630,8 +3630,16 @@ double opt_general_expert_mode(OPT_ARGS_NUM)
 #if defined(HAVE_VISUDEV)
 double opt_general_heavy_visualization(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET)
+  if(action & GMSH_SET){
+    if(CTX::instance()->heavyVisu != val)
+      CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
     CTX::instance()->heavyVisu = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.butt[22]->value
+        (CTX::instance()->heavyVisu);
+#endif
   return CTX::instance()->heavyVisu;
 }
 #endif
