@@ -17,7 +17,7 @@
 #include <sys/stat.h>
 #include "GmshMessage.h"
 #include "GmshSocket.h"
-#include "Gmsh.h"
+#include "GmshGlobal.h"
 #include "GModel.h"
 #include "Options.h"
 #include "Context.h"

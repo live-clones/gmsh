@@ -5,7 +5,7 @@
 
 #include <stdlib.h>
 #include <string>
-#include "Gmsh.h"
+#include "GmshGlobal.h"
 #include "GmshMessage.h"
 #include "Context.h"
 #include "Options.h"

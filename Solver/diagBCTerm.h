@@ -9,7 +9,7 @@
 #include <assert.h>
 #include "femTerm.h"
 #include "simpleFunction.h"
-#include "Gmsh.h"
+#include "GmshGlobal.h"
 #include "GModel.h"
 #include "SElement.h"
 #include "fullMatrix.h"
@@ -26,8 +26,8 @@ class diagBCTerm : public femTerm<double> {
   {
     return se->getMeshElement()->getNumShapeFunctions();
   }
-  virtual int sizeOfC(SElement *se) const 
-  { 
+  virtual int sizeOfC(SElement *se) const
+  {
     return se->getMeshElement()->getNumShapeFunctions();
   }
   Dof getLocalDofR(SElement *se, int iRow) const
@@ -47,7 +47,7 @@ class diagBCTerm : public femTerm<double> {
         m(k, j) = 0.0;
       }
       MVertex *v = e->getShapeFunctionNode(j);
-      if( v->onWhat()->dim() < 2 ) m(j, j) = 1.0; 
+      if( v->onWhat()->dim() < 2 ) m(j, j) = 1.0;
       else m(j, j) = 0.0;
     }
   }

@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "GmshAPI.h"
+#include <gmsh.h>
 
 int main(int argc, char **argv)
 {

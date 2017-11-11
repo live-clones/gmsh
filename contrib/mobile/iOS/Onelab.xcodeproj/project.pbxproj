@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		2901F1211BB0086C004C328B /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 2901F1201BB0086C004C328B /* libz.tbd */; };
 		2907CCEC193DE6560011341A /* icon_onelab.png in Resources */ = {isa = PBXBuildFile; fileRef = 2907CCEB193DE6560011341A /* icon_onelab.png */; };
-		291191DB1E93ACF700069C0C /* OCCT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 291191DA1E93ACF700069C0C /* OCCT.framework */; };
+		291191DB1E93ACF700069C0C /* occt.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 291191DA1E93ACF700069C0C /* occt.framework */; };
 		295056611D9AF3D200B9D9C4 /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 295056601D9AF3D200B9D9C4 /* MessageUI.framework */; };
 		2988FF1E18E59558001435B6 /* libf2cblas.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2988FF1C18E59558001435B6 /* libf2cblas.a */; };
 		2988FF1F18E59558001435B6 /* libf2clapack.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2988FF1D18E59558001435B6 /* libf2clapack.a */; };
@@ -38,8 +38,8 @@
 		9CC6EBB917BA1CC7001CA21A /* drawMesh.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CC6EBB817BA1CC7001CA21A /* drawMesh.cpp */; };
 		9CC85C021790286C00F241C4 /* files in Resources */ = {isa = PBXBuildFile; fileRef = 9CC85C011790286C00F241C4 /* files */; };
 		9CDCED2317D5C00500B39082 /* Model.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9CDCED2217D5C00500B39082 /* Model.mm */; };
-		9CE08E10178AEB1600A83B4B /* GetDP.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE08E0D178AEB1600A83B4B /* GetDP.framework */; };
-		9CE08E11178AEB1600A83B4B /* Gmsh.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE08E0E178AEB1600A83B4B /* Gmsh.framework */; };
+		9CE08E10178AEB1600A83B4B /* getdp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE08E0D178AEB1600A83B4B /* getdp.framework */; };
+		9CE08E11178AEB1600A83B4B /* gmsh.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE08E0E178AEB1600A83B4B /* gmsh.framework */; };
 		9CE08E12178AEB1600A83B4B /* petsc.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9CE08E0F178AEB1600A83B4B /* petsc.framework */; };
 		9CE08E13178AEC5F00A83B4B /* drawContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E01178AE6BE00A83B4B /* drawContext.cpp */; };
 		9CE08E17178AEC5F00A83B4B /* Trackball.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9CE08E04178AE6BE00A83B4B /* Trackball.cpp */; };
@@ -56,7 +56,7 @@
 /* Begin PBXFileReference section */
 		2901F1201BB0086C004C328B /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-tbd-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		2907CCEB193DE6560011341A /* icon_onelab.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon_onelab.png; sourceTree = "<group>"; };
-		291191DA1E93ACF700069C0C /* OCCT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OCCT.framework; path = Onelab/frameworks/OCCT.framework; sourceTree = "<group>"; };
+		291191DA1E93ACF700069C0C /* occt.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = occt.framework; path = Onelab/frameworks/occt.framework; sourceTree = "<group>"; };
 		295056601D9AF3D200B9D9C4 /* MessageUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MessageUI.framework; path = System/Library/Frameworks/MessageUI.framework; sourceTree = SDKROOT; };
 		2988FF1C18E59558001435B6 /* libf2cblas.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2cblas.a; path = Onelab/frameworks/petsc.framework/libf2cblas.a; sourceTree = "<group>"; };
 		2988FF1D18E59558001435B6 /* libf2clapack.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2clapack.a; path = Onelab/frameworks/petsc.framework/libf2clapack.a; sourceTree = "<group>"; };
@@ -100,8 +100,8 @@
 		9CE08E02178AE6BE00A83B4B /* drawContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = drawContext.h; sourceTree = "<group>"; usesTabs = 1; };
 		9CE08E04178AE6BE00A83B4B /* Trackball.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Trackball.cpp; sourceTree = "<group>"; usesTabs = 1; };
 		9CE08E05178AE6BE00A83B4B /* Trackball.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Trackball.h; sourceTree = "<group>"; usesTabs = 1; };
-		9CE08E0D178AEB1600A83B4B /* GetDP.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GetDP.framework; path = Onelab/frameworks/GetDP.framework; sourceTree = "<group>"; };
-		9CE08E0E178AEB1600A83B4B /* Gmsh.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Gmsh.framework; path = Onelab/frameworks/Gmsh.framework; sourceTree = "<group>"; };
+		9CE08E0D178AEB1600A83B4B /* getdp.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = getdp.framework; path = Onelab/frameworks/getdp.framework; sourceTree = "<group>"; };
+		9CE08E0E178AEB1600A83B4B /* gmsh.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = gmsh.framework; path = Onelab/frameworks/gmsh.framework; sourceTree = "<group>"; };
 		9CE08E0F178AEB1600A83B4B /* petsc.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = petsc.framework; path = Onelab/frameworks/petsc.framework; sourceTree = "<group>"; };
 		9CE18C1E17B27EDB009BA06E /* Parameter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Parameter.h; sourceTree = "<group>"; usesTabs = 1; };
 		9CE18C1F17B27EDB009BA06E /* Parameter.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = Parameter.mm; sourceTree = "<group>"; usesTabs = 1; };
@@ -137,11 +137,11 @@
 				9C96083F1712C16300E1D4A0 /* CoreGraphics.framework in Frameworks */,
 				9CE2773B17E197F50076E728 /* Social.framework in Frameworks */,
 				295056611D9AF3D200B9D9C4 /* MessageUI.framework in Frameworks */,
-				9CE08E10178AEB1600A83B4B /* GetDP.framework in Frameworks */,
-				9CE08E11178AEB1600A83B4B /* Gmsh.framework in Frameworks */,
+				9CE08E10178AEB1600A83B4B /* getdp.framework in Frameworks */,
+				9CE08E11178AEB1600A83B4B /* gmsh.framework in Frameworks */,
 				9CE08E12178AEB1600A83B4B /* petsc.framework in Frameworks */,
 				9C1B9912194F4E0400507EFD /* slepc.framework in Frameworks */,
-				291191DB1E93ACF700069C0C /* OCCT.framework in Frameworks */,
+				291191DB1E93ACF700069C0C /* occt.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -178,7 +178,7 @@
 		9C9608391712C16300E1D4A0 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				291191DA1E93ACF700069C0C /* OCCT.framework */,
+				291191DA1E93ACF700069C0C /* occt.framework */,
 				295056601D9AF3D200B9D9C4 /* MessageUI.framework */,
 				2901F1201BB0086C004C328B /* libz.tbd */,
 				9C1B9911194F4E0400507EFD /* slepc.framework */,
@@ -187,8 +187,8 @@
 				9C2C3A1F187FDF9900E87F78 /* libstdc++.tbd */,
 				9C2C3A1D187FDF9200E87F78 /* libc++.tbd */,
 				9CE2773917E197DA0076E728 /* Social.framework */,
-				9CE08E0D178AEB1600A83B4B /* GetDP.framework */,
-				9CE08E0E178AEB1600A83B4B /* Gmsh.framework */,
+				9CE08E0D178AEB1600A83B4B /* getdp.framework */,
+				9CE08E0E178AEB1600A83B4B /* gmsh.framework */,
 				9CE08E0F178AEB1600A83B4B /* petsc.framework */,
 				9C96089C1712C7F600E1D4A0 /* QuartzCore.framework */,
 				9C96089A1712C7BE00E1D4A0 /* OpenGLES.framework */,
