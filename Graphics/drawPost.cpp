@@ -39,8 +39,8 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
       glColor4ubv((GLubyte *)va->getColorArray(4 * i));
       double f = 1.;
       if(opt->pointType > 1){
-        char *n = va->getNormalArray(3 * i);
-        f = char2float(*n);
+        float *n = va->getNormalArray(3 * i);
+        f = *n;
       }
       if(opt->pointType == 2){
         int s = (int)(opt->pointSize * f);
@@ -63,10 +63,9 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
       double x[2] = {p0[0], p1[0]}, y[2] = {p0[1], p1[1]}, z[2] = {p0[2], p1[2]};
       glColor4ubv((GLubyte *)va->getColorArray(4 * i));
       if(opt->lineType == 2){
-        char *n0 = va->getNormalArray(3 * i);
-        char *n1 = va->getNormalArray(3 * (i + 1));
-        double v0 = char2float(*n0), v1 = char2float(*n1);
-        ctx->drawTaperedCylinder(opt->lineWidth, v0, v1, 0., 1., x, y, z, opt->light);
+        float *v0 = va->getNormalArray(3 * i);
+        float *v1 = va->getNormalArray(3 * (i + 1));
+        ctx->drawTaperedCylinder(opt->lineWidth, *v0, *v1, 0., 1., x, y, z, opt->light);
       }
       else if (opt->lineType == 1)
         ctx->drawCylinder(opt->lineWidth, x, y, z, opt->light);
@@ -74,9 +73,9 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
 	float l = sqrt ((p0[0] - p1[0]) * (p0[0] - p1[0]) +
                         (p0[1] - p1[1]) * (p0[1] - p1[1]) +
                         (p0[2] - p1[2]) * (p0[2] - p1[2]) );
-        char *n0 = va->getNormalArray(3 * i);
-        char *n1 = va->getNormalArray(3 * (i + 1));
-        double v0 = char2float(*n0), v1 = char2float(*n1);
+        float *n0 = va->getNormalArray(3 * i);
+        float *n1 = va->getNormalArray(3 * (i + 1));
+        double v0 = *n0, v1 = *n1;
 	float dir [3] = {(p1[0] - p0[0]) / l , (p1[1] - p0[1]) / l , (p1[2] - p0[2]) / l};
 	printf("%g %g %g %g %g %g\n", v0, v1, p0[0], p0[1], p1[0], p1[1]);
 	ctx->drawVector(1, 0,
@@ -90,7 +89,7 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
     glEnableClientState(GL_VERTEX_ARRAY);
     if(useNormalArray){
       glEnable(GL_LIGHTING);
-      glNormalPointer(GL_BYTE, 0, va->getNormalArray());
+      glNormalPointer(GL_FLOAT, 0, va->getNormalArray());
       glEnableClientState(GL_NORMAL_ARRAY);
     }
     else

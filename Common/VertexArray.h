@@ -138,7 +138,7 @@ class VertexArray{
  private:
   int _numVerticesPerElement;
   std::vector<float> _vertices;
-  std::vector<char> _normals;
+  std::vector<float> _normals;
   std::vector<unsigned char> _colors;
   std::vector<MElement*> _elements;
   std::set<ElementData<3>, ElementDataLessThan<3> > _data3;
@@ -168,9 +168,9 @@ class VertexArray{
   std::vector<float>::iterator lastVertex(){return _vertices.end();}
 
   // return a pointer to the raw normal array
-  char *getNormalArray(int i=0){ return &_normals[i]; }
-  std::vector<char>::iterator firstNormal(){return _normals.begin();}
-  std::vector<char>::iterator lastNormal(){return _normals.end();}
+  float *getNormalArray(int i=0){ return &_normals[i]; }
+  std::vector<float>::iterator firstNormal(){return _normals.begin();}
+  std::vector<float>::iterator lastNormal(){return _normals.end();}
 
   // return a pointer to the raw color array
   unsigned char *getColorArray(int i=0){ return &_colors[i]; }
