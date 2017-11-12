@@ -19,6 +19,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "ExtrudeParams.h"
 
 // gmsh
 
@@ -467,3 +468,163 @@ int gmshModelAddEmbedded(int dim, const std::vector<int> &tags, int toDim, int t
 }
 
 // gmshModelGeo
+
+int gmshModelGeoAddVertex(int &tag, double x, double y, double z, double lc)
+{
+  return !GModel::current()->getGEOInternals()->addVertex(tag, x, y, z, lc);
+}
+
+int gmshModelGeoAddLine(int &tag, int startTag, int endTag)
+{
+  return !GModel::current()->getGEOInternals()->addLine(tag, startTag, endTag);
+}
+
+int gmshModelGeoAddCircleArc(int &tag, int startTag, int centerTag, int endTag,
+                             double nx, double ny, double nz)
+{
+  return !GModel::current()->getGEOInternals()->addCircleArc
+    (tag, startTag, centerTag, endTag, nx, ny, nz);
+}
+
+int gmshModelGeoAddEllipseArc(int &tag, int startTag, int centerTag, int majorTag,
+                              int endTag, double nx, double ny, double nz)
+{
+  return !GModel::current()->getGEOInternals()->addEllipseArc
+    (tag, startTag, centerTag, majorTag, endTag, nx, ny, nz);
+}
+
+int gmshModelGeoAddSpline(int &tag, const std::vector<int> &vertexTags)
+{
+  return !GModel::current()->getGEOInternals()->addSpline(tag, vertexTags);
+}
+
+int gmshModelGeoAddBSpline(int &tag, const std::vector<int> &vertexTags)
+{
+  return !GModel::current()->getGEOInternals()->addBSpline(tag, vertexTags);
+}
+
+int gmshModelGeoAddBezier(int &tag, const std::vector<int> &vertexTags)
+{
+  return !GModel::current()->getGEOInternals()->addBezier(tag, vertexTags);
+}
+
+int gmshModelGeoAddLineLoop(int &tag, const std::vector<int> &edgeTags)
+{
+  return !GModel::current()->getGEOInternals()->addLineLoop(tag, edgeTags);
+}
+
+int gmshModelGeoAddPlaneSurface(int &tag, const std::vector<int> &wireTags)
+{
+  return !GModel::current()->getGEOInternals()->addPlaneSurface(tag, wireTags);
+}
+
+int gmshModelGeoAddSurfaceFilling(int &tag, const std::vector<int> &wireTags,
+                                  int sphereCenterTag)
+{
+  return !GModel::current()->getGEOInternals()->addSurfaceFilling
+    (tag, wireTags, sphereCenterTag);
+}
+
+int gmshModelGeoAddSurfaceLoop(int &tag, const std::vector<int> &faceTags)
+{
+  return !GModel::current()->getGEOInternals()->addSurfaceLoop(tag, faceTags);
+}
+
+int gmshModelGeoAddVolume(int &tag, const std::vector<int> &shellTags)
+{
+  return !GModel::current()->getGEOInternals()->addVolume(tag, shellTags);
+}
+
+static ExtrudeParams *getExtrudeParams(const std::vector<int> &numElements,
+                                       const std::vector<double> &heights,
+                                       bool recombine)
+{
+  ExtrudeParams *e = 0;
+  if(numElements.size()){
+    e = new ExtrudeParams();
+    e->mesh.ExtrudeMesh = true;
+    e->mesh.NbElmLayer = numElements;
+    e->mesh.hLayer = heights;
+    if(e->mesh.hLayer.empty()) e->mesh.hLayer.push_back(1.);
+    e->mesh.Recombine = recombine;
+  }
+  return e;
+}
+
+int gmshModelGeoExtrude(const std::vector<std::pair<int, int> > &inDimTags,
+                        double dx, double dy, double dz,
+                        std::vector<std::pair<int, int> > &outDimTags,
+                        const std::vector<int> &numElements,
+                        const std::vector<double> &heights, bool recombine)
+{
+  return !GModel::current()->getGEOInternals()->extrude
+    (inDimTags, dx, dy, dz, outDimTags,
+     getExtrudeParams(numElements, heights, recombine));
+}
+
+int gmshModelGeoRevolve(const std::vector<std::pair<int, int> > &inDimTags,
+                        double x, double y, double z,
+                        double ax, double ay, double az, double angle,
+                        std::vector<std::pair<int, int> > &outDimTags,
+                        const std::vector<int> &numElements,
+                        const std::vector<double> &heights, bool recombine)
+{
+  return !GModel::current()->getGEOInternals()->revolve
+    (inDimTags, x, y, z, ax, ay, az, angle, outDimTags,
+     getExtrudeParams(numElements, heights, recombine));
+}
+
+int gmshModelGeoTwist(const std::vector<std::pair<int, int> > &inDimTags,
+                      double x, double y, double z,
+                      double dx, double dy, double dz,
+                      double ax, double ay, double az, double angle,
+                      std::vector<std::pair<int, int> > &outDimTags,
+                      const std::vector<int> &numElements,
+                      const std::vector<double> &heights, bool recombine)
+{
+  return !GModel::current()->getGEOInternals()->twist
+    (inDimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, outDimTags,
+     getExtrudeParams(numElements, heights, recombine));
+}
+
+int gmshModelGeoTranslate(const std::vector<std::pair<int, int> > &dimTags,
+                          double dx, double dy, double dz)
+{
+}
+
+int gmshModelGeoRotate(const std::vector<std::pair<int, int> > &dimTags,
+                       double x, double y, double z, double ax, double ay, double az,
+                       double angle)
+{
+}
+
+int gmshModelGeoDilate(const std::vector<std::pair<int, int> > &dimTags,
+                       double x, double y, double z,
+                       double a, double b, double c)
+{
+}
+
+int gmshModelGeoSymmetry(const std::vector<std::pair<int, int> > &dimTags,
+                         double a, double b, double c, double d)
+{
+}
+
+int gmshModelGeoCopy(const std::vector<std::pair<int, int> > &inDimTags,
+                     std::vector<std::pair<int, int> > &outDimTags)
+{
+}
+
+int gmshModelGeoRemove(const std::vector<std::pair<int, int> > &dimTags,
+                       bool recursive)
+{
+}
+
+int gmshModelGeoRemoveAllDuplicates()
+{
+}
+
+int gmshModelGeoSynchronize()
+{
+  GModel::current()->getGEOInternals()->synchronize(GModel::current());
+  return 0;
+}

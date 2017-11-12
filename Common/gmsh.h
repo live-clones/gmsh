@@ -91,8 +91,6 @@ GMSH_API gmshModelGeoAddEllipseArc(int &tag, int startTag, int centerTag, int ma
 GMSH_API gmshModelGeoAddSpline(int &tag, const std::vector<int> &vertexTags);
 GMSH_API gmshModelGeoAddBSpline(int &tag, const std::vector<int> &vertexTags);
 GMSH_API gmshModelGeoAddBezier(int &tag, const std::vector<int> &vertexTags);
-GMSH_API gmshModelGeoAddNurbs(int &tag, const std::vector<int> &vertexTags,
-                              const std::vector<double> &knots);
 GMSH_API gmshModelGeoAddLineLoop(int &tag, const std::vector<int> &edgeTags);
 GMSH_API gmshModelGeoAddPlaneSurface(int &tag, const std::vector<int> &wireTags);
 GMSH_API gmshModelGeoAddSurfaceFilling(int &tag, const std::vector<int> &wireTags,
@@ -102,21 +100,24 @@ GMSH_API gmshModelGeoAddVolume(int &tag, const std::vector<int> &shellTags);
 GMSH_API gmshModelGeoExtrude(const std::vector<std::pair<int, int> > &inDimTags,
                              double dx, double dy, double dz,
                              std::vector<std::pair<int, int> > &outDimTags,
-                             const std::vector<int> &numElements,
-                             const std::vector<double> &heights, bool recombine);
+                             const std::vector<int> &numElements=std::vector<int>(),
+                             const std::vector<double> &heights=std::vector<double>(),
+                             bool recombine=false);
 GMSH_API gmshModelGeoRevolve(const std::vector<std::pair<int, int> > &inDimTags,
                              double x, double y, double z,
                              double ax, double ay, double az, double angle,
                              std::vector<std::pair<int, int> > &outDimTags,
-                             const std::vector<int> &numElements,
-                             const std::vector<double> &heights, bool recombine);
+                             const std::vector<int> &numElements=std::vector<int>(),
+                             const std::vector<double> &heights=std::vector<double>(),
+                             bool recombine=false);
 GMSH_API gmshModelGeoTwist(const std::vector<std::pair<int, int> > &inDimTags,
                            double x, double y, double z,
                            double dx, double dy, double dz,
                            double ax, double ay, double az, double angle,
                            std::vector<std::pair<int, int> > &outDimTags,
-                           const std::vector<int> &numElements,
-                           const std::vector<double> &heights, bool recombine);
+                           const std::vector<int> &numElements=std::vector<int>(),
+                           const std::vector<double> &heights=std::vector<double>(),
+                           bool recombine=false);
 GMSH_API gmshModelGeoTranslate(const std::vector<std::pair<int, int> > &dimTags,
                                double dx, double dy, double dz);
 GMSH_API gmshModelGeoRotate(const std::vector<std::pair<int, int> > &dimTags,

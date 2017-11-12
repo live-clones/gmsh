@@ -25,3 +25,6 @@ target_link_libraries(basic ${GMSH_LIB} ${LAPACK_LIB} ${BLAS_LIB})
 
 add_executable(basic2 basic2.cpp)
 target_link_libraries(basic2 ${GMSH_LIB} ${LAPACK_LIB} ${BLAS_LIB})
+
+add_executable(t1 t1.cpp)
+target_link_libraries(t1 ${GMSH_LIB} ${LAPACK_LIB} ${BLAS_LIB})
