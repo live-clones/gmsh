@@ -169,6 +169,11 @@ set(GMSH_DEPRECATED_API
   contrib/MeshQualityOptimizer/MeshQualityOptimizer.h
   contrib/MathEx/mathex.h)
 
+get_property(IAMCHILD DIRECTORY  PROPERTY PARENT_DIRECTORY)
+if(IAMCHILD)
+  set(GMSH_DEPRECATED_API ${GMSH_API} PARENT_SCOPE)
+endif(IAMCHILD)
+
 if(${CMAKE_MAJOR_VERSION} GREATER 2)
   string(TIMESTAMP DATE "%Y%m%d")
 else(${CMAKE_MAJOR_VERSION} GREATER 2)
@@ -1271,7 +1276,6 @@ if(ENABLE_WRAP_PYTHON)
       else(SWIG_MAJOR_VERSION EQUAL 1)
         set_config_option(HAVE_PYTHON "Python")
         mark_as_advanced(CLEAR PYTHON_LIBRARY PYTHON_INCLUDE_DIR)
-        add_subdirectory(wrappers/gmshpy)
         if(ENABLE_NUMPY)
           if (NOT NUMPY_INC)
             EXEC_PROGRAM (${PYTHON_EXECUTABLE}
@@ -1302,13 +1306,6 @@ if(ENABLE_WRAP_PYTHON)
     endif(NOT ENABLE_DEPRECATED_API)
   endif(SWIG_FOUND AND PYTHONLIBS_FOUND)
 endif(ENABLE_WRAP_PYTHON)
-
-if(ENABLE_WRAP_JAVA AND ENABLE_DEPRECATED_API)
-  if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
-    message(WARNING "Java wrapping samples will not work without BLAS and LAPACK")
-  endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
-  add_subdirectory(wrappers/java)
-endif(ENABLE_WRAP_JAVA AND ENABLE_DEPRECATED_API)
 
 check_function_exists(vsnprintf HAVE_VSNPRINTF)
 if(NOT HAVE_VSNPRINTF AND NOT ENABLE_BUILD_IOS AND NOT ENABLE_BUILD_ANDROID)
@@ -1936,6 +1933,14 @@ elseif(WIN32 OR CYGWIN)
 else(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
   set(CPACK_GENERATOR TGZ)
 endif(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
+
+if(HAVE_PYTHON AND ENABLE_DEPRECATED_API)
+  add_subdirectory(wrappers/gmshpy)
+endif(HAVE_PYTHON AND ENABLE_DEPRECATED_API)
+
+if(ENABLE_WRAP_JAVA AND ENABLE_DEPRECATED_API)
+  add_subdirectory(wrappers/java)
+endif(ENABLE_WRAP_JAVA AND ENABLE_DEPRECATED_API)
 
 include(CPack)
 
