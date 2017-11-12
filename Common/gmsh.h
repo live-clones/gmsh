@@ -82,7 +82,7 @@ GMSH_API gmshModelAddEmbedded(int dim, const std::vector<int> &tags,
                               int toDim, int toTag);
 
 // gmshModelGeo
-GMSH_API gmshModelGeoAddVertex(int &tag, double x, double y, double z, double lc);
+GMSH_API gmshModelGeoAddVertex(int &tag, double x, double y, double z, double meshSize);
 GMSH_API gmshModelGeoAddLine(int &tag, int startTag, int endTag);
 GMSH_API gmshModelGeoAddCircleArc(int &tag, int startTag, int centerTag, int endTag,
                                   double nx=0., double ny=0., double nz=0.);
@@ -135,7 +135,8 @@ GMSH_API gmshModelGeoRemove(const std::vector<std::pair<int, int> > &dimTags,
 GMSH_API gmshModelGeoRemoveAllDuplicates();
 GMSH_API gmshModelGeoSynchronize();
 
-// gmshModelOCC
+// gmshModelOcc
+GMSH_API gmshModelOccAddVertex(int &tag, double x, double y, double z, double meshSize);
 
 // gmshSolver
 

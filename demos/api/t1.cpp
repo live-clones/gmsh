@@ -7,6 +7,7 @@ int main(int argc, char **argv)
 {
   gmshInitialize(argc, argv);
   gmshOptionSetNumber("General.Terminal", 1);
+
   gmshModelCreate("t1");
 
   double lc = 1e-2;
@@ -39,9 +40,11 @@ int main(int argc, char **argv)
   gmshModelSetPhysicalName(2, 6, "My surface");
 
   gmshModelGeoSynchronize();
+
   gmshModelMesh(2);
 
   gmshExport("t1.msh");
+
   gmshFinalize();
   return 0;
 }

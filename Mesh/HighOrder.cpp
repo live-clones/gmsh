@@ -1328,41 +1328,36 @@ static void updateHighOrderVertices(GEntity *e,
 
 static void updatePeriodicEdgesAndFaces(GModel *m)
 {
-
   // Edges
 
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it) {
-
     GEdge *tgt = *it;
     GEdge *src = dynamic_cast<GEdge*>(tgt->meshMaster());
 
     if (src != NULL && src != tgt) {
-
       std::map<MVertex*,MVertex*> &v2v = tgt->correspondingVertices;
       std::map<MVertex*,MVertex*> &p2p = tgt->correspondingHOPoints;
       p2p.clear();
 
       Msg::Info("Constructing high order periodicity for edge connection %d - %d",
-                tgt->tag(),src->tag());
+                tgt->tag(), src->tag());
 
       std::map<MEdge,MLine*,Less_Edge> srcEdges;
-      for (unsigned int i=0;i<src->getNumMeshElements();i++)  {
+      for (unsigned int i = 0; i < src->getNumMeshElements(); i++)  {
         MLine* srcLine = dynamic_cast<MLine*>(src->getMeshElement(i));
-        if (!srcLine) Msg::Error("Master element %d is not an edge ",
+        if (!srcLine) Msg::Error("Master element %d is not an edge",
                                  src->getMeshElement(i)->getNum());
         srcEdges[MEdge(srcLine->getVertex(0),
                        srcLine->getVertex(1))] = srcLine;
       }
 
       for (unsigned int i = 0; i < tgt->getNumMeshElements(); ++i) {
-
         MLine* tgtLine = dynamic_cast<MLine*> (tgt->getMeshElement(i));
         MVertex* vtcs[2];
-
         if (!tgtLine) Msg::Error("Slave element %d is not an edge ",
                             tgt->getMeshElement(i)->getNum());
 
-        for (int iVtx=0;iVtx<2;iVtx++) {
+        for (int iVtx = 0; iVtx < 2; iVtx++) {
           MVertex* vtx = tgtLine->getVertex(iVtx);
           std::map<MVertex*,MVertex*>::iterator tIter = v2v.find(vtx);
           if (tIter == v2v.end()) {
@@ -1373,8 +1368,9 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
           else vtcs[iVtx] = tIter->second;
         }
 
-        std::map<MEdge,MLine*,Less_Edge>::iterator srcIter = srcEdges.find(MEdge(vtcs[0],vtcs[1]));
-        if (srcIter==srcEdges.end()) {
+        std::map<MEdge,MLine*,Less_Edge>::iterator srcIter =
+          srcEdges.find(MEdge(vtcs[0],vtcs[1]));
+        if (srcIter == srcEdges.end()) {
           Msg::Error("Can't find periodic counterpart of edge %d-%d on edge %d"
                      ", connected to edge %d-%d on %d",
                      tgtLine->getVertex(0)->getNum(),
@@ -1387,7 +1383,8 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
         else {
           MLine* srcLine = srcIter->second;
           if (tgtLine->getNumVertices() != srcLine->getNumVertices()) throw;
-          for (int i=2;i<tgtLine->getNumVertices();i++) p2p[tgtLine->getVertex(i)] = srcLine->getVertex(i);
+          for (int i = 2; i < tgtLine->getNumVertices(); i++)
+            p2p[tgtLine->getVertex(i)] = srcLine->getVertex(i);
         }
       }
     }
@@ -1397,7 +1394,6 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
     GFace *tgt = *it;
     GFace *src = dynamic_cast<GFace*>(tgt->meshMaster());
     if (src != NULL && src != tgt) {
-
       Msg::Info("Constructing high order periodicity for face connection %d - %d",
                 tgt->tag(),src->tag());
 
@@ -1407,20 +1403,19 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
 
       std::map<MFace,MElement*,Less_Face> srcFaces;
 
-      for (unsigned int i=0;i<src->getNumMeshElements();++i) {
+      for (unsigned int i = 0; i < src->getNumMeshElements(); ++i) {
         MElement* srcElmt  = src->getMeshElement(i);
         int nbVtcs = 0;
         if (dynamic_cast<MTriangle*>   (srcElmt)) nbVtcs = 3;
         if (dynamic_cast<MQuadrangle*> (srcElmt)) nbVtcs = 4;
         std::vector<MVertex*> vtcs;
-        for (int iVtx=0;iVtx<nbVtcs;iVtx++) {
+        for (int iVtx = 0; iVtx < nbVtcs; iVtx++) {
           vtcs.push_back(srcElmt->getVertex(iVtx));
         }
         srcFaces[MFace(vtcs)] = srcElmt;
       }
 
-      for (unsigned int i=0;i<tgt->getNumMeshElements();++i) {
-
+      for (unsigned int i = 0; i < tgt->getNumMeshElements(); ++i) {
         MElement* tgtElmt = tgt->getMeshElement(i);
         Msg::Info("Checking element %d in face %d",i,tgt->tag());
 
@@ -1428,7 +1423,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
         if (dynamic_cast<MTriangle*>   (tgtElmt)) nbVtcs = 3;
         if (dynamic_cast<MQuadrangle*> (tgtElmt)) nbVtcs = 4;
         std::vector<MVertex*> vtcs;
-        for (int iVtx=0;iVtx<nbVtcs;iVtx++) {
+        for (int iVtx = 0; iVtx < nbVtcs; iVtx++) {
           MVertex* vtx = tgtElmt->getVertex(iVtx);
 
           std::map<MVertex*,MVertex*>::iterator tIter = v2v.find(vtx);
@@ -1447,7 +1442,8 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
         std::map<MFace,MElement*>::iterator srcIter = srcFaces.find(MFace(vtcs));
         if (srcIter == srcFaces.end()) {
           std::ostringstream faceDef;
-          for (int iVtx=0;iVtx<nbVtcs;iVtx++) faceDef << vtcs[iVtx]->getNum() << " ";
+          for (int iVtx = 0; iVtx < nbVtcs; iVtx++)
+            faceDef << vtcs[iVtx]->getNum() << " ";
           Msg::Error("Cannot find periodic counterpart of face %s in face %d "
                      "connected to %d",faceDef.str().c_str(),
                      tgt->tag(),src->tag());
@@ -1461,7 +1457,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
       }
     }
   }
-  Msg::Info("Finalized high order topology of periodic connections");
+  Msg::Debug("Finalized high order topology of periodic connections");
 }
 
 void SetOrder1(GModel *m, bool onlyVisible)

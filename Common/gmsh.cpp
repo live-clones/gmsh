@@ -469,9 +469,9 @@ int gmshModelAddEmbedded(int dim, const std::vector<int> &tags, int toDim, int t
 
 // gmshModelGeo
 
-int gmshModelGeoAddVertex(int &tag, double x, double y, double z, double lc)
+int gmshModelGeoAddVertex(int &tag, double x, double y, double z, double meshSize)
 {
-  return !GModel::current()->getGEOInternals()->addVertex(tag, x, y, z, lc);
+  return !GModel::current()->getGEOInternals()->addVertex(tag, x, y, z, meshSize);
 }
 
 int gmshModelGeoAddLine(int &tag, int startTag, int endTag)
@@ -642,4 +642,13 @@ int gmshModelGeoSynchronize()
 
 // gmshModelOCC
 
+static void createOcc()
+{
+  if(!GModel::current()->getOCCInternals()) GModel::current()->createOCCInternals();
+}
 
+int gmshModelOccAddVertex(int &tag, double x, double y, double z, double meshSize)
+{
+  createOcc();
+  return !GModel::current()->getOCCInternals()->addVertex(tag, x, y, z, meshSize);
+}
