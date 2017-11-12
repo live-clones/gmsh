@@ -17,31 +17,19 @@ int main(int argc, char **argv)
 
   double R = 1.4, Rs = R*.7, Rt = R*1.25;
 
-  std::vector<int> tag = {1,2,3,4,5,6,7,8};
-  gmshModelOccAddBox(tag[0], -R,-R,-R, 2*R,2*R,2*R);
-  gmshModelOccAddSphere(tag[1], 0,0,0,Rt);
+  std::vector<int> t = {1,2,3,4,5,6,7,8};
+  gmshModelOccAddBox(t[0], -R,-R,-R, 2*R,2*R,2*R);
+  gmshModelOccAddSphere(t[1], 0,0,0,Rt);
 
-  std::vector<std::pair<int, int> > obj, tool, out;
-  std::vector<std::vector<std::pair<int, int> > > outMap;
+  std::vector<std::pair<int, int> > o;
+  std::vector<std::vector<std::pair<int, int> > > om;
 
-  obj.push_back(std::pair<int, int>(3, 1));
-  tool.push_back(std::pair<int, int>(3, 2));
-  gmshModelOccBooleanIntersection(tag[2], obj, tool, out, outMap, true, true);
-
-  gmshModelOccAddCylinder(tag[3], -2*R,0,0, 4*R,0,0, Rs);
-  gmshModelOccAddCylinder(tag[4], 0,-2*R,0, 0,4*R,0, Rs);
-  gmshModelOccAddCylinder(tag[5], 0,0,-2*R, 0,0,4*R, Rs);
-
-  obj.clear(); tool.clear();
-  obj.push_back(std::pair<int, int>(3, 4));
-  tool.push_back(std::pair<int, int>(3, 5));
-  tool.push_back(std::pair<int, int>(3, 6));
-  gmshModelOccBooleanUnion(tag[6], obj, tool, out, outMap, true, true);
-
-  obj.clear(); tool.clear();
-  obj.push_back(std::pair<int, int>(3, 3));
-  tool.push_back(std::pair<int, int>(3, 7));
-  gmshModelOccBooleanDifference(tag[7], obj, tool, out, outMap, true, true);
+  gmshModelOccBooleanIntersection(t[2], {{3, t[0]}}, {{3, t[1]}}, o, om);
+  gmshModelOccAddCylinder(t[3], -2*R,0,0, 4*R,0,0, Rs);
+  gmshModelOccAddCylinder(t[4], 0,-2*R,0, 0,4*R,0, Rs);
+  gmshModelOccAddCylinder(t[5], 0,0,-2*R, 0,0,4*R, Rs);
+  gmshModelOccBooleanUnion(t[6], {{3, t[3]}, {3, t[4]}}, {{3, t[5]}}, o, om);
+  gmshModelOccBooleanDifference(t[7], {{3, t[2]}}, {{3, t[6]}}, o, om);
 
   gmshModelOccSynchronize();
 

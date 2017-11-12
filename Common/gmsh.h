@@ -180,22 +180,26 @@ GMSH_API gmshModelOccBooleanUnion(int tag, const vector_pair &objectDimTags,
                                   const vector_pair &toolDimTags,
                                   vector_pair &outDimTags,
                                   std::vector<vector_pair > &outDimTagsMap,
-                                  bool removeObject, bool removeTool);
+                                  bool removeObject = true,
+                                  bool removeTool = true);
 GMSH_API gmshModelOccBooleanIntersection(int tag, const vector_pair &objectDimTags,
                                          const vector_pair &toolDimTags,
                                          vector_pair &outDimTags,
                                          std::vector<vector_pair > &outDimTagsMap,
-                                         bool removeObject, bool removeTool);
+                                         bool removeObject = true,
+                                         bool removeTool = true);
 GMSH_API gmshModelOccBooleanDifference(int tag, const vector_pair &objectDimTags,
                                        const vector_pair &toolDimTags,
                                        vector_pair &outDimTags,
                                        std::vector<vector_pair > &outDimTagsMap,
-                                       bool removeObject, bool removeTool);
+                                       bool removeObject = true,
+                                       bool removeTool = true);
 GMSH_API gmshModelOccBooleanFragments(int tag, const vector_pair &objectDimTags,
                                       const vector_pair &toolDimTags,
                                       vector_pair &outDimTags,
                                       std::vector<vector_pair> &outDimTagsMap,
-                                      bool removeObject, bool removeTool);
+                                      bool removeObject = true,
+                                      bool removeTool = true);
 
 GMSH_API gmshModelOccSynchronize();
 
