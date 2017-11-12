@@ -22,11 +22,9 @@ endif(GMSH_LIB MATCHES ".a")
 
 include_directories(${GMSH_INC})
 
-add_executable(basic basic.cpp)
-target_link_libraries(basic ${GMSH_LIB} ${LAPACK_LIB} ${BLAS_LIB})
-
-add_executable(basic2 basic2.cpp)
-target_link_libraries(basic2 ${GMSH_LIB} ${LAPACK_LIB} ${BLAS_LIB})
-
-add_executable(t1 t1.cpp)
-target_link_libraries(t1 ${GMSH_LIB} ${LAPACK_LIB} ${BLAS_LIB})
+file(GLOB FILES *.cpp)
+foreach(FILE ${FILES})
+  get_filename_component(DEMO ${FILE} NAME_WE)
+  add_executable(${DEMO} ${FILE})
+  target_link_libraries(${DEMO} ${GMSH_LIB} ${LAPACK_LIB} ${BLAS_LIB})
+endforeach(FILE)
