@@ -423,10 +423,10 @@ int gmshModelSetReverseMesh(int dim, int tag)
   return 0;
 }
 
-int gmshModelAddEmbedded(int dim, const std::vector<int> &tags, int toDim, int toTag)
+int gmshModelEmbed(int dim, const std::vector<int> &tags, int inDim, int inTag)
 {
-  if(toDim == 2){
-    GFace *gf = GModel::current()->getFaceByTag(toTag);
+  if(inDim == 2){
+    GFace *gf = GModel::current()->getFaceByTag(inTag);
     if(gf){
       for(unsigned int i = 0; i < tags.size(); i++){
         if(dim == 0){
@@ -442,8 +442,8 @@ int gmshModelAddEmbedded(int dim, const std::vector<int> &tags, int toDim, int t
       }
     }
   }
-  else if(toDim == 3){
-    GRegion *gr = GModel::current()->getRegionByTag(toTag);
+  else if(inDim == 3){
+    GRegion *gr = GModel::current()->getRegionByTag(inTag);
     if(gr){
       for(unsigned int i = 0; i < tags.size(); i++){
         if(dim == 0){
@@ -640,7 +640,7 @@ int gmshModelGeoSynchronize()
   return 0;
 }
 
-// gmshModelOCC
+// gmshModelOcc
 
 static void createOcc()
 {
@@ -651,4 +651,11 @@ int gmshModelOccAddVertex(int &tag, double x, double y, double z, double meshSiz
 {
   createOcc();
   return !GModel::current()->getOCCInternals()->addVertex(tag, x, y, z, meshSize);
+}
+
+int gmshModelGeoSynchronize()
+{
+  createOcc();
+  GModel::current()->getOccInternals()->synchronize(GModel::current());
+  return 0;
 }

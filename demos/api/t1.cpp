@@ -1,4 +1,3 @@
-#include <iostream>
 #include <gmsh.h>
 
 // this reimplements gmsh/tutorial/t1.geo

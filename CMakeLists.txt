@@ -1252,7 +1252,7 @@ if(ENABLE_WRAP_PYTHON)
   find_package(PythonLibs)
   if(SWIG_FOUND AND PYTHONLIBS_FOUND)
     message(STATUS "Found SWIG version " ${SWIG_VERSION})
-    if(NOT DEPRECATED_API) # new bindings
+    if(NOT ENABLE_DEPRECATED_API) # new bindings
       include_directories(${PYTHON_INCLUDE_PATH})
       include_directories(${CMAKE_CURRENT_SOURCE_DIR})
       set(CMAKE_SWIG_FLAGS "")
@@ -1263,7 +1263,7 @@ if(ENABLE_WRAP_PYTHON)
         set_target_properties("_gmsh" PROPERTIES LINK_FLAGS
                               "-undefined suppress -flat_namespace")
       endif(APPLE)
-    else(NOT DEPRECATED_API) # old, deprecated internal developer bindings
+    else(NOT ENABLE_DEPRECATED_API) # old, deprecated internal developer bindings
       find_package(PythonInterp)
       string(SUBSTRING ${SWIG_VERSION} 0 1 SWIG_MAJOR_VERSION)
       if(SWIG_MAJOR_VERSION EQUAL 1)
@@ -1299,16 +1299,16 @@ if(ENABLE_WRAP_PYTHON)
           endif(ENABLE_PETSC4PY)
         endif(HAVE_PETSC)
       endif(SWIG_MAJOR_VERSION EQUAL 1)
-    endif(NOT DEPRECATED_API)
+    endif(NOT ENABLE_DEPRECATED_API)
   endif(SWIG_FOUND AND PYTHONLIBS_FOUND)
 endif(ENABLE_WRAP_PYTHON)
 
-if(ENABLE_WRAP_JAVA AND DEPRECATED_API)
+if(ENABLE_WRAP_JAVA AND ENABLE_DEPRECATED_API)
   if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
     message(WARNING "Java wrapping samples will not work without BLAS and LAPACK")
   endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
   add_subdirectory(wrappers/java)
-endif(ENABLE_WRAP_JAVA AND DEPRECATED_API)
+endif(ENABLE_WRAP_JAVA AND ENABLE_DEPRECATED_API)
 
 check_function_exists(vsnprintf HAVE_VSNPRINTF)
 if(NOT HAVE_VSNPRINTF AND NOT ENABLE_BUILD_IOS AND NOT ENABLE_BUILD_ANDROID)
