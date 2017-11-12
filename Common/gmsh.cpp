@@ -3,11 +3,22 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
-#include "gmsh.h"
 #include "GmshGlobal.h"
 #include "GModel.h"
 #include "GModelIO_GEO.h"
 #include "GModelIO_OCC.h"
+#include "GVertex.h"
+#include "GEdge.h"
+#include "GFace.h"
+#include "GRegion.h"
+#include "MPoint.h"
+#include "MLine.h"
+#include "MTriangle.h"
+#include "MQuadrangle.h"
+#include "MTetrahedron.h"
+#include "MHexahedron.h"
+#include "MPrism.h"
+#include "MPyramid.h"
 
 // gmsh
 
@@ -128,24 +139,24 @@ int gmshModelDestroy()
   return 1;
 }
 
-int gmshModelGetElementaryTags(int dim, std::vector<int> &tags)
+int gmshModelGetEntities(std::vector<std::pair<int, int> > &dimTags)
 {
   std::vector<GEntity*> entities;
-  GModel::current()->getEntities(entities, dim);
-  tags.clear();
+  GModel::current()->getEntities(entities);
   for(unsigned int i = 0; i < entities.size(); i++)
-    tags.push_back(entities[i]->tag());
+    dimTags.push_back(std::pair<int, int>(entities[i]->dim(), entities[i]->tag()));
   return 0;
 }
 
-int gmshModelGetPhysicalTags(int dim, std::vector<int> &tags)
+int gmshModelGetPhysicalGroups(std::vector<std::pair<int, int> > &dimTags)
 {
-  std::map<int, std::vector<GEntity*> > groups;
-  GModel::current()->getPhysicalGroups(dim, groups);
-  tags.clear();
-  for(std::map<int, std::vector<GEntity*> >::iterator it = groups.begin();
-      it != groups.end(); it++)
-    tags.push_back(it->first);
+  std::map<int, std::vector<GEntity*> > groups[4];
+  GModel::current()->getPhysicalGroups(groups);
+  for(int dim = 0; dim < 4; dim++){
+    for(std::map<int, std::vector<GEntity*> >::iterator it = groups[dim].begin();
+        it != groups[dim].end(); it++)
+      dimTags.push_back(std::pair<int, int>(dim, it->first));
+  }
   return 0;
 }
 
@@ -160,13 +171,12 @@ int gmshModelAddPhysicalGroup(int dim, int tag, const std::vector<int> &tags)
   return 1;
 }
 
-int gmshModelGetElementaryTagsForPhysicalGroup(int dim, int tag,
-                                               std::vector<int> &tags)
+int gmshModelGetEntitiesForPhysicalGroup(int dim, int tag,
+                                         std::vector<int> &tags)
 {
   std::map<int, std::vector<GEntity*> > groups;
   GModel::current()->getPhysicalGroups(dim, groups);
   std::map<int, std::vector<GEntity*> >::iterator it = groups.find(tag);
-  tags.clear();
   if(it != groups.end()){
     for(unsigned j = 0; j < it->second.size(); j++)
       tags.push_back(it->second[j]->tag());
@@ -198,9 +208,9 @@ int gmshModelGetVertexCoordinates(int tag, double &x, double &y, double &z)
   return 1;
 }
 
-int gmshModelGetBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
-                             std::vector<std::pair<int, int> > &outDimTags,
-                             bool combined, bool oriented, bool recursive)
+int gmshModelGetBoundary(const std::vector<std::pair<int, int> > &inDimTags,
+                         std::vector<std::pair<int, int> > &outDimTags,
+                         bool combined, bool oriented, bool recursive)
 {
   bool r = GModel::current()->getBoundaryTags(inDimTags, outDimTags, combined,
                                               oriented, recursive);
@@ -208,15 +218,14 @@ int gmshModelGetBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
   return 1;
 }
 
-int gmshModelGetElementaryTagsInBoundingBox(int dim,
-                                            double x1, double y1, double z1,
-                                            double x2, double y2, double z2,
-                                            std::vector<int> &tags)
+int gmshModelGetEntitiesInBoundingBox(int dim,
+                                      double x1, double y1, double z1,
+                                      double x2, double y2, double z2,
+                                      std::vector<int> &tags)
 {
   SBoundingBox3d box(x1, y1, z1, x2, y2, z2);
   std::vector<GEntity*> entities;
   GModel::current()->getEntitiesInBox(entities, box, dim);
-  tags.clear();
   for(unsigned int i = 0; i < entities.size(); i++)
     tags.push_back(entities[i]->tag());
   return 0;
@@ -256,27 +265,78 @@ int gmshModelMesh(int dim)
 }
 
 int gmshModelGetMeshVertices(int dim, int tag, std::vector<int> &vertexTags,
-                             std::vector<double> &coords,
-                             std::vector<double> &parametricCoords)
+                             std::vector<double> &coords)
 {
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge) return 1;
+  for(unsigned int i = 0; i < ge->mesh_vertices.size(); i++){
+    MVertex *v = ge->mesh_vertices[i];
+    vertexTags.push_back(v->getNum());
+    coords.push_back(v->x());
+    coords.push_back(v->y());
+    coords.push_back(v->z());
+  }
   return 0;
+}
+
+template<class T>
+static void addElementInfo(std::vector<T*> &ele,
+                           std::vector<int> &elementType,
+                           std::vector<std::vector<int> > &elementTags,
+                           std::vector<std::vector<int> > &vertexTags)
+{
+  if(ele.empty()) return;
+  elementType.push_back(ele.front()->getTypeForMSH());
+  elementTags.push_back(std::vector<int>());
+  vertexTags.push_back(std::vector<int>());
+  for(unsigned int i = 0; i < ele.size(); i++){
+    elementTags.back().push_back(ele[i]->getNum());
+    for(unsigned int j = 0; j < ele[i]->getNumVertices(); j++){
+      vertexTags.back().push_back(ele[i]->getVertex(j)->getNum());
+    }
+  }
 }
 
 int gmshModelGetMeshElements(int dim, int tag, std::vector<int> &types,
                              std::vector<std::vector<int> > &elementTags,
                              std::vector<std::vector<int> > &vertexTags)
 {
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge) return 1;
+  switch(dim){
+  case 0: {
+    GVertex *v = static_cast<GVertex*>(ge);
+    addElementInfo(v->points, types, elementTags, vertexTags);
+    break; }
+  case 1: {
+    GEdge *e = static_cast<GEdge*>(ge);
+    addElementInfo(e->lines, types, elementTags, vertexTags);
+    break; }
+  case 2: {
+    GFace *f = static_cast<GFace*>(ge);
+    addElementInfo(f->triangles, types, elementTags, vertexTags);
+    addElementInfo(f->quadrangles, types, elementTags, vertexTags);
+    break; }
+  case 3: {
+    GRegion *r = static_cast<GRegion*>(ge);
+    addElementInfo(r->tetrahedra, types, elementTags, vertexTags);
+    addElementInfo(r->hexahedra, types, elementTags, vertexTags);
+    addElementInfo(r->prisms, types, elementTags, vertexTags);
+    addElementInfo(r->pyramids, types, elementTags, vertexTags);
+    break; }
+  }
   return 0;
 }
 
 int gmshModelSetMeshSize(int dim, int tag, double size)
 {
-  return 0;
-}
-
-int gmshModelSetCompound(int dim, const std::vector<int> &tags)
-{
-  return 0;
+  if(dim) return 2;
+  GVertex *gv = GModel::current()->getVertexByTag(tag);
+  if(gv){
+    gv->setPrescribedMeshSizeAtVertex(size);
+    return 0;
+  }
+  return 1;
 }
 
 int gmshModelSetTransfiniteLine(int tag, int nPoints, int type, double coef)
