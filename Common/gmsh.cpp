@@ -341,37 +341,128 @@ int gmshModelSetMeshSize(int dim, int tag, double size)
 
 int gmshModelSetTransfiniteLine(int tag, int nPoints, int type, double coef)
 {
-  return 0;
+  GEdge *ge = GModel::current()->getEdgeByTag(tag);
+  if(ge){
+    ge->meshAttributes.method = MESH_TRANSFINITE;
+    ge->meshAttributes.nbPointsTransfinite = nPoints;
+    ge->meshAttributes.typeTransfinite = type;
+    ge->meshAttributes.coeffTransfinite = coef;
+    return 0;
+  }
+  return 1;
 }
 
 int gmshModelSetTransfiniteSurface(int tag, int arrangement,
                                    const std::vector<int> &cornerTags)
 {
-  return 0;
+  GFace *gf = GModel::current()->getFaceByTag(tag);
+  if(gf){
+    gf->meshAttributes.method = MESH_TRANSFINITE;
+    gf->meshAttributes.transfiniteArrangement = arrangement;
+    if(cornerTags.empty() || cornerTags.size() == 3 || cornerTags.size() == 4){
+      for(unsigned int j = 0; j < cornerTags.size(); j++){
+        GVertex *gv = GModel::current()->getVertexByTag(cornerTags[j]);
+        if(gv)
+          gf->meshAttributes.corners.push_back(gv);
+      }
+    }
+    return 0;
+  }
+  return 1;
 }
 
 int gmshModelSetTransfiniteVolume(int tag, const std::vector<int> &cornerTags)
 {
-  return 0;
+  GRegion *gr = GModel::current()->getRegionByTag(tag);
+  if(gr){
+    gr->meshAttributes.method = MESH_TRANSFINITE;
+    if(cornerTags.empty() || cornerTags.size() == 6 || cornerTags.size() == 8){
+      for(unsigned int i = 0; i < cornerTags.size(); i++){
+        GVertex *gv = GModel::current()->getVertexByTag(cornerTags[i]);
+        if(gv)
+          gr->meshAttributes.corners.push_back(gv);
+      }
+    }
+    return 0;
+  }
+  return 1;
 }
 
 int gmshModelSetRecombine(int dim, int tag, double angle)
 {
-  return 0;
+  GFace *gf = GModel::current()->getFaceByTag(tag);
+  if(gf){
+    gf->meshAttributes.recombine = 1;
+    gf->meshAttributes.recombineAngle = angle;
+    return 0;
+  }
+  return 1;
 }
 
 int gmshModelSetSmoothing(int tag, int val)
 {
-  return 0;
+  GFace *gf = GModel::current()->getFaceByTag(tag);
+  if(gf){
+    gf->meshAttributes.transfiniteSmoothing = val;
+    return 0;
+  }
+  return 1;
 }
 
 int gmshModelSetReverseMesh(int dim, int tag)
 {
+  if(dim == 1){
+    GEdge *ge = GModel::current()->getEdgeByTag(tag);
+    if(ge) ge->meshAttributes.reverseMesh = 1;
+  }
+  else if(dim == 2){
+    GFace *gf = GModel::current()->getFaceByTag(tag);
+    if(gf) gf->meshAttributes.reverseMesh = 1;
+  }
   return 0;
 }
 
-int gmshModelAddEmbeddedVertex(int tag, int inDim, int inTag)
+int gmshModelAddEmbedded(int dim, const std::vector<int> &tags, int toDim, int toTag)
 {
+  if(toDim == 2){
+    GFace *gf = GModel::current()->getFaceByTag(toTag);
+    if(gf){
+      for(unsigned int i = 0; i < tags.size(); i++){
+        if(dim == 0){
+          GVertex *gv = GModel::current()->getVertexByTag(tags[i]);
+          if(gv)
+            gf->addEmbeddedVertex(gv);
+        }
+        else if(dim == 1){
+          GEdge *ge = GModel::current()->getEdgeByTag(tags[i]);
+          if(ge)
+            gf->addEmbeddedEdge(ge);
+        }
+      }
+    }
+  }
+  else if(toDim == 3){
+    GRegion *gr = GModel::current()->getRegionByTag(toTag);
+    if(gr){
+      for(unsigned int i = 0; i < tags.size(); i++){
+        if(dim == 0){
+          GVertex *gv = GModel::current()->getVertexByTag(tags[i]);
+          if(gv)
+            gr->addEmbeddedVertex(gv);
+        }
+        else if(dim == 1){
+          GEdge *ge = GModel::current()->getEdgeByTag(tags[i]);
+          if(ge)
+            gr->addEmbeddedEdge(ge);
+        }
+        else if(dim == 2){
+          GFace *gf = GModel::current()->getFaceByTag(tags[i]);
+          if(gf)
+            gr->addEmbeddedFace(gf);
+        }
+      }
+    }
+  }
   return 0;
 }
 

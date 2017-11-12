@@ -78,7 +78,8 @@ GMSH_API gmshModelSetTransfiniteVolume(int tag, const std::vector<int> &cornerTa
 GMSH_API gmshModelSetRecombine(int dim, int tag, double angle);
 GMSH_API gmshModelSetSmoothing(int tag, int val);
 GMSH_API gmshModelSetReverseMesh(int dim, int tag);
-GMSH_API gmshModelAddEmbeddedVertex(int tag, int inDim, int inTag);
+GMSH_API gmshModelAddEmbedded(int dim, const std::vector<int> &tags,
+                              int toDim, int toTag);
 
 // gmshModelGeo
 GMSH_API gmshModelGeoAddVertex(int &tag, double x, double y, double z, double lc);

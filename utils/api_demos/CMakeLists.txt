@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
+# TODO: Gmsh will should create a cmake file when installing the lib, so all the
+# external dependencies can be obtained automatically
+
 find_library(GMSH_LIB gmsh)
 if(NOT GMSH_LIB)
   message(FATAL_ERROR "Could not find libgmsh")
@@ -17,5 +20,8 @@ endif(GMSH_LIB MATCHES ".a")
 
 include_directories(${GMSH_INC})
 
-add_executable(t0 t0.cpp)
-target_link_libraries(t0 ${GMSH_LIB} ${LAPACK_LIB} ${BLAS_LIB})
+add_executable(basic basic.cpp)
+target_link_libraries(basic ${GMSH_LIB} ${LAPACK_LIB} ${BLAS_LIB})
+
+add_executable(basic2 basic2.cpp)
+target_link_libraries(basic2 ${GMSH_LIB} ${LAPACK_LIB} ${BLAS_LIB})
