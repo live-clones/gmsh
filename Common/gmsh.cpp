@@ -47,18 +47,24 @@ static void splitOptionName(const std::string &fullName, std::string &category,
                             std::string &name, int &index)
 {
   std::string::size_type d = fullName.find_first_of('.');
+  if(d == std::string::npos){
+    name = fullName;
+    return;
+  }
   category = fullName.substr(0, d);
   std::string::size_type b1 = fullName.find_first_of('[');
   std::string::size_type b2 = fullName.find_last_of(']');
   if(b1 != std::string::npos && b2 != std::string::npos){
-    std::string id = fullName.substr(b1, b2 - b1);
-    name = fullName.substr(d, b1 - d);
+    std::string id = fullName.substr(b1 + 1, b2 - b1 - 1);
+    index = atoi(id.c_str());
+    category = fullName.substr(0, b1);
+    name = fullName.substr(d + 1, b1 - d);
   }
   else{
     index = 0;
-    name = fullName.substr(d);
+    name = fullName.substr(d + 1);
   }
-  Msg::Debug("Decoded option name '%s' . '%s' '[%d]'", category.c_str(),
+  Msg::Debug("Decoded option name '%s' . '%s' (index %d)", category.c_str(),
              name.c_str(), index);
 }
 

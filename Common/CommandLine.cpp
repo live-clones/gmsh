@@ -1033,11 +1033,11 @@ void GetOptions(int argc, char *argv[])
         else
           Msg::Fatal("Missing number");
       }
-#if defined(HAVE_FLTK)
       else if(!strcmp(argv[i] + 1, "term")) {
         terminal = 1;
         i++;
       }
+#if defined(HAVE_FLTK)
       else if(!strcmp(argv[i] + 1, "dual")) {
         CTX::instance()->mesh.dual = 1;
         i++;
