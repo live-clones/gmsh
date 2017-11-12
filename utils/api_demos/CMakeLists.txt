@@ -17,5 +17,5 @@ endif(GMSH_LIB MATCHES ".a")
 
 include_directories(${GMSH_INC})
 
-add_executable(mainSimple mainSimple.cpp)
-target_link_libraries(mainSimple ${GMSH_LIB} ${LAPACK_LIB} ${BLAS_LIB})
+add_executable(t0 t0.cpp)
+target_link_libraries(t0 ${GMSH_LIB} ${LAPACK_LIB} ${BLAS_LIB})
