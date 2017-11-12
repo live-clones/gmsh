@@ -590,37 +590,48 @@ int gmshModelGeoTwist(const std::vector<std::pair<int, int> > &inDimTags,
 int gmshModelGeoTranslate(const std::vector<std::pair<int, int> > &dimTags,
                           double dx, double dy, double dz)
 {
+  return !GModel::current()->getGEOInternals()->translate(dimTags, dx, dy, dz);
 }
 
 int gmshModelGeoRotate(const std::vector<std::pair<int, int> > &dimTags,
                        double x, double y, double z, double ax, double ay, double az,
                        double angle)
 {
+  return !GModel::current()->getGEOInternals()->rotate
+    (dimTags, x, y, z, ax, ay, az, angle);
 }
 
 int gmshModelGeoDilate(const std::vector<std::pair<int, int> > &dimTags,
                        double x, double y, double z,
                        double a, double b, double c)
 {
+  return !GModel::current()->getGEOInternals()->dilate
+    (dimTags, x, y, z, a, b, c);
 }
 
 int gmshModelGeoSymmetry(const std::vector<std::pair<int, int> > &dimTags,
                          double a, double b, double c, double d)
 {
+  return !GModel::current()->getGEOInternals()->symmetry
+    (dimTags, a, b, c, d);
 }
 
 int gmshModelGeoCopy(const std::vector<std::pair<int, int> > &inDimTags,
                      std::vector<std::pair<int, int> > &outDimTags)
 {
+  return !GModel::current()->getGEOInternals()->copy(inDimTags, outDimTags);
 }
 
 int gmshModelGeoRemove(const std::vector<std::pair<int, int> > &dimTags,
                        bool recursive)
 {
+  return !GModel::current()->getGEOInternals()->remove(dimTags, recursive);
 }
 
 int gmshModelGeoRemoveAllDuplicates()
 {
+  GModel::current()->getGEOInternals()->removeAllDuplicates();
+  return 0;
 }
 
 int gmshModelGeoSynchronize()
@@ -628,3 +639,7 @@ int gmshModelGeoSynchronize()
   GModel::current()->getGEOInternals()->synchronize(GModel::current());
   return 0;
 }
+
+// gmshModelOCC
+
+

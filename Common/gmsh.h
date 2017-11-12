@@ -136,13 +136,6 @@ GMSH_API gmshModelGeoRemoveAllDuplicates();
 GMSH_API gmshModelGeoSynchronize();
 
 // gmshModelOCC
-GMSH_API gmshModelOCCAddVertex(int &tag, double x, double y, double z, double lc);
-GMSH_API gmshModelOCCAddLine(int &tag, int startVertexTag, int endVertexTag);
-GMSH_API gmshModelOCCExtrude(const std::vector<std::pair<int, int> > &inDimTag,
-                             double dx, double dy, double dz,
-                             std::vector<std::pair<int, int> > &outDimTags);
-GMSH_API gmshModelOCCRemoveAllDuplicates();
-GMSH_API gmshModelOCCSynchronize();
 
 // gmshSolver
 

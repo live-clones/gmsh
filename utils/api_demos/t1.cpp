@@ -10,31 +10,32 @@ int main(int argc, char **argv)
   gmshModelCreate("t1");
 
   double lc = 1e-2;
-  int tag;
-  tag = 1; gmshModelGeoAddVertex(tag, 0, 0, 0, lc);
-  tag = 2; gmshModelGeoAddVertex(tag, .1, 0,  0, lc);
-  tag = 3; gmshModelGeoAddVertex(tag, .1, .3, 0, lc);
-  tag = 4; gmshModelGeoAddVertex(tag, 0,  .3, 0, lc);
 
-  tag = 1; gmshModelGeoAddLine(tag, 1, 2);
-  tag = 2; gmshModelGeoAddLine(tag, 3, 2);
-  tag = 3; gmshModelGeoAddLine(tag, 3, 4);
-  tag = 4; gmshModelGeoAddLine(tag, 4, 1);
+  std::vector<int> t = {1, 2, 3, 4};
+  gmshModelGeoAddVertex(t[0], 0, 0, 0, lc);
+  gmshModelGeoAddVertex(t[1], .1, 0,  0, lc);
+  gmshModelGeoAddVertex(t[2], .1, .3, 0, lc);
+  gmshModelGeoAddVertex(t[3], 0,  .3, 0, lc);
 
-  std::vector<int> l;
-  l.push_back(4); l.push_back(1); l.push_back(-2); l.push_back(3);
-  tag = 1; gmshModelGeoAddLineLoop(tag, l);
+  gmshModelGeoAddLine(t[0], 1, 2);
+  gmshModelGeoAddLine(t[1], 3, 2);
+  gmshModelGeoAddLine(t[2], 3, 4);
+  gmshModelGeoAddLine(t[3], 4, 1);
 
-  std::vector<int> ll;
-  ll.push_back(1);
-  tag = 1; gmshModelGeoAddPlaneSurface(tag, ll);
+  std::vector<int> l = {4, 1, -2, 3};
+  gmshModelGeoAddLineLoop(t[0], l);
 
-  std::vector<int> p;
-  p.push_back(1); p.push_back(2);
-  gmshModelAddPhysicalGroup(0, 1, p);
-  gmshModelAddPhysicalGroup(1, 2, p);
-  p.clear(); p.push_back(1);
-  gmshModelAddPhysicalGroup(2, 6, p);
+  std::vector<int> ll = {1};
+  gmshModelGeoAddPlaneSurface(t[0], ll);
+
+  std::vector<int> p1 = {1, 2};
+  gmshModelAddPhysicalGroup(0, 1, p1);
+
+  std::vector<int> p2 = {1, 2};
+  gmshModelAddPhysicalGroup(1, 2, p2);
+
+  std::vector<int> p3 = {1};
+  gmshModelAddPhysicalGroup(2, 6, p3);
   gmshModelSetPhysicalName(2, 6, "My surface");
 
   gmshModelGeoSynchronize();
