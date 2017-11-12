@@ -140,6 +140,7 @@ GMSH_API gmshModelGeoSynchronize();
 // gmshModelOcc
 GMSH_API gmshModelOccAddVertex(int &tag, double x, double y, double z,
                                double meshSize);
+GMSH_API gmshModelOccSynchronize();
 
 // gmshSolver
 

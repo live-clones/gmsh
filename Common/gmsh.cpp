@@ -653,9 +653,9 @@ int gmshModelOccAddVertex(int &tag, double x, double y, double z, double meshSiz
   return !GModel::current()->getOCCInternals()->addVertex(tag, x, y, z, meshSize);
 }
 
-int gmshModelGeoSynchronize()
+int gmshModelOccSynchronize()
 {
   createOcc();
-  GModel::current()->getOccInternals()->synchronize(GModel::current());
+  GModel::current()->getOCCInternals()->synchronize(GModel::current());
   return 0;
 }
