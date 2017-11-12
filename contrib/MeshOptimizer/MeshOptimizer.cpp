@@ -35,7 +35,6 @@
 #include <stack>
 #include "Context.h"
 #include "GmshConfig.h"
-#include "Gmsh.h"
 #include "GModel.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -50,7 +49,6 @@
 
 #if defined(HAVE_BFGS)
 
-
 typedef std::vector<MElement*> elVec;
 typedef elVec::const_iterator elVecConstIter;
 typedef std::set<MElement*> elSet;
@@ -63,9 +61,7 @@ typedef std::map<MVertex*, elVec> vertElVecMap;
 typedef std::map<MElement*, elSet> elElSetMap;
 typedef std::pair<elSet, vertSet> elSetVertSetPair;
 
-
 namespace {
-
 
 vertSet getAllBndVertices(elSet &elements, const vertElVecMap &vertex2elements)
 {
@@ -380,7 +376,7 @@ void displayMinMaxVal(int nbPatchSuccess[3], std::vector<std::string > &objFunct
       mvcolor(7, false);
   }
 }
-  
+
 void displayResultTable(int nbPatchSuccess[3], int nbPatch){
   mvcolor(1, true);
   mvprintLeft(28," TOTAL PATCHES : %4i ",nbPatch);
@@ -432,7 +428,7 @@ void optimizeDisjointPatches(const vertElVecMap &vertex2elements,
   std::vector<std::pair<double,double> > newObjFunctionRange;
   std::vector<std::string > objFunctionNames;
 
- 
+
   par.success = 1;
 
   const elEntMap &e2ePatch = par.useGeomForPatches ? element2entity : elEntMap();
@@ -499,7 +495,7 @@ void optimizeDisjointPatches(const vertElVecMap &vertex2elements,
 
     //#pragma omp critical
     par.success = std::min(par.success, success);
-    
+
     nbPatchSuccess[success+1]++;
     if (par.nCurses){
       displayMinMaxVal(nbPatchSuccess, objFunctionNames, newObjFunctionRange);
@@ -537,7 +533,7 @@ MElement *getWorstElement(elSet &badElts,
   return worstEl;
 }
 
-  
+
 void optimizeOneByOne(const vertElVecMap &vertex2elements,
                       const elEntMap &element2entity,
                       const elElMap &el2BndEl,
@@ -560,13 +556,13 @@ void optimizeOneByOne(const vertElVecMap &vertex2elements,
   if (par.verbose > 0) Msg::Info("%d bad elements, starting to iterate...", initNumBadElts);
 
   elElSetMap element2elements;                                                                // Element to element connectivity, built progressively
-  
+
   // Loop over bad elements
   for (int iBadEl=0; iBadEl<initNumBadElts; iBadEl++) {
 
     int success;
     if (badElts.empty()) break;
-    
+
     // Create patch around worst element and remove it from badElts
     MElement *worstEl = getWorstElement(badElts, e2ePatch, par);
     badElts.erase(worstEl);
@@ -574,7 +570,7 @@ void optimizeOneByOne(const vertElVecMap &vertex2elements,
     // Initialize patch size to be adapted
     int maxLayers = par.patchDef->maxLayers;
     double distanceFactor = 1.;
-    
+
     // Patch adaptation loop
     for (int iAdapt=0; iAdapt<par.patchDef->maxPatchAdapt; iAdapt++) {
 
@@ -653,9 +649,9 @@ void optimizeOneByOne(const vertElVecMap &vertex2elements,
         }
       }
 
-      
+
     }                                                                       // End of adaptation loop
-              
+
     nbPatchSuccess[success+1]++;
     if (par.nCurses){
       displayMinMaxVal(nbPatchSuccess, objFunctionNames, newObjFunctionRange);
@@ -670,7 +666,7 @@ void optimizeOneByOne(const vertElVecMap &vertex2elements,
         break;
       case -1: Msg::Info("Patch %i failed", iBadEl); break;
       }
-    
+
     par.success = std::min(par.success, success);
   }
 
@@ -696,7 +692,7 @@ void meshOptimizer(std::vector<GEntity*> &entities, MeshOptParameters &par)
   if (par.logFileName.compare("") != 0 || par.nCurses)
     Msg::SetCallback(&_logWriter);
 
-    
+
   double startTime = Cpu();
   if (par.nCurses) {
     mvbold(true);
@@ -753,7 +749,7 @@ void meshOptimizer(std::vector<GEntity*> &entities, MeshOptParameters &par)
       mvbold(true);
       mvprintCenter(-2, " ERROR: Unknown strategy %d for mesh optimization ", par.patchDef->strategy);
       mvcolor(2,false);
-      mvbold(false);    
+      mvbold(false);
     }
     else
       Msg::Error("Unknown strategy %d for mesh optimization", par.patchDef->strategy);
@@ -766,7 +762,7 @@ void meshOptimizer(std::vector<GEntity*> &entities, MeshOptParameters &par)
         mvbold(true);
         mvprintCenter(-2, " Optimization succeeded ");
         mvcolor(4,false);
-        mvbold(false);    
+        mvbold(false);
       }
       else
         Msg::Info("Optimization succeeded");
@@ -777,7 +773,7 @@ void meshOptimizer(std::vector<GEntity*> &entities, MeshOptParameters &par)
         mvbold(true);
         mvprintCenter(-2, " Optimization partially failed (all measures above critical value, but some below target) ");
         mvcolor(5,false);
-        mvbold(false);    
+        mvbold(false);
       }
       else
         Msg::Warning("Optimization partially failed (all measures above critical "
@@ -789,7 +785,7 @@ void meshOptimizer(std::vector<GEntity*> &entities, MeshOptParameters &par)
         mvbold(true);
         mvprintCenter(-2, "Optimization Failed");
         mvcolor(3,false);
-        mvbold(false);    
+        mvbold(false);
       }
       else
         Msg::Error("Optimization failed (some measures below critical value)");
@@ -803,7 +799,7 @@ void meshOptimizer(std::vector<GEntity*> &entities, MeshOptParameters &par)
   }
   if (par.logFileName.compare("") != 0 || par.nCurses)
     Msg::SetCallback(NULL);
-  
+
 #else
   Msg::Error("Mesh optimizer requires BFGS");
 #endif

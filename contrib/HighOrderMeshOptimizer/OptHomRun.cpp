@@ -36,7 +36,6 @@
 #include "OptHomRun.h"
 #include "OptHomPeriodicity.h"
 #include "GModel.h"
-#include "Gmsh.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MTetrahedron.h"

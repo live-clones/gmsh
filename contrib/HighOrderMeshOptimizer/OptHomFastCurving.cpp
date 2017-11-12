@@ -35,7 +35,6 @@
 #include "OptHomFastCurving.h"
 #include "GmshConfig.h"
 #include "GModel.h"
-#include "Gmsh.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -756,7 +755,7 @@ void optimizeCADDist2DP2(GEntity *geomEnt, std::vector<MVertex*> &baseVert)
   if (uBV0 < uBV1) { uMin = uBV0; uMax = uBV1; }
   else { uMin = uBV1; uMax = uBV0; }
   const double du = uMax - uMin;
-  
+
   // First initial value for secant method
   double u00 = uMin + 0.5*du;
   double distSq00 = moveAndGetDistSq2DP2(ge, &bndMetaElt, vert, u00);
