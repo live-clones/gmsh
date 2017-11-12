@@ -1,23 +1,13 @@
-#include <stdio.h>
 #include <gmsh.h>
 
 int main(int argc, char **argv)
 {
   gmshInitialize(argc, argv);
-  gmshSetOption("Mesh", "Algorithm", 5.);
-  GModel *m = new GModel();
-  m->readGEO("../../tutorial/t5.geo");
-  //GmshMergeFile("../../tutorial/t5.geo"); // will also set the bbox
-  m->mesh(3);
-  for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
-    GRegion *r = *it;
-    printf("volume %d contains %d elements:\n", r->tag(), r->getNumMeshElements());
-    for(unsigned int i = 0; i < r->getNumMeshElements(); i++)
-      printf(" %d", r->getMeshElement(i)->getNum());
-    printf("\n");
-  }
-  m->writeMSH("test.msh");
-  m->writeUNV("test.unv");
-  delete m;
-  GmshFinalize();
+  gmshOptionSetNumber("General.Terminal", 1);
+  gmshOptionSetNumber("Mesh.Algorithm", 5);
+  gmshOpen("../../tutorial/t5.geo");
+  gmshModelMesh(3);
+  gmshExport("test.msh");
+  gmshExport("test.unv");
+  gmshFinalize();
 }
