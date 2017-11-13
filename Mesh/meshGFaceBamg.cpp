@@ -20,7 +20,6 @@
 #include "meshGFaceDelaunayInsertion.h"
 #include "Options.h"
 #include "meshGFace.h"
-#include "GFaceCompound.h"
 #include "MElementOctree.h"
 
 #if defined(HAVE_BAMG)
@@ -71,29 +70,11 @@ static void computeMeshMetricsForBamg(GFace *gf, int numV,
 }
 
 
-void meshGFaceBamg(GFace *gf){
-
-   std::list<GEdge*> edges = gf->edges();
-   bool hasCompounds  = false;
-
-  //Replace edges by their compounds
-   std::set<GEdge*> mySet;
-   std::list<GEdge*>::iterator it = edges.begin();
-   while(it != edges.end()){
-    if((*it)->getCompound()){
-      hasCompounds = true;
-      GEdge *gec = (GEdge*)(*it)->getCompound();
-      mySet.insert(gec);
-    }
-    else{
-      mySet.insert(*it);
-    }
-    ++it;
-   }
-   edges.clear();
-   edges.insert(edges.begin(), mySet.begin(), mySet.end());
-   std::set<MVertex*> bcVertex;
-   for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
+void meshGFaceBamg(GFace *gf)
+{
+  std::list<GEdge*> edges = gf->edges();
+  std::set<MVertex*> bcVertex;
+  for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
     for (unsigned int i = 0; i < (*it)->lines.size(); i++){
       bcVertex.insert((*it)->lines[i]->getVertex(0));
       bcVertex.insert((*it)->lines[i]->getVertex(1));
@@ -149,16 +130,6 @@ void meshGFaceBamg(GFace *gf){
     double v1(bamgVertices[nodes[0]][1]);
     double v2(bamgVertices[nodes[1]][1]);
     double v3(bamgVertices[nodes[2]][1]);
-    if (hasCompounds){
-      MVertex *vv1 = new MVertex(u1,v1,0.0);
-      MVertex *vv2 = new MVertex(u2,v2,0.0);
-      MVertex *vv3 = new MVertex(u3,v3,0.0);
-      newVert.push_back(vv1);
-      newVert.push_back(vv2);
-      newVert.push_back(vv3);
-      MTriangle *tri = new MTriangle(vv1,vv2,vv3, i);
-      myParamElems.push_back(tri);
-    }
     double sign = (u2-u1)*(v3-v1) - (u3-u1)*(v2-v1);
     if (sign < 0){
       int temp = nodes[0];
@@ -189,9 +160,6 @@ void meshGFaceBamg(GFace *gf){
 			       bamgVertices, bamgTriangles, bamgBoundary);
 
   MElementOctree *_octree = NULL;
-  if (hasCompounds){
-    _octree = new MElementOctree(myParamElems);
-  }
 
   Mesh2 *refinedBamgMesh = 0;
   int iterMax = 41;
@@ -239,27 +207,6 @@ void meshGFaceBamg(GFace *gf){
       // }
       //If point not found because compound edges have been remeshed and boundary triangles have changed
       //then we call our new octree
-      if ( !gp.succeeded() && hasCompounds){
-	double uvw[3] = {v[0],v[1], 0.0};
-	double UV[3];
-	double initialTol = MElement::getTolerance();
-	MElement::setTolerance(1.e-2);
-	MElement *e = _octree->find(v[0],v[1], 0.0, -1);
-	MElement::setTolerance(initialTol);
-	if (e){
-	  e->xyz2uvw(uvw,UV);
-	  double valX[8], valY[8], valZ[8];
-	  for (int i=0;i<e->getNumPrimaryVertices();i++){
-	    int numTri = e->getNum();
-	    valX[i] = gf->triangles[numTri]->getVertex(i)->x();
-	    valY[i] = gf->triangles[numTri]->getVertex(i)->y();
-	    valZ[i] = gf->triangles[numTri]->getVertex(i)->z();
-	  }
-	  gp.x() = e->interpolate(valX,UV[0],UV[1],UV[2]);
-	  gp.y() = e->interpolate(valY,UV[0],UV[1],UV[2]);
-	  gp.z() = e->interpolate(valZ,UV[0],UV[1],UV[2]);
-	}
-      }
       MFaceVertex *x = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, v[0], v[1]);
       yetAnother[i] = x;
       gf->mesh_vertices.push_back(x);

@@ -6,7 +6,6 @@
 #include <sstream>
 #include "GModel.h"
 #include "GFace.h"
-#include "GFaceCompound.h"
 #include "gmshEdge.h"
 #include "Geo.h"
 #include "GeoInterpolation.h"

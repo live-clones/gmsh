@@ -436,7 +436,6 @@ fullMatrix<double> gLevelsetPoints::generateRbfMat(int p, int index,
     }
   }
   return rbfMat;
-
 }
 
 void gLevelsetPoints::RbfOp(int p, int index,

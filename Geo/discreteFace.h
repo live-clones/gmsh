@@ -18,10 +18,10 @@ class discreteDiskFace;
 class triangulation;
 
 class discreteFace : public GFace {
-  // FIXME we should at the end use a mesh() function that is specific to
-  // discreteFace; we should also SAVE those data's
+ private:
+  bool _meshable;
  public:
-  discreteFace(GModel *model, int num);
+  discreteFace(GModel *model, int num, bool meshable=false);
   virtual ~discreteFace() {}
   void checkAndFixOrientation();
   void setupDiscreteVertex(GVertex*,MVertex*,std::set<MVertex*>*);
@@ -40,7 +40,6 @@ class discreteFace : public GFace {
   double curvatureMax(const SPoint2 &param) const;
   double curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
                                   double *curvMax, double *curvMin) const;
-  virtual bool haveParametrization() { return getCompound(); }
   GEntity::GeomType geomType() const { return DiscreteSurface; }
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &param,
@@ -52,7 +51,7 @@ class discreteFace : public GFace {
   void writeGEO(FILE *fp);
   void createGeometry();
   void gatherMeshes();
-  virtual void mesh (bool verbose);
+  virtual void mesh(bool verbose);
   std::vector<discreteDiskFace*> _atlas;
   std::vector<GFace*> _CAD;
   std::map<MEdge,std::vector<int>,Less_Edge> allEdg2Tri;

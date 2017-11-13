@@ -7,7 +7,6 @@
 #include "GFace.h"
 #include "GVertex.h"
 #include "GEdge.h"
-#include "GEdgeCompound.h"
 #include "GEntity.h"
 #include "Context.h"
 #include "Field.h"
@@ -19,12 +18,9 @@ static double max_surf_curvature(const GEdge *ge, double u)
   std::list<GFace *> faces = ge->faces();
   std::list<GFace *>::iterator it = faces.begin();
   while(it != faces.end()){
-    if ((*it)->geomType() != GEntity::CompoundSurface &&
-        (*it)->geomType() != GEntity::DiscreteSurface){
-      SPoint2 par = ge->reparamOnFace((*it), u, 1);
-      double cc = (*it)->curvature(par);
-      val = std::max(cc, val);
-    }
+    SPoint2 par = ge->reparamOnFace((*it), u, 1);
+    double cc = (*it)->curvature(par);
+    val = std::max(cc, val);
     ++it;
   }
   return val;
@@ -93,71 +89,24 @@ SMetric3 max_edge_curvature_metric(const GEdge *ge, double u)
 
 static SMetric3 metric_based_on_surface_curvature(const GEdge *ge, double u, bool iso_surf)
 {
-  const GEdgeCompound* ptrCompoundEdge = dynamic_cast<const GEdgeCompound*>(ge);
-  if (ptrCompoundEdge){
-    double cmax, cmin;
-    SVector3 dirMax,dirMin;
-    cmax = ptrCompoundEdge->curvatures(u,&dirMax, &dirMin, &cmax,&cmin);
-    if (cmin == 0)cmin =1.e-12;
-    if (cmax == 0)cmax =1.e-12;
-    double lambda2 =  ((2 * M_PI) /( fabs(cmax) *  CTX::instance()->mesh.minCircPoints ) );
-    double lambda1 =  ((2 * M_PI) /( fabs(cmin) *  CTX::instance()->mesh.minCircPoints ) );
-    SVector3 Z = crossprod(dirMax,dirMin);
-
-    lambda1 = std::max(lambda1, CTX::instance()->mesh.lcMin);
-    lambda2 = std::max(lambda2, CTX::instance()->mesh.lcMin);
-    lambda1 = std::min(lambda1, CTX::instance()->mesh.lcMax);
-    lambda2 = std::min(lambda2, CTX::instance()->mesh.lcMax);
-
-    SMetric3 curvMetric (1. / (lambda1 * lambda1), 1. / (lambda2 * lambda2),
-                         1.e-12, dirMin, dirMax, Z);
-    return curvMetric;
+  SMetric3 mesh_size(1.e-12);
+  std::list<GFace *> faces = ge->faces();
+  std::list<GFace *>::iterator it = faces.begin();
+  // we choose the metric eigenvectors to be the ones
+  // related to the edge ...
+  SMetric3 curvMetric = max_edge_curvature_metric(ge, u);
+  while(it != faces.end()){
+    SPoint2 par = ge->reparamOnFace((*it), u, 1);
+    SMetric3 m = metric_based_on_surface_curvature (*it, par.x(), par.y(), iso_surf);
+    curvMetric = intersection_conserveM1(curvMetric,m);
+    ++it;
   }
-  else{
-    SMetric3 mesh_size(1.e-12);
-    std::list<GFace *> faces = ge->faces();
-    std::list<GFace *>::iterator it = faces.begin();
-    // we choose the metric eigenvectors to be the ones
-    // related to the edge ...
-    SMetric3 curvMetric = max_edge_curvature_metric(ge, u);
-    while(it != faces.end()){
-      if (((*it)->geomType() != GEntity::CompoundSurface) &&
-          ((*it)->geomType() != GEntity::DiscreteSurface)){
-        SPoint2 par = ge->reparamOnFace((*it), u, 1);
-        SMetric3 m = metric_based_on_surface_curvature (*it, par.x(), par.y(), iso_surf);
-        curvMetric = intersection_conserveM1(curvMetric,m);
-      }
-      ++it;
-    }
-
-    return curvMetric;
-  }
+  return curvMetric;
 }
 
 static SMetric3 metric_based_on_surface_curvature(const GVertex *gv, bool iso_surf)
 {
   SMetric3 mesh_size(1.e-15);
-  std::list<GEdge*> l_edges = gv->edges();
-  for (std::list<GEdge*>::const_iterator ite = l_edges.begin();
-       ite != l_edges.end(); ++ite){
-    GEdge *_myGEdge = *ite;
-    Range<double> bounds = _myGEdge->parBounds(0);
-
-    // ES: Added extra if condition to use the code below only with compund curves
-    // This is because we want to call the function
-    // metric_based_on_surface_curvature(const GEdge *ge, double u) for the case when
-    // ge is a compound edge
-    if (_myGEdge->geomType() == GEntity::CompoundCurve){
-      if (gv == _myGEdge->getBeginVertex())
-        mesh_size = intersection
-          (mesh_size,
-           metric_based_on_surface_curvature(_myGEdge, bounds.low(), iso_surf));
-      else
-        mesh_size = intersection
-          (mesh_size,
-           metric_based_on_surface_curvature(_myGEdge, bounds.high(), iso_surf));
-    }
-  }
   return mesh_size;
 }
 

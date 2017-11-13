@@ -231,9 +231,6 @@ class GModel {
   char getVisibility(){ return _visible; }
   void setVisibility(char val){ _visible = val; }
 
-  // set the visibility of compound entities
-  void setCompoundVisibility();
-
   // get the number of entities in this model
   int getNumRegions() const { return regions.size(); }
   int getNumFaces() const { return faces.size(); }
@@ -278,9 +275,6 @@ class GModel {
   void remove(GVertex *v);
   void remove(int dim, int tag, bool recursive=false);
   void remove(const std::vector<std::pair<int, int> > &dimTags, bool recursive=false);
-
-  GEdge *addCompoundEdge(std::vector<GEdge*> edges, int num=-1);
-  GFace *addCompoundFace(std::vector<GFace*> faces, int type, int split, int num=-1);
 
   // snap vertices on model edges by using geometry tolerance
   void snapVertices();
@@ -446,9 +440,7 @@ class GModel {
 
   // create topology from mesh
   void createTopologyFromMeshNew();
-  void createTopologyFromMesh(int ignoreHoles=0);
-  void createTopologyFromRegions(std::vector<discreteRegion*> &discRegions);
-  void createTopologyFromFaces(std::vector<discreteFace*> &pFaces, int ignoreHoles=0);
+  void createTopologyFromMesh();
   void makeDiscreteRegionsSimplyConnected();
   void makeDiscreteFacesSimplyConnected();
 

@@ -1129,10 +1129,6 @@ void GetOptions(int argc, char *argv[])
         else
           Msg::Fatal("Missing argument");
       }
-      else if(!strcmp(argv[i] + 1, "showCompounds")) {
-        CTX::instance()->geom.hideCompounds = 0;
-        i++;
-      }
 #endif
 #if defined(__APPLE__)
       else if(!strncmp(argv[i] + 1, "psn", 3)) {

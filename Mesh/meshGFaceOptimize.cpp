@@ -1173,7 +1173,6 @@ int edgeSwapPass2(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
 static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
 {
   // never recombine a face that is part of a compound!
-  if(gf->getCompound()) return 0;
   if(gf->triangles.size() == 0) return 1;
 
   int success = 1;
@@ -1444,7 +1443,7 @@ void recombineIntoQuads(GFace *gf,
 
   bool haveParam = true;
   bool saveAll = CTX::instance()->mesh.saveAll;
-  if(gf->geomType() == GEntity::DiscreteSurface && !gf->getCompound())
+  if(gf->geomType() == GEntity::DiscreteSurface)
     haveParam = false;
 
   if (saveAll) gf->model()->writeMSH("before.msh");
