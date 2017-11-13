@@ -10,21 +10,21 @@
 // them to remesh STL files, even if in this case there's usually only a single
 // elementary geometrical entity per compound.
 
-// FIXME - the global "meshDiscrete" option will be replaced by meshing
-// constraints "Compound Surface{...};"
+// FIXME: compute parametrization of discrete surfaces read from mesh file
 General.MeshDiscrete = 1;
 
 // Let's merge the mesh that we would like to remesh. This mesh was reclassified
 // ("colored") from an initial STL triangulation using the "Reclassify 2D" tool
 // in Gmsh, so that we could split it along sharp geometrical features.
 Merge "t13_data.msh";
-RefineMesh;
 
 // We can now define a compound line (resp. surface) for each discrete line
 // (resp. surface) in the model
-// FIXME: this is currently not used
-ll[] = Line {:};
 ss[] = Surface {:};
+
+// FIXME: does not do anything yet (because the underlying surfaces are
+// discrete):
+Compound Surface{ss[]};
 
 // And we can create the volume based on the new compound entities
 Surface Loop(1) = {ss[]};
@@ -36,7 +36,7 @@ Field[1].F = "2.0";
 Background Field = 1;
 
 DefineConstant[
-  funny = {1, Choices{0,1},
+  funny = {0, Choices{0,1},
     Name "Parameters/Apply funny mesh size field?"}
 ];
 

@@ -693,7 +693,6 @@ int GModel::_readMSH2(const std::string &name)
 
   _createGeometryOfDiscreteEntities() ;
 
-
   // copying periodic information from the mesh
 
   rewind(fp);

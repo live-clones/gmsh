@@ -218,7 +218,7 @@ class GEdge : public GEntity {
 
   virtual void discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts);
   SPoint3 closestPoint (SPoint3 &p, double tolerance);
-  virtual void mesh(bool) ;
+  virtual void mesh(bool verbose) ;
 };
 
 #endif

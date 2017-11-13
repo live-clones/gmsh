@@ -166,7 +166,6 @@ Cos                     return tCos;
 Cosh                    return tCosh;
 Cpu                     return tCpu;
 CreateTopology          return tCreateTopology;
-CreateTopologyNoHoles   return tCreateTopologyNoHoles;
 CurrentDir              return tCurrentDirectory;
 CurrentDirectory        return tCurrentDirectory;
 Cylinder                return tCylinder;

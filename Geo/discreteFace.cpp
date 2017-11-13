@@ -74,7 +74,8 @@ static inline void crouzeixRaviart(const std::vector<double> &U,std::vector<doub
     F[i] =  U[0] * (1.-2.*eta[i]) + U[1] * (2.*(xsi[i]+eta[i])-1.) + U[2] * (1-2.*xsi[i]);
 }
 
-discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
+discreteFace::discreteFace(GModel *model, int num, bool meshable)
+  : GFace(model, num), _meshable(meshable)
 {
   Surface *s = CreateSurface(num, MSH_SURF_DISCRETE);
   Tree_Add(model->getGEOInternals()->Surfaces, &s);
@@ -188,18 +189,13 @@ void discreteFace::secondDer(const SPoint2 &param,
 
 void discreteFace::createGeometry()
 {
-
   checkAndFixOrientation();
 
-
 #if defined(HAVE_SOLVER) && defined(HAVE_ANN)
-
-
-
   int order = 1;
   int nPart = 2;
   double eta = .5*5/(2.*3.14);
-  if (!_atlas.empty())return;
+  if (!_atlas.empty()) return;
 
   double dtSplit = 0.0;
 
@@ -217,7 +213,7 @@ void discreteFace::createGeometry()
      (toSplit.top())->aspectRatio() > eta ||
      (toSplit.top())->seamPoint){
 
-    while( !toSplit.empty()){
+    while(!toSplit.empty()){
       std::vector<triangulation*> part;
       triangulation* tosplit = toSplit.top();
       toSplit.pop();
@@ -245,7 +241,6 @@ void discreteFace::createGeometry()
   }
   updateTopology(toParam);
 
-
   /*
   FILE* debug = Fopen("tralala-init.pos","w");
   fprintf(debug,"View \"discreteEdges\"{\n");
@@ -272,12 +267,10 @@ void discreteFace::createGeometry()
   */
 
   for(unsigned int i=0; i<toParam.size(); i++){
-
     fillHoles(toParam[i]);
     //sprintf(name,"mapFilled%d.pos",i);
     //toParam[i]->print(name, toParam[i]->idNum);
   }
-
 
   for(unsigned int i=0; i<toParam.size(); i++){
     discreteDiskFace *df = new discreteDiskFace (this,toParam[i], order,(_CAD.empty() ? NULL : &_CAD));
@@ -340,59 +333,36 @@ void discreteFace::gatherMeshes()
 void discreteFace::mesh(bool verbose)
 {
 #if defined(HAVE_ANN) && defined(HAVE_SOLVER) && defined(HAVE_MESH)
+  /*
   for(unsigned int j=0; j<_atlas.size(); j++){
-
     std::list<GEdge*> ge = _atlas[j]->edges();
     for(std::list<GEdge*>::iterator it = ge.begin(); it!=ge.end(); ++it){
-
       char myname[256];
       sprintf(myname,"tralala%d_%d.pos",(*it)->tag(),j+1);
       FILE* debug = Fopen(myname,"w");
       fprintf(debug,"View \"discreteEdges\"{\n");
       std::vector<MLine*> ml = (*it)->lines;
-
-      //printf("___map %d (%d), ge %d___ (%p)\n",j+1,_atlas[j]->tag(),(*it)->tag(),(*it));
       for(unsigned int i=0; i<ml.size(); i++){
 	ml[i]->writePOS(debug,false,true,false,false,false,false,1.,(*it)->tag());
-	//printf("%d[%d;%d]--",ml[i]->getNum(),ml[i]->getVertex(0)->getNum(),ml[i]->getVertex(1)->getNum());
       }
-      //printf("\n");
-
       fprintf(debug,"};");
       fclose(debug);
     }
   }
+  */
 
-  if (!CTX::instance()->meshDiscrete) return;
+  if(!_meshable && !CTX::instance()->meshDiscrete) return;
 
-  //Msg::Info("Discrete Face %d is going to be meshed",tag());
   for (unsigned int i=0;i<_atlas.size();i++){
-    //    {
-      //      void openProblemsON(void);
-      //      if (tag() == 3) openProblemsON();
-      //    }
     _atlas[i]->mesh(verbose);
-    //    {
-    //      void openProblemsOFF(void);
-    //      if (tag()==3) openProblemsOFF();
-    //    }
-    /*
-      const char *name = "atlas%d";
-      char filename[256];
-      sprintf(filename,name,i);t0
-      _atlas[i]->printPhysicalMesh(filename);*/
   }
-
   gatherMeshes();
   meshStatistics.status = GFace::DONE;
 #endif
 }
 
-
-
 void discreteFace::checkAndFixOrientation()
 {
-
   // first of all, all the triangles have to be oriented in the same way
   std::map<MEdge,std::vector<MElement*>,Less_Edge> ed2tri; // edge to 1 or 2 triangle(s)
 
@@ -408,7 +378,8 @@ void discreteFace::checkAndFixOrientation()
   std::map<MElement*,std::vector<MElement*> > neighbors;
   for (unsigned int i=0; i<triangles.size(); ++i){
     MElement* e = triangles[i];
-    for(int j=0; j<e->getNumEdges(); j++){ // #improveme: efficiency could be improved by setting neighbors mutually
+    for(int j=0; j<e->getNumEdges(); j++){
+      // #improveme: efficiency could be improved by setting neighbors mutually
       std::vector<MElement*> my_mt = ed2tri[e->getEdge(j)];
       if (my_mt.size() > 1){// my_mt.size() = {1;2}
 	MElement* neighTri  = my_mt[0] == e ? my_mt[1] : my_mt[0];
@@ -472,8 +443,8 @@ void discreteFace::checkAndFixOrientation()
   } // end while
 }
 
-
-void discreteFace::setupDiscreteVertex(GVertex*dv,MVertex*mv,std::set<MVertex*>*trash){
+void discreteFace::setupDiscreteVertex(GVertex*dv,MVertex*mv,std::set<MVertex*>*trash)
+{
   mv->setEntity(dv);
   dv->mesh_vertices.push_back(mv);
   this->model()->add(dv);
@@ -494,13 +465,11 @@ void discreteFace::setupDiscreteEdge(discreteEdge*de,std::vector<MLine*>mlines,
   de->createGeometry();
   de->getBeginVertex()->addEdge(de);
   de->getEndVertex()->addEdge(de);
-
 }
 
 // split old GEdge's
 void discreteFace::splitDiscreteEdge(GEdge *de , GVertex *gv, discreteEdge* newE[2])
 {
-
   MVertex *vend = de->getEndVertex()->mesh_vertices[0];
 
   int mytag = this->model()->getMaxElementaryNumber(1) + 1;
@@ -560,7 +529,8 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
 #if defined(HAVE_SOLVER) && defined(HAVE_ANN) && defined(HAVE_METIS)
 
   int nVertex = trian->tri.size(); // number of elements
-  int nEdge = trian->ed2tri.size() - trian->borderEdg.size();// number of edges, (without the boundary ones)
+  // number of edges, (without the boundary ones)
+  int nEdge = trian->ed2tri.size() - trian->borderEdg.size();
 
   std::vector<int> idx;
   idx.resize(nVertex+1);
@@ -777,7 +747,8 @@ void discreteFace::updateTopology(std::vector<triangulation*>&partition)
 }
 
 void discreteFace::fillHoles(triangulation* trian)
-{// #improveme moving the center
+{
+  // #improveme moving the center
 #if defined(HAVE_SOLVER) && defined(HAVE_ANN)
   std::map<double,std::vector<MVertex*> > bords = trian->bord;
   std::map<double,std::vector<MVertex*> >::reverse_iterator it = bords.rbegin();
@@ -847,8 +818,6 @@ void discreteFace::addTriangle(triangulation* trian, MTriangle* t)
   trian->tri.push_back(t);
 #endif
 }
-
-
 
 void discreteFace::complex_crossField()
 {
@@ -986,9 +955,6 @@ void discreteFace::complex_crossField()
   fclose(myfile);
 #endif
 }
-
-
-
 
 void discreteFace::crossField()
 {
@@ -1139,7 +1105,6 @@ void discreteFace::crossField()
   fclose(myfile);
 #endif
 }
-
 
 void discreteFace::writeGEO(FILE *fp)
 {

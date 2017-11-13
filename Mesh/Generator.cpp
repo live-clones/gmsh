@@ -446,7 +446,7 @@ static void Mesh2D(GModel *m)
   // meshes) is global as it depends on a smooth normal field generated from the
   // surface mesh of the source surfaces
   if(!Mesh2DWithBoundaryLayers(m)){
-    std::set<GFace*, GEntityLessThan> cf, f;
+    std::set<GFace*, GEntityLessThan> f;
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
       f.insert(*it);
 
@@ -463,27 +463,7 @@ static void Mesh2D(GModel *m)
       for(size_t K = 0 ; K < temp.size() ; K++){
         if (temp[K]->meshStatistics.status == GFace::PENDING){
           backgroundMesh::current()->unset();
-	  // meshGFace mesher(true);
           temp[K]->mesh(true);
-#if defined(HAVE_BFGS)
-          if(CTX::instance()->mesh.optimizeLloyd){
-            if (temp[K]->geomType()==GEntity::Plane ||
-                temp[K]->geomType()==GEntity::RuledSurface) {
-              if (temp[K]->meshAttributes.method != MESH_TRANSFINITE &&
-                  !temp[K]->meshAttributes.extrude) {
-                smoothing smm(CTX::instance()->mesh.optimizeLloyd, 6);
-                //m->writeMSH("beforeLLoyd.msh");
-                smm.optimize_face(temp[K]);
-                int rec = ((CTX::instance()->mesh.recombineAll ||
-                            temp[K]->meshAttributes.recombine) &&
-                           !CTX::instance()->mesh.recombine3DAll);
-                //m->writeMSH("afterLLoyd.msh");
-                if (rec) recombineIntoQuads(temp[K]);
-                //m->writeMSH("afterRecombine.msh");
-              }
-            }
-          }
-#endif
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
@@ -496,35 +476,6 @@ static void Mesh2D(GModel *m)
 #if defined(_OPENMP)
 #pragma omp master
 #endif
-      for(std::set<GFace*, GEntityLessThan>::iterator it = cf.begin();
-          it != cf.end(); ++it){
-        if ((*it)->meshStatistics.status == GFace::PENDING){
-          backgroundMesh::current()->unset();
-	  //          meshGFace mesher(true);
-          (*it)->mesh(true);
-#if defined(HAVE_BFGS)
-          if(CTX::instance()->mesh.optimizeLloyd){
-            if ((*it)->geomType()==GEntity::Plane ||
-                (*it)->geomType()==GEntity::RuledSurface) {
-              if ((*it)->meshAttributes.method != MESH_TRANSFINITE &&
-                  !(*it)->meshAttributes.extrude) {
-                smoothing smm(CTX::instance()->mesh.optimizeLloyd, 6);
-                //m->writeMSH("beforeLLoyd.msh");
-                smm.optimize_face(*it);
-                int rec = ((CTX::instance()->mesh.recombineAll ||
-                            (*it)->meshAttributes.recombine) &&
-                           !CTX::instance()->mesh.recombine3DAll);
-                //m->writeMSH("afterLLoyd.msh");
-                if (rec) recombineIntoQuads(*it);
-                //m->writeMSH("afterRecombine.msh");
-              }
-            }
-          }
-#endif
-          nPending++;
-        }
-        if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
-      }
       if(!nPending) break;
       if(nIter++ > 10) break;
     }

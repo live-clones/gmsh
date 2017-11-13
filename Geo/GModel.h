@@ -440,9 +440,7 @@ class GModel {
 
   // create topology from mesh
   void createTopologyFromMeshNew();
-  void createTopologyFromMesh(int ignoreHoles=0);
-  void createTopologyFromRegions(std::vector<discreteRegion*> &discRegions);
-  void createTopologyFromFaces(std::vector<discreteFace*> &pFaces, int ignoreHoles=0);
+  void createTopologyFromMesh();
   void makeDiscreteRegionsSimplyConnected();
   void makeDiscreteFacesSimplyConnected();
 
