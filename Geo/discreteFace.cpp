@@ -208,7 +208,7 @@ void discreteFace::createGeometry()
   init->iter = iter++;
   allEdg2Tri = init->ed2tri;
   toSplit.push(init);
-  //  printf("%12.5E\n",(toSplit.top())->aspectRatio() );
+
   if((toSplit.top())->genus()!=0 ||
      (toSplit.top())->aspectRatio() > eta ||
      (toSplit.top())->seamPoint){
@@ -232,9 +232,9 @@ void discreteFace::createGeometry()
 	  toParam.push_back(part[i]);
 	  part[i]->idNum=id++;
 	}
-      }// end for i
-    }// !.empty()
-  }// end if it is not disk-like
+      }
+    }
+  }
   else{
     toParam.push_back(toSplit.top());
     toSplit.top()->idNum=id++;
@@ -245,19 +245,13 @@ void discreteFace::createGeometry()
   FILE* debug = Fopen("tralala-init.pos","w");
   fprintf(debug,"View \"discreteEdges\"{\n");
   for(unsigned int j=0; j<toParam.size(); j++){
-
     std::list<GEdge*> ge = toParam[j]->my_GEdges;
     for(std::list<GEdge*>::iterator it = ge.begin(); it!=ge.end(); ++it){
       if((*it)->tag()==112 ){
-
 	std::vector<MLine*> ml = (*it)->lines;
-	printf("___(init) map %d, ge %d___ (%p)\n",j+1,(*it)->tag(),(*it));
 	for(unsigned int i=0; i<ml.size(); i++){
 	  ml[i]->writePOS(debug,true,false,false,false,false,false,1.,(*it)->tag());
-	  printf("%d[%d;%d]--",ml[i]->getNum(),ml[i]->getVertex(0)->getNum(),ml[i]->getVertex(1)->getNum());
 	}
-	printf("\n");
-
       }
 
     }
@@ -268,14 +262,15 @@ void discreteFace::createGeometry()
 
   for(unsigned int i=0; i<toParam.size(); i++){
     fillHoles(toParam[i]);
-    //sprintf(name,"mapFilled%d.pos",i);
+    //sprintf(name, "mapFilled%d.pos",i);
     //toParam[i]->print(name, toParam[i]->idNum);
   }
 
   for(unsigned int i=0; i<toParam.size(); i++){
-    discreteDiskFace *df = new discreteDiskFace (this,toParam[i], order,(_CAD.empty() ? NULL : &_CAD));
-    df->printAtlasMesh();
-    df->printParamMesh();
+    discreteDiskFace *df = new discreteDiskFace
+      (this, toParam[i], order, (_CAD.empty() ? NULL : &_CAD));
+    //df->printAtlasMesh();
+    //df->printParamMesh();
     //df->putOnView(tag(), i, true,true);
     df->replaceEdges(toParam[i]->my_GEdges);
     _atlas.push_back(df);
@@ -307,7 +302,9 @@ void discreteFace::gatherMeshes()
       else {
 	if (_CAD.empty())triangles.push_back(t);
 	else
-	  Msg::Warning ("FILE %s LINE %d Triangle from atlas part %u has no classification for (u;v)=(%f;%f)",__FILE__,__LINE__,i+1,pc.x(),pc.y());
+	  Msg::Warning("FILE %s LINE %d Triangle from atlas part %u has no "
+                       "classification for (u;v)=(%f;%f)",__FILE__,
+                       __LINE__, i+1, pc.x(), pc.y());
       }
     }
     _atlas[i]->triangles.clear();
@@ -323,7 +320,9 @@ void discreteFace::gatherMeshes()
 	// here we should recompute on the CAD if necessary
 	mt->gf->mesh_vertices.push_back(v);
       }
-      else Msg::Warning ("FILE %s LINE %d Vertex has no classification",__FILE__,__LINE__);
+      else
+        Msg::Warning("FILE %s LINE %d Vertex has no classification",
+                     __FILE__, __LINE__);
     }
     _atlas[i]->mesh_vertices.clear();
   }
@@ -378,7 +377,7 @@ void discreteFace::checkAndFixOrientation()
   std::map<MElement*,std::vector<MElement*> > neighbors;
   for (unsigned int i=0; i<triangles.size(); ++i){
     MElement* e = triangles[i];
-    for(int j=0; j<e->getNumEdges(); j++){
+    for(int j = 0; j < e->getNumEdges(); j++){
       // #improveme: efficiency could be improved by setting neighbors mutually
       std::vector<MElement*> my_mt = ed2tri[e->getEdge(j)];
       if (my_mt.size() > 1){// my_mt.size() = {1;2}
@@ -388,11 +387,14 @@ void discreteFace::checkAndFixOrientation()
     }
   }
 
-  // queue: first in, first out
-  std::queue<MElement*> checkList; // element for reference orientation
-  std::queue< std::vector<MElement*> > checkLists; // corresponding neighbor element to be checked for its orientation
-  std::queue<MElement*> my_todo; // todo list
-  std::map<MElement*,bool> check_todo; // help to complete todo list
+  // element for reference orientation
+  std::queue<MElement*> checkList;
+  // corresponding neighbor element to be checked for its orientation
+  std::queue< std::vector<MElement*> > checkLists;
+  // todo list
+  std::queue<MElement*> my_todo;
+  // help to complete todo list
+  std::map<MElement*,bool> check_todo;
 
   my_todo.push(triangles[0]);
 
@@ -428,10 +430,13 @@ void discreteFace::checkAndFixOrientation()
 	for (unsigned int j=0; j<3; j++){
 	  if (current->getVertex(k) == neigs[i]->getVertex(j)){
 	    myCond = true;
-	    if (!(current->getVertex(k!=2 ?k+1 : 0 ) == neigs[i]->getVertex(j!=0 ? j-1 : 2) ||
-		  current->getVertex(k!=0 ?k-1 : 2 ) == neigs[i]->getVertex(j!=2 ? j+1 : 0))){
+	    if (!(current->getVertex(k!=2 ?k+1 : 0 ) ==
+                  neigs[i]->getVertex(j!=0 ? j-1 : 2) ||
+		  current->getVertex(k!=0 ?k-1 : 2 ) ==
+                  neigs[i]->getVertex(j!=2 ? j+1 : 0))){
 	      neigs[i]->reverse();
-	      //Msg::Info("discreteFace: triangle %d has been reoriented.",neigs[i]->getNum());
+	      //Msg::Info("discreteFace: triangle %d has been reoriented.",
+              //          neigs[i]->getNum());
 	    }
 	    break;
 	  }
@@ -439,11 +444,12 @@ void discreteFace::checkAndFixOrientation()
 	if (myCond)
 	  break;
       }
-    } // end for unsigned int i
-  } // end while
+    }
+  }
 }
 
-void discreteFace::setupDiscreteVertex(GVertex*dv,MVertex*mv,std::set<MVertex*>*trash)
+void discreteFace::setupDiscreteVertex(GVertex*dv, MVertex*mv,
+                                       std::set<MVertex*>*trash)
 {
   mv->setEntity(dv);
   dv->mesh_vertices.push_back(mv);
@@ -457,7 +463,8 @@ void discreteFace::setupDiscreteEdge(discreteEdge*de,std::vector<MLine*>mlines,
 {
   this->model()->add(de);// new GEdge
   de->setTopo(mlines);// associated MLine's
-  for(unsigned int i=1; i<mlines.size(); i++){//not the first vertex of the GEdge (neither the last one)
+  for(unsigned int i=1; i<mlines.size(); i++){
+    //not the first vertex of the GEdge (neither the last one)
     mlines[i]->getVertex(0)->setEntity(de);
     de->mesh_vertices.push_back(mlines[i]->getVertex(0));
     if(trash) trash->insert(mlines[i]->getVertex(0));
@@ -561,7 +568,8 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
   std::vector<int> part;
   part.resize(nVertex);
   int zero = 0;
-  METIS_PartGraphRecursive(&nVertex,&(idx[0]),&(nbh[0]),NULL,NULL,&zero,&zero,&nPartitions,&zero,&edgeCut,&(part[0]));
+  METIS_PartGraphRecursive(&nVertex, &(idx[0]), &(nbh[0]), NULL, NULL,
+                           &zero, &zero, &nPartitions, &zero, &edgeCut, &(part[0]));
 
   std::map<MElement*,int> el2part;
   std::vector<std::vector<MElement*> > elem;
@@ -573,14 +581,18 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
 
   //check connectivity
   for(int p=0; p<nPartitions; p++){// part by part
-    std::set<MElement*> celem(elem[p].begin(),elem[p].end());// current elements of the p-th part
-    std::queue<MElement*> my_todo; // todo list, for adjacency check - in order to check the connectivity of the part
-    std::map<MElement*,bool> check_todo; // help to complete todo list
+    // current elements of the p-th part
+    std::set<MElement*> celem(elem[p].begin(),elem[p].end());
+    // todo list, for adjacency check - in order to check the connectivity of the part
+    std::queue<MElement*> my_todo;
+    // help to complete todo list
+    std::map<MElement*,bool> check_todo;
     std::vector<MElement*> temp = elem[p];
     MElement* starter = temp[0];
     my_todo.push(starter);
     check_todo[starter] = true;
-    celem.erase(starter);// if the element is connected to the previous ones, it is removed from the set
+    // if the element is connected to the previous ones, it is removed from the set
+    celem.erase(starter);
     while(!my_todo.empty()){
       MElement* current = my_todo.front();
       my_todo.pop();
@@ -589,32 +601,35 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
 	if(trian->ed2tri[ed].size()>1){
 	  const std::vector<int> &oldnums = trian->ed2tri[ed];
 	  int on = trian->tri[oldnums[0]] == current ? oldnums[1] : oldnums[0];
-	  if(check_todo.find(trian->tri[on])==check_todo.end() && el2part[trian->tri[on]]==p){
+	  if(check_todo.find(trian->tri[on])==check_todo.end() &&
+             el2part[trian->tri[on]]==p){
 	    my_todo.push(trian->tri[on]);
 	    check_todo[trian->tri[on]] = true;
 	    celem.erase(trian->tri[on]);
 	  }
 	}
-      }// end for j
-    }// end while
-    if(!celem.empty()){// if the set is empty, it means that the part was connected
-      //Msg::Info("discreteFace::split(), a partition (%d) is not connected: it is going to be fixed.",p);
+      }
+    }
+    // if the set is empty, it means that the part was connected
+    if(!celem.empty()){
       std::vector<MElement*> relem(celem.begin(),celem.end());// new part
-      for(unsigned int ie=0; ie<relem.size(); ie++)// updating the id part of the element belonging to the new part
+      // updating the id part of the element belonging to the new part
+      for(unsigned int ie=0; ie<relem.size(); ie++)
 	el2part[relem[ie]] = nPartitions;
       nPartitions++;
       elem.push_back(relem);
-      std::set<MElement*> _elem(elem[p].begin(),elem[p].end());// updating the elements of the current part
-      for(std::set<MElement*>::iterator its=celem.begin(); its!=celem.end(); ++its)
+      // updating the elements of the current part
+      std::set<MElement*> _elem(elem[p].begin(),elem[p].end());
+      for(std::set<MElement*>::iterator its = celem.begin(); its != celem.end(); ++its)
 	_elem.erase(*its);
       elem[p].clear();
       std::vector<MElement*> upe(_elem.begin(),_elem.end());
       elem[p] = upe;
     }
-  }// end for p
-  for(int i=0; i<nPartitions; i++)// new triangulation of the connected parts
+  }
+  // new triangulation of the connected parts
+  for(int i=0; i<nPartitions; i++)
     partition.push_back(new triangulation(i, elem[i],this));
-
 #endif
 }
 
@@ -625,19 +640,30 @@ void discreteFace::updateTopology(std::vector<triangulation*>&partition)
   //---- setting topology, i.e. GEdge's and GVertex's ----//
   //------------------------------------------------------//
   int nPartitions = partition.size();
-  std::set<MVertex*> todelete; // vertices that do not belong to the GFace anymore
-  std::set<GEdge*> gGEdges(l_edges.begin(),l_edges.end());// initial GEdges of the GFace (to be updated)
+  // vertices that do not belong to the GFace anymore
+  std::set<MVertex*> todelete;
+  // initial GEdges of the GFace (to be updated)
+  std::set<GEdge*> gGEdges(l_edges.begin(),l_edges.end());
 
-  for(int i=0; i<nPartitions; i++){// each part is going to be compared with the other ones
-    const std::set<MEdge,Less_Edge> &bordi = partition[i]->borderEdg;// edges defining the border(s) of the i-th new triangulation
-    for(int ii=i+1; ii<nPartitions; ii++){// compare to the ii-th partitions, with ii > i since ii < i have already been compared
-      std::map<MVertex*,MLine*> v02edg;//first vertex of the MLine
+  // each part is going to be compared with the other ones
+  for(int i = 0; i < nPartitions; i++){
+    // edges defining the border(s) of the i-th new triangulation
+    const std::set<MEdge,Less_Edge> &bordi = partition[i]->borderEdg;
+    // compare to the ii-th partitions, with ii > i since ii < i have already
+    // been compared
+    for(int ii=i+1; ii<nPartitions; ii++){
+      std::map<MVertex*,MLine*> v02edg; //first vertex of the MLine
       std::set<MVertex*> first, last;
-      const std::set<MEdge,Less_Edge> &bii = partition[ii]->borderEdg;// edges defining the border(s) of the ii-th new triangulation
-      for(std::set<MEdge,Less_Edge>::iterator ie = bordi.begin(); ie != bordi.end(); ++ie){// MEdge by MEdge of the i-th triangulation border(s)
-	if(bii.find(*ie)!=bii.end()){// if the border edge is common to both triangulations, then it is a future GEdge - composed of MLine's
-	  v02edg[ie->getVertex(0)] = new MLine(ie->getVertex(0),ie->getVertex(1));// a new MLine is created
-
+      // edges defining the border(s) of the ii-th new triangulation
+      const std::set<MEdge,Less_Edge> &bii = partition[ii]->borderEdg;
+      // MEdge by MEdge of the i-th triangulation border(s)
+      for(std::set<MEdge,Less_Edge>::iterator ie = bordi.begin();
+          ie != bordi.end(); ++ie){
+        // if the border edge is common to both triangulations, then it is a
+        // future GEdge - composed of MLine's
+	if(bii.find(*ie)!=bii.end()){
+	  v02edg[ie->getVertex(0)] = new MLine(ie->getVertex(0),
+                                               ie->getVertex(1));
 	  // identifying first and last vertices of the future GEdge's, if any
 	  if( first.find(ie->getVertex(1)) != first.end() )
 	    first.erase(ie->getVertex(1));
@@ -647,19 +673,19 @@ void discreteFace::updateTopology(std::vector<triangulation*>&partition)
 	    last.erase(ie->getVertex(0));
 	  else
 	    first.insert(ie->getVertex(0));
-	}// end bii.find
-      }//end for ie
+	}
+      }
 
-      //---- creation of the GEdge's from new MLine's ----//
+      // creation of the GEdge's from new MLine's
       while(!first.empty()){// starting with nonloop GEdge's
-	GVertex *v[2];// a GEdge is defined by two GVertex
-	std::vector<MLine*> myLines;// MLine's of the current nonloop GEdge
+	GVertex *v[2]; // a GEdge is defined by two GVertex
+	std::vector<MLine*> myLines; // MLine's of the current nonloop GEdge
 	std::set<MVertex*>::iterator itf = first.begin();
-	MVertex* cv0 = *itf;// starting with a first vertex
-	while(last.find(cv0) == last.end()){// until reaching the corresponding last vertex
-	  myLines.push_back(v02edg[cv0]);// push the correspong MLine
-	  v02edg.erase(cv0);// and erasing it from the map
-	  cv0 = myLines.back()->getVertex(1);// next vertex
+	MVertex* cv0 = *itf; // starting with a first vertex
+	while(last.find(cv0) == last.end()){ // until reaching the corresponding last vertex
+	  myLines.push_back(v02edg[cv0]); // push the correspong MLine
+	  v02edg.erase(cv0); // and erasing it from the map
+	  cv0 = myLines.back()->getVertex(1); // next vertex
 	}// end last
 	std::vector<MVertex*> mvt;
 	mvt.resize(2);
@@ -667,39 +693,47 @@ void discreteFace::updateTopology(std::vector<triangulation*>&partition)
 	mvt[1] = cv0;
 	// creation of the GVertex, for new nonloop GEdge's
 	for(int imvt=0; imvt<2; imvt++){
-	  std::set<GEdge*>::iterator oe=gGEdges.begin();// find the old GEdge that has the current new GVertex
-	  while(oe !=gGEdges.end() && mvt[imvt]->onWhat() != *oe && mvt[imvt]->onWhat() != (*oe)->getBeginVertex() && mvt[imvt]->onWhat() != (*oe)->getEndVertex())
+          // find the old GEdge that has the current new GVertex
+	  std::set<GEdge*>::iterator oe = gGEdges.begin();
+	  while(oe !=gGEdges.end() && mvt[imvt]->onWhat() != *oe &&
+                mvt[imvt]->onWhat() != (*oe)->getBeginVertex() &&
+                mvt[imvt]->onWhat() != (*oe)->getEndVertex())
 	    ++oe;
 
-
-	  if (oe == gGEdges.end()){// not on an existing GEdge: new internal GVertex
-	    v[imvt] = new discreteVertex (this->model(),model()->getMaxElementaryNumber(0) + 1);
+          // not on an existing GEdge: new internal GVertex
+	  if (oe == gGEdges.end()){
+	    v[imvt] = new discreteVertex (this->model(),
+                                          model()->getMaxElementaryNumber(0) + 1);
 	    setupDiscreteVertex(v[imvt],mvt[imvt],&todelete);
 	  }
 	  else{// on an existing GEdge
-	    GEdge* onit = *oe;// the new GVertex can already exist; if it is the case, there is no need to create a new one
+            // the new GVertex can already exist; if it is the case, there is no
+            // need to create a new one
+	    GEdge* onit = *oe;
 	    if(mvt[imvt] == onit->getBeginVertex()->mesh_vertices[0])
 	      v[imvt] = onit->getBeginVertex();
 	    else if (mvt[imvt] == onit->getEndVertex()->mesh_vertices[0])
 	      v[imvt] = onit->getEndVertex();
 	    else{
-	      v[imvt] = new discreteVertex (this->model(),model()->getMaxElementaryNumber(0) + 1);
+	      v[imvt] = new discreteVertex (this->model(),
+                                            model()->getMaxElementaryNumber(0) + 1);
 	      setupDiscreteVertex(v[imvt],mvt[imvt],NULL);
 	      discreteEdge* de[2];
 	      splitDiscreteEdge(onit,v[imvt],de);
 	      gGEdges.erase(onit);
 	      gGEdges.insert(de[0]);
 	      gGEdges.insert(de[1]);
-	    }// end if-elseif-else
-	  }// end else oe==end()
-	}// end imvt
+	    }
+	  }
+	}
 	// the new GEdge can be created with its GVertex
-	discreteEdge* internalE = new discreteEdge (this->model(),this->model()->getMaxElementaryNumber(1) + 1,v[0],v[1]);
+	discreteEdge* internalE = new discreteEdge
+          (this->model(), this->model()->getMaxElementaryNumber(1) + 1,v[0],v[1]);
 	setupDiscreteEdge(internalE,myLines,&todelete);
 	gGEdges.insert(internalE);
 
 	first.erase(itf);// next first vertex of a nonloop GEdge
-      }//end while first.empty()
+      }
 
       // remaining MLines for 'loop'GEdge's
       while(!v02edg.empty()){
@@ -713,13 +747,13 @@ void discreteFace::updateTopology(std::vector<triangulation*>&partition)
 	}
 	v = new discreteVertex (this->model(),model()->getMaxElementaryNumber(0) + 1);
 	setupDiscreteVertex(v,cv0,&todelete);
-	discreteEdge* gloop = new discreteEdge (this->model(),this->model()->getMaxElementaryNumber(1) + 1,v,v);
+	discreteEdge* gloop = new discreteEdge
+          (this->model(),this->model()->getMaxElementaryNumber(1) + 1,v,v);
 	setupDiscreteEdge(gloop,my_MLines,&todelete);
 	gGEdges.insert(gloop);
-      }// end while v02edg.empty()
-    }//end for ii
-  }// end for i
-
+      }
+    }
+  }
 
   // adding old-updated bounding GEdge's to the corresponding partitions
   for(std::set<GEdge*>::iterator le=gGEdges.begin(); le!=gGEdges.end(); ++le){
@@ -788,18 +822,28 @@ void discreteFace::fillHoles(triangulation* trian)
     SVector3 nmean(0.,0.,0.);
     for(unsigned int j=1; j<mv.size(); j++){
       addTriangle(trian,new MTriangle(mv[j],mv[j-1],center));
-      SVector3 temp0(center->x()-mv[j]->x(),center->y()-mv[j]->y(),center->z()-mv[j]->z());
-      SVector3 temp1(center->x()-mv[j-1]->x(),center->y()-mv[j-1]->y(),center->z()-mv[j-1]->z());
+      SVector3 temp0(center->x()-mv[j]->x(),
+                     center->y()-mv[j]->y(),
+                     center->z()-mv[j]->z());
+      SVector3 temp1(center->x()-mv[j-1]->x(),
+                     center->y()-mv[j-1]->y(),
+                     center->z()-mv[j-1]->z());
       SVector3 temp(crossprod(temp0,temp1));
       nmean += temp;
     }
     addTriangle(trian,new MTriangle(mv[0],mv[mv.size()-1],center));
-    SVector3 temp0(center->x()-mv[0]->x(),center->y()-mv[0]->y(),center->z()-mv[0]->z());
-    SVector3 temp1(center->x()-mv[mv.size()-1]->x(),center->y()-mv[mv.size()-1]->y(),center->z()-mv[mv.size()-1]->z());
+    SVector3 temp0(center->x()-mv[0]->x(),
+                   center->y()-mv[0]->y(),
+                   center->z()-mv[0]->z());
+    SVector3 temp1(center->x()-mv[mv.size()-1]->x(),
+                   center->y()-mv[mv.size()-1]->y(),
+                   center->z()-mv[mv.size()-1]->z());
     SVector3 temp(crossprod(temp0,temp1));
     nmean += temp;
     nmean *= 1./(norm(nmean)*mv.size());
-    MVertex update(center->x()+nmean.x(),center->y()+nmean.y(),center->z()+nmean.z());
+    MVertex update(center->x()+nmean.x(),
+                   center->y()+nmean.y(),
+                   center->z()+nmean.z());
     *center = update;
     center->setEntity(this);
   }
@@ -822,14 +866,15 @@ void discreteFace::addTriangle(triangulation* trian, MTriangle* t)
 void discreteFace::complex_crossField()
 {
 #if defined(HAVE_SOLVER) && defined(HAVE_ANN)
-  // COMPLEX linear system
+  // complex linear system
   linearSystem<std::complex<double> > * lsys;
 
 #ifdef HAVE_PETSC
 #ifdef PETSC_USE_COMPLEX
   lsys = new linearSystemPETSc<std::complex<double> >;
 #else
-  Msg::Error("Petsc complex is required (we do need complex in discreteFace::complex_crossField())");
+  Msg::Error("Petsc complex is required (we do need complex in "
+             "discreteFace::complex_crossField())");
   return;
 #endif
 #else
@@ -858,9 +903,8 @@ void discreteFace::complex_crossField()
       triangles[mini]->getEdgeInfo(ed,num,s);
       myAssembler.numberDof(3*mini+num,0);
       ed2key[ed] = 3*mini+num;
-    }// end for j
-  }// end for unsigned int i
-
+    }
+  }
 
   double grad[3][3] = {{0.,-2.,0.},{2.,2.,0.},{-2.,0.,0.}};
   for (unsigned int i=0; i<triangles.size(); i++){
@@ -892,14 +936,12 @@ void discreteFace::complex_crossField()
 
 	Dof C(ed2key[tri->getEdge(k)],0);
 	myAssembler.assemble(R,C,K_jk);
-      }// end for k
-
-    }// end for j
-
-  }// end for unsigned int
-
+      }
+    }
+  }
 
   lsys->systemSolve();
+
   FILE* myfile = Fopen("crossField.pos","w");
   fprintf(myfile,"View \"cross\"{\n");
   for(unsigned int i=0; i<triangles.size(); i++){
@@ -926,7 +968,8 @@ void discreteFace::complex_crossField()
     std::vector<double> U; U.resize(3);
     std::vector<double> V; V.resize(3);
     for(int j=0; j<3; j++){
-      fprintf(myfile,"%f,%f,%f",tri->getVertex(j)->x(),tri->getVertex(j)->y(),tri->getVertex(j)->z());
+      fprintf(myfile,"%f,%f,%f",tri->getVertex(j)->x(),
+              tri->getVertex(j)->y(),tri->getVertex(j)->z());
       if (j<2) fprintf(myfile,",");
       MEdge ed = tri->getEdge(j);
       std::complex<double> fstar; // edge basis
@@ -944,7 +987,9 @@ void discreteFace::complex_crossField()
     fprintf(myfile,"{");
     for(int j=0; j<3; j++){
       double u = Fu[j], v = Fv[j]; double theta = std::atan2(v,u)/4.;
-      SVector3 cf(cos(theta)*e.x()+sin(theta)*d.x(),cos(theta)*e.y()+sin(theta)*d.y(),cos(theta)*e.z()+sin(theta)*d.z());
+      SVector3 cf(cos(theta)*e.x()+sin(theta)*d.x(),
+                  cos(theta)*e.y()+sin(theta)*d.y(),
+                  cos(theta)*e.z()+sin(theta)*d.z());
       cf = cf*sqrt(u*u+v*v);
       fprintf(myfile,"%f,%f,%f",cf.x(),cf.y(),cf.z());
       if (j<2) fprintf(myfile,",");
@@ -953,6 +998,7 @@ void discreteFace::complex_crossField()
   }
   fprintf(myfile,"};");
   fclose(myfile);
+
 #endif
 }
 
@@ -992,8 +1038,8 @@ void discreteFace::crossField()
       myAssembler.numberDof(3*mini+num,0); // u, not U
       myAssembler.numberDof(3*mini+num,1); // v, not V
       ed2key[ed] = 3*mini+num;
-    }// end for j
-  }// end for unsigned int i
+    }
+  }
 
   double grad[3][3] = {{0.,-2.,0.},{2.,2.,0.},{-2.,0.,0.}};
   for (unsigned int i=0; i<triangles.size(); i++){
@@ -1024,23 +1070,16 @@ void discreteFace::crossField()
 	    for(int kk=0; kk<3; kk++)
 	      K_jk += grad[j][jj] * invjac[l][jj] * invjac[l][kk] * grad[k][kk];
 	K_jk *= dJac/2.;
-	//printf("%f\t",K_jk);
-	//printf("%f \t %f \n %f \t %f \n",cos(4.*(alpha_j-alpha_k))*K_jk,sin(4.*(alpha_j-alpha_k))*K_jk,sin(4.*(alpha_k-alpha_j))*K_jk,cos(4.*(alpha_j-alpha_k))*K_jk);
-
-
 	myAssembler.assemble(Ru,Cu,cos(4.*(alpha_j-alpha_k))*K_jk);
 	myAssembler.assemble(Ru,Cv,sin(4.*(alpha_j-alpha_k))*K_jk);
 	myAssembler.assemble(Rv,Cu,sin(4.*(alpha_k-alpha_j))*K_jk);
 	myAssembler.assemble(Rv,Cv,cos(4.*(alpha_j-alpha_k))*K_jk);
-      }// end for k
-      //printf("\n");
-
-    }// end for j
-    //printf("\n");
-  }// end for unsigned int
-
+      }
+    }
+  }
 
   lsys->systemSolve();
+
   FILE* myfile = Fopen("crossField.pos","w");
   fprintf(myfile,"View \"cross\"{\n");
   for(unsigned int i=0; i<triangles.size(); i++){
@@ -1066,11 +1105,11 @@ void discreteFace::crossField()
     SVector3 d = crossprod(n,e); d.normalize();
     //printf("d=(%f %f)\n",d.x(),d.y());
 
-
     std::vector<double> U; U.resize(3);
     std::vector<double> V; V.resize(3);
     for(int j=0; j<3; j++){
-      fprintf(myfile,"%f,%f,%f",tri->getVertex(j)->x(),tri->getVertex(j)->y(),tri->getVertex(j)->z());
+      fprintf(myfile,"%f,%f,%f",tri->getVertex(j)->x(),tri->getVertex(j)->y(),
+              tri->getVertex(j)->z());
       if (j<2) fprintf(myfile,",");
       MEdge ed = tri->getEdge(j);
       double  u, v;// edge basis
@@ -1081,7 +1120,6 @@ void discreteFace::crossField()
       double alpha = getAlpha(tri,j);// triangle basis
       U[j] = cos(4.*alpha)*u - sin(4.*alpha)*v;// U, not u
       V[j] = sin(4.*alpha)*u + cos(4.*alpha)*v;// V, not v
-      //printf("sol: ed%d[%f,%f]--[%f,%f] \t Theta = %f (tri) ~ theta = %f (ed) ~ alpha = %f ~u=%f, v=%f VS U=%f, V=%f \n",j,ed.getSortedVertex(0)->x(),ed.getSortedVertex(0)->y(),ed.getSortedVertex(1)->x(),ed.getSortedVertex(1)->y(),std::atan2(V[j],U[j])*180./(4.*M_PI),std::atan2(v,u)*180./(4.*M_PI),alpha*180./M_PI,u,v,U[j],V[j]);
     }
     fprintf(myfile,")");
     std::vector<double> Fu, Fv;
@@ -1090,11 +1128,10 @@ void discreteFace::crossField()
     fprintf(myfile,"{");
     for(int j=0; j<3; j++){
       double u = Fu[j], v = Fv[j]; double theta = std::atan2(v,u)/4.;
-      //printf("theta_%d = %f\n",j,theta*180./M_PI);
-      SVector3 cf(cos(theta)*e.x()+sin(theta)*d.x(),cos(theta)*e.y()+sin(theta)*d.y(),cos(theta)*e.z()+sin(theta)*d.z());
-      //cf = cf*sqrt(u*u+v*v);
-      fprintf(myfile,"%f,%f,%f",cf.x(),cf.y(),cf.z());//cos(theta)*e.x()-sin(theta)*e.y(),sin(theta)*e.x()+cos(theta)*e.y(),e.z());
-
+      SVector3 cf(cos(theta)*e.x()+sin(theta)*d.x(),
+                  cos(theta)*e.y()+sin(theta)*d.y(),
+                  cos(theta)*e.z()+sin(theta)*d.z());
+      fprintf(myfile,"%f,%f,%f",cf.x(),cf.y(),cf.z());
       if( std::abs(dot(cf,n)) > 1e-12)
 	printf("/!\\ ---> warning orthogonality \t %f \n",dot(cf,n));
       if (j<2) fprintf(myfile,",");
