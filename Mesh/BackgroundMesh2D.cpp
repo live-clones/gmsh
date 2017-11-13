@@ -288,7 +288,7 @@ void backgroundMesh2D::computeSizeField()
     return;
   }
 
-  list<GEdge*> e;
+  list<GEdge*> e = face->edges();
   list<GEdge*>::const_iterator it = e.begin();
   DoubleStorageType sizes;
 
@@ -391,7 +391,8 @@ void backgroundMesh2D::updateSizes()
 
 
 
-frameFieldBackgroundMesh2D::frameFieldBackgroundMesh2D(GFace *_gf):backgroundMesh2D(_gf,false)
+frameFieldBackgroundMesh2D::frameFieldBackgroundMesh2D(GFace *_gf)
+  : backgroundMesh2D(_gf, false)
 {
   reset();
 
@@ -473,13 +474,12 @@ void frameFieldBackgroundMesh2D::computeCrossField(simpleFunction<double> &eval_
 
   DoubleStorageType _cosines4,_sines4;
 
-  list<GEdge*> e;
   GFace *face = dynamic_cast<GFace*>(gf);
   if(!face){
     Msg::Error("Entity is not a face in background mesh");
     return;
   }
-
+  list<GEdge*> e = face->edges();
   list<GEdge*>::const_iterator it = e.begin();
 
   for( ; it != e.end(); ++it ){
