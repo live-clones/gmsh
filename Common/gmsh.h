@@ -115,7 +115,6 @@ GMSH_API gmshModelGeoAddSurfaceLoop(const int tag, const std::vector<int> &faceT
                                     int &outTag);
 GMSH_API gmshModelGeoAddVolume(const int tag, const std::vector<int> &shellTags,
                                int &outTag);
-
 GMSH_API gmshModelGeoExtrude(const vector_pair &inDimTags,
                              const double dx, const double dy, const double dz,
                              vector_pair &outDimTags,
