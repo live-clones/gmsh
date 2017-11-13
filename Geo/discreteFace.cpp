@@ -275,7 +275,7 @@ void discreteFace::createGeometry()
     df->replaceEdges(toParam[i]->my_GEdges);
     _atlas.push_back(df);
   }
-  complex_crossField();
+  //complex_crossField();
 #endif
 }
 

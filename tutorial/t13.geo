@@ -32,14 +32,10 @@ Volume(1) = {1};
 
 // element size imposed by a size field
 Field[1] = MathEval;
-Field[1].F = "2.0";
+Field[1].F = "1.5";
 Background Field = 1;
 
-DefineConstant[
-  funny = {0, Choices{0,1},
-    Name "Parameters/Apply funny mesh size field?"}
-];
-
+funny = DefineNumber[0, Choices{0,1}, Name "Parameters/Apply funny mesh size field?" ];
 If(funny)
   Field[1].F = "2*Sin((x+y)/5) + 3";
 EndIf
