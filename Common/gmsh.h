@@ -176,7 +176,7 @@ GMSH_API gmshModelOccAddBezier(const int tag, const std::vector<int> &vertexTags
 GMSH_API gmshModelOccAddBSpline(const int tag, const std::vector<int> &vertexTags,
                                 int &outTag);
 GMSH_API gmshModelOccAddWire(const int tag, const std::vector<int> &edgeTags,
-                             int &outTag, const bool checkClosed=false);
+                             int &outTag, const bool checkClosed = false);
 GMSH_API gmshModelOccAddLineLoop(const int tag, const std::vector<int> &edgeTags,
                                  int &outTag);
 GMSH_API gmshModelOccAddRectangle(const int tag, const double x, const double y,
@@ -220,25 +220,24 @@ GMSH_API gmshModelOccAddThruSections(const int tag, const std::vector<int> &wire
 GMSH_API addThickSolid(const int tag, const int solidTag,
                        const std::vector<int> &excludeFaceTags,
                        const double offset, vector_pair &outDimTags);
-GMSH_API gmshModelOccExtrude(const vector_pair &inDimTags,
-                             const double dx, const double dy, const double dz,
-                             vector_pair &outDimTags,
-                             const std::vector<int> &numElements,
-                             const std::vector<double> &heights,
-                             const bool recombine);
+GMSH_API gmshModelOccExtrude(const vector_pair &inDimTags, const double dx, const double dy,
+                             const double dz, vector_pair &outDimTags,
+                             const std::vector<int> &numElements = std::vector<int>(),
+                             const std::vector<double> &heights = std::vector<double>(),
+                             const bool recombine = false);
 GMSH_API gmshModelOccRevolve(const vector_pair &inDimTags,
                              const double x, const double y, const double z,
                              const double ax, const double ay, const double az,
-                             const double angle,
-                             vector_pair &outDimTags,
-                             const std::vector<int> &numElements,
-                             const std::vector<double> &heights, bool recombine);
+                             const double angle, vector_pair &outDimTags,
+                             const std::vector<int> &numElements = std::vector<int>(),
+                             const std::vector<double> &heights = std::vector<double>(),
+                             const bool recombine = false);
 GMSH_API gmshModelOccAddPipe(const vector_pair &inDimTags, int wireTag,
                              vector_pair &outDimTags);
 GMSH_API gmshModelOccFillet(const std::vector<int> &regionTags,
                             const std::vector<int> &edgeTags,
                             const double radius, vector_pair &outDimTags,
-                            const bool removeRegion);
+                            const bool removeRegion = true);
 GMSH_API gmshModelOccBooleanUnion(const int tag, const vector_pair &objectDimTags,
                                   const vector_pair &toolDimTags,
                                   vector_pair &outDimTags,
