@@ -46,7 +46,6 @@ opt(CAIRO "Enable Cairo to render fonts (experimental)" ${DEFAULT})
 opt(CHACO "Enable Chaco mesh partitioner (alternative to Metis)" ${DEFAULT})
 opt(COMPRESSED_IO "Enable compressed (gzip) input/output using zlib" OFF)
 opt(CXX11 "Enable C++11" ${DEFAULT})
-opt(DEPRECATED_API "Enable deprecated internal developer API" ON)
 opt(DINTEGRATION "Enable discrete integration (needed for levelsets)" ${DEFAULT})
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
 opt(FOURIER_MODEL "Enable Fourier geometrical models (experimental)" OFF)
@@ -54,6 +53,7 @@ opt(GETDP "Enable GetDP solver (as a directly linked library)" ${DEFAULT})
 opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
 opt(GMP "Enable GMP for Kbipack (advanced)" ON)
 opt(GRAPHICS "Enable building graphics lib even without GUI (advanced)" OFF)
+opt(INTERNAL_DEVELOPER_API "Enable internal developer API (will be off by default)" ON)
 opt(KBIPACK "Enable Kbipack (neeeded by homology solver)" ${DEFAULT})
 opt(MATHEX "Enable math expression parser (used by plugins and options)" ${DEFAULT})
 opt(MED "Enable MED mesh and post file formats" ${DEFAULT})
@@ -104,7 +104,7 @@ set(GMSH_SHORT_LICENSE "GNU General Public License")
 
 set(GMSH_API Common/gmsh.h)
 
-set(GMSH_DEPRECATED_API
+set(GMSH_INTERNAL_DEVELOPER_API
   ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h
   ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h
   Common/GmshGlobal.h Common/Context.h Common/GmshDefines.h Common/GmshMessage.h
@@ -171,7 +171,7 @@ set(GMSH_DEPRECATED_API
 
 get_property(IAMCHILD DIRECTORY  PROPERTY PARENT_DIRECTORY)
 if(IAMCHILD)
-  set(GMSH_DEPRECATED_API ${GMSH_API} PARENT_SCOPE)
+  set(GMSH_INTERNAL_DEVELOPER_API ${GMSH_API} PARENT_SCOPE)
 endif(IAMCHILD)
 
 if(${CMAKE_MAJOR_VERSION} GREATER 2)
@@ -1257,7 +1257,7 @@ if(ENABLE_WRAP_PYTHON)
   find_package(PythonLibs)
   if(SWIG_FOUND AND PYTHONLIBS_FOUND)
     message(STATUS "Found SWIG version " ${SWIG_VERSION})
-    if(NOT ENABLE_DEPRECATED_API) # new bindings
+    if(NOT ENABLE_INTERNAL_DEVELOPER_API) # new bindings
       include_directories(${PYTHON_INCLUDE_PATH})
       include_directories(${CMAKE_CURRENT_SOURCE_DIR})
       set(CMAKE_SWIG_FLAGS "")
@@ -1268,7 +1268,7 @@ if(ENABLE_WRAP_PYTHON)
         set_target_properties("_gmsh" PROPERTIES LINK_FLAGS
                               "-undefined suppress -flat_namespace")
       endif(APPLE)
-    else(NOT ENABLE_DEPRECATED_API) # old, deprecated internal developer bindings
+    else(NOT ENABLE_INTERNAL_DEVELOPER_API) # old, deprecated internal developer bindings
       find_package(PythonInterp)
       string(SUBSTRING ${SWIG_VERSION} 0 1 SWIG_MAJOR_VERSION)
       if(SWIG_MAJOR_VERSION EQUAL 1)
@@ -1303,7 +1303,7 @@ if(ENABLE_WRAP_PYTHON)
           endif(ENABLE_PETSC4PY)
         endif(HAVE_PETSC)
       endif(SWIG_MAJOR_VERSION EQUAL 1)
-    endif(NOT ENABLE_DEPRECATED_API)
+    endif(NOT ENABLE_INTERNAL_DEVELOPER_API)
   endif(SWIG_FOUND AND PYTHONLIBS_FOUND)
 endif(ENABLE_WRAP_PYTHON)
 
@@ -1762,9 +1762,9 @@ if(ENABLE_ONELAB)
 endif(ENABLE_ONELAB)
 if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   install(FILES ${GMSH_API} DESTINATION ${GMSH_INC})
-  if(ENABLE_DEPRECATED_API)
-    install(FILES ${GMSH_DEPRECATED_API} DESTINATION ${GMSH_INC}/gmsh)
-  endif(ENABLE_DEPRECATED_API)
+  if(ENABLE_INTERNAL_DEVELOPER_API)
+    install(FILES ${GMSH_INTERNAL_DEVELOPER_API} DESTINATION ${GMSH_INC}/gmsh)
+  endif(ENABLE_INTERNAL_DEVELOPER_API)
 endif(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 install(FILES ${WELCOME_FILE} DESTINATION ${GMSH_DOC} RENAME README.txt)
 install(FILES ${LICENSE_FILE} DESTINATION ${GMSH_DOC})
@@ -1788,13 +1788,13 @@ foreach(FILE ${GMSH_API})
     -E copy_if_different ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Headers/
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endforeach(FILE)
-if(ENABLE_DEPRECATED_API)
-  foreach(FILE ${GMSH_DEPRECATED_API})
+if(ENABLE_INTERNAL_DEVELOPER_API)
+  foreach(FILE ${GMSH_INTERNAL_DEVELOPER_API})
     add_custom_command(TARGET get_headers POST_BUILD COMMAND ${CMAKE_COMMAND}
       -E copy_if_different ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Headers/gmsh/
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   endforeach(FILE)
-endif(ENABLE_DEPRECATED_API)
+endif(ENABLE_INTERNAL_DEVELOPER_API)
 
 find_program(MAKEINFO makeinfo)
 if(MAKEINFO)
@@ -1865,13 +1865,13 @@ if(APPLE AND ENABLE_BUILD_LIB)
         ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/gmsh.framework/Headers/
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   endforeach(FILE)
-  if(ENABLE_DEPRECATED_API)
-    foreach(FILE ${GMSH_DEPRECATED_API})
+  if(ENABLE_INTERNAL_DEVELOPER_API)
+    foreach(FILE ${GMSH_INTERNAL_DEVELOPER_API})
       add_custom_command(TARGET framework POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
           ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/gmsh.framework/Headers/
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     endforeach(FILE)
-  endif(ENABLE_DEPRECATED_API)
+  endif(ENABLE_INTERNAL_DEVELOPER_API)
 endif(APPLE AND ENABLE_BUILD_LIB)
 
 set(CPACK_PACKAGE_VENDOR "Christophe Geuzaine and Jean-Francois Remacle")
@@ -1934,13 +1934,13 @@ else(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
   set(CPACK_GENERATOR TGZ)
 endif(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
 
-if(HAVE_PYTHON AND ENABLE_DEPRECATED_API)
+if(HAVE_PYTHON AND ENABLE_INTERNAL_DEVELOPER_API)
   add_subdirectory(wrappers/gmshpy)
-endif(HAVE_PYTHON AND ENABLE_DEPRECATED_API)
+endif(HAVE_PYTHON AND ENABLE_INTERNAL_DEVELOPER_API)
 
-if(ENABLE_WRAP_JAVA AND ENABLE_DEPRECATED_API)
+if(ENABLE_WRAP_JAVA AND ENABLE_INTERNAL_DEVELOPER_API)
   add_subdirectory(wrappers/java)
-endif(ENABLE_WRAP_JAVA AND ENABLE_DEPRECATED_API)
+endif(ENABLE_WRAP_JAVA AND ENABLE_INTERNAL_DEVELOPER_API)
 
 include(CPack)
 

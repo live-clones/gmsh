@@ -116,8 +116,8 @@ if (NOT ENABLE_GMSHPY_SOURCE_PACKAGE)
 endif (NOT ENABLE_GMSHPY_SOURCE_PACKAGE)
 
 if(ENABLE_GMSHPY_SOURCE_PACKAGE)
-  set(GMSH_DEPRECATED_API ${GMSH_DEPRECATED_API} Geo/Curvature.h Mesh/Generator.h 
-      Mesh/meshGFaceLloyd.h Numeric/DivideAndConquer.h Post/PViewFactory.h
+  set(GMSH_INTERNAL_DEVELOPER_API ${GMSH_INTERNAL_DEVELOPER_API} Geo/Curvature.h 
+      Mesh/Generator.h Mesh/meshGFaceLloyd.h Numeric/DivideAndConquer.h Post/PViewFactory.h
       Solver/linearSystemPETSc.h Fltk/FlGui.h Solver/functionSpace.h
       Solver/STensor43.h Solver/sparsityPattern.h Solver/SElement.h
       Solver/groupOfElements.h PARENT_SCOPE)
