@@ -35,7 +35,6 @@ set(SRC
     HighOrder.cpp 
     meshPartition.cpp
     meshRefine.cpp
-    multiscalePartition.cpp
     QuadTriUtils.cpp
       QuadTriExtruded2D.cpp QuadTriExtruded3D.cpp QuadTriTransfinite3D.cpp
     simple3D.cpp ThinLayer.cpp

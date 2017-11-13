@@ -13,7 +13,6 @@
 #include "discreteDiskFace.h"
 #include "GModelIO_GEO.h"
 #include "Geo.h"
-#include "GFaceCompound.h"
 #include "Context.h"
 #include "OS.h"
 #include "meshPartitionObjects.h"

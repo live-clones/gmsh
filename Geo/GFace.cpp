@@ -35,7 +35,7 @@
 #define SQU(a)      ((a)*(a))
 
 GFace::GFace(GModel *model, int tag)
-  : GEntity(model, tag), r1(0), r2(0), compound(0), va_geom_triangles(0)
+  : GEntity(model, tag), r1(0), r2(0), va_geom_triangles(0)
 {
   meshStatistics.status = GFace::PENDING;
   resetMeshAttributes();
@@ -1101,7 +1101,7 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[
 #endif
 }
 
-bool GFace::containsParam(const SPoint2 &pt) 
+bool GFace::containsParam(const SPoint2 &pt)
 {
   Range<double> uu = parBounds(0);
   Range<double> vv = parBounds(1);

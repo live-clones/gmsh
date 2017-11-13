@@ -12,8 +12,6 @@
 #include "GModel.h"
 #include "GModelIO_GEO.h"
 #include "GModelIO_OCC.h"
-#include "GFaceCompound.h"
-#include "GEdgeCompound.h"
 #include "MPoint.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -3222,36 +3220,6 @@ int GModel::readGEO(const std::string &name)
   return true;
 }
 
-GEdge* GModel::addCompoundEdge(std::vector<GEdge*> edges, int num)
-{
-  if (num < 0) num = getMaxElementaryNumber(1) + 1;
-  GEdgeCompound *gec = new GEdgeCompound(this, num, edges);
-  add(gec);
-  return gec;
-}
-
-GFace* GModel::addCompoundFace(std::vector<GFace*> faces, int param, int split, int num)
-{
-#if defined(HAVE_SOLVER)
-  if (num < 0) num = getMaxElementaryNumber(2) + 1;
-  std::list<GFace*> faces_comp(faces.begin(), faces.end());
-  std::list<GEdge*> U0;
-  GFaceCompound::typeOfCompound typ = GFaceCompound::HARMONIC_CIRCLE;
-  if (param == 1) typ =  GFaceCompound::CONFORMAL_SPECTRAL;
-  if (param == 2) typ =  GFaceCompound::RADIAL_BASIS;
-  if (param == 3) typ =  GFaceCompound::HARMONIC_PLANE;
-  if (param == 4) typ =  GFaceCompound::CONVEX_CIRCLE;
-  if (param == 5) typ =  GFaceCompound::CONVEX_PLANE;
-  if (param == 6) typ =  GFaceCompound::HARMONIC_SQUARE;
-  if (param == 7) typ =  GFaceCompound::CONFORMAL_FE;
-  GFaceCompound *gfc = new GFaceCompound(this, num, faces_comp, U0, typ, split);
-  add(gfc);
-  return gfc;
-#else
-  return 0;
-#endif
-}
-
 void GModel::setPhysicalNumToEntitiesInBox(int EntityDimension, int PhysicalNumber,
                                            SBoundingBox3d box)
 {
@@ -3701,47 +3669,3 @@ void GModel::computeHomology()
 #endif
 }
 
-void GModel::setCompoundVisibility()
-{
-  // force visibility status of compound entities
-
-  for(eiter eit = firstEdge(); eit != lastEdge(); eit++){
-    GEdge *ge = *eit;
-    if (ge->getCompound()){
-      if(CTX::instance()->geom.hideCompounds) {
-        // use visibility info of compound edge if this edge belongs to it
-        ge->setVisibility(0, true);
-        bool val2 = ge->getCompound()->getVisibility();
-        if(ge->getCompound()->getBeginVertex())
-          ge->getCompound()->getBeginVertex()->setVisibility(val2);
-        if(ge->getCompound()->getEndVertex())
-          ge->getCompound()->getEndVertex()->setVisibility(val2);
-      }
-      else {
-        ge->setVisibility(1, true);
-      }
-    }
-  }
-
-  for(fiter fit = firstFace(); fit != lastFace(); fit++){
-    GFace *gf = *fit;
-    if (gf->getCompound()){
-      if(CTX::instance()->geom.hideCompounds) {
-        gf->setVisibility(0, true);
-        std::list<GEdge*> edgesComp = gf->getCompound()->edges();
-        bool val2 = gf->getCompound()->getVisibility();
-        // show edges of the compound surface
-        for (std::list<GEdge*>::iterator it = edgesComp.begin(); it != edgesComp.end(); ++it) {
-          if((*it)->getCompound())
-            (*it)->getCompound()->setVisibility(val2, true);
-          else
-            (*it)->setVisibility(val2, true);
-        }
-      }
-      else {
-        gf->setVisibility(1, true);
-      }
-    }
-  }
-
-}

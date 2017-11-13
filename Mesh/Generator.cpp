@@ -29,7 +29,6 @@
 #include "HighOrder.h"
 #include "Generator.h"
 #include "meshGFaceLloyd.h"
-#include "GFaceCompound.h"
 #include "Field.h"
 #include "Options.h"
 #include "simple3D.h"
@@ -449,10 +448,7 @@ static void Mesh2D(GModel *m)
   if(!Mesh2DWithBoundaryLayers(m)){
     std::set<GFace*, GEntityLessThan> cf, f;
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
-      if ((*it)->geomType() == GEntity::CompoundSurface)
-        cf.insert(*it);
-      else
-        f.insert(*it);
+      f.insert(*it);
 
     Msg::ResetProgressMeter();
 
@@ -471,8 +467,7 @@ static void Mesh2D(GModel *m)
           temp[K]->mesh(true);
 #if defined(HAVE_BFGS)
           if(CTX::instance()->mesh.optimizeLloyd){
-            if (temp[K]->geomType()==GEntity::CompoundSurface ||
-                temp[K]->geomType()==GEntity::Plane ||
+            if (temp[K]->geomType()==GEntity::Plane ||
                 temp[K]->geomType()==GEntity::RuledSurface) {
               if (temp[K]->meshAttributes.method != MESH_TRANSFINITE &&
                   !temp[K]->meshAttributes.extrude) {
@@ -509,8 +504,7 @@ static void Mesh2D(GModel *m)
           (*it)->mesh(true);
 #if defined(HAVE_BFGS)
           if(CTX::instance()->mesh.optimizeLloyd){
-            if ((*it)->geomType()==GEntity::CompoundSurface ||
-                (*it)->geomType()==GEntity::Plane ||
+            if ((*it)->geomType()==GEntity::Plane ||
                 (*it)->geomType()==GEntity::RuledSurface) {
               if ((*it)->meshAttributes.method != MESH_TRANSFINITE &&
                   !(*it)->meshAttributes.extrude) {

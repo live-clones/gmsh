@@ -9,9 +9,7 @@
 #include "Context.h"
 #include "GVertex.h"
 #include "GEdge.h"
-#include "GEdgeCompound.h"
 #include "GFace.h"
-#include "GFaceCompound.h"
 #include "GModel.h"
 #include "OS.h"
 #include "Field.h"
@@ -227,7 +225,6 @@ static void propagateValuesOnFace(GFace *_gf,
 void backgroundMesh::propagate1dMesh(GFace *_gf)
 {
   std::list<GEdge*> e;// = _gf->edges();
-  replaceMeshCompound(_gf, e);
   std::list<GEdge*>::const_iterator it = e.begin();
   std::map<MVertex*,double> sizes;
 
@@ -282,7 +279,6 @@ crossField2d::crossField2d(MVertex* v, GEdge* ge)
 void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
 {
   std::list<GEdge*> e;
-  replaceMeshCompound(_gf, e);
 
   std::list<GEdge*>::const_iterator it = e.begin();
   std::map<MVertex*,double> _cosines4,_sines4;
@@ -443,7 +439,6 @@ void backgroundMesh::propagateCrossField(GFace *_gf, simpleFunction<double> *ONE
   std::map<MVertex*,double> _cosines4,_sines4;
 
   std::list<GEdge*> e;
-  replaceMeshCompound(_gf, e);
 
   std::list<GEdge*>::const_iterator it = e.begin();
 
@@ -486,7 +481,7 @@ void backgroundMesh::propagateCrossField(GFace *_gf, simpleFunction<double> *ONE
 
   //    print("cos4.pos",0,_cosines4,0);
   //    print("sin4.pos",0,_sines4,0);
-  
+
   std::map<MVertex*,MVertex*>::iterator itv2 = _2Dto3D.begin();
   for ( ; itv2 != _2Dto3D.end(); ++itv2){
     MVertex *v_2D = itv2->first;

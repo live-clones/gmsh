@@ -10,9 +10,7 @@
 #include "GModel.h"
 #include "GVertex.h"
 #include "GEdge.h"
-#include "GEdgeCompound.h"
 #include "GFace.h"
-#include "GFaceCompound.h"
 #include "MElement.h"
 #include "MElementOctree.h"
 #include "MTriangle.h"
@@ -291,7 +289,6 @@ void backgroundMesh2D::computeSizeField()
   }
 
   list<GEdge*> e;
-  replaceMeshCompound(face, e);
   list<GEdge*>::const_iterator it = e.begin();
   DoubleStorageType sizes;
 
@@ -482,8 +479,6 @@ void frameFieldBackgroundMesh2D::computeCrossField(simpleFunction<double> &eval_
     Msg::Error("Entity is not a face in background mesh");
     return;
   }
-
-  replaceMeshCompound(face, e);
 
   list<GEdge*>::const_iterator it = e.begin();
 

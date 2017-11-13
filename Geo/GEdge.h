@@ -21,7 +21,6 @@
 class MElement;
 class MLine;
 class ExtrudeParams;
-class GEdgeCompound;
 class closestPointFinder;
 
 // A model edge.
@@ -35,7 +34,6 @@ class GEdge : public GEntity {
   // FIXME: normals need to be mutable at the moment, because thay can
   // be created in const member functions
   mutable std::map<MVertex*, SVector3, std::less<MVertex*> > _normals;
-  GEdgeCompound *compound; // this model edge belongs to a compound
   std::list<GFace *> l_faces;
   // for specific solid modelers that need to re-do the internal curve
   // if a topological change ending points is done (glueing)
@@ -190,10 +188,6 @@ class GEdge : public GEntity {
   // compute the parameter U from a point XYZ
   virtual bool XYZToU(const double X, const double Y, const double Z,
                       double &U, const double relax=1) const;
-
-  // compound
-  void setCompound(GEdgeCompound *gec) { compound = gec; }
-  GEdgeCompound *getCompound() const { return compound; }
 
   // gluing
   void replaceEndingPoints(GVertex *, GVertex *);

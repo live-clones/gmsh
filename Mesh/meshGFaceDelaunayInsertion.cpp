@@ -23,7 +23,6 @@
 #include "MQuadrangle.h"
 #include "Field.h"
 #include "GModel.h"
-#include "GFaceCompound.h"
 #include "discreteDiskFace.h"
 #include "intersectCurveSurface.h"
 #include "HilbertCurve.h"
@@ -1326,18 +1325,6 @@ bool optimalPointFrontalB (GFace *gf,
     }
   }
 #endif
-
-  if (gf->geomType() == GEntity::CompoundSurface){
-    GFaceCompound *gfc = dynamic_cast<GFaceCompound*> (gf);
-    if (gfc){
-      GPoint gp = gfc->intersectionWithCircle(n2,n1,middle,d,newPoint);
-      if (gp.succeeded()){
-	newPoint[0] = gp.u();
-	newPoint[1] = gp.v();
-	return true;
-      }
-    }
-  }
 
   double uvt[3] = {newPoint[0],newPoint[1],0.0};
   curveFunctorCircle cc (n2,n1,middle,d);

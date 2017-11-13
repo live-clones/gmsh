@@ -2161,62 +2161,16 @@ Shape :
     }
   | tCompound GeoEntity123 '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      int num = (int)$4;
-      std::vector<int> tags; ListOfDouble2Vector($7, tags);
-      switch ($2) {
-      case 1:
-        {
-          bool r = GModel::current()->getGEOInternals()->addCompoundLine(num, tags);
-          if(!r) yymsg(0, "Could not add compound line");
-        }
-        $$.Type = MSH_SEGM_COMPOUND;
-        break;
-      case 2:
-        {
-          bool r = GModel::current()->getGEOInternals()->addCompoundSurface(num, tags);
-          if(!r) yymsg(0, "Could not add compound surface");
-        }
-        $$.Type = MSH_SURF_COMPOUND;
-        break;
-      case 3:
-        {
-          bool r = GModel::current()->getGEOInternals()->addCompoundVolume(num, tags);
-          if(!r) yymsg(0, "Could not add compound volume");
-        }
-        $$.Type = MSH_VOLUME_COMPOUND;
-        break;
-      }
-      List_Delete($7);
-      $$.Num = num;
+      yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints instead");
+      $$.Type = 0;
+      $$.Num = 0;
     }
   | tCompound GeoEntity123 '(' FExpr ')' tAFFECT ListOfDouble tSTRING
       '{' RecursiveListOfListOfDouble '}' tEND
     {
-      // Particular case only for dim 2 (Surface)
-      if ($2 == 2) {
-        int num = (int)$4;
-        std::vector<int> tags; ListOfDouble2Vector($7, tags);
-        std::vector<int> bndTags[4];
-        for(int i = 0; i < List_Nbr($10); i++){
-          if(i < 4)
-            ListOfDouble2Vector(*(List_T**)List_Pointer($10, i), bndTags[i]);
-          else
-            break;
-        }
-        bool r = GModel::current()->getGEOInternals()->addCompoundSurface
-          (num, tags, bndTags);
-        if(!r) yymsg(0, "Could not add compound surface");
-        List_Delete($7);
-        Free($8);
-        for (int i = 0; i < List_Nbr($10); i++)
-          List_Delete(*(List_T**)List_Pointer($10, i));
-        List_Delete($10);
-        $$.Type = MSH_SURF_COMPOUND;
-        $$.Num = num;
-      }
-      else {
-        yymsg(0, "GeoEntity dim out of range [2,2]");
-      }
+      yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints instead");
+      $$.Type = 0;
+      $$.Num = 0;
     }
   | tPhysical GeoEntity
     {

@@ -745,7 +745,6 @@ void OpenProject(const std::string &fileName)
     FlGui::instance()->updateViews(true, false);
     FlGui::instance()->updateFields();
     GModel::current()->setSelection(0);
-    GModel::current()->setCompoundVisibility();
   }
 #endif
 }
