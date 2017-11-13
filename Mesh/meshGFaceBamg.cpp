@@ -70,21 +70,11 @@ static void computeMeshMetricsForBamg(GFace *gf, int numV,
 }
 
 
-void meshGFaceBamg(GFace *gf){
-
-   std::list<GEdge*> edges = gf->edges();
-
-  //Replace edges by their compounds
-   std::set<GEdge*> mySet;
-   std::list<GEdge*>::iterator it = edges.begin();
-   while(it != edges.end()){
-     mySet.insert(*it);
-     ++it;
-   }
-   edges.clear();
-   edges.insert(edges.begin(), mySet.begin(), mySet.end());
-   std::set<MVertex*> bcVertex;
-   for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
+void meshGFaceBamg(GFace *gf)
+{
+  std::list<GEdge*> edges = gf->edges();
+  std::set<MVertex*> bcVertex;
+  for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
     for (unsigned int i = 0; i < (*it)->lines.size(); i++){
       bcVertex.insert((*it)->lines[i]->getVertex(0));
       bcVertex.insert((*it)->lines[i]->getVertex(1));
