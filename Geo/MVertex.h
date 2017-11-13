@@ -94,7 +94,7 @@ class MVertex{
                 double scalingFactor=1.0);
   void writeMSH2(FILE *fp, bool binary=false, bool saveParametric=false,
                  double scalingFactor=1.0);
-  void writeMSH4(std::ofstream &file, bool binary=false, bool saveParametric=false,
+  void writeMSH4(FILE *fp, bool binary=false, bool saveParametric=false,
                  double scalingFactor=1.0);
   void writePLY2(FILE *fp);
   void writeVRML(FILE *fp, double scalingFactor=1.0);

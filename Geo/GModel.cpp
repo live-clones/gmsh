@@ -1457,7 +1457,14 @@ int GModel::partitionMesh(int numPart)
   opt_mesh_partition_num(0, GMSH_SET, numPart);
   int ier = deleteMeshPartitions();
   if(ier != 0) return ier;
-  ier = PartitionMesh(this);
+  if(numPart > 0)
+  {
+    ier = PartitionMesh(this);
+  }
+  else
+  {
+    return 1;
+  }
   return ier;
 #else
   Msg::Error("Mesh module not compiled");

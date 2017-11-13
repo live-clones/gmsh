@@ -1132,28 +1132,28 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
   if(physical < 0) reverse();
 }
 
-void MElement::writeMSH4(std::ofstream &file, bool binary)
+void MElement::writeMSH4(FILE *fp, bool binary)
 {
   std::vector<MVertex*> verts;
   getVertices(verts);
   
   if(binary)
   {
-    file.write((char*)&_num, sizeof(int));
+    fwrite(&_num, sizeof(int), 1, fp);
     for(unsigned int i = 0; i < verts.size(); i++)
     {
       int vertNum = verts[i]->getNum();
-      file.write((char*)&vertNum, sizeof(int));
+      fwrite(&vertNum, sizeof(int), 1, fp);
     }
   }
   else
   {
-    file << _num << " ";
+    fprintf(fp, "%d ", _num);
     for(unsigned int i = 0; i < verts.size(); i++)
     {
-      file << verts[i]->getNum() << " ";
+       fprintf(fp, "%d ", verts[i]->getNum());
     }
-    file << std::endl;
+    fprintf(fp, "\n");
   }
 }
 

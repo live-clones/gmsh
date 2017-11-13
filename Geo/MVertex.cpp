@@ -195,65 +195,63 @@ void MVertex::writeMSH2(FILE *fp, bool binary, bool saveParametric, double scali
   }
 }
 
-void MVertex::writeMSH4(std::ofstream &file, bool binary, bool saveParametric, double scalingFactor)
+void MVertex::writeMSH4(FILE *fp, bool binary, bool saveParametric, double scalingFactor)
 {
   if(binary)
   {
-    file.write((char*)&_num, sizeof(int));
+    fwrite(&_num, sizeof(int), 1, fp);
     double xScale = _x*scalingFactor;
     double yScale = _y*scalingFactor;
     double zScale = _z*scalingFactor;
-    file.write((char*)&xScale, sizeof(double));
-    file.write((char*)&yScale, sizeof(double));
-    file.write((char*)&zScale, sizeof(double));
+    fwrite(&xScale, sizeof(double), 1, fp);
+    fwrite(&yScale, sizeof(double), 1, fp);
+    fwrite(&zScale, sizeof(double), 1, fp);
     if(saveParametric)
     {
       int geDim = _ge->dim();
       int geTag = _ge->tag();
-      file.write((char*)&geDim, sizeof(int));
-      file.write((char*)&geTag, sizeof(int));
+      fwrite(&geDim, sizeof(int), 1, fp);
+      fwrite(&geTag, sizeof(int), 1, fp);
       
       if(_ge->dim() == 1)
       {
         double u;
         getParameter(0, u);
-        file.write((char*)&u, sizeof(double));
+        fwrite(&u, sizeof(double), 1, fp);
       }
       else if(_ge->dim() == 2)
       {
         double u, v;
         getParameter(0, u);
         getParameter(1, v);
-        file.write((char*)&u, sizeof(double));
-        file.write((char*)&v, sizeof(double));
+        fwrite(&u, sizeof(double), 1, fp);
+        fwrite(&v, sizeof(double), 1, fp);
       }
     }
   }
   else
   {
-    file << _num << " " << _x*scalingFactor << " " << _y*scalingFactor << " " << _z*scalingFactor;
+    fprintf(fp, "%d %g %g %g", _num, _x*scalingFactor, _y*scalingFactor, _z*scalingFactor);
     if(saveParametric)
     {
-      file << " " << _ge->dim() << " " << _ge->tag() << " ";
+      fprintf(fp, " %d %d ", _ge->dim(), _ge->tag());
       
       if(_ge->dim() == 1)
       {
         double u;
         getParameter(0, u);
-        file << u << std::endl;
+        fprintf(fp, "%g", u);
       }
       else if(_ge->dim() == 2)
       {
         double u, v;
         getParameter(0, u);
         getParameter(1, v);
-        file << u << " " << v << std::endl;
+        fprintf(fp, "%g %g", u, v);
       }
     }
-    else
-    {
-      file << std::endl;
-    }
+    
+    fprintf(fp, "\n");
   }
 }
 

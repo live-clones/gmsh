@@ -375,7 +375,7 @@ class MElement
                          int num=0, int elementary=1, int physical=1,
                          int parentNum=0, int dom1Num = 0, int dom2Num = 0,
                          std::vector<short> *ghosts=0);
-  virtual void writeMSH4(std::ofstream &file, bool binary=false);
+  virtual void writeMSH4(FILE *fp, bool binary=false);
   virtual void writePOS(FILE *fp, bool printElementary, bool printElementNumber,
                         bool printSICN, bool printSIGE, bool printGamma,
                         bool printDisto,double scalingFactor=1.0, int elementary=1);

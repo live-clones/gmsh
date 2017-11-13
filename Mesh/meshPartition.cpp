@@ -63,9 +63,12 @@ int PartitionMesh(GModel *const model)
   Graph graph;
   Msg::StatusBar(true, "Building mesh graph...");
   int ier = MakeGraph(model, graph);
-  Msg::StatusBar(true, "Partitioning graph...");
-  if(!ier) ier = PartitionGraph(graph);
-  if(ier) return 1;
+  if(CTX::instance()->mesh.num_partitions > 1)
+  {
+    Msg::StatusBar(true, "Partitioning graph...");
+    if(!ier) ier = PartitionGraph(graph);
+    if(ier) return 1;
+  }
     
   // Assign partitions to elements
   std::unordered_map<MElement*, unsigned short> elmToPartition;
@@ -73,9 +76,18 @@ int PartitionMesh(GModel *const model)
   {
     if(graph.element(i) != NULL)
     {
-      elmToPartition.insert(std::pair<MElement*, unsigned short>(graph.element(i), graph.partition(i)+1));
-      //Should be removed
-      graph.element(i)->setPartition(graph.partition(i)+1);
+      if(CTX::instance()->mesh.num_partitions > 1)
+      {
+        elmToPartition.insert(std::pair<MElement*, unsigned short>(graph.element(i), graph.partition(i)+1));
+        //Should be removed
+        graph.element(i)->setPartition(graph.partition(i)+1);
+      }
+      else
+      {
+        elmToPartition.insert(std::pair<MElement*, unsigned short>(graph.element(i), 1));
+        //Should be removed
+        graph.element(i)->setPartition(1);
+      }
     }
   }
   graph.clear();

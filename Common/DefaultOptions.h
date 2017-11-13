@@ -1106,7 +1106,7 @@ StringXNumber MeshOptions_Number[] = {
     "Number of hexahedra in the current mesh (read-only)" },
   { F, "NbNodes" , opt_mesh_nb_nodes , 0. ,
     "Number of nodes in the current mesh (read-only)" },
-  { F|O, "NbPartitions" , opt_mesh_partition_num, 2. ,
+  { F|O, "NbPartitions" , opt_mesh_partition_num, 0. ,
     "Number of partitions" },
   { F, "NbPrisms" , opt_mesh_nb_prisms , 0. ,
     "Number of prisms in the current mesh (read-only)" },

@@ -155,6 +155,7 @@ void partition_cancel_cb(Fl_Widget *widget, void *data)
   PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
   dlg->window->hide();
   Fl::delete_widget(dlg->window);
+  CTX::instance()->mesh.num_partitions = 0;
 }
 
 // Select groups to display
@@ -260,7 +261,7 @@ void partition_dialog()
     {
       Fl_Value_Input *const o = new Fl_Value_Input (2*WB + 2*BB, y, IW, BH, "Number of\nPartitions");
       dlg.inputNumPartition = o;
-      o->minimum(2);
+      o->minimum(0);
       o->maximum(std::numeric_limits<unsigned short>::max());
       o->callback((Fl_Callback *)partition_opt_num_partitions_cb, &dlg);
       o->step(1);
