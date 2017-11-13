@@ -10,16 +10,13 @@ set(SRC
   GEntity.cpp STensor3.cpp
     GVertex.cpp GEdge.cpp GFace.cpp GRegion.cpp
     GEdgeLoop.cpp
-  GRbf.cpp
     gmshVertex.cpp gmshEdge.cpp gmshFace.cpp gmshRegion.cpp
-   gmshSurface.cpp
-   OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp
-   GenericVertex.cpp GenericEdge.cpp GenericFace.cpp GenericRegion.cpp
+    gmshSurface.cpp
+    OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp
+    GenericVertex.cpp GenericEdge.cpp GenericFace.cpp GenericRegion.cpp
     discreteEdge.cpp discreteFace.cpp discreteDiskFace.cpp discreteRegion.cpp
     fourierEdge.cpp fourierFace.cpp fourierProjectionFace.cpp
-  ACISVertex.cpp
-  ACISEdge.cpp
-  ACISFace.cpp
+    ACISVertex.cpp ACISEdge.cpp ACISFace.cpp
   GModel.cpp
   GModelCreateTopologyFromMesh.cpp
     GModelVertexArrays.cpp
