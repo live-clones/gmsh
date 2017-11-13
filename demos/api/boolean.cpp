@@ -18,12 +18,10 @@ int main(int argc, char **argv)
   double R = 1.4, Rs = R*.7, Rt = R*1.25;
 
   int o;
-  gmshModelOccAddBox(1, -R,-R,-R, 2*R,2*R,2*R, o);
-  gmshModelOccAddSphere(2, 0,0,0,Rt, o);
-
   std::vector<std::pair<int, int> > ov;
   std::vector<std::vector<std::pair<int, int> > > om;
-
+  gmshModelOccAddBox(1, -R,-R,-R, 2*R,2*R,2*R, o);
+  gmshModelOccAddSphere(2, 0,0,0,Rt, o);
   gmshModelOccBooleanIntersection(3, {{3, 1}}, {{3, 2}}, ov, om);
   gmshModelOccAddCylinder(4, -2*R,0,0, 4*R,0,0, Rs, o);
   gmshModelOccAddCylinder(5, 0,-2*R,0, 0,4*R,0, Rs, o);
