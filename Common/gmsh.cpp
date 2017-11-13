@@ -81,7 +81,7 @@ static void splitOptionName(const std::string &fullName, std::string &category,
              name.c_str(), index);
 }
 
-int gmshOptionSetNumber(const std::string &name, double value)
+int gmshOptionSetNumber(const std::string &name, const double value)
 {
   std::string c, n;
   int i;
@@ -162,7 +162,7 @@ int gmshModelGetPhysicalGroups(vector_pair &dimTags)
   return 0;
 }
 
-int gmshModelAddPhysicalGroup(int dim, int tag, const std::vector<int> &tags)
+int gmshModelAddPhysicalGroup(const int dim, const int tag, const std::vector<int> &tags)
 {
   bool r = GModel::current()->getGEOInternals()->modifyPhysicalGroup
     (dim, tag, 0, tags);
@@ -173,7 +173,7 @@ int gmshModelAddPhysicalGroup(int dim, int tag, const std::vector<int> &tags)
   return 1;
 }
 
-int gmshModelGetEntitiesForPhysicalGroup(int dim, int tag,
+int gmshModelGetEntitiesForPhysicalGroup(const int dim, const int tag,
                                          std::vector<int> &tags)
 {
   std::map<int, std::vector<GEntity*> > groups;
@@ -186,19 +186,19 @@ int gmshModelGetEntitiesForPhysicalGroup(int dim, int tag,
   return 0;
 }
 
-int gmshModelSetPhysicalName(int dim, int tag, const std::string &name)
+int gmshModelSetPhysicalName(const int dim, const int tag, const std::string &name)
 {
   GModel::current()->setPhysicalName(name, dim, tag);
   return 0;
 }
 
-int gmshModelGetPhysicalName(int dim, int tag, std::string &name)
+int gmshModelGetPhysicalName(const int dim, const int tag, std::string &name)
 {
   name = GModel::current()->getPhysicalName(dim, tag);
   return 0;
 }
 
-int gmshModelGetVertexCoordinates(int tag, double &x, double &y, double &z)
+int gmshModelGetVertexCoordinates(const int tag, double &x, double &y, double &z)
 {
   GVertex *gv = GModel::current()->getVertexByTag(tag);
   if(gv){
@@ -211,7 +211,7 @@ int gmshModelGetVertexCoordinates(int tag, double &x, double &y, double &z)
 }
 
 int gmshModelGetBoundary(const vector_pair &inDimTags, vector_pair &outDimTags,
-                         bool combined, bool oriented, bool recursive)
+                         const bool combined, const bool oriented, const bool recursive)
 {
   bool r = GModel::current()->getBoundaryTags(inDimTags, outDimTags, combined,
                                               oriented, recursive);
@@ -219,9 +219,9 @@ int gmshModelGetBoundary(const vector_pair &inDimTags, vector_pair &outDimTags,
   return 1;
 }
 
-int gmshModelGetEntitiesInBoundingBox(int dim,
-                                      double x1, double y1, double z1,
-                                      double x2, double y2, double z2,
+int gmshModelGetEntitiesInBoundingBox(const int dim,
+                                      const double x1, const double y1, const double z1,
+                                      const double x2, const double y2, const double z2,
                                       std::vector<int> &tags)
 {
   SBoundingBox3d box(x1, y1, z1, x2, y2, z2);
@@ -232,8 +232,8 @@ int gmshModelGetEntitiesInBoundingBox(int dim,
   return 0;
 }
 
-int gmshModelGetBoundingBox(int dim, int tag, double &x1, double &y1, double &z1,
-                            double &x2, double &y2, double &z2)
+int gmshModelGetBoundingBox(const int dim, const int tag, double &x1, double &y1,
+                            double &z1, double &x2, double &y2, double &z2)
 {
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   if(!ge) return 1;
@@ -248,7 +248,7 @@ int gmshModelGetBoundingBox(int dim, int tag, double &x1, double &y1, double &z1
   return 0;
 }
 
-int gmshModelRemove(const vector_pair &dimTags, bool recursive)
+int gmshModelRemove(const vector_pair &dimTags, const bool recursive)
 {
   GModel::current()->remove(dimTags, recursive);
   return 0;
@@ -264,7 +264,8 @@ int gmshModelMesh(int dim)
   return 1;
 }
 
-int gmshModelGetMeshVertices(int dim, int tag, std::vector<int> &vertexTags,
+int gmshModelGetMeshVertices(const int dim, const int tag,
+                             std::vector<int> &vertexTags,
                              std::vector<double> &coords)
 {
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
@@ -297,7 +298,7 @@ static void addElementInfo(std::vector<T*> &ele,
   }
 }
 
-int gmshModelGetMeshElements(int dim, int tag, std::vector<int> &types,
+int gmshModelGetMeshElements(const int dim, const int tag, std::vector<int> &types,
                              std::vector<std::vector<int> > &elementTags,
                              std::vector<std::vector<int> > &vertexTags)
 {
@@ -328,7 +329,7 @@ int gmshModelGetMeshElements(int dim, int tag, std::vector<int> &types,
   return 0;
 }
 
-int gmshModelSetMeshSize(int dim, int tag, double size)
+int gmshModelSetMeshSize(const int dim, const int tag, const double size)
 {
   if(dim) return 2;
   GVertex *gv = GModel::current()->getVertexByTag(tag);
@@ -339,7 +340,8 @@ int gmshModelSetMeshSize(int dim, int tag, double size)
   return 1;
 }
 
-int gmshModelSetTransfiniteLine(int tag, int nPoints, int type, double coef)
+int gmshModelSetTransfiniteLine(const int tag, const int nPoints, const int type,
+                                const double coef)
 {
   GEdge *ge = GModel::current()->getEdgeByTag(tag);
   if(ge){
@@ -352,7 +354,7 @@ int gmshModelSetTransfiniteLine(int tag, int nPoints, int type, double coef)
   return 1;
 }
 
-int gmshModelSetTransfiniteSurface(int tag, int arrangement,
+int gmshModelSetTransfiniteSurface(const int tag, const int arrangement,
                                    const std::vector<int> &cornerTags)
 {
   GFace *gf = GModel::current()->getFaceByTag(tag);
@@ -371,7 +373,7 @@ int gmshModelSetTransfiniteSurface(int tag, int arrangement,
   return 1;
 }
 
-int gmshModelSetTransfiniteVolume(int tag, const std::vector<int> &cornerTags)
+int gmshModelSetTransfiniteVolume(const int tag, const std::vector<int> &cornerTags)
 {
   GRegion *gr = GModel::current()->getRegionByTag(tag);
   if(gr){
@@ -388,7 +390,7 @@ int gmshModelSetTransfiniteVolume(int tag, const std::vector<int> &cornerTags)
   return 1;
 }
 
-int gmshModelSetRecombine(int dim, int tag, double angle)
+int gmshModelSetRecombine(const int dim, const int tag, const double angle)
 {
   GFace *gf = GModel::current()->getFaceByTag(tag);
   if(gf){
@@ -399,7 +401,7 @@ int gmshModelSetRecombine(int dim, int tag, double angle)
   return 1;
 }
 
-int gmshModelSetSmoothing(int tag, int val)
+int gmshModelSetSmoothing(const int tag, const int val)
 {
   GFace *gf = GModel::current()->getFaceByTag(tag);
   if(gf){
@@ -409,7 +411,7 @@ int gmshModelSetSmoothing(int tag, int val)
   return 1;
 }
 
-int gmshModelSetReverseMesh(int dim, int tag)
+int gmshModelSetReverseMesh(const int dim, const int tag)
 {
   if(dim == 1){
     GEdge *ge = GModel::current()->getEdgeByTag(tag);
@@ -422,7 +424,8 @@ int gmshModelSetReverseMesh(int dim, int tag)
   return 0;
 }
 
-int gmshModelEmbed(int dim, const std::vector<int> &tags, int inDim, int inTag)
+int gmshModelEmbed(const int dim, const std::vector<int> &tags,
+                   const int inDim, const int inTag)
 {
   if(inDim == 2){
     GFace *gf = GModel::current()->getFaceByTag(inTag);
@@ -468,75 +471,98 @@ int gmshModelEmbed(int dim, const std::vector<int> &tags, int inDim, int inTag)
 
 // gmshModelGeo
 
-int gmshModelGeoAddVertex(int &tag, double x, double y, double z, double meshSize)
+int gmshModelGeoAddVertex(const int tag, const double x, const double y, const double z,
+                          int &outTag, const double meshSize)
 {
-  return !GModel::current()->getGEOInternals()->addVertex(tag, x, y, z, meshSize);
+  outTag = tag;
+  return !GModel::current()->getGEOInternals()->addVertex(outTag, x, y, z, meshSize);
 }
 
-int gmshModelGeoAddLine(int &tag, int startTag, int endTag)
+int gmshModelGeoAddLine(const int tag, const int startTag, const int endTag,
+                        int &outTag)
 {
-  return !GModel::current()->getGEOInternals()->addLine(tag, startTag, endTag);
+  outTag = tag;
+  return !GModel::current()->getGEOInternals()->addLine(outTag, startTag, endTag);
 }
 
-int gmshModelGeoAddCircleArc(int &tag, int startTag, int centerTag, int endTag,
-                             double nx, double ny, double nz)
+int gmshModelGeoAddCircleArc(const int tag, const int startTag, const int centerTag,
+                             const int endTag, int &outTag,
+                             const double nx, const double ny, const double nz)
 {
+  outTag = tag;
   return !GModel::current()->getGEOInternals()->addCircleArc
-    (tag, startTag, centerTag, endTag, nx, ny, nz);
+    (outTag, startTag, centerTag, endTag, nx, ny, nz);
 }
 
-int gmshModelGeoAddEllipseArc(int &tag, int startTag, int centerTag, int majorTag,
-                              int endTag, double nx, double ny, double nz)
+int gmshModelGeoAddEllipseArc(const int tag, const int startTag, const int centerTag,
+                              const int majorTag, const int endTag, int &outTag,
+                              const double nx, const double ny, const double nz)
 {
+  outTag = tag;
   return !GModel::current()->getGEOInternals()->addEllipseArc
-    (tag, startTag, centerTag, majorTag, endTag, nx, ny, nz);
+    (outTag, startTag, centerTag, majorTag, endTag, nx, ny, nz);
 }
 
-int gmshModelGeoAddSpline(int &tag, const std::vector<int> &vertexTags)
+int gmshModelGeoAddSpline(const int tag, const std::vector<int> &vertexTags,
+                          int &outTag)
 {
-  return !GModel::current()->getGEOInternals()->addSpline(tag, vertexTags);
+  outTag = tag;
+  return !GModel::current()->getGEOInternals()->addSpline(outTag, vertexTags);
 }
 
-int gmshModelGeoAddBSpline(int &tag, const std::vector<int> &vertexTags)
+int gmshModelGeoAddBSpline(const int tag, const std::vector<int> &vertexTags,
+                           int &outTag)
 {
-  return !GModel::current()->getGEOInternals()->addBSpline(tag, vertexTags);
+  outTag = tag;
+  return !GModel::current()->getGEOInternals()->addBSpline(outTag, vertexTags);
 }
 
-int gmshModelGeoAddBezier(int &tag, const std::vector<int> &vertexTags)
+int gmshModelGeoAddBezier(const int tag, const std::vector<int> &vertexTags,
+                          int &outTag)
 {
-  return !GModel::current()->getGEOInternals()->addBezier(tag, vertexTags);
+  outTag = tag;
+  return !GModel::current()->getGEOInternals()->addBezier(outTag, vertexTags);
 }
 
-int gmshModelGeoAddLineLoop(int &tag, const std::vector<int> &edgeTags)
+int gmshModelGeoAddLineLoop(const int tag, const std::vector<int> &edgeTags,
+                            int &outTag)
 {
-  return !GModel::current()->getGEOInternals()->addLineLoop(tag, edgeTags);
+  outTag = tag;
+  return !GModel::current()->getGEOInternals()->addLineLoop(outTag, edgeTags);
 }
 
-int gmshModelGeoAddPlaneSurface(int &tag, const std::vector<int> &wireTags)
+int gmshModelGeoAddPlaneSurface(const int tag, const std::vector<int> &wireTags,
+                                int &outTag)
 {
-  return !GModel::current()->getGEOInternals()->addPlaneSurface(tag, wireTags);
+  outTag = tag;
+  return !GModel::current()->getGEOInternals()->addPlaneSurface(outTag, wireTags);
 }
 
-int gmshModelGeoAddSurfaceFilling(int &tag, const std::vector<int> &wireTags,
-                                  int sphereCenterTag)
+int gmshModelGeoAddSurfaceFilling(const int tag, const std::vector<int> &wireTags,
+                                  int &outTag, const int sphereCenterTag)
 {
+  outTag = tag;
   return !GModel::current()->getGEOInternals()->addSurfaceFilling
-    (tag, wireTags, sphereCenterTag);
+    (outTag, wireTags, sphereCenterTag);
 }
 
-int gmshModelGeoAddSurfaceLoop(int &tag, const std::vector<int> &faceTags)
+int gmshModelGeoAddSurfaceLoop(const int tag, const std::vector<int> &faceTags,
+                               int &outTag)
 {
-  return !GModel::current()->getGEOInternals()->addSurfaceLoop(tag, faceTags);
+  outTag = tag;
+  return !GModel::current()->getGEOInternals()->addSurfaceLoop(outTag, faceTags);
 }
 
-int gmshModelGeoAddVolume(int &tag, const std::vector<int> &shellTags)
+int gmshModelGeoAddVolume(const int tag, const std::vector<int> &shellTags,
+                          int &outTag)
 {
-  return !GModel::current()->getGEOInternals()->addVolume(tag, shellTags);
+  outTag = tag;
+  return !GModel::current()->getGEOInternals()->addVolume(outTag, shellTags);
 }
 
 static ExtrudeParams *getExtrudeParams(const std::vector<int> &numElements,
                                        const std::vector<double> &heights,
-                                       bool recombine)
+                                       const bool recombine)
 {
   ExtrudeParams *e = 0;
   if(numElements.size()){
@@ -551,10 +577,10 @@ static ExtrudeParams *getExtrudeParams(const std::vector<int> &numElements,
 }
 
 int gmshModelGeoExtrude(const vector_pair &inDimTags,
-                        double dx, double dy, double dz,
+                        const double dx, const double dy, const double dz,
                         vector_pair &outDimTags,
                         const std::vector<int> &numElements,
-                        const std::vector<double> &heights, bool recombine)
+                        const std::vector<double> &heights, const bool recombine)
 {
   return !GModel::current()->getGEOInternals()->extrude
     (inDimTags, dx, dy, dz, outDimTags,
@@ -562,11 +588,11 @@ int gmshModelGeoExtrude(const vector_pair &inDimTags,
 }
 
 int gmshModelGeoRevolve(const vector_pair &inDimTags,
-                        double x, double y, double z,
-                        double ax, double ay, double az, double angle,
-                        vector_pair &outDimTags,
+                        const double x, const double y, const double z,
+                        const double ax, const double ay, const double az,
+                        const double angle, vector_pair &outDimTags,
                         const std::vector<int> &numElements,
-                        const std::vector<double> &heights, bool recombine)
+                        const std::vector<double> &heights, const bool recombine)
 {
   return !GModel::current()->getGEOInternals()->revolve
     (inDimTags, x, y, z, ax, ay, az, angle, outDimTags,
@@ -574,42 +600,41 @@ int gmshModelGeoRevolve(const vector_pair &inDimTags,
 }
 
 int gmshModelGeoTwist(const vector_pair &inDimTags,
-                      double x, double y, double z,
-                      double dx, double dy, double dz,
-                      double ax, double ay, double az, double angle,
-                      vector_pair &outDimTags,
+                      const double x, const double y, const double z,
+                      const double dx, const double dy, const double dz,
+                      const double ax, const double ay, const double az,
+                      const double angle, vector_pair &outDimTags,
                       const std::vector<int> &numElements,
-                      const std::vector<double> &heights, bool recombine)
+                      const std::vector<double> &heights, const bool recombine)
 {
   return !GModel::current()->getGEOInternals()->twist
     (inDimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, outDimTags,
      getExtrudeParams(numElements, heights, recombine));
 }
 
-int gmshModelGeoTranslate(const vector_pair &dimTags,
-                          double dx, double dy, double dz)
+int gmshModelGeoTranslate(const vector_pair &dimTags, const double dx,
+                          const double dy, const double dz)
 {
   return !GModel::current()->getGEOInternals()->translate(dimTags, dx, dy, dz);
 }
 
-int gmshModelGeoRotate(const vector_pair &dimTags,
-                       double x, double y, double z, double ax, double ay, double az,
-                       double angle)
+int gmshModelGeoRotate(const vector_pair &dimTags, const double x, const double y,
+                       const double z, const double ax, const double ay, const double az,
+                       const double angle)
 {
   return !GModel::current()->getGEOInternals()->rotate
     (dimTags, x, y, z, ax, ay, az, angle);
 }
 
-int gmshModelGeoDilate(const vector_pair &dimTags,
-                       double x, double y, double z,
-                       double a, double b, double c)
+int gmshModelGeoDilate(const vector_pair &dimTags, const double x, const double y,
+                       const double z, const double a, const double b, const double c)
 {
   return !GModel::current()->getGEOInternals()->dilate
     (dimTags, x, y, z, a, b, c);
 }
 
 int gmshModelGeoSymmetry(const vector_pair &dimTags,
-                         double a, double b, double c, double d)
+                         const double a, const double b, const double c, const double d)
 {
   return !GModel::current()->getGEOInternals()->symmetry
     (dimTags, a, b, c, d);
@@ -620,7 +645,7 @@ int gmshModelGeoCopy(const vector_pair &inDimTags, vector_pair &outDimTags)
   return !GModel::current()->getGEOInternals()->copy(inDimTags, outDimTags);
 }
 
-int gmshModelGeoRemove(const vector_pair &dimTags, bool recursive)
+int gmshModelGeoRemove(const vector_pair &dimTags, const bool recursive)
 {
   return !GModel::current()->getGEOInternals()->remove(dimTags, recursive);
 }
@@ -644,181 +669,279 @@ static void createOcc()
   if(!GModel::current()->getOCCInternals()) GModel::current()->createOCCInternals();
 }
 
-int gmshModelOccAddVertex(int &tag, double x, double y, double z, double meshSize)
+int gmshModelOccAddVertex(const int tag, const double x, const double y, const double z,
+                          int &outTag, const double meshSize)
 {
   createOcc();
-  return !GModel::current()->getOCCInternals()->addVertex(tag, x, y, z, meshSize);
+  outTag = tag;
+  return !GModel::current()->getOCCInternals()->addVertex(outTag, x, y, z, meshSize);
 }
 
-int gmshModelOccAddLine(int &tag, int startTag, int endTag)
+int gmshModelOccAddLine(const int tag, const int startTag, const int endTag,
+                        int &outTag)
 {
   createOcc();
-  return !GModel::current()->getOCCInternals()->addLine(tag, startTag, endTag);
+  outTag = tag;
+  return !GModel::current()->getOCCInternals()->addLine(outTag, startTag, endTag);
 }
 
-int gmshModelOccAddCircleArc(int &tag, int startTag, int centerTag,
-                             int endTag)
+int gmshModelOccAddCircleArc(const int tag, const int startTag, const int centerTag,
+                             const int endTag, int &outTag)
 {
   createOcc();
+  outTag = tag;
   return !GModel::current()->getOCCInternals()->addCircleArc
-    (tag, startTag, centerTag, endTag);
+    (outTag, startTag, centerTag, endTag);
 }
 
-int gmshModelOccAddCircle(int &tag, double x, double y, double z, double r,
-                          double angle1, double angle2)
+int gmshModelOccAddCircle(const int tag, const double x, const double y, const double z,
+                          const double r, int &outTag, const double angle1,
+                          const double angle2)
 {
   createOcc();
+  outTag = tag;
   return !GModel::current()->getOCCInternals()->addCircle
-    (tag, x, y, z, r, angle1, angle2);
+    (outTag, x, y, z, r, angle1, angle2);
 }
 
-int gmshModelOccAddEllipseArc(int &tag, int startTag, int centerTag, int endTag)
+int gmshModelOccAddEllipseArc(const int tag, const int startTag, const int centerTag,
+                              const int endTag, int &outTag)
 {
   createOcc();
+  outTag = tag;
   return !GModel::current()->getOCCInternals()->addEllipseArc
-    (tag, startTag, centerTag, endTag);
+    (outTag, startTag, centerTag, endTag);
 }
 
-int gmshModelOccAddEllipse(int &tag, double x, double y, double z, double r1,
-                           double r2, double angle1, double angle2)
+int gmshModelOccAddEllipse(const int tag, const double x, const double y, const double z,
+                           const double r1, const double r2, int &outTag,
+                           const double angle1, const double angle2)
 {
   createOcc();
+  outTag = tag;
   return !GModel::current()->getOCCInternals()->addEllipse
-    (tag, x, y, z, r1, r2, angle1, angle2);
+    (outTag, x, y, z, r1, r2, angle1, angle2);
 }
 
-int gmshModelOccAddSpline(int &tag, const std::vector<int> &vertexTags)
+int gmshModelOccAddSpline(const int tag, const std::vector<int> &vertexTags,
+                          int &outTag)
 {
   createOcc();
-  return !GModel::current()->getOCCInternals()->addSpline(tag, vertexTags);
+  outTag = tag;
+  return !GModel::current()->getOCCInternals()->addSpline(outTag, vertexTags);
 }
 
-int gmshModelOccAddBezier(int &tag, const std::vector<int> &vertexTags)
+int gmshModelOccAddBezier(const int tag, const std::vector<int> &vertexTags,
+                          int &outTag)
 {
   createOcc();
-  return !GModel::current()->getOCCInternals()->addBezier(tag, vertexTags);
+  outTag = tag;
+  return !GModel::current()->getOCCInternals()->addBezier(outTag, vertexTags);
 }
 
-int gmshModelOccAddBSpline(int &tag, const std::vector<int> &vertexTags)
+int gmshModelOccAddBSpline(const int tag, const std::vector<int> &vertexTags,
+                           int &outTag)
 {
   createOcc();
-  return !GModel::current()->getOCCInternals()->addBSpline(tag, vertexTags);
+  outTag = tag;
+  return !GModel::current()->getOCCInternals()->addBSpline(outTag, vertexTags);
 }
 
-int gmshModelOccAddWire(int &tag, const std::vector<int> &edgeTags,
-                        bool checkClosed)
+int gmshModelOccAddWire(const int tag, const std::vector<int> &edgeTags,
+                        int &outTag, const bool checkClosed)
 {
   createOcc();
+  outTag = tag;
   return !GModel::current()->getOCCInternals()->addWire
-    (tag, edgeTags, checkClosed);
+    (outTag, edgeTags, checkClosed);
 }
 
-int gmshModelOccAddLineLoop(int &tag, const std::vector<int> &edgeTags)
+int gmshModelOccAddLineLoop(const int tag, const std::vector<int> &edgeTags,
+                            int &outTag)
 {
   createOcc();
-  return !GModel::current()->getOCCInternals()->addLineLoop(tag, edgeTags);
+  outTag = tag;
+  return !GModel::current()->getOCCInternals()->addLineLoop(outTag, edgeTags);
 }
 
-int gmshModelOccAddRectangle(int &tag, double x, double y, double z,
-                             double dx, double dy, double roundedRadius)
+int gmshModelOccAddRectangle(const int tag, const double x, const double y,
+                             const double z, const double dx, const double dy,
+                             int &outTag, const double roundedRadius)
 {
   createOcc();
+  outTag = tag;
   return !GModel::current()->getOCCInternals()->addRectangle
-    (tag, x, y, z, dx, dy, roundedRadius);
+    (outTag, x, y, z, dx, dy, roundedRadius);
 }
 
-int gmshModelOccAddDisk(int &tag, double xc, double yc, double zc,
-                        double rx, double ry)
+int gmshModelOccAddDisk(const int tag, const double xc, const double yc,
+                        const double zc, const double rx, const double ry,
+                        int &outTag)
 {
   createOcc();
+  outTag = tag;
   return !GModel::current()->getOCCInternals()->addDisk
-    (tag, xc, yc, zc, rx, ry);
+    (outTag, xc, yc, zc, rx, ry);
 }
 
-int gmshModelOccAddPlaneSurface(int &tag, const std::vector<int> &wireTags)
+int gmshModelOccAddPlaneSurface(const int tag, const std::vector<int> &wireTags,
+                                int &outTag)
 {
   createOcc();
-  return !GModel::current()->getOCCInternals()->addPlaneSurface(tag, wireTags);
+  outTag = tag;
+  return !GModel::current()->getOCCInternals()->addPlaneSurface(outTag, wireTags);
 }
 
-int gmshModelOccAddSurfaceFilling(int &tag, int wireTag)
+int gmshModelOccAddSurfaceFilling(const int tag, const int wireTag, int &outTag)
 {
   createOcc();
-  return !GModel::current()->getOCCInternals()->addSurfaceFilling(tag, wireTag);
+  outTag = tag;
+  return !GModel::current()->getOCCInternals()->addSurfaceFilling(outTag, wireTag);
 }
 
-int gmshModelOccAddSurfaceLoop(int &tag, const std::vector<int> &faceTags)
+int gmshModelOccAddSurfaceLoop(const int tag, const std::vector<int> &faceTags,
+                               int &outTag)
 {
   createOcc();
-  return !GModel::current()->getOCCInternals()->addSurfaceLoop(tag, faceTags);
+  outTag = tag;
+  return !GModel::current()->getOCCInternals()->addSurfaceLoop(outTag, faceTags);
 }
 
-int gmshModelOccAddVolume(int &tag, const std::vector<int> &shellTags)
+int gmshModelOccAddVolume(const int tag, const std::vector<int> &shellTags,
+                          int &outTag)
 {
   createOcc();
-  return !GModel::current()->getOCCInternals()->addVolume(tag, shellTags);
+  outTag = tag;
+  return !GModel::current()->getOCCInternals()->addVolume(outTag, shellTags);
 }
 
-int gmshModelOccAddSphere(int &tag, double xc, double yc, double zc,
-                          double radius, double angle1, double angle2,
-                          double angle3)
+int gmshModelOccAddSphere(const int tag, const double xc, const double yc,
+                          const double zc, const double radius, int &outTag,
+                          const double angle1, const double angle2,
+                          const double angle3)
 {
   createOcc();
+  outTag = tag;
   return !GModel::current()->getOCCInternals()->addSphere
-    (tag, xc, yc, zc, radius, angle1, angle2, angle3);
+    (outTag, xc, yc, zc, radius, angle1, angle2, angle3);
 }
 
-int gmshModelOccAddBox(int &tag, double x, double y, double z,
-                       double dx, double dy, double dz)
+int gmshModelOccAddBox(const int tag, const double x, const double y, const double z,
+                       const double dx, const double dy, const double dz, int &outTag)
 {
   createOcc();
+  outTag = tag;
   return !GModel::current()->getOCCInternals()->addBox
-    (tag, x, y, z, dx, dy, dz);
+    (outTag, x, y, z, dx, dy, dz);
 }
 
-int gmshModelOccAddCylinder(int &tag, double x, double y, double z,
-                            double dx, double dy, double dz, double r,
-                            double angle)
+int gmshModelOccAddCylinder(const int tag, const double x, const double y,
+                            const double z, const double dx, const double dy,
+                            const double dz, const double r, int &outTag,
+                            const double angle)
 {
   createOcc();
+  outTag = tag;
   return !GModel::current()->getOCCInternals()->addCylinder
-    (tag, x, y, z, dx, dy, dz, r, angle);
+    (outTag, x, y, z, dx, dy, dz, r, angle);
 }
 
-int gmshModelOccAddCone(int &tag, double x, double y, double z,
-                        double dx, double dy, double dz, double r1, double r2,
-                        double angle)
+int gmshModelOccAddCone(const int tag, const double x, const double y, const double z,
+                        const double dx, const double dy, const double dz,
+                        const double r1, const double r2, int &outTag,
+                        const double angle)
 {
   createOcc();
+  outTag = tag;
   return !GModel::current()->getOCCInternals()->addCone
-    (tag, x, y, z, dx, dy, dz, r1, r2, angle);
+    (outTag, x, y, z, dx, dy, dz, r1, r2, angle);
 }
 
-int gmshModelOccAddWedge(int &tag, double x, double y, double z, double dx,
-                         double dy, double dz, double ltx)
+int gmshModelOccAddWedge(const int tag, const double x, const double y, const double z,
+                         const double dx, const double dy, const double dz,
+                         int &outTag, const double ltx)
 {
   createOcc();
+  outTag = tag;
   return !GModel::current()->getOCCInternals()->addWedge
-    (tag, x, y, z, dx, dy, dz, ltx);
+    (outTag, x, y, z, dx, dy, dz, ltx);
 }
 
-int gmshModelOccAddTorus(int &tag, double x, double y, double z, double r1,
-                         double r2, double angle)
+int gmshModelOccAddTorus(const int tag, const double x, const double y, const double z,
+                         const double r1, const double r2, int &outTag,
+                         const double angle)
 {
   createOcc();
+  outTag = tag;
   return !GModel::current()->getOCCInternals()->addTorus
-    (tag, x, y, z, r1, r2, angle);
+    (outTag, x, y, z, r1, r2, angle);
 }
 
+int gmshModelOccAddThruSections(const int tag, const std::vector<int> &wireTags,
+                                vector_pair &outDimTags, const bool makeSolid,
+                                const bool makeRuled)
+{
+  createOcc();
+  return !GModel::current()->getOCCInternals()->addThruSections
+    (tag, wireTags, makeSolid, makeRuled, outDimTags);
+}
 
+GMSH_API addThickSolid(const int tag, const int solidTag,
+                       const std::vector<int> &excludeFaceTags,
+                       const double offset, vector_pair &outDimTags)
+{
+  createOcc();
+  return !GModel::current()->getOCCInternals()->addThickSolid
+    (tag, solidTag, excludeFaceTags, offset, outDimTags);
+}
 
+int gmshModelOccExtrude(const vector_pair &inDimTags,
+                        const double dx, const double dy, const double dz,
+                        vector_pair &outDimTags,
+                        const std::vector<int> &numElements,
+                        const std::vector<double> &heights, const bool recombine)
+{
+  createOcc();
+  return !GModel::current()->getOCCInternals()->extrude
+    (inDimTags, dx, dy, dz, outDimTags,
+     getExtrudeParams(numElements, heights, recombine));
+}
 
+int gmshModelOccRevolve(const vector_pair &inDimTags,
+                        const double x, const double y, const double z,
+                        const double ax, const double ay, const double az,
+                        const double angle, vector_pair &outDimTags,
+                        const std::vector<int> &numElements,
+                        const std::vector<double> &heights, const bool recombine)
+{
+  return !GModel::current()->getOCCInternals()->revolve
+    (inDimTags, x, y, z, ax, ay, az, angle, outDimTags,
+     getExtrudeParams(numElements, heights, recombine));
+}
 
-int gmshModelOccBooleanUnion(int tag, const vector_pair &objectDimTags,
+int gmshModelOccAddPipe(const vector_pair &inDimTags, const int wireTag,
+                        vector_pair &outDimTags)
+{
+  createOcc();
+  return !GModel::current()->getOCCInternals()->addPipe
+    (inDimTags, wireTag, outDimTags);
+}
+
+int gmshModelOccFillet(const std::vector<int> &regionTags,
+                       const std::vector<int> &edgeTags,
+                       const double radius, vector_pair &outDimTags,
+                       const bool removeRegion)
+{
+  createOcc();
+  return !GModel::current()->getOCCInternals()->fillet
+    (regionTags, edgeTags, radius, outDimTags, removeRegion);
+}
+
+int gmshModelOccBooleanUnion(const int tag, const vector_pair &objectDimTags,
                              const vector_pair &toolDimTags,
                              vector_pair &outDimTags,
                              std::vector<vector_pair > &outDimTagsMap,
-                             bool removeObject, bool removeTool)
+                             const bool removeObject, const bool removeTool)
 {
   createOcc();
   return !GModel::current()->getOCCInternals()->booleanUnion
@@ -826,11 +949,11 @@ int gmshModelOccBooleanUnion(int tag, const vector_pair &objectDimTags,
      removeObject, removeTool);
 }
 
-int gmshModelOccBooleanIntersection(int tag, const vector_pair &objectDimTags,
+int gmshModelOccBooleanIntersection(const int tag, const vector_pair &objectDimTags,
                                     const vector_pair &toolDimTags,
                                     vector_pair &outDimTags,
                                     std::vector<vector_pair > &outDimTagsMap,
-                                    bool removeObject, bool removeTool)
+                                    const bool removeObject, const bool removeTool)
 {
   createOcc();
   return !GModel::current()->getOCCInternals()->booleanIntersection
@@ -838,11 +961,11 @@ int gmshModelOccBooleanIntersection(int tag, const vector_pair &objectDimTags,
      removeObject, removeTool);
 }
 
-int gmshModelOccBooleanDifference(int tag, const vector_pair &objectDimTags,
+int gmshModelOccBooleanDifference(const int tag, const vector_pair &objectDimTags,
                                   const vector_pair &toolDimTags,
                                   vector_pair &outDimTags,
                                   std::vector<vector_pair > &outDimTagsMap,
-                                  bool removeObject, bool removeTool)
+                                  const bool removeObject, const bool removeTool)
 {
   createOcc();
   return !GModel::current()->getOCCInternals()->booleanDifference
@@ -850,16 +973,76 @@ int gmshModelOccBooleanDifference(int tag, const vector_pair &objectDimTags,
      removeObject, removeTool);
 }
 
-int gmshModelOccBooleanFragments(int tag, const vector_pair &objectDimTags,
+int gmshModelOccBooleanFragments(const int tag, const vector_pair &objectDimTags,
                                  const vector_pair &toolDimTags,
                                  vector_pair &outDimTags,
                                  std::vector<vector_pair> &outDimTagsMap,
-                                 bool removeObject, bool removeTool)
+                                 const bool removeObject, const bool removeTool)
 {
   createOcc();
   return !GModel::current()->getOCCInternals()->booleanFragments
     (tag, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
      removeObject, removeTool);
+}
+
+int gmshModelOccTranslate(const vector_pair &dimTags, const double dx,
+                          const double dy, const double dz)
+{
+  createOcc();
+  return !GModel::current()->getOCCInternals()->translate(dimTags, dx, dy, dz);
+}
+
+int gmshModelOccRotate(const vector_pair &dimTags, const double x, const double y,
+                       const double z, const double ax, const double ay, const double az,
+                       const double angle)
+{
+  createOcc();
+  return !GModel::current()->getOCCInternals()->rotate
+    (dimTags, x, y, z, ax, ay, az, angle);
+}
+
+int gmshModelOccDilate(const vector_pair &dimTags, const double x, const double y,
+                       const double z, const double a, const double b, const double c)
+{
+  createOcc();
+  return !GModel::current()->getOCCInternals()->dilate
+    (dimTags, x, y, z, a, b, c);
+}
+
+int gmshModelOccSymmetry(const vector_pair &dimTags,
+                         const double a, const double b, const double c, const double d)
+{
+  createOcc();
+  return !GModel::current()->getOCCInternals()->symmetry
+    (dimTags, a, b, c, d);
+}
+
+int gmshModelOccCopy(const vector_pair &inDimTags, vector_pair &outDimTags)
+{
+  createOcc();
+  return !GModel::current()->getOCCInternals()->copy(inDimTags, outDimTags);
+}
+
+int gmshModelOccRemove(const vector_pair &dimTags, const bool recursive)
+{
+  createOcc();
+  return !GModel::current()->getOCCInternals()->remove(dimTags, recursive);
+}
+
+int gmshModelOccRemoveAllDuplicates()
+{
+  createOcc();
+  GModel::current()->getOCCInternals()->removeAllDuplicates();
+  return 0;
+}
+
+int gmshModelOccImportShapes(const std::string &fileName, vector_pair &outDimTags,
+                             const bool highestDimOnly,
+                             const std::string &format)
+{
+  createOcc();
+  return !GModel::current()->getOCCInternals()->importShapes
+    (fileName, highestDimOnly, outDimTags, format);
 }
 
 int gmshModelOccSynchronize()
