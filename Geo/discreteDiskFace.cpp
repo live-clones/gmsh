@@ -1245,7 +1245,7 @@ double triangulation::geodesicDistance ()
     if (Fixed.size() == v2t.size())break;
   }
 
-
+  /*
   char name[256];
   sprintf(name,"geodesicDistance%d.pos",iter);
   FILE *f = fopen(name,"w");
@@ -1262,7 +1262,7 @@ double triangulation::geodesicDistance ()
   }
   fprintf(f,"};\n");
   fclose(f);
-
+  */
   return CLOSEST;
 }
 

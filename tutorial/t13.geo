@@ -26,9 +26,9 @@ ss[] = Surface {:};
 // discrete):
 Compound Surface{ss[]};
 
-// And we can create the volume based on the new compound entities
-Surface Loop(1) = {ss[]};
-Volume(1) = {1};
+// FIXME: re-add this when we use a good parametrization
+//Surface Loop(1) = {ss[]};
+//Volume(1) = {1};
 
 // element size imposed by a size field
 Field[1] = MathEval;
