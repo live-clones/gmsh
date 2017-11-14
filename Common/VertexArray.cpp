@@ -31,11 +31,20 @@ void VertexArray::_addVertex(float x, float y, float z)
 
 void VertexArray::_addNormal(float nx, float ny, float nz)
 {
-  // storing the normals as bytes hurts rendering performance, but it
-  // significantly reduces the memory footprint
+#if defined(HAVE_VISUDEV)
   _normals.push_back(nx);
   _normals.push_back(ny);
   _normals.push_back(nz);
+#else
+  // storing the normals as bytes hurts rendering performance, but it
+  // significantly reduces the memory footprint
+  char cx = float2char(nx);
+  char cy = float2char(ny);
+  char cz = float2char(nz);
+  _normals.push_back(cx);
+  _normals.push_back(cy);
+  _normals.push_back(cz);
+#endif
 }
 
 void VertexArray::_addColor(unsigned char r, unsigned char g, unsigned char b,
@@ -128,9 +137,9 @@ void VertexArray::finalize()
 
 class AlphaElement {
  public:
-  AlphaElement(float *vp, float *np, unsigned char *cp) : v(vp), n(np), c(cp) {}
+  AlphaElement(float *vp, normal_type *np, unsigned char *cp) : v(vp), n(np), c(cp) {}
   float *v;
-  float *n;
+  normal_type *n;
   unsigned char *c;
 };
 
@@ -179,14 +188,14 @@ void VertexArray::sort(double x, double y, double z)
   elements.reserve(n);
   for(int i = 0; i < n; i++){
     float *vp = &_vertices[3 * npe * i];
-    float *np = _normals.empty() ? 0 : &_normals[3 * npe * i];
+    normal_type *np = _normals.empty() ? 0 : &_normals[3 * npe * i];
     unsigned char *cp = _colors.empty() ? 0 : &_colors[4 * npe * i];
     elements.push_back(AlphaElement(vp, np, cp));
   }
   std::sort(elements.begin(), elements.end(), AlphaElementLessThan());
 
   std::vector<float> sortedVertices;
-  std::vector<float> sortedNormals;
+  std::vector<normal_type> sortedNormals;
   std::vector<unsigned char> sortedColors;
   sortedVertices.reserve(_vertices.size());
   sortedNormals.reserve(_normals.size());
@@ -212,8 +221,9 @@ void VertexArray::sort(double x, double y, double z)
 
 double VertexArray::getMemoryInMb()
 {
-  int bytes = _vertices.size() * sizeof(float) + _normals.size() * sizeof(float) +
-    _colors.size() * sizeof(unsigned char);
+  int bytes = _vertices.size() * sizeof(float) +
+              _normals.size() * sizeof(normal_type) +
+              _colors.size() * sizeof(unsigned char);
   return (double)bytes / 1024. / 1024.;
 }
 
@@ -221,7 +231,9 @@ char *VertexArray::toChar(int num, std::string name, int type, double min, doubl
                           int numsteps, double time, SBoundingBox3d bbox, int &len)
 {
   int vn = _vertices.size(), nn = _normals.size(), cn = _colors.size();
-  int vs = vn * sizeof(float), ns = nn * sizeof(float), cs = cn * sizeof(unsigned char);
+  int vs = vn * sizeof(float),
+      ns = nn * sizeof(normal_type),
+      cs = cn * sizeof(unsigned char);
   int is = sizeof(int), ds = sizeof(double);
   int ss = name.size();
   double xmin = bbox.min().x(), ymin = bbox.min().y(), zmin = bbox.min().z();
@@ -311,7 +323,8 @@ void VertexArray::fromChar(int length, const char *bytes, int swap)
 
   int nn; memcpy(&nn, &bytes[index], is); index += is;
   if(nn){
-    _normals.resize(nn); int ns = nn * sizeof(float);
+    _normals.resize(nn);
+    int ns = nn * sizeof(normal_type);
     memcpy(&_normals[0], &bytes[index], ns); index += ns;
   }
 

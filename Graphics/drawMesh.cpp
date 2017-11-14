@@ -367,7 +367,7 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va, GLint type
 
   if(useNormalArray){
     glEnable(GL_LIGHTING);
-    glNormalPointer(GL_FLOAT, 0, va->getNormalArray());
+    glNormalPointer(NORMAL_GLTYPE, 0, va->getNormalArray());
     glEnableClientState(GL_NORMAL_ARRAY);
   }
   else
