@@ -116,8 +116,8 @@ if (NOT ENABLE_GMSHPY_SOURCE_PACKAGE)
 endif (NOT ENABLE_GMSHPY_SOURCE_PACKAGE)
 
 if(ENABLE_GMSHPY_SOURCE_PACKAGE)
-  set(GMSH_API ${GMSH_API} Geo/Curvature.h Mesh/Generator.h 
-      Mesh/meshGFaceLloyd.h Numeric/DivideAndConquer.h Post/PViewFactory.h
+  set(GMSH_INTERNAL_DEVELOPER_API ${GMSH_INTERNAL_DEVELOPER_API} Geo/Curvature.h 
+      Mesh/Generator.h Mesh/meshGFaceLloyd.h Numeric/DivideAndConquer.h Post/PViewFactory.h
       Solver/linearSystemPETSc.h Fltk/FlGui.h Solver/functionSpace.h
       Solver/STensor43.h Solver/sparsityPattern.h Solver/SElement.h
       Solver/groupOfElements.h PARENT_SCOPE)
@@ -151,7 +151,6 @@ if(ENABLE_GMSHPY_SOURCE_PACKAGE)
     Solver/eigenSolver.h
     Mesh/Generator.h
     Geo/GeomMeshMatcher.h
-    Geo/GFaceCompound.h
     Geo/gmshLevelset.h
     Numeric/jacobiPolynomials.h
     Numeric/legendrePolynomials.h

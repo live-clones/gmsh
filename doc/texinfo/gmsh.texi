@@ -950,7 +950,7 @@ List of expressions are also widely used, and are defined as:
   BoundingBox Point|Line|Surface|Volume @{ @var{expression} @}
   Point @{ @var{expression} @} |
   Physical Point|Line|Surface|Volume @{ @var{expression-list} @} |
-  <Physical> Point|Line|Surface|Volume { : } |
+  <Physical> Point|Line|Surface|Volume @{ : @} |
 @c  @var{duplicata} - already implemented: should we explain this?
 @end example
 
@@ -1963,16 +1963,6 @@ Creates a path made of lines. Wires are only available with the
 OpenCASCADE kernel. They are used to create @code{ThruSections} and
 extrusions along paths.
 
-@item Compound Line ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a compound line from several elementary lines.  When meshed, a
-compound line will be reparametrized as a single line, whose mesh can
-thus cross internal boundaries. The @var{expression} inside the
-parentheses is the compound line's identification number; the
-@var{expression-list} on the right hand side contains the identification
-number of the elementary lines that should be reparametrized as a single
-line. See @code{Compound Surface} for additional information on compound
-entities.
-
 @item Physical Line ( @var{expression} | @var{char-expression} <, @var{expression}> ) <+|->= @{ @var{expression-list} @};
 Creates a physical line. The @var{expression} inside the parentheses is
 the physical line's identification number; the @var{expression-list} on
@@ -2042,19 +2032,6 @@ surface loop. A surface loop must always represent a closed shell, and the
 elementary surfaces should be oriented consistently (using negative
 identification numbers to specify reverse orientation). (Surface loops are
 used to create volumes: see @ref{Volumes}.)
-
-@item Compound Surface ( @var{expression} ) = @{ @var{expression-list} @} < Boundary @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @} @} > ;
-Creates a compound surface from several elementary surfaces.  When
-meshed, a compound surface will be reparametrized as a single surface,
-whose mesh can thus cross internal boundaries. Compound surfaces are
-mostly useful for remeshing discrete models; see ``J.-F. Remacle,
-C. Geuzaine, G. Compere and E. Marchandise, @emph{High Quality Surface
-Remeshing Using Harmonic Maps}, International Journal for Numerical
-Methods in Engineering, 2009'' for details as well as the wiki for more
-examples.  The @var{expression} inside the parentheses is the compound
-surface's identification number; the mandatory @var{expression-list} on
-the right hand side contains the identification number of the elementary
-surfaces that should be reparametrized as a single surface.
 
 @item Physical Surface ( @var{expression} | @var{char-expression} <, @var{expression}> ) <+|->= @{ @var{expression-list} @};
 Creates a physical surface. The @var{expression} inside the parentheses
@@ -2142,16 +2119,6 @@ the OpenCASCADE kernel.
 
 @c @item ThickSolid ( @var{expression} ) = @{ @var{expression-list} @};
 @c todo: @code{ThickSolid} is only available with the OpenCASCADE kernel.
-
-@item Compound Volume ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a compound volume from several elementary volumes.  When meshed,
-a compound volume will be reparametrized as a single volume, whose mesh
-can thus cross internal boundaries. The @var{expression} inside the
-parentheses is the compound volume's identification number; the
-@var{expression-list} on the right hand side contains the identification
-number of the elementary volumes that should be reparametrized as a
-single volume. See @code{Compound Surface} for additional information on
-compound entities.
 
 @item Physical Volume ( @var{expression} | @var{char-expression} <, @var{expression}> ) <+|->= @{ @var{expression-list} @};
 Creates a physical volume. The @var{expression} inside the parentheses

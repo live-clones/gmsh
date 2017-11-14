@@ -23,7 +23,6 @@
 #include "OS.h"
 #include "GPoint.h"
 #include "GFace.h"
-#include "GEdgeCompound.h"
 #include "MLine.h"
 
 #define Pred(x) ((x)->prev)
@@ -1008,7 +1007,7 @@ void DocRecord::concave(double x,double y,GFace* gf)
   std::set<int>::iterator it2;
 
   list = gf->edges();
-  replaceMeshCompound(gf,list);
+
   for(it1 = list.begin(); it1 != list.end(); it1++){
     edge = *it1;
     for(unsigned int i = 0; i < edge->getNumMeshElements(); i++){
@@ -1142,7 +1141,7 @@ void DocRecord::clear_edges()
 bool DocRecord::delaunay_conformity(GFace* gf)
 {
   std::list<GEdge*> list = gf->edges();
-  replaceMeshCompound(gf,list);
+
   for(std::list<GEdge*>::iterator it = list.begin(); it!= list.end(); it++){
     GEdge *edge = *it;
     for(unsigned int i = 0; i < edge->getNumMeshElements(); i++){

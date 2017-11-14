@@ -7,16 +7,16 @@
 #define _ELASTICITY_TERM_H_
 
 #include "femTerm.h"
-#include "Gmsh.h"
+#include "GmshGlobal.h"
 #include "GModel.h"
 #include "polynomialBasis.h"
 #include "SElement.h"
 #include "fullMatrix.h"
 
-struct elasticityDataAtGaussPoint 
-{  
+struct elasticityDataAtGaussPoint
+{
   std::vector< fullMatrix<double> > gradSF;
-  std::vector<double> u,v,w,weight;  
+  std::vector<double> u,v,w,weight;
 };
 
 class elasticityTerm : public femTerm<double> {
@@ -25,7 +25,7 @@ class elasticityTerm : public femTerm<double> {
   int _iFieldR, _iFieldC;
   SVector3 _volumeForce;
   mutable std::map<int,elasticityDataAtGaussPoint> _data;
-  void createData (MElement*) const;    
+  void createData (MElement*) const;
  public:
   void setFieldC(int i){_iFieldC = i;}
   void setFieldR(int i){_iFieldR = i;}
@@ -39,7 +39,7 @@ class elasticityTerm : public femTerm<double> {
     return 3 * se->getMeshElement()->getNumShapeFunctions();
   }
   // order dofs in the local matrix :
-  // dx1, dx2 ... dxn, dy1, ..., dyn, dz1, ... dzn 
+  // dx1, dx2 ... dxn, dy1, ..., dyn, dz1, ... dzn
   Dof getLocalDofR(SElement *se, int iRow) const
   {
     MElement *e = se->getMeshElement();
@@ -70,9 +70,9 @@ class elasticityTerm : public femTerm<double> {
   Formulation of elasticity with 3 fields
    -) displacement U
    -) lagrange multipliers p and g
-  
-   g = trace (epsilon) 
-   p = trace (epsilon) 
+
+   g = trace (epsilon)
+   p = trace (epsilon)
 
 
 */
@@ -103,7 +103,7 @@ public:
     return sizeOfR(se);
   }
   // order dofs in the local matrix :
-  // dx1, dx2 ... dxn, dy1, ..., dyn, dz1, ... dzn , 
+  // dx1, dx2 ... dxn, dy1, ..., dyn, dz1, ... dzn ,
   // p1,p2,...,pm, g1,g2,...,gm
   Dof getLocalDofR(SElement *se, int iRow) const
   {
@@ -118,7 +118,7 @@ public:
     else {
       iRow -= 3 * _sizeN;
       iComp = 3 + iRow / _sizeM;
-      ithLocalVertex = iRow % _sizeM;      
+      ithLocalVertex = iRow % _sizeM;
     }
     return Dof(e->getShapeFunctionNode(ithLocalVertex)->getNum(),
                Dof::createTypeWithTwoInts(iComp, _iField));

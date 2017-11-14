@@ -32,7 +32,7 @@ typedef unsigned long intptr_t;
 #include "graphicWindow.h"
 #include "fileDialogs.h"
 #include "onelabGroup.h"
-#include "Gmsh.h"
+#include "GmshGlobal.h"
 #include "FlGui.h"
 #include "Context.h"
 #include "GModel.h"

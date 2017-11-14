@@ -3,8 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
-#ifndef _GMSH_H_
-#define _GMSH_H_
+#ifndef _GMSH_GLOBAL_H_
+#define _GMSH_GLOBAL_H_
 
 #include <string>
 #include "GmshMessage.h"

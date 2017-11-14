@@ -19,7 +19,7 @@
 #include "GmshDefines.h"
 
 GRegion::GRegion(GModel *model, int tag)
-  : GEntity (model, tag), compound(0)
+  : GEntity (model, tag)
 {
   resetMeshAttributes();
 }
@@ -309,13 +309,6 @@ std::list<GEdge*> GRegion::edges() const
     std::list<GEdge*>::const_iterator it2 = e2.begin();
     while (it2 != e2.end()){
       GEdge *edge = *it2;
-
-      // FIXME: we need to fix the compound design and decide what to do; same
-      // thing for faces() (either store or compute the entities, either use
-      // original or compound entities, etc.)
-      if(edge->getCompound())
-        edge = (GEdge*)edge->getCompound();
-
       if(std::find(e.begin(), e.end(), edge) == e.end())
         e.push_back(edge);
       ++it2;

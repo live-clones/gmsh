@@ -6,7 +6,7 @@
 #include <OpenGLES/ES1/glext.h>
 #endif
 
-#include <gmsh/Gmsh.h>
+#include <gmsh/GmshGlobal.h>
 #include <gmsh/GModel.h>
 #include <gmsh/GEdgeCompound.h>
 #include <gmsh/GFaceCompound.h>

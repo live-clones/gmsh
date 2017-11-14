@@ -2,7 +2,7 @@
  %module WrapGmsh
  %{
  /* Put header files here or function declarations like below */
-#include "Gmsh.h"
+#include "GmshGlobal.h"
 #include "GModel.h"
 #include "Geo.h"
 #include "GVertex.h"

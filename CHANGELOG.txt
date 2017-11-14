@@ -1,5 +1,6 @@
 3.1.0: generalized handling of "all" entities in geo file (using {:} notation);
-removed GModelFactory.
+removed GModelFactory, G{Edge,Face,Region}Compounds and old reparametrization
+code.
 
 3.0.6 (Novmeber 5, 2017): improved meshing of spheres; improved handling of mesh
 size constraints with OpenCASCADE kernel; implemented "Coherence" for

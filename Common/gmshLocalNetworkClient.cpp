@@ -9,7 +9,7 @@
 #elif defined(HAVE_NO_INTPTR_T)
 typedef unsigned long intptr_t;
 #endif
-#include "Gmsh.h"
+#include "GmshGlobal.h"
 #include "Context.h"
 #include "OS.h"
 #include "StringUtils.h"

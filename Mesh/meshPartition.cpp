@@ -28,7 +28,6 @@
 #include "discreteEdge.h"
 #include "discreteFace.h"
 #include "discreteRegion.h"
-#include "GFaceCompound.h"
 
 //--Prototype for Chaco interface
 

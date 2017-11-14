@@ -432,7 +432,6 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_occ_scaling(0, GMSH_SET, o->geo.value[20]->value());
 
   opt_geometry_light_two_side(0, GMSH_SET, o->geo.butt[14]->value());
-  opt_geometry_hide_compounds(0, GMSH_SET, o->geo.butt[17]->value());
 
   opt_geometry_normals(0, GMSH_SET, o->geo.value[0]->value());
   opt_geometry_tangents(0, GMSH_SET, o->geo.value[1]->value());

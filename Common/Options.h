@@ -361,7 +361,6 @@ double opt_geometry_offset0(OPT_ARGS_NUM);
 double opt_geometry_offset1(OPT_ARGS_NUM);
 double opt_geometry_offset2(OPT_ARGS_NUM);
 double opt_geometry_auto_coherence(OPT_ARGS_NUM);
-double opt_geometry_hide_compounds(OPT_ARGS_NUM);
 double opt_geometry_oriented_physicals(OPT_ARGS_NUM);
 double opt_geometry_highlight_orphans(OPT_ARGS_NUM);
 double opt_geometry_tolerance(OPT_ARGS_NUM);

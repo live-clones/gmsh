@@ -30,7 +30,6 @@
 #include "BDS.h"
 #include "OS.h"
 #include "Context.h"
-#include "GFaceCompound.h"
 #include "meshGRegionMMG3D.h"
 #include "simple3D.h"
 #include "directions3D.h"
@@ -1074,22 +1073,6 @@ void meshGRegion::operator() (GRegion *gr)
         return;
       }
     }
-  }
-
-  // replace discreteFaces by their compounds
-  {
-    std::set<GFace*, GEntityLessThan> mySet;
-    std::list<GFace*>::iterator it = faces.begin();
-    while(it != faces.end()){
-      if((*it)->getCompound())
-        mySet.insert((*it)->getCompound());
-      else
-        mySet.insert(*it);
-      ++it;
-    }
-    faces.clear();
-    faces.insert(faces.begin(), mySet.begin(), mySet.end());
-    gr->set(faces);
   }
 
   if(CTX::instance()->mesh.algo3d != ALGO_3D_FRONTAL){
