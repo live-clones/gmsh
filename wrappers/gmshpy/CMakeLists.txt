@@ -151,7 +151,6 @@ if(ENABLE_GMSHPY_SOURCE_PACKAGE)
     Solver/eigenSolver.h
     Mesh/Generator.h
     Geo/GeomMeshMatcher.h
-    Geo/GFaceCompound.h
     Geo/gmshLevelset.h
     Numeric/jacobiPolynomials.h
     Numeric/legendrePolynomials.h
