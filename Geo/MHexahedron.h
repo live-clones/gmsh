@@ -87,19 +87,8 @@ class MHexahedron : public MElement {
   virtual double getInnerRadius();
   virtual double angleShapeMeasure();
   virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
-  virtual int getNumFacesRep(bool curved){ return 12; }
-  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int f[12][3] = {
-      {0, 3, 2}, {0, 2, 1},
-      {0, 1, 5}, {0, 5, 4},
-      {0, 4, 7}, {0, 7, 3},
-      {1, 2, 6}, {1, 6, 5},
-      {2, 3, 7}, {2, 7, 6},
-      {4, 5, 6}, {4, 6, 7}
-    };
-    _getFaceRep(_v[f[num][0]], _v[f[num][1]], _v[f[num][2]], x, y, z, n);
-  }
+  virtual int getNumFacesRep(bool curved);
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize(4);

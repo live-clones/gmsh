@@ -39,8 +39,12 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
       glColor4ubv((GLubyte *)va->getColorArray(4 * i));
       double f = 1.;
       if(opt->pointType > 1){
+#if defined(HAVE_VISUDEV)
+        f = *va->getNormalArray(3 * i);
+#else
         char *n = va->getNormalArray(3 * i);
         f = char2float(*n);
+#endif
       }
       if(opt->pointType == 2){
         int s = (int)(opt->pointSize * f);
@@ -62,26 +66,36 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
       float *p1 = va->getVertexArray(3 * (i + 1));
       double x[2] = {p0[0], p1[0]}, y[2] = {p0[1], p1[1]}, z[2] = {p0[2], p1[2]};
       glColor4ubv((GLubyte *)va->getColorArray(4 * i));
-      if(opt->lineType == 2){
+      if (opt->lineType == 2){
+#if defined(HAVE_VISUDEV)
+        double v0 = *va->getNormalArray(3 * i);
+        double v1 = *va->getNormalArray(3 * (i + 1));
+#else
         char *n0 = va->getNormalArray(3 * i);
         char *n1 = va->getNormalArray(3 * (i + 1));
         double v0 = char2float(*n0), v1 = char2float(*n1);
+#endif
         ctx->drawTaperedCylinder(opt->lineWidth, v0, v1, 0., 1., x, y, z, opt->light);
       }
       else if (opt->lineType == 1)
         ctx->drawCylinder(opt->lineWidth, x, y, z, opt->light);
       else { // 2D (for now) MNT diagrams for frames
-	float l = sqrt ((p0[0] - p1[0]) * (p0[0] - p1[0]) +
+        float l = sqrt ((p0[0] - p1[0]) * (p0[0] - p1[0]) +
                         (p0[1] - p1[1]) * (p0[1] - p1[1]) +
                         (p0[2] - p1[2]) * (p0[2] - p1[2]) );
+#if defined(HAVE_VISUDEV)
+        double v0 = *va->getNormalArray(3 * i);
+        double v1 = *va->getNormalArray(3 * (i + 1));
+#else
         char *n0 = va->getNormalArray(3 * i);
         char *n1 = va->getNormalArray(3 * (i + 1));
         double v0 = char2float(*n0), v1 = char2float(*n1);
-	float dir [3] = {(p1[0] - p0[0]) / l , (p1[1] - p0[1]) / l , (p1[2] - p0[2]) / l};
-	printf("%g %g %g %g %g %g\n", v0, v1, p0[0], p0[1], p1[0], p1[1]);
-	ctx->drawVector(1, 0,
-			p0[0] - dir[1] * v0 , p0[1] + dir[0] * v0 , 0.0,
-			p1[0] - dir[1] * v1 , p1[1] + dir[0] * v1 , 0.0,opt->light);
+#endif
+        float dir [3] = {(p1[0] - p0[0]) / l , (p1[1] - p0[1]) / l , (p1[2] - p0[2]) / l};
+        printf("%g %g %g %g %g %g\n", v0, v1, p0[0], p0[1], p1[0], p1[1]);
+        ctx->drawVector(1, 0,
+                        p0[0] - dir[1] * v0 , p0[1] + dir[0] * v0 , 0.0,
+                        p1[0] - dir[1] * v1 , p1[1] + dir[0] * v1 , 0.0,opt->light);
       }
     }
   }
@@ -90,7 +104,7 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
     glEnableClientState(GL_VERTEX_ARRAY);
     if(useNormalArray){
       glEnable(GL_LIGHTING);
-      glNormalPointer(GL_BYTE, 0, va->getNormalArray());
+      glNormalPointer(NORMAL_GLTYPE, 0, va->getNormalArray());
       glEnableClientState(GL_NORMAL_ARRAY);
     }
     else

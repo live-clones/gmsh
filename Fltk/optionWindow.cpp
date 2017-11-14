@@ -296,6 +296,9 @@ static void general_options_ok_cb(Fl_Widget *w, void *data)
                  (CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str());
   opt_general_options_save(0, GMSH_SET, o->general.butt[9]->value());
   opt_general_expert_mode(0, GMSH_SET, o->general.butt[10]->value());
+#if defined(HAVE_VISUDEV)
+  opt_general_heavy_visualization(0, GMSH_SET, o->general.butt[22]->value());
+#endif
 
   if(opt_general_gui_color_scheme(0, GMSH_GET, 0) != o->general.butt[21]->value()){
     opt_general_gui_color_scheme(0, GMSH_SET, o->general.butt[21]->value());
@@ -1475,12 +1478,19 @@ optionWindow::optionWindow(int deltaFontSize)
       general.butt[9]->type(FL_TOGGLE_BUTTON);
       general.butt[9]->callback(general_options_ok_cb);
 
+#if defined(HAVE_VISUDEV)
+      general.butt[22] = new Fl_Check_Button
+        (L + 2 * WB, 2 * WB + 8 * BH, BW/2-WB, BH, "Enable heavy visualization capabilities");
+      general.butt[22]->type(FL_TOGGLE_BUTTON);
+      general.butt[22]->callback(general_options_ok_cb);
+#endif
+
       Fl_Button *b1 = new Fl_Button
         (L + width - 2 * WB - BW/3, 2 * WB + 7 * BH, BW/3, BH, "Show file path");
       b1->callback(options_show_file_cb, (void*)"option");
 
       Fl_Button *b2 = new Fl_Button
-        (L + 2 * WB, 2 * WB + 9 * BH, BW, BH, "Restore all options to default settings");
+        (L + 2 * WB, 2 * WB + 10 * BH, BW, BH, "Restore all options to default settings");
       b2->callback(options_restore_defaults_cb);
       if(CTX::instance()->guiColorScheme)
         b2->color(FL_DARK_RED);

@@ -11,6 +11,12 @@
 #include "SVector3.h"
 #include "SBoundingBox3d.h"
 
+#if defined(HAVE_VISUDEV)
+typedef float normal_type;
+#else
+typedef char normal_type;
+#endif
+
 class MElement;
 
 template<int N>
@@ -138,7 +144,7 @@ class VertexArray{
  private:
   int _numVerticesPerElement;
   std::vector<float> _vertices;
-  std::vector<char> _normals;
+  std::vector<normal_type> _normals;
   std::vector<unsigned char> _colors;
   std::vector<MElement*> _elements;
   std::set<ElementData<3>, ElementDataLessThan<3> > _data3;
@@ -168,9 +174,9 @@ class VertexArray{
   std::vector<float>::iterator lastVertex(){return _vertices.end();}
 
   // return a pointer to the raw normal array
-  char *getNormalArray(int i=0){ return &_normals[i]; }
-  std::vector<char>::iterator firstNormal(){return _normals.begin();}
-  std::vector<char>::iterator lastNormal(){return _normals.end();}
+  normal_type *getNormalArray(int i=0){ return &_normals[i]; }
+  std::vector<normal_type>::iterator firstNormal(){return _normals.begin();}
+  std::vector<normal_type>::iterator lastNormal(){return _normals.end();}
 
   // return a pointer to the raw color array
   unsigned char *getColorArray(int i=0){ return &_colors[i]; }
