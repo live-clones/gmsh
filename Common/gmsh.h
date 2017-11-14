@@ -88,8 +88,8 @@ GMSH_API gmshModelEmbed(const int dim, const std::vector<int> &tags, const int i
                         const int inTag);
 
 // gmshModelGeo
-GMSH_API gmshModelGeoAddVertex(const int tag, const double x, const double y,
-                               const double z, int &outTag, const double meshSize = 0.);
+GMSH_API gmshModelGeoAddPoint(const int tag, const double x, const double y,
+                              const double z, int &outTag, const double meshSize = 0.);
 GMSH_API gmshModelGeoAddLine(const int tag, const int startTag, const int endTag,
                              int &outTag);
 GMSH_API gmshModelGeoAddCircleArc(const int tag, const int startTag, const int centerTag,
@@ -154,8 +154,8 @@ GMSH_API gmshModelGeoRemoveAllDuplicates();
 GMSH_API gmshModelGeoSynchronize();
 
 // gmshModelOcc
-GMSH_API gmshModelOccAddVertex(const int tag, const double x, const double y,
-                               const double z, int &outTag, const double meshSize = 0.);
+GMSH_API gmshModelOccAddPoint(const int tag, const double x, const double y,
+                              const double z, int &outTag, const double meshSize = 0.);
 GMSH_API gmshModelOccAddLine(const int tag, const int startTag, const int endTag,
                              int &outTag);
 GMSH_API gmshModelOccAddCircleArc(const int tag, const int startTag, const int centerTag,
@@ -275,12 +275,22 @@ GMSH_API gmshModelOccSymmetry(const vector_pair &dimTags, const double a,
 GMSH_API gmshModelOccCopy(const vector_pair &inDimTags, vector_pair &outDimTags);
 GMSH_API gmshModelOccRemove(const vector_pair &dimTags, const bool recursive);
 GMSH_API gmshModelOccRemoveAllDuplicates();
-GMSH_API importShapes(const std::string &fileName, vector_pair &outDimTags,
-                      const bool highestDimOnly = true,
-                      const std::string &format = "");
+GMSH_API gmshModelOccImportShapes(const std::string &fileName, vector_pair &outDimTags,
+                                  const bool highestDimOnly = true,
+                                  const std::string &format = "");
 GMSH_API gmshModelOccSynchronize();
 
-// gmshField
+// gmshModelField
+
+GMSH_API gmshModelFieldAdd(const int tag, const std::string &type);
+GMSH_API gmshModelFieldSetNumber(const int tag, const std::string &option,
+                                 const double value);
+GMSH_API gmshModelFieldSetString(const int tag, const std::string &option,
+                                 const std::string &value);
+GMSH_API gmshModelFieldSetNumbers(const int tag, const std::string &option,
+                                  const std::vector<double> &value);
+GMSH_API gmshModelFieldSetAsBackground(const int tag);
+GMSH_API gmshModelFieldDelete(const int tag);
 
 // gmshSolver
 

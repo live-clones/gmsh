@@ -11,10 +11,10 @@ int main(int argc, char **argv)
 
   double lc = 1e-2;
   int o;
-  gmshModelGeoAddVertex(1, 0, 0, 0, o, lc);
-  gmshModelGeoAddVertex(2, .1, 0,  0, o, lc);
-  gmshModelGeoAddVertex(3, .1, .3, 0, o, lc);
-  gmshModelGeoAddVertex(4, 0,  .3, 0, o, lc);
+  gmshModelGeoAddPoint(1, 0, 0, 0, o, lc);
+  gmshModelGeoAddPoint(2, .1, 0,  0, o, lc);
+  gmshModelGeoAddPoint(3, .1, .3, 0, o, lc);
+  gmshModelGeoAddPoint(4, 0,  .3, 0, o, lc);
 
   gmshModelGeoAddLine(1, 1, 2, o);
   gmshModelGeoAddLine(2, 3, 2, o);

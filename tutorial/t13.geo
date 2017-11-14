@@ -32,7 +32,7 @@ Compound Surface{ss[]};
 
 // element size imposed by a size field
 Field[1] = MathEval;
-Field[1].F = "1.5";
+Field[1].F = "4";
 Background Field = 1;
 
 funny = DefineNumber[0, Choices{0,1}, Name "Parameters/Apply funny mesh size field?" ];

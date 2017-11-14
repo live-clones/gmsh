@@ -4,6 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include "gmsh.h"
+#include "GmshConfig.h"
 #include "GmshGlobal.h"
 #include "GModel.h"
 #include "GModelIO_GEO.h"
@@ -21,6 +22,10 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 #include "ExtrudeParams.h"
+
+#if defined(HAVE_MESH)
+#include "Field.h"
+#endif
 
 // gmsh
 
@@ -471,8 +476,8 @@ int gmshModelEmbed(const int dim, const std::vector<int> &tags,
 
 // gmshModelGeo
 
-int gmshModelGeoAddVertex(const int tag, const double x, const double y, const double z,
-                          int &outTag, const double meshSize)
+int gmshModelGeoAddPoint(const int tag, const double x, const double y, const double z,
+                         int &outTag, const double meshSize)
 {
   outTag = tag;
   return !GModel::current()->getGEOInternals()->addVertex(outTag, x, y, z, meshSize);
@@ -669,8 +674,8 @@ static void createOcc()
   if(!GModel::current()->getOCCInternals()) GModel::current()->createOCCInternals();
 }
 
-int gmshModelOccAddVertex(const int tag, const double x, const double y, const double z,
-                          int &outTag, const double meshSize)
+int gmshModelOccAddPoint(const int tag, const double x, const double y, const double z,
+                         int &outTag, const double meshSize)
 {
   createOcc();
   outTag = tag;
@@ -1037,8 +1042,7 @@ int gmshModelOccRemoveAllDuplicates()
 }
 
 int gmshModelOccImportShapes(const std::string &fileName, vector_pair &outDimTags,
-                             const bool highestDimOnly,
-                             const std::string &format)
+                             const bool highestDimOnly, const std::string &format)
 {
   createOcc();
   return !GModel::current()->getOCCInternals()->importShapes
@@ -1050,4 +1054,124 @@ int gmshModelOccSynchronize()
   createOcc();
   GModel::current()->getOCCInternals()->synchronize(GModel::current());
   return 0;
+}
+
+// gmshModelField
+
+int gmshModelFieldAdd(const int tag, const std::string &type)
+{
+#if defined(HAVE_MESH)
+  if(!GModel::current()->getFields()->newField(tag, type)){
+    Msg::Error("Cannot create Field %i of type '%s'", tag, type.c_str());
+    return 1;
+  }
+  return 0;
+#else
+  return 1;
+#endif
+}
+
+#if defined(HAVE_MESH)
+static FieldOption *getFieldOption(const int tag, const std::string &option)
+{
+  Field *field = GModel::current()->getFields()->get(tag);
+  if(!field){
+    Msg::Error("No field with id %i", tag);
+    return 0;
+  }
+  FieldOption *o = field->options[option];
+  if(!o){
+    Msg::Error("Unknown option '%s' in field %i of type '%s'", option.c_str(),
+               tag, field->getName());
+    return 0;
+  }
+  return o;
+}
+#endif
+
+int gmshModelFieldSetNumber(const int tag, const std::string &option,
+                            const double value)
+{
+#if defined(HAVE_MESH)
+  FieldOption *o = getFieldOption(tag, option);
+  if(!o) return 1;
+  try { o->numericalValue(value); }
+  catch(...){
+    Msg::Error("Cannot set numerical value to option '%s' in field %i",
+               option.c_str(), tag);
+    return 1;
+  }
+  return 0;
+#else
+  return 1;
+#endif
+}
+
+int gmshModelFieldSetString(const int tag, const std::string &option,
+                            const std::string &value)
+{
+#if defined(HAVE_MESH)
+  FieldOption *o = getFieldOption(tag, option);
+  if(!o) return 1;
+  try { o->string(value); }
+  catch(...){
+    Msg::Error("Cannot set string value to option '%s' in field %i",
+               option.c_str(), tag);
+    return 1;
+  }
+  return 0;
+#else
+  return 1;
+#endif
+}
+
+int gmshModelFieldSetNumbers(const int tag, const std::string &option,
+                             const std::vector<double> &value)
+{
+#if defined(HAVE_MESH)
+  FieldOption *o = getFieldOption(tag, option);
+  if(!o) return 1;
+  try {
+    if(o->getType() == FIELD_OPTION_LIST) {
+      std::list<int> vl;
+      for(unsigned int i = 0; i < value.size(); i++)
+        vl.push_back((int)value[i]);
+      o->list(vl);
+    }
+    else{
+      std::list<double> vl;
+      for(unsigned int i = 0; i < value.size(); i++)
+        vl.push_back(value[i]);
+      o->listdouble(vl);
+    }
+  }
+  catch(...){
+    Msg::Error("Cannot set numeric values to option '%s' in field %i",
+               option.c_str(), tag);
+    return 1;
+  }
+  return 0;
+#else
+  return 1;
+#endif
+}
+
+int gmshModelFieldSetAsBackground(const int tag)
+{
+#if defined(HAVE_MESH)
+  GModel::current()->getFields()->setBackgroundFieldId(tag);
+  return 0;
+#else
+  return 1;
+#endif
+}
+
+int gmshModelFieldDelete(const int tag)
+{
+#if defined(HAVE_MESH)
+  GModel::current()->getFields()->deleteField(tag);
+  return 0;
+#else
+  return 1;
+#endif
 }

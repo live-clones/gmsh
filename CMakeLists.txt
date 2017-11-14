@@ -1408,7 +1408,7 @@ if(NOOPT OR ENABLE_BUILD_IOS)
   set_compile_flags(NOOPT_SRC "-O0")
 endif(NOOPT OR ENABLE_BUILD_IOS)
 
-#enable Revoropt and set compile flags for the corresponding plugin
+# enable Revoropt and set compile flags for the corresponding plugin
 if(ENABLE_REVOROPT)
   find_path(EIGEN3_INC "eigen3/Eigen/Dense")
   if(EIGEN3_INC AND HAVE_MESH AND HAVE_PLUGINS AND HAVE_ANN AND HAVE_BFGS)
