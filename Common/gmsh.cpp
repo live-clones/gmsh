@@ -22,6 +22,7 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 #include "ExtrudeParams.h"
+#include "Context.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
@@ -480,7 +481,11 @@ int gmshModelGeoAddPoint(const int tag, const double x, const double y, const do
                          int &outTag, const double meshSize)
 {
   outTag = tag;
-  return !GModel::current()->getGEOInternals()->addVertex(outTag, x, y, z, meshSize);
+  double xx = CTX::instance()->geom.scalingFactor * x;
+  double yy = CTX::instance()->geom.scalingFactor * y;
+  double zz = CTX::instance()->geom.scalingFactor * z;
+  double lc = CTX::instance()->geom.scalingFactor * meshSize;
+  return !GModel::current()->getGEOInternals()->addVertex(outTag, xx, yy, zz, lc);
 }
 
 int gmshModelGeoAddLine(const int tag, const int startTag, const int endTag,

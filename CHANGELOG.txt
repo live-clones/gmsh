@@ -1,6 +1,6 @@
 3.1.0: generalized handling of "all" entities in geo file (using {:} notation);
 removed GModelFactory, G{Edge,Face,Region}Compounds and old reparametrization
-code.
+code; beta version of new stable Gmsh C++ API.
 
 3.0.6 (Novmeber 5, 2017): improved meshing of spheres; improved handling of mesh
 size constraints with OpenCASCADE kernel; implemented "Coherence" for

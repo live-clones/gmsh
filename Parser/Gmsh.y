@@ -1573,7 +1573,6 @@ Shape :
       double y = CTX::instance()->geom.scalingFactor * $6[1];
       double z = CTX::instance()->geom.scalingFactor * $6[2];
       double lc = CTX::instance()->geom.scalingFactor * $6[3];
-      if(lc == 0.) lc = MAX_LC; // no mesh size given at the point
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         r = GModel::current()->getOCCInternals()->addVertex(num, x, y, z, lc);
