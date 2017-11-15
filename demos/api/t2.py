@@ -59,7 +59,7 @@ gmshModelGeoAddPlaneSurface(11, [10])
 gmshModelGeoCopy([(2, 1), (2, 11)], ov)
 gmshModelGeoTranslate(ov, 0.12, 0, 0)
 
-print "New surfaces '%d' and '%d'\n", ov[0][1], ov[1][1]
+print "New surfaces " + str(ov[0][1]) + " and " + str(ov[1][1])
 
 gmshModelGeoAddPoint(100, 0., 0.3, 0.13, lc)
 gmshModelGeoAddPoint(101, 0.08, 0.3, 0.1, lc)
