@@ -1,4 +1,3 @@
-
 // This reimplements gmsh/tutorial/t1.geo in C++. For all the elementary
 // explanations about the general philosphy of entities in Gmsh, see the
 // comments in the .geo file. Comments here will focus on the specifics of the
@@ -64,12 +63,17 @@ int main(int argc, char **argv)
   // entity.
   gmshModelSetPhysicalName(2, 6, "My surface");
 
+  // Before it can be meshed, the internal CAD representation (here in the
+  // built-in "Geo" CAD kernel) must be synchronized with the Gmsh model, which
+  // will create the relevant Gmsh data structure to represent the full topology
+  // of the model. This is achieved by the gmshModelGeoSynchronize() API call.
   gmshModelGeoSynchronize();
 
+  // We can then generate a 2D mesh, and save it to disk.
   gmshModelMesh(2);
-
   gmshExport("t1.msh");
 
+  // Gmsh finalize should be called at the end.
   gmshFinalize();
   return 0;
 }

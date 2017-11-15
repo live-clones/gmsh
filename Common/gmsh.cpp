@@ -59,7 +59,12 @@ int gmshInitialize(int argc, char **argv)
 int gmshFinalize()
 {
   if(!isInitialized()) return -1;
-  return !GmshFinalize();
+  if(GmshFinalize()){
+    _initialized = 0;
+    return 0;
+  }
+  Msg::Error("Something went wrong when finalizing Gmsh");
+  return 1;
 }
 
 int gmshOpen(const std::string &fileName)

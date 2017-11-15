@@ -1,6 +1,7 @@
-#include <gmsh.h>
+// This reimplements gmsh/tutorial/t2.geo in C++. Comments focus on the new API
+// functions used compared to t1.cpp.
 
-// this reimplements gmsh/tutorial/t2.geo
+#include <gmsh.h>
 
 int main(int argc, char **argv)
 {
@@ -9,7 +10,7 @@ int main(int argc, char **argv)
 
   gmshModelCreate("t2");
 
-  // copy/paste from t1.cpp
+  // Copy/paste from t1.cpp
   double lc = 1e-2;
   int o;
   gmshModelGeoAddPoint(1, 0, 0, 0, o, lc);
@@ -28,12 +29,20 @@ int main(int argc, char **argv)
   gmshModelAddPhysicalGroup(1, 2, {1, 2});
   gmshModelAddPhysicalGroup(2, 6, {1});
   gmshModelSetPhysicalName(2, 6, "My surface");
-  // end copy/paste
+  // End copy/paste
 
   gmshModelGeoAddPoint(5, 0, .4, 0, o, lc);
   gmshModelGeoAddLine(5, 4, 5, o);
+
+  // Geometrical transformations take a std::vector of std::pair<int, int> as
+  // first argument, which contains the list of entities, represented by
+  // (dimension,tag) pairs. Here we translate point 3 (dimension = 0, tag = 3),
+  // by dx=-0.05, dy=0, dz=0.
   gmshModelGeoTranslate({{0, 3}}, -0.05, 0, 0);
 
+  // The "Duplicata" functionality in .geo files is handled by
+  // gmshModelGeoCopy(), which takes a vector of (dim,tag) pairs as input, and
+  // returns another vector of (dim,tag) pairs.
   std::vector<std::pair<int, int> > ov, ov2;
   gmshModelGeoCopy({{0, 3}}, ov);
   gmshModelGeoTranslate(ov, 0, 0.1, 0);
@@ -73,11 +82,17 @@ int main(int argc, char **argv)
   gmshModelGeoAddLineLoop(126, {115, 116, 117, 114}, o);
   gmshModelGeoAddPlaneSurface(127, {126}, o);
 
+  // The API to create surface loops ("shells") and volumes is similar to the
+  // one use to create line loops and surfaces.
   gmshModelGeoAddSurfaceLoop(128, {127, 119, 121, 123, 125, 11}, o);
   gmshModelGeoAddVolume(129, {128}, o);
 
+  // Extrusion works as expected, by providing a vector of (dim,tag) pairs as
+  // input, the translation vector, and a vector of (dim,tag) pairs as output.
   gmshModelGeoExtrude({ov[1]}, 0, 0, 0.12, ov2);
 
+  // Mesh sizes associated to geometrical points can be set by passing a vector
+  // of (dim,tag) pairs for the corresponding entities
   gmshModelGeoSetMeshSize({{0,103}, {0,105}, {0,109}, {0,102}, {0,28},
                            {0, 24}, {0,6}, {0,5}}, lc * 3);
 
