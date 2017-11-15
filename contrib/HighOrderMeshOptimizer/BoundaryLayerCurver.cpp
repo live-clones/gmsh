@@ -258,6 +258,21 @@ namespace
       }
     }
   }
+
+  void drawMLineN(const std::vector<MVertex *> &vertices_, GEdge *ent,
+                  bool newHOvert = false)
+  {
+    std::vector<MVertex *> vertices = vertices_;
+    if (newHOvert) {
+      for (int j = 2; j < vertices.size(); ++j) {
+        MVertex *v = vertices[j];
+        vertices[j] = new MVertex(v->x(), v->y(), v->z());
+        ent->addMeshVertex(vertices[j]);
+      }
+    }
+    MLineN *line = new MLineN(vertices);
+    ent->addLine(line);
+  }
 }
 
 namespace BoundaryLayerCurver
@@ -631,7 +646,7 @@ namespace BoundaryLayerCurver
 //    drawBezierControlPolygon(topVert, bndEnt);
     if (last) {
 //      drawAmplifiedDiffWithLin(topVert, bndEnt, 2);
-//      drawBezierControlPolygon(topVert, bndEnt);
+      drawBezierControlPolygon(topVert, bndEnt);
     }
   }
 
@@ -824,7 +839,8 @@ namespace BoundaryLayerCurver
 //    if (bottomEdge->getNum() != 1102) return true; // HO
 
     MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
-    std::vector<MVertex *> bottomVertices, topVertices;
+    std::vector<MVertex *> bottomVertices, topVertices, dum, dum2;
+
     for (int i = 0; i < column.size(); ++i) {
       MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
       int iBottom, sign;
@@ -839,9 +855,59 @@ namespace BoundaryLayerCurver
       Parameters2DCurve parameters;
       computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
       computePositionEdgeVert(bottomVertices, topVertices, parameters, w,
-                              dampingFactor, bndEnt, i, i == column.size()-1);
+                              dampingFactor, bndEnt, i, -i == column.size()-1);
       repositionInteriorNodes(quad);
       bottom = MEdge(topVertices[0], topVertices[1]);
+
+      bool drawT0 = true;
+      bool drawT1 = true;
+      bool drawT2 = true;
+      bool drawB1 = false;
+      bool drawB2 = false;
+
+      if (drawT0) drawMLineN(topVertices, (GEdge *)bndEnt, true);
+
+      if (true) {
+        // Going back to bottom
+        dum = bottomVertices;
+        for (int j = 2; j < dum.size(); ++j) dum[j] = new MVertex(0, 0, 0);
+        computeExtremityCoefficients(topVertices, dum, parameters, w);
+        computePositionEdgeVert(topVertices, dum, parameters, w,
+                                dampingFactor, bndEnt, i, -i == column.size()-1);
+        if (drawB1) drawMLineN(dum, (GEdge *)bndEnt, true);
+
+        // Computing top again
+        dum2 = topVertices;
+        for (int j = 2; j < dum2.size(); ++j) dum2[j] = new MVertex(0, 0, 0);
+        computeExtremityCoefficients(dum, dum2, parameters, w);
+        computePositionEdgeVert(dum, dum2, parameters, w,
+                                dampingFactor, bndEnt, i, -i == column.size()-1);
+        if (drawT1) drawMLineN(dum2, (GEdge *)bndEnt, true);
+
+        // Going back to bottom
+        computeExtremityCoefficients(dum2, dum, parameters, w);
+        computePositionEdgeVert(dum2, dum, parameters, w,
+                                dampingFactor, bndEnt, i, -i == column.size()-1);
+        if (drawB2) drawMLineN(dum, (GEdge *)bndEnt, true);
+
+        // Computing top again
+        computeExtremityCoefficients(dum, dum2, parameters, w);
+        computePositionEdgeVert(dum, dum2, parameters, w,
+                                dampingFactor, bndEnt, i, -i == column.size()-1);
+        if (drawT2) drawMLineN(dum2, (GEdge *)bndEnt, true);
+
+        const double fact = -1;
+
+        // Computing correction top
+        for (int j = 2; j < dum2.size(); ++j) {
+          MVertex *v = topVertices[j];
+          MVertex *v1 = dum2[j];
+          v->x() += fact * (v->x() - v1->x());
+          v->y() += fact * (v->y() - v1->y());
+          v->z() += fact * (v->z() - v1->z());
+        }
+        repositionInteriorNodes(quad);
+      }
 
       // Check validity of first and last layer:
       if ((i == 0 || i == column.size()-1) && quad->getValidity() != 1) return false;
