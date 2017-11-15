@@ -8,7 +8,7 @@ int main(int argc, char **argv)
   gmshInitialize(argc, argv);
   gmshOptionSetNumber("General.Terminal", 1);
 
-  gmshModelCreate("t2");
+  gmshModelCreate("t3");
 
   // copy/paste from t1.cpp
   double lc = 1e-2;
