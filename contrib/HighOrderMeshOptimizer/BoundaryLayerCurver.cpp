@@ -753,7 +753,7 @@ namespace BoundaryLayerCurver
 
   bool curve2DTriColumn(MElement *bottomEdge, MElement *extElem,
                         std::vector<MElement *> &column,
-                        SVector3 w, double dampingFactor, GEntity *bndEnt)
+                        SVector3 &w, double dampingFactor, GEntity *bndEnt)
   {
     MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
     std::vector<MVertex *> bottomVertices, topVertices, midVertices;
@@ -768,7 +768,7 @@ namespace BoundaryLayerCurver
       else
         top = commonEdge(tri1, dynamic_cast<MTriangle *>(column[i+2]));
 
-      // Reorient if needed
+      // Reorient if needed (makes function repositionInteriorNodes() simpler)
       int iBottom, iTop, sign;
       tri0->getEdgeInfo(bottom, iBottom, sign);
       tri0->getEdgeInfo(common, iTop, sign);
@@ -816,7 +816,7 @@ namespace BoundaryLayerCurver
   }
 
   bool curve2DQuadColumn(MElement *bottomEdge, std::vector<MElement *> &column,
-                         SVector3 w, double dampingFactor, GEntity *bndEnt)
+                         SVector3 &w, double dampingFactor, GEntity *bndEnt)
   {
 //    if (bottomEdge->getNum() != 1156) return true; // Strange
 //    if (bottomEdge->getNum() != 1079) return true; // Good
@@ -829,9 +829,8 @@ namespace BoundaryLayerCurver
       MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
       int iBottom, sign;
       quad->getEdgeInfo(bottom, iBottom, sign);
-      if (iBottom != 0) {
-        quad->reorient(4 - iBottom, false);
-      }
+      // Reorientation makes function repositionInteriorNodes() simpler
+      if (iBottom != 0) quad->reorient(4 - iBottom, false);
       quad->getEdgeVertices(0, bottomVertices);
       quad->getEdgeVertices(2, topVertices);
       std::reverse(topVertices.begin(), topVertices.begin() + 2);
@@ -862,6 +861,89 @@ namespace BoundaryLayerCurver
     return true;
   }
 
+  bool curve2DQuadColumn2(MElement *bottomEdge, std::vector<MElement *> &column,
+                          SVector3 w, double dampingFactor, GEntity *bndEnt)
+  {
+    static const bool draw = true;
+    MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
+    std::vector<MVertex *> bottomVertices, topVertices, tmp1, tmp2;
+
+    MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[0]);
+    int iBottom, sign;
+    quad->getEdgeInfo(bottom, iBottom, sign);
+    quad->getEdgeVertices(iBottom, tmp1);
+    MLineN bottomLine = MLineN(tmp1);
+    int newOrder = ((int)tmp1.size()-1) * 2;
+    topVertices.push_back(tmp1[0]);
+    topVertices.push_back(tmp1[1]);
+    for (int i = 2; i <= newOrder; ++i) {
+      if (i % 2) {
+        topVertices.push_back(tmp1[(i+1)/2]);
+      }
+      else {
+        double u = (i-1) * 2. / newOrder - 1;
+        SPoint3 p;
+        bottomLine.pnt(u, 0, 0, p);
+        if (draw) {
+          MVertex *v = new MVertex(p.x(), p.y(), p.z());
+          ((GEdge *) bndEnt)->addMeshVertex(v);
+          topVertices.push_back(v);
+        }
+        else topVertices.push_back(new MVertex(p.x(), p.y(), p.z()));
+      }
+    }
+    if (draw) {
+      MLineN *line = new MLineN(topVertices);
+      ((GEdge *) bndEnt)->addLine(line);
+    }
+
+    for (int i = 0; i < column.size(); ++i) {
+      MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
+      int iBottom, sign;
+      quad->getEdgeInfo(bottom, iBottom, sign);
+      // Reorientation makes function repositionInteriorNodes() simpler
+      if (iBottom != 0) quad->reorient(4 - iBottom, false);
+      bottomVertices = topVertices;
+      quad->getEdgeVertices(0, tmp1);
+      if (tmp1[0] == bottomVertices[1]) {
+        std::reverse(bottomVertices.begin(), bottomVertices.begin() + 2);
+        std::reverse(bottomVertices.begin() + 2, bottomVertices.end());
+      }
+      quad->getEdgeVertices(2, tmp2);
+      std::reverse(tmp2.begin(), tmp2.begin() + 2);
+      std::reverse(tmp2.begin() + 2, tmp2.end());
+      topVertices.clear();
+      topVertices.push_back(tmp2[0]);
+      topVertices.push_back(tmp2[1]);
+      for (int i = 2; i <= newOrder; ++i) {
+        if (i % 2) topVertices.push_back(tmp2[(i+1)/2]);
+        else {
+          if (draw) {
+            MVertex *v = new MVertex(0, 0, 0);
+            ((GEdge *) bndEnt)->addMeshVertex(v);
+            topVertices.push_back(v);
+          }
+          else topVertices.push_back(new MVertex(0, 0, 0));
+        }
+      }
+      if (draw) {
+        MLineN *line = new MLineN(topVertices);
+        ((GEdge *) bndEnt)->addLine(line);
+      }
+
+      Parameters2DCurve parameters;
+      computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
+      computePositionEdgeVert(bottomVertices, topVertices, parameters, w,
+                              dampingFactor, bndEnt, i, i == column.size()-1);
+      repositionInteriorNodes(quad);
+      bottom = MEdge(topVertices[0], topVertices[1]);
+
+      // Check validity of first and last layer:
+      if ((i == 0 || i == column.size()-1) && quad->getValidity() != 1) return false;
+    }
+    return true;
+  }
+
 }
 
 
@@ -878,7 +960,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
 //    std::cout << bottomEdge->getNum();
     double dampingFactor = 0;
     bool success = false;
-    while (!success && dampingFactor < 1000) {
+    if (!success && dampingFactor < 1000) {
       if (column[0]->getType() == TYPE_TRI)
         success = BoundaryLayerCurver::curve2DTriColumn(bottomEdge,
                                                         aboveElements[i],
