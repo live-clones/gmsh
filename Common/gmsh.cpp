@@ -651,7 +651,13 @@ static ExtrudeParams *getExtrudeParams(const std::vector<int> &numElements,
     e->mesh.ExtrudeMesh = true;
     e->mesh.NbElmLayer = numElements;
     e->mesh.hLayer = heights;
-    if(e->mesh.hLayer.empty()) e->mesh.hLayer.push_back(1.);
+    if(e->mesh.hLayer.empty()){
+      e->mesh.NbLayer = 1;
+      e->mesh.hLayer.push_back(1.);
+    }
+    else{
+      e->mesh.NbLayer = heights.size();
+    }
     e->mesh.Recombine = recombine;
   }
   return e;

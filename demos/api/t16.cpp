@@ -31,8 +31,9 @@ int main(int argc, char **argv)
   double lcar2 = .0005;
   double lcar3 = .055;
 
-  gmshModelGetEntities(ov);
+  gmshModelGetEntities(ov, 0);
   gmshModelSetMeshSize(ov, lcar1);
+
   gmshModelGetBoundary(holes, ov, false, false, true);
   gmshModelSetMeshSize(ov, lcar3);
 
