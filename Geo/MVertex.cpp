@@ -231,7 +231,7 @@ void MVertex::writeMSH4(FILE *fp, bool binary, bool saveParametric, double scali
   }
   else
   {
-    fprintf(fp, "%d %g %g %g", _num, _x*scalingFactor, _y*scalingFactor, _z*scalingFactor);
+    fprintf(fp, "%d %.16g %.16g %.16g", _num, _x*scalingFactor, _y*scalingFactor, _z*scalingFactor);
     if(saveParametric)
     {
       fprintf(fp, " %d %d ", _ge->dim(), _ge->tag());
@@ -240,14 +240,14 @@ void MVertex::writeMSH4(FILE *fp, bool binary, bool saveParametric, double scali
       {
         double u;
         getParameter(0, u);
-        fprintf(fp, "%g", u);
+        fprintf(fp, "%.16g", u);
       }
       else if(_ge->dim() == 2)
       {
         double u, v;
         getParameter(0, u);
         getParameter(1, v);
-        fprintf(fp, "%g %g", u, v);
+        fprintf(fp, "%.16g %.16g", u, v);
       }
     }
     

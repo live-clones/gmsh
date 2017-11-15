@@ -12,21 +12,19 @@
 #include "discreteEdge.h"
 
 class partitionEdge : public discreteEdge {
- public:
+public:
   std::vector<unsigned short> _partitions;
   GEdge *_parentEntity;
- public:
-  partitionEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1,
-                std::vector<unsigned short> &partitions)
-    : discreteEdge(model, num, _v0, _v1), _partitions(partitions), _parentEntity(NULL)
-  {
-    std::sort(_partitions.begin(), _partitions.end());
-  }
+public:
+  partitionEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1, std::vector<unsigned short> &partitions) : discreteEdge(model, num, _v0, _v1), _partitions(partitions), _parentEntity(NULL) {}
+  partitionEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1) : discreteEdge(model, num, _v0, _v1), _partitions(), _parentEntity(NULL) {}
   virtual ~partitionEdge() {}
   virtual GeomType geomType() const { return PartitionCurve; }
   
   virtual void setParentEntity(GEdge* e) { _parentEntity = e; }
   virtual GEdge* getParentEntity() const { return _parentEntity; }
+  
+  virtual void setPartition(std::vector<unsigned short> &partitions) { _partitions = partitions; }
 };
 
 struct Less_partitionEdge :

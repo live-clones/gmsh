@@ -10,20 +10,19 @@
 #include "discreteRegion.h"
 
 class partitionRegion : public discreteRegion {
- public:
+public:
   std::vector<unsigned short> _partitions;
   GRegion *_parentEntity;
- public:
-  partitionRegion(GModel *model, int num, std::vector<unsigned short> &partitions)
-    : discreteRegion(model, num), _partitions(partitions), _parentEntity(NULL)
-  {
-    std::sort(_partitions.begin(), _partitions.end());
-  }
+public:
+  partitionRegion(GModel *model, int num, std::vector<unsigned short> &partitions) : discreteRegion(model, num), _partitions(partitions), _parentEntity(NULL) {}
+  partitionRegion(GModel *model, int num) : discreteRegion(model, num), _partitions(), _parentEntity(NULL) {}
   virtual ~partitionRegion() {}
   virtual GeomType geomType() const { return PartitionVolume; }
   
   virtual void setParentEntity(GRegion* r) { _parentEntity = r; }
   virtual GRegion* getParentEntity() const { return _parentEntity; }
+  
+  virtual void setPartition(std::vector<unsigned short> &partitions) { _partitions = partitions; }
 };
 
 struct Less_partitionRegion :

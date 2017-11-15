@@ -339,7 +339,7 @@ class GFace : public GEntity {
   void addTriangle(MTriangle *t){ triangles.push_back(t); }
   void addQuadrangle(MQuadrangle *q){ quadrangles.push_back(q); }
   void addPolygon(MPolygon *p){ polygons.push_back(p); }
-  void addElement(int type, MElement *e);
+  virtual void addElement(int type, MElement *e);
 
   // get the boundary layer columns
   BoundaryLayerColumns *getColumns () {return &_columns;}

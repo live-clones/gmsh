@@ -345,6 +345,9 @@ class GEntity {
 
   // add a MeshVertex
   void addMeshVertex(MVertex *v) { mesh_vertices.push_back(v);}
+  
+  // add an element
+  virtual void addElement(int type, MElement *e) {}
 
   // relocate mesh vertices using their parametric coordinates
   virtual void relocateMeshVertices(){}

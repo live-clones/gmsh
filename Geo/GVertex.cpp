@@ -144,3 +144,14 @@ void GVertex::relocateMeshVertices()
     v->z() = z();
   }
 }
+
+void GVertex::addElement(int type, MElement *e)
+{
+  switch (type){
+    case TYPE_PNT:
+      addPoint(reinterpret_cast<MPoint*>(e));
+      break;
+    default:
+      Msg::Error("Trying to add unsupported element in vertex");
+  }
+}

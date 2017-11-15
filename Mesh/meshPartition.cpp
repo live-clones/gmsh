@@ -1800,7 +1800,7 @@ int CreateTopologyFile(GModel* model, std::string name)
         else
         {
           std::string substr;
-          std::vector<int> partitions = getPartition(model, entities[i], substr);
+          std::vector<unsigned short> partitions = getPartition(model, entities[i], substr);
           if(substr == "_Sigma")
           {
             for(unsigned int j = 0; j < partitions.size(); j++)
@@ -1829,7 +1829,7 @@ int CreateTopologyFile(GModel* model, std::string name)
         else
         {
           std::string substr;
-          std::vector<int> partitions = getPartition(model, entities[i], substr);
+          std::vector<unsigned short> partitions = getPartition(model, entities[i], substr);
           if(substr == "_Sigma")
           {
             for(unsigned int j = 0; j < partitions.size(); j++)
@@ -1858,7 +1858,7 @@ int CreateTopologyFile(GModel* model, std::string name)
         else
         {
           std::string substr;
-          std::vector<int> partitions = getPartition(model, entities[i], substr);
+          std::vector<unsigned short> partitions = getPartition(model, entities[i], substr);
           if(substr == "_Sigma")
           {
             for(unsigned int j = 0; j < partitions.size(); j++)
@@ -1887,7 +1887,7 @@ int CreateTopologyFile(GModel* model, std::string name)
         else
         {
           std::string substr;
-          std::vector<int> partitions = getPartition(model, entities[i], substr);
+          std::vector<unsigned short> partitions = getPartition(model, entities[i], substr);
           if(substr == "_Sigma")
           {
             for(unsigned int j = 0; j < partitions.size(); j++)
@@ -2083,10 +2083,10 @@ int getTag(GModel* model, GEntity* entity)
   return -1;
 }
 
-std::vector<int> getPartition(GModel* model, GEntity* entity, std::string &substr)
+std::vector<unsigned short> getPartition(GModel* model, GEntity* entity, std::string &substr)
 {
   std::vector<int> tags = entity->getPhysicalEntities();
-  std::vector<int> partitions;
+  std::vector<unsigned short> partitions;
   substr.clear();
   for(unsigned int i = 0; i < tags.size(); i++)
   {
@@ -2119,6 +2119,12 @@ std::vector<int> getPartition(GModel* model, GEntity* entity, std::string &subst
   }
   
   return partitions;
+}
+
+std::vector<unsigned short> getPartition(GModel* model, GEntity* entity)
+{
+  std::string substr;
+  return getPartition(model, entity, substr);
 }
 
 /*******************************************************************************

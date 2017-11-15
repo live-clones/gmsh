@@ -9,21 +9,20 @@
 #include "GModel.h"
 #include "discreteVertex.h"
 
-class partitionVertex : public discreteVertex {
- public:
+class partitionVertex : public discreteVertex{
+public:
   std::vector<unsigned short> _partitions;
   GVertex *_parentEntity;
- public:
-  partitionVertex(GModel *model, int num, std::vector<unsigned short> &partitions)
-    : discreteVertex(model, num), _partitions(partitions), _parentEntity(NULL)
-  {
-    std::sort(_partitions.begin(), _partitions.end());
-  }
+public:
+  partitionVertex(GModel *model, int num, std::vector<unsigned short> &partitions) : discreteVertex(model, num), _partitions(partitions), _parentEntity(NULL) {}
+  partitionVertex(GModel *model, int num) : discreteVertex(model, num), _partitions(), _parentEntity(NULL) {}
   virtual ~partitionVertex() {}
   virtual GeomType geomType() const { return PartitionVertex; }
   
   virtual void setParentEntity(GVertex* v) { _parentEntity = v; }
   virtual GVertex* getParentEntity() const { return _parentEntity; }
+  
+  virtual void setPartition(std::vector<unsigned short> &partitions) { _partitions = partitions; }
 };
 
 

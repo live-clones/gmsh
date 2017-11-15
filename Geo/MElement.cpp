@@ -1612,7 +1612,7 @@ int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_PYR_53  : if(name) *name = "Pyramid 53";       return 5 + 8*6;
   case MSH_PYR_61  : if(name) *name = "Pyramid 61";       return 5 + 8*7;
   case MSH_PYR_69  : if(name) *name = "Pyramid 69";       return 5 + 8*8;
-  case MSH_TRIH_4 : if(name) *name = "Trihedron 4";       return 4;
+  case MSH_TRIH_4 :  if(name) *name = "Trihedron 4";      return 4;
   case MSH_POLYH_  : if(name) *name = "Polyhedron";       return 0;
   case MSH_PNT_SUB : if(name) *name = "Point Xfem";       return 1;
   case MSH_LIN_SUB : if(name) *name = "Line Xfem";        return 2;

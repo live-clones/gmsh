@@ -10,20 +10,19 @@
 #include "discreteFace.h"
 
 class partitionFace : public discreteFace {
- public:
+public:
   std::vector<unsigned short> _partitions;
   GFace *_parentEntity;
- public:
-  partitionFace(GModel *model, int num, std::vector<unsigned short> &partitions) 
-    : discreteFace(model, num), _partitions(partitions), _parentEntity(NULL)
-  {
-    std::sort(_partitions.begin(), _partitions.end());
-  }
+public:
+  partitionFace(GModel *model, int num, std::vector<unsigned short> &partitions) : discreteFace(model, num), _partitions(partitions), _parentEntity(NULL) {}
+  partitionFace(GModel *model, int num) : discreteFace(model, num), _partitions(), _parentEntity(NULL) {}
   virtual ~partitionFace() {}
   virtual GeomType geomType() const { return PartitionSurface; }
   
   virtual void setParentEntity(GFace* f) { _parentEntity = f; }
   virtual GFace* getParentEntity() const { return _parentEntity; }
+  
+  virtual void setPartition(std::vector<unsigned short> &partitions) { _partitions = partitions; }
 };
 
 struct Less_partitionFace : 

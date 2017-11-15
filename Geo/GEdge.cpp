@@ -631,6 +631,17 @@ static void _discretize(double tol, GEdge * edge, std::vector<sortedPoint> &upts
   _discretize(tol, edge, upts, posmid);
 }
 
+void GEdge::addElement(int type, MElement *e)
+{
+  switch (type){
+    case TYPE_LIN:
+      addLine(reinterpret_cast<MLine*>(e));
+      break;
+    default:
+      Msg::Error("Trying to add unsupported element in edge");
+  }
+}
+
 void GEdge::discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts)
 {
   std::vector<sortedPoint> upts;
