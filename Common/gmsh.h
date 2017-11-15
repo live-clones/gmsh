@@ -49,8 +49,8 @@ GMSH_API gmshOptionGetString(const std::string &name, std::string &value);
 GMSH_API gmshModelCreate(const std::string &name);
 GMSH_API gmshModelSetCurrent(const std::string &name);
 GMSH_API gmshModelDestroy();
-GMSH_API gmshModelGetEntities(vector_pair &dimTags);
-GMSH_API gmshModelGetPhysicalGroups(vector_pair &dimTags);
+GMSH_API gmshModelGetEntities(vector_pair &dimTags, const int dim=-1);
+GMSH_API gmshModelGetPhysicalGroups(vector_pair &dimTags, const int dim=-1);
 GMSH_API gmshModelAddPhysicalGroup(const int dim, const int tag,
                                    const std::vector<int> &tags);
 GMSH_API gmshModelGetEntitiesForPhysicalGroup(const int dim, const int tag,
@@ -62,9 +62,10 @@ GMSH_API gmshModelGetVertexCoordinates(const int tag, double &x, double &y, doub
 GMSH_API gmshModelGetBoundary(const vector_pair &inDimTags, vector_pair &outDimTags,
                               const bool combined = true, const bool oriented = true,
                               const bool recursive = false);
-GMSH_API gmshModelGetEntitiesInBoundingBox(const int dim, const double x1, const double y1,
-                                           const double z1, const double x2, const double y2,
-                                           const double z2, std::vector<int> &tags);
+GMSH_API gmshModelGetEntitiesInBoundingBox(const double x1, const double y1,
+                                           const double z1, const double x2,
+                                           const double y2, const double z2,
+                                           vector_pair &tags, const int dim=-1);
 GMSH_API gmshModelGetBoundingBox(const int dim, const int tag, double &x1, double &y1,
                                  double &z1, double &x2, double &y2, double &z2);
 GMSH_API gmshModelRemove(const vector_pair &dimTags, const bool recursive = false);
@@ -72,15 +73,17 @@ GMSH_API gmshModelMesh(const int dim);
 GMSH_API gmshModelGetMeshVertices(const int dim, const int tag,
                                   std::vector<int> &vertexTags,
                                   std::vector<double> &coords);
-GMSH_API gmshModelGetMeshElements(const int dim, const int tag, std::vector<int> &types,
+GMSH_API gmshModelGetMeshElements(const int dim, const int tag,
+                                  std::vector<int> &types,
                                   std::vector<std::vector<int> > &elementTags,
                                   std::vector<std::vector<int> > &vertexTags);
-GMSH_API gmshModelSetMeshSize(const int dim, const int tag, const double size);
-GMSH_API gmshModelSetTransfiniteLine(const int tag, const int nPoints, const int type,
-                                     const double coef);
+GMSH_API gmshModelSetMeshSize(const vector_pair &dimTags, const double size);
+GMSH_API gmshModelSetTransfiniteLine(const int tag, const int nPoints,
+                                     const int type, const double coef);
 GMSH_API gmshModelSetTransfiniteSurface(const int tag, const int arrangement,
                                         const std::vector<int> &cornerTags);
-GMSH_API gmshModelSetTransfiniteVolume(const int tag, const std::vector<int> &cornerTags);
+GMSH_API gmshModelSetTransfiniteVolume(const int tag,
+                                       const std::vector<int> &cornerTags);
 GMSH_API gmshModelSetRecombine(const int dim, const int tag, const double angle);
 GMSH_API gmshModelSetSmoothing(const int tag, const int val);
 GMSH_API gmshModelSetReverseMesh(const int dim, const int tag);
@@ -151,6 +154,13 @@ GMSH_API gmshModelGeoSymmetry(const vector_pair &dimTags, const double a, const 
 GMSH_API gmshModelGeoCopy(const vector_pair &inDimTags, vector_pair &outDimTags);
 GMSH_API gmshModelGeoRemove(const vector_pair &dimTags, const bool recursive = false);
 GMSH_API gmshModelGeoRemoveAllDuplicates();
+GMSH_API gmshModelGeoSetMeshSize(const vector_pair &dimTags, const double size);
+GMSH_API gmshModelGeoSetTransfiniteLine(const int tag, const int nPoints,
+                                        const int type, const double coef);
+GMSH_API gmshModelGeoSetTransfiniteSurface(const int tag, const int arrangement,
+                                           const std::vector<int> &cornerTags);
+GMSH_API gmshModelGeoSetTransfiniteVolume(const int tag,
+                                          const std::vector<int> &cornerTags);
 GMSH_API gmshModelGeoSynchronize();
 
 // gmshModelOcc
@@ -278,6 +288,7 @@ GMSH_API gmshModelOccRemoveAllDuplicates();
 GMSH_API gmshModelOccImportShapes(const std::string &fileName, vector_pair &outDimTags,
                                   const bool highestDimOnly = true,
                                   const std::string &format = "");
+GMSH_API gmshModelOccSetMeshSize(const vector_pair &dimTags, const double size);
 GMSH_API gmshModelOccSynchronize();
 
 // gmshModelField
