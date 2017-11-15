@@ -33,6 +33,8 @@ static int _initialized = 0;
 static bool isInitialized()
 {
   if(!_initialized){
+    // make sure stuff gets printed out
+    CTX::instance()->terminal = 1;
     Msg::Error("Gmsh has not been initialized");
     return false;
   }
