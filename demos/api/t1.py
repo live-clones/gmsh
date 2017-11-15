@@ -50,7 +50,6 @@ gmshModelGeoAddLine(2, 3, 2);
 gmshModelGeoAddLine(3, 3, 4);
 gmshModelGeoAddLine(4, 4, 1);
 
-
 # The philosophy to construct line loops and surfaces is similar: the second
 # arguments are now vectors of integers.
 gmshModelGeoAddLineLoop(1, [4, 1, -2, 3]);

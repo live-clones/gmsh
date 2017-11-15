@@ -4,13 +4,17 @@
 # API functions used, compared to the ones introduced in t1.py.
 
 from gmsh import *
+import sys
 
-gmshInitialize();
+# If sys.argv is passed, Gmsh will parse the commandline in the same way as the
+# standalone Gmsh code.
+gmshInitialize(sys.argv);
+
 gmshOptionSetNumber("General.Terminal", 1);
 
 gmshModelCreate("t2");
 
-# Copied from t1.cpp...
+# Copied from t1.py...
 lc = 1e-2;
 gmshModelGeoAddPoint(1, 0, 0, 0, lc);
 gmshModelGeoAddPoint(2, .1, 0,  0, lc);

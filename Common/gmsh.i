@@ -1,7 +1,14 @@
 %module gmsh
+
+// "int &outTag" in function arguments is replaced by an append of outTag to the
+// value returned by the function
 %include typemaps.i
-// reference to int is appended to the returned values of the function
 %apply int &OUTPUT { int &outTag };
+
+// handle gracefully the arguments of gmshInitialize
+%include argcargv.i
+%apply (int ARGC, char **ARGV) { (int argc, char **argv) }
+
 %{
   #include "gmsh.h"
 %}
