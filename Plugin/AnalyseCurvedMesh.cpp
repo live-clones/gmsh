@@ -116,9 +116,9 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
   _numElementToScan = static_cast<int>(CurvedMeshOptions_Number[7].def);
   _viewOrder = 10;
   _elementToScan = NULL;
-  _hoElement = NULL;
+//  _hoElement = NULL;
   for (int type = 0; type < 20; ++type) {
-    _allElem[type].clear();
+//    _allElem[type].clear();
     _dataPViewJacAllElements[type].clear();
   }
 
@@ -544,20 +544,20 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeJacobianToScan(MElement *el,
 
   _entity = entity;
   _elementToScan = el;
-  fullMatrix<double> points =
-          _elementToScan->getFunctionSpace(_viewOrder)->points;
-  int tag = ElementType::getTag(_elementToScan->getType(), _viewOrder);
-  std::vector<MVertex *> v;
-  for (int k = 0; k < points.size1(); k++) {
-    double t1 = points(k, 0);
-    double t2 = points(k, 1);
-    double t3 = points(k, 2);
-    SPoint3 pos;
-    _elementToScan->pnt(t1, t2, t3, pos);
-    v.push_back(new MVertex(pos.x(), pos.y(), pos.z()));
-  }
-  MElementFactory factory;
-  _hoElement = factory.create(tag, v);
+//  fullMatrix<double> points =
+//          _elementToScan->getFunctionSpace(_viewOrder)->points;
+//  int tag = ElementType::getTag(_elementToScan->getType(), _viewOrder);
+//  std::vector<MVertex *> v;
+//  for (int k = 0; k < points.size1(); k++) {
+//    double t1 = points(k, 0);
+//    double t2 = points(k, 1);
+//    double t3 = points(k, 2);
+//    SPoint3 pos;
+//    _elementToScan->pnt(t1, t2, t3, pos);
+//    v.push_back(new MVertex(pos.x(), pos.y(), pos.z()));
+//  }
+//  MElementFactory factory;
+//  _hoElement = factory.create(tag, v);
 
   fullVector<double> jac;
   jacobianBasedQuality::sampleJacobian(_elementToScan, _viewOrder,
@@ -569,9 +569,10 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeJacobianToScan(MElement *el,
 
   if (_numElementToScan == -7) {
     const int type = el->getType();
-//    _jacAllElem[type].push_back(_jacElementToScan);
-    _allElem[type].push_back(std::make_pair(el, _hoElement));
-    _dataPViewJacAllElements[type][_hoElement->getNum()] = _jacElementToScan;
+//    _allElem[type].push_back(std::make_pair(el, _hoElement));
+    _allElem[type].push_back(std::make_pair(el, el));
+//    _dataPViewJacAllElements[type][_hoElement->getNum()] = _jacElementToScan;
+    _dataPViewJacAllElements[type][_elementToScan->getNum()] = _jacElementToScan;
   }
 }
 
@@ -626,33 +627,33 @@ void GMSH_AnalyseCurvedMeshPlugin::_addElementInEntity(MElement *element,
 
 void GMSH_AnalyseCurvedMeshPlugin::_createPViewElementToScan()
 {
-  if (!_hoElement) return;
-
-  const nodalBasis *fs = BasisFactory::getNodalBasis(_hoElement->getTypeForMSH());
-  const polynomialBasis *pfs = dynamic_cast<const polynomialBasis*>(fs);
+//  if (!_hoElement) return;
 
   // Jacobian determinant
   std::map<int, std::vector<double>> dataPView;
   std::stringstream name;
   if (_numElementToScan != -7) {
-    dataPView[_hoElement->getNum()] = _jacElementToScan;
-    name.str(std::string());
-    name << "Jacobian elem " << _numElementToScan;
-    _addElementInEntity(_hoElement, _entity);
-    PView *view = new PView(name.str().c_str(), "ElementNodeData",
-                            _m, dataPView, 0, 1);
-    PViewData *viewData = view->getData();
-    viewData->deleteInterpolationMatrices(_hoElement->getType());
-    viewData->setInterpolationMatrices(_hoElement->getType(),
-                                       pfs->coefficients, pfs->monomials,
-                                       pfs->coefficients, pfs->monomials);
+//    const nodalBasis *fs = BasisFactory::getNodalBasis(_hoElement->getTypeForMSH());
+//    const polynomialBasis *pfs = dynamic_cast<const polynomialBasis*>(fs);
+//
+//    dataPView[_hoElement->getNum()] = _jacElementToScan;
+//    name.str(std::string());
+//    name << "Jacobian elem " << _numElementToScan;
+//    _addElementInEntity(_hoElement, _entity);
+//    PView *view = new PView(name.str().c_str(), "ElementNodeData",
+//                            _m, dataPView, 0, 1);
+//    PViewData *viewData = view->getData();
+//    viewData->deleteInterpolationMatrices(_hoElement->getType());
+//    viewData->setInterpolationMatrices(_hoElement->getType(),
+//                                       pfs->coefficients, pfs->monomials,
+//                                       pfs->coefficients, pfs->monomials);
   }
   else {
     for (int type = 0; type < 20; ++type) {
       if (_dataPViewJacAllElements[type].empty()) continue;
-      for (int i = 0; i < _allElem[type].size(); ++i) {
-        _addElementInEntity(_allElem[type][i].second, _entity);
-      }
+//      for (int i = 0; i < _allElem[type].size(); ++i) {
+//        _addElementInEntity(_allElem[type][i].second, _entity);
+//      }
       name.str(std::string());
       name << "Jacobian all ";
       switch (type) {
@@ -665,32 +666,40 @@ void GMSH_AnalyseCurvedMeshPlugin::_createPViewElementToScan()
       PViewData *viewData = view->getData();
       viewData->deleteInterpolationMatrices(type);
 
-      const int hoTag = _allElem[type][0].second->getTypeForMSH();
-      const nodalBasis *fs = BasisFactory::getNodalBasis(hoTag);
-      const polynomialBasis *pfs = dynamic_cast<const polynomialBasis*>(fs);
+//      const int hoTag = _allElem[type][0].second->getTypeForMSH();
+//      const nodalBasis *fs = BasisFactory::getNodalBasis(hoTag);
+//      const polynomialBasis *pfs = dynamic_cast<const polynomialBasis*>(fs);
+//      viewData->setInterpolationMatrices(type,
+//                                         pfs->coefficients, pfs->monomials,
+//                                         pfs->coefficients, pfs->monomials);
+      const nodalBasis *fsE = BasisFactory::getNodalBasis(_allElem[type][0].first->getTypeForMSH());
+      const polynomialBasis *pfsE = dynamic_cast<const polynomialBasis*>(fsE);
+      const int hoTag = ElementType::getTag(type, _viewOrder);
+      const nodalBasis *fsV = BasisFactory::getNodalBasis(hoTag);
+      const polynomialBasis *pfsV = dynamic_cast<const polynomialBasis*>(fsV);
       viewData->setInterpolationMatrices(type,
-                                         pfs->coefficients, pfs->monomials,
-                                         pfs->coefficients, pfs->monomials);
+                                         pfsV->coefficients, pfsV->monomials,
+                                         pfsE->coefficients, pfsE->monomials);
     }
   }
 
   // Quality measures
   fullVector<double> ige;
   if (_numElementToScan != -7) {
-    jacobianBasedQuality::sampleIGEMeasure(_elementToScan, _viewOrder, ige);
-    dataPView.clear();
-    for (int j = 0; j < ige.size(); ++j) {
-      dataPView[_hoElement->getNum()].push_back(ige(j));
-    }
-    name.str(std::string());
-    name << "IGE elem " << _numElementToScan;
-    PView *view = new PView(name.str().c_str(), "ElementNodeData",
-                            _m, dataPView, 0, 1);
-    PViewData *viewData = view->getData();
-    viewData->deleteInterpolationMatrices(_hoElement->getType());
-    viewData->setInterpolationMatrices(_hoElement->getType(),
-                                       pfs->coefficients, pfs->monomials,
-                                       pfs->coefficients, pfs->monomials);
+//    jacobianBasedQuality::sampleIGEMeasure(_elementToScan, _viewOrder, ige);
+//    dataPView.clear();
+//    for (int j = 0; j < ige.size(); ++j) {
+//      dataPView[_hoElement->getNum()].push_back(ige(j));
+//    }
+//    name.str(std::string());
+//    name << "IGE elem " << _numElementToScan;
+//    PView *view = new PView(name.str().c_str(), "ElementNodeData",
+//                            _m, dataPView, 0, 1);
+//    PViewData *viewData = view->getData();
+//    viewData->deleteInterpolationMatrices(_hoElement->getType());
+//    viewData->setInterpolationMatrices(_hoElement->getType(),
+//                                       pfs->coefficients, pfs->monomials,
+//                                       pfs->coefficients, pfs->monomials);
   }
   else {
     for (int type = 0; type < 20; ++type) {
@@ -718,12 +727,20 @@ void GMSH_AnalyseCurvedMeshPlugin::_createPViewElementToScan()
       PViewData *viewData = view->getData();
       viewData->deleteInterpolationMatrices(type);
 
-      const int hoTag = _allElem[type][0].second->getTypeForMSH();
-      const nodalBasis *fs = BasisFactory::getNodalBasis(hoTag);
-      const polynomialBasis *pfs = dynamic_cast<const polynomialBasis*>(fs);
+//      const int hoTag = _allElem[type][0].second->getTypeForMSH();
+//      const nodalBasis *fs = BasisFactory::getNodalBasis(hoTag);
+//      const polynomialBasis *pfs = dynamic_cast<const polynomialBasis*>(fs);
+//      viewData->setInterpolationMatrices(type,
+//                                         pfs->coefficients, pfs->monomials,
+//                                         pfs->coefficients, pfs->monomials);
+      const nodalBasis *fsE = BasisFactory::getNodalBasis(_allElem[type][0].first->getTypeForMSH());
+      const polynomialBasis *pfsE = dynamic_cast<const polynomialBasis*>(fsE);
+      const int hoTag = ElementType::getTag(type, _viewOrder);
+      const nodalBasis *fsV = BasisFactory::getNodalBasis(hoTag);
+      const polynomialBasis *pfsV = dynamic_cast<const polynomialBasis*>(fsV);
       viewData->setInterpolationMatrices(type,
-                                         pfs->coefficients, pfs->monomials,
-                                         pfs->coefficients, pfs->monomials);
+                                         pfsV->coefficients, pfsV->monomials,
+                                         pfsE->coefficients, pfsE->monomials);
     }
 
 

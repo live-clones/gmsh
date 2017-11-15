@@ -44,7 +44,7 @@ private :
 
   // Element to scan
   int _numElementToScan;
-  MElement *_elementToScan, *_hoElement;
+  MElement *_elementToScan, *__hoElement;
   int _viewOrder;
   std::vector<double> _jacElementToScan;
 
