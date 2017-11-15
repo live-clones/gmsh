@@ -19,6 +19,7 @@
 
 %template() std::pair<int, int>;
 %template(IntVector) std::vector<int>;
+%template(IntVectorVector) std::vector<std::vector<int> >;
 %template(DoubleVector) std::vector<double>;
 %template(StringVector) std::vector<std::string>;
 %template(PairVector) std::vector<std::pair<int, int> >;

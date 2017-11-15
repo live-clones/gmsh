@@ -228,6 +228,7 @@ int gmshModelGetEntitiesForPhysicalGroup(const int dim, const int tag,
                                          std::vector<int> &tags)
 {
   if(!isInitialized()) return -1;
+  tags.clear();
   std::map<int, std::vector<GEntity*> > groups;
   GModel::current()->getPhysicalGroups(dim, groups);
   std::map<int, std::vector<GEntity*> >::iterator it = groups.find(tag);
@@ -330,6 +331,8 @@ int gmshModelGetMeshVertices(const int dim, const int tag,
                              std::vector<double> &coords)
 {
   if(!isInitialized()) return -1;
+  vertexTags.clear();
+  coords.clear();
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   if(!ge) return 1;
   for(unsigned int i = 0; i < ge->mesh_vertices.size(); i++){
@@ -343,7 +346,7 @@ int gmshModelGetMeshVertices(const int dim, const int tag,
 }
 
 template<class T>
-static void addElementInfo(std::vector<T*> &ele,
+static void addElementInfo(const std::vector<T*> &ele,
                            std::vector<int> &elementType,
                            std::vector<std::vector<int> > &elementTags,
                            std::vector<std::vector<int> > &vertexTags)
@@ -365,6 +368,9 @@ int gmshModelGetMeshElements(const int dim, const int tag, std::vector<int> &typ
                              std::vector<std::vector<int> > &vertexTags)
 {
   if(!isInitialized()) return -1;
+  types.clear();
+  elementTags.clear();
+  vertexTags.clear();
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   if(!ge) return 1;
   switch(dim){
@@ -1130,7 +1136,7 @@ int gmshModelOccBooleanUnion(const int tag, const vector_pair &objectDimTags,
 int gmshModelOccBooleanIntersection(const int tag, const vector_pair &objectDimTags,
                                     const vector_pair &toolDimTags,
                                     vector_pair &outDimTags,
-                                    std::vector<vector_pair > &outDimTagsMap,
+                                    std::vector<vector_pair> &outDimTagsMap,
                                     const bool removeObject, const bool removeTool)
 {
   if(!isInitialized()) return -1;
@@ -1145,7 +1151,7 @@ int gmshModelOccBooleanIntersection(const int tag, const vector_pair &objectDimT
 int gmshModelOccBooleanDifference(const int tag, const vector_pair &objectDimTags,
                                   const vector_pair &toolDimTags,
                                   vector_pair &outDimTags,
-                                  std::vector<vector_pair > &outDimTagsMap,
+                                  std::vector<vector_pair> &outDimTagsMap,
                                   const bool removeObject, const bool removeTool)
 {
   if(!isInitialized()) return -1;
