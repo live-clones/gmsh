@@ -293,7 +293,7 @@ GMSH_API gmshModelOccSynchronize();
 
 // gmshModelField
 
-GMSH_API gmshModelFieldAdd(const int tag, const std::string &type);
+GMSH_API gmshModelFieldCreate(const int tag, const std::string &type);
 GMSH_API gmshModelFieldSetNumber(const int tag, const std::string &option,
                                  const double value);
 GMSH_API gmshModelFieldSetString(const int tag, const std::string &option,
@@ -303,9 +303,7 @@ GMSH_API gmshModelFieldSetNumbers(const int tag, const std::string &option,
 GMSH_API gmshModelFieldSetAsBackground(const int tag);
 GMSH_API gmshModelFieldDelete(const int tag);
 
-// gmshSolver
-
-// gmshPost
+// gmshView
 
 // gmshPlugin
 

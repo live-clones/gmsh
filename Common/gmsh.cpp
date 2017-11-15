@@ -1262,7 +1262,7 @@ int gmshModelOccSynchronize()
 
 // gmshModelField
 
-int gmshModelFieldAdd(const int tag, const std::string &type)
+int gmshModelFieldCreate(const int tag, const std::string &type)
 {
   if(!isInitialized()) return -1;
 #if defined(HAVE_MESH)
