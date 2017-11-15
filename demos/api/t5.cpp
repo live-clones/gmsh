@@ -1,11 +1,12 @@
+// This file reimplements gmsh/tutorial/t5.geo in C++.
+
 #include <gmsh.h>
 #include <cstdio>
-
-// this reimplements gmsh/tutorial/t5.geo
 
 void cheeseHole(double x, double y, double z, double r, double lc,
                 std::vector<int> &shells, std::vector<int> &volumes)
 {
+  // When the tag (first argument) is negative, the
   int p1; gmshModelGeoAddPoint(-1, x,  y,  z,  p1, lc);
   int p2; gmshModelGeoAddPoint(-1, x+r,y,  z,  p2, lc);
   int p3; gmshModelGeoAddPoint(-1, x,  y+r,z,  p3, lc);

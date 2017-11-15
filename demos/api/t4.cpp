@@ -1,7 +1,7 @@
+// This file reimplements gmsh/tutorial/t4.geo in C++.
+
 #include <math.h>
 #include <gmsh.h>
-
-// this reimplements gmsh/tutorial/t4.geo
 
 double hypoth(double a, double b){ return sqrt(a * a + b * b); }
 
@@ -77,9 +77,11 @@ int main(int argc, char **argv)
   gmshModelGeoAddLineLoop(21, {17,-15,18,19,-20,16}, o);
   gmshModelGeoAddPlaneSurface(22, {21}, o);
   gmshModelGeoAddLineLoop(23, {11,-12,13,14,1,2,-3,4,5,6,7,-8,9,10}, o);
+
+  // A surface with one hole is specified using 2 line loops:
   gmshModelGeoAddPlaneSurface(24, {23,21}, o);
 
-  // FIXME: this will be implemented through the gmshPost or gmshView API
+  // FIXME: this will be implemented through the gmshView API
   /*
   View "comments" {
     T2(10, -10, 0){ StrCat("Created on ", Today, " with Gmsh") };
@@ -90,6 +92,7 @@ int main(int argc, char **argv)
     T2(350, -7, 0){ "file://image.png@20x0" };
   };
   */
+
   gmshModelGeoSynchronize();
 
   gmshModelMesh(2);

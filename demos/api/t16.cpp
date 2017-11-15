@@ -1,6 +1,6 @@
-#include <gmsh.h>
+// This file reimplements gmsh/tutorial/t16.geo in C++.
 
-// this reimplements gmsh/tutorial/t16.geo
+#include <gmsh.h>
 
 int main(int argc, char **argv)
 {
@@ -49,4 +49,3 @@ int main(int argc, char **argv)
   gmshFinalize();
   return 0;
 }
-
