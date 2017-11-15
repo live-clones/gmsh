@@ -7,7 +7,7 @@ int main(int argc, char **argv)
   gmshInitialize(argc, argv);
   gmshOptionSetNumber("General.Terminal", 1);
 
-  gmshModelCreate("boolean");
+  gmshModelCreate("t16");
 
   int o;
   std::vector<std::pair<int, int> > ov;

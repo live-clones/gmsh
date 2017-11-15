@@ -1,6 +1,6 @@
-#include <gmsh.h>
+// This reimplements gmsh/demos/boolean/boolean.geo in C++.
 
-// this reimplements gmsh/demos/boolean/boolean.geo
+#include <gmsh.h>
 
 int main(int argc, char **argv)
 {
@@ -19,15 +19,15 @@ int main(int argc, char **argv)
 
   int o;
   std::vector<std::pair<int, int> > ov;
-  std::vector<std::vector<std::pair<int, int> > > om;
+  std::vector<std::vector<std::pair<int, int> > > ovv;
   gmshModelOccAddBox(1, -R,-R,-R, 2*R,2*R,2*R, o);
   gmshModelOccAddSphere(2, 0,0,0,Rt, o);
-  gmshModelOccBooleanIntersection(3, {{3, 1}}, {{3, 2}}, ov, om);
+  gmshModelOccBooleanIntersection(3, {{3, 1}}, {{3, 2}}, ov, ovv);
   gmshModelOccAddCylinder(4, -2*R,0,0, 4*R,0,0, Rs, o);
   gmshModelOccAddCylinder(5, 0,-2*R,0, 0,4*R,0, Rs, o);
   gmshModelOccAddCylinder(6, 0,0,-2*R, 0,0,4*R, Rs, o);
-  gmshModelOccBooleanUnion(7, {{3, 4}, {3, 5}}, {{3, 6}}, ov, om);
-  gmshModelOccBooleanDifference(8, {{3, 3}}, {{3, 7}}, ov, om);
+  gmshModelOccBooleanUnion(7, {{3, 4}, {3, 5}}, {{3, 6}}, ov, ovv);
+  gmshModelOccBooleanDifference(8, {{3, 3}}, {{3, 7}}, ov, ovv);
 
   gmshModelOccSynchronize();
 
