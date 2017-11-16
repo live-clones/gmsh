@@ -7,6 +7,7 @@
 
 #if defined(HAVE_MESH)
 
+
 #include "AnalyseCurvedMesh.h"
 #include "OS.h"
 #include "Context.h"
@@ -30,14 +31,14 @@
 class bezierBasis;
 
 StringXNumber CurvedMeshOptions_Number[] = {
-  {GMSH_FULLRC, "Jacobian determinant", NULL, 1},
-  {GMSH_FULLRC, "IGE measure", NULL, 1},
+  {GMSH_FULLRC, "Jacobian determinant", NULL, 2},
+  {GMSH_FULLRC, "IGE measure", NULL, 2},
   {GMSH_FULLRC, "ICN measure", NULL, 1},
   {GMSH_FULLRC, "Hiding threshold", NULL, 9},
   {GMSH_FULLRC, "Draw PView", NULL, 0},
   {GMSH_FULLRC, "Recompute", NULL, 1},
   {GMSH_FULLRC, "Dimension of elements", NULL, -1},
-  {GMSH_FULLRC, "Element to print quality", NULL, -7}
+  {GMSH_FULLRC, "Element to draw quality", NULL, -1}
 };
 
 extern "C"
@@ -105,22 +106,23 @@ std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
 PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
 {
   _m = GModel::current();
-  bool computeJac = static_cast<int>(CurvedMeshOptions_Number[0].def);
-  bool computeIGE = static_cast<int>(CurvedMeshOptions_Number[1].def);
-  bool computeICN = static_cast<int>(CurvedMeshOptions_Number[2].def);
-  _threshold      = static_cast<double>(CurvedMeshOptions_Number[3].def);
-  bool drawPView  = static_cast<int>(CurvedMeshOptions_Number[4].def);
-  bool recompute  = static_cast<bool>(CurvedMeshOptions_Number[5].def);
-  int askedDim    = static_cast<int>(CurvedMeshOptions_Number[6].def);
+  int computeJac = static_cast<int>(CurvedMeshOptions_Number[0].def);
+  int computeIGE = static_cast<int>(CurvedMeshOptions_Number[1].def);
+  int computeICN = static_cast<int>(CurvedMeshOptions_Number[2].def);
+  _threshold     = CurvedMeshOptions_Number[3].def;
+  bool drawPView = static_cast<bool>(CurvedMeshOptions_Number[4].def);
+  bool recompute = static_cast<bool>(CurvedMeshOptions_Number[5].def);
+  int askedDim   = static_cast<int>(CurvedMeshOptions_Number[6].def);
+
+  _pwJac = computeJac/2;
+  _pwIGE = computeIGE/2;
+  _pwICN = computeICN/2;
 
   _numElementToScan = static_cast<int>(CurvedMeshOptions_Number[7].def);
-  _viewOrder = 10;
-  _elementToScan = NULL;
-//  _hoElement = NULL;
-  for (int type = 0; type < 20; ++type) {
-//    _allElem[type].clear();
-    _dataPViewJacAllElements[type].clear();
-  }
+  _viewOrder = 0;
+  _dataPViewJac.clear();
+  _dataPViewIGE.clear();
+  _dataPViewICN.clear();
 
   if (askedDim < 0 || askedDim > 4) askedDim = _m->getDim();
 
@@ -180,7 +182,7 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
   if (printStatS) _printStatIGE();
   if (printStatI) _printStatICN();
 
-  _createPViewElementToScan();
+  _createPViewPointwise();
 
   // Create PView
   if (drawPView)
@@ -362,7 +364,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
       if (min < 0 && max < 0) ++cntInverted;
       progress.next();
 
-      _computeJacobianToScan(el, entity, normals);
+      _computePointwiseQuantities(el, normals);
     }
     delete normals;
   }
@@ -536,215 +538,81 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatICN()
             infminI, avgminI, supminI);
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_computeJacobianToScan(MElement *el,
-                                                          GEntity *entity,
-                                                          const fullMatrix<double> *normals)
-{
-  if (_numElementToScan != -7 && el->getNum() != _numElementToScan) return;
+void GMSH_AnalyseCurvedMeshPlugin::_computePointwiseQuantities(MElement *el,
+                                                               const fullMatrix<double> *normals) {
+  if (_numElementToScan != -1 && el->getNum() != _numElementToScan) return;
 
-  _entity = entity;
-  _elementToScan = el;
-//  fullMatrix<double> points =
-//          _elementToScan->getFunctionSpace(_viewOrder)->points;
-//  int tag = ElementType::getTag(_elementToScan->getType(), _viewOrder);
-//  std::vector<MVertex *> v;
-//  for (int k = 0; k < points.size1(); k++) {
-//    double t1 = points(k, 0);
-//    double t2 = points(k, 1);
-//    double t3 = points(k, 2);
-//    SPoint3 pos;
-//    _elementToScan->pnt(t1, t2, t3, pos);
-//    v.push_back(new MVertex(pos.x(), pos.y(), pos.z()));
-//  }
-//  MElementFactory factory;
-//  _hoElement = factory.create(tag, v);
+  if (!_type2tag[el->getType()])
+    _type2tag[el->getType()] = el->getTypeForMSH();
+  else
+    // Skip if element tag is different from previous elements of same type
+    if (_type2tag[el->getType()] != el->getTypeForMSH()) return;
 
-  fullVector<double> jac;
-  jacobianBasedQuality::sampleJacobian(_elementToScan, _viewOrder,
-                                       jac, normals);
-  _jacElementToScan.clear();
-  for (int j = 0; j < jac.size(); ++j) {
-    _jacElementToScan.push_back(jac(j));
+  static fullVector<double> tmpVector;
+  int num = el->getNum();
+
+  if (!_viewOrder) {
+//    _viewOrder = 2 * el->getPolynomialOrder();
+    _viewOrder = 10;
   }
 
-  if (_numElementToScan == -7) {
-    const int type = el->getType();
-//    _allElem[type].push_back(std::make_pair(el, _hoElement));
-    _allElem[type].push_back(std::make_pair(el, el));
-//    _dataPViewJacAllElements[type][_hoElement->getNum()] = _jacElementToScan;
-    _dataPViewJacAllElements[type][_elementToScan->getNum()] = _jacElementToScan;
+  if (_pwJac) {
+    jacobianBasedQuality::sampleJacobian(el, _viewOrder, tmpVector, normals);
+    std::vector<double> &vec = _dataPViewJac[num];
+    for (int j = 0; j < tmpVector.size(); ++j)
+      vec.push_back(tmpVector(j));
   }
-}
 
-void GMSH_AnalyseCurvedMeshPlugin::_addElementInEntity(MElement *element,
-                                                       GEntity *entity)
-{
-  int dim = entity->dim();
-  switch (dim) {
-  case 1:
-    {
-      GEdge *gedge = dynamic_cast<GEdge*>(entity);
-      int type = element->getType();
-      switch (type) {
-        case TYPE_LIN:
-          gedge->lines.push_back(dynamic_cast<MLine*>(element));
-      }
-    }
-    break;
-  case 2:
-    {
-      GFace *gface = dynamic_cast<GFace*>(entity);
-      int type = element->getType();
-      switch (type) {
-        case TYPE_TRI:
-          gface->triangles.push_back(dynamic_cast<MTriangle*>(element));
-          break;
-        case TYPE_QUA:
-          gface->quadrangles.push_back(dynamic_cast<MQuadrangle*>(element));
-          break;
-      }
-    }
-    break;
-  case 3:
-    {
-      GRegion *gregion = dynamic_cast<GRegion*>(entity);
-      int type = element->getType();
-      switch (type) {
-        case TYPE_TET:
-          gregion->tetrahedra.push_back(dynamic_cast<MTetrahedron*>(element));
-          break;
-        case TYPE_HEX:
-          gregion->hexahedra.push_back(dynamic_cast<MHexahedron*>(element));
-          break;
-        case TYPE_PRI:
-          gregion->prisms.push_back(dynamic_cast<MPrism*>(element));
-          break;
-      }
-    }
-    break;
+  if (_pwIGE) {
+    jacobianBasedQuality::sampleIGEMeasure(el, _viewOrder, tmpVector);
+    std::vector<double> &vec = _dataPViewIGE[num];
+    for (int j = 0; j < tmpVector.size(); ++j)
+      vec.push_back(tmpVector(j));
+  }
+
+  if (_pwICN) {
+//    jacobianBasedQuality::sampleICNMeasure(el, _viewOrder, tmpVector);
+//    std::vector<double> &vec = _dataPViewICN[num];
+//    for (int j = 0; j < tmpVector.size(); ++j)
+//      vec.push_back(tmpVector(j));
   }
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_createPViewElementToScan()
+void GMSH_AnalyseCurvedMeshPlugin::_setInterpolationMatrices(PView *view)
 {
-//  if (!_hoElement) return;
-
-  // Jacobian determinant
-  std::map<int, std::vector<double>> dataPView;
-  std::stringstream name;
-  if (_numElementToScan != -7) {
-//    const nodalBasis *fs = BasisFactory::getNodalBasis(_hoElement->getTypeForMSH());
-//    const polynomialBasis *pfs = dynamic_cast<const polynomialBasis*>(fs);
-//
-//    dataPView[_hoElement->getNum()] = _jacElementToScan;
-//    name.str(std::string());
-//    name << "Jacobian elem " << _numElementToScan;
-//    _addElementInEntity(_hoElement, _entity);
-//    PView *view = new PView(name.str().c_str(), "ElementNodeData",
-//                            _m, dataPView, 0, 1);
-//    PViewData *viewData = view->getData();
-//    viewData->deleteInterpolationMatrices(_hoElement->getType());
-//    viewData->setInterpolationMatrices(_hoElement->getType(),
-//                                       pfs->coefficients, pfs->monomials,
-//                                       pfs->coefficients, pfs->monomials);
+  PViewData *viewData = view->getData();
+  for (int type = 0; type < 20; ++type) {
+    if (!_type2tag[type]) continue;
+    viewData->deleteInterpolationMatrices(type);
+    const nodalBasis *fsE = BasisFactory::getNodalBasis(_type2tag[type]);
+    const polynomialBasis *pfsE = dynamic_cast<const polynomialBasis *>(fsE);
+    const int hoTag = ElementType::getTag(type, _viewOrder);
+    const nodalBasis *fsV = BasisFactory::getNodalBasis(hoTag);
+    const polynomialBasis *pfsV = dynamic_cast<const polynomialBasis *>(fsV);
+    viewData->setInterpolationMatrices(type,
+                                       pfsV->coefficients, pfsV->monomials,
+                                       pfsE->coefficients, pfsE->monomials);
   }
-  else {
-    for (int type = 0; type < 20; ++type) {
-      if (_dataPViewJacAllElements[type].empty()) continue;
-//      for (int i = 0; i < _allElem[type].size(); ++i) {
-//        _addElementInEntity(_allElem[type][i].second, _entity);
-//      }
-      name.str(std::string());
-      name << "Jacobian all ";
-      switch (type) {
-        case TYPE_TRI: name << "triangles"; break;
-        case TYPE_QUA: name << "quadrangles"; break;
-        default: name << "?"; break;
-      }
-      PView *view = new PView(name.str().c_str(), "ElementNodeData",
-                              _m, _dataPViewJacAllElements[type], 0, 1);
-      PViewData *viewData = view->getData();
-      viewData->deleteInterpolationMatrices(type);
+}
 
-//      const int hoTag = _allElem[type][0].second->getTypeForMSH();
-//      const nodalBasis *fs = BasisFactory::getNodalBasis(hoTag);
-//      const polynomialBasis *pfs = dynamic_cast<const polynomialBasis*>(fs);
-//      viewData->setInterpolationMatrices(type,
-//                                         pfs->coefficients, pfs->monomials,
-//                                         pfs->coefficients, pfs->monomials);
-      const nodalBasis *fsE = BasisFactory::getNodalBasis(_allElem[type][0].first->getTypeForMSH());
-      const polynomialBasis *pfsE = dynamic_cast<const polynomialBasis*>(fsE);
-      const int hoTag = ElementType::getTag(type, _viewOrder);
-      const nodalBasis *fsV = BasisFactory::getNodalBasis(hoTag);
-      const polynomialBasis *pfsV = dynamic_cast<const polynomialBasis*>(fsV);
-      viewData->setInterpolationMatrices(type,
-                                         pfsV->coefficients, pfsV->monomials,
-                                         pfsE->coefficients, pfsE->monomials);
-    }
+void GMSH_AnalyseCurvedMeshPlugin::_createPViewPointwise()
+{
+  if (_pwJac) {
+    _setInterpolationMatrices(
+        new PView("Pointwise Jacobian", "ElementNodeData", _m, _dataPViewJac, 0, 1)
+    );
   }
 
-  // Quality measures
-  fullVector<double> ige;
-  if (_numElementToScan != -7) {
-//    jacobianBasedQuality::sampleIGEMeasure(_elementToScan, _viewOrder, ige);
-//    dataPView.clear();
-//    for (int j = 0; j < ige.size(); ++j) {
-//      dataPView[_hoElement->getNum()].push_back(ige(j));
-//    }
-//    name.str(std::string());
-//    name << "IGE elem " << _numElementToScan;
-//    PView *view = new PView(name.str().c_str(), "ElementNodeData",
-//                            _m, dataPView, 0, 1);
-//    PViewData *viewData = view->getData();
-//    viewData->deleteInterpolationMatrices(_hoElement->getType());
-//    viewData->setInterpolationMatrices(_hoElement->getType(),
-//                                       pfs->coefficients, pfs->monomials,
-//                                       pfs->coefficients, pfs->monomials);
+  if (_pwIGE) {
+    _setInterpolationMatrices(
+        new PView("Pointwise IGE", "ElementNodeData", _m, _dataPViewIGE, 0, 1)
+    );
   }
-  else {
-    for (int type = 0; type < 20; ++type) {
-      if (_allElem[type].empty()) continue;
-      dataPView.clear();
 
-      for (int i = 0; i < _allElem[type].size(); ++i) {
-        MElement *loElement = _allElem[type][i].first;
-        MElement *hoElement = _allElem[type][i].second;
-        jacobianBasedQuality::sampleIGEMeasure(loElement, _viewOrder, ige);
-        for (int j = 0; j < ige.size(); ++j) {
-          dataPView[hoElement->getNum()].push_back(ige(j));
-        }
-      }
-
-      name.str(std::string());
-      name << "IGE all ";
-      switch (type) {
-        case TYPE_TRI: name << "triangles"; break;
-        case TYPE_QUA: name << "quadrangles"; break;
-        default: name << "?"; break;
-      }
-      PView *view = new PView(name.str().c_str(), "ElementNodeData",
-                              _m, dataPView, 0, 1);
-      PViewData *viewData = view->getData();
-      viewData->deleteInterpolationMatrices(type);
-
-//      const int hoTag = _allElem[type][0].second->getTypeForMSH();
-//      const nodalBasis *fs = BasisFactory::getNodalBasis(hoTag);
-//      const polynomialBasis *pfs = dynamic_cast<const polynomialBasis*>(fs);
-//      viewData->setInterpolationMatrices(type,
-//                                         pfs->coefficients, pfs->monomials,
-//                                         pfs->coefficients, pfs->monomials);
-      const nodalBasis *fsE = BasisFactory::getNodalBasis(_allElem[type][0].first->getTypeForMSH());
-      const polynomialBasis *pfsE = dynamic_cast<const polynomialBasis*>(fsE);
-      const int hoTag = ElementType::getTag(type, _viewOrder);
-      const nodalBasis *fsV = BasisFactory::getNodalBasis(hoTag);
-      const polynomialBasis *pfsV = dynamic_cast<const polynomialBasis*>(fsV);
-      viewData->setInterpolationMatrices(type,
-                                         pfsV->coefficients, pfsV->monomials,
-                                         pfsE->coefficients, pfsE->monomials);
-    }
-
-
-    name << "IGE all elem";
+  if (_pwICN) {
+    _setInterpolationMatrices(
+        new PView("Pointwise ICN", "ElementNodeData", _m, _dataPViewICN, 0, 1)
+    );
   }
 }
 
