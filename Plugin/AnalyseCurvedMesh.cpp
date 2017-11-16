@@ -20,23 +20,17 @@
 #include <sstream>
 #include <fstream>
 #include "qualityMeasuresJacobian.h"
-#include "MLine.h"
-#include "MTriangle.h"
-#include "MQuadrangle.h"
-#include "MHexahedron.h"
-#include "MTetrahedron.h"
-#include "MPrism.h"
 #include "BasisFactory.h"
 
 class bezierBasis;
 
 StringXNumber CurvedMeshOptions_Number[] = {
-  {GMSH_FULLRC, "Jacobian determinant", NULL, 2},
-  {GMSH_FULLRC, "IGE measure", NULL, 2},
+  {GMSH_FULLRC, "Jacobian determinant", NULL, 1},
+  {GMSH_FULLRC, "IGE measure", NULL, 1},
   {GMSH_FULLRC, "ICN measure", NULL, 1},
   {GMSH_FULLRC, "Hiding threshold", NULL, 9},
   {GMSH_FULLRC, "Draw PView", NULL, 0},
-  {GMSH_FULLRC, "Recompute", NULL, 1},
+  {GMSH_FULLRC, "Recompute", NULL, 0},
   {GMSH_FULLRC, "Dimension of elements", NULL, -1},
   {GMSH_FULLRC, "Element to draw quality", NULL, -1}
 };
@@ -552,7 +546,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computePointwiseQuantities(MElement *el,
   int num = el->getNum();
 
   if (!_viewOrder) {
-//    _viewOrder = 2 * el->getPolynomialOrder();
+//    _viewOrder = std::min(10, 2 * el->getPolynomialOrder());
     _viewOrder = 10;
   }
 
