@@ -12,19 +12,18 @@ int main(int argc, char **argv)
 
   // Copied from t1.cpp...
   double lc = 1e-2;
-  int o;
-  gmshModelGeoAddPoint(1, 0, 0, 0, o, lc);
-  gmshModelGeoAddPoint(2, .1, 0,  0, o, lc);
-  gmshModelGeoAddPoint(3, .1, .3, 0, o, lc);
-  gmshModelGeoAddPoint(4, 0,  .3, 0, o, lc);
+  gmshModelGeoAddPoint(1, 0, 0, 0, lc);
+  gmshModelGeoAddPoint(2, .1, 0,  0, lc);
+  gmshModelGeoAddPoint(3, .1, .3, 0, lc);
+  gmshModelGeoAddPoint(4, 0,  .3, 0, lc);
 
-  gmshModelGeoAddLine(1, 1, 2, o);
-  gmshModelGeoAddLine(2, 3, 2, o);
-  gmshModelGeoAddLine(3, 3, 4, o);
-  gmshModelGeoAddLine(4, 4, 1, o);
+  gmshModelGeoAddLine(1, 1, 2);
+  gmshModelGeoAddLine(2, 3, 2);
+  gmshModelGeoAddLine(3, 3, 4);
+  gmshModelGeoAddLine(4, 4, 1);
 
-  gmshModelGeoAddLineLoop(1, {4, 1, -2, 3}, o);
-  gmshModelGeoAddPlaneSurface(1, {1}, o);
+  gmshModelGeoAddLineLoop(1, {4, 1, -2, 3});
+  gmshModelGeoAddPlaneSurface(1, {1});
   gmshModelAddPhysicalGroup(0, 1, {1, 2});
   gmshModelAddPhysicalGroup(1, 2, {1, 2});
   gmshModelAddPhysicalGroup(2, 6, {1});

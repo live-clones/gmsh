@@ -17,15 +17,14 @@ int main(int argc, char **argv)
 
   double R = 1.4, Rs = R*.7, Rt = R*1.25;
 
-  int o;
   std::vector<std::pair<int, int> > ov;
   std::vector<std::vector<std::pair<int, int> > > ovv;
-  gmshModelOccAddBox(1, -R,-R,-R, 2*R,2*R,2*R, o);
-  gmshModelOccAddSphere(2, 0,0,0,Rt, o);
+  gmshModelOccAddBox(1, -R,-R,-R, 2*R,2*R,2*R);
+  gmshModelOccAddSphere(2, 0,0,0,Rt);
   gmshModelOccBooleanIntersection(3, {{3, 1}}, {{3, 2}}, ov, ovv);
-  gmshModelOccAddCylinder(4, -2*R,0,0, 4*R,0,0, Rs, o);
-  gmshModelOccAddCylinder(5, 0,-2*R,0, 0,4*R,0, Rs, o);
-  gmshModelOccAddCylinder(6, 0,0,-2*R, 0,0,4*R, Rs, o);
+  gmshModelOccAddCylinder(4, -2*R,0,0, 4*R,0,0, Rs);
+  gmshModelOccAddCylinder(5, 0,-2*R,0, 0,4*R,0, Rs);
+  gmshModelOccAddCylinder(6, 0,0,-2*R, 0,0,4*R, Rs);
   gmshModelOccBooleanUnion(7, {{3, 4}, {3, 5}}, {{3, 6}}, ov, ovv);
   gmshModelOccBooleanDifference(8, {{3, 3}}, {{3, 7}}, ov, ovv);
 

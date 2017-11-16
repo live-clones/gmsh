@@ -10,21 +10,20 @@ int main(int argc, char **argv)
 
   gmshModelCreate("t1");
 
-  int o;
   double lc = .15;
-  gmshModelGeoAddPoint(1, 0.0,0.0,0, o,lc);
-  gmshModelGeoAddPoint(2, 1,0.0,0, o,lc);
-  gmshModelGeoAddPoint(3, 1,1,0, o,lc);
-  gmshModelGeoAddPoint(4, 0,1,0, o,lc);
-  gmshModelGeoAddPoint(5, 0.2,.5,0, o,lc);
+  gmshModelGeoAddPoint(1, 0.0,0.0,0,lc);
+  gmshModelGeoAddPoint(2, 1,0.0,0,lc);
+  gmshModelGeoAddPoint(3, 1,1,0,lc);
+  gmshModelGeoAddPoint(4, 0,1,0,lc);
+  gmshModelGeoAddPoint(5, 0.2,.5,0,lc);
 
-  gmshModelGeoAddLine(1, 1,2, o);
-  gmshModelGeoAddLine(2, 2,3, o);
-  gmshModelGeoAddLine(3, 3,4, o);
-  gmshModelGeoAddLine(4, 4,1, o);
+  gmshModelGeoAddLine(1, 1,2);
+  gmshModelGeoAddLine(2, 2,3);
+  gmshModelGeoAddLine(3, 3,4);
+  gmshModelGeoAddLine(4, 4,1);
 
-  gmshModelGeoAddLineLoop(5, {1,2,3,4}, o);
-  gmshModelGeoAddPlaneSurface(6, {5}, o);
+  gmshModelGeoAddLineLoop(5, {1,2,3,4});
+  gmshModelGeoAddPlaneSurface(6, {5});
 
   gmshModelFieldCreate(1, "Attractor");
   gmshModelFieldSetNumbers(1, "NodesList", {5});

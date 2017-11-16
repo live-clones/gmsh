@@ -11,19 +11,18 @@ int main(int argc, char **argv)
 
   // Copied from t1.cpp...
   double lc = 1e-2;
-  int o;
-  gmshModelGeoAddPoint(1, 0, 0, 0, o, lc);
-  gmshModelGeoAddPoint(2, .1, 0,  0, o, lc);
-  gmshModelGeoAddPoint(3, .1, .3, 0, o, lc);
-  gmshModelGeoAddPoint(4, 0,  .3, 0, o, lc);
+  gmshModelGeoAddPoint(1, 0, 0, 0, lc);
+  gmshModelGeoAddPoint(2, .1, 0,  0, lc);
+  gmshModelGeoAddPoint(3, .1, .3, 0, lc);
+  gmshModelGeoAddPoint(4, 0,  .3, 0, lc);
 
-  gmshModelGeoAddLine(1, 1, 2, o);
-  gmshModelGeoAddLine(2, 3, 2, o);
-  gmshModelGeoAddLine(3, 3, 4, o);
-  gmshModelGeoAddLine(4, 4, 1, o);
+  gmshModelGeoAddLine(1, 1, 2);
+  gmshModelGeoAddLine(2, 3, 2);
+  gmshModelGeoAddLine(3, 3, 4);
+  gmshModelGeoAddLine(4, 4, 1);
 
-  gmshModelGeoAddLineLoop(1, {4, 1, -2, 3}, o);
-  gmshModelGeoAddPlaneSurface(1, {1}, o);
+  gmshModelGeoAddLineLoop(1, {4, 1, -2, 3});
+  gmshModelGeoAddPlaneSurface(1, {1});
   gmshModelAddPhysicalGroup(0, 1, {1, 2});
   gmshModelAddPhysicalGroup(1, 2, {1, 2});
   gmshModelAddPhysicalGroup(2, 6, {1});
@@ -34,15 +33,15 @@ int main(int argc, char **argv)
   gmshModelGeoRemove({{2,1}, {1,4}});
 
   // Replace left boundary with 3 new lines
-  int p1; gmshModelGeoAddPoint(-1, -0.05, 0.05, 0, p1, lc);
-  int p2; gmshModelGeoAddPoint(-1, -0.05, 0.1, 0, p2, lc);
-  int l1; gmshModelGeoAddLine(-1, 1, p1, l1);
-  int l2; gmshModelGeoAddLine(-1, p1, p2, l2);
-  int l3; gmshModelGeoAddLine(-1, p2, 4, l3);
+  int p1 = gmshModelGeoAddPoint(-1, -0.05, 0.05, 0, lc)[1];
+  int p2 = gmshModelGeoAddPoint(-1, -0.05, 0.1, 0, lc)[1];
+  int l1 = gmshModelGeoAddLine(-1, 1, p1)[1];
+  int l2 = gmshModelGeoAddLine(-1, p1, p2)[1];
+  int l3 = gmshModelGeoAddLine(-1, p2, 4)[1];
 
   // Recreate surface
-  gmshModelGeoAddLineLoop(2, {2, -1, l1, l2, l3, -3}, o);
-  gmshModelGeoAddPlaneSurface(1, {-2}, o);
+  gmshModelGeoAddLineLoop(2, {2, -1, l1, l2, l3, -3});
+  gmshModelGeoAddPlaneSurface(1, {-2});
 
   // Put 20 points with a refinement toward the extremities on curve 2
   gmshModelGeoSetTransfiniteLine(2, 20, "Bump", 0.05);
@@ -72,17 +71,17 @@ int main(int argc, char **argv)
 
   // When the surface has only 3 or 4 control points, the transfinite constraint
   // can be applied automatically (without specifying the corners explictly).
-  gmshModelGeoAddPoint(7, 0.2, 0.2, 0, o, 1.0);
-  gmshModelGeoAddPoint(8, 0.2, 0.1, 0, o, 1.0);
-  gmshModelGeoAddPoint(9, 0, 0.3, 0, o, 1.0);
-  gmshModelGeoAddPoint(10, 0.25, 0.2, 0, o, 1.0);
-  gmshModelGeoAddPoint(11, 0.3, 0.1, 0, o, 1.0);
-  gmshModelGeoAddLine(10, 8, 11, o);
-  gmshModelGeoAddLine(11, 11, 10, o);
-  gmshModelGeoAddLine(12, 10, 7, o);
-  gmshModelGeoAddLine(13, 7, 8, o);
-  gmshModelGeoAddLineLoop(14, {13, 10, 11, 12}, o);
-  gmshModelGeoAddPlaneSurface(15, {14}, o);
+  gmshModelGeoAddPoint(7, 0.2, 0.2, 0, 1.0);
+  gmshModelGeoAddPoint(8, 0.2, 0.1, 0, 1.0);
+  gmshModelGeoAddPoint(9, 0, 0.3, 0, 1.0);
+  gmshModelGeoAddPoint(10, 0.25, 0.2, 0, 1.0);
+  gmshModelGeoAddPoint(11, 0.3, 0.1, 0, 1.0);
+  gmshModelGeoAddLine(10, 8, 11);
+  gmshModelGeoAddLine(11, 11, 10);
+  gmshModelGeoAddLine(12, 10, 7);
+  gmshModelGeoAddLine(13, 7, 8);
+  gmshModelGeoAddLineLoop(14, {13, 10, 11, 12});
+  gmshModelGeoAddPlaneSurface(15, {14});
   for(int i = 10; i <= 13; i++)
     gmshModelGeoSetTransfiniteLine(i, 10);
   gmshModelGeoSetTransfiniteSurface(15);
