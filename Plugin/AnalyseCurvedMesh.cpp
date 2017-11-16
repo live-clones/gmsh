@@ -35,7 +35,7 @@ StringXNumber CurvedMeshOptions_Number[] = {
   {GMSH_FULLRC, "Recompute", NULL, 0},
   {GMSH_FULLRC, "Dimension of elements", NULL, -1}
 #if defined(HAVE_VISUDEV)
- ,{GMSH_FULLRC, "Element to draw quality", NULL, -1}
+ ,{GMSH_FULLRC, "Element to draw quality", NULL, 0}
 #endif
 };
 
@@ -558,7 +558,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computePointwiseQuantities(MElement *el,
 
   if (!_viewOrder) {
 //    _viewOrder = std::min(10, 2 * el->getPolynomialOrder());
-    _viewOrder = 10;
+    _viewOrder = 9;
   }
 
   if (_pwJac) {
