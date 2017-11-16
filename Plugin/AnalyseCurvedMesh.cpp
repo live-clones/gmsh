@@ -7,6 +7,7 @@
 
 #if defined(HAVE_MESH)
 
+
 #include "AnalyseCurvedMesh.h"
 #include "OS.h"
 #include "Context.h"
@@ -19,6 +20,9 @@
 #include <sstream>
 #include <fstream>
 #include "qualityMeasuresJacobian.h"
+#if defined(HAVE_VISUDEV)
+#include "BasisFactory.h"
+#endif
 
 class bezierBasis;
 
@@ -30,6 +34,9 @@ StringXNumber CurvedMeshOptions_Number[] = {
   {GMSH_FULLRC, "Draw PView", NULL, 0},
   {GMSH_FULLRC, "Recompute", NULL, 0},
   {GMSH_FULLRC, "Dimension of elements", NULL, -1}
+#if defined(HAVE_VISUDEV)
+ ,{GMSH_FULLRC, "Element to draw quality", NULL, 0}
+#endif
 };
 
 extern "C"
@@ -97,13 +104,25 @@ std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
 PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
 {
   _m = GModel::current();
-  bool computeJac = static_cast<int>(CurvedMeshOptions_Number[0].def);
-  bool computeIGE = static_cast<int>(CurvedMeshOptions_Number[1].def);
-  bool computeICN = static_cast<int>(CurvedMeshOptions_Number[2].def);
-  _threshold      = static_cast<double>(CurvedMeshOptions_Number[3].def);
-  bool drawPView  = static_cast<int>(CurvedMeshOptions_Number[4].def);
-  bool recompute  = static_cast<bool>(CurvedMeshOptions_Number[5].def);
-  int askedDim    = static_cast<int>(CurvedMeshOptions_Number[6].def);
+  int computeJac = static_cast<int>(CurvedMeshOptions_Number[0].def);
+  int computeIGE = static_cast<int>(CurvedMeshOptions_Number[1].def);
+  int computeICN = static_cast<int>(CurvedMeshOptions_Number[2].def);
+  _threshold     = CurvedMeshOptions_Number[3].def;
+  bool drawPView = static_cast<bool>(CurvedMeshOptions_Number[4].def);
+  bool recompute = static_cast<bool>(CurvedMeshOptions_Number[5].def);
+  int askedDim   = static_cast<int>(CurvedMeshOptions_Number[6].def);
+
+#if defined(HAVE_VISUDEV)
+  _pwJac = computeJac/2;
+  _pwIGE = computeIGE/2;
+  _pwICN = computeICN/2;
+
+  _numElementToScan = static_cast<int>(CurvedMeshOptions_Number[7].def);
+  _viewOrder = 0;
+  _dataPViewJac.clear();
+  _dataPViewIGE.clear();
+  _dataPViewICN.clear();
+#endif
 
   if (askedDim < 0 || askedDim > 4) askedDim = _m->getDim();
 
@@ -162,6 +181,10 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
   if (printStatJ) _printStatJacobian();
   if (printStatS) _printStatIGE();
   if (printStatI) _printStatICN();
+
+#if defined(HAVE_VISUDEV)
+  _createPViewPointwise();
+#endif
 
   // Create PView
   if (drawPView)
@@ -342,6 +365,10 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
       _data.push_back(data_elementMinMax(el, min, max));
       if (min < 0 && max < 0) ++cntInverted;
       progress.next();
+
+#if defined(HAVE_VISUDEV)
+      _computePointwiseQuantities(el, normals);
+#endif
     }
     delete normals;
   }
@@ -514,5 +541,85 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatICN()
   Msg::Info("ICN       = %8.3f, %8.3f, %8.3f (worst, avg, best)",
             infminI, avgminI, supminI);
 }
+
+#if defined(HAVE_VISUDEV)
+void GMSH_AnalyseCurvedMeshPlugin::_computePointwiseQuantities(MElement *el,
+                                                               const fullMatrix<double> *normals) {
+  if (_numElementToScan != -1 && el->getNum() != _numElementToScan) return;
+
+  if (!_type2tag[el->getType()])
+    _type2tag[el->getType()] = el->getTypeForMSH();
+  else
+    // Skip if element tag is different from previous elements of same type
+    if (_type2tag[el->getType()] != el->getTypeForMSH()) return;
+
+  static fullVector<double> tmpVector;
+  int num = el->getNum();
+
+  if (!_viewOrder) {
+//    _viewOrder = std::min(10, 2 * el->getPolynomialOrder());
+    _viewOrder = 9;
+  }
+
+  if (_pwJac) {
+    jacobianBasedQuality::sampleJacobian(el, _viewOrder, tmpVector, normals);
+    std::vector<double> &vec = _dataPViewJac[num];
+    for (int j = 0; j < tmpVector.size(); ++j)
+      vec.push_back(tmpVector(j));
+  }
+
+  if (_pwIGE) {
+    jacobianBasedQuality::sampleIGEMeasure(el, _viewOrder, tmpVector);
+    std::vector<double> &vec = _dataPViewIGE[num];
+    for (int j = 0; j < tmpVector.size(); ++j)
+      vec.push_back(tmpVector(j));
+  }
+
+  if (_pwICN) {
+//    jacobianBasedQuality::sampleICNMeasure(el, _viewOrder, tmpVector);
+//    std::vector<double> &vec = _dataPViewICN[num];
+//    for (int j = 0; j < tmpVector.size(); ++j)
+//      vec.push_back(tmpVector(j));
+  }
+}
+
+void GMSH_AnalyseCurvedMeshPlugin::_setInterpolationMatrices(PView *view)
+{
+  PViewData *viewData = view->getData();
+  for (int type = 0; type < 20; ++type) {
+    if (!_type2tag[type]) continue;
+    viewData->deleteInterpolationMatrices(type);
+    const nodalBasis *fsE = BasisFactory::getNodalBasis(_type2tag[type]);
+    const polynomialBasis *pfsE = dynamic_cast<const polynomialBasis *>(fsE);
+    const int hoTag = ElementType::getTag(type, _viewOrder);
+    const nodalBasis *fsV = BasisFactory::getNodalBasis(hoTag);
+    const polynomialBasis *pfsV = dynamic_cast<const polynomialBasis *>(fsV);
+    viewData->setInterpolationMatrices(type,
+                                       pfsV->coefficients, pfsV->monomials,
+                                       pfsE->coefficients, pfsE->monomials);
+  }
+}
+
+void GMSH_AnalyseCurvedMeshPlugin::_createPViewPointwise()
+{
+  if (_pwJac) {
+    _setInterpolationMatrices(
+        new PView("Pointwise Jacobian", "ElementNodeData", _m, _dataPViewJac, 0, 1)
+    );
+  }
+
+  if (_pwIGE) {
+    _setInterpolationMatrices(
+        new PView("Pointwise IGE", "ElementNodeData", _m, _dataPViewIGE, 0, 1)
+    );
+  }
+
+  if (_pwICN) {
+    _setInterpolationMatrices(
+        new PView("Pointwise ICN", "ElementNodeData", _m, _dataPViewICN, 0, 1)
+    );
+  }
+}
+#endif
 
 #endif
