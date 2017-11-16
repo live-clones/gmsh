@@ -20,7 +20,9 @@
 #include <sstream>
 #include <fstream>
 #include "qualityMeasuresJacobian.h"
+#if defined(HAVE_VISUDEV)
 #include "BasisFactory.h"
+#endif
 
 class bezierBasis;
 
@@ -31,8 +33,10 @@ StringXNumber CurvedMeshOptions_Number[] = {
   {GMSH_FULLRC, "Hiding threshold", NULL, 9},
   {GMSH_FULLRC, "Draw PView", NULL, 0},
   {GMSH_FULLRC, "Recompute", NULL, 0},
-  {GMSH_FULLRC, "Dimension of elements", NULL, -1},
-  {GMSH_FULLRC, "Element to draw quality", NULL, -1}
+  {GMSH_FULLRC, "Dimension of elements", NULL, -1}
+#if defined(HAVE_VISUDEV)
+ ,{GMSH_FULLRC, "Element to draw quality", NULL, -1}
+#endif
 };
 
 extern "C"
@@ -108,6 +112,7 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
   bool recompute = static_cast<bool>(CurvedMeshOptions_Number[5].def);
   int askedDim   = static_cast<int>(CurvedMeshOptions_Number[6].def);
 
+#if defined(HAVE_VISUDEV)
   _pwJac = computeJac/2;
   _pwIGE = computeIGE/2;
   _pwICN = computeICN/2;
@@ -117,6 +122,7 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
   _dataPViewJac.clear();
   _dataPViewIGE.clear();
   _dataPViewICN.clear();
+#endif
 
   if (askedDim < 0 || askedDim > 4) askedDim = _m->getDim();
 
@@ -176,7 +182,9 @@ PView* GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
   if (printStatS) _printStatIGE();
   if (printStatI) _printStatICN();
 
+#if defined(HAVE_VISUDEV)
   _createPViewPointwise();
+#endif
 
   // Create PView
   if (drawPView)
@@ -358,7 +366,9 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
       if (min < 0 && max < 0) ++cntInverted;
       progress.next();
 
+#if defined(HAVE_VISUDEV)
       _computePointwiseQuantities(el, normals);
+#endif
     }
     delete normals;
   }
@@ -532,6 +542,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatICN()
             infminI, avgminI, supminI);
 }
 
+#if defined(HAVE_VISUDEV)
 void GMSH_AnalyseCurvedMeshPlugin::_computePointwiseQuantities(MElement *el,
                                                                const fullMatrix<double> *normals) {
   if (_numElementToScan != -1 && el->getNum() != _numElementToScan) return;
@@ -609,5 +620,6 @@ void GMSH_AnalyseCurvedMeshPlugin::_createPViewPointwise()
     );
   }
 }
+#endif
 
 #endif

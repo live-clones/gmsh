@@ -40,6 +40,7 @@ private :
   GModel *_m;
   double _threshold;
 
+#if defined(HAVE_VISUDEV)
   // Pointwise data
   int _numElementToScan;
   bool _pwJac, _pwIGE, _pwICN;
@@ -48,6 +49,7 @@ private :
   std::map<int, std::vector<double>> _dataPViewICN;
   int _type2tag[20] = {0};
   int _viewOrder = 0;
+#endif
 
   // for 1d, 2d, 3d
   bool _computedJac[3], _computedIGE[3], _computedICN[3];
@@ -89,9 +91,11 @@ private :
   void _printStatIGE();
   void _printStatICN();
 
+#if defined(HAVE_VISUDEV)
   void _computePointwiseQuantities(MElement *, const fullMatrix<double> *normals);
   void _createPViewPointwise();
   void _setInterpolationMatrices(PView *);
+#endif
 };
 
 #endif
