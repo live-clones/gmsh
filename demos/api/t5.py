@@ -3,9 +3,6 @@
 from gmsh import *
 import math
 
-def hypot(a, b):
-    return math.sqrt(a * a + b * b)
-
 gmshInitialize()
 gmshOptionSetNumber("General.Terminal", 1)
 
@@ -114,7 +111,7 @@ def cheeseHole(x, y, z, r, lc, shells, volumes):
     volumes.append(v)
 
 x = 0; y = 0.75; z = 0; r = 0.09
-for t in range(1,5):
+for t in range(1, 6):
     x += 0.166 ;
     z += 0.166 ;
     cheeseHole(x, y, z, r, lcar3, shells, volumes);

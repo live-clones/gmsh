@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
 # This file reimplements gmsh/tutorial/t1.geo in Python. For all the elementary
-# explanations about the general philosphy of entities in Gmsh, see the
-# comments in the .geo file. Comments here will focus on the specifics of the
-# Python API.
+# explanations about the general philosphy of entities in Gmsh, see the comments
+# in the .geo file. Comments here focus on the specifics of the Python API.
 
 # The API is entirely defined in the gmsh module
 from gmsh import *

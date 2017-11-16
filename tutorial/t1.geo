@@ -21,8 +21,8 @@ Point(1) = {0, 0, 0, lc};
 
 // The distribution of the mesh element sizes is then obtained by interpolation
 // of these characteristic lengths throughout the geometry. Another method to
-// specify characteristic lengths is to use a background mesh (see `t7.geo' and
-// `bgmesh.pos').
+// specify characteristic lengths is to use general mesh size Fields (see
+// `t10.geo'). A particular case is the use of a background mesh (see `t7.geo').
 
 // We can then define some additional points as well as our first curve.  Curves
 // are Gmsh's second type of elementery entities, and, amongst curves, straight

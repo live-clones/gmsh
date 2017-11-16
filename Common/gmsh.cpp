@@ -411,7 +411,8 @@ int gmshModelSetMeshSize(const vector_pair &dimTags, const double size)
   return ret;
 }
 
-int gmshModelSetTransfiniteLine(const int tag, const int nPoints, const int type,
+int gmshModelSetTransfiniteLine(const int tag, const int nPoints,
+                                const std::string &type,
                                 const double coef)
 {
   if(!isInitialized()) return -1;
@@ -419,21 +420,32 @@ int gmshModelSetTransfiniteLine(const int tag, const int nPoints, const int type
   if(ge){
     ge->meshAttributes.method = MESH_TRANSFINITE;
     ge->meshAttributes.nbPointsTransfinite = nPoints;
-    ge->meshAttributes.typeTransfinite = type;
-    ge->meshAttributes.coeffTransfinite = coef;
+    ge->meshAttributes.typeTransfinite =
+      (type == "Progression" || type == "Power") ? 1 :
+      (type == "Bump") ? 2 :
+      1;
+    ge->meshAttributes.coeffTransfinite = std::abs(coef);
+    // in .geo file we use a negative tag to do this trick; it's a bad idea
+    if(coef < 0) ge->meshAttributes.typeTransfinite *= -1;
     return 0;
   }
   return 1;
 }
 
-int gmshModelSetTransfiniteSurface(const int tag, const int arrangement,
+int gmshModelSetTransfiniteSurface(const int tag, const std::string &arrangement,
                                    const std::vector<int> &cornerTags)
 {
   if(!isInitialized()) return -1;
   GFace *gf = GModel::current()->getFaceByTag(tag);
   if(gf){
     gf->meshAttributes.method = MESH_TRANSFINITE;
-    gf->meshAttributes.transfiniteArrangement = arrangement;
+    gf->meshAttributes.transfiniteArrangement =
+      (arrangement == "Right") ? 1 :
+      (arrangement == "Left") ? -1 :
+      (arrangement == "AlternateRight") ? 2 :
+      (arrangement == "AlternateLeft") ? -2 :
+      (arrangement == "Alternate") ? 2 :
+      -1;
     if(cornerTags.empty() || cornerTags.size() == 3 || cornerTags.size() == 4){
       for(unsigned int j = 0; j < cornerTags.size(); j++){
         GVertex *gv = GModel::current()->getVertexByTag(cornerTags[j]);
@@ -476,9 +488,10 @@ int gmshModelSetRecombine(const int dim, const int tag, const double angle)
   return 1;
 }
 
-int gmshModelSetSmoothing(const int tag, const int val)
+int gmshModelSetSmoothing(const int dim, const int tag, const int val)
 {
   if(!isInitialized()) return -1;
+  if(dim != 2) return 1;
   GFace *gf = GModel::current()->getFaceByTag(tag);
   if(gf){
     gf->meshAttributes.transfiniteSmoothing = val;
@@ -487,18 +500,24 @@ int gmshModelSetSmoothing(const int tag, const int val)
   return 1;
 }
 
-int gmshModelSetReverseMesh(const int dim, const int tag)
+int gmshModelSetReverseMesh(const int dim, const int tag, const bool val)
 {
   if(!isInitialized()) return -1;
   if(dim == 1){
     GEdge *ge = GModel::current()->getEdgeByTag(tag);
-    if(ge) ge->meshAttributes.reverseMesh = 1;
+    if(ge){
+      ge->meshAttributes.reverseMesh = val;
+      return 0;
+    }
   }
   else if(dim == 2){
     GFace *gf = GModel::current()->getFaceByTag(tag);
-    if(gf) gf->meshAttributes.reverseMesh = 1;
+    if(gf){
+      gf->meshAttributes.reverseMesh = val;
+      return 0;
+    }
   }
-  return 0;
+  return 1;
 }
 
 int gmshModelEmbed(const int dim, const std::vector<int> &tags,
@@ -770,24 +789,64 @@ int gmshModelGeoRemoveAllDuplicates()
   return 0;
 }
 
-int gmshModelGeoSetTransfiniteLine(const int tag, const int nPoints, const int type,
+int gmshModelGeoSetTransfiniteLine(const int tag, const int nPoints,
+                                   const std::string &type,
                                    const double coef)
 {
   if(!isInitialized()) return -1;
-  return 1;
+  int t =
+    (type == "Progression" || type == "Power") ? 1 :
+    (type == "Bump") ? 2 :
+    1;
+  double c = std::abs(coef);
+  // in .geo file we use a negative tag to do this trick; it's a bad idea
+  if(coef < 0) t = -t;
+  GModel::current()->getGEOInternals()->setTransfiniteLine(tag, nPoints, t, c);
+  return 0;
 }
 
-int gmshModelGeoSetTransfiniteSurface(const int tag, const int arrangement,
+int gmshModelGeoSetTransfiniteSurface(const int tag, const std::string &arrangement,
                                       const std::vector<int> &cornerTags)
 {
   if(!isInitialized()) return -1;
-  return 1;
+  int t =
+    (arrangement == "Right") ? 1 :
+    (arrangement == "Left") ? -1 :
+    (arrangement == "AlternateRight") ? 2 :
+    (arrangement == "AlternateLeft") ? -2 :
+    (arrangement == "Alternate") ? 2 :
+    -1;
+  GModel::current()->getGEOInternals()->setTransfiniteSurface(tag, t, cornerTags);
+  return 0;
 }
 
 int gmshModelGeoSetTransfiniteVolume(const int tag, const std::vector<int> &cornerTags)
 {
   if(!isInitialized()) return -1;
-  return 1;
+  GModel::current()->getGEOInternals()->setTransfiniteVolume(tag, cornerTags);
+  return 0;
+}
+
+int gmshModelGeoSetRecombine(const int dim, const int tag, const double angle)
+{
+  if(!isInitialized()) return -1;
+  GModel::current()->getGEOInternals()->setRecombine(dim, tag, angle);
+  return 0;
+}
+
+int gmshModelGeoSetSmoothing(const int dim, const int tag, const int val)
+{
+  if(!isInitialized()) return -1;
+  if(dim != 2) return 1;
+  GModel::current()->getGEOInternals()->setSmoothing(tag, val);
+  return 0;
+}
+
+int gmshModelGeoSetReverseMesh(const int dim, const int tag, const bool val)
+{
+  if(!isInitialized()) return -1;
+  GModel::current()->getGEOInternals()->setReverseMesh(dim, tag, val);
+  return 0;
 }
 
 int gmshModelGeoSetMeshSize(const vector_pair &dimTags, const double size)

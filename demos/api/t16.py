@@ -19,7 +19,7 @@ gmshModelOccBooleanDifference(3,[(3,1)], [(3,2)], ov, ovv)
 x = 0; y = 0.75; z = 0; r = 0.09
 
 holes = PairVector()
-for t in range(1, 5):
+for t in range(1, 6):
     x += 0.166
     z += 0.166
     gmshModelOccAddSphere(3 + t, x,y,z,r)
