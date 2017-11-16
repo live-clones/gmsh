@@ -137,17 +137,20 @@ int MQuadrangle::getNumFacesRep(bool curved)
 
 int MQuadrangleN::getNumFacesRep(bool curved)
 {
-  return curved ? 2*SQU(CTX::instance()->mesh.numSubEdges) : 2;
+  return curved ? 2*SQU(CTX::instance()->mesh.numSubEdges) :
+         MQuadrangle::getNumFacesRep(curved);
 }
 
 int MQuadrangle8::getNumFacesRep(bool curved)
 {
-  return curved ? 2*SQU(CTX::instance()->mesh.numSubEdges) : 2;
+  return curved ? 2*SQU(CTX::instance()->mesh.numSubEdges) :
+         MQuadrangle::getNumFacesRep(curved);
 }
 
 int MQuadrangle9::getNumFacesRep(bool curved)
 {
-  return curved ? 2*SQU(CTX::instance()->mesh.numSubEdges) : 2;
+  return curved ? 2*SQU(CTX::instance()->mesh.numSubEdges) :
+         MQuadrangle::getNumFacesRep(curved);
 }
 
 static void _myGetFaceRep(MQuadrangle *t, int num, double *x, double *y, double *z,
