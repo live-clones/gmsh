@@ -5,6 +5,7 @@
 
 #include <sstream>
 #include <iomanip>
+#include <ctime>
 #include "GModel.h"
 #include "OS.h"
 #include "GmshMessage.h"
@@ -168,6 +169,9 @@ void readMSHPeriodicNodes(FILE *fp, GModel *gm)
 
 int GModel::readMSH(const std::string &name)
 {
+  clock_t t;
+  t = clock();
+  
   FILE *fp = Fopen(name.c_str(), "rb");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
@@ -210,11 +214,17 @@ int GModel::readMSH(const std::string &name)
       }
       if(version < 3.){
         fclose(fp);
-        return _readMSH2(name);
+        int ret = _readMSH2(name);
+        t = clock() - t;
+        Msg::StatusBar(true, "Reading in %f seconds", ((float)t)/CLOCKS_PER_SEC);
+        return ret;
       }
       if(version == 4.0){
         fclose(fp);
-        return _readMSH4(name);
+        int ret = _readMSH4(name);
+        t = clock() - t;
+        Msg::StatusBar(true, "Reading in %f seconds", ((float)t)/CLOCKS_PER_SEC);
+        return ret;
       }
       if(format){
         binary = true;

@@ -31,6 +31,7 @@
 #include "MTrihedron.h"
 #include "meshPartition.h"
 #include "StringUtils.h"
+#include "Options.h"
 
 //Write functions
 void writeMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary, double scalingFactor);
@@ -42,6 +43,7 @@ void writeMSH4PeriodicNodes(GModel *const model, FILE* fp, bool partitioned, boo
 //Read functions
 void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary);
 void readMSH4Physicals(GModel *const model, GEntity *const entity, bool binary, char *str);
+void readMSH4BoundingBox(GModel *const model, GEntity *const entity, bool binary, char *str);
 std::pair<int, MVertex*> *readMSH4Nodes(GModel *const model, FILE* fp, bool binary, bool parametric, bool &dense, int &nbrNodes);
 std::pair<int, MElement*> *readMSH4Elements(GModel *const model, FILE* fp, bool binary, bool &dense, int &nbrElements);
 void readMSHPeriodicNodes(GModel *const model, FILE* fp, bool binary);
@@ -303,21 +305,6 @@ int GModel::_readMSH4(const std::string &name)
     str[0] = 'a';
   }
   
-  // associate the correct geometrical entity with each mesh vertex
-  _associateEntityWithMeshVertices();
-  
-  // store the vertices in their associated geometrical entity
-  if(_vertexVectorCache.size())
-  {
-    _storeVerticesInEntities(_vertexVectorCache);
-  }
-  else
-  {
-    _storeVerticesInEntities(_vertexMapCache);
-  }
-  
-  _createGeometryOfDiscreteEntities() ;
-  
   fclose(fp);
   
   return postpro ? 2 : 1;
@@ -326,13 +313,19 @@ int GModel::_readMSH4(const std::string &name)
 void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary)
 {
   char str[256];
-  if(!fgets(str, sizeof(str), fp) || feof(fp))
+
+  if(partition)
   {
-    fclose(fp);
-    return;
+    int numPartitions = 0;
+    if(fscanf(fp, "%d", &numPartitions) != 1)
+    {
+      fclose(fp);
+      return;
+    }
+    opt_mesh_partition_num(0, GMSH_SET, numPartitions);
   }
   int numVert = 0, numEdges = 0, numFaces = 0, numReg = 0;
-  if(sscanf(str, "%d %d %d %d", &numVert, &numEdges, &numFaces, &numReg) != 4)
+  if(fscanf(fp, "%d %d %d %d", &numVert, &numEdges, &numFaces, &numReg) != 4)
   {
     fclose(fp);
     return;
@@ -340,19 +333,12 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
   //Vertices
   for(int i = 0; i < numVert; i++)
   {
-    if(!fgets(str, sizeof(str), fp) || feof(fp))
-    {
-      fclose(fp);
-      return;
-    }
-    
     int tag = 0;
     double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
-    char phyStr[256];
     int parentTag = 0;
     if(partition)
     {
-      if(sscanf(str, "%d %d %lf %lf %lf %lf %lf %lf %[0-9 ]", &tag, &parentTag, &minX, &minY, &minZ, &maxX, &maxY, &maxZ, phyStr) != 9)
+      if(fscanf(fp, "%d %d %lf %lf %lf %lf %lf %lf %[0-9 ]", &tag, &parentTag, &minX, &minY, &minZ, &maxX, &maxY, &maxZ, str) != 9)
       {
         fclose(fp);
         return;
@@ -360,7 +346,7 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
     }
     else
     {
-      if(sscanf(str, "%d %lf %lf %lf %lf %lf %lf %[0-9 ]", &tag, &minX, &minY, &minZ, &maxX, &maxY, &maxZ, phyStr) != 8)
+      if(fscanf(fp, "%d %lf %lf %lf %lf %lf %lf %[0-9 ]", &tag, &minX, &minY, &minZ, &maxX, &maxY, &maxZ, str) != 8)
       {
         fclose(fp);
         return;
@@ -381,7 +367,7 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
       }
       model->add(gv);
     }
-    readMSH4Physicals(model, gv, binary, phyStr);
+    readMSH4Physicals(model, gv, binary, str);
     
     if(partition)
     {
@@ -393,19 +379,12 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
   //Edges
   for(int i = 0; i < numEdges; i++)
   {
-    if(!fgets(str, sizeof(str), fp) || feof(fp))
-    {
-      fclose(fp);
-      return;
-    }
-    
     int tag = 0;
     double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
-    char phyStr[256];
     int parentTag = 0;
     if(partition)
     {
-      if(sscanf(str, "%d %d %lf %lf %lf %lf %lf %lf %[0-9 ]", &tag, &parentTag, &minX, &minY, &minZ, &maxX, &maxY, &maxZ, phyStr) != 9)
+      if(fscanf(fp, "%d %d %lf %lf %lf %lf %lf %lf %[0-9 ]", &tag, &parentTag, &minX, &minY, &minZ, &maxX, &maxY, &maxZ, str) != 9)
       {
         fclose(fp);
         return;
@@ -413,7 +392,7 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
     }
     else
     {
-      if(sscanf(str, "%d %lf %lf %lf %lf %lf %lf %[0-9 ]", &tag, &minX, &minY, &minZ, &maxX, &maxY, &maxZ, phyStr) != 8)
+      if(fscanf(fp, "%d %lf %lf %lf %lf %lf %lf %[0-9 ]", &tag, &minX, &minY, &minZ, &maxX, &maxY, &maxZ, str) != 8)
       {
         fclose(fp);
         return;
@@ -434,7 +413,7 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
       }
       model->add(ge);
     }
-    readMSH4Physicals(model, ge, binary, phyStr);
+    readMSH4Physicals(model, ge, binary, str);
     
     if(partition)
     {
@@ -442,26 +421,18 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
       static_cast<partitionEdge*>(ge)->setPartition(partitions);
     }
     
-    //Todo : Bounding vertices
-    
+    readMSH4BoundingBox(model, ge, binary, str);
   }
   
   //Faces
   for(int i = 0; i < numFaces; i++)
   {
-    if(!fgets(str, sizeof(str), fp) || feof(fp))
-    {
-      fclose(fp);
-      return;
-    }
-    
     int tag = 0;
     double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
-    char phyStr[256];
     int parentTag = 0;
     if(partition)
     {
-      if(sscanf(str, "%d %d %lf %lf %lf %lf %lf %lf %[0-9 ]", &tag, &parentTag, &minX, &minY, &minZ, &maxX, &maxY, &maxZ, phyStr) != 9)
+      if(fscanf(fp, "%d %d %lf %lf %lf %lf %lf %lf %[0-9 ]", &tag, &parentTag, &minX, &minY, &minZ, &maxX, &maxY, &maxZ, str) != 9)
       {
         fclose(fp);
         return;
@@ -469,7 +440,7 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
     }
     else
     {
-      if(sscanf(str, "%d %lf %lf %lf %lf %lf %lf %[0-9 ]", &tag, &minX, &minY, &minZ, &maxX, &maxY, &maxZ, phyStr) != 8)
+      if(fscanf(fp, "%d %lf %lf %lf %lf %lf %lf %[0-9 ]", &tag, &minX, &minY, &minZ, &maxX, &maxY, &maxZ, str) != 8)
       {
         fclose(fp);
         return;
@@ -490,7 +461,7 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
       }
       model->add(gf);
     }
-    readMSH4Physicals(model, gf, binary, phyStr);
+    readMSH4Physicals(model, gf, binary, str);
     
     if(partition)
     {
@@ -498,26 +469,18 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
       static_cast<partitionFace*>(gf)->setPartition(partitions);
     }
     
-    //Todo : Bounding edges
-    
+    readMSH4BoundingBox(model, gf, binary, str);
   }
   
   //Regions
   for(int i = 0; i < numReg; i++)
   {
-    if(!fgets(str, sizeof(str), fp) || feof(fp))
-    {
-      fclose(fp);
-      return;
-    }
-    
     int tag = 0;
     double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
-    char phyStr[256];
     int parentTag = 0;
     if(partition)
     {
-      if(sscanf(str, "%d %d %lf %lf %lf %lf %lf %lf %[0-9 ]", &tag, &parentTag, &minX, &minY, &minZ, &maxX, &maxY, &maxZ, phyStr) != 9)
+      if(fscanf(fp, "%d %d %lf %lf %lf %lf %lf %lf %[0-9 ]", &tag, &parentTag, &minX, &minY, &minZ, &maxX, &maxY, &maxZ, str) != 9)
       {
         fclose(fp);
         return;
@@ -525,7 +488,7 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
     }
     else
     {
-      if(sscanf(str, "%d %lf %lf %lf %lf %lf %lf %[0-9 ]", &tag, &minX, &minY, &minZ, &maxX, &maxY, &maxZ, phyStr) != 8)
+      if(fscanf(fp, "%d %lf %lf %lf %lf %lf %lf %[0-9 ]", &tag, &minX, &minY, &minZ, &maxX, &maxY, &maxZ, str) != 8)
       {
         fclose(fp);
         return;
@@ -546,7 +509,7 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
       }
       model->add(gr);
     }
-    readMSH4Physicals(model, gr, binary, phyStr);
+    readMSH4Physicals(model, gr, binary, str);
     
     if(partition)
     {
@@ -554,8 +517,7 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
       static_cast<partitionRegion*>(gr)->setPartition(partitions);
     }
     
-    //Todo : Bounding faces
-    
+    readMSH4BoundingBox(model, gr, binary, str);
   }
 }
 
@@ -569,23 +531,80 @@ void readMSH4Physicals(GModel *const model, GEntity *const entity, bool binary, 
   {
     int phyTag = 0;
     
-    if(i != numPhy-1)
+    if(sscanf(str, "%d %s", &phyTag, strTmp) != 2)
     {
-      if(sscanf(str, "%d %s", &phyTag, strTmp) != 2)
+      return;
+    }
+    strcpy(str, strTmp);
+    
+    entity->addPhysicalEntity(phyTag);
+  }
+}
+
+void readMSH4BoundingBox(GModel *const model, GEntity *const entity, bool binary, char *str)
+{
+  int numBrep = 0;
+  char strTmp[265];
+  sscanf(str, "%d %[0-9 ]", &numBrep, strTmp);
+  strcpy(str, strTmp);
+  std::vector<GEntity*> boundingEntities;
+  std::vector<int> boundingSign;
+  for(int i = 0; i < numBrep; i++)
+  {
+    int entityTag = 0;
+    
+    if(i != numBrep-1)
+    {
+      if(sscanf(str, "%d %s", &entityTag, strTmp) != 2)
       {
         return;
       }
     }
     else
     {
-      if(sscanf(str, "%d", &phyTag) != 1)
+      if(sscanf(str, "%d", &entityTag) != 1)
       {
         return;
       }
     }
     strcpy(str, strTmp);
     
-    entity->addPhysicalEntity(phyTag);
+    GEntity *brep = model->getEntityByTag(entity->dim()-1, std::abs(entityTag));
+    if(brep == NULL)
+    {
+      Msg::Warning("Entity %d not found in the Brep of entity %d", entityTag, entity->tag());
+      return;
+    }
+    boundingEntities.push_back(entity);
+    boundingSign.push_back((std::abs(entityTag) == entityTag ? 1 : -1));
+  }
+  
+  switch (entity->dim()) {
+    case 1:
+      if(boundingEntities.size() == 2)
+      {
+        reinterpret_cast<discreteEdge*>(entity)->setBeginVertex(reinterpret_cast<GVertex*>(boundingEntities[0]));
+        reinterpret_cast<discreteEdge*>(entity)->setBeginVertex(reinterpret_cast<GVertex*>(boundingEntities[1]));
+      }
+      break;
+    case 2:
+    {
+      std::vector<int> tags(boundingEntities.size());
+      for(unsigned int i = 0; i < boundingEntities.size(); i++)
+        tags[i] = boundingEntities[i]->tag();
+      reinterpret_cast<discreteFace*>(entity)->setBoundEdges(tags, boundingSign);
+    }
+      break;
+    case 3:
+    {
+      std::vector<int> tags(boundingEntities.size());
+      for(unsigned int i = 0; i < boundingEntities.size(); i++)
+        tags[i] = boundingEntities[i]->tag();
+      reinterpret_cast<discreteRegion*>(entity)->setBoundFaces(tags, boundingSign);
+    }
+      break;
+    default:
+      break;
   }
 }
 
@@ -681,6 +700,7 @@ std::pair<int, MVertex*> *readMSH4Nodes(GModel *const model, FILE* fp, bool bina
         vertex = new MVertex(xyz[0], xyz[1], xyz[2], entity, nodeTag);
       }
       entity->addMeshVertex(vertex);
+      vertex->setEntity(entity);
       minVertex = std::min(minVertex, nodeTag);
       maxVertex = std::max(maxVertex, nodeTag);
       
@@ -1386,7 +1406,27 @@ void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned, bool binary
   {
     int numSection = vertices.size() + edges.size() + faces.size() + regions.size();
     fwrite(&numSection, sizeof(int), 1, fp);
-    //Todo : add the global size
+    int globalSize = numSection*3*sizeof(int);
+    if(saveParametric)
+    {
+      int nbrVerticesInEdge = 0, nbrVerticesInFace = 0;
+
+      for(GModel::eiter it = edges.begin(); it != edges.end(); ++it)
+      {
+        nbrVerticesInEdge += (*it)->getNumMeshVertices();
+      }
+      for(GModel::fiter it = faces.begin(); it != faces.end(); ++it)
+      {
+        nbrVerticesInFace += (*it)->getNumMeshVertices();
+      }
+      
+      globalSize += model->getNumMeshVertices()*(sizeof(int) + 3*sizeof(double)) + nbrVerticesInEdge*sizeof(double) + 2*nbrVerticesInFace*sizeof(double);
+    }
+    else
+    {
+      globalSize += model->getNumMeshVertices()*(sizeof(int) + 3*sizeof(double));
+    }
+    fwrite(&globalSize, sizeof(int), 1, fp);
   }
   else
   {
@@ -1561,7 +1601,16 @@ void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned, bool bin
   {
     int numSection = elementsByDegree.size();
     fwrite(&numSection, sizeof(int), 1, fp);
-    //Todo : add the global size
+    
+    int globalSize = numSection*4*sizeof(int);
+    for(std::map<std::pair<int, GEntity*>, std::vector<MElement*> >::iterator it = elementsByDegree.begin(); it != elementsByDegree.end(); ++it)
+    {
+      const int numElm = it->second[0]->getNumVertices();
+      globalSize += numElm*sizeof(int);//elementTag
+      globalSize += numElm*numElm*sizeof(int);//vertexTags
+    }
+
+    fwrite(&globalSize, sizeof(int), 1, fp);
   }
   else
   {
@@ -1573,9 +1622,11 @@ void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned, bool bin
     if(binary)
     {
       int entityTag = it->first.second->tag();
+      int entityDim = it->first.second->dim();
       int elmType = it->first.first;
       int numElm = it->second.size();
       fwrite(&entityTag, sizeof(int), 1, fp);
+      fwrite(&entityDim, sizeof(int), 1, fp);
       fwrite(&elmType, sizeof(int), 1, fp);
       fwrite(&numElm, sizeof(int), 1, fp);
     }
@@ -1630,9 +1681,12 @@ void writeMSH4PeriodicNodes(GModel *const model, FILE *fp, bool partitioned, boo
         
         if(g_slave->affineTransform.size() == 16)
         {
-          //Todo : In binary?
           fprintf(fp, "Affine");
-          for(int j = 0; j < 16; j++) fprintf(fp, " %.16g", g_slave->affineTransform[i]);
+          for(int j = 0; j < 16; j++)
+          {
+            double value = g_slave->affineTransform[i];
+            fwrite(&value, sizeof(double), 1, fp);
+          }
           fprintf(fp, "\n");
         }
         
@@ -1653,7 +1707,6 @@ void writeMSH4PeriodicNodes(GModel *const model, FILE *fp, bool partitioned, boo
       
         if(g_slave->affineTransform.size() == 16)
         {
-          //Todo : What is it?
           fprintf(fp, "Affine");
           for(int j = 0; j < 16; j++) fprintf(fp, " %.16g", g_slave->affineTransform[i]);
           fprintf(fp, "\n");
