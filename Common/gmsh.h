@@ -86,7 +86,8 @@ GMSH_API gmshModelSetTransfiniteSurface(const int tag,
                                         const std::vector<int> &cornerTags =
                                         std::vector<int>());
 GMSH_API gmshModelSetTransfiniteVolume(const int tag,
-                                       const std::vector<int> &cornerTags);
+                                       const std::vector<int> &cornerTags =
+                                       std::vector<int>());
 GMSH_API gmshModelSetRecombine(const int dim, const int tag, const double angle = 45.);
 GMSH_API gmshModelSetSmoothing(const int dim, const int tag, const int val);
 GMSH_API gmshModelSetReverseMesh(const int dim, const int tag, const bool val = true);
