@@ -1008,7 +1008,7 @@ void GEO_Internals::setSmoothing(int tag, int val)
   _changed = true;
 }
 
-void GEO_Internals::setReverseMesh(int dim, int tag)
+void GEO_Internals::setReverseMesh(int dim, int tag, bool val)
 {
   if(dim == 1){
     if(!tag){
@@ -1016,13 +1016,13 @@ void GEO_Internals::setReverseMesh(int dim, int tag)
       for(int i = 0; i < List_Nbr(tmp); i++){
         Curve *c;
         List_Read(tmp, i, &c);
-        c->ReverseMesh = 1;
+        c->ReverseMesh = val ? 1 : 0;
       }
       List_Delete(tmp);
     }
     else{
       Curve *c = FindCurve(tag);
-      if(c) c->ReverseMesh = 1;
+      if(c) c->ReverseMesh = val ? 1 : 0;
     }
   }
   else if(dim == 2){
@@ -1031,13 +1031,13 @@ void GEO_Internals::setReverseMesh(int dim, int tag)
       for(int i = 0; i < List_Nbr(tmp); i++){
         Surface *s;
         List_Read(tmp, i, &s);
-        s->ReverseMesh = 1;
+        s->ReverseMesh = val ? 1 : 0;
       }
       List_Delete(tmp);
     }
     else{
       Surface *s = FindSurface(tag);
-      if(s) s->ReverseMesh = 1;
+      if(s) s->ReverseMesh = val ? 1 : 0;
     }
   }
   _changed = true;

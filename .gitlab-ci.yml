@@ -155,7 +155,7 @@ windows32_official_release:
   script:
     - mkdir build
     - cd build
-    - /usr/local/bin/cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DENABLE_CAIRO=0 -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc-3.7.5 -DSLEPC_DIR=/Users/geuzaine/src/slepc-3.7.3 -DBLAS_LAPACK_LIBRARIES=/usr/local/lib/libopenblas.a ..
+    - /usr/local/bin/cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DCMAKE_C_COMPILER=/opt/local/bin/clang-mp-3.9 -DCMAKE_CXX_COMPILER=/opt/local/bin/clang++-mp-3.9 -DENABLE_CAIRO=0 -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc-3.7.5 -DSLEPC_DIR=/Users/geuzaine/src/slepc-3.7.3 -DBLAS_LAPACK_LIBRARIES=/usr/local/lib/libopenblas.a ..
     - make package -j 1
     - PKG=`ls gmsh-*.dmg`
     - scp ${PKG} ace@ace36.montefiore.ulg.ac.be:/tmp

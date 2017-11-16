@@ -9,7 +9,7 @@
 // Let's use the geometry from the first tutorial as a basis for this one
 Include "t1.geo";
 
-// Delete the left line and create replace it with 3 new ones
+// Delete the left line and replace it with 3 new ones
 Delete{ Surface{1}; Line{4}; }
 
 p1 = newp; Point(p1) = {-0.05, 0.05, 0, lc};
@@ -70,3 +70,4 @@ Line Loop(14) = {13, 10, 11, 12};
 Plane Surface(15) = {14};
 Transfinite Line {10:13} = 10;
 Transfinite Surface{15};
+Physical Surface(2) = 15;

@@ -17,16 +17,18 @@
 // By design, the API is purely functional, and only uses elementary C++ types
 // from the standard library. This design should not and will not change.
 
-// All functions return 0 on successful completion.
+// All functions return 0 as the first entry of the returned vector on
+// successful completion. Additional integer results can be appends to this
+// returned value, depending on context.
 
 #include <cmath>
 #include <vector>
 #include <string>
 
 #if defined(WIN32)
-#define GMSH_API __declspec(dllexport) int
+#define GMSH_API __declspec(dllexport) std::vector<int>
 #else
-#define GMSH_API int
+#define GMSH_API std::vector<int>
 #endif
 
 typedef std::vector<std::pair<int, int> > vector_pair;
@@ -57,8 +59,10 @@ GMSH_API gmshModelGetEntitiesForPhysicalGroup(const int dim, const int tag,
                                               std::vector<int> &tags);
 GMSH_API gmshModelSetPhysicalName(const int dim, const int tag,
                                   const std::string &name);
-GMSH_API gmshModelGetPhysicalName(const int dim, const int tag, std::string &name);
-GMSH_API gmshModelGetVertexCoordinates(const int tag, double &x, double &y, double &z);
+GMSH_API gmshModelGetPhysicalName(const int dim, const int tag,
+                                  std::string &name);
+GMSH_API gmshModelGetVertexCoordinates(const int tag, double &x, double &y,
+                                       double &z);
 GMSH_API gmshModelGetBoundary(const vector_pair &inDimTags, vector_pair &outDimTags,
                               const bool combined = true, const bool oriented = true,
                               const bool recursive = false);
@@ -79,45 +83,42 @@ GMSH_API gmshModelGetMeshElements(const int dim, const int tag,
                                   std::vector<std::vector<int> > &vertexTags);
 GMSH_API gmshModelSetMeshSize(const vector_pair &dimTags, const double size);
 GMSH_API gmshModelSetTransfiniteLine(const int tag, const int nPoints,
-                                     const int type, const double coef);
-GMSH_API gmshModelSetTransfiniteSurface(const int tag, const int arrangement,
-                                        const std::vector<int> &cornerTags);
+                                     const std::string &type = "Progression",
+                                     const double coef = 1.);
+GMSH_API gmshModelSetTransfiniteSurface(const int tag,
+                                        const std::string &arrangement = "Left",
+                                        const std::vector<int> &cornerTags =
+                                        std::vector<int>());
 GMSH_API gmshModelSetTransfiniteVolume(const int tag,
-                                       const std::vector<int> &cornerTags);
-GMSH_API gmshModelSetRecombine(const int dim, const int tag, const double angle);
-GMSH_API gmshModelSetSmoothing(const int tag, const int val);
-GMSH_API gmshModelSetReverseMesh(const int dim, const int tag);
+                                       const std::vector<int> &cornerTags =
+                                       std::vector<int>());
+GMSH_API gmshModelSetRecombine(const int dim, const int tag, const double angle = 45.);
+GMSH_API gmshModelSetSmoothing(const int dim, const int tag, const int val);
+GMSH_API gmshModelSetReverseMesh(const int dim, const int tag, const bool val = true);
 GMSH_API gmshModelEmbed(const int dim, const std::vector<int> &tags, const int inDim,
                         const int inTag);
 
 // gmshModelGeo
 GMSH_API gmshModelGeoAddPoint(const int tag, const double x, const double y,
-                              const double z, int &outTag, const double meshSize = 0.);
-GMSH_API gmshModelGeoAddLine(const int tag, const int startTag, const int endTag,
-                             int &outTag);
-GMSH_API gmshModelGeoAddCircleArc(const int tag, const int startTag, const int centerTag,
-                                  const int endTag, int &outTag, const double nx = 0.,
-                                  const double ny = 0., const double nz = 0.);
+                              const double z, const double meshSize = 0.);
+GMSH_API gmshModelGeoAddLine(const int tag, const int startTag, const int endTag);
+GMSH_API gmshModelGeoAddCircleArc(const int tag, const int startTag,
+                                  const int centerTag, const int endTag,
+                                  const double nx = 0., const double ny = 0.,
+                                  const double nz = 0.);
 GMSH_API gmshModelGeoAddEllipseArc(const int tag, const int startTag, const int centerTag,
-                                   const int majorTag, const int endTag, int &outTag,
+                                   const int majorTag, const int endTag,
                                    const double nx = 0., const double ny = 0.,
                                    const double nz = 0.);
-GMSH_API gmshModelGeoAddSpline(const int tag, const std::vector<int> &vertexTags,
-                               int &outTag);
-GMSH_API gmshModelGeoAddBSpline(const int tag, const std::vector<int> &vertexTags,
-                                int &outTag);
-GMSH_API gmshModelGeoAddBezier(const int tag, const std::vector<int> &vertexTags,
-                               int &outTag);
-GMSH_API gmshModelGeoAddLineLoop(const int tag, const std::vector<int> &edgeTags,
-                                 int &outTag);
-GMSH_API gmshModelGeoAddPlaneSurface(const int tag, const std::vector<int> &wireTags,
-                                     int &outTag);
+GMSH_API gmshModelGeoAddSpline(const int tag, const std::vector<int> &vertexTags);
+GMSH_API gmshModelGeoAddBSpline(const int tag, const std::vector<int> &vertexTags);
+GMSH_API gmshModelGeoAddBezier(const int tag, const std::vector<int> &vertexTags);
+GMSH_API gmshModelGeoAddLineLoop(const int tag, const std::vector<int> &edgeTags);
+GMSH_API gmshModelGeoAddPlaneSurface(const int tag, const std::vector<int> &wireTags);
 GMSH_API gmshModelGeoAddSurfaceFilling(const int tag, const std::vector<int> &wireTags,
-                                       int &outTag, const int sphereCenterTag = -1);
-GMSH_API gmshModelGeoAddSurfaceLoop(const int tag, const std::vector<int> &faceTags,
-                                    int &outTag);
-GMSH_API gmshModelGeoAddVolume(const int tag, const std::vector<int> &shellTags,
-                               int &outTag);
+                                       const int sphereCenterTag = -1);
+GMSH_API gmshModelGeoAddSurfaceLoop(const int tag, const std::vector<int> &faceTags);
+GMSH_API gmshModelGeoAddVolume(const int tag, const std::vector<int> &shellTags);
 GMSH_API gmshModelGeoExtrude(const vector_pair &inDimTags,
                              const double dx, const double dy, const double dz,
                              vector_pair &outDimTags,
@@ -156,74 +157,72 @@ GMSH_API gmshModelGeoRemove(const vector_pair &dimTags, const bool recursive = f
 GMSH_API gmshModelGeoRemoveAllDuplicates();
 GMSH_API gmshModelGeoSetMeshSize(const vector_pair &dimTags, const double size);
 GMSH_API gmshModelGeoSetTransfiniteLine(const int tag, const int nPoints,
-                                        const int type, const double coef);
-GMSH_API gmshModelGeoSetTransfiniteSurface(const int tag, const int arrangement,
-                                           const std::vector<int> &cornerTags);
+                                        const std::string &type = "Progression",
+                                        const double coef = 1.);
+GMSH_API gmshModelGeoSetTransfiniteSurface(const int tag,
+                                           const std::string &arrangement = "Left",
+                                           const std::vector<int> &cornerTags =
+                                           std::vector<int>());
 GMSH_API gmshModelGeoSetTransfiniteVolume(const int tag,
-                                          const std::vector<int> &cornerTags);
+                                          const std::vector<int> &cornerTags =
+                                          std::vector<int>());
+GMSH_API gmshModelGeoSetRecombine(const int dim, const int tag, const double angle = 45.);
+GMSH_API gmshModelGeoSetSmoothing(const int dim, const int tag, const int val);
+GMSH_API gmshModelGeoSetReverseMesh(const int dim, const int tag, const bool val = true);
 GMSH_API gmshModelGeoSynchronize();
 
 // gmshModelOcc
 GMSH_API gmshModelOccAddPoint(const int tag, const double x, const double y,
-                              const double z, int &outTag, const double meshSize = 0.);
-GMSH_API gmshModelOccAddLine(const int tag, const int startTag, const int endTag,
-                             int &outTag);
+                              const double z, const double meshSize = 0.);
+GMSH_API gmshModelOccAddLine(const int tag, const int startTag, const int endTag);
 GMSH_API gmshModelOccAddCircleArc(const int tag, const int startTag, const int centerTag,
-                                  const int endTag, int &outTag);
+                                  const int endTag);
 GMSH_API gmshModelOccAddCircle(const int tag, const double x, const double y,
-                               const double z, const double r, int &outTag,
+                               const double z, const double r,
                                const double angle1 = 0., const double angle2 = 2*M_PI);
 GMSH_API gmshModelOccAddEllipseArc(const int tag, const int startTag, const int centerTag,
-                                   const int endTag, int &outTag);
+                                   const int endTag);
 GMSH_API gmshModelOccAddEllipse(const int tag, const double x, const double y,
                                 const double z, const double r1, const double r2,
-                                int &outTag, const double angle1 = 0.,
+                                const double angle1 = 0.,
                                 const double angle2 = 2*M_PI);
-GMSH_API gmshModelOccAddSpline(const int tag, const std::vector<int> &vertexTags,
-                               int &outTag);
-GMSH_API gmshModelOccAddBezier(const int tag, const std::vector<int> &vertexTags,
-                               int &outTag);
-GMSH_API gmshModelOccAddBSpline(const int tag, const std::vector<int> &vertexTags,
-                                int &outTag);
+GMSH_API gmshModelOccAddSpline(const int tag, const std::vector<int> &vertexTags);
+GMSH_API gmshModelOccAddBezier(const int tag, const std::vector<int> &vertexTags);
+GMSH_API gmshModelOccAddBSpline(const int tag, const std::vector<int> &vertexTags);
 GMSH_API gmshModelOccAddWire(const int tag, const std::vector<int> &edgeTags,
-                             int &outTag, const bool checkClosed = false);
-GMSH_API gmshModelOccAddLineLoop(const int tag, const std::vector<int> &edgeTags,
-                                 int &outTag);
+                             const bool checkClosed = false);
+GMSH_API gmshModelOccAddLineLoop(const int tag, const std::vector<int> &edgeTags);
 GMSH_API gmshModelOccAddRectangle(const int tag, const double x, const double y,
                                   const double z, const double dx, const double dy,
-                                  int &outTag, const double roundedRadius = 0.);
+                                  const double roundedRadius = 0.);
 GMSH_API gmshModelOccAddDisk(const int tag, const double xc, const double yc,
-                             const double zc, const double rx, const double ry,
-                             int &outTag);
-GMSH_API gmshModelOccAddPlaneSurface(const int tag, const std::vector<int> &wireTags,
-                                     int &outTag);
-GMSH_API gmshModelOccAddSurfaceFilling(const int tag, int wireTag, int &outTag);
-GMSH_API gmshModelOccAddSurfaceLoop(const int tag, const std::vector<int> &faceTags,
-                                    int &outTag);
-GMSH_API gmshModelOccAddVolume(const int tag, const std::vector<int> &shellTags,
-                               int &outTag);
+                             const double zc, const double rx, const double ry);
+GMSH_API gmshModelOccAddPlaneSurface(const int tag, const std::vector<int> &wireTags);
+GMSH_API gmshModelOccAddSurfaceFilling(const int tag, int wireTag);
+GMSH_API gmshModelOccAddSurfaceLoop(const int tag, const std::vector<int> &faceTags);
+GMSH_API gmshModelOccAddVolume(const int tag, const std::vector<int> &shellTags);
 GMSH_API gmshModelOccAddSphere(const int tag, const double xc, const double yc,
-                               const double zc, const double radius, int &outTag,
+                               const double zc, const double radius,
                                const double angle1 = -M_PI/2,
                                const double angle2 = M_PI/2,
                                const double angle3 = 2*M_PI);
 GMSH_API gmshModelOccAddBox(const int tag, const double x, const double y,
                             const double z, const double dx, const double dy,
-                            const double dz, int &outTag);
+                            const double dz);
 GMSH_API gmshModelOccAddCylinder(const int tag, const double x, const double y,
                                  const double z, const double dx, const double dy,
-                                 const double dz, const double r, int &outTag,
+                                 const double dz, const double r,
                                  double angle = 2*M_PI);
 GMSH_API gmshModelOccAddCone(const int tag, const double x, const double y,
                              const double z, const double dx, const double dy,
                              const double dz, const double r1, const double r2,
-                             int &outTag, const double angle = 2*M_PI);
+                             const double angle = 2*M_PI);
 GMSH_API gmshModelOccAddWedge(const int tag, const double x, const double y,
                               const double z, const double dx, const double dy,
-                              const double dz, int &outTag, const double ltx = 0.);
+                              const double dz, const double ltx = 0.);
 GMSH_API gmshModelOccAddTorus(const int tag, const double x, const double y,
                               const double z, const double r1, const double r2,
-                              int &outTag, const double angle = 2*M_PI);
+                              const double angle = 2*M_PI);
 GMSH_API gmshModelOccAddThruSections(const int tag, const std::vector<int> &wireTags,
                                      vector_pair &outDimTags, const bool makeSolid = true,
                                      const bool makeRuled = false);
@@ -283,7 +282,7 @@ GMSH_API gmshModelOccDilate(const vector_pair &dimTags, const double x,
 GMSH_API gmshModelOccSymmetry(const vector_pair &dimTags, const double a,
                               const double b, const double c, const double d);
 GMSH_API gmshModelOccCopy(const vector_pair &inDimTags, vector_pair &outDimTags);
-GMSH_API gmshModelOccRemove(const vector_pair &dimTags, const bool recursive);
+GMSH_API gmshModelOccRemove(const vector_pair &dimTags, const bool recursive = false);
 GMSH_API gmshModelOccRemoveAllDuplicates();
 GMSH_API gmshModelOccImportShapes(const std::string &fileName, vector_pair &outDimTags,
                                   const bool highestDimOnly = true,
@@ -293,7 +292,7 @@ GMSH_API gmshModelOccSynchronize();
 
 // gmshModelField
 
-GMSH_API gmshModelFieldAdd(const int tag, const std::string &type);
+GMSH_API gmshModelFieldCreate(const int tag, const std::string &type);
 GMSH_API gmshModelFieldSetNumber(const int tag, const std::string &option,
                                  const double value);
 GMSH_API gmshModelFieldSetString(const int tag, const std::string &option,
@@ -303,12 +302,12 @@ GMSH_API gmshModelFieldSetNumbers(const int tag, const std::string &option,
 GMSH_API gmshModelFieldSetAsBackground(const int tag);
 GMSH_API gmshModelFieldDelete(const int tag);
 
-// gmshSolver
-
-// gmshPost
+// gmshView
 
 // gmshPlugin
 
 // gmshGraphics
+
+#undef GMSH_API
 
 #endif
