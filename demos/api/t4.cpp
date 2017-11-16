@@ -22,7 +22,6 @@ int main(int argc, char **argv)
   double ccos = (-h5*R1 + e2 * hypot(h5, hypot(e2, R1))) / (h5*h5 + e2*e2);
   double ssin = sqrt(1 - ccos*ccos);
 
-  int o;
   gmshModelGeoAddPoint(1, -e1-e2, 0    , 0, Lc1);
   gmshModelGeoAddPoint(2, -e1-e2, h1   , 0, Lc1);
   gmshModelGeoAddPoint(3, -e3-r , h1   , 0, Lc2);
