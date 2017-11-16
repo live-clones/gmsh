@@ -8,10 +8,9 @@
 
 int main(int argc, char **argv)
 {
-  // Before using any functions in the C++ API, Gmsh must be initialized. If
-  // argc/argv are passed, Gmsh will parse the commandline in the same way as
-  // the standalone Gmsh code.
-  gmshInitialize(argc, argv);
+  // Before using any functions in the C++ API, Gmsh must be initialized. All
+  // the function in the API return 0 on successful completion.
+  gmshInitialize();
 
   // By default Gmsh will not print out any messages: in order to output
   // messages on the terminal, just set the standard Gmsh option

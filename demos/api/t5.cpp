@@ -6,7 +6,8 @@
 void cheeseHole(double x, double y, double z, double r, double lc,
                 std::vector<int> &shells, std::vector<int> &volumes)
 {
-  // When the tag (first argument) is negative, the
+  // When the tag (first argument) is negative, the next available tag for the
+  // corresponding entity is returned as the 5th argument (e.g. p1)
   int p1; gmshModelGeoAddPoint(-1, x,  y,  z,  p1, lc);
   int p2; gmshModelGeoAddPoint(-1, x+r,y,  z,  p2, lc);
   int p3; gmshModelGeoAddPoint(-1, x,  y+r,z,  p3, lc);

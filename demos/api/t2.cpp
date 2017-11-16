@@ -5,6 +5,8 @@
 
 int main(int argc, char **argv)
 {
+  // If argc/argv are passed, Gmsh will parse the commandline in the same way as
+  // the standalone Gmsh code.
   gmshInitialize(argc, argv);
   gmshOptionSetNumber("General.Terminal", 1);
 

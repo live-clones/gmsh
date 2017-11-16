@@ -3,9 +3,6 @@
 from gmsh import *
 import math
 
-def hypot(a, b):
-    return math.sqrt(a * a + b * b)
-
 gmshInitialize()
 gmshOptionSetNumber("General.Terminal", 1)
 
@@ -17,6 +14,9 @@ h1 = 5 * cm; h2 = 10 * cm; h3 = 5 * cm; h4 = 2 * cm; h5 = 4.5 * cm
 R1 = 1 * cm; R2 = 1.5 * cm; r = 1 * cm
 Lc1 = 0.01
 Lc2 = 0.003
+
+def hypot(a, b):
+    return math.sqrt(a * a + b * b)
 
 ccos = (-h5*R1 + e2 * hypot(h5, hypot(e2, R1))) / (h5*h5 + e2*e2)
 ssin = math.sqrt(1 - ccos*ccos)

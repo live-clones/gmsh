@@ -5,12 +5,11 @@
 # comments in the .geo file. Comments here will focus on the specifics of the
 # Python API.
 
-# The Gmsh API is entirely defined in the gmsh module
+# The API is entirely defined in the gmsh module
 from gmsh import *
 
-# Before using any functions in the Python API, Gmsh must be initialized. If
-# argc/argv are passed, Gmsh will parse the commandline in the same way as the
-# standalone Gmsh code.
+# Before using any functions in the Python API, Gmsh must be initialized.  All
+# the function in the API return 0 on successful completion.
 gmshInitialize()
 
 # By default Gmsh will not print out any messages: in order to output messages
