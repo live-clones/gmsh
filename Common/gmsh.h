@@ -18,7 +18,7 @@
 // from the standard library. This design should not and will not change.
 
 // All functions return 0 as the first entry of the returned vector on
-// successful completion. Additional integer results can be appends to this
+// successful completion. Additional integer results can be appended to this
 // returned value, depending on context.
 
 #include <cmath>

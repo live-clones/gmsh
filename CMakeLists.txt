@@ -1267,10 +1267,10 @@ if(ENABLE_WRAP_PYTHON)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR})
     set(CMAKE_SWIG_FLAGS "")
     set_source_files_properties(Common/gmsh.i PROPERTIES CPLUSPLUS ON)
-    swig_add_module(gmshpython python Common/gmsh.i)
-    swig_link_libraries(gmshpython ${PYTHON_LIBRARIES} shared)
+    swig_add_module(gmsh python Common/gmsh.i)
+    swig_link_libraries(gmsh ${PYTHON_LIBRARIES} shared)
     if(APPLE)
-      set_target_properties("_gmshpython" PROPERTIES LINK_FLAGS
+      set_target_properties("_gmsh" PROPERTIES LINK_FLAGS
                             "-undefined suppress -flat_namespace")
     endif(APPLE)
     # internal developer API bindings
