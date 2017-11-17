@@ -522,6 +522,45 @@ namespace BoundaryLayerCurver
           dz += sf[j][0] * v->z();
         }
       }
+      SVector3 t, n, h;
+      t = SVector3(dx, dy, dz).unit();
+      n = crossprod(w, t);
+      int &d = triDirection;
+      h = parameters.thicknessAtPoint(xi, d) * n
+          + parameters.coeffbAtPoint(xi, d) * t;
+      xyz(i, 0) = xc + h.x();
+      xyz(i, 1) = yc + h.y();
+      xyz(i, 2) = zc + h.z();
+    }
+  }
+
+  void bezierOffset(const std::vector<MVertex *> &baseVert,
+                    fullMatrix<double> &controlPts,
+                    Parameters2DCurve &parameters, SVector3 w,
+                    int triDirection = 0)
+  {
+    int tagLine = ElementType::getTag(TYPE_LIN, baseVert.size()-1);
+    const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
+
+    int nbPoints = (int)baseVert.size();
+
+    fullMatrix<double> dn(nbPoints, 3), dt(nbPoints, 3);
+    Msg::Info(" ");
+    for (int i = 0; i < nbPoints; ++i) {
+      double xi = 2 * (double)(i-1) / (nbPoints - 1) - 1;
+      if (i == 0) xi = -1;
+      if (i == 1) xi = 1;
+      double dx = 0, dy = 0, dz = 0;
+      {
+        double sf[100][3];
+        fs->df(xi, 0, 0, sf);
+        for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+          const MVertex *v = baseVert[j];
+          dx += sf[j][0] * v->x();
+          dy += sf[j][0] * v->y();
+          dz += sf[j][0] * v->z();
+        }
+      }
       SVector3 t, n, h, nn, tt;
       t = SVector3(dx, dy, dz).unit();
       n = crossprod(w, t);
@@ -530,15 +569,21 @@ namespace BoundaryLayerCurver
           + parameters.coeffbAtPoint(xi, d) * t;
       nn = parameters.thicknessAtPoint(xi, d) * n;
       tt = parameters.coeffbAtPoint(xi, d) * t;
-      xyz(i, 0) = xc + h.x();
-      xyz(i, 1) = yc + h.y();
-      xyz(i, 2) = zc + h.z();
+      dn(i, 0) = nn.x(); dn(i, 1) = nn.y(); dn(i, 2) = nn.z();
+      dt(i, 0) = tt.x(); dt(i, 1) = tt.y(); dt(i, 2) = tt.z();
+//      nn.print("n");
+//      tt.print("t");
+      controlPts(i, 0) += h.x();
+      controlPts(i, 1) += h.y();
+      controlPts(i, 2) += h.z();
     }
+    dn.print("dn");
+    dt.print("dt");
   }
 
   void damping(std::vector<MVertex *> &vertices, double limit)
   {
-    const int nVert = vertices.size();
+    const int nVert = (int)vertices.size();
     const bezierBasis *fs = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 1);
 
     fullMatrix<double> xyz(nVert, 3);
@@ -608,42 +653,66 @@ namespace BoundaryLayerCurver
 
     if (nLayer == 0) {
 //      drawAmplifiedDiffWithLin(baseVert, bndEnt, 20);
-//      drawBezierControlPolygon(baseVert, bndEnt);
+      drawBezierControlPolygon(baseVert, bndEnt);
     }
 
-    const int orderCurve = baseVert.size() - 1;
+    const int orderCurve = (int)baseVert.size() - 1;
     const int orderGauss = orderCurve * 2;
     const int sizeSystem = getNGQLPts(orderGauss);
     const IntPt *gaussPnts = getGQLPts(orderGauss);
 
-    fullMatrix<double> xyz(sizeSystem + 2, 3);
-    idealPositionEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz,
-                      bndEnt, direction);
-    for (int i = 0; i < 2; ++i) {
-      xyz(sizeSystem+i, 0) = topVert[i]->x();
-      xyz(sizeSystem+i, 1) = topVert[i]->y();
-      xyz(sizeSystem+i, 2) = topVert[i]->z();
+    if (false) {
+      fullMatrix<double> xyz(sizeSystem + 2, 3);
+      idealPositionEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz,
+                        bndEnt, direction);
+      for (int i = 0; i < 2; ++i) {
+        xyz(sizeSystem+i, 0) = topVert[i]->x();
+        xyz(sizeSystem+i, 1) = topVert[i]->y();
+        xyz(sizeSystem+i, 2) = topVert[i]->z();
+      }
+
+      LeastSquareData *data = getLeastSquareData(TYPE_LIN, orderCurve, orderGauss);
+
+      fullMatrix<double> coeff(orderCurve + 1, 3);
+      fullMatrix<double> newxyz(orderCurve + 1, 3);
+      data->invA.mult(xyz, coeff);
+      data->Leg2Lag.mult(coeff, newxyz);
+
+      for (int i = 2; i < topVert.size(); ++i) {
+        topVert[i]->x() = newxyz(i, 0);
+        topVert[i]->y() = newxyz(i, 1);
+        topVert[i]->z() = newxyz(i, 2);
+      }
+    }
+    else {
+      int nVert = baseVert.size();
+      fullMatrix<double> xyz(nVert, 3);
+      for (int i = 0; i < nVert; ++i) {
+        xyz(i, 0) = baseVert[i]->x();
+        xyz(i, 1) = baseVert[i]->y();
+        xyz(i, 2) = baseVert[i]->z();
+      }
+
+      const bezierBasis *fs = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 1);
+      fullMatrix<double> controlPoints(nVert, 3);
+      fs->lag2Bez(xyz, controlPoints);
+      bezierOffset(baseVert, controlPoints, parameters, w, direction);
+
+      fs->matrixBez2Lag.mult(controlPoints, xyz);
+      for (int i = 0; i < nVert; ++i) {
+        topVert[i]->x() = xyz(i, 0);
+        topVert[i]->y() = xyz(i, 1);
+        topVert[i]->z() = xyz(i, 2);
+      }
     }
 
-    LeastSquareData *data = getLeastSquareData(TYPE_LIN, orderCurve, orderGauss);
-
-    fullMatrix<double> coeff(orderCurve + 1, 3);
-    fullMatrix<double> newxyz(orderCurve + 1, 3);
-    data->invA.mult(xyz, coeff);
-    data->Leg2Lag.mult(coeff, newxyz);
-
-    for (int i = 2; i < topVert.size(); ++i) {
-      topVert[i]->x() = newxyz(i, 0);
-      topVert[i]->y() = newxyz(i, 1);
-      topVert[i]->z() = newxyz(i, 2);
-    }
 
     damping(topVert, factorDamping * parameters.characteristicThickness());
 
 //    if (nLayer == 0)
 //      drawBezierControlPolygon(topVert, bndEnt);
 //    drawAmplifiedDiffWithLin(topVert, bndEnt, 2);
-//    drawBezierControlPolygon(topVert, bndEnt);
+    drawBezierControlPolygon(topVert, bndEnt);
     if (last) {
 //      drawAmplifiedDiffWithLin(topVert, bndEnt, 2);
       drawBezierControlPolygon(topVert, bndEnt);
@@ -837,6 +906,7 @@ namespace BoundaryLayerCurver
 //    if (bottomEdge->getNum() != 1079) return true; // Good
 //    if (bottomEdge->getNum() != 1136) return true; // Bad
 //    if (bottomEdge->getNum() != 1102) return true; // HO
+    if (bottomEdge->getNum() != 1150) return true; // concave
 
     MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
     std::vector<MVertex *> bottomVertices, topVertices, dum, dum2;
@@ -859,15 +929,15 @@ namespace BoundaryLayerCurver
       repositionInteriorNodes(quad);
       bottom = MEdge(topVertices[0], topVertices[1]);
 
-      bool drawT0 = true;
-      bool drawT1 = true;
-      bool drawT2 = true;
-      bool drawB1 = false;
+      bool drawT0 = false;
+      bool drawT1 = false;
+      bool drawT2 = false;
+      bool drawB1 = true;
       bool drawB2 = false;
 
       if (drawT0) drawMLineN(topVertices, (GEdge *)bndEnt, true);
 
-      if (true) {
+      if (false) {
         // Going back to bottom
         dum = bottomVertices;
         for (int j = 2; j < dum.size(); ++j) dum[j] = new MVertex(0, 0, 0);
