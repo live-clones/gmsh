@@ -430,16 +430,14 @@ GMSH_API gmshModelGetMeshElements(const int dim, const int tag,
 GMSH_API gmshModelSetMeshSize(const vector_pair &dimTags, const double size)
 {
   if(!isInitialized()) return GMSH_ERROR(-1);
-  bool ok = true;
   for(unsigned int i = 0; i < dimTags.size(); i++){
     int dim = dimTags[i].first, tag = dimTags[i].second;
-    if(dim != 1) ok = false;
-    GVertex *gv = GModel::current()->getVertexByTag(tag);
-    if(gv) gv->setPrescribedMeshSizeAtVertex(size);
+    if(dim == 0){
+      GVertex *gv = GModel::current()->getVertexByTag(tag);
+      if(gv) gv->setPrescribedMeshSizeAtVertex(size);
+    }
   }
-  if(ok)
-    return GMSH_OK;
-  return GMSH_ERROR(1);
+  return GMSH_OK;
 }
 
 GMSH_API gmshModelSetTransfiniteLine(const int tag, const int nPoints,

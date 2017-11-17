@@ -405,7 +405,13 @@ static void filterPoints(GEdge*ge, int nMinimumPoints)
     v->getParameter(0,t);
     if (i != 0){
       double t0;
-      v0->getParameter(0,t0);
+      if (v0->onWhat()->dim() == 0){
+        // Vertex is begin point
+        t0 = ge->parFromPoint(SPoint3(v0->x(), v0->y(), v0->z()));
+      }
+      else
+        v0->getParameter(0, t0);
+
       t=0.5*(t+t0);
     }
     double lc = F_LcB(ge, t);

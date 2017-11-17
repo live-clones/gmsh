@@ -62,7 +62,6 @@ int main(int argc, char **argv)
   double lcar2 = .0005;
   double lcar3 = .055;
 
-  int o;
   gmshModelGeoAddPoint(1, 0.5,0.5,0.5, lcar2);
   gmshModelGeoAddPoint(2, 0.5,0.5,0, lcar1);
   gmshModelGeoAddPoint(3, 0,0.5,0.5, lcar1);
@@ -134,7 +133,7 @@ int main(int argc, char **argv)
                 t, x, y, z, r, volumes.back());
   }
 
-  int v = gmshModelGeoAddVolume(186, shells)[1];
+  gmshModelGeoAddVolume(186, shells);
 
   gmshModelAddPhysicalGroup(3, 10, {186});
   gmshModelGeoSynchronize();

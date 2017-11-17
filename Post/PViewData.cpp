@@ -184,6 +184,11 @@ bool PViewData::haveInterpolationMatrices(int type)
     return _interpolation.count(type) ? true : false;
 }
 
+void PViewData::deleteInterpolationMatrices(int type)
+{
+  _interpolation.erase(type);
+}
+
 void PViewData::removeInterpolationScheme(const std::string &name)
 {
   std::map<std::string, interpolationMatrices>::iterator it = _interpolationSchemes.find(name);
