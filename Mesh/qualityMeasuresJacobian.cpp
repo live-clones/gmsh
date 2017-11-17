@@ -48,28 +48,26 @@ static inline void computeCoeffLengthVectors_(const fullMatrix<double> &mat,
                               pow_int(mat(i, 4), 2) +
                               pow_int(mat(i, 5), 2)  );
     }
-    if (mat.size2() > 6) { // if 3D
-      for (int i = 0; i < sz1; i++) {
-        coeff(i, 2) = std::sqrt(pow_int(mat(i, 6), 2) +
-                                pow_int(mat(i, 7), 2) +
-                                pow_int(mat(i, 8), 2)  );
-      }
-    }
-    else if (type == TYPE_TRI) {
+    if (type == TYPE_TRI) {
       for (int i = 0; i < sz1; i++) {
         coeff(i, 2) = std::sqrt(pow_int(mat(i, 3) - mat(i, 0), 2) +
                                 pow_int(mat(i, 4) - mat(i, 1), 2) +
                                 pow_int(mat(i, 5) - mat(i, 2), 2)  );
       }
     }
-    switch (type) {
-      case TYPE_TET:
-      case TYPE_PRI:
-        for (int i = 0; i < sz1; i++) {
-          coeff(i, 3) = std::sqrt(pow_int(mat(i, 3) - mat(i, 0), 2) +
-                                  pow_int(mat(i, 4) - mat(i, 1), 2) +
-                                  pow_int(mat(i, 5) - mat(i, 2), 2)  );
-        }
+    else if (type != TYPE_QUA) { // if 3D
+      for (int i = 0; i < sz1; i++) {
+        coeff(i, 2) = std::sqrt(pow_int(mat(i, 6), 2) +
+                                pow_int(mat(i, 7), 2) +
+                                pow_int(mat(i, 8), 2)  );
+      }
+    }
+    if (type == TYPE_TET || type == TYPE_PRI) {
+      for (int i = 0; i < sz1; i++) {
+        coeff(i, 3) = std::sqrt(pow_int(mat(i, 3) - mat(i, 0), 2) +
+                                pow_int(mat(i, 4) - mat(i, 1), 2) +
+                                pow_int(mat(i, 5) - mat(i, 2), 2)  );
+      }
     }
     if (type == TYPE_TET) {
       for (int i = 0; i < sz1; i++) {
