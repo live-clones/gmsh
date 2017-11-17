@@ -17,8 +17,6 @@
 
 #include <cstring>
 
-#define SQU(a)      ((a)*(a))
-
 void MQuadrangle::getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                              SVector3 *n)
 {
@@ -137,19 +135,19 @@ int MQuadrangle::getNumFacesRep(bool curved)
 
 int MQuadrangleN::getNumFacesRep(bool curved)
 {
-  return curved ? 2*SQU(CTX::instance()->mesh.numSubEdges) :
+  return curved ? 2 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
          MQuadrangle::getNumFacesRep(curved);
 }
 
 int MQuadrangle8::getNumFacesRep(bool curved)
 {
-  return curved ? 2*SQU(CTX::instance()->mesh.numSubEdges) :
+  return curved ? 2 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
          MQuadrangle::getNumFacesRep(curved);
 }
 
 int MQuadrangle9::getNumFacesRep(bool curved)
 {
-  return curved ? 2*SQU(CTX::instance()->mesh.numSubEdges) :
+  return curved ? 2 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
          MQuadrangle::getNumFacesRep(curved);
 }
 
