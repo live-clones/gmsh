@@ -31,6 +31,7 @@
 #define _BOUNDARYLAYERCURVER_H_
 
 //#include <map>
+#include <algorithm>
 #include <list>
 
 #include "MEdge.h"
