@@ -176,6 +176,53 @@ namespace
     }
   }
 
+  void drawBezierOffsets(fullMatrix<double> controlPoints,
+                         GEdge *entity, SPoint3 p, double fact = 1)
+  {
+    MVertex *v = new MVertex(p.x(), p.y(), p.z(), entity);
+    entity->addLine(new MLine(v, v));
+    entity->addMeshVertex(v);
+
+    int order = controlPoints.size1() - 1;
+    const bezierBasis *fs = BasisFactory::getBezierBasis(TYPE_LIN, order);
+
+    controlPoints.scale(fact);
+    for (int i = 0; i < order + 1; ++i) {
+      controlPoints(i, 0) += p.x();
+      controlPoints(i, 1) += p.y();
+      controlPoints(i, 2) += p.z();
+    }
+
+    fullMatrix<double> xyz(order+1, 3);
+    fs->matrixBez2Lag.mult(controlPoints, xyz);
+
+    std::vector<MVertex *> vertices(order + 1);
+    for (int i = 0; i < order + 1; ++i) {
+      vertices[i] = new MVertex(xyz(i, 0), xyz(i, 1), xyz(i, 2));
+      entity->addMeshVertex(vertices[i]);
+    }
+
+    MLineN *line = new MLineN(vertices);
+    entity->addLine(line);
+
+    MVertex *previous = NULL;
+    int idx[100];
+    idx[0] = 0;
+    idx[order] = 1;
+    for (int i = 1; i < order; ++i) {
+      idx[i] = i+1;
+    }
+    for (int i = 0; i < order + 1; ++i) {
+      MVertex *v = new MVertex(controlPoints(idx[i], 0), controlPoints(idx[i], 1), controlPoints(idx[i], 2));
+      if (previous) {
+        MLine *line = new MLine(v, previous);
+        entity->addLine(line);
+        entity->addMeshVertex(v);
+      }
+      previous = v;
+    }
+  }
+
   void drawIdealCurve(const std::vector<MVertex *> &baseVert,
                       BoundaryLayerCurver::Parameters2DCurve &parameters, 
                       SVector3 w, GEntity *entity, bool drawh = true,
@@ -534,9 +581,49 @@ namespace BoundaryLayerCurver
     }
   }
 
+  double dampingBezierControlPoints(fullMatrix<double> &controlPoints, double limit)
+  {
+    const int nVert = controlPoints.size1();
+
+    std::vector<int> idx(nVert);
+    idx[0] = 0;
+    idx[nVert-1] = 1;
+    for (int i = 1; i < nVert-1; ++i) idx[i] = i+1;
+
+    fullMatrix<double> dCtrlPnts(nVert, 3);
+    dCtrlPnts(idx[0], 0) = 0;
+    dCtrlPnts(idx[0], 1) = 0;
+    dCtrlPnts(idx[0], 2) = 0;
+    dCtrlPnts(idx[nVert-1], 0) = 0;
+    dCtrlPnts(idx[nVert-1], 1) = 0;
+    dCtrlPnts(idx[nVert-1], 2) = 0;
+    for (int i = 1; i < nVert-1; ++i) {
+      for (int j = 0; j < 3; ++j)
+        dCtrlPnts(idx[i], j) = .25 * controlPoints(idx[i-1], j) +
+                               .25 * controlPoints(idx[i+1], j) -
+                               .5 * controlPoints(idx[i], j);
+    }
+
+    double maxDisplacement = 0;
+    for (int i = 0; i < nVert; ++i) {
+      double displacement = std::sqrt(dCtrlPnts(i, 0) * dCtrlPnts(i, 0) +
+                                      dCtrlPnts(i, 1) * dCtrlPnts(i, 1) +
+                                      dCtrlPnts(i, 2) * dCtrlPnts(i, 2));
+      maxDisplacement = std::max(maxDisplacement, displacement);
+    }
+
+    if (maxDisplacement > limit)
+      dCtrlPnts.scale(limit / maxDisplacement);
+    // TODO go to linear in other case??
+
+    controlPoints.add(dCtrlPnts);
+    return maxDisplacement > limit ? limit : maxDisplacement;
+  }
+
   void bezierOffset(const std::vector<MVertex *> &baseVert,
                     fullMatrix<double> &controlPts,
                     Parameters2DCurve &parameters, SVector3 w,
+                    GEntity *bndEnt,
                     int triDirection = 0)
   {
     int tagLine = ElementType::getTag(TYPE_LIN, baseVert.size()-1);
@@ -565,20 +652,80 @@ namespace BoundaryLayerCurver
       t = SVector3(dx, dy, dz).unit();
       n = crossprod(w, t);
       int &d = triDirection;
-      h = parameters.thicknessAtPoint(xi, d) * n
-          + parameters.coeffbAtPoint(xi, d) * t;
+//      h = parameters.thicknessAtPoint(xi, d) * n
+//          + parameters.coeffbAtPoint(xi, d) * t;
       nn = parameters.thicknessAtPoint(xi, d) * n;
       tt = parameters.coeffbAtPoint(xi, d) * t;
       dn(i, 0) = nn.x(); dn(i, 1) = nn.y(); dn(i, 2) = nn.z();
       dt(i, 0) = tt.x(); dt(i, 1) = tt.y(); dt(i, 2) = tt.z();
-//      nn.print("n");
-//      tt.print("t");
-      controlPts(i, 0) += h.x();
-      controlPts(i, 1) += h.y();
-      controlPts(i, 2) += h.z();
+//      controlPts(i, 0) += h.x();
+//      controlPts(i, 1) += h.y();
+//      controlPts(i, 2) += h.z();
     }
-    dn.print("dn");
-    dt.print("dt");
+    if (true) {
+      for (int i = 0; i < nbPoints; ++i) {
+        controlPts(i, 0) += dn(i, 0) + dt(i, 0);
+        controlPts(i, 1) += dn(i, 1) + dt(i, 1);
+        controlPts(i, 2) += dn(i, 2) + dt(i, 2);
+      }
+    }
+    else {
+      dn.print("dn");
+      dt.print("dt");
+      static double x = 0;
+      static double prevmaxdxn = 0;
+      static double prevmaxdxt = 0;
+      double maxdyn = 0;
+      double maxdyt = 0;
+      double maxdxn = 0;
+      double maxdxt = 0;
+      for (int i = 0; i < nbPoints; ++i) {
+        maxdyn = std::max(maxdyn, -dn(i, 1));
+        maxdyt = std::max(maxdyt, dt(i, 1));
+        maxdxn = std::max(maxdxn, -dn(i, 0));
+        maxdxt = std::max(maxdxt, -dt(i, 0));
+      }
+      x += 1.5 * std::max(prevmaxdxn, prevmaxdxt);
+      drawBezierOffsets(dn, (GEdge*)bndEnt, SPoint3(x, -5, 0));
+      double dy = - 1.5*(maxdyn+maxdyt);
+      dy = -.05;
+      drawBezierOffsets(dt, (GEdge*)bndEnt, SPoint3(x, -5 + dy, 0));
+
+      std::cout << "limit:" << parameters.characteristicThickness() << std::endl;
+      double dep = 0;
+      dep = dampingBezierControlPoints(dt, .1*parameters.characteristicThickness());
+      std::cout << "dep:" << dep/parameters.characteristicThickness() << std::endl;
+      dep = dampingBezierControlPoints(dt, .1*parameters.characteristicThickness());
+      std::cout << "dep:" << dep/parameters.characteristicThickness() << std::endl;
+      dep = dampingBezierControlPoints(dt, .1*parameters.characteristicThickness());
+      std::cout << "dep:" << dep/parameters.characteristicThickness() << std::endl;
+      dep = dampingBezierControlPoints(dt, .1*parameters.characteristicThickness());
+      std::cout << "dep:" << dep/parameters.characteristicThickness() << std::endl;
+      dep = dampingBezierControlPoints(dt, .1*parameters.characteristicThickness());
+      std::cout << "dep:" << dep/parameters.characteristicThickness() << std::endl;
+      for (int i = 0; i < nbPoints; ++i) {
+        controlPts(i, 0) += dn(i, 0) + dt(i, 0);
+        controlPts(i, 1) += dn(i, 1) + dt(i, 1);
+        controlPts(i, 2) += dn(i, 2) + dt(i, 2);
+      }
+      drawBezierOffsets(dt, (GEdge*)bndEnt, SPoint3(x, -5 + dy, 0));
+
+      x += 1.5 * std::max(maxdxn, maxdxt);
+      prevmaxdxn = 0;
+      prevmaxdxt = 0;
+      for (int i = 0; i < nbPoints; ++i) {
+        prevmaxdxn = std::max(maxdxn, dn(i, 0));
+        prevmaxdxt = std::max(maxdxt, dt(i, 0));
+      }
+
+      static double prevMaxNormn = 0;
+      static double prevMaxNormt = 0;
+      double maxNormn = 0;
+      double maxNormt = 0;
+      for (int i = 0; i < nbPoints; ++i) {
+        maxNormn = std::max(maxNormn, 1.);
+      }
+    }
   }
 
   void damping(std::vector<MVertex *> &vertices, double limit)
@@ -661,7 +808,7 @@ namespace BoundaryLayerCurver
     const int sizeSystem = getNGQLPts(orderGauss);
     const IntPt *gaussPnts = getGQLPts(orderGauss);
 
-    if (false) {
+    if (true) {
       fullMatrix<double> xyz(sizeSystem + 2, 3);
       idealPositionEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz,
                         bndEnt, direction);
@@ -696,7 +843,7 @@ namespace BoundaryLayerCurver
       const bezierBasis *fs = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 1);
       fullMatrix<double> controlPoints(nVert, 3);
       fs->lag2Bez(xyz, controlPoints);
-      bezierOffset(baseVert, controlPoints, parameters, w, direction);
+      bezierOffset(baseVert, controlPoints, parameters, w, bndEnt, direction);
 
       fs->matrixBez2Lag.mult(controlPoints, xyz);
       for (int i = 0; i < nVert; ++i) {
@@ -906,7 +1053,7 @@ namespace BoundaryLayerCurver
 //    if (bottomEdge->getNum() != 1079) return true; // Good
 //    if (bottomEdge->getNum() != 1136) return true; // Bad
 //    if (bottomEdge->getNum() != 1102) return true; // HO
-    if (bottomEdge->getNum() != 1150) return true; // concave
+//    if (bottomEdge->getNum() != 1150) return true; // concave
 
     MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
     std::vector<MVertex *> bottomVertices, topVertices, dum, dum2;
