@@ -438,20 +438,20 @@ int MHexahedron::getNumFacesRep(bool curved)
 
 int MHexahedron20::getNumFacesRep(bool curved)
 {
-  return curved ? 6 * (CTX::instance()->mesh.numSubEdges *
-                       CTX::instance()->mesh.numSubEdges * 2) : 12;
+  return curved ? 12 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+         MHexahedron::getNumFacesRep(curved);
 }
 
 int MHexahedron27::getNumFacesRep(bool curved)
 {
-  return curved ? 6 * (CTX::instance()->mesh.numSubEdges *
-                       CTX::instance()->mesh.numSubEdges * 2) : 12;
+  return curved ? 12 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+         MHexahedron::getNumFacesRep(curved);
 }
 
 int MHexahedronN::getNumFacesRep(bool curved)
 {
-  return curved ? 6 * (CTX::instance()->mesh.numSubEdges *
-                       CTX::instance()->mesh.numSubEdges * 2) : 12;
+  return curved ? 12 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+         MHexahedron::getNumFacesRep(curved);
 }
 
 void _getIndicesReversedHex(int order, indicesReversed &indices)

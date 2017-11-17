@@ -97,7 +97,8 @@ int MPyramidN::getNumFacesRep(bool curved)
 {
   // FIXME: remove !getIsAssimilatedSerendipity() when serendip are implemented
   return (curved && !getIsAssimilatedSerendipity()) ?
-    6 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) : 6;
+         6 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+         MPyramid::getNumFacesRep(curved);
 }
 
 static void _myGetFaceRep(MPyramid *pyr, int num, double *x, double *y, double *z,
