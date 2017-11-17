@@ -49,8 +49,8 @@ GMSH_API gmshOptionGetString(const std::string &name, std::string &value);
 
 // gmshModel
 GMSH_API gmshModelCreate(const std::string &name);
+GMSH_API gmshModelDelete();
 GMSH_API gmshModelSetCurrent(const std::string &name);
-GMSH_API gmshModelDestroy();
 GMSH_API gmshModelGetEntities(vector_pair &dimTags, const int dim=-1);
 GMSH_API gmshModelGetPhysicalGroups(vector_pair &dimTags, const int dim=-1);
 GMSH_API gmshModelAddPhysicalGroup(const int dim, const int tag,
@@ -293,6 +293,7 @@ GMSH_API gmshModelOccSynchronize();
 // gmshModelField
 
 GMSH_API gmshModelFieldCreate(const int tag, const std::string &type);
+GMSH_API gmshModelFieldDelete(const int tag);
 GMSH_API gmshModelFieldSetNumber(const int tag, const std::string &option,
                                  const double value);
 GMSH_API gmshModelFieldSetString(const int tag, const std::string &option,
@@ -300,7 +301,6 @@ GMSH_API gmshModelFieldSetString(const int tag, const std::string &option,
 GMSH_API gmshModelFieldSetNumbers(const int tag, const std::string &option,
                                   const std::vector<double> &value);
 GMSH_API gmshModelFieldSetAsBackground(const int tag);
-GMSH_API gmshModelFieldDelete(const int tag);
 
 // gmshView
 
