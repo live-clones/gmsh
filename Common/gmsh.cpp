@@ -34,14 +34,13 @@
 #include "Field.h"
 #endif
 
-// -1 : not initialized
-// 0 : success
-// 1 : generic error
-// 2 : bad input arguments
-
 #define GMSH_API std::vector<int>
 #define GMSH_OK std::vector<int>(1, 0)
 #define GMSH_ERROR(n) std::vector<int>(1, n)
+// Error codes: -1 : not initialized
+//               0 : success
+//               1 : generic error
+//               2 : bad input arguments
 
 static int _initialized = 0;
 
@@ -503,8 +502,8 @@ GMSH_API gmshModelSetMeshVertices(const int dim, const int tag,
                                   const std::vector<double> &parametricCoordinates)
 {
   if(!_isInitialized()) return GMSH_ERROR(-1);
-  GEntity *e = GModel::current()->getEntityByTag(dim, tag);
-  if(!e){
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge){
     Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
     return GMSH_ERROR(2);
   }
@@ -521,10 +520,10 @@ GMSH_API gmshModelSetMeshVertices(const int dim, const int tag,
     param = true;
   }
   GModel::current()->destroyMeshCaches();
-  if(e->mesh_vertices.size())
+  if(ge->mesh_vertices.size())
     Msg::Warning("%s already contains mesh vertices",
                  _entityName(dim, tag).c_str());
-  e->mesh_vertices.clear();
+  ge->mesh_vertices.clear();
   for(unsigned int i = 0; i < vertexTags.size(); i++){
     int n = vertexTags[i];
     double x = coordinates[3 * i];
@@ -533,16 +532,16 @@ GMSH_API gmshModelSetMeshVertices(const int dim, const int tag,
     MVertex *vv = 0;
     if(param && dim == 1){
       double u = parametricCoordinates[i];
-      vv = new MEdgeVertex(x, y, z, e, u, n);
+      vv = new MEdgeVertex(x, y, z, ge, u, n);
     }
     else if(param && dim == 2){
       double u = parametricCoordinates[i];
       double v = parametricCoordinates[i + 1];
-      vv = new MFaceVertex(x, y, z, e, u, v, n);
+      vv = new MFaceVertex(x, y, z, ge, u, v, n);
     }
     else
-      vv = new MVertex(x, y, z, e, n);
-    e->mesh_vertices.push_back(vv);
+      vv = new MVertex(x, y, z, ge, n);
+    ge->mesh_vertices.push_back(vv);
   }
   return GMSH_OK;
 }
@@ -565,8 +564,8 @@ GMSH_API gmshModelSetMeshElements(const int dim, const int tag,
                                   const std::vector<std::vector<int> > &vertexTags)
 {
   if(!_isInitialized()) return GMSH_ERROR(-1);
-  GEntity *e = GModel::current()->getEntityByTag(dim, tag);
-  if(!e){
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge){
     Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
     return GMSH_ERROR(2);
   }
@@ -607,33 +606,33 @@ GMSH_API gmshModelSetMeshElements(const int dim, const int tag,
     switch(dim){
     case 0:
       if(elements[0]->getType() == TYPE_PNT)
-        _addElements(dim, tag, elements, static_cast<GVertex*>(e)->points);
+        _addElements(dim, tag, elements, static_cast<GVertex*>(ge)->points);
       else
         ok = false;
       break;
     case 1:
       if(elements[0]->getType() == TYPE_LIN)
-        _addElements(dim, tag, elements, static_cast<GEdge*>(e)->lines);
+        _addElements(dim, tag, elements, static_cast<GEdge*>(ge)->lines);
       else
         ok = false;
      break;
     case 2:
       if(elements[0]->getType() == TYPE_TRI)
-        _addElements(dim, tag, elements, static_cast<GFace*>(e)->triangles);
+        _addElements(dim, tag, elements, static_cast<GFace*>(ge)->triangles);
       else if(elements[0]->getType() == TYPE_QUA)
-        _addElements(dim, tag, elements, static_cast<GFace*>(e)->quadrangles);
+        _addElements(dim, tag, elements, static_cast<GFace*>(ge)->quadrangles);
       else
         ok = false;
       break;
     case 3:
       if(elements[0]->getType() == TYPE_TET)
-        _addElements(dim, tag, elements, static_cast<GRegion*>(e)->tetrahedra);
+        _addElements(dim, tag, elements, static_cast<GRegion*>(ge)->tetrahedra);
       else if(elements[0]->getType() == TYPE_HEX)
-        _addElements(dim, tag, elements, static_cast<GRegion*>(e)->hexahedra);
+        _addElements(dim, tag, elements, static_cast<GRegion*>(ge)->hexahedra);
       else if(elements[0]->getType() == TYPE_PRI)
-        _addElements(dim, tag, elements, static_cast<GRegion*>(e)->prisms);
+        _addElements(dim, tag, elements, static_cast<GRegion*>(ge)->prisms);
       else if(elements[0]->getType() == TYPE_PYR)
-        _addElements(dim, tag, elements, static_cast<GRegion*>(e)->pyramids);
+        _addElements(dim, tag, elements, static_cast<GRegion*>(ge)->pyramids);
       else
         ok = false;
       break;
