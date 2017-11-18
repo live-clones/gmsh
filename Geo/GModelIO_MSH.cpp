@@ -305,7 +305,7 @@ int GModel::readMSH(const std::string &name)
                 if(fread(&u, sizeof(double), 1, fp) != 1){ fclose(fp); return 0; }
                 if(swap) SwapBytes((char*)&u, sizeof(double), 1);
               }
-              vertex = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge, u, -1.0, num);
+              vertex = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge, u, num);
             }
             break;
           case 2:
