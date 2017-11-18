@@ -61,8 +61,6 @@ GMSH_API gmshModelSetPhysicalName(const int dim, const int tag,
                                   const std::string &name);
 GMSH_API gmshModelGetPhysicalName(const int dim, const int tag,
                                   std::string &name);
-GMSH_API gmshModelGetVertexCoordinates(const int tag, double &x, double &y,
-                                       double &z);
 GMSH_API gmshModelGetBoundary(const vector_pair &inDimTags, vector_pair &outDimTags,
                               const bool combined = true, const bool oriented = true,
                               const bool recursive = false);
@@ -76,7 +74,8 @@ GMSH_API gmshModelRemove(const vector_pair &dimTags, const bool recursive = fals
 GMSH_API gmshModelMesh(const int dim);
 GMSH_API gmshModelGetMeshVertices(const int dim, const int tag,
                                   std::vector<int> &vertexTags,
-                                  std::vector<double> &coords);
+                                  std::vector<double> &coordinates,
+                                  std::vector<double> &parametricCoordinates);
 GMSH_API gmshModelGetMeshElements(const int dim, const int tag,
                                   std::vector<int> &types,
                                   std::vector<std::vector<int> > &elementTags,

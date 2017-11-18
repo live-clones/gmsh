@@ -44,7 +44,7 @@ int main(int argc, char **argv)
   // The "Duplicata" functionality in .geo files is handled by
   // gmshModelGeoCopy(), which takes a vector of (dim, tag) pairs as input, and
   // returns another vector of (dim, tag) pairs.
-  std::vector<std::pair<int, int> > ov, ov2;
+  std::vector<std::pair<int, int> > ov;
   gmshModelGeoCopy({{0, 3}}, ov);
   gmshModelGeoTranslate(ov, 0, 0.1, 0);
 
@@ -90,6 +90,7 @@ int main(int argc, char **argv)
 
   // Extrusion works as expected, by providing a vector of (dim, tag) pairs as
   // input, the translation vector, and a vector of (dim, tag) pairs as output.
+  std::vector<std::pair<int, int> > ov2;
   gmshModelGeoExtrude({ov[1]}, 0, 0, 0.12, ov2);
 
   // Mesh sizes associated to geometrical points can be set by passing a vector

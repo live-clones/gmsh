@@ -21,9 +21,9 @@ int main(int argc, char **argv)
 
     // get the mesh vertices for each elementary entity
     std::vector<int> vertexTags;
-    std::vector<double> vertexCoords;
+    std::vector<double> vertexCoords, vertexParams;
     int dim = entities[i].first, tag = entities[i].second;
-    gmshModelGetMeshVertices(dim, tag, vertexTags, vertexCoords);
+    gmshModelGetMeshVertices(dim, tag, vertexTags, vertexCoords, vertexParams);
 
     // get the mesh elements for each elementary entity
     std::vector<int> elemTypes;

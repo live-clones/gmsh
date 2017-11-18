@@ -278,20 +278,6 @@ GMSH_API gmshModelGetPhysicalName(const int dim, const int tag,
   return GMSH_OK;
 }
 
-GMSH_API gmshModelGetVertexCoordinates(const int tag, double &x, double &y,
-                                       double &z)
-{
-  if(!_isInitialized()) return GMSH_ERROR(-1);
-  GVertex *gv = GModel::current()->getVertexByTag(tag);
-  if(gv){
-    x = gv->x();
-    y = gv->y();
-    z = gv->z();
-    return GMSH_OK;
-  }
-  return GMSH_ERROR(1);
-}
-
 GMSH_API gmshModelGetBoundary(const vector_pair &inDimTags, vector_pair &outDimTags,
                               const bool combined, const bool oriented,
                               const bool recursive)
@@ -356,19 +342,24 @@ GMSH_API gmshModelMesh(int dim)
 
 GMSH_API gmshModelGetMeshVertices(const int dim, const int tag,
                                   std::vector<int> &vertexTags,
-                                  std::vector<double> &coords)
+                                  std::vector<double> &coordinates,
+                                  std::vector<double> &parametricCoordinates)
 {
   if(!_isInitialized()) return GMSH_ERROR(-1);
   vertexTags.clear();
-  coords.clear();
+  coordinates.clear();
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   if(!ge) return GMSH_ERROR(1);
   for(unsigned int i = 0; i < ge->mesh_vertices.size(); i++){
     MVertex *v = ge->mesh_vertices[i];
     vertexTags.push_back(v->getNum());
-    coords.push_back(v->x());
-    coords.push_back(v->y());
-    coords.push_back(v->z());
+    coordinates.push_back(v->x());
+    coordinates.push_back(v->y());
+    coordinates.push_back(v->z());
+    double par;
+    for(int j = 0; j < dim; j++){
+      if(v->getParameter(j, par)) parametricCoordinates.push_back(par);
+    }
   }
   return GMSH_OK;
 }

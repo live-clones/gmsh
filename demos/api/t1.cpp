@@ -1,7 +1,8 @@
-// This file reimplements gmsh/tutorial/t1.geo in C++. For all the elementary
-// explanations about the general philosphy of entities in Gmsh, see the
-// comments in the .geo file. Comments here focus on the specifics of the C++
-// API.
+// This file reimplements gmsh/tutorial/t1.geo in C++.
+
+// For all the elementary explanations about the general philosphy of entities
+// in Gmsh, see the comments in the .geo file. Comments here focus on the
+// specifics of the C++ API.
 
 // The Gmsh API is entirely defined in the <gmsh.h> header:
 #include <gmsh.h>
