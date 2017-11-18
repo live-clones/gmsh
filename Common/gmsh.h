@@ -50,6 +50,7 @@ GMSH_API gmshOptionGetString(const std::string &name, std::string &value);
 // gmshModel
 GMSH_API gmshModelCreate(const std::string &name);
 GMSH_API gmshModelDelete();
+GMSH_API gmshModelList(std::vector<std::string> &names);
 GMSH_API gmshModelSetCurrent(const std::string &name);
 GMSH_API gmshModelGetEntities(vector_pair &dimTags, const int dim=-1);
 GMSH_API gmshModelGetPhysicalGroups(vector_pair &dimTags, const int dim=-1);
@@ -70,6 +71,9 @@ GMSH_API gmshModelGetEntitiesInBoundingBox(const double x1, const double y1,
                                            vector_pair &tags, const int dim=-1);
 GMSH_API gmshModelGetBoundingBox(const int dim, const int tag, double &x1, double &y1,
                                  double &z1, double &x2, double &y2, double &z2);
+GMSH_API gmshModelAddDiscreteEntity(const int dim, const int tag,
+                                    const std::vector<int> &boundary
+                                    = std::vector<int>());
 GMSH_API gmshModelRemove(const vector_pair &dimTags, const bool recursive = false);
 GMSH_API gmshModelMesh(const int dim);
 GMSH_API gmshModelGetMeshVertices(const int dim, const int tag,
@@ -80,6 +84,15 @@ GMSH_API gmshModelGetMeshElements(const int dim, const int tag,
                                   std::vector<int> &types,
                                   std::vector<std::vector<int> > &elementTags,
                                   std::vector<std::vector<int> > &vertexTags);
+GMSH_API gmshModelSetMeshVertices(const int dim, const int tag,
+                                  const std::vector<int> &vertexTags,
+                                  const std::vector<double> &coordinates,
+                                  const std::vector<double> &parametricCoordinates =
+                                  std::vector<double>());
+GMSH_API gmshModelSetMeshElements(const int dim, const int tag,
+                                  const std::vector<int> &types,
+                                  const std::vector<std::vector<int> > &elementTags,
+                                  const std::vector<std::vector<int> > &vertexTags);
 GMSH_API gmshModelSetMeshSize(const vector_pair &dimTags, const double size);
 GMSH_API gmshModelSetTransfiniteLine(const int tag, const int nPoints,
                                      const std::string &type = "Progression",

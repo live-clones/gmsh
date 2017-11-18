@@ -325,7 +325,7 @@ int ElementType::DimensionFromTag(int tag)
     case(MSH_HEX_92):   case(MSH_HEX_104):
 
     case(MSH_TRIH_4):
-      
+
     case(MSH_POLYH_):
       return 3;
 
@@ -400,7 +400,7 @@ int ElementType::SerendipityFromTag(int tag)
   case MSH_PYR_285 : case MSH_PYR_385 :
 
   case MSH_TRIH_4 :
-    
+
     return 0; // Not Serendipity
 
 
@@ -563,6 +563,7 @@ int ElementType::getTag(int parentTag, int order, bool serendip)
   }
 }
 
-int ElementType::getPrimaryTag(int tag) {
+int ElementType::getPrimaryTag(int tag)
+{
   return getTag(ParentTypeFromTag(tag), 1);
 }
