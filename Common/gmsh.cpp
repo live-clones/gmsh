@@ -519,11 +519,7 @@ GMSH_API gmshModelSetMeshVertices(const int dim, const int tag,
     }
     param = true;
   }
-  GModel::current()->destroyMeshCaches();
-  if(ge->mesh_vertices.size())
-    Msg::Warning("%s already contains mesh vertices",
-                 _entityName(dim, tag).c_str());
-  ge->mesh_vertices.clear();
+  ge->deleteMesh(); // this will also delete the model mesh cache
   for(unsigned int i = 0; i < vertexTags.size(); i++){
     int n = vertexTags[i];
     double x = coordinates[3 * i];
@@ -551,9 +547,8 @@ static void _addElements(int dim, int tag, const std::vector<MElement*> &src,
                          std::vector<T*> &dst)
 {
   if(dst.size())
-    Msg::Warning("%s already contains some mesh elements",
+    Msg::Warning("%s already contains mesh elements - appending the new ones",
                  _entityName(dim, tag).c_str());
-  dst.clear();
   for(unsigned int i = 0; i < src.size(); i++)
     dst.push_back(static_cast<T*>(src[i]));
 }
