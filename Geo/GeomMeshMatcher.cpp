@@ -513,8 +513,8 @@ int GeomMeshMatcher::forceTomatch(GModel *geom, GModel *mesh, const double TOL)
 	  GEntity *gg = (GEntity*)gp.g();
 	  found=1;
 	  //	  printf("vertex %d matches GEdge %d on position %g\n",v->getNum(),gg->tag(),gp.u());
-	  gg->mesh_vertices.push_back(new MEdgeVertex (gp.x(),gp.y(),gp.z(),
-						       gg,gp.u(),-1.,v->getNum()));
+	  gg->mesh_vertices.push_back(new MEdgeVertex (gp.x(), gp.y(), gp.z(),
+						       gg, gp.u(), v->getNum()));
 	}
       }
       if (!found && v->onWhat()->dim() <= 2){
@@ -586,13 +586,13 @@ template <class GEType>
 static void copy_periodicity (std::vector<Pair<GEType*, GEType*> >& eCor,
                               std::map<MVertex*,MVertex*>& mesh_to_geom)
 {
-    
+
   typename std::multimap<GEType*,GEType*> eMap; // (eCor.begin(),eCor.end());
   typename std::vector<Pair<GEType*,GEType*> >::iterator eIter = eCor.begin();
   for (;eIter!=eCor.end();++eIter) {
     eMap.insert(std::make_pair(eIter->second(),eIter->first()));
   }
-  
+
   typename std::multimap<GEType*,GEType*>::iterator srcIter = eMap.begin();
 
   for (;srcIter!=eMap.end();++srcIter) {
@@ -600,17 +600,17 @@ static void copy_periodicity (std::vector<Pair<GEType*, GEType*> >& eCor,
     GEType* oldSrc = dynamic_cast<GEType*> (oldTgt->meshMaster());
 
     if (oldSrc != NULL && oldSrc != oldTgt) {
-      
+
       GEType* newTgt = srcIter->second;
       typename std::map<GEType*,GEType*>::iterator tgtIter = eMap.find(oldSrc);
       if (tgtIter == eMap.end()) {
-        Msg::Error("Could not find matched entity for %d", 
+        Msg::Error("Could not find matched entity for %d",
                    "which has a matched periodic counterpart %d",
                    oldSrc->tag(),oldTgt->tag());
       }
       GEType* newSrc = tgtIter->second;
       newTgt->setMeshMaster(newSrc,oldTgt->affineTransform);
-      
+
       std::map<MVertex*,MVertex*>& oldV2v = oldTgt->correspondingVertices;
       std::map<MVertex*,MVertex*>& newV2v = newTgt->correspondingVertices;
 
@@ -619,15 +619,15 @@ static void copy_periodicity (std::vector<Pair<GEType*, GEType*> >& eCor,
 
         MVertex* oldTgtV = vIter->first;
         MVertex* oldSrcV = vIter->second;
-        
+
         std::map<MVertex*,MVertex*>::iterator newTvIter = mesh_to_geom.find(oldTgtV);
         std::map<MVertex*,MVertex*>::iterator newSvIter = mesh_to_geom.find(oldSrcV);
-        
+
         if (newTvIter == mesh_to_geom.end()) {
           Msg::Error("Could not find copy of target vertex %d in entity %d of dim",
                      oldTgtV->getIndex(),oldTgt->tag(),oldTgt->dim());
         }
-        
+
         if (newSvIter == mesh_to_geom.end()) {
           Msg::Error("Could not find copy of source vertex %d in entity %d of dim",
                      oldSrcV->getIndex(),oldSrc->tag(),oldSrc->dim());
@@ -677,9 +677,8 @@ static void copy_vertices (GEdge* to, GEdge* from, std::map<MVertex*,MVertex*> &
   for (unsigned int i=0;i<from->mesh_vertices.size();i++){
     MVertex *v_from = from->mesh_vertices[i];
     double t;
-    GPoint gp = to->closestPoint(SPoint3(v_from->x(),v_from->y(),v_from->z()), t );
-    MEdgeVertex *v_to = new MEdgeVertex (gp.x(),gp.y(),gp.z(), to, gp.u() );
-    
+    GPoint gp = to->closestPoint(SPoint3(v_from->x(),v_from->y(),v_from->z()), t);
+    MEdgeVertex *v_to = new MEdgeVertex(gp.x(),gp.y(),gp.z(), to, gp.u());
     to->mesh_vertices.push_back(v_to);
     _mesh_to_geom[v_from] = v_to;
   }
@@ -789,8 +788,8 @@ void copy_elements (GModel *geom, GModel *mesh, std::map<MVertex*,MVertex*> &_me
 
 int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
 {
-  
-  Msg::StatusBar(true,"Matching discrete mesh to actual CAD ...");  
+
+  Msg::StatusBar(true,"Matching discrete mesh to actual CAD ...");
   double t1 = Cpu();
 
   mesh->createTopologyFromMesh();
@@ -804,14 +803,14 @@ int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
   std::vector<Pair<GRegion*, GRegion*> > *coresp_r = matchRegions (geom, mesh, coresp_f, ok);
 
   std::map<MVertex*,MVertex*> _mesh_to_geom;
-  
+
   copy_vertices(geom,mesh,_mesh_to_geom,coresp_v,coresp_e,coresp_f,coresp_r);
   copy_elements(geom,mesh,_mesh_to_geom,coresp_v,coresp_e,coresp_f,coresp_r);
-  
+
   copy_periodicity(*coresp_v,_mesh_to_geom);
   copy_periodicity(*coresp_e,_mesh_to_geom);
   copy_periodicity(*coresp_f,_mesh_to_geom);
-  
+
   delete coresp_v;
   delete coresp_e;
   delete coresp_f;
