@@ -37,10 +37,6 @@
 #define GMSH_API std::vector<int>
 #define GMSH_OK std::vector<int>(1, 0)
 #define GMSH_ERROR(n) std::vector<int>(1, n)
-// Error codes: -1 : not initialized
-//               0 : success
-//               1 : generic error
-//               2 : bad input arguments
 
 static int _initialized = 0;
 
@@ -252,19 +248,6 @@ GMSH_API gmshModelGetPhysicalGroups(vector_pair &dimTags, const int dim)
   return GMSH_OK;
 }
 
-GMSH_API gmshModelAddPhysicalGroup(const int dim, const int tag,
-                                   const std::vector<int> &tags)
-{
-  if(!_isInitialized()) return GMSH_ERROR(-1);
-  bool r = GModel::current()->getGEOInternals()->modifyPhysicalGroup
-    (dim, tag, 0, tags);
-  if(r){
-    GModel::current()->getGEOInternals()->synchronize(GModel::current());
-    return GMSH_OK;
-  }
-  return GMSH_ERROR(1);
-}
-
 GMSH_API gmshModelGetEntitiesForPhysicalGroup(const int dim, const int tag,
                                               std::vector<int> &tags)
 {
@@ -278,6 +261,19 @@ GMSH_API gmshModelGetEntitiesForPhysicalGroup(const int dim, const int tag,
       tags.push_back(it->second[j]->tag());
   }
   return GMSH_OK;
+}
+
+GMSH_API gmshModelAddPhysicalGroup(const int dim, const int tag,
+                                   const std::vector<int> &tags)
+{
+  if(!_isInitialized()) return GMSH_ERROR(-1);
+  bool r = GModel::current()->getGEOInternals()->modifyPhysicalGroup
+    (dim, tag, 0, tags);
+  if(r){
+    GModel::current()->getGEOInternals()->synchronize(GModel::current());
+    return GMSH_OK;
+  }
+  return GMSH_ERROR(1);
 }
 
 GMSH_API gmshModelSetPhysicalName(const int dim, const int tag,
@@ -308,14 +304,14 @@ GMSH_API gmshModelGetBoundary(const vector_pair &inDimTags, vector_pair &outDimT
   return GMSH_ERROR(1);
 }
 
-GMSH_API gmshModelGetEntitiesInBoundingBox(const double x1, const double y1,
-                                           const double z1, const double x2,
-                                           const double y2, const double z2,
+GMSH_API gmshModelGetEntitiesInBoundingBox(const double xmin, const double ymin,
+                                           const double zmin, const double xmax,
+                                           const double ymax, const double zmax,
                                            vector_pair &dimTags, const int dim)
 {
   if(!_isInitialized()) return GMSH_ERROR(-1);
   dimTags.clear();
-  SBoundingBox3d box(x1, y1, z1, x2, y2, z2);
+  SBoundingBox3d box(xmin, ymin, zmin, xmax, ymax, zmax);
   std::vector<GEntity*> entities;
   GModel::current()->getEntitiesInBox(entities, box, dim);
   for(unsigned int i = 0; i < entities.size(); i++)
@@ -336,8 +332,9 @@ static std::string _entityName(int dim, int tag)
   return stream.str();
 }
 
-GMSH_API gmshModelGetBoundingBox(const int dim, const int tag, double &x1, double &y1,
-                                 double &z1, double &x2, double &y2, double &z2)
+GMSH_API gmshModelGetBoundingBox(const int dim, const int tag, double &xmin,
+                                 double &ymin, double &zmin, double &xmax,
+                                 double &ymax, double &zmax)
 {
   if(!_isInitialized()) return GMSH_ERROR(-1);
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
@@ -347,12 +344,12 @@ GMSH_API gmshModelGetBoundingBox(const int dim, const int tag, double &x1, doubl
   }
   SBoundingBox3d box = ge->bounds();
   if(box.empty()) return GMSH_ERROR(3);
-  x1 = box.min().x();
-  y1 = box.min().y();
-  z1 = box.min().z();
-  x2 = box.max().x();
-  y2 = box.max().y();
-  z2 = box.max().z();
+  xmin = box.min().x();
+  ymin = box.min().y();
+  zmin = box.min().z();
+  xmax = box.max().x();
+  ymax = box.max().y();
+  zmax = box.max().z();
   return GMSH_OK;
 }
 
@@ -636,6 +633,51 @@ GMSH_API gmshModelSetMeshElements(const int dim, const int tag,
       Msg::Error("Wrong type of element for %s", _entityName(dim, tag).c_str());
       return GMSH_ERROR(2);
     }
+  }
+  return GMSH_OK;
+}
+
+GMSH_API gmshModelGetMeshVertex(const int vertexTag,
+                                std::vector<double> &coordinates,
+                                std::vector<double> &parametricCoordinates)
+{
+  if(!_isInitialized()) return GMSH_ERROR(-1);
+  MVertex *v = GModel::current()->getMeshVertexByTag(vertexTag);
+  if(!v){
+    Msg::Error("Unknown mesh vertex %d", vertexTag);
+    return GMSH_ERROR(2);
+  }
+  coordinates.clear();
+  coordinates.push_back(v->x());
+  coordinates.push_back(v->x());
+  coordinates.push_back(v->x());
+  parametricCoordinates.clear();
+  double u;
+  if(v->getParameter(0, u))
+    parametricCoordinates.push_back(u);
+  if(v->getParameter(1, u))
+    parametricCoordinates.push_back(u);
+  return GMSH_OK;
+}
+
+GMSH_API gmshModelGetMeshElement(const int elementTag, int &type,
+                                 std::vector<int> &vertexTags)
+{
+  if(!_isInitialized()) return GMSH_ERROR(-1);
+  MElement *e = GModel::current()->getMeshElementByTag(elementTag);
+  if(!e){
+    Msg::Error("Unknown mesh element %d", elementTag);
+    return GMSH_ERROR(2);
+  }
+  type = e->getTypeForMSH();
+  vertexTags.clear();
+  for(int i = 0; i < e->getNumVertices(); i++){
+    MVertex *v = e->getVertex(i);
+    if(!v){
+      Msg::Error("Unknown mesh vertex in element %d", elementTag);
+      return GMSH_ERROR(2);
+    }
+    vertexTags.push_back(v->getNum());
   }
   return GMSH_OK;
 }
