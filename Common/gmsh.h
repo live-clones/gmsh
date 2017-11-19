@@ -39,7 +39,7 @@
 #define GMSH_API std::vector<int>
 #endif
 
-// An geometrical entity in the Gmsh API is represented by two integers: its
+// A geometrical entity in the Gmsh API is represented by two integers: its
 // dimension (dim = 0, 1, 2 or 3) and its tag (its unique identifier). When
 // dealing with multiple geometrical entities of possibly different dimensions
 // (e.g. points and surfaces), the entities are packed as a list of (dim, tag)
@@ -191,19 +191,35 @@ GMSH_API gmshModelGetMeshVertices(const int dim, const int tag,
 // Gmsh reference manual). `elementTags' is a vector of length `types.size()';
 // each entry is a vector containing the tags (unique identifiers) of the
 // elements of the corresponding type. `vertexTags' is a vector of length
-// `types.size()'; each entry is a vector (length = number of elements of the
-// give type times number of vertices per element) contains the vertex tags of
-// all the elements of the given type.
+// `types.size()'; each entry is a vector of length equal to the number of
+// elements of the give type, times the number of vertices per element, that
+// contains the vertex tags of all the elements of the given type.
 GMSH_API gmshModelGetMeshElements(const int dim, const int tag,
                                   std::vector<int> &types,
                                   std::vector<std::vector<int> > &elementTags,
                                   std::vector<std::vector<int> > &vertexTags);
 
+// Sets the mesh vertices in the geometrical entity of dimension `dim' and tag
+// `tag'. `vertextags' contains the vertex tags (unique identification
+// numbers). `coordinates` is a vector of length `3 * vertexTags.size()' that
+// contains the (x, y, z) coordinates of the vertices. The optional
+// `parametricCoordinates` vector contains the parametric coordinates of the
+// vertices, if any. The length of `parametricCoordinates` can be 0 or `dim *
+// vertexTags.size()'.
 GMSH_API gmshModelSetMeshVertices(const int dim, const int tag,
                                   const std::vector<int> &vertexTags,
                                   const std::vector<double> &coordinates,
                                   const std::vector<double> &parametricCoordinates =
                                   std::vector<double>());
+
+// Sets the mesh elements of the entity of dimension `dim' and `tag'
+// tag. `types' contains the MSH types (e.g. 2 for 3-node triangles -- see the
+// Gmsh reference manual). `elementTags' is a vector of length `types.size()';
+// each entry is a vector containing the tags (unique identifiers) of the
+// elements of the corresponding type. `vertexTags' is a vector of length
+// `types.size()'; each entry is a vector of length equal to the number of
+// elements of the give type, times the number of vertices per element, that
+// contains the vertex tags of all the elements of the given type.
 GMSH_API gmshModelSetMeshElements(const int dim, const int tag,
                                   const std::vector<int> &types,
                                   const std::vector<std::vector<int> > &elementTags,
