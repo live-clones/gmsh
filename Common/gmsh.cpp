@@ -292,13 +292,13 @@ GMSH_API gmshModelGetPhysicalName(const int dim, const int tag,
   return GMSH_OK;
 }
 
-GMSH_API gmshModelGetBoundary(const vector_pair &inDimTags, vector_pair &outDimTags,
+GMSH_API gmshModelGetBoundary(const vector_pair &dimTags, vector_pair &outDimTags,
                               const bool combined, const bool oriented,
                               const bool recursive)
 {
   if(!_isInitialized()) return GMSH_ERROR(-1);
   outDimTags.clear();
-  bool r = GModel::current()->getBoundaryTags(inDimTags, outDimTags, combined,
+  bool r = GModel::current()->getBoundaryTags(dimTags, outDimTags, combined,
                                               oriented, recursive);
   if(r) return GMSH_OK;
   return GMSH_ERROR(1);
@@ -695,7 +695,7 @@ GMSH_API gmshModelSetMeshSize(const vector_pair &dimTags, const double size)
   return GMSH_OK;
 }
 
-GMSH_API gmshModelSetTransfiniteLine(const int tag, const int nPoints,
+GMSH_API gmshModelSetTransfiniteLine(const int tag, const int numVertices,
                                      const std::string &type, const double coef)
 {
   if(!_isInitialized()) return GMSH_ERROR(-1);
@@ -705,7 +705,7 @@ GMSH_API gmshModelSetTransfiniteLine(const int tag, const int nPoints,
     return GMSH_ERROR(2);
   }
   ge->meshAttributes.method = MESH_TRANSFINITE;
-  ge->meshAttributes.nbPointsTransfinite = nPoints;
+  ge->meshAttributes.nbPointsTransfinite = numVertices;
   ge->meshAttributes.typeTransfinite =
     (type == "Progression" || type == "Power") ? 1 :
     (type == "Bump") ? 2 :
@@ -764,16 +764,18 @@ GMSH_API gmshModelSetTransfiniteVolume(const int tag,
   return GMSH_OK;
 }
 
-GMSH_API gmshModelSetRecombine(const int dim, const int tag, const double angle)
+GMSH_API gmshModelSetRecombine(const int dim, const int tag)
 {
   if(!_isInitialized()) return GMSH_ERROR(-1);
+  if(dim != 2)
+    return GMSH_ERROR(2);
   GFace *gf = GModel::current()->getFaceByTag(tag);
   if(!gf){
     Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
     return GMSH_ERROR(2);
   }
   gf->meshAttributes.recombine = 1;
-  gf->meshAttributes.recombineAngle = angle;
+  gf->meshAttributes.recombineAngle = 45.;
   return GMSH_OK;
 }
 
@@ -1047,7 +1049,7 @@ static ExtrudeParams *_getExtrudeParams(const std::vector<int> &numElements,
   return e;
 }
 
-GMSH_API gmshModelGeoExtrude(const vector_pair &inDimTags,
+GMSH_API gmshModelGeoExtrude(const vector_pair &dimTags,
                              const double dx, const double dy, const double dz,
                              vector_pair &outDimTags,
                              const std::vector<int> &numElements,
@@ -1057,13 +1059,13 @@ GMSH_API gmshModelGeoExtrude(const vector_pair &inDimTags,
   if(!_isInitialized()) return GMSH_ERROR(-1);
   outDimTags.clear();
   if(GModel::current()->getGEOInternals()->extrude
-     (inDimTags, dx, dy, dz, outDimTags,
+     (dimTags, dx, dy, dz, outDimTags,
       _getExtrudeParams(numElements, heights, recombine)))
     return GMSH_OK;
   return GMSH_ERROR(1);
 }
 
-GMSH_API gmshModelGeoRevolve(const vector_pair &inDimTags,
+GMSH_API gmshModelGeoRevolve(const vector_pair &dimTags,
                              const double x, const double y, const double z,
                              const double ax, const double ay, const double az,
                              const double angle, vector_pair &outDimTags,
@@ -1074,13 +1076,13 @@ GMSH_API gmshModelGeoRevolve(const vector_pair &inDimTags,
   if(!_isInitialized()) return GMSH_ERROR(-1);
   outDimTags.clear();
   if(GModel::current()->getGEOInternals()->revolve
-    (inDimTags, x, y, z, ax, ay, az, angle, outDimTags,
+    (dimTags, x, y, z, ax, ay, az, angle, outDimTags,
      _getExtrudeParams(numElements, heights, recombine)))
     return GMSH_OK;
   return GMSH_ERROR(1);
 }
 
-GMSH_API gmshModelGeoTwist(const vector_pair &inDimTags,
+GMSH_API gmshModelGeoTwist(const vector_pair &dimTags,
                            const double x, const double y, const double z,
                            const double dx, const double dy, const double dz,
                            const double ax, const double ay, const double az,
@@ -1092,7 +1094,7 @@ GMSH_API gmshModelGeoTwist(const vector_pair &inDimTags,
   if(!_isInitialized()) return GMSH_ERROR(-1);
   outDimTags.clear();
   if(GModel::current()->getGEOInternals()->twist
-    (inDimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, outDimTags,
+    (dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, outDimTags,
      _getExtrudeParams(numElements, heights, recombine)))
     return GMSH_OK;
   return GMSH_ERROR(1);
@@ -1139,11 +1141,11 @@ GMSH_API gmshModelGeoSymmetry(const vector_pair &dimTags, const double a,
   return GMSH_ERROR(1);
 }
 
-GMSH_API gmshModelGeoCopy(const vector_pair &inDimTags, vector_pair &outDimTags)
+GMSH_API gmshModelGeoCopy(const vector_pair &dimTags, vector_pair &outDimTags)
 {
   if(!_isInitialized()) return GMSH_ERROR(-1);
   outDimTags.clear();
-  if(GModel::current()->getGEOInternals()->copy(inDimTags, outDimTags))
+  if(GModel::current()->getGEOInternals()->copy(dimTags, outDimTags))
     return GMSH_OK;
   return GMSH_ERROR(1);
 }
@@ -1589,7 +1591,7 @@ GMSH_API addThickSolid(const int tag, const int solidTag,
   return GMSH_ERROR(1);
 }
 
-GMSH_API gmshModelOccExtrude(const vector_pair &inDimTags,
+GMSH_API gmshModelOccExtrude(const vector_pair &dimTags,
                              const double dx, const double dy, const double dz,
                              vector_pair &outDimTags,
                              const std::vector<int> &numElements,
@@ -1600,13 +1602,13 @@ GMSH_API gmshModelOccExtrude(const vector_pair &inDimTags,
   _createOcc();
   outDimTags.clear();
   if(GModel::current()->getOCCInternals()->extrude
-    (inDimTags, dx, dy, dz, outDimTags,
+    (dimTags, dx, dy, dz, outDimTags,
      _getExtrudeParams(numElements, heights, recombine)))
     return GMSH_OK;
   return GMSH_ERROR(1);
 }
 
-GMSH_API gmshModelOccRevolve(const vector_pair &inDimTags,
+GMSH_API gmshModelOccRevolve(const vector_pair &dimTags,
                              const double x, const double y, const double z,
                              const double ax, const double ay, const double az,
                              const double angle, vector_pair &outDimTags,
@@ -1618,20 +1620,20 @@ GMSH_API gmshModelOccRevolve(const vector_pair &inDimTags,
   _createOcc();
   outDimTags.clear();
   if(GModel::current()->getOCCInternals()->revolve
-    (inDimTags, x, y, z, ax, ay, az, angle, outDimTags,
+    (dimTags, x, y, z, ax, ay, az, angle, outDimTags,
      _getExtrudeParams(numElements, heights, recombine)))
     return GMSH_OK;
   return GMSH_ERROR(1);
 }
 
-GMSH_API gmshModelOccAddPipe(const vector_pair &inDimTags, const int wireTag,
+GMSH_API gmshModelOccAddPipe(const vector_pair &dimTags, const int wireTag,
                              vector_pair &outDimTags)
 {
   if(!_isInitialized()) return GMSH_ERROR(-1);
   _createOcc();
   outDimTags.clear();
   if(GModel::current()->getOCCInternals()->addPipe
-    (inDimTags, wireTag, outDimTags))
+    (dimTags, wireTag, outDimTags))
     return GMSH_OK;
   return GMSH_ERROR(1);
 }
@@ -1771,12 +1773,12 @@ GMSH_API gmshModelOccSymmetry(const vector_pair &dimTags, const double a,
   return GMSH_ERROR(1);
 }
 
-GMSH_API gmshModelOccCopy(const vector_pair &inDimTags, vector_pair &outDimTags)
+GMSH_API gmshModelOccCopy(const vector_pair &dimTags, vector_pair &outDimTags)
 {
   if(!_isInitialized()) return GMSH_ERROR(-1);
   _createOcc();
   outDimTags.clear();
-  if(GModel::current()->getOCCInternals()->copy(inDimTags, outDimTags))
+  if(GModel::current()->getOCCInternals()->copy(dimTags, outDimTags))
     return GMSH_OK;
   return GMSH_ERROR(1);
 }

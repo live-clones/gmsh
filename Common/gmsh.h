@@ -138,13 +138,13 @@ GMSH_API gmshModelSetPhysicalName(const int dim, const int tag,
 GMSH_API gmshModelGetPhysicalName(const int dim, const int tag,
                                   std::string &name);
 
-// Gets the boundary of the geometrical entities `inDimTags'. Returns in
+// Gets the boundary of the geometrical entities `dimTags'. Returns in
 // `outDimTags' the boundary of the individual entities (if `combined' is false)
 // or the boundary of the combined geometrical shape formed by all input
 // entities (if `combined' is true). Returns tags multiplied by the sign of the
 // boundary entity if `oriented' is true. Applies the boundary operator
 // recursively down to dimension 0 (i.e. to points) if `recursive' is true.
-GMSH_API gmshModelGetBoundary(const vector_pair &inDimTags, vector_pair &outDimTags,
+GMSH_API gmshModelGetBoundary(const vector_pair &dimTags, vector_pair &outDimTags,
                               const bool combined = true, const bool oriented = true,
                               const bool recursive = false);
 
@@ -174,51 +174,110 @@ GMSH_API gmshModelRemove(const vector_pair &dimTags, const bool recursive = fals
 // Generates a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).
 GMSH_API gmshModelMesh(const int dim);
 
-// Gets the mesh vertices of the entity of dimension `dim' and `tag' tag.
+// Gets the mesh vertices of the entity of dimension `dim' and `tag'
+// tag. `vertextags' contains the vertex tags (unique identification
+// numbers). `coordinates` is a vector of length `3 * vertexTags.size()' that
+// contains the (x, y, z) coordinates of the vertices. `parametricCoordinates`
+// contains the parametric coordinates of the vertices, if available. The length
+// of `parametricCoordinates` can be 0, `vertexTags.size()' or `2 *
+// vertexTags.size()'.
 GMSH_API gmshModelGetMeshVertices(const int dim, const int tag,
                                   std::vector<int> &vertexTags,
                                   std::vector<double> &coordinates,
                                   std::vector<double> &parametricCoordinates);
+
+// Gets the mesh elements of the entity of dimension `dim' and `tag'
+// tag. `types' contains the MSH types (e.g. 2 for 3-node triangles -- see the
+// Gmsh reference manual). `elementTags' is a vector of length `types.size()';
+// each entry is a vector containing the tags (unique identifiers) of the
+// elements of the corresponding type. `vertexTags' is a vector of length
+// `types.size()'; each entry is a vector (length = number of elements of the
+// give type times number of vertices per element) contains the vertex tags of
+// all the elements of the given type.
 GMSH_API gmshModelGetMeshElements(const int dim, const int tag,
                                   std::vector<int> &types,
                                   std::vector<std::vector<int> > &elementTags,
                                   std::vector<std::vector<int> > &vertexTags);
-// Warning: for large meshes all the vertices in a model should be numbered in a
-// continuous sequence of tags from 1 to N.
+
 GMSH_API gmshModelSetMeshVertices(const int dim, const int tag,
                                   const std::vector<int> &vertexTags,
                                   const std::vector<double> &coordinates,
                                   const std::vector<double> &parametricCoordinates =
                                   std::vector<double>());
-// Warning: for large meshes all the elements in a model should be numbered in a
-// continuous sequence of tags from 1 to N.
 GMSH_API gmshModelSetMeshElements(const int dim, const int tag,
                                   const std::vector<int> &types,
                                   const std::vector<std::vector<int> > &elementTags,
                                   const std::vector<std::vector<int> > &vertexTags);
-// Warning: only efficient if all vertices are numbered in a continuous sequence
-// of tags from 1 to N.
+
+// Gets the coordinates and the parametric coordinates (if any) of the mesh
+// vertex with tag `tag'. This is an inefficient way of accessing mesh vertex
+// data, as it relies on a dynamic cache stored in the model. For large meshes
+// all the vertices in the model should be numbered in a continuous sequence of
+// tags from 1 to N to maintain reasonnable performance (in this case the
+// internal cache is based on a vector; otherwise it uses a map).
 GMSH_API gmshModelGetMeshVertex(const int vertexTag,
                                 std::vector<double> &coordinates,
                                 std::vector<double> &parametricCoordinates);
-// Warning: only efficient if all elements are numbered in a continuous sequence
-// of tags from 1 to N.
+
+// Gets the type and vertex tags of the mesh element with tag `tag'. This is an
+// inefficient way of accessing mesh element data, as it relies on a dynamic
+// cache stored in the model. For large meshes all the elements in the model
+// should be numbered in a continuous sequence of tags from 1 to N to maintain
+// reasonnable performance (in this case the internal cache is based on a
+// vector; otherwise it uses a map).
 GMSH_API gmshModelGetMeshElement(const int elementTag, int &type,
                                  std::vector<int> &vertexTags);
+
+// Sets a mesh size constraint on the geometrical entities `dimTags'. Currently
+// only entities of dimension 0 (points) are handled.
 GMSH_API gmshModelSetMeshSize(const vector_pair &dimTags, const double size);
-GMSH_API gmshModelSetTransfiniteLine(const int tag, const int nPoints,
+
+// Sets a transfinite meshing constraint on the line `tag', with `numVertices'
+// mesh vertices distributed according to `type' and `coef'. Currently supported
+// types are "Progression" (geometrical progression with power `coef') and
+// "Bump" (refinement toward both extreminties of the line0.
+GMSH_API gmshModelSetTransfiniteLine(const int tag, const int numVertices,
                                      const std::string &type = "Progression",
                                      const double coef = 1.);
+
+// Sets a transfinite meshing constraint on the surface `tag'. `arrangement'
+// describes the arrangement of the triangles when the surface is not flagged as
+// recombined: currently supported values are "Left", "Right", "AlternateLeft"
+// and "AlternateRight". `cornerTags' can be used to specify the (3 or 4)
+// corners of the transfinite interpolation explicitly; specifying the corners
+// explicitly is mandatory if the surface has more that 3 or 4 points on its
+// boundary.
 GMSH_API gmshModelSetTransfiniteSurface(const int tag,
                                         const std::string &arrangement = "Left",
                                         const std::vector<int> &cornerTags =
                                         std::vector<int>());
+
+// Sets a transfinite meshing constraint on the surface `tag'. `cornerTags' can
+// be used to specify the (6 or 8) corners of the transfinite interpolation
+// explicitly.
 GMSH_API gmshModelSetTransfiniteVolume(const int tag,
                                        const std::vector<int> &cornerTags =
                                        std::vector<int>());
-GMSH_API gmshModelSetRecombine(const int dim, const int tag, const double angle = 45.);
+
+// Sets a recombination meshing constraint on the geometrical entity of
+// dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to
+// recombine triangles into quadrangles) are supported.
+GMSH_API gmshModelSetRecombine(const int dim, const int tag);
+
+// Sets a smoothing meshing constraint on the geometrical entity of dimension
+// `dim' and tag `tag'. `val' iterations of a Laplace smoother will be applied.
 GMSH_API gmshModelSetSmoothing(const int dim, const int tag, const int val);
+
+// Sets a reverse meshing constraint on the geometrical entity of dimension
+// `dim' and tag `tag'. If `val' is true, the mesh orientation will be reverse
+// with respect to the natural mesh orientation (i.e. the orientation consistent
+// with the orientation of the geometrical entity). If `val' is false, the mesh
+// is left as-is.
 GMSH_API gmshModelSetReverseMesh(const int dim, const int tag, const bool val = true);
+
+// Emebds the geometrical entities of dimension `dim' and tags `tags' in the
+// (inDim, inTag) geometrical entity. `inDim' must be strictly greater than
+// `dim'.
 GMSH_API gmshModelEmbed(const int dim, const std::vector<int> &tags, const int inDim,
                         const int inTag);
 
@@ -246,13 +305,13 @@ GMSH_API gmshModelGeoAddSurfaceFilling(const int tag, const std::vector<int> &wi
                                        const int sphereCenterTag = -1);
 GMSH_API gmshModelGeoAddSurfaceLoop(const int tag, const std::vector<int> &faceTags);
 GMSH_API gmshModelGeoAddVolume(const int tag, const std::vector<int> &shellTags);
-GMSH_API gmshModelGeoExtrude(const vector_pair &inDimTags,
+GMSH_API gmshModelGeoExtrude(const vector_pair &dimTags,
                              const double dx, const double dy, const double dz,
                              vector_pair &outDimTags,
                              const std::vector<int> &numElements = std::vector<int>(),
                              const std::vector<double> &heights = std::vector<double>(),
                              const bool recombine = false);
-GMSH_API gmshModelGeoRevolve(const vector_pair &inDimTags,
+GMSH_API gmshModelGeoRevolve(const vector_pair &dimTags,
                              const double x, const double y, const double z,
                              const double ax, const double ay,
                              const double az, const double angle,
@@ -260,7 +319,7 @@ GMSH_API gmshModelGeoRevolve(const vector_pair &inDimTags,
                              const std::vector<int> &numElements = std::vector<int>(),
                              const std::vector<double> &heights = std::vector<double>(),
                              const bool recombine = false);
-GMSH_API gmshModelGeoTwist(const vector_pair &inDimTags,
+GMSH_API gmshModelGeoTwist(const vector_pair &dimTags,
                            const double x, const double y, const double z,
                            const double dx, const double dy, const double dz,
                            const double ax, const double ay, const double az,
@@ -279,7 +338,7 @@ GMSH_API gmshModelGeoDilate(const vector_pair &dimTags, const double x, const do
                             const double c);
 GMSH_API gmshModelGeoSymmetry(const vector_pair &dimTags, const double a, const double b,
                               const double c, const double d);
-GMSH_API gmshModelGeoCopy(const vector_pair &inDimTags, vector_pair &outDimTags);
+GMSH_API gmshModelGeoCopy(const vector_pair &dimTags, vector_pair &outDimTags);
 GMSH_API gmshModelGeoRemove(const vector_pair &dimTags, const bool recursive = false);
 GMSH_API gmshModelGeoRemoveAllDuplicates();
 GMSH_API gmshModelGeoSetMeshSize(const vector_pair &dimTags, const double size);
@@ -359,19 +418,19 @@ GMSH_API gmshModelOccAddThruSections(const int tag, const std::vector<int> &wire
 GMSH_API addThickSolid(const int tag, const int solidTag,
                        const std::vector<int> &excludeFaceTags,
                        const double offset, vector_pair &outDimTags);
-GMSH_API gmshModelOccExtrude(const vector_pair &inDimTags, const double dx, const double dy,
+GMSH_API gmshModelOccExtrude(const vector_pair &dimTags, const double dx, const double dy,
                              const double dz, vector_pair &outDimTags,
                              const std::vector<int> &numElements = std::vector<int>(),
                              const std::vector<double> &heights = std::vector<double>(),
                              const bool recombine = false);
-GMSH_API gmshModelOccRevolve(const vector_pair &inDimTags,
+GMSH_API gmshModelOccRevolve(const vector_pair &dimTags,
                              const double x, const double y, const double z,
                              const double ax, const double ay, const double az,
                              const double angle, vector_pair &outDimTags,
                              const std::vector<int> &numElements = std::vector<int>(),
                              const std::vector<double> &heights = std::vector<double>(),
                              const bool recombine = false);
-GMSH_API gmshModelOccAddPipe(const vector_pair &inDimTags, int wireTag,
+GMSH_API gmshModelOccAddPipe(const vector_pair &dimTags, int wireTag,
                              vector_pair &outDimTags);
 GMSH_API gmshModelOccFillet(const std::vector<int> &regionTags,
                             const std::vector<int> &edgeTags,
@@ -411,7 +470,7 @@ GMSH_API gmshModelOccDilate(const vector_pair &dimTags, const double x,
                             const double b, const double c);
 GMSH_API gmshModelOccSymmetry(const vector_pair &dimTags, const double a,
                               const double b, const double c, const double d);
-GMSH_API gmshModelOccCopy(const vector_pair &inDimTags, vector_pair &outDimTags);
+GMSH_API gmshModelOccCopy(const vector_pair &dimTags, vector_pair &outDimTags);
 GMSH_API gmshModelOccRemove(const vector_pair &dimTags, const bool recursive = false);
 GMSH_API gmshModelOccRemoveAllDuplicates();
 GMSH_API gmshModelOccImportShapes(const std::string &fileName, vector_pair &outDimTags,
