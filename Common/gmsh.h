@@ -33,29 +33,30 @@
 #endif
 
 // A geometrical entity in the Gmsh API is represented by two integers: its
-// dimension (dim = 0, 1, 2 or 3) and its tag (its unique identifier). When
-// dealing with multiple geometrical entities of possibly different dimensions,
-// the entities are packed as a vector of (dim, tag) integer pairs.
+// dimension (dim = 0, 1, 2 or 3) and its tag (its unique, strictly positive
+// identifier). When dealing with multiple geometrical entities of possibly
+// different dimensions, the entities are packed as a vector of (dim, tag)
+// integer pairs.
 typedef std::vector<std::pair<int, int> > vector_pair;
 
 // -----------------------------------------------------------------------------
-// Module "gmsh": top-level functions
+// Module gmsh: top-level functions
 // -----------------------------------------------------------------------------
 
-// Initializes Gmsh. `gmshInitialize()' must be called before any call to the
-// other functions in the API. If argc and argv are are provided, they will be
-// handled in the same way as the command line arguments in the Gmsh app.
+// Initializes Gmsh. This must be called before any call to the other functions
+// in the API. If argc and argv are provided, they will be handled in the same
+// way as the command line arguments in the Gmsh app.
 GMSH_API void gmshInitialize(int argc = 0, char **argv = 0);
 
 // Finalizes Gmsh. This must be called when you are done using the Gmsh API.
 GMSH_API void gmshFinalize();
 
 // Opens a file and creates one (or more) new model(s). Equivalent to the
-// File->Open menu in the Gmsh app. Handling of the file depends on its
+// `File->Open' menu in the Gmsh app. Handling of the file depends on its
 // extension and/or its contents.
 GMSH_API void gmshOpen(const std::string &fileName);
 
-// Merges a file. Equivalent to the File->Merge menu in the Gmsh app. Handling
+// Merges a file. Equivalent to the `File->Merge' menu in the Gmsh app. Handling
 // of the file depends on its extension and/or its contents.
 GMSH_API void gmshMerge(const std::string &fileName);
 
@@ -67,7 +68,7 @@ GMSH_API void gmshExport(const std::string &fileName);
 GMSH_API void gmshClear();
 
 // -----------------------------------------------------------------------------
-// Module "gmshOption": global option handling functions
+// Module gmshOption: global option handling functions
 // -----------------------------------------------------------------------------
 
 // Sets a numerical option to `value'. `name' is of the form "category.option"
@@ -86,7 +87,7 @@ GMSH_API void gmshOptionSetString(const std::string &name,
 GMSH_API void gmshOptionGetString(const std::string &name, std::string &value);
 
 // -----------------------------------------------------------------------------
-// Module "gmshModel": per-model functions
+// Module gmshModel: per-model functions
 // -----------------------------------------------------------------------------
 
 // Creates a new model, with name `name', and sets it as the current model.
@@ -114,14 +115,14 @@ GMSH_API void gmshModelGetEntities(vector_pair &dimTags, const int dim = -1);
 GMSH_API void gmshModelGetPhysicalGroups(vector_pair &dimTags,
                                          const int dim = -1);
 
-// Gets the tags of all the (elementary) geometrical entities grouped in the
+// Gets the tags of all the (elementary) geometrical entities making up the
 // physical group of dimension `dim' and tag `tag'.
 GMSH_API void gmshModelGetEntitiesForPhysicalGroup(const int dim, const int tag,
                                                    std::vector<int> &tags);
 
 // Adds a physical group of dimension `dim', grouping the elementary entities
 // with tags `tags'. The function returns the tag of the physical group, equal
-// to `tag' if `tag' > 0, or a new tag if not.
+// to `tag' if `tag' is positive, or a new tag if `tag' < 0.
 GMSH_API int gmshModelAddPhysicalGroup(const int dim,
                                        const std::vector<int> &tags,
                                        int tag = -1);
@@ -146,8 +147,10 @@ GMSH_API void gmshModelGetBoundary(const vector_pair &dimTags,
                                    const bool oriented = true,
                                    const bool recursive = false);
 
-// Gets the (elementary) geometrical entities in the bounding box defined by two
-// points (xmin, ymin, zmin) and (xmax, ymax, zmax).
+// Gets the (elementary) geometrical entities in the bounding box defined by the
+// two points (xmin, ymin, zmin) and (xmax, ymax, zmax). If `dim' is >= 0,
+// returns only the entities of the specified dimension (e.g. points if `dim' ==
+// 0).
 GMSH_API void gmshModelGetEntitiesInBoundingBox(const double xmin,
                                                 const double ymin,
                                                 const double zmin,
@@ -155,7 +158,7 @@ GMSH_API void gmshModelGetEntitiesInBoundingBox(const double xmin,
                                                 const double ymax,
                                                 const double zmax,
                                                 vector_pair &tags,
-                                                const int dim=-1);
+                                                const int dim = -1);
 
 // Gets the bounding box (xmin, ymin, zmin), (xmax, ymax, zmax) of the
 // geometrical entity of dimension `dim' and tag `tag'.
@@ -165,16 +168,17 @@ GMSH_API void gmshModelGetBoundingBox(const int dim, const int tag, double &xmin
 
 // Adds a discrete geometrical entity (defined by a mesh) of dimension `dim' in
 // the current model. The function returns the tag of the new discrete entity,
-// equal to `tag' if `tag' > 0, or a new tag if not. `boundary' specifies the
-// tags of the entities on the boundary of the entity, if any. Specyfing
-// `bounday' allows Gmsh to maintain the topology of the overall model.
+// equal to `tag' if `tag' is positive, or a new tag if `tag' < 0. `boundary'
+// specifies the tags of the entities on the boundary of the discrete entity, if
+// any. Specyfing `boundary' allows Gmsh to construct the topology of the
+// overall model.
 GMSH_API int gmshModelAddDiscreteEntity(const int dim,
                                         const int tag = -1,
                                         const std::vector<int> &boundary =
                                         std::vector<int>());
 
 // Removes the entities `dimTags' of the current model. If `recursive' is true,
-// remove all the entities on their bundaries, down to dimension 0.
+// remove all the entities on their boundaries, down to dimension 0.
 GMSH_API void gmshModelRemove(const vector_pair &dimTags,
                               const bool recursive = false);
 
@@ -182,35 +186,38 @@ GMSH_API void gmshModelRemove(const vector_pair &dimTags,
 GMSH_API void gmshModelMesh(const int dim);
 
 // Gets the mesh vertices of the entity of dimension `dim' and `tag'
-// tag. `vertextags' contains the vertex tags (unique identification
-// numbers). `coord` is a vector of length `3 * vertexTags.size()' that contains
-// the (x, y, z) coordinates of the vertices. `parametricCoord` contains the
-// parametric coordinates of the vertices, if available. The length of
-// `parametricCoord` can be 0, `vertexTags.size()' or `2 * vertexTags.size()'.
+// tag. `vertextags' contains the vertex tags (their unique, strictly positive
+// identification numbers). `coord` is a vector of length `3 *
+// vertexTags.size()' that contains the (x, y, z) coordinates of the vertices,
+// concatenated. `parametricCoord` contains the parametric coordinates of the
+// vertices, if available. The length of `parametricCoord` can be 0 or `dim *
+// vertexTags.size()'.
 GMSH_API void gmshModelGetMeshVertices(const int dim, const int tag,
                                        std::vector<int> &vertexTags,
                                        std::vector<double> &coord,
                                        std::vector<double> &parametricCoord);
 
 // Gets the mesh elements of the entity of dimension `dim' and `tag'
-// tag. `types' contains the MSH types (e.g. 2 for 3-node triangles -- see the
-// Gmsh reference manual). `elementTags' is a vector of length `types.size()';
-// each entry is a vector containing the tags (unique identifiers) of the
-// elements of the corresponding type. `vertexTags' is a vector of length
-// `types.size()'; each entry is a vector of length equal to the number of
-// elements of the give type, times the number of vertices per element, that
-// contains the vertex tags of all the elements of the given type.
+// tag. `types' contains the MSH types of the elements (e.g. `2' for 3-node
+// triangles: see the Gmsh reference manual). `elementTags' is a vector of
+// length `types.size()'; each entry is a vector containing the tags (unique,
+// strictly positive identifiers) of the elements of the corresponding
+// type. `vertexTags' is also a vector of length `types.size()'; each entry is a
+// vector of length equal to the number of elements of the given type times the
+// number of vertices for this type of element, that contains the vertex tags of
+// all the elements of the given type, concatenated.
 GMSH_API void gmshModelGetMeshElements(const int dim, const int tag,
                                        std::vector<int> &types,
                                        std::vector<std::vector<int> > &elementTags,
                                        std::vector<std::vector<int> > &vertexTags);
 
 // Sets the mesh vertices in the geometrical entity of dimension `dim' and tag
-// `tag'. `vertextags' contains the vertex tags (unique identification
-// numbers). `coord` is a vector of length `3 * vertexTags.size()' that contains
-// the (x, y, z) coordinates of the vertices. The optional `parametricCoord`
-// vector contains the parametric coordinates of the vertices, if any. The
-// length of `parametricCoord` can be 0 or `dim * vertexTags.size()'.
+// `tag'. `vertextags' contains the vertex tags (their unique, strictly positive
+// identification numbers). `coord` is a vector of length `3 *
+// vertexTags.size()' that contains the (x, y, z) coordinates of the vertices,
+// concatenated. The optional `parametricCoord` vector contains the parametric
+// coordinates of the vertices, if any. The length of `parametricCoord` can be 0
+// or `dim * vertexTags.size()'.
 GMSH_API void gmshModelSetMeshVertices(const int dim, const int tag,
                                        const std::vector<int> &vertexTags,
                                        const std::vector<double> &coord,
@@ -218,21 +225,22 @@ GMSH_API void gmshModelSetMeshVertices(const int dim, const int tag,
                                        std::vector<double>());
 
 // Sets the mesh elements of the entity of dimension `dim' and `tag'
-// tag. `types' contains the MSH types (e.g. 2 for 3-node triangles -- see the
-// Gmsh reference manual). `elementTags' is a vector of length `types.size()';
-// each entry is a vector containing the tags (unique identifiers) of the
-// elements of the corresponding type. `vertexTags' is a vector of length
-// `types.size()'; each entry is a vector of length equal to the number of
-// elements of the give type, times the number of vertices per element, that
-// contains the vertex tags of all the elements of the given type.
+// tag. `types' contains the MSH types of the elements (e.g. `2' for 3-node
+// triangles: see the Gmsh reference manual). `elementTags' is a vector of
+// length `types.size()'; each entry is a vector containing the tags (unique,
+// strictly positive identifiers) of the elements of the corresponding
+// type. `vertexTags' is also a vector of length `types.size()'; each entry is a
+// vector of length equal to the number of elements of the give type times the
+// number of vertices per element, that contains the vertex tags of all the
+// elements of the given type, concatenated.
 GMSH_API void gmshModelSetMeshElements(const int dim, const int tag,
                                        const std::vector<int> &types,
                                        const std::vector<std::vector<int> > &elementTags,
                                        const std::vector<std::vector<int> > &vertexTags);
 
 // Gets the coordinates and the parametric coordinates (if any) of the mesh
-// vertex with tag `tag'. This is an inefficient way of accessing mesh vertex
-// data, as it relies on a dynamic cache stored in the model. For large meshes
+// vertex with tag `tag'. This is a useful by inefficient way of accessing mesh
+// vertex data, as it relies on a cache stored in the model. For large meshes
 // all the vertices in the model should be numbered in a continuous sequence of
 // tags from 1 to N to maintain reasonnable performance (in this case the
 // internal cache is based on a vector; otherwise it uses a map).
@@ -240,8 +248,8 @@ GMSH_API void gmshModelGetMeshVertex(const int vertexTag,
                                      std::vector<double> &coord,
                                      std::vector<double> &parametricCoord);
 
-// Gets the type and vertex tags of the mesh element with tag `tag'. This is an
-// inefficient way of accessing mesh element data, as it relies on a dynamic
+// Gets the type and vertex tags of the mesh element with tag `tag'. This is a
+// useful but inefficient way of accessing mesh element data, as it relies on a
 // cache stored in the model. For large meshes all the elements in the model
 // should be numbered in a continuous sequence of tags from 1 to N to maintain
 // reasonnable performance (in this case the internal cache is based on a
@@ -256,7 +264,7 @@ GMSH_API void gmshModelSetMeshSize(const vector_pair &dimTags, const double size
 // Sets a transfinite meshing constraint on the line `tag', with `numVertices'
 // mesh vertices distributed according to `type' and `coef'. Currently supported
 // types are "Progression" (geometrical progression with power `coef') and
-// "Bump" (refinement toward both extreminties of the line0.
+// "Bump" (refinement toward both extreminties of the line).
 GMSH_API void gmshModelSetTransfiniteLine(const int tag, const int numVertices,
                                           const std::string &type = "Progression",
                                           const double coef = 1.);
@@ -286,11 +294,11 @@ GMSH_API void gmshModelSetTransfiniteVolume(const int tag,
 GMSH_API void gmshModelSetRecombine(const int dim, const int tag);
 
 // Sets a smoothing meshing constraint on the geometrical entity of dimension
-// `dim' and tag `tag'. `val' iterations of a Laplace smoother will be applied.
+// `dim' and tag `tag'. `val' iterations of a Laplace smoother are applied.
 GMSH_API void gmshModelSetSmoothing(const int dim, const int tag, const int val);
 
 // Sets a reverse meshing constraint on the geometrical entity of dimension
-// `dim' and tag `tag'. If `val' is true, the mesh orientation will be reverse
+// `dim' and tag `tag'. If `val' is true, the mesh orientation will be reversed
 // with respect to the natural mesh orientation (i.e. the orientation consistent
 // with the orientation of the geometrical entity). If `val' is false, the mesh
 // is left as-is.
@@ -304,21 +312,40 @@ GMSH_API void gmshModelEmbed(const int dim, const std::vector<int> &tags,
                              const int inDim, const int inTag);
 
 // -----------------------------------------------------------------------------
-// Section "gmshModelGeo": built-in CAD kernel functions for current model
+// Module gmshModelGeo: per-model, built-in CAD kernel functions
 // -----------------------------------------------------------------------------
 
+// Adds a geometrical point in the internal, built-in CAD model, at coordinates
+// (x, y, z). If `meshSize' is > 0, adds a meshing constraint at that point. If
+// `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
+// automatically. Returns the tag of the point.
 GMSH_API int gmshModelGeoAddPoint(const double x, const double y, const double z,
                                   const double meshSize = 0., const int tag = -1);
+
+// Adds a straight line segment between the two points with tags `startTag' and
+// `endTag'. If `tag' is positive, sets the tag explicitly; otherwise a new tag
+// is selected automatically. Returns the tag of the line.
 GMSH_API int gmshModelGeoAddLine(const int startTag, const int endTag,
                                  const int tag = -1);
+
+// Adds a circle arc between the two points with tags `startTag' and `endTag',
+// with center `centertag'. If `tag' is positive, sets the tag explicitly;
+// otherwise a new tag is selected automatically. If (`nx', `ny', `nz') !=
+// (0,0,0), explicitely sets the plane of the circle arc.
 GMSH_API int gmshModelGeoAddCircleArc(const int startTag, const int centerTag,
                                       const int endTag, const int tag = -1,
                                       const double nx = 0., const double ny = 0.,
                                       const double nz = 0.);
+
+// Adds an ellipse arc between the two points `startTag' and `endTag', with
+// center `centertag' and major axis point `majorTag'. If `tag' is positive,
+// sets the tag explicitly; otherwise a new tag is selected automatically. If
+// (`nx', `ny', `nz') != (0,0,0), explicitely sets the plane of the circle arc.
 GMSH_API int gmshModelGeoAddEllipseArc(const int startTag, const int centerTag,
                                        const int majorTag, const int endTag,
                                        const int tag = -1, const double nx = 0.,
                                        const double ny = 0., const double nz = 0.);
+
 GMSH_API int gmshModelGeoAddSpline(const std::vector<int> &vertexTags,
                                    const int tag = -1);
 GMSH_API int gmshModelGeoAddBSpline(const std::vector<int> &vertexTags,
@@ -400,7 +427,7 @@ GMSH_API void gmshModelGeoSetReverseMesh(const int dim, const int tag,
 GMSH_API void gmshModelGeoSynchronize();
 
 // -----------------------------------------------------------------------------
-// Section "gmshModelOcc": OpenCASCADE CAD kernel functions for current model
+// Module gmshModelOcc: per-model, OpenCASCADE CAD kernel functions
 // -----------------------------------------------------------------------------
 
 GMSH_API int gmshModelOccAddPoint(const double x, const double y, const double z,
@@ -554,7 +581,7 @@ GMSH_API void gmshModelOccSetMeshSize(const vector_pair &dimTags, const double s
 GMSH_API void gmshModelOccSynchronize();
 
 // -----------------------------------------------------------------------------
-// Section "gmshModelField": mesh size field functions for current model
+// Module gmshModelField: per-model mesh size field functions
 // -----------------------------------------------------------------------------
 
 GMSH_API int gmshModelFieldCreate(const std::string &type, const int tag = -1);
