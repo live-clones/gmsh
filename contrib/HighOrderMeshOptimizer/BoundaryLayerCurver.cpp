@@ -491,6 +491,7 @@ namespace BoundaryLayerCurver
   }
 
   void computeExtremityCoefficients(const std::vector<MVertex*> &baseVert,
+                                    const std::vector<MVertex*> &damped,
                                     const std::vector<MVertex*> &topVert,
                                     Parameters2DCurve &parameters,
                                     SVector3 w)
@@ -504,7 +505,7 @@ namespace BoundaryLayerCurver
       double dx = 0, dy = 0, dz = 0;
       fs->df(-1, 0, 0, sf);
       for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
-        const MVertex *v = baseVert[j];
+        const MVertex *v = damped[j];
         dx += sf[j][0] * v->x();
         dy += sf[j][0] * v->y();
         dz += sf[j][0] * v->z();
@@ -523,7 +524,7 @@ namespace BoundaryLayerCurver
       double dx = 0, dy = 0, dz = 0;
       fs->df(1, 0, 0, sf);
       for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
-        const MVertex *v = baseVert[j];
+        const MVertex *v = damped[j];
         dx += sf[j][0] * v->x();
         dy += sf[j][0] * v->y();
         dz += sf[j][0] * v->z();
@@ -540,6 +541,7 @@ namespace BoundaryLayerCurver
   }
 
   void idealPositionEdge(const std::vector<MVertex *> &baseVert,
+                         const std::vector<MVertex *> &damped,
                          Parameters2DCurve &parameters, SVector3 w,
                          int nbPoints, const IntPt *points,
                          fullMatrix<double> &xyz, GEntity *bndEnt,
@@ -561,12 +563,13 @@ namespace BoundaryLayerCurver
         fs->df(xi, 0, 0, sf);
         for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
           const MVertex *v = baseVert[j];
+          const MVertex *vDamped = damped[j];
           xc += f[j] * v->x();
           yc += f[j] * v->y();
           zc += f[j] * v->z();
-          dx += sf[j][0] * v->x();
-          dy += sf[j][0] * v->y();
-          dz += sf[j][0] * v->z();
+          dx += sf[j][0] * vDamped->x();
+          dy += sf[j][0] * vDamped->y();
+          dz += sf[j][0] * vDamped->z();
         }
       }
       SVector3 t, n, h;
@@ -783,6 +786,7 @@ namespace BoundaryLayerCurver
   }
 
   void computePositionEdgeVert(const std::vector<MVertex *> &baseVert,
+                               const std::vector<MVertex *> &damped,
                                std::vector<MVertex *> &topVert,
                                Parameters2DCurve &parameters, SVector3 w,
                                double factorDamping, GEntity *bndEnt,
@@ -808,9 +812,9 @@ namespace BoundaryLayerCurver
     const int sizeSystem = getNGQLPts(orderGauss);
     const IntPt *gaussPnts = getGQLPts(orderGauss);
 
-    if (true) {
+    if (true) { // Least square projection
       fullMatrix<double> xyz(sizeSystem + 2, 3);
-      idealPositionEdge(baseVert, parameters, w, sizeSystem, gaussPnts, xyz,
+      idealPositionEdge(baseVert, damped, parameters, w, sizeSystem, gaussPnts, xyz,
                         bndEnt, direction);
       for (int i = 0; i < 2; ++i) {
         xyz(sizeSystem+i, 0) = topVert[i]->x();
@@ -831,7 +835,7 @@ namespace BoundaryLayerCurver
         topVert[i]->z() = newxyz(i, 2);
       }
     }
-    else {
+    else { // Bézier
       int nVert = baseVert.size();
       fullMatrix<double> xyz(nVert, 3);
       for (int i = 0; i < nVert; ++i) {
@@ -1029,11 +1033,11 @@ namespace BoundaryLayerCurver
       int direction = 1;
       if (bottomVertices[1] == midVertices[1]) direction = -1;
       Parameters2DCurve parameters;
-      computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
-      computePositionEdgeVert(bottomVertices, midVertices, parameters, w,
+      computeExtremityCoefficients(bottomVertices, bottomVertices, topVertices, parameters, w);
+      computePositionEdgeVert(bottomVertices, bottomVertices, midVertices, parameters, w,
                               dampingFactor, bndEnt, i/2, i == column.size()-2,
                               direction);
-      computePositionEdgeVert(bottomVertices, topVertices, parameters, w,
+      computePositionEdgeVert(bottomVertices, bottomVertices, topVertices, parameters, w,
                               dampingFactor, bndEnt, i/2, i == column.size()-2);
       repositionInteriorNodes(tri0);
       repositionInteriorNodes(tri1);
@@ -1070,8 +1074,15 @@ namespace BoundaryLayerCurver
       std::reverse(topVertices.begin() + 2, topVertices.end());
 
       Parameters2DCurve parameters;
-      computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
-      computePositionEdgeVert(bottomVertices, topVertices, parameters, w,
+      computeExtremityCoefficients(bottomVertices, bottomVertices, topVertices, parameters, w);
+      std::vector<MVertex *> dampedBottomVertices(bottomVertices.size());
+      for (int i = 0; i < bottomVertices.size(); ++i) {
+        MVertex *v = bottomVertices[i];
+        dampedBottomVertices[i] = new MVertex(v->x(), v->y(), v->z());
+      }
+      damping(dampedBottomVertices, .00 * bottomVertices[0]->distance(bottomVertices[1]));
+      computeExtremityCoefficients(bottomVertices, dampedBottomVertices, topVertices, parameters, w);
+      computePositionEdgeVert(bottomVertices, dampedBottomVertices, topVertices, parameters, w,
                               dampingFactor, bndEnt, i, -i == column.size()-1);
       repositionInteriorNodes(quad);
       bottom = MEdge(topVertices[0], topVertices[1]);
@@ -1088,28 +1099,28 @@ namespace BoundaryLayerCurver
         // Going back to bottom
         dum = bottomVertices;
         for (int j = 2; j < dum.size(); ++j) dum[j] = new MVertex(0, 0, 0);
-        computeExtremityCoefficients(topVertices, dum, parameters, w);
-        computePositionEdgeVert(topVertices, dum, parameters, w,
+        computeExtremityCoefficients(topVertices, topVertices, dum, parameters, w);
+        computePositionEdgeVert(topVertices, topVertices, dum, parameters, w,
                                 dampingFactor, bndEnt, i, -i == column.size()-1);
         if (drawB1) drawMLineN(dum, (GEdge *)bndEnt, true);
 
         // Computing top again
         dum2 = topVertices;
         for (int j = 2; j < dum2.size(); ++j) dum2[j] = new MVertex(0, 0, 0);
-        computeExtremityCoefficients(dum, dum2, parameters, w);
-        computePositionEdgeVert(dum, dum2, parameters, w,
+        computeExtremityCoefficients(dum, dum, dum2, parameters, w);
+        computePositionEdgeVert(dum, dum, dum2, parameters, w,
                                 dampingFactor, bndEnt, i, -i == column.size()-1);
         if (drawT1) drawMLineN(dum2, (GEdge *)bndEnt, true);
 
         // Going back to bottom
-        computeExtremityCoefficients(dum2, dum, parameters, w);
-        computePositionEdgeVert(dum2, dum, parameters, w,
+        computeExtremityCoefficients(dum2, dum2, dum, parameters, w);
+        computePositionEdgeVert(dum2, dum2, dum, parameters, w,
                                 dampingFactor, bndEnt, i, -i == column.size()-1);
         if (drawB2) drawMLineN(dum, (GEdge *)bndEnt, true);
 
         // Computing top again
-        computeExtremityCoefficients(dum, dum2, parameters, w);
-        computePositionEdgeVert(dum, dum2, parameters, w,
+        computeExtremityCoefficients(dum, dum, dum2, parameters, w);
+        computePositionEdgeVert(dum, dum, dum2, parameters, w,
                                 dampingFactor, bndEnt, i, -i == column.size()-1);
         if (drawT2) drawMLineN(dum2, (GEdge *)bndEnt, true);
 
@@ -1128,6 +1139,14 @@ namespace BoundaryLayerCurver
 
       // Check validity of first and last layer:
       if ((i == 0 || i == column.size()-1) && quad->getValidity() != 1) return false;
+      // debug
+      if (quad->getValidity() != 1) {
+
+        for (int j = i+1; j < column.size(); ++j) {
+          column[j]->setVisibility(false);
+        }
+        return false;
+      }
 
 //      if (false && i < 16) {
 //        double fact = 10;
@@ -1215,8 +1234,8 @@ namespace BoundaryLayerCurver
       }
 
       Parameters2DCurve parameters;
-      computeExtremityCoefficients(bottomVertices, topVertices, parameters, w);
-      computePositionEdgeVert(bottomVertices, topVertices, parameters, w,
+      computeExtremityCoefficients(bottomVertices, bottomVertices, topVertices, parameters, w);
+      computePositionEdgeVert(bottomVertices, bottomVertices, topVertices, parameters, w,
                               dampingFactor, bndEnt, i, i == column.size()-1);
       repositionInteriorNodes(quad);
       bottom = MEdge(topVertices[0], topVertices[1]);
@@ -1255,6 +1274,11 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
                                                          bndEnt);
       if (dampingFactor == 0) dampingFactor = .01;
       else dampingFactor *= 2;
+    }
+    if (success) {
+      for (int j = 0; j < column.size(); ++j) {
+        column[j]->setVisibility(false);
+      }
     }
 //    if (success)
 //      std::cout << " ok for " << dampingFactor << std::endl;
