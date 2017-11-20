@@ -9,10 +9,7 @@
 
 int main(int argc, char **argv)
 {
-  // Before using any functions in the C++ API, Gmsh must be initialized. All
-  // the functions in the API return a vector of integers. The first integer is
-  // 0 on successful completion; additional integers can be appended depending
-  // on context.
+  // Before using any functions in the C++ API, Gmsh must be initialized.
   gmshInitialize();
 
   // By default Gmsh will not print out any messages: in order to output
@@ -30,35 +27,37 @@ int main(int argc, char **argv)
   // have the "gmshModeGeo" prefix. To create geometrical points with the
   // built-in CAD kernel, one thus uses gmshModelGeoAddPoint():
   //
-  // - the first argument is the point tag
+  // - the first 3 arguments are the point coordinates (x, y, z)
   //
-  // - the next 3 arguments are the point coordinates (x, y, z)
+  // - the next (optional) argument is the target mesh size close to the point
   //
-  // - the last (optional) argument is the target mesh size close to the point
+  // - the last (optional) argument is the point tag
   double lc = 1e-2;
-  gmshModelGeoAddPoint(1, 0, 0, 0, lc);
-  gmshModelGeoAddPoint(2, .1, 0,  0, lc);
-  gmshModelGeoAddPoint(3, .1, .3, 0, lc);
-  gmshModelGeoAddPoint(4, 0,  .3, 0, lc);
+  gmshModelGeoAddPoint(0, 0, 0, lc, 1);
+  gmshModelGeoAddPoint(.1, 0,  0, lc, 2);
+  gmshModelGeoAddPoint(.1, .3, 0, lc, 3);
+  gmshModelGeoAddPoint(0,  .3, 0, lc, 4);
 
   // The API to create lines with the built-in kernel follows the same
-  // conventions: the first argument is the line tag, followed by 2 point tags.
-  gmshModelGeoAddLine(1, 1, 2);
-  gmshModelGeoAddLine(2, 3, 2);
-  gmshModelGeoAddLine(3, 3, 4);
-  gmshModelGeoAddLine(4, 4, 1);
+  // conventions: the first 2 arguments are point tags, the last (optional one)
+  // is the line tag.
+  gmshModelGeoAddLine(1, 2, 1);
+  gmshModelGeoAddLine(3, 2, 2);
+  gmshModelGeoAddLine(3, 4, 3);
+  gmshModelGeoAddLine(4, 1, 4);
 
-  // The philosophy to construct line loops and surfaces is similar: the second
-  // arguments are now vectors of integers.
-  gmshModelGeoAddLineLoop(1, {4, 1, -2, 3});
-  gmshModelGeoAddPlaneSurface(1, {1});
+  // The philosophy to construct line loops and surfaces is similar: the first
+  // argument is now a vector of integers.
+  gmshModelGeoAddLineLoop({4, 1, -2, 3}, 1);
+  gmshModelGeoAddPlaneSurface({1}, 1);
 
   // Physical groups are defined by providing the dimension of the group (0 for
   // physical points, 1 for physical lines, 2 for physical surfaces and 3 for
-  // phsyical volumes) and its tag, followed by a vector of entity tags.
-  gmshModelAddPhysicalGroup(0, 1, {1, 2});
-  gmshModelAddPhysicalGroup(1, 2, {1, 2});
-  gmshModelAddPhysicalGroup(2, 6, {1});
+  // phsyical volumes) followed by a vector of entity tags. The last (optional)
+  // argument is the tag of the new group to create.
+  gmshModelAddPhysicalGroup(0, {1, 2}, 1);
+  gmshModelAddPhysicalGroup(1, {1, 2}, 2);
+  gmshModelAddPhysicalGroup(2, {1}, 6);
 
   // Physical names are also defined by providing the dimension and tag of the
   // entity.
