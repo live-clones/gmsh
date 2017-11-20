@@ -19,14 +19,14 @@ R = 1.4; Rs = R*.7; Rt = R*1.25
 
 ov = PairVector(); ovv = PairVectorVector()
 
-gmshModelOccAddBox(1, -R,-R,-R, 2*R,2*R,2*R)
-gmshModelOccAddSphere(2, 0,0,0,Rt)
-gmshModelOccBooleanIntersection(3, [(3, 1)], [(3, 2)], ov, ovv)
-gmshModelOccAddCylinder(4, -2*R,0,0, 4*R,0,0, Rs)
-gmshModelOccAddCylinder(5, 0,-2*R,0, 0,4*R,0, Rs)
-gmshModelOccAddCylinder(6, 0,0,-2*R, 0,0,4*R, Rs)
-gmshModelOccBooleanUnion(7, [(3, 4), (3, 5)], [(3, 6)], ov, ovv)
-gmshModelOccBooleanDifference(8, [(3, 3)], [(3, 7)], ov, ovv)
+gmshModelOccAddBox(-R,-R,-R, 2*R,2*R,2*R, 1)
+gmshModelOccAddSphere(0,0,0,Rt, 2)
+gmshModelOccBooleanIntersection([(3, 1)], [(3, 2)], ov, ovv, 3)
+gmshModelOccAddCylinder(-2*R,0,0, 4*R,0,0, Rs, 4)
+gmshModelOccAddCylinder(0,-2*R,0, 0,4*R,0, Rs, 5)
+gmshModelOccAddCylinder(0,0,-2*R, 0,0,4*R, Rs, 6)
+gmshModelOccBooleanUnion([(3, 4), (3, 5)], [(3, 6)], ov, ovv, 7)
+gmshModelOccBooleanDifference([(3, 3)], [(3, 7)], ov, ovv, 8)
 
 gmshModelOccSynchronize();
 

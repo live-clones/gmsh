@@ -11,44 +11,44 @@ int main(int argc, char **argv)
   gmshModelCreate("t1");
 
   double lc = .15;
-  gmshModelGeoAddPoint(1, 0.0,0.0,0,lc);
-  gmshModelGeoAddPoint(2, 1,0.0,0,lc);
-  gmshModelGeoAddPoint(3, 1,1,0,lc);
-  gmshModelGeoAddPoint(4, 0,1,0,lc);
-  gmshModelGeoAddPoint(5, 0.2,.5,0,lc);
+  gmshModelGeoAddPoint(0.0,0.0,0,lc, 1);
+  gmshModelGeoAddPoint(1,0.0,0,lc, 2);
+  gmshModelGeoAddPoint(1,1,0,lc, 3);
+  gmshModelGeoAddPoint(0,1,0,lc, 4);
+  gmshModelGeoAddPoint(0.2,.5,0,lc, 5);
 
-  gmshModelGeoAddLine(1, 1,2);
-  gmshModelGeoAddLine(2, 2,3);
-  gmshModelGeoAddLine(3, 3,4);
-  gmshModelGeoAddLine(4, 4,1);
+  gmshModelGeoAddLine(1,2, 1);
+  gmshModelGeoAddLine(2,3, 2);
+  gmshModelGeoAddLine(3,4, 3);
+  gmshModelGeoAddLine(4,1, 4);
 
-  gmshModelGeoAddLineLoop(5, {1,2,3,4});
-  gmshModelGeoAddPlaneSurface(6, {5});
+  gmshModelGeoAddLineLoop({1,2,3,4}, 5);
+  gmshModelGeoAddPlaneSurface({5}, 6);
 
-  gmshModelFieldCreate(1, "Attractor");
+  gmshModelFieldCreate("Attractor", 1);
   gmshModelFieldSetNumbers(1, "NodesList", {5});
   gmshModelFieldSetNumber(1, "NNodesByEdge", 100);
   gmshModelFieldSetNumbers(1, "EdgesList", {2});
 
-  gmshModelFieldCreate(2, "Threshold");
+  gmshModelFieldCreate("Threshold", 2);
   gmshModelFieldSetNumber(2, "IField", 1);
   gmshModelFieldSetNumber(2, "LcMin", lc / 30);
   gmshModelFieldSetNumber(2, "LcMax", lc);
   gmshModelFieldSetNumber(2, "DistMin", 0.15);
   gmshModelFieldSetNumber(2, "DistMax", 0.5);
 
-  gmshModelFieldCreate(3, "MathEval");
+  gmshModelFieldCreate("MathEval", 3);
   gmshModelFieldSetString(3, "F", "Cos(4*3.14*x) * Sin(4*3.14*y) / 10 + 0.101");
 
-  gmshModelFieldCreate(4, "Attractor");
+  gmshModelFieldCreate("Attractor", 4);
   gmshModelFieldSetNumbers(4, "NodesList", {1});
 
-  gmshModelFieldCreate(5, "MathEval");
+  gmshModelFieldCreate("MathEval", 5);
   std::stringstream stream;
   stream << "F4^3 + " << lc / 100;
   gmshModelFieldSetString(5, "F", stream.str());
 
-  gmshModelFieldCreate(6, "Box");
+  gmshModelFieldCreate("Box", 6);
   gmshModelFieldSetNumber(6, "VIn", lc / 15);
   gmshModelFieldSetNumber(6, "VOut", lc);
   gmshModelFieldSetNumber(6, "XMin", 0.3);
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
   gmshModelFieldSetNumber(6, "YMin", 0.3);
   gmshModelFieldSetNumber(6, "YMax", 0.6);
 
-  gmshModelFieldCreate(7, "Min");
+  gmshModelFieldCreate("Min", 7);
   gmshModelFieldSetNumbers(7, "FieldsList", {2, 3, 5, 6});
 
   gmshModelFieldSetAsBackground(7);

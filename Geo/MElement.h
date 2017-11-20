@@ -65,11 +65,13 @@ class MElement
   virtual int getPolynomialOrder() const { return 1; }
 
   // return true if the element can be considered as a serendipity element
-  virtual bool getIsAssimilatedSerendipity() const {
+  virtual bool getIsAssimilatedSerendipity() const
+  {
     return ElementType::SerendipityFromTag(getTypeForMSH()) > 0;
   }
   // return true if the element has to be considered as a serendipity element
-  virtual bool getIsOnlySerendipity() const {
+  virtual bool getIsOnlySerendipity() const
+  {
     return ElementType::SerendipityFromTag(getTypeForMSH()) > 1;
   }
 

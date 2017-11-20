@@ -8,8 +8,7 @@
 
 namespace ElementType
 {
-  // Give parent type, order & dimension
-  // corresponding to any element type.
+  // Give parent type, order & dimension corresponding to any element type.
   int ParentTypeFromTag(int tag);
   int OrderFromTag(int tag);
   int DimensionFromTag(int tag);

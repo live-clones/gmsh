@@ -95,8 +95,8 @@ MetaEl::metaInfoType::metaInfoType(int type, int order)
   linBaseFaceBasis = BasisFactory::getNodalBasis(linBaseFaceTag);
   const int nbLinBaseShapeFunc = linBaseFaceBasis->getNumShapeFunctions();
   baseLinShapeFuncVal.resize(nbBaseVert, nbLinBaseShapeFunc);
-  
-  // Compute value of nodal bases of base face at base vertices 
+
+  // Compute value of nodal bases of base face at base vertices
   const fullMatrix<double> basePoints = baseFaceBasis->getReferenceNodes();
   for (int iV = 0; iV < baseFaceBasis->getNumShapeFunctions(); iV++) {
     const double &u = basePoints(iV, 0), &v = basePoints(iV, 1);
@@ -211,7 +211,7 @@ void MetaEl::computeBaseNorm(const SVector3 &metaNorm,
       MVertex *vert = baseVert[iSF];
       const double xyz[3] = {vert->x(), vert->y(), vert->z()};
       for (int iXYZ = 0; iXYZ < 3; iXYZ++) {
-        jac[iXYZ][0] += xyz[iXYZ] * _mInfo.baseGradShapeFuncVal(iV, 3*iSF); 
+        jac[iXYZ][0] += xyz[iXYZ] * _mInfo.baseGradShapeFuncVal(iV, 3*iSF);
         jac[iXYZ][1] += xyz[iXYZ] * _mInfo.baseGradShapeFuncVal(iV, 3*iSF+1);
       }
     }
@@ -256,7 +256,7 @@ MetaEl::MetaEl(int type, int order, const std::vector<MVertex*> &baseVert,
       double u, v;
       bVert->getParameter(0, u);
       bVert->getParameter(1, v);
-      _metaVert[baseInd[iV]] = new MEdgeVertex(bVert->x(), bVert->y(),
+      _metaVert[baseInd[iV]] = new MFaceVertex(bVert->x(), bVert->y(),
                                                bVert->z(), geomEnt, u, v);
     }
   }

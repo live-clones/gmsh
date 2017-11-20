@@ -481,7 +481,7 @@ static void remeshUnrecoveredEdges(std::map<MVertex*, BDS_Point*> &recoverMapInv
           double t = 0.5 * (t2 + t1);
           double lc = 0.5 * (lc1 + lc2);
           GPoint V = itr->ge->point(t);
-          MEdgeVertex * newv = new MEdgeVertex(V.x(), V.y(), V.z(), itr->ge, t, lc);
+          MEdgeVertex * newv = new MEdgeVertex(V.x(), V.y(), V.z(), itr->ge, t, 0, lc);
           newLines.push_back(new MLine(v1, newv));
           newLines.push_back(new MLine(newv, v2));
           delete itr->ge->lines[i];
@@ -2265,7 +2265,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
         if (mv1->onWhat()->dim() == 1) {
           double t;
           mv1->getParameter(0,t);
-          mv2 = new MEdgeVertex(mv1->x(),mv1->y(),mv1->z(),mv1->onWhat(), t,
+          mv2 = new MEdgeVertex(mv1->x(),mv1->y(),mv1->z(),mv1->onWhat(), t, 0,
                                 ((MEdgeVertex*)mv1)->getLc());
         }
         else if (mv1->onWhat()->dim() == 0) {

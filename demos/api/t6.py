@@ -10,21 +10,19 @@ gmshModelCreate("t6")
 
 # Copied from t1.py...
 lc = 1e-2
-gmshModelGeoAddPoint(1, 0, 0, 0, lc)
-gmshModelGeoAddPoint(2, .1, 0,  0, lc)
-gmshModelGeoAddPoint(3, .1, .3, 0, lc)
-gmshModelGeoAddPoint(4, 0,  .3, 0, lc)
-
-gmshModelGeoAddLine(1, 1, 2)
-gmshModelGeoAddLine(2, 3, 2)
-gmshModelGeoAddLine(3, 3, 4)
-gmshModelGeoAddLine(4, 4, 1)
-
-gmshModelGeoAddLineLoop(1, [4, 1, -2, 3])
-gmshModelGeoAddPlaneSurface(1, [1])
-gmshModelAddPhysicalGroup(0, 1, [1, 2])
-gmshModelAddPhysicalGroup(1, 2, [1, 2])
-gmshModelAddPhysicalGroup(2, 6, [1])
+gmshModelGeoAddPoint(0, 0, 0, lc, 1)
+gmshModelGeoAddPoint(.1, 0,  0, lc, 2)
+gmshModelGeoAddPoint(.1, .3, 0, lc, 3)
+gmshModelGeoAddPoint(0, .3, 0, lc, 4)
+gmshModelGeoAddLine(1, 2, 1)
+gmshModelGeoAddLine(3, 2, 2)
+gmshModelGeoAddLine(3, 4, 3)
+gmshModelGeoAddLine(4, 1, 4)
+gmshModelGeoAddLineLoop([4, 1, -2, 3], 1)
+gmshModelGeoAddPlaneSurface([1], 1)
+gmshModelAddPhysicalGroup(0, [1, 2], 1)
+gmshModelAddPhysicalGroup(1, [1, 2], 2)
+gmshModelAddPhysicalGroup(2, [1], 6)
 gmshModelSetPhysicalName(2, 6, "My surface")
 # ...end of copy
 
@@ -32,15 +30,15 @@ gmshModelSetPhysicalName(2, 6, "My surface")
 gmshModelGeoRemove([[2,1], [1,4]])
 
 # Replace left boundary with 3 new lines
-p1 = gmshModelGeoAddPoint(-1, -0.05, 0.05, 0, lc)[1]
-p2 = gmshModelGeoAddPoint(-1, -0.05, 0.1, 0, lc)[1]
-l1 = gmshModelGeoAddLine(-1, 1, p1)[1]
-l2 = gmshModelGeoAddLine(-1, p1, p2)[1]
-l3 = gmshModelGeoAddLine(-1, p2, 4)[1]
+p1 = gmshModelGeoAddPoint(-0.05, 0.05, 0, lc)
+p2 = gmshModelGeoAddPoint(-0.05, 0.1, 0, lc)
+l1 = gmshModelGeoAddLine(1, p1)
+l2 = gmshModelGeoAddLine(p1, p2)
+l3 = gmshModelGeoAddLine(p2, 4)
 
 # Recreate surface
-gmshModelGeoAddLineLoop(2, [2, -1, l1, l2, l3, -3])
-gmshModelGeoAddPlaneSurface(1, [-2])
+gmshModelGeoAddLineLoop([2, -1, l1, l2, l3, -3], 2)
+gmshModelGeoAddPlaneSurface([-2], 1)
 
 # Put 20 points with a refinement toward the extremities on curve 2
 gmshModelGeoSetTransfiniteLine(2, 20, "Bump", 0.05)
@@ -66,25 +64,25 @@ gmshModelGeoSetRecombine(2, 1)
 
 # Apply an elliptic smoother to the grid
 gmshOptionSetNumber("Mesh.Smoothing", 100)
-gmshModelAddPhysicalGroup(2, 1, [1])
+gmshModelAddPhysicalGroup(2, [1], 1)
 
 # When the surface has only 3 or 4 control points, the transfinite constraint
 # can be applied automatically (without specifying the corners explictly).
-gmshModelGeoAddPoint(7, 0.2, 0.2, 0, 1.0)
-gmshModelGeoAddPoint(8, 0.2, 0.1, 0, 1.0)
-gmshModelGeoAddPoint(9, 0, 0.3, 0, 1.0)
-gmshModelGeoAddPoint(10, 0.25, 0.2, 0, 1.0)
-gmshModelGeoAddPoint(11, 0.3, 0.1, 0, 1.0)
-gmshModelGeoAddLine(10, 8, 11)
-gmshModelGeoAddLine(11, 11, 10)
-gmshModelGeoAddLine(12, 10, 7)
-gmshModelGeoAddLine(13, 7, 8)
-gmshModelGeoAddLineLoop(14, [13, 10, 11, 12])
-gmshModelGeoAddPlaneSurface(15, [14])
+gmshModelGeoAddPoint(0.2, 0.2, 0, 1.0, 7)
+gmshModelGeoAddPoint(0.2, 0.1, 0, 1.0, 8)
+gmshModelGeoAddPoint(0, 0.3, 0, 1.0, 9)
+gmshModelGeoAddPoint(0.25, 0.2, 0, 1.0, 10)
+gmshModelGeoAddPoint(0.3, 0.1, 0, 1.0, 11)
+gmshModelGeoAddLine(8, 11, 10)
+gmshModelGeoAddLine(11, 10, 11)
+gmshModelGeoAddLine(10, 7, 12)
+gmshModelGeoAddLine(7, 8, 13)
+gmshModelGeoAddLineLoop([13, 10, 11, 12], 14)
+gmshModelGeoAddPlaneSurface([14], 15)
 for i in range(10,14):
     gmshModelGeoSetTransfiniteLine(i, 10)
 gmshModelGeoSetTransfiniteSurface(15)
-gmshModelAddPhysicalGroup(2, 2, [15])
+gmshModelAddPhysicalGroup(2, [15], 2)
 
 gmshModelMesh(2)
 gmshExport("t6.msh")

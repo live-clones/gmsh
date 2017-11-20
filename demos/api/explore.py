@@ -4,13 +4,12 @@ from gmsh import *
 import sys
 
 if len(sys.argv) < 2:
-    print "Usage: basic.py file.geo [options]"
+    print "Usage: " + sys.argv[0] + " file.msh [options]"
     exit(0)
 
 gmshInitialize()
 gmshOptionSetNumber("General.Terminal", 1)
 gmshOpen(sys.argv[1])
-gmshModelMesh(3)
 
 # get all elementary entities in the model
 entities = PairVector()
@@ -19,8 +18,8 @@ gmshModelGetEntities(entities)
 for e in entities:
     # get the mesh vertices for each elementary entity
     vertexTags = IntVector()
-    vertexCoords = DoubleVector()
-    gmshModelGetMeshVertices(e[0], e[1], vertexTags, vertexCoords)
+    vertexCoords = DoubleVector(); vertexParams = DoubleVector()
+    gmshModelGetMeshVertices(e[0], e[1], vertexTags, vertexCoords, vertexParams)
     # get the mesh elements for each elementary entity
     elemTypes = IntVector()
     elemTags = IntVectorVector(); elemVertexTags = IntVectorVector()

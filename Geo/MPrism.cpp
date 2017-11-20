@@ -496,20 +496,20 @@ int MPrism::getNumFacesRep(bool curved)
 
 int MPrism15::getNumFacesRep(bool curved)
 {
-  return curved ? 4 * (CTX::instance()->mesh.numSubEdges *
-                       CTX::instance()->mesh.numSubEdges * 2) : 8;
+  return curved ? 8 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+         MPrism::getNumFacesRep(curved);
 }
 
 int MPrism18::getNumFacesRep(bool curved)
 {
-  return curved ? 4 * (CTX::instance()->mesh.numSubEdges *
-                       CTX::instance()->mesh.numSubEdges * 2) : 8;
+  return curved ? 8 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+         MPrism::getNumFacesRep(curved);
 }
 
 int MPrismN::getNumFacesRep(bool curved)
 {
-  return curved ? 4 * (CTX::instance()->mesh.numSubEdges *
-                       CTX::instance()->mesh.numSubEdges * 2) : 8;
+  return curved ? 8 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+         MPrism::getNumFacesRep(curved);
 }
 
 static void _addEdgeNodes(int num, bool reverse, int order,
