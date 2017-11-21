@@ -320,6 +320,40 @@ namespace
     MLineN *line = new MLineN(vertices);
     ent->addLine(line);
   }
+
+  /*             A
+   *             *
+   *           ,/ \
+   *       c ,/    \ b
+   *       ,/       \
+   *     ,/          \
+   *    *-------------*
+   *  B        a        C
+   */
+  bool solveASDtriangle(double angleB, const SVector3 &sideA,
+                        const SVector3 &dirSideB, const SVector3 &w,
+                        double &lengthSideB, bool positiveLengths = true)
+  {
+    // Assuming:
+    // - angleB is the signed angle from a to c in range [-pi, pi]
+    // - sideA is the vector from B to C
+    // - dirSideB is a vector from C in direction to A
+    // positiveLengths means that each angle should be of same sign
+    if (std::abs(angleB) > M_PI) {
+      Msg::Warning("angle greater than pi in solveASDtriangle");
+    }
+    int sign = gmsh_sign(angleB);
+
+    double angleC = signedAngle(dirSideB, -sideA, w);
+    if (positiveLengths && sign * angleC < 0) return false;
+
+    double angleA = sign * M_PI - angleB - angleC;
+    if (std::abs(angleA) < 1e-10) return false;
+    if (positiveLengths && (sign * angleA < 0 || sign * angleA > M_PI)) return false;
+
+    lengthSideB = sideA.norm() / std::sin(angleA) * std::sin(angleB);
+    return true;
+  }
 }
 
 namespace BoundaryLayerCurver
@@ -827,27 +861,32 @@ namespace BoundaryLayerCurver
       if (maxDisplacement < .05 * limit)
         maxDisplacement = computeLinearDirections(controlPoints, dCtrlPnts);
 
-//      dCtrlPnts.print("dCtrlPnts");
-      double fact0 = 0, fact1 = 0;
-      double factL0 = 0, factL1 = 0;
-      double sign0 = angle0 > 0 ? 1 : -1;
+      double fact0 = 0;
+      {
+        double alpha = angle0 - gmsh_sign(angle0) * targetAngle0;
+        SVector3 dir(dCtrlPnts(2, 0), dCtrlPnts(2, 1), dCtrlPnts(2, 2));
 
-      SVector3 dir0(dCtrlPnts(2, 0), dCtrlPnts(2, 1), dCtrlPnts(2, 2));
-      double alpha0 = angle0 - (sign0 > 0 ? targetAngle0 : -targetAngle0);
-      double beta0 = signedAngle(vTop0, -dir0, w);
-      double gamma0 = (sign0 > 0 ? M_PI : -M_PI) - beta0 - alpha0;
-      double sa0 = std::sin(alpha0);
-      double sg0 = std::sin(gamma0);
-      double l0 = vTop0.norm();
-      double L0 = vTop0.norm() / std::sin(gamma0) * std::sin(alpha0);
-      double d0 = dir0.norm();
-      if (sign0 * beta0 < 0 || sign0 * beta0 > M_PI ||
-          sign0 * gamma0 < 0 || sign0 * gamma0 > M_PI)
-        canImprove0 = false;
-      if (improve0 && canImprove0) {
-        fact0 = vTop0.norm() / std::sin(gamma0) * std::sin(alpha0) / dir0.norm();
+        double length;
+        canImprove0 = solveASDtriangle(-alpha, vTop0, dir, w, length);
+        if (improve0 && canImprove0) {
+          fact0 = length / dir.norm();
+        }
       }
 
+      double fact1 = 0;
+      {
+        double alpha = angle1 - gmsh_sign(angle1) * targetAngle1;
+        const int i = nVert-1;
+        SVector3 dir(dCtrlPnts(i, 0), dCtrlPnts(i, 1), dCtrlPnts(i, 2));
+
+        double length;
+        canImprove1 = solveASDtriangle(-alpha, -vTop1, dir, w, length);
+        if (improve1 && canImprove1) {
+          fact1 = length / dir.norm();
+        }
+      }
+
+      double factL0 = 0, factL1 = 0;
 //      // FIXME compute length curve instead
 //      double totalLength = linear.norm();
 //      double limitLength = .5 * totalLength / (nVert-1);
@@ -861,22 +900,6 @@ namespace BoundaryLayerCurver
 //        }
 ////      }
 
-      double sign1 = angle1 > 0 ? 1 : -1;
-      SVector3 dir1(dCtrlPnts(nVert-1, 0), dCtrlPnts(nVert-1, 1), dCtrlPnts(nVert-1, 2));
-      double alpha1 = angle1 - (sign1 > 0 ? targetAngle1 : -targetAngle1);
-      double beta1 = signedAngle(vTop1, dir1, w);
-      double gamma1 = (sign1 > 0 ? M_PI : -M_PI) - beta1 - alpha1;
-      double sa1 = std::sin(alpha1);
-      double sg1 = std::sin(gamma1);
-      double l1 = vTop1.norm();
-      double L1 = vTop1.norm() / std::sin(gamma1) * std::sin(alpha1);
-      double d1 = dir1.norm();
-      if (sign1 * beta1 < 0 || sign1 * beta1 > M_PI ||
-          sign1 * gamma1 < 0 || sign1 * gamma1 > M_PI)
-        canImprove1 = false;
-      if (improve1 && canImprove1) {
-        fact1 = vTop1.norm() / std::sin(gamma1) * std::sin(alpha1) / dir1.norm();
-      }
       double factDisp = (limit-displacement) / maxDisplacement;
       double fact = std::min(1., std::min(factDisp, std::max(fact0, fact1)));
       std::cout << "fact: " << fact << " (" << fact0 << ", " << fact1 << ")" << std::endl;
