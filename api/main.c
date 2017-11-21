@@ -1,27 +1,26 @@
 #include <stdio.h>
 #include "gmshc.h"
 
-#define chk(ierr) if (ierr != 0) {fprintf(stderr, "ERROR on line %i in function '%s': gmsh function return non-zero error code: %i\n",__LINE__, __FUNCTION__,ierr); gmshcFinalize(); exit(ierr);}
+#define chk(ierr) if (ierr != 0) {fprintf(stderr, "ERROR on line %i in function '%s': gmsh function return non-zero error code: %i\n",__LINE__, __FUNCTION__,ierr); gmshcFinalize(NULL); exit(ierr);}
 
 void genGeometry() {
   int ierr;
-  ierr = gmshcModelCreate("square");
-  ierr = gmshcModelGeoAddPoint(0,0,0,0.1,1,NULL);chk(ierr);
-  ierr = gmshcModelGeoAddPoint(1,0,0,0.1,2,NULL);chk(ierr);
-  ierr = gmshcModelGeoAddPoint(1,1,0,0.1,3,NULL);chk(ierr);
-  ierr = gmshcModelGeoAddPoint(0,1,0,0.1,4,NULL);chk(ierr);
-  ierr = gmshcModelGeoAddLine(1,2,1,NULL); chk(ierr);
-  ierr = gmshcModelGeoAddLine(2,3,2,NULL); chk(ierr);
-  ierr = gmshcModelGeoAddLine(3,4,3,NULL); chk(ierr);
+  gmshcModelCreate("square",&ierr);chk(ierr);
+  gmshcModelGeoAddPoint(0,0,0,0.1,1,&ierr);chk(ierr);
+  gmshcModelGeoAddPoint(1,0,0,0.1,2,&ierr);chk(ierr);
+  gmshcModelGeoAddPoint(1,1,0,0.1,3,&ierr);chk(ierr);
+  gmshcModelGeoAddPoint(0,1,0,0.1,4,&ierr);chk(ierr);
+  gmshcModelGeoAddLine(1,2,1,&ierr); chk(ierr);
+  gmshcModelGeoAddLine(2,3,2,&ierr); chk(ierr);
+  gmshcModelGeoAddLine(3,4,3,&ierr); chk(ierr);
   // try automatic assignement of tag
-  int line4;
-  ierr = gmshcModelGeoAddLine(4,1,-1,&line4); chk(ierr);
+  int line4 = gmshcModelGeoAddLine(4,1,-1,&ierr); chk(ierr);
   printf("line4 received tag %i\n\n", line4);
   int ll[] = {1,2,3,line4};
-  ierr = gmshcModelGeoAddLineLoop(ll,4,1,NULL); chk(ierr);
+  gmshcModelGeoAddLineLoop(ll,4,1,&ierr); chk(ierr);
   int s[] = {1};
-  ierr = gmshcModelGeoAddPlaneSurface(ll,1,6,NULL); chk(ierr);
-  ierr = gmshcModelGeoSynchronize(); chk(ierr);
+  gmshcModelGeoAddPlaneSurface(ll,1,6,&ierr); chk(ierr);
+  gmshcModelGeoSynchronize(&ierr); chk(ierr);
 }
 
 void printMesh() {
@@ -29,13 +28,13 @@ void printMesh() {
   int *dimTags;
   size_t ndimTags;
 
-  ierr = gmshcModelGetEntities(&dimTags, &ndimTags, -1); chk(ierr);
+  gmshcModelGetEntities(&dimTags, &ndimTags, -1,&ierr); chk(ierr);
 
   for (size_t ie = 0; ie < ndimTags/2; ++ie) {
     int *types, **elementTags, **vertexTags;
     size_t ntypes, *nelementTags, nnelementTags, *nvertexTags, nnvertexTags;
 
-    ierr = gmshcModelGetMeshElements(dimTags[ie*2+0], dimTags[ie*2+1], &types, &ntypes, &elementTags, &nelementTags, &nnelementTags, &vertexTags, &nvertexTags, &nnvertexTags); chk(ierr);
+    gmshcModelGetMeshElements(dimTags[ie*2+0], dimTags[ie*2+1], &types, &ntypes, &elementTags, &nelementTags, &nnelementTags, &vertexTags, &nvertexTags, &nnvertexTags,&ierr); chk(ierr);
 
     printf("entity %i of dim %i\n", dimTags[ie*2+1], dimTags[ie*2+0]);
     for (size_t i = 0; i < nnelementTags; ++i) {
@@ -66,16 +65,16 @@ void printMesh() {
 void genError() {
   int ierr;
   printf("\n** generate an error **\n");
-  ierr = gmshcModelGetMeshElements(999, 999, NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL); chk(ierr);
+  gmshcModelGetMeshElements(999, 999, NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,&ierr); chk(ierr);
 }
 
 int main(int argc, char **argv) {
   int ierr;
   gmshcInitialize(argc, argv);
   genGeometry();
-  ierr = gmshcModelMesh(2); chk(ierr);
-  ierr = gmshcExport("square.msh"); chk(ierr);
+  gmshcModelMesh(2,&ierr); chk(ierr);
+  gmshcExport("square.msh",&ierr); chk(ierr);
   printMesh();
   genError();
-  ierr = gmshcFinalize(); chk(ierr);
+  gmshcFinalize(&ierr); chk(ierr);
 }

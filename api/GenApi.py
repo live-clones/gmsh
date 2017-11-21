@@ -420,10 +420,10 @@ class API:
                 f.write("\n")
                 f.write("/* gmsh"+module.name+" */\n")
                 for rtype, name, args in module.fs:
-                    f.write("GMSH_API int gmshc" + module.name+name+"("+", ".join(
-                        list((a.c for a in args))) +
-                        ((", "+rtype.rtype_c + " *result") if rtype else "") +
-                        ");\n")
+                    f.write("GMSH_API "+(rtype.rtype_c if rtype else "void"))
+                    f.write(" gmshc" + module.name+name+"("
+                            +", ".join(list((a.c for a in args+(oint("ierr"),))))
+                            + ");\n")
             f.write(c_footer)
 
         with open(filename+".cc","w") as f:
@@ -432,22 +432,21 @@ class API:
                 f.write("\n")
                 f.write("/* gmsh"+module.name+" */\n")
                 for rtype, name, args in module.fs:
-                    #rt = rtype.rtype_c if rtype else "void"
-                    f.write("int gmshc" + module.name+name+"("+", ".join(
-                        list((a.c for a in args)))+
-                        ((", "+rtype.rtype_c + " *result") if rtype else "") +
-                        "){\n"
-                        )
+                    f.write(rtype.rtype_c if rtype else "void")
+                    f.write(" gmshc" + module.name+name+"("
+                        +", ".join(list((a.c for a in args+(oint("ierr"),))))+"){\n")
+                    if rtype:
+                        f.write("  "+ rtype.rtype_c + "  result_api_;\n")
+                    f.write("if(ierr) *ierr = 0;\n");
                     f.write("  try {\n");
                     f.write("".join((a.c_cpp_pre for a in args)))
                     if rtype:
-                        f.write(rtype.rtype_c + " result_api_ = ")
+                        f.write("  result_api_ = ")
                     f.write("  gmsh" + module.name+name+"("+", ".join(
                         list((a.c_cpp_arg for a in args)))+
                         ");\n")
-                    if rtype:
-                        f.write("if(result) *result = result_api_;\n")
                     f.write("".join((a.c_cpp_post for a in args)))
-                    f.write("  } catch(int api_ierr_) {return api_ierr_;}\n");
-                    f.write("  return 0;\n");
+                    f.write("  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}\n");
+                    if rtype :
+                        f.write("  return result_api_;\n");
                     f.write("}\n\n")
