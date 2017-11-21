@@ -178,7 +178,7 @@ class ovectorvectorint(arg):
         return "api_"+self.name+"_"
     @property
     def c_cpp_pre(self):
-        return "  std::vector<std::vector<int> >"+self.c_cpp_arg +";\n"
+        return "  std::vector<std::vector<int> > "+self.c_cpp_arg +";\n"
     @property
     def c_cpp_post(self):
         return "  vectorvector2ptrptr("+self.c_cpp_arg+", " + self.name + ", "+self.name+"Size, "+self.name+"SizeSize);\n"
@@ -436,13 +436,14 @@ class API:
                     f.write(" gmshc" + module.name+name+"("
                         +", ".join(list((a.c for a in args+(oint("ierr"),))))+"){\n")
                     if rtype:
-                        f.write("  "+ rtype.rtype_c + "  result_api_;\n")
+                        f.write("  "+ rtype.rtype_c + " result_api_;\n")
                     f.write("  if(ierr) *ierr = 0;\n");
                     f.write("  try {\n");
                     f.write("".join((a.c_cpp_pre for a in args)))
+                    f.write("  ")
                     if rtype:
-                        f.write("  result_api_ = ")
-                    f.write("  gmsh" + module.name+name+"("+", ".join(
+                        f.write("result_api_ = ")
+                    f.write("gmsh" + module.name+name+"("+", ".join(
                         list((a.c_cpp_arg for a in args)))+
                         ");\n")
                     f.write("".join((a.c_cpp_post for a in args)))
