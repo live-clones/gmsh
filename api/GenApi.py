@@ -437,7 +437,7 @@ class API:
                         +", ".join(list((a.c for a in args+(oint("ierr"),))))+"){\n")
                     if rtype:
                         f.write("  "+ rtype.rtype_c + "  result_api_;\n")
-                    f.write("if(ierr) *ierr = 0;\n");
+                    f.write("  if(ierr) *ierr = 0;\n");
                     f.write("  try {\n");
                     f.write("".join((a.c_cpp_pre for a in args)))
                     if rtype:
