@@ -312,13 +312,16 @@ GMSH_API void gmshModelEmbed(const int dim, const std::vector<int> &tags,
                              const int inDim, const int inTag);
 
 // -----------------------------------------------------------------------------
-// Module gmshModelGeo: per-model, built-in CAD kernel functions
+// Module gmshModelGeo: internal per-model GEO CAD kernel functions
 // -----------------------------------------------------------------------------
 
-// Adds a geometrical point in the internal, built-in CAD model, at coordinates
-// (x, y, z). If `meshSize' is > 0, adds a meshing constraint at that point. If
-// `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
-// automatically. Returns the tag of the point.
+// Adds a geometrical point in the internal GEO CAD representation, at
+// coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
+// that point. If `tag' is positive, sets the tag explicitly; otherwise a new
+// tag is selected automatically. Returns the tag of the point. (Note that the
+// point will be added in the current model only after gmshModelGeoSynchronize()
+// is called. This behavior holds for all the entities created in the
+// gmshModelGeo module.)
 GMSH_API int gmshModelGeoAddPoint(const double x, const double y, const double z,
                                   const double meshSize = 0., const int tag = -1);
 
@@ -417,12 +420,13 @@ GMSH_API void gmshModelGeoExtrude(const vector_pair &dimTags,
                                   std::vector<double>(),
                                   const bool recombine = false);
 
-// Extrudes the geometrical entities in `dimTags' by rotation around the axis of
-// revolution defined by the point (`x', `y', `z') and the direction (`ax',
-// `ay', `az'). Returns extruded entities in `outDimTags'. If `numElements' is
-// not empty, also extrude the mesh: the entries in `numElements' give the
-// number of elements in each layer. If `height' is not empty, it provides the
-// (cummulative) height of the different layers, normalized to 1.
+// Extrudes the geometrical entities in `dimTags' by rotation of `angle' radians
+// around the axis of revolution defined by the point (`x', `y', `z') and the
+// direction (`ax', `ay', `az'). Returns extruded entities in `outDimTags'. If
+// `numElements' is not empty, also extrude the mesh: the entries in
+// `numElements' give the number of elements in each layer. If `height' is not
+// empty, it provides the (cummulative) height of the different layers,
+// normalized to 1.
 GMSH_API void gmshModelGeoRevolve(const vector_pair &dimTags,
                                   const double x, const double y, const double z,
                                   const double ax, const double ay,
@@ -434,6 +438,13 @@ GMSH_API void gmshModelGeoRevolve(const vector_pair &dimTags,
                                   std::vector<double>(),
                                   const bool recombine = false);
 
+// Extrudes the geometrical entities in `dimTags' by a combined translation and
+// rotation of `angle' radians, along (`dx', `dy', `dz') and around the axis of
+// revolution defined by the point (`x', `y', `z') and the direction (`ax',
+// `ay', `az'). Returns extruded entities in `outDimTags'. If `numElements' is
+// not empty, also extrude the mesh: the entries in `numElements' give the
+// number of elements in each layer. If `height' is not empty, it provides the
+// (cummulative) height of the different layers, normalized to 1.
 GMSH_API void gmshModelGeoTwist(const vector_pair &dimTags,
                                 const double x, const double y, const double z,
                                 const double dx, const double dy, const double dz,
@@ -445,44 +456,109 @@ GMSH_API void gmshModelGeoTwist(const vector_pair &dimTags,
                                 const std::vector<double> &heights =
                                 std::vector<double>(),
                                 const bool recombine = false);
+
+// Translates the geometrical entities in `dimTags' along (`dx', `dy', `dz').
 GMSH_API void gmshModelGeoTranslate(const vector_pair &dimTags, const double dx,
                                     const double dy, const double dz);
+
+// Rotates the geometrical entities in `dimTags' of `angle' radians around the
+// axis of revolution defined by the point (`x', `y', `z') and the direction
+// (`ax', `ay', `az').
 GMSH_API void gmshModelGeoRotate(const vector_pair &dimTags, const double x,
                                  const double y, const double z, const double ax,
                                  const double ay, const double az,
                                  const double angle);
+
+
+// Scales the geometrical entities in `dimTag' by factors `a', `b' and `c' along
+// the three coordinate axes; use (`x', `y', `z') as the center of the
+// homothetic transformation.
 GMSH_API void gmshModelGeoDilate(const vector_pair &dimTags, const double x,
                                  const double y, const double z, const double a,
                                  const double b, const double c);
+
+// Applies a symmetry transformation to the geometrical entities in `dimTag',
+// with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
 GMSH_API void gmshModelGeoSymmetry(const vector_pair &dimTags, const double a,
                                    const double b, const double c, const double d);
+
+// Copies the entities in `dimTags'; the new entities are returned in
+// `outDimTags'.
 GMSH_API void gmshModelGeoCopy(const vector_pair &dimTags, vector_pair &outDimTags);
+
+// Removes the entities `dimTags'. If `recursive' is true, remove all the
+// entities on their boundaries, down to dimension 0.
 GMSH_API void gmshModelGeoRemove(const vector_pair &dimTags,
                                  const bool recursive = false);
+
+// Remove all duplicate entities (different entities at the same geometrical
+// location).
 GMSH_API void gmshModelGeoRemoveAllDuplicates();
+
+
+// Sets a mesh size constraint on the geometrical entities `dimTags'. Currently
+// only entities of dimension 0 (points) are handled.
 GMSH_API void gmshModelGeoSetMeshSize(const vector_pair &dimTags, const double size);
+
+// Sets a transfinite meshing constraint on the line `tag', with `numVertices'
+// mesh vertices distributed according to `type' and `coef'. Currently supported
+// types are "Progression" (geometrical progression with power `coef') and
+// "Bump" (refinement toward both extreminties of the line).
 GMSH_API void gmshModelGeoSetTransfiniteLine(const int tag, const int nPoints,
                                              const std::string &type = "Progression",
                                              const double coef = 1.);
+
+// Sets a transfinite meshing constraint on the surface `tag'. `arrangement'
+// describes the arrangement of the triangles when the surface is not flagged as
+// recombined: currently supported values are "Left", "Right", "AlternateLeft"
+// and "AlternateRight". `cornerTags' can be used to specify the (3 or 4)
+// corners of the transfinite interpolation explicitly; specifying the corners
+// explicitly is mandatory if the surface has more that 3 or 4 points on its
+// boundary.
 GMSH_API void gmshModelGeoSetTransfiniteSurface(const int tag,
                                                 const std::string &arrangement = "Left",
                                                 const std::vector<int> &cornerTags =
                                                 std::vector<int>());
+
+// Sets a transfinite meshing constraint on the surface `tag'. `cornerTags' can
+// be used to specify the (6 or 8) corners of the transfinite interpolation
+// explicitly.
 GMSH_API void gmshModelGeoSetTransfiniteVolume(const int tag,
                                                const std::vector<int> &cornerTags =
                                                std::vector<int>());
+
+// Sets a recombination meshing constraint on the geometrical entity of
+// dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to
+// recombine triangles into quadrangles) are supported.
 GMSH_API void gmshModelGeoSetRecombine(const int dim, const int tag,
                                        const double angle = 45.);
+
+// Sets a smoothing meshing constraint on the geometrical entity of dimension
+// `dim' and tag `tag'. `val' iterations of a Laplace smoother are applied.
 GMSH_API void gmshModelGeoSetSmoothing(const int dim, const int tag,
                                        const int val);
+
+// Sets a reverse meshing constraint on the geometrical entity of dimension
+// `dim' and tag `tag'. If `val' is true, the mesh orientation will be reversed
+// with respect to the natural mesh orientation (i.e. the orientation consistent
+// with the orientation of the geometrical entity). If `val' is false, the mesh
+// is left as-is.
 GMSH_API void gmshModelGeoSetReverseMesh(const int dim, const int tag,
                                          const bool val = true);
+
+// Synchronize the internal GEO CAD representation with the current Gmsh
+// model. This can be called at any time, but since it involves a non trivial
+// amount of processing, the number of synchronization points should normally be
+// minimized.
 GMSH_API void gmshModelGeoSynchronize();
 
 // -----------------------------------------------------------------------------
-// Module gmshModelOcc: per-model, OpenCASCADE CAD kernel functions
+// Module gmshModelOcc: internal per-model OpenCASCADE CAD kernel functions
 // -----------------------------------------------------------------------------
 
+// (Note that the point will be added in the current model only after
+// gmshModelOccSynchronize() is called. This behavior holds for all the entities
+// created in the gmshModelGeo module.)
 GMSH_API int gmshModelOccAddPoint(const double x, const double y, const double z,
                                   const double meshSize = 0., const int tag = -1);
 GMSH_API int gmshModelOccAddLine(const int startTag, const int endTag,
@@ -594,14 +670,14 @@ GMSH_API int gmshModelOccBooleanUnion(const vector_pair &objectDimTags,
 GMSH_API int gmshModelOccBooleanIntersection(const vector_pair &objectDimTags,
                                              const vector_pair &toolDimTags,
                                              vector_pair &outDimTags,
-                                             std::vector<vector_pair > &outDimTagsMap,
+                                             std::vector<vector_pair> &outDimTagsMap,
                                              const int tag = -1,
                                              const bool removeObject = true,
                                              const bool removeTool = true);
 GMSH_API int gmshModelOccBooleanDifference(const vector_pair &objectDimTags,
                                            const vector_pair &toolDimTags,
                                            vector_pair &outDimTags,
-                                           std::vector<vector_pair > &outDimTagsMap,
+                                           std::vector<vector_pair> &outDimTagsMap,
                                            const int tag = -1,
                                            const bool removeObject = true,
                                            const bool removeTool = true);
@@ -630,7 +706,11 @@ GMSH_API void gmshModelOccImportShapes(const std::string &fileName,
                                        vector_pair &outDimTags,
                                        const bool highestDimOnly = true,
                                        const std::string &format = "");
+
+// Sets a mesh size constraint on the geometrical entities `dimTags'. Currently
+// only entities of dimension 0 (points) are handled.
 GMSH_API void gmshModelOccSetMeshSize(const vector_pair &dimTags, const double size);
+
 GMSH_API void gmshModelOccSynchronize();
 
 // -----------------------------------------------------------------------------
