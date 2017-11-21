@@ -328,41 +328,86 @@ GMSH_API int gmshModelGeoAddPoint(const double x, const double y, const double z
 GMSH_API int gmshModelGeoAddLine(const int startTag, const int endTag,
                                  const int tag = -1);
 
-// Adds a circle arc between the two points with tags `startTag' and `endTag',
-// with center `centertag'. If `tag' is positive, sets the tag explicitly;
-// otherwise a new tag is selected automatically. If (`nx', `ny', `nz') !=
-// (0,0,0), explicitely sets the plane of the circle arc.
+// Adds a circle arc (stricly smaller than Pi) between the two points with tags
+// `startTag' and `endTag', with center `centertag'. If `tag' is positive, sets
+// the tag explicitly; otherwise a new tag is selected automatically. If (`nx',
+// `ny', `nz') != (0,0,0), explicitely sets the plane of the circle arc. Returns
+// the tag of the circle arc.
 GMSH_API int gmshModelGeoAddCircleArc(const int startTag, const int centerTag,
                                       const int endTag, const int tag = -1,
                                       const double nx = 0., const double ny = 0.,
                                       const double nz = 0.);
 
-// Adds an ellipse arc between the two points `startTag' and `endTag', with
-// center `centertag' and major axis point `majorTag'. If `tag' is positive,
-// sets the tag explicitly; otherwise a new tag is selected automatically. If
-// (`nx', `ny', `nz') != (0,0,0), explicitely sets the plane of the circle arc.
+// Adds an ellipse arc (stricly smaller than Pi) between the two points
+// `startTag' and `endTag', with center `centertag' and major axis point
+// `majorTag'. If `tag' is positive, sets the tag explicitly; otherwise a new
+// tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0), explicitely
+// sets the plane of the circle arc. Returns the tag of the ellipse arc.
 GMSH_API int gmshModelGeoAddEllipseArc(const int startTag, const int centerTag,
                                        const int majorTag, const int endTag,
                                        const int tag = -1, const double nx = 0.,
                                        const double ny = 0., const double nz = 0.);
 
+// Adds a spline curve going through `vertexTags' points. If `tag' is positive,
+// sets the tag explicitly; otherwise a new tag is selected automatically.
+// Returns the tag of the spline curve.
 GMSH_API int gmshModelGeoAddSpline(const std::vector<int> &vertexTags,
                                    const int tag = -1);
+
+// Adds a b-spline curve with `vertexTags' control points. If `tag' is positive,
+// sets the tag explicitly; otherwise a new tag is selected automatically.
+// Returns the tag of the b-spline curve.
 GMSH_API int gmshModelGeoAddBSpline(const std::vector<int> &vertexTags,
                                     const int tag = -1);
+
+// Adds a Bezier curve with `vertexTags' control points. If `tag' is positive,
+// sets the tag explicitly; otherwise a new tag is selected automatically.
+// Returns the tag of the Bezier curve.
 GMSH_API int gmshModelGeoAddBezier(const std::vector<int> &vertexTags,
                                    const int tag = -1);
+
+// Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should
+// contain (signed) tags of geometrical enties of dimension 1 forming a closed
+// loop: a negative tag signifies that the underlying edge is considered with
+// reversed orientation. If `tag' is positive, sets the tag explicitly;
+// otherwise a new tag is selected automatically. Returns the tag of the line
+// loop.
 GMSH_API int gmshModelGeoAddLineLoop(const std::vector<int> &edgeTags,
                                      const int tag = -1);
+
+// Adds a plane surface defined by one or more line loops `wireTags'. The first
+// line loop defines the exterior contour; additional line loop define holes. If
+// `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
+// automatically. Returns the tag of the surface.
 GMSH_API int gmshModelGeoAddPlaneSurface(const std::vector<int> &wireTags,
                                          const int tag = -1);
+
+// Adds a surface filling the line loops in `wireTags'. Currently only a single
+// line loop is supported; this line loop should be composed by 3 or 4 edges
+// only. If `tag' is positive, sets the tag explicitly; otherwise a new tag is
+// selected automatically. Returns the tag of the surface.
 GMSH_API int gmshModelGeoAddSurfaceFilling(const std::vector<int> &wireTags,
                                            const int tag = -1,
                                            const int sphereCenterTag = -1);
+
+// Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is
+// positive, sets the tag explicitly; otherwise a new tag is selected
+// automatically. Returns the tag of the surface loop.
 GMSH_API int gmshModelGeoAddSurfaceLoop(const std::vector<int> &faceTags,
                                         const int tag = -1);
+
+// Adds a volume defined by one or more surface loops `shellTags'. The first
+// surface loop defines the exterior boundary; additional surface loop define
+// holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag is
+// selected automatically. Returns the tag of the volume.
 GMSH_API int gmshModelGeoAddVolume(const std::vector<int> &shellTags,
                                    const int tag = -1);
+
+// Extrudes the geometrical entities in `dimTags' by translation along (`dx',
+// `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements' is
+// not empty, also extrude the mesh: the entries in `numElements' give the
+// number of elements in each layer. If `height' is not empty, it provides the
+// (cummulative) height of the different layers, normalized to 1.
 GMSH_API void gmshModelGeoExtrude(const vector_pair &dimTags,
                                   const double dx, const double dy, const double dz,
                                   vector_pair &outDimTags,
@@ -371,6 +416,13 @@ GMSH_API void gmshModelGeoExtrude(const vector_pair &dimTags,
                                   const std::vector<double> &heights =
                                   std::vector<double>(),
                                   const bool recombine = false);
+
+// Extrudes the geometrical entities in `dimTags' by rotation around the axis of
+// revolution defined by the point (`x', `y', `z') and the direction (`ax',
+// `ay', `az'). Returns extruded entities in `outDimTags'. If `numElements' is
+// not empty, also extrude the mesh: the entries in `numElements' give the
+// number of elements in each layer. If `height' is not empty, it provides the
+// (cummulative) height of the different layers, normalized to 1.
 GMSH_API void gmshModelGeoRevolve(const vector_pair &dimTags,
                                   const double x, const double y, const double z,
                                   const double ax, const double ay,
@@ -381,6 +433,7 @@ GMSH_API void gmshModelGeoRevolve(const vector_pair &dimTags,
                                   const std::vector<double> &heights =
                                   std::vector<double>(),
                                   const bool recombine = false);
+
 GMSH_API void gmshModelGeoTwist(const vector_pair &dimTags,
                                 const double x, const double y, const double z,
                                 const double dx, const double dy, const double dz,
