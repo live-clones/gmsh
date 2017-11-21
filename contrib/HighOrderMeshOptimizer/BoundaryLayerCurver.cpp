@@ -330,15 +330,16 @@ namespace
    *    *-------------*
    *  B        a        C
    */
+
   bool solveASDtriangle(double angleB, const SVector3 &sideA,
-                        const SVector3 &dirSideB, const SVector3 &w,
-                        double &lengthSideB, bool positiveLengths = true)
+                        const SVector3 &dirSideB, double &lengthSideB,
+                        const SVector3 &w, bool positiveLengths = true)
   {
     // Assuming:
     // - angleB is the signed angle from a to c in range [-pi, pi]
     // - sideA is the vector from B to C
-    // - dirSideB is a vector from C in direction to A
-    // positiveLengths means that each angle should be of same sign
+    // - dirSideB is a vector from C in the direction of A
+    // positiveLengths=true implies that all angles have to be of the same sign
     if (std::abs(angleB) > M_PI) {
       Msg::Warning("angle greater than pi in solveASDtriangle");
     }
@@ -348,10 +349,34 @@ namespace
     if (positiveLengths && sign * angleC < 0) return false;
 
     double angleA = sign * M_PI - angleB - angleC;
-    if (std::abs(angleA) < 1e-10) return false;
+    if (std::abs(angleA) < 1e-12) return false;
     if (positiveLengths && (sign * angleA < 0 || sign * angleA > M_PI)) return false;
 
     lengthSideB = sideA.norm() / std::sin(angleA) * std::sin(angleB);
+    return true;
+  }
+
+  bool solveLSDtriangle(double lengthSideC, const SVector3 &sideA,
+                        const SVector3 &dirSideB, double &lengthSideB,
+                        const SVector3 &w)
+  {
+    // Assuming:
+    // - sideA is the vector from B to C
+    // - dirSideB is a vector from C in the direction of A
+    // - positive lengths, i.e. all angles have to be of the same sign
+    // - lengthSideC > length(sideA). Otherwise, ambiguous (0, 1 or 2 solutions)
+    if (lengthSideC < sideA.norm()) return false;
+
+    double angleC = signedAngle(dirSideB, -sideA, w);
+    int sign = gmsh_sign(angleC);
+
+    double sinAngleA = sideA.norm() / lengthSideC * std::sin(angleC);
+    double angleA = std::asin(sinAngleA);
+
+    double angleB = sign * M_PI - angleA - angleC;
+    lengthSideB = sideA.norm() / sinAngleA * std::sin(angleB);
+    if (lengthSideB < 0) std::cout << "AARRAFGAGGAE" << std::endl;
+    // TODO remove this
     return true;
   }
 }
@@ -851,59 +876,65 @@ namespace BoundaryLayerCurver
     double displacement = 0;
 
     bool canImprove0 = true, canImprove1 = true;
-    bool improve0 = std::abs(angle0) > targetAngle0 + 1e-10;
-    bool improve1 = std::abs(angle1) > targetAngle1 + 1e-10;
+    bool canImproveL0 = true, canImproveL1 = true;
+    bool improve0 = std::abs(angle0) > targetAngle0 + 1e-12;
+    bool improve1 = std::abs(angle1) > targetAngle1 + 1e-12;
     bool canImprove = (improve0 && canImprove0) || (improve1 && canImprove1);
 
-    while (canImprove && displacement < limit)
+    bool improved = true;
+
+    while (improved && displacement < limit)
     {
       double maxDisplacement = computeDampingDirections(controlPoints, dCtrlPnts);
       if (maxDisplacement < .05 * limit)
         maxDisplacement = computeLinearDirections(controlPoints, dCtrlPnts);
 
-      double fact0 = 0;
+      const int k = nVert-1;
+      SVector3 dir0(dCtrlPnts(2, 0), dCtrlPnts(2, 1), dCtrlPnts(2, 2));
+      SVector3 dir1(dCtrlPnts(k, 0), dCtrlPnts(k, 1), dCtrlPnts(k, 2));
+
+      double maxFact = 0;
       {
         double alpha = angle0 - gmsh_sign(angle0) * targetAngle0;
-        SVector3 dir(dCtrlPnts(2, 0), dCtrlPnts(2, 1), dCtrlPnts(2, 2));
 
         double length;
-        canImprove0 = solveASDtriangle(-alpha, vTop0, dir, w, length);
-        if (improve0 && canImprove0) {
-          fact0 = length / dir.norm();
-        }
+        canImprove0 = solveASDtriangle(-alpha, vTop0, dir0, length, w);
+        if (improve0 && canImprove0)
+          maxFact = std::max(maxFact, length / dir0.norm());
       }
 
-      double fact1 = 0;
-      {
+      if (maxFact < 1) {
         double alpha = angle1 - gmsh_sign(angle1) * targetAngle1;
-        const int i = nVert-1;
-        SVector3 dir(dCtrlPnts(i, 0), dCtrlPnts(i, 1), dCtrlPnts(i, 2));
 
         double length;
-        canImprove1 = solveASDtriangle(-alpha, -vTop1, dir, w, length);
-        if (improve1 && canImprove1) {
-          fact1 = length / dir.norm();
-        }
+        canImprove1 = solveASDtriangle(-alpha, -vTop1, dir1, length, w);
+        if (improve1 && canImprove1)
+          maxFact = std::max(maxFact, length / dir1.norm());
       }
 
-      double factL0 = 0, factL1 = 0;
-//      // FIXME compute length curve instead
-//      double totalLength = linear.norm();
-//      double limitLength = .5 * totalLength / (nVert-1);
-////      if (sign0 * beta0 > 0 && sign0 * beta0 < M_PI) {
-//        double length0 = vTop0.norm();
-//        if (length0 < limitLength) {
-//          double sinGamma0 = length0 / limitLength * std::sin(beta0);
-//          double gamma0x = std::asin(sinGamma0);
-//          double alpha0 = (sinGamma0 > 0 ? M_PI : -M_PI) - beta0 - gamma0;
-//
-//        }
-////      }
+      double totalLength = linear.norm();
+      double limitLength = .5 * totalLength / (nVert-1);
+      double length0 = vTop0.norm();
+      double length1 = vTop1.norm();
+
+      if (maxFact < 1 && length0 < limitLength) {
+        double length;
+        bool canImprove = solveLSDtriangle(limitLength, vTop0, dir0, length, w);
+        std::cout << "canImprove: " << canImprove << std::endl;
+        if (canImprove) maxFact = std::max(maxFact, length / dir0.norm());
+      }
+
+      if (maxFact < 1 && length1 < limitLength) {
+        double length;
+        bool canImprove = solveLSDtriangle(limitLength, -vTop1, dir1, length, w);
+        if (canImprove) maxFact = std::max(maxFact, length / dir1.norm());
+      }
 
       double factDisp = (limit-displacement) / maxDisplacement;
-      double fact = std::min(1., std::min(factDisp, std::max(fact0, fact1)));
-      std::cout << "fact: " << fact << " (" << fact0 << ", " << fact1 << ")" << std::endl;
+      double fact = std::min(1., std::min(factDisp, maxFact));
+//      std::cout << "fact: " << fact << " (" << fact0 << ", " << fact1 << ")" << std::endl;
 //      fact = std::max(fact0, fact1);
+      if (fact < 1e-12) fact = 0;
 
       dCtrlPnts.scale(fact);
       controlPoints.add(dCtrlPnts);
@@ -921,9 +952,10 @@ namespace BoundaryLayerCurver
       bool aa = std::abs(angle0) > targetAngle0;
       bool bb = std::abs(angle1) > targetAngle1;
 
-      improve0 = std::abs(angle0) > targetAngle0 + 1e-10;
-      improve1 = std::abs(angle1) > targetAngle1 + 1e-10;
+      improve0 = std::abs(angle0) > targetAngle0 + 1e-12;
+      improve1 = std::abs(angle1) > targetAngle1 + 1e-12;
       canImprove = (improve0 && canImprove0) || (improve1 && canImprove1);
+      improved = fact > 0;
     }
   }
 
