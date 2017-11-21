@@ -584,36 +584,71 @@ namespace BoundaryLayerCurver
     }
   }
 
-  double dampingBezierControlPoints(fullMatrix<double> &controlPoints, double limit)
+  double computeDampingDirections(const fullMatrix<double> &controlPoints,
+                                  fullMatrix<double> &directions)
   {
     const int nVert = controlPoints.size1();
 
     std::vector<int> idx(nVert);
     idx[0] = 0;
-    idx[nVert-1] = 1;
     for (int i = 1; i < nVert-1; ++i) idx[i] = i+1;
+    idx[nVert-1] = 1;
 
-    fullMatrix<double> dCtrlPnts(nVert, 3);
-    dCtrlPnts(idx[0], 0) = 0;
-    dCtrlPnts(idx[0], 1) = 0;
-    dCtrlPnts(idx[0], 2) = 0;
-    dCtrlPnts(idx[nVert-1], 0) = 0;
-    dCtrlPnts(idx[nVert-1], 1) = 0;
-    dCtrlPnts(idx[nVert-1], 2) = 0;
+    directions(idx[0], 0) = 0;
+    directions(idx[0], 1) = 0;
+    directions(idx[0], 2) = 0;
+    directions(idx[nVert-1], 0) = 0;
+    directions(idx[nVert-1], 1) = 0;
+    directions(idx[nVert-1], 2) = 0;
     for (int i = 1; i < nVert-1; ++i) {
       for (int j = 0; j < 3; ++j)
-        dCtrlPnts(idx[i], j) = .25 * controlPoints(idx[i-1], j) +
-                               .25 * controlPoints(idx[i+1], j) -
-                               .5 * controlPoints(idx[i], j);
+        directions(idx[i], j) = .25 * controlPoints(idx[i-1], j) +
+                                .25 * controlPoints(idx[i+1], j) -
+                                .5 * controlPoints(idx[i], j);
     }
 
     double maxDisplacement = 0;
-    for (int i = 0; i < nVert; ++i) {
-      double displacement = std::sqrt(dCtrlPnts(i, 0) * dCtrlPnts(i, 0) +
-                                      dCtrlPnts(i, 1) * dCtrlPnts(i, 1) +
-                                      dCtrlPnts(i, 2) * dCtrlPnts(i, 2));
+    for (int i = 1; i < nVert-1; ++i) {
+      double displacement = std::sqrt(directions(i, 0) * directions(i, 0) +
+                                      directions(i, 1) * directions(i, 1) +
+                                      directions(i, 2) * directions(i, 2));
       maxDisplacement = std::max(maxDisplacement, displacement);
     }
+    return maxDisplacement;
+  }
+
+  double computeLinearDirections(const fullMatrix<double> &controlPoints,
+                                 fullMatrix<double> &directions)
+  {
+    const int nVert = controlPoints.size1();
+
+    std::vector<double> xi(nVert);
+    xi[0] = 0;
+    xi[1] = 1;
+    for (int i = 2; i < nVert; ++i) xi[i] = (double)(i-1) / (nVert-1);
+
+    for (int i = 1; i < nVert-1; ++i) {
+      for (int j = 0; j < 3; ++j)
+        directions(i, j) = (1-xi[i]) * controlPoints(0, j) +
+                              xi[i]  * controlPoints(1, j) -
+                                       controlPoints(i, j);
+    }
+
+    double maxDisplacement = 0;
+    for (int i = 1; i < nVert-1; ++i) {
+      double displacement = std::sqrt(directions(i, 0) * directions(i, 0) +
+                                      directions(i, 1) * directions(i, 1) +
+                                      directions(i, 2) * directions(i, 2));
+      maxDisplacement = std::max(maxDisplacement, displacement);
+    }
+    return maxDisplacement;
+  }
+
+  double dampingBezierControlPoints(fullMatrix<double> &controlPoints, double limit)
+  {
+    const int nVert = controlPoints.size1();
+    fullMatrix<double> dCtrlPnts(nVert, 3);
+    double maxDisplacement = computeDampingDirections(controlPoints, dCtrlPnts);
 
     if (maxDisplacement > limit)
       dCtrlPnts.scale(limit / maxDisplacement);
@@ -745,32 +780,8 @@ namespace BoundaryLayerCurver
     fullMatrix<double> controlPoints(nVert, 3);
     fs->lag2Bez(xyz, controlPoints);
 
-    std::vector<int> idx(nVert);
-    idx[0] = 0;
-    for (int i = 1; i < nVert-1; ++i) idx[i] = i+1;
-    idx[nVert-1] = 1;
-
     fullMatrix<double> dCtrlPnts(nVert, 3);
-    dCtrlPnts(idx[0], 0) = 0;
-    dCtrlPnts(idx[0], 1) = 0;
-    dCtrlPnts(idx[0], 2) = 0;
-    dCtrlPnts(idx[nVert-1], 0) = 0;
-    dCtrlPnts(idx[nVert-1], 1) = 0;
-    dCtrlPnts(idx[nVert-1], 2) = 0;
-    for (int i = 1; i < nVert-1; ++i) {
-      for (int j = 0; j < 3; ++j)
-        dCtrlPnts(idx[i], j) = .25 * controlPoints(idx[i-1], j) +
-                               .25 * controlPoints(idx[i+1], j) -
-                               .5 * controlPoints(idx[i], j);
-    }
-
-    double maxDisplacement = 0;
-    for (int i = 0; i < nVert; ++i) {
-      double displacement = std::sqrt(dCtrlPnts(i, 0) * dCtrlPnts(i, 0) +
-                                      dCtrlPnts(i, 1) * dCtrlPnts(i, 1) +
-                                      dCtrlPnts(i, 2) * dCtrlPnts(i, 2));
-      maxDisplacement = std::max(maxDisplacement, displacement);
-    }
+    double maxDisplacement = computeDampingDirections(controlPoints, dCtrlPnts);
 
     if (maxDisplacement > limit)
       dCtrlPnts.scale(limit / maxDisplacement);
@@ -782,6 +793,114 @@ namespace BoundaryLayerCurver
       vertices[i]->x() = xyz(i, 0);
       vertices[i]->y() = xyz(i, 1);
       vertices[i]->z() = xyz(i, 2);
+    }
+  }
+
+  void regularizeExtremities(double targetAngle0, double targetAngle1,
+                             SVector3 linear, SVector3 w,
+                             fullMatrix<double> &controlPoints, double limit)
+  {
+    targetAngle0 = std::abs(targetAngle0);
+    targetAngle1 = std::abs(targetAngle1);
+    int nVert = controlPoints.size1();
+    SVector3 vTop0(controlPoints(2, 0) - controlPoints(0, 0),
+                   controlPoints(2, 1) - controlPoints(0, 1),
+                   controlPoints(2, 2) - controlPoints(0, 2));
+    SVector3 vTop1(controlPoints(1, 0) - controlPoints(nVert-1, 0),
+                   controlPoints(1, 1) - controlPoints(nVert-1, 1),
+                   controlPoints(1, 2) - controlPoints(nVert-1, 2));
+
+    double angle0 = signedAngle(linear, vTop0, w);
+    double angle1 = signedAngle(linear, vTop1, w);
+
+    fullMatrix<double> dCtrlPnts(nVert, 3);
+    double displacement = 0;
+
+    bool canImprove0 = true, canImprove1 = true;
+    bool improve0 = std::abs(angle0) > targetAngle0 + 1e-10;
+    bool improve1 = std::abs(angle1) > targetAngle1 + 1e-10;
+    bool canImprove = (improve0 && canImprove0) || (improve1 && canImprove1);
+
+    while (canImprove && displacement < limit)
+    {
+      double maxDisplacement = computeDampingDirections(controlPoints, dCtrlPnts);
+      if (maxDisplacement < .05 * limit)
+        maxDisplacement = computeLinearDirections(controlPoints, dCtrlPnts);
+
+//      dCtrlPnts.print("dCtrlPnts");
+      double fact0 = 0, fact1 = 0;
+      double factL0 = 0, factL1 = 0;
+      double sign0 = angle0 > 0 ? 1 : -1;
+
+      SVector3 dir0(dCtrlPnts(2, 0), dCtrlPnts(2, 1), dCtrlPnts(2, 2));
+      double alpha0 = angle0 - (sign0 > 0 ? targetAngle0 : -targetAngle0);
+      double beta0 = signedAngle(vTop0, -dir0, w);
+      double gamma0 = (sign0 > 0 ? M_PI : -M_PI) - beta0 - alpha0;
+      double sa0 = std::sin(alpha0);
+      double sg0 = std::sin(gamma0);
+      double l0 = vTop0.norm();
+      double L0 = vTop0.norm() / std::sin(gamma0) * std::sin(alpha0);
+      double d0 = dir0.norm();
+      if (sign0 * beta0 < 0 || sign0 * beta0 > M_PI ||
+          sign0 * gamma0 < 0 || sign0 * gamma0 > M_PI)
+        canImprove0 = false;
+      if (improve0 && canImprove0) {
+        fact0 = vTop0.norm() / std::sin(gamma0) * std::sin(alpha0) / dir0.norm();
+      }
+
+//      // FIXME compute length curve instead
+//      double totalLength = linear.norm();
+//      double limitLength = .5 * totalLength / (nVert-1);
+////      if (sign0 * beta0 > 0 && sign0 * beta0 < M_PI) {
+//        double length0 = vTop0.norm();
+//        if (length0 < limitLength) {
+//          double sinGamma0 = length0 / limitLength * std::sin(beta0);
+//          double gamma0x = std::asin(sinGamma0);
+//          double alpha0 = (sinGamma0 > 0 ? M_PI : -M_PI) - beta0 - gamma0;
+//
+//        }
+////      }
+
+      double sign1 = angle1 > 0 ? 1 : -1;
+      SVector3 dir1(dCtrlPnts(nVert-1, 0), dCtrlPnts(nVert-1, 1), dCtrlPnts(nVert-1, 2));
+      double alpha1 = angle1 - (sign1 > 0 ? targetAngle1 : -targetAngle1);
+      double beta1 = signedAngle(vTop1, dir1, w);
+      double gamma1 = (sign1 > 0 ? M_PI : -M_PI) - beta1 - alpha1;
+      double sa1 = std::sin(alpha1);
+      double sg1 = std::sin(gamma1);
+      double l1 = vTop1.norm();
+      double L1 = vTop1.norm() / std::sin(gamma1) * std::sin(alpha1);
+      double d1 = dir1.norm();
+      if (sign1 * beta1 < 0 || sign1 * beta1 > M_PI ||
+          sign1 * gamma1 < 0 || sign1 * gamma1 > M_PI)
+        canImprove1 = false;
+      if (improve1 && canImprove1) {
+        fact1 = vTop1.norm() / std::sin(gamma1) * std::sin(alpha1) / dir1.norm();
+      }
+      double factDisp = (limit-displacement) / maxDisplacement;
+      double fact = std::min(1., std::min(factDisp, std::max(fact0, fact1)));
+      std::cout << "fact: " << fact << " (" << fact0 << ", " << fact1 << ")" << std::endl;
+//      fact = std::max(fact0, fact1);
+
+      dCtrlPnts.scale(fact);
+      controlPoints.add(dCtrlPnts);
+
+      vTop0 = SVector3(controlPoints(2, 0) - controlPoints(0, 0),
+                       controlPoints(2, 1) - controlPoints(0, 1),
+                       controlPoints(2, 2) - controlPoints(0, 2));
+      vTop1 = SVector3(controlPoints(1, 0) - controlPoints(nVert-1, 0),
+                       controlPoints(1, 1) - controlPoints(nVert-1, 1),
+                       controlPoints(1, 2) - controlPoints(nVert-1, 2));
+
+      angle0 = signedAngle(linear, vTop0, w);
+      angle1 = signedAngle(linear, vTop1, w);
+      displacement += fact * maxDisplacement;
+      bool aa = std::abs(angle0) > targetAngle0;
+      bool bb = std::abs(angle1) > targetAngle1;
+
+      improve0 = std::abs(angle0) > targetAngle0 + 1e-10;
+      improve1 = std::abs(angle1) > targetAngle1 + 1e-10;
+      canImprove = (improve0 && canImprove0) || (improve1 && canImprove1);
     }
   }
 
@@ -857,8 +976,73 @@ namespace BoundaryLayerCurver
       }
     }
 
-
     damping(topVert, factorDamping * parameters.characteristicThickness());
+
+    // Control
+    if (true) {
+      int nVert = baseVert.size();
+      fullMatrix<double> xyzBase(nVert, 3);
+      fullMatrix<double> xyzTop(nVert, 3);
+      for (int i = 0; i < nVert; ++i) {
+        xyzBase(i, 0) = baseVert[i]->x();
+        xyzBase(i, 1) = baseVert[i]->y();
+        xyzBase(i, 2) = baseVert[i]->z();
+        xyzTop(i, 0) = topVert[i]->x();
+        xyzTop(i, 1) = topVert[i]->y();
+        xyzTop(i, 2) = topVert[i]->z();
+      }
+      const bezierBasis *fs = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 1);
+
+      fullMatrix<double> controlPointsBase(nVert, 3);
+      fs->lag2Bez(xyzBase, controlPointsBase);
+      SVector3 vBase0(controlPointsBase(2, 0) - controlPointsBase(0, 0),
+                      controlPointsBase(2, 1) - controlPointsBase(0, 1),
+                      controlPointsBase(2, 2) - controlPointsBase(0, 2));
+      SVector3 vBase1(controlPointsBase(1, 0) - controlPointsBase(nVert-1, 0),
+                      controlPointsBase(1, 1) - controlPointsBase(nVert-1, 1),
+                      controlPointsBase(1, 2) - controlPointsBase(nVert-1, 2));
+
+      fullMatrix<double> controlPointsTop(nVert, 3);
+      fs->lag2Bez(xyzTop, controlPointsTop);
+      SVector3 vTop0(controlPointsTop(2, 0) - controlPointsTop(0, 0),
+                     controlPointsTop(2, 1) - controlPointsTop(0, 1),
+                     controlPointsTop(2, 2) - controlPointsTop(0, 2));
+      SVector3 vTop1(controlPointsTop(1, 0) - controlPointsTop(nVert-1, 0),
+                     controlPointsTop(1, 1) - controlPointsTop(nVert-1, 1),
+                     controlPointsTop(1, 2) - controlPointsTop(nVert-1, 2));
+
+      SVector3 vLinBase = baseVert[1]->point() - baseVert[0]->point();
+      SVector3 vLinTop = topVert[1]->point() - topVert[0]->point();
+
+      double a = dot(w, crossprod(vLinBase, vBase0)) / norm(vLinBase) / norm(vBase0);
+      double b = dot(w, crossprod(vLinBase, vBase1)) / norm(vLinBase) / norm(vBase1);
+      double c = dot(w, crossprod(vLinTop, vTop0)) / norm(vLinTop) / norm(vTop0);
+      double d = dot(w, crossprod(vLinTop, vTop1)) / norm(vLinTop) / norm(vTop1);
+//      a *= 180*M_1_PI;
+//      b *= 180*M_1_PI;
+//      c *= 180*M_1_PI;
+//      d *= 180*M_1_PI;
+//      std::cout << "angles: " << a << " -> " << c << " (*" << c/a << ")  "
+//                              << b << " -> " << d << " (*" << d/b << ")" << std::endl;
+      a = signedAngle(vLinBase, vBase0, w);
+      b = signedAngle(vLinBase, vBase1, w);
+      c = signedAngle(vLinTop, vTop0, w);
+      d = signedAngle(vLinTop, vTop1, w);
+      std::cout << "angles: " << a*180*M_1_PI << " -> " << c*180*M_1_PI << " (*" << c/a << ")  "
+                              << b*180*M_1_PI << " -> " << d*180*M_1_PI << " (*" << d/b << ")" << std::endl;
+
+      double limit = 1000*parameters.characteristicThickness();
+
+      regularizeExtremities(a, b, vLinTop, w, controlPointsTop, limit);
+
+      fs->matrixBez2Lag.mult(controlPointsTop, xyzTop);
+      for (int i = 0; i < nVert; ++i) {
+        topVert[i]->x() = xyzTop(i, 0);
+        topVert[i]->y() = xyzTop(i, 1);
+        topVert[i]->z() = xyzTop(i, 2);
+      }
+    }
+
 
 //    if (nLayer == 0)
 //      drawBezierControlPolygon(topVert, bndEnt);
@@ -1058,6 +1242,7 @@ namespace BoundaryLayerCurver
 //    if (bottomEdge->getNum() != 1136) return true; // Bad
 //    if (bottomEdge->getNum() != 1102) return true; // HO
 //    if (bottomEdge->getNum() != 1150) return true; // concave
+//    if (bottomEdge->getNum() != 1151) return true; // symetric of concave
 
     MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
     std::vector<MVertex *> bottomVertices, topVertices, dum, dum2;
@@ -1276,9 +1461,9 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
       else dampingFactor *= 2;
     }
     if (success) {
-      for (int j = 0; j < column.size(); ++j) {
-        column[j]->setVisibility(false);
-      }
+//      for (int j = 0; j < column.size(); ++j) {
+//        column[j]->setVisibility(false);
+//      }
     }
 //    if (success)
 //      std::cout << " ok for " << dampingFactor << std::endl;

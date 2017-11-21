@@ -1097,7 +1097,8 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
   if (bndEnt->dim() == 1) {
     GEdge *gEd = bndEnt->cast2Edge();
     for(unsigned int i = 0; i< gEd->lines.size(); i++)
-      insertIfCurved(gEd->lines[i], bndEl);
+//      insertIfCurved(gEd->lines[i], bndEl);
+      bndEl.push_back(gEd->lines[i]);
   }
   else if (bndEnt->dim() == 2) {
     GFace *gFace = bndEnt->cast2Face();

@@ -122,9 +122,18 @@ inline SVector3 crossprod(const SVector3 &a, const SVector3 &b)
                   -(a.x() * b.z() - b.x() * a.z()),
                   a.x() * b.y() - b.x() * a.y()); }
 
-inline double angle (const SVector3 &a, const SVector3 &b){
+inline double angle (const SVector3 &a, const SVector3 &b)
+{
   double cosTheta = dot(a,b);
   double sinTheta = norm(crossprod(a,b));
+  return atan2 (sinTheta,cosTheta);
+}
+
+inline double signedAngle(const SVector3 &a, const SVector3 &b,
+                          const SVector3 &n)
+{
+  double cosTheta = dot(a,b);
+  double sinTheta = dot(crossprod(a,b), n);
   return atan2 (sinTheta,cosTheta);
 }
 
