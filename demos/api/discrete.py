@@ -24,7 +24,7 @@ gmshModelSetMeshElements(2, 1,
                          [2], # single type : 3-node triangle
                          [[1, 2]], # triangle tags: 1 and 2
                          [[1, 2, 3, # triangle 1: vertices 1, 2, 3
-                           1, 3, 4]]); # triangle 2: vertices 1, 3, 4
+                           1, 3, 4]]) # triangle 2: vertices 1, 3, 4
 
 # export the mesh ; use explore.py to read and examine the mesh
 gmshExport("test.msh")

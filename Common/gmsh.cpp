@@ -34,7 +34,13 @@
 #include "Field.h"
 #endif
 
-#define GMSH_ERROR(n) { throw n; }
+#if defined(HAVE_POST)
+#include "PView.h"
+#include "PViewData.h"
+#include "PViewDataList.h"
+#include "PViewDataGModel.h"
+#include "PViewOptions.h"
+#endif
 
 static int _initialized = 0;
 
@@ -55,52 +61,52 @@ void gmshInitialize(int argc, char **argv)
 {
   if(_initialized){
     Msg::Error("Gmsh has aleady been initialized");
-    GMSH_ERROR(1);
+    throw 1;
   }
   if(GmshInitialize(argc, argv)){
     _initialized = 1;
     return;
   }
-  GMSH_ERROR(-1);
+  throw -1;
 }
 
 void gmshFinalize()
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   if(GmshFinalize()){
     _initialized = 0;
     return;
   }
   Msg::Error("Something went wrong when finalizing Gmsh");
-  GMSH_ERROR(1);
+  throw 1;
 }
 
 void gmshOpen(const std::string &fileName)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   if(GmshOpenProject(fileName)) return;
-  GMSH_ERROR(1);
+  throw 1;
 }
 
 void gmshMerge(const std::string &fileName)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   if(GmshMergeFile(fileName)) return;
-  GMSH_ERROR(1);
+  throw 1;
 }
 
 void gmshExport(const std::string &fileName)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   if(GmshWriteFile(fileName)) return;
-  GMSH_ERROR(1);
+  throw 1;
 }
 
 void gmshClear()
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   if(GmshClearProject()) return;
-  GMSH_ERROR(1);
+  throw 1;
 }
 
 // gmshOption
@@ -132,79 +138,79 @@ static void _splitOptionName(const std::string &fullName, std::string &category,
 
 void gmshOptionSetNumber(const std::string &name, const double value)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   std::string c, n;
   int i;
   _splitOptionName(name, c, n, i);
   if(GmshSetOption(c, n, value, i)) return;
-  GMSH_ERROR(1);
+  throw 1;
 }
 
 void gmshOptionGetNumber(const std::string &name, double &value)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   std::string c, n;
   int i;
   _splitOptionName(name, c, n, i);
   if(GmshGetOption(c, n, value, i)) return;
-  GMSH_ERROR(1);
+  throw 1;
 }
 
 void gmshOptionSetString(const std::string &name, const std::string &value)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   std::string c, n;
   int i;
   _splitOptionName(name, c, n, i);
   if(GmshSetOption(c, n, value, i)) return;
-  GMSH_ERROR(1);
+  throw 1;
 }
 
 void gmshOptionGetString(const std::string &name, std::string &value)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   std::string c, n;
   int i;
   _splitOptionName(name, c, n, i);
   if(GmshGetOption(c, n, value, i)) return;
-  GMSH_ERROR(1);
+  throw 1;
 }
 
 // gmshModel
 
 void gmshModelCreate(const std::string &name)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   GModel *m = new GModel(name);
-  if(!m){ GMSH_ERROR(1); }
+  if(!m){ throw 1; }
 }
 
 void gmshModelDelete()
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   GModel *m = GModel::current();
-  if(!m){ GMSH_ERROR(1); }
+  if(!m){ throw 1; }
   delete m;
 }
 
 void gmshModelList(std::vector<std::string> &names)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   for(unsigned int i = 0; i < GModel::list.size(); i++)
     names.push_back(GModel::list[i]->getName());
 }
 
 void gmshModelSetCurrent(const std::string &name)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   GModel *m = GModel::findByName(name);
-  if(!m){ GMSH_ERROR(1); }
+  if(!m){ throw 1; }
   GModel::setCurrent(m);
 }
 
 void gmshModelGetEntities(vector_pair &dimTags, const int dim)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   dimTags.clear();
   std::vector<GEntity*> entities;
   GModel::current()->getEntities(entities, dim);
@@ -214,7 +220,7 @@ void gmshModelGetEntities(vector_pair &dimTags, const int dim)
 
 void gmshModelGetPhysicalGroups(vector_pair &dimTags, const int dim)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   dimTags.clear();
   std::map<int, std::vector<GEntity*> > groups[4];
   GModel::current()->getPhysicalGroups(groups);
@@ -230,7 +236,7 @@ void gmshModelGetPhysicalGroups(vector_pair &dimTags, const int dim)
 void gmshModelGetEntitiesForPhysicalGroup(const int dim, const int tag,
                                           std::vector<int> &tags)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   tags.clear();
   std::map<int, std::vector<GEntity*> > groups;
   GModel::current()->getPhysicalGroups(dim, groups);
@@ -244,13 +250,13 @@ void gmshModelGetEntitiesForPhysicalGroup(const int dim, const int tag,
 int gmshModelAddPhysicalGroup(const int dim, const std::vector<int> &tags,
                               const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   int outTag = tag;
   if(outTag < 0)
     outTag = GModel::current()->getGEOInternals()->getMaxPhysicalTag() + 1;
   if(!GModel::current()->getGEOInternals()->modifyPhysicalGroup
      (dim, outTag, 0, tags)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   GModel::current()->getGEOInternals()->synchronize(GModel::current());
   return outTag;
@@ -259,13 +265,13 @@ int gmshModelAddPhysicalGroup(const int dim, const std::vector<int> &tags,
 void gmshModelSetPhysicalName(const int dim, const int tag,
                               const std::string &name)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   GModel::current()->setPhysicalName(name, dim, tag);
 }
 
 void gmshModelGetPhysicalName(const int dim, const int tag, std::string &name)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   name = GModel::current()->getPhysicalName(dim, tag);
 }
 
@@ -273,11 +279,11 @@ void gmshModelGetBoundary(const vector_pair &dimTags, vector_pair &outDimTags,
                           const bool combined, const bool oriented,
                           const bool recursive)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   outDimTags.clear();
   if(!GModel::current()->getBoundaryTags(dimTags, outDimTags, combined,
                                          oriented, recursive)){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
@@ -286,7 +292,7 @@ void gmshModelGetEntitiesInBoundingBox(const double xmin, const double ymin,
                                        const double ymax, const double zmax,
                                        vector_pair &dimTags, const int dim)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   dimTags.clear();
   SBoundingBox3d box(xmin, ymin, zmin, xmax, ymax, zmax);
   std::vector<GEntity*> entities;
@@ -312,14 +318,14 @@ void gmshModelGetBoundingBox(const int dim, const int tag, double &xmin,
                              double &ymin, double &zmin, double &xmax,
                              double &ymax, double &zmax)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   if(!ge){
     Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
-    GMSH_ERROR(2);
+    throw 2;
   }
   SBoundingBox3d box = ge->bounds();
-  if(box.empty()){ GMSH_ERROR(3); }
+  if(box.empty()){ throw(3); }
   xmin = box.min().x();
   ymin = box.min().y();
   zmin = box.min().z();
@@ -331,7 +337,7 @@ void gmshModelGetBoundingBox(const int dim, const int tag, double &xmin,
 int gmshModelAddDiscreteEntity(const int dim, const int tag,
                                const std::vector<int> &boundary)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   int outTag = tag;
   if(outTag < 0){
     outTag = GModel::current()->getMaxElementaryNumber(dim);
@@ -339,7 +345,7 @@ int gmshModelAddDiscreteEntity(const int dim, const int tag,
   GEntity *e = GModel::current()->getEntityByTag(dim, outTag);
   if(e){
     Msg::Error("%s already exists", _entityName(dim, outTag).c_str());
-    GMSH_ERROR(2);
+    throw 2;
   }
   // FIXME: check and set boundary entities to construct topology!
   switch(dim){
@@ -365,23 +371,41 @@ int gmshModelAddDiscreteEntity(const int dim, const int tag,
     break;
   }
   default :
-    GMSH_ERROR(2);
+    throw 2;
   }
   return outTag;
 }
 
 void gmshModelRemove(const vector_pair &dimTags, const bool recursive)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   GModel::current()->remove(dimTags, recursive);
 }
 
 void gmshModelMesh(int dim)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   GModel *m = GModel::current();
-  if(!m){ GMSH_ERROR(1); }
+  if(!m){ throw 1; }
   m->mesh(dim);
+}
+
+void gmshModelGetLastMeshEntityError(vector_pair &dimTags)
+{
+  if(!_isInitialized()){ throw -1; }
+  std::vector<GEntity*> e = GModel::current()->getLastMeshEntityError();
+  dimTags.clear();
+  for(unsigned int i = 0; i < e.size(); i++)
+    dimTags.push_back(std::pair<int, int>(e[i]->dim(), e[i]->tag()));
+}
+
+void gmshModelGetLastMeshVertexError(std::vector<int> &vertexTags)
+{
+  if(!_isInitialized()){ throw -1; }
+  std::vector<MVertex*> v = GModel::current()->getLastMeshVertexError();
+  vertexTags.clear();
+  for(unsigned int i = 0; i < v.size(); i++)
+    vertexTags.push_back(v[i]->getNum());
 }
 
 void gmshModelGetMeshVertices(const int dim, const int tag,
@@ -389,13 +413,13 @@ void gmshModelGetMeshVertices(const int dim, const int tag,
                               std::vector<double> &coord,
                               std::vector<double> &parametricCoord)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   vertexTags.clear();
   coord.clear();
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   if(!ge){
     Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
-    GMSH_ERROR(2);
+    throw 2;
   }
   for(unsigned int i = 0; i < ge->mesh_vertices.size(); i++){
     MVertex *v = ge->mesh_vertices[i];
@@ -433,14 +457,14 @@ void gmshModelGetMeshElements(const int dim, const int tag,
                               std::vector<std::vector<int> > &elementTags,
                               std::vector<std::vector<int> > &vertexTags)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   types.clear();
   elementTags.clear();
   vertexTags.clear();
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   if(!ge){
     Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
-    GMSH_ERROR(2);
+    throw 2;
   }
   switch(dim){
   case 0: {
@@ -471,21 +495,21 @@ void gmshModelSetMeshVertices(const int dim, const int tag,
                               const std::vector<double> &coord,
                               const std::vector<double> &parametricCoord)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   if(!ge){
     Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
-    GMSH_ERROR(2);
+    throw 2;
   }
   if(coord.size() != 3 * vertexTags.size()){
     Msg::Error("Wrong number of coord");
-    GMSH_ERROR(2);
+    throw 2;
   }
   bool param = false;
   if(parametricCoord.size()){
     if(parametricCoord.size() != dim * vertexTags.size()){
       Msg::Error("Wrong number of parametric coord");
-      GMSH_ERROR(2);
+      throw 2;
     }
     param = true;
   }
@@ -501,8 +525,8 @@ void gmshModelSetMeshVertices(const int dim, const int tag,
       vv = new MEdgeVertex(x, y, z, ge, u, n);
     }
     else if(param && dim == 2){
-      double u = parametricCoord[i];
-      double v = parametricCoord[i + 1];
+      double u = parametricCoord[2 * i];
+      double v = parametricCoord[2 * i + 1];
       vv = new MFaceVertex(x, y, z, ge, u, v, n);
     }
     else
@@ -527,19 +551,19 @@ void gmshModelSetMeshElements(const int dim, const int tag,
                               const std::vector<std::vector<int> > &elementTags,
                               const std::vector<std::vector<int> > &vertexTags)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   if(!ge){
     Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
-    GMSH_ERROR(2);
+    throw 2;
   }
   if(types.size() != elementTags.size()){
     Msg::Error("Wrong number of element tags");
-    GMSH_ERROR(2);
+    throw 2;
   }
   if(types.size() != vertexTags.size()){
     Msg::Error("Wrong number of vertex tags");
-    GMSH_ERROR(2);
+    throw 2;
   }
   for(unsigned int i = 0; i < types.size(); i++){
     int type = types[i];
@@ -548,7 +572,7 @@ void gmshModelSetMeshElements(const int dim, const int tag,
     if(!numEle) continue;
     if(numEle * numVertPerEle != vertexTags[i].size()){
       Msg::Error("Wrong number of vertex tags for element type %d", type);
-      GMSH_ERROR(2);
+      throw 2;
     }
     std::vector<MElement*> elements(numEle);
     std::vector<MVertex*> vertices(numVertPerEle);
@@ -561,7 +585,7 @@ void gmshModelSetMeshElements(const int dim, const int tag,
         vertices[k] = GModel::current()->getMeshVertexByTag(vtag);
         if(!vertices[k]){
           Msg::Error("Unknown mesh vertex %d", vtag);
-          GMSH_ERROR(2);
+          throw 2;
         }
       }
       elements[j] = f.create(type, vertices, etag);
@@ -603,7 +627,7 @@ void gmshModelSetMeshElements(const int dim, const int tag,
     }
     if(!ok){
       Msg::Error("Wrong type of element for %s", _entityName(dim, tag).c_str());
-      GMSH_ERROR(2);
+      throw 2;
     }
   }
 }
@@ -612,11 +636,11 @@ void gmshModelGetMeshVertex(const int vertexTag,
                             std::vector<double> &coord,
                             std::vector<double> &parametricCoord)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   MVertex *v = GModel::current()->getMeshVertexByTag(vertexTag);
   if(!v){
     Msg::Error("Unknown mesh vertex %d", vertexTag);
-    GMSH_ERROR(2);
+    throw 2;
   }
   coord.clear();
   coord.push_back(v->x());
@@ -633,11 +657,11 @@ void gmshModelGetMeshVertex(const int vertexTag,
 void gmshModelGetMeshElement(const int elementTag, int &type,
                              std::vector<int> &vertexTags)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   MElement *e = GModel::current()->getMeshElementByTag(elementTag);
   if(!e){
     Msg::Error("Unknown mesh element %d", elementTag);
-    GMSH_ERROR(2);
+    throw 2;
   }
   type = e->getTypeForMSH();
   vertexTags.clear();
@@ -645,7 +669,7 @@ void gmshModelGetMeshElement(const int elementTag, int &type,
     MVertex *v = e->getVertex(i);
     if(!v){
       Msg::Error("Unknown mesh vertex in element %d", elementTag);
-      GMSH_ERROR(2);
+      throw 2;
     }
     vertexTags.push_back(v->getNum());
   }
@@ -653,7 +677,7 @@ void gmshModelGetMeshElement(const int elementTag, int &type,
 
 void gmshModelSetMeshSize(const vector_pair &dimTags, const double size)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   for(unsigned int i = 0; i < dimTags.size(); i++){
     int dim = dimTags[i].first, tag = dimTags[i].second;
     if(dim == 0){
@@ -666,11 +690,11 @@ void gmshModelSetMeshSize(const vector_pair &dimTags, const double size)
 void gmshModelSetTransfiniteLine(const int tag, const int numVertices,
                                  const std::string &type, const double coef)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   GEdge *ge = GModel::current()->getEdgeByTag(tag);
   if(!ge){
     Msg::Error("%s does not exist", _entityName(1, tag).c_str());
-    GMSH_ERROR(2);
+    throw 2;
   }
   ge->meshAttributes.method = MESH_TRANSFINITE;
   ge->meshAttributes.nbPointsTransfinite = numVertices;
@@ -687,11 +711,11 @@ void gmshModelSetTransfiniteSurface(const int tag,
                                     const std::string &arrangement,
                                     const std::vector<int> &cornerTags)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   GFace *gf = GModel::current()->getFaceByTag(tag);
   if(!gf){
     Msg::Error("%s does not exist", _entityName(2, tag).c_str());
-    GMSH_ERROR(2);
+    throw 2;
   }
   gf->meshAttributes.method = MESH_TRANSFINITE;
   gf->meshAttributes.transfiniteArrangement =
@@ -713,11 +737,11 @@ void gmshModelSetTransfiniteSurface(const int tag,
 void gmshModelSetTransfiniteVolume(const int tag,
                                    const std::vector<int> &cornerTags)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   GRegion *gr = GModel::current()->getRegionByTag(tag);
   if(!gr){
     Msg::Error("%s does not exist", _entityName(3, tag).c_str());
-    GMSH_ERROR(2);
+    throw 2;
   }
   gr->meshAttributes.method = MESH_TRANSFINITE;
   if(cornerTags.empty() || cornerTags.size() == 6 || cornerTags.size() == 8){
@@ -731,12 +755,12 @@ void gmshModelSetTransfiniteVolume(const int tag,
 
 void gmshModelSetRecombine(const int dim, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
-  if(dim != 2){ GMSH_ERROR(2); }
+  if(!_isInitialized()){ throw -1; }
+  if(dim != 2){ throw 2; }
   GFace *gf = GModel::current()->getFaceByTag(tag);
   if(!gf){
     Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
-    GMSH_ERROR(2);
+    throw 2;
   }
   gf->meshAttributes.recombine = 1;
   gf->meshAttributes.recombineAngle = 45.;
@@ -744,24 +768,24 @@ void gmshModelSetRecombine(const int dim, const int tag)
 
 void gmshModelSetSmoothing(const int dim, const int tag, const int val)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
-  if(dim != 2){ GMSH_ERROR(2); }
+  if(!_isInitialized()){ throw -1; }
+  if(dim != 2){ throw 2; }
   GFace *gf = GModel::current()->getFaceByTag(tag);
   if(!gf){
     Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
-    GMSH_ERROR(2);
+    throw 2;
   }
   gf->meshAttributes.transfiniteSmoothing = val;
 }
 
 void gmshModelSetReverseMesh(const int dim, const int tag, const bool val)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   if(dim == 1){
     GEdge *ge = GModel::current()->getEdgeByTag(tag);
     if(!ge){
       Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
-      GMSH_ERROR(2);
+      throw 2;
     }
     ge->meshAttributes.reverseMesh = val;
   }
@@ -769,7 +793,7 @@ void gmshModelSetReverseMesh(const int dim, const int tag, const bool val)
     GFace *gf = GModel::current()->getFaceByTag(tag);
     if(!gf){
       Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
-      GMSH_ERROR(2);
+      throw 2;
     }
     gf->meshAttributes.reverseMesh = val;
   }
@@ -778,19 +802,19 @@ void gmshModelSetReverseMesh(const int dim, const int tag, const bool val)
 void gmshModelEmbed(const int dim, const std::vector<int> &tags,
                     const int inDim, const int inTag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   if(inDim == 2){
     GFace *gf = GModel::current()->getFaceByTag(inTag);
     if(!gf){
       Msg::Error("%s does not exist", _entityName(2, inTag).c_str());
-      GMSH_ERROR(2);
+      throw 2;
     }
     for(unsigned int i = 0; i < tags.size(); i++){
       if(dim == 0){
         GVertex *gv = GModel::current()->getVertexByTag(tags[i]);
         if(!gv){
           Msg::Error("%s does not exist", _entityName(0, tags[i]).c_str());
-          GMSH_ERROR(2);
+          throw 2;
         }
         gf->addEmbeddedVertex(gv);
       }
@@ -798,7 +822,7 @@ void gmshModelEmbed(const int dim, const std::vector<int> &tags,
         GEdge *ge = GModel::current()->getEdgeByTag(tags[i]);
         if(!ge){
           Msg::Error("%s does not exist", _entityName(1, tags[i]).c_str());
-          GMSH_ERROR(2);
+          throw 2;
         }
         gf->addEmbeddedEdge(ge);
       }
@@ -808,14 +832,14 @@ void gmshModelEmbed(const int dim, const std::vector<int> &tags,
     GRegion *gr = GModel::current()->getRegionByTag(inTag);
     if(!gr){
       Msg::Error("%s does not exist", _entityName(3, inTag).c_str());
-      GMSH_ERROR(2);
+      throw 2;
     }
     for(unsigned int i = 0; i < tags.size(); i++){
       if(dim == 0){
         GVertex *gv = GModel::current()->getVertexByTag(tags[i]);
         if(!gv){
           Msg::Error("%s does not exist", _entityName(0, tags[i]).c_str());
-          GMSH_ERROR(2);
+          throw 2;
         }
         gr->addEmbeddedVertex(gv);
       }
@@ -823,7 +847,7 @@ void gmshModelEmbed(const int dim, const std::vector<int> &tags,
         GEdge *ge = GModel::current()->getEdgeByTag(tags[i]);
         if(!ge){
           Msg::Error("%s does not exist", _entityName(1, tags[i]).c_str());
-          GMSH_ERROR(2);
+          throw 2;
         }
         gr->addEmbeddedEdge(ge);
       }
@@ -831,7 +855,7 @@ void gmshModelEmbed(const int dim, const std::vector<int> &tags,
         GFace *gf = GModel::current()->getFaceByTag(tags[i]);
         if(!gf){
           Msg::Error("%s does not exist", _entityName(2, tags[i]).c_str());
-          GMSH_ERROR(2);
+          throw 2;
         }
         gr->addEmbeddedFace(gf);
       }
@@ -844,24 +868,24 @@ void gmshModelEmbed(const int dim, const std::vector<int> &tags,
 int gmshModelGeoAddPoint(const double x, const double y, const double z,
                          const double meshSize, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   int outTag = tag;
   double xx = CTX::instance()->geom.scalingFactor * x;
   double yy = CTX::instance()->geom.scalingFactor * y;
   double zz = CTX::instance()->geom.scalingFactor * z;
   double lc = CTX::instance()->geom.scalingFactor * meshSize;
   if(!GModel::current()->getGEOInternals()->addVertex(outTag, xx, yy, zz, lc)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
 
 int gmshModelGeoAddLine(const int startTag, const int endTag, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   int outTag = tag;
   if(!GModel::current()->getGEOInternals()->addLine(outTag, startTag, endTag)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -870,11 +894,11 @@ int gmshModelGeoAddCircleArc(const int startTag, const int centerTag,
                              const int endTag, const int tag, const double nx,
                              const double ny, const double nz)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   int outTag = tag;
   if(!GModel::current()->getGEOInternals()->addCircleArc
      (outTag, startTag, centerTag, endTag, nx, ny, nz)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -884,61 +908,61 @@ int gmshModelGeoAddEllipseArc(const int startTag, const int centerTag,
                               const int tag, const double nx, const double ny,
                               const double nz)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   int outTag = tag;
   if(!GModel::current()->getGEOInternals()->addEllipseArc
      (outTag, startTag, centerTag, majorTag, endTag, nx, ny, nz)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
 
 int gmshModelGeoAddSpline(const std::vector<int> &vertexTags, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   int outTag = tag;
   if(!GModel::current()->getGEOInternals()->addSpline(outTag, vertexTags)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
 
 int gmshModelGeoAddBSpline(const std::vector<int> &vertexTags, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   int outTag = tag;
   if(!GModel::current()->getGEOInternals()->addBSpline(outTag, vertexTags)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
 
 int gmshModelGeoAddBezier(const std::vector<int> &vertexTags, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   int outTag = tag;
   if(!GModel::current()->getGEOInternals()->addBezier(outTag, vertexTags)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
 
 int gmshModelGeoAddLineLoop(const std::vector<int> &edgeTags, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   int outTag = tag;
   if(!GModel::current()->getGEOInternals()->addLineLoop(outTag, edgeTags)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
 
 int gmshModelGeoAddPlaneSurface(const std::vector<int> &wireTags, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   int outTag = tag;
   if(!GModel::current()->getGEOInternals()->addPlaneSurface(outTag, wireTags)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -946,31 +970,31 @@ int gmshModelGeoAddPlaneSurface(const std::vector<int> &wireTags, const int tag)
 int gmshModelGeoAddSurfaceFilling(const std::vector<int> &wireTags, const int tag,
                                   const int sphereCenterTag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   int outTag = tag;
   if(!GModel::current()->getGEOInternals()->addSurfaceFilling
      (outTag, wireTags, sphereCenterTag)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
 
 int gmshModelGeoAddSurfaceLoop(const std::vector<int> &faceTags, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   int outTag = tag;
   if(!GModel::current()->getGEOInternals()->addSurfaceLoop(outTag, faceTags)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
 
 int gmshModelGeoAddVolume(const std::vector<int> &shellTags, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   int outTag = tag;
   if(!GModel::current()->getGEOInternals()->addVolume(outTag, shellTags)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1004,12 +1028,12 @@ void gmshModelGeoExtrude(const vector_pair &dimTags,
                          const std::vector<double> &heights,
                          const bool recombine)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   outDimTags.clear();
   if(!GModel::current()->getGEOInternals()->extrude
      (dimTags, dx, dy, dz, outDimTags,
       _getExtrudeParams(numElements, heights, recombine))){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
@@ -1022,12 +1046,12 @@ void gmshModelGeoRevolve(const vector_pair &dimTags,
                          const std::vector<double> &heights,
                          const bool recombine)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   outDimTags.clear();
   if(!GModel::current()->getGEOInternals()->revolve
      (dimTags, x, y, z, ax, ay, az, angle, outDimTags,
       _getExtrudeParams(numElements, heights, recombine))){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
@@ -1041,21 +1065,21 @@ void gmshModelGeoTwist(const vector_pair &dimTags,
                        const std::vector<double> &heights,
                        const bool recombine)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   outDimTags.clear();
   if(!GModel::current()->getGEOInternals()->twist
      (dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, outDimTags,
       _getExtrudeParams(numElements, heights, recombine))){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
 void gmshModelGeoTranslate(const vector_pair &dimTags, const double dx,
                            const double dy, const double dz)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   if(!GModel::current()->getGEOInternals()->translate(dimTags, dx, dy, dz)){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
@@ -1063,10 +1087,10 @@ void gmshModelGeoRotate(const vector_pair &dimTags, const double x,
                         const double y, const double z, const double ax,
                         const double ay, const double az, const double angle)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   if(!GModel::current()->getGEOInternals()->rotate
      (dimTags, x, y, z, ax, ay, az, angle)){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
@@ -1074,43 +1098,43 @@ void gmshModelGeoDilate(const vector_pair &dimTags, const double x,
                         const double y, const double z, const double a,
                         const double b, const double c)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   if(!GModel::current()->getGEOInternals()->dilate
      (dimTags, x, y, z, a, b, c)){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
 void gmshModelGeoSymmetry(const vector_pair &dimTags, const double a,
                           const double b, const double c, const double d)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   if(!GModel::current()->getGEOInternals()->symmetry
      (dimTags, a, b, c, d)){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
 void gmshModelGeoCopy(const vector_pair &dimTags, vector_pair &outDimTags)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   outDimTags.clear();
   if(!GModel::current()->getGEOInternals()->copy(dimTags, outDimTags)){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
 void gmshModelGeoRemove(const vector_pair &dimTags, const bool recursive)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   if(!GModel::current()->getGEOInternals()->remove(dimTags, recursive)){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
 void gmshModelGeoRemoveAllDuplicates()
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   GModel::current()->getGEOInternals()->removeAllDuplicates();
 }
 
@@ -1118,7 +1142,7 @@ void gmshModelGeoSetTransfiniteLine(const int tag, const int nPoints,
                                     const std::string &type,
                                     const double coef)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   int t =
     (type == "Progression" || type == "Power") ? 1 :
     (type == "Bump") ? 2 :
@@ -1133,7 +1157,7 @@ void gmshModelGeoSetTransfiniteSurface(const int tag,
                                        const std::string &arrangement,
                                        const std::vector<int> &cornerTags)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   int t =
     (arrangement == "Right") ? 1 :
     (arrangement == "Left") ? -1 :
@@ -1147,32 +1171,32 @@ void gmshModelGeoSetTransfiniteSurface(const int tag,
 void gmshModelGeoSetTransfiniteVolume(const int tag,
                                       const std::vector<int> &cornerTags)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   GModel::current()->getGEOInternals()->setTransfiniteVolume(tag, cornerTags);
 }
 
 void gmshModelGeoSetRecombine(const int dim, const int tag, const double angle)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   GModel::current()->getGEOInternals()->setRecombine(dim, tag, angle);
 }
 
 void gmshModelGeoSetSmoothing(const int dim, const int tag, const int val)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
-  if(dim != 2){ GMSH_ERROR(2); }
+  if(!_isInitialized()){ throw -1; }
+  if(dim != 2){ throw 2; }
   GModel::current()->getGEOInternals()->setSmoothing(tag, val);
 }
 
 void gmshModelGeoSetReverseMesh(const int dim, const int tag, const bool val)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   GModel::current()->getGEOInternals()->setReverseMesh(dim, tag, val);
 }
 
 void gmshModelGeoSetMeshSize(const vector_pair &dimTags, const double size)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   for(unsigned int i = 0; i < dimTags.size(); i++){
     int dim = dimTags[i].first, tag = dimTags[i].second;
     GModel::current()->getGEOInternals()->setMeshSize(dim, tag, size);
@@ -1181,7 +1205,7 @@ void gmshModelGeoSetMeshSize(const vector_pair &dimTags, const double size)
 
 void gmshModelGeoSynchronize()
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   GModel::current()->getGEOInternals()->synchronize(GModel::current());
 }
 
@@ -1195,22 +1219,22 @@ static void _createOcc()
 int gmshModelOccAddPoint(const double x, const double y, const double z,
                          const double meshSize, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addVertex(outTag, x, y, z, meshSize)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
 
 int gmshModelOccAddLine(const int startTag, const int endTag, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addLine(outTag, startTag, endTag)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1218,12 +1242,12 @@ int gmshModelOccAddLine(const int startTag, const int endTag, const int tag)
 int gmshModelOccAddCircleArc(const int startTag, const int centerTag,
                              const int endTag, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addCircleArc
      (outTag, startTag, centerTag, endTag)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1232,12 +1256,12 @@ int gmshModelOccAddCircle(const double x, const double y, const double z,
                           const double r, const int tag,
                           const double angle1, const double angle2)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addCircle
      (outTag, x, y, z, r, angle1, angle2)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1245,12 +1269,12 @@ int gmshModelOccAddCircle(const double x, const double y, const double z,
 int gmshModelOccAddEllipseArc(const int startTag, const int centerTag,
                               const int endTag, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addEllipseArc
      (outTag, startTag, centerTag, endTag)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1260,45 +1284,45 @@ int gmshModelOccAddEllipse(const double x, const double y, const double z,
                            const int tag,
                            const double angle1, const double angle2)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addEllipse
      (outTag, x, y, z, r1, r2, angle1, angle2)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
 
 int gmshModelOccAddSpline(const std::vector<int> &vertexTags, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addSpline(outTag, vertexTags)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
 
 int gmshModelOccAddBezier(const std::vector<int> &vertexTags, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addBezier(outTag, vertexTags)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
 
 int gmshModelOccAddBSpline(const std::vector<int> &vertexTags, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addBSpline(outTag, vertexTags)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1306,23 +1330,23 @@ int gmshModelOccAddBSpline(const std::vector<int> &vertexTags, const int tag)
 int gmshModelOccAddWire(const std::vector<int> &edgeTags, const int tag,
                         const bool checkClosed)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addWire
      (outTag, edgeTags, checkClosed)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
 
 int gmshModelOccAddLineLoop(const std::vector<int> &edgeTags, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addLineLoop(outTag, edgeTags)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1331,12 +1355,12 @@ int gmshModelOccAddRectangle(const double x, const double y, const double z,
                              const double dx, const double dy, const int tag,
                              const double roundedRadius)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addRectangle
      (outTag, x, y, z, dx, dy, roundedRadius)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1344,56 +1368,56 @@ int gmshModelOccAddRectangle(const double x, const double y, const double z,
 int gmshModelOccAddDisk(const double xc, const double yc, const double zc,
                         const double rx, const double ry, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addDisk
      (outTag, xc, yc, zc, rx, ry)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
 
 int gmshModelOccAddPlaneSurface(const std::vector<int> &wireTags, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addPlaneSurface(outTag, wireTags)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
 
 int gmshModelOccAddSurfaceFilling(const int wireTag, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addSurfaceFilling(outTag, wireTag)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
 
 int gmshModelOccAddSurfaceLoop(const std::vector<int> &faceTags, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addSurfaceLoop(outTag, faceTags)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
 
 int gmshModelOccAddVolume(const std::vector<int> &shellTags, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addVolume(outTag, shellTags)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1403,12 +1427,12 @@ int gmshModelOccAddSphere(const double xc, const double yc, const double zc,
                           const double angle1, const double angle2,
                           const double angle3)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addSphere
      (outTag, xc, yc, zc, radius, angle1, angle2, angle3)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1417,12 +1441,12 @@ int gmshModelOccAddBox(const double x, const double y, const double z,
                        const double dx, const double dy, const double dz,
                        const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addBox
      (outTag, x, y, z, dx, dy, dz)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1431,12 +1455,12 @@ int gmshModelOccAddCylinder(const double x, const double y, const double z,
                             const double dx, const double dy, const double dz,
                             const double r, const int tag, const double angle)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addCylinder
      (outTag, x, y, z, dx, dy, dz, r, angle)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1446,12 +1470,12 @@ int gmshModelOccAddCone(const double x, const double y, const double z,
                         const double r1, const double r2, const int tag,
                         const double angle)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addCone
      (outTag, x, y, z, dx, dy, dz, r1, r2, angle)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1460,12 +1484,12 @@ int gmshModelOccAddWedge(const double x, const double y, const double z,
                          const double dx, const double dy, const double dz,
                          const int tag, const double ltx)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addWedge
      (outTag, x, y, z, dx, dy, dz, ltx)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1474,12 +1498,12 @@ int gmshModelOccAddTorus(const double x, const double y, const double z,
                          const double r1, const double r2, const int tag,
                          const double angle)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addTorus
      (outTag, x, y, z, r1, r2, angle)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1489,13 +1513,13 @@ int gmshModelOccAddThruSections(const std::vector<int> &wireTags,
                                 const int tag, const bool makeSolid,
                                 const bool makeRuled)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   outDimTags.clear();
   if(!GModel::current()->getOCCInternals()->addThruSections
      (outTag, wireTags, makeSolid, makeRuled, outDimTags)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1505,13 +1529,13 @@ int addThickSolid(const int solidTag,
                   const double offset, vector_pair &outDimTags,
                   const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   outDimTags.clear();
   if(!GModel::current()->getOCCInternals()->addThickSolid
      (outTag, solidTag, excludeFaceTags, offset, outDimTags)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1523,13 +1547,13 @@ void gmshModelOccExtrude(const vector_pair &dimTags,
                          const std::vector<double> &heights,
                          const bool recombine)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   outDimTags.clear();
   if(!GModel::current()->getOCCInternals()->extrude
     (dimTags, dx, dy, dz, outDimTags,
      _getExtrudeParams(numElements, heights, recombine))){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
@@ -1541,25 +1565,25 @@ void gmshModelOccRevolve(const vector_pair &dimTags,
                          const std::vector<double> &heights,
                          const bool recombine)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   outDimTags.clear();
   if(!GModel::current()->getOCCInternals()->revolve
      (dimTags, x, y, z, ax, ay, az, angle, outDimTags,
       _getExtrudeParams(numElements, heights, recombine))){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
 void gmshModelOccAddPipe(const vector_pair &dimTags, const int wireTag,
                          vector_pair &outDimTags)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   outDimTags.clear();
   if(!GModel::current()->getOCCInternals()->addPipe
      (dimTags, wireTag, outDimTags)){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
@@ -1568,12 +1592,12 @@ void gmshModelOccFillet(const std::vector<int> &regionTags,
                         const double radius, vector_pair &outDimTags,
                         const bool removeRegion)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   outDimTags.clear();
   if(!GModel::current()->getOCCInternals()->fillet
      (regionTags, edgeTags, radius, outDimTags, removeRegion)){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
@@ -1585,7 +1609,7 @@ int gmshModelOccBooleanUnion(const vector_pair &objectDimTags,
                              const bool removeObject,
                              const bool removeTool)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   outDimTags.clear();
@@ -1593,7 +1617,7 @@ int gmshModelOccBooleanUnion(const vector_pair &objectDimTags,
   if(!GModel::current()->getOCCInternals()->booleanUnion
      (outTag, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
       removeObject, removeTool)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1606,7 +1630,7 @@ int gmshModelOccBooleanIntersection(const vector_pair &objectDimTags,
                                     const bool removeObject,
                                     const bool removeTool)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   outDimTags.clear();
@@ -1614,7 +1638,7 @@ int gmshModelOccBooleanIntersection(const vector_pair &objectDimTags,
   if(!GModel::current()->getOCCInternals()->booleanIntersection
      (outTag, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
       removeObject, removeTool)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1627,7 +1651,7 @@ int gmshModelOccBooleanDifference(const vector_pair &objectDimTags,
                                   const bool removeObject,
                                   const bool removeTool)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   outDimTags.clear();
@@ -1635,7 +1659,7 @@ int gmshModelOccBooleanDifference(const vector_pair &objectDimTags,
   if(!GModel::current()->getOCCInternals()->booleanDifference
      (outTag, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
       removeObject, removeTool)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1648,7 +1672,7 @@ int gmshModelOccBooleanFragments(const vector_pair &objectDimTags,
                                  const bool removeObject,
                                  const bool removeTool)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   outDimTags.clear();
@@ -1656,7 +1680,7 @@ int gmshModelOccBooleanFragments(const vector_pair &objectDimTags,
   if(!GModel::current()->getOCCInternals()->booleanFragments
      (outTag, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
       removeObject, removeTool)){
-    GMSH_ERROR(1);
+    throw 1;
   }
   return outTag;
 }
@@ -1664,10 +1688,10 @@ int gmshModelOccBooleanFragments(const vector_pair &objectDimTags,
 void gmshModelOccTranslate(const vector_pair &dimTags, const double dx,
                            const double dy, const double dz)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   if(!GModel::current()->getOCCInternals()->translate(dimTags, dx, dy, dz)){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
@@ -1675,11 +1699,11 @@ void gmshModelOccRotate(const vector_pair &dimTags, const double x,
                         const double y, const double z, const double ax,
                         const double ay, const double az, const double angle)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   if(!GModel::current()->getOCCInternals()->rotate
      (dimTags, x, y, z, ax, ay, az, angle)){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
@@ -1687,46 +1711,46 @@ void gmshModelOccDilate(const vector_pair &dimTags, const double x,
                         const double y, const double z, const double a,
                         const double b, const double c)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   if(!GModel::current()->getOCCInternals()->dilate
      (dimTags, x, y, z, a, b, c)){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
 void gmshModelOccSymmetry(const vector_pair &dimTags, const double a,
                           const double b, const double c, const double d)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   if(!GModel::current()->getOCCInternals()->symmetry(dimTags, a, b, c, d)){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
 void gmshModelOccCopy(const vector_pair &dimTags, vector_pair &outDimTags)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   outDimTags.clear();
   if(!GModel::current()->getOCCInternals()->copy(dimTags, outDimTags)){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
 void gmshModelOccRemove(const vector_pair &dimTags, const bool recursive)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   if(!GModel::current()->getOCCInternals()->remove(dimTags, recursive)){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
 void gmshModelOccRemoveAllDuplicates()
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   GModel::current()->getOCCInternals()->removeAllDuplicates();
 }
@@ -1736,18 +1760,18 @@ void gmshModelOccImportShapes(const std::string &fileName,
                               const bool highestDimOnly,
                               const std::string &format)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   outDimTags.clear();
   if(!GModel::current()->getOCCInternals()->importShapes
      (fileName, highestDimOnly, outDimTags, format)){
-    GMSH_ERROR(1);
+    throw 1;
   }
 }
 
 void gmshModelOccSetMeshSize(const vector_pair &dimTags, const double size)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   for(unsigned int i = 0; i < dimTags.size(); i++){
     int dim = dimTags[i].first, tag = dimTags[i].second;
@@ -1757,7 +1781,7 @@ void gmshModelOccSetMeshSize(const vector_pair &dimTags, const double size)
 
 void gmshModelOccSynchronize()
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   _createOcc();
   GModel::current()->getOCCInternals()->synchronize(GModel::current());
 }
@@ -1766,7 +1790,7 @@ void gmshModelOccSynchronize()
 
 int gmshModelFieldCreate(const std::string &type, const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
   int outTag = tag;
 #if defined(HAVE_MESH)
   if(outTag < 0){
@@ -1774,23 +1798,23 @@ int gmshModelFieldCreate(const std::string &type, const int tag)
   }
   if(!GModel::current()->getFields()->newField(tag, type)){
     Msg::Error("Cannot create Field %i of type '%s'", tag, type.c_str());
-    GMSH_ERROR(1);
+    throw 1;
   }
 #else
   Msg::Error("Fields require the mesh module");
-  GMSH_ERROR(-1);
+  throw -1;
 #endif
   return outTag;
 }
 
 void gmshModelFieldDelete(const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
 #if defined(HAVE_MESH)
   GModel::current()->getFields()->deleteField(tag);
 #else
   Msg::Error("Fields require the mesh module");
-  GMSH_ERROR(-1);
+  throw -1;
 #endif
 }
 
@@ -1815,48 +1839,48 @@ static FieldOption *_getFieldOption(const int tag, const std::string &option)
 void gmshModelFieldSetNumber(const int tag, const std::string &option,
                              const double value)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
-  if(!o){ GMSH_ERROR(1); }
+  if(!o){ throw 1; }
   try { o->numericalValue(value); }
   catch(...){
     Msg::Error("Cannot set numerical value to option '%s' in field %i",
                option.c_str(), tag);
-    GMSH_ERROR(1);
+    throw 1;
   }
 #else
   Msg::Error("Fields require the mesh module");
-  GMSH_ERROR(-1);
+  throw -1;
 #endif
 }
 
 void gmshModelFieldSetString(const int tag, const std::string &option,
                              const std::string &value)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
-  if(!o){ GMSH_ERROR(1); }
+  if(!o){ throw 1; }
   try { o->string(value); }
   catch(...){
     Msg::Error("Cannot set string value to option '%s' in field %i",
                option.c_str(), tag);
-    GMSH_ERROR(1);
+    throw 1;
   }
 #else
   Msg::Error("Fields require the mesh module");
-  GMSH_ERROR(-1);
+  throw -1;
 #endif
 }
 
 void gmshModelFieldSetNumbers(const int tag, const std::string &option,
                               const std::vector<double> &value)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
 #if defined(HAVE_MESH)
   FieldOption *o = _getFieldOption(tag, option);
-  if(!o){ GMSH_ERROR(1); }
+  if(!o){ throw 1; }
   try {
     if(o->getType() == FIELD_OPTION_LIST) {
       std::list<int> vl;
@@ -1874,22 +1898,157 @@ void gmshModelFieldSetNumbers(const int tag, const std::string &option,
   catch(...){
     Msg::Error("Cannot set numeric values to option '%s' in field %i",
                option.c_str(), tag);
-    GMSH_ERROR(1);
+    throw 1;
   }
 #else
   Msg::Error("Fields require the mesh module");
-  GMSH_ERROR(-1);
+  throw -1;
 #endif
 }
 
 void gmshModelFieldSetAsBackground(const int tag)
 {
-  if(!_isInitialized()){ GMSH_ERROR(-1); }
+  if(!_isInitialized()){ throw -1; }
 #if defined(HAVE_MESH)
   GModel::current()->getFields()->setBackgroundFieldId(tag);
 #else
   Msg::Error("Fields require the mesh module");
-  GMSH_ERROR(-1);
+  throw -1;
 #endif
 }
 
+// gmshView
+
+int gmshViewCreate(const std::string &name, const int tag)
+{
+  if(!_isInitialized()){ throw -1; }
+#if defined(HAVE_POST)
+  PView *view = new PView(tag);
+  view->getData()->setName(name);
+  return view->getTag();
+#else
+  Msg::Error("Views require the post-processing module");
+  throw -1;
+#endif
+}
+
+void gmshViewDelete(const int tag)
+{
+  if(!_isInitialized()){ throw -1; }
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(!view){
+    Msg::Error("Unknown view with tag %d", tag);
+    throw 2;
+  }
+#else
+  Msg::Error("Views require the post-processing module");
+  throw -1;
+#endif
+}
+
+int gmshViewGetIndex(const int tag)
+{
+  if(!_isInitialized()){ throw -1; }
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(!view){
+    Msg::Error("Unknown view with tag %d", tag);
+    throw 2;
+  }
+  return view->getIndex();
+#else
+  Msg::Error("Views require the post-processing module");
+  throw -1;
+#endif
+}
+
+void gmshViewAddModelData(const int tag, const std::string &modelName,
+                          const std::string &dataType,
+                          const std::vector<int> &tags,
+                          const std::vector<std::vector<double> > &data,
+                          const int step, const int time,
+                          const int numComponents, const int partition)
+{
+  if(!_isInitialized()){ throw -1; }
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(!view){
+    Msg::Error("Unknown view with tag %d", tag);
+    throw 2;
+  }
+  GModel *model = GModel::current();
+  if(modelName.size()){
+    model = GModel::findByName(modelName);
+    if(!model){
+      Msg::Error("Unknown model '%s'", modelName.c_str());
+      throw 2;
+    }
+  }
+  if(tags.size() != data.size()){
+    Msg::Error("Incompatible number of tags and data");
+    throw 2;
+  }
+  PViewDataGModel *d = dynamic_cast<PViewDataGModel*>(view->getData());
+  if(!d){ // change the view type
+    std::string name = view->getData()->getName();
+    delete view->getData();
+    PViewDataGModel::DataType type;
+    if(dataType == "NodeData")
+      type = PViewDataGModel::NodeData;
+    else if(dataType == "ElementData")
+      type = PViewDataGModel::ElementData;
+    else if(dataType == "ElementNodeData")
+      type = PViewDataGModel::ElementNodeData;
+    else if(dataType == "Beam")
+      type = PViewDataGModel::BeamData;
+    else{
+      Msg::Error("Unknown type of view to create '%s'", dataType.c_str());
+      throw 2;
+    }
+    d = new PViewDataGModel(type);
+    d->setName(name);
+    d->setFileName(name + ".msh");
+    view->setData(d);
+  }
+  d->addData(model, tags, data, step, time, partition, numComponents);
+  if(view->getOptions()->adaptVisualizationGrid)
+    d->initAdaptiveData(view->getOptions()->timeStep,
+                        view->getOptions()->maxRecursionLevel,
+                        view->getOptions()->targetError);
+#else
+  Msg::Error("Views require the post-processing module");
+  throw -1;
+#endif
+}
+
+/*
+void gmshViewAddListData(const int tag, ...);
+void gmshViewAddStringData(const int tag, ...);
+void gmshViewAddXYData(const int tag, const std::vector<double> &x,
+                       const std::vector<double> &y);
+void gmshViewAddXYZData(const int tag, const std::vector<double> &x,
+                        const std::vector<double> &y,
+                        const std::vector<double> &z);
+
+void gmshViewGetValue(tag, x, y, z, step, &vector_double);
+void gmshViewGetRawData(tag, &double_vector);
+void gmshViewSetRawData(tag, const &double_vector);
+*/
+
+void gmshViewExport(const int tag, const std::string &fileName,
+                    const bool append)
+{
+  if(!_isInitialized()){ throw -1; }
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(!view){
+    Msg::Error("Unknown view with tag %d", tag);
+    throw 2;
+  }
+  view->write(fileName, 10, append);
+#else
+  Msg::Error("Views require the post-processing module");
+  throw -1;
+#endif
+}

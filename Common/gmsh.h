@@ -185,6 +185,14 @@ GMSH_API void gmshModelRemove(const vector_pair &dimTags,
 // Generates a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).
 GMSH_API void gmshModelMesh(const int dim);
 
+// Gets the last entities (if any) where a meshing error occurred. Currently
+// only populated by the new 3D meshing algorithms.
+GMSH_API void gmshModelGetLastMeshEntityError(vector_pair &dimTags);
+
+// Gets the last mesh vertices (if any) where a meshing error
+// occurred. Currently only populated by the new 3D meshing algorithms.
+GMSH_API void gmshModelGetLastMeshVertexError(std::vector<int> &vertexTags);
+
 // Gets the mesh vertices of the entity of dimension `dim' and `tag'
 // tag. `vertextags' contains the vertex tags (their unique, strictly positive
 // identification numbers). `coord` is a vector of length `3 *
@@ -556,19 +564,38 @@ GMSH_API void gmshModelGeoSynchronize();
 // Module gmshModelOcc: internal per-model OpenCASCADE CAD kernel functions
 // -----------------------------------------------------------------------------
 
-// (Note that the point will be added in the current model only after
-// gmshModelOccSynchronize() is called. This behavior holds for all the entities
-// created in the gmshModelGeo module.)
+// Adds a geometrical point in the internal OpenCASCADE CAD representation, at
+// coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
+// that point. If `tag' is positive, sets the tag explicitly; otherwise a new
+// tag is selected automatically. Returns the tag of the point. (Note that the
+// point will be added in the current model only after gmshModelGeoSynchronize()
+// is called. This behavior holds for all the entities created in the
+// gmshModelOcc module.)
 GMSH_API int gmshModelOccAddPoint(const double x, const double y, const double z,
                                   const double meshSize = 0., const int tag = -1);
+
+// Adds a straight line segment between the two points with tags `startTag' and
+// `endTag'. If `tag' is positive, sets the tag explicitly; otherwise a new tag
+// is selected automatically. Returns the tag of the line.
 GMSH_API int gmshModelOccAddLine(const int startTag, const int endTag,
                                  const int tag = -1);
+
+// Adds a circle arc between the two points with tags `startTag' and `endTag',
+// with center `centertag'. If `tag' is positive, sets the tag explicitly;
+// otherwise a new tag is selected automatically. Returns the tag of the circle
+// arc.
 GMSH_API int gmshModelOccAddCircleArc(const int startTag, const int centerTag,
                                       const int endTag, const int tag = -1);
+
+// Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive,
+// sets the tag explicitly; otherwise a new tag is selected
+// automatically. `angle1' and `angle2' allow to create a circle arc. Returns
+// the tag of the circle.
 GMSH_API int gmshModelOccAddCircle(const double x, const double y, const double z,
                                    const double r, const int tag = -1,
                                    const double angle1 = 0.,
                                    const double angle2 = 2*M_PI);
+
 GMSH_API int gmshModelOccAddEllipseArc(const int startTag, const int centerTag,
                                        const int endTag, const int tag = -1);
 GMSH_API int gmshModelOccAddEllipse(const double x, const double y, const double z,
@@ -711,6 +738,10 @@ GMSH_API void gmshModelOccImportShapes(const std::string &fileName,
 // only entities of dimension 0 (points) are handled.
 GMSH_API void gmshModelOccSetMeshSize(const vector_pair &dimTags, const double size);
 
+// Synchronize the internal OpenCASCADE CAD representation with the current Gmsh
+// model. This can be called at any time, but since it involves a non trivial
+// amount of processing, the number of synchronization points should normally be
+// minimized.
 GMSH_API void gmshModelOccSynchronize();
 
 // -----------------------------------------------------------------------------
@@ -726,6 +757,48 @@ GMSH_API void gmshModelFieldSetString(const int tag, const std::string &option,
 GMSH_API void gmshModelFieldSetNumbers(const int tag, const std::string &option,
                                        const std::vector<double> &value);
 GMSH_API void gmshModelFieldSetAsBackground(const int tag);
+
+// -----------------------------------------------------------------------------
+// Module gmshView: post-processing view functions
+// -----------------------------------------------------------------------------
+
+// Creates a new post-processing view, with name `name'. If `tag' is positive
+// use it (and delete the view with that tag if it already exists), otherwise
+// associate a new tag. Returns the view tag.
+GMSH_API int gmshViewCreate(const std::string &name, const int tag = -1);
+
+// Deletes the view with tag `tag'.
+GMSH_API void gmshViewDelete(const int tag);
+
+// Gets the index of the view with tag `tag' in the list of currently loaded
+// views. This dynamic index (it can change when views are deleted) is used to
+// access view options with the gmshOption functions.
+GMSH_API int gmshViewGetIndex(const int tag);
+
+// Adds model-based post-processing data to the view with tag `tag'. `modelName'
+// identifies the model the data is attached to. `dataType' specifies the type
+// of data, currently either "NodeData", "ElementData" or
+// "ElementNodeData". `tags' gives the tags of the vertices or elements in the
+// mesh to which the data is associated. `data' is a vector of length
+// `tags.size()`: each entry is the vector of double precision numbers
+// representing the data associated with the corresponding tag. The optional
+// `step` and `time` arguments associate a time step and time value with the
+// data. `numComponents' gives the number of data components (1 for scalar data,
+// 3 for vector data, etc.) per entity; if negative, it is automatically
+// inferred (when possible) from the input data. `partition' allows to specify
+// data in several sub-sets.
+GMSH_API void gmshViewAddModelData(const int tag, const std::string &modelName,
+                                   const std::string &dataType,
+                                   const std::vector<int> &tags,
+                                   const std::vector<std::vector<double> > &data,
+                                   const int step = 0, const int time = 0.,
+                                   const int numComponents = -1,
+                                   const int partition = 0);
+
+// Exports the view to a file. The export format is determined by the file
+// extension.
+GMSH_API void gmshViewExport(const int tag, const std::string &fileName,
+                             const bool append = false);
 
 #undef GMSH_API
 
