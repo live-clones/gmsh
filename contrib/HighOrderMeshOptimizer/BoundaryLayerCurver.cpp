@@ -721,7 +721,7 @@ namespace BoundaryLayerCurver
 
   void bezierOffset(const std::vector<MVertex *> &baseVert,
                     fullMatrix<double> &controlPts,
-                    Parameters2DCurve &parameters, SVector3 w,
+                    Parameters2DCurve &parameters, SVector3 &w,
                     GEntity *bndEnt,
                     int triDirection = 0)
   {
@@ -858,7 +858,7 @@ namespace BoundaryLayerCurver
   }
 
   void regularizeExtremities(double targetAngle0, double targetAngle1,
-                             SVector3 linear, SVector3 w,
+                             SVector3 linear, SVector3 &w,
                              fullMatrix<double> &controlPoints, double limit,
                              double expansionFactor, double previousLenght0,
                              double previousLenght1)
@@ -962,6 +962,66 @@ namespace BoundaryLayerCurver
     }
   }
 
+  void regularizeExtremities(const std::vector<MVertex *> &baseVert,
+                             std::vector<MVertex *> &topVert,
+                             Parameters2DCurve &parameters, SVector3 &w)
+  {
+
+    int nVert = baseVert.size();
+    fullMatrix<double> xyzBase(nVert, 3);
+    fullMatrix<double> xyzTop(nVert, 3);
+    for (int i = 0; i < nVert; ++i) {
+      xyzBase(i, 0) = baseVert[i]->x();
+      xyzBase(i, 1) = baseVert[i]->y();
+      xyzBase(i, 2) = baseVert[i]->z();
+      xyzTop(i, 0) = topVert[i]->x();
+      xyzTop(i, 1) = topVert[i]->y();
+      xyzTop(i, 2) = topVert[i]->z();
+    }
+    const bezierBasis *fs = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 1);
+
+    fullMatrix<double> controlPointsBase(nVert, 3);
+    fs->lag2Bez(xyzBase, controlPointsBase);
+    SVector3 vBase0(controlPointsBase(2, 0) - controlPointsBase(0, 0),
+                    controlPointsBase(2, 1) - controlPointsBase(0, 1),
+                    controlPointsBase(2, 2) - controlPointsBase(0, 2));
+    SVector3 vBase1(controlPointsBase(1, 0) - controlPointsBase(nVert-1, 0),
+                    controlPointsBase(1, 1) - controlPointsBase(nVert-1, 1),
+                    controlPointsBase(1, 2) - controlPointsBase(nVert-1, 2));
+
+    fullMatrix<double> controlPointsTop(nVert, 3);
+    fs->lag2Bez(xyzTop, controlPointsTop);
+    SVector3 vTop0(controlPointsTop(2, 0) - controlPointsTop(0, 0),
+                   controlPointsTop(2, 1) - controlPointsTop(0, 1),
+                   controlPointsTop(2, 2) - controlPointsTop(0, 2));
+    SVector3 vTop1(controlPointsTop(1, 0) - controlPointsTop(nVert-1, 0),
+                   controlPointsTop(1, 1) - controlPointsTop(nVert-1, 1),
+                   controlPointsTop(1, 2) - controlPointsTop(nVert-1, 2));
+
+    SVector3 vLinBase = baseVert[1]->point() - baseVert[0]->point();
+    SVector3 vLinTop = topVert[1]->point() - topVert[0]->point();
+
+    double a = signedAngle(vLinBase, vBase0, w);
+    double b = signedAngle(vLinBase, vBase1, w);
+    double c = signedAngle(vLinTop, vTop0, w);
+    double d = signedAngle(vLinTop, vTop1, w);
+    std::cout << "angles: " << a*180*M_1_PI << " -> " << c*180*M_1_PI << " (*" << c/a << ")  "
+              << b*180*M_1_PI << " -> " << d*180*M_1_PI << " (*" << d/b << ")" << std::endl;
+
+    double limit = .5 * parameters.characteristicThickness();
+
+    double expansionFactor = vLinTop.norm() / vLinBase.norm();
+    regularizeExtremities(a, b, vLinTop, w, controlPointsTop, limit,
+                          expansionFactor, vBase0.norm(), vBase1.norm());
+
+    fs->matrixBez2Lag.mult(controlPointsTop, xyzTop);
+    for (int i = 0; i < nVert; ++i) {
+      topVert[i]->x() = xyzTop(i, 0);
+      topVert[i]->y() = xyzTop(i, 1);
+      topVert[i]->z() = xyzTop(i, 2);
+    }
+  }
+
   void computePositionEdgeVert(const std::vector<MVertex *> &baseVert,
                                const std::vector<MVertex *> &damped,
                                std::vector<MVertex *> &topVert,
@@ -1034,74 +1094,9 @@ namespace BoundaryLayerCurver
       }
     }
 
-    damping(topVert, factorDamping * parameters.characteristicThickness());
+//    damping(topVert, factorDamping * parameters.characteristicThickness());
 
-    // Control
-    if (true) {
-      int nVert = baseVert.size();
-      fullMatrix<double> xyzBase(nVert, 3);
-      fullMatrix<double> xyzTop(nVert, 3);
-      for (int i = 0; i < nVert; ++i) {
-        xyzBase(i, 0) = baseVert[i]->x();
-        xyzBase(i, 1) = baseVert[i]->y();
-        xyzBase(i, 2) = baseVert[i]->z();
-        xyzTop(i, 0) = topVert[i]->x();
-        xyzTop(i, 1) = topVert[i]->y();
-        xyzTop(i, 2) = topVert[i]->z();
-      }
-      const bezierBasis *fs = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 1);
-
-      fullMatrix<double> controlPointsBase(nVert, 3);
-      fs->lag2Bez(xyzBase, controlPointsBase);
-      SVector3 vBase0(controlPointsBase(2, 0) - controlPointsBase(0, 0),
-                      controlPointsBase(2, 1) - controlPointsBase(0, 1),
-                      controlPointsBase(2, 2) - controlPointsBase(0, 2));
-      SVector3 vBase1(controlPointsBase(1, 0) - controlPointsBase(nVert-1, 0),
-                      controlPointsBase(1, 1) - controlPointsBase(nVert-1, 1),
-                      controlPointsBase(1, 2) - controlPointsBase(nVert-1, 2));
-
-      fullMatrix<double> controlPointsTop(nVert, 3);
-      fs->lag2Bez(xyzTop, controlPointsTop);
-      SVector3 vTop0(controlPointsTop(2, 0) - controlPointsTop(0, 0),
-                     controlPointsTop(2, 1) - controlPointsTop(0, 1),
-                     controlPointsTop(2, 2) - controlPointsTop(0, 2));
-      SVector3 vTop1(controlPointsTop(1, 0) - controlPointsTop(nVert-1, 0),
-                     controlPointsTop(1, 1) - controlPointsTop(nVert-1, 1),
-                     controlPointsTop(1, 2) - controlPointsTop(nVert-1, 2));
-
-      SVector3 vLinBase = baseVert[1]->point() - baseVert[0]->point();
-      SVector3 vLinTop = topVert[1]->point() - topVert[0]->point();
-
-      double a = dot(w, crossprod(vLinBase, vBase0)) / norm(vLinBase) / norm(vBase0);
-      double b = dot(w, crossprod(vLinBase, vBase1)) / norm(vLinBase) / norm(vBase1);
-      double c = dot(w, crossprod(vLinTop, vTop0)) / norm(vLinTop) / norm(vTop0);
-      double d = dot(w, crossprod(vLinTop, vTop1)) / norm(vLinTop) / norm(vTop1);
-//      a *= 180*M_1_PI;
-//      b *= 180*M_1_PI;
-//      c *= 180*M_1_PI;
-//      d *= 180*M_1_PI;
-//      std::cout << "angles: " << a << " -> " << c << " (*" << c/a << ")  "
-//                              << b << " -> " << d << " (*" << d/b << ")" << std::endl;
-      a = signedAngle(vLinBase, vBase0, w);
-      b = signedAngle(vLinBase, vBase1, w);
-      c = signedAngle(vLinTop, vTop0, w);
-      d = signedAngle(vLinTop, vTop1, w);
-      std::cout << "angles: " << a*180*M_1_PI << " -> " << c*180*M_1_PI << " (*" << c/a << ")  "
-                              << b*180*M_1_PI << " -> " << d*180*M_1_PI << " (*" << d/b << ")" << std::endl;
-
-      double limit = .5*parameters.characteristicThickness();
-
-      double expansionFactor = vLinTop.norm() / vLinBase.norm();
-      regularizeExtremities(a, b, vLinTop, w, controlPointsTop, limit,
-                            expansionFactor, vBase0.norm(), vBase1.norm());
-
-      fs->matrixBez2Lag.mult(controlPointsTop, xyzTop);
-      for (int i = 0; i < nVert; ++i) {
-        topVert[i]->x() = xyzTop(i, 0);
-        topVert[i]->y() = xyzTop(i, 1);
-        topVert[i]->z() = xyzTop(i, 2);
-      }
-    }
+    regularizeExtremities(baseVert, topVert, parameters, w);
 
 
 //    if (nLayer == 0)
@@ -1299,7 +1294,7 @@ namespace BoundaryLayerCurver
   {
 //    if (bottomEdge->getNum() != 1156) return true; // Strange
 //    if (bottomEdge->getNum() != 1079) return true; // Good
-    if (bottomEdge->getNum() != 1078) return true; // Next to good
+//    if (bottomEdge->getNum() != 1078) return true; // Next to good
 //    if (bottomEdge->getNum() != 1136) return true; // Bad
 //    if (bottomEdge->getNum() != 1102) return true; // HO
 //    if (bottomEdge->getNum() != 1150) return true; // concave
