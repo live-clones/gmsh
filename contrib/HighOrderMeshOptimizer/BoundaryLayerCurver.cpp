@@ -859,7 +859,9 @@ namespace BoundaryLayerCurver
 
   void regularizeExtremities(double targetAngle0, double targetAngle1,
                              SVector3 linear, SVector3 w,
-                             fullMatrix<double> &controlPoints, double limit)
+                             fullMatrix<double> &controlPoints, double limit,
+                             double expansionFactor, double previousLenght0,
+                             double previousLenght1)
   {
     targetAngle0 = std::abs(targetAngle0);
     targetAngle1 = std::abs(targetAngle1);
@@ -888,8 +890,8 @@ namespace BoundaryLayerCurver
     while (improved && displacement < limit)
     {
       double maxDisplacement = computeDampingDirections(controlPoints, dCtrlPnts);
-      if (maxDisplacement < .05 * limit)
-        maxDisplacement = computeLinearDirections(controlPoints, dCtrlPnts);
+//      if (maxDisplacement < .05 * limit)
+//        maxDisplacement = computeLinearDirections(controlPoints, dCtrlPnts);
 
       const int k = nVert-1;
       SVector3 dir0(dCtrlPnts(2, 0), dCtrlPnts(2, 1), dCtrlPnts(2, 2));
@@ -914,21 +916,20 @@ namespace BoundaryLayerCurver
           maxFact = std::max(maxFact, length / dir1.norm());
       }
 
-      double totalLength = linear.norm();
-      double limitLength = .5 * totalLength / (nVert-1);
+//      double totalLength = linear.norm();
+//      double limitLength = .5 * totalLength / (nVert-1);
       double length0 = vTop0.norm();
       double length1 = vTop1.norm();
 
-      if (maxFact < 1 && length0 < limitLength) {
+      if (maxFact < 1 && expansionFactor > 1 && length0 < previousLenght0) {
         double length;
-        bool canImprove = solveLSDtriangle(limitLength, vTop0, dir0, length, w);
-        std::cout << "canImprove: " << canImprove << std::endl;
+        bool canImprove = solveLSDtriangle(previousLenght0, vTop0, dir0, length, w);
         if (canImprove) maxFact = std::max(maxFact, length / dir0.norm());
       }
 
-      if (maxFact < 1 && length1 < limitLength) {
+      if (maxFact < 1 && expansionFactor > 1 && length1 < previousLenght1) {
         double length;
-        bool canImprove = solveLSDtriangle(limitLength, -vTop1, dir1, length, w);
+        bool canImprove = solveLSDtriangle(previousLenght1, -vTop1, dir1, length, w);
         if (canImprove) maxFact = std::max(maxFact, length / dir1.norm());
       }
 
@@ -1088,9 +1089,11 @@ namespace BoundaryLayerCurver
       std::cout << "angles: " << a*180*M_1_PI << " -> " << c*180*M_1_PI << " (*" << c/a << ")  "
                               << b*180*M_1_PI << " -> " << d*180*M_1_PI << " (*" << d/b << ")" << std::endl;
 
-      double limit = 1000*parameters.characteristicThickness();
+      double limit = .5*parameters.characteristicThickness();
 
-      regularizeExtremities(a, b, vLinTop, w, controlPointsTop, limit);
+      double expansionFactor = vLinTop.norm() / vLinBase.norm();
+      regularizeExtremities(a, b, vLinTop, w, controlPointsTop, limit,
+                            expansionFactor, vBase0.norm(), vBase1.norm());
 
       fs->matrixBez2Lag.mult(controlPointsTop, xyzTop);
       for (int i = 0; i < nVert; ++i) {
@@ -1296,6 +1299,7 @@ namespace BoundaryLayerCurver
   {
 //    if (bottomEdge->getNum() != 1156) return true; // Strange
 //    if (bottomEdge->getNum() != 1079) return true; // Good
+    if (bottomEdge->getNum() != 1078) return true; // Next to good
 //    if (bottomEdge->getNum() != 1136) return true; // Bad
 //    if (bottomEdge->getNum() != 1102) return true; // HO
 //    if (bottomEdge->getNum() != 1150) return true; // concave
