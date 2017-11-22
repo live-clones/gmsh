@@ -42,6 +42,10 @@
 #include "PViewOptions.h"
 #endif
 
+#if defined(HAVE_PLUGINS)
+#include "PluginManager.h"
+#endif
+
 static int _initialized = 0;
 
 static bool _isInitialized()
@@ -1941,6 +1945,7 @@ void gmshViewDelete(const int tag)
     Msg::Error("Unknown view with tag %d", tag);
     throw 2;
   }
+  delete view;
 #else
   Msg::Error("Views require the post-processing module");
   throw -1;
@@ -1957,6 +1962,19 @@ int gmshViewGetIndex(const int tag)
     throw 2;
   }
   return view->getIndex();
+#else
+  Msg::Error("Views require the post-processing module");
+  throw -1;
+#endif
+}
+
+void gmshViewGetTags(std::vector<int> &tags)
+{
+  if(!_isInitialized()){ throw -1; }
+#if defined(HAVE_POST)
+  tags.clear();
+  for(unsigned int i = 0; i < PView::list.size(); i++)
+    tags.push_back(PView::list[i]->getTag());
 #else
   Msg::Error("Views require the post-processing module");
   throw -1;
@@ -2049,6 +2067,58 @@ void gmshViewExport(const int tag, const std::string &fileName,
   view->write(fileName, 10, append);
 #else
   Msg::Error("Views require the post-processing module");
+  throw -1;
+#endif
+}
+
+// gmshPlugin
+
+void gmshPluginSetNumber(const std::string &name, const std::string &option,
+                         const double value)
+{
+#if defined(HAVE_PLUGINS)
+  try {
+    PluginManager::instance()->setPluginOption(name, option, value);
+  }
+  catch(...) {
+    Msg::Error("Unknown plugin or plugin option");
+    throw 2;
+  }
+#else
+  Msg::Error("Views require the post-processing and plugin modules");
+  throw -1;
+#endif
+}
+
+void gmshPluginSetString(const std::string &name, const std::string &option,
+                         const std::string &value)
+{
+#if defined(HAVE_PLUGINS)
+  try {
+    PluginManager::instance()->setPluginOption(name, option, value);
+  }
+  catch(...) {
+    Msg::Error("Unknown plugin or plugin option");
+    throw 2;
+  }
+#else
+  Msg::Error("Views require the post-processing and plugin modules");
+  throw -1;
+#endif
+}
+
+void gmshPluginRun(const std::string &name)
+{
+#if defined(HAVE_PLUGINS)
+  try {
+    PluginManager::instance()->action(name, "Run", 0);
+  }
+  catch(...) {
+    Msg::Error("Unknown plugin or plugin action");
+    throw 2;
+  }
+#else
+  Msg::Error("Views require the post-processing and plugin modules");
   throw -1;
 #endif
 }

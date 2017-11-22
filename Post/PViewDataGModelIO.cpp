@@ -53,7 +53,6 @@ bool PViewDataGModel::addData(GModel *model,
                               const std::vector<std::vector<double> > &data,
                               int step, double time, int partition, int numComp)
 {
-  printf("data size %d tag size %d\n", data.size() , tags.size());
   if(data.empty() || tags.empty() || data.size() != tags.size()) return false;
 
   if (numComp < 0){

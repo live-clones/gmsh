@@ -775,6 +775,9 @@ GMSH_API void gmshViewDelete(const int tag);
 // access view options with the gmshOption functions.
 GMSH_API int gmshViewGetIndex(const int tag);
 
+// Gets the tags of all views.
+GMSH_API void gmshViewGetTags(std::vector<int> &tags);
+
 // Adds model-based post-processing data to the view with tag `tag'. `modelName'
 // identifies the model the data is attached to. `dataType' specifies the type
 // of data, currently either "NodeData", "ElementData" or
@@ -799,6 +802,23 @@ GMSH_API void gmshViewAddModelData(const int tag, const std::string &modelName,
 // extension.
 GMSH_API void gmshViewExport(const int tag, const std::string &fileName,
                              const bool append = false);
+
+// -----------------------------------------------------------------------------
+// Module gmshPlugin: plugin functions
+// -----------------------------------------------------------------------------
+
+// Sets the numerical option `option` to the value `value' for plugin `name'.
+GMSH_API void gmshPluginSetNumber(const std::string &name,
+                                  const std::string &option,
+                                  const double value);
+
+// Sets the string option `option` to the value `value' for plugin `name'.
+GMSH_API void gmshPluginSetString(const std::string &name,
+                                  const std::string &option,
+                                  const std::string &value);
+
+// Runs the plugin `name'.
+GMSH_API void gmshPluginRun(const std::string &name);
 
 #undef GMSH_API
 
