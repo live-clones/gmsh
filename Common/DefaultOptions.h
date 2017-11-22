@@ -1400,6 +1400,10 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "Plugins" , opt_post_plugins , 1. ,
     "Enable default post-processing plugins?" },
 
+  { F|O, "SaveInterpolationMatrices" , opt_post_save_interpolation_matrices , 1. ,
+    "Save the interpolation matrices when exporting model-based data" },
+  { F|O, "SaveMesh" , opt_post_save_mesh , 1. ,
+    "Save the mesh when exporting model-based data" },
   { F|O, "Smoothing" , opt_post_smooth , 0. ,
     "Apply (non-reversible) smoothing to post-processing view when merged" },
 

@@ -260,6 +260,7 @@ class CTX {
     int draw, link, horizontalScales;
     int smooth, animCycle, animStep, combineTime, combineRemoveOrig;
     int fileFormat, plugins, forceNodeData, forceElementData;
+    int saveMesh, saveInterpolationMatrices;
     double animDelay;
     std::string doubleClickedGraphPointCommand;
     double doubleClickedGraphPointX, doubleClickedGraphPointY;
