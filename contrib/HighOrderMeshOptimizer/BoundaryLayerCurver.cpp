@@ -340,6 +340,7 @@ namespace
     // - sideA is the vector from B to C
     // - dirSideB is a vector from C in the direction of A
     // positiveLengths=true implies that all angles have to be of the same sign
+    if (dirSideB.norm() < 1e-12) return false;
     if (std::abs(angleB) > M_PI) {
       Msg::Warning("angle greater than pi in solveASDtriangle");
     }
@@ -366,6 +367,7 @@ namespace
     // - positive lengths, i.e. all angles have to be of the same sign
     // - lengthSideC > length(sideA). Otherwise, ambiguous (0, 1 or 2 solutions)
     if (lengthSideC < sideA.norm()) return false;
+    if (dirSideB.norm() < 1e-12) return false;
 
     double angleC = signedAngle(dirSideB, -sideA, w);
     int sign = gmsh_sign(angleC);
@@ -659,15 +661,15 @@ namespace BoundaryLayerCurver
     directions(idx[nVert-1], 0) = 0;
     directions(idx[nVert-1], 1) = 0;
     directions(idx[nVert-1], 2) = 0;
-    for (int i = 1; i < nVert-1; ++i) {
+    for (int k = 1; k < nVert-1; ++k) {
       for (int j = 0; j < 3; ++j)
-        directions(idx[i], j) = .25 * controlPoints(idx[i-1], j) +
-                                .25 * controlPoints(idx[i+1], j) -
-                                .5 * controlPoints(idx[i], j);
+        directions(idx[k], j) = .25 * controlPoints(idx[k-1], j) +
+                                .25 * controlPoints(idx[k+1], j) -
+                                .5 * controlPoints(idx[k], j);
     }
 
     double maxDisplacement = 0;
-    for (int i = 1; i < nVert-1; ++i) {
+    for (int i = 2; i < nVert; ++i) {
       double displacement = std::sqrt(directions(i, 0) * directions(i, 0) +
                                       directions(i, 1) * directions(i, 1) +
                                       directions(i, 2) * directions(i, 2));
@@ -686,7 +688,7 @@ namespace BoundaryLayerCurver
     xi[1] = 1;
     for (int i = 2; i < nVert; ++i) xi[i] = (double)(i-1) / (nVert-1);
 
-    for (int i = 1; i < nVert-1; ++i) {
+    for (int i = 2; i < nVert; ++i) {
       for (int j = 0; j < 3; ++j)
         directions(i, j) = (1-xi[i]) * controlPoints(0, j) +
                               xi[i]  * controlPoints(1, j) -
@@ -694,7 +696,7 @@ namespace BoundaryLayerCurver
     }
 
     double maxDisplacement = 0;
-    for (int i = 1; i < nVert-1; ++i) {
+    for (int i = 2; i < nVert; ++i) {
       double displacement = std::sqrt(directions(i, 0) * directions(i, 0) +
                                       directions(i, 1) * directions(i, 1) +
                                       directions(i, 2) * directions(i, 2));
