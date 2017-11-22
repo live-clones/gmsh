@@ -38,7 +38,7 @@ void assignToParent(std::set<MVertex*> &verts, partitionVertex *vertex, ITERATOR
 
 int MakeGraph(GModel *const model, Graph &graph);
 template <class ITERATOR>
-void fillElementsToNodesMap(Graph &graph, const GEntity *const entity, int &eptrIndex, int &eindIndex, ITERATOR it_beg, ITERATOR it_end);
+void fillElementsToNodesMap(Graph &graph, const GEntity *const entity, int &eptrIndex, int &eindIndex, int &numVertex, ITERATOR it_beg, ITERATOR it_end);
 int getSizeOfEind(const GModel *const model);
 int getNumVertices(const MElement *const element);
 bool isPeriodic(const GModel *const model);
@@ -58,7 +58,7 @@ void assignElementsToEntities(GModel *const model, std::unordered_map<MElement*,
 void addPhysical(GModel *const model, GEntity *const entity, const unsigned short partition);
 
 void CreatePartitionBoundaries(GModel *const model, std::multimap<unsigned short, GEntity*> &newPartitionBoundaries, std::multimap<unsigned short, GEntity*> &newBoundariesOfPartitionBoundaries);
-MElement* getReferenceElement(const std::vector< std::pair<MElement*, std::vector<unsigned short> > > &elementPairs);
+MElement* getReferenceElement(const std::vector< std::pair<MElement*, std::vector<unsigned short> > > &elementPairs, std::vector<unsigned short> &referencePartitions);
 void getPartitionInVector(std::vector<unsigned short> &partitions, const std::vector< std::pair<MElement*, std::vector<unsigned short> > > &boundaryPair);
 template <class ITERATOR>
 void fillit_(std::unordered_map<MFace, std::vector< std::pair<MElement*, std::vector<unsigned short> > >, Hash_Face, Equal_Face> &faceToElement, std::vector<unsigned short> &partitions, ITERATOR it_beg, ITERATOR it_end);
@@ -76,7 +76,7 @@ void setVerticesToEntity(std::set<MVertex *> &verts, GEntity *const entity, ITER
 
 int CreateTopologyFile(GModel* model, std::string name);
 int getTag(GModel* model, GEntity* entity);
-std::vector<unsigned short> getPartition(GModel* model, GEntity* entity, std::string &substr);
+std::string getSubstr(GModel* model, GEntity* entity);
 std::vector<unsigned short> getPartition(GModel* model, GEntity* entity);
 
 void ComputePartitionedBREP(GModel* model, std::multimap<unsigned short, GEntity*> &newPartitionEntities, std::multimap<unsigned short, GEntity*> &newPartitionBoundaries, std::multimap<unsigned short, GEntity*> &newBoundariesOfPartitionBoundaries);

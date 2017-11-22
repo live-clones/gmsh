@@ -62,7 +62,7 @@ struct PartitionDialog
   Fl_Value_Input *inputPriWeight;
   Fl_Value_Input *inputPyrWeight;
   Fl_Value_Input *inputHexWeight;
-  
+    
   void write_all_options()
   {    // Group 0
     CTX::instance()->mesh.num_partitions = static_cast<int>(inputNumPartition->value());
@@ -155,7 +155,6 @@ void partition_cancel_cb(Fl_Widget *widget, void *data)
   PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
   dlg->window->hide();
   Fl::delete_widget(dlg->window);
-  CTX::instance()->mesh.num_partitions = 0;
 }
 
 // Select groups to display

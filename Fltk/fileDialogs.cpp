@@ -988,15 +988,15 @@ int meshStatFileDialog(const char *name)
 }
 
 // Save msh dialog
+struct _mshFileDialog{
+  Fl_Window *window;
+  Fl_Check_Button *b[4];
+  Fl_Choice *c;
+  Fl_Button *ok, *cancel;
+};
 
 int mshFileDialog(const char *name)
 {
-  struct _mshFileDialog{
-    Fl_Window *window;
-    Fl_Check_Button *b[4];
-    Fl_Choice *c;
-    Fl_Button *ok, *cancel;
-  };
   static _mshFileDialog *dialog = NULL;
 
   static Fl_Menu_Item formatmenu[] = {
@@ -1021,6 +1021,7 @@ int mshFileDialog(const char *name)
     dialog->c = new Fl_Choice(WB, y, BBB + BBB / 2, BH, "Format"); y += BH;
     dialog->c->menu(formatmenu);
     dialog->c->align(FL_ALIGN_RIGHT);
+    dialog->c->callback((Fl_Callback *)format_cb, dialog);
     dialog->b[0] = new Fl_Check_Button
       (WB, y, 2 * BBB + WB, BH, "Save all (ignore physical groups)"); y += BH;
     dialog->b[0]->type(FL_TOGGLE_BUTTON);
@@ -1052,6 +1053,11 @@ int mshFileDialog(const char *name)
   dialog->b[1]->value(CTX::instance()->mesh.saveParametric ? 1 : 0);
   dialog->b[2]->value(CTX::instance()->mesh.mshFilePartitioned ? 1 : 0);
   dialog->b[3]->value(CTX::instance()->mesh.partitionedTopology ? 1 : 0);
+  if(CTX::instance()->mesh.num_partitions == 0)
+  {
+    dialog->b[2]->deactivate();
+    dialog->b[3]->deactivate();
+  }
   dialog->window->show();
 
   while(dialog->window->shown()){
@@ -1060,7 +1066,6 @@ int mshFileDialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-        Msg::Info("%d", dialog->c->value());
         opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI,
                                   (dialog->c->value() == 0) ? 1.0 :
                                   (dialog->c->value() == 1 || dialog->c->value() == 2) ? 2.2 :
@@ -1083,6 +1088,21 @@ int mshFileDialog(const char *name)
     }
   }
   return 0;
+}
+
+void format_cb(Fl_Widget *widget, void *data)
+{
+  _mshFileDialog *dialog = static_cast<_mshFileDialog*>(data);
+  if((dialog->c->value() == 5 || dialog->c->value() == 6 || dialog->c->value() == 3 || dialog->c->value() == 4 || dialog->c->value() == 1 || dialog->c->value() == 2) && CTX::instance()->mesh.num_partitions > 0)
+  {
+    dialog->b[2]->activate();
+    dialog->b[3]->activate();
+  }
+  else
+  {
+    dialog->b[2]->deactivate();
+    dialog->b[3]->deactivate();
+  }
 }
 
 // unv/inp mesh dialog

@@ -1454,9 +1454,9 @@ int GModel::deleteMeshPartitions()
 int GModel::partitionMesh(int numPart)
 {
 #if defined(HAVE_MESH) && (defined(HAVE_METIS))
-  opt_mesh_partition_num(0, GMSH_SET, numPart);
   int ier = deleteMeshPartitions();
   if(ier != 0) return ier;
+  opt_mesh_partition_num(0, GMSH_SET, numPart);
   if(numPart > 0)
   {
     ier = PartitionMesh(this);

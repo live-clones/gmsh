@@ -73,7 +73,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-1, -2, -3",         "Perform 1D, 2D or 3D mesh generation, then exit"));
   s.push_back(mp("-o file",            "Specify output file name"));
   s.push_back(mp("-format string",     "Select output mesh format (auto (default), msh, "
-                                       "msh1, msh2, unv, vrml, ply2, stl, mesh, bdf, cgns, "
+                                       "msh1, msh2, msh3, msh4, unv, vrml, ply2, stl, mesh, bdf, cgns, "
                                        "p3d, diff, med, neu, ...)"));
   s.push_back(mp("-bin",               "Use binary format when available"));
   s.push_back(mp("-refine",            "Perform uniform mesh refinement, then exit"));
@@ -676,7 +676,7 @@ void GetOptions(int argc, char *argv[])
 #endif
           // convert mesh to latest binary format
           if(GModel::current()->getMeshStatus() > 0){
-            CTX::instance()->mesh.mshFileVersion = 3.0;
+            CTX::instance()->mesh.mshFileVersion = 4.0;
             CTX::instance()->mesh.binary = 1;
             CreateOutputFile(fileName, FORMAT_MSH);
           }
@@ -920,6 +920,10 @@ void GetOptions(int argc, char *argv[])
           else if(!strcmp(argv[i], "msh3")){
             CTX::instance()->mesh.fileFormat = FORMAT_MSH;
             CTX::instance()->mesh.mshFileVersion = 3.0;
+          }
+          else if(!strcmp(argv[i], "msh4")){
+            CTX::instance()->mesh.fileFormat = FORMAT_MSH;
+            CTX::instance()->mesh.mshFileVersion = 4.0;
           }
           else{
             int format = GetFileFormatFromExtension(std::string(".") + argv[i]);

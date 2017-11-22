@@ -51,8 +51,11 @@ class Graph
   
   unsigned int *_adjncy;                      /*The metis graph structure*/
   
-  MElement** _element;                        /*The element corresponding to each graph element
+  MElement** _element;                        /*Elements corresponding to each graph elements
                                               in eptr*/
+  
+  int* _vertex;                               /*Vertices corresponding to each graph vertices
+                                               in eptr*/
   
   unsigned int *_vwgt;                        /*The width associated to each elements of eptr*/
   
@@ -60,7 +63,7 @@ class Graph
 
   public:
   
-  Graph() : _ne(0), _nn(0), _dim(0), _eind(NULL), _eptr(NULL), _xadj(NULL), _adjncy(NULL), _element(NULL), _vwgt(NULL), _partition(NULL)
+  Graph() : _ne(0), _nn(0), _dim(0), _eind(NULL), _eptr(NULL), _xadj(NULL), _adjncy(NULL), _element(NULL), _vertex(NULL), _vwgt(NULL), _partition(NULL)
   { }
   
   void fillDefaultWeights()
@@ -117,6 +120,7 @@ class Graph
   unsigned int adjncy(unsigned int i) const { return _adjncy[i]; };
   unsigned int *adjncy() const { return _adjncy; };
   MElement* element(unsigned int i) const { return _element[i]; };
+  int vertex(unsigned int i) const { return _vertex[i]; };
   unsigned int *vwgt() const { return _vwgt; };
   unsigned int partition(unsigned int i) const { return _partition[i]; };
   unsigned int *partition() const { return _partition; };
@@ -154,6 +158,12 @@ class Graph
     for(unsigned int i = 0; i < size; i++) _element[i] = NULL;
   }
   void element(unsigned int i, MElement* element) { _element[i] = element; };
+  void vertexResize(unsigned int size)
+  {
+    _vertex = new int[size];
+    for(unsigned int i = 0; i < size; i++) _vertex[i] = -1;
+  }
+  void vertex(unsigned int i, int vertex) { _vertex[i] = vertex; };
   void vwgt(unsigned int *vwgt) { _vwgt = vwgt; };
   void partition(unsigned int *partition) { _partition = partition; };
   
@@ -183,6 +193,11 @@ class Graph
     {
       delete[] _element;
       _element = NULL;
+    }
+    if(_vertex != NULL)
+    {
+      delete[] _vertex;
+      _vertex = NULL;
     }
     if(_vwgt != NULL)
     {

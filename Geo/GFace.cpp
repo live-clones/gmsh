@@ -204,7 +204,7 @@ void GFace::resetMeshAttributes()
 SBoundingBox3d GFace::bounds() const
 {
   SBoundingBox3d res;
-  if(geomType() != DiscreteSurface){
+  if(geomType() != DiscreteSurface && geomType() != PartitionSurface){
     std::list<GEdge*>::const_iterator it = l_edges.begin();
     for(; it != l_edges.end(); it++)
       res += (*it)->bounds();

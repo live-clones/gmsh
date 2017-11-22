@@ -5698,14 +5698,14 @@ double opt_mesh_msh_file_version(OPT_ARGS_NUM)
 double opt_mesh_msh_file_partitioned(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.mshFilePartitioned = val;
+    CTX::instance()->mesh.mshFilePartitioned = (int) val;
   return CTX::instance()->mesh.mshFilePartitioned;
 }
 
 double opt_mesh_msh_file_partitioned_topology(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.partitionedTopology = val;
+    CTX::instance()->mesh.partitionedTopology = (int) val;
   return CTX::instance()->mesh.partitionedTopology;
 }
 

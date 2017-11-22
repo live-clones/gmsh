@@ -198,7 +198,7 @@ void GEdge::delFace(GFace *f)
 SBoundingBox3d GEdge::bounds() const
 {
   SBoundingBox3d bbox;
-  if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve){
+  if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve && geomType() != PartitionCurve){
     Range<double> tr = parBounds(0);
     const int N = 10;
     for(int i = 0; i < N; i++){

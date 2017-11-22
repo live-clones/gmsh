@@ -1097,9 +1097,9 @@ StringXNumber MeshOptions_Number[] = {
     "Weight of triangle element for METIS load balancing" },
   { F|O, "PartitionBoundaries"     , opt_mesh_partition_boundaries , 1 ,
     "Create boundary entities between partitions" },
-  { F|O, "PartitionMeshes"     , opt_mesh_msh_file_partitioned , 1 ,
+  { F|O, "PartitionMeshes"     , opt_mesh_msh_file_partitioned , 0 ,
     "Write one mesh file by partition" },
-  { F|O, "PartitionTopology"     , opt_mesh_msh_file_partitioned_topology , 1 ,
+  { F|O, "PartitionTopology"     , opt_mesh_msh_file_partitioned_topology , 0 ,
     "Write a topology file" },
 
   { F, "NbHexahedra" , opt_mesh_nb_hexahedra , 0. ,
@@ -1204,7 +1204,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "RefineSteps" , opt_mesh_refine_steps , 10 ,
     "Number of refinement steps in the MeshAdapt-based 2D algorithms" },
 
-  { F,   "SaveAll" , opt_mesh_save_all , 0. ,
+  { F,   "SaveAll" , opt_mesh_save_all , 1. ,
     "Ignore Physical definitions and save all elements" },
   { F|O, "SaveElementTagType" , opt_mesh_save_element_tag_type , 1. ,
     "Type of the element tag saved in mesh formats that don't support saving "

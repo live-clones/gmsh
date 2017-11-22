@@ -140,7 +140,7 @@ void GRegion::resetMeshAttributes()
 SBoundingBox3d GRegion::bounds() const
 {
   SBoundingBox3d res;
-  if(geomType() != DiscreteVolume){
+  if(geomType() != DiscreteVolume && geomType() != PartitionVolume){
     std::list<GFace*>::const_iterator it = l_faces.begin();
     for(; it != l_faces.end(); it++)
       res += (*it)->bounds();
