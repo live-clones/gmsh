@@ -966,12 +966,7 @@ StringXNumber GeometryOptions_Number[] = {
 StringXNumber MeshOptions_Number[] = {
   { F|O, "Algorithm" , opt_mesh_algo2d , ALGO_2D_AUTO ,
     "2D mesh algorithm (1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=BAMG, 8=DelQuad)" },
-  { F|O, "Algorithm3D" , opt_mesh_algo3d ,
-#if defined(HAVE_TETGEN)
-    ALGO_3D_DELAUNAY ,
-#else
-    ALGO_3D_DELAUNAY_NEW ,
-#endif
+  { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_DELAUNAY_NEW ,
     "3D mesh algorithm (1=Delaunay, 2=New Delaunay, 4=Frontal, 5=Frontal Delaunay, "
     "6=Frontal Hex, 7=MMG3D, 9=R-tree)" },
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
