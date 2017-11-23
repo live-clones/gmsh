@@ -748,14 +748,27 @@ GMSH_API void gmshModelOccSynchronize();
 // Module gmshModelField: per-model mesh size field functions
 // -----------------------------------------------------------------------------
 
+// Creates a new mesh size field of type `type'. If `tag' is positive, assign
+// the tag explcitly; otherwise a new tag is assigned automatically. Returns the
+// field tag.
 GMSH_API int gmshModelFieldCreate(const std::string &type, const int tag = -1);
+
+// Deletes the field with tag `tag'.
 GMSH_API void gmshModelFieldDelete(const int tag);
+
+// Sets the numerical option `option' to value `value' for field `tag'.
 GMSH_API void gmshModelFieldSetNumber(const int tag, const std::string &option,
                                       const double value);
+
+// Sets the string option `option' to value `value' for field `tag'.
 GMSH_API void gmshModelFieldSetString(const int tag, const std::string &option,
                                       const std::string &value);
+
+// Sets the numerical list option `option' to value `value' for field `tag'.
 GMSH_API void gmshModelFieldSetNumbers(const int tag, const std::string &option,
                                        const std::vector<double> &value);
+
+// Sets the field `tag' as background mesh size field.
 GMSH_API void gmshModelFieldSetAsBackground(const int tag);
 
 // -----------------------------------------------------------------------------
