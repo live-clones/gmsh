@@ -175,7 +175,7 @@ static bool getEdgeVerticesOnGeo(GEdge *ge, MVertex *v0, MVertex *v1,
     MVertex *v;
     int count = u0<u1? j + 1 : nPts + 1  - (j + 1);
     GPoint pc = ge->point(US[count]);
-    v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge,US[count]);
+    v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, US[count]);
     // this destroys the ordering of the mesh vertices on the edge
     ve.push_back(v);
   }

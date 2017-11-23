@@ -152,7 +152,7 @@ PView::PView(const std::string &name, const std::string &type,
                             _options->targetError);
 }
 
-void PView::addStep(GModel *model, std::map<int, std::vector<double> > &data,
+void PView::addStep(GModel *model, const std::map<int, std::vector<double> > &data,
                     double time, int numComp)
 {
   PViewDataGModel *d = dynamic_cast<PViewDataGModel*>(_data);

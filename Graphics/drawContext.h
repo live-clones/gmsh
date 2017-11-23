@@ -27,6 +27,12 @@
 #include <GL/glu.h>
 #endif
 
+#if defined(HAVE_VISUDEV)
+#define NORMAL_GLTYPE GL_FLOAT
+#else
+#define NORMAL_GLTYPE GL_BYTE
+#endif
+
 class PView;
 class GModel;
 class GVertex;

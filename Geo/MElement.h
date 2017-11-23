@@ -43,6 +43,10 @@ class MElement
                    int faceIndex=-1);
   void _getFaceRep(MVertex *v0, MVertex *v1, MVertex *v2,
                    double *x, double *y, double *z, SVector3 *n);
+#if defined(HAVE_VISUDEV)
+  void _getFaceRepQuad(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
+                       double *x, double *y, double *z, SVector3 *n);
+#endif
  public :
   MElement(int num=0, int part=0);
   virtual ~MElement(){}
@@ -61,11 +65,13 @@ class MElement
   virtual int getPolynomialOrder() const { return 1; }
 
   // return true if the element can be considered as a serendipity element
-  virtual bool getIsAssimilatedSerendipity() const {
+  virtual bool getIsAssimilatedSerendipity() const
+  {
     return ElementType::SerendipityFromTag(getTypeForMSH()) > 0;
   }
   // return true if the element has to be considered as a serendipity element
-  virtual bool getIsOnlySerendipity() const {
+  virtual bool getIsOnlySerendipity() const
+  {
     return ElementType::SerendipityFromTag(getTypeForMSH()) > 1;
   }
 
@@ -420,8 +426,9 @@ class MElement
 
 class MElementFactory{
  public:
-  MElement *create(int type, std::vector< MVertex* > &v, int num=0, int part=0,
-                   bool owner=false, int parent=0, MElement *parent_ptr=NULL, MElement *d1 = 0, MElement *d2 = 0);
+  MElement *create(int type, std::vector< MVertex* > &v, int num = 0, int part = 0,
+                   bool owner = false, int parent = 0, MElement *parent_ptr = NULL,
+                   MElement *d1 = 0, MElement *d2 = 0);
   MElement *create(int num, int type, const std::vector<int> &data, GModel *model);
 };
 

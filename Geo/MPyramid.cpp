@@ -82,12 +82,23 @@ void MPyramidN::getEdgeRep(bool curved, int num,
   else MPyramid::getEdgeRep(false, num, x, y, z, n);
 }
 
+int MPyramid::getNumFacesRep(bool curved)
+{
+#if defined(HAVE_VISUDEV)
+  if (CTX::instance()->heavyVisu) {
+    if (CTX::instance()->mesh.numSubEdges == 1) return 8;
+    return 6 * gmsh_SQU(CTX::instance()->mesh.numSubEdges);
+  }
+#endif
+  return 6;
+}
 
 int MPyramidN::getNumFacesRep(bool curved)
 {
   // FIXME: remove !getIsAssimilatedSerendipity() when serendip are implemented
   return (curved && !getIsAssimilatedSerendipity()) ?
-    6 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) : 6;
+         6 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+         MPyramid::getNumFacesRep(curved);
 }
 
 static void _myGetFaceRep(MPyramid *pyr, int num, double *x, double *y, double *z,
@@ -121,6 +132,8 @@ static void _myGetFaceRep(MPyramid *pyr, int num, double *x, double *y, double *
     iVertex4 = 3;
   }
 
+  SPoint3 pnt1, pnt2, pnt3;
+
   if (iFace < 4) {
 
     int ix = 0, iy = 0;
@@ -137,7 +150,6 @@ static void _myGetFaceRep(MPyramid *pyr, int num, double *x, double *y, double *
 
     const double d = 1. / numSubEdges;
 
-    SPoint3 pnt1, pnt2, pnt3;
     double u1, v1, u2, v2, u3, v3;
     if (ix % 2 == 0){
       u1 = ix / 2 * d; v1= iy*d;
@@ -165,21 +177,8 @@ static void _myGetFaceRep(MPyramid *pyr, int num, double *x, double *y, double *
     pyr->pnt(U1, V1, W1, pnt1);
     pyr->pnt(U2, V2, W2, pnt2);
     pyr->pnt(U3, V3, W3, pnt3);
-
-    x[0] = pnt1.x(); x[1] = pnt2.x(); x[2] = pnt3.x();
-    y[0] = pnt1.y(); y[1] = pnt2.y(); y[2] = pnt3.y();
-    z[0] = pnt1.z(); z[1] = pnt2.z(); z[2] = pnt3.z();
-
-    SVector3 d1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
-    SVector3 d2(x[2] - x[0], y[2] - y[0], z[2] - z[0]);
-    n[0] = crossprod(d1, d2);
-    n[0].normalize();
-    n[1] = n[0];
-    n[2] = n[0];
-
   }
   else {
-    SPoint3 pnt1, pnt2, pnt3;
 
     /*
     0
@@ -316,14 +315,50 @@ static void _myGetFaceRep(MPyramid *pyr, int num, double *x, double *y, double *
     pyr->pnt(U2,V2,W2, pnt2);
     pyr->pnt(U3,V3,W3, pnt3);
     }
-
-    n[0] = 1;
-    n[1] = 1;
-    n[2] = 1;
-    x[0] = pnt1.x(); x[1] = pnt2.x(); x[2] = pnt3.x();
-    y[0] = pnt1.y(); y[1] = pnt2.y(); y[2] = pnt3.y();
-    z[0] = pnt1.z(); z[1] = pnt2.z(); z[2] = pnt3.z();
   }
+
+  x[0] = pnt1.x(); x[1] = pnt2.x(); x[2] = pnt3.x();
+  y[0] = pnt1.y(); y[1] = pnt2.y(); y[2] = pnt3.y();
+  z[0] = pnt1.z(); z[1] = pnt2.z(); z[2] = pnt3.z();
+
+  SVector3 d1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
+  SVector3 d2(x[2] - x[0], y[2] - y[0], z[2] - z[0]);
+  n[0] = crossprod(d1, d2);
+  n[0].normalize();
+  n[1] = n[0];
+  n[2] = n[0];
+}
+
+void MPyramid::getFaceRep(bool curved, int num,
+                          double *x, double *y, double *z, SVector3 *n)
+{
+#if defined(HAVE_VISUDEV)
+  static const int fquad[4][4] = {
+      {0, 3, 2, 1}, {3, 2, 1, 0}, {2, 1, 0, 3}, {1, 0, 3, 2}
+  };
+  if (CTX::instance()->heavyVisu) {
+    if (CTX::instance()->mesh.numSubEdges > 1) {
+      _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+      return;
+    }
+    if (num > 3) {
+      int i = num - 4;
+      _getFaceRepQuad(getVertex(fquad[i][0]), getVertex(fquad[i][1]),
+                      getVertex(fquad[i][2]), getVertex(fquad[i][3]),
+                      x, y, z, n);
+      return;
+    }
+  }
+#endif
+  static const int f[6][3] = {
+      {0, 1, 4},
+      {3, 0, 4},
+      {1, 2, 4},
+      {2, 3, 4},
+      {0, 3, 2}, {0, 2, 1}
+  };
+  _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
+              x, y, z, n);
 }
 
 void MPyramidN::getFaceRep(bool curved, int num,

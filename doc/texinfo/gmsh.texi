@@ -3444,8 +3444,8 @@ being stored in @var{list-of-coords}). Defining @var{g}[@var{i}] =
 Sum(@var{j}=0, ..., @var{m}-1) @var{G}[@var{i}][@var{j}]
 @var{q}[@var{j}], with @var{q}[@var{j}] = @var{u}^@var{Q}[@var{j}][0]
 @var{v}^@var{Q}[@var{j}][1] @var{w}^@var{Q}[@var{j}][2], then
-@var{val-coef-matrix} denotes the @var{m} x @var{m} matrix @var{G} and
-@var{val-exp-matrix} denotes the @var{m} x @var{3} matrix @var{Q}.
+@var{geo-coef-matrix} denotes the @var{m} x @var{m} matrix @var{G} and
+@var{geo-exp-matrix} denotes the @var{m} x @var{3} matrix @var{Q}.
 
 Here are for example the interpolation matrices for a first order
 quadrangle:

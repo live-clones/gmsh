@@ -966,12 +966,7 @@ StringXNumber GeometryOptions_Number[] = {
 StringXNumber MeshOptions_Number[] = {
   { F|O, "Algorithm" , opt_mesh_algo2d , ALGO_2D_AUTO ,
     "2D mesh algorithm (1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=BAMG, 8=DelQuad)" },
-  { F|O, "Algorithm3D" , opt_mesh_algo3d ,
-#if defined(HAVE_TETGEN)
-    ALGO_3D_DELAUNAY ,
-#else
-    ALGO_3D_DELAUNAY_NEW ,
-#endif
+  { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_DELAUNAY_NEW ,
     "3D mesh algorithm (1=Delaunay, 2=New Delaunay, 4=Frontal, 5=Frontal Delaunay, "
     "6=Frontal Hex, 7=MMG3D, 9=R-tree)" },
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
@@ -1400,6 +1395,10 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "Plugins" , opt_post_plugins , 1. ,
     "Enable default post-processing plugins?" },
 
+  { F|O, "SaveInterpolationMatrices" , opt_post_save_interpolation_matrices , 1. ,
+    "Save the interpolation matrices when exporting model-based data" },
+  { F|O, "SaveMesh" , opt_post_save_mesh , 1. ,
+    "Save the mesh when exporting model-based data" },
   { F|O, "Smoothing" , opt_post_smooth , 0. ,
     "Apply (non-reversible) smoothing to post-processing view when merged" },
 

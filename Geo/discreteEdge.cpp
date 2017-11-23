@@ -295,7 +295,7 @@ void discreteEdge::parametrize(std::map<GFace*, std::map<MVertex*, MVertex*,
     MVertex *vR = lines[i]->getVertex(_orientation[i]);
     int param = i+1;
     MVertex *vNEW = new MEdgeVertex(vR->x(),vR->y(),vR->z(), this,
-                                    param, -1., vR->getNum());
+                                    param, vR->getNum());
     old2new.insert(std::make_pair(vR,vNEW));
     newVertices.push_back(vNEW);
     newLines.push_back(new MLine(vL, vNEW));
@@ -378,7 +378,7 @@ void discreteEdge::parametrize(std::map<MVertex*, MVertex*>& old2new)
     else vR = lines[i]->getVertex(0);
     int param = i+1;
     MVertex *vNEW = new MEdgeVertex(vR->x(),vR->y(),vR->z(), this,
-                                    param, -1., vR->getNum());
+                                    param, vR->getNum());
     old2new.insert(std::make_pair(vR,vNEW));
     newVertices.push_back(vNEW);
     newLines.push_back(new MLine(vL, vNEW));

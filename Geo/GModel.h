@@ -66,7 +66,7 @@ class GModel {
   // the visibility flag
   char _visible;
 
-  // vertex and element caches to speed-up direct access by tag (only
+  // vertex and element caches to speed-up direct access by tag (mostly
   // used for post-processing I/O)
   std::vector<MVertex*> _vertexVectorCache;
   std::map<int, MVertex*> _vertexMapCache;

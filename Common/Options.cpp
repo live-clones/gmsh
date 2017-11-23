@@ -3627,6 +3627,23 @@ double opt_general_expert_mode(OPT_ARGS_NUM)
   return CTX::instance()->expertMode;
 }
 
+#if defined(HAVE_VISUDEV)
+double opt_general_heavy_visualization(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    if(CTX::instance()->heavyVisu != val)
+      CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+    CTX::instance()->heavyVisu = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.butt[22]->value
+        (CTX::instance()->heavyVisu);
+#endif
+  return CTX::instance()->heavyVisu;
+}
+#endif
+
 double opt_general_stereo_mode(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -6843,6 +6860,20 @@ double opt_post_force_element_data(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->post.forceElementData = (int)val;
   return CTX::instance()->post.forceElementData;
+}
+
+double opt_post_save_mesh(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->post.saveMesh = (int)val;
+  return CTX::instance()->post.saveMesh;
+}
+
+double opt_post_save_interpolation_matrices(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->post.saveInterpolationMatrices = (int)val;
+  return CTX::instance()->post.saveInterpolationMatrices;
 }
 
 double opt_post_double_clicked_graph_point_x(OPT_ARGS_NUM)

@@ -377,6 +377,13 @@ bool discreteDiskFace::parametrize() const
 
   double t2 = Cpu();
   Msg::Debug("Assembly done in %8.3f seconds", t2 - t1);
+
+
+  if(!myAssemblerU.sizeOfR() || !myAssemblerV.sizeOfR()){
+    Msg::Warning("No unknowns in systems to compute parametrization - skipping");
+    return false;
+  }
+
   lsys_u->systemSolve();
   lsys_v->systemSolve();
   Msg::Debug("Systems solved");

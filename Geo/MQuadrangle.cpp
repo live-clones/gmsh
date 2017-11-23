@@ -17,8 +17,6 @@
 
 #include <cstring>
 
-#define SQU(a)      ((a)*(a))
-
 void MQuadrangle::getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                              SVector3 *n)
 {
@@ -124,19 +122,33 @@ void MQuadrangle9::getEdgeRep(bool curved, int num,
   else MQuadrangle::getEdgeRep(false, num, x, y, z, n);
 }
 
+int MQuadrangle::getNumFacesRep(bool curved)
+{
+#if defined(HAVE_VISUDEV)
+  if (CTX::instance()->heavyVisu) {
+    if (CTX::instance()->mesh.numSubEdges == 1) return 4;
+    return 2 * gmsh_SQU(CTX::instance()->mesh.numSubEdges);
+  }
+#endif
+  return 2;
+}
+
 int MQuadrangleN::getNumFacesRep(bool curved)
 {
-  return curved ? 2*SQU(CTX::instance()->mesh.numSubEdges) : 2;
+  return curved ? 2 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+         MQuadrangle::getNumFacesRep(curved);
 }
 
 int MQuadrangle8::getNumFacesRep(bool curved)
 {
-  return curved ? 2*SQU(CTX::instance()->mesh.numSubEdges) : 2;
+  return curved ? 2 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+         MQuadrangle::getNumFacesRep(curved);
 }
 
 int MQuadrangle9::getNumFacesRep(bool curved)
 {
-  return curved ? 2*SQU(CTX::instance()->mesh.numSubEdges) : 2;
+  return curved ? 2 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+         MQuadrangle::getNumFacesRep(curved);
 }
 
 static void _myGetFaceRep(MQuadrangle *t, int num, double *x, double *y, double *z,
@@ -189,6 +201,30 @@ static void _myGetFaceRep(MQuadrangle *t, int num, double *x, double *y, double 
   x[0] = pnt1.x(); x[1] = pnt2.x(); x[2] = pnt3.x();
   y[0] = pnt1.y(); y[1] = pnt2.y(); y[2] = pnt3.y();
   z[0] = pnt1.z(); z[1] = pnt2.z(); z[2] = pnt3.z();
+}
+
+void MQuadrangle::getFaceRep(bool curved, int num,
+                             double *x, double *y, double *z, SVector3 *n)
+{
+#if defined(HAVE_VISUDEV)
+  static const int fquad[4][4] = {
+      {0, 1, 2, 3}, {1, 2, 3, 0}, {2, 3, 0, 1}, {3, 0, 1, 2}
+  };
+  if (CTX::instance()->heavyVisu) {
+    if (CTX::instance()->mesh.numSubEdges > 1) {
+      _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+      return;
+    }
+    _getFaceRepQuad(getVertex(fquad[num][0]), getVertex(fquad[num][1]),
+                    getVertex(fquad[num][2]), getVertex(fquad[num][3]),
+                    x, y, z, n);
+    return;
+  }
+#endif
+  static const int f[2][3] = {
+      {0, 1, 2}, {0, 2, 3}
+  };
+  _getFaceRep(_v[f[num][0]], _v[f[num][1]], _v[f[num][2]], x, y, z, n);
 }
 
 void MQuadrangleN::getFaceRep(bool curved, int num,

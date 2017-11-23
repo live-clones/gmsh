@@ -285,6 +285,9 @@ double opt_general_zoom_factor(OPT_ARGS_NUM);
 double opt_general_expert_mode(OPT_ARGS_NUM);
 double opt_general_stereo_mode(OPT_ARGS_NUM);
 double opt_general_camera_mode(OPT_ARGS_NUM);
+#if defined(HAVE_VISUDEV)
+double opt_general_heavy_visualization(OPT_ARGS_NUM);
+#endif
 double opt_general_eye_sep_ratio(OPT_ARGS_NUM);
 double opt_general_focallength_ratio(OPT_ARGS_NUM);
 double opt_general_camera_aperture(OPT_ARGS_NUM);
@@ -579,6 +582,8 @@ double opt_post_nb_views(OPT_ARGS_NUM);
 double opt_post_file_format(OPT_ARGS_NUM);
 double opt_post_force_node_data(OPT_ARGS_NUM);
 double opt_post_force_element_data(OPT_ARGS_NUM);
+double opt_post_save_mesh(OPT_ARGS_NUM);
+double opt_post_save_interpolation_matrices(OPT_ARGS_NUM);
 double opt_post_double_clicked_graph_point_x(OPT_ARGS_NUM);
 double opt_post_double_clicked_graph_point_y(OPT_ARGS_NUM);
 double opt_post_double_clicked_view(OPT_ARGS_NUM);

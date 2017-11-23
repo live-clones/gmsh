@@ -53,7 +53,7 @@ opt(GETDP "Enable GetDP solver (as a directly linked library)" ${DEFAULT})
 opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
 opt(GMP "Enable GMP for Kbipack (advanced)" ON)
 opt(GRAPHICS "Enable building graphics lib even without GUI (advanced)" OFF)
-opt(INTERNAL_DEVELOPER_API "Enable internal developer API (will be off by default)" ON)
+opt(INTERNAL_DEVELOPER_API "Enable internal developer API" OFF)
 opt(KBIPACK "Enable Kbipack (neeeded by homology solver)" ${DEFAULT})
 opt(MATHEX "Enable math expression parser (used by plugins and options)" ${DEFAULT})
 opt(MED "Enable MED mesh and post file formats" ${DEFAULT})
@@ -88,6 +88,7 @@ opt(SOLVER "Enable built-in finite element solvers (required for compounds)" ${D
 opt(TAUCS "Enable Taucs linear solver" ${DEFAULT})
 opt(TCMALLOC "Enable libtcmalloc, a fast malloc implementation but that does not release memory" OFF)
 opt(TETGEN "Enable Tetgen 3D initial mesh generator" ${DEFAULT})
+opt(VISUDEV "Enable additional visualization capabilities for development purpose" OFF)
 opt(VORO3D "Enable Voro3D (for hex meshing, experimental)" ${DEFAULT})
 opt(WRAP_JAVA "Enable generation of Java wrappers" OFF)
 opt(WRAP_PYTHON "Enable generation of Python wrappers" OFF)
@@ -104,75 +105,22 @@ set(GMSH_SHORT_LICENSE "GNU General Public License")
 
 set(GMSH_API Common/gmsh.h)
 
-set(GMSH_INTERNAL_DEVELOPER_API
-  ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h
-  ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h
-  Common/GmshGlobal.h Common/Context.h Common/GmshDefines.h Common/GmshMessage.h
-    Common/VertexArray.h Common/Octree.h Common/OctreeInternals.h Common/OS.h
-    Common/StringUtils.h Common/OpenFile.h Common/Hash.h Common/onelab.h
-    Common/GmshSocket.h Common/onelabUtils.h Common/Options.h Common/picojson.h
-  Numeric/Numeric.h Numeric/GaussIntegration.h Numeric/polynomialBasis.h
-    Numeric/JacobianBasis.h Numeric/bezierBasis.h Numeric/fullMatrix.h
-    Numeric/FuncSpaceData.h Numeric/pointsGenerators.h Numeric/simpleFunction.h
-    Numeric/cartesian.h Numeric/ElementType.h Numeric/BasisFactory.h
-    Numeric/CondNumBasis.h Numeric/mathEvaluator.h Numeric/nodalBasis.h
-  Geo/GModel.h Geo/GEntity.h Geo/GPoint.h Geo/GVertex.h Geo/GEdge.h Geo/GFace.h
-    Geo/GRegion.h Geo/GEdgeLoop.h Geo/MVertex.h Geo/MVertexBoundaryLayerData.h
-    Geo/MEdge.h Geo/MFace.h Geo/MEdgeHash.h Geo/MFaceHash.h Geo/MElement.h
-    Geo/MElementOctree.h Geo/MPoint.h Geo/MLine.h Geo/MTriangle.h
-    Geo/MQuadrangle.h Geo/MTetrahedron.h Geo/MHexahedron.h Geo/MPrism.h
-    Geo/MPyramid.h Geo/MTrihedron.h Geo/MElementCut.h Geo/discreteVertex.h
-    Geo/discreteEdge.h Geo/discreteFace.h Geo/discreteRegion.h Geo/SPoint2.h
-    Geo/SPoint3.h Geo/SVector3.h Geo/STensor3.h Geo/SBoundingBox3d.h Geo/Pair.h
-    Geo/Range.h Geo/SOrientedBoundingBox.h Geo/CellComplex.h Geo/ChainComplex.h
-    Geo/Cell.h Geo/Homology.h Geo/Chain.h Geo/GenericVertex.h Geo/GenericEdge.h
-    Geo/GenericFace.h Geo/GenericRegion.h Geo/partitionVertex.h
-    Geo/partitionEdge.h Geo/partitionFace.h Geo/CGNSOptions.h Geo/gmshLevelset.h
-    Geo/boundaryLayersData.h
-  Mesh/meshGEdge.h Mesh/meshGFace.h Mesh/meshGFaceOptimize.h
-    Mesh/meshPartition.h Mesh/meshGFaceDelaunayInsertion.h Mesh/simple3D.h
-    Mesh/meshPartitionOptions.h Mesh/directions3D.h Mesh/yamakawa.h
-    Mesh/Voronoi3D.h Mesh/Levy3D.h Mesh/meshMetric.h Mesh/ThinLayer.h
-  Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h
-    Solver/elasticityTerm.h Solver/crossConfTerm.h Solver/orthogonalTerm.h
-    Solver/linearSystem.h Solver/linearSystemGMM.h Solver/linearSystemCSR.h
-    Solver/linearSystemFull.h Solver/elasticitySolver.h Solver/sparsityPattern.h
-    Solver/groupOfElements.h Solver/linearSystemPETSc.h
-    Solver/linearSystemMUMPS.h Solver/thermicSolver.h
-  Post/PView.h Post/PViewData.h Plugin/PluginManager.h Post/OctreePost.h
-    Post/PViewDataList.h Post/PViewDataGModel.h Post/PViewOptions.h
-    Post/ColorTable.h Post/adaptiveData.h
-  Graphics/drawContext.h
-  contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h
-    contrib/kbipack/gmp_blas.h contrib/kbipack/mpz.h
-  contrib/DiscreteIntegration/Integration3D.h
-    contrib/HighOrderMeshOptimizer/OptHOM.h
-    contrib/HighOrderMeshOptimizer/OptHomMesh.h
-    contrib/HighOrderMeshOptimizer/OptHomRun.h
-    contrib/HighOrderMeshOptimizer/ParamCoord.h
-    contrib/HighOrderMeshOptimizer/OptHomFastCurving.h
-    contrib/HighOrderMeshOptimizer/BoundaryLayerCurver.h
-    contrib/HighOrderMeshOptimizer/OptHomIntegralBoundaryDist.h
-    contrib/HighOrderMeshOptimizer/CADDistances.h
-    contrib/HighOrderMeshOptimizer/OptHomObjContribScaledJac.h
-    contrib/HighOrderMeshOptimizer/OptHomObjContribMetricMin.h
-    contrib/HighOrderMeshOptimizer/OptHomObjContribCADDist.h
-  contrib/MeshOptimizer/MeshOptPatch.h contrib/MeshOptimizer/MeshOpt.h
-    contrib/MeshOptimizer/MeshOptCommon.h contrib/MeshOptimizer/MeshOptimizer.h
-    contrib/MeshOptimizer/MeshOptObjContribFunc.h
-    contrib/MeshOptimizer/MeshOptObjContrib.h
-    contrib/MeshOptimizer/MeshOptObjContribScaledNodeDispSq.h
-    contrib/MeshOptimizer/MeshOptObjectiveFunction.h
-    contrib/MeshOptimizer/MeshOptVertexCoord.h
-  contrib/MeshQualityOptimizer/MeshQualityObjContribIdealJac.h
-    contrib/MeshQualityOptimizer/MeshQualityObjContribInvCond.h
-    contrib/MeshQualityOptimizer/MeshQualityOptimizer.h 
-  contrib/MathEx/mathex.h)
-
-get_property(IAMCHILD DIRECTORY  PROPERTY PARENT_DIRECTORY)
-if(IAMCHILD)
-  set(GMSH_INTERNAL_DEVELOPER_API ${GMSH_API} PARENT_SCOPE)
-endif(IAMCHILD)
+if(ENABLE_INTERNAL_DEVELOPER_API)
+  message(WARNING "The internal developer API is unsupported and undocumented. "
+      "It is meant for Gmsh (and related projects) developers, not for wide "
+      "distribution. If you are packaging Gmsh for redistribution, please "
+      "DO NOT enable this and just ship the stable API (${GMSH_API}) instead.")
+  file(GLOB_RECURSE HEADERS Common/*.h Numeric/*.h Geo/*.h Mesh/*.h Solver/*.h 
+    Post/*.h Graphics/*.h contrib/kbipack/*.h contrib/DiscreteIntegration/*.h
+    contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
+    contrib/MeshQualityOptimizer/*.h contrib/MathEx/*.h)
+  set(GMSH_INTERNAL_DEVELOPER_API ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h
+      ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h ${HEADERS})
+  get_property(IAMCHILD DIRECTORY  PROPERTY PARENT_DIRECTORY)
+  if(IAMCHILD)
+    set(GMSH_INTERNAL_DEVELOPER_API ${GMSH_API} PARENT_SCOPE)
+  endif(IAMCHILD)
+endif(ENABLE_INTERNAL_DEVELOPER_API)
 
 if(${CMAKE_MAJOR_VERSION} GREATER 2)
   string(TIMESTAMP DATE "%Y%m%d")
@@ -445,7 +393,7 @@ if(ENABLE_BLAS_LAPACK)
     endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
 
     if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
-      message(STATUS "Warning: Could not find Blas or Lapack: most meshing algorithms "
+      message(WARNING "Could not find Blas or Lapack: most meshing algorithms "
               "will not be functional")
     endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
 
@@ -487,6 +435,10 @@ if(ENABLE_PARSER)
   add_subdirectory(Parser)
   set_config_option(HAVE_PARSER "Parser")
 endif(ENABLE_PARSER)
+
+if(ENABLE_VISUDEV)
+  set_config_option(HAVE_VISUDEV "VisuDev")
+endif(ENABLE_VISUDEV)
 
 if(ENABLE_FLTK)
   # first, try to use fltk-config for fltk >= 1.3 (FindFLTK is buggy on Unix,
@@ -1069,7 +1021,7 @@ if(HAVE_SOLVER)
       set_source_files_properties(${TAUCS_G} PROPERTIES COMPILE_FLAGS -DTAUCS_CORE_GENERAL)
       set_config_option(HAVE_TAUCS "Taucs")
     else(HAVE_METIS)
-      message(STATUS "Warning: Disabling Taucs (requires METIS)")
+      message(WARNING "Disabling Taucs (requires METIS)")
     endif(HAVE_METIS)
   endif(ENABLE_TAUCS AND HAVE_BLAS AND HAVE_LAPACK)
 
@@ -1140,9 +1092,9 @@ if(ENABLE_OCC)
     endif(OCC_MAJOR AND OCC_MINOR AND OCC_MAINT)
   endif(OCC_INC)
   if(OCC_VERSION AND OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
-    message(WARNING "Gmsh requires OpenCASCADE >= ${OCC_MINIMAL_VERSION}")
-    message(WARNING "Use CMAKE_PREFIX_PATH or the CASROOT environment variable "
-            "to explicitely specify the installation path of OpenCASCADE")
+    message(WARNING "Gmsh requires OpenCASCADE >= ${OCC_MINIMAL_VERSION}. "
+        "Use CMAKE_PREFIX_PATH or the CASROOT environment variable "
+        "to explicitely specify the installation path of OpenCASCADE")
   else(OCC_VERSION AND OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
     set(OCC_LIBS_REQUIRED
 	# subset of DataExchange
@@ -1262,7 +1214,11 @@ if(ENABLE_WRAP_PYTHON)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR})
     set(CMAKE_SWIG_FLAGS "")
     set_source_files_properties(Common/gmsh.i PROPERTIES CPLUSPLUS ON)
-    swig_add_module(gmsh python Common/gmsh.i)
+    if(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.8)
+      swig_add_library(gmsh LANGUAGE python SOURCES Common/gmsh.i)
+    else(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.8)
+      swig_add_module(gmsh python Common/gmsh.i)
+    endif(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.8)
     swig_link_libraries(gmsh ${PYTHON_LIBRARIES} shared)
     if(APPLE)
       set_target_properties("_gmsh" PROPERTIES LINK_FLAGS
@@ -1403,7 +1359,7 @@ if(NOOPT OR ENABLE_BUILD_IOS)
   set_compile_flags(NOOPT_SRC "-O0")
 endif(NOOPT OR ENABLE_BUILD_IOS)
 
-#enable Revoropt and set compile flags for the corresponding plugin
+# enable Revoropt and set compile flags for the corresponding plugin
 if(ENABLE_REVOROPT)
   find_path(EIGEN3_INC "eigen3/Eigen/Dense")
   if(EIGEN3_INC AND HAVE_MESH AND HAVE_PLUGINS AND HAVE_ANN AND HAVE_BFGS)

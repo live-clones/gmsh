@@ -310,7 +310,7 @@ int GModel::_readMSH2(const std::string &name)
               if(fread(uv, sizeof(double), 1, fp) != 1){ fclose(fp); return 0; }
               if(swap) SwapBytes((char*)uv, sizeof(double), 1);
             }
-            newVertex = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge, uv[0], -1.0, num);
+            newVertex = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge, uv[0], num);
           }
           else if (iClasDim == 2){
             GFace *gf = getFaceByTag(iClasTag);

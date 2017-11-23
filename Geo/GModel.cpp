@@ -2489,7 +2489,7 @@ void GModel::createTopologyFromMesh()
   Msg::StatusBar(true, "Done creating topology from mesh (%g s)", t2 - t1);
 }
 
-void makeSimplyConnected(std::map<int, std::vector<MElement*> > elements[11])
+static void makeSimplyConnected(std::map<int, std::vector<MElement*> > elements[11])
 {
   //only for tetras and triangles
   Msg::Info("Make simply connected regions and surfaces");

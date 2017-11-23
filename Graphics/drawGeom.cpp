@@ -230,7 +230,7 @@ class drawGFace {
     glEnableClientState(GL_VERTEX_ARRAY);
     if(useNormalArray){
       glEnable(GL_LIGHTING);
-      glNormalPointer(GL_BYTE, 0, va->getNormalArray());
+      glNormalPointer(NORMAL_GLTYPE, 0, va->getNormalArray());
       glEnableClientState(GL_NORMAL_ARRAY);
     }
     else{

@@ -22,11 +22,9 @@ private:
   double _minJac, _maxJac, _minIGE, _minICN;
 public:
   data_elementMinMax(MElement *e,
-                     double minJ = 2,
-                     double maxJ = 0,
-                     double minIGE = -1,
-                     double minICN = -1)
-    : _el(e), _minJac(minJ), _maxJac(maxJ), _minIGE(minIGE), _minICN(minICN) {}
+                     double minJ = 2, double maxJ = 0,
+                     double minIGE = -1, double minICN = -1)
+      : _el(e), _minJac(minJ), _maxJac(maxJ), _minIGE(minIGE), _minICN(minICN) {}
   void setMinS(double r) { _minIGE = r; }
   void setMinI(double r) { _minICN = r; }
   MElement* element() { return _el; }
@@ -41,6 +39,17 @@ class GMSH_AnalyseCurvedMeshPlugin : public GMSH_PostPlugin
 private :
   GModel *_m;
   double _threshold;
+
+#if defined(HAVE_VISUDEV)
+  // Pointwise data
+  int _numElementToScan;
+  bool _pwJac, _pwIGE, _pwICN;
+  std::map<int, std::vector<double>> _dataPViewJac;
+  std::map<int, std::vector<double>> _dataPViewIGE;
+  std::map<int, std::vector<double>> _dataPViewICN;
+  int _type2tag[20] = {0};
+  int _viewOrder = 0;
+#endif
 
   // for 1d, 2d, 3d
   bool _computedJac[3], _computedIGE[3], _computedICN[3];
@@ -81,6 +90,12 @@ private :
   void _printStatJacobian();
   void _printStatIGE();
   void _printStatICN();
+
+#if defined(HAVE_VISUDEV)
+  void _computePointwiseQuantities(MElement *, const fullMatrix<double> *normals);
+  void _createPViewPointwise();
+  void _setInterpolationMatrices(PView *);
+#endif
 };
 
 #endif

@@ -606,7 +606,7 @@ double ComputeDistanceToGeometry (GEntity *ge , int distanceDefinition, double t
       const double DISTE =computeBndDist(el,distanceDefinition, tolerance);
       if (DISTE != 0.0){
         NUM++;
-        //        if(distanceDefinition == 1)printf("%d %12.5E\n",iEl,DISTE);
+        // if(distanceDefinition == 1)printf("%d %12.5E\n",iEl,DISTE);
         maxd = std::max(maxd,DISTE);
         sum += DISTE;
       }
@@ -671,7 +671,7 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
         if (jmin < p.BARRIER_MIN || jmax > p.BARRIER_MAX) badasses.insert(el);
       }
     }
-    printf("maxdist = %g badasses size = %lu\n", maxdist, badasses.size());
+    Msg::Info("maxdist = %g badasses size = %lu", maxdist, badasses.size());
     if (p.strategy == 0)
       optimizeConnectedBlobs(vertex2elements, element2entity, badasses, p, samples, false);
     else if (p.strategy == 2)

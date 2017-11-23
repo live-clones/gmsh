@@ -125,26 +125,26 @@ bool tetgenmesh::reconstructmesh(void *p)
   {
     std::set<MVertex*, MVertexLessThanNum> all;
     std::list<GFace*> f = _gr->faces();
-    for (std::list<GFace*>::iterator it = f.begin(); it != f.end(); ++it) {
+    for(std::list<GFace*>::iterator it = f.begin(); it != f.end(); ++it){
       GFace *gf = *it;
-      for (unsigned int i = 0; i < gf->triangles.size(); i++){
+      for(unsigned int i = 0; i < gf->triangles.size(); i++){
         all.insert(gf->triangles[i]->getVertex(0));
         all.insert(gf->triangles[i]->getVertex(1));
         all.insert(gf->triangles[i]->getVertex(2));
       }
     }
     std::list<GEdge*> e = _gr->embeddedEdges();
-    for (std::list<GEdge*>::iterator it = e.begin(); it != e.end(); ++it) {
+    for(std::list<GEdge*>::iterator it = e.begin(); it != e.end(); ++it){
       GEdge *ge = *it;
-      for (unsigned int i = 0; i < ge->lines.size(); i++){
+      for(unsigned int i = 0; i < ge->lines.size(); i++){
         all.insert(ge->lines[i]->getVertex(0));
         all.insert(ge->lines[i]->getVertex(1));
       }
     }
     std::list<GVertex*> v = _gr->embeddedVertices();
-    for (std::list<GVertex*>::iterator it = v.begin(); it != v.end(); ++it) {
+    for(std::list<GVertex*>::iterator it = v.begin(); it != v.end(); ++it){
       GVertex *gv = *it;
-      for (unsigned int i = 0; i < gv->points.size(); i++){
+      for(unsigned int i = 0; i < gv->points.size(); i++){
         all.insert(gv->points[i]->getVertex(0));
       }
     }
@@ -166,19 +166,19 @@ bool tetgenmesh::reconstructmesh(void *p)
     REAL x, y, z;
 
     // Read the points.
-    for (unsigned int i = 0; i < _vertices.size(); i++) {
+    for(unsigned int i = 0; i < _vertices.size(); i++){
       makepoint(&pointloop, UNUSEDVERTEX);
       // Read the point coordinates.
       x = pointloop[0] = _vertices[i]->x();
       y = pointloop[1] = _vertices[i]->y();
       z = pointloop[2] = _vertices[i]->z();
       // Determine the smallest and largest x, y and z coordinates.
-      if (i == 0) {
+      if(i == 0){
 	xmin = xmax = x;
 	ymin = ymax = y;
 	zmin = zmax = z;
       }
-      else {
+      else{
 	xmin = (x < xmin) ? x : xmin;
 	xmax = (x > xmax) ? x : xmax;
 	ymin = (y < ymin) ? y : ymin;
@@ -193,13 +193,13 @@ bool tetgenmesh::reconstructmesh(void *p)
     y = ymax - ymin;
     z = zmax - zmin;
     longest = sqrt(x * x + y * y + z * z);
-    if (longest == 0.0) {
+    if(longest == 0.0){
       Msg::Warning("The point set is trivial");
       return true;
     }
 
     // Two identical points are distinguished by 'lengthlimit'.
-    if (minedgelength == 0.0) {
+    if(minedgelength == 0.0){
       minedgelength = longest * b->epsilon;
     }
   }
@@ -209,13 +209,13 @@ bool tetgenmesh::reconstructmesh(void *p)
   // Create a map from indices to vertices.
   makeindex2pointmap(idx2verlist);
   // 'idx2verlist' has length 'in->numberofpoints + 1'.
-  if (in->firstnumber == 1) {
+  if(in->firstnumber == 1){
     idx2verlist[0] = dummypoint; // Let 0th-entry be dummypoint.
   }
 
   {
     // Index the vertices.
-    for (unsigned int i = 0; i < _vertices.size(); i++){
+    for(unsigned int i = 0; i < _vertices.size(); i++){
       _vertices[i]->setIndex(i);
     }
 
@@ -234,26 +234,26 @@ bool tetgenmesh::reconstructmesh(void *p)
 
     // Allocate an array that maps each vertex to its adjacent tets.
     ver2tetarray = new tetrahedron[_vertices.size() + 1];
-    //for (i = 0; i < in->numberofpoints + 1; i++) {
-    for (unsigned int i = in->firstnumber; i < _vertices.size() + in->firstnumber; i++) {
+    //for(i = 0; i < in->numberofpoints + 1; i++){
+    for(unsigned int i = in->firstnumber; i < _vertices.size() + in->firstnumber; i++){
       setpointtype(idx2verlist[i], VOLVERTEX); // initial type.
       ver2tetarray[i] = NULL;
     }
 
     // Create the tetrahedra and connect those that share a common face.
-    for (unsigned int i = 0; i < tets.size(); i++) {
+    for(unsigned int i = 0; i < tets.size(); i++){
       // Get the four vertices.
-      for (int j = 0; j < 4; j++) {
+      for(int j = 0; j < 4; j++){
 	p[j] = idx2verlist[tets[i]->getVertex(j)->getIndex()];
       }
       // Check the orientation.
       ori = orient3d(p[0], p[1], p[2], p[3]);
-      if (ori > 0.0) {
+      if(ori > 0.0){
 	// Swap the first two vertices.
 	q[0] = p[0]; p[0] = p[1]; p[1] = q[0];
       }
-      else if (ori == 0.0) {
-	if (!b->quiet) {
+      else if(ori == 0.0){
+	if(!b->quiet){
 	  printf("Warning:  Tet #%d is degenerate.\n", i + in->firstnumber);
 	}
       }
@@ -261,7 +261,7 @@ bool tetgenmesh::reconstructmesh(void *p)
       maketetrahedron(&tetloop); // tetloop.ver = 11.
       setvertices(tetloop, p[0], p[1], p[2], p[3]);
       // Try connecting this tet to others that share the common faces.
-      for (tetloop.ver = 0; tetloop.ver < 4; tetloop.ver++) {
+      for(tetloop.ver = 0; tetloop.ver < 4; tetloop.ver++){
 	p[3] = oppo(tetloop);
 	// Look for other tets having this vertex.
 	idx = pointmark(p[3]);
@@ -271,7 +271,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 	// Push the current tet onto the stack.
 	ver2tetarray[idx] = encode(tetloop);
 	decode(tptr, checktet);
-	if (checktet.tet != NULL) {
+	if(checktet.tet != NULL){
 	  p[0] =  org(tetloop); // a
 	  p[1] = dest(tetloop); // b
 	  p[2] = apex(tetloop); // c
@@ -282,21 +282,21 @@ bool tetgenmesh::reconstructmesh(void *p)
 	    q[2] = apex(checktet); // c'
 	    // Check the three faces at 'd' in 'checktet'.
 	    bondflag = 0;
-	    for (int j = 0; j < 3; j++) {
+	    for(int j = 0; j < 3; j++){
 	      // Go to the face [b',a',d], or [c',b',d], or [a',c',d].
 	      esym(checktet, face2);
-	      if (face2.tet[face2.ver & 3] == NULL) {
+	      if(face2.tet[face2.ver & 3] == NULL){
 		k = ((j + 1) % 3);
-		if (q[k] == p[0]) {   // b', c', a' = a
-		  if (q[j] == p[1]) { // a', b', c' = b
+		if(q[k] == p[0]){   // b', c', a' = a
+		  if(q[j] == p[1]){ // a', b', c' = b
 		    // [#,#,d] is matched to [b,a,d].
 		    esym(tetloop, face1);
 		    bond(face1, face2);
 		    bondflag++;
 		  }
 		}
-		if (q[k] == p[1]) {   // b',c',a' = b
-		  if (q[j] == p[2]) { // a',b',c' = c
+		if(q[k] == p[1]){   // b',c',a' = b
+		  if(q[j] == p[2]){ // a',b',c' = c
 		    // [#,#,d] is matched to [c,b,d].
 		    enext(tetloop, face1);
 		    esymself(face1);
@@ -304,8 +304,8 @@ bool tetgenmesh::reconstructmesh(void *p)
 		    bondflag++;
 		  }
 		}
-		if (q[k] == p[2]) {   // b',c',a' = c
-		  if (q[j] == p[0]) { // a',b',c' = a
+		if(q[k] == p[2]){   // b',c',a' = c
+		  if(q[j] == p[0]){ // a',b',c' = a
 		    // [#,#,d] is matched to [a,c,d].
 		    eprev(tetloop, face1);
 		    esymself(face1);
@@ -314,26 +314,26 @@ bool tetgenmesh::reconstructmesh(void *p)
 		  }
 		}
 	      }
-              else {
+              else{
 		bondflag++;
 	      }
 	      enextself(checktet);
 	    } // j
 	    // Go to the next tet in the link.
 	    tptr = checktet.tet[8 + checktet.ver];
-	    if (bondflag == 3) {
+	    if(bondflag == 3){
 	      // All three faces at d in 'checktet' have been connected.
 	      // It can be removed from the link.
 	      prevchktet.tet[8 + prevchktet.ver] = tptr;
 	    }
-            else {
+            else{
 	      // Bakup the previous tet in the link.
 	      prevchktet = checktet;
 	    }
 	    decode(tptr, checktet);
 	  } while (checktet.tet != NULL);
-	} // if (checktet.tet != NULL)
-      } // for (tetloop.ver = 0; ...
+	} // if(checktet.tet != NULL)
+      } // for(tetloop.ver = 0; ...
     } // i
 
     // Remember a tet of the mesh.
@@ -345,10 +345,10 @@ bool tetgenmesh::reconstructmesh(void *p)
 
     tetrahedrons->traversalinit();
     tetloop.tet = tetrahedrontraverse();
-    while (tetloop.tet != (tetrahedron *) NULL) {
+    while (tetloop.tet != (tetrahedron *) NULL){
       tptr = encode(tetloop);
-      for (tetloop.ver = 0; tetloop.ver < 4; tetloop.ver++) {
-	if (tetloop.tet[tetloop.ver] == NULL) {
+      for(tetloop.ver = 0; tetloop.ver < 4; tetloop.ver++){
+	if(tetloop.tet[tetloop.ver] == NULL){
 	  // Create a hull tet.
 	  maketetrahedron(&hulltet);
 	  p[0] =  org(tetloop);
@@ -357,15 +357,15 @@ bool tetgenmesh::reconstructmesh(void *p)
 	  setvertices(hulltet, p[1], p[0], p[2], dummypoint);
 	  bond(tetloop, hulltet);
 	  // Try connecting this to others that share common hull edges.
-	  for (int j = 0; j < 3; j++) {
+	  for(int j = 0; j < 3; j++){
 	    fsym(hulltet, face2);
-	    while (1) {
-	      if (face2.tet == NULL) break;
+	    while (1){
+	      if(face2.tet == NULL) break;
 	      esymself(face2);
-	      if (apex(face2) == dummypoint) break;
+	      if(apex(face2) == dummypoint) break;
 	      fsymself(face2);
 	    }
-	    if (face2.tet != NULL) {
+	    if(face2.tet != NULL){
 	      // Found an adjacent hull tet.
 	      assert(face2.tet[face2.ver & 3] == NULL);
 	      esym(hulltet, face1);
@@ -399,12 +399,12 @@ bool tetgenmesh::reconstructmesh(void *p)
     point p[4];
     int idx;
 
-    for (std::list<GFace*>::iterator it = f_list.begin(); it != f_list.end(); ++it){
+    for(std::list<GFace*>::iterator it = f_list.begin(); it != f_list.end(); ++it){
       GFace *gf = *it;
-      for (unsigned int i = 0; i < gf->triangles.size(); i++) {
-	for (int j = 0; j < 3; j++) {
+      for(unsigned int i = 0; i < gf->triangles.size(); i++){
+	for(int j = 0; j < 3; j++){
 	  p[j] = idx2verlist[gf->triangles[i]->getVertex(j)->getIndex()];
-	  if (pointtype(p[j]) == VOLVERTEX) {
+	  if(pointtype(p[j]) == VOLVERTEX){
 	    setpointtype(p[j], FACETVERTEX);
 	  }
 	}
@@ -413,7 +413,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 	setshvertices(newsh, p[0], p[1], p[2]);
 	setshellmark(newsh, gf->tag()); // the GFace's tag.
 	recentsh = newsh;
-	for (int j = 0; j < 3; j++) {
+	for(int j = 0; j < 3; j++){
 	  makeshellface(subsegs, &newseg);
 	  setshvertices(newseg, sorg(newsh), sdest(newsh), NULL);
 	  // Set the default segment marker '-1'.
@@ -441,15 +441,15 @@ bool tetgenmesh::reconstructmesh(void *p)
     // Process the set of PSC edges.
     // Remeber that all segments have default marker '-1'.
     //    int COUNTER = 0;
-    for (std::list<GEdge*>::iterator it = e_list.begin(); it != e_list.end();
-	 ++it) {
+    for(std::list<GEdge*>::iterator it = e_list.begin(); it != e_list.end();
+	 ++it){
       GEdge *ge = *it;
-      for (unsigned int i = 0; i < ge->lines.size(); i++) {
-	for (int j = 0; j < 2; j++) {
+      for(unsigned int i = 0; i < ge->lines.size(); i++){
+	for(int j = 0; j < 2; j++){
 	  p[j] = idx2verlist[ge->lines[i]->getVertex(j)->getIndex()];
 	  setpointtype(p[j], RIDGEVERTEX);
         }
-	if (p[0] == p[1]) {
+	if(p[0] == p[1]){
 	  // This is a potential problem in surface mesh.
 	  continue; // Skip this edge.
 	}
@@ -457,57 +457,57 @@ bool tetgenmesh::reconstructmesh(void *p)
 	newseg.sh = NULL;
 	searchsh.sh = NULL;
 	idx = pointmark(p[0]) - in->firstnumber;
-	for (int j = idx2shlist[idx]; j < idx2shlist[idx + 1]; j++) {
+	for(int j = idx2shlist[idx]; j < idx2shlist[idx + 1]; j++){
 	  checkpt = sdest(shperverlist[j]);
-	  if (checkpt == p[1]) {
+	  if(checkpt == p[1]){
 	    searchsh = shperverlist[j];
 	    break; // Found.
 	  }
-          else {
+          else{
 	    checkpt = sapex(shperverlist[j]);
-	    if (checkpt == p[1]) {
+	    if(checkpt == p[1]){
 	      senext2(shperverlist[j], searchsh);
 	      sesymself(searchsh);
 	      break;
 	    }
 	  }
 	} // j
-	if (searchsh.sh != NULL) {
+	if(searchsh.sh != NULL){
 	  // Check if this edge is already a segment of the mesh.
 	  sspivot(searchsh, checkseg);
-          if (checkseg.sh != NULL) {
+          if(checkseg.sh != NULL){
             // This segment already exist.
             newseg = checkseg;
           }
-          else {
+          else{
             // Create a new segment at this edge.
             makeshellface(subsegs, &newseg);
             setshvertices(newseg, p[0], p[1], NULL);
             ssbond(searchsh, newseg);
             spivot(searchsh, neighsh);
-            if (neighsh.sh != NULL) {
+            if(neighsh.sh != NULL){
               ssbond(neighsh, newseg);
             }
           }
 	}
-        else {
+        else{
 	  // It is a dangling segment (not belong to any facets).
 	  // Check if segment [p[0],p[1]] already exists.
 	  // TODO: Change the brute-force search. Slow!
 	  /*	  point *ppt;
 	  subsegs->traversalinit();
 	  segloop.sh = shellfacetraverse(subsegs);
-	  while (segloop.sh != NULL) {
+	  while (segloop.sh != NULL){
 	    ppt = (point *) &(segloop.sh[3]);
-	    if (((ppt[0] == p[0]) && (ppt[1] == p[1])) ||
-		((ppt[0] == p[1]) && (ppt[1] == p[0]))) {
+	    if(((ppt[0] == p[0]) && (ppt[1] == p[1])) ||
+		((ppt[0] == p[1]) && (ppt[1] == p[0]))){
 	      // Found!
 	      newseg = segloop;
 	      break;
 	    }
 	    segloop.sh = shellfacetraverse(subsegs);
 	    }*/
-	  if (newseg.sh == NULL) {
+	  if(newseg.sh == NULL){
 	    makeshellface(subsegs, &newseg);
 	    setshvertices(newseg, p[0], p[1], NULL);
 	  }
@@ -525,7 +525,7 @@ bool tetgenmesh::reconstructmesh(void *p)
     // The total number of iunput segments.
     insegments = subsegs->items;
 
-    if (0) {
+    if(0){
       outmesh2medit("dump2");
     }
 
@@ -541,7 +541,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 
   carveholes();
 
-  if (subvertstack->objects > 0l) {
+  if(subvertstack->objects > 0l){
     suppresssteinerpoints();
   }
 
@@ -550,7 +550,7 @@ bool tetgenmesh::reconstructmesh(void *p)
   // let's try
   optimizemesh();
 
-  if ((dupverts > 0l) || (unuverts > 0l)) {
+  if((dupverts > 0l) || (unuverts > 0l)){
     // Remove hanging nodes.
     // cannot call this here due to 8 additional exterior vertices we inserted
     // jettisonnodes();
@@ -560,7 +560,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 
   Msg::Debug("Statistics:\n");
   Msg::Debug("  Input points: %ld", _vertices.size());
-  if (b->plc) {
+  if(b->plc){
     Msg::Debug("  Input facets: %ld", f_list.size());
     Msg::Debug("  Input segments: %ld", e_list.size());
   }
@@ -568,50 +568,51 @@ bool tetgenmesh::reconstructmesh(void *p)
   tetnumber = tetrahedrons->items - hullsize;
   facenumber = (tetnumber * 4l + hullsize) / 2l;
 
-  if (b->weighted) { // -w option
+  if(b->weighted){ // -w option
     Msg::Debug(" Mesh points: %ld", points->items - nonregularcount);
   }
-  else {
+  else{
     Msg::Debug(" Mesh points: %ld", points->items);
   }
   Msg::Debug("  Mesh tetrahedra: %ld", tetnumber);
   Msg::Debug("  Mesh faces: %ld", facenumber);
-  if (meshedges > 0l) {
+  if(meshedges > 0l){
     Msg::Debug("  Mesh edges: %ld", meshedges);
-  } else {
-    if (!nonconvex) {
+  }
+  else{
+    if(!nonconvex){
       long vsize = points->items - dupverts - unuverts;
-      if (b->weighted) vsize -= nonregularcount;
+      if(b->weighted) vsize -= nonregularcount;
       meshedges = vsize + facenumber - tetnumber - 1;
       Msg::Debug("  Mesh edges: %ld", meshedges);
     }
   }
 
-  if (b->plc || b->refine) {
+  if(b->plc || b->refine){
     Msg::Debug("  Mesh faces on facets: %ld", subfaces->items);
     Msg::Debug("  Mesh edges on segments: %ld", subsegs->items);
-    if (st_volref_count > 0l) {
+    if(st_volref_count > 0l){
       Msg::Debug("  Steiner points inside domain: %ld", st_volref_count);
     }
-    if (st_facref_count > 0l) {
+    if(st_facref_count > 0l){
       Msg::Debug("  Steiner points on facets:  %ld", st_facref_count);
     }
-    if (st_segref_count > 0l) {
+    if(st_segref_count > 0l){
       Msg::Debug("  Steiner points on segments:  %ld", st_segref_count);
     }
   }
-  else {
+  else{
     Msg::Debug("  Convex hull faces: %ld", hullsize);
-    if (meshhulledges > 0l) {
+    if (meshhulledges > 0l){
       Msg::Debug("  Convex hull edges: %ld", meshhulledges);
     }
   }
-  if (b->weighted) { // -w option
+  if(b->weighted){ // -w option
     Msg::Debug("  Skipped non-regular points: %ld", nonregularcount);
   }
 
   // Debug
-  if (0) {
+  if(0){
     outmesh2medit("dump");
   }
 
@@ -626,17 +627,17 @@ bool tetgenmesh::reconstructmesh(void *p)
     // Find the list of GFaces, GEdges that have been modified.
     std::set<int> l_faces, l_edges;
 
-    if (points->items > (int)_vertices.size()) {
+    if(points->items > (int)_vertices.size()){
       face parentseg, parentsh, spinsh;
       point pointloop;
       // Create newly added mesh vertices.
       // The new vertices must be added at the end of the point list.
       points->traversalinit();
       pointloop = pointtraverse();
-      while (pointloop != (point) NULL) {
-        if (issteinerpoint(pointloop)) {
+      while (pointloop != (point) NULL){
+        if(issteinerpoint(pointloop)){
           // Check if this Steiner point locates on boundary.
-          if (pointtype(pointloop) == FREESEGVERTEX) {
+          if(pointtype(pointloop) == FREESEGVERTEX){
             sdecode(point2sh(pointloop), parentseg);
             assert(parentseg.sh != NULL);
             l_edges.insert(shellmark(parentseg));
@@ -644,18 +645,18 @@ bool tetgenmesh::reconstructmesh(void *p)
             GEdge *ge = NULL;
             GFace *gf = NULL;
             int etag = shellmark(parentseg);
-            for (std::list<GEdge*>::iterator it = e_list.begin();
-                 it != e_list.end(); ++it) {
-              if ((*it)->tag() == etag) {
+            for(std::list<GEdge*>::iterator it = e_list.begin();
+                 it != e_list.end(); ++it){
+              if((*it)->tag() == etag){
                 ge = *it;
                 break;
               }
             }
-            if (ge != NULL) {
+            if(ge != NULL){
               MEdgeVertex *v = new MEdgeVertex(pointloop[0], pointloop[1],
                                                pointloop[2], ge, 0);
               double uu = 0;
-              if (reparamMeshVertexOnEdge(v, ge, uu)) {
+              if(reparamMeshVertexOnEdge(v, ge, uu)){
                 v->setParameter(0, uu);
               }
               v->setIndex(pointmark(pointloop));
@@ -663,22 +664,22 @@ bool tetgenmesh::reconstructmesh(void *p)
 	      _extras[pointmark(pointloop)] = v;
             }
             spivot(parentseg, parentsh);
-            if (parentsh.sh != NULL) {
-              if (ge == NULL) {
+            if(parentsh.sh != NULL){
+              if(ge == NULL){
                 // We treat this vertex a facet vertex.
                 int ftag = shellmark(parentsh);
-                for (std::list<GFace*>::iterator it = f_list.begin();
-                     it != f_list.end(); ++it) {
-                  if ((*it)->tag() == ftag) {
+                for(std::list<GFace*>::iterator it = f_list.begin();
+                     it != f_list.end(); ++it){
+                  if((*it)->tag() == ftag){
                     gf = *it;
                     break;
                   }
                 }
-                if (gf != NULL) {
+                if(gf != NULL){
                   MFaceVertex *v = new MFaceVertex(pointloop[0], pointloop[1],
                                                    pointloop[2], gf, 0, 0);
                   SPoint2 param;
-                  if (reparamMeshVertexOnFace(v, gf, param)) {
+                  if(reparamMeshVertexOnFace(v, gf, param)){
                     v->setParameter(0, param.x());
                     v->setParameter(1, param.y());
                   }
@@ -689,38 +690,39 @@ bool tetgenmesh::reconstructmesh(void *p)
               }
               // Record all the GFaces' tag at this segment.
               spinsh = parentsh;
-              while (1) {
+              while (1){
                 l_faces.insert(shellmark(spinsh));
                 spivotself(spinsh);
-                if (spinsh.sh == parentsh.sh) break;
+                if(spinsh.sh == parentsh.sh) break;
               }
             }
-            if ((ge == NULL) && (gf == NULL)) {
+            if((ge == NULL) && (gf == NULL)){
               // Create an interior mesh vertex.
               MVertex *v = new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
               v->setIndex(pointmark(pointloop));
 	      _extras[pointmark(pointloop)] = v;
-	      _gr->mesh_vertices.push_back(v);            }
+	      _gr->mesh_vertices.push_back(v);
+            }
           }
-          else if (pointtype(pointloop) == FREEFACETVERTEX) {
+          else if(pointtype(pointloop) == FREEFACETVERTEX){
             sdecode(point2sh(pointloop), parentsh);
             assert(parentsh.sh != NULL);
             l_faces.insert(shellmark(parentsh));
             // Get the GFace containing this vertex.
             GFace *gf = NULL;
             int ftag = shellmark(parentsh);
-            for (std::list<GFace*>::iterator it = f_list.begin();
-                 it != f_list.end(); ++it) {
-              if ((*it)->tag() == ftag) {
+            for(std::list<GFace*>::iterator it = f_list.begin();
+                 it != f_list.end(); ++it){
+              if((*it)->tag() == ftag){
                 gf = *it;
                 break;
               }
             }
-            if (gf != NULL) {
+            if(gf != NULL){
               MFaceVertex *v = new MFaceVertex(pointloop[0], pointloop[1],
                                                pointloop[2], gf, 0, 0);
               SPoint2 param;
-              if (reparamMeshVertexOnFace(v, gf, param)) {
+              if(reparamMeshVertexOnFace(v, gf, param)){
                 v->setParameter(0, param.x());
                 v->setParameter(1, param.y());
               }
@@ -728,7 +730,7 @@ bool tetgenmesh::reconstructmesh(void *p)
               _gr->mesh_vertices.push_back(v);
 	      _extras[pointmark(pointloop)] = v;
             }
-            else {
+            else{
               // Create a mesh vertex.
               MVertex *v = new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
               v->setIndex(pointmark(pointloop));
@@ -736,7 +738,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 	      _extras[pointmark(pointloop)] = v;
             }
           }
-          else {
+          else{
             MVertex *v = new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
             v->setIndex(pointmark(pointloop));
             _gr->mesh_vertices.push_back(v);
@@ -745,23 +747,23 @@ bool tetgenmesh::reconstructmesh(void *p)
         }
         pointloop = pointtraverse();
       }
-      //      assert((int)_vertices.size() == points->items);
+      // assert((int)_vertices.size() == points->items);
     }
 
-    if (!_extras.empty())
+    if(!_extras.empty())
       Msg::Info("We add %d steiner points...", _extras.size());
 
-    if (l_edges.size() > 0) {
+    if(l_edges.size() > 0){
       // There are Steiner points on segments!
       face segloop;
       // Re-create the segment mesh in the corresponding GEdges.
-      for (std::set<int>::iterator it = l_edges.begin(); it!=l_edges.end(); ++it) {
+      for(std::set<int>::iterator it = l_edges.begin(); it!=l_edges.end(); ++it){
         // Find the GFace with tag = *it.
         GEdge *ge = NULL;
         int etag = *it;
-        for (std::list<GEdge*>::iterator eit = e_list.begin();
-             eit != e_list.end(); ++eit) {
-          if ((*eit)->tag() == etag) {
+        for(std::list<GEdge*>::iterator eit = e_list.begin();
+             eit != e_list.end(); ++eit){
+          if((*eit)->tag() == etag){
             ge = (*eit);
             break;
           }
@@ -777,8 +779,8 @@ bool tetgenmesh::reconstructmesh(void *p)
         segloop.shver = 0;
         subsegs->traversalinit();
         segloop.sh = shellfacetraverse(subsegs);
-        while (segloop.sh != NULL) {
-          if (shellmark(segloop) == etag) {
+        while (segloop.sh != NULL){
+          if(shellmark(segloop) == etag){
             p[0] = sorg(segloop);
             p[1] = sdest(segloop);
             MVertex *v1 = pointmark(p[0]) >= (int)_vertices.size() ?
@@ -796,17 +798,17 @@ bool tetgenmesh::reconstructmesh(void *p)
       } // it
     }
 
-    if (l_faces.size() > 0) {
+    if(l_faces.size() > 0){
       // There are Steiner points on facets!
       face subloop;
       // Re-create the surface mesh in the corresponding GFaces.
-      for (std::set<int>::iterator it = l_faces.begin(); it != l_faces.end(); ++it) {
+      for(std::set<int>::iterator it = l_faces.begin(); it != l_faces.end(); ++it){
         // Find the GFace with tag = *it.
         GFace *gf = NULL;
         int ftag = *it;
-        for (std::list<GFace*>::iterator fit = f_list.begin();
-             fit != f_list.end(); ++fit) {
-          if ((*fit)->tag() == ftag) {
+        for(std::list<GFace*>::iterator fit = f_list.begin();
+             fit != f_list.end(); ++fit){
+          if((*fit)->tag() == ftag){
             gf = (*fit);
             break;
           }
@@ -825,8 +827,8 @@ bool tetgenmesh::reconstructmesh(void *p)
         subloop.shver = 0;
         subfaces->traversalinit();
         subloop.sh = shellfacetraverse(subfaces);
-        while (subloop.sh != NULL) {
-          if (shellmark(subloop) == ftag) {
+        while (subloop.sh != NULL){
+          if(shellmark(subloop) == ftag){
             p[0] = sorg(subloop);
             p[1] = sdest(subloop);
             p[2] = sapex(subloop);
@@ -836,11 +838,11 @@ bool tetgenmesh::reconstructmesh(void *p)
               _extras[pointmark(p[1])] : _vertices[pointmark(p[1])];
             MVertex *v3 = pointmark(p[2]) >= (int)_vertices.size() ?
               _extras[pointmark(p[2])] : _vertices[pointmark(p[2])];
-	    // if (pointmark(p[0]) >= _vertices.size())
+	    // if(pointmark(p[0]) >= _vertices.size())
             //   printf("F %d %d\n",v1->getIndex(),pointmark(p[0]));
-	    // if (pointmark(p[1]) >= _vertices.size())
+	    // if(pointmark(p[1]) >= _vertices.size())
             //   printf("F %d %d\n",v2->getIndex(),pointmark(p[1]));
-	    // if (pointmark(p[2]) >= _vertices.size())
+	    // if(pointmark(p[2]) >= _vertices.size())
             //   printf("F %d %d\n",v3->getIndex(),pointmark(p[2]));
 	    // MVertex *v1 = _vertices[pointmark(p[0])];
 	    // MVertex *v2 = _vertices[pointmark(p[1])];
@@ -859,7 +861,7 @@ bool tetgenmesh::reconstructmesh(void *p)
     tetrahedrons->traversalinit();
     tetloop.tet = tetrahedrontraverse();
 
-    while (tetloop.tet != (tetrahedron *) NULL) {
+    while (tetloop.tet != (tetrahedron *) NULL){
       p[0] = org(tetloop);
       p[1] = dest(tetloop);
       p[2] = apex(tetloop);
@@ -873,13 +875,13 @@ bool tetgenmesh::reconstructmesh(void *p)
         _extras[pointmark(p[2])] : _vertices[pointmark(p[2])];
       MVertex *v4 = pointmark(p[3]) >= (int)_vertices.size() ?
         _extras[pointmark(p[3])] : _vertices[pointmark(p[3])];
-      // if (pointmark(p[0]) >= _vertices.size())
+      // if(pointmark(p[0]) >= _vertices.size())
       //   printf("%d %d\n",v1->getIndex(),pointmark(p[0]));
-      // if (pointmark(p[1]) >= _vertices.size())
+      // if(pointmark(p[1]) >= _vertices.size())
       //   printf("%d %d\n",v2->getIndex(),pointmark(p[1]));
-      // if (pointmark(p[2]) >= _vertices.size())
+      // if(pointmark(p[2]) >= _vertices.size())
       //   printf("%d %d\n",v3->getIndex(),pointmark(p[2]));
-      // if (pointmark(p[3]) >= _vertices.size())
+      // if(pointmark(p[3]) >= _vertices.size())
       ///   printf("%d %d\n",v4->getIndex(),pointmark(p[3]));
       // MVertex *v1 = _vertices[pointmark(p[0])];
       // MVertex *v2 = _vertices[pointmark(p[1])];
@@ -908,7 +910,7 @@ void tetgenmesh::outsurfacemesh(const char* mfilename)
   strcpy(sfilename, mfilename);
   strcat(sfilename, ".node");
   outfile = fopen(sfilename, "w");
-  if (!b->quiet) {
+  if(!b->quiet){
     printf("Writing %s.\n", sfilename);
   }
   fprintf(outfile, "%ld  3  0  0\n", points->items);
@@ -917,7 +919,7 @@ void tetgenmesh::outsurfacemesh(const char* mfilename)
   points->traversalinit();
   pointloop = pointtraverse();
   pointnumber = firstindex; // in->firstnumber;
-  while (pointloop != (point) NULL) {
+  while (pointloop != (point) NULL){
     // Point number, x, y and z coordinates.
     fprintf(outfile, "%4d    %.17g  %.17g  %.17g", pointnumber,
             pointloop[0], pointloop[1], pointloop[2]);
@@ -932,18 +934,18 @@ void tetgenmesh::outsurfacemesh(const char* mfilename)
   strcpy(sfilename, mfilename);
   strcat(sfilename, ".smesh");
   outfile = fopen(sfilename, "w");
-  if (!b->quiet) {
+  if(!b->quiet){
     printf("Writing %s.\n", sfilename);
   }
   int shift = 0; // Default no shiftment.
-  if ((in->firstnumber == 1) && (firstindex == 0)) {
+  if((in->firstnumber == 1) && (firstindex == 0)){
     shift = 1; // Shift the output indices by 1.
   }
   fprintf(outfile, "0 3 0 0\n");
   fprintf(outfile, "%ld  1\n", subfaces->items);
   subfaces->traversalinit();
   faceloop.sh = shellfacetraverse(subfaces);
-  while (faceloop.sh != (shellface *) NULL) {
+  while (faceloop.sh != (shellface *) NULL){
     torg = sorg(faceloop);
     tdest = sdest(faceloop);
     tapex = sapex(faceloop);
@@ -961,14 +963,14 @@ void tetgenmesh::outsurfacemesh(const char* mfilename)
   strcpy(sfilename, mfilename);
   strcat(sfilename, ".edge");
   outfile = fopen(sfilename, "w");
-  if (!b->quiet) {
+  if(!b->quiet){
     printf("Writing %s.\n", sfilename);
   }
   fprintf(outfile, "%ld  1\n", subsegs->items);
   subsegs->traversalinit();
   edgeloop.sh = shellfacetraverse(subsegs);
   edgenumber = firstindex; // in->firstnumber;
-  while (edgeloop.sh != (shellface *) NULL) {
+  while (edgeloop.sh != (shellface *) NULL){
     torg = sorg(edgeloop);
     tdest = sdest(edgeloop);
     fprintf(outfile, "%5d   %4d  %4d  %d\n", edgenumber,
@@ -992,18 +994,19 @@ void tetgenmesh::outmesh2medit(const char* mfilename)
   int shift = 0;
   int marker;
 
-  if (mfilename != (char *) NULL && mfilename[0] != '\0') {
+  if(mfilename != (char *) NULL && mfilename[0] != '\0'){
     strcpy(mefilename, mfilename);
-  } else {
+  }
+  else{
     strcpy(mefilename, "unnamed");
   }
   strcat(mefilename, ".mesh");
 
-  if (!b->quiet) {
+  if(!b->quiet){
     printf("Writing %s.\n", mefilename);
   }
   outfile = fopen(mefilename, "w");
-  if (outfile == (FILE *) NULL) {
+  if(outfile == (FILE *) NULL){
     printf("File I/O Error:  Cannot create file %s.\n", mefilename);
     return;
   }
@@ -1021,7 +1024,7 @@ void tetgenmesh::outmesh2medit(const char* mfilename)
   points->traversalinit();
   ptloop = pointtraverse();
   //pointnumber = 1;
-  while (ptloop != (point) NULL) {
+  while (ptloop != (point) NULL){
     // Point coordinates.
     fprintf(outfile, "%.17g  %.17g  %.17g", ptloop[0], ptloop[1], ptloop[2]);
     fprintf(outfile, "    0\n");
@@ -1031,9 +1034,10 @@ void tetgenmesh::outmesh2medit(const char* mfilename)
   }
 
   // Medit need start number form 1.
-  if (in->firstnumber == 1) {
+  if(in->firstnumber == 1){
     shift = 0;
-  } else {
+  }
+  else{
     shift = 1;
   }
 
@@ -1046,11 +1050,12 @@ void tetgenmesh::outmesh2medit(const char* mfilename)
 
   tetrahedrons->traversalinit();
   tetptr = tetrahedrontraverse();
-  while (tetptr != (tetrahedron *) NULL) {
-    if (!b->reversetetori) {
+  while (tetptr != (tetrahedron *) NULL){
+    if(!b->reversetetori){
       p1 = (point) tetptr[4];
       p2 = (point) tetptr[5];
-    } else {
+    }
+    else{
       p1 = (point) tetptr[5];
       p2 = (point) tetptr[4];
     }
@@ -1059,9 +1064,10 @@ void tetgenmesh::outmesh2medit(const char* mfilename)
     fprintf(outfile, "%5d  %5d  %5d  %5d",
             pointmark(p1)+shift, pointmark(p2)+shift,
             pointmark(p3)+shift, pointmark(p4)+shift);
-    if (numelemattrib > 0) {
+    if(numelemattrib > 0){
       fprintf(outfile, "  %.17g", elemattribute(tetptr, 0));
-    } else {
+    }
+    else{
       fprintf(outfile, "  0");
     }
     fprintf(outfile, "\n");
@@ -1078,7 +1084,7 @@ void tetgenmesh::outmesh2medit(const char* mfilename)
 
   subfaces->traversalinit();
   sface.sh = shellfacetraverse(subfaces);
-  while (sface.sh != NULL) {
+  while (sface.sh != NULL){
     p1 =  sorg(sface);
     p2 = sdest(sface);
     p3 = sapex(sface);
@@ -1109,6 +1115,39 @@ bool meshGRegionBoundaryRecovery(GRegion *gr)
       ret = false;
     }
     else if(err == 3){
+      std::map<int, MVertex *> all;
+      std::list<GFace*> f = gr->faces();
+      for(std::list<GFace*>::iterator it = f.begin(); it != f.end(); ++it){
+        GFace *gf = *it;
+        for(unsigned int i = 0; i < gf->triangles.size(); i++){
+          for(int j = 0; j < 3; j++){
+            MVertex *v = gf->triangles[i]->getVertex(j);
+            all[v->getIndex()] = v;
+          }
+        }
+      }
+      std::list<GEdge*> e = gr->embeddedEdges();
+      for(std::list<GEdge*>::iterator it = e.begin(); it != e.end(); ++it){
+        GEdge *ge = *it;
+        for(unsigned int i = 0; i < ge->lines.size(); i++){
+          for(int j = 0; j < 2; j++){
+            MVertex *v = ge->lines[i]->getVertex(j);
+            all[v->getIndex()] = v;
+          }
+        }
+      }
+      std::list<GVertex*> v = gr->embeddedVertices();
+      for(std::list<GVertex*>::iterator it = v.begin(); it != v.end(); ++it){
+        GVertex *gv = *it;
+        for(unsigned int i = 0; i < gv->points.size(); i++){
+          MVertex *v = gv->points[i]->getVertex(0);
+          all[v->getIndex()] = v;
+        }
+      }
+      for(unsigned int i = 0; i < gr->mesh_vertices.size(); i++){
+        MVertex *v = gr->mesh_vertices[i];
+        all[v->getIndex()] = v;
+      }
       std::string what;
       bool pnt = true;
       switch(tetgenBR::sevent.e_type){
@@ -1148,15 +1187,13 @@ bool meshGRegionBoundaryRecovery(GRegion *gr)
           }
         }
         for(int i = 0; i < 3; i++){
-          if(vtags[f][i]){
-            MVertex *v = gr->model()->getMeshVertexByTag(vtags[f][i]);
-            if(v){
-              gr->model()->addLastMeshVertexError(v);
-              x.push_back(v->x());
-              y.push_back(v->y());
-              z.push_back(v->z());
-              val.push_back(f + 1.);
-            }
+          MVertex *v = all[vtags[f][i]];
+          if(v){
+            gr->model()->addLastMeshVertexError(v);
+            x.push_back(v->x());
+            y.push_back(v->y());
+            z.push_back(v->z());
+            val.push_back(f + 1.);
           }
         }
       }

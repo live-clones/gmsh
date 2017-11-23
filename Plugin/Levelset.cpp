@@ -466,8 +466,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
   double scalarValues[8] = {0., 0., 0., 0., 0., 0., 0., 0.};
 
   if(_valueIndependent) {
-    // create a single output view containing the (possibly
-    // multi-step) levelset
+    // create a single output view containing the (possibly multi-step) levelset
     int firstNonEmptyStep = vdata->getFirstNonEmptyTimeStep();
     PViewDataList *out = getDataList(new PView());
     for(int ent = 0; ent < vdata->getNumEntities(firstNonEmptyStep); ent++){
