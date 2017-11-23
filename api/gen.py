@@ -270,3 +270,4 @@ api.add_module("Graphics")
 
 api.write_cpp("gmsh")
 api.write_c("gmshc")
+api.write_python()
