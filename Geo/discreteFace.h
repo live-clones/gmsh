@@ -31,8 +31,6 @@ class discreteFace : public GFace {
   void split(triangulation*,std::vector<triangulation*>&,int);
   void fillHoles(triangulation*);
   void addTriangle(triangulation*,MTriangle*);
-  void complex_crossField();
-  void crossField();
   using GFace::point;
   GPoint point(double par1, double par2) const;
   SPoint2 parFromPoint(const SPoint3 &p, bool onSurface=true) const;

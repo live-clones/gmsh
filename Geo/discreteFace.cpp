@@ -5,7 +5,6 @@
 
 #include <stack>
 #include <queue>
-#include <complex>
 #include <stdlib.h>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
@@ -20,59 +19,11 @@
 #include "meshPartition.h"
 #include "MPoint.h"
 
-#if defined(HAVE_PETSC)
-#include "linearSystemPETSc.h"
-#endif
-
 #if defined(HAVE_METIS)
 extern "C" {
 #include <metis.h>
 }
 #endif
-
-static inline double getAlpha(MTriangle* tri, int edj)
-{
-  double alpha;
-  if (edj==0)
-    alpha = 0.;
-  else{
-    MVertex *v0, *v1, *v2;
-
-    v0 = tri->getVertex(0);
-    v1 = tri->getVertex(1);
-    v2 = tri->getVertex(2);
-
-    SVector3 a(v1->x()-v0->x(),v1->y()-v0->y(),v1->z()-v0->z());
-    SVector3 b(v2->x()-v0->x(),v2->y()-v0->y(),v2->z()-v0->z());
-    SVector3 n = crossprod(a,b); n.normalize();
-
-    v0 = tri->getEdge(0).getSortedVertex(0);
-    v1 = tri->getEdge(0).getSortedVertex(1);
-    SVector3 U(v1->x()-v0->x(),v1->y()-v0->y(),v1->z()-v0->z());
-    U.normalize();
-    SVector3 V = crossprod(n,U); V.normalize();
-
-    v0 = tri->getEdge(edj).getSortedVertex(0);
-    v1 = tri->getEdge(edj).getSortedVertex(1);
-    SVector3 e(v1->x()-v0->x(),v1->y()-v0->y(),v1->z()-v0->z());
-    e.normalize();
-
-    alpha = std::atan2(dot(e,V),dot(e,U));
-  }
-
-  return alpha;
-
-}
-
-static inline void crouzeixRaviart(const std::vector<double> &U,std::vector<double> &F)
-{
-  F.resize(3);
-
-  double xsi[3] = {0.,1.,0.};
-  double eta[3] = {0.,0.,1.};
-  for(int i=0; i<3; i++)
-    F[i] =  U[0] * (1.-2.*eta[i]) + U[1] * (2.*(xsi[i]+eta[i])-1.) + U[2] * (1-2.*xsi[i]);
-}
 
 discreteFace::discreteFace(GModel *model, int num, bool meshable)
   : GFace(model, num), _meshable(meshable)
@@ -208,7 +159,6 @@ void discreteFace::createGeometry()
   init->iter = iter++;
   allEdg2Tri = init->ed2tri;
   toSplit.push(init);
-
   if((toSplit.top())->genus()!=0 ||
      (toSplit.top())->aspectRatio() > eta ||
      (toSplit.top())->seamPoint){
@@ -275,7 +225,6 @@ void discreteFace::createGeometry()
     df->replaceEdges(toParam[i]->my_GEdges);
     _atlas.push_back(df);
   }
-  //complex_crossField();
 #endif
 }
 
@@ -860,286 +809,6 @@ void discreteFace::addTriangle(triangulation* trian, MTriangle* t)
     trian->ed2tri[ed].push_back(n);
   }
   trian->tri.push_back(t);
-#endif
-}
-
-void discreteFace::complex_crossField()
-{
-#if defined(HAVE_SOLVER) && defined(HAVE_ANN)
-  // complex linear system
-  linearSystem<std::complex<double> > * lsys;
-
-#ifdef HAVE_PETSC
-#ifdef PETSC_USE_COMPLEX
-  lsys = new linearSystemPETSc<std::complex<double> >;
-#else
-  Msg::Error("Petsc complex is required (we do need complex in "
-             "discreteFace::complex_crossField())");
-  return;
-#endif
-#else
-  Msg::Error("Petsc is required (we do need complex in discreteFace::crossField())");
-  return;
-#endif
-
-  std::complex<double> i1(0,1);
-  dofManager<std::complex<double> > myAssembler(lsys);
-
-  std::map<MEdge,int,Less_Edge> ed2key;
-  for (unsigned int i=0; i<triangles.size(); i++){
-
-    MTriangle* tri = triangles[i];
-    for(int j=0; j<3; j++){
-
-      MEdge ed = tri->getEdge(j);
-      std::vector<int> iTri = allEdg2Tri[ed];
-      int mini = iTri[0];
-      if (iTri.size()>1)
-	mini = iTri[0] < iTri[1] ? iTri[0] : iTri[1];
-      else
-	myAssembler.fixDof(3*mini+j,0,std::complex<double>(1)); // #tocheck
-
-      int num,s;
-      triangles[mini]->getEdgeInfo(ed,num,s);
-      myAssembler.numberDof(3*mini+num,0);
-      ed2key[ed] = 3*mini+num;
-    }
-  }
-
-  double grad[3][3] = {{0.,-2.,0.},{2.,2.,0.},{-2.,0.,0.}};
-  for (unsigned int i=0; i<triangles.size(); i++){
-
-    MTriangle* tri = triangles[i];
-
-    double jac[3][3];
-    double invjac[3][3];
-    double dJac = tri->getJacobian(0., 0., 0., jac);
-    inv3x3(jac, invjac);
-
-    for(int j=0; j<3; j++){
-
-      double alpha_j = getAlpha(tri,j);
-
-      std::complex<double> ej(std::exp(4.*i1*alpha_j));
-      Dof R(ed2key[tri->getEdge(j)],0);
-      for(int k=0; k<3; k++){
-
-	double alpha_k = getAlpha(tri,k);
-
-	std::complex<double> ek(std::exp(-4.*i1*alpha_k));
-	std::complex<double> K_jk = 0.;
-	for (int l=0; l<3; l++)
-	  for(int jj=0; jj<3; jj++)
-	    for(int kk=0; kk<3; kk++)
-	      K_jk += grad[j][jj] * invjac[l][jj] * invjac[l][kk] * grad[k][kk];
-	K_jk *= ej*ek*dJac/2.;
-
-	Dof C(ed2key[tri->getEdge(k)],0);
-	myAssembler.assemble(R,C,K_jk);
-      }
-    }
-  }
-
-  lsys->systemSolve();
-
-  FILE* myfile = Fopen("crossField.pos","w");
-  fprintf(myfile,"View \"cross\"{\n");
-  for(unsigned int i=0; i<triangles.size(); i++){
-    fprintf(myfile,"VT(");
-    MTriangle* tri = triangles[i];
-    MEdge ed = tri->getEdge(0);
-
-    MVertex *v0, *v1, *v2;
-
-    v0 = tri->getVertex(0);
-    v1 = tri->getVertex(1);
-    v2 = tri->getVertex(2);
-
-    SVector3 a(v1->x()-v0->x(),v1->y()-v0->y(),v1->z()-v0->z());
-    SVector3 b(v2->x()-v0->x(),v2->y()-v0->y(),v2->z()-v0->z());
-    SVector3 n = crossprod(a,b); n.normalize();
-
-    v0 = ed.getSortedVertex(0);
-    v1 = ed.getSortedVertex(1);
-    SVector3 e(v1->x()-v0->x(),v1->y()-v0->y(),v1->z()-v0->z());
-    e.normalize();
-    SVector3 d = crossprod(n,e); d.normalize();
-
-    std::vector<double> U; U.resize(3);
-    std::vector<double> V; V.resize(3);
-    for(int j=0; j<3; j++){
-      fprintf(myfile,"%f,%f,%f",tri->getVertex(j)->x(),
-              tri->getVertex(j)->y(),tri->getVertex(j)->z());
-      if (j<2) fprintf(myfile,",");
-      MEdge ed = tri->getEdge(j);
-      std::complex<double> fstar; // edge basis
-      myAssembler.getDofValue(ed2key[ed],0,fstar); // conjugate dof in the local edge basis
-      double alpha = getAlpha(tri,j); // triangle basis
-      std::complex<double> F(std::exp(4.*i1*alpha));
-      F *= std::conj(fstar); // dof of the local tri basis
-      U[j] = std::real(F);
-      V[j] = std::imag(F);
-    }
-    fprintf(myfile,")");
-    std::vector<double> Fu, Fv;
-    crouzeixRaviart(U,Fu);
-    crouzeixRaviart(V,Fv);
-    fprintf(myfile,"{");
-    for(int j=0; j<3; j++){
-      double u = Fu[j], v = Fv[j]; double theta = std::atan2(v,u)/4.;
-      SVector3 cf(cos(theta)*e.x()+sin(theta)*d.x(),
-                  cos(theta)*e.y()+sin(theta)*d.y(),
-                  cos(theta)*e.z()+sin(theta)*d.z());
-      cf = cf*sqrt(u*u+v*v);
-      fprintf(myfile,"%f,%f,%f",cf.x(),cf.y(),cf.z());
-      if (j<2) fprintf(myfile,",");
-    }
-    fprintf(myfile,"};\n");
-  }
-  fprintf(myfile,"};");
-  fclose(myfile);
-
-#endif
-}
-
-void discreteFace::crossField()
-{
-#if defined(HAVE_SOLVER) && defined(HAVE_ANN)
-  // linear system
-  linearSystem<double> * lsys = 0;
-
-#ifdef HAVE_PETSC
-  lsys = new linearSystemPETSc<double>;
-#else
-  Msg::Error("Petsc is required for cross fields");
-  return;
-#endif
-
-  dofManager<double> myAssembler(lsys);
-
-  std::map<MEdge,int,Less_Edge> ed2key;
-  for (unsigned int i=0; i<triangles.size(); i++){
-
-    MTriangle* tri = triangles[i];
-    for(int j=0; j<3; j++){
-
-      MEdge ed = tri->getEdge(j);
-      std::vector<int> iTri = allEdg2Tri[ed];
-      int mini = iTri[0];
-      if (iTri.size()>1)
-	mini = iTri[0] < iTri[1] ? iTri[0] : iTri[1];
-      else{
-	myAssembler.fixDof(3*mini+j,0,1.); // setting theta and not Theta
-	myAssembler.fixDof(3*mini+j,1,0.);
-      }
-
-      int num,s;
-      triangles[mini]->getEdgeInfo(ed,num,s);
-      myAssembler.numberDof(3*mini+num,0); // u, not U
-      myAssembler.numberDof(3*mini+num,1); // v, not V
-      ed2key[ed] = 3*mini+num;
-    }
-  }
-
-  double grad[3][3] = {{0.,-2.,0.},{2.,2.,0.},{-2.,0.,0.}};
-  for (unsigned int i=0; i<triangles.size(); i++){
-
-    MTriangle* tri = triangles[i];
-
-    double jac[3][3];
-    double invjac[3][3];
-    double dJac = tri->getJacobian(0., 0., 0., jac);
-    inv3x3(jac, invjac);
-
-    for(int j=0; j<3; j++){
-
-      double alpha_j = getAlpha(tri,j);
-
-      Dof Ru(ed2key[tri->getEdge(j)],0);
-      Dof Rv(ed2key[tri->getEdge(j)],1);
-      for(int k=0; k<3; k++){
-
-	double alpha_k = getAlpha(tri,k);
-
-	Dof Cu(ed2key[tri->getEdge(k)],0);
-	Dof Cv(ed2key[tri->getEdge(k)],1);
-
-	double K_jk = 0.;
-	for (int l=0; l<3; l++)
-	  for(int jj=0; jj<3; jj++)
-	    for(int kk=0; kk<3; kk++)
-	      K_jk += grad[j][jj] * invjac[l][jj] * invjac[l][kk] * grad[k][kk];
-	K_jk *= dJac/2.;
-	myAssembler.assemble(Ru,Cu,cos(4.*(alpha_j-alpha_k))*K_jk);
-	myAssembler.assemble(Ru,Cv,sin(4.*(alpha_j-alpha_k))*K_jk);
-	myAssembler.assemble(Rv,Cu,sin(4.*(alpha_k-alpha_j))*K_jk);
-	myAssembler.assemble(Rv,Cv,cos(4.*(alpha_j-alpha_k))*K_jk);
-      }
-    }
-  }
-
-  lsys->systemSolve();
-
-  FILE* myfile = Fopen("crossField.pos","w");
-  fprintf(myfile,"View \"cross\"{\n");
-  for(unsigned int i=0; i<triangles.size(); i++){
-    fprintf(myfile,"VT(");
-    MTriangle* tri = triangles[i];
-    MEdge ed = tri->getEdge(0);
-
-    MVertex *v0, *v1, *v2;
-
-    v0 = tri->getVertex(0);
-    v1 = tri->getVertex(1);
-    v2 = tri->getVertex(2);
-
-    SVector3 a(v1->x()-v0->x(),v1->y()-v0->y(),v1->z()-v0->z());
-    SVector3 b(v2->x()-v0->x(),v2->y()-v0->y(),v2->z()-v0->z());
-    SVector3 n = crossprod(a,b); n.normalize();
-
-    v0 = ed.getSortedVertex(0);
-    v1 = ed.getSortedVertex(1);
-    SVector3 e(v1->x()-v0->x(),v1->y()-v0->y(),v1->z()-v0->z());
-    e.normalize();
-    //printf("e=(%f %f)\n",e.x(),e.y());
-    SVector3 d = crossprod(n,e); d.normalize();
-    //printf("d=(%f %f)\n",d.x(),d.y());
-
-    std::vector<double> U; U.resize(3);
-    std::vector<double> V; V.resize(3);
-    for(int j=0; j<3; j++){
-      fprintf(myfile,"%f,%f,%f",tri->getVertex(j)->x(),tri->getVertex(j)->y(),
-              tri->getVertex(j)->z());
-      if (j<2) fprintf(myfile,",");
-      MEdge ed = tri->getEdge(j);
-      double  u, v;// edge basis
-      myAssembler.getDofValue(ed2key[ed],0,u);// u
-      myAssembler.getDofValue(ed2key[ed],1,v);// v
-      if(std::abs(u*u+v*v-1)>1e-12)
-	printf("/!\\ ---> warning unit vector \t %f  \n",sqrt(u*u+v*v));
-      double alpha = getAlpha(tri,j);// triangle basis
-      U[j] = cos(4.*alpha)*u - sin(4.*alpha)*v;// U, not u
-      V[j] = sin(4.*alpha)*u + cos(4.*alpha)*v;// V, not v
-    }
-    fprintf(myfile,")");
-    std::vector<double> Fu, Fv;
-    crouzeixRaviart(U,Fu);
-    crouzeixRaviart(V,Fv);
-    fprintf(myfile,"{");
-    for(int j=0; j<3; j++){
-      double u = Fu[j], v = Fv[j]; double theta = std::atan2(v,u)/4.;
-      SVector3 cf(cos(theta)*e.x()+sin(theta)*d.x(),
-                  cos(theta)*e.y()+sin(theta)*d.y(),
-                  cos(theta)*e.z()+sin(theta)*d.z());
-      fprintf(myfile,"%f,%f,%f",cf.x(),cf.y(),cf.z());
-      if( std::abs(dot(cf,n)) > 1e-12)
-	printf("/!\\ ---> warning orthogonality \t %f \n",dot(cf,n));
-      if (j<2) fprintf(myfile,",");
-    }
-    fprintf(myfile,"};\n");
-  }
-  fprintf(myfile,"};");
-  fclose(myfile);
 #endif
 }
 

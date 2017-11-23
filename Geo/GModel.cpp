@@ -1565,6 +1565,7 @@ void GModel::_createGeometryOfDiscreteEntities(bool force)
   }
   if (CTX::instance()->meshDiscrete){
     Msg::Info("Creating the geometry of discrete surfaces");
+    printf("2\n");
     for(fiter it = firstFace(); it != lastFace(); ++it){
       if((*it)->geomType() == GEntity::DiscreteSurface) {
 	discreteFace *df = dynamic_cast<discreteFace*> (*it);
