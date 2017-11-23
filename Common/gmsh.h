@@ -811,6 +811,26 @@ GMSH_API void gmshViewAddModelData(const int tag, const std::string &modelName,
                                    const int numComponents = -1,
                                    const int partition = 0);
 
+// Adds list-based post-processing data to the view with tag `tag'. `type'
+// identifies the data: "SP" for scalar points, "VP", for vector points,
+// etc. `numEle' gives the number of elements in the data. `data' contains the
+// data for the `numEle' elements.
+GMSH_API void gmshViewAddListData(const int tag, const std::string &type,
+                                  const int numEle, const std::vector<double> &data);
+
+// Probes the view `tag' for its `value' at point (`x', `y', `z').
+GMSH_API void gmshViewProbe(const int tag, const double x, const double y,
+                            const double z, std::vector<double> &value,
+                            const int step = -1, const int numComp = -1,
+                            const bool gradient = false,
+                            const double tolerance = 0.,
+                            const std::vector<double> xElemCoord
+                            = std::vector<double>(),
+                            const std::vector<double> yElemCoord
+                            = std::vector<double>(),
+                            const std::vector<double> zElemCoord
+                            = std::vector<double>());
+
 // Exports the view to a file. The export format is determined by the file
 // extension.
 GMSH_API void gmshViewExport(const int tag, const std::string &fileName,

@@ -2040,19 +2040,103 @@ void gmshViewAddModelData(const int tag, const std::string &modelName,
 #endif
 }
 
-/*
-void gmshViewAddListData(const int tag, ...);
-void gmshViewAddStringData(const int tag, ...);
-void gmshViewAddXYData(const int tag, const std::vector<double> &x,
-                       const std::vector<double> &y);
-void gmshViewAddXYZData(const int tag, const std::vector<double> &x,
-                        const std::vector<double> &y,
-                        const std::vector<double> &z);
+void gmshViewAddListData(const int tag, const std::string &type, const int numEle,
+                         const std::vector<double> &data)
+{
+  if(!_isInitialized()){ throw -1; }
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(!view){
+    Msg::Error("Unknown view with tag %d", tag);
+    throw 2;
+  }
+  PViewDataList *d = dynamic_cast<PViewDataList*>(view->getData());
+  if(!d){ // change the view type
+    std::string name = view->getData()->getName();
+    delete view->getData();
+    d = new PViewDataList();
+    d->setName(name);
+    d->setFileName(name + ".pos");
+    view->setData(d);
+  }
+  const char *types[] = {"SP", "VP", "TP", "SL", "VL", "TL", "ST", "VT", "TT",
+                         "SQ", "VQ", "TQ", "SS", "VS", "TS", "SH", "VH", "TH",
+                         "SI", "VI", "TI", "SY", "VY", "TY"};
+  for(int idxtype = 0; idxtype < 24; idxtype++){
+    if(type == types[idxtype]){
+      d->importList(idxtype, numEle, data, true);
+      return;
+    }
+  }
+  Msg::Error("Unknown data type for list import");
+  throw 2;
+#else
+  Msg::Error("Views require the post-processing module");
+  throw -1;
+#endif
+}
 
-void gmshViewGetValue(tag, x, y, z, step, &vector_double);
-void gmshViewGetRawData(tag, &double_vector);
-void gmshViewSetRawData(tag, const &double_vector);
-*/
+void gmshViewProbe(const int tag, const double x, const double y,
+                   const double z, std::vector<double> &value,
+                   const int step, const int numComp,
+                   const bool gradient, const double tolerance,
+                   const std::vector<double> xElemCoord,
+                   const std::vector<double> yElemCoord,
+                   const std::vector<double> zElemCoord)
+{
+  if(!_isInitialized()){ throw -1; }
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(!view){
+    Msg::Error("Unknown view with tag %d", tag);
+    throw 2;
+  }
+  PViewData *data = view->getData();
+  if(!data){ throw 2; }
+  value.clear();
+  std::vector<double> val(9 * data->getNumTimeSteps());
+  bool found = false;
+  int qn = 0;
+  double *qx = 0, *qy = 0, *qz = 0;
+  if(xElemCoord.size() && yElemCoord.size() && zElemCoord.size() &&
+     xElemCoord.size() == yElemCoord.size() &&
+     xElemCoord.size() == zElemCoord.size()){
+    qn = xElemCoord.size();
+    qx = (double*)&xElemCoord[0];
+    qy = (double*)&yElemCoord[0];
+    qz = (double*)&zElemCoord[0];
+  }
+  switch(numComp){
+  case 1:
+    found = data->searchScalarWithTol
+      (x, y, z, &val[0], step, 0, tolerance, qn, qx, qy, qz, gradient);
+    break;
+  case 3:
+    found = data->searchVectorWithTol
+      (x, y, z, &val[0], step, 0, tolerance, qn, qx, qy, qz, gradient);
+    break;
+  case 9:
+    found = data->searchTensorWithTol
+      (x, y, z, &val[0], step, 0, tolerance, qn, qx, qy, qz, gradient);
+    break;
+  default:
+    found = data->searchScalarWithTol
+      (x, y, z, &val[0], step, 0, tolerance, qn, qx, qy, qz, gradient);
+    if(!found)
+      found = data->searchVectorWithTol
+        (x, y, z, &val[0], step, 0, tolerance, qn, qx, qy, qz, gradient);
+    if(!found)
+      found = data->searchTensorWithTol
+        (x, y, z, &val[0], step, 0, tolerance, qn, qx, qy, qz, gradient);
+    break;
+  }
+  if(found)
+    value.insert(value.end(), val.begin(), val.end());
+#else
+  Msg::Error("Views require the post-processing module");
+  throw -1;
+#endif
+}
 
 void gmshViewExport(const int tag, const std::string &fileName,
                     const bool append)

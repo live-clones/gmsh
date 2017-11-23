@@ -137,6 +137,7 @@ class PViewDataList : public PViewData {
                         bool forceNodeData=false, bool forceElementData=false);
   virtual void importLists(int N[24], std::vector<double> *V[24]);
   virtual void getListPointers(int N[24], std::vector<double> *V[24]);
+  void importList(int index, int n, const std::vector<double> &v, bool finalize);
 };
 
 #endif
