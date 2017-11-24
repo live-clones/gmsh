@@ -3,7 +3,7 @@
 
 #include <gmsh.h>
 
-// make all function in the gmsh namespace directly available
+// make all functions in the gmsh namespace directly available
 using namespace gmsh;
 
 int main(int argc, char **argv)
