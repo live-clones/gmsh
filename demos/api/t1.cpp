@@ -15,7 +15,7 @@ int main(int argc, char **argv)
   // By default Gmsh will not print out any messages: in order to output
   // messages on the terminal, just set the standard Gmsh option
   // "General.Terminal" (same format and meaning as in .geo files) using
-  // gmshOptionSetNumber():
+  // gmsh::option::setNumber():
   gmsh::option::setNumber("General.Terminal", 1);
 
   // This adds a new model, named "t1". If gmsh::model::add() is not called, a
@@ -24,8 +24,8 @@ int main(int argc, char **argv)
 
   // The C++ API provides direct access to the internal CAD kernels. The
   // built-in CAD kernel was used in t1.geo: the corresponding API functions
-  // have the "gmshModeGeo" prefix. To create geometrical points with the
-  // built-in CAD kernel, one thus uses gmshModelGeoAddPoint():
+  // live in the "gmsh::model::geo" namespace. To create geometrical points with
+  // the built-in CAD kernel, one thus uses gmsh::model::geo::addPoint():
   //
   // - the first 3 arguments are the point coordinates (x, y, z)
   //
@@ -65,11 +65,11 @@ int main(int argc, char **argv)
 
   // Before it can be meshed, the internal CAD representation must be
   // synchronized with the Gmsh model, which will create the relevant Gmsh data
-  // structures. This is achieved by the gmshModelGeoSynchronize() API call for
-  // the built-in CAD kernel. Synchronizations can be called at any time, but
-  // they involve a non trivial amount of processing; so while you could
-  // synchronize the internal CAD data after every CAD command, it is usually
-  // better to minimize the number of synchronization points.
+  // structures. This is achieved by the gmsh::model::geo::synchronize() API
+  // call for the built-in CAD kernel. Synchronizations can be called at any
+  // time, but they involve a non trivial amount of processing; so while you
+  // could synchronize the internal CAD data after every CAD command, it is
+  // usually better to minimize the number of synchronization points.
   gmsh::model::geo::synchronize();
 
   // We can then generate a 2D mesh...
