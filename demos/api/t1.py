@@ -7,19 +7,19 @@
 # of the Python API.
 
 # The API is entirely defined in the gmsh module
-from gmsh import *
+import gmsh
 
 # Before using any functions in the Python API, Gmsh must be initialized.
-gmshInitialize()
+gmsh.initialize()
 
 # By default Gmsh will not print out any messages: in order to output messages
 # on the terminal, just set the standard Gmsh option "General.Terminal" (same
 # format and meaning as in .geo files) using gmshOptionSetNumber():
-gmshOptionSetNumber("General.Terminal", 1)
+gmsh.optionSetNumber("General.Terminal", 1)
 
 # This creates a new model, named "t1". If gmshModelCreate() is not called, a
 # new default (unnamed) model will be created on the fly, if necessary.
-gmshModelCreate("t1")
+gmsh.modelAdd("t1")
 
 # The Python API provides direct access to the internal CAD kernels. The
 # built-in CAD kernel was used in t1.geo: the corresponding API functions have
@@ -32,35 +32,35 @@ gmshModelCreate("t1")
 #
 # - the last (optional) argument is the point tag
 lc = 1e-2
-gmshModelGeoAddPoint(0, 0, 0, lc, 1)
-gmshModelGeoAddPoint(.1, 0,  0, lc, 2)
-gmshModelGeoAddPoint(.1, .3, 0, lc, 3)
-gmshModelGeoAddPoint(0, .3, 0, lc, 4)
+gmsh.modelGeoAddPoint(0, 0, 0, lc, 1)
+gmsh.modelGeoAddPoint(.1, 0,  0, lc, 2)
+gmsh.modelGeoAddPoint(.1, .3, 0, lc, 3)
+gmsh.modelGeoAddPoint(0, .3, 0, lc, 4)
 
 # The API to create lines with the built-in kernel follows the same
 # conventions: the first 2 arguments are point tags, the last (optional one)
 # is the line tag.
-gmshModelGeoAddLine(1, 2, 1)
-gmshModelGeoAddLine(3, 2, 2)
-gmshModelGeoAddLine(3, 4, 3)
-gmshModelGeoAddLine(4, 1, 4)
+gmsh.modelGeoAddLine(1, 2, 1)
+gmsh.modelGeoAddLine(3, 2, 2)
+gmsh.modelGeoAddLine(3, 4, 3)
+gmsh.modelGeoAddLine(4, 1, 4)
 
 # The philosophy to construct line loops and surfaces is similar: the first
 # argument is now a vector of integers.
-gmshModelGeoAddLineLoop([4, 1, -2, 3], 1)
-gmshModelGeoAddPlaneSurface([1], 1)
+gmsh.modelGeoAddLineLoop([4, 1, -2, 3], 1)
+gmsh.modelGeoAddPlaneSurface([1], 1)
 
 # Physical groups are defined by providing the dimension of the group (0 for
 # physical points, 1 for physical lines, 2 for physical surfaces and 3 for
 # phsyical volumes) followed by a vector of entity tags. The last (optional)
 # argument is the tag of the new group to create.
-gmshModelAddPhysicalGroup(0, [1, 2], 1)
-gmshModelAddPhysicalGroup(1, [1, 2], 2)
-gmshModelAddPhysicalGroup(2, [1], 6)
+gmsh.modelAddPhysicalGroup(0, [1, 2], 1)
+gmsh.modelAddPhysicalGroup(1, [1, 2], 2)
+gmsh.modelAddPhysicalGroup(2, [1], 6)
 
 # Physical names are also defined by providing the dimension and tag of the
 # entity.
-gmshModelSetPhysicalName(2, 6, "My surface")
+gmsh.modelSetPhysicalName(2, 6, "My surface")
 
 # Before it can be meshed, the internal CAD representation must be synchronized
 # with the Gmsh model, which will create the relevant Gmsh data structures. This
@@ -69,13 +69,13 @@ gmshModelSetPhysicalName(2, 6, "My surface")
 # trivial amount of processing; so while you could synchronize the internal CAD
 # data after every CAD command, it is usually better to minimize the number of
 # synchronization points.
-gmshModelGeoSynchronize()
+gmsh.modelGeoSynchronize()
 
 # We can then generate a 2D mesh...
-gmshModelMesh(2)
+gmsh.modelMeshGenerate(2)
 
 # ... and save it to disk
-gmshExport("t1.msh")
+gmsh.write("t1.msh")
 
 # This should be called at the end:
-gmshFinalize()
+gmsh.finalize()

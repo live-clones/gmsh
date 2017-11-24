@@ -94,6 +94,16 @@ Enable default post-processing plugins?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item PostProcessing.SaveInterpolationMatrices
+Save the interpolation matrices when exporting model-based data@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item PostProcessing.SaveMesh
+Save the mesh when exporting model-based data@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item PostProcessing.Smoothing
 Apply (non-reversible) smoothing to post-processing view when merged@*
 Default value: @code{0}@*

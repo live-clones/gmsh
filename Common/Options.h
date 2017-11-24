@@ -582,6 +582,8 @@ double opt_post_nb_views(OPT_ARGS_NUM);
 double opt_post_file_format(OPT_ARGS_NUM);
 double opt_post_force_node_data(OPT_ARGS_NUM);
 double opt_post_force_element_data(OPT_ARGS_NUM);
+double opt_post_save_mesh(OPT_ARGS_NUM);
+double opt_post_save_interpolation_matrices(OPT_ARGS_NUM);
 double opt_post_double_clicked_graph_point_x(OPT_ARGS_NUM);
 double opt_post_double_clicked_graph_point_y(OPT_ARGS_NUM);
 double opt_post_double_clicked_view(OPT_ARGS_NUM);

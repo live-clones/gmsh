@@ -2,50 +2,50 @@
 
 # This file reimplements gmsh/tutorial/t16.geo in Python.
 
-from gmsh import *
+import gmsh
 import math
 
-gmshInitialize()
-gmshOptionSetNumber("General.Terminal", 1)
+gmsh.initialize()
+gmsh.optionSetNumber("General.Terminal", 1)
 
-gmshModelCreate("t16")
+gmsh.modelAdd("t16")
 
-ov = PairVector(); ovv = PairVectorVector()
+ov = gmsh.PairVector(); ovv = gmsh.PairVectorVector()
 
-gmshModelOccAddBox(0,0,0, 1,1,1, 1)
-gmshModelOccAddBox(0,0,0, 0.5,0.5,0.5, 2)
-gmshModelOccBooleanDifference([(3,1)], [(3,2)], ov, ovv, 3)
+gmsh.modelOccAddBox(0,0,0, 1,1,1, 1)
+gmsh.modelOccAddBox(0,0,0, 0.5,0.5,0.5, 2)
+gmsh.modelOccBooleanDifference([(3,1)], [(3,2)], ov, ovv, 3)
 
 x = 0; y = 0.75; z = 0; r = 0.09
 
-holes = PairVector()
+holes = gmsh.PairVector()
 for t in range(1, 6):
     x += 0.166
     z += 0.166
-    gmshModelOccAddSphere(x,y,z,r, 3 + t)
+    gmsh.modelOccAddSphere(x,y,z,r, 3 + t)
     holes.append((3, 3 + t))
 
-gmshModelOccBooleanFragments([(3,3)], holes, ov, ovv)
+gmsh.modelOccBooleanFragments([(3,3)], holes, ov, ovv)
 
-gmshModelOccSynchronize()
+gmsh.modelOccSynchronize()
 
 lcar1 = .1
 lcar2 = .0005
 lcar3 = .055
 
-gmshModelGetEntities(ov, 0);
-gmshModelSetMeshSize(ov, lcar1);
+gmsh.modelGetEntities(ov, 0);
+gmsh.modelMeshSetSize(ov, lcar1);
 
-gmshModelGetBoundary(holes, ov, False, False, True);
-gmshModelSetMeshSize(ov, lcar3);
+gmsh.modelGetBoundary(holes, ov, False, False, True);
+gmsh.modelMeshSetSize(ov, lcar3);
 
 eps = 1e-3
-gmshModelGetEntitiesInBoundingBox(0.5-eps, 0.5-eps, 0.5-eps,
+gmsh.modelGetEntitiesInBoundingBox(0.5-eps, 0.5-eps, 0.5-eps,
                                   0.5+eps, 0.5+eps, 0.5+eps, ov, 0)
-gmshModelSetMeshSize(ov, lcar2)
+gmsh.modelMeshSetSize(ov, lcar2)
 
-gmshModelMesh(3)
+gmsh.modelMeshGenerate(3)
 
-gmshExport("t16.msh")
+gmsh.write("t16.msh")
 
-gmshFinalize()
+gmsh.finalize()

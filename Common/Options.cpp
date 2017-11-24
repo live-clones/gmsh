@@ -6862,6 +6862,20 @@ double opt_post_force_element_data(OPT_ARGS_NUM)
   return CTX::instance()->post.forceElementData;
 }
 
+double opt_post_save_mesh(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->post.saveMesh = (int)val;
+  return CTX::instance()->post.saveMesh;
+}
+
+double opt_post_save_interpolation_matrices(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->post.saveInterpolationMatrices = (int)val;
+  return CTX::instance()->post.saveInterpolationMatrices;
+}
+
 double opt_post_double_clicked_graph_point_x(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

@@ -8,12 +8,12 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  gmshInitialize();
-  gmshOptionSetNumber("General.Terminal", 1);
-  gmshOpen(argv[1]);
-  gmshModelMesh(3);
-  gmshExport("test.msh");
-  gmshFinalize();
+  gmsh::initialize();
+  gmsh::option::setNumber("General.Terminal", 1);
+  gmsh::open(argv[1]);
+  gmsh::model::mesh::generate(3);
+  gmsh::write("test.msh");
+  gmsh::finalize();
 
   return 0;
 }

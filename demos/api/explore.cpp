@@ -8,26 +8,25 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  gmshInitialize();
-  gmshOptionSetNumber("General.Terminal", 1);
-  gmshOpen(argv[1]);
+  gmsh::initialize();
+  gmsh::option::setNumber("General.Terminal", 1);
+  gmsh::open(argv[1]);
 
   // get all elementary entities in the model
   std::vector<std::pair<int, int> > entities;
-  gmshModelGetEntities(entities);
+  gmsh::model::getEntities(entities);
 
   for(unsigned int i = 0; i < entities.size(); i++){
-
     // get the mesh vertices for each elementary entity
     std::vector<int> vertexTags;
     std::vector<double> vertexCoords, vertexParams;
     int dim = entities[i].first, tag = entities[i].second;
-    gmshModelGetMeshVertices(dim, tag, vertexTags, vertexCoords, vertexParams);
+    gmsh::model::mesh::getVertices(dim, tag, vertexTags, vertexCoords, vertexParams);
 
     // get the mesh elements for each elementary entity
     std::vector<int> elemTypes;
     std::vector<std::vector<int> > elemTags, elemVertexTags;
-    gmshModelGetMeshElements(dim, tag, elemTypes, elemTags, elemVertexTags);
+    gmsh::model::mesh::getElements(dim, tag, elemTypes, elemTags, elemVertexTags);
 
     // report some statistics
     int numElem = 0;
@@ -38,6 +37,6 @@ int main(int argc, char **argv)
               << dim << "," << tag << ")\n";
   }
 
-  gmshFinalize();
+  gmsh::finalize();
   return 0;
 }
