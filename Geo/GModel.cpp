@@ -1472,6 +1472,13 @@ int GModel::partitionMesh(int numPart)
 #endif
 }
 
+int GModel::createPartitionTopology()
+{
+  opt_mesh_partition_num(0, GMSH_SET, meshPartitions.size());
+  int ier = CreatePartitionTopology(this);
+  return ier;
+}
+
 int GModel::partitionedTopology(std::string &name)
 {
   int ier = CreateTopologyFile(this, name);

@@ -169,9 +169,6 @@ void readMSHPeriodicNodes(FILE *fp, GModel *gm)
 
 int GModel::readMSH(const std::string &name)
 {
-  clock_t t;
-  t = clock();
-  
   FILE *fp = Fopen(name.c_str(), "rb");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
@@ -214,17 +211,11 @@ int GModel::readMSH(const std::string &name)
       }
       if(version < 3.){
         fclose(fp);
-        int ret = _readMSH2(name);
-        t = clock() - t;
-        Msg::StatusBar(true, "Reading in %f seconds", ((float)t)/CLOCKS_PER_SEC);
-        return ret;
+        return _readMSH2(name);
       }
       if(version == 4.0){
         fclose(fp);
-        int ret = _readMSH4(name);
-        t = clock() - t;
-        Msg::StatusBar(true, "Reading in %f seconds", ((float)t)/CLOCKS_PER_SEC);
-        return ret;
+        return _readMSH4(name);
       }
       if(format){
         binary = true;
@@ -645,12 +636,13 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
                      int saveSinglePartition, bool multipleView)
 {
   if(version < 3)
-    return _writeMSH2(name, version, binary, saveAll, saveParametric,
-                      scalingFactor, elementStartNum, saveSinglePartition,
-                      multipleView);
+  {
+    return _writeMSH2(name, version, binary, saveAll, saveParametric, scalingFactor, elementStartNum, saveSinglePartition, multipleView);
+  }
   if(version == 4.0)
-    return _writeMSH4(name, version, binary, saveAll, saveParametric,
-                      scalingFactor);
+  {
+    return _writeMSH4(name, version, binary, saveAll, saveParametric, scalingFactor);
+  }
 
   FILE *fp;
   if(multipleView)

@@ -447,6 +447,8 @@ class GModel {
   int deleteMeshPartitions();
   // partition the mesh
   int partitionMesh(int num);
+  // Import a mesh partitionned by a tag given to the element en create the topology
+  int createPartitionTopology();
   // create the partitioned topology file
   int partitionedTopology(std::string &name);
 

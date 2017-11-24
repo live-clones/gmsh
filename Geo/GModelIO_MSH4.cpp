@@ -44,7 +44,7 @@ void writeMSH4PeriodicNodes(GModel *const model, FILE* fp, bool partitioned, boo
 //Read functions
 void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary, bool swap);
 void readMSH4Physicals(GModel *const model, FILE* fp, GEntity *const entity, bool binary, char *str, bool swap);
-void readMSH4BoundingBox(GModel *const model, FILE* fp, GEntity *const entity, bool binary, char *str, bool swap);
+void readMSH4BoundingEntities(GModel *const model, FILE* fp, GEntity *const entity, bool binary, char *str, bool swap);
 std::pair<int, MVertex*> *readMSH4Nodes(GModel *const model, FILE* fp, bool binary, bool parametric, bool &dense, unsigned long &nbrNodes, bool swap);
 std::pair<int, MElement*> *readMSH4Elements(GModel *const model, FILE* fp, bool binary, bool &dense, unsigned long &nbrElements, bool swap);
 void readMSH4PeriodicNodes(GModel *const model, FILE* fp, bool binary, bool swap);
@@ -571,7 +571,7 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
       static_cast<partitionEdge*>(ge)->setPartition(partitions);
     }
     
-    readMSH4BoundingBox(model, fp, ge, binary, str, swap);
+    readMSH4BoundingEntities(model, fp, ge, binary, str, swap);
   }
   //Faces
   for(int i = 0; i < numFaces; i++)
@@ -673,7 +673,7 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
       static_cast<partitionFace*>(gf)->setPartition(partitions);
     }
     
-    readMSH4BoundingBox(model, fp, gf, binary, str, swap);
+    readMSH4BoundingEntities(model, fp, gf, binary, str, swap);
   }
   
   //Regions
@@ -776,7 +776,7 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
       static_cast<partitionRegion*>(gr)->setPartition(partitions);
     }
     
-    readMSH4BoundingBox(model, fp, gr, binary, str, swap);
+    readMSH4BoundingEntities(model, fp, gr, binary, str, swap);
   }
 }
 
@@ -808,25 +808,22 @@ void readMSH4Physicals(GModel *const model, FILE* fp, GEntity *const entity, boo
   }
   else
   {
-    char strTmp[265];
-    sscanf(str, "%lu %[0-9- ]", &numPhy, strTmp);
-    strcpy(str, strTmp);
+    sscanf(str, "%lu %[0-9- ]", &numPhy, str);
     for(int i = 0; i < numPhy; i++)
     {
       int phyTag = 0;
       
-      if(sscanf(str, "%d %[0-9- ]", &phyTag, strTmp) != 2)
+      if(sscanf(str, "%d %[0-9- ]", &phyTag, str) != 2)
       {
         return;
       }
-      strcpy(str, strTmp);
     
       entity->addPhysicalEntity(phyTag);
     }
   }
 }
 
-void readMSH4BoundingBox(GModel *const model, FILE* fp, GEntity *const entity, bool binary, char *str, bool swap)
+void readMSH4BoundingEntities(GModel *const model, FILE* fp, GEntity *const entity, bool binary, char *str, bool swap)
 {
   unsigned long numBrep = 0;
   std::vector<GEntity*> boundingEntities;
@@ -864,16 +861,14 @@ void readMSH4BoundingBox(GModel *const model, FILE* fp, GEntity *const entity, b
   }
   else
   {
-    char strTmp[265];
-    sscanf(str, "%lu %[0-9- ]", &numBrep, strTmp);
-    strcpy(str, strTmp);
+    sscanf(str, "%lu %[0-9- ]", &numBrep, str);
     for(int i = 0; i < numBrep; i++)
     {
       int entityTag = 0;
       
       if(i != numBrep-1)
       {
-        if(sscanf(str, "%d %[0-9- ]", &entityTag, strTmp) != 2)
+        if(sscanf(str, "%d %[0-9- ]", &entityTag, str) != 2)
         {
           return;
         }
@@ -885,7 +880,6 @@ void readMSH4BoundingBox(GModel *const model, FILE* fp, GEntity *const entity, b
           return;
         }
       }
-      strcpy(str, strTmp);
       
       GEntity *brep = model->getEntityByTag(entity->dim()-1, std::abs(entityTag));
       if(brep == NULL)
@@ -1200,7 +1194,6 @@ std::pair<int, MVertex*> *readMSH4Nodes(GModel *const model, FILE* fp, bool bina
 std::pair<int, MElement*> *readMSH4Elements(GModel *const model, FILE* fp, bool binary, bool &dense, unsigned long &nbrElements, bool swap)
 {
   char str[256];
-  char strTmp[256];
   unsigned long numBlock = 0;
   nbrElements = 0;
   if(binary)
@@ -1333,7 +1326,7 @@ std::pair<int, MElement*> *readMSH4Elements(GModel *const model, FILE* fp, bool 
           int vertexTag = 0;
           if(k != nbrVertices-1)
           {
-            if(sscanf(str, "%d %[0-9- ]", &vertexTag, strTmp) != 2)
+            if(sscanf(str, "%d %[0-9- ]", &vertexTag, str) != 2)
             {
               fclose(fp);
               return NULL;
@@ -1347,7 +1340,6 @@ std::pair<int, MElement*> *readMSH4Elements(GModel *const model, FILE* fp, bool 
               return NULL;
             }
           }
-          strcpy(str, strTmp);
         
           vertices[k] = model->getMeshVertexByTag(vertexTag);
           if(vertices[k] == NULL)
@@ -1616,10 +1608,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary, boo
     writeMSH4Entities(this, fp, true, binary, scalingFactor);
     fprintf(fp, "$EndPartitionedEntities\n");
   }
-  
-  fclose(fp);
-  return 1;
-  
+    
   // nodes
   if(saveParametric)
   {
@@ -2439,9 +2428,29 @@ void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned, bool bin
       fprintf(fp, "%d %d %d %lu\n", it->first.second->tag(), it->first.second->dim(), it->first.first, it->second.size());
     }
     
-    for(unsigned int i = 0; i < it->second.size(); i++)
+    if(binary)
     {
-      it->second[i]->writeMSH4(fp, binary);
+      const int nbrVertices = MElement::getInfoMSH(it->first.first);
+      int indexElement = 0;
+      int *elementData = new int[it->second.size()*(nbrVertices+1)];
+      for(unsigned int i = 0; i < it->second.size()*(nbrVertices+1); i+=(nbrVertices+1))
+      {
+        elementData[i] = it->second[indexElement]->getNum();
+        for(unsigned int j = 0; j < nbrVertices; j++)
+        {
+          elementData[i+1+j] = it->second[indexElement]->getVertex(j)->getNum();
+        }
+        indexElement++;
+      }
+      fwrite(elementData, sizeof(int), it->second.size()*(nbrVertices+1), fp);
+      delete[] elementData;
+    }
+    else
+    {
+      for(unsigned int i = 0; i < it->second.size(); i++)
+      {
+        it->second[i]->writeMSH4(fp, binary);
+      }
     }
   }
   
