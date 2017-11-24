@@ -692,7 +692,7 @@ namespace gmsh { // Top-level functions
                                const double z, const double dx,
                                const double dy, const double dz,
                                const double r, const int tag = -1,
-                               double angle = 2*M_PI);
+                               const double angle = 2*M_PI);
       GMSH_API int addCone(const double x, const double y, const double z,
                            const double dx, const double dy, const double dz,
                            const double r1, const double r2,
@@ -849,11 +849,11 @@ namespace gmsh { // Top-level functions
                         const int step = -1, const int numComp = -1,
                         const bool gradient = false,
                         const double tolerance = 0.,
-                        const std::vector<double> xElemCoord
+                        const std::vector<double> &xElemCoord
                         = std::vector<double>(),
-                        const std::vector<double> yElemCoord
+                        const std::vector<double> &yElemCoord
                         = std::vector<double>(),
-                        const std::vector<double> zElemCoord
+                        const std::vector<double> &zElemCoord
                         = std::vector<double>());
 
     // Writes the view to a file. The export format is determined by the file

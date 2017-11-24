@@ -2,272 +2,157 @@ from GenApi import *
 
 api = API()
 
-#add_function("","Initialize",[iintp("argc"),arg("char **","argv")])
-gmsh = api.add_module("")
+gmsh = api.add_module('gmsh')
+#gmsh.add(None,'initialize',iint('argc','0'),icharpp('argv','0'))
+gmsh.add(None,'finalize')
+gmsh.add(None,'open',istring('fileName'))
+gmsh.add(None,'merge',istring('fileName'))
+gmsh.add(None,'write',istring('fileName'))
+gmsh.add(None,'clear')
 
-gmsh.add(None,"Finalize")
-gmsh.add(None,"Open",istring("fileName"))
-gmsh.add(None,"Merge",istring("fileName"))
-gmsh.add(None,"Export",istring("fileName"))
-gmsh.add(None,"Clear")
+option = gmsh.add_module('option')
+option.add(None,'setNumber',istring('name'),idouble('value'))
+option.add(None,'getNumber',istring('name'),odouble('value'))
+option.add(None,'setString',istring('name'),istring('value'))
+option.add(None,'getString',istring('name'),ostring('value'))
 
-options = api.add_module("Option")
-options.add(None,"SetNumber",istring("name"),idouble("value"))
-options.add(None,"GetNumber",istring("name"),odouble("value"))
-options.add(None,"SetString",istring("name"),istring("value"))
-options.add(None,"GetString",istring("name"),ostring("value"))
+model = gmsh.add_module('model')
+model.add(None,'add',istring('name'))
+model.add(None,'remove')
+model.add(None,'list',ovectorstring('names'))
+model.add(None,'setCurrent',istring('name'))
+model.add(None,'getEntities',ovectorpair('dimTags'),iint('dim','-1'))
+model.add(None,'getPhysicalGroups',ovectorpair('dimTags'),iint('dim','-1'))
+model.add(None,'getEntitiesForPhysicalGroup',iint('dim'),iint('tag'),ovectorint('tags'))
+model.add(oint,'addPhysicalGroup',iint('dim'),ivectorint('tags'),iint('tag','-1'))
+model.add(None,'setPhysicalName',iint('dim'),iint('tag'),istring('name'))
+model.add(None,'getPhysicalName',iint('dim'),iint('tag'),ostring('name'))
+model.add(None,'getBoundary',ivectorpair('dimTags'),ovectorpair('outDimTags'),ibool('combined','true'),ibool('oriented','true'),ibool('recursive','false'))
+model.add(None,'getEntitiesInBoundingBox',idouble('xmin'),idouble('ymin'),idouble('zmin'),idouble('xmax'),idouble('ymax'),idouble('zmax'),ovectorpair('tags'),iint('dim','-1'))
+model.add(None,'getBoundingBox',iint('dim'),iint('tag'),odouble('xmin'),odouble('ymin'),odouble('zmin'),odouble('xmax'),odouble('ymax'),odouble('zmax'))
+model.add(oint,'addDiscreteEntity',iint('dim'),iint('tag','-1'),ivectorint('boundary','std::vector<int>()'))
+model.add(None,'removeEntities',ivectorpair('dimTags'),ibool('recursive','false'))
 
-model = api.add_module("Model")
-model.add(None,"Create",istring("name"))
-model.add(None,"SetCurrent",istring("name"))
-model.add(None,"Delete")
+mesh = model.add_module('mesh')
+mesh.add(None,'generate',iint('dim'))
+mesh.add(None,'getLastEntityError',ovectorpair('dimTags'))
+mesh.add(None,'getLastVertexError',ovectorint('vertexTags'))
+mesh.add(None,'getVertices',iint('dim'),iint('tag'),ovectorint('vertexTags'),ovectordouble('coord'),ovectordouble('parametricCoord'))
+mesh.add(None,'getElements',iint('dim'),iint('tag'),ovectorint('types'),ovectorvectorint('elementTags'),ovectorvectorint('vertexTags'))
+mesh.add(None,'setVertices',iint('dim'),iint('tag'),ivectorint('vertexTags'),ivectordouble('coord'),ivectordouble('parametricCoord','std::vector<double>()'))
+#mesh.add(None,'setElements',iint('dim'),iint('tag'),ivectorint('types'),ivectorvectorint('elementTags'),ivectorvectorint('vertexTags'))
+mesh.add(None,'getVertex',iint('vertexTag'),ovectordouble('coord'),ovectordouble('parametricCoord'))
+mesh.add(None,'getElement',iint('elementTag'),oint('type'),ovectorint('vertexTags'))
+mesh.add(None,'setSize',ivectorpair('dimTags'),idouble('size'))
+mesh.add(None,'setTransfiniteLine',iint('tag'),iint('numVertices'),istring('type','"Progression"'),idouble('coef','1.'))
+mesh.add(None,'setTransfiniteSurface',iint('tag'),istring('arrangement','"Left"'),ivectorint('cornerTags','std::vector<int>()'))
+mesh.add(None,'setTransfiniteVolume',iint('tag'),ivectorint('cornerTags','std::vector<int>()'))
+mesh.add(None,'setRecombine',iint('dim'),iint('tag'))
+mesh.add(None,'setSmoothing',iint('dim'),iint('tag'),iint('val'))
+mesh.add(None,'setReverse',iint('dim'),iint('tag'),ibool('val','true'))
+mesh.add(None,'embed',iint('dim'),ivectorint('tags'),iint('inDim'),iint('inTag'))
 
-model.add(None,"GetEntities",ovectorpair("dimTags"),iint("dim","-1"))
-model.add(None,"GetPhysicalGroups",ovectorpair("dimTags"),iint("dim","-1"))
-model.add(oint,"AddPhysicalGroup",iint("dim"),ivectorint("tags"),iint("tag","-1"))
-model.add(None,"GetEntitiesForPhysicalGroup",iint("dim"),iint("tag"),ovectorint("tags"))
-model.add(None,"SetPhysicalName",iint("dim"),iint("tag"),istring("name"))
-model.add(None,"GetPhysicalName",iint("dim"),iint("tag"),ostring("name"))
-model.add(None,"GetBoundary",ivectorpair("inDimTags"),ovectorpair("outDimTags"),
-        ibool("combined","true"),ibool("oriented","true"),ibool("recursive","false"))
-model.add(None,"GetEntitiesInBoundingBox",
-        idouble("x1"),idouble("y1"),idouble("z1"),
-        idouble("x2"),idouble("y2"),idouble("z2"),
-        ovectorpair("tags"),iint("dim","-1"))
+field = mesh.add_module('field')
+field.add(oint,'add',istring('type'),iint('tag','-1'))
+field.add(None,'remove',iint('tag'))
+field.add(None,'setNumber',iint('tag'),istring('option'),idouble('value'))
+field.add(None,'setString',iint('tag'),istring('option'),istring('value'))
+field.add(None,'setNumbers',iint('tag'),istring('option'),ivectordouble('value'))
+field.add(None,'setAsBackground',iint('tag'))
 
-model.add(None,"GetBoundingBox",iint("dim"),iint("tag"),odouble("x1"),odouble("y1"),
-        odouble("z1"),odouble("x2"),odouble("y2"),odouble("z2"))
-model.add(None,"Remove",ivectorpair("dimTags"),ibool("recursive","false"))
-model.add(None,"Mesh",iint("dim"))
-model.add(None,"GetMeshVertices",iint("dim"),iint("tag"),
-        ovectorint("vertexTags"),
-        ovectordouble("coords"),
-        ovectordouble("parametricCoord")
-        )
-model.add(None,"GetMeshElements",iint("dim"),iint("tag"),
-        ovectorint("types"),
-        ovectorvectorint("elementTags"),
-        ovectorvectorint("vertexTags"))
-model.add(None,"SetMeshSize",ivectorpair("dimTags"),idouble("size"))
-model.add(None,"SetTransfiniteLine",iint("tag"),iint("nPoints"),
-        istring("type","Progression"),
-        idouble("coef","1."))
-model.add(None,"SetTransfiniteSurface",iint("tag"),
-        istring("arrangement","Left"),
-        ivectorint("cornerTags","std::vector<int>()"))
-model.add(None,"SetTransfiniteVolume",iint("tag"),
-        ivectorint("cornerTags","std::vector<int>()"))
-model.add(None,"SetSmoothing",iint("dim"),iint("tag"),iint("val"))
-model.add(None,"SetReverseMesh",iint("dim"),iint("tag"),ibool("val","true"))
-model.add(None,"Embed",iint("dim"),ivectorint("tags"),iint("inDim"),
-        iint("inTag"))
+geo = model.add_module('geo')
+geo.add(oint,'addPoint',idouble('x'),idouble('y'),idouble('z'),idouble('meshSize','0.'),iint('tag','-1'))
+geo.add(oint,'addLine',iint('startTag'),iint('endTag'),iint('tag','-1'))
+geo.add(oint,'addCircleArc',iint('startTag'),iint('centerTag'),iint('endTag'),iint('tag','-1'),idouble('nx','0.'),idouble('ny','0.'),idouble('nz','0.'))
+geo.add(oint,'addEllipseArc',iint('startTag'),iint('centerTag'),iint('majorTag'),iint('endTag'),iint('tag','-1'),idouble('nx','0.'),idouble('ny','0.'),idouble('nz','0.'))
+geo.add(oint,'addSpline',ivectorint('vertexTags'),iint('tag','-1'))
+geo.add(oint,'addBSpline',ivectorint('vertexTags'),iint('tag','-1'))
+geo.add(oint,'addBezier',ivectorint('vertexTags'),iint('tag','-1'))
+geo.add(oint,'addLineLoop',ivectorint('edgeTags'),iint('tag','-1'))
+geo.add(oint,'addPlaneSurface',ivectorint('wireTags'),iint('tag','-1'))
+geo.add(oint,'addSurfaceFilling',ivectorint('wireTags'),iint('tag','-1'),iint('sphereCenterTag','-1'))
+geo.add(oint,'addSurfaceLoop',ivectorint('faceTags'),iint('tag','-1'))
+geo.add(oint,'addVolume',ivectorint('shellTags'),iint('tag','-1'))
+geo.add(None,'extrude',ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()'),ivectordouble('heights','std::vector<double>()'),ibool('recombine','false'))
+geo.add(None,'revolve',ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()'),ivectordouble('heights','std::vector<double>()'),ibool('recombine','false'))
+geo.add(None,'twist',ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()'),ivectordouble('heights','std::vector<double>()'),ibool('recombine','false'))
+geo.add(None,'translate',ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'))
+geo.add(None,'rotate',ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'))
+geo.add(None,'dilate',ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('a'),idouble('b'),idouble('c'))
+geo.add(None,'symmetry',ivectorpair('dimTags'),idouble('a'),idouble('b'),idouble('c'),idouble('d'))
+geo.add(None,'copy',ivectorpair('dimTags'),ovectorpair('outDimTags'))
+geo.add(None,'remove',ivectorpair('dimTags'),ibool('recursive','false'))
+geo.add(None,'removeAllDuplicates')
+geo.add(None,'synchronize')
 
-model_geo = api.add_module("ModelGeo")
-model_geo.add(oint,"AddPoint",idouble("x"),idouble("y"), idouble("z"),idouble("meshSize","0."),iint("tag","-1"))
-model_geo.add(oint,"AddLine",iint("startTag"),iint("endTag"),iint("tag","-1"))
-model_geo.add(oint,"AddCircleArc",
-        iint("startTag"), iint("centerTag"),iint("endTag"),
-        iint("tag","-1"),
-        idouble("nx","0."),idouble("ny","0."), idouble("nz","0."))
-model_geo.add(oint,"AddEllipseArc",
-        iint("startTag"),iint("centerTag"),iint("majorTag"),iint("endTag"),
-        iint("tag","-1"),
-        idouble("nx","0."),idouble("ny","0."), idouble("nz","0."))
-model_geo.add(oint,"AddSpline",ivectorint("vertexTags"),iint("tag","-1"))
-model_geo.add(oint,"AddBSpline",ivectorint("vertexTags"),iint("tag","-1"))
-model_geo.add(oint,"AddBezier",ivectorint("vertexTags"),iint("tag","-1"))
-model_geo.add(oint,"AddLineLoop",ivectorint("edgeTags"),iint("tag","-1"))
-model_geo.add(oint,"AddPlaneSurface",ivectorint("wireTags"),iint("tag","-1"))
-model_geo.add(oint,"AddSurfaceFilling",ivectorint("wireTags"), iint("sphereCenterTag","-1"),iint("tag","-1"))
-model_geo.add(oint,"AddSurfaceLoop",ivectorint("faceTags"),iint("tag","-1"))
-model_geo.add(oint,"AddVolume",ivectorint("shellTags"),iint("tag","-1"))
-model_geo.add(None,"Extrude",ivectorpair("inDimTags"),
-        idouble("dx"),idouble("dy"),idouble("dz"),
-        ovectorpair("outDimTags"),
-        ivectorint("numElements","std::vector<int>()"),
-        ivectordouble("heights","std::vector<double>()"),
-        ibool("recombine","false"))
-model_geo.add(None,"Revolve",ivectorpair("inDimTags"),
-        idouble("x"),idouble("y"),idouble("z"),
-        idouble("ax"),idouble("ay"),
-        idouble("az"),idouble("angle"),
-        ovectorpair("outDimTags"),
-        ivectorint("numElements","std::vector<int>()"),
-        ivectordouble("heights","std::vector<double>()"),
-        ibool("recombine","false"))
-model_geo.add(None,"Twist",ivectorpair("inDimTags"),
-        idouble("x"),idouble("y"),idouble("z"),
-        idouble("dx"),idouble("dy"),idouble("dz"),
-        idouble("ax"),idouble("ay"),idouble("az"),
-        idouble("angle"),
-        ovectorpair("outDimTags"),
-        ivectorint("numElements","std::vector<int>()"),
-        ivectordouble("heights","std::vector<double>()"),
-        ibool("recombine","false"))
-model_geo.add(None,"Translate",ivectorpair("dimTags"),
-        idouble("dx"),idouble("dy"),idouble("dz"))
-model_geo.add(None,"Rotate",ivectorpair("dimTags"),idouble("x"),idouble("y"),
-        idouble("z"),idouble("ax"),idouble("ay"),
-        idouble("az"),idouble("angle"))
-model_geo.add(None,"Dilate",ivectorpair("dimTags"),idouble("x"),idouble("y"),
-        idouble("z"),idouble("a"),idouble("b"),
-        idouble("c"))
-model_geo.add(None,"Symmetry",ivectorpair("dimTags"),idouble("a"),idouble("b"),
-        idouble("c"),idouble("d"))
-model_geo.add(None,"Copy",ivectorpair("inDimTags"),ovectorpair("outDimTags"))
-model_geo.add(None,"Remove",ivectorpair("dimTags"),ibool("recursive","false"))
-model_geo.add(None,"RemoveAllDuplicates")
-model_geo.add(None,"SetMeshSize",ivectorpair("dimTags"),idouble("size"))
-model_geo.add(None,"SetTransfiniteLine",iint("tag"),iint("nPoints"),
-        istring("type","Progression"),
-        idouble("coef","1."))
-model_geo.add(None,"SetTransfiniteSurface",iint("tag"),
-        istring("arrangement","Left"),
-        ivectorint("cornerTags","std::vector<int>()"))
-model_geo.add(None,"SetTransfiniteVolume",iint("tag"),
-        ivectorint("cornerTags","std::vector<int>()"))
-model_geo.add(None,"SetRecombine",iint("dim"),iint("tag"),idouble("angle","45."))
-model_geo.add(None,"SetSmoothing",iint("dim"),iint("tag"),iint("val"))
-model_geo.add(None,"SetReverseMesh",iint("dim"),iint("tag"),ibool("val","true"))
-model_geo.add(None,"Synchronize")
+mesh = geo.add_module('mesh')
+mesh.add(None,'setSize',ivectorpair('dimTags'),idouble('size'))
+mesh.add(None,'setTransfiniteLine',iint('tag'),iint('nPoints'),istring('type','"Progression"'),idouble('coef','1.'))
+mesh.add(None,'setTransfiniteSurface',iint('tag'),istring('arrangement','"Left"'),ivectorint('cornerTags','std::vector<int>()'))
+mesh.add(None,'setTransfiniteVolume',iint('tag'),ivectorint('cornerTags','std::vector<int>()'))
+mesh.add(None,'setRecombine',iint('dim'),iint('tag'),idouble('angle','45.'))
+mesh.add(None,'setSmoothing',iint('dim'),iint('tag'),iint('val'))
+mesh.add(None,'setReverse',iint('dim'),iint('tag'),ibool('val','true'))
 
-model_occ = api.add_module("ModelOcc")
-#model_occ.add(oint,"AddPoint",iint("tag"),idouble("x"),idouble("y"),
-#        idouble("z"),idouble("meshSize","0."))
-#model_occ.add(oint,"AddLine",iint("tag"),iint("startTag"),iint("endTag"))
-#model_occ.add(oint,"AddCircleArc",iint("tag"),iint("startTag"),iint("centerTag"),
-#        iint("endTag"))
-#model_occ.add(oint,"AddCircle",iint("tag"),idouble("x"),idouble("y"),
-#        idouble("z"),idouble("r"),
-#        idouble("angle1","0."),idouble("angle2","2*M_PI"))
-#model_occ.add(oint,"AddEllipseArc",iint("tag"),iint("startTag"),iint("centerTag"),
-#        iint("endTag"))
-#model_occ.add(oint,"AddEllipse",iint("tag"),idouble("x"),idouble("y"),
-#        idouble("z"),idouble("r1"),idouble("r2"),
-#        idouble("angle1","0."),
-#        idouble("angle2","2*M_PI"))
-#model_occ.add(oint,"AddSpline",iint("tag"),ivectorint("vertexTags"))
-#model_occ.add(oint,"AddBezier",iint("tag"),ivectorint("vertexTags"))
-#model_occ.add(oint,"AddBSpline",iint("tag"),ivectorint("vertexTags"))
-#model_occ.add(oint,"AddWire",iint("tag"),ivectorint("edgeTags"),
-#        ibool("checkClosed","false"))
-#model_occ.add(oint,"AddLineLoop",iint("tag"),ivectorint("edgeTags"))
-#model_occ.add(oint,"AddRectangle",iint("tag"),idouble("x"),idouble("y"),
-#        idouble("z"),idouble("dx"),idouble("dy"),
-#        idouble("roundedRadius","0."))
-#model_occ.add(oint,"AddDisk",iint("tag"),idouble("xc"),idouble("yc"),
-#        idouble("zc"),idouble("rx"),idouble("ry"))
-#model_occ.add(oint,"AddPlaneSurface",iint("tag"),ivectorint("wireTags"))
-#model_occ.add(oint,"AddSurfaceFilling",iint("tag"),iint("wireTag"))
-#model_occ.add(oint,"AddSurfaceLoop",iint("tag"),ivectorint("faceTags"))
-#model_occ.add(oint,"AddVolume",iint("tag"),ivectorint("shellTags"))
-#model_occ.add(oint,"AddSphere",iint("tag"),idouble("xc"),idouble("yc"),
-#        idouble("zc"),idouble("radius"),
-#        idouble("angle1","-M_PI/2"),
-#        idouble("angle2","M_PI/2"),
-#        idouble("angle3","2*M_PI"))
-#model_occ.add(oint,"AddBox",iint("tag"),idouble("x"),idouble("y"),
-#        idouble("z"),idouble("dx"),idouble("dy"),
-#        idouble("dz"))
-#model_occ.add(oint,"AddCylinder",iint("tag"),idouble("x"),idouble("y"),
-#        idouble("z"),idouble("dx"),idouble("dy"),
-#        idouble("dz"),idouble("r"),
-#        idouble("angle","2*M_PI"))
-#model_occ.add(oint,"AddCone",iint("tag"),idouble("x"),idouble("y"),
-#        idouble("z"),idouble("dx"),idouble("dy"),
-#        idouble("dz"),idouble("r1"),idouble("r2"),
-#        idouble("angle","2*M_PI"))
-#model_occ.add(oint,"AddWedge",iint("tag"),idouble("x"),idouble("y"),
-#        idouble("z"),idouble("dx"),idouble("dy"),
-#        idouble("dz"),idouble("ltx","0."))
-#model_occ.add(oint,"AddTorus",iint("tag"),idouble("x"),idouble("y"),
-#        idouble("z"),idouble("r1"),idouble("r2"),
-#        idouble("angle","2*M_PI"))
-#model_occ.add(oint,"AddThruSections",ivectorint("wireTags"),
-#        ovectorpair("outDimTags"),
-#        iint("tag"),
-#        ibool("makeSolid","true"),
-#        ibool("makeRuled","false"))
-#GMSH_API addThickSolid"",iint("tag"),iint("solidTag"),
-#                       ivectorint("excludeFaceTags"),
-#                       idouble("offset"),ovectorpair("outDimTags"))
-model_occ.add(None,"Extrude",ivectorpair("inDimTags"),idouble("dx"),idouble("dy"),
-        idouble("dz"),ovectorpair("outDimTags"),
-        ivectorint("numElements","std::vector<int>()"),
-        ivectordouble("heights","std::vector<double>()"),
-        ibool("recombine","false"))
-model_occ.add(None,"Revolve",ivectorpair("inDimTags"),
-        idouble("x"),idouble("y"),idouble("z"),
-        idouble("ax"),idouble("ay"),idouble("az"),
-        idouble("angle"),ovectorpair("outDimTags"),
-        ivectorint("numElements","std::vector<int>()"),
-        ivectordouble("heights","std::vector<double>()"),
-        ibool("recombine","false"))
-model_occ.add(None,"AddPipe",ivectorpair("inDimTags"),iint("wireTag"),
-        ovectorpair("outDimTags"))
-model_occ.add(None,"Fillet",ivectorint("regionTags"),
-        ivectorint("edgeTags"),
-        idouble("radius"),ovectorpair("outDimTags"),
-        ibool("removeRegion","true"))
-model_occ.add(oint,"BooleanUnion",ivectorpair("objectDimTags"),
-        ivectorpair("toolDimTags"),
-        ovectorpair("outDimTags"),
-        ovectorvectorpair("outDimTagsMap"),
-        iint("tag","-1"),
-        ibool("removeObject","true"),
-        ibool("removeTool","true"))
-model_occ.add(oint,"BooleanIntersection",ivectorpair("objectDimTags"),
-        ivectorpair("toolDimTags"),
-        ovectorpair("outDimTags"),
-        ovectorvectorpair("outDimTagsMap"),
-        iint("tag"),
-        ibool("removeObject","true"),
-        ibool("removeTool","true"))
-model_occ.add(oint,"BooleanDifference",ivectorpair("objectDimTags"),
-        ivectorpair("toolDimTags"),
-        ovectorpair("outDimTags"),
-        ovectorvectorpair("outDimTagsMap"),
-        iint("tag","-1"),
-        ibool("removeObject","true"),
-        ibool("removeTool","true"))
-model_occ.add(oint,"BooleanFragments",ivectorpair("objectDimTags"),
-        ivectorpair("toolDimTags"),
-        ovectorpair("outDimTags"),
-        ovectorvectorpair("outDimTagsMap"),
-        iint("tag","-1"),
-        ibool("removeObject","true"),
-        ibool("removeTool","true"))
-model_occ.add(None,"Translate",ivectorpair("dimTags"),idouble("dx"),
-        idouble("dy"),idouble("dz"))
-model_occ.add(None,"Rotate",ivectorpair("dimTags"),idouble("x"),
-        idouble("y"),idouble("z"),idouble("ax"),
-        idouble("ay"),idouble("az"),idouble("angle"))
-model_occ.add(None,"Dilate",ivectorpair("dimTags"),idouble("x"),
-        idouble("y"),idouble("z"),idouble("a"),
-        idouble("b"),idouble("c"))
-model_occ.add(None,"Symmetry",ivectorpair("dimTags"),idouble("a"),
-        idouble("b"),idouble("c"),idouble("d"))
-model_occ.add(None,"Copy",ivectorpair("inDimTags"),ovectorpair("outDimTags"))
-model_occ.add(None,"Remove",ivectorpair("dimTags"),ibool("recursive","false"))
-model_occ.add(None,"RemoveAllDuplicates")
-model_occ.add(None,"ImportShapes",istring("fileName"),ovectorpair("outDimTags"),
-        ibool("highestDimOnly","true"),
-        istring("format",""))
-model_occ.add(None,"SetMeshSize",ivectorpair("dimTags"),idouble("size"))
-model_occ.add(None,"Synchronize")
+occ = model.add_module('occ')
+occ.add(oint,'addPoint',idouble('x'),idouble('y'),idouble('z'),idouble('meshSize','0.'),iint('tag','-1'))
+occ.add(oint,'addLine',iint('startTag'),iint('endTag'),iint('tag','-1'))
+occ.add(oint,'addCircleArc',iint('startTag'),iint('centerTag'),iint('endTag'),iint('tag','-1'))
+occ.add(oint,'addCircle',idouble('x'),idouble('y'),idouble('z'),idouble('r'),iint('tag','-1'),idouble('angle1','0.'),idouble('angle2','2*M_PI'))
+occ.add(oint,'addEllipseArc',iint('startTag'),iint('centerTag'),iint('endTag'),iint('tag','-1'))
+occ.add(oint,'addEllipse',idouble('x'),idouble('y'),idouble('z'),idouble('r1'),idouble('r2'),iint('tag','-1'),idouble('angle1','0.'),idouble('angle2','2*M_PI'))
+occ.add(oint,'addSpline',ivectorint('vertexTags'),iint('tag','-1'))
+occ.add(oint,'addBezier',ivectorint('vertexTags'),iint('tag','-1'))
+occ.add(oint,'addBSpline',ivectorint('vertexTags'),iint('tag','-1'))
+occ.add(oint,'addWire',ivectorint('edgeTags'),iint('tag','-1'),ibool('checkClosed','false'))
+occ.add(oint,'addLineLoop',ivectorint('edgeTags'),iint('tag','-1'))
+occ.add(oint,'addRectangle',idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),iint('tag','-1'),idouble('roundedRadius','0.'))
+occ.add(oint,'addDisk',idouble('xc'),idouble('yc'),idouble('zc'),idouble('rx'),idouble('ry'),iint('tag','-1'))
+occ.add(oint,'addPlaneSurface',ivectorint('wireTags'),iint('tag','-1'))
+occ.add(oint,'addSurfaceFilling',iint('wireTag'),iint('tag','-1'))
+occ.add(oint,'addSurfaceLoop',ivectorint('faceTags'),iint('tag','-1'))
+occ.add(oint,'addVolume',ivectorint('shellTags'),iint('tag','-1'))
+occ.add(oint,'addSphere',idouble('xc'),idouble('yc'),idouble('zc'),idouble('radius'),iint('tag','-1'),idouble('angle1','-M_PI/2'),idouble('angle2','M_PI/2'),idouble('angle3','2*M_PI'))
+occ.add(oint,'addBox',idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),iint('tag','-1'))
+occ.add(oint,'addCylinder',idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),idouble('r'),iint('tag','-1'),idouble('angle','2*M_PI'))
+occ.add(oint,'addCone',idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),idouble('r1'),idouble('r2'),iint('tag','-1'),idouble('angle','2*M_PI'))
+occ.add(oint,'addWedge',idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),iint('tag','-1'),idouble('ltx','0.'))
+occ.add(oint,'addTorus',idouble('x'),idouble('y'),idouble('z'),idouble('r1'),idouble('r2'),iint('tag','-1'),idouble('angle','2*M_PI'))
+occ.add(oint,'addThruSections',ivectorint('wireTags'),ovectorpair('outDimTags'),iint('tag','-1'),ibool('makeSolid','true'),ibool('makeRuled','false'))
+occ.add(oint,'addThickSolid',iint('solidTag'),ivectorint('excludeFaceTags'),idouble('offset'),ovectorpair('outDimTags'),iint('tag','-1'))
+occ.add(None,'extrude',ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()'),ivectordouble('heights','std::vector<double>()'),ibool('recombine','false'))
+occ.add(None,'revolve',ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()'),ivectordouble('heights','std::vector<double>()'),ibool('recombine','false'))
+occ.add(None,'addPipe',ivectorpair('dimTags'),iint('wireTag'),ovectorpair('outDimTags'))
+occ.add(None,'fillet',ivectorint('regionTags'),ivectorint('edgeTags'),idouble('radius'),ovectorpair('outDimTags'),ibool('removeRegion','true'))
+occ.add(oint,'booleanUnion',ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true'),ibool('removeTool','true'))
+occ.add(oint,'booleanIntersection',ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true'),ibool('removeTool','true'))
+occ.add(oint,'booleanDifference',ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true'),ibool('removeTool','true'))
+occ.add(oint,'booleanFragments',ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true'),ibool('removeTool','true'))
+occ.add(None,'translate',ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'))
+occ.add(None,'rotate',ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'))
+occ.add(None,'dilate',ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('a'),idouble('b'),idouble('c'))
+occ.add(None,'symmetry',ivectorpair('dimTags'),idouble('a'),idouble('b'),idouble('c'),idouble('d'))
+occ.add(None,'copy',ivectorpair('dimTags'),ovectorpair('outDimTags'))
+occ.add(None,'remove',ivectorpair('dimTags'),ibool('recursive','false'))
+occ.add(None,'removeAllDuplicates')
+occ.add(None,'importShapes',istring('fileName'),ovectorpair('outDimTags'),ibool('highestDimOnly','true'),istring('format','""'))
+occ.add(None,'setMeshSize',ivectorpair('dimTags'),idouble('size'))
+occ.add(None,'synchronize')
 
-model_field = api.add_module("ModelField")
-model_field.add(oint,"Create",istring("type"),iint("tag","-1"))
-model_field.add(None,"SetNumber",iint("tag"),istring("option"),idouble("value"))
-model_field.add(None,"SetString",iint("tag"),istring("option"),istring("value"))
-model_field.add(None,"SetNumbers",iint("tag"),istring("option"),ivectordouble("value"))
-model_field.add(None,"SetAsBackground",iint("tag"))
-model_field.add(None,"Delete",iint("tag"))
+view = gmsh.add_module('view')
+view.add(oint,'add',istring('name'),iint('tag','-1'))
+view.add(None,'remove',iint('tag'))
+view.add(oint,'getIndex',iint('tag'))
+view.add(None,'getTags',ovectorint('tags'))
+#view.add(None,'addModelData',iint('tag'),istring('modelName'),istring('dataType'),ivectorint('tags'),ivectorvectordouble('data'),iint('step','0'),iint('time','0.'),iint('numComponents','-1'),iint('partition','0'))
+view.add(None,'addListData',iint('tag'),istring('type'),iint('numEle'),ivectordouble('data'))
+view.add(None,'probe',iint('tag'),idouble('x'),idouble('y'),idouble('z'),ovectordouble('value'),iint('step','-1'),iint('numComp','-1'),ibool('gradient','false'),idouble('tolerance','0.'),ivectordouble('xElemCoord','std::vector<double>()'),ivectordouble('yElemCoord','std::vector<double>()'),ivectordouble('zElemCoord','std::vector<double>()'))
+view.add(None,'write',iint('tag'),istring('fileName'),ibool('append','false'))
 
-api.add_module("View")
-api.add_module("Plugin")
-api.add_module("Graphics")
-
-api.write_cpp("gmsh")
-api.write_c("gmshc")
+plugin = gmsh.add_module('plugin')
+plugin.add(None,'setNumber',istring('name'),istring('option'),idouble('value'))
+plugin.add(None,'setString',istring('name'),istring('option'),istring('value'))
+plugin.add(None,'run',istring('name'))
+api.write_cpp()
+api.write_c()
 api.write_python()

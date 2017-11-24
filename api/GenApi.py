@@ -1,3 +1,4 @@
+import os 
 class arg:
 
     def __init__(self,name,value,type_cpp,type_c,out):
@@ -9,8 +10,7 @@ class arg:
         self.cpp_value = (" = "+value) if value else ""
 
         n = self.type_cpp 
-        if n[-1] != "&":
-            n += " "
+        n += " "
         n += self.name
         n += self.cpp_value
         self.cpp = n
@@ -37,7 +37,7 @@ class oint(arg):
         self.c_arg = "*"+name
 
 def istring(name,value=None):
-    value = "\""+value+"\"" if value is not None else None
+    #value = "\""+value+"\"" if value is not None else None
     a = arg(name,value,"const std::string&","const char*",False)
     a.python_arg = "c_char_p("+name+".encode())"
     return a
@@ -46,7 +46,7 @@ def ostring(name,value=None):
     a = arg(name,value,"std::string &","char**",True)
     a.c_arg = "api_"+name+"_"
     a.c_pre = "  std::string "+a.c_arg +";\n"
-    a.c_post = "  *"+name+" = strdup("+a.c_arg+".c_str());\n"
+    a.c_post = "  *"+name+" = _strdup("+a.c_arg+".c_str());\n"
     name_ = "api_"+name+"_"
     a.python_pre = name_+" = c_char_p()"
     a.python_arg = "byref("+name_+")"
@@ -68,20 +68,33 @@ def odouble(name,value=None):
     return a
 
 def ovectorpair(name,value=None):
-    a = arg(name,value,"vector_pair &","int**",True)
+    a = arg(name,value,"gmsh::vector_pair &","int**",True)
     name_ = "api_"+name+"_"
     name_n = name_ + "n_"
     a.c_arg = name_
-    a.c_pre = "  vector_pair "+name_ +";\n"
-    a.c_post = "  pairvector2intptr("+name_+"," + name + ","+name_n+");\n"
-    a.c = "int** "+name+",size_t* "+name_n
+    a.c_pre = "  gmsh::vector_pair "+name_ +";\n"
+    a.c_post = "  pairvector2intptr("+name_+"," + name + ","+name+"_n);\n"
+    a.c = "int** "+name+",size_t* "+name+"_n"
     a.python_pre = name_+", "+name_n+" = POINTER(c_int)(), c_size_t()"
     a.python_arg = "byref("+name_+"),byref("+name_n+")"
     a.python_return = "_ovectorpair("+name_+","+name_n+".value)"
     return a
 
+def ovectorstring(name,value=None):
+    a = arg(name,value,"std::vector<std::string> &","char**",True)
+    name_ = "api_"+name+"_"
+    name_n = name_ + "n_"
+    a.c_arg = name_
+    a.c_pre = "  std::vector<std::string> "+name_ +";\n"
+    a.c_post = "  stringvector2charpp("+name_+"," + name + ","+name+"_n);\n"
+    a.c = "char*** "+name+",size_t* "+name+"_n"
+    a.python_pre = name_+", "+name_n+" = POINTER(c_char_p)(), c_size_t()"
+    a.python_arg = "byref("+name_+"),byref("+name_n+")"
+    a.python_return = "_ovectorstring("+name_+","+name_n+".value)"
+    return a
+
 def ivectorpair(name,value=None):
-    a = arg(name,value,"const vector_pair &","const int*",False)
+    a = arg(name,value,"const gmsh::vector_pair &","const int*",False)
     a.c_arg = "intptr2pairvector("+name+","+name+"_n)"
     a.c = "int* "+name+",size_t "+name+"_n"
     a.python_pre = "api_"+name+"_, api"+name+"_n_ = _ivectorpair("+name+")"
@@ -114,8 +127,8 @@ def ovectorint(name,value=None):
     name_n = name_ + "n_"
     a.c_arg = name_
     a.c_pre = "  std::vector<int> "+name_ +";\n"
-    a.c_post = "  vector2ptr("+name_+"," + name + ","+name_n+");\n"
-    a.c = "int** "+name+",size_t* "+name_n
+    a.c_post = "  vector2ptr("+name_+"," + name + ","+name+"_n);\n"
+    a.c = "int** "+name+",size_t* "+name+"_n"
     a.python_pre = name_+", "+name_n+" = POINTER(c_int)(), c_size_t()"
     a.python_arg = "byref("+name_+"),byref("+name_n+")"
     a.python_return = "_ovectorint("+name_+","+name_n+".value)"
@@ -135,7 +148,7 @@ def ovectordouble(name,value=None):
     name_n = name_ + "n_"
     a.c_arg = name_
     a.c_pre = "  std::vector<double> "+a.c_arg +";\n"
-    a.c_post = "  vector2ptr("+name_+"," + name + ","+name_n+";\n"
+    a.c_post = "  vector2ptr("+name_+"," + name + ","+name+"_n);\n"
     a.c  = "double** "+name+",size_t* "+name+"_n"
     a.python_pre = name_+", "+name_n+" = POINTER(c_double)(), c_size_t()"
     a.python_arg = "byref("+name_+"),byref("+name_n+")"
@@ -149,22 +162,22 @@ def ovectorvectorint(name,value=None):
     name_nn = name_ + "nn_"
     a.c_arg = name_
     a.c_pre = "  std::vector<std::vector<int> > "+a.c_arg +";\n"
-    a.c_post = "  vectorvector2ptrptr("+name_+"," + name + ","+name_n+","+name_nn+");\n"
-    a.c  = "int*** "+name+",size_t** "+name_n+",size_t *"+name_nn
+    a.c_post = "  vectorvector2ptrptr("+name_+"," + name + ","+name+"_n,"+name+"_nn);\n"
+    a.c  = "int*** "+name+",size_t** "+name+"_n,size_t *"+name+"_nn"
     a.python_pre = name_+", "+name_n+", "+name_nn +" = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()"
     a.python_arg = "byref("+name_+"),byref("+name_n+"),byref("+name_nn+")"
     a.python_return = "_ovectorvectorint("+name_+","+name_n+","+name_nn+")"
     return a
 
 def ovectorvectorpair(name,value=None):
-    a = arg(name,value,"std::vector<vector_pair> &","int**",True)
+    a = arg(name,value,"std::vector<gmsh::vector_pair> &","int**",True)
     name_ = "api_"+name+"_"
     name_n = name_ + "n_"
     name_nn = name_ + "nn_"
     a.c_arg = name_
-    a.c_pre = "  std::vector<vector_pair >"+name_ +";\n"
-    a.c_post = "  pairvectorvector2intptrptr("+name_+"," + name + ","+name_n+","+name_nn+";\n"
-    a.c  = "int*** "+name+",size_t** "+name_n+",size_t *"+name_nn
+    a.c_pre = "  std::vector<gmsh::vector_pair >"+name_ +";\n"
+    a.c_post = "  pairvectorvector2intptrptr("+name_+"," + name + ","+name+"_n,"+name+"_nn);\n"
+    a.c  = "int*** "+name+",size_t** "+name+"_n,size_t *"+name+"_nn"
     a.python_pre = name_+", "+name_n+", "+name_nn +" = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()"
     a.python_arg = "byref("+name_+"),byref("+name_n+"),byref("+name_nn+")"
     a.python_return = "_ovectorvectorpair("+name_+","+name_n+","+name_nn+")"
@@ -175,9 +188,16 @@ class Module:
     def __init__(self,name):
         self.name = name
         self.fs = []
+        self.submodules = []
 
     def add(self,rtype,name,*args):
         self.fs.append((rtype,name,args))
+
+    def add_module(self, name) :
+        module = Module(name)
+        self.submodules.append(module)
+        return module
+
 
 cpp_header="""// Gmsh - Copyright (C) 1997-2017 C. Geuzaine,J.-F. Remacle
 //
@@ -212,9 +232,11 @@ cpp_header="""// Gmsh - Copyright (C) 1997-2017 C. Geuzaine,J.-F. Remacle
 #define GMSH_API
 #endif
 
-typedef std::vector<std::pair<int,int> > vector_pair;
 
-GMSH_API void gmshInitialize(int argc,char **argv);
+namespace gmsh {
+  GMSH_API void initialize(int argc,char **argv);
+  typedef std::vector<std::pair<int,int> > vector_pair;
+}
 """
 
 cpp_footer=""" 
@@ -254,8 +276,8 @@ c_header="""// Gmsh - Copyright (C) 1997-2017 C. Geuzaine,J.-F. Remacle
 
 #include <stdlib.h>
 
-GMSH_API void gmshcInitialize(char argc,char **argv);
-GMSH_API void gmshcFree_(void *p);
+GMSH_API void gmshInitialize(char argc,char **argv);
+GMSH_API void gmshFree_(void *p);
 """
 
 c_footer="""
@@ -264,7 +286,7 @@ c_footer="""
 #endif
 """
 
-c_header="""// Gmsh - Copyright (C) 1997-2017 C. Geuzaine,J.-F. Remacle
+c_cpp_header="""// Gmsh - Copyright (C) 1997-2017 C. Geuzaine,J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -274,6 +296,13 @@ extern \"C\" {
 }
 #include "gmsh.h"
 #include <cstring>
+
+char * _strdup(const char *i) {
+  size_t len = strlen(i);
+  char *o = (char*)malloc(sizeof(char)*(len+1));
+  memcpy(o,i,len+1);
+  return o;
+}
 
 template<typename t>
 std::vector<t> ptr2vector(const t *p,size_t size) {
@@ -289,7 +318,7 @@ void vector2ptr(const std::vector<t>&v,t **p,size_t *size) {
   *size = v.size();
 }
 
-void pairvector2intptr(const vector_pair &v,int **p,size_t *size) {
+void pairvector2intptr(const gmsh::vector_pair &v,int **p,size_t *size) {
   *p = (int*)malloc(sizeof(int)*(v.size()*2));
   for (size_t i = 0; i < v.size(); ++i){
     (*p)[i*2+0] = v[i].first;
@@ -298,8 +327,16 @@ void pairvector2intptr(const vector_pair &v,int **p,size_t *size) {
   *size = v.size()*2;
 }
 
-vector_pair intptr2pairvector(const int *p,size_t size){
-  vector_pair v(size/2);
+void stringvector2charpp(const std::vector<std::string> &v,char ***p,size_t *size) {
+  *p = (char**)malloc(sizeof(char*)*(v.size()*2));
+  for (size_t i = 0; i < v.size(); ++i){
+    (*p)[i] = _strdup(v[i].c_str());
+  }
+  *size = v.size();
+}
+
+gmsh::vector_pair intptr2pairvector(const int *p,size_t size){
+  gmsh::vector_pair v(size/2);
   for (size_t i = 0; i < size/2; ++i) {
     v[i].first = p[i*2+0];
     v[i].second = p[i*2+1];
@@ -316,18 +353,18 @@ void vectorvector2ptrptr(const std::vector<std::vector<t> > &v,t ***p,size_t **s
   *sizeSize = v.size();
 }
 
-int** pairvectorvector2intptrptr(const std::vector<vector_pair > &v,int ***p,size_t **size,size_t *sizeSize) {
+int** pairvectorvector2intptrptr(const std::vector<gmsh::vector_pair > &v,int ***p,size_t **size,size_t *sizeSize) {
   *p = (int**)malloc(sizeof(int*)*v.size());
   for (size_t i = 0; i < v.size(); ++i)
     pairvector2intptr(v[i],p[i],size[i]);
   *sizeSize = v.size();
 }
 
-void gmshcInitialize(char argc,char **argv){
-  gmshInitialize(argc,argv);
+void gmshInitialize(char argc,char **argv){
+  gmsh::initialize(argc,argv);
 }
 
-void gmshcFree_(void *p) {
+void gmshFree_(void *p) {
   if(p) free(p);
 }
 """
@@ -344,58 +381,58 @@ try :
     import numpy
     use_numpy = True
     try : 
-        from weakref import finalize
+        import weakref
     except :
-        from backports.weakref import finalize
+        from backports import weakref
 except :
     pass
 
-def Initialize() :
-    lib.gmshcInitialize(c_int(0),c_voidp(None))
+def initialize() :
+    lib.gmshInitialize(c_int(0),c_voidp(None))
 
 def _ostring(s) :
     sp = s.value.decode("utf-8")
-    lib.gmshcFree_(s)
+    lib.gmshFree_(s)
     return sp
 
 def _ovectorpair(ptr,size):
     if use_numpy :
         v = numpy.ctypeslib.as_array(ptr, (size//2,2))
-        finalize(v, lib.gmshcFree_, ptr)
+        weakref.finalize(v, lib.gmshFree_, ptr)
     else :
         v = list((ptr[i*2],ptr[i*2+1]) for i in range(size//2))
-        lib.gmshcFree_(ptr)
+        lib.gmshFree_(ptr)
     return v
 
 def _ovectorint(ptr,size):
     if use_numpy :
         v = numpy.ctypeslib.as_array(ptr, (size,))
-        finalize(v, lib.gmshcFree_, ptr)
+        weakref.finalize(v, lib.gmshFree_, ptr)
     else :
         v = list(ptr[i] for i in range(size))
-        lib.gmshcFree_(ptr)
+        lib.gmshFree_(ptr)
     return v
 
 def _ovectordouble(ptr,size):
     if use_numpy :
         v = numpy.ctypeslib.as_array(ptr, (size,))
-        finalize(v, lib.gmshcFree_, ptr)
+        weakref.finalize(v, lib.gmshFree_, ptr)
     else :
         v = list(ptr[i] for i in range(size))
-        lib.gmshcFree_(ptr)
+        lib.gmshFree_(ptr)
     return v
 
 
 def _ovectorvectorint(ptr,size,n):
     v = [_ovectorint(pointer(ptr[i].contents),size[i]) for i in range(n.value)]
-    lib.gmshcFree_(size)
-    lib.gmshcFree_(ptr)
+    lib.gmshFree_(size)
+    lib.gmshFree_(ptr)
     return v
 
 def _ovectorvectorpair(ptr,size,n):
     v = [_ovectorpair(pointer(ptr[i].contents),size[i]) for i in range(n.value)]
-    lib.gmshcFree_(size)
-    lib.gmshcFree_(ptr)
+    lib.gmshFree_(size)
+    lib.gmshFree_(ptr)
     return v
 
 def _ivectorint(o):
@@ -429,81 +466,106 @@ class API:
         self.modules.append(module)
         return module
 
-    def write_cpp(self,filename):
-        with open(filename+".h","w") as f:
+    def write_cpp(self):
+        def write_module(module,indent) :
+            f.write(indent+"namespace "+module.name +" {\n")
+            indent += "  "
+            for rtype,name,args in module.fs:
+                rt = rtype.rtype_cpp if rtype else "void"
+                f.write(indent+"GMSH_API " + rt + " " + name + "("+",".join(
+                    list((a.cpp for a in args)))+");\n")
+            for m in module.submodules :
+                write_module(m, indent)
+            f.write(indent[:-2]+"} // namespace "+ module.name+"\n")
+        with open("gmsh.h","w") as f:
             f.write(cpp_header)
-            for module in self.modules:
-                f.write("\n")
-                f.write("// gmsh"+module.name+"\n")
-                for rtype,name,args in module.fs:
-                    rt = rtype.rtype_cpp if rtype else "void"
-                    f.write("GMSH_API " + rt + " gmsh" + module.name+name+"("+",".join(
-                        list((a.cpp for a in args)))+");\n")
+            for m in self.modules:
+                write_module(m,"")
             f.write(cpp_footer)
 
-    def write_c(self,filename):
-        with open(filename+".h","w") as f:
-            f.write(c_header)
-            for module in self.modules:
-                f.write("\n")
-                f.write("/* gmsh"+module.name+" */\n")
-                for rtype,name,args in module.fs:
-                    f.write("GMSH_API "+(rtype.rtype_c if rtype else "void"))
-                    f.write(" gmshc" + module.name+name+"("
-                            +",".join(list((a.c for a in args+(oint("ierr"),))))
-                            + ");\n")
-            f.write(c_footer)
+    def write_c(self):
+        def c_fun_name(module, f) :
+            n = "gmshc"
+            if module :
+                n += module[0].upper() + module[1:]
+            return n + f[0].upper() + f[1:]
+        def write_module(module,c_namespace,cpp_namespace) :
+            cpp_namespace += module.name+"::"
+            if c_namespace :
+                c_namespace += module.name[0].upper()+module.name[1:]
+            else :
+                c_namespace = module.name
+            for rtype,name,args in module.fs:
+                fname = c_namespace + name[0].upper()+name[1:]
+                f.write("GMSH_API "+(rtype.rtype_c if rtype else "void"))
+                f.write(" "+fname+"("
+                        +",".join(list((a.c for a in args+(oint("ierr"),))))
+                        + ");\n")
+                fc.write(rtype.rtype_c if rtype else "void")
+                fc.write(" "+fname+"("
+                    +",".join(list((a.c for a in args+(oint("ierr"),))))+"){\n")
+                if rtype:
+                    fc.write("  "+ rtype.rtype_c + " result_api_;\n")
+                fc.write("  if(ierr) *ierr = 0;\n");
+                fc.write("  try {\n");
+                fc.write("".join((a.c_pre for a in args)))
+                fc.write("  ")
+                if rtype:
+                    fc.write("result_api_ = ")
+                fc.write(cpp_namespace+name+"("+",".join(
+                    list((a.c_arg for a in args)))+
+                    ");\n")
+                fc.write("".join((a.c_post for a in args)))
+                fc.write("  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}\n");
+                if rtype :
+                    fc.write("  return result_api_;\n");
+                fc.write("}\n\n")
+            for m in module.submodules :
+                write_module(m, c_namespace,cpp_namespace)
 
-        with open(filename+".cc","w") as f:
-            f.write(c_header)
-            for module in self.modules:
-                f.write("\n")
-                f.write("/* gmsh"+module.name+" */\n")
-                for rtype,name,args in module.fs:
-                    f.write(rtype.rtype_c if rtype else "void")
-                    f.write(" gmshc" + module.name+name+"("
-                        +",".join(list((a.c for a in args+(oint("ierr"),))))+"){\n")
-                    if rtype:
-                        f.write("  "+ rtype.rtype_c + " result_api_;\n")
-                    f.write("  if(ierr) *ierr = 0;\n");
-                    f.write("  try {\n");
-                    f.write("".join((a.c_pre for a in args)))
-                    f.write("  ")
-                    if rtype:
-                        f.write("result_api_ = ")
-                    f.write("gmsh" + module.name+name+"("+",".join(
-                        list((a.c_arg for a in args)))+
-                        ");\n")
-                    f.write("".join((a.c_post for a in args)))
-                    f.write("  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}\n");
-                    if rtype :
-                        f.write("  return result_api_;\n");
-                    f.write("}\n\n")
+        with open("gmshc.h","w") as f :
+            with open("gmshc.cc","w") as fc :
+                f.write(c_header)
+                fc.write(c_cpp_header)
+                for module in self.modules:
+                    write_module(module,"","")
+                f.write(c_footer)
 
     def write_python(self) :
+        def write_function(f,rtype, name, args, modulepath,indent):
+            iargs = list(a for a in args if not a.out)
+            oargs = list(a for a in args if a.out)
+            f.write("\n"+indent+"def "+name+"("
+                    +",".join((a.name for a in iargs))
+                    +"):\n")
+            for a in args :
+                if a.python_pre : f.write(indent+"    "+a.python_pre+"\n")
+            f.write(indent+"    ierr = c_int()\n")
+            f.write(indent+"    api__result__ = " if rtype is oint else ("    "+indent))
+            c_name = modulepath + name[0].upper()+name[1:]
+            f.write("lib."+c_name+"(\n        "+indent
+                    +(",\n"+indent+"        ").join(tuple((a.python_arg for a in args))+("byref(ierr)",))
+                    +")\n")
+            f.write(indent+"    if ierr.value != 0 :\n")
+            f.write(indent+"        raise ValueError(\""+c_name+" returned non-zero error code : \"+ str(ierr.value))\n")
+            r = (["api__result__"]) if rtype else []
+            r += list((o.python_return for o in oargs))
+            if len(r) != 0 :
+                if len(r) == 1 :
+                    f.write(indent+"    return "+r[0]+"\n")
+                else :
+                    f.write(indent+"    return (\n        "+",\n        ".join(r)+")\n")
+        def write_module(f,m,modulepath,indent) :
+            if modulepath :
+                modulepath += m.name[0].upper()+m.name[1:]
+            else :
+                modulepath = m.name
+            for fun in m.fs :
+                write_function(f,*fun,modulepath,indent)
+            for module in m.submodules :
+                f.write("\n\n"+indent + "class " + module.name + ":\n")
+                write_module(f,module,modulepath,indent+"    ")
         with open("gmsh.py","w") as f :
             f.write(python_header)
             for module in self.modules:
-                f.write("\n## gmsh"+module.name + " ##\n")
-                for (rtype,name,args) in module.fs:
-                    iargs = list(a for a in args if not a.out)
-                    oargs = list(a for a in args if a.out)
-                    f.write("\ndef "+module.name+name+"("
-                            +",".join((a.name for a in iargs))
-                            +"):\n")
-                    for a in args :
-                        if a.python_pre : f.write("    "+a.python_pre+"\n")
-                    f.write("    ierr = c_int()\n")
-                    f.write("    api__result__ = " if rtype is oint else "    ")
-                    f.write("lib.gmshc"+module.name+name+"(\n        "
-                            +",\n        ".join(tuple((a.python_arg for a in args))+("byref(ierr)",))
-                            +")\n")
-                    f.write("    if ierr.value != 0 :\n")
-                    f.write("        raise ValueError(\"gmsh."+module.name+name+" returned non-zero error code : \"+ str(ierr.value))\n")
-                    r = (["api__result__"]) if rtype else []
-                    r += list((o.python_return for o in oargs))
-                    if len(r) != 0 :
-                        if len(r) == 1 :
-                            f.write("    return "+r[0]+"\n")
-                        else :
-                            f.write("    return (\n        "+",\n        ".join(r)+")\n")
+                write_module(f,module,"","")
