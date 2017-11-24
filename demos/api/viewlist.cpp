@@ -2,8 +2,8 @@
 
 int main(int argc, char **argv)
 {
-  gmshInitialize();
-  gmshOptionSetNumber("General.Terminal", 1);
+  gmsh::initialize();
+  gmsh::option::setNumber("General.Terminal", 1);
 
   std::vector<double> tri1 = {0., 1., 1.,
                               0., 0., 1.,
@@ -21,15 +21,15 @@ int main(int argc, char **argv)
     tri2.push_back(13. + step);
   }
 
-  int t = gmshViewCreate("some data");
+  int t = gmsh::view::add("some data");
   std::vector<double> data;
   data.insert(data.end(), tri1.begin(), tri1.end());
   data.insert(data.end(), tri2.begin(), tri2.end());
 
-  gmshViewAddListData(t, "ST", 2, data);
+  gmsh::view::addListData(t, "ST", 2, data);
 
-  gmshViewExport(t, "data.pos");
+  gmsh::view::write(t, "data.pos");
 
-  gmshFinalize();
+  gmsh::finalize();
   return 0;
 }

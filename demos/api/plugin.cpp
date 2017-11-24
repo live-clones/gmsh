@@ -2,42 +2,42 @@
 
 int main(int argc, char **argv)
 {
-  gmshInitialize();
-  gmshOptionSetNumber("General.Terminal", 1);
+  gmsh::initialize();
+  gmsh::option::setNumber("General.Terminal", 1);
 
   // Copied from discrete.cpp...
-  gmshModelCreate("test");
-  gmshModelAddDiscreteEntity(2, 1);
-  gmshModelSetMeshVertices(2, 1, {1, 2, 3, 4},
-                           {0., 0., 0.,
-                            1., 0., 0.,
-                            1., 1., 0.,
-                            0., 1., 0.});
-  gmshModelSetMeshElements(2, 1, {2}, {{1, 2}},
-                           {{1, 2, 3,
-                             1, 3, 4}});
+  gmsh::model::add("test");
+  gmsh::model::addDiscreteEntity(2, 1);
+  gmsh::model::mesh::setVertices(2, 1, {1, 2, 3, 4},
+                                 {0., 0., 0.,
+                                  1., 0., 0.,
+                                  1., 1., 0.,
+                                  0., 1., 0.});
+  gmsh::model::mesh::setElements(2, 1, {2}, {{1, 2}},
+                                 {{1, 2, 3,
+                                   1, 3, 4}});
   // ... end of copy
 
   // create a view with some data
-  int t = gmshViewCreate("some data");
-  gmshViewAddModelData(t, "test", "NodeData",
-                       {1, 2, 3, 4},
-                       {{1.},{10.},{20.},{1.}});
+  int t = gmsh::view::add("some data");
+  gmsh::view::addModelData(t, "test", "NodeData",
+                           {1, 2, 3, 4},
+                           {{1.},{10.},{20.},{1.}});
 
   // compute the iso-curve at value 11
-  gmshPluginSetNumber("Isosurface", "Value", 11.);
-  gmshPluginRun("Isosurface");
+  gmsh::plugin::setNumber("Isosurface", "Value", 11.);
+  gmsh::plugin::run("Isosurface");
 
   // delete the source view
-  gmshViewDelete(t);
+  gmsh::view::remove(t);
 
   // check how many views the plugin created (a priori, a single one)
   std::vector<int> tags;
-  gmshViewGetTags(tags);
+  gmsh::view::getTags(tags);
   if(tags.size() == 1)
-    gmshViewExport(tags[0], "iso.msh");
+    gmsh::view::write(tags[0], "iso.msh");
 
-  gmshFinalize();
+  gmsh::finalize();
   return 0;
 }
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-from gmsh import *
+import gmsh
 import sys
 
-gmshInitialize(sys.argv)
-gmshOptionSetNumber("General.Terminal", 1)
+gmsh.initialize(sys.argv)
+gmsh.optionSetNumber("General.Terminal", 1)
 
 tri1 = [0., 1., 1.,
         0., 0., 1.,
@@ -17,10 +17,10 @@ for step in range(0, 10):
     tri1.append(10.); tri1.append(10.); tri1.append(12. + step)
     tri2.append(10.); tri2.append(12. + step); tri2.append(13. + step)
 
-t = gmshViewCreate("some data")
+t = gmsh.viewAdd("some data")
 
-gmshViewAddListData(t, "ST", 2, tri1 + tri2)
+gmsh.viewAddListData(t, "ST", 2, tri1 + tri2)
 
-gmshViewExport(t, "data.pos")
+gmsh.viewWrite(t, "data.pos")
 
-gmshFinalize()
+gmsh.finalize()
