@@ -1,3 +1,12 @@
+// This file is part of Tetgen/BR, the Boundary Recovery code of TetGen
+//
+// Copyright 2015-2016 Weierstrass Institute for Applied Analysis and
+// Stochastics
+//
+// This file is relicensed under the terms of LICENSE.txt for use in Gmsh thanks
+// to a Software License Agreement between Weierstrass Institute for Applied
+// Analysis and Stochastics and GMESH SPRL.
+
 ///////////////////////////////////////////////////////////////////////////////
 //                                                                           //
 // TetGen                                                                    //
