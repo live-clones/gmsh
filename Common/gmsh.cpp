@@ -573,8 +573,8 @@ void gmsh::model::mesh::setElements(const int dim, const int tag,
   }
   for(unsigned int i = 0; i < types.size(); i++){
     int type = types[i];
-    int numEle = elementTags[i].size();
-    int numVertPerEle = MElement::getInfoMSH(type);
+    unsigned int numEle = elementTags[i].size();
+    unsigned int numVertPerEle = MElement::getInfoMSH(type);
     if(!numEle) continue;
     if(numEle * numVertPerEle != vertexTags[i].size()){
       Msg::Error("Wrong number of vertex tags for element type %d", type);

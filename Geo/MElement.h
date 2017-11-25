@@ -27,16 +27,16 @@ class JacobianBasis;
 class MElement
 {
  private:
-  // the id number of the element (this number is unique and is
-  // guaranteed never to change once a mesh has been generated)
+  // the id number of the element (this number is unique and is guaranteed never
+  // to change once a mesh has been generated)
   int _num;
   // the number of the mesh partition the element belongs to
   short _partition;
   // a visibility flag
   char _visible;
  protected:
-  // the tolerance used to determine if a point is inside an element,
-  // in parametric coordinates
+  // the tolerance used to determine if a point is inside an element, in
+  // parametric coordinates
   static double _isInsideTolerance;
   void _getEdgeRep(MVertex *v0, MVertex *v1,
                    double *x, double *y, double *z, SVector3 *n,
@@ -122,9 +122,8 @@ class MElement
   // get the vertex using INP ordering
   virtual MVertex *getVertexINP(int num){ return getVertex(num); }
 
-  // get the number of vertices associated with edges, faces and
-  // volumes (nonzero only for higher order elements, polygons or
-  // polyhedra)
+  // get the number of vertices associated with edges, faces and volumes
+  // (nonzero only for higher order elements, polygons or polyhedra)
   virtual int getNumEdgeVertices() const { return 0; }
   virtual int getNumFaceVertices() const { return 0; }
   virtual int getNumVolumeVertices() const { return 0; }
@@ -200,7 +199,8 @@ class MElement
   virtual double maxEdge();
   virtual double minEdge();
 
-  // max. distance between curved and straight element among all high-order nodes
+  // max. distance between curved and straight element among all high-order
+  // nodes
   double maxDistToStraight() const;
 
   // get the quality measures
@@ -235,14 +235,14 @@ class MElement
   virtual void signedInvCondNumRange(double &iCNMin, double &iCNMax, GEntity *ge = 0);
   virtual void signedInvGradErrorRange(double &minSIGE, double &maxSIGE);
 
-  // get the radius of the inscribed circle/sphere if it exists,
-  // otherwise get the minimum radius of all the circles/spheres
-  // tangent to the most boundaries of the element.
+  // get the radius of the inscribed circle/sphere if it exists, otherwise get
+  // the minimum radius of all the circles/spheres tangent to the most
+  // boundaries of the element.
   virtual double getInnerRadius(){ return 0.; }
 
-  // get the radius of the circumscribed circle/sphere if it exists,
-  // otherwise get the maximum radius of all the circles/spheres
-  // tangent to the most boundaries of the element.
+  // get the radius of the circumscribed circle/sphere if it exists, otherwise
+  // get the maximum radius of all the circles/spheres tangent to the most
+  // boundaries of the element.
   virtual double getOuterRadius(){ return 0.; }
 
   // compute the barycenter
@@ -257,18 +257,16 @@ class MElement
   // get volume of element
   virtual double getVolume();
 
-  // return sign of volume (+1 or -1) for 3D elements (or 0 if element
-  // has zero volume)
+  // return sign of volume (+1 or -1) for 3D elements (or 0 if element has zero
+  // volume)
   virtual int getVolumeSign();
 
-  // compute and change the orientation of 3D elements to get positive
-  // volume (return false if element has zero volume)
+  // compute and change the orientation of 3D elements to get positive volume
+  // (return false if element has zero volume)
   virtual bool setVolumePositive();
 
-  // compute the extrema of the Jacobian determinant
-  // return  1 if the element is valid,
-  //         0 if the element is invalid,
-  //        -1 if the element is reversed
+  // compute the extrema of the Jacobian determinant return 1 if the element is
+  // valid, 0 if the element is invalid, -1 if the element is reversed
   int getValidity();
 
   // return an information string for the element
@@ -283,23 +281,23 @@ class MElement
   // return parametric coordinates (u,v,w) of a vertex
   virtual void getNode(int num, double &u, double &v, double &w) const;
 
-  // return the interpolating nodal shape functions evaluated at point
-  // (u,v,w) in parametric coordinates (if order == -1, use the
-  // polynomial order of the element)
+  // return the interpolating nodal shape functions evaluated at point (u,v,w)
+  // in parametric coordinates (if order == -1, use the polynomial order of the
+  // element)
   virtual void getShapeFunctions(double u, double v, double w, double s[],
                                  int order=-1) const;
 
-  // return the gradient of the nodal shape functions evaluated at
-  // point (u,v,w) in parametric coordinates (if order == -1, use the
-  // polynomial order of the element)
+  // return the gradient of the nodal shape functions evaluated at point (u,v,w)
+  // in parametric coordinates (if order == -1, use the polynomial order of the
+  // element)
   virtual void getGradShapeFunctions(double u, double v, double w, double s[][3],
                                      int order=-1) const;
   virtual void getHessShapeFunctions(double u, double v, double w, double s[][3][3],
                                      int order=-1) const;
   virtual void getThirdDerivativeShapeFunctions(double u, double v, double w,
                                                 double s[][3][3][3], int order=-1) const;
-  // return the Jacobian of the element evaluated at point (u,v,w) in
-  // parametric coordinates
+  // return the Jacobian of the element evaluated at point (u,v,w) in parametric
+  // coordinates
   virtual double getJacobian(const fullMatrix<double> &gsf, double jac[3][3]) const;
   // To be compatible with _vgrads of functionSpace without having to put under
   // fullMatrix form
@@ -331,8 +329,8 @@ class MElement
   // parametric coordinates
   virtual double getEigenvaluesMetric(double u, double v, double w, double values[3]) const;
 
-  // get the point in cartesian coordinates corresponding to the point
-  // (u,v,w) in parametric coordinates
+  // get the point in cartesian coordinates corresponding to the point (u,v,w)
+  // in parametric coordinates
   virtual void pnt(double u, double v, double w, SPoint3 &p) const;
   // To be compatible with functionSpace without changing form
   virtual void pnt(const std::vector<double> &sf,SPoint3 &p) const;
@@ -347,12 +345,11 @@ class MElement
   virtual void movePointFromElementSpaceToParentSpace(double &u, double &v,
                                                       double &w) const;
 
-  // test if a point, given in parametric coordinates, belongs to the
-  // element
+  // test if a point, given in parametric coordinates, belongs to the element
   virtual bool isInside(double u, double v, double w) const = 0;
 
-  // interpolate the given nodal data (resp. its gradient, curl and
-  // divergence) at point (u,v,w) in parametric coordinates
+  // interpolate the given nodal data (resp. its gradient, curl and divergence)
+  // at point (u,v,w) in parametric coordinates
   double interpolate(double val[], double u, double v, double w, int stride=1,
                      int order=-1);
   void interpolateGrad(double val[], double u, double v, double w, double f[],
@@ -369,7 +366,8 @@ class MElement
                this->getType());
   }
   double integrate(double val[], int pOrder, int stride=1, int order=-1);
-  // val[] must contain interpolation data for face/edge vertices of given edge/face
+  // val[] must contain interpolation data for face/edge vertices of given
+  // edge/face
   double integrateCirc(double val[], int edge, int pOrder, int order=-1);
   double integrateFlux(double val[], int face, int pOrder, int order=-1);
 
@@ -401,8 +399,8 @@ class MElement
   virtual void writeINP(FILE *fp, int num);
   virtual void writeSU2(FILE *fp, int num);
 
-  // info for specific IO formats (returning 0 means that the element
-  // is not implemented in that format)
+  // info for specific IO formats (returning 0 means that the element is not
+  // implemented in that format)
   virtual int getTypeForMSH() const { return 0; }
   virtual int getTypeForUNV() const { return 0; }
   virtual int getTypeForVTK() const { return 0; }
@@ -412,9 +410,8 @@ class MElement
   virtual const char *getStringForDIFF() const { return 0; }
   virtual const char *getStringForINP() const { return 0; }
 
-  // return the number of vertices, as well as the element name if
-  // 'name' != 0
-  static int getInfoMSH(const int typeMSH, const char **const name=0);
+  // return the number of vertices, as well as the element name if 'name' != 0
+  static unsigned int getInfoMSH(const int typeMSH, const char **const name=0);
   virtual int getNumVerticesForMSH() { return getNumVertices(); }
   virtual void getVerticesIdForMSH(std::vector<int> &verts);
 
