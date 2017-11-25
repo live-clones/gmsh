@@ -1470,7 +1470,7 @@ void MElement::writeSU2(FILE *fp, int num)
   else fprintf(fp, "\n");
 }
 
-int MElement::getInfoMSH(const int typeMSH, const char **const name)
+unsigned int MElement::getInfoMSH(const int typeMSH, const char **const name)
 {
   switch(typeMSH){
   case MSH_PNT     : if(name) *name = "Point";            return 1;

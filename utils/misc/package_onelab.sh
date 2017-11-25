@@ -145,6 +145,34 @@ if [ $# -lt 1 ] || [ $1 == "linux64" ]; then
   rm -rf onelab-Linux64
 fi
 
+if [ $# -lt 1 ] || [ $1 == "linux32" ]; then
+  rm -rf onelab-Linux32*
+  mkdir onelab-Linux32
+  curl -O http://gmsh.info/bin/Linux/gmsh-${GMSH}-Linux32.tgz
+  curl -O http://getdp.info/bin/Linux/getdp-${GETDP}-Linux32c.tgz
+  mv gmsh-${GMSH}-Linux32.tgz /tmp
+  mv getdp-${GETDP}-Linux32c.tgz /tmp
+  tar zxvf /tmp/gmsh-${GMSH}-Linux32.tgz -C /tmp
+  tar zxvf /tmp/getdp-${GETDP}-Linux32c.tgz -C /tmp
+  cp /tmp/README.txt onelab-Linux32
+  mv /tmp/gmsh-*${GMSH}-Linux32/bin/gmsh onelab-Linux32
+  mv /tmp/gmsh-*${GMSH}-Linux32/bin/onelab.py onelab-Linux32
+  mv /tmp/getdp-*${GETDP}-Linux32/bin/getdp onelab-Linux32
+  mv /tmp/gmsh-*${GMSH}-Linux32/share/doc/gmsh/LICENSE.txt onelab-Linux32/LICENSE.txt
+  echo "\n\n" >> onelab-Linux32/LICENSE.txt
+  cat /tmp/getdp-*${GETDP}-Linux32/share/doc/getdp/LICENSE.txt >> onelab-Linux32/LICENSE.txt
+  mv /tmp/gmsh-*${GMSH}-Linux32/share/doc/gmsh/CREDITS.txt onelab-Linux32/CREDITS.txt
+  echo "\n\n" >> onelab-Linux32/CREDITS.txt
+  cat /tmp/getdp-*${GETDP}-Linux32/share/doc/getdp/CREDITS.txt >> onelab-Linux32/CREDITS.txt
+  mv /tmp/getdp-*${GETDP}-Linux32/share/doc/getdp/templates onelab-Linux32
+  mv /tmp/gmsh-*${GMSH}-Linux32/share/doc/gmsh/tutorial onelab-Linux32
+  cp -R /tmp/models onelab-Linux32
+  rm -rf /tmp/gmsh-*
+  rm -rf /tmp/getdp-*
+  zip -r onelab-Linux32.zip onelab-Linux32
+  rm -rf onelab-Linux32
+fi
+
 if [ $# -lt 1 ] || [ $1 == "mac" ]; then
   rm -rf onelab-MacOSX*
   mkdir onelab-MacOSX
