@@ -382,9 +382,9 @@ try :
     import numpy
     use_numpy = True
     try : 
-        import weakref
+        from weakref import finalize as weakreffinalize
     except :
-        from backports import weakref
+        from backports.weakref import finalize as weakreffinalize
 except :
     pass
 
@@ -399,7 +399,7 @@ def _ostring(s) :
 def _ovectorpair(ptr,size):
     if use_numpy :
         v = numpy.ctypeslib.as_array(ptr, (size//2,2))
-        weakref.finalize(v, lib.gmshFree_, ptr)
+        weakreffinalize(v, lib.gmshFree_, ptr)
     else :
         v = list((ptr[i*2],ptr[i*2+1]) for i in range(size//2))
         lib.gmshFree_(ptr)
@@ -408,7 +408,7 @@ def _ovectorpair(ptr,size):
 def _ovectorint(ptr,size):
     if use_numpy :
         v = numpy.ctypeslib.as_array(ptr, (size,))
-        weakref.finalize(v, lib.gmshFree_, ptr)
+        weakreffinalize(v, lib.gmshFree_, ptr)
     else :
         v = list(ptr[i] for i in range(size))
         lib.gmshFree_(ptr)
@@ -417,7 +417,7 @@ def _ovectorint(ptr,size):
 def _ovectordouble(ptr,size):
     if use_numpy :
         v = numpy.ctypeslib.as_array(ptr, (size,))
-        weakref.finalize(v, lib.gmshFree_, ptr)
+        weakreffinalize(v, lib.gmshFree_, ptr)
     else :
         v = list(ptr[i] for i in range(size))
         lib.gmshFree_(ptr)
@@ -533,10 +533,14 @@ class API:
                 f.write(c_footer)
 
     def write_python(self) :
-        def write_function(f,rtype, name, args, doc, modulepath,indent):
+        def write_function(f,fun, modulepath,indent):
+            (rtype,name,args,doc) = fun
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
-            f.write("\n"+indent+"def "+name+"("
+            f.write("\n")
+            if (modulepath != "gmsh") :
+                f.write(indent+"@staticmethod\n")
+            f.write(indent+"def "+name+"("
                     +",".join((a.name for a in iargs))
                     +"):\n")
             indent += "    "
@@ -573,7 +577,7 @@ class API:
             else :
                 modulepath = m.name
             for fun in m.fs :
-                write_function(f,*fun,modulepath,indent)
+                write_function(f,fun,modulepath,indent)
             for module in m.submodules :
                 f.write("\n\n"+indent + "class " + module.name + ":\n")
                 indentm = indent + "    "
