@@ -2095,9 +2095,9 @@ void gmsh::view::probe(const int tag, const double x, const double y,
                        const double z, std::vector<double> &value,
                        const int step, const int numComp,
                        const bool gradient, const double tolerance,
-                       const std::vector<double> xElemCoord,
-                       const std::vector<double> yElemCoord,
-                       const std::vector<double> zElemCoord)
+                       const std::vector<double> &xElemCoord,
+                       const std::vector<double> &yElemCoord,
+                       const std::vector<double> &zElemCoord)
 {
   if(!_isInitialized()){ throw -1; }
 #if defined(HAVE_POST)
