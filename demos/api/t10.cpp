@@ -3,29 +3,30 @@
 #include <gmsh.h>
 #include <sstream>
 
-using namespace gmsh;
+namespace model = gmsh::model;
+namespace factory = gmsh::model::geo;
 
 int main(int argc, char **argv)
 {
-  initialize(argc, argv);
-  option::setNumber("General.Terminal", 1);
+  gmsh::initialize(argc, argv);
+  gmsh::option::setNumber("General.Terminal", 1);
 
   model::add("t1");
 
   double lc = .15;
-  model::geo::addPoint(0.0,0.0,0,lc, 1);
-  model::geo::addPoint(1,0.0,0,lc, 2);
-  model::geo::addPoint(1,1,0,lc, 3);
-  model::geo::addPoint(0,1,0,lc, 4);
-  model::geo::addPoint(0.2,.5,0,lc, 5);
+  factory::addPoint(0.0,0.0,0,lc, 1);
+  factory::addPoint(1,0.0,0,lc, 2);
+  factory::addPoint(1,1,0,lc, 3);
+  factory::addPoint(0,1,0,lc, 4);
+  factory::addPoint(0.2,.5,0,lc, 5);
 
-  model::geo::addLine(1,2, 1);
-  model::geo::addLine(2,3, 2);
-  model::geo::addLine(3,4, 3);
-  model::geo::addLine(4,1, 4);
+  factory::addLine(1,2, 1);
+  factory::addLine(2,3, 2);
+  factory::addLine(3,4, 3);
+  factory::addLine(4,1, 4);
 
-  model::geo::addLineLoop({1,2,3,4}, 5);
-  model::geo::addPlaneSurface({5}, 6);
+  factory::addLineLoop({1,2,3,4}, 5);
+  factory::addPlaneSurface({5}, 6);
 
   model::mesh::field::add("Attractor", 1);
   model::mesh::field::setNumbers(1, "NodesList", {5});
@@ -63,9 +64,9 @@ int main(int argc, char **argv)
 
   model::mesh::field::setAsBackground(7);
 
-  model::geo::synchronize();
+  factory::synchronize();
   model::mesh::generate(2);
-  write("t10.msh");
-  finalize();
+  gmsh::write("t10.msh");
+  gmsh::finalize();
   return 0;
 }
