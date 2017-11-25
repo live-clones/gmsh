@@ -67,7 +67,7 @@ windows64_msvc_ci:
 # Official Linux builds (master branch only)
 # ------------------------------------------
 
-.linux64_official: &linux64_official
+.linux_official: &linux_official
   only:
     - master
   script:
@@ -77,19 +77,40 @@ windows64_msvc_ci:
     - make package -j 1
     - PKG=`ls gmsh-*.tar*`; scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
     - /usr/local/bin/ctest -D Experimental -j 1 --output-on-failure
+
+linux64_official_snapshot:
+  <<: *linux_official
   tags:
     - linux64
     - official
-
-linux64_official_snapshot:
-  <<: *linux64_official
   except:
     - tags
 
 linux64_official_release:
   variables:
     EXTRA_VERSION: ""
-  <<: *linux64_official
+  <<: *linux_official
+  tags:
+    - linux64
+    - official
+  only:
+    - /^gmsh_.*$/
+
+linux32_official_snapshot:
+  <<: *linux_official
+  tags:
+    - linux32
+    - official
+  except:
+    - tags
+
+linux32_official_release:
+  variables:
+    EXTRA_VERSION: ""
+  <<: *linux_official
+  tags:
+    - linux32
+    - official
   only:
     - /^gmsh_.*$/
 
@@ -149,7 +170,7 @@ windows32_official_release:
 # Official MacOS builds (master branch only)
 # ------------------------------------------
 
-.macos64_official: &macos64_official
+.macos_official: &macos_official
   only:
     - master
   script:
@@ -163,19 +184,22 @@ windows32_official_release:
     - scp ace@ace36.montefiore.ulg.ac.be:/tmp/${PKG} .
     - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/MacOSX/${PKG}
     - /usr/local/bin/ctest -D Experimental -j 1 --output-on-failure
+
+macos64_official_snapshot:
+  <<: *macos_official
   tags:
     - macos64
     - official
-
-macos64_official_snapshot:
-  <<: *macos64_official
   except:
     - tags
 
 macos64_official_release:
   variables:
     EXTRA_VERSION: ""
-  <<: *macos64_official
+  <<: *macos_official
+  tags:
+    - macos64
+    - official
   only:
     - /^gmsh_.*$/
 
@@ -192,12 +216,12 @@ macos64_official_release:
     - /usr/local/bin/cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} ..
     - make package_source
     - PKG=`ls gmsh-*.tar*`; scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/src/${PKG/\.tar\.gz/\.tgz}
-  tags:
-    - linux64
-    - official
 
 source_official_snapshot:
   <<: *source_official
+  tags:
+    - linux64
+    - official
   except:
     - tags
 
@@ -205,5 +229,8 @@ source_official_release:
   variables:
     EXTRA_VERSION: ""
   <<: *source_official
+  tags:
+    - linux64
+    - official
   only:
     - /^gmsh_.*$/
