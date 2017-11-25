@@ -1,3 +1,4 @@
+import textwrap
 tmap = {
         'int':'iint',
         'char**':'icharpp',
@@ -31,7 +32,7 @@ def parse_arg(a) :
     typ = a[:p+1].replace(" ","")
     return tmap[typ]+"('"+name+"'"+((",'"+value+"'") if value else "")+")"
 
-def parse_fun(f,fun,namespace) :
+def parse_fun(f,fun,namespace,doc) :
     iarg =fun.find("(")
     earg =fun.rfind(")")
     pre = fun[:iarg]
@@ -46,14 +47,18 @@ def parse_fun(f,fun,namespace) :
         raise NameError("Unknown return type : ", t)
     if (args == ['']) :
         args = []
+    #f.write("\ndoc = (\n"
+    #        "'''"+" '''\n'''".join(textwrap.wrap(doc))+"'''\n)\n")
+    f.write("\ndoc = '''"+doc+"'''\n")
     if (name in ["initialize","setElements","addModelData"]) :
         f.write("#")
-    f.write(namespace+".add("+",".join([ret,"'"+name+"'"]+[parse_arg(a) for a in args])+")\n")
+    f.write(namespace+".add("+",".join(["'"+name+"'","doc",ret]+[parse_arg(a) for a in args])+")\n")
 
 namespace = ["api"]
 
 with open("../Common/gmsh.h") as f :
     with open("gen.py","w") as fo :
+        current_doc = ""
         fo.write("from GenApi import *\n\napi = API()\n")
         ls = f.readlines()
         i = 0
@@ -70,14 +75,22 @@ with open("../Common/gmsh.h") as f :
                     i += 1
                     f += " " + l
                 try :
-                    parse_fun(fo,f,namespace[-1])
+                    parse_fun(fo,f,namespace[-1],current_doc)
                 except :
                     raise NameError(f)
+            elif l[:2] == "//":
+                current_doc = l[2:].strip()
+                while ls[i].strip()[:2]== "//":
+                    current_doc += ls[i].strip()[2:]
+                    i += 1
             elif w[0] == "namespace" :
-                fo.write("\n"+w[1]+" = "+namespace[-1]+".add_module('"+w[1]+"')\n")
+                doc = " ".join(w[4:])
+                fo.write("\n"+w[1]+" = "+namespace[-1]+".add_module('"+w[1]+"','"+doc+"')\n")
                 namespace += [w[1]]
+                current_doc = ""
             elif w[0] == "}" :
                 namespace.pop()
+        fo.write("\n")
         fo.write("api.write_cpp()\n")
         fo.write("api.write_c()\n")
         fo.write("api.write_python()\n")

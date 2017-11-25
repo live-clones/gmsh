@@ -1,4 +1,4 @@
-import os 
+import textwrap
 class arg:
 
     def __init__(self,name,value,type_cpp,type_c,out):
@@ -74,10 +74,10 @@ def ovectorpair(name,value=None):
     a.c_arg = name_
     a.c_pre = "  gmsh::vector_pair "+name_ +";\n"
     a.c_post = "  pairvector2intptr("+name_+"," + name + ","+name+"_n);\n"
-    a.c = "int** "+name+",size_t* "+name+"_n"
+    a.c = "int** "+name+", size_t* "+name+"_n"
     a.python_pre = name_+", "+name_n+" = POINTER(c_int)(), c_size_t()"
-    a.python_arg = "byref("+name_+"),byref("+name_n+")"
-    a.python_return = "_ovectorpair("+name_+","+name_n+".value)"
+    a.python_arg = "byref("+name_+"), byref("+name_n+")"
+    a.python_return = "_ovectorpair("+name_+", "+name_n+".value)"
     return a
 
 def ovectorstring(name,value=None):
@@ -89,14 +89,14 @@ def ovectorstring(name,value=None):
     a.c_post = "  stringvector2charpp("+name_+"," + name + ","+name+"_n);\n"
     a.c = "char*** "+name+",size_t* "+name+"_n"
     a.python_pre = name_+", "+name_n+" = POINTER(c_char_p)(), c_size_t()"
-    a.python_arg = "byref("+name_+"),byref("+name_n+")"
-    a.python_return = "_ovectorstring("+name_+","+name_n+".value)"
+    a.python_arg = "byref("+name_+"), byref("+name_n+")"
+    a.python_return = "_ovectorstring("+name_+", "+name_n+".value)"
     return a
 
 def ivectorpair(name,value=None):
     a = arg(name,value,"const gmsh::vector_pair &","const int*",False)
     a.c_arg = "intptr2pairvector("+name+","+name+"_n)"
-    a.c = "int* "+name+",size_t "+name+"_n"
+    a.c = "int* "+name+", size_t "+name+"_n"
     a.python_pre = "api_"+name+"_, api"+name+"_n_ = _ivectorpair("+name+")"
     a.python_arg = "api_"+name+"_, api"+name+"_n_"
     return a
@@ -116,7 +116,7 @@ def obool(name,value=None):
 def ivectorint(name,value=None):
     a = arg(name,value,"const std::vector<int> &","const int*",False)
     a.c_arg = "ptr2vector("+name+","+name+"_n)"
-    a.c = "int* "+name+",size_t "+name+"_n"
+    a.c = "int* "+name+", size_t "+name+"_n"
     a.python_pre = "api_"+name+"_, api"+name+"_n_ = _ivectorint("+name+")"
     a.python_arg = "api_"+name+"_, api"+name+"_n_"
     return a
@@ -128,7 +128,7 @@ def ovectorint(name,value=None):
     a.c_arg = name_
     a.c_pre = "  std::vector<int> "+name_ +";\n"
     a.c_post = "  vector2ptr("+name_+"," + name + ","+name+"_n);\n"
-    a.c = "int** "+name+",size_t* "+name+"_n"
+    a.c = "int** "+name+", size_t* "+name+"_n"
     a.python_pre = name_+", "+name_n+" = POINTER(c_int)(), c_size_t()"
     a.python_arg = "byref("+name_+"),byref("+name_n+")"
     a.python_return = "_ovectorint("+name_+","+name_n+".value)"
@@ -137,7 +137,7 @@ def ovectorint(name,value=None):
 def ivectordouble(name,value=None):
     a = arg(name,value,"const std::vector<double> &","double**",False)
     a.c_arg = "ptr2vector("+name+","+name+"_n)"
-    a.c  = "double* "+name+",size_t "+name+"_n"
+    a.c  = "double* "+name+", size_t "+name+"_n"
     a.python_pre = "api_"+name+"_, api"+name+"_n_ = _ivectordouble("+name+")"
     a.python_arg = "api_"+name+"_, api"+name+"_n_"
     return a
@@ -149,7 +149,7 @@ def ovectordouble(name,value=None):
     a.c_arg = name_
     a.c_pre = "  std::vector<double> "+a.c_arg +";\n"
     a.c_post = "  vector2ptr("+name_+"," + name + ","+name+"_n);\n"
-    a.c  = "double** "+name+",size_t* "+name+"_n"
+    a.c  = "double** "+name+", size_t* "+name+"_n"
     a.python_pre = name_+", "+name_n+" = POINTER(c_double)(), c_size_t()"
     a.python_arg = "byref("+name_+"),byref("+name_n+")"
     a.python_return = "_ovectordouble("+name_+","+name_n+".value)"
@@ -163,7 +163,7 @@ def ovectorvectorint(name,value=None):
     a.c_arg = name_
     a.c_pre = "  std::vector<std::vector<int> > "+a.c_arg +";\n"
     a.c_post = "  vectorvector2ptrptr("+name_+"," + name + ","+name+"_n,"+name+"_nn);\n"
-    a.c  = "int*** "+name+",size_t** "+name+"_n,size_t *"+name+"_nn"
+    a.c  = "int*** "+name+", size_t** "+name+"_n, size_t *"+name+"_nn"
     a.python_pre = name_+", "+name_n+", "+name_nn +" = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()"
     a.python_arg = "byref("+name_+"),byref("+name_n+"),byref("+name_nn+")"
     a.python_return = "_ovectorvectorint("+name_+","+name_n+","+name_nn+")"
@@ -177,7 +177,7 @@ def ovectorvectorpair(name,value=None):
     a.c_arg = name_
     a.c_pre = "  std::vector<gmsh::vector_pair >"+name_ +";\n"
     a.c_post = "  pairvectorvector2intptrptr("+name_+"," + name + ","+name+"_n,"+name+"_nn);\n"
-    a.c  = "int*** "+name+",size_t** "+name+"_n,size_t *"+name+"_nn"
+    a.c  = "int*** "+name+", size_t** "+name+"_n, size_t *"+name+"_nn"
     a.python_pre = name_+", "+name_n+", "+name_nn +" = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()"
     a.python_arg = "byref("+name_+"),byref("+name_n+"),byref("+name_nn+")"
     a.python_return = "_ovectorvectorpair("+name_+","+name_n+","+name_nn+")"
@@ -185,16 +185,17 @@ def ovectorvectorpair(name,value=None):
 
 class Module:
 
-    def __init__(self,name):
+    def __init__(self,name,doc):
         self.name = name
+        self.doc = doc
         self.fs = []
         self.submodules = []
 
-    def add(self,rtype,name,*args):
-        self.fs.append((rtype,name,args))
+    def add(self,name,doc,rtype,*args):
+        self.fs.append((rtype,name,args,doc))
 
-    def add_module(self, name) :
-        module = Module(name)
+    def add_module(self, name,doc) :
+        module = Module(name,doc)
         self.submodules.append(module)
         return module
 
@@ -461,22 +462,26 @@ class API:
     def __init__(self):
         self.modules = []
 
-    def add_module(self,name):
-        module = Module(name)
+    def add_module(self,name,doc):
+        module = Module(name,doc)
         self.modules.append(module)
         return module
 
     def write_cpp(self):
         def write_module(module,indent) :
-            f.write(indent+"namespace "+module.name +" {\n")
+            f.write("\n"+indent+"namespace "+module.name +" { // " + module.doc + "\n\n")
             indent += "  "
-            for rtype,name,args in module.fs:
+            for rtype,name,args,doc in module.fs:
+                f.write("\n")
+                f.write(indent+"// "+("\n"+indent+"// ").join(textwrap.wrap(doc,75))+"\n\n")
                 rt = rtype.rtype_cpp if rtype else "void"
-                f.write(indent+"GMSH_API " + rt + " " + name + "("+",".join(
-                    list((a.cpp for a in args)))+");\n")
+                f.write(indent+"GMSH_API " + rt + " " + name + "(")
+                if args :
+                    f.write("\n"+indent+"    " +(",\n"+indent+"    ").join(a.cpp for a in args))
+                f.write(");\n\n")
             for m in module.submodules :
                 write_module(m, indent)
-            f.write(indent[:-2]+"} // namespace "+ module.name+"\n")
+            f.write(indent[:-2]+"} // namespace "+ module.name+"\n\n")
         with open("gmsh.h","w") as f:
             f.write(cpp_header)
             for m in self.modules:
@@ -484,22 +489,18 @@ class API:
             f.write(cpp_footer)
 
     def write_c(self):
-        def c_fun_name(module, f) :
-            n = "gmshc"
-            if module :
-                n += module[0].upper() + module[1:]
-            return n + f[0].upper() + f[1:]
         def write_module(module,c_namespace,cpp_namespace) :
             cpp_namespace += module.name+"::"
             if c_namespace :
                 c_namespace += module.name[0].upper()+module.name[1:]
             else :
                 c_namespace = module.name
-            for rtype,name,args in module.fs:
+            for rtype,name,args,doc in module.fs:
                 fname = c_namespace + name[0].upper()+name[1:]
+                f.write("\n/* "+"\n * ".join(textwrap.wrap(doc,75))+" */\n")
                 f.write("GMSH_API "+(rtype.rtype_c if rtype else "void"))
-                f.write(" "+fname+"("
-                        +",".join(list((a.c for a in args+(oint("ierr"),))))
+                f.write(" "+fname+"(\n            "
+                        +",\n            ".join(list((a.c for a in args+(oint("ierr"),))))
                         + ");\n")
                 fc.write(rtype.rtype_c if rtype else "void")
                 fc.write(" "+fname+"("
@@ -532,29 +533,40 @@ class API:
                 f.write(c_footer)
 
     def write_python(self) :
-        def write_function(f,rtype, name, args, modulepath,indent):
+        def write_function(f,rtype, name, args, doc, modulepath,indent):
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write("\n"+indent+"def "+name+"("
                     +",".join((a.name for a in iargs))
                     +"):\n")
+            indent += "    "
+            f.write(indent+'"""\n')
+            f.write(indent+("\n"+indent).join(textwrap.wrap(doc,75))+"\n")
+            if rtype or oargs :
+                f.write("\n"+indent+"return " + ", ".join(
+                    ([rtype.rtype_c] if rtype else[])
+                    +[a.name for a in oargs])
+                +"\n")
+            f.write(indent+'"""\n')
             for a in args :
-                if a.python_pre : f.write(indent+"    "+a.python_pre+"\n")
-            f.write(indent+"    ierr = c_int()\n")
-            f.write(indent+"    api__result__ = " if rtype is oint else ("    "+indent))
+                if a.python_pre : f.write(indent+a.python_pre+"\n")
+            f.write(indent+"ierr = c_int()\n")
+            f.write(indent+"api__result__ = " if rtype is oint else (indent))
             c_name = modulepath + name[0].upper()+name[1:]
-            f.write("lib."+c_name+"(\n        "+indent
-                    +(",\n"+indent+"        ").join(tuple((a.python_arg for a in args))+("byref(ierr)",))
+            f.write("lib."+c_name+"(\n    "+indent
+                    +(",\n"+indent+"    ").join(tuple((a.python_arg for a in args))+("byref(ierr)",))
                     +")\n")
-            f.write(indent+"    if ierr.value != 0 :\n")
-            f.write(indent+"        raise ValueError(\""+c_name+" returned non-zero error code : \"+ str(ierr.value))\n")
+            f.write(indent+"if ierr.value != 0 :\n")
+            f.write(indent+"    raise ValueError(\n")
+            f.write(indent+"        \""+c_name+" returned non-zero error code : \",\n")
+            f.write(indent+"        ierr.value)\n")
             r = (["api__result__"]) if rtype else []
             r += list((o.python_return for o in oargs))
             if len(r) != 0 :
                 if len(r) == 1 :
-                    f.write(indent+"    return "+r[0]+"\n")
+                    f.write(indent+"return "+r[0]+"\n")
                 else :
-                    f.write(indent+"    return (\n        "+",\n        ".join(r)+")\n")
+                    f.write(indent+"return (\n"+indent+"    "+(",\n"+indent+"    ").join(r)+")\n")
         def write_module(f,m,modulepath,indent) :
             if modulepath :
                 modulepath += m.name[0].upper()+m.name[1:]
@@ -564,7 +576,11 @@ class API:
                 write_function(f,*fun,modulepath,indent)
             for module in m.submodules :
                 f.write("\n\n"+indent + "class " + module.name + ":\n")
-                write_module(f,module,modulepath,indent+"    ")
+                indentm = indent + "    "
+                f.write(indentm+'"""\n')
+                f.write(indentm+("\n"+indentm).join(textwrap.wrap(module.doc,75))+"\n")
+                f.write(indentm+'"""\n')
+                write_module(f,module,modulepath,indentm)
         with open("gmsh.py","w") as f :
             f.write(python_header)
             for module in self.modules:
