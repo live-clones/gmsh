@@ -14,13 +14,7 @@ class arg:
         self.out = out
         self.type_cpp = type_cpp
         self.type_c = type_c
-        self.cpp_value = (" = "+value) if value else ""
-
-        n = self.type_cpp 
-        n += " "
-        n += self.name
-        n += self.cpp_value
-        self.cpp = n
+        self.cpp = self.type_cpp+" "+self.name+((" = "+value) if value else "")
 
         self.c_arg = self.name
         self.c_pre = ""
@@ -44,7 +38,6 @@ class oint(arg):
         self.c_arg = "*"+name
 
 def istring(name,value=None):
-    #value = "\""+value+"\"" if value is not None else None
     a = arg(name,value,"const std::string &","const char *",False)
     a.python_arg = "c_char_p("+name+".encode())"
     return a
@@ -128,6 +121,22 @@ def ivectorint(name,value=None):
     a.python_arg = "api_"+name+"_, api"+name+"_n_"
     return a
 
+def ivectorvectorint(name,value=None):
+    a = arg(name,value,"const std::vector<std::vector<int> >&","const int**",False)
+    a.c_arg = "ptrptr2vectorvector("+name+","+name+"_n,"+name+"_nn)"
+    a.c = "const int** "+name+", const size_t* "+name+"_n, "+"size_t "+name+"_nn"
+    a.python_pre = "api_"+name+"_, api_"+name+"_n_, api_"+name+"_nn_ = _ivectorvectorint("+name+")"
+    a.python_arg = "api_"+name+"_, api_"+name+"_n_, api_"+name+"_nn_"
+    return a
+
+def ivectorvectordouble(name,value=None):
+    a = arg(name,value,"const std::vector<std::vector<double> >&","const double**",False)
+    a.c_arg = "ptrptr2vectorvector("+name+","+name+"_n,"+name+"_nn)"
+    a.c = "const double** "+name+", const size_t* "+name+"_n, "+"size_t "+name+"_nn"
+    a.python_pre = "api_"+name+"_, api_"+name+"_n_, api_"+name+"_nn_ = _ivectorvectordouble("+name+")"
+    a.python_arg = "api_"+name+"_, api_"+name+"_n_"
+    return a
+
 def ovectorint(name,value=None):
     a = arg(name,value,"std::vector<int> &","int **",True)
     name_ = "api_"+name+"_"
@@ -188,6 +197,18 @@ def ovectorvectorpair(name,value=None):
     a.python_pre = name_+", "+name_n+", "+name_nn +" = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()"
     a.python_arg = "byref("+name_+"),byref("+name_n+"),byref("+name_nn+")"
     a.python_return = "_ovectorvectorpair("+name_+","+name_n+","+name_nn+")"
+    return a
+
+def argcargv() : 
+    a = arg("", None, "", "", False)
+    a.cpp = "int argc = 0, char **argv = 0"
+    a.c_arg = "argc, argv"
+    a.c = "int argc, char **argv"
+    a.c_pre = ""
+    a.c_post = ""
+    a.name = "argv"
+    a.python_arg = "api_argc_, api_argv_"
+    a.python_pre = "api_argc_, api_argv_ = _iargcargv(argv)"
     return a
 
 class Module:
@@ -307,9 +328,7 @@ c_header="""/*
 
 #include <stdlib.h>
 
-/* FIXME: this still needs to be generated automatically */
-GMSH_API void gmshInitialize(char argc, char **argv);
-GMSH_API void gmshFree_(void *p);
+GMSH_API void gmshFree(void *p);
 """
 
 c_footer="""#undef GMSH_API
@@ -338,6 +357,14 @@ char * _strdup(const char *i) {
 template<typename t>
 std::vector<t> ptr2vector(const t *p,size_t size) {
   return std::vector<t>(p,p+size);
+}
+
+template<typename t>
+std::vector<std::vector<t> > ptrptr2vectorvector(const t **p, const size_t *n, size_t size) {
+  std::vector<std::vector<t> > v(size);
+  for (size_t i=0; i<size; ++i)
+    v[i] = std::vector<t>(p[i],p[i]+n[i]);
+  return v;
 }
 
 template<typename t>
@@ -391,11 +418,7 @@ int** pairvectorvector2intptrptr(const std::vector<gmsh::vector_pair > &v,int **
   *sizeSize = v.size();
 }
 
-void gmshInitialize(char argc,char **argv){
-  gmsh::initialize(argc,argv);
-}
-
-void gmshFree_(void *p) {
+void gmshFree(void *p) {
   if(p) free(p);
 }
 """
@@ -436,52 +459,49 @@ try :
 except :
     pass
 
-def initialize() :
-    lib.gmshInitialize(c_int(0),c_voidp(None))
-
 def _ostring(s) :
     sp = s.value.decode("utf-8")
-    lib.gmshFree_(s)
+    lib.gmshFree(s)
     return sp
 
 def _ovectorpair(ptr,size):
     if use_numpy :
         v = numpy.ctypeslib.as_array(ptr, (size//2,2))
-        weakreffinalize(v, lib.gmshFree_, ptr)
+        weakreffinalize(v, lib.gmshFree, ptr)
     else :
         v = list((ptr[i*2],ptr[i*2+1]) for i in range(size//2))
-        lib.gmshFree_(ptr)
+        lib.gmshFree(ptr)
     return v
 
 def _ovectorint(ptr,size):
     if use_numpy :
         v = numpy.ctypeslib.as_array(ptr, (size,))
-        weakreffinalize(v, lib.gmshFree_, ptr)
+        weakreffinalize(v, lib.gmshFree, ptr)
     else :
         v = list(ptr[i] for i in range(size))
-        lib.gmshFree_(ptr)
+        lib.gmshFree(ptr)
     return v
 
 def _ovectordouble(ptr,size):
     if use_numpy :
         v = numpy.ctypeslib.as_array(ptr, (size,))
-        weakreffinalize(v, lib.gmshFree_, ptr)
+        weakreffinalize(v, lib.gmshFree, ptr)
     else :
         v = list(ptr[i] for i in range(size))
-        lib.gmshFree_(ptr)
+        lib.gmshFree(ptr)
     return v
 
 
 def _ovectorvectorint(ptr,size,n):
     v = [_ovectorint(pointer(ptr[i].contents),size[i]) for i in range(n.value)]
-    lib.gmshFree_(size)
-    lib.gmshFree_(ptr)
+    lib.gmshFree(size)
+    lib.gmshFree(ptr)
     return v
 
 def _ovectorvectorpair(ptr,size,n):
     v = [_ovectorpair(pointer(ptr[i].contents),size[i]) for i in range(n.value)]
-    lib.gmshFree_(size)
-    lib.gmshFree_(ptr)
+    lib.gmshFree(size)
+    lib.gmshFree(ptr)
     return v
 
 def _ivectorint(o):
@@ -489,7 +509,22 @@ def _ivectorint(o):
         return  numpy.ascontiguousarray(o,numpy.int32).ctypes, c_size_t(len(o))
     else :
         return byref((c_int*len(o))(*o)), c_size_t(len(o))
-        
+
+def _ivectorvectorint(os):
+    n = len(os)
+    parrays = [_ivectorint(o) for o in os]
+    sizes = (c_size_t*n)(*(a[1] for a in parrays))
+    arrays = (POINTER(c_int)*n)(*(cast(a[0],POINTER(c_int)) for a in parrays))
+    size = c_size_t(n)
+    return byref(arrays), byref(sizes), size
+
+def _ivectorvectordouble(os):
+    n = len(os)
+    parrays = [_ivectordouble(o) for o in os]
+    sizes = (c_size_t*n)(*(a[1] for a in parrays))
+    arrays = (POINTER(c_double)*n)(*(cast(a[0],POINTER(c_int)) for a in parrays))
+    size = c_size_t(n)
+    return byref(arrays), byref(sizes), size
 
 def _ivectordouble(o):
     if use_numpy :
@@ -502,6 +537,9 @@ def _ivectorpair(o):
         return  numpy.ascontiguousarray(o,numpy.int32).reshape(len(o),2).ctypes, c_size_t(len(o)*2)
     else :
         return byref(((c_int*2)*len(o))(*o)), c_size_t(len(o)*2)
+
+def _iargcargv(o) :
+    return c_int(len(o)), (c_char_p*len(o))(*(s.encode() for s in o))
 
 """
 

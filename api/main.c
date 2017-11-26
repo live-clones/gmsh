@@ -70,7 +70,7 @@ void genError() {
 
 int main(int argc, char **argv) {
   int ierr;
-  gmshInitialize(argc, argv);
+  gmshInitialize(argc, argv, &ierr); chk(ierr);
   genGeometry();
   gmshModelMeshGenerate(2,&ierr); chk(ierr);
   gmshWrite("square.msh",&ierr); chk(ierr);

@@ -1,6 +1,9 @@
 import gmsh
+import sys
 
-gmsh.initialize()
+gmsh.initialize(sys.argv)
+print(gmsh.option.getNumber("Mesh.Algorithm"))
+
 gmsh.open("square.msh")
 
 model = gmsh.model
@@ -43,7 +46,11 @@ for e in entities :
         print("type ", types[i])
         print("tags : ", list(tags[i]))
         print("vertices : ", list(vertices[i]))
+    if e[0] == [2] and e[1] == 6 :
+        model.mesh.setElements(e[0],e[1],types,[tags[0][:10]],[vertices[0][:30]])
 
+
+gmsh.write("mesh_truncated.msh")
 print("Vertices")
 tags, coord, _ = model.mesh.getVertices(2,6)
 print(tags)

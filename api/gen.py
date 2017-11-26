@@ -25,7 +25,7 @@ api = API()
 gmsh = api.add_module('gmsh','Top-level functions')
 
 doc = '''Initializes Gmsh. This must be called before any call to the other functions in the API. If argc and argv are provided, they will be handled in the same way as the command line arguments in the Gmsh app.'''
-#gmsh.add('initialize',doc,None,iint('argc','0'),icharpp('argv','0'))
+gmsh.add('initialize',doc,None,argcargv())
 
 doc = '''Finalizes Gmsh. This must be called when you are done using the Gmsh API.'''
 gmsh.add('finalize',doc,None)
@@ -124,7 +124,7 @@ doc = '''Sets the mesh vertices in the geometrical entity of dimension `dim' and
 mesh.add('setVertices',doc,None,iint('dim'),iint('tag'),ivectorint('vertexTags'),ivectordouble('coord'),ivectordouble('parametricCoord','std::vector<double>()'))
 
 doc = '''Sets the mesh elements of the entity of dimension `dim' and `tag' tag. `types' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh reference manual). `elementTags' is a vector of length `types.size()'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `vertexTags' is also a vector of length `types.size()'; each entry is a vector of length equal to the number of elements of the give type times the number of vertices per element, that contains the vertex tags of all the elements of the given type, concatenated.'''
-#mesh.add('setElements',doc,None,iint('dim'),iint('tag'),ivectorint('types'),ivectorvectorint('elementTags'),ivectorvectorint('vertexTags'))
+mesh.add('setElements',doc,None,iint('dim'),iint('tag'),ivectorint('types'),ivectorvectorint('elementTags'),ivectorvectorint('vertexTags'))
 
 doc = '''Gets the coordinates and the parametric coordinates (if any) of the mesh vertex with tag `tag'. This is a useful by inefficient way of accessing mesh vertex data, as it relies on a cache stored in the model. For large meshes all the vertices in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
 mesh.add('getVertex',doc,None,iint('vertexTag'),ovectordouble('coord'),ovectordouble('parametricCoord'))
@@ -416,7 +416,7 @@ doc = '''Gets the tags of all views.'''
 view.add('getTags',doc,None,ovectorint('tags'))
 
 doc = '''Adds model-based post-processing data to the view with tag `tag'. `modelName' identifies the model the data is attached to. `dataType' specifies the type of data, currently either "NodeData", "ElementData" or "ElementNodeData". `tags' gives the tags of the vertices or elements in the mesh to which the data is associated. `data' is a vector of length `tags.size()`: each entry is the vector of double precision numbers representing the data associated with the corresponding tag. The optional `step` and `time` arguments associate a time step and time value with the data. `numComponents' gives the number of data components (1 for scalar data, 3 for vector data, etc.) per entity; if negative, it is automatically inferred (when possible) from the input data. `partition' allows to specify data in several sub-sets.'''
-#view.add('addModelData',doc,None,iint('tag'),istring('modelName'),istring('dataType'),ivectorint('tags'),ivectorvectordouble('data'),iint('step','0'),iint('time','0.'),iint('numComponents','-1'),iint('partition','0'))
+view.add('addModelData',doc,None,iint('tag'),istring('modelName'),istring('dataType'),ivectorint('tags'),ivectorvectordouble('data'),iint('step','0'),iint('time','0.'),iint('numComponents','-1'),iint('partition','0'))
 
 doc = '''Adds list-based post-processing data to the view with tag `tag'. `type' identifies the data: "SP" for scalar points, "VP", for vector points, etc. `numEle' gives the number of elements in the data. `data' contains the data for the `numEle' elements.'''
 view.add('addListData',doc,None,iint('tag'),istring('type'),iint('numEle'),ivectordouble('data'))
