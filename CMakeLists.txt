@@ -109,7 +109,7 @@ if(ENABLE_INTERNAL_DEVELOPER_API)
   message(WARNING "The internal developer API is unsupported and undocumented. "
       "It is meant for Gmsh (and related projects) developers, not for wide "
       "distribution. If you are packaging Gmsh for redistribution, please "
-      "DO NOT enable this and just ship the stable API (${GMSH_API}) instead.")
+      "DO NOT enable this and just ship the stable API (api/gmsh.h) instead.")
   file(GLOB_RECURSE HEADERS Common/*.h Numeric/*.h Geo/*.h Mesh/*.h Solver/*.h 
     Post/*.h Graphics/*.h contrib/kbipack/*.h contrib/DiscreteIntegration/*.h
     contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
@@ -124,8 +124,6 @@ endif(ENABLE_INTERNAL_DEVELOPER_API)
 
 set(ONELAB_PY contrib/onelab/python/onelab.py)
 set(GMSH_PY api/gmsh.py)
-
-file(COPY ${GMSH_PY} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 if(${CMAKE_MAJOR_VERSION} GREATER 2)
   string(TIMESTAMP DATE "%Y%m%d")
@@ -1473,10 +1471,9 @@ endif(ENABLE_BUILD_LIB)
 
 # shared library target
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
-  set(CMAKE_MACOSX_RPATH ON)
+  set(CMAKE_MACOSX_RPATH 0)
   add_library(shared SHARED ${GMSH_SRC})
-  set_target_properties(shared PROPERTIES OUTPUT_NAME gmsh)
-  set_target_properties(shared PROPERTIES
+  set_target_properties(shared PROPERTIES OUTPUT_NAME gmsh
     VERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}
     SOVERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
   if(HAVE_LAPACK AND LAPACK_FLAGS)
@@ -1487,17 +1484,12 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
             "won't link. In MSVC change /MT to /MD in the shared project properties")
   endif(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
   target_link_libraries(shared ${LINK_LIBRARIES})
+  # C wrappers
   add_library(sharedc SHARED api/gmshc.cpp)
-  
-  set_target_properties(sharedc PROPERTIES OUTPUT_NAME gmshc)
-  set_target_properties(sharedc PROPERTIES
+  set_target_properties(sharedc PROPERTIES OUTPUT_NAME gmshc SUFFIX .so
     VERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}
     SOVERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
   target_link_libraries(sharedc shared)
-  if(APPLE)
-    set_target_properties(shared PROPERTIES MACOSX_RPATH ".")
-    set_target_properties(sharedc PROPERTIES MACOSX_RPATH ".")
-  endif(APPLE)
 endif(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 
 # binary targets
@@ -1666,11 +1658,18 @@ else(WIN32 OR CYGWIN)
   set(GMSH_INC ${CMAKE_INSTALL_INCLUDEDIR})
 endif(WIN32 OR CYGWIN)
 
+# FIXME: change this once we understand rpaths :-)
+if(APPLE)
+  set_target_properties(shared PROPERTIES INSTALL_NAME_DIR 
+                        ${CMAKE_INSTALL_PREFIX}/${GMSH_LIB})
+endif(APPLE)
+
 # mark targets as optional so we can install them separately if needed
 # (e.g. "make lib" or "make shared" followed by "make install/fast")
 install(TARGETS gmsh DESTINATION ${GMSH_BIN} OPTIONAL)
 if(ENABLE_BUILD_LIB)
   install(TARGETS lib DESTINATION ${GMSH_LIB} OPTIONAL)
+  install(TARGETS libc DESTINATION ${GMSH_LIB} OPTIONAL)
 endif(ENABLE_BUILD_LIB)
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   if(WIN32 AND NOT MSVC OR CYGWIN)
@@ -1706,6 +1705,8 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   else(WIN32 AND NOT MSVC OR CYGWIN)
     install(TARGETS shared DESTINATION ${GMSH_LIB} OPTIONAL)
     install(TARGETS sharedc DESTINATION ${GMSH_LIB} OPTIONAL)
+    # FIXME once we cleanup the installation of the python module
+    install(TARGETS sharedc DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/api OPTIONAL)
   endif(WIN32 AND NOT MSVC OR CYGWIN)
 endif(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 
@@ -1714,7 +1715,6 @@ if(ENABLE_ONELAB)
 endif(ENABLE_ONELAB)
 if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   install(FILES ${GMSH_API} DESTINATION ${GMSH_INC})
-  install(FILES ${GMSH_PY} DESTINATION ${GMSH_LIB})
   if(ENABLE_INTERNAL_DEVELOPER_API)
     install(FILES ${GMSH_INTERNAL_DEVELOPER_API} DESTINATION ${GMSH_INC}/gmsh)
   endif(ENABLE_INTERNAL_DEVELOPER_API)

@@ -26,5 +26,5 @@ of the corresponding tutorials in gmsh/tutorials.
 
 2b) To run the Python examples:
 
-  export PYTHON_PATH=/path/to/gmsh/build
+  export PYTHON_PATH=/path/to/gmsh/api
   python demos/api/t1.py
