@@ -324,7 +324,7 @@ doc = '''TODO'''
 occ.add('addVolume',doc,oint,ivectorint('shellTags'),iint('tag','-1'))
 
 doc = '''TODO'''
-occ.add('addSphere',doc,oint,idouble('xc'),idouble('yc'),idouble('zc'),idouble('radius'),iint('tag','-1'),idouble('angle1','-M_PI/2','-pi/2'),idouble('angle2','M_PI/2','-pi/2'),idouble('angle3','2*M_PI','-pi/2'))
+occ.add('addSphere',doc,oint,idouble('xc'),idouble('yc'),idouble('zc'),idouble('radius'),iint('tag','-1'),idouble('angle1','-M_PI/2','-pi/2'),idouble('angle2','M_PI/2','pi/2'),idouble('angle3','2*M_PI','2*pi'))
 
 doc = '''TODO'''
 occ.add('addBox',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),iint('tag','-1'))

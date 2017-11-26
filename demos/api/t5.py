@@ -64,51 +64,51 @@ factory.addPlaneSurface([38], 39)
 shells = []
 
 # When the tag is not specified, a new one is automatically provided
-sl = factory.addSurfaceLoop([35,31,29,37,33,23,39,25,27], -1) #FIXME default args
+sl = factory.addSurfaceLoop([35,31,29,37,33,23,39,25,27])
 shells.append(sl)
 
 def cheeseHole(x, y, z, r, lc, shells):
-    p1 = factory.addPoint(x,  y,  z,   lc, -1) #FIXME default args
-    p2 = factory.addPoint(x+r,y,  z,   lc, -1) #FIXME default args
-    p3 = factory.addPoint(x,  y+r,z,   lc, -1) #FIXME default args
-    p4 = factory.addPoint(x,  y,  z+r, lc, -1) #FIXME default args
-    p5 = factory.addPoint(x-r,y,  z,   lc, -1) #FIXME default args
-    p6 = factory.addPoint(x,  y-r,z,   lc, -1) #FIXME default args
-    p7 = factory.addPoint(x,  y,  z-r, lc, -1) #FIXME default args
+    p1 = factory.addPoint(x,  y,  z,   lc)
+    p2 = factory.addPoint(x+r,y,  z,   lc)
+    p3 = factory.addPoint(x,  y+r,z,   lc)
+    p4 = factory.addPoint(x,  y,  z+r, lc)
+    p5 = factory.addPoint(x-r,y,  z,   lc)
+    p6 = factory.addPoint(x,  y-r,z,   lc)
+    p7 = factory.addPoint(x,  y,  z-r, lc)
 
-    c1 = factory.addCircleArc(p2,p1,p7, -1,0,0,0) #FIXME default args
-    c2 = factory.addCircleArc(p7,p1,p5, -1,0,0,0) #FIXME default args
-    c3 = factory.addCircleArc(p5,p1,p4, -1,0,0,0) #FIXME default args
-    c4 = factory.addCircleArc(p4,p1,p2, -1,0,0,0) #FIXME default args
-    c5 = factory.addCircleArc(p2,p1,p3, -1,0,0,0) #FIXME default args
-    c6 = factory.addCircleArc(p3,p1,p5, -1,0,0,0) #FIXME default args
-    c7 = factory.addCircleArc(p5,p1,p6, -1,0,0,0) #FIXME default args
-    c8 = factory.addCircleArc(p6,p1,p2, -1,0,0,0) #FIXME default args
-    c9 = factory.addCircleArc(p7,p1,p3, -1,0,0,0) #FIXME default args
-    c10 = factory.addCircleArc(p3,p1,p4, -1,0,0,0) #FIXME default args
-    c11 = factory.addCircleArc(p4,p1,p6, -1,0,0,0) #FIXME default args
-    c12 = factory.addCircleArc(p6,p1,p7, -1,0,0,0) #FIXME default args
+    c1 = factory.addCircleArc(p2,p1,p7)
+    c2 = factory.addCircleArc(p7,p1,p5)
+    c3 = factory.addCircleArc(p5,p1,p4)
+    c4 = factory.addCircleArc(p4,p1,p2)
+    c5 = factory.addCircleArc(p2,p1,p3)
+    c6 = factory.addCircleArc(p3,p1,p5)
+    c7 = factory.addCircleArc(p5,p1,p6)
+    c8 = factory.addCircleArc(p6,p1,p2)
+    c9 = factory.addCircleArc(p7,p1,p3)
+    c10 = factory.addCircleArc(p3,p1,p4)
+    c11 = factory.addCircleArc(p4,p1,p6)
+    c12 = factory.addCircleArc(p6,p1,p7)
     
-    l1 = factory.addLineLoop([c5,c10,c4], -1) #FIXME default args
-    l2 = factory.addLineLoop([c9,-c5,c1], -1) #FIXME default args
-    l3 = factory.addLineLoop([c12,-c8,-c1], -1) #FIXME default args
-    l4 = factory.addLineLoop([c8,-c4,c11], -1) #FIXME default args
-    l5 = factory.addLineLoop([-c10,c6,c3], -1) #FIXME default args
-    l6 = factory.addLineLoop([-c11,-c3,c7], -1) #FIXME default args
-    l7 = factory.addLineLoop([-c2,-c7,-c12], -1) #FIXME default args
-    l8 = factory.addLineLoop([-c6,-c9,c2], -1) #FIXME default args
+    l1 = factory.addLineLoop([c5,c10,c4])
+    l2 = factory.addLineLoop([c9,-c5,c1])
+    l3 = factory.addLineLoop([c12,-c8,-c1])
+    l4 = factory.addLineLoop([c8,-c4,c11])
+    l5 = factory.addLineLoop([-c10,c6,c3])
+    l6 = factory.addLineLoop([-c11,-c3,c7])
+    l7 = factory.addLineLoop([-c2,-c7,-c12])
+    l8 = factory.addLineLoop([-c6,-c9,c2])
     
-    s1 = factory.addSurfaceFilling([l1], -1,-1) #FIXME default args
-    s2 = factory.addSurfaceFilling([l2], -1,-1) #FIXME default args
-    s3 = factory.addSurfaceFilling([l3], -1,-1) #FIXME default args
-    s4 = factory.addSurfaceFilling([l4], -1,-1) #FIXME default args
-    s5 = factory.addSurfaceFilling([l5], -1,-1) #FIXME default args
-    s6 = factory.addSurfaceFilling([l6], -1,-1) #FIXME default args
-    s7 = factory.addSurfaceFilling([l7], -1,-1) #FIXME default args
-    s8 = factory.addSurfaceFilling([l8], -1,-1) #FIXME default args
+    s1 = factory.addSurfaceFilling([l1])
+    s2 = factory.addSurfaceFilling([l2])
+    s3 = factory.addSurfaceFilling([l3])
+    s4 = factory.addSurfaceFilling([l4])
+    s5 = factory.addSurfaceFilling([l5])
+    s6 = factory.addSurfaceFilling([l6])
+    s7 = factory.addSurfaceFilling([l7])
+    s8 = factory.addSurfaceFilling([l8])
     
-    sl = factory.addSurfaceLoop([s1, s2, s3, s4, s5, s6, s7, s8], -1) #FIXME default args
-    v = factory.addVolume([sl], -1) #FIXME default args
+    sl = factory.addSurfaceLoop([s1, s2, s3, s4, s5, s6, s7, s8])
+    v = factory.addVolume([sl])
     shells.append(sl)
     return v
 

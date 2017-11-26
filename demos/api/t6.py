@@ -30,14 +30,14 @@ model.setPhysicalName(2, 6, "My surface")
 # ...end of copy
 
 # Delete surface 1 and left boundary (line 4)
-factory.remove([[2,1], [1,4]], False)  #FIXME default args
+factory.remove([[2,1], [1,4]])
 
 # Replace left boundary with 3 new lines
-p1 = factory.addPoint(-0.05, 0.05, 0, lc, -1) #FIXME default args
-p2 = factory.addPoint(-0.05, 0.1, 0, lc, -1) #FIXME default args
-l1 = factory.addLine(1, p1, -1) #FIXME default args
-l2 = factory.addLine(p1, p2, -1) #FIXME default args
-l3 = factory.addLine(p2, 4, -1) #FIXME default args
+p1 = factory.addPoint(-0.05, 0.05, 0, lc)
+p2 = factory.addPoint(-0.05, 0.1, 0, lc)
+l1 = factory.addLine(1, p1)
+l2 = factory.addLine(p1, p2)
+l3 = factory.addLine(p2, 4)
 
 # Recreate surface
 factory.addLineLoop([2, -1, l1, l2, l3, -3], 2)
@@ -49,9 +49,9 @@ factory.mesh.setTransfiniteLine(2, 20, "Bump", 0.05)
 # Put 20 points total on combination of curves l1, l2 and l3 (beware that the
 # points p1 and p2 are shared by the curves, so we do not create 6 + 6 + 10 = 22
 # points, but 20!)
-factory.mesh.setTransfiniteLine(l1, 6, "", 1) #FIXME default args
-factory.mesh.setTransfiniteLine(l2, 6, "", 1) #FIXME default args
-factory.mesh.setTransfiniteLine(l3, 10, "", 1) #FIXME default args
+factory.mesh.setTransfiniteLine(l1, 6)
+factory.mesh.setTransfiniteLine(l2, 6)
+factory.mesh.setTransfiniteLine(l3, 10)
 
 # Put 30 points following a geometric progression on curve 1 (reversed) and on
 # curve 3
@@ -63,7 +63,7 @@ factory.mesh.setTransfiniteLine(3, 30, "Progression", 1.2)
 factory.mesh.setTransfiniteSurface(1, "Left", [1,2,3,4])
 
 # Recombine the triangles into quads
-factory.mesh.setRecombine(2, 1, 0) #FIXME default args
+factory.mesh.setRecombine(2, 1)
 
 # Apply an elliptic smoother to the grid
 gmsh.option.setNumber("Mesh.Smoothing", 100)
@@ -83,8 +83,8 @@ factory.addLine(7, 8, 13)
 factory.addLineLoop([13, 10, 11, 12], 14)
 factory.addPlaneSurface([14], 15)
 for i in range(10,14):
-    factory.mesh.setTransfiniteLine(i, 10, "",1) #FIXME default args
-factory.mesh.setTransfiniteSurface(15, "",[]) #FIXME default args
+    factory.mesh.setTransfiniteLine(i, 10)
+factory.mesh.setTransfiniteSurface(15)
 model.addPhysicalGroup(2, [15], 2)
 
 model.mesh.generate(2)

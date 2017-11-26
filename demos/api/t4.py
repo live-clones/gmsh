@@ -56,23 +56,23 @@ factory.addPoint( 0, h1+h3-R2,    0, Lc2, 25)
 factory.addLine(1 , 17, 1)
 factory.addLine(17, 16, 2)
 
-factory.addCircleArc(14,15,16, 3, 0,0,0) #FIXME default args
+factory.addCircleArc(14,15,16, 3)
 factory.addLine(14,13, 4)
 factory.addLine(13,12, 5)
 factory.addLine(12,11, 6)
 factory.addLine(11,10, 7)
-factory.addCircleArc(8,9,10, 8, 0,0,0) #FIXME default args
+factory.addCircleArc(8,9,10, 8)
 factory.addLine(8,7, 9)
 factory.addLine(7,6, 10)
 factory.addLine(6,5, 11)
-factory.addCircleArc(3,4,5, 12, 0,0,0) #FIXME default args
+factory.addCircleArc(3,4,5, 12)
 factory.addLine(3,2, 13)
 factory.addLine(2,1, 14)
 factory.addLine(18,19, 15)
-factory.addCircleArc(21,20,24, 16, 0,0,0) #FIXME default args
-factory.addCircleArc(24,20,19, 17, 0,0,0) #FIXME default args
-factory.addCircleArc(18,23,25, 18, 0,0,0) #FIXME default args
-factory.addCircleArc(25,23,22, 19, 0,0,0) #FIXME default args
+factory.addCircleArc(21,20,24, 16)
+factory.addCircleArc(24,20,19, 17)
+factory.addCircleArc(18,23,25, 18)
+factory.addCircleArc(25,23,22, 19)
 factory.addLine(21,22, 20)
 
 factory.addLineLoop([17,-15,18,19,-20,16], 21)

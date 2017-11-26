@@ -15,10 +15,10 @@ for step in range(0, 10):
     tri1.append(10.); tri1.append(10.); tri1.append(12. + step)
     tri2.append(10.); tri2.append(12. + step); tri2.append(13. + step)
 
-t = gmsh.view.add("some data", -1)#FIXME default args
+t = gmsh.view.add("some data")
 
 gmsh.view.addListData(t, "ST", 2, tri1 + tri2)
 
-gmsh.view.write(t, "data.pos", False)#FIXME default args
+gmsh.view.write(t, "data.pos")
 
 gmsh.finalize()

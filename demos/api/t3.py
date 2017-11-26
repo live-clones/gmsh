@@ -35,14 +35,14 @@ angle = 90.
 # Extruding the mesh in addition to the geometry works as in .geo files: the
 # number of elements for each layer and the (end) height of each layer are
 # specified in two vectors.
-ov = factory.extrude([(2,1)], 0, 0, h, [8,2], [0.5,1], False) #FIXME default args
+ov = factory.extrude([(2,1)], 0, 0, h, [8,2], [0.5,1])
 
 #/ Rotational and twisted extrusions are available as well with the built-in CAD
 # kernel. The last (optional) argument for the Extrude/Revolve/Twist commands
 # specified whether the extruded mesh should be recombined or not.
-ov = factory.revolve([(2,28)], -0.1,0,0.1, 0,1,0, -math.pi/2, [7], [], False)
+ov = factory.revolve([(2,28)], -0.1,0,0.1, 0,1,0, -math.pi/2, [7])
 ov = factory.twist([(2,50)], 0,0.15,0.25, -2*h,0,0, 1,0,0, angle*math.pi/180.,
-                   [10], [], True) #FIXME default args
+                   [10], [], True)
 
 model.addPhysicalGroup(3, [1, 2, ov[1][1]], 101)
 

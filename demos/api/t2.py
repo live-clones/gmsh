@@ -92,7 +92,7 @@ factory.addVolume([128], 129)
 
 # Extrusion works as expected, by providing a vector of (dim, tag) pairs as
 # input, the translation vector, and a vector of (dim, tag) pairs as output.
-ov2 = factory.extrude([ov[1]], 0, 0, 0.12, [], [], False) #FIXME default args
+ov2 = factory.extrude([ov[1]], 0, 0, 0.12)
 
 # Mesh sizes associated to geometrical points can be set by passing a vector of
 # (dim, tag) pairs for the corresponding points.

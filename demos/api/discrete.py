@@ -7,7 +7,7 @@ gmsh.option.setNumber("General.Terminal", 1)
 gmsh.model.add("test");
 
 # add discrete surface with tag 1
-gmsh.model.addDiscreteEntity(2, 1, []) #FIXME default args
+gmsh.model.addDiscreteEntity(2, 1)
 
 # add 4 mesh vertices
 gmsh.model.mesh.setVertices(2, 1,
@@ -15,7 +15,7 @@ gmsh.model.mesh.setVertices(2, 1,
                             [0., 0., 0., # coordinates of vertex 1
                              1., 0., 0., # coordinates of vertex 2
                              1., 1., 0., # ...
-                             0., 1., 0.], []) #FIXME default args
+                             0., 1., 0.])
 
 # add 2 triangles
 gmsh.model.mesh.setElements(2, 1,

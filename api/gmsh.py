@@ -2152,7 +2152,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSphere(xc,yc,zc,radius,tag=-1,angle1=-pi/2,angle2=-pi/2,angle3=-pi/2):
+        def addSphere(xc,yc,zc,radius,tag=-1,angle1=-pi/2,angle2=pi/2,angle3=2*pi):
             """
             TODO
 

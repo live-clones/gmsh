@@ -6,12 +6,12 @@ gmsh.option.setNumber("General.Terminal", 1)
 
 # Copied from discrete.py...
 gmsh.model.add("test");
-gmsh.model.addDiscreteEntity(2, 1, [])#FIXME default args
+gmsh.model.addDiscreteEntity(2, 1)
 gmsh.model.mesh.setVertices(2, 1, [1, 2, 3, 4],
                             [0., 0., 0.,
                              1., 0., 0.,
                              1., 1., 0.,
-                             0., 1., 0.], [])#FIXME default args
+                             0., 1., 0.])
 gmsh.model.mesh.setElements(2, 1, [2], [[1, 2]],
                             [[1, 2, 3,
                               1, 3, 4]])

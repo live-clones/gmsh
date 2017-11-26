@@ -1,30 +1,32 @@
-This directory contains examples on how to use the Gmsh API in C++ and in
-Python. The full API is available in Common/gmsh.h.
+This directory contains examples on how to use the Gmsh API.
 
 The files t1.{cpp,py}, t2.{cpp,py}, ... are reimplementations in C++ and Python
 of the corresponding tutorials in gmsh/tutorials.
 
-1) Build and install the Gmsh library (this is done automatically when building
-   the dynamically-linked Gmsh app):
+To run the examples, you first need to build and install the Gmsh library (this
+is done automatically when building the dynamically-linked Gmsh app). To do so,
+follow these steps, in the top-level directory of the Gmsh source code:
 
-  cd gmsh
   mkdir build
   cd build
   cmake -DENABLE_BUILD_DYNAMIC=1 ..
   make
   make install
+
+Then, to build and run the C++ examples:
+
   cd ..
-
-2a) To build the C++ examples:
-
   cd demos/api
   mkdir build
   cd build
   cmake ..
   make
   ./t1
+  ./t2
 
-2b) To run the Python examples:
+To run the Python examples, add the top-level api directory to your PYTHON_PATH
+and simply run the examples with Python:
 
   export PYTHON_PATH=/path/to/gmsh/api
-  python demos/api/t1.py
+  python t1.py
+  python t2.py

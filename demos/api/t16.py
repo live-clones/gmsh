@@ -13,7 +13,7 @@ model.add("t16")
 
 factory.addBox(0,0,0, 1,1,1, 1)
 factory.addBox(0,0,0, 0.5,0.5,0.5, 2)
-factory.booleanDifference([(3,1)], [(3,2)], 3, True,True) #FIXME default args
+factory.booleanDifference([(3,1)], [(3,2)], 3)
 
 x = 0; y = 0.75; z = 0; r = 0.09
 
@@ -21,10 +21,10 @@ holes = []
 for t in range(1, 6):
     x += 0.166
     z += 0.166
-    factory.addSphere(x,y,z,r, 3 + t, -math.pi/2, math.pi/2, 2*math.pi) #FIXME default args
+    factory.addSphere(x,y,z,r, 3 + t)
     holes.append((3, 3 + t))
 
-ov, ovv = factory.booleanFragments([(3,3)], holes, -1,True,True) #FIXME default args
+ov, ovv = factory.booleanFragments([(3,3)], holes)
 
 factory.synchronize()
 
