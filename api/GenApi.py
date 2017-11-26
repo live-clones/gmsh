@@ -97,8 +97,8 @@ def ivectorpair(name,value=None):
     a = arg(name,value,"const gmsh::vector_pair &","const int *",False)
     a.c_arg = "intptr2pairvector("+name+","+name+"_n)"
     a.c = "int* "+name+", size_t "+name+"_n"
-    a.python_pre = "api_"+name+"_, api"+name+"_n_ = _ivectorpair("+name+")"
-    a.python_arg = "api_"+name+"_, api"+name+"_n_"
+    a.python_pre = "api_"+name+"_, api_"+name+"_n_ = _ivectorpair("+name+")"
+    a.python_arg = "api_"+name+"_, api_"+name+"_n_"
     return a
 
 def ibool(name,value=None):
@@ -117,8 +117,8 @@ def ivectorint(name,value=None):
     a = arg(name,value,"const std::vector<int> &","const int *",False)
     a.c_arg = "ptr2vector("+name+","+name+"_n)"
     a.c = "int* "+name+", size_t "+name+"_n"
-    a.python_pre = "api_"+name+"_, api"+name+"_n_ = _ivectorint("+name+")"
-    a.python_arg = "api_"+name+"_, api"+name+"_n_"
+    a.python_pre = "api_"+name+"_, api_"+name+"_n_ = _ivectorint("+name+")"
+    a.python_arg = "api_"+name+"_, api_"+name+"_n_"
     return a
 
 def ivectorvectorint(name,value=None):
@@ -154,8 +154,8 @@ def ivectordouble(name,value=None):
     a = arg(name,value,"const std::vector<double> &","double **",False)
     a.c_arg = "ptr2vector("+name+","+name+"_n)"
     a.c  = "double* "+name+", size_t "+name+"_n"
-    a.python_pre = "api_"+name+"_, api"+name+"_n_ = _ivectordouble("+name+")"
-    a.python_arg = "api_"+name+"_, api"+name+"_n_"
+    a.python_pre = "api_"+name+"_, api_"+name+"_n_ = _ivectordouble("+name+")"
+    a.python_arg = "api_"+name+"_, api_"+name+"_n_"
     return a
 
 def ovectordouble(name,value=None):
