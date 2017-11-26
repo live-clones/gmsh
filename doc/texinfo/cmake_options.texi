@@ -22,7 +22,7 @@ Enable dynamic Gmsh executable (linked with shared lib) (default: OFF)
 @item ENABLE_BUILD_ANDROID
 Enable Android NDK library target (experimental) (default: OFF)
 @item ENABLE_BUILD_IOS
-Enable iOS (ARM) library target (experimental) (default: OFF)
+Enable iOS library target (experimental) (default: OFF)
 @item ENABLE_CGNS
 Enable CGNS mesh export (experimental) (default: OFF)
 @item ENABLE_CAIRO
@@ -31,6 +31,8 @@ Enable Cairo to render fonts (experimental) (default: ON)
 Enable Chaco mesh partitioner (alternative to Metis) (default: ON)
 @item ENABLE_COMPRESSED_IO
 Enable compressed (gzip) input/output using zlib (default: OFF)
+@item ENABLE_CXX11
+Enable C++11 (default: ON)
 @item ENABLE_DINTEGRATION
 Enable discrete integration (needed for levelsets) (default: ON)
 @item ENABLE_FLTK
@@ -45,6 +47,8 @@ Enable GMM linear solvers (simple alternative to PETSc) (default: ON)
 Enable GMP for Kbipack (advanced) (default: ON)
 @item ENABLE_GRAPHICS
 Enable building graphics lib even without GUI (advanced) (default: OFF)
+@item ENABLE_INTERNAL_DEVELOPER_API
+Enable internal developer API (default: OFF)
 @item ENABLE_KBIPACK
 Enable Kbipack (neeeded by homology solver) (default: ON)
 @item ENABLE_MATHEX
@@ -70,11 +74,13 @@ Enable native file chooser in GUI (default: ON)
 @item ENABLE_NETGEN
 Enable Netgen 3D frontal mesh generator (default: ON)
 @item ENABLE_NUMPY
-Enable conversion between fullMatrix and numpy array (requires SWIG) (default: OFF)
+Enable fullMatrix and numpy array conversion for internal developer API (default: OFF)
 @item ENABLE_PETSC4PY
-Enable petsc4py wrappers for petsc matrices (default: ON)
+Enable petsc4py wrappers for petsc matrices in internal developer API (default: ON)
 @item ENABLE_OCC
-Enable Open CASCADE geometrical models (default: ON)
+Enable OpenCASCADE geometrical models (default: ON)
+@item ENABLE_OCC_CAF
+Enable OpenCASCADE CAF module (default: OFF)
 @item ENABLE_ONELAB
 Enable ONELAB solver interface (default: ON)
 @item ENABLE_ONELAB_METAMODEL
@@ -84,7 +90,7 @@ Enable OpenMP (experimental) (default: OFF)
 @item ENABLE_OPTHOM
 Enable high-order mesh optimization tools (default: ON)
 @item ENABLE_OS_SPECIFIC_INSTALL
-Enable OS-specific (e.g. app bundle) installation (default: ON)
+Enable OS-specific (e.g. app bundle) installation (default: OFF)
 @item ENABLE_OSMESA
 Enable OSMesa for offscreen rendering (experimental) (default: OFF)
 @item ENABLE_PARSER
@@ -101,10 +107,6 @@ Enable Poppler for displaying PDF documents (experimental) (default: OFF)
 Enable dummy QT graphical interface proof-of-concept (experimental) (default: OFF)
 @item ENABLE_REVOROPT
 Enable Revoropt (used for CVT remeshing) (default: OFF)
-@item ENABLE_SALOME
-Enable Salome routines for CAD healing (default: ON)
-@item ENABLE_SGEOM
-Enable SGEOM interface to OCC (experimental) (default: OFF)
 @item ENABLE_SLEPC
 Enable SLEPc eigensolvers (required for conformal compounds) (default: ON)
 @item ENABLE_SOLVER
@@ -115,11 +117,13 @@ Enable Taucs linear solver (default: ON)
 Enable libtcmalloc, a fast malloc implementation but that does not release memory (default: OFF)
 @item ENABLE_TETGEN
 Enable Tetgen 3D initial mesh generator (default: ON)
+@item ENABLE_VISUDEV
+Enable additional visualization capabilities for development purpose (default: OFF)
 @item ENABLE_VORO3D
 Enable Voro3D (for hex meshing, experimental) (default: ON)
 @item ENABLE_WRAP_JAVA
-Enable generation of Java wrappers (experimental) (default: OFF)
+Enable generation of Java wrappers for internal developer API (default: OFF)
 @item ENABLE_WRAP_PYTHON
-Enable generation of Python wrappers (default: OFF)
+Enable generation of Python wrappers for internal developer API (default: OFF)
 @item ENABLE_ZIPPER
 Enable Zip file compression/decompression (default: OFF)

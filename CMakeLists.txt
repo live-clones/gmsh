@@ -1471,6 +1471,7 @@ endif(ENABLE_BUILD_LIB)
 
 # shared library target
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
+  # FIXME: change this once we understand rpaths
   set(CMAKE_MACOSX_RPATH 0)
   add_library(shared SHARED ${GMSH_SRC})
   set_target_properties(shared PROPERTIES OUTPUT_NAME gmsh
@@ -1658,10 +1659,14 @@ else(WIN32 OR CYGWIN)
   set(GMSH_INC ${CMAKE_INSTALL_INCLUDEDIR})
 endif(WIN32 OR CYGWIN)
 
-# FIXME: change this once we understand rpaths :-)
+# FIXME: change this once we understand rpaths
 if(APPLE)
-  set_target_properties(shared PROPERTIES INSTALL_NAME_DIR 
-                        ${CMAKE_INSTALL_PREFIX}/${GMSH_LIB})
+  if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
+    set_target_properties(shared PROPERTIES INSTALL_NAME_DIR 
+                          ${CMAKE_INSTALL_PREFIX}/${GMSH_LIB})
+    set_target_properties(sharedc PROPERTIES INSTALL_NAME_DIR 
+                          ${CMAKE_INSTALL_PREFIX}/${GMSH_LIB})
+  endif(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
 endif(APPLE)
 
 # mark targets as optional so we can install them separately if needed
