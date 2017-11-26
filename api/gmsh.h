@@ -61,6 +61,11 @@ namespace gmsh {
 }
 namespace gmsh { // Top-level functions
 
+  // Initializes Gmsh. This must be called before any call to the other functions
+  // in the API. If argc and argv are provided, they will be handled in the same
+  // way as the command line arguments in the Gmsh app.
+  GMSH_API void initialize(int argc = 0, char **argv = 0);
+
   // Finalizes Gmsh. This must be called when you are done using the Gmsh API.
   GMSH_API void finalize();
 
@@ -257,6 +262,21 @@ namespace gmsh { // Top-level functions
                                 const std::vector<int> & vertexTags,
                                 const std::vector<double> & coord,
                                 const std::vector<double> & parametricCoord = std::vector<double>());
+
+      // Sets the mesh elements of the entity of dimension `dim' and `tag' tag.
+      // `types' contains the MSH types of the elements (e.g. `2' for 3-node
+      // triangles: see the Gmsh reference manual). `elementTags' is a vector of
+      // length `types.size()'; each entry is a vector containing the tags (unique,
+      // strictly positive identifiers) of the elements of the corresponding type.
+      // `vertexTags' is also a vector of length `types.size()'; each entry is a
+      // vector of length equal to the number of elements of the give type times
+      // the number of vertices per element, that contains the vertex tags of all
+      // the elements of the given type, concatenated.
+      GMSH_API void setElements(const int dim,
+                                const int tag,
+                                const std::vector<int> & types,
+                                const std::vector<std::vector<int> >& elementTags,
+                                const std::vector<std::vector<int> >& vertexTags);
 
       // Gets the coordinates and the parametric coordinates (if any) of the mesh
       // vertex with tag `tag'. This is a useful by inefficient way of accessing
@@ -994,6 +1014,28 @@ namespace gmsh { // Top-level functions
 
     // Gets the tags of all views.
     GMSH_API void getTags(std::vector<int> & tags);
+
+    // Adds model-based post-processing data to the view with tag `tag'.
+    // `modelName' identifies the model the data is attached to. `dataType'
+    // specifies the type of data, currently either "NodeData", "ElementData" or
+    // "ElementNodeData". `tags' gives the tags of the vertices or elements in the
+    // mesh to which the data is associated. `data' is a vector of length
+    // `tags.size()`: each entry is the vector of double precision numbers
+    // representing the data associated with the corresponding tag. The optional
+    // `step` and `time` arguments associate a time step and time value with the
+    // data. `numComponents' gives the number of data components (1 for scalar
+    // data, 3 for vector data, etc.) per entity; if negative, it is automatically
+    // inferred (when possible) from the input data. `partition' allows to specify
+    // data in several sub-sets.
+    GMSH_API void addModelData(const int tag,
+                               const std::string & modelName,
+                               const std::string & dataType,
+                               const std::vector<int> & tags,
+                               const std::vector<std::vector<double> >& data,
+                               const int step = 0,
+                               const int time = 0.,
+                               const int numComponents = -1,
+                               const int partition = 0);
 
     // Adds list-based post-processing data to the view with tag `tag'. `type'
     // identifies the data: "SP" for scalar points, "VP", for vector points, etc.
