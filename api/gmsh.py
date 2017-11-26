@@ -33,7 +33,7 @@ else:
 
 use_numpy = False
 try :
-    import numpy2
+    import numpy
     use_numpy = True
     try : 
         from weakref import finalize as weakreffinalize
