@@ -66,8 +66,8 @@ opt(MSVC_STATIC_RUNTIME "Enable static Visual C++ runtime" OFF)
 opt(MUMPS "Enable MUMPS sparse direct linear solver" OFF)
 opt(NATIVE_FILE_CHOOSER "Enable native file chooser in GUI" ${DEFAULT})
 opt(NETGEN "Enable Netgen 3D frontal mesh generator" ${DEFAULT})
-opt(NUMPY "Enable conversion between fullMatrix and numpy array (requires SWIG)" OFF)
-opt(PETSC4PY "Enable petsc4py wrappers for petsc matrices" ON)
+opt(NUMPY "Enable fullMatrix and numpy array conversion for internal developer API" OFF)
+opt(PETSC4PY "Enable petsc4py wrappers for petsc matrices in internal developer API" ON)
 opt(OCC "Enable OpenCASCADE geometrical models" ${DEFAULT})
 opt(OCC_CAF "Enable OpenCASCADE CAF module" OFF)
 opt(ONELAB "Enable ONELAB solver interface" ${DEFAULT})
@@ -90,8 +90,8 @@ opt(TCMALLOC "Enable libtcmalloc, a fast malloc implementation but that does not
 opt(TETGEN "Enable Tetgen 3D initial mesh generator" ${DEFAULT})
 opt(VISUDEV "Enable additional visualization capabilities for development purpose" OFF)
 opt(VORO3D "Enable Voro3D (for hex meshing, experimental)" ${DEFAULT})
-opt(WRAP_JAVA "Enable generation of Java wrappers" OFF)
-opt(WRAP_PYTHON "Enable generation of Python wrappers" OFF)
+opt(WRAP_JAVA "Enable generation of Java wrappers for internal developer API" OFF)
+opt(WRAP_PYTHON "Enable generation of Python wrappers for internal developer API" OFF)
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 3)
@@ -103,7 +103,7 @@ set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
 set(GMSH_VERSION "${GMSH_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}")
 set(GMSH_SHORT_LICENSE "GNU General Public License")
 
-set(GMSH_API Common/gmsh.h)
+set(GMSH_API api/gmsh.h)
 
 if(ENABLE_INTERNAL_DEVELOPER_API)
   message(WARNING "The internal developer API is unsupported and undocumented. "
@@ -187,9 +187,11 @@ if(NOT APPLE)
   endif(HAVE_64BIT_SIZE_T)
 endif(NOT APPLE)
 
-if(ENABLE_WRAP_PYTHON AND NOT ENABLE_BUILD_SHARED)
-  set(ENABLE_BUILD_DYNAMIC ON)
-endif(ENABLE_WRAP_PYTHON AND NOT ENABLE_BUILD_SHARED)
+if(NOT ENABLE_BUILD_SHARED)
+  if(ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
+    set(ENABLE_BUILD_DYNAMIC ON)
+  endif(ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
+endif(NOT ENABLE_BUILD_SHARED)
 
 if(MSVC)
   # remove annoying warning about bool/int cast performance
@@ -1203,66 +1205,48 @@ if(ENABLE_ZIPPER)
   endif(HAVE_LIBZ)
 endif(ENABLE_ZIPPER)
 
-if(ENABLE_WRAP_PYTHON)
+if(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_PYTHON)
   find_package(SWIG REQUIRED)
   include(${SWIG_USE_FILE})
   find_package(PythonLibs)
   if(SWIG_FOUND AND PYTHONLIBS_FOUND)
     message(STATUS "Found SWIG version " ${SWIG_VERSION})
-    # stable API bindings
-    include_directories(${PYTHON_INCLUDE_PATH})
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-    set(CMAKE_SWIG_FLAGS "")
-    set_source_files_properties(Common/gmsh.i PROPERTIES CPLUSPLUS ON)
-    if(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.8)
-      swig_add_library(gmsh LANGUAGE python SOURCES Common/gmsh.i)
-    else(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.8)
-      swig_add_module(gmsh python Common/gmsh.i)
-    endif(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.8)
-    swig_link_libraries(gmsh ${PYTHON_LIBRARIES} shared)
-    if(APPLE)
-      set_target_properties("_gmsh" PROPERTIES LINK_FLAGS
-                            "-undefined suppress -flat_namespace")
-    endif(APPLE)
-    # internal developer API bindings
-    if(ENABLE_INTERNAL_DEVELOPER_API)
-      find_package(PythonInterp)
-      string(SUBSTRING ${SWIG_VERSION} 0 1 SWIG_MAJOR_VERSION)
-      if(SWIG_MAJOR_VERSION EQUAL 1)
-        message(WARNING "Python bindings require SWIG >= 2: disabling Python")
-      else(SWIG_MAJOR_VERSION EQUAL 1)
-        set_config_option(HAVE_PYTHON "Python")
-        mark_as_advanced(CLEAR PYTHON_LIBRARY PYTHON_INCLUDE_DIR)
-        if(ENABLE_NUMPY)
-          if (NOT NUMPY_INC)
-            EXEC_PROGRAM (${PYTHON_EXECUTABLE}
-              ARGS "-c \"import numpy; print(numpy.get_include())\""
-              OUTPUT_VARIABLE NUMPY_INC
-              RETURN_VALUE NUMPY_NOT_FOUND)
-          endif(NOT NUMPY_INC)
-          if(NUMPY_INC)
-            list(APPEND EXTERNAL_INCLUDES ${NUMPY_INC})
-            set_config_option(HAVE_NUMPY "Numpy")
-          endif(NUMPY_INC)
-        endif(ENABLE_NUMPY)
-        if(HAVE_PETSC)
-          if(ENABLE_PETSC4PY)
-            EXECUTE_PROCESS(
-              COMMAND ${PYTHON_EXECUTABLE} -c "import petsc4py; print(petsc4py.get_include())"
-              OUTPUT_VARIABLE PETSC4PY_INC
-              RESULT_VARIABLE PETSC4PY_NOT_FOUND
-              ERROR_QUIET
-              OUTPUT_STRIP_TRAILING_WHITESPACE)
-            if(PETSC4PY_INC)
-              list(APPEND EXTERNAL_INCLUDES ${PETSC4PY_INC})
-              set_config_option(HAVE_PETSC4PY "PETSc4py")
-            endif(PETSC4PY_INC)
-          endif(ENABLE_PETSC4PY)
-        endif(HAVE_PETSC)
-      endif(SWIG_MAJOR_VERSION EQUAL 1)
-    endif(ENABLE_INTERNAL_DEVELOPER_API)
+    find_package(PythonInterp)
+    string(SUBSTRING ${SWIG_VERSION} 0 1 SWIG_MAJOR_VERSION)
+    if(SWIG_MAJOR_VERSION EQUAL 1)
+      message(WARNING "Python bindings require SWIG >= 2: disabling Python")
+    else(SWIG_MAJOR_VERSION EQUAL 1)
+      set_config_option(HAVE_PYTHON "Python")
+      mark_as_advanced(CLEAR PYTHON_LIBRARY PYTHON_INCLUDE_DIR)
+      if(ENABLE_NUMPY)
+        if (NOT NUMPY_INC)
+          EXEC_PROGRAM (${PYTHON_EXECUTABLE}
+            ARGS "-c \"import numpy; print(numpy.get_include())\""
+            OUTPUT_VARIABLE NUMPY_INC
+            RETURN_VALUE NUMPY_NOT_FOUND)
+        endif(NOT NUMPY_INC)
+        if(NUMPY_INC)
+          list(APPEND EXTERNAL_INCLUDES ${NUMPY_INC})
+          set_config_option(HAVE_NUMPY "Numpy")
+        endif(NUMPY_INC)
+      endif(ENABLE_NUMPY)
+      if(HAVE_PETSC)
+        if(ENABLE_PETSC4PY)
+          EXECUTE_PROCESS(
+            COMMAND ${PYTHON_EXECUTABLE} -c "import petsc4py; print(petsc4py.get_include())"
+            OUTPUT_VARIABLE PETSC4PY_INC
+            RESULT_VARIABLE PETSC4PY_NOT_FOUND
+            ERROR_QUIET
+            OUTPUT_STRIP_TRAILING_WHITESPACE)
+          if(PETSC4PY_INC)
+            list(APPEND EXTERNAL_INCLUDES ${PETSC4PY_INC})
+            set_config_option(HAVE_PETSC4PY "PETSc4py")
+          endif(PETSC4PY_INC)
+        endif(ENABLE_PETSC4PY)
+      endif(HAVE_PETSC)
+    endif(SWIG_MAJOR_VERSION EQUAL 1)
   endif(SWIG_FOUND AND PYTHONLIBS_FOUND)
-endif(ENABLE_WRAP_PYTHON)
+endif(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_PYTHON)
 
 check_function_exists(vsnprintf HAVE_VSNPRINTF)
 if(NOT HAVE_VSNPRINTF AND NOT ENABLE_BUILD_IOS AND NOT ENABLE_BUILD_ANDROID)
@@ -1455,7 +1439,7 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 # we could specify include dirs more selectively, but this is simpler
 include_directories(Common Fltk Geo Graphics Mesh Solver Numeric Parser
-  Plugin Post Qt ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/Common)
+  Plugin Post Qt api ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/Common)
 
 # set this for external codes that might include this CMakeList file
 set(GMSH_EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDES} CACHE
@@ -1501,8 +1485,7 @@ if(ENABLE_BUILD_ANDROID)
 endif(ENABLE_BUILD_ANDROID)
 
 # shared library target
-if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC OR
-   ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
+if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   add_library(shared SHARED ${GMSH_SRC})
   set_target_properties(shared PROPERTIES OUTPUT_NAME gmsh)
   set_target_properties(shared PROPERTIES
@@ -1516,8 +1499,7 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC OR
             "won't link. In MSVC change /MT to /MD in the shared project properties")
   endif(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
   target_link_libraries(shared ${LINK_LIBRARIES})
-endif(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC OR
-      ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
+endif(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 
 # binary targets
 if(HAVE_FLTK)
@@ -1891,13 +1873,13 @@ else(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
   set(CPACK_GENERATOR TGZ)
 endif(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
 
-if(ENABLE_WRAP_PYTHON AND HAVE_PYTHON AND ENABLE_INTERNAL_DEVELOPER_API)
+if(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_PYTHON AND HAVE_PYTHON)
   add_subdirectory(wrappers/gmshpy)
-endif(ENABLE_WRAP_PYTHON AND HAVE_PYTHON AND ENABLE_INTERNAL_DEVELOPER_API)
+endif(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_PYTHON AND HAVE_PYTHON)
 
-if(ENABLE_WRAP_JAVA AND ENABLE_INTERNAL_DEVELOPER_API)
+if(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_JAVA)
   add_subdirectory(wrappers/java)
-endif(ENABLE_WRAP_JAVA AND ENABLE_INTERNAL_DEVELOPER_API)
+endif(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_JAVA)
 
 include(CPack)
 

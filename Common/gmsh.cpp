@@ -4,7 +4,6 @@
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <sstream>
-#include "gmsh.h"
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "GmshGlobal.h"
@@ -45,6 +44,8 @@
 #if defined(HAVE_PLUGINS)
 #include "PluginManager.h"
 #endif
+
+#include "gmsh.h" // automatically generated, in gmsh/api
 
 static int _initialized = 0;
 

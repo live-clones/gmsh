@@ -1,3 +1,10 @@
+# Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+#
+# See the LICENSE.txt file for license information. Please report all
+# bugs and problems to the public mailing list <gmsh@onelab.info>.
+
+# Contributed by Jonathan Lambrechts
+
 import textwrap
 class arg:
 
@@ -33,17 +40,17 @@ class oint(arg):
     rtype_cpp = "int"
     rtype_c = "int"
     def __init__(self,name,value=None):
-        arg.__init__(self,name,value,"int&","int*",True)
+        arg.__init__(self,name,value,"int &","int *",True)
         self.c_arg = "*"+name
 
 def istring(name,value=None):
     #value = "\""+value+"\"" if value is not None else None
-    a = arg(name,value,"const std::string&","const char*",False)
+    a = arg(name,value,"const std::string &","const char *",False)
     a.python_arg = "c_char_p("+name+".encode())"
     return a
 
 def ostring(name,value=None):
-    a = arg(name,value,"std::string &","char**",True)
+    a = arg(name,value,"std::string &","char **",True)
     a.c_arg = "api_"+name+"_"
     a.c_pre = "  std::string "+a.c_arg +";\n"
     a.c_post = "  *"+name+" = _strdup("+a.c_arg+".c_str());\n"
@@ -59,7 +66,7 @@ def idouble(name,value=None):
      return a
 
 def odouble(name,value=None):
-    a = arg(name,value,"double&","double*",True)
+    a = arg(name,value,"double &","double *",True)
     a.c_arg = "*"+name
     name_ = "api_"+name+"_"
     a.python_pre = name_+" = c_double()"
@@ -68,7 +75,7 @@ def odouble(name,value=None):
     return a
 
 def ovectorpair(name,value=None):
-    a = arg(name,value,"gmsh::vector_pair &","int**",True)
+    a = arg(name,value,"gmsh::vector_pair &","int **",True)
     name_ = "api_"+name+"_"
     name_n = name_ + "n_"
     a.c_arg = name_
@@ -81,7 +88,7 @@ def ovectorpair(name,value=None):
     return a
 
 def ovectorstring(name,value=None):
-    a = arg(name,value,"std::vector<std::string> &","char**",True)
+    a = arg(name,value,"std::vector<std::string> &","char **",True)
     name_ = "api_"+name+"_"
     name_n = name_ + "n_"
     a.c_arg = name_
@@ -94,7 +101,7 @@ def ovectorstring(name,value=None):
     return a
 
 def ivectorpair(name,value=None):
-    a = arg(name,value,"const gmsh::vector_pair &","const int*",False)
+    a = arg(name,value,"const gmsh::vector_pair &","const int *",False)
     a.c_arg = "intptr2pairvector("+name+","+name+"_n)"
     a.c = "int* "+name+", size_t "+name+"_n"
     a.python_pre = "api_"+name+"_, api"+name+"_n_ = _ivectorpair("+name+")"
@@ -107,14 +114,14 @@ def ibool(name,value=None):
     return a
     
 def obool(name,value=None):
-    a = arg(name,value,"bool &","int*",True)
+    a = arg(name,value,"bool &","int *",True)
     a.c_arg = "api_"+name+"_"
     a.c_pre = "  bool "+a.c_arg +";\n"
     a.c_post = "  *"+name+" = (int)"+a.c_arg+";\n"
     return a
 
 def ivectorint(name,value=None):
-    a = arg(name,value,"const std::vector<int> &","const int*",False)
+    a = arg(name,value,"const std::vector<int> &","const int *",False)
     a.c_arg = "ptr2vector("+name+","+name+"_n)"
     a.c = "int* "+name+", size_t "+name+"_n"
     a.python_pre = "api_"+name+"_, api"+name+"_n_ = _ivectorint("+name+")"
@@ -122,7 +129,7 @@ def ivectorint(name,value=None):
     return a
 
 def ovectorint(name,value=None):
-    a = arg(name,value,"std::vector<int> &","int**",True)
+    a = arg(name,value,"std::vector<int> &","int **",True)
     name_ = "api_"+name+"_"
     name_n = name_ + "n_"
     a.c_arg = name_
@@ -135,7 +142,7 @@ def ovectorint(name,value=None):
     return a
 
 def ivectordouble(name,value=None):
-    a = arg(name,value,"const std::vector<double> &","double**",False)
+    a = arg(name,value,"const std::vector<double> &","double **",False)
     a.c_arg = "ptr2vector("+name+","+name+"_n)"
     a.c  = "double* "+name+", size_t "+name+"_n"
     a.python_pre = "api_"+name+"_, api"+name+"_n_ = _ivectordouble("+name+")"
@@ -143,7 +150,7 @@ def ivectordouble(name,value=None):
     return a
 
 def ovectordouble(name,value=None):
-    a = arg(name,value,"std::vector<double> &","double*",True)
+    a = arg(name,value,"std::vector<double> &","double *",True)
     name_ = "api_"+name+"_"
     name_n = name_ + "n_"
     a.c_arg = name_
@@ -156,7 +163,7 @@ def ovectordouble(name,value=None):
     return a
 
 def ovectorvectorint(name,value=None):
-    a = arg(name,value,"std::vector<std::vector<int> > &","int**",True)
+    a = arg(name,value,"std::vector<std::vector<int> > &","int **",True)
     name_ = "api_"+name+"_"
     name_n = name_ + "n_"
     name_nn = name_ + "nn_"
@@ -170,7 +177,7 @@ def ovectorvectorint(name,value=None):
     return a
 
 def ovectorvectorpair(name,value=None):
-    a = arg(name,value,"std::vector<gmsh::vector_pair> &","int**",True)
+    a = arg(name,value,"std::vector<gmsh::vector_pair> &","int **",True)
     name_ = "api_"+name+"_"
     name_n = name_ + "n_"
     name_nn = name_ + "nn_"
@@ -210,11 +217,11 @@ cpp_header="""// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
 
 // This file defines the Gmsh C++ API.
 //
-// Do not edit this file: it is automatically generated by `gmsh/api/gen.py'.
+// Do not edit it directly: it is automatically generated by `api/gen.py'.
 //
 // By design, the Gmsh C++ API is purely functional, and only uses elementary
-// C++ types from the standard library. A pure C as well as Python API are also
-// automatically generated by `gmsh/api/gen.py': see `gmshc.h' and `gmsh.py'.
+// types from the standard library. A pure C as well as Python API are also
+// automatically generated by `api/gen.py': see `gmshc.h' and `gmsh.py'.
 //
 // See `gmsh/demos/api' for examples on how to use the Gmsh API. In particular, 
 // this directory contains C++ and Python versions of several of the `.geo' 
@@ -230,38 +237,67 @@ cpp_header="""// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
 #define GMSH_API
 #endif
 
-
 namespace gmsh {
-  GMSH_API void initialize(int argc,char **argv);
-  typedef std::vector<std::pair<int,int> > vector_pair;
+
+  // A geometrical entity in the Gmsh API is represented by two integers: its
+  // dimension (dim = 0, 1, 2 or 3) and its tag (its unique, strictly positive
+  // identifier). When dealing with multiple geometrical entities of possibly
+  // different dimensions, the entities are packed as a vector of (dim, tag)
+  // integer pairs.
+  typedef std::vector<std::pair<int, int> > vector_pair;
+
+  // FIXME: these still need to be generated automatically
+  GMSH_API void initialize(int argc = 0, char **argv = 0);
+  namespace model {
+    namespace mesh {
+      GMSH_API void setElements(const int dim, const int tag,
+                                const std::vector<int> &types,
+                                const std::vector<std::vector<int> > &elementTags,
+                                const std::vector<std::vector<int> > &vertexTags);
+    }
+  }
+  namespace view {
+    GMSH_API void addModelData(const int tag, const std::string &modelName,
+                               const std::string &dataType,
+                               const std::vector<int> &tags,
+                               const std::vector<std::vector<double> > &data,
+                               const int step = 0, const int time = 0.,
+                               const int numComponents = -1,
+                               const int partition = 0);
+  }
+  // end of FIXME
+
 }
 """
 
-cpp_footer=""" 
-#undef GMSH_API
+cpp_footer="""#undef GMSH_API
 
 #endif
 """
 
-c_header="""// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
-//
-// See the LICENSE.txt file for license information. Please report all
-// bugs and problems to the public mailing list <gmsh@onelab.info>.
+c_header="""/*
+ * Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+ *
+ * See the LICENSE.txt file for license information. Please report all
+ * bugs and problems to the public mailing list <gmsh@onelab.info>.
+ */
 
 #ifndef _GMSHC_H_
 #define _GMSHC_H_
 
-// This file defines the Gmsh C API.
-//
-// Do not edit this file: it is automatically generated by `gmsh/api/gen.py'.
-//
-// By design, the Gmsh C API is purely functional, and only uses elementary
-// types. A C++ as well as Python API are also automatically generated by
-// `gmsh/api/gen.py': see `gmsh.h' and `gmsh.py'.
-//
-// See `gmsh/demos/api' for examples on how to use the Gmsh API. In particular, 
-// this directory contains C++ and Python versions of several of the `.geo' 
-// tutorials from `gmsh/tutorials'.
+/*
+ * This file defines the Gmsh C API.
+ *
+ * Do not edit it directly: it is automatically generated by `api/gen.py'.
+ *
+ * By design, the Gmsh C API is purely functional, and only uses elementary
+ * types. A C++ as well as Python API are also automatically generated by
+ * `api/gen.py': see `gmsh.h' and `gmsh.py'.
+ *
+ * See `gmsh/demos/api' for examples on how to use the Gmsh API. In particular,
+ * this directory contains C++ and Python versions of several of the `.geo'
+ * tutorials from `gmsh/tutorials'.
+ */
 
 #if defined(WIN32)
 #define GMSH_API __declspec(dllexport)
@@ -271,12 +307,12 @@ c_header="""// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
 
 #include <stdlib.h>
 
-GMSH_API void gmshInitialize(char argc,char **argv);
+/* FIXME: this still needs to be generated automatically */
+GMSH_API void gmshInitialize(char argc, char **argv);
 GMSH_API void gmshFree_(void *p);
 """
 
-c_footer="""
-#undef GMSH_API
+c_footer="""#undef GMSH_API
 
 #endif
 """
@@ -364,7 +400,25 @@ void gmshFree_(void *p) {
 }
 """
 
-python_header = """from ctypes import *
+python_header = """# Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+#
+# See the LICENSE.txt file for license information. Please report all
+# bugs and problems to the public mailing list <gmsh@onelab.info>.
+
+# This file defines the Gmsh Pyhton API.
+#
+# Do not edit it directly: it is automatically generated by `api/gen.py'.
+#
+# By design, the Gmsh Pyhton API is purely functional, and only uses elementary
+# types (as well as `numpy' arrays if `numpy' is avaiable). A C++ as well a
+# pure C API are also automatically generated by `api/gen.py': see `gmsh.h'
+# and `gmshc.h'.
+#
+# See `gmsh/demos/api' for examples on how to use the Gmsh API. In particular,
+# this directory contains C++ and Python versions of several of the `.geo'
+# tutorials from `gmsh/tutorials'.
+
+from ctypes import *
 import signal
 import os
 signal.signal(signal.SIGINT,signal.SIG_DFL)
@@ -463,15 +517,15 @@ class API:
 
     def write_cpp(self):
         def write_module(module,indent) :
-            f.write("\n"+indent+"namespace "+module.name +" { // " + module.doc + "\n\n")
+            f.write(indent+"namespace "+module.name +" { // " + module.doc + "\n\n")
             indent += "  "
             for rtype,name,args,doc in module.fs:
-                f.write("\n")
-                f.write(indent+"// "+("\n"+indent+"// ").join(textwrap.wrap(doc,75))+"\n\n")
+                f.write(indent+"// "+("\n"+indent+"// ").join(textwrap.wrap(doc,80-len(indent)))+"\n")
                 rt = rtype.rtype_cpp if rtype else "void"
-                f.write(indent+"GMSH_API " + rt + " " + name + "(")
+                fnameapi = indent+"GMSH_API " + rt + " " + name + "(";
+                f.write(fnameapi)
                 if args :
-                    f.write("\n"+indent+"    " +(",\n"+indent+"    ").join(a.cpp for a in args))
+                    f.write((",\n" + ' ' * len(fnameapi)).join(a.cpp for a in args))
                 f.write(");\n\n")
             for m in module.submodules :
                 write_module(m, indent)
@@ -492,9 +546,9 @@ class API:
             for rtype,name,args,doc in module.fs:
                 fname = c_namespace + name[0].upper()+name[1:]
                 f.write("\n/* "+"\n * ".join(textwrap.wrap(doc,75))+" */\n")
-                f.write("GMSH_API "+(rtype.rtype_c if rtype else "void"))
-                f.write(" "+fname+"(\n            "
-                        +",\n            ".join(list((a.c for a in args+(oint("ierr"),))))
+                fnameapi = "GMSH_API "+(rtype.rtype_c if rtype else "void")+" "+fname+"("
+                f.write(fnameapi
+                        +(",\n" + ' ' * len(fnameapi)).join(list((a.c for a in args+(oint("ierr"),))))
                         + ");\n")
                 fc.write(rtype.rtype_c if rtype else "void")
                 fc.write(" "+fname+"("
@@ -519,7 +573,7 @@ class API:
                 write_module(m, c_namespace,cpp_namespace)
 
         with open("gmshc.h","w") as f :
-            with open("gmshc.cc","w") as fc :
+            with open("gmshc.cpp","w") as fc :
                 f.write(c_header)
                 fc.write(c_cpp_header)
                 for module in self.modules:

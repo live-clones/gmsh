@@ -1,3 +1,23 @@
+# Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+#
+# See the LICENSE.txt file for license information. Please report all
+# bugs and problems to the public mailing list <gmsh@onelab.info>.
+
+# This is the master definition file for the Gmsh API.
+#
+# Running this script will generate
+#
+#  - gmsh.h: the header defining the Gmsh C++ API
+#  - gmshc.h: the header defining the Gmsh C API
+#  - gmshc.cpp: the wrapper for the Gmsh C API
+#  - gmsh.py: the module defining the Gmsh Python API
+#
+# By design, the Gmsh API is purely functional, and only uses elementary types.
+#
+# See `gmsh/demos/api' for examples on how to use the Gmsh API. In particular,
+# this directory contains C++ and Python versions of several of the `.geo'
+# tutorials from `gmsh/tutorials'.
+
 from GenApi import *
 
 api = API()
@@ -261,118 +281,118 @@ occ.add('addLine',doc,oint,iint('startTag'),iint('endTag'),iint('tag','-1'))
 doc = '''Adds a circle arc between the two points with tags `startTag' and `endTag', with center `centertag'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the circle arc.'''
 occ.add('addCircleArc',doc,oint,iint('startTag'),iint('centerTag'),iint('endTag'),iint('tag','-1'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addCircle',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('r'),iint('tag','-1'),idouble('angle1','0.'),idouble('angle2','2*M_PI'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addEllipseArc',doc,oint,iint('startTag'),iint('centerTag'),iint('endTag'),iint('tag','-1'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addEllipse',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('r1'),idouble('r2'),iint('tag','-1'),idouble('angle1','0.'),idouble('angle2','2*M_PI'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addSpline',doc,oint,ivectorint('vertexTags'),iint('tag','-1'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addBezier',doc,oint,ivectorint('vertexTags'),iint('tag','-1'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addBSpline',doc,oint,ivectorint('vertexTags'),iint('tag','-1'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addWire',doc,oint,ivectorint('edgeTags'),iint('tag','-1'),ibool('checkClosed','false'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addLineLoop',doc,oint,ivectorint('edgeTags'),iint('tag','-1'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addRectangle',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),iint('tag','-1'),idouble('roundedRadius','0.'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addDisk',doc,oint,idouble('xc'),idouble('yc'),idouble('zc'),idouble('rx'),idouble('ry'),iint('tag','-1'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addPlaneSurface',doc,oint,ivectorint('wireTags'),iint('tag','-1'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addSurfaceFilling',doc,oint,iint('wireTag'),iint('tag','-1'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addSurfaceLoop',doc,oint,ivectorint('faceTags'),iint('tag','-1'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addVolume',doc,oint,ivectorint('shellTags'),iint('tag','-1'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addSphere',doc,oint,idouble('xc'),idouble('yc'),idouble('zc'),idouble('radius'),iint('tag','-1'),idouble('angle1','-M_PI/2'),idouble('angle2','M_PI/2'),idouble('angle3','2*M_PI'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addBox',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),iint('tag','-1'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addCylinder',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),idouble('r'),iint('tag','-1'),idouble('angle','2*M_PI'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addCone',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),idouble('r1'),idouble('r2'),iint('tag','-1'),idouble('angle','2*M_PI'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addWedge',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),iint('tag','-1'),idouble('ltx','0.'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addTorus',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('r1'),idouble('r2'),iint('tag','-1'),idouble('angle','2*M_PI'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addThruSections',doc,oint,ivectorint('wireTags'),ovectorpair('outDimTags'),iint('tag','-1'),ibool('makeSolid','true'),ibool('makeRuled','false'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addThickSolid',doc,oint,iint('solidTag'),ivectorint('excludeFaceTags'),idouble('offset'),ovectorpair('outDimTags'),iint('tag','-1'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('extrude',doc,None,ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()'),ivectordouble('heights','std::vector<double>()'),ibool('recombine','false'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('revolve',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()'),ivectordouble('heights','std::vector<double>()'),ibool('recombine','false'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('addPipe',doc,None,ivectorpair('dimTags'),iint('wireTag'),ovectorpair('outDimTags'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('fillet',doc,None,ivectorint('regionTags'),ivectorint('edgeTags'),idouble('radius'),ovectorpair('outDimTags'),ibool('removeRegion','true'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('booleanUnion',doc,oint,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true'),ibool('removeTool','true'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('booleanIntersection',doc,oint,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true'),ibool('removeTool','true'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('booleanDifference',doc,oint,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true'),ibool('removeTool','true'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('booleanFragments',doc,oint,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true'),ibool('removeTool','true'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('translate',doc,None,ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('rotate',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('dilate',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('a'),idouble('b'),idouble('c'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('symmetry',doc,None,ivectorpair('dimTags'),idouble('a'),idouble('b'),idouble('c'),idouble('d'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('copy',doc,None,ivectorpair('dimTags'),ovectorpair('outDimTags'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('remove',doc,None,ivectorpair('dimTags'),ibool('recursive','false'))
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('removeAllDuplicates',doc,None)
 
-doc = '''Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle1' and `angle2' allow to add a circle arc. Returns the tag of the circle.'''
+doc = '''TODO'''
 occ.add('importShapes',doc,None,istring('fileName'),ovectorpair('outDimTags'),ibool('highestDimOnly','true'),istring('format','""'))
 
 doc = '''Sets a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
