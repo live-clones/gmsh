@@ -1486,6 +1486,7 @@ endif(ENABLE_BUILD_ANDROID)
 
 # shared library target
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
+  set(CMAKE_MACOSX_RPATH ON)
   add_library(shared SHARED ${GMSH_SRC})
   set_target_properties(shared PROPERTIES OUTPUT_NAME gmsh)
   set_target_properties(shared PROPERTIES
@@ -1498,6 +1499,9 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
     message(STATUS "Note: By enabling ENABLE_MSVC_STATIC_RUNTIME, shared library "
             "won't link. In MSVC change /MT to /MD in the shared project properties")
   endif(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
+  if(APPLE)
+    set_target_properties(shared PROPERTIES MACOSX_RPATH ".")
+  endif(APPLE)
   target_link_libraries(shared ${LINK_LIBRARIES})
 endif(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 
