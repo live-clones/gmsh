@@ -89,7 +89,7 @@ doc = '''Gets the name of the physical group of dimension `dim' and tag `tag'.''
 model.add('getPhysicalName',doc,None,iint('dim'),iint('tag'),ostring('name'))
 
 doc = '''Gets the boundary of the geometrical entities `dimTags'. Returns in `outDimTags' the boundary of the individual entities (if `combined' is false) or the boundary of the combined geometrical shape formed by all input entities (if `combined' is true). Returns tags multiplied by the sign of the boundary entity if `oriented' is true. Applies the boundary operator recursively down to dimension 0 (i.e. to points) if `recursive' is true.'''
-model.add('getBoundary',doc,None,ivectorpair('dimTags'),ovectorpair('outDimTags'),ibool('combined','true'),ibool('oriented','true'),ibool('recursive','false'))
+model.add('getBoundary',doc,None,ivectorpair('dimTags'),ovectorpair('outDimTags'),ibool('combined','true','True'),ibool('oriented','true','True'),ibool('recursive','false','False'))
 
 doc = '''Gets the (elementary) geometrical entities in the bounding box defined by the two points (xmin, ymin, zmin) and (xmax, ymax, zmax). If `dim' is >= 0, returns only the entities of the specified dimension (e.g. points if `dim' == 0).'''
 model.add('getEntitiesInBoundingBox',doc,None,idouble('xmin'),idouble('ymin'),idouble('zmin'),idouble('xmax'),idouble('ymax'),idouble('zmax'),ovectorpair('tags'),iint('dim','-1'))
@@ -98,10 +98,10 @@ doc = '''Gets the bounding box (xmin, ymin, zmin), (xmax, ymax, zmax) of the geo
 model.add('getBoundingBox',doc,None,iint('dim'),iint('tag'),odouble('xmin'),odouble('ymin'),odouble('zmin'),odouble('xmax'),odouble('ymax'),odouble('zmax'))
 
 doc = '''Adds a discrete geometrical entity (defined by a mesh) of dimension `dim' in the current model. The function returns the tag of the new discrete entity, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0. `boundary' specifies the tags of the entities on the boundary of the discrete entity, if any. Specyfing `boundary' allows Gmsh to construct the topology of the overall model.'''
-model.add('addDiscreteEntity',doc,oint,iint('dim'),iint('tag','-1'),ivectorint('boundary','std::vector<int>()'))
+model.add('addDiscreteEntity',doc,oint,iint('dim'),iint('tag','-1'),ivectorint('boundary','std::vector<int>()',"[]"))
 
 doc = '''Removes the entities `dimTags' of the current model. If `recursive' is true, remove all the entities on their boundaries, down to dimension 0.'''
-model.add('removeEntities',doc,None,ivectorpair('dimTags'),ibool('recursive','false'))
+model.add('removeEntities',doc,None,ivectorpair('dimTags'),ibool('recursive','false','False'))
 
 mesh = model.add_module('mesh','Per-model meshing functions')
 
@@ -121,7 +121,7 @@ doc = '''Gets the mesh elements of the entity of dimension `dim' and `tag' tag. 
 mesh.add('getElements',doc,None,iint('dim'),iint('tag'),ovectorint('types'),ovectorvectorint('elementTags'),ovectorvectorint('vertexTags'))
 
 doc = '''Sets the mesh vertices in the geometrical entity of dimension `dim' and tag `tag'. `vertextags' contains the vertex tags (their unique, strictly positive identification numbers). `coord` is a vector of length `3 * vertexTags.size()' that contains the (x, y, z) coordinates of the vertices, concatenated. The optional `parametricCoord` vector contains the parametric coordinates of the vertices, if any. The length of `parametricCoord` can be 0 or `dim * vertexTags.size()'.'''
-mesh.add('setVertices',doc,None,iint('dim'),iint('tag'),ivectorint('vertexTags'),ivectordouble('coord'),ivectordouble('parametricCoord','std::vector<double>()'))
+mesh.add('setVertices',doc,None,iint('dim'),iint('tag'),ivectorint('vertexTags'),ivectordouble('coord'),ivectordouble('parametricCoord','std::vector<double>()',"[]"))
 
 doc = '''Sets the mesh elements of the entity of dimension `dim' and `tag' tag. `types' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh reference manual). `elementTags' is a vector of length `types.size()'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `vertexTags' is also a vector of length `types.size()'; each entry is a vector of length equal to the number of elements of the give type times the number of vertices per element, that contains the vertex tags of all the elements of the given type, concatenated.'''
 mesh.add('setElements',doc,None,iint('dim'),iint('tag'),ivectorint('types'),ivectorvectorint('elementTags'),ivectorvectorint('vertexTags'))
@@ -139,10 +139,10 @@ doc = '''Sets a transfinite meshing constraint on the line `tag', with `numVerti
 mesh.add('setTransfiniteLine',doc,None,iint('tag'),iint('numVertices'),istring('type','"Progression"'),idouble('coef','1.'))
 
 doc = '''Sets a transfinite meshing constraint on the surface `tag'. `arrangement' describes the arrangement of the triangles when the surface is not flagged as recombined: currently supported values are "Left", "Right", "AlternateLeft" and "AlternateRight". `cornerTags' can be used to specify the (3 or 4) corners of the transfinite interpolation explicitly; specifying the corners explicitly is mandatory if the surface has more that 3 or 4 points on its boundary.'''
-mesh.add('setTransfiniteSurface',doc,None,iint('tag'),istring('arrangement','"Left"'),ivectorint('cornerTags','std::vector<int>()'))
+mesh.add('setTransfiniteSurface',doc,None,iint('tag'),istring('arrangement','"Left"'),ivectorint('cornerTags','std::vector<int>()',"[]"))
 
 doc = '''Sets a transfinite meshing constraint on the surface `tag'. `cornerTags' can be used to specify the (6 or 8) corners of the transfinite interpolation explicitly.'''
-mesh.add('setTransfiniteVolume',doc,None,iint('tag'),ivectorint('cornerTags','std::vector<int>()'))
+mesh.add('setTransfiniteVolume',doc,None,iint('tag'),ivectorint('cornerTags','std::vector<int>()',"[]"))
 
 doc = '''Sets a recombination meshing constraint on the geometrical entity of dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine triangles into quadrangles) are supported.'''
 mesh.add('setRecombine',doc,None,iint('dim'),iint('tag'))
@@ -151,7 +151,7 @@ doc = '''Sets a smoothing meshing constraint on the geometrical entity of dimens
 mesh.add('setSmoothing',doc,None,iint('dim'),iint('tag'),iint('val'))
 
 doc = '''Sets a reverse meshing constraint on the geometrical entity of dimension `dim' and tag `tag'. If `val' is true, the mesh orientation will be reversed with respect to the natural mesh orientation (i.e. the orientation consistent with the orientation of the geometrical entity). If `val' is false, the mesh is left as-is.'''
-mesh.add('setReverse',doc,None,iint('dim'),iint('tag'),ibool('val','true'))
+mesh.add('setReverse',doc,None,iint('dim'),iint('tag'),ibool('val','true','True'))
 
 doc = '''Emebds the geometrical entities of dimension `dim' and tags `tags' in the (inDim, inTag) geometrical entity. `inDim' must be strictly greater than `dim'.'''
 mesh.add('embed',doc,None,iint('dim'),ivectorint('tags'),iint('inDim'),iint('inTag'))
@@ -215,13 +215,13 @@ doc = '''Adds a volume defined by one or more surface loops `shellTags'. The fir
 geo.add('addVolume',doc,oint,ivectorint('shellTags'),iint('tag','-1'))
 
 doc = '''Extrudes the geometrical entities in `dimTags' by translation along (`dx', `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
-geo.add('extrude',doc,None,ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()'),ivectordouble('heights','std::vector<double>()'),ibool('recombine','false'))
+geo.add('extrude',doc,None,ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()',"[]"),ivectordouble('heights','std::vector<double>()',"[]"),ibool('recombine','false','False'))
 
 doc = '''Extrudes the geometrical entities in `dimTags' by rotation of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). Returns extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
-geo.add('revolve',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()'),ivectordouble('heights','std::vector<double>()'),ibool('recombine','false'))
+geo.add('revolve',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()',"[]"),ivectordouble('heights','std::vector<double>()',"[]"),ibool('recombine','false','False'))
 
 doc = '''Extrudes the geometrical entities in `dimTags' by a combined translation and rotation of `angle' radians, along (`dx', `dy', `dz') and around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). Returns extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
-geo.add('twist',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()'),ivectordouble('heights','std::vector<double>()'),ibool('recombine','false'))
+geo.add('twist',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()',"[]"),ivectordouble('heights','std::vector<double>()',"[]"),ibool('recombine','false','False'))
 
 doc = '''Translates the geometrical entities in `dimTags' along (`dx', `dy', `dz').'''
 geo.add('translate',doc,None,ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'))
@@ -239,7 +239,7 @@ doc = '''Copies the entities in `dimTags'; the new entities are returned in `out
 geo.add('copy',doc,None,ivectorpair('dimTags'),ovectorpair('outDimTags'))
 
 doc = '''Removes the entities `dimTags'. If `recursive' is true, remove all the entities on their boundaries, down to dimension 0.'''
-geo.add('remove',doc,None,ivectorpair('dimTags'),ibool('recursive','false'))
+geo.add('remove',doc,None,ivectorpair('dimTags'),ibool('recursive','false','False'))
 
 doc = '''Remove all duplicate entities (different entities at the same geometrical location).'''
 geo.add('removeAllDuplicates',doc,None)
@@ -256,10 +256,10 @@ doc = '''Sets a transfinite meshing constraint on the line `tag', with `numVerti
 mesh.add('setTransfiniteLine',doc,None,iint('tag'),iint('nPoints'),istring('type','"Progression"'),idouble('coef','1.'))
 
 doc = '''Sets a transfinite meshing constraint on the surface `tag'. `arrangement' describes the arrangement of the triangles when the surface is not flagged as recombined: currently supported values are "Left", "Right", "AlternateLeft" and "AlternateRight". `cornerTags' can be used to specify the (3 or 4) corners of the transfinite interpolation explicitly; specifying the corners explicitly is mandatory if the surface has more that 3 or 4 points on its boundary.'''
-mesh.add('setTransfiniteSurface',doc,None,iint('tag'),istring('arrangement','"Left"'),ivectorint('cornerTags','std::vector<int>()'))
+mesh.add('setTransfiniteSurface',doc,None,iint('tag'),istring('arrangement','"Left"'),ivectorint('cornerTags','std::vector<int>()',"[]"))
 
 doc = '''Sets a transfinite meshing constraint on the surface `tag'. `cornerTags' can be used to specify the (6 or 8) corners of the transfinite interpolation explicitly.'''
-mesh.add('setTransfiniteVolume',doc,None,iint('tag'),ivectorint('cornerTags','std::vector<int>()'))
+mesh.add('setTransfiniteVolume',doc,None,iint('tag'),ivectorint('cornerTags','std::vector<int>()',"[]"))
 
 doc = '''Sets a recombination meshing constraint on the geometrical entity of dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to recombine triangles into quadrangles) are supported.'''
 mesh.add('setRecombine',doc,None,iint('dim'),iint('tag'),idouble('angle','45.'))
@@ -268,7 +268,7 @@ doc = '''Sets a smoothing meshing constraint on the geometrical entity of dimens
 mesh.add('setSmoothing',doc,None,iint('dim'),iint('tag'),iint('val'))
 
 doc = '''Sets a reverse meshing constraint on the geometrical entity of dimension `dim' and tag `tag'. If `val' is true, the mesh orientation will be reversed with respect to the natural mesh orientation (i.e. the orientation consistent with the orientation of the geometrical entity). If `val' is false, the mesh is left as-is.'''
-mesh.add('setReverse',doc,None,iint('dim'),iint('tag'),ibool('val','true'))
+mesh.add('setReverse',doc,None,iint('dim'),iint('tag'),ibool('val','true','True'))
 
 occ = model.add_module('occ','Internal per-model OpenCASCADE CAD kernel functions')
 
@@ -282,13 +282,13 @@ doc = '''Adds a circle arc between the two points with tags `startTag' and `endT
 occ.add('addCircleArc',doc,oint,iint('startTag'),iint('centerTag'),iint('endTag'),iint('tag','-1'))
 
 doc = '''TODO'''
-occ.add('addCircle',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('r'),iint('tag','-1'),idouble('angle1','0.'),idouble('angle2','2*M_PI'))
+occ.add('addCircle',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('r'),iint('tag','-1'),idouble('angle1','0.'),idouble('angle2','2*M_PI','2*pi'))
 
 doc = '''TODO'''
 occ.add('addEllipseArc',doc,oint,iint('startTag'),iint('centerTag'),iint('endTag'),iint('tag','-1'))
 
 doc = '''TODO'''
-occ.add('addEllipse',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('r1'),idouble('r2'),iint('tag','-1'),idouble('angle1','0.'),idouble('angle2','2*M_PI'))
+occ.add('addEllipse',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('r1'),idouble('r2'),iint('tag','-1'),idouble('angle1','0.'),idouble('angle2','2*M_PI','2*pi'))
 
 doc = '''TODO'''
 occ.add('addSpline',doc,oint,ivectorint('vertexTags'),iint('tag','-1'))
@@ -300,7 +300,7 @@ doc = '''TODO'''
 occ.add('addBSpline',doc,oint,ivectorint('vertexTags'),iint('tag','-1'))
 
 doc = '''TODO'''
-occ.add('addWire',doc,oint,ivectorint('edgeTags'),iint('tag','-1'),ibool('checkClosed','false'))
+occ.add('addWire',doc,oint,ivectorint('edgeTags'),iint('tag','-1'),ibool('checkClosed','false','False'))
 
 doc = '''TODO'''
 occ.add('addLineLoop',doc,oint,ivectorint('edgeTags'),iint('tag','-1'))
@@ -324,52 +324,52 @@ doc = '''TODO'''
 occ.add('addVolume',doc,oint,ivectorint('shellTags'),iint('tag','-1'))
 
 doc = '''TODO'''
-occ.add('addSphere',doc,oint,idouble('xc'),idouble('yc'),idouble('zc'),idouble('radius'),iint('tag','-1'),idouble('angle1','-M_PI/2'),idouble('angle2','M_PI/2'),idouble('angle3','2*M_PI'))
+occ.add('addSphere',doc,oint,idouble('xc'),idouble('yc'),idouble('zc'),idouble('radius'),iint('tag','-1'),idouble('angle1','-M_PI/2','-pi/2'),idouble('angle2','M_PI/2','-pi/2'),idouble('angle3','2*M_PI','-pi/2'))
 
 doc = '''TODO'''
 occ.add('addBox',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),iint('tag','-1'))
 
 doc = '''TODO'''
-occ.add('addCylinder',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),idouble('r'),iint('tag','-1'),idouble('angle','2*M_PI'))
+occ.add('addCylinder',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),idouble('r'),iint('tag','-1'),idouble('angle','2*M_PI','2*pi'))
 
 doc = '''TODO'''
-occ.add('addCone',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),idouble('r1'),idouble('r2'),iint('tag','-1'),idouble('angle','2*M_PI'))
+occ.add('addCone',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),idouble('r1'),idouble('r2'),iint('tag','-1'),idouble('angle','2*M_PI','2*pi'))
 
 doc = '''TODO'''
 occ.add('addWedge',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),iint('tag','-1'),idouble('ltx','0.'))
 
 doc = '''TODO'''
-occ.add('addTorus',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('r1'),idouble('r2'),iint('tag','-1'),idouble('angle','2*M_PI'))
+occ.add('addTorus',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('r1'),idouble('r2'),iint('tag','-1'),idouble('angle','2*M_PI','2*pi'))
 
 doc = '''TODO'''
-occ.add('addThruSections',doc,oint,ivectorint('wireTags'),ovectorpair('outDimTags'),iint('tag','-1'),ibool('makeSolid','true'),ibool('makeRuled','false'))
+occ.add('addThruSections',doc,oint,ivectorint('wireTags'),ovectorpair('outDimTags'),iint('tag','-1'),ibool('makeSolid','true','True'),ibool('makeRuled','false','False'))
 
 doc = '''TODO'''
 occ.add('addThickSolid',doc,oint,iint('solidTag'),ivectorint('excludeFaceTags'),idouble('offset'),ovectorpair('outDimTags'),iint('tag','-1'))
 
 doc = '''TODO'''
-occ.add('extrude',doc,None,ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()'),ivectordouble('heights','std::vector<double>()'),ibool('recombine','false'))
+occ.add('extrude',doc,None,ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()',"[]"),ivectordouble('heights','std::vector<double>()',"[]"),ibool('recombine','false','False'))
 
 doc = '''TODO'''
-occ.add('revolve',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()'),ivectordouble('heights','std::vector<double>()'),ibool('recombine','false'))
+occ.add('revolve',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()',"[]"),ivectordouble('heights','std::vector<double>()',"[]"),ibool('recombine','false','False'))
 
 doc = '''TODO'''
 occ.add('addPipe',doc,None,ivectorpair('dimTags'),iint('wireTag'),ovectorpair('outDimTags'))
 
 doc = '''TODO'''
-occ.add('fillet',doc,None,ivectorint('regionTags'),ivectorint('edgeTags'),idouble('radius'),ovectorpair('outDimTags'),ibool('removeRegion','true'))
+occ.add('fillet',doc,None,ivectorint('regionTags'),ivectorint('edgeTags'),idouble('radius'),ovectorpair('outDimTags'),ibool('removeRegion','true','True'))
 
 doc = '''TODO'''
-occ.add('booleanUnion',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true'),ibool('removeTool','true'))
+occ.add('booleanUnion',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true','True'),ibool('removeTool','true','True'))
 
 doc = '''TODO'''
-occ.add('booleanIntersection',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true'),ibool('removeTool','true'))
+occ.add('booleanIntersection',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true','True'),ibool('removeTool','true','True'))
 
 doc = '''TODO'''
-occ.add('booleanDifference',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true'),ibool('removeTool','true'))
+occ.add('booleanDifference',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true','True'),ibool('removeTool','true','True'))
 
 doc = '''TODO'''
-occ.add('booleanFragments',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true'),ibool('removeTool','true'))
+occ.add('booleanFragments',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true','True'),ibool('removeTool','true','True'))
 
 doc = '''TODO'''
 occ.add('translate',doc,None,ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'))
@@ -387,13 +387,13 @@ doc = '''TODO'''
 occ.add('copy',doc,None,ivectorpair('dimTags'),ovectorpair('outDimTags'))
 
 doc = '''TODO'''
-occ.add('remove',doc,None,ivectorpair('dimTags'),ibool('recursive','false'))
+occ.add('remove',doc,None,ivectorpair('dimTags'),ibool('recursive','false','False'))
 
 doc = '''TODO'''
 occ.add('removeAllDuplicates',doc,None)
 
 doc = '''TODO'''
-occ.add('importShapes',doc,None,istring('fileName'),ovectorpair('outDimTags'),ibool('highestDimOnly','true'),istring('format','""'))
+occ.add('importShapes',doc,None,istring('fileName'),ovectorpair('outDimTags'),ibool('highestDimOnly','true','True'),istring('format','""'))
 
 doc = '''Sets a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 occ.add('setMeshSize',doc,None,ivectorpair('dimTags'),idouble('size'))
@@ -422,10 +422,10 @@ doc = '''Adds list-based post-processing data to the view with tag `tag'. `type'
 view.add('addListData',doc,None,iint('tag'),istring('type'),iint('numEle'),ivectordouble('data'))
 
 doc = '''Probes the view `tag' for its `value' at point (`x', `y', `z').'''
-view.add('probe',doc,None,iint('tag'),idouble('x'),idouble('y'),idouble('z'),ovectordouble('value'),iint('step','-1'),iint('numComp','-1'),ibool('gradient','false'),idouble('tolerance','0.'),ivectordouble('xElemCoord','std::vector<double>()'),ivectordouble('yElemCoord','std::vector<double>()'),ivectordouble('zElemCoord','std::vector<double>()'))
+view.add('probe',doc,None,iint('tag'),idouble('x'),idouble('y'),idouble('z'),ovectordouble('value'),iint('step','-1'),iint('numComp','-1'),ibool('gradient','false','False'),idouble('tolerance','0.'),ivectordouble('xElemCoord','std::vector<double>()',"[]"),ivectordouble('yElemCoord','std::vector<double>()',"[]"),ivectordouble('zElemCoord','std::vector<double>()',"[]"))
 
 doc = '''Writes the view to a file. The export format is determined by the file extension.'''
-view.add('write',doc,None,iint('tag'),istring('fileName'),ibool('append','false'))
+view.add('write',doc,None,iint('tag'),istring('fileName'),ibool('append','false','False'))
 
 plugin = gmsh.add_module('plugin','Plugin functions')
 

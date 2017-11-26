@@ -20,6 +20,8 @@ from ctypes import *
 import signal
 import os
 import platform
+from math import pi
+
 signal.signal(signal.SIGINT,signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == 'Windows':
@@ -349,7 +351,7 @@ class model:
                 ierr.value)
 
     @staticmethod
-    def getEntities(dim):
+    def getEntities(dim=-1):
         """
         Gets all the (elementary) geometrical entities in the current model. If
         `dim' is >= 0, returns only the entities of the specified dimension (e.g.
@@ -371,7 +373,7 @@ class model:
         return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
 
     @staticmethod
-    def getPhysicalGroups(dim):
+    def getPhysicalGroups(dim=-1):
         """
         Gets all the physical groups in the current model. If `dim' is >= 0,
         returns only the entities of the specified dimension (e.g. physical points
@@ -414,7 +416,7 @@ class model:
         return _ovectorint(api_tags_,api_tags_n_.value)
 
     @staticmethod
-    def addPhysicalGroup(dim,tags,tag):
+    def addPhysicalGroup(dim,tags,tag=-1):
         """
         Adds a physical group of dimension `dim', grouping the elementary entities
         with tags `tags'. The function returns the tag of the physical group, equal
@@ -472,7 +474,7 @@ class model:
         return _ostring(api_name_)
 
     @staticmethod
-    def getBoundary(dimTags,combined,oriented,recursive):
+    def getBoundary(dimTags,combined=True,oriented=True,recursive=False):
         """
         Gets the boundary of the geometrical entities `dimTags'. Returns in
         `outDimTags' the boundary of the individual entities (if `combined' is
@@ -500,7 +502,7 @@ class model:
         return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
     @staticmethod
-    def getEntitiesInBoundingBox(xmin,ymin,zmin,xmax,ymax,zmax,dim):
+    def getEntitiesInBoundingBox(xmin,ymin,zmin,xmax,ymax,zmax,dim=-1):
         """
         Gets the (elementary) geometrical entities in the bounding box defined by
         the two points (xmin, ymin, zmin) and (xmax, ymax, zmax). If `dim' is >= 0,
@@ -565,7 +567,7 @@ class model:
             api_zmax_.value)
 
     @staticmethod
-    def addDiscreteEntity(dim,tag,boundary):
+    def addDiscreteEntity(dim,tag=-1,boundary=[]):
         """
         Adds a discrete geometrical entity (defined by a mesh) of dimension `dim'
         in the current model. The function returns the tag of the new discrete
@@ -590,7 +592,7 @@ class model:
         return api__result__
 
     @staticmethod
-    def removeEntities(dimTags,recursive):
+    def removeEntities(dimTags,recursive=False):
         """
         Removes the entities `dimTags' of the current model. If `recursive' is
         true, remove all the entities on their boundaries, down to dimension 0.
@@ -734,7 +736,7 @@ class model:
                 _ovectorvectorint(api_vertexTags_,api_vertexTags_n_,api_vertexTags_nn_))
 
         @staticmethod
-        def setVertices(dim,tag,vertexTags,coord,parametricCoord):
+        def setVertices(dim,tag,vertexTags,coord,parametricCoord=[]):
             """
             Sets the mesh vertices in the geometrical entity of dimension `dim' and tag
             `tag'. `vertextags' contains the vertex tags (their unique, strictly
@@ -862,7 +864,7 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def setTransfiniteLine(tag,numVertices,type,coef):
+        def setTransfiniteLine(tag,numVertices,type="Progression",coef=1.):
             """
             Sets a transfinite meshing constraint on the line `tag', with `numVertices'
             mesh vertices distributed according to `type' and `coef'. Currently
@@ -882,7 +884,7 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def setTransfiniteSurface(tag,arrangement,cornerTags):
+        def setTransfiniteSurface(tag,arrangement="Left",cornerTags=[]):
             """
             Sets a transfinite meshing constraint on the surface `tag'. `arrangement'
             describes the arrangement of the triangles when the surface is not flagged
@@ -905,7 +907,7 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def setTransfiniteVolume(tag,cornerTags):
+        def setTransfiniteVolume(tag,cornerTags=[]):
             """
             Sets a transfinite meshing constraint on the surface `tag'. `cornerTags'
             can be used to specify the (6 or 8) corners of the transfinite
@@ -957,7 +959,7 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def setReverse(dim,tag,val):
+        def setReverse(dim,tag,val=True):
             """
             Sets a reverse meshing constraint on the geometrical entity of dimension
             `dim' and tag `tag'. If `val' is true, the mesh orientation will be
@@ -1003,7 +1005,7 @@ class model:
             """
 
             @staticmethod
-            def add(type,tag):
+            def add(type,tag=-1):
                 """
                 Adds a new mesh size field of type `type'. If `tag' is positive, assign the
                 tag explcitly; otherwise a new tag is assigned automatically. Returns the
@@ -1106,7 +1108,7 @@ class model:
         """
 
         @staticmethod
-        def addPoint(x,y,z,meshSize,tag):
+        def addPoint(x,y,z,meshSize=0.,tag=-1):
             """
             Adds a geometrical point in the internal GEO CAD representation, at
             coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
@@ -1133,7 +1135,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addLine(startTag,endTag,tag):
+        def addLine(startTag,endTag,tag=-1):
             """
             Adds a straight line segment between the two points with tags `startTag'
             and `endTag'. If `tag' is positive, sets the tag explicitly; otherwise a
@@ -1154,7 +1156,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addCircleArc(startTag,centerTag,endTag,tag,nx,ny,nz):
+        def addCircleArc(startTag,centerTag,endTag,tag=-1,nx=0.,ny=0.,nz=0.):
             """
             Adds a circle arc (stricly smaller than Pi) between the two points with
             tags `startTag' and `endTag', with center `centertag'. If `tag' is
@@ -1181,7 +1183,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addEllipseArc(startTag,centerTag,majorTag,endTag,tag,nx,ny,nz):
+        def addEllipseArc(startTag,centerTag,majorTag,endTag,tag=-1,nx=0.,ny=0.,nz=0.):
             """
             Adds an ellipse arc (stricly smaller than Pi) between the two points
             `startTag' and `endTag', with center `centertag' and major axis point
@@ -1210,7 +1212,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSpline(vertexTags,tag):
+        def addSpline(vertexTags,tag=-1):
             """
             Adds a spline curve going through `vertexTags' points. If `tag' is
             positive, sets the tag explicitly; otherwise a new tag is selected
@@ -1231,7 +1233,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addBSpline(vertexTags,tag):
+        def addBSpline(vertexTags,tag=-1):
             """
             Adds a b-spline curve with `vertexTags' control points. If `tag' is
             positive, sets the tag explicitly; otherwise a new tag is selected
@@ -1252,7 +1254,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addBezier(vertexTags,tag):
+        def addBezier(vertexTags,tag=-1):
             """
             Adds a Bezier curve with `vertexTags' control points. If `tag' is positive,
             sets the tag explicitly; otherwise a new tag is selected automatically.
@@ -1273,7 +1275,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addLineLoop(edgeTags,tag):
+        def addLineLoop(edgeTags,tag=-1):
             """
             Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should
             contain (signed) tags of geometrical enties of dimension 1 forming a closed
@@ -1297,7 +1299,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addPlaneSurface(wireTags,tag):
+        def addPlaneSurface(wireTags,tag=-1):
             """
             Adds a plane surface defined by one or more line loops `wireTags'. The
             first line loop defines the exterior contour; additional line loop define
@@ -1319,7 +1321,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSurfaceFilling(wireTags,tag,sphereCenterTag):
+        def addSurfaceFilling(wireTags,tag=-1,sphereCenterTag=-1):
             """
             Adds a surface filling the line loops in `wireTags'. Currently only a
             single line loop is supported; this line loop should be composed by 3 or 4
@@ -1342,7 +1344,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSurfaceLoop(faceTags,tag):
+        def addSurfaceLoop(faceTags,tag=-1):
             """
             Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is
             positive, sets the tag explicitly; otherwise a new tag is selected
@@ -1363,7 +1365,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addVolume(shellTags,tag):
+        def addVolume(shellTags,tag=-1):
             """
             Adds a volume defined by one or more surface loops `shellTags'. The first
             surface loop defines the exterior boundary; additional surface loop define
@@ -1385,7 +1387,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def extrude(dimTags,dx,dy,dz,numElements,heights,recombine):
+        def extrude(dimTags,dx,dy,dz,numElements=[],heights=[],recombine=False):
             """
             Extrudes the geometrical entities in `dimTags' by translation along (`dx',
             `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements' is
@@ -1417,7 +1419,7 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def revolve(dimTags,x,y,z,ax,ay,az,angle,numElements,heights,recombine):
+        def revolve(dimTags,x,y,z,ax,ay,az,angle,numElements=[],heights=[],recombine=False):
             """
             Extrudes the geometrical entities in `dimTags' by rotation of `angle'
             radians around the axis of revolution defined by the point (`x', `y', `z')
@@ -1455,7 +1457,7 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def twist(dimTags,x,y,z,dx,dy,dz,ax,ay,az,angle,numElements,heights,recombine):
+        def twist(dimTags,x,y,z,dx,dy,dz,ax,ay,az,angle,numElements=[],heights=[],recombine=False):
             """
             Extrudes the geometrical entities in `dimTags' by a combined translation
             and rotation of `angle' radians, along (`dx', `dy', `dz') and around the
@@ -1604,7 +1606,7 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def remove(dimTags,recursive):
+        def remove(dimTags,recursive=False):
             """
             Removes the entities `dimTags'. If `recursive' is true, remove all the
             entities on their boundaries, down to dimension 0.
@@ -1674,7 +1676,7 @@ class model:
                         ierr.value)
 
             @staticmethod
-            def setTransfiniteLine(tag,nPoints,type,coef):
+            def setTransfiniteLine(tag,nPoints,type="Progression",coef=1.):
                 """
                 Sets a transfinite meshing constraint on the line `tag', with `numVertices'
                 mesh vertices distributed according to `type' and `coef'. Currently
@@ -1694,7 +1696,7 @@ class model:
                         ierr.value)
 
             @staticmethod
-            def setTransfiniteSurface(tag,arrangement,cornerTags):
+            def setTransfiniteSurface(tag,arrangement="Left",cornerTags=[]):
                 """
                 Sets a transfinite meshing constraint on the surface `tag'. `arrangement'
                 describes the arrangement of the triangles when the surface is not flagged
@@ -1717,7 +1719,7 @@ class model:
                         ierr.value)
 
             @staticmethod
-            def setTransfiniteVolume(tag,cornerTags):
+            def setTransfiniteVolume(tag,cornerTags=[]):
                 """
                 Sets a transfinite meshing constraint on the surface `tag'. `cornerTags'
                 can be used to specify the (6 or 8) corners of the transfinite
@@ -1735,7 +1737,7 @@ class model:
                         ierr.value)
 
             @staticmethod
-            def setRecombine(dim,tag,angle):
+            def setRecombine(dim,tag,angle=45.):
                 """
                 Sets a recombination meshing constraint on the geometrical entity of
                 dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to
@@ -1770,7 +1772,7 @@ class model:
                         ierr.value)
 
             @staticmethod
-            def setReverse(dim,tag,val):
+            def setReverse(dim,tag,val=True):
                 """
                 Sets a reverse meshing constraint on the geometrical entity of dimension
                 `dim' and tag `tag'. If `val' is true, the mesh orientation will be
@@ -1796,7 +1798,7 @@ class model:
         """
 
         @staticmethod
-        def addPoint(x,y,z,meshSize,tag):
+        def addPoint(x,y,z,meshSize=0.,tag=-1):
             """
             Adds a geometrical point in the internal OpenCASCADE CAD representation, at
             coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
@@ -1823,7 +1825,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addLine(startTag,endTag,tag):
+        def addLine(startTag,endTag,tag=-1):
             """
             Adds a straight line segment between the two points with tags `startTag'
             and `endTag'. If `tag' is positive, sets the tag explicitly; otherwise a
@@ -1844,7 +1846,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addCircleArc(startTag,centerTag,endTag,tag):
+        def addCircleArc(startTag,centerTag,endTag,tag=-1):
             """
             Adds a circle arc between the two points with tags `startTag' and `endTag',
             with center `centertag'. If `tag' is positive, sets the tag explicitly;
@@ -1867,7 +1869,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addCircle(x,y,z,r,tag,angle1,angle2):
+        def addCircle(x,y,z,r,tag=-1,angle1=0.,angle2=2*pi):
             """
             TODO
 
@@ -1890,7 +1892,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addEllipseArc(startTag,centerTag,endTag,tag):
+        def addEllipseArc(startTag,centerTag,endTag,tag=-1):
             """
             TODO
 
@@ -1910,7 +1912,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addEllipse(x,y,z,r1,r2,tag,angle1,angle2):
+        def addEllipse(x,y,z,r1,r2,tag=-1,angle1=0.,angle2=2*pi):
             """
             TODO
 
@@ -1934,7 +1936,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSpline(vertexTags,tag):
+        def addSpline(vertexTags,tag=-1):
             """
             TODO
 
@@ -1953,7 +1955,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addBezier(vertexTags,tag):
+        def addBezier(vertexTags,tag=-1):
             """
             TODO
 
@@ -1972,7 +1974,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addBSpline(vertexTags,tag):
+        def addBSpline(vertexTags,tag=-1):
             """
             TODO
 
@@ -1991,7 +1993,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addWire(edgeTags,tag,checkClosed):
+        def addWire(edgeTags,tag=-1,checkClosed=False):
             """
             TODO
 
@@ -2011,7 +2013,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addLineLoop(edgeTags,tag):
+        def addLineLoop(edgeTags,tag=-1):
             """
             TODO
 
@@ -2030,7 +2032,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addRectangle(x,y,z,dx,dy,tag,roundedRadius):
+        def addRectangle(x,y,z,dx,dy,tag=-1,roundedRadius=0.):
             """
             TODO
 
@@ -2053,7 +2055,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addDisk(xc,yc,zc,rx,ry,tag):
+        def addDisk(xc,yc,zc,rx,ry,tag=-1):
             """
             TODO
 
@@ -2075,7 +2077,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addPlaneSurface(wireTags,tag):
+        def addPlaneSurface(wireTags,tag=-1):
             """
             TODO
 
@@ -2094,7 +2096,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSurfaceFilling(wireTag,tag):
+        def addSurfaceFilling(wireTag,tag=-1):
             """
             TODO
 
@@ -2112,7 +2114,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSurfaceLoop(faceTags,tag):
+        def addSurfaceLoop(faceTags,tag=-1):
             """
             TODO
 
@@ -2131,7 +2133,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addVolume(shellTags,tag):
+        def addVolume(shellTags,tag=-1):
             """
             TODO
 
@@ -2150,7 +2152,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSphere(xc,yc,zc,radius,tag,angle1,angle2,angle3):
+        def addSphere(xc,yc,zc,radius,tag=-1,angle1=-pi/2,angle2=-pi/2,angle3=-pi/2):
             """
             TODO
 
@@ -2174,7 +2176,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addBox(x,y,z,dx,dy,dz,tag):
+        def addBox(x,y,z,dx,dy,dz,tag=-1):
             """
             TODO
 
@@ -2197,7 +2199,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addCylinder(x,y,z,dx,dy,dz,r,tag,angle):
+        def addCylinder(x,y,z,dx,dy,dz,r,tag=-1,angle=2*pi):
             """
             TODO
 
@@ -2222,7 +2224,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addCone(x,y,z,dx,dy,dz,r1,r2,tag,angle):
+        def addCone(x,y,z,dx,dy,dz,r1,r2,tag=-1,angle=2*pi):
             """
             TODO
 
@@ -2248,7 +2250,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addWedge(x,y,z,dx,dy,dz,tag,ltx):
+        def addWedge(x,y,z,dx,dy,dz,tag=-1,ltx=0.):
             """
             TODO
 
@@ -2272,7 +2274,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addTorus(x,y,z,r1,r2,tag,angle):
+        def addTorus(x,y,z,r1,r2,tag=-1,angle=2*pi):
             """
             TODO
 
@@ -2295,7 +2297,7 @@ class model:
             return api__result__
 
         @staticmethod
-        def addThruSections(wireTags,tag,makeSolid,makeRuled):
+        def addThruSections(wireTags,tag=-1,makeSolid=True,makeRuled=False):
             """
             TODO
 
@@ -2320,7 +2322,7 @@ class model:
                 _ovectorpair(api_outDimTags_, api_outDimTags_n_.value))
 
         @staticmethod
-        def addThickSolid(solidTag,excludeFaceTags,offset,tag):
+        def addThickSolid(solidTag,excludeFaceTags,offset,tag=-1):
             """
             TODO
 
@@ -2345,7 +2347,7 @@ class model:
                 _ovectorpair(api_outDimTags_, api_outDimTags_n_.value))
 
         @staticmethod
-        def extrude(dimTags,dx,dy,dz,numElements,heights,recombine):
+        def extrude(dimTags,dx,dy,dz,numElements=[],heights=[],recombine=False):
             """
             TODO
 
@@ -2373,7 +2375,7 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def revolve(dimTags,x,y,z,ax,ay,az,angle,numElements,heights,recombine):
+        def revolve(dimTags,x,y,z,ax,ay,az,angle,numElements=[],heights=[],recombine=False):
             """
             TODO
 
@@ -2426,7 +2428,7 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def fillet(regionTags,edgeTags,radius,removeRegion):
+        def fillet(regionTags,edgeTags,radius,removeRegion=True):
             """
             TODO
 
@@ -2450,7 +2452,7 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def booleanUnion(objectDimTags,toolDimTags,tag,removeObject,removeTool):
+        def booleanUnion(objectDimTags,toolDimTags,tag=-1,removeObject=True,removeTool=True):
             """
             TODO
 
@@ -2479,7 +2481,7 @@ class model:
                 _ovectorvectorpair(api_outDimTagsMap_,api_outDimTagsMap_n_,api_outDimTagsMap_nn_))
 
         @staticmethod
-        def booleanIntersection(objectDimTags,toolDimTags,tag,removeObject,removeTool):
+        def booleanIntersection(objectDimTags,toolDimTags,tag=-1,removeObject=True,removeTool=True):
             """
             TODO
 
@@ -2508,7 +2510,7 @@ class model:
                 _ovectorvectorpair(api_outDimTagsMap_,api_outDimTagsMap_n_,api_outDimTagsMap_nn_))
 
         @staticmethod
-        def booleanDifference(objectDimTags,toolDimTags,tag,removeObject,removeTool):
+        def booleanDifference(objectDimTags,toolDimTags,tag=-1,removeObject=True,removeTool=True):
             """
             TODO
 
@@ -2537,7 +2539,7 @@ class model:
                 _ovectorvectorpair(api_outDimTagsMap_,api_outDimTagsMap_n_,api_outDimTagsMap_nn_))
 
         @staticmethod
-        def booleanFragments(objectDimTags,toolDimTags,tag,removeObject,removeTool):
+        def booleanFragments(objectDimTags,toolDimTags,tag=-1,removeObject=True,removeTool=True):
             """
             TODO
 
@@ -2666,7 +2668,7 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def remove(dimTags,recursive):
+        def remove(dimTags,recursive=False):
             """
             TODO
             """
@@ -2695,7 +2697,7 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def importShapes(fileName,highestDimOnly,format):
+        def importShapes(fileName,highestDimOnly=True,format=""):
             """
             TODO
 
@@ -2755,7 +2757,7 @@ class view:
     """
 
     @staticmethod
-    def add(name,tag):
+    def add(name,tag=-1):
         """
         Adds a new post-processing view, with name `name'. If `tag' is positive use
         it (and remove the view with that tag if it already exists), otherwise
@@ -2826,7 +2828,7 @@ class view:
         return _ovectorint(api_tags_,api_tags_n_.value)
 
     @staticmethod
-    def addModelData(tag,modelName,dataType,tags,data,step,time,numComponents,partition):
+    def addModelData(tag,modelName,dataType,tags,data,step=0,time=0.,numComponents=-1,partition=0):
         """
         Adds model-based post-processing data to the view with tag `tag'.
         `modelName' identifies the model the data is attached to. `dataType'
@@ -2882,7 +2884,7 @@ class view:
                 ierr.value)
 
     @staticmethod
-    def probe(tag,x,y,z,step,numComp,gradient,tolerance,xElemCoord,yElemCoord,zElemCoord):
+    def probe(tag,x,y,z,step=-1,numComp=-1,gradient=False,tolerance=0.,xElemCoord=[],yElemCoord=[],zElemCoord=[]):
         """
         Probes the view `tag' for its `value' at point (`x', `y', `z').
 
@@ -2914,7 +2916,7 @@ class view:
         return _ovectordouble(api_value_,api_value_n_.value)
 
     @staticmethod
-    def write(tag,fileName,append):
+    def write(tag,fileName,append=False):
         """
         Writes the view to a file. The export format is determined by the file
         extension.
