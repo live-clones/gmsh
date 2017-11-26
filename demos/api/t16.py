@@ -21,10 +21,10 @@ holes = []
 for t in range(1, 6):
     x += 0.166
     z += 0.166
-    factory.addSphere(x,y,z,r, 3 + t)
+    factory.addSphere(x,y,z,r, 3 + t, -math.pi/2, math.pi/2, 2*math.pi) #FIXME default args
     holes.append((3, 3 + t))
 
-ov,ovv = factory.BooleanFragments([(3,3)], holes, True,True) #FIXME default args
+ov = factory.booleanFragments([(3,3)], holes, -1,True,True) #FIXME default args
 
 factory.synchronize()
 
@@ -32,10 +32,10 @@ lcar1 = .1
 lcar2 = .0005
 lcar3 = .055
 
-model.getEntities(ov, 0);
+ov = model.getEntities(0);
 model.mesh.setSize(ov, lcar1);
 
-model.getBoundary(holes, ov, False, False, True);
+ov = model.getBoundary(holes, False, False, True);
 model.mesh.setSize(ov, lcar3);
 
 eps = 1e-3
