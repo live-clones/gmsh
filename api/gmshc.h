@@ -35,7 +35,7 @@ GMSH_API void gmshFree(void *p);
 /* Initializes Gmsh. This must be called before any call to the other
  * functions in the API. If argc and argv are provided, they will be handled
  * in the same way as the command line arguments in the Gmsh app. */
-GMSH_API void gmshInitialize(int argc, char **argv,
+GMSH_API void gmshInitialize(int argc, char ** argv,
                              int * ierr);
 
 /* Finalizes Gmsh. This must be called when you are done using the Gmsh API. */
@@ -90,7 +90,7 @@ GMSH_API void gmshModelAdd(const char * name,
 GMSH_API void gmshModelRemove(int * ierr);
 
 /* Lists the names of all models. */
-GMSH_API void gmshModelList(char*** names,size_t* names_n,
+GMSH_API void gmshModelList(char *** names,size_t * names_n,
                             int * ierr);
 
 /* Sets the current model to the model with name `name'. If several models
@@ -102,7 +102,7 @@ GMSH_API void gmshModelSetCurrent(const char * name,
  * `dim' is >= 0, returns only the entities of the specified dimension (e.g.
  * points if `dim' == 0). The entities are returned as a vector of (dim, tag)
  * integer pairs. */
-GMSH_API void gmshModelGetEntities(int** dimTags, size_t* dimTags_n,
+GMSH_API void gmshModelGetEntities(int ** dimTags, size_t * dimTags_n,
                                    const int dim,
                                    int * ierr);
 
@@ -110,7 +110,7 @@ GMSH_API void gmshModelGetEntities(int** dimTags, size_t* dimTags_n,
  * returns only the entities of the specified dimension (e.g. physical points
  * if `dim' == 0). The entities are returned as a vector of (dim, tag) integer
  * pairs. */
-GMSH_API void gmshModelGetPhysicalGroups(int** dimTags, size_t* dimTags_n,
+GMSH_API void gmshModelGetPhysicalGroups(int ** dimTags, size_t * dimTags_n,
                                          const int dim,
                                          int * ierr);
 
@@ -118,7 +118,7 @@ GMSH_API void gmshModelGetPhysicalGroups(int** dimTags, size_t* dimTags_n,
  * physical group of dimension `dim' and tag `tag'. */
 GMSH_API void gmshModelGetEntitiesForPhysicalGroup(const int dim,
                                                    const int tag,
-                                                   int** tags, size_t* tags_n,
+                                                   int ** tags, size_t * tags_n,
                                                    int * ierr);
 
 /* Adds a physical group of dimension `dim', grouping the elementary entities
@@ -147,8 +147,8 @@ GMSH_API void gmshModelGetPhysicalName(const int dim,
  * input entities (if `combined' is true). Returns tags multiplied by the sign
  * of the boundary entity if `oriented' is true. Applies the boundary operator
  * recursively down to dimension 0 (i.e. to points) if `recursive' is true. */
-GMSH_API void gmshModelGetBoundary(int* dimTags, size_t dimTags_n,
-                                   int** outDimTags, size_t* outDimTags_n,
+GMSH_API void gmshModelGetBoundary(int * dimTags, size_t dimTags_n,
+                                   int ** outDimTags, size_t * outDimTags_n,
                                    const int combined,
                                    const int oriented,
                                    const int recursive,
@@ -164,7 +164,7 @@ GMSH_API void gmshModelGetEntitiesInBoundingBox(const double xmin,
                                                 const double xmax,
                                                 const double ymax,
                                                 const double zmax,
-                                                int** tags, size_t* tags_n,
+                                                int ** tags, size_t * tags_n,
                                                 const int dim,
                                                 int * ierr);
 
@@ -193,7 +193,7 @@ GMSH_API int gmshModelAddDiscreteEntity(const int dim,
 
 /* Removes the entities `dimTags' of the current model. If `recursive' is
  * true, remove all the entities on their boundaries, down to dimension 0. */
-GMSH_API void gmshModelRemoveEntities(int* dimTags, size_t dimTags_n,
+GMSH_API void gmshModelRemoveEntities(int * dimTags, size_t dimTags_n,
                                       const int recursive,
                                       int * ierr);
 
@@ -204,12 +204,12 @@ GMSH_API void gmshModelMeshGenerate(const int dim,
 
 /* Gets the last entities (if any) where a meshing error occurred. Currently
  * only populated by the new 3D meshing algorithms. */
-GMSH_API void gmshModelMeshGetLastEntityError(int** dimTags, size_t* dimTags_n,
+GMSH_API void gmshModelMeshGetLastEntityError(int ** dimTags, size_t * dimTags_n,
                                               int * ierr);
 
 /* Gets the last mesh vertices (if any) where a meshing error occurred.
  * Currently only populated by the new 3D meshing algorithms. */
-GMSH_API void gmshModelMeshGetLastVertexError(int** vertexTags, size_t* vertexTags_n,
+GMSH_API void gmshModelMeshGetLastVertexError(int ** vertexTags, size_t * vertexTags_n,
                                               int * ierr);
 
 /* Gets the mesh vertices of the entity of dimension `dim' and `tag' tag.
@@ -221,9 +221,9 @@ GMSH_API void gmshModelMeshGetLastVertexError(int** vertexTags, size_t* vertexTa
  * vertexTags.size()'. */
 GMSH_API void gmshModelMeshGetVertices(const int dim,
                                        const int tag,
-                                       int** vertexTags, size_t* vertexTags_n,
-                                       double** coord, size_t* coord_n,
-                                       double** parametricCoord, size_t* parametricCoord_n,
+                                       int ** vertexTags, size_t * vertexTags_n,
+                                       double ** coord, size_t * coord_n,
+                                       double ** parametricCoord, size_t * parametricCoord_n,
                                        int * ierr);
 
 /* Gets the mesh elements of the entity of dimension `dim' and `tag' tag.
@@ -237,9 +237,9 @@ GMSH_API void gmshModelMeshGetVertices(const int dim,
  * tags of all the elements of the given type, concatenated. */
 GMSH_API void gmshModelMeshGetElements(const int dim,
                                        const int tag,
-                                       int** types, size_t* types_n,
-                                       int*** elementTags, size_t** elementTags_n, size_t *elementTags_nn,
-                                       int*** vertexTags, size_t** vertexTags_n, size_t *vertexTags_nn,
+                                       int ** types, size_t * types_n,
+                                       int *** elementTags, size_t ** elementTags_n, size_t *elementTags_nn,
+                                       int *** vertexTags, size_t ** vertexTags_n, size_t *vertexTags_nn,
                                        int * ierr);
 
 /* Sets the mesh vertices in the geometrical entity of dimension `dim' and tag
@@ -252,8 +252,8 @@ GMSH_API void gmshModelMeshGetElements(const int dim,
 GMSH_API void gmshModelMeshSetVertices(const int dim,
                                        const int tag,
                                        int* vertexTags, size_t vertexTags_n,
-                                       double* coord, size_t coord_n,
-                                       double* parametricCoord, size_t parametricCoord_n,
+                                       double * coord, size_t coord_n,
+                                       double * parametricCoord, size_t parametricCoord_n,
                                        int * ierr);
 
 /* Sets the mesh elements of the entity of dimension `dim' and `tag' tag.
@@ -268,8 +268,8 @@ GMSH_API void gmshModelMeshSetVertices(const int dim,
 GMSH_API void gmshModelMeshSetElements(const int dim,
                                        const int tag,
                                        int* types, size_t types_n,
-                                       const int** elementTags, const size_t* elementTags_n, size_t elementTags_nn,
-                                       const int** vertexTags, const size_t* vertexTags_n, size_t vertexTags_nn,
+                                       const int ** elementTags, const size_t * elementTags_n, size_t elementTags_nn,
+                                       const int ** vertexTags, const size_t * vertexTags_n, size_t vertexTags_nn,
                                        int * ierr);
 
 /* Gets the coordinates and the parametric coordinates (if any) of the mesh
@@ -279,8 +279,8 @@ GMSH_API void gmshModelMeshSetElements(const int dim,
  * sequence of tags from 1 to N to maintain reasonnable performance (in this
  * case the internal cache is based on a vector; otherwise it uses a map). */
 GMSH_API void gmshModelMeshGetVertex(const int vertexTag,
-                                     double** coord, size_t* coord_n,
-                                     double** parametricCoord, size_t* parametricCoord_n,
+                                     double ** coord, size_t * coord_n,
+                                     double ** parametricCoord, size_t * parametricCoord_n,
                                      int * ierr);
 
 /* Gets the type and vertex tags of the mesh element with tag `tag'. This is a
@@ -291,12 +291,12 @@ GMSH_API void gmshModelMeshGetVertex(const int vertexTag,
  * vector; otherwise it uses a map). */
 GMSH_API void gmshModelMeshGetElement(const int elementTag,
                                       int * type,
-                                      int** vertexTags, size_t* vertexTags_n,
+                                      int ** vertexTags, size_t * vertexTags_n,
                                       int * ierr);
 
 /* Sets a mesh size constraint on the geometrical entities `dimTags'.
  * Currently only entities of dimension 0 (points) are handled. */
-GMSH_API void gmshModelMeshSetSize(int* dimTags, size_t dimTags_n,
+GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n,
                                    const double size,
                                    int * ierr);
 
@@ -388,7 +388,7 @@ GMSH_API void gmshModelMeshFieldSetString(const int tag,
 /* Sets the numerical list option `option' to value `value' for field `tag'. */
 GMSH_API void gmshModelMeshFieldSetNumbers(const int tag,
                                            const char * option,
-                                           double* value, size_t value_n,
+                                           double * value, size_t value_n,
                                            int * ierr);
 
 /* Sets the field `tag' as background mesh size field. */
@@ -515,13 +515,13 @@ GMSH_API int gmshModelGeoAddVolume(int* shellTags, size_t shellTags_n,
  * not empty, also extrude the mesh: the entries in `numElements' give the
  * number of elements in each layer. If `height' is not empty, it provides the
  * (cummulative) height of the different layers, normalized to 1. */
-GMSH_API void gmshModelGeoExtrude(int* dimTags, size_t dimTags_n,
+GMSH_API void gmshModelGeoExtrude(int * dimTags, size_t dimTags_n,
                                   const double dx,
                                   const double dy,
                                   const double dz,
-                                  int** outDimTags, size_t* outDimTags_n,
+                                  int ** outDimTags, size_t * outDimTags_n,
                                   int* numElements, size_t numElements_n,
-                                  double* heights, size_t heights_n,
+                                  double * heights, size_t heights_n,
                                   const int recombine,
                                   int * ierr);
 
@@ -532,7 +532,7 @@ GMSH_API void gmshModelGeoExtrude(int* dimTags, size_t dimTags_n,
  * entries in `numElements' give the number of elements in each layer. If
  * `height' is not empty, it provides the (cummulative) height of the
  * different layers, normalized to 1. */
-GMSH_API void gmshModelGeoRevolve(int* dimTags, size_t dimTags_n,
+GMSH_API void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,
                                   const double x,
                                   const double y,
                                   const double z,
@@ -540,9 +540,9 @@ GMSH_API void gmshModelGeoRevolve(int* dimTags, size_t dimTags_n,
                                   const double ay,
                                   const double az,
                                   const double angle,
-                                  int** outDimTags, size_t* outDimTags_n,
+                                  int ** outDimTags, size_t * outDimTags_n,
                                   int* numElements, size_t numElements_n,
-                                  double* heights, size_t heights_n,
+                                  double * heights, size_t heights_n,
                                   const int recombine,
                                   int * ierr);
 
@@ -554,7 +554,7 @@ GMSH_API void gmshModelGeoRevolve(int* dimTags, size_t dimTags_n,
  * `numElements' give the number of elements in each layer. If `height' is not
  * empty, it provides the (cummulative) height of the different layers,
  * normalized to 1. */
-GMSH_API void gmshModelGeoTwist(int* dimTags, size_t dimTags_n,
+GMSH_API void gmshModelGeoTwist(int * dimTags, size_t dimTags_n,
                                 const double x,
                                 const double y,
                                 const double z,
@@ -565,14 +565,14 @@ GMSH_API void gmshModelGeoTwist(int* dimTags, size_t dimTags_n,
                                 const double ay,
                                 const double az,
                                 const double angle,
-                                int** outDimTags, size_t* outDimTags_n,
+                                int ** outDimTags, size_t * outDimTags_n,
                                 int* numElements, size_t numElements_n,
-                                double* heights, size_t heights_n,
+                                double * heights, size_t heights_n,
                                 const int recombine,
                                 int * ierr);
 
 /* Translates the geometrical entities in `dimTags' along (`dx', `dy', `dz'). */
-GMSH_API void gmshModelGeoTranslate(int* dimTags, size_t dimTags_n,
+GMSH_API void gmshModelGeoTranslate(int * dimTags, size_t dimTags_n,
                                     const double dx,
                                     const double dy,
                                     const double dz,
@@ -581,7 +581,7 @@ GMSH_API void gmshModelGeoTranslate(int* dimTags, size_t dimTags_n,
 /* Rotates the geometrical entities in `dimTags' of `angle' radians around the
  * axis of revolution defined by the point (`x', `y', `z') and the direction
  * (`ax', `ay', `az'). */
-GMSH_API void gmshModelGeoRotate(int* dimTags, size_t dimTags_n,
+GMSH_API void gmshModelGeoRotate(int * dimTags, size_t dimTags_n,
                                  const double x,
                                  const double y,
                                  const double z,
@@ -594,7 +594,7 @@ GMSH_API void gmshModelGeoRotate(int* dimTags, size_t dimTags_n,
 /* Scales the geometrical entities in `dimTag' by factors `a', `b' and `c'
  * along the three coordinate axes; use (`x', `y', `z') as the center of the
  * homothetic transformation. */
-GMSH_API void gmshModelGeoDilate(int* dimTags, size_t dimTags_n,
+GMSH_API void gmshModelGeoDilate(int * dimTags, size_t dimTags_n,
                                  const double x,
                                  const double y,
                                  const double z,
@@ -606,7 +606,7 @@ GMSH_API void gmshModelGeoDilate(int* dimTags, size_t dimTags_n,
 /* Applies a symmetry transformation to the geometrical entities in `dimTag',
  * with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' =
  * 0. */
-GMSH_API void gmshModelGeoSymmetry(int* dimTags, size_t dimTags_n,
+GMSH_API void gmshModelGeoSymmetry(int * dimTags, size_t dimTags_n,
                                    const double a,
                                    const double b,
                                    const double c,
@@ -615,13 +615,13 @@ GMSH_API void gmshModelGeoSymmetry(int* dimTags, size_t dimTags_n,
 
 /* Copies the entities in `dimTags'; the new entities are returned in
  * `outDimTags'. */
-GMSH_API void gmshModelGeoCopy(int* dimTags, size_t dimTags_n,
-                               int** outDimTags, size_t* outDimTags_n,
+GMSH_API void gmshModelGeoCopy(int * dimTags, size_t dimTags_n,
+                               int ** outDimTags, size_t * outDimTags_n,
                                int * ierr);
 
 /* Removes the entities `dimTags'. If `recursive' is true, remove all the
  * entities on their boundaries, down to dimension 0. */
-GMSH_API void gmshModelGeoRemove(int* dimTags, size_t dimTags_n,
+GMSH_API void gmshModelGeoRemove(int * dimTags, size_t dimTags_n,
                                  const int recursive,
                                  int * ierr);
 
@@ -637,7 +637,7 @@ GMSH_API void gmshModelGeoSynchronize(int * ierr);
 
 /* Sets a mesh size constraint on the geometrical entities `dimTags'.
  * Currently only entities of dimension 0 (points) are handled. */
-GMSH_API void gmshModelGeoMeshSetSize(int* dimTags, size_t dimTags_n,
+GMSH_API void gmshModelGeoMeshSetSize(int * dimTags, size_t dimTags_n,
                                       const double size,
                                       int * ierr);
 
@@ -889,7 +889,7 @@ GMSH_API int gmshModelOccAddTorus(const double x,
 
 /* TODO */
 GMSH_API int gmshModelOccAddThruSections(int* wireTags, size_t wireTags_n,
-                                         int** outDimTags, size_t* outDimTags_n,
+                                         int ** outDimTags, size_t * outDimTags_n,
                                          const int tag,
                                          const int makeSolid,
                                          const int makeRuled,
@@ -899,23 +899,23 @@ GMSH_API int gmshModelOccAddThruSections(int* wireTags, size_t wireTags_n,
 GMSH_API int gmshModelOccAddThickSolid(const int solidTag,
                                        int* excludeFaceTags, size_t excludeFaceTags_n,
                                        const double offset,
-                                       int** outDimTags, size_t* outDimTags_n,
+                                       int ** outDimTags, size_t * outDimTags_n,
                                        const int tag,
                                        int * ierr);
 
 /* TODO */
-GMSH_API void gmshModelOccExtrude(int* dimTags, size_t dimTags_n,
+GMSH_API void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,
                                   const double dx,
                                   const double dy,
                                   const double dz,
-                                  int** outDimTags, size_t* outDimTags_n,
+                                  int ** outDimTags, size_t * outDimTags_n,
                                   int* numElements, size_t numElements_n,
-                                  double* heights, size_t heights_n,
+                                  double * heights, size_t heights_n,
                                   const int recombine,
                                   int * ierr);
 
 /* TODO */
-GMSH_API void gmshModelOccRevolve(int* dimTags, size_t dimTags_n,
+GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n,
                                   const double x,
                                   const double y,
                                   const double z,
@@ -923,75 +923,75 @@ GMSH_API void gmshModelOccRevolve(int* dimTags, size_t dimTags_n,
                                   const double ay,
                                   const double az,
                                   const double angle,
-                                  int** outDimTags, size_t* outDimTags_n,
+                                  int ** outDimTags, size_t * outDimTags_n,
                                   int* numElements, size_t numElements_n,
-                                  double* heights, size_t heights_n,
+                                  double * heights, size_t heights_n,
                                   const int recombine,
                                   int * ierr);
 
 /* TODO */
-GMSH_API void gmshModelOccAddPipe(int* dimTags, size_t dimTags_n,
+GMSH_API void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n,
                                   const int wireTag,
-                                  int** outDimTags, size_t* outDimTags_n,
+                                  int ** outDimTags, size_t * outDimTags_n,
                                   int * ierr);
 
 /* TODO */
 GMSH_API void gmshModelOccFillet(int* regionTags, size_t regionTags_n,
                                  int* edgeTags, size_t edgeTags_n,
                                  const double radius,
-                                 int** outDimTags, size_t* outDimTags_n,
+                                 int ** outDimTags, size_t * outDimTags_n,
                                  const int removeRegion,
                                  int * ierr);
 
 /* TODO */
-GMSH_API int gmshModelOccBooleanUnion(int* objectDimTags, size_t objectDimTags_n,
-                                      int* toolDimTags, size_t toolDimTags_n,
-                                      int** outDimTags, size_t* outDimTags_n,
-                                      int*** outDimTagsMap, size_t** outDimTagsMap_n, size_t *outDimTagsMap_nn,
+GMSH_API int gmshModelOccBooleanUnion(int * objectDimTags, size_t objectDimTags_n,
+                                      int * toolDimTags, size_t toolDimTags_n,
+                                      int ** outDimTags, size_t * outDimTags_n,
+                                      int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
                                       const int tag,
                                       const int removeObject,
                                       const int removeTool,
                                       int * ierr);
 
 /* TODO */
-GMSH_API int gmshModelOccBooleanIntersection(int* objectDimTags, size_t objectDimTags_n,
-                                             int* toolDimTags, size_t toolDimTags_n,
-                                             int** outDimTags, size_t* outDimTags_n,
-                                             int*** outDimTagsMap, size_t** outDimTagsMap_n, size_t *outDimTagsMap_nn,
+GMSH_API int gmshModelOccBooleanIntersection(int * objectDimTags, size_t objectDimTags_n,
+                                             int * toolDimTags, size_t toolDimTags_n,
+                                             int ** outDimTags, size_t * outDimTags_n,
+                                             int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
                                              const int tag,
                                              const int removeObject,
                                              const int removeTool,
                                              int * ierr);
 
 /* TODO */
-GMSH_API int gmshModelOccBooleanDifference(int* objectDimTags, size_t objectDimTags_n,
-                                           int* toolDimTags, size_t toolDimTags_n,
-                                           int** outDimTags, size_t* outDimTags_n,
-                                           int*** outDimTagsMap, size_t** outDimTagsMap_n, size_t *outDimTagsMap_nn,
+GMSH_API int gmshModelOccBooleanDifference(int * objectDimTags, size_t objectDimTags_n,
+                                           int * toolDimTags, size_t toolDimTags_n,
+                                           int ** outDimTags, size_t * outDimTags_n,
+                                           int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
                                            const int tag,
                                            const int removeObject,
                                            const int removeTool,
                                            int * ierr);
 
 /* TODO */
-GMSH_API int gmshModelOccBooleanFragments(int* objectDimTags, size_t objectDimTags_n,
-                                          int* toolDimTags, size_t toolDimTags_n,
-                                          int** outDimTags, size_t* outDimTags_n,
-                                          int*** outDimTagsMap, size_t** outDimTagsMap_n, size_t *outDimTagsMap_nn,
+GMSH_API int gmshModelOccBooleanFragments(int * objectDimTags, size_t objectDimTags_n,
+                                          int * toolDimTags, size_t toolDimTags_n,
+                                          int ** outDimTags, size_t * outDimTags_n,
+                                          int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
                                           const int tag,
                                           const int removeObject,
                                           const int removeTool,
                                           int * ierr);
 
 /* TODO */
-GMSH_API void gmshModelOccTranslate(int* dimTags, size_t dimTags_n,
+GMSH_API void gmshModelOccTranslate(int * dimTags, size_t dimTags_n,
                                     const double dx,
                                     const double dy,
                                     const double dz,
                                     int * ierr);
 
 /* TODO */
-GMSH_API void gmshModelOccRotate(int* dimTags, size_t dimTags_n,
+GMSH_API void gmshModelOccRotate(int * dimTags, size_t dimTags_n,
                                  const double x,
                                  const double y,
                                  const double z,
@@ -1002,7 +1002,7 @@ GMSH_API void gmshModelOccRotate(int* dimTags, size_t dimTags_n,
                                  int * ierr);
 
 /* TODO */
-GMSH_API void gmshModelOccDilate(int* dimTags, size_t dimTags_n,
+GMSH_API void gmshModelOccDilate(int * dimTags, size_t dimTags_n,
                                  const double x,
                                  const double y,
                                  const double z,
@@ -1012,7 +1012,7 @@ GMSH_API void gmshModelOccDilate(int* dimTags, size_t dimTags_n,
                                  int * ierr);
 
 /* TODO */
-GMSH_API void gmshModelOccSymmetry(int* dimTags, size_t dimTags_n,
+GMSH_API void gmshModelOccSymmetry(int * dimTags, size_t dimTags_n,
                                    const double a,
                                    const double b,
                                    const double c,
@@ -1020,12 +1020,12 @@ GMSH_API void gmshModelOccSymmetry(int* dimTags, size_t dimTags_n,
                                    int * ierr);
 
 /* TODO */
-GMSH_API void gmshModelOccCopy(int* dimTags, size_t dimTags_n,
-                               int** outDimTags, size_t* outDimTags_n,
+GMSH_API void gmshModelOccCopy(int * dimTags, size_t dimTags_n,
+                               int ** outDimTags, size_t * outDimTags_n,
                                int * ierr);
 
 /* TODO */
-GMSH_API void gmshModelOccRemove(int* dimTags, size_t dimTags_n,
+GMSH_API void gmshModelOccRemove(int * dimTags, size_t dimTags_n,
                                  const int recursive,
                                  int * ierr);
 
@@ -1034,14 +1034,14 @@ GMSH_API void gmshModelOccRemoveAllDuplicates(int * ierr);
 
 /* TODO */
 GMSH_API void gmshModelOccImportShapes(const char * fileName,
-                                       int** outDimTags, size_t* outDimTags_n,
+                                       int ** outDimTags, size_t * outDimTags_n,
                                        const int highestDimOnly,
                                        const char * format,
                                        int * ierr);
 
 /* Sets a mesh size constraint on the geometrical entities `dimTags'.
  * Currently only entities of dimension 0 (points) are handled. */
-GMSH_API void gmshModelOccSetMeshSize(int* dimTags, size_t dimTags_n,
+GMSH_API void gmshModelOccSetMeshSize(int * dimTags, size_t dimTags_n,
                                       const double size,
                                       int * ierr);
 
@@ -1069,7 +1069,7 @@ GMSH_API int gmshViewGetIndex(const int tag,
                               int * ierr);
 
 /* Gets the tags of all views. */
-GMSH_API void gmshViewGetTags(int** tags, size_t* tags_n,
+GMSH_API void gmshViewGetTags(int ** tags, size_t * tags_n,
                               int * ierr);
 
 /* Adds model-based post-processing data to the view with tag `tag'.
@@ -1088,7 +1088,7 @@ GMSH_API void gmshViewAddModelData(const int tag,
                                    const char * modelName,
                                    const char * dataType,
                                    int* tags, size_t tags_n,
-                                   const double** data, const size_t* data_n, size_t data_nn,
+                                   const double ** data, const size_t * data_n, size_t data_nn,
                                    const int step,
                                    const int time,
                                    const int numComponents,
@@ -1102,7 +1102,7 @@ GMSH_API void gmshViewAddModelData(const int tag,
 GMSH_API void gmshViewAddListData(const int tag,
                                   const char * type,
                                   const int numEle,
-                                  double* data, size_t data_n,
+                                  double * data, size_t data_n,
                                   int * ierr);
 
 /* Probes the view `tag' for its `value' at point (`x', `y', `z'). */
@@ -1110,14 +1110,14 @@ GMSH_API void gmshViewProbe(const int tag,
                             const double x,
                             const double y,
                             const double z,
-                            double** value, size_t* value_n,
+                            double ** value, size_t * value_n,
                             const int step,
                             const int numComp,
                             const int gradient,
                             const double tolerance,
-                            double* xElemCoord, size_t xElemCoord_n,
-                            double* yElemCoord, size_t yElemCoord_n,
-                            double* zElemCoord, size_t zElemCoord_n,
+                            double * xElemCoord, size_t xElemCoord_n,
+                            double * yElemCoord, size_t yElemCoord_n,
+                            double * zElemCoord, size_t zElemCoord_n,
                             int * ierr);
 
 /* Writes the view to a file. The export format is determined by the file

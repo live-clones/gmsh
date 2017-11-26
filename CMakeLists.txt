@@ -1487,7 +1487,7 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   target_link_libraries(shared ${LINK_LIBRARIES})
   # C wrappers
   add_library(sharedc SHARED api/gmshc.cpp)
-  set_target_properties(sharedc PROPERTIES OUTPUT_NAME gmshc SUFFIX .so
+  set_target_properties(sharedc PROPERTIES OUTPUT_NAME gmshc
     VERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}
     SOVERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
   target_link_libraries(sharedc shared)

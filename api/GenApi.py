@@ -74,7 +74,7 @@ def ovectorpair(name,value=None):
     a.c_arg = name_
     a.c_pre = "  gmsh::vector_pair "+name_ +";\n"
     a.c_post = "  pairvector2intptr("+name_+"," + name + ","+name+"_n);\n"
-    a.c = "int** "+name+", size_t* "+name+"_n"
+    a.c = "int ** "+name+", size_t * "+name+"_n"
     a.python_pre = name_+", "+name_n+" = POINTER(c_int)(), c_size_t()"
     a.python_arg = "byref("+name_+"), byref("+name_n+")"
     a.python_return = "_ovectorpair("+name_+", "+name_n+".value)"
@@ -87,7 +87,7 @@ def ovectorstring(name,value=None):
     a.c_arg = name_
     a.c_pre = "  std::vector<std::string> "+name_ +";\n"
     a.c_post = "  stringvector2charpp("+name_+"," + name + ","+name+"_n);\n"
-    a.c = "char*** "+name+",size_t* "+name+"_n"
+    a.c = "char *** "+name+",size_t * "+name+"_n"
     a.python_pre = name_+", "+name_n+" = POINTER(c_char_p)(), c_size_t()"
     a.python_arg = "byref("+name_+"), byref("+name_n+")"
     a.python_return = "_ovectorstring("+name_+", "+name_n+".value)"
@@ -96,7 +96,7 @@ def ovectorstring(name,value=None):
 def ivectorpair(name,value=None):
     a = arg(name,value,"const gmsh::vector_pair &","const int *",False)
     a.c_arg = "intptr2pairvector("+name+","+name+"_n)"
-    a.c = "int* "+name+", size_t "+name+"_n"
+    a.c = "int * "+name+", size_t "+name+"_n"
     a.python_pre = "api_"+name+"_, api_"+name+"_n_ = _ivectorpair("+name+")"
     a.python_arg = "api_"+name+"_, api_"+name+"_n_"
     return a
@@ -124,7 +124,7 @@ def ivectorint(name,value=None):
 def ivectorvectorint(name,value=None):
     a = arg(name,value,"const std::vector<std::vector<int> >&","const int**",False)
     a.c_arg = "ptrptr2vectorvector("+name+","+name+"_n,"+name+"_nn)"
-    a.c = "const int** "+name+", const size_t* "+name+"_n, "+"size_t "+name+"_nn"
+    a.c = "const int ** "+name+", const size_t * "+name+"_n, "+"size_t "+name+"_nn"
     a.python_pre = "api_"+name+"_, api_"+name+"_n_, api_"+name+"_nn_ = _ivectorvectorint("+name+")"
     a.python_arg = "api_"+name+"_, api_"+name+"_n_, api_"+name+"_nn_"
     return a
@@ -132,7 +132,7 @@ def ivectorvectorint(name,value=None):
 def ivectorvectordouble(name,value=None):
     a = arg(name,value,"const std::vector<std::vector<double> >&","const double**",False)
     a.c_arg = "ptrptr2vectorvector("+name+","+name+"_n,"+name+"_nn)"
-    a.c = "const double** "+name+", const size_t* "+name+"_n, "+"size_t "+name+"_nn"
+    a.c = "const double ** "+name+", const size_t * "+name+"_n, "+"size_t "+name+"_nn"
     a.python_pre = "api_"+name+"_, api_"+name+"_n_, api_"+name+"_nn_ = _ivectorvectordouble("+name+")"
     a.python_arg = "api_"+name+"_, api_"+name+"_n_"
     return a
@@ -144,7 +144,7 @@ def ovectorint(name,value=None):
     a.c_arg = name_
     a.c_pre = "  std::vector<int> "+name_ +";\n"
     a.c_post = "  vector2ptr("+name_+"," + name + ","+name+"_n);\n"
-    a.c = "int** "+name+", size_t* "+name+"_n"
+    a.c = "int ** "+name+", size_t * "+name+"_n"
     a.python_pre = name_+", "+name_n+" = POINTER(c_int)(), c_size_t()"
     a.python_arg = "byref("+name_+"),byref("+name_n+")"
     a.python_return = "_ovectorint("+name_+","+name_n+".value)"
@@ -153,7 +153,7 @@ def ovectorint(name,value=None):
 def ivectordouble(name,value=None):
     a = arg(name,value,"const std::vector<double> &","double **",False)
     a.c_arg = "ptr2vector("+name+","+name+"_n)"
-    a.c  = "double* "+name+", size_t "+name+"_n"
+    a.c  = "double * "+name+", size_t "+name+"_n"
     a.python_pre = "api_"+name+"_, api_"+name+"_n_ = _ivectordouble("+name+")"
     a.python_arg = "api_"+name+"_, api_"+name+"_n_"
     return a
@@ -165,7 +165,7 @@ def ovectordouble(name,value=None):
     a.c_arg = name_
     a.c_pre = "  std::vector<double> "+a.c_arg +";\n"
     a.c_post = "  vector2ptr("+name_+"," + name + ","+name+"_n);\n"
-    a.c  = "double** "+name+", size_t* "+name+"_n"
+    a.c  = "double ** "+name+", size_t * "+name+"_n"
     a.python_pre = name_+", "+name_n+" = POINTER(c_double)(), c_size_t()"
     a.python_arg = "byref("+name_+"),byref("+name_n+")"
     a.python_return = "_ovectordouble("+name_+","+name_n+".value)"
@@ -179,7 +179,7 @@ def ovectorvectorint(name,value=None):
     a.c_arg = name_
     a.c_pre = "  std::vector<std::vector<int> > "+a.c_arg +";\n"
     a.c_post = "  vectorvector2ptrptr("+name_+"," + name + ","+name+"_n,"+name+"_nn);\n"
-    a.c  = "int*** "+name+", size_t** "+name+"_n, size_t *"+name+"_nn"
+    a.c  = "int *** "+name+", size_t ** "+name+"_n, size_t *"+name+"_nn"
     a.python_pre = name_+", "+name_n+", "+name_nn +" = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()"
     a.python_arg = "byref("+name_+"),byref("+name_n+"),byref("+name_nn+")"
     a.python_return = "_ovectorvectorint("+name_+","+name_n+","+name_nn+")"
@@ -193,7 +193,7 @@ def ovectorvectorpair(name,value=None):
     a.c_arg = name_
     a.c_pre = "  std::vector<gmsh::vector_pair >"+name_ +";\n"
     a.c_post = "  pairvectorvector2intptrptr("+name_+"," + name + ","+name+"_n,"+name+"_nn);\n"
-    a.c  = "int*** "+name+", size_t** "+name+"_n, size_t *"+name+"_nn"
+    a.c  = "int *** "+name+", size_t ** "+name+"_n, size_t *"+name+"_nn"
     a.python_pre = name_+", "+name_n+", "+name_nn +" = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()"
     a.python_arg = "byref("+name_+"),byref("+name_n+"),byref("+name_nn+")"
     a.python_return = "_ovectorvectorpair("+name_+","+name_n+","+name_nn+")"
@@ -201,9 +201,9 @@ def ovectorvectorpair(name,value=None):
 
 def argcargv() : 
     a = arg("", None, "", "", False)
-    a.cpp = "int argc = 0, char **argv = 0"
+    a.cpp = "int argc = 0, char ** argv = 0"
     a.c_arg = "argc, argv"
-    a.c = "int argc, char **argv"
+    a.c = "int argc, char ** argv"
     a.c_pre = ""
     a.c_post = ""
     a.name = "argv"
@@ -425,9 +425,15 @@ python_header = """# Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
 from ctypes import *
 import signal
 import os
+import platform
 signal.signal(signal.SIGINT,signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
-lib = CDLL(libdir+"/libgmshc.so")
+if platform.system() == 'Windows':
+    lib = CDLL(libdir+"/gmshc.dll")
+elif platform.system() == 'Darwin':
+    lib = CDLL(libdir+"/libgmshc.dylib")
+else:
+    lib = CDLL(libdir+"/libgmshc.so")
 
 use_numpy = False
 try :

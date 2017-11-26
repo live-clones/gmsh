@@ -44,7 +44,7 @@ namespace gmsh { // Top-level functions
   // Initializes Gmsh. This must be called before any call to the other functions
   // in the API. If argc and argv are provided, they will be handled in the same
   // way as the command line arguments in the Gmsh app.
-  GMSH_API void initialize(int argc = 0, char **argv = 0);
+  GMSH_API void initialize(int argc = 0, char ** argv = 0);
 
   // Finalizes Gmsh. This must be called when you are done using the Gmsh API.
   GMSH_API void finalize();

@@ -19,9 +19,15 @@
 from ctypes import *
 import signal
 import os
+import platform
 signal.signal(signal.SIGINT,signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
-lib = CDLL(libdir+"/libgmshc.so")
+if platform.system() == 'Windows':
+    lib = CDLL(libdir+"/gmshc.dll")
+elif platform.system() == 'Darwin':
+    lib = CDLL(libdir+"/libgmshc.dylib")
+else:
+    lib = CDLL(libdir+"/libgmshc.so")
 
 use_numpy = False
 try :
