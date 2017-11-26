@@ -8,7 +8,7 @@
 import gmsh
 
 # Before using any functions in the Python API, Gmsh must be initialized.
-gmsh.initialize([]) #FIXME default args
+gmsh.initialize()
 
 # By default Gmsh will not print out any messages: in order to output messages
 # on the terminal, just set the standard Gmsh option "General.Terminal" (same

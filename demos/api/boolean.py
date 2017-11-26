@@ -2,7 +2,6 @@
 
 import gmsh
 import sys
-import math #FIXME default args
 
 model = gmsh.model
 factory = model.occ

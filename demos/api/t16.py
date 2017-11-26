@@ -6,7 +6,7 @@ import math
 model = gmsh.model
 factory = model.occ
 
-gmsh.initialize([]) #FIXME default args
+gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 1)
 
 model.add("t16")
