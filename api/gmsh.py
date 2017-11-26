@@ -33,7 +33,7 @@ else:
 
 use_numpy = False
 try :
-    import numpy
+    import numpy2
     use_numpy = True
     try : 
         from weakref import finalize as weakreffinalize
@@ -91,7 +91,7 @@ def _ivectorint(o):
     if use_numpy :
         return  numpy.ascontiguousarray(o,numpy.int32).ctypes, c_size_t(len(o))
     else :
-        return byref((c_int*len(o))(*o)), c_size_t(len(o))
+        return (c_int*len(o))(*o), c_size_t(len(o))
 
 def _ivectorvectorint(os):
     n = len(os)
@@ -99,27 +99,27 @@ def _ivectorvectorint(os):
     sizes = (c_size_t*n)(*(a[1] for a in parrays))
     arrays = (POINTER(c_int)*n)(*(cast(a[0],POINTER(c_int)) for a in parrays))
     size = c_size_t(n)
-    return byref(arrays), byref(sizes), size
+    return arrays, sizes, size
 
 def _ivectorvectordouble(os):
     n = len(os)
     parrays = [_ivectordouble(o) for o in os]
     sizes = (c_size_t*n)(*(a[1] for a in parrays))
-    arrays = (POINTER(c_double)*n)(*(cast(a[0],POINTER(c_int)) for a in parrays))
+    arrays = (POINTER(c_double)*n)(*(cast(a[0],POINTER(c_double)) for a in parrays))
     size = c_size_t(n)
-    return byref(arrays), byref(sizes), size
+    return arrays, sizes, size
 
 def _ivectordouble(o):
     if use_numpy :
         return  numpy.ascontiguousarray(o,numpy.float64).ctypes, c_size_t(len(o))
     else :
-        return byref((c_double*len(o))(*o)), c_size_t(len(o))
+        return (c_double*len(o))(*o), c_size_t(len(o))
 
 def _ivectorpair(o):
     if use_numpy :
         return  numpy.ascontiguousarray(o,numpy.int32).reshape(len(o),2).ctypes, c_size_t(len(o)*2)
     else :
-        return byref(((c_int*2)*len(o))(*o)), c_size_t(len(o)*2)
+        return ((c_int*2)*len(o))(*o), c_size_t(len(o)*2)
 
 def _iargcargv(o) :
     return c_int(len(o)), (c_char_p*len(o))(*(s.encode() for s in o))
@@ -2828,7 +2828,7 @@ class view:
         return _ovectorint(api_tags_,api_tags_n_.value)
 
     @staticmethod
-    def addModelData(tag,modelName,dataType,tags,data,step=0,time=0.,numComponents=-1,partition=0):
+    def addModelData(tag,modelName,dataType,tags,data,step=0,time=0,numComponents=-1,partition=0):
         """
         Adds model-based post-processing data to the view with tag `tag'.
         `modelName' identifies the model the data is attached to. `dataType'
@@ -2851,7 +2851,7 @@ class view:
             c_char_p(modelName.encode()),
             c_char_p(dataType.encode()),
             api_tags_, api_tags_n_,
-            api_data_, api_data_n_,
+            api_data_, api_data_n_, api_data_nn_,
             c_int(step),
             c_int(time),
             c_int(numComponents),

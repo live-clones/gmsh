@@ -135,7 +135,7 @@ def ivectorvectordouble(name,value=None,python_value=None):
     a.c_arg = "ptrptr2vectorvector("+name+","+name+"_n,"+name+"_nn)"
     a.c = "const double ** "+name+", const size_t * "+name+"_n, "+"size_t "+name+"_nn"
     a.python_pre = "api_"+name+"_, api_"+name+"_n_, api_"+name+"_nn_ = _ivectorvectordouble("+name+")"
-    a.python_arg = "api_"+name+"_, api_"+name+"_n_"
+    a.python_arg = "api_"+name+"_, api_"+name+"_n_, api_"+name+"_nn_"
     return a
 
 def ovectorint(name,value=None,python_value=None):
@@ -498,7 +498,7 @@ def _ivectorint(o):
     if use_numpy :
         return  numpy.ascontiguousarray(o,numpy.int32).ctypes, c_size_t(len(o))
     else :
-        return byref((c_int*len(o))(*o)), c_size_t(len(o))
+        return (c_int*len(o))(*o), c_size_t(len(o))
 
 def _ivectorvectorint(os):
     n = len(os)
@@ -506,27 +506,27 @@ def _ivectorvectorint(os):
     sizes = (c_size_t*n)(*(a[1] for a in parrays))
     arrays = (POINTER(c_int)*n)(*(cast(a[0],POINTER(c_int)) for a in parrays))
     size = c_size_t(n)
-    return byref(arrays), byref(sizes), size
+    return arrays, sizes, size
 
 def _ivectorvectordouble(os):
     n = len(os)
     parrays = [_ivectordouble(o) for o in os]
     sizes = (c_size_t*n)(*(a[1] for a in parrays))
-    arrays = (POINTER(c_double)*n)(*(cast(a[0],POINTER(c_int)) for a in parrays))
+    arrays = (POINTER(c_double)*n)(*(cast(a[0],POINTER(c_double)) for a in parrays))
     size = c_size_t(n)
-    return byref(arrays), byref(sizes), size
+    return arrays, sizes, size
 
 def _ivectordouble(o):
     if use_numpy :
         return  numpy.ascontiguousarray(o,numpy.float64).ctypes, c_size_t(len(o))
     else :
-        return byref((c_double*len(o))(*o)), c_size_t(len(o))
+        return (c_double*len(o))(*o), c_size_t(len(o))
 
 def _ivectorpair(o):
     if use_numpy :
         return  numpy.ascontiguousarray(o,numpy.int32).reshape(len(o),2).ctypes, c_size_t(len(o)*2)
     else :
-        return byref(((c_int*2)*len(o))(*o)), c_size_t(len(o)*2)
+        return ((c_int*2)*len(o))(*o), c_size_t(len(o)*2)
 
 def _iargcargv(o) :
     return c_int(len(o)), (c_char_p*len(o))(*(s.encode() for s in o))
