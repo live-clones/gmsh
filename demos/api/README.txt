@@ -4,12 +4,13 @@ Python. The full API is available in Common/gmsh.h.
 The files t1.{cpp,py}, t2.{cpp,py}, ... are reimplementations in C++ and Python
 of the corresponding tutorials in gmsh/tutorials.
 
-1) Build and install Gmsh, the dynamic Gmsh library and the Python wrappers:
+1) Build and install the Gmsh library (this is done automatically when building
+   the dynamically-linked Gmsh app):
 
   cd gmsh
   mkdir build
   cd build
-  cmake -DENABLE_WRAP_PYTHON=1 ..
+  cmake -DENABLE_BUILD_DYNAMIC=1 ..
   make
   make install
   cd ..

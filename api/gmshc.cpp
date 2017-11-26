@@ -73,7 +73,7 @@ void vectorvector2ptrptr(const std::vector<std::vector<t> > &v,t ***p,size_t **s
   *sizeSize = v.size();
 }
 
-int** pairvectorvector2intptrptr(const std::vector<gmsh::vector_pair > &v,int ***p,size_t **size,size_t *sizeSize) {
+void pairvectorvector2intptrptr(const std::vector<gmsh::vector_pair > &v,int ***p,size_t **size,size_t *sizeSize) {
   *p = (int**)malloc(sizeof(int*)*v.size());
   for (size_t i = 0; i < v.size(); ++i)
     pairvector2intptr(v[i],p[i],size[i]);

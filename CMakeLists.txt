@@ -103,7 +103,7 @@ set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
 set(GMSH_VERSION "${GMSH_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}")
 set(GMSH_SHORT_LICENSE "GNU General Public License")
 
-set(GMSH_API api/gmsh.h)
+set(GMSH_API api/gmsh.h api/gmshc.h)
 
 if(ENABLE_INTERNAL_DEVELOPER_API)
   message(WARNING "The internal developer API is unsupported and undocumented. "
@@ -118,9 +118,14 @@ if(ENABLE_INTERNAL_DEVELOPER_API)
       ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h ${HEADERS})
   get_property(IAMCHILD DIRECTORY  PROPERTY PARENT_DIRECTORY)
   if(IAMCHILD)
-    set(GMSH_INTERNAL_DEVELOPER_API ${GMSH_API} PARENT_SCOPE)
+    set(GMSH_INTERNAL_DEVELOPER_API ${GMSH_INTERNAL_DEVELOPER_API} PARENT_SCOPE)
   endif(IAMCHILD)
 endif(ENABLE_INTERNAL_DEVELOPER_API)
+
+set(ONELAB_PY contrib/onelab/python/onelab.py)
+set(GMSH_PY api/gmsh.py)
+
+file(COPY ${GMSH_PY} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 if(${CMAKE_MAJOR_VERSION} GREATER 2)
   string(TIMESTAMP DATE "%Y%m%d")
@@ -539,8 +544,7 @@ if(ENABLE_ONELAB)
       include_directories(contrib/onelab)
       set_config_option(HAVE_ONELAB_METAMODEL "ONELABMetamodel")
     endif(ENABLE_ONELAB_METAMODEL)
-    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab/python/onelab.py
-              DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+    file(COPY ${ONELAB_PY} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
   endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab)
 endif(ENABLE_ONELAB)
 
@@ -1463,26 +1467,9 @@ if(ENABLE_BUILD_LIB)
       set_target_properties(lib PROPERTIES LINK_FLAGS_RELEASE "/nodefaultlib:LIBCMT")
     endif(ENABLE_MSVC_STATIC_RUNTIME)
   endif(MSVC)
+  add_library(libc STATIC api/gmsh.cpp)
+  set_target_properties(libc PROPERTIES OUTPUT_NAME gmshc)
 endif(ENABLE_BUILD_LIB)
-
-if(ENABLE_BUILD_ANDROID)
-  find_file(CMAKE_TOOLCHAIN_FILE "android.toolchain.cmake")
-  if(NOT CMAKE_TOOLCHAIN_FILE)
-    message(FATAL_ERROR "Cannot compile Gmsh for android without android-cmake")
-  endif(NOT CMAKE_TOOLCHAIN_FILE)
-  add_definitions(-D_GLIBCXX_USE_C99_MATH=1)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-  set(CMAKE_BUILD_TYPE Release)
-  set(LIBRARY_OUTPUT_PATH_ROOT ${CMAKE_CURRENT_BINARY_DIR})
-  set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/libs/)
-  add_definitions(-DBUILD_ANDROID)
-  add_definitions(-DPICOJSON_USE_LOCALE=0)
-  add_library(androidGmsh SHARED ${GMSH_SRC})
-  set_target_properties(androidGmsh PROPERTIES OUTPUT_NAME gmsh)
-  target_link_libraries(androidGmsh ${EXTERNAL_LIBRARIES} ${LAPACK_LIBRARIES})
-  add_custom_command(TARGET androidGmsh POST_BUILD COMMAND
-                     ${CMAKE_STRIP} ${LIBRARY_OUTPUT_PATH}/libgmsh.so)
-endif(ENABLE_BUILD_ANDROID)
 
 # shared library target
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
@@ -1499,10 +1486,18 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
     message(STATUS "Note: By enabling ENABLE_MSVC_STATIC_RUNTIME, shared library "
             "won't link. In MSVC change /MT to /MD in the shared project properties")
   endif(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
+  target_link_libraries(shared ${LINK_LIBRARIES})
+  add_library(sharedc SHARED api/gmshc.cpp)
+  
+  set_target_properties(sharedc PROPERTIES OUTPUT_NAME gmshc)
+  set_target_properties(sharedc PROPERTIES
+    VERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}
+    SOVERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
+  target_link_libraries(sharedc shared)
   if(APPLE)
     set_target_properties(shared PROPERTIES MACOSX_RPATH ".")
+    set_target_properties(sharedc PROPERTIES MACOSX_RPATH ".")
   endif(APPLE)
-  target_link_libraries(shared ${LINK_LIBRARIES})
 endif(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 
 # binary targets
@@ -1538,10 +1533,6 @@ if(WIN32 AND NOT MSVC OR CYGWIN)
     set(FLAGS "${FLAGS} -Wl,-Bstatic -lgfortran")
     set_target_properties(gmsh PROPERTIES
       LINK_FLAGS "${FLAGS} -Wl,--enable-auto-import")
-    set(LIBGMSH_DEF "libgmsh-${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.def")
-    # automatically export .def file with all symbols
-    set_target_properties(shared PROPERTIES PREFIX "lib"
-      LINK_FLAGS "${FLAGS} -Wl,--export-all-symbols,--output-def,${LIBGMSH_DEF}")
   else(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
     set_target_properties(gmsh PROPERTIES
       LINK_FLAGS "${FLAGS} -static")
@@ -1553,6 +1544,26 @@ elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS
     "/STACK:16777216 /SAFESEH:NO")
 endif(WIN32 AND NOT MSVC OR CYGWIN)
+
+# android target
+if(ENABLE_BUILD_ANDROID)
+  find_file(CMAKE_TOOLCHAIN_FILE "android.toolchain.cmake")
+  if(NOT CMAKE_TOOLCHAIN_FILE)
+    message(FATAL_ERROR "Cannot compile Gmsh for android without android-cmake")
+  endif(NOT CMAKE_TOOLCHAIN_FILE)
+  add_definitions(-D_GLIBCXX_USE_C99_MATH=1)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  set(CMAKE_BUILD_TYPE Release)
+  set(LIBRARY_OUTPUT_PATH_ROOT ${CMAKE_CURRENT_BINARY_DIR})
+  set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/libs/)
+  add_definitions(-DBUILD_ANDROID)
+  add_definitions(-DPICOJSON_USE_LOCALE=0)
+  add_library(androidGmsh SHARED ${GMSH_SRC})
+  set_target_properties(androidGmsh PROPERTIES OUTPUT_NAME gmsh)
+  target_link_libraries(androidGmsh ${EXTERNAL_LIBRARIES} ${LAPACK_LIBRARIES})
+  add_custom_command(TARGET androidGmsh POST_BUILD COMMAND
+                     ${CMAKE_STRIP} ${LIBRARY_OUTPUT_PATH}/libgmsh.so)
+endif(ENABLE_BUILD_ANDROID)
 
 # parser target
 find_program(BISON bison)
@@ -1579,7 +1590,6 @@ set(WELCOME_FILE ${CMAKE_CURRENT_SOURCE_DIR}/doc/WELCOME.txt)
 set(LICENSE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt)
 set(CREDITS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/CREDITS.txt)
 set(CHANGELOG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/CHANGELOG.txt)
-set(ONELAB_PY ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab/python/onelab.py)
 file(GLOB TUTORIAL_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorial/?*.*)
 file(GLOB DEMOS ${CMAKE_CURRENT_SOURCE_DIR}/demos/*)
 foreach(SUBDIR ${DEMOS})
@@ -1667,9 +1677,7 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
     # install only the runtime (DLL); the .dll.a generated by gcc is not usable
     # by MSVC
     install(TARGETS shared RUNTIME DESTINATION ${GMSH_LIB} OPTIONAL)
-    # install .def file
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${LIBGMSH_DEF}
-            DESTINATION ${GMSH_LIB})
+    install(TARGETS sharedc RUNTIME DESTINATION ${GMSH_LIB} OPTIONAL)
     # install these DLLs until we figure out how to link them in statically
     # (libstc++ and libgcc should be linkable statically with -static-libstdc++
     # and -static-libgcc but with current mingw64 toolchain it does not
@@ -1697,6 +1705,7 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
     endif(GCC_DLL AND STDC_DLL)
   else(WIN32 AND NOT MSVC OR CYGWIN)
     install(TARGETS shared DESTINATION ${GMSH_LIB} OPTIONAL)
+    install(TARGETS sharedc DESTINATION ${GMSH_LIB} OPTIONAL)
   endif(WIN32 AND NOT MSVC OR CYGWIN)
 endif(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 
@@ -1705,6 +1714,7 @@ if(ENABLE_ONELAB)
 endif(ENABLE_ONELAB)
 if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   install(FILES ${GMSH_API} DESTINATION ${GMSH_INC})
+  install(FILES ${GMSH_PY} DESTINATION ${GMSH_LIB})
   if(ENABLE_INTERNAL_DEVELOPER_API)
     install(FILES ${GMSH_INTERNAL_DEVELOPER_API} DESTINATION ${GMSH_INC}/gmsh)
   endif(ENABLE_INTERNAL_DEVELOPER_API)
