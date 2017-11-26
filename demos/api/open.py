@@ -5,10 +5,10 @@ if len(sys.argv) < 2:
     print "Usage: " + sys.argv[0] + " file.geo [options]"
     exit(0)
 
-gmsh.initialize()
-gmsh.optionSetNumber("General.Terminal", 1)
+gmsh.initialize([]) #FIXME default args
+gmsh.option.setNumber("General.Terminal", 1)
 gmsh.open(sys.argv[1])
-gmsh.modelMeshGenerate(3)
+gmsh.model.mesh.generate(3)
 gmsh.write("test.msh")
 gmsh.finalize()
 
