@@ -10,6 +10,7 @@
 import gmsh
 
 # Before using any functions in the Python API, Gmsh must be initialized.
+# FIXME: remove optional argument
 gmsh.initialize([])
 
 # By default Gmsh will not print out any messages: in order to output messages
