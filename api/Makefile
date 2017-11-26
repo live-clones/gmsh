@@ -8,5 +8,5 @@ linux:
 	gcc main.c -L. -Wl,-rpath=. -L../build -Wl,-rpath=../build  -lgmshc -lgmsh -lstdc++ -o main
 
 mac:
-	g++ gmshc.cpp -shared -fPIC -L. -lstdc++ -lgmsh -o libgmshc.so
+	g++ gmshc.cpp -shared -fPIC -L../bin  -L. -lstdc++ -lgmsh -o libgmshc.so
 	gcc main.c -L. -lgmshc -lgmsh -lstdc++ -o main

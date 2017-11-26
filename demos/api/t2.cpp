@@ -10,7 +10,7 @@ namespace factory = gmsh::model::geo;
 int main(int argc, char **argv)
 {
   // If argc/argv are passed, Gmsh will parse the commandline in the same way as
-  // the standalone Gmsh code.
+  // the standalone Gmsh app.
   gmsh::initialize(argc, argv);
   gmsh::option::setNumber("General.Terminal", 1);
 
