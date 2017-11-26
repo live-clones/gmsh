@@ -1123,7 +1123,7 @@ void gmshViewGetTags(int ** tags, size_t * tags_n,int * ierr){
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshViewAddModelData(const int tag,const char * modelName,const char * dataType,int* tags, size_t tags_n,const double ** data, const size_t * data_n, size_t data_nn,const int step,const int time,const int numComponents,const int partition,int * ierr){
+void gmshViewAddModelData(const int tag,const char * modelName,const char * dataType,int* tags, size_t tags_n,const double ** data, const size_t * data_n, size_t data_nn,const int step,const double time,const int numComponents,const int partition,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::view::addModelData(tag,modelName,dataType,ptr2vector(tags,tags_n),ptrptr2vectorvector(data,data_n,data_nn),step,time,numComponents,partition);

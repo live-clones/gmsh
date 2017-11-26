@@ -1090,7 +1090,7 @@ GMSH_API void gmshViewAddModelData(const int tag,
                                    int* tags, size_t tags_n,
                                    const double ** data, const size_t * data_n, size_t data_nn,
                                    const int step,
-                                   const int time,
+                                   const double time,
                                    const int numComponents,
                                    const int partition,
                                    int * ierr);

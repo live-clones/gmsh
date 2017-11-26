@@ -1993,7 +1993,7 @@ void gmsh::view::addModelData(const int tag, const std::string &modelName,
                               const std::string &dataType,
                               const std::vector<int> &tags,
                               const std::vector<std::vector<double> > &data,
-                              const int step, const int time,
+                              const int step, const double time,
                               const int numComponents, const int partition)
 {
   if(!_isInitialized()){ throw -1; }

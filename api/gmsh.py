@@ -2828,7 +2828,7 @@ class view:
         return _ovectorint(api_tags_,api_tags_n_.value)
 
     @staticmethod
-    def addModelData(tag,modelName,dataType,tags,data,step=0,time=0,numComponents=-1,partition=0):
+    def addModelData(tag,modelName,dataType,tags,data,step=0,time=0.,numComponents=-1,partition=0):
         """
         Adds model-based post-processing data to the view with tag `tag'.
         `modelName' identifies the model the data is attached to. `dataType'
@@ -2853,7 +2853,7 @@ class view:
             api_tags_, api_tags_n_,
             api_data_, api_data_n_, api_data_nn_,
             c_int(step),
-            c_int(time),
+            c_double(time),
             c_int(numComponents),
             c_int(partition),
             byref(ierr))

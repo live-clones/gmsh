@@ -1013,7 +1013,7 @@ namespace gmsh { // Top-level functions
                                const std::vector<int> & tags,
                                const std::vector<std::vector<double> >& data,
                                const int step = 0,
-                               const int time = 0,
+                               const double time = 0.,
                                const int numComponents = -1,
                                const int partition = 0);
 
