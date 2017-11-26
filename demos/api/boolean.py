@@ -2,35 +2,37 @@
 
 import gmsh
 import sys
+import math #FIXME default args
+
+model = gmsh.model
+factory = model.occ
 
 gmsh.initialize(sys.argv)
 
-gmsh.optionSetNumber("General.Terminal", 1)
+gmsh.option.setNumber("General.Terminal", 1)
 
-gmsh.modelAdd("boolean")
+model.add("boolean")
 
 # from http://en.wikipedia.org/wiki/Constructive_solid_geometry
 
-gmsh.optionSetNumber("Mesh.Algorithm", 6);
-gmsh.optionSetNumber("Mesh.CharacteristicLengthMin", 0.4);
-gmsh.optionSetNumber("Mesh.CharacteristicLengthMax", 0.4);
+gmsh.option.setNumber("Mesh.Algorithm", 6);
+gmsh.option.setNumber("Mesh.CharacteristicLengthMin", 0.4);
+gmsh.option.setNumber("Mesh.CharacteristicLengthMax", 0.4);
 
 R = 1.4; Rs = R*.7; Rt = R*1.25
 
-ov = gmsh.PairVector(); ovv = gmsh.PairVectorVector()
+factory.addBox(-R,-R,-R, 2*R,2*R,2*R, 1)
+factory.addSphere(0,0,0,Rt, 2, -math.pi/2, math.pi/2, 2*math.pi)#FIXME default args
+factory.booleanIntersection([(3, 1)], [(3, 2)], 3, True,True) #FIXME default args
+factory.addCylinder(-2*R,0,0, 4*R,0,0, Rs, 4)
+factory.addCylinder(0,-2*R,0, 0,4*R,0, Rs, 5)
+factory.addCylinder(0,0,-2*R, 0,0,4*R, Rs, 6)
+factory.booleanUnion([(3, 4), (3, 5)], [(3, 6)], 7, True,True) #FIXME default args
+factory.booleanDifference([(3, 3)], [(3, 7)], 8, True,True) #FIXME default args
 
-gmsh.modelOccAddBox(-R,-R,-R, 2*R,2*R,2*R, 1)
-gmsh.modelOccAddSphere(0,0,0,Rt, 2)
-gmsh.modelOccBooleanIntersection([(3, 1)], [(3, 2)], ov, ovv, 3)
-gmsh.modelOccAddCylinder(-2*R,0,0, 4*R,0,0, Rs, 4)
-gmsh.modelOccAddCylinder(0,-2*R,0, 0,4*R,0, Rs, 5)
-gmsh.modelOccAddCylinder(0,0,-2*R, 0,0,4*R, Rs, 6)
-gmsh.modelOccBooleanUnion([(3, 4), (3, 5)], [(3, 6)], ov, ovv, 7)
-gmsh.modelOccBooleanDifference([(3, 3)], [(3, 7)], ov, ovv, 8)
+factory.synchronize();
 
-gmsh.modelOccSynchronize();
-
-gmsh.modelMeshGenerate(3)
+model.mesh.generate(3)
 
 gmsh.write("boolean.msh")
 
