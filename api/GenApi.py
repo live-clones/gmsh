@@ -267,28 +267,8 @@ namespace gmsh {
   // integer pairs.
   typedef std::vector<std::pair<int, int> > vector_pair;
 
-  // FIXME: these still need to be generated automatically
-  GMSH_API void initialize(int argc = 0, char **argv = 0);
-  namespace model {
-    namespace mesh {
-      GMSH_API void setElements(const int dim, const int tag,
-                                const std::vector<int> &types,
-                                const std::vector<std::vector<int> > &elementTags,
-                                const std::vector<std::vector<int> > &vertexTags);
-    }
-  }
-  namespace view {
-    GMSH_API void addModelData(const int tag, const std::string &modelName,
-                               const std::string &dataType,
-                               const std::vector<int> &tags,
-                               const std::vector<std::vector<double> > &data,
-                               const int step = 0, const int time = 0.,
-                               const int numComponents = -1,
-                               const int partition = 0);
-  }
-  // end of FIXME
-
 }
+
 """
 
 cpp_footer="""#undef GMSH_API
