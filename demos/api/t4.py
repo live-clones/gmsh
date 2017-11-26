@@ -3,10 +3,13 @@
 import gmsh
 import math
 
-gmsh.initialize()
-gmsh.optionSetNumber("General.Terminal", 1)
+model = gmsh.model
+factory = model.geo
 
-gmsh.modelAdd("t4")
+gmsh.initialize([]) #FIXME default args
+gmsh.option.setNumber("General.Terminal", 1)
+
+model.add("t4")
 
 cm = 1e-02
 e1 = 4.5 * cm; e2 = 6 * cm / 2; e3 =  5 * cm / 2
@@ -21,63 +24,63 @@ def hypot(a, b):
 ccos = (-h5*R1 + e2 * hypot(h5, hypot(e2, R1))) / (h5*h5 + e2*e2)
 ssin = math.sqrt(1 - ccos*ccos)
 
-gmsh.modelGeoAddPoint(-e1-e2, 0    , 0, Lc1, 1)
-gmsh.modelGeoAddPoint(-e1-e2, h1   , 0, Lc1, 2)
-gmsh.modelGeoAddPoint(-e3-r , h1   , 0, Lc2, 3)
-gmsh.modelGeoAddPoint(-e3-r , h1+r , 0, Lc2, 4)
-gmsh.modelGeoAddPoint(-e3   , h1+r , 0, Lc2, 5)
-gmsh.modelGeoAddPoint(-e3   , h1+h2, 0, Lc1, 6)
-gmsh.modelGeoAddPoint( e3   , h1+h2, 0, Lc1, 7)
-gmsh.modelGeoAddPoint( e3   , h1+r , 0, Lc2, 8)
-gmsh.modelGeoAddPoint( e3+r , h1+r , 0, Lc2, 9)
-gmsh.modelGeoAddPoint( e3+r , h1   , 0, Lc2, 10)
-gmsh.modelGeoAddPoint( e1+e2, h1   , 0, Lc1, 11)
-gmsh.modelGeoAddPoint( e1+e2, 0    , 0, Lc1, 12)
-gmsh.modelGeoAddPoint( e2   , 0    , 0, Lc1, 13)
+factory.addPoint(-e1-e2, 0    , 0, Lc1, 1)
+factory.addPoint(-e1-e2, h1   , 0, Lc1, 2)
+factory.addPoint(-e3-r , h1   , 0, Lc2, 3)
+factory.addPoint(-e3-r , h1+r , 0, Lc2, 4)
+factory.addPoint(-e3   , h1+r , 0, Lc2, 5)
+factory.addPoint(-e3   , h1+h2, 0, Lc1, 6)
+factory.addPoint( e3   , h1+h2, 0, Lc1, 7)
+factory.addPoint( e3   , h1+r , 0, Lc2, 8)
+factory.addPoint( e3+r , h1+r , 0, Lc2, 9)
+factory.addPoint( e3+r , h1   , 0, Lc2, 10)
+factory.addPoint( e1+e2, h1   , 0, Lc1, 11)
+factory.addPoint( e1+e2, 0    , 0, Lc1, 12)
+factory.addPoint( e2   , 0    , 0, Lc1, 13)
 
-gmsh.modelGeoAddPoint( R1 / ssin, h5+R1*ccos, 0, Lc2, 14)
-gmsh.modelGeoAddPoint( 0        , h5        , 0, Lc2, 15)
-gmsh.modelGeoAddPoint(-R1 / ssin, h5+R1*ccos, 0, Lc2, 16)
-gmsh.modelGeoAddPoint(-e2       , 0.0       , 0, Lc1, 17)
+factory.addPoint( R1 / ssin, h5+R1*ccos, 0, Lc2, 14)
+factory.addPoint( 0        , h5        , 0, Lc2, 15)
+factory.addPoint(-R1 / ssin, h5+R1*ccos, 0, Lc2, 16)
+factory.addPoint(-e2       , 0.0       , 0, Lc1, 17)
 
-gmsh.modelGeoAddPoint(-R2 , h1+h3   , 0, Lc2, 18)
-gmsh.modelGeoAddPoint(-R2 , h1+h3+h4, 0, Lc2, 19)
-gmsh.modelGeoAddPoint( 0  , h1+h3+h4, 0, Lc2, 20)
-gmsh.modelGeoAddPoint( R2 , h1+h3+h4, 0, Lc2, 21)
-gmsh.modelGeoAddPoint( R2 , h1+h3   , 0, Lc2, 22)
-gmsh.modelGeoAddPoint( 0  , h1+h3   , 0, Lc2, 23)
+factory.addPoint(-R2 , h1+h3   , 0, Lc2, 18)
+factory.addPoint(-R2 , h1+h3+h4, 0, Lc2, 19)
+factory.addPoint( 0  , h1+h3+h4, 0, Lc2, 20)
+factory.addPoint( R2 , h1+h3+h4, 0, Lc2, 21)
+factory.addPoint( R2 , h1+h3   , 0, Lc2, 22)
+factory.addPoint( 0  , h1+h3   , 0, Lc2, 23)
                                                 
-gmsh.modelGeoAddPoint( 0, h1+h3+h4+R2, 0, Lc2, 24)
-gmsh.modelGeoAddPoint( 0, h1+h3-R2,    0, Lc2, 25)
+factory.addPoint( 0, h1+h3+h4+R2, 0, Lc2, 24)
+factory.addPoint( 0, h1+h3-R2,    0, Lc2, 25)
 
-gmsh.modelGeoAddLine(1 , 17, 1)
-gmsh.modelGeoAddLine(17, 16, 2)
+factory.addLine(1 , 17, 1)
+factory.addLine(17, 16, 2)
 
-gmsh.modelGeoAddCircleArc(14,15,16, 3)
-gmsh.modelGeoAddLine(14,13, 4)
-gmsh.modelGeoAddLine(13,12, 5)
-gmsh.modelGeoAddLine(12,11, 6)
-gmsh.modelGeoAddLine(11,10, 7)
-gmsh.modelGeoAddCircleArc(8,9,10, 8)
-gmsh.modelGeoAddLine(8,7, 9)
-gmsh.modelGeoAddLine(7,6, 10)
-gmsh.modelGeoAddLine(6,5, 11)
-gmsh.modelGeoAddCircleArc(3,4,5, 12)
-gmsh.modelGeoAddLine(3,2, 13)
-gmsh.modelGeoAddLine(2,1, 14)
-gmsh.modelGeoAddLine(18,19, 15)
-gmsh.modelGeoAddCircleArc(21,20,24, 16)
-gmsh.modelGeoAddCircleArc(24,20,19, 17)
-gmsh.modelGeoAddCircleArc(18,23,25, 18)
-gmsh.modelGeoAddCircleArc(25,23,22, 19)
-gmsh.modelGeoAddLine(21,22, 20)
+factory.addCircleArc(14,15,16, 3, 0,0,0) #FIXME default args
+factory.addLine(14,13, 4)
+factory.addLine(13,12, 5)
+factory.addLine(12,11, 6)
+factory.addLine(11,10, 7)
+factory.addCircleArc(8,9,10, 8, 0,0,0) #FIXME default args
+factory.addLine(8,7, 9)
+factory.addLine(7,6, 10)
+factory.addLine(6,5, 11)
+factory.addCircleArc(3,4,5, 12, 0,0,0) #FIXME default args
+factory.addLine(3,2, 13)
+factory.addLine(2,1, 14)
+factory.addLine(18,19, 15)
+factory.addCircleArc(21,20,24, 16, 0,0,0) #FIXME default args
+factory.addCircleArc(24,20,19, 17, 0,0,0) #FIXME default args
+factory.addCircleArc(18,23,25, 18, 0,0,0) #FIXME default args
+factory.addCircleArc(25,23,22, 19, 0,0,0) #FIXME default args
+factory.addLine(21,22, 20)
 
-gmsh.modelGeoAddLineLoop([17,-15,18,19,-20,16], 21)
-gmsh.modelGeoAddPlaneSurface([21], 22)
-gmsh.modelGeoAddLineLoop([11,-12,13,14,1,2,-3,4,5,6,7,-8,9,10], 23)
+factory.addLineLoop([17,-15,18,19,-20,16], 21)
+factory.addPlaneSurface([21], 22)
+factory.addLineLoop([11,-12,13,14,1,2,-3,4,5,6,7,-8,9,10], 23)
 
 # A surface with one hole is specified using 2 line loops:
-gmsh.modelGeoAddPlaneSurface([23,21], 24)
+factory.addPlaneSurface([23,21], 24)
 
 # FIXME: this will be implemented through the gmshView API
 #  View "comments" {
@@ -89,9 +92,9 @@ gmsh.modelGeoAddPlaneSurface([23,21], 24)
 #    T2(350, -7, 0){ "file://image.png@20x0" };
 # };
 
-gmsh.modelGeoSynchronize()
+factory.synchronize()
 
-gmsh.modelMeshGenerate(2)
+model.mesh.generate(2)
 
 gmsh.write("t4.msh")
 

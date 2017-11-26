@@ -1,50 +1,49 @@
-#!/usr/bin/env python
-
 # This file reimplements gmsh/tutorial/t16.geo in Python.
 
 import gmsh
 import math
 
-gmsh.initialize()
-gmsh.optionSetNumber("General.Terminal", 1)
+model = gmsh.model
+factory = model.occ
 
-gmsh.modelAdd("t16")
+gmsh.initialize([]) #FIXME default args
+gmsh.option.setNumber("General.Terminal", 1)
 
-ov = gmsh.PairVector(); ovv = gmsh.PairVectorVector()
+model.add("t16")
 
-gmsh.modelOccAddBox(0,0,0, 1,1,1, 1)
-gmsh.modelOccAddBox(0,0,0, 0.5,0.5,0.5, 2)
-gmsh.modelOccBooleanDifference([(3,1)], [(3,2)], ov, ovv, 3)
+factory.addBox(0,0,0, 1,1,1, 1)
+factory.addBox(0,0,0, 0.5,0.5,0.5, 2)
+factory.booleanDifference([(3,1)], [(3,2)], 3, True,True) #FIXME default args
 
 x = 0; y = 0.75; z = 0; r = 0.09
 
-holes = gmsh.PairVector()
+holes = []
 for t in range(1, 6):
     x += 0.166
     z += 0.166
-    gmsh.modelOccAddSphere(x,y,z,r, 3 + t)
+    factory.addSphere(x,y,z,r, 3 + t)
     holes.append((3, 3 + t))
 
-gmsh.modelOccBooleanFragments([(3,3)], holes, ov, ovv)
+ov,ovv = factory.BooleanFragments([(3,3)], holes, True,True) #FIXME default args
 
-gmsh.modelOccSynchronize()
+factory.synchronize()
 
 lcar1 = .1
 lcar2 = .0005
 lcar3 = .055
 
-gmsh.modelGetEntities(ov, 0);
-gmsh.modelMeshSetSize(ov, lcar1);
+model.getEntities(ov, 0);
+model.mesh.setSize(ov, lcar1);
 
-gmsh.modelGetBoundary(holes, ov, False, False, True);
-gmsh.modelMeshSetSize(ov, lcar3);
+model.getBoundary(holes, ov, False, False, True);
+model.mesh.setSize(ov, lcar3);
 
 eps = 1e-3
-gmsh.modelGetEntitiesInBoundingBox(0.5-eps, 0.5-eps, 0.5-eps,
-                                  0.5+eps, 0.5+eps, 0.5+eps, ov, 0)
-gmsh.modelMeshSetSize(ov, lcar2)
+ov = model.getEntitiesInBoundingBox(0.5-eps, 0.5-eps, 0.5-eps,
+                                    0.5+eps, 0.5+eps, 0.5+eps, 0)
+model.mesh.setSize(ov, lcar2)
 
-gmsh.modelMeshGenerate(3)
+model.mesh.generate(3)
 
 gmsh.write("t16.msh")
 

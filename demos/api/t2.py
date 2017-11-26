@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # This file reimplements gmsh/tutorial/t2.geo in Python. Comments focus on the new
 # API functions used, compared to the ones introduced in t1.py.
 
@@ -94,8 +92,7 @@ factory.addVolume([128], 129)
 
 # Extrusion works as expected, by providing a vector of (dim, tag) pairs as
 # input, the translation vector, and a vector of (dim, tag) pairs as output.
-# FIXME: remove optional arguments
-ov2 = factory.extrude([ov[1]], 0, 0, 0.12, [], [], False)
+ov2 = factory.extrude([ov[1]], 0, 0, 0.12, [], [], False) #FIXME default args
 
 # Mesh sizes associated to geometrical points can be set by passing a vector of
 # (dim, tag) pairs for the corresponding points.

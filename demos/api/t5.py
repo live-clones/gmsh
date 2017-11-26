@@ -3,124 +3,127 @@
 import gmsh
 import math
 
-gmsh.initialize()
-gmsh.optionSetNumber("General.Terminal", 1)
+model = gmsh.model
+factory = model.geo
 
-gmsh.modelAdd("t5")
+gmsh.initialize([]) #FIXME default args
+gmsh.option.setNumber("General.Terminal", 1)
+
+model.add("t5")
 
 lcar1 = .1
 lcar2 = .0005
 lcar3 = .055
 
-gmsh.modelGeoAddPoint(0.5,0.5,0.5, lcar2, 1)
-gmsh.modelGeoAddPoint(0.5,0.5,0, lcar1, 2)
-gmsh.modelGeoAddPoint(0,0.5,0.5, lcar1, 3)
-gmsh.modelGeoAddPoint(0,0,0.5, lcar1, 4)
-gmsh.modelGeoAddPoint(0.5,0,0.5, lcar1, 5)
-gmsh.modelGeoAddPoint(0.5,0,0, lcar1, 6)
-gmsh.modelGeoAddPoint(0,0.5,0, lcar1, 7)
-gmsh.modelGeoAddPoint(0,1,0, lcar1, 8)
-gmsh.modelGeoAddPoint(1,1,0, lcar1, 9)
-gmsh.modelGeoAddPoint(0,0,1, lcar1, 10)
-gmsh.modelGeoAddPoint(0,1,1, lcar1, 11)
-gmsh.modelGeoAddPoint(1,1,1, lcar1, 12)
-gmsh.modelGeoAddPoint(1,0,1, lcar1, 13)
-gmsh.modelGeoAddPoint(1,0,0, lcar1, 14)
+factory.addPoint(0.5,0.5,0.5, lcar2, 1)
+factory.addPoint(0.5,0.5,0, lcar1, 2)
+factory.addPoint(0,0.5,0.5, lcar1, 3)
+factory.addPoint(0,0,0.5, lcar1, 4)
+factory.addPoint(0.5,0,0.5, lcar1, 5)
+factory.addPoint(0.5,0,0, lcar1, 6)
+factory.addPoint(0,0.5,0, lcar1, 7)
+factory.addPoint(0,1,0, lcar1, 8)
+factory.addPoint(1,1,0, lcar1, 9)
+factory.addPoint(0,0,1, lcar1, 10)
+factory.addPoint(0,1,1, lcar1, 11)
+factory.addPoint(1,1,1, lcar1, 12)
+factory.addPoint(1,0,1, lcar1, 13)
+factory.addPoint(1,0,0, lcar1, 14)
 
-gmsh.modelGeoAddLine(8,9, 1);   gmsh.modelGeoAddLine(9,12, 2)
-gmsh.modelGeoAddLine(12,11, 3); gmsh.modelGeoAddLine(11,8, 4)
-gmsh.modelGeoAddLine(9,14, 5);  gmsh.modelGeoAddLine(14,13, 6)
-gmsh.modelGeoAddLine(13,12, 7); gmsh.modelGeoAddLine(11,10, 8)
-gmsh.modelGeoAddLine(10,13, 9); gmsh.modelGeoAddLine(10,4, 10)
-gmsh.modelGeoAddLine(4,5, 11);  gmsh.modelGeoAddLine(5,6, 12)
-gmsh.modelGeoAddLine(6,2, 13);  gmsh.modelGeoAddLine(2,1, 14)
-gmsh.modelGeoAddLine(1,3, 15);  gmsh.modelGeoAddLine(3,7, 16)
-gmsh.modelGeoAddLine(7,2, 17);  gmsh.modelGeoAddLine(3,4, 18)
-gmsh.modelGeoAddLine(5,1, 19);  gmsh.modelGeoAddLine(7,8, 20)
-gmsh.modelGeoAddLine(6,14, 21); 
+factory.addLine(8,9, 1);   factory.addLine(9,12, 2)
+factory.addLine(12,11, 3); factory.addLine(11,8, 4)
+factory.addLine(9,14, 5);  factory.addLine(14,13, 6)
+factory.addLine(13,12, 7); factory.addLine(11,10, 8)
+factory.addLine(10,13, 9); factory.addLine(10,4, 10)
+factory.addLine(4,5, 11);  factory.addLine(5,6, 12)
+factory.addLine(6,2, 13);  factory.addLine(2,1, 14)
+factory.addLine(1,3, 15);  factory.addLine(3,7, 16)
+factory.addLine(7,2, 17);  factory.addLine(3,4, 18)
+factory.addLine(5,1, 19);  factory.addLine(7,8, 20)
+factory.addLine(6,14, 21); 
 
-gmsh.modelGeoAddLineLoop([-11,-19,-15,-18], 22)
-gmsh.modelGeoAddPlaneSurface([22], 23)
-gmsh.modelGeoAddLineLoop([16,17,14,15], 24)
-gmsh.modelGeoAddPlaneSurface([24], 25)
-gmsh.modelGeoAddLineLoop([-17,20,1,5,-21,13], 26)
-gmsh.modelGeoAddPlaneSurface([26], 27)
-gmsh.modelGeoAddLineLoop([-4,-1,-2,-3], 28)
-gmsh.modelGeoAddPlaneSurface([28], 29)
-gmsh.modelGeoAddLineLoop([-7,2,-5,-6], 30)
-gmsh.modelGeoAddPlaneSurface([30], 31)
-gmsh.modelGeoAddLineLoop([6,-9,10,11,12,21], 32)
-gmsh.modelGeoAddPlaneSurface([32], 33)
-gmsh.modelGeoAddLineLoop([7,3,8,9], 34)
-gmsh.modelGeoAddPlaneSurface([34], 35)
-gmsh.modelGeoAddLineLoop([-10,18,-16,-20,4,-8], 36)
-gmsh.modelGeoAddPlaneSurface([36], 37)
-gmsh.modelGeoAddLineLoop([-14,-13,-12,19], 38)
-gmsh.modelGeoAddPlaneSurface([38], 39)
+factory.addLineLoop([-11,-19,-15,-18], 22)
+factory.addPlaneSurface([22], 23)
+factory.addLineLoop([16,17,14,15], 24)
+factory.addPlaneSurface([24], 25)
+factory.addLineLoop([-17,20,1,5,-21,13], 26)
+factory.addPlaneSurface([26], 27)
+factory.addLineLoop([-4,-1,-2,-3], 28)
+factory.addPlaneSurface([28], 29)
+factory.addLineLoop([-7,2,-5,-6], 30)
+factory.addPlaneSurface([30], 31)
+factory.addLineLoop([6,-9,10,11,12,21], 32)
+factory.addPlaneSurface([32], 33)
+factory.addLineLoop([7,3,8,9], 34)
+factory.addPlaneSurface([34], 35)
+factory.addLineLoop([-10,18,-16,-20,4,-8], 36)
+factory.addPlaneSurface([36], 37)
+factory.addLineLoop([-14,-13,-12,19], 38)
+factory.addPlaneSurface([38], 39)
 
-shells = gmsh.IntVector(); volumes = gmsh.IntVector()
+shells = []
 
 # When the tag is not specified, a new one is automatically provided
-sl = gmsh.modelGeoAddSurfaceLoop([35,31,29,37,33,23,39,25,27])
-shells.push_back(sl)
+sl = factory.addSurfaceLoop([35,31,29,37,33,23,39,25,27], -1) #FIXME default args
+shells.append(sl)
 
-def cheeseHole(x, y, z, r, lc, shells, volumes):
-    p1 = gmsh.modelGeoAddPoint(x,  y,  z,   lc)
-    p2 = gmsh.modelGeoAddPoint(x+r,y,  z,   lc)
-    p3 = gmsh.modelGeoAddPoint(x,  y+r,z,   lc)
-    p4 = gmsh.modelGeoAddPoint(x,  y,  z+r, lc)
-    p5 = gmsh.modelGeoAddPoint(x-r,y,  z,   lc)
-    p6 = gmsh.modelGeoAddPoint(x,  y-r,z,   lc)
-    p7 = gmsh.modelGeoAddPoint(x,  y,  z-r, lc)
+def cheeseHole(x, y, z, r, lc, shells):
+    p1 = factory.addPoint(x,  y,  z,   lc, -1) #FIXME default args
+    p2 = factory.addPoint(x+r,y,  z,   lc, -1) #FIXME default args
+    p3 = factory.addPoint(x,  y+r,z,   lc, -1) #FIXME default args
+    p4 = factory.addPoint(x,  y,  z+r, lc, -1) #FIXME default args
+    p5 = factory.addPoint(x-r,y,  z,   lc, -1) #FIXME default args
+    p6 = factory.addPoint(x,  y-r,z,   lc, -1) #FIXME default args
+    p7 = factory.addPoint(x,  y,  z-r, lc, -1) #FIXME default args
 
-    c1 = gmsh.modelGeoAddCircleArc(p2,p1,p7)
-    c2 = gmsh.modelGeoAddCircleArc(p7,p1,p5)
-    c3 = gmsh.modelGeoAddCircleArc(p5,p1,p4)
-    c4 = gmsh.modelGeoAddCircleArc(p4,p1,p2)
-    c5 = gmsh.modelGeoAddCircleArc(p2,p1,p3)
-    c6 = gmsh.modelGeoAddCircleArc(p3,p1,p5)
-    c7 = gmsh.modelGeoAddCircleArc(p5,p1,p6)
-    c8 = gmsh.modelGeoAddCircleArc(p6,p1,p2)
-    c9 = gmsh.modelGeoAddCircleArc(p7,p1,p3)
-    c10 = gmsh.modelGeoAddCircleArc(p3,p1,p4)
-    c11 = gmsh.modelGeoAddCircleArc(p4,p1,p6)
-    c12 = gmsh.modelGeoAddCircleArc(p6,p1,p7)
+    c1 = factory.addCircleArc(p2,p1,p7, -1,0,0,0) #FIXME default args
+    c2 = factory.addCircleArc(p7,p1,p5, -1,0,0,0) #FIXME default args
+    c3 = factory.addCircleArc(p5,p1,p4, -1,0,0,0) #FIXME default args
+    c4 = factory.addCircleArc(p4,p1,p2, -1,0,0,0) #FIXME default args
+    c5 = factory.addCircleArc(p2,p1,p3, -1,0,0,0) #FIXME default args
+    c6 = factory.addCircleArc(p3,p1,p5, -1,0,0,0) #FIXME default args
+    c7 = factory.addCircleArc(p5,p1,p6, -1,0,0,0) #FIXME default args
+    c8 = factory.addCircleArc(p6,p1,p2, -1,0,0,0) #FIXME default args
+    c9 = factory.addCircleArc(p7,p1,p3, -1,0,0,0) #FIXME default args
+    c10 = factory.addCircleArc(p3,p1,p4, -1,0,0,0) #FIXME default args
+    c11 = factory.addCircleArc(p4,p1,p6, -1,0,0,0) #FIXME default args
+    c12 = factory.addCircleArc(p6,p1,p7, -1,0,0,0) #FIXME default args
     
-    l1 = gmsh.modelGeoAddLineLoop([c5,c10,c4])
-    l2 = gmsh.modelGeoAddLineLoop([c9,-c5,c1])
-    l3 = gmsh.modelGeoAddLineLoop([c12,-c8,-c1])
-    l4 = gmsh.modelGeoAddLineLoop([c8,-c4,c11])
-    l5 = gmsh.modelGeoAddLineLoop([-c10,c6,c3])
-    l6 = gmsh.modelGeoAddLineLoop([-c11,-c3,c7])
-    l7 = gmsh.modelGeoAddLineLoop([-c2,-c7,-c12])
-    l8 = gmsh.modelGeoAddLineLoop([-c6,-c9,c2])
+    l1 = factory.addLineLoop([c5,c10,c4], -1) #FIXME default args
+    l2 = factory.addLineLoop([c9,-c5,c1], -1) #FIXME default args
+    l3 = factory.addLineLoop([c12,-c8,-c1], -1) #FIXME default args
+    l4 = factory.addLineLoop([c8,-c4,c11], -1) #FIXME default args
+    l5 = factory.addLineLoop([-c10,c6,c3], -1) #FIXME default args
+    l6 = factory.addLineLoop([-c11,-c3,c7], -1) #FIXME default args
+    l7 = factory.addLineLoop([-c2,-c7,-c12], -1) #FIXME default args
+    l8 = factory.addLineLoop([-c6,-c9,c2], -1) #FIXME default args
     
-    s1 = gmsh.modelGeoAddSurfaceFilling([l1])
-    s2 = gmsh.modelGeoAddSurfaceFilling([l2])
-    s3 = gmsh.modelGeoAddSurfaceFilling([l3])
-    s4 = gmsh.modelGeoAddSurfaceFilling([l4])
-    s5 = gmsh.modelGeoAddSurfaceFilling([l5])
-    s6 = gmsh.modelGeoAddSurfaceFilling([l6])
-    s7 = gmsh.modelGeoAddSurfaceFilling([l7])
-    s8 = gmsh.modelGeoAddSurfaceFilling([l8])
+    s1 = factory.addSurfaceFilling([l1], -1,-1) #FIXME default args
+    s2 = factory.addSurfaceFilling([l2], -1,-1) #FIXME default args
+    s3 = factory.addSurfaceFilling([l3], -1,-1) #FIXME default args
+    s4 = factory.addSurfaceFilling([l4], -1,-1) #FIXME default args
+    s5 = factory.addSurfaceFilling([l5], -1,-1) #FIXME default args
+    s6 = factory.addSurfaceFilling([l6], -1,-1) #FIXME default args
+    s7 = factory.addSurfaceFilling([l7], -1,-1) #FIXME default args
+    s8 = factory.addSurfaceFilling([l8], -1,-1) #FIXME default args
     
-    sl = gmsh.modelGeoAddSurfaceLoop([s1, s2, s3, s4, s5, s6, s7, s8])
-    v = gmsh.modelGeoAddVolume([sl])
+    sl = factory.addSurfaceLoop([s1, s2, s3, s4, s5, s6, s7, s8], -1) #FIXME default args
+    v = factory.addVolume([sl], -1) #FIXME default args
     shells.append(sl)
-    volumes.append(v)
+    return v
 
 x = 0; y = 0.75; z = 0; r = 0.09
 for t in range(1, 6):
     x += 0.166 ;
     z += 0.166 ;
-    cheeseHole(x, y, z, r, lcar3, shells, volumes);
-    gmsh.modelAddPhysicalGroup(3, [volumes.back()], t);
+    v = cheeseHole(x, y, z, r, lcar3, shells);
+    model.addPhysicalGroup(3, [v], t);
 
-gmsh.modelGeoAddVolume(shells, 186);
+factory.addVolume(shells, 186);
       
-gmsh.modelAddPhysicalGroup(3, [186], 10);
-gmsh.modelGeoSynchronize()
-gmsh.modelMeshGenerate(3)
+model.addPhysicalGroup(3, [186], 10);
+factory.synchronize()
+model.mesh.generate(3)
 gmsh.write("t5.msh")
 
 gmsh.finalize()

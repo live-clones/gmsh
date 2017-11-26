@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # This file reimplements gmsh/tutorial/t1.geo in Python. 
 
 # For all the elementary explanations about the general philosphy of entities in
@@ -10,8 +8,7 @@
 import gmsh
 
 # Before using any functions in the Python API, Gmsh must be initialized.
-# FIXME: remove optional argument
-gmsh.initialize([])
+gmsh.initialize([]) #FIXME default args
 
 # By default Gmsh will not print out any messages: in order to output messages
 # on the terminal, just set the standard Gmsh option "General.Terminal" (same
