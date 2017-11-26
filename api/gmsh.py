@@ -125,7 +125,7 @@ def _iargcargv(o) :
     return c_int(len(o)), (c_char_p*len(o))(*(s.encode() for s in o))
 
 
-def initialize(argv):
+def initialize(argv=[]):
     """
     Initializes Gmsh. This must be called before any call to the other
     functions in the API. If argc and argv are provided, they will be handled

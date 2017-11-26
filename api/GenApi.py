@@ -208,6 +208,7 @@ def argcargv() :
     a.c_pre = ""
     a.c_post = ""
     a.name = "argv"
+    a.python_value = "[]"
     a.python_arg = "api_argc_, api_argv_"
     a.python_pre = "api_argc_, api_argv_ = _iargcargv(argv)"
     return a
