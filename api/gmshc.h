@@ -944,27 +944,37 @@ GMSH_API void gmshModelOccFillet(int* regionTags, size_t regionTags_n,
                                  int * ierr);
 
 /* TODO */
-GMSH_API int gmshModelOccBooleanUnion(int * objectDimTags, size_t objectDimTags_n,
-                                      int * toolDimTags, size_t toolDimTags_n,
-                                      int ** outDimTags, size_t * outDimTags_n,
-                                      int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
-                                      const int tag,
-                                      const int removeObject,
-                                      const int removeTool,
-                                      int * ierr);
+GMSH_API void gmshModelOccBooleanUnion(int * objectDimTags, size_t objectDimTags_n,
+                                       int * toolDimTags, size_t toolDimTags_n,
+                                       int ** outDimTags, size_t * outDimTags_n,
+                                       int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
+                                       const int tag,
+                                       const int removeObject,
+                                       const int removeTool,
+                                       int * ierr);
 
 /* TODO */
-GMSH_API int gmshModelOccBooleanIntersection(int * objectDimTags, size_t objectDimTags_n,
-                                             int * toolDimTags, size_t toolDimTags_n,
-                                             int ** outDimTags, size_t * outDimTags_n,
-                                             int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
-                                             const int tag,
-                                             const int removeObject,
-                                             const int removeTool,
-                                             int * ierr);
+GMSH_API void gmshModelOccBooleanIntersection(int * objectDimTags, size_t objectDimTags_n,
+                                              int * toolDimTags, size_t toolDimTags_n,
+                                              int ** outDimTags, size_t * outDimTags_n,
+                                              int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
+                                              const int tag,
+                                              const int removeObject,
+                                              const int removeTool,
+                                              int * ierr);
 
 /* TODO */
-GMSH_API int gmshModelOccBooleanDifference(int * objectDimTags, size_t objectDimTags_n,
+GMSH_API void gmshModelOccBooleanDifference(int * objectDimTags, size_t objectDimTags_n,
+                                            int * toolDimTags, size_t toolDimTags_n,
+                                            int ** outDimTags, size_t * outDimTags_n,
+                                            int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
+                                            const int tag,
+                                            const int removeObject,
+                                            const int removeTool,
+                                            int * ierr);
+
+/* TODO */
+GMSH_API void gmshModelOccBooleanFragments(int * objectDimTags, size_t objectDimTags_n,
                                            int * toolDimTags, size_t toolDimTags_n,
                                            int ** outDimTags, size_t * outDimTags_n,
                                            int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
@@ -972,16 +982,6 @@ GMSH_API int gmshModelOccBooleanDifference(int * objectDimTags, size_t objectDim
                                            const int removeObject,
                                            const int removeTool,
                                            int * ierr);
-
-/* TODO */
-GMSH_API int gmshModelOccBooleanFragments(int * objectDimTags, size_t objectDimTags_n,
-                                          int * toolDimTags, size_t toolDimTags_n,
-                                          int ** outDimTags, size_t * outDimTags_n,
-                                          int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
-                                          const int tag,
-                                          const int removeObject,
-                                          const int removeTool,
-                                          int * ierr);
 
 /* TODO */
 GMSH_API void gmshModelOccTranslate(int * dimTags, size_t dimTags_n,

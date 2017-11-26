@@ -1752,70 +1752,64 @@ void gmsh::model::occ::fillet(const std::vector<int> &regionTags,
   }
 }
 
-int gmsh::model::occ::booleanUnion(const vector_pair &objectDimTags,
-                                   const vector_pair &toolDimTags,
-                                   vector_pair &outDimTags,
-                                   std::vector<vector_pair > &outDimTagsMap,
-                                   const int tag,
-                                   const bool removeObject,
-                                   const bool removeTool)
+void gmsh::model::occ::booleanUnion(const vector_pair &objectDimTags,
+                                    const vector_pair &toolDimTags,
+                                    vector_pair &outDimTags,
+                                    std::vector<vector_pair > &outDimTagsMap,
+                                    const int tag,
+                                    const bool removeObject,
+                                    const bool removeTool)
 {
   if(!_isInitialized()){ throw -1; }
   _createOcc();
-  int outTag = tag;
   outDimTags.clear();
   outDimTagsMap.clear();
   if(!GModel::current()->getOCCInternals()->booleanUnion
-     (outTag, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
+     (tag, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
       removeObject, removeTool)){
     throw 1;
   }
-  return outTag;
 }
 
-int gmsh::model::occ::booleanIntersection(const vector_pair &objectDimTags,
-                                          const vector_pair &toolDimTags,
-                                          vector_pair &outDimTags,
-                                          std::vector<vector_pair> &outDimTagsMap,
-                                          const int tag,
-                                          const bool removeObject,
-                                          const bool removeTool)
+void gmsh::model::occ::booleanIntersection(const vector_pair &objectDimTags,
+                                           const vector_pair &toolDimTags,
+                                           vector_pair &outDimTags,
+                                           std::vector<vector_pair> &outDimTagsMap,
+                                           const int tag,
+                                           const bool removeObject,
+                                           const bool removeTool)
 {
   if(!_isInitialized()){ throw -1; }
   _createOcc();
-  int outTag = tag;
   outDimTags.clear();
   outDimTagsMap.clear();
   if(!GModel::current()->getOCCInternals()->booleanIntersection
-     (outTag, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
+     (tag, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
       removeObject, removeTool)){
     throw 1;
   }
-  return outTag;
 }
 
-int gmsh::model::occ::booleanDifference(const vector_pair &objectDimTags,
-                                        const vector_pair &toolDimTags,
-                                        vector_pair &outDimTags,
-                                        std::vector<vector_pair> &outDimTagsMap,
-                                        const int tag,
-                                        const bool removeObject,
-                                        const bool removeTool)
+void gmsh::model::occ::booleanDifference(const vector_pair &objectDimTags,
+                                         const vector_pair &toolDimTags,
+                                         vector_pair &outDimTags,
+                                         std::vector<vector_pair> &outDimTagsMap,
+                                         const int tag,
+                                         const bool removeObject,
+                                         const bool removeTool)
 {
   if(!_isInitialized()){ throw -1; }
   _createOcc();
-  int outTag = tag;
   outDimTags.clear();
   outDimTagsMap.clear();
   if(!GModel::current()->getOCCInternals()->booleanDifference
-     (outTag, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
+     (tag, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
       removeObject, removeTool)){
     throw 1;
   }
-  return outTag;
 }
 
-int gmsh::model::occ::booleanFragments(const vector_pair &objectDimTags,
+void gmsh::model::occ::booleanFragments(const vector_pair &objectDimTags,
                                        const vector_pair &toolDimTags,
                                        vector_pair &outDimTags,
                                        std::vector<vector_pair> &outDimTagsMap,
@@ -1825,15 +1819,13 @@ int gmsh::model::occ::booleanFragments(const vector_pair &objectDimTags,
 {
   if(!_isInitialized()){ throw -1; }
   _createOcc();
-  int outTag = tag;
   outDimTags.clear();
   outDimTagsMap.clear();
   if(!GModel::current()->getOCCInternals()->booleanFragments
-     (outTag, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
+     (tag, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
       removeObject, removeTool)){
     throw 1;
   }
-  return outTag;
 }
 
 void gmsh::model::occ::translate(const vector_pair &dimTags, const double dx,

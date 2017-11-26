@@ -877,40 +877,40 @@ namespace gmsh { // Top-level functions
                            const bool removeRegion = true);
 
       // TODO
-      GMSH_API int booleanUnion(const gmsh::vector_pair & objectDimTags,
-                                const gmsh::vector_pair & toolDimTags,
-                                gmsh::vector_pair & outDimTags,
-                                std::vector<gmsh::vector_pair> & outDimTagsMap,
-                                const int tag = -1,
-                                const bool removeObject = true,
-                                const bool removeTool = true);
+      GMSH_API void booleanUnion(const gmsh::vector_pair & objectDimTags,
+                                 const gmsh::vector_pair & toolDimTags,
+                                 gmsh::vector_pair & outDimTags,
+                                 std::vector<gmsh::vector_pair> & outDimTagsMap,
+                                 const int tag = -1,
+                                 const bool removeObject = true,
+                                 const bool removeTool = true);
 
       // TODO
-      GMSH_API int booleanIntersection(const gmsh::vector_pair & objectDimTags,
-                                       const gmsh::vector_pair & toolDimTags,
-                                       gmsh::vector_pair & outDimTags,
-                                       std::vector<gmsh::vector_pair> & outDimTagsMap,
-                                       const int tag = -1,
-                                       const bool removeObject = true,
-                                       const bool removeTool = true);
+      GMSH_API void booleanIntersection(const gmsh::vector_pair & objectDimTags,
+                                        const gmsh::vector_pair & toolDimTags,
+                                        gmsh::vector_pair & outDimTags,
+                                        std::vector<gmsh::vector_pair> & outDimTagsMap,
+                                        const int tag = -1,
+                                        const bool removeObject = true,
+                                        const bool removeTool = true);
 
       // TODO
-      GMSH_API int booleanDifference(const gmsh::vector_pair & objectDimTags,
+      GMSH_API void booleanDifference(const gmsh::vector_pair & objectDimTags,
+                                      const gmsh::vector_pair & toolDimTags,
+                                      gmsh::vector_pair & outDimTags,
+                                      std::vector<gmsh::vector_pair> & outDimTagsMap,
+                                      const int tag = -1,
+                                      const bool removeObject = true,
+                                      const bool removeTool = true);
+
+      // TODO
+      GMSH_API void booleanFragments(const gmsh::vector_pair & objectDimTags,
                                      const gmsh::vector_pair & toolDimTags,
                                      gmsh::vector_pair & outDimTags,
                                      std::vector<gmsh::vector_pair> & outDimTagsMap,
                                      const int tag = -1,
                                      const bool removeObject = true,
                                      const bool removeTool = true);
-
-      // TODO
-      GMSH_API int booleanFragments(const gmsh::vector_pair & objectDimTags,
-                                    const gmsh::vector_pair & toolDimTags,
-                                    gmsh::vector_pair & outDimTags,
-                                    std::vector<gmsh::vector_pair> & outDimTagsMap,
-                                    const int tag = -1,
-                                    const bool removeObject = true,
-                                    const bool removeTool = true);
 
       // TODO
       GMSH_API void translate(const gmsh::vector_pair & dimTags,

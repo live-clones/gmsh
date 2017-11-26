@@ -24,7 +24,7 @@ for t in range(1, 6):
     factory.addSphere(x,y,z,r, 3 + t, -math.pi/2, math.pi/2, 2*math.pi) #FIXME default args
     holes.append((3, 3 + t))
 
-ov = factory.booleanFragments([(3,3)], holes, -1,True,True) #FIXME default args
+ov, ovv = factory.booleanFragments([(3,3)], holes, -1,True,True) #FIXME default args
 
 factory.synchronize()
 

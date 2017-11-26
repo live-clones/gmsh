@@ -2454,14 +2454,14 @@ class model:
             """
             TODO
 
-            return int, outDimTags, outDimTagsMap
+            return outDimTags, outDimTagsMap
             """
             api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
             api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
-            api__result__ = lib.gmshModelOccBooleanUnion(
+            lib.gmshModelOccBooleanUnion(
                 api_objectDimTags_, api_objectDimTags_n_,
                 api_toolDimTags_, api_toolDimTags_n_,
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
@@ -2475,7 +2475,6 @@ class model:
                     "gmshModelOccBooleanUnion returned non-zero error code : ",
                     ierr.value)
             return (
-                api__result__,
                 _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
                 _ovectorvectorpair(api_outDimTagsMap_,api_outDimTagsMap_n_,api_outDimTagsMap_nn_))
 
@@ -2484,14 +2483,14 @@ class model:
             """
             TODO
 
-            return int, outDimTags, outDimTagsMap
+            return outDimTags, outDimTagsMap
             """
             api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
             api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
-            api__result__ = lib.gmshModelOccBooleanIntersection(
+            lib.gmshModelOccBooleanIntersection(
                 api_objectDimTags_, api_objectDimTags_n_,
                 api_toolDimTags_, api_toolDimTags_n_,
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
@@ -2505,7 +2504,6 @@ class model:
                     "gmshModelOccBooleanIntersection returned non-zero error code : ",
                     ierr.value)
             return (
-                api__result__,
                 _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
                 _ovectorvectorpair(api_outDimTagsMap_,api_outDimTagsMap_n_,api_outDimTagsMap_nn_))
 
@@ -2514,14 +2512,14 @@ class model:
             """
             TODO
 
-            return int, outDimTags, outDimTagsMap
+            return outDimTags, outDimTagsMap
             """
             api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
             api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
-            api__result__ = lib.gmshModelOccBooleanDifference(
+            lib.gmshModelOccBooleanDifference(
                 api_objectDimTags_, api_objectDimTags_n_,
                 api_toolDimTags_, api_toolDimTags_n_,
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
@@ -2535,7 +2533,6 @@ class model:
                     "gmshModelOccBooleanDifference returned non-zero error code : ",
                     ierr.value)
             return (
-                api__result__,
                 _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
                 _ovectorvectorpair(api_outDimTagsMap_,api_outDimTagsMap_n_,api_outDimTagsMap_nn_))
 
@@ -2544,14 +2541,14 @@ class model:
             """
             TODO
 
-            return int, outDimTags, outDimTagsMap
+            return outDimTags, outDimTagsMap
             """
             api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
             api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
-            api__result__ = lib.gmshModelOccBooleanFragments(
+            lib.gmshModelOccBooleanFragments(
                 api_objectDimTags_, api_objectDimTags_n_,
                 api_toolDimTags_, api_toolDimTags_n_,
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
@@ -2565,7 +2562,6 @@ class model:
                     "gmshModelOccBooleanFragments returned non-zero error code : ",
                     ierr.value)
             return (
-                api__result__,
                 _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
                 _ovectorvectorpair(api_outDimTagsMap_,api_outDimTagsMap_n_,api_outDimTagsMap_nn_))
 
