@@ -41,9 +41,8 @@ GMSH_API void gmshInitialize(int argc, char ** argv,
 /* Finalizes Gmsh. This must be called when you are done using the Gmsh API. */
 GMSH_API void gmshFinalize(int * ierr);
 
-/* Opens a file and adds one (or more) new model(s). Equivalent to the
- * `File->Open' menu in the Gmsh app. Handling of the file depends on its
- * extension and/or its contents. */
+/* Opens a file. Equivalent to the `File->Open' menu in the Gmsh app. Handling
+ * of the file depends on its extension and/or its contents. */
 GMSH_API void gmshOpen(const char * fileName,
                        int * ierr);
 
@@ -799,7 +798,10 @@ GMSH_API int gmshModelOccAddLineLoop(int* edgeTags, size_t edgeTags_n,
                                      const int tag,
                                      int * ierr);
 
-/* TODO */
+/* Adds a rectangle with lower left corner at (`x', `y', `z') and upper right
+ * corner at (`x' + `dx', `y' + `dy', `z'). If `tag' is positive, sets the tag
+ * explicitly; otherwise a new tag is selected automatically. Rounds the
+ * corners if `roundedRadius' is nonzero. Returns the tag of the rectangle. */
 GMSH_API int gmshModelOccAddRectangle(const double x,
                                       const double y,
                                       const double z,
@@ -809,7 +811,9 @@ GMSH_API int gmshModelOccAddRectangle(const double x,
                                       const double roundedRadius,
                                       int * ierr);
 
-/* TODO */
+/* Adds a disk with center (`xc', `yc', `zc') and radius `rx' along the x-axis
+ * and `ry; along the y-axis. If `tag' is positive, sets the tag explicitly;
+ * otherwise a new tag is selected automatically. Returns the tag of the disk. */
 GMSH_API int gmshModelOccAddDisk(const double xc,
                                  const double yc,
                                  const double zc,
@@ -849,7 +853,11 @@ GMSH_API int gmshModelOccAddVolume(int* shellTags, size_t shellTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* TODO */
+/* Adds a sphere of center (`xc', `yc', `zc') and radius `r'. The optional
+ * `angle1' and `angle2' arguments define the polar angle opening (from -Pi/2
+ * to Pi/2). The optional `angle3' argument defines the azimuthal opening
+ * (from 0 to 2*Pi). If `tag' is positive, sets the tag explicitly; otherwise
+ * a new tag is selected automatically. Returns the tag of the sphere. */
 GMSH_API int gmshModelOccAddSphere(const double xc,
                                    const double yc,
                                    const double zc,
@@ -860,7 +868,10 @@ GMSH_API int gmshModelOccAddSphere(const double xc,
                                    const double angle3,
                                    int * ierr);
 
-/* TODO */
+/* Adds a parallelepipedic box defined by a point (`x', `y', `z') and the
+ * extents along the x-, y- and z-axes. If `tag' is positive, sets the tag
+ * explicitly; otherwise a new tag is selected automatically. Returns the tag
+ * of the box. */
 GMSH_API int gmshModelOccAddBox(const double x,
                                 const double y,
                                 const double z,
@@ -870,7 +881,12 @@ GMSH_API int gmshModelOccAddBox(const double x,
                                 const int tag,
                                 int * ierr);
 
-/* TODO */
+/* Adds a cylinder, defined by the center (`x', `y', `z') of its first
+ * circular face, the 3 components (`dx', `dy', `dz') of the vector defining
+ * its axis and its radius `r'. The optional `angle' argument defines the
+ * angular opening (from 0 to 2*Pi). If `tag' is positive, sets the tag
+ * explicitly; otherwise a new tag is selected automatically. Returns the tag
+ * of the cylinder. */
 GMSH_API int gmshModelOccAddCylinder(const double x,
                                      const double y,
                                      const double z,
@@ -882,7 +898,12 @@ GMSH_API int gmshModelOccAddCylinder(const double x,
                                      const double angle,
                                      int * ierr);
 
-/* TODO */
+/* Add a cone, defined by the center (`x', `y', `z') of its first circular
+ * face, the 3 components of the vector (`dx', `dy', `dz') defining its axis
+ * and the two radii `r1' and `r2' of the faces (these radii can be zero). If
+ * `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
+ * automatically. `angle' defines the optional angular opening (from 0 to
+ * 2*Pi). Returns the tag of the cone. */
 GMSH_API int gmshModelOccAddCone(const double x,
                                  const double y,
                                  const double z,
@@ -895,7 +916,11 @@ GMSH_API int gmshModelOccAddCone(const double x,
                                  const double angle,
                                  int * ierr);
 
-/* TODO */
+/* Add a right angular wedge, defined by the right-angle point (`x', `y', `z')
+ * and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If `tag'
+ * is positive, sets the tag explicitly; otherwise a new tag is selected
+ * automatically. The optional argument `ltx' defines the top extent along the
+ * x-axis. Returns the tag of the wedge. */
 GMSH_API int gmshModelOccAddWedge(const double x,
                                   const double y,
                                   const double z,
@@ -906,7 +931,10 @@ GMSH_API int gmshModelOccAddWedge(const double x,
                                   const double ltx,
                                   int * ierr);
 
-/* TODO */
+/* Adds a torus, defined by its center (`x', `y', `z') and its 2 radii `r' and
+ * `r2'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is
+ * selected automatically. The optional argument `angle' defines the angular
+ * opening (from 0 to 2*Pi). Returns the tag of the wedge. */
 GMSH_API int gmshModelOccAddTorus(const double x,
                                   const double y,
                                   const double z,
@@ -916,7 +944,12 @@ GMSH_API int gmshModelOccAddTorus(const double x,
                                   const double angle,
                                   int * ierr);
 
-/* TODO */
+/* Adds a volume (if the optional argument `makeSolid' is set) or surfaces
+ * defined through the open or closed wires `wireTags'. If `tag' is positive,
+ * sets the tag explicitly; otherwise a new tag is selected automatically. The
+ * new entities are returned in `outDimTags'. If the optional argument
+ * `makeRuled' is set, the surfaces created on the boundary are forced to be
+ * ruled surfaces. */
 GMSH_API int gmshModelOccAddThruSections(int* wireTags, size_t wireTags_n,
                                          int ** outDimTags, size_t * outDimTags_n,
                                          const int tag,
@@ -924,7 +957,12 @@ GMSH_API int gmshModelOccAddThruSections(int* wireTags, size_t wireTags_n,
                                          const int makeRuled,
                                          int * ierr);
 
-/* TODO */
+/* Adds a hollowed volume built from an initial volume `solidTag' and a set of
+ * faces from this volume `excludeFaceTags', which are to be removed. The
+ * remaining faces of the volume become the walls of the hollowed solid, with
+ * thickness `offset'. If `tag' is positive, sets the tag explicitly;
+ * otherwise a new tag is selected automatically. Returns the tag of the
+ * volume. */
 GMSH_API int gmshModelOccAddThickSolid(const int solidTag,
                                        int* excludeFaceTags, size_t excludeFaceTags_n,
                                        const double offset,
@@ -1081,7 +1119,11 @@ GMSH_API void gmshModelOccRemove(int * dimTags, size_t dimTags_n,
  * dimensional entities. */
 GMSH_API void gmshModelOccRemoveAllDuplicates(int * ierr);
 
-/* TODO */
+/* Imports BREP, STEP or IGES shapes from the file `fileName'. The imported
+ * entities are returned in `outDimTags'. If the optional argument
+ * `highestDimOnly' is set, only import the highest dimensional entities in
+ * the file. The optional argument `format' can be used to force the format of
+ * the file (currently "brep", "step" or "iges"). */
 GMSH_API void gmshModelOccImportShapes(const char * fileName,
                                        int ** outDimTags, size_t * outDimTags_n,
                                        const int highestDimOnly,

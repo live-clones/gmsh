@@ -2112,7 +2112,7 @@ Creates a volume defined through line loops. @code{ThruSections} is only
 available with the OpenCASCADE kernel.
 
 @item Ruled ThruSections ( @var{expression} ) = @{ @var{expression-list} @};
-Same as @code{ThruSections}, but the surfaces creates on the boundary
+Same as @code{ThruSections}, but the surfaces created on the boundary
 are forced to be ruled. @code{Ruled ThruSections} is only available with
 the OpenCASCADE kernel.
 

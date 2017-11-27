@@ -30,7 +30,7 @@ gmsh.add('initialize',doc,None,argcargv())
 doc = '''Finalizes Gmsh. This must be called when you are done using the Gmsh API.'''
 gmsh.add('finalize',doc,None)
 
-doc = '''Opens a file and adds one (or more) new model(s). Equivalent to the `File->Open' menu in the Gmsh app. Handling of the file depends on its extension and/or its contents.'''
+doc = '''Opens a file. Equivalent to the `File->Open' menu in the Gmsh app. Handling of the file depends on its extension and/or its contents.'''
 gmsh.add('open',doc,None,istring('fileName'))
 
 doc = '''Merges a file. Equivalent to the `File->Merge' menu in the Gmsh app. Handling of the file depends on its extension and/or its contents.'''
@@ -302,10 +302,10 @@ occ.add('addWire',doc,oint,ivectorint('edgeTags'),iint('tag','-1'),ibool('checkC
 doc = '''Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should contain (signed) tags of geometrical enties of dimension 1 forming a closed loop: a negative tag signifies that the underlying edge is considered with reversed orientation. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the line loop.'''
 occ.add('addLineLoop',doc,oint,ivectorint('edgeTags'),iint('tag','-1'))
 
-doc = '''TODO'''
+doc = '''Adds a rectangle with lower left corner at (`x', `y', `z') and upper right corner at (`x' + `dx', `y' + `dy', `z'). If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Rounds the corners if `roundedRadius' is nonzero. Returns the tag of the rectangle.'''
 occ.add('addRectangle',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),iint('tag','-1'),idouble('roundedRadius','0.'))
 
-doc = '''TODO'''
+doc = '''Adds a disk with center (`xc', `yc', `zc') and radius `rx' along the x-axis and `ry; along the y-axis. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the disk.'''
 occ.add('addDisk',doc,oint,idouble('xc'),idouble('yc'),idouble('zc'),idouble('rx'),idouble('ry'),iint('tag','-1'))
 
 doc = '''Adds a plane surface defined by one or more line loops (or closed wires) `wireTags'. The first line loop defines the exterior contour; additional line loop define holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the surface.'''
@@ -320,28 +320,30 @@ occ.add('addSurfaceLoop',doc,oint,ivectorint('faceTags'),iint('tag','-1'))
 doc = '''Adds a volume defined by one or more surface loops `shellTags'. The first surface loop defines the exterior boundary; additional surface loop define holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the volume.'''
 occ.add('addVolume',doc,oint,ivectorint('shellTags'),iint('tag','-1'))
 
-doc = '''TODO'''
+doc = '''Adds a sphere of center (`xc', `yc', `zc') and radius `r'. The optional `angle1' and `angle2' arguments define the polar angle opening (from -Pi/2 to Pi/2). The optional `angle3' argument defines the azimuthal opening (from 0 to 2*Pi). If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the sphere.'''
 occ.add('addSphere',doc,oint,idouble('xc'),idouble('yc'),idouble('zc'),idouble('radius'),iint('tag','-1'),idouble('angle1','-M_PI/2','-pi/2'),idouble('angle2','M_PI/2','pi/2'),idouble('angle3','2*M_PI','2*pi'))
 
-doc = '''TODO'''
+doc = '''Adds a parallelepipedic box defined by a point (`x', `y', `z') and the extents along the x-, y- and z-axes. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the box.'''
 occ.add('addBox',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),iint('tag','-1'))
 
-doc = '''TODO'''
+doc = '''Adds a cylinder, defined by the center (`x', `y', `z') of its first circular face, the 3 components (`dx', `dy', `dz') of the vector defining its axis and its radius `r'. The optional `angle' argument defines the angular opening (from 0 to 2*Pi). If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the cylinder.'''
 occ.add('addCylinder',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),idouble('r'),iint('tag','-1'),idouble('angle','2*M_PI','2*pi'))
 
-doc = '''TODO'''
+doc = '''Add a cone, defined by the center (`x', `y', `z') of its first circular face, the 3 components of the vector (`dx', `dy', `dz') defining its axis and the two radii `r1' and `r2' of the faces (these radii can be zero). If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle' defines the optional angular opening (from 0 to 2*Pi). Returns the tag of the cone.'''
 occ.add('addCone',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),idouble('r1'),idouble('r2'),iint('tag','-1'),idouble('angle','2*M_PI','2*pi'))
 
-doc = '''TODO'''
+
+doc = '''Add a right angular wedge, defined by the right-angle point (`x', `y', `z') and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. The optional argument `ltx' defines the
+top extent along the x-axis. Returns the tag of the wedge.'''
 occ.add('addWedge',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),iint('tag','-1'),idouble('ltx','0.'))
 
-doc = '''TODO'''
+doc = '''Adds a torus, defined by its center (`x', `y', `z') and its 2 radii `r' and `r2'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. The optional argument `angle' defines the angular opening (from 0 to 2*Pi). Returns the tag of the wedge.'''
 occ.add('addTorus',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('r1'),idouble('r2'),iint('tag','-1'),idouble('angle','2*M_PI','2*pi'))
 
-doc = '''TODO'''
+doc = '''Adds a volume (if the optional argument `makeSolid' is set) or surfaces defined through the open or closed wires `wireTags'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. The new entities are returned in `outDimTags'. If the optional argument `makeRuled' is set, the surfaces created on the boundary are forced to be ruled surfaces.'''
 occ.add('addThruSections',doc,oint,ivectorint('wireTags'),ovectorpair('outDimTags'),iint('tag','-1'),ibool('makeSolid','true','True'),ibool('makeRuled','false','False'))
 
-doc = '''TODO'''
+doc = '''Adds a hollowed volume built from an initial volume `solidTag' and a set of faces from this volume `excludeFaceTags', which are to be removed. The remaining faces of the volume become the walls of the hollowed solid, with thickness `offset'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the volume.'''
 occ.add('addThickSolid',doc,oint,iint('solidTag'),ivectorint('excludeFaceTags'),idouble('offset'),ovectorpair('outDimTags'),iint('tag','-1'))
 
 doc = '''Extrudes the geometrical entities in `dimTags' by translation along (`dx', `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
@@ -389,7 +391,7 @@ occ.add('remove',doc,None,ivectorpair('dimTags'),ibool('recursive','false','Fals
 doc = '''Removes all duplicate entities (different entities at the same geometrical location) after intersecting (using boolean fragments) all highest dimensional entities.'''
 occ.add('removeAllDuplicates',doc,None)
 
-doc = '''TODO'''
+doc = '''Imports BREP, STEP or IGES shapes from the file `fileName'. The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in the file. The optional argument `format' can be used to force the format of the file (currently "brep", "step" or "iges").'''
 occ.add('importShapes',doc,None,istring('fileName'),ovectorpair('outDimTags'),ibool('highestDimOnly','true','True'),istring('format','""'))
 
 doc = '''Sets a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
