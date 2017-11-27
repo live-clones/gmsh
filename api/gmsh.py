@@ -94,7 +94,10 @@ def _ovectorvectorpair(ptr,size,n):
 
 def _ivectorint(o):
     if use_numpy :
-        return  numpy.ascontiguousarray(o,numpy.int32).ctypes, c_size_t(len(o))
+        array = numpy.ascontiguousarray(o,numpy.int32)
+        ct = array.ctypes
+        ct.array = array
+        return  ct, c_size_t(len(o))
     else :
         return (c_int*len(o))(*o), c_size_t(len(o))
 
@@ -116,13 +119,19 @@ def _ivectorvectordouble(os):
 
 def _ivectordouble(o):
     if use_numpy :
-        return  numpy.ascontiguousarray(o,numpy.float64).ctypes, c_size_t(len(o))
+        array = numpy.ascontiguousarray(o,numpy.float64)
+        ct = array.ctypes
+        ct.array = array
+        return  ct, c_size_t(len(o))
     else :
         return (c_double*len(o))(*o), c_size_t(len(o))
 
 def _ivectorpair(o):
     if use_numpy :
-        return  numpy.ascontiguousarray(o,numpy.int32).reshape(len(o),2).ctypes, c_size_t(len(o)*2)
+        array = numpy.ascontiguousarray(o,numpy.int32)
+        ct = array.ctypes
+        ct.array = array
+        return  ct, c_size_t(len(o)*2)
     else :
         return ((c_int*2)*len(o))(*o), c_size_t(len(o)*2)
 
