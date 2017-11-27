@@ -34,7 +34,12 @@ else:
 use_numpy = False
 try :
     import numpy
-    use_numpy = True
+    major = int(numpy.version.version.split('.')[0])
+    minor = int(numpy.version.version.split('.')[1])
+    if major == 1 and minor < 9:
+        use_numpy = False
+    else:
+        use_numpy = True
     try : 
         from weakref import finalize as weakreffinalize
     except :
