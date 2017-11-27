@@ -4905,7 +4905,7 @@ automatically from the master API definition file
 
 @itemize @bullet
 @item C++ API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.h,gmsh.h}
-@item C API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.h,gmshc.h}
+@item C API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmshc.h,gmshc.h}
 @item Python API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.py,gmsh.py}
 @end itemize
 
