@@ -184,7 +184,7 @@ namespace gmsh { // Top-level functions
                                    const std::vector<int> & boundary = std::vector<int>());
 
     // Removes the entities `dimTags' of the current model. If `recursive' is true,
-    // remove all the entities on their boundaries, down to dimension 0.
+    // removes all the entities on their boundaries, down to dimension 0.
     GMSH_API void removeEntities(const gmsh::vector_pair & dimTags,
                                  const bool recursive = false);
 
@@ -423,9 +423,9 @@ namespace gmsh { // Top-level functions
                                  const double ny = 0.,
                                  const double nz = 0.);
 
-      // Adds a spline curve going through `vertexTags' points. If `tag' is
-      // positive, sets the tag explicitly; otherwise a new tag is selected
-      // automatically.  Returns the tag of the spline curve.
+      // Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If
+      // `tag' is positive, sets the tag explicitly; otherwise a new tag is
+      // selected automatically.  Returns the tag of the spline curve.
       GMSH_API int addSpline(const std::vector<int> & vertexTags,
                              const int tag = -1);
 
@@ -579,12 +579,12 @@ namespace gmsh { // Top-level functions
       GMSH_API void copy(const gmsh::vector_pair & dimTags,
                          gmsh::vector_pair & outDimTags);
 
-      // Removes the entities `dimTags'. If `recursive' is true, remove all the
+      // Removes the entities `dimTags'. If `recursive' is true, removes all the
       // entities on their boundaries, down to dimension 0.
       GMSH_API void remove(const gmsh::vector_pair & dimTags,
                            const bool recursive = false);
 
-      // Remove all duplicate entities (different entities at the same geometrical
+      // Removes all duplicate entities (different entities at the same geometrical
       // location).
       GMSH_API void removeAllDuplicates();
 
@@ -678,7 +678,7 @@ namespace gmsh { // Top-level functions
                            const int tag = -1);
 
       // Adds a circle arc between the two points with tags `startTag' and
-      // `endTag', with center `centertag'. If `tag' is positive, sets the tag
+      // `endTag', with center `centerTag'. If `tag' is positive, sets the tag
       // explicitly; otherwise a new tag is selected automatically. Returns the tag
       // of the circle arc.
       GMSH_API int addCircleArc(const int startTag,
@@ -686,7 +686,10 @@ namespace gmsh { // Top-level functions
                                 const int endTag,
                                 const int tag = -1);
 
-      // TODO
+      // Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is
+      // positive, sets the tag explicitly; otherwise a new tag is selected
+      // automatically. If `angle1' and `angle2' are specified, creates a circle
+      // arc between the two angles. Returns the tag of the circle.
       GMSH_API int addCircle(const double x,
                              const double y,
                              const double z,
@@ -695,13 +698,20 @@ namespace gmsh { // Top-level functions
                              const double angle1 = 0.,
                              const double angle2 = 2*M_PI);
 
-      // TODO
+      // Adds an ellipse arc between the two points with tags `startTag' and
+      // `endTag', with center `centerTag'. If `tag' is positive, sets the tag
+      // explicitly; otherwise a new tag is selected automatically. Returns the tag
+      // of the ellipse arc.
       GMSH_API int addEllipseArc(const int startTag,
                                  const int centerTag,
                                  const int endTag,
                                  const int tag = -1);
 
-      // TODO
+      // Adds an ellipse of center (`x', `y', `z') and radii `r1' and `r2' along
+      // the x- and y-axes respectively. If `tag' is positive, sets the tag
+      // explicitly; otherwise a new tag is selected automatically. If `angle1' and
+      // `angle2' are specified, creates an ellipse arc between the two angles.
+      // Returns the tag of the ellipse.
       GMSH_API int addEllipse(const double x,
                               const double y,
                               const double z,
@@ -711,24 +721,33 @@ namespace gmsh { // Top-level functions
                               const double angle1 = 0.,
                               const double angle2 = 2*M_PI);
 
-      // TODO
+      // Adds a spline (b-spline) curve going through `vertexTags' points, with a
+      // given tolerance. If `tag' is positive, sets the tag explicitly; otherwise
+      // a new tag is selected automatically.  Returns the tag of the spline curve.
       GMSH_API int addSpline(const std::vector<int> & vertexTags,
                              const int tag = -1);
 
-      // TODO
+      // Adds a Bezier curve with `vertexTags' control points. If `tag' is
+      // positive, sets the tag explicitly; otherwise a new tag is selected
+      // automatically.  Returns the tag of the Bezier curve.
       GMSH_API int addBezier(const std::vector<int> & vertexTags,
                              const int tag = -1);
 
-      // TODO
-      GMSH_API int addBSpline(const std::vector<int> & vertexTags,
-                              const int tag = -1);
-
-      // TODO
+      // Adds a wire (open or closed) formed by `edgeTags'. `edgeTags' should
+      // contain (signed) tags of geometrical enties of dimension 1: a negative tag
+      // signifies that the underlying edge is considered with reversed
+      // orientation. If `tag' is positive, sets the tag explicitly; otherwise a
+      // new tag is selected automatically. Returns the tag of the wire.
       GMSH_API int addWire(const std::vector<int> & edgeTags,
                            const int tag = -1,
                            const bool checkClosed = false);
 
-      // TODO
+      // Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should
+      // contain (signed) tags of geometrical enties of dimension 1 forming a
+      // closed loop: a negative tag signifies that the underlying edge is
+      // considered with reversed orientation. If `tag' is positive, sets the tag
+      // explicitly; otherwise a new tag is selected automatically. Returns the tag
+      // of the line loop.
       GMSH_API int addLineLoop(const std::vector<int> & edgeTags,
                                const int tag = -1);
 
@@ -749,19 +768,30 @@ namespace gmsh { // Top-level functions
                            const double ry,
                            const int tag = -1);
 
-      // TODO
+      // Adds a plane surface defined by one or more line loops (or closed wires)
+      // `wireTags'. The first line loop defines the exterior contour; additional
+      // line loop define holes. If `tag' is positive, sets the tag explicitly;
+      // otherwise a new tag is selected automatically. Returns the tag of the
+      // surface.
       GMSH_API int addPlaneSurface(const std::vector<int> & wireTags,
                                    const int tag = -1);
 
-      // TODO
+      // Adds a surface filling the line loops in `wireTags'. If `tag' is positive,
+      // sets the tag explicitly; otherwise a new tag is selected automatically.
+      // Returns the tag of the surface.
       GMSH_API int addSurfaceFilling(const int wireTag,
                                      const int tag = -1);
 
-      // TODO
+      // Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is
+      // positive, sets the tag explicitly; otherwise a new tag is selected
+      // automatically. Returns the tag of the surface loop.
       GMSH_API int addSurfaceLoop(const std::vector<int> & faceTags,
                                   const int tag = -1);
 
-      // TODO
+      // Adds a volume defined by one or more surface loops `shellTags'. The first
+      // surface loop defines the exterior boundary; additional surface loop define
+      // holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
+      // is selected automatically. Returns the tag of the volume.
       GMSH_API int addVolume(const std::vector<int> & shellTags,
                              const int tag = -1);
 
@@ -840,7 +870,11 @@ namespace gmsh { // Top-level functions
                                  gmsh::vector_pair & outDimTags,
                                  const int tag = -1);
 
-      // TODO
+      // Extrudes the geometrical entities in `dimTags' by translation along (`dx',
+      // `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements'
+      // is not empty, also extrude the mesh: the entries in `numElements' give the
+      // number of elements in each layer. If `height' is not empty, it provides
+      // the (cummulative) height of the different layers, normalized to 1.
       GMSH_API void extrude(const gmsh::vector_pair & dimTags,
                             const double dx,
                             const double dy,
@@ -850,7 +884,13 @@ namespace gmsh { // Top-level functions
                             const std::vector<double> & heights = std::vector<double>(),
                             const bool recombine = false);
 
-      // TODO
+      // Extrudes the geometrical entities in `dimTags' by rotation of `angle'
+      // radians around the axis of revolution defined by the point (`x', `y', `z')
+      // and the direction (`ax', `ay', `az'). Returns extruded entities in
+      // `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
+      // entries in `numElements' give the number of elements in each layer. If
+      // `height' is not empty, it provides the (cummulative) height of the
+      // different layers, normalized to 1.
       GMSH_API void revolve(const gmsh::vector_pair & dimTags,
                             const double x,
                             const double y,
@@ -912,13 +952,15 @@ namespace gmsh { // Top-level functions
                                      const bool removeObject = true,
                                      const bool removeTool = true);
 
-      // TODO
+      // Translates the geometrical entities in `dimTags' along (`dx', `dy', `dz').
       GMSH_API void translate(const gmsh::vector_pair & dimTags,
                               const double dx,
                               const double dy,
                               const double dz);
 
-      // TODO
+      // Rotates the geometrical entities in `dimTags' of `angle' radians around
+      // the axis of revolution defined by the point (`x', `y', `z') and the
+      // direction (`ax', `ay', `az').
       GMSH_API void rotate(const gmsh::vector_pair & dimTags,
                            const double x,
                            const double y,
@@ -928,7 +970,9 @@ namespace gmsh { // Top-level functions
                            const double az,
                            const double angle);
 
-      // TODO
+      // Scales the geometrical entities in `dimTag' by factors `a', `b' and `c'
+      // along the three coordinate axes; use (`x', `y', `z') as the center of the
+      // homothetic transformation.
       GMSH_API void dilate(const gmsh::vector_pair & dimTags,
                            const double x,
                            const double y,
@@ -937,22 +981,28 @@ namespace gmsh { // Top-level functions
                            const double b,
                            const double c);
 
-      // TODO
+      // Applies a symmetry transformation to the geometrical entities in `dimTag',
+      // with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' =
+      // 0.
       GMSH_API void symmetry(const gmsh::vector_pair & dimTags,
                              const double a,
                              const double b,
                              const double c,
                              const double d);
 
-      // TODO
+      // Copies the entities in `dimTags'; the new entities are returned in
+      // `outDimTags'.
       GMSH_API void copy(const gmsh::vector_pair & dimTags,
                          gmsh::vector_pair & outDimTags);
 
-      // TODO
+      // Removes the entities `dimTags'. If `recursive' is true, removes all the
+      // entities on their boundaries, down to dimension 0.
       GMSH_API void remove(const gmsh::vector_pair & dimTags,
                            const bool recursive = false);
 
-      // TODO
+      // Removes all duplicate entities (different entities at the same geometrical
+      // location) after intersecting (using boolean fragments) all highest
+      // dimensional entities.
       GMSH_API void removeAllDuplicates();
 
       // TODO

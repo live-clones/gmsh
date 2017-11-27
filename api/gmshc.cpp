@@ -778,15 +778,6 @@ int gmshModelOccAddBezier(int* vertexTags, size_t vertexTags_n,const int tag,int
   return result_api_;
 }
 
-int gmshModelOccAddBSpline(int* vertexTags, size_t vertexTags_n,const int tag,int * ierr){
-  int result_api_;
-  if(ierr) *ierr = 0;
-  try {
-  result_api_ = gmsh::model::occ::addBSpline(ptr2vector(vertexTags,vertexTags_n),tag);
-  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
-  return result_api_;
-}
-
 int gmshModelOccAddWire(int* edgeTags, size_t edgeTags_n,const int tag,const int checkClosed,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;

@@ -1465,17 +1465,6 @@ int gmsh::model::occ::addBezier(const std::vector<int> &vertexTags, const int ta
   return outTag;
 }
 
-int gmsh::model::occ::addBSpline(const std::vector<int> &vertexTags, const int tag)
-{
-  if(!_isInitialized()){ throw -1; }
-  _createOcc();
-  int outTag = tag;
-  if(!GModel::current()->getOCCInternals()->addBSpline(outTag, vertexTags)){
-    throw 1;
-  }
-  return outTag;
-}
-
 int gmsh::model::occ::addWire(const std::vector<int> &edgeTags, const int tag,
                               const bool checkClosed)
 {

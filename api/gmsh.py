@@ -609,7 +609,7 @@ class model:
     def removeEntities(dimTags,recursive=False):
         """
         Removes the entities `dimTags' of the current model. If `recursive' is
-        true, remove all the entities on their boundaries, down to dimension 0.
+        true, removes all the entities on their boundaries, down to dimension 0.
         """
         api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
         ierr = c_int()
@@ -1228,8 +1228,8 @@ class model:
         @staticmethod
         def addSpline(vertexTags,tag=-1):
             """
-            Adds a spline curve going through `vertexTags' points. If `tag' is
-            positive, sets the tag explicitly; otherwise a new tag is selected
+            Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If
+            `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
             automatically.  Returns the tag of the spline curve.
 
             return int
@@ -1622,7 +1622,7 @@ class model:
         @staticmethod
         def remove(dimTags,recursive=False):
             """
-            Removes the entities `dimTags'. If `recursive' is true, remove all the
+            Removes the entities `dimTags'. If `recursive' is true, removes all the
             entities on their boundaries, down to dimension 0.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -1639,7 +1639,7 @@ class model:
         @staticmethod
         def removeAllDuplicates():
             """
-            Remove all duplicate entities (different entities at the same geometrical
+            Removes all duplicate entities (different entities at the same geometrical
             location).
             """
             ierr = c_int()
@@ -1863,7 +1863,7 @@ class model:
         def addCircleArc(startTag,centerTag,endTag,tag=-1):
             """
             Adds a circle arc between the two points with tags `startTag' and `endTag',
-            with center `centertag'. If `tag' is positive, sets the tag explicitly;
+            with center `centerTag'. If `tag' is positive, sets the tag explicitly;
             otherwise a new tag is selected automatically. Returns the tag of the
             circle arc.
 
@@ -1885,7 +1885,10 @@ class model:
         @staticmethod
         def addCircle(x,y,z,r,tag=-1,angle1=0.,angle2=2*pi):
             """
-            TODO
+            Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is
+            positive, sets the tag explicitly; otherwise a new tag is selected
+            automatically. If `angle1' and `angle2' are specified, creates a circle arc
+            between the two angles. Returns the tag of the circle.
 
             return int
             """
@@ -1908,7 +1911,10 @@ class model:
         @staticmethod
         def addEllipseArc(startTag,centerTag,endTag,tag=-1):
             """
-            TODO
+            Adds an ellipse arc between the two points with tags `startTag' and
+            `endTag', with center `centerTag'. If `tag' is positive, sets the tag
+            explicitly; otherwise a new tag is selected automatically. Returns the tag
+            of the ellipse arc.
 
             return int
             """
@@ -1928,7 +1934,11 @@ class model:
         @staticmethod
         def addEllipse(x,y,z,r1,r2,tag=-1,angle1=0.,angle2=2*pi):
             """
-            TODO
+            Adds an ellipse of center (`x', `y', `z') and radii `r1' and `r2' along the
+            x- and y-axes respectively. If `tag' is positive, sets the tag explicitly;
+            otherwise a new tag is selected automatically. If `angle1' and `angle2' are
+            specified, creates an ellipse arc between the two angles. Returns the tag
+            of the ellipse.
 
             return int
             """
@@ -1952,7 +1962,9 @@ class model:
         @staticmethod
         def addSpline(vertexTags,tag=-1):
             """
-            TODO
+            Adds a spline (b-spline) curve going through `vertexTags' points, with a
+            given tolerance. If `tag' is positive, sets the tag explicitly; otherwise a
+            new tag is selected automatically.  Returns the tag of the spline curve.
 
             return int
             """
@@ -1971,7 +1983,9 @@ class model:
         @staticmethod
         def addBezier(vertexTags,tag=-1):
             """
-            TODO
+            Adds a Bezier curve with `vertexTags' control points. If `tag' is positive,
+            sets the tag explicitly; otherwise a new tag is selected automatically.
+            Returns the tag of the Bezier curve.
 
             return int
             """
@@ -1988,28 +2002,13 @@ class model:
             return api__result__
 
         @staticmethod
-        def addBSpline(vertexTags,tag=-1):
-            """
-            TODO
-
-            return int
-            """
-            api_vertexTags_, api_vertexTags_n_ = _ivectorint(vertexTags)
-            ierr = c_int()
-            api__result__ = lib.gmshModelOccAddBSpline(
-                api_vertexTags_, api_vertexTags_n_,
-                c_int(tag),
-                byref(ierr))
-            if ierr.value != 0 :
-                raise ValueError(
-                    "gmshModelOccAddBSpline returned non-zero error code : ",
-                    ierr.value)
-            return api__result__
-
-        @staticmethod
         def addWire(edgeTags,tag=-1,checkClosed=False):
             """
-            TODO
+            Adds a wire (open or closed) formed by `edgeTags'. `edgeTags' should
+            contain (signed) tags of geometrical enties of dimension 1: a negative tag
+            signifies that the underlying edge is considered with reversed orientation.
+            If `tag' is positive, sets the tag explicitly; otherwise a new tag is
+            selected automatically. Returns the tag of the wire.
 
             return int
             """
@@ -2029,7 +2028,12 @@ class model:
         @staticmethod
         def addLineLoop(edgeTags,tag=-1):
             """
-            TODO
+            Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should
+            contain (signed) tags of geometrical enties of dimension 1 forming a closed
+            loop: a negative tag signifies that the underlying edge is considered with
+            reversed orientation. If `tag' is positive, sets the tag explicitly;
+            otherwise a new tag is selected automatically. Returns the tag of the line
+            loop.
 
             return int
             """
@@ -2093,7 +2097,11 @@ class model:
         @staticmethod
         def addPlaneSurface(wireTags,tag=-1):
             """
-            TODO
+            Adds a plane surface defined by one or more line loops (or closed wires)
+            `wireTags'. The first line loop defines the exterior contour; additional
+            line loop define holes. If `tag' is positive, sets the tag explicitly;
+            otherwise a new tag is selected automatically. Returns the tag of the
+            surface.
 
             return int
             """
@@ -2112,7 +2120,9 @@ class model:
         @staticmethod
         def addSurfaceFilling(wireTag,tag=-1):
             """
-            TODO
+            Adds a surface filling the line loops in `wireTags'. If `tag' is positive,
+            sets the tag explicitly; otherwise a new tag is selected automatically.
+            Returns the tag of the surface.
 
             return int
             """
@@ -2130,7 +2140,9 @@ class model:
         @staticmethod
         def addSurfaceLoop(faceTags,tag=-1):
             """
-            TODO
+            Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is
+            positive, sets the tag explicitly; otherwise a new tag is selected
+            automatically. Returns the tag of the surface loop.
 
             return int
             """
@@ -2149,7 +2161,10 @@ class model:
         @staticmethod
         def addVolume(shellTags,tag=-1):
             """
-            TODO
+            Adds a volume defined by one or more surface loops `shellTags'. The first
+            surface loop defines the exterior boundary; additional surface loop define
+            holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
+            is selected automatically. Returns the tag of the volume.
 
             return int
             """
@@ -2363,7 +2378,11 @@ class model:
         @staticmethod
         def extrude(dimTags,dx,dy,dz,numElements=[],heights=[],recombine=False):
             """
-            TODO
+            Extrudes the geometrical entities in `dimTags' by translation along (`dx',
+            `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements' is
+            not empty, also extrude the mesh: the entries in `numElements' give the
+            number of elements in each layer. If `height' is not empty, it provides the
+            (cummulative) height of the different layers, normalized to 1.
 
             return outDimTags
             """
@@ -2391,7 +2410,13 @@ class model:
         @staticmethod
         def revolve(dimTags,x,y,z,ax,ay,az,angle,numElements=[],heights=[],recombine=False):
             """
-            TODO
+            Extrudes the geometrical entities in `dimTags' by rotation of `angle'
+            radians around the axis of revolution defined by the point (`x', `y', `z')
+            and the direction (`ax', `ay', `az'). Returns extruded entities in
+            `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
+            entries in `numElements' give the number of elements in each layer. If
+            `height' is not empty, it provides the (cummulative) height of the
+            different layers, normalized to 1.
 
             return outDimTags
             """
@@ -2584,7 +2609,7 @@ class model:
         @staticmethod
         def translate(dimTags,dx,dy,dz):
             """
-            TODO
+            Translates the geometrical entities in `dimTags' along (`dx', `dy', `dz').
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -2602,7 +2627,9 @@ class model:
         @staticmethod
         def rotate(dimTags,x,y,z,ax,ay,az,angle):
             """
-            TODO
+            Rotates the geometrical entities in `dimTags' of `angle' radians around the
+            axis of revolution defined by the point (`x', `y', `z') and the direction
+            (`ax', `ay', `az').
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -2624,7 +2651,9 @@ class model:
         @staticmethod
         def dilate(dimTags,x,y,z,a,b,c):
             """
-            TODO
+            Scales the geometrical entities in `dimTag' by factors `a', `b' and `c'
+            along the three coordinate axes; use (`x', `y', `z') as the center of the
+            homothetic transformation.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -2645,7 +2674,9 @@ class model:
         @staticmethod
         def symmetry(dimTags,a,b,c,d):
             """
-            TODO
+            Applies a symmetry transformation to the geometrical entities in `dimTag',
+            with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' =
+            0.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -2664,7 +2695,8 @@ class model:
         @staticmethod
         def copy(dimTags):
             """
-            TODO
+            Copies the entities in `dimTags'; the new entities are returned in
+            `outDimTags'.
 
             return outDimTags
             """
@@ -2684,7 +2716,8 @@ class model:
         @staticmethod
         def remove(dimTags,recursive=False):
             """
-            TODO
+            Removes the entities `dimTags'. If `recursive' is true, removes all the
+            entities on their boundaries, down to dimension 0.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -2700,7 +2733,9 @@ class model:
         @staticmethod
         def removeAllDuplicates():
             """
-            TODO
+            Removes all duplicate entities (different entities at the same geometrical
+            location) after intersecting (using boolean fragments) all highest
+            dimensional entities.
             """
             ierr = c_int()
             lib.gmshModelOccRemoveAllDuplicates(

@@ -192,7 +192,7 @@ GMSH_API int gmshModelAddDiscreteEntity(const int dim,
                                         int * ierr);
 
 /* Removes the entities `dimTags' of the current model. If `recursive' is
- * true, remove all the entities on their boundaries, down to dimension 0. */
+ * true, removes all the entities on their boundaries, down to dimension 0. */
 GMSH_API void gmshModelRemoveEntities(int * dimTags, size_t dimTags_n,
                                       const int recursive,
                                       int * ierr);
@@ -447,8 +447,8 @@ GMSH_API int gmshModelGeoAddEllipseArc(const int startTag,
                                        const double nz,
                                        int * ierr);
 
-/* Adds a spline curve going through `vertexTags' points. If `tag' is
- * positive, sets the tag explicitly; otherwise a new tag is selected
+/* Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If
+ * `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
  * automatically.  Returns the tag of the spline curve. */
 GMSH_API int gmshModelGeoAddSpline(int* vertexTags, size_t vertexTags_n,
                                    const int tag,
@@ -619,13 +619,13 @@ GMSH_API void gmshModelGeoCopy(int * dimTags, size_t dimTags_n,
                                int ** outDimTags, size_t * outDimTags_n,
                                int * ierr);
 
-/* Removes the entities `dimTags'. If `recursive' is true, remove all the
+/* Removes the entities `dimTags'. If `recursive' is true, removes all the
  * entities on their boundaries, down to dimension 0. */
 GMSH_API void gmshModelGeoRemove(int * dimTags, size_t dimTags_n,
                                  const int recursive,
                                  int * ierr);
 
-/* Remove all duplicate entities (different entities at the same geometrical
+/* Removes all duplicate entities (different entities at the same geometrical
  * location). */
 GMSH_API void gmshModelGeoRemoveAllDuplicates(int * ierr);
 
@@ -718,7 +718,7 @@ GMSH_API int gmshModelOccAddLine(const int startTag,
                                  int * ierr);
 
 /* Adds a circle arc between the two points with tags `startTag' and `endTag',
- * with center `centertag'. If `tag' is positive, sets the tag explicitly;
+ * with center `centerTag'. If `tag' is positive, sets the tag explicitly;
  * otherwise a new tag is selected automatically. Returns the tag of the
  * circle arc. */
 GMSH_API int gmshModelOccAddCircleArc(const int startTag,
@@ -727,7 +727,10 @@ GMSH_API int gmshModelOccAddCircleArc(const int startTag,
                                       const int tag,
                                       int * ierr);
 
-/* TODO */
+/* Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is
+ * positive, sets the tag explicitly; otherwise a new tag is selected
+ * automatically. If `angle1' and `angle2' are specified, creates a circle arc
+ * between the two angles. Returns the tag of the circle. */
 GMSH_API int gmshModelOccAddCircle(const double x,
                                    const double y,
                                    const double z,
@@ -737,14 +740,21 @@ GMSH_API int gmshModelOccAddCircle(const double x,
                                    const double angle2,
                                    int * ierr);
 
-/* TODO */
+/* Adds an ellipse arc between the two points with tags `startTag' and
+ * `endTag', with center `centerTag'. If `tag' is positive, sets the tag
+ * explicitly; otherwise a new tag is selected automatically. Returns the tag
+ * of the ellipse arc. */
 GMSH_API int gmshModelOccAddEllipseArc(const int startTag,
                                        const int centerTag,
                                        const int endTag,
                                        const int tag,
                                        int * ierr);
 
-/* TODO */
+/* Adds an ellipse of center (`x', `y', `z') and radii `r1' and `r2' along the
+ * x- and y-axes respectively. If `tag' is positive, sets the tag explicitly;
+ * otherwise a new tag is selected automatically. If `angle1' and `angle2' are
+ * specified, creates an ellipse arc between the two angles. Returns the tag
+ * of the ellipse. */
 GMSH_API int gmshModelOccAddEllipse(const double x,
                                     const double y,
                                     const double z,
@@ -755,28 +765,36 @@ GMSH_API int gmshModelOccAddEllipse(const double x,
                                     const double angle2,
                                     int * ierr);
 
-/* TODO */
+/* Adds a spline (b-spline) curve going through `vertexTags' points, with a
+ * given tolerance. If `tag' is positive, sets the tag explicitly; otherwise a
+ * new tag is selected automatically.  Returns the tag of the spline curve. */
 GMSH_API int gmshModelOccAddSpline(int* vertexTags, size_t vertexTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* TODO */
+/* Adds a Bezier curve with `vertexTags' control points. If `tag' is positive,
+ * sets the tag explicitly; otherwise a new tag is selected automatically.
+ * Returns the tag of the Bezier curve. */
 GMSH_API int gmshModelOccAddBezier(int* vertexTags, size_t vertexTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* TODO */
-GMSH_API int gmshModelOccAddBSpline(int* vertexTags, size_t vertexTags_n,
-                                    const int tag,
-                                    int * ierr);
-
-/* TODO */
+/* Adds a wire (open or closed) formed by `edgeTags'. `edgeTags' should
+ * contain (signed) tags of geometrical enties of dimension 1: a negative tag
+ * signifies that the underlying edge is considered with reversed orientation.
+ * If `tag' is positive, sets the tag explicitly; otherwise a new tag is
+ * selected automatically. Returns the tag of the wire. */
 GMSH_API int gmshModelOccAddWire(int* edgeTags, size_t edgeTags_n,
                                  const int tag,
                                  const int checkClosed,
                                  int * ierr);
 
-/* TODO */
+/* Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should
+ * contain (signed) tags of geometrical enties of dimension 1 forming a closed
+ * loop: a negative tag signifies that the underlying edge is considered with
+ * reversed orientation. If `tag' is positive, sets the tag explicitly;
+ * otherwise a new tag is selected automatically. Returns the tag of the line
+ * loop. */
 GMSH_API int gmshModelOccAddLineLoop(int* edgeTags, size_t edgeTags_n,
                                      const int tag,
                                      int * ierr);
@@ -800,22 +818,33 @@ GMSH_API int gmshModelOccAddDisk(const double xc,
                                  const int tag,
                                  int * ierr);
 
-/* TODO */
+/* Adds a plane surface defined by one or more line loops (or closed wires)
+ * `wireTags'. The first line loop defines the exterior contour; additional
+ * line loop define holes. If `tag' is positive, sets the tag explicitly;
+ * otherwise a new tag is selected automatically. Returns the tag of the
+ * surface. */
 GMSH_API int gmshModelOccAddPlaneSurface(int* wireTags, size_t wireTags_n,
                                          const int tag,
                                          int * ierr);
 
-/* TODO */
+/* Adds a surface filling the line loops in `wireTags'. If `tag' is positive,
+ * sets the tag explicitly; otherwise a new tag is selected automatically.
+ * Returns the tag of the surface. */
 GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag,
                                            const int tag,
                                            int * ierr);
 
-/* TODO */
+/* Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is
+ * positive, sets the tag explicitly; otherwise a new tag is selected
+ * automatically. Returns the tag of the surface loop. */
 GMSH_API int gmshModelOccAddSurfaceLoop(int* faceTags, size_t faceTags_n,
                                         const int tag,
                                         int * ierr);
 
-/* TODO */
+/* Adds a volume defined by one or more surface loops `shellTags'. The first
+ * surface loop defines the exterior boundary; additional surface loop define
+ * holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
+ * is selected automatically. Returns the tag of the volume. */
 GMSH_API int gmshModelOccAddVolume(int* shellTags, size_t shellTags_n,
                                    const int tag,
                                    int * ierr);
@@ -903,7 +932,11 @@ GMSH_API int gmshModelOccAddThickSolid(const int solidTag,
                                        const int tag,
                                        int * ierr);
 
-/* TODO */
+/* Extrudes the geometrical entities in `dimTags' by translation along (`dx',
+ * `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements' is
+ * not empty, also extrude the mesh: the entries in `numElements' give the
+ * number of elements in each layer. If `height' is not empty, it provides the
+ * (cummulative) height of the different layers, normalized to 1. */
 GMSH_API void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,
                                   const double dx,
                                   const double dy,
@@ -914,7 +947,13 @@ GMSH_API void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,
                                   const int recombine,
                                   int * ierr);
 
-/* TODO */
+/* Extrudes the geometrical entities in `dimTags' by rotation of `angle'
+ * radians around the axis of revolution defined by the point (`x', `y', `z')
+ * and the direction (`ax', `ay', `az'). Returns extruded entities in
+ * `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
+ * entries in `numElements' give the number of elements in each layer. If
+ * `height' is not empty, it provides the (cummulative) height of the
+ * different layers, normalized to 1. */
 GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n,
                                   const double x,
                                   const double y,
@@ -983,14 +1022,16 @@ GMSH_API void gmshModelOccBooleanFragments(int * objectDimTags, size_t objectDim
                                            const int removeTool,
                                            int * ierr);
 
-/* TODO */
+/* Translates the geometrical entities in `dimTags' along (`dx', `dy', `dz'). */
 GMSH_API void gmshModelOccTranslate(int * dimTags, size_t dimTags_n,
                                     const double dx,
                                     const double dy,
                                     const double dz,
                                     int * ierr);
 
-/* TODO */
+/* Rotates the geometrical entities in `dimTags' of `angle' radians around the
+ * axis of revolution defined by the point (`x', `y', `z') and the direction
+ * (`ax', `ay', `az'). */
 GMSH_API void gmshModelOccRotate(int * dimTags, size_t dimTags_n,
                                  const double x,
                                  const double y,
@@ -1001,7 +1042,9 @@ GMSH_API void gmshModelOccRotate(int * dimTags, size_t dimTags_n,
                                  const double angle,
                                  int * ierr);
 
-/* TODO */
+/* Scales the geometrical entities in `dimTag' by factors `a', `b' and `c'
+ * along the three coordinate axes; use (`x', `y', `z') as the center of the
+ * homothetic transformation. */
 GMSH_API void gmshModelOccDilate(int * dimTags, size_t dimTags_n,
                                  const double x,
                                  const double y,
@@ -1011,7 +1054,9 @@ GMSH_API void gmshModelOccDilate(int * dimTags, size_t dimTags_n,
                                  const double c,
                                  int * ierr);
 
-/* TODO */
+/* Applies a symmetry transformation to the geometrical entities in `dimTag',
+ * with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' =
+ * 0. */
 GMSH_API void gmshModelOccSymmetry(int * dimTags, size_t dimTags_n,
                                    const double a,
                                    const double b,
@@ -1019,17 +1064,21 @@ GMSH_API void gmshModelOccSymmetry(int * dimTags, size_t dimTags_n,
                                    const double d,
                                    int * ierr);
 
-/* TODO */
+/* Copies the entities in `dimTags'; the new entities are returned in
+ * `outDimTags'. */
 GMSH_API void gmshModelOccCopy(int * dimTags, size_t dimTags_n,
                                int ** outDimTags, size_t * outDimTags_n,
                                int * ierr);
 
-/* TODO */
+/* Removes the entities `dimTags'. If `recursive' is true, removes all the
+ * entities on their boundaries, down to dimension 0. */
 GMSH_API void gmshModelOccRemove(int * dimTags, size_t dimTags_n,
                                  const int recursive,
                                  int * ierr);
 
-/* TODO */
+/* Removes all duplicate entities (different entities at the same geometrical
+ * location) after intersecting (using boolean fragments) all highest
+ * dimensional entities. */
 GMSH_API void gmshModelOccRemoveAllDuplicates(int * ierr);
 
 /* TODO */
