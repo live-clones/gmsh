@@ -88,6 +88,11 @@ namespace BoundaryLayerCurver
     std::vector<int> i1;
   };
 
+  struct TFIData {
+    fullMatrix<double> T0;
+    fullMatrix<double> T1;
+  };
+
 }
 
 void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,

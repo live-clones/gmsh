@@ -428,6 +428,7 @@ namespace BoundaryLayerCurver
   typedef std::pair<int, std::pair<int, int> > TupleLeastSquareData;
   static std::map<TupleLeastSquareData, LeastSquareData*> leastSquareData;
   static std::map<int, InteriorPlacementData*> interiorPlacementData;
+  static std::map<std::pair<int, int>, TFIData*> tfiData;
 
   LeastSquareData* constructLeastSquareData(int typeElement, int order,
                                             int orderGauss)
@@ -588,6 +589,156 @@ namespace BoundaryLayerCurver
     LeastSquareData *data = constructLeastSquareData(typeElement, order,
                                                      orderGauss);
     leastSquareData[typeOrder] = data;
+    return data;
+  }
+
+  TFIData* constructTFIData(int typeElement, int order)
+  {
+    TFIData *data = new TFIData;
+    int nbDof = order+1;
+
+    fullMatrix<double> Mh; // lag coeff p n -> lag coeff p (n+1)
+    fullMatrix<double> M0; // lag coeff p (n+1) c -> (1-xi) * c
+    fullMatrix<double> M1; // lag coeff p (n+1) c ->    xi  * c
+    fullMatrix<double> Ml; // lag coeff p (n+1) -> leg coeff p n
+    fullMatrix<double> Me; // leg coeff p n -> lag coeff p n
+
+    if (typeElement == TYPE_LIN) {
+      int tagLine = ElementType::getTag(TYPE_LIN, order);
+      const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
+      const fullMatrix<double> &refNodes = fs->getReferenceNodes();
+      int tagLineh = ElementType::getTag(TYPE_LIN, order+1);
+      // FIXME replace with BasisFactory::getNodalBasis(funcSpaceData);
+      const nodalBasis *fsh = BasisFactory::getNodalBasis(tagLineh);
+      const fullMatrix<double> &refNodesh = fsh->getReferenceNodes();
+
+      int nbDofh = refNodesh.size1();
+
+      refNodesh.print("refNodesh");
+
+      Mh.resize(nbDofh, nbDof);
+      for (int i = 0; i < nbDofh; ++i) {
+        double sf[100];
+        fs->f(refNodesh(i, 0), refNodesh(i, 1), refNodesh(i, 2), sf);
+        for (int j = 0; j < nbDof; ++j) {
+          Mh(i, j) = sf[j];
+        }
+      }
+      Mh.print("Mh");
+
+      M0.resize(nbDofh, nbDofh, true);
+      M1.resize(nbDofh, nbDofh, true);
+      for (int i = 0; i < nbDofh; ++i) {
+        M0(i, i) = .5 - refNodesh(i, 0) / 2;
+        M1(i, i) = .5 + refNodesh(i, 0) / 2;
+      }
+      M0.print("M0");
+      M1.print("M1");
+
+      Ml.resize(nbDof, nbDofh);
+      {
+        fullMatrix<double> vandermonde(nbDofh, nbDofh);
+        LegendrePolynomials legendre(order + 1);
+
+        double *val = new double[nbDofh];
+        for (int i = 0; i < nbDofh; ++i) {
+          legendre.fc(refNodesh(i,0), val);
+          for (int j = 0; j < nbDofh; ++j) {
+            vandermonde(i, j) = val[j];
+          }
+        }
+        delete val;
+
+        fullMatrix<double> tmp;
+        vandermonde.invert(tmp);
+        vandermonde.print("vandermonde");
+        tmp.print("tmp");
+        Ml.copy(tmp, 0, nbDof, 0, nbDofh, 0, 0);
+      }
+      Ml.print("Ml");
+
+      Me.resize(nbDof, nbDof);
+      {
+        LegendrePolynomials legendre(order);
+
+        double *val = new double[nbDof];
+        for (int i = 0; i < nbDof; ++i) {
+          legendre.fc(refNodes(i, 0), val);
+          for (int j = 0; j < nbDof; ++j) {
+            Me(i, j) = val[j];
+          }
+        }
+        delete val;
+      }
+      Me.print("Me");
+
+      fullMatrix<double> tmp0(nbDofh, nbDof);
+      fullMatrix<double> tmp1(nbDofh, nbDof);
+      M0.mult(Mh, tmp0);
+      M1.mult(Mh, tmp1);
+      fullMatrix<double> tmp(nbDof, nbDofh);
+      Me.mult(Ml, tmp);
+      tmp.print("tmp");
+      data->T0.resize(nbDof, nbDof);
+      data->T1.resize(nbDof, nbDof);
+      tmp.mult(tmp0, data->T0);
+      tmp.mult(tmp1, data->T1);
+
+      data->T0.print("data->T0");
+      data->T1.print("data->T1");
+    }
+
+//    fullVector<double> x(nbDof);
+//    x.setAll(1);
+//    fullVector<double> b1(nbDof);
+//    fullVector<double> b2(nbDof);
+//    data->T0.mult(x, b1);
+//    b1.print("b");
+//    data->T1.mult(x, b1);
+//    b1.print("b");
+//
+//    x(0) = 0;
+//    x(2) = 1/6.;
+//    x(3) = 2/6.;
+//    x(4) = 3/6.;
+//    x(5) = 4/6.;
+//    x(6) = 5/6.;
+//    x(1) = 1;
+//    data->T0.mult(x, b1);
+//    b1.print("b1");
+//    data->T1.mult(x, b2);
+//    b2.print("b2");
+//    b1.axpy(b2);
+//    b1.print("b");
+//
+//    x(0) = 0;
+//    x(2) = 0.000021433470508;
+//    x(3) = 0.001371742112483;
+//    x(4) = 0.015625000000000;
+//    x(5) = 0.087791495198903;
+//    x(6) = 0.334897976680384;
+//    x(1) = 1.000000000000000;
+//    data->T0.mult(x, b1);
+//    b1.print("b1");
+//    data->T1.mult(x, b2);
+//    b2.print("b2");
+//    b1.axpy(b2);
+//    b1.print("b");
+
+    return data;
+  }
+
+  TFIData* getTFIData(int typeElement, int order)
+  {
+    std::pair<int, int> typeOrder(typeElement, order);
+    std::map<std::pair<int, int>, TFIData*>::iterator it;
+    it = tfiData.find(typeOrder);
+
+    if (it != tfiData.end()) return it->second;
+
+    TFIData *data = constructTFIData(typeElement, order);
+
+    tfiData[typeOrder] = data;
     return data;
   }
 
@@ -1473,76 +1624,20 @@ namespace BoundaryLayerCurver
     return true;
   }
 
-  bool curve2DQuadColumnTFI(MElement *bottomEdge, std::vector<MElement *> &column,
-                            SVector3 &w, double dampingFactor, GEntity *bndEnt)
+  void linearTFI(std::vector<MElement *> &column,
+                 std::vector<MVertex *> &globalBottomVertices,
+                 std::vector<MVertex *> &globalTopVertices)
   {
-//    if (bottomEdge->getNum() != 1156) return true; // Strange
-//    if (bottomEdge->getNum() != 1079) return true; // Good
-//    if (bottomEdge->getNum() != 1078) return true; // Next to good
-//    if (bottomEdge->getNum() != 1136) return true; // Bad
-//    if (bottomEdge->getNum() != 1102) return true; // HO
-//    if (bottomEdge->getNum() != 1150) return true; // concave
-//    if (bottomEdge->getNum() != 1151) return true; // symetric of concave
-
-    // First, go through the whole column, reorient and save last curve
-
-    MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
-    std::vector<MVertex *> bottomVertices, topVertices;
-    std::vector<MVertex *> globalBottomVertices, globalTopVertices;
-
-    for (int i = 0; i < column.size(); ++i) {
-      MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
-      int iBottom, sign;
-      quad->getEdgeInfo(bottom, iBottom, sign);
-      // Reorientation makes function repositionInteriorNodes() simpler
-      if (iBottom != 0) quad->reorient(4 - iBottom, false);
-      quad->getEdgeVertices(0, bottomVertices);
-      quad->getEdgeVertices(2, topVertices);
-      std::reverse(topVertices.begin(), topVertices.begin() + 2);
-      std::reverse(topVertices.begin() + 2, topVertices.end());
-
-      if (i == 0) globalBottomVertices = bottomVertices;
-      if (i == column.size() - 1) globalTopVertices = topVertices;
-
-      bottom = MEdge(topVertices[0], topVertices[1]);
-    }
-
-    // Curve last layer
-
-    Parameters2DCurve parameters;
-    computeExtremityCoefficients(globalBottomVertices, globalBottomVertices,
-                                 globalTopVertices, parameters, w);
-    computePositionEdgeVert(globalBottomVertices, globalBottomVertices,
-                            globalTopVertices, parameters, w,
-                            dampingFactor, bndEnt, -1, true);
-
-  int num = bottomEdge->getNum();
-    int N = 0;
-    switch (bottomEdge->getNum()) {
-      case 1157:
-        N = 5;
-        break;
-      case 1156:
-        N = 10;
-        break;
-      case 1150:
-        N = 80;
-        break;
-      case 1102:
-        N = 150;
-    }
-
-    for (int i = 0; i < N; ++i) {
-      damping2(globalTopVertices, .1, bndEnt);
-    }
-
-    // Go trough the whole column and compute TFI position of topVertices
+    // Here, we assume that "thickness" is identical on the left and on the
+    // right part of the column => identical eta_i
+    std::vector<MVertex *> bottomVertices;
     MVertex *vbot = globalBottomVertices[0];
     MVertex *vtop = globalTopVertices[0];
     double dX = vtop->x() - vbot->x();
     double dY = vtop->y() - vbot->y();
     bool lookAtX = std::abs(dX) > std::abs(dY);
 
+    // Go trough the whole column and compute TFI position of topVertices
     for (int i = (int)column.size() - 1; i >= 0; --i) {
       MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
       quad->getEdgeVertices(0, bottomVertices);
@@ -1559,6 +1654,204 @@ namespace BoundaryLayerCurver
         v->z() = (1 - factor) * vbot->z() + factor * vtop->z();
       }
       repositionInteriorNodes(quad);
+    }
+  }
+
+  void linearTFI(const fullMatrix<double> &x, fullMatrix<double> &lin)
+  {
+    int n = x.size1();
+    lin.copy(x, 0, 2, 0, 3, 0, 0);
+    for (int i = 2; i < n; ++i) {
+      double fact = ((double)i-1)/(n-1);
+      for (int j = 0; j < 3; ++j)
+        lin(i, j) = (1-fact) * x(0, j) + fact * x(1, j);
+    }
+  }
+
+  void hermiteTFI(std::vector<std::vector<MVertex *> > &layerVertices)
+  {
+    // General definition
+
+    // First, compute eta_i^k, k=0,1
+    std::vector<std::pair<double, double> > eta(layerVertices.size());
+    eta[0] = std::make_pair(0, 0);
+    MVertex *vb0 = layerVertices[0][0];
+    MVertex *vb1 = layerVertices[0][1];
+    for (int i = 1; i < layerVertices.size(); ++i) {
+      MVertex *vt0 = layerVertices[i][0];
+      MVertex *vt1 = layerVertices[i][1];
+      eta[i].first = eta[i-1].first + vb0->distance(vt0);
+      eta[i].second = eta[i-1].second + vb1->distance(vt1);
+      vb0 = vt0;
+      vb1 = vt1;
+    }
+
+    for (int i = 1; i < eta.size()-1; ++i) {
+      eta[i].first /= eta.back().first;
+      eta[i].second /= eta.back().second;
+    }
+
+    // Precompute Delta(x_k), k=0,1,n
+    int numVerticesToCompute = (int)layerVertices[0].size();
+    fullMatrix<double> delta0(numVerticesToCompute, 3);
+    fullMatrix<double> delta1(numVerticesToCompute, 3);
+    fullMatrix<double> deltan(numVerticesToCompute, 3);
+    for (int i = 0; i < delta0.size1(); ++i) {
+      delta0(i, 0) = layerVertices[0][i]->x();
+      delta0(i, 1) = layerVertices[0][i]->y();
+      delta0(i, 2) = layerVertices[0][i]->z();
+      delta1(i, 0) = layerVertices[1][i]->x();
+      delta1(i, 1) = layerVertices[1][i]->y();
+      delta1(i, 2) = layerVertices[1][i]->z();
+      deltan(i, 0) = layerVertices.back()[i]->x();
+      deltan(i, 1) = layerVertices.back()[i]->y();
+      deltan(i, 2) = layerVertices.back()[i]->z();
+    }
+    double eta1 = .5 * (eta[1].first + eta[1].second);
+    {
+      fullMatrix<double> dummy(numVerticesToCompute, 3);
+      linearTFI(delta0, dummy);
+      delta0.add(dummy, -1);
+      linearTFI(delta1, dummy);
+      delta1.add(dummy, -1);
+      linearTFI(deltan, dummy);
+      deltan.add(dummy, -1);
+
+      delta1.add(delta0, -1);
+      delta1.scale(1 / eta1);
+      deltan.add(delta0, -1);
+    }
+
+    // Go through each layer
+    TFIData *tfiData = getTFIData(TYPE_LIN, (int)layerVertices[0].size()-1);
+
+    for (int i = 2; i < layerVertices.size()-1; ++i) {
+      fullMatrix<double> x(numVerticesToCompute, 3);
+      for (int j = 0; j < delta0.size1(); ++j) {
+        x(j, 0) = layerVertices[i][j]->x();
+        x(j, 1) = layerVertices[i][j]->y();
+        x(j, 2) = layerVertices[i][j]->z();
+      }
+      linearTFI(x, x);
+
+      fullMatrix<double> termDelta(numVerticesToCompute, 3);
+      termDelta.copy(delta0);
+      fullMatrix<double> int0(numVerticesToCompute, 3);
+      fullMatrix<double> int1(numVerticesToCompute, 3);
+      fullMatrix<double> int2(numVerticesToCompute, 3);
+      fullMatrix<double> int3(numVerticesToCompute, 3);
+      tfiData->T0.mult(delta1, int0);
+      tfiData->T1.mult(delta1, int1);
+      termDelta.axpy(int0, eta[i].first);
+      termDelta.axpy(int1, eta[i].second);
+      tfiData->T1.mult(int1, int3);
+      tfiData->T1.mult(int0, int2);
+      tfiData->T0.mult(int0, int1);
+      termDelta.axpy(int1, - eta[i].first * eta[i].first);
+      termDelta.axpy(int2, - eta[i].first * eta[i].second);
+      termDelta.axpy(int3, - eta[i].second * eta[i].second);
+      tfiData->T0.mult(deltan, int0);
+      tfiData->T1.mult(deltan, int1);
+      tfiData->T1.mult(int1, int3);
+      tfiData->T1.mult(int0, int2);
+      tfiData->T0.mult(int0, int1);
+      termDelta.axpy(int1, eta[i].first * eta[i].first);
+      termDelta.axpy(int2, eta[i].first * eta[i].second);
+      termDelta.axpy(int3, eta[i].second * eta[i].second);
+
+      termDelta.print("termDelta");
+      x.print("x");
+
+      x.axpy(termDelta);
+      for (int j = 0; j < delta0.size1(); ++j) {
+        layerVertices[i][j]->x() = x(j, 0);
+        layerVertices[i][j]->y() = x(j, 1);
+        layerVertices[i][j]->z() = x(j, 2);
+      }
+    }
+
+
+  }
+
+  bool curve2DQuadColumnTFI(MElement *bottomEdge, std::vector<MElement *> &column,
+                            SVector3 &w, double dampingFactor, GEntity *bndEnt)
+  {
+//    if (bottomEdge->getNum() != 1156) return true; // Strange
+//    if (bottomEdge->getNum() != 1079) return true; // Good
+//    if (bottomEdge->getNum() != 1078) return true; // Next to good
+//    if (bottomEdge->getNum() != 1136) return true; // Bad
+//    if (bottomEdge->getNum() != 1102) return true; // HO
+//    if (bottomEdge->getNum() != 1150) return true; // concave
+//    if (bottomEdge->getNum() != 1151) return true; // symetric of concave
+
+    // First, go through the whole column, reorient and save last curve
+
+    MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
+    std::vector<MVertex *> bottomVertices, topVertices;
+    std::vector<MVertex *> globalBottomVertices, globalTopVertices;
+    std::vector<std::vector<MVertex *> > allLayerVertices; // for general TFI
+
+    for (int i = 0; i < column.size(); ++i) {
+      MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
+      int iBottom, sign;
+      quad->getEdgeInfo(bottom, iBottom, sign);
+      // Reorientation makes function repositionInteriorNodes() simpler
+      if (iBottom != 0) quad->reorient(4 - iBottom, false);
+      quad->getEdgeVertices(0, bottomVertices);
+      quad->getEdgeVertices(2, topVertices);
+      std::reverse(topVertices.begin(), topVertices.begin() + 2);
+      std::reverse(topVertices.begin() + 2, topVertices.end());
+
+      if (i == 0) {
+        globalBottomVertices = bottomVertices;
+        allLayerVertices.push_back(bottomVertices);
+      }
+      allLayerVertices.push_back(topVertices);
+      if (i == column.size() - 1) globalTopVertices = topVertices;
+
+      bottom = MEdge(topVertices[0], topVertices[1]);
+    }
+
+    // Curve last layer
+    Parameters2DCurve parameters;
+    computeExtremityCoefficients(globalBottomVertices, globalBottomVertices,
+                                 globalTopVertices, parameters, w);
+    computePositionEdgeVert(globalBottomVertices, globalBottomVertices,
+                            globalTopVertices, parameters, w,
+                            dampingFactor, bndEnt, -1, true);
+    int N = 0;
+    switch (bottomEdge->getNum()) {
+      case 1157:
+        N = 5;
+        break;
+      case 1156:
+        N = 10;
+        break;
+      case 1150:
+        N = 80;
+        break;
+      case 1102:
+        N = 150;
+    }
+    for (int i = 0; i < N; ++i) {
+      damping2(globalTopVertices, .1, bndEnt);
+    }
+
+    // Choose between linear and hermite
+    static bool linear = false;
+    if (linear) {
+      linearTFI(column, globalBottomVertices, globalTopVertices);
+    }
+    else {
+      computeExtremityCoefficients(globalBottomVertices, globalBottomVertices,
+                                   allLayerVertices[1], parameters, w);
+      computePositionEdgeVert(globalBottomVertices, globalBottomVertices,
+                              allLayerVertices[1], parameters, w,
+                              dampingFactor, bndEnt, -1, true);
+
+      hermiteTFI(allLayerVertices);
+      for (int i = 0; i < (int)column.size(); ++i)
+        repositionInteriorNodes(column[i]);
     }
 
     return true;
@@ -1587,7 +1880,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
                                                         column, n,
                                                         dampingFactor, bndEnt);
       else
-        success = BoundaryLayerCurver::curve2DQuadColumnTFI(bottomEdge, column,
+        success = BoundaryLayerCurver::curve2DQuadColumn(bottomEdge, column,
                                                          n, dampingFactor,
                                                          bndEnt);
       if (dampingFactor == 0) dampingFactor = .01;
