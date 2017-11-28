@@ -1137,20 +1137,16 @@ void MElement::writeMSH4(FILE *fp, bool binary)
   std::vector<MVertex*> verts;
   getVertices(verts);
   
-  if(binary)
-  {
+  if(binary){ //Implemented but not used in practice
     fwrite(&_num, sizeof(int), 1, fp);
-    for(unsigned int i = 0; i < verts.size(); i++)
-    {
+    for(unsigned int i = 0; i < verts.size(); i++){
       int vertNum = verts[i]->getNum();
       fwrite(&vertNum, sizeof(int), 1, fp);
     }
   }
-  else
-  {
+  else{
     fprintf(fp, "%d ", _num);
-    for(unsigned int i = 0; i < verts.size(); i++)
-    {
+    for(unsigned int i = 0; i < verts.size(); i++){
        fprintf(fp, "%d ", verts[i]->getNum());
     }
     fprintf(fp, "\n");
