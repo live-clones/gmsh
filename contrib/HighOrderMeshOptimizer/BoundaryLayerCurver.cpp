@@ -38,6 +38,13 @@
 #include "gmshVertex.h"
 #include "Geo.h"
 #include "MLine.h"
+#include "GModel.h"
+#if defined(HAVE_POST)
+#include "PView.h"
+#endif
+#if defined(HAVE_FLTK)
+#include "FlGui.h"
+#endif
 
 //#include "MElement.h"
 //#include "MLine.h"
@@ -1560,14 +1567,6 @@ namespace BoundaryLayerCurver
   bool curve2DQuadColumn(MElement *bottomEdge, std::vector<MElement *> &column,
                          SVector3 &w, double dampingFactor, GEntity *bndEnt)
   {
-//    if (bottomEdge->getNum() != 1156) return true; // Strange
-//    if (bottomEdge->getNum() != 1079) return true; // Good
-//    if (bottomEdge->getNum() != 1078) return true; // Next to good
-//    if (bottomEdge->getNum() != 1136) return true; // Bad
-//    if (bottomEdge->getNum() != 1102) return true; // HO
-//    if (bottomEdge->getNum() != 1150) return true; // concave
-//    if (bottomEdge->getNum() != 1151) return true; // symetric of concave
-
     MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
     std::vector<MVertex *> bottomVertices, topVertices;
 
@@ -1776,16 +1775,7 @@ namespace BoundaryLayerCurver
   bool curve2DQuadColumnTFI(MElement *bottomEdge, std::vector<MElement *> &column,
                             SVector3 &w, double dampingFactor, GEntity *bndEnt)
   {
-//    if (bottomEdge->getNum() != 1156) return true; // Strange
-//    if (bottomEdge->getNum() != 1079) return true; // Good
-//    if (bottomEdge->getNum() != 1078) return true; // Next to good
-//    if (bottomEdge->getNum() != 1136) return true; // Bad
-//    if (bottomEdge->getNum() != 1102) return true; // HO
-//    if (bottomEdge->getNum() != 1150) return true; // concave
-//    if (bottomEdge->getNum() != 1151) return true; // symetric of concave
-
     // First, go through the whole column, reorient and save last curve
-
     MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
     std::vector<MVertex *> bottomVertices, topVertices;
     std::vector<MVertex *> globalBottomVertices, globalTopVertices;
@@ -1821,17 +1811,11 @@ namespace BoundaryLayerCurver
                             dampingFactor, bndEnt, -1, true);
     int N = 0;
     switch (bottomEdge->getNum()) {
-      case 1157:
-        N = 5;
-        break;
-      case 1156:
-        N = 10;
-        break;
-      case 1150:
-        N = 80;
-        break;
-      case 1102:
-        N = 150;
+      case 1157: N =   5; break;
+      case 1156: N =  10; break;
+      case 1150: N =  80; break;
+      case 1102: N = 150; break;
+      case 1079: N = 100; break;
     }
     for (int i = 0; i < N; ++i) {
       damping2(globalTopVertices, .1, bndEnt);
@@ -1848,6 +1832,13 @@ namespace BoundaryLayerCurver
       computePositionEdgeVert(globalBottomVertices, globalBottomVertices,
                               allLayerVertices[1], parameters, w,
                               dampingFactor, bndEnt, -1, true);
+//      int N = 0;
+//      switch (bottomEdge->getNum()) {
+//        case 1102: N = 0; break;
+//      }
+//      for (int i = 0; i < N; ++i) {
+//        damping2(allLayerVertices[1], .1, bndEnt);
+//      }
 
       hermiteTFI(allLayerVertices);
       for (int i = 0; i < (int)column.size(); ++i)
@@ -1855,6 +1846,121 @@ namespace BoundaryLayerCurver
     }
 
     return true;
+  }
+
+  void computeThicknessQuality(std::vector<MVertex *> &bottomVertices,
+                               std::vector<MVertex *> &topVertices,
+                               std::vector<double> &thickness,
+                               SVector3 &w)
+  {
+    int nVertices = (int)bottomVertices.size();
+    int tagLine = ElementType::getTag(TYPE_LIN, nVertices-1);
+    const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
+
+    for (int i = 0; i < nVertices; ++i) {
+      const MVertex *v0 = bottomVertices[i];
+      const MVertex *v1 = topVertices[i];
+      SVector3 t, n, h;
+      h = SVector3(v1->x()-v0->x(), v1->y()-v0->y(), v1->z()-v0->z());
+
+      double xi = fs->points(i, 0);
+      double xc = 0, yc = 0, zc = 0;
+      double dx = 0, dy = 0, dz = 0;
+      {
+        double f[100];
+        double sf[100][3];
+        fs->f(xi, 0, 0, f);
+        fs->df(xi, 0, 0, sf);
+        for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+          const MVertex *v = bottomVertices[j];
+          xc += f[j] * v->x();
+          yc += f[j] * v->y();
+          zc += f[j] * v->z();
+          dx += sf[j][0] * v->x();
+          dy += sf[j][0] * v->y();
+          dz += sf[j][0] * v->z();
+        }
+      }
+      t = SVector3(dx, dy, dz).unit();
+      n = crossprod(w, t);
+      thickness.push_back(dot(h, n));
+    }
+
+    double t0 = thickness[0];
+    double t1 = thickness[1];
+    thickness[0] = 1;
+    thickness[1] = 1;
+    for (int j = 2; j < nVertices; ++j) {
+      double fact = ((double)j-1)/(nVertices-1);
+      double idealThickness = (1-fact) * t0 + fact * t1;
+      int sign = gmsh_sign(idealThickness);
+      if (sign * thickness[j] < 0)
+        thickness[j] = 0;
+      else if (sign*thickness[j] < sign*idealThickness)
+        thickness[j] = thickness[j] / idealThickness;
+      else
+        thickness[j] = idealThickness / thickness[j];
+    }
+  }
+
+  void computeThicknessPView(MElement *el, SVector3 &w,
+                             std::map<int, std::vector<double> > &data)
+  {
+    if (el->getType() == TYPE_QUA) {
+      std::vector<MVertex *> bottomVertices, topVertices;
+
+      el->getEdgeVertices(0, bottomVertices);
+      el->getEdgeVertices(2, topVertices);
+      std::reverse(topVertices.begin(), topVertices.begin() + 2);
+      std::reverse(topVertices.begin() + 2, topVertices.end());
+
+      std::vector<double> thickness[2];
+      computeThicknessQuality(bottomVertices, topVertices, thickness[0], w);
+      computeThicknessQuality(topVertices, bottomVertices, thickness[1], w);
+
+      std::map<int, double> v2q;
+      v2q[0] = thickness[0][0];
+      v2q[1] = thickness[0][1];
+      v2q[2] = thickness[1][1];
+      v2q[3] = thickness[1][0];
+      int nEdgeVertex = (int)topVertices.size()-2;
+      for (int i = 2; i < (int)thickness[0].size(); ++i) {
+        v2q[4+i-2] = thickness[0][i];
+        v2q[3+3*nEdgeVertex-i+2] = thickness[1][i];
+      }
+
+      double q00 = v2q[0];
+      double q10 = v2q[1];
+      double q11 = v2q[2];
+      double q01 = v2q[3];
+      for (int i = 0; i < nEdgeVertex; ++i) {
+        double fact = ((double)i+1)/(nEdgeVertex+1);
+        v2q[4+nEdgeVertex+i]   = (1-fact) * q10 + fact * q11;
+        v2q[4+3*nEdgeVertex+i] = (1-fact) * q01 + fact * q00;
+      }
+
+      int tag = el->getTypeForMSH();
+      InteriorPlacementData *pData;
+      std::map<int, InteriorPlacementData*>::iterator it;
+      it = interiorPlacementData.find(tag);
+      if (it != interiorPlacementData.end()) pData = it->second;
+      else {
+        pData = constructInteriorPlacementData(tag);
+        interiorPlacementData[tag] = pData;
+      }
+      for (int i = 0; i < pData->iToMove.size(); ++i) {
+        int idx = pData->iToMove[i];
+        double q0 = v2q[pData->i0[i]];
+        double q1 = v2q[pData->i1[i]];
+        v2q[idx] = pData->factor[i] * q0 + (1-pData->factor[i]) * q1;
+      }
+
+      std::vector<double> &vData = data[el->getNum()];
+      std::map<int, double>::iterator it2;
+      for (it2 = v2q.begin(); it2 != v2q.end(); ++it2) {
+        vData.push_back(it2->second);
+      }
+    }
   }
 
 }
@@ -1867,8 +1973,18 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
 #ifdef _OPENMP
 #pragma omp for
 #endif
+  std::map<int, std::vector<double> > data;
+
+
   for (int i = 0; i < bndEl2column.size(); ++i) {
     MElement *bottomEdge = bndEl2column[i].first;
+//    if (bottomEdge->getNum() != 1079) continue; // Good
+//    if (bottomEdge->getNum() != 1078) continue; // Next to good
+//    if (bottomEdge->getNum() != 1102) continue; // Bad HO
+//    if (bottomEdge->getNum() != 1136) continue; // Bad
+//    if (bottomEdge->getNum() != 1150) continue; // concave
+//    if (bottomEdge->getNum() != 1151) continue; // symetric of concave
+//    if (bottomEdge->getNum() != 1156) continue; // Strange
     std::vector<MElement*> &column = bndEl2column[i].second;
 //    std::cout << bottomEdge->getNum();
     double dampingFactor = 0;
@@ -1880,7 +1996,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
                                                         column, n,
                                                         dampingFactor, bndEnt);
       else
-        success = BoundaryLayerCurver::curve2DQuadColumn(bottomEdge, column,
+        success = BoundaryLayerCurver::curve2DQuadColumnTFI(bottomEdge, column,
                                                          n, dampingFactor,
                                                          bndEnt);
       if (dampingFactor == 0) dampingFactor = .01;
@@ -1891,11 +2007,27 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
 //        column[j]->setVisibility(false);
 //      }
     }
-//    if (success)
-//      std::cout << " ok for " << dampingFactor << std::endl;
-//    else
-//      std::cout << " NOT OK :'( " << dampingFactor << std::endl;
+    for (int j = 0; j < column.size(); ++j) {
+      BoundaryLayerCurver::computeThicknessPView(column[j], n, data);
+    }
   }
+
+#if defined(HAVE_POST)
+//  new PView("Thickness quality", "ElementNodeData", GModel::current(), data, 0, 1);
+  std::map<int, std::vector<double> > data2;
+  std::map<int, std::vector<double> >::iterator it;
+  for (it = data.begin(); it != data.end(); ++it) {
+    double min = 1;
+    for (int i = 0; i < (int)it->second.size(); ++i) {
+      min = std::min(min, it->second[i]);
+    }
+    data2[it->first].push_back(min);
+  }
+  new PView("Thickness quality", "ElementData", GModel::current(), data2, 0, 1);
+#if defined(HAVE_FLTK)
+  FlGui::instance()->updateViews(true, true);
+#endif
+#endif
 }
 
 void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column)
