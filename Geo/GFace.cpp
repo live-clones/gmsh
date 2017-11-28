@@ -1884,3 +1884,29 @@ void GFace::addElement(int type, MElement *e)
       Msg::Error("Trying to add unsupported element in face");
   }
 }
+
+void GFace::removeElement(int type, MElement *e)
+{
+  switch (type){
+    case TYPE_TRI:
+    {
+      std::vector<MTriangle*>::iterator it = std::find(triangles.begin(), triangles.end(), reinterpret_cast<MTriangle*>(e));
+      if(it != triangles.end()) triangles.erase(it);
+    }
+      break;
+    case TYPE_QUA:
+    {
+      std::vector<MQuadrangle*>::iterator it = std::find(quadrangles.begin(), quadrangles.end(), reinterpret_cast<MQuadrangle*>(e));
+      if(it != quadrangles.end()) quadrangles.erase(it);
+    }
+      break;
+    case TYPE_POLYG:
+    {
+      std::vector<MPolygon*>::iterator it = std::find(polygons.begin(), polygons.end(), reinterpret_cast<MPolygon*>(e));
+      if(it != polygons.end()) polygons.erase(it);
+    }
+      break;
+    default:
+      Msg::Error("Trying to remove unsupported element in face");
+  }
+}

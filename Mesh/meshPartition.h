@@ -42,39 +42,38 @@ int MakeGraph(GModel *const model, Graph &graph);
 template <class ITERATOR>
 void fillElementsToNodesMap(Graph &graph, const GEntity *const entity, int &eptrIndex, int &eindIndex, int &numVertex, ITERATOR it_beg, ITERATOR it_end);
 int getSizeOfEind(const GModel *const model);
-int getNumVertices(const MElement *const element);
 bool isPeriodic(const GModel *const model);
 
 int PartitionGraph(Graph &graph);
 void createDualGraph(Graph &graph);
 
-void CreateNewEntities(GModel *const model, std::unordered_map<MElement*, unsigned short> &elmToPartition, std::multimap<unsigned short, GEntity*> &newPartitionEntities);
+void CreateNewEntities(GModel *const model, std::unordered_map<MElement*, unsigned int> &elmToPartition);
 template <class ITERATOR>
-void assignElementsToEntities(GModel *const model, std::unordered_map<MElement*, unsigned short> &elmToPartition, std::vector<GRegion *> &newRegions, ITERATOR it_beg, ITERATOR it_end);
+void assignElementsToEntities(GModel *const model, std::unordered_map<MElement*, unsigned int> &elmToPartition, std::vector<GRegion *> &newRegions, ITERATOR it_beg, ITERATOR it_end);
 template <class ITERATOR>
-void assignElementsToEntities(GModel *const model, std::unordered_map<MElement*, unsigned short> &elmToPartition, std::vector<GFace *> &newFaces, ITERATOR it_beg, ITERATOR it_end);
+void assignElementsToEntities(GModel *const model, std::unordered_map<MElement*, unsigned int> &elmToPartition, std::vector<GFace *> &newFaces, ITERATOR it_beg, ITERATOR it_end);
 template <class ITERATOR>
-void assignElementsToEntities(GModel *const model, std::unordered_map<MElement*, unsigned short> &elmToPartition, std::vector<GEdge *> &newEdges, ITERATOR it_beg, ITERATOR it_end);
+void assignElementsToEntities(GModel *const model, std::unordered_map<MElement*, unsigned int> &elmToPartition, std::vector<GEdge *> &newEdges, ITERATOR it_beg, ITERATOR it_end);
 template <class ITERATOR>
-void assignElementsToEntities(GModel *const model, std::unordered_map<MElement*, unsigned short> &elmToPartition, std::vector<GVertex *> &newVertices, ITERATOR it_beg, ITERATOR it_end);
-void addPhysical(GModel *const model, GEntity *const entity, const unsigned short partition);
+void assignElementsToEntities(GModel *const model, std::unordered_map<MElement*, unsigned int> &elmToPartition, std::vector<GVertex *> &newVertices, ITERATOR it_beg, ITERATOR it_end);
+void addPhysical(GModel *const model, GEntity *const entity, const unsigned int partition);
 
-void CreatePartitionBoundaries(GModel *const model, std::multimap<unsigned short, GEntity*> &newPartitionBoundaries, std::multimap<unsigned short, GEntity*> &newBoundariesOfPartitionBoundaries);
-MElement* getReferenceElement(const std::vector< std::pair<MElement*, std::vector<unsigned short> > > &elementPairs, std::vector<unsigned short> &referencePartitions);
-void getPartitionInVector(std::vector<unsigned short> &partitions, const std::vector< std::pair<MElement*, std::vector<unsigned short> > > &boundaryPair);
+void CreatePartitionBoundaries(GModel *const model);
+MElement* getReferenceElement(const std::vector< std::pair<MElement*, std::vector<unsigned int> > > &elementPairs, std::vector<unsigned int> &referencePartitions);
+void getPartitionInVector(std::vector<unsigned int> &partitions, const std::vector< std::pair<MElement*, std::vector<unsigned int> > > &boundaryPair);
 template <class ITERATOR>
-void fillit_(std::unordered_map<MFace, std::vector< std::pair<MElement*, std::vector<unsigned short> > >, Hash_Face, Equal_Face> &faceToElement, std::vector<unsigned short> &partitions, ITERATOR it_beg, ITERATOR it_end);
+void fillit_(std::unordered_map<MFace, std::vector< std::pair<MElement*, std::vector<unsigned int> > >, Hash_Face, Equal_Face> &faceToElement, std::vector<unsigned int> &partitions, ITERATOR it_beg, ITERATOR it_end);
 template <class ITERATOR>
-void fillit_(std::unordered_map<MEdge, std::vector< std::pair<MElement*, std::vector<unsigned short> > > , Hash_Edge, Equal_Edge> &edgeToElement, std::vector<unsigned short> &partitions, ITERATOR it_beg, ITERATOR it_end);
+void fillit_(std::unordered_map<MEdge, std::vector< std::pair<MElement*, std::vector<unsigned int> > > , Hash_Edge, Equal_Edge> &edgeToElement, std::vector<unsigned int> &partitions, ITERATOR it_beg, ITERATOR it_end);
 template <class ITERATOR>
-void fillit_(std::unordered_map<MVertex*, std::vector< std::pair<MElement*, std::vector<unsigned short> > > > &vertexToElement, std::vector<unsigned short> &partitions, ITERATOR it_beg, ITERATOR it_end);
-void assignPartitionBoundary(GModel *const model, MFace &me, MElement* reference, std::vector<unsigned short> partitions, std::set<partitionFace*, Less_partitionFace> &pfaces);
-void assignPartitionBoundary(GModel *const model, MEdge &me, MElement* reference, std::vector<unsigned short> partitions, std::set<partitionEdge*, Less_partitionEdge> &pedges, std::set<partitionFace*, Less_partitionFace> &pfaces, std::set<partitionEdge*, Less_partitionEdge> &bndedges);
-void assignPartitionBoundary(GModel *const model, MVertex *ve, MElement* reference, std::vector<unsigned short> partitions, std::set<partitionVertex*, Less_partitionVertex> &pvertices, std::set<partitionEdge*, Less_partitionEdge> &pedges, std::set<partitionFace*, Less_partitionFace> &pfaces, std::set<partitionEdge*, Less_partitionEdge> &bndedges, std::set<partitionVertex*, Less_partitionVertex> &bndvertices);
+void fillit_(std::unordered_map<MVertex*, std::vector< std::pair<MElement*, std::vector<unsigned int> > > > &vertexToElement, std::vector<unsigned int> &partitions, ITERATOR it_beg, ITERATOR it_end);
+void assignPartitionBoundary(GModel *const model, MFace &me, MElement* reference, std::vector<unsigned int> partitions, std::set<partitionFace*, Less_partitionFace> &pfaces);
+void assignPartitionBoundary(GModel *const model, MEdge &me, MElement* reference, std::vector<unsigned int> partitions, std::set<partitionEdge*, Less_partitionEdge> &pedges);
+void assignPartitionBoundary(GModel *const model, MVertex *ve, MElement* reference, std::vector<unsigned int> partitions, std::set<partitionVertex*, Less_partitionVertex> &pvertices);
 
-void AssignMeshVertices(GModel *model, int dim = -1);
+void AssignMeshVertices(GModel *model, int dim = 4, bool inAllDim = false);
 template <class ITERATOR>
-void setVerticesToEntity(std::set<MVertex *> &verts, GEntity *const entity, ITERATOR it_beg, ITERATOR it_end);
+void setVerticesToEntity(GEntity *const entity, ITERATOR it_beg, ITERATOR it_end, bool inAllDim);
 
 void DivideNonConnectedEntities(GModel *model);
 template <class ITERATOR>
@@ -86,11 +85,16 @@ void fillConnectedElements(std::set<MElement*> &connectedElements, std::unordere
 template <class ITERATOR>
 void fillFaceToElement(std::unordered_map<MFace, std::vector<MElement*>, Hash_Face, Equal_Face> &faceToElement, ITERATOR it_beg, ITERATOR it_end);
 void fillConnectedElements(std::set<MElement*> &connectedElements, std::unordered_map<MFace, std::vector<MElement*>, Hash_Face, Equal_Face> &faceToElement, MElement *element);
+void fillBoundaryFace(GModel *const model, std::vector<GFace*> &boundaryFace, partitionRegion* entity);
+void fillBoundaryEdge(GModel *const model, std::vector<GEdge*> &boundaryEdge, partitionFace* entity);
+void fillBoundaryVertex(GModel *const model, std::vector<GVertex*> &boundaryVertex, partitionEdge* entity);
+template <class ITERATOR>
+void fillElements(std::vector<MElement*> &elements, GEntity* entity, ITERATOR it_beg, ITERATOR it_end);
 
 int CreateTopologyFile(GModel* model, std::string name);
 int getTag(GModel* model, GEntity* entity);
 std::string getSubstr(GModel* model, GEntity* entity);
-std::vector<unsigned short> getPartition(GModel* model, GEntity* entity);
+std::vector<unsigned int> getPartition(GModel* model, GEntity* entity);
 
 
 int PartitionMeshFace(std::list<GFace*> &cFaces);

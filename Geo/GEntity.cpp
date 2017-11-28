@@ -4,6 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <sstream>
+#include <algorithm>
 #include "GModel.h"
 #include "GEntity.h"
 #include "MElement.h"
@@ -62,6 +63,13 @@ std::string GEntity::getInfoString()
   }
 
   return sstream.str();
+}
+
+// delete a MeshVertex
+void GEntity::deleteMeshVertex(MVertex *v)
+{
+  std::vector<MVertex*>::iterator it = std::find(mesh_vertices.begin(), mesh_vertices.end(), v);
+  if(it != mesh_vertices.end()) mesh_vertices.erase(it);
 }
 
 GVertex *GEntity::cast2Vertex() { return dynamic_cast<GVertex*>(this); }

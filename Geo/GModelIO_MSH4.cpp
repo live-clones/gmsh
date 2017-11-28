@@ -388,7 +388,7 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
     readMSH4Physicals(model, fp, gv, binary, str, swap);
     
     if(partition){
-      std::vector<unsigned short> partitions = getPartition(model, gv);
+      std::vector<unsigned int> partitions = getPartition(model, gv);
       static_cast<partitionVertex*>(gv)->setPartition(partitions);
     }
   }
@@ -472,7 +472,7 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
     readMSH4Physicals(model, fp, ge, binary, str, swap);
     
     if(partition){
-      std::vector<unsigned short> partitions = getPartition(model, ge);
+      std::vector<unsigned int> partitions = getPartition(model, ge);
       static_cast<partitionEdge*>(ge)->setPartition(partitions);
     }
     
@@ -557,7 +557,7 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
     readMSH4Physicals(model, fp, gf, binary, str, swap);
     
     if(partition){
-      std::vector<unsigned short> partitions = getPartition(model, gf);
+      std::vector<unsigned int> partitions = getPartition(model, gf);
       static_cast<partitionFace*>(gf)->setPartition(partitions);
     }
     
@@ -643,7 +643,7 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
     readMSH4Physicals(model, fp, gr, binary, str, swap);
     
     if(partition){
-      std::vector<unsigned short> partitions = getPartition(model, gr);
+      std::vector<unsigned int> partitions = getPartition(model, gr);
       static_cast<partitionRegion*>(gr)->setPartition(partitions);
     }
     
@@ -2203,25 +2203,25 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version, b
     for(unsigned int j = 0; j < entities.size(); j++){
       switch(entities[j]->geomType()){
         case GEntity::PartitionVolume:
-          if(std::find(static_cast<partitionRegion*>(entities[j])->_partitions.begin(), static_cast<partitionRegion*>(entities[j])->_partitions.end(), i) != static_cast<partitionRegion*>(entities[j])->_partitions.end()){
+          if(std::find(static_cast<partitionRegion*>(entities[j])->getPartitions().begin(), static_cast<partitionRegion*>(entities[j])->getPartitions().end(), i) != static_cast<partitionRegion*>(entities[j])->getPartitions().end()){
             tmp->add(static_cast<partitionRegion*>(entities[j]));
             tmp->add(static_cast<partitionRegion*>(entities[j])->getParentEntity());
           }
           break;
         case GEntity::PartitionSurface:
-          if(std::find(static_cast<partitionFace*>(entities[j])->_partitions.begin(), static_cast<partitionFace*>(entities[j])->_partitions.end(), i) != static_cast<partitionFace*>(entities[j])->_partitions.end()){
+          if(std::find(static_cast<partitionFace*>(entities[j])->getPartitions().begin(), static_cast<partitionFace*>(entities[j])->getPartitions().end(), i) != static_cast<partitionFace*>(entities[j])->getPartitions().end()){
             tmp->add(static_cast<partitionFace*>(entities[j]));
             tmp->add(static_cast<partitionFace*>(entities[j])->getParentEntity());
           }
           break;
         case GEntity::PartitionCurve:
-          if(std::find(static_cast<partitionEdge*>(entities[j])->_partitions.begin(), static_cast<partitionEdge*>(entities[j])->_partitions.end(), i) != static_cast<partitionEdge*>(entities[j])->_partitions.end()){
+          if(std::find(static_cast<partitionEdge*>(entities[j])->getPartitions().begin(), static_cast<partitionEdge*>(entities[j])->getPartitions().end(), i) != static_cast<partitionEdge*>(entities[j])->getPartitions().end()){
             tmp->add(static_cast<partitionEdge*>(entities[j]));
             tmp->add(static_cast<partitionEdge*>(entities[j])->getParentEntity());
           }
           break;
         case GEntity::PartitionVertex:
-          if(std::find(static_cast<partitionVertex*>(entities[j])->_partitions.begin(), static_cast<partitionVertex*>(entities[j])->_partitions.end(), i) != static_cast<partitionVertex*>(entities[j])->_partitions.end()){
+          if(std::find(static_cast<partitionVertex*>(entities[j])->getPartitions().begin(), static_cast<partitionVertex*>(entities[j])->getPartitions().end(), i) != static_cast<partitionVertex*>(entities[j])->getPartitions().end()){
             tmp->add(static_cast<partitionVertex*>(entities[j]));
             tmp->add(static_cast<partitionVertex*>(entities[j])->getParentEntity());
           }

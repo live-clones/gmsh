@@ -152,7 +152,8 @@ class GRegion : public GEntity {
   void addPyramid(MPyramid *p){ pyramids.push_back(p); }
   void addPolyhedron(MPolyhedron *p){ polyhedra.push_back(p); }
   void addTrihedron(MTrihedron *t){ trihedra.push_back(t); }
-  void addElement(int type, MElement *e);
+  virtual void addElement(int type, MElement *e);
+  virtual void removeElement(int type, MElement *e);
 
   // get the boundary layer columns
   BoundaryLayerColumns *getColumns () { return &_columns; }

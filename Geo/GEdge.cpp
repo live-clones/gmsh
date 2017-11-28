@@ -642,6 +642,20 @@ void GEdge::addElement(int type, MElement *e)
   }
 }
 
+void GEdge::removeElement(int type, MElement *e)
+{
+  switch (type){
+    case TYPE_LIN:
+    {
+      std::vector<MLine*>::iterator it = std::find(lines.begin(), lines.end(), reinterpret_cast<MLine*>(e));
+      if(it != lines.end()) lines.erase(it);
+    }
+      break;
+    default:
+      Msg::Error("Trying to remove unsupported element in edge");
+  }
+}
+
 void GEdge::discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts)
 {
   std::vector<sortedPoint> upts;
