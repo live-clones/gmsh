@@ -89,7 +89,7 @@ def _ovectorvectorpair(ptr,size,n):
 
 def _ivectorint(o):
     if use_numpy :
-        return  numpy.ascontiguousarray(o,numpy.int32).ctypes, c_size_t(len(o))
+        return numpy.ascontiguousarray(o,numpy.int32).ctypes, c_size_t(len(o))
     else :
         return (c_int*len(o))(*o), c_size_t(len(o))
 

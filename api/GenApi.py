@@ -442,16 +442,11 @@ else:
 use_numpy = False
 try :
     import numpy
-    major = int(numpy.version.version.split('.')[0])
-    minor = int(numpy.version.version.split('.')[1])
-    if major == 1 and minor < 9:
-        use_numpy = False
-    else:
-        use_numpy = True
     try : 
         from weakref import finalize as weakreffinalize
     except :
         from backports.weakref import finalize as weakreffinalize
+    use_numpy = True
 except :
     pass
 
@@ -502,10 +497,7 @@ def _ovectorvectorpair(ptr,size,n):
 
 def _ivectorint(o):
     if use_numpy :
-        array = numpy.ascontiguousarray(o,numpy.int32)
-        ct = array.ctypes
-        ct.array = array
-        return  ct, c_size_t(len(o))
+        return numpy.ascontiguousarray(o,numpy.int32).ctypes, c_size_t(len(o))
     else :
         return (c_int*len(o))(*o), c_size_t(len(o))
 
@@ -514,6 +506,7 @@ def _ivectorvectorint(os):
     parrays = [_ivectorint(o) for o in os]
     sizes = (c_size_t*n)(*(a[1] for a in parrays))
     arrays = (POINTER(c_int)*n)(*(cast(a[0],POINTER(c_int)) for a in parrays))
+    arrays.ref = [a[0] for a in parrays]
     size = c_size_t(n)
     return arrays, sizes, size
 
@@ -522,6 +515,7 @@ def _ivectorvectordouble(os):
     parrays = [_ivectordouble(o) for o in os]
     sizes = (c_size_t*n)(*(a[1] for a in parrays))
     arrays = (POINTER(c_double)*n)(*(cast(a[0],POINTER(c_double)) for a in parrays))
+    arrays.ref = [a[0] for a in parrays]
     size = c_size_t(n)
     return arrays, sizes, size
 
