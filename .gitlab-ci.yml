@@ -69,7 +69,7 @@ windows64_msvc_ci:
 
 .linux_official: &linux_official
   only:
-    - master
+    - master@gmsh/gmsh
   script:
     - mkdir build
     - cd build
@@ -120,7 +120,7 @@ linux32_official_release:
 
 .windows_official: &windows_official
   only:
-    - master
+    - master@gmsh/gmsh
   script:
     - md build
     - cd build
@@ -172,7 +172,7 @@ windows32_official_release:
 
 .macos_official: &macos_official
   only:
-    - master
+    - master@gmsh/gmsh
   script:
     - mkdir build
     - cd build
@@ -209,7 +209,7 @@ macos64_official_release:
 
 .source_official: &source_official
   only:
-    - master
+    - master@gmsh/gmsh
   script:
     - mkdir build_src
     - cd build_src
