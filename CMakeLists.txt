@@ -1465,7 +1465,7 @@ if(ENABLE_BUILD_LIB)
       set_target_properties(lib PROPERTIES LINK_FLAGS_RELEASE "/nodefaultlib:LIBCMT")
     endif(ENABLE_MSVC_STATIC_RUNTIME)
   endif(MSVC)
-  add_library(libc STATIC api/gmsh.cpp)
+  add_library(libc STATIC api/gmshc.cpp)
   set_target_properties(libc PROPERTIES OUTPUT_NAME gmshc)
 endif(ENABLE_BUILD_LIB)
 
