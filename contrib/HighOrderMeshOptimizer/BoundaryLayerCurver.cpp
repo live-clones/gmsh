@@ -909,7 +909,7 @@ namespace BoundaryLayerCurver
                                         directions(i, 2) * directions(i, 2));
         maxDisplacementNoSub = std::max(maxDisplacementNoSub, displacement);
       }
-      std::cout << "max disp: " << maxDisplacementNoSub << " " << maxDisplacement << std::endl;
+//      std::cout << "max disp: " << maxDisplacementNoSub << " " << maxDisplacement << std::endl;
     }
     else {
       for (int i = 2; i < nVert; ++i) {
@@ -1102,9 +1102,8 @@ namespace BoundaryLayerCurver
     drawBezierControlPolygon(vertices, ent);
   }
 
-  void damping2(std::vector<MVertex *> &vertices, double fact, GEntity *ent)
+  void damping2(std::vector<MVertex *> &vertices, double fact, GEntity *ent, bool draw = true)
   {
-    drawBezierControlPolygon(vertices, ent);
     const int nVert = (int)vertices.size();
     const bezierBasis *fs = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 1);
 
@@ -1129,7 +1128,45 @@ namespace BoundaryLayerCurver
       vertices[i]->y() = xyz(i, 1);
       vertices[i]->z() = xyz(i, 2);
     }
-    drawBezierControlPolygon(vertices, ent);
+    if (draw) drawBezierControlPolygon(vertices, ent);
+  }
+
+  double damping3(std::vector<MVertex *> &vertices, double maxFact,
+                  double limit, GEntity *ent, bool draw = true)
+  {
+    const int nVert = (int)vertices.size();
+    const bezierBasis *fs = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 1);
+
+    fullMatrix<double> xyz(nVert, 3);
+    for (int i = 0; i < nVert; ++i) {
+      xyz(i, 0) = vertices[i]->x();
+      xyz(i, 1) = vertices[i]->y();
+      xyz(i, 2) = vertices[i]->z();
+    }
+    fullMatrix<double> controlPoints(nVert, 3);
+    fs->lag2Bez(xyz, controlPoints);
+
+    fullMatrix<double> dCtrlPnts(nVert, 3);
+    double maxDisplacement = computeDampingDirections(controlPoints, dCtrlPnts);
+
+    dCtrlPnts.scale(maxFact);
+    maxDisplacement *= maxFact;
+
+    if (maxDisplacement > limit) {
+      dCtrlPnts.scale(limit / maxDisplacement);
+      maxDisplacement = limit;
+    }
+    controlPoints.add(dCtrlPnts);
+
+    fs->matrixBez2Lag.mult(controlPoints, xyz);
+    for (int i = 0; i < nVert; ++i) {
+      vertices[i]->x() = xyz(i, 0);
+      vertices[i]->y() = xyz(i, 1);
+      vertices[i]->z() = xyz(i, 2);
+    }
+
+    if (draw) drawBezierControlPolygon(vertices, ent);
+    return maxDisplacement;
   }
 
   void regularizeExtremities(double targetAngle0, double targetAngle1,
@@ -1377,7 +1414,7 @@ namespace BoundaryLayerCurver
 //    if (nLayer == 0)
 //      drawBezierControlPolygon(topVert, bndEnt);
 //    drawAmplifiedDiffWithLin(topVert, bndEnt, 2);
-    drawBezierControlPolygon(topVert, bndEnt);
+//    drawBezierControlPolygon(topVert, bndEnt);
     if (last) {
 //      drawAmplifiedDiffWithLin(topVert, bndEnt, 2);
       drawBezierControlPolygon(topVert, bndEnt);
@@ -1781,6 +1818,15 @@ namespace BoundaryLayerCurver
     std::vector<MVertex *> globalBottomVertices, globalTopVertices;
     std::vector<std::vector<MVertex *> > allLayerVertices; // for general TFI
 
+    double distDamping = 0; // dist = factor of length first element...
+    switch (bottomEdge->getNum()) {
+      case 1157: distDamping =  .05; break;
+      case 1156: distDamping =  .10; break;
+      case 1150: distDamping =  .12; break;
+      case 1102: distDamping =  .45; break;
+    }
+    distDamping *= bottom.length();
+
     for (int i = 0; i < column.size(); ++i) {
       MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
       int iBottom, sign;
@@ -1809,20 +1855,15 @@ namespace BoundaryLayerCurver
     computePositionEdgeVert(globalBottomVertices, globalBottomVertices,
                             globalTopVertices, parameters, w,
                             dampingFactor, bndEnt, -1, true);
-    int N = 0;
-    switch (bottomEdge->getNum()) {
-      case 1157: N =   5; break;
-      case 1156: N =  10; break;
-      case 1150: N =  80; break;
-      case 1102: N = 150; break;
-      case 1079: N = 100; break;
-    }
-    for (int i = 0; i < N; ++i) {
-      damping2(globalTopVertices, .1, bndEnt);
+
+    double remainingDamping = distDamping;
+    std::cout << "remain:" << remainingDamping << std::endl;
+    while (remainingDamping > 1e-12) {
+      remainingDamping -= damping3(topVertices, .1, remainingDamping, bndEnt, true);
     }
 
     // Choose between linear and hermite
-    static bool linear = false;
+    static bool linear = true;
     if (linear) {
       linearTFI(column, globalBottomVertices, globalTopVertices);
     }
@@ -1845,6 +1886,90 @@ namespace BoundaryLayerCurver
         repositionInteriorNodes(column[i]);
     }
 
+    return true;
+  }
+
+  bool curve2DQuadColumnFirst(MElement *bottomEdge, std::vector<MElement *> &column,
+                              SVector3 &w, double dampingFactor, GEntity *bndEnt)
+  {
+
+    // First, go through the whole column, reorient and save last curve
+    MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
+    std::vector<MVertex *> bottomVertices, topVertices;
+    std::vector<MVertex *> globalBottomVertices, globalTopVertices;
+
+    double distDamping = 0; // dist = factor of length first element...
+    switch (bottomEdge->getNum()) {
+      case 1157: distDamping =  .05; break;
+      case 1156: distDamping =  .10; break;
+      case 1150: distDamping =  .12; break;
+      case 1102: distDamping =  .45; break;
+    }
+    distDamping *= bottom.length();
+
+    for (int i = 0; i < column.size(); ++i) {
+      MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
+      int iBottom, sign;
+      quad->getEdgeInfo(bottom, iBottom, sign);
+      // Reorientation makes function repositionInteriorNodes() simpler
+      if (iBottom != 0) quad->reorient(4 - iBottom, false);
+      quad->getEdgeVertices(0, bottomVertices);
+      quad->getEdgeVertices(2, topVertices);
+      std::reverse(topVertices.begin(), topVertices.begin() + 2);
+      std::reverse(topVertices.begin() + 2, topVertices.end());
+
+      if (i == 0) globalBottomVertices = bottomVertices;
+      if (i == column.size() - 1) globalTopVertices = topVertices;
+
+      bottom = MEdge(topVertices[0], topVertices[1]);
+    }
+
+    //
+    MVertex *vbot = globalBottomVertices[0];
+    MVertex *vtop = globalTopVertices[0];
+    double dX = vtop->x() - vbot->x();
+    double dY = vtop->y() - vbot->y();
+    bool lookAtX = std::abs(dX) > std::abs(dY);
+
+    bottom = MEdge(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
+
+    for (int i = 0; i < column.size(); ++i) {
+      MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
+      int iBottom, sign;
+      quad->getEdgeInfo(bottom, iBottom, sign);
+      // Reorientation makes function repositionInteriorNodes() simpler
+      if (iBottom != 0) quad->reorient(4 - iBottom, false);
+      quad->getEdgeVertices(0, bottomVertices);
+      quad->getEdgeVertices(2, topVertices);
+      std::reverse(topVertices.begin(), topVertices.begin() + 2);
+      std::reverse(topVertices.begin() + 2, topVertices.end());
+      if (i == 0) globalBottomVertices = bottomVertices;
+
+      Parameters2DCurve parameters;
+      computeExtremityCoefficients(globalBottomVertices, globalBottomVertices, topVertices, parameters, w);
+      computePositionEdgeVert(globalBottomVertices, globalBottomVertices, topVertices, parameters, w,
+                              dampingFactor, bndEnt, i, -i == column.size()-1);
+
+      double factor;
+      {
+        MVertex *v = topVertices[0];
+        if (lookAtX) factor = (v->x() - vbot->x()) / dX;
+        else factor = (v->y() - vbot->y()) / dY;
+      }
+
+      double remainingDamping = distDamping * factor * (i+1) / column.size();
+//      std::cout << "remain:" << remainingDamping << std::endl;
+      while (remainingDamping > 1e-12) {
+        remainingDamping -= damping3(topVertices, .1, remainingDamping, bndEnt, false);
+      }
+      drawBezierControlPolygon(topVertices, bndEnt);
+
+      repositionInteriorNodes(quad);
+      bottom = MEdge(topVertices[0], topVertices[1]);
+
+      // Check validity of first and last layer:
+      if ((i == 0 || i == column.size()-1) && quad->getValidity() != 1) return false;
+    }
     return true;
   }
 
@@ -1985,6 +2110,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
 //    if (bottomEdge->getNum() != 1150) continue; // concave
 //    if (bottomEdge->getNum() != 1151) continue; // symetric of concave
 //    if (bottomEdge->getNum() != 1156) continue; // Strange
+//    if (bottomEdge->getNum() != 1157) continue; // next to Strange
     std::vector<MElement*> &column = bndEl2column[i].second;
 //    std::cout << bottomEdge->getNum();
     double dampingFactor = 0;
