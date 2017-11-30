@@ -980,7 +980,7 @@ Tet* walk (Tet *t, Vert *v, int maxx, double &totSearch, int thread)
 						(double*)f.V[1],
 						(double*)f.V[2],
 						(double*)v);
-      if (val >=-1.e-09) count++;
+      if (val >=0.0) count++;
       if (val < _min){
 	NEIGH = iNeigh;
 	_min = val;
