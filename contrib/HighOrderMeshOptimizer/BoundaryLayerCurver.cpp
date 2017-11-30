@@ -45,6 +45,8 @@
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
 #endif
+#include "Options.h"
+#include "AnalyseCurvedMesh.h"
 
 //#include "MElement.h"
 //#include "MLine.h"
@@ -272,7 +274,8 @@ namespace
 
   void drawIdealCurve(const std::vector<MVertex *> &baseVert,
                       BoundaryLayerCurver::Parameters2DCurve &parameters, 
-                      SVector3 w, GEntity *entity, bool drawh = true,
+                      SVector3 w, GEntity *entity, bool drawVertLines = false,
+                      bool drawh = true,
                       bool drawn = false, bool drawt = false, int cnt = 100)
   {
     int tagLine = ElementType::getTag(TYPE_LIN, baseVert.size() - 1);
@@ -315,11 +318,16 @@ namespace
         y = yc + h.y();
         z = zc + h.z();
         v = new MVertex(x, y, z, entity);
+        ((GEdge *) entity)->addMeshVertex(v);
         if (vh0) {
           line = new MLine(v, vh0);
           ((GEdge *) entity)->addLine(line);
         }
-        ((GEdge *) entity)->addMeshVertex(v);
+        if (drawVertLines) {
+          MVertex *vbase = new MVertex(xc, yc, zc, entity);
+          line = new MLine(vbase, v);
+          ((GEdge *) entity)->addLine(line);
+        }
         vh0 = v;
       }
 
@@ -1353,7 +1361,7 @@ namespace BoundaryLayerCurver
 
     if (nLayer == 0) {
 //      drawAmplifiedDiffWithLin(baseVert, bndEnt, 20);
-      drawBezierControlPolygon(baseVert, bndEnt);
+//      drawBezierControlPolygon(baseVert, bndEnt);
     }
 
     const int orderCurve = (int)baseVert.size() - 1;
@@ -1417,7 +1425,7 @@ namespace BoundaryLayerCurver
 //    drawBezierControlPolygon(topVert, bndEnt);
     if (last) {
 //      drawAmplifiedDiffWithLin(topVert, bndEnt, 2);
-      drawBezierControlPolygon(topVert, bndEnt);
+//      drawBezierControlPolygon(topVert, bndEnt);
     }
   }
 
@@ -1604,6 +1612,7 @@ namespace BoundaryLayerCurver
   bool curve2DQuadColumn(MElement *bottomEdge, std::vector<MElement *> &column,
                          SVector3 &w, double dampingFactor, GEntity *bndEnt)
   {
+    opt_general_default_filename(0, GMSH_SET, "layer");
     MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
     std::vector<MVertex *> bottomVertices, topVertices;
 
@@ -1806,23 +1815,35 @@ namespace BoundaryLayerCurver
 
   }
 
-  bool curve2DQuadColumnTFI(MElement *bottomEdge, std::vector<MElement *> &column,
-                            SVector3 &w, double dampingFactor, GEntity *bndEnt)
+  double getDistDamping(int num)
   {
+    switch (num) {
+      case 1157: return .05;
+      case 1156: return .10;
+      case 1150: return .12;
+      case 1102: return .45;
+      case 1079: return .15;
+      default: return .10;
+    }
+  }
+
+  bool curve2DQuadColumnTFI(MElement *bottomEdge, std::vector<MElement *> &column,
+                            SVector3 &w, double dampingFactor, GEntity *bndEnt,
+                            bool linear)
+  {
+    if (linear)
+      opt_general_default_filename(0, GMSH_SET, "tfiLinear");
+    else
+      opt_general_default_filename(0, GMSH_SET, "tfiHermite");
+
     // First, go through the whole column, reorient and save last curve
     MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
     std::vector<MVertex *> bottomVertices, topVertices;
     std::vector<MVertex *> globalBottomVertices, globalTopVertices;
     std::vector<std::vector<MVertex *> > allLayerVertices; // for general TFI
 
-    double distDamping = 0; // dist = factor of length first element...
-    switch (bottomEdge->getNum()) {
-      case 1157: distDamping =  .05; break;
-      case 1156: distDamping =  .10; break;
-      case 1150: distDamping =  .12; break;
-      case 1102: distDamping =  .45; break;
-    }
-    distDamping *= bottom.length();
+    double lengthFirst = bottom.length();
+    double distDamping = getDistDamping(bottomEdge->getNum()) * lengthFirst;
 
     for (int i = 0; i < column.size(); ++i) {
       MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
@@ -1853,14 +1874,17 @@ namespace BoundaryLayerCurver
                             globalTopVertices, parameters, w,
                             dampingFactor, bndEnt, -1, true);
 
+//    drawIdealCurve(globalBottomVertices, parameters, w, bndEnt, true);
+
     double remainingDamping = distDamping;
-    std::cout << "remain:" << remainingDamping << std::endl;
-    while (remainingDamping > 1e-12) {
-      remainingDamping -= damping3(topVertices, .1, remainingDamping, bndEnt, true);
+    double delta = 1;
+//      std::cout << "remain:" << remainingDamping << std::endl;
+    while (remainingDamping > 1e-12 && delta > 1e-4 * lengthFirst) {
+      delta = damping3(topVertices, .1, remainingDamping, bndEnt, false);
+      remainingDamping -= delta;
     }
 
     // Choose between linear and hermite
-    static bool linear = true;
     if (linear) {
       linearTFI(column, globalBottomVertices, globalTopVertices);
     }
@@ -1889,20 +1913,14 @@ namespace BoundaryLayerCurver
   bool curve2DQuadColumnFirst(MElement *bottomEdge, std::vector<MElement *> &column,
                               SVector3 &w, double dampingFactor, GEntity *bndEnt)
   {
-
+    opt_general_default_filename(0, GMSH_SET, "first");
     // First, go through the whole column, reorient and save last curve
     MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
     std::vector<MVertex *> bottomVertices, topVertices;
     std::vector<MVertex *> globalBottomVertices, globalTopVertices;
 
-    double distDamping = 0; // dist = factor of length first element...
-    switch (bottomEdge->getNum()) {
-      case 1157: distDamping =  .05; break;
-      case 1156: distDamping =  .10; break;
-      case 1150: distDamping =  .12; break;
-      case 1102: distDamping =  .45; break;
-    }
-    distDamping *= bottom.length();
+    double lengthFirst = bottom.length();
+    double distDamping = getDistDamping(bottomEdge->getNum()) * lengthFirst;
 
     for (int i = 0; i < column.size(); ++i) {
       MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
@@ -1955,11 +1973,14 @@ namespace BoundaryLayerCurver
       }
 
       double remainingDamping = distDamping * factor * (i+1) / column.size();
+//      double remainingDamping = distDamping * factor;
+      double delta = lengthFirst;
 //      std::cout << "remain:" << remainingDamping << std::endl;
-      while (remainingDamping > 1e-12) {
-        remainingDamping -= damping3(topVertices, .1, remainingDamping, bndEnt, false);
+      while (remainingDamping > 1e-12 && delta > 1e-4 * lengthFirst) {
+        delta = damping3(topVertices, .1, remainingDamping, bndEnt, false);
+        remainingDamping -= delta;
       }
-      drawBezierControlPolygon(topVertices, bndEnt);
+//      drawBezierControlPolygon(topVertices, bndEnt);
 
       repositionInteriorNodes(quad);
       bottom = MEdge(topVertices[0], topVertices[1]);
@@ -2119,9 +2140,15 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
                                                         column, n,
                                                         dampingFactor, bndEnt);
       else
+//        success = BoundaryLayerCurver::curve2DQuadColumn(bottomEdge, column,
+//                                                         n, dampingFactor,
+//                                                         bndEnt);
+//        success = BoundaryLayerCurver::curve2DQuadColumnFirst(bottomEdge, column,
+//                                                              n, dampingFactor,
+//                                                              bndEnt);
         success = BoundaryLayerCurver::curve2DQuadColumnTFI(bottomEdge, column,
-                                                         n, dampingFactor,
-                                                         bndEnt);
+                                                            n, dampingFactor,
+                                                            bndEnt, false);
       if (dampingFactor == 0) dampingFactor = .01;
       else dampingFactor *= 2;
     }
@@ -2147,6 +2174,8 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
     data2[it->first].push_back(min);
   }
   new PView("Thickness quality", "ElementData", GModel::current(), data2, 0, 1);
+  static int aaa = 0;
+  if (++aaa == 7) GMSH_AnalyseCurvedMeshPlugin().execute(NULL);
 #if defined(HAVE_FLTK)
   FlGui::instance()->updateViews(true, true);
 #endif
