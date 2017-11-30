@@ -197,7 +197,7 @@ if [ $# -lt 1 ] || [ $1 == "mac" ]; then
   mv /tmp/getdp-*${GETDP}-MacOSX/share/doc/getdp/templates onelab-MacOSX
   cp -R gmsh_mount/tutorial onelab-MacOSX
   cp -R /tmp/models onelab-MacOSX
-  umount gmsh_mount
+  hdiutil eject gmsh_mount
   rm -rf /tmp/gmsh-*
   rm -rf /tmp/getdp-*
   # cannot use zip file: it destroys the signature for onelab.py
