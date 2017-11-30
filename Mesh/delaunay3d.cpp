@@ -1340,7 +1340,7 @@ void delaunayTrgl (const unsigned int numThreads,
     }
   }
 
-  if (invalidCavities[0])Msg::Warning("%d invalid cavities",invalidCavities[0]);
+  if (invalidCavities[0])Msg::Error("%d invalid cavities",invalidCavities[0]);
 
 #if defined(_VERBOSE)
   printf("average searches per point  %12.5E\n",totSearchGlob/Npts);
