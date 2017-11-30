@@ -843,7 +843,7 @@ StringXNumber GeometryOptions_Number[] = {
     "Type of entity label (1=elementary number, 2=physical number)" },
   { F|O, "Light" , opt_geometry_light , 1. ,
     "Enable lighting for the geometry" },
-  { F|O, "LightTwoSide" , opt_geometry_light_two_side , 0. ,
+  { F|O, "LightTwoSide" , opt_geometry_light_two_side , 1. ,
     "Light both sides of surfaces (leads to slower rendering)" },
   { F|O, "Lines" , opt_geometry_lines , 1. ,
     "Display geometry curves?" },
@@ -1097,7 +1097,7 @@ StringXNumber MeshOptions_Number[] = {
     "Enable lighting for the mesh" },
   { F|O, "LightLines" , opt_mesh_light_lines , 2. ,
     "Enable lighting for mesh edges (0=no, 1=surfaces, 2=surfaces+volumes" },
-  { F|O, "LightTwoSide" , opt_mesh_light_two_side , 0. ,
+  { F|O, "LightTwoSide" , opt_mesh_light_two_side , 1. ,
     "Light both sides of surfaces (leads to slower rendering)" },
   { F|O, "Lines" , opt_mesh_lines , 0. ,
     "Display mesh lines (1D elements)?" },
@@ -1326,10 +1326,10 @@ StringXNumber SolverOptions_Number[] = {
     "Automatically load the ONELAB database when launching a solver" },
   { F|O, "AutoSaveDatabase" , opt_solver_auto_save_database , 1. ,
     "Automatically save the ONELAB database after each computation" },
-  { F|O, "AutoMesh" , opt_solver_auto_mesh , 1. ,
-    "Automatically mesh if necesssary (0: never remesh; 1: on startup, use existing "
-    "mesh on disk if available; 2: always remesh; -1: the geometry script creates "
-    "the mesh)" },
+  { F|O, "AutoMesh" , opt_solver_auto_mesh , 2. ,
+    "Automatically mesh (0: never; 1: if geometry changed, but use existing "
+    "mesh on disk if available; 2: if geometry changed; -1: the geometry script "
+    "creates the mesh)" },
   { F|O, "AutoMergeFile" , opt_solver_auto_merge_file , 1. ,
     "Automatically merge result files" },
   { F|O, "AutoShowViews" , opt_solver_auto_show_views , 2. ,
@@ -1562,7 +1562,7 @@ StringXNumber ViewOptions_Number[] = {
     "Enable lighting for the view" },
   { F|O, "LightLines" , opt_view_light_lines , 1. ,
     "Light element edges" },
-  { F|O, "LightTwoSide" , opt_view_light_two_side , 0. ,
+  { F|O, "LightTwoSide" , opt_view_light_two_side , 1. ,
     "Light both sides of surfaces (leads to slower rendering)" },
   { F|O, "LineType" , opt_view_line_type , 0. ,
     "Display lines as solid color segments (0) or 3D cylinders (1)" },
