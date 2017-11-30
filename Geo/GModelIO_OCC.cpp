@@ -66,6 +66,7 @@
 #include <Geom_TrimmedCurve.hxx>
 #include <IGESControl_Reader.hxx>
 #include <IGESControl_Writer.hxx>
+#include <Interface_Static.hxx>
 #include <Poly_Triangulation.hxx>
 #include <Poly_Triangle.hxx>
 #include <STEPControl_Reader.hxx>
@@ -110,6 +111,12 @@ OCC_Internals::OCC_Internals()
   for(int i = 0; i < 6; i++) _maxTag[i] = 0;
   _changed = true;
   _meshAttributes = new OCCMeshAttributesRTree(CTX::instance()->geom.tolerance);
+
+  // FIXME: check how we can change the handling of units in STEP, IGES and BREP
+  // files; by default I think we should convert to meters.
+  //Interface_Static::Init("XSTEP","xstep.cascade.unit",'&',"eval UIN");
+  //Interface_Static::SetCVal("xstep.cascade.unit", "M");
+  //Interface_Static::SetIVal ("read.scale.unit", 1);
 }
 
 OCC_Internals::~OCC_Internals()
