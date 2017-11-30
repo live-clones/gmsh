@@ -158,6 +158,7 @@ bool tetgenmesh::reconstructmesh(void *p)
   std::vector<MTetrahedron*> tets;
 
   delaunayMeshIn3D(_vertices, tets, false);
+  if (Msg::GetErrorCount()) return false;
 
   Msg::Debug("Points have been tetrahedralized");
 
