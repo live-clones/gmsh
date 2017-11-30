@@ -1729,6 +1729,7 @@ namespace BoundaryLayerCurver
 
     // Precompute Delta(x_k), k=0,1,n
     int numVerticesToCompute = (int)layerVertices[0].size();
+    double eta1 = .5 * (eta[1].first + eta[1].second);
     fullMatrix<double> delta0(numVerticesToCompute, 3);
     fullMatrix<double> delta1(numVerticesToCompute, 3);
     fullMatrix<double> deltan(numVerticesToCompute, 3);
@@ -1743,7 +1744,6 @@ namespace BoundaryLayerCurver
       deltan(i, 1) = layerVertices.back()[i]->y();
       deltan(i, 2) = layerVertices.back()[i]->z();
     }
-    double eta1 = .5 * (eta[1].first + eta[1].second);
     {
       fullMatrix<double> dummy(numVerticesToCompute, 3);
       linearTFI(delta0, dummy);
@@ -1761,7 +1761,27 @@ namespace BoundaryLayerCurver
     // Go through each layer
     TFIData *tfiData = getTFIData(TYPE_LIN, (int)layerVertices[0].size()-1);
 
-    for (int i = 2; i < layerVertices.size()-1; ++i) {
+    fullMatrix<double> term0(numVerticesToCompute, 3);
+    fullMatrix<double> term10(numVerticesToCompute, 3);
+    fullMatrix<double> term11(numVerticesToCompute, 3);
+    fullMatrix<double> term20(numVerticesToCompute, 3);
+    fullMatrix<double> term21(numVerticesToCompute, 3);
+    fullMatrix<double> term22(numVerticesToCompute, 3);
+    term0.copy(delta0);
+    tfiData->T0.mult(delta1, term10);
+    tfiData->T1.mult(delta1, term11);
+    fullMatrix<double> diff(numVerticesToCompute, 3);
+    fullMatrix<double> dum0(numVerticesToCompute, 3);
+    fullMatrix<double> dum1(numVerticesToCompute, 3);
+    diff.copy(deltan);
+    diff.add(delta1, -1);
+    tfiData->T0.mult(diff, dum0);
+    tfiData->T1.mult(diff, dum1);
+    tfiData->T0.mult(dum0, term20);
+    tfiData->T1.mult(dum0, term21);
+    tfiData->T1.mult(dum1, term22);
+
+    for (int i = 2; i < layerVertices.size(); ++i) {
       fullMatrix<double> x(numVerticesToCompute, 3);
       for (int j = 0; j < delta0.size1(); ++j) {
         x(j, 0) = layerVertices[i][j]->x();
@@ -1770,35 +1790,12 @@ namespace BoundaryLayerCurver
       }
       linearTFI(x, x);
 
-      fullMatrix<double> termDelta(numVerticesToCompute, 3);
-      termDelta.copy(delta0);
-      fullMatrix<double> int0(numVerticesToCompute, 3);
-      fullMatrix<double> int1(numVerticesToCompute, 3);
-      fullMatrix<double> int2(numVerticesToCompute, 3);
-      fullMatrix<double> int3(numVerticesToCompute, 3);
-      tfiData->T0.mult(delta1, int0);
-      tfiData->T1.mult(delta1, int1);
-      termDelta.axpy(int0, eta[i].first);
-      termDelta.axpy(int1, eta[i].second);
-      tfiData->T1.mult(int1, int3);
-      tfiData->T1.mult(int0, int2);
-      tfiData->T0.mult(int0, int1);
-      termDelta.axpy(int1, - eta[i].first * eta[i].first);
-      termDelta.axpy(int2, - eta[i].first * eta[i].second);
-      termDelta.axpy(int3, - eta[i].second * eta[i].second);
-      tfiData->T0.mult(deltan, int0);
-      tfiData->T1.mult(deltan, int1);
-      tfiData->T1.mult(int1, int3);
-      tfiData->T1.mult(int0, int2);
-      tfiData->T0.mult(int0, int1);
-      termDelta.axpy(int1, eta[i].first * eta[i].first);
-      termDelta.axpy(int2, eta[i].first * eta[i].second);
-      termDelta.axpy(int3, eta[i].second * eta[i].second);
-
-      termDelta.print("termDelta");
-      x.print("x");
-
-      x.axpy(termDelta);
+      x.axpy(term0);
+      x.axpy(term10, eta[i].first);
+      x.axpy(term11, eta[i].second);
+      x.axpy(term20, eta[i].first * eta[i].first);
+      x.axpy(term21, 2*eta[i].first * eta[i].second);
+      x.axpy(term22, eta[i].second * eta[i].second);
       for (int j = 0; j < delta0.size1(); ++j) {
         layerVertices[i][j]->x() = x(j, 0);
         layerVertices[i][j]->y() = x(j, 1);
