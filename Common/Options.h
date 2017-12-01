@@ -64,6 +64,7 @@ std::string opt_geometry_double_clicked_point_command(OPT_ARGS_STR);
 std::string opt_geometry_double_clicked_line_command(OPT_ARGS_STR);
 std::string opt_geometry_double_clicked_surface_command(OPT_ARGS_STR);
 std::string opt_geometry_double_clicked_volume_command(OPT_ARGS_STR);
+std::string opt_geometry_occ_target_unit(OPT_ARGS_STR);
 std::string opt_solver_socket_name(OPT_ARGS_STR);
 std::string opt_solver_name(OPT_ARGS_STR);
 std::string opt_solver_name0(OPT_ARGS_STR);

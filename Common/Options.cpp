@@ -1376,6 +1376,13 @@ std::string opt_geometry_double_clicked_volume_command(OPT_ARGS_STR)
   return CTX::instance()->geom.doubleClickedVolumeCommand;
 }
 
+std::string opt_geometry_occ_target_unit(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occTargetUnit = val;
+  return CTX::instance()->geom.occTargetUnit;
+}
+
 std::string opt_solver_socket_name(OPT_ARGS_STR)
 {
   if(action & GMSH_SET)

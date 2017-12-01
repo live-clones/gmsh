@@ -78,6 +78,7 @@ struct contextGeometryOptions {
   int occAutoFix, occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
   int occSewFaces, occParallel, occBooleanPreserveNumbering;
   double occScaling;
+  std::string occTargetUnit;
   int copyMeshingMethod, exactExtrusion;
   int matchGeomAndMesh;
   int orientedPhysicals, doubleClickedEntityTag;

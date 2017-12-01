@@ -1,5 +1,8 @@
-Merge "Block.stp";
 SetFactory("OpenCASCADE");
+Geometry.OCCTargetUnit = "MM";
+
+Merge "Block.stp";
+
 Wedge(2) = {-32, -2.1, -15.5, 40, 40, 60, 0};
 //+
 BooleanIntersection{ Volume{2}; Delete; }{ Volume{1}; Delete; }

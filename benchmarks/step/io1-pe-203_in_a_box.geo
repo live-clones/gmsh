@@ -1,3 +1,4 @@
+Geometry.OCCTargetUnit = "MM";
 
 Merge "io1-pe-203.step";
 
