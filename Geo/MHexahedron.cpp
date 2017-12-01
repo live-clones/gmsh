@@ -88,46 +88,10 @@ double MHexahedron::getInnerRadius()
 void MHexahedron::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) const
 {
   for (ithFace = 0; ithFace < 6; ithFace++){
-    MVertex *v0 = _v[faces_hexa(ithFace, 0)];
-    MVertex *v1 = _v[faces_hexa(ithFace, 1)];
-    MVertex *v2 = _v[faces_hexa(ithFace, 2)];
-    MVertex *v3 = _v[faces_hexa(ithFace, 3)];
-
-    if (v0 == face.getVertex(0) && v1 == face.getVertex(1) &&
-        v2 == face.getVertex(2) && v3 == face.getVertex(3)){
-      sign = 1; rot = 0; return;
-    }
-    if (v0 == face.getVertex(1) && v1 == face.getVertex(2) &&
-        v2 == face.getVertex(3) && v3 == face.getVertex(0)){
-      sign = 1; rot = 1; return;
-    }
-    if (v0 == face.getVertex(2) && v1 == face.getVertex(3) &&
-        v2 == face.getVertex(0) && v3 == face.getVertex(1)){
-      sign = 1; rot = 2; return;
-    }
-    if (v0 == face.getVertex(3) && v1 == face.getVertex(0) &&
-        v2 == face.getVertex(1) && v3 == face.getVertex(2)){
-      sign = 1; rot = 3; return;
-    }
-    // reverse
-    if (v0 == face.getVertex(0) && v1 == face.getVertex(3) &&
-        v2 == face.getVertex(2) && v3 == face.getVertex(1)){
-      sign = -1; rot = 0; return;
-    }
-    if (v0 == face.getVertex(3) && v1 == face.getVertex(2) &&
-        v2 == face.getVertex(1) && v3 == face.getVertex(0)){
-      sign = -1; rot = 1; return;
-    }
-    if (v0 == face.getVertex(2) && v1 == face.getVertex(1) &&
-        v2 == face.getVertex(0) && v3 == face.getVertex(3)){
-      sign = -1; rot = 2; return;
-    }
-    if (v0 == face.getVertex(1) && v1 == face.getVertex(0) &&
-        v2 == face.getVertex(3) && v3 == face.getVertex(2)){
-      sign = -1; rot = 3; return;
-    }
+    if (_getFaceInfo(getFace(ithFace), face, sign, rot)) break;
   }
-  Msg::Error("Could not get face information for hexahedron %d", getNum());
+  if (ithFace == 6)
+    Msg::Error("Could not get face information for hexahedron %d", getNum());
 }
 
 static void _myGetEdgeRep(MHexahedron *hex, int num, double *x, double *y, double *z,

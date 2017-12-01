@@ -47,6 +47,10 @@ class MElement
   void _getFaceRepQuad(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
                        double *x, double *y, double *z, SVector3 *n);
 #endif
+
+  static bool _getFaceInfo(const MFace &face, const MFace &other,
+                           int &sign, int &rot);
+
  public :
   MElement(int num=0, int part=0);
   virtual ~MElement(){}

@@ -71,68 +71,10 @@ double MPrism::getInnerRadius()
 void MPrism::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) const
 {
   for (ithFace = 0; ithFace < 5; ithFace++){
-    MVertex *v0 = _v[faces_prism(ithFace, 0)];
-    MVertex *v1 = _v[faces_prism(ithFace, 1)];
-    MVertex *v2 = _v[faces_prism(ithFace, 2)];
-
-    if (face.getNumVertices()==3) {
-      if (v0 == face.getVertex(0) && v1 == face.getVertex(1) && v2 == face.getVertex(2)){
-        sign = 1; rot = 0; return;
-      }
-      if (v0 == face.getVertex(1) && v1 == face.getVertex(2) && v2 == face.getVertex(0)){
-        sign = 1; rot = 1; return;
-      }
-      if (v0 == face.getVertex(2) && v1 == face.getVertex(0) && v2 == face.getVertex(1)){
-        sign = 1; rot = 2; return;
-      }
-      if (v0 == face.getVertex(0) && v1 == face.getVertex(2) && v2 == face.getVertex(1)){
-        sign = -1; rot = 0; return;
-      }
-      if (v0 == face.getVertex(1) && v1 == face.getVertex(0) && v2 == face.getVertex(2)){
-        sign = -1; rot = 1; return;
-      }
-      if (v0 == face.getVertex(2) && v1 == face.getVertex(1) && v2 == face.getVertex(0)){
-        sign = -1; rot = 2; return;
-      }
-    }
-    else {
-      MVertex *v3 = _v[faces_prism(ithFace, 3)];
-      if (v0 == face.getVertex(0) && v1 == face.getVertex(1) &&
-          v2 == face.getVertex(2) && v3 == face.getVertex(3)){
-        sign = 1; rot = 0; return;
-      }
-      if (v0 == face.getVertex(1) && v1 == face.getVertex(2) &&
-          v2 == face.getVertex(3) && v3 == face.getVertex(0)){
-        sign = 1; rot = 1; return;
-      }
-      if (v0 == face.getVertex(2) && v1 == face.getVertex(3) &&
-          v2 == face.getVertex(0) && v3 == face.getVertex(1)){
-        sign = 1; rot = 2; return;
-      }
-      if (v0 == face.getVertex(3) && v1 == face.getVertex(0) &&
-          v2 == face.getVertex(1) && v3 == face.getVertex(2)){
-        sign = 1; rot = 3; return;
-      }
-      if (v0 == face.getVertex(0) && v1 == face.getVertex(3) &&
-          v2 == face.getVertex(2) && v3 == face.getVertex(1)){
-        sign = -1; rot = 0; return;
-      }
-      if (v0 == face.getVertex(1) && v1 == face.getVertex(0) &&
-          v2 == face.getVertex(3) && v3 == face.getVertex(2)){
-        sign = -1; rot = 1; return;
-      }
-      if (v0 == face.getVertex(2) && v1 == face.getVertex(1) &&
-          v2 == face.getVertex(0) && v3 == face.getVertex(3)){
-        sign = -1; rot = 2; return;
-      }
-      if (v0 == face.getVertex(3) && v1 == face.getVertex(2) &&
-          v2 == face.getVertex(1) && v3 == face.getVertex(0)){
-        sign = -1; rot = 3; return;
-      }
-    }
-
+    if (_getFaceInfo(getFace(ithFace), face, sign, rot)) break;
   }
-  Msg::Error("Could not get face information for prism %d", getNum());
+  if (ithFace == 5)
+    Msg::Error("Could not get face information for prism %d", getNum());
 }
 
 static void _myGetEdgeRep(MPrism *pri, int num, double *x, double *y, double *z,

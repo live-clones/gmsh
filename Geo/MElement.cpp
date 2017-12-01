@@ -62,6 +62,46 @@ double MElement::getTolerance()
   return _isInsideTolerance;
 }
 
+bool MElement::_getFaceInfo(const MFace &face, const MFace &other,
+                            int &sign, int &rot)
+{
+  // Looks how is 'other' compared to 'face'. We suppose that 'face'
+  // is the reference.
+  // Return false if they are different.
+  // In case sign = 1, then rot = 1 if 'other' is equal to 'face' rotated
+  // one time according to the right hand side.
+  // In case sign = -1, then rot = 0 if 'other' is equal to reversed 'face'.
+  // In case sign = -1, then rot = 1 if 'other' is equal to reversed 'face'
+  // rotated one time according to the right hand side.
+  int N = face.getNumVertices();
+
+  sign = 0;
+  rot = -1;
+  if (N != other.getNumVertices()) return false;
+
+  sign = 1;
+  for (rot = 0; rot < N; ++rot) {
+    int i;
+    for (i = 0; i < N; ++i) {
+      if (other.getVertex(i) != face.getVertex((i+rot)%N)) break;
+    }
+    if (i == N) return true;
+  }
+
+  sign = -1;
+  for (rot = 0; rot < N; ++rot) {
+    int i;
+    for (i = 0; i < N; ++i) {
+      if (other.getVertex(i) != face.getVertex((N+rot-i)%N)) break;
+    }
+    if (i == N) return true;
+  }
+
+  sign = 0;
+  rot = -1;
+  return false;
+}
+
 void MElement::_getEdgeRep(MVertex *v0, MVertex *v1,
                            double *x, double *y, double *z, SVector3 *n,
                            int faceIndex)

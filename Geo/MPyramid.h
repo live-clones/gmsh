@@ -105,6 +105,7 @@ class MPyramid : public MElement {
     v.resize((num < 4) ? 3 : 4);
     _getFaceVertices(num, v);
   }
+  virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
   virtual int getType() const { return TYPE_PYR; }
   virtual int getTypeForMSH() const { return MSH_PYR_5; }
   virtual int getTypeForVTK() const { return 14; }
