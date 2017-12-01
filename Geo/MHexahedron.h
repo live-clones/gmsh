@@ -77,7 +77,7 @@ class MHexahedron : public MElement {
     _getEdgeVertices(num, v);
   }
   virtual int getNumFaces(){ return 6; }
-  virtual MFace getFace(int num)
+  virtual MFace getFace(int num) const
   {
     return MFace(_v[faces_hexa(num, 0)],
                  _v[faces_hexa(num, 1)],

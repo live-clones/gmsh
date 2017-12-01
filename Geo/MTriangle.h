@@ -94,7 +94,7 @@ class MTriangle : public MElement {
     _getEdgeVertices(num, v);
   }
   virtual int getNumFaces(){ return 1; }
-  virtual MFace getFace(int num)
+  virtual MFace getFace(int num) const
   {
     return MFace(_v[0], _v[1], _v[2]);
   }

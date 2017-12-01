@@ -152,7 +152,7 @@ class MElement
 
   // get the faces
   virtual int getNumFaces() = 0;
-  virtual MFace getFace(int num) = 0;
+  virtual MFace getFace(int num) const = 0;
 
   // give an MFace as input and get its local number, sign and rotation
   virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign,

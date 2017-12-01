@@ -80,7 +80,7 @@ class MPrism : public MElement {
   }
   virtual int getNumFaces(){ return 5; }
   virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
-  virtual MFace getFace(int num)
+  virtual MFace getFace(int num) const
   {
     if(num < 2)
       return MFace(_v[faces_prism(num, 0)],

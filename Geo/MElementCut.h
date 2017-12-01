@@ -88,7 +88,7 @@ class MPolyhedron : public MElement {
     v[1] = _edges[num].getVertex(1);
   }
   virtual int getNumFaces() { return _faces.size(); }
-  virtual MFace getFace(int num) { return _faces[num]; }
+  virtual MFace getFace(int num) const { return _faces[num]; }
   virtual int getNumFacesRep(bool curved) { return _faces.size(); }
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
@@ -242,7 +242,7 @@ class MPolygon : public MElement {
     v[1] = _edges[num].getVertex(1);
   }
   virtual int getNumFaces() { return 1; }
-  virtual MFace getFace(int num) { return MFace(_vertices); }
+  virtual MFace getFace(int num) const { return MFace(_vertices); }
   virtual int getNumFacesRep(bool curved) { return _parts.size(); }
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {

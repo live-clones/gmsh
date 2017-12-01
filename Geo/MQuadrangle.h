@@ -90,7 +90,7 @@ class MQuadrangle : public MElement {
     _getEdgeVertices(num, v);
   }
   virtual int getNumFaces(){ return 1; }
-  virtual MFace getFace(int num){ return MFace(_v[0], _v[1], _v[2], _v[3]); }
+  virtual MFace getFace(int num) const { return MFace(_v[0], _v[1], _v[2], _v[3]); }
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const

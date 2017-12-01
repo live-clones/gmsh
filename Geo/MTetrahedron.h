@@ -75,7 +75,7 @@ class MTetrahedron : public MElement {
     _getEdgeVertices(num, v);
   }
   virtual int getNumFaces(){ return 4; }
-  virtual MFace getFace(int num)
+  virtual MFace getFace(int num) const
   {
     return MFace(_v[faces_tetra(num, 0)],
                  _v[faces_tetra(num, 1)],

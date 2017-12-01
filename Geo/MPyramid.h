@@ -88,7 +88,7 @@ class MPyramid : public MElement {
     _getEdgeVertices(num, v);
   }
   virtual int getNumFaces(){ return 5; }
-  virtual MFace getFace(int num)
+  virtual MFace getFace(int num) const
   {
     if(num < 4)
       return MFace(_v[faces_pyramid(num, 0)],

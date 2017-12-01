@@ -60,7 +60,7 @@ class MLine : public MElement {
     _getEdgeVertices(v);
   }
   virtual int getNumFaces(){ return 0; }
-  virtual MFace getFace(int num){ return MFace(); }
+  virtual MFace getFace(int num) const { return MFace(); }
   virtual int getNumFacesRep(bool curved){ return 0; }
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n){}
   virtual int getType() const { return TYPE_LIN; }
