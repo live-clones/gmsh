@@ -1,7 +1,8 @@
 SetFactory("OpenCASCADE");
 
-Mesh.CharacteristicLengthMin = 1e-3;
-Mesh.CharacteristicLengthMax = 1e-3;
+Mesh.CharacteristicLengthMin = 1;
+Mesh.CharacteristicLengthMax = 1;
+Geometry.OCCTargetUnit = "MM";
 
 a() = ShapeFromFile("component8.step");
 
