@@ -224,7 +224,7 @@ void onelab_option_cb(Fl_Widget *w, void *data)
     FlGui::instance()->onelab->setButtonVisibility();
   }
   else if(what == "mesh")
-    CTX::instance()->solver.autoMesh = val;
+    CTX::instance()->solver.autoMesh = val ? 2 : 0;
   else if(what == "merge")
     CTX::instance()->solver.autoMergeFile = val;
   else if(what == "show")
