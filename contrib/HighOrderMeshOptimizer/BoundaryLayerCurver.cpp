@@ -126,8 +126,8 @@ namespace
     fullMatrix<double> controlPoints(nVert, 3);
     fs->lag2Bez(xyz, controlPoints);
 
-    bool subdivide = false;
-    bool subdivide2 = false;
+    bool subdivide = true;
+    bool subdivide2 = true;
     if (subdivide) {
       fullMatrix<double> allSubs(2*nVert, 3);
       fs->subdivideBezCoeff(controlPoints, allSubs);
@@ -171,7 +171,6 @@ namespace
     ((GEdge *) entity)->addLine(line);
     ((GEdge *) entity)->addMeshVertex(v);
 
-
     const int nVert = vertices.size();
 
     fullMatrix<double> controlPoints(nVert, 3);
@@ -207,19 +206,53 @@ namespace
         deriv(i, 2) = deriv(i+1, 2) - deriv(i, 2);
       }
       deriv.scale(n);
+      fullMatrix<double> controlPointsDeriv(n, 3);
+      controlPointsDeriv(0, 0) = p.x() + deriv(0, 0);
+      controlPointsDeriv(0, 1) = p.y() + deriv(0, 1);
+      controlPointsDeriv(0, 2) = p.z() + deriv(0, 2);
+      controlPointsDeriv(1, 0) = p.x() + deriv(n-1, 0);
+      controlPointsDeriv(1, 1) = p.y() + deriv(n-1, 1);
+      controlPointsDeriv(1, 2) = p.z() + deriv(n-1, 2);
+      for (int i = 2; i < n; ++i) {
+        controlPointsDeriv(i, 0) = p.x() + deriv(i-1, 0);
+        controlPointsDeriv(i, 1) = p.y() + deriv(i-1, 1);
+        controlPointsDeriv(i, 2) = p.z() + deriv(i-1, 2);
+      }
       if (!onlyN || *onlyN == n) {
-        MVertex *previous = NULL;
-        for (int i = 0; i < n; ++i) {
-          MVertex *v = new MVertex(p.x() + deriv(i, 0), p.y() + deriv(i, 1),
-                                   p.z() + deriv(i, 2), entity);
-          if (previous) {
-            MLine *line = new MLine(v, previous);
-            ((GEdge *) entity)->addLine(line);
-            ((GEdge *) entity)->addMeshVertex(v);
+        bool subdivide = true;
+        bool subdivide2 = true;
+        if (subdivide) {
+          const bezierBasis *fs = BasisFactory::getBezierBasis(TYPE_LIN, n-1);
+          fullMatrix<double> allSubs(2*n, 3);
+          fs->subdivideBezCoeff(controlPointsDeriv, allSubs);
+          fullMatrix<double> sub(n, 3);
+          sub.copy(allSubs, 0, n, 0, 3, 0, 0);
+          if (subdivide2) {
+            fullMatrix<double> allSubs2(2*n, 3);
+            fs->subdivideBezCoeff(sub, allSubs2);
+            fullMatrix<double> sub2(n, 3);
+            sub2.copy(allSubs2, 0, n, 0, 3, 0, 0);
+            drawBezierControlPolygon(sub2, entity);
+            sub2.copy(allSubs2, n, n, 0, 3, 0, 0);
+            drawBezierControlPolygon(sub2, entity);
           }
-          else if (n == 1)
-            ((GEdge *) entity)->addMeshVertex(v);
-          previous = v;
+          else
+            drawBezierControlPolygon(sub, entity);
+          sub.copy(allSubs, n, n, 0, 3, 0, 0);
+          if (subdivide2) {
+            fullMatrix<double> allSubs2(2*n, 3);
+            fs->subdivideBezCoeff(sub, allSubs2);
+            fullMatrix<double> sub2(n, 3);
+            sub2.copy(allSubs2, 0, n, 0, 3, 0, 0);
+            drawBezierControlPolygon(sub2, entity);
+            sub2.copy(allSubs2, n, n, 0, 3, 0, 0);
+            drawBezierControlPolygon(sub2, entity);
+          }
+          else
+            drawBezierControlPolygon(sub, entity);
+        }
+        else {
+          drawBezierControlPolygon(controlPointsDeriv, entity);
         }
       }
     }
@@ -339,6 +372,11 @@ namespace
         v = new MVertex(x, y, z, entity);
         if (vn0) {
           line = new MLine(v, vn0);
+          ((GEdge *) entity)->addLine(line);
+        }
+        if (drawVertLines) {
+          MVertex *vbase = new MVertex(xc, yc, zc, entity);
+          line = new MLine(vbase, v);
           ((GEdge *) entity)->addLine(line);
         }
         ((GEdge *) entity)->addMeshVertex(v);
@@ -1731,7 +1769,7 @@ namespace BoundaryLayerCurver
       vb1 = vt1;
     }
 
-    for (int i = 1; i < eta.size()-1; ++i) {
+    for (int i = 1; i < eta.size(); ++i) {
       eta[i].first /= eta.back().first;
       eta[i].second /= eta.back().second;
     }
@@ -1790,7 +1828,7 @@ namespace BoundaryLayerCurver
     tfiData->T1.mult(dum0, term21);
     tfiData->T1.mult(dum1, term22);
 
-    for (int i = 2; i < layerVertices.size(); ++i) {
+    for (int i = 2; i < layerVertices.size()-1; ++i) {
       fullMatrix<double> x(numVerticesToCompute, 3);
       for (int j = 0; j < delta0.size1(); ++j) {
         x(j, 0) = layerVertices[i][j]->x();
@@ -1866,6 +1904,31 @@ namespace BoundaryLayerCurver
       bottom = MEdge(topVertices[0], topVertices[1]);
     }
 
+//    int deriv = 5;
+//    double scale = 1, dx = 2; // Strange
+//    double scale = 1, dx = 8; // Good
+    int deriv = 6;
+    double scale = 10, dx = 2; // Strange
+//    double scale = 1, dx = 2; // Good
+    drawBezierControlPolygon(globalBottomVertices, bndEnt);
+    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(0, -10, 0), &deriv, scale);
+    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(-dx, -10, 0), &deriv, scale);
+    damping3(globalBottomVertices, .3, 10000, bndEnt, true);
+    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(dx, -10, 0), &deriv, scale);
+    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(-dx, -10, 0), &deriv, scale);
+    damping3(globalBottomVertices, .3, 10000, bndEnt, true);
+    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(2*dx, -10, 0), &deriv, scale);
+    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(-dx, -10, 0), &deriv, scale);
+    damping3(globalBottomVertices, .3, 10000, bndEnt, true);
+    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(3*dx, -10, 0), &deriv, scale);
+    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(-dx, -10, 0), &deriv, scale);
+    damping3(globalBottomVertices, .3, 10000, bndEnt, true);
+    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(4*dx, -10, 0), &deriv, scale);
+    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(-dx, -10, 0), &deriv, scale);
+    damping3(globalBottomVertices, .3, 10000, bndEnt, true);
+    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(5*dx, -10, 0), &deriv, scale);
+    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(-dx, -10, 0), &deriv, scale);
+
     // Curve last layer
     Parameters2DCurve parameters;
     computeExtremityCoefficients(globalBottomVertices, globalBottomVertices,
@@ -1874,7 +1937,7 @@ namespace BoundaryLayerCurver
                             globalTopVertices, parameters, w,
                             dampingFactor, bndEnt, -1, true);
 
-//    drawIdealCurve(globalBottomVertices, parameters, w, bndEnt, true);
+    drawIdealCurve(globalBottomVertices, parameters, w, bndEnt, true, false, true);
 
     double remainingDamping = distDamping;
     double delta = 1;
@@ -2124,7 +2187,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
 //    if (bottomEdge->getNum() != 1079) continue; // Good
 //    if (bottomEdge->getNum() != 1078) continue; // Next to good
 //    if (bottomEdge->getNum() != 1102) continue; // Bad HO
-//    if (bottomEdge->getNum() != 1136) continue; // Bad
+//    if (bottomEdge->getNum() != 1136) continue; // Bad linear
 //    if (bottomEdge->getNum() != 1150) continue; // concave
 //    if (bottomEdge->getNum() != 1151) continue; // symetric of concave
 //    if (bottomEdge->getNum() != 1156) continue; // Strange
@@ -2173,9 +2236,9 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
     }
     data2[it->first].push_back(min);
   }
-  new PView("Thickness quality", "ElementData", GModel::current(), data2, 0, 1);
-  static int aaa = 0;
-  if (++aaa == 7) GMSH_AnalyseCurvedMeshPlugin().execute(NULL);
+//  new PView("Thickness quality", "ElementData", GModel::current(), data2, 0, 1);
+//  static int aaa = 0;
+//  if (++aaa == 7) GMSH_AnalyseCurvedMeshPlugin().execute(NULL);
 #if defined(HAVE_FLTK)
   FlGui::instance()->updateViews(true, true);
 #endif
