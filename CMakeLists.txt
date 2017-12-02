@@ -199,17 +199,18 @@ endif(NOT ENABLE_BUILD_SHARED)
 if(MSVC)
   # remove annoying warning about bool/int cast performance
   set(GMSH_CONFIG_PRAGMAS "#pragma warning(disable:4800 4244 4267)")
-  if(ENABLE_MSVC_STATIC_RUNTIME)
-    foreach(VAR
-            CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
-            CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO
-            CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
-            CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO)
-      if(${VAR} MATCHES "/MD")
-        string(REGEX REPLACE "/MD" "/MT" ${VAR} "${${VAR}}")
-      endif(${VAR} MATCHES "/MD")
-    endforeach(VAR)
-  endif(ENABLE_MSVC_STATIC_RUNTIME)
+  foreach(VAR
+          CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
+          CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO
+          CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
+          CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO)
+    if(ENABLE_MSVC_STATIC_RUNTIME AND ${VAR} MATCHES "/MD")
+      string(REGEX REPLACE "/MD" "/MT" ${VAR} "${${VAR}}")
+    endif(ENABLE_MSVC_STATIC_RUNTIME AND ${VAR} MATCHES "/MD")
+    if(NOT ${VAR} MATCHES "/MP") # enable parallel compilation
+      set(${VAR} "${${VAR}} /MP")
+    endif(NOT ${VAR} MATCHES "/MP")
+  endforeach(VAR)
   if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
     # automatically export .def file with all symbols (requires CMake 3.4);
     # depending on the compiling options this might lead to more than 64k export
