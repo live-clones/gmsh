@@ -56,7 +56,7 @@ windows64_msvc_ci:
     - md build
     - cd build
     - cmake -DGMSH_EXTRA_VERSION=%EXTRA_VERSION:~0,13% ..
-    - msbuild package.vcxproj
+    - msbuild /m package.vcxproj
   tags:
     - windows64
     - official
