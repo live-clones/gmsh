@@ -962,45 +962,45 @@ void gmshModelOccFillet(int* regionTags, size_t regionTags_n,int* edgeTags, size
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelOccBooleanUnion(int * objectDimTags, size_t objectDimTags_n,int * toolDimTags, size_t toolDimTags_n,int ** outDimTags, size_t * outDimTags_n,int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,const int tag,const int removeObject,const int removeTool,int * ierr){
+void gmshModelOccFuse(int * objectDimTags, size_t objectDimTags_n,int * toolDimTags, size_t toolDimTags_n,int ** outDimTags, size_t * outDimTags_n,int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,const int tag,const int removeObject,const int removeTool,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::vector_pair api_outDimTags_;
   std::vector<gmsh::vector_pair >api_outDimTagsMap_;
-  gmsh::model::occ::booleanUnion(intptr2pairvector(objectDimTags,objectDimTags_n),intptr2pairvector(toolDimTags,toolDimTags_n),api_outDimTags_,api_outDimTagsMap_,tag,removeObject,removeTool);
+  gmsh::model::occ::fuse(intptr2pairvector(objectDimTags,objectDimTags_n),intptr2pairvector(toolDimTags,toolDimTags_n),api_outDimTags_,api_outDimTagsMap_,tag,removeObject,removeTool);
   pairvector2intptr(api_outDimTags_,outDimTags,outDimTags_n);
   pairvectorvector2intptrptr(api_outDimTagsMap_,outDimTagsMap,outDimTagsMap_n,outDimTagsMap_nn);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelOccBooleanIntersection(int * objectDimTags, size_t objectDimTags_n,int * toolDimTags, size_t toolDimTags_n,int ** outDimTags, size_t * outDimTags_n,int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,const int tag,const int removeObject,const int removeTool,int * ierr){
+void gmshModelOccIntersect(int * objectDimTags, size_t objectDimTags_n,int * toolDimTags, size_t toolDimTags_n,int ** outDimTags, size_t * outDimTags_n,int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,const int tag,const int removeObject,const int removeTool,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::vector_pair api_outDimTags_;
   std::vector<gmsh::vector_pair >api_outDimTagsMap_;
-  gmsh::model::occ::booleanIntersection(intptr2pairvector(objectDimTags,objectDimTags_n),intptr2pairvector(toolDimTags,toolDimTags_n),api_outDimTags_,api_outDimTagsMap_,tag,removeObject,removeTool);
+  gmsh::model::occ::intersect(intptr2pairvector(objectDimTags,objectDimTags_n),intptr2pairvector(toolDimTags,toolDimTags_n),api_outDimTags_,api_outDimTagsMap_,tag,removeObject,removeTool);
   pairvector2intptr(api_outDimTags_,outDimTags,outDimTags_n);
   pairvectorvector2intptrptr(api_outDimTagsMap_,outDimTagsMap,outDimTagsMap_n,outDimTagsMap_nn);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelOccBooleanDifference(int * objectDimTags, size_t objectDimTags_n,int * toolDimTags, size_t toolDimTags_n,int ** outDimTags, size_t * outDimTags_n,int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,const int tag,const int removeObject,const int removeTool,int * ierr){
+void gmshModelOccCut(int * objectDimTags, size_t objectDimTags_n,int * toolDimTags, size_t toolDimTags_n,int ** outDimTags, size_t * outDimTags_n,int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,const int tag,const int removeObject,const int removeTool,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::vector_pair api_outDimTags_;
   std::vector<gmsh::vector_pair >api_outDimTagsMap_;
-  gmsh::model::occ::booleanDifference(intptr2pairvector(objectDimTags,objectDimTags_n),intptr2pairvector(toolDimTags,toolDimTags_n),api_outDimTags_,api_outDimTagsMap_,tag,removeObject,removeTool);
+  gmsh::model::occ::cut(intptr2pairvector(objectDimTags,objectDimTags_n),intptr2pairvector(toolDimTags,toolDimTags_n),api_outDimTags_,api_outDimTagsMap_,tag,removeObject,removeTool);
   pairvector2intptr(api_outDimTags_,outDimTags,outDimTags_n);
   pairvectorvector2intptrptr(api_outDimTagsMap_,outDimTagsMap,outDimTagsMap_n,outDimTagsMap_nn);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelOccBooleanFragments(int * objectDimTags, size_t objectDimTags_n,int * toolDimTags, size_t toolDimTags_n,int ** outDimTags, size_t * outDimTags_n,int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,const int tag,const int removeObject,const int removeTool,int * ierr){
+void gmshModelOccFragment(int * objectDimTags, size_t objectDimTags_n,int * toolDimTags, size_t toolDimTags_n,int ** outDimTags, size_t * outDimTags_n,int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,const int tag,const int removeObject,const int removeTool,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::vector_pair api_outDimTags_;
   std::vector<gmsh::vector_pair >api_outDimTagsMap_;
-  gmsh::model::occ::booleanFragments(intptr2pairvector(objectDimTags,objectDimTags_n),intptr2pairvector(toolDimTags,toolDimTags_n),api_outDimTags_,api_outDimTagsMap_,tag,removeObject,removeTool);
+  gmsh::model::occ::fragment(intptr2pairvector(objectDimTags,objectDimTags_n),intptr2pairvector(toolDimTags,toolDimTags_n),api_outDimTags_,api_outDimTagsMap_,tag,removeObject,removeTool);
   pairvector2intptr(api_outDimTags_,outDimTags,outDimTags_n);
   pairvectorvector2intptrptr(api_outDimTagsMap_,outDimTagsMap,outDimTagsMap_n,outDimTagsMap_nn);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}

@@ -509,7 +509,7 @@ GMSH_API int gmshModelGeoAddVolume(int* shellTags, size_t shellTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* Extrudes the geometrical entities in `dimTags' by translation along (`dx',
+/* Extrudes the geometrical entities `dimTags' by translation along (`dx',
  * `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements' is
  * not empty, also extrude the mesh: the entries in `numElements' give the
  * number of elements in each layer. If `height' is not empty, it provides the
@@ -524,13 +524,13 @@ GMSH_API void gmshModelGeoExtrude(int * dimTags, size_t dimTags_n,
                                   const int recombine,
                                   int * ierr);
 
-/* Extrudes the geometrical entities in `dimTags' by rotation of `angle'
- * radians around the axis of revolution defined by the point (`x', `y', `z')
- * and the direction (`ax', `ay', `az'). Returns extruded entities in
- * `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
- * entries in `numElements' give the number of elements in each layer. If
- * `height' is not empty, it provides the (cummulative) height of the
- * different layers, normalized to 1. */
+/* Extrudes the geometrical entities `dimTags' by rotation of `angle' radians
+ * around the axis of revolution defined by the point (`x', `y', `z') and the
+ * direction (`ax', `ay', `az'). Returns extruded entities in `outDimTags'. If
+ * `numElements' is not empty, also extrude the mesh: the entries in
+ * `numElements' give the number of elements in each layer. If `height' is not
+ * empty, it provides the (cummulative) height of the different layers,
+ * normalized to 1. */
 GMSH_API void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,
                                   const double x,
                                   const double y,
@@ -545,14 +545,13 @@ GMSH_API void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,
                                   const int recombine,
                                   int * ierr);
 
-/* Extrudes the geometrical entities in `dimTags' by a combined translation
- * and rotation of `angle' radians, along (`dx', `dy', `dz') and around the
- * axis of revolution defined by the point (`x', `y', `z') and the direction
- * (`ax', `ay', `az'). Returns extruded entities in `outDimTags'. If
- * `numElements' is not empty, also extrude the mesh: the entries in
- * `numElements' give the number of elements in each layer. If `height' is not
- * empty, it provides the (cummulative) height of the different layers,
- * normalized to 1. */
+/* Extrudes the geometrical entities `dimTags' by a combined translation and
+ * rotation of `angle' radians, along (`dx', `dy', `dz') and around the axis
+ * of revolution defined by the point (`x', `y', `z') and the direction (`ax',
+ * `ay', `az'). Returns extruded entities in `outDimTags'. If `numElements' is
+ * not empty, also extrude the mesh: the entries in `numElements' give the
+ * number of elements in each layer. If `height' is not empty, it provides the
+ * (cummulative) height of the different layers, normalized to 1. */
 GMSH_API void gmshModelGeoTwist(int * dimTags, size_t dimTags_n,
                                 const double x,
                                 const double y,
@@ -570,14 +569,14 @@ GMSH_API void gmshModelGeoTwist(int * dimTags, size_t dimTags_n,
                                 const int recombine,
                                 int * ierr);
 
-/* Translates the geometrical entities in `dimTags' along (`dx', `dy', `dz'). */
+/* Translates the geometrical entities `dimTags' along (`dx', `dy', `dz'). */
 GMSH_API void gmshModelGeoTranslate(int * dimTags, size_t dimTags_n,
                                     const double dx,
                                     const double dy,
                                     const double dz,
                                     int * ierr);
 
-/* Rotates the geometrical entities in `dimTags' of `angle' radians around the
+/* Rotates the geometrical entities `dimTags' of `angle' radians around the
  * axis of revolution defined by the point (`x', `y', `z') and the direction
  * (`ax', `ay', `az'). */
 GMSH_API void gmshModelGeoRotate(int * dimTags, size_t dimTags_n,
@@ -590,8 +589,8 @@ GMSH_API void gmshModelGeoRotate(int * dimTags, size_t dimTags_n,
                                  const double angle,
                                  int * ierr);
 
-/* Scales the geometrical entities in `dimTag' by factors `a', `b' and `c'
- * along the three coordinate axes; use (`x', `y', `z') as the center of the
+/* Scales the geometrical entities `dimTag' by factors `a', `b' and `c' along
+ * the three coordinate axes; use (`x', `y', `z') as the center of the
  * homothetic transformation. */
 GMSH_API void gmshModelGeoDilate(int * dimTags, size_t dimTags_n,
                                  const double x,
@@ -602,7 +601,7 @@ GMSH_API void gmshModelGeoDilate(int * dimTags, size_t dimTags_n,
                                  const double c,
                                  int * ierr);
 
-/* Applies a symmetry transformation to the geometrical entities in `dimTag',
+/* Applies a symmetry transformation to the geometrical entities `dimTag',
  * with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' =
  * 0. */
 GMSH_API void gmshModelGeoSymmetry(int * dimTags, size_t dimTags_n,
@@ -612,7 +611,7 @@ GMSH_API void gmshModelGeoSymmetry(int * dimTags, size_t dimTags_n,
                                    const double d,
                                    int * ierr);
 
-/* Copies the entities in `dimTags'; the new entities are returned in
+/* Copies the entities `dimTags'; the new entities are returned in
  * `outDimTags'. */
 GMSH_API void gmshModelGeoCopy(int * dimTags, size_t dimTags_n,
                                int ** outDimTags, size_t * outDimTags_n,
@@ -970,7 +969,7 @@ GMSH_API int gmshModelOccAddThickSolid(const int solidTag,
                                        const int tag,
                                        int * ierr);
 
-/* Extrudes the geometrical entities in `dimTags' by translation along (`dx',
+/* Extrudes the geometrical entities `dimTags' by translation along (`dx',
  * `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements' is
  * not empty, also extrude the mesh: the entries in `numElements' give the
  * number of elements in each layer. If `height' is not empty, it provides the
@@ -985,13 +984,13 @@ GMSH_API void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,
                                   const int recombine,
                                   int * ierr);
 
-/* Extrudes the geometrical entities in `dimTags' by rotation of `angle'
- * radians around the axis of revolution defined by the point (`x', `y', `z')
- * and the direction (`ax', `ay', `az'). Returns extruded entities in
- * `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
- * entries in `numElements' give the number of elements in each layer. If
- * `height' is not empty, it provides the (cummulative) height of the
- * different layers, normalized to 1. */
+/* Extrudes the geometrical entities `dimTags' by rotation of `angle' radians
+ * around the axis of revolution defined by the point (`x', `y', `z') and the
+ * direction (`ax', `ay', `az'). Returns extruded entities in `outDimTags'. If
+ * `numElements' is not empty, also extrude the mesh: the entries in
+ * `numElements' give the number of elements in each layer. If `height' is not
+ * empty, it provides the (cummulative) height of the different layers,
+ * normalized to 1. */
 GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n,
                                   const double x,
                                   const double y,
@@ -1006,13 +1005,16 @@ GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n,
                                   const int recombine,
                                   int * ierr);
 
-/* TODO */
+/* Adds a pipe by extruding the entities `dimTags' along the curve `wireTag'.
+ * Returns the pipe in `outDimTags'. */
 GMSH_API void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n,
                                   const int wireTag,
                                   int ** outDimTags, size_t * outDimTags_n,
                                   int * ierr);
 
-/* TODO */
+/* Fillets the volumes `regionTags' on the curves `edgeTags' with radius
+ * `radius'. Returns the filleted entities in `outDimTags'. Removes the
+ * original volume if `removeRegion' is set. */
 GMSH_API void gmshModelOccFillet(int* regionTags, size_t regionTags_n,
                                  int* edgeTags, size_t edgeTags_n,
                                  const double radius,
@@ -1020,54 +1022,70 @@ GMSH_API void gmshModelOccFillet(int* regionTags, size_t regionTags_n,
                                  const int removeRegion,
                                  int * ierr);
 
-/* TODO */
-GMSH_API void gmshModelOccBooleanUnion(int * objectDimTags, size_t objectDimTags_n,
-                                       int * toolDimTags, size_t toolDimTags_n,
-                                       int ** outDimTags, size_t * outDimTags_n,
-                                       int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
-                                       const int tag,
-                                       const int removeObject,
-                                       const int removeTool,
-                                       int * ierr);
+/* Computes the boolean union (the fusion) of the entities `objectDimTags' and
+ * `toolDimTags'.Returns the resulting entities in `outDimTags'. If `tag' is
+ * positive, attemps to set the tag explicitly (ony valid if the boolean
+ * operation results in a single entity). Removes the object if `removeObject'
+ * is set. Removes the tool if `removeTool' is set. */
+GMSH_API void gmshModelOccFuse(int * objectDimTags, size_t objectDimTags_n,
+                               int * toolDimTags, size_t toolDimTags_n,
+                               int ** outDimTags, size_t * outDimTags_n,
+                               int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
+                               const int tag,
+                               const int removeObject,
+                               const int removeTool,
+                               int * ierr);
 
-/* TODO */
-GMSH_API void gmshModelOccBooleanIntersection(int * objectDimTags, size_t objectDimTags_n,
-                                              int * toolDimTags, size_t toolDimTags_n,
-                                              int ** outDimTags, size_t * outDimTags_n,
-                                              int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
-                                              const int tag,
-                                              const int removeObject,
-                                              const int removeTool,
-                                              int * ierr);
+/* Computes the boolean intersection (the common parts) of the entities
+ * `objectDimTags' and `toolDimTags'. Returns the resulting entities in
+ * `outDimTags'. If `tag' is positive, attemps to set the tag explicitly (ony
+ * valid if the boolean operation results in a single entity). Removes the
+ * object if `removeObject' is set. Removes the tool if `removeTool' is set. */
+GMSH_API void gmshModelOccIntersect(int * objectDimTags, size_t objectDimTags_n,
+                                    int * toolDimTags, size_t toolDimTags_n,
+                                    int ** outDimTags, size_t * outDimTags_n,
+                                    int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
+                                    const int tag,
+                                    const int removeObject,
+                                    const int removeTool,
+                                    int * ierr);
 
-/* TODO */
-GMSH_API void gmshModelOccBooleanDifference(int * objectDimTags, size_t objectDimTags_n,
-                                            int * toolDimTags, size_t toolDimTags_n,
-                                            int ** outDimTags, size_t * outDimTags_n,
-                                            int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
-                                            const int tag,
-                                            const int removeObject,
-                                            const int removeTool,
-                                            int * ierr);
+/* Computes the boolean difference between the entities `objectDimTags' and
+ * `toolDimTags'. Returns the resulting entities in `outDimTags'. If `tag' is
+ * positive, attemps to set the tag explicitly (ony valid if the boolean
+ * operation results in a single entity). Removes the object if `removeObject'
+ * is set. Removes the tool if `removeTool' is set. */
+GMSH_API void gmshModelOccCut(int * objectDimTags, size_t objectDimTags_n,
+                              int * toolDimTags, size_t toolDimTags_n,
+                              int ** outDimTags, size_t * outDimTags_n,
+                              int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
+                              const int tag,
+                              const int removeObject,
+                              const int removeTool,
+                              int * ierr);
 
-/* TODO */
-GMSH_API void gmshModelOccBooleanFragments(int * objectDimTags, size_t objectDimTags_n,
-                                           int * toolDimTags, size_t toolDimTags_n,
-                                           int ** outDimTags, size_t * outDimTags_n,
-                                           int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
-                                           const int tag,
-                                           const int removeObject,
-                                           const int removeTool,
-                                           int * ierr);
+/* Copmutes the boolean fragments (general fuse) of the entities
+ * `objectDimTags' and `toolDimTags'. Returns the resulting entities in
+ * `outDimTags'. If `tag' is positive, attemps to set the tag explicitly (ony
+ * valid if the boolean operation results in a single entity). Removes the
+ * object if `removeObject' is set. Removes the tool if `removeTool' is set. */
+GMSH_API void gmshModelOccFragment(int * objectDimTags, size_t objectDimTags_n,
+                                   int * toolDimTags, size_t toolDimTags_n,
+                                   int ** outDimTags, size_t * outDimTags_n,
+                                   int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn,
+                                   const int tag,
+                                   const int removeObject,
+                                   const int removeTool,
+                                   int * ierr);
 
-/* Translates the geometrical entities in `dimTags' along (`dx', `dy', `dz'). */
+/* Translates the geometrical entities `dimTags' along (`dx', `dy', `dz'). */
 GMSH_API void gmshModelOccTranslate(int * dimTags, size_t dimTags_n,
                                     const double dx,
                                     const double dy,
                                     const double dz,
                                     int * ierr);
 
-/* Rotates the geometrical entities in `dimTags' of `angle' radians around the
+/* Rotates the geometrical entities `dimTags' of `angle' radians around the
  * axis of revolution defined by the point (`x', `y', `z') and the direction
  * (`ax', `ay', `az'). */
 GMSH_API void gmshModelOccRotate(int * dimTags, size_t dimTags_n,
@@ -1080,8 +1098,8 @@ GMSH_API void gmshModelOccRotate(int * dimTags, size_t dimTags_n,
                                  const double angle,
                                  int * ierr);
 
-/* Scales the geometrical entities in `dimTag' by factors `a', `b' and `c'
- * along the three coordinate axes; use (`x', `y', `z') as the center of the
+/* Scales the geometrical entities `dimTag' by factors `a', `b' and `c' along
+ * the three coordinate axes; use (`x', `y', `z') as the center of the
  * homothetic transformation. */
 GMSH_API void gmshModelOccDilate(int * dimTags, size_t dimTags_n,
                                  const double x,
@@ -1092,7 +1110,7 @@ GMSH_API void gmshModelOccDilate(int * dimTags, size_t dimTags_n,
                                  const double c,
                                  int * ierr);
 
-/* Applies a symmetry transformation to the geometrical entities in `dimTag',
+/* Applies a symmetry transformation to the geometrical entities `dimTag',
  * with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' =
  * 0. */
 GMSH_API void gmshModelOccSymmetry(int * dimTags, size_t dimTags_n,
@@ -1102,7 +1120,7 @@ GMSH_API void gmshModelOccSymmetry(int * dimTags, size_t dimTags_n,
                                    const double d,
                                    int * ierr);
 
-/* Copies the entities in `dimTags'; the new entities are returned in
+/* Copies the entities `dimTags'; the new entities are returned in
  * `outDimTags'. */
 GMSH_API void gmshModelOccCopy(int * dimTags, size_t dimTags_n,
                                int ** outDimTags, size_t * outDimTags_n,
@@ -1196,7 +1214,13 @@ GMSH_API void gmshViewAddListData(const int tag,
                                   double * data, size_t data_n,
                                   int * ierr);
 
-/* Probes the view `tag' for its `value' at point (`x', `y', `z'). */
+/* Probes the view `tag' for its `value' at point (`x', `y', `z'). Returns
+ * only the value at step `step' is `step' is positive. Returns only values
+ * with `numComp' if `numComp' is positive. Returns the gradient of the
+ * `value' if `gradient' is set. Probes with a geometrical tolerance (in the
+ * reference unit cube) of `tolerance' if `tolerance' is not zero. Returns the
+ * result from the element described by its coordinates if `xElementCoord',
+ * `yElementCoord' and `zElementCoord' are provided. */
 GMSH_API void gmshViewProbe(const int tag,
                             const double x,
                             const double y,
@@ -1211,8 +1235,8 @@ GMSH_API void gmshViewProbe(const int tag,
                             double * zElemCoord, size_t zElemCoord_n,
                             int * ierr);
 
-/* Writes the view to a file. The export format is determined by the file
- * extension. */
+/* Writes the view to a file `fileName'. The export format is determined by
+ * the file extension. Appends to the file if `append' is set. */
 GMSH_API void gmshViewWrite(const int tag,
                             const char * fileName,
                             const int append,

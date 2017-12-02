@@ -22,6 +22,8 @@ from GenApi import *
 
 api = API()
 
+################################################################################
+
 gmsh = api.add_module('gmsh','Top-level functions')
 
 doc = '''Initializes Gmsh. This must be called before any call to the other functions in the API. If argc and argv are provided, they will be handled in the same way as the command line arguments in the Gmsh app.'''
@@ -42,6 +44,8 @@ gmsh.add('write',doc,None,istring('fileName'))
 doc = '''Clears all loaded models and post-processing data, and adds a new empty model.'''
 gmsh.add('clear',doc,None)
 
+################################################################################
+
 option = gmsh.add_module('option','Global option handling functions')
 
 doc = '''Sets a numerical option to `value'. `name' is of the form "category.option" or "category[num].option". Available categories and options are listed in the Gmsh reference manual.'''
@@ -55,6 +59,8 @@ option.add('setString',doc,None,istring('name'),istring('value'))
 
 doc = '''Gets the `value' of a string option.'''
 option.add('getString',doc,None,istring('name'),ostring('value'))
+
+################################################################################
 
 model = gmsh.add_module('model','Per-model functions')
 
@@ -102,6 +108,8 @@ model.add('addDiscreteEntity',doc,oint,iint('dim'),iint('tag','-1'),ivectorint('
 
 doc = '''Removes the entities `dimTags' of the current model. If `recursive' is true, removes all the entities on their boundaries, down to dimension 0.'''
 model.add('removeEntities',doc,None,ivectorpair('dimTags'),ibool('recursive','false','False'))
+
+################################################################################
 
 mesh = model.add_module('mesh','Per-model meshing functions')
 
@@ -156,6 +164,8 @@ mesh.add('setReverse',doc,None,iint('dim'),iint('tag'),ibool('val','true','True'
 doc = '''Emebds the geometrical entities of dimension `dim' and tags `tags' in the (inDim, inTag) geometrical entity. `inDim' must be strictly greater than `dim'.'''
 mesh.add('embed',doc,None,iint('dim'),ivectorint('tags'),iint('inDim'),iint('inTag'))
 
+################################################################################
+
 field = mesh.add_module('field','Per-model mesh size field functions')
 
 doc = '''Adds a new mesh size field of type `type'. If `tag' is positive, assign the tag explcitly; otherwise a new tag is assigned automatically. Returns the field tag.'''
@@ -175,6 +185,8 @@ field.add('setNumbers',doc,None,iint('tag'),istring('option'),ivectordouble('val
 
 doc = '''Sets the field `tag' as background mesh size field.'''
 field.add('setAsBackground',doc,None,iint('tag'))
+
+################################################################################
 
 geo = model.add_module('geo','Internal per-model GEO CAD kernel functions')
 
@@ -214,28 +226,28 @@ geo.add('addSurfaceLoop',doc,oint,ivectorint('faceTags'),iint('tag','-1'))
 doc = '''Adds a volume defined by one or more surface loops `shellTags'. The first surface loop defines the exterior boundary; additional surface loop define holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the volume.'''
 geo.add('addVolume',doc,oint,ivectorint('shellTags'),iint('tag','-1'))
 
-doc = '''Extrudes the geometrical entities in `dimTags' by translation along (`dx', `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
+doc = '''Extrudes the geometrical entities `dimTags' by translation along (`dx', `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
 geo.add('extrude',doc,None,ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()',"[]"),ivectordouble('heights','std::vector<double>()',"[]"),ibool('recombine','false','False'))
 
-doc = '''Extrudes the geometrical entities in `dimTags' by rotation of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). Returns extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
+doc = '''Extrudes the geometrical entities `dimTags' by rotation of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). Returns extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
 geo.add('revolve',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()',"[]"),ivectordouble('heights','std::vector<double>()',"[]"),ibool('recombine','false','False'))
 
-doc = '''Extrudes the geometrical entities in `dimTags' by a combined translation and rotation of `angle' radians, along (`dx', `dy', `dz') and around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). Returns extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
+doc = '''Extrudes the geometrical entities `dimTags' by a combined translation and rotation of `angle' radians, along (`dx', `dy', `dz') and around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). Returns extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
 geo.add('twist',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()',"[]"),ivectordouble('heights','std::vector<double>()',"[]"),ibool('recombine','false','False'))
 
-doc = '''Translates the geometrical entities in `dimTags' along (`dx', `dy', `dz').'''
+doc = '''Translates the geometrical entities `dimTags' along (`dx', `dy', `dz').'''
 geo.add('translate',doc,None,ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'))
 
-doc = '''Rotates the geometrical entities in `dimTags' of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az').'''
+doc = '''Rotates the geometrical entities `dimTags' of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az').'''
 geo.add('rotate',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'))
 
-doc = '''Scales the geometrical entities in `dimTag' by factors `a', `b' and `c' along the three coordinate axes; use (`x', `y', `z') as the center of the homothetic transformation.'''
+doc = '''Scales the geometrical entities `dimTag' by factors `a', `b' and `c' along the three coordinate axes; use (`x', `y', `z') as the center of the homothetic transformation.'''
 geo.add('dilate',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('a'),idouble('b'),idouble('c'))
 
-doc = '''Applies a symmetry transformation to the geometrical entities in `dimTag', with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
+doc = '''Applies a symmetry transformation to the geometrical entities `dimTag', with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
 geo.add('symmetry',doc,None,ivectorpair('dimTags'),idouble('a'),idouble('b'),idouble('c'),idouble('d'))
 
-doc = '''Copies the entities in `dimTags'; the new entities are returned in `outDimTags'.'''
+doc = '''Copies the entities `dimTags'; the new entities are returned in `outDimTags'.'''
 geo.add('copy',doc,None,ivectorpair('dimTags'),ovectorpair('outDimTags'))
 
 doc = '''Removes the entities `dimTags'. If `recursive' is true, removes all the entities on their boundaries, down to dimension 0.'''
@@ -246,6 +258,8 @@ geo.add('removeAllDuplicates',doc,None)
 
 doc = '''Synchronize the internal GEO CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
 geo.add('synchronize',doc,None)
+
+################################################################################
 
 mesh = geo.add_module('mesh','geo-specific meshing constraints')
 
@@ -269,6 +283,8 @@ mesh.add('setSmoothing',doc,None,iint('dim'),iint('tag'),iint('val'))
 
 doc = '''Sets a reverse meshing constraint on the geometrical entity of dimension `dim' and tag `tag'. If `val' is true, the mesh orientation will be reversed with respect to the natural mesh orientation (i.e. the orientation consistent with the orientation of the geometrical entity). If `val' is false, the mesh is left as-is.'''
 mesh.add('setReverse',doc,None,iint('dim'),iint('tag'),ibool('val','true','True'))
+
+################################################################################
 
 occ = model.add_module('occ','Internal per-model OpenCASCADE CAD kernel functions')
 
@@ -332,9 +348,7 @@ occ.add('addCylinder',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('d
 doc = '''Add a cone, defined by the center (`x', `y', `z') of its first circular face, the 3 components of the vector (`dx', `dy', `dz') defining its axis and the two radii `r1' and `r2' of the faces (these radii can be zero). If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle' defines the optional angular opening (from 0 to 2*Pi). Returns the tag of the cone.'''
 occ.add('addCone',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),idouble('r1'),idouble('r2'),iint('tag','-1'),idouble('angle','2*M_PI','2*pi'))
 
-
-doc = '''Add a right angular wedge, defined by the right-angle point (`x', `y', `z') and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. The optional argument `ltx' defines the
-top extent along the x-axis. Returns the tag of the wedge.'''
+doc = '''Add a right angular wedge, defined by the right-angle point (`x', `y', `z') and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. The optional argument `ltx' defines the top extent along the x-axis. Returns the tag of the wedge.'''
 occ.add('addWedge',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),iint('tag','-1'),idouble('ltx','0.'))
 
 doc = '''Adds a torus, defined by its center (`x', `y', `z') and its 2 radii `r' and `r2'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. The optional argument `angle' defines the angular opening (from 0 to 2*Pi). Returns the tag of the wedge.'''
@@ -346,43 +360,43 @@ occ.add('addThruSections',doc,oint,ivectorint('wireTags'),ovectorpair('outDimTag
 doc = '''Adds a hollowed volume built from an initial volume `solidTag' and a set of faces from this volume `excludeFaceTags', which are to be removed. The remaining faces of the volume become the walls of the hollowed solid, with thickness `offset'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the volume.'''
 occ.add('addThickSolid',doc,oint,iint('solidTag'),ivectorint('excludeFaceTags'),idouble('offset'),ovectorpair('outDimTags'),iint('tag','-1'))
 
-doc = '''Extrudes the geometrical entities in `dimTags' by translation along (`dx', `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
+doc = '''Extrudes the geometrical entities `dimTags' by translation along (`dx', `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
 occ.add('extrude',doc,None,ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()',"[]"),ivectordouble('heights','std::vector<double>()',"[]"),ibool('recombine','false','False'))
 
-doc = '''Extrudes the geometrical entities in `dimTags' by rotation of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). Returns extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
+doc = '''Extrudes the geometrical entities `dimTags' by rotation of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). Returns extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
 occ.add('revolve',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()',"[]"),ivectordouble('heights','std::vector<double>()',"[]"),ibool('recombine','false','False'))
 
-doc = '''TODO'''
+doc = '''Adds a pipe by extruding the entities `dimTags' along the curve `wireTag'. Returns the pipe in `outDimTags'.'''
 occ.add('addPipe',doc,None,ivectorpair('dimTags'),iint('wireTag'),ovectorpair('outDimTags'))
 
-doc = '''TODO'''
+doc = '''Fillets the volumes `regionTags' on the curves `edgeTags' with radius `radius'. Returns the filleted entities in `outDimTags'. Removes the original volume if `removeRegion' is set.'''
 occ.add('fillet',doc,None,ivectorint('regionTags'),ivectorint('edgeTags'),idouble('radius'),ovectorpair('outDimTags'),ibool('removeRegion','true','True'))
 
-doc = '''TODO'''
-occ.add('booleanUnion',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true','True'),ibool('removeTool','true','True'))
+doc = '''Computes the boolean union (the fusion) of the entities `objectDimTags' and `toolDimTags'.Returns the resulting entities in `outDimTags'. If `tag' is positive, attemps to set the tag explicitly (ony valid if the boolean operation results in a single entity). Removes the object if `removeObject' is set. Removes the tool if `removeTool' is set.'''
+occ.add('fuse',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true','True'),ibool('removeTool','true','True'))
 
-doc = '''TODO'''
-occ.add('booleanIntersection',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true','True'),ibool('removeTool','true','True'))
+doc = '''Computes the boolean intersection (the common parts) of the entities `objectDimTags' and `toolDimTags'. Returns the resulting entities in `outDimTags'. If `tag' is positive, attemps to set the tag explicitly (ony valid if the boolean operation results in a single entity). Removes the object if `removeObject' is set. Removes the tool if `removeTool' is set.'''
+occ.add('intersect',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true','True'),ibool('removeTool','true','True'))
 
-doc = '''TODO'''
-occ.add('booleanDifference',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true','True'),ibool('removeTool','true','True'))
+doc = '''Computes the boolean difference between the entities `objectDimTags' and `toolDimTags'. Returns the resulting entities in `outDimTags'. If `tag' is positive, attemps to set the tag explicitly (ony valid if the boolean operation results in a single entity). Removes the object if `removeObject' is set. Removes the tool if `removeTool' is set.'''
+occ.add('cut',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true','True'),ibool('removeTool','true','True'))
 
-doc = '''TODO'''
-occ.add('booleanFragments',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true','True'),ibool('removeTool','true','True'))
+doc = '''Copmutes the boolean fragments (general fuse) of the entities `objectDimTags' and `toolDimTags'. Returns the resulting entities in `outDimTags'. If `tag' is positive, attemps to set the tag explicitly (ony valid if the boolean operation results in a single entity). Removes the object if `removeObject' is set. Removes the tool if `removeTool' is set.'''
+occ.add('fragment',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true','True'),ibool('removeTool','true','True'))
 
-doc = '''Translates the geometrical entities in `dimTags' along (`dx', `dy', `dz').'''
+doc = '''Translates the geometrical entities `dimTags' along (`dx', `dy', `dz').'''
 occ.add('translate',doc,None,ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'))
 
-doc = '''Rotates the geometrical entities in `dimTags' of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az').'''
+doc = '''Rotates the geometrical entities `dimTags' of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az').'''
 occ.add('rotate',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'))
 
-doc = '''Scales the geometrical entities in `dimTag' by factors `a', `b' and `c' along the three coordinate axes; use (`x', `y', `z') as the center of the homothetic transformation.'''
+doc = '''Scales the geometrical entities `dimTag' by factors `a', `b' and `c' along the three coordinate axes; use (`x', `y', `z') as the center of the homothetic transformation.'''
 occ.add('dilate',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('a'),idouble('b'),idouble('c'))
 
-doc = '''Applies a symmetry transformation to the geometrical entities in `dimTag', with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
+doc = '''Applies a symmetry transformation to the geometrical entities `dimTag', with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
 occ.add('symmetry',doc,None,ivectorpair('dimTags'),idouble('a'),idouble('b'),idouble('c'),idouble('d'))
 
-doc = '''Copies the entities in `dimTags'; the new entities are returned in `outDimTags'.'''
+doc = '''Copies the entities `dimTags'; the new entities are returned in `outDimTags'.'''
 occ.add('copy',doc,None,ivectorpair('dimTags'),ovectorpair('outDimTags'))
 
 doc = '''Removes the entities `dimTags'. If `recursive' is true, removes all the entities on their boundaries, down to dimension 0.'''
@@ -399,6 +413,8 @@ occ.add('setMeshSize',doc,None,ivectorpair('dimTags'),idouble('size'))
 
 doc = '''Synchronize the internal OpenCASCADE CAD representation with the current Gmsh model. This can be called at any time, but since it involves a non trivial amount of processing, the number of synchronization points should normally be minimized.'''
 occ.add('synchronize',doc,None)
+
+################################################################################
 
 view = gmsh.add_module('view','Post-processing view functions')
 
@@ -420,11 +436,13 @@ view.add('addModelData',doc,None,iint('tag'),istring('modelName'),istring('dataT
 doc = '''Adds list-based post-processing data to the view with tag `tag'. `type' identifies the data: "SP" for scalar points, "VP", for vector points, etc. `numEle' gives the number of elements in the data. `data' contains the data for the `numEle' elements.'''
 view.add('addListData',doc,None,iint('tag'),istring('type'),iint('numEle'),ivectordouble('data'))
 
-doc = '''Probes the view `tag' for its `value' at point (`x', `y', `z').'''
+doc = '''Probes the view `tag' for its `value' at point (`x', `y', `z'). Returns only the value at step `step' is `step' is positive. Returns only values with `numComp' if `numComp' is positive. Returns the gradient of the `value' if `gradient' is set. Probes with a geometrical tolerance (in the reference unit cube) of `tolerance' if `tolerance' is not zero. Returns the result from the element described by its coordinates if `xElementCoord', `yElementCoord' and `zElementCoord' are provided.'''
 view.add('probe',doc,None,iint('tag'),idouble('x'),idouble('y'),idouble('z'),ovectordouble('value'),iint('step','-1'),iint('numComp','-1'),ibool('gradient','false','False'),idouble('tolerance','0.'),ivectordouble('xElemCoord','std::vector<double>()',"[]"),ivectordouble('yElemCoord','std::vector<double>()',"[]"),ivectordouble('zElemCoord','std::vector<double>()',"[]"))
 
-doc = '''Writes the view to a file. The export format is determined by the file extension.'''
+doc = '''Writes the view to a file `fileName'. The export format is determined by the file extension. Appends to the file if `append' is set.'''
 view.add('write',doc,None,iint('tag'),istring('fileName'),ibool('append','false','False'))
+
+################################################################################
 
 plugin = gmsh.add_module('plugin','Plugin functions')
 
@@ -436,6 +454,8 @@ plugin.add('setString',doc,None,istring('name'),istring('option'),istring('value
 
 doc = '''Runs the plugin `name'.'''
 plugin.add('run',doc,None,istring('name'))
+
+################################################################################
 
 api.write_cpp()
 api.write_c()

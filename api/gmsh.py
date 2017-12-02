@@ -1396,7 +1396,7 @@ class model:
         @staticmethod
         def extrude(dimTags,dx,dy,dz,numElements=[],heights=[],recombine=False):
             """
-            Extrudes the geometrical entities in `dimTags' by translation along (`dx',
+            Extrudes the geometrical entities `dimTags' by translation along (`dx',
             `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements' is
             not empty, also extrude the mesh: the entries in `numElements' give the
             number of elements in each layer. If `height' is not empty, it provides the
@@ -1428,13 +1428,13 @@ class model:
         @staticmethod
         def revolve(dimTags,x,y,z,ax,ay,az,angle,numElements=[],heights=[],recombine=False):
             """
-            Extrudes the geometrical entities in `dimTags' by rotation of `angle'
-            radians around the axis of revolution defined by the point (`x', `y', `z')
-            and the direction (`ax', `ay', `az'). Returns extruded entities in
-            `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
-            entries in `numElements' give the number of elements in each layer. If
-            `height' is not empty, it provides the (cummulative) height of the
-            different layers, normalized to 1.
+            Extrudes the geometrical entities `dimTags' by rotation of `angle' radians
+            around the axis of revolution defined by the point (`x', `y', `z') and the
+            direction (`ax', `ay', `az'). Returns extruded entities in `outDimTags'. If
+            `numElements' is not empty, also extrude the mesh: the entries in
+            `numElements' give the number of elements in each layer. If `height' is not
+            empty, it provides the (cummulative) height of the different layers,
+            normalized to 1.
 
             return outDimTags
             """
@@ -1466,14 +1466,13 @@ class model:
         @staticmethod
         def twist(dimTags,x,y,z,dx,dy,dz,ax,ay,az,angle,numElements=[],heights=[],recombine=False):
             """
-            Extrudes the geometrical entities in `dimTags' by a combined translation
-            and rotation of `angle' radians, along (`dx', `dy', `dz') and around the
-            axis of revolution defined by the point (`x', `y', `z') and the direction
-            (`ax', `ay', `az'). Returns extruded entities in `outDimTags'. If
-            `numElements' is not empty, also extrude the mesh: the entries in
-            `numElements' give the number of elements in each layer. If `height' is not
-            empty, it provides the (cummulative) height of the different layers,
-            normalized to 1.
+            Extrudes the geometrical entities `dimTags' by a combined translation and
+            rotation of `angle' radians, along (`dx', `dy', `dz') and around the axis
+            of revolution defined by the point (`x', `y', `z') and the direction (`ax',
+            `ay', `az'). Returns extruded entities in `outDimTags'. If `numElements' is
+            not empty, also extrude the mesh: the entries in `numElements' give the
+            number of elements in each layer. If `height' is not empty, it provides the
+            (cummulative) height of the different layers, normalized to 1.
 
             return outDimTags
             """
@@ -1508,7 +1507,7 @@ class model:
         @staticmethod
         def translate(dimTags,dx,dy,dz):
             """
-            Translates the geometrical entities in `dimTags' along (`dx', `dy', `dz').
+            Translates the geometrical entities `dimTags' along (`dx', `dy', `dz').
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -1526,7 +1525,7 @@ class model:
         @staticmethod
         def rotate(dimTags,x,y,z,ax,ay,az,angle):
             """
-            Rotates the geometrical entities in `dimTags' of `angle' radians around the
+            Rotates the geometrical entities `dimTags' of `angle' radians around the
             axis of revolution defined by the point (`x', `y', `z') and the direction
             (`ax', `ay', `az').
             """
@@ -1550,8 +1549,8 @@ class model:
         @staticmethod
         def dilate(dimTags,x,y,z,a,b,c):
             """
-            Scales the geometrical entities in `dimTag' by factors `a', `b' and `c'
-            along the three coordinate axes; use (`x', `y', `z') as the center of the
+            Scales the geometrical entities `dimTag' by factors `a', `b' and `c' along
+            the three coordinate axes; use (`x', `y', `z') as the center of the
             homothetic transformation.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -1573,7 +1572,7 @@ class model:
         @staticmethod
         def symmetry(dimTags,a,b,c,d):
             """
-            Applies a symmetry transformation to the geometrical entities in `dimTag',
+            Applies a symmetry transformation to the geometrical entities `dimTag',
             with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' =
             0.
             """
@@ -1594,7 +1593,7 @@ class model:
         @staticmethod
         def copy(dimTags):
             """
-            Copies the entities in `dimTags'; the new entities are returned in
+            Copies the entities `dimTags'; the new entities are returned in
             `outDimTags'.
 
             return outDimTags
@@ -2410,7 +2409,7 @@ class model:
         @staticmethod
         def extrude(dimTags,dx,dy,dz,numElements=[],heights=[],recombine=False):
             """
-            Extrudes the geometrical entities in `dimTags' by translation along (`dx',
+            Extrudes the geometrical entities `dimTags' by translation along (`dx',
             `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements' is
             not empty, also extrude the mesh: the entries in `numElements' give the
             number of elements in each layer. If `height' is not empty, it provides the
@@ -2442,13 +2441,13 @@ class model:
         @staticmethod
         def revolve(dimTags,x,y,z,ax,ay,az,angle,numElements=[],heights=[],recombine=False):
             """
-            Extrudes the geometrical entities in `dimTags' by rotation of `angle'
-            radians around the axis of revolution defined by the point (`x', `y', `z')
-            and the direction (`ax', `ay', `az'). Returns extruded entities in
-            `outDimTags'. If `numElements' is not empty, also extrude the mesh: the
-            entries in `numElements' give the number of elements in each layer. If
-            `height' is not empty, it provides the (cummulative) height of the
-            different layers, normalized to 1.
+            Extrudes the geometrical entities `dimTags' by rotation of `angle' radians
+            around the axis of revolution defined by the point (`x', `y', `z') and the
+            direction (`ax', `ay', `az'). Returns extruded entities in `outDimTags'. If
+            `numElements' is not empty, also extrude the mesh: the entries in
+            `numElements' give the number of elements in each layer. If `height' is not
+            empty, it provides the (cummulative) height of the different layers,
+            normalized to 1.
 
             return outDimTags
             """
@@ -2480,7 +2479,8 @@ class model:
         @staticmethod
         def addPipe(dimTags,wireTag):
             """
-            TODO
+            Adds a pipe by extruding the entities `dimTags' along the curve `wireTag'.
+            Returns the pipe in `outDimTags'.
 
             return outDimTags
             """
@@ -2501,7 +2501,9 @@ class model:
         @staticmethod
         def fillet(regionTags,edgeTags,radius,removeRegion=True):
             """
-            TODO
+            Fillets the volumes `regionTags' on the curves `edgeTags' with radius
+            `radius'. Returns the filleted entities in `outDimTags'. Removes the
+            original volume if `removeRegion' is set.
 
             return outDimTags
             """
@@ -2523,9 +2525,13 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def booleanUnion(objectDimTags,toolDimTags,tag=-1,removeObject=True,removeTool=True):
+        def fuse(objectDimTags,toolDimTags,tag=-1,removeObject=True,removeTool=True):
             """
-            TODO
+            Computes the boolean union (the fusion) of the entities `objectDimTags' and
+            `toolDimTags'.Returns the resulting entities in `outDimTags'. If `tag' is
+            positive, attemps to set the tag explicitly (ony valid if the boolean
+            operation results in a single entity). Removes the object if `removeObject'
+            is set. Removes the tool if `removeTool' is set.
 
             return outDimTags, outDimTagsMap
             """
@@ -2534,7 +2540,7 @@ class model:
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelOccBooleanUnion(
+            lib.gmshModelOccFuse(
                 api_objectDimTags_, api_objectDimTags_n_,
                 api_toolDimTags_, api_toolDimTags_n_,
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
@@ -2545,16 +2551,20 @@ class model:
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
-                    "gmshModelOccBooleanUnion returned non-zero error code : ",
+                    "gmshModelOccFuse returned non-zero error code : ",
                     ierr.value)
             return (
                 _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
                 _ovectorvectorpair(api_outDimTagsMap_,api_outDimTagsMap_n_,api_outDimTagsMap_nn_))
 
         @staticmethod
-        def booleanIntersection(objectDimTags,toolDimTags,tag=-1,removeObject=True,removeTool=True):
+        def intersect(objectDimTags,toolDimTags,tag=-1,removeObject=True,removeTool=True):
             """
-            TODO
+            Computes the boolean intersection (the common parts) of the entities
+            `objectDimTags' and `toolDimTags'. Returns the resulting entities in
+            `outDimTags'. If `tag' is positive, attemps to set the tag explicitly (ony
+            valid if the boolean operation results in a single entity). Removes the
+            object if `removeObject' is set. Removes the tool if `removeTool' is set.
 
             return outDimTags, outDimTagsMap
             """
@@ -2563,7 +2573,7 @@ class model:
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelOccBooleanIntersection(
+            lib.gmshModelOccIntersect(
                 api_objectDimTags_, api_objectDimTags_n_,
                 api_toolDimTags_, api_toolDimTags_n_,
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
@@ -2574,16 +2584,20 @@ class model:
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
-                    "gmshModelOccBooleanIntersection returned non-zero error code : ",
+                    "gmshModelOccIntersect returned non-zero error code : ",
                     ierr.value)
             return (
                 _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
                 _ovectorvectorpair(api_outDimTagsMap_,api_outDimTagsMap_n_,api_outDimTagsMap_nn_))
 
         @staticmethod
-        def booleanDifference(objectDimTags,toolDimTags,tag=-1,removeObject=True,removeTool=True):
+        def cut(objectDimTags,toolDimTags,tag=-1,removeObject=True,removeTool=True):
             """
-            TODO
+            Computes the boolean difference between the entities `objectDimTags' and
+            `toolDimTags'. Returns the resulting entities in `outDimTags'. If `tag' is
+            positive, attemps to set the tag explicitly (ony valid if the boolean
+            operation results in a single entity). Removes the object if `removeObject'
+            is set. Removes the tool if `removeTool' is set.
 
             return outDimTags, outDimTagsMap
             """
@@ -2592,7 +2606,7 @@ class model:
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelOccBooleanDifference(
+            lib.gmshModelOccCut(
                 api_objectDimTags_, api_objectDimTags_n_,
                 api_toolDimTags_, api_toolDimTags_n_,
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
@@ -2603,16 +2617,20 @@ class model:
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
-                    "gmshModelOccBooleanDifference returned non-zero error code : ",
+                    "gmshModelOccCut returned non-zero error code : ",
                     ierr.value)
             return (
                 _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
                 _ovectorvectorpair(api_outDimTagsMap_,api_outDimTagsMap_n_,api_outDimTagsMap_nn_))
 
         @staticmethod
-        def booleanFragments(objectDimTags,toolDimTags,tag=-1,removeObject=True,removeTool=True):
+        def fragment(objectDimTags,toolDimTags,tag=-1,removeObject=True,removeTool=True):
             """
-            TODO
+            Copmutes the boolean fragments (general fuse) of the entities
+            `objectDimTags' and `toolDimTags'. Returns the resulting entities in
+            `outDimTags'. If `tag' is positive, attemps to set the tag explicitly (ony
+            valid if the boolean operation results in a single entity). Removes the
+            object if `removeObject' is set. Removes the tool if `removeTool' is set.
 
             return outDimTags, outDimTagsMap
             """
@@ -2621,7 +2639,7 @@ class model:
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelOccBooleanFragments(
+            lib.gmshModelOccFragment(
                 api_objectDimTags_, api_objectDimTags_n_,
                 api_toolDimTags_, api_toolDimTags_n_,
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
@@ -2632,7 +2650,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
-                    "gmshModelOccBooleanFragments returned non-zero error code : ",
+                    "gmshModelOccFragment returned non-zero error code : ",
                     ierr.value)
             return (
                 _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
@@ -2641,7 +2659,7 @@ class model:
         @staticmethod
         def translate(dimTags,dx,dy,dz):
             """
-            Translates the geometrical entities in `dimTags' along (`dx', `dy', `dz').
+            Translates the geometrical entities `dimTags' along (`dx', `dy', `dz').
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             ierr = c_int()
@@ -2659,7 +2677,7 @@ class model:
         @staticmethod
         def rotate(dimTags,x,y,z,ax,ay,az,angle):
             """
-            Rotates the geometrical entities in `dimTags' of `angle' radians around the
+            Rotates the geometrical entities `dimTags' of `angle' radians around the
             axis of revolution defined by the point (`x', `y', `z') and the direction
             (`ax', `ay', `az').
             """
@@ -2683,8 +2701,8 @@ class model:
         @staticmethod
         def dilate(dimTags,x,y,z,a,b,c):
             """
-            Scales the geometrical entities in `dimTag' by factors `a', `b' and `c'
-            along the three coordinate axes; use (`x', `y', `z') as the center of the
+            Scales the geometrical entities `dimTag' by factors `a', `b' and `c' along
+            the three coordinate axes; use (`x', `y', `z') as the center of the
             homothetic transformation.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
@@ -2706,7 +2724,7 @@ class model:
         @staticmethod
         def symmetry(dimTags,a,b,c,d):
             """
-            Applies a symmetry transformation to the geometrical entities in `dimTag',
+            Applies a symmetry transformation to the geometrical entities `dimTag',
             with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' =
             0.
             """
@@ -2727,7 +2745,7 @@ class model:
         @staticmethod
         def copy(dimTags):
             """
-            Copies the entities in `dimTags'; the new entities are returned in
+            Copies the entities `dimTags'; the new entities are returned in
             `outDimTags'.
 
             return outDimTags
@@ -2971,7 +2989,13 @@ class view:
     @staticmethod
     def probe(tag,x,y,z,step=-1,numComp=-1,gradient=False,tolerance=0.,xElemCoord=[],yElemCoord=[],zElemCoord=[]):
         """
-        Probes the view `tag' for its `value' at point (`x', `y', `z').
+        Probes the view `tag' for its `value' at point (`x', `y', `z'). Returns
+        only the value at step `step' is `step' is positive. Returns only values
+        with `numComp' if `numComp' is positive. Returns the gradient of the
+        `value' if `gradient' is set. Probes with a geometrical tolerance (in the
+        reference unit cube) of `tolerance' if `tolerance' is not zero. Returns the
+        result from the element described by its coordinates if `xElementCoord',
+        `yElementCoord' and `zElementCoord' are provided.
 
         return value
         """
@@ -3003,8 +3027,8 @@ class view:
     @staticmethod
     def write(tag,fileName,append=False):
         """
-        Writes the view to a file. The export format is determined by the file
-        extension.
+        Writes the view to a file `fileName'. The export format is determined by
+        the file extension. Appends to the file if `append' is set.
         """
         ierr = c_int()
         lib.gmshViewWrite(

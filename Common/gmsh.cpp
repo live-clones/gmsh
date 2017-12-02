@@ -1741,13 +1741,13 @@ void gmsh::model::occ::fillet(const std::vector<int> &regionTags,
   }
 }
 
-void gmsh::model::occ::booleanUnion(const vector_pair &objectDimTags,
-                                    const vector_pair &toolDimTags,
-                                    vector_pair &outDimTags,
-                                    std::vector<vector_pair > &outDimTagsMap,
-                                    const int tag,
-                                    const bool removeObject,
-                                    const bool removeTool)
+void gmsh::model::occ::fuse(const vector_pair &objectDimTags,
+                            const vector_pair &toolDimTags,
+                            vector_pair &outDimTags,
+                            std::vector<vector_pair > &outDimTagsMap,
+                            const int tag,
+                            const bool removeObject,
+                            const bool removeTool)
 {
   if(!_isInitialized()){ throw -1; }
   _createOcc();
@@ -1760,13 +1760,13 @@ void gmsh::model::occ::booleanUnion(const vector_pair &objectDimTags,
   }
 }
 
-void gmsh::model::occ::booleanIntersection(const vector_pair &objectDimTags,
-                                           const vector_pair &toolDimTags,
-                                           vector_pair &outDimTags,
-                                           std::vector<vector_pair> &outDimTagsMap,
-                                           const int tag,
-                                           const bool removeObject,
-                                           const bool removeTool)
+void gmsh::model::occ::intersect(const vector_pair &objectDimTags,
+                                 const vector_pair &toolDimTags,
+                                 vector_pair &outDimTags,
+                                 std::vector<vector_pair> &outDimTagsMap,
+                                 const int tag,
+                                 const bool removeObject,
+                                 const bool removeTool)
 {
   if(!_isInitialized()){ throw -1; }
   _createOcc();
@@ -1779,13 +1779,13 @@ void gmsh::model::occ::booleanIntersection(const vector_pair &objectDimTags,
   }
 }
 
-void gmsh::model::occ::booleanDifference(const vector_pair &objectDimTags,
-                                         const vector_pair &toolDimTags,
-                                         vector_pair &outDimTags,
-                                         std::vector<vector_pair> &outDimTagsMap,
-                                         const int tag,
-                                         const bool removeObject,
-                                         const bool removeTool)
+void gmsh::model::occ::cut(const vector_pair &objectDimTags,
+                           const vector_pair &toolDimTags,
+                           vector_pair &outDimTags,
+                           std::vector<vector_pair> &outDimTagsMap,
+                           const int tag,
+                           const bool removeObject,
+                           const bool removeTool)
 {
   if(!_isInitialized()){ throw -1; }
   _createOcc();
@@ -1798,13 +1798,13 @@ void gmsh::model::occ::booleanDifference(const vector_pair &objectDimTags,
   }
 }
 
-void gmsh::model::occ::booleanFragments(const vector_pair &objectDimTags,
-                                       const vector_pair &toolDimTags,
-                                       vector_pair &outDimTags,
-                                       std::vector<vector_pair> &outDimTagsMap,
-                                       const int tag,
-                                       const bool removeObject,
-                                       const bool removeTool)
+void gmsh::model::occ::fragment(const vector_pair &objectDimTags,
+                                const vector_pair &toolDimTags,
+                                vector_pair &outDimTags,
+                                std::vector<vector_pair> &outDimTagsMap,
+                                const int tag,
+                                const bool removeObject,
+                                const bool removeTool)
 {
   if(!_isInitialized()){ throw -1; }
   _createOcc();

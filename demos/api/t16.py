@@ -13,7 +13,7 @@ model.add("t16")
 
 factory.addBox(0,0,0, 1,1,1, 1)
 factory.addBox(0,0,0, 0.5,0.5,0.5, 2)
-factory.booleanDifference([(3,1)], [(3,2)], 3)
+factory.cut([(3,1)], [(3,2)], 3)
 
 x = 0; y = 0.75; z = 0; r = 0.09
 
@@ -24,7 +24,7 @@ for t in range(1, 6):
     factory.addSphere(x,y,z,r, 3 + t)
     holes.append((3, 3 + t))
 
-ov, ovv = factory.booleanFragments([(3,3)], holes)
+ov, ovv = factory.fragment([(3,3)], holes)
 
 factory.synchronize()
 
