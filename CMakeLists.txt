@@ -1472,8 +1472,13 @@ endif(ENABLE_BUILD_LIB)
 
 # shared library target
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
-  # FIXME: change this once we understand rpaths
-  set(CMAKE_MACOSX_RPATH 0)
+  if(APPLE)
+    # FIXME: change this once we understand rpaths
+    set(CMAKE_MACOSX_RPATH 0)
+  endif(APPLE)
+  if(WIN32)
+    add_definitions(-DGMSH_DLL_EXPORT)
+  endif(WIN32)
   add_library(shared SHARED ${GMSH_SRC})
   set_target_properties(shared PROPERTIES OUTPUT_NAME gmsh
     VERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}

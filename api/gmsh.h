@@ -22,7 +22,7 @@
 #include <vector>
 #include <string>
 
-#if defined(WIN32)
+#if defined(GMSH_DLL_EXPORT)
 #define GMSH_API __declspec(dllexport)
 #else
 #define GMSH_API

@@ -254,7 +254,7 @@ cpp_header="""// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
 #include <vector>
 #include <string>
 
-#if defined(WIN32)
+#if defined(GMSH_DLL_EXPORT)
 #define GMSH_API __declspec(dllexport)
 #else
 #define GMSH_API
@@ -302,7 +302,7 @@ c_header="""/*
  * tutorials from `gmsh/tutorials'.
  */
 
-#if defined(WIN32)
+#if defined(GMSH_DLL_EXPORT)
 #define GMSH_API __declspec(dllexport)
 #else
 #define GMSH_API
