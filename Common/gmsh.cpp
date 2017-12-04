@@ -1648,36 +1648,32 @@ int gmsh::model::occ::addTorus(const double x, const double y, const double z,
   return outTag;
 }
 
-int gmsh::model::occ::addThruSections(const std::vector<int> &wireTags,
-                                      vector_pair &outDimTags,
-                                      const int tag, const bool makeSolid,
-                                      const bool makeRuled)
+void gmsh::model::occ::addThruSections(const std::vector<int> &wireTags,
+                                       vector_pair &outDimTags,
+                                       const int tag, const bool makeSolid,
+                                       const bool makeRuled)
 {
   if(!_isInitialized()){ throw -1; }
   _createOcc();
-  int outTag = tag;
   outDimTags.clear();
   if(!GModel::current()->getOCCInternals()->addThruSections
-     (outTag, wireTags, makeSolid, makeRuled, outDimTags)){
+     (tag, wireTags, makeSolid, makeRuled, outDimTags)){
     throw 1;
   }
-  return outTag;
 }
 
-int gmsh::model::occ::addThickSolid(const int solidTag,
-                                    const std::vector<int> &excludeFaceTags,
-                                    const double offset, vector_pair &outDimTags,
-                                    const int tag)
+void gmsh::model::occ::addThickSolid(const int solidTag,
+                                     const std::vector<int> &excludeFaceTags,
+                                     const double offset, vector_pair &outDimTags,
+                                     const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   _createOcc();
-  int outTag = tag;
   outDimTags.clear();
   if(!GModel::current()->getOCCInternals()->addThickSolid
-     (outTag, solidTag, excludeFaceTags, offset, outDimTags)){
+     (tag, solidTag, excludeFaceTags, offset, outDimTags)){
     throw 1;
   }
-  return outTag;
 }
 
 void gmsh::model::occ::extrude(const vector_pair &dimTags,

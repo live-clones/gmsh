@@ -74,7 +74,6 @@ def _ovectordouble(ptr,size):
         lib.gmshFree(ptr)
     return v
 
-
 def _ovectorvectorint(ptr,size,n):
     v = [_ovectorint(pointer(ptr[i].contents),size[i]) for i in range(n.value)]
     lib.gmshFree(size)
@@ -2356,12 +2355,12 @@ class model:
             `makeRuled' is set, the surfaces created on the boundary are forced to be
             ruled surfaces.
 
-            return int, outDimTags
+            return outDimTags
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddThruSections(
+            lib.gmshModelOccAddThruSections(
                 api_wireTags_, api_wireTags_n_,
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
                 c_int(tag),
@@ -2372,9 +2371,7 @@ class model:
                 raise ValueError(
                     "gmshModelOccAddThruSections returned non-zero error code : ",
                     ierr.value)
-            return (
-                api__result__,
-                _ovectorpair(api_outDimTags_, api_outDimTags_n_.value))
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
         def addThickSolid(solidTag,excludeFaceTags,offset,tag=-1):
@@ -2383,15 +2380,14 @@ class model:
             faces from this volume `excludeFaceTags', which are to be removed. The
             remaining faces of the volume become the walls of the hollowed solid, with
             thickness `offset'. If `tag' is positive, sets the tag explicitly;
-            otherwise a new tag is selected automatically. Returns the tag of the
-            volume.
+            otherwise a new tag is selected automatically.
 
-            return int, outDimTags
+            return outDimTags
             """
             api_excludeFaceTags_, api_excludeFaceTags_n_ = _ivectorint(excludeFaceTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddThickSolid(
+            lib.gmshModelOccAddThickSolid(
                 c_int(solidTag),
                 api_excludeFaceTags_, api_excludeFaceTags_n_,
                 c_double(offset),
@@ -2402,9 +2398,7 @@ class model:
                 raise ValueError(
                     "gmshModelOccAddThickSolid returned non-zero error code : ",
                     ierr.value)
-            return (
-                api__result__,
-                _ovectorpair(api_outDimTags_, api_outDimTags_n_.value))
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
         def extrude(dimTags,dx,dy,dz,numElements=[],heights=[],recombine=False):

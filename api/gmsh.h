@@ -891,23 +891,22 @@ namespace gmsh { // Top-level functions
       // The new entities are returned in `outDimTags'. If the optional argument
       // `makeRuled' is set, the surfaces created on the boundary are forced to be
       // ruled surfaces.
-      GMSH_API int addThruSections(const std::vector<int> & wireTags,
-                                   gmsh::vector_pair & outDimTags,
-                                   const int tag = -1,
-                                   const bool makeSolid = true,
-                                   const bool makeRuled = false);
+      GMSH_API void addThruSections(const std::vector<int> & wireTags,
+                                    gmsh::vector_pair & outDimTags,
+                                    const int tag = -1,
+                                    const bool makeSolid = true,
+                                    const bool makeRuled = false);
 
       // Adds a hollowed volume built from an initial volume `solidTag' and a set
       // of faces from this volume `excludeFaceTags', which are to be removed. The
       // remaining faces of the volume become the walls of the hollowed solid, with
       // thickness `offset'. If `tag' is positive, sets the tag explicitly;
-      // otherwise a new tag is selected automatically. Returns the tag of the
-      // volume.
-      GMSH_API int addThickSolid(const int solidTag,
-                                 const std::vector<int> & excludeFaceTags,
-                                 const double offset,
-                                 gmsh::vector_pair & outDimTags,
-                                 const int tag = -1);
+      // otherwise a new tag is selected automatically.
+      GMSH_API void addThickSolid(const int solidTag,
+                                  const std::vector<int> & excludeFaceTags,
+                                  const double offset,
+                                  gmsh::vector_pair & outDimTags,
+                                  const int tag = -1);
 
       // Extrudes the geometrical entities `dimTags' by translation along (`dx',
       // `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements'

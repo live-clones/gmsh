@@ -904,26 +904,22 @@ int gmshModelOccAddTorus(const double x,const double y,const double z,const doub
   return result_api_;
 }
 
-int gmshModelOccAddThruSections(int* wireTags, size_t wireTags_n,int ** outDimTags, size_t * outDimTags_n,const int tag,const int makeSolid,const int makeRuled,int * ierr){
-  int result_api_;
+void gmshModelOccAddThruSections(int* wireTags, size_t wireTags_n,int ** outDimTags, size_t * outDimTags_n,const int tag,const int makeSolid,const int makeRuled,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::vector_pair api_outDimTags_;
-  result_api_ = gmsh::model::occ::addThruSections(ptr2vector(wireTags,wireTags_n),api_outDimTags_,tag,makeSolid,makeRuled);
+  gmsh::model::occ::addThruSections(ptr2vector(wireTags,wireTags_n),api_outDimTags_,tag,makeSolid,makeRuled);
   pairvector2intptr(api_outDimTags_,outDimTags,outDimTags_n);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
-  return result_api_;
 }
 
-int gmshModelOccAddThickSolid(const int solidTag,int* excludeFaceTags, size_t excludeFaceTags_n,const double offset,int ** outDimTags, size_t * outDimTags_n,const int tag,int * ierr){
-  int result_api_;
+void gmshModelOccAddThickSolid(const int solidTag,int* excludeFaceTags, size_t excludeFaceTags_n,const double offset,int ** outDimTags, size_t * outDimTags_n,const int tag,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::vector_pair api_outDimTags_;
-  result_api_ = gmsh::model::occ::addThickSolid(solidTag,ptr2vector(excludeFaceTags,excludeFaceTags_n),offset,api_outDimTags_,tag);
+  gmsh::model::occ::addThickSolid(solidTag,ptr2vector(excludeFaceTags,excludeFaceTags_n),offset,api_outDimTags_,tag);
   pairvector2intptr(api_outDimTags_,outDimTags,outDimTags_n);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
-  return result_api_;
 }
 
 void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,const double dx,const double dy,const double dz,int ** outDimTags, size_t * outDimTags_n,int* numElements, size_t numElements_n,double * heights, size_t heights_n,const int recombine,int * ierr){
