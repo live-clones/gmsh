@@ -29,7 +29,7 @@ class GVertex : public GEntity
   virtual ~GVertex();
 
   // delete mesh data
-  virtual void deleteMesh();
+  virtual void deleteMesh(bool vertices = true, bool elements = true);
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
@@ -80,7 +80,7 @@ class GVertex : public GEntity
   // get number of elements in the mesh
   unsigned int getNumMeshElements();
   void getNumMeshElements(unsigned *const c) const;
-  
+
   // get the element at the given index
   MElement *getMeshElement(unsigned int index);
 

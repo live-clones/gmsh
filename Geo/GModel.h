@@ -198,7 +198,7 @@ class GModel {
   // mesh is changed)
   void destroyMeshCaches();
   //delete the mesh stored in entities and call destroMeshCaches
-  void deleteMesh();
+  void deleteMesh(bool vertices = true, bool elements = true);
 
   // remove all mesh vertex associations to geometrical entities and remove
   // vertices from geometrical entities, then _associateEntityWithMeshVertices

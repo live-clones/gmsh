@@ -42,16 +42,13 @@ print("Entities")
 entities = model.getEntities()
 for e in entities :
     print("entity ",e)
-    vertexTags,vertexCoords,_ = model.mesh.getVertices(e[0],e[1])
-    elemTypes,elemTags,elemVertices = model.mesh.getElements(e[0],e[1])
-    for i in range(len(elemTypes)):
-        print("type ", elemTypes[i])
-        print("tags : ", list(elemTags[i]))
-        print("vertices : ", list(elemVertices[i]))
+    types,tags,vertices = model.mesh.getElements(e[0],e[1])
+    for i in range(len(types)):
+        print("type ", types[i])
+        print("tags : ", list(tags[i]))
+        print("vertices : ", list(vertices[i]))
     if e[0] == [2] and e[1] == 6 :
-        model.mesh.setVertices(e[0],e[1],vertexTags,vertexCoords)
-        model.mesh.setElements(e[0],e[1],elemTypes,[elemTags[0][:10]],[elemVertices[0][:30]])
-
+        model.mesh.setElements(e[0],e[1],types,[tags[0][:10]],[vertices[0][:30]])
 
 gmsh.write("mesh_truncated.msh")
 print("Vertices")

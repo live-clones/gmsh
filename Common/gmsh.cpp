@@ -520,7 +520,8 @@ void gmsh::model::mesh::setVertices(const int dim, const int tag,
     }
     param = true;
   }
-  ge->deleteMesh(); // this will also delete the model mesh cache
+  // delete vertices; this will also delete the model mesh cache
+  ge->deleteMesh(true, false);
   for(unsigned int i = 0; i < vertexTags.size(); i++){
     int n = vertexTags[i];
     double x = coord[3 * i];
@@ -546,9 +547,6 @@ template<class T>
 static void _addElements(int dim, int tag, const std::vector<MElement*> &src,
                          std::vector<T*> &dst)
 {
-  if(dst.size())
-    Msg::Warning("%s already contains mesh elements - appending the new ones",
-                 _entityName(dim, tag).c_str());
   for(unsigned int i = 0; i < src.size(); i++)
     dst.push_back(static_cast<T*>(src[i]));
 }
@@ -572,6 +570,8 @@ void gmsh::model::mesh::setElements(const int dim, const int tag,
     Msg::Error("Wrong number of vertex tags");
     throw 2;
   }
+  // delete elements; this will also delete the model mesh cache
+  ge->deleteMesh(false, true);
   for(unsigned int i = 0; i < types.size(); i++){
     int type = types[i];
     unsigned int numEle = elementTags[i].size();

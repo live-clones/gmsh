@@ -126,17 +126,21 @@ void GFace::replaceEdge(GEdge *e1, GEdge *e2)
   l_edges = newlist;
 }
 
-void GFace::deleteMesh()
+void GFace::deleteMesh(bool vertices, bool elements)
 {
-  for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
-  mesh_vertices.clear();
-  transfinite_vertices.clear();
-  for(unsigned int i = 0; i < triangles.size(); i++) delete triangles[i];
-  triangles.clear();
-  for(unsigned int i = 0; i < quadrangles.size(); i++) delete quadrangles[i];
-  quadrangles.clear();
-  for(unsigned int i = 0; i < polygons.size(); i++) delete polygons[i];
-  polygons.clear();
+  if(vertices){
+    for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
+    mesh_vertices.clear();
+    transfinite_vertices.clear();
+  }
+  if(elements){
+    for(unsigned int i = 0; i < triangles.size(); i++) delete triangles[i];
+    triangles.clear();
+    for(unsigned int i = 0; i < quadrangles.size(); i++) delete quadrangles[i];
+    quadrangles.clear();
+    for(unsigned int i = 0; i < polygons.size(); i++) delete polygons[i];
+    polygons.clear();
+  }
   deleteVertexArrays();
   model()->destroyMeshCaches();
 }

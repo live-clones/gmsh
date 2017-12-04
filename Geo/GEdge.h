@@ -43,7 +43,7 @@ class GEdge : public GEntity {
   virtual ~GEdge();
 
   // delete mesh data
-  virtual void deleteMesh();
+  virtual void deleteMesh(bool vertices = true, bool elements = true);
 
   // get the start/end vertices of the edge
   void setBeginVertex(GVertex *gv) { v0=gv; }

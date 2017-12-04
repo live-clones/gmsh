@@ -227,16 +227,16 @@ void GModel::destroyMeshCaches()
   _octree = 0;
 }
 
-void GModel::deleteMesh()
+void GModel::deleteMesh(bool vertices, bool elements)
 {
   for(riter it = firstRegion(); it != lastRegion();++it)
-    (*it)->deleteMesh();
+    (*it)->deleteMesh(vertices, elements);
   for(fiter it = firstFace(); it != lastFace();++it)
-    (*it)->deleteMesh();
+    (*it)->deleteMesh(vertices, elements);
   for(eiter it = firstEdge(); it != lastEdge();++it)
-    (*it)->deleteMesh();
+    (*it)->deleteMesh(vertices, elements);
   for(viter it = firstVertex(); it != lastVertex();++it)
-    (*it)->deleteMesh();
+    (*it)->deleteMesh(vertices, elements);
   destroyMeshCaches();
   _currentMeshEntity = 0;
   _lastMeshEntityError.clear();

@@ -189,7 +189,7 @@ class GEntity {
   virtual void mesh(bool verbose) {}
 
   // delete the mesh data
-  virtual void deleteMesh(){}
+  virtual void deleteMesh(bool vertices = true, bool elements = true){}
 
   // delete the vertex arrays, used to to draw the mesh efficiently
   void deleteVertexArrays();
