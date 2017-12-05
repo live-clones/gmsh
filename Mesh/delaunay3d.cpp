@@ -967,7 +967,7 @@ Tet* walk (Tet *t, Vert *v, int maxx, double &totSearch, int thread)
 {
   std::set<Tet *> investigatedTets;
   std::queue<Tet *> tets;
-  investigatedTets.emplace(t);
+  investigatedTets.insert(t);
   while (1){
     totSearch++;
     if (t == NULL) {
@@ -993,14 +993,14 @@ Tet* walk (Tet *t, Vert *v, int maxx, double &totSearch, int thread)
         }
         else
         {
-          tets.emplace(t->T[iNeigh]);
+          tets.push(t->T[iNeigh]);
         }
       }
     }
     if (count == 4  && t->inSphere(v,thread))return t;
     if (NEIGH >= 0){
       t = t->T[NEIGH];
-      investigatedTets.emplace(t);
+      investigatedTets.insert(t);
     }
     else if (tets.empty()){
       Msg::Fatal("Jump-and-Walk Failed (No neighbor)");
