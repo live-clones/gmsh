@@ -20,16 +20,14 @@ GVertex::~GVertex()
   deleteMesh();
 }
 
-void GVertex::deleteMesh(bool vertices, bool elements)
+void GVertex::deleteMesh(bool onlyDeleteElements)
 {
-  if(vertices){
+  if(!onlyDeleteElements){
     for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
     mesh_vertices.clear();
   }
-  if(elements){
-    for(unsigned int i = 0; i < points.size(); i++) delete points[i];
-    points.clear();
-  }
+  for(unsigned int i = 0; i < points.size(); i++) delete points[i];
+  points.clear();
   deleteVertexArrays();
   model()->destroyMeshCaches();
 }

@@ -520,8 +520,8 @@ void gmsh::model::mesh::setVertices(const int dim, const int tag,
     }
     param = true;
   }
-  // delete vertices; this will also delete the model mesh cache
-  ge->deleteMesh(true, false);
+  // delete vertices and elements; this will also delete the model mesh cache
+  ge->deleteMesh();
   for(unsigned int i = 0; i < vertexTags.size(); i++){
     int n = vertexTags[i];
     double x = coord[3 * i];
@@ -570,8 +570,8 @@ void gmsh::model::mesh::setElements(const int dim, const int tag,
     Msg::Error("Wrong number of vertex tags");
     throw 2;
   }
-  // delete elements; this will also delete the model mesh cache
-  ge->deleteMesh(false, true);
+  // delete only elements; this will also delete the model mesh cache
+  ge->deleteMesh(true);
   for(unsigned int i = 0; i < types.size(); i++){
     int type = types[i];
     unsigned int numEle = elementTags[i].size();

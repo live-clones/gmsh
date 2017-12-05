@@ -29,7 +29,7 @@ class GVertex : public GEntity
   virtual ~GVertex();
 
   // delete mesh data
-  virtual void deleteMesh(bool vertices = true, bool elements = true);
+  virtual void deleteMesh(bool onlyDeleteElements = false);
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();

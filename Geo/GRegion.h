@@ -42,7 +42,7 @@ class GRegion : public GEntity {
   virtual ~GRegion();
 
   // delete mesh data
-  virtual void deleteMesh(bool vertices = true, bool elements = true);
+  virtual void deleteMesh(bool onlyDeleteElements = false);
 
   // get the dimension of the region (3)
   virtual int dim() const { return 3; }
