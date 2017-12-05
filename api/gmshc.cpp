@@ -1161,3 +1161,10 @@ void gmshPluginRun(const char * name,int * ierr){
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
+void gmshGraphicsRunFltkGui(int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  gmsh::graphics::runFltkGui();
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+

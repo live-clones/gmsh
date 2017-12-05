@@ -3086,3 +3086,22 @@ class plugin:
             raise ValueError(
                 "gmshPluginRun returned non-zero error code : ",
                 ierr.value)
+
+
+class graphics:
+    """
+    Graphics functions
+    """
+
+    @staticmethod
+    def runFltkGui():
+        """
+        Launch the FLTK graphical user interface.
+        """
+        ierr = c_int()
+        lib.gmshGraphicsRunFltkGui(
+            byref(ierr))
+        if ierr.value != 0 :
+            raise ValueError(
+                "gmshGraphicsRunFltkGui returned non-zero error code : ",
+                ierr.value)

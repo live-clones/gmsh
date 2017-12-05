@@ -1182,6 +1182,13 @@ namespace gmsh { // Top-level functions
 
   } // namespace plugin
 
+  namespace graphics { // Graphics functions
+
+    // Launch the FLTK graphical user interface.
+    GMSH_API void runFltkGui();
+
+  } // namespace graphics
+
 } // namespace gmsh
 
 #undef GMSH_API

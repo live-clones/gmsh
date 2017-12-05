@@ -45,9 +45,15 @@
 #include "PluginManager.h"
 #endif
 
+#if defined(HAVE_FLTK)
+#include "FlGui.h"
+#endif
+
 #include "gmsh.h" // automatically generated, in gmsh/api
 
 static int _initialized = 0;
+static int _argc = 0;
+static char **_argv = 0;
 
 static bool _isInitialized()
 {
@@ -70,6 +76,9 @@ void gmsh::initialize(int argc, char **argv)
   }
   if(GmshInitialize(argc, argv)){
     _initialized = 1;
+    _argc = argc;
+    _argv = new char*[_argc + 1];
+    for(int i = 0; i < argc; i++) _argv[i] = argv[i];
     return;
   }
   throw -1;
@@ -79,6 +88,9 @@ void gmsh::finalize()
 {
   if(!_isInitialized()){ throw -1; }
   if(GmshFinalize()){
+    _argc = 0;
+    if(_argv) delete [] _argv;
+    _argv = 0;
     _initialized = 0;
     return;
   }
@@ -2153,6 +2165,7 @@ void gmsh::view::write(const int tag, const std::string &fileName,
 void gmsh::plugin::setNumber(const std::string &name, const std::string &option,
                              const double value)
 {
+  if(!_isInitialized()){ throw -1; }
 #if defined(HAVE_PLUGINS)
   try {
     PluginManager::instance()->setPluginOption(name, option, value);
@@ -2170,6 +2183,7 @@ void gmsh::plugin::setNumber(const std::string &name, const std::string &option,
 void gmsh::plugin::setString(const std::string &name, const std::string &option,
                              const std::string &value)
 {
+  if(!_isInitialized()){ throw -1; }
 #if defined(HAVE_PLUGINS)
   try {
     PluginManager::instance()->setPluginOption(name, option, value);
@@ -2186,6 +2200,7 @@ void gmsh::plugin::setString(const std::string &name, const std::string &option,
 
 void gmsh::plugin::run(const std::string &name)
 {
+  if(!_isInitialized()){ throw -1; }
 #if defined(HAVE_PLUGINS)
   try {
     PluginManager::instance()->action(name, "Run", 0);
@@ -2196,6 +2211,24 @@ void gmsh::plugin::run(const std::string &name)
   }
 #else
   Msg::Error("Views require the post-processing and plugin modules");
+  throw -1;
+#endif
+}
+
+// gmsh::graphics
+
+void gmsh::graphics::runFltkGui()
+{
+  if(!_isInitialized()){ throw -1; }
+#if defined(HAVE_FLTK)
+  FlGui::instance(_argc, _argv);
+  if(GModel::current()->getFileName().empty())
+    GModel::current()->setFileName("untitled.geo");
+  if(!FlGui::instance()->run()){
+    throw 1;
+  }
+#else
+  Msg::Error("Fltk GUI not available");
   throw -1;
 #endif
 }

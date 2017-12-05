@@ -457,6 +457,13 @@ plugin.add('run',doc,None,istring('name'))
 
 ################################################################################
 
+graphics = gmsh.add_module('graphics','Graphics functions')
+
+doc = '''Launch the FLTK graphical user interface.'''
+graphics.add('runFltkGui',doc,None)
+
+################################################################################
+
 api.write_cpp()
 api.write_c()
 api.write_python()

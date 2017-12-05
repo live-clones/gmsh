@@ -1256,6 +1256,9 @@ GMSH_API void gmshPluginSetString(const char * name,
 /* Runs the plugin `name'. */
 GMSH_API void gmshPluginRun(const char * name,
                             int * ierr);
+
+/* Launch the FLTK graphical user interface. */
+GMSH_API void gmshGraphicsRunFltkGui(int * ierr);
 #undef GMSH_API
 
 #endif
