@@ -16,6 +16,7 @@
 #include <vector>
 #include <algorithm>
 #include <math.h>
+#include <queue>
 #include "SBoundingBox3d.h"
 #include "OS.h"
 #include "delaunay3d_private.h"
@@ -964,6 +965,9 @@ static void delaunayCavity2 (Tet *tet,
 
 Tet* walk (Tet *t, Vert *v, int maxx, double &totSearch, int thread)
 {
+  std::set<Tet *> investigatedTets;
+  std::queue<Tet *> tets;
+  investigatedTets.emplace(t);
   while (1){
     totSearch++;
     if (t == NULL) {
@@ -982,16 +986,29 @@ Tet* walk (Tet *t, Vert *v, int maxx, double &totSearch, int thread)
 						(double*)v);
       if (val >=0.0) count++;
       if (val < _min){
-	NEIGH = iNeigh;
-	_min = val;
+        if (!investigatedTets.count(t->T[iNeigh]))
+        {
+          NEIGH = iNeigh;
+          _min = val;
+        }
+        else
+        {
+          tets.emplace(t->T[iNeigh]);
+        }
       }
     }
     if (count == 4  && t->inSphere(v,thread))return t;
     if (NEIGH >= 0){
       t = t->T[NEIGH];
+      investigatedTets.emplace(t);
     }
-    else {
+    else if (tets.empty()){
       Msg::Fatal("Jump-and-Walk Failed (No neighbor)");
+    }
+    else
+    {
+      t = tets.front();
+      tets.pop();
     }
   }
   Msg::Fatal("Jump-and-Walk Failed (No neighbor)");
