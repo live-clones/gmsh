@@ -483,7 +483,8 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
         CTX::instance()->initialContext = 4;
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "saveall")) {
+      else if(!strcmp(argv[i] + 1, "saveall") ||
+              !strcmp(argv[i] + 1, "save_all")) {
         CTX::instance()->mesh.saveAll = 1;
         i++;
       }

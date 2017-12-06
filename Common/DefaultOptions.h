@@ -1266,8 +1266,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "SaveParametric" , opt_mesh_save_parametric , 0. ,
     "Save parametric coordinates of nodes" },
   { F|O, "SaveGroupsOfNodes" , opt_mesh_save_groups_of_nodes , 0. ,
-    "Save groups of nodes for each physical line and surface (UNV mesh "
-    "format only)" },
+    "Save groups of nodes for each physical line and surface (for UNV, INP and Tochnog "
+    "mesh formats)" },
   { F|O, "ScalingFactor" , opt_mesh_scaling_factor , 1.0 ,
     "Global scaling factor applied to the saved mesh" },
   { F|O, "SecondOrderExperimental" , opt_mesh_second_order_experimental , 0. ,
