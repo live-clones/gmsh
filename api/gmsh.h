@@ -1184,10 +1184,26 @@ namespace gmsh { // Top-level functions
 
   namespace graphics { // Graphics functions
 
-    // Launch the FLTK graphical user interface.
-    GMSH_API void runFltkGui();
+    // Draws all the OpenGL scenes.
+    GMSH_API void draw();
 
   } // namespace graphics
+
+  namespace fltk { // Fltk graphical user interface functions
+
+    // Creates the Fltk graphical user interface.
+    GMSH_API void initialize();
+
+    // Waits at most `time' seconds for user interface events and returns. If
+    // `time' < 0, wait indefinitely.
+    GMSH_API void wait(const double time = -1.);
+
+    // Runs the event loop of the Fltk graphical user interface, i.e. repeatedly
+    // calls `wait()`. First automatically creates the user interface if it has not
+    // yet been initialized.
+    GMSH_API void run();
+
+  } // namespace fltk
 
 } // namespace gmsh
 

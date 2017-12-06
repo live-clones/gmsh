@@ -515,7 +515,6 @@ FlGui *FlGui::instance(int argc, char **argv)
     _instance = new FlGui(argc, argv);
     // set all options in the new GUI
     InitOptionsGUI(0);
-
     // say welcome!
     Msg::StatusBar(false, "Gmsh %s", GetGmshVersion());
     // log the following for bug reports
@@ -531,17 +530,15 @@ FlGui *FlGui::instance(int argc, char **argv)
     Msg::Info("Launch date    : %s", Msg::GetLaunchDate().c_str());
     Msg::Info("Command line   : %s", Msg::GetCommandLineArgs().c_str());
     Msg::Info("-------------------------------------------------------");
+    // set global bounding box in CTX (necessary if we run the gui without any
+    // model/post-processing data)
+    SetBoundingBox();
   }
   return _instance;
 }
 
 int FlGui::run()
 {
-  // bounding box computation necessary if we run the gui without merging any
-  // files (e.g. if we build the geometry with python and create the gui from
-  // the python script)
-  SetBoundingBox();
-
   // draw the scene
   drawContext::global()->draw();
 
@@ -955,7 +952,9 @@ void FlGui::setGraphicTitle(std::string title)
 {
   for(unsigned int i = 0; i < graph.size(); i++){
     std::ostringstream sstream;
-    if(!i)
+    if(title.empty())
+      sstream << "Gmsh";
+    else if(!i)
       sstream << "Gmsh - " << title;
     else
       sstream << "Gmsh - " << title << " [" << i << "]";

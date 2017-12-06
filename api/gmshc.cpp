@@ -1161,10 +1161,31 @@ void gmshPluginRun(const char * name,int * ierr){
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshGraphicsRunFltkGui(int * ierr){
+void gmshGraphicsDraw(int * ierr){
   if(ierr) *ierr = 0;
   try {
-  gmsh::graphics::runFltkGui();
+  gmsh::graphics::draw();
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
+void gmshFltkInitialize(int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  gmsh::fltk::initialize();
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
+void gmshFltkWait(const double time,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  gmsh::fltk::wait(time);
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
+void gmshFltkRun(int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  gmsh::fltk::run();
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 

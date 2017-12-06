@@ -45,6 +45,10 @@
 #include "PluginManager.h"
 #endif
 
+#if defined(HAVE_OPENGL)
+#include "drawContext.h"
+#endif
+
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
 #endif
@@ -1909,6 +1913,24 @@ void gmsh::model::occ::importShapes(const std::string &fileName,
   }
 }
 
+// void gmsh::model::occ::importShapesNativePointer(const void *shape,
+//                                                  vector_pair &outDimTags,
+//                                                  const bool highestDimOnly)
+// {
+//   if(!_isInitialized()){ throw -1; }
+//   _createOcc();
+//   outDimTags.clear();
+// #if defined(HAVE_OCC)
+//   if(!GModel::current()->getOCCInternals()->importShapes
+//      (static_cast<TopoDS_Shape*>(shape), outDimTags, highestDimOnly)){
+//     throw 1;
+//   }
+// #else
+//   Msg::Error("Gmsh requires OpenCASCADE to import native shape");
+//   throw -1;
+// #endif
+// }
+
 void gmsh::model::occ::setMeshSize(const vector_pair &dimTags, const double size)
 {
   if(!_isInitialized()){ throw -1; }
@@ -2217,18 +2239,52 @@ void gmsh::plugin::run(const std::string &name)
 
 // gmsh::graphics
 
-void gmsh::graphics::runFltkGui()
+void gmsh::graphics::draw()
+{
+#if defined(HAVE_OPENGL)
+  drawContext::global()->draw();
+#endif
+}
+
+// gmsh::fltk
+
+void gmsh::fltk::initialize()
 {
   if(!_isInitialized()){ throw -1; }
 #if defined(HAVE_FLTK)
   FlGui::instance(_argc, _argv);
-  if(GModel::current()->getFileName().empty())
-    GModel::current()->setFileName("untitled.geo");
-  if(!FlGui::instance()->run()){
-    throw 1;
-  }
+  FlGui::check();
 #else
-  Msg::Error("Fltk GUI not available");
+  Msg::Error("Fltk not available");
+  throw -1;
+#endif
+}
+
+void gmsh::fltk::wait(const double time)
+{
+  if(!_isInitialized()){ throw -1; }
+#if defined(HAVE_FLTK)
+  if(!FlGui::available())
+    FlGui::instance(_argc, _argv);
+  if(time >= 0)
+    FlGui::wait(time);
+  else
+    FlGui::wait();
+#else
+  Msg::Error("Fltk not available");
+  throw -1;
+#endif
+}
+
+void gmsh::fltk::run()
+{
+  if(!_isInitialized()){ throw -1; }
+#if defined(HAVE_FLTK)
+  if(!FlGui::available())
+    FlGui::instance(_argc, _argv);
+  FlGui::instance()->run(); // this calls draw() once
+#else
+  Msg::Error("Fltk not available");
   throw -1;
 #endif
 }

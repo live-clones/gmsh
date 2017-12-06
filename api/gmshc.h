@@ -1257,8 +1257,21 @@ GMSH_API void gmshPluginSetString(const char * name,
 GMSH_API void gmshPluginRun(const char * name,
                             int * ierr);
 
-/* Launch the FLTK graphical user interface. */
-GMSH_API void gmshGraphicsRunFltkGui(int * ierr);
+/* Draws all the OpenGL scenes. */
+GMSH_API void gmshGraphicsDraw(int * ierr);
+
+/* Creates the Fltk graphical user interface. */
+GMSH_API void gmshFltkInitialize(int * ierr);
+
+/* Waits at most `time' seconds for user interface events and returns. If
+ * `time' < 0, wait indefinitely. */
+GMSH_API void gmshFltkWait(const double time,
+                           int * ierr);
+
+/* Runs the event loop of the Fltk graphical user interface, i.e. repeatedly
+ * calls `wait()`. First automatically creates the user interface if it has
+ * not yet been initialized. */
+GMSH_API void gmshFltkRun(int * ierr);
 #undef GMSH_API
 
 #endif

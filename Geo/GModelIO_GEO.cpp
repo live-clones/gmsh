@@ -1225,6 +1225,9 @@ void GEO_Internals::synchronize(GModel *model)
     }
   }
 
+  // recompute global boundind box in CTX
+  SetBoundingBox();
+
   Msg::Debug("GModel imported:");
   Msg::Debug("%d vertices", model->getNumVertices());
   Msg::Debug("%d edges", model->getNumEdges());

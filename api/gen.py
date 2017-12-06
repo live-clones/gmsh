@@ -408,6 +408,9 @@ occ.add('removeAllDuplicates',doc,None)
 doc = '''Imports BREP, STEP or IGES shapes from the file `fileName'. The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in the file. The optional argument `format' can be used to force the format of the file (currently "brep", "step" or "iges").'''
 occ.add('importShapes',doc,None,istring('fileName'),ovectorpair('outDimTags'),ibool('highestDimOnly','true','True'),istring('format','""'))
 
+#doc = '''Imports native OpenCASCADE shapes by providing a raw pointer to a TopoDS_Shape. The imported entities are returned in `outDimTags'. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in the file.'''
+#occ.add('importShapesNativePointer',doc,None,voidstar('shape'),ovectorpair('outDimTags'),ibool('highestDimOnly','true','True'))
+
 doc = '''Sets a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 occ.add('setMeshSize',doc,None,ivectorpair('dimTags'),idouble('size'))
 
@@ -459,8 +462,21 @@ plugin.add('run',doc,None,istring('name'))
 
 graphics = gmsh.add_module('graphics','Graphics functions')
 
-doc = '''Launch the FLTK graphical user interface.'''
-graphics.add('runFltkGui',doc,None)
+doc = '''Draws all the OpenGL scenes.'''
+graphics.add('draw',doc,None)
+
+################################################################################
+
+fltk = gmsh.add_module('fltk','Fltk graphical user interface functions')
+
+doc = '''Creates the Fltk graphical user interface.'''
+fltk.add('initialize',doc,None)
+
+doc = '''Waits at most `time' seconds for user interface events and returns. If `time' < 0, wait indefinitely.'''
+fltk.add('wait',doc,None,idouble('time', '-1.'))
+
+doc = '''Runs the event loop of the Fltk graphical user interface, i.e. repeatedly calls `wait()`. First automatically creates the user interface if it has not yet been initialized.'''
+fltk.add('run',doc,None)
 
 ################################################################################
 

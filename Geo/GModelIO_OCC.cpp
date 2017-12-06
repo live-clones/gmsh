@@ -2926,6 +2926,9 @@ void OCC_Internals::synchronize(GModel *model)
     _copyExtrudedMeshAttributes(region, occr);
   }
 
+  // recompute global boundind box in CTX
+  SetBoundingBox();
+
   Msg::Debug("GModel imported:");
   Msg::Debug("%d vertices", model->getNumVertices());
   Msg::Debug("%d edges", model->getNumEdges());
@@ -3740,7 +3743,6 @@ int GModel::importOCCShape(const void *shape)
 #endif
   _occ_internals->synchronize(this);
   snapVertices();
-  SetBoundingBox();
   return 1;
 }
 

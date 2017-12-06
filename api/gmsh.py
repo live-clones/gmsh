@@ -3094,14 +3094,63 @@ class graphics:
     """
 
     @staticmethod
-    def runFltkGui():
+    def draw():
         """
-        Launch the FLTK graphical user interface.
+        Draws all the OpenGL scenes.
         """
         ierr = c_int()
-        lib.gmshGraphicsRunFltkGui(
+        lib.gmshGraphicsDraw(
             byref(ierr))
         if ierr.value != 0 :
             raise ValueError(
-                "gmshGraphicsRunFltkGui returned non-zero error code : ",
+                "gmshGraphicsDraw returned non-zero error code : ",
+                ierr.value)
+
+
+class fltk:
+    """
+    Fltk graphical user interface functions
+    """
+
+    @staticmethod
+    def initialize():
+        """
+        Creates the Fltk graphical user interface.
+        """
+        ierr = c_int()
+        lib.gmshFltkInitialize(
+            byref(ierr))
+        if ierr.value != 0 :
+            raise ValueError(
+                "gmshFltkInitialize returned non-zero error code : ",
+                ierr.value)
+
+    @staticmethod
+    def wait(time=-1.):
+        """
+        Waits at most `time' seconds for user interface events and returns. If
+        `time' < 0, wait indefinitely.
+        """
+        ierr = c_int()
+        lib.gmshFltkWait(
+            c_double(time),
+            byref(ierr))
+        if ierr.value != 0 :
+            raise ValueError(
+                "gmshFltkWait returned non-zero error code : ",
+                ierr.value)
+
+    @staticmethod
+    def run():
+        """
+        Runs the event loop of the Fltk graphical user interface, i.e. repeatedly
+        calls `wait()`. First automatically creates the user interface if it has
+        not yet been initialized.
+        """
+        ierr = c_int()
+        lib.gmshFltkRun(
+            byref(ierr))
+        if ierr.value != 0 :
+            raise ValueError(
+                "gmshFltkRun returned non-zero error code : ",
                 ierr.value)
