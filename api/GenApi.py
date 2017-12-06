@@ -313,7 +313,8 @@ c_header="""/*
 GMSH_API void gmshFree(void *p);
 """
 
-c_footer="""#undef GMSH_API
+c_footer="""
+#undef GMSH_API
 
 #endif
 """

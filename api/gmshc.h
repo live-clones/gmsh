@@ -1273,6 +1273,7 @@ GMSH_API void gmshFltkWait(const double time,
  * calls `wait()`. First automatically creates the user interface if it has
  * not yet been initialized. */
 GMSH_API void gmshFltkRun(int * ierr);
+
 #undef GMSH_API
 
 #endif
