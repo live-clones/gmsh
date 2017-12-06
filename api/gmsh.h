@@ -1195,7 +1195,8 @@ namespace gmsh { // Top-level functions
     GMSH_API void initialize();
 
     // Waits at most `time' seconds for user interface events and returns. If
-    // `time' < 0, wait indefinitely.
+    // `time' < 0, waits indefinitely. First automatically creates the user
+    // interface if it has not yet been initialized.
     GMSH_API void wait(const double time = -1.);
 
     // Runs the event loop of the Fltk graphical user interface, i.e. repeatedly

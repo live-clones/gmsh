@@ -1264,7 +1264,8 @@ GMSH_API void gmshGraphicsDraw(int * ierr);
 GMSH_API void gmshFltkInitialize(int * ierr);
 
 /* Waits at most `time' seconds for user interface events and returns. If
- * `time' < 0, wait indefinitely. */
+ * `time' < 0, waits indefinitely. First automatically creates the user
+ * interface if it has not yet been initialized. */
 GMSH_API void gmshFltkWait(const double time,
                            int * ierr);
 

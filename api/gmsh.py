@@ -3129,7 +3129,8 @@ class fltk:
     def wait(time=-1.):
         """
         Waits at most `time' seconds for user interface events and returns. If
-        `time' < 0, wait indefinitely.
+        `time' < 0, waits indefinitely. First automatically creates the user
+        interface if it has not yet been initialized.
         """
         ierr = c_int()
         lib.gmshFltkWait(

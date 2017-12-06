@@ -472,7 +472,7 @@ fltk = gmsh.add_module('fltk','Fltk graphical user interface functions')
 doc = '''Creates the Fltk graphical user interface.'''
 fltk.add('initialize',doc,None)
 
-doc = '''Waits at most `time' seconds for user interface events and returns. If `time' < 0, wait indefinitely.'''
+doc = '''Waits at most `time' seconds for user interface events and returns. If `time' < 0, waits indefinitely. First automatically creates the user interface if it has not yet been initialized.'''
 fltk.add('wait',doc,None,idouble('time', '-1.'))
 
 doc = '''Runs the event loop of the Fltk graphical user interface, i.e. repeatedly calls `wait()`. First automatically creates the user interface if it has not yet been initialized.'''

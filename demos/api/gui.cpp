@@ -28,7 +28,7 @@ int main(int argc, char **argv)
   gmsh::model::occ::synchronize();
   // ...end of copy
 
-  // this would be equivalent to gmsh.fltk.run():
+  // this would be equivalent to gmsh::fltk::run():
   //
   // gmsh::graphics::draw();
   // while(1){
