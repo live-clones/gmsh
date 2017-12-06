@@ -1,7 +1,14 @@
 #include <stdio.h>
 #include "gmshc.h"
 
-#define chk(ierr) if (ierr != 0) {fprintf(stderr, "ERROR on line %i in function '%s': gmsh function return non-zero error code: %i\n",__LINE__, __FUNCTION__,ierr); gmshFinalize(NULL); exit(ierr);}
+#define chk(ierr)                                               \
+  if(ierr != 0){                                                \
+    fprintf(stderr, "Error on line %i in function '%s': "       \
+            "gmsh function returned non-zero error code: %i\n", \
+            __LINE__, __FUNCTION__, ierr);                      \
+    gmshFinalize(NULL);                                         \
+    exit(ierr);                                                 \
+  }
 
 void genGeometry() {
   int ierr;
@@ -70,7 +77,7 @@ void genError() {
 
 int main(int argc, char **argv) {
   int ierr;
-  gmshInitialize(argc, argv, &ierr); chk(ierr);
+  gmshInitialize(argc, argv, 1, &ierr); chk(ierr);
   genGeometry();
   gmshModelMeshGenerate(2,&ierr); chk(ierr);
   gmshWrite("square.msh",&ierr); chk(ierr);

@@ -77,8 +77,7 @@ class onelabGroup : public Fl_Group{
   void stop(bool val){ _stop = val; }
 };
 
-void onelab_cb(Fl_Widget *w, void *data);
 void solver_cb(Fl_Widget *w, void *data);
-int metamodel_cb(const std::string &name, const std::string &action="");
+void onelab_cb(Fl_Widget *w, void *data);
 
 #endif

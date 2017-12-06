@@ -1,0 +1,38 @@
+#include <stdio.h>
+#include <gmshc.h>
+
+#define chk(ierr)                                               \
+  if(ierr != 0){                                                \
+    fprintf(stderr, "Error on line %i in function '%s': "       \
+            "gmsh function returned non-zero error code: %i\n", \
+            __LINE__, __FUNCTION__, ierr);                      \
+    gmshFinalize(NULL);                                         \
+    exit(ierr);                                                 \
+  }
+
+int main(int argc, char **argv)
+{
+  int ierr;
+  char *json;
+
+  if(argc < 2){
+    printf("Usage: %s file [options]\n", argv[0]);
+    return 1;
+  }
+
+  gmshInitialize(0, 0, 1, &ierr); chk(ierr);
+  gmshOptionSetNumber("General.Terminal", 1, &ierr); chk(ierr);
+
+  gmshOpen(argv[1], &ierr); chk(ierr);
+
+  /* attempts to run a client selected when opening the file (e.g. a .pro
+     file) */
+  gmshOnelabRun("", "", &ierr); chk(ierr);
+
+  gmshOnelabGet(&json, "json", &ierr); chk(ierr);
+  printf("%s", json);
+
+  gmshFinalize(&ierr); chk(ierr);
+
+  return 0;
+}
