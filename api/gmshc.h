@@ -34,8 +34,11 @@ GMSH_API void gmshFree(void *p);
 
 /* Initializes Gmsh. This must be called before any call to the other
  * functions in the API. If argc and argv are provided, they will be handled
- * in the same way as the command line arguments in the Gmsh app. */
+ * in the same way as the command line arguments in the Gmsh app. If
+ * `readConfigFiles' is set, reads system Gmsh configuration files (gmshrc and
+ * gmsh-options). */
 GMSH_API void gmshInitialize(int argc, char ** argv,
+                             const int readConfigFiles,
                              int * ierr);
 
 /* Finalizes Gmsh. This must be called when you are done using the Gmsh API. */
@@ -1273,6 +1276,22 @@ GMSH_API void gmshFltkWait(const double time,
  * calls `wait()`. First automatically creates the user interface if it has
  * not yet been initialized. */
 GMSH_API void gmshFltkRun(int * ierr);
+
+/* Gets data from the Onelab server. */
+GMSH_API void gmshOnelabGet(char ** data,
+                            const char * format,
+                            int * ierr);
+
+/* Sets data in the Onelab server. */
+GMSH_API void gmshOnelabSet(const char * data,
+                            const char * format,
+                            int * ierr);
+
+/* Runs a onelab client. If no name is given, attemps to run a client that
+ * might be linked to the processed input files. */
+GMSH_API void gmshOnelabRun(const char * name,
+                            const char * command,
+                            int * ierr);
 
 #undef GMSH_API
 

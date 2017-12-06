@@ -293,7 +293,7 @@ void PrintUsage(const std::string &name)
   }
 }
 
-void GetOptions(int argc, char *argv[])
+void GetOptions(int argc, char *argv[], bool readConfigFiles)
 {
   // print messages on terminal (use special 99 value so that we can detect if
   // it was later set to 1 in the option file)
@@ -301,9 +301,7 @@ void GetOptions(int argc, char *argv[])
   CTX::instance()->terminal = 99;
 
 #if defined(HAVE_PARSER)
-  if(argc && argv){
-    // parse session and option file (if argc/argv is not provided skip this
-    // step: this is usually what is expected when using Gmsh as a library)
+  if(readConfigFiles){
     ParseFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName, true);
     ParseFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName, true);
   }

@@ -69,18 +69,6 @@ class gmshLocalNetworkClient : public onelab::localNetworkClient{
   bool kill();
 };
 
-// FIXME: move this to onelabUtils
-void initializeLoops();
-bool incrementLoops();
-void updateGraphs();
-std::string timeStamp();
-void saveDb(const std::string &fileName);
-void archiveOutputFiles(const std::string &fileName);
-void archiveSolutionFiles(const std::string &fileName);
-void loadDb(const std::string &name);
-void resetDb(bool runGmshClient);
-void solver_batch_cb(void *data);
-
 #endif
 
 #endif

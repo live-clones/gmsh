@@ -26,8 +26,8 @@ api = API()
 
 gmsh = api.add_module('gmsh','Top-level functions')
 
-doc = '''Initializes Gmsh. This must be called before any call to the other functions in the API. If argc and argv are provided, they will be handled in the same way as the command line arguments in the Gmsh app.'''
-gmsh.add('initialize',doc,None,argcargv())
+doc = '''Initializes Gmsh. This must be called before any call to the other functions in the API. If argc and argv are provided, they will be handled in the same way as the command line arguments in the Gmsh app. If `readConfigFiles' is set, reads system Gmsh configuration files (gmshrc and gmsh-options).'''
+gmsh.add('initialize',doc,None,argcargv(),ibool('readConfigFiles','true','True'))
 
 doc = '''Finalizes Gmsh. This must be called when you are done using the Gmsh API.'''
 gmsh.add('finalize',doc,None)
@@ -477,6 +477,19 @@ fltk.add('wait',doc,None,idouble('time', '-1.'))
 
 doc = '''Runs the event loop of the Fltk graphical user interface, i.e. repeatedly calls `wait()`. First automatically creates the user interface if it has not yet been initialized.'''
 fltk.add('run',doc,None)
+
+################################################################################
+
+onelab = gmsh.add_module('onelab','Onelab server functions')
+
+doc = '''Gets data from the Onelab server.'''
+onelab.add('get',doc,None,ostring('data'),istring('format', '"json"'))
+
+doc = '''Sets data in the Onelab server.'''
+onelab.add('set',doc,None,istring('data'),istring('format', '"json"'))
+
+doc = '''Runs a onelab client. If no name is given, attemps to run a client that might be linked to the processed input files.'''
+onelab.add('run',doc,None,istring('name', '""'),istring('command', '""'))
 
 ################################################################################
 

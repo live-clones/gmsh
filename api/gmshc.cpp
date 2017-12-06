@@ -84,10 +84,10 @@ void pairvectorvector2intptrptr(const std::vector<gmsh::vector_pair > &v,int ***
 void gmshFree(void *p) {
   if(p) free(p);
 }
-void gmshInitialize(int argc, char ** argv,int * ierr){
+void gmshInitialize(int argc, char ** argv,const int readConfigFiles,int * ierr){
   if(ierr) *ierr = 0;
   try {
-  gmsh::initialize(argc, argv);
+  gmsh::initialize(argc, argv,readConfigFiles);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
@@ -1186,6 +1186,29 @@ void gmshFltkRun(int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::fltk::run();
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
+void gmshOnelabGet(char ** data,const char * format,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  std::string api_data_;
+  gmsh::onelab::get(api_data_,format);
+  *data = _strdup(api_data_.c_str());
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
+void gmshOnelabSet(const char * data,const char * format,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  gmsh::onelab::set(data,format);
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
+void gmshOnelabRun(const char * name,const char * command,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  gmsh::onelab::run(name,command);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 

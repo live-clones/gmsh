@@ -43,8 +43,10 @@ namespace gmsh { // Top-level functions
 
   // Initializes Gmsh. This must be called before any call to the other functions
   // in the API. If argc and argv are provided, they will be handled in the same
-  // way as the command line arguments in the Gmsh app.
-  GMSH_API void initialize(int argc = 0, char ** argv = 0);
+  // way as the command line arguments in the Gmsh app. If `readConfigFiles' is
+  // set, reads system Gmsh configuration files (gmshrc and gmsh-options).
+  GMSH_API void initialize(int argc = 0, char ** argv = 0,
+                           const bool readConfigFiles = true);
 
   // Finalizes Gmsh. This must be called when you are done using the Gmsh API.
   GMSH_API void finalize();
@@ -1205,6 +1207,23 @@ namespace gmsh { // Top-level functions
     GMSH_API void run();
 
   } // namespace fltk
+
+  namespace onelab { // Onelab server functions
+
+    // Gets data from the Onelab server.
+    GMSH_API void get(std::string & data,
+                      const std::string & format = "json");
+
+    // Sets data in the Onelab server.
+    GMSH_API void set(const std::string & data,
+                      const std::string & format = "json");
+
+    // Runs a onelab client. If no name is given, attemps to run a client that
+    // might be linked to the processed input files.
+    GMSH_API void run(const std::string & name = "",
+                      const std::string & command = "");
+
+  } // namespace onelab
 
 } // namespace gmsh
 

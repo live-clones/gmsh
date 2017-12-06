@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
   }
 
   // Initialize static stuff (parser symbols, options)
-  GmshInitialize(argc, argv);
+  GmshInitialize(argc, argv, true);
 
   // Non-interactive Gmsh
   if(CTX::instance()->batch) {

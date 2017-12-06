@@ -53,6 +53,11 @@
 #include "FlGui.h"
 #endif
 
+#if defined(HAVE_ONELAB)
+#include "onelab.h"
+#include "onelabUtils.h"
+#endif
+
 #include "gmsh.h" // automatically generated, in gmsh/api
 
 static int _initialized = 0;
@@ -72,13 +77,13 @@ static bool _isInitialized()
 
 // gmsh
 
-void gmsh::initialize(int argc, char **argv)
+void gmsh::initialize(int argc, char **argv, bool readConfigFiles)
 {
   if(_initialized){
     Msg::Error("Gmsh has aleady been initialized");
     throw 1;
   }
-  if(GmshInitialize(argc, argv)){
+  if(GmshInitialize(argc, argv, readConfigFiles)){
     _initialized = 1;
     _argc = argc;
     _argv = new char*[_argc + 1];
@@ -2286,5 +2291,43 @@ void gmsh::fltk::run()
 #else
   Msg::Error("Fltk not available");
   throw -1;
+#endif
+}
+
+// gmsh::onelab
+
+void gmsh::onelab::get(std::string &data, const std::string &format)
+{
+  if(!_isInitialized()){ throw -1; }
+#if defined(HAVE_ONELAB)
+  if(format == "json")
+    ::onelab::server::instance()->toJSON(data, "Gmsh");
+  else
+    Msg::Error("Unknown data format");
+#else
+  Msg::Error("Onelab not available");
+  throw -1;
+#endif
+}
+
+void gmsh::onelab::set(const std::string &data, const std::string &format)
+{
+  if(!_isInitialized()){ throw -1; }
+#if defined(HAVE_ONELAB)
+  if(format == "json")
+    ::onelab::server::instance()->fromJSON(data);
+  else
+    Msg::Error("Unknown data format");
+#else
+  Msg::Error("Onelab not available");
+  throw -1;
+#endif
+}
+
+void gmsh::onelab::run(const std::string &name, const std::string &command)
+{
+  if(!_isInitialized()){ throw -1; }
+#if defined(HAVE_ONELAB)
+  onelabUtils::runClient(name, command);
 #endif
 }

@@ -132,16 +132,19 @@ def _iargcargv(o) :
     return c_int(len(o)), (c_char_p*len(o))(*(s.encode() for s in o))
 
 
-def initialize(argv=[]):
+def initialize(argv=[],readConfigFiles=True):
     """
     Initializes Gmsh. This must be called before any call to the other
     functions in the API. If argc and argv are provided, they will be handled
-    in the same way as the command line arguments in the Gmsh app.
+    in the same way as the command line arguments in the Gmsh app. If
+    `readConfigFiles' is set, reads system Gmsh configuration files (gmshrc and
+    gmsh-options).
     """
     api_argc_, api_argv_ = _iargcargv(argv)
     ierr = c_int()
     lib.gmshInitialize(
         api_argc_, api_argv_,
+        c_int(bool(readConfigFiles)),
         byref(ierr))
     if ierr.value != 0 :
         raise ValueError(
@@ -3154,4 +3157,60 @@ class fltk:
         if ierr.value != 0 :
             raise ValueError(
                 "gmshFltkRun returned non-zero error code : ",
+                ierr.value)
+
+
+class onelab:
+    """
+    Onelab server functions
+    """
+
+    @staticmethod
+    def get(format="json"):
+        """
+        Gets data from the Onelab server.
+
+        return data
+        """
+        api_data_ = c_char_p()
+        ierr = c_int()
+        lib.gmshOnelabGet(
+            byref(api_data_),
+            c_char_p(format.encode()),
+            byref(ierr))
+        if ierr.value != 0 :
+            raise ValueError(
+                "gmshOnelabGet returned non-zero error code : ",
+                ierr.value)
+        return _ostring(api_data_)
+
+    @staticmethod
+    def set(data,format="json"):
+        """
+        Sets data in the Onelab server.
+        """
+        ierr = c_int()
+        lib.gmshOnelabSet(
+            c_char_p(data.encode()),
+            c_char_p(format.encode()),
+            byref(ierr))
+        if ierr.value != 0 :
+            raise ValueError(
+                "gmshOnelabSet returned non-zero error code : ",
+                ierr.value)
+
+    @staticmethod
+    def run(name="",command=""):
+        """
+        Runs a onelab client. If no name is given, attemps to run a client that
+        might be linked to the processed input files.
+        """
+        ierr = c_int()
+        lib.gmshOnelabRun(
+            c_char_p(name.encode()),
+            c_char_p(command.encode()),
+            byref(ierr))
+        if ierr.value != 0 :
+            raise ValueError(
+                "gmshOnelabRun returned non-zero error code : ",
                 ierr.value)

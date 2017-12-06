@@ -10,16 +10,24 @@
 #include "GmshDefines.h"
 #include "GModel.h"
 #include "Context.h"
+#include "Options.h"
 #include "OS.h"
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "StringUtils.h"
+#include "gmshLocalNetworkClient.h"
 #include "onelabUtils.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
 #include "PViewOptions.h"
+#endif
+
+#if defined(HAVE_FLTK)
+#include "FlGui.h"
+#include "onelabGroup.h"
+#include "drawContext.h"
 #endif
 
 namespace onelabUtils {
@@ -71,9 +79,9 @@ namespace onelabUtils {
     }
     return args;
   }
+
   std::string getMshFileName(onelab::client *c)
   {
-
     std::string name;
     std::vector<onelab::string> ps;
     c->get(ps, "Gmsh/MshFileName");
@@ -93,7 +101,6 @@ namespace onelabUtils {
       o.setAttribute("Closed", "1");
       c->set(o);
     }
-
     // we could keep track of mesh file name in "Output files" so we could
     // archive the mesh automatically:
     /*
@@ -406,6 +413,107 @@ namespace onelabUtils {
     return redraw;
   }
 
+  void runClient(const std::string &name, const std::string &command)
+  {
+    if(name.size()){
+      // try to run as a subclient of Gmsh; or if not as a new client
+      onelab::remoteNetworkClient *c =
+        dynamic_cast<onelab::remoteNetworkClient*>(Msg::GetOnelabClient());
+      if(c){
+        c->runSubClient(name, command);
+      }
+      else{
+        gmshLocalNetworkClient client(name, command, "", true);
+        client.run();
+      }
+    }
+    else{
+      // try to run a client that might have been selected previously, e.g. by
+      // opening a file with known client extension (like ".pro")
+      int num = CTX::instance()->launchSolverAtStartup;
+      std::string name, exe, host;
+      if(num == -1){
+        // no client to run
+        return;
+      }
+      else if(num == -2){
+        // just run local Gmsh client
+      }
+      else if(num >= 0){
+        // run local Gmsh client + solver num
+        name = opt_solver_name(num, GMSH_GET, "");
+        exe = opt_solver_executable(num, GMSH_GET, "");
+        host = opt_solver_remote_login(num, GMSH_GET, "");
+        if(exe.empty()){
+          Msg::Error("Solver executable name not provided");
+          return;
+        }
+      }
+      else{
+        Msg::Error("Unknown client to run in batch mode (%d)", num);
+        return;
+      }
+
+      onelab::number n("0Metamodel/Batch", CTX::instance()->batch);
+      n.setVisible(false);
+      onelab::server::instance()->set(n);
+
+      // create client
+      onelab::localNetworkClient *c = 0;
+      onelab::string o;
+      if(name.size()){
+        c = new gmshLocalNetworkClient(name, exe, host);
+        c->setIndex(num);
+        o = c->getName() + "/Action";
+      }
+
+      // initialize
+      onelabUtils::runGmshClient("initialize", CTX::instance()->solver.autoMesh);
+      if(c){
+        o.setValue("initialize");
+        onelab::server::instance()->set(o);
+        c->run();
+      }
+
+      // load db
+      if(CTX::instance()->solver.autoLoadDatabase){
+        std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
+        std::string db = split[0] + split[1] + ".db";
+        if(!StatFile(db)) loadDb(db);
+      }
+
+      // check
+      onelabUtils::runGmshClient("check", CTX::instance()->solver.autoMesh);
+      if(c){
+        onelabUtils::guessModelName(c);
+        o.setValue("check");
+        onelab::server::instance()->set(o);
+        c->run();
+      }
+
+      // compute
+      initializeLoops();
+      do{
+        onelabUtils::runGmshClient("compute", CTX::instance()->solver.autoMesh);
+        if(c){
+          onelabUtils::guessModelName(c);
+          o.setValue("compute");
+          onelab::server::instance()->set(o);
+          c->run();
+          onelab::server::instance()->setChanged(0, c->getName());
+        }
+      } while(incrementLoops());
+
+      if(CTX::instance()->solver.autoSaveDatabase ||
+         CTX::instance()->solver.autoArchiveOutputFiles){
+        std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
+        std::string db = split[0] + split[1] + ".db";
+        if(CTX::instance()->solver.autoArchiveOutputFiles) archiveOutputFiles(db);
+        if(CTX::instance()->solver.autoSaveDatabase) saveDb(db);
+      }
+    }
+  }
+
   // update x using y, giving priority to any settings in x that can be set in
   // the GUI. The value of x is only changed if y is read-only.
   double updateNumber(onelab::number &x, onelab::number &y, const bool readOnlyRange)
@@ -511,6 +619,226 @@ namespace onelabUtils {
       x.setAttribute("MultipleSelection", y.getAttribute("MultipleSelection"));
 
     return val;
+  }
+
+  void initializeLoops()
+  {
+    onelabUtils::initializeLoop("1");
+    onelabUtils::initializeLoop("2");
+    onelabUtils::initializeLoop("3");
+
+#if defined(HAVE_FLTK)
+    if(FlGui::available() && onelab::server::instance()->getChanged())
+      FlGui::instance()->rebuildTree(false);
+#endif
+  }
+
+  bool incrementLoops()
+  {
+    bool ret = false;
+    if(onelabUtils::incrementLoop("3"))      ret = true;
+    else if(onelabUtils::incrementLoop("2")) ret = true;
+    else if(onelabUtils::incrementLoop("1")) ret = true;
+
+    //Define ONELAB parameter indicating whether or not in a loop
+    onelab::number n("0Metamodel/Loop",ret?1:0);
+    n.setVisible(false);
+    onelab::server::instance()->set(n);
+
+#if defined(HAVE_FLTK)
+    if(FlGui::available() && onelab::server::instance()->getChanged())
+      FlGui::instance()->rebuildTree(false);
+#endif
+    return ret;
+  }
+
+  void updateGraphs()
+  {
+    bool redraw = false;
+    for(int i = 0; i < 18; i++){
+      std::ostringstream tmp;
+      tmp << i;
+      bool ret = onelabUtils::updateGraph(tmp.str());
+      redraw = redraw || ret;
+    }
+    if(redraw){
+      // don't delete the widgets, as this is called in widget callbacks
+#if defined(HAVE_FLTK)
+      FlGui::instance()->updateViews(true, false);
+      drawContext::global()->draw();
+#endif
+    }
+  }
+
+  std::string timeStamp()
+  {
+    time_t now;
+    time(&now);
+    tm *t = localtime(&now);
+    char stamp[32];
+    // stamp.size() is always 20
+    sprintf(stamp, "_%04d-%02d-%02d_%02d-%02d-%02d", 1900 + t->tm_year,
+            1 + t->tm_mon, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec);
+    return std::string(stamp);
+  }
+
+  void saveDb(const std::string &fileName)
+  {
+    FILE *fp = Fopen(fileName.c_str(), "wb");
+    if(fp){
+      Msg::StatusBar(true, "Saving database '%s'...", fileName.c_str());
+      onelab::server::instance()->toFile(fp);
+      fclose(fp);
+      Msg::StatusBar(true, "Done saving database '%s'", fileName.c_str());
+    }
+    else
+      Msg::Error("Could not save database '%s'", fileName.c_str());
+
+#if 0
+    fp = Fopen((fileName + ".json").c_str(), "wb");
+    if(fp){
+      std::string json;
+      onelab::server::instance()->toJSON(json, "Gmsh");
+      fwrite(json.c_str(), sizeof(char), json.size(), fp);
+      fclose(fp);
+    }
+#endif
+  }
+
+  void archiveOutputFiles(const std::string &fileName)
+  {
+    std::string stamp;
+    std::vector<onelab::string> ps;
+    onelab::server::instance()->get(ps,"0Metamodel/9Tag");
+    if(ps.size() && ps[0].getValue().size())
+      stamp.assign(timeStamp() + "_" + ps[0].getValue());
+    else
+      stamp.assign(timeStamp());
+
+    // add time stamp in all output files in the db, and rename them on disk
+    std::vector<onelab::string> strings;
+    onelab::server::instance()->get(strings);
+    for(unsigned int i = 0; i < strings.size(); i++){
+      if(strings[i].getName().find("9Output files") != std::string::npos){
+        std::vector<std::string> names = strings[i].getChoices();
+        names.push_back(strings[i].getValue());
+        for(unsigned int j = 0; j < names.size(); j++){
+          std::vector<std::string> split = SplitFileName(names[j]);
+          int n = split[1].size();
+          // if name is not already stamped
+          if(n < 18 || split[1][n-3] != '-' || split[1][n-6] != '-' ||
+             split[1][n-9] != '_'){
+            std::string old = names[j];
+            CreateSingleDir(split[0] + "archive/");
+            names[j] = split[0] + "archive/" + split[1] + stamp + split[2];
+            Msg::Info("Renaming '%s' into '%s'", old.c_str(), names[j].c_str());
+            rename(old.c_str(), names[j].c_str());
+          }
+        }
+        strings[i].setValue(names.back());
+        names.pop_back();
+        strings[i].setChoices(names);
+        onelab::server::instance()->set(strings[i]);
+      }
+    }
+
+    // save stamped db
+    {
+      std::vector<std::string> split = SplitFileName(fileName);
+      CreateSingleDir(split[0] + "archive/");
+      saveDb(split[0] + "archive/" + split[1] + stamp + split[2]);
+    }
+
+#if defined(HAVE_FLTK)
+    FlGui::instance()->rebuildTree(true);
+#endif
+  }
+
+  void archiveSolutionFiles(const std::string &fileName)
+  {
+    // extract tag from db fileName, use fileName as tag otherwise
+    std::vector<std::string> split = SplitFileName(fileName);
+    std::string dir = split[0] + "archive/";
+    std::string tag = split[1];
+    if (!tag.compare(0,6,"onelab"))
+      tag.assign(tag.substr(6)); // cut off 'onelab' if present
+
+    // add tag to all solution files in the db, and rename them on disk
+    std::vector<onelab::string> strings;
+    onelab::server::instance()->get(strings,"0Metamodel/9Solution files");
+    if(strings.size()){
+      std::vector<std::string> names = strings[0].getChoices();
+      if(names.size()){
+        for(unsigned int j = 0; j < names.size(); j++){
+          std::vector<std::string> split = SplitFileName(names[j]);
+          std::string old = names[j];
+          CreateSingleDir(dir);
+          names[j] = dir + split[1] + tag + split[2];
+          Msg::Info("Renaming '%s' into '%s'", old.c_str(), names[j].c_str());
+          rename(old.c_str(), names[j].c_str());
+        }
+        strings[0].setValue(names[0]);
+        strings[0].setChoices(names);
+        onelab::server::instance()->set(strings[0]);
+#if defined(HAVE_FLTK)
+        FlGui::instance()->rebuildTree(true);
+#endif
+      }
+    }
+  }
+
+  void loadDb(const std::string &name)
+  {
+    Msg::StatusBar(true, "Loading database '%s'...", name.c_str());
+    FILE *fp = Fopen(name.c_str(), "rb");
+    if(fp){
+      onelab::server::instance()->fromFile(fp);
+      fclose(fp);
+      Msg::StatusBar(true, "Done loading database '%s'", name.c_str());
+    }
+    else
+      Msg::Error("Could not load database '%s'", name.c_str());
+  }
+
+  void resetDb(bool runGmshClient)
+  {
+    Msg::Info("Resetting database");
+
+    // clear everything except persistent parameters
+    std::vector<onelab::number> allNumbers, persistentNumbers;
+    std::vector<onelab::string> allStrings, persistentStrings;
+    onelab::server::instance()->get(allNumbers);
+    onelab::server::instance()->get(allStrings);
+    for(unsigned int i = 0; i < allNumbers.size(); i++){
+      if(allNumbers[i].getAttribute("Persistent") == "1")
+        persistentNumbers.push_back(allNumbers[i]);
+    }
+    for(unsigned int i = 0; i < allStrings.size(); i++){
+      if(allStrings[i].getAttribute("Persistent") == "1")
+        persistentStrings.push_back(allStrings[i]);
+    }
+
+    // clear the db
+    onelab::server::instance()->clear();
+
+    // run Gmsh client for non-python metamodels
+    if(runGmshClient && onelab::server::instance()->findClient("Gmsh") !=
+       onelab::server::instance()->lastClient())
+      onelabUtils::runGmshClient("reset", CTX::instance()->solver.autoMesh);
+
+    for(unsigned int i = 0; i < persistentNumbers.size(); i++){
+      Msg::Debug("Restoring persistent parameter %s",
+                 persistentNumbers[i].getName().c_str());
+      onelab::server::instance()->set(persistentNumbers[i]);
+    }
+    for(unsigned int i = 0; i < persistentStrings.size(); i++){
+      Msg::Debug("Restoring persistent parameter %s",
+                 persistentStrings[i].getName().c_str());
+      onelab::server::instance()->set(persistentStrings[i]);
+    }
+
+    // mark all parameters as changed
+    onelab::server::instance()->setChanged(3);
   }
 
 }
