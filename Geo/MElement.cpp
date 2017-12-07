@@ -615,8 +615,8 @@ double MElement::getJacobian(const fullMatrix<double> &gsf, double jac[3][3]) co
   return _computeDeterminantAndRegularize(this, jac);
 }
 
-double MElement::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])
-const {
+double MElement::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3]) const
+{
   jac[0][0] = jac[0][1] = jac[0][2] = 0.;
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
   jac[2][0] = jac[2][1] = jac[2][2] = 0.;
