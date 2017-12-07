@@ -1110,10 +1110,21 @@ void gmshViewGetTags(int ** tags, size_t * tags_n,int * ierr){
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshViewAddModelData(const int tag,const char * modelName,const char * dataType,int* tags, size_t tags_n,const double ** data, const size_t * data_n, size_t data_nn,const int step,const double time,const int numComponents,const int partition,int * ierr){
+void gmshViewAddModelData(const int tag,const char * modelName,const char * dataType,const int step,int* tags, size_t tags_n,const double ** data, const size_t * data_n, size_t data_nn,const double time,const int numComponents,const int partition,int * ierr){
   if(ierr) *ierr = 0;
   try {
-  gmsh::view::addModelData(tag,modelName,dataType,ptr2vector(tags,tags_n),ptrptr2vectorvector(data,data_n,data_nn),step,time,numComponents,partition);
+  gmsh::view::addModelData(tag,modelName,dataType,step,ptr2vector(tags,tags_n),ptrptr2vectorvector(data,data_n,data_nn),time,numComponents,partition);
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
+void gmshViewGetModelData(const int tag,const int step,int ** tags, size_t * tags_n,double *** data, size_t ** data_n, size_t *data_nn,double * time,int * numComponents,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  std::vector<int> api_tags_;
+  std::vector<std::vector<double> > api_data_;
+  gmsh::view::getModelData(tag,step,api_tags_,api_data_,*time,*numComponents);
+  vector2ptr(api_tags_,tags,tags_n);
+  vectorvector2ptrptr(api_data_,data,data_n,data_nn);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 

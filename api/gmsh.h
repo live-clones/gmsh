@@ -256,8 +256,8 @@ namespace gmsh { // Top-level functions
       GMSH_API void setElements(const int dim,
                                 const int tag,
                                 const std::vector<int> & types,
-                                const std::vector<std::vector<int> >& elementTags,
-                                const std::vector<std::vector<int> >& vertexTags);
+                                const std::vector<std::vector<int> > & elementTags,
+                                const std::vector<std::vector<int> > & vertexTags);
 
       // Gets the coordinates and the parametric coordinates (if any) of the mesh
       // vertex with tag `tag'. This is a useful by inefficient way of accessing
@@ -1111,24 +1111,34 @@ namespace gmsh { // Top-level functions
     // Adds model-based post-processing data to the view with tag `tag'.
     // `modelName' identifies the model the data is attached to. `dataType'
     // specifies the type of data, currently either "NodeData", "ElementData" or
-    // "ElementNodeData". `tags' gives the tags of the vertices or elements in the
-    // mesh to which the data is associated. `data' is a vector of length
-    // `tags.size()`: each entry is the vector of double precision numbers
-    // representing the data associated with the corresponding tag. The optional
-    // `step` and `time` arguments associate a time step and time value with the
-    // data. `numComponents' gives the number of data components (1 for scalar
-    // data, 3 for vector data, etc.) per entity; if negative, it is automatically
-    // inferred (when possible) from the input data. `partition' allows to specify
-    // data in several sub-sets.
+    // "ElementNodeData". `step' specifies the identifier (>= 0) of the data in a
+    // sequence. `tags' gives the tags of the vertices or elements in the mesh to
+    // which the data is associated. `data' is a vector of length `tags.size()`:
+    // each entry is the vector of double precision numbers representing the data
+    // associated with the corresponding tag. The optional `time` argument
+    // associate a time value with the data. `numComponents' gives the number of
+    // data components (1 for scalar data, 3 for vector data, etc.) per entity; if
+    // negative, it is automatically inferred (when possible) from the input data.
+    // `partition' allows to specify data in several sub-sets.
     GMSH_API void addModelData(const int tag,
                                const std::string & modelName,
                                const std::string & dataType,
+                               const int step,
                                const std::vector<int> & tags,
-                               const std::vector<std::vector<double> >& data,
-                               const int step = 0,
+                               const std::vector<std::vector<double> > & data,
                                const double time = 0.,
                                const int numComponents = -1,
                                const int partition = 0);
+
+    // Gets model-based post-processing data from the view with tag `tag' at step
+    // `step. Returns the `data' associated to the vertices or the elements with
+    // tags `tags'.
+    GMSH_API void getModelData(const int tag,
+                               const int step,
+                               std::vector<int> & tags,
+                               std::vector<std::vector<double> > & data,
+                               double & time,
+                               int & numComponents);
 
     // Adds list-based post-processing data to the view with tag `tag'. `type'
     // identifies the data: "SP" for scalar points, "VP", for vector points, etc.

@@ -2014,11 +2014,11 @@ void gmsh::view::getTags(std::vector<int> &tags)
 }
 
 void gmsh::view::addModelData(const int tag, const std::string &modelName,
-                              const std::string &dataType,
+                              const std::string &dataType, const int step,
                               const std::vector<int> &tags,
                               const std::vector<std::vector<double> > &data,
-                              const int step, const double time,
-                              const int numComponents, const int partition)
+                              const double time, const int numComponents,
+                              const int partition)
 {
   if(!_isInitialized()){ throw -1; }
 #if defined(HAVE_POST)
@@ -2066,6 +2066,25 @@ void gmsh::view::addModelData(const int tag, const std::string &modelName,
     d->initAdaptiveData(view->getOptions()->timeStep,
                         view->getOptions()->maxRecursionLevel,
                         view->getOptions()->targetError);
+#else
+  Msg::Error("Views require the post-processing module");
+  throw -1;
+#endif
+}
+
+void gmsh::view::getModelData(const int tag, const int step,
+                              std::vector<int> &tags,
+                              std::vector<std::vector<double> > &data,
+                              double &time, int &numComponents)
+{
+  if(!_isInitialized()){ throw -1; }
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(!view){
+    Msg::Error("Unknown view with tag %d", tag);
+    throw 2;
+  }
+  // TODO
 #else
   Msg::Error("Views require the post-processing module");
   throw -1;

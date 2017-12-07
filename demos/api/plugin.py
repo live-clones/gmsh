@@ -19,7 +19,7 @@ gmsh.model.mesh.setElements(2, 1, [2], [[1, 2]],
 
 # create a view with some data
 t = gmsh.view.add("some data")
-gmsh.view.addModelData(t, "test", "NodeData",
+gmsh.view.addModelData(t, "test", "NodeData", 0,
                        [1, 2, 3, 4],
                        [[1.],[10.],[20.],[1.]])
 

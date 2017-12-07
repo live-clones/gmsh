@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 
   // create a view with some data
   int t = gmsh::view::add("some data");
-  gmsh::view::addModelData(t, "test", "NodeData",
+  gmsh::view::addModelData(t, "test", "NodeData", 0,
                            {1, 2, 3, 4},
                            {{1.},{10.},{20.},{1.}});
 

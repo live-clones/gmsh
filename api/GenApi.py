@@ -6,8 +6,8 @@
 # Contributed by Jonathan Lambrechts
 
 import textwrap
-class arg:
 
+class arg:
     def __init__(self,name,value,python_value,type_cpp,type_c,out):
         self.name = name
         self.value = value
@@ -26,6 +26,18 @@ class arg:
         self.python_return = "not_implemented"
         self.python_pre = ""
 
+def ibool(name,value=None,python_value=None):
+    a = arg(name,value,python_value,"const bool","const int",False)
+    a.python_arg = "c_int(bool("+name+"))"
+    return a
+
+def obool(name,value=None,python_value=None):
+    a = arg(name,value,python_value,"bool &","int *",True)
+    a.c_arg = "api_"+name+"_"
+    a.c_pre = "  bool "+a.c_arg +";\n"
+    a.c_post = "  *"+name+" = (int)"+a.c_arg+";\n"
+    return a
+
 def iint(name,value=None,python_value=None):
     a = arg(name,value,python_value,"const int","const int",False)
     a.python_arg = "c_int("+name+")"
@@ -37,22 +49,6 @@ class oint(arg):
     def __init__(self,name,value=None):
         arg.__init__(self,name,value,None,"int &","int *",True)
         self.c_arg = "*"+name
-
-def istring(name,value=None,python_value=None):
-    a = arg(name,value,python_value,"const std::string &","const char *",False)
-    a.python_arg = "c_char_p("+name+".encode())"
-    return a
-
-def ostring(name,value=None,python_value=None):
-    a = arg(name,value,python_value,"std::string &","char **",True)
-    a.c_arg = "api_"+name+"_"
-    a.c_pre = "  std::string "+a.c_arg +";\n"
-    a.c_post = "  *"+name+" = _strdup("+a.c_arg+".c_str());\n"
-    name_ = "api_"+name+"_"
-    a.python_pre = name_+" = c_char_p()"
-    a.python_arg = "byref("+name_+")"
-    a.python_return = "_ostring("+name_+")"
-    return a
 
 def idouble(name,value=None,python_value=None):
      a = arg(name,value,python_value,"const double","const double",False)
@@ -68,17 +64,20 @@ def odouble(name,value=None,python_value=None):
     a.python_return = name_+".value"
     return a
 
-def ovectorpair(name,value=None,python_value=None):
-    a = arg(name,value,python_value,"gmsh::vector_pair &","int **",True)
+def istring(name,value=None,python_value=None):
+    a = arg(name,value,python_value,"const std::string &","const char *",False)
+    a.python_arg = "c_char_p("+name+".encode())"
+    return a
+
+def ostring(name,value=None,python_value=None):
+    a = arg(name,value,python_value,"std::string &","char **",True)
+    a.c_arg = "api_"+name+"_"
+    a.c_pre = "  std::string "+a.c_arg +";\n"
+    a.c_post = "  *"+name+" = _strdup("+a.c_arg+".c_str());\n"
     name_ = "api_"+name+"_"
-    name_n = name_ + "n_"
-    a.c_arg = name_
-    a.c_pre = "  gmsh::vector_pair "+name_ +";\n"
-    a.c_post = "  pairvector2intptr("+name_+"," + name + ","+name+"_n);\n"
-    a.c = "int ** "+name+", size_t * "+name+"_n"
-    a.python_pre = name_+", "+name_n+" = POINTER(c_int)(), c_size_t()"
-    a.python_arg = "byref("+name_+"), byref("+name_n+")"
-    a.python_return = "_ovectorpair("+name_+", "+name_n+".value)"
+    a.python_pre = name_+" = c_char_p()"
+    a.python_arg = "byref("+name_+")"
+    a.python_return = "_ostring("+name_+")"
     return a
 
 def ovectorstring(name,value=None,python_value=None):
@@ -102,16 +101,31 @@ def ivectorpair(name,value=None,python_value=None):
     a.python_arg = "api_"+name+"_, api_"+name+"_n_"
     return a
 
-def ibool(name,value=None,python_value=None):
-    a = arg(name,value,python_value,"const bool","const int",False)
-    a.python_arg = "c_int(bool("+name+"))"
+def ovectorpair(name,value=None,python_value=None):
+    a = arg(name,value,python_value,"gmsh::vector_pair &","int **",True)
+    name_ = "api_"+name+"_"
+    name_n = name_ + "n_"
+    a.c_arg = name_
+    a.c_pre = "  gmsh::vector_pair "+name_ +";\n"
+    a.c_post = "  pairvector2intptr("+name_+"," + name + ","+name+"_n);\n"
+    a.c = "int ** "+name+", size_t * "+name+"_n"
+    a.python_pre = name_+", "+name_n+" = POINTER(c_int)(), c_size_t()"
+    a.python_arg = "byref("+name_+"), byref("+name_n+")"
+    a.python_return = "_ovectorpair("+name_+", "+name_n+".value)"
     return a
-    
-def obool(name,value=None,python_value=None):
-    a = arg(name,value,python_value,"bool &","int *",True)
-    a.c_arg = "api_"+name+"_"
-    a.c_pre = "  bool "+a.c_arg +";\n"
-    a.c_post = "  *"+name+" = (int)"+a.c_arg+";\n"
+
+def ovectorvectorpair(name,value=None,python_value=None):
+    a = arg(name,value,python_value,"std::vector<gmsh::vector_pair> &","int **",True)
+    name_ = "api_"+name+"_"
+    name_n = name_ + "n_"
+    name_nn = name_ + "nn_"
+    a.c_arg = name_
+    a.c_pre = "  std::vector<gmsh::vector_pair >"+name_ +";\n"
+    a.c_post = "  pairvectorvector2intptrptr("+name_+"," + name + ","+name+"_n,"+name+"_nn);\n"
+    a.c  = "int *** "+name+", size_t ** "+name+"_n, size_t *"+name+"_nn"
+    a.python_pre = name_+", "+name_n+", "+name_nn +" = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()"
+    a.python_arg = "byref("+name_+"),byref("+name_n+"),byref("+name_nn+")"
+    a.python_return = "_ovectorvectorpair("+name_+","+name_n+","+name_nn+")"
     return a
 
 def ivectorint(name,value=None,python_value=None):
@@ -120,22 +134,6 @@ def ivectorint(name,value=None,python_value=None):
     a.c = "int* "+name+", size_t "+name+"_n"
     a.python_pre = "api_"+name+"_, api_"+name+"_n_ = _ivectorint("+name+")"
     a.python_arg = "api_"+name+"_, api_"+name+"_n_"
-    return a
-
-def ivectorvectorint(name,value=None,python_value=None):
-    a = arg(name,value,python_value,"const std::vector<std::vector<int> > &","const int**",False)
-    a.c_arg = "ptrptr2vectorvector("+name+","+name+"_n,"+name+"_nn)"
-    a.c = "const int ** "+name+", const size_t * "+name+"_n, "+"size_t "+name+"_nn"
-    a.python_pre = "api_"+name+"_, api_"+name+"_n_, api_"+name+"_nn_ = _ivectorvectorint("+name+")"
-    a.python_arg = "api_"+name+"_, api_"+name+"_n_, api_"+name+"_nn_"
-    return a
-
-def ivectorvectordouble(name,value=None,python_value=None):
-    a = arg(name,value,python_value,"const std::vector<std::vector<double> > &","const double**",False)
-    a.c_arg = "ptrptr2vectorvector("+name+","+name+"_n,"+name+"_nn)"
-    a.c = "const double ** "+name+", const size_t * "+name+"_n, "+"size_t "+name+"_nn"
-    a.python_pre = "api_"+name+"_, api_"+name+"_n_, api_"+name+"_nn_ = _ivectorvectordouble("+name+")"
-    a.python_arg = "api_"+name+"_, api_"+name+"_n_, api_"+name+"_nn_"
     return a
 
 def ovectorint(name,value=None,python_value=None):
@@ -149,6 +147,28 @@ def ovectorint(name,value=None,python_value=None):
     a.python_pre = name_+", "+name_n+" = POINTER(c_int)(), c_size_t()"
     a.python_arg = "byref("+name_+"),byref("+name_n+")"
     a.python_return = "_ovectorint("+name_+","+name_n+".value)"
+    return a
+
+def ivectorvectorint(name,value=None,python_value=None):
+    a = arg(name,value,python_value,"const std::vector<std::vector<int> > &","const int**",False)
+    a.c_arg = "ptrptr2vectorvector("+name+","+name+"_n,"+name+"_nn)"
+    a.c = "const int ** "+name+", const size_t * "+name+"_n, "+"size_t "+name+"_nn"
+    a.python_pre = "api_"+name+"_, api_"+name+"_n_, api_"+name+"_nn_ = _ivectorvectorint("+name+")"
+    a.python_arg = "api_"+name+"_, api_"+name+"_n_, api_"+name+"_nn_"
+    return a
+
+def ovectorvectorint(name,value=None,python_value=None):
+    a = arg(name,value,python_value,"std::vector<std::vector<int> > &","int **",True)
+    name_ = "api_"+name+"_"
+    name_n = name_ + "n_"
+    name_nn = name_ + "nn_"
+    a.c_arg = name_
+    a.c_pre = "  std::vector<std::vector<int> > "+a.c_arg +";\n"
+    a.c_post = "  vectorvector2ptrptr("+name_+"," + name + ","+name+"_n,"+name+"_nn);\n"
+    a.c  = "int *** "+name+", size_t ** "+name+"_n, size_t *"+name+"_nn"
+    a.python_pre = name_+", "+name_n+", "+name_nn +" = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()"
+    a.python_arg = "byref("+name_+"),byref("+name_n+"),byref("+name_nn+")"
+    a.python_return = "_ovectorvectorint("+name_+","+name_n+","+name_nn+")"
     return a
 
 def ivectordouble(name,value=None,python_value=None):
@@ -172,32 +192,26 @@ def ovectordouble(name,value=None,python_value=None):
     a.python_return = "_ovectordouble("+name_+","+name_n+".value)"
     return a
 
-def ovectorvectorint(name,value=None,python_value=None):
-    a = arg(name,value,python_value,"std::vector<std::vector<int> > &","int **",True)
-    name_ = "api_"+name+"_"
-    name_n = name_ + "n_"
-    name_nn = name_ + "nn_"
-    a.c_arg = name_
-    a.c_pre = "  std::vector<std::vector<int> > "+a.c_arg +";\n"
-    a.c_post = "  vectorvector2ptrptr("+name_+"," + name + ","+name+"_n,"+name+"_nn);\n"
-    a.c  = "int *** "+name+", size_t ** "+name+"_n, size_t *"+name+"_nn"
-    a.python_pre = name_+", "+name_n+", "+name_nn +" = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()"
-    a.python_arg = "byref("+name_+"),byref("+name_n+"),byref("+name_nn+")"
-    a.python_return = "_ovectorvectorint("+name_+","+name_n+","+name_nn+")"
+def ivectorvectordouble(name,value=None,python_value=None):
+    a = arg(name,value,python_value,"const std::vector<std::vector<double> > &","const double**",False)
+    a.c_arg = "ptrptr2vectorvector("+name+","+name+"_n,"+name+"_nn)"
+    a.c = "const double ** "+name+", const size_t * "+name+"_n, "+"size_t "+name+"_nn"
+    a.python_pre = "api_"+name+"_, api_"+name+"_n_, api_"+name+"_nn_ = _ivectorvectordouble("+name+")"
+    a.python_arg = "api_"+name+"_, api_"+name+"_n_, api_"+name+"_nn_"
     return a
 
-def ovectorvectorpair(name,value=None,python_value=None):
-    a = arg(name,value,python_value,"std::vector<gmsh::vector_pair> &","int **",True)
+def ovectorvectordouble(name,value=None,python_value=None):
+    a = arg(name,value,python_value,"std::vector<std::vector<double> > &","double **",True)
     name_ = "api_"+name+"_"
     name_n = name_ + "n_"
     name_nn = name_ + "nn_"
     a.c_arg = name_
-    a.c_pre = "  std::vector<gmsh::vector_pair >"+name_ +";\n"
-    a.c_post = "  pairvectorvector2intptrptr("+name_+"," + name + ","+name+"_n,"+name+"_nn);\n"
-    a.c  = "int *** "+name+", size_t ** "+name+"_n, size_t *"+name+"_nn"
-    a.python_pre = name_+", "+name_n+", "+name_nn +" = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()"
+    a.c_pre = "  std::vector<std::vector<double> > "+a.c_arg +";\n"
+    a.c_post = "  vectorvector2ptrptr("+name_+"," + name + ","+name+"_n,"+name+"_nn);\n"
+    a.c  = "double *** "+name+", size_t ** "+name+"_n, size_t *"+name+"_nn"
+    a.python_pre = name_+", "+name_n+", "+name_nn +" = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()"
     a.python_arg = "byref("+name_+"),byref("+name_n+"),byref("+name_nn+")"
-    a.python_return = "_ovectorvectorpair("+name_+","+name_n+","+name_nn+")"
+    a.python_return = "_ovectorvectordouble("+name_+","+name_n+","+name_nn+")"
     return a
 
 def argcargv() : 

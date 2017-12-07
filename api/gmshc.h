@@ -1186,24 +1186,35 @@ GMSH_API void gmshViewGetTags(int ** tags, size_t * tags_n,
 /* Adds model-based post-processing data to the view with tag `tag'.
  * `modelName' identifies the model the data is attached to. `dataType'
  * specifies the type of data, currently either "NodeData", "ElementData" or
- * "ElementNodeData". `tags' gives the tags of the vertices or elements in the
- * mesh to which the data is associated. `data' is a vector of length
- * `tags.size()`: each entry is the vector of double precision numbers
- * representing the data associated with the corresponding tag. The optional
- * `step` and `time` arguments associate a time step and time value with the
- * data. `numComponents' gives the number of data components (1 for scalar
- * data, 3 for vector data, etc.) per entity; if negative, it is automatically
- * inferred (when possible) from the input data. `partition' allows to specify
- * data in several sub-sets. */
+ * "ElementNodeData". `step' specifies the identifier (>= 0) of the data in a
+ * sequence. `tags' gives the tags of the vertices or elements in the mesh to
+ * which the data is associated. `data' is a vector of length `tags.size()`:
+ * each entry is the vector of double precision numbers representing the data
+ * associated with the corresponding tag. The optional `time` argument
+ * associate a time value with the data. `numComponents' gives the number of
+ * data components (1 for scalar data, 3 for vector data, etc.) per entity; if
+ * negative, it is automatically inferred (when possible) from the input data.
+ * `partition' allows to specify data in several sub-sets. */
 GMSH_API void gmshViewAddModelData(const int tag,
                                    const char * modelName,
                                    const char * dataType,
+                                   const int step,
                                    int* tags, size_t tags_n,
                                    const double ** data, const size_t * data_n, size_t data_nn,
-                                   const int step,
                                    const double time,
                                    const int numComponents,
                                    const int partition,
+                                   int * ierr);
+
+/* Gets model-based post-processing data from the view with tag `tag' at step
+ * `step. Returns the `data' associated to the vertices or the elements with
+ * tags `tags'. */
+GMSH_API void gmshViewGetModelData(const int tag,
+                                   const int step,
+                                   int ** tags, size_t * tags_n,
+                                   double *** data, size_t ** data_n, size_t *data_nn,
+                                   double * time,
+                                   int * numComponents,
                                    int * ierr);
 
 /* Adds list-based post-processing data to the view with tag `tag'. `type'

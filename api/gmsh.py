@@ -2928,20 +2928,20 @@ class view:
         return _ovectorint(api_tags_,api_tags_n_.value)
 
     @staticmethod
-    def addModelData(tag,modelName,dataType,tags,data,step=0,time=0.,numComponents=-1,partition=0):
+    def addModelData(tag,modelName,dataType,step,tags,data,time=0.,numComponents=-1,partition=0):
         """
         Adds model-based post-processing data to the view with tag `tag'.
         `modelName' identifies the model the data is attached to. `dataType'
         specifies the type of data, currently either "NodeData", "ElementData" or
-        "ElementNodeData". `tags' gives the tags of the vertices or elements in the
-        mesh to which the data is associated. `data' is a vector of length
-        `tags.size()`: each entry is the vector of double precision numbers
-        representing the data associated with the corresponding tag. The optional
-        `step` and `time` arguments associate a time step and time value with the
-        data. `numComponents' gives the number of data components (1 for scalar
-        data, 3 for vector data, etc.) per entity; if negative, it is automatically
-        inferred (when possible) from the input data. `partition' allows to specify
-        data in several sub-sets.
+        "ElementNodeData". `step' specifies the identifier (>= 0) of the data in a
+        sequence. `tags' gives the tags of the vertices or elements in the mesh to
+        which the data is associated. `data' is a vector of length `tags.size()`:
+        each entry is the vector of double precision numbers representing the data
+        associated with the corresponding tag. The optional `time` argument
+        associate a time value with the data. `numComponents' gives the number of
+        data components (1 for scalar data, 3 for vector data, etc.) per entity; if
+        negative, it is automatically inferred (when possible) from the input data.
+        `partition' allows to specify data in several sub-sets.
         """
         api_tags_, api_tags_n_ = _ivectorint(tags)
         api_data_, api_data_n_, api_data_nn_ = _ivectorvectordouble(data)
@@ -2950,9 +2950,9 @@ class view:
             c_int(tag),
             c_char_p(modelName.encode()),
             c_char_p(dataType.encode()),
+            c_int(step),
             api_tags_, api_tags_n_,
             api_data_, api_data_n_, api_data_nn_,
-            c_int(step),
             c_double(time),
             c_int(numComponents),
             c_int(partition),
@@ -2961,6 +2961,37 @@ class view:
             raise ValueError(
                 "gmshViewAddModelData returned non-zero error code : ",
                 ierr.value)
+
+    @staticmethod
+    def getModelData(tag,step):
+        """
+        Gets model-based post-processing data from the view with tag `tag' at step
+        `step. Returns the `data' associated to the vertices or the elements with
+        tags `tags'.
+
+        return tags, data, time, numComponents
+        """
+        api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
+        api_data_, api_data_n_, api_data_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
+        api_time_ = c_double()
+        ierr = c_int()
+        lib.gmshViewGetModelData(
+            c_int(tag),
+            c_int(step),
+            byref(api_tags_),byref(api_tags_n_),
+            byref(api_data_),byref(api_data_n_),byref(api_data_nn_),
+            byref(api_time_),
+            not_implemented,
+            byref(ierr))
+        if ierr.value != 0 :
+            raise ValueError(
+                "gmshViewGetModelData returned non-zero error code : ",
+                ierr.value)
+        return (
+            _ovectorint(api_tags_,api_tags_n_.value),
+            _ovectorvectordouble(api_data_,api_data_n_,api_data_nn_),
+            api_time_.value,
+            not_implemented)
 
     @staticmethod
     def addListData(tag,type,numEle,data):
