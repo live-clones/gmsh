@@ -642,9 +642,6 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
     Msg::Error ("Frontal Layers Algo deprecated");
   else if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_HEX)
     Msg::Error ("Frontal Layers Algo deprecated");
-  else if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D){
-    refineMeshMMG(gr);
-  }
   else{
     int nbvertices_filler = (old_algo_hexa()) ?
       Filler::get_nbr_new_vertices() : Filler3D::get_nbr_new_vertices();
@@ -730,7 +727,11 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
   gr->embeddedVertices() = oldEmbVertices;
 
   // now do insertion of points
-  if(CTX::instance()->mesh.oldRefinement){
+
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D){
+    refineMeshMMG(gr);
+  }
+  else if(CTX::instance()->mesh.oldRefinement){
     insertVerticesInRegion(gr, 2000000000, true);
   }
   else{
@@ -751,7 +752,8 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 {
   if(regions.empty()) return;
 
-  if(CTX::instance()->mesh.algo3d == ALGO_3D_DELAUNAY_NEW){
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_DELAUNAY_NEW ||
+     CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D){
     MeshDelaunayVolumeNewCode(regions);
   }
   else{
