@@ -99,6 +99,16 @@ std::string FlGui::getOpenedThroughMacFinder()
   return _openedThroughMacFinder;
 }
 
+void FlGui::setFinishedProcessingCommandLine()
+{
+  _finishedProcessingCommandLine = true;
+}
+
+bool FlGui::getFinishedProcessingCommandLine()
+{
+  return _finishedProcessingCommandLine;
+}
+
 static int globalShortcut(int event)
 {
   if(!FlGui::available()) return 0;
@@ -503,10 +513,11 @@ FlGui::FlGui(int argc, char **argv)
 
 FlGui *FlGui::_instance = 0;
 std::string FlGui::_openedThroughMacFinder = "";
+bool FlGui::_finishedProcessingCommandLine = false;
 
 bool FlGui::available()
 {
-  return (_instance != 0);
+  return (_instance != 0) && _finishedProcessingCommandLine;
 }
 
 FlGui *FlGui::instance(int argc, char **argv)

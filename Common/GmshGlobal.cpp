@@ -370,8 +370,11 @@ int GmshFLTK(int argc, char **argv)
   // display GUI immediately for quick launch time
   FlGui::instance()->check();
 
-  // open project file and merge all other input files
-  if(FlGui::getOpenedThroughMacFinder().empty()){
+  if(FlGui::getOpenedThroughMacFinder().size() &&
+     CTX::instance()->files.empty()){
+    OpenProject(FlGui::getOpenedThroughMacFinder());
+  }
+  else{
     OpenProject(GModel::current()->getFileName());
     bool open = false;
     for(unsigned int i = 0; i < CTX::instance()->files.size(); i++){
@@ -390,9 +393,8 @@ int GmshFLTK(int argc, char **argv)
         MergeFile(CTX::instance()->files[i]);
     }
   }
-  else{
-    OpenProject(FlGui::getOpenedThroughMacFinder());
-  }
+
+  FlGui::instance()->setFinishedProcessingCommandLine();
 
   if(CTX::instance()->post.combineTime){
     PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);
