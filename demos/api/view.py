@@ -22,7 +22,7 @@ t = gmsh.view.add("some data")
 
 # add 10 steps of model-based data, on the nodes of the mesh
 for step in range(0, 10):
-    gmsh.view.addModelData(t, "test", "NodeData", step,
+    gmsh.view.addModelData(t, step, "test", "NodeData",
                            [1, 2, 3, 4], # tags of nodes
                            [[10.],[10.],[12.+step],[13.+step]]) # data, per node
     

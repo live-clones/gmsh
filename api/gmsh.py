@@ -80,6 +80,12 @@ def _ovectorvectorint(ptr,size,n):
     lib.gmshFree(ptr)
     return v
 
+def _ovectorvectordouble(ptr,size,n):
+    v = [_ovectordouble(pointer(ptr[i].contents),size[i]) for i in range(n.value)]
+    lib.gmshFree(size)
+    lib.gmshFree(ptr)
+    return v
+
 def _ovectorvectorpair(ptr,size,n):
     v = [_ovectorpair(pointer(ptr[i].contents),size[i]) for i in range(n.value)]
     lib.gmshFree(size)
@@ -840,11 +846,12 @@ class model:
 
             return type, vertexTags
             """
+            api_type_ = c_int()
             api_vertexTags_, api_vertexTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetElement(
                 c_int(elementTag),
-                not_implemented,
+                byref(api_type_),
                 byref(api_vertexTags_),byref(api_vertexTags_n_),
                 byref(ierr))
             if ierr.value != 0 :
@@ -852,7 +859,7 @@ class model:
                     "gmshModelMeshGetElement returned non-zero error code : ",
                     ierr.value)
             return (
-                not_implemented,
+                api_type_.value,
                 _ovectorint(api_vertexTags_,api_vertexTags_n_.value))
 
         @staticmethod
@@ -2928,7 +2935,7 @@ class view:
         return _ovectorint(api_tags_,api_tags_n_.value)
 
     @staticmethod
-    def addModelData(tag,modelName,dataType,step,tags,data,time=0.,numComponents=-1,partition=0):
+    def addModelData(tag,step,modelName,dataType,tags,data,time=0.,numComponents=-1,partition=0):
         """
         Adds model-based post-processing data to the view with tag `tag'.
         `modelName' identifies the model the data is attached to. `dataType'
@@ -2948,9 +2955,9 @@ class view:
         ierr = c_int()
         lib.gmshViewAddModelData(
             c_int(tag),
+            c_int(step),
             c_char_p(modelName.encode()),
             c_char_p(dataType.encode()),
-            c_int(step),
             api_tags_, api_tags_n_,
             api_data_, api_data_n_, api_data_nn_,
             c_double(time),
@@ -2967,31 +2974,36 @@ class view:
         """
         Gets model-based post-processing data from the view with tag `tag' at step
         `step. Returns the `data' associated to the vertices or the elements with
-        tags `tags'.
+        tags `tags', as well as the `dataType' and the number of components
+        `numComponents'.
 
-        return tags, data, time, numComponents
+        return dataType, tags, data, time, numComponents
         """
+        api_dataType_ = c_char_p()
         api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
         api_data_, api_data_n_, api_data_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
         api_time_ = c_double()
+        api_numComponents_ = c_int()
         ierr = c_int()
         lib.gmshViewGetModelData(
             c_int(tag),
             c_int(step),
+            byref(api_dataType_),
             byref(api_tags_),byref(api_tags_n_),
             byref(api_data_),byref(api_data_n_),byref(api_data_nn_),
             byref(api_time_),
-            not_implemented,
+            byref(api_numComponents_),
             byref(ierr))
         if ierr.value != 0 :
             raise ValueError(
                 "gmshViewGetModelData returned non-zero error code : ",
                 ierr.value)
         return (
+            _ostring(api_dataType_),
             _ovectorint(api_tags_,api_tags_n_.value),
             _ovectorvectordouble(api_data_,api_data_n_,api_data_nn_),
             api_time_.value,
-            not_implemented)
+            api_numComponents_.value)
 
     @staticmethod
     def addListData(tag,type,numEle,data):

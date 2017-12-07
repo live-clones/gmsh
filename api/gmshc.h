@@ -1196,9 +1196,9 @@ GMSH_API void gmshViewGetTags(int ** tags, size_t * tags_n,
  * negative, it is automatically inferred (when possible) from the input data.
  * `partition' allows to specify data in several sub-sets. */
 GMSH_API void gmshViewAddModelData(const int tag,
+                                   const int step,
                                    const char * modelName,
                                    const char * dataType,
-                                   const int step,
                                    int* tags, size_t tags_n,
                                    const double ** data, const size_t * data_n, size_t data_nn,
                                    const double time,
@@ -1208,9 +1208,11 @@ GMSH_API void gmshViewAddModelData(const int tag,
 
 /* Gets model-based post-processing data from the view with tag `tag' at step
  * `step. Returns the `data' associated to the vertices or the elements with
- * tags `tags'. */
+ * tags `tags', as well as the `dataType' and the number of components
+ * `numComponents'. */
 GMSH_API void gmshViewGetModelData(const int tag,
                                    const int step,
+                                   char ** dataType,
                                    int ** tags, size_t * tags_n,
                                    double *** data, size_t ** data_n, size_t *data_nn,
                                    double * time,

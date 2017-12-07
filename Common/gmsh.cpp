@@ -2013,8 +2013,9 @@ void gmsh::view::getTags(std::vector<int> &tags)
 #endif
 }
 
-void gmsh::view::addModelData(const int tag, const std::string &modelName,
-                              const std::string &dataType, const int step,
+void gmsh::view::addModelData(const int tag, const int step,
+                              const std::string &modelName,
+                              const std::string &dataType,
                               const std::vector<int> &tags,
                               const std::vector<std::vector<double> > &data,
                               const double time, const int numComponents,
@@ -2050,6 +2051,8 @@ void gmsh::view::addModelData(const int tag, const std::string &modelName,
       type = PViewDataGModel::ElementData;
     else if(dataType == "ElementNodeData")
       type = PViewDataGModel::ElementNodeData;
+    else if(dataType == "GaussPointData")
+      type = PViewDataGModel::GaussPointData;
     else if(dataType == "Beam")
       type = PViewDataGModel::BeamData;
     else{
@@ -2073,7 +2076,7 @@ void gmsh::view::addModelData(const int tag, const std::string &modelName,
 }
 
 void gmsh::view::getModelData(const int tag, const int step,
-                              std::vector<int> &tags,
+                              std::string &dataType, std::vector<int> &tags,
                               std::vector<std::vector<double> > &data,
                               double &time, int &numComponents)
 {
@@ -2084,7 +2087,52 @@ void gmsh::view::getModelData(const int tag, const int step,
     Msg::Error("Unknown view with tag %d", tag);
     throw 2;
   }
-  // TODO
+  PViewDataGModel *d = dynamic_cast<PViewDataGModel*>(view->getData());
+  if(!d){
+    Msg::Error("View with tag %d does not contain model data", tag);
+    throw 2;
+  }
+  if(d->getType() == PViewDataGModel::NodeData)
+    dataType = "NodeData";
+  else if(d->getType() == PViewDataGModel::ElementData)
+    dataType = "ElementData";
+  else if(d->getType() == PViewDataGModel::ElementNodeData)
+    dataType = "ElementNodeData";
+  else if(d->getType() == PViewDataGModel::GaussPointData)
+    dataType = "GaussPointData";
+  else if(d->getType() == PViewDataGModel::BeamData)
+    dataType = "Beam";
+  else
+    dataType = "Unknown";
+  stepData<double> *s = d->getStepData(step);
+  if(!s){
+    Msg::Error("View with tag %d does not contain model data for step %d",
+               tag, step);
+    throw 2;
+  }
+  tags.clear();
+  data.clear();
+  time = s->getTime();
+  numComponents = s->getNumComponents();
+  int numEnt = 0;
+  for(int i = 0; i < s->getNumData(); i++){
+    if(s->getData(i)) numEnt++;
+  }
+  if(!numEnt) return;
+  data.resize(numEnt);
+  tags.resize(numEnt);
+  int j = 0;
+  for(int i = 0; i < s->getNumData(); i++){
+    double *dd = s->getData(i);
+    if(dd){
+      tags[j] = i;
+      int mult = s->getMult(i);
+      data[j].resize(numComponents * mult);
+      for(int k = 0; k < numComponents * mult; k++)
+        data[j][k] = dd[k];
+      j++;
+    }
+  }
 #else
   Msg::Error("Views require the post-processing module");
   throw -1;

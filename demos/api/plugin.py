@@ -19,9 +19,13 @@ gmsh.model.mesh.setElements(2, 1, [2], [[1, 2]],
 
 # create a view with some data
 t = gmsh.view.add("some data")
-gmsh.view.addModelData(t, "test", "NodeData", 0,
+gmsh.view.addModelData(t, 0, "test", "NodeData",
                        [1, 2, 3, 4],
                        [[1.],[10.],[20.],[1.]])
+
+# test getting it back
+dataType, tags, data, time, numComp = gmsh.view.getModelData(t, 0)
+print dataType, tags
 
 # compute the iso-curve at value 11
 gmsh.plugin.setNumber("Isosurface", "Value", 11.)

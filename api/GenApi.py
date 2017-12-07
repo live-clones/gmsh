@@ -46,9 +46,13 @@ def iint(name,value=None,python_value=None):
 class oint(arg):
     rtype_cpp = "int"
     rtype_c = "int"
-    def __init__(self,name,value=None):
-        arg.__init__(self,name,value,None,"int &","int *",True)
+    def __init__(self,name,value=None,python_value=None):
+        arg.__init__(self,name,value,python_value,"int &","int *",True)
         self.c_arg = "*"+name
+        name_ = "api_"+name+"_"
+        self.python_pre = name_+" = c_int()"
+        self.python_arg = "byref("+name_+")"
+        self.python_return = name_+".value"
 
 def idouble(name,value=None,python_value=None):
      a = arg(name,value,python_value,"const double","const double",False)
@@ -499,6 +503,12 @@ def _ovectordouble(ptr,size):
 
 def _ovectorvectorint(ptr,size,n):
     v = [_ovectorint(pointer(ptr[i].contents),size[i]) for i in range(n.value)]
+    lib.gmshFree(size)
+    lib.gmshFree(ptr)
+    return v
+
+def _ovectorvectordouble(ptr,size,n):
+    v = [_ovectordouble(pointer(ptr[i].contents),size[i]) for i in range(n.value)]
     lib.gmshFree(size)
     lib.gmshFree(ptr)
     return v

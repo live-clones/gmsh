@@ -1121,9 +1121,9 @@ namespace gmsh { // Top-level functions
     // negative, it is automatically inferred (when possible) from the input data.
     // `partition' allows to specify data in several sub-sets.
     GMSH_API void addModelData(const int tag,
+                               const int step,
                                const std::string & modelName,
                                const std::string & dataType,
-                               const int step,
                                const std::vector<int> & tags,
                                const std::vector<std::vector<double> > & data,
                                const double time = 0.,
@@ -1132,9 +1132,11 @@ namespace gmsh { // Top-level functions
 
     // Gets model-based post-processing data from the view with tag `tag' at step
     // `step. Returns the `data' associated to the vertices or the elements with
-    // tags `tags'.
+    // tags `tags', as well as the `dataType' and the number of components
+    // `numComponents'.
     GMSH_API void getModelData(const int tag,
                                const int step,
+                               std::string & dataType,
                                std::vector<int> & tags,
                                std::vector<std::vector<double> > & data,
                                double & time,
