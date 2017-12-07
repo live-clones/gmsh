@@ -17,6 +17,7 @@ bool PViewDataGModel::addData(GModel *model,
                               int step, double time, int partition, int numComp)
 {
   if(data.empty()) return false;
+  if(step < 0) return false;
 
   if (numComp < 0){
     numComp = 9;
