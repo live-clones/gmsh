@@ -34,7 +34,7 @@ gmsh.plugin.run("Isosurface")
 # delete the source view
 gmsh.view.remove(t)
 
-# check how many views the plugin created (a priori, a single one)
+# check how many views the plugin created (a priori, a single list-based one)
 tags = gmsh.view.getTags()
 if len(tags) == 1:
     gmsh.view.write(tags[0], "iso.msh")

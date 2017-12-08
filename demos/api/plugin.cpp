@@ -1,3 +1,4 @@
+#include <iostream>
 #include <gmsh.h>
 
 int main(int argc, char **argv)
@@ -24,6 +25,18 @@ int main(int argc, char **argv)
                            {1, 2, 3, 4},
                            {{1.},{10.},{20.},{1.}});
 
+  // test getting data back
+  std::string dataType;
+  std::vector<int> tags;
+  std::vector<std::vector<double> > data;
+  double time;
+  int numComp;
+  gmsh::view::getModelData(t, 0, dataType, tags, data, time, numComp);
+  std::cout << dataType;
+  for(unsigned int i = 0; i < tags.size(); i++)
+    std::cout << " " << tags[i];
+  std::cout << std::endl;
+
   // compute the iso-curve at value 11
   gmsh::plugin::setNumber("Isosurface", "Value", 11.);
   gmsh::plugin::run("Isosurface");
@@ -31,11 +44,20 @@ int main(int argc, char **argv)
   // delete the source view
   gmsh::view::remove(t);
 
-  // check how many views the plugin created (a priori, a single one)
-  std::vector<int> tags;
+  // check how many views the plugin created (a priori, a single list-based one)
   gmsh::view::getTags(tags);
-  if(tags.size() == 1)
+  if(tags.size() == 1){
     gmsh::view::write(tags[0], "iso.msh");
+    // test getting data back
+    std::vector<std::string> dataTypes;
+    std::vector<int> numElements;
+    gmsh::view::getListData(tags[0], dataTypes, numElements, data);
+    for(unsigned int i = 0; i < dataTypes.size(); i++)
+      std::cout << dataTypes[i] << " ";
+    for(unsigned int i = 0; i < numElements.size(); i++)
+      std::cout << numElements[i] << " ";
+    std::cout << std::endl;
+  }
 
   gmsh::finalize();
   return 0;
