@@ -1137,6 +1137,19 @@ void gmshViewAddListData(const int tag,const char * type,const int numEle,double
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
+void gmshViewGetListData(const int tag,char *** dataType,size_t * dataType_n,int ** numElements, size_t * numElements_n,double *** data, size_t ** data_n, size_t *data_nn,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  std::vector<std::string> api_dataType_;
+  std::vector<int> api_numElements_;
+  std::vector<std::vector<double> > api_data_;
+  gmsh::view::getListData(tag,api_dataType_,api_numElements_,api_data_);
+  stringvector2charpp(api_dataType_,dataType,dataType_n);
+  vector2ptr(api_numElements_,numElements,numElements_n);
+  vectorvector2ptrptr(api_data_,data,data_n,data_nn);
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
 void gmshViewProbe(const int tag,const double x,const double y,const double z,double ** value, size_t * value_n,const int step,const int numComp,const int gradient,const double tolerance,double * xElemCoord, size_t xElemCoord_n,double * yElemCoord, size_t yElemCoord_n,double * zElemCoord, size_t zElemCoord_n,int * ierr){
   if(ierr) *ierr = 0;
   try {

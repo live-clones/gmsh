@@ -501,6 +501,12 @@ def _ovectordouble(ptr,size):
         lib.gmshFree(ptr)
     return v
 
+def _ovectorstring(ptr,size):
+    # FIXME Jon numpy + free
+    v = list(ptr[i] for i in range(size))
+    lib.gmshFree(ptr)
+    return v
+
 def _ovectorvectorint(ptr,size,n):
     v = [_ovectorint(pointer(ptr[i].contents),size[i]) for i in range(n.value)]
     lib.gmshFree(size)

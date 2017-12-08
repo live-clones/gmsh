@@ -1151,6 +1151,14 @@ namespace gmsh { // Top-level functions
                               const int numEle,
                               const std::vector<double> & data);
 
+    // Gets list-based post-processing data from the view with tag `tag'. Returns
+    // the types `dataTypes', the number of elements `numElements' for each data
+    // type and the `data' for each data type.
+    GMSH_API void getListData(const int tag,
+                              std::vector<std::string> & dataType,
+                              std::vector<int> & numElements,
+                              std::vector<std::vector<double> > & data);
+
     // Probes the view `tag' for its `value' at point (`x', `y', `z'). Returns only
     // the value at step `step' is `step' is positive. Returns only values with
     // `numComp' if `numComp' is positive. Returns the gradient of the `value' if

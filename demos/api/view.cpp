@@ -23,7 +23,7 @@ int main(int argc, char **argv)
 
   // add 10 steps of model-based data, on the nodes of the mesh
   for(int step = 0; step < 10; step++)
-    gmsh::view::addModelData(t, "test", "NodeData", step,
+    gmsh::view::addModelData(t, step, "test", "NodeData",
                              {1, 2, 3, 4}, // tags of nodes
                              {{10.},{10.},{12.+step},{13.+step}}); // data, per node
 

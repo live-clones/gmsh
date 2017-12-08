@@ -74,6 +74,12 @@ def _ovectordouble(ptr,size):
         lib.gmshFree(ptr)
     return v
 
+def _ovectorstring(ptr,size):
+    # FIXME Jon numpy + free
+    v = list(ptr[i] for i in range(size))
+    lib.gmshFree(ptr)
+    return v
+
 def _ovectorvectorint(ptr,size,n):
     v = [_ovectorint(pointer(ptr[i].contents),size[i]) for i in range(n.value)]
     lib.gmshFree(size)
@@ -3025,6 +3031,34 @@ class view:
             raise ValueError(
                 "gmshViewAddListData returned non-zero error code : ",
                 ierr.value)
+
+    @staticmethod
+    def getListData(tag):
+        """
+        Gets list-based post-processing data from the view with tag `tag'. Returns
+        the types `dataTypes', the number of elements `numElements' for each data
+        type and the `data' for each data type.
+
+        return dataType, numElements, data
+        """
+        api_dataType_, api_dataType_n_ = POINTER(c_char_p)(), c_size_t()
+        api_numElements_, api_numElements_n_ = POINTER(c_int)(), c_size_t()
+        api_data_, api_data_n_, api_data_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
+        ierr = c_int()
+        lib.gmshViewGetListData(
+            c_int(tag),
+            byref(api_dataType_), byref(api_dataType_n_),
+            byref(api_numElements_),byref(api_numElements_n_),
+            byref(api_data_),byref(api_data_n_),byref(api_data_nn_),
+            byref(ierr))
+        if ierr.value != 0 :
+            raise ValueError(
+                "gmshViewGetListData returned non-zero error code : ",
+                ierr.value)
+        return (
+            _ovectorstring(api_dataType_, api_dataType_n_.value),
+            _ovectorint(api_numElements_,api_numElements_n_.value),
+            _ovectorvectordouble(api_data_,api_data_n_,api_data_nn_))
 
     @staticmethod
     def probe(tag,x,y,z,step=-1,numComp=-1,gradient=False,tolerance=0.,xElemCoord=[],yElemCoord=[],zElemCoord=[]):

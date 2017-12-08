@@ -1229,6 +1229,15 @@ GMSH_API void gmshViewAddListData(const int tag,
                                   double * data, size_t data_n,
                                   int * ierr);
 
+/* Gets list-based post-processing data from the view with tag `tag'. Returns
+ * the types `dataTypes', the number of elements `numElements' for each data
+ * type and the `data' for each data type. */
+GMSH_API void gmshViewGetListData(const int tag,
+                                  char *** dataType,size_t * dataType_n,
+                                  int ** numElements, size_t * numElements_n,
+                                  double *** data, size_t ** data_n, size_t *data_nn,
+                                  int * ierr);
+
 /* Probes the view `tag' for its `value' at point (`x', `y', `z'). Returns
  * only the value at step `step' is `step' is positive. Returns only values
  * with `numComp' if `numComp' is positive. Returns the gradient of the

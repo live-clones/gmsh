@@ -2090,7 +2090,7 @@ void gmsh::view::getModelData(const int tag, const int step,
   PViewDataGModel *d = dynamic_cast<PViewDataGModel*>(view->getData());
   if(!d){
     Msg::Error("View with tag %d does not contain model data", tag);
-    throw 2;
+    return;
   }
   if(d->getType() == PViewDataGModel::NodeData)
     dataType = "NodeData";
@@ -2139,8 +2139,8 @@ void gmsh::view::getModelData(const int tag, const int step,
 #endif
 }
 
-void gmsh::view::addListData(const int tag, const std::string &type,
-                             const int numEle, const std::vector<double> &data)
+void gmsh::view::addListData(const int tag, const std::string &dataType,
+                             const int numElements, const std::vector<double> &data)
 {
   if(!_isInitialized()){ throw -1; }
 #if defined(HAVE_POST)
@@ -2162,13 +2162,48 @@ void gmsh::view::addListData(const int tag, const std::string &type,
                          "SQ", "VQ", "TQ", "SS", "VS", "TS", "SH", "VH", "TH",
                          "SI", "VI", "TI", "SY", "VY", "TY"};
   for(int idxtype = 0; idxtype < 24; idxtype++){
-    if(type == types[idxtype]){
-      d->importList(idxtype, numEle, data, true);
+    if(dataType == types[idxtype]){
+      d->importList(idxtype, numElements, data, true);
       return;
     }
   }
   Msg::Error("Unknown data type for list import");
   throw 2;
+#else
+  Msg::Error("Views require the post-processing module");
+  throw -1;
+#endif
+}
+
+void gmsh::view::getListData(const int tag, std::vector<std::string> &dataTypes,
+                             std::vector<int> &numElements,
+                             std::vector<std::vector<double> > &data)
+{
+  if(!_isInitialized()){ throw -1; }
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(!view){
+    Msg::Error("Unknown view with tag %d", tag);
+    throw 2;
+  }
+  PViewDataList *d = dynamic_cast<PViewDataList*>(view->getData());
+  if(!d){
+    Msg::Error("View with tag %d does not contain list data", tag);
+    return;
+  }
+  const char *types[] = {"SP", "VP", "TP", "SL", "VL", "TL", "ST", "VT", "TT",
+                         "SQ", "VQ", "TQ", "SS", "VS", "TS", "SH", "VH", "TH",
+                         "SI", "VI", "TI", "SY", "VY", "TY"};
+  std::vector<int> N(24);
+  std::vector< std::vector<double>* > V(24);
+  d->getListPointers(&N[0], &V[0]);
+  for(int idxtype = 0; idxtype < 24; idxtype++){
+    if(N[idxtype]){
+      dataTypes.push_back(types[idxtype]);
+      numElements.push_back(N[idxtype]);
+      data.push_back(*V[idxtype]);
+    }
+  }
 #else
   Msg::Error("Views require the post-processing module");
   throw -1;

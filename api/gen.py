@@ -442,6 +442,9 @@ view.add('getModelData',doc,None,iint('tag'),iint('step'),ostring('dataType'),ov
 doc = '''Adds list-based post-processing data to the view with tag `tag'. `type' identifies the data: "SP" for scalar points, "VP", for vector points, etc. `numEle' gives the number of elements in the data. `data' contains the data for the `numEle' elements.'''
 view.add('addListData',doc,None,iint('tag'),istring('type'),iint('numEle'),ivectordouble('data'))
 
+doc = '''Gets list-based post-processing data from the view with tag `tag'. Returns the types `dataTypes', the number of elements `numElements' for each data type and the `data' for each data type.'''
+view.add('getListData',doc,None,iint('tag'),ovectorstring('dataType'),ovectorint('numElements'),ovectorvectordouble('data'))
+
 doc = '''Probes the view `tag' for its `value' at point (`x', `y', `z'). Returns only the value at step `step' is `step' is positive. Returns only values with `numComp' if `numComp' is positive. Returns the gradient of the `value' if `gradient' is set. Probes with a geometrical tolerance (in the reference unit cube) of `tolerance' if `tolerance' is not zero. Returns the result from the element described by its coordinates if `xElementCoord', `yElementCoord' and `zElementCoord' are provided.'''
 view.add('probe',doc,None,iint('tag'),idouble('x'),idouble('y'),idouble('z'),ovectordouble('value'),iint('step','-1'),iint('numComp','-1'),ibool('gradient','false','False'),idouble('tolerance','0.'),ivectordouble('xElemCoord','std::vector<double>()',"[]"),ivectordouble('yElemCoord','std::vector<double>()',"[]"),ivectordouble('zElemCoord','std::vector<double>()',"[]"))
 
