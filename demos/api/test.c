@@ -41,7 +41,7 @@ void printMesh() {
     int *types, **elementTags, **vertexTags;
     size_t ntypes, *nelementTags, nnelementTags, *nvertexTags, nnvertexTags;
 
-    gmshModelMeshGetElements(dimTags[ie*2+0], dimTags[ie*2+1], &types, &ntypes, &elementTags, &nelementTags, &nnelementTags, &vertexTags, &nvertexTags, &nnvertexTags,&ierr); chk(ierr);
+    gmshModelMeshGetElements(&types, &ntypes, &elementTags, &nelementTags, &nnelementTags, &vertexTags, &nvertexTags, &nnvertexTags,dimTags[ie*2+0], dimTags[ie*2+1], &ierr); chk(ierr);
 
     printf("entity %i of dim %i\n", dimTags[ie*2+1], dimTags[ie*2+0]);
     for (size_t i = 0; i < nnelementTags; ++i) {
@@ -72,7 +72,7 @@ void printMesh() {
 void genError() {
   int ierr;
   printf("\n** generate an error **\n");
-  gmshModelMeshGetElements(999, 999, NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,&ierr); chk(ierr);
+  gmshModelMeshGetElements(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,999, 999, &ierr); chk(ierr);
 }
 
 int main(int argc, char **argv) {

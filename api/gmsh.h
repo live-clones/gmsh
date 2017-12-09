@@ -203,33 +203,37 @@ namespace gmsh { // Top-level functions
       // Currently only populated by the new 3D meshing algorithms.
       GMSH_API void getLastVertexError(std::vector<int> & vertexTags);
 
-      // Gets the mesh vertices of the entity of dimension `dim' and `tag' tag.
-      // `vertextags' contains the vertex tags (their unique, strictly positive
-      // identification numbers). `coord` is a vector of length `3 *
-      // vertexTags.size()' that contains the (x, y, z) coordinates of the
-      // vertices, concatenated. `parametricCoord` contains the parametric
-      // coordinates of the vertices, if available. The length of `parametricCoord`
-      // can be 0 or `dim * vertexTags.size()'.
-      GMSH_API void getVertices(const int dim,
-                                const int tag,
-                                std::vector<int> & vertexTags,
+      // Gets the mesh vertices of the entity of dimension `dim' and `tag' tag. If
+      // `tag' < 0, gets the vertices for all entities of dimension `dim'. If `dim'
+      // and `tag' are negative, gets all the vertices in the mesh. `vertextags'
+      // contains the vertex tags (their unique, strictly positive identification
+      // numbers). `coord` is a vector of length `3 * vertexTags.size()' that
+      // contains the (x, y, z) coordinates of the vertices, concatenated. If `dim'
+      // >= 0, `parametricCoord` contains the parametric coordinates of the
+      // vertices, if available. The length of `parametricCoord` can be 0 or `dim *
+      // vertexTags.size()'.
+      GMSH_API void getVertices(std::vector<int> & vertexTags,
                                 std::vector<double> & coord,
-                                std::vector<double> & parametricCoord);
+                                std::vector<double> & parametricCoord,
+                                const int dim = -1,
+                                const int tag = -1);
 
-      // Gets the mesh elements of the entity of dimension `dim' and `tag' tag.
-      // `types' contains the MSH types of the elements (e.g. `2' for 3-node
-      // triangles: see the Gmsh reference manual). `elementTags' is a vector of
-      // length `types.size()'; each entry is a vector containing the tags (unique,
+      // Gets the mesh elements of the entity of dimension `dim' and `tag' tag. If
+      // `tag' < 0, gets the vertices for all entities of dimension `dim'. If `dim'
+      // and `tag' are negative, gets all the elements in the mesh. `types'
+      // contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
+      // the Gmsh reference manual). `elementTags' is a vector of length
+      // `types.size()'; each entry is a vector containing the tags (unique,
       // strictly positive identifiers) of the elements of the corresponding type.
       // `vertexTags' is also a vector of length `types.size()'; each entry is a
       // vector of length equal to the number of elements of the given type times
       // the number of vertices for this type of element, that contains the vertex
       // tags of all the elements of the given type, concatenated.
-      GMSH_API void getElements(const int dim,
-                                const int tag,
-                                std::vector<int> & types,
+      GMSH_API void getElements(std::vector<int> & types,
                                 std::vector<std::vector<int> > & elementTags,
-                                std::vector<std::vector<int> > & vertexTags);
+                                std::vector<std::vector<int> > & vertexTags,
+                                const int dim = -1,
+                                const int tag = -1);
 
       // Sets the mesh vertices in the geometrical entity of dimension `dim' and
       // tag `tag'. `vertextags' contains the vertex tags (their unique, strictly

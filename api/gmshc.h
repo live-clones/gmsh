@@ -214,34 +214,38 @@ GMSH_API void gmshModelMeshGetLastEntityError(int ** dimTags, size_t * dimTags_n
 GMSH_API void gmshModelMeshGetLastVertexError(int ** vertexTags, size_t * vertexTags_n,
                                               int * ierr);
 
-/* Gets the mesh vertices of the entity of dimension `dim' and `tag' tag.
- * `vertextags' contains the vertex tags (their unique, strictly positive
- * identification numbers). `coord` is a vector of length `3 *
- * vertexTags.size()' that contains the (x, y, z) coordinates of the vertices,
- * concatenated. `parametricCoord` contains the parametric coordinates of the
+/* Gets the mesh vertices of the entity of dimension `dim' and `tag' tag. If
+ * `tag' < 0, gets the vertices for all entities of dimension `dim'. If `dim'
+ * and `tag' are negative, gets all the vertices in the mesh. `vertextags'
+ * contains the vertex tags (their unique, strictly positive identification
+ * numbers). `coord` is a vector of length `3 * vertexTags.size()' that
+ * contains the (x, y, z) coordinates of the vertices, concatenated. If `dim'
+ * >= 0, `parametricCoord` contains the parametric coordinates of the
  * vertices, if available. The length of `parametricCoord` can be 0 or `dim *
  * vertexTags.size()'. */
-GMSH_API void gmshModelMeshGetVertices(const int dim,
-                                       const int tag,
-                                       int ** vertexTags, size_t * vertexTags_n,
+GMSH_API void gmshModelMeshGetVertices(int ** vertexTags, size_t * vertexTags_n,
                                        double ** coord, size_t * coord_n,
                                        double ** parametricCoord, size_t * parametricCoord_n,
+                                       const int dim,
+                                       const int tag,
                                        int * ierr);
 
-/* Gets the mesh elements of the entity of dimension `dim' and `tag' tag.
- * `types' contains the MSH types of the elements (e.g. `2' for 3-node
- * triangles: see the Gmsh reference manual). `elementTags' is a vector of
- * length `types.size()'; each entry is a vector containing the tags (unique,
- * strictly positive identifiers) of the elements of the corresponding type.
- * `vertexTags' is also a vector of length `types.size()'; each entry is a
- * vector of length equal to the number of elements of the given type times
- * the number of vertices for this type of element, that contains the vertex
- * tags of all the elements of the given type, concatenated. */
-GMSH_API void gmshModelMeshGetElements(const int dim,
-                                       const int tag,
-                                       int ** types, size_t * types_n,
+/* Gets the mesh elements of the entity of dimension `dim' and `tag' tag. If
+ * `tag' < 0, gets the vertices for all entities of dimension `dim'. If `dim'
+ * and `tag' are negative, gets all the elements in the mesh. `types' contains
+ * the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh
+ * reference manual). `elementTags' is a vector of length `types.size()'; each
+ * entry is a vector containing the tags (unique, strictly positive
+ * identifiers) of the elements of the corresponding type. `vertexTags' is
+ * also a vector of length `types.size()'; each entry is a vector of length
+ * equal to the number of elements of the given type times the number of
+ * vertices for this type of element, that contains the vertex tags of all the
+ * elements of the given type, concatenated. */
+GMSH_API void gmshModelMeshGetElements(int ** types, size_t * types_n,
                                        int *** elementTags, size_t ** elementTags_n, size_t *elementTags_nn,
                                        int *** vertexTags, size_t ** vertexTags_n, size_t *vertexTags_nn,
+                                       const int dim,
+                                       const int tag,
                                        int * ierr);
 
 /* Sets the mesh vertices in the geometrical entity of dimension `dim' and tag

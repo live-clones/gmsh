@@ -436,85 +436,145 @@ void gmsh::model::mesh::getLastVertexError(std::vector<int> &vertexTags)
     vertexTags.push_back(v[i]->getNum());
 }
 
-void gmsh::model::mesh::getVertices(const int dim, const int tag,
-                                    std::vector<int> &vertexTags,
+void gmsh::model::mesh::getVertices(std::vector<int> &vertexTags,
                                     std::vector<double> &coord,
-                                    std::vector<double> &parametricCoord)
+                                    std::vector<double> &parametricCoord,
+                                    const int dim, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   vertexTags.clear();
   coord.clear();
-  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
-  if(!ge){
-    Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
-    throw 2;
+  parametricCoord.clear();
+  std::vector<GEntity*> entities;
+  if(dim >= 0 && tag >= 0){
+    GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+    if(!ge){
+      Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
+      throw 2;
+    }
+    entities.push_back(ge);
   }
-  for(unsigned int i = 0; i < ge->mesh_vertices.size(); i++){
-    MVertex *v = ge->mesh_vertices[i];
-    vertexTags.push_back(v->getNum());
-    coord.push_back(v->x());
-    coord.push_back(v->y());
-    coord.push_back(v->z());
-    double par;
-    for(int j = 0; j < dim; j++){
-      if(v->getParameter(j, par)) parametricCoord.push_back(par);
+  else{
+    GModel::current()->getEntities(entities, dim);
+  }
+  for(unsigned int i = 0; i < entities.size(); i++){
+    GEntity *ge = entities[i];
+    for(unsigned int j = 0; j < ge->mesh_vertices.size(); j++){
+      MVertex *v = ge->mesh_vertices[j];
+      vertexTags.push_back(v->getNum());
+      coord.push_back(v->x());
+      coord.push_back(v->y());
+      coord.push_back(v->z());
+      if(dim > 0){
+        double par;
+        for(int k = 0; k < dim; k++){
+          if(v->getParameter(k, par)) parametricCoord.push_back(par);
+        }
+      }
     }
   }
 }
 
 template<class T>
-static void _addElementInfo(const std::vector<T*> &ele,
-                            std::vector<int> &elementType,
+static void _addElementInfo(int type, const std::vector<T*> &ele,
                             std::vector<std::vector<int> > &elementTags,
                             std::vector<std::vector<int> > &vertexTags)
 {
-  if(ele.empty()) return;
-  elementType.push_back(ele.front()->getTypeForMSH());
-  elementTags.push_back(std::vector<int>());
-  vertexTags.push_back(std::vector<int>());
+  if(ele.empty() || ele.front()->getTypeForMSH() != type) return;
   for(unsigned int i = 0; i < ele.size(); i++){
     elementTags.back().push_back(ele[i]->getNum());
     for(unsigned int j = 0; j < ele[i]->getNumVertices(); j++){
       vertexTags.back().push_back(ele[i]->getVertex(j)->getNum());
     }
   }
+
 }
 
-void gmsh::model::mesh::getElements(const int dim, const int tag,
-                                    std::vector<int> &types,
+void gmsh::model::mesh::getElements(std::vector<int> &types,
                                     std::vector<std::vector<int> > &elementTags,
-                                    std::vector<std::vector<int> > &vertexTags)
+                                    std::vector<std::vector<int> > &vertexTags,
+                                    const int dim, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   types.clear();
   elementTags.clear();
   vertexTags.clear();
-  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
-  if(!ge){
-    Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
-    throw 2;
+  std::vector<GEntity*> entities;
+  if(dim >= 0 && tag >= 0){
+    GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+    if(!ge){
+      Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
+      throw 2;
+    }
+    entities.push_back(ge);
   }
-  switch(dim){
-  case 0: {
-    GVertex *v = static_cast<GVertex*>(ge);
-    _addElementInfo(v->points, types, elementTags, vertexTags);
-    break; }
-  case 1: {
-    GEdge *e = static_cast<GEdge*>(ge);
-    _addElementInfo(e->lines, types, elementTags, vertexTags);
-    break; }
-  case 2: {
-    GFace *f = static_cast<GFace*>(ge);
-    _addElementInfo(f->triangles, types, elementTags, vertexTags);
-    _addElementInfo(f->quadrangles, types, elementTags, vertexTags);
-    break; }
-  case 3: {
-    GRegion *r = static_cast<GRegion*>(ge);
-    _addElementInfo(r->tetrahedra, types, elementTags, vertexTags);
-    _addElementInfo(r->hexahedra, types, elementTags, vertexTags);
-    _addElementInfo(r->prisms, types, elementTags, vertexTags);
-    _addElementInfo(r->pyramids, types, elementTags, vertexTags);
-    break; }
+  else{
+    GModel::current()->getEntities(entities, dim);
+  }
+  std::map<int, std::vector<GEntity*> > typeMap;
+  for(unsigned int i = 0; i < entities.size(); i++){
+    GEntity *ge = entities[i];
+    switch(ge->dim()){
+    case 0: {
+      GVertex *v = static_cast<GVertex*>(ge);
+      if(v->points.size())
+        typeMap[v->points.front()->getTypeForMSH()].push_back(ge);
+      break; }
+    case 1: {
+      GEdge *e = static_cast<GEdge*>(ge);
+      if(e->lines.size())
+        typeMap[e->lines.front()->getTypeForMSH()].push_back(ge);
+      break; }
+    case 2: {
+      GFace *f = static_cast<GFace*>(ge);
+      if(f->triangles.size())
+        typeMap[f->triangles.front()->getTypeForMSH()].push_back(ge);
+      if(f->quadrangles.size())
+        typeMap[f->quadrangles.front()->getTypeForMSH()].push_back(ge);
+      break; }
+    case 3: {
+      GRegion *r = static_cast<GRegion*>(ge);
+      if(r->tetrahedra.size())
+        typeMap[r->tetrahedra.front()->getTypeForMSH()].push_back(ge);
+      if(r->hexahedra.size())
+        typeMap[r->hexahedra.front()->getTypeForMSH()].push_back(ge);
+      if(r->prisms.size())
+        typeMap[r->prisms.front()->getTypeForMSH()].push_back(ge);
+      if(r->pyramids.size())
+        typeMap[r->pyramids.front()->getTypeForMSH()].push_back(ge);
+      break; }
+    }
+  }
+  for(std::map<int, std::vector<GEntity*> >::iterator it = typeMap.begin();
+      it != typeMap.end(); it++){
+    types.push_back(it->first);
+    elementTags.push_back(std::vector<int>());
+    vertexTags.push_back(std::vector<int>());
+    for(unsigned int i = 0; i < it->second.size(); i++){
+      GEntity *ge = it->second[i];
+      switch(ge->dim()){
+      case 0: {
+        GVertex *v = static_cast<GVertex*>(ge);
+        _addElementInfo(it->first, v->points, elementTags, vertexTags);
+        break; }
+      case 1: {
+        GEdge *e = static_cast<GEdge*>(ge);
+        _addElementInfo(it->first, e->lines, elementTags, vertexTags);
+        break; }
+      case 2: {
+        GFace *f = static_cast<GFace*>(ge);
+        _addElementInfo(it->first, f->triangles, elementTags, vertexTags);
+        _addElementInfo(it->first, f->quadrangles, elementTags, vertexTags);
+        break; }
+      case 3: {
+        GRegion *r = static_cast<GRegion*>(ge);
+        _addElementInfo(it->first, r->tetrahedra, elementTags, vertexTags);
+        _addElementInfo(it->first, r->hexahedra, elementTags, vertexTags);
+        _addElementInfo(it->first, r->prisms, elementTags, vertexTags);
+        _addElementInfo(it->first, r->pyramids, elementTags, vertexTags);
+        break; }
+      }
+    }
   }
 }
 
@@ -1961,6 +2021,10 @@ int gmsh::view::add(const std::string &name, const int tag)
 #if defined(HAVE_POST)
   PView *view = new PView(tag);
   view->getData()->setName(name);
+#if defined(HAVE_FLTK)
+  if(FlGui::available())
+    FlGui::instance()->updateViews(true, true);
+#endif
   return view->getTag();
 #else
   Msg::Error("Views require the post-processing module");
@@ -1978,6 +2042,10 @@ void gmsh::view::remove(const int tag)
     throw 2;
   }
   delete view;
+#if defined(HAVE_FLTK)
+  if(FlGui::available())
+    FlGui::instance()->updateViews(true, true);
+#endif
 #else
   Msg::Error("Views require the post-processing module");
   throw -1;

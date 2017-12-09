@@ -21,12 +21,12 @@ int main(int argc, char **argv)
     std::vector<int> vertexTags;
     std::vector<double> vertexCoords, vertexParams;
     int dim = entities[i].first, tag = entities[i].second;
-    gmsh::model::mesh::getVertices(dim, tag, vertexTags, vertexCoords, vertexParams);
+    gmsh::model::mesh::getVertices(vertexTags, vertexCoords, vertexParams, dim, tag);
 
     // get the mesh elements for each elementary entity
     std::vector<int> elemTypes;
     std::vector<std::vector<int> > elemTags, elemVertexTags;
-    gmsh::model::mesh::getElements(dim, tag, elemTypes, elemTags, elemVertexTags);
+    gmsh::model::mesh::getElements(elemTypes, elemTags, elemVertexTags, dim, tag);
 
     // report some statistics
     int numElem = 0;

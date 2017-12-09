@@ -22,4 +22,10 @@ for e in entities:
     print str(len(vertexTags)) + " mesh vertices " + str(numElem),\
           "mesh elements on entity " + str(e)
 
+# all mesh vertex coordinates
+vertexTags, vertexCoords, _ = gmsh.model.mesh.getVertices()
+x = dict(zip(vertexTags, vertexCoords[0::3]))
+y = dict(zip(vertexTags, vertexCoords[1::3]))
+z = dict(zip(vertexTags, vertexCoords[2::3]))
+
 gmsh.finalize()

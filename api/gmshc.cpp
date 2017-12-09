@@ -304,26 +304,26 @@ void gmshModelMeshGetLastVertexError(int ** vertexTags, size_t * vertexTags_n,in
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshGetVertices(const int dim,const int tag,int ** vertexTags, size_t * vertexTags_n,double ** coord, size_t * coord_n,double ** parametricCoord, size_t * parametricCoord_n,int * ierr){
+void gmshModelMeshGetVertices(int ** vertexTags, size_t * vertexTags_n,double ** coord, size_t * coord_n,double ** parametricCoord, size_t * parametricCoord_n,const int dim,const int tag,int * ierr){
   if(ierr) *ierr = 0;
   try {
   std::vector<int> api_vertexTags_;
   std::vector<double> api_coord_;
   std::vector<double> api_parametricCoord_;
-  gmsh::model::mesh::getVertices(dim,tag,api_vertexTags_,api_coord_,api_parametricCoord_);
+  gmsh::model::mesh::getVertices(api_vertexTags_,api_coord_,api_parametricCoord_,dim,tag);
   vector2ptr(api_vertexTags_,vertexTags,vertexTags_n);
   vector2ptr(api_coord_,coord,coord_n);
   vector2ptr(api_parametricCoord_,parametricCoord,parametricCoord_n);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshGetElements(const int dim,const int tag,int ** types, size_t * types_n,int *** elementTags, size_t ** elementTags_n, size_t *elementTags_nn,int *** vertexTags, size_t ** vertexTags_n, size_t *vertexTags_nn,int * ierr){
+void gmshModelMeshGetElements(int ** types, size_t * types_n,int *** elementTags, size_t ** elementTags_n, size_t *elementTags_nn,int *** vertexTags, size_t ** vertexTags_n, size_t *vertexTags_nn,const int dim,const int tag,int * ierr){
   if(ierr) *ierr = 0;
   try {
   std::vector<int> api_types_;
   std::vector<std::vector<int> > api_elementTags_;
   std::vector<std::vector<int> > api_vertexTags_;
-  gmsh::model::mesh::getElements(dim,tag,api_types_,api_elementTags_,api_vertexTags_);
+  gmsh::model::mesh::getElements(api_types_,api_elementTags_,api_vertexTags_,dim,tag);
   vector2ptr(api_types_,types,types_n);
   vectorvector2ptrptr(api_elementTags_,elementTags,elementTags_n,elementTags_nn);
   vectorvector2ptrptr(api_vertexTags_,vertexTags,vertexTags_n,vertexTags_nn);

@@ -689,13 +689,15 @@ class model:
             return _ovectorint(api_vertexTags_,api_vertexTags_n_.value)
 
         @staticmethod
-        def getVertices(dim,tag):
+        def getVertices(dim=-1,tag=-1):
             """
-            Gets the mesh vertices of the entity of dimension `dim' and `tag' tag.
-            `vertextags' contains the vertex tags (their unique, strictly positive
-            identification numbers). `coord` is a vector of length `3 *
-            vertexTags.size()' that contains the (x, y, z) coordinates of the vertices,
-            concatenated. `parametricCoord` contains the parametric coordinates of the
+            Gets the mesh vertices of the entity of dimension `dim' and `tag' tag. If
+            `tag' < 0, gets the vertices for all entities of dimension `dim'. If `dim'
+            and `tag' are negative, gets all the vertices in the mesh. `vertextags'
+            contains the vertex tags (their unique, strictly positive identification
+            numbers). `coord` is a vector of length `3 * vertexTags.size()' that
+            contains the (x, y, z) coordinates of the vertices, concatenated. If `dim'
+            >= 0, `parametricCoord` contains the parametric coordinates of the
             vertices, if available. The length of `parametricCoord` can be 0 or `dim *
             vertexTags.size()'.
 
@@ -706,11 +708,11 @@ class model:
             api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetVertices(
-                c_int(dim),
-                c_int(tag),
                 byref(api_vertexTags_),byref(api_vertexTags_n_),
                 byref(api_coord_),byref(api_coord_n_),
                 byref(api_parametricCoord_),byref(api_parametricCoord_n_),
+                c_int(dim),
+                c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
@@ -722,17 +724,19 @@ class model:
                 _ovectordouble(api_parametricCoord_,api_parametricCoord_n_.value))
 
         @staticmethod
-        def getElements(dim,tag):
+        def getElements(dim=-1,tag=-1):
             """
-            Gets the mesh elements of the entity of dimension `dim' and `tag' tag.
-            `types' contains the MSH types of the elements (e.g. `2' for 3-node
-            triangles: see the Gmsh reference manual). `elementTags' is a vector of
-            length `types.size()'; each entry is a vector containing the tags (unique,
-            strictly positive identifiers) of the elements of the corresponding type.
-            `vertexTags' is also a vector of length `types.size()'; each entry is a
-            vector of length equal to the number of elements of the given type times
-            the number of vertices for this type of element, that contains the vertex
-            tags of all the elements of the given type, concatenated.
+            Gets the mesh elements of the entity of dimension `dim' and `tag' tag. If
+            `tag' < 0, gets the vertices for all entities of dimension `dim'. If `dim'
+            and `tag' are negative, gets all the elements in the mesh. `types' contains
+            the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh
+            reference manual). `elementTags' is a vector of length `types.size()'; each
+            entry is a vector containing the tags (unique, strictly positive
+            identifiers) of the elements of the corresponding type. `vertexTags' is
+            also a vector of length `types.size()'; each entry is a vector of length
+            equal to the number of elements of the given type times the number of
+            vertices for this type of element, that contains the vertex tags of all the
+            elements of the given type, concatenated.
 
             return types, elementTags, vertexTags
             """
@@ -741,11 +745,11 @@ class model:
             api_vertexTags_, api_vertexTags_n_, api_vertexTags_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetElements(
-                c_int(dim),
-                c_int(tag),
                 byref(api_types_),byref(api_types_n_),
                 byref(api_elementTags_),byref(api_elementTags_n_),byref(api_elementTags_nn_),
                 byref(api_vertexTags_),byref(api_vertexTags_n_),byref(api_vertexTags_nn_),
+                c_int(dim),
+                c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
