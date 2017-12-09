@@ -517,7 +517,7 @@ bool FlGui::_finishedProcessingCommandLine = false;
 
 bool FlGui::available()
 {
-  return (_instance != 0) && _finishedProcessingCommandLine;
+  return _instance != 0;
 }
 
 FlGui *FlGui::instance(int argc, char **argv)
