@@ -134,41 +134,42 @@ PView* GMSH_QuadratureDataPlugin::execute(PView *v)
   std::vector<int> tags;
   std::vector<std::vector<double> > data;
 
-  // FIXME: make this efficient: precompute the size of vectors (or better,
-  // directly fill stepData), precompute the shape functions derivatives and use
-  // that for the jacobian + parallelise with openmp.
+  // FIXME: make this efficient: directly fill stepData, precompute the shape
+  // functions derivatives and use that for the jacobian + parallelise with
+  // openmp.
   for(unsigned int i = 0; i < entities.size(); i++){
     for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
       MElement *e = entities[i]->getMeshElement(j);
-      tags.push_back(e->getNum());
-      data.push_back(std::vector<double>());
       int npts; IntPt *gp;
       e->getIntegrationPoints(order, &npts, &gp);
+      tags.push_back(e->getNum());
+      data.push_back(std::vector<double>(npts * 17, 0.));
       for(int i = 0; i < npts; i++){
+        double *vv = &(data.back()[i * 17]);
         double u = gp[i].pt[0];
         double v = gp[i].pt[1];
         double w = gp[i].pt[2];
         double weight = gp[i].weight;
         SPoint3 p;
         e->pnt(u, v, w, p);
-        data.back().push_back(p.x());
-        data.back().push_back(p.y());
-        data.back().push_back(p.z());
-        data.back().push_back(u);
-        data.back().push_back(v);
-        data.back().push_back(w);
-        data.back().push_back(weight);
+        vv[0] = p.x();
+        vv[1] = p.y();
+        vv[2] = p.z();
+        vv[3] = u;
+        vv[4] = v;
+        vv[5] = w;
+        vv[6] = weight;
         double jac[3][3];
-        data.back().push_back(e->getJacobian(u, v, w, jac));
-        data.back().push_back(jac[0][0]);
-        data.back().push_back(jac[0][1]);
-        data.back().push_back(jac[0][2]);
-        data.back().push_back(jac[1][0]);
-        data.back().push_back(jac[1][1]);
-        data.back().push_back(jac[1][2]);
-        data.back().push_back(jac[2][0]);
-        data.back().push_back(jac[2][1]);
-        data.back().push_back(jac[2][2]);
+        vv[7] = e->getJacobian(u, v, w, jac);
+        vv[8] = jac[0][0];
+        vv[9] = jac[0][1];
+        vv[10] = jac[0][2];
+        vv[11] = jac[1][0];
+        vv[12] = jac[1][1];
+        vv[13] = jac[1][2];
+        vv[14] = jac[2][0];
+        vv[15] = jac[2][1];
+        vv[16] = jac[2][2];
       }
     }
   }
