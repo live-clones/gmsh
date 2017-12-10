@@ -966,6 +966,9 @@ int gmsh::model::mesh::field::add(const std::string &type, const int tag)
     Msg::Error("Cannot add Field %i of type '%s'", tag, type.c_str());
     throw 1;
   }
+#if defined(HAVE_FLTK)
+  if(FlGui::available()) FlGui::instance()->updateFields();
+#endif
 #else
   Msg::Error("Fields require the mesh module");
   throw -1;
@@ -978,6 +981,9 @@ void gmsh::model::mesh::field::remove(const int tag)
   if(!_isInitialized()){ throw -1; }
 #if defined(HAVE_MESH)
   GModel::current()->getFields()->deleteField(tag);
+#if defined(HAVE_FLTK)
+  if(FlGui::available()) FlGui::instance()->updateFields();
+#endif
 #else
   Msg::Error("Fields require the mesh module");
   throw -1;
@@ -2022,8 +2028,7 @@ int gmsh::view::add(const std::string &name, const int tag)
   PView *view = new PView(tag);
   view->getData()->setName(name);
 #if defined(HAVE_FLTK)
-  if(FlGui::available())
-    FlGui::instance()->updateViews(true, true);
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
 #endif
   return view->getTag();
 #else
@@ -2043,8 +2048,7 @@ void gmsh::view::remove(const int tag)
   }
   delete view;
 #if defined(HAVE_FLTK)
-  if(FlGui::available())
-    FlGui::instance()->updateViews(true, true);
+  if(FlGui::available()) FlGui::instance()->updateViews(true, true);
 #endif
 #else
   Msg::Error("Views require the post-processing module");
@@ -2428,6 +2432,7 @@ void gmsh::fltk::initialize()
   if(!_isInitialized()){ throw -1; }
 #if defined(HAVE_FLTK)
   FlGui::instance(_argc, _argv);
+  FlGui::setFinishedProcessingCommandLine();
   FlGui::check();
 #else
   Msg::Error("Fltk not available");

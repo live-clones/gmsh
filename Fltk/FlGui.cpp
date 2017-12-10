@@ -541,6 +541,8 @@ FlGui *FlGui::instance(int argc, char **argv)
     Msg::Info("Launch date    : %s", Msg::GetLaunchDate().c_str());
     Msg::Info("Command line   : %s", Msg::GetCommandLineArgs().c_str());
     Msg::Info("-------------------------------------------------------");
+    // update views (in case the GUI is created after some data has been loaded)
+    _instance->updateViews(true, true);
     // set global bounding box in CTX (necessary if we run the gui without any
     // model/post-processing data)
     SetBoundingBox();
