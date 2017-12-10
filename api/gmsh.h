@@ -372,7 +372,7 @@ namespace gmsh { // Top-level functions
                                  const std::vector<double> & value);
 
         // Sets the field `tag' as background mesh size field.
-        GMSH_API void setAsBackground(const int tag);
+        GMSH_API void setAsBackgroundMesh(const int tag);
 
       } // namespace field
 

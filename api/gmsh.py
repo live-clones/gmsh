@@ -1114,17 +1114,17 @@ class model:
                         ierr.value)
 
             @staticmethod
-            def setAsBackground(tag):
+            def setAsBackgroundMesh(tag):
                 """
                 Sets the field `tag' as background mesh size field.
                 """
                 ierr = c_int()
-                lib.gmshModelMeshFieldSetAsBackground(
+                lib.gmshModelMeshFieldSetAsBackgroundMesh(
                     c_int(tag),
                     byref(ierr))
                 if ierr.value != 0 :
                     raise ValueError(
-                        "gmshModelMeshFieldSetAsBackground returned non-zero error code : ",
+                        "gmshModelMeshFieldSetAsBackgroundMesh returned non-zero error code : ",
                         ierr.value)
 
 

@@ -1472,15 +1472,18 @@ class ParametricField : public Field
 class PostViewField : public Field
 {
   OctreePost *octree;
-  int view_index;
+  int view_index, view_tag;
   bool crop_negative_values;
  public:
   PostViewField()
   {
     octree = 0;
     view_index = 0;
+    view_tag = -1;
     options["IView"] = new FieldOptionInt
       (view_index, "Post-processing view index", &update_needed);
+    options["ViewTag"] = new FieldOptionInt
+      (view_tag, "Post-processing view tag", &update_needed);
     crop_negative_values = true;
     options["CropNegativeValues"] = new FieldOptionBool
       (crop_negative_values, "return LC_MAX instead of a negative value (this "
@@ -1492,13 +1495,16 @@ class PostViewField : public Field
   }
   PView *getView() const
   {
-    // we should maybe test the unique view num instead, but that
-    // would be slower
-    if(view_index < 0 || view_index >= (int)PView::list.size()){
-      Msg::Error("View[%d] does not exist", view_index);
-      return 0;
+    PView *v = 0;
+    if(view_tag >= 0)
+      v = PView::getViewByTag(view_tag);
+    if(!v){
+      if(view_index < 0 || view_index >= (int)PView::list.size()){
+        Msg::Error("View[%d] does not exist", view_index);
+        return 0;
+      }
+      v = PView::list[view_index];
     }
-    PView *v = PView::list[view_index];
     if(v->getData()->hasModel(GModel::current())){
       Msg::Error("Cannot use view based on current mesh for background mesh: you might"
                  " want to use a list-based view (.pos file) instead");

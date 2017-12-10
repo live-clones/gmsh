@@ -457,10 +457,10 @@ void gmshModelMeshFieldSetNumbers(const int tag,const char * option,double * val
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshFieldSetAsBackground(const int tag,int * ierr){
+void gmshModelMeshFieldSetAsBackgroundMesh(const int tag,int * ierr){
   if(ierr) *ierr = 0;
   try {
-  gmsh::model::mesh::field::setAsBackground(tag);
+  gmsh::model::mesh::field::setAsBackgroundMesh(tag);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 

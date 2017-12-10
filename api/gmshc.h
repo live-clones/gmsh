@@ -398,8 +398,8 @@ GMSH_API void gmshModelMeshFieldSetNumbers(const int tag,
                                            int * ierr);
 
 /* Sets the field `tag' as background mesh size field. */
-GMSH_API void gmshModelMeshFieldSetAsBackground(const int tag,
-                                                int * ierr);
+GMSH_API void gmshModelMeshFieldSetAsBackgroundMesh(const int tag,
+                                                    int * ierr);
 
 /* Adds a geometrical point in the internal GEO CAD representation, at
  * coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at

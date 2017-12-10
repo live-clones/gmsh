@@ -58,7 +58,7 @@ model.mesh.field.setNumber(6, "YMax", 0.6)
 model.mesh.field.add("Min", 7)
 model.mesh.field.setNumbers(7, "FieldsList", [2, 3, 5, 6])
 
-model.mesh.field.setAsBackground(7)
+model.mesh.field.setAsBackgroundMesh(7)
 
 factory.synchronize()
 model.mesh.generate(2)

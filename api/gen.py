@@ -184,7 +184,7 @@ doc = '''Sets the numerical list option `option' to value `value' for field `tag
 field.add('setNumbers',doc,None,iint('tag'),istring('option'),ivectordouble('value'))
 
 doc = '''Sets the field `tag' as background mesh size field.'''
-field.add('setAsBackground',doc,None,iint('tag'))
+field.add('setAsBackgroundMesh',doc,None,iint('tag'))
 
 ################################################################################
 

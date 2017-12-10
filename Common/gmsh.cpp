@@ -962,8 +962,8 @@ int gmsh::model::mesh::field::add(const std::string &type, const int tag)
   if(outTag < 0){
     outTag = GModel::current()->getFields()->newId();
   }
-  if(!GModel::current()->getFields()->newField(tag, type)){
-    Msg::Error("Cannot add Field %i of type '%s'", tag, type.c_str());
+  if(!GModel::current()->getFields()->newField(outTag, type)){
+    Msg::Error("Cannot add Field %i of type '%s'", outTag, type.c_str());
     throw 1;
   }
 #if defined(HAVE_FLTK)
@@ -1078,7 +1078,7 @@ void gmsh::model::mesh::field::setNumbers(const int tag, const std::string &opti
 #endif
 }
 
-void gmsh::model::mesh::field::setAsBackground(const int tag)
+void gmsh::model::mesh::field::setAsBackgroundMesh(const int tag)
 {
   if(!_isInitialized()){ throw -1; }
 #if defined(HAVE_MESH)
