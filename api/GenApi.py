@@ -92,7 +92,7 @@ def ovectorstring(name,value=None,python_value=None):
     a.c_pre = "  std::vector<std::string> "+name_ +";\n"
     a.c_post = "  stringvector2charpp("+name_+"," + name + ","+name+"_n);\n"
     a.c = "char *** "+name+",size_t * "+name+"_n"
-    a.python_pre = name_+", "+name_n+" = POINTER(c_char_p)(), c_size_t()"
+    a.python_pre = name_+", "+name_n+" = POINTER(POINTER(c_char))(), c_size_t()"
     a.python_arg = "byref("+name_+"), byref("+name_n+")"
     a.python_return = "_ovectorstring("+name_+", "+name_n+".value)"
     return a
@@ -502,8 +502,7 @@ def _ovectordouble(ptr,size):
     return v
 
 def _ovectorstring(ptr,size):
-    # FIXME Jon numpy + free
-    v = list(ptr[i] for i in range(size))
+    v = list(_ostring(cast(ptr[i],c_char_p) for i in range(size))
     lib.gmshFree(ptr)
     return v
 

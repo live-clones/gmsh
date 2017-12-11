@@ -75,8 +75,7 @@ def _ovectordouble(ptr,size):
     return v
 
 def _ovectorstring(ptr,size):
-    # FIXME Jon numpy + free
-    v = list(ptr[i] for i in range(size))
+    v = list(ptr[i].decode("utf-8") for i in range(size))
     lib.gmshFree(ptr)
     return v
 
