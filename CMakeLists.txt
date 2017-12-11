@@ -67,15 +67,15 @@ opt(MSVC_STATIC_RUNTIME "Enable static Visual C++ runtime" OFF)
 opt(MUMPS "Enable MUMPS sparse direct linear solver" OFF)
 opt(NATIVE_FILE_CHOOSER "Enable native file chooser in GUI" ${DEFAULT})
 opt(NETGEN "Enable Netgen 3D frontal mesh generator" ${DEFAULT})
-opt(NUMPY "Enable conversion between fullMatrix and numpy array (requires SWIG)" OFF)
-opt(PETSC4PY "Enable petsc4py wrappers for petsc matrices" ON)
+opt(NUMPY "Enable fullMatrix and numpy array conversion for internal developer API" OFF)
+opt(PETSC4PY "Enable petsc4py wrappers for petsc matrices in internal developer API" ON)
 opt(OCC "Enable OpenCASCADE geometrical models" ${DEFAULT})
 opt(OCC_CAF "Enable OpenCASCADE CAF module" OFF)
 opt(ONELAB "Enable ONELAB solver interface" ${DEFAULT})
 opt(ONELAB_METAMODEL "Enable ONELAB metamodels (experimental)" ${DEFAULT})
 opt(OPENMP "Enable OpenMP (experimental)" OFF)
 opt(OPTHOM "Enable high-order mesh optimization tools" ${DEFAULT})
-opt(OS_SPECIFIC_INSTALL "Enable OS-specific (e.g. app bundle) installation" ${DEFAULT})
+opt(OS_SPECIFIC_INSTALL "Enable OS-specific (e.g. app bundle) installation" OFF)
 opt(OSMESA "Enable OSMesa for offscreen rendering (experimental)" OFF)
 opt(PARSER "Enable GEO file parser (required for .geo/.pos files)" ${DEFAULT})
 opt(PETSC "Enable PETSc linear solvers (required for SLEPc)" ${DEFAULT})
@@ -91,8 +91,8 @@ opt(TCMALLOC "Enable libtcmalloc, a fast malloc implementation but that does not
 opt(TETGEN "Enable Tetgen 3D initial mesh generator" ${DEFAULT})
 opt(VISUDEV "Enable additional visualization capabilities for development purpose" OFF)
 opt(VORO3D "Enable Voro3D (for hex meshing, experimental)" ${DEFAULT})
-opt(WRAP_JAVA "Enable generation of Java wrappers" OFF)
-opt(WRAP_PYTHON "Enable generation of Python wrappers" OFF)
+opt(WRAP_JAVA "Enable generation of Java wrappers for internal developer API" OFF)
+opt(WRAP_PYTHON "Enable generation of Python wrappers for internal developer API" OFF)
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 3)
@@ -104,13 +104,13 @@ set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
 set(GMSH_VERSION "${GMSH_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}")
 set(GMSH_SHORT_LICENSE "GNU General Public License")
 
-set(GMSH_API Common/gmsh.h)
+set(GMSH_API api/gmsh.h api/gmshc.h)
 
 if(ENABLE_INTERNAL_DEVELOPER_API)
   message(WARNING "The internal developer API is unsupported and undocumented. "
       "It is meant for Gmsh (and related projects) developers, not for wide "
       "distribution. If you are packaging Gmsh for redistribution, please "
-      "DO NOT enable this and just ship the stable API (${GMSH_API}) instead.")
+      "DO NOT enable this and just ship the stable API (api/gmsh.h) instead.")
   file(GLOB_RECURSE HEADERS Common/*.h Numeric/*.h Geo/*.h Mesh/*.h Solver/*.h 
     Post/*.h Graphics/*.h contrib/kbipack/*.h contrib/DiscreteIntegration/*.h
     contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
@@ -119,9 +119,12 @@ if(ENABLE_INTERNAL_DEVELOPER_API)
       ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h ${HEADERS})
   get_property(IAMCHILD DIRECTORY  PROPERTY PARENT_DIRECTORY)
   if(IAMCHILD)
-    set(GMSH_INTERNAL_DEVELOPER_API ${GMSH_API} PARENT_SCOPE)
+    set(GMSH_INTERNAL_DEVELOPER_API ${GMSH_INTERNAL_DEVELOPER_API} PARENT_SCOPE)
   endif(IAMCHILD)
 endif(ENABLE_INTERNAL_DEVELOPER_API)
+
+set(ONELAB_PY contrib/onelab/python/onelab.py)
+set(GMSH_PY api/gmsh.py)
 
 if(${CMAKE_MAJOR_VERSION} GREATER 2)
   string(TIMESTAMP DATE "%Y%m%d")
@@ -188,24 +191,27 @@ if(NOT APPLE)
   endif(HAVE_64BIT_SIZE_T)
 endif(NOT APPLE)
 
-if(ENABLE_WRAP_PYTHON AND NOT ENABLE_BUILD_SHARED)
-  set(ENABLE_BUILD_DYNAMIC ON)
-endif(ENABLE_WRAP_PYTHON AND NOT ENABLE_BUILD_SHARED)
+if(NOT ENABLE_BUILD_SHARED)
+  if(ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
+    set(ENABLE_BUILD_DYNAMIC ON)
+  endif(ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
+endif(NOT ENABLE_BUILD_SHARED)
 
 if(MSVC)
   # remove annoying warning about bool/int cast performance
   set(GMSH_CONFIG_PRAGMAS "#pragma warning(disable:4800 4244 4267)")
-  if(ENABLE_MSVC_STATIC_RUNTIME)
-    foreach(VAR
-            CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
-            CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO
-            CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
-            CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO)
-      if(${VAR} MATCHES "/MD")
-        string(REGEX REPLACE "/MD" "/MT" ${VAR} "${${VAR}}")
-      endif(${VAR} MATCHES "/MD")
-    endforeach(VAR)
-  endif(ENABLE_MSVC_STATIC_RUNTIME)
+  foreach(VAR
+          CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
+          CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO
+          CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
+          CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO)
+    if(ENABLE_MSVC_STATIC_RUNTIME AND ${VAR} MATCHES "/MD")
+      string(REGEX REPLACE "/MD" "/MT" ${VAR} "${${VAR}}")
+    endif(ENABLE_MSVC_STATIC_RUNTIME AND ${VAR} MATCHES "/MD")
+    if(NOT ${VAR} MATCHES "/MP") # enable parallel compilation
+      set(${VAR} "${${VAR}} /MP")
+    endif(NOT ${VAR} MATCHES "/MP")
+  endforeach(VAR)
   if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
     # automatically export .def file with all symbols (requires CMake 3.4);
     # depending on the compiling options this might lead to more than 64k export
@@ -538,8 +544,7 @@ if(ENABLE_ONELAB)
       include_directories(contrib/onelab)
       set_config_option(HAVE_ONELAB_METAMODEL "ONELABMetamodel")
     endif(ENABLE_ONELAB_METAMODEL)
-    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab/python/onelab.py
-              DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+    file(COPY ${ONELAB_PY} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
   endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab)
 endif(ENABLE_ONELAB)
 
@@ -1212,66 +1217,48 @@ if(ENABLE_ZIPPER)
   endif(HAVE_LIBZ)
 endif(ENABLE_ZIPPER)
 
-if(ENABLE_WRAP_PYTHON)
+if(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_PYTHON)
   find_package(SWIG REQUIRED)
   include(${SWIG_USE_FILE})
   find_package(PythonLibs)
   if(SWIG_FOUND AND PYTHONLIBS_FOUND)
     message(STATUS "Found SWIG version " ${SWIG_VERSION})
-    # stable API bindings
-    include_directories(${PYTHON_INCLUDE_PATH})
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-    set(CMAKE_SWIG_FLAGS "")
-    set_source_files_properties(Common/gmsh.i PROPERTIES CPLUSPLUS ON)
-    if(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.8)
-      swig_add_library(gmsh LANGUAGE python SOURCES Common/gmsh.i)
-    else(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.8)
-      swig_add_module(gmsh python Common/gmsh.i)
-    endif(${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION} GREATER 3.8)
-    swig_link_libraries(gmsh ${PYTHON_LIBRARIES} shared)
-    if(APPLE)
-      set_target_properties("_gmsh" PROPERTIES LINK_FLAGS
-                            "-undefined suppress -flat_namespace")
-    endif(APPLE)
-    # internal developer API bindings
-    if(ENABLE_INTERNAL_DEVELOPER_API)
-      find_package(PythonInterp)
-      string(SUBSTRING ${SWIG_VERSION} 0 1 SWIG_MAJOR_VERSION)
-      if(SWIG_MAJOR_VERSION EQUAL 1)
-        message(WARNING "Python bindings require SWIG >= 2: disabling Python")
-      else(SWIG_MAJOR_VERSION EQUAL 1)
-        set_config_option(HAVE_PYTHON "Python")
-        mark_as_advanced(CLEAR PYTHON_LIBRARY PYTHON_INCLUDE_DIR)
-        if(ENABLE_NUMPY)
-          if (NOT NUMPY_INC)
-            EXEC_PROGRAM (${PYTHON_EXECUTABLE}
-              ARGS "-c \"import numpy; print(numpy.get_include())\""
-              OUTPUT_VARIABLE NUMPY_INC
-              RETURN_VALUE NUMPY_NOT_FOUND)
-          endif(NOT NUMPY_INC)
-          if(NUMPY_INC)
-            list(APPEND EXTERNAL_INCLUDES ${NUMPY_INC})
-            set_config_option(HAVE_NUMPY "Numpy")
-          endif(NUMPY_INC)
-        endif(ENABLE_NUMPY)
-        if(HAVE_PETSC)
-          if(ENABLE_PETSC4PY)
-            EXECUTE_PROCESS(
-              COMMAND ${PYTHON_EXECUTABLE} -c "import petsc4py; print(petsc4py.get_include())"
-              OUTPUT_VARIABLE PETSC4PY_INC
-              RESULT_VARIABLE PETSC4PY_NOT_FOUND
-              ERROR_QUIET
-              OUTPUT_STRIP_TRAILING_WHITESPACE)
-            if(PETSC4PY_INC)
-              list(APPEND EXTERNAL_INCLUDES ${PETSC4PY_INC})
-              set_config_option(HAVE_PETSC4PY "PETSc4py")
-            endif(PETSC4PY_INC)
-          endif(ENABLE_PETSC4PY)
-        endif(HAVE_PETSC)
-      endif(SWIG_MAJOR_VERSION EQUAL 1)
-    endif(ENABLE_INTERNAL_DEVELOPER_API)
+    find_package(PythonInterp)
+    string(SUBSTRING ${SWIG_VERSION} 0 1 SWIG_MAJOR_VERSION)
+    if(SWIG_MAJOR_VERSION EQUAL 1)
+      message(WARNING "Python bindings require SWIG >= 2: disabling Python")
+    else(SWIG_MAJOR_VERSION EQUAL 1)
+      set_config_option(HAVE_PYTHON "Python")
+      mark_as_advanced(CLEAR PYTHON_LIBRARY PYTHON_INCLUDE_DIR)
+      if(ENABLE_NUMPY)
+        if (NOT NUMPY_INC)
+          EXEC_PROGRAM (${PYTHON_EXECUTABLE}
+            ARGS "-c \"import numpy; print(numpy.get_include())\""
+            OUTPUT_VARIABLE NUMPY_INC
+            RETURN_VALUE NUMPY_NOT_FOUND)
+        endif(NOT NUMPY_INC)
+        if(NUMPY_INC)
+          list(APPEND EXTERNAL_INCLUDES ${NUMPY_INC})
+          set_config_option(HAVE_NUMPY "Numpy")
+        endif(NUMPY_INC)
+      endif(ENABLE_NUMPY)
+      if(HAVE_PETSC)
+        if(ENABLE_PETSC4PY)
+          EXECUTE_PROCESS(
+            COMMAND ${PYTHON_EXECUTABLE} -c "import petsc4py; print(petsc4py.get_include())"
+            OUTPUT_VARIABLE PETSC4PY_INC
+            RESULT_VARIABLE PETSC4PY_NOT_FOUND
+            ERROR_QUIET
+            OUTPUT_STRIP_TRAILING_WHITESPACE)
+          if(PETSC4PY_INC)
+            list(APPEND EXTERNAL_INCLUDES ${PETSC4PY_INC})
+            set_config_option(HAVE_PETSC4PY "PETSc4py")
+          endif(PETSC4PY_INC)
+        endif(ENABLE_PETSC4PY)
+      endif(HAVE_PETSC)
+    endif(SWIG_MAJOR_VERSION EQUAL 1)
   endif(SWIG_FOUND AND PYTHONLIBS_FOUND)
-endif(ENABLE_WRAP_PYTHON)
+endif(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_PYTHON)
 
 check_function_exists(vsnprintf HAVE_VSNPRINTF)
 if(NOT HAVE_VSNPRINTF AND NOT ENABLE_BUILD_IOS AND NOT ENABLE_BUILD_ANDROID)
@@ -1464,7 +1451,7 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 # we could specify include dirs more selectively, but this is simpler
 include_directories(Common Fltk Geo Graphics Mesh Solver Numeric Parser
-  Plugin Post Qt ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/Common)
+  Plugin Post Qt api ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/Common)
 
 # set this for external codes that might include this CMakeList file
 set(GMSH_EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDES} CACHE
@@ -1488,33 +1475,21 @@ if(ENABLE_BUILD_LIB)
       set_target_properties(lib PROPERTIES LINK_FLAGS_RELEASE "/nodefaultlib:LIBCMT")
     endif(ENABLE_MSVC_STATIC_RUNTIME)
   endif(MSVC)
+  add_library(libc STATIC api/gmshc.cpp)
+  set_target_properties(libc PROPERTIES OUTPUT_NAME gmshc)
 endif(ENABLE_BUILD_LIB)
 
-if(ENABLE_BUILD_ANDROID)
-  find_file(CMAKE_TOOLCHAIN_FILE "android.toolchain.cmake")
-  if(NOT CMAKE_TOOLCHAIN_FILE)
-    message(FATAL_ERROR "Cannot compile Gmsh for android without android-cmake")
-  endif(NOT CMAKE_TOOLCHAIN_FILE)
-  add_definitions(-D_GLIBCXX_USE_C99_MATH=1)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-  set(CMAKE_BUILD_TYPE Release)
-  set(LIBRARY_OUTPUT_PATH_ROOT ${CMAKE_CURRENT_BINARY_DIR})
-  set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/libs/)
-  add_definitions(-DBUILD_ANDROID)
-  add_definitions(-DPICOJSON_USE_LOCALE=0)
-  add_library(androidGmsh SHARED ${GMSH_SRC})
-  set_target_properties(androidGmsh PROPERTIES OUTPUT_NAME gmsh)
-  target_link_libraries(androidGmsh ${EXTERNAL_LIBRARIES} ${LAPACK_LIBRARIES})
-  add_custom_command(TARGET androidGmsh POST_BUILD COMMAND
-                     ${CMAKE_STRIP} ${LIBRARY_OUTPUT_PATH}/libgmsh.so)
-endif(ENABLE_BUILD_ANDROID)
-
 # shared library target
-if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC OR
-   ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
+if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
+  if(APPLE)
+    # FIXME: change this once we understand rpaths
+    set(CMAKE_MACOSX_RPATH 0)
+  endif(APPLE)
+  if(WIN32)
+    add_definitions(-DGMSH_DLL_EXPORT)
+  endif(WIN32)
   add_library(shared SHARED ${GMSH_SRC})
-  set_target_properties(shared PROPERTIES OUTPUT_NAME gmsh)
-  set_target_properties(shared PROPERTIES
+  set_target_properties(shared PROPERTIES OUTPUT_NAME gmsh
     VERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}
     SOVERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
   if(HAVE_LAPACK AND LAPACK_FLAGS)
@@ -1525,8 +1500,13 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC OR
             "won't link. In MSVC change /MT to /MD in the shared project properties")
   endif(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
   target_link_libraries(shared ${LINK_LIBRARIES})
-endif(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC OR
-      ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
+  # C wrappers
+  add_library(sharedc SHARED api/gmshc.cpp)
+  set_target_properties(sharedc PROPERTIES OUTPUT_NAME gmshc
+    VERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}
+    SOVERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
+  target_link_libraries(sharedc shared)
+endif(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 
 # binary targets
 if(HAVE_FLTK)
@@ -1561,10 +1541,6 @@ if(WIN32 AND NOT MSVC OR CYGWIN)
     set(FLAGS "${FLAGS} -Wl,-Bstatic -lgfortran")
     set_target_properties(gmsh PROPERTIES
       LINK_FLAGS "${FLAGS} -Wl,--enable-auto-import")
-    set(LIBGMSH_DEF "libgmsh-${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.def")
-    # automatically export .def file with all symbols
-    set_target_properties(shared PROPERTIES PREFIX "lib"
-      LINK_FLAGS "${FLAGS} -Wl,--export-all-symbols,--output-def,${LIBGMSH_DEF}")
   else(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
     set_target_properties(gmsh PROPERTIES
       LINK_FLAGS "${FLAGS} -static")
@@ -1576,6 +1552,26 @@ elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS
     "/STACK:16777216 /SAFESEH:NO")
 endif(WIN32 AND NOT MSVC OR CYGWIN)
+
+# android target
+if(ENABLE_BUILD_ANDROID)
+  find_file(CMAKE_TOOLCHAIN_FILE "android.toolchain.cmake")
+  if(NOT CMAKE_TOOLCHAIN_FILE)
+    message(FATAL_ERROR "Cannot compile Gmsh for android without android-cmake")
+  endif(NOT CMAKE_TOOLCHAIN_FILE)
+  add_definitions(-D_GLIBCXX_USE_C99_MATH=1)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  set(CMAKE_BUILD_TYPE Release)
+  set(LIBRARY_OUTPUT_PATH_ROOT ${CMAKE_CURRENT_BINARY_DIR})
+  set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/libs/)
+  add_definitions(-DBUILD_ANDROID)
+  add_definitions(-DPICOJSON_USE_LOCALE=0)
+  add_library(androidGmsh SHARED ${GMSH_SRC})
+  set_target_properties(androidGmsh PROPERTIES OUTPUT_NAME gmsh)
+  target_link_libraries(androidGmsh ${EXTERNAL_LIBRARIES} ${LAPACK_LIBRARIES})
+  add_custom_command(TARGET androidGmsh POST_BUILD COMMAND
+                     ${CMAKE_STRIP} ${LIBRARY_OUTPUT_PATH}/libgmsh.so)
+endif(ENABLE_BUILD_ANDROID)
 
 # parser target
 find_program(BISON bison)
@@ -1602,7 +1598,6 @@ set(WELCOME_FILE ${CMAKE_CURRENT_SOURCE_DIR}/doc/WELCOME.txt)
 set(LICENSE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt)
 set(CREDITS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/CREDITS.txt)
 set(CHANGELOG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/CHANGELOG.txt)
-set(ONELAB_PY ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab/python/onelab.py)
 file(GLOB TUTORIAL_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorial/?*.*)
 file(GLOB DEMOS ${CMAKE_CURRENT_SOURCE_DIR}/demos/*)
 foreach(SUBDIR ${DEMOS})
@@ -1651,7 +1646,9 @@ if(WIN32 OR CYGWIN)
   endif(ENABLE_OS_SPECIFIC_INSTALL)
   if(CYGWIN)
     unix2dos(GMSH_API)
-    unix2dos(GMSH_DEPREATED_API)
+    if(ENABLE_INTERNAL_DEVELOPER_API)
+      unix2dos(GMSH_INTERNAL_DEVELOPER_API)
+    endif(ENABLE_INTERNAL_DEVELOPER_API)
     unix2dos(WELCOME_FILE)
     unix2dos(LICENSE_FILE)
     unix2dos(CREDITS_FILE)
@@ -1679,20 +1676,29 @@ else(WIN32 OR CYGWIN)
   set(GMSH_INC ${CMAKE_INSTALL_INCLUDEDIR})
 endif(WIN32 OR CYGWIN)
 
+# FIXME: change this once we understand rpaths
+if(APPLE)
+  if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
+    set_target_properties(shared PROPERTIES INSTALL_NAME_DIR 
+                          ${CMAKE_INSTALL_PREFIX}/${GMSH_LIB})
+    set_target_properties(sharedc PROPERTIES INSTALL_NAME_DIR 
+                          ${CMAKE_INSTALL_PREFIX}/${GMSH_LIB})
+  endif(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
+endif(APPLE)
+
 # mark targets as optional so we can install them separately if needed
 # (e.g. "make lib" or "make shared" followed by "make install/fast")
 install(TARGETS gmsh DESTINATION ${GMSH_BIN} OPTIONAL)
 if(ENABLE_BUILD_LIB)
   install(TARGETS lib DESTINATION ${GMSH_LIB} OPTIONAL)
+  install(TARGETS libc DESTINATION ${GMSH_LIB} OPTIONAL)
 endif(ENABLE_BUILD_LIB)
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   if(WIN32 AND NOT MSVC OR CYGWIN)
     # install only the runtime (DLL); the .dll.a generated by gcc is not usable
     # by MSVC
     install(TARGETS shared RUNTIME DESTINATION ${GMSH_LIB} OPTIONAL)
-    # install .def file
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${LIBGMSH_DEF}
-            DESTINATION ${GMSH_LIB})
+    install(TARGETS sharedc RUNTIME DESTINATION ${GMSH_LIB} OPTIONAL)
     # install these DLLs until we figure out how to link them in statically
     # (libstc++ and libgcc should be linkable statically with -static-libstdc++
     # and -static-libgcc but with current mingw64 toolchain it does not
@@ -1720,6 +1726,9 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
     endif(GCC_DLL AND STDC_DLL)
   else(WIN32 AND NOT MSVC OR CYGWIN)
     install(TARGETS shared DESTINATION ${GMSH_LIB} OPTIONAL)
+    install(TARGETS sharedc DESTINATION ${GMSH_LIB} OPTIONAL)
+    # FIXME once we cleanup the installation of the python module
+    install(TARGETS sharedc DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/api OPTIONAL)
   endif(WIN32 AND NOT MSVC OR CYGWIN)
 endif(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 
@@ -1900,13 +1909,13 @@ else(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
   set(CPACK_GENERATOR TGZ)
 endif(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
 
-if(ENABLE_WRAP_PYTHON AND HAVE_PYTHON AND ENABLE_INTERNAL_DEVELOPER_API)
+if(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_PYTHON AND HAVE_PYTHON)
   add_subdirectory(wrappers/gmshpy)
-endif(ENABLE_WRAP_PYTHON AND HAVE_PYTHON AND ENABLE_INTERNAL_DEVELOPER_API)
+endif(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_PYTHON AND HAVE_PYTHON)
 
-if(ENABLE_WRAP_JAVA AND ENABLE_INTERNAL_DEVELOPER_API)
+if(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_JAVA)
   add_subdirectory(wrappers/java)
-endif(ENABLE_WRAP_JAVA AND ENABLE_INTERNAL_DEVELOPER_API)
+endif(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_JAVA)
 
 include(CPack)
 

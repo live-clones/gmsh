@@ -1,43 +1,65 @@
+#include <iostream>
 #include <gmsh.h>
 
 int main(int argc, char **argv)
 {
-  gmshInitialize();
-  gmshOptionSetNumber("General.Terminal", 1);
+  gmsh::initialize();
+  gmsh::option::setNumber("General.Terminal", 1);
 
   // Copied from discrete.cpp...
-  gmshModelCreate("test");
-  gmshModelAddDiscreteEntity(2, 1);
-  gmshModelSetMeshVertices(2, 1, {1, 2, 3, 4},
-                           {0., 0., 0.,
-                            1., 0., 0.,
-                            1., 1., 0.,
-                            0., 1., 0.});
-  gmshModelSetMeshElements(2, 1, {2}, {{1, 2}},
-                           {{1, 2, 3,
-                             1, 3, 4}});
+  gmsh::model::add("test");
+  gmsh::model::addDiscreteEntity(2, 1);
+  gmsh::model::mesh::setVertices(2, 1, {1, 2, 3, 4},
+                                 {0., 0., 0.,
+                                  1., 0., 0.,
+                                  1., 1., 0.,
+                                  0., 1., 0.});
+  gmsh::model::mesh::setElements(2, 1, {2}, {{1, 2}},
+                                 {{1, 2, 3,
+                                   1, 3, 4}});
   // ... end of copy
 
   // create a view with some data
-  int t = gmshViewCreate("some data");
-  gmshViewAddModelData(t, "test", "NodeData",
-                       {1, 2, 3, 4},
-                       {{1.},{10.},{20.},{1.}});
+  int t = gmsh::view::add("some data");
+  gmsh::view::addModelData(t, 0, "test", "NodeData",
+                           {1, 2, 3, 4},
+                           {{1.},{10.},{20.},{1.}});
+
+  // test getting data back
+  std::string dataType;
+  std::vector<int> tags;
+  std::vector<std::vector<double> > data;
+  double time;
+  int numComp;
+  gmsh::view::getModelData(t, 0, dataType, tags, data, time, numComp);
+  std::cout << dataType;
+  for(unsigned int i = 0; i < tags.size(); i++)
+    std::cout << " " << tags[i];
+  std::cout << std::endl;
 
   // compute the iso-curve at value 11
-  gmshPluginSetNumber("Isosurface", "Value", 11.);
-  gmshPluginRun("Isosurface");
+  gmsh::plugin::setNumber("Isosurface", "Value", 11.);
+  gmsh::plugin::run("Isosurface");
 
   // delete the source view
-  gmshViewDelete(t);
+  gmsh::view::remove(t);
 
-  // check how many views the plugin created (a priori, a single one)
-  std::vector<int> tags;
-  gmshViewGetTags(tags);
-  if(tags.size() == 1)
-    gmshViewExport(tags[0], "iso.msh");
+  // check how many views the plugin created (a priori, a single list-based one)
+  gmsh::view::getTags(tags);
+  if(tags.size() == 1){
+    gmsh::view::write(tags[0], "iso.msh");
+    // test getting data back
+    std::vector<std::string> dataTypes;
+    std::vector<int> numElements;
+    gmsh::view::getListData(tags[0], dataTypes, numElements, data);
+    for(unsigned int i = 0; i < dataTypes.size(); i++)
+      std::cout << dataTypes[i] << " ";
+    for(unsigned int i = 0; i < numElements.size(); i++)
+      std::cout << numElements[i] << " ";
+    std::cout << std::endl;
+  }
 
-  gmshFinalize();
+  gmsh::finalize();
   return 0;
 }
 

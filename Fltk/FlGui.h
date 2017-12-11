@@ -49,6 +49,7 @@ class FlGui{
  private:
   static FlGui *_instance;
   static std::string _openedThroughMacFinder;
+  static bool _finishedProcessingCommandLine;
   std::string _lastStatus;
  public:
   std::vector<GVertex*> selectedVertices;
@@ -97,6 +98,8 @@ class FlGui{
   // is a file opened through the Mac Finder?
   static void setOpenedThroughMacFinder(const std::string &name);
   static std::string getOpenedThroughMacFinder();
+  static void setFinishedProcessingCommandLine();
+  static bool getFinishedProcessingCommandLine();
   // test application-level keyboard shortcuts
   int testGlobalShortcuts(int event);
   // test the arrow shortcuts (not in the application-level shortcuts)

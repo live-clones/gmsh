@@ -11,21 +11,22 @@
 Code contributions to Gmsh have been provided by David Colignon (colormaps),
 Emilie Marchandise (compound geometrical entities), Gaetan Bricteux (Gauss
 integration and levelsets), Jacques Lechelle (DIFFPACK mesh format), Jonathan
-Lambrechts (fields, solver), Jozef Vesely (help with Tetgen integration), Koen
-Hillewaert (high order elements, generalized periodic meshes), Laurent Stainier
-(eigenvalue solvers, tensor display and MacOS bits), Marc Ume (original list
-code), Mark van Doesburg (OpenCASCADE face connection), Matt Gundry (Plot3d mesh
-format), Matti Pellikka (Cell complex and Homology solver), Nicolas Tardieu
-(help with Netgen integration), Pascale Noyret (MED mesh format), Pierre Badel
-(root finding and minimization), Ruth Sabariego (pyramids), Stephen Guzik (CGNS
-and partitioners), Bastien Gorissen (parallel remote post-processing), Eric
-Bechet (solver), Gilles Marckmann (camera and stero mode), Ashish Negi (Netgen
-CAD healing), Trevor Strickler (structured/unstructured coupling with pyramids),
-Amaury Johnen (Bezier), Benjamin Ruard (Java wrappers), Maxime Graulich
-(iOS/Android port), Francois Henrotte (onelab metamodels), Sebastian Eiser (PGF
-output), Alexis Salzman (compressed IO), Hang Si (TetGen/BR boundary recovery
-code), Fernando Lorenzo (Tochnog support). See comments in the sources for more
-information. If we forgot to list your contributions please send us an email!
+Lambrechts (fields, solver, python wrapper), Jozef Vesely (help with Tetgen
+integration), Koen Hillewaert (high order elements, generalized periodic
+meshes), Laurent Stainier (eigenvalue solvers, tensor display and MacOS bits),
+Marc Ume (original list code), Mark van Doesburg (OpenCASCADE face connection),
+Matt Gundry (Plot3d mesh format), Matti Pellikka (Cell complex and Homology
+solver), Nicolas Tardieu (help with Netgen integration), Pascale Noyret (MED
+mesh format), Pierre Badel (root finding and minimization), Ruth Sabariego
+(pyramids), Stephen Guzik (CGNS and partitioners), Bastien Gorissen (parallel
+remote post-processing), Eric Bechet (solver), Gilles Marckmann (camera and
+stero mode), Ashish Negi (Netgen CAD healing), Trevor Strickler
+(structured/unstructured coupling with pyramids), Amaury Johnen (Bezier),
+Benjamin Ruard (Java wrappers), Maxime Graulich (iOS/Android port), Francois
+Henrotte (onelab metamodels), Sebastian Eiser (PGF output), Alexis Salzman
+(compressed IO), Hang Si (TetGen/BR boundary recovery code), Fernando Lorenzo
+(Tochnog support). See comments in the sources for more information. If we
+forgot to list your contributions please send us an email!
 
 The TetGen/BR code (Mesh/tetgenBR.{cpp,h}) is copyright (c) 2016 Hang Si, Weierstrass
 Institute for Applied Analysis and Stochatics.

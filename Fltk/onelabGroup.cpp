@@ -52,6 +52,47 @@ typedef unsigned long intptr_t;
 // interface. You'll need to reimplement this if you plan to build a different
 // ONELAB server.
 
+void solver_cb(Fl_Widget *w, void *data)
+{
+  if(!FlGui::instance()->onelab) return;
+
+  int num = (intptr_t)data;
+  if(num >= 0){
+    std::string name = opt_solver_name(num, GMSH_GET, "");
+    std::string exe = opt_solver_executable(num, GMSH_GET, "");
+    std::string host = opt_solver_remote_login(num, GMSH_GET, "");
+    FlGui::instance()->onelab->addSolver(name, exe, host, num);
+  }
+  else{
+    FlGui::instance()->onelab->rebuildSolverList();
+  }
+
+  if(CTX::instance()->solver.autoLoadDatabase){
+    std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
+    std::string db = split[0] + split[1] + ".db";
+    if(!StatFile(db)){
+      onelabUtils::loadDb(db);
+      CTX::instance()->launchSolverAtStartup = -1;
+    }
+  }
+
+  if(FlGui::instance()->onelab->isBusy())
+    FlGui::instance()->onelab->show();
+  else{
+    if(CTX::instance()->launchSolverAtStartup >= 0){
+      onelab_cb(0, (void*)"reset");
+      onelabUtils::setFirstComputationFlag(true);
+    }
+    else if(num >= 0)
+      onelab_cb(0, (void*)"check");
+    else
+      onelab_cb(0, (void*)"refresh");
+    FlGui::instance()->onelab->updateGearMenu();
+  }
+
+  CTX::instance()->launchSolverAtStartup = -1;
+}
+
 void onelab_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
@@ -59,7 +100,7 @@ void onelab_cb(Fl_Widget *w, void *data)
   std::string action((const char*)data);
 
   if(action == "refresh"){
-    updateGraphs();
+    onelabUtils::updateGraphs();
     FlGui::instance()->rebuildTree(true);
     return;
   }
@@ -109,8 +150,8 @@ void onelab_cb(Fl_Widget *w, void *data)
     db.assign(SplitFileName(GModel::current()->getFileName())[0] + fileName);
     if(fileChooser(FILE_CHOOSER_CREATE, "Save", "*.db", db.c_str())){
       if(!restoreMode)
-	archiveSolutionFiles(fileChooserGetName(1));
-      saveDb(fileChooserGetName(1));
+	onelabUtils::archiveSolutionFiles(fileChooserGetName(1));
+      onelabUtils::saveDb(fileChooserGetName(1));
     }
 
     // special handling for metamodels: switch back to normal "run" mode"
@@ -131,12 +172,12 @@ void onelab_cb(Fl_Widget *w, void *data)
   if(action == "load"){
     std::string db = SplitFileName(GModel::current()->getFileName())[0] + "onelab.db";
     if(fileChooser(FILE_CHOOSER_SINGLE, "Load", "*.db", db.c_str()))
-      loadDb(fileChooserGetName(1));
+      onelabUtils::loadDb(fileChooserGetName(1));
     action = "check";
   }
 
   if(action == "reset"){
-    resetDb(true);
+    onelabUtils::resetDb(true);
     action = "check";
   }
 
@@ -144,7 +185,7 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   FlGui::instance()->onelab->setButtonMode("", "stop");
 
-  if(action == "compute") initializeLoops();
+  if(action == "compute") onelabUtils::initializeLoops();
 
   do{ // enter loop
 
@@ -185,19 +226,19 @@ void onelab_cb(Fl_Widget *w, void *data)
     }
 
     if(action != "initialize"){
-      updateGraphs();
+      onelabUtils::updateGraphs();
       FlGui::instance()->rebuildTree(action == "compute");
     }
 
   } while(action == "compute" && !FlGui::instance()->onelab->stop() &&
-          incrementLoops());
+          onelabUtils::incrementLoops());
 
   if(action == "compute" && (CTX::instance()->solver.autoSaveDatabase ||
                              CTX::instance()->solver.autoArchiveOutputFiles)){
     std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
     std::string db = split[0] + split[1] + ".db";
-    if(CTX::instance()->solver.autoArchiveOutputFiles) archiveOutputFiles(db);
-    if(CTX::instance()->solver.autoSaveDatabase) saveDb(db);
+    if(CTX::instance()->solver.autoArchiveOutputFiles) onelabUtils::archiveOutputFiles(db);
+    if(CTX::instance()->solver.autoSaveDatabase) onelabUtils::saveDb(db);
   }
 
   FlGui::instance()->onelab->stop(false);
@@ -224,7 +265,7 @@ void onelab_option_cb(Fl_Widget *w, void *data)
     FlGui::instance()->onelab->setButtonVisibility();
   }
   else if(what == "mesh")
-    CTX::instance()->solver.autoMesh = val;
+    CTX::instance()->solver.autoMesh = val ? 2 : 0;
   else if(what == "merge")
     CTX::instance()->solver.autoMergeFile = val;
   else if(what == "show")
@@ -652,12 +693,12 @@ void onelabGroup::openCloseViewButton(int num)
 static bool serverAction(const std::string &action)
 {
   if(action == "ResetDatabase"){ // reset the onelab db
-    resetDb(false);
+    onelabUtils::resetDb(false);
     FlGui::instance()->rebuildTree(false);
     return true;
   }
   else if(action == "Reset"){ // reset db + models except current one
-    resetDb(false);
+    onelabUtils::resetDb(false);
     for(int i = PView::list.size() - 1; i >= 0; i--)
       delete PView::list[i];
     for(int i = GModel::list.size() - 1; i >= 0; i--)
@@ -755,7 +796,7 @@ static void onelab_number_input_range_cb(Fl_Widget *w, void *data)
     setGmshOption(numbers[0]);
     performServerAction(numbers[0]);
     onelab::server::instance()->set(numbers[0]);
-    updateGraphs();
+    onelabUtils::updateGraphs();
     autoCheck(old, numbers[0]);
   }
 }
@@ -770,7 +811,7 @@ static void onelab_number_output_range_cb(Fl_Widget *w, void *data)
     outputRange *o = (outputRange*)w;
     numbers[0].setAttribute("Graph", o->graph());
     onelab::server::instance()->set(numbers[0]);
-    updateGraphs();
+    onelabUtils::updateGraphs();
   }
 }
 
@@ -1460,48 +1501,3 @@ void onelabGroup::addSolver(const std::string &name, const std::string &executab
   onelab_cb(0, (void*)"initialize");
 }
 
-void solver_cb(Fl_Widget *w, void *data)
-{
-  if(!FlGui::instance()->onelab) return;
-
-  int num = (intptr_t)data;
-  if(num >= 0){
-    std::string name = opt_solver_name(num, GMSH_GET, "");
-    std::string exe = opt_solver_executable(num, GMSH_GET, "");
-    std::string host = opt_solver_remote_login(num, GMSH_GET, "");
-    FlGui::instance()->onelab->addSolver(name, exe, host, num);
-  }
-  else{
-    FlGui::instance()->onelab->rebuildSolverList();
-  }
-
-  if(CTX::instance()->solver.autoLoadDatabase){
-    std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
-    std::string db = split[0] + split[1] + ".db";
-    if(!StatFile(db)){
-      loadDb(db);
-      CTX::instance()->launchSolverAtStartup = -1;
-    }
-  }
-
-  if(FlGui::instance()->onelab->isBusy())
-    FlGui::instance()->onelab->show();
-  else{
-    if(CTX::instance()->launchSolverAtStartup >= 0){
-      onelab_cb(0, (void*)"reset");
-      onelabUtils::setFirstComputationFlag(true);
-    }
-    else if(num >= 0)
-      onelab_cb(0, (void*)"check");
-    else
-      onelab_cb(0, (void*)"refresh");
-    FlGui::instance()->onelab->updateGearMenu();
-  }
-
-  CTX::instance()->launchSolverAtStartup = -1;
-}
-
-void flgui_wait_cb(double time)
-{
-  FlGui::instance()->wait(time);
-}

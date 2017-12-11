@@ -89,7 +89,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-smooth int",        "Set number of mesh smoothing steps"));
   s.push_back(mp("-order int",         "Set mesh order (1, ..., 5)"));
   s.push_back(mp("-optimize[_netgen]", "Optimize quality of tetrahedral elements"));
-  s.push_back(mp("-optimize_threshold", "Optimize tetrahedral elements that have a qulaity less than a threshold"));
+  s.push_back(mp("-optimize_threshold", "Optimize tetrahedral elements that have a quality less than a threshold"));
   s.push_back(mp("-optimize_ho",       "Optimize high order meshes"));
   s.push_back(mp("-ho_[min,max,nlayers]", "High-order optimization parameters"));
   s.push_back(mp("-optimize_lloyd",    "Optimize 2D meshes using Lloyd algorithm"));
@@ -293,7 +293,7 @@ void PrintUsage(const std::string &name)
   }
 }
 
-void GetOptions(int argc, char *argv[])
+void GetOptions(int argc, char *argv[], bool readConfigFiles)
 {
   // print messages on terminal (use special 99 value so that we can detect if
   // it was later set to 1 in the option file)
@@ -301,9 +301,7 @@ void GetOptions(int argc, char *argv[])
   CTX::instance()->terminal = 99;
 
 #if defined(HAVE_PARSER)
-  if(argc && argv){
-    // parse session and option file (if argc/argv is not provided skip this
-    // step: this is usually what is expected when using Gmsh as a library)
+  if(readConfigFiles){
     ParseFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName, true);
     ParseFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName, true);
   }
@@ -485,7 +483,8 @@ void GetOptions(int argc, char *argv[])
         CTX::instance()->initialContext = 4;
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "saveall")) {
+      else if(!strcmp(argv[i] + 1, "saveall") ||
+              !strcmp(argv[i] + 1, "save_all")) {
         CTX::instance()->mesh.saveAll = 1;
         i++;
       }

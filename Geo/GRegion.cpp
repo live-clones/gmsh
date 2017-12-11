@@ -34,11 +34,13 @@ GRegion::~GRegion()
   deleteMesh();
 }
 
-void GRegion::deleteMesh()
+void GRegion::deleteMesh(bool onlyDeleteElements)
 {
-  for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
-  mesh_vertices.clear();
-  transfinite_vertices.clear();
+  if(!onlyDeleteElements){
+    for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
+    mesh_vertices.clear();
+    transfinite_vertices.clear();
+  }
   for(unsigned int i = 0; i < tetrahedra.size(); i++) delete tetrahedra[i];
   tetrahedra.clear();
   for(unsigned int i = 0; i < hexahedra.size(); i++) delete hexahedra[i];
@@ -51,7 +53,6 @@ void GRegion::deleteMesh()
   trihedra.clear();
   for(unsigned int i = 0; i < polyhedra.size(); i++) delete polyhedra[i];
   polyhedra.clear();
-
   deleteVertexArrays();
   model()->destroyMeshCaches();
 }

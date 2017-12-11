@@ -37,7 +37,7 @@ set(SRC
   MeshSubEntities.cpp
   CVTRemesh.cpp
   ShowNeighborElements.cpp
-  GaussPoints.cpp
+  GaussPoints.cpp QuadratureData.cpp
   VoroMetal.cpp
 )
 

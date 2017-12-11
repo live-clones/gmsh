@@ -68,7 +68,7 @@ class GFace : public GEntity {
   std::set<MVertex*> constr_vertices;
 
   // delete mesh data
-  virtual void deleteMesh();
+  virtual void deleteMesh(bool onlyDeleteElements = false);
 
   // add/delete regions that are bounded by the face
   void addRegion(GRegion *r)

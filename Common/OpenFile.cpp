@@ -277,12 +277,12 @@ static std::string getSolverForExtension(const std::string &ext)
 
 static int defineSolver(const std::string &name)
 {
-  for(int i = 0; i < NUM_SOLVERS; i++){
+  int i;
+  for(i = 0; i < NUM_SOLVERS; i++){
     if(opt_solver_name(i, GMSH_GET, "") == name) return i;
   }
-  // overwrite last one
-  opt_solver_name(NUM_SOLVERS - 1, GMSH_SET|GMSH_GUI, name);
-  return NUM_SOLVERS - 1;
+  opt_solver_name(i - 1, GMSH_SET|GMSH_GUI, name);
+  return i - 1;
 }
 #endif
 
@@ -752,11 +752,11 @@ void OpenProject(const std::string &fileName)
 void OpenProjectMacFinder(const char *fileName)
 {
 #if defined(HAVE_FLTK)
-  if(!FlGui::available()){
+  if(!FlGui::available() || !FlGui::getFinishedProcessingCommandLine()){
     // Gmsh is not ready: will open the file later
     FlGui::setOpenedThroughMacFinder(fileName);
   }
-  else if(FlGui::available()){
+  else{
     // Gmsh is running
     OpenProject(fileName);
     drawContext::global()->draw();

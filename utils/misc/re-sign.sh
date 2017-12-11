@@ -19,7 +19,7 @@ if [ $ext == "dmg" ]; then
   mkdir ${base}
   cp -R /tmp/tmp_mount/* ${base}/
   codesign -v --force --deep --sign "Developer ID Application: Christophe Geuzaine" ${base}/Gmsh.app
-  umount /tmp/tmp_mount
+  hdiutil eject /tmp/tmp_mount
   rm -rf ${file} /tmp/tmp.cdr
   hdiutil create -srcfolder ${base} ${file}
   codesign -v --sign "Developer ID Application: Christophe Geuzaine" ${file}

@@ -871,11 +871,6 @@ namespace onelab{
       }
       return NULL;
     }
-    void _getAllParameters(std::set<parameter*, parameterLessThan> &ps) const
-    {
-      ps.insert(_numbers.begin(), _numbers.end());
-      ps.insert(_strings.begin(), _strings.end());
-    }
   public:
     parameterSpace(){}
     ~parameterSpace(){ clear(); }
@@ -883,7 +878,7 @@ namespace onelab{
     {
       if(name.empty() && client.empty()){
         std::set<parameter*, parameterLessThan> ps;
-        _getAllParameters(ps);
+        getAllParameters(ps);
         for(std::set<parameter*, parameterLessThan>::iterator it = ps.begin();
             it != ps.end(); it++)
           delete *it;
@@ -934,7 +929,7 @@ namespace onelab{
     bool hasClient(const std::string &client) const
     {
       std::set<parameter*, parameterLessThan> ps;
-      _getAllParameters(ps);
+      getAllParameters(ps);
       for(std::set<parameter*, parameterLessThan>::iterator it = ps.begin();
           it != ps.end(); it++)
         if((*it)->hasClient(client)) return true;
@@ -945,7 +940,7 @@ namespace onelab{
     int getChanged(const std::string &client="") const
     {
       std::set<parameter*, parameterLessThan> ps;
-      _getAllParameters(ps);
+      getAllParameters(ps);
       int changed = 0;
       for(std::set<parameter*, parameterLessThan>::iterator it = ps.begin();
           it != ps.end(); it++){
@@ -958,7 +953,7 @@ namespace onelab{
     void setChanged(int changed, const std::string &client="")
     {
       std::set<parameter*, parameterLessThan> ps;
-      _getAllParameters(ps);
+      getAllParameters(ps);
       for(std::set<parameter*, parameterLessThan>::iterator it = ps.begin();
           it != ps.end(); it++)
         (*it)->setChanged(changed, client);
@@ -966,7 +961,7 @@ namespace onelab{
     void thresholdChanged(int threshold, const std::string &client="")
     {
       std::set<parameter*, parameterLessThan> ps;
-      _getAllParameters(ps);
+      getAllParameters(ps);
       for(std::set<parameter*, parameterLessThan>::iterator it = ps.begin();
           it != ps.end(); it++){
         int changed = (*it)->getChanged(client);
@@ -980,7 +975,7 @@ namespace onelab{
     {
       std::vector<std::string> s;
       std::set<parameter*, parameterLessThan> ps;
-      _getAllParameters(ps);
+      getAllParameters(ps);
       for(std::set<parameter*, parameterLessThan>::const_iterator it = ps.begin();
           it != ps.end(); it++)
         if(client.empty() || (*it)->hasClient(client)){
@@ -1021,7 +1016,7 @@ namespace onelab{
       json += "  \"version\":\"" + parameter::version() + "\",\n";
       json += "  \"parameters\":[\n";
       std::set<parameter*, parameterLessThan> ps;
-      _getAllParameters(ps);
+      getAllParameters(ps);
       for(std::set<parameter*, parameterLessThan>::const_iterator it = ps.begin();
           it != ps.end(); it++){
         if(it != ps.begin()) json += ",\n";
@@ -1034,9 +1029,9 @@ namespace onelab{
       json += "\n  ] }\n}\n";
       return true;
     }
-#if defined(HAVE_PICOJSON)
     bool fromJSON(const std::string &json, const std::string &client="")
     {
+#if defined(HAVE_PICOJSON)
       picojson::value v;
       std::string err = picojson::parse(v, json);
       if(err.size()) return false;
@@ -1071,8 +1066,10 @@ namespace onelab{
         }
       }
       return true;
-    }
+#else
+      return false;
 #endif
+    }
   };
 
   // The onelab client: a class that communicates with the onelab server. Each
@@ -1237,12 +1234,10 @@ namespace onelab{
     {
       return _parameterSpace.toJSON(json, client);
     }
-#if defined(HAVE_PICOJSON)
     bool fromJSON(const std::string &json, const std::string &client="")
     {
       return _parameterSpace.fromJSON(json, client);
     }
-#endif
   };
 
   // A local client, which lives in the same memory space as the server.

@@ -9,36 +9,36 @@
 #include <string>
 #include "GmshMessage.h"
 
-int GmshInitialize(int argc=0, char **argv=0);
+int GmshInitialize(int argc = 0, char **argv = 0, bool readConfigFiles = false);
 int GmshSetMessageHandler(GmshMessage *callback);
 GmshMessage *GmshGetMessageHandler();
 int GmshSetBoundingBox(double xmin, double xmax,
                        double ymin, double ymax,
                        double zmin, double zmax);
 int GmshSetOption(const std::string &category, const std::string &name,
-                  std::string value, int index=0);
+                  std::string value, int index = 0);
 int GmshSetOption(const std::string &category, const std::string &name,
-                  double value, int index=0);
+                  double value, int index = 0);
 int GmshSetOption(const std::string &category, const std::string &name,
-                  unsigned int value, int index=0);
+                  unsigned int value, int index = 0);
 void GmshSetStringOption(const std::string &category, const std::string &name,
-                         std::string value, int index=0);
+                         std::string value, int index = 0);
 void GmshSetNumberOption(const std::string &category, const std::string &name,
-                         double value, int index=0);
+                         double value, int index = 0);
 void GmshSetColorOption(const std::string &category, const std::string &name,
-                        unsigned int value, int index=0);
+                        unsigned int value, int index = 0);
 int GmshGetOption(const std::string &category, const std::string &name,
-                  std::string &value, int index=0);
+                  std::string &value, int index = 0);
 int GmshGetOption(const std::string &category, const std::string &name,
-                  double &value, int index=0);
+                  double &value, int index = 0);
 int GmshGetOption(const std::string &category, const std::string &name,
-                  unsigned int &value, int index=0);
+                  unsigned int &value, int index = 0);
 std::string GmshGetStringOption(const std::string &category, const std::string &name,
-                                int index=0);
+                                int index = 0);
 double GmshGetNumberOption(const std::string &category, const std::string &name,
-                           int index=0);
+                           int index = 0);
 unsigned int GmshGetColorOption(const std::string &category, const std::string &name,
-                                int index=0);
+                                int index = 0);
 int GmshRestoreDefaultOptions();
 int GmshOpenProject(const std::string &fileName);
 int GmshClearProject();
@@ -48,6 +48,6 @@ int GmshWriteFile(const std::string &fileName);
 int GmshFinalize();
 int GmshBatch();
 int GmshBatch(int argc, char **argv);
-int GmshFLTK(int argc=0, char **argv=0);
+int GmshFLTK(int argc = 0, char **argv = 0);
 
 #endif

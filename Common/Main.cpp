@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
   }
 
   new GModel();
-  GmshInitialize(argc, argv);
+  GmshInitialize(argc, argv, true);
 
   if(!Msg::GetGmshClient()) CTX::instance()->terminal = 1;
   CTX::instance()->noPopup = 1;

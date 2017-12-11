@@ -19,9 +19,9 @@
 @c pointers and menus.
 @c 
 @c =========================================================================
-@c %**start of header
+@c %**starts of header
 @setfilename gmsh.info
-@set GMSH-VERSION 3.0
+@set GMSH-VERSION 3.1
 @set COPYRIGHT @copyright{} 1997-2017 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @settitle Gmsh @value{GMSH-VERSION}
 @footnotestyle separate
@@ -121,6 +121,7 @@ for Gmsh @value{GMSH-VERSION} (@today{}).
 * Tutorial::                    A step-by-step tutorial
 * Options::                     List of all available options
 * Compiling the source code::   Information on how to comile Gmsh from source
+* Gmsh API::                    Gmsh Application Programming Interface
 * Information for developers::  Information for Gmsh developers
 * Frequently asked questions::  The Gmsh FAQ
 * Version history::             Changelog
@@ -221,17 +222,19 @@ instructions are prescribed either interactively using the graphical
 user interface (GUI) or in text files using Gmsh's own scripting
 language.  Interactive actions generate language bits in the input
 files, and vice versa. This makes it possible to automate all
-treatments, using loops, conditionals and external system calls. A brief
-description of the four modules is given hereafter.
+treatments, using loops, conditionals and external system calls. (A
+programming API is also available, for integrating Gmsh as a library in
+your own C++, C or Python code: @ref{Gmsh API}.) A brief description of
+the four modules is given hereafter.
 
 @menu
-* Geometry::
-* Mesh::
-* Solver::
-* Post-processing::
-* What Gmsh is pretty good at::
-* and what Gmsh is not so good at::
-* Bug reports::
+* Geometry::                    
+* Mesh::                        
+* Solver::                      
+* Post-processing::             
+* What Gmsh is pretty good at::  
+* and what Gmsh is not so good at::  
+* Bug reports::                 
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -316,7 +319,7 @@ computations and process the results directly from within Gmsh's
 post-processing module. The default solver interfaced with Gmsh is GetDP
 (@uref{http://getdp.info}). Examples on how to interface other solvers
 are available in the source distribution (in the
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/solvers,utils/solvers}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/solvers,utils/solvers}
 directory).
 
 @c -------------------------------------------------------------------------
@@ -408,7 +411,7 @@ small but powerful GUI.
 @node and what Gmsh is not so good at, Bug reports, What Gmsh is pretty good at, Overview
 @section @dots{} and what Gmsh is not so good at
 
-As of version 3.0, here are some known weaknesses of Gmsh:
+Here are some known weaknesses of Gmsh:
 
 @itemize @bullet
 @item
@@ -420,9 +423,12 @@ features, and many aspects of the interface could be enhanced
 (especially manipulators).
 @item
 Gmsh's scripting language is quite limited, providing only very crude
-loop controls and user-defined macros, with no local variables. We will
-at some point create a C API so that you can access Gmsh features with
-your language of choice.
+loop controls and user-defined macros, with no local variables. For more
+complex workflows, or for integrating Gmsh as a library directly in
+other software tools, a application programming interface is
+available. This allows to directly access Gmsh features from C++, C or
+Python. The C interface also makes other bulding addintional interfaces
+(to Javascript, Julia, etc.) relatively easy.
 @end itemize
 
 If you have the skills and some free time, feel free to join the
@@ -445,7 +451,7 @@ developers}) to remedy the aforementioned (and all other) shortcomings!
 
 If you think you have found a bug in Gmsh, you can report it by email to
 the public Gmsh mailing list at @email{gmsh@@onelab.info}, or file it
-directly into the @url{http://gitlab.onelab.info/gmsh/gmsh/issues,bug
+directly into the @url{https://gitlab.onelab.info/gmsh/gmsh/issues,bug
 tracking database}. Please send as precise a description of the problem
 as you can, including sample input files that produce the bug. Don't
 forget to mention both the version of Gmsh and the version of your
@@ -453,7 +459,7 @@ operation system (@pxref{Command-line options} to see how to get this
 information).
 
 See @ref{Frequently asked questions}, and the
-@url{http://gitlab.onelab.info/gmsh/gmsh/issues,bug tracking system} to
+@url{https://gitlab.onelab.info/gmsh/gmsh/issues,bug tracking system} to
 see which problems we already know about.
 
 @c =========================================================================
@@ -503,23 +509,16 @@ Gmsh can read/write many standard mesh files, depending on how it was
 built: check the `File->Export' menu for a list of available formats.
 
 Finally, to use Gmsh at the third level (i.e., to link the Gmsh library
-with your own code), you will need to learn the internal Gmsh
-Application Programming Interface (API). No complete documentation of
-this API is available yet; a good starting point is @ref{Source code
-structure}, which gives a short introduction to Gmsh's internal source
-code structure. Then have a look e.g. at the examples in the
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/api_demos/,utils/api_demos}
-directory in the source code.  To build the library see the instructions
-in @ref{Compiling the source code} and in the top-level
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/README.txt,README.txt}
-file in the source distribution.
+with your own code), you will need to learn the Gmsh Application
+Programming Interface (API). This API is available in C++, C and Python:
+see @ref{Gmsh API} for more information.
 
 @c -------------------------------------------------------------------------
 @c Syntactic rules used in the manual
 @c -------------------------------------------------------------------------
 
 @menu
-* Syntactic rules::
+* Syntactic rules::             
 @end menu
 
 @node Syntactic rules,  , How to read this manual?, How to read this manual?
@@ -563,11 +562,11 @@ preceding rule.
 @cindex Running Gmsh
 
 @menu
-* Interactive mode::
-* Non-interactive mode::
-* Command-line options::
-* Mouse actions::
-* Keyboard shortcuts::
+* Interactive mode::            
+* Non-interactive mode::        
+* Command-line options::        
+* Mouse actions::               
+* Keyboard shortcuts::          
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -593,7 +592,7 @@ menu using `Window->Attach/Detach Menu'.)
 
 To open the first tutorial file (@pxref{Tutorial}), select the
 `File->Open' menu, and choose
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t1.geo,t1.geo}. When
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t1.geo,t1.geo}. When
 using a terminal, you can specify the file name directly on the command
 line, i.e.:
 
@@ -631,9 +630,9 @@ the command line, the first one defines the active model and the others
 are `merged' into this model. You can merge such files with the
 `File->Merge' menu. For example, to merge the post-processing views
 contained in the files
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/view1.pos,view1.pos}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/view1.pos,view1.pos}
 and
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/view5.msh,view5.msh}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/view5.msh,view5.msh}
 together with the geometry of the first tutorial @ref{t1.geo}, you can
 type the following command:
 
@@ -686,7 +685,7 @@ to mesh the first tutorial in batch mode, just type:
 
 To mesh the same example, but with the background mesh available in the
 file
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/bgmesh.pos,bgmesh.pos},
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/bgmesh.pos,bgmesh.pos},
 type:
 
 @example
@@ -762,14 +761,14 @@ modules''. Commands peculiar to these modules will be introduced in
 @ref{Post-processing module}, respectively.
 
 @menu
-* Comments::
-* Expressions::
-* Operators::
-* Built-in functions::
-* User-defined macros::
-* Loops and conditionals::
-* General commands::
-* General options::
+* Comments::                    
+* Expressions::                 
+* Operators::                   
+* Built-in functions::          
+* User-defined macros::         
+* Loops and conditionals::      
+* General commands::            
+* General options::             
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -813,9 +812,9 @@ The two constant types used in Gmsh scripts are @var{real} and
 meaning and syntax as in the C or C++ programming languages.
 
 @menu
-* Floating point expressions::
-* Character expressions::
-* Color expressions::
+* Floating point expressions::  
+* Character expressions::       
+* Color expressions::           
 @end menu
 
 @c .........................................................................
@@ -1113,7 +1112,7 @@ Colors expressions are hybrids between fixed-length braced
 @noindent The first case permits to use the X Windows names to refer to colors,
 e.g., @code{Red}, @code{SpringGreen}, @code{LavenderBlush3}, @dots{}
 (see
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Common/Colors.h,Common/Colors.h}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Common/Colors.h,Common/Colors.h}
 in the source code for a complete list). The second case permits to
 define colors by using three expressions to specify their red, green and
 blue components (with values comprised between 0 and 255). The third
@@ -1824,8 +1823,8 @@ more information about how physical entities affect the way meshes are
 saved.
 
 @menu
-* Geometry commands::
-* Geometry options::
+* Geometry commands::           
+* Geometry options::            
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -1846,14 +1845,14 @@ is enclosed between parentheses. If an @var{expression} refers to a
 previously defined entity, it is enclosed between braces.''
 
 @menu
-* Points::
-* Lines::
-* Surfaces::
-* Volumes::
-* Extrusions::
-* Boolean operations::
-* Transformations::
-* Miscellaneous geometry commands::
+* Points::                      
+* Lines::                       
+* Surfaces::                    
+* Volumes::                     
+* Extrusions::                  
+* Boolean operations::          
+* Transformations::             
+* Miscellaneous geometry commands::  
 @end menu
 
 @c .........................................................................
@@ -2113,7 +2112,7 @@ Creates a volume defined through line loops. @code{ThruSections} is only
 available with the OpenCASCADE kernel.
 
 @item Ruled ThruSections ( @var{expression} ) = @{ @var{expression-list} @};
-Same as @code{ThruSections}, but the surfaces creates on the boundary
+Same as @code{ThruSections}, but the surfaces created on the boundary
 are forced to be ruled. @code{Ruled ThruSections} is only available with
 the OpenCASCADE kernel.
 
@@ -2277,7 +2276,7 @@ As explained in @ref{Floating point expressions}, @var{boolean} can be
 used in an expression, in which case it returns the list of
 identification numbers of the highest dimensional entities created by
 the boolean operation.  See
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/boolean/,demos/boolean}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/boolean/,demos/boolean}
 for examples.
 
 An alternative syntax exists for boolean operations, which can be used
@@ -2298,7 +2297,7 @@ identification number @var{expression}.
 @end ftable
 
 Again, see
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/boolean/,demos/boolean}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/boolean/,demos/boolean}
 for examples.
 
 Boolean operations are only available with the OpenCASCADE geometry kernel.
@@ -2485,10 +2484,10 @@ algorithm can be quite poor.
 @c primitives, etc.)
 
 @menu
-* Choosing the right unstructured algorithm::
-* Elementary vs physical entities::
-* Mesh commands::
-* Mesh options::
+* Choosing the right unstructured algorithm::  
+* Elementary vs physical entities::  
+* Mesh commands::               
+* Mesh options::                
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -2652,9 +2651,9 @@ given either in the GUI or on the command line (see @ref{Running Gmsh on
 your system}, and @ref{Command-line options}).
 
 @menu
-* Specifying mesh element sizes::
-* Structured grids::
-* Miscellaneous mesh commands::
+* Specifying mesh element sizes::  
+* Structured grids::            
+* Miscellaneous mesh commands::  
 @end menu
 
 @c .........................................................................
@@ -3102,15 +3101,15 @@ solver module, you need to specify its name (@code{Solver.Name0},
 @ref{Solver options list}).
 
 The client-server API for the solver interface is defined in the
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Common/onelab.h,onelab.h}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Common/onelab.h,onelab.h}
 header. See
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/solvers/c++/solver.cpp,utils/solvers/c++/solver.cpp}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/solvers/c++/solver.cpp,utils/solvers/c++/solver.cpp}
 for a simple example on how to use the ONELAB programming interface. See
 the sources of GetDP (@url{http://getdp.info} for a more comprehensive
 example.
 
 @menu
-* Solver options::
+* Solver options::              
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -3196,15 +3195,15 @@ graphical window, or be automatically positioned in order to avoid overlaps.
 
 Sample post-processing files in human-readable ``parsed'' format and in
 the native MSH file format are available in the
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial,tutorial}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial,tutorial}
 directory of Gmsh's distribution (@file{.pos} and @file{.msh}
 files). The ``parsed'' format is defined in the next section (cf. the
 @code{View} command); the MSH format is defined in @ref{File formats}.
 
 @menu
-* Post-processing commands::
-* Post-processing plugins::
-* Post-processing options::
+* Post-processing commands::    
+* Post-processing plugins::     
+* Post-processing options::     
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -3540,10 +3539,10 @@ underlying mesh, and can therefore be easier to use in some
 cases.)
 
 @menu
-* MSH ASCII file format::
-* MSH binary file format::
-* Node ordering::
-* Legacy formats::
+* MSH ASCII file format::       
+* MSH binary file format::      
+* Node ordering::               
+* Legacy formats::              
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -4214,9 +4213,9 @@ you do not use them in new applications.
 @c .........................................................................
 
 @menu
-* MSH file format version 1.0::
-* POS ASCII file format::
-* POS binary file format::
+* MSH file format version 1.0::  
+* POS ASCII file format::       
+* POS binary file format::      
 @end menu
 
 @node MSH file format version 1.0, POS ASCII file format, Legacy formats, Legacy formats
@@ -4585,7 +4584,7 @@ the same for all other kinds of values.
 The following examples introduce new features gradually, starting with
 @ref{t1.geo}. The files corresponding to these examples are available in
 the
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial,tutorial}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial,tutorial}
 directory of the Gmsh distribution.
 
 To learn how to run Gmsh on your computer, see @ref{Running Gmsh on your
@@ -4593,22 +4592,22 @@ system}. Screencasts that show how to use the GUI are available on
 @uref{http://gmsh.info/screencasts/}.
 
 @menu
-* t1.geo::
-* t2.geo::
-* t3.geo::
-* t4.geo::
-* t5.geo::
-* t6.geo::
-* t7.geo::
-* t8.geo::
-* t9.geo::
-* t10.geo::
-* t11.geo::
-* t12.geo::
-* t13.geo::
-* t14.geo::
-* t15.geo::
-* t16.geo::
+* t1.geo::                      
+* t2.geo::                      
+* t3.geo::                      
+* t4.geo::                      
+* t5.geo::                      
+* t6.geo::                      
+* t7.geo::                      
+* t8.geo::                      
+* t9.geo::                      
+* t10.geo::                     
+* t11.geo::                     
+* t12.geo::                     
+* t13.geo::                     
+* t14.geo::                     
+* t15.geo::                     
+* t16.geo::                     
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -4616,7 +4615,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t1.geo, t2.geo, Tutorial, Tutorial
-@section @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t1.geo,t1.geo}
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t1.geo,t1.geo}
 
 @verbatiminclude ../../tutorial/t1.geo
 
@@ -4625,7 +4624,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t2.geo, t3.geo, t1.geo, Tutorial
-@section @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t2.geo,t2.geo}
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t2.geo,t2.geo}
 
 @verbatiminclude ../../tutorial/t2.geo
 
@@ -4634,7 +4633,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t3.geo, t4.geo, t2.geo, Tutorial
-@section @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t3.geo,t3.geo}
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t3.geo,t3.geo}
 
 @verbatiminclude ../../tutorial/t3.geo
 
@@ -4643,7 +4642,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t4.geo, t5.geo, t3.geo, Tutorial
-@section @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t4.geo,t4.geo}
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t4.geo,t4.geo}
 
 @verbatiminclude ../../tutorial/t4.geo
 
@@ -4652,7 +4651,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t5.geo, t6.geo, t4.geo, Tutorial
-@section @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t5.geo,t5.geo}
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t5.geo,t5.geo}
 
 @verbatiminclude ../../tutorial/t5.geo
 
@@ -4661,7 +4660,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t6.geo, t7.geo, t5.geo, Tutorial
-@section @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t6.geo,t6.geo}
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t6.geo,t6.geo}
 
 @verbatiminclude ../../tutorial/t6.geo
 
@@ -4670,7 +4669,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t7.geo, t8.geo, t6.geo, Tutorial
-@section @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t7.geo,t7.geo}
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t7.geo,t7.geo}
 
 @verbatiminclude ../../tutorial/t7.geo
 
@@ -4679,7 +4678,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t8.geo, t9.geo, t7.geo, Tutorial
-@section @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t8.geo,t8.geo}
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t8.geo,t8.geo}
 
 @verbatiminclude ../../tutorial/t8.geo
 
@@ -4688,7 +4687,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t9.geo, t10.geo, t8.geo, Tutorial
-@section @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t9.geo,t9.geo}
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t9.geo,t9.geo}
 
 @verbatiminclude ../../tutorial/t9.geo
 
@@ -4697,7 +4696,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t10.geo, t11.geo, t9.geo, Tutorial
-@section @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t10.geo,t10.geo}
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t10.geo,t10.geo}
 
 @verbatiminclude ../../tutorial/t10.geo
 
@@ -4706,7 +4705,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t11.geo, t12.geo, t10.geo, Tutorial
-@section @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t11.geo,t11.geo}
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t11.geo,t11.geo}
 
 @verbatiminclude ../../tutorial/t11.geo
 
@@ -4715,7 +4714,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t12.geo, t13.geo, t11.geo, Tutorial
-@section @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t12.geo,t12.geo}
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t12.geo,t12.geo}
 
 @verbatiminclude ../../tutorial/t12.geo
 
@@ -4724,7 +4723,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t13.geo, t14.geo, t12.geo, Tutorial
-@section @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t13.geo,t13.geo}
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t13.geo,t13.geo}
 
 @verbatiminclude ../../tutorial/t13.geo
 
@@ -4733,7 +4732,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t14.geo, t15.geo, t13.geo, Tutorial
-@section @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t14.geo,t14.geo}
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t14.geo,t14.geo}
 
 @verbatiminclude ../../tutorial/t14.geo
 
@@ -4742,7 +4741,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t15.geo, t16.geo, t14.geo, Tutorial
-@section @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t15.geo,t15.geo}
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t15.geo,t15.geo}
 
 @verbatiminclude ../../tutorial/t15.geo
 
@@ -4751,7 +4750,7 @@ system}. Screencasts that show how to use the GUI are available on
 @c -------------------------------------------------------------------------
 
 @node t16.geo,  , t15.geo, Tutorial
-@section @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t16.geo,t16.geo}
+@section @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/tutorial/t16.geo,t16.geo}
 
 @verbatiminclude ../../tutorial/t16.geo
 
@@ -4784,11 +4783,11 @@ by hand.
 @c All the included files are generated automatically with `gmsh -doc'
 
 @menu
-* General options list::
-* Geometry options list::
-* Mesh options list::
-* Solver options list::
-* Post-processing options list::
+* General options list::        
+* Geometry options list::       
+* Mesh options list::           
+* Solver options list::         
+* Post-processing options list::  
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -4848,7 +4847,7 @@ by hand.
 @c Compiling the source code
 @c =========================================================================
 
-@node Compiling the source code, Information for developers, Options, Top
+@node Compiling the source code, Gmsh API, Options, Top
 @appendix Compiling the source code
 
 Stable releases and source snapshots are available from
@@ -4860,7 +4859,7 @@ directly:
 The first time you want to download the latest full source, type:
 
 @example
-git clone @url{http://gitlab.onelab.info/gmsh/gmsh.git}
+git clone @url{https://gitlab.onelab.info/gmsh/gmsh.git}
 @end example
 
 @item
@@ -4875,7 +4874,7 @@ git pull
 
 Once you have the source code, you need to run CMake to configure your
 build (see the
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/README.txt,README.txt}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/README.txt,README.txt}
 file in the top-level source directory for detailed information on how
 to run CMake).
 
@@ -4889,10 +4888,40 @@ enable optional modules or features. Here is the list of CMake options:
 @end ftable
 
 @c =========================================================================
+@c Gmsh API
+@c =========================================================================
+
+@node Gmsh API, Information for developers, Compiling the source code, Top
+@appendix Gmsh API
+
+The Gmsh Application Programming Interface (API) allows you to integrate
+the Gmsh library in your own application.
+
+By design, the Gmsh API is purely functional, and only uses elementary
+types from the target language. Currently supported languages are C++, C
+and Python. The different versions of the API are generated
+automatically from the master API definition file
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gen.py,api/gen.py}:
+
+@itemize @bullet
+@item C++ API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.h,gmsh.h}
+@item C API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmshc.h,gmshc.h}
+@item Python API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.py,gmsh.py}
+@end itemize
+
+The documentation for each function in the API is included in the
+relevant header and module files.
+
+Examples on how to use the API are available in the
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/,demos/api}
+directory. In particular, this directory contains C++ and Python
+versions of several of the @code{.geo} tutorials from @ref{Tutorial}.
+
+@c =========================================================================
 @c Information for developers
 @c =========================================================================
 
-@node Information for developers, Frequently asked questions, Compiling the source code, Top
+@node Information for developers, Frequently asked questions, Gmsh API, Top
 @appendix Information for developers
 
 @cindex Developer, information
@@ -4906,10 +4935,14 @@ set. Gmsh's build system is based on CMake
 source code is provided in @ref{Compiling the source code} (see also
 @ref{Frequently asked questions}).
 
+This section is for developers who would like to contribute directly to
+the Gmsh source code. If you want to integrate Gmsh in your own
+application, you should use the @ref{Gmsh API} instead.
+
 @menu
-* Source code structure::
-* Coding style::
-* Adding a new option::
+* Source code structure::       
+* Coding style::                
+* Adding a new option::         
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -4921,33 +4954,33 @@ source code is provided in @ref{Compiling the source code} (see also
 
 Gmsh's code is structured in several subdirectories, roughly separated
 between the four core modules
-(@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo,Geo},
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Mesh,Mesh},
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Solver,Solver},
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Post,Post}) and associated
-utilities (@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Common,Common},
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Numeric,Numeric}) on one hand, and
-the graphics (@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Graphics,Graphics})
-and interface (@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Fltk,Fltk},
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Parser,Parser}) code on the other.
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo,Geo},
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Mesh,Mesh},
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Solver,Solver},
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Post,Post}) and associated
+utilities (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Common,Common},
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Numeric,Numeric}) on one hand, and
+the graphics (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Graphics,Graphics})
+and interface (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Fltk,Fltk},
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Parser,Parser}) code on the other.
 
 The geometry and mesh modules are based on an object-oriented model
-class (@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GModel.h,Geo/GModel.h}),
+class (@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GModel.h,Geo/GModel.h}),
 built upon abstract geometrical entity classes
-(@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GVertex.h,Geo/GVertex.h},
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GEdge.h,Geo/GEdge.h},
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GFace.h,Geo/GFace.h} and
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GRegion.h,Geo/GRegion.h}). Concrete
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GVertex.h,Geo/GVertex.h},
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GEdge.h,Geo/GEdge.h},
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GFace.h,Geo/GFace.h} and
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/GRegion.h,Geo/GRegion.h}). Concrete
 implementations of the geometrical entity classes are provided for each
 supported CAD kernel
-(e.g. @url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/gmshVertex.h,Geo/gmshVertex.h}
+(e.g. @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/gmshVertex.h,Geo/gmshVertex.h}
 for geometry points in Gmsh's native CAD format, or
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/OCCVertex.h,Geo/OCCVertex.h}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Geo/OCCVertex.h,Geo/OCCVertex.h}
 for geometry points from OpenCASCADE). The post-processing module is
 based on the concept of views
-(@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Post/PView.h,Post/PView.h}) and
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Post/PView.h,Post/PView.h}) and
 abstract data containers (derived from
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Post/PViewData.h,Post/PViewData.h}).
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Post/PViewData.h,Post/PViewData.h}).
 
 @c -------------------------------------------------------------------------
 @c Coding style
@@ -5012,24 +5045,24 @@ To add a new option in Gmsh:
 @enumerate
 @item
 create the option in the @code{CTX} class
-(@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Common/Context.h,Common/Context.h}
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Common/Context.h,Common/Context.h}
 if it's a classical option, or in the @code{PViewOptions} class
-(@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Post/PViewOptions.h,Post/PViewOptions.h})
+(@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Post/PViewOptions.h,Post/PViewOptions.h})
 if it's a post-processing view-dependent option;
 @item
 in
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Common/DefaultOptions.h,Common/DefaultOptions.h},
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Common/DefaultOptions.h,Common/DefaultOptions.h},
 give a name (for the parser to be able to access it), a reference to a
 handling routine (i.e. @code{opt_XXX}) and a default value for this
 option;
 @item
 create the handling routine @code{opt_XXX} in
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Common/Options.cpp,Common/Options.cpp}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Common/Options.cpp,Common/Options.cpp}
 (and add the prototype in
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Common/Options.h,Common/Options.h});
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Common/Options.h,Common/Options.h});
 @item
 optional: create the associated widget in
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/Fltk/optionWindow.cpp,Fltk/optionWindow.h};
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Fltk/optionWindow.cpp,Fltk/optionWindow.h};
 @end enumerate
 
 @c -------------------------------------------------------------------------
@@ -5153,13 +5186,13 @@ optional: create the associated widget in
 @cindex FAQ
 
 @menu
-* The basics::
-* Installation problems::
-* General questions::
-* Geometry module questions::
-* Mesh module questions::
-* Solver module questions::
-* Post-processing module questions::
+* The basics::                  
+* Installation problems::       
+* General questions::           
+* Geometry module questions::   
+* Mesh module questions::       
+* Solver module questions::     
+* Post-processing module questions::  
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -5194,11 +5227,16 @@ extension.
 
 In English people tend to pronounce `Gmsh' as ``gee-mesh''.
 
+@item Can I embed 'Gmsh' in my own software?
+
+Yes, using the Gmsh API (@pxref{Gmsh API}). See @ref{Copying conditions}
+for the licensing constraints.
+
 @item Where can I find more information?
 
 @url{http://gmsh.info} is the primary location to obtain information
 about Gmsh. There you will for example find the complete reference
-manual, a @url{http://gitlab.onelab.info/gmsh/gmsh/issues,bug tracking
+manual, a @url{https://gitlab.onelab.info/gmsh/gmsh/issues,bug tracking
 database} and a searchable archive of the Gmsh mailing list
 (@email{gmsh@@onelab.info}).
 @end enumerate
@@ -5225,7 +5263,7 @@ found at @url{http://www.mesa3d.org}.
 
 You need cmake (@url{http://www.cmake.org}) and a C++ compiler. See
 @ref{Compiling the source code} and the
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/README.txt,README.txt}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/README.txt,README.txt}
 file in the top-level source directory for more information.
 
 @item Where does Gmsh save its configuration files?
@@ -5291,7 +5329,7 @@ post-processing data sets, or to change parameters according to
 @code{Print.Parameter}. To create fully customized animations or to use
 different output formats (AVI, MP4, etc.) you should write a
 script. Have a look at @ref{t8.geo} or
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/anim.script,demos/anim.script}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/anim.script,demos/anim.script}
 for some examples.
 
 @item Can I change values in input fields with the mouse in the GUI?
@@ -5447,7 +5485,7 @@ panel. From the command line, you can also use @code{-order 2}.
 
 Yes, you can import a surface mesh in any one of the supported mesh file
 formats, define a volume, and mesh it. For an example see
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/sphere-discrete.geo,demos/sphere-discrete.geo}.
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/sphere-discrete.geo,demos/sphere-discrete.geo}.
 
 @item How do I define boundary conditions or material properties in Gmsh?
 
@@ -5517,7 +5555,7 @@ solver (@url{http://getdp.info}) to see how this is done.
 Sure. The simplest (but rather crude) approach if to re-launch Gmsh
 everytime you want to visualize something (a simple C program showing
 how to do this is given in
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/misc/callgmsh.c,utils/misc/callgmsh.c}). A
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/utils/misc/callgmsh.c,utils/misc/callgmsh.c}). A
 better approach is to modify your program so that it can communicate
 with Gmsh over a socket (see ``How do I integrate my own solver with
 Gmsh?''  above; you can skip the option file creation). Then select
@@ -5608,7 +5646,7 @@ Evaluate plugin.
 You can save simple MPEG animations directly from the `File->Export'
 menu. For other formats you should write a script. Have a look at
 @ref{t8.geo} or
-@url{http://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/anim.script,demos/anim.script}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/anim.script,demos/anim.script}
 for some examples.
 
 @item Is there a way to visualize only certain components of vector/tensor fields?

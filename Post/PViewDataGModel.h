@@ -267,6 +267,11 @@ class PViewDataGModel : public PViewData {
   bool readMED(const std::string &fileName, int fileIndex);
   bool writeMED(const std::string &fileName);
   void importLists(int N[24], std::vector<double> *V[24]);
+  stepData<double> *getStepData(int step)
+  {
+    if(step >= 0 && step < _steps.size()) return _steps[step];
+    return 0;
+  }
 };
 
 #endif

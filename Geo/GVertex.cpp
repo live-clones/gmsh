@@ -20,10 +20,12 @@ GVertex::~GVertex()
   deleteMesh();
 }
 
-void GVertex::deleteMesh()
+void GVertex::deleteMesh(bool onlyDeleteElements)
 {
-  for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
-  mesh_vertices.clear();
+  if(!onlyDeleteElements){
+    for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
+    mesh_vertices.clear();
+  }
   for(unsigned int i = 0; i < points.size(); i++) delete points[i];
   points.clear();
   deleteVertexArrays();
@@ -87,7 +89,7 @@ unsigned int GVertex::getNumMeshElements()
 
 void GVertex::getNumMeshElements(unsigned *const c) const
 {
-  c[0] += points.size();  
+  c[0] += points.size();
 }
 
 MElement *GVertex::getMeshElement(unsigned int index)

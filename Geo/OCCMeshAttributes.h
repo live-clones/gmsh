@@ -9,6 +9,7 @@
 #include <vector>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "OS.h"
 #include "rtree.h"
 
 #if defined(HAVE_OCC)
@@ -84,6 +85,30 @@ class OCCMeshAttributesRTree{
       delete _all[i];
     _all.clear();
   }
+  void print(const std::string &fileName="")
+  {
+    FILE *fp = stdout;
+    if(fileName.size()){
+      fp = Fopen(fileName.c_str(), "w");
+      if(!fp){
+        Msg::Error("Could not open file '%s'", fileName.c_str());
+        return;
+      }
+    }
+    fprintf(fp, "View(\"rtree mesh sizes\"){\n");
+    for(unsigned int i = 0; i < _all.size(); i++){
+      if(_all[i]->getDim() != 0)
+        continue;
+      if(_all[i]->getMeshSize() == MAX_LC)
+        continue;
+      gp_Pnt pnt = BRep_Tool::Pnt(TopoDS::Vertex(_all[i]->getShape()));
+      fprintf(fp, "SP(%g,%g,%g){%g};\n", pnt.X(), pnt.Y(), pnt.Z(),
+              _all[i]->getMeshSize());
+    }
+    fprintf(fp, "};\n");
+    if(fileName.size())
+      fclose(fp);
+  }
   void insert(OCCMeshAttributes *v)
   {
     _all.push_back(v);
@@ -136,8 +161,8 @@ class OCCMeshAttributesRTree{
     double bmax[3] = {x + _tol, y + _tol, z + _tol};
     std::vector<OCCMeshAttributes*> tmp;
     _rtree[dim]->Search(bmin, bmax, rtree_callback, &tmp);
-    Msg::Debug("OCCRTree found %d matches in tree of size %d",
-               (int)tmp.size(), (int)_all.size());
+    Msg::Debug("OCCRTree found %d matches at (%g,%g,%g) in tree of size %d",
+               (int)tmp.size(), x, y, z, (int)_all.size());
     if(tmp.empty()){ // no match
       return;
     }
@@ -155,7 +180,6 @@ class OCCMeshAttributesRTree{
       }
     }
     // potential matches based on bounding box
-    gp_Pnt pmin1 = box.CornerMin(), pmax1 = box.CornerMax();
     for(unsigned int i = 0; i < tmp.size(); i++){
       if(requireMeshSize && tmp[i]->getMeshSize() == MAX_LC)
         continue;
@@ -163,8 +187,7 @@ class OCCMeshAttributesRTree{
         continue;
       Bnd_Box box2;
       BRepBndLib::Add(tmp[i]->getShape(), box2);
-      gp_Pnt pmin2 = box2.CornerMin(), pmax2 = box2.CornerMax();
-      if(pmin1.Distance(pmin2) < _tol && pmax1.Distance(pmax2) < _tol){
+      if(box.Distance(box2) < _tol){
         attr.push_back(tmp[i]);
       }
     }

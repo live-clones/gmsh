@@ -37,10 +37,12 @@ GEdge::~GEdge()
   deleteMesh();
 }
 
-void GEdge::deleteMesh()
+void GEdge::deleteMesh(bool onlyDeleteElements)
 {
-  for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
-  mesh_vertices.clear();
+  if(!onlyDeleteElements){
+    for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
+    mesh_vertices.clear();
+  }
   for(unsigned int i = 0; i < lines.size(); i++) delete lines[i];
   lines.clear();
   _normals.clear();

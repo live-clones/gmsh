@@ -33,6 +33,7 @@ typedef unsigned long intptr_t;
 #endif
 
 #if defined(HAVE_ONELAB)
+#include "onelabUtils.h"
 #include "gmshLocalNetworkClient.h"
 #endif
 
@@ -53,7 +54,7 @@ typedef unsigned long intptr_t;
 #include "onelabGroup.h"
 #endif
 
-int GmshInitialize(int argc, char **argv)
+int GmshInitialize(int argc, char **argv, bool readConfigFiles)
 {
   Msg::SetNumThreads(1);
 
@@ -76,7 +77,7 @@ int GmshInitialize(int argc, char **argv)
   InitOptions(0);
 
   // Read configuration files and command line options
-  GetOptions(argc, argv);
+  GetOptions(argc, argv, readConfigFiles);
 
   // Make sure we have enough resources (stack)
   CheckResources();
@@ -246,7 +247,7 @@ int GmshFinalize()
   // Delete static _interpolationSchemes of PViewData class
   PViewData::removeAllInterpolationSchemes();
 #endif
-  
+
   // Delete all Gmodels
   while(GModel::list.size()>0) delete GModel::list[GModel::list.size()-1];
   std::vector<GModel*>().swap(GModel::list);
@@ -337,7 +338,7 @@ int GmshBatch()
 
   // launch solver (if requested)
 #if defined(HAVE_ONELAB)
-  solver_batch_cb((void*)(intptr_t)CTX::instance()->launchSolverAtStartup);
+  onelabUtils::runClient();
 #endif
 
   time_t now;
@@ -352,7 +353,7 @@ int GmshBatch()
 int GmshBatch(int argc, char **argv)
 {
   new GModel();
-  GmshInitialize(argc, argv);
+  GmshInitialize(argc, argv, true);
   if(!Msg::GetGmshClient()) CTX::instance()->terminal = 1;
   CTX::instance()->noPopup = 1;
   GmshBatch();
@@ -369,8 +370,11 @@ int GmshFLTK(int argc, char **argv)
   // display GUI immediately for quick launch time
   FlGui::instance()->check();
 
-  // open project file and merge all other input files
-  if(FlGui::getOpenedThroughMacFinder().empty()){
+  if(FlGui::getOpenedThroughMacFinder().size() &&
+     CTX::instance()->files.empty()){
+    OpenProject(FlGui::getOpenedThroughMacFinder());
+  }
+  else{
     OpenProject(GModel::current()->getFileName());
     bool open = false;
     for(unsigned int i = 0; i < CTX::instance()->files.size(); i++){
@@ -389,9 +393,8 @@ int GmshFLTK(int argc, char **argv)
         MergeFile(CTX::instance()->files[i]);
     }
   }
-  else{
-    OpenProject(FlGui::getOpenedThroughMacFinder());
-  }
+
+  FlGui::instance()->setFinishedProcessingCommandLine();
 
   if(CTX::instance()->post.combineTime){
     PView::combine(true, 2, CTX::instance()->post.combineRemoveOrig);

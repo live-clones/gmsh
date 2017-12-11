@@ -2,6 +2,7 @@ SetFactory("OpenCASCADE");
 
 Mesh.CharacteristicLengthMin = 3;
 Mesh.CharacteristicLengthMax = 3;
+Geometry.OCCTargetUnit = "MM";
 
 DefineConstant[
   z = {16, Name "Parameters/z position of box"}

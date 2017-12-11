@@ -1,32 +1,31 @@
-#!/usr/bin/env python
-
-from gmsh import *
+import gmsh
 import sys
 
 if len(sys.argv) < 2:
     print "Usage: " + sys.argv[0] + " file.msh [options]"
     exit(0)
 
-gmshInitialize()
-gmshOptionSetNumber("General.Terminal", 1)
-gmshOpen(sys.argv[1])
+gmsh.initialize()
+gmsh.option.setNumber("General.Terminal", 1)
+gmsh.open(sys.argv[1])
 
 # get all elementary entities in the model
-entities = PairVector()
-gmshModelGetEntities(entities)
+entities = gmsh.model.getEntities()
 
 for e in entities:
     # get the mesh vertices for each elementary entity
-    vertexTags = IntVector()
-    vertexCoords = DoubleVector(); vertexParams = DoubleVector()
-    gmshModelGetMeshVertices(e[0], e[1], vertexTags, vertexCoords, vertexParams)
+    vertexTags, vertexCoords, vertexParams = gmsh.model.mesh.getVertices(e[0], e[1])
     # get the mesh elements for each elementary entity
-    elemTypes = IntVector()
-    elemTags = IntVectorVector(); elemVertexTags = IntVectorVector()
-    gmshModelGetMeshElements(e[0], e[1], elemTypes, elemTags, elemVertexTags)
+    elemTypes, elemTags, elemVertexTags = gmsh.model.mesh.getElements(e[0], e[1])
     # report some statistics
     numElem = sum(len(i) for i in elemTags)
-    print str(vertexTags.size()) + " mesh vertices " + str(numElem),\
+    print str(len(vertexTags)) + " mesh vertices " + str(numElem),\
           "mesh elements on entity " + str(e)
 
-gmshFinalize()
+# all mesh vertex coordinates
+vertexTags, vertexCoords, _ = gmsh.model.mesh.getVertices()
+x = dict(zip(vertexTags, vertexCoords[0::3]))
+y = dict(zip(vertexTags, vertexCoords[1::3]))
+z = dict(zip(vertexTags, vertexCoords[2::3]))
+
+gmsh.finalize()

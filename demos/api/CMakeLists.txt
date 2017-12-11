@@ -28,3 +28,12 @@ foreach(DEMO ${DEMOS})
   add_executable(${DEMONAME} ${DEMO})
   target_link_libraries(${DEMONAME} ${GMSH_LIB} ${LAPACK_LIB} ${BLAS_LIB})
 endforeach(DEMO)
+
+find_library(GMSHC_LIB gmshc)
+
+file(GLOB DEMOS *.c)
+foreach(DEMO ${DEMOS})
+  get_filename_component(DEMONAME ${DEMO} NAME_WE)
+  add_executable(${DEMONAME}c ${DEMO})
+  target_link_libraries(${DEMONAME}c ${GMSHC_LIB} ${GMSH_LIB} ${LAPACK_LIB} ${BLAS_LIB})
+endforeach(DEMO)

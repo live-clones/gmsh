@@ -66,6 +66,7 @@
 #include <Geom_TrimmedCurve.hxx>
 #include <IGESControl_Reader.hxx>
 #include <IGESControl_Writer.hxx>
+#include <Interface_Static.hxx>
 #include <Poly_Triangulation.hxx>
 #include <Poly_Triangle.hxx>
 #include <STEPControl_Reader.hxx>
@@ -2624,6 +2625,13 @@ bool OCC_Internals::remove(const std::vector<std::pair<int, int> > &dimTags,
   return ret;
 }
 
+static void setTargetUnit(std::string unit)
+{
+  if(unit.empty()) return; // use unit specified in the file
+  if(!Interface_Static::SetCVal("xstep.cascade.unit", unit.c_str()))
+    Msg::Error("Could not set OpenCASCADE target unit '%s'", unit.c_str());
+}
+
 bool OCC_Internals::importShapes(const std::string &fileName, bool highestDimOnly,
                                  std::vector<std::pair<int, int> > &outDimTags,
                                  const std::string &format)
@@ -2652,6 +2660,7 @@ bool OCC_Internals::importShapes(const std::string &fileName, bool highestDimOnl
       }
       dummy_app->NewDocument("STEP-XCAF", step_doc);
       STEPCAFControl_Reader reader;
+      setTargetUnit(CTX::instance()->geom.occTargetUnit);
       if(reader.ReadFile(fileName.c_str()) != IFSelect_RetDone){
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return false;
@@ -2691,6 +2700,7 @@ bool OCC_Internals::importShapes(const std::string &fileName, bool highestDimOnl
       result = step_shape_contents->GetShape(step_shapes.Value(1));
 #else
       STEPControl_Reader reader;
+      setTargetUnit(CTX::instance()->geom.occTargetUnit);
       if(reader.ReadFile(fileName.c_str()) != IFSelect_RetDone){
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return false;
@@ -2704,6 +2714,7 @@ bool OCC_Internals::importShapes(const std::string &fileName, bool highestDimOnl
             split[2] == ".iges" || split[2] == ".igs" ||
             split[2] == ".IGES" || split[2] == ".IGS"){
       IGESControl_Reader reader;
+      setTargetUnit(CTX::instance()->geom.occTargetUnit);
       if(reader.ReadFile(fileName.c_str()) != IFSelect_RetDone){
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return false;
@@ -2775,6 +2786,7 @@ bool OCC_Internals::exportShapes(const std::string &fileName,
             split[2] == ".step" || split[2] == ".stp" ||
             split[2] == ".STEP" || split[2] == ".STP"){
       STEPControl_Writer writer;
+      setTargetUnit(CTX::instance()->geom.occTargetUnit);
       if(writer.Transfer(c, STEPControl_AsIs) == IFSelect_RetDone){
         if(writer.Write(fileName.c_str()) != IFSelect_RetDone){
           Msg::Error("Could not create file '%s'", fileName.c_str());
@@ -2913,6 +2925,9 @@ void OCC_Internals::synchronize(GModel *model)
     }
     _copyExtrudedMeshAttributes(region, occr);
   }
+
+  // recompute global boundind box in CTX
+  SetBoundingBox();
 
   Msg::Debug("GModel imported:");
   Msg::Debug("%d vertices", model->getNumVertices());
@@ -3728,7 +3743,6 @@ int GModel::importOCCShape(const void *shape)
 #endif
   _occ_internals->synchronize(this);
   snapVertices();
-  SetBoundingBox();
   return 1;
 }
 

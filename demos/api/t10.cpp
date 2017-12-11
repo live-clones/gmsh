@@ -3,66 +3,70 @@
 #include <gmsh.h>
 #include <sstream>
 
+namespace model = gmsh::model;
+namespace factory = gmsh::model::geo;
+
 int main(int argc, char **argv)
 {
-  gmshInitialize(argc, argv);
-  gmshOptionSetNumber("General.Terminal", 1);
+  gmsh::initialize(argc, argv);
+  gmsh::option::setNumber("General.Terminal", 1);
 
-  gmshModelCreate("t1");
+  model::add("t1");
 
   double lc = .15;
-  gmshModelGeoAddPoint(0.0,0.0,0,lc, 1);
-  gmshModelGeoAddPoint(1,0.0,0,lc, 2);
-  gmshModelGeoAddPoint(1,1,0,lc, 3);
-  gmshModelGeoAddPoint(0,1,0,lc, 4);
-  gmshModelGeoAddPoint(0.2,.5,0,lc, 5);
+  factory::addPoint(0.0,0.0,0,lc, 1);
+  factory::addPoint(1,0.0,0,lc, 2);
+  factory::addPoint(1,1,0,lc, 3);
+  factory::addPoint(0,1,0,lc, 4);
+  factory::addPoint(0.2,.5,0,lc, 5);
 
-  gmshModelGeoAddLine(1,2, 1);
-  gmshModelGeoAddLine(2,3, 2);
-  gmshModelGeoAddLine(3,4, 3);
-  gmshModelGeoAddLine(4,1, 4);
+  factory::addLine(1,2, 1);
+  factory::addLine(2,3, 2);
+  factory::addLine(3,4, 3);
+  factory::addLine(4,1, 4);
 
-  gmshModelGeoAddLineLoop({1,2,3,4}, 5);
-  gmshModelGeoAddPlaneSurface({5}, 6);
+  factory::addLineLoop({1,2,3,4}, 5);
+  factory::addPlaneSurface({5}, 6);
 
-  gmshModelFieldCreate("Attractor", 1);
-  gmshModelFieldSetNumbers(1, "NodesList", {5});
-  gmshModelFieldSetNumber(1, "NNodesByEdge", 100);
-  gmshModelFieldSetNumbers(1, "EdgesList", {2});
+  model::mesh::field::add("Attractor", 1);
+  model::mesh::field::setNumbers(1, "NodesList", {5});
+  model::mesh::field::setNumber(1, "NNodesByEdge", 100);
+  model::mesh::field::setNumbers(1, "EdgesList", {2});
 
-  gmshModelFieldCreate("Threshold", 2);
-  gmshModelFieldSetNumber(2, "IField", 1);
-  gmshModelFieldSetNumber(2, "LcMin", lc / 30);
-  gmshModelFieldSetNumber(2, "LcMax", lc);
-  gmshModelFieldSetNumber(2, "DistMin", 0.15);
-  gmshModelFieldSetNumber(2, "DistMax", 0.5);
+  model::mesh::field::add("Threshold", 2);
+  model::mesh::field::setNumber(2, "IField", 1);
+  model::mesh::field::setNumber(2, "LcMin", lc / 30);
+  model::mesh::field::setNumber(2, "LcMax", lc);
+  model::mesh::field::setNumber(2, "DistMin", 0.15);
+  model::mesh::field::setNumber(2, "DistMax", 0.5);
 
-  gmshModelFieldCreate("MathEval", 3);
-  gmshModelFieldSetString(3, "F", "Cos(4*3.14*x) * Sin(4*3.14*y) / 10 + 0.101");
+  model::mesh::field::add("MathEval", 3);
+  model::mesh::field::setString(3, "F", "Cos(4*3.14*x) * Sin(4*3.14*y) / 10 + 0.101");
 
-  gmshModelFieldCreate("Attractor", 4);
-  gmshModelFieldSetNumbers(4, "NodesList", {1});
+  model::mesh::field::add("Attractor", 4);
+  model::mesh::field::setNumbers(4, "NodesList", {1});
 
-  gmshModelFieldCreate("MathEval", 5);
+  model::mesh::field::add("MathEval", 5);
   std::stringstream stream;
   stream << "F4^3 + " << lc / 100;
-  gmshModelFieldSetString(5, "F", stream.str());
+  model::mesh::field::setString(5, "F", stream.str());
 
-  gmshModelFieldCreate("Box", 6);
-  gmshModelFieldSetNumber(6, "VIn", lc / 15);
-  gmshModelFieldSetNumber(6, "VOut", lc);
-  gmshModelFieldSetNumber(6, "XMin", 0.3);
-  gmshModelFieldSetNumber(6, "XMax", 0.6);
-  gmshModelFieldSetNumber(6, "YMin", 0.3);
-  gmshModelFieldSetNumber(6, "YMax", 0.6);
+  model::mesh::field::add("Box", 6);
+  model::mesh::field::setNumber(6, "VIn", lc / 15);
+  model::mesh::field::setNumber(6, "VOut", lc);
+  model::mesh::field::setNumber(6, "XMin", 0.3);
+  model::mesh::field::setNumber(6, "XMax", 0.6);
+  model::mesh::field::setNumber(6, "YMin", 0.3);
+  model::mesh::field::setNumber(6, "YMax", 0.6);
 
-  gmshModelFieldCreate("Min", 7);
-  gmshModelFieldSetNumbers(7, "FieldsList", {2, 3, 5, 6});
+  model::mesh::field::add("Min", 7);
+  model::mesh::field::setNumbers(7, "FieldsList", {2, 3, 5, 6});
 
-  gmshModelFieldSetAsBackground(7);
+  model::mesh::field::setAsBackgroundMesh(7);
 
-  gmshModelGeoSynchronize();
-  gmshModelMesh(2);
-  gmshExport("t10.msh");
+  factory::synchronize();
+  model::mesh::generate(2);
+  gmsh::write("t10.msh");
+  gmsh::finalize();
   return 0;
 }

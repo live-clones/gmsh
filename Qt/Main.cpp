@@ -17,7 +17,7 @@
 int main(int argc, char *argv[])
 {
   new GModel();
-  GmshInitialize(argc, argv);
+  GmshInitialize(argc, argv, true);
 
   OpenProject(GModel::current()->getFileName());
   for(unsigned int i = 1; i < CTX::instance()->files.size(); i++){
