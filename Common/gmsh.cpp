@@ -475,30 +475,9 @@ void gmsh::model::mesh::getVertices(std::vector<int> &vertexTags,
   }
 }
 
-template<class T>
-static void _addElementInfo(int type, const std::vector<T*> &ele,
-                            std::vector<std::vector<int> > &elementTags,
-                            std::vector<std::vector<int> > &vertexTags)
+static void _getElementTypeMap(int dim, int tag,
+                               std::map<int, std::vector<GEntity*> > &typeMap)
 {
-  if(ele.empty() || ele.front()->getTypeForMSH() != type) return;
-  for(unsigned int i = 0; i < ele.size(); i++){
-    elementTags.back().push_back(ele[i]->getNum());
-    for(unsigned int j = 0; j < ele[i]->getNumVertices(); j++){
-      vertexTags.back().push_back(ele[i]->getVertex(j)->getNum());
-    }
-  }
-
-}
-
-void gmsh::model::mesh::getElements(std::vector<int> &types,
-                                    std::vector<std::vector<int> > &elementTags,
-                                    std::vector<std::vector<int> > &vertexTags,
-                                    const int dim, const int tag)
-{
-  if(!_isInitialized()){ throw -1; }
-  types.clear();
-  elementTags.clear();
-  vertexTags.clear();
   std::vector<GEntity*> entities;
   if(dim >= 0 && tag >= 0){
     GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
@@ -511,7 +490,6 @@ void gmsh::model::mesh::getElements(std::vector<int> &types,
   else{
     GModel::current()->getEntities(entities, dim);
   }
-  std::map<int, std::vector<GEntity*> > typeMap;
   for(unsigned int i = 0; i < entities.size(); i++){
     GEntity *ge = entities[i];
     switch(ge->dim()){
@@ -545,34 +523,90 @@ void gmsh::model::mesh::getElements(std::vector<int> &types,
       break; }
     }
   }
-  for(std::map<int, std::vector<GEntity*> >::iterator it = typeMap.begin();
+}
+
+void gmsh::model::mesh::getElements(std::vector<int> &elementTypes,
+                                    std::vector<std::vector<int> > &elementTags,
+                                    std::vector<std::vector<int> > &vertexTags,
+                                    const int dim, const int tag)
+{
+  if(!_isInitialized()){ throw -1; }
+  elementTypes.clear();
+  elementTags.clear();
+  vertexTags.clear();
+  std::map<int, std::vector<GEntity*> > typeMap;
+  _getElementTypeMap(dim, tag, typeMap);
+  for(std::map<int, std::vector<GEntity*> >::const_iterator it = typeMap.begin();
       it != typeMap.end(); it++){
-    types.push_back(it->first);
+    elementTypes.push_back(it->first);
     elementTags.push_back(std::vector<int>());
     vertexTags.push_back(std::vector<int>());
     for(unsigned int i = 0; i < it->second.size(); i++){
       GEntity *ge = it->second[i];
-      switch(ge->dim()){
-      case 0: {
-        GVertex *v = static_cast<GVertex*>(ge);
-        _addElementInfo(it->first, v->points, elementTags, vertexTags);
-        break; }
-      case 1: {
-        GEdge *e = static_cast<GEdge*>(ge);
-        _addElementInfo(it->first, e->lines, elementTags, vertexTags);
-        break; }
-      case 2: {
-        GFace *f = static_cast<GFace*>(ge);
-        _addElementInfo(it->first, f->triangles, elementTags, vertexTags);
-        _addElementInfo(it->first, f->quadrangles, elementTags, vertexTags);
-        break; }
-      case 3: {
-        GRegion *r = static_cast<GRegion*>(ge);
-        _addElementInfo(it->first, r->tetrahedra, elementTags, vertexTags);
-        _addElementInfo(it->first, r->hexahedra, elementTags, vertexTags);
-        _addElementInfo(it->first, r->prisms, elementTags, vertexTags);
-        _addElementInfo(it->first, r->pyramids, elementTags, vertexTags);
-        break; }
+      for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
+        MElement *e = ge->getMeshElement(j);
+        if(e->getTypeForMSH() == it->first){
+          elementTags.back().push_back(e->getNum());
+          for(int k = 0; k < e->getNumVertices(); k++){
+            vertexTags.back().push_back(e->getVertex(k)->getNum());
+          }
+        }
+      }
+    }
+  }
+}
+
+void gmsh::model::mesh::getIntegrationData(const std::string &type, const int order,
+                                           std::vector<std::vector<double> > &intPoints,
+                                           std::vector<std::vector<double> > &intWeights,
+                                           std::vector<std::vector<double> > &intData,
+                                           const int dim, const int tag)
+{
+  if(!_isInitialized()){ throw -1; }
+  intPoints.clear();
+  intWeights.clear();
+  intData.clear();
+  std::map<int, std::vector<GEntity*> > typeMap;
+  _getElementTypeMap(dim, tag, typeMap);
+  for(std::map<int, std::vector<GEntity*> >::const_iterator it = typeMap.begin();
+      it != typeMap.end(); it++){
+    int mshType = ElementType::ParentTypeFromTag(it->first);
+    fullMatrix<double> pts;
+    fullVector<double> weights;
+    gaussIntegration::get(mshType, order, pts, weights);
+    if(pts.size1() != weights.size() || pts.size2() != 3){
+      Msg::Error("Wrong integration point format");
+      throw 3;
+    }
+    intPoints.push_back(std::vector<double>());
+    intWeights.push_back(std::vector<double>());
+    intData.push_back(std::vector<double>());
+    for(int i = 0; i < pts.size1(); i++){
+      intPoints.back().push_back(pts(i, 0));
+      intPoints.back().push_back(pts(i, 1));
+      intPoints.back().push_back(pts(i, 2));
+    }
+    for(int i = 0; i < weights.size(); i++)
+      intWeights.back().push_back(weights(i));
+    for(unsigned int i = 0; i < it->second.size(); i++){
+      GEntity *ge = it->second[i];
+      for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
+        MElement *e = ge->getMeshElement(j);
+        if(e->getTypeForMSH() == it->first){
+          for(unsigned int k = 0; k < weights.size(); k++){
+            SPoint3 p;
+            e->pnt(pts(k, 0), pts(k, 1), pts(k, 2), p);
+            intData.back().push_back(p.x());
+            intData.back().push_back(p.y());
+            intData.back().push_back(p.z());
+            double jac[3][3];
+            double det = e->getJacobian(pts(k, 0), pts(k, 1), pts(k, 2), jac);
+            intData.back().push_back(det);
+            for(int m = 0; m < 3; m++)
+              for(int n = 0; n < 3; n++)
+                intData.back().push_back(jac[m][n]);
+          }
+        }
       }
     }
   }

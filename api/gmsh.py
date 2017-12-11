@@ -75,7 +75,7 @@ def _ovectordouble(ptr,size):
     return v
 
 def _ovectorstring(ptr,size):
-    v = list(ptr[i].decode("utf-8") for i in range(size))
+    v = list(_ostring(cast(ptr[i],c_char_p) for i in range(size)))
     lib.gmshFree(ptr)
     return v
 
@@ -344,7 +344,7 @@ class model:
 
         return names
         """
-        api_names_, api_names_n_ = POINTER(c_char_p)(), c_size_t()
+        api_names_, api_names_n_ = POINTER(POINTER(c_char))(), c_size_t()
         ierr = c_int()
         lib.gmshModelList(
             byref(api_names_), byref(api_names_n_),
@@ -726,25 +726,25 @@ class model:
         def getElements(dim=-1,tag=-1):
             """
             Gets the mesh elements of the entity of dimension `dim' and `tag' tag. If
-            `tag' < 0, gets the vertices for all entities of dimension `dim'. If `dim'
-            and `tag' are negative, gets all the elements in the mesh. `types' contains
-            the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh
-            reference manual). `elementTags' is a vector of length `types.size()'; each
-            entry is a vector containing the tags (unique, strictly positive
-            identifiers) of the elements of the corresponding type. `vertexTags' is
-            also a vector of length `types.size()'; each entry is a vector of length
-            equal to the number of elements of the given type times the number of
-            vertices for this type of element, that contains the vertex tags of all the
-            elements of the given type, concatenated.
+            `tag' < 0, gets the elements for all entities of dimension `dim'. If `dim'
+            and `tag' are negative, gets all the elements in the mesh. `elementTypes'
+            contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
+            the Gmsh reference manual). `elementTags' is a vector of length
+            `elementTypes.size()'; each entry is a vector containing the tags (unique,
+            strictly positive identifiers) of the elements of the corresponding type.
+            `vertexTags' is also a vector of length `elementTypes.size()'; each entry
+            is a vector of length equal to the number of elements of the given type
+            times the number of vertices for this type of element, that contains the
+            vertex tags of all the elements of the given type, concatenated.
 
-            return types, elementTags, vertexTags
+            return elementTypes, elementTags, vertexTags
             """
-            api_types_, api_types_n_ = POINTER(c_int)(), c_size_t()
+            api_elementTypes_, api_elementTypes_n_ = POINTER(c_int)(), c_size_t()
             api_elementTags_, api_elementTags_n_, api_elementTags_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
             api_vertexTags_, api_vertexTags_n_, api_vertexTags_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetElements(
-                byref(api_types_),byref(api_types_n_),
+                byref(api_elementTypes_),byref(api_elementTypes_n_),
                 byref(api_elementTags_),byref(api_elementTags_n_),byref(api_elementTags_nn_),
                 byref(api_vertexTags_),byref(api_vertexTags_n_),byref(api_vertexTags_nn_),
                 c_int(dim),
@@ -755,9 +755,48 @@ class model:
                     "gmshModelMeshGetElements returned non-zero error code : ",
                     ierr.value)
             return (
-                _ovectorint(api_types_,api_types_n_.value),
+                _ovectorint(api_elementTypes_,api_elementTypes_n_.value),
                 _ovectorvectorint(api_elementTags_,api_elementTags_n_,api_elementTags_nn_),
                 _ovectorvectorint(api_vertexTags_,api_vertexTags_n_,api_vertexTags_nn_))
+
+        @staticmethod
+        def getIntegrationData(type,order,dim=-1,tag=-1):
+            """
+            Gets the integration data for mesh elements of the entity of dimension
+            `dim' and `tag' tag. The data is returned by element, in the same order as
+            the date returned by `getElements'. `integrationPoints' contains for each
+            element type a vector (of length 3 times the number of integration points)
+            containing the parametric coordinates (u, v, w) of the integration points.
+            `integrationWeigths' contains for each element type a vector containing the
+            weigths of the corrresponding integration points. `integrationData'
+            contains for each element type a vector (of size 13 times the number of
+            integration points) containing the (x, y, z) coordinates of the integration
+            point, the determinant of the Jacobian and the 9 entries (by row) of the
+            3x3 Jacobian matrix.
+
+            return integrationPoints, integrationWeigths, integrationData
+            """
+            api_integrationPoints_, api_integrationPoints_n_, api_integrationPoints_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
+            api_integrationWeigths_, api_integrationWeigths_n_, api_integrationWeigths_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
+            api_integrationData_, api_integrationData_n_, api_integrationData_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetIntegrationData(
+                c_char_p(type.encode()),
+                c_int(order),
+                byref(api_integrationPoints_),byref(api_integrationPoints_n_),byref(api_integrationPoints_nn_),
+                byref(api_integrationWeigths_),byref(api_integrationWeigths_n_),byref(api_integrationWeigths_nn_),
+                byref(api_integrationData_),byref(api_integrationData_n_),byref(api_integrationData_nn_),
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshGetIntegrationData returned non-zero error code : ",
+                    ierr.value)
+            return (
+                _ovectorvectordouble(api_integrationPoints_,api_integrationPoints_n_,api_integrationPoints_nn_),
+                _ovectorvectordouble(api_integrationWeigths_,api_integrationWeigths_n_,api_integrationWeigths_nn_),
+                _ovectorvectordouble(api_integrationData_,api_integrationData_n_,api_integrationData_nn_))
 
         @staticmethod
         def setVertices(dim,tag,vertexTags,coord,parametricCoord=[]):
@@ -3044,7 +3083,7 @@ class view:
 
         return dataType, numElements, data
         """
-        api_dataType_, api_dataType_n_ = POINTER(c_char_p)(), c_size_t()
+        api_dataType_, api_dataType_n_ = POINTER(POINTER(c_char))(), c_size_t()
         api_numElements_, api_numElements_n_ = POINTER(c_int)(), c_size_t()
         api_data_, api_data_n_, api_data_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
         ierr = c_int()

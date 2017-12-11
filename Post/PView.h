@@ -56,7 +56,7 @@ class PView{
   // construct a new mesh-based view from a bunch of data
   PView(const std::string &name, const std::string &type, GModel *model,
         std::map<int, std::vector<double> > &data, double time=0.,
-        int numComp = -1);
+        int numComp = -1, int tag = -1);
   // add a new time step to a given mesh-based view
   void addStep(GModel *model, const std::map<int, std::vector<double> > &data,
                double time=0.,int numComp = -1);

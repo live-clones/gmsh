@@ -151,6 +151,7 @@ endif(NOT GMSH_HOST)
 if(NOT PACKAGER)
   set(PACKAGER "unknown")
 endif(NOT PACKAGER)
+string(REPLACE "\\" " " PACKAGER ${PACKAGER})
 set(GMSH_PACKAGER "${PACKAGER}")
 
 if(APPLE)

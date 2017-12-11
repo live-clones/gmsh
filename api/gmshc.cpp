@@ -317,16 +317,29 @@ void gmshModelMeshGetVertices(int ** vertexTags, size_t * vertexTags_n,double **
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshGetElements(int ** types, size_t * types_n,int *** elementTags, size_t ** elementTags_n, size_t *elementTags_nn,int *** vertexTags, size_t ** vertexTags_n, size_t *vertexTags_nn,const int dim,const int tag,int * ierr){
+void gmshModelMeshGetElements(int ** elementTypes, size_t * elementTypes_n,int *** elementTags, size_t ** elementTags_n, size_t *elementTags_nn,int *** vertexTags, size_t ** vertexTags_n, size_t *vertexTags_nn,const int dim,const int tag,int * ierr){
   if(ierr) *ierr = 0;
   try {
-  std::vector<int> api_types_;
+  std::vector<int> api_elementTypes_;
   std::vector<std::vector<int> > api_elementTags_;
   std::vector<std::vector<int> > api_vertexTags_;
-  gmsh::model::mesh::getElements(api_types_,api_elementTags_,api_vertexTags_,dim,tag);
-  vector2ptr(api_types_,types,types_n);
+  gmsh::model::mesh::getElements(api_elementTypes_,api_elementTags_,api_vertexTags_,dim,tag);
+  vector2ptr(api_elementTypes_,elementTypes,elementTypes_n);
   vectorvector2ptrptr(api_elementTags_,elementTags,elementTags_n,elementTags_nn);
   vectorvector2ptrptr(api_vertexTags_,vertexTags,vertexTags_n,vertexTags_nn);
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
+void gmshModelMeshGetIntegrationData(const char * type,const int order,double *** integrationPoints, size_t ** integrationPoints_n, size_t *integrationPoints_nn,double *** integrationWeigths, size_t ** integrationWeigths_n, size_t *integrationWeigths_nn,double *** integrationData, size_t ** integrationData_n, size_t *integrationData_nn,const int dim,const int tag,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  std::vector<std::vector<double> > api_integrationPoints_;
+  std::vector<std::vector<double> > api_integrationWeigths_;
+  std::vector<std::vector<double> > api_integrationData_;
+  gmsh::model::mesh::getIntegrationData(type,order,api_integrationPoints_,api_integrationWeigths_,api_integrationData_,dim,tag);
+  vectorvector2ptrptr(api_integrationPoints_,integrationPoints,integrationPoints_n,integrationPoints_nn);
+  vectorvector2ptrptr(api_integrationWeigths_,integrationWeigths,integrationWeigths_n,integrationWeigths_nn);
+  vectorvector2ptrptr(api_integrationData_,integrationData,integrationData_n,integrationData_nn);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 

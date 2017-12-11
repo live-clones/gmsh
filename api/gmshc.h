@@ -231,22 +231,42 @@ GMSH_API void gmshModelMeshGetVertices(int ** vertexTags, size_t * vertexTags_n,
                                        int * ierr);
 
 /* Gets the mesh elements of the entity of dimension `dim' and `tag' tag. If
- * `tag' < 0, gets the vertices for all entities of dimension `dim'. If `dim'
- * and `tag' are negative, gets all the elements in the mesh. `types' contains
- * the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh
- * reference manual). `elementTags' is a vector of length `types.size()'; each
- * entry is a vector containing the tags (unique, strictly positive
- * identifiers) of the elements of the corresponding type. `vertexTags' is
- * also a vector of length `types.size()'; each entry is a vector of length
- * equal to the number of elements of the given type times the number of
- * vertices for this type of element, that contains the vertex tags of all the
- * elements of the given type, concatenated. */
-GMSH_API void gmshModelMeshGetElements(int ** types, size_t * types_n,
+ * `tag' < 0, gets the elements for all entities of dimension `dim'. If `dim'
+ * and `tag' are negative, gets all the elements in the mesh. `elementTypes'
+ * contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
+ * the Gmsh reference manual). `elementTags' is a vector of length
+ * `elementTypes.size()'; each entry is a vector containing the tags (unique,
+ * strictly positive identifiers) of the elements of the corresponding type.
+ * `vertexTags' is also a vector of length `elementTypes.size()'; each entry
+ * is a vector of length equal to the number of elements of the given type
+ * times the number of vertices for this type of element, that contains the
+ * vertex tags of all the elements of the given type, concatenated. */
+GMSH_API void gmshModelMeshGetElements(int ** elementTypes, size_t * elementTypes_n,
                                        int *** elementTags, size_t ** elementTags_n, size_t *elementTags_nn,
                                        int *** vertexTags, size_t ** vertexTags_n, size_t *vertexTags_nn,
                                        const int dim,
                                        const int tag,
                                        int * ierr);
+
+/* Gets the integration data for mesh elements of the entity of dimension
+ * `dim' and `tag' tag. The data is returned by element, in the same order as
+ * the date returned by `getElements'. `integrationPoints' contains for each
+ * element type a vector (of length 3 times the number of integration points)
+ * containing the parametric coordinates (u, v, w) of the integration points.
+ * `integrationWeigths' contains for each element type a vector containing the
+ * weigths of the corrresponding integration points. `integrationData'
+ * contains for each element type a vector (of size 13 times the number of
+ * integration points) containing the (x, y, z) coordinates of the integration
+ * point, the determinant of the Jacobian and the 9 entries (by row) of the
+ * 3x3 Jacobian matrix. */
+GMSH_API void gmshModelMeshGetIntegrationData(const char * type,
+                                              const int order,
+                                              double *** integrationPoints, size_t ** integrationPoints_n, size_t *integrationPoints_nn,
+                                              double *** integrationWeigths, size_t ** integrationWeigths_n, size_t *integrationWeigths_nn,
+                                              double *** integrationData, size_t ** integrationData_n, size_t *integrationData_nn,
+                                              const int dim,
+                                              const int tag,
+                                              int * ierr);
 
 /* Sets the mesh vertices in the geometrical entity of dimension `dim' and tag
  * `tag'. `vertextags' contains the vertex tags (their unique, strictly

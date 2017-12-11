@@ -269,7 +269,7 @@ class PViewDataGModel : public PViewData {
   void importLists(int N[24], std::vector<double> *V[24]);
   stepData<double> *getStepData(int step)
   {
-    if(step >= 0 && step < _steps.size()) return _steps[step];
+    if(step >= 0 && step < (int)_steps.size()) return _steps[step];
     return 0;
   }
 };

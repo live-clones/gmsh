@@ -380,7 +380,7 @@ int GModel::_readMSH2(const std::string &name)
               fclose(fp);
               return 0;
             }
-            if(numVertices != MElement::getInfoMSH(type)){ fclose(fp); return 0; }
+            if(numVertices != (int)MElement::getInfoMSH(type)){ fclose(fp); return 0; }
           }
           else{
             int numTags;

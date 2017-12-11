@@ -10,16 +10,12 @@ int main(int argc, char **argv)
   gmsh::model::occ::synchronize();
   gmsh::model::mesh::setTransfiniteSurface(100);
   gmsh::model::mesh::generate(2);
-  gmsh::plugin::setNumber("QuadratureData", "Order", 5);
-  gmsh::plugin::setNumber("QuadratureData", "Dimension", 2);
-  gmsh::plugin::setNumber("QuadratureData", "ViewTag", 90);
-  gmsh::plugin::run("QuadratureData");
+  gmsh::plugin::run("NewView");
   std::cout << "before get" << std::endl;
   std::string type; std::vector<int> tags;
   std::vector<std::vector<double> > data; double time; int numComp;
-  gmsh::view::getModelData(90, 0, type, tags, data, time, numComp);
+  gmsh::view::getModelData(0, 0, type, tags, data, time, numComp);
   std::cout << "after get" << std::endl;
-  gmsh::view::remove(90);
   gmsh::finalize();
   return 0;
 }
