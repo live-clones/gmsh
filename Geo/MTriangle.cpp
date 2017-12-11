@@ -119,6 +119,21 @@ double MTriangle::gammaShapeMeasure()
 
 void MTriangle::xyz2uvw(double xyz[3], double uvw[3]) const
 {
+  /*
+  double M[2][2], R[2];
+  const SPoint2 p0 (getVertex(0)->x(),getVertex(0)->y());
+  const SPoint2 p1 (getVertex(1)->x(),getVertex(1)->y());
+  const SPoint2 p2 (getVertex(2)->x(),getVertex(2)->y());
+  M[0][0] = p1.x() - p0.x();
+  M[0][1] = p2.x() - p0.x();
+  M[1][0] = p1.y() - p0.y();
+  M[1][1] = p2.y() - p0.y();
+  R[0] = (xyz[0] - p0.x());
+  R[1] = (xyz[1] - p0.y());
+  sys2x2(M, R, uvw);
+  return;*/
+
+
   const double O[3] = {_v[0]->x(), _v[0]->y(), _v[0]->z()};
   const double d[3] = {xyz[0] - O[0], xyz[1] - O[1], xyz[2] - O[2]};
   const double d1[3] = {_v[1]->x() - O[0], _v[1]->y() - O[1], _v[1]->z() - O[2]};

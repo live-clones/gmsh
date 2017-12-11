@@ -1359,8 +1359,6 @@ static void meshCompound(GFace* gf, bool verbose)
                          c->triangles.end());
     df->mesh_vertices.insert(df->mesh_vertices.end(), c->mesh_vertices.begin(),
                              c->mesh_vertices.end());
-    for (unsigned int j = 0; j < c->triangles.size(); j++)
-      df->_CAD.push_back(c);
     c->triangles.clear();
     c->mesh_vertices.clear();
   }

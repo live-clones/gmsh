@@ -123,4 +123,7 @@ struct Less_Edge : public std::binary_function<MEdge, MEdge, bool> {
   }
 };
 
+// assume a set of MEdge, give consecutive list of vertices
+bool SortEdgeConsecutive (const std::vector<MEdge> &,
+			  std::vector<std::vector<MVertex*> >&vs);
 #endif
