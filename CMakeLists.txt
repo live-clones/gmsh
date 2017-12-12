@@ -1508,6 +1508,11 @@ if(HAVE_FLTK)
   else(ENABLE_BUILD_DYNAMIC)
     add_executable(gmsh WIN32 Fltk/Main.cpp ${GMSH_SRC})
   endif(ENABLE_BUILD_DYNAMIC)
+  # we could add this to create a minimal app bundle even without install
+  # if(APPLE AND NOT ENABLE_OS_SPECIFIC_INSTALL)
+  #  set_target_properties(gmsh PROPERTIES MACOSX_BUNDLE ON
+  #    MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/gmsh_dev.plist)
+  # endif(APPLE AND NOT ENABLE_OS_SPECIFIC_INSTALL)
 elseif(HAVE_QT)
   qt4_wrap_cpp(GMSH_MOC_SRC ${GMSH_MOC_HDR})
   add_executable(gmsh WIN32 Qt/Main.cpp ${GMSH_SRC} ${GMSH_MOC_SRC})
