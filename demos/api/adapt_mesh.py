@@ -30,7 +30,7 @@ class myMesh:
     def __init__(self):
         vtags, vxyz, _ = gmsh.model.mesh.getVertices()
         etypes, etags, evtags = gmsh.model.mesh.getElements()
-        quvw, qweights, qdata = gmsh.model.mesh.getIntegrationData("Gauss", 2)
+        quvw, qdata, fsComp, fsData = gmsh.model.mesh.getIntegrationData("Gauss2", "")
         self.vertices = {}
         for i in range(len(vtags)):
             self.vertices[vtags[i]] = myVertex(
@@ -38,9 +38,9 @@ class myMesh:
         self.elements = {}
         for i in range(len(etypes)):
             nev = len(evtags[i]) / len(etags[i])
-            nq = len(qweights[i])
-            qu = quvw[i][0::3]; qv = quvw[i][1::3]; qw = quvw[i][2::3]; 
-            qweight = qweights[i]
+            nq = len(quvw[i]) / 4
+            qu = quvw[i][0::4]; qv = quvw[i][1::4]; qw = quvw[i][2::4]; 
+            qweight = quvw[i][3::4]
             for j in range(len(etags[i])):
                 ev = [self.vertices[k] for k in evtags[i][nev*j:nev*(j+1)]]
                 qx = []; qy = []; qz = []; qdet = []; qjac = []

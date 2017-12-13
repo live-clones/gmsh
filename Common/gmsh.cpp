@@ -556,16 +556,46 @@ void gmsh::model::mesh::getElements(std::vector<int> &elementTypes,
   }
 }
 
-void gmsh::model::mesh::getIntegrationData(const std::string &type, const int order,
+static bool _getIntegrationInfo(const std::string &intType,
+                                std::string &intName, int &intOrder)
+{
+  if(intType.substr(0, 5) == "Gauss"){
+    intName = "Gauss";
+    intOrder = atoi(intType.substr(5).c_str());
+    return true;
+  }
+  return false;
+}
+
+static bool _getFunctionSpaceInfo(const std::string &fsType,
+                                  std::string &fsName, int &fsOrder, int &fsComp)
+{
+  return true;
+}
+
+void gmsh::model::mesh::getIntegrationData(const std::string &intType,
+                                           const std::string &fsType,
                                            std::vector<std::vector<double> > &intPoints,
-                                           std::vector<std::vector<double> > &intWeights,
                                            std::vector<std::vector<double> > &intData,
+                                           int &fsNumComp,
+                                           std::vector<std::vector<double> > &fsData,
                                            const int dim, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   intPoints.clear();
-  intWeights.clear();
   intData.clear();
+  fsNumComp = 0;
+  fsData.clear();
+  std::string intName = "", fsName = "";
+  int intOrder = 0, fsOrder = 0;
+  if(!_getIntegrationInfo(intType, intName, intOrder)){
+    Msg::Error("Unknown quadrature type '%s'", intType.c_str());
+    throw 2;
+  }
+  if(!_getFunctionSpaceInfo(fsType, fsName, fsOrder, fsNumComp)){
+    Msg::Error("Unknown function space type '%s'", fsType.c_str());
+    throw 2;
+  }
   std::map<int, std::vector<GEntity*> > typeMap;
   _getElementTypeMap(dim, tag, typeMap);
   for(std::map<int, std::vector<GEntity*> >::const_iterator it = typeMap.begin();
@@ -573,21 +603,19 @@ void gmsh::model::mesh::getIntegrationData(const std::string &type, const int or
     int mshType = ElementType::ParentTypeFromTag(it->first);
     fullMatrix<double> pts;
     fullVector<double> weights;
-    gaussIntegration::get(mshType, order, pts, weights);
+    gaussIntegration::get(mshType, intOrder, pts, weights);
     if(pts.size1() != weights.size() || pts.size2() != 3){
       Msg::Error("Wrong integration point format");
       throw 3;
     }
     intPoints.push_back(std::vector<double>());
-    intWeights.push_back(std::vector<double>());
     intData.push_back(std::vector<double>());
     for(int i = 0; i < pts.size1(); i++){
       intPoints.back().push_back(pts(i, 0));
       intPoints.back().push_back(pts(i, 1));
       intPoints.back().push_back(pts(i, 2));
+      intPoints.back().push_back(weights(i));
     }
-    for(int i = 0; i < weights.size(); i++)
-      intWeights.back().push_back(weights(i));
     for(unsigned int i = 0; i < it->second.size(); i++){
       GEntity *ge = it->second[i];
       for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){

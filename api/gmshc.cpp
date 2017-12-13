@@ -330,16 +330,16 @@ void gmshModelMeshGetElements(int ** elementTypes, size_t * elementTypes_n,int *
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshGetIntegrationData(const char * type,const int order,double *** integrationPoints, size_t ** integrationPoints_n, size_t *integrationPoints_nn,double *** integrationWeigths, size_t ** integrationWeigths_n, size_t *integrationWeigths_nn,double *** integrationData, size_t ** integrationData_n, size_t *integrationData_nn,const int dim,const int tag,int * ierr){
+void gmshModelMeshGetIntegrationData(const char * integrationType,const char * functionSpaceType,double *** integrationPoints, size_t ** integrationPoints_n, size_t *integrationPoints_nn,double *** integrationData, size_t ** integrationData_n, size_t *integrationData_nn,int * functionSpaceNumComponents,double *** functionSpaceData, size_t ** functionSpaceData_n, size_t *functionSpaceData_nn,const int dim,const int tag,int * ierr){
   if(ierr) *ierr = 0;
   try {
   std::vector<std::vector<double> > api_integrationPoints_;
-  std::vector<std::vector<double> > api_integrationWeigths_;
   std::vector<std::vector<double> > api_integrationData_;
-  gmsh::model::mesh::getIntegrationData(type,order,api_integrationPoints_,api_integrationWeigths_,api_integrationData_,dim,tag);
+  std::vector<std::vector<double> > api_functionSpaceData_;
+  gmsh::model::mesh::getIntegrationData(integrationType,functionSpaceType,api_integrationPoints_,api_integrationData_,*functionSpaceNumComponents,api_functionSpaceData_,dim,tag);
   vectorvector2ptrptr(api_integrationPoints_,integrationPoints,integrationPoints_n,integrationPoints_nn);
-  vectorvector2ptrptr(api_integrationWeigths_,integrationWeigths,integrationWeigths_n,integrationWeigths_nn);
   vectorvector2ptrptr(api_integrationData_,integrationData,integrationData_n,integrationData_nn);
+  vectorvector2ptrptr(api_functionSpaceData_,functionSpaceData,functionSpaceData_n,functionSpaceData_nn);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 

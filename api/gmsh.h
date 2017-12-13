@@ -236,21 +236,27 @@ namespace gmsh { // Top-level functions
                                 const int tag = -1);
 
       // Gets the integration data for mesh elements of the entity of dimension
-      // `dim' and `tag' tag. The data is returned by element, in the same order as
-      // the date returned by `getElements'. `integrationPoints' contains for each
-      // element type a vector (of length 3 times the number of integration points)
-      // containing the parametric coordinates (u, v, w) of the integration points.
-      // `integrationWeigths' contains for each element type a vector containing
-      // the weigths of the corrresponding integration points. `integrationData'
+      // `dim' and `tag' tag. The data is returned by element type and by element,
+      // in the same order as the data returned by `getElements'. `integrationType'
+      // specifies the type of integration (e.g. "Gauss4") and `functionSpaceType'
+      // specifies the function space (e.g. "IsoParametric"). `integrationPoints'
+      // contains for each element type a vector (of length 4 times the number of
+      // integration points) containing the parametric coordinates (u, v, w) and
+      // the weight associated to the integration points. `integrationData'
       // contains for each element type a vector (of size 13 times the number of
       // integration points) containing the (x, y, z) coordinates of the
       // integration point, the determinant of the Jacobian and the 9 entries (by
-      // row) of the 3x3 Jacobian matrix.
-      GMSH_API void getIntegrationData(const std::string & type,
-                                       const int order,
+      // row) of the 3x3 Jacobian matrix. If `functionSpaceType' is provided,
+      // `functionSpaceNumComponents' returns the number of components returned by
+      // the evaluation of a basis function in the space and `functionSpaceData'
+      // contains for each element type the evaluation of the basis functions at
+      // the integration points.
+      GMSH_API void getIntegrationData(const std::string & integrationType,
+                                       const std::string & functionSpaceType,
                                        std::vector<std::vector<double> > & integrationPoints,
-                                       std::vector<std::vector<double> > & integrationWeigths,
                                        std::vector<std::vector<double> > & integrationData,
+                                       int & functionSpaceNumComponents,
+                                       std::vector<std::vector<double> > & functionSpaceData,
                                        const int dim = -1,
                                        const int tag = -1);
 

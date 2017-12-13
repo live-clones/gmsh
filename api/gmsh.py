@@ -760,32 +760,38 @@ class model:
                 _ovectorvectorint(api_vertexTags_,api_vertexTags_n_,api_vertexTags_nn_))
 
         @staticmethod
-        def getIntegrationData(type,order,dim=-1,tag=-1):
+        def getIntegrationData(integrationType,functionSpaceType,dim=-1,tag=-1):
             """
             Gets the integration data for mesh elements of the entity of dimension
-            `dim' and `tag' tag. The data is returned by element, in the same order as
-            the date returned by `getElements'. `integrationPoints' contains for each
-            element type a vector (of length 3 times the number of integration points)
-            containing the parametric coordinates (u, v, w) of the integration points.
-            `integrationWeigths' contains for each element type a vector containing the
-            weigths of the corrresponding integration points. `integrationData'
-            contains for each element type a vector (of size 13 times the number of
-            integration points) containing the (x, y, z) coordinates of the integration
-            point, the determinant of the Jacobian and the 9 entries (by row) of the
-            3x3 Jacobian matrix.
+            `dim' and `tag' tag. The data is returned by element type and by element,
+            in the same order as the data returned by `getElements'. `integrationType'
+            specifies the type of integration (e.g. "Gauss4") and `functionSpaceType'
+            specifies the function space (e.g. "IsoParametric"). `integrationPoints'
+            contains for each element type a vector (of length 4 times the number of
+            integration points) containing the parametric coordinates (u, v, w) and the
+            weight associated to the integration points. `integrationData' contains for
+            each element type a vector (of size 13 times the number of integration
+            points) containing the (x, y, z) coordinates of the integration point, the
+            determinant of the Jacobian and the 9 entries (by row) of the 3x3 Jacobian
+            matrix. If `functionSpaceType' is provided, `functionSpaceNumComponents'
+            returns the number of components returned by the evaluation of a basis
+            function in the space and `functionSpaceData' contains for each element
+            type the evaluation of the basis functions at the integration points.
 
-            return integrationPoints, integrationWeigths, integrationData
+            return integrationPoints, integrationData, functionSpaceNumComponents, functionSpaceData
             """
             api_integrationPoints_, api_integrationPoints_n_, api_integrationPoints_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
-            api_integrationWeigths_, api_integrationWeigths_n_, api_integrationWeigths_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
             api_integrationData_, api_integrationData_n_, api_integrationData_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
+            api_functionSpaceNumComponents_ = c_int()
+            api_functionSpaceData_, api_functionSpaceData_n_, api_functionSpaceData_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetIntegrationData(
-                c_char_p(type.encode()),
-                c_int(order),
+                c_char_p(integrationType.encode()),
+                c_char_p(functionSpaceType.encode()),
                 byref(api_integrationPoints_),byref(api_integrationPoints_n_),byref(api_integrationPoints_nn_),
-                byref(api_integrationWeigths_),byref(api_integrationWeigths_n_),byref(api_integrationWeigths_nn_),
                 byref(api_integrationData_),byref(api_integrationData_n_),byref(api_integrationData_nn_),
+                byref(api_functionSpaceNumComponents_),
+                byref(api_functionSpaceData_),byref(api_functionSpaceData_n_),byref(api_functionSpaceData_nn_),
                 c_int(dim),
                 c_int(tag),
                 byref(ierr))
@@ -795,8 +801,9 @@ class model:
                     ierr.value)
             return (
                 _ovectorvectordouble(api_integrationPoints_,api_integrationPoints_n_,api_integrationPoints_nn_),
-                _ovectorvectordouble(api_integrationWeigths_,api_integrationWeigths_n_,api_integrationWeigths_nn_),
-                _ovectorvectordouble(api_integrationData_,api_integrationData_n_,api_integrationData_nn_))
+                _ovectorvectordouble(api_integrationData_,api_integrationData_n_,api_integrationData_nn_),
+                api_functionSpaceNumComponents_.value,
+                _ovectorvectordouble(api_functionSpaceData_,api_functionSpaceData_n_,api_functionSpaceData_nn_))
 
         @staticmethod
         def setVertices(dim,tag,vertexTags,coord,parametricCoord=[]):
