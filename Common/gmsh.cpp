@@ -570,7 +570,25 @@ static bool _getIntegrationInfo(const std::string &intType,
 static bool _getFunctionSpaceInfo(const std::string &fsType,
                                   std::string &fsName, int &fsOrder, int &fsComp)
 {
-  return true;
+  if(fsType.empty() || fsType == "None"){
+    fsName = "";
+    fsOrder = 0;
+    fsComp = 0;
+    return true;
+  }
+  if(fsType == "IsoParametric" || fsType == "Lagrange"){
+    fsName = "Lagrange";
+    fsOrder = -1;
+    fsComp = 1;
+    return true;
+  }
+  if(fsType == "GradIsoParametric" || fsType == "GradLagrange"){
+    fsName = "GradLagrange";
+    fsOrder = -1;
+    fsComp = 3;
+    return true;
+  }
+  return false;
 }
 
 void gmsh::model::mesh::getIntegrationData(const std::string &intType,
@@ -600,14 +618,28 @@ void gmsh::model::mesh::getIntegrationData(const std::string &intType,
   _getElementTypeMap(dim, tag, typeMap);
   for(std::map<int, std::vector<GEntity*> >::const_iterator it = typeMap.begin();
       it != typeMap.end(); it++){
-    int mshType = ElementType::ParentTypeFromTag(it->first);
+
+    // get quadrature info
+    int familyType = ElementType::ParentTypeFromTag(it->first);
     fullMatrix<double> pts;
     fullVector<double> weights;
-    gaussIntegration::get(mshType, intOrder, pts, weights);
+    gaussIntegration::get(familyType, intOrder, pts, weights);
     if(pts.size1() != weights.size() || pts.size2() != 3){
       Msg::Error("Wrong integration point format");
       throw 3;
     }
+    // get function space info
+    const nodalBasis *basis = 0;
+    if(fsNumComp){
+      if(fsOrder == -1){ // isoparametric
+        basis = BasisFactory::getNodalBasis(it->first);
+      }
+      else{
+        int newType = ElementType::getTag(familyType, fsOrder, false);
+        basis = BasisFactory::getNodalBasis(newType);
+      }
+    }
+
     intPoints.push_back(std::vector<double>());
     intData.push_back(std::vector<double>());
     for(int i = 0; i < pts.size1(); i++){

@@ -77,7 +77,7 @@ class myMesh{
     gmsh::model::mesh::getElements(etypes, etags, evtags);
     std::vector<std::vector<double> > quvw, qdata, fsdata;
     int fscomp;
-    gmsh::model::mesh::getIntegrationData("Gauss2", "", quvw, qdata, fscomp, fsdata);
+    gmsh::model::mesh::getIntegrationData("Gauss2", "None", quvw, qdata, fscomp, fsdata);
     for(unsigned int i = 0; i < vtags.size(); i++){
       _vertices[vtags[i]] = new myVertex
         (vtags[i], vxyz[3*i], vxyz[3*i+1], vxyz[3*i+2]);

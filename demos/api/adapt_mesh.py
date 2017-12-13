@@ -30,7 +30,7 @@ class myMesh:
     def __init__(self):
         vtags, vxyz, _ = gmsh.model.mesh.getVertices()
         etypes, etags, evtags = gmsh.model.mesh.getElements()
-        quvw, qdata, fsComp, fsData = gmsh.model.mesh.getIntegrationData("Gauss2", "")
+        quvw, qdata, fsComp, fsData = gmsh.model.mesh.getIntegrationData("Gauss2", "None")
         self.vertices = {}
         for i in range(len(vtags)):
             self.vertices[vtags[i]] = myVertex(
