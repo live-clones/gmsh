@@ -75,22 +75,22 @@ class myMesh{
     std::vector<int> etypes;
     std::vector<std::vector<int> > etags, evtags;
     gmsh::model::mesh::getElements(etypes, etags, evtags);
-    std::vector<std::vector<double> > quvw, qdata, fsdata;
+    std::vector<std::vector<double> > quvwo, qdata, fsdata;
     int fscomp;
-    gmsh::model::mesh::getIntegrationData("Gauss2", "None", quvw, qdata, fscomp, fsdata);
+    gmsh::model::mesh::getIntegrationData("Gauss2", "None", quvwo, qdata, fscomp, fsdata);
     for(unsigned int i = 0; i < vtags.size(); i++){
       _vertices[vtags[i]] = new myVertex
         (vtags[i], vxyz[3*i], vxyz[3*i+1], vxyz[3*i+2]);
     }
     for(unsigned int i = 0; i < etypes.size(); i++){
       int nev = evtags[i].size() / etags[i].size();
-      int nq = quvw[i].size() / 4;
+      int nq = quvwo[i].size() / 4;
       std::vector<double> qu, qv, qw, qweight;
-      for(unsigned int j = 0; j < quvw[i].size(); j+=4){
-        qu.push_back(quvw[i][j]);
-        qv.push_back(quvw[i][j+1]);
-        qw.push_back(quvw[i][j+2]);
-        qweight.push_back(quvw[i][j+3]);
+      for(unsigned int j = 0; j < quvwo[i].size(); j+=4){
+        qu.push_back(quvwo[i][j]);
+        qv.push_back(quvwo[i][j+1]);
+        qw.push_back(quvwo[i][j+2]);
+        qweight.push_back(quvwo[i][j+3]);
       }
       for(unsigned int j = 0; j < etags[i].size(); j++){
         std::vector<myVertex*> ev;

@@ -656,6 +656,42 @@ void gmsh::model::mesh::getIntegrationData(const std::string &intType,
         }
       }
     }
+
+    // get function space info
+    const nodalBasis *basis = 0;
+    if(fsNumComp){
+      if(fsOrder == -1){ // isoparametric
+        basis = BasisFactory::getNodalBasis(it->first);
+      }
+      else{
+        int newType = ElementType::getTag(familyType, fsOrder, false);
+        basis = BasisFactory::getNodalBasis(newType);
+      }
+    }
+    if(basis){
+      int nq = weights.size();
+      int n = basis->getNumShapeFunctions();
+      fsData.push_back(std::vector<double>(n * fsNumComp * nq, 0.));
+      double s[1256], ds[1256][3];
+      for(unsigned int i = 0; i < nq; i++){
+        double u = pts(i, 0), v = pts(i, 1), w = pts(i, 2);
+        switch(fsNumComp){
+        case 1:
+          basis->f(u, v, w, s);
+          for(int j = 0; j < n; j++)
+            fsData.back()[n * i + j] = s[j];
+          break;
+        case 3:
+          basis->df(u, v, w, ds);
+          for(int j = 0; j < n; j++){
+            fsData.back()[n * 3 * i + j] = ds[j][0];
+            fsData.back()[n * 3 * i + j + 1] = ds[j][1];
+            fsData.back()[n * 3 * i + j + 2] = ds[j][2];
+          }
+          break;
+        }
+      }
+    }
   }
 }
 
