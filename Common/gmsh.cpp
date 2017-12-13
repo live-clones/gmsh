@@ -618,7 +618,6 @@ void gmsh::model::mesh::getIntegrationData(const std::string &intType,
   _getElementTypeMap(dim, tag, typeMap);
   for(std::map<int, std::vector<GEntity*> >::const_iterator it = typeMap.begin();
       it != typeMap.end(); it++){
-
     // get quadrature info
     int familyType = ElementType::ParentTypeFromTag(it->first);
     fullMatrix<double> pts;
@@ -628,18 +627,6 @@ void gmsh::model::mesh::getIntegrationData(const std::string &intType,
       Msg::Error("Wrong integration point format");
       throw 3;
     }
-    // get function space info
-    const nodalBasis *basis = 0;
-    if(fsNumComp){
-      if(fsOrder == -1){ // isoparametric
-        basis = BasisFactory::getNodalBasis(it->first);
-      }
-      else{
-        int newType = ElementType::getTag(familyType, fsOrder, false);
-        basis = BasisFactory::getNodalBasis(newType);
-      }
-    }
-
     intPoints.push_back(std::vector<double>());
     intData.push_back(std::vector<double>());
     for(int i = 0; i < pts.size1(); i++){
