@@ -6,9 +6,7 @@
 #ifndef _PARTITION_EDGE_H_
 #define _PARTITION_EDGE_H_
 
-#include <stdio.h>
 #include "GModel.h"
-#include "GEdge.h"
 #include "discreteEdge.h"
 
 class partitionEdge : public discreteEdge {

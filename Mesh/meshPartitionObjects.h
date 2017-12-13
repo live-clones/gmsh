@@ -69,15 +69,12 @@ class Graph
   void fillDefaultWeights()
   {
     _vwgt = new unsigned int[_ne];
-    for(unsigned int i = 0; i < _ne; i++)
-    {
-      if(_element[i] == NULL)
-      {
+    for(unsigned int i = 0; i < _ne; i++){
+      if(_element[i] == NULL){
         _vwgt[i] = 1;
         continue;
       }
-      switch (_element[i]->getType())
-      {
+      switch (_element[i]->getType()){
         case TYPE_TRI:
           _vwgt[i] = CTX::instance()->mesh.part_triWeight;
           break;
@@ -169,46 +166,55 @@ class Graph
   
   void clear()
   {
-    if(_eind != NULL)
-    {
+    if(_eind != NULL){
       delete[] _eind;
       _eind = NULL;
     }
-    if(_eptr != NULL)
-    {
+    if(_eptr != NULL){
       delete[] _eptr;
       _eptr = NULL;
     }
-    if(_xadj != NULL)
-    {
+    if(_xadj != NULL){
       delete[] _xadj;
       _xadj = NULL;
     }
-    if(_adjncy != NULL)
-    {
+    if(_adjncy != NULL){
       delete[] _adjncy;
       _adjncy = NULL;
     }
-    if(_element != NULL)
-    {
+    if(_element != NULL){
       delete[] _element;
       _element = NULL;
     }
-    if(_vertex != NULL)
-    {
+    if(_vertex != NULL){
       delete[] _vertex;
       _vertex = NULL;
     }
-    if(_vwgt != NULL)
-    {
+    if(_vwgt != NULL){
       delete[] _vwgt;
       _vwgt = NULL;
     }
-    if(_partition != NULL)
-    {
+    if(_partition != NULL){
       delete[] _partition;
       _partition = NULL;
     }
+  }
+  
+  std::vector< std::set<MElement*> > getBoundaryElements()
+  {
+    std::vector< std::set<MElement*> > elements(CTX::instance()->mesh.num_partitions, std::set<MElement*>());
+    for(unsigned int i = 0; i < _ne; i++){
+      for(unsigned int j = _xadj[i]; j < _xadj[i+1]; j++){
+        if(_partition[i] != _partition[_adjncy[j]]){
+          if(_element[i]->getDim() == _dim)
+            elements[_partition[i]].insert(_element[i]);
+          if(_element[_adjncy[j]]->getDim() == _dim)
+            elements[_partition[_adjncy[j]]].insert(_element[_adjncy[j]]);
+        }
+      }
+    }
+    
+    return elements;
   }
   
 };

@@ -108,6 +108,7 @@ class GFace : public GEntity {
   // edges that bound the face
   virtual std::list<GEdge*> edges() const { return l_edges; }
   inline void set(const std::list<GEdge*> f) { l_edges= f; }
+  inline void setOrientations(const std::list<int> f) { l_dirs= f; }
   virtual std::list<int> edgeOrientations() const { return l_dirs; }
   inline bool containsEdge (int iEdge) const
   {
