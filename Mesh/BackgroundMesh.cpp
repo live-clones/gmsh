@@ -154,7 +154,7 @@ static void propagateValuesOnFace(GFace *_gf,
 {
 #if defined(HAVE_SOLVER)
   linearSystem<double> *_lsys = 0;
-#if defined(HAVE_PETSC) && !defined(HAVE_TAUCS)
+#if defined(HAVE_PETSC)
   _lsys = new linearSystemPETSc<double>;
 #elif defined(HAVE_GMM) && !defined(HAVE_TAUCS)
   linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
