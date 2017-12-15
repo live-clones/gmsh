@@ -1472,10 +1472,10 @@ int GModel::partitionMesh(int numPart)
 #endif
 }
 
-int GModel::createPartitionTopology()
+int GModel::convertOldPartitioningToNewOne()
 {
   opt_mesh_partition_num(0, GMSH_SET, meshPartitions.size());
-  int ier = CreatePartitionTopology(this);
+  int ier = ConvertOldPartitioningToNewOne(this);
   return ier;
 }
 

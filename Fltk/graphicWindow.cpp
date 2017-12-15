@@ -2236,9 +2236,9 @@ static void mesh_unpartition_cb(Fl_Widget *w, void *data)
   }
 }
 
-static void mesh_create_partition_topology_cb(Fl_Widget *w, void *data)
+static void mesh_convert_old_partitioning_cb(Fl_Widget *w, void *data)
 {
-  int ier = GModel::current()->createPartitionTopology();
+  int ier = GModel::current()->convertOldPartitioningToNewOne();
   
   // Update the screen
   if(!ier) {
@@ -4328,8 +4328,8 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_partition_cb} ,
   {"0Modules/Mesh/Unpartition",
     (Fl_Callback *)mesh_unpartition_cb} ,
-  {"0Modules/Mesh/Create partition topology",
-    (Fl_Callback *)mesh_create_partition_topology_cb} ,
+  {"0Modules/Mesh/Convert old partitioning",
+    (Fl_Callback *)mesh_convert_old_partitioning_cb} ,
 #endif
   {"0Modules/Mesh/Smooth 2D",
    (Fl_Callback *)mesh_smooth_cb} ,

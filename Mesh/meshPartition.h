@@ -36,7 +36,7 @@ void assignToParent(std::set<MVertex*> &verts, partitionEdge *edge, ITERATOR it_
 template <class ITERATOR>
 void assignToParent(std::set<MVertex*> &verts, partitionVertex *vertex, ITERATOR it_beg, ITERATOR it_end);
 
-int CreatePartitionTopology(GModel *const model);
+int ConvertOldPartitioningToNewOne(GModel *const model);
 
 int MakeGraph(GModel *const model, Graph &graph);
 template <class ITERATOR>

@@ -378,7 +378,7 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
     if (!gv){
       if(partition){
         gv = new partitionVertex(model, tag);
-        static_cast<partitionVertex*>(gv)->setParentEntity(model->getVertexByTag(parentTag));
+        static_cast<partitionVertex*>(gv)->setParentEntity((parentTag != 0) ? model->getVertexByTag(parentTag) : NULL);
       }
       else{
         gv = new discreteVertex(model, tag);
@@ -462,7 +462,7 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
     if (!ge){
       if(partition){
         ge = new partitionEdge(model, tag, NULL, NULL);
-        static_cast<partitionEdge*>(ge)->setParentEntity(model->getEdgeByTag(parentTag));
+        static_cast<partitionEdge*>(ge)->setParentEntity((parentTag != 0) ? model->getEdgeByTag(parentTag) : NULL);
       }
       else{
         ge = new discreteEdge(model, tag, NULL, NULL);
@@ -547,7 +547,7 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
     if (!gf){
       if(partition){
         gf = new partitionFace(model, tag);
-        static_cast<partitionFace*>(gf)->setParentEntity(model->getFaceByTag(parentTag));
+        static_cast<partitionFace*>(gf)->setParentEntity((parentTag != 0) ? model->getFaceByTag(parentTag) : NULL);
       }
       else{
         gf = new discreteFace(model, tag);
@@ -633,7 +633,7 @@ void readMSH4Entities(GModel *const model, FILE* fp, bool partition, bool binary
     if (!gr){
       if(partition){
         gr = new partitionRegion(model, tag);
-        static_cast<partitionRegion*>(gr)->setParentEntity(model->getRegionByTag(parentTag));
+        static_cast<partitionRegion*>(gr)->setParentEntity((parentTag != 0) ? model->getRegionByTag(parentTag) : NULL);
       }
       else{
         gr = new discreteRegion(model, tag);
@@ -1348,7 +1348,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary, boo
   fprintf(fp, "$EndEntities\n");
   
   // partitioned entities
-  if(CTX::instance()->mesh.num_partitions > 0){
+  if(getNumPartitions() > 0){
     fprintf(fp, "$PartitionedEntities\n");
     writeMSH4Entities(this, fp, true, binary, scalingFactor);
     fprintf(fp, "$EndPartitionedEntities\n");
@@ -1357,22 +1357,22 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary, boo
   // nodes
   if(saveParametric){
     fprintf(fp, "$ParametricNodes\n");
-    writeMSH4Nodes(this, fp, CTX::instance()->mesh.num_partitions == 0 ? false : true, binary, saveParametric, scalingFactor, saveAll);
+    writeMSH4Nodes(this, fp, getNumPartitions() == 0 ? false : true, binary, saveParametric, scalingFactor, saveAll);
     fprintf(fp, "$EndParametricNodes\n");
   }
   else{
     fprintf(fp, "$Nodes\n");
-    writeMSH4Nodes(this, fp, CTX::instance()->mesh.num_partitions == 0 ? false : true, binary, saveParametric, scalingFactor, saveAll);
+    writeMSH4Nodes(this, fp, getNumPartitions() == 0 ? false : true, binary, saveParametric, scalingFactor, saveAll);
     fprintf(fp, "$EndNodes\n");
   }
   
   // elements
   fprintf(fp, "$Elements\n");
-  writeMSH4Elements(this, fp, CTX::instance()->mesh.num_partitions == 0 ? false : true, binary, saveAll);
+  writeMSH4Elements(this, fp, getNumPartitions() == 0 ? false : true, binary, saveAll);
   fprintf(fp, "$EndElements\n");
   
   // periodic
-  writeMSH4PeriodicNodes(this, fp, CTX::instance()->mesh.num_partitions == 0 ? false : true, binary);
+  writeMSH4PeriodicNodes(this, fp, getNumPartitions() == 0 ? false : true, binary);
   
   fclose(fp);
   
@@ -1416,7 +1416,10 @@ void writeMSH4Entities(GModel *const model, FILE *fp, bool partition, bool binar
   }
   
   if(binary){
-    if(partition) fwrite(&CTX::instance()->mesh.num_partitions, sizeof(int), 1, fp);
+    if(partition) {
+      unsigned int nparts = model->getNumPartitions();
+      fwrite(&nparts, sizeof(unsigned int), 1, fp);
+    }
     unsigned long verticesSize = vertices.size();
     unsigned long edgesSize = edges.size();
     unsigned long facesSize = faces.size();
@@ -1430,7 +1433,10 @@ void writeMSH4Entities(GModel *const model, FILE *fp, bool partition, bool binar
       int entityTag = (*it)->tag();
       fwrite(&entityTag, sizeof(int), 1, fp);
       if(partition){
-        int parentEntityTag = static_cast<partitionVertex*>(*it)->getParentEntity()->tag();
+        int parentEntityTag = 0;
+        if(static_cast<partitionVertex*>(*it)->getParentEntity() != NULL){
+          parentEntityTag = static_cast<partitionVertex*>(*it)->getParentEntity()->tag();
+        }
         fwrite(&parentEntityTag, sizeof(int), 1, fp);
       }
       SBoundingBox3d boundBox = (*it)->bounds();
@@ -1460,7 +1466,10 @@ void writeMSH4Entities(GModel *const model, FILE *fp, bool partition, bool binar
       int entityTag = (*it)->tag();
       fwrite(&entityTag, sizeof(int), 1, fp);
       if(partition){
-        int parentEntityTag = static_cast<partitionEdge*>(*it)->getParentEntity()->tag();
+        int parentEntityTag = 0;
+        if(static_cast<partitionEdge*>(*it)->getParentEntity() != NULL){
+          parentEntityTag = static_cast<partitionEdge*>(*it)->getParentEntity()->tag();
+        }
         fwrite(&parentEntityTag, sizeof(int), 1, fp);
       }
       
@@ -1495,7 +1504,10 @@ void writeMSH4Entities(GModel *const model, FILE *fp, bool partition, bool binar
       int entityTag = (*it)->tag();
       fwrite(&entityTag, sizeof(int), 1, fp);
       if(partition){
-        int parentEntityTag = static_cast<partitionFace*>(*it)->getParentEntity()->tag();
+        int parentEntityTag = 0;
+        if(static_cast<partitionFace*>(*it)->getParentEntity() != NULL){
+          parentEntityTag = static_cast<partitionFace*>(*it)->getParentEntity()->tag();
+        }
         fwrite(&parentEntityTag, sizeof(int), 1, fp);
       }
       
@@ -1543,7 +1555,10 @@ void writeMSH4Entities(GModel *const model, FILE *fp, bool partition, bool binar
       int entityTag = (*it)->tag();
       fwrite(&entityTag, sizeof(int), 1, fp);
       if(partition){
-        int parentEntityTag = static_cast<partitionRegion*>(*it)->getParentEntity()->tag();
+        int parentEntityTag = 0;
+        if(static_cast<partitionRegion*>(*it)->getParentEntity() != NULL){
+          parentEntityTag = static_cast<partitionRegion*>(*it)->getParentEntity()->tag();
+        }
         fwrite(&parentEntityTag, sizeof(int), 1, fp);
       }
       
@@ -1581,16 +1596,22 @@ void writeMSH4Entities(GModel *const model, FILE *fp, bool partition, bool binar
         fwrite(&brepTag, sizeof(int), 1, fp);
       }
     }
+    
     fprintf(fp, "\n");
   }
   else{
-    if(partition) fprintf(fp, "%d", CTX::instance()->mesh.num_partitions);
+    if(partition) fprintf(fp, "%d ", model->getNumPartitions());
     fprintf(fp, "%lu %lu %lu %lu\n", vertices.size(), edges.size(), faces.size(), regions.size());
     
     for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it){
       fprintf(fp, "%d ", (*it)->tag());
       if(partition){
-        fprintf(fp, "%d ", static_cast<partitionVertex*>(*it)->getParentEntity()->tag());
+        if(static_cast<partitionVertex*>(*it)->getParentEntity() != NULL){
+          fprintf(fp, "%d ", static_cast<partitionVertex*>(*it)->getParentEntity()->tag());
+        }
+        else{
+          fprintf(fp, "0 ");
+        }
       }
       SBoundingBox3d boundBox = (*it)->bounds();
       boundBox *= scalingFactor;
@@ -1599,7 +1620,7 @@ void writeMSH4Entities(GModel *const model, FILE *fp, bool partition, bool binar
       writeMSH4Physicals(fp, *it, binary);
       fprintf(fp, "\n");
     }
-        
+    
     for(GModel::eiter it = edges.begin(); it != edges.end(); ++it){
       std::list<GVertex*> vertices;
       if((*it)->getBeginVertex()) vertices.push_back((*it)->getBeginVertex());
@@ -1607,7 +1628,12 @@ void writeMSH4Entities(GModel *const model, FILE *fp, bool partition, bool binar
       
       fprintf(fp, "%d ", (*it)->tag());
       if(partition){
-        fprintf(fp, "%d ", static_cast<partitionEdge*>(*it)->getParentEntity()->tag());
+        if(static_cast<partitionEdge*>(*it)->getParentEntity() != NULL){
+          fprintf(fp, "%d ", static_cast<partitionEdge*>(*it)->getParentEntity()->tag());
+        }
+        else{
+          fprintf(fp, "0 ");
+        }
       }
       
       SBoundingBox3d boundBox = (*it)->bounds();
@@ -1630,7 +1656,12 @@ void writeMSH4Entities(GModel *const model, FILE *fp, bool partition, bool binar
       
       fprintf(fp, "%d ", (*it)->tag());
       if(partition){
-        fprintf(fp, "%d ", static_cast<partitionFace*>(*it)->getParentEntity()->tag());
+        if(static_cast<partitionFace*>(*it)->getParentEntity() != NULL){
+          fprintf(fp, "%d ", static_cast<partitionFace*>(*it)->getParentEntity()->tag());
+        }
+        else{
+          fprintf(fp, "0 ");
+        }
       }
       
       SBoundingBox3d boundBox = (*it)->bounds();
@@ -1665,7 +1696,12 @@ void writeMSH4Entities(GModel *const model, FILE *fp, bool partition, bool binar
       
       fprintf(fp, "%d ", (*it)->tag());
       if(partition){
-        fprintf(fp, "%d ", static_cast<partitionRegion*>(*it)->getParentEntity()->tag());
+        if(static_cast<partitionRegion*>(*it)->getParentEntity() != NULL){
+          fprintf(fp, "%d ", static_cast<partitionRegion*>(*it)->getParentEntity()->tag());
+        }
+        else{
+          fprintf(fp, "0 ");
+        }
       }
       
       SBoundingBox3d boundBox = (*it)->bounds();
@@ -2191,7 +2227,7 @@ void writeMSH4PeriodicNodes(GModel *const model, FILE *fp, bool partitioned, boo
 
 int GModel::_writePartitionedMSH4(const std::string &baseName, double version, bool binary, bool saveAll, bool saveParametric, double scalingFactor)
 {
-  for(int i = 0; i < CTX::instance()->mesh.num_partitions; i++){
+  for(int i = 0; i < getNumPartitions(); i++){
     // Create a temporitary model
     GModel *tmp = new GModel();
     for(GModel::piter it = this->firstPhysicalName(); it != this->lastPhysicalName(); ++it){

@@ -30,6 +30,8 @@ class Graph
 {
   private:
   
+  unsigned int _nparts;                       /*The number of partitions*/
+  
   unsigned int _ne;                           /*The number of elements*/
   
   unsigned int _nn;                           /*The number of nodes*/
@@ -63,7 +65,7 @@ class Graph
 
   public:
   
-  Graph() : _ne(0), _nn(0), _dim(0), _eind(NULL), _eptr(NULL), _xadj(NULL), _adjncy(NULL), _element(NULL), _vertex(NULL), _vwgt(NULL), _partition(NULL)
+  Graph() : _nparts(0), _ne(0), _nn(0), _dim(0), _eind(NULL), _eptr(NULL), _xadj(NULL), _adjncy(NULL), _element(NULL), _vertex(NULL), _vwgt(NULL), _partition(NULL)
   { }
   
   void fillDefaultWeights()
@@ -105,6 +107,7 @@ class Graph
     clear();
   }
   
+  unsigned int nparts() const { return _nparts; };
   unsigned int ne() const { return _ne; };
   unsigned int nn() const { return _nn; };
   unsigned int dim() const { return _dim; };
@@ -122,6 +125,7 @@ class Graph
   unsigned int partition(unsigned int i) const { return _partition[i]; };
   unsigned int *partition() const { return _partition; };
   
+  void nparts(unsigned int nparts) { _nparts = nparts; };
   void ne(unsigned int ne) { _ne = ne; };
   void nn(unsigned int nn) { _nn = nn; };
   void dim(unsigned int dim) { _dim = dim; };
@@ -202,7 +206,7 @@ class Graph
   
   std::vector< std::set<MElement*> > getBoundaryElements()
   {
-    std::vector< std::set<MElement*> > elements(CTX::instance()->mesh.num_partitions, std::set<MElement*>());
+    std::vector< std::set<MElement*> > elements(_nparts, std::set<MElement*>());
     for(unsigned int i = 0; i < _ne; i++){
       for(unsigned int j = _xadj[i]; j < _xadj[i+1]; j++){
         if(_partition[i] != _partition[_adjncy[j]]){
