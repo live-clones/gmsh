@@ -89,7 +89,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-smooth int",        "Set number of mesh smoothing steps"));
   s.push_back(mp("-order int",         "Set mesh order (1, ..., 5)"));
   s.push_back(mp("-optimize[_netgen]", "Optimize quality of tetrahedral elements"));
-  s.push_back(mp("-optimize_threshold", "Optimize tetrahedral elements that have a qulaity less than a threshold"));
+  s.push_back(mp("-optimize_threshold", "Optimize tetrahedral elements that have a quality less than a threshold"));
   s.push_back(mp("-optimize_ho",       "Optimize high order meshes"));
   s.push_back(mp("-ho_[min,max,nlayers]", "High-order optimization parameters"));
   s.push_back(mp("-optimize_lloyd",    "Optimize 2D meshes using Lloyd algorithm"));
@@ -150,6 +150,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-setstring name value", "Set constant string name=value"));
   s.push_back(mp("-option file",       "Parse option file at startup"));
   s.push_back(mp("-convert files",     "Convert files into latest binary formats, then exit"));
+  s.push_back(mp("-nt int",            "Set number of threads"));
   s.push_back(mp("-cpu",               "Report CPU times for all operations"));
   s.push_back(mp("-version",           "Show version number"));
   s.push_back(mp("-info",              "Show detailed version information"));
@@ -292,7 +293,7 @@ void PrintUsage(const std::string &name)
   }
 }
 
-void GetOptions(int argc, char *argv[])
+void GetOptions(int argc, char *argv[], bool readConfigFiles)
 {
   // print messages on terminal (use special 99 value so that we can detect if
   // it was later set to 1 in the option file)
@@ -300,9 +301,7 @@ void GetOptions(int argc, char *argv[])
   CTX::instance()->terminal = 99;
 
 #if defined(HAVE_PARSER)
-  if(argc && argv){
-    // parse session and option file (if argc/argv is not provided skip this
-    // step: this is usually what is expected when using Gmsh as a library)
+  if(readConfigFiles){
     ParseFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName, true);
     ParseFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName, true);
   }
@@ -486,7 +485,8 @@ void GetOptions(int argc, char *argv[])
         CTX::instance()->initialContext = 4;
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "saveall")) {
+      else if(!strcmp(argv[i] + 1, "saveall") ||
+              !strcmp(argv[i] + 1, "save_all")) {
         CTX::instance()->mesh.saveAll = 1;
         i++;
       }
@@ -1026,15 +1026,15 @@ void GetOptions(int argc, char *argv[])
       else if(!strcmp(argv[i] + 1, "nt")) {
         i++;
         if(argv[i])
-          Msg::SetNumThreads(atoi(argv[i++]));
+          opt_general_num_threads(0, GMSH_SET, atoi(argv[i++]));
         else
           Msg::Fatal("Missing number");
       }
-#if defined(HAVE_FLTK)
       else if(!strcmp(argv[i] + 1, "term")) {
         terminal = 1;
         i++;
       }
+#if defined(HAVE_FLTK)
       else if(!strcmp(argv[i] + 1, "dual")) {
         CTX::instance()->mesh.dual = 1;
         i++;
@@ -1125,10 +1125,6 @@ void GetOptions(int argc, char *argv[])
           CTX::instance()->display = argv[i++];
         else
           Msg::Fatal("Missing argument");
-      }
-      else if(!strcmp(argv[i] + 1, "showCompounds")) {
-        CTX::instance()->geom.hideCompounds = 0;
-        i++;
       }
 #endif
 #if defined(__APPLE__)

@@ -225,6 +225,7 @@ class PViewData {
                                 const fullMatrix<double> &expGeo);
   int getInterpolationMatrices(int type, std::vector<fullMatrix<double>*> &p);
   bool haveInterpolationMatrices(int type=0);
+  void deleteInterpolationMatrices(int type=0);
 
   // access to global interpolation schemes
   static void removeInterpolationScheme(const std::string &name);
@@ -244,6 +245,10 @@ class PViewData {
 
   // set simple X-Y data
   virtual void setXY(std::vector<double> &x, std::vector<double> &y){}
+
+  // set simple pointwise XYZ data
+  virtual void setXYZV(std::vector<double> &x, std::vector<double> &y,
+                       std::vector<double> &z, std::vector<double> &v){}
 
   // ask to fill vertex arrays remotely
   virtual bool isRemote(){ return false; }

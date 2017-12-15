@@ -4,8 +4,8 @@
 # bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 set(SRC  
-  Gmsh.cpp
-    GmshMessage.cpp
+  GmshGlobal.cpp
+  GmshMessage.cpp
   gmshPopplerWrapper.cpp
   Context.cpp
   Options.cpp
@@ -24,7 +24,7 @@ set(SRC
   onelabUtils.cpp
   GamePad.cpp
   GmshRemote.cpp
-  GmshAPI.cpp
+  gmsh.cpp
 )
 
 if(ENABLE_ONELAB AND NOT ENABLE_ONELAB2)

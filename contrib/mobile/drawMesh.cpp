@@ -6,10 +6,8 @@
 #include <OpenGLES/ES1/glext.h>
 #endif
 
-#include <gmsh/Gmsh.h>
+#include <gmsh/GmshGlobal.h>
 #include <gmsh/GModel.h>
-#include <gmsh/GEdgeCompound.h>
-#include <gmsh/GFaceCompound.h>
 #include <gmsh/PView.h>
 #include <gmsh/PViewData.h>
 #include <gmsh/Context.h>
@@ -57,33 +55,20 @@ void drawMeshVertex(GVertex *e)
 
 void drawMeshEdge(GEdge *e)
 {
-  if(!e->getVisibility()) {
-    if(e->getCompound()) {
-      if(!e->getCompound()->getVisibility()) return;
-    }
-    else
-      return;
-  }
+  if(!e->getVisibility()) return;
   glLineWidth(CTX::instance()->mesh.lineWidth);
   drawArray(e->va_lines, GL_LINES, true);
 }
 
 void drawMeshFace(GFace *f)
 {
-  if(!f->getVisibility()) {
-    if(f->getCompound()) {
-      if(!f->getCompound()->getVisibility()) return;
-    }
-    else
-      return;
-  }
+  if(!f->getVisibility()) return;
   drawArray(f->va_lines, GL_LINES, true);
 }
 
 void drawMeshRegion(GRegion *r)
 {
   if(!r->getVisibility()) return;
-
   drawArray(r->va_lines, GL_LINES, true);
 }
 

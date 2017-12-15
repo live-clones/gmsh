@@ -67,6 +67,7 @@ struct contextMeshOptions {
   int NewtonConvergenceTestXYZ;
   int preserveNumberingMsh2;
   int ignorePeriodicity;
+  int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
 };
 
 struct contextGeometryOptions {
@@ -82,9 +83,10 @@ struct contextGeometryOptions {
   int occAutoFix, occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
   int occSewFaces, occParallel, occBooleanPreserveNumbering;
   double occScaling;
+  std::string occTargetUnit;
   int copyMeshingMethod, exactExtrusion;
   int matchGeomAndMesh;
-  int hideCompounds, orientedPhysicals, doubleClickedEntityTag;
+  int orientedPhysicals, doubleClickedEntityTag;
   int reparamOnFaceRobust;
   std::string doubleClickedPointCommand, doubleClickedLineCommand;
   std::string doubleClickedSurfaceCommand, doubleClickedVolumeCommand;
@@ -240,6 +242,10 @@ class CTX {
   int mouseSelection, mouseHoverMeshes, pickElements;
   // disable some warnings for expert users?
   int expertMode;
+#if defined(HAVE_VISUDEV)
+  // Enable heavy visualization capabilities (for development purpose)
+  int heavyVisu;
+#endif
   // dynamic: equal to 1 while gmsh is printing
   int printing;
   // hide all unselected entities?
@@ -257,6 +263,7 @@ class CTX {
     int draw, link, horizontalScales;
     int smooth, animCycle, animStep, combineTime, combineRemoveOrig;
     int fileFormat, plugins, forceNodeData, forceElementData;
+    int saveMesh, saveInterpolationMatrices;
     double animDelay;
     std::string doubleClickedGraphPointCommand;
     double doubleClickedGraphPointX, doubleClickedGraphPointY;

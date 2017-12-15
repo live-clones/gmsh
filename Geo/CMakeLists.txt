@@ -9,21 +9,17 @@ set(SRC
   intersectCurveSurface.cpp
   GEntity.cpp STensor3.cpp
     GVertex.cpp GEdge.cpp GFace.cpp GRegion.cpp
-    GEdgeLoop.cpp GEdgeCompound.cpp GFaceCompound.cpp
-  GRegionCompound.cpp GRbf.cpp
+    GEdgeLoop.cpp
     gmshVertex.cpp gmshEdge.cpp gmshFace.cpp gmshRegion.cpp
-   gmshSurface.cpp
-   OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp
-   GenericVertex.cpp GenericEdge.cpp GenericFace.cpp GenericRegion.cpp
+    gmshSurface.cpp
+    OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp
+    GenericVertex.cpp GenericEdge.cpp GenericFace.cpp GenericRegion.cpp
     discreteEdge.cpp discreteFace.cpp discreteDiskFace.cpp discreteRegion.cpp
     fourierEdge.cpp fourierFace.cpp fourierProjectionFace.cpp
-  ACISVertex.cpp
-  ACISEdge.cpp
-  ACISFace.cpp
+    ACISVertex.cpp ACISEdge.cpp ACISFace.cpp
   GModel.cpp
   GModelCreateTopologyFromMesh.cpp
     GModelVertexArrays.cpp
-    GModelFactory.cpp
     GModelIO_GEO.cpp GModelIO_ACIS.cpp GModelIO_OCC.cpp GModelIO_TOCHNOG.cpp
       GModelIO_Fourier.cpp
     GModelIO_MSH.cpp GModelIO_MSH2.cpp GModelIO_MSH4.cpp GModelIO_VTK.cpp
@@ -47,7 +43,6 @@ set(SRC
     MHexahedron.cpp MPrism.cpp MPyramid.cpp MTrihedron.cpp MElementCut.cpp MSubElement.cpp
   MZone.cpp MZoneBoundary.cpp
   Cell.cpp CellComplex.cpp ChainComplex.cpp Homology.cpp Chain.cpp
-  Curvature.cpp
   MVertexBoundaryLayerData.cpp
 )
 

@@ -5,7 +5,7 @@
 
 @ftable @code
 @item Plugin(AnalyseCurvedMesh)
-Plugin(AnalyseCurvedMesh) analyse all elements of a given dimension. According to what is asked, it computes the minimum of the Jacobian determinant (J), the IGE quality measure (Inverse Gradient Error) and/or the ICN quality measure (Inverse Condition Number). Statistics are printed and, if asked, a Pview is created for each measure. The plugin hides elements for which the measure mu > 'Hidding threshold', where mu is the ICN measure if asked otherwise the IGE measure if asked otherwise the Jacobian determinant.@*
+Plugin(AnalyseCurvedMesh) analyse all elements of a given dimension. According to what is asked, it computes the minimum of the Jacobian determinant (J), the IGE quality measure (Inverse Gradient Error) and/or the ICN quality measure (Inverse Condition Number). Statistics are printed and, if asked, a Pview is created for each measure. The plugin hides elements for which the measure mu > 'Hiding threshold', where mu is the ICN measure if asked otherwise the IGE measure if asked otherwise the Jacobian determinant.@*
 @*
 J is faster to compute but gives information only on validity while the other measure gives also information on quality.@*
 The IGE measure is related to the error on the gradient of the finite element solution. It is the scaled Jacobian for quads and hexes and a new measure for triangles and tetrahedra.@*
@@ -20,7 +20,7 @@ Parameters:@*
 @*
 - ICN measure = @{0, 1@}@*
 @*
-- Hidding threshold = [0, 1]: Hides all element for which min(mu) is strictly greater than the threshold, where mu is the ICN if ICN measure == 1, otherwise mu is the IGE it IGE measure == 1, otherwise mu is the Jacobian determinant.@*
+- Hiding threshold = [0, 1]: Hides all element for which min(mu) is strictly greater than the threshold, where mu is the ICN if ICN measure == 1, otherwise mu is the IGE it IGE measure == 1, otherwise mu is the Jacobian determinant.@*
 If threshold == 0, hides all elements except invalid.@*
 @*
 - Draw PView = @{0, 1@}: Creates a PView of min(J)/max(J), min(IGE) and/or min(ICN) according to what is asked. If 'Recompute' = 1, new PViews are created.@*
@@ -36,7 +36,7 @@ Default value: @code{1}
 Default value: @code{1}
 @item ICN measure
 Default value: @code{1}
-@item Hidding threshold
+@item Hiding threshold
 Default value: @code{9}
 @item Draw PView
 Default value: @code{0}
@@ -366,14 +366,6 @@ Numeric options:
 Default value: @code{-1}
 @end table
 
-@item Plugin(DuplicateBoundaries)
-Plugin(DuplicateBoundaries) is not documented yet.
-Numeric options:
-@table @code
-@item Dummy
-Default value: @code{1}
-@end table
-
 @item Plugin(Eigenvalues)
 Plugin(Eigenvalues) computes the three real eigenvalues of each tensor in the view `View'.@*
 @*
@@ -441,9 +433,9 @@ Plugin(FaultZone) convert all the embedded lines of an existing surfacic mesh to
 @*
 `SurfaceTag' must be an existing plane surface containing embedded lines. Embedded lines must have been added to the surface via the command Line In Surface. The surface must be meshed with quadratic incomplete elements.@*
 @*
-`Thickness' is the thichness of the flat quadrangles. Set a value different to zero can be helpfull to check the connectivity. @*
+`Thickness' is the thickness of the flat quadrangles. Set a value different to zero can be helpful to check the connectivity. @*
 @*
-`Prefix' is the prefix of the name of physicals containing the new embedded. All physicals containing embedded lines are replaced by physicals containing the coresponding joint elements.
+`Prefix' is the prefix of the name of physicals containing the new embedded. All physicals containing embedded lines are replaced by physicals containing the corresponding joint elements.
 String options:
 @table @code
 @item Prefix

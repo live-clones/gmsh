@@ -98,6 +98,9 @@ class OCC_Internals {
   // get the tag of a shape of a given dimension
   int _find(int dim, TopoDS_Shape shape);
 
+  // get maximum dimension of shape bound to tag
+  int _getMaxDim();
+
   // get (dim,tag) of all shapes (that will be) bound to tags
   void _getAllDimTags(std::vector<std::pair<int, int> > &dimTags, int dim=99);
 
@@ -362,36 +365,6 @@ class OCC_Internals {
   bool makeTorusSTL(double x, double y, double z, double r1, double r2, double angle,
                     std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
                     std::vector<int> &triangles);
-
-  // *** FIXME what follows will be removed ***
- private:
-  TopoDS_Shape _shape;
- public:
-  void _addShapeToLists(TopoDS_Shape shape){ _addShapeToMaps(shape); }
-  void _healGeometry(double tolerance, bool fixdegenerated,
-                     bool fixsmalledges, bool fixspotstripfaces, bool sewfaces,
-                     bool makesolids=false, double scaling=0.0)
-  {
-    _healShape(_shape, tolerance, fixdegenerated, fixsmalledges,
-               fixspotstripfaces, sewfaces, makesolids, scaling);
-  }
-  void applyBooleanOperator(TopoDS_Shape tool, const BooleanOperator &op);
-  TopoDS_Shape getShape () { return _shape; }
-  void buildLists();
-  void buildShapeFromLists(TopoDS_Shape shape);
-  void fillet(std::vector<TopoDS_Edge> &shapes, double radius);
-  void buildShapeFromGModel(GModel*);
-  void buildGModel(GModel *gm);
-  void loadShape(const TopoDS_Shape *s)
-  {
-    std::vector<std::pair<int, int> > outDimTags;
-    importShapes(s, false, outDimTags);
-  }
-  GVertex *addVertexToModel(GModel *model, TopoDS_Vertex v);
-  GEdge *addEdgeToModel(GModel *model, TopoDS_Edge e);
-  GFace *addFaceToModel(GModel *model, TopoDS_Face f);
-  GRegion *addRegionToModel(GModel *model, TopoDS_Solid r);
-  // *** FIXME end of stuff that will be removed ***
 };
 
 #else

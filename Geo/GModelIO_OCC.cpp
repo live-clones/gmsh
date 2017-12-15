@@ -66,6 +66,7 @@
 #include <Geom_TrimmedCurve.hxx>
 #include <IGESControl_Reader.hxx>
 #include <IGESControl_Writer.hxx>
+#include <Interface_Static.hxx>
 #include <Poly_Triangulation.hxx>
 #include <Poly_Triangle.hxx>
 #include <STEPControl_Reader.hxx>
@@ -1344,6 +1345,10 @@ bool OCC_Internals::_makeSphere(TopoDS_Solid &result, double xc, double yc, doub
     Msg::Error("Sphere radius should be positive");
     return false;
   }
+  if(angle3 <= 0 || angle3 > 2 * M_PI){
+    Msg::Error("Cannot build sphere with angle <= 0 or angle > 2*Pi");
+    return false;
+  }
   try{
     gp_Pnt p(xc, yc, zc);
     BRepPrimAPI_MakeSphere s(p, radius, angle1, angle2, angle3);
@@ -1423,6 +1428,10 @@ bool OCC_Internals::_makeCylinder(TopoDS_Solid &result, double x, double y, doub
   const double H = sqrt(dx * dx + dy * dy + dz * dz);
   if(!H){
     Msg::Error("Cannot build cylinder of zero height");
+    return false;
+  }
+  if(angle <= 0 || angle > 2 * M_PI){
+    Msg::Error("Cannot build cylinder with angle <= 0 or angle > 2*Pi");
     return false;
   }
   try{
@@ -2380,6 +2389,14 @@ bool OCC_Internals::booleanFragments(int tag,
                          outDimTags, outDimTagsMap, removeObject, removeTool);
 }
 
+int OCC_Internals::_getMaxDim()
+{
+  if(_tagSolid.Extent()) return 3;
+  if(_tagFace.Extent()) return 2;
+  if(_tagEdge.Extent()) return 1;
+  return 0;
+}
+
 void OCC_Internals::_getAllDimTags(std::vector<std::pair<int, int> > &dimTags, int dim)
 {
   for(int d = -2; d < 4; d++){
@@ -2402,7 +2419,7 @@ void OCC_Internals::removeAllDuplicates()
 {
   std::vector<std::pair<int, int> > objectDimTags, toolDimTags, outDimTags;
   std::vector<std::vector<std::pair<int, int> > > outDimTagsMap;
-  _getAllDimTags(objectDimTags); // all shapes (that will be) bound to tags
+  _getAllDimTags(objectDimTags, _getMaxDim());
   booleanFragments(-1, objectDimTags, toolDimTags, outDimTags, outDimTagsMap,
                    true, true);
 }
@@ -2483,6 +2500,23 @@ bool OCC_Internals::_transform(const std::vector<std::pair<int, int> > &inDimTag
     result = gtfo->Shape();
   }
 
+  // copy vertex-based meshing attributes
+  TopExp_Explorer exp0;
+  for(exp0.Init(c, TopAbs_VERTEX); exp0.More(); exp0.Next()){
+    TopoDS_Vertex vertex = TopoDS::Vertex(exp0.Current());
+    TopoDS_Shape transformed;
+    if(tfo)
+      transformed = tfo->ModifiedShape(vertex);
+    else if(gtfo)
+      transformed = gtfo->ModifiedShape(vertex);
+    if(!transformed.IsNull()){
+      double lc = _meshAttributes->getMeshSize(0, vertex);
+      if(lc > 0 && lc < MAX_LC)
+        _meshAttributes->insert(new OCCMeshAttributes(0, transformed, lc));
+    }
+  }
+
+  // try to re-bind trasnformed shapes to same tags as original shapes
   std::vector<TopoDS_Shape> outShapes;
   _addSimpleShapes(result, outShapes);
 
@@ -2591,6 +2625,13 @@ bool OCC_Internals::remove(const std::vector<std::pair<int, int> > &dimTags,
   return ret;
 }
 
+static void setTargetUnit(std::string unit)
+{
+  if(unit.empty()) return; // use unit specified in the file
+  if(!Interface_Static::SetCVal("xstep.cascade.unit", unit.c_str()))
+    Msg::Error("Could not set OpenCASCADE target unit '%s'", unit.c_str());
+}
+
 bool OCC_Internals::importShapes(const std::string &fileName, bool highestDimOnly,
                                  std::vector<std::pair<int, int> > &outDimTags,
                                  const std::string &format)
@@ -2619,6 +2660,7 @@ bool OCC_Internals::importShapes(const std::string &fileName, bool highestDimOnl
       }
       dummy_app->NewDocument("STEP-XCAF", step_doc);
       STEPCAFControl_Reader reader;
+      setTargetUnit(CTX::instance()->geom.occTargetUnit);
       if(reader.ReadFile(fileName.c_str()) != IFSelect_RetDone){
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return false;
@@ -2658,6 +2700,7 @@ bool OCC_Internals::importShapes(const std::string &fileName, bool highestDimOnl
       result = step_shape_contents->GetShape(step_shapes.Value(1));
 #else
       STEPControl_Reader reader;
+      setTargetUnit(CTX::instance()->geom.occTargetUnit);
       if(reader.ReadFile(fileName.c_str()) != IFSelect_RetDone){
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return false;
@@ -2671,6 +2714,7 @@ bool OCC_Internals::importShapes(const std::string &fileName, bool highestDimOnl
             split[2] == ".iges" || split[2] == ".igs" ||
             split[2] == ".IGES" || split[2] == ".IGS"){
       IGESControl_Reader reader;
+      setTargetUnit(CTX::instance()->geom.occTargetUnit);
       if(reader.ReadFile(fileName.c_str()) != IFSelect_RetDone){
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return false;
@@ -2742,6 +2786,7 @@ bool OCC_Internals::exportShapes(const std::string &fileName,
             split[2] == ".step" || split[2] == ".stp" ||
             split[2] == ".STEP" || split[2] == ".STP"){
       STEPControl_Writer writer;
+      setTargetUnit(CTX::instance()->geom.occTargetUnit);
       if(writer.Transfer(c, STEPControl_AsIs) == IFSelect_RetDone){
         if(writer.Write(fileName.c_str()) != IFSelect_RetDone){
           Msg::Error("Could not create file '%s'", fileName.c_str());
@@ -2880,6 +2925,9 @@ void OCC_Internals::synchronize(GModel *model)
     }
     _copyExtrudedMeshAttributes(region, occr);
   }
+
+  // recompute global boundind box in CTX
+  SetBoundingBox();
 
   Msg::Debug("GModel imported:");
   Msg::Debug("%d vertices", model->getNumVertices());
@@ -3611,461 +3659,6 @@ bool OCC_Internals::makeTorusSTL(double x, double y, double z, double r1, double
     return false;
   return true;
 }
-/*
-void dumpStepLabels(STEPControl_Reader reader)
-{
-  const Handle(XSControl_WorkSession) &theSession = reader.WS();
-  const Handle(Interface_InterfaceModel) &theModel = theSession->Model();
-  Standard_Integer nb = theModel->NbEntities();
-  for(Standard_Integer i=1; i < ....) {
-    Handle(StepRepr_Representation) entity =
-      Handle(StepRepr_Representation)::DownCast(theModel->Value(i));
-    if(entity.IsNull()){
-      continue;
-    }
-    if(entity->Name().IsNull()){
-      continue;
-    }
-    cout << Name()->ToCString();
-  }
-}
-
-void dumpIgesLabels(IGESControl_Reader reader)
-{
-  const Handle(XSControl_WorkSession) & theSession = reader.WS();
-  const Handle(Interface_InterfaceModel) & theModel = theSession->Model();
-  Standard_Integer nb = theModel->NbEntities();
-  for(Standard_Integer i=1; i<...; i++){
-    Handle(IGESData_IGESEntity) entity =
-      Handle(IGESData_IGESEntity)::DownCast(theModel->Value(i));
-    if(entity.IsNull()){
-      continue;
-    }
-    if(entity->HasName()){
-      cout << NameValue()->String().ToCString();
-    }
-  }
-}
-*/
-
-// FIXME ***************** BEGIN WILL BE REMOVED ************************
-
-void addSimpleShapes(TopoDS_Shape theShape, TopTools_ListOfShape &theList)
-{
-  if(theShape.ShapeType() != TopAbs_COMPOUND &&
-     theShape.ShapeType() != TopAbs_COMPSOLID) {
-    theList.Append(theShape);
-    return;
-  }
-
-  TopTools_MapOfShape mapShape;
-  TopoDS_Iterator It(theShape, Standard_True, Standard_True);
-
-  for(; It.More(); It.Next()) {
-    TopoDS_Shape aShape_i = It.Value();
-    if(mapShape.Add(aShape_i)) {
-      if(aShape_i.ShapeType() == TopAbs_COMPOUND ||
-         aShape_i.ShapeType() == TopAbs_COMPSOLID) {
-        addSimpleShapes(aShape_i, theList);
-      }
-      else {
-        theList.Append(aShape_i);
-      }
-    }
-  }
-}
-
-void OCC_Internals::buildLists()
-{
-  _somap.Clear();
-  _shmap.Clear();
-  _fmap.Clear();
-  _wmap.Clear();
-  _emap.Clear();
-  _vmap.Clear();
-  _addShapeToMaps(_shape);
-}
-
-void OCC_Internals::buildShapeFromGModel(GModel* gm)
-{
-  _somap.Clear();
-  _shmap.Clear();
-  _fmap.Clear();
-  _wmap.Clear();
-  _emap.Clear();
-  _vmap.Clear();
-  for (GModel::riter it = gm->firstRegion(); it != gm->lastRegion() ; ++it){
-    if ((*it)->getNativeType() == GEntity::OpenCascadeModel){
-      OCCRegion *occ = static_cast<OCCRegion*> (*it);
-      if(occ) _addShapeToMaps(occ->getTopoDS_Shape());
-    }
-  }
-  for (GModel::fiter it = gm->firstFace(); it != gm->lastFace() ; ++it){
-    if ((*it)->getNativeType() == GEntity::OpenCascadeModel){
-      OCCFace *occ = static_cast<OCCFace*> (*it);
-      if(occ) _addShapeToMaps(occ->getTopoDS_Face());
-    }
-  }
-  BRep_Builder B;
-  TopoDS_Compound C;
-  B.MakeCompound(C);
-  for(int i = 1; i <= _vmap.Extent(); i++) B.Add(C, _vmap(i));
-  for(int i = 1; i <= _emap.Extent(); i++) B.Add(C, _emap(i));
-  for(int i = 1; i <= _wmap.Extent(); i++) B.Add(C, _wmap(i));
-  for(int i = 1; i <= _fmap.Extent(); i++) B.Add(C, _fmap(i));
-  for(int i = 1; i <= _shmap.Extent(); i++) B.Add(C, _shmap(i));
-  for(int i = 1; i <= _somap.Extent(); i++) B.Add(C, _somap(i));
-  _shape = C;
-}
-
-void OCC_Internals::buildShapeFromLists(TopoDS_Shape shape)
-{
-  BRep_Builder B;
-  TopoDS_Compound C;
-  B.MakeCompound(C);
-
-  TopTools_ListOfShape theList;
-  addSimpleShapes(shape, theList);
-  TopTools_ListIteratorOfListOfShape itSub1(theList);
-  for (; itSub1.More(); itSub1.Next()) B.Add(C, itSub1.Value());
-
-  for(int i = 1; i <= _vmap.Extent(); i++) B.Add(C, _vmap(i));
-  for(int i = 1; i <= _emap.Extent(); i++) B.Add(C, _emap(i));
-  for(int i = 1; i <= _wmap.Extent(); i++) B.Add(C, _wmap(i));
-  for(int i = 1; i <= _fmap.Extent(); i++) B.Add(C, _fmap(i));
-  for(int i = 1; i <= _shmap.Extent(); i++) B.Add(C, _shmap(i));
-  for(int i = 1; i <= _somap.Extent(); i++) B.Add(C, _somap(i));
-  _shape = C;
-}
-
-GVertex *OCC_Internals::addVertexToModel(GModel *model, TopoDS_Vertex vertex)
-{
-  GVertex *gv = getVertexForOCCShape(model, vertex);
-  if(gv) return gv;
-  _addShapeToMaps(vertex);
-  buildShapeFromLists(vertex);
-  buildGModel(model);
-  return getVertexForOCCShape(model, vertex);
-}
-
-GEdge *OCC_Internals::addEdgeToModel(GModel *model, TopoDS_Edge edge)
-{
-  GEdge *ge = getEdgeForOCCShape(model, edge);
-  if(ge) return ge;
-  _addShapeToMaps(edge);
-  buildShapeFromLists(edge);
-  buildGModel(model);
-  return getEdgeForOCCShape(model, edge);
-}
-
-GFace* OCC_Internals::addFaceToModel(GModel *model, TopoDS_Face face)
-{
-  GFace *gf = getFaceForOCCShape(model, face);
-  if(gf) return gf;
-  _addShapeToMaps(face);
-  buildShapeFromLists(face);
-  buildGModel(model);
-  return getFaceForOCCShape(model, face);
-}
-
-GRegion* OCC_Internals::addRegionToModel(GModel *model, TopoDS_Solid region)
-{
-  GRegion *gr = getRegionForOCCShape(model, region);
-  if(gr) return gr;
-
-  //   FIXME THE PREVIOUS IMPLEMENTATION WAS BETTER FOR SOME USERS :-)
-  buildShapeFromLists(region);
-  model->destroy();
-  buildLists();
-  buildGModel(model);
-  return getRegionForOCCShape(model, region);
-  //  _addShapeToMaps(region);
-  //  buildShapeFromLists(region);
-  //  buildGModel(model);
-  //  return getRegionForOCCShape(model, region);
-}
-
-void OCC_Internals::buildGModel(GModel *model)
-{
-  // building geom vertices
-  int numv = model->getMaxElementaryNumber(0) + 1;
-  for(int i = 1; i <= _vmap.Extent(); i++){
-    TopoDS_Vertex vertex = TopoDS::Vertex(_vmap(i));
-    if(!getVertexForOCCShape(model, vertex)){
-      model->add(new OCCVertex(model, numv, vertex));
-      numv++;
-    }
-  }
-
-  // building geom edges
-  int nume = model->getMaxElementaryNumber(1) + 1;
-  for(int i = 1; i <= _emap.Extent(); i++){
-    int i1 = _vmap.FindIndex(TopExp::FirstVertex(TopoDS::Edge(_emap(i))));
-    int i2 = _vmap.FindIndex(TopExp::LastVertex(TopoDS::Edge(_emap(i))));
-    if(!getEdgeForOCCShape(model, TopoDS::Edge(_emap(i)))){
-      GVertex *v1 = getVertexForOCCShape(model, TopoDS::Vertex(_vmap(i1)));
-      GVertex *v2 = getVertexForOCCShape(model, TopoDS::Vertex(_vmap(i2)));
-      model->add(new OCCEdge(model, TopoDS::Edge(_emap(i)), nume, v1, v2));
-      nume++;
-    }
-  }
-
-  // building geom faces
-  int numf = model->getMaxElementaryNumber(2) + 1;
-  for(int i = 1; i <= _fmap.Extent(); i++){
-    if(!getFaceForOCCShape(model, TopoDS::Face(_fmap(i)))){
-      model->add(new OCCFace(model, TopoDS::Face(_fmap(i)), numf));
-      numf++;
-    }
-  }
-
-  // building geom regions
-  int numr = model->getMaxElementaryNumber(3) + 1;
-  for(int i = 1; i <= _somap.Extent(); i++){
-    if(!getRegionForOCCShape(model, TopoDS::Solid(_somap(i)))){
-      model->add(new OCCRegion(model, TopoDS::Solid(_somap(i)), numr));
-      numr++;
-    }
-  }
-}
-
-void OCC_Internals::applyBooleanOperator(TopoDS_Shape tool, const BooleanOperator &op)
-{
-  if(tool.IsNull()) return;
-  if(_shape.IsNull()){
-    _shape = tool;
-    return;
-  }
-
-  switch(op){
-  case OCC_Internals::Intersection :
-    {
-      TopoDS_Shape theNewShape;
-      BRep_Builder B;
-      TopoDS_Compound C;
-      B.MakeCompound(C);
-      TopTools_ListOfShape listShape1, listShape2;
-      addSimpleShapes(_shape, listShape1);
-      addSimpleShapes(tool, listShape2);
-      Standard_Boolean isCompound =
-        (listShape1.Extent() > 1 || listShape2.Extent() > 1);
-
-      TopTools_ListIteratorOfListOfShape itSub1(listShape1);
-      for(; itSub1.More(); itSub1.Next()) {
-        TopoDS_Shape aValue1 = itSub1.Value();
-        TopTools_ListIteratorOfListOfShape itSub2(listShape2);
-        for(; itSub2.More(); itSub2.Next()) {
-          TopoDS_Shape aValue2 = itSub2.Value();
-          BRepAlgoAPI_Common BO(aValue1, aValue2);
-          if(!BO.IsDone()) {
-            Msg::Error("Boolean Intersection Operator can not be performed");
-          }
-          if(isCompound) {
-            TopoDS_Shape aStepResult = BO.Shape();
-            if(aStepResult.ShapeType() == TopAbs_COMPOUND) {
-              TopoDS_Iterator aCompIter(aStepResult);
-              for(; aCompIter.More(); aCompIter.Next()) {
-                B.Add(C, aCompIter.Value());
-              }
-            }
-            else {
-              B.Add(C, aStepResult);
-            }
-          }
-          else
-            theNewShape = BO.Shape();
-        }
-      }
-      if(isCompound) {
-        TopTools_ListOfShape listShapeC;
-        addSimpleShapes(C, listShapeC);
-        TopTools_ListIteratorOfListOfShape itSubC(listShapeC);
-        //bool isOnlySolids = true;
-        for(; itSubC.More(); itSubC.Next()) {
-          TopoDS_Shape aValueC = itSubC.Value();
-          //if(aValueC.ShapeType() != TopAbs_SOLID) isOnlySolids = false;
-        }
-        // if(isOnlySolids)
-        //   theNewShape = GlueFaces(C, Precision::Confusion());
-        // else
-        theNewShape = C;
-      }
-      _shape = theNewShape;
-    }
-    break;
-  case OCC_Internals::Difference :
-    {
-      TopoDS_Shape theNewShape;
-      BRep_Builder B;
-      TopoDS_Compound C;
-      B.MakeCompound(C);
-
-      TopTools_ListOfShape listShapes, listTools;
-      addSimpleShapes(_shape, listShapes);
-      addSimpleShapes(tool, listTools);
-
-      Standard_Boolean isCompound = (listShapes.Extent() > 1);
-
-      TopTools_ListIteratorOfListOfShape itSub1(listShapes);
-      for(; itSub1.More(); itSub1.Next()) {
-        TopoDS_Shape aCut = itSub1.Value();
-        // tools
-        TopTools_ListIteratorOfListOfShape itSub2(listTools);
-        for(; itSub2.More(); itSub2.Next()) {
-          TopoDS_Shape aTool = itSub2.Value();
-          BRepAlgoAPI_Cut BO(aCut, aTool);
-          if(!BO.IsDone()) {
-            Msg::Error("Cut operation can not be performed on the given shapes");
-            return;
-          }
-          aCut = BO.Shape();
-        }
-        if(isCompound) {
-          if(aCut.ShapeType() == TopAbs_COMPOUND) {
-            TopoDS_Iterator aCompIter(aCut);
-            for(; aCompIter.More(); aCompIter.Next()) {
-              B.Add(C, aCompIter.Value());
-            }
-          }
-          else {
-            B.Add(C, aCut);
-          }
-        }
-        else
-          theNewShape = aCut;
-      }
-
-      if(isCompound) {
-        TopTools_ListOfShape listShapeC;
-        addSimpleShapes(C, listShapeC);
-        TopTools_ListIteratorOfListOfShape itSubC(listShapeC);
-        //bool isOnlySolids = true;
-        for(; itSubC.More(); itSubC.Next()) {
-          TopoDS_Shape aValueC = itSubC.Value();
-          //if(aValueC.ShapeType() != TopAbs_SOLID) isOnlySolids = false;
-        }
-        // if(isOnlySolids)
-        //   theNewShape = GlueFaces(C, Precision::Confusion());
-        // else
-        theNewShape = C;
-      }
-      _shape = theNewShape;
-    }
-    break;
-  case OCC_Internals::Union :
-    {
-      TopoDS_Solid solid1, solid2;
-      int hack = 0;
-      if(_shape.ShapeType() != TopAbs_SOLID && tool.ShapeType() != TopAbs_SOLID){
-        TopExp_Explorer exp0;
-        for(exp0.Init(_shape, TopAbs_SOLID); exp0.More(); exp0.Next()){
-          solid1 = TopoDS::Solid(exp0.Current());
-          hack++;
-          break;
-        }
-        for(exp0.Init(tool, TopAbs_SOLID); exp0.More(); exp0.Next()){
-          solid2 = TopoDS::Solid(exp0.Current());
-          hack++;
-          break;
-        }
-      }
-      if(hack == 2){ // FIXME: just a temp hack!
-        Msg::Info("Temporary hack in Fuse :-)");
-        BRepAlgoAPI_Fuse BO(solid1, solid2);
-        if(!BO.IsDone()) {
-          Msg::Error("Fuse operation can not be performed on the given shapes");
-        }
-        _shape = BO.Shape();
-      }
-      else{
-        BRepAlgoAPI_Fuse BO(tool, _shape);
-        if(!BO.IsDone()) {
-          Msg::Error("Fuse operation can not be performed on the given shapes");
-        }
-        _shape = BO.Shape();
-      }
-    }
-    break;
-  case OCC_Internals::Section :
-    {
-      TopoDS_Shape theNewShape;
-      BRep_Builder B;
-      TopoDS_Compound C;
-      B.MakeCompound(C);
-
-      TopTools_ListOfShape listShapes, listTools;
-      addSimpleShapes(_shape, listShapes);
-      addSimpleShapes(tool, listTools);
-
-      Standard_Boolean isCompound = (listShapes.Extent() > 1);
-      TopTools_ListIteratorOfListOfShape itSub1(listShapes);
-      for(; itSub1.More(); itSub1.Next()) {
-        TopoDS_Shape aValue1 = itSub1.Value();
-        TopTools_ListIteratorOfListOfShape itSub2(listTools);
-        for(; itSub2.More(); itSub2.Next()) {
-          TopoDS_Shape aValue2 = itSub2.Value();
-          BRepAlgoAPI_Section BO(aValue1, aValue2, Standard_False);
-          BO.Approximation(Standard_True);
-          BO.Build();
-          if(!BO.IsDone()) {
-            Msg::Error("Section operation can not be performed on the given shapes");
-            return;
-          }
-          if(isCompound) {
-            TopoDS_Shape aStepResult = BO.Shape();
-            if(aStepResult.ShapeType() == TopAbs_COMPOUND) {
-              TopoDS_Iterator aCompIter(aStepResult);
-              for(; aCompIter.More(); aCompIter.Next()) {
-                B.Add(C, aCompIter.Value());
-              }
-            }
-            else {
-              B.Add(C, aStepResult);
-            }
-          }
-          else
-            theNewShape = BO.Shape();
-        }
-      }
-      if(isCompound)
-        theNewShape = C;
-      _shape = theNewShape;
-    }
-    break;
-  default :
-    Msg::Error("Requested boolean operation not implemented");
-    break;
-  }
-}
-
-void OCC_Internals::fillet(std::vector<TopoDS_Edge> &edgesToFillet,
-                           double Radius)
-{
-  // create a tool for fillet
-  BRepFilletAPI_MakeFillet fill(_shape);
-  for(unsigned int i = 0; i < edgesToFillet.size(); ++i){
-    fill.Add(edgesToFillet[i]);
-  }
-  for(int i = 1; i <= fill.NbContours(); i++){
-    fill.SetRadius(Radius, i, 1);
-  }
-  fill.Build();
-  if(!fill.IsDone()) {
-    Msg::Error("Fillet can't be computed on the given shape with the given radius");
-    return;
-  }
-  _shape = fill.Shape();
-
-  if(_shape.IsNull()) return;
-
-  // Check shape validity
-  BRepCheck_Analyzer ana(_shape, false);
-  if(!ana.IsValid()) {
-    Msg::Error("Fillet algorithm have produced an invalid shape result");
-  }
-}
-
-// FIXME ***************** END OF WILL BE REMOVED ************************
 
 #endif
 
@@ -4150,7 +3743,6 @@ int GModel::importOCCShape(const void *shape)
 #endif
   _occ_internals->synchronize(this);
   snapVertices();
-  SetBoundingBox();
   return 1;
 }
 

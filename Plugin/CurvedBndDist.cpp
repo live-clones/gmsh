@@ -3,7 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
-#include "Gmsh.h"
+#include "GmshGlobal.h"
 #include "GmshConfig.h"
 #include "GModel.h"
 #include "MElement.h"

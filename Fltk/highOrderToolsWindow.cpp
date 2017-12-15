@@ -135,6 +135,21 @@ static void chooseopti_cb(Fl_Widget *w, void *data)
     o->value[11]->deactivate();
     break;
   }
+  case 3: {                                           // Fast curving 2
+    o->choice[0]->deactivate();
+    o->choice[3]->deactivate();
+    o->value[1]->deactivate();
+    o->value[2]->deactivate();
+    o->value[3]->deactivate();
+    o->value[4]->deactivate();
+    o->value[5]->deactivate();
+    o->value[7]->deactivate();
+    o->value[8]->deactivate();
+    o->value[9]->deactivate();
+    o->value[10]->deactivate();
+    o->value[11]->deactivate();
+    break;
+  }
   }
 
 }
@@ -186,7 +201,8 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     p.adaptBlobLayerFact = (int) o->value[10]->value();
     p.adaptBlobDistFact = o->value[11]->value();
     p.optPrimSurfMesh = false;
-    HighOrderMeshOptimizer(GModel::current(), p);
+    // HighOrderMeshOptimizer(GModel::current(), p);
+    HighOrderMeshOptimizerNew(GModel::current(), p);
     break;
   }
   case 1: {                                                               // Elastic analogy
@@ -197,6 +213,16 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     FastCurvingParameters p;
     p.onlyVisible = onlyVisible;
     p.dim = dim;
+    p.curveOuterBL = FastCurvingParameters::OUTER_CURVE;
+    p.thickness = false;
+    HighOrderMeshFastCurving(GModel::current(), p);
+    break;
+  }
+  case 3: {                                                   // Fast curving 2
+    FastCurvingParameters p;
+    p.onlyVisible = onlyVisible;
+    p.dim = dim;
+    p.thickness = true;
     HighOrderMeshFastCurving(GModel::current(), p);
     break;
   }
@@ -305,6 +331,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
     {"Optimization", 0, 0, 0},
     {"Elastic Analogy", 0, 0, 0},
     {"Fast Curving", 0, 0, 0},
+    {"Fast Curving 2 (experimental)", 0, 0, 0},
     {0}
   };
   choice[2] = new Fl_Choice

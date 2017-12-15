@@ -92,18 +92,8 @@ class MPrism : public MElement {
                    _v[faces_prism(num, 2)],
                    _v[faces_prism(num, 3)]);
   }
-  virtual int getNumFacesRep(bool curved){ return 8; }
-  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
-  {
-    static const int f[8][3] = {
-      {0, 2, 1},
-      {3, 4, 5},
-      {0, 1, 4}, {0, 4, 3},
-      {0, 3, 5}, {0, 5, 2},
-      {1, 2, 5}, {1, 5, 4}
-    };
-    _getFaceRep(_v[f[num][0]], _v[f[num][1]], _v[f[num][2]], x, y, z, n);
-  }
+  virtual int getNumFacesRep(bool curved);
+  virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {
     v.resize((num < 2) ? 3 : 4);

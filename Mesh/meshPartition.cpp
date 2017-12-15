@@ -30,7 +30,12 @@
 #include "MTrihedron.h"
 #include "MElementCut.h"
 #include "MPoint.h"
-#include "GFaceCompound.h"
+#include "partitionVertex.h"
+#include "partitionEdge.h"
+#include "partitionFace.h"
+#include "discreteEdge.h"
+#include "discreteFace.h"
+#include "discreteRegion.h"
 
 //--Prototypes for METIS
 

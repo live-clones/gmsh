@@ -40,6 +40,8 @@ StringXString GeneralOptions_String[] = {
 
   { F|O, "BackgroundImageFileName" , opt_general_background_image_filename , "" ,
     "Background image file in JPEG, PNG or PDF format" },
+  { F,   "BuildOptions" , opt_general_build_options , "" ,
+    "Gmsh build options (read-only)" },
 
   { F|O, "DefaultFileName" , opt_general_default_filename , "untitled.geo" ,
     "Default project file name" },
@@ -123,6 +125,9 @@ StringXString GeneralOptions_String[] = {
 #endif
     "Temporary file used by the geometry module" },
 
+  { F,   "Version" , opt_general_version , "" ,
+    "Gmsh version (read-only)" },
+
   { F, "WatchFilePattern", opt_general_watch_file_pattern , "" ,
      "Pattern of files to merge as they become available"},
 
@@ -138,6 +143,11 @@ StringXString GeometryOptions_String[] = {
     "Command parsed when double-clicking on a surface" },
   { F|O, "DoubleClickedVolumeCommand" , opt_geometry_double_clicked_volume_command, "" ,
     "Command parsed when double-clicking on a volume" },
+
+  { F|O, "OCCTargetUnit" , opt_geometry_occ_target_unit , "M" ,
+    "Length unit to which coordinates from STEP and IGES files are converted to when "
+    "imported by OpenCASCADE (leave empty to keep the unit defined in the STEP and "
+    "IGES file)"},
 
   { 0, 0 , 0 , "" , 0 }
 } ;
@@ -675,6 +685,8 @@ StringXNumber GeneralOptions_Number[] = {
   { F|O, "NoPopup" , opt_general_nopopup , 0. ,
     "Disable interactive dialog windows in scripts (and use default values "
     "instead)" },
+  { F|O, "NumThreads" , opt_general_num_threads , 1. ,
+    "Set (maximum) number of threads" },
 
   { F|S, "OptionsPositionX" , opt_general_option_position0 , 650. ,
     "Horizontal position (in pixels) of the upper left corner of the option "
@@ -829,8 +841,6 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "ExtrudeSplinePoints" , opt_geometry_extrude_spline_points, 5. ,
     "Number of control points for splines created during extrusion" },
 
-  { F|O, "HideCompounds" , opt_geometry_hide_compounds, 1. ,
-    "Hide entities that make up compound entities?" },
   { F|O, "HighlightOrphans" , opt_geometry_highlight_orphans, 0. ,
     "Highlight orphan entities (lines connected to a single surface, etc.)?" },
 
@@ -838,7 +848,7 @@ StringXNumber GeometryOptions_Number[] = {
     "Type of entity label (1=elementary number, 2=physical number)" },
   { F|O, "Light" , opt_geometry_light , 1. ,
     "Enable lighting for the geometry" },
-  { F|O, "LightTwoSide" , opt_geometry_light_two_side , 0. ,
+  { F|O, "LightTwoSide" , opt_geometry_light_two_side , 1. ,
     "Light both sides of surfaces (leads to slower rendering)" },
   { F|O, "Lines" , opt_geometry_lines , 1. ,
     "Display geometry curves?" },
@@ -961,12 +971,7 @@ StringXNumber GeometryOptions_Number[] = {
 StringXNumber MeshOptions_Number[] = {
   { F|O, "Algorithm" , opt_mesh_algo2d , ALGO_2D_AUTO ,
     "2D mesh algorithm (1=MeshAdapt, 2=Automatic, 5=Delaunay, 6=Frontal, 7=BAMG, 8=DelQuad)" },
-  { F|O, "Algorithm3D" , opt_mesh_algo3d ,
-#if defined(HAVE_TETGEN)
-    ALGO_3D_DELAUNAY ,
-#else
-    ALGO_3D_DELAUNAY_NEW ,
-#endif
+  { F|O, "Algorithm3D" , opt_mesh_algo3d , ALGO_3D_DELAUNAY_NEW ,
     "3D mesh algorithm (1=Delaunay, 2=New Delaunay, 4=Frontal, 5=Frontal Delaunay, "
     "6=Frontal Hex, 7=MMG3D, 9=R-tree)" },
   { F|O, "AngleSmoothNormals" , opt_mesh_angle_smooth_normals , 30.0 ,
@@ -1022,7 +1027,7 @@ StringXNumber MeshOptions_Number[] = {
     "Element shrinking factor (between 0 and 1)" },
 
   { F|O, "FlexibleTransfinite" , opt_mesh_flexible_transfinite , 0 ,
-    "Allow transfinite contraints to be modified for Blossom or by global mesh size factor" },
+    "Allow transfinite constraints to be modified for Blossom or by global mesh size factor" },
   { F|O, "NewtonConvergenceTestXYZ" , opt_mesh_newton_convergence_test_xyz , 0. ,
     "Force inverse surface mapping algorithm (Newton-Raphson) to converge in real "
     "coordinates (experimental)" },
@@ -1057,7 +1062,7 @@ StringXNumber MeshOptions_Number[] = {
     "Enable lighting for the mesh" },
   { F|O, "LightLines" , opt_mesh_light_lines , 2. ,
     "Enable lighting for mesh edges (0=no, 1=surfaces, 2=surfaces+volumes" },
-  { F|O, "LightTwoSide" , opt_mesh_light_two_side , 0. ,
+  { F|O, "LightTwoSide" , opt_mesh_light_two_side , 1. ,
     "Light both sides of surfaces (leads to slower rendering)" },
   { F|O, "Lines" , opt_mesh_lines , 0. ,
     "Display mesh lines (1D elements)?" },
@@ -1066,6 +1071,12 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "LineWidth" , opt_mesh_line_width , 1.0 ,
     "Display width of mesh lines (in pixels)" },
 
+  { F|O, "MaxNumThreads1D" , opt_mesh_max_num_threads_1d , 0. ,
+    "Maximum number of threads for 1D meshing (0: use default number of threads)" },
+  { F|O, "MaxNumThreads2D" , opt_mesh_max_num_threads_2d , 0. ,
+    "Maximum number of threads for 2D meshing (0: use default number of threads)" },
+  { F|O, "MaxNumThreads3D" , opt_mesh_max_num_threads_3d , 0. ,
+    "Maximum number of threads for 3D meshing (0: use default number of threads)" },
   { F|O, "MeshOnlyVisible" , opt_mesh_mesh_only_visible, 0. ,
     "Mesh only visible entities (experimental: use with caution!)" },
   { F|O, "MetisAlgorithm" , opt_mesh_partition_metis_algorithm, 1. ,
@@ -1172,7 +1183,7 @@ StringXNumber MeshOptions_Number[] = {
     "Preserve element numbering in MSH2 format (will break meshes with multiple "
     "physical groups for a single elementary entity)"},
   { F|O, "IgnorePeriodicity" , opt_mesh_ignore_periodicity , 0. ,
-    "Ignore alignement of periodic boundaries when reading the mesh "
+    "Ignore alignment of periodic boundaries when reading the mesh "
     "(used by ParaView plugin)"},
 #if defined(HAVE_BLOSSOM)
   { F|O, "RecombinationAlgorithm" , opt_mesh_algo_recombine , 1 ,
@@ -1214,8 +1225,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "SaveParametric" , opt_mesh_save_parametric , 0. ,
     "Save parametric coordinates of nodes" },
   { F|O, "SaveGroupsOfNodes" , opt_mesh_save_groups_of_nodes , 0. ,
-    "Save groups of nodes for each physical line and surface (UNV mesh "
-    "format only)" },
+    "Save groups of nodes for each physical line and surface (for UNV, INP and Tochnog "
+    "mesh formats)" },
   { F|O, "ScalingFactor" , opt_mesh_scaling_factor , 1.0 ,
     "Global scaling factor applied to the saved mesh" },
   { F|O, "SecondOrderExperimental" , opt_mesh_second_order_experimental , 0. ,
@@ -1279,10 +1290,10 @@ StringXNumber SolverOptions_Number[] = {
     "Automatically load the ONELAB database when launching a solver" },
   { F|O, "AutoSaveDatabase" , opt_solver_auto_save_database , 1. ,
     "Automatically save the ONELAB database after each computation" },
-  { F|O, "AutoMesh" , opt_solver_auto_mesh , 1. ,
-    "Automatically mesh if necesssary (0: never remesh; 1: on startup, use existing "
-    "mesh on disk if available; 2: always remesh; -1: the geometry script creates "
-    "the mesh)" },
+  { F|O, "AutoMesh" , opt_solver_auto_mesh , 2. ,
+    "Automatically mesh (0: never; 1: if geometry changed, but use existing "
+    "mesh on disk if available; 2: if geometry changed; -1: the geometry script "
+    "creates the mesh)" },
   { F|O, "AutoMergeFile" , opt_solver_auto_merge_file , 1. ,
     "Automatically merge result files" },
   { F|O, "AutoShowViews" , opt_solver_auto_show_views , 2. ,
@@ -1348,6 +1359,10 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "Plugins" , opt_post_plugins , 1. ,
     "Enable default post-processing plugins?" },
 
+  { F|O, "SaveInterpolationMatrices" , opt_post_save_interpolation_matrices , 1. ,
+    "Save the interpolation matrices when exporting model-based data" },
+  { F|O, "SaveMesh" , opt_post_save_mesh , 1. ,
+    "Save the mesh when exporting model-based data" },
   { F|O, "Smoothing" , opt_post_smooth , 0. ,
     "Apply (non-reversible) smoothing to post-processing view when merged" },
 
@@ -1511,7 +1526,7 @@ StringXNumber ViewOptions_Number[] = {
     "Enable lighting for the view" },
   { F|O, "LightLines" , opt_view_light_lines , 1. ,
     "Light element edges" },
-  { F|O, "LightTwoSide" , opt_view_light_two_side , 0. ,
+  { F|O, "LightTwoSide" , opt_view_light_two_side , 1. ,
     "Light both sides of surfaces (leads to slower rendering)" },
   { F|O, "LineType" , opt_view_line_type , 0. ,
     "Display lines as solid color segments (0) or 3D cylinders (1)" },

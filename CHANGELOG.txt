@@ -1,5 +1,12 @@
-3.0.6: improved meshing of spheres; implement "Coherence" for OpenCASCADE
-kernel, as a shortcut to BooleanFragments; bug fixes.
+3.1.0: new C++, C and Python API (in beta); removed GModelFactory,
+G{Edge,Face,Region}Compounds and old reparametrization code; generalized
+handling of "all" entities in geo file (using {:} notation); various small fixes
+and enhancements.
+
+3.0.6 (November 5, 2017): improved meshing of spheres; improved handling of mesh
+size constraints with OpenCASCADE kernel; implemented "Coherence" for
+OpenCASCADE kernel (shortcut for BooleanFragments); added GAMBIT Neutral File
+export; small improvements and bug fixes.
 
 3.0.5 (September 6, 2017): bug fixes.
 
@@ -148,11 +155,11 @@ understand; many bug fixes and usability improvements all over the place.
 mesh and graphics code refactoring, small usability enhancements and bug fixes.
 
 2.4.0 (Aug 22, 2009): switched build system to CMake; optionally copy
-transfinite mesh contraints during geometry transformations; bumped mesh version
-format to 2.1 (small change in the $PhysicalNames section, where the group
-dimension is now required); ported most plugins to the new post-processing API;
-switched from MathEval to MathEx and Flu_Tree_Browser to Fl_Tree; small bug
-fixes and improvements all over the place.
+transfinite mesh constraints during geometry transformations; bumped mesh
+version format to 2.1 (small change in the $PhysicalNames section, where the
+group dimension is now required); ported most plugins to the new
+post-processing API; switched from MathEval to MathEx and Flu_Tree_Browser to
+Fl_Tree; small bug fixes and improvements all over the place.
 
 2.3.1 (Mar 18, 2009): removed GSL dependency (Gmsh now simply uses Blas and
 Lapack); new per-window visibility; added support for composite window printing

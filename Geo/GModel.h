@@ -31,12 +31,10 @@ class gLevelset;
 class discreteFace;
 class discreteRegion;
 class MElementOctree;
-class GModelFactory;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel {
  private:
-  friend class OCCFactory;
   std::multimap<std::pair<std::vector<int>, std::vector<int> >,
                 std::pair<std::string, std::vector<int> > > _homologyRequests;
   std::set<GRegion*, GEntityLessThan> _chainRegions;
@@ -72,7 +70,7 @@ class GModel {
   // the visibility flag
   char _visible;
 
-  // vertex and element caches to speed-up direct access by tag (only
+  // vertex and element caches to speed-up direct access by tag (mostly
   // used for post-processing I/O)
   std::vector<MVertex*> _vertexVectorCache;
   std::map<int, MVertex*> _vertexMapCache;
@@ -106,9 +104,6 @@ class GModel {
   void _createFMInternals();
   void _deleteFMInternals();
 
-  // CAD creation factory
-  GModelFactory *_factory;
-
   // characteristic length (mesh size) fields
   FieldManager *_fields;
 
@@ -138,6 +133,10 @@ class GModel {
 
   // entity that is currently being meshed (used for error reporting)
   GEntity *_currentMeshEntity;
+
+  // last entities/vertices where a meshing error has been reported
+  std::vector<GEntity*> _lastMeshEntityError;
+  std::vector<MVertex*> _lastMeshVertexError;
 
   // index of the current model (in the static list of all loaded
   // models)
@@ -203,7 +202,7 @@ class GModel {
   // mesh is changed)
   void destroyMeshCaches();
   //delete the mesh stored in entities and call destroMeshCaches
-  void deleteMesh();
+  void deleteMesh(bool onlyDeleteElements = false);
 
   // remove all mesh vertex associations to geometrical entities and remove
   // vertices from geometrical entities, then _associateEntityWithMeshVertices
@@ -235,9 +234,6 @@ class GModel {
   // get/set the visibility flag
   char getVisibility(){ return _visible; }
   void setVisibility(char val){ _visible = val; }
-
-  // set the visibility of compound entities
-  void setCompoundVisibility();
 
   // get the number of entities in this model
   int getNumRegions() const { return regions.size(); }
@@ -436,6 +432,14 @@ class GModel {
   void setCurrentMeshEntity(GEntity *e){ _currentMeshEntity = e; }
   GEntity *getCurrentMeshEntity(){ return _currentMeshEntity; }
 
+  // set/get entities/vertices linked meshing errors
+  void clearLastMeshEntityError(){ _lastMeshEntityError.clear(); }
+  void addLastMeshEntityError(GEntity *e){ _lastMeshEntityError.push_back(e); }
+  std::vector<GEntity*> getLastMeshEntityError(){ return _lastMeshEntityError; }
+  void clearLastMeshVertexError(){ _lastMeshVertexError.clear(); }
+  void addLastMeshVertexError(MVertex *v){ _lastMeshVertexError.push_back(v); }
+  std::vector<MVertex*> getLastMeshVertexError(){ return _lastMeshVertexError; }
+
   // delete all invisble mesh elements
   void removeInvisibleElements();
 
@@ -470,9 +474,7 @@ class GModel {
 
   // create topology from mesh
   void createTopologyFromMeshNew();
-  void createTopologyFromMesh(int ignoreHoles=0);
-  void createTopologyFromRegions(std::vector<discreteRegion*> &discRegions);
-  void createTopologyFromFaces(std::vector<discreteFace*> &pFaces, int ignoreHoles=0);
+  void createTopologyFromMesh();
   void makeDiscreteRegionsSimplyConnected();
   void makeDiscreteFacesSimplyConnected();
 
@@ -516,69 +518,6 @@ class GModel {
 
   // classify a mesh for all faces on the current model
   void classifyAllFaces();
-
-  // glue entities in the model (assume a tolerance eps and merge
-  // vertices that are too close, then merge edges, faces and
-  // regions). Warning: the gluer changes the geometric model, so that
-  // some pointers could become invalid.
-  //  void glue(double eps);
-
-  // change the entity creation factory
-  void setFactory(std::string name);
-
-  // create brep geometry entities using the factory
-  GVertex *addVertex(double x, double y, double z, double lc);
-  GEdge *addLine(GVertex *v1, GVertex *v2);
-  GEdge *addCircleArcCenter(double x, double y, double z, GVertex *start, GVertex *end);
-  GEdge *addCircleArcCenter(GVertex *start, GVertex *center, GVertex *end);
-  GEdge *addCircleArc3Points(double x, double y, double z, GVertex *start, GVertex *end);
-  GEdge *addBezier(GVertex *start, GVertex *end, std::vector<std::vector<double> > points);
-  GEdge *addBSpline(GVertex *start, GVertex *end, std::vector<std::vector<double> > points);
-  GEdge *addNURBS(GVertex *start, GVertex *end,
-		  std::vector<std::vector<double> > points,
-		  std::vector<double> knots,
-		  std::vector<double> weights,
-		  std::vector<int> mult);
-  GEntity *revolve(GEntity *e, std::vector<double> p1, std::vector<double> p2,
-                   double angle);
-  GEntity *extrude(GEntity *e, std::vector<double> p1, std::vector<double> p2);
-  std::vector<GEntity*> extrudeBoundaryLayer(GEntity *e, int nbLayers, double hLayers,
-                                             int dir=1, int view=-1);
-  GEntity *addPipe(GEntity *e, std::vector<GEdge *> edges);
-  GEntity *addThruSections(std::vector<std::vector<GEdge *> > edges);
-
-  std::vector<GFace *> addRuledFaces(std::vector<std::vector<GEdge *> > edges);
-  GFace *addFace(std::vector<GEdge *> edges, std::vector< std::vector<double > > points);
-  GFace *addPlanarFace(std::vector<std::vector<GEdge *> > edges);
-  GFace *addPlanarFace (std::vector<std::vector<GEdgeSigned> > edges);
-  GFace *add2Drect(double x0, double y0, double dx, double dy);
-  GFace *add2Dellips(double xc, double yc, double rx, double ry);
-
-  GEdge *addCompoundEdge(std::vector<GEdge*> edges, int num=-1);
-  GFace *addCompoundFace(std::vector<GFace*> faces, int type, int split, int num=-1);
-  GRegion *addVolume(std::vector<std::vector<GFace*> > faces);
-
-  // create solid geometry primitives using the factory
-  GEntity *addSphere(double cx, double cy, double cz, double radius);
-  GEntity *addCylinder(std::vector<double> p1, std::vector<double> p2, double radius);
-  GEntity *addTorus(std::vector<double> p1, std::vector<double> p2, double radius1,
-                    double radius2);
-  GEntity *addBlock(std::vector<double> p1, std::vector<double> p2);
-  GEntity *add3DBlock(std::vector<double> p1, double dx, double dy , double dz);
-  GEntity *addCone(std::vector<double> p1, std::vector<double> p2, double radius1,
-                   double radius2);
-
-  // heal geometry using the factory
-  void healGeometry(double tolerance = -1);
-
-  // boolean operators acting on 2 models
-  GModel *computeBooleanUnion(GModel *tool, int createNewModel=0);
-  GModel *computeBooleanIntersection(GModel *tool, int createNewModel=0);
-  GModel *computeBooleanDifference(GModel *tool, int createNewModel=0);
-
-  void setPeriodicAllFaces(std::vector<double> FaceTranslationVector);
-  void setPeriodicPairOfFaces(int numFaceMaster, std::vector<int> EdgeListMaster,
-                              int numFaceSlave, std::vector<int> EdgeListSlave);
 
   // build a new GModel by cutting the elements crossed by the levelset ls
   // if cutElem is set to false, split the model without cutting the elements

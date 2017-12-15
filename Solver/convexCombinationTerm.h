@@ -9,7 +9,7 @@
 #include <assert.h>
 #include "femTerm.h"
 #include "simpleFunction.h"
-#include "Gmsh.h"
+#include "GmshGlobal.h"
 #include "GModel.h"
 #include "SElement.h"
 #include "fullMatrix.h"

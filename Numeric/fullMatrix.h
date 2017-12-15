@@ -10,6 +10,7 @@
 #include "GmshMessage.h"
 #include <cmath>
 #include <cstdio>
+#include <complex>
 
 template <class scalar> class fullMatrix;
 
@@ -176,12 +177,7 @@ class fullVector
   /**
      @return Returns the @f$ L^2 @f$ norm of this fullVector.
   */
-  inline scalar norm() const
-  {
-    scalar n = 0.;
-    for(int i = 0; i < _r; ++i) n += _data[i] * _data[i];
-    return sqrt(n);
-  }
+  inline scalar norm() const; // Specialised in this file
 
   /**
      @param r A positive integer;
@@ -396,6 +392,24 @@ class fullVector
   bool getOwnData() const {return _own_data;};
   void setOwnData(bool ownData) {_own_data = ownData;};
 };
+
+// Specialisation of fullVector<scalar>::norm() const
+template<>
+inline double fullVector<double>::norm() const
+{
+  double n = 0.;
+  for(int i = 0; i < _r; ++i) n += _data[i] * _data[i];
+  return sqrt(n);
+}
+template<>
+inline std::complex<double> fullVector<std::complex<double> >::norm() const
+{
+  double n = 0.;
+  for(int i = 0; i < _r; ++i) n += _data[i].real() * _data[i].real() +
+                                   _data[i].imag() * _data[i].imag();
+  return std::complex<double>(sqrt(n), 0.);
+}
+
 
 // An abstract interface for dense matrix of scalar
 template <class scalar>

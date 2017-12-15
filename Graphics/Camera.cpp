@@ -11,7 +11,7 @@
 #include <math.h>
 #include <algorithm>
 #include "Camera.h"
-#include "Gmsh.h"
+#include "GmshGlobal.h"
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "Trackball.h"

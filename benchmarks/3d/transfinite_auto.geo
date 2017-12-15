@@ -1,7 +1,7 @@
-/********************************************************************* 
+/*********************************************************************
  *
  *  Gmsh tutorial 6
- * 
+ *
  *  Transfinite meshes
  *
  *********************************************************************/
@@ -55,13 +55,13 @@ Point(25) = {r_inf, 0, r_inf, lc2} ;
 Point(26) = {r_inf*Cos(phi1), r_inf*Sin(phi1),  r_inf, lc2} ;
 
 Circle(1) = {2,1,19};  Circle(2) = {19,1,6};  Circle(3) = {3,1,21};
-Circle(4) = {21,1,7};  Circle(5) = {4,1,23};  Circle(6) = {23,1,8};   
+Circle(4) = {21,1,7};  Circle(5) = {4,1,23};  Circle(6) = {23,1,8};
 Line(7)   = {5,25};    Line(8)   = {25,9};
 Circle(9) = {10,1,20}; Circle(10)= {20,1,6};  Circle(11) = {11,1,22};
 Circle(12)= {22,1,7};  Circle(13)= {12,1,24}; Circle(14) = {24,1,8};
 Line(15)  = {13,26};   Line(16)  = {26,9};
 Circle(17)= {19,1,20}; Circle(18)= {21,1,22}; Circle(19) = {23,1,24};
-Circle(20)= {25,1,26}; Circle(21)= {2,1,10};  Circle(22) = {3,1,11};  
+Circle(20)= {25,1,26}; Circle(21)= {2,1,10};  Circle(22) = {3,1,11};
 Circle(23)= {4,1,12};  Circle(24)= {5,1,13};
 
 Line(25) = {1,14};  Line(26) = {14,2};  Line(27) = {2,3};
@@ -191,7 +191,7 @@ Transfinite Surface{103} = {24,23,25,26};
 Transfinite Surface{119} = {9,26,25};
 Transfinite Surface{117} = {13,5,25,26};
 */
-Transfinite Surface "*"; // easier, isn't it?
+Transfinite Surface {:}; // easier, isn't it?
 
 // 3. Transfinite volumes are also defined by an ordered list of the
 // points on their boundary (the ordering defines the ordering of the
@@ -207,7 +207,7 @@ Transfinite Volume{141} = {7,22,21,8,24,23};
 Transfinite Volume{143} = {12,4,5,13,24,23,25,26};
 Transfinite Volume{145} = {8,24,23,9,26,25};
 */
-Transfinite Volume "*"; // hmmm?
+Transfinite Volume {:}; // hmmm?
 
 // As with Extruded meshes, the `Recombine' command tells Gmsh to
 // recombine the simplices into quadrangles, prisms or hexahedra when
@@ -215,7 +215,7 @@ Transfinite Volume "*"; // hmmm?
 /*
 Recombine Surface {55:127};
 */
-Recombine Surface "*";
+Recombine Surface {:};
 
 // We finish by defing some physical entities:
 

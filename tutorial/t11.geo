@@ -26,7 +26,7 @@ Background Field = 1;
 // To generate quadrangles instead of triangles, we can simply add
 Recombine Surface{100};
 
-// If we'd had several surfaces, we could have used 'Recombine Surface "*";'.
+// If we'd had several surfaces, we could have used 'Recombine Surface {:};'.
 // Yet another way would be to specify the global option "Mesh.RecombineAll =
 // 1;".
 

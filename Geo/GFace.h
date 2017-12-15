@@ -24,7 +24,6 @@ class MTriangle;
 class MQuadrangle;
 class MPolygon;
 class ExtrudeParams;
-class GFaceCompound;
 
 class GRegion;
 
@@ -39,7 +38,6 @@ class GFace : public GEntity {
   mean_plane meanPlane;
   std::list<GEdge *> embedded_edges;
   std::list<GVertex *> embedded_vertices;
-  GFaceCompound *compound; // this model face belongs to a compound
 
   BoundaryLayerColumns _columns;
 
@@ -70,7 +68,7 @@ class GFace : public GEntity {
   std::set<MVertex*> constr_vertices;
 
   // delete mesh data
-  virtual void deleteMesh();
+  virtual void deleteMesh(bool onlyDeleteElements = false);
 
   // add/delete regions that are bounded by the face
   void addRegion(GRegion *r)
@@ -254,10 +252,6 @@ class GFace : public GEntity {
   //compute mesh statistics
   void computeMeshSizeFieldAccuracy(double &avg,double &max_e, double &min_e,
 				    int &nE, int &GS);
-
-  // compound
-  void setCompound(GFaceCompound *gfc) { compound = gfc; }
-  GFaceCompound *getCompound() const { return compound; }
 
   // add points (and optionally normals) in vectors so that two
   // points are at most maxDist apart

@@ -187,7 +187,7 @@ int GmshRemote()
       // stop if we have no communications for 5 minutes
       int ret = client->Select(300, 0);
       if(!ret){
-        client->Info("Timout: stopping remote Gmsh...");
+        client->Info("Timeout: stopping remote Gmsh...");
         break;
       }
       else if(ret < 0){

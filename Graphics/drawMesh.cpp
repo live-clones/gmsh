@@ -8,8 +8,6 @@
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "GModel.h"
-#include "GFaceCompound.h"
-#include "GEdgeCompound.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -147,12 +145,6 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
 
 static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
 {
-  //if(e->dim() == 2) {
-  //  if(e->cast2Edge()->getCompound()) {
-  //    if(e->cast2Edge()->getCompound()
-  //
-   // }
-  //}
   if(CTX::instance()->mesh.points) {
     if(CTX::instance()->mesh.pointType) {
       for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
@@ -367,7 +359,7 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va, GLint type
 
   if(useNormalArray){
     glEnable(GL_LIGHTING);
-    glNormalPointer(GL_BYTE, 0, va->getNormalArray());
+    glNormalPointer(NORMAL_GLTYPE, 0, va->getNormalArray());
     glEnableClientState(GL_NORMAL_ARRAY);
   }
   else
@@ -442,11 +434,7 @@ class drawMeshGEdge {
   void operator () (GEdge *e)
   {
     if(!e->getVisibility()) {
-      if(e->getCompound()) {
-        if(!e->getCompound()->getVisibility()) return;
-      }
-      else
-        return;
+      return;
     }
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
@@ -491,11 +479,7 @@ class drawMeshGFace {
   void operator () (GFace *f)
   {
     if(!f->getVisibility()) {
-      if(f->getCompound()) {
-        if(!f->getCompound()->getVisibility()) return;
-      }
-      else
-        return;
+      return;
     }
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&

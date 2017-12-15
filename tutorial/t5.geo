@@ -155,6 +155,6 @@ Physical Volume (10) = 186 ;
 
 // We could make only part of the model visible to only mesh this subset:
 //
-// Hide "*";
+// Hide {:}
 // Recursive Show { Volume{129}; }
 // Mesh.MeshOnlyVisible=1;

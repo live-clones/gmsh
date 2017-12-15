@@ -10,7 +10,6 @@
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
-#include "GFaceCompound.h"
 #include "discreteDiskFace.h"
 #include "GmshMessage.h"
 #include "StringUtils.h"
@@ -451,12 +450,6 @@ static void getAllParameters(MVertex *v, GFace *gf, std::vector<SPoint2> &params
 {
   params.clear();
 
-  if (gf->geomType() == GEntity::CompoundSurface ){
-    GFaceCompound *gfc = (GFaceCompound*) gf;
-    params.push_back(gfc->parFromVertex(v));
-    return;
-  }
-
 #if defined(HAVE_ANN) && defined(HAVE_SOLVER)
   if (gf->geomType() == GEntity::DiscreteDiskSurface ){
     discreteDiskFace *gfc = (discreteDiskFace*) gf;
@@ -562,12 +555,6 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
 bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
                              bool onSurface)
 {
-  if(gf->geomType() == GEntity::CompoundSurface){
-    GFaceCompound *gfc = (GFaceCompound*) gf;
-    param = gfc->parFromVertex(v);
-    return true;
-  }
-
 #if defined(HAVE_ANN) && defined(HAVE_SOLVER)
   if (gf->geomType() == GEntity::DiscreteDiskSurface ){
     discreteDiskFace *gfc = (discreteDiskFace*) gf;

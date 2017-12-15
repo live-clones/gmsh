@@ -109,11 +109,25 @@ PView::PView(const std::string &xname, const std::string &yname,
   _options->axesLabel[0] = xname;
 }
 
-PView::PView(const std::string &name, const std::string &type,
-             GModel *model, std::map<int, std::vector<double> > &data,
-             double time, int numComp)
+PView::PView(const std::string &name, std::vector<double> &x, std::vector<double> &y,
+             std::vector<double> &z, std::vector<double> &v)
 {
   _init();
+  _data = new PViewDataList();
+  _data->setXYZV(x, y, z, v);
+  _data->setName(name);
+  _data->setFileName(name + ".pos");
+  _options = new PViewOptions(*PViewOptions::reference());
+  _options->axes = 3;
+  _options->pointSize = 7.;
+  _options->pointType = 1.;
+}
+
+PView::PView(const std::string &name, const std::string &type,
+             GModel *model, std::map<int, std::vector<double> > &data,
+             double time, int numComp, int tag)
+{
+  _init(tag);
   PViewDataGModel::DataType t;
   if(type == "NodeData")
     t = PViewDataGModel::NodeData;
@@ -138,7 +152,7 @@ PView::PView(const std::string &name, const std::string &type,
                             _options->targetError);
 }
 
-void PView::addStep(GModel *model, std::map<int, std::vector<double> > &data,
+void PView::addStep(GModel *model, const std::map<int, std::vector<double> > &data,
                     double time, int numComp)
 {
   PViewDataGModel *d = dynamic_cast<PViewDataGModel*>(_data);

@@ -5,7 +5,7 @@
 
 #include <string>
 #include <iostream>
-#include "Gmsh.h"
+#include "GmshGlobal.h"
 #include <string.h>
 #include "drawContext.h"
 #include "Trackball.h"

@@ -20,8 +20,6 @@
 #include "GModelIO_GEO.h"
 #include "Geo.h"
 #include "OS.h"
-#include "Curvature.h"
-#include "GEdgeCompound.h"
 
 #if defined(HAVE_MESH)
 #include "meshGEdge.h"
@@ -297,7 +295,7 @@ void discreteEdge::parametrize(std::map<GFace*, std::map<MVertex*, MVertex*,
     MVertex *vR = lines[i]->getVertex(_orientation[i]);
     int param = i+1;
     MVertex *vNEW = new MEdgeVertex(vR->x(),vR->y(),vR->z(), this,
-                                    param, -1., vR->getNum());
+                                    param, vR->getNum());
     old2new.insert(std::make_pair(vR,vNEW));
     newVertices.push_back(vNEW);
     newLines.push_back(new MLine(vL, vNEW));
@@ -380,7 +378,7 @@ void discreteEdge::parametrize(std::map<MVertex*, MVertex*>& old2new)
     else vR = lines[i]->getVertex(0);
     int param = i+1;
     MVertex *vNEW = new MEdgeVertex(vR->x(),vR->y(),vR->z(), this,
-                                    param, -1., vR->getNum());
+                                    param, vR->getNum());
     old2new.insert(std::make_pair(vR,vNEW));
     newVertices.push_back(vNEW);
     newLines.push_back(new MLine(vL, vNEW));
@@ -489,34 +487,15 @@ SVector3 discreteEdge::firstDer(double par) const
 
 double discreteEdge::curvature(double par) const
 {
-  double tLoc;
-  int iEdge;
-  if(!getLocalParameter(par, iEdge, tLoc)) return MAX_LC;
-
-  double c0, c1;
-  Curvature& curvature  = Curvature::getInstance();
-  if( !Curvature::valueAlreadyComputed() ) {
-    Msg::Warning("Need to compute discrete curvature (in discreteEdge)");
-    Curvature::typeOfCurvature type = Curvature::RUSIN; //RUSIN; //RBF
-    curvature.computeCurvature(model(), type);
-  }
-
-  curvature.edgeNodalValues(lines[iEdge],c0, c1, 1);
-  double cv = (1-tLoc)*c0 + tLoc*c1;
-
-  return cv;
+  Msg::Error("Curvature for discrete edge not implemented yet");
+  return 0.;
 }
 
 double discreteEdge::curvatures(const double par, SVector3 *dirMax, SVector3 *dirMin,
                                 double *curvMax, double *curvMin) const
 {
-  if (getCompound()){
-    return getCompound()->curvatures(par, dirMax, dirMin, curvMax, curvMin);
-  }
-  else{
-    Msg::Error("Cannot evaluate curvatures and curvature directions on discrete edge");
-    return false;
-  }
+  Msg::Error("Cannot evaluate curvatures and curvature directions on discrete edge");
+  return false;
 }
 
 Range<double> discreteEdge::parBounds(int i) const

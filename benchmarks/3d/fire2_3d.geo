@@ -570,6 +570,6 @@ Surface Loop(410) = {158, 355, 353, 332, 234, 202};
 Volume(411) = {410};
 
 
-Recombine Surface "*";
-Transfinite Surface "*";
-Transfinite Volume "*";
+Recombine Surface {:};
+Transfinite Surface {:};
+Transfinite Volume {:};

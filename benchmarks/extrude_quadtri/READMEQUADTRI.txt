@@ -182,10 +182,10 @@ a. FOR TRANSFINITE VOLUMES:
 The transfinite QuadTri algorithm may be applied by using the following
 command:
 
-TransfQuadTri { expression-list } | "*";
+TransfQuadTri { expression-list } | {:};
 
 Where 'expression-list' is a list of volume numbers to apply QuadTri to.
-"*" is used to apply TransfQuadTri to all existing volumes.  A transfinite
+{:} is used to apply TransfQuadTri to all existing volumes.  A transfinite
 volume with any combination of recombined and un-recombined transfinite boundary
 surfaces is valid when meshed with TransfQuadTri. When applied to 
 non-Transfinite volumes, TransfQuadTri has NO effect on those volumes.

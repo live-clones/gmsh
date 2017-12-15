@@ -4,7 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <stdlib.h>
-#include "Gmsh.h"
+#include "GmshGlobal.h"
 #include "GmshConfig.h"
 #include "GModel.h"
 #include "OS.h"

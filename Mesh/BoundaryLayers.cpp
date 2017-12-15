@@ -13,7 +13,6 @@
 #include "meshGFace.h"
 #include "GmshMessage.h"
 #include "Field.h"
-#include "GFaceCompound.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -249,20 +248,6 @@ static void checkDepends(GModel *m, GFace *f, std::set<GFace*> &dep)
     }
     dep.insert(from);
     checkDepends(m, from, dep);
-  }
-
-  if(f->geomType() == GEntity::CompoundSurface){
-    std::list<GFace*> compounds = ((GFaceCompound*)(f))->getCompounds();
-    std::list<GFace*>::iterator itgf = compounds.begin();
-    for( ; itgf != compounds.end(); itgf++ ){
-      if(!(*itgf)){
-        Msg::Error("Unknown compound face in boundary layer source face %d",
-                   f->tag());
-        return;
-      }
-      dep.insert(*itgf);
-      checkDepends(m, *itgf, dep);
-    }
   }
 }
 

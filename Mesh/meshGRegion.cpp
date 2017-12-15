@@ -30,7 +30,6 @@
 #include "BDS.h"
 #include "OS.h"
 #include "Context.h"
-#include "GFaceCompound.h"
 #include "meshGRegionMMG3D.h"
 #include "simple3D.h"
 #include "directions3D.h"
@@ -643,9 +642,6 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
     Msg::Error ("Frontal Layers Algo deprecated");
   else if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL_HEX)
     Msg::Error ("Frontal Layers Algo deprecated");
-  else if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D){
-    refineMeshMMG(gr);
-  }
   else{
     int nbvertices_filler = (old_algo_hexa()) ?
       Filler::get_nbr_new_vertices() : Filler3D::get_nbr_new_vertices();
@@ -705,9 +701,8 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
   std::list<GVertex*> oldEmbVertices = gr->embeddedVertices();
   gr->embeddedVertices() = allEmbVertices;
 
-  try{
-    meshGRegionBoundaryRecovery(gr);
-    /*
+  meshGRegionBoundaryRecovery(gr);
+  /*
     FILE *fp = Fopen("debug.pos", "w");
     if(fp){
       fprintf(fp, "View \"debug\" {\n");
@@ -716,16 +711,7 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
       fprintf(fp, "};\n");
       fclose(fp);
     }
-    */
-  }
-  catch(int err){
-    if(err == 3){
-      Msg::Warning("Self-intersecting surface mesh: TODO!");
-    }
-    else{
-      Msg::Error("Could not recover boundary: error %d", err);
-    }
-  }
+  */
 
   // sort triangles in all model faces in order to be able to search in vectors
   std::list<GFace*>::iterator itf =  allFaces.begin();
@@ -741,7 +727,11 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
   gr->embeddedVertices() = oldEmbVertices;
 
   // now do insertion of points
-  if(CTX::instance()->mesh.oldRefinement){
+
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D){
+    refineMeshMMG(gr);
+  }
+  else if(CTX::instance()->mesh.oldRefinement){
     insertVerticesInRegion(gr, 2000000000, true);
   }
   else{
@@ -762,7 +752,8 @@ void MeshDelaunayVolume(std::vector<GRegion*> &regions)
 {
   if(regions.empty()) return;
 
-  if(CTX::instance()->mesh.algo3d == ALGO_3D_DELAUNAY_NEW){
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_DELAUNAY_NEW ||
+     CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D){
     MeshDelaunayVolumeNewCode(regions);
   }
   else{
@@ -1084,22 +1075,6 @@ void meshGRegion::operator() (GRegion *gr)
         return;
       }
     }
-  }
-
-  // replace discreteFaces by their compounds
-  {
-    std::set<GFace*, GEntityLessThan> mySet;
-    std::list<GFace*>::iterator it = faces.begin();
-    while(it != faces.end()){
-      if((*it)->getCompound())
-        mySet.insert((*it)->getCompound());
-      else
-        mySet.insert(*it);
-      ++it;
-    }
-    faces.clear();
-    faces.insert(faces.begin(), mySet.begin(), mySet.end());
-    gr->set(faces);
   }
 
   if(CTX::instance()->mesh.algo3d != ALGO_3D_FRONTAL){

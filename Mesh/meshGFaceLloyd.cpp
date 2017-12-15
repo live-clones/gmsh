@@ -413,8 +413,9 @@ smoothing::smoothing(int param1,int param2){
   NORM = param2;
 }
 
-void smoothing::optimize_face(GFace* gf){
-  if(gf->getNumMeshElements()==0 || gf->getCompound()) return;
+void smoothing::optimize_face(GFace* gf)
+{
+  if(gf->getNumMeshElements()==0) return;
 
   std::set<MVertex*> all;
 
@@ -600,10 +601,10 @@ void smoothing::optimize_model(){
   for(it=model->firstFace();it!=model->lastFace();it++)
   {
     gf = *it;
-	if(gf->getNumMeshElements()>0 && !gf->getCompound() /*&& gf->geomType()==GEntity::CompoundSurface*/){
-	  optimize_face(gf);
-	  //recombineIntoQuads(gf,1,1);
-	}
+    if(gf->getNumMeshElements()>0){
+      optimize_face(gf);
+      //recombineIntoQuads(gf,1,1);
+    }
   }
 }
 

@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "GmshConfig.h"
+#include "GmshVersion.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "StringUtils.h"
@@ -1121,6 +1122,16 @@ std::string opt_general_background_image_filename(OPT_ARGS_STR)
   return CTX::instance()->bgImageFileName;
 }
 
+std::string opt_general_version(OPT_ARGS_STR)
+{
+  return GMSH_VERSION;
+}
+
+std::string opt_general_build_options(OPT_ARGS_STR)
+{
+  return GMSH_CONFIG_OPTIONS;
+}
+
 std::string opt_general_filename(OPT_ARGS_STR)
 {
   return GModel::current()->getFileName();
@@ -1363,6 +1374,13 @@ std::string opt_geometry_double_clicked_volume_command(OPT_ARGS_STR)
   if(action & GMSH_SET)
     CTX::instance()->geom.doubleClickedVolumeCommand = val;
   return CTX::instance()->geom.doubleClickedVolumeCommand;
+}
+
+std::string opt_geometry_occ_target_unit(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occTargetUnit = val;
+  return CTX::instance()->geom.occTargetUnit;
 }
 
 std::string opt_solver_socket_name(OPT_ARGS_STR)
@@ -3616,6 +3634,23 @@ double opt_general_expert_mode(OPT_ARGS_NUM)
   return CTX::instance()->expertMode;
 }
 
+#if defined(HAVE_VISUDEV)
+double opt_general_heavy_visualization(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    if(CTX::instance()->heavyVisu != val)
+      CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+    CTX::instance()->heavyVisu = (int)val;
+  }
+#if defined(HAVE_FLTK)
+  if(FlGui::available() && (action & GMSH_GUI))
+    FlGui::instance()->options->general.butt[22]->value
+        (CTX::instance()->heavyVisu);
+#endif
+  return CTX::instance()->heavyVisu;
+}
+#endif
+
 double opt_general_stereo_mode(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
@@ -4234,6 +4269,13 @@ double opt_general_light53(OPT_ARGS_NUM)
   return CTX::instance()->lightPosition[5][3];
 }
 
+double opt_general_num_threads(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    Msg::SetNumThreads(val);
+  return Msg::GetNumThreads();
+}
+
 double opt_geometry_transform(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
@@ -4379,28 +4421,6 @@ double opt_geometry_auto_coherence(OPT_ARGS_NUM)
       (CTX::instance()->geom.autoCoherence);
 #endif
   return CTX::instance()->geom.autoCoherence;
-}
-
-double opt_geometry_hide_compounds(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET){
-    int old = CTX::instance()->geom.hideCompounds;
-    CTX::instance()->geom.hideCompounds = (int)val;
-    if(old != (int)val){
-      GModel::current()->setCompoundVisibility();
-      CTX::instance()->mesh.changed = ENT_ALL;
-#if defined(HAVE_FLTK)
-      if(FlGui::available()) FlGui::instance()->resetVisibility();
-#endif
-    }
-  }
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI)){
-    FlGui::instance()->options->geo.butt[17]->value
-      (CTX::instance()->geom.hideCompounds);
-  }
-#endif
-  return CTX::instance()->geom.hideCompounds;
 }
 
 double opt_geometry_oriented_physicals(OPT_ARGS_NUM)
@@ -6439,6 +6459,26 @@ double opt_mesh_ignore_periodicity(OPT_ARGS_NUM)
   return CTX::instance()->mesh.ignorePeriodicity;
 }
 
+double opt_mesh_max_num_threads_1d(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.maxNumThreads1D = (int) val;
+  return CTX::instance()->mesh.maxNumThreads1D;
+}
+
+double opt_mesh_max_num_threads_2d(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.maxNumThreads2D = (int) val;
+  return CTX::instance()->mesh.maxNumThreads2D;
+}
+
+double opt_mesh_max_num_threads_3d(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.maxNumThreads3D = (int) val;
+  return CTX::instance()->mesh.maxNumThreads3D;
+}
 
 double opt_solver_listen(OPT_ARGS_NUM)
 {
@@ -6658,6 +6698,20 @@ double opt_post_force_element_data(OPT_ARGS_NUM)
   if(action & GMSH_SET)
     CTX::instance()->post.forceElementData = (int)val;
   return CTX::instance()->post.forceElementData;
+}
+
+double opt_post_save_mesh(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->post.saveMesh = (int)val;
+  return CTX::instance()->post.saveMesh;
+}
+
+double opt_post_save_interpolation_matrices(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->post.saveInterpolationMatrices = (int)val;
+  return CTX::instance()->post.saveInterpolationMatrices;
 }
 
 double opt_post_double_clicked_graph_point_x(OPT_ARGS_NUM)

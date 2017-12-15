@@ -33,7 +33,11 @@ class optionWindow{
 
   struct{
     Fl_Group *group;
+#if defined(HAVE_VISUDEV)
+    Fl_Check_Button *butt[23];
+#else
     Fl_Check_Button *butt[22];
+#endif
     Fl_Button *push[20];
     Fl_Value_Input *value[50];
     Fl_Button *color[50];

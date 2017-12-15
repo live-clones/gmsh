@@ -118,6 +118,8 @@ class PViewDataList : public PViewData {
   bool combineTime(nameData &nd);
   bool combineSpace(nameData &nd);
   void setXY(std::vector<double> &x, std::vector<double> &y);
+  void setXYZV(std::vector<double> &x, std::vector<double> &y, std::vector<double> &z,
+               std::vector<double> &v);
   bool isListBased(){ return true; }
   double getMemoryInMb();
 
@@ -135,6 +137,7 @@ class PViewDataList : public PViewData {
                         bool forceNodeData=false, bool forceElementData=false);
   virtual void importLists(int N[24], std::vector<double> *V[24]);
   virtual void getListPointers(int N[24], std::vector<double> *V[24]);
+  void importList(int index, int n, const std::vector<double> &v, bool finalize);
 };
 
 #endif

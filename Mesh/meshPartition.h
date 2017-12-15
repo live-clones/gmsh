@@ -13,8 +13,6 @@
 #include "partitionFace.h"
 #include "partitionEdge.h"
 #include "partitionVertex.h"
-
-#include "GFaceCompound.h"
 #include "GFace.h"
 
 #include "MFaceHash.h"
@@ -95,7 +93,6 @@ std::vector<unsigned int> getPartition(GModel* model, GEntity* entity);
 
 int PartitionMeshFace(std::list<GFace*> &cFaces);
 int PartitionMeshElements(std::vector<MElement*> &elements);
-
 void splitBoundaryEdges(GModel *model,
                         std::set<partitionEdge*, Less_partitionEdge> &newEdges);
 void createPartitionFaces(GModel *model, std::vector<MElement *> &elements, int num_parts, std::vector<discreteFace*> &pFaces);

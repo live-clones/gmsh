@@ -24,6 +24,10 @@ double minICNMeasure(MElement *el,
                      bool knownValid = false,
                      bool reversedOk = false);
 void sampleIGEMeasure(MElement *el, int order, double &min, double &max);
+void sampleJacobian(MElement *el, int order, fullVector<double> &jac,
+                    const fullMatrix<double> *normals = NULL);
+void sampleIGEMeasure(MElement *el, int order, fullVector<double> &ige);
+void sampleICNMeasure(MElement *el, int order, fullVector<double> &icn);
 double minSampledICNMeasure(MElement *el, int order);//fordebug
 double minSampledIGEMeasure(MElement *el, int order);//fordebug
 

@@ -302,8 +302,10 @@ bool PView::write(const std::string &fileName, int format, bool append)
   case 3: ret = _data->writeSTL(fileName); break;
   case 4: ret = _data->writeTXT(fileName); break;
   case 5: ret = _data->writeMSH(fileName, CTX::instance()->mesh.mshFileVersion,
-                                CTX::instance()->mesh.binary, true, false,
-                                0, true, CTX::instance()->post.forceNodeData,
+                                CTX::instance()->mesh.binary,
+                                CTX::instance()->post.saveMesh, false, 0,
+                                CTX::instance()->post.saveInterpolationMatrices,
+                                CTX::instance()->post.forceNodeData,
                                 CTX::instance()->post.forceElementData); break;
   case 6: ret = _data->writeMED(fileName); break;
   case 7: ret = writeX3D(fileName); break;
@@ -316,8 +318,10 @@ bool PView::write(const std::string &fileName, int format, bool append)
         ret = _data->writeSTL(fileName);
       else if(ext == ".msh")
         ret = _data->writeMSH(fileName, CTX::instance()->mesh.mshFileVersion,
-                              CTX::instance()->mesh.binary, true, false,
-                              0, true, CTX::instance()->post.forceNodeData,
+                              CTX::instance()->mesh.binary,
+                              CTX::instance()->post.saveMesh, false, 0,
+                              CTX::instance()->post.saveInterpolationMatrices,
+                              CTX::instance()->post.forceNodeData,
                               CTX::instance()->post.forceElementData);
       else if(ext == ".med")
         ret = _data->writeMED(fileName);

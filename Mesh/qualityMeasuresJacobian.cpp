@@ -48,28 +48,26 @@ static inline void computeCoeffLengthVectors_(const fullMatrix<double> &mat,
                               pow_int(mat(i, 4), 2) +
                               pow_int(mat(i, 5), 2)  );
     }
-    if (mat.size2() > 6) { // if 3D
-      for (int i = 0; i < sz1; i++) {
-        coeff(i, 2) = std::sqrt(pow_int(mat(i, 6), 2) +
-                                pow_int(mat(i, 7), 2) +
-                                pow_int(mat(i, 8), 2)  );
-      }
-    }
-    else if (type == TYPE_TRI) {
+    if (type == TYPE_TRI) {
       for (int i = 0; i < sz1; i++) {
         coeff(i, 2) = std::sqrt(pow_int(mat(i, 3) - mat(i, 0), 2) +
                                 pow_int(mat(i, 4) - mat(i, 1), 2) +
                                 pow_int(mat(i, 5) - mat(i, 2), 2)  );
       }
     }
-    switch (type) {
-      case TYPE_TET:
-      case TYPE_PRI:
-        for (int i = 0; i < sz1; i++) {
-          coeff(i, 3) = std::sqrt(pow_int(mat(i, 3) - mat(i, 0), 2) +
-                                  pow_int(mat(i, 4) - mat(i, 1), 2) +
-                                  pow_int(mat(i, 5) - mat(i, 2), 2)  );
-        }
+    else if (type != TYPE_QUA) { // if 3D
+      for (int i = 0; i < sz1; i++) {
+        coeff(i, 2) = std::sqrt(pow_int(mat(i, 6), 2) +
+                                pow_int(mat(i, 7), 2) +
+                                pow_int(mat(i, 8), 2)  );
+      }
+    }
+    if (type == TYPE_TET || type == TYPE_PRI) {
+      for (int i = 0; i < sz1; i++) {
+        coeff(i, 3) = std::sqrt(pow_int(mat(i, 3) - mat(i, 0), 2) +
+                                pow_int(mat(i, 4) - mat(i, 1), 2) +
+                                pow_int(mat(i, 5) - mat(i, 2), 2)  );
+      }
     }
     if (type == TYPE_TET) {
       for (int i = 0; i < sz1; i++) {
@@ -406,6 +404,32 @@ double minICNMeasure(MElement *el,
 
 void sampleIGEMeasure(MElement *el, int deg, double &min, double &max)
 {
+  fullVector<double> ige;
+  sampleIGEMeasure(el, deg, ige);
+
+  min = std::numeric_limits<double>::infinity();
+  max = -min;
+  for (int i = 0; i < ige.size(); ++i) {
+    min = std::min(min, ige(i));
+    max = std::max(max, ige(i));
+  }
+}
+
+void sampleJacobian(MElement *el, int deg, fullVector<double> &jac,
+                    const fullMatrix<double> *normals)
+{
+  FuncSpaceData sampleSpace = FuncSpaceData(el, deg);
+  const JacobianBasis *jacBasis = BasisFactory::getJacobianBasis(sampleSpace);
+
+  fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
+  el->getNodesCoord(nodesXYZ);
+
+  jac.resize(jacBasis->getNumJacNodes());
+  jacBasis->getSignedJacobian(nodesXYZ, jac, normals);
+}
+
+void sampleIGEMeasure(MElement *el, int deg, fullVector<double> &ige)
+{
   fullMatrix<double> nodesXYZ(el->getNumVertices(), 3);
   el->getNodesCoord(nodesXYZ);
 
@@ -427,7 +451,7 @@ void sampleIGEMeasure(MElement *el, int deg, double &min, double &max)
     jacDetSpace = FuncSpaceData(el, true, deg-1, 1, &serendipFalse);
     break;
   default:
-    Msg::Error("ICN not implemented for type of element %d", el->getType());
+    Msg::Error("IGE not implemented for type of element %d", el->getType());
     return;
   }
 
@@ -439,21 +463,12 @@ void sampleIGEMeasure(MElement *el, int deg, double &min, double &max)
 
   fullMatrix<double> coeffMatLag(gradBasis->getNumSamplingPoints(), 9);
   gradBasis->getAllGradientsFromNodes(nodesXYZ, coeffMatLag);
+  if (el->getDim() == 2) coeffMatLag.resize(coeffMatLag.size1(), 6, false);
 
   fullMatrix<double> v;
   computeCoeffLengthVectors_(coeffMatLag, v, type);
 
-  fullVector<double> ige;
   computeIGE_(coeffDeterminant, v, ige, type);
-
-  min = std::numeric_limits<double>::infinity();
-  max = -min;
-  for (int i = 0; i < ige.size(); ++i) {
-    min = std::min(min, ige(i));
-    max = std::max(max, ige(i));
-  }
-
-  return;
 }
 
 double minSampledICNMeasure(MElement *el, int deg)//fordebug

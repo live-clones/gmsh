@@ -9,14 +9,13 @@
 #include "Context.h"
 #include "Numeric.h"
 #include "BasisFactory.h"
+#include "pointsGenerators.h"
 
 #if defined(HAVE_MESH)
 #include "qualityMeasures.h"
 #endif
 
 #include <cstring>
-
-#define SQU(a)      ((a)*(a))
 
 void MQuadrangle::getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                              SVector3 *n)
@@ -140,19 +139,33 @@ void MQuadrangle9::getEdgeRep(bool curved, int num,
   else MQuadrangle::getEdgeRep(false, num, x, y, z, n);
 }
 
+int MQuadrangle::getNumFacesRep(bool curved)
+{
+#if defined(HAVE_VISUDEV)
+  if (CTX::instance()->heavyVisu) {
+    if (CTX::instance()->mesh.numSubEdges == 1) return 4;
+    return 2 * gmsh_SQU(CTX::instance()->mesh.numSubEdges);
+  }
+#endif
+  return 2;
+}
+
 int MQuadrangleN::getNumFacesRep(bool curved)
 {
-  return curved ? 2*SQU(CTX::instance()->mesh.numSubEdges) : 2;
+  return curved ? 2 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+         MQuadrangle::getNumFacesRep(curved);
 }
 
 int MQuadrangle8::getNumFacesRep(bool curved)
 {
-  return curved ? 2*SQU(CTX::instance()->mesh.numSubEdges) : 2;
+  return curved ? 2 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+         MQuadrangle::getNumFacesRep(curved);
 }
 
 int MQuadrangle9::getNumFacesRep(bool curved)
 {
-  return curved ? 2*SQU(CTX::instance()->mesh.numSubEdges) : 2;
+  return curved ? 2 * gmsh_SQU(CTX::instance()->mesh.numSubEdges) :
+         MQuadrangle::getNumFacesRep(curved);
 }
 
 static void _myGetFaceRep(MQuadrangle *t, int num, double *x, double *y, double *z,
@@ -205,6 +218,30 @@ static void _myGetFaceRep(MQuadrangle *t, int num, double *x, double *y, double 
   x[0] = pnt1.x(); x[1] = pnt2.x(); x[2] = pnt3.x();
   y[0] = pnt1.y(); y[1] = pnt2.y(); y[2] = pnt3.y();
   z[0] = pnt1.z(); z[1] = pnt2.z(); z[2] = pnt3.z();
+}
+
+void MQuadrangle::getFaceRep(bool curved, int num,
+                             double *x, double *y, double *z, SVector3 *n)
+{
+#if defined(HAVE_VISUDEV)
+  static const int fquad[4][4] = {
+      {0, 1, 2, 3}, {1, 2, 3, 0}, {2, 3, 0, 1}, {3, 0, 1, 2}
+  };
+  if (CTX::instance()->heavyVisu) {
+    if (CTX::instance()->mesh.numSubEdges > 1) {
+      _myGetFaceRep(this, num, x, y, z, n, CTX::instance()->mesh.numSubEdges);
+      return;
+    }
+    _getFaceRepQuad(getVertex(fquad[num][0]), getVertex(fquad[num][1]),
+                    getVertex(fquad[num][2]), getVertex(fquad[num][3]),
+                    x, y, z, n);
+    return;
+  }
+#endif
+  static const int f[2][3] = {
+      {0, 1, 2}, {0, 2, 3}
+  };
+  _getFaceRep(_v[f[num][0]], _v[f[num][1]], _v[f[num][2]], x, y, z, n);
 }
 
 void MQuadrangleN::getFaceRep(bool curved, int num,
@@ -386,15 +423,16 @@ void MQuadrangleN::reverse()
   }
 }
 
-void MQuadrangle::reorient(int rot, bool swap) {
+void MQuadrangle::reorient(int rot, bool swap)
+{
   MVertex* tmp[4];
   if (swap) for (int i=0;i<4;i++) tmp[i] = _v[(4-i+rot)%4];
   else      for (int i=0;i<4;i++) tmp[i] = _v[(4+i-rot)%4];
   std::memcpy(_v,tmp,4*sizeof(MVertex*));
 }
 
-void MQuadrangle8::reorient(int rot, bool swap) {
-
+void MQuadrangle8::reorient(int rot, bool swap)
+{
   if (rot == 0 && !swap) return;
 
   MQuadrangle::reorient(rot,swap);
@@ -404,8 +442,8 @@ void MQuadrangle8::reorient(int rot, bool swap) {
   std::memcpy(_vs,tmp,4*sizeof(MVertex*));
 }
 
-void MQuadrangle9::reorient(int rot, bool swap) {
-
+void MQuadrangle9::reorient(int rot, bool swap)
+{
   if (rot == 0 && !swap) return;
 
   MQuadrangle::reorient(rot,swap);
@@ -415,46 +453,67 @@ void MQuadrangle9::reorient(int rot, bool swap) {
   std::memcpy(_vs,tmp,4*sizeof(MVertex*));
 }
 
-void MQuadrangleN::reorient(int rot, bool swap) {
+std::map<TupleReorientation, IndicesReoriented> MQuadrangleN::_tuple2indicesReoriented;
 
-  if (rot == 0 && !swap) return;
+namespace
+{
+  void _getIndicesReorientedQuad(int order, int rot, bool swap,
+                                 IndicesReoriented &indices)
+  {
+    fullMatrix<double> ref = gmshGenerateMonomialsQuadrangle(order);
+    ref.add(- order / 2.);
 
-  MQuadrangle::reorient(rot,swap);
-  int order  = getPolynomialOrder();
-  int nbEdgePts = order - 1;
-  unsigned int idx = 0;
-
-  std::vector<MVertex*> tmp;
-
-  if (swap) {
-    for (int iEdge=0;iEdge<4;iEdge++) {
-      int edgeIdx = ((7-iEdge+rot)%4)*nbEdgePts;
-      for (int i=nbEdgePts-1;i>=0;i--) tmp.push_back(_vs[edgeIdx+i]);
-    }
-  }
-  else {
-    for (int iEdge=0;iEdge<4;iEdge++) {
-      int edgeIdx = ((4+iEdge-rot)%4)*nbEdgePts;
-      for (int i=0;i<nbEdgePts;i++)    tmp.push_back(_vs[edgeIdx+i]);
-    }
-  }
-
-  idx += 4*nbEdgePts;
-
-  if (_vs.size() >= idx) {
-    nbEdgePts = order - 3;
-    if (order > 2) {
-      if (swap) for (int i=0;i<4;i++) tmp.push_back(_vs[idx + (4-i+rot)%4]);
-      else      for (int i=0;i<4;i++) tmp.push_back(_vs[idx + (4+i-rot)%4]);
-      idx += 4;
-      if (order > 3) {
-        if (swap) for (int i=0;i<4;i++) tmp.push_back(_vs[idx + (7-i+rot)%4]);
-        else      for (int i=0;i<4;i++) tmp.push_back(_vs[idx + (4+i-rot)%4]);
-        idx += 4;
-        if (order > 4) Msg::Error("Reorientation of quad not supported above order 4");
+    indices.resize(ref.size1());
+    for (int i = 0; i < ref.size1(); ++i) {
+      double u = ref(i, 0);
+      double v = ref(i, 1);
+      double tmp = u;
+      switch (rot) {
+        case 1: u =  v; v = -tmp; break;
+        case 2: u = -u; v =   -v; break;
+        case 3: u = -v; v =  tmp; break;
+      }
+      if (swap) {
+        tmp = u;
+        u = v;
+        v = tmp;
+      }
+      for (int j = 0; j < ref.size1(); ++j) {
+        if (u == ref(j, 0) && v == ref(j, 1)) {
+          indices[i] = j;
+          break;
+        }
       }
     }
-    tmp.push_back(_vs[idx]);
   }
-  _vs = tmp;
+}
+
+void MQuadrangleN::reorient(int rot, bool swap)
+{
+  if (rot == 0 && !swap) return;
+
+  TupleReorientation mytuple(getTypeForMSH(), std::make_pair(rot, swap));
+  std::map<TupleReorientation, IndicesReoriented>::iterator it;
+  it = _tuple2indicesReoriented.find(mytuple);
+  if (it == _tuple2indicesReoriented.end()) {
+    IndicesReoriented indices;
+    _getIndicesReorientedQuad(_order, rot, swap, indices);
+    _tuple2indicesReoriented[mytuple] = indices;
+    it = _tuple2indicesReoriented.find(mytuple);
+  }
+
+  IndicesReoriented &indices = it->second;
+
+  // copy vertices
+  std::vector<MVertex*> oldv(4 + _vs.size());
+  std::copy(_v, _v+4, oldv.begin());
+  std::copy(_vs.begin(), _vs.end(), oldv.begin()+4);
+
+  // reorient
+  for (int i = 0; i < 4; ++i) {
+    _v[i] = oldv[indices[i]];
+  }
+  for (unsigned int i = 0; i < _vs.size(); ++i) {
+    _vs[i] = oldv[indices[4+i]];
+  }
 }

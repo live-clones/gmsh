@@ -40,7 +40,7 @@ opt(BUILD_LIB "Enable 'lib' target for building static Gmsh library" OFF)
 opt(BUILD_SHARED "Enable 'shared' target for building shared Gmsh library" OFF)
 opt(BUILD_DYNAMIC "Enable dynamic Gmsh executable (linked with shared lib)" OFF)
 opt(BUILD_ANDROID "Enable Android NDK library target (experimental)" OFF)
-opt(BUILD_IOS "Enable iOS (ARM) library target (experimental)" OFF)
+opt(BUILD_IOS "Enable iOS library target (experimental)" OFF)
 opt(CGNS "Enable CGNS mesh export (experimental)" OFF)
 opt(CAIRO "Enable Cairo to render fonts (experimental)" ${DEFAULT})
 opt(COMPRESSED_IO "Enable compressed (gzip) input/output using zlib" OFF)
@@ -52,6 +52,7 @@ opt(GETDP "Enable GetDP solver (as a directly linked library)" ${DEFAULT})
 opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
 opt(GMP "Enable GMP for Kbipack (advanced)" ON)
 opt(GRAPHICS "Enable building graphics lib even without GUI (advanced)" OFF)
+opt(INTERNAL_DEVELOPER_API "Enable internal developer API" OFF)
 opt(KBIPACK "Enable Kbipack (neeeded by homology solver)" ${DEFAULT})
 opt(MATHEX "Enable math expression parser (used by plugins and options)" ${DEFAULT})
 opt(MED "Enable MED mesh and post file formats" ${DEFAULT})
@@ -64,15 +65,15 @@ opt(MSVC_STATIC_RUNTIME "Enable static Visual C++ runtime" OFF)
 opt(MUMPS "Enable MUMPS sparse direct linear solver" OFF)
 opt(NATIVE_FILE_CHOOSER "Enable native file chooser in GUI" ${DEFAULT})
 opt(NETGEN "Enable Netgen 3D frontal mesh generator" ${DEFAULT})
-opt(NUMPY "Enable conversion between fullMatrix and numpy array (requires SWIG)" OFF)
-opt(PETSC4PY "Enable petsc4py wrappers for petsc matrices" ON)
+opt(NUMPY "Enable fullMatrix and numpy array conversion for internal developer API" OFF)
+opt(PETSC4PY "Enable petsc4py wrappers for petsc matrices in internal developer API" ON)
 opt(OCC "Enable OpenCASCADE geometrical models" ${DEFAULT})
 opt(OCC_CAF "Enable OpenCASCADE CAF module" OFF)
 opt(ONELAB "Enable ONELAB solver interface" ${DEFAULT})
 opt(ONELAB_METAMODEL "Enable ONELAB metamodels (experimental)" ${DEFAULT})
 opt(OPENMP "Enable OpenMP (experimental)" OFF)
 opt(OPTHOM "Enable high-order mesh optimization tools" ${DEFAULT})
-opt(OS_SPECIFIC_INSTALL "Enable OS-specific (e.g. app bundle) installation" ${DEFAULT})
+opt(OS_SPECIFIC_INSTALL "Enable OS-specific (e.g. app bundle) installation" OFF)
 opt(OSMESA "Enable OSMesa for offscreen rendering (experimental)" OFF)
 opt(PARSER "Enable GEO file parser (required for .geo/.pos files)" ${DEFAULT})
 opt(PETSC "Enable PETSc linear solvers (required for SLEPc)" ${DEFAULT})
@@ -86,88 +87,42 @@ opt(SOLVER "Enable built-in finite element solvers (required for compounds)" ${D
 opt(TAUCS "Enable Taucs linear solver" ${DEFAULT})
 opt(TCMALLOC "Enable libtcmalloc, a fast malloc implementation but that does not release memory" OFF)
 opt(TETGEN "Enable Tetgen 3D initial mesh generator" ${DEFAULT})
+opt(VISUDEV "Enable additional visualization capabilities for development purpose" OFF)
 opt(VORO3D "Enable Voro3D (for hex meshing, experimental)" ${DEFAULT})
-opt(WRAP_JAVA "Enable generation of Java wrappers (experimental)" OFF)
-opt(WRAP_PYTHON "Enable generation of Python wrappers" OFF)
+opt(WRAP_JAVA "Enable generation of Java wrappers for internal developer API" OFF)
+opt(WRAP_PYTHON "Enable generation of Python wrappers for internal developer API" OFF)
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 3)
 set(GMSH_MINOR_VERSION 0)
-set(GMSH_PATCH_VERSION 6)
+set(GMSH_PATCH_VERSION 7)
 set(GMSH_EXTRA_VERSION "" CACHE STRING "Gmsh extra version string")
 
 set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
 set(GMSH_VERSION "${GMSH_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}")
 set(GMSH_SHORT_LICENSE "GNU General Public License")
 
-set(GMSH_API
-  ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h
-  ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h
-  Common/Gmsh.h Common/Context.h Common/GmshDefines.h Common/GmshMessage.h
-    Common/VertexArray.h Common/Octree.h Common/OctreeInternals.h
-    Common/OS.h Common/StringUtils.h Common/OpenFile.h Common/Hash.h
-    Common/onelab.h Common/GmshSocket.h Common/onelabUtils.h Common/Options.h
-    Common/picojson.h
-  Numeric/Numeric.h Numeric/GaussIntegration.h Numeric/polynomialBasis.h
-    Numeric/JacobianBasis.h Numeric/bezierBasis.h Numeric/fullMatrix.h
-    Numeric/FuncSpaceData.h Numeric/pointsGenerators.h
-    Numeric/simpleFunction.h Numeric/cartesian.h Numeric/ElementType.h
-    Numeric/BasisFactory.h Numeric/CondNumBasis.h
-  Geo/GModel.h Geo/GEntity.h Geo/GPoint.h Geo/GVertex.h Geo/GEdge.h
-    Geo/GFace.h Geo/GRegion.h Geo/GEdgeLoop.h Geo/GEdgeCompound.h
-    Geo/GFaceCompound.h Geo/GRegionCompound.h Geo/GRbf.h Geo/MVertex.h
-    Geo/MVertexBoundaryLayerData.h Geo/MEdge.h Geo/MFace.h
-    Geo/MEdgeHash.h Geo/MFaceHash.h
-    Geo/MElement.h Geo/MElementOctree.h Geo/MPoint.h Geo/MLine.h
-    Geo/MTriangle.h Geo/MQuadrangle.h Geo/MTetrahedron.h Geo/MHexahedron.h
-    Geo/MPrism.h Geo/MPyramid.h Geo/MTrihedron.h Geo/MElementCut.h Geo/MElementOctree.h
-    Geo/discreteVertex.h Geo/discreteEdge.h Geo/discreteFace.h Geo/discreteRegion.h
-    Geo/SPoint2.h Geo/SPoint3.h Geo/SVector3.h Geo/STensor3.h Geo/SBoundingBox3d.h
-    Geo/Pair.h Geo/Range.h Geo/SOrientedBoundingBox.h
-    Geo/CellComplex.h Geo/ChainComplex.h Geo/Cell.h Geo/Homology.h Geo/Chain.h
-    Geo/GenericVertex.h Geo/GenericEdge.h Geo/GenericFace.h Geo/GenericRegion.h
-    Geo/partitionVertex.h Geo/partitionEdge.h Geo/partitionFace.h Geo/CGNSOptions.h
-    Geo/gmshLevelset.h Geo/boundaryLayersData.h
-  Mesh/meshGEdge.h Mesh/meshGFace.h Mesh/meshGFaceOptimize.h
-    Mesh/meshPartition.h Mesh/meshGFaceDelaunayInsertion.h
-    Mesh/simple3D.h Mesh/meshPartitionOptions.h Mesh/directions3D.h Mesh/yamakawa.h
-    Mesh/Voronoi3D.h Mesh/Levy3D.h Mesh/meshMetric.h Mesh/ThinLayer.h
-  Numeric/mathEvaluator.h
-  Solver/dofManager.h Solver/femTerm.h Solver/laplaceTerm.h Solver/elasticityTerm.h
-    Solver/crossConfTerm.h Solver/orthogonalTerm.h
-    Solver/linearSystem.h Solver/linearSystemGMM.h Solver/linearSystemCSR.h
-    Solver/linearSystemFull.h Solver/elasticitySolver.h Solver/sparsityPattern.h
-    Solver/groupOfElements.h Solver/linearSystemPETSc.h Solver/linearSystemMUMPS.h
-    Solver/thermicSolver.h
-  Post/PView.h Post/PViewData.h Plugin/PluginManager.h Post/OctreePost.h
-  Post/PViewDataList.h Post/PViewDataGModel.h Post/PViewOptions.h Post/ColorTable.h
-   Numeric/nodalBasis.h Post/adaptiveData.h
-  Graphics/drawContext.h
-  contrib/kbipack/gmp_normal_form.h contrib/kbipack/gmp_matrix.h
-    contrib/kbipack/gmp_blas.h contrib/kbipack/mpz.h
-  contrib/DiscreteIntegration/Integration3D.h
-  contrib/HighOrderMeshOptimizer/OptHOM.h contrib/HighOrderMeshOptimizer/OptHomMesh.h
-  contrib/HighOrderMeshOptimizer/OptHomRun.h contrib/HighOrderMeshOptimizer/ParamCoord.h
-  contrib/HighOrderMeshOptimizer/OptHomFastCurving.h
-  contrib/HighOrderMeshOptimizer/OptHomIntegralBoundaryDist.h
-  contrib/HighOrderMeshOptimizer/CADDistances.h
-  contrib/HighOrderMeshOptimizer/OptHomObjContribScaledJac.h
-  contrib/HighOrderMeshOptimizer/OptHomObjContribMetricMin.h
-  contrib/HighOrderMeshOptimizer/OptHomObjContribCADDist.h
-  contrib/MeshOptimizer/MeshOptPatch.h contrib/MeshOptimizer/MeshOpt.h
-  contrib/MeshOptimizer/MeshOptCommon.h contrib/MeshOptimizer/MeshOptimizer.h
-  contrib/MeshOptimizer/MeshOptObjContribFunc.h contrib/MeshOptimizer/MeshOptObjContrib.h
-  contrib/MeshOptimizer/MeshOptObjContribScaledNodeDispSq.h
-  contrib/MeshOptimizer/MeshOptObjectiveFunction.h contrib/MeshOptimizer/MeshOptVertexCoord.h
-  contrib/MeshQualityOptimizer/MeshQualityObjContribIdealJac.h
-  contrib/MeshQualityOptimizer/MeshQualityObjContribInvCond.h
-  contrib/MeshQualityOptimizer/MeshQualityOptimizer.h
-  contrib/MathEx/mathex.h)
+set(GMSH_API api/gmsh.h api/gmshc.h)
 
-get_property(IAMCHILD DIRECTORY  PROPERTY PARENT_DIRECTORY)
-if(IAMCHILD)
-  set(GMSH_API ${GMSH_API} PARENT_SCOPE)
-endif(IAMCHILD)
+if(ENABLE_INTERNAL_DEVELOPER_API)
+  message(WARNING "The internal developer API is unsupported and undocumented. "
+      "It is meant for Gmsh (and related projects) developers, not for wide "
+      "distribution. If you are packaging Gmsh for redistribution, please "
+      "DO NOT enable this and just ship the stable API (api/gmsh.h) instead.")
+  file(GLOB_RECURSE HEADERS Common/*.h Numeric/*.h Geo/*.h Mesh/*.h Solver/*.h 
+    Post/*.h Graphics/*.h contrib/kbipack/*.h contrib/DiscreteIntegration/*.h
+    contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
+    contrib/MeshQualityOptimizer/*.h contrib/MathEx/*.h)
+  set(GMSH_INTERNAL_DEVELOPER_API ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h
+      ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h ${HEADERS})
+  get_property(IAMCHILD DIRECTORY  PROPERTY PARENT_DIRECTORY)
+  if(IAMCHILD)
+    set(GMSH_INTERNAL_DEVELOPER_API ${GMSH_INTERNAL_DEVELOPER_API} PARENT_SCOPE)
+  endif(IAMCHILD)
+endif(ENABLE_INTERNAL_DEVELOPER_API)
+
+set(ONELAB_PY contrib/onelab/python/onelab.py)
+set(GMSH_PY api/gmsh.py)
 
 if(${CMAKE_MAJOR_VERSION} GREATER 2)
   string(TIMESTAMP DATE "%Y%m%d")
@@ -195,6 +150,7 @@ endif(NOT GMSH_HOST)
 if(NOT PACKAGER)
   set(PACKAGER "unknown")
 endif(NOT PACKAGER)
+string(REPLACE "\\" " " PACKAGER ${PACKAGER})
 set(GMSH_PACKAGER "${PACKAGER}")
 
 if(APPLE)
@@ -234,24 +190,27 @@ if(NOT APPLE)
   endif(HAVE_64BIT_SIZE_T)
 endif(NOT APPLE)
 
-if(ENABLE_WRAP_PYTHON AND NOT ENABLE_BUILD_SHARED)
-  set(ENABLE_BUILD_DYNAMIC ON)
-endif(ENABLE_WRAP_PYTHON AND NOT ENABLE_BUILD_SHARED)
+if(NOT ENABLE_BUILD_SHARED)
+  if(ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
+    set(ENABLE_BUILD_DYNAMIC ON)
+  endif(ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
+endif(NOT ENABLE_BUILD_SHARED)
 
 if(MSVC)
   # remove annoying warning about bool/int cast performance
   set(GMSH_CONFIG_PRAGMAS "#pragma warning(disable:4800 4244 4267)")
-  if(ENABLE_MSVC_STATIC_RUNTIME)
-    foreach(VAR
-            CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
-            CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO
-            CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
-            CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO)
-      if(${VAR} MATCHES "/MD")
-        string(REGEX REPLACE "/MD" "/MT" ${VAR} "${${VAR}}")
-      endif(${VAR} MATCHES "/MD")
-    endforeach(VAR)
-  endif(ENABLE_MSVC_STATIC_RUNTIME)
+  foreach(VAR
+          CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
+          CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO
+          CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
+          CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO)
+    if(ENABLE_MSVC_STATIC_RUNTIME AND ${VAR} MATCHES "/MD")
+      string(REGEX REPLACE "/MD" "/MT" ${VAR} "${${VAR}}")
+    endif(ENABLE_MSVC_STATIC_RUNTIME AND ${VAR} MATCHES "/MD")
+    if(NOT ${VAR} MATCHES "/MP") # enable parallel compilation
+      set(${VAR} "${${VAR}} /MP")
+    endif(NOT ${VAR} MATCHES "/MP")
+  endforeach(VAR)
   if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
     # automatically export .def file with all symbols (requires CMake 3.4);
     # depending on the compiling options this might lead to more than 64k export
@@ -440,7 +399,7 @@ if(ENABLE_BLAS_LAPACK)
     endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
 
     if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
-      message(STATUS "Warning: Could not find Blas or Lapack: most meshing algorithms "
+      message(WARNING "Could not find Blas or Lapack: most meshing algorithms "
               "will not be functional")
     endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
 
@@ -482,6 +441,10 @@ if(ENABLE_PARSER)
   add_subdirectory(Parser)
   set_config_option(HAVE_PARSER "Parser")
 endif(ENABLE_PARSER)
+
+if(ENABLE_VISUDEV)
+  set_config_option(HAVE_VISUDEV "VisuDev")
+endif(ENABLE_VISUDEV)
 
 if(ENABLE_FLTK)
   # first, try to use fltk-config for fltk >= 1.3 (FindFLTK is buggy on Unix,
@@ -580,8 +543,7 @@ if(ENABLE_ONELAB)
       include_directories(contrib/onelab)
       set_config_option(HAVE_ONELAB_METAMODEL "ONELABMetamodel")
     endif(ENABLE_ONELAB_METAMODEL)
-    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab/python/onelab.py
-              DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+    file(COPY ${ONELAB_PY} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
   endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab)
 endif(ENABLE_ONELAB)
 
@@ -1059,7 +1021,7 @@ if(HAVE_SOLVER)
       set_source_files_properties(${TAUCS_G} PROPERTIES COMPILE_FLAGS -DTAUCS_CORE_GENERAL)
       set_config_option(HAVE_TAUCS "Taucs")
     else(HAVE_METIS)
-      message(STATUS "Warning: Disabling Taucs (requires METIS)")
+      message(WARNING "Disabling Taucs (requires METIS)")
     endif(HAVE_METIS)
   endif(ENABLE_TAUCS AND HAVE_BLAS AND HAVE_LAPACK)
 
@@ -1130,9 +1092,9 @@ if(ENABLE_OCC)
     endif(OCC_MAJOR AND OCC_MINOR AND OCC_MAINT)
   endif(OCC_INC)
   if(OCC_VERSION AND OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
-    message(WARNING "Gmsh requires OpenCASCADE >= ${OCC_MINIMAL_VERSION}")
-    message(WARNING "Use CMAKE_PREFIX_PATH or the CASROOT environment variable "
-            "to explicitely specify the installation path of OpenCASCADE")
+    message(WARNING "Gmsh requires OpenCASCADE >= ${OCC_MINIMAL_VERSION}. "
+        "Use CMAKE_PREFIX_PATH or the CASROOT environment variable "
+        "to explicitely specify the installation path of OpenCASCADE")
   else(OCC_VERSION AND OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
     set(OCC_LIBS_REQUIRED
 	# subset of DataExchange
@@ -1241,51 +1203,48 @@ if(ENABLE_ZIPPER)
   endif(HAVE_LIBZ)
 endif(ENABLE_ZIPPER)
 
-if(ENABLE_WRAP_PYTHON)
-  find_package(SWIG)
+if(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_PYTHON)
+  find_package(SWIG REQUIRED)
+  include(${SWIG_USE_FILE})
   find_package(PythonLibs)
-  find_package(PythonInterp)# ${PYTHONLIBS_VERSION_STRING} EXACT)
   if(SWIG_FOUND AND PYTHONLIBS_FOUND)
     message(STATUS "Found SWIG version " ${SWIG_VERSION})
+    find_package(PythonInterp)
     string(SUBSTRING ${SWIG_VERSION} 0 1 SWIG_MAJOR_VERSION)
     if(SWIG_MAJOR_VERSION EQUAL 1)
       message(WARNING "Python bindings require SWIG >= 2: disabling Python")
     else(SWIG_MAJOR_VERSION EQUAL 1)
       set_config_option(HAVE_PYTHON "Python")
       mark_as_advanced(CLEAR PYTHON_LIBRARY PYTHON_INCLUDE_DIR)
+      if(ENABLE_NUMPY)
+        if (NOT NUMPY_INC)
+          EXEC_PROGRAM (${PYTHON_EXECUTABLE}
+            ARGS "-c \"import numpy; print(numpy.get_include())\""
+            OUTPUT_VARIABLE NUMPY_INC
+            RETURN_VALUE NUMPY_NOT_FOUND)
+        endif(NOT NUMPY_INC)
+        if(NUMPY_INC)
+          list(APPEND EXTERNAL_INCLUDES ${NUMPY_INC})
+          set_config_option(HAVE_NUMPY "Numpy")
+        endif(NUMPY_INC)
+      endif(ENABLE_NUMPY)
+      if(HAVE_PETSC)
+        if(ENABLE_PETSC4PY)
+          EXECUTE_PROCESS(
+            COMMAND ${PYTHON_EXECUTABLE} -c "import petsc4py; print(petsc4py.get_include())"
+            OUTPUT_VARIABLE PETSC4PY_INC
+            RESULT_VARIABLE PETSC4PY_NOT_FOUND
+            ERROR_QUIET
+            OUTPUT_STRIP_TRAILING_WHITESPACE)
+          if(PETSC4PY_INC)
+            list(APPEND EXTERNAL_INCLUDES ${PETSC4PY_INC})
+            set_config_option(HAVE_PETSC4PY "PETSc4py")
+          endif(PETSC4PY_INC)
+        endif(ENABLE_PETSC4PY)
+      endif(HAVE_PETSC)
     endif(SWIG_MAJOR_VERSION EQUAL 1)
   endif(SWIG_FOUND AND PYTHONLIBS_FOUND)
-endif(ENABLE_WRAP_PYTHON)
-
-if(HAVE_PYTHON)
-  if(ENABLE_NUMPY)
-    if (NOT NUMPY_INC)
-      EXEC_PROGRAM (${PYTHON_EXECUTABLE}
-        ARGS "-c \"import numpy; print(numpy.get_include())\""
-        OUTPUT_VARIABLE NUMPY_INC
-        RETURN_VALUE NUMPY_NOT_FOUND)
-    endif(NOT NUMPY_INC)
-    if(NUMPY_INC)
-      list(APPEND EXTERNAL_INCLUDES ${NUMPY_INC})
-      set_config_option(HAVE_NUMPY "Numpy")
-    endif(NUMPY_INC)
-  endif(ENABLE_NUMPY)
-  if(HAVE_PETSC)
-    if(ENABLE_PETSC4PY)
-      EXECUTE_PROCESS(
-        COMMAND ${PYTHON_EXECUTABLE} -c "import petsc4py; print(petsc4py.get_include())"
-        OUTPUT_VARIABLE PETSC4PY_INC
-        RESULT_VARIABLE PETSC4PY_NOT_FOUND
-        ERROR_QUIET
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-      )
-      if(PETSC4PY_INC)
-        list(APPEND EXTERNAL_INCLUDES ${PETSC4PY_INC})
-        set_config_option(HAVE_PETSC4PY "PETSc4py")
-      endif(PETSC4PY_INC)
-    endif(ENABLE_PETSC4PY)
-  endif(HAVE_PETSC)
-endif(HAVE_PYTHON)
+endif(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_PYTHON)
 
 check_function_exists(vsnprintf HAVE_VSNPRINTF)
 if(NOT HAVE_VSNPRINTF AND NOT ENABLE_BUILD_IOS AND NOT ENABLE_BUILD_ANDROID)
@@ -1382,7 +1341,7 @@ if(NOOPT OR ENABLE_BUILD_IOS)
   set_compile_flags(NOOPT_SRC "-O0")
 endif(NOOPT OR ENABLE_BUILD_IOS)
 
-#enable Revoropt and set compile flags for the corresponding plugin
+# enable Revoropt and set compile flags for the corresponding plugin
 if(ENABLE_REVOROPT)
   find_path(EIGEN3_INC "eigen3/Eigen/Dense")
   if(EIGEN3_INC AND HAVE_MESH AND HAVE_PLUGINS AND HAVE_ANN AND HAVE_BFGS)
@@ -1478,7 +1437,7 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 # we could specify include dirs more selectively, but this is simpler
 include_directories(Common Fltk Geo Graphics Mesh Solver Numeric Parser
-  Plugin Post Qt ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/Common)
+  Plugin Post Qt api ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/Common)
 
 # set this for external codes that might include this CMakeList file
 set(GMSH_EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDES} CACHE
@@ -1495,40 +1454,28 @@ endforeach(DIR)
 # static library target
 if(ENABLE_BUILD_LIB)
   add_library(lib STATIC ${GMSH_SRC})
-  set_target_properties(lib PROPERTIES OUTPUT_NAME Gmsh)
+  set_target_properties(lib PROPERTIES OUTPUT_NAME gmsh)
   if(MSVC)
     set_target_properties(lib PROPERTIES DEBUG_POSTFIX d)
     if(ENABLE_MSVC_STATIC_RUNTIME)
       set_target_properties(lib PROPERTIES LINK_FLAGS_RELEASE "/nodefaultlib:LIBCMT")
     endif(ENABLE_MSVC_STATIC_RUNTIME)
   endif(MSVC)
+  add_library(libc STATIC api/gmshc.cpp)
+  set_target_properties(libc PROPERTIES OUTPUT_NAME gmshc)
 endif(ENABLE_BUILD_LIB)
 
-if(ENABLE_BUILD_ANDROID)
-  find_file(CMAKE_TOOLCHAIN_FILE "android.toolchain.cmake")
-  if(NOT CMAKE_TOOLCHAIN_FILE)
-    message(FATAL_ERROR "Cannot compile Gmsh for android without android-cmake")
-  endif(NOT CMAKE_TOOLCHAIN_FILE)
-  add_definitions(-D_GLIBCXX_USE_C99_MATH=1)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-  set(CMAKE_BUILD_TYPE Release)
-  set(LIBRARY_OUTPUT_PATH_ROOT ${CMAKE_CURRENT_BINARY_DIR})
-  set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/libs/)
-  add_definitions(-DBUILD_ANDROID)
-  add_definitions(-DPICOJSON_USE_LOCALE=0)
-  add_library(androidGmsh SHARED ${GMSH_SRC})
-  set_target_properties(androidGmsh PROPERTIES OUTPUT_NAME Gmsh)
-  target_link_libraries(androidGmsh ${EXTERNAL_LIBRARIES} ${LAPACK_LIBRARIES})
-  add_custom_command(TARGET androidGmsh POST_BUILD COMMAND
-                     ${CMAKE_STRIP} ${LIBRARY_OUTPUT_PATH}/libGmsh.so)
-endif(ENABLE_BUILD_ANDROID)
-
 # shared library target
-if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC OR
-   ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
+if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
+  if(APPLE)
+    # FIXME: change this once we understand rpaths
+    set(CMAKE_MACOSX_RPATH 0)
+  endif(APPLE)
+  if(WIN32)
+    add_definitions(-DGMSH_DLL_EXPORT)
+  endif(WIN32)
   add_library(shared SHARED ${GMSH_SRC})
-  set_target_properties(shared PROPERTIES OUTPUT_NAME Gmsh)
-  set_target_properties(shared PROPERTIES
+  set_target_properties(shared PROPERTIES OUTPUT_NAME gmsh
     VERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}
     SOVERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
   if(HAVE_LAPACK AND LAPACK_FLAGS)
@@ -1539,8 +1486,13 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC OR
             "won't link. In MSVC change /MT to /MD in the shared project properties")
   endif(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
   target_link_libraries(shared ${LINK_LIBRARIES})
-endif(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC OR
-      ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
+  # C wrappers
+  add_library(sharedc SHARED api/gmshc.cpp)
+  set_target_properties(sharedc PROPERTIES OUTPUT_NAME gmshc
+    VERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}
+    SOVERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
+  target_link_libraries(sharedc shared)
+endif(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 
 # binary targets
 if(HAVE_FLTK)
@@ -1550,6 +1502,11 @@ if(HAVE_FLTK)
   else(ENABLE_BUILD_DYNAMIC)
     add_executable(gmsh WIN32 Fltk/Main.cpp ${GMSH_SRC})
   endif(ENABLE_BUILD_DYNAMIC)
+  # we could add this to create a minimal app bundle even without install
+  # if(APPLE AND NOT ENABLE_OS_SPECIFIC_INSTALL)
+  #  set_target_properties(gmsh PROPERTIES MACOSX_BUNDLE ON
+  #    MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/gmsh_dev.plist)
+  # endif(APPLE AND NOT ENABLE_OS_SPECIFIC_INSTALL)
 elseif(HAVE_QT)
   qt4_wrap_cpp(GMSH_MOC_SRC ${GMSH_MOC_HDR})
   add_executable(gmsh WIN32 Qt/Main.cpp ${GMSH_SRC} ${GMSH_MOC_SRC})
@@ -1575,10 +1532,6 @@ if(WIN32 AND NOT MSVC OR CYGWIN)
     set(FLAGS "${FLAGS} -Wl,-Bstatic -lgfortran")
     set_target_properties(gmsh PROPERTIES
       LINK_FLAGS "${FLAGS} -Wl,--enable-auto-import")
-    set(LIBGMSH_DEF "libGmsh-${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.def")
-    # automatically export .def file with all symbols
-    set_target_properties(shared PROPERTIES PREFIX "lib"
-      LINK_FLAGS "${FLAGS} -Wl,--export-all-symbols,--output-def,${LIBGMSH_DEF}")
   else(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
     set_target_properties(gmsh PROPERTIES
       LINK_FLAGS "${FLAGS} -static")
@@ -1590,6 +1543,26 @@ elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS
     "/STACK:16777216 /SAFESEH:NO")
 endif(WIN32 AND NOT MSVC OR CYGWIN)
+
+# android target
+if(ENABLE_BUILD_ANDROID)
+  find_file(CMAKE_TOOLCHAIN_FILE "android.toolchain.cmake")
+  if(NOT CMAKE_TOOLCHAIN_FILE)
+    message(FATAL_ERROR "Cannot compile Gmsh for android without android-cmake")
+  endif(NOT CMAKE_TOOLCHAIN_FILE)
+  add_definitions(-D_GLIBCXX_USE_C99_MATH=1)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  set(CMAKE_BUILD_TYPE Release)
+  set(LIBRARY_OUTPUT_PATH_ROOT ${CMAKE_CURRENT_BINARY_DIR})
+  set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/libs/)
+  add_definitions(-DBUILD_ANDROID)
+  add_definitions(-DPICOJSON_USE_LOCALE=0)
+  add_library(androidGmsh SHARED ${GMSH_SRC})
+  set_target_properties(androidGmsh PROPERTIES OUTPUT_NAME gmsh)
+  target_link_libraries(androidGmsh ${EXTERNAL_LIBRARIES} ${LAPACK_LIBRARIES})
+  add_custom_command(TARGET androidGmsh POST_BUILD COMMAND
+                     ${CMAKE_STRIP} ${LIBRARY_OUTPUT_PATH}/libgmsh.so)
+endif(ENABLE_BUILD_ANDROID)
 
 # parser target
 find_program(BISON bison)
@@ -1616,7 +1589,6 @@ set(WELCOME_FILE ${CMAKE_CURRENT_SOURCE_DIR}/doc/WELCOME.txt)
 set(LICENSE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt)
 set(CREDITS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/CREDITS.txt)
 set(CHANGELOG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/CHANGELOG.txt)
-set(ONELAB_PY ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab/python/onelab.py)
 file(GLOB TUTORIAL_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorial/?*.*)
 file(GLOB DEMOS ${CMAKE_CURRENT_SOURCE_DIR}/demos/*)
 foreach(SUBDIR ${DEMOS})
@@ -1654,15 +1626,20 @@ if(WIN32 OR CYGWIN)
     set(GMSH_LIB .)
     set(GMSH_DOC .)
     set(GMSH_MAN .)
+    set(GMSH_INC .)
   else(ENABLE_OS_SPECIFIC_INSTALL)
     include(GNUInstallDirs)
     set(GMSH_BIN ${CMAKE_INSTALL_BINDIR})
     set(GMSH_LIB ${CMAKE_INSTALL_LIBDIR})
     set(GMSH_DOC ${CMAKE_INSTALL_DOCDIR})
     set(GMSH_MAN ${CMAKE_INSTALL_MANDIR}/man1)
+    set(GMSH_INC ${CMAKE_INSTALL_INCLUDEDIR})
   endif(ENABLE_OS_SPECIFIC_INSTALL)
   if(CYGWIN)
     unix2dos(GMSH_API)
+    if(ENABLE_INTERNAL_DEVELOPER_API)
+      unix2dos(GMSH_INTERNAL_DEVELOPER_API)
+    endif(ENABLE_INTERNAL_DEVELOPER_API)
     unix2dos(WELCOME_FILE)
     unix2dos(LICENSE_FILE)
     unix2dos(CREDITS_FILE)
@@ -1680,27 +1657,39 @@ elseif(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
   set(GMSH_LIB ../MacOS)
   set(GMSH_DOC ../../..)
   set(GMSH_MAN ../../..)
+  set(GMSH_INC ../MacOS)
 else(WIN32 OR CYGWIN)
-  set(GMSH_BIN bin)
-  set(GMSH_LIB lib)
-  set(GMSH_DOC share/doc/gmsh)
-  set(GMSH_MAN share/man/man1)
+  include(GNUInstallDirs)
+  set(GMSH_BIN ${CMAKE_INSTALL_BINDIR})
+  set(GMSH_LIB ${CMAKE_INSTALL_LIBDIR})
+  set(GMSH_DOC ${CMAKE_INSTALL_DOCDIR})
+  set(GMSH_MAN ${CMAKE_INSTALL_MANDIR}/man1)
+  set(GMSH_INC ${CMAKE_INSTALL_INCLUDEDIR})
 endif(WIN32 OR CYGWIN)
+
+# FIXME: change this once we understand rpaths
+if(APPLE)
+  if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
+    set_target_properties(shared PROPERTIES INSTALL_NAME_DIR 
+                          ${CMAKE_INSTALL_PREFIX}/${GMSH_LIB})
+    set_target_properties(sharedc PROPERTIES INSTALL_NAME_DIR 
+                          ${CMAKE_INSTALL_PREFIX}/${GMSH_LIB})
+  endif(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
+endif(APPLE)
 
 # mark targets as optional so we can install them separately if needed
 # (e.g. "make lib" or "make shared" followed by "make install/fast")
 install(TARGETS gmsh DESTINATION ${GMSH_BIN} OPTIONAL)
 if(ENABLE_BUILD_LIB)
   install(TARGETS lib DESTINATION ${GMSH_LIB} OPTIONAL)
+  install(TARGETS libc DESTINATION ${GMSH_LIB} OPTIONAL)
 endif(ENABLE_BUILD_LIB)
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   if(WIN32 AND NOT MSVC OR CYGWIN)
     # install only the runtime (DLL); the .dll.a generated by gcc is not usable
     # by MSVC
     install(TARGETS shared RUNTIME DESTINATION ${GMSH_LIB} OPTIONAL)
-    # install .def file
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${LIBGMSH_DEF}
-            DESTINATION ${GMSH_LIB})
+    install(TARGETS sharedc RUNTIME DESTINATION ${GMSH_LIB} OPTIONAL)
     # install these DLLs until we figure out how to link them in statically
     # (libstc++ and libgcc should be linkable statically with -static-libstdc++
     # and -static-libgcc but with current mingw64 toolchain it does not
@@ -1728,6 +1717,9 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
     endif(GCC_DLL AND STDC_DLL)
   else(WIN32 AND NOT MSVC OR CYGWIN)
     install(TARGETS shared DESTINATION ${GMSH_LIB} OPTIONAL)
+    install(TARGETS sharedc DESTINATION ${GMSH_LIB} OPTIONAL)
+    # FIXME once we cleanup the installation of the python module
+    install(TARGETS sharedc DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/api OPTIONAL)
   endif(WIN32 AND NOT MSVC OR CYGWIN)
 endif(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 
@@ -1735,7 +1727,10 @@ if(ENABLE_ONELAB)
   install(FILES ${ONELAB_PY} DESTINATION ${GMSH_BIN})
 endif(ENABLE_ONELAB)
 if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
-  install(FILES ${GMSH_API} DESTINATION include/gmsh)
+  install(FILES ${GMSH_API} DESTINATION ${GMSH_INC})
+  if(ENABLE_INTERNAL_DEVELOPER_API)
+    install(FILES ${GMSH_INTERNAL_DEVELOPER_API} DESTINATION ${GMSH_INC}/gmsh)
+  endif(ENABLE_INTERNAL_DEVELOPER_API)
 endif(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 install(FILES ${WELCOME_FILE} DESTINATION ${GMSH_DOC} RENAME README.txt)
 install(FILES ${LICENSE_FILE} DESTINATION ${GMSH_DOC})
@@ -1756,9 +1751,16 @@ add_custom_target(get_headers
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 foreach(FILE ${GMSH_API})
   add_custom_command(TARGET get_headers POST_BUILD COMMAND ${CMAKE_COMMAND}
-    -E copy_if_different ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Headers/gmsh/
+    -E copy_if_different ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Headers/
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endforeach(FILE)
+if(ENABLE_INTERNAL_DEVELOPER_API)
+  foreach(FILE ${GMSH_INTERNAL_DEVELOPER_API})
+    add_custom_command(TARGET get_headers POST_BUILD COMMAND ${CMAKE_COMMAND}
+      -E copy_if_different ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Headers/gmsh/
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  endforeach(FILE)
+endif(ENABLE_INTERNAL_DEVELOPER_API)
 
 find_program(MAKEINFO makeinfo)
 if(MAKEINFO)
@@ -1816,19 +1818,26 @@ if(APPLE AND ENABLE_BUILD_LIB)
   get_target_property(LIBNAME lib LOCATION) # depracated
   #set(LIBNAME $<TARGET_FILE:lib>) # FIXME: use this in the future
   add_custom_target(framework DEPENDS lib
-    COMMAND ${CMAKE_COMMAND} -E remove_directory Gmsh.framework
-    COMMAND ${CMAKE_COMMAND} -E make_directory Gmsh.framework/Headers
-    COMMAND ${CMAKE_COMMAND} -E make_directory Gmsh.framework/Resources
-    COMMAND ${CMAKE_COMMAND} -E copy ${LIBNAME} Gmsh.framework/Gmsh
+    COMMAND ${CMAKE_COMMAND} -E remove_directory gmsh.framework
+    COMMAND ${CMAKE_COMMAND} -E make_directory gmsh.framework/Headers
+    COMMAND ${CMAKE_COMMAND} -E make_directory gmsh.framework/Resources
+    COMMAND ${CMAKE_COMMAND} -E copy ${LIBNAME} gmsh.framework/gmsh
     COMMAND ${CMAKE_COMMAND} -E copy Info_framework.plist
-                                     Gmsh.framework/Resources/Info.plist
-    COMMAND ${CMAKE_COMMAND} -E create_symlink . Gmsh.framework/Headers/gmsh
+                                     gmsh.framework/Resources/Info.plist
+    COMMAND ${CMAKE_COMMAND} -E create_symlink . gmsh.framework/Headers/gmsh
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
   foreach(FILE ${GMSH_API})
     add_custom_command(TARGET framework POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
-        ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Gmsh.framework/Headers/
+        ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/gmsh.framework/Headers/
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   endforeach(FILE)
+  if(ENABLE_INTERNAL_DEVELOPER_API)
+    foreach(FILE ${GMSH_INTERNAL_DEVELOPER_API})
+      add_custom_command(TARGET framework POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
+          ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/gmsh.framework/Headers/
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    endforeach(FILE)
+  endif(ENABLE_INTERNAL_DEVELOPER_API)
 endif(APPLE AND ENABLE_BUILD_LIB)
 
 set(CPACK_PACKAGE_VENDOR "Christophe Geuzaine and Jean-Francois Remacle")
@@ -1842,14 +1851,14 @@ if(GMSH_EXTRA_VERSION MATCHES "-git.*") # so that we'll overwrite the archives
   set(CPACK_PACKAGE_FILE_NAME gmsh-git-${GMSH_OS})
   set(CPACK_SOURCE_PACKAGE_FILE_NAME gmsh-git-source)
 else(GMSH_EXTRA_VERSION MATCHES "-git.*")
-  set(CPACK_PACKAGE_FILE_NAME gmsh-${GMSH_VERSION}-${GMSH_OS})      
+  set(CPACK_PACKAGE_FILE_NAME gmsh-${GMSH_VERSION}-${GMSH_OS})
   set(CPACK_SOURCE_PACKAGE_FILE_NAME gmsh-${GMSH_VERSION}-source)
 endif(GMSH_EXTRA_VERSION MATCHES "-git.*")
-set(CPACK_PACKAGE_INSTALL_DIRECTORY "Gmsh")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "gmsh")
 set(CPACK_RESOURCE_FILE_LICENSE ${LICENSE_FILE})
 set(CPACK_RESOURCE_FILE_README ${WELCOME_FILE})
 set(CPACK_RESOURCE_FILE_WELCOME ${WELCOME_FILE})
-set(CPACK_PACKAGE_EXECUTABLE "gmsh;Gmsh")
+set(CPACK_PACKAGE_EXECUTABLE "gmsh")
 set(CPACK_STRIP_FILES TRUE)
 set(CPACK_SOURCE_GENERATOR TGZ)
 set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_CURRENT_BINARY_DIR}" "/CVS/" "/.svn" "/.git"
@@ -1891,16 +1900,13 @@ else(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
   set(CPACK_GENERATOR TGZ)
 endif(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
 
-if(HAVE_PYTHON)
+if(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_PYTHON AND HAVE_PYTHON)
   add_subdirectory(wrappers/gmshpy)
-endif(HAVE_PYTHON)
+endif(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_PYTHON AND HAVE_PYTHON)
 
-if(ENABLE_WRAP_JAVA)
-  if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
-    message(WARNING "Java wrapping samples will not work without BLAS and LAPACK")
-  endif(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
+if(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_JAVA)
   add_subdirectory(wrappers/java)
-endif(ENABLE_WRAP_JAVA)
+endif(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_JAVA)
 
 include(CPack)
 
@@ -1918,15 +1924,6 @@ if(NOT DISABLE_GMSH_TESTS)
       add_test(${TEST} ./gmsh ${TEST} -3 -nopopup -o ./tmp.msh)
     endif(HAVE_OCC OR NOT ${TEST} MATCHES "boolean")
   endforeach()
-  # if(HAVE_PYTHON)
-  #   file(GLOB_RECURSE TESTFILES tutorial/*.py)
-  #   foreach(TESTFILE ${TESTFILES})
-  #     add_test(NAME ${TESTFILE}
-  #              COMMAND ${PYTHON_EXECUTABLE}
-  #                      ${TESTFILE} $<CONFIGURATION>)
-  #     # sys.path.insert(0, "path/to/your/package")
-  #   endforeach()
-  # endif(HAVE_PYTHON)
 endif(NOT DISABLE_GMSH_TESTS)
 
 message(STATUS "")

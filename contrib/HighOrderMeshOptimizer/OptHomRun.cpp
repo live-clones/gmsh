@@ -36,7 +36,6 @@
 #include "OptHomRun.h"
 #include "OptHomPeriodicity.h"
 #include "GModel.h"
-#include "Gmsh.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MTetrahedron.h"
@@ -607,7 +606,7 @@ double ComputeDistanceToGeometry (GEntity *ge , int distanceDefinition, double t
       const double DISTE =computeBndDist(el,distanceDefinition, tolerance);
       if (DISTE != 0.0){
         NUM++;
-        //        if(distanceDefinition == 1)printf("%d %12.5E\n",iEl,DISTE);
+        // if(distanceDefinition == 1)printf("%d %12.5E\n",iEl,DISTE);
         maxd = std::max(maxd,DISTE);
         sum += DISTE;
       }
@@ -672,7 +671,7 @@ void HighOrderMeshOptimizer(GModel *gm, OptHomParameters &p)
         if (jmin < p.BARRIER_MIN || jmax > p.BARRIER_MAX) badasses.insert(el);
       }
     }
-    printf("maxdist = %g badasses size = %lu\n", maxdist, badasses.size());
+    Msg::Info("maxdist = %g badasses size = %lu", maxdist, badasses.size());
     if (p.strategy == 0)
       optimizeConnectedBlobs(vertex2elements, element2entity, badasses, p, samples, false);
     else if (p.strategy == 2)
@@ -727,7 +726,7 @@ struct HOPatchDefParameters : public MeshOptPatchDef
 private:
   double jacMin, jacMax;
   double distanceFactor;
-  bool optCAD;
+  bool optCAD, lockCurvedBLElts;
   double optCADDistMax, optCADWeight;
 };
 
@@ -751,6 +750,7 @@ HOPatchDefParameters::HOPatchDefParameters(const OptHomParameters &p)
   optCAD = p.optCAD;
   optCADDistMax = p.optCADDistMax;
   optCADWeight = p.optCADWeight;
+  lockCurvedBLElts = p.lockCurvedBLElts;
 }
 
 
@@ -791,6 +791,10 @@ int HOPatchDefParameters::inPatch(const SPoint3 &badBary,
                                   double limDist, MElement *el,
                                   GEntity* gEnt) const
 {
+  if (lockCurvedBLElts && (gEnt != 0)) {
+    const std::set<MElement*> &lockedElts = gEnt->curvedBLElements;
+    if (lockedElts.find(el) != lockedElts.end()) return -1;
+  }
   return testElInDist(badBary, limDist, el) ? 1 : 0;
 }
 
@@ -803,7 +807,7 @@ void HighOrderMeshOptimizerNew(std::vector<GEntity*> &entities, OptHomParameters
   par.dim = p.dim;
   par.onlyVisible = p.onlyVisible;
   par.fixBndNodes = p.fixBndNodes;
-  par.useGeomForPatches = false;
+  par.useGeomForPatches = p.lockCurvedBLElts;
   par.useGeomForOpt = false;
   par.useBoundaries = p.optCAD;
   HOPatchDefParameters patchDef(p);

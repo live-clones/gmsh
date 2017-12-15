@@ -9,7 +9,7 @@
 
 #include <dlfcn.h>
 
-#include <gmsh/Gmsh.h>
+#include <gmsh/GmshGlobal.h>
 #include <gmsh/GmshConfig.h>
 #include <gmsh/GmshVersion.h>
 #include <gmsh/GModel.h>

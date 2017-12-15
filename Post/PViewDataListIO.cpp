@@ -723,6 +723,21 @@ void PViewDataList::importLists(int N[24], std::vector<double> *V[24])
   finalize();
 }
 
+void PViewDataList::importList(int index, int n, const std::vector<double> &v,
+                               bool fin)
+{
+  if(index < 0 || index >= 24){
+    Msg::Error("Wrong list index to import");
+    return;
+  }
+  std::vector<double> *list = 0;
+  int *nbe = 0, nbc, nbn;
+  _getRawData(index, &list, &nbe, &nbc, &nbn);
+  *nbe = n;
+  *list = v; // deep copy
+  if(fin) finalize();
+}
+
 void PViewDataList::getListPointers(int N[24], std::vector<double> *V[24])
 {
   for(int i = 0; i < 24; i++){

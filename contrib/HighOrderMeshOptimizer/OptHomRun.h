@@ -57,6 +57,7 @@ struct OptHomParameters {
   double optCADWeight;//Weight
   double optCADDistMax;//Maximum allowed distance from the CAD
   double discrTolerance;
+  bool lockCurvedBLElts; // Do not include in optimization elements already fixed by "fast curving"
 
   // OUTPUT ------>
   int SUCCESS; // 0 --> success , 1 --> Not converged
@@ -70,7 +71,7 @@ struct OptHomParameters {
       distanceFactor(12), fixBndNodes(false), strategy(0), maxAdaptBlob(3),
       adaptBlobLayerFact(2.), adaptBlobDistFact(2.), optPrimSurfMesh(false),
       optCAD(false), optCADWeight(1000.), optCADDistMax(1.e22), discrTolerance(1.e-4),
-      SUCCESS(0), numBlobs(0), minJac(0.), maxJac(0.), CPU(0.)
+      lockCurvedBLElts(true), SUCCESS(0), numBlobs(0), minJac(0.), maxJac(0.), CPU(0.)
   {
   }
 };

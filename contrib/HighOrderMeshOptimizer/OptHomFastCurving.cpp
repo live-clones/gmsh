@@ -35,7 +35,6 @@
 #include "OptHomFastCurving.h"
 #include "GmshConfig.h"
 #include "GModel.h"
-#include "Gmsh.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -50,6 +49,9 @@
 #include "MetaEl.h"
 #include "qualityMeasuresJacobian.h"
 #include "CADDistances.h"
+#include "Field.h"
+#include "boundaryLayersData.h"
+#include "BoundaryLayerCurver.h"
 
 
 
@@ -725,28 +727,69 @@ double calcCADDistSq2D(GEntity *geomEnt, MElement *bndElt)
 
 
 
+double moveAndGetDistSq2DP2(GEdge *ge, MLine3 *bndMetaElt,
+                           MVertex* vert, double u)
+{
+  vert->setParameter(0, u);
+  GPoint gp = ge->point(u);
+  vert->setXYZ(gp.x(), gp.y(), gp.z());
+  return calcCADDistSq2D(ge, bndMetaElt);
+}
+
+
+
 void optimizeCADDist2DP2(GEntity *geomEnt, std::vector<MVertex*> &baseVert)
 {
-  static const int NPTS = 1000;
+  // Parameters for secant method
+  static const int MAXIT = 20;
+  static const double TOL = 1e-3;
+
+  // Boundary geometric and mesh entities, parametrization
   MLine3 bndMetaElt(baseVert);
   MVertex* &vert = baseVert[2];
-  const double xS = vert->x(), yS = vert->y();
-  const GEdge *ge = geomEnt->cast2Edge();
+  GEdge *ge = geomEnt->cast2Edge();
   const Range<double> parBounds = ge->parBounds(0);
-  const double du = (parBounds.high()-parBounds.low())/double(NPTS-1);
-  double uMin = 0., distSqMin = 1e300;
-  double uDbg;
-  vert->getParameter(0, uDbg);
-  for (double u = parBounds.low(); u < parBounds.high(); u += du) {
+  double uBV0, uBV1, uMin, uMax;
+  reparamMeshVertexOnEdge(baseVert[0], ge, uBV0);
+  reparamMeshVertexOnEdge(baseVert[1], ge, uBV1);
+  if (uBV0 < uBV1) { uMin = uBV0; uMax = uBV1; }
+  else { uMin = uBV1; uMax = uBV0; }
+  const double du = uMax - uMin;
+
+  // First initial value for secant method
+  double u00 = uMin + 0.5*du;
+  double distSq00 = moveAndGetDistSq2DP2(ge, &bndMetaElt, vert, u00);
+  const double edLen = bndMetaElt.getLength();
+
+  // Second initial value for secant method
+  const double u0A = uMin + 0.45*du, u0B = uMin + 0.55*du;
+  const double distSq0A = moveAndGetDistSq2DP2(ge, &bndMetaElt, vert, u0A);
+  const double distSq0B = moveAndGetDistSq2DP2(ge, &bndMetaElt, vert, u0B);
+  double u0, distSq0;
+  if (distSq0A < distSq0B) {
+    u0 = u0A; distSq0 = distSq0A;
+  }
+  else {
+    u0 = u0B; distSq0 = distSq0B;
+  }
+
+  // Secant method iteration
+  double u;
+  bool converged = false;
+  for (int it = 0; it < MAXIT; it++) {
+    u = (u00*distSq0 - u0*distSq00) / (distSq0 - distSq00);
+    const double distSq = moveAndGetDistSq2DP2(ge, &bndMetaElt, vert, u);
+    if (std::abs(u-u0)/du < TOL) { converged = true; break; }
+    u00 = u0; distSq00 = distSq0;
+    u0 = u; distSq0 = distSq;
+  }
+
+  if (!converged || (u < uMin+TOL) || (u > uMax-TOL)) {                         // Set to mid-point if not converged
+    u = uMin + 0.5*du;
     vert->setParameter(0, u);
     GPoint gp = ge->point(u);
     vert->setXYZ(gp.x(), gp.y(), gp.z());
-    const double distSq = calcCADDistSq2D(geomEnt, &bndMetaElt);
-    if (distSq < distSqMin) { uMin = u; distSqMin = distSq; }
   }
-  vert->setParameter(0, uMin);
-  GPoint gp = ge->point(uMin);
-  vert->setXYZ(gp.x(), gp.y(), gp.z());
 }
 
 
@@ -883,8 +926,9 @@ double curveAndMeasureAboveEl(MetaEl &metaElt, MElement *lastElt,
 
 
 
-void curveColumn(const FastCurvingParameters &p, GEntity *geomEnt,
-                 int metaElType, std::vector<MVertex*> &baseVert,
+void curveColumn(const FastCurvingParameters &p, GEntity *ent,
+                 GEntity *bndEnt, int metaElType,
+                 std::vector<MVertex*> &baseVert,
                  const std::vector<MVertex*> &topPrimVert, MElement *aboveElt,
                  std::vector<MElement*> &blob, std::set<MVertex*> &movedVert,
                  DbgOutputMeta &dbgOut)
@@ -896,20 +940,22 @@ void curveColumn(const FastCurvingParameters &p, GEntity *geomEnt,
 
   // If 2D P2 and allowed, modify base vertices to minimize distance between wall edge and CAD
   if ((p.optimizeGeometry) && (metaElType == TYPE_QUA) && (order == 2))
-    optimizeCADDist2DP2(geomEnt, baseVert);
+    optimizeCADDist2DP2(bndEnt, baseVert);
 
   // Create meta-element
   MetaEl metaElt(metaElType, order, baseVert, topPrimVert);
 
-  // If allowed, curve top face of meta-element while avoiding breaking the element above
-  if (p.curveOuterBL) {
+  // If required, curve top face of meta-element
+  if (p.curveOuterBL != FastCurvingParameters::OUTER_NOCURVE) {
     MElement* &lastElt = blob.back();
     double minJacDet, maxJacDet;
     double deformMin = 0., qualDeformMin = 1.;
     double deformMax = 1.;
     double qualDeformMax = curveAndMeasureAboveEl(metaElt, lastElt, aboveElt,
                                                   deformMax);
-    if (qualDeformMax < MINQUAL) {                                                // Max deformation makes element above invalid
+    // Bisection on displacement to avoid breaking the element above if required
+    if ((p.curveOuterBL == FastCurvingParameters::OUTER_CURVECONSERVATIVE) &&
+        (qualDeformMax < MINQUAL)) {                                              // Max deformation makes element above invalid
       for (int iter = 0; iter < MAXITER; iter++) {                                // Bisection to find max. deformation that makes element above valid
         const double deformMid = 0.5 * (deformMin + deformMax);
         const double qualDeformMid = curveAndMeasureAboveEl(metaElt, lastElt,
@@ -928,15 +974,16 @@ void curveColumn(const FastCurvingParameters &p, GEntity *geomEnt,
 
   // Curve elements
   dbgOut.addMetaEl(metaElt);
-  for (int iEl = 0; iEl < blob.size(); iEl++)
+  for (int iEl = 0; iEl < blob.size(); iEl++) {
     curveElement(metaElt, movedVert, blob[iEl]);
+    ent->curvedBLElements.insert(blob[iEl]);
+  }
 }
 
 
-
 void curveMeshFromBndElt(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
-                         GEntity *bndEnt, MElement *bndElt,
-                         std::set<MVertex*> movedVert,
+                         GEntity *ent, GEntity *bndEnt,
+                         MElement *bndElt, std::set<MVertex*> movedVert,
                          const FastCurvingParameters &p,
                          DbgOutputMeta &dbgOut)
 {
@@ -974,17 +1021,76 @@ void curveMeshFromBndElt(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
   if (!foundCol || blob.empty()) return; // Skip bnd. el. if top vertices not found
   DbgOutputCol dbgOutCol;
   dbgOutCol.addBlob(blob);
-  dbgOutCol.write("col_KO", bndElt->getNum());
+//  dbgOutCol.write("col_KO", bndElt->getNum());
   if (aboveElt == 0) std::cout << "DBGTT: aboveElt = 0 for bnd. elt. " << bndElt->getNum() << std::endl;
-  curveColumn(p, bndEnt, metaElType, baseVert, topPrimVert, aboveElt, blob,
-              movedVert, dbgOut);
-  dbgOutCol.write("col_OK", bndElt->getNum());
+  curveColumn(p, ent, bndEnt, metaElType, baseVert, topPrimVert,
+              aboveElt, blob, movedVert, dbgOut);
+//  dbgOutCol.write("col_OK", bndElt->getNum());
+}
+
+void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
+                                     MFaceVecMEltMap &face2el,
+                                     GEntity *ent, GEntity *bndEnt,
+                                     std::list<MElement*> &bndElts,
+                                     const FastCurvingParameters &p,
+                                     fullMatrix<double> *normals)
+{
+  // inspired from curveMeshFromBndElt
+
+  std::vector<std::pair<MElement*, std::vector<MElement*> > > bndEl2column;
+  std::vector<MElement*> aboveElements;
+
+  std::list<MElement*>::iterator it = bndElts.begin();
+  while (it != bndElts.end()) {
+    MElement *bndEl = *it;
+    const int bndType = bndEl->getType();
+    bool foundCol;
+    std::vector<MVertex*> baseVert, topPrimVert;
+    MElement *aboveElt = 0;
+
+    if (bndType == TYPE_LIN) { // 1D boundary
+      MVertex *vb0 = bndEl->getVertex(0);
+      MVertex *vb1 = bndEl->getVertex(1);
+      MEdge baseEd(vb0, vb1);
+      std::vector<MElement*> vec;
+      bndEl2column.push_back(std::make_pair(bndEl, std::vector<MElement*>()));
+      aboveElements.push_back(NULL);
+      foundCol = getColumn2D(ed2el, p, baseEd, baseVert, topPrimVert,
+                             bndEl2column.back().second, aboveElements.back());
+    }
+    else { // 2D boundary
+      MVertex *vb0 = bndEl->getVertex(0);
+      MVertex *vb1 = bndEl->getVertex(1);
+      MVertex *vb2 = bndEl->getVertex(2);
+      MVertex *vb3 = NULL;
+      if (bndType == TYPE_QUA) vb3 = bndEl->getVertex(3);
+      MFace baseFace(vb0, vb1, vb2, vb3);
+      bndEl2column.push_back(std::make_pair(bndEl, std::vector<MElement*>()));
+      aboveElements.push_back(NULL);
+      foundCol = getColumn3D(face2el, p, baseFace, baseVert, topPrimVert,
+                             bndEl2column.back().second, aboveElements.back());
+    }
+    if (!foundCol || bndEl2column.back().second.empty()) {
+      bndEl2column.pop_back();
+    } // Skip bnd. el. if top vertices not found
+
+    ++it;
+  }
+
+  SVector3 normal;
+  if (normals)
+    normal = SVector3((*normals)(0, 0), (*normals)(0, 1), (*normals)(0, 2));
+  else
+    normal = SVector3(0, 0, 1);
+  if (p.dim == 2) curve2DBoundaryLayer(bndEl2column, aboveElements, normal, bndEnt);
+  else curve3DBoundaryLayer(bndEl2column);
 }
 
 
-
 void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
-                      GEntity *bndEnt, const FastCurvingParameters &p)
+                      GEntity *ent, GEntity *bndEnt,
+                      const FastCurvingParameters &p,
+                      fullMatrix<double> *normals)
 {
   // Build list of bnd. elements to consider
   std::list<MElement*> bndEl;
@@ -995,23 +1101,35 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
   }
   else if (bndEnt->dim() == 2) {
     GFace *gFace = bndEnt->cast2Face();
-    for(unsigned int i = 0; i< gFace->triangles.size(); i++)
-      insertIfCurved(gFace->triangles[i], bndEl);
+    for(unsigned int i = 0; i< gFace->triangles.size(); i++) {
+      if (p.thickness) bndEl.push_back(gFace->triangles[i]);
+      else insertIfCurved(gFace->triangles[i], bndEl);
+    }
     for(unsigned int i = 0; i< gFace->quadrangles.size(); i++)
-      insertIfCurved(gFace->quadrangles[i], bndEl);
+      if (p.thickness) bndEl.push_back(gFace->quadrangles[i]);
+      else insertIfCurved(gFace->quadrangles[i], bndEl);
   }
   else
     Msg::Error("Cannot process model entity %i of dim %i", bndEnt->tag(),
                                                            bndEnt->dim());
+
+  if (p.thickness) {
+    getColumnsAndcurveBoundaryLayer(ed2el, face2el, ent,
+                                    bndEnt, bndEl, p, normals);
+    return;
+  }
 
   // Loop over boundary elements to curve them by columns
   DbgOutputMeta dbgOut;
   std::set<MVertex*> movedVert;
   for(std::list<MElement*>::iterator itBE = bndEl.begin();
       itBE != bndEl.end(); itBE++) // Loop over bnd. elements
-    curveMeshFromBndElt(ed2el, face2el, bndEnt, *itBE, movedVert, p, dbgOut);
-  dbgOut.write("meta-elements", bndEnt->tag());
+    curveMeshFromBndElt(ed2el, face2el, ent, bndEnt,
+                        *itBE, movedVert, p, dbgOut);
+//  dbgOut.write("meta-elements", bndEnt->tag());
 }
+
+
 
 
 
@@ -1020,48 +1138,85 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
 
 
 // Main function for fast curving
-void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p)
+void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
+                              bool requireBLInfo)
 {
   double t1 = Cpu();
   Msg::StatusBar(true, "Curving high order boundary layer mesh...");
 
-  // Retrieve geometric entities
+  // Retrieve geometric entities and boundary layer field
   std::vector<GEntity*> allGEnt;
   gm->getEntities(allGEnt);
+  BoundaryLayerField *blField = getBLField(gm);
 
   // Curve mesh for non-straight boundary entities
   for (int iEnt = 0; iEnt < allGEnt.size(); ++iEnt) {
-    // Retrive entity
+    // Retrieve entity
     GEntity* &gEnt = allGEnt[iEnt];
     if (gEnt->dim() != p.dim) continue;
 
-    // Compute edge/face -> elt. connectivity
-    Msg::Info("Computing connectivity for entity %i...", gEnt->tag());
-    MEdgeVecMEltMap ed2el;
-    MFaceVecMEltMap face2el;
-    if (p.dim == 2) calcEdge2Elements(allGEnt[iEnt], ed2el);
-    else calcFace2Elements(allGEnt[iEnt], face2el);
+    // Compute normal if planar surface
+    fullMatrix<double> *normals = NULL;
+    if (p.dim == 2) {
+      if (gEnt->geomType() == GEntity::Plane &&
+              gEnt->haveParametrization()) {
+        double u = gEnt->parBounds(0).low();
+        double v = gEnt->parBounds(1).low();
+        SVector3 n = dynamic_cast<GFace*>(gEnt)->normal(SPoint2(u, v));
+        normals = new fullMatrix<double>(1, 3);
+        normals->set(0, 0, n[0]);
+        normals->set(0, 1, n[1]);
+        normals->set(0, 2, n[2]);
+      }
+      else if (gEnt->geomType() == GEntity::DiscreteSurface) {
+        SBoundingBox3d bb = gEnt->bounds();
+        // If we don't have the CAD, check if the mesh is 2D:
+        if (!bb.empty() && bb.max().z() - bb.min().z() == .0) {
+          normals = new fullMatrix<double>(1, 3);
+          normals->set(0, 0, 0);
+          normals->set(0, 1, 0);
+          normals->set(0, 2, 1);
+        }
+      }
+    }
 
-    // Retrieve boundary entities
+    // Retrieve boundary entities and test if boundary layer
     std::vector<GEntity*> bndEnts;
+    std::set<GEntity*> blBndEnts;
     if (p.dim == 2) {
       std::list<GEdge*> gEds = gEnt->edges();
       bndEnts = std::vector<GEntity*>(gEds.begin(), gEds.end());
+      for (int iBndEnt = 0; iBndEnt < bndEnts.size(); iBndEnt++) {
+        GEntity* &bndEnt = bndEnts[iBndEnt];
+        if ((blField != 0) && blField->isEdgeBL(bndEnt->tag())) {
+          blBndEnts.insert(bndEnt);
+        }
+      }
     }
     else {
       std::list<GFace*> gFaces = gEnt->faces();
       bndEnts = std::vector<GEntity*>(gFaces.begin(), gFaces.end());
     }
+    if (requireBLInfo && blBndEnts.empty()) continue;                           // Skip if BL info is required but there is none
+
+    // Compute edge/face -> elt. connectivity
+    Msg::Info("Computing connectivity for entity %i...", gEnt->tag());
+    MEdgeVecMEltMap ed2el;
+    MFaceVecMEltMap face2el;
+    if (p.dim == 2) calcEdge2Elements(gEnt, ed2el);
+    else calcFace2Elements(gEnt, face2el);
 
     // Curve mesh from each boundary entity
     for (int iBndEnt = 0; iBndEnt < bndEnts.size(); iBndEnt++) {
       GEntity* &bndEnt = bndEnts[iBndEnt];
-      if (p.onlyVisible && !bndEnt->getVisibility()) continue;
+      if (p.onlyVisible && !bndEnt->getVisibility()) continue;                  // Skip if "only visible" required and entity is invisible
+      if (!blBndEnts.empty() &&                                                 // Skip if there is BL info but not on this boundary
+          (blBndEnts.find(bndEnt) == blBndEnts.end())) continue;
       const GEntity::GeomType bndType = bndEnt->geomType();
-      if ((bndType == GEntity::Line) || (bndType == GEntity::Plane)) continue;
+      if ((bndType == GEntity::Line) || (bndType == GEntity::Plane)) continue;  // Skip if boundary is straight
       Msg::Info("Curving elements in entity %d for boundary entity %d...",
                 gEnt->tag(), bndEnt->tag());
-      curveMeshFromBnd(ed2el, face2el, bndEnt, p);
+      curveMeshFromBnd(ed2el, face2el, gEnt, bndEnt, p, normals);
     }
   }
 

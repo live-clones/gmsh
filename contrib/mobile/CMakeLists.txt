@@ -41,21 +41,21 @@ macro(append_src FILES)
 endmacro(append_src)
 
 if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
-  # GetDP framework
-  find_path(GETDP_FRAMEWORK GetDP.framework)
+  # getdp framework
+  find_path(GETDP_FRAMEWORK getdp.framework)
   if(GETDP_FRAMEWORK)
-    set(GETDP_FRAMEWORK ${GETDP_FRAMEWORK}/GetDP.framework)
+    set(GETDP_FRAMEWORK ${GETDP_FRAMEWORK}/getdp.framework)
     message(STATUS "Found framework " ${GETDP_FRAMEWORK})
   else(GETDP_FRAMEWORK)
-    message(SEND_ERROR "Could not find GetDP.framework")
+    message(SEND_ERROR "Could not find getdp.framework")
   endif(GETDP_FRAMEWORK)
-  # Gmsh framework
-  find_path(GMSH_FRAMEWORK Gmsh.framework)
+  # gmsh framework
+  find_path(GMSH_FRAMEWORK gmsh.framework)
   if(GMSH_FRAMEWORK)
-    set(GMSH_FRAMEWORK ${GMSH_FRAMEWORK}/Gmsh.framework)
+    set(GMSH_FRAMEWORK ${GMSH_FRAMEWORK}/gmsh.framework)
     message(STATUS "Found framework " ${GMSH_FRAMEWORK})
   else(GMSH_FRAMEWORK)
-    message(SEND_ERROR "Could not find Gmsh.framework")
+    message(SEND_ERROR "Could not find gmsh.framework")
   endif(GMSH_FRAMEWORK)
   # PETSc framework
   find_path(PETSC_FRAMEWORK petsc.framework)
@@ -74,12 +74,12 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     message(SEND_ERROR "Could not find slepc.framework")
   endif(SLEPC_FRAMEWORK)
   # OpenCASCADE framework
-  find_path(OCCT_FRAMEWORK OCCT.framework)
+  find_path(OCCT_FRAMEWORK occt.framework)
   if(OCCT_FRAMEWORK)
-    set(OCCT_FRAMEWORK ${OCCT_FRAMEWORK}/OCCT.framework)
+    set(OCCT_FRAMEWORK ${OCCT_FRAMEWORK}/occt.framework)
     message(STATUS "Found framework " ${OCCT_FRAMEWORK})
   else(OCCT_FRAMEWORK)
-    message(SEND_ERROR "Could not find OCCT.framework")
+    message(SEND_ERROR "Could not find occt.framework")
   endif(OCCT_FRAMEWORK)
   # add target
   add_custom_target(xcodeProject
@@ -100,14 +100,14 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/iosUtils.h ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/iosUtils.cpp ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/frameworks/
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${GETDP_FRAMEWORK}/ ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/frameworks/GetDP.framework/
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${GETDP_FRAMEWORK}/ ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/frameworks/getdp.framework/
     COMMAND ${CMAKE_COMMAND} -E remove ${GMSH_FRAMEWORK}/Headers/gmsh
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${GMSH_FRAMEWORK}/ ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/frameworks/Gmsh.framework/
-    COMMAND ${CMAKE_COMMAND} -E create_symlink . ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/frameworks/Gmsh.framework/Headers/gmsh
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${GMSH_FRAMEWORK}/ ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/frameworks/gmsh.framework/
+    COMMAND ${CMAKE_COMMAND} -E create_symlink . ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/frameworks/gmsh.framework/Headers/gmsh
     COMMAND ${CMAKE_COMMAND} -E create_symlink . ${GMSH_FRAMEWORK}/Headers/gmsh
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${PETSC_FRAMEWORK}/ ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/frameworks/petsc.framework/
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${SLEPC_FRAMEWORK}/ ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/frameworks/slepc.framework/
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${OCCT_FRAMEWORK}/ ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/frameworks/OCCT.framework/
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${OCCT_FRAMEWORK}/ ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/frameworks/occt.framework/
   )
   add_custom_command(TARGET xcodeProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove_directory
                     ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/files)
@@ -152,23 +152,23 @@ if(ENABLE_BUILD_ANDROID)
   append_src(drawString.cpp)
   append_src(drawGeom.cpp)
   append_src(drawMesh.cpp)
-  # GetDP lib
+  # getdp lib
   find_library(GETDP_LIB Getdp PATH_SUFFIXES lib)
-  find_path(GETDP_INC "GetDP.h" PATH_SUFFIXES include getdp include/getdp)
+  find_path(GETDP_INC "getdp.h" PATH_SUFFIXES include getdp include/getdp)
   if(GETDP_LIB AND GETDP_INC)
     list(APPEND EXTERNAL_LIBRARIES ${GETDP_LIB})
     list(APPEND EXTERNAL_INCLUDES ${GETDP_INC})
   else(GETDP_LIB AND GETDP_INC)
-    message(SEND_ERROR "Could not find GetDP library")
+    message(SEND_ERROR "Could not find getdp library")
   endif(GETDP_LIB AND GETDP_INC)
-  # Gmsh lib
+  # gmsh lib
   find_library(GMSH_LIB Gmsh PATH_SUFFIXES lib)
-  find_path(GMSH_INC "Gmsh.h" PATH_SUFFIXES include gmsh include/gmsh)
+  find_path(GMSH_INC "GmshGlobal.h" PATH_SUFFIXES include gmsh include/gmsh)
   if(GMSH_LIB AND GMSH_INC)
     list(APPEND EXTERNAL_LIBRARIES ${GMSH_LIB})
     list(APPEND EXTERNAL_INCLUDES ${GMSH_INC})
   else(GMSH_LIB AND GMSH_INC)
-    message(SEND_ERROR "Could not find Gmsh library")
+    message(SEND_ERROR "Could not find gmsh library")
   endif(GMSH_LIB AND GMSH_INC)
   # Onelab android lib
   include_directories(${EXTERNAL_INCLUDES})

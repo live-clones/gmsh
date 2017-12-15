@@ -44,6 +44,9 @@ class bezierBasis {
   inline FuncSpaceData getFuncSpaceData() const {return _data;}
   bezierBasisRaiser* getRaiser() const;
 
+  // Evaluate Bezier functions at the point (u, v, w)
+  void f(double u, double v, double w, double *sf) const;
+
   // generate Bezier points
   void generateBezierPoints(fullMatrix<double>&) const;
 

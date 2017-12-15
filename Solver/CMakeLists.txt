@@ -15,7 +15,6 @@ elasticitySolver.cpp
   thermicSolver.cpp
   SElement.cpp
   eigenSolver.cpp
-  multiscaleLaplace.cpp
 functionSpace.cpp
   filters.cpp
   frameSolver.cpp

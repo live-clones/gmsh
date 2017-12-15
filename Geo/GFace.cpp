@@ -35,7 +35,7 @@
 #define SQU(a)      ((a)*(a))
 
 GFace::GFace(GModel *model, int tag)
-  : GEntity(model, tag), r1(0), r2(0), compound(0), va_geom_triangles(0)
+  : GEntity(model, tag), r1(0), r2(0), va_geom_triangles(0)
 {
   meshStatistics.status = GFace::PENDING;
   resetMeshAttributes();
@@ -126,11 +126,13 @@ void GFace::replaceEdge(GEdge *e1, GEdge *e2)
   l_edges = newlist;
 }
 
-void GFace::deleteMesh()
+void GFace::deleteMesh(bool onlyDeleteElements)
 {
-  for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
-  mesh_vertices.clear();
-  transfinite_vertices.clear();
+  if(!onlyDeleteElements){
+    for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
+    mesh_vertices.clear();
+    transfinite_vertices.clear();
+  }
   for(unsigned int i = 0; i < triangles.size(); i++) delete triangles[i];
   triangles.clear();
   for(unsigned int i = 0; i < quadrangles.size(); i++) delete quadrangles[i];
@@ -1101,7 +1103,7 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[
 #endif
 }
 
-bool GFace::containsParam(const SPoint2 &pt) 
+bool GFace::containsParam(const SPoint2 &pt)
 {
   Range<double> uu = parBounds(0);
   Range<double> vv = parBounds(1);
@@ -1344,13 +1346,13 @@ bool GFace::fillPointCloud(double maxDist,
 #if defined(HAVE_MESH)
 static void meshCompound(GFace* gf, bool verbose)
 {
-  discreteFace *df = new discreteFace (gf->model(), gf->tag() + 100000);
-
+  discreteFace *df = new discreteFace(gf->model(), gf->tag() + 100000, true);
   std::set<int> ec;
-  for (unsigned int i=0;i<gf->_compound.size();i++){
+
+  for (unsigned int i = 0; i < gf->_compound.size(); i++){
     GFace *c = (GFace*)gf->_compound[i];
     std::list<GEdge*> edges = c->edges();
-    for (std::list<GEdge*> :: iterator it = edges.begin() ; it != edges.end(); ++it){
+    for (std::list<GEdge*>::iterator it = edges.begin() ; it != edges.end(); ++it){
       std::set<int>::iterator found = ec.find((*it)->tag());
       if (found == ec.end())ec.insert((*it)->tag());
       else ec.erase(found);
@@ -1359,10 +1361,12 @@ static void meshCompound(GFace* gf, bool verbose)
                          c->triangles.end());
     df->mesh_vertices.insert(df->mesh_vertices.end(), c->mesh_vertices.begin(),
                              c->mesh_vertices.end());
-    for (unsigned int j=0;j<c->triangles.size();j++)df->_CAD.push_back(c);
+    for (unsigned int j = 0; j < c->triangles.size(); j++)
+      df->_CAD.push_back(c);
     c->triangles.clear();
     c->mesh_vertices.clear();
   }
+
   std::vector<int> cedges;
   cedges.insert(cedges.begin(), ec.begin(), ec.end());
   df->setBoundEdges(cedges);
@@ -1377,15 +1381,17 @@ void GFace::mesh(bool verbose)
 #if defined(HAVE_MESH)
   meshGFace mesher;
   mesher(this, verbose);
-  if (!_compound.empty()){ // Some faces are meshed together
-    if (_compound[0] == this){ //  I'm the one that makes the compound job
+  if(_compound.size()){ // Some faces are meshed together
+    if(_compound[0] == this){ //  I'm the one that makes the compound job
       bool ok = true;
-      for (unsigned int i = 0; i < _compound.size(); i++){
+      for(unsigned int i = 0; i < _compound.size(); i++){
 	GFace *gf = (GFace*)_compound[i];
 	ok &= (gf->meshStatistics.status == GFace::DONE);
       }
-      if (!ok)meshStatistics.status = GFace::PENDING;
-      else {
+      if(!ok){
+        meshStatistics.status = GFace::PENDING;
+      }
+      else{
 	meshCompound(this, verbose);
 	return;
       }
@@ -1399,8 +1405,8 @@ void GFace::lloyd(int nbiter, int infn)
 #if defined(HAVE_MESH) && defined(HAVE_BFGS)
   smoothing s = smoothing(nbiter,infn);
   s.optimize_face(this);
-  //lloydAlgorithm algo(nbiter, infn);
-  //algo(this);
+  // lloydAlgorithm algo(nbiter, infn);
+  // algo(this);
 #endif
 }
 

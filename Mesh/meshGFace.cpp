@@ -16,7 +16,6 @@
 #include "BackgroundMesh.h"
 #include "GVertex.h"
 #include "GEdge.h"
-#include "GEdgeCompound.h"
 #include "robustPredicates.h"
 #include "discreteFace.h"
 #include "GFace.h"
@@ -40,7 +39,6 @@
 #include "meshPartition.h"
 #include "CreateFile.h"
 #include "Context.h"
-#include "multiscalePartition.h"
 #include "meshGFaceLloyd.h"
 #include "boundaryLayersData.h"
 #include "filterElements.h"
@@ -482,7 +480,7 @@ static void remeshUnrecoveredEdges(std::map<MVertex*, BDS_Point*> &recoverMapInv
           double t = 0.5 * (t2 + t1);
           double lc = 0.5 * (lc1 + lc2);
           GPoint V = itr->ge->point(t);
-          MEdgeVertex * newv = new MEdgeVertex(V.x(), V.y(), V.z(), itr->ge, t, lc);
+          MEdgeVertex * newv = new MEdgeVertex(V.x(), V.y(), V.z(), itr->ge, t, 0, lc);
           newLines.push_back(new MLine(v1, newv));
           newLines.push_back(new MLine(newv, v2));
           delete itr->ge->lines[i];
@@ -957,16 +955,7 @@ static void directions_storage(GFace* gf)
   gf->storage4.clear();
 
   for(it=vertices.begin();it!=vertices.end();it++){
-    ok = 0;
-
-    if(!gf->getCompound()){
-      if(gf->geomType()==GEntity::CompoundSurface){
-        ok = translate(gf,octree,*it,SPoint2(0.0,0.0),v1,v2);
-      }
-      else{
-        ok = improved_translate(gf,*it,v1,v2);
-      }
-    }
+    ok = improved_translate(gf,*it,v1,v2);
 
     if(ok){
       gf->storage1.push_back(SPoint3((*it)->x(),(*it)->y(),(*it)->z()));
@@ -996,16 +985,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   std::list<GEdge*> edges = replacement_edges ? *replacement_edges : gf->edges();
   std::list<int> dir = gf->edgeOrientations();
   std::vector<MEdge> medgesToRecover;
-
-  // replace edges by their compounds
-  // if necessary split compound and remesh parts
-  bool isMeshed = false;
-  if(gf->geomType() == GEntity::CompoundSurface  && !onlyInitialMesh){
-    isMeshed = checkMeshCompound((GFaceCompound*) gf, edges);
-    if (isMeshed) return true;
-  }
-
-  //  if (gf->degenerate(0))return 0;
 
   // build a set with all points of the boundaries
   std::set<MVertex*, MVertexLessThanNum> all_vertices, boundary;
@@ -1506,9 +1485,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   //gf->triangles.clear();
   //gf->quadrangles.clear();
 
-  // only delete the mesh data stored in the base GFace class (calling
-  // gf->deleteMesh() would also destroy e.g. the data in a compound face, which
-  // we should not do)
+  // only delete the mesh data stored in the base GFace class
   gf->GFace::deleteMesh();
 
   Msg::Debug("Starting to add internal points");
@@ -1597,12 +1574,21 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   delete m;
 
-
-
   gf->quadrangles.insert(gf->quadrangles.begin(),blQuads.begin(),blQuads.end());
   gf->triangles.insert(gf->triangles.begin(),blTris.begin(),blTris.end());
   gf->mesh_vertices.insert(gf->mesh_vertices.begin(),verts.begin(),verts.end());
 
+#if defined(HAVE_ANN)
+  if (!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine){
+    FieldManager *fields = gf->model()->getFields();
+    BoundaryLayerField *blf = 0;
+    if(fields->getBoundaryLayerField() > 0){
+      Field *bl_field = fields->get(fields->getBoundaryLayerField());
+      blf = dynamic_cast<BoundaryLayerField*> (bl_field);
+      if (blf && !blf->iRecombine) quadsToTriangles(gf,10000);
+    }
+  }
+#endif
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
      !CTX::instance()->mesh.optimizeLloyd && !onlyInitialMesh && CTX::instance()->mesh.algoRecombine != 2)
@@ -2278,7 +2264,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
         if (mv1->onWhat()->dim() == 1) {
           double t;
           mv1->getParameter(0,t);
-          mv2 = new MEdgeVertex(mv1->x(),mv1->y(),mv1->z(),mv1->onWhat(), t,
+          mv2 = new MEdgeVertex(mv1->x(),mv1->y(),mv1->z(),mv1->onWhat(), t, 0,
                                 ((MEdgeVertex*)mv1)->getLc());
         }
         else if (mv1->onWhat()->dim() == 0) {
@@ -2513,247 +2499,6 @@ void meshGFace::operator() (GFace *gf, bool print)
   }
 }
 
-bool checkMeshCompound(GFaceCompound *gf, std::list<GEdge*> &edges)
-{
-  bool isMeshed = false;
-#if defined(HAVE_SOLVER)
-  bool correctTopo = gf->checkTopology();
-  if (!correctTopo && gf->allowPartition()){
-    partitionAndRemesh((GFaceCompound*) gf);
-    isMeshed = true;
-    return isMeshed;
-  }
-
-  bool correctParam = gf->parametrize();
-
-  if (!correctParam &&  gf->allowPartition()){
-   partitionAndRemesh((GFaceCompound*) gf);
-   isMeshed = true;
-   return isMeshed;
-  }
-
-  //Replace edges by their compounds
-  std::set<GEdge*> mySet;
-  std::list<GEdge*>::iterator it = edges.begin();
-  while(it != edges.end()){
-    if((*it)->getCompound()){
-      mySet.insert((*it)->getCompound());
-    }
-    else{
-      mySet.insert(*it);
-    }
-    ++it;
-  }
-  edges.clear();
-  edges.insert(edges.begin(), mySet.begin(), mySet.end());
-#endif
-  return isMeshed;
-}
-
-void partitionAndRemesh(GFaceCompound *gf)
-{
-#if defined(HAVE_SOLVER) && defined(HAVE_ANN) && defined(HAVE_METIS)
-
-  // Partition the mesh and createTopology for new faces
-  double tbegin = Cpu();
-  std::list<GFace*> cFaces = gf->getCompounds();
-  std::vector<MElement *> elements;
-  for (std::list<GFace*>::iterator it = cFaces.begin(); it != cFaces.end(); it++)
-    for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++)
-      elements.push_back((*it)->getMeshElement(j));
-
-  typeOfPartition method;
-  if(gf->nbSplit > 0) method = MULTILEVEL;
-  else method = LAPLACIAN;
-
-  int allowType = gf->allowPartition();
-  multiscalePartition *msp = new multiscalePartition(elements, abs(gf->nbSplit),
-                                                     method, allowType);
-
-  int NF = msp->getNumberOfParts();
-  int numv = gf->model()->getMaxElementaryNumber(0) + 1;
-  int nume = gf->model()->getMaxElementaryNumber(1) + 1;
-  int numf = gf->model()->getMaxElementaryNumber(2) + 1;
-  std::vector<discreteFace*> pFaces;
-  createPartitionFaces(gf->model(), elements, NF, pFaces);
-
-  gf->model()->createTopologyFromFaces(pFaces);
-
-  double tmult = Cpu();
-  Msg::Info("Multiscale Partition SUCCESSFULLY PERFORMED : %d parts (%g s)",
-            NF, tmult - tbegin);
-  gf->model()->writeMSH("multiscalePARTS.msh", 2.2, false, true);
-
-  // Remesh new faces (Compound Lines and Compound Surfaces)
-  Msg::Info("*** Starting parametrize compounds:");
-  double t0 = Cpu();
-
-  //Parametrize Compound Lines
-  int NE = gf->model()->getMaxElementaryNumber(1) - nume + 1;
-  for (int i=0; i < NE; i++){
-    std::vector<GEdge*>e_compound;
-    GEdge *pe = gf->model()->getEdgeByTag(nume+i);//partition edge
-    e_compound.push_back(pe);
-    int num_gec = nume + NE + i ;
-    Msg::Info("Parametrize Compound Line (%d) = %d discrete edge",
-              num_gec, pe->tag());
-    GEdgeCompound *gec = new GEdgeCompound(gf->model(), num_gec, e_compound);
-    gf->model()->add(gec);
-  }
-
-  // Parametrize Compound surfaces
-  std::set<MVertex*> allNod;
-  std::list<GEdge*> U0;
-  for (int i=0; i < NF; i++){
-    std::list<GFace*> f_compound;
-    GFace *pf =  gf->model()->getFaceByTag(numf+i);//partition face
-    int num_gfc = numf + NF + i ;
-    f_compound.push_back(pf);
-    Msg::Info("Parametrize Compound Surface (%d) = %d discrete face",
-              num_gfc, pf->tag());
-
-    GFaceCompound *gfc = new GFaceCompound(gf->model(), num_gfc, f_compound, U0,
-                                           gf->getTypeOfCompound());
-
-    gfc->meshAttributes.recombine = gf->meshAttributes.recombine;
-    gf->model()->add(gfc);
-
-    gfc->parametrize();
-  }
-
-  double t1 = Cpu();
-  Msg::Info("*** Parametrize compounds done (%g s)", t1-t0);
-  Msg::Info("*** Starting meshing 1D edges ...:");
-  for (int i = 0; i < NE; i++){
-    GEdge *gec = gf->model()->getEdgeByTag(nume + NE + i);
-    meshGEdge mge;
-    mge(gec);
-  }
-  double t2 = Cpu();
-  Msg::Info("*** Meshing 1D edges done (%gs)", t2-t1);
-
-  Msg::Info("*** Starting Mesh of surface %d ...", gf->tag());
-
-  for (int i=0; i < NF; i++){
-    GFace *gfc =  gf->model()->getFaceByTag(numf + NF + i );
-    meshGFace mgf;
-    mgf(gfc);
-
-    for(unsigned int j = 0; j < gfc->triangles.size(); ++j){
-      MTriangle *t = gfc->triangles[j];
-      std::vector<MVertex *> v(3);
-      for(int k = 0; k < 3; k++){
-        v[k] = t->getVertex(k);
-        allNod.insert(v[k]);
-      }
-      gf->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
-    }
-    for(unsigned int j = 0; j < gfc->quadrangles.size(); ++j){
-      MQuadrangle *q = gfc->quadrangles[j];
-      std::vector<MVertex *> v(4);
-      for(int k = 0; k < 4; k++){
-        v[k] = q->getVertex(k);
-        allNod.insert(v[k]);
-      }
-      gf->quadrangles.push_back(new MQuadrangle(v[0], v[1], v[2], v[3]));
-    }
-
-    //update mesh statistics
-    gf->meshStatistics.efficiency_index += gfc->meshStatistics.efficiency_index;
-    gf->meshStatistics.longest_edge_length = std::max(gf->meshStatistics.longest_edge_length,
-                                                     gfc->meshStatistics.longest_edge_length);
-    gf->meshStatistics.smallest_edge_length= std::min(gf->meshStatistics.smallest_edge_length,
-                                                      gfc->meshStatistics.smallest_edge_length);
-    gf->meshStatistics.nbGoodLength  += gfc->meshStatistics.nbGoodLength;
-    gf->meshStatistics.nbGoodQuality += gfc->meshStatistics.nbGoodQuality;
-    gf->meshStatistics.nbEdge += gfc->meshStatistics.nbEdge;
-
-  }
-
-  // Removing discrete Vertices - Edges - Faces
-  int NV = gf->model()->getMaxElementaryNumber(0) - numv + 1;
-  for (int i=0; i < NV; i++){
-    GVertex *pv = gf->model()->getVertexByTag(numv+i);
-    gf->model()->remove(pv);
-  }
-  for (int i=0; i < NE; i++){
-    GEdge *gec = gf->model()->getEdgeByTag(nume+NE+i);
-    GEdge *pe = gf->model()->getEdgeByTag(nume+i);
-    gf->model()->remove(pe);
-    gf->model()->remove(gec);
-  }
-  for (int i=0; i < NF; i++){
-    GFace *gfc = gf->model()->getFaceByTag(numf+NF+i);
-    GFace *pf  = gf->model()->getFaceByTag(numf+i);
-    gf->model()->remove(pf);
-    gf->model()->remove(gfc);
-  }
-
-  // Put new mesh in a new discreteFace
-  for(std::set<MVertex*>::iterator it = allNod.begin(); it != allNod.end(); ++it){
-    gf->mesh_vertices.push_back(*it);
-  }
-
-  // FIXME: This horrible hack is necessary to remove vertices that might belong
-  // to a GVertex.  The true fix is rewrite this part of the code: it's far too
-  // complex and error prone.
-  for(GModel::viter it = gf->model()->firstVertex(); it != gf->model()->lastVertex(); it++){
-    std::vector<MVertex*>::iterator itve = std::find
-      (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), (*it)->mesh_vertices[0]);
-    if(itve != gf->mesh_vertices.end())
-      gf->mesh_vertices.erase(itve);
-  }
-
-  // Remove mesh_vertices that belong to l_edges
-  std::list<GEdge*> l_edges = gf->edges();
-  for(std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); it++){
-    std::vector<MVertex*> edge_vertices = (*it)->mesh_vertices;
-    std::vector<MVertex*>::const_iterator itv = edge_vertices.begin();
-    for(; itv != edge_vertices.end(); itv++){
-      std::vector<MVertex*>::iterator itve = std::find
-        (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), *itv);
-      if (itve != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itve);
-    }
-    MVertex *vB = (*it)->getBeginVertex()->mesh_vertices[0];
-    std::vector<MVertex*>::iterator itvB = std::find
-      (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vB);
-    if (itvB != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvB);
-    MVertex *vE = (*it)->getEndVertex()->mesh_vertices[0];
-    std::vector<MVertex*>::iterator itvE = std::find
-      (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vE);
-    if (itvE != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvE);
-
-    //if l_edge is a compond
-    if((*it)->getCompound()){
-      GEdgeCompound *gec = (*it)->getCompound();
-      std::vector<MVertex*> edge_vertices = gec->mesh_vertices;
-      std::vector<MVertex*>::const_iterator itv = edge_vertices.begin();
-      for(; itv != edge_vertices.end(); itv++){
-        std::vector<MVertex*>::iterator itve = std::find
-          (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), *itv);
-        if (itve != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itve);
-      }
-      MVertex *vB = (*it)->getBeginVertex()->mesh_vertices[0];
-      std::vector<MVertex*>::iterator itvB = std::find
-        (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vB);
-      if (itvB != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvB);
-      MVertex *vE = (*it)->getEndVertex()->mesh_vertices[0];
-      std::vector<MVertex*>::iterator itvE = std::find
-        (gf->mesh_vertices.begin(), gf->mesh_vertices.end(), vE);
-      if (itvE != gf->mesh_vertices.end()) gf->mesh_vertices.erase(itvE);
-    }
-  }
-
-  double t3 = Cpu();
-  Msg::Info("*** Mesh of surface %d done by assembly %d remeshed faces (%g s)",
-            gf->tag(), NF, t3-t2);
-  Msg::Info("-----------------------------------------------------------");
-
-  gf->coherenceNormals();
-  gf->meshStatistics.status = GFace::DONE;
-#endif
-}
-
 static bool getGFaceNormalFromVert(GFace *gf, MElement *el, SVector3 &nf)
 {
   bool found = false;
@@ -2822,8 +2567,7 @@ void orientMeshGFace::operator()(GFace *gf)
   gf->model()->setCurrentMeshEntity(gf);
 
   if(gf->geomType() == GEntity::DiscreteSurface ||
-     gf->geomType() == GEntity::BoundaryLayerSurface ||
-     gf->geomType() == GEntity::CompoundSurface){
+     gf->geomType() == GEntity::BoundaryLayerSurface){
     // don't do anything
   }
   else {

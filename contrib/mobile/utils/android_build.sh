@@ -87,7 +87,7 @@ if [ ! -d "$getdp_git/build_${android}" ] || [ ! -f "$getdp_git/build_${android}
   mkdir $getdp_git/build_${android}
 fi
 cd $getdp_git/build_${android}
-PETSC_DIR= PETSC_ARCH= SLEPC_DIR= cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_GMSH=1 -DENABLE_KERNEL=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_lib/Headers;$petsc_lib/Headers/mpiuni" -DPETSC_LIBS="$petsc_lib/libpetsc.so" -DENABLE_SLEPC=1 -DSLEPC_INC="$slepc_lib/Headers/" -DSLEPC_LIB="$slepc_lib/libslepc.so" -DGMSH_INC="$gmsh_git/build_${android}/Headers/" -DGMSH_LIB="$gmsh_git/build_${android}/libs/libGmsh.so" -DBLAS_LAPACK_LIBRARIES="$petsc_lib/libf2cblas.so;$petsc_lib/libf2clapack.so" ..
+PETSC_DIR= PETSC_ARCH= SLEPC_DIR= cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_GMSH=1 -DENABLE_KERNEL=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_lib/Headers;$petsc_lib/Headers/mpiuni" -DPETSC_LIBS="$petsc_lib/libpetsc.so" -DENABLE_SLEPC=1 -DSLEPC_INC="$slepc_lib/Headers/" -DSLEPC_LIB="$slepc_lib/libslepc.so" -DGMSH_INC="$gmsh_git/build_${android}/Headers/" -DGMSH_LIB="$gmsh_git/build_${android}/libs/libgmsh.so" -DBLAS_LAPACK_LIBRARIES="$petsc_lib/libf2cblas.so;$petsc_lib/libf2clapack.so" ..
 check
 make androidGetdp -j$cmake_thread
 check
@@ -104,9 +104,9 @@ cmake $cmake_default -DAPPNAME:STRING=${appname} \
       -DCMAKE_INCLUDE_PATH="$getdp_git/" \
       -DBLAS_LIB="$petsc_lib/libf2cblas.so" -DLAPACK_LIB="$petsc_lib/libf2clapack.so" \
       -DPETSC_LIB="$petsc_lib/libpetsc.so" -DSLEPC_LIB="$slepc_lib/libslepc.so" \
-      -DGMSH_INC="$gmsh_git/build_${android}/Headers" -DGMSH_LIB="$gmsh_git/build_${android}/libs/libGmsh.so" \
+      -DGMSH_INC="$gmsh_git/build_${android}/Headers" -DGMSH_LIB="$gmsh_git/build_${android}/libs/libgmsh.so" \
       -DBENCHMARKSDIR="$getdp_git/" \
-      -DGETDP_INC="$getdp_git/build_${android}/Headers" -DGETDP_LIB="$getdp_git/build_${android}/libs/libGetDP.so" ..
+      -DGETDP_INC="$getdp_git/build_${android}/Headers" -DGETDP_LIB="$getdp_git/build_${android}/libs/libgetdp.so" ..
 check
 make androidOnelab -j$cmake_thread
 check

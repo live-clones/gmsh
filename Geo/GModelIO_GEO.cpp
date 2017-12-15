@@ -16,9 +16,6 @@
 #include "ListUtils.h"
 #include "gmshVertex.h"
 #include "gmshFace.h"
-#include "GFaceCompound.h"
-#include "GEdgeCompound.h"
-#include "GRegionCompound.h"
 #include "gmshEdge.h"
 #include "gmshRegion.h"
 #include "Field.h"
@@ -103,6 +100,7 @@ bool GEO_Internals::addVertex(int &tag, double x, double y, double z, double lc)
     return false;
   }
   if(tag < 0) tag = getMaxTag(0) + 1;
+  if(!lc) lc = MAX_LC;
   Vertex *v = CreateVertex(tag, x, y, z, lc, 1.0);
   Tree_Add(Points, &v);
   _changed = true;
@@ -307,22 +305,6 @@ bool GEO_Internals::addNurbs(int &tag, const std::vector<int> &vertexTags,
   return true;
 }
 
-bool GEO_Internals::addCompoundLine(int &tag, const std::vector<int> &edgeTags)
-{
-  if(tag >= 0 && FindCurve(tag)){
-    Msg::Error("GEO edge with tag %d already exists", tag);
-    return false;
-  }
-  if(tag < 0) tag = getMaxTag(1) + 1;
-  Curve *c = CreateCurve(tag, MSH_SEGM_COMPOUND, 1, NULL, NULL, -1, -1, 0., 1.);
-  c->compound = edgeTags;
-  EndCurve(c);
-  Tree_Add(Curves, &c);
-  CreateReversedCurve(c);
-  _changed = true;
-  return true;
-}
-
 bool GEO_Internals::addLineLoop(int &tag, const std::vector<int> &edgeTags)
 {
   if(tag >= 0 && FindEdgeLoop(tag)){
@@ -429,27 +411,6 @@ bool GEO_Internals::addSurfaceFilling(int &tag, const std::vector<int> &wireTags
   return true;
 }
 
-bool GEO_Internals::addCompoundSurface(int &tag, const std::vector<int> &faceTags,
-                                       std::vector<int> edgeTags[4])
-{
-  if(tag >= 0 && FindSurface(tag)){
-    Msg::Error("GEO face with tag %d already exists", tag);
-    return false;
-  }
-  if(tag < 0) tag = getMaxTag(2) + 1;
-
-  Surface *s = CreateSurface(tag, MSH_SURF_COMPOUND);
-  s->compound = faceTags;
-  if(edgeTags){
-    for(int i = 0; i < 4; i++)
-      s->compoundBoundary[i] = edgeTags[i];
-  }
-  SetSurfaceGeneratrices(s, 0);
-  Tree_Add(Surfaces, &s);
-  _changed = true;
-  return true;
-}
-
 bool GEO_Internals::addSurfaceLoop(int &tag, const std::vector<int> &faceTags)
 {
   if(tag >= 0 && FindSurfaceLoop(tag)){
@@ -486,21 +447,6 @@ bool GEO_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
   Volume *v = CreateVolume(tag, MSH_VOLUME);
   SetVolumeSurfaces(v, tmp);
   List_Delete(tmp);
-  Tree_Add(Volumes, &v);
-  _changed = true;
-  return true;
-}
-
-bool GEO_Internals::addCompoundVolume(int &tag, const std::vector<int> &regionTags)
-{
-  if(tag >= 0 && FindVolume(tag)){
-    Msg::Error("GEO region with tag %d already exists", tag);
-    return false;
-  }
-  if(tag < 0) tag = getMaxTag(3) + 1;
-
-  Volume *v = CreateVolume(tag, MSH_VOLUME_COMPOUND);
-  v->compound = regionTags;
   Tree_Add(Volumes, &v);
   _changed = true;
   return true;
@@ -1062,7 +1008,7 @@ void GEO_Internals::setSmoothing(int tag, int val)
   _changed = true;
 }
 
-void GEO_Internals::setReverseMesh(int dim, int tag)
+void GEO_Internals::setReverseMesh(int dim, int tag, bool val)
 {
   if(dim == 1){
     if(!tag){
@@ -1070,13 +1016,13 @@ void GEO_Internals::setReverseMesh(int dim, int tag)
       for(int i = 0; i < List_Nbr(tmp); i++){
         Curve *c;
         List_Read(tmp, i, &c);
-        c->ReverseMesh = 1;
+        c->ReverseMesh = val ? 1 : 0;
       }
       List_Delete(tmp);
     }
     else{
       Curve *c = FindCurve(tag);
-      if(c) c->ReverseMesh = 1;
+      if(c) c->ReverseMesh = val ? 1 : 0;
     }
   }
   else if(dim == 2){
@@ -1085,13 +1031,13 @@ void GEO_Internals::setReverseMesh(int dim, int tag)
       for(int i = 0; i < List_Nbr(tmp); i++){
         Surface *s;
         List_Read(tmp, i, &s);
-        s->ReverseMesh = 1;
+        s->ReverseMesh = val ? 1 : 0;
       }
       List_Delete(tmp);
     }
     else{
       Surface *s = FindSurface(tag);
-      if(s) s->ReverseMesh = 1;
+      if(s) s->ReverseMesh = val ? 1 : 0;
     }
   }
   _changed = true;
@@ -1167,11 +1113,7 @@ void GEO_Internals::synchronize(GModel *model)
       List_Read(curves, i, &c);
       if(c->Num >= 0){
         GEdge *e = model->getEdgeByTag(c->Num);
-        if(!e && c->Typ == MSH_SEGM_COMPOUND){
-          Msg::Debug("Postpone creation of compound edge %d until all others "
-                     "have been created", c->Num);
-        }
-        else if(!e && c->beg && c->end){
+        if(!e && c->beg && c->end){
           e = new gmshEdge(model, c, model->getVertexByTag(c->beg->Num),
                            model->getVertexByTag(c->end->Num));
           model->add(e);
@@ -1181,8 +1123,7 @@ void GEO_Internals::synchronize(GModel *model)
           model->add(e);
         }
         else{
-          if(e->getNativeType() == GEntity::GmshModel &&
-             c->Typ != MSH_SEGM_COMPOUND){
+          if(e->getNativeType() == GEntity::GmshModel){
             if(c->beg && c->end)
               ((gmshEdge*)e)->resetNativePtr(c, model->getVertexByTag(c->beg->Num),
                                              model->getVertexByTag(c->end->Num));
@@ -1194,30 +1135,6 @@ void GEO_Internals::synchronize(GModel *model)
         if(c->degenerated) e->setTooSmall(true);
       }
     }
-    // now generate the compound curves
-    for(int i = 0; i < List_Nbr(curves); i++){
-      Curve *c;
-      List_Read(curves, i, &c);
-      if(c->Num >= 0){
-        GEdge *e = model->getEdgeByTag(c->Num);
-        if(!e && c->Typ == MSH_SEGM_COMPOUND){
-          std::vector<GEdge*> comp;
-          for(unsigned int j = 0; j < c->compound.size(); j++){
-            GEdge *ge = model->getEdgeByTag(c->compound[j]);
-            if(ge) comp.push_back(ge);
-          }
-          e = new GEdgeCompound(model, c->Num, comp);
-          e->meshAttributes.method = c->Method;
-          e->meshAttributes.nbPointsTransfinite = c->nbPointsTransfinite;
-          e->meshAttributes.typeTransfinite = c->typeTransfinite;
-          e->meshAttributes.coeffTransfinite = c->coeffTransfinite;
-          e->meshAttributes.extrude = c->Extrude;
-          e->meshAttributes.reverseMesh = c->ReverseMesh;
-          model->add(e);
-          if(c->degenerated) e->setTooSmall(true);
-        }
-      }
-    }
     List_Delete(curves);
   }
 
@@ -1227,55 +1144,12 @@ void GEO_Internals::synchronize(GModel *model)
       Surface *s;
       List_Read(surfaces, i, &s);
       GFace *f = model->getFaceByTag(s->Num);
-      if(!f && s->Typ == MSH_SURF_COMPOUND){
-        std::list<GFace*> comp;
-        for(unsigned int j = 0; j < s->compound.size(); j++){
-          GFace *gf = model->getFaceByTag(s->compound[j]);
-          if(gf)
-            comp.push_back(gf);
-        }
-        std::list<GEdge*> b[4];
-        for(int j = 0; j < 4; j++){
-          for(unsigned int k = 0; k < s->compoundBoundary[j].size(); k++){
-            GEdge *ge = model->getEdgeByTag(s->compoundBoundary[j][k]);
-            if(ge) b[j].push_back(ge);
-          }
-        }
-        int param = CTX::instance()->mesh.remeshParam;
-        GFaceCompound::typeOfCompound typ = GFaceCompound::HARMONIC_CIRCLE;
-        if (param == 1) typ = GFaceCompound::CONFORMAL_SPECTRAL;
-        if (param == 2) typ = GFaceCompound::RADIAL_BASIS;
-        if (param == 3) typ = GFaceCompound::HARMONIC_PLANE;
-        if (param == 4) typ = GFaceCompound::CONVEX_CIRCLE;
-        if (param == 5) typ = GFaceCompound::CONVEX_PLANE;
-        if (param == 6) typ = GFaceCompound::HARMONIC_SQUARE;
-        if (param == 7) typ = GFaceCompound::CONFORMAL_FE;
-        int algo = CTX::instance()->mesh.remeshAlgo;
-        f = new GFaceCompound(model, s->Num, comp, b[0], b[1], b[2], b[3], typ, algo);
-        f->meshAttributes.recombine = s->Recombine;
-        f->meshAttributes.recombineAngle = s->RecombineAngle;
-        f->meshAttributes.method = s->Method;
-        f->meshAttributes.extrude = s->Extrude;
-        f->meshAttributes.transfiniteArrangement = s->Recombine_Dir;
-        f->meshAttributes.corners.clear();
-        for(int j = 0; j < List_Nbr(s->TrsfPoints); j++){
-          Vertex *corn;
-          List_Read(s->TrsfPoints, j, &corn);
-          GVertex *gv = f->model()->getVertexByTag(corn->Num);
-          if(gv)
-            f->meshAttributes.corners.push_back(gv);
-          else
-            Msg::Error("Unknown vertex %d in transfinite attributes", corn->Num);
-        }
-        model->add(f);
-      }
-      else if(!f){
+      if(!f){
         f = new gmshFace(model, s);
         model->add(f);
       }
       else{
-        if(f->getNativeType() == GEntity::GmshModel &&
-           s->Typ != MSH_SURF_COMPOUND)
+        if(f->getNativeType() == GEntity::GmshModel)
           ((gmshFace*)f)->resetNativePtr(s);
         f->resetMeshAttributes();
       }
@@ -1289,22 +1163,12 @@ void GEO_Internals::synchronize(GModel *model)
       Volume *v;
       List_Read(volumes, i, &v);
       GRegion *r = model->getRegionByTag(v->Num);
-      if(!r && v->Typ == MSH_VOLUME_COMPOUND){
-        std::vector<GRegion*> comp;
-        for(unsigned int j = 0; j < v->compound.size(); j++){
-          GRegion *gr = model->getRegionByTag(v->compound[j]);
-          if(gr) comp.push_back(gr);
-        }
-        r = new GRegionCompound(model, v->Num, comp);
-        model->add(r);
-      }
-      else if(!r){
+      if(!r){
         r = new gmshRegion(model, v);
         model->add(r);
       }
       else{
-        if(r->getNativeType() == GEntity::GmshModel &&
-           v->Typ != MSH_VOLUME_COMPOUND)
+        if(r->getNativeType() == GEntity::GmshModel)
           ((gmshRegion*)r)->resetNativePtr(v);
         r->resetMeshAttributes();
       }
@@ -1360,6 +1224,9 @@ void GEO_Internals::synchronize(GModel *model)
       ents[i]->_compound = ents;
     }
   }
+
+  // recompute global boundind box in CTX
+  SetBoundingBox();
 
   Msg::Debug("GModel imported:");
   Msg::Debug("%d vertices", model->getNumVertices());

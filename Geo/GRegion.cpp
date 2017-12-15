@@ -19,7 +19,7 @@
 #include "GmshDefines.h"
 
 GRegion::GRegion(GModel *model, int tag)
-  : GEntity (model, tag), compound(0)
+  : GEntity (model, tag)
 {
   resetMeshAttributes();
 }
@@ -34,11 +34,13 @@ GRegion::~GRegion()
   deleteMesh();
 }
 
-void GRegion::deleteMesh()
+void GRegion::deleteMesh(bool onlyDeleteElements)
 {
-  for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
-  mesh_vertices.clear();
-  transfinite_vertices.clear();
+  if(!onlyDeleteElements){
+    for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
+    mesh_vertices.clear();
+    transfinite_vertices.clear();
+  }
   for(unsigned int i = 0; i < tetrahedra.size(); i++) delete tetrahedra[i];
   tetrahedra.clear();
   for(unsigned int i = 0; i < hexahedra.size(); i++) delete hexahedra[i];
@@ -51,7 +53,6 @@ void GRegion::deleteMesh()
   trihedra.clear();
   for(unsigned int i = 0; i < polyhedra.size(); i++) delete polyhedra[i];
   polyhedra.clear();
-
   deleteVertexArrays();
   model()->destroyMeshCaches();
 }
@@ -309,13 +310,6 @@ std::list<GEdge*> GRegion::edges() const
     std::list<GEdge*>::const_iterator it2 = e2.begin();
     while (it2 != e2.end()){
       GEdge *edge = *it2;
-
-      // FIXME: we need to fix the compound design and decide what to do; same
-      // thing for faces() (either store or compute the entities, either use
-      // original or compound entities, etc.)
-      if(edge->getCompound())
-        edge = (GEdge*)edge->getCompound();
-
       if(std::find(e.begin(), e.end(), edge) == e.end())
         e.push_back(edge);
       ++it2;

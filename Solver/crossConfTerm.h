@@ -8,7 +8,7 @@
 
 #include "femTerm.h"
 #include "simpleFunction.h"
-#include "Gmsh.h"
+#include "GmshGlobal.h"
 #include "GModel.h"
 #include "SElement.h"
 #include "fullMatrix.h"
@@ -21,19 +21,19 @@ class crossConfTerm : public femTerm<double> {
   int _iFieldC;
   std::map<MVertex*, SPoint3> *_coordView;
  public:
-  crossConfTerm(GModel *gm, int iFieldR, int iFieldC, 
-                simpleFunction<double> *diffusivity, 
+  crossConfTerm(GModel *gm, int iFieldR, int iFieldC,
+                simpleFunction<double> *diffusivity,
 		std::map<MVertex*, SPoint3> *coord=NULL)
-    : femTerm<double>(gm), _diffusivity(diffusivity), _iFieldR(iFieldR), 
+    : femTerm<double>(gm), _diffusivity(diffusivity), _iFieldR(iFieldR),
     _iFieldC(iFieldC), _coordView(coord) {}
 
-  virtual int sizeOfR(SElement *se) const 
+  virtual int sizeOfR(SElement *se) const
   {
-    return se->getMeshElement()->getNumShapeFunctions(); 
+    return se->getMeshElement()->getNumShapeFunctions();
   }
   virtual int sizeOfC(SElement *se) const
   {
-    return se->getMeshElement()->getNumShapeFunctions(); 
+    return se->getMeshElement()->getNumShapeFunctions();
   }
   Dof getLocalDofR(SElement *se, int iRow) const
   {
@@ -49,7 +49,7 @@ class crossConfTerm : public femTerm<double> {
   {
     MElement *e = se->getMeshElement();
     int nbSF = e->getNumShapeFunctions();
-    int integrationOrder = 2 * (e->getPolynomialOrder() - 1); 
+    int integrationOrder = 2 * (e->getPolynomialOrder() - 1);
     int npts;
     IntPt *GP;
     double jac[3][3];
@@ -59,21 +59,21 @@ class crossConfTerm : public femTerm<double> {
     e->getIntegrationPoints(integrationOrder, &npts, &GP);
 
     m.setAll(0.);
-    
+
     for (int i = 0; i < npts; i++){
       const double u = GP[i].pt[0];
       const double v = GP[i].pt[1];
       const double w = GP[i].pt[2];
       const double weight = GP[i].weight;
-      const double detJ = e->getJacobian(u, v, w, jac);   
+      const double detJ = e->getJacobian(u, v, w, jac);
       SPoint3 p; e->pnt(u, v, w, p);
       const double _diff = (*_diffusivity)(p.x(), p.y(), p.z());
-      inv3x3(jac, invjac); 
+      inv3x3(jac, invjac);
       e->getGradShapeFunctions(u, v, w, grads);
       for (int j = 0; j < nbSF; j++){
-        Grads[j] = SVector3(invjac[0][0] * grads[j][0] + invjac[0][1] * grads[j][1] + 
+        Grads[j] = SVector3(invjac[0][0] * grads[j][0] + invjac[0][1] * grads[j][1] +
                             invjac[0][2] * grads[j][2],
-                            invjac[1][0] * grads[j][0] + invjac[1][1] * grads[j][1] + 
+                            invjac[1][0] * grads[j][0] + invjac[1][1] * grads[j][1] +
                             invjac[1][2] * grads[j][2],
                             invjac[2][0] * grads[j][0] + invjac[2][1] * grads[j][1] +
                             invjac[2][2] * grads[j][2]);

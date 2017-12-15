@@ -3596,7 +3596,7 @@ bool IntersectCurvesWithSurface(List_T *curve_ids, int surface_id, List_T *shape
       }
     }
     else{
-      Msg::Error("Uknown curve %d", (int)curve_id);
+      Msg::Error("Unknown curve %d", (int)curve_id);
       return false;
     }
   }

@@ -11,8 +11,6 @@
 #include "GModel.h"
 #include "SBoundingBox3d.h"
 #include "GmshMessage.h"
-#include "GEdgeCompound.h"
-#include "GFaceCompound.h"
 
 static void drawEntityLabel(drawContext *ctx, GEntity *e,
                             double x, double y, double z, double offset)
@@ -124,7 +122,6 @@ class drawGEdge {
     if(e->geomType() == GEntity::DiscreteCurve) return;
     if(e->geomType() == GEntity::PartitionCurve) return;
     if(e->geomType() == GEntity::BoundaryLayerCurve) return;
-    // if(e->geomType() == GEntity::CompoundCurve) return;
 
     bool select = (_ctx->render_mode == drawContext::GMSH_SELECT &&
                    e->model() == GModel::current());
@@ -233,7 +230,7 @@ class drawGFace {
     glEnableClientState(GL_VERTEX_ARRAY);
     if(useNormalArray){
       glEnable(GL_LIGHTING);
-      glNormalPointer(GL_BYTE, 0, va->getNormalArray());
+      glNormalPointer(NORMAL_GLTYPE, 0, va->getNormalArray());
       glEnableClientState(GL_NORMAL_ARRAY);
     }
     else{
@@ -286,7 +283,7 @@ class drawGFace {
     if(CTX::instance()->geom.surfaces){
       if(CTX::instance()->geom.surfaceType > 0 && f->va_geom_triangles){
         bool selected = false;
-        if (f->getSelection() || (f->getCompound() && f->getCompound()->getSelection()))
+        if (f->getSelection())
           selected = true;
         _drawVertexArray
           (f->va_geom_triangles, CTX::instance()->geom.light,
@@ -365,8 +362,6 @@ class drawGFace {
 
     if(CTX::instance()->geom.surfaces) {
       //bool selected = false;
-      //if (f->getSelection() || (f->getCompound() && f->getCompound()->getSelection()))
-        //selected = true;
       if(CTX::instance()->geom.surfaceType > 0 && f->va_geom_triangles){
         _drawVertexArray(f->va_geom_triangles, CTX::instance()->geom.light,
                          f->getSelection(), CTX::instance()->color.geom.selection);
@@ -415,24 +410,6 @@ class drawGFace {
     }
   }
 
-  void _drawCompoundGFace(GFace *f, bool visible = false, bool selected = false)
-  {
-    GFaceCompound *fc = (GFaceCompound*) f;
-    std::list<GFace*> faces = fc->getCompounds();
-    for (std::list<GFace*>::iterator it = faces.begin(); it!=faces.end(); it++) {
-      if ((*it)->geomType() == GEntity::DiscreteSurface) continue;
-      if ((*it)->geomType() == GEntity::PartitionSurface) continue;
-      if ((*it)->geomType() == GEntity::BoundaryLayerSurface) continue;
-
-      if((*it)->geomType() == GEntity::CompoundSurface)
-        _drawCompoundGFace((*it));
-      else if ((*it)->geomType() == GEntity::Plane)
-        _drawPlaneGFace((*it));
-      else
-        _drawParametricGFace((*it));
-    }
-  }
-
  public :
   drawGFace(drawContext *ctx) : _ctx(ctx) {}
   void operator () (GFace *f)
@@ -467,9 +444,7 @@ class drawGFace {
     else
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
-    if(f->geomType() == GEntity::CompoundSurface)
-      _drawCompoundGFace(f);
-    else if(f->geomType() == GEntity::Plane)
+    if(f->geomType() == GEntity::Plane)
       _drawPlaneGFace(f);
     else
       _drawParametricGFace(f);

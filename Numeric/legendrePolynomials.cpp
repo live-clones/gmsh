@@ -33,6 +33,17 @@ void LegendrePolynomials::f(double u, double *val) const
 
 
 
+void LegendrePolynomials::fc(double u, double *val) const
+{
+  f(u, val);
+  for (int i = 2; i < n+1; ++i) {
+    if (i % 2) val[i] -= u;
+    else val[i] -= 1;
+  }
+}
+
+
+
 void LegendrePolynomials::df(double u, double *val) const
 {
 

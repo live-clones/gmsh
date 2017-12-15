@@ -45,6 +45,22 @@ void PViewDataList::setXY(std::vector<double> &x, std::vector<double> &y)
   finalize();
 }
 
+void PViewDataList::setXYZV(std::vector<double> &x, std::vector<double> &y,
+                            std::vector<double> &z, std::vector<double> &v)
+{
+  NbSP = 0;
+  SP.clear();
+  int n = std::min(std::min(std::min(x.size(), y.size()), z.size()), v.size());
+  for(int i = 0; i < n; i++){
+    SP.push_back(x[i]);
+    SP.push_back(y[i]);
+    SP.push_back(z[i]);
+    SP.push_back(v[i]);
+    NbSP++;
+  }
+  finalize();
+}
+
 bool PViewDataList::finalize(bool computeMinMax, const std::string &interpolationScheme)
 {
   BBox.reset();
@@ -666,7 +682,7 @@ bool PViewDataList::combineSpace(nameData &nd)
     dVecMerge(l->TI, TI); NbTI += l->NbTI; dVecMerge(l->SY, SY); NbSY += l->NbSY;
     dVecMerge(l->VY, VY); NbVY += l->NbVY; dVecMerge(l->TY, TY); NbTY += l->NbTY;
     dVecMerge(l->VR, VR); NbVR += l->NbVR; dVecMerge(l->TR, TR); NbTR += l->NbTR;
-    
+
     // merge strings
     for(unsigned int i = 0; i < l->T2D.size(); i += 4){
       T2D.push_back(l->T2D[i]);

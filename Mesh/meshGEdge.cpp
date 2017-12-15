@@ -90,7 +90,6 @@ static double F_LcB(GEdge *ge, double t)
 
   /*  if (blf){
     double lc2 = (*blf)( p.x(), p.y(), p.z() , ge);
-    //    printf("p %g %g lc %g\n",p.x(),p.y(),lc2);
     lc = std::min(lc, lc2);
   }
   */
@@ -124,7 +123,6 @@ static double F_Lc(GEdge *ge, double t)
   /*
   if (blf){
     double lc2 = (*blf)( p.x(), p.y(), p.z() , ge);
-    //    printf("p %g %g lc %g\n",p.x(),p.y(),lc2);
     lc_here = std::min(lc_here, lc2);
   }
   */
@@ -405,7 +403,13 @@ static void filterPoints(GEdge*ge, int nMinimumPoints)
     v->getParameter(0,t);
     if (i != 0){
       double t0;
-      v0->getParameter(0,t0);
+      if (v0->onWhat()->dim() == 0){
+        // Vertex is begin point
+        t0 = ge->parFromPoint(SPoint3(v0->x(), v0->y(), v0->z()));
+      }
+      else
+        v0->getParameter(0, t0);
+
       t=0.5*(t+t0);
     }
     double lc = F_LcB(ge, t);
@@ -455,7 +459,7 @@ static void createPoints(GVertex *gv, GEdge *ge, BoundaryLayerField *blf,
   while (1){
     if (L > blf->thickness || L > LEdge * .4) break;
     SPoint3 p (gv->x() + dir.x() * L, gv->y() + dir.y() * L, 0.0);
-    v.push_back(new MEdgeVertex(p.x(), p.y(), p.z(), ge,  ge->parFromPoint(p), blf->hfar));
+    v.push_back(new MEdgeVertex(p.x(), p.y(), p.z(), ge, ge->parFromPoint(p), 0, blf->hfar));
     int ith = v.size() ;
     L += hwall * pow (blf->ratio, ith);
   }
@@ -689,8 +693,7 @@ void meshGEdge::operator() (GEdge *ge)
         const double d = norm(der);
         double lc  = d/(P1.lc + dlc / dp * (d - P1.p));
         GPoint V = ge->point(t);
-	// printf("%d %g\n",NUMP-1,t);
-        mesh_vertices[NUMP - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t, lc);
+        mesh_vertices[NUMP - 1] = new MEdgeVertex(V.x(), V.y(), V.z(), ge, t, 0, lc);
         NUMP++;
       }
       else {

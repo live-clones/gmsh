@@ -77,6 +77,21 @@ void MElement::_getEdgeRep(MVertex *v0, MVertex *v1,
   }
 }
 
+#if defined(HAVE_VISUDEV)
+void MElement::_getFaceRepQuad(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
+                               double *x, double *y, double *z, SVector3 *n)
+{
+  x[0] = v0->x(); x[1] = v1->x(); x[2] = (x[0]+x[1]+v2->x()+v3->x())/4;
+  y[0] = v0->y(); y[1] = v1->y(); y[2] = (y[0]+y[1]+v2->y()+v3->y())/4;
+  z[0] = v0->z(); z[1] = v1->z(); z[2] = (z[0]+z[1]+v2->z()+v3->z())/4;;
+  SVector3 t1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
+  SVector3 t2(x[2] - x[0], y[2] - y[0], z[2] - z[0]);
+  SVector3 normal = crossprod(t1, t2);
+  normal.normalize();
+  for(int i = 0; i < 3; i++) n[i] = normal;
+}
+#endif
+
 void MElement::_getFaceRep(MVertex *v0, MVertex *v1, MVertex *v2,
                            double *x, double *y, double *z, SVector3 *n)
 {
@@ -600,8 +615,8 @@ double MElement::getJacobian(const fullMatrix<double> &gsf, double jac[3][3]) co
   return _computeDeterminantAndRegularize(this, jac);
 }
 
-double MElement::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])
-const {
+double MElement::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3]) const
+{
   jac[0][0] = jac[0][1] = jac[0][2] = 0.;
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
   jac[2][0] = jac[2][1] = jac[2][2] = 0.;
@@ -1476,7 +1491,7 @@ void MElement::writeSU2(FILE *fp, int num)
   else fprintf(fp, "\n");
 }
 
-int MElement::getInfoMSH(const int typeMSH, const char **const name)
+unsigned int MElement::getInfoMSH(const int typeMSH, const char **const name)
 {
   switch(typeMSH){
   case MSH_PNT     : if(name) *name = "Point";            return 1;

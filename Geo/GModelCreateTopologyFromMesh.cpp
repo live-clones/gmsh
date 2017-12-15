@@ -636,6 +636,7 @@ void GModel::createTopologyFromMeshNew()
   double t1 = Cpu();
 
   if (topoExists (this)) {
+    Msg::Info("Topology exists: createTopoFromMeshNew is a noop");
     return;
   }
 

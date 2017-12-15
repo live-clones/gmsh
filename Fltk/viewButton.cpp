@@ -34,7 +34,7 @@ static void view_toggle_cb(Fl_Widget *w, void *data)
   if(but){
     if(Fl::event_state(FL_SHIFT)){
       for(unsigned int i = 0; i < PView::list.size(); i++){
-        if(i != num) opt_view_visible(i, GMSH_SET | GMSH_GUI, 0);
+        if((int)i != num) opt_view_visible(i, GMSH_SET | GMSH_GUI, 0);
         else opt_view_visible(i, GMSH_SET | GMSH_GUI, 1);
       }
     }

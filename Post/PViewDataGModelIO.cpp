@@ -12,14 +12,16 @@
 #include "StringUtils.h"
 #include "OS.h"
 
-bool PViewDataGModel::addData(GModel *model, std::map<int, std::vector<double> > &data,
+bool PViewDataGModel::addData(GModel *model,
+                              const std::map<int, std::vector<double> > &data,
                               int step, double time, int partition, int numComp)
 {
   if(data.empty()) return false;
+  if(step < 0) return false;
 
   if (numComp < 0){
     numComp = 9;
-    for(std::map<int, std::vector<double> >::iterator it = data.begin();
+    for(std::map<int, std::vector<double> >::const_iterator it = data.begin();
         it != data.end(); it++)
       numComp = std::min(numComp, (int)it->second.size());
   }
@@ -34,12 +36,47 @@ bool PViewDataGModel::addData(GModel *model, std::map<int, std::vector<double> >
     model->getNumMeshElements();
   _steps[step]->resizeData(numEnt);
 
-  for(std::map<int, std::vector<double> >::iterator it = data.begin();
+  for(std::map<int, std::vector<double> >::const_iterator it = data.begin();
       it != data.end(); it++){
     int mult = it->second.size() / numComp;
     double *d  = _steps[step]->getData(it->first, true, mult);
     for(int j = 0; j < numComp * mult; j++)
       d[j] = it->second[j];
+  }
+  if(partition >= 0)
+    _steps[step]->getPartitions().insert(partition);
+  finalize();
+  return true;
+}
+
+bool PViewDataGModel::addData(GModel *model,
+                              const std::vector<int> &tags,
+                              const std::vector<std::vector<double> > &data,
+                              int step, double time, int partition, int numComp)
+{
+  if(data.empty() || tags.empty() || data.size() != tags.size()) return false;
+
+  if (numComp < 0){
+    numComp = 9;
+    for(unsigned int i = 0; i < data.size(); i++)
+       numComp = std::min(numComp, (int)data[i].size());
+  }
+
+  while(step >= (int)_steps.size())
+    _steps.push_back(new stepData<double>(model, numComp));
+  _steps[step]->fillEntities();
+  _steps[step]->computeBoundingBox();
+  _steps[step]->setTime(time);
+
+  int numEnt = (_type == NodeData) ? model->getNumMeshVertices() :
+    model->getNumMeshElements();
+  _steps[step]->resizeData(numEnt);
+
+  for(unsigned int i = 0; i < data.size(); i++){
+    int mult = data[i].size() / numComp;
+    double *d  = _steps[step]->getData(tags[i], true, mult);
+    for(int j = 0; j < numComp * mult; j++)
+      d[j] = data[i][j];
   }
   if(partition >= 0)
     _steps[step]->getPartitions().insert(partition);

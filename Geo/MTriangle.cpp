@@ -8,6 +8,7 @@
 #include "Numeric.h"
 #include "Context.h"
 #include "BasisFactory.h"
+#include "pointsGenerators.h"
 
 #if defined(HAVE_MESH)
 #include "qualityMeasures.h"
@@ -348,40 +349,65 @@ void MTriangle6::reorient(int rot, bool swap)
   else      for (int i=0;i<3;i++) _vs[i] = tmp[(3-rot+i)%3];
 }
 
+std::map<TupleReorientation, IndicesReoriented> MTriangleN::_tuple2indicesReoriented;
+
+namespace
+{
+  void _getIndicesReorientedTri(int order, int rot, bool swap,
+                                IndicesReoriented &indices)
+  {
+    fullMatrix<double> ref = gmshGenerateMonomialsTriangle(order);
+
+    indices.resize(ref.size1());
+    for (int i = 0; i < ref.size1(); ++i) {
+      double u = ref(i, 0);
+      double v = ref(i, 1);
+      double tmp;
+      switch (rot) {
+        case 1: tmp = u; u = order - u - v; v = tmp; break;
+        case 2: tmp = v; v = order - u - v; u = tmp; break;
+      }
+      if (swap) {
+        tmp = u;
+        u = v;
+        v = tmp;
+      }
+      for (int j = 0; j < ref.size1(); ++j) {
+        if (u == ref(j, 0) && v == ref(j, 1)) {
+          indices[i] = j;
+          break;
+        }
+      }
+    }
+  }
+}
+
 void MTriangleN::reorient(int rot, bool swap)
 {
   if (rot == 0 && !swap) return;
 
-  MTriangle::reorient(rot,swap);
-
-  std::vector<MVertex*> tmp;
-  int order  = getPolynomialOrder();
-  int nbEdge =  order - 1;
-  unsigned int idx = 0;
-
-  if (swap) {
-    for (int iEdge=0;iEdge<3;iEdge++) {
-      int edgeIdx = ((5-iEdge+rot)%3)*nbEdge;
-      for (int i=nbEdge-1;i>=0;i--) tmp.push_back(_vs[edgeIdx + i]);
-    }
-  }
-  else {
-    for (int iEdge=0;iEdge<3;iEdge++) {
-      int edgeIdx = ((3+iEdge-rot)%3)*nbEdge;
-      for (int i=0;i<nbEdge;i++) tmp.push_back(_vs[edgeIdx + i]);
-    }
+  TupleReorientation mytuple(getTypeForMSH(), std::make_pair(rot, swap));
+  std::map<TupleReorientation, IndicesReoriented>::iterator it;
+  it = _tuple2indicesReoriented.find(mytuple);
+  if (it == _tuple2indicesReoriented.end()) {
+    IndicesReoriented indices;
+    _getIndicesReorientedTri(_order, rot, swap, indices);
+    _tuple2indicesReoriented[mytuple] = indices;
+    it = _tuple2indicesReoriented.find(mytuple);
   }
 
-  idx += 3*nbEdge;
+  IndicesReoriented &indices = it->second;
 
-  if (_vs.size() > idx) {
-    if (order == 3) tmp.push_back(_vs[idx]);
-    if (order == 4) {
-      if (swap) for(int i=0;i<3;i++) tmp.push_back(_vs[idx+(3+rot-i)%3]);
-      else      for(int i=0;i<3;i++) tmp.push_back(_vs[idx+(3+i-rot)%3]);
-    }
-    if (order >=5)
-      Msg::Error("Reorientation of a triangle not supported above order 4");
+  // copy vertices
+  std::vector<MVertex*> oldv(3 + _vs.size());
+  std::copy(_v, _v+3, oldv.begin());
+  std::copy(_vs.begin(), _vs.end(), oldv.begin()+3);
+
+  // reorient
+  for (int i = 0; i < 3; ++i) {
+    _v[i] = oldv[indices[i]];
   }
-  _vs = tmp;
+  for (unsigned int i = 0; i < _vs.size(); ++i) {
+    _vs[i] = oldv[indices[3+i]];
+  }
 }

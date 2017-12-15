@@ -29,7 +29,6 @@
 #include "HighOrder.h"
 #include "Generator.h"
 #include "meshGFaceLloyd.h"
-#include "GFaceCompound.h"
 #include "Field.h"
 #include "Options.h"
 #include "simple3D.h"
@@ -312,13 +311,16 @@ static void Mesh0D(GModel *m)
 
 static void Mesh1D(GModel *m)
 {
-
   m->getFields()->initialize();
 
   if(TooManyElements(m, 1)) return;
   Msg::StatusBar(true, "Meshing 1D...");
   double t1 = Cpu();
 
+  int prevNumThreads = Msg::GetMaxThreads();
+  if(CTX::instance()->mesh.maxNumThreads1D > 0 &&
+     CTX::instance()->mesh.maxNumThreads1D <= Msg::GetMaxThreads())
+    Msg::SetNumThreads(CTX::instance()->mesh.maxNumThreads1D);
 
   std::vector<GEdge*> temp;
   for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
@@ -352,6 +354,8 @@ static void Mesh1D(GModel *m)
     if(!nPending) break;
     if(nIter++ > 10) break;
   }
+
+  Msg::SetNumThreads(prevNumThreads);
 
   double t2 = Cpu();
   CTX::instance()->meshTimer[0] = t2 - t1;
@@ -430,6 +434,11 @@ static void Mesh2D(GModel *m)
   Msg::StatusBar(true, "Meshing 2D...");
   double t1 = Cpu();
 
+  int prevNumThreads = Msg::GetMaxThreads();
+  if(CTX::instance()->mesh.maxNumThreads2D > 0 &&
+     CTX::instance()->mesh.maxNumThreads2D <= Msg::GetMaxThreads())
+    Msg::SetNumThreads(CTX::instance()->mesh.maxNumThreads2D);
+
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
     (*it)->meshStatistics.status = GFace::PENDING;
 
@@ -437,12 +446,9 @@ static void Mesh2D(GModel *m)
   // meshes) is global as it depends on a smooth normal field generated from the
   // surface mesh of the source surfaces
   if(!Mesh2DWithBoundaryLayers(m)){
-    std::set<GFace*, GEntityLessThan> cf, f;
+    std::set<GFace*, GEntityLessThan> f;
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it)
-      if ((*it)->geomType() == GEntity::CompoundSurface)
-        cf.insert(*it);
-      else
-        f.insert(*it);
+      f.insert(*it);
 
     Msg::ResetProgressMeter();
 
@@ -457,28 +463,7 @@ static void Mesh2D(GModel *m)
       for(size_t K = 0 ; K < temp.size() ; K++){
         if (temp[K]->meshStatistics.status == GFace::PENDING){
           backgroundMesh::current()->unset();
-	  // meshGFace mesher(true);
           temp[K]->mesh(true);
-#if defined(HAVE_BFGS)
-          if(CTX::instance()->mesh.optimizeLloyd){
-            if (temp[K]->geomType()==GEntity::CompoundSurface ||
-                temp[K]->geomType()==GEntity::Plane ||
-                temp[K]->geomType()==GEntity::RuledSurface) {
-              if (temp[K]->meshAttributes.method != MESH_TRANSFINITE &&
-                  !temp[K]->meshAttributes.extrude) {
-                smoothing smm(CTX::instance()->mesh.optimizeLloyd, 6);
-                //m->writeMSH("beforeLLoyd.msh");
-                smm.optimize_face(temp[K]);
-                int rec = ((CTX::instance()->mesh.recombineAll ||
-                            temp[K]->meshAttributes.recombine) &&
-                           !CTX::instance()->mesh.recombine3DAll);
-                //m->writeMSH("afterLLoyd.msh");
-                if (rec) recombineIntoQuads(temp[K]);
-                //m->writeMSH("afterRecombine.msh");
-              }
-            }
-          }
-#endif
 #if defined(_OPENMP)
 #pragma omp critical
 #endif
@@ -491,42 +476,14 @@ static void Mesh2D(GModel *m)
 #if defined(_OPENMP)
 #pragma omp master
 #endif
-      for(std::set<GFace*, GEntityLessThan>::iterator it = cf.begin();
-          it != cf.end(); ++it){
-        if ((*it)->meshStatistics.status == GFace::PENDING){
-          backgroundMesh::current()->unset();
-	  //          meshGFace mesher(true);
-          (*it)->mesh(true);
-#if defined(HAVE_BFGS)
-          if(CTX::instance()->mesh.optimizeLloyd){
-            if ((*it)->geomType()==GEntity::CompoundSurface ||
-                (*it)->geomType()==GEntity::Plane ||
-                (*it)->geomType()==GEntity::RuledSurface) {
-              if ((*it)->meshAttributes.method != MESH_TRANSFINITE &&
-                  !(*it)->meshAttributes.extrude) {
-                smoothing smm(CTX::instance()->mesh.optimizeLloyd, 6);
-                //m->writeMSH("beforeLLoyd.msh");
-                smm.optimize_face(*it);
-                int rec = ((CTX::instance()->mesh.recombineAll ||
-                            (*it)->meshAttributes.recombine) &&
-                           !CTX::instance()->mesh.recombine3DAll);
-                //m->writeMSH("afterLLoyd.msh");
-                if (rec) recombineIntoQuads(*it);
-                //m->writeMSH("afterRecombine.msh");
-              }
-            }
-          }
-#endif
-          nPending++;
-        }
-        if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
-      }
       if(!nPending) break;
       if(nIter++ > 10) break;
     }
   }
 
   // collapseSmallEdges(*m);
+
+  Msg::SetNumThreads(prevNumThreads);
 
   double t2 = Cpu();
   CTX::instance()->meshTimer[1] = t2 - t1;
@@ -813,7 +770,7 @@ void TestConformity(GModel *gm)
       }
     }
   }
-  if (!count)Msg::Info("Mesh Conformity: OK");
+  if (!count) Msg::Info("Mesh Conformity: OK");
   else Msg::Error ("Mesh is not conforming (%d hanging faces)!",count);
 }
 
@@ -825,7 +782,10 @@ static void Mesh3D(GModel *m)
   Msg::StatusBar(true, "Meshing 3D...");
   double t1 = Cpu();
 
-  Msg::ResetProgressMeter();
+  int prevNumThreads = Msg::GetMaxThreads();
+  if(CTX::instance()->mesh.maxNumThreads3D > 0 &&
+     CTX::instance()->mesh.maxNumThreads3D <= Msg::GetMaxThreads())
+    Msg::SetNumThreads(CTX::instance()->mesh.maxNumThreads3D);
 
   if(m->getNumRegions())
     Msg::ProgressMeter(0, 100, false, "Meshing 3D...");
@@ -936,7 +896,7 @@ static void Mesh3D(GModel *m)
               nb_hexa_recombination*100./nb_elements_recombination);
     Msg::Info(".... Percentage of hexahedra (Vol) : %g",
               vol_hexa_recombination*100./vol_element_recombination);
-    //    MakeMeshConformal (m, 1);
+    // MakeMeshConformal (m, 1);
     TestConformity(m);
   }
 
@@ -950,16 +910,20 @@ static void Mesh3D(GModel *m)
 
   for (GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it) {
     if ((*it)->getNumMeshElements() == 0) {
-      Msg::Warning("Volume %d consists of no elements\n", (*it)->tag());
+      Msg::Warning("Volume %d consists of no elements", (*it)->tag());
     }
   }
 
   CTX::instance()->mesh.changed = ENT_ALL;
+
+  Msg::SetNumThreads(prevNumThreads);
+
   double t2 = Cpu();
   CTX::instance()->meshTimer[2] = t2 - t1;
 
   if(m->getNumRegions())
     Msg::ProgressMeter(100, 100, false, "Meshing 3D...");
+
   Msg::StatusBar(true, "Done meshing 3D (%g s)", CTX::instance()->meshTimer[2]);
 }
 
@@ -1052,6 +1016,9 @@ void GenerateMesh(GModel *m, int ask)
   CTX::instance()->lock = 1;
 
   Msg::ResetErrorCounter();
+
+  m->clearLastMeshEntityError();
+  m->clearLastMeshVertexError();
 
   int old = m->getMeshStatus(false);
 

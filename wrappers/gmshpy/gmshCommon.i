@@ -5,7 +5,7 @@
 %include std_string.i
 %include std_vector.i
 %include std_map.i
-%include cpointer.i 
+%include cpointer.i
 %import "gmshtypemaps.i"
 
 %{
@@ -13,7 +13,7 @@
   #include "GmshConfig.h"
 
   #include "Context.h"
-  #include "Gmsh.h"
+  #include "GmshGlobal.h"
   #include "GmshDefines.h"
   #include "GmshMessage.h"
 #if defined(HAVE_FLTK)
@@ -26,7 +26,7 @@
       if(FlGui::available()) return;
 #endif
       (level == "Info" ? std::cout : std::cerr) <<level<<" : "<<message<<std::endl;
-      if (level == "Fatal") 
+      if (level == "Fatal")
         Msg::Exit(1);
     }
   };
@@ -52,6 +52,6 @@ namespace std {
 #if defined(HAVE_FLTK)
 %include "FlGui.h"
 #endif
-%include "Gmsh.h"
+%include "GmshGlobal.h"
 %include "GmshDefines.h"
 %include "GmshMessage.h"

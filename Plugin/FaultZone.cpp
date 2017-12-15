@@ -49,12 +49,12 @@ std::string GMSH_FaultZonePlugin::getHelp() const
     "command Line In Surface. "
     "The surface must be meshed with quadratic incomplete elements."
     "\n\n"
-    "`Thickness' is the thichness of the flat quadrangles. "
-    "Set a value different to zero can be helpfull to check the connectivity. "
+    "`Thickness' is the thickness of the flat quadrangles. "
+    "Set a value different to zero can be helpful to check the connectivity. "
     "\n\n"
     "`Prefix' is the prefix of the name of physicals containing the new embedded. "
     "All physicals containing embedded lines are replaced by physicals containing "
-    "the coresponding joint elements.";
+    "the corresponding joint elements.";
 }
 
 int GMSH_FaultZonePlugin::getNbOptions() const

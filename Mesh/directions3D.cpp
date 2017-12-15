@@ -13,7 +13,6 @@
 #include "MTetrahedron.h"
 #include "directions3D.h"
 #include "OS.h"
-#include "GFaceCompound.h"
 #include "cross3D.h"
 
 #if defined(HAVE_SOLVER)
@@ -509,21 +508,6 @@ void Frame_field::initFace(GFace* gf)
   // compute cumulative cross-data "vertices x elements" for the whole contour of gf
   std::list<GEdge*> edges = gf->edges();
   vertex_to_elements.clear();
-  //Replace edges by their compounds
-   std::set<GEdge*> mySet;
-   std::list<GEdge*>::iterator it = edges.begin();
-   while(it != edges.end()){
-    if((*it)->getCompound()){
-      GEdge *gec = (GEdge*)(*it)->getCompound();
-      mySet.insert(gec);
-    }
-    else{
-      mySet.insert(*it);
-    }
-    ++it;
-   }
-   edges.clear();
-   edges.insert(edges.begin(), mySet.begin(), mySet.end());
   for( std::list<GEdge*>::const_iterator it=edges.begin(); it!=edges.end(); it++){
     build_vertex_to_elements(*it,false);
   }

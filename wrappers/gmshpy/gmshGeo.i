@@ -12,14 +12,12 @@
   #include "GmshConfig.h"
 
   #include "GModel.h"
-  #include "GPoint.h"  
+  #include "GPoint.h"
   #include "GEntity.h"
   #include "GVertex.h"
   #include "GEdge.h"
   #include "GFace.h"
-  #include "GFaceCompound.h"
   #include "GRegion.h"
-  #include "GRegionCompound.h"
   #include "discreteFace.h"
   #include "discreteEdge.h"
   #include "discreteRegion.h"
@@ -43,7 +41,6 @@
   #include "SPoint3.h"
   #include "SPoint2.h"
   #include "SBoundingBox3d.h"
-  #include "Curvature.h"
   #include "simpleFunction.h"
   #include "GeomMeshMatcher.h"
 %}
@@ -104,7 +101,7 @@ namespace std {
 %ignore GPoint::x();
 %ignore GPoint::y();
 %ignore GPoint::z();
-%include "GPoint.h"  
+%include "GPoint.h"
 %include "GEntity.h"
 %include "GVertex.h"
 %apply std::vector<double> &OUTPUT{std::vector<double> &ts}
@@ -112,9 +109,7 @@ namespace std {
 %include "GEdge.h"
 %ignore GFace::computeMeanPlane(std::vector< MVertex *>const&);
 %include "GFace.h"
-%include "GFaceCompound.h"
 %include "GRegion.h"
-%include "GRegionCompound.h"
 %include "discreteFace.h"
 %include "discreteEdge.h"
 %include "discreteVertex.h"
@@ -146,7 +141,6 @@ namespace std {
 %include "SVector3.h"
 %include "SPoint2.h"
 %include "SBoundingBox3d.h"
-%include "Curvature.h"
 %include "gmshLevelset.h"
 %include "GeomMeshMatcher.h"
 

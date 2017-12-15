@@ -16,6 +16,7 @@ class LegendrePolynomials {
   ~LegendrePolynomials();
 
   void f(double u, double *val) const;
+  void fc(double u, double *val) const;
 
   void df(double u, double *val) const;
 

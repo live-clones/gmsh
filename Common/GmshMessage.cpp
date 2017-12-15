@@ -17,7 +17,7 @@
 #include <sys/stat.h>
 #include "GmshMessage.h"
 #include "GmshSocket.h"
-#include "Gmsh.h"
+#include "GmshGlobal.h"
 #include "GModel.h"
 #include "Options.h"
 #include "Context.h"
@@ -27,6 +27,7 @@
 
 #if defined(HAVE_ONELAB)
 #include "onelab.h"
+#include "onelabUtils.h"
 #endif
 
 #include "gmshLocalNetworkClient.h"
@@ -454,6 +455,7 @@ void Msg::Fatal(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
+  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
   if(_logFile) fprintf(_logFile, "Fatal: %s\n", str);
   if(_callback) (*_callback)("Fatal", str);
@@ -503,6 +505,7 @@ void Msg::Error(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
+  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
   if(_logFile) fprintf(_logFile, "Error: %s\n", str);
   if(_callback) (*_callback)("Error", str);
@@ -544,6 +547,7 @@ void Msg::Warning(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
+  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
   if(_logFile) fprintf(_logFile, "Warning: %s\n", str);
   if(_callback) (*_callback)("Warning", str);
@@ -582,6 +586,7 @@ void Msg::Info(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
+  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
   if(_infoCpu){
     std::string res = PrintResources(false, true, true, true);
@@ -623,6 +628,7 @@ void Msg::Direct(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
+  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
   if(_logFile) fprintf(_logFile, "Direct: %s\n", str);
   if(_callback) (*_callback)("Direct", str);
@@ -659,6 +665,7 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
+  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
   if(_infoCpu){
     std::string res = PrintResources(false, true, true, true);
@@ -699,6 +706,8 @@ void Msg::StatusGl(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
+  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+
   if(FlGui::available())
     FlGui::instance()->setStatus(str, true);
 #endif
@@ -722,6 +731,7 @@ void Msg::Debug(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
+  int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
 
   if(_logFile) fprintf(_logFile, "Debug: %s\n", str);
   if(_callback) (*_callback)("Debug", str);
@@ -758,6 +768,8 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
     va_start(args, fmt);
     vsnprintf(str, sizeof(str), fmt, args);
     va_end(args);
+    int l = strlen(str); if(str[l-1] == '\n') str[l-1] = '\0';
+
     sprintf(str2, "%3d%%    : %s", _progressMeterCurrent, str);
 
     if(_client) _client->Progress(str2);
@@ -1501,15 +1513,7 @@ void Msg::ImportPhysicalGroupsInOnelab()
 void Msg::RunOnelabClient(const std::string &name, const std::string &command)
 {
 #if defined(HAVE_ONELAB)
-  onelab::remoteNetworkClient *c =
-    dynamic_cast<onelab::remoteNetworkClient*>(_onelabClient);
-  if(c){
-    c->runSubClient(name, command);
-  }
-  else{
-    gmshLocalNetworkClient client(name, command, "", true);
-    client.run();
-  }
+  onelabUtils::runClient(name, command);
 #endif
 }
 

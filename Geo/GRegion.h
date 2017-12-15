@@ -21,7 +21,6 @@ class MPyramid;
 class MPolyhedron;
 class MTrihedron;
 class ExtrudeParams;
-class GRegionCompound;
 class BoundaryLayerColumns;
 
 // A model region.
@@ -32,7 +31,6 @@ class GRegion : public GEntity {
   std::list<GFace *> embedded_faces;
   std::list<GEdge *> embedded_edges;
   std::list<int> l_dirs;
-  GRegionCompound *compound; // this model ede belongs to a compound
 
   // replace faces (for gluing) for specific modelers, we have to
   // re-create internal data ...
@@ -44,7 +42,7 @@ class GRegion : public GEntity {
   virtual ~GRegion();
 
   // delete mesh data
-  virtual void deleteMesh();
+  virtual void deleteMesh(bool onlyDeleteElements = false);
 
   // get the dimension of the region (3)
   virtual int dim() const { return 3; }
@@ -118,10 +116,6 @@ class GRegion : public GEntity {
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
-
-  // compound
-  void setCompound(GRegionCompound *grc) { compound = grc; }
-  GRegionCompound *getCompound() const { return compound; }
 
   struct {
     // do we recombine the tetrahedra of the mesh into hex?

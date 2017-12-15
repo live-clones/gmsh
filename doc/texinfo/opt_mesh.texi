@@ -120,7 +120,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.FlexibleTransfinite
-Allow transfinite contraints to be modified for Blossom or by global mesh size factor@*
+Allow transfinite constraints to be modified for Blossom or by global mesh size factor@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -212,6 +212,21 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.LineWidth
 Display width of mesh lines (in pixels)@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MaxNumThreads1D
+Maximum number of threads for 1D meshing (0: use default number of threads)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MaxNumThreads2D
+Maximum number of threads for 2D meshing (0: use default number of threads)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MaxNumThreads3D
+Maximum number of threads for 3D meshing (0: use default number of threads)@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MeshOnlyVisible
@@ -450,7 +465,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.IgnorePeriodicity
-Ignore alignement of periodic boundaries when reading the mesh (used by ParaView plugin)@*
+Ignore alignment of periodic boundaries when reading the mesh (used by ParaView plugin)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

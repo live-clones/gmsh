@@ -49,14 +49,14 @@ fi
 
 petsc_framework="$frameworks_dir/petsc.framework"
 slepc_framework="$frameworks_dir/slepc.framework"
-gmsh_framework="$frameworks_dir/Gmsh.framework"
-getdp_framework="$frameworks_dir/GetDP.framework"
-occt_framework="$frameworks_dir/OCCT.framework"
+gmsh_framework="$frameworks_dir/gmsh.framework"
+getdp_framework="$frameworks_dir/getdp.framework"
+occt_framework="$frameworks_dir/occt.framework"
 
 if [ $enable_simulator != 0 ]; then
-  cmake_default="-DDEFAULT=0 -DCMAKE_TOOLCHAIN_FILE=$gmsh_git/contrib/mobile/utils/iOS.cmake -DIOS_PLATFORM=SIMULATOR -DENABLE_BUILD_IOS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64 -GXcode"
+  cmake_default="-DDEFAULT=0 -DENABLE_INTERNAL_DEVELOPER_API=1 -DCMAKE_TOOLCHAIN_FILE=$gmsh_git/contrib/mobile/utils/iOS.cmake -DIOS_PLATFORM=SIMULATOR -DENABLE_BUILD_IOS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64 -GXcode"
 else
-  cmake_default="-DDEFAULT=0 -DCMAKE_TOOLCHAIN_FILE=$gmsh_git/contrib/mobile/utils/iOS.cmake -DIOS_PLATFORM=OS -DENABLE_BUILD_IOS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=armv7;armv7s;arm64 -GXcode"
+  cmake_default="-DDEFAULT=0 -DENABLE_INTERNAL_DEVELOPER_API=1 -DCMAKE_TOOLCHAIN_FILE=$gmsh_git/contrib/mobile/utils/iOS.cmake -DIOS_PLATFORM=OS -DENABLE_BUILD_IOS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=armv7;armv7s;arm64 -GXcode"
 fi
 
 build_cmd="xcodebuild -target lib -configuration Release"
@@ -74,13 +74,13 @@ function check {
 cd $gmsh_git && git pull
 mkdir -p $gmsh_git/build_${ios}
 cd $gmsh_git/build_${ios}
-cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_MATHEX=1 -DENABLE_MESH=1 -DENABLE_ONELAB=1 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_PLUGINS=1 -DENABLE_ANN=1 -DENABLE_TETGEN=1 -DENABLE_KBIPACK=1 -DENABLE_GMP=0 -DENABLE_ZIPPER=1 -DENABLE_OCC=$enable_occ -DOCC_LIBS="$occt_framework/OCCT" -DOCC_INC="$occt_framework/Headers/" ..
+cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_MATHEX=1 -DENABLE_MESH=1 -DENABLE_ONELAB=1 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_PLUGINS=1 -DENABLE_ANN=1 -DENABLE_TETGEN=1 -DENABLE_KBIPACK=1 -DENABLE_GMP=0 -DENABLE_ZIPPER=1 -DENABLE_OCC=$enable_occ -DOCC_LIBS="$occt_framework/occt" -DOCC_INC="$occt_framework/Headers/" ..
 check
 $build_cmd OTHER_CFLAGS="-m${iphoneos_version}-min=8.0 -fembed-bitcode" OTHER_CPLUSPLUSFLAGS="-m${iphoneos_version}-min=8.0 -fembed-bitcode -std=c++11"
 check
 $headers_cmd
 mkdir -p $gmsh_framework/Headers
-cp $gmsh_git/build_${ios}/Release-${iphoneos}/libGmsh.a $gmsh_framework/Gmsh
+cp $gmsh_git/build_${ios}/Release-${iphoneos}/libgmsh.a $gmsh_framework/gmsh
 cd $gmsh_framework/Headers
 cp $gmsh_git/build_${ios}/Headers/gmsh/* .
 ln -s . gmsh
@@ -89,13 +89,13 @@ ln -s . gmsh
 cd $getdp_git && git pull
 mkdir -p $getdp_git/build_${ios}
 cd $getdp_git/build_${ios}
-PETSC_DIR= PETSC_ARCH= SLEPC_DIR= cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_GMSH=1 -DENABLE_KERNEL=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_framework/Headers/" -DPETSC_LIBS="$petsc_framework/petsc" -DENABLE_SLEPC=1 -DSLEPC_INC="$slepc_framework/Headers/" -DSLEPC_LIB="$slepc_framework/slepc" -DGMSH_INC="$gmsh_framework/Headers/" -DGMSH_LIB="$gmsh_framework/Gmsh" ..
+PETSC_DIR= PETSC_ARCH= SLEPC_DIR= cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_GMSH=1 -DENABLE_KERNEL=1 -DENABLE_PETSC=1 -DPETSC_INC="$petsc_framework/Headers/" -DPETSC_LIBS="$petsc_framework/petsc" -DENABLE_SLEPC=1 -DSLEPC_INC="$slepc_framework/Headers/" -DSLEPC_LIB="$slepc_framework/slepc" -DGMSH_INC="$gmsh_framework/Headers/" -DGMSH_LIB="$gmsh_framework/gmsh" ..
 check
 $build_cmd OTHER_CFLAGS="-m${iphoneos_version}-min=8.0 -fembed-bitcode" OTHER_CPLUSPLUSFLAGS="-m${iphoneos_version}-min=8.0 -fembed-bitcode"
 check
 $headers_cmd
 mkdir -p $getdp_framework/Headers
-cp $getdp_git/build_${ios}/Release-${iphoneos}/libGetDP.a $getdp_framework/GetDP
+cp $getdp_git/build_${ios}/Release-${iphoneos}/libgetdp.a $getdp_framework/getdp
 cd $getdp_framework/Headers
 cp $getdp_git/build_${ios}/Headers/getdp/* .
 

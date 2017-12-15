@@ -20,11 +20,13 @@ class GMSH_NewViewPlugin : public GMSH_PostPlugin
   std::string getName() const { return "NewView"; }
   std::string getShortHelp() const
   {
-    return "Create an empty New View from a mesh";
+    return "Create an empty new view from a mesh";
   }
   std::string getHelp() const;
   int getNbOptions() const;
-  StringXNumber *getOption(int iopt);  
+  StringXNumber *getOption(int iopt);
+  int getNbOptionsStr() const;
+  StringXString* getOptionStr(int iopt);
   PView *execute(PView *);
 };
 

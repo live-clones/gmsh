@@ -4,7 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <stdlib.h>
-#include "Gmsh.h"
+#include "GmshGlobal.h"
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "CommandLine.h"
@@ -17,7 +17,7 @@
 int main(int argc, char *argv[])
 {
   new GModel();
-  GmshInitialize(argc, argv);
+  GmshInitialize(argc, argv, true);
 
   OpenProject(GModel::current()->getFileName());
   for(unsigned int i = 1; i < CTX::instance()->files.size(); i++){

@@ -47,15 +47,18 @@ class PView{
   PView(PViewData *data, int tag=-1);
   // construct a new view, alias of the view "ref"
   PView(PView *ref, bool copyOptions=true);
-  // construct a new list-based view from a simple 2D dataset
+  // construct a new list-based view from a simple 2D point dataset
   PView(const std::string &xname, const std::string &yname,
         std::vector<double> &x, std::vector<double> &y);
+  // construct a new list-based view from a simple 3D point dataset
+  PView(const std::string &name, std::vector<double> &x, std::vector<double> &y,
+        std::vector<double> &z, std::vector<double> &v);
   // construct a new mesh-based view from a bunch of data
   PView(const std::string &name, const std::string &type, GModel *model,
         std::map<int, std::vector<double> > &data, double time=0.,
-        int numComp = -1);
+        int numComp = -1, int tag = -1);
   // add a new time step to a given mesh-based view
-  void addStep(GModel *model, std::map<int, std::vector<double> > &data,
+  void addStep(GModel *model, const std::map<int, std::vector<double> > &data,
                double time=0.,int numComp = -1);
 
   // default destructor

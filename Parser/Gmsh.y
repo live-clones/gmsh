@@ -188,7 +188,7 @@ struct doubleXstring{
 %token tSyncModel tNewModel
 %token tOnelabAction tOnelabRun tCodeName
 %token tCpu tMemory tTotalMemory
-%token tCreateTopology tCreateTopologyNoHoles
+%token tCreateTopology
 %token tDistanceFunction tDefineConstant tUndefineConstant
 %token tDefineNumber tDefineStruct tNameStruct tDimNameSpace tAppend
 %token tDefineString tSetNumber tSetString
@@ -1573,7 +1573,6 @@ Shape :
       double y = CTX::instance()->geom.scalingFactor * $6[1];
       double z = CTX::instance()->geom.scalingFactor * $6[2];
       double lc = CTX::instance()->geom.scalingFactor * $6[3];
-      if(lc == 0.) lc = MAX_LC; // no mesh size given at the point
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         r = GModel::current()->getOCCInternals()->addVertex(num, x, y, z, lc);
@@ -2161,62 +2160,16 @@ Shape :
     }
   | tCompound GeoEntity123 '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      int num = (int)$4;
-      std::vector<int> tags; ListOfDouble2Vector($7, tags);
-      switch ($2) {
-      case 1:
-        {
-          bool r = GModel::current()->getGEOInternals()->addCompoundLine(num, tags);
-          if(!r) yymsg(0, "Could not add compound line");
-        }
-        $$.Type = MSH_SEGM_COMPOUND;
-        break;
-      case 2:
-        {
-          bool r = GModel::current()->getGEOInternals()->addCompoundSurface(num, tags);
-          if(!r) yymsg(0, "Could not add compound surface");
-        }
-        $$.Type = MSH_SURF_COMPOUND;
-        break;
-      case 3:
-        {
-          bool r = GModel::current()->getGEOInternals()->addCompoundVolume(num, tags);
-          if(!r) yymsg(0, "Could not add compound volume");
-        }
-        $$.Type = MSH_VOLUME_COMPOUND;
-        break;
-      }
-      List_Delete($7);
-      $$.Num = num;
+      yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints instead");
+      $$.Type = 0;
+      $$.Num = 0;
     }
   | tCompound GeoEntity123 '(' FExpr ')' tAFFECT ListOfDouble tSTRING
       '{' RecursiveListOfListOfDouble '}' tEND
     {
-      // Particular case only for dim 2 (Surface)
-      if ($2 == 2) {
-        int num = (int)$4;
-        std::vector<int> tags; ListOfDouble2Vector($7, tags);
-        std::vector<int> bndTags[4];
-        for(int i = 0; i < List_Nbr($10); i++){
-          if(i < 4)
-            ListOfDouble2Vector(*(List_T**)List_Pointer($10, i), bndTags[i]);
-          else
-            break;
-        }
-        bool r = GModel::current()->getGEOInternals()->addCompoundSurface
-          (num, tags, bndTags);
-        if(!r) yymsg(0, "Could not add compound surface");
-        List_Delete($7);
-        Free($8);
-        for (int i = 0; i < List_Nbr($10); i++)
-          List_Delete(*(List_T**)List_Pointer($10, i));
-        List_Delete($10);
-        $$.Type = MSH_SURF_COMPOUND;
-        $$.Num = num;
-      }
-      else {
-        yymsg(0, "GeoEntity dim out of range [2,2]");
-      }
+      yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints instead");
+      $$.Type = 0;
+      $$.Num = 0;
     }
   | tPhysical GeoEntity
     {
@@ -2490,6 +2443,62 @@ ListOfShapes :
 	Shape s;
 	s.Num = (int)d;
         switch ($2) {
+        case 0: s.Type = MSH_POINT    ; break;
+        case 1: s.Type = MSH_SEGM_LINE; break;
+        case 2: s.Type = MSH_SURF_PLAN; break; // we don't care about the actual type
+        case 3: s.Type = MSH_VOLUME   ; break;
+        }
+        List_Add($$, &s);
+      }
+    }
+  | ListOfShapes tPhysical GeoEntity '{' RecursiveListOfDouble '}' tEND
+    {
+      List_T *tmp = List_Create(10, 10, sizeof(double));
+      getElementaryTagsForPhysicalGroups($3, $5, tmp);
+      for(int i = 0; i < List_Nbr(tmp); i++){
+	double d;
+	List_Read(tmp, i, &d);
+ 	Shape s;
+	s.Num = (int)d; // FIXME
+        switch ($3) {
+        case 0: s.Type = MSH_POINT    ; break;
+        case 1: s.Type = MSH_SEGM_LINE; break;
+        case 2: s.Type = MSH_SURF_PLAN; break; // we don't care about the actual type
+        case 3: s.Type = MSH_VOLUME   ; break;
+        }
+        List_Add($$, &s);
+      }
+    }
+  | ListOfShapes GeoEntity '{' tDOTS '}' tEND
+    {
+      List_T *tmp = List_Create(10, 10, sizeof(double));
+      getAllElementaryTags($2, tmp);
+      for(int i = 0; i < List_Nbr(tmp); i++){
+	double d;
+	List_Read(tmp, i, &d);
+	Shape s;
+	s.Num = (int)d;
+        switch ($2) {
+        case 0: s.Type = MSH_POINT    ; break;
+        case 1: s.Type = MSH_SEGM_LINE; break;
+        case 2: s.Type = MSH_SURF_PLAN; break; // we don't care about the actual type
+        case 3: s.Type = MSH_VOLUME   ; break;
+        }
+        List_Add($$, &s);
+      }
+    }
+  | ListOfShapes tPhysical GeoEntity '{' tDOTS '}' tEND
+    {
+      List_T *tmp = List_Create(10, 10, sizeof(double));
+      List_T *tmp2 = List_Create(10, 10, sizeof(double));
+      getAllPhysicalTags($3, tmp2);
+      getElementaryTagsForPhysicalGroups($3, tmp2, tmp);
+      for(int i = 0; i < List_Nbr(tmp); i++){
+	double d;
+	List_Read(tmp, i, &d);
+ 	Shape s;
+	s.Num = (int)d; // FIXME
+        switch ($3) {
         case 0: s.Type = MSH_POINT    ; break;
         case 1: s.Type = MSH_SEGM_LINE; break;
         case 2: s.Type = MSH_SURF_PLAN; break; // we don't care about the actual type
@@ -3017,15 +3026,21 @@ SetPartition :
 //  V I S I B I L I T Y
 
 Visibility :
-    tShow tBIGSTR tEND
+    tShow '{' tDOTS '}'
     {
-      std::string what = $2;
+      setVisibility(-1, 1, false);
+    }
+  | tShow tBIGSTR tEND // deprecated: use {:} instead
+    {
       setVisibility(-1, 1, false);
       Free($2);
     }
-  | tHide tBIGSTR tEND
+  | tHide '{' tDOTS '}'
     {
-      std::string what = $2;
+      setVisibility(-1, 0, false);
+    }
+  | tHide tBIGSTR tEND // deprecated: use {:} instead
+    {
       setVisibility(-1, 0, false);
       Free($2);
     }
@@ -3307,10 +3322,6 @@ Command :
    | tCreateTopology tEND
     {
       GModel::current()->createTopologyFromMesh();
-    }
-   | tCreateTopologyNoHoles tEND
-    {
-      GModel::current()->createTopologyFromMesh(1);
     }
    | tRefineMesh tEND
     {
@@ -4083,14 +4094,19 @@ PeriodicTransform :
 ;
 
 Constraints :
-    tCharacteristic tLength ListOfDouble tAFFECT FExpr tEND
+    tCharacteristic tLength ListOfDoubleOrAll tAFFECT FExpr tEND
     {
       // mesh sizes at vertices are stored in internal CAD data, as they can be
       // specified during vertex creation and copied around during CAD
       // operations
-      for(int i = 0; i < List_Nbr($3); i++){
-	double d;
-	List_Read($3, i, &d);
+      List_T *tmp = $3;
+      if(!$3){
+        tmp = List_Create(100, 100, sizeof(double));
+        getAllElementaryTags(0, tmp);
+      }
+      for(int i = 0; i < List_Nbr(tmp); i++){
+        double d;
+        List_Read(tmp, i, &d);
         int tag = (int)d;
         if(GModel::current()->getOCCInternals())
           GModel::current()->getOCCInternals()->setMeshSize(0, tag, $5);
@@ -4098,7 +4114,7 @@ Constraints :
         GVertex *gv = GModel::current()->getVertexByTag(tag);
         if(gv) gv->setPrescribedMeshSizeAtVertex($5);
       }
-      List_Delete($3);
+      List_Delete(tmp);
     }
   | tTransfinite tLine ListOfDoubleOrAll tAFFECT FExpr TransfiniteType tEND
     {
@@ -5282,14 +5298,20 @@ ListOfDoubleOrAll :
     {
       $$ = $1;
     }
-  | tBIGSTR
+  | '{' tDOTS '}'
     {
-      if(!strcmp($1, "*") || !strcmp($1, "all"))
+      $$ = 0;
+    }
+  | tBIGSTR // deprecated: use {:} instead
+    {
+      if(!strcmp($1, "*") || !strcmp($1, "all")){
         $$ = 0;
+      }
       else{
         yyerror("Unknown special string for list replacement");
         $$ = List_Create(2, 1, sizeof(double));
       }
+      Free($1);
     }
 ;
 
@@ -5350,7 +5372,23 @@ FExpr_Multi :
       List_Add($$, &y);
       List_Add($$, &z);
     }
-  | GeoEntity tBIGSTR
+  | tPoint '{' tDOTS '}'
+    {
+      $$ = List_Create(10, 10, sizeof(double));
+      getAllElementaryTags(0, $$);
+    }
+  | tPoint tBIGSTR // deprecated syntax: use {:} instead
+    {
+      $$ = List_Create(10, 10, sizeof(double));
+      getAllElementaryTags(0, $$);
+      Free($2);
+    }
+  | GeoEntity123 '{' tDOTS '}'
+    {
+      $$ = List_Create(10, 10, sizeof(double));
+      getAllElementaryTags($1, $$);
+    }
+  | GeoEntity123 tBIGSTR // deprecated syntax: use {:} instead
     {
       $$ = List_Create(10, 10, sizeof(double));
       getAllElementaryTags($1, $$);
@@ -6632,6 +6670,9 @@ void getAllPhysicalTags(int dim, List_T *out)
 
 void getElementaryTagsForPhysicalGroups(int dim, List_T *in, List_T *out)
 {
+  if(GModel::current()->getOCCInternals() &&
+     GModel::current()->getOCCInternals()->getChanged())
+    GModel::current()->getOCCInternals()->synchronize(GModel::current());
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 

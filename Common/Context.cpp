@@ -79,7 +79,6 @@ CTX::CTX() : gamepad(0)
 
   // need to initialize these too, since the corresponding opt_XXX routines use
   // the current value to detect changes
-  geom.hideCompounds = 1;
   mesh.changed = 0;
   mesh.qualityInf = mesh.qualitySup = mesh.qualityType = 0;
   mesh.radiusInf = mesh.radiusSup = 0;

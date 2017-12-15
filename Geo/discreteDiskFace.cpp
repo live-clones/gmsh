@@ -180,7 +180,7 @@ static void discreteDiskFaceCentroid(void *a, double*c)
   c[2] = 0.0;
 }
 
-static int discreteDiskFaceInEle(void *a, double*c)// # mark
+static int discreteDiskFaceInEle(void *a, double*c)
 {
   discreteDiskFaceTriangle *t = (discreteDiskFaceTriangle *)a;
   double Xi[2];
@@ -196,55 +196,48 @@ static int discreteDiskFaceInEle(void *a, double*c)// # mark
 
 static bool orderVertices(const double &tot_length, const std::vector<MVertex*> &l,
                           std::vector<double> &coord)
-{ // called once by constructor ; organize the vertices for the linear system
+{
+  // called once by constructor ; organize the vertices for the linear system
   // expressing the mapping
   coord.clear();
   coord.push_back(0.);
-
   MVertex* first = l[0];
-
   for(unsigned int i=1; i < l.size(); i++){
-
     MVertex* next = l[i];
-
     const double length = sqrt( (next->x() - first->x()) * (next->x() - first->x()) +
 				(next->y() - first->y()) * (next->y() - first->y()) +
 				(next->z() - first->z()) * (next->z() - first->z()) );
-
     coord.push_back(coord[coord.size()-1] + length / tot_length);
-
     first = next;
-
   }
   return true;
 }
 
-/*BUILDER*/
 discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
-                                   int p, std::vector<GFace*> *CAD) :
-  GFace(gf->model(),diskTriangulation->idNum), _parent (gf), _ddft(NULL), oct(NULL)
+                                   int p, std::vector<GFace*> *CAD)
+  : GFace(gf->model(), diskTriangulation->idNum), _parent (gf), _ddft(NULL), oct(NULL)
 {
   initialTriangulation = diskTriangulation;
   std::vector<MElement*> mesh = diskTriangulation->tri;
   _order = p;
   _n = (p+1)*(p+2)/2;
   discrete_triangles.resize(mesh.size());
-  std::map<MVertex*,MVertex*> v2v;// mesh vertex |-> face vertex
+  std::map<MVertex*,MVertex*> v2v; // mesh vertex |-> face vertex
   std::map<MEdge,MVertex*,Less_Edge> ed2nodes; // edge to interior node(s)
   for (unsigned int i=0;i<mesh.size();i++){ // triangle by triangle
     std::vector<MVertex*> vs; // MTriangle vertices
-    for (unsigned int j=0; j<3; j++){ // loop over vertices AND edges of the current triangle
-      MVertex *v = mesh[i]->getVertex(j);// firstly, edge vertices
+    // loop over vertices AND edges of the current triangle
+    for (unsigned int j = 0; j < 3; j++){
+      MVertex *v = mesh[i]->getVertex(j); // firstly, edge vertices
       if (v->onWhat()->dim() == 2) {
-	std::map<MVertex*,MVertex*> :: iterator it = v2v.find(v);
+	std::map<MVertex*,MVertex*>::iterator it = v2v.find(v);
 	if (it == v2v.end()){
 	  MFaceVertex *vv;
-	  if (!CAD) vv  = new MFaceVertex ( v->x(),  v->y(),  v->z(), v->onWhat(), 0, 0);
+	  if(!CAD || (*CAD)[i] != v->onWhat()){
+            vv  = new MFaceVertex(v->x(), v->y(), v->z(), v->onWhat(), 0, 0);
+          }
 	  else{
-	    GFace *cad = (*CAD)[i];
-	    if(cad != v->onWhat())
-              Msg::Fatal("Line %d FILE %s : erroneous cad list",__LINE__,__FILE__);
-	    double pu,pv; v->getParameter(0,pu);v->getParameter(1,pv);
+	    double pu, pv; v->getParameter(0, pu); v->getParameter(1, pv);
 	    vv  = new MFaceVertex ( v->x(),  v->y(),  v->z(), v->onWhat(), pu, pv);
 	  }
 	  v2v[v] = vv;
@@ -293,7 +286,6 @@ discreteDiskFace::discreteDiskFace(GFace *gf, triangulation* diskTriangulation,
   //putOnView(gf->tag(),diskTriangulation->idNum,true,true);
   //printParamMesh();
 }
-/*end BUILDER*/
 
 discreteDiskFace::~discreteDiskFace()
 {
@@ -337,7 +329,6 @@ bool discreteDiskFace::parametrize() const
 { // #improveme
 
   linearSystem<double> * lsys_u, *lsys_v;
-
 
 #ifdef HAVE_MUMPS
   lsys_u = new linearSystemMUMPS<double>;
@@ -386,10 +377,18 @@ bool discreteDiskFace::parametrize() const
 
   double t2 = Cpu();
   Msg::Debug("Assembly done in %8.3f seconds", t2 - t1);
+
+
+  if(!myAssemblerU.sizeOfR() || !myAssemblerV.sizeOfR()){
+    Msg::Warning("No unknowns in systems to compute parametrization - skipping");
+    return false;
+  }
+
   lsys_u->systemSolve();
   lsys_v->systemSolve();
   Msg::Debug("Systems solved");
-  for(std::set<MVertex *>::iterator itv = allNodes.begin(); itv !=allNodes.end() ; ++itv){
+  for(std::set<MVertex *>::iterator itv = allNodes.begin();
+      itv !=allNodes.end() ; ++itv){
     MVertex *v = *itv;
     double value_U, value_V;
     myAssemblerU.getDofValue(v, 0, 1, value_U);
@@ -415,15 +414,15 @@ bool discreteDiskFace::parametrize() const
   return true;
 }
 
-
-
 void discreteDiskFace::getTriangleUV(const double u,const double v,
 				     discreteDiskFaceTriangle **mt,
-				     double &_xi, double &_eta)const{
+				     double &_xi, double &_eta)const
+{
   double uv[3] = {u,v,0.};
   *mt = (discreteDiskFaceTriangle*) Octree_Search(uv,oct);
   if (!(*mt)) {
-    for (unsigned int i=0; i<discrete_triangles.size()-geoTriangulation->fillingHoles.size(); i++){
+    for (unsigned int i = 0; i < discrete_triangles.size() -
+           geoTriangulation->fillingHoles.size(); i++){
       discreteDiskFaceTriangle *ct = &_ddft[i];
       double Xi[2];
       int xxx = discreteDiskFaceInEle(ct, Xi);
@@ -434,7 +433,9 @@ void discreteDiskFace::getTriangleUV(const double u,const double v,
 	return;
       }
     }
-    Msg::Debug("discreteDiskFace::getTriangleUV(), didn't find the reference coordinate (xi;eta) for (u;v)=(%f;%f) among %d triangles",u,v,discrete_triangles.size()-geoTriangulation->fillingHoles.size());
+    Msg::Debug("discreteDiskFace::getTriangleUV(), didn't find the reference "
+               "coordinate (xi;eta) for (u;v)=(%f;%f) among %d triangles",
+               u,v,discrete_triangles.size()-geoTriangulation->fillingHoles.size());
     return;
   }
 
@@ -442,7 +443,8 @@ void discreteDiskFace::getTriangleUV(const double u,const double v,
   double U[2] = {u,v};
   bool pass = uv2xi(*mt,U,Xi);
   if (!pass){
-    Msg::Error("discreteDiskFace::getTriangleUV(), didn't find the reference coordinate (xi;eta) for (u;v)=(%f;%f)",u,v);
+    Msg::Error("discreteDiskFace::getTriangleUV(), didn't find the reference "
+               "coordinate (xi;eta) for (u;v)=(%f;%f)", u, v);
     return;
   }
   _xi = Xi[0];
@@ -453,7 +455,7 @@ bool discreteDiskFace::checkOrientationUV()
 {
   discreteDiskFaceTriangle *ct;
 
-  if(_order==1){
+  if(_order == 1){
     double current; // initial and current orientation
     ct = &_ddft[0];
     double p1[2] = {ct->p[0].x(), ct->p[0].y()};
@@ -471,7 +473,8 @@ bool discreteDiskFace::checkOrientationUV()
       else nbP++;
     }
     if (nbP*nbM){
-      Msg::Info("Map %d of the atlas : Triangles have different orientations (%d + / %d -)",tag(),nbP,nbM);
+      Msg::Info("Map %d of the atlas: triangles have different orientations (%d + / %d -)",
+                tag(), nbP, nbM);
       return false;
     }
     return true;
@@ -481,7 +484,8 @@ bool discreteDiskFace::checkOrientationUV()
     double min, max;
     std::vector<MVertex*> localVertices;
     localVertices.resize(_n);
-    for(unsigned int i=0; i<discrete_triangles.size()-geoTriangulation->fillingHoles.size(); i++){
+    for(unsigned int i=0; i<discrete_triangles.size() -
+          geoTriangulation->fillingHoles.size(); i++){
       ct = &_ddft[i];
       for(int j=0; j<_n; j++)
 	localVertices[j] = new MVertex(ct->p[j].x(),ct->p[j].y(),0.);
@@ -524,11 +528,14 @@ void discreteDiskFace::optimize()
   // -- generation of parametric nodes
   std::map<SPoint3,MVertex*> sp2mv;
   std::vector<MElement*> paramTriangles;
-  for(std::map<MVertex*,SPoint3>::iterator it=coordinates.begin(); it!= coordinates.end(); ++it)
+  for(std::map<MVertex*,SPoint3>::iterator it=coordinates.begin();
+      it != coordinates.end(); ++it)
     sp2mv[it->second] = new MVertex(it->second.x(),it->second.y(),0.);
   // -- generation of parametric triangles
-  paramTriangles.resize(discrete_triangles.size() - geoTriangulation->fillingHoles.size());
-  for(unsigned int i=0; i<discrete_triangles.size() -geoTriangulation->fillingHoles.size(); i++){
+  paramTriangles.resize(discrete_triangles.size() -
+                        geoTriangulation->fillingHoles.size());
+  for(unsigned int i = 0; i < discrete_triangles.size() -
+        geoTriangulation->fillingHoles.size(); i++){
     discreteDiskFaceTriangle* ct = &_ddft[i];
     std::vector<MVertex*> mv;
     mv.resize(ct->tri->getNumVertices());
@@ -551,35 +558,34 @@ void discreteDiskFace::optimize()
   // ---- discrete vertex
   std::set<GFace*, GEntityLessThan>::iterator it = paramDisk->firstFace();
   GFace *dgf = *it;
-  discreteVertex *dv = new discreteVertex(paramDisk,paramDisk->getMaxElementaryNumber(0)+1);
+  discreteVertex *dv = new discreteVertex(paramDisk,
+                                          paramDisk->getMaxElementaryNumber(0) + 1);
   sp2mv[coordinates[_U0[0]]]->setEntity(dv);
   dv->mesh_vertices.push_back(sp2mv[coordinates[_U0[0]]]);
   todelete.insert(sp2mv[coordinates[_U0[0]]]);
   paramDisk->add(dv);
   // ---- discrete edge
-  discreteEdge *de = new discreteEdge(paramDisk,paramDisk->getMaxElementaryNumber(1)+1,dv,dv);
+  discreteEdge *de = new discreteEdge(paramDisk,
+                                      paramDisk->getMaxElementaryNumber(1)+1, dv, dv);
   paramDisk->add(de);
   std::vector<MLine*> lines;
   for(unsigned int i=1; i<_U0.size(); i++){
     sp2mv[coordinates[_U0[i]]]->setEntity(de);
     de->mesh_vertices.push_back(sp2mv[coordinates[_U0[i]]]);
     todelete.insert(sp2mv[coordinates[_U0[i]]]);
-    lines.push_back(new MLine(sp2mv[coordinates[_U0[i-1]]],sp2mv[coordinates[_U0[i]]]));
+    lines.push_back(new MLine(sp2mv[coordinates[_U0[i-1]]],
+                              sp2mv[coordinates[_U0[i]]]));
   }
-  lines.push_back(new MLine(sp2mv[coordinates[_U0[_U0.size()-1]]],sp2mv[coordinates[_U0[0]]]));
+  lines.push_back(new MLine(sp2mv[coordinates[_U0[_U0.size()-1]]],
+                            sp2mv[coordinates[_U0[0]]]));
   de->setTopo(lines);
   de->createGeometry();// !!!! setTopo ... MLine's
-
-
 
   // optimization
   if(_order >1)
     HighOrderMeshOptimizer(paramDisk, optParams);
   else
     MeshQualityOptimizer(paramDisk,opt);
-
-
-
 
   // update the parametrization
   paramTriangles = e2e[0];
@@ -606,7 +612,6 @@ void discreteDiskFace::optimize()
 
   // cleaning
   delete paramDisk;
-
 #endif
 }
 
@@ -647,27 +652,24 @@ SPoint2 discreteDiskFace::parFromVertex(MVertex *v) const
   std::map<MVertex*,SPoint3>::iterator it = coordinates.find(v);
   if(it != coordinates.end()) return SPoint2(it->second.x(),it->second.y());
   // The 1D mesh has been re-done
-  if (v->onWhat()->dim()==1){
+  if (v->onWhat()->dim() == 1){
     if (v->onWhat()->geomType() == DiscreteCurve){
       discreteEdge *de = dynamic_cast<discreteEdge*> (v->onWhat());
-      if (de){
+      if(de){
 	MVertex *v1,*v2;
 	double xi;
 	de->interpolateInGeometry (v,&v1,&v2,xi); // modify
 	std::map<MVertex*,SPoint3>::iterator it1 = coordinates.find(v1);
 	std::map<MVertex*,SPoint3>::iterator it2 = coordinates.find(v2);
-	if(it1 == coordinates.end()) Msg::Fatal("FIXME TO DO %d %s",__LINE__,__FILE__);
-	if(it2 == coordinates.end()) Msg::Fatal("FIXME TO DO %d %s",__LINE__,__FILE__);
-	return SPoint2(it1->second.x(),it1->second.y()) * (1.-xi) +
-	  SPoint2(it2->second.x(),it2->second.y()) * xi; // modify
+	if(it1 != coordinates.end() && it2 != coordinates.end()){
+          return SPoint2(it1->second.x(),it1->second.y()) * (1.-xi) +
+            SPoint2(it2->second.x(),it2->second.y()) * xi; // modify
+        }
       }
     }
-    Msg::Fatal("FIXME TO DO %d %s",__LINE__,__FILE__);
   }
-  else if (v->onWhat()->dim()==0)
-    Msg::Fatal("discreteDiskFace::parFromVertex vertex classified on a model "
-               "vertex that is not part of the face");
 
+  Msg::Error("discreteDiskFace::parFromVertex failed");
   return SPoint2(0,0);
 }
 
@@ -678,15 +680,13 @@ SVector3 discreteDiskFace::normal(const SPoint2 &param) const
 
 double discreteDiskFace::curvatureMax(const SPoint2 &param) const
 {
-  throw;
-  return false;
+  return 0;
 }
 
 double discreteDiskFace::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
 				    double *curvMax, double *curvMin) const
 {
-  throw;
-  return false;
+  return 0;
 }
 
 Pair<SVector3, SVector3> discreteDiskFace::firstDer(const SPoint2 &param) const
@@ -709,8 +709,7 @@ Pair<SVector3, SVector3> discreteDiskFace::firstDer(const SPoint2 &param) const
 
   double dudxi[2][2] = {{0.,0.},{0.,0.}};
 
-  for (int io=0; io<_n; io++){
-
+  for (int io = 0; io < _n; io++){
     double X = tri->getVertex(io)->x();
     double Y = tri->getVertex(io)->y();
     double Z = tri->getVertex(io)->z();
@@ -732,7 +731,6 @@ Pair<SVector3, SVector3> discreteDiskFace::firstDer(const SPoint2 &param) const
 
     dudxi[1][0] += V*df[io][0];
     dudxi[1][1] += V*df[io][1];
-
   }
 
   double dxidu[2][2];
@@ -755,18 +753,17 @@ Pair<SVector3, SVector3> discreteDiskFace::firstDer(const SPoint2 &param) const
 
 void discreteDiskFace::secondDer(const SPoint2 &param,
 				 SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
-{ // cf Sauvage's thesis
-  return;
+{
+  // cf Sauvage's thesis
 }
 
 void discreteDiskFace::putOnView(int iFace, int iMap, bool Xu, bool Ux)
-{// #improveme  using built-in methods
+{
+  // FIXME using built-in methods
 
   char mybuffer [64];
 
   FILE *view_u=NULL, *view_v=NULL, *UVx=NULL, *UVy=NULL, *UVz=NULL;
-
-
 
   if(Xu){
     sprintf(mybuffer, "param_u_gface%d_part%d_order%d.pos",
@@ -803,7 +800,8 @@ void discreteDiskFace::putOnView(int iFace, int iMap, bool Xu, bool Ux)
       fprintf(UVy,"View \"y(U)\"{\n");
       fprintf(UVz,"View \"z(U)\"{\n");
     }
-    for (unsigned int i=0; i<discrete_triangles.size()-geoTriangulation->fillingHoles.size(); i++){
+    for (unsigned int i = 0; i < discrete_triangles.size() -
+           geoTriangulation->fillingHoles.size(); i++){
       discreteDiskFaceTriangle* my_ddft = &_ddft[i];
       if (_order == 1){
 	if(Xu){
@@ -893,26 +891,13 @@ void discreteDiskFace::putOnView(int iFace, int iMap, bool Xu, bool Ux)
   }
 }
 
-// useful for mesh generators
-// Intersection of a circle and a plane
-//FILE *allProblems = NULL;
-//void openProblemsON(void){
-//  allProblems = fopen ("op.pos","w");
-//}
-//void openProblemsOFF(void){
-//  fclose(allProblems);
-//  allProblems = NULL;
-//}
-
 GPoint discreteDiskFace::intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
 						const SVector3 &p, const double &R,
 						double uv[2]) const
 {
-
-
   SVector3 n = crossprod(n1,n2);
   n.normalize();
-  //  printf("n %g %g %g\n",n.x(), n.y(), n.z());
+
   const int N = (int)(discrete_triangles.size()-geoTriangulation->fillingHoles.size());
   for (int i=-1;i<N;i++){
     discreteDiskFaceTriangle *ct = NULL;
@@ -1001,32 +986,18 @@ GPoint discreteDiskFace::intersectionWithCircle(const SVector3 &n1, const SVecto
   GPoint pp(0);
   pp.setNoSuccess();
   Msg::Debug("ARGG no success intersection circle");
-  //  Msg::Info("ARGG no success intersection circle");
-  //  printf("Point(1) = {%g,%g,%g};\n",p.x(),p.y(),p.z());
-  //  printf("Point(2) = {%g,%g,%g};\n",p.x()+d*n1.x(),p.y()+d*n1.y(),p.z()+d*n1.z());
-  //  printf("Point(3) = {%g,%g,%g};\n",p.x()+d*n2.x(),p.y()+d*n2.y(),p.z()+d*n2.z());
-
-  //  //  printf("Circle(4) = {2,1,3};\n");
-  //  printf("{%g,%g,%g};\n",n1.x(),n1.y(),n1.z());
-  //  printf("{%g,%g,%g};\n",n2.x(),n2.y(),n2.z());
-  //  printf("coucou --> \n");
-  //  if (allProblems){
-  //    fprintf(allProblems,"VP(%g,%g,%g){%g,%g,%g};\n",p.x(),p.y(),p.z(),R*n2.x(),R*n2.y(),R*n2.z());
-  //  }
-  //  getchar();
   return pp;
 }
-
 
 GPoint discreteDiskFace::intersectionWithCircle2(const SVector3 &n1, const SVector3 &n2,
 						const SVector3 &p, const double &d,
 						double uv[2]) const
 {
-
   // n2 is exterior
   SVector3 n = crossprod(n1,n2);
   n.normalize();
-  for (int i=-1;i<(int)(discrete_triangles.size()-geoTriangulation->fillingHoles.size());i++){
+  for (int i = -1; i < (int)(discrete_triangles.size() -
+                             geoTriangulation->fillingHoles.size()); i++){
     discreteDiskFaceTriangle *ct = NULL;
     double U,V;
     if (i == -1) getTriangleUV(uv[0],uv[1], &ct, U,V);
@@ -1118,7 +1089,8 @@ GPoint discreteDiskFace::intersectionWithCircle2(const SVector3 &n1, const SVect
   //  printf("{%g,%g,%g};\n",n2.x(),n2.y(),n2.z());
   //  printf("coucou --> \n");
     //  if (allProblems){
-    //    fprintf(allProblems,"VP(%g,%g,%g){%g,%g,%g};\n",p.x(),p.y(),p.z(),d*n2.x(),d*n2.y(),d*n2.z());
+    //    fprintf(allProblems,"VP(%g,%g,%g){%g,%g,%g};\n",
+    //            p.x(),p.y(),p.z(),d*n2.x(),d*n2.y(),d*n2.z());
     //  }
   //  getchar();
   return pp;
@@ -1126,7 +1098,8 @@ GPoint discreteDiskFace::intersectionWithCircle2(const SVector3 &n1, const SVect
 
 // computes some kind of maximal distance in a mesh
 
-static void addTo (std::map<MVertex*, std::vector<MElement*> > &v2t, MVertex *v, MElement *t)
+static void addTo(std::map<MVertex*, std::vector<MElement*> > &v2t,
+                  MVertex *v, MElement *t)
 {
   std::map<MVertex*, std::vector<MElement*> > :: iterator it = v2t.find(v);
   if (it == v2t.end()){
@@ -1145,26 +1118,16 @@ static void update(std::map<MVertex*,double> &Close, MVertex *v2, double d)
 
 }
 
-static MEdge getEdge (MElement *t, MVertex *v)
+static MEdge getEdge(MElement *t, MVertex *v)
 {
   for (int i=0;i<3;i++)
     if (t->getVertex(i) == v) return t->getEdge((i+1)%3);
   return MEdge();
 }
 
-/* #warning
-static double computeDistanceLinePoint (MVertex *v1, MVertex *v2, MVertex *v){
-
-  SVector3 U  = v2->point() - v1->point();
-  SVector3 BA = v2->point() - v->point();
-
-  SVector3 xx = crossprod(U,BA);
-  return xx.norm() / U.norm();
-
-}
-*/
-inline double computeDistance (MVertex *v1, double d1, MVertex *v2, double d2, MVertex *v){
-
+inline double computeDistance(MVertex *v1, double d1, MVertex *v2, double d2,
+                              MVertex *v)
+{
   //       o------------a
   //
   //
@@ -1178,9 +1141,6 @@ inline double computeDistance (MVertex *v1, double d1, MVertex *v2, double d2, M
   //  printf("%p %p %p\n",v1,v2,v);
 
   return std::min(d2+v2->distance(v),d1+v1->distance(v));
-
-
-
 
   double a = v2->distance(v1);
 
@@ -1276,12 +1236,14 @@ double triangulation::geodesicDistance ()
       std::map<MVertex*,double>::iterator it1 = Fixed.find(ed.getVertex(1));
       //      printf("coucou %p %p\n",ed.getVertex(0),ed.getVertex(1));
       if (it0 != Fixed.end() && it1 == Fixed.end()){
-	double d = computeDistance (it->first,it->second,it0->first,it0->second,ed.getVertex(1));
+	double d = computeDistance (it->first,it->second,it0->first,it0->second,
+                                    ed.getVertex(1));
 	//	printf("neigh %d fixed 0 --> d = %g\n",i,d);
 	update(Close, ed.getVertex(1), d);
       }
       else if (it1 != Fixed.end() && it0 == Fixed.end()){
-	double d = computeDistance (it->first,it->second,it1->first,it1->second,ed.getVertex(0));
+	double d = computeDistance(it->first,it->second,it1->first,it1->second,
+                                   ed.getVertex(0));
 	//	printf("neigh %d fixed 1 --> d = %g\n",i,d);
 	update(Close, ed.getVertex(0), d);
       }
@@ -1290,7 +1252,7 @@ double triangulation::geodesicDistance ()
     if (Fixed.size() == v2t.size())break;
   }
 
-
+  /*
   char name[256];
   sprintf(name,"geodesicDistance%d.pos",iter);
   FILE *f = fopen(name,"w");
@@ -1302,13 +1264,12 @@ double triangulation::geodesicDistance ()
     fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
 	    tri[i]->getVertex(0)->x(),tri[i]->getVertex(0)->y(),tri[i]->getVertex(0)->z(),
 	    tri[i]->getVertex(1)->x(),tri[i]->getVertex(1)->y(),tri[i]->getVertex(1)->z(),
-	    tri[i]->getVertex(2)->x(),tri[i]->getVertex(2)->y(),tri[i]->getVertex(2)->z(),d0,d1,d2);
-
+	    tri[i]->getVertex(2)->x(),tri[i]->getVertex(2)->y(),tri[i]->getVertex(2)->z(),
+            d0,d1,d2);
   }
   fprintf(f,"};\n");
   fclose(f);
-
-
+  */
   return CLOSEST;
 }
 
@@ -1367,7 +1328,8 @@ void discreteDiskFace::printParamMesh()
   sprintf(buffer,"param_mesh%d.msh",tag());
   FILE* pmesh = fopen(buffer,"w");
   int count = 1;
-  fprintf(pmesh,"$MeshFormat\n2.2 0 8\n$EndMeshFormat\n$Nodes\n%u\n",(unsigned int)allNodes.size());
+  fprintf(pmesh,"$MeshFormat\n2.2 0 8\n$EndMeshFormat\n$Nodes\n%u\n",
+          (unsigned int)allNodes.size());
   for(std::set<MVertex*>::iterator it = allNodes.begin(); it!=allNodes.end(); ++it){
     fprintf(pmesh,"%d %f %f 0\n",count,(coordinates[(*it)]).x(),(coordinates[(*it)]).y());
     mv2int[*it] = count;

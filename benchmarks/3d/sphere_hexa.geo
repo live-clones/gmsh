@@ -60,10 +60,10 @@ Surface Loop(90) = {45,-77,-79,-27,83,81};Volume(91) = {90};
 Surface Loop(92) = {40,-81,-71,-28,73,-65};Volume(93) = {92};
 Surface Loop(94) = {34,61,-75,77,69,6};Volume(95) = {94};
 
-Transfinite Line "*" = n;
-Transfinite Surface "*";
-Recombine Surface "*";
-Transfinite Volume "*";
+Transfinite Line {:} = n;
+Transfinite Surface {:};
+Recombine Surface {:};
+Transfinite Volume {:};
 
 // group all hexas in a single volume
 Physical Volume(1) = {1, 85:95:2};

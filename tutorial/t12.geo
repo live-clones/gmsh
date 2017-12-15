@@ -23,36 +23,14 @@ Line(4) = {9, 3}; Line(5) = {3, 4}; Line(6) = {4, 7};
 Line(7) = {7, 6}; Line(8) = {6, 1}; Spline(9) = {7, 5, 9};
 Line(10) = {6, 8};
 
-Line Loop(11) = {5, 6, 9, 4};     Surface(12) = {11};
-Line Loop(13) = {9, -3, -10, -7}; Surface(14) = {13};
-Line Loop(15) = {10, -2, -1, -8}; Surface(16) = {15};
+Line Loop(11) = {5, 6, 9, 4};     Surface(1) = {11};
+Line Loop(13) = {9, -3, -10, -7}; Surface(5) = {13};
+Line Loop(15) = {10, -2, -1, -8}; Surface(10) = {15};
 
 // Treat lines 2, 3 and 4 as a single line
-Compound Line(100) = {2, 3, 4};
+Compound Line{2, 3, 4}; // FIXME: not (re)implemeted yet
 // Idem with lines 6, 7 and 8
-Compound Line(101) = {6, 7, 8};
+Compound Line{6, 7, 8}; // FIXME: not (re)implemeted yet
 
 // Treat surfaces 12, 14 and 16 as a single surface
-Compound Surface(200) = {12, 14, 16};
-
-// Add option to toggle visibility of sub-entities
-DefineConstant[ hide = {Geometry.HideCompounds, Choices{0,1},
-    Name "Hide compound sub-entities", GmshOption "Geometry.HideCompounds",
-    AutoCheck 0} ];
-
-// More details about the reparametrization technique can be found in the
-// following papers:
-//
-// * J.-F. Remacle, C. Geuzaine, G. Compère and E. Marchandise, "High-Quality
-//   Surface Remeshing Using Harmonic Maps", International Journal for Numerical
-//   Methods in Engineering, 83 (4), pp. 403-425, 2010.
-//
-// * E. Marchandise, G. Compère, M. Willemet, G. Bricteux, C. Geuzaine and J-F
-//   Remacle, "Quality meshing based on STL triangulations for biomedical
-//   simulations", International Journal for Numerical Methods in Biomedical
-//   Engineering", 26 (7), pp. 876-889, 2010.
-//
-// * E. Marchandise, C. Carton de Wiart, W. G. Vos, C. Geuzaine and
-//   J.-F. Remacle, "High Quality Surface Remeshing Using Harmonic Maps. Part
-//   II: Surfaces with High Genus and of Large Aspect Ratio", International
-//   Journal for Numerical Methods in Engineering, 86 (11), pp. 1303-1321, 2011.
+Compound Surface{1, 5, 10};

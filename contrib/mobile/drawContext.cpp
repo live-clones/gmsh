@@ -1,6 +1,6 @@
 #include <map>
 
-#include <gmsh/Gmsh.h>
+#include <gmsh/GmshGlobal.h>
 #include <gmsh/OpenFile.h>
 #include <gmsh/GModel.h>
 #include <gmsh/MElement.h>
@@ -1189,7 +1189,7 @@ int onelab_cb(std::string action)
     args.insert(args.end(), c.begin(), c.end());
     args.push_back("-onelab");
     args.push_back("GetDP");
-    GetDP(args, onelab::server::instance());
+    getdp(args, onelab::server::instance());
   } while(action == "compute" && !onelabStop && (onelabUtils::incrementLoop("3") ||
                                                  onelabUtils::incrementLoop("2") ||
                                                  onelabUtils::incrementLoop("1")));

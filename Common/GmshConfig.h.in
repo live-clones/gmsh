@@ -66,6 +66,7 @@
 #cmakedefine HAVE_SOLVER
 #cmakedefine HAVE_TAUCS
 #cmakedefine HAVE_TETGEN
+#cmakedefine HAVE_VISUDEV
 #cmakedefine HAVE_VORO3D
 #cmakedefine HAVE_ZIPPER
 

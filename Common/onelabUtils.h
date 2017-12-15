@@ -20,12 +20,21 @@ namespace onelabUtils {
   std::vector<double> getRange(onelab::number &p);
   bool updateGraph(const std::string &graphNum);
   bool runGmshClient(const std::string &action, int meshAuto);
+  void runClient(const std::string &name = "", const std::string &command = "");
   bool getFirstComputationFlag();
   void setFirstComputationFlag(bool val);
   bool haveSolverToRun();
-
   double updateNumber(onelab::number &x, onelab::number &y, const bool readOnlyRange=false);
   std::string updateString(onelab::string &x, onelab::string &y);
+  void initializeLoops();
+  bool incrementLoops();
+  void updateGraphs();
+  std::string timeStamp();
+  void saveDb(const std::string &fileName);
+  void archiveOutputFiles(const std::string &fileName);
+  void archiveSolutionFiles(const std::string &fileName);
+  void loadDb(const std::string &name);
+  void resetDb(bool runGmshClient);
 }
 
 #endif

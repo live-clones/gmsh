@@ -39,6 +39,11 @@ Background image file in JPEG, PNG or PDF format@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
+@item General.BuildOptions
+Gmsh build options (read-only)@*
+Default value: @code{" 64Bit Ann Bamg Bfgs Blas(VecLib) Blossom C++11 Chaco DIntegration Dlopen Fltk GMP Gmm Jpeg(Fltk) Kbipack Lapack(VecLib) MathEx Mesh Metis Mmg3d Mpeg NativeFileChooser Netgen ONELAB ONELABMetamodel OpenCASCADE OpenGL OptHom PETSc Parser Plugins Png(Fltk) Post SLEPc Solver Taucs TetGen/BR Tetgen1.5 Voro3D Zlib"}@*
+Saved in: @code{-}
+
 @item General.DefaultFileName
 Default project file name@*
 Default value: @code{"untitled.geo"}@*
@@ -153,6 +158,11 @@ Saved in: @code{General.OptionsFileName}
 Temporary file used by the geometry module@*
 Default value: @code{".gmsh-tmp"}@*
 Saved in: @code{General.SessionFileName}
+
+@item General.Version
+Gmsh version (read-only)@*
+Default value: @code{"3.0.7"}@*
+Saved in: @code{-}
 
 @item General.WatchFilePattern
 Pattern of files to merge as they become available@*
@@ -902,6 +912,11 @@ Saved in: @code{General.SessionFileName}
 @item General.NoPopup
 Disable interactive dialog windows in scripts (and use default values instead)@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item General.NumThreads
+Set (maximum) number of threads@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item General.OptionsPositionX

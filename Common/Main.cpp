@@ -4,7 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <stdlib.h>
-#include "Gmsh.h"
+#include "GmshGlobal.h"
 #include "GModel.h"
 #include "CommandLine.h"
 #include "GmshMessage.h"
@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
   }
 
   new GModel();
-  GmshInitialize(argc, argv);
+  GmshInitialize(argc, argv, true);
 
   if(!Msg::GetGmshClient()) CTX::instance()->terminal = 1;
   CTX::instance()->noPopup = 1;

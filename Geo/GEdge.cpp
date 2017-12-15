@@ -21,7 +21,7 @@
 
 GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
   : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(0),
-    v0(_v0), v1(_v1), compound(0), masterOrientation(0)
+    v0(_v0), v1(_v1), masterOrientation(0)
 {
   if(v0) v0->addEdge(this);
   if(v1 && v1 != v0) v1->addEdge(this);
@@ -37,10 +37,12 @@ GEdge::~GEdge()
   deleteMesh();
 }
 
-void GEdge::deleteMesh()
+void GEdge::deleteMesh(bool onlyDeleteElements)
 {
-  for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
-  mesh_vertices.clear();
+  if(!onlyDeleteElements){
+    for(unsigned int i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
+    mesh_vertices.clear();
+  }
   for(unsigned int i = 0; i < lines.size(); i++) delete lines[i];
   lines.clear();
   _normals.clear();

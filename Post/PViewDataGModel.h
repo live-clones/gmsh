@@ -34,6 +34,9 @@ class stepData{
   // optimal. This is the price to pay if we want 1) rapid access to
   // the data and 2) not to store any additional info in MVertex or
   // MElement)
+  //
+  // FIXME: we should change this design and store a vector<int> of tags, and do
+  // indirect addressing, even if it's a bit slower...
   std::vector<Real*> *_data;
   // a vector containing the multiplying factor allowing to compute
   // the number of values stored in _data for each index (number of
@@ -242,7 +245,12 @@ class PViewDataGModel : public PViewData {
 
   // Add some data "on the fly" (data is stored in a map, indexed by
   // node or element number depending on the type of dataset)
-  bool addData(GModel *model, std::map<int, std::vector<double> > &data,
+  bool addData(GModel *model, const std::map<int, std::vector<double> > &data,
+               int step, double time, int partition, int numComp);
+
+  // Add some data "on the fly", without a map
+  bool addData(GModel *model, const std::vector<int> &tags,
+               const std::vector<std::vector<double> > &data,
                int step, double time, int partition, int numComp);
 
   // Allow to destroy the data
@@ -252,13 +260,18 @@ class PViewDataGModel : public PViewData {
                int fileIndex, FILE *fp, bool binary, bool swap, int step,
                double time, int partition, int numComp, int numNodes,
                const std::string &interpolationScheme);
-  virtual bool writeMSH(const std::string &fileName, double version=2.2, bool binary=false,
-                        bool savemesh=true, bool multipleView=false,
+  virtual bool writeMSH(const std::string &fileName, double version=2.2,
+                        bool binary=false, bool savemesh=true, bool multipleView=false,
                         int partitionNum=0, bool saveInterpolationMatrices=true,
                         bool forceNodeData=false, bool forceElementData=false);
   bool readMED(const std::string &fileName, int fileIndex);
   bool writeMED(const std::string &fileName);
   void importLists(int N[24], std::vector<double> *V[24]);
+  stepData<double> *getStepData(int step)
+  {
+    if(step >= 0 && step < (int)_steps.size()) return _steps[step];
+    return 0;
+  }
 };
 
 #endif

@@ -1472,15 +1472,18 @@ class ParametricField : public Field
 class PostViewField : public Field
 {
   OctreePost *octree;
-  int view_index;
+  int view_index, view_tag;
   bool crop_negative_values;
  public:
   PostViewField()
   {
     octree = 0;
     view_index = 0;
+    view_tag = -1;
     options["IView"] = new FieldOptionInt
       (view_index, "Post-processing view index", &update_needed);
+    options["ViewTag"] = new FieldOptionInt
+      (view_tag, "Post-processing view tag", &update_needed);
     crop_negative_values = true;
     options["CropNegativeValues"] = new FieldOptionBool
       (crop_negative_values, "return LC_MAX instead of a negative value (this "
@@ -1492,13 +1495,16 @@ class PostViewField : public Field
   }
   PView *getView() const
   {
-    // we should maybe test the unique view num instead, but that
-    // would be slower
-    if(view_index < 0 || view_index >= (int)PView::list.size()){
-      Msg::Error("View[%d] does not exist", view_index);
-      return 0;
+    PView *v = 0;
+    if(view_tag >= 0)
+      v = PView::getViewByTag(view_tag);
+    if(!v){
+      if(view_index < 0 || view_index >= (int)PView::list.size()){
+        Msg::Error("View[%d] does not exist", view_index);
+        return 0;
+      }
+      v = PView::list[view_index];
     }
-    PView *v = PView::list[view_index];
     if(v->getData()->hasModel(GModel::current())){
       Msg::Error("Cannot use view based on current mesh for background mesh: you might"
                  " want to use a list-based view (.pos file) instead");
@@ -1866,7 +1872,7 @@ class AttractorAnisoCurveField : public Field {
       (n_nodes_by_edge, "Number of nodes used to discretized each curve",
        &update_needed);
     options["dMin"] = new FieldOptionDouble
-      (dMin, "Minimum distance, bellow this distance from the curves, "
+      (dMin, "Minimum distance, below this distance from the curves, "
        "prescribe the minimum mesh sizes.");
     options["dMax"] = new FieldOptionDouble
       (dMax, "Maxmium distance, above this distance from the curves, prescribe "
@@ -2210,193 +2216,6 @@ public:
     return sqrt(d);
   }
 };
-
-//------------------------ N A N O F L A N N -------------------------------------------------------------------------
-#include <nanoflann.hpp>
-using namespace nanoflann;
-// This is an exampleof a custom data set class
-struct PointCloud
-{
-  std::vector<SPoint3>  pts;
-}; 
-
-// And this is the "dataset to kd-tree" adaptor class:
-template <typename Derived>
-struct PointCloudAdaptor
-{
-  
-  const Derived &obj; //!< A const ref to the data set origin
-  
-  /// The constructor that sets the data set source
-  PointCloudAdaptor(const Derived &obj_) : obj(obj_) { }
-  
-  /// CRTP helper method
-  inline const Derived& derived() const { return obj; }
-  
-  // Must return the number of data points
-  inline size_t kdtree_get_point_count() const { return derived().pts.size(); }
-  
-  // Returns the distance between the vector "p1[0:size-1]" and the data point with index "idx_p2" stored in the class:
-  inline double kdtree_distance(const double *p1, const size_t idx_p2,size_t /*size*/) const
-  {
-    const double d0=p1[0]-derived().pts[idx_p2].x();
-    const double d1=p1[1]-derived().pts[idx_p2].y();
-    const double d2=p1[2]-derived().pts[idx_p2].z();
-    return d0*d0+d1*d1+d2*d2;
-  }
-
-  // Returns the dim'th component of the idx'th point in the class:
-  // Since this is inlined and the "dim" argument is typically an immediate value, the
-  //  "if/else's" are actually solved at compile time.
-  inline double kdtree_get_pt(const size_t idx, int dim) const
-  {
-    if (dim==0) return derived().pts[idx].x();
-    else if (dim==1) return derived().pts[idx].y();
-    else return derived().pts[idx].z();
-  }
-  
-  // Optional bounding-box computation: return false to default to a standard bbox computation loop.
-  //   Return true if the BBOX was already computed by the class and returned in "bb" so it can be avoided to redo it again.
-  //   Look at bb.size() to find out the expected dimensionality (e.g. 2 or 3 for point clouds)
-  template <class BBOX>
-  bool kdtree_get_bbox(BBOX& /*bb*/) const { return false; }
-
-}; // end of PointCloudAdaptor
-
-
-typedef PointCloudAdaptor<PointCloud> PC2KD;
-
-typedef KDTreeSingleIndexAdaptor<
-  L2_Simple_Adaptor<double, PC2KD > ,
-  PC2KD, 3 > my_kd_tree_t;
-
-class DistanceField : public Field
-{  
-  std::list<int> nodes_id, edges_id, faces_id;
-  int _xFieldId, _yFieldId, _zFieldId;
-  Field *_xField, *_yField, *_zField;
-  int n_nodes_by_edge;
-  PointCloud P;
-  my_kd_tree_t *index;
-  PC2KD pc2kd;
-public:
-  DistanceField() : index(NULL) , pc2kd(P)
-  {
-    n_nodes_by_edge = 20;
-    options["NodesList"] = new FieldOptionList
-      (nodes_id, "Indices of nodes in the geometric model", &update_needed);
-    options["EdgesList"] = new FieldOptionList
-      (edges_id, "Indices of curves in the geometric model", &update_needed);
-    options["NNodesByEdge"] = new FieldOptionInt
-      (n_nodes_by_edge, "Number of nodes used to discretized each curve",
-       &update_needed);
-    options["FacesList"] = new FieldOptionList
-      (faces_id, "Indices of surfaces in the geometric model (Warning, this feature "
-       "is still experimental. It might (read: will probably) give wrong results "
-       "for complex surfaces)", &update_needed);
-    _xFieldId = _yFieldId = _zFieldId = -1;
-    options["FieldX"] = new FieldOptionInt
-      (_xFieldId, "Id of the field to use as x coordinate.", &update_needed);
-    options["FieldY"] = new FieldOptionInt
-      (_yFieldId, "Id of the field to use as y coordinate.", &update_needed);
-    options["FieldZ"] = new FieldOptionInt
-      (_zFieldId, "Id of the field to use as z coordinate.", &update_needed);
-  }
-  ~DistanceField()
-  {
-    if (index) delete index;
-  }
-  const char *getName()
-  {
-    return "DistanceField";
-  }
-  std::string getDescription()
-  {
-    return "Compute the distance from the nearest node in a list. It can also "
-      "be used to compute the distance from curves, in which case each curve "
-      "is replaced by NNodesByEdge equidistant nodes and the distance from those "
-      "nodes is computed.";
-  }
-  void update() {
-    if(update_needed) {
-      //      printf("Creating Data For Distance Field\n");
-      _xField = _xFieldId >= 0 ? (GModel::current()->getFields()->get(_xFieldId)) : NULL;
-      _yField = _yFieldId >= 0 ? (GModel::current()->getFields()->get(_yFieldId)) : NULL;
-      _zField = _zFieldId >= 0 ? (GModel::current()->getFields()->get(_zFieldId)) : NULL;
-
-      std::vector<SPoint3> &points = P.pts;
-      for(std::list<int>::iterator it = faces_id.begin();
-          it != faces_id.end(); ++it) {
-	GFace *f = GModel::current()->getFaceByTag(*it);
-	if (f){
-	  if (f->mesh_vertices.size()){
-	    for (unsigned int i = 0; i < f->mesh_vertices.size(); i++){
-	      MVertex *v = f->mesh_vertices[i];
-	      points.push_back(SPoint3(v->x(), v->y(), v->z()));
-	    }
-	  }
-	  else {
-	    SBoundingBox3d bb = f->bounds();
-	    SVector3 dd = bb.max() - bb.min();
-	    double maxDist = dd.norm() / n_nodes_by_edge ;
-	    std::vector<SPoint2> uvpoints;
-	    f->fillPointCloud(maxDist, &points, &uvpoints);
-	  }
-	}
-      }
-      
-      for(std::list<int>::iterator it = nodes_id.begin();
-          it != nodes_id.end(); ++it) {
-	GVertex *gv = GModel::current()->getVertexByTag(*it);
-	if(gv) points.push_back(SPoint3(gv->x(), gv->y(), gv->z()));
-      }
-
-      for(std::list<int>::iterator it = edges_id.begin();
-          it != edges_id.end(); ++it) {
-	GEdge *e = GModel::current()->getEdgeByTag(*it);
-	if(e) {
-	  if (e->mesh_vertices.size()){
-	    for(unsigned int i = 0; i < e->mesh_vertices.size(); i++) 
-              points.push_back(SPoint3(e->mesh_vertices[i]->x(),
-				       e->mesh_vertices[i]->y(),
-				       e->mesh_vertices[i]->z()));
-	  }
-	  int NNN = n_nodes_by_edge - e->mesh_vertices.size();
-	  for(int i = 1; i < NNN - 1; i++) {
-	    double u = (double)i / (NNN - 1);
-	    Range<double> b = e->parBounds(0);
-	    double t = b.low() + u * (b.high() - b.low());
-	    GPoint gp = e->point(t);
-	    points.push_back(SPoint3(gp.x(),gp.y(),gp.z()));
-	  }
-	}
-      }      
-      
-      // construct a kd-tree index:
-      
-      //      printf("Constructing kd-tree with %lu points\n",points.size());
-      
-      index = new my_kd_tree_t(3 , pc2kd, KDTreeSingleIndexAdaptorParams(10) );
-      index->buildIndex();
-      update_needed=false;
-    }
-  }
-  
-  using Field::operator();
-  virtual double operator() (double X, double Y, double Z, GEntity *ge=0)
-  {
-    double query_pt[3] = {X,Y,Z};
-    const size_t num_results = 1;
-    size_t ret_index;
-    double out_dist_sqr;
-    nanoflann::KNNResultSet<double> resultSet(num_results);
-    resultSet.init(&ret_index, &out_dist_sqr );
-    index->findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
-    return sqrt (out_dist_sqr);
-  }
-};
-//------------------------ N A N O F L A N N -------------------------------------------------------------------------
-
 
 class OctreeField : public Field {
   // octree field
@@ -2898,7 +2717,192 @@ void BoundaryLayerField::operator() (double x, double y, double z,
       v = intersection_conserveM1(v, hop[i]);
   metr = v;
 }
+
 #endif
+
+#include <nanoflann.hpp>
+using namespace nanoflann;
+
+// This is an exampleof a custom data set class
+struct PointCloud
+{
+  std::vector<SPoint3>  pts;
+};
+
+// And this is the "dataset to kd-tree" adaptor class:
+template <typename Derived>
+struct PointCloudAdaptor
+{
+
+  const Derived &obj; //!< A const ref to the data set origin
+
+  // The constructor that sets the data set source
+  PointCloudAdaptor(const Derived &obj_) : obj(obj_) { }
+
+  // CRTP helper method
+  inline const Derived& derived() const { return obj; }
+
+  // Must return the number of data points
+  inline size_t kdtree_get_point_count() const { return derived().pts.size(); }
+
+  // Returns the distance between the vector "p1[0:size-1]" and the data point
+  // with index "idx_p2" stored in the class:
+  inline double kdtree_distance(const double *p1, const size_t idx_p2,size_t /*size*/) const
+  {
+    const double d0=p1[0]-derived().pts[idx_p2].x();
+    const double d1=p1[1]-derived().pts[idx_p2].y();
+    const double d2=p1[2]-derived().pts[idx_p2].z();
+    return d0*d0+d1*d1+d2*d2;
+  }
+
+  // Returns the dim'th component of the idx'th point in the class: Since this
+  // is inlined and the "dim" argument is typically an immediate value, the
+  // "if/else's" are actually solved at compile time.
+  inline double kdtree_get_pt(const size_t idx, int dim) const
+  {
+    if (dim==0) return derived().pts[idx].x();
+    else if (dim==1) return derived().pts[idx].y();
+    else return derived().pts[idx].z();
+  }
+
+  // Optional bounding-box computation: return false to default to a standard
+  // bbox computation loop.  Return true if the BBOX was already computed by the
+  // class and returned in "bb" so it can be avoided to redo it again.  Look at
+  // bb.size() to find out the expected dimensionality (e.g. 2 or 3 for point
+  // clouds)
+  template <class BBOX>
+  bool kdtree_get_bbox(BBOX& /*bb*/) const { return false; }
+
+}; // end of PointCloudAdaptor
+
+typedef PointCloudAdaptor<PointCloud> PC2KD;
+
+typedef KDTreeSingleIndexAdaptor<
+  L2_Simple_Adaptor<double, PC2KD > ,
+  PC2KD, 3 > my_kd_tree_t;
+
+class DistanceField : public Field
+{
+  std::list<int> nodes_id, edges_id, faces_id;
+  int _xFieldId, _yFieldId, _zFieldId;
+  Field *_xField, *_yField, *_zField;
+  int n_nodes_by_edge;
+  PointCloud P;
+  my_kd_tree_t *index;
+  PC2KD pc2kd;
+public:
+  DistanceField() : index(NULL) , pc2kd(P)
+  {
+    n_nodes_by_edge = 20;
+    options["NodesList"] = new FieldOptionList
+      (nodes_id, "Indices of nodes in the geometric model", &update_needed);
+    options["EdgesList"] = new FieldOptionList
+      (edges_id, "Indices of curves in the geometric model", &update_needed);
+    options["NNodesByEdge"] = new FieldOptionInt
+      (n_nodes_by_edge, "Number of nodes used to discretized each curve",
+       &update_needed);
+    options["FacesList"] = new FieldOptionList
+      (faces_id, "Indices of surfaces in the geometric model (Warning, this feature "
+       "is still experimental. It might (read: will probably) give wrong results "
+       "for complex surfaces)", &update_needed);
+    _xFieldId = _yFieldId = _zFieldId = -1;
+    options["FieldX"] = new FieldOptionInt
+      (_xFieldId, "Id of the field to use as x coordinate.", &update_needed);
+    options["FieldY"] = new FieldOptionInt
+      (_yFieldId, "Id of the field to use as y coordinate.", &update_needed);
+    options["FieldZ"] = new FieldOptionInt
+      (_zFieldId, "Id of the field to use as z coordinate.", &update_needed);
+  }
+  ~DistanceField()
+  {
+    if (index) delete index;
+  }
+  const char *getName()
+  {
+    return "DistanceField";
+  }
+  std::string getDescription()
+  {
+    return "Compute the distance from the nearest node in a list. It can also "
+      "be used to compute the distance from curves, in which case each curve "
+      "is replaced by NNodesByEdge equidistant nodes and the distance from those "
+      "nodes is computed.";
+  }
+  void update()
+  {
+    if(update_needed) {
+      _xField = _xFieldId >= 0 ? (GModel::current()->getFields()->get(_xFieldId)) : NULL;
+      _yField = _yFieldId >= 0 ? (GModel::current()->getFields()->get(_yFieldId)) : NULL;
+      _zField = _zFieldId >= 0 ? (GModel::current()->getFields()->get(_zFieldId)) : NULL;
+
+      std::vector<SPoint3> &points = P.pts;
+      for(std::list<int>::iterator it = faces_id.begin();
+          it != faces_id.end(); ++it) {
+	GFace *f = GModel::current()->getFaceByTag(*it);
+	if (f){
+	  if (f->mesh_vertices.size()){
+	    for (unsigned int i = 0; i < f->mesh_vertices.size(); i++){
+	      MVertex *v = f->mesh_vertices[i];
+	      points.push_back(SPoint3(v->x(), v->y(), v->z()));
+	    }
+	  }
+	  else {
+	    SBoundingBox3d bb = f->bounds();
+	    SVector3 dd = bb.max() - bb.min();
+	    double maxDist = dd.norm() / n_nodes_by_edge ;
+	    std::vector<SPoint2> uvpoints;
+	    f->fillPointCloud(maxDist, &points, &uvpoints);
+	  }
+	}
+      }
+
+      for(std::list<int>::iterator it = nodes_id.begin();
+          it != nodes_id.end(); ++it) {
+	GVertex *gv = GModel::current()->getVertexByTag(*it);
+	if(gv) points.push_back(SPoint3(gv->x(), gv->y(), gv->z()));
+      }
+
+      for(std::list<int>::iterator it = edges_id.begin();
+          it != edges_id.end(); ++it) {
+	GEdge *e = GModel::current()->getEdgeByTag(*it);
+	if(e) {
+	  if (e->mesh_vertices.size()){
+	    for(unsigned int i = 0; i < e->mesh_vertices.size(); i++)
+              points.push_back(SPoint3(e->mesh_vertices[i]->x(),
+				       e->mesh_vertices[i]->y(),
+				       e->mesh_vertices[i]->z()));
+	  }
+	  int NNN = n_nodes_by_edge - e->mesh_vertices.size();
+	  for(int i = 1; i < NNN - 1; i++) {
+	    double u = (double)i / (NNN - 1);
+	    Range<double> b = e->parBounds(0);
+	    double t = b.low() + u * (b.high() - b.low());
+	    GPoint gp = e->point(t);
+	    points.push_back(SPoint3(gp.x(),gp.y(),gp.z()));
+	  }
+	}
+      }
+
+      // construct a kd-tree index:
+      index = new my_kd_tree_t(3 , pc2kd, KDTreeSingleIndexAdaptorParams(10) );
+      index->buildIndex();
+      update_needed=false;
+    }
+  }
+
+  using Field::operator();
+  virtual double operator() (double X, double Y, double Z, GEntity *ge=0)
+  {
+    double query_pt[3] = {X,Y,Z};
+    const size_t num_results = 1;
+    size_t ret_index;
+    double out_dist_sqr;
+    nanoflann::KNNResultSet<double> resultSet(num_results);
+    resultSet.init(&ret_index, &out_dist_sqr );
+    index->findNeighbors(resultSet, &query_pt[0], nanoflann::SearchParams(10));
+    return sqrt (out_dist_sqr);
+  }
+};
 
 FieldManager::FieldManager()
 {
@@ -2945,7 +2949,6 @@ void FieldManager::initialize(){
   std::map<int,Field*> :: iterator it = begin();
   for (; it != end() ; ++it) it->second->update();
 }
-
 
 FieldManager::~FieldManager()
 {
@@ -3020,36 +3023,26 @@ void FieldManager::setBackgroundMesh(int iView)
   _background_field = id;
 }
 
-
-
-
 GenericField::GenericField(){};
-
 
 GenericField::~GenericField(){};
 
-
-double GenericField::operator() (double x, double y, double z, GEntity *ge){
+double GenericField::operator() (double x, double y, double z, GEntity *ge)
+{
   std::vector<double> sizes(cbs.size());
   std::vector<ptrfunction>::iterator itcbs = cbs.begin();
   std::vector<void*>::iterator itdata = user_data.begin();
-//  std::cout << "#callbacks=" << cbs.size() << std::endl;
-//  std::cout << "#user_data=" << user_data.size() << std::endl;
   for (std::vector<double>::iterator it = sizes.begin();it!=sizes.end();it++,itdata++,itcbs++){
     bool ok = (*itcbs)(x,y,z,(*itdata),(*it));
     if (!ok){
       Msg::Warning("GenericField::ERROR from callback ");
-      std::cout << "GenericField::ERROR from callback number " << std::distance(sizes.begin(),it) << std::endl;
     }
-//    std::cout << "callback " << std::distance(sizes.begin(),it) << ": size set to " << *it << std::endl;
   }
-//  std::cout << "   ----> min = " << (*std::min_element(sizes.begin(),sizes.end())) << std::endl;
   return (*std::min_element(sizes.begin(),sizes.end()));
 }
 
-
-
-void GenericField::setCallbackWithData(ptrfunction fct, void *data){
+void GenericField::setCallbackWithData(ptrfunction fct, void *data)
+{
   user_data.push_back(data);
   cbs.push_back(fct);
 }

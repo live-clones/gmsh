@@ -34,7 +34,7 @@ class GEO_Internals{
                 double dx, double dy, double dz,
                 double ax, double ay, double az, double angle,
                 std::vector<std::pair<int, int> > &outDimTags,
-                ExtrudeParams *e=0);
+                ExtrudeParams *e = 0);
  public:
   GEO_Internals(){ _allocateAll(); }
   ~GEO_Internals(){ _freeAll(); }
@@ -53,10 +53,10 @@ class GEO_Internals{
   bool addVertex(int &tag, double x, double y, gmshSurface *s, double lc);
   bool addLine(int &tag, int startTag, int endTag);
   bool addLine(int &tag, const std::vector<int> &vertexTags);
-  bool addCircleArc(int &tag, int startTag, int centerTag, int EndTag,
-                    double nx=0., double ny=0., double nz=0.);
+  bool addCircleArc(int &tag, int startTag, int centerTag, int endTag,
+                    double nx = 0., double ny = 0., double nz = 0.);
   bool addEllipseArc(int &tag, int startTag, int centerTag, int majorTag,
-                     int endTag, double nx=0., double ny=0., double nz=0.);
+                     int endTag, double nx = 0., double ny = 0., double nz = 0.);
   bool addSpline(int &tag, const std::vector<int> &vertexTags);
   bool addBSpline(int &tag, const std::vector<int> &vertexTags);
   bool addBezier(int &tag, const std::vector<int> &vertexTags);
@@ -67,10 +67,10 @@ class GEO_Internals{
   bool addPlaneSurface(int &tag, const std::vector<int> &wireTags);
   bool addDiscreteSurface(int &tag);
   bool addSurfaceFilling(int &tag, const std::vector<int> &wireTags,
-                         int sphereCenterTag=-1);
+                         int sphereCenterTag = -1);
   bool addSurfaceLoop(int &tag, const std::vector<int> &faceTags);
   bool addCompoundSurface(int &tag, const std::vector<int> &faceTags,
-                          std::vector<int> edgeTags[4]=0);
+                          std::vector<int> edgeTags[4] = 0);
   bool addVolume(int &tag, const std::vector<int> &shellTags);
   bool addCompoundVolume(int &tag, const std::vector<int> &regionTags);
 
@@ -78,21 +78,21 @@ class GEO_Internals{
   bool extrude(const std::vector<std::pair<int, int> > &inDimTags,
                double dx, double dy, double dz,
                std::vector<std::pair<int, int> > &outDimTags,
-               ExtrudeParams *e=0);
+               ExtrudeParams *e = 0);
   bool revolve(const std::vector<std::pair<int, int> > &inDimTags,
                double x, double y, double z,
                double ax, double ay, double az, double angle,
                std::vector<std::pair<int, int> > &outDimTags,
-               ExtrudeParams *e=0);
+               ExtrudeParams *e = 0);
   bool twist(const std::vector<std::pair<int, int> > &inDimTags,
              double x, double y, double z,
              double dx, double dy, double dz,
              double ax, double ay, double az, double angle,
              std::vector<std::pair<int, int> > &outDimTags,
-             ExtrudeParams *e=0);
+             ExtrudeParams *e = 0);
   bool boundaryLayer(const std::vector<std::pair<int, int> > &inDimTags,
                      std::vector<std::pair<int, int> > &outDimTags,
-                     ExtrudeParams *e=0);
+                     ExtrudeParams *e = 0);
 
   // apply transformations
   bool translate(const std::vector<std::pair<int, int> > &dimTags,
@@ -115,8 +115,8 @@ class GEO_Internals{
   // copy and remove
   bool copy(const std::vector<std::pair<int, int> > &inDimTags,
             std::vector<std::pair<int, int> > &outDimTags);
-  bool remove(int dim, int tag, bool recursive=false);
-  bool remove(const std::vector<std::pair<int, int> > &dimTags, bool recursive=false);
+  bool remove(int dim, int tag, bool recursive = false);
+  bool remove(const std::vector<std::pair<int, int> > &dimTags, bool recursive = false);
 
   // manipulate physical groups
   void resetPhysicalGroups();
@@ -139,7 +139,7 @@ class GEO_Internals{
   void setTransfiniteVolumeQuadTri(int tag);
   void setRecombine(int dim, int tag, double angle);
   void setSmoothing(int tag, int val);
-  void setReverseMesh(int dim, int tag);
+  void setReverseMesh(int dim, int tag, bool val = 1);
 
   // synchronize internal CAD data with the given GModel
   void synchronize(GModel *model);
