@@ -63,10 +63,13 @@ int PartitionMesh(GModel *const model)
   Msg::StatusBar(true, "Building mesh graph...");
   int ier = MakeGraph(model, graph);
   graph.nparts(CTX::instance()->mesh.num_partitions);
-  if(graph.nparts() > 1){
+  if(graph.nparts() > 0){
     Msg::StatusBar(true, "Partitioning graph...");
     if(!ier) ier = PartitionGraph(graph);
     if(ier) return 1;
+  }
+  else{
+    return 0;
   }
     
   // Assign partitions to elements
@@ -352,48 +355,95 @@ void assignToParent(std::set<MVertex*> &verts, partitionVertex *vertex, ITERATOR
 int ConvertOldPartitioningToNewOne(GModel *const model)
 {
   std::unordered_map<MElement*, unsigned int> elmToPartition;
+  std::set<unsigned int> partitions;
   
   //Loop over regions
   for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
-    for(std::vector<MTetrahedron*>::iterator itElm = (*it)->tetrahedra.begin(); itElm != (*it)->tetrahedra.end(); ++itElm)
+    for(std::vector<MTetrahedron*>::iterator itElm = (*it)->tetrahedra.begin(); itElm != (*it)->tetrahedra.end(); ++itElm){
       elmToPartition.insert(std::pair<MElement*, unsigned int>(*itElm, (*itElm)->getPartition()));
-    for(std::vector<MHexahedron*>::iterator itElm = (*it)->hexahedra.begin(); itElm != (*it)->hexahedra.end(); ++itElm)
+      partitions.insert((*itElm)->getPartition());
+    }
+    for(std::vector<MHexahedron*>::iterator itElm = (*it)->hexahedra.begin(); itElm != (*it)->hexahedra.end(); ++itElm){
       elmToPartition.insert(std::pair<MElement*, unsigned int>(*itElm, (*itElm)->getPartition()));
-    for(std::vector<MPrism*>::iterator itElm = (*it)->prisms.begin(); itElm != (*it)->prisms.end(); ++itElm)
+      partitions.insert((*itElm)->getPartition());
+    }
+    for(std::vector<MPrism*>::iterator itElm = (*it)->prisms.begin(); itElm != (*it)->prisms.end(); ++itElm){
       elmToPartition.insert(std::pair<MElement*, unsigned int>(*itElm, (*itElm)->getPartition()));
-    for(std::vector<MPyramid*>::iterator itElm = (*it)->pyramids.begin(); itElm != (*it)->pyramids.end(); ++itElm)
+      partitions.insert((*itElm)->getPartition());
+    }
+    for(std::vector<MPyramid*>::iterator itElm = (*it)->pyramids.begin(); itElm != (*it)->pyramids.end(); ++itElm){
       elmToPartition.insert(std::pair<MElement*, unsigned int>(*itElm, (*itElm)->getPartition()));
-    for(std::vector<MTrihedron*>::iterator itElm = (*it)->trihedra.begin(); itElm != (*it)->trihedra.end(); ++itElm)
+      partitions.insert((*itElm)->getPartition());
+    }
+    for(std::vector<MTrihedron*>::iterator itElm = (*it)->trihedra.begin(); itElm != (*it)->trihedra.end(); ++itElm){
       elmToPartition.insert(std::pair<MElement*, unsigned int>(*itElm, (*itElm)->getPartition()));
+      partitions.insert((*itElm)->getPartition());
+    }
   }
   
   //Loop over faces
   for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
-    for(std::vector<MTriangle*>::iterator itElm = (*it)->triangles.begin(); itElm != (*it)->triangles.end(); ++itElm)
+    for(std::vector<MTriangle*>::iterator itElm = (*it)->triangles.begin(); itElm != (*it)->triangles.end(); ++itElm){
       elmToPartition.insert(std::pair<MElement*, unsigned int>(*itElm, (*itElm)->getPartition()));
-    for(std::vector<MQuadrangle*>::iterator itElm = (*it)->quadrangles.begin(); itElm != (*it)->quadrangles.end(); ++itElm)
+      partitions.insert((*itElm)->getPartition());
+    }
+    for(std::vector<MQuadrangle*>::iterator itElm = (*it)->quadrangles.begin(); itElm != (*it)->quadrangles.end(); ++itElm){
       elmToPartition.insert(std::pair<MElement*, unsigned int>(*itElm, (*itElm)->getPartition()));
+      partitions.insert((*itElm)->getPartition());
+    }
   }
   
   //Loop over edges
   for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
-    for(std::vector<MLine*>::iterator itElm = (*it)->lines.begin(); itElm != (*it)->lines.end(); ++itElm)
+    for(std::vector<MLine*>::iterator itElm = (*it)->lines.begin(); itElm != (*it)->lines.end(); ++itElm){
       elmToPartition.insert(std::pair<MElement*, unsigned int>(*itElm, (*itElm)->getPartition()));
+      partitions.insert((*itElm)->getPartition());
+    }
   }
   
   //Loop over vertices
   for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex(); ++it){
-    for(std::vector<MPoint*>::iterator itElm = (*it)->points.begin(); itElm != (*it)->points.end(); ++itElm)
+    for(std::vector<MPoint*>::iterator itElm = (*it)->points.begin(); itElm != (*it)->points.end(); ++itElm){
       elmToPartition.insert(std::pair<MElement*, unsigned int>(*itElm, (*itElm)->getPartition()));
+      partitions.insert((*itElm)->getPartition());
+    }
   }
-    
+  
+  Graph graph;
+  Msg::StatusBar(true, "Building mesh graph...");
+  int ier = MakeGraph(model, graph);
+  if(ier) return 1;
+  createDualGraph(graph);
+  graph.nparts(partitions.size());
+  
+  unsigned int *part = new unsigned int[graph.ne()];
+  for(unsigned int i = 0; i < graph.ne(); i++){
+    if(graph.element(i) != NULL){
+      part[i] = graph.element(i)->getPartition()-1;
+      Msg::Info("%d", part[i]);
+      if(graph.element(i)->getPartition() == 0){
+        Msg::Error("All elements are not partitioned.");
+        return 1;
+      }
+    }
+  }
+  graph.partition(part);
+  
+  std::vector< std::set<MElement*> > boundaryElements = graph.getBoundaryElements();
+  graph.clear();
+  model->recomputeMeshPartitions();
+  
   Msg::StatusBar(true, "Create new entities...");
   CreateNewEntities(model, elmToPartition);
   elmToPartition.clear();
   
   if(CTX::instance()->mesh.createPartitionBoundaries){
     Msg::StatusBar(true, "Create boundaries...");
-    CreatePartitionBoundaries(model, std::vector< std::set<MElement*> >());
+    CreatePartitionBoundaries(model, boundaryElements);
+    boundaryElements.clear();
+    
+    Msg::StatusBar(true, "Build the topology...");
+    BuildTopology(model);
   }
   
   AssignMeshVertices(model);
@@ -1324,22 +1374,14 @@ void CreatePartitionBoundaries(GModel *const model, const std::vector< std::set<
   
   if (meshDim >= 3){//Create partition faces
     Msg::Info("Creating partition faces... ");
-    if(boundaryElements.size() != 0 && meshDim == 3){
-      for(unsigned int i = 0; i < model->getNumPartitions(); i++){
-        std::vector<unsigned int> partition;
-        partition.push_back(i);
-        fillit_(faceToElement, partition, boundaryElements[i].begin(), boundaryElements[i].end());
-      }
-    }
-    else{
-      for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
-        if((*it)->geomType() == GEntity::PartitionVolume){
-          fillit_(faceToElement, static_cast<partitionRegion*>(*it)->getPartitions(), (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
-          fillit_(faceToElement, static_cast<partitionRegion*>(*it)->getPartitions(), (*it)->hexahedra.begin(), (*it)->hexahedra.end());
-          fillit_(faceToElement, static_cast<partitionRegion*>(*it)->getPartitions(), (*it)->prisms.begin(), (*it)->prisms.end());
-          fillit_(faceToElement, static_cast<partitionRegion*>(*it)->getPartitions(), (*it)->pyramids.begin(), (*it)->pyramids.end());
-          fillit_(faceToElement, static_cast<partitionRegion*>(*it)->getPartitions(), (*it)->trihedra.begin(), (*it)->trihedra.end());
-        }
+
+    for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
+      if((*it)->geomType() == GEntity::PartitionVolume){
+        fillit_(faceToElement, static_cast<partitionRegion*>(*it)->getPartitions(), (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
+        fillit_(faceToElement, static_cast<partitionRegion*>(*it)->getPartitions(), (*it)->hexahedra.begin(), (*it)->hexahedra.end());
+        fillit_(faceToElement, static_cast<partitionRegion*>(*it)->getPartitions(), (*it)->prisms.begin(), (*it)->prisms.end());
+        fillit_(faceToElement, static_cast<partitionRegion*>(*it)->getPartitions(), (*it)->pyramids.begin(), (*it)->pyramids.end());
+        fillit_(faceToElement, static_cast<partitionRegion*>(*it)->getPartitions(), (*it)->trihedra.begin(), (*it)->trihedra.end());
       }
     }
 
@@ -1360,21 +1402,14 @@ void CreatePartitionBoundaries(GModel *const model, const std::vector< std::set<
   
   if (meshDim >= 2){//Create partition edges
     Msg::Info("Creating partition edges... ");
-    if(boundaryElements.size() != 0 && meshDim == 2){
-      for(unsigned int i = 0; i < model->getNumPartitions(); i++){
-        std::vector<unsigned int> partition;
-        partition.push_back(i);
-        fillit_(edgeToElement, partition, boundaryElements[i].begin(), boundaryElements[i].end());
+   
+    for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
+      if((*it)->geomType() == GEntity::PartitionSurface){
+        fillit_(edgeToElement, static_cast<partitionFace*>(*it)->getPartitions(), (*it)->triangles.begin(), (*it)->triangles.end());
+        fillit_(edgeToElement, static_cast<partitionFace*>(*it)->getPartitions(), (*it)->quadrangles.begin(), (*it)->quadrangles.end());
       }
     }
-    else{
-      for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
-        if((*it)->geomType() == GEntity::PartitionSurface){
-          fillit_(edgeToElement, static_cast<partitionFace*>(*it)->getPartitions(), (*it)->triangles.begin(), (*it)->triangles.end());
-          fillit_(edgeToElement, static_cast<partitionFace*>(*it)->getPartitions(), (*it)->quadrangles.begin(), (*it)->quadrangles.end());
-        }
-      }
-    }
+    
     for(std::unordered_map<MEdge, std::vector< std::pair<MElement*, std::vector<unsigned int> > >, Hash_Edge, Equal_Edge>::const_iterator it = edgeToElement.begin(); it != edgeToElement.end(); ++it){
       MEdge e = it->first;
       
@@ -1914,7 +1949,7 @@ int CreateTopologyFile(GModel* model, std::string name)
         std::string substr  = getSubstr(model, entities[i]);
         if(substr == "_omega"){
           for(unsigned int j = 0; j < static_cast<partitionRegion*>(entities[i])->numPartitions(); j++){
-            omega.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionRegion*>(entities[i])->getPartition(i), entities[i]));
+            omega.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionRegion*>(entities[i])->getPartition(j), entities[i]));
           }
         }
       }
@@ -1922,18 +1957,18 @@ int CreateTopologyFile(GModel* model, std::string name)
       case GEntity::PartitionSurface: {
         std::string substr  = getSubstr(model, entities[i]);
         if(substr == "_omega"){
-          for(unsigned int j = 0; j < static_cast<partitionRegion*>(entities[i])->numPartitions(); j++){
-            omega.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionRegion*>(entities[i])->getPartition(i), entities[i]));
+          for(unsigned int j = 0; j < static_cast<partitionFace*>(entities[i])->numPartitions(); j++){
+            omega.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionFace*>(entities[i])->getPartition(j), entities[i]));
           }
         }
         else if(substr == "_sigma"){
-          for(unsigned int j = 0; j < static_cast<partitionRegion*>(entities[i])->numPartitions(); j++){
-            sigma.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionRegion*>(entities[i])->getPartition(i), entities[i]));
+          for(unsigned int j = 0; j < static_cast<partitionFace*>(entities[i])->numPartitions(); j++){
+            sigma.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionFace*>(entities[i])->getPartition(j), entities[i]));
           }
         }
         else if(substr == "_omicron"){
-          for(unsigned int j = 0; j < static_cast<partitionRegion*>(entities[i])->numPartitions(); j++){
-            omicron.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionRegion*>(entities[i])->getPartition(i), entities[i]));
+          for(unsigned int j = 0; j < static_cast<partitionFace*>(entities[i])->numPartitions(); j++){
+            omicron.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionFace*>(entities[i])->getPartition(j), entities[i]));
           }
         }
       }
@@ -1941,28 +1976,28 @@ int CreateTopologyFile(GModel* model, std::string name)
       case GEntity::PartitionCurve: {
         std::string substr  = getSubstr(model, entities[i]);
         if(substr == "_omega"){
-          for(unsigned int j = 0; j < static_cast<partitionRegion*>(entities[i])->numPartitions(); j++){
-            omega.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionRegion*>(entities[i])->getPartition(i), entities[i]));
+          for(unsigned int j = 0; j < static_cast<partitionEdge*>(entities[i])->numPartitions(); j++){
+            omega.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionEdge*>(entities[i])->getPartition(j), entities[i]));
           }
         }
         else if(substr == "_sigma"){
-          for(unsigned int j = 0; j < static_cast<partitionRegion*>(entities[i])->numPartitions(); j++){
-            sigma.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionRegion*>(entities[i])->getPartition(i), entities[i]));
+          for(unsigned int j = 0; j < static_cast<partitionEdge*>(entities[i])->numPartitions(); j++){
+            sigma.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionEdge*>(entities[i])->getPartition(j), entities[i]));
           }
         }
         else if(substr == "_tau"){
-          for(unsigned int j = 0; j < static_cast<partitionRegion*>(entities[i])->numPartitions(); j++){
-            tau.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionRegion*>(entities[i])->getPartition(i), entities[i]));
+          for(unsigned int j = 0; j < static_cast<partitionEdge*>(entities[i])->numPartitions(); j++){
+            tau.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionEdge*>(entities[i])->getPartition(j), entities[i]));
           }
         }
         else if(substr == "_omicron"){
-          for(unsigned int j = 0; j < static_cast<partitionRegion*>(entities[i])->numPartitions(); j++){
-            omicron.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionRegion*>(entities[i])->getPartition(i), entities[i]));
+          for(unsigned int j = 0; j < static_cast<partitionEdge*>(entities[i])->numPartitions(); j++){
+            omicron.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionEdge*>(entities[i])->getPartition(j), entities[i]));
           }
         }
         else if(substr == "_omicronSigma"){
-          for(unsigned int j = 0; j < static_cast<partitionRegion*>(entities[i])->numPartitions(); j++){
-            omicronSigma.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionRegion*>(entities[i])->getPartition(i), entities[i]));
+          for(unsigned int j = 0; j < static_cast<partitionEdge*>(entities[i])->numPartitions(); j++){
+            omicronSigma.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionEdge*>(entities[i])->getPartition(j), entities[i]));
           }
         }
       }
@@ -1970,38 +2005,38 @@ int CreateTopologyFile(GModel* model, std::string name)
       case GEntity::PartitionVertex: {
         std::string substr  = getSubstr(model, entities[i]);
         if(substr == "_omega"){
-          for(unsigned int j = 0; j < static_cast<partitionRegion*>(entities[i])->numPartitions(); j++){
-            omega.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionRegion*>(entities[i])->getPartition(i), entities[i]));
+          for(unsigned int j = 0; j < static_cast<partitionVertex*>(entities[i])->numPartitions(); j++){
+            omega.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionVertex*>(entities[i])->getPartition(j), entities[i]));
           }
         }
         else if(substr == "_sigma"){
-          for(unsigned int j = 0; j < static_cast<partitionRegion*>(entities[i])->numPartitions(); j++){
-            sigma.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionRegion*>(entities[i])->getPartition(i), entities[i]));
+          for(unsigned int j = 0; j < static_cast<partitionVertex*>(entities[i])->numPartitions(); j++){
+            sigma.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionVertex*>(entities[i])->getPartition(j), entities[i]));
           }
         }
         else if(substr == "_tau"){
-          for(unsigned int j = 0; j < static_cast<partitionRegion*>(entities[i])->numPartitions(); j++){
-            tau.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionRegion*>(entities[i])->getPartition(i), entities[i]));
+          for(unsigned int j = 0; j < static_cast<partitionVertex*>(entities[i])->numPartitions(); j++){
+            tau.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionVertex*>(entities[i])->getPartition(j), entities[i]));
           }
         }
         else if(substr == "_upsilon"){
-          for(unsigned int j = 0; j < static_cast<partitionRegion*>(entities[i])->numPartitions(); j++){
-            upsilon.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionRegion*>(entities[i])->getPartition(i), entities[i]));
+          for(unsigned int j = 0; j < static_cast<partitionVertex*>(entities[i])->numPartitions(); j++){
+            upsilon.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionVertex*>(entities[i])->getPartition(j), entities[i]));
           }
         }
         else if(substr == "_omicron"){
-          for(unsigned int j = 0; j < static_cast<partitionRegion*>(entities[i])->numPartitions(); j++){
-            omicron.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionRegion*>(entities[i])->getPartition(i), entities[i]));
+          for(unsigned int j = 0; j < static_cast<partitionVertex*>(entities[i])->numPartitions(); j++){
+            omicron.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionVertex*>(entities[i])->getPartition(j), entities[i]));
           }
         }
         else if(substr == "_omicronSigma"){
-          for(unsigned int j = 0; j < static_cast<partitionRegion*>(entities[i])->numPartitions(); j++){
-            omicronSigma.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionRegion*>(entities[i])->getPartition(i), entities[i]));
+          for(unsigned int j = 0; j < static_cast<partitionVertex*>(entities[i])->numPartitions(); j++){
+            omicronSigma.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionVertex*>(entities[i])->getPartition(j), entities[i]));
           }
         }
         else if(substr == "_omicronTau"){
-          for(unsigned int j = 0; j < static_cast<partitionRegion*>(entities[i])->numPartitions(); j++){
-            omicronTau.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionRegion*>(entities[i])->getPartition(i), entities[i]));
+          for(unsigned int j = 0; j < static_cast<partitionVertex*>(entities[i])->numPartitions(); j++){
+            omicronTau.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionVertex*>(entities[i])->getPartition(j), entities[i]));
           }
         }
       }

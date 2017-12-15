@@ -635,12 +635,14 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
                      double scalingFactor, int elementStartNum,
                      int saveSinglePartition, bool multipleView)
 {
-  if(version < 3)
-  {
+  if(version != 4.0 && getNumPartitions() > 0){
+    Msg::Warning("Saving a partitioned mesh in a format different of 4.0 may cause information loss.");
+  }
+  
+  if(version < 3){
     return _writeMSH2(name, version, binary, saveAll, saveParametric, scalingFactor, elementStartNum, saveSinglePartition, multipleView);
   }
-  if(version == 4.0)
-  {
+  if(version == 4.0){
     return _writeMSH4(name, version, binary, saveAll, saveParametric, scalingFactor);
   }
 

@@ -108,6 +108,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-check",             "Perform various consistency checks on mesh"));
   s.push_back(mp("-ignorePeriocity",   "Ignore periodic boundaries"));
   s.push_back(mp("-oneFilePerPart",    "Save mesh partitions in separate files"));
+  s.push_back(mp("-savePartTopology",  "Save the partitioned topology files"));
 #if defined(HAVE_FLTK)
   s.push_back(mp("Post-processing options:", ""));
   s.push_back(mp("-link int",          "Select link mode between views (0, 1, 2, 3, 4)"));
@@ -439,6 +440,14 @@ void GetOptions(int argc, char *argv[])
           }
           else check = false;
         }
+      }
+      else if(!strcmp(argv[i] + 1, "oneFilePerPart")){
+        opt_mesh_msh_file_partitioned(0,GMSH_SET,1.);
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "savePartTopology")){
+        opt_mesh_msh_file_partitioned_topology(0,GMSH_SET,1.);
+        i++;
       }
       else if(!strcmp(argv[i] + 1, "new")) {
         CTX::instance()->files.push_back("-new");

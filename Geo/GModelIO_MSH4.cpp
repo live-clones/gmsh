@@ -57,6 +57,7 @@ void readMSH4PeriodicNodes(GModel *const model, FILE* fp, bool binary, bool swap
 
 int GModel::_readMSH4(const std::string &name)
 {
+  bool partitioned = false;
   FILE *fp = Fopen(name.c_str(), "rb");
   if(!fp){
     Msg::Error("Unable to open file '%s'", name.c_str());
@@ -135,6 +136,7 @@ int GModel::_readMSH4(const std::string &name)
     }
     else if(!strncmp(&str[1], "PartitionedEntities", 19)){
       readMSH4Entities(this, fp, true, binary, swap);
+      partitioned = true;
     }
     else if(!strncmp(&str[1], "Nodes", 5)){
       _vertexVectorCache.clear();
@@ -265,6 +267,56 @@ int GModel::_readMSH4(const std::string &name)
   }
   
   fclose(fp);
+  
+  /***
+   *
+   *  This part is added to ensure the compatibility between the new partitioning and the old one.
+   *
+   ***/
+  if(partitioned){
+    std::vector<GEntity*> entities;
+    getEntities(entities);
+    for(unsigned int i = 0; i < entities.size(); i++){
+      if(entities[i]->geomType() == GEntity::PartitionVertex)
+      {
+        if(static_cast<partitionVertex*>(entities[i])->numPartitions() == 1){
+          const unsigned int part = static_cast<partitionVertex*>(entities[i])->getPartition(0);
+          for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+            entities[i]->getMeshElement(j)->setPartition(part);
+          }
+        }
+      }
+      else if(entities[i]->geomType() == GEntity::PartitionCurve)
+      {
+        if(static_cast<partitionEdge*>(entities[i])->numPartitions() == 1){
+          const unsigned int part = static_cast<partitionEdge*>(entities[i])->getPartition(0);
+          for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+            entities[i]->getMeshElement(j)->setPartition(part);
+          }
+        }
+      }
+      else if(entities[i]->geomType() == GEntity::PartitionSurface)
+      {
+        if(static_cast<partitionFace*>(entities[i])->numPartitions() == 1){
+          const unsigned int part = static_cast<partitionFace*>(entities[i])->getPartition(0);
+          for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+            entities[i]->getMeshElement(j)->setPartition(part);
+          }
+        }
+      }
+      else if(entities[i]->geomType() == GEntity::PartitionVolume)
+      {
+        if(static_cast<partitionRegion*>(entities[i])->numPartitions() == 1){
+          const unsigned int part = static_cast<partitionRegion*>(entities[i])->getPartition(0);
+          for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+            entities[i]->getMeshElement(j)->setPartition(part);
+          }
+        }
+      }
+    }
+    
+    recomputeMeshPartitions();
+  }
   
   return postpro ? 2 : 1;
 }
@@ -750,6 +802,14 @@ void readMSH4BoundingEntities(GModel *const model, FILE* fp, GEntity *const enti
       if(boundingEntities.size() == 2){
         reinterpret_cast<discreteEdge*>(entity)->setBeginVertex(reinterpret_cast<GVertex*>(boundingEntities[0]));
         reinterpret_cast<discreteEdge*>(entity)->setEndVertex(reinterpret_cast<GVertex*>(boundingEntities[1]));
+      }
+      else if(boundingEntities.size() == 1){
+        if(boundingSign[0] == 1){
+          reinterpret_cast<discreteEdge*>(entity)->setBeginVertex(reinterpret_cast<GVertex*>(boundingEntities[0]));
+        }
+        else{
+          reinterpret_cast<discreteEdge*>(entity)->setEndVertex(reinterpret_cast<GVertex*>(boundingEntities[0]));
+        }
       }
       break;
     case 2:
@@ -1459,8 +1519,15 @@ void writeMSH4Entities(GModel *const model, FILE *fp, bool partition, bool binar
     
     for(GModel::eiter it = edges.begin(); it != edges.end(); ++it){
       std::list<GVertex*> vertices;
-      if((*it)->getBeginVertex()) vertices.push_back((*it)->getBeginVertex());
-      if((*it)->getEndVertex()) vertices.push_back((*it)->getEndVertex());
+      std::vector<int> ori;
+      if((*it)->getBeginVertex()){
+        vertices.push_back((*it)->getBeginVertex());
+        ori.push_back(1);
+      }
+      if((*it)->getEndVertex()) {// I use the convention that the end vertex is negative
+        vertices.push_back((*it)->getEndVertex());
+        ori.push_back(-1);
+      }
       unsigned long verticesSize = vertices.size();
       
       int entityTag = (*it)->tag();
@@ -1490,9 +1557,11 @@ void writeMSH4Entities(GModel *const model, FILE *fp, bool partition, bool binar
       writeMSH4Physicals(fp, *it, binary);
       
       fwrite(&verticesSize, sizeof(unsigned long), 1, fp);
+      int oriI = 0;
       for(std::list<GVertex*>::iterator itv = vertices.begin(); itv != vertices.end(); itv++){
-        int brepTag = (*itv)->tag();
+        int brepTag = ori[oriI] * (*itv)->tag();
         fwrite(&brepTag, sizeof(int), 1, fp);
+        oriI++;
       }
     }
     
@@ -1623,8 +1692,15 @@ void writeMSH4Entities(GModel *const model, FILE *fp, bool partition, bool binar
     
     for(GModel::eiter it = edges.begin(); it != edges.end(); ++it){
       std::list<GVertex*> vertices;
-      if((*it)->getBeginVertex()) vertices.push_back((*it)->getBeginVertex());
-      if((*it)->getEndVertex()) vertices.push_back((*it)->getEndVertex());
+      std::vector<int> ori;
+      if((*it)->getBeginVertex()){
+        vertices.push_back((*it)->getBeginVertex());
+        ori.push_back(1);
+      }
+      if((*it)->getEndVertex()) {// I use the convention that the end vertex is negative
+        vertices.push_back((*it)->getEndVertex());
+        ori.push_back(-1);
+      }
       
       fprintf(fp, "%d ", (*it)->tag());
       if(partition){
@@ -1644,8 +1720,11 @@ void writeMSH4Entities(GModel *const model, FILE *fp, bool partition, bool binar
       writeMSH4Physicals(fp, *it, binary);
       
       fprintf(fp, "%lu ", vertices.size());
-      for(std::list<GVertex*>::iterator itv = vertices.begin(); itv != vertices.end(); itv++)
-        fprintf(fp, "%d ", (*itv)->tag());
+      int oriI = 0;
+      for(std::list<GVertex*>::iterator itv = vertices.begin(); itv != vertices.end(); itv++){
+        fprintf(fp, "%d ", ori[oriI]*(*itv)->tag());
+        oriI++;
+      }
       
       fprintf(fp, "\n");
     }
@@ -2234,32 +2313,44 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version, b
       tmp->setPhysicalName(it->second, it->first.first, it->first.second);
     }
     
+    for(int i = 0; i < getNumPartitions(); i++){
+      tmp->meshPartitions.insert(i);
+    }
+    
     std::vector<GEntity*> entities;
-    this->getEntities(entities);
+    getEntities(entities);
     for(unsigned int j = 0; j < entities.size(); j++){
       switch(entities[j]->geomType()){
         case GEntity::PartitionVolume:
           if(std::find(static_cast<partitionRegion*>(entities[j])->getPartitions().begin(), static_cast<partitionRegion*>(entities[j])->getPartitions().end(), i) != static_cast<partitionRegion*>(entities[j])->getPartitions().end()){
             tmp->add(static_cast<partitionRegion*>(entities[j]));
-            tmp->add(static_cast<partitionRegion*>(entities[j])->getParentEntity());
+            if(static_cast<partitionRegion*>(entities[j])->getParentEntity() != NULL){
+              tmp->add(static_cast<partitionRegion*>(entities[j])->getParentEntity());
+            }
           }
           break;
         case GEntity::PartitionSurface:
           if(std::find(static_cast<partitionFace*>(entities[j])->getPartitions().begin(), static_cast<partitionFace*>(entities[j])->getPartitions().end(), i) != static_cast<partitionFace*>(entities[j])->getPartitions().end()){
             tmp->add(static_cast<partitionFace*>(entities[j]));
-            tmp->add(static_cast<partitionFace*>(entities[j])->getParentEntity());
+            if(static_cast<partitionFace*>(entities[j])->getParentEntity() != NULL){
+              tmp->add(static_cast<partitionFace*>(entities[j])->getParentEntity());
+            }
           }
           break;
         case GEntity::PartitionCurve:
           if(std::find(static_cast<partitionEdge*>(entities[j])->getPartitions().begin(), static_cast<partitionEdge*>(entities[j])->getPartitions().end(), i) != static_cast<partitionEdge*>(entities[j])->getPartitions().end()){
             tmp->add(static_cast<partitionEdge*>(entities[j]));
-            tmp->add(static_cast<partitionEdge*>(entities[j])->getParentEntity());
+            if(static_cast<partitionEdge*>(entities[j])->getParentEntity() != NULL){
+              tmp->add(static_cast<partitionEdge*>(entities[j])->getParentEntity());
+            }
           }
           break;
         case GEntity::PartitionVertex:
           if(std::find(static_cast<partitionVertex*>(entities[j])->getPartitions().begin(), static_cast<partitionVertex*>(entities[j])->getPartitions().end(), i) != static_cast<partitionVertex*>(entities[j])->getPartitions().end()){
             tmp->add(static_cast<partitionVertex*>(entities[j]));
-            tmp->add(static_cast<partitionVertex*>(entities[j])->getParentEntity());
+            if(static_cast<partitionVertex*>(entities[j])->getParentEntity() != NULL){
+              tmp->add(static_cast<partitionVertex*>(entities[j])->getParentEntity());
+            }
           }
           break;
         default:
