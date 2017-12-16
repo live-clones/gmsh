@@ -270,6 +270,7 @@ void partition_dialog()
     // Booleans options
     {
       Fl_Check_Button *const o = new Fl_Check_Button (2*WB + 2*BB, y, 2*BB, BH, "Create ghost cells");
+      o->deactivate();
       dlg.setGhostCells = o;
     }
     {

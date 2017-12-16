@@ -1053,7 +1053,7 @@ int mshFileDialog(const char *name)
   dialog->b[1]->value(CTX::instance()->mesh.saveParametric ? 1 : 0);
   dialog->b[2]->value(CTX::instance()->mesh.mshFilePartitioned ? 1 : 0);
   dialog->b[3]->value(CTX::instance()->mesh.partitionedTopology ? 1 : 0);
-  if(CTX::instance()->mesh.num_partitions == 0)
+  if(GModel::current()->getNumPartitions() == 0)
   {
     dialog->b[2]->deactivate();
     dialog->b[3]->deactivate();
