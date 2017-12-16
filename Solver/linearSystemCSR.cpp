@@ -15,9 +15,6 @@
 #define SWAP(a, b)  temp = (a); (a) = (b); (b) = temp;
 #define SWAPI(a, b) tempi = (a); (a) = (b); (b) = tempi;
 
-
-
-
 static void *CSRMalloc(size_t size)
 {
   void *ptr;
@@ -466,103 +463,4 @@ int linearSystemCSRGmm<double>::systemSolve()
   return 1;
 }
 
-#endif
-
-#if defined(HAVE_TAUCS)
-
-extern "C" {
-#include "taucs.h"
-}
-
-template class linearSystemCSRTaucs<double>;
-
-template<>
-int linearSystemCSRTaucs<double>::systemSolve()
-{
-  if (!_a)return 1;
-  if(!sorted){
-    sortColumns_(_b->size(),
-                CSRList_Nbr(_a),
-                (INDEX_TYPE *) _ptr->array,
-                (INDEX_TYPE *) _jptr->array,
-                (INDEX_TYPE *) _ai->array,
-                (double*) _a->array);
-  }
-  sorted = true;
-
-  //  taucs_logfile("stderr");
-
-  
-  taucs_ccs_matrix myVeryCuteTaucsMatrix;
-  myVeryCuteTaucsMatrix.n = myVeryCuteTaucsMatrix.m = _b->size();
-  //myVeryCuteTaucsMatrix.rowind = (INDEX_TYPE*)_ptr->array;
-  //myVeryCuteTaucsMatrix.colptr = (INDEX_TYPE*)_ai->array;
-  myVeryCuteTaucsMatrix.rowind = (INDEX_TYPE*)_ai->array;
-  myVeryCuteTaucsMatrix.colptr = (INDEX_TYPE*)_jptr->array;
-  myVeryCuteTaucsMatrix.values.d = (double*)_a->array;
-  if (_symmetric)
-    myVeryCuteTaucsMatrix.flags = TAUCS_SYMMETRIC | TAUCS_LOWER | TAUCS_DOUBLE;
-  else 
-    myVeryCuteTaucsMatrix.flags = TAUCS_DOUBLE ;
-
-  char* options[] = { _symmetric ? (char*)"taucs.factor.LLT=true" : (char*)"taucs.factor.LLT=true",NULL };
-  //  char* options[] = {  NULL };
-  double t1 = Cpu();
-  int result = taucs_linsolve(&myVeryCuteTaucsMatrix,
-                              NULL,
-                              1,
-                              &(*_x)[0],
-                              &(*_b)[0],
-                              options,
-                              NULL);
-  double t2 = Cpu();
-  Msg::Debug("TAUCS has solved %d unknowns in %8.3f seconds", _b->size(), t2 - t1);
-  if (result != TAUCS_SUCCESS){
-    Msg::Error("Taucs Was Not Successfull %d", result);
-  }
-  return 1;
-}
-#if 0
-template class linearSystemCSRTaucs<std::complex<double> >;
-
-template<>
-int linearSystemCSRTaucs<std::complex<double> >::systemSolve()
-{
-  if (!_a)return 1;
-  if(!sorted){
-    sortColumns_(_b->size(),
-                CSRList_Nbr(_a),
-                (INDEX_TYPE *) _ptr->array,
-                (INDEX_TYPE *) _jptr->array,
-                (INDEX_TYPE *) _ai->array,
-                (std::complex<double>*) _a->array);
-  }
-  sorted = true;
-
-  taucs_ccs_matrix myVeryCuteTaucsMatrix;
-  myVeryCuteTaucsMatrix.n = myVeryCuteTaucsMatrix.m = _b->size();
-  //myVeryCuteTaucsMatrix.rowind = (INDEX_TYPE*)_ptr->array;
-  //myVeryCuteTaucsMatrix.colptr = (INDEX_TYPE*)_ai->array;
-  myVeryCuteTaucsMatrix.rowind = (INDEX_TYPE*)_ai->array;
-  myVeryCuteTaucsMatrix.colptr = (INDEX_TYPE*)_jptr->array;
-  myVeryCuteTaucsMatrix.values.z = (taucs_dcomplex*)_a->array;
-  myVeryCuteTaucsMatrix.flags = TAUCS_SYMMETRIC | TAUCS_LOWER | TAUCS_DCOMPLEX;
-  char* options[] = { (char*)"taucs.factor.mf=true", NULL };
-  double t1 = Cpu();
-  int result = taucs_linsolve(&myVeryCuteTaucsMatrix,
-                              NULL,
-                              1,
-                              &(*_x)[0],
-                              &(*_b)[0],
-                              options,
-                              NULL);
-  double t2 = Cpu();
-  Msg::Debug("TAUCS has solved %d unknowns in %8.3f seconds", _b->size(), t2 - t1);
-  if (result != TAUCS_SUCCESS){
-    Msg::Error("Taucs Was Not Successfull %d", result);
-  }
-  return 1;
-}
-
-#endif
 #endif
