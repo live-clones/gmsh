@@ -5,12 +5,12 @@
 //
 // meshPartition.cpp - Copyright (C) 2008 S. Guzik, C. Geuzaine, J.-F. Remacle
 
-#include <fstream>
 #include <sstream>
 #include <algorithm>
 #include <ctime>
 #include <limits>
 #include <stack>
+#include <cstdlib>
 
 #include "Context.h"
 #include "GmshConfig.h"
@@ -1583,7 +1583,11 @@ MElement* getReferenceElement(const std::vector< std::pair<MElement*, std::vecto
       }
     }
     minSizeElementPairs.clear();
+#ifdef HAVE_CXX11
     minSizeElementPairs = std::move(minSizeElementPairsTmp);
+#else
+    minSizeElementPairs = minSizeElementPairsTmp;
+#endif
   }
   
   return minSizeElementPairs[0].first;
@@ -2113,12 +2117,12 @@ int CreateTopologyFile(GModel* model, std::string name)
   }
   
   const unsigned int npart = model->getNumPartitions();
-  std::ofstream file(name, std::ofstream::trunc);
+  FILE *fp = Fopen(name.c_str(), "w");
   
-  if(!file.is_open()) return 1;
+  if(fp == NULL) return 1;
   
   //-----------Group-----------
-  file << "Group{" << std::endl;
+  fprintf(fp, "Group{\n");
   
   //Omega_i
   for(unsigned int i = 0; i < npart; i++){
@@ -2130,14 +2134,14 @@ int CreateTopologyFile(GModel* model, std::string name)
       physicalTags.insert(getTag(model, it->second));
     }
     
-    file << "\tOmega_" << i << " = Region[{";
+    fprintf(fp, "\tOmega_%d = Region[{", i);
     for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
-      if(it != physicalTags.begin()) file << ", ";
-      file << *it;
+      if(it != physicalTags.begin()) fprintf(fp, ", ");
+      fprintf(fp, "%d", *it);
     }
-    file << "}];" << std::endl;
+    fprintf(fp, "}];\n");
   }
-  file << std::endl;
+  fprintf(fp, "\n");
   
   //Sigma_i
   for(unsigned int i = 0; i < npart; i++){
@@ -2149,24 +2153,24 @@ int CreateTopologyFile(GModel* model, std::string name)
       physicalTags.insert(getTag(model, it->second));
     }
     
-    file << "\tSigma_" << i << " = Region[{";
+    fprintf(fp, "\tSigma_%d = Region[{", i);
     for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
-      if(it != physicalTags.begin()) file << ", ";
-      file << *it;
+      if(it != physicalTags.begin()) fprintf(fp, ", ");
+      fprintf(fp, "%d", *it);
     }
-    file << "}];" << std::endl;
+    fprintf(fp, "}];\n");
   }
-  file << std::endl;
+  fprintf(fp, "\n");
   
   //Sigma_i_j  
   for(std::multimap<unsigned int, GEntity*>::iterator it1 = sigma.begin(); it1 != sigma.end(); ++it1){
     for(std::multimap<unsigned int, GEntity*>::iterator it2 = sigma.begin(); it2 != sigma.end(); ++it2){
       if(it2->second == it1->second && *it2 != *it1){
-        file << "\tSigma_" << it1->first << "_" << it2->first << " = Region[{" << getTag(model, it1->second) << "}];" << std::endl;
+        fprintf(fp, "\tSigma_%d_%d = Region[{%d}];\n", it1->first, it2->first, getTag(model, it1->second));
       }
     }
   }
-  file << std::endl;
+  fprintf(fp, "\n");
   
   //Tau_i
   for(unsigned int i = 0; i < npart; i++){
@@ -2178,24 +2182,24 @@ int CreateTopologyFile(GModel* model, std::string name)
       physicalTags.insert(getTag(model, it->second));
     }
     
-    file << "\tTau_" << i << " = Region[{";
+    fprintf(fp, "\tTau_%d = Region[{", i);
     for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
-      if(it != physicalTags.begin()) file << ", ";
-      file << *it;
+      if(it != physicalTags.begin()) fprintf(fp, ", ");
+      fprintf(fp, "%d", *it);
     }
-    file << "}];" << std::endl;
+    fprintf(fp, "}];\n");
   }
-  file << std::endl;
+  fprintf(fp, "\n");
   
   //Tau_i_j
   for(std::multimap<unsigned int, GEntity*>::iterator it1 = tau.begin(); it1 != tau.end(); ++it1){
     for(std::multimap<unsigned int, GEntity*>::iterator it2 = tau.begin(); it2 != tau.end(); ++it2){
       if(it2->second == it1->second && it2 != it1){
-        file << "\tTau_" << it1->first << "_" << it2->first << " = Region[{" << getTag(model, it1->second) << "}];" << std::endl;
+        fprintf(fp, "\tTau_%d_%d = Region[{%d}];\n", it1->first, it2->first, getTag(model, it1->second));
       }
     }
   }
-  file << std::endl;
+  fprintf(fp, "\n");
   
   //Upsilon_i
   for(unsigned int i = 0; i < npart; i++){
@@ -2207,24 +2211,24 @@ int CreateTopologyFile(GModel* model, std::string name)
       physicalTags.insert(getTag(model, it->second));
     }
     
-    file << "\tUpsilon_" << i << " = Region[{";
+    fprintf(fp, "\tUpsilon_%d = Region[{", i);
     for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
-      if(it != physicalTags.begin()) file << ", ";
-      file << *it;
+      if(it != physicalTags.begin()) fprintf(fp, ", ");
+      fprintf(fp, "%d", *it);
     }
-    file << "}];" << std::endl;
+    fprintf(fp, "}];\n");
   }
-  file << std::endl;
+  fprintf(fp, "\n");
   
   //Upsilon_i_j
   for(std::multimap<unsigned int, GEntity*>::iterator it1 = upsilon.begin(); it1 != upsilon.end(); ++it1){
     for(std::multimap<unsigned int, GEntity*>::iterator it2 = upsilon.begin(); it2 != upsilon.end(); ++it2){
       if(it2->second == it1->second && it2 != it1){
-        file << "\tUpsilon_" << it1->first << "_" << it2->first << " = Region[{" << getTag(model, it1->second) << "}];" << std::endl;
+        fprintf(fp, "\tUpsilon_%d_%d = Region[{%d}];\n", it1->first, it2->first, getTag(model, it1->second));
       }
     }
   }
-  file << std::endl;
+  fprintf(fp, "\n");
   
   //Omicron_i
   for(unsigned int i = 0; i < npart; i++){
@@ -2236,24 +2240,24 @@ int CreateTopologyFile(GModel* model, std::string name)
       physicalTags.insert(getTag(model, it->second));
     }
     
-    file << "\tOmicron_" << i << " = Region[{";
+    fprintf(fp, "\tOmicron_%d = Region[{", i);
     for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
-      if(it != physicalTags.begin()) file << ", ";
-      file << *it;
+      if(it != physicalTags.begin()) fprintf(fp, ", ");
+      fprintf(fp, "%d", *it);
     }
-    file << "}];" << std::endl;
+    fprintf(fp, "}];\n");
   }
-  file << std::endl;
+  fprintf(fp, "\n");
   
   //Omicron_i_j
   for(std::multimap<unsigned int, GEntity*>::iterator it1 = omicron.begin(); it1 != omicron.end(); ++it1){
     for(std::multimap<unsigned int, GEntity*>::iterator it2 = omicron.begin(); it2 != omicron.end(); ++it2){
       if(it2->second == it1->second && it2 != it1){
-        file << "\tOmicron_" << it1->first << "_" << it2->first << " = Region[{" << getTag(model, it1->second) << "}];" << std::endl;
+        fprintf(fp, "\tOmicron_%d_%d = Region[{%d}];\n", it1->first, it2->first, getTag(model, it1->second));
       }
     }
   }
-  file << std::endl;
+  fprintf(fp, "\n");
   
   //OmicronSigma_i
   for(unsigned int i = 0; i < npart; i++){
@@ -2265,24 +2269,24 @@ int CreateTopologyFile(GModel* model, std::string name)
       physicalTags.insert(getTag(model, it->second));
     }
     
-    file << "\tOmicronSigma_" << i << " = Region[{";
+    fprintf(fp, "\tOmicronSigma_%d = Region[{", i);
     for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
-      if(it != physicalTags.begin()) file << ", ";
-      file << *it;
+      if(it != physicalTags.begin()) fprintf(fp, ", ");
+      fprintf(fp, "%d", *it);
     }
-    file << "}];" << std::endl;
+    fprintf(fp, "}];\n");
   }
-  file << std::endl;
+  fprintf(fp, "\n");
   
   //OmicronSigma_i_j
   for(std::multimap<unsigned int, GEntity*>::iterator it1 = omicronSigma.begin(); it1 != omicronSigma.end(); ++it1){
     for(std::multimap<unsigned int, GEntity*>::iterator it2 = omicronSigma.begin(); it2 != omicronSigma.end(); ++it2){
       if(it2->second == it1->second && it2 != it1){
-        file << "\tOmicronSigma_" << it1->first << "_" << it2->first << " = Region[{" << getTag(model, it1->second) << "}];" << std::endl;
+        fprintf(fp, "\tOmicronSigma_%d_%d = Region[{%d}];\n", it1->first, it2->first, getTag(model, it1->second));
       }
     }
   }
-  file << std::endl;
+  fprintf(fp, "\n");
   
   //OmicronTau_i
   for(unsigned int i = 0; i < npart; i++){
@@ -2294,32 +2298,32 @@ int CreateTopologyFile(GModel* model, std::string name)
       physicalTags.insert(getTag(model, it->second));
     }
     
-    file << "\tOmicronTau_" << i << " = Region[{";
+    fprintf(fp, "\tOmicronTau_%d = Region[{", i);
     for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
-      if(it != physicalTags.begin()) file << ", ";
-      file << *it;
+      if(it != physicalTags.begin()) fprintf(fp, ", ");
+      fprintf(fp, "%d", *it);
     }
-    file << "}];" << std::endl;
+    fprintf(fp, "}];\n");
   }
-  file << std::endl;
+  fprintf(fp, "\n");
   
   //OmicronTau_i_j
   for(std::multimap<unsigned int, GEntity*>::iterator it1 = omicronTau.begin(); it1 != omicronTau.end(); ++it1){
     for(std::multimap<unsigned int, GEntity*>::iterator it2 = omicronTau.begin(); it2 != omicronTau.end(); ++it2){
       if(it2->second == it1->second && it2 != it1){
-        file << "\tOmicronTau_" << it1->first << "_" << it2->first << " = Region[{" << getTag(model, it1->second) << "}];" << std::endl;
+        fprintf(fp, "\tOmicronTau_%d_%d = Region[{%d}];\n", it1->first, it2->first, getTag(model, it1->second));
       }
     }
   }
-  file << std::endl;
+  fprintf(fp, "\n");
   
   //D
-  file << "\tD() = {";
+  fprintf(fp, "\tD() = {");
   for(unsigned int i = 0; i < npart; i++){
-    if(i != 0) file << ", ";
-    file << i;
+    if(i != 0) fprintf(fp, ", ");
+    fprintf(fp, "%d", i);
   }
-  file << "};" << std::endl;
+  fprintf(fp, "};\n");
   
   //D_i
   std::multimap<unsigned int, unsigned int> neighbors;
@@ -2345,20 +2349,22 @@ int CreateTopologyFile(GModel* model, std::string name)
     std::pair <std::multimap<unsigned int, unsigned int>::iterator, std::multimap<unsigned int, unsigned int>::iterator> range;
     range = neighbors.equal_range(i);
     std::vector<unsigned int> writeNeighbors;
-    file << "\tD_" << i << "() = {";
+    fprintf(fp, "\tD_%d() = {", i);
     int j = 0;
     for(std::multimap<unsigned int, unsigned int>::iterator it = range.first; it != range.second; ++it){
       if(std::find(writeNeighbors.begin(), writeNeighbors.end(), it->second) == writeNeighbors.end() && i != it->second){
-        if(j != 0) file << ", ";
-        file << it->second;
+        if(j != 0) fprintf(fp, ", ");
+        fprintf(fp, "%d", it->second);
         writeNeighbors.push_back(it->second);
         j++;
       }
     }
-    file << "};" << std::endl;
+    fprintf(fp, "};\n");
   }
   
-  file << "}" << std::endl << std::endl;
+  fprintf(fp, "}\n\n");
+  
+  fclose(fp);
   
   return 0;
 }
@@ -2417,12 +2423,20 @@ std::vector<unsigned int> getPartition(GModel* model, GEntity* entity)
           integer.clear();
         }
         else if(name[j] == ','){
+#ifdef HAVE_CXX11
           partitions.push_back(stoi(integer));
+#else
+          partitions.push_back(atoi(integer.c_str()));
+#endif
           integer.clear();
         }
         else if(name[j] == ' ') continue;
         else if(name[j] == '}'){
+#ifdef HAVE_CXX11
           partitions.push_back(stoi(integer));
+#else
+          partitions.push_back(atoi(integer.c_str()));
+#endif
           break;
         }
         else{
@@ -2617,7 +2631,13 @@ void addPhysical(GModel *const model, partitionRegion *parentEntity, partitionFa
     
     for(unsigned int i = 0; i < parentEntity->numPartitions(); i++){
       if(i > 0) name += ",";
+#ifdef HAVE_CXX11
       name += std::to_string(parentEntity->getPartition(i));
+#else
+      char intToChar[20];
+      sprintf(intToChar, "%d", parentEntity->getPartition(i));
+      name += intToChar;
+#endif
     }
     name += "}";
     
@@ -2665,7 +2685,13 @@ void addPhysical(GModel *const model, partitionRegion *parentEntity, partitionFa
   
   for(unsigned int i = 0; i < childEntity->numPartitions(); i++){
     if(i > 0) name += ",";
+#ifdef HAVE_CXX11
     name += std::to_string(childEntity->getPartition(i));
+#else
+    char intToChar[20];
+    sprintf(intToChar, "%d", childEntity->getPartition(i));
+    name += intToChar;
+#endif
   }
   name += "}";
   
@@ -2684,7 +2710,13 @@ void addPhysical(GModel *const model, partitionFace *parentEntity, partitionEdge
     
     for(unsigned int j = 0; j < parentEntity->numPartitions(); j++){
       if(j > 0) name += ",";
+#ifdef HAVE_CXX11
       name += std::to_string(parentEntity->getPartition(j));
+#else
+      char intToChar[20];
+      sprintf(intToChar, "%d", parentEntity->getPartition(j));
+      name += intToChar;
+#endif
     }
     name += "}";
     
@@ -2731,7 +2763,13 @@ void addPhysical(GModel *const model, partitionFace *parentEntity, partitionEdge
   
   for(unsigned int j = 0; j < childEntity->numPartitions(); j++){
     if(j > 0) name += ",";
+#ifdef HAVE_CXX11
     name += std::to_string(childEntity->getPartition(j));
+#else
+    char intToChar[20];
+    sprintf(intToChar, "%d", childEntity->getPartition(j));
+    name += intToChar;
+#endif
   }
   name += "}";
   
@@ -2750,7 +2788,13 @@ void addPhysical(GModel *const model, partitionEdge *parentEntity, partitionVert
     
     for(unsigned int j = 0; j < parentEntity->numPartitions(); j++){
       if(j > 0) name += ",";
-      name += std::to_string(parentEntity->getPartition(j));
+#ifdef HAVE_CXX11
+      name += std::to_string(childEntity->getPartition(j));
+#else
+      char intToChar[20];
+      sprintf(intToChar, "%d", childEntity->getPartition(j));
+      name += intToChar;
+#endif
     }
     name += "}";
     
@@ -2797,7 +2841,13 @@ void addPhysical(GModel *const model, partitionEdge *parentEntity, partitionVert
   
   for(unsigned int j = 0; j < childEntity->numPartitions(); j++){
     if(j > 0) name += ",";
+#ifdef HAVE_CXX11
     name += std::to_string(childEntity->getPartition(j));
+#else
+    char intToChar[20];
+    sprintf(intToChar, "%d", childEntity->getPartition(j));
+    name += intToChar;
+#endif
   }
   name += "}";
   
