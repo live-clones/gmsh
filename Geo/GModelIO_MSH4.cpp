@@ -2377,7 +2377,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version, b
 
 /*******************************************************************************
  *
- * CreateTopologyFile
+ * partitionedTopology
  *
  ******************************************************************************/
 

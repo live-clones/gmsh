@@ -722,6 +722,7 @@ endif(ENABLE_POPPLER)
 if(HAVE_MESH OR HAVE_SOLVER)
   if(ENABLE_METIS)
     # Use of Metis 5
+    add_definitions(-DUSE_GKREGEX)
     add_subdirectory(contrib/Metis5/GKlib)
     add_subdirectory(contrib/Metis5)
     # make sure to include path before any (system) Metis 5 directories
