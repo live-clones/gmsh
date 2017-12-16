@@ -208,12 +208,10 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet,
   linearSystem<double> *_lsys = 0;
 #if defined(HAVE_PETSC)
   _lsys = new linearSystemPETSc<double>;
-#elif defined(HAVE_GMM) && !defined(HAVE_TAUCS)
+#elif defined(HAVE_GMM)
   linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
   _lsysb->setGmres(1);
   _lsys = _lsysb;
-#elif defined(HAVE_TAUCS)
-  _lsys = new linearSystemCSRTaucs<double>;
 #else
   _lsys = new linearSystemFull<double>;
 #endif

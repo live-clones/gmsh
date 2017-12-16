@@ -39,15 +39,14 @@ void thermicSolver::setMesh(const std::string &meshFileName)
 
 void thermicSolver::solve()
 {
-  linearSystemFull<double> *lsys = new linearSystemFull<double>;
-/*#if defined(HAVE_TAUCS)
-  linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
-#elif defined(HAVE_PETSC)
+#if defined(HAVE_PETSC)
   linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
-#else
+#elif defined(HAVE_GMM)
   linearSystemGmm<double> *lsys = new linearSystemGmm<double>;
   lsys->setNoisy(2);
-#endif*/
+#else
+  linearSystemFull<double> *lsys = new linearSystemFull<double>;
+#endif
   assemble(lsys);
   lsys->systemSolve();
   printf("-- done solving!\n");

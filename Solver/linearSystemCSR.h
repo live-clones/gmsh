@@ -194,30 +194,4 @@ class linearSystemCSRGmm : public linearSystemCSR<scalar> {
   ;
 };
 
-template <class scalar>
-class linearSystemCSRTaucs : public linearSystemCSR<scalar> {
-  bool _symmetric;
- public:
-  linearSystemCSRTaucs(bool s = true) : _symmetric(s){}
-  virtual ~linearSystemCSRTaucs(){}
-  virtual void addToMatrix(int il, int ic, const scalar &val)
-  {
-    if (!_symmetric || il <= ic) {
-      linearSystemCSR<scalar>::addToMatrix(il, ic, val);
-    }
-  }
-  virtual void insertInSparsityPattern(int il, int ic) {
-    if (!_symmetric || il <= ic)
-      linearSystemCSR<scalar>::insertInSparsityPattern(il,ic);
-  }
-  virtual int systemSolve()
-#if !defined(HAVE_TAUCS)
-  {
-    Msg::Error("TAUCS is not available in this version of Gmsh");
-    return 0;
-  }
-#endif
-  ;
-};
-
 #endif
