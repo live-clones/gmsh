@@ -1428,8 +1428,13 @@ void GModel::recomputeMeshPartitions()
 
 int GModel::deleteMeshPartitions()
 {
+#if defined(HAVE_MESH)
   meshPartitions.clear();
   return UnpartitionMesh(this);
+#else
+  Msg::Error("Mesh module not compiled");
+  return 1;
+#endif
 }
 
 int GModel::partitionMesh(int numPart)
@@ -1455,15 +1460,25 @@ int GModel::partitionMesh(int numPart)
 
 int GModel::convertOldPartitioningToNewOne()
 {
+#if defined(HAVE_MESH) && (defined(HAVE_METIS))
   opt_mesh_partition_num(0, GMSH_SET, meshPartitions.size());
   int ier = ConvertOldPartitioningToNewOne(this);
   return ier;
+#else
+  Msg::Error("Mesh module not compiled");
+  return 1;
+#endif
 }
 
 int GModel::partitionedTopology(std::string &name)
 {
+#if defined(HAVE_MESH)
   int ier = CreateTopologyFile(this, name);
   return ier;
+#else
+  Msg::Error("Mesh module not compiled");
+  return 1;
+#endif
 }
 
 void GModel::store(std::vector<MVertex*> &vertices, int dim,
