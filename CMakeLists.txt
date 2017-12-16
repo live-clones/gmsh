@@ -84,7 +84,7 @@ opt(QT "Enable dummy QT graphical interface proof-of-concept (experimental)" OFF
 opt(REVOROPT "Enable Revoropt (used for CVT remeshing)" OFF)
 opt(SLEPC "Enable SLEPc eigensolvers (required for conformal compounds)" ${DEFAULT})
 opt(SOLVER "Enable built-in finite element solvers (required for compounds)" ${DEFAULT})
-opt(TAUCS "Enable Taucs linear solver" ${DEFAULT})
+opt(TAUCS "Enable Taucs linear solver" OFF)
 opt(TCMALLOC "Enable libtcmalloc, a fast malloc implementation but that does not release memory" OFF)
 opt(TETGEN "Enable Tetgen 3D initial mesh generator" ${DEFAULT})
 opt(VISUDEV "Enable additional visualization capabilities for development purpose" OFF)
