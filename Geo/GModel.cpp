@@ -1470,17 +1470,6 @@ int GModel::convertOldPartitioningToNewOne()
 #endif
 }
 
-int GModel::partitionedTopology(std::string &name)
-{
-#if defined(HAVE_MESH)
-  int ier = CreateTopologyFile(this, name);
-  return ier;
-#else
-  Msg::Error("Mesh module not compiled");
-  return 1;
-#endif
-}
-
 void GModel::store(std::vector<MVertex*> &vertices, int dim,
                    std::map<int, std::vector<MElement*> > &entityMap,
                    std::map<int, std::map<int, std::string> > &physicalMap)

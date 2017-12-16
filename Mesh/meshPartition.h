@@ -110,12 +110,7 @@ void addPhysical(GModel *const model, partitionRegion *parentEntity, partitionFa
 void addPhysical(GModel *const model, partitionFace *parentEntity, partitionEdge *childEntity);
 void addPhysical(GModel *const model, partitionEdge *parentEntity, partitionVertex *childEntity);
 int computeOrientation(GEntity *parent, GEntity *child);
-
-int CreateTopologyFile(GModel* model, std::string name);
-int getTag(GModel* model, GEntity* entity);
-std::string getSubstr(GModel* model, GEntity* entity);
-std::vector<unsigned int> getPartition(GModel* model, GEntity* entity);
-
+std::string getPhysicalSubstr(GModel* model, GEntity* entity);
 
 int PartitionMeshFace(std::list<GFace*> &cFaces);
 int PartitionMeshElements(std::vector<MElement*> &elements);

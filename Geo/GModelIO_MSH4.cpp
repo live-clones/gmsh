@@ -49,6 +49,11 @@ std::pair<int, MVertex*> *readMSH4Nodes(GModel *const model, FILE* fp, bool bina
 std::pair<int, MElement*> *readMSH4Elements(GModel *const model, FILE* fp, bool binary, bool &dense, unsigned long &nbrElements, bool swap);
 void readMSH4PeriodicNodes(GModel *const model, FILE* fp, bool binary, bool swap);
 
+//Write partitioned topology
+int getTag(GModel* model, GEntity* entity);
+std::string getSubstr(GModel* model, GEntity* entity);
+std::vector<unsigned int> getPartition(GModel* model, GEntity* entity);
+
 /********************************************************
  *
  *    Read functions
@@ -2357,7 +2362,8 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version, b
           break;
       }
     }
-    AssignMeshVertices(tmp);
+    tmp->_associateEntityWithMeshVertices();
+    tmp->pruneMeshVertexAssociations();
     std::ostringstream sstream;
     sstream << baseName << "_" << i << ".msh";
     
@@ -2368,4 +2374,459 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version, b
   
   return 1;
 }
+
+/*******************************************************************************
+ *
+ * CreateTopologyFile
+ *
+ ******************************************************************************/
+
+int GModel::partitionedTopology(std::string &name)
+{
+  std::multimap<unsigned int, GEntity*> omega;
+  std::multimap<unsigned int, GEntity*> sigma;
+  std::multimap<unsigned int, GEntity*> tau;
+  std::multimap<unsigned int, GEntity*> upsilon;
+  std::multimap<unsigned int, GEntity*> omicron;
+  std::multimap<unsigned int, GEntity*> omicronSigma;
+  std::multimap<unsigned int, GEntity*> omicronTau;
+  
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+  for(unsigned int i = 0; i < entities.size(); i++){
+    switch(entities[i]->geomType()){
+      case GEntity::PartitionVolume: {
+        std::string substr  = getSubstr(this, entities[i]);
+        if(substr == "_omega"){
+          for(unsigned int j = 0; j < static_cast<partitionRegion*>(entities[i])->numPartitions(); j++){
+            omega.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionRegion*>(entities[i])->getPartition(j), entities[i]));
+          }
+        }
+      }
+        break;
+      case GEntity::PartitionSurface: {
+        std::string substr  = getSubstr(this, entities[i]);
+        if(substr == "_omega"){
+          for(unsigned int j = 0; j < static_cast<partitionFace*>(entities[i])->numPartitions(); j++){
+            omega.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionFace*>(entities[i])->getPartition(j), entities[i]));
+          }
+        }
+        else if(substr == "_sigma"){
+          for(unsigned int j = 0; j < static_cast<partitionFace*>(entities[i])->numPartitions(); j++){
+            sigma.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionFace*>(entities[i])->getPartition(j), entities[i]));
+          }
+        }
+        else if(substr == "_omicron"){
+          for(unsigned int j = 0; j < static_cast<partitionFace*>(entities[i])->numPartitions(); j++){
+            omicron.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionFace*>(entities[i])->getPartition(j), entities[i]));
+          }
+        }
+      }
+        break;
+      case GEntity::PartitionCurve: {
+        std::string substr  = getSubstr(this, entities[i]);
+        if(substr == "_omega"){
+          for(unsigned int j = 0; j < static_cast<partitionEdge*>(entities[i])->numPartitions(); j++){
+            omega.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionEdge*>(entities[i])->getPartition(j), entities[i]));
+          }
+        }
+        else if(substr == "_sigma"){
+          for(unsigned int j = 0; j < static_cast<partitionEdge*>(entities[i])->numPartitions(); j++){
+            sigma.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionEdge*>(entities[i])->getPartition(j), entities[i]));
+          }
+        }
+        else if(substr == "_tau"){
+          for(unsigned int j = 0; j < static_cast<partitionEdge*>(entities[i])->numPartitions(); j++){
+            tau.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionEdge*>(entities[i])->getPartition(j), entities[i]));
+          }
+        }
+        else if(substr == "_omicron"){
+          for(unsigned int j = 0; j < static_cast<partitionEdge*>(entities[i])->numPartitions(); j++){
+            omicron.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionEdge*>(entities[i])->getPartition(j), entities[i]));
+          }
+        }
+        else if(substr == "_omicronSigma"){
+          for(unsigned int j = 0; j < static_cast<partitionEdge*>(entities[i])->numPartitions(); j++){
+            omicronSigma.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionEdge*>(entities[i])->getPartition(j), entities[i]));
+          }
+        }
+      }
+        break;
+      case GEntity::PartitionVertex: {
+        std::string substr  = getSubstr(this, entities[i]);
+        if(substr == "_omega"){
+          for(unsigned int j = 0; j < static_cast<partitionVertex*>(entities[i])->numPartitions(); j++){
+            omega.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionVertex*>(entities[i])->getPartition(j), entities[i]));
+          }
+        }
+        else if(substr == "_sigma"){
+          for(unsigned int j = 0; j < static_cast<partitionVertex*>(entities[i])->numPartitions(); j++){
+            sigma.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionVertex*>(entities[i])->getPartition(j), entities[i]));
+          }
+        }
+        else if(substr == "_tau"){
+          for(unsigned int j = 0; j < static_cast<partitionVertex*>(entities[i])->numPartitions(); j++){
+            tau.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionVertex*>(entities[i])->getPartition(j), entities[i]));
+          }
+        }
+        else if(substr == "_upsilon"){
+          for(unsigned int j = 0; j < static_cast<partitionVertex*>(entities[i])->numPartitions(); j++){
+            upsilon.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionVertex*>(entities[i])->getPartition(j), entities[i]));
+          }
+        }
+        else if(substr == "_omicron"){
+          for(unsigned int j = 0; j < static_cast<partitionVertex*>(entities[i])->numPartitions(); j++){
+            omicron.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionVertex*>(entities[i])->getPartition(j), entities[i]));
+          }
+        }
+        else if(substr == "_omicronSigma"){
+          for(unsigned int j = 0; j < static_cast<partitionVertex*>(entities[i])->numPartitions(); j++){
+            omicronSigma.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionVertex*>(entities[i])->getPartition(j), entities[i]));
+          }
+        }
+        else if(substr == "_omicronTau"){
+          for(unsigned int j = 0; j < static_cast<partitionVertex*>(entities[i])->numPartitions(); j++){
+            omicronTau.insert(std::pair<unsigned int, GEntity*>(static_cast<partitionVertex*>(entities[i])->getPartition(j), entities[i]));
+          }
+        }
+      }
+        break;
+      default:
+        break;
+    }
+  }
+  
+  const unsigned int npart = getNumPartitions();
+  FILE *fp = Fopen(name.c_str(), "w");
+  
+  if(fp == NULL) return 1;
+  
+  //-----------Group-----------
+  fprintf(fp, "Group{\n");
+  
+  //Omega_i
+  for(unsigned int i = 0; i < npart; i++){
+    std::pair <std::multimap<unsigned int, GEntity*>::iterator, std::multimap<unsigned int, GEntity*>::iterator> range;
+    range = omega.equal_range(i);
+    
+    std::set<int> physicalTags;
+    for(std::multimap<unsigned int, GEntity*>::iterator it = range.first; it != range.second; ++it){
+      physicalTags.insert(getTag(this, it->second));
+    }
+    
+    fprintf(fp, "\tOmega_%d = Region[{", i);
+    for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
+      if(it != physicalTags.begin()) fprintf(fp, ", ");
+      fprintf(fp, "%d", *it);
+    }
+    fprintf(fp, "}];\n");
+  }
+  fprintf(fp, "\n");
+  
+  //Sigma_i
+  for(unsigned int i = 0; i < npart; i++){
+    std::pair <std::multimap<unsigned int, GEntity*>::iterator, std::multimap<unsigned int, GEntity*>::iterator> range;
+    range = sigma.equal_range(i);
+    
+    std::set<int> physicalTags;
+    for(std::multimap<unsigned int, GEntity*>::iterator it = range.first; it != range.second; ++it){
+      physicalTags.insert(getTag(this, it->second));
+    }
+    
+    fprintf(fp, "\tSigma_%d = Region[{", i);
+    for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
+      if(it != physicalTags.begin()) fprintf(fp, ", ");
+      fprintf(fp, "%d", *it);
+    }
+    fprintf(fp, "}];\n");
+  }
+  fprintf(fp, "\n");
+  
+  //Sigma_i_j
+  for(std::multimap<unsigned int, GEntity*>::iterator it1 = sigma.begin(); it1 != sigma.end(); ++it1){
+    for(std::multimap<unsigned int, GEntity*>::iterator it2 = sigma.begin(); it2 != sigma.end(); ++it2){
+      if(it2->second == it1->second && *it2 != *it1){
+        fprintf(fp, "\tSigma_%d_%d = Region[{%d}];\n", it1->first, it2->first, getTag(this, it1->second));
+      }
+    }
+  }
+  fprintf(fp, "\n");
+  
+  //Tau_i
+  for(unsigned int i = 0; i < npart; i++){
+    std::pair <std::multimap<unsigned int, GEntity*>::iterator, std::multimap<unsigned int, GEntity*>::iterator> range;
+    range = tau.equal_range(i);
+    
+    std::set<int> physicalTags;
+    for(std::multimap<unsigned int, GEntity*>::iterator it = range.first; it != range.second; ++it){
+      physicalTags.insert(getTag(this, it->second));
+    }
+    
+    fprintf(fp, "\tTau_%d = Region[{", i);
+    for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
+      if(it != physicalTags.begin()) fprintf(fp, ", ");
+      fprintf(fp, "%d", *it);
+    }
+    fprintf(fp, "}];\n");
+  }
+  fprintf(fp, "\n");
+  
+  //Tau_i_j
+  for(std::multimap<unsigned int, GEntity*>::iterator it1 = tau.begin(); it1 != tau.end(); ++it1){
+    for(std::multimap<unsigned int, GEntity*>::iterator it2 = tau.begin(); it2 != tau.end(); ++it2){
+      if(it2->second == it1->second && it2 != it1){
+        fprintf(fp, "\tTau_%d_%d = Region[{%d}];\n", it1->first, it2->first, getTag(this, it1->second));
+      }
+    }
+  }
+  fprintf(fp, "\n");
+  
+  //Upsilon_i
+  for(unsigned int i = 0; i < npart; i++){
+    std::pair <std::multimap<unsigned int, GEntity*>::iterator, std::multimap<unsigned int, GEntity*>::iterator> range;
+    range = upsilon.equal_range(i);
+    
+    std::set<int> physicalTags;
+    for(std::multimap<unsigned int, GEntity*>::iterator it = range.first; it != range.second; ++it){
+      physicalTags.insert(getTag(this, it->second));
+    }
+    
+    fprintf(fp, "\tUpsilon_%d = Region[{", i);
+    for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
+      if(it != physicalTags.begin()) fprintf(fp, ", ");
+      fprintf(fp, "%d", *it);
+    }
+    fprintf(fp, "}];\n");
+  }
+  fprintf(fp, "\n");
+  
+  //Upsilon_i_j
+  for(std::multimap<unsigned int, GEntity*>::iterator it1 = upsilon.begin(); it1 != upsilon.end(); ++it1){
+    for(std::multimap<unsigned int, GEntity*>::iterator it2 = upsilon.begin(); it2 != upsilon.end(); ++it2){
+      if(it2->second == it1->second && it2 != it1){
+        fprintf(fp, "\tUpsilon_%d_%d = Region[{%d}];\n", it1->first, it2->first, getTag(this, it1->second));
+      }
+    }
+  }
+  fprintf(fp, "\n");
+  
+  //Omicron_i
+  for(unsigned int i = 0; i < npart; i++){
+    std::pair <std::multimap<unsigned int, GEntity*>::iterator, std::multimap<unsigned int, GEntity*>::iterator> range;
+    range = omicron.equal_range(i);
+    
+    std::set<int> physicalTags;
+    for(std::multimap<unsigned int, GEntity*>::iterator it = range.first; it != range.second; ++it){
+      physicalTags.insert(getTag(this, it->second));
+    }
+    
+    fprintf(fp, "\tOmicron_%d = Region[{", i);
+    for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
+      if(it != physicalTags.begin()) fprintf(fp, ", ");
+      fprintf(fp, "%d", *it);
+    }
+    fprintf(fp, "}];\n");
+  }
+  fprintf(fp, "\n");
+  
+  //Omicron_i_j
+  for(std::multimap<unsigned int, GEntity*>::iterator it1 = omicron.begin(); it1 != omicron.end(); ++it1){
+    for(std::multimap<unsigned int, GEntity*>::iterator it2 = omicron.begin(); it2 != omicron.end(); ++it2){
+      if(it2->second == it1->second && it2 != it1){
+        fprintf(fp, "\tOmicron_%d_%d = Region[{%d}];\n", it1->first, it2->first, getTag(this, it1->second));
+      }
+    }
+  }
+  fprintf(fp, "\n");
+  
+  //OmicronSigma_i
+  for(unsigned int i = 0; i < npart; i++){
+    std::pair <std::multimap<unsigned int, GEntity*>::iterator, std::multimap<unsigned int, GEntity*>::iterator> range;
+    range = omicronSigma.equal_range(i);
+    
+    std::set<int> physicalTags;
+    for(std::multimap<unsigned int, GEntity*>::iterator it = range.first; it != range.second; ++it){
+      physicalTags.insert(getTag(this, it->second));
+    }
+    
+    fprintf(fp, "\tOmicronSigma_%d = Region[{", i);
+    for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
+      if(it != physicalTags.begin()) fprintf(fp, ", ");
+      fprintf(fp, "%d", *it);
+    }
+    fprintf(fp, "}];\n");
+  }
+  fprintf(fp, "\n");
+  
+  //OmicronSigma_i_j
+  for(std::multimap<unsigned int, GEntity*>::iterator it1 = omicronSigma.begin(); it1 != omicronSigma.end(); ++it1){
+    for(std::multimap<unsigned int, GEntity*>::iterator it2 = omicronSigma.begin(); it2 != omicronSigma.end(); ++it2){
+      if(it2->second == it1->second && it2 != it1){
+        fprintf(fp, "\tOmicronSigma_%d_%d = Region[{%d}];\n", it1->first, it2->first, getTag(this, it1->second));
+      }
+    }
+  }
+  fprintf(fp, "\n");
+  
+  //OmicronTau_i
+  for(unsigned int i = 0; i < npart; i++){
+    std::pair <std::multimap<unsigned int, GEntity*>::iterator, std::multimap<unsigned int, GEntity*>::iterator> range;
+    range = omicronTau.equal_range(i);
+    
+    std::set<int> physicalTags;
+    for(std::multimap<unsigned int, GEntity*>::iterator it = range.first; it != range.second; ++it){
+      physicalTags.insert(getTag(this, it->second));
+    }
+    
+    fprintf(fp, "\tOmicronTau_%d = Region[{", i);
+    for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
+      if(it != physicalTags.begin()) fprintf(fp, ", ");
+      fprintf(fp, "%d", *it);
+    }
+    fprintf(fp, "}];\n");
+  }
+  fprintf(fp, "\n");
+  
+  //OmicronTau_i_j
+  for(std::multimap<unsigned int, GEntity*>::iterator it1 = omicronTau.begin(); it1 != omicronTau.end(); ++it1){
+    for(std::multimap<unsigned int, GEntity*>::iterator it2 = omicronTau.begin(); it2 != omicronTau.end(); ++it2){
+      if(it2->second == it1->second && it2 != it1){
+        fprintf(fp, "\tOmicronTau_%d_%d = Region[{%d}];\n", it1->first, it2->first, getTag(this, it1->second));
+      }
+    }
+  }
+  fprintf(fp, "\n");
+  
+  //D
+  fprintf(fp, "\tD() = {");
+  for(unsigned int i = 0; i < npart; i++){
+    if(i != 0) fprintf(fp, ", ");
+    fprintf(fp, "%d", i);
+  }
+  fprintf(fp, "};\n");
+  
+  //D_i
+  std::multimap<unsigned int, unsigned int> neighbors;
+  for(std::multimap<unsigned int, GEntity*>::iterator it = sigma.begin(); it != sigma.end(); ++it){
+    if(it->second->geomType() == GEntity::PartitionSurface){
+      for(unsigned int i = 0; i < static_cast<partitionFace*>(it->second)->numPartitions(); i++){
+        neighbors.insert(std::pair<unsigned int, unsigned int>(it->first, static_cast<partitionFace*>(it->second)->getPartition(i)));
+      }
+    }
+    else if(it->second->geomType() == GEntity::PartitionCurve){
+      for(unsigned int i = 0; i < static_cast<partitionEdge*>(it->second)->numPartitions(); i++){
+        neighbors.insert(std::pair<unsigned int, unsigned int>(it->first, static_cast<partitionEdge*>(it->second)->getPartition(i)));
+      }
+    }
+    else if(it->second->geomType() == GEntity::PartitionVertex){
+      for(unsigned int i = 0; i < static_cast<partitionVertex*>(it->second)->numPartitions(); i++){
+        neighbors.insert(std::pair<unsigned int, unsigned int>(it->first, static_cast<partitionVertex*>(it->second)->getPartition(i)));
+      }
+    }
+  }
+  
+  for(unsigned int i = 0; i < npart; i++){
+    std::pair <std::multimap<unsigned int, unsigned int>::iterator, std::multimap<unsigned int, unsigned int>::iterator> range;
+    range = neighbors.equal_range(i);
+    std::vector<unsigned int> writeNeighbors;
+    fprintf(fp, "\tD_%d() = {", i);
+    int j = 0;
+    for(std::multimap<unsigned int, unsigned int>::iterator it = range.first; it != range.second; ++it){
+      if(std::find(writeNeighbors.begin(), writeNeighbors.end(), it->second) == writeNeighbors.end() && i != it->second){
+        if(j != 0) fprintf(fp, ", ");
+        fprintf(fp, "%d", it->second);
+        writeNeighbors.push_back(it->second);
+        j++;
+      }
+    }
+    fprintf(fp, "};\n");
+  }
+  
+  fprintf(fp, "}\n\n");
+  
+  fclose(fp);
+  
+  return 0;
+}
+
+int getTag(GModel* model, GEntity* entity)
+{
+  std::vector<int> tags = entity->getPhysicalEntities();
+  for(unsigned int i = 0; i < tags.size(); i++){
+    std::string name = model->getPhysicalName(entity->dim(),tags[i]);
+    
+    if(name[0] != '_') continue;
+    else return tags[i];
+  }
+  
+  return -1;
+}
+
+std::string getSubstr(GModel* model, GEntity* entity)
+{
+  std::string substr;
+  std::vector<int> tags = entity->getPhysicalEntities();
+  for(unsigned int i = 0; i < tags.size(); i++){
+    std::string name = model->getPhysicalName(entity->dim(),tags[i]);
+    
+    std::string str;
+    if(name[0] == '_'){
+      for(unsigned int j = 0; j < name.length(); j++){
+        if(name[j] == '{'){
+          substr = str;
+          break;
+        }
+        else if(name[j] == ' ') continue;
+        else if(name[j] == '}') break;
+        else{
+          str += name[j];
+        }
+      }
+    }
+    
+  }
+  
+  return substr;
+}
+
+std::vector<unsigned int> getPartition(GModel* model, GEntity* entity)
+{
+  std::vector<int> tags = entity->getPhysicalEntities();
+  std::vector<unsigned int> partitions;
+  for(unsigned int i = 0; i < tags.size(); i++){
+    std::string name = model->getPhysicalName(entity->dim(),tags[i]);
+    
+    std::string integer;
+    if(name[0] == '_'){
+      for(unsigned int j = 0; j < name.length(); j++){
+        if(name[j] == '{'){
+          integer.clear();
+        }
+        else if(name[j] == ','){
+#ifdef HAVE_CXX11
+          partitions.push_back(stoi(integer));
+#else
+          partitions.push_back(atoi(integer.c_str()));
+#endif
+          integer.clear();
+        }
+        else if(name[j] == ' ') continue;
+        else if(name[j] == '}'){
+#ifdef HAVE_CXX11
+          partitions.push_back(stoi(integer));
+#else
+          partitions.push_back(atoi(integer.c_str()));
+#endif
+          break;
+        }
+        else{
+          integer += name[j];
+        }
+      }
+    }
+  }
+  
+  return partitions;
+}
+
 
