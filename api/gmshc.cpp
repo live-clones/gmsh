@@ -343,6 +343,39 @@ void gmshModelMeshGetIntegrationData(const char * integrationType,const char * f
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
+void gmshModelMeshGetElementTypes(int ** elementTypes, size_t * elementTypes_n,const int dim,const int tag,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  std::vector<int> api_elementTypes_;
+  gmsh::model::mesh::getElementTypes(api_elementTypes_,dim,tag);
+  vector2ptr(api_elementTypes_,elementTypes,elementTypes_n);
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
+void gmshModelMeshGetElementsByType(const int elementType,int ** elementTags, size_t * elementTags_n,int ** vertexTags, size_t * vertexTags_n,const int dim,const int tag,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  std::vector<int> api_elementTags_;
+  std::vector<int> api_vertexTags_;
+  gmsh::model::mesh::getElementsByType(elementType,api_elementTags_,api_vertexTags_,dim,tag);
+  vector2ptr(api_elementTags_,elementTags,elementTags_n);
+  vector2ptr(api_vertexTags_,vertexTags,vertexTags_n);
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
+void gmshModelMeshGetIntegrationDataByType(const int elementType,const char * integrationType,const char * functionSpaceType,double ** integrationPoints, size_t * integrationPoints_n,double ** integrationData, size_t * integrationData_n,int * functionSpaceNumComponents,double ** functionSpaceData, size_t * functionSpaceData_n,const int dim,const int tag,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  std::vector<double> api_integrationPoints_;
+  std::vector<double> api_integrationData_;
+  std::vector<double> api_functionSpaceData_;
+  gmsh::model::mesh::getIntegrationDataByType(elementType,integrationType,functionSpaceType,api_integrationPoints_,api_integrationData_,*functionSpaceNumComponents,api_functionSpaceData_,dim,tag);
+  vector2ptr(api_integrationPoints_,integrationPoints,integrationPoints_n);
+  vector2ptr(api_integrationData_,integrationData,integrationData_n);
+  vector2ptr(api_functionSpaceData_,functionSpaceData,functionSpaceData_n);
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
 void gmshModelMeshSetVertices(const int dim,const int tag,int* vertexTags, size_t vertexTags_n,double * coord, size_t coord_n,double * parametricCoord, size_t parametricCoord_n,int * ierr){
   if(ierr) *ierr = 0;
   try {

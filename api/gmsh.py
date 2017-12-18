@@ -806,6 +806,88 @@ class model:
                 _ovectorvectordouble(api_functionSpaceData_,api_functionSpaceData_n_,api_functionSpaceData_nn_))
 
         @staticmethod
+        def getElementTypes(dim=-1,tag=-1):
+            """
+            Gets the types of mesh elements in the entity of dimension `dim' and `tag'
+            tag. If `tag' < 0, gets the types for all entities of dimension `dim'. If
+            `dim' and `tag' are negative, gets all the types in the mesh.
+
+            return elementTypes
+            """
+            api_elementTypes_, api_elementTypes_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetElementTypes(
+                byref(api_elementTypes_),byref(api_elementTypes_n_),
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshGetElementTypes returned non-zero error code : ",
+                    ierr.value)
+            return _ovectorint(api_elementTypes_,api_elementTypes_n_.value)
+
+        @staticmethod
+        def getElementsByType(elementType,dim=-1,tag=-1):
+            """
+            Gets the mesh elements in the same way as `getElements', but for a single
+            `elementType'.
+
+            return elementTags, vertexTags
+            """
+            api_elementTags_, api_elementTags_n_ = POINTER(c_int)(), c_size_t()
+            api_vertexTags_, api_vertexTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetElementsByType(
+                c_int(elementType),
+                byref(api_elementTags_),byref(api_elementTags_n_),
+                byref(api_vertexTags_),byref(api_vertexTags_n_),
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshGetElementsByType returned non-zero error code : ",
+                    ierr.value)
+            return (
+                _ovectorint(api_elementTags_,api_elementTags_n_.value),
+                _ovectorint(api_vertexTags_,api_vertexTags_n_.value))
+
+        @staticmethod
+        def getIntegrationDataByType(elementType,integrationType,functionSpaceType,dim=-1,tag=-1):
+            """
+            Gets the integration data for mesh elements in the same way as
+            `getIntegrationData', but for a single `elementType'.
+
+            return integrationPoints, integrationData, functionSpaceNumComponents, functionSpaceData
+            """
+            api_integrationPoints_, api_integrationPoints_n_ = POINTER(c_double)(), c_size_t()
+            api_integrationData_, api_integrationData_n_ = POINTER(c_double)(), c_size_t()
+            api_functionSpaceNumComponents_ = c_int()
+            api_functionSpaceData_, api_functionSpaceData_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetIntegrationDataByType(
+                c_int(elementType),
+                c_char_p(integrationType.encode()),
+                c_char_p(functionSpaceType.encode()),
+                byref(api_integrationPoints_),byref(api_integrationPoints_n_),
+                byref(api_integrationData_),byref(api_integrationData_n_),
+                byref(api_functionSpaceNumComponents_),
+                byref(api_functionSpaceData_),byref(api_functionSpaceData_n_),
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshGetIntegrationDataByType returned non-zero error code : ",
+                    ierr.value)
+            return (
+                _ovectordouble(api_integrationPoints_,api_integrationPoints_n_.value),
+                _ovectordouble(api_integrationData_,api_integrationData_n_.value),
+                api_functionSpaceNumComponents_.value,
+                _ovectordouble(api_functionSpaceData_,api_functionSpaceData_n_.value))
+
+        @staticmethod
         def setVertices(dim,tag,vertexTags,coord,parametricCoord=[]):
             """
             Sets the mesh vertices in the geometrical entity of dimension `dim' and tag

@@ -273,6 +273,36 @@ GMSH_API void gmshModelMeshGetIntegrationData(const char * integrationType,
                                               const int tag,
                                               int * ierr);
 
+/* Gets the types of mesh elements in the entity of dimension `dim' and `tag'
+ * tag. If `tag' < 0, gets the types for all entities of dimension `dim'. If
+ * `dim' and `tag' are negative, gets all the types in the mesh. */
+GMSH_API void gmshModelMeshGetElementTypes(int ** elementTypes, size_t * elementTypes_n,
+                                           const int dim,
+                                           const int tag,
+                                           int * ierr);
+
+/* Gets the mesh elements in the same way as `getElements', but for a single
+ * `elementType'. */
+GMSH_API void gmshModelMeshGetElementsByType(const int elementType,
+                                             int ** elementTags, size_t * elementTags_n,
+                                             int ** vertexTags, size_t * vertexTags_n,
+                                             const int dim,
+                                             const int tag,
+                                             int * ierr);
+
+/* Gets the integration data for mesh elements in the same way as
+ * `getIntegrationData', but for a single `elementType'. */
+GMSH_API void gmshModelMeshGetIntegrationDataByType(const int elementType,
+                                                    const char * integrationType,
+                                                    const char * functionSpaceType,
+                                                    double ** integrationPoints, size_t * integrationPoints_n,
+                                                    double ** integrationData, size_t * integrationData_n,
+                                                    int * functionSpaceNumComponents,
+                                                    double ** functionSpaceData, size_t * functionSpaceData_n,
+                                                    const int dim,
+                                                    const int tag,
+                                                    int * ierr);
+
 /* Sets the mesh vertices in the geometrical entity of dimension `dim' and tag
  * `tag'. `vertextags' contains the vertex tags (their unique, strictly
  * positive identification numbers). `coord` is a vector of length `3 *

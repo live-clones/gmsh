@@ -131,6 +131,15 @@ mesh.add('getElements',doc,None,ovectorint('elementTypes'),ovectorvectorint('ele
 doc = '''Gets the integration data for mesh elements of the entity of dimension `dim' and `tag' tag. The data is returned by element type and by element, in the same order as the data returned by `getElements'. `integrationType' specifies the type of integration (e.g. \"Gauss4\") and `functionSpaceType' specifies the function space (e.g. \"IsoParametric\"). `integrationPoints' contains for each element type a vector (of length 4 times the number of integration points) containing the parametric coordinates (u, v, w) and the weight associated to the integration points. `integrationData' contains for each element type a vector (of size 13 times the number of integration points) containing the (x, y, z) coordinates of the integration point, the determinant of the Jacobian and the 9 entries (by row) of the 3x3 Jacobian matrix. If `functionSpaceType' is provided, `functionSpaceNumComponents' returns the number of components returned by the evaluation of a basis function in the space and `functionSpaceData' contains for each element type the evaluation of the basis functions at the integration points.'''
 mesh.add('getIntegrationData',doc,None,istring('integrationType'),istring('functionSpaceType'),ovectorvectordouble('integrationPoints'),ovectorvectordouble('integrationData'),oint('functionSpaceNumComponents'),ovectorvectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))
 
+doc = '''Gets the types of mesh elements in the entity of dimension `dim' and `tag' tag. If `tag' < 0, gets the types for all entities of dimension `dim'. If `dim' and `tag' are negative, gets all the types in the mesh.'''
+mesh.add('getElementTypes',doc,None,ovectorint('elementTypes'),iint('dim', '-1'),iint('tag', '-1'))
+
+doc = '''Gets the mesh elements in the same way as `getElements', but for a single `elementType'.'''
+mesh.add('getElementsByType',doc,None,iint('elementType'),ovectorint('elementTags'),ovectorint('vertexTags'),iint('dim', '-1'),iint('tag', '-1'))
+
+doc = '''Gets the integration data for mesh elements in the same way as `getIntegrationData', but for a single `elementType'.'''
+mesh.add('getIntegrationDataByType',doc,None,iint('elementType'),istring('integrationType'),istring('functionSpaceType'),ovectordouble('integrationPoints'),ovectordouble('integrationData'),oint('functionSpaceNumComponents'),ovectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))
+
 doc = '''Sets the mesh vertices in the geometrical entity of dimension `dim' and tag `tag'. `vertextags' contains the vertex tags (their unique, strictly positive identification numbers). `coord` is a vector of length `3 * vertexTags.size()' that contains the (x, y, z) coordinates of the vertices, concatenated. The optional `parametricCoord` vector contains the parametric coordinates of the vertices, if any. The length of `parametricCoord` can be 0 or `dim * vertexTags.size()'.'''
 mesh.add('setVertices',doc,None,iint('dim'),iint('tag'),ivectorint('vertexTags'),ivectordouble('coord'),ivectordouble('parametricCoord','std::vector<double>()',"[]"))
 

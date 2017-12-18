@@ -260,6 +260,33 @@ namespace gmsh { // Top-level functions
                                        const int dim = -1,
                                        const int tag = -1);
 
+      // Gets the types of mesh elements in the entity of dimension `dim' and `tag'
+      // tag. If `tag' < 0, gets the types for all entities of dimension `dim'. If
+      // `dim' and `tag' are negative, gets all the types in the mesh.
+      GMSH_API void getElementTypes(std::vector<int> & elementTypes,
+                                    const int dim = -1,
+                                    const int tag = -1);
+
+      // Gets the mesh elements in the same way as `getElements', but for a single
+      // `elementType'.
+      GMSH_API void getElementsByType(const int elementType,
+                                      std::vector<int> & elementTags,
+                                      std::vector<int> & vertexTags,
+                                      const int dim = -1,
+                                      const int tag = -1);
+
+      // Gets the integration data for mesh elements in the same way as
+      // `getIntegrationData', but for a single `elementType'.
+      GMSH_API void getIntegrationDataByType(const int elementType,
+                                             const std::string & integrationType,
+                                             const std::string & functionSpaceType,
+                                             std::vector<double> & integrationPoints,
+                                             std::vector<double> & integrationData,
+                                             int & functionSpaceNumComponents,
+                                             std::vector<double> & functionSpaceData,
+                                             const int dim = -1,
+                                             const int tag = -1);
+
       // Sets the mesh vertices in the geometrical entity of dimension `dim' and
       // tag `tag'. `vertextags' contains the vertex tags (their unique, strictly
       // positive identification numbers). `coord` is a vector of length `3 *
