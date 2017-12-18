@@ -603,7 +603,7 @@ namespace ClosureGen {
         }
       }
     } else {
-      Msg::Error("FaceClosureFull not implemented for prisms of order %d",order);
+      Msg::Warning("FaceClosureFull not implemented for prisms of order %d",order);
     }
 
   }
