@@ -323,7 +323,7 @@ namespace
       const bezierBasis *fs3 = BasisFactory::getBezierBasis(TYPE_LIN, order);
       fs3->matrixBez2Lag.mult(angleChangeBez, angleChange);
       angleChange.scale(fact);
-      angleChange.print("angleChange");
+//      angleChange.print("angleChange");
 
       const bezierBasis *fs0 = BasisFactory::getBezierBasis(TYPE_LIN, 1);
       fs0->interpolate(controlPoints, refPoints, points);
@@ -338,7 +338,7 @@ namespace
         points(i, 2) += n.z() * angleChange(i);
       }
     }
-    points.print("points");
+//    points.print("points");
 
     std::vector<MVertex*> newVert(2*nVert-4);
     for (int i = 0; i < (int)newVert.size(); ++i) {
@@ -831,7 +831,7 @@ namespace BoundaryLayerCurver
       M1.mult(Mh, tmp1);
       fullMatrix<double> tmp(nbDof, nbDofh);
       Me.mult(Ml, tmp);
-      tmp.print("tmp");
+//      tmp.print("tmp");
       data->T0.resize(nbDof, nbDof);
       data->T1.resize(nbDof, nbDof);
       tmp.mult(tmp0, data->T0);
@@ -1567,6 +1567,72 @@ namespace BoundaryLayerCurver
     }
   }
 
+  double computeMeanSquareError(const std::vector<MVertex *> &verticesCurve1,
+                                const std::vector<MVertex *> &verticesCurve2)
+  {
+    const int orderCurve = (int)verticesCurve1.size() - 1;
+    const int orderGauss = orderCurve * 2;
+    int nPts = getNGQLPts(orderGauss);
+    IntPt *gPts = getGQLPts(orderGauss);
+
+    double mse = 0;
+
+    for (int i = 0; i < nPts; ++i) {
+      const double xi = gPts[i].pt[0];
+
+      int tagLine = ElementType::getTag(TYPE_LIN, orderCurve);
+      const nodalBasis* fs = BasisFactory::getNodalBasis(tagLine);
+      double sf[100];
+      fs->f(xi, 0, 0, sf);
+
+      double x1 = 0., y1 = 0., z1 = 0.;
+      double x2 = 0., y2 = 0., z2 = 0.;
+      for (int j = 0; j < orderCurve+1; j++) {
+        const MVertex *v1 = verticesCurve1[i];
+        const MVertex *v2 = verticesCurve2[i];
+        x1 += sf[j] * v1->x();
+        y1 += sf[j] * v1->y();
+        z1 += sf[j] * v1->z();
+        x2 += sf[j] * v2->x();
+        y2 += sf[j] * v2->y();
+        z2 += sf[j] * v2->z();
+      }
+
+      mse += (x1-x2) * (x1-x2) * gPts[i].weight;
+      mse += (y1-y2) * (y1-y2) * gPts[i].weight;
+      mse += (z1-z2) * (z1-z2) * gPts[i].weight;
+
+      const double w = gPts[i].weight;
+    }
+    return mse;
+  }
+
+  double objectiveFunction(const std::vector<MVertex *> &baseVert,
+                           const std::vector<MVertex *> &topVert,
+                           std::vector<MVertex *> &bottomVertFromTop, SVector3 w,
+                           GEntity *bndEnt)
+  {
+    Parameters2DCurve parameters;
+    computeExtremityCoefficients(topVert, topVert, bottomVertFromTop, parameters, w);
+    computePositionEdgeVert(topVert, topVert,
+                            bottomVertFromTop, parameters, w,
+                            0, bndEnt, -1);
+    return computeMeanSquareError(baseVert, bottomVertFromTop);
+  }
+
+  void optimizePositionEdgeVert(const std::vector<MVertex *> &baseVert,
+                                std::vector<MVertex *> &topVert, SVector3 w,
+                                GEntity *bndEnt)
+  {
+    std::vector<MVertex *> bottomVertFromTop;
+    for (int i = 0; i < baseVert.size(); ++i) {
+      const MVertex *v = baseVert[i];
+      bottomVertFromTop.push_back(new MVertex(v->x(),v->y(),v->z()));
+    }
+    const double obj = objectiveFunction(baseVert, topVert, bottomVertFromTop, w, bndEnt);
+    std::cout << "obj: " << obj << " " << baseVert[2]->getNum() << std::endl;
+  }
+
   InteriorPlacementData* constructInteriorPlacementData(int tag)
   {
     const int order = ElementType::OrderFromTag(tag);
@@ -2041,6 +2107,7 @@ namespace BoundaryLayerCurver
     computePositionEdgeVert(globalBottomVertices, globalBottomVertices,
                             globalTopVertices, parameters, w,
                             dampingFactor, bndEnt, -1, true);
+    optimizePositionEdgeVert(globalBottomVertices, globalTopVertices, w, bndEnt);
 
 //    drawIdealCurve(globalBottomVertices, parameters, w, bndEnt, true, false, true);
 
@@ -2295,7 +2362,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
 //    if (bottomEdge->getNum() != 1136) continue; // Bad linear
 //    if (bottomEdge->getNum() != 1150) continue; // concave
 //    if (bottomEdge->getNum() != 1151) continue; // symetric of concave
-    if (bottomEdge->getNum() != 1156) continue; // Strange
+//    if (bottomEdge->getNum() != 1156) continue; // Strange
 //    if (bottomEdge->getNum() != 1157) continue; // next to Strange
     std::vector<MElement*> &column = bndEl2column[i].second;
 //    std::cout << bottomEdge->getNum();
