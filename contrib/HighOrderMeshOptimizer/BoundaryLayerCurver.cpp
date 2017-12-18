@@ -47,6 +47,7 @@
 #endif
 #include "Options.h"
 #include "AnalyseCurvedMesh.h"
+#include "pointsGenerators.h"
 
 //#include "MElement.h"
 //#include "MLine.h"
@@ -255,6 +256,105 @@ namespace
           drawBezierControlPolygon(controlPointsDeriv, entity);
         }
       }
+    }
+  }
+
+  void drawAngleChange(const std::vector<MVertex *> &vertices,
+                       GEntity *entity, SVector3 w, double fact = 1)
+  {
+    const int nVert = vertices.size();
+
+    fullMatrix<double> controlPoints(nVert, 3);
+    {
+      const bezierBasis *fs = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 1);
+      fullMatrix<double> xyz(nVert, 3);
+      for (int i = 0; i < nVert; ++i) {
+        xyz(i, 0) = vertices[i]->x();
+        xyz(i, 1) = vertices[i]->y();
+        xyz(i, 2) = vertices[i]->z();
+      }
+      fs->lag2Bez(xyz, controlPoints);
+    }
+//    controlPoints.print("controlPoints");
+
+    fullMatrix<double> deriv1(nVert-1, 3);
+    fullMatrix<double> deriv2(nVert-2, 3);
+    for (int j = 0; j < 3; ++j) {
+      deriv1(0, j) = controlPoints(2, j) - controlPoints(0, j);
+      deriv1(1, j) = controlPoints(1, j) - controlPoints(nVert-1, j);
+      for (int i = 2; i < nVert-1; ++i) {
+        deriv1(i, j) = controlPoints(i+1, j) - controlPoints(i, j);
+      }
+      deriv1.scale(nVert-1);
+      deriv2(0, j) = deriv1(2, j) - deriv1(0, j);
+      deriv2(1, j) = deriv1(1, j) - deriv1(nVert-2, j);
+      for (int i = 2; i < nVert-2; ++i) {
+        deriv2(i, j) = deriv1(i+1, j) - deriv1(i, j);
+      }
+      deriv2.scale(nVert-2);
+    }
+//    deriv1.print("deriv1");
+//    deriv2.print("deriv2");
+
+    fullMatrix<double> points(2*nVert-4, 3);
+    {
+      fullMatrix<double> interp1;
+      fullMatrix<double> interp2;
+      const int order = 2 * nVert - 5;
+      fullMatrix<double> refPoints = gmshGeneratePointsLine(order);
+//      refPoints.print("refPoints");
+      const bezierBasis *fs1 = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 2);
+      const bezierBasis *fs2 = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 3);
+      fs1->interpolate(deriv1, refPoints, interp1);
+      fs2->interpolate(deriv2, refPoints, interp2);
+//      interp1.print("interp1");
+//      interp2.print("interp2");
+
+      fullVector<double> angleChangeBez(order+1);
+      for (int i = 0; i < order+1; ++i) {
+        angleChangeBez(i) = interp1(i, 0) * interp2(i, 1)
+                          - interp1(i, 1) * interp2(i, 0);
+//        angleChangeBez(i) /= interp1(i, 0) * interp1(i, 0)
+//                           + interp1(i, 1) * interp1(i, 1);
+      }
+//      angleChangeBez.print("angleChangeBez");
+
+      fullVector<double> angleChange(order+1);
+      const bezierBasis *fs3 = BasisFactory::getBezierBasis(TYPE_LIN, order);
+      fs3->matrixBez2Lag.mult(angleChangeBez, angleChange);
+      angleChange.scale(fact);
+      angleChange.print("angleChange");
+
+      const bezierBasis *fs0 = BasisFactory::getBezierBasis(TYPE_LIN, 1);
+      fs0->interpolate(controlPoints, refPoints, points);
+
+      SVector3 v = SVector3(vertices[1]->x() - vertices[0]->x(),
+                            vertices[1]->y() - vertices[0]->y(),
+                            vertices[1]->z() - vertices[0]->z());
+      SVector3 n = crossprod(w, v).unit();
+      for (int i = 0; i < 2*nVert-4; ++i) {
+        points(i, 0) += n.x() * angleChange(i);
+        points(i, 1) += n.y() * angleChange(i);
+        points(i, 2) += n.z() * angleChange(i);
+      }
+    }
+    points.print("points");
+
+    std::vector<MVertex*> newVert(2*nVert-4);
+    for (int i = 0; i < (int)newVert.size(); ++i) {
+      newVert[i] = new MVertex(points(i, 0), points(i, 1), points(i, 2));
+    ((GEdge *) entity)->addMeshVertex(newVert[i]);
+    }
+    MLineN *line = new MLineN(newVert);
+    ((GEdge *) entity)->addLine(line);
+
+    {
+      MLine *line = new MLine(vertices[0], vertices[1]);
+      ((GEdge *) entity)->addLine(line);
+      line = new MLine(vertices[0], newVert[0]);
+      ((GEdge *) entity)->addLine(line);
+      line = new MLine(vertices[1], newVert[1]);
+      ((GEdge *) entity)->addLine(line);
     }
   }
 
@@ -667,7 +767,7 @@ namespace BoundaryLayerCurver
 
       int nbDofh = refNodesh.size1();
 
-      refNodesh.print("refNodesh");
+//      refNodesh.print("refNodesh");
 
       Mh.resize(nbDofh, nbDof);
       for (int i = 0; i < nbDofh; ++i) {
@@ -677,7 +777,7 @@ namespace BoundaryLayerCurver
           Mh(i, j) = sf[j];
         }
       }
-      Mh.print("Mh");
+//      Mh.print("Mh");
 
       M0.resize(nbDofh, nbDofh, true);
       M1.resize(nbDofh, nbDofh, true);
@@ -685,8 +785,8 @@ namespace BoundaryLayerCurver
         M0(i, i) = .5 - refNodesh(i, 0) / 2;
         M1(i, i) = .5 + refNodesh(i, 0) / 2;
       }
-      M0.print("M0");
-      M1.print("M1");
+//      M0.print("M0");
+//      M1.print("M1");
 
       Ml.resize(nbDof, nbDofh);
       {
@@ -704,11 +804,11 @@ namespace BoundaryLayerCurver
 
         fullMatrix<double> tmp;
         vandermonde.invert(tmp);
-        vandermonde.print("vandermonde");
-        tmp.print("tmp");
+//        vandermonde.print("vandermonde");
+//        tmp.print("tmp");
         Ml.copy(tmp, 0, nbDof, 0, nbDofh, 0, 0);
       }
-      Ml.print("Ml");
+//      Ml.print("Ml");
 
       Me.resize(nbDof, nbDof);
       {
@@ -723,7 +823,7 @@ namespace BoundaryLayerCurver
         }
         delete val;
       }
-      Me.print("Me");
+//      Me.print("Me");
 
       fullMatrix<double> tmp0(nbDofh, nbDof);
       fullMatrix<double> tmp1(nbDofh, nbDof);
@@ -737,8 +837,8 @@ namespace BoundaryLayerCurver
       tmp.mult(tmp0, data->T0);
       tmp.mult(tmp1, data->T1);
 
-      data->T0.print("data->T0");
-      data->T1.print("data->T1");
+//      data->T0.print("data->T0");
+//      data->T1.print("data->T1");
     }
 
 //    fullVector<double> x(nbDof);
@@ -1855,6 +1955,7 @@ namespace BoundaryLayerCurver
 
   double getDistDamping(int num)
   {
+    return 0;
     switch (num) {
       case 1157: return .05;
       case 1156: return .10;
@@ -1904,6 +2005,9 @@ namespace BoundaryLayerCurver
       bottom = MEdge(topVertices[0], topVertices[1]);
     }
 
+    drawAngleChange(globalBottomVertices, bndEnt, w, 1e-2);
+
+    /*
 //    int deriv = 5;
 //    double scale = 1, dx = 2; // Strange
 //    double scale = 1, dx = 8; // Good
@@ -1928,6 +2032,7 @@ namespace BoundaryLayerCurver
     damping3(globalBottomVertices, .3, 10000, bndEnt, true);
     drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(5*dx, -10, 0), &deriv, scale);
     drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(-dx, -10, 0), &deriv, scale);
+     */
 
     // Curve last layer
     Parameters2DCurve parameters;
@@ -1937,13 +2042,13 @@ namespace BoundaryLayerCurver
                             globalTopVertices, parameters, w,
                             dampingFactor, bndEnt, -1, true);
 
-    drawIdealCurve(globalBottomVertices, parameters, w, bndEnt, true, false, true);
+//    drawIdealCurve(globalBottomVertices, parameters, w, bndEnt, true, false, true);
 
     double remainingDamping = distDamping;
     double delta = 1;
 //      std::cout << "remain:" << remainingDamping << std::endl;
     while (remainingDamping > 1e-12 && delta > 1e-4 * lengthFirst) {
-      delta = damping3(topVertices, .1, remainingDamping, bndEnt, false);
+      delta = damping3(globalTopVertices, .1, remainingDamping, bndEnt, false);
       remainingDamping -= delta;
     }
 
@@ -2190,7 +2295,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
 //    if (bottomEdge->getNum() != 1136) continue; // Bad linear
 //    if (bottomEdge->getNum() != 1150) continue; // concave
 //    if (bottomEdge->getNum() != 1151) continue; // symetric of concave
-//    if (bottomEdge->getNum() != 1156) continue; // Strange
+    if (bottomEdge->getNum() != 1156) continue; // Strange
 //    if (bottomEdge->getNum() != 1157) continue; // next to Strange
     std::vector<MElement*> &column = bndEl2column[i].second;
 //    std::cout << bottomEdge->getNum();
