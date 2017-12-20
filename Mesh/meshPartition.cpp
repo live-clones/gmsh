@@ -1489,7 +1489,7 @@ void CreatePartitionBoundaries(GModel *const model, const std::vector< std::set<
       getPartitionInVector(partitions, it->second);
       if(partitions.size() < 2) continue;
       
-      MElement* reference = getReferenceElement(it->second);//it->second[0].first; //getReferenceElement(it->second);
+      MElement* reference = getReferenceElement(it->second);
       if(reference == NULL) continue;
       
       assignPartitionBoundary(model, v, reference, partitions, pvertices, elementToEntity);
@@ -1588,6 +1588,7 @@ MElement* getReferenceElement(const std::vector< std::pair<MElement*, std::vecto
 #else
     minSizeElementPairs = minSizeElementPairsTmp;
 #endif
+    minSizeElementPairsTmp.clear();
   }
   
   return minSizeElementPairs[0].first;
