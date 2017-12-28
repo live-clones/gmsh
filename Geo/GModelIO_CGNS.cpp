@@ -75,9 +75,6 @@ extern bool completeCGNSType  (ElementType_t cgnsType);
 // get the gmsh tag for this element type
 extern int  tagFromCGNSType   (ElementType_t cgnsType);
 
-// get the name for a grid location
-extern std::string gridLocationNameCGNS(GridLocation_t location);
-
 // get the dimension for a grid location
 extern int gridLocationDimCGNS(GridLocation_t location);
 
@@ -1052,7 +1049,10 @@ protected:
     case PointListDonor:
       for (int i=0;i<size;i++)                 pts.push_back(ptsList[i]-1);
       break;
+    default:
+      throw;
     }
+    
   }
   
 
@@ -1263,19 +1263,31 @@ bool readCGNSBoundaryConditions(int fileIndex,
     }
     
     GridLocation_t location;
-    ierr = cg_boco_gridlocation_read(fileIndex,baseIndex,zoneIndex,boCoIndex,&location);
+    ierr = cg_boco_gridlocation_read(fileIndex,baseIndex,zoneIndex,
+                                     boCoIndex,&location);
     if (ierr != CG_OK) {
       Msg::Error("%s (%i) : %s",__FILE__,__LINE__,cg_get_error());
       return false;
     }
 
-    if (meshDim == 2 && location != EdgeCenter) {
-      Msg::Error("Boundary conditions need to be specified on edges for 2D zone");
+    Msg::Info("Boundary conditions %s specified on %s and set type %s",
+              bcName,cg_GridLocationName(location),cg_PointSetTypeName(ptSetType));
+
+    if (meshDim == 2 && 
+        location != CGNS::EdgeCenter &&
+        location != CGNS::Vertex) {
+      Msg::Error("Boundary condition %s should be specified on edges "
+                 "for 2D zone and not on %s",
+                 bcName,cg_GridLocationName(location));
       return false;
     }
     
-    if (meshDim == 3 && location != FaceCenter) {
-      Msg::Error("Boundary conditions need to be specified on faces for 3D zones");
+    if (meshDim == 3 && 
+        location != CGNS::FaceCenter &&
+        location != CGNS::Vertex) {
+      Msg::Error("Boundary condition %s should be specified on faces "
+                 "for 3D zones and not on %s",
+                 bcName,cg_GridLocationName(location));
       return false;
     }
 
@@ -1309,21 +1321,29 @@ bool readCGNSBoundaryConditions(int fileIndex,
       Msg::Info("Boundary condition is linked to family %s",family);
     }
     
+
+
     classToName[classIndex] = bcName;
     
     switch (ptSetType) {
+    case ElementRange:
     case PointRange:
+    case PointRangeDonor:
       Msg::Info("Boundary condition %s is defined on %i %s",
-                bcName,elt[1]-elt[0]+1,gridLocationNameCGNS(location).c_str());
+                bcName,elt[1]-elt[0]+1,cg_GridLocationName(location));
       for (cgsize_t i=elt[0];i<=elt[1];i++) eltToClass[i] = classIndex;
       break;
+    case ElementList:
     case PointList:
+    case PointListDonor:
       Msg::Info("Boundary condition %s is defined on %i %s",
-                bcName,nbElts,gridLocationNameCGNS(location).c_str());
+                bcName,nbElts,cg_GridLocationName(location));
       for (cgsize_t i=0;i<nbElts;i++) eltToClass[elt[i]] = classIndex;
       break;
     default:
-      Msg::Error("Specification format of boundary conditions is currently not supported");
+      Msg::Error("Point set type %s is currently not supported "
+                 "for boundary conditions",
+                 cg_PointSetTypeName(ptSetType));
       break;
     }
   }
@@ -1340,7 +1360,6 @@ bool readCGNSPeriodicConnections(int fileIndex,
   
   int nbConn(0);
   cg_nconns(fileIndex,baseIndex,zoneIndex,&nbConn);	
-  
   
   for (int connIndex=0;connIndex<nbConn;connIndex++){ 
     
@@ -1392,6 +1411,7 @@ bool readCGNSPeriodicConnections(int fileIndex,
     delete [] srcPts;
     
   }
+  return true;
 }
 
 // -----------------------------------------------------------------------------
@@ -1573,7 +1593,6 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
     //     we can later add ijk here to allow for mixed meshes
 
     ZoneType_t zoneType;
-
     if (cg_zone_type(fileIndex,baseIndex,zoneIndex,&zoneType) != CG_OK) {
       Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
                  __FILE__,__LINE__,fileName.c_str(),cg_get_error());
@@ -1766,11 +1785,8 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
       
       delete [] elts;
     }
-    // 
-
-    readCGNSPeriodicConnections(fileIndex,baseIndex,zoneIndex,zoneName,zoneType,periodic);
-                                
-
+    
+    // readCGNSPeriodicConnections(fileIndex,baseIndex,zoneIndex,zoneName,zoneType,periodic);
   }
 
   for (std::map<ElementType_t,int*>::iterator rIter=renumbering.begin();
@@ -1781,7 +1797,19 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
   for(int i = 0; i < 10 ; i++) _storeElementsInEntities(eltMap[i]);
 
   createTopologyFromMeshNew();
-
+  
+  for (int zoneIndex=1;zoneIndex<=nbZones;zoneIndex++) {
+    cgsize_t sizes[3];
+    char zoneName[maxLenCGNS];
+    if (cg_zone_read(fileIndex,baseIndex,zoneIndex,zoneName,sizes) != CG_OK) {
+      Msg::Error("%s (%i) : Error reading CGNS file %s : %s",
+                 __FILE__,__LINE__,fileName.c_str(),cg_get_error());
+      return 0;
+    }
+    readCGNSPeriodicConnections(fileIndex,baseIndex,
+                                zoneIndex,zoneName,Unstructured,periodic);
+  }
+  
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertices);
 
