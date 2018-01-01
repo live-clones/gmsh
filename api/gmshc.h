@@ -157,9 +157,9 @@ GMSH_API void gmshModelGetBoundary(int * dimTags, size_t dimTags_n,
                                    int * ierr);
 
 /* Gets the (elementary) geometrical entities in the bounding box defined by
- * the two points (xmin, ymin, zmin) and (xmax, ymax, zmax). If `dim' is >= 0,
- * returns only the entities of the specified dimension (e.g. points if `dim'
- * == 0). */
+ * the two points (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If
+ * `dim' is >= 0, returns only the entities of the specified dimension (e.g.
+ * points if `dim' == 0). */
 GMSH_API void gmshModelGetEntitiesInBoundingBox(const double xmin,
                                                 const double ymin,
                                                 const double zmin,
@@ -170,8 +170,8 @@ GMSH_API void gmshModelGetEntitiesInBoundingBox(const double xmin,
                                                 const int dim,
                                                 int * ierr);
 
-/* Gets the bounding box (xmin, ymin, zmin), (xmax, ymax, zmax) of the
- * geometrical entity of dimension `dim' and tag `tag'. */
+/* Gets the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
+ * the geometrical entity of dimension `dim' and tag `tag'. */
 GMSH_API void gmshModelGetBoundingBox(const int dim,
                                       const int tag,
                                       double * xmin,
@@ -216,13 +216,13 @@ GMSH_API void gmshModelMeshGetLastVertexError(int ** vertexTags, size_t * vertex
 
 /* Gets the mesh vertices of the entity of dimension `dim' and `tag' tag. If
  * `tag' < 0, gets the vertices for all entities of dimension `dim'. If `dim'
- * and `tag' are negative, gets all the vertices in the mesh. `vertextags'
+ * and `tag' are negative, gets all the vertices in the mesh. `vertexTags'
  * contains the vertex tags (their unique, strictly positive identification
- * numbers). `coord` is a vector of length `3 * vertexTags.size()' that
- * contains the (x, y, z) coordinates of the vertices, concatenated. If `dim'
- * >= 0, `parametricCoord` contains the parametric coordinates of the
- * vertices, if available. The length of `parametricCoord` can be 0 or `dim *
- * vertexTags.size()'. */
+ * numbers). `coord' is a vector of length 3 times the length of `vertexTags'
+ * that contains the (x, y, z) coordinates of the vertices, concatenated. If
+ * `dim' >= 0, `parametricCoord' contains the parametric coordinates of the
+ * vertices, if available. The length of `parametricCoord' can be 0 or `dim'
+ * times the length of `vertexTags'. */
 GMSH_API void gmshModelMeshGetVertices(int ** vertexTags, size_t * vertexTags_n,
                                        double ** coord, size_t * coord_n,
                                        double ** parametricCoord, size_t * parametricCoord_n,
@@ -234,13 +234,13 @@ GMSH_API void gmshModelMeshGetVertices(int ** vertexTags, size_t * vertexTags_n,
  * `tag' < 0, gets the elements for all entities of dimension `dim'. If `dim'
  * and `tag' are negative, gets all the elements in the mesh. `elementTypes'
  * contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
- * the Gmsh reference manual). `elementTags' is a vector of length
- * `elementTypes.size()'; each entry is a vector containing the tags (unique,
+ * the Gmsh reference manual). `elementTags' is a vector of the same length as
+ * `elementTypes'; each entry is a vector containing the tags (unique,
  * strictly positive identifiers) of the elements of the corresponding type.
- * `vertexTags' is also a vector of length `elementTypes.size()'; each entry
- * is a vector of length equal to the number of elements of the given type
- * times the number of vertices for this type of element, that contains the
- * vertex tags of all the elements of the given type, concatenated. */
+ * `vertexTags' is also a vector of the same length as `elementTypes'; each
+ * entry is a vector of length equal to the number of elements of the given
+ * type times the number of vertices for this type of element, that contains
+ * the vertex tags of all the elements of the given type, concatenated. */
 GMSH_API void gmshModelMeshGetElements(int ** elementTypes, size_t * elementTypes_n,
                                        int *** elementTags, size_t ** elementTags_n, size_t *elementTags_nn,
                                        int *** vertexTags, size_t ** vertexTags_n, size_t *vertexTags_nn,
@@ -305,11 +305,11 @@ GMSH_API void gmshModelMeshGetIntegrationDataByType(const int elementType,
 
 /* Sets the mesh vertices in the geometrical entity of dimension `dim' and tag
  * `tag'. `vertextags' contains the vertex tags (their unique, strictly
- * positive identification numbers). `coord` is a vector of length `3 *
- * vertexTags.size()' that contains the (x, y, z) coordinates of the vertices,
- * concatenated. The optional `parametricCoord` vector contains the parametric
- * coordinates of the vertices, if any. The length of `parametricCoord` can be
- * 0 or `dim * vertexTags.size()'. */
+ * positive identification numbers). `coord' is a vector of length 3 times the
+ * length of `vertexTags' that contains the (x, y, z) coordinates of the
+ * vertices, concatenated. The optional `parametricCoord' vector contains the
+ * parametric coordinates of the vertices, if any. The length of
+ * `parametricCoord' can be 0 or `dim' times the length of `vertexTags'. */
 GMSH_API void gmshModelMeshSetVertices(const int dim,
                                        const int tag,
                                        int* vertexTags, size_t vertexTags_n,
@@ -319,13 +319,13 @@ GMSH_API void gmshModelMeshSetVertices(const int dim,
 
 /* Sets the mesh elements of the entity of dimension `dim' and `tag' tag.
  * `types' contains the MSH types of the elements (e.g. `2' for 3-node
- * triangles: see the Gmsh reference manual). `elementTags' is a vector of
- * length `types.size()'; each entry is a vector containing the tags (unique,
+ * triangles: see the Gmsh reference manual). `elementTags' is a vector of the
+ * same length as `types'; each entry is a vector containing the tags (unique,
  * strictly positive identifiers) of the elements of the corresponding type.
- * `vertexTags' is also a vector of length `types.size()'; each entry is a
- * vector of length equal to the number of elements of the give type times the
- * number of vertices per element, that contains the vertex tags of all the
- * elements of the given type, concatenated. */
+ * `vertexTags' is also a vector of the same length as `types'; each entry is
+ * a vector of length equal to the number of elements of the give type times
+ * the number of vertices per element, that contains the vertex tags of all
+ * the elements of the given type, concatenated. */
 GMSH_API void gmshModelMeshSetElements(const int dim,
                                        const int tag,
                                        int* types, size_t types_n,
@@ -1247,13 +1247,13 @@ GMSH_API void gmshViewGetTags(int ** tags, size_t * tags_n,
  * specifies the type of data, currently either "NodeData", "ElementData" or
  * "ElementNodeData". `step' specifies the identifier (>= 0) of the data in a
  * sequence. `tags' gives the tags of the vertices or elements in the mesh to
- * which the data is associated. `data' is a vector of length `tags.size()`:
- * each entry is the vector of double precision numbers representing the data
- * associated with the corresponding tag. The optional `time` argument
- * associate a time value with the data. `numComponents' gives the number of
- * data components (1 for scalar data, 3 for vector data, etc.) per entity; if
- * negative, it is automatically inferred (when possible) from the input data.
- * `partition' allows to specify data in several sub-sets. */
+ * which the data is associated. `data' is a vector of the same length as
+ * `tags': each entry is the vector of double precision numbers representing
+ * the data associated with the corresponding tag. The optional `time'
+ * argument associate a time value with the data. `numComponents' gives the
+ * number of data components (1 for scalar data, 3 for vector data, etc.) per
+ * entity; if negative, it is automatically inferred (when possible) from the
+ * input data. `partition' allows to specify data in several sub-sets. */
 GMSH_API void gmshViewAddModelData(const int tag,
                                    const int step,
                                    const char * modelName,
@@ -1325,13 +1325,13 @@ GMSH_API void gmshViewWrite(const int tag,
                             const int append,
                             int * ierr);
 
-/* Sets the numerical option `option` to the value `value' for plugin `name'. */
+/* Sets the numerical option `option' to the value `value' for plugin `name'. */
 GMSH_API void gmshPluginSetNumber(const char * name,
                                   const char * option,
                                   const double value,
                                   int * ierr);
 
-/* Sets the string option `option` to the value `value' for plugin `name'. */
+/* Sets the string option `option' to the value `value' for plugin `name'. */
 GMSH_API void gmshPluginSetString(const char * name,
                                   const char * option,
                                   const char * value,

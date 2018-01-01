@@ -151,9 +151,9 @@ namespace gmsh { // Top-level functions
                               const bool recursive = false);
 
     // Gets the (elementary) geometrical entities in the bounding box defined by
-    // the two points (xmin, ymin, zmin) and (xmax, ymax, zmax). If `dim' is >= 0,
-    // returns only the entities of the specified dimension (e.g. points if `dim'
-    // == 0).
+    // the two points (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If
+    // `dim' is >= 0, returns only the entities of the specified dimension (e.g.
+    // points if `dim' == 0).
     GMSH_API void getEntitiesInBoundingBox(const double xmin,
                                            const double ymin,
                                            const double zmin,
@@ -163,8 +163,8 @@ namespace gmsh { // Top-level functions
                                            gmsh::vector_pair & tags,
                                            const int dim = -1);
 
-    // Gets the bounding box (xmin, ymin, zmin), (xmax, ymax, zmax) of the
-    // geometrical entity of dimension `dim' and tag `tag'.
+    // Gets the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
+    // the geometrical entity of dimension `dim' and tag `tag'.
     GMSH_API void getBoundingBox(const int dim,
                                  const int tag,
                                  double & xmin,
@@ -205,13 +205,13 @@ namespace gmsh { // Top-level functions
 
       // Gets the mesh vertices of the entity of dimension `dim' and `tag' tag. If
       // `tag' < 0, gets the vertices for all entities of dimension `dim'. If `dim'
-      // and `tag' are negative, gets all the vertices in the mesh. `vertextags'
+      // and `tag' are negative, gets all the vertices in the mesh. `vertexTags'
       // contains the vertex tags (their unique, strictly positive identification
-      // numbers). `coord` is a vector of length `3 * vertexTags.size()' that
-      // contains the (x, y, z) coordinates of the vertices, concatenated. If `dim'
-      // >= 0, `parametricCoord` contains the parametric coordinates of the
-      // vertices, if available. The length of `parametricCoord` can be 0 or `dim *
-      // vertexTags.size()'.
+      // numbers). `coord' is a vector of length 3 times the length of `vertexTags'
+      // that contains the (x, y, z) coordinates of the vertices, concatenated. If
+      // `dim' >= 0, `parametricCoord' contains the parametric coordinates of the
+      // vertices, if available. The length of `parametricCoord' can be 0 or `dim'
+      // times the length of `vertexTags'.
       GMSH_API void getVertices(std::vector<int> & vertexTags,
                                 std::vector<double> & coord,
                                 std::vector<double> & parametricCoord,
@@ -222,13 +222,13 @@ namespace gmsh { // Top-level functions
       // `tag' < 0, gets the elements for all entities of dimension `dim'. If `dim'
       // and `tag' are negative, gets all the elements in the mesh. `elementTypes'
       // contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
-      // the Gmsh reference manual). `elementTags' is a vector of length
-      // `elementTypes.size()'; each entry is a vector containing the tags (unique,
+      // the Gmsh reference manual). `elementTags' is a vector of the same length
+      // as `elementTypes'; each entry is a vector containing the tags (unique,
       // strictly positive identifiers) of the elements of the corresponding type.
-      // `vertexTags' is also a vector of length `elementTypes.size()'; each entry
-      // is a vector of length equal to the number of elements of the given type
-      // times the number of vertices for this type of element, that contains the
-      // vertex tags of all the elements of the given type, concatenated.
+      // `vertexTags' is also a vector of the same length as `elementTypes'; each
+      // entry is a vector of length equal to the number of elements of the given
+      // type times the number of vertices for this type of element, that contains
+      // the vertex tags of all the elements of the given type, concatenated.
       GMSH_API void getElements(std::vector<int> & elementTypes,
                                 std::vector<std::vector<int> > & elementTags,
                                 std::vector<std::vector<int> > & vertexTags,
@@ -289,11 +289,11 @@ namespace gmsh { // Top-level functions
 
       // Sets the mesh vertices in the geometrical entity of dimension `dim' and
       // tag `tag'. `vertextags' contains the vertex tags (their unique, strictly
-      // positive identification numbers). `coord` is a vector of length `3 *
-      // vertexTags.size()' that contains the (x, y, z) coordinates of the
-      // vertices, concatenated. The optional `parametricCoord` vector contains the
+      // positive identification numbers). `coord' is a vector of length 3 times
+      // the length of `vertexTags' that contains the (x, y, z) coordinates of the
+      // vertices, concatenated. The optional `parametricCoord' vector contains the
       // parametric coordinates of the vertices, if any. The length of
-      // `parametricCoord` can be 0 or `dim * vertexTags.size()'.
+      // `parametricCoord' can be 0 or `dim' times the length of `vertexTags'.
       GMSH_API void setVertices(const int dim,
                                 const int tag,
                                 const std::vector<int> & vertexTags,
@@ -303,12 +303,12 @@ namespace gmsh { // Top-level functions
       // Sets the mesh elements of the entity of dimension `dim' and `tag' tag.
       // `types' contains the MSH types of the elements (e.g. `2' for 3-node
       // triangles: see the Gmsh reference manual). `elementTags' is a vector of
-      // length `types.size()'; each entry is a vector containing the tags (unique,
-      // strictly positive identifiers) of the elements of the corresponding type.
-      // `vertexTags' is also a vector of length `types.size()'; each entry is a
-      // vector of length equal to the number of elements of the give type times
-      // the number of vertices per element, that contains the vertex tags of all
-      // the elements of the given type, concatenated.
+      // the same length as `types'; each entry is a vector containing the tags
+      // (unique, strictly positive identifiers) of the elements of the
+      // corresponding type. `vertexTags' is also a vector of the same length as
+      // `types'; each entry is a vector of length equal to the number of elements
+      // of the give type times the number of vertices per element, that contains
+      // the vertex tags of all the elements of the given type, concatenated.
       GMSH_API void setElements(const int dim,
                                 const int tag,
                                 const std::vector<int> & types,
@@ -1169,9 +1169,9 @@ namespace gmsh { // Top-level functions
     // specifies the type of data, currently either "NodeData", "ElementData" or
     // "ElementNodeData". `step' specifies the identifier (>= 0) of the data in a
     // sequence. `tags' gives the tags of the vertices or elements in the mesh to
-    // which the data is associated. `data' is a vector of length `tags.size()`:
-    // each entry is the vector of double precision numbers representing the data
-    // associated with the corresponding tag. The optional `time` argument
+    // which the data is associated. `data' is a vector of the same length as
+    // `tags': each entry is the vector of double precision numbers representing
+    // the data associated with the corresponding tag. The optional `time' argument
     // associate a time value with the data. `numComponents' gives the number of
     // data components (1 for scalar data, 3 for vector data, etc.) per entity; if
     // negative, it is automatically inferred (when possible) from the input data.
@@ -1245,12 +1245,12 @@ namespace gmsh { // Top-level functions
 
   namespace plugin { // Plugin functions
 
-    // Sets the numerical option `option` to the value `value' for plugin `name'.
+    // Sets the numerical option `option' to the value `value' for plugin `name'.
     GMSH_API void setNumber(const std::string & name,
                             const std::string & option,
                             const double value);
 
-    // Sets the string option `option` to the value `value' for plugin `name'.
+    // Sets the string option `option' to the value `value' for plugin `name'.
     GMSH_API void setString(const std::string & name,
                             const std::string & option,
                             const std::string & value);
