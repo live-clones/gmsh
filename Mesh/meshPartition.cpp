@@ -239,9 +239,9 @@ class Graph
     for(unsigned int i = 0; i < _ne; i++){
       for(unsigned int j = _xadj[i]; j < _xadj[i+1]; j++){
         if(_partition[i] != _partition[_adjncy[j]]){
-          if(_element[i]->getDim() == _dim)
+          if(_element[i]->getDim() == (int)_dim)
             elements[_partition[i]].insert(_element[i]);
-          if(_element[_adjncy[j]]->getDim() == _dim)
+          if(_element[_adjncy[j]]->getDim() == (int)_dim)
             elements[_partition[_adjncy[j]]].insert(_element[_adjncy[j]]);
         }
       }
@@ -420,7 +420,7 @@ static int MakeGraph(GModel *const model, Graph &graph)
                                                         graph.vertex(it->second->getNum()-1)));
       }
     }
-    for(unsigned int i = 0; i < eindSize; i++){
+    for(int i = 0; i < eindSize; i++){
       std::map<int,int>::iterator it = correspondingVertices.find(graph.eind(i));
       if(it != correspondingVertices.end()){
         graph.eind(i,it->second);
@@ -468,7 +468,7 @@ static void createDualGraph(Graph &graph)
   for(unsigned int i = 0; i < graph.ne(); i++){
     unsigned int l = 0;
     for(unsigned int j = graph.eptr(i); j < graph.eptr(i+1); j++){
-      for(unsigned int k = nptr[graph.eind(j)]; k < nptr[graph.eind(j)+1]; k++){
+      for(int k = nptr[graph.eind(j)]; k < nptr[graph.eind(j)+1]; k++){
         if(nind[k] != i){
           if(marker[nind[k]] == 0) nbrs[l++] = nind[k];
           marker[nind[k]]++;
@@ -495,7 +495,7 @@ static void createDualGraph(Graph &graph)
   for(unsigned int i = 0; i < graph.ne(); i++){
     unsigned int l = 0;
     for(unsigned int j = graph.eptr(i); j < graph.eptr(i+1); j++){
-      for(unsigned int k = nptr[graph.eind(j)]; k < nptr[graph.eind(j)+1]; k++){
+      for(int k = nptr[graph.eind(j)]; k < nptr[graph.eind(j)+1]; k++){
         if(nind[k] != i){
           if (marker[nind[k]] == 0) nbrs[l++] = nind[k];
           marker[nind[k]]++;
@@ -627,7 +627,7 @@ static int PartitionGraph(Graph &graph)
 
     //Check and correct the topology
     for(unsigned int i = 0; i < graph.ne(); i++){
-      if(graph.element(i)->getDim() == graph.dim()) continue;
+      if(graph.element(i)->getDim() == (int)graph.dim()) continue;
 
       for(unsigned int j = graph.xadj(i); j < graph.xadj(i+1); j++){
         if(graph.element(graph.adjncy(j))->getDim() == graph.element(i)->getDim()+1){
@@ -758,7 +758,7 @@ static void setVerticesToEntity(GEntity *const entity,
                                 ITERATOR it_beg, ITERATOR it_end, bool inAllDim)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it){
-    for(unsigned int i = 0; i < (*it)->getNumVertices(); i++){
+    for(int i = 0; i < (*it)->getNumVertices(); i++){
       if((*it)->getVertex(i)->onWhat() == NULL){
         (*it)->getVertex(i)->setEntity(entity);
         entity->addMeshVertex((*it)->getVertex(i));
@@ -777,7 +777,7 @@ static void AssignMeshVertices(GModel *model, int dim = -1, bool inAllDim = fals
   if(dim == 0 || dim == -1){
     for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex(); ++it){
       for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
-        for(unsigned int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
+        for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
           (*it)->getMeshElement(i)->getVertex(j)->setEntity(NULL);
         }
       }
@@ -789,7 +789,7 @@ static void AssignMeshVertices(GModel *model, int dim = -1, bool inAllDim = fals
   if(dim == 1 || dim == -1){
     for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
       for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
-        for(unsigned int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
+        for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
           (*it)->getMeshElement(i)->getVertex(j)->setEntity(NULL);
         }
       }
@@ -801,7 +801,7 @@ static void AssignMeshVertices(GModel *model, int dim = -1, bool inAllDim = fals
   if(dim == 2 || dim == -1){
     for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
       for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
-        for(unsigned int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
+        for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
           (*it)->getMeshElement(i)->getVertex(j)->setEntity(NULL);
         }
       }
@@ -813,7 +813,7 @@ static void AssignMeshVertices(GModel *model, int dim = -1, bool inAllDim = fals
   if(dim == 3 || dim == -1){
     for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
       for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
-        for(unsigned int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
+        for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
           (*it)->getMeshElement(i)->getVertex(j)->setEntity(NULL);
         }
       }
@@ -858,7 +858,7 @@ static void AssignMeshVertices(GModel *model, int dim = -1, bool inAllDim = fals
 static void AssignMeshVerticesToEntity(GEntity *entity, bool inAllDim = false)
 {
   for(unsigned int i = 0; i < entity->getNumMeshElements(); i++){
-    for(unsigned int j = 0; j < entity->getMeshElement(i)->getNumVertices(); j++){
+    for(int j = 0; j < entity->getMeshElement(i)->getNumVertices(); j++){
       entity->getMeshElement(i)->getVertex(j)->setEntity(NULL);
     }
   }
@@ -1285,7 +1285,7 @@ static void fillit_(hashmapface &faceToElement,
                     ITERATOR it_beg, ITERATOR it_end)
 {
   for (ITERATOR it = it_beg; it != it_end ; ++it){
-    for(unsigned int i = 0; i < (*it)->getNumFaces(); i++){
+    for(int i = 0; i < (*it)->getNumFaces(); i++){
       faceToElement[(*it)->getFace(i)].push_back
         (std::pair<MElement*, std::vector<unsigned int> >(*it,partitions));
     }
@@ -1298,7 +1298,7 @@ static void fillit_(hashmapedge &edgeToElement,
                     ITERATOR it_beg, ITERATOR it_end)
 {
   for (ITERATOR it = it_beg; it != it_end; ++it){
-    for(unsigned int i = 0; i < (*it)->getNumEdges(); i++){
+    for(int i = 0; i < (*it)->getNumEdges(); i++){
       edgeToElement[(*it)->getEdge(i)].push_back
         (std::pair<MElement*, std::vector<unsigned int> >(*it,partitions));
     }
@@ -1311,7 +1311,7 @@ static void fillit_(hashmapvertex &vertexToElement,
                     ITERATOR it_beg, ITERATOR it_end)
 {
   for (ITERATOR it = it_beg; it != it_end ; ++it){
-    for(unsigned int i = 0; i < (*it)->getNumPrimaryVertices(); i++){
+    for(int i = 0; i < (*it)->getNumPrimaryVertices(); i++){
       vertexToElement[(*it)->getVertex(i)].push_back
         (std::pair<MElement*, std::vector<unsigned int> >(*it,partitions));
     }
@@ -1476,7 +1476,7 @@ static void assignPartitionBoundary(GModel *const model, MFace &me, MElement* re
   }
 
   int numFace = 0;
-  for(unsigned int i = 0; i < reference->getNumFaces(); i++){
+  for(int i = 0; i < reference->getNumFaces(); i++){
     if(reference->getFace(i) == me){
       numFace = i;
       break;
@@ -1569,7 +1569,7 @@ static void assignPartitionBoundary(GModel *const model, MEdge &me, MElement* re
   }
 
   int numEdge = 0;
-  for(unsigned int i = 0; i < reference->getNumEdges(); i++){
+  for(int i = 0; i < reference->getNumEdges(); i++){
     if(reference->getEdge(i) == me){
       numEdge = i;
       break;
@@ -2252,7 +2252,7 @@ static int computeOrientation(GEntity *parent, GEntity *child)
         int numFace = 0;
         MFace me = child->getMeshElement(0)->getFace(0);
 
-        for(unsigned int j = 0; j < element->getNumFaces(); j++){
+        for(int j = 0; j < element->getNumFaces(); j++){
           if(element->getFace(j) == me){
             numFace = j;
             break;
@@ -2268,7 +2268,7 @@ static int computeOrientation(GEntity *parent, GEntity *child)
         int numEdge = 0;
         MEdge me = child->getMeshElement(0)->getEdge(0);
 
-        for(unsigned int j = 0; j < element->getNumEdges(); j++){
+        for(int j = 0; j < element->getNumEdges(); j++){
           if(element->getEdge(j) == me){
             numEdge = j;
             break;
@@ -2443,13 +2443,13 @@ int PartitionMesh(GModel *const model)
 
 template <class ITERATOR>
 static void assignToParent(std::set<MVertex*> &verts, partitionRegion *region,
-                    ITERATOR it_beg, ITERATOR it_end)
+                           ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it){
     region->getParentEntity()->addElement((*it)->getType(), *it);
     (*it)->setPartition(0);
 
-    for(unsigned int i = 0; i < (*it)->getNumVertices(); i++){
+    for(int i = 0; i < (*it)->getNumVertices(); i++){
       if(verts.find((*it)->getVertex(i)) == verts.end()){
         (*it)->getVertex(i)->setEntity(region->getParentEntity());
         region->getParentEntity()->addMeshVertex((*it)->getVertex(i));
@@ -2461,13 +2461,13 @@ static void assignToParent(std::set<MVertex*> &verts, partitionRegion *region,
 
 template <class ITERATOR>
 static void assignToParent(std::set<MVertex*> &verts, partitionFace *face,
-                    ITERATOR it_beg, ITERATOR it_end)
+                           ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it){
     face->getParentEntity()->addElement((*it)->getType(), *it);
     (*it)->setPartition(0);
 
-    for(unsigned int i = 0; i < (*it)->getNumVertices(); i++){
+    for(int i = 0; i < (*it)->getNumVertices(); i++){
       if(verts.find((*it)->getVertex(i)) == verts.end()){
         (*it)->getVertex(i)->setEntity(face->getParentEntity());
         face->getParentEntity()->addMeshVertex((*it)->getVertex(i));
@@ -2479,13 +2479,13 @@ static void assignToParent(std::set<MVertex*> &verts, partitionFace *face,
 
 template <class ITERATOR>
 static void assignToParent(std::set<MVertex*> &verts, partitionEdge *edge,
-                    ITERATOR it_beg, ITERATOR it_end)
+                           ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it){
     edge->getParentEntity()->addLine(reinterpret_cast<MLine*>(*it));
     (*it)->setPartition(0);
 
-    for(unsigned int i = 0; i < (*it)->getNumVertices(); i++){
+    for(int i = 0; i < (*it)->getNumVertices(); i++){
       if(verts.find((*it)->getVertex(i)) == verts.end()){
         (*it)->getVertex(i)->setEntity(edge->getParentEntity());
         edge->getParentEntity()->addMeshVertex((*it)->getVertex(i));
@@ -2497,14 +2497,14 @@ static void assignToParent(std::set<MVertex*> &verts, partitionEdge *edge,
 
 template <class ITERATOR>
 static void assignToParent(std::set<MVertex*> &verts, partitionVertex *vertex,
-                    ITERATOR it_beg, ITERATOR it_end)
+                           ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it)
   {
     vertex->getParentEntity()->addPoint(reinterpret_cast<MPoint*>(*it));
     (*it)->setPartition(0);
 
-    for(unsigned int i = 0; i < (*it)->getNumVertices(); i++){
+    for(int i = 0; i < (*it)->getNumVertices(); i++){
       if(verts.find((*it)->getVertex(i)) == verts.end()){
         (*it)->getVertex(i)->setEntity(vertex->getParentEntity());
         vertex->getParentEntity()->addMeshVertex((*it)->getVertex(i));

@@ -53,7 +53,7 @@ static void readMSH4Physicals(GModel *const model, FILE* fp, GEntity *const enti
     }
     if(swap) SwapBytes((char*)phyTags, sizeof(int), numPhy);
 
-    for(int i = 0; i < numPhy; i++){
+    for(unsigned int i = 0; i < numPhy; i++){
       entity->addPhysicalEntity(phyTags[i]);
     }
     delete[] phyTags;
@@ -61,7 +61,7 @@ static void readMSH4Physicals(GModel *const model, FILE* fp, GEntity *const enti
   else
   {
     sscanf(str, "%lu %[0-9- ]", &numPhy, str);
-    for(int i = 0; i < numPhy; i++){
+    for(unsigned int i = 0; i < numPhy; i++){
       int phyTag = 0;
 
       if(sscanf(str, "%d %[0-9- ]", &phyTag, str) != 2){
@@ -94,7 +94,7 @@ static void readMSH4BoundingEntities(GModel *const model, FILE* fp, GEntity *con
     }
     if(swap) SwapBytes((char*)brepTags, sizeof(int), numBrep);
 
-    for(int i = 0; i < numBrep; i++){
+    for(unsigned int i = 0; i < numBrep; i++){
       GEntity *brep = model->getEntityByTag(entity->dim()-1, std::abs(brepTags[i]));
       if(brep == NULL){
         Msg::Warning("Entity %d not found in the Brep of entity %d",
@@ -108,10 +108,10 @@ static void readMSH4BoundingEntities(GModel *const model, FILE* fp, GEntity *con
   }
   else{
     sscanf(str, "%lu %[0-9- ]", &numBrep, str);
-    for(int i = 0; i < numBrep; i++){
+    for(unsigned int i = 0; i < numBrep; i++){
       int entityTag = 0;
 
-      if(i != numBrep-1){
+      if(i != numBrep - 1){
         if(sscanf(str, "%d %[0-9- ]", &entityTag, str) != 2){
           return;
         }
@@ -254,7 +254,7 @@ static void readMSH4Entities(GModel *const model, FILE* fp, bool partition,
     }
   }
   //Vertices
-  for(int i = 0; i < numVert; i++){
+  for(unsigned int i = 0; i < numVert; i++){
     int tag = 0;
     double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
     int parentTag = 0;
@@ -341,7 +341,7 @@ static void readMSH4Entities(GModel *const model, FILE* fp, bool partition,
   }
 
   // Edges
-  for(int i = 0; i < numEdges; i++){
+  for(unsigned int i = 0; i < numEdges; i++){
     int tag = 0;
     double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
     int parentTag = 0;
@@ -429,7 +429,7 @@ static void readMSH4Entities(GModel *const model, FILE* fp, bool partition,
     readMSH4BoundingEntities(model, fp, ge, binary, str, swap);
   }
   // Faces
-  for(int i = 0; i < numFaces; i++){
+  for(unsigned int i = 0; i < numFaces; i++){
     int tag = 0;
     double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
     int parentTag = 0;
@@ -518,7 +518,7 @@ static void readMSH4Entities(GModel *const model, FILE* fp, bool partition,
   }
 
   // Regions
-  for(int i = 0; i < numReg; i++){
+  for(unsigned int i = 0; i < numReg; i++){
     int tag = 0;
     double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
     int parentTag = 0;
@@ -634,7 +634,7 @@ static std::pair<int, MVertex*> *readMSH4Nodes(GModel *const model, FILE* fp,
   unsigned long minVertex = nbrNodes+1, maxVertex = 0;
   std::pair<int, MVertex*> *vertexCache = new std::pair<int, MVertex*>[nbrNodes];
   Msg::Info("%lu vertices", nbrNodes);
-  for(int i = 0; i < numBlock; i++){
+  for(unsigned int i = 0; i < numBlock; i++){
     int entityTag = 0, entityDim = 0;
     unsigned long numNodes = 0;
 
@@ -670,7 +670,7 @@ static std::pair<int, MVertex*> *readMSH4Nodes(GModel *const model, FILE* fp,
       return NULL;
     }
 
-    for(int j = 0; j < numNodes; j++){
+    for(unsigned int j = 0; j < numNodes; j++){
       double xyz[3];
       int nodeTag = 0;
       MVertex *vertex = NULL;
@@ -869,7 +869,7 @@ static std::pair<int, MElement*> *readMSH4Elements(GModel *const model, FILE* fp
   unsigned long minElement = nbrElements+1, maxElement = 0;
   std::pair<int, MElement*> *elementCache = new std::pair<int, MElement*>[nbrElements];
   Msg::Info("%lu elements", nbrElements);
-  for(int i = 0; i < numBlock; i++){
+  for(unsigned int i = 0; i < numBlock; i++){
     int entityTag = 0, entityDim = 0, elmType = 0;
     unsigned long numElements = 0;
 
@@ -919,8 +919,8 @@ static std::pair<int, MElement*> *readMSH4Elements(GModel *const model, FILE* fp
       if(swap) SwapBytes((char*)data, sizeof(int), numElements*(nbrVertices+1));
 
       std::vector<MVertex*> vertices(nbrVertices, NULL);
-      for(unsigned int j = 0; j < numElements*(nbrVertices+1); j+=(nbrVertices+1)){
-        for(unsigned int k = 0; k < nbrVertices; k++){
+      for(unsigned int j = 0; j < numElements*(nbrVertices+1); j += (nbrVertices+1)){
+        for(int k = 0; k < nbrVertices; k++){
           vertices[k] = model->getMeshVertexByTag(data[j+k+1]);
           if(vertices[k] == NULL){
             Msg::Error("Unknown vertex %d in element %d", data[j+k+1], data[j]);
@@ -948,7 +948,7 @@ static std::pair<int, MElement*> *readMSH4Elements(GModel *const model, FILE* fp
       delete[] data;
     }
     else{
-      for(int j = 0; j < numElements; j++){
+      for(unsigned int j = 0; j < numElements; j++){
         int elmTag = 0;
         if(fscanf(fp, "%d %[0-9- ]", &elmTag, str) != 2){
           fclose(fp);
@@ -1133,7 +1133,7 @@ static void readMSH4PeriodicNodes(GModel *const model, FILE* fp,
       }
     }
 
-    for(unsigned long j = 0; j < correspondingVertexSize; j++){
+    for(long j = 0; j < correspondingVertexSize; j++){
       int v1 = 0, v2 = 0;
       if(binary){
         int data[2];
@@ -1263,7 +1263,7 @@ int GModel::_readMSH4(const std::string &name)
           _vertexVectorCache.resize(nbrNodes+1, NULL);
           _vertexVectorCache[0] = 0;
 
-          for(int i = 0; i < nbrNodes; i++){
+          for(unsigned int i = 0; i < nbrNodes; i++){
             if(_vertexVectorCache[vertexCache[i].first] == NULL){
               _vertexVectorCache[vertexCache[i].first] = vertexCache[i].second;
             }
@@ -1273,7 +1273,7 @@ int GModel::_readMSH4(const std::string &name)
           }
         }
         else{
-          for(int i = 0; i < nbrNodes; i++){
+          for(unsigned int i = 0; i < nbrNodes; i++){
             if(_vertexMapCache.count(vertexCache[i].first) == 0){
               _vertexMapCache[vertexCache[i].first] = vertexCache[i].second;
             }
@@ -1302,7 +1302,7 @@ int GModel::_readMSH4(const std::string &name)
           _vertexVectorCache.resize(nbrNodes+1, NULL);
           _vertexVectorCache[0] = 0;
 
-          for(int i = 0; i < nbrNodes; i++){
+          for(unsigned int i = 0; i < nbrNodes; i++){
             if(_vertexVectorCache[vertexCache[i].first] == NULL){
               _vertexVectorCache[vertexCache[i].first] = vertexCache[i].second;
             }
@@ -1312,7 +1312,7 @@ int GModel::_readMSH4(const std::string &name)
           }
         }
         else{
-          for(int i = 0; i < nbrNodes; i++){
+          for(unsigned int i = 0; i < nbrNodes; i++){
             if(_vertexMapCache.count(vertexCache[i].first) == 0){
               _vertexMapCache[vertexCache[i].first] = vertexCache[i].second;
             }
@@ -1339,7 +1339,7 @@ int GModel::_readMSH4(const std::string &name)
           _elementVectorCache.resize(nbrElements+1, NULL);
           _elementVectorCache[0] = 0;
 
-          for(int i = 0; i < nbrElements; i++){
+          for(unsigned int i = 0; i < nbrElements; i++){
             if(_elementVectorCache[elementCache[i].first] == NULL){
               _elementVectorCache[elementCache[i].first] = elementCache[i].second;
             }
@@ -1349,7 +1349,7 @@ int GModel::_readMSH4(const std::string &name)
           }
         }
         else{
-          for(int i = 0; i < nbrElements; i++){
+          for(unsigned int i = 0; i < nbrElements; i++){
             if(_elementMapCache.count(elementCache[i].first) == 0){
               _elementMapCache[elementCache[i].first] = elementCache[i].second;
             }
@@ -1855,7 +1855,7 @@ static unsigned long getAdditionalEntities(std::set<GRegion*, GEntityLessThan> &
       it != edges.end(); ++it){
     numVertices += (*it)->getNumMeshVertices();
     for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
-      for(unsigned int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
+      for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
         if((*it)->getMeshElement(i)->getVertex(j)->onWhat() != (*it)){
           GEntity *entity = (*it)->getMeshElement(i)->getVertex(j)->onWhat();
 
@@ -1896,7 +1896,7 @@ static unsigned long getAdditionalEntities(std::set<GRegion*, GEntityLessThan> &
       it != faces.end(); ++it){
     numVertices += (*it)->getNumMeshVertices();
     for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
-      for(unsigned int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
+      for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
         if((*it)->getMeshElement(i)->getVertex(j)->onWhat() != (*it)){
           GEntity *entity = (*it)->getMeshElement(i)->getVertex(j)->onWhat();
 
@@ -1937,7 +1937,7 @@ static unsigned long getAdditionalEntities(std::set<GRegion*, GEntityLessThan> &
       it != regions.end(); ++it){
     numVertices += (*it)->getNumMeshVertices();
     for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
-      for(unsigned int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
+      for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
         if((*it)->getMeshElement(i)->getVertex(j)->onWhat() != (*it)){
           GEntity *entity = (*it)->getMeshElement(i)->getVertex(j)->onWhat();
 
@@ -2241,7 +2241,7 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
       int *elementData = new int[it->second.size()*(nbrVertices+1)];
       for(unsigned int i = 0; i < it->second.size()*(nbrVertices+1); i+=(nbrVertices+1)){
         elementData[i] = it->second[indexElement]->getNum();
-        for(unsigned int j = 0; j < nbrVertices; j++){
+        for(int j = 0; j < nbrVertices; j++){
           elementData[i+1+j] = it->second[indexElement]->getVertex(j)->getNum();
         }
         indexElement++;
@@ -2415,15 +2415,15 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
                                   bool binary, bool saveAll, bool saveParametric,
                                   double scalingFactor)
 {
-  for(int i = 0; i < getNumPartitions(); i++){
+  for(unsigned int i = 0; i < getNumPartitions(); i++){
     // Create a temporitary model
     GModel *tmp = new GModel();
     for(GModel::piter it = this->firstPhysicalName(); it != this->lastPhysicalName(); ++it){
       tmp->setPhysicalName(it->second, it->first.first, it->first.second);
     }
 
-    for(int i = 0; i < getNumPartitions(); i++){
-      tmp->meshPartitions.insert(i);
+    for(unsigned int j = 0; j < getNumPartitions(); j++){
+      tmp->meshPartitions.insert(j);
     }
 
     std::vector<GEntity*> entities;

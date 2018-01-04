@@ -924,39 +924,28 @@ static bool improved_translate(GFace* gf,MVertex* vertex,SVector3& v1,SVector3& 
 
 static void directions_storage(GFace* gf)
 {
-  bool ok;
-  unsigned int i;
-  int j;
-  MVertex* vertex;
-  MElement* element;
-  SPoint2 point;
-  SVector3 v1;
-  SVector3 v2;
-  MElementOctree* octree;
   std::set<MVertex*> vertices;
-  std::set<MVertex*>::iterator it;
-
-  vertices.clear();
-
-  for(i=0;i<gf->getNumMeshElements();i++){
-    element = gf->getMeshElement(i);
-    for(j=0;j<element->getNumVertices();j++){
-      vertex = element->getVertex(j);
+  for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
+    MElement* element = gf->getMeshElement(i);
+    for(int j = 0; j < element->getNumVertices(); j++){
+      MVertex *vertex = element->getVertex(j);
       vertices.insert(vertex);
     }
   }
 
   backgroundMesh::set(gf);
-  octree = backgroundMesh::current()->get_octree();
 
   gf->storage1.clear();
   gf->storage2.clear();
   gf->storage3.clear();
   gf->storage4.clear();
 
-  for(it=vertices.begin();it!=vertices.end();it++){
-    ok = improved_translate(gf,*it,v1,v2);
-
+  for(std::set<MVertex*>::iterator it = vertices.begin();
+      it != vertices.end(); it++){
+    SPoint2 point;
+    SVector3 v1;
+    SVector3 v2;
+    bool ok = improved_translate(gf,*it,v1,v2);
     if(ok){
       gf->storage1.push_back(SPoint3((*it)->x(),(*it)->y(),(*it)->z()));
       gf->storage2.push_back(v1);

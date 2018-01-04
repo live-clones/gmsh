@@ -691,8 +691,8 @@ void backgroundMesh::print(const std::string &filename, GFace *gf,
   fclose(f);
 }
 
-MElementOctree* backgroundMesh::get_octree(){
-
+MElementOctree* backgroundMesh::get_octree()
+{
   return _octree;
 }
 
