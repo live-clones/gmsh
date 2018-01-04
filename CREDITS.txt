@@ -29,8 +29,8 @@ Henrotte (onelab metamodels), Sebastian Eiser (PGF output), Alexis Salzman
 comments in the sources for more information. If we forgot to list your
 contributions please send us an email!
 
-The TetGen/BR code (Mesh/tetgenBR.{cpp,h}) is copyright (c) 2016 Hang Si, Weierstrass
-Institute for Applied Analysis and Stochatics.
+The TetGen/BR code (Mesh/tetgenBR.{cpp,h}) is copyright (c) 2016 Hang Si,
+Weierstrass Institute for Applied Analysis and Stochatics.
 
 The AVL tree code (Common/avl.{cpp,h}) and the YUV image code
 (Graphics/gl2yuv.{cpp,h}) are copyright (C) 1988-1993, 1995 The Regents of the
@@ -101,38 +101,34 @@ codes in the contrib/ directory, each governed by their own license:
 * contrib/MathEx based in part on the work of the SSCILIB Library, copyright (C)
   2000-2003 Sadao Massago;
 
-* contrib/Metis written by George Karypis (karypis at cs.umn.edu), copyright (C)
-  1998 Regents of the University of Minnesota;
+* contrib/metis written by George Karypis (karypis at cs.umn.edu), copyright (C)
+  1995-2013 Regents of the University of Minnesota;
 
 * contrib/mpeg_encode copyright (c) 1995 The Regents of the University of
   California;
 
-* contrib/Netgen subdirectory copyright (C) 1994-2004 Joachim Sch"oberl;
+* contrib/Netgen copyright (C) 1994-2004 Joachim Sch"oberl;
 
-* contrib/Tetgen1.5 subdirectory) copyright (C) 2002-2007 Hang Si;
+* contrib/Tetgen1.5 copyright (C) 2002-2007 Hang Si;
 
-* contrib/bamg subdirectory) from Freefem++ copyright (C) Frederic Hecht;
+* contrib/bamg from Freefem++ copyright (C) Frederic Hecht;
 
-* contrib/lbfgs subdirectory) (C) Sergey Bochkanov (ALGLIB project);
+* contrib/lbfgs (C) Sergey Bochkanov (ALGLIB project);
 
-* contrib/mmg3d subdirectory) from MMG3D Version 4.0 (C) 2004-2011 Cecile
-  Dobrzynski and Pascal Frey (IPB - UPMC - INRIA);
+* contrib/mmg3d from MMG3D Version 4.0 (C) 2004-2011 Cecile Dobrzynski and
+  Pascal Frey (IPB - UPMC - INRIA);
 
-* contrib/blossom subdirectory) copyright (C) 1995-1997 Bill Cook et al.;
+* contrib/blossom copyright (C) 1995-1997 Bill Cook et al.;
 
-* contrib/bamg subdirectory) from Freefem++ copyright (C) Frederic Hecht;
+* contrib/bamg from Freefem++ copyright (C) Frederic Hecht;
 
-* contrib/taucs subdirectory) from TAUCS Version 2.0, November 29, 2001,
-  Copyright (c) 2001, 2002, 2003 by Sivan Toledo, Tel-Aviv Univesity,
-  stoledo@tau.ac.il. All Rights Reserved.
+* contrib/voro++ from Voro++ Copyright (c) 2008, The Regents of the University
+  of California, through Lawrence Berkeley National Laboratory (subject to
+  receipt of any required approvals from the U.S. Dept. of Energy). All rights
+  reserved;
 
-* contrib/voro++ subdirectory) from Voro++ Copyright (c) 2008, The Regents of
-  the University of California, through Lawrence Berkeley National Laboratory
-  (subject to receipt of any required approvals from the U.S. Dept. of
-  Energy). All rights reserved;
-
-* contrib/zipper subdirectory) from MiniZip - Copyright (c) 1998-2010 - by
-  Gilles Vollant - version 1.1 64 bits from Mathias Svensson.
+* contrib/zipper from MiniZip - Copyright (c) 1998-2010 - by Gilles Vollant -
+  version 1.1 64 bits from Mathias Svensson.
 
 Check the configuration options to see which has been enabled.
 
