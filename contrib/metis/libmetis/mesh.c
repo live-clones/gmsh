@@ -258,15 +258,11 @@ idx_t FindCommonElements(idx_t qid, idx_t elen, idx_t *eind, idx_t *nptr,
   marker[qid] = 0;
 
   /* compact the list to contain only those with at least ncommon nodes */
-  /*
-   * (elen-1 != 0 ? elen-1 : 1) and (eptr[l+1]-eptr[l]-1 != 0 ? eptr[l+1]-eptr[l]-1 : 1 )
-   * is a modification done by Anthony Royer
-   */
   for (j=0, i=0; i<k; i++) {
     overlap = marker[l = nbrs[i]];
     if (overlap >= ncommon || 
-        overlap >= (elen-1 != 0 ? elen-1 : 1) ||
-        overlap >= (eptr[l+1]-eptr[l]-1 != 0 ? eptr[l+1]-eptr[l]-1 : 1) )
+        overlap >= elen-1 || 
+        overlap >= eptr[l+1]-eptr[l]-1)
       nbrs[j++] = l;
     marker[l] = 0;
   }
