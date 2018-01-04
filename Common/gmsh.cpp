@@ -664,7 +664,7 @@ static void _storeIntegrationData(const int elementType,
     for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
       MElement *e = ge->getMeshElement(j);
       if(e->getTypeForMSH() == elementType){
-        for(unsigned int k = 0; k < weights.size(); k++){
+        for(int k = 0; k < weights.size(); k++){
           SPoint3 p;
           e->pnt(pts(k, 0), pts(k, 1), pts(k, 2), p);
           intData.push_back(p.x());
@@ -696,7 +696,7 @@ static void _storeIntegrationData(const int elementType,
     int n = basis->getNumShapeFunctions();
     fsData.resize(n * fsNumComp * nq, 0.);
     double s[1256], ds[1256][3];
-    for(unsigned int i = 0; i < nq; i++){
+    for(int i = 0; i < nq; i++){
       double u = pts(i, 0), v = pts(i, 1), w = pts(i, 2);
       switch(fsNumComp){
       case 1:

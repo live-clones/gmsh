@@ -14,21 +14,30 @@ private:
   std::vector<unsigned int> _partitions;
   GFace *_parentEntity;
 public:
-  partitionFace(GModel *model, int num, const std::vector<unsigned int> &partitions) : discreteFace(model, num), _partitions(partitions), _parentEntity(NULL) {}
-  partitionFace(GModel *model, int num) : discreteFace(model, num), _partitions(), _parentEntity(NULL) {}
+  partitionFace(GModel *model, int num, const std::vector<unsigned int> &partitions)
+    : discreteFace(model, num), _partitions(partitions), _parentEntity(NULL) {}
+  partitionFace(GModel *model, int num)
+    : discreteFace(model, num), _partitions(), _parentEntity(NULL) {}
   virtual ~partitionFace() {}
   virtual GeomType geomType() const { return PartitionSurface; }
-  
   virtual void setParentEntity(GFace* f) { _parentEntity = f; }
   virtual GFace* getParentEntity() const { return _parentEntity; }
-  
-  virtual void setPartition(std::vector<unsigned int> &partitions) { _partitions = partitions; }
-  virtual const std::vector<unsigned int>& getPartitions() const { return _partitions; }
-  virtual unsigned int getPartition(unsigned int index) const { return _partitions[index]; }
+  virtual void setPartition(std::vector<unsigned int> &partitions)
+  {
+    _partitions = partitions;
+  }
+  virtual const std::vector<unsigned int>& getPartitions() const
+  {
+    return _partitions;
+  }
+  virtual unsigned int getPartition(unsigned int index) const
+  {
+    return _partitions[index];
+  }
   virtual unsigned int numPartitions() const { return _partitions.size(); }
 };
 
-struct Less_partitionFace : 
+struct Less_partitionFace :
   public std::binary_function<partitionFace*, partitionFace*, bool> {
   bool operator()(const partitionFace* e1, const partitionFace* e2) const
   {

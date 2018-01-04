@@ -14,17 +14,26 @@ private:
   std::vector<unsigned int> _partitions;
   GRegion *_parentEntity;
 public:
-  partitionRegion(GModel *model, int num, const std::vector<unsigned int> &partitions) : discreteRegion(model, num), _partitions(partitions), _parentEntity(NULL) {}
-  partitionRegion(GModel *model, int num) : discreteRegion(model, num), _partitions(), _parentEntity(NULL) {}
+  partitionRegion(GModel *model, int num, const std::vector<unsigned int> &partitions) :
+    discreteRegion(model, num), _partitions(partitions), _parentEntity(NULL) {}
+  partitionRegion(GModel *model, int num)
+    : discreteRegion(model, num), _partitions(), _parentEntity(NULL) {}
   virtual ~partitionRegion() {}
   virtual GeomType geomType() const { return PartitionVolume; }
-  
   virtual void setParentEntity(GRegion* r) { _parentEntity = r; }
   virtual GRegion* getParentEntity() const { return _parentEntity; }
-  
-  virtual void setPartition(std::vector<unsigned int> &partitions) { _partitions = partitions; }
-  virtual const std::vector<unsigned int>& getPartitions() const { return _partitions; }
-  virtual unsigned int getPartition(unsigned int index) const { return _partitions[index]; }
+  virtual void setPartition(std::vector<unsigned int> &partitions)
+  {
+    _partitions = partitions;
+  }
+  virtual const std::vector<unsigned int>& getPartitions() const
+  {
+    return _partitions;
+  }
+  virtual unsigned int getPartition(unsigned int index) const
+  {
+    return _partitions[index];
+  }
   virtual unsigned int numPartitions() const { return _partitions.size(); }
 };
 
