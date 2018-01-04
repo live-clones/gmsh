@@ -150,24 +150,25 @@ void GVertex::relocateMeshVertices()
 void GVertex::addElement(int type, MElement *e)
 {
   switch (type){
-    case TYPE_PNT:
-      addPoint(reinterpret_cast<MPoint*>(e));
-      break;
-    default:
-      Msg::Error("Trying to add unsupported element in vertex");
+  case TYPE_PNT:
+    addPoint(reinterpret_cast<MPoint*>(e));
+    break;
+  default:
+    Msg::Error("Trying to add unsupported element in vertex");
   }
 }
 
 void GVertex::removeElement(int type, MElement *e)
 {
   switch (type){
-    case TYPE_PNT:
+  case TYPE_PNT:
     {
-      std::vector<MPoint*>::iterator it = std::find(points.begin(), points.end(), reinterpret_cast<MPoint*>(e));
+      std::vector<MPoint*>::iterator it = std::find
+        (points.begin(), points.end(), reinterpret_cast<MPoint*>(e));
       if(it != points.end()) points.erase(it);
     }
-      break;
-    default:
-      Msg::Error("Trying to remove unsupported element in vertex");
+    break;
+  default:
+    Msg::Error("Trying to remove unsupported element in vertex");
   }
 }

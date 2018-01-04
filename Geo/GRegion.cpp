@@ -481,43 +481,49 @@ void GRegion::addElement(int type, MElement *e)
 void GRegion::removeElement(int type, MElement *e)
 {
   switch (type){
-    case TYPE_TET:
+  case TYPE_TET:
     {
-      std::vector<MTetrahedron*>::iterator it = std::find(tetrahedra.begin(), tetrahedra.end(), reinterpret_cast<MTetrahedron*>(e));
+      std::vector<MTetrahedron*>::iterator it = std::find
+        (tetrahedra.begin(), tetrahedra.end(), reinterpret_cast<MTetrahedron*>(e));
       if(it != tetrahedra.end()) tetrahedra.erase(it);
     }
-      break;
-    case TYPE_HEX:
+    break;
+  case TYPE_HEX:
     {
-      std::vector<MHexahedron*>::iterator it = std::find(hexahedra.begin(), hexahedra.end(), reinterpret_cast<MHexahedron*>(e));
+      std::vector<MHexahedron*>::iterator it = std::find
+        (hexahedra.begin(), hexahedra.end(), reinterpret_cast<MHexahedron*>(e));
       if(it != hexahedra.end()) hexahedra.erase(it);
     }
-      break;
-    case TYPE_PRI:
+    break;
+  case TYPE_PRI:
     {
-      std::vector<MPrism*>::iterator it = std::find(prisms.begin(), prisms.end(), reinterpret_cast<MPrism*>(e));
+      std::vector<MPrism*>::iterator it = std::find
+        (prisms.begin(), prisms.end(), reinterpret_cast<MPrism*>(e));
       if(it != prisms.end()) prisms.erase(it);
     }
-      break;
-    case TYPE_PYR:
+    break;
+  case TYPE_PYR:
     {
-      std::vector<MPyramid*>::iterator it = std::find(pyramids.begin(), pyramids.end(), reinterpret_cast<MPyramid*>(e));
+      std::vector<MPyramid*>::iterator it = std::find
+        (pyramids.begin(), pyramids.end(), reinterpret_cast<MPyramid*>(e));
       if(it != pyramids.end()) pyramids.erase(it);
     }
-      break;
-    case TYPE_TRIH:
+    break;
+  case TYPE_TRIH:
     {
-      std::vector<MTrihedron*>::iterator it = std::find(trihedra.begin(), trihedra.end(), reinterpret_cast<MTrihedron*>(e));
+      std::vector<MTrihedron*>::iterator it = std::find
+        (trihedra.begin(), trihedra.end(), reinterpret_cast<MTrihedron*>(e));
       if(it != trihedra.end()) trihedra.erase(it);
     }
-      break;
-    case TYPE_POLYH:
+    break;
+  case TYPE_POLYH:
     {
-      std::vector<MPolyhedron*>::iterator it = std::find(polyhedra.begin(), polyhedra.end(), reinterpret_cast<MPolyhedron*>(e));
+      std::vector<MPolyhedron*>::iterator it = std::find
+        (polyhedra.begin(), polyhedra.end(), reinterpret_cast<MPolyhedron*>(e));
       if(it != polyhedra.end()) polyhedra.erase(it);
     }
-      break;
-    default:
-      Msg::Error("Trying to remove unsupported element in region");
+    break;
+  default:
+    Msg::Error("Trying to remove unsupported element in region");
   }
 }

@@ -469,7 +469,7 @@ static void createDualGraph(Graph &graph)
     unsigned int l = 0;
     for(unsigned int j = graph.eptr(i); j < graph.eptr(i+1); j++){
       for(int k = nptr[graph.eind(j)]; k < nptr[graph.eind(j)+1]; k++){
-        if(nind[k] != i){
+        if(nind[k] != (int)i){
           if(marker[nind[k]] == 0) nbrs[l++] = nind[k];
           marker[nind[k]]++;
         }
@@ -496,7 +496,7 @@ static void createDualGraph(Graph &graph)
     unsigned int l = 0;
     for(unsigned int j = graph.eptr(i); j < graph.eptr(i+1); j++){
       for(int k = nptr[graph.eind(j)]; k < nptr[graph.eind(j)+1]; k++){
-        if(nind[k] != i){
+        if(nind[k] != (int)i){
           if (marker[nind[k]] == 0) nbrs[l++] = nind[k];
           marker[nind[k]]++;
         }
@@ -943,10 +943,10 @@ static void fillConnectedElements(std::vector< std::set<MElement*> > &connectedE
 static void CreateNewEntities(GModel *const model,
                               hashmap<MElement*, unsigned int> &elmToPartition)
 {
-  std::set<GRegion*, GEntityLessThan> regions = model->getGRegions();
-  std::set<GFace*, GEntityLessThan> faces = model->getGFaces();
-  std::set<GEdge*, GEntityLessThan> edges = model->getGEdges();
-  std::set<GVertex*, GEntityLessThan> vertices = model->getGVertices();
+  std::set<GRegion*, GEntityLessThan> regions = model->getRegions();
+  std::set<GFace*, GEntityLessThan> faces = model->getFaces();
+  std::set<GEdge*, GEntityLessThan> edges = model->getEdges();
+  std::set<GVertex*, GEntityLessThan> vertices = model->getVertices();
 
   for(GModel::const_riter it = regions.begin(); it != regions.end(); ++it){
     std::vector<GRegion *> newRegions(model->getNumPartitions(), NULL);
@@ -2638,12 +2638,12 @@ int UnpartitionMesh(GModel *const model)
 
   model->recomputeMeshPartitions();
 
-  std::map<std::pair<int, int>, std::string> physicalNames = model->getAllPhysical();
+  std::map<std::pair<int, int>, std::string> physicalNames = model->getPhysicalNames();
   for(GModel::piter it = physicalNames.begin(); it != physicalNames.end(); ++it){
     std::string name = it->second;
 
     if(name[0] == '_'){
-      model->erasePhysicalGroup(it->first.first, it->first.second);
+      model->removePhysicalGroup(it->first.first, it->first.second);
     }
   }
 

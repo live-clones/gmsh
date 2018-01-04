@@ -2535,7 +2535,7 @@ std::string getSubstr(GModel* model, GEntity* entity)
   return substr;
 }
 
-int GModel::partitionedTopology(std::string &name)
+int GModel::writePartitionedTopology(std::string &name)
 {
   std::multimap<unsigned int, GEntity*> omega;
   std::multimap<unsigned int, GEntity*> sigma;

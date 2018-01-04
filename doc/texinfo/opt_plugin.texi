@@ -910,13 +910,20 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(NewView)
-Plugin(NewView) creates a new view from a mesh.The parameter `Dimension' gives the dimensionof the initialized to zero NodeData vector
+Plugin(NewView) creates a new model-based view from the current mesh, with `NumComp' field components.@*
+@*
+If `ViewTag' is positive, force that tag for the created view.
+String options:
+@table @code
+@item Type
+Default value: @code{"NodeData"}
+@end table
 Numeric options:
 @table @code
-@item View
-Default value: @code{-1}
-@item Dimension
+@item NumComp
 Default value: @code{1}
+@item ViewTag
+Default value: @code{-1}
 @end table
 
 @item Plugin(Particles)
@@ -1218,18 +1225,6 @@ Default value: @code{0}
 @item View
 Default value: @code{-1}
 @item OtherView
-Default value: @code{-1}
-@end table
-
-@item Plugin(Tetrahedralize)
-Plugin(Tetrahedralize) tetrahedralizes the points in the view `View'.@*
-@*
-If `View' < 0, the plugin is run on the current view.@*
-@*
-Plugin(Tetrahedralize) creates one new view.
-Numeric options:
-@table @code
-@item View
 Default value: @code{-1}
 @end table
 

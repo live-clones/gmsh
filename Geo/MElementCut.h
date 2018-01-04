@@ -176,8 +176,10 @@ class MPolyhedron : public MElement {
       for(int j = 0; j < 4; j++)
         verts[i * 4 + j] = _parts[i]->getVertex(j)->getIndex();
   }
-  // Return the number of nodes that this element must have with the other in order to put an edge between them in the dual graph used during the partitioning.
-  virtual int numCommonNodesInDualGraph(const MElement *const other) const { return 1; }
+  virtual int numCommonNodesInDualGraph(const MElement *const other) const
+  {
+    return 1;
+  }
 };
 
 class MPolygon : public MElement {
@@ -323,8 +325,10 @@ class MPolygon : public MElement {
       for(int j = 0; j < 3; j++)
         verts[i * 3 + j] = _parts[i]->getVertex(j)->getIndex();
   }
-  // Return the number of nodes that this element must have with the other in order to put an edge between them in the dual graph used during the partitioning.
-  virtual int numCommonNodesInDualGraph(const MElement *const other) const { return 1; }
+  virtual int numCommonNodesInDualGraph(const MElement *const other) const
+  {
+    return 1;
+  }
 };
 
 class MLineChild : public MLine {

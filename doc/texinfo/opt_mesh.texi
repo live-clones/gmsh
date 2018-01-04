@@ -11,7 +11,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Algorithm3D
 3D mesh algorithm (1=Delaunay, 2=New Delaunay, 4=Frontal, 5=Frontal Delaunay, 6=Frontal Hex, 7=MMG3D, 9=R-tree)@*
-Default value: @code{1}@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.AngleSmoothNormals
@@ -196,7 +196,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LightTwoSide
 Light both sides of surfaces (leads to slower rendering)@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Lines
@@ -235,18 +235,18 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MetisAlgorithm
-METIS partitioning algorithm (1=Recursive, 2=K-way, 3=Nodal weight)@*
+METIS partitioning algorithm (1=Recursive, 2=K-way)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MetisEdgeMatching
-(Adv. METIS): Determines the matching type (1=Random, 2=Heavy-Edge, 3=Sorted Heavy-Edge)@*
-Default value: @code{3}@*
+(Adv. METIS): Determines the matching type (1=Random, 2=Sorted Heavy-Edge)@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MetisRefinementAlgorithm
-(Adv. METIS): Algorithm for k-way refinement (1=Random, 2=Greedy, 3=Random with minimized connectivity)@*
-Default value: @code{3}@*
+(Adv. METIS): Algorithm for k-way refinement (1=FM-based cut, 2=Greedy, 3=Two-sided node FM, 4=One-sided node FM)@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MinimumCirclePoints
@@ -262,11 +262,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.MshFileVersion
 Version of the MSH file format to use@*
 Default value: @code{2.2}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.MshFilePartitioned
-Split MSH file by mesh partition (0: no, 1: yes, 2: create physicals by partition)@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionHexWeight
@@ -300,8 +295,23 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionTriWeight
-Weight of triangle for METIS load balancing@*
+Weight of triangle element for METIS load balancing@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionBoundaries
+Create boundary entities between partitions@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionMeshes
+Write one mesh file by partition@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionTopology
+Write a topology file@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.NbHexahedra
@@ -316,7 +326,7 @@ Saved in: @code{-}
 
 @item Mesh.NbPartitions
 Number of partitions@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.NbPrisms
@@ -377,11 +387,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.OptimizeNetgen
 Optimize the mesh using Netgen to improve the quality of tetrahedral elements@*
 Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.Partitioner
-Partitioner software (1=Chacho, 2=METIS)@*
-Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Points
@@ -452,11 +457,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.RandomFactor
 Random factor used in the 2D meshing algorithm (should be increased if RandomFactor * size(triangle)/size(model) approaches machine accuracy)@*
 Default value: @code{1e-09}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.IgnorePartitionBoundary
-Ignore partitions boundaries (0=no, 1=yes)@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PreserveNumberingMsh2
@@ -545,7 +545,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveGroupsOfNodes
-Save groups of nodes for each physical line and surface (UNV mesh format only)@*
+Save groups of nodes for each physical line and surface (for UNV, INP and Tochnog mesh formats)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

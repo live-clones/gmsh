@@ -350,8 +350,8 @@ class GEntity {
   // add a MeshVertex
   void addMeshVertex(MVertex *v) { mesh_vertices.push_back(v);}
   // delete a MeshVertex
-  void deleteMeshVertex(MVertex *v);
-  
+  void removeMeshVertex(MVertex *v);
+
   // add an element
   virtual void addElement(int type, MElement *e) {}
   // remove an element

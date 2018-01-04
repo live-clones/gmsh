@@ -636,25 +636,26 @@ static void _discretize(double tol, GEdge * edge, std::vector<sortedPoint> &upts
 void GEdge::addElement(int type, MElement *e)
 {
   switch (type){
-    case TYPE_LIN:
-      addLine(reinterpret_cast<MLine*>(e));
-      break;
-    default:
-      Msg::Error("Trying to add unsupported element in edge");
+  case TYPE_LIN:
+    addLine(reinterpret_cast<MLine*>(e));
+    break;
+  default:
+    Msg::Error("Trying to add unsupported element in edge");
   }
 }
 
 void GEdge::removeElement(int type, MElement *e)
 {
   switch (type){
-    case TYPE_LIN:
+  case TYPE_LIN:
     {
-      std::vector<MLine*>::iterator it = std::find(lines.begin(), lines.end(), reinterpret_cast<MLine*>(e));
+      std::vector<MLine*>::iterator it = std::find
+        (lines.begin(), lines.end(), reinterpret_cast<MLine*>(e));
       if(it != lines.end()) lines.erase(it);
     }
-      break;
-    default:
-      Msg::Error("Trying to remove unsupported element in edge");
+    break;
+  default:
+    Msg::Error("Trying to remove unsupported element in edge");
   }
 }
 

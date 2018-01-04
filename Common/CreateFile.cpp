@@ -261,22 +261,25 @@ void CreateOutputFile(const std::string &fileName, int format,
     break;
 
   case FORMAT_MSH:
-    if(CTX::instance()->mesh.num_partitions > 1 && CTX::instance()->mesh.mshFilePartitioned == 1)
-    {
+    if(CTX::instance()->mesh.num_partitions > 1 &&
+       CTX::instance()->mesh.mshFilePartitioned == 1){
       std::vector<std::string> splitName = SplitFileName(name);
       splitName[0] += splitName[1];
-      GModel::current()->writePartitionedMSH(splitName[0], CTX::instance()->mesh.mshFileVersion, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor);
+      GModel::current()->writePartitionedMSH
+        (splitName[0], CTX::instance()->mesh.mshFileVersion,
+         CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
+         CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor);
     }
-    else
-    {
-      GModel::current()->writeMSH(name, CTX::instance()->mesh.mshFileVersion, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor);
+    else{
+      GModel::current()->writeMSH
+        (name, CTX::instance()->mesh.mshFileVersion, CTX::instance()->mesh.binary,
+         CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveParametric,
+         CTX::instance()->mesh.scalingFactor);
     }
-      
-    if(CTX::instance()->mesh.partitionedTopology)
-    {
+    if(CTX::instance()->mesh.partitionedTopology){
       std::vector<std::string> splitName = SplitFileName(name);
-      splitName[0] += splitName[1] + "_topology.pro";
-      GModel::current()->partitionedTopology(splitName[0]);
+      splitName[0] += splitName[1] + "_topology.geo";
+      GModel::current()->writePartitionedTopology(splitName[0]);
     }
     break;
 

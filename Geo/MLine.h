@@ -97,7 +97,6 @@ class MLine : public MElement {
   }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual void discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts);
-  // Return the number of nodes that this element must have with the other in order to put an edge between them in the dual graph used during the partitioning.
   virtual int numCommonNodesInDualGraph(const MElement *const other) const
   {
     return ((other->getType() == TYPE_LIN || other->getType() == TYPE_PNT) ? 1 : 2);

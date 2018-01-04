@@ -1877,42 +1877,45 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies)
 void GFace::addElement(int type, MElement *e)
 {
   switch (type){
-    case TYPE_TRI:
-      addTriangle(reinterpret_cast<MTriangle*>(e));
-      break;
-    case TYPE_QUA:
-      addQuadrangle(reinterpret_cast<MQuadrangle*>(e));
-      break;
-    case TYPE_POLYG:
-      addPolygon(reinterpret_cast<MPolygon*>(e));
-      break;
-    default:
-      Msg::Error("Trying to add unsupported element in face");
+  case TYPE_TRI:
+    addTriangle(reinterpret_cast<MTriangle*>(e));
+    break;
+  case TYPE_QUA:
+    addQuadrangle(reinterpret_cast<MQuadrangle*>(e));
+    break;
+  case TYPE_POLYG:
+    addPolygon(reinterpret_cast<MPolygon*>(e));
+    break;
+  default:
+    Msg::Error("Trying to add unsupported element in face");
   }
 }
 
 void GFace::removeElement(int type, MElement *e)
 {
   switch (type){
-    case TYPE_TRI:
+  case TYPE_TRI:
     {
-      std::vector<MTriangle*>::iterator it = std::find(triangles.begin(), triangles.end(), reinterpret_cast<MTriangle*>(e));
+      std::vector<MTriangle*>::iterator it = std::find
+        (triangles.begin(), triangles.end(), reinterpret_cast<MTriangle*>(e));
       if(it != triangles.end()) triangles.erase(it);
     }
-      break;
-    case TYPE_QUA:
+    break;
+  case TYPE_QUA:
     {
-      std::vector<MQuadrangle*>::iterator it = std::find(quadrangles.begin(), quadrangles.end(), reinterpret_cast<MQuadrangle*>(e));
+      std::vector<MQuadrangle*>::iterator it = std::find
+        (quadrangles.begin(), quadrangles.end(), reinterpret_cast<MQuadrangle*>(e));
       if(it != quadrangles.end()) quadrangles.erase(it);
     }
-      break;
-    case TYPE_POLYG:
+    break;
+  case TYPE_POLYG:
     {
-      std::vector<MPolygon*>::iterator it = std::find(polygons.begin(), polygons.end(), reinterpret_cast<MPolygon*>(e));
+      std::vector<MPolygon*>::iterator it = std::find
+        (polygons.begin(), polygons.end(), reinterpret_cast<MPolygon*>(e));
       if(it != polygons.end()) polygons.erase(it);
     }
-      break;
-    default:
-      Msg::Error("Trying to remove unsupported element in face");
+    break;
+  default:
+    Msg::Error("Trying to remove unsupported element in face");
   }
 }

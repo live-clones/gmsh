@@ -659,7 +659,7 @@ void GModel::getPhysicalGroups(int dim, std::map<int, std::vector<GEntity*> > &g
   }
 }
 
-void GModel::deletePhysicalGroups()
+void GModel::removePhysicalGroups()
 {
   std::vector<GEntity*> entities;
   getEntities(entities);
@@ -667,7 +667,7 @@ void GModel::deletePhysicalGroups()
     entities[i]->physicals.clear();
 }
 
-void GModel::deletePhysicalGroup(int dim, int num)
+void GModel::removePhysicalGroup(int dim, int num)
 {
   std::vector<GEntity*> entities;
   getEntities(entities, dim);
@@ -678,12 +678,6 @@ void GModel::deletePhysicalGroup(int dim, int num)
         p.push_back(entities[i]->physicals[j]);
     entities[i]->physicals = p;
   }
-}
-
-void GModel::erasePhysicalGroup(int dim, int num)
-{
-  deletePhysicalGroup(dim, num);
-  
   physicalNames.erase(std::pair<int,int>(dim, num));
 }
 
@@ -3198,4 +3192,3 @@ void GModel::computeHomology()
   Msg::Error("Homology computation requires KBIPACK");
 #endif
 }
-

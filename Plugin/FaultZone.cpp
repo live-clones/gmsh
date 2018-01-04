@@ -667,7 +667,7 @@ void GMSH_FaultZoneMesher::CreateJointElements(GModel* gModel, GFace* gFace,
           gFace->physicals.push_back(pnew->Num);
         }
         List_Remove(gModel->getGEOInternals()->PhysicalGroups, i);
-        gModel->deletePhysicalGroup(1, p->Num);
+        gModel->removePhysicalGroup(1, p->Num);
         i-=1;
       }
       List_Delete(faceEntities);

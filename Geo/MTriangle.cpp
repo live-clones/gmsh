@@ -141,7 +141,6 @@ void MTriangle::xyz2uvw(double xyz[3], double uvw[3]) const
   uvw[2] = 0.;
 }
 
-// Return the number of nodes that this element must have with the other in order to put an edge between them in the dual graph used during the partitioning.
 int MTriangle::numCommonNodesInDualGraph(const MElement *const other) const
 {
   switch (other->getType())

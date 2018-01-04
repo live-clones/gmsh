@@ -2950,7 +2950,7 @@ Delete :
       }
       else if(!strcmp($2, "Physicals")){
 	GModel::current()->getGEOInternals()->resetPhysicalGroups();
-	GModel::current()->deletePhysicalGroups();
+	GModel::current()->removePhysicalGroups();
       }
       else if(!strcmp($2, "Variables")){
 	gmsh_yysymbols.clear();
