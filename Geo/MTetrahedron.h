@@ -182,6 +182,7 @@ class MTetrahedron : public MElement {
     };
     return e[face][vert];
   }
+  virtual int numCommonNodesInDualGraph(const MElement *const other) const;
 };
 
 /*

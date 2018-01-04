@@ -73,13 +73,13 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-1, -2, -3",         "Perform 1D, 2D or 3D mesh generation, then exit"));
   s.push_back(mp("-o file",            "Specify output file name"));
   s.push_back(mp("-format string",     "Select output mesh format (auto (default), msh, "
-                                       "msh1, msh2, unv, vrml, ply2, stl, mesh, bdf, cgns, "
+                                       "msh1, msh2, msh3, msh4, unv, vrml, ply2, stl, mesh, bdf, cgns, "
                                        "p3d, diff, med, neu, ...)"));
   s.push_back(mp("-bin",               "Use binary format when available"));
   s.push_back(mp("-refine",            "Perform uniform mesh refinement, then exit"));
   s.push_back(mp("-reclassify",        "Reclassify mesh, then exit"));
   s.push_back(mp("-part int",          "Partition after batch mesh generation"));
-  s.push_back(mp("-partWeight tri|quad|tet|prism|hex int", "Weight of a triangle/quad/etc. "
+  s.push_back(mp("-partWeight tri|quad|tet|hex|pri|pyr|trih int", "Weight of a triangle/quad/etc. "
                                                            "during partitioning"));
   s.push_back(mp("-save_all",          "Save all elements (discard physical group definitions)"));
   s.push_back(mp("-save_parametric",   "Save vertices with their parametric coordinates"));
@@ -106,9 +106,9 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-rand float",        "Set random perturbation factor"));
   s.push_back(mp("-bgm file",          "Load background mesh from file"));
   s.push_back(mp("-check",             "Perform various consistency checks on mesh"));
-  s.push_back(mp("-ignorePartBound",   "Ignore partition boundaries"));
   s.push_back(mp("-ignorePeriocity",   "Ignore periodic boundaries"));
   s.push_back(mp("-oneFilePerPart",    "Save mesh partitions in separate files"));
+  s.push_back(mp("-savePartTopology",  "Save the partitioned topology files"));
 #if defined(HAVE_FLTK)
   s.push_back(mp("Post-processing options:", ""));
   s.push_back(mp("-link int",          "Select link mode between views (0, 1, 2, 3, 4)"));
@@ -388,11 +388,6 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
         CTX::instance()->batch = 6;
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "renumber")) {
-        CTX::instance()->batchAfterMesh = 1;
-        CTX::instance()->partitionOptions.renumber = 1;
-        i++;
-      }
       else if(!strcmp(argv[i] + 1, "part")) {
         i++;
         if(argv[i]){
@@ -405,7 +400,6 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
       else if (!strcmp(argv[i] + 1,"partWeight")) {
         i++;
         bool check = true;
-        opt_mesh_partition_partitioner(0, GMSH_SET, 2); // Metis partitioner
         opt_mesh_partition_metis_algorithm(0, GMSH_SET, 3); // partGraphKWay w/ weights
         while (check) {
           if (argv[i]) {
@@ -413,29 +407,29 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
               i++;
               opt_mesh_partition_tri_weight(0,GMSH_SET,atoi(argv[i]));
             }
-            else if (!strcmp(argv[i],"quad")) {
+            else if (!strcmp(argv[i],"quad") || !strcmp(argv[i],"quadrangle")) {
               i++;
               opt_mesh_partition_qua_weight(0,GMSH_SET,atoi(argv[i]));
             }
-            else if (!strcmp(argv[i],"tet")) {
+            else if (!strcmp(argv[i],"tet") || !strcmp(argv[i],"tetrahedron")) {
               i++;
               opt_mesh_partition_tet_weight(0,GMSH_SET,atoi(argv[i]));
             }
-            else if (!strcmp(argv[i],"prism")) {
+            else if (!strcmp(argv[i],"hex") || !strcmp(argv[i],"hexahedron")) {
+              i++;
+              opt_mesh_partition_hex_weight(0,GMSH_SET,atoi(argv[i]));
+            }
+            else if (!strcmp(argv[i],"pri") || !strcmp(argv[i],"prism")) {
               i++;
               opt_mesh_partition_pri_weight(0,GMSH_SET,atoi(argv[i]));
             }
-            else if (!strcmp(argv[i],"pyramid")) {
+            else if (!strcmp(argv[i],"pyr") || !strcmp(argv[i],"pyramid")) {
               i++;
               opt_mesh_partition_pyr_weight(0,GMSH_SET,atoi(argv[i]));
             }
-            else if (!strcmp(argv[i],"trihedron")) {
+            else if (!strcmp(argv[i],"trih") || !strcmp(argv[i],"trihedron")) {
               i++;
               opt_mesh_partition_trih_weight(0,GMSH_SET,atoi(argv[i]));
-            }
-            else if (!strcmp(argv[i],"hex")) {
-              i++;
-              opt_mesh_partition_hex_weight(0,GMSH_SET,atoi(argv[i]));
             }
             else {
               Msg::Error("Bad argument for 'partWeight' (%s)", argv[i]);
@@ -445,6 +439,14 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
           }
           else check = false;
         }
+      }
+      else if(!strcmp(argv[i] + 1, "oneFilePerPart")){
+        opt_mesh_msh_file_partitioned(0,GMSH_SET,1.);
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "savePartTopology")){
+        opt_mesh_msh_file_partitioned_topology(0,GMSH_SET,1.);
+        i++;
       }
       else if(!strcmp(argv[i] + 1, "new")) {
         CTX::instance()->files.push_back("-new");
@@ -683,7 +685,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
 #endif
           // convert mesh to latest binary format
           if(GModel::current()->getMeshStatus() > 0){
-            CTX::instance()->mesh.mshFileVersion = 3.0;
+            CTX::instance()->mesh.mshFileVersion = 4.0;
             CTX::instance()->mesh.binary = 1;
             CreateOutputFile(fileName, FORMAT_MSH);
           }
@@ -752,14 +754,6 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
         }
         else
           Msg::Fatal("Missing number");
-      }
-      else if(!strcmp(argv[i] + 1, "ignorePartBound")) {
-        i++;
-        opt_mesh_ignore_part_bound(0, GMSH_SET, 1);
-      }
-      else if(!strcmp(argv[i] + 1, "oneFilePerPart")) {
-        i++;
-        opt_mesh_msh_file_partitioned(0, GMSH_SET, 1);
       }
       else if(!strcmp(argv[i] + 1, "ignorePeriodicity")) {
         i++;
@@ -935,6 +929,10 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
           else if(!strcmp(argv[i], "msh3")){
             CTX::instance()->mesh.fileFormat = FORMAT_MSH;
             CTX::instance()->mesh.mshFileVersion = 3.0;
+          }
+          else if(!strcmp(argv[i], "msh4")){
+            CTX::instance()->mesh.fileFormat = FORMAT_MSH;
+            CTX::instance()->mesh.mshFileVersion = 4.0;
           }
           else{
             int format = GetFileFormatFromExtension(std::string(".") + argv[i]);

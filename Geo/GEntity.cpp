@@ -4,6 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <sstream>
+#include <algorithm>
 #include "GModel.h"
 #include "GEntity.h"
 #include "MElement.h"
@@ -62,6 +63,14 @@ std::string GEntity::getInfoString()
   }
 
   return sstream.str();
+}
+
+// removes a MeshVertex
+void GEntity::removeMeshVertex(MVertex *v)
+{
+  std::vector<MVertex*>::iterator it = std::find
+    (mesh_vertices.begin(), mesh_vertices.end(), v);
+  if(it != mesh_vertices.end()) mesh_vertices.erase(it);
 }
 
 GVertex *GEntity::cast2Vertex() { return dynamic_cast<GVertex*>(this); }
@@ -128,20 +137,20 @@ void GEntity::updateVertices(const std::map<MVertex*,MVertex*>& old2new) {
 
   std::map<MVertex*,MVertex*>::iterator cIter = correspondingVertices.begin();
   for (;cIter!=correspondingVertices.end();++cIter) {
-    
+
     MVertex* tgt = cIter->first;
     MVertex* src = cIter->second;
-    
+
     std::map<MVertex*,MVertex*>::const_iterator tIter = old2new.find(tgt);
     if (tIter!=old2new.end()) tgt = tIter->second;
-    
+
     std::map<MVertex*,MVertex*>::const_iterator sIter = old2new.find(src);
     if (sIter!=old2new.end()) src = sIter->second;
-    
+
     newCorrespondingVertices.insert(std::make_pair(tgt,src));
 
   }
-  
+
   correspondingVertices.clear();
   correspondingVertices = newCorrespondingVertices;
 
@@ -149,20 +158,20 @@ void GEntity::updateVertices(const std::map<MVertex*,MVertex*>& old2new) {
 
   std::map<MVertex*,MVertex*>::iterator hIter = correspondingHOPoints.begin();
   for (;hIter!=correspondingHOPoints.end();++hIter) {
-    
+
     MVertex* tgt = hIter->first;
     MVertex* src = hIter->second;
-    
+
     std::map<MVertex*,MVertex*>::const_iterator tIter = old2new.find(tgt);
     if (tIter!=old2new.end()) tgt = tIter->second;
-    
+
     std::map<MVertex*,MVertex*>::const_iterator sIter = old2new.find(src);
     if (sIter!=old2new.end()) src = sIter->second;
-    
+
     newCorrespondingVertices.insert(std::make_pair(tgt,src));
 
   }
-  
+
   correspondingHOPoints.clear();
   correspondingHOPoints = newCorrespondingVertices;
 

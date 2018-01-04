@@ -1147,6 +1147,27 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
   if(physical < 0) reverse();
 }
 
+void MElement::writeMSH4(FILE *fp, bool binary)
+{
+  std::vector<MVertex*> verts;
+  getVertices(verts);
+  
+  if(binary){ //Implemented but not used in practice
+    fwrite(&_num, sizeof(int), 1, fp);
+    for(unsigned int i = 0; i < verts.size(); i++){
+      int vertNum = verts[i]->getNum();
+      fwrite(&vertNum, sizeof(int), 1, fp);
+    }
+  }
+  else{
+    fprintf(fp, "%d ", _num);
+    for(unsigned int i = 0; i < verts.size(); i++){
+       fprintf(fp, "%d ", verts[i]->getNum());
+    }
+    fprintf(fp, "\n");
+  }
+}
+
 void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
                         bool printSICN, bool printSIGE, bool printGamma,
                         bool printDisto, double scalingFactor, int elementary)
@@ -1602,7 +1623,7 @@ unsigned int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_PYR_53  : if(name) *name = "Pyramid 53";       return 5 + 8*6;
   case MSH_PYR_61  : if(name) *name = "Pyramid 61";       return 5 + 8*7;
   case MSH_PYR_69  : if(name) *name = "Pyramid 69";       return 5 + 8*8;
-  case MSH_TRIH_4 : if(name) *name = "Trihedron 4";       return 4;
+  case MSH_TRIH_4 :  if(name) *name = "Trihedron 4";      return 4;
   case MSH_POLYH_  : if(name) *name = "Polyhedron";       return 0;
   case MSH_PNT_SUB : if(name) *name = "Point Xfem";       return 1;
   case MSH_LIN_SUB : if(name) *name = "Line Xfem";        return 2;

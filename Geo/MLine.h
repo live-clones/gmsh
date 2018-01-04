@@ -97,6 +97,10 @@ class MLine : public MElement {
   }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual void discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts);
+  virtual int numCommonNodesInDualGraph(const MElement *const other) const
+  {
+    return ((other->getType() == TYPE_LIN || other->getType() == TYPE_PNT) ? 1 : 2);
+  }
 };
 
 /*

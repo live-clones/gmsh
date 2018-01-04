@@ -12,13 +12,17 @@
 #include "distanceTerm.h"
 #include "Context.h"
 #include "Numeric.h"
+
+#if defined(HAVE_SOLVER)
 #include "dofManager.h"
 #include "linearSystemGMM.h"
 #include "linearSystemCSR.h"
 #include "linearSystemFull.h"
+#include "linearSystemPETSc.h"
 #include "orthogonalTerm.h"
 #include "laplaceTerm.h"
 #include "crossConfTerm.h"
+#endif
 
 template <class scalar> class simpleFunction;
 
@@ -210,15 +214,17 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   }
 
 #if defined(HAVE_SOLVER)
-#if defined(HAVE_TAUCS)
-  linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
-#else
+#if defined(HAVE_PETSC)
+  linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
+#elif defined(HAVE_GMM)
   linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
   lsys->setNoisy(1);
   lsys->setGmres(1);
   lsys->setPrec(5.e-8);
+#else
+  linearSystemFull<double> *lsys = new linearSystemFull<double>;
 #endif
-  dofManager<double> * dofView = new dofManager<double>(lsys);
+  dofManager<double> *dofView = new dofManager<double>(lsys);
 #endif
 
   GEntity* ge = _entities[_entities.size()-1];
@@ -432,13 +438,15 @@ PView *GMSH_DistancePlugin::execute(PView *v)
   if (ortho > 0) {
 #if defined(HAVE_SOLVER)
 
-#ifdef HAVE_TAUCS
-    linearSystemCSRTaucs<double> *lsys2 = new linearSystemCSRTaucs<double>;
-#else
+#if defined(HAVE_PETSC)
+    linearSystemPETSc<double> *lsys2 = new linearSystemPETSc<double>;
+#elif defined(HAVE_GMM)
     linearSystemCSRGmm<double> *lsys2 = new linearSystemCSRGmm<double>;
     lsys->setNoisy(1);
     lsys->setGmres(1);
     lsys->setPrec(5.e-8);
+#else
+    linearSystemFull<double> *lsys2 = new linearSystemFull<double>;
 #endif
     dofManager<double> myAssembler(lsys2);
     simpleFunction<double> ONE(1.0);

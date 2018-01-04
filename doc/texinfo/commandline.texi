@@ -21,7 +21,7 @@ Perform 1D, 2D or 3D mesh generation, then exit
 @item -o file
 Specify output file name
 @item -format string
-Select output mesh format (auto (default), msh, msh1, msh2, unv, vrml, ply2, stl, mesh, bdf, cgns, p3d, diff, med, neu, ...)
+Select output mesh format (auto (default), msh, msh1, msh2, msh3, msh4, unv, vrml, ply2, stl, mesh, bdf, cgns, p3d, diff, med, neu, ...)
 @item -bin
 Use binary format when available
 @item -refine
@@ -30,7 +30,7 @@ Perform uniform mesh refinement, then exit
 Reclassify mesh, then exit
 @item -part int
 Partition after batch mesh generation
-@item -partWeight tri|quad|tet|prism|hex int
+@item -partWeight tri|quad|tet|hex|pri|pyr|trih int
 Weight of a triangle/quad/etc. during partitioning
 @item -save_all
 Save all elements (discard physical group definitions)
@@ -47,7 +47,7 @@ Set mesh order (1, ..., 5)
 @item -optimize[_netgen]
 Optimize quality of tetrahedral elements
 @item -optimize_threshold
-Optimize tetrahedral elements that have a qulaity less than a threshold
+Optimize tetrahedral elements that have a quality less than a threshold
 @item -optimize_ho
 Optimize high order meshes
 @item -ho_[min,max,nlayers]
@@ -76,12 +76,12 @@ Set random perturbation factor
 Load background mesh from file
 @item -check
 Perform various consistency checks on mesh
-@item -ignorePartBound
-Ignore partition boundaries
 @item -ignorePeriocity
 Ignore periodic boundaries
 @item -oneFilePerPart
 Save mesh partitions in separate files
+@item -savePartTopology
+Save the partitioned topology files
 @end ftable
  Post-processing options:
 @ftable @code

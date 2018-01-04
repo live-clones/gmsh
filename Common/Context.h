@@ -10,7 +10,6 @@
 #include <map>
 #include <string>
 #include "CGNSOptions.h"
-#include "meshPartitionOptions.h"
 
 #define NUM_SOLVERS 10
 
@@ -26,7 +25,7 @@ struct contextMeshOptions {
   int pointsNum, linesNum, surfacesNum, volumesNum, qualityType, labelType;
   int optimize,  optimizeNetgen, optimizeLloyd, smoothCrossField, refineSteps;
   double optimizeThreshold,normals, tangents, explode, angleSmoothNormals, allowSwapEdgeAngle;
-  double mshFileVersion, mshFilePartitioned, pointSize, lineWidth;
+  double mshFileVersion, pointSize, lineWidth;
   double qualityInf, qualitySup, radiusInf, radiusSup;
   double scalingFactor, lcFactor, randFactor, lcIntegrationPrecision;
   double lcMin, lcMax, toleranceEdgeLength, toleranceInitialDelaunay;
@@ -37,6 +36,13 @@ struct contextMeshOptions {
   int algoRecombine, recombineAll, recombine3DAll, recombine3DLevel;
   int recombine3DConformity;
   int flexibleTransfinite;
+  // partition options
+  double mshFilePartitioned, partitionedTopology;
+  int num_partitions, createPartitionBoundaries, createGhostCells;//createGhostCells not use
+  int metis_algorithm; // 1 - Recursive, 2 - K-way
+  int metis_edge_matching; // 1 - Random matching, 2 - Sorted heavy-edge matching
+  int metis_refine_algorithm; // 1 - FM-based cut refinement, 2 - Greedy-based cut and volume refinement, 3 - Two-sided node FM refinement, 4 - One-sided node FM refinement
+  int part_triWeight, part_quaWeight, part_tetWeight, part_hexWeight, part_priWeight, part_pyrWeight, part_trihWeight;
   //-- for recombination test (amaury) --
   int doRecombinationTest, recombinationTestStart;
   int recombinationTestNoGreedyStrat, recombinationTestNewStrat;
@@ -58,7 +64,6 @@ struct contextMeshOptions {
   int cgnsImportOrder;
   std::map<int,int> algo2d_per_face;
   std::map<int,int> curvature_control_per_face;
-  int ignorePartBound;
   int NewtonConvergenceTestXYZ;
   int preserveNumberingMsh2;
   int ignorePeriodicity;
@@ -252,9 +257,6 @@ class CTX {
   contextGeometryOptions geom;
   // mesh options
   contextMeshOptions mesh;
-  // FIXME: putting these in the mesh struct (where they belong) causes
-  // an LNK1179 error ("duplicate COMDAT") with MSVC...
-  meshPartitionOptions partitionOptions;
   CGNSOptions cgnsOptions;
   // post processing options
   struct{

@@ -106,6 +106,7 @@ class GFace : public GEntity {
   // edges that bound the face
   virtual std::list<GEdge*> edges() const { return l_edges; }
   inline void set(const std::list<GEdge*> f) { l_edges= f; }
+  inline void setOrientations(const std::list<int> f) { l_dirs= f; }
   virtual std::list<int> edgeOrientations() const { return l_dirs; }
   inline bool containsEdge (int iEdge) const
   {
@@ -333,6 +334,8 @@ class GFace : public GEntity {
   void addTriangle(MTriangle *t){ triangles.push_back(t); }
   void addQuadrangle(MQuadrangle *q){ quadrangles.push_back(q); }
   void addPolygon(MPolygon *p){ polygons.push_back(p); }
+  virtual void addElement(int type, MElement *e);
+  virtual void removeElement(int type, MElement *e);
 
   // get the boundary layer columns
   BoundaryLayerColumns *getColumns () {return &_columns;}

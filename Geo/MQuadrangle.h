@@ -158,6 +158,7 @@ class MQuadrangle : public MElement {
     };
     return e[edge][vert];
   }
+  virtual int numCommonNodesInDualGraph(const MElement *const other) const;
 };
 
 /*

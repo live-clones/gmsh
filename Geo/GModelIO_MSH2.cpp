@@ -33,8 +33,8 @@ extern void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities, boo
 extern void readMSHPeriodicNodes(FILE *fp, GModel *gm);
 extern void writeMSHEntities(FILE *fp, GModel *gm);
 
-static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
-                        std::vector<MVertex*> &vertices)
+static bool getMeshVertices(int num, int *indices, std::map<int, MVertex*> &map,
+                            std::vector<MVertex*> &vertices)
 {
   for(int i = 0; i < num; i++){
     if(!map.count(indices[i])){
@@ -47,8 +47,8 @@ static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
   return true;
 }
 
-static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
-                        std::vector<MVertex*> &vertices, int minVertex = 0)
+static bool getMeshVertices(int num, int *indices, std::vector<MVertex*> &vec,
+                            std::vector<MVertex*> &vertices, int minVertex = 0)
 {
   for(int i = 0; i < num; i++){
     if(indices[i] < minVertex || indices[i] > (int)(vec.size() - 1 + minVertex)){
@@ -420,14 +420,14 @@ int GModel::_readMSH2(const std::string &name)
           }
           std::vector<MVertex*> vertices;
           if(vertexVector.size()){
-            if(!getVertices(numVertices, indices, vertexVector, vertices, minVertex)){
+            if(!getMeshVertices(numVertices, indices, vertexVector, vertices, minVertex)){
               delete [] indices;
               fclose(fp);
               return 0;
             }
           }
           else{
-            if(!getVertices(numVertices, indices, vertexMap, vertices)){
+            if(!getMeshVertices(numVertices, indices, vertexMap, vertices)){
               delete [] indices;
               fclose(fp);
               return 0;
@@ -498,7 +498,7 @@ int GModel::_readMSH2(const std::string &name)
 	  }
           delete [] indices;
 
-          if (CTX::instance()->mesh.ignorePartBound && elementary<0) continue;
+          if (elementary<0) continue;
           MElement *e = createElementMSH2(this, num, type, physical, elementary,
                                           partition, vertices, elements, physicals,
                                           own, p, doms[0], doms[1]);
@@ -547,14 +547,14 @@ int GModel::_readMSH2(const std::string &name)
             int *indices = &data[numTags + 1];
             std::vector<MVertex*> vertices;
             if(vertexVector.size()){
-              if(!getVertices(numVertices, indices, vertexVector, vertices, minVertex)){
+              if(!getMeshVertices(numVertices, indices, vertexVector, vertices, minVertex)){
                 delete [] data;
                 fclose(fp);
                 return 0;
               }
             }
             else{
-              if(!getVertices(numVertices, indices, vertexMap, vertices)){
+              if(!getMeshVertices(numVertices, indices, vertexMap, vertices)){
                 delete [] data;
                 fclose(fp);
                 return 0;
@@ -1102,7 +1102,7 @@ int GModel::_writePartitionedMSH2(const std::string &baseName, bool binary,
     int partition = *it;
 
     std::ostringstream sstream;
-    sstream << baseName << "_" << std::setw(6) << std::setfill('0') << partition;
+    sstream << baseName << "_" << partition << ".msh";
 
     numElements = getNumElementsMSH(this, saveAll, partition);
     Msg::Info("Writing partition %d in file '%s'", partition, sstream.str().c_str());

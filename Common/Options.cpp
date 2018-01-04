@@ -5718,57 +5718,71 @@ double opt_mesh_msh_file_version(OPT_ARGS_NUM)
 double opt_mesh_msh_file_partitioned(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
-    CTX::instance()->mesh.mshFilePartitioned = val;
+    CTX::instance()->mesh.mshFilePartitioned = (int) val;
   return CTX::instance()->mesh.mshFilePartitioned;
+}
+
+double opt_mesh_msh_file_partitioned_topology(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.partitionedTopology = (int) val;
+  return CTX::instance()->mesh.partitionedTopology;
 }
 
 double opt_mesh_partition_hex_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->partitionOptions.hexWeight = (int) val;
-  return CTX::instance()->partitionOptions.hexWeight;
+    CTX::instance()->mesh.part_hexWeight = (int) val;
+  return CTX::instance()->mesh.part_hexWeight;
 }
 
 double opt_mesh_partition_pri_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->partitionOptions.priWeight = (int) val;
-  return CTX::instance()->partitionOptions.priWeight;
+    CTX::instance()->mesh.part_priWeight = (int) val;
+  return CTX::instance()->mesh.part_priWeight;
 }
 
 double opt_mesh_partition_pyr_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->partitionOptions.pyrWeight = (int) val;
-  return CTX::instance()->partitionOptions.pyrWeight;
+    CTX::instance()->mesh.part_pyrWeight = (int) val;
+  return CTX::instance()->mesh.part_pyrWeight;
 }
 
 double opt_mesh_partition_trih_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->partitionOptions.trihWeight = (int) val;
-  return CTX::instance()->partitionOptions.trihWeight;
+    CTX::instance()->mesh.part_trihWeight = (int) val;
+  return CTX::instance()->mesh.part_trihWeight;
 }
 
 double opt_mesh_partition_qua_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->partitionOptions.quaWeight = (int) val;
-  return CTX::instance()->partitionOptions.quaWeight;
+    CTX::instance()->mesh.part_quaWeight = (int) val;
+  return CTX::instance()->mesh.part_quaWeight;
 }
 
 double opt_mesh_partition_tet_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->partitionOptions.tetWeight = (int) val;
-  return CTX::instance()->partitionOptions.tetWeight;
+    CTX::instance()->mesh.part_tetWeight = (int) val;
+  return CTX::instance()->mesh.part_tetWeight;
 }
 
 double opt_mesh_partition_tri_weight(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)
-    CTX::instance()->partitionOptions.triWeight = (int) val;
-  return CTX::instance()->partitionOptions.triWeight;
+    CTX::instance()->mesh.part_triWeight = (int) val;
+  return CTX::instance()->mesh.part_triWeight;
+}
+
+double opt_mesh_partition_boundaries(OPT_ARGS_NUM)
+{
+  if (action & GMSH_SET)
+    CTX::instance()->mesh.createPartitionBoundaries = val;
+  return CTX::instance()->mesh.createPartitionBoundaries;
 }
 
 double opt_mesh_binary(OPT_ARGS_NUM)
@@ -6379,221 +6393,45 @@ double opt_mesh_cpu_time(OPT_ARGS_NUM)
   return s[14] + s[15] + s[16];
 }
 
-double opt_mesh_partition_partitioner(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    const int ival = (int)val;
-    CTX::instance()->partitionOptions.partitioner =
-      (ival < 1 || ival > 2) ? 1 : ival;
-  }
-  return CTX::instance()->partitionOptions.partitioner;
-}
-
 double opt_mesh_partition_num(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    const int ival = std::max(1, (int)val);
-    CTX::instance()->partitionOptions.num_partitions = ival;
-    unsigned hcdim = 0;  // log2 to get hypercube dimensions
-    unsigned jval = ival;
-    while(jval >>= 1) ++hcdim;
-    CTX::instance()->partitionOptions.ndims_tot = hcdim;
-    CTX::instance()->partitionOptions.mesh_dims[0] = ival;
-    CTX::instance()->partitionOptions.mesh_dims[1] = 1;
-    CTX::instance()->partitionOptions.mesh_dims[2] = 1;
-    if(CTX::instance()->partitionOptions.partitioner == 2)  // METIS
-      CTX::instance()->partitionOptions.algorithm = (ival <= 8) ? 1 : 2;
+    const int ival = std::max(0, (int)val);
+    CTX::instance()->mesh.num_partitions = ival;
+    CTX::instance()->mesh.metis_algorithm = (ival <= 8) ? 1 : 2;
   }
-  return CTX::instance()->partitionOptions.num_partitions;
-}
-
-double opt_mesh_partition_chaco_global_method(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    int ival = (int)val;
-    CTX::instance()->partitionOptions.global_method =
-      (ival < 1 || ival > 6 || ival == 3) ? 1 : ival;
-  }
-  return  CTX::instance()->partitionOptions.global_method;
-}
-
-double opt_mesh_partition_chaco_architecture(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    const int ival = (int)val;
-    CTX::instance()->partitionOptions.architecture =
-      (ival < 0 || ival > 3) ? 1 : ival;
-  }
-  return CTX::instance()->partitionOptions.architecture;
-}
-
-double opt_mesh_partition_chaco_ndims_tot(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    const int ival = std::max(1, (int)val);
-    CTX::instance()->partitionOptions.ndims_tot = ival;
-    CTX::instance()->partitionOptions.num_partitions = 1 << ival;
-  }
-  return CTX::instance()->partitionOptions.ndims_tot;
-}
-
-double opt_mesh_partition_chaco_mesh_dims1(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    const int ival = std::max(1, (int)val);
-    CTX::instance()->partitionOptions.mesh_dims[0] = ival;
-    CTX::instance()->partitionOptions.num_partitions = ival;
-    if(CTX::instance()->partitionOptions.architecture >= 2)
-      CTX::instance()->partitionOptions.num_partitions *=
-        CTX::instance()->partitionOptions.mesh_dims[1];
-    if(CTX::instance()->partitionOptions.architecture == 3)
-      CTX::instance()->partitionOptions.num_partitions *=
-        CTX::instance()->partitionOptions.mesh_dims[2];
-  }
-  return CTX::instance()->partitionOptions.mesh_dims[0];
-}
-
-double opt_mesh_partition_chaco_mesh_dims2(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    const int ival = std::max(1, (int)val);
-    CTX::instance()->partitionOptions.mesh_dims[1] = ival;
-    CTX::instance()->partitionOptions.num_partitions =
-      CTX::instance()->partitionOptions.mesh_dims[0]*ival;
-    if(CTX::instance()->partitionOptions.architecture == 3)
-      CTX::instance()->partitionOptions.num_partitions *=
-        CTX::instance()->partitionOptions.mesh_dims[2];
-  }
-  return CTX::instance()->partitionOptions.mesh_dims[1];
-}
-
-double opt_mesh_partition_chaco_mesh_dims3(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    const int ival = std::max(1, (int)val);
-    CTX::instance()->partitionOptions.mesh_dims[2] = ival;
-    CTX::instance()->partitionOptions.num_partitions =
-      CTX::instance()->partitionOptions.mesh_dims[0]*
-      CTX::instance()->partitionOptions.mesh_dims[1]*ival;
-  }
-  return CTX::instance()->partitionOptions.mesh_dims[2];
-}
-
-double opt_mesh_partition_chaco_local_method(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    int ival = (int)val;
-    if(CTX::instance()->partitionOptions.algorithm == 1) ival = 1;
-    CTX::instance()->partitionOptions.local_method = (ival < 0 || ival > 1) ? 1 : ival;
-  }
-  return CTX::instance()->partitionOptions.local_method;
-}
-
-double opt_mesh_partition_chaco_eigensolver(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    int ival = val ? 1 : 0;
-    CTX::instance()->partitionOptions.rqi_flag = ival;
-  }
-  return CTX::instance()->partitionOptions.rqi_flag;
-}
-
-double opt_mesh_partition_chaco_vmax(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    const int ival = (int)val;
-    CTX::instance()->partitionOptions.vmax = (ival < 1) ? 1 : ival;
-  }
-  return CTX::instance()->partitionOptions.vmax;
-}
-
-double opt_mesh_partition_chaco_nsection(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    const int ival = (int)val;
-    CTX::instance()->partitionOptions.ndims = (ival < 1 || ival > 3) ? 1 : ival;
-    if(CTX::instance()->partitionOptions.ndims > 1 &&
-       CTX::instance()->partitionOptions.algorithm == 2)
-      CTX::instance()->partitionOptions.terminal_propogation = false;
-  }
-  return CTX::instance()->partitionOptions.ndims;
-}
-
-double opt_mesh_partition_chaco_eigtol(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->partitionOptions.eigtol = (val <= 0.) ? 1.E-3 : val;
-  return CTX::instance()->partitionOptions.eigtol;
-}
-
-double opt_mesh_partition_chaco_seed(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->partitionOptions.seed = (long)val;
-  return CTX::instance()->partitionOptions.seed;
-}
-
-double opt_mesh_partition_chaco_refine_partition(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->partitionOptions.refine_partition = val ? 1 : 0;
-  return CTX::instance()->partitionOptions.refine_partition;
-}
-
-double opt_mesh_partition_chaco_internal_vertices(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->partitionOptions.internal_vertices = val ? 1 : 0;
-  return CTX::instance()->partitionOptions.internal_vertices;
-}
-
-double opt_mesh_partition_chaco_refine_map(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->partitionOptions.refine_map = val ? 1 : 0;
-  return CTX::instance()->partitionOptions.refine_map;
-}
-
-double opt_mesh_partition_chaco_terminal_propogation(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) {
-    CTX::instance()->partitionOptions.terminal_propogation = val ? 1 : 0;
-    if(CTX::instance()->partitionOptions.terminal_propogation &&
-       CTX::instance()->partitionOptions.algorithm == 2)
-      CTX::instance()->partitionOptions.ndims = 1;
-  }
-  return CTX::instance()->partitionOptions.terminal_propogation;
+  return CTX::instance()->mesh.num_partitions;
 }
 
 double opt_mesh_partition_metis_algorithm(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     int ival = (int)val;
-    if(ival < 1 || ival > 3)
-      ival = (CTX::instance()->partitionOptions.num_partitions <= 8) ? 1 : 2;
-    CTX::instance()->partitionOptions.algorithm = ival;
+    if(ival < 1 || ival > 2)
+      ival = (CTX::instance()->mesh.num_partitions <= 8) ? 1 : 2;
+    CTX::instance()->mesh.metis_algorithm = ival;
   }
-  return  CTX::instance()->partitionOptions.algorithm;
+  return  CTX::instance()->mesh.metis_algorithm;
 }
 
 double opt_mesh_partition_metis_edge_matching(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     const int ival = (int)val;
-    CTX::instance()->partitionOptions.edge_matching =
-      (ival < 1 || ival > 3) ? 3 : ival;
+    CTX::instance()->mesh.metis_edge_matching =
+      (ival < 1 || ival > 2) ? 2 : ival;
   }
-  return CTX::instance()->partitionOptions.edge_matching;
+  return CTX::instance()->mesh.metis_edge_matching;
 }
 
 double opt_mesh_partition_metis_refine_algorithm(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
     const int ival = (int)val;
-    CTX::instance()->partitionOptions.refine_algorithm =
-      (ival < 1 || ival > 3) ? 3 : ival;
+    CTX::instance()->mesh.metis_refine_algorithm =
+      (ival < 1 || ival > 4) ? 2 : ival;
   }
-  return CTX::instance()->partitionOptions.refine_algorithm;
+  return CTX::instance()->mesh.metis_refine_algorithm;
 }
 
 double opt_mesh_clip(OPT_ARGS_NUM)
@@ -6605,13 +6443,6 @@ double opt_mesh_clip(OPT_ARGS_NUM)
     FlGui::instance()->clipping->resetBrowser();
 #endif
   return CTX::instance()->mesh.clip;
-}
-
-double opt_mesh_ignore_part_bound(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->mesh.ignorePartBound = (int) val;
-  return CTX::instance()->mesh.ignorePartBound;
 }
 
 double opt_mesh_preserve_numbering_msh2(OPT_ARGS_NUM)

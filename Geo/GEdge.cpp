@@ -200,7 +200,7 @@ void GEdge::delFace(GFace *f)
 SBoundingBox3d GEdge::bounds() const
 {
   SBoundingBox3d bbox;
-  if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve){
+  if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve && geomType() != PartitionCurve){
     Range<double> tr = parBounds(0);
     const int N = 10;
     for(int i = 0; i < N; i++){
@@ -631,6 +631,32 @@ static void _discretize(double tol, GEdge * edge, std::vector<sortedPoint> &upts
   upts[pos0].next = posmid;
   _discretize(tol, edge, upts, pos0);
   _discretize(tol, edge, upts, posmid);
+}
+
+void GEdge::addElement(int type, MElement *e)
+{
+  switch (type){
+  case TYPE_LIN:
+    addLine(reinterpret_cast<MLine*>(e));
+    break;
+  default:
+    Msg::Error("Trying to add unsupported element in edge");
+  }
+}
+
+void GEdge::removeElement(int type, MElement *e)
+{
+  switch (type){
+  case TYPE_LIN:
+    {
+      std::vector<MLine*>::iterator it = std::find
+        (lines.begin(), lines.end(), reinterpret_cast<MLine*>(e));
+      if(it != lines.end()) lines.erase(it);
+    }
+    break;
+  default:
+    Msg::Error("Trying to remove unsupported element in edge");
+  }
 }
 
 void GEdge::discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts)

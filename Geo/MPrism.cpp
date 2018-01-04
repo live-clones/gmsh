@@ -135,6 +135,23 @@ void MPrism::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) c
   Msg::Error("Could not get face information for prism %d", getNum());
 }
 
+int MPrism::numCommonNodesInDualGraph(const MElement *const other) const
+{
+  switch (other->getType())
+  {
+    case TYPE_PNT:
+      return 1;
+    case TYPE_LIN:
+      return 2;
+    case TYPE_QUA:
+      return 4;
+    case TYPE_HEX:
+      return 4;
+    default:
+      return 3;
+  }
+}
+
 static void _myGetEdgeRep(MPrism *pri, int num, double *x, double *y, double *z,
                           SVector3 *n, int numSubEdges)
 {

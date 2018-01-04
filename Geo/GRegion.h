@@ -62,6 +62,7 @@ class GRegion : public GEntity {
   virtual std::list<GFace*> faces() const{ return l_faces; }
   virtual std::list<int> faceOrientations() const{ return l_dirs; }
   inline void set(const std::list<GFace*> f) { l_faces = f; }
+  inline void setOrientations(const std::list<int> f) { l_dirs= f; }
 
   // vertices that are embedded in the region
   virtual std::list<GVertex*> &embeddedVertices() { return embedded_vertices; }
@@ -146,7 +147,8 @@ class GRegion : public GEntity {
   void addPyramid(MPyramid *p){ pyramids.push_back(p); }
   void addPolyhedron(MPolyhedron *p){ polyhedra.push_back(p); }
   void addTrihedron(MTrihedron *t){ trihedra.push_back(t); }
-  void addElement(int type, MElement *e);
+  virtual void addElement(int type, MElement *e);
+  virtual void removeElement(int type, MElement *e);
 
   // get the boundary layer columns
   BoundaryLayerColumns *getColumns () { return &_columns; }

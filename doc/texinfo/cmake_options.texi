@@ -27,8 +27,6 @@ Enable iOS library target (experimental) (default: OFF)
 Enable CGNS mesh export (experimental) (default: OFF)
 @item ENABLE_CAIRO
 Enable Cairo to render fonts (experimental) (default: ON)
-@item ENABLE_CHACO
-Enable Chaco mesh partitioner (alternative to Metis) (default: ON)
 @item ENABLE_COMPRESSED_IO
 Enable compressed (gzip) input/output using zlib (default: OFF)
 @item ENABLE_CXX11

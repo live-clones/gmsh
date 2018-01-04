@@ -42,6 +42,14 @@ class GModel {
   std::set<GEdge*, GEntityLessThan> _chainEdges;
   std::set<GVertex*, GEntityLessThan> _chainVertices;
 
+  int _readMSH4(const std::string &name);
+  int _writeMSH4(const std::string &name, double version=4.0,
+                 bool binary=false, bool saveAll=false,
+                 bool saveParametric=false, double scalingFactor=1.0);
+  int _writePartitionedMSH4(const std::string &baseName, double version=4.0,
+                            bool binary=false, bool saveAll=false,
+                            bool saveParametric=false, double scalingFactor=1.0);
+
   int _readMSH2(const std::string &name);
   int _writeMSH2(const std::string &name, double version=2.2, bool binary=false,
                  bool saveAll=false, bool saveParametric=false,
@@ -247,6 +255,11 @@ class GModel {
   typedef std::set<GEdge*, GEntityLessThan>::iterator eiter;
   typedef std::set<GVertex*, GEntityLessThan>::iterator viter;
 
+  typedef std::set<GRegion*, GEntityLessThan>::const_iterator const_riter;
+  typedef std::set<GFace*, GEntityLessThan>::const_iterator const_fiter;
+  typedef std::set<GEdge*, GEntityLessThan>::const_iterator const_eiter;
+  typedef std::set<GVertex*, GEntityLessThan>::const_iterator const_viter;
+
   // get an iterator initialized to the first/last entity in this model
   riter firstRegion() { return regions.begin(); }
   fiter firstFace() { return faces.begin(); }
@@ -256,6 +269,20 @@ class GModel {
   fiter lastFace() { return faces.end(); }
   eiter lastEdge() { return edges.end(); }
   viter lastVertex() { return vertices.end(); }
+  const_riter firstRegion() const { return regions.begin(); }
+  const_fiter firstFace() const { return faces.begin(); }
+  const_eiter firstEdge() const { return edges.begin(); }
+  const_viter firstVertex() const { return vertices.begin(); }
+  const_riter lastRegion() const { return regions.end(); }
+  const_fiter lastFace() const { return faces.end(); }
+  const_eiter lastEdge() const { return edges.end(); }
+  const_viter lastVertex() const { return vertices.end(); }
+
+  // get the set of entities
+  std::set<GRegion*, GEntityLessThan> getRegions() const { return regions; };
+  std::set<GFace*, GEntityLessThan> getFaces() const { return faces; };
+  std::set<GEdge*, GEntityLessThan> getEdges() const { return edges; };
+  std::set<GVertex*, GEntityLessThan> getVertices() const { return vertices; };
 
   // find the entity with the given tag
   GRegion *getRegionByTag(int n) const;
@@ -275,6 +302,7 @@ class GModel {
   void remove(GVertex *v);
   void remove(int dim, int tag, bool recursive=false);
   void remove(const std::vector<std::pair<int, int> > &dimTags, bool recursive=false);
+  void remove();
 
   // snap vertices on model edges by using geometry tolerance
   void snapVertices();
@@ -301,10 +329,14 @@ class GModel {
   // return all physical groups (one map per dimension: 0-D to 3-D)
   void getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4]) const;
   void getPhysicalGroups(int dim, std::map<int, std::vector<GEntity*> > &groups) const;
+  std::map<std::pair<int, int>, std::string> getPhysicalNames() const
+  {
+    return physicalNames;
+  }
 
-  // delete physical groups in the model
-  void deletePhysicalGroups();
-  void deletePhysicalGroup(int dim, int num);
+  // remove physical groups in the model
+  void removePhysicalGroups();
+  void removePhysicalGroup(int dim, int num);
 
   // return the highest number associated with a physical entity of a
   // given dimension (or highest for all dimenions if dim < 0)
@@ -420,9 +452,17 @@ class GModel {
   // the list of partitions
   std::set<int> &getMeshPartitions() { return meshPartitions; }
   void recomputeMeshPartitions();
+  unsigned int getNumPartitions() const { return meshPartitions.size(); };
 
   // delete all the partitions
-  void deleteMeshPartitions();
+  int deleteMeshPartitions();
+  // partition the mesh
+  int partitionMesh(int num);
+  // Import a mesh partitionned by a tag given to the element en create the
+  // topology
+  int convertOldPartitioningToNewOne();
+  // write the partitioned topology file
+  int writePartitionedTopology(std::string &name);
 
   // store/recall min and max partitions size
   void setMinPartitionSize(const int pSize) { partitionSize[0] = pSize; }
@@ -475,12 +515,6 @@ class GModel {
 
   // optimize the mesh
   int optimizeMesh(const std::string &how);
-
-  // partition the mesh
-  int partitionMesh(int num);
-
-  // create partition boundaries
-  void createPartitionBoundaries(int createGhostCells, int createAllDims = 0);
 
   // fill the vertex arrays, given the current option and data
   bool fillVertexArrays();

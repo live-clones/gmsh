@@ -181,6 +181,7 @@ class MHexahedron : public MElement {
     };
     return e[face][edge];
   }
+  virtual int numCommonNodesInDualGraph(const MElement *const other) const;
 };
 
 /*

@@ -209,7 +209,7 @@ PView *GMSH_SimplePartitionPlugin::execute(PView *v)
     }
 #else
     for(int p = 0; p < numSlices - 1; p++){
-      std::vector<int> v2(2);
+      std::vector<unsigned int> v2(2);
       v2[0] = p + 1;
       v2[1] = p + 2;
       if(dim == 2){

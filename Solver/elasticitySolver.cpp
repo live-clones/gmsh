@@ -114,14 +114,13 @@ void elasticitySolver::solve()
   if(pAssembler && pAssembler->getLinearSystem(sysname))
     delete pAssembler->getLinearSystem(sysname);
 
-  //linearSystemFull<double> *lsys = new linearSystemFull<double>;
-#if defined(HAVE_TAUCS)
-  linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
-#elif defined(HAVE_PETSC)
+#if defined(HAVE_PETSC)
   linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
-#else
+#elif defined(HAVE_GMM)
   linearSystemGmm<double> *lsys = new linearSystemGmm<double>;
   lsys->setNoisy(2);
+#else
+  linearSystemFull<double> *lsys = new linearSystemFull<double>;
 #endif
 
   assemble(lsys);
@@ -171,7 +170,7 @@ void elasticitySolver::readInputFile(const std::string &fn)
     }
     if(what[0]=='#'){
       char buffer[1024];
-      if(fgets(buffer, sizeof(buffer), f) == NULL) 
+      if(fgets(buffer, sizeof(buffer), f) == NULL)
         Msg::Error("Cannot read line.");
     }
     else if (!strcmp(what, "ElasticDomain")){
@@ -400,7 +399,7 @@ void elasticitySolver::changeLMTau(int tag, double tau)
       LagrangeMultiplierFields[i]._tau = tau;
     }
   }
-  
+
 }
 
 void elasticitySolver::setEdgeDisp(int edge, int comp, simpleFunction<double> *f)
@@ -753,7 +752,7 @@ PView *elasticitySolver::buildErrorView(const std::string postFileName, simpleFu
 {
   std::cout <<  "build Error View"<< std::endl;
   std::map<int, std::vector<double> > data;
-  
+
   SolverField<SVector3> solField(pAssembler, LagSpace);
   for (unsigned int i = 0; i < elasticFields.size(); ++i){
     for (groupOfElements::elementContainer::const_iterator it = elasticFields[i].g->begin(); it != elasticFields[i].g->end(); ++it){

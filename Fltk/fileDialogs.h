@@ -36,6 +36,7 @@ int gl2psFileDialog(const char *filename, const char *title, int format);
 int optionsFileDialog(const char *filename);
 int meshStatFileDialog(const char *filename);
 int mshFileDialog(const char *filename);
+void format_cb(Fl_Widget *widget, void *data);
 int unvinpFileDialog(const char *filename, const char *title, int format);
 int bdfFileDialog(const char *filename);
 int latexFileDialog(const char *filename);

@@ -386,6 +386,14 @@ void GModel::remove(const std::vector<std::pair<int, int> > &dimTags, bool recur
     remove(dimTags[i].first, dimTags[i].second, recursive);
 }
 
+void GModel::remove()
+{
+  regions.clear();
+  faces.clear();
+  edges.clear();
+  vertices.clear();
+}
+
 void GModel::snapVertices()
 {
   viter vit = firstVertex();
@@ -651,7 +659,7 @@ void GModel::getPhysicalGroups(int dim, std::map<int, std::vector<GEntity*> > &g
   }
 }
 
-void GModel::deletePhysicalGroups()
+void GModel::removePhysicalGroups()
 {
   std::vector<GEntity*> entities;
   getEntities(entities);
@@ -659,7 +667,7 @@ void GModel::deletePhysicalGroups()
     entities[i]->physicals.clear();
 }
 
-void GModel::deletePhysicalGroup(int dim, int num)
+void GModel::removePhysicalGroup(int dim, int num)
 {
   std::vector<GEntity*> entities;
   getEntities(entities, dim);
@@ -670,6 +678,7 @@ void GModel::deletePhysicalGroup(int dim, int num)
         p.push_back(entities[i]->physicals[j]);
     entities[i]->physicals = p;
   }
+  physicalNames.erase(std::pair<int,int>(dim, num));
 }
 
 int GModel::getMaxPhysicalNumber(int dim)
@@ -711,7 +720,7 @@ int GModel::getPhysicalNumber(const int &dim, const std::string &name)
   for(piter physIt = firstPhysicalName(); physIt != lastPhysicalName(); ++physIt)
     if(dim == physIt->first.first && name == physIt->second)
       return physIt->first.second;
-  Msg::Warning("No physical group found with the name '%s'", name.c_str());
+  //Msg::Warning("No physical group found with the name '%s'", name.c_str());
   return -1;
 }
 
@@ -1084,18 +1093,6 @@ int GModel::optimizeMesh(const std::string &how)
 #endif
 }
 
-int GModel::partitionMesh(int numPart)
-{
-#if defined(HAVE_MESH) && (defined(HAVE_METIS) || defined(HAVE_CHACO))
-  opt_mesh_partition_num(0, GMSH_SET, numPart);
-  PartitionMesh(this, CTX::instance()->partitionOptions);
-  return 1;
-#else
-  Msg::Error("Mesh module not compiled");
-  return 0;
-#endif
-}
-
 int GModel::setOrderN(int order, int linear, int incomplete)
 {
 #if defined(HAVE_MESH)
@@ -1423,14 +1420,48 @@ void GModel::recomputeMeshPartitions()
   }
 }
 
-void GModel::deleteMeshPartitions()
+int GModel::deleteMeshPartitions()
 {
-  std::vector<GEntity*> entities;
-  getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++)
-    for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++)
-      entities[i]->getMeshElement(j)->setPartition(0);
+#if defined(HAVE_MESH)
   meshPartitions.clear();
+  return UnpartitionMesh(this);
+#else
+  Msg::Error("Mesh module not compiled");
+  return 1;
+#endif
+}
+
+int GModel::partitionMesh(int numPart)
+{
+#if defined(HAVE_MESH) && (defined(HAVE_METIS))
+  int ier = deleteMeshPartitions();
+  if(ier != 0) return ier;
+  opt_mesh_partition_num(0, GMSH_SET, numPart);
+  if(numPart > 0)
+  {
+    ier = PartitionMesh(this);
+  }
+  else
+  {
+    return 1;
+  }
+  return ier;
+#else
+  Msg::Error("Mesh module not compiled");
+  return 1;
+#endif
+}
+
+int GModel::convertOldPartitioningToNewOne()
+{
+#if defined(HAVE_MESH) && (defined(HAVE_METIS))
+  opt_mesh_partition_num(0, GMSH_SET, meshPartitions.size());
+  int ier = ConvertOldPartitioningToNewOne(this);
+  return ier;
+#else
+  Msg::Error("Mesh module not compiled");
+  return 1;
+#endif
 }
 
 void GModel::store(std::vector<MVertex*> &vertices, int dim,
@@ -1691,8 +1722,8 @@ void GModel::_storePhysicalTagsInEntities(int dim,
   }
 }
 
-static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
-                        std::vector<MVertex*> &vertices)
+static bool getMeshVertices(int num, int *indices, std::map<int, MVertex*> &map,
+                            std::vector<MVertex*> &vertices)
 {
   for(int i = 0; i < num; i++){
     if(!map.count(indices[i])){
@@ -1705,8 +1736,8 @@ static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
   return true;
 }
 
-static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
-                        std::vector<MVertex*> &vertices, int minVertex = 0)
+static bool getMeshVertices(int num, int *indices, std::vector<MVertex*> &vec,
+                            std::vector<MVertex*> &vertices, int minVertex = 0)
 {
   for(int i = 0; i < num; i++){
     if(indices[i] < minVertex || indices[i] > (int)(vec.size() - 1 + minVertex)){
@@ -1795,14 +1826,14 @@ GModel *GModel::createGModel(std::map<int, MVertex*> &vertexMap,
     nbVertices = (int)vertexIndices[i].size();
     indices = &vertexIndices[i][0];
     if(vertexVector.size()){
-      if(!getVertices(nbVertices, indices, vertexVector, vertices)){
+      if(!getMeshVertices(nbVertices, indices, vertexVector, vertices)){
         Msg::Error("Vertex not found aborting");
         delete gm;
         return 0;
       }
     }
     else{
-      if(!getVertices(nbVertices, indices, vertexMap, vertices)){
+      if(!getMeshVertices(nbVertices, indices, vertexMap, vertices)){
         Msg::Error("Vertex not found aborting");
         delete gm;
         return 0;
@@ -2136,46 +2167,6 @@ static int connectedSurfaces(std::vector<MElement*> &elements,
       e2e.erase(*it);
   }
   return faces.size();
-}
-
-static void recurConnectMEdgesByMVertex(MVertex *v,
-                                        std::multimap<MVertex*, MEdge> &v2e,
-                                        std::set<MEdge, Less_Edge> &group,
-                                        std::set<MVertex*> &touched)
-{
-  if (touched.find(v) != touched.end()) return;
-  touched.insert(v);
-  for (std::multimap <MVertex*, MEdge>::iterator it = v2e.lower_bound(v);
-       it != v2e.upper_bound(v) ; ++it){
-    group.insert(it->second);
-    for (int i = 0; i < it->second.getNumVertices(); ++i){
-      recurConnectMEdgesByMVertex(it->second.getVertex(i), v2e, group, touched);
-    }
-  }
-}
-
-static int connectedSurfaceBoundaries(std::set<MEdge, Less_Edge> &edges,
-                                      std::vector<std::vector<MEdge> > &boundaries)
-{
-  std::multimap<MVertex*,MEdge> v2e;
-  for(std::set<MEdge, Less_Edge>::iterator it = edges.begin(); it != edges.end(); it++){
-    for (int j = 0; j < it->getNumVertices(); j++){
-      v2e.insert(std::make_pair(it->getVertex(j), *it));
-    }
-  }
-
-  while (!v2e.empty()){
-    std::set<MEdge, Less_Edge> group;
-    std::set<MVertex*> touched;
-    recurConnectMEdgesByMVertex(v2e.begin()->first, v2e, group, touched);
-    std::vector<MEdge> temp;
-    temp.insert(temp.begin(), group.begin(), group.end());
-    boundaries.push_back(temp);
-    for (std::set<MVertex*>::iterator it = touched.begin() ; it != touched.end();++it)
-      v2e.erase(*it);
-  }
-
-  return boundaries.size();
 }
 
 void GModel::alignPeriodicBoundaries()
@@ -3067,13 +3058,6 @@ void GModel::classifyFaces(std::set<GFace*> &_faces)
 #endif
 }
 
-void GModel::createPartitionBoundaries(int createGhostCells, int createAllDims)
-{
-#if (defined(HAVE_CHACO) || defined(HAVE_METIS)) && defined(HAVE_MESH)
-  CreatePartitionBoundaries(this, createGhostCells, createAllDims);
-#endif
-}
-
 void GModel::addHomologyRequest(const std::string &type,
                                 std::vector<int> &domain,
                                 std::vector<int> &subdomain,
@@ -3168,4 +3152,3 @@ void GModel::computeHomology()
   Msg::Error("Homology computation requires KBIPACK");
 #endif
 }
-

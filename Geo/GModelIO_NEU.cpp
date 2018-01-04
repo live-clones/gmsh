@@ -27,11 +27,11 @@ namespace
   // maintaining backwards compatibility with C++03
   template<typename Key, typename Value>
   struct hashMap {
-    #if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
     typedef std::unordered_map<Key, Value> _;
-    #else
+#else
     typedef std::map<Key, Value> _;
-    #endif
+#endif
   };
 
   const hashMap<std::string, unsigned>::_::value_type rawData[] = {

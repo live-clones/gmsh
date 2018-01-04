@@ -5,6 +5,7 @@
 
 #include <sstream>
 #include <iomanip>
+#include <ctime>
 #include "GModel.h"
 #include "OS.h"
 #include "GmshMessage.h"
@@ -211,6 +212,10 @@ int GModel::readMSH(const std::string &name)
       if(version < 3.){
         fclose(fp);
         return _readMSH2(name);
+      }
+      if(version == 4.0){
+        fclose(fp);
+        return _readMSH4(name);
       }
       if(format){
         binary = true;
@@ -630,10 +635,18 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
                      double scalingFactor, int elementStartNum,
                      int saveSinglePartition, bool multipleView)
 {
-  if(version < 3)
-    return _writeMSH2(name, version, binary, saveAll, saveParametric,
-                      scalingFactor, elementStartNum, saveSinglePartition,
-                      multipleView);
+  if(version != 4.0 && getNumPartitions() > 0){
+    Msg::Warning("Saving a partitioned mesh in a format different of 4.0 may "
+                 "cause information loss");
+  }
+
+  if(version < 3){
+    return _writeMSH2(name, version, binary, saveAll, saveParametric, scalingFactor,
+                      elementStartNum, saveSinglePartition, multipleView);
+  }
+  if(version == 4.0){
+    return _writeMSH4(name, version, binary, saveAll, saveParametric, scalingFactor);
+  }
 
   FILE *fp;
   if(multipleView)
@@ -745,8 +758,11 @@ int GModel::writePartitionedMSH(const std::string &baseName, double version,
                                 double scalingFactor)
 {
   if(version < 3)
-    return _writePartitionedMSH2(baseName, binary, saveAll, saveParametric,
-                                 scalingFactor);
+    return _writePartitionedMSH2(baseName, binary, saveAll,
+                                 saveParametric, scalingFactor);
+  else if(version == 4.0)
+    return _writePartitionedMSH4(baseName, version, binary, saveAll,
+                                 saveParametric, scalingFactor);
 
   for(std::set<int>::iterator it = meshPartitions.begin();
       it != meshPartitions.end(); it++){

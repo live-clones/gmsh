@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <algorithm>
 #include <string>
+#include <fstream>
 
 #include "GmshMessage.h"
 #include "ElementType.h"
@@ -378,6 +379,7 @@ class MElement
                          int num=0, int elementary=1, int physical=1,
                          int parentNum=0, int dom1Num = 0, int dom2Num = 0,
                          std::vector<short> *ghosts=0);
+  virtual void writeMSH4(FILE *fp, bool binary=false);
   virtual void writePOS(FILE *fp, bool printElementary, bool printElementNumber,
                         bool printSICN, bool printSIGE, bool printGamma,
                         bool printDisto,double scalingFactor=1.0, int elementary=1);
@@ -419,6 +421,11 @@ class MElement
   virtual MElement *copy(std::map<int, MVertex*> &vertexMap,
                          std::map<MElement*, MElement*> &newParents,
                          std::map<MElement*, MElement*> &newDomains);
+
+  // Return the number of nodes that this element must have with the other in
+  // order to put an edge between them in the dual graph used during the
+  // partitioning.
+  virtual int numCommonNodesInDualGraph(const MElement *const other) const = 0;
 };
 
 class MElementFactory{

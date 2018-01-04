@@ -206,7 +206,7 @@ void GFace::resetMeshAttributes()
 SBoundingBox3d GFace::bounds() const
 {
   SBoundingBox3d res;
-  if(geomType() != DiscreteSurface){
+  if(geomType() != DiscreteSurface && geomType() != PartitionSurface){
     std::list<GEdge*>::const_iterator it = l_edges.begin();
     for(; it != l_edges.end(); it++)
       res += (*it)->bounds();
@@ -1872,4 +1872,50 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies)
   // --- including for edges and vertices
 
   setMeshMaster(master, tfo);
+}
+
+void GFace::addElement(int type, MElement *e)
+{
+  switch (type){
+  case TYPE_TRI:
+    addTriangle(reinterpret_cast<MTriangle*>(e));
+    break;
+  case TYPE_QUA:
+    addQuadrangle(reinterpret_cast<MQuadrangle*>(e));
+    break;
+  case TYPE_POLYG:
+    addPolygon(reinterpret_cast<MPolygon*>(e));
+    break;
+  default:
+    Msg::Error("Trying to add unsupported element in face");
+  }
+}
+
+void GFace::removeElement(int type, MElement *e)
+{
+  switch (type){
+  case TYPE_TRI:
+    {
+      std::vector<MTriangle*>::iterator it = std::find
+        (triangles.begin(), triangles.end(), reinterpret_cast<MTriangle*>(e));
+      if(it != triangles.end()) triangles.erase(it);
+    }
+    break;
+  case TYPE_QUA:
+    {
+      std::vector<MQuadrangle*>::iterator it = std::find
+        (quadrangles.begin(), quadrangles.end(), reinterpret_cast<MQuadrangle*>(e));
+      if(it != quadrangles.end()) quadrangles.erase(it);
+    }
+    break;
+  case TYPE_POLYG:
+    {
+      std::vector<MPolygon*>::iterator it = std::find
+        (polygons.begin(), polygons.end(), reinterpret_cast<MPolygon*>(e));
+      if(it != polygons.end()) polygons.erase(it);
+    }
+    break;
+  default:
+    Msg::Error("Trying to remove unsupported element in face");
+  }
 }
