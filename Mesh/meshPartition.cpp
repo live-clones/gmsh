@@ -19,11 +19,28 @@
 #include <stack>
 #include <cstdlib>
 #include <map>
+
 #if __cplusplus >= 201103L
 #include <unordered_map>
 #define hashmap std::unordered_map
+#define hashmapface std::unordered_map\
+  <MFace, std::vector<std::pair<MElement*, std::vector<unsigned int> > >,\
+   Hash_Face, Equal_Face>
+#define hashmapedge std::unordered_map\
+  <MEdge, std::vector<std::pair<MElement*, std::vector<unsigned int> > >,\
+   Hash_Edge, Equal_Edge>
+#define hashmapvertex std::unordered_map\
+  <MVertex*, std::vector<std::pair<MElement*, std::vector<unsigned int> > > >
 #else
 #define hashmap std::map
+#define hashmapface std::map\
+  <MFace, std::vector<std::pair<MElement*, std::vector<unsigned int> > >,\
+   Equal_Face>
+#define hashmapedge std::map\
+  <MEdge, std::vector<std::pair<MElement*, std::vector<unsigned int> > >,\
+   Equal_Edge>
+#define hashmapvertex std::map\
+  <MVertex*, std::vector<std::pair<MElement*, std::vector<unsigned int> > > >
 #endif
 
 #include "OS.h"
@@ -1263,9 +1280,7 @@ static void CreateNewEntities(GModel *const model,
 }
 
 template <class ITERATOR>
-static void fillit_(hashmap<MFace,
-                    std::vector<std::pair<MElement*, std::vector<unsigned int> > >,
-                    Hash_Face, Equal_Face> &faceToElement,
+static void fillit_(hashmapface &faceToElement,
                     const std::vector<unsigned int> &partitions,
                     ITERATOR it_beg, ITERATOR it_end)
 {
@@ -1278,9 +1293,7 @@ static void fillit_(hashmap<MFace,
 }
 
 template <class ITERATOR>
-static void fillit_(hashmap<MEdge,
-                    std::vector<std::pair<MElement*, std::vector<unsigned int> > >,
-                    Hash_Edge, Equal_Edge> &edgeToElement,
+static void fillit_(hashmapedge &edgeToElement,
                     const std::vector<unsigned int> &partitions,
                     ITERATOR it_beg, ITERATOR it_end)
 {
@@ -1293,9 +1306,7 @@ static void fillit_(hashmap<MEdge,
 }
 
 template <class ITERATOR>
-static void fillit_(hashmap<MVertex*,
-                    std::vector<std::pair<MElement*, std::vector<unsigned int> > > >
-                    &vertexToElement,
+static void fillit_(hashmapvertex &vertexToElement,
                     const std::vector<unsigned int> &partitions,
                     ITERATOR it_beg, ITERATOR it_end)
 {
@@ -1638,12 +1649,9 @@ static void CreatePartitionBoundaries(GModel *const model,
   std::multimap<partitionEdge*, GEntity*, Less_partitionEdge> pedges;
   std::multimap<partitionVertex*, GEntity*, Less_partitionVertex> pvertices;
 
-  hashmap<MFace, std::vector<std::pair<MElement*, std::vector<unsigned int> > >,
-          Hash_Face, Equal_Face> faceToElement;
-  hashmap<MEdge, std::vector<std::pair<MElement*, std::vector<unsigned int> > >,
-          Hash_Edge, Equal_Edge> edgeToElement;
-  hashmap<MVertex*,
-          std::vector<std::pair<MElement*, std::vector<unsigned int> > > > vertexToElement;
+  hashmapface faceToElement;
+  hashmapedge edgeToElement;
+  hashmapvertex vertexToElement;
 
   if (meshDim >= 3){ // Create partition faces
     Msg::Info("Creating partition faces... ");
@@ -1663,8 +1671,7 @@ static void CreatePartitionBoundaries(GModel *const model,
       }
     }
 
-    for(hashmap<MFace, std::vector< std::pair<MElement*, std::vector<unsigned int> > >,
-          Hash_Face, Equal_Face>::const_iterator it = faceToElement.begin();
+    for(hashmapface::const_iterator it = faceToElement.begin();
         it != faceToElement.end(); ++it){
       MFace f = it->first;
 
@@ -1755,8 +1762,7 @@ static void CreatePartitionBoundaries(GModel *const model,
                 (*it)->quadrangles.begin(), (*it)->quadrangles.end());
       }
     }
-    for(hashmap<MEdge, std::vector< std::pair<MElement*, std::vector<unsigned int> > >,
-          Hash_Edge, Equal_Edge>::const_iterator it = edgeToElement.begin();
+    for(hashmapedge::const_iterator it = edgeToElement.begin();
         it != edgeToElement.end(); ++it){
       MEdge e = it->first;
 
@@ -1841,8 +1847,7 @@ static void CreatePartitionBoundaries(GModel *const model,
                 (*it)->lines.begin(), (*it)->lines.end());
       }
     }
-    for(hashmap<MVertex*, std::vector< std::pair<MElement*,
-          std::vector<unsigned int> > > >::const_iterator it = vertexToElement.begin();
+    for(hashmapvertex::const_iterator it = vertexToElement.begin();
         it != vertexToElement.end(); ++it){
       MVertex *v = it->first;
 
@@ -2657,27 +2662,32 @@ int ConvertOldPartitioningToNewOne(GModel *const model)
   for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
     for(std::vector<MTetrahedron*>::iterator itElm = (*it)->tetrahedra.begin();
         itElm != (*it)->tetrahedra.end(); ++itElm){
-      elmToPartition.insert(std::pair<MElement*, unsigned int>(*itElm, (*itElm)->getPartition()));
+      elmToPartition.insert(std::pair<MElement*, unsigned int>
+                            (*itElm, (*itElm)->getPartition()));
       partitions.insert((*itElm)->getPartition());
     }
     for(std::vector<MHexahedron*>::iterator itElm = (*it)->hexahedra.begin();
         itElm != (*it)->hexahedra.end(); ++itElm){
-      elmToPartition.insert(std::pair<MElement*, unsigned int>(*itElm, (*itElm)->getPartition()));
+      elmToPartition.insert(std::pair<MElement*, unsigned int>
+                            (*itElm, (*itElm)->getPartition()));
       partitions.insert((*itElm)->getPartition());
     }
     for(std::vector<MPrism*>::iterator itElm = (*it)->prisms.begin();
         itElm != (*it)->prisms.end(); ++itElm){
-      elmToPartition.insert(std::pair<MElement*, unsigned int>(*itElm, (*itElm)->getPartition()));
+      elmToPartition.insert(std::pair<MElement*, unsigned int>
+                            (*itElm, (*itElm)->getPartition()));
       partitions.insert((*itElm)->getPartition());
     }
     for(std::vector<MPyramid*>::iterator itElm = (*it)->pyramids.begin();
         itElm != (*it)->pyramids.end(); ++itElm){
-      elmToPartition.insert(std::pair<MElement*, unsigned int>(*itElm, (*itElm)->getPartition()));
+      elmToPartition.insert(std::pair<MElement*, unsigned int>
+                            (*itElm, (*itElm)->getPartition()));
       partitions.insert((*itElm)->getPartition());
     }
     for(std::vector<MTrihedron*>::iterator itElm = (*it)->trihedra.begin();
         itElm != (*it)->trihedra.end(); ++itElm){
-      elmToPartition.insert(std::pair<MElement*, unsigned int>(*itElm, (*itElm)->getPartition()));
+      elmToPartition.insert(std::pair<MElement*, unsigned int>
+                            (*itElm, (*itElm)->getPartition()));
       partitions.insert((*itElm)->getPartition());
     }
   }
@@ -2686,12 +2696,14 @@ int ConvertOldPartitioningToNewOne(GModel *const model)
   for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
     for(std::vector<MTriangle*>::iterator itElm = (*it)->triangles.begin();
         itElm != (*it)->triangles.end(); ++itElm){
-      elmToPartition.insert(std::pair<MElement*, unsigned int>(*itElm, (*itElm)->getPartition()));
+      elmToPartition.insert(std::pair<MElement*, unsigned int>
+                            (*itElm, (*itElm)->getPartition()));
       partitions.insert((*itElm)->getPartition());
     }
     for(std::vector<MQuadrangle*>::iterator itElm = (*it)->quadrangles.begin();
         itElm != (*it)->quadrangles.end(); ++itElm){
-      elmToPartition.insert(std::pair<MElement*, unsigned int>(*itElm, (*itElm)->getPartition()));
+      elmToPartition.insert(std::pair<MElement*, unsigned int>
+                            (*itElm, (*itElm)->getPartition()));
       partitions.insert((*itElm)->getPartition());
     }
   }
@@ -2700,7 +2712,8 @@ int ConvertOldPartitioningToNewOne(GModel *const model)
   for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
     for(std::vector<MLine*>::iterator itElm = (*it)->lines.begin();
         itElm != (*it)->lines.end(); ++itElm){
-      elmToPartition.insert(std::pair<MElement*, unsigned int>(*itElm, (*itElm)->getPartition()));
+      elmToPartition.insert(std::pair<MElement*, unsigned int>
+                            (*itElm, (*itElm)->getPartition()));
       partitions.insert((*itElm)->getPartition());
     }
   }
@@ -2709,7 +2722,8 @@ int ConvertOldPartitioningToNewOne(GModel *const model)
   for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex(); ++it){
     for(std::vector<MPoint*>::iterator itElm = (*it)->points.begin();
         itElm != (*it)->points.end(); ++itElm){
-      elmToPartition.insert(std::pair<MElement*, unsigned int>(*itElm, (*itElm)->getPartition()));
+      elmToPartition.insert(std::pair<MElement*, unsigned int>
+                            (*itElm, (*itElm)->getPartition()));
       partitions.insert((*itElm)->getPartition());
     }
   }
