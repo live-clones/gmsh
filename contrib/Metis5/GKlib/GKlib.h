@@ -1,6 +1,6 @@
 /*
  * GKlib.h
- * 
+ *
  * George's library of most frequently used routines
  *
  * $Id: GKlib.h 13005 2012-10-23 22:34:36Z karypis $
@@ -14,6 +14,7 @@
 
 #if defined(_MSC_VER)
 #define __MSC__
+#define __thread // fix for Gmsh
 #endif
 #if defined(__ICC)
 #define __ICC__
@@ -54,7 +55,7 @@
 
 
 
-#if defined(__OPENMP__) 
+#if defined(__OPENMP__)
 #include <omp.h>
 #endif
 
@@ -80,5 +81,3 @@
 
 
 #endif  /* GKlib.h */
-
-
