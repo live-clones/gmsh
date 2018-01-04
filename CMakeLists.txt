@@ -721,16 +721,19 @@ endif(ENABLE_POPPLER)
 
 if(HAVE_MESH OR HAVE_SOLVER)
   if(ENABLE_METIS)
-    # Use of Metis 5
-    add_definitions(-DUSE_GKREGEX)
-    add_subdirectory(contrib/Metis5/GKlib)
-    add_subdirectory(contrib/Metis5)
-    # make sure to include path before any (system) Metis 5 directories
-    include_directories(BEFORE contrib/Metis5/GKlib)
-    include_directories(BEFORE contrib/Metis5)
-    set_config_option(HAVE_METIS "Metis5")
-    message(STATUS "Note: By including Metis you have to comply with Metis' "
-            "special licensing requirements stated in contrib/Metis5/README.txt.")
+    find_library(METIS_LIB metis PATH_SUFFIXES lib)
+    find_path(METIS_INC "metis.h" PATH_SUFFIXES include)
+    if(METIS_LIB AND METIS_INC)
+       list(APPEND EXTERNAL_LIBRARIES ${METIS_LIB})
+       list(APPEND EXTERNAL_INCLUDES ${METIS_INC})
+    else(METIS_LIB AND METIS_INC)
+       message(STATUS "System METIS not found: using contrib/metis instead")
+       add_definitions(-DUSE_GKREGEX)
+       add_subdirectory(contrib/metis)
+       include_directories(contrib/metis/include contrib/metis/libmetis
+                           contrib/metis/GKlib)
+    endif(METIS_LIB AND METIS_INC)
+    set_config_option(HAVE_METIS "Metis")
   endif(ENABLE_METIS)
 endif(HAVE_MESH OR HAVE_SOLVER)
 
