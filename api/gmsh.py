@@ -525,9 +525,9 @@ class model:
     def getEntitiesInBoundingBox(xmin,ymin,zmin,xmax,ymax,zmax,dim=-1):
         """
         Gets the (elementary) geometrical entities in the bounding box defined by
-        the two points (xmin, ymin, zmin) and (xmax, ymax, zmax). If `dim' is >= 0,
-        returns only the entities of the specified dimension (e.g. points if `dim'
-        == 0).
+        the two points (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If
+        `dim' is >= 0, returns only the entities of the specified dimension (e.g.
+        points if `dim' == 0).
 
         return tags
         """
@@ -552,8 +552,8 @@ class model:
     @staticmethod
     def getBoundingBox(dim,tag):
         """
-        Gets the bounding box (xmin, ymin, zmin), (xmax, ymax, zmax) of the
-        geometrical entity of dimension `dim' and tag `tag'.
+        Gets the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
+        the geometrical entity of dimension `dim' and tag `tag'.
 
         return xmin, ymin, zmin, xmax, ymax, zmax
         """
@@ -692,13 +692,13 @@ class model:
             """
             Gets the mesh vertices of the entity of dimension `dim' and `tag' tag. If
             `tag' < 0, gets the vertices for all entities of dimension `dim'. If `dim'
-            and `tag' are negative, gets all the vertices in the mesh. `vertextags'
+            and `tag' are negative, gets all the vertices in the mesh. `vertexTags'
             contains the vertex tags (their unique, strictly positive identification
-            numbers). `coord` is a vector of length `3 * vertexTags.size()' that
-            contains the (x, y, z) coordinates of the vertices, concatenated. If `dim'
-            >= 0, `parametricCoord` contains the parametric coordinates of the
-            vertices, if available. The length of `parametricCoord` can be 0 or `dim *
-            vertexTags.size()'.
+            numbers). `coord' is a vector of length 3 times the length of `vertexTags'
+            that contains the (x, y, z) coordinates of the vertices, concatenated. If
+            `dim' >= 0, `parametricCoord' contains the parametric coordinates of the
+            vertices, if available. The length of `parametricCoord' can be 0 or `dim'
+            times the length of `vertexTags'.
 
             return vertexTags, coord, parametricCoord
             """
@@ -729,13 +729,13 @@ class model:
             `tag' < 0, gets the elements for all entities of dimension `dim'. If `dim'
             and `tag' are negative, gets all the elements in the mesh. `elementTypes'
             contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
-            the Gmsh reference manual). `elementTags' is a vector of length
-            `elementTypes.size()'; each entry is a vector containing the tags (unique,
+            the Gmsh reference manual). `elementTags' is a vector of the same length as
+            `elementTypes'; each entry is a vector containing the tags (unique,
             strictly positive identifiers) of the elements of the corresponding type.
-            `vertexTags' is also a vector of length `elementTypes.size()'; each entry
-            is a vector of length equal to the number of elements of the given type
-            times the number of vertices for this type of element, that contains the
-            vertex tags of all the elements of the given type, concatenated.
+            `vertexTags' is also a vector of the same length as `elementTypes'; each
+            entry is a vector of length equal to the number of elements of the given
+            type times the number of vertices for this type of element, that contains
+            the vertex tags of all the elements of the given type, concatenated.
 
             return elementTypes, elementTags, vertexTags
             """
@@ -806,15 +806,97 @@ class model:
                 _ovectorvectordouble(api_functionSpaceData_,api_functionSpaceData_n_,api_functionSpaceData_nn_))
 
         @staticmethod
+        def getElementTypes(dim=-1,tag=-1):
+            """
+            Gets the types of mesh elements in the entity of dimension `dim' and `tag'
+            tag. If `tag' < 0, gets the types for all entities of dimension `dim'. If
+            `dim' and `tag' are negative, gets all the types in the mesh.
+
+            return elementTypes
+            """
+            api_elementTypes_, api_elementTypes_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetElementTypes(
+                byref(api_elementTypes_),byref(api_elementTypes_n_),
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshGetElementTypes returned non-zero error code : ",
+                    ierr.value)
+            return _ovectorint(api_elementTypes_,api_elementTypes_n_.value)
+
+        @staticmethod
+        def getElementsByType(elementType,dim=-1,tag=-1):
+            """
+            Gets the mesh elements in the same way as `getElements', but for a single
+            `elementType'.
+
+            return elementTags, vertexTags
+            """
+            api_elementTags_, api_elementTags_n_ = POINTER(c_int)(), c_size_t()
+            api_vertexTags_, api_vertexTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetElementsByType(
+                c_int(elementType),
+                byref(api_elementTags_),byref(api_elementTags_n_),
+                byref(api_vertexTags_),byref(api_vertexTags_n_),
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshGetElementsByType returned non-zero error code : ",
+                    ierr.value)
+            return (
+                _ovectorint(api_elementTags_,api_elementTags_n_.value),
+                _ovectorint(api_vertexTags_,api_vertexTags_n_.value))
+
+        @staticmethod
+        def getIntegrationDataByType(elementType,integrationType,functionSpaceType,dim=-1,tag=-1):
+            """
+            Gets the integration data for mesh elements in the same way as
+            `getIntegrationData', but for a single `elementType'.
+
+            return integrationPoints, integrationData, functionSpaceNumComponents, functionSpaceData
+            """
+            api_integrationPoints_, api_integrationPoints_n_ = POINTER(c_double)(), c_size_t()
+            api_integrationData_, api_integrationData_n_ = POINTER(c_double)(), c_size_t()
+            api_functionSpaceNumComponents_ = c_int()
+            api_functionSpaceData_, api_functionSpaceData_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetIntegrationDataByType(
+                c_int(elementType),
+                c_char_p(integrationType.encode()),
+                c_char_p(functionSpaceType.encode()),
+                byref(api_integrationPoints_),byref(api_integrationPoints_n_),
+                byref(api_integrationData_),byref(api_integrationData_n_),
+                byref(api_functionSpaceNumComponents_),
+                byref(api_functionSpaceData_),byref(api_functionSpaceData_n_),
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshGetIntegrationDataByType returned non-zero error code : ",
+                    ierr.value)
+            return (
+                _ovectordouble(api_integrationPoints_,api_integrationPoints_n_.value),
+                _ovectordouble(api_integrationData_,api_integrationData_n_.value),
+                api_functionSpaceNumComponents_.value,
+                _ovectordouble(api_functionSpaceData_,api_functionSpaceData_n_.value))
+
+        @staticmethod
         def setVertices(dim,tag,vertexTags,coord,parametricCoord=[]):
             """
             Sets the mesh vertices in the geometrical entity of dimension `dim' and tag
             `tag'. `vertextags' contains the vertex tags (their unique, strictly
-            positive identification numbers). `coord` is a vector of length `3 *
-            vertexTags.size()' that contains the (x, y, z) coordinates of the vertices,
-            concatenated. The optional `parametricCoord` vector contains the parametric
-            coordinates of the vertices, if any. The length of `parametricCoord` can be
-            0 or `dim * vertexTags.size()'.
+            positive identification numbers). `coord' is a vector of length 3 times the
+            length of `vertexTags' that contains the (x, y, z) coordinates of the
+            vertices, concatenated. The optional `parametricCoord' vector contains the
+            parametric coordinates of the vertices, if any. The length of
+            `parametricCoord' can be 0 or `dim' times the length of `vertexTags'.
             """
             api_vertexTags_, api_vertexTags_n_ = _ivectorint(vertexTags)
             api_coord_, api_coord_n_ = _ivectordouble(coord)
@@ -837,13 +919,13 @@ class model:
             """
             Sets the mesh elements of the entity of dimension `dim' and `tag' tag.
             `types' contains the MSH types of the elements (e.g. `2' for 3-node
-            triangles: see the Gmsh reference manual). `elementTags' is a vector of
-            length `types.size()'; each entry is a vector containing the tags (unique,
+            triangles: see the Gmsh reference manual). `elementTags' is a vector of the
+            same length as `types'; each entry is a vector containing the tags (unique,
             strictly positive identifiers) of the elements of the corresponding type.
-            `vertexTags' is also a vector of length `types.size()'; each entry is a
-            vector of length equal to the number of elements of the give type times the
-            number of vertices per element, that contains the vertex tags of all the
-            elements of the given type, concatenated.
+            `vertexTags' is also a vector of the same length as `types'; each entry is
+            a vector of length equal to the number of elements of the give type times
+            the number of vertices per element, that contains the vertex tags of all
+            the elements of the given type, concatenated.
             """
             api_types_, api_types_n_ = _ivectorint(types)
             api_elementTags_, api_elementTags_n_, api_elementTags_nn_ = _ivectorvectorint(elementTags)
@@ -2997,13 +3079,13 @@ class view:
         specifies the type of data, currently either "NodeData", "ElementData" or
         "ElementNodeData". `step' specifies the identifier (>= 0) of the data in a
         sequence. `tags' gives the tags of the vertices or elements in the mesh to
-        which the data is associated. `data' is a vector of length `tags.size()`:
-        each entry is the vector of double precision numbers representing the data
-        associated with the corresponding tag. The optional `time` argument
-        associate a time value with the data. `numComponents' gives the number of
-        data components (1 for scalar data, 3 for vector data, etc.) per entity; if
-        negative, it is automatically inferred (when possible) from the input data.
-        `partition' allows to specify data in several sub-sets.
+        which the data is associated. `data' is a vector of the same length as
+        `tags': each entry is the vector of double precision numbers representing
+        the data associated with the corresponding tag. The optional `time'
+        argument associate a time value with the data. `numComponents' gives the
+        number of data components (1 for scalar data, 3 for vector data, etc.) per
+        entity; if negative, it is automatically inferred (when possible) from the
+        input data. `partition' allows to specify data in several sub-sets.
         """
         api_tags_, api_tags_n_ = _ivectorint(tags)
         api_data_, api_data_n_, api_data_nn_ = _ivectorvectordouble(data)
@@ -3173,7 +3255,7 @@ class plugin:
     @staticmethod
     def setNumber(name,option,value):
         """
-        Sets the numerical option `option` to the value `value' for plugin `name'.
+        Sets the numerical option `option' to the value `value' for plugin `name'.
         """
         ierr = c_int()
         lib.gmshPluginSetNumber(
@@ -3189,7 +3271,7 @@ class plugin:
     @staticmethod
     def setString(name,option,value):
         """
-        Sets the string option `option` to the value `value' for plugin `name'.
+        Sets the string option `option' to the value `value' for plugin `name'.
         """
         ierr = c_int()
         lib.gmshPluginSetString(
