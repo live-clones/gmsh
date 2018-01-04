@@ -33,8 +33,8 @@ extern void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities, boo
 extern void readMSHPeriodicNodes(FILE *fp, GModel *gm);
 extern void writeMSHEntities(FILE *fp, GModel *gm);
 
-static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
-                        std::vector<MVertex*> &vertices)
+static bool getMeshVertices(int num, int *indices, std::map<int, MVertex*> &map,
+                            std::vector<MVertex*> &vertices)
 {
   for(int i = 0; i < num; i++){
     if(!map.count(indices[i])){
@@ -47,8 +47,8 @@ static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
   return true;
 }
 
-static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
-                        std::vector<MVertex*> &vertices, int minVertex = 0)
+static bool getMeshVertices(int num, int *indices, std::vector<MVertex*> &vec,
+                            std::vector<MVertex*> &vertices, int minVertex = 0)
 {
   for(int i = 0; i < num; i++){
     if(indices[i] < minVertex || indices[i] > (int)(vec.size() - 1 + minVertex)){
@@ -420,14 +420,14 @@ int GModel::_readMSH2(const std::string &name)
           }
           std::vector<MVertex*> vertices;
           if(vertexVector.size()){
-            if(!getVertices(numVertices, indices, vertexVector, vertices, minVertex)){
+            if(!getMeshVertices(numVertices, indices, vertexVector, vertices, minVertex)){
               delete [] indices;
               fclose(fp);
               return 0;
             }
           }
           else{
-            if(!getVertices(numVertices, indices, vertexMap, vertices)){
+            if(!getMeshVertices(numVertices, indices, vertexMap, vertices)){
               delete [] indices;
               fclose(fp);
               return 0;
@@ -547,14 +547,14 @@ int GModel::_readMSH2(const std::string &name)
             int *indices = &data[numTags + 1];
             std::vector<MVertex*> vertices;
             if(vertexVector.size()){
-              if(!getVertices(numVertices, indices, vertexVector, vertices, minVertex)){
+              if(!getMeshVertices(numVertices, indices, vertexVector, vertices, minVertex)){
                 delete [] data;
                 fclose(fp);
                 return 0;
               }
             }
             else{
-              if(!getVertices(numVertices, indices, vertexMap, vertices)){
+              if(!getMeshVertices(numVertices, indices, vertexMap, vertices)){
                 delete [] data;
                 fclose(fp);
                 return 0;

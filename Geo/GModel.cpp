@@ -1722,8 +1722,8 @@ void GModel::_storePhysicalTagsInEntities(int dim,
   }
 }
 
-static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
-                        std::vector<MVertex*> &vertices)
+static bool getMeshVertices(int num, int *indices, std::map<int, MVertex*> &map,
+                            std::vector<MVertex*> &vertices)
 {
   for(int i = 0; i < num; i++){
     if(!map.count(indices[i])){
@@ -1736,8 +1736,8 @@ static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
   return true;
 }
 
-static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
-                        std::vector<MVertex*> &vertices, int minVertex = 0)
+static bool getMeshVertices(int num, int *indices, std::vector<MVertex*> &vec,
+                            std::vector<MVertex*> &vertices, int minVertex = 0)
 {
   for(int i = 0; i < num; i++){
     if(indices[i] < minVertex || indices[i] > (int)(vec.size() - 1 + minVertex)){
@@ -1826,14 +1826,14 @@ GModel *GModel::createGModel(std::map<int, MVertex*> &vertexMap,
     nbVertices = (int)vertexIndices[i].size();
     indices = &vertexIndices[i][0];
     if(vertexVector.size()){
-      if(!getVertices(nbVertices, indices, vertexVector, vertices)){
+      if(!getMeshVertices(nbVertices, indices, vertexVector, vertices)){
         Msg::Error("Vertex not found aborting");
         delete gm;
         return 0;
       }
     }
     else{
-      if(!getVertices(nbVertices, indices, vertexMap, vertices)){
+      if(!getMeshVertices(nbVertices, indices, vertexMap, vertices)){
         Msg::Error("Vertex not found aborting");
         delete gm;
         return 0;

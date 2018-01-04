@@ -1048,10 +1048,10 @@ static void CreateNewEntities(GModel *const model,
   }
 
   // Divide the non connected entities
-  regions = model->getGRegions();
-  faces = model->getGFaces();
-  edges = model->getGEdges();
-  vertices = model->getGVertices();
+  regions = model->getRegions();
+  faces = model->getFaces();
+  edges = model->getEdges();
+  vertices = model->getVertices();
 
   // Loop over vertices
   for(GModel::const_viter it = vertices.begin(); it != vertices.end(); ++it){
@@ -1687,7 +1687,7 @@ static void CreatePartitionBoundaries(GModel *const model,
     faceToElement.clear();
 
     // Divide the non connected entities
-    std::set<GFace*, GEntityLessThan> faces = model->getGFaces();
+    std::set<GFace*, GEntityLessThan> faces = model->getFaces();
     for(GModel::const_fiter it = faces.begin(); it != faces.end(); ++it){
       if((*it)->geomType() == GEntity::PartitionSurface){
         partitionFace* face = static_cast<partitionFace*>(*it);
@@ -1778,7 +1778,7 @@ static void CreatePartitionBoundaries(GModel *const model,
     edgeToElement.clear();
 
     // Divide the non connected entities
-    std::set<GEdge*, GEntityLessThan> edges = model->getGEdges();
+    std::set<GEdge*, GEntityLessThan> edges = model->getEdges();
     for(GModel::const_eiter it = edges.begin(); it != edges.end(); ++it){
       if((*it)->geomType() == GEntity::PartitionCurve){
         partitionEdge* edge = static_cast<partitionEdge*>(*it);
@@ -1863,7 +1863,7 @@ static void CreatePartitionBoundaries(GModel *const model,
     vertexToElement.clear();
 
     // Divide the non connected entities
-    std::set<GVertex*, GEntityLessThan> vertices = model->getGVertices();
+    std::set<GVertex*, GEntityLessThan> vertices = model->getVertices();
     for(GModel::const_viter it = vertices.begin(); it != vertices.end(); ++it){
       if((*it)->geomType() == GEntity::PartitionVertex){
         partitionVertex* vertex = static_cast<partitionVertex*>(*it);
@@ -2519,10 +2519,10 @@ static void assignToParent(std::set<MVertex*> &verts, partitionVertex *vertex,
 int UnpartitionMesh(GModel *const model)
 {
   // make a copy so we can iterate safely (we will remove some entities)
-  std::set<GRegion*, GEntityLessThan> regions = model->getGRegions();
-  std::set<GFace*, GEntityLessThan> faces = model->getGFaces();
-  std::set<GEdge*, GEntityLessThan> edges = model->getGEdges();
-  std::set<GVertex*, GEntityLessThan> vertices = model->getGVertices();
+  std::set<GRegion*, GEntityLessThan> regions = model->getRegions();
+  std::set<GFace*, GEntityLessThan> faces = model->getFaces();
+  std::set<GEdge*, GEntityLessThan> edges = model->getEdges();
+  std::set<GVertex*, GEntityLessThan> vertices = model->getVertices();
 
   std::set<MVertex*> verts;
 

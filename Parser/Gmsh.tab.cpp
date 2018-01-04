@@ -9495,7 +9495,7 @@ yyreduce:
       }
       else if(!strcmp((yyvsp[(2) - (3)].c), "Physicals")){
 	GModel::current()->getGEOInternals()->resetPhysicalGroups();
-	GModel::current()->deletePhysicalGroups();
+	GModel::current()->removePhysicalGroups();
       }
       else if(!strcmp((yyvsp[(2) - (3)].c), "Variables")){
 	gmsh_yysymbols.clear();

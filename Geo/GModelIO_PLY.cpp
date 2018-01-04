@@ -15,8 +15,8 @@
 #include "PViewDataList.h"
 #endif
 
-static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
-                        std::vector<MVertex*> &vertices)
+static bool getMeshVertices(int num, int *indices, std::vector<MVertex*> &vec,
+                            std::vector<MVertex*> &vertices)
 {
   for(int i = 0; i < num; i++){
     if(indices[i] < 0 || indices[i] > (int)(vec.size() - 1)){
@@ -124,7 +124,7 @@ int GModel::readPLY(const std::string &name)
 	  int n[3], nbe;
 	  sscanf(buffer, "%d %d %d %d", &nbe, &n[0], &n[1], &n[2]);
 	  std::vector<MVertex*> vertices;
-	  if(!getVertices(3, n, vertexVector, vertices)){ fclose(fp); return 0; }
+	  if(!getMeshVertices(3, n, vertexVector, vertices)){ fclose(fp); return 0; }
 	  elements[0][elementary].push_back(new MTriangle(vertices));
 	}
 
@@ -223,7 +223,7 @@ int GModel::readPLY2(const std::string &name)
 	  sscanf(buffer, "%d",  &n[2]);
 	}
 	std::vector<MVertex*> vertices;
-	if(!getVertices(3, n, vertexVector, vertices)){ fclose(fp); return 0; }
+	if(!getMeshVertices(3, n, vertexVector, vertices)){ fclose(fp); return 0; }
 	elements[0][elementary].push_back(new MTriangle(vertices));
       }
     }
@@ -269,4 +269,3 @@ int GModel::writePLY2(const std::string &name)
   fclose(fp);
   return 1;
 }
-
