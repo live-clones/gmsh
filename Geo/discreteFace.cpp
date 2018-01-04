@@ -15,8 +15,6 @@
 #include "Geo.h"
 #include "Context.h"
 #include "OS.h"
-#include "meshPartitionObjects.h"
-#include "meshPartition.h"
 #include "MPoint.h"
 
 #if defined(HAVE_PETSC)
@@ -567,8 +565,9 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
   std::vector<int> part;
   part.resize(nVertex);
   int one = 1;
-  METIS_PartGraphRecursive((idx_t* )&nVertex, (idx_t *)&one, (idx_t* )&(idx[0]), (idx_t *)&(nbh[0]),NULL, NULL, NULL, (idx_t *)&nPartitions, NULL, NULL, NULL, (idx_t *)&edgeCut, (idx_t *)&(part[0]));
-
+  METIS_PartGraphRecursive((idx_t* )&nVertex, (idx_t *)&one, (idx_t* )&(idx[0]),
+                           (idx_t *)&(nbh[0]),NULL, NULL, NULL, (idx_t *)&nPartitions,
+                           NULL, NULL, NULL, (idx_t *)&edgeCut, (idx_t *)&(part[0]));
 
   std::map<MElement*,int> el2part;
   std::vector<std::vector<MElement*> > elem;
