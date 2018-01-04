@@ -2169,46 +2169,6 @@ static int connectedSurfaces(std::vector<MElement*> &elements,
   return faces.size();
 }
 
-static void recurConnectMEdgesByMVertex(MVertex *v,
-                                        std::multimap<MVertex*, MEdge> &v2e,
-                                        std::set<MEdge, Less_Edge> &group,
-                                        std::set<MVertex*> &touched)
-{
-  if (touched.find(v) != touched.end()) return;
-  touched.insert(v);
-  for (std::multimap <MVertex*, MEdge>::iterator it = v2e.lower_bound(v);
-       it != v2e.upper_bound(v) ; ++it){
-    group.insert(it->second);
-    for (int i = 0; i < it->second.getNumVertices(); ++i){
-      recurConnectMEdgesByMVertex(it->second.getVertex(i), v2e, group, touched);
-    }
-  }
-}
-
-static int connectedSurfaceBoundaries(std::set<MEdge, Less_Edge> &edges,
-                                      std::vector<std::vector<MEdge> > &boundaries)
-{
-  std::multimap<MVertex*,MEdge> v2e;
-  for(std::set<MEdge, Less_Edge>::iterator it = edges.begin(); it != edges.end(); it++){
-    for (int j = 0; j < it->getNumVertices(); j++){
-      v2e.insert(std::make_pair(it->getVertex(j), *it));
-    }
-  }
-
-  while (!v2e.empty()){
-    std::set<MEdge, Less_Edge> group;
-    std::set<MVertex*> touched;
-    recurConnectMEdgesByMVertex(v2e.begin()->first, v2e, group, touched);
-    std::vector<MEdge> temp;
-    temp.insert(temp.begin(), group.begin(), group.end());
-    boundaries.push_back(temp);
-    for (std::set<MVertex*>::iterator it = touched.begin() ; it != touched.end();++it)
-      v2e.erase(*it);
-  }
-
-  return boundaries.size();
-}
-
 void GModel::alignPeriodicBoundaries()
 {
   Msg::Debug("Aligning periodic boundaries");
