@@ -14,7 +14,7 @@
 
 #if defined(_MSC_VER)
 #define __MSC__
-#define __thread // fix for Gmsh
+#define __thread /* fix for Gmsh: __thread not ok with MSVC */
 #endif
 #if defined(__ICC)
 #define __ICC__

@@ -41,8 +41,10 @@
 #endif
   #include <inttypes.h>
   #include <sys/types.h>
+#ifndef WIN32 /* fix for Gmsh: these do not exist on WIN32/gcc */
   #include <sys/resource.h>
   #include <sys/time.h>
+#endif
 #endif
 
 
