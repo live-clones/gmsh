@@ -676,6 +676,11 @@ class GModel {
                bool saveAll=false, double scalingFactor=1.0,
                bool bigEndian=false);
 
+  //Matlab format
+  int writeMATLAB(const std::string &name, bool binary=false,
+		  bool saveAll=false, double scalingFactor=1.0);
+
+  
   // Tochnog format
   int writeTOCHNOG(const std::string &name,  bool saveGroupsOfNodes=false,
                    bool saveAll=false, double scalingFactor=1.0);

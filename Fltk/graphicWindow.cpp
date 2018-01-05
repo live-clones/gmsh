@@ -305,6 +305,8 @@ static int _save_mesh(const char *name){ return genericMeshFileDialog
     (name, "MESH Options", FORMAT_MESH, false, true); }
 static int _save_mail(const char *name){ return genericMeshFileDialog
     (name, "MAIL Options", FORMAT_MAIL, false, false); }
+static int _save_matlab(const char *name){ return genericMeshFileDialog
+    (name, "MATLAB Options", FORMAT_MATLAB, false, false); }
 static int _save_bdf(const char *name){ return bdfFileDialog(name); }
 static int _save_p3d(const char *name){ return genericMeshFileDialog
     (name, "P3D Options", FORMAT_P3D, false, false); }
@@ -372,6 +374,7 @@ static int _save_auto(const char *name)
   case FORMAT_RMED : return _save_view_med(name);
   case FORMAT_MESH : return _save_mesh(name);
   case FORMAT_MAIL : return _save_mail(name);
+  case FORMAT_MATLAB : return _save_matlab(name);
   case FORMAT_BDF  : return _save_bdf(name);
   case FORMAT_DIFF : return _save_diff(name);
   case FORMAT_INP  : return _save_inp(name);
@@ -431,6 +434,7 @@ static void file_export_cb(Fl_Widget *w, void *data)
 #endif
     {"Mesh - INRIA Medit" TT "*.mesh", _save_mesh},
     {"Mesh - CEA Triangulation" TT "*.mail", _save_mail},
+    {"Mesh - Matlab" TT "*.m", _save_matlab},
     {"Mesh - Nastran Bulk Data File" TT "*.bdf", _save_bdf},
     {"Mesh - Plot3D Structured Mesh" TT "*.p3d", _save_p3d},
     {"Mesh - STL Surface" TT "*.stl", _save_stl},
