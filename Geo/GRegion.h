@@ -63,6 +63,9 @@ class GRegion : public GEntity {
   virtual std::list<int> faceOrientations() const{ return l_dirs; }
   inline void set(const std::list<GFace*> f) { l_faces = f; }
   inline void setOrientations(const std::list<int> f) { l_dirs= f; }
+  
+  // delete bounded edges
+  void deleteBoundedEntities() { l_faces.clear(); l_dirs.clear(); }
 
   // vertices that are embedded in the region
   virtual std::list<GVertex*> &embeddedVertices() { return embedded_vertices; }

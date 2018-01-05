@@ -2562,6 +2562,7 @@ int UnpartitionMesh(GModel *const model)
       }
       pedge->lines.clear();
       pedge->mesh_vertices.clear();
+      pedge->deleteBoundedEntities();
 
       model->remove(pedge);
       delete pedge;
@@ -2589,6 +2590,7 @@ int UnpartitionMesh(GModel *const model)
       pface->triangles.clear();
       pface->quadrangles.clear();
       pface->mesh_vertices.clear();
+      pface->deleteBoundedEntities();
 
       model->remove(pface);
       delete pface;
@@ -2630,6 +2632,7 @@ int UnpartitionMesh(GModel *const model)
       pregion->pyramids.clear();
       pregion->trihedra.clear();
       pregion->mesh_vertices.clear();
+      pregion->deleteBoundedEntities();
 
       model->remove(pregion);
       delete pregion;

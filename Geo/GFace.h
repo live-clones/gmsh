@@ -114,6 +114,9 @@ class GFace : public GEntity {
       if ((*it)->tag() == iEdge) return true;
     return false;
   }
+  
+  // delete bounded edges
+  void deleteBoundedEntities() { l_edges.clear(); l_dirs.clear(); }
 
   // edges that are embedded in the face
   virtual std::list<GEdge*> embeddedEdges() const { return embedded_edges; }
