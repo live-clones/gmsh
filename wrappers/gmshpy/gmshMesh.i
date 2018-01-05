@@ -14,7 +14,6 @@
   #include "meshGFaceLloyd.h"
 #endif
   #include "meshGFaceOptimize.h"
-  #include "meshPartitionOptions.h"
 #if defined(HAVE_OPTHOM)
   #include "OptHomRun.h"
   #include "OptHomElastic.h"
@@ -52,7 +51,6 @@ namespace std {
 %include "meshGFaceLloyd.h"
 #endif
 %include "meshGFaceOptimize.h"
-%include "meshPartitionOptions.h"
 #if defined(HAVE_OPTHOM)
 %include "OptHomRun.h"
 %include "OptHomElastic.h"
