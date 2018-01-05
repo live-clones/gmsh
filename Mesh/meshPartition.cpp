@@ -1288,7 +1288,7 @@ static void fillit_(hashmapface &faceToElement,
   for (ITERATOR it = it_beg; it != it_end ; ++it){
     for(int i = 0; i < (*it)->getNumFaces(); i++){
       faceToElement[(*it)->getFace(i)].push_back
-        (std::pair<MElement*, std::vector<unsigned int> >(*it,partitions));
+        (std::pair<MElement*, std::vector<unsigned int> >(*it, partitions));
     }
   }
 }
@@ -1301,7 +1301,7 @@ static void fillit_(hashmapedge &edgeToElement,
   for (ITERATOR it = it_beg; it != it_end; ++it){
     for(int i = 0; i < (*it)->getNumEdges(); i++){
       edgeToElement[(*it)->getEdge(i)].push_back
-        (std::pair<MElement*, std::vector<unsigned int> >(*it,partitions));
+        (std::pair<MElement*, std::vector<unsigned int> >(*it, partitions));
     }
   }
 }
@@ -1314,7 +1314,7 @@ static void fillit_(hashmapvertex &vertexToElement,
   for (ITERATOR it = it_beg; it != it_end ; ++it){
     for(int i = 0; i < (*it)->getNumPrimaryVertices(); i++){
       vertexToElement[(*it)->getVertex(i)].push_back
-        (std::pair<MElement*, std::vector<unsigned int> >(*it,partitions));
+        (std::pair<MElement*, std::vector<unsigned int> >(*it, partitions));
     }
   }
 }
@@ -1661,6 +1661,7 @@ static void CreatePartitionBoundaries(GModel *const model,
 
     for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
       if((*it)->geomType() == GEntity::PartitionVolume){
+        // FIXME: this is slow
         fillit_(faceToElement, static_cast<partitionRegion*>(*it)->getPartitions(),
                 (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
         fillit_(faceToElement, static_cast<partitionRegion*>(*it)->getPartitions(),
