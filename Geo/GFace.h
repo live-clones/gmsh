@@ -64,9 +64,6 @@ class GFace : public GEntity {
   GFace(GModel *model, int tag);
   virtual ~GFace();
 
-
-  std::set<MVertex*> constr_vertices;
-
   // delete mesh data
   virtual void deleteMesh(bool onlyDeleteElements = false);
 
@@ -96,17 +93,13 @@ class GFace : public GEntity {
   // edge in the face, not part of any edge loops--use with caution!)
   void delFreeEdge(GEdge *e);
 
-  //find the edge 1 from the list of edges and replace it by edge 2
-  //dont change the edge loops, and is susceptible to break some functionalities
-  void replaceEdge(GEdge *e1, GEdge *e2);
-
   // edge orientations
   virtual std::list<int> orientations() const { return l_dirs; }
 
   // edges that bound the face
   virtual std::list<GEdge*> edges() const { return l_edges; }
-  inline void set(const std::list<GEdge*> f) { l_edges= f; }
-  inline void setOrientations(const std::list<int> f) { l_dirs= f; }
+  inline void set(const std::list<GEdge*> f) { l_edges = f; }
+  inline void setOrientations(const std::list<int> f) { l_dirs = f; }
   virtual std::list<int> edgeOrientations() const { return l_dirs; }
   inline bool containsEdge (int iEdge) const
   {
@@ -114,9 +107,6 @@ class GFace : public GEntity {
       if ((*it)->tag() == iEdge) return true;
     return false;
   }
-  
-  // delete bounded edges
-  void deleteBoundedEntities() { l_edges.clear(); l_dirs.clear(); }
 
   // edges that are embedded in the face
   virtual std::list<GEdge*> embeddedEdges() const { return embedded_edges; }
@@ -326,6 +316,9 @@ class GFace : public GEntity {
   // a array for accessing the transfinite vertices using a pair of
   // indices
   std::vector<std::vector<MVertex*> > transfinite_vertices;
+
+  // FIXME: testing for constrained packing of parallelogram algo
+  std::set<MVertex*> constr_vertices;
 
   // relocate mesh vertices using parametric coordinates
   void relocateMeshVertices();

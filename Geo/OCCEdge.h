@@ -49,9 +49,6 @@ class OCCEdge : public GEdge {
   void setTrimmed(OCCFace *);
   bool isSeam(const GFace *) const;
   virtual void writeGEO(FILE *fp);
-  TopoDS_Edge getTopoDS_Edge() const {return c;}
-  TopoDS_Edge getTopoDS_EdgeOld() const {return _replacement;}
-  void replaceEndingPointsInternals(GVertex *, GVertex *);
 };
 
 #endif

@@ -109,23 +109,6 @@ void GFace::delFreeEdge(GEdge *e)
   }
 }
 
-void GFace::replaceEdge(GEdge *e1, GEdge *e2)
-{
-  std::list<GEdge*>::iterator ite = l_edges.begin();
-  std::list<GEdge*> newlist;
-  newlist.clear();
-  while(ite != l_edges.end()){
-    if(e1 == *ite){
-      newlist.push_back(e2);
-    }
-    else{
-      newlist.push_back((*ite));
-    }
-    ite++;
-  }
-  l_edges = newlist;
-}
-
 void GFace::deleteMesh(bool onlyDeleteElements)
 {
   if(!onlyDeleteElements){
@@ -1412,7 +1395,6 @@ void GFace::lloyd(int nbiter, int infn)
 
 void GFace::replaceEdges(std::list<GEdge*> &new_edges)
 {
-  //  replaceEdgesInternal(new_edges);
   std::list<GEdge*>::iterator it  = l_edges.begin();
   std::list<GEdge*>::iterator it2 = new_edges.begin();
   std::list<int>::iterator it3 = l_dirs.begin();

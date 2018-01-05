@@ -16,7 +16,6 @@
 class OCCRegion : public GRegion {
  protected:
   TopoDS_Solid s;
-  void replaceFacesInternal (std::list<GFace*> &);
   void setup();
  public:
   OCCRegion(GModel *m, TopoDS_Solid s, int num);
