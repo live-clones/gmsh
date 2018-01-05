@@ -52,7 +52,6 @@ OCCFace::~OCCFace()
 {
   if(model()->getOCCInternals()){
     model()->getOCCInternals()->unbind(s, tag());
-    model()->getOCCInternals()->unbind(_replaced, tag());
   }
 }
 

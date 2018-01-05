@@ -35,9 +35,6 @@ class GEdge : public GEntity {
   // be created in const member functions
   mutable std::map<MVertex*, SVector3, std::less<MVertex*> > _normals;
   std::list<GFace *> l_faces;
-  // for specific solid modelers that need to re-do the internal curve
-  // if a topological change ending points is done (glueing)
-  virtual void replaceEndingPointsInternals(GVertex *, GVertex *) {}
  public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
   virtual ~GEdge();
@@ -46,8 +43,8 @@ class GEdge : public GEntity {
   virtual void deleteMesh(bool onlyDeleteElements = false);
 
   // get the start/end vertices of the edge
-  void setBeginVertex(GVertex *gv) { v0=gv; }
-  void setEndVertex(GVertex *gv)  { v1=gv; }
+  void setBeginVertex(GVertex *gv) { v0 = gv; }
+  void setEndVertex(GVertex *gv)  { v1 = gv; }
   virtual GVertex *getBeginVertex() const { return v0; }
   virtual GVertex *getEndVertex() const { return v1; }
 
@@ -188,9 +185,6 @@ class GEdge : public GEntity {
   // compute the parameter U from a point XYZ
   virtual bool XYZToU(const double X, const double Y, const double Z,
                       double &U, const double relax=1) const;
-
-  // gluing
-  void replaceEndingPoints(GVertex *, GVertex *);
 
   // relocate mesh vertices using parametric coordinates
   void relocateMeshVertices();

@@ -31,10 +31,6 @@ class GRegion : public GEntity {
   std::list<GFace *> embedded_faces;
   std::list<GEdge *> embedded_edges;
   std::list<int> l_dirs;
-
-  // replace faces (for gluing) for specific modelers, we have to
-  // re-create internal data ...
-  virtual void replaceFacesInternal (std::list<GFace*> &) {}
   BoundaryLayerColumns _columns;
 
  public:
@@ -86,9 +82,6 @@ class GRegion : public GEntity {
 
   // check if the region is connected to another region by an edge
   bool edgeConnected(GRegion *r) const;
-
-  // replace edges (gor gluing)
-  void replaceFaces (std::list<GFace*> &);
 
   // compute volume, moment of intertia and center of gravity
   double computeSolidProperties (std::vector<double> cg,

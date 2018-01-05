@@ -414,10 +414,12 @@ static int MakeGraph(GModel *const model, Graph &graph)
     std::vector<GEntity*> entities;
     model->getEntities(entities);
     for(unsigned int i = 0; i < entities.size(); i++){
-      for(std::map<MVertex*,MVertex*>::iterator it = entities[i]->correspondingVertices.begin();
+      for(std::map<MVertex*,MVertex*>::iterator it =
+            entities[i]->correspondingVertices.begin();
           it != entities[i]->correspondingVertices.end(); ++it){
-        correspondingVertices.insert(std::pair<int,int>(graph.vertex(it->first->getNum()-1),
-                                                        graph.vertex(it->second->getNum()-1)));
+        correspondingVertices.insert(std::pair<int,int>
+                                     (graph.vertex(it->first->getNum()-1),
+                                      graph.vertex(it->second->getNum()-1)));
       }
     }
     for(int i = 0; i < eindSize; i++){
@@ -478,7 +480,8 @@ static void createDualGraph(Graph &graph)
 
     unsigned int nbrsNeighbors = 0;
     for(unsigned int j = 0; j < l; j++){
-      if(marker[nbrs[j]] >= graph.element(i)->numCommonNodesInDualGraph(graph.element(nbrs[j])))
+      if(marker[nbrs[j]] >=
+         graph.element(i)->numCommonNodesInDualGraph(graph.element(nbrs[j])))
         nbrsNeighbors++;
       marker[nbrs[j]] = 0;
       nbrs[j] = 0;
@@ -504,7 +507,8 @@ static void createDualGraph(Graph &graph)
     }
 
     for(unsigned int j = 0; j < l; j++){
-      if(marker[nbrs[j]] >= graph.element(i)->numCommonNodesInDualGraph(graph.element(nbrs[j]))){
+      if(marker[nbrs[j]] >=
+         graph.element(i)->numCommonNodesInDualGraph(graph.element(nbrs[j]))){
         graph.adjncy(graph.xadj(i), nbrs[j]);
         graph.xadj(i, graph.xadj(i)+1);
       }
@@ -575,8 +579,10 @@ static int PartitionGraph(Graph &graph)
         break;
     }
 
-    metisOptions[METIS_OPTION_NUMBERING] = 0; // C numbering
-    metisOptions[METIS_OPTION_OBJTYPE] = METIS_OBJTYPE_CUT; // Specifies the type of objective
+    // C numbering
+    metisOptions[METIS_OPTION_NUMBERING] = 0;
+    // Specifies the type of objective
+    metisOptions[METIS_OPTION_OBJTYPE] = METIS_OBJTYPE_CUT;
 
     int objval;
     unsigned int *epart = new unsigned int[graph.ne()];
@@ -1072,7 +1078,8 @@ static void CreateNewEntities(GModel *const model,
           // Add to model
           model->add(pvertex);
           // Add elements
-          pvertex->addElement(vertex->getMeshElement(i)->getType(), vertex->getMeshElement(i));
+          pvertex->addElement(vertex->getMeshElement(i)->getType(),
+                              vertex->getMeshElement(i));
         }
 
         model->remove(vertex);
@@ -1619,8 +1626,8 @@ static void assignPartitionBoundary(GModel *const model, MVertex *ve, MElement* 
     model->add(ppv);
   }
   else{
-    for(std::multimap<partitionVertex*, GEntity*, Less_partitionVertex>::iterator it = ret.first;
-        it != ret.second; ++it){
+    for(std::multimap<partitionVertex*, GEntity*, Less_partitionVertex>::iterator it =
+          ret.first; it != ret.second; ++it){
       if(elementToEntity[reference] == (*it).second){
         ppv = (*it).first;
       }
@@ -1628,7 +1635,8 @@ static void assignPartitionBoundary(GModel *const model, MVertex *ve, MElement* 
     if(!ppv){
       // Create new entity and add them to the model
       ppv = new partitionVertex(model, model->getMaxElementaryNumber(0)+1, partitions);
-      pvertices.insert(std::pair<partitionVertex*, GEntity*>(ppv, elementToEntity[reference]));
+      pvertices.insert(std::pair<partitionVertex*, GEntity*>
+                       (ppv, elementToEntity[reference]));
       model->add(ppv);
     }
   }
@@ -1639,7 +1647,8 @@ static void assignPartitionBoundary(GModel *const model, MVertex *ve, MElement* 
 
 // Create the new entities between each partitions (sigma and bndSigma).
 static void CreatePartitionBoundaries(GModel *const model,
-                                      const std::vector<std::set<MElement*> > &boundaryElements)
+                                      const std::vector<std::set<MElement*> >
+                                      &boundaryElements)
 {
   const int meshDim = model->getDim();
   std::map<MElement*, GEntity*> elementToEntity;
@@ -1882,7 +1891,8 @@ static void CreatePartitionBoundaries(GModel *const model,
             // Add to model
             model->add(pvertex);
             // Add elements
-            pvertex->addElement(vertex->getMeshElement(i)->getType(), vertex->getMeshElement(i));
+            pvertex->addElement(vertex->getMeshElement(i)->getType(),
+                                vertex->getMeshElement(i));
           }
 
           model->remove(vertex);
@@ -2334,7 +2344,8 @@ static void BuildTopology(GModel *model)
           (*itSet)->addFace(*it);
           edges.push_back((*itSet));
           edgesOrientation.push_back(computeOrientation(*it, *itSet));
-          addPhysical(model, static_cast<partitionFace*>(*it), static_cast<partitionEdge*>(*itSet));
+          addPhysical(model, static_cast<partitionFace*>(*it),
+                      static_cast<partitionEdge*>(*itSet));
         }
       }
       (*it)->set(edges);
@@ -2562,6 +2573,8 @@ int UnpartitionMesh(GModel *const model)
       }
       pedge->lines.clear();
       pedge->mesh_vertices.clear();
+      pedge->setBeginVertex(0);
+      pedge->setEndVertex(0);
 
       model->remove(pedge);
       delete pedge;
@@ -2582,13 +2595,14 @@ int UnpartitionMesh(GModel *const model)
       else{
         for(unsigned int j = 0; j < pface->triangles.size(); j++)
           delete pface->triangles[j];
-
         for(unsigned int j = 0; j < pface->quadrangles.size(); j++)
           delete pface->quadrangles[j];
       }
       pface->triangles.clear();
       pface->quadrangles.clear();
       pface->mesh_vertices.clear();
+      pface->set(std::list<GEdge*>());
+      pface->setOrientations(std::list<int>());
 
       model->remove(pface);
       delete pface;
@@ -2630,6 +2644,8 @@ int UnpartitionMesh(GModel *const model)
       pregion->pyramids.clear();
       pregion->trihedra.clear();
       pregion->mesh_vertices.clear();
+      pregion->set(std::list<GFace*>());
+      pregion->setOrientations(std::list<int>());
 
       model->remove(pregion);
       delete pregion;
