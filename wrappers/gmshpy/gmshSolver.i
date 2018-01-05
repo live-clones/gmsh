@@ -35,7 +35,6 @@
 %template(linearSystemFullMatrixDouble) linearSystem<fullMatrix<double> >;
 %include "linearSystemCSR.h"
 %template(linearSystemCSRDouble) linearSystemCSR<double>;
-%template(linearSystemTAUCSDouble) linearSystemCSRTaucs<double>;
 %include "linearSystemFull.h"
 %template(linearSystemFullDouble) linearSystemFull<double> ;
 #if defined(HAVE_PETSC)
