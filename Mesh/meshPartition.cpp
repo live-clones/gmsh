@@ -531,7 +531,7 @@ static void createDualGraph(Graph &graph)
 static int PartitionGraph(Graph &graph)
 {
 #ifdef HAVE_METIS
-  Msg::Info("Launching METIS graph partitioner");
+  Msg::Info("Running METIS graph partitioner");
 
   try {
     int metisOptions[METIS_NOPTIONS];
@@ -545,7 +545,7 @@ static int PartitionGraph(Graph &graph)
         metisOptions[METIS_OPTION_PTYPE] = METIS_PTYPE_KWAY;
         break;
       default:
-        Msg::Info("Unknown partition algorithm");
+        Msg::Info("Unknown partitioning algorithm");
         break;
     }
 
@@ -557,7 +557,7 @@ static int PartitionGraph(Graph &graph)
         metisOptions[METIS_OPTION_CTYPE] = METIS_CTYPE_SHEM;
         break;
       default:
-        Msg::Info("Unknown partition edge matching");
+        Msg::Info("Unknown partitioning edge matching");
         break;
     }
 
@@ -575,7 +575,7 @@ static int PartitionGraph(Graph &graph)
         metisOptions[METIS_OPTION_RTYPE] = METIS_RTYPE_SEP1SIDED;
         break;
       default:
-        Msg::Info("Unknown partition refine algorithm");
+        Msg::Info("Unknown partitioning refinement algorithm");
         break;
     }
 
@@ -611,27 +611,21 @@ static int PartitionGraph(Graph &graph)
     }
 
     switch(metisError){
-      case METIS_OK:
-        break;
-      case METIS_ERROR_INPUT:
-        Msg::Error("Metis error (input)!");
-        return 1;
-        break;
-      case METIS_ERROR_MEMORY:
-        Msg::Error("Metis error (memory)!");
-        return 1;
-        break;
-      case METIS_ERROR:
-        Msg::Error("Metis error!");
-        return 1;
-        break;
-      default:
-        Msg::Error("Error!");
-        return 1;
-        break;
+    case METIS_OK:
+      break;
+    case METIS_ERROR_INPUT:
+      Msg::Error("METIS input error");
+      return 1;
+    case METIS_ERROR_MEMORY:
+      Msg::Error("METIS memoty error");
+      return 1;
+    case METIS_ERROR:
+    default:
+      Msg::Error("METIS error");
+      return 1;
     }
 
-    //Check and correct the topology
+    // Check and correct the topology
     for(unsigned int i = 0; i < graph.ne(); i++){
       if(graph.element(i)->getDim() == (int)graph.dim()) continue;
 
@@ -660,10 +654,10 @@ static int PartitionGraph(Graph &graph)
     }
     graph.partition(epart);
 
-    Msg::Info("Total edge-cut : %d", objval);
+    Msg::Info("%d partitions, %d total edge-cuts", numPart, objval);
   }
   catch(...) {
-    Msg::Error("METIS threw an exception");
+    Msg::Error("METIS exception");
     return 2;
   }
 #endif
@@ -1136,7 +1130,7 @@ static void CreateNewEntities(GModel *const model,
           for(std::set<MElement*>::iterator itSet = connectedElements[i].begin();
               itSet != connectedElements[i].end(); ++itSet){
             // Add elements
-            pedge->addElement((*itSet)->getType() ,(*itSet));
+            pedge->addElement((*itSet)->getType(), (*itSet));
           }
         }
 
@@ -1198,7 +1192,7 @@ static void CreateNewEntities(GModel *const model,
           for(std::set<MElement*>::iterator itSet = connectedElements[i].begin();
               itSet != connectedElements[i].end(); ++itSet){
             // Add elements
-            pface->addElement((*itSet)->getType() ,(*itSet));
+            pface->addElement((*itSet)->getType(), (*itSet));
           }
         }
 
@@ -1267,7 +1261,7 @@ static void CreateNewEntities(GModel *const model,
           for(std::set<MElement*>::iterator itSet = connectedElements[i].begin();
               itSet != connectedElements[i].end(); ++itSet){
             //Add elements
-            pregion->addElement((*itSet)->getType() ,(*itSet));
+            pregion->addElement((*itSet)->getType(), (*itSet));
           }
         }
 
@@ -1663,7 +1657,7 @@ static void CreatePartitionBoundaries(GModel *const model,
   hashmapvertex vertexToElement;
 
   if (meshDim >= 3){ // Create partition faces
-    Msg::Info("Creating partition faces... ");
+    Msg::Info(" - Creating partition faces");
 
     for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
       if((*it)->geomType() == GEntity::PartitionVolume){
@@ -1744,7 +1738,7 @@ static void CreatePartitionBoundaries(GModel *const model,
             for(std::set<MElement*>::iterator itSet = connectedElements[i].begin();
                 itSet != connectedElements[i].end(); ++itSet){
               // Add elements
-              pface->addElement((*itSet)->getType() ,(*itSet));
+              pface->addElement((*itSet)->getType(), (*itSet));
             }
           }
 
@@ -1761,7 +1755,7 @@ static void CreatePartitionBoundaries(GModel *const model,
   }
 
   if (meshDim >= 2){ // Create partition edges
-    Msg::Info("Creating partition edges... ");
+    Msg::Info(" - Creating partition edges");
 
     for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
       if((*it)->geomType() == GEntity::PartitionSurface){
@@ -1833,7 +1827,7 @@ static void CreatePartitionBoundaries(GModel *const model,
             for(std::set<MElement*>::iterator itSet = connectedElements[i].begin();
                 itSet != connectedElements[i].end(); ++itSet){
               // Add elements
-              pedge->addElement((*itSet)->getType() ,(*itSet));
+              pedge->addElement((*itSet)->getType(), (*itSet));
             }
           }
 
@@ -1849,7 +1843,7 @@ static void CreatePartitionBoundaries(GModel *const model,
   }
 
   if (meshDim >= 1){ // Create partition vertices
-    Msg::Info("Creating partition vertices... ");
+    Msg::Info(" - Creating partition vertices");
     for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
       if((*it)->geomType() == GEntity::PartitionCurve){
         fillit_(vertexToElement, static_cast<partitionEdge*>(*it)->getPartitions(),
@@ -2370,7 +2364,8 @@ static void BuildTopology(GModel *model)
           (*itSet)->addEdge(*it);
           vertices.push_back((*itSet));
           verticesOrientation.push_back(computeOrientation(*it, *itSet));
-          addPhysical(model, static_cast<partitionEdge*>(*it), static_cast<partitionVertex*>(*itSet));
+          addPhysical(model, static_cast<partitionEdge*>(*it),
+                      static_cast<partitionVertex*>(*itSet));
         }
       }
 
@@ -2399,18 +2394,15 @@ static void BuildTopology(GModel *model)
 // Partition a mesh into n parts. Returns: 0 = success, 1 = error
 int PartitionMesh(GModel *const model)
 {
+  if(CTX::instance()->mesh.num_partitions <= 0) return 0;
+
+  Msg::StatusBar(true, "Partitioning mesh...");
+  double t1 = Cpu();
+
   Graph graph;
-  Msg::StatusBar(true, "Building mesh graph...");
-  int ier = MakeGraph(model, graph);
+  if(MakeGraph(model, graph)) return 1;
   graph.nparts(CTX::instance()->mesh.num_partitions);
-  if(graph.nparts() > 0){
-    Msg::StatusBar(true, "Partitioning graph...");
-    if(!ier) ier = PartitionGraph(graph);
-    if(ier) return 1;
-  }
-  else{
-    return 0;
-  }
+  if(PartitionGraph(graph)) return 1;
 
   // Assign partitions to elements
   hashmap<MElement*, unsigned int> elmToPartition;
@@ -2433,22 +2425,23 @@ int PartitionMesh(GModel *const model)
   graph.clear();
   model->recomputeMeshPartitions();
 
-  Msg::StatusBar(true, "Create new entities...");
   CreateNewEntities(model, elmToPartition);
   elmToPartition.clear();
 
+  double t2 = Cpu();
+  Msg::StatusBar(true, "Done partitioning mesh (%g s)", t2 - t1);
+
   if(CTX::instance()->mesh.createPartitionBoundaries){
-    Msg::StatusBar(true, "Create boundaries...");
+    Msg::StatusBar(true, "Creating partitioned topology...");
     CreatePartitionBoundaries(model, boundaryElements);
     boundaryElements.clear();
-
-    Msg::StatusBar(true, "Build the topology...");
     BuildTopology(model);
+    double t3 = Cpu();
+    Msg::StatusBar(true, "Done creating partitioned topology (%g s)", t3 - t2);
   }
 
   AssignMeshVertices(model);
 
-  Msg::StatusBar(true, "Done partitioning");
   return 0;
 }
 
@@ -2666,95 +2659,33 @@ int UnpartitionMesh(GModel *const model)
   return 0;
 }
 
-// Import a mesh partitionned by a tag given to the element en create the
+// Import a mesh partitionned by a tag given to the element and create the
 // topology (omega, sigma, bndSigma, ...). Returns: 0 = success, 1 = no elements
 // found.
 int ConvertOldPartitioningToNewOne(GModel *const model)
 {
+  Msg::StatusBar(true, "Converting old partitioning...");
+
   hashmap<MElement*, unsigned int> elmToPartition;
   std::set<unsigned int> partitions;
-
-  // Loop over regions
-  for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
-    for(std::vector<MTetrahedron*>::iterator itElm = (*it)->tetrahedra.begin();
-        itElm != (*it)->tetrahedra.end(); ++itElm){
-      elmToPartition.insert(std::pair<MElement*, unsigned int>
-                            (*itElm, (*itElm)->getPartition()));
-      partitions.insert((*itElm)->getPartition());
-    }
-    for(std::vector<MHexahedron*>::iterator itElm = (*it)->hexahedra.begin();
-        itElm != (*it)->hexahedra.end(); ++itElm){
-      elmToPartition.insert(std::pair<MElement*, unsigned int>
-                            (*itElm, (*itElm)->getPartition()));
-      partitions.insert((*itElm)->getPartition());
-    }
-    for(std::vector<MPrism*>::iterator itElm = (*it)->prisms.begin();
-        itElm != (*it)->prisms.end(); ++itElm){
-      elmToPartition.insert(std::pair<MElement*, unsigned int>
-                            (*itElm, (*itElm)->getPartition()));
-      partitions.insert((*itElm)->getPartition());
-    }
-    for(std::vector<MPyramid*>::iterator itElm = (*it)->pyramids.begin();
-        itElm != (*it)->pyramids.end(); ++itElm){
-      elmToPartition.insert(std::pair<MElement*, unsigned int>
-                            (*itElm, (*itElm)->getPartition()));
-      partitions.insert((*itElm)->getPartition());
-    }
-    for(std::vector<MTrihedron*>::iterator itElm = (*it)->trihedra.begin();
-        itElm != (*it)->trihedra.end(); ++itElm){
-      elmToPartition.insert(std::pair<MElement*, unsigned int>
-                            (*itElm, (*itElm)->getPartition()));
-      partitions.insert((*itElm)->getPartition());
+  std::vector<GEntity*> entities;
+  model->getEntities(entities);
+  for(unsigned int i = 0; i < entities.size(); i++){
+    for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
+      MElement *e = entities[i]->getMeshElement(i);
+      elmToPartition.insert(std::pair<MElement*, unsigned int>(e, e->getPartition()));
+      partitions.insert(e->getPartition());
     }
   }
-
-  // Loop over faces
-  for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
-    for(std::vector<MTriangle*>::iterator itElm = (*it)->triangles.begin();
-        itElm != (*it)->triangles.end(); ++itElm){
-      elmToPartition.insert(std::pair<MElement*, unsigned int>
-                            (*itElm, (*itElm)->getPartition()));
-      partitions.insert((*itElm)->getPartition());
-    }
-    for(std::vector<MQuadrangle*>::iterator itElm = (*it)->quadrangles.begin();
-        itElm != (*it)->quadrangles.end(); ++itElm){
-      elmToPartition.insert(std::pair<MElement*, unsigned int>
-                            (*itElm, (*itElm)->getPartition()));
-      partitions.insert((*itElm)->getPartition());
-    }
-  }
-
-  // Loop over edges
-  for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
-    for(std::vector<MLine*>::iterator itElm = (*it)->lines.begin();
-        itElm != (*it)->lines.end(); ++itElm){
-      elmToPartition.insert(std::pair<MElement*, unsigned int>
-                            (*itElm, (*itElm)->getPartition()));
-      partitions.insert((*itElm)->getPartition());
-    }
-  }
-
-  // Loop over vertices
-  for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex(); ++it){
-    for(std::vector<MPoint*>::iterator itElm = (*it)->points.begin();
-        itElm != (*it)->points.end(); ++itElm){
-      elmToPartition.insert(std::pair<MElement*, unsigned int>
-                            (*itElm, (*itElm)->getPartition()));
-      partitions.insert((*itElm)->getPartition());
-    }
-  }
-
   Graph graph;
-  Msg::StatusBar(true, "Building mesh graph...");
-  int ier = MakeGraph(model, graph);
-  if(ier) return 1;
+  if(MakeGraph(model, graph)) return 1;
   createDualGraph(graph);
   graph.nparts(partitions.size());
 
   unsigned int *part = new unsigned int[graph.ne()];
   for(unsigned int i = 0; i < graph.ne(); i++){
     if(graph.element(i)){
-      part[i] = graph.element(i)->getPartition()-1;
+      part[i] = graph.element(i)->getPartition() - 1;
       Msg::Info("%d", part[i]);
       if(graph.element(i)->getPartition() == 0){
         Msg::Error("All elements are not partitioned.");
@@ -2768,21 +2699,20 @@ int ConvertOldPartitioningToNewOne(GModel *const model)
   graph.clear();
   model->recomputeMeshPartitions();
 
-  Msg::StatusBar(true, "Create new entities...");
   CreateNewEntities(model, elmToPartition);
   elmToPartition.clear();
 
+  Msg::StatusBar(true, "Done converting old partitioning");
+
   if(CTX::instance()->mesh.createPartitionBoundaries){
-    Msg::StatusBar(true, "Create boundaries...");
+    Msg::StatusBar(true, "Creating partitioned topology...");
     CreatePartitionBoundaries(model, boundaryElements);
     boundaryElements.clear();
-
-    Msg::StatusBar(true, "Build the topology...");
     BuildTopology(model);
+    Msg::StatusBar(true, "Done creating partitioned topology");
   }
 
   AssignMeshVertices(model);
-
   return 0;
 }
 
