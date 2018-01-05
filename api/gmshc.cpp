@@ -286,6 +286,34 @@ void gmshModelMeshGenerate(const int dim,int * ierr){
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
+void gmshModelMeshPartition(const int numPart,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  gmsh::model::mesh::partition(numPart);
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
+void gmshModelMeshRefine(int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  gmsh::model::mesh::refine();
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
+void gmshModelMeshSetOrder(const int order,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  gmsh::model::mesh::setOrder(order);
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
+void gmshModelMeshRemoveDuplicateVertices(int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  gmsh::model::mesh::removeDuplicateVertices();
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
 void gmshModelMeshGetLastEntityError(int ** dimTags, size_t * dimTags_n,int * ierr){
   if(ierr) *ierr = 0;
   try {

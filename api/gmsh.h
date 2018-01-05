@@ -195,6 +195,19 @@ namespace gmsh { // Top-level functions
       // 3).
       GMSH_API void generate(const int dim);
 
+      // Partitions the mesh of the current model into `numPart' partitions.
+      GMSH_API void partition(const int numPart);
+
+      // Refines the mesh of the current model by uniformly splitting the elements.
+      GMSH_API void refine();
+
+      // Sets the order of the elements in the mesh of the current model to
+      // `order'.
+      GMSH_API void setOrder(const int order);
+
+      // Removes duplicate mesh vertices in the mesh of the current model.
+      GMSH_API void removeDuplicateVertices();
+
       // Gets the last entities (if any) where a meshing error occurred. Currently
       // only populated by the new 3D meshing algorithms.
       GMSH_API void getLastEntityError(gmsh::vector_pair & dimTags);

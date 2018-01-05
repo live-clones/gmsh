@@ -650,6 +650,60 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def partition(numPart):
+            """
+            Partitions the mesh of the current model into `numPart' partitions.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshPartition(
+                c_int(numPart),
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshPartition returned non-zero error code : ",
+                    ierr.value)
+
+        @staticmethod
+        def refine():
+            """
+            Refines the mesh of the current model by uniformly splitting the elements.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRefine(
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshRefine returned non-zero error code : ",
+                    ierr.value)
+
+        @staticmethod
+        def setOrder(order):
+            """
+            Sets the order of the elements in the mesh of the current model to `order'.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshSetOrder(
+                c_int(order),
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshSetOrder returned non-zero error code : ",
+                    ierr.value)
+
+        @staticmethod
+        def removeDuplicateVertices():
+            """
+            Removes duplicate mesh vertices in the mesh of the current model.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRemoveDuplicateVertices(
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshRemoveDuplicateVertices returned non-zero error code : ",
+                    ierr.value)
+
+        @staticmethod
         def getLastEntityError():
             """
             Gets the last entities (if any) where a meshing error occurred. Currently

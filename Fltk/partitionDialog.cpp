@@ -5,6 +5,7 @@
 //
 // Contributor(s):
 //   Stephen Guzik
+//   Anthony Royer
 //
 
 #include <limits>
@@ -62,13 +63,13 @@ struct PartitionDialog
   Fl_Value_Input *inputPriWeight;
   Fl_Value_Input *inputPyrWeight;
   Fl_Value_Input *inputHexWeight;
-    
+
   void write_all_options()
   {    // Group 0
     CTX::instance()->mesh.num_partitions = static_cast<int>(inputNumPartition->value());
     CTX::instance()->mesh.createGhostCells = setGhostCells->value();
     CTX::instance()->mesh.createPartitionBoundaries = setPartitionBoundaries->value();
-  
+
     // Group 1
     CTX::instance()->mesh.metis_algorithm = choiceMetisAlg->value() + 1;
 
@@ -90,21 +91,21 @@ struct PartitionDialog
     inputNumPartition->value(CTX::instance()->mesh.num_partitions);
     setGhostCells->value(CTX::instance()->mesh.createGhostCells);
     setPartitionBoundaries->value(CTX::instance()->mesh.createPartitionBoundaries);
-  
+
     // Group 2
     choiceMetisAlg->value(CTX::instance()->mesh.metis_algorithm - 1);
 
     // Group 3
     choiceEdgeMatch->value(CTX::instance()->mesh.metis_edge_matching - 1);
     choiceRefineAlg->value(CTX::instance()->mesh.metis_refine_algorithm - 1);
-    
+
     inputTriWeight->value(CTX::instance()->mesh.part_triWeight);
     inputQuaWeight->value(CTX::instance()->mesh.part_quaWeight);
     inputTetWeight->value(CTX::instance()->mesh.part_tetWeight);
     inputPriWeight->value(CTX::instance()->mesh.part_priWeight);
     inputPyrWeight->value(CTX::instance()->mesh.part_pyrWeight);
     inputHexWeight->value(CTX::instance()->mesh.part_hexWeight);
-    
+
     // Call all callbacks to ensure consistent options
     partition_opt_num_partitions_cb(inputNumPartition, this);
   }
@@ -136,7 +137,7 @@ void partition_partition_cb(Fl_Widget *widget, void *data)
 
   // Write all options
   dlg->write_all_options();
-    
+
   // Partition the mesh
   int ier = GModel::current()->partitionMesh(CTX::instance()->mesh.num_partitions);
 
@@ -162,7 +163,7 @@ void partition_select_groups_cb(Fl_Widget *widget, void *data)
 {
   PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
   // If this callback was made by the "Advanced" toggle buttons, set the label
-  
+
   if(dlg->toggleButtonAdvMetis == widget)
   {
     dlg->toggleButtonAdvMetis->label((dlg->toggleButtonAdvMetis->value()) ? "Advanced @-28->" : "Advanced @-22->");
@@ -339,8 +340,8 @@ void partition_dialog()
       o->align(FL_ALIGN_RIGHT);
     }
     y += BH + WB + 1;  // +1 for multiline label
-    // element weights - line 1 
-    { 
+    // element weights - line 1
+    {
       Fl_Value_Input *const o = new Fl_Value_Input (WB, y, 2*BB/3, BH, "Triangle");
       dlg.inputTriWeight = o;
       o->minimum(1);
@@ -348,7 +349,7 @@ void partition_dialog()
       o->step(1);
       o->align(FL_ALIGN_RIGHT);
     }
-    { 
+    {
       Fl_Value_Input *const o = new Fl_Value_Input (2*WB + (w/3-WB), y,2*BB/3, BH, "Tetrahedron");
       dlg.inputTetWeight = o;
       o->minimum(1);
@@ -356,7 +357,7 @@ void partition_dialog()
       o->step(1);
       o->align(FL_ALIGN_RIGHT);
     }
-    { 
+    {
       Fl_Value_Input *const o = new Fl_Value_Input (3*WB + 2*(w/3-WB), y,2*BB/3, BH, "Prism");
       dlg.inputPriWeight = o;
       o->minimum(1);
@@ -364,9 +365,9 @@ void partition_dialog()
       o->step(1);
       o->align(FL_ALIGN_RIGHT);
     }
-    y += 2 + WB + BH + 1; 
-    // element weights - line 2 
-    { 
+    y += 2 + WB + BH + 1;
+    // element weights - line 2
+    {
       Fl_Value_Input *const o = new Fl_Value_Input (WB, y, 2*BB/3, BH, "Quadrangle");
       dlg.inputQuaWeight = o;
       o->minimum(1);
@@ -374,7 +375,7 @@ void partition_dialog()
       o->step(1);
       o->align(FL_ALIGN_RIGHT);
     }
-    { 
+    {
       Fl_Value_Input *const o = new Fl_Value_Input (2*WB + (w/3-WB), y,2*BB/3, BH, "Hexahedron");
       dlg.inputHexWeight = o;
       o->minimum(1);
@@ -382,7 +383,7 @@ void partition_dialog()
       o->step(1);
       o->align(FL_ALIGN_RIGHT);
     }
-    { 
+    {
       Fl_Value_Input *const o = new Fl_Value_Input (3*WB + 2*(w/3-WB), y,2*BB/3, BH, "Pyramid");
       dlg.inputPyrWeight = o;
       o->minimum(1);
@@ -394,7 +395,7 @@ void partition_dialog()
     g->end();
     g->hide();
   }
-  
+
   // Dialog termination group [3]
   {
     const int GH = 2 + BH + 2*WB;
