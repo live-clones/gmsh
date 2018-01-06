@@ -473,9 +473,6 @@ static void Mesh2D(GModel *m)
         }
         if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
       }
-#if defined(_OPENMP)
-#pragma omp master
-#endif
       if(!nPending) break;
       if(nIter++ > 10) break;
     }
