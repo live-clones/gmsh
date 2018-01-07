@@ -73,8 +73,9 @@ static void readMSH4Physicals(GModel *const model, FILE* fp, GEntity *const enti
   }
 }
 
-static void readMSH4BoundingEntities(GModel *const model, FILE* fp, GEntity *const entity,
-                                     bool binary, char *str, bool swap)
+static void readMSH4BoundingEntities(GModel *const model, FILE* fp,
+                                     GEntity *const entity, bool binary,
+                                     char *str, bool swap)
 {
   unsigned long numBrep = 0;
   std::vector<GEntity*> boundingEntities;
@@ -124,7 +125,8 @@ static void readMSH4BoundingEntities(GModel *const model, FILE* fp, GEntity *con
 
       GEntity *brep = model->getEntityByTag(entity->dim()-1, std::abs(entityTag));
       if(!brep){
-        Msg::Warning("Entity %d not found in the Brep of entity %d", entityTag, entity->tag());
+        Msg::Warning("Entity %d not found in the Brep of entity %d",
+                     entityTag, entity->tag());
         return;
       }
       boundingEntities.push_back(brep);
@@ -1577,7 +1579,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
 
       fwrite(&verticesSize, sizeof(unsigned long), 1, fp);
       int oriI = 0;
-      for(std::list<GVertex*>::iterator itv = vertices.begin(); itv != vertices.end(); itv++){
+      for(std::list<GVertex*>::iterator itv = vertices.begin();
+          itv != vertices.end(); itv++){
         int brepTag = ori[oriI] * (*itv)->tag();
         fwrite(&brepTag, sizeof(int), 1, fp);
         oriI++;
@@ -2024,7 +2027,8 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned, bool
   }
 
   if(binary){
-    unsigned long numSection = vertices.size() + edges.size() + faces.size() + regions.size();
+    unsigned long numSection = vertices.size() + edges.size() +
+      faces.size() + regions.size();
     fwrite(&numSection, sizeof(unsigned long), 1, fp);
     fwrite(&numVertices, sizeof(unsigned long), 1, fp);
   }
@@ -2153,7 +2157,8 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
 
     numElements += (*it)->points.size();
     for(unsigned int i = 0; i < (*it)->points.size(); i++)
-      elementsByDegree[ std::pair<int, GEntity*>((*it)->points[i]->getTypeForMSH(), *it) ]
+      elementsByDegree[ std::pair<int, GEntity*>
+                        ((*it)->points[i]->getTypeForMSH(), *it) ]
         .push_back((*it)->points[i]);
   }
 
@@ -2162,7 +2167,8 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
 
     numElements += (*it)->lines.size();
     for(unsigned int i = 0; i < (*it)->lines.size(); i++)
-      elementsByDegree[ std::pair<int, GEntity*>((*it)->lines[i]->getTypeForMSH(), *it) ]
+      elementsByDegree[ std::pair<int, GEntity*>
+                        ((*it)->lines[i]->getTypeForMSH(), *it) ]
         .push_back((*it)->lines[i]);
   }
 
@@ -2171,12 +2177,14 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
 
     numElements += (*it)->triangles.size();
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++)
-      elementsByDegree[ std::pair<int, GEntity*>((*it)->triangles[i]->getTypeForMSH(), *it) ]
+      elementsByDegree[ std::pair<int, GEntity*>
+                        ((*it)->triangles[i]->getTypeForMSH(), *it) ]
         .push_back((*it)->triangles[i]);
 
     numElements += (*it)->quadrangles.size();
     for(unsigned int i = 0; i < (*it)->quadrangles.size(); i++)
-      elementsByDegree[ std::pair<int, GEntity*>((*it)->quadrangles[i]->getTypeForMSH(), *it) ]
+      elementsByDegree[ std::pair<int, GEntity*>
+                        ((*it)->quadrangles[i]->getTypeForMSH(), *it) ]
         .push_back((*it)->quadrangles[i]);
   }
 
@@ -2185,27 +2193,32 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
 
     numElements += (*it)->tetrahedra.size();
     for(unsigned int i = 0; i < (*it)->tetrahedra.size(); i++)
-      elementsByDegree[ std::pair<int, GEntity*>((*it)->tetrahedra[i]->getTypeForMSH(), *it) ]
+      elementsByDegree[ std::pair<int, GEntity*>
+                        ((*it)->tetrahedra[i]->getTypeForMSH(), *it) ]
         .push_back((*it)->tetrahedra[i]);
 
     numElements += (*it)->hexahedra.size();
     for(unsigned int i = 0; i < (*it)->hexahedra.size(); i++)
-      elementsByDegree[ std::pair<int, GEntity*>((*it)->hexahedra[i]->getTypeForMSH(), *it) ]
+      elementsByDegree[ std::pair<int, GEntity*>
+                        ((*it)->hexahedra[i]->getTypeForMSH(), *it) ]
         .push_back((*it)->hexahedra[i]);
 
     numElements += (*it)->prisms.size();
     for(unsigned int i = 0; i < (*it)->prisms.size(); i++)
-      elementsByDegree[ std::pair<int, GEntity*>((*it)->prisms[i]->getTypeForMSH(), *it) ]
+      elementsByDegree[ std::pair<int, GEntity*>
+                        ((*it)->prisms[i]->getTypeForMSH(), *it) ]
         .push_back((*it)->prisms[i]);
 
     numElements += (*it)->pyramids.size();
     for(unsigned int i = 0; i < (*it)->pyramids.size(); i++)
-      elementsByDegree[ std::pair<int, GEntity*>((*it)->pyramids[i]->getTypeForMSH(), *it) ]
+      elementsByDegree[ std::pair<int, GEntity*>
+                        ((*it)->pyramids[i]->getTypeForMSH(), *it) ]
         .push_back((*it)->pyramids[i]);
 
     numElements += (*it)->trihedra.size();
     for(unsigned int i = 0; i < (*it)->trihedra.size(); i++)
-      elementsByDegree[ std::pair<int, GEntity*>((*it)->trihedra[i]->getTypeForMSH(), *it) ]
+      elementsByDegree[ std::pair<int, GEntity*>
+                        ((*it)->trihedra[i]->getTypeForMSH(), *it) ]
         .push_back((*it)->trihedra[i]);
   }
 
