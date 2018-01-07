@@ -57,7 +57,7 @@ StringXString *GMSH_VoroMetalPlugin::getOptionStr(int iopt)
   return &VoroMetalOptions_String[iopt];
 }
 
-#if defined(HAVE_MESH) && defined(HAVE_VORO3D)
+#if defined(HAVE_MESH) && defined(HAVE_VOROPP)
 
 #include "meshGRegion.h"
 #include "voro++.hh"
