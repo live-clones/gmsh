@@ -65,13 +65,13 @@ Set minimum mesh element size
 @item -clmax float
 Set maximum mesh element size
 @item -aniso_max float
-Set maximum anisotropy (only used in bamg for now)
+Set maximum anisotropy (for bamg)
 @item -smooth_ratio float
-Set smoothing ration between mesh sizes at nodes of a same edge (only used in bamg)
+Set smoothing ration between mesh sizes at nodes of a same edge (for bamg)
 @item -clcurv
 Automatically compute element sizes from curvatures
 @item -epslc1d
-Set accuracy of evaluation of LCFIELD for 1D mesh
+Set accuracy of evaluation of mesh size field for 1D mesh
 @item -swapangle
 Set the threshold angle (in degree) between two adjacent faces below which a swap is allowed
 @item -rand float
@@ -118,7 +118,7 @@ Specify display
 @item -camera
 Use camera mode view;
 @item -stereo
-OpenGL quad-buffered stereo rendering (requires special graphic card)
+OpenGL quad-buffered stereo rendering (requires special graphics card)
 @item -gamepad
 Use gamepad controller if available
 @end ftable

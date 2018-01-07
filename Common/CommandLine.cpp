@@ -66,95 +66,96 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   typedef std::pair<std::string, std::string> mp;
   std::vector<mp> s;
   s.push_back(mp("Geometry options:", ""));
-  s.push_back(mp("-0",                 "Output model, then exit"));
-  s.push_back(mp("-tol float",         "Set geometrical tolerance"));
-  s.push_back(mp("-match",             "Match geometries and meshes"));
+  s.push_back(mp("-0", "Output model, then exit"));
+  s.push_back(mp("-tol float", "Set geometrical tolerance"));
+  s.push_back(mp("-match", "Match geometries and meshes"));
   s.push_back(mp("Mesh options:", ""));
-  s.push_back(mp("-1, -2, -3",         "Perform 1D, 2D or 3D mesh generation, then exit"));
-  s.push_back(mp("-o file",            "Specify output file name"));
-  s.push_back(mp("-format string",     "Select output mesh format (auto (default), msh, "
+  s.push_back(mp("-1, -2, -3", "Perform 1D, 2D or 3D mesh generation, then exit"));
+  s.push_back(mp("-o file", "Specify output file name"));
+  s.push_back(mp("-format string", "Select output mesh format (auto (default), msh, "
                  "msh1, msh2, msh3, msh4, unv, vrml, ply2, stl, mesh, bdf, cgns, "
                  "p3d, diff, med, neu, ...)"));
-  s.push_back(mp("-bin",               "Use binary format when available"));
-  s.push_back(mp("-refine",            "Perform uniform mesh refinement, then exit"));
-  s.push_back(mp("-reclassify",        "Reclassify mesh, then exit"));
-  s.push_back(mp("-part int",          "Partition after batch mesh generation"));
-  s.push_back(mp("-part_weight tri|quad|tet|hex|pri|pyr|trih int", "Weight of a triangle/quad/etc. "
-                 "during partitioning"));
-  s.push_back(mp("-part_split",        "Save mesh partitions in separate files"));
-  s.push_back(mp("-part_topo",         "Save the partition topology .pro file"));
-  s.push_back(mp("-save_all",          "Save all elements (discard physical group definitions)"));
-  s.push_back(mp("-save_parametric",   "Save vertices with their parametric coordinates"));
-  s.push_back(mp("-save_topology",     "Save model topology"));
-  s.push_back(mp("-algo string",       "Select mesh algorithm (meshadapt, del2d, front2d, "
+  s.push_back(mp("-bin", "Use binary format when available"));
+  s.push_back(mp("-refine", "Perform uniform mesh refinement, then exit"));
+  s.push_back(mp("-reclassify", "Reclassify mesh, then exit"));
+  s.push_back(mp("-part int", "Partition after batch mesh generation"));
+  s.push_back(mp("-part_weight tri|quad|tet|hex|pri|pyr|trih int",
+                 "Weight of a triangle/quad/etc. during partitioning"));
+  s.push_back(mp("-part_split", "Save mesh partitions in separate files"));
+  s.push_back(mp("-part_topo", "Save the partition topology .pro file"));
+  s.push_back(mp("-save_all", "Save all elements (discard physical group definitions)"));
+  s.push_back(mp("-save_parametric", "Save vertices with their parametric coordinates"));
+  s.push_back(mp("-save_topology", "Save model topology"));
+  s.push_back(mp("-algo string", "Select mesh algorithm (meshadapt, del2d, front2d, "
                  "delquad, del3d, front3d, mmg3d, pack)"));
-  s.push_back(mp("-smooth int",        "Set number of mesh smoothing steps"));
-  s.push_back(mp("-order int",         "Set mesh order (1, ..., 5)"));
+  s.push_back(mp("-smooth int", "Set number of mesh smoothing steps"));
+  s.push_back(mp("-order int", "Set mesh order (1, ..., 5)"));
   s.push_back(mp("-optimize[_netgen]", "Optimize quality of tetrahedral elements"));
-  s.push_back(mp("-optimize_threshold", "Optimize tetrahedral elements that have a quality less than a threshold"));
-  s.push_back(mp("-optimize_ho",       "Optimize high order meshes"));
+  s.push_back(mp("-optimize_threshold", "Optimize tetrahedral elements that have a "
+                 "quality less than a threshold"));
+  s.push_back(mp("-optimize_ho", "Optimize high order meshes"));
   s.push_back(mp("-ho_[min,max,nlayers]", "High-order optimization parameters"));
-  s.push_back(mp("-optimize_lloyd",    "Optimize 2D meshes using Lloyd algorithm"));
-  s.push_back(mp("-clscale float",     "Set global mesh element size scaling factor"));
-  s.push_back(mp("-clmin float",       "Set minimum mesh element size"));
-  s.push_back(mp("-clmax float",       "Set maximum mesh element size"));
-  s.push_back(mp("-aniso_max float",   "Set maximum anisotropy (only used in bamg for now)"));
-  s.push_back(mp("-smooth_ratio float", "Set smoothing ration between mesh sizes at nodes of "
-                 "a same edge (only used in bamg)"));
-  s.push_back(mp("-clcurv",            "Automatically compute element sizes from curvatures"));
-  s.push_back(mp("-epslc1d",           "Set accuracy of evaluation of LCFIELD for 1D mesh"));
-  s.push_back(mp("-swapangle",         "Set the threshold angle (in degree) between two adjacent"
-                 " faces below which a swap is allowed"));
-  s.push_back(mp("-rand float",        "Set random perturbation factor"));
-  s.push_back(mp("-bgm file",          "Load background mesh from file"));
-  s.push_back(mp("-check",             "Perform various consistency checks on mesh"));
-  s.push_back(mp("-ignore_periocity",  "Ignore periodic boundaries"));
+  s.push_back(mp("-optimize_lloyd", "Optimize 2D meshes using Lloyd algorithm"));
+  s.push_back(mp("-clscale float", "Set global mesh element size scaling factor"));
+  s.push_back(mp("-clmin float", "Set minimum mesh element size"));
+  s.push_back(mp("-clmax float", "Set maximum mesh element size"));
+  s.push_back(mp("-aniso_max float", "Set maximum anisotropy (for bamg)"));
+  s.push_back(mp("-smooth_ratio float", "Set smoothing ration between mesh sizes at "
+                 "nodes of a same edge (for bamg)"));
+  s.push_back(mp("-clcurv", "Automatically compute element sizes from curvatures"));
+  s.push_back(mp("-epslc1d", "Set accuracy of evaluation of mesh size field for 1D mesh"));
+  s.push_back(mp("-swapangle", "Set the threshold angle (in degree) between two adjacent "
+                 "faces below which a swap is allowed"));
+  s.push_back(mp("-rand float", "Set random perturbation factor"));
+  s.push_back(mp("-bgm file", "Load background mesh from file"));
+  s.push_back(mp("-check", "Perform various consistency checks on mesh"));
+  s.push_back(mp("-ignore_periocity", "Ignore periodic boundaries"));
 #if defined(HAVE_FLTK)
   s.push_back(mp("Post-processing options:", ""));
-  s.push_back(mp("-link int",          "Select link mode between views (0, 1, 2, 3, 4)"));
-  s.push_back(mp("-combine",           "Combine views having identical names into "
-                 "multi-time-step views"));
+  s.push_back(mp("-link int", "Select link mode between views (0, 1, 2, 3, 4)"));
+  s.push_back(mp("-combine", "Combine views having identical names into multi-time-step "
+                 "views"));
   s.push_back(mp("Solver options:", ""));
-  s.push_back(mp("-listen",            "Always listen to incoming connection requests"));
+  s.push_back(mp("-listen", "Always listen to incoming connection requests"));
   s.push_back(mp("-minterpreter string", "Name of Octave interpreter"));
   s.push_back(mp("-pyinterpreter string", "Name of Python interpreter"));
-  s.push_back(mp("-run",               "Run ONELAB solver(s)"));
+  s.push_back(mp("-run", "Run ONELAB solver(s)"));
   s.push_back(mp("Display options:", ""));
-  s.push_back(mp("-n",                 "Hide all meshes and post-processing views on startup"));
-  s.push_back(mp("-nodb",              "Disable double buffering"));
-  s.push_back(mp("-numsubedges",       "Set num of subdivisions for high order element display"));
-  s.push_back(mp("-fontsize int",      "Specify the font size for the GUI"));
-  s.push_back(mp("-theme string",      "Specify FLTK GUI theme"));
-  s.push_back(mp("-display string",    "Specify display"));
-  s.push_back(mp("-camera",            "Use camera mode view;"));
-  s.push_back(mp("-stereo",            "OpenGL quad-buffered stereo rendering (requires "
-                                       "special graphic card)"));
-  s.push_back(mp("-gamepad",           "Use gamepad controller if available"));
+  s.push_back(mp("-n", "Hide all meshes and post-processing views on startup"));
+  s.push_back(mp("-nodb", "Disable double buffering"));
+  s.push_back(mp("-numsubedges", "Set num of subdivisions for high order element display"));
+  s.push_back(mp("-fontsize int", "Specify the font size for the GUI"));
+  s.push_back(mp("-theme string", "Specify FLTK GUI theme"));
+  s.push_back(mp("-display string", "Specify display"));
+  s.push_back(mp("-camera", "Use camera mode view;"));
+  s.push_back(mp("-stereo","OpenGL quad-buffered stereo rendering (requires special "
+                 "graphics card)"));
+  s.push_back(mp("-gamepad", "Use gamepad controller if available"));
 #endif
   s.push_back(mp("Other options:", ""));
   s.push_back(mp("-, -parse_and_exit", "Parse input files, then exit"));
-  s.push_back(mp("-new",               "Create new model before merge next file"));
-  s.push_back(mp("-merge",             "Merge next files"));
-  s.push_back(mp("-open",              "Open next files"));
+  s.push_back(mp("-new", "Create new model before merge next file"));
+  s.push_back(mp("-merge", "Merge next files"));
+  s.push_back(mp("-open", "Open next files"));
 #if defined(HAVE_FLTK)
   s.push_back(mp("-a, -g, -m, -s, -p", "Start in automatic, geometry, mesh, solver or "
-                                       "post-processing mode"));
+                 "post-processing mode"));
 #endif
-  s.push_back(mp("-pid",               "Print process id on stdout"));
-  s.push_back(mp("-watch pattern",     "Pattern of files to merge as they become available"));
-  s.push_back(mp("-bg file",           "Load background (image or PDF) file"));
-  s.push_back(mp("-v int",             "Set verbosity level"));
-  s.push_back(mp("-nopopup",           "Don't popup dialog windows in scripts"));
+  s.push_back(mp("-pid", "Print process id on stdout"));
+  s.push_back(mp("-watch pattern", "Pattern of files to merge as they become available"));
+  s.push_back(mp("-bg file", "Load background (image or PDF) file"));
+  s.push_back(mp("-v int", "Set verbosity level"));
+  s.push_back(mp("-nopopup", "Don't popup dialog windows in scripts"));
   s.push_back(mp("-string \"string\"", "Parse command string at startup"));
   s.push_back(mp("-setnumber name value", "Set constant number name=value"));
   s.push_back(mp("-setstring name value", "Set constant string name=value"));
-  s.push_back(mp("-option file",       "Parse option file at startup"));
-  s.push_back(mp("-convert files",     "Convert files into latest binary formats, then exit"));
-  s.push_back(mp("-nt int",            "Set number of threads"));
-  s.push_back(mp("-cpu",               "Report CPU times for all operations"));
-  s.push_back(mp("-version",           "Show version number"));
-  s.push_back(mp("-info",              "Show detailed version information"));
-  s.push_back(mp("-help",              "Show command line usage"));
+  s.push_back(mp("-option file", "Parse option file at startup"));
+  s.push_back(mp("-convert files", "Convert files into latest binary formats, then exit"));
+  s.push_back(mp("-nt int", "Set number of threads"));
+  s.push_back(mp("-cpu", "Report CPU times for all operations"));
+  s.push_back(mp("-version", "Show version number"));
+  s.push_back(mp("-info", "Show detailed version information"));
+  s.push_back(mp("-help", "Show command line usage"));
   return s;
 }
 
@@ -168,51 +169,51 @@ std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::s
 #endif
   typedef std::pair<std::string, std::string> mp;
   std::vector<mp> s;
-  s.push_back(mp("Left arrow",     "Go to previous time step"));
-  s.push_back(mp("Right arrow",    "Go to next time step"));
-  s.push_back(mp("Up arrow",       "Make previous view visible"));
-  s.push_back(mp("Down arrow",     "Make next view visible"));
-  s.push_back(mp("0",              "Reload geometry"));
-  s.push_back(mp(cc + "0",         "Reload full project"));
-  s.push_back(mp("1 or F1",        "Mesh lines"));
-  s.push_back(mp("2 or F2",        "Mesh surfaces"));
-  s.push_back(mp("3 or F3",        "Mesh volumes"));
-  s.push_back(mp("Escape",         "Cancel lasso zoom/selection, toggle mouse selection ON/OFF"));
-  s.push_back(mp("e",              "End/accept selection in geometry creation mode"));
-  s.push_back(mp("g",              "Go to geometry module"));
-  s.push_back(mp("m",              "Go to mesh module"));
-  s.push_back(mp("p",              "Go to post-processing module"));
-  s.push_back(mp("q",              "Abort selection in geometry creation mode"));
-  s.push_back(mp("s",              "Go to solver module"));
-  s.push_back(mp("x",              "Toogle x coordinate freeze in geometry creation mode"));
-  s.push_back(mp("y",              "Toogle y coordinate freeze in geometry creation mode"));
-  s.push_back(mp("z",              "Toogle z coordinate freeze in geometry creation mode"));
-  s.push_back(mp("Shift+a",        "Bring all windows to front"));
-  s.push_back(mp("Shift+g",        "Show geometry options"));
-  s.push_back(mp("Shift+m",        "Show mesh options"));
-  s.push_back(mp("Shift+o",        "Show general options"));
-  s.push_back(mp("Shift+p",        "Show post-processing options"));
-  s.push_back(mp("Shift+s",        "Show solver options"));
-  s.push_back(mp("Shift+u",        "Show post-processing view plugins"));
-  s.push_back(mp("Shift+w",        "Show post-processing view options"));
-  s.push_back(mp("Shift+x",        "Move only along x coordinate in geometry creation mode"));
-  s.push_back(mp("Shift+y",        "Move only along y coordinate in geometry creation mode"));
-  s.push_back(mp("Shift+z",        "Move only along z coordinate in geometry creation mode"));
-  s.push_back(mp("Shift+Escape",   "Enable full mouse selection"));
-  s.push_back(mp(cc + "d",         "Attach/detach menu"));
-  s.push_back(mp(cc + "e",         "Export project"));
-  s.push_back(mp(cc + "f",         "Enter full screen"));
-  s.push_back(mp(cc + "i",         "Show statistics window"));
-  s.push_back(mp(cc + "j",         "Save model options"));
-  s.push_back(mp(cc + "l",         "Show message console"));
+  s.push_back(mp("Left arrow", "Go to previous time step"));
+  s.push_back(mp("Right arrow", "Go to next time step"));
+  s.push_back(mp("Up arrow", "Make previous view visible"));
+  s.push_back(mp("Down arrow", "Make next view visible"));
+  s.push_back(mp("0", "Reload geometry"));
+  s.push_back(mp(cc + "0", "Reload full project"));
+  s.push_back(mp("1 or F1", "Mesh lines"));
+  s.push_back(mp("2 or F2", "Mesh surfaces"));
+  s.push_back(mp("3 or F3", "Mesh volumes"));
+  s.push_back(mp("Escape", "Cancel lasso zoom/selection, toggle mouse selection ON/OFF"));
+  s.push_back(mp("e", "End/accept selection in geometry creation mode"));
+  s.push_back(mp("g", "Go to geometry module"));
+  s.push_back(mp("m", "Go to mesh module"));
+  s.push_back(mp("p", "Go to post-processing module"));
+  s.push_back(mp("q", "Abort selection in geometry creation mode"));
+  s.push_back(mp("s", "Go to solver module"));
+  s.push_back(mp("x", "Toogle x coordinate freeze in geometry creation mode"));
+  s.push_back(mp("y", "Toogle y coordinate freeze in geometry creation mode"));
+  s.push_back(mp("z", "Toogle z coordinate freeze in geometry creation mode"));
+  s.push_back(mp("Shift+a", "Bring all windows to front"));
+  s.push_back(mp("Shift+g", "Show geometry options"));
+  s.push_back(mp("Shift+m", "Show mesh options"));
+  s.push_back(mp("Shift+o", "Show general options"));
+  s.push_back(mp("Shift+p", "Show post-processing options"));
+  s.push_back(mp("Shift+s", "Show solver options"));
+  s.push_back(mp("Shift+u", "Show post-processing view plugins"));
+  s.push_back(mp("Shift+w", "Show post-processing view options"));
+  s.push_back(mp("Shift+x", "Move only along x coordinate in geometry creation mode"));
+  s.push_back(mp("Shift+y", "Move only along y coordinate in geometry creation mode"));
+  s.push_back(mp("Shift+z", "Move only along z coordinate in geometry creation mode"));
+  s.push_back(mp("Shift+Escape", "Enable full mouse selection"));
+  s.push_back(mp(cc + "d", "Attach/detach menu"));
+  s.push_back(mp(cc + "e", "Export project"));
+  s.push_back(mp(cc + "f", "Enter full screen"));
+  s.push_back(mp(cc + "i", "Show statistics window"));
+  s.push_back(mp(cc + "j", "Save model options"));
+  s.push_back(mp(cc + "l", "Show message console"));
 #if defined(__APPLE__)
-  s.push_back(mp(cc + "m",         "Minimize window"));
+  s.push_back(mp(cc + "m", "Minimize window"));
 #endif
-  s.push_back(mp(cc + "n",         "Create new project file"));
-  s.push_back(mp(cc + "o",         "Open project file"));
-  s.push_back(mp(cc + "q",         "Quit"));
-  s.push_back(mp(cc + "r",         "Rename project file"));
-  s.push_back(mp(cc + "s",         "Save mesh in default format"));
+  s.push_back(mp(cc + "n", "Create new project file"));
+  s.push_back(mp(cc + "o", "Open project file"));
+  s.push_back(mp(cc + "q", "Quit"));
+  s.push_back(mp(cc + "r", "Rename project file"));
+  s.push_back(mp(cc + "s", "Save mesh in default format"));
   s.push_back(mp("Shift+" + cc + "c", "Show clipping plane window"));
   s.push_back(mp("Shift+" + cc + "h", "Show current options and workspace window"));
   s.push_back(mp("Shift+" + cc + "j", "Save options as default"));
@@ -221,38 +222,38 @@ std::vector<std::pair<std::string, std::string> > GetShortcutsUsage(const std::s
   s.push_back(mp("Shift+" + cc + "o", "Merge file(s)"));
   s.push_back(mp("Shift+" + cc + "u", "Show plugin window"));
   s.push_back(mp("Shift+" + cc + "v", "Show visibility window"));
-  s.push_back(mp("Alt+a",          "Loop through axes modes"));
-  s.push_back(mp("Alt+b",          "Hide/show bounding boxes"));
-  s.push_back(mp("Alt+c",          "Loop through predefined color schemes"));
-  s.push_back(mp("Alt+e",          "Hide/Show element outlines for visible post-pro views"));
-  s.push_back(mp("Alt+f",          "Change redraw mode (fast/full)"));
-  s.push_back(mp("Alt+h",          "Hide/show all post-processing views"));
-  s.push_back(mp("Alt+i",          "Hide/show all post-processing view scales"));
-  s.push_back(mp("Alt+l",          "Hide/show geometry lines"));
-  s.push_back(mp("Alt+m",          "Toggle visibility of all mesh entities"));
-  s.push_back(mp("Alt+n",          "Hide/show all post-processing view annotations"));
-  s.push_back(mp("Alt+o",          "Change projection mode (orthographic/perspective)"));
-  s.push_back(mp("Alt+p",          "Hide/show geometry points"));
-  s.push_back(mp("Alt+r",          "Loop through range modes for visible post-pro views"));
-  s.push_back(mp("Alt+s",          "Hide/show geometry surfaces"));
-  s.push_back(mp("Alt+t",          "Loop through interval modes for visible post-pro views"));
-  s.push_back(mp("Alt+v",          "Hide/show geometry volumes"));
-  s.push_back(mp("Alt+w",          "Enable/disable all lighting"));
-  s.push_back(mp("Alt+x",          "Set X view"));
-  s.push_back(mp("Alt+y",          "Set Y view"));
-  s.push_back(mp("Alt+z",          "Set Z view"));
-  s.push_back(mp("Alt+Shift+a",    "Hide/show small axes"));
-  s.push_back(mp("Alt+Shift+b",    "Hide/show mesh volume faces"));
-  s.push_back(mp("Alt+Shift+c",    "Loop through predefined colormaps"));
-  s.push_back(mp("Alt+Shift+d",    "Hide/show mesh surface faces"));
-  s.push_back(mp("Alt+Shift+l",    "Hide/show mesh lines"));
-  s.push_back(mp("Alt+Shift+p",    "Hide/show mesh points"));
-  s.push_back(mp("Alt+Shift+s",    "Hide/show mesh surface edges"));
-  s.push_back(mp("Alt+Shift+t",    "Same as Alt+t, but with numeric mode included"));
-  s.push_back(mp("Alt+Shift+v",    "Hide/show mesh volume edges"));
-  s.push_back(mp("Alt+Shift+x",    "Set -X view"));
-  s.push_back(mp("Alt+Shift+y",    "Set -Y view"));
-  s.push_back(mp("Alt+Shift+z",    "Set -Z view"));
+  s.push_back(mp("Alt+a", "Loop through axes modes"));
+  s.push_back(mp("Alt+b", "Hide/show bounding boxes"));
+  s.push_back(mp("Alt+c", "Loop through predefined color schemes"));
+  s.push_back(mp("Alt+e", "Hide/Show element outlines for visible post-pro views"));
+  s.push_back(mp("Alt+f", "Change redraw mode (fast/full)"));
+  s.push_back(mp("Alt+h", "Hide/show all post-processing views"));
+  s.push_back(mp("Alt+i", "Hide/show all post-processing view scales"));
+  s.push_back(mp("Alt+l", "Hide/show geometry lines"));
+  s.push_back(mp("Alt+m", "Toggle visibility of all mesh entities"));
+  s.push_back(mp("Alt+n", "Hide/show all post-processing view annotations"));
+  s.push_back(mp("Alt+o", "Change projection mode (orthographic/perspective)"));
+  s.push_back(mp("Alt+p", "Hide/show geometry points"));
+  s.push_back(mp("Alt+r", "Loop through range modes for visible post-pro views"));
+  s.push_back(mp("Alt+s", "Hide/show geometry surfaces"));
+  s.push_back(mp("Alt+t", "Loop through interval modes for visible post-pro views"));
+  s.push_back(mp("Alt+v", "Hide/show geometry volumes"));
+  s.push_back(mp("Alt+w", "Enable/disable all lighting"));
+  s.push_back(mp("Alt+x", "Set X view"));
+  s.push_back(mp("Alt+y", "Set Y view"));
+  s.push_back(mp("Alt+z", "Set Z view"));
+  s.push_back(mp("Alt+Shift+a", "Hide/show small axes"));
+  s.push_back(mp("Alt+Shift+b", "Hide/show mesh volume faces"));
+  s.push_back(mp("Alt+Shift+c", "Loop through predefined colormaps"));
+  s.push_back(mp("Alt+Shift+d", "Hide/show mesh surface faces"));
+  s.push_back(mp("Alt+Shift+l", "Hide/show mesh lines"));
+  s.push_back(mp("Alt+Shift+p", "Hide/show mesh points"));
+  s.push_back(mp("Alt+Shift+s", "Hide/show mesh surface edges"));
+  s.push_back(mp("Alt+Shift+t", "Same as Alt+t, but with numeric mode included"));
+  s.push_back(mp("Alt+Shift+v", "Hide/show mesh volume edges"));
+  s.push_back(mp("Alt+Shift+x", "Set -X view"));
+  s.push_back(mp("Alt+Shift+y", "Set -Y view"));
+  s.push_back(mp("Alt+Shift+z", "Set -Z view"));
   return s;
 }
 
@@ -260,19 +261,20 @@ std::vector<std::pair<std::string, std::string> > GetMouseUsage()
 {
   typedef std::pair<std::string, std::string> mp;
   std::vector<mp> s;
-  s.push_back(mp("Move", "- Highlight the entity under the mouse pointer and display its properties"));
-  s.push_back(mp("",     "- Resize a lasso zoom or a lasso (un)selection"));
+  s.push_back(mp("Move", "- Highlight the entity under the mouse pointer and "
+                 "display its properties"));
+  s.push_back(mp("", "- Resize a lasso zoom or a lasso (un)selection"));
   s.push_back(mp("Left button", "- Rotate"));
-  s.push_back(mp("",            "- Select an entity"));
-  s.push_back(mp("",            "- Accept a lasso zoom or a lasso selection"));
+  s.push_back(mp("", "- Select an entity"));
+  s.push_back(mp("", "- Accept a lasso zoom or a lasso selection"));
   s.push_back(mp("Ctrl+Left button", "Start a lasso zoom or a lasso (un)selection"));
   s.push_back(mp("Middle button", "- Zoom"));
-  s.push_back(mp("",              "- Unselect an entity"));
-  s.push_back(mp("",              "- Accept a lasso zoom or a lasso unselection"));
+  s.push_back(mp("", "- Unselect an entity"));
+  s.push_back(mp("", "- Accept a lasso zoom or a lasso unselection"));
   s.push_back(mp("Ctrl+Middle button", "Orthogonalize display"));
   s.push_back(mp("Right button", "- Pan"));
-  s.push_back(mp("",             "- Cancel a lasso zoom or a lasso (un)selection"));
-  s.push_back(mp("",             "- Pop-up menu on post-processing view button"));
+  s.push_back(mp("", "- Cancel a lasso zoom or a lasso (un)selection"));
+  s.push_back(mp("", "- Pop-up menu on post-processing view button"));
   s.push_back(mp("Ctrl+Right button", "Reset to default viewpoint"));
   return s;
 }
@@ -397,7 +399,8 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
         else
           Msg::Fatal("Missing number");
       }
-      else if (!strcmp(argv[i] + 1, "partWeight")) {
+      else if(!strcmp(argv[i] + 1, "part_weight") ||
+              !strcmp(argv[i] + 1, "partWeight")) {
         i++;
         bool check = true;
         opt_mesh_partition_metis_algorithm(0, GMSH_SET, 3); // partGraphKWay w/ weights
