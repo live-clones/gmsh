@@ -612,7 +612,7 @@ Options:@*
 @item InField
 Id of the field to use as x coordinate.@*
 type: integer@*
-default value: @code{1387399928}
+default value: @code{1752631850}
 @end table
 
 @item Param
@@ -709,11 +709,11 @@ default value: @code{""}
 @item OutsideValue
 Value of the field outside the grid (only used if the "SetOutsideValue" option is true).@*
 type: float@*
-default value: @code{6.95326006193493e-310}
+default value: @code{0}
 @item SetOutsideValue
 True to use the "OutsideValue" option. If False, the last values of the grid are used.@*
 type: boolean@*
-default value: @code{171}
+default value: @code{0}
 @item TextFormat
 True for ASCII input files, false for binary files (4 bite signed integers for n, double precision floating points for v, D and O)@*
 type: boolean@*

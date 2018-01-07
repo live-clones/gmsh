@@ -73,19 +73,21 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-1, -2, -3",         "Perform 1D, 2D or 3D mesh generation, then exit"));
   s.push_back(mp("-o file",            "Specify output file name"));
   s.push_back(mp("-format string",     "Select output mesh format (auto (default), msh, "
-                                       "msh1, msh2, msh3, msh4, unv, vrml, ply2, stl, mesh, bdf, cgns, "
-                                       "p3d, diff, med, neu, ...)"));
+                 "msh1, msh2, msh3, msh4, unv, vrml, ply2, stl, mesh, bdf, cgns, "
+                 "p3d, diff, med, neu, ...)"));
   s.push_back(mp("-bin",               "Use binary format when available"));
   s.push_back(mp("-refine",            "Perform uniform mesh refinement, then exit"));
   s.push_back(mp("-reclassify",        "Reclassify mesh, then exit"));
   s.push_back(mp("-part int",          "Partition after batch mesh generation"));
-  s.push_back(mp("-partWeight tri|quad|tet|hex|pri|pyr|trih int", "Weight of a triangle/quad/etc. "
-                                                           "during partitioning"));
+  s.push_back(mp("-part_weight tri|quad|tet|hex|pri|pyr|trih int", "Weight of a triangle/quad/etc. "
+                 "during partitioning"));
+  s.push_back(mp("-part_split",        "Save mesh partitions in separate files"));
+  s.push_back(mp("-part_topo",         "Save the partition topology .pro file"));
   s.push_back(mp("-save_all",          "Save all elements (discard physical group definitions)"));
   s.push_back(mp("-save_parametric",   "Save vertices with their parametric coordinates"));
   s.push_back(mp("-save_topology",     "Save model topology"));
   s.push_back(mp("-algo string",       "Select mesh algorithm (meshadapt, del2d, front2d, "
-                                        "delquad, del3d, front3d, mmg3d, pack)"));
+                 "delquad, del3d, front3d, mmg3d, pack)"));
   s.push_back(mp("-smooth int",        "Set number of mesh smoothing steps"));
   s.push_back(mp("-order int",         "Set mesh order (1, ..., 5)"));
   s.push_back(mp("-optimize[_netgen]", "Optimize quality of tetrahedral elements"));
@@ -96,24 +98,22 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-clscale float",     "Set global mesh element size scaling factor"));
   s.push_back(mp("-clmin float",       "Set minimum mesh element size"));
   s.push_back(mp("-clmax float",       "Set maximum mesh element size"));
-  s.push_back(mp("-anisoMax float",    "Set maximum anisotropy (only used in bamg for now)"));
-  s.push_back(mp("-smoothRatio float", "Set smoothing ration between mesh sizes at nodes of "
-                                       "a same edge (only used in bamg)"));
+  s.push_back(mp("-aniso_max float",   "Set maximum anisotropy (only used in bamg for now)"));
+  s.push_back(mp("-smooth_ratio float", "Set smoothing ration between mesh sizes at nodes of "
+                 "a same edge (only used in bamg)"));
   s.push_back(mp("-clcurv",            "Automatically compute element sizes from curvatures"));
   s.push_back(mp("-epslc1d",           "Set accuracy of evaluation of LCFIELD for 1D mesh"));
   s.push_back(mp("-swapangle",         "Set the threshold angle (in degree) between two adjacent"
-                                       " faces below which a swap is allowed"));
+                 " faces below which a swap is allowed"));
   s.push_back(mp("-rand float",        "Set random perturbation factor"));
   s.push_back(mp("-bgm file",          "Load background mesh from file"));
   s.push_back(mp("-check",             "Perform various consistency checks on mesh"));
-  s.push_back(mp("-ignorePeriocity",   "Ignore periodic boundaries"));
-  s.push_back(mp("-oneFilePerPart",    "Save mesh partitions in separate files"));
-  s.push_back(mp("-savePartTopology",  "Save the partitioned topology files"));
+  s.push_back(mp("-ignore_periocity",  "Ignore periodic boundaries"));
 #if defined(HAVE_FLTK)
   s.push_back(mp("Post-processing options:", ""));
   s.push_back(mp("-link int",          "Select link mode between views (0, 1, 2, 3, 4)"));
   s.push_back(mp("-combine",           "Combine views having identical names into "
-                                       "multi-time-step views"));
+                 "multi-time-step views"));
   s.push_back(mp("Solver options:", ""));
   s.push_back(mp("-listen",            "Always listen to incoming connection requests"));
   s.push_back(mp("-minterpreter string", "Name of Octave interpreter"));
@@ -397,37 +397,37 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
         else
           Msg::Fatal("Missing number");
       }
-      else if (!strcmp(argv[i] + 1,"partWeight")) {
+      else if (!strcmp(argv[i] + 1, "partWeight")) {
         i++;
         bool check = true;
         opt_mesh_partition_metis_algorithm(0, GMSH_SET, 3); // partGraphKWay w/ weights
         while (check) {
           if (argv[i]) {
-            if (!strcmp(argv[i],"tri") || !strcmp(argv[i],"triangle")) {
+            if (!strcmp(argv[i], "tri") || !strcmp(argv[i], "triangle")) {
               i++;
               opt_mesh_partition_tri_weight(0,GMSH_SET,atoi(argv[i]));
             }
-            else if (!strcmp(argv[i],"quad") || !strcmp(argv[i],"quadrangle")) {
+            else if (!strcmp(argv[i], "quad") || !strcmp(argv[i], "quadrangle")) {
               i++;
               opt_mesh_partition_qua_weight(0,GMSH_SET,atoi(argv[i]));
             }
-            else if (!strcmp(argv[i],"tet") || !strcmp(argv[i],"tetrahedron")) {
+            else if (!strcmp(argv[i], "tet") || !strcmp(argv[i], "tetrahedron")) {
               i++;
               opt_mesh_partition_tet_weight(0,GMSH_SET,atoi(argv[i]));
             }
-            else if (!strcmp(argv[i],"hex") || !strcmp(argv[i],"hexahedron")) {
+            else if (!strcmp(argv[i], "hex") || !strcmp(argv[i], "hexahedron")) {
               i++;
               opt_mesh_partition_hex_weight(0,GMSH_SET,atoi(argv[i]));
             }
-            else if (!strcmp(argv[i],"pri") || !strcmp(argv[i],"prism")) {
+            else if (!strcmp(argv[i], "pri") || !strcmp(argv[i], "prism")) {
               i++;
               opt_mesh_partition_pri_weight(0,GMSH_SET,atoi(argv[i]));
             }
-            else if (!strcmp(argv[i],"pyr") || !strcmp(argv[i],"pyramid")) {
+            else if (!strcmp(argv[i], "pyr") || !strcmp(argv[i], "pyramid")) {
               i++;
               opt_mesh_partition_pyr_weight(0,GMSH_SET,atoi(argv[i]));
             }
-            else if (!strcmp(argv[i],"trih") || !strcmp(argv[i],"trihedron")) {
+            else if (!strcmp(argv[i], "trih") || !strcmp(argv[i], "trihedron")) {
               i++;
               opt_mesh_partition_trih_weight(0,GMSH_SET,atoi(argv[i]));
             }
@@ -440,12 +440,14 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
           else check = false;
         }
       }
-      else if(!strcmp(argv[i] + 1, "oneFilePerPart")){
-        opt_mesh_msh_file_partitioned(0,GMSH_SET,1.);
+      else if(!strcmp(argv[i] + 1, "part_split") ||
+              !strcmp(argv[i] + 1, "oneFilePerPart")){
+        opt_mesh_partition_split_mesh_files(0, GMSH_SET, 1.);
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "savePartTopology")){
-        opt_mesh_msh_file_partitioned_topology(0,GMSH_SET,1.);
+      else if(!strcmp(argv[i] + 1, "part_topo") ||
+              !strcmp(argv[i] + 1, "savePartTopology")){
+        opt_mesh_partition_save_topology_file(0, GMSH_SET, 1.);
         i++;
       }
       else if(!strcmp(argv[i] + 1, "new")) {
@@ -626,14 +628,16 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
         else
           Msg::Fatal("Missing file name");
       }
-      else if(!strcmp(argv[i] + 1, "anisoMax")) {
+      else if(!strcmp(argv[i] + 1, "aniso_max") ||
+              !strcmp(argv[i] + 1, "anisoMax")) {
         i++;
         if(argv[i])
           CTX::instance()->mesh.anisoMax = atof(argv[i++]);
         else
           Msg::Fatal("Missing anisotropy ratio");
       }
-      else if(!strcmp(argv[i] + 1, "smoothRatio")) {
+      else if(!strcmp(argv[i] + 1, "smooth_ratio") ||
+              !strcmp(argv[i] + 1, "smoothRatio")) {
         i++;
         if(argv[i])
           CTX::instance()->mesh.smoothRatio = atof(argv[i++]);
@@ -755,7 +759,8 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
         else
           Msg::Fatal("Missing number");
       }
-      else if(!strcmp(argv[i] + 1, "ignorePeriodicity")) {
+      else if(!strcmp(argv[i] + 1, "ignore_periodicity") ||
+              !strcmp(argv[i] + 1, "ignorePeriodicity")) {
         i++;
         opt_mesh_ignore_periodicity(0, GMSH_SET, 1);
       }

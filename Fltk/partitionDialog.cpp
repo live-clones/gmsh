@@ -49,7 +49,7 @@ struct PartitionDialog
   Fl_Choice *choicePartitioner;
   Fl_Value_Input *inputNumPartition;
   Fl_Check_Button *setGhostCells;
-  Fl_Check_Button *setPartitionBoundaries;
+  Fl_Check_Button *setTopology;
   // Group 1
   Fl_Choice *choiceMetisAlg;
   Fl_Toggle_Button *toggleButtonAdvMetis;
@@ -66,45 +66,45 @@ struct PartitionDialog
 
   void write_all_options()
   {    // Group 0
-    CTX::instance()->mesh.num_partitions = static_cast<int>(inputNumPartition->value());
-    CTX::instance()->mesh.createGhostCells = setGhostCells->value();
-    CTX::instance()->mesh.createPartitionBoundaries = setPartitionBoundaries->value();
+    CTX::instance()->mesh.numPartitions = static_cast<int>(inputNumPartition->value());
+    CTX::instance()->mesh.partitionCreateGhostCells = setGhostCells->value();
+    CTX::instance()->mesh.partitionCreateTopology = setTopology->value();
 
     // Group 1
-    CTX::instance()->mesh.metis_algorithm = choiceMetisAlg->value() + 1;
+    CTX::instance()->mesh.metisAlgorithm = choiceMetisAlg->value() + 1;
 
     // Group 2
-    CTX::instance()->mesh.metis_edge_matching = choiceEdgeMatch->value() + 1;
-    CTX::instance()->mesh.metis_refine_algorithm = choiceRefineAlg->value() + 1;
+    CTX::instance()->mesh.metisEdgeMatching = choiceEdgeMatch->value() + 1;
+    CTX::instance()->mesh.metisRefinementAlgorithm = choiceRefineAlg->value() + 1;
 
-    CTX::instance()->mesh.part_triWeight = (int)inputTriWeight->value();
-    CTX::instance()->mesh.part_quaWeight = (int)inputQuaWeight->value();
-    CTX::instance()->mesh.part_tetWeight = (int)inputTetWeight->value();
-    CTX::instance()->mesh.part_priWeight = (int)inputPriWeight->value();
-    CTX::instance()->mesh.part_pyrWeight = (int)inputPyrWeight->value();
-    CTX::instance()->mesh.part_hexWeight = (int)inputHexWeight->value();
+    CTX::instance()->mesh.partitionTriWeight = (int)inputTriWeight->value();
+    CTX::instance()->mesh.partitionQuaWeight = (int)inputQuaWeight->value();
+    CTX::instance()->mesh.partitionTetWeight = (int)inputTetWeight->value();
+    CTX::instance()->mesh.partitionPriWeight = (int)inputPriWeight->value();
+    CTX::instance()->mesh.partitionPyrWeight = (int)inputPyrWeight->value();
+    CTX::instance()->mesh.partitionHexWeight = (int)inputHexWeight->value();
 
   }
   void read_all_options()
   {
     // Group 0
-    inputNumPartition->value(CTX::instance()->mesh.num_partitions);
-    setGhostCells->value(CTX::instance()->mesh.createGhostCells);
-    setPartitionBoundaries->value(CTX::instance()->mesh.createPartitionBoundaries);
+    inputNumPartition->value(CTX::instance()->mesh.numPartitions);
+    setGhostCells->value(CTX::instance()->mesh.partitionCreateGhostCells);
+    setTopology->value(CTX::instance()->mesh.partitionCreateTopology);
 
     // Group 2
-    choiceMetisAlg->value(CTX::instance()->mesh.metis_algorithm - 1);
+    choiceMetisAlg->value(CTX::instance()->mesh.metisAlgorithm - 1);
 
     // Group 3
-    choiceEdgeMatch->value(CTX::instance()->mesh.metis_edge_matching - 1);
-    choiceRefineAlg->value(CTX::instance()->mesh.metis_refine_algorithm - 1);
+    choiceEdgeMatch->value(CTX::instance()->mesh.metisEdgeMatching - 1);
+    choiceRefineAlg->value(CTX::instance()->mesh.metisRefinementAlgorithm - 1);
 
-    inputTriWeight->value(CTX::instance()->mesh.part_triWeight);
-    inputQuaWeight->value(CTX::instance()->mesh.part_quaWeight);
-    inputTetWeight->value(CTX::instance()->mesh.part_tetWeight);
-    inputPriWeight->value(CTX::instance()->mesh.part_priWeight);
-    inputPyrWeight->value(CTX::instance()->mesh.part_pyrWeight);
-    inputHexWeight->value(CTX::instance()->mesh.part_hexWeight);
+    inputTriWeight->value(CTX::instance()->mesh.partitionTriWeight);
+    inputQuaWeight->value(CTX::instance()->mesh.partitionQuaWeight);
+    inputTetWeight->value(CTX::instance()->mesh.partitionTetWeight);
+    inputPriWeight->value(CTX::instance()->mesh.partitionPriWeight);
+    inputPyrWeight->value(CTX::instance()->mesh.partitionPyrWeight);
+    inputHexWeight->value(CTX::instance()->mesh.partitionHexWeight);
 
     // Call all callbacks to ensure consistent options
     partition_opt_num_partitions_cb(inputNumPartition, this);
@@ -139,7 +139,7 @@ void partition_partition_cb(Fl_Widget *widget, void *data)
   dlg->write_all_options();
 
   // Partition the mesh
-  int ier = GModel::current()->partitionMesh(CTX::instance()->mesh.num_partitions);
+  int ier = GModel::current()->partitionMesh(CTX::instance()->mesh.numPartitions);
 
   // Update the screen
   if(!ier)
@@ -259,7 +259,8 @@ void partition_dialog()
     }
     // Number of partitions
     {
-      Fl_Value_Input *const o = new Fl_Value_Input (2*WB + 2*BB, y, IW, BH, "Number of\nPartitions");
+      Fl_Value_Input *const o = new Fl_Value_Input
+        (2*WB + 2*BB, y, IW, BH, "Number of\nPartitions");
       dlg.inputNumPartition = o;
       o->minimum(0);
       o->maximum(std::numeric_limits<unsigned short>::max());
@@ -270,13 +271,15 @@ void partition_dialog()
     y += BH + WB;
     // Booleans options
     {
-      Fl_Check_Button *const o = new Fl_Check_Button (2*WB + 2*BB, y, 2*BB, BH, "Create ghost cells");
+      Fl_Check_Button *const o = new Fl_Check_Button
+        (2*WB + 2*BB, y, 2*BB, BH, "Create ghost cells");
       o->deactivate();
       dlg.setGhostCells = o;
     }
     {
-      Fl_Check_Button *const o = new Fl_Check_Button (WB, y, 2*BB, BH, "Create partition boundaries");
-      dlg.setPartitionBoundaries = o;
+      Fl_Check_Button *const o = new Fl_Check_Button
+        (WB, y, 2*BB, BH, "Create partition topology");
+      dlg.setTopology = o;
     }
     y += BH + WB;
     // Box (line)

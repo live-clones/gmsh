@@ -111,27 +111,13 @@ class Graph
         continue;
       }
       switch (_element[i]->getType()){
-      case TYPE_TRI:
-        _vwgt[i] = CTX::instance()->mesh.part_triWeight;
-        break;
-      case TYPE_QUA:
-        _vwgt[i] = CTX::instance()->mesh.part_quaWeight;
-        break;
-      case TYPE_TET:
-        _vwgt[i] = CTX::instance()->mesh.part_tetWeight;
-        break;
-      case TYPE_PYR:
-        _vwgt[i] = CTX::instance()->mesh.part_pyrWeight;
-        break;
-      case TYPE_PRI:
-        _vwgt[i] = CTX::instance()->mesh.part_priWeight;
-        break;
-      case TYPE_HEX:
-        _vwgt[i] = CTX::instance()->mesh.part_hexWeight;
-        break;
-      default:
-        _vwgt[i] = 1;
-        break;
+      case TYPE_TRI: _vwgt[i] = CTX::instance()->mesh.partitionTriWeight; break;
+      case TYPE_QUA: _vwgt[i] = CTX::instance()->mesh.partitionQuaWeight; break;
+      case TYPE_TET: _vwgt[i] = CTX::instance()->mesh.partitionTetWeight; break;
+      case TYPE_PYR: _vwgt[i] = CTX::instance()->mesh.partitionPyrWeight; break;
+      case TYPE_PRI: _vwgt[i] = CTX::instance()->mesh.partitionPriWeight; break;
+      case TYPE_HEX: _vwgt[i] = CTX::instance()->mesh.partitionHexWeight; break;
+      default: _vwgt[i] = 1; break;
       }
     }
   }
@@ -537,7 +523,7 @@ static int PartitionGraph(Graph &graph)
     int metisOptions[METIS_NOPTIONS];
     METIS_SetDefaultOptions((idx_t *)metisOptions);
 
-    switch(CTX::instance()->mesh.metis_algorithm){
+    switch(CTX::instance()->mesh.metisAlgorithm){
       case 1: // Recursive
         metisOptions[METIS_OPTION_PTYPE] = METIS_PTYPE_RB;
         break;
@@ -549,7 +535,7 @@ static int PartitionGraph(Graph &graph)
         break;
     }
 
-    switch(CTX::instance()->mesh.metis_edge_matching){
+    switch(CTX::instance()->mesh.metisEdgeMatching){
       case 1: // Random matching
         metisOptions[METIS_OPTION_CTYPE] = METIS_CTYPE_RM;
         break;
@@ -561,7 +547,7 @@ static int PartitionGraph(Graph &graph)
         break;
     }
 
-    switch(CTX::instance()->mesh.metis_refine_algorithm){
+    switch(CTX::instance()->mesh.metisRefinementAlgorithm){
       case 1: // FM-based cut refinement
         metisOptions[METIS_OPTION_RTYPE] = METIS_RTYPE_FM;
         break;
@@ -2395,14 +2381,14 @@ static void BuildTopology(GModel *model)
 // Partition a mesh into n parts. Returns: 0 = success, 1 = error
 int PartitionMesh(GModel *const model)
 {
-  if(CTX::instance()->mesh.num_partitions <= 0) return 0;
+  if(CTX::instance()->mesh.numPartitions <= 0) return 0;
 
   Msg::StatusBar(true, "Partitioning mesh...");
   double t1 = Cpu();
 
   Graph graph;
   if(MakeGraph(model, graph)) return 1;
-  graph.nparts(CTX::instance()->mesh.num_partitions);
+  graph.nparts(CTX::instance()->mesh.numPartitions);
   if(PartitionGraph(graph)) return 1;
 
   // Assign partitions to elements
@@ -2432,13 +2418,13 @@ int PartitionMesh(GModel *const model)
   double t2 = Cpu();
   Msg::StatusBar(true, "Done partitioning mesh (%g s)", t2 - t1);
 
-  if(CTX::instance()->mesh.createPartitionBoundaries){
-    Msg::StatusBar(true, "Creating partitioned topology...");
+  if(CTX::instance()->mesh.partitionCreateTopology){
+    Msg::StatusBar(true, "Creating partition topology...");
     CreatePartitionBoundaries(model, boundaryElements);
     boundaryElements.clear();
     BuildTopology(model);
     double t3 = Cpu();
-    Msg::StatusBar(true, "Done creating partitioned topology (%g s)", t3 - t2);
+    Msg::StatusBar(true, "Done creating partition topology (%g s)", t3 - t2);
   }
 
   AssignMeshVertices(model);
@@ -2705,12 +2691,12 @@ int ConvertOldPartitioningToNewOne(GModel *const model)
 
   Msg::StatusBar(true, "Done converting old partitioning");
 
-  if(CTX::instance()->mesh.createPartitionBoundaries){
-    Msg::StatusBar(true, "Creating partitioned topology...");
+  if(CTX::instance()->mesh.partitionCreateTopology){
+    Msg::StatusBar(true, "Creating partition topology...");
     CreatePartitionBoundaries(model, boundaryElements);
     boundaryElements.clear();
     BuildTopology(model);
-    Msg::StatusBar(true, "Done creating partitioned topology");
+    Msg::StatusBar(true, "Done creating partition topology");
   }
 
   AssignMeshVertices(model);

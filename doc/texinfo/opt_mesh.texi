@@ -240,12 +240,12 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MetisEdgeMatching
-(Adv. METIS): Determines the matching type (1=Random, 2=Sorted Heavy-Edge)@*
+METIS edge matching type (1=Random, 2=Sorted Heavy-Edge)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MetisRefinementAlgorithm
-(Adv. METIS): Algorithm for k-way refinement (1=FM-based cut, 2=Greedy, 3=Two-sided node FM, 4=One-sided node FM)@*
+METIS algorithm for k-way refinement (1=FM-based cut, 2=Greedy, 3=Two-sided node FM, 4=One-sided node FM)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -299,18 +299,23 @@ Weight of triangle element for METIS load balancing@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.PartitionBoundaries
+@item Mesh.PartitionTopology
 Create boundary entities between partitions@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.PartitionMeshes
-Write one mesh file by partition@*
+@item Mesh.PartitionGhostCells
+Create boundary entities between partitions@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.PartitionTopology
-Write a topology file@*
+@item Mesh.PartitionSplitMeshFiles
+Write one file for each mesh partition@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionTopologyFile
+Write a .pro file with the partition topology@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

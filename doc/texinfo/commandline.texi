@@ -30,8 +30,12 @@ Perform uniform mesh refinement, then exit
 Reclassify mesh, then exit
 @item -part int
 Partition after batch mesh generation
-@item -partWeight tri|quad|tet|hex|pri|pyr|trih int
+@item -part_weight tri|quad|tet|hex|pri|pyr|trih int
 Weight of a triangle/quad/etc. during partitioning
+@item -part_split
+Save mesh partitions in separate files
+@item -part_topo
+Save the partition topology .pro file
 @item -save_all
 Save all elements (discard physical group definitions)
 @item -save_parametric
@@ -60,9 +64,9 @@ Set global mesh element size scaling factor
 Set minimum mesh element size
 @item -clmax float
 Set maximum mesh element size
-@item -anisoMax float
+@item -aniso_max float
 Set maximum anisotropy (only used in bamg for now)
-@item -smoothRatio float
+@item -smooth_ratio float
 Set smoothing ration between mesh sizes at nodes of a same edge (only used in bamg)
 @item -clcurv
 Automatically compute element sizes from curvatures
@@ -76,12 +80,8 @@ Set random perturbation factor
 Load background mesh from file
 @item -check
 Perform various consistency checks on mesh
-@item -ignorePeriocity
+@item -ignore_periocity
 Ignore periodic boundaries
-@item -oneFilePerPart
-Save mesh partitions in separate files
-@item -savePartTopology
-Save the partitioned topology files
 @end ftable
  Post-processing options:
 @ftable @code

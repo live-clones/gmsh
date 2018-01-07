@@ -425,7 +425,7 @@ void gmsh::model::mesh::partition(const int numPart)
 {
   if(!_isInitialized()){ throw -1; }
   GModel::current()->partitionMesh(numPart >= 0 ? numPart :
-                                   CTX::instance()->mesh.num_partitions);
+                                   CTX::instance()->mesh.numPartitions);
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
