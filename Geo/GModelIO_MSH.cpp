@@ -3,6 +3,8 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
+#include <stdio.h>
+#include <string.h>
 #include "GModel.h"
 #include "OS.h"
 #include "GmshMessage.h"
