@@ -25,9 +25,9 @@ stero mode), Ashish Negi (Netgen CAD healing), Trevor Strickler
 Benjamin Ruard (Java wrappers), Maxime Graulich (iOS/Android port), Francois
 Henrotte (onelab metamodels), Sebastian Eiser (PGF output), Alexis Salzman
 (compressed IO), Hang Si (TetGen/BR boundary recovery code), Fernando Lorenzo
-(Tochnog support), Anthony Royer (new partitioning code, MSH4 format). See
-comments in the sources for more information. If we forgot to list your
-contributions please send us an email!
+(Tochnog support), Larry Price (Gambit export), Anthony Royer (new partitioning
+code, MSH4 format). See comments in the sources for more information. If we
+forgot to list your contributions please send us an email!
 
 The TetGen/BR code (Mesh/tetgenBR.{cpp,h}) is copyright (c) 2016 Hang Si,
 Weierstrass Institute for Applied Analysis and Stochatics.
@@ -156,4 +156,4 @@ Hackbarth, Peter Wainwright, Jiri Hnidek, Thierry Thomas, Konstantinos Poulios,
 Laurent Van Miegroet, Shahrokh Ghavamian, Geordie McBain, Jose Paulo Moitinho de
 Almeida, Guillaume Demesy, Wendy Merks-Swolfs, Cosmin Stefan Deaconu, Nigel
 Nunn, Serban Georgescu, Julien Troufflard, Michele Mocciola, Matthijs Sypkens
-Smit, Sauli Ruuska, Larry Price.
+Smit, Sauli Ruuska.

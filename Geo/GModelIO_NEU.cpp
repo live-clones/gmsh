@@ -2,6 +2,8 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
+//
+// Contributed by Larry Price
 
 #include <time.h>
 #include <algorithm>
@@ -18,9 +20,9 @@
 
 namespace
 {
-  static const unsigned GAMBIT_TYPE_EDGE = 1;
-  static const unsigned GAMBIT_TYPE_QUAD = 2;
-  static const unsigned GAMBIT_TYPE_TRI  = 3;
+  //static const unsigned GAMBIT_TYPE_EDGE = 1;
+  //static const unsigned GAMBIT_TYPE_QUAD = 2;
+  //static const unsigned GAMBIT_TYPE_TRI  = 3;
   static const unsigned GAMBIT_TYPE_TET  = 6;
 
   // This struct allows us to take advantage of C++11 unordered_map while
