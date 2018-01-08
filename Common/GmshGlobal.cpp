@@ -319,9 +319,11 @@ int GmshBatch()
 #endif
   }
 
-  if(CTX::instance()->batch > 0 || CTX::instance()->batchAfterMesh == 1){
-    if(CTX::instance()->mesh.numPartitions > 1)
-      GModel::current()->partitionMesh(CTX::instance()->mesh.numPartitions);
+  if(CTX::instance()->batchAfterMesh == 1 &&
+     CTX::instance()->mesh.numPartitions > 1)
+    GModel::current()->partitionMesh(CTX::instance()->mesh.numPartitions);
+
+  if(CTX::instance()->batch > 0 || CTX::instance()->batchAfterMesh){
     std::string name = CTX::instance()->outputFileName;
     if(name.empty()){
       if(CTX::instance()->mesh.fileFormat == FORMAT_AUTO)
