@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -304,7 +304,7 @@ helpWindow::helpWindow()
     o->box(FL_FLAT_BOX);
     std::ostringstream sstream;
     sstream << "<center><h3>Gmsh</h3><br>version " << GetGmshVersion()
-            << "<p>Copyright (C) 1997-2017"
+            << "<p>Copyright (C) 1997-2018"
             << "<br>Christophe Geuzaine and Jean-Francois Remacle"
             << "<p><a href=\"http://gmsh.info/doc/CREDITS.txt\">Credits</a> "
             << "and <a href=\"http://gmsh.info/doc/LICENSE.txt\">licensing "

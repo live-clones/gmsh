@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -2410,7 +2410,8 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
     std::ostringstream sstream;
     sstream << baseName << "_" << i << ".msh";
 
-    tmp->_writeMSH4(sstream.str(), version, binary, saveAll, saveParametric, scalingFactor);
+    tmp->_writeMSH4(sstream.str(), version, binary, saveAll, saveParametric,
+                    scalingFactor);
     tmp->remove();
     delete tmp;
   }
