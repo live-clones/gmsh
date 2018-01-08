@@ -1267,19 +1267,6 @@ static void CreateNewEntities(GModel *const model,
 }
 
 template <class ITERATOR>
-static void fillit_(hashmapface &faceToElement,
-                    const std::vector<unsigned int> &partitions,
-                    ITERATOR it_beg, ITERATOR it_end)
-{
-  for (ITERATOR it = it_beg; it != it_end ; ++it){
-    for(int i = 0; i < (*it)->getNumFaces(); i++){
-      faceToElement[(*it)->getFace(i)].push_back
-        (std::pair<MElement*, std::vector<unsigned int> >(*it, partitions));
-    }
-  }
-}
-
-template <class ITERATOR>
 static void fillit_(hashmapedge &edgeToElement,
                     const std::vector<unsigned int> &partitions,
                     ITERATOR it_beg, ITERATOR it_end)
@@ -1645,19 +1632,12 @@ static void CreatePartitionBoundaries(GModel *const model,
   if (meshDim >= 3){ // Create partition faces
     Msg::Info(" - Creating partition faces");
 
-    for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
-      if((*it)->geomType() == GEntity::PartitionVolume){
-        // FIXME: this is slow
-        fillit_(faceToElement, static_cast<partitionRegion*>(*it)->getPartitions(),
-                (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
-        fillit_(faceToElement, static_cast<partitionRegion*>(*it)->getPartitions(),
-                (*it)->hexahedra.begin(), (*it)->hexahedra.end());
-        fillit_(faceToElement, static_cast<partitionRegion*>(*it)->getPartitions(),
-                (*it)->prisms.begin(), (*it)->prisms.end());
-        fillit_(faceToElement, static_cast<partitionRegion*>(*it)->getPartitions(),
-                (*it)->pyramids.begin(), (*it)->pyramids.end());
-        fillit_(faceToElement, static_cast<partitionRegion*>(*it)->getPartitions(),
-                (*it)->trihedra.begin(), (*it)->trihedra.end());
+    for(unsigned int i = 0; i < boundaryElements.size(); i++){
+      for(std::set<MElement*>::iterator it = boundaryElements[i].begin(); it != boundaryElements[i].end(); ++it){
+        for(int j = 0; j < (*it)->getNumFaces(); j++){
+          faceToElement[(*it)->getFace(j)].push_back
+          (std::pair<MElement*, std::vector<unsigned int> >(*it, std::vector<unsigned int>(1,i)));
+        }
       }
     }
 
@@ -1744,12 +1724,26 @@ static void CreatePartitionBoundaries(GModel *const model,
   if (meshDim >= 2){ // Create partition edges
     Msg::Info(" - Creating partition edges");
 
-    for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
-      if((*it)->geomType() == GEntity::PartitionSurface){
-        fillit_(edgeToElement, static_cast<partitionFace*>(*it)->getPartitions(),
-                (*it)->triangles.begin(), (*it)->triangles.end());
-        fillit_(edgeToElement, static_cast<partitionFace*>(*it)->getPartitions(),
-                (*it)->quadrangles.begin(), (*it)->quadrangles.end());
+    if (meshDim == 2){
+      for(unsigned int i = 0; i < boundaryElements.size(); i++){
+        for(std::set<MElement*>::iterator it = boundaryElements[i].begin();
+            it != boundaryElements[i].end(); ++it){
+          for(int j = 0; j < (*it)->getNumEdges(); j++){
+            edgeToElement[(*it)->getEdge(j)].push_back
+            (std::pair<MElement*, std::vector<unsigned int> >
+             (*it, std::vector<unsigned int>(1,i)));
+          }
+        }
+      }
+    }
+    else{
+      for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
+        if((*it)->geomType() == GEntity::PartitionSurface){
+          fillit_(edgeToElement, static_cast<partitionFace*>(*it)->getPartitions(),
+                  (*it)->triangles.begin(), (*it)->triangles.end());
+          fillit_(edgeToElement, static_cast<partitionFace*>(*it)->getPartitions(),
+                  (*it)->quadrangles.begin(), (*it)->quadrangles.end());
+        }
       }
     }
     for(hashmapedge::const_iterator it = edgeToElement.begin();
@@ -1831,10 +1825,24 @@ static void CreatePartitionBoundaries(GModel *const model,
 
   if (meshDim >= 1){ // Create partition vertices
     Msg::Info(" - Creating partition vertices");
-    for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
-      if((*it)->geomType() == GEntity::PartitionCurve){
-        fillit_(vertexToElement, static_cast<partitionEdge*>(*it)->getPartitions(),
-                (*it)->lines.begin(), (*it)->lines.end());
+    if (meshDim == 1){
+      for(unsigned int i = 0; i < boundaryElements.size(); i++){
+        for(std::set<MElement*>::iterator it = boundaryElements[i].begin();
+            it != boundaryElements[i].end(); ++it){
+          for(int j = 0; j < (*it)->getNumPrimaryVertices(); j++){
+            vertexToElement[(*it)->getVertex(j)].push_back
+            (std::pair<MElement*, std::vector<unsigned int> >
+             (*it, std::vector<unsigned int>(1,i)));
+          }
+        }
+      }
+    }
+    else{
+      for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
+        if((*it)->geomType() == GEntity::PartitionCurve){
+          fillit_(vertexToElement, static_cast<partitionEdge*>(*it)->getPartitions(),
+                  (*it)->lines.begin(), (*it)->lines.end());
+        }
       }
     }
     for(hashmapvertex::const_iterator it = vertexToElement.begin();
