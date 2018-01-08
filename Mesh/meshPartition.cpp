@@ -1033,6 +1033,10 @@ static void CreateNewEntities(GModel *const model,
     (*it)->points.clear();
   }
 
+  // If we don't create the partition topology let's just assume that the user
+  // does not care about multi-connected partitions or partition boundaries.
+  if(!CTX::instance()->mesh.partitionCreateTopology) return;
+
   // Divide the non connected entities
   regions = model->getRegions();
   faces = model->getFaces();
@@ -2416,6 +2420,7 @@ int PartitionMesh(GModel *const model)
       }
     }
   }
+
   std::vector< std::set<MElement*> > boundaryElements = graph.getBoundaryElements();
   graph.clear();
   model->recomputeMeshPartitions();
