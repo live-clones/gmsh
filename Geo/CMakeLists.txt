@@ -27,7 +27,7 @@ set(SRC
       GModelIO_UNV.cpp GModelIO_BDF.cpp GModelIO_IR3.cpp GModelIO_DIFF.cpp
       GModelIO_GEOM.cpp GModelIO_INP.cpp GModelIO_MAIL.cpp GModelIO_P3D.cpp
       GModelIO_CELUM.cpp GModelIO_NEU.cpp GModelIO_ACTRAN.cpp GModelIO_SU2.cpp
-      GModelIO_SAMCEF.cpp GModelIO_POS.cpp
+      GModelIO_SAMCEF.cpp GModelIO_MATLAB.cpp GModelIO_POS.cpp
   ExtrudeParams.cpp
   Geo.cpp
   GeoStringInterface.cpp GeoInterpolation.cpp

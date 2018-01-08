@@ -294,6 +294,15 @@ void MVertex::writeVTK(FILE *fp, bool binary, double scalingFactor, bool bigEndi
   }
 }
 
+void MVertex::writeMATLAB(FILE *fp, int i, bool binary, double scalingFactor)
+{
+  if(_index < 0) return; // negative index vertices are never saved
+
+  fprintf(fp, "gX(%d) = %.16g;\n", i, x() * scalingFactor);
+  fprintf(fp, "gY(%d) = %.16g;\n", i, y() * scalingFactor);
+  fprintf(fp, "gZ(%d) = %.16g;\n", i, z() * scalingFactor);
+}
+
 void MVertex::writeTOCHNOG(FILE *fp, int dim, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved

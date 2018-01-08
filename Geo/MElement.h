@@ -111,6 +111,9 @@ class MElement
   // get the vertex using the VTK ordering
   virtual MVertex *getVertexVTK(int num){ return getVertex(num); }
 
+  // get the vertex using the MATLAB ordering
+  virtual MVertex *getVertexMATLAB(int num){ return getVertex(num); }
+
   // get the vertex using the Tochnog ordering
   virtual MVertex *getVertexTOCHNOG(int num){ return getVertex(num); }
 
@@ -388,6 +391,7 @@ class MElement
   virtual void writePLY2(FILE *fp);
   virtual void writeUNV(FILE *fp, int num=0, int elementary=1, int physical=1);
   virtual void writeVTK(FILE *fp, bool binary=false, bool bigEndian=false);
+  virtual void writeMATLAB(FILE *fp, bool binary=false);
   virtual void writeTOCHNOG(FILE *fp, int num);
   virtual void writeMESH(FILE *fp, int elementTagType=1, int elementary=1,
                          int physical=0);
@@ -406,6 +410,7 @@ class MElement
   virtual int getTypeForMSH() const { return 0; }
   virtual int getTypeForUNV() const { return 0; }
   virtual int getTypeForVTK() const { return 0; }
+  virtual int getTypeForMATLAB() const { return 0; }
   virtual const char *getStringForTOCHNOG() const { return 0; }
   virtual const char *getStringForPOS() const { return 0; }
   virtual const char *getStringForBDF() const { return 0; }
