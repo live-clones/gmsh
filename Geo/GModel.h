@@ -474,6 +474,7 @@ class GModel {
   int getMinPartitionSize() const { return partitionSize[0]; }
   int getMaxPartitionSize() const { return partitionSize[1]; }
 
+  void setGhostCells(std::multimap<MElement*, short> &ghostCells){ _ghostCells = ghostCells; }
   std::multimap<MElement*, short> &getGhostCells(){ return _ghostCells; }
 
   // perform various coherence tests on the mesh

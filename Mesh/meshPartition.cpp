@@ -225,15 +225,32 @@ class Graph
     for(unsigned int i = 0; i < _ne; i++){
       for(unsigned int j = _xadj[i]; j < _xadj[i+1]; j++){
         if(_partition[i] != _partition[_adjncy[j]]){
-          if(_element[i]->getDim() == (int)_dim)
+          if(_element[i]->getDim() == (int)_dim){
             elements[_partition[i]].insert(_element[i]);
-          if(_element[_adjncy[j]]->getDim() == (int)_dim)
-            elements[_partition[_adjncy[j]]].insert(_element[_adjncy[j]]);
+          }
         }
       }
     }
 
     return elements;
+  }
+  std::multimap<MElement*, short> getGhostCells()
+  {
+    std::multimap<MElement*, short> ghostCells;
+    for(unsigned int i = 0; i < _ne; i++){
+      std::set<short> ghostCellsPartition;
+      for(unsigned int j = _xadj[i]; j < _xadj[i+1]; j++){
+        if(_partition[i] != _partition[_adjncy[j]] &&
+           ghostCellsPartition.find(_partition[_adjncy[j]]) == ghostCellsPartition.end()){
+          if(_element[i]->getDim() == (int)_dim){
+            ghostCells.insert(std::pair<MElement*, short>(_element[i], _partition[_adjncy[j]]));
+            ghostCellsPartition.insert(_partition[_adjncy[j]]);
+          }
+        }
+      }
+    }
+    
+    return ghostCells;
   }
 };
 
@@ -2409,9 +2426,12 @@ int PartitionMesh(GModel *const model)
     }
   }
   std::vector< std::set<MElement*> > boundaryElements = graph.getBoundaryElements();
+  std::multimap<MElement*, short> ghostCells = graph.getGhostCells();
+  model->setGhostCells(ghostCells);
+  ghostCells.clear();
   graph.clear();
   model->recomputeMeshPartitions();
-
+  
   CreateNewEntities(model, elmToPartition);
   elmToPartition.clear();
 
@@ -2683,6 +2703,9 @@ int ConvertOldPartitioningToNewOne(GModel *const model)
   graph.partition(part);
 
   std::vector< std::set<MElement*> > boundaryElements = graph.getBoundaryElements();
+  std::multimap<MElement*, short> ghostCells = graph.getGhostCells();
+  model->setGhostCells(ghostCells);
+  ghostCells.clear();
   graph.clear();
   model->recomputeMeshPartitions();
 

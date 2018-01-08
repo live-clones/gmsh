@@ -1169,6 +1169,82 @@ static void readMSH4PeriodicNodes(GModel *const model, FILE* fp,
   }
 }
 
+static void readMSH4GhostElements(GModel *const model, FILE* fp,
+                                  bool binary, bool swap)
+{
+  int numGhostCells = 0;
+  if(binary){
+    if(fread(&numGhostCells, sizeof(int), 1, fp) != 1){
+      fclose(fp);
+      return;
+    }
+    if(swap) SwapBytes((char*)&numGhostCells, sizeof(int), 1);
+  }
+  else{
+    if(fscanf(fp, "%d", &numGhostCells) != 1){
+      Msg::Info("bug");
+      fclose(fp);
+      return;
+    }
+  }
+  
+  std::multimap<MElement*, short> ghostCells;
+  for(int i = 0; i < numGhostCells; i++){
+    int numElm = 0;
+    int numGhost = 0;
+    char str[256];
+    
+    if(binary){
+      int data[2];
+      if(fread(&data, sizeof(int), 2, fp) != 2){
+        fclose(fp);
+        return;
+      }
+      if(swap) SwapBytes((char*)data, sizeof(int), 2);
+      numElm = data[0];
+      numGhost = data[1];
+    }
+    else{
+      if(fscanf(fp, "%d %d %[0-9- ]", &numElm, &numGhost, str) != 3){
+        fclose(fp);
+        return;
+      }
+    }
+    
+    MElement *elm = model->getMeshElementByTag(numElm);
+    
+    for(unsigned int j = 0; j < numGhost; j++){
+      int ghostPartition = 0;
+      
+      if(binary){
+        if(fread(&ghostPartition, sizeof(int), 1, fp) != 1){
+          fclose(fp);
+          return;
+        }
+        if(swap) SwapBytes((char*)&ghostPartition, sizeof(int), 1);
+      }
+      else{
+        if(j == numGhost-1){
+          if(sscanf(str, "%d", &ghostPartition) != 1){
+            fclose(fp);
+            return;
+          }
+        }
+        else{
+          if(sscanf(str, "%d %[0-9- ]", &ghostPartition, str) != 2){
+            fclose(fp);
+            return;
+          }
+        }
+      }
+      
+      ghostCells.insert(std::pair<MElement*, short>(elm, (short)ghostPartition));
+    }
+  }
+  
+  model->setGhostCells(ghostCells);
+}
+
 int GModel::_readMSH4(const std::string &name)
 {
   bool partitioned = false;
@@ -1369,6 +1445,9 @@ int GModel::_readMSH4(const std::string &name)
     }
     else if(!strncmp(&str[1], "Periodic", 8)){
       readMSH4PeriodicNodes(this, fp, binary, swap);
+    }
+    else if(!strncmp(&str[1], "GhostElements", 13)){
+      readMSH4GhostElements(this, fp, binary, swap);
     }
     else if(!strncmp(&str[1], "NodeData", 8) || !strncmp(&str[1], "ElementData", 11) ||
             !strncmp(&str[1], "ElementNodeData", 15)){
@@ -2350,6 +2429,49 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp, bool partition
   fprintf(fp, "$EndPeriodic\n");
 }
 
+static void writeMSH4GhostCells(GModel *const model, FILE *fp, bool binary)
+{
+  std::multimap<MElement*, short> ghost_cells = model->getGhostCells();
+  std::map<MElement*, std::vector<unsigned int> > ghostCells;
+  
+  if(ghost_cells.size() != 0){
+    
+    for(std::multimap<MElement*, short>::iterator it = ghost_cells.begin(); it != ghost_cells.end(); ++it){
+      ghostCells[it->first].push_back(it->second);
+    }
+    
+    fprintf(fp, "$GhostElements\n");
+    if(binary){
+      int ghostCellsSize = ghostCells.size();
+      fwrite(&ghostCellsSize, sizeof(int), 1, fp);
+      
+      for(std::map<MElement*, std::vector<unsigned int> >::iterator it = ghostCells.begin();
+          it != ghostCells.end(); ++it){
+        int elmNum = it->first->getNum();
+        unsigned int numGhost = it->second.size();
+        fwrite(&elmNum, sizeof(int), 1, fp);
+        fwrite(&numGhost, sizeof(unsigned int), 1, fp);
+        for(unsigned int i = 0; i < it->second.size(); i++){
+          fwrite(&it->second[i], sizeof(int), 1, fp);
+        }
+      }
+    }
+    else{
+      fprintf(fp, "%ld\n", ghostCells.size());
+      
+      for(std::map<MElement*, std::vector<unsigned int> >::iterator it = ghostCells.begin();
+          it != ghostCells.end(); ++it){
+        fprintf(fp, "%d %ld", it->first->getNum(), it->second.size());
+        for(unsigned int i = 0; i < it->second.size(); i++){
+          fprintf(fp, " %d", it->second[i]);
+        }
+        fprintf(fp, "\n");
+      }
+    }
+    fprintf(fp, "$EndGhostElements\n");
+  }
+}
+
 int GModel::_writeMSH4(const std::string &name, double version, bool binary,
                        bool saveAll, bool saveParametric, double scalingFactor)
 {
@@ -2418,6 +2540,9 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   // periodic
   writeMSH4PeriodicNodes(this, fp, getNumPartitions() == 0 ? false : true, binary);
+  
+  //ghostCells
+  writeMSH4GhostCells(this, fp, binary);
 
   fclose(fp);
 
