@@ -1329,6 +1329,22 @@ void MElement::writeVTK(FILE *fp, bool binary, bool bigEndian)
   }
 }
 
+void MElement::writeMATLAB(FILE *fp, bool binary)
+{
+  if(!getTypeForMATLAB()) return;
+
+    if(binary)
+    {
+      Msg::Warning("Binary format not available for Matlab, saving into ASCII format");
+      binary = false;
+    }
+
+  int n = getNumVertices();
+  for(int i = 0; i < n; i++)
+    fprintf(fp, " %d", getVertexMATLAB(i)->getIndex());
+  fprintf(fp, ";\n");
+}
+
 void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
 {
   int type = getTypeForUNV();

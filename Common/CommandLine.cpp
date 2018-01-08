@@ -82,7 +82,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-part_weight tri|quad|tet|hex|pri|pyr|trih int",
                  "Weight of a triangle/quad/etc. during partitioning"));
   s.push_back(mp("-part_split", "Save mesh partitions in separate files"));
-  s.push_back(mp("-part_topo", "Save the partition topology .pro file"));
+  s.push_back(mp("-part_[no]topo", "Create the partition topology"));
+  s.push_back(mp("-part_topo_pro", "Save the partition topology .pro file"));
   s.push_back(mp("-save_all", "Save all elements (discard physical group definitions)"));
   s.push_back(mp("-save_parametric", "Save vertices with their parametric coordinates"));
   s.push_back(mp("-save_topology", "Save model topology"));
@@ -448,9 +449,17 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
         opt_mesh_partition_split_mesh_files(0, GMSH_SET, 1.);
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "part_topo") ||
+      else if(!strcmp(argv[i] + 1, "part_topo_pro") ||
               !strcmp(argv[i] + 1, "savePartTopology")){
         opt_mesh_partition_save_topology_file(0, GMSH_SET, 1.);
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "part_topo")){
+        opt_mesh_partition_create_topology(0, GMSH_SET, 1.);
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "part_notopo")){
+        opt_mesh_partition_create_topology(0, GMSH_SET, 0.);
         i++;
       }
       else if(!strcmp(argv[i] + 1, "new")) {

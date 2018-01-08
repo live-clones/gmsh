@@ -279,7 +279,6 @@ int GmshBatch()
       MergeFile(CTX::instance()->files[i]);
   }
 
-
 #if defined(HAVE_POST) && defined(HAVE_MESH)
   if(!CTX::instance()->bgmFileName.empty()) {
     MergePostProcessingFile(CTX::instance()->bgmFileName);
@@ -317,13 +316,12 @@ int GmshBatch()
       RefineMesh(GModel::current(), CTX::instance()->mesh.secondOrderLinear);
     else if(CTX::instance()->batch == 6)
       GModel::current()->classifyAllFaces();
-#if defined(HAVE_METIS)
-    if(CTX::instance()->batchAfterMesh == 1){
-      if (CTX::instance()->mesh.numPartitions > 1)
-        GModel::current()->partitionMesh(CTX::instance()->mesh.numPartitions);
-    }
 #endif
-#endif
+  }
+
+  if(CTX::instance()->batch > 0 || CTX::instance()->batchAfterMesh == 1){
+    if(CTX::instance()->mesh.numPartitions > 1)
+      GModel::current()->partitionMesh(CTX::instance()->mesh.numPartitions);
     std::string name = CTX::instance()->outputFileName;
     if(name.empty()){
       if(CTX::instance()->mesh.fileFormat == FORMAT_AUTO)
