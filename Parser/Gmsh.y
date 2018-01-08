@@ -4270,7 +4270,7 @@ Constraints :
       for(int i = 0; i < List_Nbr($4); i++){
 	double d;
 	List_Read($4, i, &d);
-	CTX::instance()->mesh.algo2d_per_face[(int)d] = (int)$7;
+	CTX::instance()->mesh.algo2dPerFace[(int)d] = (int)$7;
       }
       List_Delete($4);
     }

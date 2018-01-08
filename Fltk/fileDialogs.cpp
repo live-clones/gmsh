@@ -1032,7 +1032,7 @@ int mshFileDialog(const char *name)
       (WB, y, 2 * BBB + WB, BH, "Save one file per partition"); y += BH;
     dialog->b[2]->type(FL_TOGGLE_BUTTON);
     dialog->b[3] = new Fl_Check_Button
-    (WB, y, 2 * BBB + WB, BH, "Save the partitioned topology"); y += BH;
+    (WB, y, 2 * BBB + WB, BH, "Save partition topology file"); y += BH;
     dialog->b[3]->type(FL_TOGGLE_BUTTON);
 
     dialog->ok = new Fl_Return_Button(WB, y + WB, BBB, BH, "OK");
@@ -1051,8 +1051,8 @@ int mshFileDialog(const char *name)
     dialog->c->value(!CTX::instance()->mesh.binary ? 5 : 6);
   dialog->b[0]->value(CTX::instance()->mesh.saveAll ? 1 : 0);
   dialog->b[1]->value(CTX::instance()->mesh.saveParametric ? 1 : 0);
-  dialog->b[2]->value(CTX::instance()->mesh.mshFilePartitioned ? 1 : 0);
-  dialog->b[3]->value(CTX::instance()->mesh.partitionedTopology ? 1 : 0);
+  dialog->b[2]->value(CTX::instance()->mesh.partitionSplitMeshFiles ? 1 : 0);
+  dialog->b[3]->value(CTX::instance()->mesh.partitionSaveTopologyFile ? 1 : 0);
   if(GModel::current()->getNumPartitions() == 0)
   {
     dialog->b[2]->deactivate();
@@ -1066,17 +1066,23 @@ int mshFileDialog(const char *name)
       Fl_Widget* o = Fl::readqueue();
       if (!o) break;
       if (o == dialog->ok) {
-        opt_mesh_msh_file_version(0, GMSH_SET | GMSH_GUI,
-                                  (dialog->c->value() == 0) ? 1.0 :
-                                  (dialog->c->value() == 1 || dialog->c->value() == 2) ? 2.2 :
-                                  (dialog->c->value() == 3 || dialog->c->value() == 4) ? 3.0 : 4.0);
-        opt_mesh_binary(0, GMSH_SET | GMSH_GUI, (dialog->c->value() == 2 ||
-                                                 dialog->c->value() == 4 ||
-                                                 dialog->c->value() == 6) ? 1 : 0);
-        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI, dialog->b[0]->value() ? 1 : 0);
-        opt_mesh_save_parametric(0, GMSH_SET | GMSH_GUI, dialog->b[1]->value() ? 1 : 0);
-        opt_mesh_msh_file_partitioned(0, GMSH_SET | GMSH_GUI, dialog->b[2]->value() ? 1 : 0);
-        opt_mesh_msh_file_partitioned_topology(0, GMSH_SET | GMSH_GUI, dialog->b[3]->value() ? 1 : 0);
+        opt_mesh_msh_file_version
+          (0, GMSH_SET | GMSH_GUI,
+           (dialog->c->value() == 0) ? 1.0 :
+           (dialog->c->value() == 1 || dialog->c->value() == 2) ? 2.2 :
+           (dialog->c->value() == 3 || dialog->c->value() == 4) ? 3.0 : 4.0);
+        opt_mesh_binary(0, GMSH_SET | GMSH_GUI,
+                        (dialog->c->value() == 2 ||
+                         dialog->c->value() == 4 ||
+                         dialog->c->value() == 6) ? 1 : 0);
+        opt_mesh_save_all(0, GMSH_SET | GMSH_GUI,
+                          dialog->b[0]->value() ? 1 : 0);
+        opt_mesh_save_parametric(0, GMSH_SET | GMSH_GUI,
+                                 dialog->b[1]->value() ? 1 : 0);
+        opt_mesh_partition_split_mesh_files(0, GMSH_SET | GMSH_GUI,
+                                            dialog->b[2]->value() ? 1 : 0);
+        opt_mesh_partition_save_topology_file(0, GMSH_SET | GMSH_GUI,
+                                              dialog->b[3]->value() ? 1 : 0);
         CreateOutputFile(name, FORMAT_MSH);
         dialog->window->hide();
         return 1;
@@ -1093,13 +1099,14 @@ int mshFileDialog(const char *name)
 void format_cb(Fl_Widget *widget, void *data)
 {
   _mshFileDialog *dialog = static_cast<_mshFileDialog*>(data);
-  if((dialog->c->value() == 5 || dialog->c->value() == 6 || dialog->c->value() == 3 || dialog->c->value() == 4 || dialog->c->value() == 1 || dialog->c->value() == 2) && CTX::instance()->mesh.num_partitions > 0)
-  {
+  if((dialog->c->value() == 5 || dialog->c->value() == 6 ||
+      dialog->c->value() == 3 || dialog->c->value() == 4 ||
+      dialog->c->value() == 1 || dialog->c->value() == 2) &&
+     CTX::instance()->mesh.numPartitions > 0){
     dialog->b[2]->activate();
     dialog->b[3]->activate();
   }
-  else
-  {
+  else{
     dialog->b[2]->deactivate();
     dialog->b[3]->deactivate();
   }

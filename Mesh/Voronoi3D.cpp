@@ -12,11 +12,11 @@
 #include "meshGRegion.h"
 #include <fstream>
 #include "Levy3D.h"
-#if defined(HAVE_VORO3D)
+#if defined(HAVE_VOROPP)
 #include "voro++.hh"
 #endif
 
-#if defined(HAVE_VORO3D)
+#if defined(HAVE_VOROPP)
 using namespace voro;
 #endif
 
@@ -80,7 +80,7 @@ void clip::execute(GRegion* gr){
 
 void clip::execute(std::vector<SPoint3>& vertices,std::vector<VoronoiElement>& clipped)
 {
-#if defined(HAVE_VORO3D)
+#if defined(HAVE_VOROPP)
   unsigned int i;
   unsigned int j;
   int start;

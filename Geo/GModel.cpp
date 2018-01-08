@@ -1437,12 +1437,10 @@ int GModel::partitionMesh(int numPart)
   int ier = deleteMeshPartitions();
   if(ier != 0) return ier;
   opt_mesh_partition_num(0, GMSH_SET, numPart);
-  if(numPart > 0)
-  {
+  if(numPart > 0){
     ier = PartitionMesh(this);
   }
-  else
-  {
+  else{
     return 1;
   }
   return ier;

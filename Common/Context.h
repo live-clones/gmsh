@@ -15,70 +15,61 @@
 
 class GamePad;
 
-// The interface-independent context.
-
 struct contextMeshOptions {
+  // mesh algorithms
+  int optimize,  optimizeNetgen, optimizeLloyd, smoothCrossField, refineSteps;
+  double lcFactor, randFactor, lcIntegrationPrecision;
+  double optimizeThreshold, normals, tangents, explode, angleSmoothNormals, allowSwapEdgeAngle;
+  double qualityInf, qualitySup, radiusInf, radiusSup;
+  double lcMin, lcMax, toleranceEdgeLength, toleranceInitialDelaunay;
+  double anisoMax, smoothRatio;
+  int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
+  int nbSmoothing, algo2d, algo3d, algoSubdivide, oldRefinement;
+  int algoRecombine, recombineAll, recombine3DAll, recombine3DLevel;
+  int recombine3DConformity, flexibleTransfinite, remeshParam, remeshAlgo;
+  int order, secondOrderLinear, secondOrderIncomplete, secondOrderExperimental;
+  int meshOnlyVisible, minCircPoints, minCurvPoints;
+  int hoOptimize, hoNLayers, hoOptPrimSurfMesh;
+  double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
+  std::map<int,int> algo2dPerFace;
+  std::map<int,int> curvatureControlPerFace;
+  int NewtonConvergenceTestXYZ;
+  int ignorePeriodicity;
+  int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
+  // mesh IO
+  int fileFormat;
+  double mshFileVersion, scalingFactor;
+  int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat;
+  int saveParametric, saveTopology, zoneDefinition;
+  int saveElementTagType, switchElementTags;
+  int cgnsImportOrder;
+  int preserveNumberingMsh2;
+  // partitioning
+  int numPartitions, partitionCreateTopology, partitionCreateGhostCells;
+  int partitionSplitMeshFiles, partitionSaveTopologyFile;
+  int partitionTriWeight, partitionQuaWeight, partitionTetWeight, partitionHexWeight;
+  int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
+  int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;
+  // recombination
+  int doRecombinationTest, recombinationTestStart;
+  int recombinationTestNoGreedyStrat, recombinationTestNewStrat, nProc, nbProc;
+  std::string recTestName;
+  // mesh display
   int draw, changed, light, lightTwoSide, lightLines, pointType;
   int points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms;
   int pyramids, trihedra;
   int surfacesEdges, surfacesFaces, volumesEdges, volumesFaces, numSubEdges;
   int pointsNum, linesNum, surfacesNum, volumesNum, qualityType, labelType;
-  int optimize,  optimizeNetgen, optimizeLloyd, smoothCrossField, refineSteps;
-  double optimizeThreshold,normals, tangents, explode, angleSmoothNormals, allowSwapEdgeAngle;
-  double mshFileVersion, pointSize, lineWidth;
-  double qualityInf, qualitySup, radiusInf, radiusSup;
-  double scalingFactor, lcFactor, randFactor, lcIntegrationPrecision;
-  double lcMin, lcMax, toleranceEdgeLength, toleranceInitialDelaunay;
-  double anisoMax, smoothRatio;
-  int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
+  double pointSize, lineWidth;
   int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
-  int fileFormat, nbSmoothing, algo2d, algo3d, algoSubdivide, oldRefinement;
-  int algoRecombine, recombineAll, recombine3DAll, recombine3DLevel;
-  int recombine3DConformity;
-  int flexibleTransfinite;
-  // partition options
-  double mshFilePartitioned, partitionedTopology;
-  int num_partitions, createPartitionBoundaries, createGhostCells;//createGhostCells not use
-  int metis_algorithm; // 1 - Recursive, 2 - K-way
-  int metis_edge_matching; // 1 - Random matching, 2 - Sorted heavy-edge matching
-  int metis_refine_algorithm; // 1 - FM-based cut refinement, 2 - Greedy-based cut and volume refinement, 3 - Two-sided node FM refinement, 4 - One-sided node FM refinement
-  int part_triWeight, part_quaWeight, part_tetWeight, part_hexWeight, part_priWeight, part_pyrWeight, part_trihWeight;
-  //-- for recombination test (amaury) --
-  int doRecombinationTest, recombinationTestStart;
-  int recombinationTestNoGreedyStrat, recombinationTestNewStrat;
-  int nProc, nbProc;
-  std::string recTestName;
-  //-------------------------------------
-  int remeshParam, remeshAlgo;
-  int order, secondOrderLinear, secondOrderIncomplete;
-  int secondOrderExperimental, meshOnlyVisible;
-  int minCircPoints, minCurvPoints;
-  int hoOptimize, hoNLayers, hoOptPrimSurfMesh;
-  double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
-  int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat;
-  int saveParametric, saveTopology;
-  int smoothNormals, zoneDefinition, clip;
-  int saveElementTagType;
-  int switchElementTags;
-  int multiplePasses;
-  int cgnsImportOrder;
-  std::map<int,int> algo2d_per_face;
-  std::map<int,int> curvature_control_per_face;
-  int NewtonConvergenceTestXYZ;
-  int preserveNumberingMsh2;
-  int ignorePeriodicity;
-  int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
+  int smoothNormals, clip;
 };
 
 struct contextGeometryOptions {
-  int draw, light, lightTwoSide, points, lines, surfaces, volumes;
-  int pointsNum, linesNum, surfacesNum, volumesNum, labelType;
-  double pointSize, lineWidth, selectedPointSize, selectedLineWidth;
-  int pointType, lineType, surfaceType, numSubEdges;
+  // geometry algorithms
   int oldCircle, oldNewreg, oldRuledSurface;
   int extrudeSplinePoints, extrudeReturnLateral;
-  double normals, tangents, scalingFactor;
-  int autoCoherence, highlightOrphans, clip, useTransform;
+  int autoCoherence;
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
   int occAutoFix, occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
   int occSewFaces, occParallel, occBooleanPreserveNumbering;
@@ -86,12 +77,21 @@ struct contextGeometryOptions {
   std::string occTargetUnit;
   int copyMeshingMethod, exactExtrusion;
   int matchGeomAndMesh;
-  int orientedPhysicals, doubleClickedEntityTag;
+  int orientedPhysicals;
   int reparamOnFaceRobust;
+  // geometry display
+  int draw, light, lightTwoSide, points, lines, surfaces, volumes;
+  int pointsNum, linesNum, surfacesNum, volumesNum, labelType;
+  double pointSize, lineWidth, selectedPointSize, selectedLineWidth;
+  int pointType, lineType, surfaceType, numSubEdges;
+  double normals, tangents, scalingFactor;
+  int highlightOrphans, clip, useTransform;
+  int doubleClickedEntityTag;
   std::string doubleClickedPointCommand, doubleClickedLineCommand;
   std::string doubleClickedSurfaceCommand, doubleClickedVolumeCommand;
 };
 
+// The interface-independent context.
 class CTX {
  private:
   static CTX *_instance;

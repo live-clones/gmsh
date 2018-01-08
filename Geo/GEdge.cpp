@@ -531,29 +531,14 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
   }
 
   if(relax > 1.e-2) {
-    //    Msg::Info("point %g %g %g on edge %d : Relaxation factor = %g",
-    //              X, Y, Z, 0.75 * relax);
+    // Msg::Info("point %g %g %g on edge %d : Relaxation factor = %g",
+    //           X, Y, Z, 0.75 * relax);
     return XYZToU(X, Y, Z, u, 0.75 * relax);
   }
 
-  //  Msg::Error("Could not converge reparametrisation of point (%e,%e,%e) on edge %d",
-  //             X, Y, Z, tag());
+  // Msg::Error("Could not converge reparametrisation of point (%e,%e,%e) on edge %d",
+  //            X, Y, Z, tag());
   return false;
-}
-
-void GEdge::replaceEndingPoints(GVertex *replOfv0, GVertex *replOfv1)
-{
-  replaceEndingPointsInternals(replOfv0, replOfv1);
-  if (replOfv0 != v0){
-    if (v0) v0->delEdge(this);
-    replOfv0->addEdge(this);
-    v0 = replOfv0;
-  }
-  if (replOfv1 != v1){
-    if (v1) v1->delEdge(this);
-    replOfv1->addEdge(this);
-    v1 = replOfv1;
-  }
 }
 
 // regions that bound this entity or that this entity bounds.

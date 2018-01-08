@@ -72,6 +72,10 @@ static bool _isInitialized()
     Msg::Error("Gmsh has not been initialized");
     return false;
   }
+  if(!GModel::current()){
+    Msg::Error("Gmsh has no current model");
+    return false;
+  }
   return true;
 }
 
@@ -410,12 +414,41 @@ void gmsh::model::removeEntities(const vector_pair &dimTags, const bool recursiv
 
 // gmsh::model::mesh
 
-void gmsh::model::mesh::generate(int dim)
+void gmsh::model::mesh::generate(const int dim)
 {
   if(!_isInitialized()){ throw -1; }
-  GModel *m = GModel::current();
-  if(!m){ throw 1; }
-  m->mesh(dim);
+  GModel::current()->mesh(dim);
+  CTX::instance()->mesh.changed = ENT_ALL;
+}
+
+void gmsh::model::mesh::partition(const int numPart)
+{
+  if(!_isInitialized()){ throw -1; }
+  GModel::current()->partitionMesh(numPart >= 0 ? numPart :
+                                   CTX::instance()->mesh.numPartitions);
+  CTX::instance()->mesh.changed = ENT_ALL;
+}
+
+void gmsh::model::mesh::refine()
+{
+  if(!_isInitialized()){ throw -1; }
+  GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear);
+  CTX::instance()->mesh.changed = ENT_ALL;
+}
+
+void gmsh::model::mesh::setOrder(const int order)
+{
+  if(!_isInitialized()){ throw -1; }
+  GModel::current()->setOrderN(order, CTX::instance()->mesh.secondOrderLinear,
+                               CTX::instance()->mesh.secondOrderIncomplete);
+  CTX::instance()->mesh.changed = ENT_ALL;
+}
+
+void gmsh::model::mesh::removeDuplicateVertices()
+{
+  if(!_isInitialized()){ throw -1; }
+  GModel::current()->removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
+  CTX::instance()->mesh.changed = ENT_ALL;
 }
 
 void gmsh::model::mesh::getLastEntityError(vector_pair &dimTags)

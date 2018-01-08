@@ -58,26 +58,26 @@ GFace::~GFace()
 int GFace::getCurvatureControlParameter() const
 {
   std::map<int,int>::iterator it =
-    CTX::instance()->mesh.curvature_control_per_face.find(tag());
-  return it == CTX::instance()->mesh.curvature_control_per_face.end() ?
+    CTX::instance()->mesh.curvatureControlPerFace.find(tag());
+  return it == CTX::instance()->mesh.curvatureControlPerFace.end() ?
     CTX::instance()->mesh.minCircPoints : it->second ;
 }
 
 void GFace::setCurvatureControlParameter(int n)
 {
-  CTX::instance()->mesh.curvature_control_per_face[tag()] = n;
+  CTX::instance()->mesh.curvatureControlPerFace[tag()] = n;
 }
 
 int GFace::getMeshingAlgo() const
 {
-  std::map<int,int>::iterator it = CTX::instance()->mesh.algo2d_per_face.find(tag());
-  return it == CTX::instance()->mesh.algo2d_per_face.end() ?
+  std::map<int,int>::iterator it = CTX::instance()->mesh.algo2dPerFace.find(tag());
+  return it == CTX::instance()->mesh.algo2dPerFace.end() ?
     CTX::instance()->mesh.algo2d : it->second ;
 }
 
 void GFace::setMeshingAlgo(int algo)
 {
-  CTX::instance()->mesh.algo2d_per_face[tag()] = algo;
+  CTX::instance()->mesh.algo2dPerFace[tag()] = algo;
 }
 
 void GFace::delFreeEdge(GEdge *e)
@@ -107,23 +107,6 @@ void GFace::delFreeEdge(GEdge *e)
       }
     }
   }
-}
-
-void GFace::replaceEdge(GEdge *e1, GEdge *e2)
-{
-  std::list<GEdge*>::iterator ite = l_edges.begin();
-  std::list<GEdge*> newlist;
-  newlist.clear();
-  while(ite != l_edges.end()){
-    if(e1 == *ite){
-      newlist.push_back(e2);
-    }
-    else{
-      newlist.push_back((*ite));
-    }
-    ite++;
-  }
-  l_edges = newlist;
 }
 
 void GFace::deleteMesh(bool onlyDeleteElements)
@@ -1412,7 +1395,6 @@ void GFace::lloyd(int nbiter, int infn)
 
 void GFace::replaceEdges(std::list<GEdge*> &new_edges)
 {
-  //  replaceEdgesInternal(new_edges);
   std::list<GEdge*>::iterator it  = l_edges.begin();
   std::list<GEdge*>::iterator it2 = new_edges.begin();
   std::list<int>::iterator it3 = l_dirs.begin();

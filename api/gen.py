@@ -116,6 +116,18 @@ mesh = model.add_module('mesh','Per-model meshing functions')
 doc = '''Generates a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).'''
 mesh.add('generate',doc,None,iint('dim'))
 
+doc = '''Partitions the mesh of the current model into `numPart' partitions.'''
+mesh.add('partition',doc,None,iint('numPart'))
+
+doc = '''Refines the mesh of the current model by uniformly splitting the elements.'''
+mesh.add('refine',doc,None)
+
+doc = '''Sets the order of the elements in the mesh of the current model to `order'.'''
+mesh.add('setOrder',doc,None,iint('order'))
+
+doc = '''Removes duplicate mesh vertices in the mesh of the current model.'''
+mesh.add('removeDuplicateVertices',doc,None)
+
 doc = '''Gets the last entities (if any) where a meshing error occurred. Currently only populated by the new 3D meshing algorithms.'''
 mesh.add('getLastEntityError',doc,None,ovectorpair('dimTags'))
 

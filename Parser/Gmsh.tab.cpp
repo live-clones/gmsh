@@ -11065,7 +11065,7 @@ yyreduce:
       for(int i = 0; i < List_Nbr((yyvsp[(4) - (8)].l)); i++){
 	double d;
 	List_Read((yyvsp[(4) - (8)].l), i, &d);
-	CTX::instance()->mesh.algo2d_per_face[(int)d] = (int)(yyvsp[(7) - (8)].d);
+	CTX::instance()->mesh.algo2dPerFace[(int)d] = (int)(yyvsp[(7) - (8)].d);
       }
       List_Delete((yyvsp[(4) - (8)].l));
     ;}

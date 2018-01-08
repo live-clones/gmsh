@@ -204,6 +204,20 @@ GMSH_API void gmshModelRemoveEntities(int * dimTags, size_t dimTags_n,
 GMSH_API void gmshModelMeshGenerate(const int dim,
                                     int * ierr);
 
+/* Partitions the mesh of the current model into `numPart' partitions. */
+GMSH_API void gmshModelMeshPartition(const int numPart,
+                                     int * ierr);
+
+/* Refines the mesh of the current model by uniformly splitting the elements. */
+GMSH_API void gmshModelMeshRefine(int * ierr);
+
+/* Sets the order of the elements in the mesh of the current model to `order'. */
+GMSH_API void gmshModelMeshSetOrder(const int order,
+                                    int * ierr);
+
+/* Removes duplicate mesh vertices in the mesh of the current model. */
+GMSH_API void gmshModelMeshRemoveDuplicateVertices(int * ierr);
+
 /* Gets the last entities (if any) where a meshing error occurred. Currently
  * only populated by the new 3D meshing algorithms. */
 GMSH_API void gmshModelMeshGetLastEntityError(int ** dimTags, size_t * dimTags_n,

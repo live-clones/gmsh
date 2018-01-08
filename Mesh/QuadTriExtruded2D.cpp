@@ -33,7 +33,6 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 ********************************************************************************/
 
-#include "Geo.h"
 #include "QuadTriExtruded2D.h"
 
 // By Geuzaine, Remacle...
@@ -88,10 +87,6 @@ int IsValidQuadToTriLateral(GFace *face, int *tri_quad_flag, bool *detectQuadToT
   numRegions = GetNeighborRegionsOfFace(face, adjacent_regions);
   for(int i_reg = 0; i_reg < numRegions; i_reg++){
     GRegion *region = adjacent_regions[i_reg];
-
-    // is region in the current model's region's or is it deleted?
-    if(!FindVolume((region->tag())))
-      continue;
 
     // is the region mesh extruded?
     if(!region->meshAttributes.extrude ||
@@ -255,10 +250,6 @@ int IsValidQuadToTriTop(GFace *face, int *quadToTri, bool *detectQuadToTriTop)
 	break;
 
       GRegion *region = all_regions[i_reg];
-
-      // is region in the current model's regions or is it deleted?
-      if( !FindVolume( ( region->tag() ) ) )
-	continue;
 
       // does face belong to region?
       std::list<GFace *> region_faces = std::list<GFace *>( region->faces() );

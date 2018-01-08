@@ -473,9 +473,6 @@ static void Mesh2D(GModel *m)
         }
         if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
       }
-#if defined(_OPENMP)
-#pragma omp master
-#endif
       if(!nPending) break;
       if(nIter++ > 10) break;
     }
@@ -937,7 +934,8 @@ void OptimizeMeshNetgen(GModel *m)
   m->setAllVolumesPositive();
 
   if (Msg::GetVerbosity() > 98)
-    std::for_each(m->firstRegion(), m->lastRegion(), TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES ());
+    std::for_each(m->firstRegion(), m->lastRegion(),
+                  TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES());
 
   double t2 = Cpu();
   Msg::StatusBar(true, "Done optimizing 3D mesh with Netgen (%g s)", t2 - t1);

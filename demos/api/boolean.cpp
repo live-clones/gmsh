@@ -31,6 +31,9 @@ int main(int argc, char **argv)
   gmsh::model::occ::synchronize();
 
   gmsh::model::mesh::generate(3);
+  //gmsh::model::mesh::refine();
+  //gmsh::model::mesh::setOrder(2);
+  //gmsh::model::mesh::partition(4);
 
   gmsh::write("boolean.msh");
 

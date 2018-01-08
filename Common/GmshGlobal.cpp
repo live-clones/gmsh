@@ -319,8 +319,8 @@ int GmshBatch()
       GModel::current()->classifyAllFaces();
 #if defined(HAVE_METIS)
     if(CTX::instance()->batchAfterMesh == 1){
-      if (CTX::instance()->mesh.num_partitions > 1)
-        GModel::current()->partitionMesh(CTX::instance()->mesh.num_partitions);
+      if (CTX::instance()->mesh.numPartitions > 1)
+        GModel::current()->partitionMesh(CTX::instance()->mesh.numPartitions);
     }
 #endif
 #endif
