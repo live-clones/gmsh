@@ -339,6 +339,13 @@ FlGui::FlGui(int argc, char **argv)
   Fl::error = error_handler;
   Fl::fatal = fatal_error_handler;
 
+#if defined(__APPLE__)
+  // the defaults use %@, which leads to (lowercase) gmsh
+  Fl_Mac_App_Menu::about = "About Gmsh";
+  Fl_Mac_App_Menu::hide = "Hide Gmsh";
+  Fl_Mac_App_Menu::quit = "Quit Gmsh";
+#endif
+
 #if defined(_OPENMP)
   // tell fltk we're in multi-threaded mode
   Fl::lock();
@@ -404,7 +411,6 @@ FlGui::FlGui(int argc, char **argv)
 
   // add callback to respond to Mac Finder
 #if defined(__APPLE__)
-  Fl_Mac_App_Menu::print = ""; // remove this: it crashes
   fl_open_callback(OpenProjectMacFinder);
   fl_mac_set_about(help_about_cb, 0);
 #endif
