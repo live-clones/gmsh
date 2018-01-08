@@ -1267,19 +1267,6 @@ static void CreateNewEntities(GModel *const model,
 }
 
 template <class ITERATOR>
-static void fillit_(hashmapface &faceToElement,
-                    const std::vector<unsigned int> &partitions,
-                    ITERATOR it_beg, ITERATOR it_end)
-{
-  for (ITERATOR it = it_beg; it != it_end ; ++it){
-    for(int i = 0; i < (*it)->getNumFaces(); i++){
-      faceToElement[(*it)->getFace(i)].push_back
-        (std::pair<MElement*, std::vector<unsigned int> >(*it, partitions));
-    }
-  }
-}
-
-template <class ITERATOR>
 static void fillit_(hashmapedge &edgeToElement,
                     const std::vector<unsigned int> &partitions,
                     ITERATOR it_beg, ITERATOR it_end)
@@ -1644,7 +1631,7 @@ static void CreatePartitionBoundaries(GModel *const model,
 
   if (meshDim >= 3){ // Create partition faces
     Msg::Info(" - Creating partition faces");
-    
+
     for(unsigned int i = 0; i < boundaryElements.size(); i++){
       for(std::set<MElement*>::iterator it = boundaryElements[i].begin(); it != boundaryElements[i].end(); ++it){
         for(int j = 0; j < (*it)->getNumFaces(); j++){
@@ -1739,10 +1726,12 @@ static void CreatePartitionBoundaries(GModel *const model,
 
     if (meshDim == 2){
       for(unsigned int i = 0; i < boundaryElements.size(); i++){
-        for(std::set<MElement*>::iterator it = boundaryElements[i].begin(); it != boundaryElements[i].end(); ++it){
+        for(std::set<MElement*>::iterator it = boundaryElements[i].begin();
+            it != boundaryElements[i].end(); ++it){
           for(int j = 0; j < (*it)->getNumEdges(); j++){
             edgeToElement[(*it)->getEdge(j)].push_back
-            (std::pair<MElement*, std::vector<unsigned int> >(*it, std::vector<unsigned int>(1,i)));
+            (std::pair<MElement*, std::vector<unsigned int> >
+             (*it, std::vector<unsigned int>(1,i)));
           }
         }
       }
@@ -1838,10 +1827,12 @@ static void CreatePartitionBoundaries(GModel *const model,
     Msg::Info(" - Creating partition vertices");
     if (meshDim == 1){
       for(unsigned int i = 0; i < boundaryElements.size(); i++){
-        for(std::set<MElement*>::iterator it = boundaryElements[i].begin(); it != boundaryElements[i].end(); ++it){
+        for(std::set<MElement*>::iterator it = boundaryElements[i].begin();
+            it != boundaryElements[i].end(); ++it){
           for(int j = 0; j < (*it)->getNumPrimaryVertices(); j++){
             vertexToElement[(*it)->getVertex(j)].push_back
-            (std::pair<MElement*, std::vector<unsigned int> >(*it, std::vector<unsigned int>(1,i)));
+            (std::pair<MElement*, std::vector<unsigned int> >
+             (*it, std::vector<unsigned int>(1,i)));
           }
         }
       }
