@@ -2410,6 +2410,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
     std::ostringstream sstream;
     sstream << baseName << "_" << i << ".msh";
 
+    Msg::Info("Writing partition %d in file '%s'", i, sstream.str().c_str());
     tmp->_writeMSH4(sstream.str(), version, binary, saveAll, saveParametric,
                     scalingFactor);
     tmp->remove();

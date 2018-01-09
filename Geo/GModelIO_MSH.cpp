@@ -106,6 +106,11 @@ int GModel::writePartitionedMSH(const std::string &baseName, double version,
                                 bool binary, bool saveAll, bool saveParametric,
                                 double scalingFactor)
 {
+  if(version < 4.0 && getNumPartitions() > 0){
+    Msg::Warning("Saving a partitioned mesh in a format older than 4.0 may "
+                 "cause information loss");
+  }
+
   if(version < 3.0){
     return _writePartitionedMSH2(baseName, binary, saveAll,
                                  saveParametric, scalingFactor);
