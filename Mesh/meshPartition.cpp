@@ -2390,6 +2390,63 @@ static void BuildTopology(GModel *model)
   }
 }
 
+void movePeriodicNodesFromParentToPartitionEntities(GModel * const model)
+{
+  std::vector<GEntity*> entities;
+  model->getEntities(entities);
+  std::set<GEntity*> emptiedEntities;
+  
+  for(unsigned int i = 0; i < entities.size(); i++){
+    if(entities[i]->correspondingVertices.size() != 0){
+      emptiedEntities.insert(entities[i]);
+      for(std::map<MVertex*,MVertex*>::iterator it = entities[i]->correspondingVertices.begin(); it != entities[i]->correspondingVertices.end(); ++it){
+        it->first->onWhat()->correspondingVertices.insert(std::pair<MVertex*,MVertex*>(it->first,it->second));
+        it->first->onWhat()->setMeshMaster(it->second->onWhat());
+      }
+    }
+  }
+  
+  for(std::set<GEntity*>::iterator it = emptiedEntities.begin(); it != emptiedEntities.end(); ++it){
+    (*it)->correspondingVertices.clear();
+    (*it)->setMeshMaster(*it);
+  }
+}
+
+void movePeriodicNodesFromPartitionToParentEntities(GModel * const model)
+{
+  std::vector<GEntity*> entities;
+  model->getEntities(entities);
+  std::set<GEntity*> emptiedEntities;
+  
+  for(unsigned int i = 0; i < entities.size(); i++){
+    if(entities[i]->correspondingVertices.size() != 0){
+      emptiedEntities.insert(entities[i]);
+      for(std::map<MVertex*,MVertex*>::iterator it = entities[i]->correspondingVertices.begin(); it != entities[i]->correspondingVertices.end(); ++it){
+        if(entities[i]->geomType() == GEntity::PartitionVertex){
+          partitionVertex* pv = static_cast<partitionVertex*>(entities[i]);
+          pv->getParentEntity()->correspondingVertices.insert(std::pair<MVertex*,MVertex*>(it->first,it->second));
+          static_cast<GEntity*>(pv->getParentEntity())->setMeshMaster(static_cast<partitionVertex*>(it->second->onWhat())->getParentEntity());
+        }
+        else if(entities[i]->geomType() == GEntity::PartitionCurve){
+          partitionEdge* pe = static_cast<partitionEdge*>(entities[i]);
+          pe->getParentEntity()->correspondingVertices.insert(std::pair<MVertex*,MVertex*>(it->first,it->second));
+          static_cast<GEntity*>(pe->getParentEntity())->setMeshMaster(static_cast<partitionEdge*>(it->second->onWhat())->getParentEntity());
+        }
+        else if(entities[i]->geomType() == GEntity::PartitionSurface){
+          partitionFace* pf = static_cast<partitionFace*>(entities[i]);
+          pf->getParentEntity()->correspondingVertices.insert(std::pair<MVertex*,MVertex*>(it->first,it->second));
+          static_cast<GEntity*>(pf->getParentEntity())->setMeshMaster(static_cast<partitionFace*>(it->second->onWhat())->getParentEntity());
+        }
+        else if(entities[i]->geomType() == GEntity::PartitionVolume){
+          partitionRegion* pr = static_cast<partitionRegion*>(entities[i]);
+          pr->getParentEntity()->correspondingVertices.insert(std::pair<MVertex*,MVertex*>(it->first,it->second));
+          static_cast<GEntity*>(pr->getParentEntity())->setMeshMaster(static_cast<partitionRegion*>(it->second->onWhat())->getParentEntity());
+        }
+      }
+    }
+  }
+}
+
 // Partition a mesh into n parts. Returns: 0 = success, 1 = error
 int PartitionMesh(GModel *const model)
 {
@@ -2441,6 +2498,8 @@ int PartitionMesh(GModel *const model)
   }
 
   AssignMeshVertices(model);
+  
+  movePeriodicNodesFromParentToPartitionEntities(model);
 
   return 0;
 }
@@ -2529,6 +2588,8 @@ int UnpartitionMesh(GModel *const model)
   std::set<GVertex*, GEntityLessThan> vertices = model->getVertices();
 
   std::set<MVertex*> verts;
+  
+  movePeriodicNodesFromPartitionToParentEntities(model);
 
   // Loop over vertices
   for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it){
@@ -2713,6 +2774,9 @@ int ConvertOldPartitioningToNewOne(GModel *const model)
   }
 
   AssignMeshVertices(model);
+  
+  movePeriodicNodesFromParentToPartitionEntities(model);
+  
   return 0;
 }
 
