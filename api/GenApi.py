@@ -135,7 +135,7 @@ def ovectorvectorpair(name,value=None,python_value=None):
 def ivectorint(name,value=None,python_value=None):
     a = arg(name,value,python_value,"const std::vector<int> &","const int *",False)
     a.c_arg = "ptr2vector("+name+","+name+"_n)"
-    a.c = "int* "+name+", size_t "+name+"_n"
+    a.c = "int * "+name+", size_t "+name+"_n"
     a.python_pre = "api_"+name+"_, api_"+name+"_n_ = _ivectorint("+name+")"
     a.python_arg = "api_"+name+"_, api_"+name+"_n_"
     return a
@@ -154,7 +154,7 @@ def ovectorint(name,value=None,python_value=None):
     return a
 
 def ivectorvectorint(name,value=None,python_value=None):
-    a = arg(name,value,python_value,"const std::vector<std::vector<int> > &","const int**",False)
+    a = arg(name,value,python_value,"const std::vector<std::vector<int> > &","const int **",False)
     a.c_arg = "ptrptr2vectorvector("+name+","+name+"_n,"+name+"_nn)"
     a.c = "const int ** "+name+", const size_t * "+name+"_n, "+"size_t "+name+"_nn"
     a.python_pre = "api_"+name+"_, api_"+name+"_n_, api_"+name+"_nn_ = _ivectorvectorint("+name+")"

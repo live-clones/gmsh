@@ -213,7 +213,7 @@ void gmshModelGetEntitiesForPhysicalGroup(const int dim,const int tag,int ** tag
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-int gmshModelAddPhysicalGroup(const int dim,int* tags, size_t tags_n,const int tag,int * ierr){
+int gmshModelAddPhysicalGroup(const int dim,int * tags, size_t tags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
@@ -263,7 +263,7 @@ void gmshModelGetBoundingBox(const int dim,const int tag,double * xmin,double * 
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-int gmshModelAddDiscreteEntity(const int dim,const int tag,int* boundary, size_t boundary_n,int * ierr){
+int gmshModelAddDiscreteEntity(const int dim,const int tag,int * boundary, size_t boundary_n,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
@@ -404,14 +404,14 @@ void gmshModelMeshGetIntegrationDataByType(const int elementType,const char * in
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshSetVertices(const int dim,const int tag,int* vertexTags, size_t vertexTags_n,double * coord, size_t coord_n,double * parametricCoord, size_t parametricCoord_n,int * ierr){
+void gmshModelMeshSetVertices(const int dim,const int tag,int * vertexTags, size_t vertexTags_n,double * coord, size_t coord_n,double * parametricCoord, size_t parametricCoord_n,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::model::mesh::setVertices(dim,tag,ptr2vector(vertexTags,vertexTags_n),ptr2vector(coord,coord_n),ptr2vector(parametricCoord,parametricCoord_n));
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshSetElements(const int dim,const int tag,int* types, size_t types_n,const int ** elementTags, const size_t * elementTags_n, size_t elementTags_nn,const int ** vertexTags, const size_t * vertexTags_n, size_t vertexTags_nn,int * ierr){
+void gmshModelMeshSetElements(const int dim,const int tag,int * types, size_t types_n,const int ** elementTags, const size_t * elementTags_n, size_t elementTags_nn,const int ** vertexTags, const size_t * vertexTags_n, size_t vertexTags_nn,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::model::mesh::setElements(dim,tag,ptr2vector(types,types_n),ptrptr2vectorvector(elementTags,elementTags_n,elementTags_nn),ptrptr2vectorvector(vertexTags,vertexTags_n,vertexTags_nn));
@@ -452,14 +452,14 @@ void gmshModelMeshSetTransfiniteLine(const int tag,const int numVertices,const c
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshSetTransfiniteSurface(const int tag,const char * arrangement,int* cornerTags, size_t cornerTags_n,int * ierr){
+void gmshModelMeshSetTransfiniteSurface(const int tag,const char * arrangement,int * cornerTags, size_t cornerTags_n,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::model::mesh::setTransfiniteSurface(tag,arrangement,ptr2vector(cornerTags,cornerTags_n));
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshSetTransfiniteVolume(const int tag,int* cornerTags, size_t cornerTags_n,int * ierr){
+void gmshModelMeshSetTransfiniteVolume(const int tag,int * cornerTags, size_t cornerTags_n,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::model::mesh::setTransfiniteVolume(tag,ptr2vector(cornerTags,cornerTags_n));
@@ -487,7 +487,7 @@ void gmshModelMeshSetReverse(const int dim,const int tag,const int val,int * ier
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshEmbed(const int dim,int* tags, size_t tags_n,const int inDim,const int inTag,int * ierr){
+void gmshModelMeshEmbed(const int dim,int * tags, size_t tags_n,const int inDim,const int inTag,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::model::mesh::embed(dim,ptr2vector(tags,tags_n),inDim,inTag);
@@ -574,7 +574,7 @@ int gmshModelGeoAddEllipseArc(const int startTag,const int centerTag,const int m
   return result_api_;
 }
 
-int gmshModelGeoAddSpline(int* vertexTags, size_t vertexTags_n,const int tag,int * ierr){
+int gmshModelGeoAddSpline(int * vertexTags, size_t vertexTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
@@ -583,7 +583,7 @@ int gmshModelGeoAddSpline(int* vertexTags, size_t vertexTags_n,const int tag,int
   return result_api_;
 }
 
-int gmshModelGeoAddBSpline(int* vertexTags, size_t vertexTags_n,const int tag,int * ierr){
+int gmshModelGeoAddBSpline(int * vertexTags, size_t vertexTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
@@ -592,7 +592,7 @@ int gmshModelGeoAddBSpline(int* vertexTags, size_t vertexTags_n,const int tag,in
   return result_api_;
 }
 
-int gmshModelGeoAddBezier(int* vertexTags, size_t vertexTags_n,const int tag,int * ierr){
+int gmshModelGeoAddBezier(int * vertexTags, size_t vertexTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
@@ -601,7 +601,7 @@ int gmshModelGeoAddBezier(int* vertexTags, size_t vertexTags_n,const int tag,int
   return result_api_;
 }
 
-int gmshModelGeoAddLineLoop(int* edgeTags, size_t edgeTags_n,const int tag,int * ierr){
+int gmshModelGeoAddLineLoop(int * edgeTags, size_t edgeTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
@@ -610,7 +610,7 @@ int gmshModelGeoAddLineLoop(int* edgeTags, size_t edgeTags_n,const int tag,int *
   return result_api_;
 }
 
-int gmshModelGeoAddPlaneSurface(int* wireTags, size_t wireTags_n,const int tag,int * ierr){
+int gmshModelGeoAddPlaneSurface(int * wireTags, size_t wireTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
@@ -619,7 +619,7 @@ int gmshModelGeoAddPlaneSurface(int* wireTags, size_t wireTags_n,const int tag,i
   return result_api_;
 }
 
-int gmshModelGeoAddSurfaceFilling(int* wireTags, size_t wireTags_n,const int tag,const int sphereCenterTag,int * ierr){
+int gmshModelGeoAddSurfaceFilling(int * wireTags, size_t wireTags_n,const int tag,const int sphereCenterTag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
@@ -628,7 +628,7 @@ int gmshModelGeoAddSurfaceFilling(int* wireTags, size_t wireTags_n,const int tag
   return result_api_;
 }
 
-int gmshModelGeoAddSurfaceLoop(int* faceTags, size_t faceTags_n,const int tag,int * ierr){
+int gmshModelGeoAddSurfaceLoop(int * faceTags, size_t faceTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
@@ -637,7 +637,7 @@ int gmshModelGeoAddSurfaceLoop(int* faceTags, size_t faceTags_n,const int tag,in
   return result_api_;
 }
 
-int gmshModelGeoAddVolume(int* shellTags, size_t shellTags_n,const int tag,int * ierr){
+int gmshModelGeoAddVolume(int * shellTags, size_t shellTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
@@ -646,7 +646,7 @@ int gmshModelGeoAddVolume(int* shellTags, size_t shellTags_n,const int tag,int *
   return result_api_;
 }
 
-void gmshModelGeoExtrude(int * dimTags, size_t dimTags_n,const double dx,const double dy,const double dz,int ** outDimTags, size_t * outDimTags_n,int* numElements, size_t numElements_n,double * heights, size_t heights_n,const int recombine,int * ierr){
+void gmshModelGeoExtrude(int * dimTags, size_t dimTags_n,const double dx,const double dy,const double dz,int ** outDimTags, size_t * outDimTags_n,int * numElements, size_t numElements_n,double * heights, size_t heights_n,const int recombine,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::vector_pair api_outDimTags_;
@@ -655,7 +655,7 @@ void gmshModelGeoExtrude(int * dimTags, size_t dimTags_n,const double dx,const d
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,const double x,const double y,const double z,const double ax,const double ay,const double az,const double angle,int ** outDimTags, size_t * outDimTags_n,int* numElements, size_t numElements_n,double * heights, size_t heights_n,const int recombine,int * ierr){
+void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,const double x,const double y,const double z,const double ax,const double ay,const double az,const double angle,int ** outDimTags, size_t * outDimTags_n,int * numElements, size_t numElements_n,double * heights, size_t heights_n,const int recombine,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::vector_pair api_outDimTags_;
@@ -664,7 +664,7 @@ void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n,const double x,const do
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelGeoTwist(int * dimTags, size_t dimTags_n,const double x,const double y,const double z,const double dx,const double dy,const double dz,const double ax,const double ay,const double az,const double angle,int ** outDimTags, size_t * outDimTags_n,int* numElements, size_t numElements_n,double * heights, size_t heights_n,const int recombine,int * ierr){
+void gmshModelGeoTwist(int * dimTags, size_t dimTags_n,const double x,const double y,const double z,const double dx,const double dy,const double dz,const double ax,const double ay,const double az,const double angle,int ** outDimTags, size_t * outDimTags_n,int * numElements, size_t numElements_n,double * heights, size_t heights_n,const int recombine,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::vector_pair api_outDimTags_;
@@ -745,14 +745,14 @@ void gmshModelGeoMeshSetTransfiniteLine(const int tag,const int nPoints,const ch
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelGeoMeshSetTransfiniteSurface(const int tag,const char * arrangement,int* cornerTags, size_t cornerTags_n,int * ierr){
+void gmshModelGeoMeshSetTransfiniteSurface(const int tag,const char * arrangement,int * cornerTags, size_t cornerTags_n,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::model::geo::mesh::setTransfiniteSurface(tag,arrangement,ptr2vector(cornerTags,cornerTags_n));
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelGeoMeshSetTransfiniteVolume(const int tag,int* cornerTags, size_t cornerTags_n,int * ierr){
+void gmshModelGeoMeshSetTransfiniteVolume(const int tag,int * cornerTags, size_t cornerTags_n,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::model::geo::mesh::setTransfiniteVolume(tag,ptr2vector(cornerTags,cornerTags_n));
@@ -834,7 +834,7 @@ int gmshModelOccAddEllipse(const double x,const double y,const double z,const do
   return result_api_;
 }
 
-int gmshModelOccAddSpline(int* vertexTags, size_t vertexTags_n,const int tag,int * ierr){
+int gmshModelOccAddSpline(int * vertexTags, size_t vertexTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
@@ -843,7 +843,7 @@ int gmshModelOccAddSpline(int* vertexTags, size_t vertexTags_n,const int tag,int
   return result_api_;
 }
 
-int gmshModelOccAddBezier(int* vertexTags, size_t vertexTags_n,const int tag,int * ierr){
+int gmshModelOccAddBezier(int * vertexTags, size_t vertexTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
@@ -852,7 +852,7 @@ int gmshModelOccAddBezier(int* vertexTags, size_t vertexTags_n,const int tag,int
   return result_api_;
 }
 
-int gmshModelOccAddWire(int* edgeTags, size_t edgeTags_n,const int tag,const int checkClosed,int * ierr){
+int gmshModelOccAddWire(int * edgeTags, size_t edgeTags_n,const int tag,const int checkClosed,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
@@ -861,7 +861,7 @@ int gmshModelOccAddWire(int* edgeTags, size_t edgeTags_n,const int tag,const int
   return result_api_;
 }
 
-int gmshModelOccAddLineLoop(int* edgeTags, size_t edgeTags_n,const int tag,int * ierr){
+int gmshModelOccAddLineLoop(int * edgeTags, size_t edgeTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
@@ -888,7 +888,7 @@ int gmshModelOccAddDisk(const double xc,const double yc,const double zc,const do
   return result_api_;
 }
 
-int gmshModelOccAddPlaneSurface(int* wireTags, size_t wireTags_n,const int tag,int * ierr){
+int gmshModelOccAddPlaneSurface(int * wireTags, size_t wireTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
@@ -906,7 +906,7 @@ int gmshModelOccAddSurfaceFilling(const int wireTag,const int tag,int * ierr){
   return result_api_;
 }
 
-int gmshModelOccAddSurfaceLoop(int* faceTags, size_t faceTags_n,const int tag,int * ierr){
+int gmshModelOccAddSurfaceLoop(int * faceTags, size_t faceTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
@@ -915,7 +915,7 @@ int gmshModelOccAddSurfaceLoop(int* faceTags, size_t faceTags_n,const int tag,in
   return result_api_;
 }
 
-int gmshModelOccAddVolume(int* shellTags, size_t shellTags_n,const int tag,int * ierr){
+int gmshModelOccAddVolume(int * shellTags, size_t shellTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
@@ -978,7 +978,7 @@ int gmshModelOccAddTorus(const double x,const double y,const double z,const doub
   return result_api_;
 }
 
-void gmshModelOccAddThruSections(int* wireTags, size_t wireTags_n,int ** outDimTags, size_t * outDimTags_n,const int tag,const int makeSolid,const int makeRuled,int * ierr){
+void gmshModelOccAddThruSections(int * wireTags, size_t wireTags_n,int ** outDimTags, size_t * outDimTags_n,const int tag,const int makeSolid,const int makeRuled,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::vector_pair api_outDimTags_;
@@ -987,7 +987,7 @@ void gmshModelOccAddThruSections(int* wireTags, size_t wireTags_n,int ** outDimT
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelOccAddThickSolid(const int solidTag,int* excludeFaceTags, size_t excludeFaceTags_n,const double offset,int ** outDimTags, size_t * outDimTags_n,const int tag,int * ierr){
+void gmshModelOccAddThickSolid(const int solidTag,int * excludeFaceTags, size_t excludeFaceTags_n,const double offset,int ** outDimTags, size_t * outDimTags_n,const int tag,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::vector_pair api_outDimTags_;
@@ -996,7 +996,7 @@ void gmshModelOccAddThickSolid(const int solidTag,int* excludeFaceTags, size_t e
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,const double dx,const double dy,const double dz,int ** outDimTags, size_t * outDimTags_n,int* numElements, size_t numElements_n,double * heights, size_t heights_n,const int recombine,int * ierr){
+void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,const double dx,const double dy,const double dz,int ** outDimTags, size_t * outDimTags_n,int * numElements, size_t numElements_n,double * heights, size_t heights_n,const int recombine,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::vector_pair api_outDimTags_;
@@ -1005,7 +1005,7 @@ void gmshModelOccExtrude(int * dimTags, size_t dimTags_n,const double dx,const d
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelOccRevolve(int * dimTags, size_t dimTags_n,const double x,const double y,const double z,const double ax,const double ay,const double az,const double angle,int ** outDimTags, size_t * outDimTags_n,int* numElements, size_t numElements_n,double * heights, size_t heights_n,const int recombine,int * ierr){
+void gmshModelOccRevolve(int * dimTags, size_t dimTags_n,const double x,const double y,const double z,const double ax,const double ay,const double az,const double angle,int ** outDimTags, size_t * outDimTags_n,int * numElements, size_t numElements_n,double * heights, size_t heights_n,const int recombine,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::vector_pair api_outDimTags_;
@@ -1023,7 +1023,7 @@ void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n,const int wireTag,int *
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelOccFillet(int* regionTags, size_t regionTags_n,int* edgeTags, size_t edgeTags_n,const double radius,int ** outDimTags, size_t * outDimTags_n,const int removeRegion,int * ierr){
+void gmshModelOccFillet(int * regionTags, size_t regionTags_n,int * edgeTags, size_t edgeTags_n,const double radius,int ** outDimTags, size_t * outDimTags_n,const int removeRegion,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::vector_pair api_outDimTags_;
@@ -1184,7 +1184,7 @@ void gmshViewGetTags(int ** tags, size_t * tags_n,int * ierr){
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshViewAddModelData(const int tag,const int step,const char * modelName,const char * dataType,int* tags, size_t tags_n,const double ** data, const size_t * data_n, size_t data_nn,const double time,const int numComponents,const int partition,int * ierr){
+void gmshViewAddModelData(const int tag,const int step,const char * modelName,const char * dataType,int * tags, size_t tags_n,const double ** data, const size_t * data_n, size_t data_nn,const double time,const int numComponents,const int partition,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::view::addModelData(tag,step,modelName,dataType,ptr2vector(tags,tags_n),ptrptr2vectorvector(data,data_n,data_nn),time,numComponents,partition);
