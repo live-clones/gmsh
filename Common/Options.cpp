@@ -6322,9 +6322,7 @@ double opt_mesh_zone_definition(OPT_ARGS_NUM)
     CTX::instance()->mesh.zoneDefinition = (int)val;
     if( (CTX::instance()->mesh.zoneDefinition < 0 ||
          CTX::instance()->mesh.zoneDefinition > 2) ||
-        (CTX::instance()->mesh.zoneDefinition == 1 &&
-         GModel::current()->getMinPartitionSize() +
-         GModel::current()->getMaxPartitionSize() == 0) )
+        (CTX::instance()->mesh.zoneDefinition == 1) )
       CTX::instance()->mesh.zoneDefinition = 0;
   }
   return CTX::instance()->mesh.zoneDefinition;

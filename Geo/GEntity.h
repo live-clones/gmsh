@@ -122,7 +122,10 @@ class GEntity {
     PartitionVertex,
     PartitionCurve,
     PartitionSurface,
-    PartitionVolume
+    PartitionVolume,
+    GhostCurve,
+    GhostSurface,
+    GhostVolume
   };
 
   enum MeshGenerationStatus {

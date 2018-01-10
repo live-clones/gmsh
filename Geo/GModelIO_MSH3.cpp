@@ -742,9 +742,7 @@ int GModel::_writePartitionedMSH3(const std::string &baseName, double version,
     return 0;
   }
 
-  for(std::set<int>::iterator it = meshPartitions.begin();
-      it != meshPartitions.end(); it++){
-    int partition = *it;
+  for(int partition = 0; partition < getNumPartitions(); partition++){
     std::ostringstream sstream;
     sstream << baseName << "_" << std::setw(6) << std::setfill('0') << partition;
     Msg::Info("Writing partition %d in file '%s'", partition, sstream.str().c_str());

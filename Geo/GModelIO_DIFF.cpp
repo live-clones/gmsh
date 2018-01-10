@@ -330,7 +330,7 @@ int GModel::readDIFF(const std::string &name)
       if(physical && (!physicals[dim].count(reg) ||
                       !physicals[dim][reg].count(physical)))
         physicals[dim][reg][physical] = "unnamed";
-      if(partition) getMeshPartitions().insert(partition);
+      if(partition > getNumPartitions()) setNumPartitions(partition);
 
       if(numElements > 100000)
         Msg::ProgressMeter(i + 1, numElements, true, "Reading elements");
