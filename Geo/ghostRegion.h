@@ -53,36 +53,43 @@ public:
   {
     GRegion::addTetrahedron(t);
     _ghostCells.insert(std::pair<MElement*, unsigned int>(t,onWhichPartition));
+    model()->addGhostCells(t,onWhichPartition);
   }
   void addHexahedron(MHexahedron *h, unsigned int onWhichPartition)
   {
     GRegion::addHexahedron(h);
     _ghostCells.insert(std::pair<MElement*, unsigned int>(h,onWhichPartition));
+    model()->addGhostCells(h,onWhichPartition);
   }
   void addPrism(MPrism *p, unsigned int onWhichPartition)
   {
     GRegion::addPrism(p);
     _ghostCells.insert(std::pair<MElement*, unsigned int>(p,onWhichPartition));
+    model()->addGhostCells(p,onWhichPartition);
   }
   void addPyramid(MPyramid *p, unsigned int onWhichPartition)
   {
     GRegion::addPyramid(p);
     _ghostCells.insert(std::pair<MElement*, unsigned int>(p,onWhichPartition));
+    model()->addGhostCells(p,onWhichPartition);
   }
   void addPolyhedron(MPolyhedron *p, unsigned int onWhichPartition)
   {
     GRegion::addPolyhedron(p);
     _ghostCells.insert(std::pair<MElement*, unsigned int>(p,onWhichPartition));
+    model()->addGhostCells(p,onWhichPartition);
   }
   void addTrihedron(MTrihedron *t, unsigned int onWhichPartition)
   {
     GRegion::addTrihedron(t);
     _ghostCells.insert(std::pair<MElement*, unsigned int>(t,onWhichPartition));
+    model()->addGhostCells(t,onWhichPartition);
   }
   void addElement(int type, MElement *e, unsigned int onWhichPartition)
   {
     GRegion::addElement(type, e);
     _ghostCells.insert(std::pair<MElement*, unsigned int>(e,onWhichPartition));
+    model()->addGhostCells(e,onWhichPartition);
   }
 };
 

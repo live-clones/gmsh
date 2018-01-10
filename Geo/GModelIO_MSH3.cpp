@@ -555,7 +555,7 @@ static int getNumElementsMSH(GEntity *ge, bool saveAll, int saveSinglePartition)
 static void writeElementMSH(FILE *fp, GModel *model, MElement *ele, bool binary,
                             int elementary)
 {
-  /*if(model->getGhostCells().size()){
+  if(model->getGhostCells().size()){
     std::vector<short> ghosts;
     std::pair<std::multimap<MElement*, short>::iterator,
               std::multimap<MElement*, short>::iterator> itp =
@@ -565,7 +565,7 @@ static void writeElementMSH(FILE *fp, GModel *model, MElement *ele, bool binary,
       ghosts.push_back(it->second);
     ele->writeMSH(fp, binary, elementary, &ghosts);
   }
-  else*/
+  else
     ele->writeMSH(fp, binary, elementary);
 }
 

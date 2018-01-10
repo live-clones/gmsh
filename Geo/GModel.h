@@ -85,6 +85,11 @@ class GModel {
   std::vector<MElement*> _elementVectorCache;
   std::map<int, MElement*> _elementMapCache;
   std::map<int, int> _elementIndexCache;
+  
+  // ghost cell information (stores partitions for each element acting
+  // as a ghost cell)
+  // /!\ Use only for compatibility with mesh format msh2 and msh3
+  std::multimap<MElement*, short> _ghostCells;
 
   // an octree for fast mesh element lookup
   MElementOctree *_octree;
@@ -461,6 +466,10 @@ class GModel {
   int convertOldPartitioningToNewOne();
   // write the partitioned topology file
   int writePartitionedTopology(std::string &name);
+  
+  // /!\ Use only for compatibility with mesh format msh2 and msh3
+  std::multimap<MElement*, short> &getGhostCells(){ return _ghostCells; }
+  void addGhostCells(MElement* elm, short partition) { _ghostCells.insert(std::pair<MElement*,short>(elm, partition)); }
 
   // perform various coherence tests on the mesh
   void checkMeshCoherence(double tolerance);

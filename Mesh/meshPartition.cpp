@@ -2627,6 +2627,10 @@ int UnpartitionMesh(GModel *const model)
       model->remove(pedge);
       delete pedge;
     }
+    else if(edge->geomType() == GEntity::GhostCurve){
+      model->remove(edge);
+      delete edge;
+    }
   }
 
   // Loop over faces
@@ -2654,6 +2658,10 @@ int UnpartitionMesh(GModel *const model)
 
       model->remove(pface);
       delete pface;
+    }
+    else if(face->geomType() == GEntity::GhostSurface){
+      model->remove(face);
+      delete face;
     }
   }
 
@@ -2697,6 +2705,10 @@ int UnpartitionMesh(GModel *const model)
 
       model->remove(pregion);
       delete pregion;
+    }
+    else if(region->geomType() == GEntity::GhostVolume){
+      model->remove(region);
+      delete region;
     }
   }
 
