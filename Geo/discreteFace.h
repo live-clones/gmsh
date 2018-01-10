@@ -9,8 +9,8 @@
 #include "GModel.h"
 #include "GFace.h"
 #include "discreteEdge.h"
-#include "MEdge.h"
 #include "MTriangle.h"
+#include "MElementCut.h"
 #include "MEdge.h"
 #include "MLine.h"
 

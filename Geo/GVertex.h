@@ -93,8 +93,8 @@ class GVertex : public GEntity
   std::vector<MPoint*> points;
 
   void addPoint(MPoint *p){ points.push_back(p); }
-  virtual void addElement(int type, MElement *e);
-  virtual void removeElement(int type, MElement *e);
+  void addElement(int type, MElement *e);
+  void removeElement(int type, MElement *e);
 };
 
 #endif

@@ -86,10 +86,6 @@ class GModel {
   std::map<int, MElement*> _elementMapCache;
   std::map<int, int> _elementIndexCache;
 
-  // ghost cell information (stores partitions for each element acting
-  // as a ghost cell)
-  std::multimap<MElement*, short> _ghostCells;
-
   // an octree for fast mesh element lookup
   MElementOctree *_octree;
 
@@ -163,8 +159,7 @@ class GModel {
   std::map<std::pair<int, int>, std::string> physicalNames, elementaryNames;
 
   // the set of all used mesh partition numbers
-  std::set<int> meshPartitions;
-  int partitionSize[2];
+  unsigned int numPartitions;
 
  public:
   GModel(std::string name="");
@@ -454,9 +449,8 @@ class GModel {
   void removeInvisibleElements();
 
   // the list of partitions
-  std::set<int> &getMeshPartitions() { return meshPartitions; }
-  void recomputeMeshPartitions();
-  unsigned int getNumPartitions() const { return meshPartitions.size(); };
+  unsigned int getNumPartitions() const { return numPartitions; }
+  void setNumPartitions(unsigned int npart){ numPartitions = npart; }
 
   // delete all the partitions
   int deleteMeshPartitions();
@@ -467,15 +461,6 @@ class GModel {
   int convertOldPartitioningToNewOne();
   // write the partitioned topology file
   int writePartitionedTopology(std::string &name);
-
-  // store/recall min and max partitions size
-  void setMinPartitionSize(const int pSize) { partitionSize[0] = pSize; }
-  void setMaxPartitionSize(const int pSize) { partitionSize[1] = pSize; }
-  int getMinPartitionSize() const { return partitionSize[0]; }
-  int getMaxPartitionSize() const { return partitionSize[1]; }
-
-  void setGhostCells(std::multimap<MElement*, short> &ghostCells){ _ghostCells = ghostCells; }
-  std::multimap<MElement*, short> &getGhostCells(){ return _ghostCells; }
 
   // perform various coherence tests on the mesh
   void checkMeshCoherence(double tolerance);

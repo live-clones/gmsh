@@ -27,6 +27,10 @@
 #include "discreteFace.h"
 #include "discreteEdge.h"
 #include "discreteVertex.h"
+#include "partitionRegion.h"
+#include "partitionFace.h"
+#include "partitionEdge.h"
+#include "partitionVertex.h"
 #include "gmshSurface.h"
 #include "SmoothData.h"
 #include "Context.h"
@@ -70,7 +74,6 @@ GModel::GModel(std::string name)
     _fields(0), _currentMeshEntity(0),
     normals(0)
 {
-  partitionSize[0] = 0; partitionSize[1] = 0;
 
   // hide all other models
   for(unsigned int i = 0; i < list.size(); i++)
@@ -1407,23 +1410,9 @@ void GModel::scaleMesh(double factor)
     }
 }
 
-void GModel::recomputeMeshPartitions()
-{
-  meshPartitions.clear();
-  std::vector<GEntity*> entities;
-  getEntities(entities);
-  for(unsigned int i = 0; i < entities.size(); i++){
-    for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
-      int part = entities[i]->getMeshElement(j)->getPartition();
-      if(part)  meshPartitions.insert(part);
-    }
-  }
-}
-
 int GModel::deleteMeshPartitions()
 {
 #if defined(HAVE_MESH)
-  meshPartitions.clear();
   return UnpartitionMesh(this);
 #else
   Msg::Error("Mesh module not compiled");
@@ -1431,19 +1420,18 @@ int GModel::deleteMeshPartitions()
 #endif
 }
 
+
 int GModel::partitionMesh(int numPart)
 {
 #if defined(HAVE_MESH) && (defined(HAVE_METIS))
-  int ier = deleteMeshPartitions();
-  if(ier != 0) return ier;
   opt_mesh_partition_num(0, GMSH_SET, numPart);
   if(numPart > 0){
-    ier = PartitionMesh(this);
+    int ier = PartitionMesh(this);
+    return ier;
   }
   else{
     return 1;
   }
-  return ier;
 #else
   Msg::Error("Mesh module not compiled");
   return 1;
@@ -1453,7 +1441,6 @@ int GModel::partitionMesh(int numPart)
 int GModel::convertOldPartitioningToNewOne()
 {
 #if defined(HAVE_MESH) && (defined(HAVE_METIS))
-  opt_mesh_partition_num(0, GMSH_SET, meshPartitions.size());
   int ier = ConvertOldPartitioningToNewOne(this);
   return ier;
 #else
@@ -1863,7 +1850,6 @@ GModel *GModel::createGModel(std::map<int, MVertex*> &vertexMap,
     if(physical[i] && (!physicals[dim].count(elementary[i]) ||
                        !physicals[dim][elementary[i]].count(physical[i])))
       physicals[dim][elementary[i]][physical[i]] = "unnamed";
-    if(partition[i]) gm->getMeshPartitions().insert(partition[i]);
   }
 
   // store the elements in their associated elementary entity. If the
@@ -1903,9 +1889,6 @@ GModel *GModel::createGModel
       MElement* me = it->second[iE];
       for(int iV = 0; iV < me->getNumVertices(); iV++) {
         vertexMap[me->getVertex(iV)->getNum()] = me->getVertex(iV);
-      }
-      if(me->getPartition()) {
-        gm->getMeshPartitions().insert(me->getPartition());
       }
       std::vector<int> entityPhysicals = entityToPhysicalsMap[entity];
       for(unsigned int i = 0; i < entityPhysicals.size(); i++) {

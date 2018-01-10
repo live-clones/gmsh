@@ -555,7 +555,7 @@ static int getNumElementsMSH(GEntity *ge, bool saveAll, int saveSinglePartition)
 static void writeElementMSH(FILE *fp, GModel *model, MElement *ele, bool binary,
                             int elementary)
 {
-  if(model->getGhostCells().size()){
+  /*if(model->getGhostCells().size()){
     std::vector<short> ghosts;
     std::pair<std::multimap<MElement*, short>::iterator,
               std::multimap<MElement*, short>::iterator> itp =
@@ -565,7 +565,7 @@ static void writeElementMSH(FILE *fp, GModel *model, MElement *ele, bool binary,
       ghosts.push_back(it->second);
     ele->writeMSH(fp, binary, elementary, &ghosts);
   }
-  else
+  else*/
     ele->writeMSH(fp, binary, elementary);
 }
 
@@ -742,9 +742,7 @@ int GModel::_writePartitionedMSH3(const std::string &baseName, double version,
     return 0;
   }
 
-  for(std::set<int>::iterator it = meshPartitions.begin();
-      it != meshPartitions.end(); it++){
-    int partition = *it;
+  for(int partition = 0; partition < getNumPartitions(); partition++){
     std::ostringstream sstream;
     sstream << baseName << "_" << std::setw(6) << std::setfill('0') << partition;
     Msg::Info("Writing partition %d in file '%s'", partition, sstream.str().c_str());

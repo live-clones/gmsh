@@ -249,9 +249,8 @@ class VisibilityList { // singleton
       }
     }
     else if(type == MeshPartitions){
-      std::set<int> part = m->getMeshPartitions();
-      for(std::set<int>::const_iterator it = part.begin(); it != part.end(); ++it)
-        _entities.push_back(new VisPartition(*it));
+      for(int part = 0; part < m->getNumPartitions(); part++)
+        _entities.push_back(new VisPartition(part));
     }
     std::sort(_entities.begin(), _entities.end(), VisLessThan());
   }

@@ -127,7 +127,7 @@ PView *GMSH_SimplePartitionPlugin::execute(PView *v)
       }
     }
   }
-  m->recomputeMeshPartitions();
+  m->setNumPartitions(numSlices);
 
   // partition lower dimension elements
   Msg::Info("Partitioning lower dimension elements");
