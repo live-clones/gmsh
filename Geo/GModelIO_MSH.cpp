@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -106,6 +106,11 @@ int GModel::writePartitionedMSH(const std::string &baseName, double version,
                                 bool binary, bool saveAll, bool saveParametric,
                                 double scalingFactor)
 {
+  if(version < 4.0 && getNumPartitions() > 0){
+    Msg::Warning("Saving a partitioned mesh in a format older than 4.0 may "
+                 "cause information loss");
+  }
+
   if(version < 3.0){
     return _writePartitionedMSH2(baseName, binary, saveAll,
                                  saveParametric, scalingFactor);

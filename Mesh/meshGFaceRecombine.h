@@ -1,11 +1,9 @@
-// Gmsh - Copyright (C) 1997-2016 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 //
-// Contributor(s):
-//   Amaury Johnen (a.johnen@ulg.ac.be)
-//
+// Contributed by Amaury Johnen
 
 #ifndef _MESH_GFACE_RECOMBINE_H_
 #define _MESH_GFACE_RECOMBINE_H_

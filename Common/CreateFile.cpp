@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -263,7 +263,7 @@ void CreateOutputFile(const std::string &fileName, int format,
     break;
 
   case FORMAT_MSH:
-    if(CTX::instance()->mesh.numPartitions > 1 &&
+    if(GModel::current()->getMeshPartitions().size() &&
        CTX::instance()->mesh.partitionSplitMeshFiles){
       std::vector<std::string> splitName = SplitFileName(name);
       splitName[0] += splitName[1];
@@ -278,7 +278,7 @@ void CreateOutputFile(const std::string &fileName, int format,
          CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveParametric,
          CTX::instance()->mesh.scalingFactor);
     }
-    if(CTX::instance()->mesh.numPartitions > 1 &&
+    if(GModel::current()->getMeshPartitions().size() &&
        CTX::instance()->mesh.partitionSaveTopologyFile){
       std::vector<std::string> splitName = SplitFileName(name);
       splitName[0] += splitName[1] + "_topology.pro";

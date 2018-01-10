@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -71,6 +71,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-match", "Match geometries and meshes"));
   s.push_back(mp("Mesh options:", ""));
   s.push_back(mp("-1, -2, -3", "Perform 1D, 2D or 3D mesh generation, then exit"));
+  s.push_back(mp("-save", "Save mesh, then exit"));
   s.push_back(mp("-o file", "Specify output file name"));
   s.push_back(mp("-format string", "Select output mesh format (auto (default), msh, "
                  "msh1, msh2, msh3, msh4, unv, vrml, ply2, stl, mesh, bdf, cgns, "
@@ -82,7 +83,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-part_weight tri|quad|tet|hex|pri|pyr|trih int",
                  "Weight of a triangle/quad/etc. during partitioning"));
   s.push_back(mp("-part_split", "Save mesh partitions in separate files"));
-  s.push_back(mp("-part_[no]topo", "Create the partition topology"));
+  s.push_back(mp("-part_[no_]topo", "Create the partition topology"));
   s.push_back(mp("-part_topo_pro", "Save the partition topology .pro file"));
   s.push_back(mp("-save_all", "Save all elements (discard physical group definitions)"));
   s.push_back(mp("-save_parametric", "Save vertices with their parametric coordinates"));
@@ -375,6 +376,10 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
         CTX::instance()->batch = 4;
         i++;
       }
+      else if(!strcmp(argv[i] + 1, "save")) {
+        CTX::instance()->batch = 99;
+        i++;
+      }
       else if(!strcmp(argv[i] + 1, "cpu")) {
         Msg::SetInfoCpu(true);
         i++;
@@ -445,6 +450,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
         }
       }
       else if(!strcmp(argv[i] + 1, "part_split") ||
+              !strcmp(argv[i] + 1, "part_split_files") ||
               !strcmp(argv[i] + 1, "oneFilePerPart")){
         opt_mesh_partition_split_mesh_files(0, GMSH_SET, 1.);
         i++;
@@ -458,7 +464,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
         opt_mesh_partition_create_topology(0, GMSH_SET, 1.);
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "part_notopo")){
+      else if(!strcmp(argv[i] + 1, "part_no_topo")){
         opt_mesh_partition_create_topology(0, GMSH_SET, 0.);
         i++;
       }
@@ -1029,7 +1035,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
       }
       else if(!strcmp(argv[i] + 1, "help") || !strcmp(argv[i] + 1, "-help")) {
         fprintf(stderr, "Gmsh, a 3D mesh generator with pre- and post-processing facilities\n");
-        fprintf(stderr, "Copyright (C) 1997-2017 Christophe Geuzaine and Jean-Francois Remacle\n");
+        fprintf(stderr, "Copyright (C) 1997-2018 C. Geuzaine and J.-F. Remacle\n");
         PrintUsage(argv[0]);
         Msg::Exit(0);
       }
