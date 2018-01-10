@@ -263,7 +263,7 @@ void CreateOutputFile(const std::string &fileName, int format,
     break;
 
   case FORMAT_MSH:
-    if(GModel::current()->getMeshPartitions().size() &&
+    if(GModel::current()->getNumPartitions() &&
        CTX::instance()->mesh.partitionSplitMeshFiles){
       std::vector<std::string> splitName = SplitFileName(name);
       splitName[0] += splitName[1];
@@ -278,7 +278,7 @@ void CreateOutputFile(const std::string &fileName, int format,
          CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveParametric,
          CTX::instance()->mesh.scalingFactor);
     }
-    if(GModel::current()->getMeshPartitions().size() &&
+    if(GModel::current()->getNumPartitions() &&
        CTX::instance()->mesh.partitionSaveTopologyFile){
       std::vector<std::string> splitName = SplitFileName(name);
       splitName[0] += splitName[1] + "_topology.pro";

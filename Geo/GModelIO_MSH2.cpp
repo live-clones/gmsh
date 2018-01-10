@@ -86,7 +86,7 @@ static MElement *createElementMSH2(GModel *m, int num, int typeMSH, int physical
   if(physical && (!physicals[dim].count(reg) || !physicals[dim][reg].count(physical)))
     physicals[dim][reg][physical] = "unnamed";
 
-  if(part) m->getMeshPartitions().insert(part);
+  if(part > m->getNumPartitions()) m->setNumPartitions(part);
   return e;
 }
 
@@ -959,9 +959,7 @@ int GModel::_writePartitionedMSH2(const std::string &baseName, bool binary,
 {
   int numElements;
   int startNum = 0;
-  for(std::set<int>::iterator it = meshPartitions.begin();
-      it != meshPartitions.end(); it++){
-    int partition = *it;
+  for(int partition = 0; partition < getNumPartitions(); partition++){
 
     std::ostringstream sstream;
     sstream << baseName << "_" << partition << ".msh";
