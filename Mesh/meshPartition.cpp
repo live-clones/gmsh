@@ -224,6 +224,18 @@ class Graph
       _partition = 0;
     }
   }
+  void clearDualGraph()
+  {
+    if(_xadj){
+      delete[] _xadj;
+      _xadj = 0;
+    }
+    if(_adjncy){
+      delete[] _adjncy;
+      _adjncy = 0;
+    }
+  }
+  
   std::vector< std::set<MElement*> > getBoundaryElements()
   {
     std::vector< std::set<MElement*> > elements(_nparts, std::set<MElement*>());
@@ -239,6 +251,7 @@ class Graph
 
     return elements;
   }
+  
   void assignGhostCells()
   {
     std::vector<GEntity*> ghostEntities(_nparts, NULL);
@@ -473,7 +486,7 @@ static int MakeGraph(GModel *const model, Graph &graph)
   return 0;
 }
 
-static void createDualGraph(Graph &graph)
+static void createDualGraph(Graph &graph, bool connectedAll)
 {
   int *nptr = new int[graph.nn()+1];
   for(unsigned int i = 0; i < graph.nn()+1; i++) nptr[i] = 0;
@@ -521,7 +534,7 @@ static void createDualGraph(Graph &graph)
     unsigned int nbrsNeighbors = 0;
     for(unsigned int j = 0; j < l; j++){
       if(marker[nbrs[j]] >=
-         graph.element(i)->numCommonNodesInDualGraph(graph.element(nbrs[j])))
+         (connectedAll ? 1 : graph.element(i)->numCommonNodesInDualGraph(graph.element(nbrs[j]))))
         nbrsNeighbors++;
       marker[nbrs[j]] = 0;
       nbrs[j] = 0;
@@ -548,7 +561,7 @@ static void createDualGraph(Graph &graph)
 
     for(unsigned int j = 0; j < l; j++){
       if(marker[nbrs[j]] >=
-         graph.element(i)->numCommonNodesInDualGraph(graph.element(nbrs[j]))){
+         (connectedAll ? 1 : graph.element(i)->numCommonNodesInDualGraph(graph.element(nbrs[j])))){
         graph.adjncy(graph.xadj(i), nbrs[j]);
         graph.xadj(i, graph.xadj(i)+1);
       }
@@ -633,7 +646,7 @@ static int PartitionGraph(Graph &graph)
     graph.fillDefaultWeights();
 
     int metisError = 0;
-    createDualGraph(graph);
+    createDualGraph(graph, false);
 
     if (metisOptions[METIS_OPTION_PTYPE] == METIS_PTYPE_KWAY){
       metisError = METIS_PartGraphKway
@@ -1152,7 +1165,7 @@ static void CreateNewEntities(GModel *const model,
 
       fillElementsToNodesMap(graph, edge, eptrIndex, eindIndex, numVertex,
                              edge->lines.begin(), edge->lines.end());
-      createDualGraph(graph);
+      createDualGraph(graph, false);
 
       std::vector< std::set<MElement*> > connectedElements;
       fillConnectedElements(connectedElements, graph);
@@ -1214,7 +1227,7 @@ static void CreateNewEntities(GModel *const model,
                              face->triangles.begin(), face->triangles.end());
       fillElementsToNodesMap(graph, face, eptrIndex, eindIndex, numVertex,
                              face->quadrangles.begin(), face->quadrangles.end());
-      createDualGraph(graph);
+      createDualGraph(graph, false);
 
       std::vector< std::set<MElement*> > connectedElements;
       fillConnectedElements(connectedElements, graph);
@@ -1283,7 +1296,7 @@ static void CreateNewEntities(GModel *const model,
                              region->pyramids.begin(), region->pyramids.end());
       fillElementsToNodesMap(graph, region, eptrIndex, eindIndex, numVertex,
                              region->trihedra.begin(), region->trihedra.end());
-      createDualGraph(graph);
+      createDualGraph(graph, false);
 
       std::vector< std::set<MElement*> > connectedElements;
       fillConnectedElements(connectedElements, graph);
@@ -1741,7 +1754,7 @@ static void CreatePartitionBoundaries(GModel *const model,
                                face->triangles.begin(), face->triangles.end());
         fillElementsToNodesMap(graph, face, eptrIndex, eindIndex, numVertex,
                                face->quadrangles.begin(), face->quadrangles.end());
-        createDualGraph(graph);
+        createDualGraph(graph, false);
 
         std::vector< std::set<MElement*> > connectedElements;
         fillConnectedElements(connectedElements, graph);
@@ -1844,7 +1857,7 @@ static void CreatePartitionBoundaries(GModel *const model,
 
         fillElementsToNodesMap(graph, edge, eptrIndex, eindIndex, numVertex,
                                edge->lines.begin(), edge->lines.end());
-        createDualGraph(graph);
+        createDualGraph(graph, false);
 
         std::vector< std::set<MElement*> > connectedElements;
         fillConnectedElements(connectedElements, graph);
@@ -2495,6 +2508,8 @@ int PartitionMesh(GModel *const model)
 
   AssignMeshVertices(model);
   
+  graph.clearDualGraph();
+  createDualGraph(graph, true);
   graph.assignGhostCells();
 
   return 0;
@@ -2746,7 +2761,7 @@ int ConvertOldPartitioningToNewOne(GModel *const model)
   }
   Graph graph(model);
   if(MakeGraph(model, graph)) return 1;
-  createDualGraph(graph);
+  createDualGraph(graph, false);
   graph.nparts(partitions.size());
 
   unsigned int *part = new unsigned int[graph.ne()];
@@ -2780,6 +2795,8 @@ int ConvertOldPartitioningToNewOne(GModel *const model)
 
   AssignMeshVertices(model);
   
+  graph.clearDualGraph();
+  createDualGraph(graph, false);
   graph.assignGhostCells();
   
   return 0;
