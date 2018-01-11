@@ -235,7 +235,7 @@ class Graph
       _adjncy = 0;
     }
   }
-  
+
   std::vector< std::set<MElement*> > getBoundaryElements()
   {
     std::vector< std::set<MElement*> > elements(_nparts, std::set<MElement*>());
@@ -251,7 +251,7 @@ class Graph
 
     return elements;
   }
-  
+
   void assignGhostCells()
   {
     std::vector<GEntity*> ghostEntities(_nparts, NULL);
@@ -273,7 +273,7 @@ class Graph
           break;
       }
     }
-    
+
     for(unsigned int i = 0; i < _ne; i++){
       std::set<short> ghostCellsPartition;
       for(unsigned int j = _xadj[i]; j < _xadj[i+1]; j++){
@@ -534,7 +534,8 @@ static void createDualGraph(Graph &graph, bool connectedAll)
     unsigned int nbrsNeighbors = 0;
     for(unsigned int j = 0; j < l; j++){
       if(marker[nbrs[j]] >=
-         (connectedAll ? 1 : graph.element(i)->numCommonNodesInDualGraph(graph.element(nbrs[j]))))
+         (connectedAll ? 1 :
+          graph.element(i)->numCommonNodesInDualGraph(graph.element(nbrs[j]))))
         nbrsNeighbors++;
       marker[nbrs[j]] = 0;
       nbrs[j] = 0;
@@ -561,7 +562,8 @@ static void createDualGraph(Graph &graph, bool connectedAll)
 
     for(unsigned int j = 0; j < l; j++){
       if(marker[nbrs[j]] >=
-         (connectedAll ? 1 : graph.element(i)->numCommonNodesInDualGraph(graph.element(nbrs[j])))){
+         (connectedAll ? 1 :
+          graph.element(i)->numCommonNodesInDualGraph(graph.element(nbrs[j])))){
         graph.adjncy(graph.xadj(i), nbrs[j]);
         graph.xadj(i, graph.xadj(i)+1);
       }
@@ -1704,10 +1706,12 @@ static void CreatePartitionBoundaries(GModel *const model,
     Msg::Info(" - Creating partition faces");
 
     for(unsigned int i = 0; i < boundaryElements.size(); i++){
-      for(std::set<MElement*>::iterator it = boundaryElements[i].begin(); it != boundaryElements[i].end(); ++it){
+      for(std::set<MElement*>::iterator it = boundaryElements[i].begin();
+          it != boundaryElements[i].end(); ++it){
         for(int j = 0; j < (*it)->getNumFaces(); j++){
           faceToElement[(*it)->getFace(j)].push_back
-          (std::pair<MElement*, std::vector<unsigned int> >(*it, std::vector<unsigned int>(1,i)));
+          (std::pair<MElement*, std::vector<unsigned int> >
+           (*it, std::vector<unsigned int>(1,i)));
         }
       }
     }
@@ -2462,18 +2466,22 @@ void movePeriodicNodesFromParentToPartitionEntities(GModel * const model)
   std::vector<GEntity*> entities;
   model->getEntities(entities);
   std::set<GEntity*> emptiedEntities;
-  
+
   for(unsigned int i = 0; i < entities.size(); i++){
     if(entities[i]->correspondingVertices.size() != 0){
       emptiedEntities.insert(entities[i]);
-      for(std::map<MVertex*,MVertex*>::iterator it = entities[i]->correspondingVertices.begin(); it != entities[i]->correspondingVertices.end(); ++it){
-        it->first->onWhat()->correspondingVertices.insert(std::pair<MVertex*,MVertex*>(it->first,it->second));
+      for(std::map<MVertex*,MVertex*>::iterator it =
+            entities[i]->correspondingVertices.begin();
+          it != entities[i]->correspondingVertices.end(); ++it){
+        it->first->onWhat()->correspondingVertices.insert
+          (std::pair<MVertex*,MVertex*>(it->first,it->second));
         it->first->onWhat()->setMeshMaster(it->second->onWhat());
       }
     }
   }
-  
-  for(std::set<GEntity*>::iterator it = emptiedEntities.begin(); it != emptiedEntities.end(); ++it){
+
+  for(std::set<GEntity*>::iterator it = emptiedEntities.begin();
+      it != emptiedEntities.end(); ++it){
     (*it)->correspondingVertices.clear();
     (*it)->setMeshMaster(*it);
   }
@@ -2484,30 +2492,40 @@ void movePeriodicNodesFromPartitionToParentEntities(GModel * const model)
   std::vector<GEntity*> entities;
   model->getEntities(entities);
   std::set<GEntity*> emptiedEntities;
-  
+
   for(unsigned int i = 0; i < entities.size(); i++){
     if(entities[i]->correspondingVertices.size() != 0){
       emptiedEntities.insert(entities[i]);
-      for(std::map<MVertex*,MVertex*>::iterator it = entities[i]->correspondingVertices.begin(); it != entities[i]->correspondingVertices.end(); ++it){
+      for(std::map<MVertex*,MVertex*>::iterator it =
+            entities[i]->correspondingVertices.begin();
+          it != entities[i]->correspondingVertices.end(); ++it){
         if(entities[i]->geomType() == GEntity::PartitionVertex){
           partitionVertex* pv = static_cast<partitionVertex*>(entities[i]);
-          pv->getParentEntity()->correspondingVertices.insert(std::pair<MVertex*,MVertex*>(it->first,it->second));
-          static_cast<GEntity*>(pv->getParentEntity())->setMeshMaster(static_cast<partitionVertex*>(it->second->onWhat())->getParentEntity());
+          pv->getParentEntity()->correspondingVertices.insert
+            (std::pair<MVertex*,MVertex*>(it->first,it->second));
+          static_cast<GEntity*>(pv->getParentEntity())->setMeshMaster
+            (static_cast<partitionVertex*>(it->second->onWhat())->getParentEntity());
         }
         else if(entities[i]->geomType() == GEntity::PartitionCurve){
           partitionEdge* pe = static_cast<partitionEdge*>(entities[i]);
-          pe->getParentEntity()->correspondingVertices.insert(std::pair<MVertex*,MVertex*>(it->first,it->second));
-          static_cast<GEntity*>(pe->getParentEntity())->setMeshMaster(static_cast<partitionEdge*>(it->second->onWhat())->getParentEntity());
+          pe->getParentEntity()->correspondingVertices.insert
+            (std::pair<MVertex*,MVertex*>(it->first,it->second));
+          static_cast<GEntity*>(pe->getParentEntity())->setMeshMaster
+            (static_cast<partitionEdge*>(it->second->onWhat())->getParentEntity());
         }
         else if(entities[i]->geomType() == GEntity::PartitionSurface){
           partitionFace* pf = static_cast<partitionFace*>(entities[i]);
-          pf->getParentEntity()->correspondingVertices.insert(std::pair<MVertex*,MVertex*>(it->first,it->second));
-          static_cast<GEntity*>(pf->getParentEntity())->setMeshMaster(static_cast<partitionFace*>(it->second->onWhat())->getParentEntity());
+          pf->getParentEntity()->correspondingVertices.insert
+            (std::pair<MVertex*,MVertex*>(it->first,it->second));
+          static_cast<GEntity*>(pf->getParentEntity())->setMeshMaster
+            (static_cast<partitionFace*>(it->second->onWhat())->getParentEntity());
         }
         else if(entities[i]->geomType() == GEntity::PartitionVolume){
           partitionRegion* pr = static_cast<partitionRegion*>(entities[i]);
-          pr->getParentEntity()->correspondingVertices.insert(std::pair<MVertex*,MVertex*>(it->first,it->second));
-          static_cast<GEntity*>(pr->getParentEntity())->setMeshMaster(static_cast<partitionRegion*>(it->second->onWhat())->getParentEntity());
+          pr->getParentEntity()->correspondingVertices.insert
+            (std::pair<MVertex*,MVertex*>(it->first,it->second));
+          static_cast<GEntity*>(pr->getParentEntity())->setMeshMaster
+            (static_cast<partitionRegion*>(it->second->onWhat())->getParentEntity());
         }
       }
     }
@@ -2547,7 +2565,7 @@ int PartitionMesh(GModel *const model)
 
   std::vector< std::set<MElement*> > boundaryElements = graph.getBoundaryElements();
   model->setNumPartitions(graph.nparts());
-  
+
   CreateNewEntities(model, elmToPartition);
   elmToPartition.clear();
 
@@ -2564,7 +2582,7 @@ int PartitionMesh(GModel *const model)
   }
 
   AssignMeshVertices(model);
-  
+
   movePeriodicNodesFromParentToPartitionEntities(model);
 
   graph.clearDualGraph();
@@ -2658,7 +2676,7 @@ int UnpartitionMesh(GModel *const model)
   std::set<GVertex*, GEntityLessThan> vertices = model->getVertices();
 
   std::set<MVertex*> verts;
-  
+
   movePeriodicNodesFromPartitionToParentEntities(model);
 
   // Loop over vertices
@@ -2855,13 +2873,13 @@ int ConvertOldPartitioningToNewOne(GModel *const model)
   }
 
   AssignMeshVertices(model);
-  
+
   movePeriodicNodesFromParentToPartitionEntities(model);
 
   graph.clearDualGraph();
   createDualGraph(graph, false);
   graph.assignGhostCells();
-  
+
   return 0;
 }
 

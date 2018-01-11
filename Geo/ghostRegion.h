@@ -16,15 +16,15 @@
 #include "MElementCut.h"
 
 class ghostRegion : public discreteRegion {
-private:
+ private:
   unsigned int _partitions;
   std::map<MElement*, unsigned int> _ghostCells;
   bool _saveMesh;
   bool _haveMesh;
-public:
+ public:
   ghostRegion(GModel *model, const int num, const unsigned int partitions)
-  : discreteRegion(model, num), _partitions(partitions), _ghostCells(), _saveMesh(false),
-  _haveMesh(false) {}
+  : discreteRegion(model, num), _partitions(partitions), _ghostCells(),
+    _saveMesh(false), _haveMesh(false) {}
   virtual ~ghostRegion()
   {
     if(!_haveMesh){
@@ -37,18 +37,14 @@ public:
       mesh_vertices.clear();
     }
   }
-  
   virtual GeomType geomType() const { return GhostVolume; }
   virtual void setPartition(const unsigned int partitions) { _partitions = partitions; }
   virtual unsigned int getPartition() const { return _partitions; }
-  
   bool saveMesh() const { return _saveMesh; }
   void saveMesh(bool saveMesh) { _saveMesh = saveMesh; }
   bool haveMesh() const { return _haveMesh; }
   void haveMesh(bool haveMesh) { _haveMesh = haveMesh; }
-  
   virtual std::map<MElement*, unsigned int> &getGhostCells() { return _ghostCells; }
-  
   void addTetrahedron(MTetrahedron *t, unsigned int onWhichPartition)
   {
     GRegion::addTetrahedron(t);

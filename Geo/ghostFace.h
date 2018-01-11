@@ -2,6 +2,8 @@
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
+//
+// Contributed by Anthony Royer
 
 #ifndef _GHOST_FACE_H_
 #define _GHOST_FACE_H_
@@ -13,15 +15,15 @@
 #include "MElementCut.h"
 
 class ghostFace : public discreteFace {
-private:
+ private:
   unsigned int _partitions;
   std::map<MElement*, unsigned int> _ghostCells;
   bool _saveMesh;
   bool _haveMesh;
-public:
+ public:
   ghostFace(GModel *model, const int num, const unsigned int partitions)
-  : discreteFace(model, num), _partitions(partitions), _ghostCells(), _saveMesh(false),
-    _haveMesh(false) {}
+  : discreteFace(model, num), _partitions(partitions), _ghostCells(),
+    _saveMesh(false), _haveMesh(false) {}
   virtual ~ghostFace()
   {
     if(!_haveMesh){
@@ -31,18 +33,14 @@ public:
       mesh_vertices.clear();
     }
   }
-  
   virtual GeomType geomType() const { return GhostSurface; }
   virtual void setPartition(const unsigned int partitions) { _partitions = partitions; }
   virtual unsigned int getPartition() const { return _partitions; }
-  
   bool saveMesh() const { return _saveMesh; }
   void saveMesh(bool saveMesh) { _saveMesh = saveMesh; }
   bool haveMesh() const { return _haveMesh; }
   void haveMesh(bool haveMesh) { _haveMesh = haveMesh; }
-  
   virtual std::map<MElement*, unsigned int> &getGhostCells() { return _ghostCells; }
-  
   void addTriangle(MTriangle *t, unsigned int onWhichPartition)
   {
     GFace::addTriangle(t);
