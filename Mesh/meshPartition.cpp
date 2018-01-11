@@ -2802,6 +2802,84 @@ int UnpartitionMesh(GModel *const model)
   return 0;
 }
 
+// Create the partition according to the element split given by elmToPartition
+// Returns: 0 = success, 1 = no elements found.
+int PartitionUsingThisSplit(GModel *const model, unsigned int npart, hashmap<MElement*, unsigned int> &elmToPartition)
+{
+  Graph graph(model);
+  if(MakeGraph(model, graph)) return 1;
+  createDualGraph(graph, false);
+  graph.nparts(npart);
+  
+  if(elmToPartition.size() != graph.ne()){
+    Msg::Error("All elements are not partitioned.");
+    return 1;
+  }
+  
+  unsigned int *part = new unsigned int[graph.ne()];
+  for(unsigned int i = 0; i < graph.ne(); i++){
+    if(graph.element(i)){
+      part[i] = elmToPartition[graph.element(i)]-1;
+    }
+  }
+  
+  // Check and correct the topology
+  for(unsigned int i = 0; i < graph.ne(); i++){
+    if(graph.element(i)->getDim() == (int)graph.dim()) continue;
+    
+    for(unsigned int j = graph.xadj(i); j < graph.xadj(i+1); j++){
+      if(graph.element(graph.adjncy(j))->getDim() == graph.element(i)->getDim()+1){
+        if(part[i] != part[graph.adjncy(j)]){
+          part[i] = part[graph.adjncy(j)];
+          elmToPartition[graph.element(i)] = part[i]+1;
+          break;
+        }
+      }
+      
+      if(graph.element(graph.adjncy(j))->getDim() == graph.element(i)->getDim()+2){
+        if(part[i] != part[graph.adjncy(j)]){
+          part[i] = part[graph.adjncy(j)];
+          elmToPartition[graph.element(i)] = part[i]+1;
+          break;
+        }
+      }
+      
+      if(graph.element(graph.adjncy(j))->getDim() == graph.element(i)->getDim()+3){
+        if(part[i] != part[graph.adjncy(j)]){
+          part[i] = part[graph.adjncy(j)];
+          elmToPartition[graph.element(i)] = part[i]+1;
+          break;
+        }
+      }
+    }
+  }
+  graph.partition(part);
+  
+  std::vector< std::set<MElement*> > boundaryElements = graph.getBoundaryElements();
+  model->setNumPartitions(graph.nparts());
+  
+  CreateNewEntities(model, elmToPartition);
+  elmToPartition.clear();
+  
+  if(CTX::instance()->mesh.partitionCreateTopology){
+    Msg::StatusBar(true, "Creating partition topology...");
+    CreatePartitionBoundaries(model, boundaryElements);
+    boundaryElements.clear();
+    BuildTopology(model);
+    Msg::StatusBar(true, "Done creating partition topology");
+  }
+  
+  AssignMeshVertices(model);
+  
+  movePeriodicNodesFromParentToPartitionEntities(model);
+  
+  graph.clearDualGraph();
+  createDualGraph(graph, false);
+  graph.assignGhostCells();
+  
+  return 0;
+}
+
 // Import a mesh partitionned by a tag given to the element and create the
 // topology (omega, sigma, bndSigma, ...). Returns: 0 = success, 1 = no elements
 // found.
@@ -2820,49 +2898,8 @@ int ConvertOldPartitioningToNewOne(GModel *const model)
       partitions.insert(e->getPartition());
     }
   }
-  Graph graph(model);
-  if(MakeGraph(model, graph)) return 1;
-  createDualGraph(graph, false);
-  graph.nparts(partitions.size());
-
-  unsigned int *part = new unsigned int[graph.ne()];
-  for(unsigned int i = 0; i < graph.ne(); i++){
-    if(graph.element(i)){
-      part[i] = graph.element(i)->getPartition() - 1;
-      Msg::Info("%d", part[i]);
-      if(graph.element(i)->getPartition() == 0){
-        Msg::Error("All elements are not partitioned.");
-        return 1;
-      }
-    }
-  }
-  graph.partition(part);
-
-  std::vector< std::set<MElement*> > boundaryElements = graph.getBoundaryElements();
-  model->setNumPartitions(graph.nparts());
-
-  CreateNewEntities(model, elmToPartition);
-  elmToPartition.clear();
-
-  Msg::StatusBar(true, "Done converting old partitioning");
-
-  if(CTX::instance()->mesh.partitionCreateTopology){
-    Msg::StatusBar(true, "Creating partition topology...");
-    CreatePartitionBoundaries(model, boundaryElements);
-    boundaryElements.clear();
-    BuildTopology(model);
-    Msg::StatusBar(true, "Done creating partition topology");
-  }
-
-  AssignMeshVertices(model);
   
-  movePeriodicNodesFromParentToPartitionEntities(model);
-
-  graph.clearDualGraph();
-  createDualGraph(graph, false);
-  graph.assignGhostCells();
-  
-  return 0;
+  return PartitionUsingThisSplit(model, partitions.size(), elmToPartition);
 }
 
 #else

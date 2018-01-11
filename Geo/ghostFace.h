@@ -43,6 +43,11 @@ public:
   
   virtual std::map<MElement*, unsigned int> &getGhostCells() { return _ghostCells; }
   
+  // To make the hidden function visible in ghostFace
+  using GFace::addTriangle;
+  using GFace::addQuadrangle;
+  using GFace::addElement;
+  
   void addTriangle(MTriangle *t, unsigned int onWhichPartition)
   {
     GFace::addTriangle(t);
