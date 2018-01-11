@@ -45,6 +45,16 @@ class ghostRegion : public discreteRegion {
   bool haveMesh() const { return _haveMesh; }
   void haveMesh(bool haveMesh) { _haveMesh = haveMesh; }
   virtual std::map<MElement*, unsigned int> &getGhostCells() { return _ghostCells; }
+  
+  // To make the hidden function visible in ghostRegion
+  using GRegion::addTetrahedron;
+  using GRegion::addHexahedron;
+  using GRegion::addPrism;
+  using GRegion::addPyramid;
+  using GRegion::addPolyhedron;
+  using GRegion::addTrihedron;
+  using GRegion::addElement;
+  
   void addTetrahedron(MTetrahedron *t, unsigned int onWhichPartition)
   {
     GRegion::addTetrahedron(t);

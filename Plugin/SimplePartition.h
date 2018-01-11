@@ -13,7 +13,7 @@ extern "C"
   GMSH_Plugin *GMSH_RegisterSimplePartitionPlugin();
 }
 
-class GMSH_SimplePartitionPlugin : public GMSH_PostPlugin
+class GMSH_SimplePartitionPlugin : public GMSH_MeshPlugin
 {
  public:
   GMSH_SimplePartitionPlugin(){}
@@ -27,7 +27,7 @@ class GMSH_SimplePartitionPlugin : public GMSH_PostPlugin
   StringXNumber* getOption(int iopt);
   int getNbOptionsStr() const;
   StringXString* getOptionStr(int iopt);
-  PView *execute(PView *);
+  void run();
 };
 
 #endif

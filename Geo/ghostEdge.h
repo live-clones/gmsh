@@ -37,6 +37,11 @@ class ghostEdge : public discreteEdge {
   bool haveMesh() const { return _haveMesh; }
   void haveMesh(bool haveMesh) { _haveMesh = haveMesh; }
   virtual std::map<MElement*, unsigned int> &getGhostCells() { return _ghostCells; }
+
+  // To make the hidden function visible in ghostEdge
+  using GEdge::addLine;
+  using GEdge::addElement;
+  
   void addLine(MLine *l, unsigned int onWhichPartition)
   {
     GEdge::addLine(l);

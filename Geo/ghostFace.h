@@ -41,6 +41,12 @@ class ghostFace : public discreteFace {
   bool haveMesh() const { return _haveMesh; }
   void haveMesh(bool haveMesh) { _haveMesh = haveMesh; }
   virtual std::map<MElement*, unsigned int> &getGhostCells() { return _ghostCells; }
+  
+  // To make the hidden function visible in ghostFace
+  using GFace::addTriangle;
+  using GFace::addQuadrangle;
+  using GFace::addElement;
+
   void addTriangle(MTriangle *t, unsigned int onWhichPartition)
   {
     GFace::addTriangle(t);
