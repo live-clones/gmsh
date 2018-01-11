@@ -84,6 +84,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "Weight of a triangle/quad/etc. during partitioning"));
   s.push_back(mp("-part_split", "Save mesh partitions in separate files"));
   s.push_back(mp("-part_[no_]topo", "Create the partition topology"));
+  s.push_back(mp("-part_[no_]ghosts", "Create ghost cells"));
   s.push_back(mp("-part_topo_pro", "Save the partition topology .pro file"));
   s.push_back(mp("-save_all", "Save all elements (discard physical group definitions)"));
   s.push_back(mp("-save_parametric", "Save vertices with their parametric coordinates"));
@@ -466,6 +467,14 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
       }
       else if(!strcmp(argv[i] + 1, "part_no_topo")){
         opt_mesh_partition_create_topology(0, GMSH_SET, 0.);
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "part_ghosts")){
+        opt_mesh_partition_create_ghost_cells(0, GMSH_SET, 1.);
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "part_no_ghosts")){
+        opt_mesh_partition_create_ghost_cells(0, GMSH_SET, 0.);
         i++;
       }
       else if(!strcmp(argv[i] + 1, "new")) {

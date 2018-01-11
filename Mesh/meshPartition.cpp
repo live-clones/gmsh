@@ -2585,9 +2585,11 @@ int PartitionMesh(GModel *const model)
 
   movePeriodicNodesFromParentToPartitionEntities(model);
 
-  graph.clearDualGraph();
-  createDualGraph(graph, true);
-  graph.assignGhostCells();
+  if(CTX::instance()->mesh.partitionCreateGhostCells){
+    graph.clearDualGraph();
+    createDualGraph(graph, true);
+    graph.assignGhostCells();
+  }
 
   return 0;
 }
@@ -2876,9 +2878,11 @@ int ConvertOldPartitioningToNewOne(GModel *const model)
 
   movePeriodicNodesFromParentToPartitionEntities(model);
 
-  graph.clearDualGraph();
-  createDualGraph(graph, false);
-  graph.assignGhostCells();
+  if(CTX::instance()->mesh.partitionCreateTopology){
+    graph.clearDualGraph();
+    createDualGraph(graph, false);
+    graph.assignGhostCells();
+  }
 
   return 0;
 }
