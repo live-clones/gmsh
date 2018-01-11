@@ -1109,7 +1109,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "PartitionTopology" , opt_mesh_partition_create_topology , 1 ,
     "Create boundary entities between partitions" },
   { F|O, "PartitionGhostCells" , opt_mesh_partition_create_ghost_cells , 0 ,
-    "Create boundary entities between partitions" },
+    "Create partition ghost cells" },
   { F|O, "PartitionSplitMeshFiles" , opt_mesh_partition_split_mesh_files , 0 ,
     "Write one file for each mesh partition" },
   { F|O, "PartitionTopologyFile" , opt_mesh_partition_save_topology_file , 0 ,
