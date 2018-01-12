@@ -2824,29 +2824,30 @@ int UnpartitionMesh(GModel *const model)
 
 // Create the partition according to the element split given by elmToPartition
 // Returns: 0 = success, 1 = no elements found.
-int PartitionUsingThisSplit(GModel *const model, unsigned int npart, hashmap<MElement*, unsigned int> &elmToPartition)
+int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
+                            hashmap<MElement*, unsigned int> &elmToPartition)
 {
   Graph graph(model);
   if(MakeGraph(model, graph)) return 1;
   createDualGraph(graph, false);
   graph.nparts(npart);
-  
+
   if(elmToPartition.size() != graph.ne()){
     Msg::Error("All elements are not partitioned.");
     return 1;
   }
-  
+
   unsigned int *part = new unsigned int[graph.ne()];
   for(unsigned int i = 0; i < graph.ne(); i++){
     if(graph.element(i)){
       part[i] = elmToPartition[graph.element(i)]-1;
     }
   }
-  
+
   // Check and correct the topology
   for(unsigned int i = 0; i < graph.ne(); i++){
     if(graph.element(i)->getDim() == (int)graph.dim()) continue;
-    
+
     for(unsigned int j = graph.xadj(i); j < graph.xadj(i+1); j++){
       if(graph.element(graph.adjncy(j))->getDim() == graph.element(i)->getDim()+1){
         if(part[i] != part[graph.adjncy(j)]){
@@ -2855,7 +2856,7 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart, hashmap<MEl
           break;
         }
       }
-      
+
       if(graph.element(graph.adjncy(j))->getDim() == graph.element(i)->getDim()+2){
         if(part[i] != part[graph.adjncy(j)]){
           part[i] = part[graph.adjncy(j)];
@@ -2863,7 +2864,7 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart, hashmap<MEl
           break;
         }
       }
-      
+
       if(graph.element(graph.adjncy(j))->getDim() == graph.element(i)->getDim()+3){
         if(part[i] != part[graph.adjncy(j)]){
           part[i] = part[graph.adjncy(j)];
@@ -2874,13 +2875,13 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart, hashmap<MEl
     }
   }
   graph.partition(part);
-  
+
   std::vector< std::set<MElement*> > boundaryElements = graph.getBoundaryElements();
   model->setNumPartitions(graph.nparts());
-  
+
   CreateNewEntities(model, elmToPartition);
   elmToPartition.clear();
-  
+
   if(CTX::instance()->mesh.partitionCreateTopology){
     Msg::StatusBar(true, "Creating partition topology...");
     CreatePartitionBoundaries(model, boundaryElements);
@@ -2888,7 +2889,7 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart, hashmap<MEl
     BuildTopology(model);
     Msg::StatusBar(true, "Done creating partition topology");
   }
-  
+
   AssignMeshVertices(model);
 
   movePeriodicNodesFromParentToPartitionEntities(model);
@@ -2920,7 +2921,7 @@ int ConvertOldPartitioningToNewOne(GModel *const model)
       partitions.insert(e->getPartition());
     }
   }
-  
+
   return PartitionUsingThisSplit(model, partitions.size(), elmToPartition);
 }
 

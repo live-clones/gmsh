@@ -10,6 +10,7 @@
 #include <unordered_map>
 #define hashmap std::unordered_map
 #else
+#include <map>
 #define hashmap std::map
 #endif
 
@@ -18,6 +19,9 @@ class GModel;
 int PartitionMesh(GModel *const model);
 int UnpartitionMesh(GModel *const model);
 int ConvertOldPartitioningToNewOne(GModel *const model);
-int PartitionUsingThisSplit(GModel *const model, unsigned int npart, hashmap<MElement*, unsigned int> &elmToPartition);
+int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
+                            hashmap<MElement*, unsigned int> &elmToPartition);
+
+#undef hashmap
 
 #endif
