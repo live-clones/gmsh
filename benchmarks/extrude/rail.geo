@@ -205,7 +205,6 @@ Mesh.FlexibleTransfinite = 1;
 Mesh.Algorithm = 8;
 Mesh.RecombineAll = 1;
 Mesh.RecombinationAlgorithm = 1;
-Mesh.Lloyd = 20;
 
 // l'extrusion est maintenant necessaire pour creer des nouvelles entites
 Extrude {0,0,5.0} {
