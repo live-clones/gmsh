@@ -485,7 +485,6 @@ double opt_mesh_partition_tri_weight(OPT_ARGS_NUM);
 double opt_mesh_partition_create_topology(OPT_ARGS_NUM);
 double opt_mesh_partition_create_ghost_cells(OPT_ARGS_NUM);
 double opt_mesh_binary(OPT_ARGS_NUM);
-double opt_mesh_lloyd(OPT_ARGS_NUM);
 double opt_mesh_smooth_cross_field(OPT_ARGS_NUM);
 double opt_mesh_bdf_field_format(OPT_ARGS_NUM);
 double opt_mesh_nb_smoothing(OPT_ARGS_NUM);

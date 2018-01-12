@@ -5799,18 +5799,6 @@ double opt_mesh_binary(OPT_ARGS_NUM)
   return CTX::instance()->mesh.binary;
 }
 
-double opt_mesh_lloyd(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET)
-    CTX::instance()->mesh.optimizeLloyd = (int)val;
-#if defined(HAVE_FLTK)
-  if(FlGui::available() && (action & GMSH_GUI))
-    FlGui::instance()->options->mesh.value[27]->value
-      (CTX::instance()->mesh.optimizeLloyd);
-#endif
-  return CTX::instance()->mesh.optimizeLloyd;
-}
-
 double opt_mesh_smooth_cross_field(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

@@ -508,7 +508,6 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
   opt_mesh_recombine3d_all(0, GMSH_SET, o->mesh.butt[22]->value());
 
   opt_mesh_nb_smoothing(0, GMSH_SET, o->mesh.value[0]->value());
-  opt_mesh_lloyd(0, GMSH_SET, o->mesh.value[27]->value());
   opt_mesh_lc_factor(0, GMSH_SET, o->mesh.value[2]->value());
   opt_mesh_lc_min(0, GMSH_SET, o->mesh.value[25]->value());
   opt_mesh_lc_max(0, GMSH_SET, o->mesh.value[26]->value());
@@ -2396,14 +2395,6 @@ optionWindow::optionWindow(int deltaFontSize)
          (L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Recombine tets into hex-dom mesh (experimental)");
       mesh.butt[22]->type(FL_TOGGLE_BUTTON);
       mesh.butt[22]->callback(mesh_options_ok_cb);
-
-      mesh.value[27] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 8 * BH, IW/2, BH, "LLoyd smoothing steps (experimental)");
-      mesh.value[27]->minimum(0);
-      mesh.value[27]->maximum(100);
-      mesh.value[27]->step(1);
-      mesh.value[27]->align(FL_ALIGN_RIGHT);
-      mesh.value[27]->callback(mesh_options_ok_cb);
 
       o->end();
     }

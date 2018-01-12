@@ -5,7 +5,6 @@
 
 #include <iostream>
 #include "meshGFaceBamg.h"
-#include "meshGFaceLloyd.h"
 #include "GmshMessage.h"
 #include "GFace.h"
 #include "GModel.h"

@@ -986,8 +986,6 @@ StringXNumber MeshOptions_Number[] = {
     "Field format for Nastran BDF files (0=free, 1=small, 2=large)" },
   { F|O, "Binary" , opt_mesh_binary , 0. ,
     "Write mesh files in binary format (if possible)" },
-  { F|O, "Lloyd" , opt_mesh_lloyd , 0. ,
-    "Apply lloyd optimization on surface meshes" },
   { F|O, "SmoothCrossField" , opt_mesh_smooth_cross_field , 0. ,
     "Apply n barycentric smoothing passes to the cross field" },
 
