@@ -56,6 +56,7 @@ public:
     }
   }
   MElement *getMElement() { return _metaEl; }
+  std::vector<MVertex*> getBaseVert();
 
 private:
   struct metaInfoType {

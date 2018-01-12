@@ -938,12 +938,13 @@ void curveColumn(const FastCurvingParameters &p, GEntity *ent,
   // Order
   const int order = blob[0]->getPolynomialOrder();
 
-  // If 2D P2 and allowed, modify base vertices to minimize distance between wall edge and CAD
-  if ((p.optimizeGeometry) && (metaElType == TYPE_QUA) && (order == 2))
-    optimizeCADDist2DP2(bndEnt, baseVert);
-
   // Create meta-element
   MetaEl metaElt(metaElType, order, baseVert, topPrimVert);
+
+  // If 2D P2 and allowed, modify base vertices to minimize distance between wall edge and CAD
+  std::vector<MVertex*> metaBaseVert = metaElt.getBaseVert();
+  if ((p.optimizeGeometry) && (metaElType == TYPE_QUA) && (order == 2))
+    optimizeCADDist2DP2(bndEnt, metaBaseVert);
 
   // If required, curve top face of meta-element
   if (p.curveOuterBL != FastCurvingParameters::OUTER_NOCURVE) {
@@ -1033,6 +1034,7 @@ void curveMeshFromBndElt(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
 
 void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
                       GEntity *ent, GEntity *bndEnt,
+                      std::set<MVertex*> movedVert,
                       const FastCurvingParameters &p)
 {
   // Build list of bnd. elements to consider
@@ -1055,7 +1057,6 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
 
   // Loop over boundary elements to curve them by columns
   DbgOutputMeta dbgOut;
-  std::set<MVertex*> movedVert;
   for(std::list<MElement*>::iterator itBE = bndEl.begin();
       itBE != bndEl.end(); itBE++) // Loop over bnd. elements
     curveMeshFromBndElt(ed2el, face2el, ent, bndEnt,
@@ -1077,9 +1078,16 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
   Msg::StatusBar(true, "Curving high order boundary layer mesh...");
 
   // Retrieve geometric entities and boundary layer field
-  std::vector<GEntity*> allGEnt;
+  std::vector<GEntity*> allGEnt, allBndEnts;
   gm->getEntities(allGEnt);
+  for (int iEnt = 0; iEnt < allGEnt.size(); ++iEnt) {
+    if (allGEnt[iEnt]->dim() == p.dim-1) allBndEnts.push_back(allGEnt[iEnt]);
+  }
   BoundaryLayerField *blField = getBLField(gm);
+  const bool useBLInfo = requireBLInfo && (blField != 0);
+
+  // Set of vertices already moved
+  std::set<MVertex*> movedVert;
 
   // Curve mesh for non-straight boundary entities
   for (int iEnt = 0; iEnt < allGEnt.size(); ++iEnt) {
@@ -1095,7 +1103,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
       bndEnts = std::vector<GEntity*>(gEds.begin(), gEds.end());
       for (int iBndEnt = 0; iBndEnt < bndEnts.size(); iBndEnt++) {
         GEntity* &bndEnt = bndEnts[iBndEnt];
-        if ((blField != 0) && blField->isEdgeBL(bndEnt->tag())) {
+        if (useBLInfo && blField->isEdgeBL(bndEnt->tag())) {
           blBndEnts.insert(bndEnt);
         }
       }
@@ -1104,7 +1112,8 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
       std::list<GFace*> gFaces = gEnt->faces();
       bndEnts = std::vector<GEntity*>(gFaces.begin(), gFaces.end());
     }
-    if (requireBLInfo && blBndEnts.empty()) continue;                           // Skip if BL info is required but there is none
+    if (useBLInfo && blBndEnts.empty()) continue;                               // Skip if BL info is required but there is none
+    if (bndEnts.size() == 0) bndEnts = allBndEnts;                              // If no bnd entities (for instance no geometry), try curving from all
 
     // Compute edge/face -> elt. connectivity
     Msg::Info("Computing connectivity for entity %i...", gEnt->tag());
@@ -1123,7 +1132,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
       if ((bndType == GEntity::Line) || (bndType == GEntity::Plane)) continue;  // Skip if boundary is straight
       Msg::Info("Curving elements in entity %d for boundary entity %d...",
                 gEnt->tag(), bndEnt->tag());
-      curveMeshFromBnd(ed2el, face2el, allGEnt[iEnt], bndEnt, p);
+      curveMeshFromBnd(ed2el, face2el, allGEnt[iEnt], bndEnt, movedVert, p);
     }
   }
 

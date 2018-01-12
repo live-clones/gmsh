@@ -449,3 +449,16 @@ std::string MetaEl::printPOS()
 
   return oss.str();
 }
+
+
+
+std::vector<MVertex*> MetaEl::getBaseVert()
+{
+  const int nbBaseVert = _mInfo.baseInd.size();
+  std::vector<MVertex*> baseVert(nbBaseVert);
+  for (int iVB = 0; iVB < nbBaseVert; iVB++) {
+    const int &indB = _mInfo.baseInd[iVB];
+    baseVert[iVB] = _metaVert[indB];
+  }
+  return baseVert;
+}

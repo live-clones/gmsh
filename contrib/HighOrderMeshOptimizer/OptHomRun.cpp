@@ -757,6 +757,10 @@ HOPatchDefParameters::HOPatchDefParameters(const OptHomParameters &p)
 
 double HOPatchDefParameters::elBadness(MElement *el, GEntity* gEnt) const
 {
+  if (lockCurvedBLElts && (gEnt != 0)) {                                        // If element locked, return high value to avoid retaining it
+    const std::set<MElement*> &lockedElts = gEnt->curvedBLElements;
+    if (lockedElts.find(el) != lockedElts.end()) return 1e300;
+  }
   double jmin, jmax;
   el->scaledJacRange(jmin, jmax);
   double badness = std::min(jmin-jacMin, 0.) + std::min(jacMax-jmax, 0.);
@@ -792,7 +796,7 @@ int HOPatchDefParameters::inPatch(const SPoint3 &badBary,
                                   double limDist, MElement *el,
                                   GEntity* gEnt) const
 {
-  if (lockCurvedBLElts && (gEnt != 0)) {
+  if (lockCurvedBLElts && (gEnt != 0)) {                                        // If element locked, do not include in patch
     const std::set<MElement*> &lockedElts = gEnt->curvedBLElements;
     if (lockedElts.find(el) != lockedElts.end()) return -1;
   }

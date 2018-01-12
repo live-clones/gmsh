@@ -187,6 +187,7 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     p.adaptBlobDistFact = o->value[11]->value();
     p.optPrimSurfMesh = false;
     // HighOrderMeshOptimizer(GModel::current(), p);
+    p.lockCurvedBLElts = true;
     HighOrderMeshOptimizerNew(GModel::current(), p);
     break;
   }
@@ -198,7 +199,9 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
     FastCurvingParameters p;
     p.onlyVisible = onlyVisible;
     p.dim = dim;
-    p.curveOuterBL = FastCurvingParameters::OUTER_CURVE;
+    // p.curveOuterBL = FastCurvingParameters::OUTER_CURVE;
+    // p.curveOuterBL = FastCurvingParameters::OUTER_CURVECONSERVATIVE;
+    // p.curveOuterBL = FastCurvingParameters::OUTER_NOCURVE;
     HighOrderMeshFastCurving(GModel::current(), p);
     break;
   }
