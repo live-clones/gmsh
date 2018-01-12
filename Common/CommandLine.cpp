@@ -76,18 +76,17 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-format string", "Select output mesh format (auto (default), msh, "
                  "msh1, msh2, msh3, msh4, unv, vrml, ply2, stl, mesh, bdf, cgns, "
                  "p3d, diff, med, neu, ...)"));
-  s.push_back(mp("-bin", "Use binary format when available"));
+  s.push_back(mp("-bin", "Create binary files when possible"));
   s.push_back(mp("-refine", "Perform uniform mesh refinement, then exit"));
   s.push_back(mp("-reclassify", "Reclassify mesh, then exit"));
   s.push_back(mp("-part int", "Partition after batch mesh generation"));
   s.push_back(mp("-part_weight tri|quad|tet|hex|pri|pyr|trih int",
                  "Weight of a triangle/quad/etc. during partitioning"));
   s.push_back(mp("-part_split", "Save mesh partitions in separate files"));
-  s.push_back(mp("-preserveNumberingMsh2", "Preserve element numbering in MSH2 format "
-                 "(will break meshes with multiple physical groups for a single elementary entity)"));
   s.push_back(mp("-part_[no_]topo", "Create the partition topology"));
   s.push_back(mp("-part_[no_]ghosts", "Create ghost cells"));
   s.push_back(mp("-part_topo_pro", "Save the partition topology .pro file"));
+  s.push_back(mp("-preserve_numbering_msh2", "Preserve element numbering in MSH2 format"));
   s.push_back(mp("-save_all", "Save all elements (discard physical group definitions)"));
   s.push_back(mp("-save_parametric", "Save vertices with their parametric coordinates"));
   s.push_back(mp("-save_topology", "Save model topology"));
@@ -100,7 +99,6 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "quality less than a threshold"));
   s.push_back(mp("-optimize_ho", "Optimize high order meshes"));
   s.push_back(mp("-ho_[min,max,nlayers]", "High-order optimization parameters"));
-  s.push_back(mp("-optimize_lloyd", "Optimize 2D meshes using Lloyd algorithm"));
   s.push_back(mp("-clscale float", "Set global mesh element size scaling factor"));
   s.push_back(mp("-clmin float", "Set minimum mesh element size"));
   s.push_back(mp("-clmax float", "Set maximum mesh element size"));
@@ -574,13 +572,6 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
           opt_mesh_ho_nlayers(0, GMSH_SET, atoi(argv[i++]));
         else
           Msg::Fatal("Missing number");
-      }
-      else if(!strcmp(argv[i] + 1, "optimize_lloyd")) {
-        i++;
-        if(argv[i])
-          CTX::instance()->mesh.optimizeLloyd = atoi(argv[i++]);
-        else
-          Msg::Fatal("Missing number of lloyd iterations");
       }
       else if(!strcmp(argv[i] + 1, "nopopup")) {
         CTX::instance()->noPopup = 1;
