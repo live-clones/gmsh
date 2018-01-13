@@ -1388,8 +1388,6 @@ void GFace::lloyd(int nbiter, int infn)
 #if defined(HAVE_MESH) && defined(HAVE_BFGS)
   smoothing s = smoothing(nbiter,infn);
   s.optimize_face(this);
-  // lloydAlgorithm algo(nbiter, infn);
-  // algo(this);
 #endif
 }
 

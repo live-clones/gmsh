@@ -39,7 +39,6 @@
 #include "meshPartition.h"
 #include "CreateFile.h"
 #include "Context.h"
-#include "meshGFaceLloyd.h"
 #include "boundaryLayersData.h"
 #include "filterElements.h"
 
@@ -1514,10 +1513,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 #endif
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-     !CTX::instance()->mesh.optimizeLloyd && !onlyInitialMesh && CTX::instance()->mesh.algoRecombine != 2)
+     !onlyInitialMesh && CTX::instance()->mesh.algoRecombine != 2)
     recombineIntoQuads(gf);
-
-
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
                        gf->meshStatistics.average_element_shape,
@@ -2305,7 +2302,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   delete m;
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-     !CTX::instance()->mesh.optimizeLloyd && CTX::instance()->mesh.algoRecombine != 2)
+     CTX::instance()->mesh.algoRecombine != 2)
     recombineIntoQuads(gf,true,false);
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
