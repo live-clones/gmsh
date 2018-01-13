@@ -72,7 +72,7 @@ GModel::GModel(std::string name)
     _name(name), _visible(1), _octree(0), _geo_internals(0),
     _occ_internals(0), _acis_internals(0), _fm_internals(0),
     _fields(0), _currentMeshEntity(0),
-    normals(0), numPartitions(0)
+    _numPartitions(0), normals(0)
 {
 
   // hide all other models
