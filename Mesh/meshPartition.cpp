@@ -2318,7 +2318,7 @@ static int computeOrientation(GEntity *parent, GEntity *child)
 {
   std::vector<MVertex*> vertices;
   child->getMeshElement(0)->getVertices(vertices);
-
+  
   for(unsigned int i = 0; i < parent->getNumMeshElements(); i++){
     std::vector<MVertex*> parentVertices;
     MElement* element = parent->getMeshElement(i);
@@ -2326,44 +2326,44 @@ static int computeOrientation(GEntity *parent, GEntity *child)
     bool haveBreak = false;
     for(unsigned int j = 0; j < vertices.size(); j++){
       std::vector<MVertex*>::iterator it = std::find
-        (parentVertices.begin(), parentVertices.end(), vertices[j]);
+      (parentVertices.begin(), parentVertices.end(), vertices[j]);
       if(it == parentVertices.end()){
         haveBreak = true;
         break;
       }
     }
-
+    
     if(!haveBreak){
       if(parent->dim() == 3){
         int numFace = 0;
         MFace me = child->getMeshElement(0)->getFace(0);
-
+        
         for(int j = 0; j < element->getNumFaces(); j++){
           if(element->getFace(j) == me){
             numFace = j;
             break;
           }
         }
-
+        
         std::vector<MVertex*> verts;
         element->getFaceVertices(numFace, verts);
-
+        
         return (verts == vertices) ? 1 : -1;
       }
       else if(parent->dim() == 2){
         int numEdge = 0;
         MEdge me = child->getMeshElement(0)->getEdge(0);
-
+        
         for(int j = 0; j < element->getNumEdges(); j++){
           if(element->getEdge(j) == me){
             numEdge = j;
             break;
           }
         }
-
+        
         std::vector<MVertex*> verts;
         element->getEdgeVertices(numEdge, verts);
-
+        
         return (verts == vertices) ? 1 : -1;
       }
       else if(parent->dim() == 1){
@@ -2371,22 +2371,34 @@ static int computeOrientation(GEntity *parent, GEntity *child)
       }
     }
   }
-
+  
   return 1;
 }
 
 // Build the topology
 static void BuildTopology(GModel *model)
 {
+  std::vector<GEntity*> entities;
+  std::map<GEntity*, SBoundingBox3d> boundingBoxes;
+  model->getEntities(entities);
+  for(unsigned int i = 0; i < entities.size(); i++){
+    if(entities[i]->geomType() == GEntity::PartitionVolume ||
+       entities[i]->geomType() == GEntity::PartitionSurface ||
+       entities[i]->geomType() == GEntity::PartitionCurve ||
+       entities[i]->geomType() == GEntity::PartitionVertex){
+      boundingBoxes.insert(std::pair<GEntity*, SBoundingBox3d>(entities[i], entities[i]->bounds()));
+    }
+  }
+  
   // Loop over regions
   for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
     if((*it)->geomType() == GEntity::PartitionVolume){
-      SBoundingBox3d boundingBox = (*it)->bounds();
+      SBoundingBox3d boundingBox = boundingBoxes[*it];
       std::set<GFace*> boundaryFace;
 
       for(GModel::const_fiter itSub = model->firstFace(); itSub != model->lastFace(); ++itSub){
         if((*itSub)->geomType() == GEntity::PartitionSurface){
-          SBoundingBox3d subBoundingBox = (*itSub)->bounds();
+          SBoundingBox3d subBoundingBox = boundingBoxes[*itSub];
           if(boundingBox.contains(subBoundingBox)){
             boundaryFace.insert(*itSub);
           }
@@ -2409,16 +2421,16 @@ static void BuildTopology(GModel *model)
       (*it)->setOrientations(facesOrientation);
     }
   }
-
+  
   // Loop over faces
   for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
     if((*it)->geomType() == GEntity::PartitionSurface){
-      SBoundingBox3d boundingBox = (*it)->bounds();
+      SBoundingBox3d boundingBox = boundingBoxes[*it];
       std::set<GEdge*> boundaryEdge;
       
       for(GModel::const_eiter itSub = model->firstEdge(); itSub != model->lastEdge(); ++itSub){
         if((*itSub)->geomType() == GEntity::PartitionCurve){
-          SBoundingBox3d subBoundingBox = (*itSub)->bounds();
+          SBoundingBox3d subBoundingBox = boundingBoxes[*itSub];
           if(boundingBox.contains(subBoundingBox)){
             boundaryEdge.insert(*itSub);
           }
@@ -2441,16 +2453,16 @@ static void BuildTopology(GModel *model)
       (*it)->setOrientations(edgesOrientation);
     }
   }
-
+  
   // Loop over edges
   for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
     if((*it)->geomType() == GEntity::PartitionCurve){
-      SBoundingBox3d boundingBox = (*it)->bounds();
+      SBoundingBox3d boundingBox = boundingBoxes[*it];
       std::set<GVertex*> boundaryVertex;
       
       for(GModel::const_viter itSub = model->firstVertex(); itSub != model->lastVertex(); ++itSub){
         if((*itSub)->geomType() == GEntity::PartitionVertex){
-          SBoundingBox3d subBoundingBox = (*itSub)->bounds();
+          SBoundingBox3d subBoundingBox = boundingBoxes[*itSub];
           if(boundingBox.contains(subBoundingBox)){
             boundaryVertex.insert(*itSub);
           }
@@ -2604,16 +2616,17 @@ int PartitionMesh(GModel *const model)
   if(CTX::instance()->mesh.partitionCreateTopology){
     Msg::StatusBar(true, "Creating partition topology...");
     std::vector< std::set<MElement*> > boundaryElements = graph.getBoundaryElements();
-    double t3 = Cpu();
-    Msg::Info(" + getBoundaryElements (%g s)", t3 - t2);
+    double tb3 = Cpu();
+    Msg::Info(" + getBoundaryElements (%g s)", tb3 - t2);
     CreatePartitionBoundaries(model, boundaryElements);
-    double t4 = Cpu();
-    Msg::Info(" + CreatePartitionBoundaries (%g s)", t4 - t3);
+    double tb4 = Cpu();
+    Msg::Info(" + CreatePartitionBoundaries (%g s)", tb4 - tb3);
     boundaryElements.clear();
     BuildTopology(model);
-    double t5 = Cpu();
-    Msg::Info(" + BuildTopology (%g s)", t5 - t4);
+    double tb5 = Cpu();
+    Msg::Info(" + BuildTopology (%g s)", tb5 - tb4);
     
+    double t3 = Cpu();
     Msg::StatusBar(true, "Done creating partition topology (%g s)", t3 - t2);
   }
 

@@ -9,6 +9,7 @@
 #include <float.h>
 #include "SPoint3.h"
 #include "SVector3.h"
+#include "MVertex.h"
 
 #if defined(WIN32)
 #undef min
@@ -95,7 +96,7 @@ class SBoundingBox3d {
     double sc = len.norm() * 0.5;
     scale (sc,sc,sc);
   }
-  bool contains(SBoundingBox3d &bound)
+  bool contains(const SBoundingBox3d &bound)
   {
     if(bound.MinPt.x() >= MinPt.x() &&
        bound.MinPt.y() >= MinPt.y() &&
