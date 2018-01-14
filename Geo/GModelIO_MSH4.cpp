@@ -2814,8 +2814,82 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
         break;
       }
     }
-    tmp->_associateEntityWithMeshVertices();
-    tmp->pruneMeshVertexAssociations();
+    
+    if(!CTX::instance()->mesh.partitionCreateTopology){
+      for(GModel::const_viter it = tmp->firstVertex(); it != tmp->lastVertex(); ++it){
+        for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
+          for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+            (*it)->getMeshElement(j)->getVertex(k)->setEntity(0);
+          }
+        }
+        (*it)->mesh_vertices.clear();
+      }
+      for(GModel::const_eiter it = tmp->firstEdge(); it != tmp->lastEdge(); ++it){
+        for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
+          for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+            (*it)->getMeshElement(j)->getVertex(k)->setEntity(0);
+          }
+        }
+        (*it)->mesh_vertices.clear();
+      }
+      for(GModel::const_fiter it = tmp->firstFace(); it != tmp->lastFace(); ++it){
+        for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
+          for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+            (*it)->getMeshElement(j)->getVertex(k)->setEntity(0);
+          }
+        }
+        (*it)->mesh_vertices.clear();
+      }
+      for(GModel::const_riter it = tmp->firstRegion(); it != tmp->lastRegion(); ++it){
+        for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
+          for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+            (*it)->getMeshElement(j)->getVertex(k)->setEntity(0);
+          }
+        }
+        (*it)->mesh_vertices.clear();
+      }
+    
+      for(GModel::const_viter it = tmp->firstVertex(); it != tmp->lastVertex(); ++it){
+        for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
+          for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+            if((*it)->getMeshElement(j)->getVertex(k)->onWhat() == 0){
+              (*it)->getMeshElement(j)->getVertex(k)->setEntity(*it);
+              (*it)->mesh_vertices.push_back((*it)->getMeshElement(j)->getVertex(k));
+            }
+          }
+        }
+      }
+      for(GModel::const_eiter it = tmp->firstEdge(); it != tmp->lastEdge(); ++it){
+        for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
+          for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+            if((*it)->getMeshElement(j)->getVertex(k)->onWhat() == 0){
+              (*it)->getMeshElement(j)->getVertex(k)->setEntity(*it);
+              (*it)->mesh_vertices.push_back((*it)->getMeshElement(j)->getVertex(k));
+            }
+          }
+        }
+      }
+      for(GModel::const_fiter it = tmp->firstFace(); it != tmp->lastFace(); ++it){
+        for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
+          for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+            if((*it)->getMeshElement(j)->getVertex(k)->onWhat() == 0){
+              (*it)->getMeshElement(j)->getVertex(k)->setEntity(*it);
+              (*it)->mesh_vertices.push_back((*it)->getMeshElement(j)->getVertex(k));
+            }
+          }
+        }
+      }
+      for(GModel::const_riter it = tmp->firstRegion(); it != tmp->lastRegion(); ++it){
+        for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
+          for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+            if((*it)->getMeshElement(j)->getVertex(k)->onWhat() == 0){
+              (*it)->getMeshElement(j)->getVertex(k)->setEntity(*it);
+              (*it)->mesh_vertices.push_back((*it)->getMeshElement(j)->getVertex(k));
+            }
+          }
+        }
+      }
+    }
 
     if(ghostEntity){
       for(unsigned int j = 0; j < ghostEntity->getNumMeshElements(); j++){

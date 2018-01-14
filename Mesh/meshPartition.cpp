@@ -1993,8 +1993,8 @@ static void CreatePartitionBoundaries(GModel *const model,
       for(unsigned int i = 0; i < mapOfPartitionsTag; i++){
         for(std::set<MElement*>::iterator it = subBoundaryElements[i].begin();
             it != subBoundaryElements[i].end(); ++it){
-          for(int j = 0; j < (*it)->getNumEdges(); j++){
-            edgeToElement[(*it)->getEdge(j)].push_back
+          for(int j = 0; j < (*it)->getNumPrimaryVertices(); j++){
+            vertexToElement[(*it)->getVertex(j)].push_back
             (std::pair<MElement*, std::vector<unsigned int> >
              (*it, mapOfPartitions[i]));
           }
@@ -2643,8 +2643,6 @@ int PartitionMesh(GModel *const model)
       }
     }
   }
-
-  std::vector< std::set<MElement*> > boundaryElements = graph.getBoundaryElements();
   model->setNumPartitions(graph.nparts());
 
   CreateNewEntities(model, elmToPartition);
@@ -2655,6 +2653,7 @@ int PartitionMesh(GModel *const model)
 
   if(CTX::instance()->mesh.partitionCreateTopology){
     Msg::StatusBar(true, "Creating partition topology...");
+    std::vector< std::set<MElement*> > boundaryElements = graph.getBoundaryElements();
     CreatePartitionBoundaries(model, boundaryElements);
     boundaryElements.clear();
     BuildTopology(model);
@@ -2957,7 +2956,6 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
   }
   graph.partition(part);
 
-  std::vector< std::set<MElement*> > boundaryElements = graph.getBoundaryElements();
   model->setNumPartitions(graph.nparts());
 
   CreateNewEntities(model, elmToPartition);
@@ -2965,6 +2963,7 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
 
   if(CTX::instance()->mesh.partitionCreateTopology){
     Msg::StatusBar(true, "Creating partition topology...");
+    std::vector< std::set<MElement*> > boundaryElements = graph.getBoundaryElements();
     CreatePartitionBoundaries(model, boundaryElements);
     boundaryElements.clear();
     BuildTopology(model);
@@ -3019,6 +3018,11 @@ int UnpartitionMesh(GModel *const model)
 }
 
 int ConvertOldPartitioningToNewOne(GModel *const model)
+{
+}
+
+int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
+                            hashmap<MElement*, unsigned int> &elmToPartition)
 {
 }
 
