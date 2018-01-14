@@ -164,7 +164,7 @@ class GModel {
   std::map<std::pair<int, int>, std::string> physicalNames, elementaryNames;
 
   // the set of all used mesh partition numbers
-  unsigned int _numPartitions;
+  unsigned int numPartitions;
 
  public:
   GModel(std::string name="");
@@ -454,8 +454,8 @@ class GModel {
   void removeInvisibleElements();
 
   // the list of partitions
-  unsigned int getNumPartitions() const { return _numPartitions; }
-  void setNumPartitions(unsigned int npart){ _numPartitions = npart; }
+  unsigned int getNumPartitions() const { return numPartitions; }
+  void setNumPartitions(unsigned int npart){ numPartitions = npart; }
 
   // delete all the partitions
   int deleteMeshPartitions();
