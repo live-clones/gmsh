@@ -2050,75 +2050,6 @@ static void CreatePartitionBoundaries(GModel *const model,
   }
 }
 
-static void fillBoundaryFace(const GModel *const model, std::set<GFace*> &boundaryFace,
-                             partitionRegion* entity, bool full = false)
-{
-  // Loop over faces
-  for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
-    bool isABoundary = true;
-    for(std::vector<MVertex*>::const_iterator itVec = (*it)->mesh_vertices.begin();
-        itVec != (*it)->mesh_vertices.end(); ++itVec){
-      if(full && (*itVec)->onWhat() != entity){
-        isABoundary = false;
-        break;
-      }
-      if(!full && (*itVec)->onWhat() == entity){
-        boundaryFace.insert(*it);
-        break;
-      }
-    }
-    if(isABoundary && full){
-      boundaryFace.insert(*it);
-    }
-  }
-}
-
-static void fillBoundaryEdge(const GModel *const model, std::set<GEdge*> &boundaryEdge,
-                             partitionFace* entity, bool full = false)
-{
-  // Loop over edges
-  for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
-    bool isABoundary = true;
-    for(std::vector<MVertex*>::const_iterator itVec = (*it)->mesh_vertices.begin();
-        itVec != (*it)->mesh_vertices.end(); ++itVec){
-      if(full && (*itVec)->onWhat() != entity){
-        isABoundary = false;
-        break;
-      }
-      if(!full && (*itVec)->onWhat() == entity){
-        boundaryEdge.insert(*it);
-        break;
-      }
-    }
-    if(isABoundary && full){
-      boundaryEdge.insert(*it);
-    }
-  }
-}
-
-static void fillBoundaryVertex(const GModel *const model, std::set<GVertex*> &boundaryVertex,
-                               partitionEdge* entity, bool full = false)
-{
-  // Loop over vertices
-  for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex(); ++it){
-    bool isABoundary = true;
-    for(std::vector<MVertex*>::const_iterator itVec = (*it)->mesh_vertices.begin();
-        itVec != (*it)->mesh_vertices.end(); ++itVec){
-      if(full && (*itVec)->onWhat() != entity){
-        isABoundary = false;
-        break;
-      }
-      if(!full && (*itVec)->onWhat() == entity){
-        boundaryVertex.insert(*it);
-        break;
-      }
-    }
-    if(isABoundary && full){
-      boundaryVertex.insert(*it);
-    }
-  }
-}
-
 static std::string getPhysicalSubstr(GModel* model, GEntity* entity)
 {
   std::string substr;
@@ -2450,10 +2381,17 @@ static void BuildTopology(GModel *model)
   // Loop over regions
   for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
     if((*it)->geomType() == GEntity::PartitionVolume){
-      AssignMeshVertices(model, 2, true);
-      AssignMeshVerticesToEntity(*it, false);
+      SBoundingBox3d boundingBox = (*it)->bounds();
       std::set<GFace*> boundaryFace;
-      fillBoundaryFace(model, boundaryFace, static_cast<partitionRegion*>(*it), true);
+
+      for(GModel::const_fiter itSub = model->firstFace(); itSub != model->lastFace(); ++itSub){
+        if((*itSub)->geomType() == GEntity::PartitionSurface){
+          SBoundingBox3d subBoundingBox = (*itSub)->bounds();
+          if(boundingBox.contains(subBoundingBox)){
+            boundaryFace.insert(*itSub);
+          }
+        }
+      }
 
       std::list<GFace*> faces;
       std::list<int> facesOrientation;
@@ -2475,11 +2413,17 @@ static void BuildTopology(GModel *model)
   // Loop over faces
   for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
     if((*it)->geomType() == GEntity::PartitionSurface){
-      AssignMeshVertices(model, 1, true);
-      AssignMeshVerticesToEntity(*it, false);
-
+      SBoundingBox3d boundingBox = (*it)->bounds();
       std::set<GEdge*> boundaryEdge;
-      fillBoundaryEdge(model, boundaryEdge, static_cast<partitionFace*>(*it), true);
+      
+      for(GModel::const_eiter itSub = model->firstEdge(); itSub != model->lastEdge(); ++itSub){
+        if((*itSub)->geomType() == GEntity::PartitionCurve){
+          SBoundingBox3d subBoundingBox = (*itSub)->bounds();
+          if(boundingBox.contains(subBoundingBox)){
+            boundaryEdge.insert(*itSub);
+          }
+        }
+      }
 
       std::list<GEdge*> edges;
       std::list<int> edgesOrientation;
@@ -2501,11 +2445,17 @@ static void BuildTopology(GModel *model)
   // Loop over edges
   for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
     if((*it)->geomType() == GEntity::PartitionCurve){
-      AssignMeshVertices(model, 0, true);
-      AssignMeshVerticesToEntity(*it, false);
-
+      SBoundingBox3d boundingBox = (*it)->bounds();
       std::set<GVertex*> boundaryVertex;
-      fillBoundaryVertex(model, boundaryVertex, static_cast<partitionEdge*>(*it), true);
+      
+      for(GModel::const_viter itSub = model->firstVertex(); itSub != model->lastVertex(); ++itSub){
+        if((*itSub)->geomType() == GEntity::PartitionVertex){
+          SBoundingBox3d subBoundingBox = (*itSub)->bounds();
+          if(boundingBox.contains(subBoundingBox)){
+            boundaryVertex.insert(*itSub);
+          }
+        }
+      }
 
       std::vector<GVertex*> vertices;
       std::list<int> verticesOrientation;
@@ -2654,10 +2604,16 @@ int PartitionMesh(GModel *const model)
   if(CTX::instance()->mesh.partitionCreateTopology){
     Msg::StatusBar(true, "Creating partition topology...");
     std::vector< std::set<MElement*> > boundaryElements = graph.getBoundaryElements();
+    double t3 = Cpu();
+    Msg::Info(" + getBoundaryElements (%g s)", t3 - t2);
     CreatePartitionBoundaries(model, boundaryElements);
+    double t4 = Cpu();
+    Msg::Info(" + CreatePartitionBoundaries (%g s)", t4 - t3);
     boundaryElements.clear();
     BuildTopology(model);
-    double t3 = Cpu();
+    double t5 = Cpu();
+    Msg::Info(" + BuildTopology (%g s)", t5 - t4);
+    
     Msg::StatusBar(true, "Done creating partition topology (%g s)", t3 - t2);
   }
 

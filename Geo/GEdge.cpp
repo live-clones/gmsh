@@ -141,7 +141,7 @@ void GEdge::reverse()
     (*line)->reverse();
 }
 
-unsigned int GEdge::getNumMeshElements()
+unsigned int GEdge::getNumMeshElements() const
 {
   return lines.size();
 }
@@ -166,7 +166,7 @@ MElement *const *GEdge::getStartElementType(int type) const
   return reinterpret_cast<MElement *const *>(&lines[0]);
 }
 
-MElement *GEdge::getMeshElement(unsigned int index)
+MElement *GEdge::getMeshElement(unsigned int index) const
 {
   if(index < lines.size())
     return lines[index];
@@ -210,8 +210,9 @@ SBoundingBox3d GEdge::bounds() const
     }
   }
   else{
-    for(unsigned int i = 0; i < mesh_vertices.size(); i++)
-      bbox += mesh_vertices[i]->point();
+    for(unsigned int i = 0; i < getNumMeshElements(); i++)
+      for(unsigned int j = 0; j < getMeshElement(i)->getNumVertices(); j++)
+        bbox += getMeshElement(i)->getVertex(j)->point();
   }
   return bbox;
 }

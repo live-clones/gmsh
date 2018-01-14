@@ -95,6 +95,17 @@ class SBoundingBox3d {
     double sc = len.norm() * 0.5;
     scale (sc,sc,sc);
   }
+  bool contains(SBoundingBox3d &bound)
+  {
+    if(bound.MinPt.x() >= MinPt.x() &&
+       bound.MinPt.y() >= MinPt.y() &&
+       bound.MinPt.z() >= MinPt.z() &&
+       bound.MaxPt.x() <= MaxPt.x() &&
+       bound.MaxPt.y() <= MaxPt.y() &&
+       bound.MaxPt.z() <= MaxPt.z()) return true;
+    
+    return false;
+  }
  private:
   SPoint3 MinPt, MaxPt;
 };

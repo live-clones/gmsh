@@ -57,7 +57,7 @@ void GRegion::deleteMesh(bool onlyDeleteElements)
   model()->destroyMeshCaches();
 }
 
-unsigned int GRegion::getNumMeshElements()
+unsigned int GRegion::getNumMeshElements() const
 {
   return tetrahedra.size() + hexahedra.size() + prisms.size() + pyramids.size() +
     trihedra.size() + polyhedra.size();
@@ -107,7 +107,7 @@ MElement *const *GRegion::getStartElementType(int type) const
   return 0;
 }
 
-MElement *GRegion::getMeshElement(unsigned int index)
+MElement *GRegion::getMeshElement(unsigned int index) const
 {
   if(index < tetrahedra.size())
     return tetrahedra[index];
@@ -147,8 +147,9 @@ SBoundingBox3d GRegion::bounds() const
       res += (*it)->bounds();
   }
   else{
-    for(unsigned int i = 0; i < mesh_vertices.size(); i++)
-      res += mesh_vertices[i]->point();
+    for(unsigned int i = 0; i < getNumMeshElements(); i++)
+      for(unsigned int j = 0; j < getMeshElement(i)->getNumVertices(); j++)
+        res += getMeshElement(i)->getVertex(j)->point();
   }
   return res;
 }
