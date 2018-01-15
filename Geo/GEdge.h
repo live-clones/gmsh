@@ -47,6 +47,11 @@ class GEdge : public GEntity {
   void setEndVertex(GVertex *gv)  { v1 = gv; }
   virtual GVertex *getBeginVertex() const { return v0; }
   virtual GVertex *getEndVertex() const { return v1; }
+  void setVertex(GVertex* f, const int orientation)
+  {
+    if(orientation > 0) v0 = f;
+    else if(orientation < 0) v1 = f;
+  }
 
   // same or opposite direction to the master
   int masterOrientation;
