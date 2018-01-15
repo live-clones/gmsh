@@ -1420,15 +1420,15 @@ static void CreateNewEntities(GModel *const model,
   
   for(GModel::const_fiter it = faces.begin(); it != faces.end(); ++it)
     if((*it)->geomType() == GEntity::PartitionSurface)
-      facesToPartitionFaces[static_cast<partitionFace*>(*it)->getParentEntity()].push_back(*it);
+      facesToPartitionFaces[static_cast<partitionFace*>(*it)->getParentEntity()].push_back(static_cast<partitionFace*>(*it));
   
   for(GModel::const_eiter it = edges.begin(); it != edges.end(); ++it)
     if((*it)->geomType() == GEntity::PartitionCurve)
-      edgesToPartitionEdges[static_cast<partitionEdge*>(*it)->getParentEntity()].push_back(*it);
+      edgesToPartitionEdges[static_cast<partitionEdge*>(*it)->getParentEntity()].push_back(static_cast<partitionEdge*>(*it));
   
   for(GModel::const_viter it = vertices.begin(); it != vertices.end(); ++it)
     if((*it)->geomType() == GEntity::PartitionVertex)
-      verticesToPartitionVertices[static_cast<partitionVertex*>(*it)->getParentEntity()].push_back(*it);
+      verticesToPartitionVertices[static_cast<partitionVertex*>(*it)->getParentEntity()].push_back(static_cast<partitionVertex*>(*it));
   
   //Rebuilt the B-Rep
   for(GModel::const_riter it = regions.begin(); it != regions.end(); ++it){
