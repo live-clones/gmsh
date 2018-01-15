@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -10,70 +10,67 @@
 #include <map>
 #include <string>
 #include "CGNSOptions.h"
-#include "meshPartitionOptions.h"
 
 #define NUM_SOLVERS 10
 
 class GamePad;
 
-// The interface-independent context.
-
 struct contextMeshOptions {
+  // mesh algorithms
+  int optimize,  optimizeNetgen, smoothCrossField, refineSteps;
+  double lcFactor, randFactor, lcIntegrationPrecision;
+  double optimizeThreshold, normals, tangents, explode, angleSmoothNormals;
+  double allowSwapEdgeAngle;
+  double qualityInf, qualitySup, radiusInf, radiusSup;
+  double lcMin, lcMax, toleranceEdgeLength, toleranceInitialDelaunay;
+  double anisoMax, smoothRatio;
+  int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
+  int nbSmoothing, algo2d, algo3d, algoSubdivide, oldRefinement;
+  int algoRecombine, recombineAll, recombine3DAll, recombine3DLevel;
+  int recombine3DConformity, flexibleTransfinite, remeshParam, remeshAlgo;
+  int order, secondOrderLinear, secondOrderIncomplete, secondOrderExperimental;
+  int meshOnlyVisible, minCircPoints, minCurvPoints;
+  int hoOptimize, hoNLayers, hoOptPrimSurfMesh;
+  double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
+  std::map<int,int> algo2dPerFace;
+  std::map<int,int> curvatureControlPerFace;
+  int NewtonConvergenceTestXYZ;
+  int ignorePeriodicity;
+  int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
+  // mesh IO
+  int fileFormat;
+  double mshFileVersion, scalingFactor;
+  int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat;
+  int saveParametric, saveTopology, zoneDefinition;
+  int saveElementTagType, switchElementTags;
+  int cgnsImportOrder;
+  int preserveNumberingMsh2;
+  // partitioning
+  int numPartitions, partitionCreateTopology, partitionCreateGhostCells;
+  int partitionSplitMeshFiles, partitionSaveTopologyFile;
+  int partitionTriWeight, partitionQuaWeight, partitionTetWeight, partitionHexWeight;
+  int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
+  int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;
+  // recombination
+  int doRecombinationTest, recombinationTestStart;
+  int recombinationTestNoGreedyStrat, recombinationTestNewStrat, nProc, nbProc;
+  std::string recTestName;
+  // mesh display
   int draw, changed, light, lightTwoSide, lightLines, pointType;
   int points, lines, triangles, quadrangles, tetrahedra, hexahedra, prisms;
   int pyramids, trihedra;
   int surfacesEdges, surfacesFaces, volumesEdges, volumesFaces, numSubEdges;
   int pointsNum, linesNum, surfacesNum, volumesNum, qualityType, labelType;
-  int optimize,  optimizeNetgen, optimizeLloyd, smoothCrossField, refineSteps;
-  double optimizeThreshold,normals, tangents, explode, angleSmoothNormals, allowSwapEdgeAngle;
-  double mshFileVersion, mshFilePartitioned, pointSize, lineWidth;
-  double qualityInf, qualitySup, radiusInf, radiusSup;
-  double scalingFactor, lcFactor, randFactor, lcIntegrationPrecision;
-  double lcMin, lcMax, toleranceEdgeLength, toleranceInitialDelaunay;
-  double anisoMax, smoothRatio;
-  int lcFromPoints, lcFromCurvature, lcExtendFromBoundary;
+  double pointSize, lineWidth;
   int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
-  int fileFormat, nbSmoothing, algo2d, algo3d, algoSubdivide, oldRefinement;
-  int algoRecombine, recombineAll, recombine3DAll, recombine3DLevel;
-  int recombine3DConformity;
-  int flexibleTransfinite;
-  //-- for recombination test (amaury) --
-  int doRecombinationTest, recombinationTestStart;
-  int recombinationTestNoGreedyStrat, recombinationTestNewStrat;
-  int nProc, nbProc;
-  std::string recTestName;
-  //-------------------------------------
-  int remeshParam, remeshAlgo;
-  int order, secondOrderLinear, secondOrderIncomplete;
-  int secondOrderExperimental, meshOnlyVisible;
-  int minCircPoints, minCurvPoints;
-  int hoOptimize, hoNLayers, hoOptPrimSurfMesh;
-  double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
-  int saveAll, saveTri, saveGroupsOfNodes, binary, bdfFieldFormat;
-  int saveParametric, saveTopology;
-  int smoothNormals, zoneDefinition, clip;
-  int saveElementTagType;
-  int switchElementTags;
-  int multiplePasses;
-  int cgnsImportOrder;
-  std::map<int,int> algo2d_per_face;
-  std::map<int,int> curvature_control_per_face;
-  int ignorePartBound;
-  int NewtonConvergenceTestXYZ;
-  int preserveNumberingMsh2;
-  int ignorePeriodicity;
-  int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
+  int smoothNormals, clip;
 };
 
 struct contextGeometryOptions {
-  int draw, light, lightTwoSide, points, lines, surfaces, volumes;
-  int pointsNum, linesNum, surfacesNum, volumesNum, labelType;
-  double pointSize, lineWidth, selectedPointSize, selectedLineWidth;
-  int pointType, lineType, surfaceType, numSubEdges;
+  // geometry algorithms
   int oldCircle, oldNewreg, oldRuledSurface;
   int extrudeSplinePoints, extrudeReturnLateral;
-  double normals, tangents, scalingFactor;
-  int autoCoherence, highlightOrphans, clip, useTransform;
+  int autoCoherence;
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
   int occAutoFix, occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
   int occSewFaces, occParallel, occBooleanPreserveNumbering;
@@ -81,12 +78,21 @@ struct contextGeometryOptions {
   std::string occTargetUnit;
   int copyMeshingMethod, exactExtrusion;
   int matchGeomAndMesh;
-  int orientedPhysicals, doubleClickedEntityTag;
+  int orientedPhysicals;
   int reparamOnFaceRobust;
+  // geometry display
+  int draw, light, lightTwoSide, points, lines, surfaces, volumes;
+  int pointsNum, linesNum, surfacesNum, volumesNum, labelType;
+  double pointSize, lineWidth, selectedPointSize, selectedLineWidth;
+  int pointType, lineType, surfaceType, numSubEdges;
+  double normals, tangents, scalingFactor;
+  int highlightOrphans, clip, useTransform;
+  int doubleClickedEntityTag;
   std::string doubleClickedPointCommand, doubleClickedLineCommand;
   std::string doubleClickedSurfaceCommand, doubleClickedVolumeCommand;
 };
 
+// The interface-independent context.
 class CTX {
  private:
   static CTX *_instance;
@@ -252,9 +258,6 @@ class CTX {
   contextGeometryOptions geom;
   // mesh options
   contextMeshOptions mesh;
-  // FIXME: putting these in the mesh struct (where they belong) causes
-  // an LNK1179 error ("duplicate COMDAT") with MSVC...
-  meshPartitionOptions partitionOptions;
   CGNSOptions cgnsOptions;
   // post processing options
   struct{

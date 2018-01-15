@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -305,6 +305,8 @@ static int _save_mesh(const char *name){ return genericMeshFileDialog
     (name, "MESH Options", FORMAT_MESH, false, true); }
 static int _save_mail(const char *name){ return genericMeshFileDialog
     (name, "MAIL Options", FORMAT_MAIL, false, false); }
+static int _save_matlab(const char *name){ return genericMeshFileDialog
+    (name, "MATLAB Options", FORMAT_MATLAB, false, false); }
 static int _save_bdf(const char *name){ return bdfFileDialog(name); }
 static int _save_p3d(const char *name){ return genericMeshFileDialog
     (name, "P3D Options", FORMAT_P3D, false, false); }
@@ -372,6 +374,7 @@ static int _save_auto(const char *name)
   case FORMAT_RMED : return _save_view_med(name);
   case FORMAT_MESH : return _save_mesh(name);
   case FORMAT_MAIL : return _save_mail(name);
+  case FORMAT_MATLAB : return _save_matlab(name);
   case FORMAT_BDF  : return _save_bdf(name);
   case FORMAT_DIFF : return _save_diff(name);
   case FORMAT_INP  : return _save_inp(name);
@@ -431,6 +434,7 @@ static void file_export_cb(Fl_Widget *w, void *data)
 #endif
     {"Mesh - INRIA Medit" TT "*.mesh", _save_mesh},
     {"Mesh - CEA Triangulation" TT "*.mail", _save_mail},
+    {"Mesh - Matlab" TT "*.m", _save_matlab},
     {"Mesh - Nastran Bulk Data File" TT "*.bdf", _save_bdf},
     {"Mesh - Plot3D Structured Mesh" TT "*.p3d", _save_p3d},
     {"Mesh - STL Surface" TT "*.stl", _save_stl},
@@ -2221,6 +2225,32 @@ static void mesh_optimize_netgen_cb(Fl_Widget *w, void *data)
 static void mesh_partition_cb(Fl_Widget *w, void *data)
 {
   partition_dialog();
+}
+
+static void mesh_unpartition_cb(Fl_Widget *w, void *data)
+{
+  int ier = GModel::current()->deleteMeshPartitions();
+  
+  // Update the screen
+  if(!ier) {
+    opt_mesh_zone_definition(0, GMSH_SET, 0.);
+    opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 1.);
+    CTX::instance()->mesh.changed = ENT_ALL;
+    drawContext::global()->draw();
+  }
+}
+
+static void mesh_convert_old_partitioning_cb(Fl_Widget *w, void *data)
+{
+  int ier = GModel::current()->convertOldPartitioningToNewOne();
+  
+  // Update the screen
+  if(!ier) {
+    opt_mesh_zone_definition(0, GMSH_SET, 0.);
+    opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 1.);
+    CTX::instance()->mesh.changed = ENT_ALL;
+    drawContext::global()->draw();
+  }
 }
 
 static void mesh_define_length_cb(Fl_Widget *w, void *data)
@@ -4297,9 +4327,13 @@ static menuItem static_modules[] = {
    (Fl_Callback *)mesh_inspect_cb} ,
   {"0Modules/Mesh/Refine by splitting",
    (Fl_Callback *)mesh_refine_cb} ,
-#if defined(HAVE_METIS) || defined(HAVE_CHACO)
+#if defined(HAVE_METIS)
   {"0Modules/Mesh/Partition",
    (Fl_Callback *)mesh_partition_cb} ,
+  {"0Modules/Mesh/Unpartition",
+    (Fl_Callback *)mesh_unpartition_cb} ,
+  {"0Modules/Mesh/Convert old partitioning",
+    (Fl_Callback *)mesh_convert_old_partitioning_cb} ,
 #endif
   {"0Modules/Mesh/Smooth 2D",
    (Fl_Callback *)mesh_smooth_cb} ,

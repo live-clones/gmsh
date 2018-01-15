@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -121,7 +121,11 @@ class GEntity {
     CompoundVolume,
     PartitionVertex,
     PartitionCurve,
-    PartitionSurface
+    PartitionSurface,
+    PartitionVolume,
+    GhostCurve,
+    GhostSurface,
+    GhostVolume
   };
 
   enum MeshGenerationStatus {
@@ -172,7 +176,8 @@ class GEntity {
       "Compound Volume",
       "Partition vertex",
       "Partition curve",
-      "Partition surface"
+      "Partition surface",
+      "Partition volume"
     };
     unsigned int type = (unsigned int)geomType();
     if(type >= sizeof(name) / sizeof(name[0]))
@@ -347,6 +352,13 @@ class GEntity {
 
   // add a MeshVertex
   void addMeshVertex(MVertex *v) { mesh_vertices.push_back(v);}
+  // delete a MeshVertex
+  void removeMeshVertex(MVertex *v);
+
+  // add an element
+  virtual void addElement(int type, MElement *e) {}
+  // remove an element
+  virtual void removeElement(int type, MElement *e) {}
 
   // relocate mesh vertices using their parametric coordinates
   virtual void relocateMeshVertices(){}

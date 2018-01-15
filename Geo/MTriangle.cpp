@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -154,6 +154,23 @@ void MTriangle::xyz2uvw(double xyz[3], double uvw[3]) const
     uvw[1] = (d[2] * d1[1] - d[1] * d1[2]) / Jyz;
   }
   uvw[2] = 0.;
+}
+
+int MTriangle::numCommonNodesInDualGraph(const MElement *const other) const
+{
+  switch (other->getType())
+  {
+    case TYPE_PNT:
+      return 1;
+    case TYPE_LIN:
+      return 2;
+    case TYPE_TRI:
+      return 2;
+    case TYPE_QUA:
+      return 2;
+    default:
+      return 3;
+  }
 }
 
 int MTriangleN::getNumEdgesRep(bool curved) {

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -28,7 +28,6 @@
 #include "BoundaryLayers.h"
 #include "HighOrder.h"
 #include "Generator.h"
-#include "meshGFaceLloyd.h"
 #include "Field.h"
 #include "Options.h"
 #include "simple3D.h"
@@ -473,9 +472,6 @@ static void Mesh2D(GModel *m)
         }
         if(!nIter) Msg::ProgressMeter(nPending, nTot, false, "Meshing 2D...");
       }
-#if defined(_OPENMP)
-#pragma omp master
-#endif
       if(!nPending) break;
       if(nIter++ > 10) break;
     }
@@ -854,7 +850,7 @@ static void Mesh3D(GModel *m)
         }
         double a = Cpu();
 
-	//	CTX::instance()->mesh.recombine3DLevel = 2;
+	// CTX::instance()->mesh.recombine3DLevel = 2;
 
         if (CTX::instance()->mesh.recombine3DLevel >= 0){
           Recombinator rec;
@@ -865,9 +861,9 @@ static void Mesh3D(GModel *m)
           sup.execute(gr);
         }
         PostOp post;
-	printf("-----------> %d %d\n",CTX::instance()->mesh.recombine3DLevel,CTX::instance()->mesh.recombine3DConformity);
-	post.execute(gr,CTX::instance()->mesh.recombine3DLevel,CTX::instance()->mesh.recombine3DConformity);
-	//			     CTX::instance()->mesh.recombine3DConformity);
+	post.execute(gr,CTX::instance()->mesh.recombine3DLevel,
+                     CTX::instance()->mesh.recombine3DConformity);
+	// CTX::instance()->mesh.recombine3DConformity);
         // 0: no pyramid, 1: single-step, 2: two-steps (conforming),
         // true: fill non-conformities with trihedra
 	RelocateVertices(gr, CTX::instance()->mesh.nbSmoothing);
@@ -937,7 +933,8 @@ void OptimizeMeshNetgen(GModel *m)
   m->setAllVolumesPositive();
 
   if (Msg::GetVerbosity() > 98)
-    std::for_each(m->firstRegion(), m->lastRegion(), TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES ());
+    std::for_each(m->firstRegion(), m->lastRegion(),
+                  TEST_IF_MESH_IS_COMPATIBLE_WITH_EMBEDDED_ENTITIES());
 
   double t2 = Cpu();
   Msg::StatusBar(true, "Done optimizing 3D mesh with Netgen (%g s)", t2 - t1);

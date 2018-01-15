@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -66,7 +66,6 @@
 #include "CVTRemesh.h"
 #include "ShowNeighborElements.h"
 #include "GaussPoints.h"
-#include "QuadratureData.h"
 #include "VoroMetal.h"
 
 // for testing purposes only :-)
@@ -268,8 +267,6 @@ void PluginManager::registerDefaultPlugins()
                       ("MeshSubEntities", GMSH_RegisterMeshSubEntitiesPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("GaussPoints", GMSH_RegisterGaussPointsPlugin()));
-    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
-                      ("QuadratureData", GMSH_RegisterQuadratureDataPlugin()));
 #if defined(HAVE_MESH)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("AnalyseCurvedMesh", GMSH_RegisterAnalyseCurvedMeshPlugin()));

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -1147,6 +1147,27 @@ void MElement::writeMSH2(FILE *fp, double version, bool binary, int num,
   if(physical < 0) reverse();
 }
 
+void MElement::writeMSH4(FILE *fp, bool binary)
+{
+  std::vector<MVertex*> verts;
+  getVertices(verts);
+  
+  if(binary){ //Implemented but not used in practice
+    fwrite(&_num, sizeof(int), 1, fp);
+    for(unsigned int i = 0; i < verts.size(); i++){
+      int vertNum = verts[i]->getNum();
+      fwrite(&vertNum, sizeof(int), 1, fp);
+    }
+  }
+  else{
+    fprintf(fp, "%d ", _num);
+    for(unsigned int i = 0; i < verts.size(); i++){
+       fprintf(fp, "%d ", verts[i]->getNum());
+    }
+    fprintf(fp, "\n");
+  }
+}
+
 void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
                         bool printSICN, bool printSIGE, bool printGamma,
                         bool printDisto, double scalingFactor, int elementary)
@@ -1306,6 +1327,22 @@ void MElement::writeVTK(FILE *fp, bool binary, bool bigEndian)
       fprintf(fp, " %d", getVertexVTK(i)->getIndex() - 1);
     fprintf(fp, "\n");
   }
+}
+
+void MElement::writeMATLAB(FILE *fp, bool binary)
+{
+  if(!getTypeForMATLAB()) return;
+
+    if(binary)
+    {
+      Msg::Warning("Binary format not available for Matlab, saving into ASCII format");
+      binary = false;
+    }
+
+  int n = getNumVertices();
+  for(int i = 0; i < n; i++)
+    fprintf(fp, " %d", getVertexMATLAB(i)->getIndex());
+  fprintf(fp, ";\n");
 }
 
 void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
@@ -1602,7 +1639,7 @@ unsigned int MElement::getInfoMSH(const int typeMSH, const char **const name)
   case MSH_PYR_53  : if(name) *name = "Pyramid 53";       return 5 + 8*6;
   case MSH_PYR_61  : if(name) *name = "Pyramid 61";       return 5 + 8*7;
   case MSH_PYR_69  : if(name) *name = "Pyramid 69";       return 5 + 8*8;
-  case MSH_TRIH_4 : if(name) *name = "Trihedron 4";       return 4;
+  case MSH_TRIH_4 :  if(name) *name = "Trihedron 4";      return 4;
   case MSH_POLYH_  : if(name) *name = "Polyhedron";       return 0;
   case MSH_PNT_SUB : if(name) *name = "Point Xfem";       return 1;
   case MSH_LIN_SUB : if(name) *name = "Line Xfem";        return 2;
@@ -1878,8 +1915,8 @@ MElement *MElementFactory::create(int num, int type, const std::vector<int> &dat
   MElement *element = create(type, vertices, num, part, false, parent);
 
   for(unsigned int j = 0; j < ghosts.size(); j++)
-    model->getGhostCells().insert(std::pair<MElement*, short>(element, ghosts[j]));
-  if(part) model->getMeshPartitions().insert(part);
+    //model->getGhostCells().insert(std::pair<MElement*, short>(element, ghosts[j]));
+  if(part > model->getNumPartitions()) model->setNumPartitions(part);
 
   return element;
 }

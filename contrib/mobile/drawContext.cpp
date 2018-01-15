@@ -12,7 +12,7 @@
 #include <gmsh/PViewData.h>
 #include <gmsh/Context.h>
 #include <gmsh/StringUtils.h>
-#include <getdp/GetDP.h>
+#include <getdp/getdp.h>
 
 #if defined(BUILD_ANDROID)
 #include <GLES/gl.h>

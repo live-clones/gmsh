@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -1097,7 +1097,7 @@ void DeletePhysicalPoint(int num)
                   ComparePhysicalGroup);
     List_Add(GModel::current()->getGEOInternals()->DelPhysicalGroups, &p);
   }
-  GModel::current()->deletePhysicalGroup(0, num);
+  GModel::current()->removePhysicalGroup(0, num);
 }
 
 void DeletePhysicalLine(int num)
@@ -1108,7 +1108,7 @@ void DeletePhysicalLine(int num)
                   ComparePhysicalGroup);
     List_Add(GModel::current()->getGEOInternals()->DelPhysicalGroups, &p);
   }
-  GModel::current()->deletePhysicalGroup(1, num);
+  GModel::current()->removePhysicalGroup(1, num);
 }
 
 void DeletePhysicalSurface(int num)
@@ -1119,7 +1119,7 @@ void DeletePhysicalSurface(int num)
                   ComparePhysicalGroup);
     List_Add(GModel::current()->getGEOInternals()->DelPhysicalGroups, &p);
   }
-  GModel::current()->deletePhysicalGroup(2, num);
+  GModel::current()->removePhysicalGroup(2, num);
 }
 
 void DeletePhysicalVolume(int num)
@@ -1130,7 +1130,7 @@ void DeletePhysicalVolume(int num)
                   ComparePhysicalGroup);
     List_Add(GModel::current()->getGEOInternals()->DelPhysicalGroups, &p);
   }
-  GModel::current()->deletePhysicalGroup(3, num);
+  GModel::current()->removePhysicalGroup(3, num);
 }
 
 Curve *CreateReversedCurve(Curve *c)

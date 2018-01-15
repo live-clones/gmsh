@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -67,6 +67,23 @@ double MQuadrangle::getVolume()
   double mn = 2. * m * n;
   double abcd = a*a - b*b + c*c - d*d;
   return sqrt( mn*mn - abcd*abcd ) / 4.;
+}
+
+int MQuadrangle::numCommonNodesInDualGraph(const MElement *const other) const
+{
+  switch (other->getType())
+  {
+    case TYPE_PNT:
+      return 1;
+    case TYPE_LIN:
+      return 2;
+    case TYPE_TRI:
+      return 2;
+    case TYPE_QUA:
+      return 2;
+    default:
+      return 4;
+  }
 }
 
 static void _myGetEdgeRep(MQuadrangle *q, int num, double *x, double *y, double *z,

@@ -3,8 +3,7 @@
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 //
-// Contributor(s):
-//   Tristan Carrier
+// Contributed by Tristan Carrier
 
 #ifndef _MESH_GFACE_LLOYD_H_
 #define _MESH_GFACE_LLOYD_H_

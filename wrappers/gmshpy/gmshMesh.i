@@ -14,7 +14,6 @@
   #include "meshGFaceLloyd.h"
 #endif
   #include "meshGFaceOptimize.h"
-  #include "meshPartitionOptions.h"
 #if defined(HAVE_OPTHOM)
   #include "OptHomRun.h"
   #include "OptHomElastic.h"
@@ -22,7 +21,7 @@
   #include "MeshQualityOptimizer.h"
   #include "CADDistances.h"
 #endif
-#if defined(HAVE_METIS) || defined(HAVE_CHACO)
+#if defined(HAVE_METIS)
   #include "meshPartition.h"
 #endif
   #include "Field.h"
@@ -52,7 +51,6 @@ namespace std {
 %include "meshGFaceLloyd.h"
 #endif
 %include "meshGFaceOptimize.h"
-%include "meshPartitionOptions.h"
 #if defined(HAVE_OPTHOM)
 %include "OptHomRun.h"
 %include "OptHomElastic.h"
@@ -60,7 +58,7 @@ namespace std {
 %include "MeshQualityOptimizer.h"
 %include "CADDistances.h"
 #endif
-#if defined(HAVE_METIS) || defined(HAVE_CHACO)
+#if defined(HAVE_METIS)
 %include "meshPartition.h"
 #endif
 %warnfilter(401) FieldManager;

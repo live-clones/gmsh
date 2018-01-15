@@ -578,7 +578,7 @@ Options:@*
 @item Delta
 Distance used to compute the mean value@*
 type: float@*
-default value: @code{0.0001}
+default value: @code{0.0003464101615137755}
 @item IField
 Field index@*
 type: integer@*
@@ -653,6 +653,10 @@ default value: @code{1}
 Post-processing view index@*
 type: integer@*
 default value: @code{0}
+@item ViewTag
+Post-processing view tag@*
+type: integer@*
+default value: @code{-1}
 @end table
 
 @item Restrict

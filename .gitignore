@@ -1,5 +1,5 @@
 bin*
-lib*
+lib
 build*
 contrib/mobile/frameworks_*
 contrib/3M

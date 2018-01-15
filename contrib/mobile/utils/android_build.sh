@@ -51,9 +51,9 @@ android_ndk="${HOME}/Library/Android/sdk/ndk-bundle/"
 android_sdk="${HOME}/Library/Android/sdk/"
 
 if [ $enable_simulator != 0 ]; then
-  cmake_default="-DDEFAULT=0 -DCMAKE_TOOLCHAIN_FILE=${android_ndk}/build/cmake/android.toolchain.cmake -DANDROID_STL_FORCE_FEATURES=1 -DENABLE_BUILD_ANDROID=1 -DCMAKE_BUILD_TYPE=Release -DANDROID_ABI=x86_64"
+  cmake_default="-DDEFAULT=0 -DENABLE_INTERNAL_DEVELOPER_API=1 -DCMAKE_TOOLCHAIN_FILE=${android_ndk}/build/cmake/android.toolchain.cmake -DANDROID_STL_FORCE_FEATURES=1 -DENABLE_BUILD_ANDROID=1 -DCMAKE_BUILD_TYPE=Release -DANDROID_ABI=x86_64"
 else
-  cmake_default="-DDEFAULT=0 -DCMAKE_TOOLCHAIN_FILE=${android_ndk}/build/cmake/android.toolchain.cmake -DANDROID_STL_FORCE_FEATURES=1 -DENABLE_BUILD_ANDROID=1 -DCMAKE_BUILD_TYPE=Release"
+  cmake_default="-DDEFAULT=0 -DENABLE_INTERNAL_DEVELOPER_API=1 -DCMAKE_TOOLCHAIN_FILE=${android_ndk}/build/cmake/android.toolchain.cmake -DANDROID_STL_FORCE_FEATURES=1 -DENABLE_BUILD_ANDROID=1 -DCMAKE_BUILD_TYPE=Release"
 fi    
 
 cmake_thread=6

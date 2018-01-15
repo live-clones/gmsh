@@ -1,11 +1,9 @@
-// Gmsh - Copyright (C) 1997-2016 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 //
-// Contributor(s):
-//   Amaury Johnen (a.johnen@ulg.ac.be)
-//
+// Contributed by Amaury Johnen
 
 #include <cmath>
 #include "meshGFaceRecombine.h"
@@ -445,7 +443,7 @@ bool Recombine2D::construct()
 
   Msg::Info("Before recombining with Blossom");
   Msg::Info(" ");
-  
+
   if (_recombineWithBlossom) {
     _blossomTime = Cpu();
     //recombineWithBlossom(_gf, .0, .16, elist, t2n);// no more in the code (see Amaury)

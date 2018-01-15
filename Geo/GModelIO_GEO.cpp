@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -1179,7 +1179,7 @@ void GEO_Internals::synchronize(GModel *model)
   // we might want to store physical groups directly in GModel; but this is OK
   // for now. We always start from scratch in GModel, as physical groups are
   // only stored in GEO internals anyway
-  model->deletePhysicalGroups();
+  model->removePhysicalGroups();
   for(int i = 0; i < List_Nbr(PhysicalGroups); i++){
     PhysicalGroup *p;
     List_Read(PhysicalGroups, i, &p);

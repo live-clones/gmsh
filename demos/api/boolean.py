@@ -32,6 +32,9 @@ factory.cut([(3, 3)], [(3, 7)], 8)
 factory.synchronize();
 
 model.mesh.generate(3)
+#model.mesh.refine()
+#model.mesh.setOrder(2)
+#model.mesh.partition(4)
 
 gmsh.write("boolean.msh")
 

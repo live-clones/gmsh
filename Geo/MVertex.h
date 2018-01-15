@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <set>
 #include <map>
+#include <fstream>
 #include "SPoint2.h"
 #include "SPoint3.h"
 #include "MVertexBoundaryLayerData.h"
@@ -93,11 +94,14 @@ class MVertex{
                 double scalingFactor=1.0);
   void writeMSH2(FILE *fp, bool binary=false, bool saveParametric=false,
                  double scalingFactor=1.0);
+  void writeMSH4(FILE *fp, bool binary=false, bool saveParametric=false,
+                 double scalingFactor=1.0);
   void writePLY2(FILE *fp);
   void writeVRML(FILE *fp, double scalingFactor=1.0);
   void writeUNV(FILE *fp, double scalingFactor=1.0);
   void writeVTK(FILE *fp, bool binary=false, double scalingFactor=1.0,
                 bool bigEndian=false);
+  void writeMATLAB(FILE *fp, int index, bool binary=false, double scalingFactor=1.0);
   void writeTOCHNOG(FILE *fp, int dim, double scalingFactor=1.0);
   void writeMESH(FILE *fp, double scalingFactor=1.0);
   void writeNEU(FILE *fp, int dim, double scalingFactor=1.0);

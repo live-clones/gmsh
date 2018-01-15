@@ -530,7 +530,7 @@
 /* Copy the first part of user declarations.  */
 #line 1 "Gmsh.y"
 
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -9495,7 +9495,7 @@ yyreduce:
       }
       else if(!strcmp((yyvsp[(2) - (3)].c), "Physicals")){
 	GModel::current()->getGEOInternals()->resetPhysicalGroups();
-	GModel::current()->deletePhysicalGroups();
+	GModel::current()->removePhysicalGroups();
       }
       else if(!strcmp((yyvsp[(2) - (3)].c), "Variables")){
 	gmsh_yysymbols.clear();
@@ -11065,7 +11065,7 @@ yyreduce:
       for(int i = 0; i < List_Nbr((yyvsp[(4) - (8)].l)); i++){
 	double d;
 	List_Read((yyvsp[(4) - (8)].l), i, &d);
-	CTX::instance()->mesh.algo2d_per_face[(int)d] = (int)(yyvsp[(7) - (8)].d);
+	CTX::instance()->mesh.algo2dPerFace[(int)d] = (int)(yyvsp[(7) - (8)].d);
       }
       List_Delete((yyvsp[(4) - (8)].l));
     ;}

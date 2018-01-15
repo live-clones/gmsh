@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -359,6 +359,22 @@ void MPyramid::getFaceRep(bool curved, int num,
   };
   _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]), getVertex(f[num][2]),
               x, y, z, n);
+}
+
+int MPyramid::numCommonNodesInDualGraph(const MElement *const other) const
+{
+  switch (other->getType()) {
+    case TYPE_PNT:
+      return 1;
+    case TYPE_LIN:
+      return 2;
+    case TYPE_QUA:
+      return 4;
+    case TYPE_HEX:
+      return 4;
+    default:
+      return 3;
+  }
 }
 
 void MPyramidN::getFaceRep(bool curved, int num,

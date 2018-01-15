@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -9,8 +9,8 @@
 #include "OS.h"
 #include "MElement.h"
 
-static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
-                        std::vector<MVertex*> &vertices)
+static bool getMeshVertices(int num, int *indices, std::map<int, MVertex*> &map,
+                            std::vector<MVertex*> &vertices)
 {
   for(int i = 0; i < num; i++){
     if(!map.count(indices[i])){
@@ -23,8 +23,8 @@ static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
   return true;
 }
 
-static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
-                        std::vector<MVertex*> &vertices, int minVertex = 0)
+static bool getMeshVertices(int num, int *indices, std::vector<MVertex*> &vec,
+                            std::vector<MVertex*> &vertices, int minVertex = 0)
 {
   for(int i = 0; i < num; i++){
     if(indices[i] < minVertex || indices[i] > (int)(vec.size() - 1 + minVertex)){
@@ -295,13 +295,13 @@ int GModel::readDIFF(const std::string &name)
         indices[j] = ElementsNodes[i - 1][j];
       std::vector<MVertex*> vertices;
       if(vertexVector.size()){
-        if(!getVertices(numVerticesPerElement, indices, vertexVector, vertices)){
+        if(!getMeshVertices(numVerticesPerElement, indices, vertexVector, vertices)){
           fclose(fp);
           return 0;
         }
       }
       else{
-        if(!getVertices(numVerticesPerElement, indices, vertexMap, vertices)){
+        if(!getMeshVertices(numVerticesPerElement, indices, vertexMap, vertices)){
           fclose(fp);
           return 0;
         }
@@ -330,7 +330,7 @@ int GModel::readDIFF(const std::string &name)
       if(physical && (!physicals[dim].count(reg) ||
                       !physicals[dim][reg].count(physical)))
         physicals[dim][reg][physical] = "unnamed";
-      if(partition) getMeshPartitions().insert(partition);
+      if(partition > getNumPartitions()) setNumPartitions(partition);
 
       if(numElements > 100000)
         Msg::ProgressMeter(i + 1, numElements, true, "Reading elements");

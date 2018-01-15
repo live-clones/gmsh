@@ -1,5 +1,5 @@
 %{
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -2950,7 +2950,7 @@ Delete :
       }
       else if(!strcmp($2, "Physicals")){
 	GModel::current()->getGEOInternals()->resetPhysicalGroups();
-	GModel::current()->deletePhysicalGroups();
+	GModel::current()->removePhysicalGroups();
       }
       else if(!strcmp($2, "Variables")){
 	gmsh_yysymbols.clear();
@@ -4270,7 +4270,7 @@ Constraints :
       for(int i = 0; i < List_Nbr($4); i++){
 	double d;
 	List_Read($4, i, &d);
-	CTX::instance()->mesh.algo2d_per_face[(int)d] = (int)$7;
+	CTX::instance()->mesh.algo2dPerFace[(int)d] = (int)$7;
       }
       List_Delete($4);
     }

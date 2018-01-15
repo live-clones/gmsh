@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -27,14 +27,14 @@
 #include "Context.h"
 #include "OS.h"
 
-#define FAST_ELEMENTS 1
-
-extern void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities, bool renumber);
+// periodic nodes and entities backported from MSH3 format
+extern void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities,
+                                  bool renumber);
 extern void readMSHPeriodicNodes(FILE *fp, GModel *gm);
 extern void writeMSHEntities(FILE *fp, GModel *gm);
 
-static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
-                        std::vector<MVertex*> &vertices)
+static bool getMeshVertices(int num, int *indices, std::map<int, MVertex*> &map,
+                            std::vector<MVertex*> &vertices)
 {
   for(int i = 0; i < num; i++){
     if(!map.count(indices[i])){
@@ -47,8 +47,8 @@ static bool getVertices(int num, int *indices, std::map<int, MVertex*> &map,
   return true;
 }
 
-static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
-                        std::vector<MVertex*> &vertices, int minVertex = 0)
+static bool getMeshVertices(int num, int *indices, std::vector<MVertex*> &vec,
+                            std::vector<MVertex*> &vertices, int minVertex = 0)
 {
   for(int i = 0; i < num; i++){
     if(indices[i] < minVertex || indices[i] > (int)(vec.size() - 1 + minVertex)){
@@ -82,104 +82,13 @@ static MElement *createElementMSH2(GModel *m, int num, int typeMSH, int physical
     return NULL;
   }
 
-#if (FAST_ELEMENTS!=1)
-  switch(e->getType()){
-  case TYPE_PNT :
-    elements[0][reg].push_back(e); break;
-  case TYPE_LIN :
-    elements[1][reg].push_back(e); break;
-  case TYPE_TRI :
-    elements[2][reg].push_back(e); break;
-  case TYPE_QUA :
-    elements[3][reg].push_back(e); break;
-  case TYPE_TET :
-    elements[4][reg].push_back(e); break;
-  case TYPE_HEX :
-    elements[5][reg].push_back(e); break;
-  case TYPE_PRI :
-    elements[6][reg].push_back(e); break;
-  case TYPE_PYR :
-    elements[7][reg].push_back(e); break;
-  case TYPE_POLYG :
-    elements[8][reg].push_back(e); break;
-  case TYPE_POLYH :
-    elements[9][reg].push_back(e); break;
-  default : Msg::Error("Wrong type of element"); return NULL;
-  }
-#endif
-
   int dim = e->getDim();
   if(physical && (!physicals[dim].count(reg) || !physicals[dim][reg].count(physical)))
     physicals[dim][reg][physical] = "unnamed";
 
-  if(part) m->getMeshPartitions().insert(part);
+  if(part > m->getNumPartitions()) m->setNumPartitions(part);
   return e;
 }
-
-#if (FAST_ELEMENTS == 0)
-
-static bool getElementsByNum(int elemNum[], std::map<int, std::vector<MElement*> > &elements,
-                             bool erase, MElement *elems[], int nbElem = 1)
-{
-  int i = 0;
-  std::map<int, std::vector<MElement*> >::iterator it = elements.begin();
-  for(; it != elements.end(); ++it) {
-    std::vector<MElement*>::iterator itE = it->second.begin();
-    for(; itE != it->second.end(); itE++) {
-      for(int j = 0; j < nbElem; j++) {
-        if((*itE)->getNum() == elemNum[j]) {
-          elems[i++] = (*itE);
-          if(erase) itE = it->second.erase(itE);
-          if(i == nbElem) return true;
-        }
-      }
-    }
-  }
-  return false;
-}
-
-static MElement *getParent(int parentNum, int type,
-                           std::map<int, std::vector<MElement*> > elements[10])
-{
-  MElement *parent = NULL;
-  switch(type){
-  case MSH_LIN_C :
-    getElementsByNum(&parentNum, elements[1], true, &parent);
-    return parent;
-  case MSH_POLYG_ : case MSH_POLYG_B :
-    if(getElementsByNum(&parentNum, elements[2], true, &parent)) return parent;
-    if(getElementsByNum(&parentNum, elements[3], true, &parent)) return parent;
-    if(getElementsByNum(&parentNum, elements[8], true, &parent)) return parent;
-    return parent;
-  case MSH_POLYH_ :
-    if(getElementsByNum(&parentNum, elements[4], true, &parent)) return parent;
-    if(getElementsByNum(&parentNum, elements[5], true, &parent)) return parent;
-    if(getElementsByNum(&parentNum, elements[6], true, &parent)) return parent;
-    if(getElementsByNum(&parentNum, elements[7], true, &parent)) return parent;
-    if(getElementsByNum(&parentNum, elements[9], true, &parent)) return parent;
-    return parent;
-  default : return parent;
-  }
-}
-
-static void getDomains(int dom1Num, int dom2Num, int type,
-                      std::map<int, std::vector<MElement*> > elements[10],
-                      MElement *doms[])
-{
-  int domNums[2] = {dom1Num, dom2Num};
-  int nbD = (dom1Num == 0 || dom2Num == 0) ? 1 : 2;
-  if(dom1Num == 0) domNums[0] = dom2Num;
-  switch(type){
-  case MSH_LIN_B :
-    getElementsByNum(domNums, elements[8], false, doms, nbD);
-    return;
-  case MSH_TRI_B : case MSH_POLYG_B :
-    getElementsByNum(domNums, elements[9], false, doms, nbD);
-    return;
-  }
-}
-
-#endif
 
 int GModel::_readMSH2(const std::string &name)
 {
@@ -380,7 +289,7 @@ int GModel::_readMSH2(const std::string &name)
               fclose(fp);
               return 0;
             }
-            if(numVertices != MElement::getInfoMSH(type)){ fclose(fp); return 0; }
+            if(numVertices != (int)MElement::getInfoMSH(type)){ fclose(fp); return 0; }
           }
           else{
             int numTags;
@@ -420,14 +329,14 @@ int GModel::_readMSH2(const std::string &name)
           }
           std::vector<MVertex*> vertices;
           if(vertexVector.size()){
-            if(!getVertices(numVertices, indices, vertexVector, vertices, minVertex)){
+            if(!getMeshVertices(numVertices, indices, vertexVector, vertices, minVertex)){
               delete [] indices;
               fclose(fp);
               return 0;
             }
           }
           else{
-            if(!getVertices(numVertices, indices, vertexMap, vertices)){
+            if(!getMeshVertices(numVertices, indices, vertexMap, vertices)){
               delete [] indices;
               fclose(fp);
               return 0;
@@ -438,10 +347,10 @@ int GModel::_readMSH2(const std::string &name)
 
 	  // search parent element
 	  if (parent != 0){
-#if (FAST_ELEMENTS == 1)
             std::map<int, MElement* >::iterator ite = elems.find(parent);
             if (ite == elems.end())
-              Msg::Error("Parent element (ascii) %d not found for element %d of type %d", parent, num, type);
+              Msg::Error("Parent element (ascii) %d not found for element %d of type %d",
+                         parent, num, type);
             else{
               p = ite->second;
               parents[parent] = p;
@@ -452,28 +361,11 @@ int GModel::_readMSH2(const std::string &name)
               parentsOwned.insert(p);
             }
             assert(p != NULL);
-#else
-            std::map<int, MElement* >::iterator itp = parents.find(parent);
-            if (itp == parents.end()){
-              p = getParent(parent, type, elements);
-              if (p)
-                parents[parent] = p;
-              else Msg::Error("Parent element %d not found for element %d dedju", parent, num);
-            }
-            else
-              p = itp->second;
-            std::set<MElement* >::iterator itpo = parentsOwned.find(p);
-            if (itpo == parentsOwned.end()){
-              own = true;
-              parentsOwned.insert(p);
-            }
-#endif
 	  }
 
           // search domains
           MElement *doms[2] = {NULL, NULL};
 	  if(dom1){
-#if (FAST_ELEMENTS==1)
             std::map<int, MElement* >::iterator ite = elems.find(dom1);
 	    if (ite == elems.end())
               Msg::Error("Domain element %d not found for element %d", dom1, num);
@@ -488,27 +380,16 @@ int GModel::_readMSH2(const std::string &name)
               Msg::Error("Domain element %d not found for element %d", dom1, num);
             if(dom2 && !doms[1])
               Msg::Error("Domain element %d not found for element %d", dom2, num);
-#else
-            getDomains(dom1, dom2, type, elements, doms);
-            if(!doms[0])
-              Msg::Error("Domain element %d not found for element %d", dom1, num);
-            if(dom2 && !doms[1])
-              Msg::Error("Domain element %d not found for element %d", dom2, num);
-#endif
 	  }
           delete [] indices;
 
-          if (CTX::instance()->mesh.ignorePartBound && elementary<0) continue;
+          if (elementary<0) continue;
           MElement *e = createElementMSH2(this, num, type, physical, elementary,
                                           partition, vertices, elements, physicals,
                                           own, p, doms[0], doms[1]);
-
-#if (FAST_ELEMENTS == 1)
 	  elems[num] = e;
 	  elemreg[num] = elementary;
 	  elemphy[num] = physical;
-#endif
-
           for(unsigned int j = 0; j < ghosts.size(); j++)
             _ghostCells.insert(std::pair<MElement*, short>(e, ghosts[j]));
           if(numElements > 100000)
@@ -547,14 +428,14 @@ int GModel::_readMSH2(const std::string &name)
             int *indices = &data[numTags + 1];
             std::vector<MVertex*> vertices;
             if(vertexVector.size()){
-              if(!getVertices(numVertices, indices, vertexVector, vertices, minVertex)){
+              if(!getMeshVertices(numVertices, indices, vertexVector, vertices, minVertex)){
                 delete [] data;
                 fclose(fp);
                 return 0;
               }
             }
             else{
-              if(!getVertices(numVertices, indices, vertexMap, vertices)){
+              if(!getMeshVertices(numVertices, indices, vertexMap, vertices)){
                 delete [] data;
                 fclose(fp);
                 return 0;
@@ -563,10 +444,10 @@ int GModel::_readMSH2(const std::string &name)
             MElement *p = NULL;
             bool own = false;
             if(parent){
-#if (FAST_ELEMENTS == 1)
 	      std::map<int, MElement* >::iterator ite = elems.find(parent);
 	      if (ite == elems.end())
-                Msg::Error("Parent (binary) element %d not found for element %d", parent, num);
+                Msg::Error("Parent (binary) element %d not found for element %d",
+                           parent, num);
 	      else{
                 p = ite->second;
                 parents[parent] = p;
@@ -577,30 +458,13 @@ int GModel::_readMSH2(const std::string &name)
                 parentsOwned.insert(p);
 	      }
 	      assert(p != NULL);
-#else
-	      std::map<int, MElement* >::iterator itp = parents.find(parent);
-              if(itp == parents.end()){
-                p = getParent(parent, type, elements);
-                if(p) parents[parent] = p;
-                else Msg::Error("Parent (binary) element %d not found", parent);
-              }
-              else p = itp->second;
-	      std::set<MElement* >::iterator itpo = parentsOwned.find(p);
-              if(itpo == parentsOwned.end()) {
-                own = true;
-                parentsOwned.insert(p);
-              }
-#endif
             }
             MElement *e = createElementMSH2(this, num, type, physical, elementary,
                                             partition, vertices, elements, physicals,
                                             own, p);
-
-#if (FAST_ELEMENTS==1)
             elems[num] = e;
             elemreg[num] = elementary;
             elemphy[num] = physical;
-#endif
             if(numPartitions > 1)
               for(int j = 0; j < numPartitions - 1; j++)
                 _ghostCells.insert(std::pair<MElement*, short>(e, -data[5 + j]));
@@ -612,7 +476,6 @@ int GModel::_readMSH2(const std::string &name)
           numElementsPartial += numElms;
         }
       }
-#if (FAST_ELEMENTS==1)
       for(int i = 0; i < 10; i++)
         elements[i].clear();
 
@@ -646,7 +509,6 @@ int GModel::_readMSH2(const std::string &name)
           }
         }
       }
-#endif
     }
     else if(!strncmp(&str[1], "NodeData", 8)) {
 
@@ -1084,7 +946,7 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
     fprintf(fp, "$ENDELM\n");
   }
 
-  writeMSHPeriodicNodes (fp, entities, renumberVertices);
+  writeMSHPeriodicNodes(fp, entities, renumberVertices);
 
   fclose(fp);
 
@@ -1097,12 +959,10 @@ int GModel::_writePartitionedMSH2(const std::string &baseName, bool binary,
 {
   int numElements;
   int startNum = 0;
-  for(std::set<int>::iterator it = meshPartitions.begin();
-      it != meshPartitions.end(); it++){
-    int partition = *it;
+  for(int partition = 0; partition < getNumPartitions(); partition++){
 
     std::ostringstream sstream;
-    sstream << baseName << "_" << std::setw(6) << std::setfill('0') << partition;
+    sstream << baseName << "_" << partition << ".msh";
 
     numElements = getNumElementsMSH(this, saveAll, partition);
     Msg::Info("Writing partition %d in file '%s'", partition, sstream.str().c_str());

@@ -155,13 +155,13 @@ void frameSolver2d::computeStiffnessMatrix (int iBeam,
 
 void frameSolver2d::solve ()
 {
-#if defined(HAVE_TAUCS)
-  linearSystemCSRTaucs<double> *lsys = new linearSystemCSRTaucs<double>;
-#elif defined(HAVE_PETSC)
+#if defined(HAVE_PETSC)
   linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
-#else
+#elif defined(HAVE_GMM)
   linearSystemGmm<double> *lsys = new linearSystemGmm<double>;
   lsys->setNoisy(2);
+#else
+  linearSystemFull<double> *lsys = new linearSystemFull<double>;
 #endif
 
   if (pAssembler)delete pAssembler;

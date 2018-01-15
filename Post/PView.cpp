@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -125,9 +125,9 @@ PView::PView(const std::string &name, std::vector<double> &x, std::vector<double
 
 PView::PView(const std::string &name, const std::string &type,
              GModel *model, std::map<int, std::vector<double> > &data,
-             double time, int numComp)
+             double time, int numComp, int tag)
 {
-  _init();
+  _init(tag);
   PViewDataGModel::DataType t;
   if(type == "NodeData")
     t = PViewDataGModel::NodeData;

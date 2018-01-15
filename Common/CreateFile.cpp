@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -40,6 +40,7 @@ int GetFileFormatFromExtension(const std::string &ext)
   else if(ext == ".opt")  return FORMAT_OPT;
   else if(ext == ".unv")  return FORMAT_UNV;
   else if(ext == ".vtk")  return FORMAT_VTK;
+  else if(ext == ".m")    return FORMAT_MATLAB;
   else if(ext == ".dat")  return FORMAT_TOCHNOG;
   else if(ext == ".txt")  return FORMAT_TXT;
   else if(ext == ".stl")  return FORMAT_STL;
@@ -102,6 +103,7 @@ std::string GetDefaultFileName(int format)
   case FORMAT_OPT:  name += ".opt"; break;
   case FORMAT_UNV:  name += ".unv"; break;
   case FORMAT_VTK:  name += ".vtk"; break;
+  case FORMAT_MATLAB:  name += ".m"; break;
   case FORMAT_TOCHNOG: name += ".dat"; break;
   case FORMAT_STL:  name += ".stl"; break;
   case FORMAT_CGNS: name += ".cgns"; break;
@@ -261,24 +263,27 @@ void CreateOutputFile(const std::string &fileName, int format,
     break;
 
   case FORMAT_MSH:
-    if(GModel::current()->getMeshPartitions().size() &&
-       CTX::instance()->mesh.mshFilePartitioned == 1)
+    if(GModel::current()->getNumPartitions() &&
+       CTX::instance()->mesh.partitionSplitMeshFiles){
+      std::vector<std::string> splitName = SplitFileName(name);
+      splitName[0] += splitName[1];
       GModel::current()->writePartitionedMSH
+        (splitName[0], CTX::instance()->mesh.mshFileVersion,
+         CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
+         CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor);
+    }
+    else{
+      GModel::current()->writeMSH
         (name, CTX::instance()->mesh.mshFileVersion, CTX::instance()->mesh.binary,
          CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveParametric,
          CTX::instance()->mesh.scalingFactor);
-    else if(GModel::current()->getMeshPartitions().size() &&
-            CTX::instance()->mesh.mshFilePartitioned == 2)
-      GModel::current()->writeMSH
-        (name, CTX::instance()->mesh.mshFileVersion,
-         CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
-         CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor,
-         0, -1000);
-    else
-      GModel::current()->writeMSH
-        (name, CTX::instance()->mesh.mshFileVersion,
-         CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
-         CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor);
+    }
+    if(GModel::current()->getNumPartitions() &&
+       CTX::instance()->mesh.partitionSaveTopologyFile){
+      std::vector<std::string> splitName = SplitFileName(name);
+      splitName[0] += splitName[1] + "_topology.pro";
+      GModel::current()->writePartitionedTopology(splitName[0]);
+    }
     break;
 
   case FORMAT_STL:
@@ -312,6 +317,12 @@ void CreateOutputFile(const std::string &fileName, int format,
       (name, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
        CTX::instance()->mesh.scalingFactor,
        CTX::instance()->bigEndian);
+    break;
+
+  case FORMAT_MATLAB:
+    GModel::current()->writeMATLAB
+      (name, CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
+       CTX::instance()->mesh.scalingFactor);
     break;
 
   case FORMAT_MESH:

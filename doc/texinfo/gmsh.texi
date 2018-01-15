@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+@c Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 @c
 @c See the LICENSE.txt file for license information. Please report all
 @c bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -22,7 +22,7 @@
 @c %**starts of header
 @setfilename gmsh.info
 @set GMSH-VERSION 3.1
-@set COPYRIGHT @copyright{} 1997-2017 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@set COPYRIGHT @copyright{} 1997-2018 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @settitle Gmsh @value{GMSH-VERSION}
 @footnotestyle separate
 @setchapternewpage odd
@@ -3030,6 +3030,10 @@ default value is 45).
 @item MeshAlgorithm Surface @{ @var{expression-list} @} = @var{expression};
 Forces the meshing algorithm per surface.
 
+@item Compound Line | Surface @{ @var{expression-list-or-all} @} ;
+Treats the given entities as a single entity when meshing, i.e. perform
+cross-patch meshing of the entities.
+
 @item Reverse Line | Surface @{ @var{expression-list-or-all} @} ;
 Reverses the mesh of the given line(s) or surface(s).
 
@@ -4188,7 +4192,7 @@ generalization). We number nodes in the following order:
 @item the volume internal nodes.
 @end itemize
 
-The numbering for internal nodes is recursive, ie. the numbering follows
+The numbering for internal nodes is recursive, i.e. the numbering follows
 that of the nodes of an embedded edge/face/volume of lower order. The
 higher order nodes are assumed to be equispaced. Edges and faces are
 numbered following the lowest order template that generates a single

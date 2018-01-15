@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -17,6 +17,9 @@
 
 #if defined(HAVE_SOLVER)
 #include "linearSystemCSR.h"
+#include "linearSystemPETSc.h"
+#include "linearSystemGMM.h"
+#include "linearSystemFull.h"
 #include "dofManager.h"
 #include "laplaceTerm.h"
 #endif
@@ -1220,8 +1223,14 @@ void Size_field::init_region(GRegion* gr)
 void Size_field::solve(GRegion* gr)
 {
 #if defined(HAVE_SOLVER)
-  linearSystemCSRTaucs<double>* system = 0;
-  system = new linearSystemCSRTaucs<double>;
+
+#if defined(HAVE_PETSC)
+  linearSystemPETSc<double> *system = new linearSystemPETSc<double>;
+#elif defined(HAVE_GMM)
+  linearSystemGmm<double> *system = new linearSystemGmm<double>;
+#else
+  linearSystemFull<double> *system = new linearSystemFull<double>;
+#endif
 
   size_t i;
   int count;

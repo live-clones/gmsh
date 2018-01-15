@@ -680,7 +680,7 @@ void DocRecord::printMedialAxis(Octree *_octree, std::string fileName, GFace *gf
 	GPoint p0(pc[0], pc[1], 0.0);
 	if (gf) p0 = gf->point(pc[0], pc[1]);
         fprintf(f,"SP(%g,%g,%g){%g};\n", p0.x(), p0.y(), p0.z(), (double)i);
-        voronoiCell (i,pts);
+        voronoiCell(i, pts);
         for (unsigned int j = 0; j < pts.size(); j++){
 	  SVector3 pp1(pts[j].x(), pts[j].y(), 0.0);
 	  SVector3 pp2(pts[(j+1) % pts.size()].x(), pts[(j+1) % pts.size()].y(), 0.0);
@@ -781,35 +781,6 @@ void centroidOfPolygon(SPoint2 &pc, std::vector<SPoint2> &pts,
   }
   xc = x.x();
   yc = x.y();
-}
-
-double DocRecord::Lloyd(int type)
-{
-  fullMatrix<double> cgs(numPoints,2);
-  double inertia_tot = 0.;
-  for(PointNumero i = 0; i < numPoints; i++) {
-    PointRecord &pt = points[i];
-    std::vector<SPoint2> pts;
-    voronoiCell (i,pts);
-    double E = 0., A;
-
-    if (!points[i].data){
-      SPoint2 p (pt.where.h,pt.where.v);
-      if (type == 0)
-        centroidOfPolygon(p,pts, cgs(i,0), cgs(i,1), E, A);
-      else
-        centroidOfOrientedBox(pts, 0.0, cgs(i,0), cgs(i,1), E, A);
-    }
-    inertia_tot += E;
-  }
-
-  for(PointNumero i = 0; i < numPoints; i++) {
-    if (!points[i].data){
-      points[i].where.h = cgs(i,0);
-      points[i].where.v = cgs(i,1);
-    }
-  }
-  return inertia_tot;
 }
 
 // Convertir les listes d'adjacence en triangles

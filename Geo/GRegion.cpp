@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -141,7 +141,7 @@ void GRegion::resetMeshAttributes()
 SBoundingBox3d GRegion::bounds() const
 {
   SBoundingBox3d res;
-  if(geomType() != DiscreteVolume){
+  if(geomType() != DiscreteVolume && geomType() != PartitionVolume){
     std::list<GFace*>::const_iterator it = l_faces.begin();
     for(; it != l_faces.end(); it++)
       res += (*it)->bounds();
@@ -333,30 +333,6 @@ bool GRegion::edgeConnected(GRegion *r) const
   return false;
 }
 
-void GRegion::replaceFaces(std::list<GFace*> &new_faces)
-{
-  replaceFacesInternal(new_faces);
-  if (l_faces.size() != new_faces.size()){
-    Msg::Error("Impossible to replace faces in region %d (%d vs %d)",
-               tag(), l_faces.size(), new_faces.size());
-  }
-
-  std::list<GFace*>::iterator it = l_faces.begin();
-  std::list<GFace*>::iterator it2 = new_faces.begin();
-  std::list<int>::iterator it3 = l_dirs.begin();
-  std::list<int> newdirs;
-  for ( ; it != l_faces.end(); ++it, ++it2, ++it3){
-    (*it)->delRegion(this);
-    (*it2)->addRegion(this);
-    // if ((*it2)->getBeginVertex() == (*it)->getBeginVertex())
-      newdirs.push_back(*it3);
-    // else
-    //   newdirs.push_back(-(*it3));
-  }
-  l_faces = new_faces;
-  l_dirs = newdirs;
-}
-
 double GRegion::computeSolidProperties(std::vector<double> cg,
                                        std::vector<double> inertia)
 {
@@ -456,24 +432,74 @@ void GRegion::addElement(int type, MElement *e)
 {
   switch (type){
   case TYPE_TET:
-    addTetrahedron((MTetrahedron*) e);
+    addTetrahedron(reinterpret_cast<MTetrahedron*>(e));
     break;
   case TYPE_HEX:
-    addHexahedron((MHexahedron*) e);
+    addHexahedron(reinterpret_cast<MHexahedron*>(e));
     break;
   case TYPE_PRI:
-    addPrism((MPrism*) e);
+    addPrism(reinterpret_cast<MPrism*>(e));
     break;
   case TYPE_PYR:
-    addPyramid((MPyramid*) e);
+    addPyramid(reinterpret_cast<MPyramid*>(e));
     break;
   case TYPE_TRIH:
-    addTrihedron((MTrihedron*) e);
+    addTrihedron(reinterpret_cast<MTrihedron*>(e));
     break;
   case TYPE_POLYH:
-    addPolyhedron((MPolyhedron*) e);
+    addPolyhedron(reinterpret_cast<MPolyhedron*>(e));
     break;
   default:
     Msg::Error("Trying to add unsupported element in region");
+  }
+}
+
+void GRegion::removeElement(int type, MElement *e)
+{
+  switch (type){
+  case TYPE_TET:
+    {
+      std::vector<MTetrahedron*>::iterator it = std::find
+        (tetrahedra.begin(), tetrahedra.end(), reinterpret_cast<MTetrahedron*>(e));
+      if(it != tetrahedra.end()) tetrahedra.erase(it);
+    }
+    break;
+  case TYPE_HEX:
+    {
+      std::vector<MHexahedron*>::iterator it = std::find
+        (hexahedra.begin(), hexahedra.end(), reinterpret_cast<MHexahedron*>(e));
+      if(it != hexahedra.end()) hexahedra.erase(it);
+    }
+    break;
+  case TYPE_PRI:
+    {
+      std::vector<MPrism*>::iterator it = std::find
+        (prisms.begin(), prisms.end(), reinterpret_cast<MPrism*>(e));
+      if(it != prisms.end()) prisms.erase(it);
+    }
+    break;
+  case TYPE_PYR:
+    {
+      std::vector<MPyramid*>::iterator it = std::find
+        (pyramids.begin(), pyramids.end(), reinterpret_cast<MPyramid*>(e));
+      if(it != pyramids.end()) pyramids.erase(it);
+    }
+    break;
+  case TYPE_TRIH:
+    {
+      std::vector<MTrihedron*>::iterator it = std::find
+        (trihedra.begin(), trihedra.end(), reinterpret_cast<MTrihedron*>(e));
+      if(it != trihedra.end()) trihedra.erase(it);
+    }
+    break;
+  case TYPE_POLYH:
+    {
+      std::vector<MPolyhedron*>::iterator it = std::find
+        (polyhedra.begin(), polyhedra.end(), reinterpret_cast<MPolyhedron*>(e));
+      if(it != polyhedra.end()) polyhedra.erase(it);
+    }
+    break;
+  default:
+    Msg::Error("Trying to remove unsupported element in region");
   }
 }

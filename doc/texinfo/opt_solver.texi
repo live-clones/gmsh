@@ -245,8 +245,8 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.AutoMesh
-Automatically mesh if necesssary (0: never remesh; 1: on startup, use existing mesh on disk if available; 2: always remesh; -1: the geometry script creates the mesh)@*
-Default value: @code{1}@*
+Automatically mesh (0: never; 1: if geometry changed, but use existing mesh on disk if available; 2: if geometry changed; -1: the geometry script creates the mesh)@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Solver.AutoMergeFile

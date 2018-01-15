@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -36,11 +36,9 @@
 #include "MElementOctree.h"
 #include "HighOrder.h"
 #include "meshGEdge.h"
-#include "meshPartitionOptions.h"
 #include "meshPartition.h"
 #include "CreateFile.h"
 #include "Context.h"
-#include "meshGFaceLloyd.h"
 #include "boundaryLayersData.h"
 #include "filterElements.h"
 
@@ -824,72 +822,6 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf,
   meshGenerator(gf, 0, 0, true , false, &hop);
 }
 
-static bool inside_domain(MElementOctree* octree,double x,double y)
-{
-  MElement* element;
-  element = (MElement*)octree->find(x, y, 0.0, 2, true);
-  if(element != NULL) return 1;
-  else return 0;
-}
-
-static bool translate(GFace* gf,MElementOctree* octree,MVertex* vertex,
-                      SPoint2 corr,SVector3& v1,SVector3& v2)
-{
-  bool ok;
-  double k;
-  double size;
-  double angle;
-  double delta_x;
-  double delta_y;
-  double x,y;
-  double x1,y1;
-  double x2,y2;
-  SPoint2 point;
-  GPoint gp1;
-  GPoint gp2;
-
-  ok = true;
-  k = 0.0001;
-  reparamMeshVertexOnFace(vertex,gf,point);
-  x = point.x();
-  y = point.y();
-  size = backgroundMesh::current()->operator()(x,y,0.0)/**get_ratio(gf,corr)*/;
-  angle = backgroundMesh::current()->getAngle(x,y,0.0);
-
-  delta_x = k*size*cos(angle);
-  delta_y = k*size*sin(angle);
-
-  x1 = x + delta_x;
-  y1 = y + delta_y;
-  x2 = x + delta_y;
-  y2 = y - delta_x;
-
-  if(!inside_domain(octree,x1,y1)){
-    x1 = x - delta_x;
-    y1 = y - delta_y;
-    if(!inside_domain(octree,x1,y1)) ok = false;
-  }
-  if(!inside_domain(octree,x2,y2)){
-    x2 = x - delta_y;
-    y2 = y + delta_x;
-    if(!inside_domain(octree,x2,y2)) ok = false;
-  }
-
-  ok = true; //?
-
-  if(ok){
-    gp1 = gf->point(x1,y1);
-    gp2 = gf->point(x2,y2);
-    v1 = SVector3(gp1.x()-vertex->x(),gp1.y()-vertex->y(),gp1.z()-vertex->z());
-    v2 = SVector3(gp2.x()-vertex->x(),gp2.y()-vertex->y(),gp2.z()-vertex->z());
-  }
-  else{
-    v1 = SVector3(1.0,0.0,0.0);
-    v2 = SVector3(0.0,1.0,0.0);
-  }
-  return ok;
-}
-
 static bool improved_translate(GFace* gf,MVertex* vertex,SVector3& v1,SVector3& v2)
 {
   double x,y;
@@ -925,39 +857,28 @@ static bool improved_translate(GFace* gf,MVertex* vertex,SVector3& v1,SVector3& 
 
 static void directions_storage(GFace* gf)
 {
-  bool ok;
-  unsigned int i;
-  int j;
-  MVertex* vertex;
-  MElement* element;
-  SPoint2 point;
-  SVector3 v1;
-  SVector3 v2;
-  MElementOctree* octree;
   std::set<MVertex*> vertices;
-  std::set<MVertex*>::iterator it;
-
-  vertices.clear();
-
-  for(i=0;i<gf->getNumMeshElements();i++){
-    element = gf->getMeshElement(i);
-    for(j=0;j<element->getNumVertices();j++){
-      vertex = element->getVertex(j);
+  for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
+    MElement* element = gf->getMeshElement(i);
+    for(int j = 0; j < element->getNumVertices(); j++){
+      MVertex *vertex = element->getVertex(j);
       vertices.insert(vertex);
     }
   }
 
   backgroundMesh::set(gf);
-  octree = backgroundMesh::current()->get_octree();
 
   gf->storage1.clear();
   gf->storage2.clear();
   gf->storage3.clear();
   gf->storage4.clear();
 
-  for(it=vertices.begin();it!=vertices.end();it++){
-    ok = improved_translate(gf,*it,v1,v2);
-
+  for(std::set<MVertex*>::iterator it = vertices.begin();
+      it != vertices.end(); it++){
+    SPoint2 point;
+    SVector3 v1;
+    SVector3 v2;
+    bool ok = improved_translate(gf,*it,v1,v2);
     if(ok){
       gf->storage1.push_back(SPoint3((*it)->x(),(*it)->y(),(*it)->z()));
       gf->storage2.push_back(v1);
@@ -1592,10 +1513,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 #endif
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-     !CTX::instance()->mesh.optimizeLloyd && !onlyInitialMesh && CTX::instance()->mesh.algoRecombine != 2)
+     !onlyInitialMesh && CTX::instance()->mesh.algoRecombine != 2)
     recombineIntoQuads(gf);
-
-
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,
                        gf->meshStatistics.average_element_shape,
@@ -2383,7 +2302,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   delete m;
 
   if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
-     !CTX::instance()->mesh.optimizeLloyd && CTX::instance()->mesh.algoRecombine != 2)
+     CTX::instance()->mesh.algoRecombine != 2)
     recombineIntoQuads(gf,true,false);
 
   computeElementShapes(gf, gf->meshStatistics.worst_element_shape,

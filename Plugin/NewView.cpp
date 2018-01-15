@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -12,8 +12,12 @@
 #include "MElement.h"
 
 StringXNumber NewViewOptions_Number[] = {
-  {GMSH_FULLRC, "View", NULL, -1.},
-  {GMSH_FULLRC, "Dimension", NULL, 1.}
+  {GMSH_FULLRC, "NumComp", NULL, 1.},
+  {GMSH_FULLRC, "ViewTag", NULL, -1.}
+};
+
+StringXString NewViewOptions_String[] = {
+  {GMSH_FULLRC, "Type", NULL, "NodeData"}
 };
 
 extern "C"
@@ -26,9 +30,9 @@ extern "C"
 
 std::string GMSH_NewViewPlugin::getHelp() const
 {
-  return "Plugin(NewView) creates a new view from a mesh."
-    "The parameter `Dimension' gives the dimension"
-    "of the initialized to zero NodeData vector";
+  return "Plugin(NewView) creates a new model-based view from the "
+    "current mesh, with `NumComp' field components.\n\n"
+    "If `ViewTag' is positive, force that tag for the created view.";
 }
 
 int GMSH_NewViewPlugin::getNbOptions() const
@@ -41,24 +45,44 @@ StringXNumber *GMSH_NewViewPlugin::getOption(int iopt)
   return &NewViewOptions_Number[iopt];
 }
 
+int GMSH_NewViewPlugin::getNbOptionsStr() const
+{
+  return sizeof(NewViewOptions_String) / sizeof(StringXString);
+}
+
+StringXString *GMSH_NewViewPlugin::getOptionStr(int iopt)
+{
+  return &NewViewOptions_String[iopt];
+}
+
 PView *GMSH_NewViewPlugin::execute(PView * v)
 {
+  int numComp = (int)NewViewOptions_Number[0].def;
+  int tag = (int)NewViewOptions_Number[1].def;
+  std::string type = NewViewOptions_String[0].def;
+
   if(GModel::current()->getMeshStatus() < 1){
     Msg::Error("No mesh available to create the view: please mesh your model!");
     return v ;
   }
-  int nbrValues = (int)NewViewOptions_Number[1].def;
-
+  if(numComp < 1){
+    Msg::Error("Bad number of components for Plugin(NewView)");
+    return v;
+  }
+  if(type != "NodeData"){
+    Msg::Error("Unknown data type for Plugin(NewView)");
+    return v;
+  }
   std::map<int, std::vector<double> > d;
   std::vector<GEntity*> entities;
   GModel::current()->getEntities(entities);
   for(unsigned int i = 0; i < entities.size(); i++){
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++){
       MVertex *ve = entities[i]->mesh_vertices[j];
-      d[ve->getNum()].resize(nbrValues);
+      d[ve->getNum()].resize(numComp);
     }
   }
 
-  PView *vn = new PView("New view", "NodeData", GModel::current(), d);
+  PView *vn = new PView("New view", "NodeData", GModel::current(), d, tag);
   return vn ;
 }

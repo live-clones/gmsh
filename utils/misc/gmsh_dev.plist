@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>CFBundleName</key><string>Gmsh</string>
+    <key>CFBundleExecutable</key><string>gmsh</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleVersion</key><string></string>
+    <key>CFBundleShortVersionString</key><string>dev</string>
+    <key>CFBundleSignature</key><string>GMSH</string>
+    <key>CFBundleGetInfoString</key><string>Gmsh, Copyright 1997-2017 C. Geuzaine and J.-F. Remacle</string>
+    <key>CFBundleIdentifier</key><string></string>
+    <key>NSHighResolutionCapable</key><true/>
+  </dict>
+</plist>

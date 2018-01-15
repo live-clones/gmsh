@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -13,12 +13,19 @@
 #include "OS.h"
 #include "MPoint.h"
 
+<<<<<<< HEAD
 #ifndef HAVE_HXT
 #include <stack>
 #include "meshPartitionObjects.h"
 #include "meshPartitionOptions.h"
 #include "meshPartition.h"
 #include "discreteDiskFace.h"
+=======
+#if defined(HAVE_PETSC)
+#include "linearSystemPETSc.h"
+#endif
+
+>>>>>>> 31f950a53c9dc8a75b2f5b251c0b92dfe9474e36
 #if defined(HAVE_METIS)
 extern "C" {
 #include <metis.h>
@@ -928,9 +935,10 @@ void discreteFace::split(triangulation* trian,std::vector<triangulation*> &parti
   int edgeCut;
   std::vector<int> part;
   part.resize(nVertex);
-  int zero = 0;
-  METIS_PartGraphRecursive(&nVertex, &(idx[0]), &(nbh[0]), NULL, NULL,
-                           &zero, &zero, &nPartitions, &zero, &edgeCut, &(part[0]));
+  int one = 1;
+  METIS_PartGraphRecursive((idx_t* )&nVertex, (idx_t *)&one, (idx_t* )&(idx[0]),
+                           (idx_t *)&(nbh[0]),NULL, NULL, NULL, (idx_t *)&nPartitions,
+                           NULL, NULL, NULL, (idx_t *)&edgeCut, (idx_t *)&(part[0]));
 
   std::map<MElement*,int> el2part;
   std::vector<std::vector<MElement*> > elem;

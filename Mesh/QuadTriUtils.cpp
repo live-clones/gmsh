@@ -33,7 +33,6 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 ********************************************************************************/
 #include <stdlib.h>
-#include "Geo.h"
 #include "QuadTriUtils.h"
 
 // By Geuzaine, Remacle...
@@ -72,10 +71,6 @@ int IsInToroidalQuadToTri(GFace *face)
 	break;
 
       GRegion *region = (*itreg);
-
-      // is region in the current model's regions or is it deleted?
-      if( !FindVolume( ( region->tag() ) ) )
-	continue;
 
       // does face belong to region and if so is it a structured extrusion?
       std::list<GFace *> region_faces = std::list<GFace *>( region->faces() );

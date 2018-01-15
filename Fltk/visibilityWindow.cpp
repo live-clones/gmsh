@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -249,9 +249,8 @@ class VisibilityList { // singleton
       }
     }
     else if(type == MeshPartitions){
-      std::set<int> part = m->getMeshPartitions();
-      for(std::set<int>::const_iterator it = part.begin(); it != part.end(); ++it)
-        _entities.push_back(new VisPartition(*it));
+      for(int part = 0; part < m->getNumPartitions(); part++)
+        _entities.push_back(new VisPartition(part));
     }
     std::sort(_entities.begin(), _entities.end(), VisLessThan());
   }

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -176,6 +176,10 @@ class MPolyhedron : public MElement {
       for(int j = 0; j < 4; j++)
         verts[i * 4 + j] = _parts[i]->getVertex(j)->getIndex();
   }
+  virtual int numCommonNodesInDualGraph(const MElement *const other) const
+  {
+    return 1;
+  }
 };
 
 class MPolygon : public MElement {
@@ -320,6 +324,10 @@ class MPolygon : public MElement {
     for(unsigned int i = 0; i < _parts.size(); i++)
       for(int j = 0; j < 3; j++)
         verts[i * 3 + j] = _parts[i]->getVertex(j)->getIndex();
+  }
+  virtual int numCommonNodesInDualGraph(const MElement *const other) const
+  {
+    return 1;
   }
 };
 

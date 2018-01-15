@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -194,6 +194,59 @@ void MVertex::writeMSH2(FILE *fp, bool binary, bool saveParametric, double scali
   }
 }
 
+void MVertex::writeMSH4(FILE *fp, bool binary, bool saveParametric, double scalingFactor)
+{
+  if(binary){
+    fwrite(&_num, sizeof(int), 1, fp);
+    double xScale = _x*scalingFactor;
+    double yScale = _y*scalingFactor;
+    double zScale = _z*scalingFactor;
+    fwrite(&xScale, sizeof(double), 1, fp);
+    fwrite(&yScale, sizeof(double), 1, fp);
+    fwrite(&zScale, sizeof(double), 1, fp);
+    if(saveParametric){
+      int geDim = _ge->dim();
+      int geTag = _ge->tag();
+      fwrite(&geDim, sizeof(int), 1, fp);
+      fwrite(&geTag, sizeof(int), 1, fp);
+
+      if(_ge->dim() == 1){
+        double u;
+        getParameter(0, u);
+        fwrite(&u, sizeof(double), 1, fp);
+      }
+      else if(_ge->dim() == 2){
+        double u, v;
+        getParameter(0, u);
+        getParameter(1, v);
+        fwrite(&u, sizeof(double), 1, fp);
+        fwrite(&v, sizeof(double), 1, fp);
+      }
+    }
+  }
+  else{
+    fprintf(fp, "%d %.16g %.16g %.16g", _num,
+            _x*scalingFactor, _y*scalingFactor, _z*scalingFactor);
+    if(saveParametric){
+      fprintf(fp, " %d %d ", _ge->dim(), _ge->tag());
+
+      if(_ge->dim() == 1){
+        double u;
+        getParameter(0, u);
+        fprintf(fp, "%.16g", u);
+      }
+      else if(_ge->dim() == 2){
+        double u, v;
+        getParameter(0, u);
+        getParameter(1, v);
+        fprintf(fp, "%.16g %.16g", u, v);
+      }
+    }
+
+    fprintf(fp, "\n");
+  }
+}
+
 void MVertex::writePLY2(FILE *fp)
 {
   if(_index < 0) return; // negative index vertices are never saved
@@ -239,6 +292,15 @@ void MVertex::writeVTK(FILE *fp, bool binary, double scalingFactor, bool bigEndi
     fprintf(fp, "%.16g %.16g %.16g\n",
             x() * scalingFactor, y() * scalingFactor, z() * scalingFactor);
   }
+}
+
+void MVertex::writeMATLAB(FILE *fp, int i, bool binary, double scalingFactor)
+{
+  if(_index < 0) return; // negative index vertices are never saved
+
+  fprintf(fp, "gX(%d) = %.16g;\n", i, x() * scalingFactor);
+  fprintf(fp, "gY(%d) = %.16g;\n", i, y() * scalingFactor);
+  fprintf(fp, "gZ(%d) = %.16g;\n", i, z() * scalingFactor);
 }
 
 void MVertex::writeTOCHNOG(FILE *fp, int dim, double scalingFactor)

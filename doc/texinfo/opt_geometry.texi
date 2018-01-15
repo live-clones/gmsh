@@ -24,6 +24,11 @@ Command parsed when double-clicking on a volume@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCTargetUnit
+Length unit to which coordinates from STEP and IGES files are converted to when imported by OpenCASCADE (leave empty to keep the unit defined in the STEP and IGES file)@*
+Default value: @code{"M"}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.AutoCoherence
 Should all duplicate entities be automatically removed? (If AutoCoherence == 2, also remove degenerate entities)@*
 Default value: @code{1}@*
@@ -76,7 +81,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.LightTwoSide
 Light both sides of surfaces (leads to slower rendering)@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Lines

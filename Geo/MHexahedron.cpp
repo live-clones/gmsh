@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -128,6 +128,21 @@ void MHexahedron::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &r
     }
   }
   Msg::Error("Could not get face information for hexahedron %d", getNum());
+}
+
+int MHexahedron::numCommonNodesInDualGraph(const MElement *const other) const
+{
+  switch (other->getType())
+  {
+    case TYPE_PNT:
+      return 1;
+    case TYPE_LIN:
+      return 2;
+    case TYPE_TRI:
+      return 3;
+    default:
+      return 4;
+  }
 }
 
 static void _myGetEdgeRep(MHexahedron *hex, int num, double *x, double *y, double *z,
