@@ -2323,6 +2323,7 @@ static int computeOrientation(GEntity *parent, GEntity *child)
     std::vector<MVertex*> parentVertices;
     MElement* element = parent->getMeshElement(i);
     element->getVertices(parentVertices);
+    
     bool haveBreak = false;
     for(unsigned int j = 0; j < vertices.size(); j++){
       std::vector<MVertex*>::iterator it = std::find
@@ -2394,29 +2395,22 @@ static void BuildTopology(GModel *model)
   for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
     if((*it)->geomType() == GEntity::PartitionVolume){
       SBoundingBox3d boundingBox = boundingBoxes[*it];
-      std::set<GFace*> boundaryFace;
+      std::list<GFace*> faces;
+      std::list<int> facesOrientation;
 
       for(GModel::const_fiter itSub = model->firstFace(); itSub != model->lastFace(); ++itSub){
         if((*itSub)->geomType() == GEntity::PartitionSurface){
           SBoundingBox3d subBoundingBox = boundingBoxes[*itSub];
           if(boundingBox.contains(subBoundingBox)){
-            boundaryFace.insert(*itSub);
+            (*itSub)->addRegion(*it);
+            faces.push_back(*itSub);
+            facesOrientation.push_back(computeOrientation(*it, *itSub));
+            addPhysical(model, static_cast<partitionRegion*>(*it),
+                        static_cast<partitionFace*>(*itSub));
           }
         }
       }
-
-      std::list<GFace*> faces;
-      std::list<int> facesOrientation;
-      for(std::set<GFace*>::const_iterator itSet = boundaryFace.begin();
-          itSet != boundaryFace.end(); ++itSet){
-        if((*itSet)->geomType() == GEntity::PartitionSurface){
-          (*itSet)->addRegion(*it);
-          faces.push_back((*itSet));
-          facesOrientation.push_back(computeOrientation(*it, *itSet));
-          addPhysical(model, static_cast<partitionRegion*>(*it),
-                      static_cast<partitionFace*>(*itSet));
-        }
-      }
+      
       (*it)->set(faces);
       (*it)->setOrientations(facesOrientation);
     }
@@ -2426,29 +2420,22 @@ static void BuildTopology(GModel *model)
   for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
     if((*it)->geomType() == GEntity::PartitionSurface){
       SBoundingBox3d boundingBox = boundingBoxes[*it];
-      std::set<GEdge*> boundaryEdge;
+      std::list<GEdge*> edges;
+      std::list<int> edgesOrientation;
       
       for(GModel::const_eiter itSub = model->firstEdge(); itSub != model->lastEdge(); ++itSub){
         if((*itSub)->geomType() == GEntity::PartitionCurve){
           SBoundingBox3d subBoundingBox = boundingBoxes[*itSub];
           if(boundingBox.contains(subBoundingBox)){
-            boundaryEdge.insert(*itSub);
+            (*itSub)->addFace(*it);
+            edges.push_back(*itSub);
+            edgesOrientation.push_back(computeOrientation(*it, *itSub));
+            addPhysical(model, static_cast<partitionFace*>(*it),
+                        static_cast<partitionEdge*>(*itSub));
           }
         }
       }
-
-      std::list<GEdge*> edges;
-      std::list<int> edgesOrientation;
-      for(std::set<GEdge*>::const_iterator itSet = boundaryEdge.begin();
-          itSet != boundaryEdge.end(); ++itSet){
-        if((*itSet)->geomType() == GEntity::PartitionCurve){
-          (*itSet)->addFace(*it);
-          edges.push_back((*itSet));
-          edgesOrientation.push_back(computeOrientation(*it, *itSet));
-          addPhysical(model, static_cast<partitionFace*>(*it),
-                      static_cast<partitionEdge*>(*itSet));
-        }
-      }
+      
       (*it)->set(edges);
       (*it)->setOrientations(edgesOrientation);
     }
@@ -2458,30 +2445,22 @@ static void BuildTopology(GModel *model)
   for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
     if((*it)->geomType() == GEntity::PartitionCurve){
       SBoundingBox3d boundingBox = boundingBoxes[*it];
-      std::set<GVertex*> boundaryVertex;
+      std::vector<GVertex*> vertices;
+      std::list<int> verticesOrientation;
       
       for(GModel::const_viter itSub = model->firstVertex(); itSub != model->lastVertex(); ++itSub){
         if((*itSub)->geomType() == GEntity::PartitionVertex){
           SBoundingBox3d subBoundingBox = boundingBoxes[*itSub];
           if(boundingBox.contains(subBoundingBox)){
-            boundaryVertex.insert(*itSub);
+            (*itSub)->addEdge(*it);
+            vertices.push_back(*itSub);
+            verticesOrientation.push_back(computeOrientation(*it, *itSub));
+            addPhysical(model, static_cast<partitionEdge*>(*it),
+                        static_cast<partitionVertex*>(*itSub));
           }
         }
       }
-
-      std::vector<GVertex*> vertices;
-      std::list<int> verticesOrientation;
-      for(std::set<GVertex*>::const_iterator itSet = boundaryVertex.begin();
-          itSet != boundaryVertex.end(); ++itSet){
-        if((*itSet)->geomType() == GEntity::PartitionVertex){
-          (*itSet)->addEdge(*it);
-          vertices.push_back((*itSet));
-          verticesOrientation.push_back(computeOrientation(*it, *itSet));
-          addPhysical(model, static_cast<partitionEdge*>(*it),
-                      static_cast<partitionVertex*>(*itSet));
-        }
-      }
-
+      
       if(vertices.size() == 2){
         if(verticesOrientation.front() == 1){
           (*it)->setBeginVertex(vertices[0]);
