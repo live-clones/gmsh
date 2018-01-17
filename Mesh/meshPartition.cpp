@@ -2191,33 +2191,7 @@ static void CreatePartitionBoundaries(GModel *const model,
   Msg::Info(" + Vertices (%g s)", t4 - t3);
 }
 
-static std::string getPhysicalSubstr(GModel* model, GEntity* entity)
-{
-  std::string substr;
-  std::vector<int> tags = entity->getPhysicalEntities();
-  for(unsigned int i = 0; i < tags.size(); i++){
-    std::string name = model->getPhysicalName(entity->dim(),tags[i]);
-
-    std::string str;
-    if(name[0] == '_'){
-      for(unsigned int j = 0; j < name.length(); j++){
-        if(name[j] == '{'){
-          substr = str;
-          break;
-        }
-        else if(name[j] == ' ') continue;
-        else if(name[j] == '}') break;
-        else{
-          str += name[j];
-        }
-      }
-    }
-
-  }
-  return substr;
-}
-
-static void addPhysical(GModel *const model, GEntity *parentEntity,
+static void addPhysical(GModel *const model, int level,
                         GEntity *childEntity)
 {
   unsigned int numPartitions = 0;
@@ -2235,45 +2209,24 @@ static void addPhysical(GModel *const model, GEntity *parentEntity,
   }
   
   std::string name;
-  if(parentEntity == 0){
-    std::string childSubStr = getPhysicalSubstr(model, childEntity);
-    if(childSubStr.size() != 0) return;
-    
+  if(level == 0){
     name = "_omega{";
   }
   else{
-    std::string parentSubStr = getPhysicalSubstr(model, parentEntity);
-    std::string childSubStr = getPhysicalSubstr(model, childEntity);
-
     if(numPartitions== 1){
-      name = "_omicron";
+      name = "_omicron{";
     }
     else{
-      if(parentSubStr == "_omega"){
-        name = "_sigma";
+      if(level == 1){
+        name = "_sigma{";
       }
-      else if(parentSubStr == "_sigma"){
-        name = "_tau";
+      else if(level == 2){
+        name = "_tau{";
       }
-      else if(parentSubStr == "_tau"){
-        name = "_upsilon";
-      }
-      else if(parentSubStr == "_upsilon"){
-        return;
-      }
-      else if(parentSubStr == "_omicron"){
-        name = "_omicronSigma";
-      }
-      else if(parentSubStr == "_omicronSigma"){
-        name = "_omicronTau";
-      }
-      else if(parentSubStr == "_omicronTau"){
-        return;
+      else if(level == 3){
+        name = "_upsilon{";
       }
     }
-
-    if(childSubStr == name) return;
-    name += "{";
   }
   
   for(unsigned int i = 0; i < numPartitions; i++){
@@ -2310,13 +2263,20 @@ static void addPhysical(GModel *const model, GEntity *parentEntity,
 // Build the topology
 static void AssignPhysicalName(GModel *model)
 {
+  std::map<GEntity*, int> levels;
   // Loop over regions
   for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
     if((*it)->geomType() == GEntity::PartitionVolume){
       addPhysical(model, 0, *it);
+      levels.insert(std::pair<GEntity*, int>(*it, 0));
+    
       std::list<GFace*> listFace = (*it)->faces();
       for(std::list<GFace*>::iterator itF = listFace.begin(); itF != listFace.end(); ++itF){
-        addPhysical(model, *it, *itF);
+        if(levels.find(*itF) == levels.end()){
+          int level = levels[*it]+1;
+          addPhysical(model, level, *itF);
+          levels.insert(std::pair<GEntity*, int>(*itF, level));
+        }
       }
     }
   }
@@ -2324,10 +2284,18 @@ static void AssignPhysicalName(GModel *model)
   // Loop over faces
   for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
     if((*it)->geomType() == GEntity::PartitionSurface){
-      addPhysical(model, 0, *it);
+      if(levels.find(*it) == levels.end()){
+        addPhysical(model, 0, *it);
+        levels.insert(std::pair<GEntity*, int>(*it, 0));
+      }
+      
       std::list<GEdge*> listEdge = (*it)->edges();
       for(std::list<GEdge*>::iterator itE = listEdge.begin(); itE != listEdge.end(); ++itE){
-        addPhysical(model, *it, *itE);
+        if(levels.find(*itE) == levels.end()){
+          int level = levels[*it]+1;
+          addPhysical(model, level, *itE);
+          levels.insert(std::pair<GEntity*, int>(*itE, level));
+        }
       }
     }
   }
@@ -2335,11 +2303,23 @@ static void AssignPhysicalName(GModel *model)
   // Loop over edges
   for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
     if((*it)->geomType() == GEntity::PartitionCurve){
-      addPhysical(model, 0, *it);
+      if(levels.find(*it) == levels.end()){
+        addPhysical(model, 0, *it);
+        levels.insert(std::pair<GEntity*, int>(*it, 0));
+      }
+      
       GVertex *v0 = (*it)->getBeginVertex();
+      if(v0 && levels.find(v0) == levels.end()){
+        int level = levels[*it]+1;
+        addPhysical(model, level, v0);
+        levels.insert(std::pair<GEntity*, int>(v0, level));
+      }
       GVertex *v1 = (*it)->getEndVertex();
-      if(v0) addPhysical(model, *it, v0);
-      if(v1) addPhysical(model, *it, v1);
+      if(v1 && levels.find(v1) == levels.end()){
+        int level = levels[*it]+1;
+        addPhysical(model, level, v1);
+        levels.insert(std::pair<GEntity*, int>(v1, level));
+      }
     }
   }
 }
