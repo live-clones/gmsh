@@ -696,7 +696,7 @@ static int PartitionGraph(Graph &graph)
     // Specifies the type of objective
     metisOptions[METIS_OPTION_OBJTYPE] = METIS_OBJTYPE_CUT;
     // Forces contiguous partitions.
-    metisOptions[METIS_OPTION_CONTIG] = 1;
+    //metisOptions[METIS_OPTION_CONTIG] = 1;
 
     int objval;
     unsigned int *epart = new unsigned int[graph.ne()];
@@ -2273,7 +2273,7 @@ static void AssignPhysicalName(GModel *model)
       std::list<GFace*> listFace = (*it)->faces();
       for(std::list<GFace*>::iterator itF = listFace.begin(); itF != listFace.end(); ++itF){
         if(levels.find(*itF) == levels.end()){
-          int level = levels[*it]+1;
+          const int level = levels[*it]+1;
           addPhysical(model, level, *itF);
           levels.insert(std::pair<GEntity*, int>(*itF, level));
         }
@@ -2292,7 +2292,7 @@ static void AssignPhysicalName(GModel *model)
       std::list<GEdge*> listEdge = (*it)->edges();
       for(std::list<GEdge*>::iterator itE = listEdge.begin(); itE != listEdge.end(); ++itE){
         if(levels.find(*itE) == levels.end()){
-          int level = levels[*it]+1;
+          const int level = levels[*it]+1;
           addPhysical(model, level, *itE);
           levels.insert(std::pair<GEntity*, int>(*itE, level));
         }
@@ -2310,13 +2310,13 @@ static void AssignPhysicalName(GModel *model)
       
       GVertex *v0 = (*it)->getBeginVertex();
       if(v0 && levels.find(v0) == levels.end()){
-        int level = levels[*it]+1;
+        const int level = levels[*it]+1;
         addPhysical(model, level, v0);
         levels.insert(std::pair<GEntity*, int>(v0, level));
       }
       GVertex *v1 = (*it)->getEndVertex();
       if(v1 && levels.find(v1) == levels.end()){
-        int level = levels[*it]+1;
+        const int level = levels[*it]+1;
         addPhysical(model, level, v1);
         levels.insert(std::pair<GEntity*, int>(v1, level));
       }
