@@ -962,7 +962,7 @@ int GModel::_writePartitionedMSH2(const std::string &baseName, bool binary,
   for(int partition = 0; partition < getNumPartitions(); partition++){
 
     std::ostringstream sstream;
-    sstream << baseName << "_" << partition << ".msh";
+    sstream << baseName << "_" << partition+1 << ".msh";
 
     numElements = getNumElementsMSH(this, saveAll, partition);
     Msg::Info("Writing partition %d in file '%s'", partition, sstream.str().c_str());
