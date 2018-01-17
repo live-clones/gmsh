@@ -235,6 +235,31 @@ void GRegion::setColor(unsigned int val, bool recursive)
   }
 }
 
+int GRegion::delFace(GFace* face)
+{
+  std::list<GFace*>::iterator it;
+  int pos = 0;
+  for(it = l_faces.begin(); it != l_faces.end(); ++it){
+    if(*it == face) break;
+    pos++;
+  }
+  l_faces.erase(it);
+  
+  std::list<int>::iterator itOri;
+  int posOri = 0;
+  int orientation = 0;
+  for(itOri = l_dirs.begin(); itOri != l_dirs.end(); ++itOri){
+    if(posOri == pos){
+      orientation = *itOri;
+      break;
+    }
+    posOri++;
+  }
+  l_dirs.erase(itOri);
+  
+  return orientation;
+}
+
 std::string GRegion::getAdditionalInfoString()
 {
   std::ostringstream sstream;

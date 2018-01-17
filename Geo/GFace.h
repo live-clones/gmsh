@@ -97,6 +97,7 @@ class GFace : public GEntity {
   virtual std::list<int> orientations() const { return l_dirs; }
 
   // edges that bound the face
+  int delEdge(GEdge* edge);
   virtual std::list<GEdge*> edges() const { return l_edges; }
   inline void set(const std::list<GEdge*> f) { l_edges = f; }
   inline void setOrientations(const std::list<int> f) { l_dirs = f; }

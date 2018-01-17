@@ -55,6 +55,7 @@ class GRegion : public GEntity {
   void addEmbeddedFace(GFace *f){ embedded_faces.push_back(f); }
 
   // get/set faces that bound the region
+  int delFace(GFace* face);
   virtual std::list<GFace*> faces() const{ return l_faces; }
   virtual std::list<int> faceOrientations() const{ return l_dirs; }
   inline void set(const std::list<GFace*> f) { l_faces = f; }

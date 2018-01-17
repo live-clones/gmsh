@@ -1426,6 +1426,7 @@ int GModel::partitionMesh(int numPart)
 #if defined(HAVE_MESH) && (defined(HAVE_METIS))
   opt_mesh_partition_num(0, GMSH_SET, numPart);
   if(numPart > 0){
+    if(_numPartitions > 0) UnpartitionMesh(this);
     int ier = PartitionMesh(this);
     return ier;
   }

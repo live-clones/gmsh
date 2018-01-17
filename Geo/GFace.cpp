@@ -109,6 +109,31 @@ void GFace::delFreeEdge(GEdge *e)
   }
 }
 
+int GFace::delEdge(GEdge* edge)
+{
+  std::list<GEdge*>::iterator it;
+  int pos = 0;
+  for(it = l_edges.begin(); it != l_edges.end(); ++it){
+    if(*it == edge) break;
+    pos++;
+  }
+  l_edges.erase(it);
+  
+  std::list<int>::iterator itOri;
+  int posOri = 0;
+  int orientation = 0;
+  for(itOri = l_dirs.begin(); itOri != l_dirs.end(); ++itOri){
+    if(posOri == pos){
+      orientation = *itOri;
+      break;
+    }
+    posOri++;
+  }
+  l_dirs.erase(itOri);
+  
+  return orientation;
+}
+
 void GFace::deleteMesh(bool onlyDeleteElements)
 {
   if(!onlyDeleteElements){

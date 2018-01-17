@@ -147,6 +147,8 @@ class Graph
   unsigned int *vwgt() const { return _vwgt; };
   unsigned int partition(unsigned int i) const { return _partition[i]; };
   unsigned int *partition() const { return _partition; };
+  unsigned int numNodes() const { return _ne; };
+  unsigned int numEdges() const { return (sizeof(_adjncy)/sizeof(unsigned int))/2; };
   void nparts(unsigned int nparts) { _nparts = nparts; };
   void ne(unsigned int ne) { _ne = ne; };
   void nn(unsigned int nn) { _nn = nn; };
@@ -1079,6 +1081,21 @@ static void dividedNonConnectedEntities(GModel *const model, int dim,
             // Add elements
             pvertex->addElement(vertex->getMeshElement(i)->getType(),
                                 vertex->getMeshElement(i));
+            // Move B-Rep
+            std::list<GEdge*> BRepEdges = vertex->edges();
+            if(BRepEdges.size() > 0){
+              for(std::list<GEdge*>::iterator itBRep = BRepEdges.begin();
+                  itBRep != BRepEdges.end(); ++itBRep){
+                if(vertex == (*itBRep)->getBeginVertex()){
+                  (*itBRep)->setVertex(pvertex, 1);
+                  pvertex->addEdge(*itBRep);
+                }
+                if(vertex == (*itBRep)->getEndVertex()){
+                  (*itBRep)->setVertex(pvertex, -1);
+                  pvertex->addEdge(*itBRep);
+                }
+              }
+            }
           }
           
           model->remove(vertex);
@@ -1117,11 +1134,26 @@ static void dividedNonConnectedEntities(GModel *const model, int dim,
                                edge->lines.begin(), edge->lines.end());
         createDualGraph(graph, false);
         
+        // if a graph contains at least ((n-1)*(n-2))/2 + 1 edges
+        // (where n is the number of nodes), then it is connected.
+        if(((graph.numNodes()-1)*(graph.numNodes()-2))/2 + 1 <= graph.numEdges()){
+          break;
+        }
+        
         std::vector< std::set<MElement*> > connectedElements;
         fillConnectedElements(connectedElements, graph);
         graph.clear();
         
         if(connectedElements.size() > 1){
+          std::list<GFace*> BRepFaces = edge->faces();
+          std::vector<int> oldOrientations;
+          if(BRepFaces.size() > 0){
+            for(std::list<GFace*>::iterator itBRep = BRepFaces.begin();
+                itBRep !=  BRepFaces.end(); ++itBRep){
+              oldOrientations.push_back((*itBRep)->delEdge(edge));
+            }
+          }
+          
           for(unsigned int i = 0; i < connectedElements.size(); i++){
             // Create the new partitionEdge
             partitionEdge *pedge = new partitionEdge
@@ -1138,6 +1170,16 @@ static void dividedNonConnectedEntities(GModel *const model, int dim,
                 itSet != connectedElements[i].end(); ++itSet){
               // Add elements
               pedge->addElement((*itSet)->getType(), (*itSet));
+            }
+            // Move B-Rep
+            if(BRepFaces.size() > 0){
+              int i = 0;
+              for(std::list<GFace*>::iterator itBRep = BRepFaces.begin();
+                  itBRep !=  BRepFaces.end(); ++itBRep){
+                (*itBRep)->setEdge(pedge, oldOrientations[i]);
+                pedge->addFace(*itBRep);
+                i++;
+              }
             }
           }
           
@@ -1181,11 +1223,26 @@ static void dividedNonConnectedEntities(GModel *const model, int dim,
                                face->quadrangles.begin(), face->quadrangles.end());
         createDualGraph(graph, false);
         
+        // if a graph contains at least ((n-1)*(n-2))/2 + 1 edges
+        // (where n is the number of nodes), then it is connected.
+        if(((graph.numNodes()-1)*(graph.numNodes()-2))/2 + 1 <= graph.numEdges()){
+          break;
+        }
+        
         std::vector< std::set<MElement*> > connectedElements;
         fillConnectedElements(connectedElements, graph);
         graph.clear();
         
         if(connectedElements.size() > 1){
+          std::list<GRegion*> BRepRegions = face->regions();
+          std::vector<int> oldOrientations;
+          if(BRepRegions.size() > 0){
+            for(std::list<GRegion*>::iterator itBRep = BRepRegions.begin();
+                itBRep !=  BRepRegions.end(); ++itBRep){
+              oldOrientations.push_back((*itBRep)->delFace(face));
+            }
+          }
+          
           for(unsigned int i = 0; i < connectedElements.size(); i++){
             // Create the new partitionFace
             partitionFace *pface = new partitionFace
@@ -1202,6 +1259,16 @@ static void dividedNonConnectedEntities(GModel *const model, int dim,
                 itSet != connectedElements[i].end(); ++itSet){
               // Add elements
               pface->addElement((*itSet)->getType(), (*itSet));
+            }
+            // Move B-Rep
+            if(BRepRegions.size() > 0){
+              int i = 0;
+              for(std::list<GRegion*>::iterator itBRep = BRepRegions.begin();
+                  itBRep !=  BRepRegions.end(); ++itBRep){
+                (*itBRep)->setFace(pface, oldOrientations[i]);
+                pface->addRegion(*itBRep);
+                i++;
+              }
             }
           }
           
@@ -1251,6 +1318,12 @@ static void dividedNonConnectedEntities(GModel *const model, int dim,
         fillElementsToNodesMap(graph, region, eptrIndex, eindIndex, numVertex,
                                region->trihedra.begin(), region->trihedra.end());
         createDualGraph(graph, false);
+        
+        // if a graph contains at least ((n-1)*(n-2))/2 + 1 edges
+        // (where n is the number of nodes), then it is connected.
+        if(((graph.numNodes()-1)*(graph.numNodes()-2))/2 + 1 <= graph.numEdges()){
+          break;
+        }
         
         std::vector< std::set<MElement*> > connectedElements;
         fillConnectedElements(connectedElements, graph);
@@ -1872,6 +1945,7 @@ static void assignBrep(GModel *const model, std::map<GEntity*, MElement*> &bound
     for(std::map<GEntity*, MElement*>::iterator it = boundaryEntityAndRefElement.begin();
         it != boundaryEntityAndRefElement.end(); ++it){
       static_cast<GRegion*>(it->first)->setFace(entity, computeOrientation(it->second, entity->getMeshElement(0)));
+      entity->addRegion(static_cast<GRegion*>(it->first));
     }
   }
   else if(e->dim() == 1){
@@ -1880,6 +1954,7 @@ static void assignBrep(GModel *const model, std::map<GEntity*, MElement*> &bound
     for(std::map<GEntity*, MElement*>::iterator it = boundaryEntityAndRefElement.begin();
         it != boundaryEntityAndRefElement.end(); ++it){
       static_cast<GFace*>(it->first)->setEdge(entity, computeOrientation(it->second, entity->getMeshElement(0)));
+      entity->addFace(static_cast<GFace*>(it->first));
     }
   }
   else if(e->dim() == 0){
@@ -1888,6 +1963,7 @@ static void assignBrep(GModel *const model, std::map<GEntity*, MElement*> &bound
     for(std::map<GEntity*, MElement*>::iterator it = boundaryEntityAndRefElement.begin();
         it != boundaryEntityAndRefElement.end(); ++it){
       static_cast<GEdge*>(it->first)->setVertex(entity, computeOrientation(it->second, entity->getMeshElement(0)));
+      entity->addEdge(static_cast<GEdge*>(it->first));
     }
   }
 }
@@ -1952,7 +2028,6 @@ static void CreatePartitionBoundaries(GModel *const model,
     faceToElement.clear();
     
     faces = model->getFaces();
-    //TODO : Change the brep
     dividedNonConnectedEntities(model, 2, regions, faces, edges, vertices);
   }
   double t2 = Cpu();
@@ -2032,7 +2107,6 @@ static void CreatePartitionBoundaries(GModel *const model,
     edgeToElement.clear();
     
     edges = model->getEdges();
-    //TODO : Change the brep
     dividedNonConnectedEntities(model, 1, regions, faces, edges, vertices);
   }
   
@@ -2110,7 +2184,6 @@ static void CreatePartitionBoundaries(GModel *const model,
     vertexToElement.clear();
     
     vertices = model->getVertices();
-    //TODO : Change the brep
     dividedNonConnectedEntities(model, 0, regions, faces, edges, vertices);
   }
   
