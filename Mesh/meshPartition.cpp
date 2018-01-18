@@ -35,10 +35,10 @@
 #define hashmap std::map
 #define hashmapface std::map\
   <MFace, std::vector<std::pair<MElement*, std::vector<unsigned int> > >,\
-   Equal_Face>
+   Less_Face>
 #define hashmapedge std::map\
   <MEdge, std::vector<std::pair<MElement*, std::vector<unsigned int> > >,\
-   Equal_Edge>
+   Less_Edge>
 #define hashmapvertex std::map\
   <MVertex*, std::vector<std::pair<MElement*, std::vector<unsigned int> > > >
 #endif
@@ -2084,6 +2084,8 @@ static void CreatePartitionBoundaries(GModel *const model,
         }
       }
     }
+    double tt2 = Cpu();
+    Msg::Info(" + Graph (%g s)", tt2-t2);
     for(hashmapedge::const_iterator it = edgeToElement.begin();
         it != edgeToElement.end(); ++it){
       MEdge e = it->first;
@@ -2105,9 +2107,13 @@ static void CreatePartitionBoundaries(GModel *const model,
       }
     }
     edgeToElement.clear();
+    double tt3 = Cpu();
+    Msg::Info(" + AssignBrep (%g s)", tt3-tt2);
     
     edges = model->getEdges();
     dividedNonConnectedEntities(model, 1, regions, faces, edges, vertices);
+    double tt4 = Cpu();
+    Msg::Info(" + DividedNonConnectedEntities (%g s)", tt4-tt3);
   }
   
   double t3 = Cpu();
