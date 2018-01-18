@@ -357,11 +357,14 @@ class GModel {
 
   // get the number of physical names
   int numPhysicalNames(){ return physicalNames.size(); }
+  
+  // get iterators to the last physical name of each dimension
+  void getInnerPhysicalNamesIterators(std::vector<piter> &iterators);
 
   // associate a name with a physical entity of dimension "dim" and
   // number "num" (returns a new number id if "num"==0)
   int setPhysicalName(std::string name, int dim, int num=0);
-  int setPhysicalNameWithoutCheck(std::string name, int dim, int num=0);
+  piter setPhysicalName(piter pos, std::string name, int dim, int num=0);
 
   // get the name (if any) of a given physical group of dimension
   // "dim" and id number "num"
