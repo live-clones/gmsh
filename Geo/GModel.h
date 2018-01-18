@@ -361,6 +361,7 @@ class GModel {
   // associate a name with a physical entity of dimension "dim" and
   // number "num" (returns a new number id if "num"==0)
   int setPhysicalName(std::string name, int dim, int num=0);
+  int setPhysicalNameWithoutCheck(std::string name, int dim, int num=0);
 
   // get the name (if any) of a given physical group of dimension
   // "dim" and id number "num"

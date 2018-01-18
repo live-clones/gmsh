@@ -699,14 +699,22 @@ int GModel::getMaxPhysicalNumber(int dim)
 int GModel::setPhysicalName(std::string name, int dim, int number)
 {
   // check if the name is already used
-  piter it = physicalNames.begin();
-  while(it != physicalNames.end()){
-    if(name == it->second && dim == it->first.first) return it->first.second;
-    ++it;
-  }
+  int findPhy = getPhysicalNumber(dim, name);
+  if(findPhy != -1) return findPhy;
+  
   // if no number is given, find the next available one
   if(!number) number = getMaxPhysicalNumber(dim) + 1;
-  physicalNames[std::pair<int, int>(dim, number)] = name;
+  physicalNames.insert(std::pair<std::pair<int, int>, std::string>
+                       (std::pair<int, int>(dim, number), name));
+  return number;
+}
+
+int GModel::setPhysicalNameWithoutCheck(std::string name, int dim, int number)
+{
+  // if no number is given, find the next available one
+  if(!number) number = getMaxPhysicalNumber(dim) + 1;
+  physicalNames.insert(std::pair<std::pair<int, int>, std::string>
+                       (std::pair<int, int>(dim, number), name));
   return number;
 }
 
@@ -723,7 +731,7 @@ int GModel::getPhysicalNumber(const int &dim, const std::string &name)
   for(piter physIt = firstPhysicalName(); physIt != lastPhysicalName(); ++physIt)
     if(dim == physIt->first.first && name == physIt->second)
       return physIt->first.second;
-  //Msg::Warning("No physical group found with the name '%s'", name.c_str());
+
   return -1;
 }
 
