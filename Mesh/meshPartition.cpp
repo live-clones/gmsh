@@ -1556,7 +1556,7 @@ static void CreateNewEntities(GModel *const model,
 }
 
 static void fillElementToEntity(GModel *const model,
-                                std::map<MElement*, GEntity*> &elmToEntity)
+                                hashmap<MElement*, GEntity*> &elmToEntity)
 {
   // Loop over regions
   for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
@@ -1682,7 +1682,7 @@ static partitionFace* assignPartitionBoundary(GModel *const model, MFace &me, ME
                                     std::vector<unsigned int> partitions,
                                     std::multimap<partitionFace*, GEntity*,
                                     Less_partitionFace> &pfaces,
-                                    std::map<MElement*, GEntity*> &elementToEntity)
+                                    hashmap<MElement*, GEntity*> &elementToEntity, int &numEntity)
 {
   partitionFace *newEntity = 0;
   partitionFace pf(model, 1, partitions);
@@ -1694,7 +1694,7 @@ static partitionFace* assignPartitionBoundary(GModel *const model, MFace &me, ME
   // Create the new partition entity for the mesh
   if(ret.first == ret.second){
     // Create new entity and add them to the model
-    ppf = new partitionFace(model, model->getMaxElementaryNumber(2)+1, partitions);
+    ppf = new partitionFace(model, ++numEntity, partitions);
     pfaces.insert(std::pair<partitionFace*, GEntity*>(ppf, elementToEntity[reference]));
     model->add(ppf);
     newEntity = ppf;
@@ -1708,7 +1708,7 @@ static partitionFace* assignPartitionBoundary(GModel *const model, MFace &me, ME
     }
     if(!ppf){
       // Create new entity and add them to the model
-      ppf = new partitionFace(model, model->getMaxElementaryNumber(2)+1, partitions);
+      ppf = new partitionFace(model, ++numEntity, partitions);
       pfaces.insert(std::pair<partitionFace*, GEntity*>(ppf, elementToEntity[reference]));
       model->add(ppf);
       newEntity = ppf;
@@ -1780,7 +1780,7 @@ static partitionEdge* assignPartitionBoundary(GModel *const model, MEdge &me, ME
                                     std::vector<unsigned int> partitions,
                                     std::multimap<partitionEdge*, GEntity*,
                                     Less_partitionEdge> &pedges,
-                                    std::map<MElement*, GEntity*> &elementToEntity)
+                                    hashmap<MElement*, GEntity*> &elementToEntity, int &numEntity)
 {
   partitionEdge *newEntity = 0;
   partitionEdge pe(model, 1, 0, 0, partitions);
@@ -1792,7 +1792,7 @@ static partitionEdge* assignPartitionBoundary(GModel *const model, MEdge &me, ME
   // Create the new partition entity for the mesh
   if(ret.first == ret.second){
     // Create new entity and add them to the model
-    ppe = new partitionEdge(model, model->getMaxElementaryNumber(1)+1, 0, 0, partitions);
+    ppe = new partitionEdge(model, ++numEntity, 0, 0, partitions);
     pedges.insert(std::pair<partitionEdge*, GEntity*>(ppe, elementToEntity[reference]));
     model->add(ppe);
     newEntity = ppe;
@@ -1806,7 +1806,7 @@ static partitionEdge* assignPartitionBoundary(GModel *const model, MEdge &me, ME
     }
     if(!ppe){
       // Create new entity and add them to the model
-      ppe = new partitionEdge(model, model->getMaxElementaryNumber(1)+1, 0, 0, partitions);
+      ppe = new partitionEdge(model, ++numEntity, 0, 0, partitions);
       pedges.insert(std::pair<partitionEdge*, GEntity*>(ppe, elementToEntity[reference]));
       model->add(ppe);
       newEntity = ppe;
@@ -1851,7 +1851,7 @@ static partitionVertex* assignPartitionBoundary(GModel *const model, MVertex *ve
                                     std::vector<unsigned int> partitions,
                                     std::multimap<partitionVertex*, GEntity*,
                                     Less_partitionVertex> &pvertices,
-                                    std::map<MElement*, GEntity*> &elementToEntity)
+                                    hashmap<MElement*, GEntity*> &elementToEntity, int &numEntity)
 {
   partitionVertex *newEntity = 0;
   partitionVertex pv(model, 1, partitions);
@@ -1862,7 +1862,7 @@ static partitionVertex* assignPartitionBoundary(GModel *const model, MVertex *ve
   partitionVertex *ppv = 0;
   // Create the new partition entity for the mesh
   if(ret.first == ret.second){
-    ppv = new partitionVertex(model, model->getMaxElementaryNumber(0)+1, partitions);
+    ppv = new partitionVertex(model, ++numEntity, partitions);
     pvertices.insert(std::pair<partitionVertex*, GEntity*>(ppv, elementToEntity[reference]));
     model->add(ppv);
     newEntity = ppv;
@@ -1876,7 +1876,7 @@ static partitionVertex* assignPartitionBoundary(GModel *const model, MVertex *ve
     }
     if(!ppv){
       // Create new entity and add them to the model
-      ppv = new partitionVertex(model, model->getMaxElementaryNumber(0)+1, partitions);
+      ppv = new partitionVertex(model, ++numEntity, partitions);
       pvertices.insert(std::pair<partitionVertex*, GEntity*>
                        (ppv, elementToEntity[reference]));
       model->add(ppv);
@@ -1974,7 +1974,7 @@ static void CreatePartitionBoundaries(GModel *const model,
                                       &boundaryElements)
 {
   const int meshDim = model->getDim();
-  std::map<MElement*, GEntity*> elementToEntity;
+  hashmap<MElement*, GEntity*> elementToEntity;
   fillElementToEntity(model, elementToEntity);
 
   std::multimap<partitionFace*, GEntity*, Less_partitionFace> pfaces;
@@ -2004,7 +2004,7 @@ static void CreatePartitionBoundaries(GModel *const model,
         }
       }
     }
-
+    int numFaceEntity = model->getMaxElementaryNumber(2);
     for(hashmapface::const_iterator it = faceToElement.begin();
         it != faceToElement.end(); ++it){
       MFace f = it->first;
@@ -2016,7 +2016,7 @@ static void CreatePartitionBoundaries(GModel *const model,
       MElement* reference = getReferenceElement(it->second);
       if(!reference) continue;
 
-      partitionFace *pf = assignPartitionBoundary(model, f, reference, partitions, pfaces, elementToEntity);
+      partitionFace *pf = assignPartitionBoundary(model, f, reference, partitions, pfaces, elementToEntity, numFaceEntity);
       if(pf){
         std::map<GEntity*, MElement*> boundaryEntityAndRefElement;
         for(unsigned int i = 0; i < it->second.size(); i++)
@@ -2086,6 +2086,7 @@ static void CreatePartitionBoundaries(GModel *const model,
     }
     double tt2 = Cpu();
     Msg::Info(" + Graph (%g s)", tt2-t2);
+    int numEdgeEntity = model->getMaxElementaryNumber(1);
     for(hashmapedge::const_iterator it = edgeToElement.begin();
         it != edgeToElement.end(); ++it){
       MEdge e = it->first;
@@ -2097,7 +2098,7 @@ static void CreatePartitionBoundaries(GModel *const model,
       MElement* reference = getReferenceElement(it->second);
       if(!reference) continue;
 
-      partitionEdge* pe = assignPartitionBoundary(model, e, reference, partitions, pedges, elementToEntity);
+      partitionEdge* pe = assignPartitionBoundary(model, e, reference, partitions, pedges, elementToEntity, numEdgeEntity);
       if(pe){
         std::map<GEntity*, MElement*> boundaryEntityAndRefElement;
         for(unsigned int i = 0; i < it->second.size(); i++)
@@ -2167,6 +2168,7 @@ static void CreatePartitionBoundaries(GModel *const model,
         }
       }
     }
+    int numVertexEntity = model->getMaxElementaryNumber(1);
     for(hashmapvertex::const_iterator it = vertexToElement.begin();
         it != vertexToElement.end(); ++it){
       MVertex *v = it->first;
@@ -2178,7 +2180,7 @@ static void CreatePartitionBoundaries(GModel *const model,
       MElement* reference = getReferenceElement(it->second);
       if(!reference) continue;
 
-      partitionVertex* pv = assignPartitionBoundary(model, v, reference, partitions, pvertices, elementToEntity);
+      partitionVertex* pv = assignPartitionBoundary(model, v, reference, partitions, pvertices, elementToEntity, numVertexEntity);
       if(pv){
         std::map<GEntity*, MElement*> boundaryEntityAndRefElement;
         for(unsigned int i = 0; i < it->second.size(); i++)
