@@ -2193,7 +2193,7 @@ static void CreatePartitionBoundaries(GModel *const model,
 
 static void addPhysical(GModel *const model, int level,
                         GEntity *childEntity, hashmap<std::string, int> &nameToNumber,
-                        std::vector<GModel::piter> &iterators, int &numPhysical, double &t)
+                        std::vector<GModel::piter> &iterators, int &numPhysical)
 {
   unsigned int numPartitions = 0;
   if(childEntity->dim() == 3){
@@ -2276,20 +2276,19 @@ static void AssignPhysicalName(GModel *model)
   std::vector<GModel::piter> iterators;
   model->getInnerPhysicalNamesIterators(iterators);
   int numPhysical = model->getMaxPhysicalNumber(-1);
-  double t = 0.;
   hashmap<GEntity*, int> levels;
   hashmap<std::string, int> nameToNumber;
   // Loop over regions
   for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
     if((*it)->geomType() == GEntity::PartitionVolume){
-      addPhysical(model, 0, *it, nameToNumber, iterators, numPhysical, t);
+      addPhysical(model, 0, *it, nameToNumber, iterators, numPhysical);
       levels.insert(std::pair<GEntity*, int>(*it, 0));
     
       std::list<GFace*> listFace = (*it)->faces();
       for(std::list<GFace*>::iterator itF = listFace.begin(); itF != listFace.end(); ++itF){
         if(levels.find(*itF) == levels.end()){
           const int level = levels[*it]+1;
-          addPhysical(model, level, *itF, nameToNumber, iterators, numPhysical, t);
+          addPhysical(model, level, *itF, nameToNumber, iterators, numPhysical);
           levels.insert(std::pair<GEntity*, int>(*itF, level));
         }
       }
@@ -2300,7 +2299,7 @@ static void AssignPhysicalName(GModel *model)
   for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
     if((*it)->geomType() == GEntity::PartitionSurface){
       if(levels.find(*it) == levels.end()){
-        addPhysical(model, 0, *it, nameToNumber, iterators, numPhysical, t);
+        addPhysical(model, 0, *it, nameToNumber, iterators, numPhysical);
         levels.insert(std::pair<GEntity*, int>(*it, 0));
       }
       
@@ -2308,7 +2307,7 @@ static void AssignPhysicalName(GModel *model)
       for(std::list<GEdge*>::iterator itE = listEdge.begin(); itE != listEdge.end(); ++itE){
         if(levels.find(*itE) == levels.end()){
           const int level = levels[*it]+1;
-          addPhysical(model, level, *itE, nameToNumber, iterators, numPhysical, t);
+          addPhysical(model, level, *itE, nameToNumber, iterators, numPhysical);
           levels.insert(std::pair<GEntity*, int>(*itE, level));
         }
       }
@@ -2319,26 +2318,24 @@ static void AssignPhysicalName(GModel *model)
   for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
     if((*it)->geomType() == GEntity::PartitionCurve){
       if(levels.find(*it) == levels.end()){
-        addPhysical(model, 0, *it, nameToNumber, iterators, numPhysical, t);
+        addPhysical(model, 0, *it, nameToNumber, iterators, numPhysical);
         levels.insert(std::pair<GEntity*, int>(*it, 0));
       }
       
       GVertex *v0 = (*it)->getBeginVertex();
       if(v0 && levels.find(v0) == levels.end()){
         const int level = levels[*it]+1;
-        addPhysical(model, level, v0, nameToNumber, iterators, numPhysical, t);
+        addPhysical(model, level, v0, nameToNumber, iterators, numPhysical);
         levels.insert(std::pair<GEntity*, int>(v0, level));
       }
       GVertex *v1 = (*it)->getEndVertex();
       if(v1 && levels.find(v1) == levels.end()){
         const int level = levels[*it]+1;
-        addPhysical(model, level, v1, nameToNumber, iterators, numPhysical, t);
+        addPhysical(model, level, v1, nameToNumber, iterators, numPhysical);
         levels.insert(std::pair<GEntity*, int>(v1, level));
       }
     }
   }
-  
-  Msg::Info(" + AddPhysical (%g s)", t);
 }
 
 void movePeriodicNodesFromParentToPartitionEntities(GModel * const model)
