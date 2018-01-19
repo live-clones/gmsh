@@ -1413,6 +1413,8 @@ int GModel::_readMSH4(const std::string &name)
       if(sscanf(str, "%d", &numPhysicalNames) != 1){
         fclose(fp); return 0;
       }
+      std::vector<GModel::piter> iterators;
+      getInnerPhysicalNamesIterators(iterators);
       for(int i = 0; i < numPhysicalNames; i++){
         int dim = 0, tag = 0;
         if(fscanf(fp, "%d %d", &dim, &tag) != 2){
@@ -1426,7 +1428,7 @@ int GModel::_readMSH4(const std::string &name)
           return 0;
         }
         std::string physicalName = ExtractDoubleQuotedString(name, 128);
-        if(physicalName.size()) setPhysicalName(physicalName, dim, tag);
+        if(physicalName.size()) iterators[dim] = setPhysicalName(iterators[dim], physicalName, dim, tag);
       }
     }
     else if(!strncmp(&str[1], "Entities", 8)){
