@@ -1428,7 +1428,8 @@ int GModel::_readMSH4(const std::string &name)
           return 0;
         }
         std::string physicalName = ExtractDoubleQuotedString(name, 128);
-        if(physicalName.size()) iterators[dim] = setPhysicalName(iterators[dim], physicalName, dim, tag);
+        if(physicalName.size())
+          iterators[dim] = setPhysicalName(iterators[dim], physicalName, dim, tag);
       }
     }
     else if(!strncmp(&str[1], "Entities", 8)){
@@ -2736,7 +2737,7 @@ static void associateVertices(GModel *model)
     }
     (*it)->mesh_vertices.clear();
   }
-  
+
   for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex(); ++it){
     for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
       for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
@@ -2795,12 +2796,9 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
   }
 
   for(unsigned int i = 0; i < getNumPartitions(); i++){
-    // Create a temporitary model
+    // Create a temporary model
     GModel *tmp = new GModel();
-    for(GModel::piter it = this->firstPhysicalName(); it != this->lastPhysicalName(); ++it){
-      tmp->setPhysicalName(it->second, it->first.first, it->first.second);
-    }
-
+    tmp->setPhysicalNames(getPhysicalNames());
     tmp->setNumPartitions(getNumPartitions());
 
     std::vector<GEntity*> entities;
@@ -2893,7 +2891,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
         break;
       }
     }
-    
+
     if(!CTX::instance()->mesh.partitionCreateTopology){
       associateVertices(tmp);
     }
@@ -2919,7 +2917,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
     tmp->remove();
     delete tmp;
   }
-  
+
   if(!CTX::instance()->mesh.partitionCreateTopology){
     associateVertices(this);
   }

@@ -9,7 +9,6 @@
 class GModel;
 class MElement;
 
-
 int PartitionMesh(GModel *const model);
 int UnpartitionMesh(GModel *const model);
 int ConvertOldPartitioningToNewOne(GModel *const model);
