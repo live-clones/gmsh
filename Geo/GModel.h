@@ -85,7 +85,7 @@ class GModel {
   std::vector<MElement*> _elementVectorCache;
   std::map<int, MElement*> _elementMapCache;
   std::map<int, int> _elementIndexCache;
-  
+
   // ghost cell information (stores partitions for each element acting
   // as a ghost cell)
   // /!\ Use only for compatibility with mesh format msh2 and msh3
@@ -337,6 +337,10 @@ class GModel {
   {
     return physicalNames;
   }
+  void setPhysicalNames(const std::map<std::pair<int, int>, std::string> &names)
+  {
+    physicalNames = names;
+  }
 
   // remove physical groups in the model
   void removePhysicalGroups();
@@ -357,7 +361,7 @@ class GModel {
 
   // get the number of physical names
   int numPhysicalNames(){ return physicalNames.size(); }
-  
+
   // get iterators to the last physical name of each dimension
   void getInnerPhysicalNamesIterators(std::vector<piter> &iterators);
 
@@ -470,10 +474,13 @@ class GModel {
   int convertOldPartitioningToNewOne();
   // write the partitioned topology file
   int writePartitionedTopology(std::string &name);
-  
+
   // /!\ Use only for compatibility with mesh format msh2 and msh3
   std::multimap<MElement*, short> &getGhostCells(){ return _ghostCells; }
-  void addGhostCells(MElement* elm, short partition) { _ghostCells.insert(std::pair<MElement*,short>(elm, partition)); }
+  void addGhostCells(MElement* elm, short partition)
+  {
+    _ghostCells.insert(std::pair<MElement*,short>(elm, partition));
+  }
 
   // perform various coherence tests on the mesh
   void checkMeshCoherence(double tolerance);
@@ -679,7 +686,7 @@ class GModel {
   int writeMATLAB(const std::string &name, bool binary=false,
 		  bool saveAll=false, double scalingFactor=1.0);
 
-  
+
   // Tochnog format
   int writeTOCHNOG(const std::string &name,  bool saveGroupsOfNodes=false,
                    bool saveAll=false, double scalingFactor=1.0);
