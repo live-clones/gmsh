@@ -2379,6 +2379,123 @@ namespace BoundaryLayerCurver
     return true;
   }
 
+  double feedbackMeasure(const std::vector<MVertex *> &baseVert,
+                         const std::vector<MVertex *> &topVert,
+                         std::vector<MVertex *> &baseVertCopy,
+                         SVector3 &w, GEntity *bndEnt)
+  {
+    Parameters2DCurve parameters;
+    computeExtremityCoefficients(topVert, topVert, baseVertCopy, parameters, w);
+    computePositionEdgeVert(topVert, topVert, baseVertCopy, parameters, w, 0, bndEnt, -1, false);
+
+    return computeMeanSquareError(baseVert, baseVertCopy);
+  }
+
+  void computeTopFeedback(const std::vector<MVertex *> &baseVert,
+                          std::vector<MVertex *> &topVert,
+                          SVector3 &w, GEntity *bndEnt)
+  {
+    std::vector<MVertex *> baseNormal0, baseNormal1, basePosition0, basePosition1;
+    std::vector<MVertex *> dummy;
+    for (int i = 0; i < baseVert.size(); ++i) {
+      const MVertex *v = baseVert[i];
+      baseNormal0.push_back(new MVertex(v->x(),v->y(),v->z()));
+      baseNormal1.push_back(new MVertex(v->x(),v->y(),v->z()));
+      basePosition0.push_back(new MVertex(v->x(),v->y(),v->z()));
+      basePosition1.push_back(new MVertex(v->x(),v->y(),v->z()));
+      dummy.push_back(new MVertex(v->x(),v->y(),v->z()));
+    }
+    Parameters2DCurve parameters;
+    computeExtremityCoefficients(basePosition0, baseNormal0, topVert, parameters, w);
+    computePositionEdgeVert(basePosition0, baseNormal0, topVert, parameters, w,
+                            0, bndEnt, -1, false);
+    double error = feedbackMeasure(baseVert, topVert, dummy, w, bndEnt);
+
+    double maxFact = .001;
+    double limit = 1e10;
+    damping3(baseNormal1, maxFact, limit, bndEnt, false);
+    damping3(basePosition1, maxFact, limit, bndEnt, false);
+
+    computeExtremityCoefficients(basePosition0, baseNormal1, topVert, parameters, w);
+    computePositionEdgeVert(basePosition0, baseNormal1, topVert, parameters, w,
+                            0, bndEnt, -1, false);
+    double errorNormal = feedbackMeasure(baseVert, topVert, dummy, w, bndEnt);
+
+    computeExtremityCoefficients(basePosition1, baseNormal0, topVert, parameters, w);
+    computePositionEdgeVert(basePosition1, baseNormal0, topVert, parameters, w,
+                            0, bndEnt, -1, false);
+    double errorPosition = feedbackMeasure(baseVert, topVert, dummy, w, bndEnt);
+
+    while (errorPosition < error || errorNormal < error) {
+      if (errorPosition < errorNormal) {
+        error = errorPosition;
+        damping3(basePosition0, maxFact, limit, bndEnt, false);
+        damping3(basePosition1, maxFact, limit, bndEnt, false);
+      }
+      else {
+        error = errorNormal;
+        damping3(baseNormal0, maxFact, limit, bndEnt, false);
+        damping3(baseNormal1, maxFact, limit, bndEnt, false);
+      }
+
+      computeExtremityCoefficients(basePosition0, baseNormal1, topVert, parameters, w);
+      computePositionEdgeVert(basePosition0, baseNormal1, topVert, parameters, w,
+                              0, bndEnt, -1, false);
+      errorNormal = feedbackMeasure(baseVert, topVert, dummy, w, bndEnt);
+
+      computeExtremityCoefficients(basePosition1, baseNormal0, topVert, parameters, w);
+      computePositionEdgeVert(basePosition1, baseNormal0, topVert, parameters, w,
+                              0, bndEnt, -1, false);
+      errorPosition = feedbackMeasure(baseVert, topVert, dummy, w, bndEnt);
+    }
+    computeExtremityCoefficients(basePosition0, baseNormal0, topVert, parameters, w);
+    computePositionEdgeVert(basePosition0, baseNormal0, topVert, parameters, w,
+                            0, bndEnt, -1, false);
+
+    std::vector<MVertex *> &topVertCopy = baseNormal0;
+    for (int i = 0; i < topVert.size(); ++i) {
+      MVertex *v = topVertCopy[i];
+      MVertex *v2 = topVert[i];
+      v->x() = v2->x();
+      v->y() = v2->y();
+      v->z() = v2->z();
+    }
+
+    damping3(topVertCopy, maxFact, limit, bndEnt, false);
+    double errorDamping = feedbackMeasure(baseVert, topVertCopy, dummy, w, bndEnt);
+    while (errorDamping < error) {
+      error = errorDamping;
+      damping3(topVertCopy, maxFact, limit, bndEnt, false);
+      damping3(topVert, maxFact, limit, bndEnt, false);
+      errorDamping = feedbackMeasure(baseVert, topVertCopy, dummy, w, bndEnt);
+    }
+  }
+
+  bool curve2DQuadColumnFeedback(MElement *bottomEdge, std::vector<MElement *> &column,
+                                 SVector3 &w, GEntity *bndEnt)
+  {
+    opt_general_default_filename(0, GMSH_SET, "feedback");
+    MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
+    std::vector<MVertex *> bottomVertices, topVertices;
+
+    for (int i = 0; i < column.size(); ++i) {
+      MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
+      int iBottom, sign;
+      quad->getEdgeInfo(bottom, iBottom, sign);
+      // Reorientation makes function repositionInteriorNodes() simpler
+      if (iBottom != 0) quad->reorient(4 - iBottom, false);
+      quad->getEdgeVertices(0, bottomVertices);
+      quad->getEdgeVertices(2, topVertices);
+      std::reverse(topVertices.begin(), topVertices.begin() + 2);
+      std::reverse(topVertices.begin() + 2, topVertices.end());
+
+      computeTopFeedback(bottomVertices, topVertices, w, bndEnt);
+      repositionInteriorNodes(quad);
+      bottom = MEdge(topVertices[0], topVertices[1]);
+    }
+    return true;
+  }
+
   void computeThicknessQuality(std::vector<MVertex *> &bottomVertices,
                                std::vector<MVertex *> &topVertices,
                                std::vector<double> &thickness,
@@ -2511,7 +2628,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
     MElement *bottomEdge = bndEl2column[i].first;
 //    if (bottomEdge->getNum() != 1079) continue; // Good
 //    if (bottomEdge->getNum() != 1078) continue; // Next to good
-//    if (bottomEdge->getNum() != 1102) continue; // Bad HO
+    if (bottomEdge->getNum() != 1102) continue; // Bad HO
 //    if (bottomEdge->getNum() != 1136) continue; // Bad linear
 //    if (bottomEdge->getNum() != 1150) continue; // concave
 //    if (bottomEdge->getNum() != 1151) continue; // symetric of concave
@@ -2534,9 +2651,11 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
 //        success = BoundaryLayerCurver::curve2DQuadColumnFirst(bottomEdge, column,
 //                                                              n, dampingFactor,
 //                                                              bndEnt);
-        success = BoundaryLayerCurver::curve2DQuadColumnTFI(bottomEdge, column,
-                                                            n, dampingFactor,
-                                                            bndEnt, true);
+//        success = BoundaryLayerCurver::curve2DQuadColumnTFI(bottomEdge, column,
+//                                                            n, dampingFactor,
+//                                                            bndEnt, true);
+      success = BoundaryLayerCurver::curve2DQuadColumnFeedback(bottomEdge, column,
+                                                               n, bndEnt);
       if (dampingFactor == 0) dampingFactor = .01;
       else dampingFactor *= 2;
     }
