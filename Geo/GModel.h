@@ -333,7 +333,7 @@ class GModel {
   // return all physical groups (one map per dimension: 0-D to 3-D)
   void getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4]) const;
   void getPhysicalGroups(int dim, std::map<int, std::vector<GEntity*> > &groups) const;
-  std::map<std::pair<int, int>, std::string> getPhysicalNames() const
+  const std::map<std::pair<int, int>, std::string> &getPhysicalNames() const
   {
     return physicalNames;
   }
