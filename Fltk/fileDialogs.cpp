@@ -1102,7 +1102,7 @@ void format_cb(Fl_Widget *widget, void *data)
   if((dialog->c->value() == 5 || dialog->c->value() == 6 ||
       dialog->c->value() == 3 || dialog->c->value() == 4 ||
       dialog->c->value() == 1 || dialog->c->value() == 2) &&
-     CTX::instance()->mesh.numPartitions > 0){
+     GModel::current()->getNumPartitions() > 0){
     dialog->b[2]->activate();
     dialog->b[3]->activate();
   }

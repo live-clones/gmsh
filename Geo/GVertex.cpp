@@ -82,7 +82,7 @@ void GVertex::writeGEO(FILE *fp, const std::string &meshSizeParameter)
             tag(), x(), y(), z());
 }
 
-unsigned int GVertex::getNumMeshElements()
+unsigned int GVertex::getNumMeshElements() const
 {
   return points.size();
 }
@@ -92,7 +92,7 @@ void GVertex::getNumMeshElements(unsigned *const c) const
   c[0] += points.size();
 }
 
-MElement *GVertex::getMeshElement(unsigned int index)
+MElement *GVertex::getMeshElement(unsigned int index) const
 {
   if(index < points.size())
     return points[index];

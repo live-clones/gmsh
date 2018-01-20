@@ -270,6 +270,7 @@ static void readMSH4Entities(GModel *const model, FILE* fp, bool partition,
     }
 
     model->setNumPartitions(numPartitions);
+    Msg::Info("%d partitions", model->getNumPartitions());
     for(unsigned int i = 0; i < 2*ghostSize; i+=2){
       switch (model->getDim()) {
         case 1:
@@ -1413,6 +1414,8 @@ int GModel::_readMSH4(const std::string &name)
       if(sscanf(str, "%d", &numPhysicalNames) != 1){
         fclose(fp); return 0;
       }
+      std::vector<GModel::piter> iterators;
+      getInnerPhysicalNamesIterators(iterators);
       for(int i = 0; i < numPhysicalNames; i++){
         int dim = 0, tag = 0;
         if(fscanf(fp, "%d %d", &dim, &tag) != 2){
@@ -1426,7 +1429,8 @@ int GModel::_readMSH4(const std::string &name)
           return 0;
         }
         std::string physicalName = ExtractDoubleQuotedString(name, 128);
-        if(physicalName.size()) setPhysicalName(physicalName, dim, tag);
+        if(physicalName.size())
+          iterators[dim] = setPhysicalName(iterators[dim], physicalName, dim, tag);
       }
     }
     else if(!strncmp(&str[1], "Entities", 8)){
@@ -2700,6 +2704,83 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   return 1;
 }
 
+static void associateVertices(GModel *model)
+{
+  for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex(); ++it){
+    for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
+      for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+        (*it)->getMeshElement(j)->getVertex(k)->setEntity(0);
+      }
+    }
+    (*it)->mesh_vertices.clear();
+  }
+  for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
+    for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
+      for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+        (*it)->getMeshElement(j)->getVertex(k)->setEntity(0);
+      }
+    }
+    (*it)->mesh_vertices.clear();
+  }
+  for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
+    for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
+      for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+        (*it)->getMeshElement(j)->getVertex(k)->setEntity(0);
+      }
+    }
+    (*it)->mesh_vertices.clear();
+  }
+  for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
+    for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
+      for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+        (*it)->getMeshElement(j)->getVertex(k)->setEntity(0);
+      }
+    }
+    (*it)->mesh_vertices.clear();
+  }
+
+  for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex(); ++it){
+    for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
+      for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+        if((*it)->getMeshElement(j)->getVertex(k)->onWhat() == 0){
+          (*it)->getMeshElement(j)->getVertex(k)->setEntity(*it);
+          (*it)->mesh_vertices.push_back((*it)->getMeshElement(j)->getVertex(k));
+        }
+      }
+    }
+  }
+  for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
+    for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
+      for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+        if((*it)->getMeshElement(j)->getVertex(k)->onWhat() == 0){
+          (*it)->getMeshElement(j)->getVertex(k)->setEntity(*it);
+          (*it)->mesh_vertices.push_back((*it)->getMeshElement(j)->getVertex(k));
+        }
+      }
+    }
+  }
+  for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
+    for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
+      for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+        if((*it)->getMeshElement(j)->getVertex(k)->onWhat() == 0){
+          (*it)->getMeshElement(j)->getVertex(k)->setEntity(*it);
+          (*it)->mesh_vertices.push_back((*it)->getMeshElement(j)->getVertex(k));
+        }
+      }
+    }
+  }
+  for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
+    for(unsigned int j = 0; j < (*it)->getNumMeshElements(); j++){
+      for(int k = 0; k < (*it)->getMeshElement(j)->getNumVertices(); k++){
+        if((*it)->getMeshElement(j)->getVertex(k)->onWhat() == 0){
+          (*it)->getMeshElement(j)->getVertex(k)->setEntity(*it);
+          (*it)->mesh_vertices.push_back((*it)->getMeshElement(j)->getVertex(k));
+        }
+      }
+    }
+  }
+}
+
 int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
                                   bool binary, bool saveAll, bool saveParametric,
                                   double scalingFactor)
@@ -2715,19 +2796,15 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
     }
   }
 
+  // Create a temporary model
+  GModel *tmp = new GModel();
+  tmp->setPhysicalNames(getPhysicalNames());
+  tmp->setNumPartitions(getNumPartitions());
+
   for(unsigned int i = 0; i < getNumPartitions(); i++){
-    // Create a temporitary model
-    GModel *tmp = new GModel();
-    for(GModel::piter it = this->firstPhysicalName(); it != this->lastPhysicalName(); ++it){
-      tmp->setPhysicalName(it->second, it->first.first, it->first.second);
-    }
-
-    tmp->setNumPartitions(getNumPartitions());
-
-    std::vector<GEntity*> entities;
-    getEntities(entities);
     std::set<GEntity*> entitiesSet;
     GEntity *ghostEntity = 0;
+
     for(unsigned int j = 0; j < entities.size(); j++){
       switch(entities[j]->geomType()){
       case GEntity::PartitionVolume:
@@ -2736,7 +2813,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
           if(std::find(pr->getPartitions().begin(), pr->getPartitions().end(), i) !=
              pr->getPartitions().end()){
             tmp->add(pr);
-            entitiesSet.insert(pr);
+            if(ghostEntity) entitiesSet.insert(pr);
           }
         }
         break;
@@ -2746,7 +2823,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
           if(std::find(pf->getPartitions().begin(), pf->getPartitions().end(), i) !=
              pf->getPartitions().end()){
             tmp->add(pf);
-            entitiesSet.insert(pf);
+            if(ghostEntity) entitiesSet.insert(pf);
           }
         }
         break;
@@ -2756,7 +2833,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
           if(std::find(pe->getPartitions().begin(), pe->getPartitions().end(), i) !=
              pe->getPartitions().end()){
             tmp->add(pe);
-            entitiesSet.insert(pe);
+            if(ghostEntity) entitiesSet.insert(pe);
           }
         }
         break;
@@ -2766,7 +2843,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
           if(std::find(pv->getPartitions().begin(), pv->getPartitions().end(), i) !=
              pv->getPartitions().end()){
             tmp->add(pv);
-            entitiesSet.insert(pv);
+            if(ghostEntity) entitiesSet.insert(pv);
           }
         }
         break;
@@ -2774,7 +2851,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
           if(i == static_cast<ghostEdge*>(entities[j])->getPartition()){
             static_cast<ghostEdge*>(entities[j])->saveMesh(true);
             tmp->add(static_cast<ghostEdge*>(entities[j]));
-            entitiesSet.insert(entities[j]);
+            if(ghostEntity) entitiesSet.insert(entities[j]);
             ghostEntity = entities[j];
           }
         break;
@@ -2782,7 +2859,7 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
           if(i == static_cast<ghostFace*>(entities[j])->getPartition()){
             static_cast<ghostFace*>(entities[j])->saveMesh(true);
             tmp->add(static_cast<ghostFace*>(entities[j]));
-            entitiesSet.insert(entities[j]);
+            if(ghostEntity) entitiesSet.insert(entities[j]);
             ghostEntity = entities[j];
           }
         break;
@@ -2790,32 +2867,34 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
           if(i == static_cast<ghostRegion*>(entities[j])->getPartition()){
             static_cast<ghostRegion*>(entities[j])->saveMesh(true);
             tmp->add(static_cast<ghostRegion*>(entities[j]));
-            entitiesSet.insert(entities[j]);
+            if(ghostEntity) entitiesSet.insert(entities[j]);
             ghostEntity = entities[j];
           }
         break;
       default:
           if(entities[j]->dim() == 0){
             tmp->add(static_cast<GVertex*>(entities[j]));
-            entitiesSet.insert(entities[j]);
+            if(ghostEntity) entitiesSet.insert(entities[j]);
           }
           else if(entities[j]->dim() == 1){
             tmp->add(static_cast<GEdge*>(entities[j]));
-            entitiesSet.insert(entities[j]);
+            if(ghostEntity) entitiesSet.insert(entities[j]);
           }
           else if(entities[j]->dim() == 2){
             tmp->add(static_cast<GFace*>(entities[j]));
-            entitiesSet.insert(entities[j]);
+            if(ghostEntity) entitiesSet.insert(entities[j]);
           }
           else if(entities[j]->dim() == 3){
             tmp->add(static_cast<GRegion*>(entities[j]));
-            entitiesSet.insert(entities[j]);
+            if(ghostEntity) entitiesSet.insert(entities[j]);
           }
         break;
       }
     }
-    tmp->_associateEntityWithMeshVertices();
-    tmp->pruneMeshVertexAssociations();
+
+    if(!CTX::instance()->mesh.partitionCreateTopology){
+      associateVertices(tmp);
+    }
 
     if(ghostEntity){
       for(unsigned int j = 0; j < ghostEntity->getNumMeshElements(); j++){
@@ -2832,11 +2911,24 @@ int GModel::_writePartitionedMSH4(const std::string &baseName, double version,
     std::ostringstream sstream;
     sstream << baseName << "_" << i << ".msh";
 
-    Msg::Info("Writing partition %d in file '%s'", i, sstream.str().c_str());
+    if(getNumPartitions() > 100){
+      if (i % 100 == 0){
+        Msg::Info("Writing partition %d/%d in file '%s'", i, getNumPartitions(),
+                  sstream.str().c_str());
+      }
+    }
+    else{
+      Msg::Info("Writing partition %d in file '%s'", i, sstream.str().c_str());
+    }
+
     tmp->_writeMSH4(sstream.str(), version, binary, saveAll, saveParametric,
                     scalingFactor);
     tmp->remove();
-    delete tmp;
+  }
+  delete tmp;
+
+  if(!CTX::instance()->mesh.partitionCreateTopology){
+    associateVertices(this);
   }
 
   return 1;

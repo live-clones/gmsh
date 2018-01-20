@@ -72,7 +72,7 @@ GModel::GModel(std::string name)
     _name(name), _visible(1), _octree(0), _geo_internals(0),
     _occ_internals(0), _acis_internals(0), _fm_internals(0),
     _fields(0), _currentMeshEntity(0),
-    normals(0), numPartitions(0)
+    _numPartitions(0), normals(0)
 {
 
   // hide all other models
@@ -696,18 +696,43 @@ int GModel::getMaxPhysicalNumber(int dim)
   return num;
 }
 
+void GModel::getInnerPhysicalNamesIterators(std::vector<piter> &iterators)
+{
+  iterators.resize(4, firstPhysicalName());
+  
+  for(piter physIt = firstPhysicalName(); physIt != lastPhysicalName(); ++physIt)
+    iterators[physIt->first.first] = physIt;
+}
+
 int GModel::setPhysicalName(std::string name, int dim, int number)
 {
   // check if the name is already used
-  piter it = physicalNames.begin();
-  while(it != physicalNames.end()){
-    if(name == it->second && dim == it->first.first) return it->first.second;
-    ++it;
-  }
+  int findPhy = getPhysicalNumber(dim, name);
+  if(findPhy != -1) return findPhy;
+  
   // if no number is given, find the next available one
   if(!number) number = getMaxPhysicalNumber(dim) + 1;
-  physicalNames[std::pair<int, int>(dim, number)] = name;
+  physicalNames.insert(std::pair<std::pair<int, int>, std::string>
+                       (std::pair<int, int>(dim, number), name));
   return number;
+}
+
+GModel::piter GModel::setPhysicalName(piter pos, std::string name, int dim, int number)
+{
+  // if no number is given, find the next available one
+  if(!number) number = getMaxPhysicalNumber(dim) + 1;
+#if __cplusplus >= 201103L
+  // Insertion complexity in O(1) if position points to
+  // the element that will FOLLOW the inserted element.
+  if(pos != lastPhysicalName()) ++pos;
+  return physicalNames.insert(pos, std::pair<std::pair<int, int>, std::string>
+                              (std::pair<int, int>(dim, number), name));
+#else
+  // Insertion complexity in O(1) if position points to
+  // the element that will PRECEDE the inserted element.
+  return physicalNames.insert(pos, std::pair<std::pair<int, int>, std::string>
+                       (std::pair<int, int>(dim, number), name));
+#endif
 }
 
 std::string GModel::getPhysicalName(int dim, int number) const
@@ -723,7 +748,7 @@ int GModel::getPhysicalNumber(const int &dim, const std::string &name)
   for(piter physIt = firstPhysicalName(); physIt != lastPhysicalName(); ++physIt)
     if(dim == physIt->first.first && name == physIt->second)
       return physIt->first.second;
-  //Msg::Warning("No physical group found with the name '%s'", name.c_str());
+
   return -1;
 }
 
@@ -1426,6 +1451,7 @@ int GModel::partitionMesh(int numPart)
 #if defined(HAVE_MESH) && (defined(HAVE_METIS))
   opt_mesh_partition_num(0, GMSH_SET, numPart);
   if(numPart > 0){
+    if(_numPartitions > 0) UnpartitionMesh(this);
     int ier = PartitionMesh(this);
     return ier;
   }

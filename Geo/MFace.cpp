@@ -9,7 +9,7 @@
 #include "MFace.h"
 #include "Numeric.h"
 
-bool compare(MVertex* v0, MVertex* v1){ return v0->getNum() < v1->getNum(); }
+bool compare(const MVertex *const v0, const MVertex *const v1){ return v0->getNum() < v1->getNum(); }
 
 void sortVertices(const std::vector<MVertex*> &v, std::vector<char> &s)
 {

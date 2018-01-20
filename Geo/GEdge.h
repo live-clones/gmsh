@@ -47,6 +47,11 @@ class GEdge : public GEntity {
   void setEndVertex(GVertex *gv)  { v1 = gv; }
   virtual GVertex *getBeginVertex() const { return v0; }
   virtual GVertex *getEndVertex() const { return v1; }
+  void setVertex(GVertex* f, const int orientation)
+  {
+    if(orientation > 0) v0 = f;
+    else if(orientation < 0) v1 = f;
+  }
 
   // same or opposite direction to the master
   int masterOrientation;
@@ -152,7 +157,7 @@ class GEdge : public GEntity {
   int getNumElementTypes() const { return 1; }
 
   // get total/by-type number of elements in the mesh
-  unsigned int getNumMeshElements();
+  unsigned int getNumMeshElements() const;
   unsigned int getNumMeshParentElements();
   void getNumMeshElements(unsigned *const c) const;
 
@@ -160,7 +165,7 @@ class GEdge : public GEntity {
   MElement *const *getStartElementType(int type) const;
 
   // get the element at the given index
-  MElement *getMeshElement(unsigned int index);
+  MElement *getMeshElement(unsigned int index) const;
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();

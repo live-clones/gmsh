@@ -78,11 +78,11 @@ class GVertex : public GEntity
   virtual void writeGEO(FILE *fp, const std::string &meshSizeParameter="");
 
   // get number of elements in the mesh
-  unsigned int getNumMeshElements();
+  unsigned int getNumMeshElements() const;
   void getNumMeshElements(unsigned *const c) const;
 
   // get the element at the given index
-  MElement *getMeshElement(unsigned int index);
+  MElement *getMeshElement(unsigned int index) const;
 
   // return true if this vertex is on a seam of the given face
   bool isOnSeam(const GFace *gf) const;
