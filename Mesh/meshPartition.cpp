@@ -1380,9 +1380,80 @@ static void CreateNewEntities(GModel *const model,
   std::set<GFace*, GEntityLessThan> faces = model->getFaces();
   std::set<GEdge*, GEntityLessThan> edges = model->getEdges();
   std::set<GVertex*, GEntityLessThan> vertices = model->getVertices();
+  
+  int elementaryNumber = model->getMaxElementaryNumber(0);
+  for(GModel::const_viter it = vertices.begin(); it != vertices.end(); ++it){
+    std::vector<partitionVertex *> newVertices(model->getNumPartitions(), 0);
+    
+    assignElementsToEntities(model, elmToPartition, newVertices,
+                             (*it)->points.begin(), (*it)->points.end(), elementaryNumber);
+    
+    for(unsigned int i = 0; i < model->getNumPartitions(); i++){
+      if(newVertices[i]){
+        static_cast<partitionVertex*>(newVertices[i])->setParentEntity((*it));
+        std::vector<int> physicalEntities = (*it)->getPhysicalEntities();
+        for(unsigned int j = 0; j < physicalEntities.size(); j++){
+          newVertices[i]->addPhysicalEntity(physicalEntities[j]);
+        }
+      }
+    }
+    
+    (*it)->mesh_vertices.clear();
+    
+    (*it)->points.clear();
+  }
+  
+  elementaryNumber = model->getMaxElementaryNumber(1);
+  for(GModel::const_eiter it = edges.begin(); it != edges.end(); ++it){
+    std::vector<partitionEdge *> newEdges(model->getNumPartitions(), 0);
+    
+    assignElementsToEntities(model, elmToPartition, newEdges,
+                             (*it)->lines.begin(), (*it)->lines.end(), elementaryNumber);
+    
+    for(unsigned int i = 0; i < model->getNumPartitions(); i++){
+      if(newEdges[i]){
+        static_cast<partitionEdge*>(newEdges[i])->setParentEntity(*it);
+        std::vector<int> physicalEntities = (*it)->getPhysicalEntities();
+        for(unsigned int j = 0; j < physicalEntities.size(); j++){
+          newEdges[i]->addPhysicalEntity(physicalEntities[j]);
+        }
+      }
+    }
+    
+    (*it)->mesh_vertices.clear();
+    
+    (*it)->lines.clear();
+  }
+  
+  elementaryNumber = model->getMaxElementaryNumber(2);
+  for(GModel::const_fiter it = faces.begin(); it != faces.end(); ++it){
+    std::vector<partitionFace *> newFaces(model->getNumPartitions(), 0);
+    
+    assignElementsToEntities
+    (model, elmToPartition, newFaces,
+     (*it)->triangles.begin(), (*it)->triangles.end(), elementaryNumber);
+    assignElementsToEntities
+    (model, elmToPartition, newFaces,
+     (*it)->quadrangles.begin(), (*it)->quadrangles.end(), elementaryNumber);
+    
+    std::list<GRegion*> BRepRegions = (*it)->regions();
+    for(unsigned int i = 0; i < model->getNumPartitions(); i++){
+      if(newFaces[i]){
+        static_cast<partitionFace*>(newFaces[i])->setParentEntity(*it);
+        std::vector<int> physicalEntities = (*it)->getPhysicalEntities();
+        for(unsigned int j = 0; j < physicalEntities.size(); j++){
+          newFaces[i]->addPhysicalEntity(physicalEntities[j]);
+        }
+      }
+    }
+    
+    (*it)->mesh_vertices.clear();
+    
+    (*it)->triangles.clear();
+    (*it)->quadrangles.clear();
+  }
 
-  int elementaryNumber = model->getMaxElementaryNumber(3);
-
+  elementaryNumber = model->getMaxElementaryNumber(3);
   for(GModel::const_riter it = regions.begin(); it != regions.end(); ++it){
     std::vector<partitionRegion *> newRegions(model->getNumPartitions(), 0);
 
@@ -1419,80 +1490,6 @@ static void CreateNewEntities(GModel *const model,
     (*it)->prisms.clear();
     (*it)->pyramids.clear();
     (*it)->trihedra.clear();
-  }
-
-  elementaryNumber = model->getMaxElementaryNumber(2);
-
-  for(GModel::const_fiter it = faces.begin(); it != faces.end(); ++it){
-    std::vector<partitionFace *> newFaces(model->getNumPartitions(), 0);
-
-    assignElementsToEntities
-      (model, elmToPartition, newFaces,
-       (*it)->triangles.begin(), (*it)->triangles.end(), elementaryNumber);
-    assignElementsToEntities
-      (model, elmToPartition, newFaces,
-       (*it)->quadrangles.begin(), (*it)->quadrangles.end(), elementaryNumber);
-
-    for(unsigned int i = 0; i < model->getNumPartitions(); i++){
-      if(newFaces[i]){
-        static_cast<partitionFace*>(newFaces[i])->setParentEntity(*it);
-        std::vector<int> physicalEntities = (*it)->getPhysicalEntities();
-        for(unsigned int j = 0; j < physicalEntities.size(); j++){
-          newFaces[i]->addPhysicalEntity(physicalEntities[j]);
-        }
-      }
-    }
-
-    (*it)->mesh_vertices.clear();
-
-    (*it)->triangles.clear();
-    (*it)->quadrangles.clear();
-  }
-
-  elementaryNumber = model->getMaxElementaryNumber(1);
-
-  for(GModel::const_eiter it = edges.begin(); it != edges.end(); ++it){
-    std::vector<partitionEdge *> newEdges(model->getNumPartitions(), 0);
-
-    assignElementsToEntities(model, elmToPartition, newEdges,
-                             (*it)->lines.begin(), (*it)->lines.end(), elementaryNumber);
-
-    for(unsigned int i = 0; i < model->getNumPartitions(); i++){
-      if(newEdges[i]){
-        static_cast<partitionEdge*>(newEdges[i])->setParentEntity(*it);
-        std::vector<int> physicalEntities = (*it)->getPhysicalEntities();
-        for(unsigned int j = 0; j < physicalEntities.size(); j++){
-          newEdges[i]->addPhysicalEntity(physicalEntities[j]);
-        }
-      }
-    }
-
-    (*it)->mesh_vertices.clear();
-
-    (*it)->lines.clear();
-  }
-
-  elementaryNumber = model->getMaxElementaryNumber(0);
-
-  for(GModel::const_viter it = vertices.begin(); it != vertices.end(); ++it){
-    std::vector<partitionVertex *> newVertices(model->getNumPartitions(), 0);
-
-    assignElementsToEntities(model, elmToPartition, newVertices,
-                             (*it)->points.begin(), (*it)->points.end(), elementaryNumber);
-
-    for(unsigned int i = 0; i < model->getNumPartitions(); i++){
-      if(newVertices[i]){
-        static_cast<partitionVertex*>(newVertices[i])->setParentEntity((*it));
-        std::vector<int> physicalEntities = (*it)->getPhysicalEntities();
-        for(unsigned int j = 0; j < physicalEntities.size(); j++){
-          newVertices[i]->addPhysicalEntity(physicalEntities[j]);
-        }
-      }
-    }
-
-    (*it)->mesh_vertices.clear();
-
-    (*it)->points.clear();
   }
 
   // If we don't create the partition topology let's just assume that the user

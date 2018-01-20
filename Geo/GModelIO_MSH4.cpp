@@ -270,6 +270,7 @@ static void readMSH4Entities(GModel *const model, FILE* fp, bool partition,
     }
 
     model->setNumPartitions(numPartitions);
+    Msg::Info("%d partitions", model->getNumPartitions());
     for(unsigned int i = 0; i < 2*ghostSize; i+=2){
       switch (model->getDim()) {
         case 1:
