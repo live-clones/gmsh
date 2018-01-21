@@ -843,6 +843,15 @@ int gmshModelOccAddSpline(int * vertexTags, size_t vertexTags_n,const int tag,in
   return result_api_;
 }
 
+int gmshModelOccAddBSpline(int * vertexTags, size_t vertexTags_n,const int tag,const int degree,double * weights, size_t weights_n,double * knots, size_t knots_n,int * multiplicities, size_t multiplicities_n,int * ierr){
+  int result_api_;
+  if(ierr) *ierr = 0;
+  try {
+  result_api_ = gmsh::model::occ::addBSpline(ptr2vector(vertexTags,vertexTags_n),tag,degree,ptr2vector(weights,weights_n),ptr2vector(knots,knots_n),ptr2vector(multiplicities,multiplicities_n));
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+  return result_api_;
+}
+
 int gmshModelOccAddBezier(int * vertexTags, size_t vertexTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;

@@ -495,13 +495,15 @@ namespace gmsh { // Top-level functions
 
       // Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If
       // `tag' is positive, sets the tag explicitly; otherwise a new tag is
-      // selected automatically.  Returns the tag of the spline curve.
+      // selected automatically. Creates a periodic curve if the first and last
+      // points are the same. Returns the tag of the spline curve.
       GMSH_API int addSpline(const std::vector<int> & vertexTags,
                              const int tag = -1);
 
-      // Adds a b-spline curve with `vertexTags' control points. If `tag' is
+      // Adds a cubic b-spline curve with `vertexTags' control points. If `tag' is
       // positive, sets the tag explicitly; otherwise a new tag is selected
-      // automatically.  Returns the tag of the b-spline curve.
+      // automatically. Creates a periodic curve if the first and last points are
+      // the same. Returns the tag of the b-spline curve.
       GMSH_API int addBSpline(const std::vector<int> & vertexTags,
                               const int tag = -1);
 
@@ -791,16 +793,29 @@ namespace gmsh { // Top-level functions
                               const double angle1 = 0.,
                               const double angle2 = 2*M_PI);
 
-      // Adds a spline (C2 b-spline) curve going through `vertexTags' points, with
-      // a given tolerance. If `tag' is positive, sets the tag explicitly;
-      // otherwise a new tag is selected automatically.  Returns the tag of the
-      // spline curve.
+      // Adds a spline (C2 b-spline) curve going through `vertexTags' points. If
+      // `tag' is positive, sets the tag explicitly; otherwise a new tag is
+      // selected automatically. Creates a periodic curve if the first and last
+      // points are the same. Returns the tag of the spline curve.
       GMSH_API int addSpline(const std::vector<int> & vertexTags,
                              const int tag = -1);
 
+      // Adds a b-spline curve of degree `degree' with `vertexTags' control points.
+      // If `weights', `knots' or `multiplicities' are not provided, default
+      // parameters are computed automatically. If `tag' is positive, sets the tag
+      // explicitly; otherwise a new tag is selected automatically. Creates a
+      // periodic curve if the first and last points are the same. Returns the tag
+      // of the b-spline curve.
+      GMSH_API int addBSpline(const std::vector<int> & vertexTags,
+                              const int tag = -1,
+                              const int degree = 3,
+                              const std::vector<double> & weights = std::vector<double>(),
+                              const std::vector<double> & knots = std::vector<double>(),
+                              const std::vector<int> & multiplicities = std::vector<int>());
+
       // Adds a Bezier curve with `vertexTags' control points. If `tag' is
       // positive, sets the tag explicitly; otherwise a new tag is selected
-      // automatically.  Returns the tag of the Bezier curve.
+      // automatically. Returns the tag of the Bezier curve.
       GMSH_API int addBezier(const std::vector<int> & vertexTags,
                              const int tag = -1);
 

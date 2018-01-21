@@ -226,10 +226,10 @@ geo.add('addCircleArc',doc,oint,iint('startTag'),iint('centerTag'),iint('endTag'
 doc = '''Adds an ellipse arc (stricly smaller than Pi) between the two points `startTag' and `endTag', with center `centertag' and major axis point `majorTag'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0), explicitely sets the plane of the circle arc. Returns the tag of the ellipse arc.'''
 geo.add('addEllipseArc',doc,oint,iint('startTag'),iint('centerTag'),iint('majorTag'),iint('endTag'),iint('tag','-1'),idouble('nx','0.'),idouble('ny','0.'),idouble('nz','0.'))
 
-doc = '''Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically.  Returns the tag of the spline curve.'''
+doc = '''Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Creates a periodic curve if the first and last points are the same. Returns the tag of the spline curve.'''
 geo.add('addSpline',doc,oint,ivectorint('vertexTags'),iint('tag','-1'))
 
-doc = '''Adds a b-spline curve with `vertexTags' control points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically.  Returns the tag of the b-spline curve.'''
+doc = '''Adds a cubic b-spline curve with `vertexTags' control points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Creates a periodic curve if the first and last points are the same. Returns the tag of the b-spline curve.'''
 geo.add('addBSpline',doc,oint,ivectorint('vertexTags'),iint('tag','-1'))
 
 doc = '''Adds a Bezier curve with `vertexTags' control points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically.  Returns the tag of the Bezier curve.'''
@@ -330,10 +330,13 @@ occ.add('addEllipseArc',doc,oint,iint('startTag'),iint('centerTag'),iint('endTag
 doc = '''Adds an ellipse of center (`x', `y', `z') and radii `r1' and `r2' along the x- and y-axes respectively. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. If `angle1' and `angle2' are specified, creates an ellipse arc between the two angles. Returns the tag of the ellipse.'''
 occ.add('addEllipse',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('r1'),idouble('r2'),iint('tag','-1'),idouble('angle1','0.'),idouble('angle2','2*M_PI','2*pi'))
 
-doc = '''Adds a spline (C2 b-spline) curve going through `vertexTags' points, with a given tolerance. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically.  Returns the tag of the spline curve.'''
+doc = '''Adds a spline (C2 b-spline) curve going through `vertexTags' points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Creates a periodic curve if the first and last points are the same. Returns the tag of the spline curve.'''
 occ.add('addSpline',doc,oint,ivectorint('vertexTags'),iint('tag','-1'))
 
-doc = '''Adds a Bezier curve with `vertexTags' control points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically.  Returns the tag of the Bezier curve.'''
+doc = '''Adds a b-spline curve of degree `degree' with `vertexTags' control points. If `weights', `knots' or `multiplicities' are not provided, default parameters are computed automatically. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Creates a periodic curve if the first and last points are the same. Returns the tag of the b-spline curve.'''
+occ.add('addBSpline',doc,oint,ivectorint('vertexTags'),iint('tag','-1'),iint('degree','3'),ivectordouble('weights','std::vector<double>()',"[]"),ivectordouble('knots','std::vector<double>()',"[]"),ivectorint('multiplicities','std::vector<int>()',"[]"))
+
+doc = '''Adds a Bezier curve with `vertexTags' control points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the Bezier curve.'''
 occ.add('addBezier',doc,oint,ivectorint('vertexTags'),iint('tag','-1'))
 
 doc = '''Adds a wire (open or closed) formed by `edgeTags'. `edgeTags' should contain (signed) tags of geometrical enties of dimension 1: a negative tag signifies that the underlying edge is considered with reversed orientation. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the wire.'''

@@ -1423,7 +1423,8 @@ class model:
             """
             Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If
             `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
-            automatically.  Returns the tag of the spline curve.
+            automatically. Creates a periodic curve if the first and last points are
+            the same. Returns the tag of the spline curve.
 
             return int
             """
@@ -1442,9 +1443,10 @@ class model:
         @staticmethod
         def addBSpline(vertexTags,tag=-1):
             """
-            Adds a b-spline curve with `vertexTags' control points. If `tag' is
+            Adds a cubic b-spline curve with `vertexTags' control points. If `tag' is
             positive, sets the tag explicitly; otherwise a new tag is selected
-            automatically.  Returns the tag of the b-spline curve.
+            automatically. Creates a periodic curve if the first and last points are
+            the same. Returns the tag of the b-spline curve.
 
             return int
             """
@@ -2154,9 +2156,10 @@ class model:
         @staticmethod
         def addSpline(vertexTags,tag=-1):
             """
-            Adds a spline (C2 b-spline) curve going through `vertexTags' points, with a
-            given tolerance. If `tag' is positive, sets the tag explicitly; otherwise a
-            new tag is selected automatically.  Returns the tag of the spline curve.
+            Adds a spline (C2 b-spline) curve going through `vertexTags' points. If
+            `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
+            automatically. Creates a periodic curve if the first and last points are
+            the same. Returns the tag of the spline curve.
 
             return int
             """
@@ -2169,6 +2172,37 @@ class model:
             if ierr.value != 0 :
                 raise ValueError(
                     "gmshModelOccAddSpline returned non-zero error code : ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
+        def addBSpline(vertexTags,tag=-1,degree=3,weights=[],knots=[],multiplicities=[]):
+            """
+            Adds a b-spline curve of degree `degree' with `vertexTags' control points.
+            If `weights', `knots' or `multiplicities' are not provided, default
+            parameters are computed automatically. If `tag' is positive, sets the tag
+            explicitly; otherwise a new tag is selected automatically. Creates a
+            periodic curve if the first and last points are the same. Returns the tag
+            of the b-spline curve.
+
+            return int
+            """
+            api_vertexTags_, api_vertexTags_n_ = _ivectorint(vertexTags)
+            api_weights_, api_weights_n_ = _ivectordouble(weights)
+            api_knots_, api_knots_n_ = _ivectordouble(knots)
+            api_multiplicities_, api_multiplicities_n_ = _ivectorint(multiplicities)
+            ierr = c_int()
+            api__result__ = lib.gmshModelOccAddBSpline(
+                api_vertexTags_, api_vertexTags_n_,
+                c_int(tag),
+                c_int(degree),
+                api_weights_, api_weights_n_,
+                api_knots_, api_knots_n_,
+                api_multiplicities_, api_multiplicities_n_,
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelOccAddBSpline returned non-zero error code : ",
                     ierr.value)
             return api__result__
 

@@ -1095,7 +1095,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags,
          (BRep_Tool::Pnt(end), CTX::instance()->geom.tolerance)){
         BRepBuilderAPI_MakeEdge e(curve, start, end);
         if(!e.IsDone()){
-          Msg::Error("Could not create BSpline curve");
+          Msg::Error("Could not create BSpline curve (with end points)");
           return false;
         }
         result = e.Edge();
@@ -1103,7 +1103,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags,
       else{ // will create new topo vertices as necessary
         BRepBuilderAPI_MakeEdge e(curve);
         if(!e.IsDone()){
-          Msg::Error("Could not create BSpline curve");
+          Msg::Error("Could not create BSpline curve (without end points)");
           return false;
         }
         result = e.Edge();
@@ -1138,11 +1138,11 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &vertexTags,
   int d = degree;
   std::vector<double> w(weights), k(knots);
   std::vector<int> m(multiplicities);
-  // degree 3 if degree not specified:
+  // degree 3 if not specified:
   if(d <= 0) d = 3;
-  // automatic default choices for weights, knots and multiplicities if not
-  // provided:
+  // automatic default weights if not provided:
   if(w.empty()) w.resize(vertexTags.size(), 1);
+  // automatic default knots and multiplicities if not provided:
   if(k.empty()){
     bool periodic = (vertexTags.front() == vertexTags.back());
     if(!periodic){

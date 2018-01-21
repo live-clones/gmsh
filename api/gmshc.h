@@ -524,14 +524,16 @@ GMSH_API int gmshModelGeoAddEllipseArc(const int startTag,
 
 /* Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If
  * `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
- * automatically.  Returns the tag of the spline curve. */
+ * automatically. Creates a periodic curve if the first and last points are
+ * the same. Returns the tag of the spline curve. */
 GMSH_API int gmshModelGeoAddSpline(int * vertexTags, size_t vertexTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* Adds a b-spline curve with `vertexTags' control points. If `tag' is
+/* Adds a cubic b-spline curve with `vertexTags' control points. If `tag' is
  * positive, sets the tag explicitly; otherwise a new tag is selected
- * automatically.  Returns the tag of the b-spline curve. */
+ * automatically. Creates a periodic curve if the first and last points are
+ * the same. Returns the tag of the b-spline curve. */
 GMSH_API int gmshModelGeoAddBSpline(int * vertexTags, size_t vertexTags_n,
                                     const int tag,
                                     int * ierr);
@@ -839,12 +841,27 @@ GMSH_API int gmshModelOccAddEllipse(const double x,
                                     const double angle2,
                                     int * ierr);
 
-/* Adds a spline (C2 b-spline) curve going through `vertexTags' points, with a
- * given tolerance. If `tag' is positive, sets the tag explicitly; otherwise a
- * new tag is selected automatically.  Returns the tag of the spline curve. */
+/* Adds a spline (C2 b-spline) curve going through `vertexTags' points. If
+ * `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
+ * automatically. Creates a periodic curve if the first and last points are
+ * the same. Returns the tag of the spline curve. */
 GMSH_API int gmshModelOccAddSpline(int * vertexTags, size_t vertexTags_n,
                                    const int tag,
                                    int * ierr);
+
+/* Adds a b-spline curve of degree `degree' with `vertexTags' control points.
+ * If `weights', `knots' or `multiplicities' are not provided, default
+ * parameters are computed automatically. If `tag' is positive, sets the tag
+ * explicitly; otherwise a new tag is selected automatically. Creates a
+ * periodic curve if the first and last points are the same. Returns the tag
+ * of the b-spline curve. */
+GMSH_API int gmshModelOccAddBSpline(int * vertexTags, size_t vertexTags_n,
+                                    const int tag,
+                                    const int degree,
+                                    double * weights, size_t weights_n,
+                                    double * knots, size_t knots_n,
+                                    int * multiplicities, size_t multiplicities_n,
+                                    int * ierr);
 
 /* Adds a Bezier curve with `vertexTags' control points. If `tag' is positive,
  * sets the tag explicitly; otherwise a new tag is selected automatically.

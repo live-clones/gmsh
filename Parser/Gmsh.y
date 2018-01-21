@@ -1735,16 +1735,26 @@ Shape :
     {
       int num = (int)$3;
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
-      std::vector<double> knots; ListOfDouble2Vector($8, knots);
+      std::vector<double> seqknots; ListOfDouble2Vector($8, seqknots);
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(0, "Nurbs not available yet with OpenCASCADE geometry kernel");
+        int degree = (int)$10;
+        std::vector<double> weights, knots;
+        std::vector<int> mults;
+        for(unsigned int i = 0; i < seqknots.size(); i++){
+          if(!i || (i && fabs(seqknots[i] - seqknots[i - 1]) > 1e-12)){
+            knots.push_back(seqknots[i]);
+            mults.push_back(1);
+          }
+          else{
+            mults.back() += 1;
+          }
+        }
+        r = GModel::current()->getOCCInternals()->addBSpline
+          (num, tags, degree, weights, knots, mults);
       }
       else{
-        int order = knots.size() - tags.size() - 1;
-        if(order != (int)$10)
-          yymsg(1, "Incompatible Nurbs order: using %d", order);
-        r = GModel::current()->getGEOInternals()->addNurbs(num, tags, knots);
+        r = GModel::current()->getGEOInternals()->addNurbs(num, tags, seqknots);
       }
       if(!r) yymsg(0, "Could not add nurbs");
       List_Delete($6);

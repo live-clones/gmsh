@@ -1360,8 +1360,7 @@ int gmsh::model::geo::addEllipseArc(const int startTag, const int centerTag,
   return outTag;
 }
 
-int gmsh::model::geo::addSpline(const std::vector<int> &vertexTags,
-                                const int tag)
+int gmsh::model::geo::addSpline(const std::vector<int> &vertexTags, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   int outTag = tag;
@@ -1371,8 +1370,7 @@ int gmsh::model::geo::addSpline(const std::vector<int> &vertexTags,
   return outTag;
 }
 
-int gmsh::model::geo::addBSpline(const std::vector<int> &vertexTags,
-                                 const int tag)
+int gmsh::model::geo::addBSpline(const std::vector<int> &vertexTags, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   int outTag = tag;
@@ -1382,8 +1380,7 @@ int gmsh::model::geo::addBSpline(const std::vector<int> &vertexTags,
   return outTag;
 }
 
-int gmsh::model::geo::addBezier(const std::vector<int> &vertexTags,
-                                const int tag)
+int gmsh::model::geo::addBezier(const std::vector<int> &vertexTags, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   int outTag = tag;
@@ -1393,8 +1390,7 @@ int gmsh::model::geo::addBezier(const std::vector<int> &vertexTags,
   return outTag;
 }
 
-int gmsh::model::geo::addLineLoop(const std::vector<int> &edgeTags,
-                                  const int tag)
+int gmsh::model::geo::addLineLoop(const std::vector<int> &edgeTags, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   int outTag = tag;
@@ -1753,6 +1749,20 @@ int gmsh::model::occ::addSpline(const std::vector<int> &vertexTags, const int ta
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addSpline(outTag, vertexTags)){
+    throw 1;
+  }
+  return outTag;
+}
+
+int gmsh::model::occ::addBSpline(const std::vector<int> &vertexTags, const int tag,
+                                 const int degree, const std::vector<double> &weights,
+                                 const std::vector<double> &knots,
+                                 const std::vector<int> &multiplicities)
+{
+  if(!_isInitialized()){ throw -1; }
+  int outTag = tag;
+  if(!GModel::current()->getOCCInternals()->addBSpline
+     (outTag, vertexTags, degree, weights, knots, multiplicities)){
     throw 1;
   }
   return outTag;

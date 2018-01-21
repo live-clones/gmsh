@@ -27,3 +27,11 @@ Plane Surface(100) = {100};
 // periodic bspline with given control points and default parameters (order 3,
 // C2)
 BSpline(101) = {103,102,101,104,105,103};
+
+
+// general bspline
+Point(201) = {0,-2,0,0.1};
+Point(202) = {1,-2,0,0.1};
+Point(203) = {1,-3,0,0.1};
+Point(204) = {0,-3,0,0.1};
+Nurbs(201) = {201,202,203,204} Knots {0,0,0, 0.5, 1,1,1} Order 2;
