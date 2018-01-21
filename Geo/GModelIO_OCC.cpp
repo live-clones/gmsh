@@ -943,8 +943,8 @@ void debugBSpline(const Handle(Geom_BSplineCurve) &curve)
     printf("  %d (%g) mult %d\n", i, knots(i), mults(i));
 }
 
-bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags, int mode,
-                                const int degree,
+bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags,
+                                int mode, const int degree,
                                 const std::vector<double> &weights,
                                 const std::vector<double> &knots,
                                 const std::vector<int> &multiplicities)
@@ -987,7 +987,6 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags, in
         return false;
       }
       Handle(Geom_BSplineCurve) curve = intp.Curve();
-      //debugBSpline(curve);
       BRepBuilderAPI_MakeEdge e(curve, start, end);
       if(!e.IsDone()){
         Msg::Error("Could not create spline");
@@ -1013,13 +1012,13 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags, in
         return false;
       }
       if(weights.size() != vertexTags.size()){
-        Msg::Error("Number of BSpline weights (%d) and control points (%d) should equal",
-                   weights.size(), vertexTags.size());
+        Msg::Error("Number of BSpline weights (%d) and control points (%d) "
+                   "should equal", weights.size(), vertexTags.size());
         return false;
       }
       if(knots.size() != multiplicities.size()){
-        Msg::Error("Number of BSpline knots (%d) and multiplicities (%d) should equal",
-                   knots.size(), multiplicities.size());
+        Msg::Error("Number of BSpline knots (%d) and multiplicities (%d) should "
+                   "equal", knots.size(), multiplicities.size());
         return false;
       }
       if(knots.size() < 2){
@@ -1028,8 +1027,8 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags, in
       }
       for(unsigned int i = 0; i < knots.size() - 1; i++){
         if(knots[i] >= knots[i+1]){
-          Msg::Error("BSpline knots should be increasing: knot %d (%g) > knot %d (%g)",
-                     i, knots[i], i + 1, knots[i + 1]);
+          Msg::Error("BSpline knots should be increasing: knot %d (%g) > "
+                     "knot %d (%g)", i, knots[i], i + 1, knots[i + 1]);
           return false;
         }
       }
@@ -1038,28 +1037,30 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags, in
           Msg::Error("BSpline multiplicities should be >= 1");
           return false;
         }
-        if(i != 0 && i != multiplicities.size() - 1 && multiplicities[i] > degree){
+        if(i != 0 && i != multiplicities.size() - 1 &&
+           multiplicities[i] > degree){
           Msg::Error("BSpline interior knot multiplicities should be <= degree");
           return false;
         }
-        if((i == 0 || i == multiplicities.size() - 1) && multiplicities[i] > degree + 1){
+        if((i == 0 || i == multiplicities.size() - 1) &&
+           multiplicities[i] > degree + 1){
           Msg::Error("BSpline end knot multiplicities should be <= degree + 1");
           return false;
         }
       }
       if(periodic){
-        Msg::Warning("FIXME periodic BSpline not correct (yet)... ");
         if(multiplicities.front() != multiplicities.back()){
-          Msg::Error("Periodic BSpline end knot multiplicies (%d and %d) should be equal",
-                     multiplicities.front(), multiplicities.back());
+          Msg::Error("Periodic BSpline end knot multiplicies (%d and %d) should "
+                     "be equal", multiplicities.front(), multiplicities.back());
           return false;
         }
         int sum = 0;
         for(unsigned int i = 0; i < multiplicities.size() - 1; i++)
           sum += multiplicities[i];
         if(vertexTags.size() - 1 != sum){
-          Msg::Error("Number of control points - 1 for periodic BSpline should be equal to "
-                     "the sum of multiplicities for all knots except the first (or last)");
+          Msg::Error("Number of control points - 1 for periodic BSpline should "
+                     "be equal to the sum of multiplicities for all knots except "
+                     "the first (or last)");
           return false;
         }
       }
@@ -1068,8 +1069,8 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags, in
         for(unsigned int i = 0; i < multiplicities.size(); i++)
           sum += multiplicities[i];
         if(vertexTags.size() != sum - degree - 1){
-          Msg::Error("Number of control points for non-periodic BSpline should be equal to "
-                     "the sum of multiplicities - degree - 1");
+          Msg::Error("Number of control points for non-periodic BSpline should "
+                     "be equal to the sum of multiplicities - degree - 1");
           return false;
         }
       }
@@ -1086,14 +1087,27 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags, in
       TColStd_Array1OfInteger m(1, multiplicities.size());
       for(unsigned  int i = 0; i < multiplicities.size(); i++)
         m.SetValue(i + 1, multiplicities[i]);
-      Handle(Geom_BSplineCurve) curve = new Geom_BSplineCurve(p, w, k, m, degree, periodic);
-      //debugBSpline(curve);
-      BRepBuilderAPI_MakeEdge e(curve, start, end);
-      if(!e.IsDone()){
-        Msg::Error("Could not create BSpline curve");
-        return false;
+      Handle(Geom_BSplineCurve) curve =
+        new Geom_BSplineCurve(p, w, k, m, degree, periodic);
+      if(curve->StartPoint().IsEqual
+         (BRep_Tool::Pnt(start), CTX::instance()->geom.tolerance) &&
+         curve->StartPoint().IsEqual
+         (BRep_Tool::Pnt(end), CTX::instance()->geom.tolerance)){
+        BRepBuilderAPI_MakeEdge e(curve, start, end);
+        if(!e.IsDone()){
+          Msg::Error("Could not create BSpline curve");
+          return false;
+        }
+        result = e.Edge();
       }
-      result = e.Edge();
+      else{ // will create new topo vertices as necessary
+        BRepBuilderAPI_MakeEdge e(curve);
+        if(!e.IsDone()){
+          Msg::Error("Could not create BSpline curve");
+          return false;
+        }
+        result = e.Edge();
+      }
     }
   }
   catch(Standard_Failure &err){

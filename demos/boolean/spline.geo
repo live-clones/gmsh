@@ -13,15 +13,17 @@ Spline(3) = {1:10};
 BSpline(4) = {1:10};
 
 
-// periodic
 Point(101) = {0.2,-1.6,0,0.1};
 Point(102) = {1.2,-1.6,0,0.1};
 Point(103) = {1.2,-1.1,0,0.1};
 Point(104) = {0.3,-1.1,0,0.1};
 Point(105) = {0.7,-1,0,0.1};
+
+// periodic bspline (C2) through the control points
 Spline(100) = {103,102,101,104,105,103};
 Line Loop(100) = {100};
 Plane Surface(100) = {100};
 
-// not yet working:
-//BSpline(101) = {103,102,101,104,105,103};
+// periodic bspline with given control points and default parameters (order 3,
+// C2)
+BSpline(101) = {103,102,101,104,105,103};
