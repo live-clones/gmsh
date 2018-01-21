@@ -57,7 +57,7 @@
 #include <BRep_Tool.hxx>
 #include <ElCLib.hxx>
 #include <GProp_GProps.hxx>
-#include <GeomAPI_PointsToBSpline.hxx>
+#include <GeomAPI_Interpolate.hxx>
 #include <Geom_BSplineCurve.hxx>
 #include <Geom_BezierCurve.hxx>
 #include <Geom_Circle.hxx>
@@ -912,7 +912,11 @@ bool OCC_Internals::addEllipse(int &tag, double x, double y, double z, double rx
   return true;
 }
 
-bool OCC_Internals::_addSpline(int &tag, const std::vector<int> &vertexTags, int mode)
+bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags, int mode,
+                                const int degree,
+                                const std::vector<double> &weights,
+                                const std::vector<double> &knots,
+                                const std::vector<int> &multiplicities)
 {
   if(tag >= 0 && _tagEdge.IsBound(tag)){
     Msg::Error("OpenCASCADE edge with tag %d already exists", tag);
@@ -937,8 +941,21 @@ bool OCC_Internals::_addSpline(int &tag, const std::vector<int> &vertexTags, int
       if(i == 0) start = vertex;
       if(i == vertexTags.size() - 1) end = vertex;
     }
-    if(mode == 0){ // BSpline through points (called "Spline" in Gmsh)
-      Handle(Geom_BSplineCurve) curve = GeomAPI_PointsToBSpline(ctrlPoints).Curve();
+    bool periodic = (vertexTags.front() == vertexTags.back());
+    if(mode == 0){
+      // BSpline through points (called "Spline" in Gmsh; will be C2, whereas it
+      // is only C1 in the GEO kernel; also works for the periodic case,
+      // contrary to GEO kernel)
+      int np = periodic ? ctrlPoints.Length() - 1 : ctrlPoints.Length();
+      Handle(TColgp_HArray1OfPnt) p = new TColgp_HArray1OfPnt(1, np);
+      for(int i = 1; i <= np; i++) p->SetValue(i, ctrlPoints(i));
+      GeomAPI_Interpolate intp(p, periodic, CTX::instance()->geom.tolerance);
+      intp.Perform();
+      if(!intp.IsDone()){
+        Msg::Error("Could not interpolate spline");
+        return false;
+      }
+      Handle(Geom_BSplineCurve) curve = intp.Curve();
       BRepBuilderAPI_MakeEdge e(curve, start, end);
       if(!e.IsDone()){
         Msg::Error("Could not create spline");
@@ -947,6 +964,7 @@ bool OCC_Internals::_addSpline(int &tag, const std::vector<int> &vertexTags, int
       result = e.Edge();
     }
     else if(mode == 1){
+      // Bezier curve
       Handle(Geom_BezierCurve) curve = new Geom_BezierCurve(ctrlPoints);
       BRepBuilderAPI_MakeEdge e(curve, start, end);
       if(!e.IsDone()){
@@ -956,11 +974,90 @@ bool OCC_Internals::_addSpline(int &tag, const std::vector<int> &vertexTags, int
       result = e.Edge();
     }
     else if(mode == 2){
-      // TODO: BSpline treat periodic case, allow to set order, etc.
-      // Handle(Geom_BSplineCurve) curve = new Geom_BSplineCurve(ctrlPoints, ...);
-      // ...
-      Msg::Error("OpenCASCADE BSpline not implemented yet");
-      return false;
+      // General BSpline curve, polynomial or rational, with explicit degree,
+      // weights, knots and multiplicities
+      if(degree < 0){
+        Msg::Error("BSpline degree (%d) should be > 0", degree);
+        return false;
+      }
+      if(weights.size() != vertexTags.size()){
+        Msg::Error("Number of BSpline weights (%d) and control points (%d) should equal",
+                   weights.size(), vertexTags.size());
+        return false;
+      }
+      if(knots.size() != multiplicities.size()){
+        Msg::Error("Number of BSpline knots (%d) and multiplicities (%d) should equal",
+                   knots.size(), multiplicities.size());
+        return false;
+      }
+      if(knots.size() < 2){
+        Msg::Error("Number of BSpline knots (%d) should be >= 2", knots.size());
+        return false;
+      }
+      for(unsigned int i = 0; i < knots.size() - 1; i++){
+        if(knots[i] >= knots[i+1]){
+          Msg::Error("BSpline knots should be increasing: knot %d (%g) > knot %d (%g)",
+                     i, knots[i], i + 1, knots[i + 1]);
+          return false;
+        }
+      }
+      for(unsigned int i = 0; i < multiplicities.size(); i++){
+        if(multiplicities[i] < 1){
+          Msg::Error("BSpline multiplicities should be >= 1");
+          return false;
+        }
+        if(i != 0 && i != multiplicities.size() - 1 && multiplicities[i] > degree){
+          Msg::Error("BSpline interior knot multiplicities should be <= degree");
+          return false;
+        }
+        if((i == 0 || i == multiplicities.size() - 1) && multiplicities[i] > degree + 1){
+          Msg::Error("BSpline end knot multiplicities should be <= degree + 1");
+          return false;
+        }
+      }
+      if(periodic){
+        if(multiplicities.front() != multiplicities.back()){
+          Msg::Error("Periodic BSpline end knot multiplicies (%d and %d) should be equal",
+                     multiplicities.front(), multiplicities.back());
+          return false;
+        }
+        // FIXME: not clear if this is correct - need to check the OCC documentation
+        int sum = 0;
+        for(unsigned int i = 0; i < multiplicities.size() - 1; i++)
+          sum += multiplicities[i];
+        if(vertexTags.size() != sum){
+          Msg::Error("Number of control points for periodic BSpline should be equal to "
+                     "the sum of multiplicities for all knots except the first (or last)");
+          return false;
+        }
+      }
+      else{
+        int sum = 0;
+        for(unsigned int i = 0; i < multiplicities.size(); i++)
+          sum += multiplicities[i];
+        if(vertexTags.size() != sum - degree - 1){
+          Msg::Error("Number of control points for non-periodic BSpline should be equal to "
+                     "the sum of multiplicities - degree - 1");
+          return false;
+        }
+      }
+      TColgp_Array1OfPnt &p = ctrlPoints;
+      TColStd_Array1OfReal w(1, weights.size());
+      for(unsigned  int i = 0; i < weights.size(); i++)
+        w.SetValue(i + 1, weights[i]);
+      TColStd_Array1OfReal k(1, knots.size());
+      for(unsigned  int i = 0; i < knots.size(); i++)
+        k.SetValue(i + 1, knots[i]);
+      TColStd_Array1OfInteger m(1, multiplicities.size());
+      for(unsigned  int i = 0; i < multiplicities.size(); i++)
+        m.SetValue(i + 1, multiplicities[i]);
+      Handle(Geom_BSplineCurve) curve = new Geom_BSplineCurve(p, w, k, m, degree, periodic);
+      BRepBuilderAPI_MakeEdge e(curve, start, end);
+      if(!e.IsDone()){
+        Msg::Error("Could not create BSpline curve");
+        return false;
+      }
+      result = e.Edge();
     }
   }
   catch(Standard_Failure &err){
@@ -974,17 +1071,59 @@ bool OCC_Internals::_addSpline(int &tag, const std::vector<int> &vertexTags, int
 
 bool OCC_Internals::addSpline(int &tag, const std::vector<int> &vertexTags)
 {
-  return _addSpline(tag, vertexTags, 0);
+  return _addBSpline(tag, vertexTags, 0);
 }
 
 bool OCC_Internals::addBezier(int &tag, const std::vector<int> &vertexTags)
 {
-  return _addSpline(tag, vertexTags, 1);
+  return _addBSpline(tag, vertexTags, 1);
 }
 
-bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &vertexTags)
+bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &vertexTags,
+                               const int degree,
+                               const std::vector<double> &weights,
+                               const std::vector<double> &knots,
+                               const std::vector<int> &multiplicities)
 {
-  return _addSpline(tag, vertexTags, 2);
+  int d = degree;
+  std::vector<double> w(weights), k(knots);
+  std::vector<int> m(multiplicities);
+  // degree 3 if degree not specified:
+  if(d <= 0) d = 3;
+  // automatic default choices for weights, knots and multiplicities if not
+  // provided:
+  if(w.empty()) w.resize(vertexTags.size(), 1);
+  if(k.empty()){
+    bool periodic = (vertexTags.front() == vertexTags.back());
+    if(!periodic){
+      int sum_of_all_mult = vertexTags.size() + d + 1;
+      // number of knots = length(mult); if first and last mult are d+1 and
+      // others mult are 1, we have sum_mult = (num_knots-2)*1+2*(d+1)
+      int num_knots = sum_of_all_mult - 2 * d;
+      if(num_knots < 2){
+        Msg::Error("Not enough control points for building BSpline of degree %d", d);
+        return false;
+      }
+      k.resize(num_knots);
+      for(unsigned int i = 0; i < k.size(); i++)
+        k[i] = i;
+      m.resize(num_knots, 1);
+      m.front() = d + 1;
+      m.back() = d + 1;
+    }
+    else{
+      // FIXME once we understand the OCC documentation :-)
+      int sum_of_mult_except_end = vertexTags.size();
+      int num_knots = sum_of_mult_except_end + 1;
+      k.resize(num_knots);
+      for(unsigned int i = 0; i < k.size(); i++)
+        k[i] = i;
+      m.resize(num_knots, 1);
+      Msg::Error("Automatic BSpline creation not doe for periodic case");
+      return false;
+    }
+  }
+  return _addBSpline(tag, vertexTags, 2, d, w, k, m);
 }
 
 bool OCC_Internals::addWire(int &tag, const std::vector<int> &edgeTags,
@@ -2667,8 +2806,10 @@ bool OCC_Internals::importShapes(const std::string &fileName, bool highestDimOnl
       }
       reader.Transfer(step_doc);
       // Read in the shape(s) and the colours present in the STEP File
-      Handle_XCAFDoc_ShapeTool step_shape_contents = XCAFDoc_DocumentTool::ShapeTool(step_doc->Main());
-      Handle_XCAFDoc_ColorTool step_colour_contents = XCAFDoc_DocumentTool::ColorTool(step_doc->Main());
+      Handle_XCAFDoc_ShapeTool step_shape_contents =
+        XCAFDoc_DocumentTool::ShapeTool(step_doc->Main());
+      Handle_XCAFDoc_ColorTool step_colour_contents =
+        XCAFDoc_DocumentTool::ColorTool(step_doc->Main());
       TDF_LabelSequence step_shapes;
       step_shape_contents->GetShapes(step_shapes);
       for(int i = 1; i <= step_shapes.Length(); i++){

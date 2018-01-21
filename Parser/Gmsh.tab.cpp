@@ -8058,7 +8058,7 @@ yyreduce:
       std::vector<int> tags; ListOfDouble2Vector((yyvsp[(6) - (7)].l), tags);
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(0, "BSpline not yet available with OpenCASCADE geometry kernel");
+        r = GModel::current()->getOCCInternals()->addBSpline(num, tags);
       }
       else{
         r = GModel::current()->getGEOInternals()->addBSpline(num, tags);
