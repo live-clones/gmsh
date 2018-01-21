@@ -912,6 +912,37 @@ bool OCC_Internals::addEllipse(int &tag, double x, double y, double z, double rx
   return true;
 }
 
+void debugBSpline(const Handle(Geom_BSplineCurve) &curve)
+{
+  int degree = curve->Degree();
+  bool periodic = curve->IsPeriodic();
+  bool rational = curve->IsRational();
+
+  int npoles = curve->NbPoles();
+  TColgp_Array1OfPnt poles(1, npoles);
+  curve->Poles(poles);
+
+  TColStd_Array1OfReal weights(1, npoles);
+  curve->Weights(weights);
+
+  int nknots = curve->NbKnots();
+  TColStd_Array1OfReal knots(1, nknots);
+  curve->Knots(knots);
+
+  TColStd_Array1OfInteger mults(1, nknots);
+  curve->Multiplicities(mults);
+
+  printf("BSpline: degree %d, periodic %d, rational %d\n", degree, periodic,
+         rational);
+  printf("Poles:\n");
+  for(int i = 1; i <= npoles; i++)
+    printf("  %d (%g, %g, %g) weight %g\n", i, poles(i).X(), poles(i).Y(),
+           poles(i).Z(), weights(i));
+  printf("Knots:\n");
+  for(int i = 1; i <= nknots; i++)
+    printf("  %d (%g) mult %d\n", i, knots(i), mults(i));
+}
+
 bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags, int mode,
                                 const int degree,
                                 const std::vector<double> &weights,
@@ -956,6 +987,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags, in
         return false;
       }
       Handle(Geom_BSplineCurve) curve = intp.Curve();
+      //debugBSpline(curve);
       BRepBuilderAPI_MakeEdge e(curve, start, end);
       if(!e.IsDone()){
         Msg::Error("Could not create spline");
@@ -1016,17 +1048,17 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags, in
         }
       }
       if(periodic){
+        Msg::Warning("FIXME periodic BSpline not correct (yet)... ");
         if(multiplicities.front() != multiplicities.back()){
           Msg::Error("Periodic BSpline end knot multiplicies (%d and %d) should be equal",
                      multiplicities.front(), multiplicities.back());
           return false;
         }
-        // FIXME: not clear if this is correct - need to check the OCC documentation
         int sum = 0;
         for(unsigned int i = 0; i < multiplicities.size() - 1; i++)
           sum += multiplicities[i];
-        if(vertexTags.size() != sum){
-          Msg::Error("Number of control points for periodic BSpline should be equal to "
+        if(vertexTags.size() - 1 != sum){
+          Msg::Error("Number of control points - 1 for periodic BSpline should be equal to "
                      "the sum of multiplicities for all knots except the first (or last)");
           return false;
         }
@@ -1041,10 +1073,13 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags, in
           return false;
         }
       }
-      TColgp_Array1OfPnt &p = ctrlPoints;
-      TColStd_Array1OfReal w(1, weights.size());
-      for(unsigned  int i = 0; i < weights.size(); i++)
-        w.SetValue(i + 1, weights[i]);
+      int np = (periodic ? ctrlPoints.Length() - 1 : ctrlPoints.Length());
+      TColgp_Array1OfPnt p(1, np);
+      TColStd_Array1OfReal w(1, np);
+      for(int i = 1; i <= np; i++){
+        p.SetValue(i, ctrlPoints(i));
+        w.SetValue(i, weights[i - 1]);
+      }
       TColStd_Array1OfReal k(1, knots.size());
       for(unsigned  int i = 0; i < knots.size(); i++)
         k.SetValue(i + 1, knots[i]);
@@ -1052,6 +1087,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags, in
       for(unsigned  int i = 0; i < multiplicities.size(); i++)
         m.SetValue(i + 1, multiplicities[i]);
       Handle(Geom_BSplineCurve) curve = new Geom_BSplineCurve(p, w, k, m, degree, periodic);
+      //debugBSpline(curve);
       BRepBuilderAPI_MakeEdge e(curve, start, end);
       if(!e.IsDone()){
         Msg::Error("Could not create BSpline curve");
@@ -1097,8 +1133,6 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &vertexTags,
     bool periodic = (vertexTags.front() == vertexTags.back());
     if(!periodic){
       int sum_of_all_mult = vertexTags.size() + d + 1;
-      // number of knots = length(mult); if first and last mult are d+1 and
-      // others mult are 1, we have sum_mult = (num_knots-2)*1+2*(d+1)
       int num_knots = sum_of_all_mult - 2 * d;
       if(num_knots < 2){
         Msg::Error("Not enough control points for building BSpline of degree %d", d);
@@ -1112,15 +1146,12 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &vertexTags,
       m.back() = d + 1;
     }
     else{
-      // FIXME once we understand the OCC documentation :-)
-      int sum_of_mult_except_end = vertexTags.size();
-      int num_knots = sum_of_mult_except_end + 1;
-      k.resize(num_knots);
+      k.resize(vertexTags.size() - 1);
       for(unsigned int i = 0; i < k.size(); i++)
         k[i] = i;
-      m.resize(num_knots, 1);
-      Msg::Error("Automatic BSpline creation not doe for periodic case");
-      return false;
+      m.resize(k.size(), 1);
+      m.front() = d - 1;
+      m.back() = d - 1;
     }
   }
   return _addBSpline(tag, vertexTags, 2, d, w, k, m);

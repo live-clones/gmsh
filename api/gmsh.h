@@ -791,9 +791,10 @@ namespace gmsh { // Top-level functions
                               const double angle1 = 0.,
                               const double angle2 = 2*M_PI);
 
-      // Adds a spline (b-spline) curve going through `vertexTags' points, with a
-      // given tolerance. If `tag' is positive, sets the tag explicitly; otherwise
-      // a new tag is selected automatically.  Returns the tag of the spline curve.
+      // Adds a spline (C2 b-spline) curve going through `vertexTags' points, with
+      // a given tolerance. If `tag' is positive, sets the tag explicitly;
+      // otherwise a new tag is selected automatically.  Returns the tag of the
+      // spline curve.
       GMSH_API int addSpline(const std::vector<int> & vertexTags,
                              const int tag = -1);
 

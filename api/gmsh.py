@@ -2154,7 +2154,7 @@ class model:
         @staticmethod
         def addSpline(vertexTags,tag=-1):
             """
-            Adds a spline (b-spline) curve going through `vertexTags' points, with a
+            Adds a spline (C2 b-spline) curve going through `vertexTags' points, with a
             given tolerance. If `tag' is positive, sets the tag explicitly; otherwise a
             new tag is selected automatically.  Returns the tag of the spline curve.
 

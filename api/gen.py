@@ -330,7 +330,7 @@ occ.add('addEllipseArc',doc,oint,iint('startTag'),iint('centerTag'),iint('endTag
 doc = '''Adds an ellipse of center (`x', `y', `z') and radii `r1' and `r2' along the x- and y-axes respectively. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. If `angle1' and `angle2' are specified, creates an ellipse arc between the two angles. Returns the tag of the ellipse.'''
 occ.add('addEllipse',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('r1'),idouble('r2'),iint('tag','-1'),idouble('angle1','0.'),idouble('angle2','2*M_PI','2*pi'))
 
-doc = '''Adds a spline (b-spline) curve going through `vertexTags' points, with a given tolerance. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically.  Returns the tag of the spline curve.'''
+doc = '''Adds a spline (C2 b-spline) curve going through `vertexTags' points, with a given tolerance. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically.  Returns the tag of the spline curve.'''
 occ.add('addSpline',doc,oint,ivectorint('vertexTags'),iint('tag','-1'))
 
 doc = '''Adds a Bezier curve with `vertexTags' control points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically.  Returns the tag of the Bezier curve.'''

@@ -839,7 +839,7 @@ GMSH_API int gmshModelOccAddEllipse(const double x,
                                     const double angle2,
                                     int * ierr);
 
-/* Adds a spline (b-spline) curve going through `vertexTags' points, with a
+/* Adds a spline (C2 b-spline) curve going through `vertexTags' points, with a
  * given tolerance. If `tag' is positive, sets the tag explicitly; otherwise a
  * new tag is selected automatically.  Returns the tag of the spline curve. */
 GMSH_API int gmshModelOccAddSpline(int * vertexTags, size_t vertexTags_n,
