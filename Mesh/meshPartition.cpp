@@ -1495,7 +1495,6 @@ static void CreateNewEntities(GModel *const model,
   // If we don't create the partition topology let's just assume that the user
   // does not care about multi-connected partitions or partition boundaries.
   if(!CTX::instance()->mesh.partitionCreateTopology) return;
-
   regions = model->getRegions();
   faces = model->getFaces();
   edges = model->getEdges();
@@ -2006,14 +2005,61 @@ static void assignBrep(GModel *const model, std::map<GEntity*, MElement*>
   }
 }
 
+void assignNewEntityBRep(Graph &graph, hashmap<MElement*, GEntity*> &elementToEntity)
+{
+  std::set< std::pair<GEntity*, GEntity*> > brepWithoutOri;
+  hashmap<GEntity*, std::set<std::pair<int, GEntity*> > > brep;
+  for(unsigned int i = 0; i < graph.ne(); i++){
+    MElement *current = graph.element(i);
+    for(unsigned int j = graph.xadj(i); j < graph.xadj(i+1); j++)
+    {
+      if(current->getDim() == graph.element(graph.adjncy(j))->getDim()+1){
+        GEntity *g1 = elementToEntity[current];
+        GEntity *g2 = elementToEntity[graph.element(graph.adjncy(j))];
+        if(brepWithoutOri.find(std::pair<GEntity*, GEntity*>(g1,g2)) == brepWithoutOri.end()){
+          const int ori = computeOrientation(current,graph.element(graph.adjncy(j)));
+          brepWithoutOri.insert(std::pair<GEntity*, GEntity*>(g1,g2));
+          brep[g1].insert(std::pair<int, GEntity*>(ori,g2));
+        }
+      }
+    }
+  }
+  
+  for(hashmap<GEntity*, std::set<std::pair<int, GEntity*> > >::iterator it = brep.begin(); it != brep.end(); ++it){
+    switch (it->first->dim()) {
+        case 3:
+        for(std::set<std::pair<int, GEntity*> >::iterator itSet = it->second.begin(); itSet != it->second.end(); ++itSet){
+          static_cast<GRegion*>(it->first)->setFace(static_cast<GFace*>(itSet->second), itSet->first);
+          static_cast<GFace*>(itSet->second)->addRegion(static_cast<GRegion*>(it->first));
+        }
+        break;
+        case 2:
+        for(std::set<std::pair<int, GEntity*> >::iterator itSet = it->second.begin(); itSet != it->second.end(); ++itSet){
+          static_cast<GFace*>(it->first)->setEdge(static_cast<GEdge*>(itSet->second), itSet->first);
+          static_cast<GEdge*>(itSet->second)->addFace(static_cast<GFace*>(it->first));
+        }
+        break;
+        case 1:
+        for(std::set<std::pair<int, GEntity*> >::iterator itSet = it->second.begin(); itSet != it->second.end(); ++itSet){
+          static_cast<GEdge*>(it->first)->setVertex(static_cast<GVertex*>(itSet->second), itSet->first);
+          static_cast<GVertex*>(itSet->second)->addEdge(static_cast<GEdge*>(it->first));
+        }
+        break;
+      default:
+        break;
+    }
+  }
+}
+
 // Create the new entities between each partitions (sigma and bndSigma).
 static void CreatePartitionBoundaries(GModel *const model,
                                       const std::vector< std::set<MElement*> >
-                                      &boundaryElements)
+                                      &boundaryElements, Graph &meshGraph)
 {
   const int meshDim = model->getDim();
   hashmap<MElement*, GEntity*> elementToEntity;
   fillElementToEntity(model, elementToEntity);
+  assignNewEntityBRep(meshGraph, elementToEntity);
 
   std::multimap<partitionFace*, GEntity*, Less_partitionFace> pfaces;
   std::multimap<partitionEdge*, GEntity*, Less_partitionEdge> pedges;
@@ -2499,7 +2545,7 @@ int PartitionMesh(GModel *const model)
   if(CTX::instance()->mesh.partitionCreateTopology){
     Msg::StatusBar(true, "Creating partition topology...");
     std::vector< std::set<MElement*> > boundaryElements = graph.getBoundaryElements();
-    CreatePartitionBoundaries(model, boundaryElements);
+    CreatePartitionBoundaries(model, boundaryElements, graph);
     boundaryElements.clear();
     AssignPhysicalName(model);
 
@@ -2810,7 +2856,7 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
   if(CTX::instance()->mesh.partitionCreateTopology){
     Msg::StatusBar(true, "Creating partition topology...");
     std::vector< std::set<MElement*> > boundaryElements = graph.getBoundaryElements();
-    CreatePartitionBoundaries(model, boundaryElements);
+    CreatePartitionBoundaries(model, boundaryElements, graph);
     boundaryElements.clear();
     AssignPhysicalName(model);
     Msg::StatusBar(true, "Done creating partition topology");
