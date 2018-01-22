@@ -66,9 +66,16 @@ static void readMSH4Physicals(GModel *const model, FILE* fp, GEntity *const enti
     sscanf(str, "%lu %[0-9- ]", &numPhy, str);
     for(unsigned int i = 0; i < numPhy; i++){
       int phyTag = 0;
-
-      if(sscanf(str, "%d %[0-9- ]", &phyTag, str) != 2){
-        return;
+      
+      if(i == numPhy-1){
+        if(sscanf(str, "%d", &phyTag) != 1){
+          return;
+        }
+      }
+      else{
+        if(sscanf(str, "%d %[0-9- ]", &phyTag, str) != 2){
+          return;
+        }
       }
 
       entity->addPhysicalEntity(phyTag);
