@@ -1,5 +1,3 @@
-# This file reimplements gmsh/tutorial/t5.geo in Python.
-
 import gmsh
 import math
 
@@ -24,14 +22,14 @@ factory.addPoint(1.2,-1.1,0,0.1, 103)
 factory.addPoint(0.3,-1.1,0,0.1, 104) 
 factory.addPoint(0.7,-1,0,0.1, 105) 
 
-# periodic bspline (C2) through the control points
+# periodic bspline through the control points
 factory.addSpline([103,102,101,104,105,103], 100)
 
-# periodic bspline (C2, degree 2) from given control points and default
-# parameters - will create a new vertex
+# periodic bspline from given control points and default parameters - will
+# create a new vertex
 factory.addBSpline([103,102,101,104,105,103], 101)
 
-# general bspline
+# general bspline with explicit degree, knots and multiplicities
 factory.addPoint(0,-2,0,0.1,201)
 factory.addPoint(1,-2,0,0.1,202)
 factory.addPoint(1,-3,0,0.1,203)
