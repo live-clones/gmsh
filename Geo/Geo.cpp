@@ -412,62 +412,6 @@ void EndCurve(Curve *c)
       Msg::Error("Otherwise, please subdivide the arc in smaller pieces.)");
     }
   }
-
-  if (c->Typ == MSH_SEGM_COMPOUND) {
-    std::list<Curve*> tmp;
-    for (std::vector<int>::const_iterator cIter=c->compound.begin();
-         cIter!=c->compound.end();++cIter) {
-      Curve* comp;
-      if (!(comp = FindCurve(*cIter))){
-        Msg::Debug("Could not find GEO edge %d as part of compound edge %d. "
-                   "Aborting sort.", *cIter, c->Num);
-        return;
-      }
-      tmp.push_back(comp);
-    }
-    std::list<int> ordered;
-    Curve* c0 = *(tmp.begin());
-    tmp.pop_front();
-    ordered.push_back(c0->Num);
-    std::pair<Vertex*,Vertex*> vtcs(c0->beg,c0->end);
-    while (tmp.size() != 0) {
-      unsigned nbCurrent = tmp.size();
-      for (std::list<Curve*>::iterator tIter=tmp.begin();tIter!=tmp.end();tIter++) {
-        Curve* c1 = *tIter;
-        if (c1->beg == vtcs.first) {
-          vtcs.first = c1->end;
-          ordered.push_front(c1->Num);
-          tmp.erase(tIter);
-          break;
-        }
-        if (c1->end == vtcs.first) {
-          vtcs.first = c1->beg;
-          ordered.push_front(c1->Num);
-          tmp.erase(tIter);
-          break;
-        }
-        if (c1->beg == vtcs.second) {
-          vtcs.second = c1->end;
-          ordered.push_back(c1->Num);
-          tmp.erase(tIter);
-          break;
-        }
-        if (c1->end == vtcs.second) {
-          vtcs.second = c1->beg;
-          ordered.push_back(c1->Num);
-          tmp.erase(tIter);
-          break;
-        }
-      }
-      if (tmp.size() == nbCurrent)
-        Msg::Error("Could not order compound edge %d to find begin and end vertex",
-                   c->Num);
-    }
-    c->beg = vtcs.first;
-    c->end = vtcs.second;
-    c->compound.clear();
-    c->compound.insert(c->compound.end(), ordered.begin(), ordered.end());
-  }
 }
 
 void EndSurface(Surface *s)
@@ -876,11 +820,7 @@ Curve *DuplicateCurve(Curve *c)
 
 static void CopySurface(Surface *s, Surface *ss)
 {
-  // Trevor Strickler modified
-  if(s->Typ == MSH_SURF_COMPOUND)
-    ss->Typ = MSH_SURF_REGL;
-  else
-    ss->Typ = s->Typ;
+  ss->Typ = s->Typ;
   if(CTX::instance()->geom.copyMeshingMethod){
     ss->Method = s->Method;
     ss->Recombine = s->Recombine;
@@ -1159,11 +1099,6 @@ Curve *CreateReversedCurve(Curve *c)
     newc->k = new float[c->degre + List_Nbr(c->Control_Points) + 1];
     for(int i = 0; i < c->degre + List_Nbr(c->Control_Points) + 1; i++)
       newc->k[c->degre + List_Nbr(c->Control_Points) - i] = c->k[i];
-  }
-
-  if(c->Typ == MSH_SEGM_COMPOUND) {
-    newc->compound.insert(newc->compound.end(), c->compound.rbegin(),
-                          c->compound.rend());
   }
 
   if(c->Typ == MSH_SEGM_CIRC)
@@ -1603,158 +1538,6 @@ class ShapeLessThan{
   }
 };
 
-// Added by Trevor Strickler for extruding unique compound surface edges
-static List_T *GetCompoundUniqueEdges(Surface *ps)
-{
-  // Two parts:
-  // Part 1: create map of keys with values abs(c->Num) that map to integer
-  //   counts of abs(c->num) in compound
-  // Part 2: Make the unique list
-
-  std::vector<int> comp_surfs = ps->compound;
-  if(comp_surfs.size() == 0 || ps->Typ != MSH_SURF_COMPOUND){
-    Msg::Error("GEO face with tag %d is not a compound", ps->Num);
-    return 0;
-  }
-
-  int num_surfs = comp_surfs.size();
-  List_T *bnd_c = List_Create(4, 1, sizeof(Curve*));
-
-  std::map<int, unsigned int> count_map;
-
-  for(int i = 0; i < num_surfs; i++){
-    Surface *s = FindSurface(std::abs(comp_surfs[i]));
-    if(!s){
-      // don't complain: some compound surfaces are not in old GEO database
-      //Msg::Warning("Unknown GEO face with tag %d", std::abs(comp_surfs[i]));
-      List_Delete(bnd_c);
-      return 0;
-    }
-    int num_in_surf = List_Nbr(s->Generatrices);
-    for(int m = 0; m < num_in_surf; m++){
-      Curve *c = 0;
-      List_Read(s->Generatrices, m, &c);
-      if(!c){
-        Msg::Warning("Unknown GEO edge");
-        List_Delete(bnd_c);
-        return 0;
-      }
-      if(!FindCurve(-c->Num)) {
-        Msg::Warning("Unknown GEO edge with tag %d", -c->Num);
-        List_Delete(bnd_c);
-        return 0;
-      }
-      int abs_Num = std::abs(c->Num) ;
-      if(count_map.find( abs_Num ) == count_map.end())
-        count_map[ abs_Num ] = 1;
-      else
-        count_map[ abs_Num ]++;
-    }
-  }
-
-  // Now, create the list of uniques.  Exclude any repeats of abs(c->num) of
-  //   course.
-  for(int i = 0; i < num_surfs; i++){
-    Surface *s = FindSurface(std::abs(comp_surfs[i]));
-    int num_in_surf = List_Nbr(s->Generatrices);
-    for( int m = 0; m < num_in_surf; m++ ){
-      Curve *c;
-      List_Read(s->Generatrices, m, &c);
-      std::map<int, unsigned int>::iterator itmap = count_map.find(std::abs(c->Num));
-      if( itmap != count_map.end() ){
-        if( itmap->second == 1 ){
-          List_Add(bnd_c, &c);
-	  // for duplicates -- if coherence on, do not need. if coherence off,
-	  // should not try to find them
-          /*bool unique_flag = true;
-          std::map<int, unsigned int>::iterator itmap2 = count_map.begin();
-          for( ; itmap2 != count_map.end(); itmap2++ ){
-            Curve *c_tmp1 = FindCurve( itmap2->first );
-            Curve *c_tmp2 = FindCurve( -itmap2->first );
-
-            if( itmap != itmap2 &&
-                ( !CompareTwoCurves( &c_tmp1, &c ) ||
-                  !CompareTwoCurves( &c_tmp2, &c ) ) ){
-              unique_flag = false;
-              break;
-            }
-          }
-          if( unique_flag )
-	    List_Add(bnd_c, &c);
-	  */
-        }
-      }
-      else{ // if not found the curve in the count_map
-        Msg::Error("A problem in finding unique curves in extrusion of compound surface %d",
-                   std::abs(ps->Num));
-        List_Delete(bnd_c);
-        return 0;
-      }
-    }
-  }
-
-  return bnd_c;
-}
-
-
-// Added by Trevor Strickler
-
-// This function returns a pointer to an allocated List_T type that contains an
-// ordered list of unique edges for a compound surface.  The edges are grouped
-// into loops if there is more than one loop.  The order is in order around a
-// loop.
-// Only one problem: Sometimes holes can be selected as the first loop, though
-// this should not create many real problems on a copied top surface.
-static List_T* GetOrderedUniqueEdges(Surface *s)
-{
-  List_T* unique = GetCompoundUniqueEdges(s);
-  if(!unique) return 0;
-
-  // need to sort out the list into ordered, oriented loops before passing
-  // these into the gmsh geometry system.
-  // Have to get list of surface numbers
-  int numgen = List_Nbr(unique);
-
-  if(!numgen){
-    List_Delete(unique);
-    return 0;
-  }
-
-  List_T *gen_nums = List_Create(numgen, 1, sizeof(int));
-
-  for(int i = 0; i < numgen; i++){
-    Curve *ctemp = 0;
-    List_Read(unique, i, &ctemp);
-    if(!ctemp){
-      Msg::Error("No such curve");
-      List_Delete(gen_nums);
-      List_Delete(unique);
-      return 0;
-    }
-    List_Add(gen_nums, &(ctemp->Num));
-  }
-
-  SortEdgesInLoop(0, gen_nums, 1);
-
-  // put sorted list of curve pointers back into compnd_gen and generatrices
-  List_Reset(unique);
-  for(int i = 0; i < List_Nbr(gen_nums); i++){
-    Curve *ctemp = 0;
-    int j;
-    List_Read(gen_nums, i, &j);
-    if(!(ctemp = FindCurve(j))){
-      Msg::Error("No such curve %d", j);
-      List_Delete(gen_nums);
-      List_Delete(unique);
-      return 0;
-    }
-    List_Add(unique, &ctemp);
-  }
-
-  List_Delete(gen_nums);
-  return unique;
-}
-
 static int CompareTwoPoints(const void *a, const void *b)
 {
   Vertex *q = *(Vertex **)a;
@@ -1822,8 +1605,7 @@ static int CompareTwoSurfaces(const void *a, const void *b)
   // checking types is the "right thing" to do (see e.g. CompareTwoCurves)
   // but it would break backward compatibility (see e.g. tutorial/t2.geo),
   // so let's just do it for boundary layer surfaces for now:
-  if(s1->Typ == MSH_SURF_BND_LAYER || s2->Typ == MSH_SURF_BND_LAYER ||
-     s1->Typ == MSH_SURF_COMPOUND || s2->Typ == MSH_SURF_COMPOUND ){
+  if(s1->Typ == MSH_SURF_BND_LAYER || s2->Typ == MSH_SURF_BND_LAYER){
     if(s1->Typ != s2->Typ) return s1->Typ - s2->Typ;
   }
 
@@ -3280,16 +3062,7 @@ void ExtrudeShapes(int type, List_T *list_in,
     case MSH_SURF_TRIC:
     case MSH_SURF_PLAN:
     case MSH_SURF_DISCRETE:
-    case MSH_SURF_COMPOUND:
       {
-        if(shape.Type == MSH_SURF_COMPOUND){
-          if(!(e && e->mesh.ExtrudeMesh)){
-            Msg::Error("Impossible to extrude compound entity %d without also extruding mesh!",
-                       abs(shape.Num) );
-            break;
-          }
-        }
-
         Volume *pv = 0;
         Shape top;
         top.Num = ExtrudeSurface(type, shape.Num, T0, T1, T2,
@@ -3618,8 +3391,8 @@ void SortEdgesInLoop(int num, List_T *edges, bool orient)
     List_Read(edges, i, &j);
     if((c = FindCurve(j))){
       List_Add(temp, &c);
-      if(c->Typ == MSH_SEGM_DISCRETE || c->Typ == MSH_SEGM_COMPOUND){
-        Msg::Debug("Aborting line loop sort for discrete or compound edge: "
+      if(c->Typ == MSH_SEGM_DISCRETE){
+        Msg::Debug("Aborting line loop sort for discrete edge: "
                    "let's hope you know what you're doing ;-)");
         List_Delete(temp);
         return;
@@ -3679,15 +3452,6 @@ void SetSurfaceGeneratrices(Surface *s, List_T *loops)
   s->Generatrices = List_Create(4, 4, sizeof(Curve *));
   List_Delete(s->GeneratricesByTag);
   s->GeneratricesByTag = List_Create(4, 4, sizeof(int));
-
-  if(s->Typ == MSH_SURF_COMPOUND){
-    s->Generatrices = GetOrderedUniqueEdges(s);
-    if(!List_Nbr(s->Generatrices)){
-      // don't complain: compounds can be not in old GEO database
-      //Msg::Warning("Could not make generatrices list for compound surface %d", s->Num);
-      return;
-    }
-  }
 
   for(int i = 0; i < nbLoop; i++) {
     int iLoop;
