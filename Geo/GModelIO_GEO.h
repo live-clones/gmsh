@@ -58,10 +58,9 @@ class GEO_Internals{
   bool addEllipseArc(int &tag, int startTag, int centerTag, int majorTag,
                      int endTag, double nx = 0., double ny = 0., double nz = 0.);
   bool addSpline(int &tag, const std::vector<int> &vertexTags);
-  bool addBSpline(int &tag, const std::vector<int> &vertexTags);
   bool addBezier(int &tag, const std::vector<int> &vertexTags);
-  bool addNurbs(int &tag, const std::vector<int> &vertexTags,
-                const std::vector<double> &knots);
+  bool addBSpline(int &tag, const std::vector<int> &vertexTags,
+                  const std::vector<double> &seqknots = std::vector<double>());
   bool addCompoundLine(int &tag, const std::vector<int> &edgeTags);
   bool addLineLoop(int &tag, const std::vector<int> &edgeTags);
   bool addPlaneSurface(int &tag, const std::vector<int> &wireTags);

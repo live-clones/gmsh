@@ -8113,7 +8113,7 @@ yyreduce:
           (num, tags, degree, weights, knots, mults);
       }
       else{
-        r = GModel::current()->getGEOInternals()->addNurbs(num, tags, seqknots);
+        r = GModel::current()->getGEOInternals()->addBSpline(num, tags, seqknots);
       }
       if(!r) yymsg(0, "Could not add nurbs");
       List_Delete((yyvsp[(6) - (11)].l));
