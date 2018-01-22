@@ -677,7 +677,7 @@ static void readMSH4Entities(GModel *const model, FILE* fp, bool partition,
 }
 
 static std::pair<int, MVertex*> *readMSH4Nodes(GModel *const model, FILE* fp,
-                                               bool binary, bool parametric, bool &dense,
+                                               bool binary, bool &dense,
                                                unsigned long &nbrNodes, bool swap)
 {
   unsigned long numBlock = 0;
@@ -704,18 +704,20 @@ static std::pair<int, MVertex*> *readMSH4Nodes(GModel *const model, FILE* fp,
   std::pair<int, MVertex*> *vertexCache = new std::pair<int, MVertex*>[nbrNodes];
   Msg::Info("%lu vertices", nbrNodes);
   for(unsigned int i = 0; i < numBlock; i++){
+    int parametric = 0;
     int entityTag = 0, entityDim = 0;
     unsigned long numNodes = 0;
 
     if(binary){
-      int data[2];
-      if(fread(data, sizeof(int), 2, fp) != 2){
+      int data[3];
+      if(fread(data, sizeof(int), 3, fp) != 3){
         fclose(fp);
         return 0;
       }
-      if(swap) SwapBytes((char*)data, sizeof(int), 2);
+      if(swap) SwapBytes((char*)data, sizeof(int), 3);
       entityTag = data[0];
       entityDim = data[1];
+      parametric = data[2];
 
       unsigned long dataLong;
       if(fread(&dataLong, sizeof(unsigned long), 1, fp) != 1){
@@ -726,7 +728,7 @@ static std::pair<int, MVertex*> *readMSH4Nodes(GModel *const model, FILE* fp,
       numNodes = dataLong;
     }
     else{
-      if(fscanf(fp, "%d %d %lu", &entityTag, &entityDim, &numNodes) != 3){
+      if(fscanf(fp, "%d %d %d %lu", &entityTag, &entityDim, &parametric, &numNodes) != 4){
         fclose(fp);
         return 0;
       }
@@ -1454,46 +1456,7 @@ int GModel::_readMSH4(const std::string &name)
       bool dense = false;
       unsigned long nbrNodes = 0;
       std::pair<int, MVertex*> *vertexCache = readMSH4Nodes
-        (this, fp, binary, false, dense, nbrNodes, swap);
-      if(vertexCache){
-        if(dense){
-          _vertexVectorCache.resize(nbrNodes+1, 0);
-          _vertexVectorCache[0] = 0;
-
-          for(unsigned int i = 0; i < nbrNodes; i++){
-            if(!_vertexVectorCache[vertexCache[i].first]){
-              _vertexVectorCache[vertexCache[i].first] = vertexCache[i].second;
-            }
-            else{
-              Msg::Warning("Skipping duplicate vertex %d", vertexCache[i].first);
-            }
-          }
-        }
-        else{
-          for(unsigned int i = 0; i < nbrNodes; i++){
-            if(_vertexMapCache.count(vertexCache[i].first) == 0){
-              _vertexMapCache[vertexCache[i].first] = vertexCache[i].second;
-            }
-            else{
-              Msg::Warning("Skipping duplicate vertex %d", vertexCache[i].first);
-            }
-          }
-        }
-
-        delete[] vertexCache;
-      }
-      else{
-        return 0;
-      }
-    }
-    else if(!strncmp(&str[1], "ParametricNodes", 15)){
-      _vertexVectorCache.clear();
-      _vertexMapCache.clear();
-      Msg::ResetProgressMeter();
-      bool dense = false;
-      unsigned long nbrNodes = 0;
-      std::pair<int, MVertex*> *vertexCache = readMSH4Nodes
-        (this, fp, binary, true, dense, nbrNodes, swap);
+        (this, fp, binary, dense, nbrNodes, swap);
       if(vertexCache){
         if(dense){
           _vertexVectorCache.resize(nbrNodes+1, 0);
@@ -2166,7 +2129,7 @@ static unsigned long getAdditionalEntities(std::set<GRegion*, GEntityLessThan> &
 }
 
 static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned, bool binary,
-                           bool saveParametric, double scalingFactor, bool saveAll)
+                           int saveParametric, double scalingFactor, bool saveAll)
 {
   std::set<GRegion*, GEntityLessThan> regions;
   std::set<GFace*, GEntityLessThan> faces;
@@ -2244,10 +2207,11 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned, bool
       unsigned long numVerts = (*it)->getNumMeshVertices();
       fwrite(&entityTag, sizeof(int), 1, fp);
       fwrite(&entityDim, sizeof(int), 1, fp);
+      fwrite(&saveParametric, sizeof(int), 1, fp);
       fwrite(&numVerts, sizeof(unsigned long), 1, fp);
     }
     else{
-      fprintf(fp, "%d %d %lu\n", (*it)->tag(), (*it)->dim(),
+      fprintf(fp, "%d %d %d %lu\n", (*it)->tag(), (*it)->dim(), saveParametric,
               (unsigned long)(*it)->getNumMeshVertices());
     }
 
@@ -2262,10 +2226,11 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned, bool
       unsigned long numVerts = (*it)->getNumMeshVertices();
       fwrite(&entityTag, sizeof(int), 1, fp);
       fwrite(&entityDim, sizeof(int), 1, fp);
+      fwrite(&saveParametric, sizeof(int), 1, fp);
       fwrite(&numVerts, sizeof(unsigned long), 1, fp);
     }
     else{
-      fprintf(fp, "%d %d %lu\n", (*it)->tag(), (*it)->dim(),
+      fprintf(fp, "%d %d %d %lu\n", (*it)->tag(), (*it)->dim(), saveParametric,
               (unsigned long)(*it)->getNumMeshVertices());
     }
 
@@ -2280,10 +2245,11 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned, bool
       unsigned long numVerts = (*it)->getNumMeshVertices();
       fwrite(&entityTag, sizeof(int), 1, fp);
       fwrite(&entityDim, sizeof(int), 1, fp);
+      fwrite(&saveParametric, sizeof(int), 1, fp);
       fwrite(&numVerts, sizeof(unsigned long), 1, fp);
     }
     else{
-      fprintf(fp, "%d %d %lu\n", (*it)->tag(), (*it)->dim(),
+      fprintf(fp, "%d %d %d %lu\n", (*it)->tag(), (*it)->dim(), saveParametric,
               (unsigned long)(*it)->getNumMeshVertices());
     }
 
@@ -2298,10 +2264,11 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned, bool
       unsigned long numVerts = (*it)->getNumMeshVertices();
       fwrite(&entityTag, sizeof(int), 1, fp);
       fwrite(&entityDim, sizeof(int), 1, fp);
+      fwrite(&saveParametric, sizeof(int), 1, fp);
       fwrite(&numVerts, sizeof(unsigned long), 1, fp);
     }
     else{
-      fprintf(fp, "%d %d %lu\n", (*it)->tag(), (*it)->dim(),
+      fprintf(fp, "%d %d %d %lu\n", (*it)->tag(), (*it)->dim(), saveParametric,
               (unsigned long)(*it)->getNumMeshVertices());
     }
 
@@ -2682,18 +2649,10 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   }
 
   // nodes
-  if(saveParametric){
-    fprintf(fp, "$ParametricNodes\n");
-    writeMSH4Nodes(this, fp, getNumPartitions() == 0 ? false : true, binary,
-                   saveParametric, scalingFactor, saveAll);
-    fprintf(fp, "$EndParametricNodes\n");
-  }
-  else{
-    fprintf(fp, "$Nodes\n");
-    writeMSH4Nodes(this, fp, getNumPartitions() == 0 ? false : true, binary,
-                   saveParametric, scalingFactor, saveAll);
-    fprintf(fp, "$EndNodes\n");
-  }
+  fprintf(fp, "$Nodes\n");
+  writeMSH4Nodes(this, fp, getNumPartitions() == 0 ? false : true, binary,
+                 saveParametric ? 1:0, scalingFactor, saveAll);
+  fprintf(fp, "$EndNodes\n");
 
   // elements
   fprintf(fp, "$Elements\n");
