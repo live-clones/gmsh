@@ -454,7 +454,7 @@ view.add('add',doc,oint,istring('name'),iint('tag','-1'))
 doc = '''Removes the view with tag `tag'.'''
 view.add('remove',doc,None,iint('tag'))
 
-doc = '''Gets the index of the view with tag `tag' in the list of currently loaded views. This dynamic index (it can change when views are removed) is used to access view options with the gmshOption functions.'''
+doc = '''Gets the index of the view with tag `tag' in the list of currently loaded views. This dynamic index (it can change when views are removed) is used to access view options.'''
 view.add('getIndex',doc,oint,iint('tag'))
 
 doc = '''Gets the tags of all views.'''

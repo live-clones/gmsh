@@ -3125,7 +3125,7 @@ class view:
         """
         Gets the index of the view with tag `tag' in the list of currently loaded
         views. This dynamic index (it can change when views are removed) is used to
-        access view options with the gmshOption functions.
+        access view options.
 
         return int
         """
