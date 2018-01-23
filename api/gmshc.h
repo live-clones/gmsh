@@ -474,9 +474,8 @@ GMSH_API void gmshModelMeshFieldSetAsBackgroundMesh(const int tag,
  * coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
  * that point. If `tag' is positive, sets the tag explicitly; otherwise a new
  * tag is selected automatically. Returns the tag of the point. (Note that the
- * point will be added in the current model only after
- * gmshModelGeoSynchronize() is called. This behavior holds for all the
- * entities added in the gmshModelGeo module.) */
+ * point will be added in the current model only after synchronize() is
+ * called. This behavior holds for all the entities added in the geo module.) */
 GMSH_API int gmshModelGeoAddPoint(const double x,
                                   const double y,
                                   const double z,
@@ -775,9 +774,8 @@ GMSH_API void gmshModelGeoMeshSetReverse(const int dim,
  * coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
  * that point. If `tag' is positive, sets the tag explicitly; otherwise a new
  * tag is selected automatically. Returns the tag of the point. (Note that the
- * point will be added in the current model only after
- * gmshModelGeoSynchronize() is called. This behavior holds for all the
- * entities added in the gmshModelOcc module.) */
+ * point will be added in the current model only after synchronize() is
+ * called. This behavior holds for all the entities added in the occ module.) */
 GMSH_API int gmshModelOccAddPoint(const double x,
                                   const double y,
                                   const double z,
