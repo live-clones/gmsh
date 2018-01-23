@@ -66,7 +66,7 @@ static void readMSH4Physicals(GModel *const model, FILE* fp, GEntity *const enti
     sscanf(str, "%lu %[0-9- ]", &numPhy, str);
     for(unsigned int i = 0; i < numPhy; i++){
       int phyTag = 0;
-      
+
       if(i == numPhy-1){
         if(sscanf(str, "%d", &phyTag) != 1){
           return;
@@ -280,26 +280,26 @@ static void readMSH4Entities(GModel *const model, FILE* fp, bool partition,
     Msg::Info("%d partitions", model->getNumPartitions());
     for(unsigned int i = 0; i < 2*ghostSize; i+=2){
       switch (model->getDim()) {
-        case 1:
+      case 1:
         {
           ghostEdge *ghostEntities = new ghostEdge(model, ghostTags[i], ghostTags[i+1]);
           model->add(ghostEntities);
         }
-          break;
-        case 2:
+        break;
+      case 2:
         {
           ghostFace *ghostEntities = new ghostFace(model, ghostTags[i], ghostTags[i+1]);
           model->add(ghostEntities);
         }
-          break;
-        case 3:
+        break;
+      case 3:
         {
           ghostRegion *ghostEntities = new ghostRegion(model, ghostTags[i], ghostTags[i+1]);
           model->add(ghostEntities);
         }
-          break;
-        default:
-          break;
+        break;
+      default:
+        break;
       }
     }
   }
