@@ -410,7 +410,7 @@ class GModel {
   int getMeshStatus(bool countDiscrete=true);
 
   // return the total number of elements in the mesh
-  int getNumMeshElements();
+  int getNumMeshElements(int dim = -1);
   int getNumMeshParentElements();
 
   // get the number of each type of element in the mesh at the largest
@@ -430,7 +430,7 @@ class GModel {
   void setMeshElementIndex(MElement *e, int index);
 
   // return the total number of vertices in the mesh
-  int getNumMeshVertices() const;
+  int getNumMeshVertices(int dim = -1) const;
 
   // access a mesh vertex by tag, using the vertex cache
   MVertex *getMeshVertexByTag(int n);

@@ -73,16 +73,11 @@ int MQuadrangle::numCommonNodesInDualGraph(const MElement *const other) const
 {
   switch (other->getType())
   {
-    case TYPE_PNT:
-      return 1;
-    case TYPE_LIN:
-      return 2;
-    case TYPE_TRI:
-      return 2;
-    case TYPE_QUA:
-      return 2;
-    default:
-      return 4;
+    case TYPE_PNT: return 1;
+    case TYPE_LIN: return 2;
+    case TYPE_TRI: return 2;
+    case TYPE_QUA: return 2;
+    default: return 4;
   }
 }
 

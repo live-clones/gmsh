@@ -1154,23 +1154,25 @@ int GModel::getMeshStatus(bool countDiscrete)
   return -1;
 }
 
-int GModel::getNumMeshVertices() const
+int GModel::getNumMeshVertices(int dim) const
 {
   std::vector<GEntity*> entities;
   getEntities(entities);
   unsigned int n = 0;
   for(unsigned int i = 0; i < entities.size(); i++)
-    n += entities[i]->mesh_vertices.size();
+    if(entities[i]->dim() == dim || dim < 0)
+      n += entities[i]->mesh_vertices.size();
   return n;
 }
 
-int GModel::getNumMeshElements()
+int GModel::getNumMeshElements(int dim)
 {
   std::vector<GEntity*> entities;
   getEntities(entities);
   unsigned int n = 0;
   for(unsigned int i = 0; i < entities.size(); i++)
-    n += entities[i]->getNumMeshElements();
+    if(entities[i]->dim() == dim || dim < 0)
+      n += entities[i]->getNumMeshElements();
   return n;
 }
 
