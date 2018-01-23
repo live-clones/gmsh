@@ -105,9 +105,9 @@ set(GMSH_API api/gmsh.h api/gmshc.h)
 
 if(ENABLE_INTERNAL_DEVELOPER_API)
   message(WARNING "The internal developer API is unsupported and undocumented. "
-      "It is meant for Gmsh (and related projects) developers, not for wide "
-      "distribution. If you are packaging Gmsh for redistribution, please "
-      "DO NOT enable this and just ship the stable API (api/gmsh.h) instead.")
+          "It is meant for Gmsh (and related projects) developers, not for wide "
+          "distribution. If you are packaging Gmsh for redistribution, please "
+          "DO NOT enable this and just ship the stable API (api/gmsh.h) instead.")
   file(GLOB_RECURSE HEADERS Common/*.h Numeric/*.h Geo/*.h Mesh/*.h Solver/*.h 
     Post/*.h Graphics/*.h contrib/kbipack/*.h contrib/DiscreteIntegration/*.h
     contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
@@ -803,9 +803,11 @@ if(HAVE_MESH)
     endif(TETGEN_LIB AND TETGEN_INC)
   endif(ENABLE_TETGEN AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Tetgen1.5/tetgen.h)
   if(HAVE_TETGEN)
+    message(WARNING "Tetgen support is deprecated and will be removed in a future "
+            "release.")
     message(STATUS "Note: By including Tetgen you have to comply with Tetgen's "
             "special licensing requirements stated in contrib/Tetgen1.5/LICENSE.")
-  endif(HAVE_TETGEN)
+    endif(HAVE_TETGEN)
 endif(HAVE_MESH)
 
 if(ENABLE_FOURIER_MODEL)
@@ -1314,11 +1316,12 @@ check_cxx_compiler_flag("-O0" NOOPT)
 if(NOOPT OR ENABLE_BUILD_IOS)
   if(ENABLE_BUILD_IOS) # optimized iOS 10 64 bits screws somewhere in Geo
     file(GLOB_RECURSE NOOPT_SRC Numeric/robustPredicates.cpp Geo/G*.cpp Mesh/BDS.cpp
-         Parser/Gmsh.tab.cpp contrib/Tetgen1.5/predicates.cxx contrib/blossom/*)
+         Parser/Gmsh.tab.cpp contrib/Tetgen1.5/predicates.cxx contrib/blossom/*
+         Mesh/Background*)
   else(ENABLE_BUILD_IOS)
     file(GLOB_RECURSE NOOPT_SRC Numeric/robustPredicates.cpp Mesh/BDS.cpp
          Parser/Gmsh.tab.cpp contrib/Tetgen1.5/predicates.cxx contrib/blossom/*
-         contrib/bamg/*)
+         contrib/bamg/* Mesh/Background*)
   endif(ENABLE_BUILD_IOS)
   set_compile_flags(NOOPT_SRC "-O0")
 endif(NOOPT OR ENABLE_BUILD_IOS)

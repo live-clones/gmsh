@@ -526,10 +526,6 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
     Msg::Debug("Cannot interpolate discrete curve");
     break;
 
-  case MSH_SEGM_COMPOUND:
-    Msg::Debug("Cannot interpolate compound curve");
-    break;
-
   default:
     Msg::Error("Unknown curve type %d in interpolation", c->Typ);
     break;
