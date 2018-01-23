@@ -104,32 +104,6 @@ class OCC_Internals {
   // get (dim,tag) of all shapes (that will be) bound to tags
   void _getAllDimTags(std::vector<std::pair<int, int> > &dimTags, int dim = 99);
 
-  // make shapes
-  bool _makeRectangle(TopoDS_Face &result, double x, double y, double z,
-                    double dx, double dy, double roundedRadius = 0.);
-  bool _makeDisk(TopoDS_Face &result, double xc, double yc, double zc,
-                 double rx, double ry);
-  bool _makeSphere(TopoDS_Solid &result, double xc, double yc, double zc,
-                   double radius, double angle1, double angle2, double angle3);
-  bool _makeBox(TopoDS_Solid &result, double x, double y, double z,
-                double dx, double dy, double dz);
-  bool _makeCylinder(TopoDS_Solid &result, double x, double y, double z,
-                   double dx, double dy, double dz, double r, double angle);
-  bool _makeCone(TopoDS_Solid &result, double x, double y, double z,
-                 double dx, double dy, double dz, double r1, double r2,
-                 double angle);
-  bool _makeWedge(TopoDS_Solid &result, double x, double y, double z,
-                  double dx, double dy, double dz, double ltx);
-  bool _makeTorus(TopoDS_Solid &result, double x, double y, double z,
-                  double r1, double r2, double angle);
-
-  // make STL triangulation of a face
-  bool _makeFaceSTL(TopoDS_Face s,
-                    std::vector<SPoint2> *verticesUV,
-                    std::vector<SPoint3> *verticesXYZ,
-                    std::vector<SVector3> *normalsXYZ,
-                    std::vector<int> &triangles);
-
   // add a shape and all its subshapes to _vmap, _emap, ..., _somap
   void _addShapeToMaps(TopoDS_Shape shape);
 

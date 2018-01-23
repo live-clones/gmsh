@@ -1213,8 +1213,8 @@ bool OCC_Internals::addLineLoop(int &tag, const std::vector<int> &edgeTags)
   return addWire(tag, edgeTags, true);
 }
 
-bool OCC_Internals::_makeRectangle(TopoDS_Face &result, double x, double y, double z,
-                                   double dx, double dy, double roundedRadius)
+static bool makeRectangle(TopoDS_Face &result, double x, double y, double z,
+                          double dx, double dy, double roundedRadius)
 {
   if(!dx || !dy){
     Msg::Error("Rectangle with zero width or height");
@@ -1294,15 +1294,15 @@ bool OCC_Internals::addRectangle(int &tag, double x, double y, double z,
     return false;
   }
   TopoDS_Face result;
-  if(!_makeRectangle(result, x, y, z, dx, dy, roundedRadius))
+  if(!makeRectangle(result, x, y, z, dx, dy, roundedRadius))
     return false;
   if(tag < 0) tag = getMaxTag(2) + 1;
   bind(result, tag, true);
   return true;
 }
 
-bool OCC_Internals::_makeDisk(TopoDS_Face &result, double xc, double yc, double zc,
-                              double rx, double ry)
+static bool makeDisk(TopoDS_Face &result, double xc, double yc, double zc,
+                     double rx, double ry)
 {
   if(ry > rx){
     Msg::Error("Major radius rx should be larger than minor radius ry");
@@ -1337,7 +1337,7 @@ bool OCC_Internals::addDisk(int &tag, double xc, double yc, double zc,
     return false;
   }
   TopoDS_Face result;
-  if(!_makeDisk(result, xc, yc, zc, rx, ry))
+  if(!makeDisk(result, xc, yc, zc, rx, ry))
     return false;
   if(tag < 0) tag = getMaxTag(2) + 1;
   bind(result, tag, true);
@@ -1524,9 +1524,9 @@ bool OCC_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
   return true;
 }
 
-bool OCC_Internals::_makeSphere(TopoDS_Solid &result, double xc, double yc, double zc,
-                                double radius, double angle1, double angle2,
-                                double angle3)
+static bool makeSphere(TopoDS_Solid &result, double xc, double yc, double zc,
+                       double radius, double angle1, double angle2,
+                       double angle3)
 {
   if(radius <= 0){
     Msg::Error("Sphere radius should be positive");
@@ -1562,15 +1562,15 @@ bool OCC_Internals::addSphere(int &tag, double xc, double yc, double zc,
     return false;
   }
   TopoDS_Solid result;
-  if(!_makeSphere(result, xc, yc, zc, radius, angle1, angle2, angle3))
+  if(!makeSphere(result, xc, yc, zc, radius, angle1, angle2, angle3))
     return false;
   if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
   return true;
 }
 
-bool OCC_Internals::_makeBox(TopoDS_Solid &result, double x, double y, double z,
-                             double dx, double dy, double dz)
+static bool makeBox(TopoDS_Solid &result, double x, double y, double z,
+                    double dx, double dy, double dz)
 {
   if(!dx || !dy || !dz){
     Msg::Error("Degenerate block");
@@ -1602,15 +1602,15 @@ bool OCC_Internals::addBox(int &tag, double x, double y, double z,
     return false;
   }
   TopoDS_Solid result;
-  if(!_makeBox(result, x, y, z, dx, dy, dz))
+  if(!makeBox(result, x, y, z, dx, dy, dz))
     return false;
   if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
   return true;
 }
 
-bool OCC_Internals::_makeCylinder(TopoDS_Solid &result, double x, double y, double z,
-                                  double dx, double dy, double dz, double r, double angle)
+static bool makeCylinder(TopoDS_Solid &result, double x, double y, double z,
+                         double dx, double dy, double dz, double r, double angle)
 {
   const double H = sqrt(dx * dx + dy * dy + dz * dz);
   if(!H){
@@ -1649,15 +1649,15 @@ bool OCC_Internals::addCylinder(int &tag, double x, double y, double z,
     return false;
   }
   TopoDS_Solid result;
-  if(!_makeCylinder(result, x, y, z, dx, dy, dz, r, angle))
+  if(!makeCylinder(result, x, y, z, dx, dy, dz, r, angle))
     return false;
   if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
   return true;
 }
 
-bool OCC_Internals::_makeTorus(TopoDS_Solid &result, double x, double y, double z,
-                               double r1, double r2, double angle)
+static bool makeTorus(TopoDS_Solid &result, double x, double y, double z,
+                      double r1, double r2, double angle)
 {
   if(r1 <= 0 || r2 <= 0){
     Msg::Error("Torus radii should be positive");
@@ -1690,16 +1690,16 @@ bool OCC_Internals::addTorus(int &tag, double x, double y, double z,
     return false;
   }
   TopoDS_Solid result;
-  if(!_makeTorus(result, x, y, z, r1, r2, angle))
+  if(!makeTorus(result, x, y, z, r1, r2, angle))
     return false;
   if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
   return true;
 }
 
-bool OCC_Internals::_makeCone(TopoDS_Solid &result, double x, double y, double z,
-                              double dx, double dy, double dz, double r1, double r2,
-                              double angle)
+static bool makeCone(TopoDS_Solid &result, double x, double y, double z,
+                     double dx, double dy, double dz, double r1, double r2,
+                     double angle)
 {
   const double H = sqrt(dx * dx + dy * dy + dz * dz);
   if(!H){
@@ -1738,15 +1738,15 @@ bool OCC_Internals::addCone(int &tag, double x, double y, double z,
     return false;
   }
   TopoDS_Solid result;
-  if(!_makeCone(result, x, y, z, dx, dy, dz, r1, r2, angle))
+  if(!makeCone(result, x, y, z, dx, dy, dz, r1, r2, angle))
     return false;
   if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
   return true;
 }
 
-bool OCC_Internals::_makeWedge(TopoDS_Solid &result, double x, double y, double z,
-                               double dx, double dy, double dz, double ltx)
+static bool makeWedge(TopoDS_Solid &result, double x, double y, double z,
+                      double dx, double dy, double dz, double ltx)
 {
   try{
     gp_Pnt aP(x, y, z);
@@ -1775,7 +1775,7 @@ bool OCC_Internals::addWedge(int &tag, double x, double y, double z,
     return false;
   }
   TopoDS_Solid result;
-  if(!_makeWedge(result, x, y, z, dx, dy, dz, ltx))
+  if(!makeWedge(result, x, y, z, dx, dy, dz, ltx))
     return false;
   if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
@@ -3660,11 +3660,11 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   Msg::Info("-----------------------------------");
 }
 
-bool OCC_Internals::_makeFaceSTL(TopoDS_Face s,
-                                 std::vector<SPoint2> *verticesUV,
-                                 std::vector<SPoint3> *verticesXYZ,
-                                 std::vector<SVector3> *normals,
-                                 std::vector<int> &triangles)
+static bool makeSTL(TopoDS_Face s,
+                    std::vector<SPoint2> *verticesUV,
+                    std::vector<SPoint3> *verticesXYZ,
+                    std::vector<SVector3> *normals,
+                    std::vector<int> &triangles)
 {
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
@@ -3730,13 +3730,14 @@ bool OCC_Internals::_makeFaceSTL(TopoDS_Face s,
 bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint2> &vertices,
                                 std::vector<int> &triangles)
 {
-  return _makeFaceSTL(s, &vertices, 0, 0, triangles);
+  return makeSTL(s, &vertices, 0, 0, triangles);
 }
 
 bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint3> &vertices,
-                                std::vector<SVector3> &normals, std::vector<int> &triangles)
+                                std::vector<SVector3> &normals,
+                                std::vector<int> &triangles)
 {
-  return _makeFaceSTL(s, 0, &vertices, &normals, triangles);
+  return makeSTL(s, 0, &vertices, &normals, triangles);
 }
 
 bool OCC_Internals::makeSolidSTL(TopoDS_Solid s, std::vector<SPoint3> &vertices,
@@ -3746,19 +3747,21 @@ bool OCC_Internals::makeSolidSTL(TopoDS_Solid s, std::vector<SPoint3> &vertices,
   TopExp_Explorer exp0;
   for(exp0.Init(s, TopAbs_FACE); exp0.More(); exp0.Next()){
     TopoDS_Face face = TopoDS::Face(exp0.Current());
-    bool tmp = _makeFaceSTL(TopoDS::Face(face.Oriented(TopAbs_FORWARD)),
-                            0, &vertices, &normals, triangles);
+    bool tmp = makeSTL(TopoDS::Face(face.Oriented(TopAbs_FORWARD)),
+                       0, &vertices, &normals, triangles);
     if(!tmp) ret = false;
   }
   return ret;
 }
 
 bool OCC_Internals::makeRectangleSTL(double x, double y, double z, double dx, double dy,
-                                     double roundedRadius, std::vector<SPoint3> &vertices,
-                                     std::vector<SVector3> &normals, std::vector<int> &triangles)
+                                     double roundedRadius,
+                                     std::vector<SPoint3> &vertices,
+                                     std::vector<SVector3> &normals,
+                                     std::vector<int> &triangles)
 {
   TopoDS_Face result;
-  if(!_makeRectangle(result, x, y, z, dx, dy, roundedRadius))
+  if(!makeRectangle(result, x, y, z, dx, dy, roundedRadius))
     return false;
   if(!makeFaceSTL(result, vertices, normals, triangles))
     return false;
@@ -3766,83 +3769,98 @@ bool OCC_Internals::makeRectangleSTL(double x, double y, double z, double dx, do
 }
 
 bool OCC_Internals::makeDiskSTL(double xc, double yc, double zc, double rx, double ry,
-                                std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+                                std::vector<SPoint3> &vertices,
+                                std::vector<SVector3> &normals,
                                 std::vector<int> &triangles)
 {
   TopoDS_Face result;
-  if(!_makeDisk(result, xc, yc, zc, rx, ry))
+  if(!makeDisk(result, xc, yc, zc, rx, ry))
     return false;
   if(!makeFaceSTL(result, vertices, normals, triangles))
     return false;
   return true;
 }
 
-bool OCC_Internals::makeSphereSTL(double xc, double yc, double zc, double radius, double angle1,
-                                  double angle2, double angle3, std::vector<SPoint3> &vertices,
-                                  std::vector<SVector3> &normals, std::vector<int> &triangles)
+bool OCC_Internals::makeSphereSTL(double xc, double yc, double zc, double radius,
+                                  double angle1, double angle2, double angle3,
+                                  std::vector<SPoint3> &vertices,
+                                  std::vector<SVector3> &normals,
+                                  std::vector<int> &triangles)
 {
   TopoDS_Solid result;
-  if(!_makeSphere(result, xc, yc, zc, radius, angle1, angle2, angle3))
+  if(!makeSphere(result, xc, yc, zc, radius, angle1, angle2, angle3))
     return false;
   if(!makeSolidSTL(result, vertices, normals, triangles))
     return false;
   return true;
 }
 
-bool OCC_Internals::makeBoxSTL(double x, double y, double z, double dx, double dy, double dz,
-                               std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+bool OCC_Internals::makeBoxSTL(double x, double y, double z,
+                               double dx, double dy, double dz,
+                               std::vector<SPoint3> &vertices,
+                               std::vector<SVector3> &normals,
                                std::vector<int> &triangles)
 {
   TopoDS_Solid result;
-  if(!_makeBox(result, x, y, z, dx, dy, dz))
+  if(!makeBox(result, x, y, z, dx, dy, dz))
     return false;
   if(!makeSolidSTL(result, vertices, normals, triangles))
     return false;
   return true;
 }
 
-bool OCC_Internals::makeCylinderSTL(double x, double y, double z, double dx, double dy, double dz,
-                                    double r, double angle, std::vector<SPoint3> &vertices,
-                                    std::vector<SVector3> &normals, std::vector<int> &triangles)
+bool OCC_Internals::makeCylinderSTL(double x, double y, double z,
+                                    double dx, double dy, double dz,
+                                    double r, double angle,
+                                    std::vector<SPoint3> &vertices,
+                                    std::vector<SVector3> &normals,
+                                    std::vector<int> &triangles)
 {
   TopoDS_Solid result;
-  if(!_makeCylinder(result, x, y, z, dx, dy, dz, r, angle))
+  if(!makeCylinder(result, x, y, z, dx, dy, dz, r, angle))
     return false;
   if(!makeSolidSTL(result, vertices, normals, triangles))
     return false;
   return true;
 }
 
-bool OCC_Internals::makeConeSTL(double x, double y, double z, double dx, double dy, double dz,
-                                double r1, double r2, double angle, std::vector<SPoint3> &vertices,
-                                std::vector<SVector3> &normals, std::vector<int> &triangles)
+bool OCC_Internals::makeConeSTL(double x, double y, double z,
+                                double dx, double dy, double dz,
+                                double r1, double r2, double angle,
+                                std::vector<SPoint3> &vertices,
+                                std::vector<SVector3> &normals,
+                                std::vector<int> &triangles)
 {
   TopoDS_Solid result;
-  if(!_makeCone(result, x, y, z, dx, dy, dz, r1, r2, angle))
+  if(!makeCone(result, x, y, z, dx, dy, dz, r1, r2, angle))
     return false;
   if(!makeSolidSTL(result, vertices, normals, triangles))
     return false;
   return true;
 }
 
-bool OCC_Internals::makeWedgeSTL(double x, double y, double z, double dx, double dy, double dz,
-                                 double ltx, std::vector<SPoint3> &vertices,
-                                 std::vector<SVector3> &normals, std::vector<int> &triangles)
-{
-  TopoDS_Solid result;
-  if(!_makeWedge(result, x, y, z, dx, dy, dz, ltx))
-    return false;
-  if(!makeSolidSTL(result, vertices, normals, triangles))
-    return false;
-  return true;
-}
-
-bool OCC_Internals::makeTorusSTL(double x, double y, double z, double r1, double r2, double angle,
-                                 std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+bool OCC_Internals::makeWedgeSTL(double x, double y, double z,
+                                 double dx, double dy, double dz, double ltx,
+                                 std::vector<SPoint3> &vertices,
+                                 std::vector<SVector3> &normals,
                                  std::vector<int> &triangles)
 {
   TopoDS_Solid result;
-  if(!_makeTorus(result, x, y, z, r1, r2, angle))
+  if(!makeWedge(result, x, y, z, dx, dy, dz, ltx))
+    return false;
+  if(!makeSolidSTL(result, vertices, normals, triangles))
+    return false;
+  return true;
+}
+
+bool OCC_Internals::makeTorusSTL(double x, double y, double z,
+                                 double r1, double r2, double angle,
+                                 std::vector<SPoint3> &vertices,
+                                 std::vector<SVector3> &normals,
+                                 std::vector<int> &triangles)
+{
+  TopoDS_Solid result;
+  if(!makeTorus(result, x, y, z, r1, r2, angle))
     return false;
   if(!makeSolidSTL(result, vertices, normals, triangles))
     return false;
