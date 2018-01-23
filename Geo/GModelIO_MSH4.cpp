@@ -67,7 +67,7 @@ static void readMSH4Physicals(GModel *const model, FILE* fp, GEntity *const enti
     for(unsigned int i = 0; i < numPhy; i++){
       int phyTag = 0;
 
-      if(i == numPhy-1){
+      if(i == numPhy-1 && entity->dim() == 0){
         if(sscanf(str, "%d", &phyTag) != 1){
           return;
         }
