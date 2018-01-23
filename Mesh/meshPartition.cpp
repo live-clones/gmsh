@@ -97,6 +97,7 @@ class Graph
   MElement **_element;
   // Vertices corresponding to each graph vertices in eptr
   int *_vertex;
+  int _vertexSize;
   // The width associated to each elements of eptr
   unsigned int *_vwgt;
   // The partitions output from the partitioner
@@ -104,11 +105,18 @@ class Graph
  public:
   Graph(GModel * const model)
     : _model(model), _nparts(0), _ne(0), _nn(0), _dim(0), _eind(0), _eptr(0),
-    _xadj(0), _adjncy(0), _element(0), _vertex(0), _vwgt(0), _partition(0)
+    _xadj(0), _adjncy(0), _element(0), _vertex(0), _vertexSize(0), _vwgt(0), _partition(0)
   {
   }
   void fillDefaultWeights()
   {
+    if(CTX::instance()->mesh.partitionTriWeight == 1 &&
+       CTX::instance()->mesh.partitionQuaWeight == 1 &&
+       CTX::instance()->mesh.partitionTetWeight == 1 &&
+       CTX::instance()->mesh.partitionPyrWeight == 1 &&
+       CTX::instance()->mesh.partitionPriWeight == 1 &&
+       CTX::instance()->mesh.partitionHexWeight == 1) return;
+    
     _vwgt = new unsigned int[_ne];
     for(unsigned int i = 0; i < _ne; i++){
       if(!_element[i]){
@@ -148,7 +156,7 @@ class Graph
   unsigned int partition(unsigned int i) const { return _partition[i]; };
   unsigned int *partition() const { return _partition; };
   unsigned int numNodes() const { return _ne; };
-  unsigned int numEdges() const { return (sizeof(_adjncy)/sizeof(unsigned int))/2; };
+  unsigned int numEdges() const { return _xadj[_ne]/2; };
   void nparts(unsigned int nparts) { _nparts = nparts; };
   void ne(unsigned int ne) { _ne = ne; };
   void nn(unsigned int nn) { _nn = nn; };
@@ -185,6 +193,7 @@ class Graph
   void element(unsigned int i, MElement* element) { _element[i] = element; };
   void vertexResize(unsigned int size)
   {
+    _vertexSize = size;
     _vertex = new int[size];
     for(unsigned int i = 0; i < size; i++) _vertex[i] = -1;
   }
@@ -217,6 +226,7 @@ class Graph
       delete[] _vertex;
       _vertex = 0;
     }
+    _vertexSize = 0;
     if(_vwgt){
       delete[] _vwgt;
       _vwgt = 0;
@@ -235,6 +245,12 @@ class Graph
     if(_adjncy){
       delete[] _adjncy;
       _adjncy = 0;
+    }
+  }
+  void eraseVertex()
+  {
+    if(_vertex){
+      for(unsigned int i = 0; i < _vertexSize; i++) _vertex[i] = -1;
     }
   }
 
@@ -316,13 +332,11 @@ static void fillElementsToNodesMap(Graph &graph, const GEntity *const entity,
 {
   for(ITERATOR it = it_beg; it != it_end; ++it){
     const int numVertices = (*it)->getNumPrimaryVertices();
-    graph.element(eptrIndex, *it);
-    eptrIndex++;
+    graph.element(eptrIndex++, *it);
     graph.eptr(eptrIndex, graph.eptr(eptrIndex-1) + numVertices);
     for(int i = 0; i < numVertices; i++){
       if(graph.vertex((*it)->getVertex(i)->getNum()-1) == -1){
-        graph.vertex((*it)->getVertex(i)->getNum()-1, numVertex);
-        numVertex++;
+        graph.vertex((*it)->getVertex(i)->getNum()-1, numVertex++);
       }
       graph.eind(eindIndex, graph.vertex((*it)->getVertex(i)->getNum()-1));
       eindIndex++;
@@ -356,31 +370,6 @@ static int getSizeOfEind(const GModel *const model)
   // Loop over vertices
   for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex(); ++it){
     size += 1*(*it)->points.size();
-  }
-
-  return size;
-}
-
-static int getSizeOfEind(const GEntity *const entity)
-{
-  int size = 0;
-
-  if(entity->dim() == 3){
-    size += 4*static_cast<const GRegion*>(entity)->tetrahedra.size();
-    size += 8*static_cast<const GRegion*>(entity)->hexahedra.size();
-    size += 6*static_cast<const GRegion*>(entity)->prisms.size();
-    size += 5*static_cast<const GRegion*>(entity)->pyramids.size();
-    size += 4*static_cast<const GRegion*>(entity)->trihedra.size();
-  }
-  else if(entity->dim() == 2){
-    size += 3*static_cast<const GFace*>(entity)->triangles.size();
-    size += 4*static_cast<const GFace*>(entity)->quadrangles.size();
-  }
-  else if(entity->dim() == 1){
-    size += 2*static_cast<const GEdge*>(entity)->lines.size();
-  }
-  else if(entity->dim() == 0){
-    size += 1*static_cast<const GVertex*>(entity)->points.size();
   }
 
   return size;
@@ -867,8 +856,7 @@ static void assignElementsToEntities(GModel *const model,
 }
 
 template <class ITERATOR>
-static void setVerticesToEntity(GEntity *const entity,
-                                ITERATOR it_beg, ITERATOR it_end, bool inAllDim)
+static void setVerticesToEntity(GEntity *const entity, ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it){
     for(int i = 0; i < (*it)->getNumVertices(); i++){
@@ -876,136 +864,77 @@ static void setVerticesToEntity(GEntity *const entity,
         (*it)->getVertex(i)->setEntity(entity);
         entity->addMeshVertex((*it)->getVertex(i));
       }
-      else{
-        if(inAllDim) entity->addMeshVertex((*it)->getVertex(i));
-      }
     }
   }
 }
 
 // Assign the vertices to its corresponding entity
-static void AssignMeshVertices(GModel *model, int dim = -1, bool inAllDim = false)
+static void AssignMeshVertices(GModel *model)
 {
   // Loop over vertices
-  if(dim == 0 || dim == -1){
-    for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex(); ++it){
-      for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
-        for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
-          (*it)->getMeshElement(i)->getVertex(j)->setEntity(0);
-        }
+  for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex(); ++it){
+    for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
+      for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
+        (*it)->getMeshElement(i)->getVertex(j)->setEntity(0);
       }
-      (*it)->mesh_vertices.clear();
     }
+    (*it)->mesh_vertices.clear();
   }
 
   // Loop over edges
-  if(dim == 1 || dim == -1){
-    for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
-      for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
-        for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
-          (*it)->getMeshElement(i)->getVertex(j)->setEntity(0);
-        }
+  for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
+    for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
+      for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
+        (*it)->getMeshElement(i)->getVertex(j)->setEntity(0);
       }
-      (*it)->mesh_vertices.clear();
     }
+    (*it)->mesh_vertices.clear();
   }
 
   // Loop over faces
-  if(dim == 2 || dim == -1){
-    for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
-      for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
-        for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
-          (*it)->getMeshElement(i)->getVertex(j)->setEntity(0);
-        }
+  for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
+    for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
+      for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
+        (*it)->getMeshElement(i)->getVertex(j)->setEntity(0);
       }
-      (*it)->mesh_vertices.clear();
     }
+    (*it)->mesh_vertices.clear();
   }
 
   // Loop over regions
-  if(dim == 3 || dim == -1){
-    for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
-      for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
-        for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
-          (*it)->getMeshElement(i)->getVertex(j)->setEntity(0);
-        }
+  for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
+    for(unsigned int i = 0; i < (*it)->getNumMeshElements(); i++){
+      for(int j = 0; j < (*it)->getMeshElement(i)->getNumVertices(); j++){
+        (*it)->getMeshElement(i)->getVertex(j)->setEntity(0);
       }
-      (*it)->mesh_vertices.clear();
     }
+    (*it)->mesh_vertices.clear();
   }
+  
 
   // Loop over vertices
-  if(dim == 0 || dim == -1){
-    for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex(); ++it){
-      setVerticesToEntity(*it, (*it)->points.begin(), (*it)->points.end(), inAllDim);
-    }
+  for(GModel::const_viter it = model->firstVertex(); it != model->lastVertex(); ++it){
+    setVerticesToEntity(*it, (*it)->points.begin(), (*it)->points.end());
   }
 
   // Loop over edges
-  if(dim == 1 || dim == -1){
-    for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
-        setVerticesToEntity(*it, (*it)->lines.begin(), (*it)->lines.end(), inAllDim);
-    }
+  for(GModel::const_eiter it = model->firstEdge(); it != model->lastEdge(); ++it){
+      setVerticesToEntity(*it, (*it)->lines.begin(), (*it)->lines.end());
   }
-
+  
   // Loop over faces
-  if(dim == 2 || dim == -1){
-    for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
-        setVerticesToEntity(*it, (*it)->triangles.begin(), (*it)->triangles.end(), inAllDim);
-        setVerticesToEntity(*it, (*it)->quadrangles.begin(), (*it)->quadrangles.end(), inAllDim);
-    }
+  for(GModel::const_fiter it = model->firstFace(); it != model->lastFace(); ++it){
+      setVerticesToEntity(*it, (*it)->triangles.begin(), (*it)->triangles.end());
+      setVerticesToEntity(*it, (*it)->quadrangles.begin(), (*it)->quadrangles.end());
   }
 
   // Loop over regions
-  if(dim == 3 || dim == -1){
-    for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
-        setVerticesToEntity(*it, (*it)->tetrahedra.begin(), (*it)->tetrahedra.end(), inAllDim);
-        setVerticesToEntity(*it, (*it)->hexahedra.begin(), (*it)->hexahedra.end(), inAllDim);
-        setVerticesToEntity(*it, (*it)->prisms.begin(), (*it)->prisms.end(), inAllDim);
-        setVerticesToEntity(*it, (*it)->pyramids.begin(), (*it)->pyramids.end(), inAllDim);
-        setVerticesToEntity(*it, (*it)->trihedra.begin(), (*it)->trihedra.end(), inAllDim);
-    }
-  }
-}
-
-static void AssignMeshVerticesToEntity(GEntity *entity, bool inAllDim = false)
-{
-  for(unsigned int i = 0; i < entity->getNumMeshElements(); i++){
-    for(int j = 0; j < entity->getMeshElement(i)->getNumVertices(); j++){
-      entity->getMeshElement(i)->getVertex(j)->setEntity(0);
-    }
-  }
-  entity->mesh_vertices.clear();
-
-  switch (entity->dim()) {
-    case 0:
-      setVerticesToEntity(entity, static_cast<GVertex*>(entity)->points.begin(),
-                          static_cast<GVertex*>(entity)->points.end(), inAllDim);
-      break;
-    case 1:
-      setVerticesToEntity(entity, static_cast<GEdge*>(entity)->lines.begin(),
-                          static_cast<GEdge*>(entity)->lines.end(), inAllDim);
-      break;
-    case 2:
-      setVerticesToEntity(entity, static_cast<GFace*>(entity)->triangles.begin(),
-                          static_cast<GFace*>(entity)->triangles.end(), inAllDim);
-      setVerticesToEntity(entity, static_cast<GFace*>(entity)->quadrangles.begin(),
-                          static_cast<GFace*>(entity)->quadrangles.end(), inAllDim);
-      break;
-    case 3:
-      setVerticesToEntity(entity, static_cast<GRegion*>(entity)->tetrahedra.begin(),
-                          static_cast<GRegion*>(entity)->tetrahedra.end(), inAllDim);
-      setVerticesToEntity(entity, static_cast<GRegion*>(entity)->hexahedra.begin(),
-                          static_cast<GRegion*>(entity)->hexahedra.end(), inAllDim);
-      setVerticesToEntity(entity, static_cast<GRegion*>(entity)->prisms.begin(),
-                          static_cast<GRegion*>(entity)->prisms.end(), inAllDim);
-      setVerticesToEntity(entity, static_cast<GRegion*>(entity)->pyramids.begin(),
-                          static_cast<GRegion*>(entity)->pyramids.end(), inAllDim);
-      setVerticesToEntity(entity, static_cast<GRegion*>(entity)->trihedra.begin(),
-                          static_cast<GRegion*>(entity)->trihedra.end(), inAllDim);
-      break;
-    default:
-      break;
+  for(GModel::const_riter it = model->firstRegion(); it != model->lastRegion(); ++it){
+      setVerticesToEntity(*it, (*it)->tetrahedra.begin(), (*it)->tetrahedra.end());
+      setVerticesToEntity(*it, (*it)->hexahedra.begin(), (*it)->hexahedra.end());
+      setVerticesToEntity(*it, (*it)->prisms.begin(), (*it)->prisms.end());
+      setVerticesToEntity(*it, (*it)->pyramids.begin(), (*it)->pyramids.end());
+      setVerticesToEntity(*it, (*it)->trihedra.begin(), (*it)->trihedra.end());
   }
 }
 
@@ -1014,8 +943,10 @@ static void fillConnectedElements(std::vector< std::set<MElement*> > &connectedE
 {
   std::stack<unsigned int> elementStack;
   std::set<MElement*> elements;
-  int startElement = 0;
+  unsigned int startElement = 0;
   bool stop = true;
+  unsigned int size = 0;
+  int isolatedElements = 0;
 
   do {
     //Inititalization
@@ -1025,30 +956,47 @@ static void fillConnectedElements(std::vector< std::set<MElement*> > &connectedE
     while(elementStack.size() != 0){
       unsigned int top = elementStack.top();
       elementStack.pop();
+      elements.insert(graph.element(top));
 
       for(unsigned int i = graph.xadj(top); i < graph.xadj(top+1); i++){
         if(graph.adjncy(i) != 0){
           elementStack.push(graph.adjncy(i));
-          elements.insert(graph.element(graph.adjncy(i)));
           graph.adjncy(i,0);
         }
       }
     }
     connectedElements.push_back(elements);
+    size += elements.size();
     elements.clear();
 
-    stop = true;
-    for(unsigned int i = 0; i < graph.ne(); i++){
-      for(unsigned int j = graph.xadj(i); j < graph.xadj(i+1); j++){
-        if(graph.adjncy(j) != 0){
-          startElement = i;
-          stop = false;
-          break;
+    stop = (size == graph.ne() ? true : false);
+    
+    startElement = 0;
+    if(!stop){
+      for(unsigned int i = 0; i < graph.ne(); i++){
+        for(unsigned int j = graph.xadj(i); j < graph.xadj(i+1); j++){
+          if(graph.adjncy(j) != 0){
+            startElement = i;
+            i = graph.ne();
+            break;
+          }
         }
       }
-      if(!stop) break;
+      if(startElement == 0){
+        int skipIsolatedElements = 0;
+        for(unsigned int i = 1; i < graph.ne(); i++){
+          if(graph.xadj(i) == graph.xadj(i+1)){
+            if(skipIsolatedElements == isolatedElements){
+              startElement = i;
+              isolatedElements++;
+              break;
+            }
+            skipIsolatedElements++;
+          }
+        }
+      }
     }
-    break;
+    //break;
   } while(!stop);
 }
 
@@ -1107,34 +1055,40 @@ static void dividedNonConnectedEntities(GModel *const model, int dim,
       }
     }
   }
-
+  
   // Loop over edges
   if(dim < 0 || dim == 1){
+    // We build a graph
+    Graph graph(model);
+    graph.ne(model->getNumMeshElements(1));
+    graph.nn(model->getNumMeshVertices(1));
+    graph.dim(model->getDim());
+    graph.elementResize(graph.ne());
+    graph.vertexResize(model->getMaxVertexNumber());
+    graph.eptrResize(graph.ne()+1);
+    graph.eptr(0,0);
+    const int eindSize = getSizeOfEind(model);
+    graph.eindResize(eindSize);
+    
     int elementaryNumber = model->getMaxElementaryNumber(1);
 
     for(GModel::const_eiter it = edges.begin(); it != edges.end(); ++it){
       if((*it)->geomType() == GEntity::PartitionCurve){
         partitionEdge* edge = static_cast<partitionEdge*>(*it);
-        AssignMeshVerticesToEntity(edge, false);
 
-        // We build a graph
-        Graph graph(model);
         graph.ne(edge->getNumMeshElements());
-        graph.nn(edge->getNumMeshVertices());
         graph.dim(1);
-        graph.elementResize(graph.ne());
-        graph.vertexResize(model->getMaxVertexNumber());
-        graph.eptrResize(graph.ne()+1);
         graph.eptr(0,0);
-        const int eindSize = getSizeOfEind(edge);
-        graph.eindResize(eindSize);
-
+        graph.clearDualGraph();
+        graph.eraseVertex();
+        
         int eptrIndex = 0;
         int eindIndex = 0;
         int numVertex = 0;
 
         fillElementsToNodesMap(graph, edge, eptrIndex, eindIndex, numVertex,
                                edge->lines.begin(), edge->lines.end());
+        graph.nn(numVertex);
         createDualGraph(graph, false);
 
         // if a graph contains at least ((n-1)*(n-2))/2 + 1 edges
@@ -1145,7 +1099,6 @@ static void dividedNonConnectedEntities(GModel *const model, int dim,
 
         std::vector< std::set<MElement*> > connectedElements;
         fillConnectedElements(connectedElements, graph);
-        graph.clear();
 
         if(connectedElements.size() > 1){
           std::list<GFace*> BRepFaces = edge->faces();
@@ -1199,24 +1152,29 @@ static void dividedNonConnectedEntities(GModel *const model, int dim,
 
   // Loop over faces
   if(dim < 0 || dim == 2){
+    // We build a graph
+    Graph graph(model);
+    graph.ne(model->getNumMeshElements(2));
+    graph.nn(model->getNumMeshVertices(2));
+    graph.dim(model->getDim());
+    graph.elementResize(graph.ne());
+    graph.vertexResize(model->getMaxVertexNumber());
+    graph.eptrResize(graph.ne()+1);
+    graph.eptr(0,0);
+    const int eindSize = getSizeOfEind(model);
+    graph.eindResize(eindSize);
+    
     int elementaryNumber = model->getMaxElementaryNumber(2);
 
     for(GModel::const_fiter it = faces.begin(); it != faces.end(); ++it){
       if((*it)->geomType() == GEntity::PartitionSurface){
         partitionFace* face = static_cast<partitionFace*>(*it);
-        AssignMeshVerticesToEntity(face, false);
 
-        // We build a graph
-        Graph graph(model);
         graph.ne(face->getNumMeshElements());
-        graph.nn(face->getNumMeshVertices());
-        graph.dim(1);
-        graph.elementResize(graph.ne());
-        graph.vertexResize(model->getMaxVertexNumber());
-        graph.eptrResize(graph.ne()+1);
+        graph.dim(2);
         graph.eptr(0,0);
-        const int eindSize = getSizeOfEind(face);
-        graph.eindResize(eindSize);
+        graph.clearDualGraph();
+        graph.eraseVertex();
 
         int eptrIndex = 0;
         int eindIndex = 0;
@@ -1226,6 +1184,7 @@ static void dividedNonConnectedEntities(GModel *const model, int dim,
                                face->triangles.begin(), face->triangles.end());
         fillElementsToNodesMap(graph, face, eptrIndex, eindIndex, numVertex,
                                face->quadrangles.begin(), face->quadrangles.end());
+        graph.nn(numVertex);
         createDualGraph(graph, false);
 
         // if a graph contains at least ((n-1)*(n-2))/2 + 1 edges
@@ -1236,7 +1195,6 @@ static void dividedNonConnectedEntities(GModel *const model, int dim,
 
         std::vector< std::set<MElement*> > connectedElements;
         fillConnectedElements(connectedElements, graph);
-        graph.clear();
 
         if(connectedElements.size() > 1){
           std::list<GRegion*> BRepRegions = face->regions();
@@ -1291,24 +1249,29 @@ static void dividedNonConnectedEntities(GModel *const model, int dim,
 
   // Loop over regions
   if(dim < 0 || dim == 3){
-    int elementaryNumber = model->getMaxElementaryNumber(1);
+    // We build a graph
+    Graph graph(model);
+    graph.ne(model->getNumMeshElements(3));
+    graph.nn(model->getNumMeshVertices(3));
+    graph.dim(model->getDim());
+    graph.elementResize(graph.ne());
+    graph.vertexResize(model->getMaxVertexNumber());
+    graph.eptrResize(graph.ne()+1);
+    graph.eptr(0,0);
+    const int eindSize = getSizeOfEind(model);
+    graph.eindResize(eindSize);
+    
+    int elementaryNumber = model->getMaxElementaryNumber(3);
 
     for(GModel::const_riter it = regions.begin(); it != regions.end(); ++it){
       if((*it)->geomType() == GEntity::PartitionVolume){
         partitionRegion* region = static_cast<partitionRegion*>(*it);
-        AssignMeshVerticesToEntity(region, false);
 
-        //We build a graph
-        Graph graph(model);
         graph.ne(region->getNumMeshElements());
-        graph.nn(region->getNumMeshVertices());
-        graph.dim(1);
-        graph.elementResize(graph.ne());
-        graph.vertexResize(model->getMaxVertexNumber());
-        graph.eptrResize(graph.ne()+1);
+        graph.dim(3);
         graph.eptr(0,0);
-        const int eindSize = getSizeOfEind(region);
-        graph.eindResize(eindSize);
+        graph.clearDualGraph();
+        graph.eraseVertex();
 
         int eptrIndex = 0;
         int eindIndex = 0;
@@ -1324,6 +1287,7 @@ static void dividedNonConnectedEntities(GModel *const model, int dim,
                                region->pyramids.begin(), region->pyramids.end());
         fillElementsToNodesMap(graph, region, eptrIndex, eindIndex, numVertex,
                                region->trihedra.begin(), region->trihedra.end());
+        graph.nn(numVertex);
         createDualGraph(graph, false);
 
         // if a graph contains at least ((n-1)*(n-2))/2 + 1 edges
@@ -1334,7 +1298,6 @@ static void dividedNonConnectedEntities(GModel *const model, int dim,
 
         std::vector< std::set<MElement*> > connectedElements;
         fillConnectedElements(connectedElements, graph);
-        graph.clear();
 
         if(connectedElements.size() > 1){
           for(unsigned int i = 0; i < connectedElements.size(); i++){
@@ -2538,6 +2501,9 @@ int PartitionMesh(GModel *const model)
 
   CreateNewEntities(model, elmToPartition);
   elmToPartition.clear();
+  
+  //+++
+  //return 0;
 
   double t2 = Cpu();
   Msg::StatusBar(true, "Done partitioning mesh (%g s)", t2 - t1);
