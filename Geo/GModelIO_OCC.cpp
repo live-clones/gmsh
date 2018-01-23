@@ -1094,7 +1094,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags,
         new Geom_BSplineCurve(p, w, k, m, degree, periodic);
       if(curve->StartPoint().IsEqual
          (BRep_Tool::Pnt(start), CTX::instance()->geom.tolerance) &&
-         curve->StartPoint().IsEqual
+         curve->EndPoint().IsEqual
          (BRep_Tool::Pnt(end), CTX::instance()->geom.tolerance)){
         BRepBuilderAPI_MakeEdge e(curve, start, end);
         if(!e.IsDone()){
