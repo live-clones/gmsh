@@ -50,8 +50,8 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
 
 OCCFace::~OCCFace()
 {
-  if(model()->getOCCInternals()){
-    model()->getOCCInternals()->unbind(s, tag());
+  if(model()->getOCCInternals() && !model()->isBeingDestroyed()){
+    model()->getOCCInternals()->unbind(s, tag()); // potentially slow
   }
 }
 

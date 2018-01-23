@@ -69,6 +69,7 @@ int GModel::_current = -1;
 GModel::GModel(std::string name)
   : _maxVertexNum(0), _maxElementNum(0),
     _checkPointedMaxVertexNum(0), _checkPointedMaxElementNum(0),
+    _destroying(false),
     _name(name), _visible(1), _octree(0), _geo_internals(0),
     _occ_internals(0), _acis_internals(0), _fm_internals(0),
     _fields(0), _currentMeshEntity(0),
@@ -161,6 +162,7 @@ GModel *GModel::findByName(const std::string &name, const std::string &fileName)
 void GModel::destroy(bool keepName)
 {
   Msg::Debug("Destroying model %s", getName().c_str());
+  _destroying = true;
 
   if(!keepName){
     _name.clear();
@@ -212,6 +214,8 @@ void GModel::destroy(bool keepName)
   _fields->reset();
 #endif
   gmshSurface::reset();
+
+  _destroying = false;
 }
 
 void GModel::destroyMeshCaches()
@@ -699,7 +703,7 @@ int GModel::getMaxPhysicalNumber(int dim)
 void GModel::getInnerPhysicalNamesIterators(std::vector<piter> &iterators)
 {
   iterators.resize(4, firstPhysicalName());
-  
+
   for(piter physIt = firstPhysicalName(); physIt != lastPhysicalName(); ++physIt)
     iterators[physIt->first.first] = physIt;
 }
@@ -709,7 +713,7 @@ int GModel::setPhysicalName(std::string name, int dim, int number)
   // check if the name is already used
   int findPhy = getPhysicalNumber(dim, name);
   if(findPhy != -1) return findPhy;
-  
+
   // if no number is given, find the next available one
   if(!number) number = getMaxPhysicalNumber(dim) + 1;
   physicalNames.insert(std::pair<std::pair<int, int>, std::string>

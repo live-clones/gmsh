@@ -30,8 +30,8 @@ OCCVertex::OCCVertex(GModel *m, int num, TopoDS_Vertex v, double lc)
 
 OCCVertex::~OCCVertex()
 {
-  if(model()->getOCCInternals())
-    model()->getOCCInternals()->unbind(_v, tag());
+  if(model()->getOCCInternals() && !model()->isBeingDestroyed())
+    model()->getOCCInternals()->unbind(_v, tag()); // potentially slow
 }
 
 void OCCVertex::setPosition(GPoint &p)

@@ -67,6 +67,8 @@ class GModel {
   // the maximum vertex and element id number in the mesh
   int _maxVertexNum, _maxElementNum;
   int _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
+  // flag set to true when the model is being destroyed
+  bool _destroying;
  protected:
   // the name of the model
   std::string _name;
@@ -189,6 +191,7 @@ class GModel {
 
   // delete everything in a GModel (optionally keep name and fileName)
   void destroy(bool keepName=false);
+  bool isBeingDestroyed() const { return _destroying; }
 
   // get/set global vertex/element num
   int getMaxVertexNumber(){ return _maxVertexNum; }
