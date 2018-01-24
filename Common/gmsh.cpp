@@ -27,6 +27,7 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 #include "ExtrudeParams.h"
+#include "StringUtils.h"
 #include "Context.h"
 
 #if defined(HAVE_MESH)
@@ -141,37 +142,12 @@ void gmsh::clear()
 
 // gmsh::option
 
-static void _splitOptionName(const std::string &fullName, std::string &category,
-                             std::string &name, int &index)
-{
-  std::string::size_type d = fullName.find_first_of('.');
-  if(d == std::string::npos){
-    name = fullName;
-    return;
-  }
-  category = fullName.substr(0, d);
-  std::string::size_type b1 = fullName.find_first_of('[');
-  std::string::size_type b2 = fullName.find_last_of(']');
-  if(b1 != std::string::npos && b2 != std::string::npos){
-    std::string id = fullName.substr(b1 + 1, b2 - b1 - 1);
-    index = atoi(id.c_str());
-    category = fullName.substr(0, b1);
-    name = fullName.substr(d + 1, b1 - d);
-  }
-  else{
-    index = 0;
-    name = fullName.substr(d + 1);
-  }
-  Msg::Debug("Decoded option name '%s' . '%s' (index %d)", category.c_str(),
-             name.c_str(), index);
-}
-
 void gmsh::option::setNumber(const std::string &name, const double value)
 {
   if(!_isInitialized()){ throw -1; }
   std::string c, n;
   int i;
-  _splitOptionName(name, c, n, i);
+  SplitOptionName(name, c, n, i);
   if(GmshSetOption(c, n, value, i)) return;
   throw 1;
 }
@@ -181,7 +157,7 @@ void gmsh::option::getNumber(const std::string &name, double &value)
   if(!_isInitialized()){ throw -1; }
   std::string c, n;
   int i;
-  _splitOptionName(name, c, n, i);
+  SplitOptionName(name, c, n, i);
   if(GmshGetOption(c, n, value, i)) return;
   throw 1;
 }
@@ -191,7 +167,7 @@ void gmsh::option::setString(const std::string &name, const std::string &value)
   if(!_isInitialized()){ throw -1; }
   std::string c, n;
   int i;
-  _splitOptionName(name, c, n, i);
+  SplitOptionName(name, c, n, i);
   if(GmshSetOption(c, n, value, i)) return;
   throw 1;
 }
@@ -201,7 +177,7 @@ void gmsh::option::getString(const std::string &name, std::string &value)
   if(!_isInitialized()){ throw -1; }
   std::string c, n;
   int i;
-  _splitOptionName(name, c, n, i);
+  SplitOptionName(name, c, n, i);
   if(GmshGetOption(c, n, value, i)) return;
   throw 1;
 }
