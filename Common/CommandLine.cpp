@@ -161,6 +161,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-version", "Show version number"));
   s.push_back(mp("-info", "Show detailed version information"));
   s.push_back(mp("-help", "Show command line usage"));
+  s.push_back(mp("-help_options", "Show all options"));
   return s;
 }
 
@@ -1064,6 +1065,13 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
         fprintf(stderr, "Gmsh, a 3D mesh generator with pre- and post-processing facilities\n");
         fprintf(stderr, "Copyright (C) 1997-2018 C. Geuzaine and J.-F. Remacle\n");
         PrintUsage(argv[0]);
+        Msg::Exit(0);
+      }
+      else if(!strcmp(argv[i] + 1, "help_options")) {
+        std::vector<std::string> s;
+        PrintOptions(0, GMSH_FULLRC, 0, 1, 0, &s);
+        for(unsigned int i = 0; i < s.size(); i++)
+          Msg::Direct("%s\n", s[i].c_str());
         Msg::Exit(0);
       }
       else if(!strcmp(argv[i] + 1, "v") || !strcmp(argv[i] + 1, "verbose")) {

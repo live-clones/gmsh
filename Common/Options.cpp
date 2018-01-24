@@ -858,33 +858,31 @@ void PrintOptionsDoc()
     for(std::map<std::string, GMSH_Plugin*>::iterator it = PluginManager::
           instance()->begin(); it != PluginManager::instance()->end(); ++it) {
       GMSH_Plugin *p = it->second;
-      if(p->getType() == GMSH_Plugin::GMSH_POST_PLUGIN) {
-        fprintf(file, "@item Plugin(%s)\n", p->getName().c_str());
-        std::string help = p->getHelp();
-        Sanitize_String_Texi(help);
-        fprintf(file, "%s\n", help.c_str());
-        int m = p->getNbOptionsStr();
-        if(m){
-          fprintf(file, "String options:\n");
-          fprintf(file, "@table @code\n");
-          for(int i = 0; i < m; i++) {
-            StringXString *sxs = p->getOptionStr(i);
-            fprintf(file, "@item %s\n", sxs->str);
-            fprintf(file, "Default value: @code{\"%s\"}\n", sxs->def.c_str());
-          }
-          fprintf(file, "@end table\n");
+      fprintf(file, "@item Plugin(%s)\n", p->getName().c_str());
+      std::string help = p->getHelp();
+      Sanitize_String_Texi(help);
+      fprintf(file, "%s\n", help.c_str());
+      int m = p->getNbOptionsStr();
+      if(m){
+        fprintf(file, "String options:\n");
+        fprintf(file, "@table @code\n");
+        for(int i = 0; i < m; i++) {
+          StringXString *sxs = p->getOptionStr(i);
+          fprintf(file, "@item %s\n", sxs->str);
+          fprintf(file, "Default value: @code{\"%s\"}\n", sxs->def.c_str());
         }
-        int n = p->getNbOptions();
-        if(n){
-          fprintf(file, "Numeric options:\n");
-          fprintf(file, "@table @code\n");
-          for(int i = 0; i < n; i++) {
-            StringXNumber *sxn = p->getOption(i);
-            fprintf(file, "@item %s\n", sxn->str);
-            fprintf(file, "Default value: @code{%g}\n", sxn->def);
-          }
-          fprintf(file, "@end table\n");
+        fprintf(file, "@end table\n");
+      }
+      int n = p->getNbOptions();
+      if(n){
+        fprintf(file, "Numeric options:\n");
+        fprintf(file, "@table @code\n");
+        for(int i = 0; i < n; i++) {
+          StringXNumber *sxn = p->getOption(i);
+          fprintf(file, "@item %s\n", sxn->str);
+          fprintf(file, "Default value: @code{%g}\n", sxn->def);
         }
+        fprintf(file, "@end table\n");
       }
       fprintf(file, "\n");
     }

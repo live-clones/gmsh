@@ -39,11 +39,6 @@ Write mesh files in binary format (if possible)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.Lloyd
-Apply lloyd optimization on surface meshes@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.SmoothCrossField
 Apply n barycentric smoothing passes to the cross field@*
 Default value: @code{0}@*
@@ -305,7 +300,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionGhostCells
-Create boundary entities between partitions@*
+Create partition ghost cells@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
