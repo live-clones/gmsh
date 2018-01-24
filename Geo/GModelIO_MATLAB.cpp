@@ -39,7 +39,7 @@ int GModel::writeMATLAB(const std::string &name, bool binary, bool saveAll, doub
   fprintf(fp, "\%\%  Matlab mesh\n");
   fprintf(fp, "\%\% %s, Created by Gmsh\n", getName().c_str());
   if(binary)
-    fprintf(fp, "\%\% BINARY\n"); 
+    fprintf(fp, "\%\% BINARY\n");
   else
     fprintf(fp, "\%\% ASCII\n");
 
@@ -49,9 +49,9 @@ int GModel::writeMATLAB(const std::string &name, bool binary, bool saveAll, doub
 
   // write mesh vertices
   fprintf(fp, "gVertices = %d;\n", numVertices);
-  fprintf(fp, "gX = zeros(gVertices,1);\n", numVertices);
-  fprintf(fp, "gY = zeros(gVertices,1);\n", numVertices);
-  fprintf(fp, "gZ = zeros(gVertices,1);\n", numVertices);
+  fprintf(fp, "gX = zeros(gVertices,1);\n");
+  fprintf(fp, "gY = zeros(gVertices,1);\n");
+  fprintf(fp, "gZ = zeros(gVertices,1);\n");
   int cpt = 0;
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
@@ -76,7 +76,7 @@ int GModel::writeMATLAB(const std::string &name, bool binary, bool saveAll, doub
 
   // print vertex indices in ascii or binary
   fprintf(fp, "\%\%\n");
-  fprintf(fp, "nTri=%d;\n", numElements);  
+  fprintf(fp, "nTri=%d;\n", numElements);
   fprintf(fp, "gTri=[\n");
   for(unsigned int i = 0; i < entities.size(); i++){
     if(entities[i]->physicals.size() || saveAll){
