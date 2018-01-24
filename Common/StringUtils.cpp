@@ -4,6 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <stdio.h>
+#include <stdlib.h>
 #if defined(__CYGWIN__)
 #include <sys/cygwin.h>
 #endif
