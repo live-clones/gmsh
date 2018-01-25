@@ -24,7 +24,7 @@ public:
   virtual GeomType geomType() const { return PartitionCurve; }
   virtual void setParentEntity(GEdge* e) { _parentEntity = e; }
   virtual GEdge* getParentEntity() const { return _parentEntity; }
-  virtual void setPartition(std::vector<unsigned int> &partitions)
+  virtual void setPartitions(std::vector<unsigned int> &partitions)
   {
     _partitions = partitions;
   }

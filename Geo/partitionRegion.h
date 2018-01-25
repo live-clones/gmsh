@@ -22,7 +22,7 @@ public:
   virtual GeomType geomType() const { return PartitionVolume; }
   virtual void setParentEntity(GRegion* r) { _parentEntity = r; }
   virtual GRegion* getParentEntity() const { return _parentEntity; }
-  virtual void setPartition(std::vector<unsigned int> &partitions)
+  virtual void setPartitions(std::vector<unsigned int> &partitions)
   {
     _partitions = partitions;
   }
