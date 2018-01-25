@@ -1106,7 +1106,7 @@ StringXNumber MeshOptions_Number[] = {
     "Weight of triangle element for METIS load balancing" },
   { F|O, "PartitionCreateTopology" , opt_mesh_partition_create_topology , 1 ,
     "Create boundary representation of partitions" },
-  { F|O, "PartitionCreatePhysicals" , opt_mesh_partition_create_physicals , 1 ,
+  { F|O, "PartitionCreatePhysicals" , opt_mesh_partition_create_physicals , 0 ,
     "Create physical groups for partitions" },
   { F|O, "PartitionCreateGhostCells" , opt_mesh_partition_create_ghost_cells , 0 ,
     "Create partition ghost cells" },
