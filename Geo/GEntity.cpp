@@ -113,42 +113,31 @@ void GEntity::setMeshMaster(GEntity* gMaster,const std::vector<double>& tfo)
 // gets the entity from which the mesh will be copied
 GEntity* GEntity::meshMaster() const { return _meshMaster; }
 
-void GEntity::updateVertices(const std::map<MVertex*,MVertex*>& old2new) {
-
+void GEntity::updateVertices(const std::map<MVertex*,MVertex*>& old2new)
+{
   // update the list of the vertices
-
   std::vector<MVertex*> newMeshVertices;
   std::vector<MVertex*>::iterator mIter = mesh_vertices.begin();
-  for (;mIter!=mesh_vertices.end();++mIter) {
-
+  for (;mIter != mesh_vertices.end(); ++mIter) {
     MVertex* vtx = *mIter;
     std::map<MVertex*,MVertex*>::const_iterator cIter = old2new.find(vtx);
     if (cIter!=old2new.end()) vtx = cIter->second;
     newMeshVertices.push_back(vtx);
   }
-
   mesh_vertices.clear();
   mesh_vertices = newMeshVertices;
 
-
   // update the periodic vertex lists
-
   std::map<MVertex*,MVertex*> newCorrespondingVertices;
-
   std::map<MVertex*,MVertex*>::iterator cIter = correspondingVertices.begin();
   for (;cIter!=correspondingVertices.end();++cIter) {
-
     MVertex* tgt = cIter->first;
     MVertex* src = cIter->second;
-
     std::map<MVertex*,MVertex*>::const_iterator tIter = old2new.find(tgt);
     if (tIter!=old2new.end()) tgt = tIter->second;
-
     std::map<MVertex*,MVertex*>::const_iterator sIter = old2new.find(src);
     if (sIter!=old2new.end()) src = sIter->second;
-
     newCorrespondingVertices.insert(std::make_pair(tgt,src));
-
   }
 
   correspondingVertices.clear();
@@ -158,21 +147,15 @@ void GEntity::updateVertices(const std::map<MVertex*,MVertex*>& old2new) {
 
   std::map<MVertex*,MVertex*>::iterator hIter = correspondingHOPoints.begin();
   for (;hIter!=correspondingHOPoints.end();++hIter) {
-
     MVertex* tgt = hIter->first;
     MVertex* src = hIter->second;
-
     std::map<MVertex*,MVertex*>::const_iterator tIter = old2new.find(tgt);
     if (tIter!=old2new.end()) tgt = tIter->second;
-
     std::map<MVertex*,MVertex*>::const_iterator sIter = old2new.find(src);
     if (sIter!=old2new.end()) src = sIter->second;
-
     newCorrespondingVertices.insert(std::make_pair(tgt,src));
-
   }
 
   correspondingHOPoints.clear();
   correspondingHOPoints = newCorrespondingVertices;
-
 }

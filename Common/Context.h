@@ -47,7 +47,7 @@ struct contextMeshOptions {
   int preserveNumberingMsh2;
   // partitioning
   int numPartitions, partitionCreateTopology, partitionCreateGhostCells;
-  int partitionSplitMeshFiles, partitionSaveTopologyFile;
+  int partitionCreatePhysicals, partitionSplitMeshFiles, partitionSaveTopologyFile;
   int partitionTriWeight, partitionQuaWeight, partitionTetWeight, partitionHexWeight;
   int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
   int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;

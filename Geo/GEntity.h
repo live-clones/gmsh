@@ -35,8 +35,7 @@ class GEntity {
   // the tag (the number) of this entity
   int _tag;
 
-  // gives the number of the master entity in periodic mesh, gives _tag
-  // if non-periodic
+  // points to the master entity in periodic mesh, or 'this' if non-periodic
   GEntity *_meshMaster;
 
   // the visibility and the selection flag
@@ -380,7 +379,6 @@ class GEntity {
 
   // corresponding high order control points
   std::map<MVertex*,MVertex*> correspondingHOPoints;
-
 };
 
 class GEntityLessThan {

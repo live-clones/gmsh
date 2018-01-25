@@ -5776,6 +5776,13 @@ double opt_mesh_partition_tri_weight(OPT_ARGS_NUM)
   return CTX::instance()->mesh.partitionTriWeight;
 }
 
+double opt_mesh_partition_create_physicals(OPT_ARGS_NUM)
+{
+  if (action & GMSH_SET)
+    CTX::instance()->mesh.partitionCreatePhysicals = val;
+  return CTX::instance()->mesh.partitionCreatePhysicals;
+}
+
 double opt_mesh_partition_create_topology(OPT_ARGS_NUM)
 {
   if (action & GMSH_SET)

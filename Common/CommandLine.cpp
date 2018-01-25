@@ -87,6 +87,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-part_split", "Save mesh partitions in separate files"));
   s.push_back(mp("-part_[no_]topo", "Create the partition topology"));
   s.push_back(mp("-part_[no_]ghosts", "Create ghost cells"));
+  s.push_back(mp("-part_[no_]physicals", "Create phsyical groups for partitions"));
   s.push_back(mp("-part_topo_pro", "Save the partition topology .pro file"));
   s.push_back(mp("-preserve_numbering_msh2", "Preserve element numbering in MSH2 format"));
   s.push_back(mp("-save_all", "Save all elements (discard physical group definitions)"));
@@ -474,6 +475,14 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
       }
       else if(!strcmp(argv[i] + 1, "part_no_topo")){
         opt_mesh_partition_create_topology(0, GMSH_SET, 0.);
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "part_physcals")){
+        opt_mesh_partition_create_physicals(0, GMSH_SET, 1.);
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "part_no_physicals")){
+        opt_mesh_partition_create_physicals(0, GMSH_SET, 0.);
         i++;
       }
       else if(!strcmp(argv[i] + 1, "part_ghosts")){
