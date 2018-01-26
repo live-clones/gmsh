@@ -1988,24 +1988,34 @@ void assignNewEntityBRep(Graph &graph, hashmap<MElement*, GEntity*> &elementToEn
     }
   }
 
-  for(hashmap<GEntity*, std::set<std::pair<int, GEntity*> > >::iterator it = brep.begin(); it != brep.end(); ++it){
+  for(hashmap<GEntity*, std::set<std::pair<int, GEntity*> > >::iterator
+        it = brep.begin(); it != brep.end(); ++it){
     switch (it->first->dim()) {
         case 3:
-        for(std::set<std::pair<int, GEntity*> >::iterator itSet = it->second.begin(); itSet != it->second.end(); ++itSet){
-          static_cast<GRegion*>(it->first)->setFace(static_cast<GFace*>(itSet->second), itSet->first);
-          static_cast<GFace*>(itSet->second)->addRegion(static_cast<GRegion*>(it->first));
+        for(std::set<std::pair<int, GEntity*> >::iterator itSet =
+              it->second.begin(); itSet != it->second.end(); ++itSet){
+          static_cast<GRegion*>(it->first)->setFace
+            (static_cast<GFace*>(itSet->second), itSet->first);
+          static_cast<GFace*>(itSet->second)->addRegion
+            (static_cast<GRegion*>(it->first));
         }
         break;
         case 2:
-        for(std::set<std::pair<int, GEntity*> >::iterator itSet = it->second.begin(); itSet != it->second.end(); ++itSet){
-          static_cast<GFace*>(it->first)->setEdge(static_cast<GEdge*>(itSet->second), itSet->first);
-          static_cast<GEdge*>(itSet->second)->addFace(static_cast<GFace*>(it->first));
+        for(std::set<std::pair<int, GEntity*> >::iterator itSet =
+              it->second.begin(); itSet != it->second.end(); ++itSet){
+          static_cast<GFace*>(it->first)->setEdge
+            (static_cast<GEdge*>(itSet->second), itSet->first);
+          static_cast<GEdge*>(itSet->second)->addFace
+            (static_cast<GFace*>(it->first));
         }
         break;
         case 1:
-        for(std::set<std::pair<int, GEntity*> >::iterator itSet = it->second.begin(); itSet != it->second.end(); ++itSet){
-          static_cast<GEdge*>(it->first)->setVertex(static_cast<GVertex*>(itSet->second), itSet->first);
-          static_cast<GVertex*>(itSet->second)->addEdge(static_cast<GEdge*>(it->first));
+        for(std::set<std::pair<int, GEntity*> >::iterator itSet =
+              it->second.begin(); itSet != it->second.end(); ++itSet){
+          static_cast<GEdge*>(it->first)->setVertex
+            (static_cast<GVertex*>(itSet->second), itSet->first);
+          static_cast<GVertex*>(itSet->second)->addEdge
+            (static_cast<GEdge*>(it->first));
         }
         break;
       default:
@@ -2046,7 +2056,7 @@ static void CreatePartitionTopology(GModel *const model,
         for(int j = 0; j < (*it)->getNumFaces(); j++){
           faceToElement[(*it)->getFace(j)].push_back
           (std::pair<MElement*, std::vector<unsigned int> >
-           (*it, std::vector<unsigned int>(1,i)));
+           (*it, std::vector<unsigned int>(1, i)));
         }
       }
     }
@@ -2090,7 +2100,7 @@ static void CreatePartitionTopology(GModel *const model,
           for(int j = 0; j < (*it)->getNumEdges(); j++){
             edgeToElement[(*it)->getEdge(j)].push_back
             (std::pair<MElement*, std::vector<unsigned int> >
-             (*it, std::vector<unsigned int>(1,i)));
+             (*it, std::vector<unsigned int>(1, i)));
           }
         }
       }
@@ -2108,6 +2118,8 @@ static void CreatePartitionTopology(GModel *const model,
         if((*it)->geomType() == GEntity::PartitionSurface){
           std::vector<unsigned int> partitions =
             static_cast<partitionFace*>(*it)->getPartitions();
+          for(unsigned int i = 0; i < partitions.size(); i++)
+            partitions[i]--;
           mapOfPartitions.insert(std::pair<unsigned int, std::vector<unsigned int> >
                                  (mapOfPartitionsTag, partitions));
           // Must absolutely be in the same order as in the MakeGraph function
@@ -2193,6 +2205,8 @@ static void CreatePartitionTopology(GModel *const model,
         if((*it)->geomType() == GEntity::PartitionCurve){
           std::vector<unsigned int> partitions =
             static_cast<partitionEdge*>(*it)->getPartitions();
+          for(unsigned int i = 0; i < partitions.size(); i++)
+            partitions[i]--;
           mapOfPartitions.insert(std::pair<unsigned int, std::vector<unsigned int> >
                                  (mapOfPartitionsTag, partitions));
           // Must absolutely be in the same order as in the MakeGraph function
@@ -2319,12 +2333,11 @@ static void addPhysical(GModel *const model, int level,
   hashmap<std::string, int>::iterator it = nameToNumber.find(name);
   if(it == nameToNumber.end()){
     number = ++numPhysical;
-    iterators[childEntity->dim()] = model->setPhysicalName(iterators[childEntity->dim()],
-                                                           name, childEntity->dim(), number);
+    iterators[childEntity->dim()] = model->setPhysicalName
+      (iterators[childEntity->dim()], name, childEntity->dim(), number);
     nameToNumber.insert(std::pair<std::string, int>(name, number));
   }
-  else
-  {
+  else{
     number = it->second;
   }
   childEntity->addPhysicalEntity(number);
