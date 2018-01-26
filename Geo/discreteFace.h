@@ -30,7 +30,8 @@ class discreteFace : public GFace {
   void updateTopology(std::vector<triangulation*>&);
   void split(triangulation*,std::vector<triangulation*>&,int);
   void fillHoles(triangulation*);
-  void addTriangle(triangulation*,MTriangle*);
+  virtual void addTriangle(triangulation*,MTriangle*);
+  using GFace::addTriangle;
   void complex_crossField();
   void crossField();
   using GFace::point;
