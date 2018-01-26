@@ -50,6 +50,7 @@ struct PartitionDialog
   Fl_Value_Input *inputNumPartition;
   Fl_Check_Button *setGhostCells;
   Fl_Check_Button *setTopology;
+  Fl_Check_Button *setPhysical;
   // Group 1
   Fl_Choice *choiceMetisAlg;
   Fl_Toggle_Button *toggleButtonAdvMetis;
@@ -69,6 +70,7 @@ struct PartitionDialog
     CTX::instance()->mesh.numPartitions = static_cast<int>(inputNumPartition->value());
     CTX::instance()->mesh.partitionCreateGhostCells = setGhostCells->value();
     CTX::instance()->mesh.partitionCreateTopology = setTopology->value();
+    CTX::instance()->mesh.partitionCreatePhysicals = setPhysical->value();
 
     // Group 1
     CTX::instance()->mesh.metisAlgorithm = choiceMetisAlg->value() + 1;
@@ -91,6 +93,7 @@ struct PartitionDialog
     inputNumPartition->value(CTX::instance()->mesh.numPartitions);
     setGhostCells->value(CTX::instance()->mesh.partitionCreateGhostCells);
     setTopology->value(CTX::instance()->mesh.partitionCreateTopology);
+    setPhysical->value(CTX::instance()->mesh.partitionCreatePhysicals);
 
     // Group 2
     choiceMetisAlg->value(CTX::instance()->mesh.metisAlgorithm - 1);
@@ -243,7 +246,7 @@ void partition_dialog()
 
   // Main options group [0]
   {
-    const int GH = 2*BH + 2 + 4*WB;
+    const int GH = 3*BH + 2 + 5*WB;
     y += WB;
     Fl_Group *g = new Fl_Group(0, y, w, GH);
     // Partitioner
@@ -273,13 +276,18 @@ void partition_dialog()
     {
       Fl_Check_Button *const o = new Fl_Check_Button
         (2*WB + 2*BB, y, 2*BB, BH, "Create ghost cells");
-      o->deactivate();
       dlg.setGhostCells = o;
     }
     {
       Fl_Check_Button *const o = new Fl_Check_Button
         (WB, y, 2*BB, BH, "Create partition topology");
       dlg.setTopology = o;
+    }
+    y += BH + WB;
+    {
+      Fl_Check_Button *const o = new Fl_Check_Button
+      (WB, y, 2*BB, BH, "Create physicals partitions");
+      dlg.setPhysical = o;
     }
     y += BH + WB;
     // Box (line)
