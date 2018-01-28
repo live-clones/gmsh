@@ -1648,7 +1648,7 @@ unsigned int MElement::getInfoMSH(const int typeMSH, const char **const name)
   default:
     Msg::Error("Unknown type of element %d", typeMSH);
     if(name) *name = "Unknown";
-    return 0;
+    return -1;
   }
 }
 
