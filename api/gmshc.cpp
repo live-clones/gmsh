@@ -358,6 +358,17 @@ void gmshModelMeshGetElements(int ** elementTypes, size_t * elementTypes_n,int *
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
+void gmshModelMeshGetElementProperties(const int elementType,char ** elementName,int * dim,int * order,int * numVertices,double ** parametricCoord, size_t * parametricCoord_n,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  std::string api_elementName_;
+  std::vector<double> api_parametricCoord_;
+  gmsh::model::mesh::getElementProperties(elementType,api_elementName_,*dim,*order,*numVertices,api_parametricCoord_);
+  *elementName = _strdup(api_elementName_.c_str());
+  vector2ptr(api_parametricCoord_,parametricCoord,parametricCoord_n);
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
 void gmshModelMeshGetIntegrationData(const char * integrationType,const char * functionSpaceType,double *** integrationPoints, size_t ** integrationPoints_n, size_t *integrationPoints_nn,double *** integrationData, size_t ** integrationData_n, size_t *integrationData_nn,int * functionSpaceNumComponents,double *** functionSpaceData, size_t ** functionSpaceData_n, size_t *functionSpaceData_nn,const int dim,const int tag,int * ierr){
   if(ierr) *ierr = 0;
   try {

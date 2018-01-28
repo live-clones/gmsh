@@ -247,20 +247,33 @@ GMSH_API void gmshModelMeshGetVertices(int ** vertexTags, size_t * vertexTags_n,
 /* Gets the mesh elements of the entity of dimension `dim' and `tag' tag. If
  * `tag' < 0, gets the elements for all entities of dimension `dim'. If `dim'
  * and `tag' are negative, gets all the elements in the mesh. `elementTypes'
- * contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
- * the Gmsh reference manual). `elementTags' is a vector of the same length as
- * `elementTypes'; each entry is a vector containing the tags (unique,
- * strictly positive identifiers) of the elements of the corresponding type.
- * `vertexTags' is also a vector of the same length as `elementTypes'; each
- * entry is a vector of length equal to the number of elements of the given
- * type times the number of vertices for this type of element, that contains
- * the vertex tags of all the elements of the given type, concatenated. */
+ * contains the MSH types of the elements (e.g. `2' for 3-node triangles); the
+ * `getElementInfo' function can be used to get information about these types.
+ * `elementTags' is a vector of the same length as `elementTypes'; each entry
+ * is a vector containing the tags (unique, strictly positive identifiers) of
+ * the elements of the corresponding type. `vertexTags' is also a vector of
+ * the same length as `elementTypes'; each entry is a vector of length equal
+ * to the number of elements of the given type times the number of vertices
+ * for this type of element, that contains the vertex tags of all the elements
+ * of the given type, concatenated. */
 GMSH_API void gmshModelMeshGetElements(int ** elementTypes, size_t * elementTypes_n,
                                        int *** elementTags, size_t ** elementTags_n, size_t *elementTags_nn,
                                        int *** vertexTags, size_t ** vertexTags_n, size_t *vertexTags_nn,
                                        const int dim,
                                        const int tag,
                                        int * ierr);
+
+/* Gets the properties of an element of type `elementType': its name
+ * (`elementName'), dimension (`dim'), order (`order'), number of vertices
+ * (`numVertices') and parametric coordinates of vertices (`parametricCoord'
+ * vector, of length `dim' times `numVertices'). */
+GMSH_API void gmshModelMeshGetElementProperties(const int elementType,
+                                                char ** elementName,
+                                                int * dim,
+                                                int * order,
+                                                int * numVertices,
+                                                double ** parametricCoord, size_t * parametricCoord_n,
+                                                int * ierr);
 
 /* Gets the integration data for mesh elements of the entity of dimension
  * `dim' and `tag' tag. The data is returned by element type and by element,

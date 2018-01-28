@@ -234,19 +234,31 @@ namespace gmsh { // Top-level functions
       // Gets the mesh elements of the entity of dimension `dim' and `tag' tag. If
       // `tag' < 0, gets the elements for all entities of dimension `dim'. If `dim'
       // and `tag' are negative, gets all the elements in the mesh. `elementTypes'
-      // contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
-      // the Gmsh reference manual). `elementTags' is a vector of the same length
-      // as `elementTypes'; each entry is a vector containing the tags (unique,
-      // strictly positive identifiers) of the elements of the corresponding type.
-      // `vertexTags' is also a vector of the same length as `elementTypes'; each
-      // entry is a vector of length equal to the number of elements of the given
-      // type times the number of vertices for this type of element, that contains
-      // the vertex tags of all the elements of the given type, concatenated.
+      // contains the MSH types of the elements (e.g. `2' for 3-node triangles);
+      // the `getElementInfo' function can be used to get information about these
+      // types. `elementTags' is a vector of the same length as `elementTypes';
+      // each entry is a vector containing the tags (unique, strictly positive
+      // identifiers) of the elements of the corresponding type. `vertexTags' is
+      // also a vector of the same length as `elementTypes'; each entry is a vector
+      // of length equal to the number of elements of the given type times the
+      // number of vertices for this type of element, that contains the vertex tags
+      // of all the elements of the given type, concatenated.
       GMSH_API void getElements(std::vector<int> & elementTypes,
                                 std::vector<std::vector<int> > & elementTags,
                                 std::vector<std::vector<int> > & vertexTags,
                                 const int dim = -1,
                                 const int tag = -1);
+
+      // Gets the properties of an element of type `elementType': its name
+      // (`elementName'), dimension (`dim'), order (`order'), number of vertices
+      // (`numVertices') and parametric coordinates of vertices (`parametricCoord'
+      // vector, of length `dim' times `numVertices').
+      GMSH_API void getElementProperties(const int elementType,
+                                         std::string & elementName,
+                                         int & dim,
+                                         int & order,
+                                         int & numVertices,
+                                         std::vector<double> & parametricCoord);
 
       // Gets the integration data for mesh elements of the entity of dimension
       // `dim' and `tag' tag. The data is returned by element type and by element,
