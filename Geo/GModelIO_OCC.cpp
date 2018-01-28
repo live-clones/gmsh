@@ -1418,9 +1418,6 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag)
     for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()){
       TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
       f.Add(edge, GeomAbs_C0);
-      // face filling will duplicate the edge
-      if(_edgeTag.IsBound(edge))
-        unbind(edge, _edgeTag.Find(edge), true);
     }
     // TODO: add optional point constraints using f.Add(gp_Pnt(x, y, z);
     f.Build();
@@ -1428,7 +1425,15 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag)
       Msg::Error("Could not build surface filling");
       return false;
     }
-    result = TopoDS::Face(f.Shape());
+    // face filling duplicates the edges, so we need to go back to the
+    // underlying surface, and remake a new face explicitly with the wire;
+    // applying ShapeFix is mandatory (not sure why...)
+    TopoDS_Face tmp = TopoDS::Face(f.Shape());
+    Handle(Geom_Surface) s = BRep_Tool::Surface(tmp);
+    result = BRepBuilderAPI_MakeFace(s, wire);
+    ShapeFix_Face fix(result);
+    fix.Perform();
+    result = fix.Face();
   }
   catch(Standard_Failure &err){
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
