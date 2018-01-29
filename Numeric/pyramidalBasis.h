@@ -18,19 +18,16 @@ class pyramidalBasis: public nodalBasis
   fullMatrix<double> bergotCoefficients;
 
  public:
-
   fullMatrix<double> coefficients;
   fullMatrix<double> monomials;
 
  public:
   pyramidalBasis(int tag);
   ~pyramidalBasis();
-
   virtual void f(double u, double v, double w, double *val) const;
   virtual void f(const fullMatrix<double> &coord, fullMatrix<double> &sf) const;
   virtual void df(double u, double v, double w, double grads[][3]) const;
   virtual void df(const fullMatrix<double> &coord, fullMatrix<double> &dfm) const;
-
   virtual int getNumShapeFunctions() const;
 };
 

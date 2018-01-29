@@ -86,27 +86,28 @@ class bezierBasis {
 class bezierBasisRaiser {
   // Let f, g, h be three function whose Bezier coefficients are given.
   // This class allows to compute the Bezier coefficients of f*g and f*g*h.
-private :
+ private :
   class _Data {
     friend class bezierBasisRaiser;
-  private:
+   private:
     int i, j, k;
     double val;
-  public:
+   public:
     _Data(double vv, int ii, int jj = -1, int kk = -1) :
       i(ii), j(jj), k(kk), val(vv) {}
   };
   std::vector<std::vector<_Data> > _raiser2, _raiser3;
   const bezierBasis *_bfs;
 
-public:
-  bezierBasisRaiser(const bezierBasis *bezier) : _bfs(bezier) {
+ public:
+  bezierBasisRaiser(const bezierBasis *bezier) : _bfs(bezier)
+  {
     _fillRaiserData();
   };
 
   const bezierBasis* getRaisedBezierBasis(int multipliedBy2or3);
 
-//  const bezierBasis* getRaisedBezierBasis(int raised) const;
+  // const bezierBasis* getRaisedBezierBasis(int raised) const;
 
   void computeCoeff(const fullVector<double> &coeffA,
                     const fullVector<double> &coeffB,
@@ -122,13 +123,9 @@ public:
                     const fullMatrix<double> &coeffB,
                     const fullMatrix<double> &coeffC,
                     fullMatrix<double> &coeffCubic);
-
-private:
+ private:
   void _fillRaiserData();
   void _fillRaiserDataPyr();
 };
 
-
 #endif
-
-
