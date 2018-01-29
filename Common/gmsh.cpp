@@ -29,6 +29,8 @@
 #include "ExtrudeParams.h"
 #include "StringUtils.h"
 #include "Context.h"
+#include "polynomialBasis.h"
+#include "pyramidalBasis.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
@@ -608,11 +610,25 @@ void gmsh::model::mesh::getElementProperties(const int elementType,
   const char *n;
   numVertices = MElement::getInfoMSH(elementType, &n);
   name = n;
-  order = ElementType::OrderFromTag(elementType);
-  dim = ElementType::DimensionFromTag(elementType);
-  // FIXME parametric coord lookup tables not implemented for all element types;
-  // current imp is not static
+  int parentType = ElementType::ParentTypeFromTag(elementType);
+  nodalBasis *basis = 0;
+  if(parentType == TYPE_PYR)
+    basis = new pyramidalBasis(elementType);
+  else
+    basis = new polynomialBasis(elementType);
+  dim = basis->dimension;
+  order = basis->order;
+  numVertices = basis->points.size1();
+  for(int i = 0; i < basis->points.size1(); i++)
+    for(int j = 0; j < basis->points.size2(); j++)
+      parametricCoord.push_back(basis->points(i, j));
+  delete basis;
 }
+
+// TODO: give access to closures
+// void gmsh::model::mesh::getElementClosures(const int elementType, ...)
+// {
+// }
 
 static bool _getIntegrationInfo(const std::string &intType,
                                 std::string &intName, int &intOrder)
