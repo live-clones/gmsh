@@ -2170,14 +2170,16 @@ Shape :
     }
   | tCompound GeoEntity123 '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints instead");
+      yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints "
+            "instead, i.e. Compound %s { ... };", ($2 == 2) ? "Surface" : "Line");
       $$.Type = 0;
       $$.Num = 0;
     }
   | tCompound GeoEntity123 '(' FExpr ')' tAFFECT ListOfDouble tSTRING
       '{' RecursiveListOfListOfDouble '}' tEND
     {
-      yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints instead");
+      yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints "
+            "instead, i.e. Compound %s { ... };", ($2 == 2) ? "Surface" : "Line");
       $$.Type = 0;
       $$.Num = 0;
     }
