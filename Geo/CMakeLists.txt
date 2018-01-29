@@ -6,6 +6,7 @@
 set(SRC
   boundaryLayersData.cpp
   closestPoint.cpp
+	closestVertex.cpp
   intersectCurveSurface.cpp
   GEntity.cpp STensor3.cpp
     GVertex.cpp GEdge.cpp GFace.cpp GRegion.cpp

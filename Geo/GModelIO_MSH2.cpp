@@ -29,7 +29,8 @@
 
 #define FAST_ELEMENTS 1
 
-extern void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities, bool renumber);
+extern void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities, bool renumber,
+                                  double scale);
 extern void readMSHPeriodicNodes(FILE *fp, GModel *gm);
 extern void writeMSHEntities(FILE *fp, GModel *gm);
 
@@ -188,7 +189,7 @@ int GModel::_readMSH2(const std::string &name)
     Msg::Error("Unable to open file '%s'", name.c_str());
     return 0;
   }
-  
+
   char str[256] = "XXX";
   double version = 1.0;
   bool binary = false, swap = false, postpro = false;
@@ -1085,7 +1086,7 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
     fprintf(fp, "$ENDELM\n");
   }
 
-  writeMSHPeriodicNodes (fp, entities, renumberVertices);
+  writeMSHPeriodicNodes (fp, entities, renumberVertices,scalingFactor);
 
   fclose(fp);
 

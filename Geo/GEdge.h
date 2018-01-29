@@ -71,6 +71,14 @@ class GEdge : public GEntity {
   // get the dimension of the edge (1)
   virtual int dim() const { return 1; }
 
+  // get the list of vertices 
+  virtual std::list<GVertex*> vertices() const {
+    std::list<GVertex*> res;
+    res.insert(res.end(),getBeginVertex());
+    res.insert(res.end(),getEndVertex());
+    return res;
+  }
+
   // set the visibility flag
   virtual void setVisibility(char val, bool recursive=false);
 

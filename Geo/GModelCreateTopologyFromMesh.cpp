@@ -572,6 +572,7 @@ void createTopologyFromMesh3D(GModel *gm, int &num)
   
   TFaceToGFaceMap       tFaceToGFace;
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); it++) {
+    
     for (unsigned i=0; i<(*it)->triangles.size();i++) {
       topoFace tf((*it)->triangles[i],0);
       tFaceToGFace.insert(std::make_pair(tf,*it));

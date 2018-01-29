@@ -29,6 +29,8 @@
 #include "MTetrahedron.h"
 #include "OS.h"
 
+#include "closestVertex.h"
+
 GeomMeshMatcher *GeomMeshMatcher::_gmm_instance = 0;
 
 template <class T> void getIntersection(std::vector<T>& res,
@@ -215,7 +217,7 @@ GeomMeshMatcher::matchEdges(GModel* m1, GModel* m2,
     num_matched_edges++;
   }
 
-  Msg::Info("Matched %i edges out of %i.", num_matched_edges, num_total_edges);
+    Msg::Info("Matched %i edges out of %i.", num_matched_edges, num_total_edges);
   if(num_matched_edges != num_total_edges) ok = false;
   return (coresp_e);
 }
@@ -639,6 +641,94 @@ static void copy_periodicity (std::vector<Pair<GEType*, GEType*> >& eCor,
 }
 
 
+template <class GEType>
+static bool apply_periodicity (std::vector<Pair<GEType*, GEType*> >& eCor)
+{
+  
+  typename std::multimap<GEType*,GEType*> eMap; // (eCor.begin(),eCor.end());
+  typename std::vector<Pair<GEType*,GEType*> >::iterator eIter = eCor.begin();
+  for (;eIter!=eCor.end();++eIter) {
+    eMap.insert(std::make_pair(eIter->second(),eIter->first()));
+  }
+  
+  typename std::multimap<GEType*,GEType*>::iterator srcIter = eMap.begin();
+
+  for (;srcIter!=eMap.end();++srcIter) {
+
+    GEType* newTgt = srcIter->second;
+    GEType* newSrc = dynamic_cast<GEType*> (newTgt->meshMaster());
+
+    if (newSrc != newTgt) { // non-trivial 
+      
+      const std::vector<double>& tfo = newTgt->affineTransform;
+      
+      closestVertexFinder cvf(newTgt,true);
+      
+      // construct list of pairs of points
+      
+      std::cout << "Creating a match between " << newTgt->tag() << " and " 
+                << newTgt->meshMaster()->tag() << " of dimension " << newTgt->dim() << std::endl;
+
+      if (tfo.size() != 16) {
+        std::cout << "No periodicity tranformation available " << ", "
+                  << tfo.size() << std::endl;
+        break;
+      }
+
+      
+      std::set<MVertex*> srcVtcs;
+      newSrc->addVerticesInSet(srcVtcs,true);
+
+      std::cout << "Matching " << cvf.getNbVtcs() << " in target to " 
+                << srcVtcs.size() << " in source " << std::endl;
+      
+      
+
+      std::set<MVertex*> usedVtcs;
+
+      std::set<MVertex*>::const_iterator sIter;
+      
+      for (sIter=srcVtcs.begin();sIter!=srcVtcs.end();++sIter) {
+        
+        MVertex* sv = *sIter;
+        MVertex* tv = cvf(sv->point(),tfo);
+
+
+        double ori[4] = {sv->x(),sv->y(),sv->z(),1};
+        double xyz[4] = {0,0,0,0};
+        
+        int idx = 0;
+        for (int i=0;i<4;i++) for (int j=0;j<4;j++) xyz[i] += tfo[idx++]*ori[j];
+        
+        if (usedVtcs.find(tv) != usedVtcs.end()) {
+          std::cout << "Have a multiple match for vertex " 
+                    << tv->getNum() << ": (" << tv->x() << "," << tv->y() << "," << tv->z() << ")"
+                    << " -> "
+                    << sv->getNum() << ": (" << sv->x() << "," << sv->y() << "," << sv->z() << ")"
+                    << ", transformed (" << xyz[0] << "," << xyz[1] << ","<< xyz[2] << ")"
+                    << std::endl;
+
+        }
+        else {
+          newTgt->correspondingVertices[tv] = sv;
+          usedVtcs.insert(tv);
+        }
+      }
+
+      if (newTgt->correspondingVertices.size() != srcVtcs.size()) {
+        std::cout << "We do not have a complete match " 
+                  << newTgt->correspondingVertices.size() << " vs " 
+                  << srcVtcs.size() << std::endl;
+      }
+      
+
+    }
+  }
+  return false;
+}
+
+
+
 static void copy_vertices (GVertex *to, GVertex *from, std::map<MVertex*,MVertex*> &_mesh_to_geom){
   to->deleteMesh();
   if (from) {
@@ -808,9 +898,9 @@ int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
   copy_vertices(geom,mesh,_mesh_to_geom,coresp_v,coresp_e,coresp_f,coresp_r);
   copy_elements(geom,mesh,_mesh_to_geom,coresp_v,coresp_e,coresp_f,coresp_r);
   
-  copy_periodicity(*coresp_v,_mesh_to_geom);
-  copy_periodicity(*coresp_e,_mesh_to_geom);
-  copy_periodicity(*coresp_f,_mesh_to_geom);
+  if (!apply_periodicity(*coresp_v)) copy_periodicity(*coresp_v,_mesh_to_geom);
+  if (!apply_periodicity(*coresp_e)) copy_periodicity(*coresp_e,_mesh_to_geom);
+  if (!apply_periodicity(*coresp_f)) copy_periodicity(*coresp_f,_mesh_to_geom);
   
   delete coresp_v;
   delete coresp_e;

@@ -33,7 +33,7 @@ static void view_toggle_cb(Fl_Widget *w, void *data)
   viewButton *but = FlGui::instance()->onelab->getViewButton(num);
   if(but){
     if(Fl::event_state(FL_SHIFT)){
-      for(int i = 0; i < PView::list.size(); i++){
+      for(int i = 0; i < (int) PView::list.size(); i++){
         if(i != num) opt_view_visible(i, GMSH_SET | GMSH_GUI, 0);
         else opt_view_visible(i, GMSH_SET | GMSH_GUI, 1);
       }

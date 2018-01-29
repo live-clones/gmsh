@@ -167,3 +167,51 @@ void GEntity::updateVertices(const std::map<MVertex*,MVertex*>& old2new) {
   correspondingHOPoints = newCorrespondingVertices;
 
 }
+
+//
+
+void GEntity::addVerticesInSet(std::set<MVertex*>&vtcs,bool closure) const {
+
+
+  vtcs.insert(mesh_vertices.begin(),mesh_vertices.end());
+  
+  if (closure) {
+    switch (dim()) {
+    case 3:
+      {
+        std::list<GFace*> clos = faces();
+
+        std::cout << "have " << clos.size() << " faces " << std::endl;
+        std::list<GFace*>::iterator cIter = clos.begin();
+        for (;cIter!=clos.end();++cIter) { 
+          std::cout << "Adding face " << (*cIter)->tag() << std::endl;
+          (*cIter)->addVerticesInSet(vtcs,true);
+        }
+        break;
+      }
+    case 2:
+      {
+        std::list<GEdge*> clos = edges();
+        std::cout << "have " << clos.size() << " edges " << std::endl;
+        std::list<GEdge*>::iterator cIter = clos.begin();
+        for (;cIter!=clos.end();++cIter) {
+          std::cout << "Adding edge " << (*cIter)->tag() << std::endl;
+          (*cIter)->addVerticesInSet(vtcs,true);
+        }
+        break;
+      }
+    case 1:
+      {
+        std::list<GVertex*> clos = vertices();
+        std::cout << "have " << clos.size() << " vertices " << std::endl;
+        std::list<GVertex*>::iterator cIter = clos.begin();
+        for (;cIter!=clos.end();++cIter) {
+          std::cout << "Adding node " << (*cIter)->tag() << std::endl;
+          (*cIter)->addVerticesInSet(vtcs,true);
+        }
+        break;
+      }
+    }
+  }
+}
+

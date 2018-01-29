@@ -1,24 +1,21 @@
-/* A Bison parser, made by GNU Bison 2.3.  */
+/* A Bison parser, made by GNU Bison 2.7.  */
 
-/* Skeleton interface for Bison's Yacc-like parsers in C
-
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
-
-   This program is free software; you can redistribute it and/or modify
+/* Bison interface for Yacc-like parsers in C
+   
+      Copyright (C) 1984, 1989-1990, 2000-2012 Free Software Foundation, Inc.
+   
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
-
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+   
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-
+   
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -29,9 +26,19 @@
    special exception, which will cause the skeleton and the resulting
    Bison output files to be licensed under the GNU General Public
    License without this special exception.
-
+   
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
+
+#ifndef YY_GMSH_YY_GMSH_TAB_HPP_INCLUDED
+# define YY_GMSH_YY_GMSH_TAB_HPP_INCLUDED
+/* Enabling traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 0
+#endif
+#if YYDEBUG
+extern int gmsh_yydebug;
+#endif
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -265,239 +272,14 @@
      tPLUSPLUS = 481
    };
 #endif
-/* Tokens.  */
-#define tDOUBLE 258
-#define tSTRING 259
-#define tBIGSTR 260
-#define tEND 261
-#define tAFFECT 262
-#define tDOTS 263
-#define tSCOPE 264
-#define tPi 265
-#define tMPI_Rank 266
-#define tMPI_Size 267
-#define tEuclidian 268
-#define tCoordinates 269
-#define tTestLevel 270
-#define tExp 271
-#define tLog 272
-#define tLog10 273
-#define tSqrt 274
-#define tSin 275
-#define tAsin 276
-#define tCos 277
-#define tAcos 278
-#define tTan 279
-#define tRand 280
-#define tAtan 281
-#define tAtan2 282
-#define tSinh 283
-#define tCosh 284
-#define tTanh 285
-#define tFabs 286
-#define tAbs 287
-#define tFloor 288
-#define tCeil 289
-#define tRound 290
-#define tFmod 291
-#define tModulo 292
-#define tHypot 293
-#define tList 294
-#define tLinSpace 295
-#define tLogSpace 296
-#define tListFromFile 297
-#define tCatenary 298
-#define tPrintf 299
-#define tError 300
-#define tStr 301
-#define tSprintf 302
-#define tStrCat 303
-#define tStrPrefix 304
-#define tStrRelative 305
-#define tStrReplace 306
-#define tAbsolutePath 307
-#define tDirName 308
-#define tStrSub 309
-#define tStrLen 310
-#define tFind 311
-#define tStrFind 312
-#define tStrCmp 313
-#define tStrChoice 314
-#define tUpperCase 315
-#define tLowerCase 316
-#define tLowerCaseIn 317
-#define tTextAttributes 318
-#define tBoundingBox 319
-#define tDraw 320
-#define tSetChanged 321
-#define tToday 322
-#define tFixRelativePath 323
-#define tCurrentDirectory 324
-#define tSyncModel 325
-#define tNewModel 326
-#define tOnelabAction 327
-#define tOnelabRun 328
-#define tCodeName 329
-#define tCpu 330
-#define tMemory 331
-#define tTotalMemory 332
-#define tCreateTopology 333
-#define tCreateTopologyNoHoles 334
-#define tDistanceFunction 335
-#define tDefineConstant 336
-#define tUndefineConstant 337
-#define tDefineNumber 338
-#define tDefineStruct 339
-#define tNameStruct 340
-#define tDimNameSpace 341
-#define tAppend 342
-#define tDefineString 343
-#define tSetNumber 344
-#define tSetString 345
-#define tPoint 346
-#define tCircle 347
-#define tEllipse 348
-#define tLine 349
-#define tSphere 350
-#define tPolarSphere 351
-#define tSurface 352
-#define tSpline 353
-#define tVolume 354
-#define tBox 355
-#define tCylinder 356
-#define tCone 357
-#define tTorus 358
-#define tEllipsoid 359
-#define tQuadric 360
-#define tShapeFromFile 361
-#define tRectangle 362
-#define tDisk 363
-#define tWire 364
-#define tGeoEntity 365
-#define tCharacteristic 366
-#define tLength 367
-#define tParametric 368
-#define tElliptic 369
-#define tRefineMesh 370
-#define tAdaptMesh 371
-#define tRelocateMesh 372
-#define tSetFactory 373
-#define tThruSections 374
-#define tWedge 375
-#define tFillet 376
-#define tChamfer 377
-#define tPlane 378
-#define tRuled 379
-#define tTransfinite 380
-#define tPhysical 381
-#define tCompound 382
-#define tPeriodic 383
-#define tUsing 384
-#define tPlugin 385
-#define tDegenerated 386
-#define tRecursive 387
-#define tRotate 388
-#define tTranslate 389
-#define tSymmetry 390
-#define tDilate 391
-#define tExtrude 392
-#define tLevelset 393
-#define tAffine 394
-#define tBooleanUnion 395
-#define tBooleanIntersection 396
-#define tBooleanDifference 397
-#define tBooleanSection 398
-#define tBooleanFragments 399
-#define tThickSolid 400
-#define tRecombine 401
-#define tSmoother 402
-#define tSplit 403
-#define tDelete 404
-#define tCoherence 405
-#define tIntersect 406
-#define tMeshAlgorithm 407
-#define tReverse 408
-#define tLayers 409
-#define tScaleLast 410
-#define tHole 411
-#define tAlias 412
-#define tAliasWithOptions 413
-#define tCopyOptions 414
-#define tQuadTriAddVerts 415
-#define tQuadTriNoNewVerts 416
-#define tRecombLaterals 417
-#define tTransfQuadTri 418
-#define tText2D 419
-#define tText3D 420
-#define tInterpolationScheme 421
-#define tTime 422
-#define tCombine 423
-#define tBSpline 424
-#define tBezier 425
-#define tNurbs 426
-#define tNurbsOrder 427
-#define tNurbsKnots 428
-#define tColor 429
-#define tColorTable 430
-#define tFor 431
-#define tIn 432
-#define tEndFor 433
-#define tIf 434
-#define tElseIf 435
-#define tElse 436
-#define tEndIf 437
-#define tExit 438
-#define tAbort 439
-#define tField 440
-#define tReturn 441
-#define tCall 442
-#define tSlide 443
-#define tMacro 444
-#define tShow 445
-#define tHide 446
-#define tGetValue 447
-#define tGetStringValue 448
-#define tGetEnv 449
-#define tGetString 450
-#define tGetNumber 451
-#define tUnique 452
-#define tHomology 453
-#define tCohomology 454
-#define tBetti 455
-#define tExists 456
-#define tFileExists 457
-#define tGetForced 458
-#define tGetForcedStr 459
-#define tGMSH_MAJOR_VERSION 460
-#define tGMSH_MINOR_VERSION 461
-#define tGMSH_PATCH_VERSION 462
-#define tGmshExecutableName 463
-#define tSetPartition 464
-#define tNameToString 465
-#define tStringToName 466
-#define tAFFECTDIVIDE 467
-#define tAFFECTTIMES 468
-#define tAFFECTMINUS 469
-#define tAFFECTPLUS 470
-#define tOR 471
-#define tAND 472
-#define tNOTEQUAL 473
-#define tEQUAL 474
-#define tGREATERGREATER 475
-#define tLESSLESS 476
-#define tGREATEROREQUAL 477
-#define tLESSOREQUAL 478
-#define UNARYPREC 479
-#define tMINUSMINUS 480
-#define tPLUSPLUS 481
-
-
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 164 "Gmsh.y"
 {
+/* Line 2058 of yacc.c  */
+#line 164 "Gmsh.y"
+
   char *c;
   int i;
   unsigned int u;
@@ -506,14 +288,30 @@ typedef union YYSTYPE
   Shape s;
   List_T *l;
   struct TwoChar c2;
-}
-/* Line 1529 of yacc.c.  */
-#line 512 "Gmsh.tab.hpp"
-	YYSTYPE;
+
+
+/* Line 2058 of yacc.c  */
+#line 295 "Gmsh.tab.hpp"
+} YYSTYPE;
+# define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
-# define YYSTYPE_IS_TRIVIAL 1
 #endif
 
 extern YYSTYPE gmsh_yylval;
 
+#ifdef YYPARSE_PARAM
+#if defined __STDC__ || defined __cplusplus
+int gmsh_yyparse (void *YYPARSE_PARAM);
+#else
+int gmsh_yyparse ();
+#endif
+#else /* ! YYPARSE_PARAM */
+#if defined __STDC__ || defined __cplusplus
+int gmsh_yyparse (void);
+#else
+int gmsh_yyparse ();
+#endif
+#endif /* ! YYPARSE_PARAM */
+
+#endif /* !YY_GMSH_YY_GMSH_TAB_HPP_INCLUDED  */

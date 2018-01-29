@@ -3108,7 +3108,8 @@ Command :
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
         std::string tmp = FixRelativePath(gmsh_yyname, $2);
-	MergeFile(tmp, true);
+				CTX::instance()->geom.matchGeomAndMesh = 1;
+				MergeFile(tmp, true);
       }
       else if(!strcmp($1, "NonBlockingSystemCall")){
 	SystemCall($2);

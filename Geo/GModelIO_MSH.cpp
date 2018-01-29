@@ -592,7 +592,9 @@ static void writeElementsMSH(FILE *fp, GModel *model, GEntity *ge, std::vector<T
   }
 }
 
-void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities, bool renumber)
+void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities, 
+                           bool renumber,
+                           double scalingFactor)
 {
   int count = 0;
   for (unsigned int i = 0; i < entities.size(); i++)
@@ -608,7 +610,14 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity*> &entities, bool renum
 
       if (g_slave->affineTransform.size() == 16) {
         fprintf(fp, "Affine");
-        for (int i = 0; i < 16;i++) fprintf(fp, " %.16g", g_slave->affineTransform[i]);
+        int idx = 0;
+        for (int i = 0; i < 4;i++) {
+          for (int j=0 ; j < 3 ; j++) {
+            fprintf(fp, " %.16g", g_slave->affineTransform[idx++]);
+          }
+          if (i==3) fprintf(fp, " %.16g", g_slave->affineTransform[idx++]);
+          else      fprintf(fp, " %.16g", g_slave->affineTransform[idx++]*scalingFactor);
+        }
         fprintf(fp, "\n");
       }
 
@@ -741,7 +750,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   fprintf(fp, "$EndElements\n");
 
   //save periodic nodes
-  writeMSHPeriodicNodes(fp, entities, renumber);
+  writeMSHPeriodicNodes(fp, entities, renumber,scalingFactor);
 
   fclose(fp);
 
