@@ -19,11 +19,12 @@ for e in entities:
     elemTypes, elemTags, elemVertexTags = gmsh.model.mesh.getElements(e[0], e[1])
     # report some statistics
     numElem = sum(len(i) for i in elemTags)
-    for t in elemTypes:
-        name, dim, order, numv, _ = gmsh.model.mesh.getElementProperties(t)
-        print "found " + name + " on entity " + str(e)
-    print str(len(vertexTags)) + " mesh vertices " + str(numElem),\
+    print str(len(vertexTags)) + " mesh vertices and " + str(numElem),\
           "mesh elements on entity " + str(e)
+    for t in elemTypes:
+        name, dim, order, numv, parv = gmsh.model.mesh.getElementProperties(t)
+        print " - Element type: " + name + ", order " + str(order)
+        print "   with " + str(numv) + " vertices in param coord: ", parv
 
 # all mesh vertex coordinates
 vertexTags, vertexCoords, _ = gmsh.model.mesh.getVertices()

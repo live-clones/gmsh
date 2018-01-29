@@ -50,7 +50,7 @@ def compute_size_field(vertices, triangles, err, N):
     return triangle_max_edge(x)/ri
 
 
-print ("Usage: adapt_mesh [intial lc] [target #elements] [dump files]")
+print("Usage: adapt_mesh [intial lc] [target #elements] [dump files]")
 
 lc = 0.02;
 N = 10000;

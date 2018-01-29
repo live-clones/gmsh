@@ -32,16 +32,20 @@ int main(int argc, char **argv)
     int numElem = 0;
     for(unsigned int i = 0; i < elemTags.size(); i++)
       numElem += elemTags[i].size();
+    std::cout << vertexTags.size() << " mesh vertices and "
+              << numElem << " mesh elements on entity ("
+              << dim << "," << tag << ")\n";
     for(unsigned int i = 0; i < elemTypes.size(); i++){
       std::string name;
       int d, order, numv;
       std::vector<double> param;
       gmsh::model::mesh::getElementProperties(elemTypes[i], name, d, order, numv, param);
-      std::cout << "found " << name << " on entity (" << dim << "," << tag << ")\n";
+      std::cout << " - Element type: " << name << ", order " << order << "\n";
+      std::cout << "   with " << numv << " vertices in param coord: (";
+      for(unsigned int j = 0; j < param.size(); j++)
+        std::cout << param[j] << " ";
+      std::cout << ")\n";
     }
-    std::cout << vertexTags.size() << " mesh vertices and "
-              << numElem << " mesh elements on entity ("
-              << dim << "," << tag << ")\n";
   }
 
   gmsh::finalize();
