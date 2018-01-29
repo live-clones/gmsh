@@ -101,7 +101,8 @@ public:
             _middle[MEdge(v1,v3)] = v2;
           }
           _backup[*ite] = (*ite)->lines;
-          //          printf("line %d goes from %d to %d\n",(*ite)->tag(), (*ite)->lines.size()-1,temp.size()-1);
+          // printf("line %d goes from %d to %d\n",
+          //        (*ite)->tag(), (*ite)->lines.size()-1, temp.size()-1);
           (*ite)->lines = temp;
         }
         ++ite;
@@ -195,7 +196,7 @@ public:
       delete _gf->quadrangles[i];
     }
     _gf->quadrangles = qnew;
-    //    printf("%d triangles %d quads\n",_gf->triangles.size(),_gf->quadrangles.size());
+    // printf("%d triangles %d quads\n",_gf->triangles.size(),_gf->quadrangles.size());
   }
   void finish ()
   {
@@ -204,9 +205,9 @@ public:
       // recombine the elements on the half mesh
       CTX::instance()->mesh.lcFactor /=2.0;
       recombineIntoQuads(_gf,true,true,.1,true);
-      //      Msg::Info("subdividing");
+      // Msg::Info("subdividing");
       subdivide();
-      //      _gf->model()->writeMSH("hop2.msh");
+      // _gf->model()->writeMSH("hop2.msh");
       restore();
       recombineIntoQuads(_gf,true,true,1.e-3,false);
       computeElementShapes(_gf,
@@ -217,7 +218,7 @@ public:
                            _gf->meshStatistics.nbGoodQuality);
     }
   }
-  void restore ()
+  void restore()
   {
     std::list<GEdge*> edges = _gf->edges();
     std::list<GEdge*>::iterator ite = edges.begin();
@@ -261,13 +262,15 @@ static void copyMesh(GFace *source, GFace *target)
 
     GVertex* gvs = gvsIter->second;
     if (checkVtcs.find(gvs) == checkVtcs.end()) {
-      if (gvs) Msg::Info("Error during periodic meshing of surface %d with surface %d:"
-                         "vertex %d has periodic counterpart %d outside of source surface",
-                         target->tag(),source->tag(),gvt->tag(),gvs->tag());
+      if (gvs)
+        Msg::Info("Error during periodic meshing of surface %d with surface %d:"
+                  "vertex %d has periodic counterpart %d outside of source surface",
+                  target->tag(),source->tag(),gvt->tag(),gvs->tag());
 
-      else Msg::Info("Error during periodic meshing of surface %d with surface %d:"
-                     "vertex %d has no periodic counterpart",
-                     target->tag(),source->tag(),gvt->tag());
+      else
+        Msg::Info("Error during periodic meshing of surface %d with surface %d:"
+                  "vertex %d has no periodic counterpart",
+                  target->tag(),source->tag(),gvt->tag());
     }
 
     MVertex* vs = gvs->mesh_vertices[0];
@@ -552,9 +555,10 @@ static bool recoverEdge(BDS_Mesh *m, GEdge *ge,
         else {
           if (_fatallyFailed){
             Msg::Error("Unable to recover the edge %d (%d/%d) on GEdge %d (on GFace %d)",
-                       ge->lines[i]->getNum(),i+1,ge->lines.size(),ge->tag(),ge->faces().back()->tag());
+                       ge->lines[i]->getNum(), i+1, ge->lines.size(), ge->tag(),
+                       ge->faces().back()->tag());
 	    outputScalarField(m->triangles, "wrongmesh.pos", 0);
-	    outputScalarField(m->triangles,"wrongparam.pos",1);
+	    outputScalarField(m->triangles, "wrongparam.pos", 1);
 	  }
           return !_fatallyFailed;
         }
@@ -642,10 +646,11 @@ static void addOrRemove(MVertex *v1, MVertex *v2, std::set<MEdge,Less_Edge> & be
   }
 }
 
-static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf,
-                                                                std::vector<MQuadrangle*> &blQuads,
-                                                                std::vector<MTriangle*> &blTris,
-                                                                std::set<MVertex*> &verts)
+static void modifyInitialMeshForTakingIntoAccountBoundaryLayers
+  (GFace *gf,
+   std::vector<MQuadrangle*> &blQuads,
+   std::vector<MTriangle*> &blTris,
+   std::set<MVertex*> &verts)
 {
   if (!buildAdditionalPoints2D (gf))return;
   BoundaryLayerColumns* _columns = gf->getColumns();
@@ -727,7 +732,7 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers(GFace *gf,
     MVertex *v = itf->first;
     int nbCol = _columns->getNbColumns(v);
 
-    for (int i=0;i<nbCol-1;i++){
+    for (int i = 0; i < nbCol - 1; i++){
       const BoundaryLayerData & c1 = _columns->getColumn(v,i);
       const BoundaryLayerData & c2 = _columns->getColumn(v,i+1);
       int N = std::min(c1._column.size(),c2._column.size());
@@ -832,7 +837,7 @@ static bool improved_translate(GFace* gf,MVertex* vertex,SVector3& v1,SVector3& 
   SVector3 basis_u,basis_v;
   Pair<SVector3,SVector3> derivatives;
 
-  reparamMeshVertexOnFace(vertex,gf,point);
+  reparamMeshVertexOnFace(vertex, gf, point);
   x = point.x();
   y = point.y();
 
@@ -899,7 +904,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
                    bool debug,
                    std::list<GEdge*> *replacement_edges)
 {
-  //onlyInitialMesh=true;
+  // onlyInitialMesh=true;
   BDS_GeomEntity CLASS_F(1, 2);
   BDS_GeomEntity CLASS_EXTERIOR(1, 3);
   std::map<BDS_Point*, MVertex*,PointLessThan> recoverMap;
@@ -1062,13 +1067,11 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       doc.points[points.size() + ip].data = pp;
     }
 
-
-
     // Use "fast" inhouse recursive algo to generate the triangulation.
     // At this stage the triangulation is not what we need
     //   -) It does not necessary recover the boundaries
-      //   -) It contains triangles outside the domain (the first edge
-      //      loop is the outer one)
+    //   -) It contains triangles outside the domain (the first edge
+    //      loop is the outer one)
     Msg::Debug("Meshing of the convex hull (%d points)", points.size());
     try{
       doc.MakeMeshWithPoints();
@@ -1108,7 +1111,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       v0->setXYZ(p0->u,p0->v,0.0);
     }
     delaunayMeshIn2D(v, result, 0);
-    //    delaunayMeshIn2D(v, result, 0, & medgesToRecover);
+    // delaunayMeshIn2D(v, result, 0, &medgesToRecover);
 
     for(unsigned int i = 0; i < v.size()-4; i++) {
       MVertex *v0 = v[i];
@@ -1146,9 +1149,9 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     outputScalarField(m->triangles, name, 1);
   }
 
-  // Recover the boundary edges and compute characteristic lenghts
-  // using mesh edge spacing. If two of these edges intersect, then
-  // the 1D mesh have to be densified
+  // Recover the boundary edges and compute characteristic lenghts using mesh
+  // edge spacing. If two of these edges intersect, then the 1D mesh have to be
+  // densified
   Msg::Debug("Recovering %d model Edges", edges.size());
   std::set<EdgeToRecover> edgesToRecover;
   std::set<EdgeToRecover> edgesNotRecovered;
@@ -1234,8 +1237,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   Msg::Debug("Boundary Edges recovered for surface %d", gf->tag());
 
-  // look for a triangle that has a negative node and recursively
-  // tag all exterior triangles
+  // look for a triangle that has a negative node and recursively tag all
+  // exterior triangles
   {
     std::list<BDS_Face*>::iterator itt = m->triangles.begin();
     while (itt != m->triangles.end()){
@@ -1256,8 +1259,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     }
   }
 
-  // now find an edge that has belongs to one of the exterior
-  // triangles
+  // now find an edge that has belongs to one of the exterior triangles
   {
     std::list<BDS_Edge*>::iterator ite = m->edges.begin();
     while (ite != m->edges.end()){
@@ -1314,8 +1316,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
                  edgesToRecover.size());
       std::set<BDS_Point*, PointLessThan>::iterator it = m->points.begin();
       for(; it != m->points.end();++it){
-        //      for(int i = 0; i < doc.numPoints; i++){
-        //        BDS_Point *pp = (BDS_Point*)doc.points[i].data;
+        // for(int i = 0; i < doc.numPoints; i++){
+        //   BDS_Point *pp = (BDS_Point*)doc.points[i].data;
         BDS_Point *pp = *it;
         std::map<BDS_Point*, MVertex*,PointLessThan>::iterator itv = recoverMap.find(pp);
         if(itv != recoverMap.end()){
@@ -1434,8 +1436,8 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
                                gf->meshStatistics.smallest_edge_length,
                                gf->meshStatistics.nbEdge,
                                gf->meshStatistics.nbGoodLength);
+  printf("=== Efficiency index is tau=%g\n", gf->meshStatistics.efficiency_index);
   */
-  //printf("=== Efficiency index is tau=%g\n", gf->meshStatistics.efficiency_index);
 
   gf->meshStatistics.status = GFace::DONE;
 
@@ -1534,10 +1536,10 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   return true;
 }
 
-// this function buils a list of vertices (BDS) that are consecutive
-// in one given edge loop. We take care of periodic surfaces. In the
-// case of periodicty, some curves are present 2 times in the wire
-// (seams). Those must be meshed separately
+// this function buils a list of vertices (BDS) that are consecutive in one
+// given edge loop. We take care of periodic surfaces. In the case of
+// periodicty, some curves are present 2 times in the wire (seams). Those must
+// be meshed separately
 
 static inline double dist2(const SPoint2 &p1, const SPoint2 &p2)
 {
@@ -1559,13 +1561,14 @@ static void printMesh1d(int iEdge, int seam, std::vector<SPoint2> &m)
 static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
                                            std::vector<BDS_Point*> &result,
                                            SBoundingBox3d &bbox, BDS_Mesh *m,
-                                           std::map<BDS_Point*, MVertex*,PointLessThan> &recoverMap,
+                                           std::map<BDS_Point*, MVertex*,PointLessThan>
+                                           &recoverMap,
                                            int &count, int countTot, double tol,
                                            bool seam_the_first = false)
 {
-  // for each edge, we build a list of points that are the mapping of
-  // the edge points on the face for seams, we build the list for
-  // every side for closed loops, we build it on both senses
+  // for each edge, we build a list of points that are the mapping of the edge
+  // points on the face for seams, we build the list for every side for closed
+  // loops, we build it on both senses
 
   std::map<GEntity*, std::vector<SPoint2> > meshes;
   std::map<GEntity*, std::vector<SPoint2> > meshes_seam;
@@ -1812,8 +1815,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 
   const double LC2D = sqrt(du * du + dv * dv);
 
-  // Buid a BDS_Mesh structure that is convenient for doing the actual
-  // meshing procedure
+  // Buid a BDS_Mesh structure that is convenient for doing the actual meshing
+  // procedure
   BDS_Mesh *m = new BDS_Mesh;
 
   std::vector<std::vector<BDS_Point*> > edgeLoops_BDS;
@@ -1873,9 +1876,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   }
 
 
-  // Use a divide & conquer type algorithm to create a triangulation.
-  // We add to the triangulation a box with 4 points that encloses the
-  // domain.
+  // Use a divide & conquer type algorithm to create a triangulation.  We add to
+  // the triangulation a box with 4 points that encloses the domain.
 #if 1 //OLD_CODE_DELAUNAY
   {
     DocRecord doc(nbPointsTotal + 4);
@@ -1954,7 +1956,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   }
 #else
   {
-    /// FIXME FOR PERIODIC : SOME MVERTices SHOULD BE DUPLICATED ...
+    /// FIXME FOR PERIODIC : some MVertices should be duplicated...
     /// Still to be done...
     std::vector<MVertex*> v;
     std::map<MVertex*, BDS_Point*> recoverMapInv;
@@ -1977,7 +1979,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     }
     std::vector<MTriangle*> result;
     delaunayMeshIn2D(v, result, 0);
-    //    delaunayMeshIn2D(v, result, 0, & medgesToRecover);
+    // delaunayMeshIn2D(v, result, 0, & medgesToRecover);
 
     for(unsigned int i = 0; i < v.size()-4; i++) {
       MVertex *v0 = v[i];
@@ -2007,8 +2009,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   }
 #endif
 
-  // Recover the boundary edges and compute characteristic lenghts
-  // using mesh edge spacing
+  // Recover the boundary edges and compute characteristic lenghts using mesh
+  // edge spacing
   BDS_GeomEntity CLASS_F(1, 2);
   BDS_GeomEntity CLASS_E(1, 1);
   BDS_GeomEntity CLASS_EXTERIOR(3, 2);
@@ -2039,8 +2041,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     }
   }
 
-  // look for a triangle that has a negative node and recursively
-  // tag all exterior triangles
+  // look for a triangle that has a negative node and recursively tag all
+  // exterior triangles
   {
     std::list<BDS_Face*>::iterator itt = m->triangles.begin();
     while (itt != m->triangles.end()){
@@ -2061,8 +2063,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     }
   }
 
-  // now find an edge that has belongs to one of the exterior
-  // triangles
+  // now find an edge that has belongs to one of the exterior triangles
   {
     std::list<BDS_Edge*>::iterator ite = m->edges.begin();
     while (ite != m->edges.end()){
@@ -2160,13 +2161,13 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
       outputScalarField(m->triangles, name, 0);
     }
 
-    //    if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
-    //            backgroundMesh::unset();
-    //    }
+    // if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine || 1) {
+    //   backgroundMesh::unset();
+    // }
   }
 
-  // This is a structure that we need only for periodic cases
-  // We will duplicate the vertices (MVertex) that are on seams
+  // This is a structure that we need only for periodic cases. We will duplicate
+  // the vertices (MVertex) that are on seams
 
   std::map<MVertex*, MVertex*> equivalence;
   std::map<MVertex*, SPoint2> parametricCoordinates;
@@ -2207,7 +2208,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     }
     // recoverMap.insert(new_relations.begin(), new_relations.end());
   }
-  //  Msg::Info("%d points that are duplicated for Delaunay meshing", equivalence.size());
+  // Msg::Info("%d points that are duplicated for Delaunay meshing", equivalence.size());
 
   // fill the small gmsh structures
   {
@@ -2236,13 +2237,11 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
         MVertex *v2 = recoverMap[n[1]];
         MVertex *v3 = recoverMap[n[2]];
         if(!n[3]){
-          // when a singular point is present, degenerated triangles
-          // may be created, for example on a sphere that contains one
-          // pole
+          // when a singular point is present, degenerated triangles may be
+          // created, for example on a sphere that contains one pole
           if(v1 != v2 && v1 != v3 && v2 != v3){
-            // we are in the periodic case. if we aim at
-            // using delaunay mesh generation in thoses cases,
-            // we should double some of the vertices
+            // we are in the periodic case. if we aim at using delaunay mesh
+            // generation in thoses cases, we should double some of the vertices
             gf->triangles.push_back(new MTriangle(v1, v2, v3));
           }
         }
@@ -2288,7 +2287,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS)
       bowyerWatsonParallelograms(gf,&equivalence, &parametricCoordinates);
     else if(gf->getMeshingAlgo() == ALGO_2D_PACK_PRLGRMS_CSTR)
-      bowyerWatsonParallelogramsConstrained(gf,gf->constr_vertices,&equivalence, &parametricCoordinates);
+      bowyerWatsonParallelogramsConstrained(gf, gf->constr_vertices, &equivalence,
+                                            &parametricCoordinates);
     else if(gf->getMeshingAlgo() == ALGO_2D_DELAUNAY ||
             gf->getMeshingAlgo() == ALGO_2D_AUTO)
       bowyerWatson(gf,1000000000, &equivalence, &parametricCoordinates);
@@ -2336,7 +2336,7 @@ void meshGFace::operator() (GFace *gf, bool print)
     return;
   }
 
-  //  if(gf->geomType() == GEntity::DiscreteFace) return;
+  // if(gf->geomType() == GEntity::DiscreteFace) return;
   if(gf->geomType() == GEntity::ProjectionFace) return;
   if(gf->meshAttributes.method == MESH_NONE) return;
   if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) return;
@@ -2388,8 +2388,8 @@ void meshGFace::operator() (GFace *gf, bool print)
   if (print)
     Msg::Info("Meshing surface %d (%s, %s)", gf->tag(), gf->getTypeString().c_str(), algo);
 
-  // compute loops on the fly (indices indicate start and end points
-  // of a loop; loops are not yet oriented)
+  // compute loops on the fly (indices indicate start and end points of a loop;
+  // loops are not yet oriented)
   Msg::Debug("Computing edge loops");
 
   Msg::Debug("Generating the mesh");
@@ -2441,8 +2441,8 @@ static bool getGFaceNormalFromBary(GFace *gf, MElement *el, SVector3 &nf)
   bool ok = true;
   for (int j = 0; j < el->getNumVertices(); j++) {
     SPoint2 p;
-    // FIXME: use inexact reparam because some vertices might not be
-    // exactly on the surface after the 3D Delaunay
+    // FIXME: use inexact reparam because some vertices might not be exactly on
+    // the surface after the 3D Delaunay
     ok = reparamMeshVertexOnFace(el->getVertex(j), gf, p, false);
     if (!ok) break;
     param += p;

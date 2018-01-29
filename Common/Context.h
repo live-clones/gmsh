@@ -18,7 +18,7 @@ class GamePad;
 struct contextMeshOptions {
   // mesh algorithms
   int optimize,  optimizeNetgen, smoothCrossField, refineSteps;
-  double lcFactor, randFactor, lcIntegrationPrecision;
+  double lcFactor, randFactor, randFactor3d, lcIntegrationPrecision;
   double optimizeThreshold, normals, tangents, explode, angleSmoothNormals;
   double allowSwapEdgeAngle;
   double qualityInf, qualitySup, radiusInf, radiusSup;

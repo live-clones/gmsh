@@ -433,6 +433,7 @@ double opt_mesh_lc_from_points(OPT_ARGS_NUM);
 double opt_mesh_lc_extend_from_boundary(OPT_ARGS_NUM);
 double opt_mesh_lc_integration_precision(OPT_ARGS_NUM);
 double opt_mesh_rand_factor(OPT_ARGS_NUM);
+double opt_mesh_rand_factor3d(OPT_ARGS_NUM);
 double opt_mesh_quality_inf(OPT_ARGS_NUM);
 double opt_mesh_quality_sup(OPT_ARGS_NUM);
 double opt_mesh_quality_type(OPT_ARGS_NUM);

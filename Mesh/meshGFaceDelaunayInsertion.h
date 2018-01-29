@@ -38,7 +38,6 @@ struct bidimMeshData
       if (it != parametricCoordinates->end()){
 	u = it->second.x();
 	v = it->second.y();
-	//	printf("%g %g\n",u,v);
       }
     }
     Us.push_back(u);
@@ -46,11 +45,13 @@ struct bidimMeshData
     vSizes.push_back(size);
     vSizesBGM.push_back(sizeBGM);
   }
-  inline int getIndex (MVertex *mv) {
+  inline int getIndex (MVertex *mv)
+  {
     if (mv->onWhat()->dim() == 2)return mv->getIndex();
     return indices[mv];
   }
-  inline MVertex * equivalent (MVertex *v1) const {
+  inline MVertex * equivalent (MVertex *v1) const
+  {
     if (equivalence){
       std::map<MVertex* , MVertex*>::iterator it = equivalence->find(v1);
       if (it == equivalence->end())return 0;
@@ -58,11 +59,12 @@ struct bidimMeshData
     }
     return 0;
   }
-  bidimMeshData (std::map<MVertex* , MVertex*>* e = 0, std::map<MVertex*, SPoint2> *p = 0) : equivalence(e), parametricCoordinates(p)
+  bidimMeshData(std::map<MVertex* , MVertex*>* e = 0,
+                std::map<MVertex*, SPoint2> *p = 0)
+    : equivalence(e), parametricCoordinates(p)
   {
   }
 };
-
 
 void buildMetric(GFace *gf, double *uv, double *metric);
 int inCircumCircleAniso(GFace *gf, double *p1, double *p2, double *p3,
@@ -73,7 +75,8 @@ void circumCenterMetric(double *pa, double *pb, double *pc, const double *metric
                         double *x, double &Radius2);
 void circumCenterMetric(MTriangle *base, const double *metric, bidimMeshData & data,
                         double *x, double &Radius2);
-bool circumCenterMetricInTriangle(MTriangle *base, const double *metric, bidimMeshData &data);
+bool circumCenterMetricInTriangle(MTriangle *base, const double *metric,
+                                  bidimMeshData &data);
 bool invMapUV(MTriangle *t, double *p, bidimMeshData &data,
               double *uv, double tol);
 
@@ -96,10 +99,12 @@ class MTri3
     MVertex *v1 = base->getVertex((i+2)%3);
     MVertex *v2 = base->getVertex(i);
     for (int j=0;j<3;j++)
-      if (n->tri()->getVertex(j) != v1 && n->tri()->getVertex(j) != v2)return n->tri()->getVertex(j);
+      if (n->tri()->getVertex(j) != v1 && n->tri()->getVertex(j) != v2)
+        return n->tri()->getVertex(j);
     return 0;
   }
-  MTri3(MTriangle *t, double lc, SMetric3 *m = 0, bidimMeshData * data = 0, GFace *gf = 0);
+  MTri3(MTriangle *t, double lc, SMetric3 *m = 0, bidimMeshData * data = 0,
+        GFace *gf = 0);
   inline void setTri(MTriangle *t) { base = t; }
   inline MTriangle *tri() const { return base; }
   inline void  setNeigh(int iN , MTri3 *n) { neigh[iN] = n; }
@@ -144,26 +149,27 @@ class compareTri3Ptr
 
 void connectTriangles(std::list<MTri3*> &);
 void connectTriangles(std::vector<MTri3*> &);
-void connectTriangles(std::set<MTri3*,compareTri3Ptr> &AllTris);
+void connectTriangles(std::set<MTri3*, compareTri3Ptr> &AllTris);
 void bowyerWatson(GFace *gf, int MAXPNT= 1000000000,
-		  std::map<MVertex* , MVertex*>* equivalence= 0,
-		  std::map<MVertex*, SPoint2> * parametricCoordinates= 0);
+		  std::map<MVertex*, MVertex*>* equivalence= 0,
+		  std::map<MVertex*, SPoint2> * parametricCoordinates = 0);
 void bowyerWatsonFrontal(GFace *gf,
-		  std::map<MVertex* , MVertex*>* equivalence= 0,
-		  std::map<MVertex*, SPoint2> * parametricCoordinates= 0);
+                         std::map<MVertex*, MVertex*>* equivalence= 0,
+                         std::map<MVertex*, SPoint2> * parametricCoordinates = 0);
 void bowyerWatsonFrontalLayers(GFace *gf, bool quad,
-		  std::map<MVertex* , MVertex*>* equivalence= 0,
-		  std::map<MVertex*, SPoint2> * parametricCoordinates= 0);
+                               std::map<MVertex*, MVertex*>* equivalence= 0,
+                               std::map<MVertex*, SPoint2> * parametricCoordinates = 0);
 void bowyerWatsonParallelograms(GFace *gf,
-		  std::map<MVertex* , MVertex*>* equivalence= 0,
-		  std::map<MVertex*, SPoint2> * parametricCoordinates= 0);
+                                std::map<MVertex*, MVertex*>* equivalence= 0,
+                                std::map<MVertex*, SPoint2> * parametricCoordinates = 0);
 void bowyerWatsonParallelogramsConstrained(GFace *gf,
-		  std::set<MVertex*> constr_vertices,
-		  std::map<MVertex* , MVertex*>* equivalence= 0,
-		  std::map<MVertex*, SPoint2> * parametricCoordinates= 0);
+                                           std::set<MVertex*> constr_vertices,
+                                           std::map<MVertex*, MVertex*> *equivalence = 0,
+                                           std::map<MVertex*, SPoint2>
+                                           *parametricCoordinates = 0);
 void buildBackGroundMesh (GFace *gf,
-		  std::map<MVertex* , MVertex*>* equivalence= 0,
-		  std::map<MVertex*, SPoint2> * parametricCoordinates= 0);
+                          std::map<MVertex*, MVertex*> *equivalence = 0,
+                          std::map<MVertex*, SPoint2> *parametricCoordinates = 0);
 
 void delaunayMeshIn2D(std::vector<MVertex*> &,
 		      std::vector<MTriangle*> &,
@@ -174,7 +180,7 @@ void delaunayMeshIn2D(std::vector<MVertex*> &,
 struct edgeXface
 {
   MVertex *v[2];
-  MTri3 * t1;
+  MTri3 *t1;
   int i1;
   edgeXface(MTri3 *_t, int iFac) : t1(_t), i1(iFac)
   {
@@ -196,7 +202,9 @@ struct edgeXface
   }
   inline bool operator == ( const edgeXface &other) const
   {
-    if(v[0]->getNum() == other.v[0]->getNum() && v[1]->getNum() == other.v[1]->getNum()) return true;
+    if(v[0]->getNum() == other.v[0]->getNum() &&
+       v[1]->getNum() == other.v[1]->getNum())
+      return true;
     return false;
   }
 };

@@ -5191,6 +5191,16 @@ double opt_mesh_rand_factor(OPT_ARGS_NUM)
   return CTX::instance()->mesh.randFactor;
 }
 
+double opt_mesh_rand_factor3d(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    if(!(action & GMSH_SET_DEFAULT) && val != CTX::instance()->mesh.randFactor3d)
+      Msg::SetOnelabChanged(2);
+    CTX::instance()->mesh.randFactor3d = val;
+  }
+  return CTX::instance()->mesh.randFactor3d;
+}
+
 double opt_mesh_quality_type(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
