@@ -1864,7 +1864,7 @@ Shape :
         }
       }
       else{
-        int sphereCenter = 0;
+        int sphereCenter = -1;
         if(List_Nbr($7) == 1){
           double d; List_Read($7, 0, &d);
           sphereCenter = (int)d;

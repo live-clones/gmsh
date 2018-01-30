@@ -8263,7 +8263,7 @@ yyreduce:
         }
       }
       else{
-        int sphereCenter = 0;
+        int sphereCenter = -1;
         if(List_Nbr((yyvsp[(7) - (8)].l)) == 1){
           double d; List_Read((yyvsp[(7) - (8)].l), 0, &d);
           sphereCenter = (int)d;
