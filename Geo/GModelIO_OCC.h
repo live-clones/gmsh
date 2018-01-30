@@ -196,7 +196,10 @@ class OCC_Internals {
                     double dx, double dy, double roundedRadius = 0.);
   bool addDisk(int &tag, double xc, double yc, double zc, double rx, double ry);
   bool addPlaneSurface(int &tag, const std::vector<int> &wireTags);
-  bool addSurfaceFilling(int &tag, int wireTag);
+  bool addSurfaceFilling(int &tag, int wireTag,
+                         const std::vector<int> &vertexTags = std::vector<int>(),
+                         const std::vector<int> &faceTags = std::vector<int>(),
+                         const std::vector<int> &faceContinuity = std::vector<int>());
   bool addSurfaceLoop(int &tag, const std::vector<int> &faceTags);
   bool addVolume(int &tag, const std::vector<int> &shellTags);
   bool addSphere(int &tag, double xc, double yc, double zc, double radius,
@@ -430,7 +433,10 @@ public:
   {
     return _error("add plane surface");
   }
-  bool addSurfaceFilling(int &tag, int wireTag)
+  bool addSurfaceFilling(int &tag, int wireTag,
+                         const std::vector<int> &vertexTags = std::vector<int>(),
+                         const std::vector<int> &faceTags = std::vector<int>(),
+                         const std::vector<int> &faceContinuity = std::vector<int>())
   {
     return _error("add surface filling");
   }

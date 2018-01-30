@@ -1398,7 +1398,10 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
   return true;
 }
 
-bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag)
+bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
+                                      const std::vector<int> &vertexTags,
+                                      const std::vector<int> &faceTags,
+                                      const std::vector<int> &faceContinuity)
 {
   if(tag >= 0 && _tagFace.IsBound(tag)){
     Msg::Error("OpenCASCADE face with tag %d already exists", tag);
@@ -1408,18 +1411,41 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag)
   TopoDS_Face result;
   try{
     BRepOffsetAPI_MakeFilling f;
-    // add edge constraints
+    // bounding edge constraints
     if(!_tagWire.IsBound(wireTag)){
       Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
       return false;
     }
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
     TopExp_Explorer exp0;
+    int i = 0;
     for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()){
       TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
-      f.Add(edge, GeomAbs_C0);
+      if(i < faceTags.size()){ // associated face constraint (does not seem to work...)
+        if(!_tagFace.IsBound(faceTags[i])){
+          Msg::Error("Unknown OpenCASCADE face with tag %d", faceTags[i]);
+          return false;
+        }
+        TopoDS_Face face = TopoDS::Face(_tagFace.Find(faceTags[i]));
+        if(i < faceContinuity.size() && faceContinuity[i] == 2)
+          f.Add(edge, face, GeomAbs_G2);
+        else
+          f.Add(edge, face, GeomAbs_G1);
+      }
+      else{
+        f.Add(edge, GeomAbs_C0);
+      }
+      i++;
     }
-    // TODO: add optional point constraints using f.Add(gp_Pnt(x, y, z);
+    // point constraints
+    for(unsigned int i = 0; i < vertexTags.size(); i++){
+      if(!_tagVertex.IsBound(vertexTags[i])){
+        Msg::Error("Unknown OpenCASCADE vertex with tag %d", vertexTags[i]);
+        return false;
+      }
+      TopoDS_Vertex vertex = TopoDS::Vertex(_tagVertex.Find(vertexTags[i]));
+      f.Add(BRep_Tool::Pnt(vertex));
+    }
     f.Build();
     if(!f.IsDone()){
       Msg::Error("Could not build surface filling");
