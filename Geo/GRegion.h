@@ -43,6 +43,9 @@ class GRegion : public GEntity {
   // get the dimension of the region (3)
   virtual int dim() const { return 3; }
 
+  // returns the parent entity for partitioned entities
+  virtual GRegion* getParentEntity() { return 0; }
+
   // set the visibility flag
   virtual void setVisibility(char val, bool recursive=false);
 

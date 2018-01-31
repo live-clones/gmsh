@@ -58,6 +58,9 @@ class GVertex : public GEntity
   // get the dimension of the vertex (0)
   virtual int dim() const { return 0; }
 
+  // returns the parent entity for partitioned entities
+  virtual GVertex* getParentEntity() { return 0; }
+
   // get the geometric type of the vertex
   virtual GeomType geomType() const { return Point; }
 

@@ -128,6 +128,9 @@ class GFace : public GEntity {
   // dimension of the face (2)
   virtual int dim() const { return 2; }
 
+  // returns the parent entity for partitioned entities
+  virtual GFace* getParentEntity() { return 0; }
+
   // set visibility flag
   virtual void setVisibility(char val, bool recursive=false);
 

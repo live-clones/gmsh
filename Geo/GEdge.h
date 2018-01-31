@@ -71,6 +71,9 @@ class GEdge : public GEntity {
   // get the dimension of the edge (1)
   virtual int dim() const { return 1; }
 
+  // returns the parent entity for partitioned entities
+  virtual GEdge* getParentEntity() { return 0; }
+
   // set the visibility flag
   virtual void setVisibility(char val, bool recursive=false);
 

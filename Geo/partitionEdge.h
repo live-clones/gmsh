@@ -23,7 +23,7 @@ public:
   virtual ~partitionEdge() {}
   virtual GeomType geomType() const { return PartitionCurve; }
   virtual void setParentEntity(GEdge* e) { _parentEntity = e; }
-  virtual GEdge* getParentEntity() const { return _parentEntity; }
+  virtual GEdge* getParentEntity() { return _parentEntity; }
   virtual void setPartitions(std::vector<unsigned int> &partitions)
   {
     _partitions = partitions;
