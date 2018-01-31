@@ -173,18 +173,6 @@ class Graph
     for(unsigned int i = 0; i < size; i++) _eptr[i] = 0;
   }
   void eptr(unsigned int i, unsigned int eptr) { _eptr[i] = eptr; };
-  void xadjResize(unsigned int size)
-  {
-    _xadj = new unsigned int[size];
-    for(unsigned int i = 0; i < size; i++) _xadj[i] = 0;
-  }
-  void xadj(unsigned int i, unsigned int xadj) { _xadj[i] = xadj; };
-  void adjncyResize(unsigned int size)
-  {
-    _adjncy = new unsigned int[size];
-    for(unsigned int i = 0; i < size; i++) _adjncy[i] = 0;
-  }
-  void adjncy(unsigned int i, unsigned int adjncy) { _adjncy[i] = adjncy; };
   void elementResize(unsigned int size)
   {
     _element = new MElement*[size];
@@ -197,6 +185,7 @@ class Graph
     _vertex = new int[size];
     for(unsigned int i = 0; i < size; i++) _vertex[i] = -1;
   }
+  void adjncy(unsigned int i, unsigned int adjncy) { _adjncy[i] = adjncy; };
   void vertex(unsigned int i, int vertex) { _vertex[i] = vertex; };
   void vwgt(unsigned int *vwgt) { _vwgt = vwgt; };
   void partition(unsigned int *partition) { _partition = partition; };
@@ -323,6 +312,104 @@ class Graph
       }
     }
   }
+  
+  void createDualGraph(bool connectedAll)
+  {
+    int *nptr = new int[_nn+1];
+    for(unsigned int i = 0; i < _nn+1; i++) nptr[i] = 0;
+    int *nind = new int[_eptr[_ne]];
+    for(unsigned int i = 0; i < _eptr[_ne]; i++) nind[i] = 0;
+    
+    for(unsigned int i = 0; i < _ne; i++){
+      for(unsigned int j = _eptr[i]; j < _eptr[i+1]; j++){
+        nptr[_eind[j]]++;
+      }
+    }
+    
+    for(unsigned int i = 1; i < _nn; i++) nptr[i] += nptr[i-1];
+    for(unsigned int i = _nn; i > 0; i--) nptr[i] = nptr[i-1];
+    nptr[0] = 0;
+    
+    for(unsigned int i = 0; i < _ne; i++){
+      for(unsigned int j = _eptr[i]; j < _eptr[i+1]; j++){
+        nind[nptr[_eind[j]]++] = i;
+      }
+    }
+    
+    for(unsigned int i = _nn; i > 0; i--) nptr[i] = nptr[i-1];
+    nptr[0] = 0;
+    
+    _xadj = new unsigned int[_ne+1];
+    for(unsigned int i = 0; i < _ne+1; i++) _xadj[i] = 0;
+    int *nbrs = new int[_ne];
+    int *marker = new int[_ne];
+    for(unsigned int i = 0; i < _ne; i++){
+      nbrs[i] = 0;
+      marker[i] = 0;
+    }
+    
+    for(unsigned int i = 0; i < _ne; i++){
+      unsigned int l = 0;
+      for(unsigned int j = _eptr[i]; j < _eptr[i+1]; j++){
+        for(int k = nptr[_eind[j]]; k < nptr[_eind[j]+1]; k++){
+          if(nind[k] != (int)i){
+            if(marker[nind[k]] == 0) nbrs[l++] = nind[k];
+            marker[nind[k]]++;
+          }
+        }
+      }
+      
+      unsigned int nbrsNeighbors = 0;
+      for(unsigned int j = 0; j < l; j++){
+        if(marker[nbrs[j]] >=
+           (connectedAll ? 1 :
+            _element[i]->numCommonNodesInDualGraph(_element[nbrs[j]])))
+          nbrsNeighbors++;
+        marker[nbrs[j]] = 0;
+        nbrs[j] = 0;
+      }
+      
+      _xadj[i] = nbrsNeighbors;
+    }
+    
+    for(unsigned int i = 1; i < _ne; i++) _xadj[i] = _xadj[i] + _xadj[i-1];
+    for(unsigned int i = _ne; i > 0; i--) _xadj[i] = _xadj[i-1];
+    _xadj[0] = 0;
+    
+    _adjncy = new unsigned int[_xadj[_ne]];
+    for(unsigned int i = 0; i < _xadj[_ne]; i++) _adjncy[i] = 0;
+    
+    for(unsigned int i = 0; i < _ne; i++){
+      unsigned int l = 0;
+      for(unsigned int j = _eptr[i]; j < _eptr[i+1]; j++){
+        for(int k = nptr[_eind[j]]; k < nptr[_eind[j]+1]; k++){
+          if(nind[k] != (int)i){
+            if (marker[nind[k]] == 0) nbrs[l++] = nind[k];
+            marker[nind[k]]++;
+          }
+        }
+      }
+      
+      for(unsigned int j = 0; j < l; j++){
+        if(marker[nbrs[j]] >=
+           (connectedAll ? 1 :
+            _element[i]->numCommonNodesInDualGraph(_element[nbrs[j]]))){
+             _adjncy[_xadj[i]] = nbrs[j];
+             _xadj[i] = _xadj[i]+1;
+           }
+        marker[nbrs[j]] = 0;
+        nbrs[j] = 0;
+      }
+    }
+    delete[] nbrs;
+    delete[] marker;
+    
+    for(unsigned int i = _ne; i > 0; i--) _xadj[i] = _xadj[i-1];
+    _xadj[0] = 0;
+    
+    delete[] nptr;
+    delete[] nind;
+  }
 };
 
 template <class ITERATOR>
@@ -373,18 +460,6 @@ static int getSizeOfEind(const GModel *const model)
   }
 
   return size;
-}
-
-static bool isPeriodic(const GModel *const model)
-{
-  std::vector<GEntity*> entities;
-  model->getEntities(entities);
-
-  for(unsigned int i = 0; i < entities.size(); i++){
-    if(entities[i]->correspondingVertices.size() != 0) return true;
-  }
-
-  return false;
 }
 
 // Creates a mesh data structure used by Metis routines. Returns: 0 = success, 1
@@ -510,124 +585,7 @@ static int MakeGraph(GModel *const model, Graph &graph, int selectDim)
     }
   }
 
-  // Taking into account the periodicity
-  if(isPeriodic(model) && selectDim < 0){
-    std::map<int,int> correspondingVertices;
-    std::vector<GEntity*> entities;
-    model->getEntities(entities);
-    for(unsigned int i = 0; i < entities.size(); i++){
-      for(std::map<MVertex*,MVertex*>::iterator it =
-            entities[i]->correspondingVertices.begin();
-          it != entities[i]->correspondingVertices.end(); ++it){
-        correspondingVertices.insert(std::pair<int,int>
-                                     (graph.vertex(it->first->getNum()-1),
-                                      graph.vertex(it->second->getNum()-1)));
-      }
-    }
-    for(int i = 0; i < eindSize; i++){
-      std::map<int,int>::iterator it = correspondingVertices.find(graph.eind(i));
-      if(it != correspondingVertices.end()){
-        graph.eind(i,it->second);
-      }
-    }
-  }
-
   return 0;
-}
-
-static void createDualGraph(Graph &graph, bool connectedAll)
-{
-  int *nptr = new int[graph.nn()+1];
-  for(unsigned int i = 0; i < graph.nn()+1; i++) nptr[i] = 0;
-  int *nind = new int[graph.eptr(graph.ne())];
-  for(unsigned int i = 0; i < graph.eptr(graph.ne()); i++) nind[i] = 0;
-
-  for(unsigned int i = 0; i < graph.ne(); i++){
-    for(unsigned int j = graph.eptr(i); j < graph.eptr(i+1); j++){
-      nptr[graph.eind(j)]++;
-    }
-  }
-
-  for(unsigned int i = 1; i < graph.nn(); i++) nptr[i] += nptr[i-1];
-  for(unsigned int i = graph.nn(); i > 0; i--) nptr[i] = nptr[i-1];
-  nptr[0] = 0;
-
-  for(unsigned int i = 0; i < graph.ne(); i++){
-    for(unsigned int j = graph.eptr(i); j < graph.eptr(i+1); j++){
-      nind[nptr[graph.eind(j)]++] = i;
-    }
-  }
-
-  for(unsigned int i = graph.nn(); i > 0; i--) nptr[i] = nptr[i-1];
-  nptr[0] = 0;
-
-  graph.xadjResize(graph.ne()+1);
-  int *nbrs = new int[graph.ne()];
-  int *marker = new int[graph.ne()];
-  for(unsigned int i = 0; i < graph.ne(); i++){
-    nbrs[i] = 0;
-    marker[i] = 0;
-  }
-
-  for(unsigned int i = 0; i < graph.ne(); i++){
-    unsigned int l = 0;
-    for(unsigned int j = graph.eptr(i); j < graph.eptr(i+1); j++){
-      for(int k = nptr[graph.eind(j)]; k < nptr[graph.eind(j)+1]; k++){
-        if(nind[k] != (int)i){
-          if(marker[nind[k]] == 0) nbrs[l++] = nind[k];
-          marker[nind[k]]++;
-        }
-      }
-    }
-
-    unsigned int nbrsNeighbors = 0;
-    for(unsigned int j = 0; j < l; j++){
-      if(marker[nbrs[j]] >=
-         (connectedAll ? 1 :
-          graph.element(i)->numCommonNodesInDualGraph(graph.element(nbrs[j]))))
-        nbrsNeighbors++;
-      marker[nbrs[j]] = 0;
-      nbrs[j] = 0;
-    }
-
-    graph.xadj(i, nbrsNeighbors);
-  }
-
-  for(unsigned int i = 1; i < graph.ne(); i++) graph.xadj(i,graph.xadj(i)+graph.xadj(i-1));
-  for(unsigned int i = graph.ne(); i > 0; i--) graph.xadj(i,graph.xadj(i-1));
-  graph.xadj(0,0);
-
-  graph.adjncyResize(graph.xadj(graph.ne()));
-  for(unsigned int i = 0; i < graph.ne(); i++){
-    unsigned int l = 0;
-    for(unsigned int j = graph.eptr(i); j < graph.eptr(i+1); j++){
-      for(int k = nptr[graph.eind(j)]; k < nptr[graph.eind(j)+1]; k++){
-        if(nind[k] != (int)i){
-          if (marker[nind[k]] == 0) nbrs[l++] = nind[k];
-          marker[nind[k]]++;
-        }
-      }
-    }
-
-    for(unsigned int j = 0; j < l; j++){
-      if(marker[nbrs[j]] >=
-         (connectedAll ? 1 :
-          graph.element(i)->numCommonNodesInDualGraph(graph.element(nbrs[j])))){
-        graph.adjncy(graph.xadj(i), nbrs[j]);
-        graph.xadj(i, graph.xadj(i)+1);
-      }
-      marker[nbrs[j]] = 0;
-      nbrs[j] = 0;
-    }
-  }
-  delete[] nbrs;
-  delete[] marker;
-
-  for(unsigned int i = graph.ne(); i > 0; i--) graph.xadj(i, graph.xadj(i-1));
-  graph.xadj(0, 0);
-
-  delete[] nptr;
-  delete[] nind;
 }
 
 // Partition a graph created by MakeGraph using Metis library. Returns: 0 =
@@ -699,7 +657,7 @@ static int PartitionGraph(Graph &graph)
     graph.fillDefaultWeights();
 
     int metisError = 0;
-    createDualGraph(graph, false);
+    graph.createDualGraph(false);
 
     if (metisOptions[METIS_OPTION_PTYPE] == METIS_PTYPE_KWAY){
       metisError = METIS_PartGraphKway
@@ -736,21 +694,25 @@ static int PartitionGraph(Graph &graph)
       if(graph.element(i)->getDim() == (int)graph.dim()) continue;
 
       for(unsigned int j = graph.xadj(i); j < graph.xadj(i+1); j++){
-        if(graph.element(graph.adjncy(j))->getDim() == graph.element(i)->getDim()+1){
+        if(graph.element(i)->getDim() == graph.element(graph.adjncy(j))->getDim()+1){
           if(epart[i] != epart[graph.adjncy(j)]){
             epart[i] = epart[graph.adjncy(j)];
             break;
           }
         }
-
-        if(graph.element(graph.adjncy(j))->getDim() == graph.element(i)->getDim()+2){
+      }
+      
+      for(unsigned int j = graph.xadj(i); j < graph.xadj(i+1); j++){
+        if(graph.element(i)->getDim() == graph.element(graph.adjncy(j))->getDim()+2){
           if(epart[i] != epart[graph.adjncy(j)]){
             epart[i] = epart[graph.adjncy(j)];
             break;
           }
         }
-
-        if(graph.element(graph.adjncy(j))->getDim() == graph.element(i)->getDim()+3){
+      }
+      
+      for(unsigned int j = graph.xadj(i); j < graph.xadj(i+1); j++){
+        if(graph.element(i)->getDim() == graph.element(graph.adjncy(j))->getDim()+3){
           if(epart[i] != epart[graph.adjncy(j)]){
             epart[i] = epart[graph.adjncy(j)];
             break;
@@ -1091,7 +1053,7 @@ static bool dividedNonConnectedEntities(GModel *const model, int dim,
         fillElementsToNodesMap(graph, edge, eptrIndex, eindIndex, numVertex,
                                edge->lines.begin(), edge->lines.end());
         graph.nn(numVertex);
-        createDualGraph(graph, false);
+        graph.createDualGraph(false);
 
         // if a graph contains at least ((n-1)*(n-2))/2 + 1 edges
         // (where n is the number of nodes), then it is connected.
@@ -1188,7 +1150,7 @@ static bool dividedNonConnectedEntities(GModel *const model, int dim,
         fillElementsToNodesMap(graph, face, eptrIndex, eindIndex, numVertex,
                                face->quadrangles.begin(), face->quadrangles.end());
         graph.nn(numVertex);
-        createDualGraph(graph, false);
+        graph.createDualGraph(false);
 
         // if a graph contains at least ((n-1)*(n-2))/2 + 1 edges
         // (where n is the number of nodes), then it is connected.
@@ -1292,7 +1254,7 @@ static bool dividedNonConnectedEntities(GModel *const model, int dim,
         fillElementsToNodesMap(graph, region, eptrIndex, eindIndex, numVertex,
                                region->trihedra.begin(), region->trihedra.end());
         graph.nn(numVertex);
-        createDualGraph(graph, false);
+        graph.createDualGraph(false);
 
         // if a graph contains at least ((n-1)*(n-2))/2 + 1 edges
         // (where n is the number of nodes), then it is connected.
@@ -2028,7 +1990,7 @@ static void CreatePartitionTopology(GModel *const model,
     else{
       Graph subGraph(model);
       MakeGraph(model, subGraph, 2);
-      createDualGraph(subGraph, false);
+      subGraph.createDualGraph(false);
       unsigned int *part = new unsigned int[subGraph.ne()];
       int partIndex = 0;
 
@@ -2118,7 +2080,7 @@ static void CreatePartitionTopology(GModel *const model,
     else{
       Graph subGraph(model);
       MakeGraph(model, subGraph, 1);
-      createDualGraph(subGraph, false);
+      subGraph.createDualGraph(false);
       unsigned int *part = new unsigned int[subGraph.ne()];
       int partIndex = 0;
 
@@ -2332,77 +2294,6 @@ static void AssignPhysicalName(GModel *model)
   }
 }
 
-void movePeriodicNodesFromParentToPartitionEntities(GModel * const model)
-{
-  std::vector<GEntity*> entities;
-  model->getEntities(entities);
-  std::set<GEntity*> emptiedEntities;
-
-  for(unsigned int i = 0; i < entities.size(); i++){
-    if(entities[i]->correspondingVertices.size() != 0){
-      emptiedEntities.insert(entities[i]);
-      for(std::map<MVertex*,MVertex*>::iterator it =
-            entities[i]->correspondingVertices.begin();
-          it != entities[i]->correspondingVertices.end(); ++it){
-        it->first->onWhat()->correspondingVertices.insert
-          (std::pair<MVertex*,MVertex*>(it->first,it->second));
-        it->first->onWhat()->setMeshMaster(it->second->onWhat());
-      }
-    }
-  }
-
-  for(std::set<GEntity*>::iterator it = emptiedEntities.begin();
-      it != emptiedEntities.end(); ++it){
-    (*it)->correspondingVertices.clear();
-    (*it)->setMeshMaster(*it);
-  }
-}
-
-void movePeriodicNodesFromPartitionToParentEntities(GModel * const model)
-{
-  std::vector<GEntity*> entities;
-  model->getEntities(entities);
-  std::set<GEntity*> emptiedEntities;
-
-  for(unsigned int i = 0; i < entities.size(); i++){
-    if(entities[i]->correspondingVertices.size() != 0){
-      emptiedEntities.insert(entities[i]);
-      for(std::map<MVertex*,MVertex*>::iterator it =
-            entities[i]->correspondingVertices.begin();
-          it != entities[i]->correspondingVertices.end(); ++it){
-        if(entities[i]->geomType() == GEntity::PartitionVertex){
-          partitionVertex* pv = static_cast<partitionVertex*>(entities[i]);
-          pv->getParentEntity()->correspondingVertices.insert
-            (std::pair<MVertex*,MVertex*>(it->first,it->second));
-          static_cast<GEntity*>(pv->getParentEntity())->setMeshMaster
-            (static_cast<partitionVertex*>(it->second->onWhat())->getParentEntity());
-        }
-        else if(entities[i]->geomType() == GEntity::PartitionCurve){
-          partitionEdge* pe = static_cast<partitionEdge*>(entities[i]);
-          pe->getParentEntity()->correspondingVertices.insert
-            (std::pair<MVertex*,MVertex*>(it->first,it->second));
-          static_cast<GEntity*>(pe->getParentEntity())->setMeshMaster
-            (static_cast<partitionEdge*>(it->second->onWhat())->getParentEntity());
-        }
-        else if(entities[i]->geomType() == GEntity::PartitionSurface){
-          partitionFace* pf = static_cast<partitionFace*>(entities[i]);
-          pf->getParentEntity()->correspondingVertices.insert
-            (std::pair<MVertex*,MVertex*>(it->first,it->second));
-          static_cast<GEntity*>(pf->getParentEntity())->setMeshMaster
-            (static_cast<partitionFace*>(it->second->onWhat())->getParentEntity());
-        }
-        else if(entities[i]->geomType() == GEntity::PartitionVolume){
-          partitionRegion* pr = static_cast<partitionRegion*>(entities[i]);
-          pr->getParentEntity()->correspondingVertices.insert
-            (std::pair<MVertex*,MVertex*>(it->first,it->second));
-          static_cast<GEntity*>(pr->getParentEntity())->setMeshMaster
-            (static_cast<partitionRegion*>(it->second->onWhat())->getParentEntity());
-        }
-      }
-    }
-  }
-}
-
 // Partition a mesh into n parts. Returns: 0 = success, 1 = error
 int PartitionMesh(GModel *const model)
 {
@@ -2457,11 +2348,9 @@ int PartitionMesh(GModel *const model)
 
   AssignMeshVertices(model);
 
-  movePeriodicNodesFromParentToPartitionEntities(model);
-
   if(CTX::instance()->mesh.partitionCreateGhostCells){
     graph.clearDualGraph();
-    createDualGraph(graph, true);
+    graph.createDualGraph(true);
     graph.assignGhostCells();
   }
 
@@ -2552,8 +2441,6 @@ int UnpartitionMesh(GModel *const model)
   std::set<GVertex*, GEntityLessThan> vertices = model->getVertices();
 
   std::set<MVertex*> verts;
-
-  movePeriodicNodesFromPartitionToParentEntities(model);
 
   // Loop over vertices
   for(GModel::viter it = vertices.begin(); it != vertices.end(); ++it){
@@ -2703,7 +2590,7 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
 {
   Graph graph(model);
   if(MakeGraph(model, graph, -1)) return 1;
-  createDualGraph(graph, false);
+  graph.createDualGraph(false);
   graph.nparts(npart);
 
   if(elmToPartition.size() != graph.ne()){
@@ -2719,27 +2606,32 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
   }
 
   // Check and correct the topology
+  // Check and correct the topology
   for(unsigned int i = 0; i < graph.ne(); i++){
     if(graph.element(i)->getDim() == (int)graph.dim()) continue;
-
+    
     for(unsigned int j = graph.xadj(i); j < graph.xadj(i+1); j++){
-      if(graph.element(graph.adjncy(j))->getDim() == graph.element(i)->getDim()+1){
+      if(graph.element(i)->getDim() == graph.element(graph.adjncy(j))->getDim()+1){
         if(part[i] != part[graph.adjncy(j)]){
           part[i] = part[graph.adjncy(j)];
           elmToPartition[graph.element(i)] = part[i]+1;
           break;
         }
       }
-
-      if(graph.element(graph.adjncy(j))->getDim() == graph.element(i)->getDim()+2){
+    }
+    
+    for(unsigned int j = graph.xadj(i); j < graph.xadj(i+1); j++){
+      if(graph.element(i)->getDim() == graph.element(graph.adjncy(j))->getDim()+2){
         if(part[i] != part[graph.adjncy(j)]){
           part[i] = part[graph.adjncy(j)];
           elmToPartition[graph.element(i)] = part[i]+1;
           break;
         }
       }
-
-      if(graph.element(graph.adjncy(j))->getDim() == graph.element(i)->getDim()+3){
+    }
+    
+    for(unsigned int j = graph.xadj(i); j < graph.xadj(i+1); j++){
+      if(graph.element(i)->getDim() == graph.element(graph.adjncy(j))->getDim()+3){
         if(part[i] != part[graph.adjncy(j)]){
           part[i] = part[graph.adjncy(j)];
           elmToPartition[graph.element(i)] = part[i]+1;
@@ -2766,11 +2658,9 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
 
   AssignMeshVertices(model);
 
-  movePeriodicNodesFromParentToPartitionEntities(model);
-
   if(CTX::instance()->mesh.partitionCreateGhostCells){
     graph.clearDualGraph();
-    createDualGraph(graph, false);
+    graph.createDualGraph(false);
     graph.assignGhostCells();
   }
 
