@@ -1552,7 +1552,7 @@ SurfaceConstraints :
   | tIn tSphere '{' FExpr '}'
     {
       $$ = List_Create(1, 1, sizeof(double));
-      int p = (int)$4;
+      double p = $4;
       List_Add($$, &p);
     }
   | tUsing tPoint '{' RecursiveListOfDouble '}'

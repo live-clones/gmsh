@@ -7909,7 +7909,7 @@ yyreduce:
 #line 1553 "Gmsh.y"
     {
       (yyval.l) = List_Create(1, 1, sizeof(double));
-      int p = (int)(yyvsp[(4) - (5)].d);
+      double p = (yyvsp[(4) - (5)].d);
       List_Add((yyval.l), &p);
     ;}
     break;
