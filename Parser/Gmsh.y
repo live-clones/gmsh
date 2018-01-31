@@ -1874,6 +1874,7 @@ Shape :
       }
       if(!r) yymsg(0, "Could not add surface");
       List_Delete($6);
+      List_Delete($7);
       $$.Type = MSH_SURF_REGL;
       $$.Num = num;
     }
@@ -1882,15 +1883,16 @@ Shape :
       yymsg(2, "'Ruled Surface' command is deprecated: use 'Surface' instead");
       int num = (int)$4;
       std::vector<int> wires; ListOfDouble2Vector($7, wires);
-      int sphereCenter = 0;
-      if(List_Nbr($7) == 1){
-        double d; List_Read($7, 0, &d);
+      int sphereCenter = -1;
+      if(List_Nbr($8) == 1){
+        double d; List_Read($8, 0, &d);
         sphereCenter = (int)d;
       }
       bool r = GModel::current()->getGEOInternals()->addSurfaceFilling
         (num, wires, sphereCenter);
       if(!r) yymsg(0, "Could not add surface");
       List_Delete($7);
+      List_Delete($8);
       $$.Type =  MSH_SURF_REGL;
       $$.Num = num;
     }
