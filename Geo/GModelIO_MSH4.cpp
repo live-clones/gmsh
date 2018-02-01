@@ -38,19 +38,19 @@
 #include "StringUtils.h"
 #include "Options.h"
 
-static void readMSH4Physicals(GModel *const model, FILE* fp, GEntity *const entity,
+static bool readMSH4Physicals(GModel *const model, FILE* fp, GEntity *const entity,
                               bool binary, char *str, bool swap)
 {
   unsigned long numPhy = 0;
   if(binary){
     if(fread(&numPhy, sizeof(unsigned long), 1, fp) != 1){
-      return;
+      return false;
     }
     if(swap) SwapBytes((char*)&numPhy, sizeof(unsigned long), 1);
 
     int *phyTags = new int[numPhy];
     if(fread(phyTags, sizeof(int), numPhy, fp) != numPhy){
-      return;
+      return false;
     }
     if(swap) SwapBytes((char*)phyTags, sizeof(int), numPhy);
 
@@ -67,21 +67,22 @@ static void readMSH4Physicals(GModel *const model, FILE* fp, GEntity *const enti
 
       if(i == numPhy-1 && entity->dim() == 0){
         if(sscanf(str, "%d", &phyTag) != 1){
-          return;
+          return false;
         }
       }
       else{
         if(sscanf(str, "%d %[0-9- ]", &phyTag, str) != 2){
-          return;
+          return false;
         }
       }
 
       entity->addPhysicalEntity(phyTag);
     }
   }
+  return true;
 }
 
-static void readMSH4BoundingEntities(GModel *const model, FILE* fp,
+static bool readMSH4BoundingEntities(GModel *const model, FILE* fp,
                                      GEntity *const entity, bool binary,
                                      char *str, bool swap)
 {
@@ -91,13 +92,13 @@ static void readMSH4BoundingEntities(GModel *const model, FILE* fp,
 
   if(binary){
     if(fread(&numBrep, sizeof(unsigned long), 1, fp) != 1){
-      return;
+      return false;
     }
     if(swap) SwapBytes((char*)&numBrep, sizeof(unsigned long), 1);
 
     int *brepTags = new int[numBrep];
     if(fread(brepTags, sizeof(int), numBrep, fp) != numBrep){
-      return;
+      return false;
     }
     if(swap) SwapBytes((char*)brepTags, sizeof(int), numBrep);
 
@@ -106,7 +107,7 @@ static void readMSH4BoundingEntities(GModel *const model, FILE* fp,
       if(!brep){
         Msg::Warning("Entity %d not found in the Brep of entity %d",
                      brepTags[i], entity->tag());
-        return;
+        return false;
       }
       boundingEntities.push_back(brep);
       boundingSign.push_back((std::abs(brepTags[i]) == brepTags[i] ? 1 : -1));
@@ -120,12 +121,12 @@ static void readMSH4BoundingEntities(GModel *const model, FILE* fp,
 
       if(i != numBrep - 1){
         if(sscanf(str, "%d %[0-9- ]", &entityTag, str) != 2){
-          return;
+          return false;
         }
       }
       else{
         if(sscanf(str, "%d", &entityTag) != 1){
-          return;
+          return false;
         }
       }
 
@@ -133,7 +134,7 @@ static void readMSH4BoundingEntities(GModel *const model, FILE* fp,
       if(!brep){
         Msg::Warning("Entity %d not found in the Brep of entity %d",
                      entityTag, entity->tag());
-        return;
+        return false;
       }
       boundingEntities.push_back(brep);
       boundingSign.push_back((std::abs(entityTag) == entityTag ? 1 : -1));
@@ -178,6 +179,7 @@ static void readMSH4BoundingEntities(GModel *const model, FILE* fp,
     default:
       break;
   }
+  return true;
 }
 
 static bool readMSH4EntityInfo(FILE *fp, bool binary, char *str, bool swap,
@@ -261,7 +263,7 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, char *str, bool swap,
   return true;
 }
 
-static void readMSH4Entities(GModel *const model, FILE* fp, bool partition,
+static bool readMSH4Entities(GModel *const model, FILE* fp, bool partition,
                              bool binary, bool swap)
 {
   char str[256];
@@ -273,35 +275,35 @@ static void readMSH4Entities(GModel *const model, FILE* fp, bool partition,
 
     if(binary){
       if(fread(&numPartitions, sizeof(int), 1, fp) != 1){
-        return;
+        return false;
       }
       if(swap) SwapBytes((char*)&numPartitions, sizeof(int), 1);
 
       if(fread(&ghostSize, sizeof(int), 1, fp) != 1){
-        return;
+        return false;
       }
       if(swap) SwapBytes((char*)&ghostSize, sizeof(int), 1);
       if(ghostSize){
         ghostTags = new int[2*ghostSize];
         if(fread(ghostTags, sizeof(int), 2*ghostSize, fp) != 2*ghostSize){
-          return;
+          return false;
         }
         if(swap) SwapBytes((char*)ghostTags, sizeof(int), 2*ghostSize);
       }
     }
     else{
       if(fscanf(fp, "%d", &numPartitions) != 1){
-        return;
+        return false;
       }
 
       if(fscanf(fp, "%d", &ghostSize) != 1){
-        return;
+        return false;
       }
       if(ghostSize){
         ghostTags = new int[2*ghostSize];
         for(unsigned int i = 0; i < 2*ghostSize; i+=2){
           if(fscanf(fp, "%d %d", &ghostTags[i], &ghostTags[i+1]) != 2){
-            return;
+            return false;
           }
         }
       }
@@ -338,7 +340,7 @@ static void readMSH4Entities(GModel *const model, FILE* fp, bool partition,
   if(binary){
     unsigned long data[4];
     if(fread(data, sizeof(unsigned long), 4, fp) != 4){
-      return;
+      return false;
     }
     if(swap) SwapBytes((char*)data, sizeof(unsigned long), 4);
     numVert = data[0];
@@ -348,7 +350,7 @@ static void readMSH4Entities(GModel *const model, FILE* fp, bool partition,
   }
   else{
     if(fscanf(fp, "%lu %lu %lu %lu", &numVert, &numEdges, &numFaces, &numReg) != 4){
-      return;
+      return false;
     }
   }
 
@@ -360,7 +362,7 @@ static void readMSH4Entities(GModel *const model, FILE* fp, bool partition,
     if(!readMSH4EntityInfo(fp, binary, str, swap,
                            partition, tag, parentTag, partitions,
                            minX, minY, minZ, maxX, maxY, maxZ))
-      return;
+      return false;
     GVertex *gv = model->getVertexByTag(tag);
     if(!gv){
       if(partition){
@@ -373,7 +375,8 @@ static void readMSH4Entities(GModel *const model, FILE* fp, bool partition,
       }
       model->add(gv);
     }
-    readMSH4Physicals(model, fp, gv, binary, str, swap);
+    if(!readMSH4Physicals(model, fp, gv, binary, str, swap))
+      return false;
   }
 
   // Edges
@@ -384,7 +387,7 @@ static void readMSH4Entities(GModel *const model, FILE* fp, bool partition,
     if(!readMSH4EntityInfo(fp, binary, str, swap,
                            partition, tag, parentTag, partitions,
                            minX, minY, minZ, maxX, maxY, maxZ))
-      return;
+      return false;
     GEdge *ge = model->getEdgeByTag(tag);
     if(!ge){
       if(partition){
@@ -397,8 +400,10 @@ static void readMSH4Entities(GModel *const model, FILE* fp, bool partition,
       }
       model->add(ge);
     }
-    readMSH4Physicals(model, fp, ge, binary, str, swap);
-    readMSH4BoundingEntities(model, fp, ge, binary, str, swap);
+    if(!readMSH4Physicals(model, fp, ge, binary, str, swap))
+      return false;
+    if(!readMSH4BoundingEntities(model, fp, ge, binary, str, swap))
+      return false;
   }
 
   // Faces
@@ -409,7 +414,7 @@ static void readMSH4Entities(GModel *const model, FILE* fp, bool partition,
     if(!readMSH4EntityInfo(fp, binary, str, swap,
                            partition, tag, parentTag, partitions,
                            minX, minY, minZ, maxX, maxY, maxZ))
-      return;
+      return false;
     GFace *gf = model->getFaceByTag(tag);
     if(!gf){
       if(partition){
@@ -422,8 +427,10 @@ static void readMSH4Entities(GModel *const model, FILE* fp, bool partition,
       }
       model->add(gf);
     }
-    readMSH4Physicals(model, fp, gf, binary, str, swap);
-    readMSH4BoundingEntities(model, fp, gf, binary, str, swap);
+    if(!readMSH4Physicals(model, fp, gf, binary, str, swap))
+      return false;
+    if(!readMSH4BoundingEntities(model, fp, gf, binary, str, swap))
+      return false;
   }
 
   // Regions
@@ -434,7 +441,7 @@ static void readMSH4Entities(GModel *const model, FILE* fp, bool partition,
     if(!readMSH4EntityInfo(fp, binary, str, swap,
                            partition, tag, parentTag, partitions,
                            minX, minY, minZ, maxX, maxY, maxZ))
-      return;
+      return false;
     GRegion *gr = model->getRegionByTag(tag);
     if(!gr){
       if(partition){
@@ -447,9 +454,12 @@ static void readMSH4Entities(GModel *const model, FILE* fp, bool partition,
       }
       model->add(gr);
     }
-    readMSH4Physicals(model, fp, gr, binary, str, swap);
-    readMSH4BoundingEntities(model, fp, gr, binary, str, swap);
+    if(!readMSH4Physicals(model, fp, gr, binary, str, swap))
+      return false;
+    if(!readMSH4BoundingEntities(model, fp, gr, binary, str, swap))
+      return false;
   }
+  return true;
 }
 
 static std::pair<int, MVertex*> *readMSH4Nodes(GModel *const model, FILE* fp,
@@ -839,19 +849,19 @@ static std::pair<int, MElement*> *readMSH4Elements(GModel *const model, FILE* fp
   return elementCache;
 }
 
-static void readMSH4PeriodicNodes(GModel *const model, FILE* fp,
+static bool readMSH4PeriodicNodes(GModel *const model, FILE* fp,
                                   bool binary, bool swap)
 {
   int numPeriodicLinks = 0;
   if(binary){
     if(fread(&numPeriodicLinks, sizeof(int), 1, fp) != 1){
-      return;
+      return false;
     }
     if(swap) SwapBytes((char*)&numPeriodicLinks, sizeof(int), 1);
   }
   else{
     if(fscanf(fp, "%d", &numPeriodicLinks) != 1){
-      return;
+      return false;
     }
   }
 
@@ -861,7 +871,7 @@ static void readMSH4PeriodicNodes(GModel *const model, FILE* fp,
     if(binary){
       int data[3];
       if(fread(&data, sizeof(int), 3, fp) != 3){
-        return;
+        return false;
       }
       if(swap) SwapBytes((char*)data, sizeof(int), 3);
       slaveDim = data[0];
@@ -870,7 +880,7 @@ static void readMSH4PeriodicNodes(GModel *const model, FILE* fp,
     }
     else{
       if(fscanf(fp, "%d %d %d", &slaveDim, &slaveTag, &masterTag) != 3){
-        return;
+        return false;
       }
     }
 
@@ -902,14 +912,14 @@ static void readMSH4PeriodicNodes(GModel *const model, FILE* fp,
     long correspondingVertexSize = 0;
     if(binary){
       if(fread(&correspondingVertexSize, sizeof(long), 1, fp) != 1){
-        return;
+        return false;
       }
       if(swap) SwapBytes((char*)&correspondingVertexSize, sizeof(long), 1);
 
       if(correspondingVertexSize < 0){ //If there is an affine parameter
         double data[16];
         if(fread(&data, sizeof(double), 16, fp) != 16){
-          return;
+          return false;
         }
         if(swap) SwapBytes((char*)data, sizeof(double), 16);
 
@@ -920,34 +930,36 @@ static void readMSH4PeriodicNodes(GModel *const model, FILE* fp,
         slave->setMeshMaster(master, tfo);
 
         if(fread(&correspondingVertexSize, sizeof(long), 1, fp) != 1){
-          return;
+          return false;
         }
         if(swap) SwapBytes((char*)&correspondingVertexSize, sizeof(long), 1);
       }
     }
     else{
       char affine[256];
-      if(!fgets(affine, sizeof(affine), fp)){
-        return;
+      if(!fscanf(fp, "%s", affine)){
+        return false;
       }
-
       if(!strncmp(affine, "Affine", 6)){
+        if(!fgets(affine, sizeof(affine), fp)){
+          return false;
+        }
         std::vector<double> tfo(16);
-        if(sscanf(affine, "%*s %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf "
+        if(sscanf(affine, "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf "
                   "%lf %lf %lf %lf", &tfo[0], &tfo[1], &tfo[2], &tfo[3], &tfo[4],
                   &tfo[5], &tfo[6], &tfo[7], &tfo[8], &tfo[9], &tfo[10], &tfo[11],
                   &tfo[12], &tfo[13], &tfo[14], &tfo[15]) != 16){
-          return;
+          return false;
         }
         slave->setMeshMaster(master, tfo);
         if(fscanf(fp, "%lu", &correspondingVertexSize) != 1){
-          return;
+          return false;
         }
       }
       else{
         slave->setMeshMaster(master);
         if(sscanf(affine, "%lu", &correspondingVertexSize) != 1){
-          return;
+          return false;
         }
       }
     }
@@ -957,7 +969,7 @@ static void readMSH4PeriodicNodes(GModel *const model, FILE* fp,
       if(binary){
         int data[2];
         if(fread(&data, sizeof(int), 2, fp) != 2){
-          return;
+          return false;
         }
         if(swap) SwapBytes((char*)data, sizeof(int), 2);
 
@@ -966,7 +978,7 @@ static void readMSH4PeriodicNodes(GModel *const model, FILE* fp,
       }
       else{
         if(fscanf(fp, "%d %d", &v1, &v2) != 2){
-          return;
+          return false;
         }
       }
       MVertex *mv1 = model->getMeshVertexByTag(v1);
@@ -982,21 +994,22 @@ static void readMSH4PeriodicNodes(GModel *const model, FILE* fp,
       slave->correspondingVertices[mv1] = mv2;
     }
   }
+  return true;
 }
 
-static void readMSH4GhostElements(GModel *const model, FILE* fp,
+static bool readMSH4GhostElements(GModel *const model, FILE* fp,
                                   bool binary, bool swap)
 {
   int numGhostCells = 0;
   if(binary){
     if(fread(&numGhostCells, sizeof(int), 1, fp) != 1){
-      return;
+      return false;
     }
     if(swap) SwapBytes((char*)&numGhostCells, sizeof(int), 1);
   }
   else{
     if(fscanf(fp, "%d", &numGhostCells) != 1){
-      return;
+      return false;
     }
   }
 
@@ -1010,7 +1023,7 @@ static void readMSH4GhostElements(GModel *const model, FILE* fp,
     if(binary){
       int data[3];
       if(fread(&data, sizeof(int), 3, fp) != 3){
-        return;
+        return false;
       }
       if(swap) SwapBytes((char*)data, sizeof(int), 3);
       numElm = data[0];
@@ -1020,7 +1033,7 @@ static void readMSH4GhostElements(GModel *const model, FILE* fp,
     }
     else{
       if(fscanf(fp, "%d %d %d %[0-9- ]", &numElm, &numPart, &numGhost, str) != 4){
-        return;
+        return false;
       }
     }
 
@@ -1031,19 +1044,19 @@ static void readMSH4GhostElements(GModel *const model, FILE* fp,
 
       if(binary){
         if(fread(&ghostPartition, sizeof(int), 1, fp) != 1){
-          return;
+          return false;
         }
         if(swap) SwapBytes((char*)&ghostPartition, sizeof(int), 1);
       }
       else{
         if(j == numGhost-1){
           if(sscanf(str, "%d", &ghostPartition) != 1){
-            return;
+            return false;
           }
         }
         else{
           if(sscanf(str, "%d %[0-9- ]", &ghostPartition, str) != 2){
-            return;
+            return false;
           }
         }
       }
@@ -1083,6 +1096,7 @@ static void readMSH4GhostElements(GModel *const model, FILE* fp,
         (it->first.first->getType(), it->first.first, it->second);
     }
   }
+  return true;
 }
 
 int GModel::_readMSH4(const std::string &name)
@@ -1164,10 +1178,18 @@ int GModel::_readMSH4(const std::string &name)
       }
     }
     else if(!strncmp(&str[1], "Entities", 8)){
-      readMSH4Entities(this, fp, false, binary, swap);
+      if(!readMSH4Entities(this, fp, false, binary, swap)){
+        Msg::Error("Could not read entities");
+        fclose(fp);
+        return 0;
+      }
     }
     else if(!strncmp(&str[1], "PartitionedEntities", 19)){
-      readMSH4Entities(this, fp, true, binary, swap);
+      if(!readMSH4Entities(this, fp, true, binary, swap)){
+        Msg::Error("Could not read partitioned entities");
+        fclose(fp);
+        return 0;
+      }
       partitioned = true;
     }
     else if(!strncmp(&str[1], "Nodes", 5)){
@@ -1178,37 +1200,35 @@ int GModel::_readMSH4(const std::string &name)
       unsigned long nbrNodes = 0;
       std::pair<int, MVertex*> *vertexCache = readMSH4Nodes
         (this, fp, binary, dense, nbrNodes, swap);
-      if(vertexCache){
-        if(dense){
-          _vertexVectorCache.resize(nbrNodes+1, 0);
-          _vertexVectorCache[0] = 0;
+      if(!vertexCache){
+        Msg::Error("Could not read vertices");
+        fclose(fp);
+        return false;
+      }
+      if(dense){
+        _vertexVectorCache.resize(nbrNodes+1, 0);
+        _vertexVectorCache[0] = 0;
 
-          for(unsigned int i = 0; i < nbrNodes; i++){
-            if(!_vertexVectorCache[vertexCache[i].first]){
-              _vertexVectorCache[vertexCache[i].first] = vertexCache[i].second;
-            }
-            else{
-              Msg::Warning("Skipping duplicate vertex %d", vertexCache[i].first);
-            }
+        for(unsigned int i = 0; i < nbrNodes; i++){
+          if(!_vertexVectorCache[vertexCache[i].first]){
+            _vertexVectorCache[vertexCache[i].first] = vertexCache[i].second;
+          }
+          else{
+            Msg::Warning("Skipping duplicate vertex %d", vertexCache[i].first);
           }
         }
-        else{
-          for(unsigned int i = 0; i < nbrNodes; i++){
-            if(_vertexMapCache.count(vertexCache[i].first) == 0){
-              _vertexMapCache[vertexCache[i].first] = vertexCache[i].second;
-            }
-            else{
-              Msg::Warning("Skipping duplicate vertex %d", vertexCache[i].first);
-            }
-          }
-        }
-
-        delete[] vertexCache;
       }
       else{
-        fclose(fp);
-        return 0;
+        for(unsigned int i = 0; i < nbrNodes; i++){
+          if(_vertexMapCache.count(vertexCache[i].first) == 0){
+            _vertexMapCache[vertexCache[i].first] = vertexCache[i].second;
+          }
+          else{
+            Msg::Warning("Skipping duplicate vertex %d", vertexCache[i].first);
+          }
+        }
       }
+      delete[] vertexCache;
     }
     else if(!strncmp(&str[1], "Elements", 8)){
       Msg::ResetProgressMeter();
@@ -1216,43 +1236,48 @@ int GModel::_readMSH4(const std::string &name)
       unsigned long nbrElements = 0;
       std::pair<int, MElement*> *elementCache = readMSH4Elements
         (this, fp, binary, dense, nbrElements, swap);
-      if(elementCache){
-        if(dense){
-          _elementVectorCache.resize(nbrElements+1, 0);
-          _elementVectorCache[0] = 0;
-
-          for(unsigned int i = 0; i < nbrElements; i++){
-            if(!_elementVectorCache[elementCache[i].first]){
-              _elementVectorCache[elementCache[i].first] = elementCache[i].second;
-            }
-            else{
-              Msg::Warning("Skipping duplicate element %d", elementCache[i].first);
-            }
+      if(!elementCache){
+        Msg::Error("Could not read elements");
+        fclose(fp);
+        return 0;
+      }
+      if(dense){
+        _elementVectorCache.resize(nbrElements+1, 0);
+        _elementVectorCache[0] = 0;
+        for(unsigned int i = 0; i < nbrElements; i++){
+          if(!_elementVectorCache[elementCache[i].first]){
+            _elementVectorCache[elementCache[i].first] = elementCache[i].second;
+          }
+          else{
+            Msg::Warning("Skipping duplicate element %d", elementCache[i].first);
           }
         }
-        else{
-          for(unsigned int i = 0; i < nbrElements; i++){
-            if(_elementMapCache.count(elementCache[i].first) == 0){
-              _elementMapCache[elementCache[i].first] = elementCache[i].second;
-            }
-            else{
-              Msg::Warning("Skipping duplicate element %d", elementCache[i].first);
-            }
-          }
-        }
-
-        delete[] elementCache;
       }
       else{
+        for(unsigned int i = 0; i < nbrElements; i++){
+          if(_elementMapCache.count(elementCache[i].first) == 0){
+            _elementMapCache[elementCache[i].first] = elementCache[i].second;
+          }
+          else{
+            Msg::Warning("Skipping duplicate element %d", elementCache[i].first);
+          }
+        }
+      }
+      delete[] elementCache;
+    }
+    else if(!strncmp(&str[1], "Periodic", 8)){
+      if(!readMSH4PeriodicNodes(this, fp, binary, swap)){
+        Msg::Error("Could not read periodic section");
         fclose(fp);
         return 0;
       }
     }
-    else if(!strncmp(&str[1], "Periodic", 8)){
-      readMSH4PeriodicNodes(this, fp, binary, swap);
-    }
     else if(!strncmp(&str[1], "GhostElements", 13)){
-      readMSH4GhostElements(this, fp, binary, swap);
+      if(!readMSH4GhostElements(this, fp, binary, swap)){
+        Msg::Error("Could not read ghost elements");
+        fclose(fp);
+        return 0;
+      }
     }
     else if(!strncmp(&str[1], "NodeData", 8) || !strncmp(&str[1], "ElementData", 11) ||
             !strncmp(&str[1], "ElementNodeData", 15)){
