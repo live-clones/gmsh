@@ -36,7 +36,6 @@
 #include "MTrihedron.h"
 #include "meshPartition.h"
 #include "StringUtils.h"
-#include "Options.h"
 
 static bool readMSH4Physicals(GModel *const model, FILE* fp, GEntity *const entity,
                               bool binary, char *str, bool swap)
@@ -59,8 +58,7 @@ static bool readMSH4Physicals(GModel *const model, FILE* fp, GEntity *const enti
     }
     delete[] phyTags;
   }
-  else
-  {
+  else{
     sscanf(str, "%lu %[0-9- ]", &numPhy, str);
     for(unsigned int i = 0; i < numPhy; i++){
       int phyTag = 0;
@@ -141,7 +139,7 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE* fp,
     }
   }
 
-  switch (entity->dim()) {
+  switch(entity->dim()){
     case 1:
       if(boundingEntities.size() == 2){
         reinterpret_cast<discreteEdge*>(entity)->setBeginVertex
@@ -312,7 +310,7 @@ static bool readMSH4Entities(GModel *const model, FILE* fp, bool partition,
     model->setNumPartitions(numPartitions);
     Msg::Info("%d partitions", model->getNumPartitions());
     for(unsigned int i = 0; i < 2*ghostSize; i+=2){
-      switch (model->getDim()) {
+      switch(model->getDim()){
       case 1:
         {
           ghostEdge *ghostEntities = new ghostEdge(model, ghostTags[i], ghostTags[i+1]);
@@ -529,7 +527,7 @@ static std::pair<int, MVertex*> *readMSH4Nodes(GModel *const model, FILE* fp,
       if(parametric){
         double u = 0., v = 0.;
 
-        switch (entityDim){
+        switch(entityDim){
           case 0:
             if(binary){
               if(fread(&nodeTag, sizeof(int), 1, fp) != 1){
