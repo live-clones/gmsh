@@ -12,33 +12,6 @@
 
 #define SQU(a)      ((a)*(a))
 
-/*
-static void InterpolateBezier(Vertex *v[4], double t, Vertex &V)
-{
-  V.lc = (1 - t) * v[1]->lc + t * v[2]->lc;
-  V.w = (1 - t) * v[1]->w + t * v[2]->w;
-  const double tt = 1.-t;
-  const double s[4] = {tt*tt*tt, 3*t*tt*tt,3*t*t*tt,t*t*t};
-  V.Pos.X = s[0]*v[0]->Pos.X+s[1]*v[1]->Pos.X+s[2]*v[2]->Pos.X+s[3]*v[3]->Pos.X;
-  V.Pos.Y = s[0]*v[0]->Pos.Y+s[1]*v[1]->Pos.Y+s[2]*v[2]->Pos.Y+s[3]*v[3]->Pos.Y;
-  V.Pos.Z = s[0]*v[0]->Pos.Z+s[1]*v[1]->Pos.Z+s[2]*v[2]->Pos.Z+s[3]*v[3]->Pos.Z;
-}
-*/
-
-static Vertex InterpolateCubicSpline(Vertex *v[4], double t)
-{
-  Vertex V;
-  V.lc = (1 - t) * v[1]->lc + t * v[2]->lc;
-  V.w = (1 - t) * v[1]->w + t * v[2]->w;
-  const double tt = 1.-t;
-  const double  t3 = t*t*t;
-  const double s[4] = {tt*tt*tt, 3*t3-6*t*t+4,-3*t3+3*t*t+3*t+1,t3};
-  V.Pos.X = (s[0]*v[0]->Pos.X+s[1]*v[1]->Pos.X+s[2]*v[2]->Pos.X+s[3]*v[3]->Pos.X)/6.0;
-  V.Pos.Y = (s[0]*v[0]->Pos.Y+s[1]*v[1]->Pos.Y+s[2]*v[2]->Pos.Y+s[3]*v[3]->Pos.Y)/6.0;
-  V.Pos.Z = (s[0]*v[0]->Pos.Z+s[1]*v[1]->Pos.Z+s[2]*v[2]->Pos.Z+s[3]*v[3]->Pos.Z)/6.0;
-  return V;
-}
-
 static void InterpolateCatmullRom(Vertex *v[4], double t, Vertex &V)
 {
   V.lc = (1 - t) * v[1]->lc + t * v[2]->lc;
@@ -134,9 +107,10 @@ static Vertex InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
   return V;
 }
 
-// interpolation in the parametric space !
+// interpolation in the parametric space
 SPoint2 InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
-                               double t1, double t2, gmshSurface *s, int derivee)
+                               double t1, double t2, gmshSurface *s,
+                               int derivee)
 {
   Vertex V;
   int i, j;
@@ -161,7 +135,7 @@ SPoint2 InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
     T[0] = 6 * t;
   }
 
-  SPoint2 coord [4], p;
+  SPoint2 coord[4], p;
 
   for(i = 0; i < 4; i++) {
     for(j = 0; j < 4; j++) {
@@ -170,12 +144,11 @@ SPoint2 InterpolateCubicSpline(Vertex *v[4], double t, double mat[4][4],
   }
 
   for(j = 0; j < 4; j++) {
-    p += coord[j] * T[j] ;
+    p += coord[j] * T[j];
   }
   return p;
 }
 
-// Bezier
 static Vertex InterpolateBezier(Curve *Curve, double u, int derivee)
 {
   int NbCurves = (List_Nbr(Curve->Control_Points) - 1) / 3;
@@ -196,7 +169,8 @@ static Vertex InterpolateBezier(Curve *Curve, double u, int derivee)
   }
 
   if(Curve->geometry){
-    SPoint2 pp = InterpolateCubicSpline(v, t, Curve->mat, t1, t2, Curve->geometry,derivee);
+    SPoint2 pp = InterpolateCubicSpline(v, t, Curve->mat, t1, t2,
+                                        Curve->geometry, derivee);
     SPoint3 pt = Curve->geometry->point(pp);
     Vertex V;
     V.Pos.X = pt.x();
@@ -204,8 +178,9 @@ static Vertex InterpolateBezier(Curve *Curve, double u, int derivee)
     V.Pos.Z = pt.z();
     return V;
   }
-  else
+  else{
     return InterpolateCubicSpline(v, t, Curve->mat, derivee, t1, t2);
+  }
 }
 
 // Uniform BSplines
@@ -240,7 +215,8 @@ static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
   }
 
   if(Curve->geometry){
-    SPoint2 pp = InterpolateCubicSpline(v, t, Curve->mat, t1, t2, Curve->geometry,derivee);
+    SPoint2 pp = InterpolateCubicSpline(v, t, Curve->mat, t1, t2,
+                                        Curve->geometry, derivee);
     SPoint3 pt = Curve->geometry->point(pp);
     Vertex V;
     V.Pos.X = pt.x();
@@ -248,9 +224,9 @@ static Vertex InterpolateUBS(Curve *Curve, double u, int derivee)
     V.Pos.Z = pt.z();
     return V;
   }
-  else
-    // return InterpolateCubicSpline(v, t, Curve->mat, derivee, t1, t2);
-    return InterpolateCubicSpline(v, t);
+  else{
+    return InterpolateCubicSpline(v, t, Curve->mat, derivee, t1, t2);
+  }
 }
 
 // Non Uniform BSplines
@@ -328,16 +304,21 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
 
   Vertex V;
 
-  if(derivee==1) {
-    // switch (c->Typ) {
-    // case MSH_SEGM_BSPLN:
-    // case MSH_SEGM_BEZIER:
-    //   V = InterpolateUBS(c, u, 1);
-    //   V.u = u;
-    //   break;
-    // default :
-      double eps1 = (u == 0) ? 0 : 1.e-5;
-      double eps2 = (u == 1) ? 0 : 1.e-5;
+  if(derivee == 1) {
+    switch (c->Typ) {
+      /*
+    case MSH_SEGM_BSPLN:
+      V = InterpolateUBS(c, u, 1);
+      V.u = u;
+      break;
+      */
+    case MSH_SEGM_BEZIER:
+      V = InterpolateBezier(c, u, 1);
+      V.u = u;
+      break;
+    default :
+      double eps1 = (u < 1e-5) ? 0 : 1.e-5;
+      double eps2 = (u > 1 - 1e-5) ? 0 : 1.e-5;
       Vertex D[2];
       D[0] = InterpolateCurve(c, u - eps1, 0);
       D[1] = InterpolateCurve(c, u + eps2, 0);
@@ -345,24 +326,26 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
       V.Pos.Y = (D[1].Pos.Y - D[0].Pos.Y) / (eps1 + eps2);
       V.Pos.Z = (D[1].Pos.Z - D[0].Pos.Z) / (eps1 + eps2);
       V.u = u;
-    //   break;
-    // }
+      break;
+    }
     return V;
   }
 
-  if(derivee==2) {
+  if(derivee == 2) {
     switch (c->Typ) {
+      /*
     case MSH_SEGM_BSPLN:
       V = InterpolateUBS(c, u, 2);
       V.u = u;
       break;
+      */
     case MSH_SEGM_BEZIER:
       V = InterpolateBezier(c, u, 2);
       V.u = u;
       break;
     default :
-      double eps1 = (u == 0) ? 0 : 1.e-5;
-      double eps2 = (u == 1) ? 0 : 1.e-5;
+      double eps1 = (u < 1e-5) ? 0 : 1.e-5;
+      double eps2 = (u > 1 - 1e-5) ? 0 : 1.e-5;
       Vertex D[2];
       D[0] = InterpolateCurve(c, u - eps1, 1);
       D[1] = InterpolateCurve(c, u + eps2, 1);
@@ -383,9 +366,6 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
   switch (c->Typ) {
 
   case MSH_SEGM_LINE:
-#if defined(HAVE_BFGS)
-    //    printf("MSH_SEGM_LINE\n");
-#endif
     N = List_Nbr(c->Control_Points);
     if(N < 2){
       Msg::Error("Line with less than 2 control points");
@@ -455,6 +435,7 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
   case MSH_SEGM_BSPLN:
     V = InterpolateUBS(c, u, 0);
     break;
+
   case MSH_SEGM_BEZIER:
     V = InterpolateBezier(c, u, 0);
     break;
