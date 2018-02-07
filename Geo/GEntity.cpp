@@ -13,6 +13,7 @@
 #include "GEdge.h"
 #include "GFace.h"
 #include "GRegion.h"
+#include "closestVertex.h"
 
 GEntity::GEntity(GModel *m,int t)
   : _model(m), _tag(t),_meshMaster(this),_visible(1), _selection(0),
@@ -99,6 +100,7 @@ void GEntity::setMeshMaster(GEntity* gMaster,const std::vector<double>& tfo)
 
   affineTransform = tfo;
   _meshMaster = gMaster;
+  updateCorrespondingVertices();
 }
 
 // gets the entity from which the mesh will be copied
@@ -180,38 +182,59 @@ void GEntity::addVerticesInSet(std::set<MVertex*>&vtcs,bool closure) const {
     case 3:
       {
         std::list<GFace*> clos = faces();
-
-        std::cout << "have " << clos.size() << " faces " << std::endl;
         std::list<GFace*>::iterator cIter = clos.begin();
-        for (;cIter!=clos.end();++cIter) { 
-          std::cout << "Adding face " << (*cIter)->tag() << std::endl;
-          (*cIter)->addVerticesInSet(vtcs,true);
-        }
+        for (;cIter!=clos.end();++cIter) (*cIter)->addVerticesInSet(vtcs,true);
         break;
       }
     case 2:
       {
         std::list<GEdge*> clos = edges();
-        std::cout << "have " << clos.size() << " edges " << std::endl;
         std::list<GEdge*>::iterator cIter = clos.begin();
-        for (;cIter!=clos.end();++cIter) {
-          std::cout << "Adding edge " << (*cIter)->tag() << std::endl;
-          (*cIter)->addVerticesInSet(vtcs,true);
-        }
+        for (;cIter!=clos.end();++cIter) (*cIter)->addVerticesInSet(vtcs,true);
         break;
       }
     case 1:
       {
         std::list<GVertex*> clos = vertices();
-        std::cout << "have " << clos.size() << " vertices " << std::endl;
         std::list<GVertex*>::iterator cIter = clos.begin();
-        for (;cIter!=clos.end();++cIter) {
-          std::cout << "Adding node " << (*cIter)->tag() << std::endl;
-          (*cIter)->addVerticesInSet(vtcs,true);
-        }
+        for (;cIter!=clos.end();++cIter) (*cIter)->addVerticesInSet(vtcs,true);
         break;
       }
     }
   }
 }
 
+void GEntity::updateCorrespondingVertices() {
+
+  if (_meshMaster != this && affineTransform.size() == 16) {
+    
+    correspondingVertices.clear();
+    closestVertexFinder cvf(_meshMaster,true);
+    
+    if (cvf.getNbVtcs()) {
+      
+      
+      std::vector<double> tfo;
+      invertAffineTransformation(affineTransform,tfo);
+      
+      std::set<MVertex*> vtcs;
+      this->addVerticesInSet(vtcs,true);
+      
+      std::set<MVertex*>::iterator vIter = vtcs.begin();
+      for (;vIter!=vtcs.end();++vIter) {
+        
+        MVertex* tv = *vIter;
+        double ori[4] = {tv->x(),tv->y(),tv->z(),1};
+        double xyz[4] = {0,0,0,0};
+        
+        int idx = 0;
+        for (int i=0;i<3;i++) for (int j=0;j<4;j++) xyz[i] += tfo[idx++] * ori[j];
+        
+        MVertex* sv = cvf(tv->point(),tfo);
+        
+        correspondingVertices[tv] = sv;
+        
+      }
+    }
+  }
+}

@@ -534,8 +534,8 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
     return XYZToU(X, Y, Z, u, 0.75 * relax);
   }
 
-  //  Msg::Error("Could not converge reparametrisation of point (%e,%e,%e) on edge %d",
-  //             X, Y, Z, tag());
+  Msg::Error("Could not converge reparametrisation of point (%e,%e,%e) on edge %d",
+             X, Y, Z, tag());
   return false;
 }
 
@@ -655,4 +655,11 @@ void GEdge::mesh(bool verbose)
   meshGEdge mesher;
   mesher(this);
 #endif
+}
+
+std::list<GVertex*> GEdge::vertices() const {
+  std::list<GVertex*> res;
+  if (getBeginVertex()) res.insert(res.end(),getBeginVertex());
+  if (getEndVertex())   res.insert(res.end(),getEndVertex());
+  return res;
 }

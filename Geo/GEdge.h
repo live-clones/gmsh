@@ -72,12 +72,7 @@ class GEdge : public GEntity {
   virtual int dim() const { return 1; }
 
   // get the list of vertices 
-  virtual std::list<GVertex*> vertices() const {
-    std::list<GVertex*> res;
-    res.insert(res.end(),getBeginVertex());
-    res.insert(res.end(),getEndVertex());
-    return res;
-  }
+  virtual std::list<GVertex*> vertices() const;
 
   // set the visibility flag
   virtual void setVisibility(char val, bool recursive=false);
@@ -194,7 +189,7 @@ class GEdge : public GEntity {
   // return the parmater location on the edge given a point in space
   // that is on the edge
   virtual double parFromPoint(const SPoint3 &P) const;
-
+  
   // compute the parameter U from a point XYZ
   virtual bool XYZToU(const double X, const double Y, const double Z,
                       double &U, const double relax=1) const;

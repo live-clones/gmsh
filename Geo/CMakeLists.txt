@@ -5,6 +5,7 @@
 
 set(SRC
   boundaryLayersData.cpp
+	affineTransformation.cpp
   closestPoint.cpp
 	closestVertex.cpp
   intersectCurveSurface.cpp

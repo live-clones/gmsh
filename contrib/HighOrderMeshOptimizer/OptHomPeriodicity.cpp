@@ -68,6 +68,9 @@ void OptHomPeriodicity::_relocateMasterVertices()
         GFace *master = dynamic_cast<GFace*>(it->first);
         GFace *slave = dynamic_cast<GFace*>(it->second);
         std::vector<double> tfo = _inverse(slave->affineTransform);
+
+        Msg::Info("Relocating vertices of master face %i using slave %i",
+                  master->tag(),slave->tag());
         
         std::map<MVertex*, MVertex*> &vertS2M = slave->correspondingVertices;
         std::map<MVertex*, MVertex*>::iterator vit;
@@ -80,7 +83,7 @@ void OptHomPeriodicity::_relocateMasterVertices()
             GPoint gp = master->point(p2);
             v->setXYZ(gp.x(), gp.y(), gp.z());
             v->setParameter(0, gp.u());
-            v->setParameter(1, gp.v());
+            v->setParameter(1, gp.v());   
           }
         }
         
@@ -99,7 +102,7 @@ void OptHomPeriodicity::_relocateMasterVertices()
         }
         break;
       }
-    case 3:
+    case 1:
       {
         GEdge *master = dynamic_cast<GEdge*>(it->first);
         int numSlave = _master2slave.count(master);
@@ -107,6 +110,10 @@ void OptHomPeriodicity::_relocateMasterVertices()
         for (int i = 0; i < numSlave; ++i) {
           if (i > 0) ++it;
           GEntity *slave = it->second;
+
+          Msg::Info("Relocating vertices of master edge %i using slave %i",
+                    master->tag(),slave->tag());
+
           std::vector<double> tfo = _inverse(slave->affineTransform);
           std::map<MVertex*, MVertex*>::iterator vit;
           
@@ -114,16 +121,16 @@ void OptHomPeriodicity::_relocateMasterVertices()
           for (vit = vertS2M.begin(); vit != vertS2M.end(); ++vit) {
             MEdgeVertex* v = dynamic_cast<MEdgeVertex*> (vit->second);
             if (v && v->onWhat() == master) {
-              GPoint p = _transform(vit->first, master, tfo);
-              v->setXYZ(v->x()+p.x(), v->y()+p.y(), v->z()+p.z());
+              GPoint gp = _transform(vit->first, master, tfo,false);
+              v->setXYZ(v->x()+gp.x(), v->y()+gp.y(), v->z()+gp.z());
             }
           }
           std::map<MVertex*, MVertex*> &pointS2M = slave->correspondingHOPoints;
           for (vit = pointS2M.begin(); vit != pointS2M.end(); ++vit) {
             MEdgeVertex* v = dynamic_cast<MEdgeVertex*> (vit->second);
             if (v && v->onWhat() == master) {
-              GPoint p = _transform(vit->first, master, tfo);
-              v->setXYZ(v->x()+p.x(), v->y()+p.y(), v->z()+p.z());
+              GPoint gp = _transform(vit->first, master, tfo,false);
+              v->setXYZ(v->x()+gp.x(), v->y()+gp.y(), v->z()+gp.z());
             }
           }
         }
@@ -161,9 +168,6 @@ void OptHomPeriodicity::_copyBackMasterVertices()
         Msg::Info("Copying master vertices from face %d to %d",
                   master->tag(),slave->tag());
 
-        std::cout << "Copying face " << master->tag() 
-                  << " to " << slave->tag() << std::endl;
-
         const std::vector<double>& tfo = slave->affineTransform;
         std::map<MVertex*, MVertex*>::iterator vit;
         
@@ -172,22 +176,26 @@ void OptHomPeriodicity::_copyBackMasterVertices()
           MFaceVertex *sv = dynamic_cast<MFaceVertex*>(vit->first);
           MFaceVertex *mv = dynamic_cast<MFaceVertex*>(vit->second);
           if (mv && mv->onWhat() == master) {
-            GPoint p = _transform(mv, slave, tfo);
+            GPoint p = _transform(mv, slave, tfo,true); // false);
             sv->setXYZ(p.x(), p.y(), p.z());
             sv->setParameter(0, p.u());
             sv->setParameter(1, p.v());
+            
           }
         }
         
+        int idx = 0;
+
         std::map<MVertex*, MVertex*> &pointS2M = slave->correspondingHOPoints;
         for (vit = pointS2M.begin(); vit != pointS2M.end(); ++vit) {
           MFaceVertex *sv = dynamic_cast<MFaceVertex*>(vit->first);
           MFaceVertex *mv = dynamic_cast<MFaceVertex*>(vit->second);
-          if (mv && mv->onWhat() == master) {
-            GPoint p = _transform(mv, slave, tfo);
+          
+          if (mv && sv && mv->onWhat() == master) {
+            GPoint p = _transform(mv, slave, tfo,true); // false);
             sv->setXYZ(p.x(), p.y(), p.z());
             sv->setParameter(0, p.u());
-            sv->setParameter(1, p.v());
+            sv->setParameter(1, p.v()); 
           }
         }
         break;
@@ -200,19 +208,16 @@ void OptHomPeriodicity::_copyBackMasterVertices()
         Msg::Info("Copying master vertices from edge %d to %d",
                   master->tag(),slave->tag());
         
-        std::cout << "Copying edge " << master->tag() 
-                  << " to " << slave->tag() << std::endl;
-
-        
         const std::vector<double> tfo = slave->affineTransform;
         std::map<MVertex*, MVertex*>::iterator vit;
       
         std::map<MVertex*, MVertex*> &vertS2M = slave->correspondingVertices;
         for (vit = vertS2M.begin(); vit != vertS2M.end(); ++vit) {
-          GPoint p = _transform(vit->second, slave, tfo);
           MEdgeVertex *sv = dynamic_cast<MEdgeVertex*>(vit->first);
           MEdgeVertex *mv = dynamic_cast<MEdgeVertex*>(vit->second);
+
           if (mv && mv->onWhat() == master) {
+            GPoint p = _transform(vit->second, slave, tfo,false);
             sv->setXYZ(p.x(), p.y(), p.z());
             sv->setParameter(0, p.u());
           }
@@ -220,10 +225,10 @@ void OptHomPeriodicity::_copyBackMasterVertices()
 
         std::map<MVertex*, MVertex*> &pointS2M = slave->correspondingHOPoints;
         for (vit = pointS2M.begin(); vit != pointS2M.end(); ++vit) {
-          GPoint p = _transform(vit->second, slave, tfo);
           MEdgeVertex *sv = dynamic_cast<MEdgeVertex*>(vit->first);
           MEdgeVertex *mv = dynamic_cast<MEdgeVertex*>(vit->second);
           if (mv && mv->onWhat() == master) {
+            GPoint p = _transform(vit->second, slave, tfo,false);
             sv->setXYZ(p.x(), p.y(), p.z());
             sv->setParameter(0, p.u());
           }
@@ -234,7 +239,11 @@ void OptHomPeriodicity::_copyBackMasterVertices()
   }
 }
 
-GPoint OptHomPeriodicity::_transform(MVertex *vsource, GEntity *target, const std::vector<double> &tfo)
+
+GPoint OptHomPeriodicity::_transform(MVertex *vsource, 
+                                     GEntity *target, 
+                                     const std::vector<double> &tfo,
+                                     bool project)
 {
   double ps[4] = {vsource->x(), vsource->y(), vsource->z(), 1.};
   double res[4] = {0., 0., 0., 0.};
@@ -243,14 +252,16 @@ GPoint OptHomPeriodicity::_transform(MVertex *vsource, GEntity *target, const st
     for(int j = 0; j < 4; j++)
       res[i] +=  tfo[idx++] * ps[j];
 
-  SPoint3 p3 (res[0], res[1], res[2]);
+  SPoint3 p3 (res[0], res[1], res[2]); 
   if (target->dim() == 2) {
-    SPoint2 p2 = dynamic_cast<GFace*>(target)->parFromPoint(p3);
-    return dynamic_cast<GFace*>(target)->point(p2);
+    SPoint2 p2 = dynamic_cast<GFace*>(target)->parFromPoint(p3); 
+    if (project) return dynamic_cast<GFace*>(target)->point(p2);
+    else         return GPoint(p3.x(),p3.y(),p3.z(),target,p2.x(),p2.y());
   }
   else if (target->dim() == 1) {
     double u = dynamic_cast<GEdge*>(target)->parFromPoint(p3);
-    return dynamic_cast<GEdge*>(target)->point(u);
+    if (project) return dynamic_cast<GEdge*>(target)->point(u);
+    else         return GPoint(p3.x(),p3.y(),p3.z(),target,u);
   }
   else {
     Msg::Error("Expected a face or an edge for computing "

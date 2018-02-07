@@ -406,6 +406,7 @@ double opt_geometry_double_clicked_entity_tag(OPT_ARGS_NUM);
 double opt_geometry_exact_extrusion(OPT_ARGS_NUM);
 double opt_geometry_match_geom_and_mesh(OPT_ARGS_NUM);
 double opt_geometry_match_mesh_scale_factor(OPT_ARGS_NUM);
+double opt_geometry_match_mesh_tolerance(OPT_ARGS_NUM);
 double opt_mesh_label_sampling(OPT_ARGS_NUM);
 double opt_mesh_optimize(OPT_ARGS_NUM);
 double opt_mesh_optimize_threshold(OPT_ARGS_NUM);

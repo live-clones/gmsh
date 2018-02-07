@@ -27,6 +27,7 @@
 
 #if defined(HAVE_OPTHOM)
 #include "OptHomFastCurving.h"
+#include "OptHomPeriodicity.h"
 #endif
 
 // --------- Functions that help optimizing placement of points on geometry -----------
@@ -1389,6 +1390,14 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
     }
   }
 
+#if defined(HAVE_OPTHOM)
+  std::vector<GEntity*> modelEdges;
+  modelEdges.insert(modelEdges.end(),m->firstEdge(),m->lastEdge());
+  OptHomPeriodicity edgePeriodicity(modelEdges);
+  edgePeriodicity.fixPeriodicity();
+#endif
+
+
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
     GFace *tgt = *it;
     GFace *src = dynamic_cast<GFace*>(tgt->meshMaster());
@@ -1418,7 +1427,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
       for (unsigned int i=0;i<tgt->getNumMeshElements();++i) {
 
         MElement* tgtElmt = tgt->getMeshElement(i);
-        Msg::Info("Checking element %d in face %d",i,tgt->tag());
+        // Msg::Info("Checking element %d in face %d",i,tgt->tag());
 
         int nbVtcs = 0;
         if (dynamic_cast<MTriangle*>   (tgtElmt)) nbVtcs = 3;
@@ -1457,6 +1466,14 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
       }
     }
   }
+  
+#if defined(HAVE_OPTHOM)
+  std::vector<GEntity*> modelFaces;
+  modelFaces.insert(modelFaces.end(),m->firstFace(),m->lastFace());
+  OptHomPeriodicity facePeriodicity(modelFaces);
+  facePeriodicity.fixPeriodicity();
+#endif
+  
   Msg::Info("Finalized high order topology of periodic connections");
 }
 

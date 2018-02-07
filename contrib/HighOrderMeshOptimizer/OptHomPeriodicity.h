@@ -52,7 +52,7 @@ private:
   void _relocateMasterVertices();
   void _copyBackMasterVertices();
 
-  static GPoint _transform(MVertex*, GEntity*, const std::vector<double>&);
+  static GPoint _transform(MVertex*, GEntity*, const std::vector<double>&,bool project=true);
   static std::vector<double> _inverse(const std::vector<double>&);
 };
 

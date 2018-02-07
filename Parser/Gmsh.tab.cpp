@@ -9503,7 +9503,7 @@ yyreduce:
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
         std::string tmp = FixRelativePath(gmsh_yyname, (yyvsp[(2) - (3)].c));
-				CTX::instance()->geom.matchGeomAndMesh = 1;
+				// CTX::instance()->geom.matchGeomAndMesh = 1;
 				MergeFile(tmp, true);
       }
       else if(!strcmp((yyvsp[(1) - (3)].c), "NonBlockingSystemCall")){

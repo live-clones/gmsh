@@ -973,7 +973,7 @@ void assignPartitionBoundary(GModel *model, MFace &me,
     if (!found)v2.push_back(v[i]->getPartition());
   }
   if (v2.size() < 2)return;
-
+  
   partitionFace pe(model, 1, v2);
   std::set<partitionFace*, Less_partitionFace>::iterator it = pfaces.find(&pe);
   partitionFace *ppe;
@@ -1014,7 +1014,7 @@ void assignPartitionBoundary(GModel *model,
     if (!found)v2.push_back(v[i]->getPartition());
   }
   if (v2.size() < 2)return;
-
+  
   partitionFace pf(model, 1, v2);
   std::set<partitionFace*, Less_partitionFace>::iterator itf = pfaces.find(&pf);
   if (itf != pfaces.end())return;

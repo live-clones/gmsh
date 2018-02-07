@@ -45,6 +45,12 @@ class GPoint
     par[0] = p[0];
     par[1] = p[1];
   }
+  GPoint (double _x, double _y, double _z, const GEntity *onwhat, double p1,double p2)
+    : X(_x), Y(_y), Z(_z), e(onwhat), success(true)
+  {
+    par[0] = p1;
+    par[1] = p2;
+  }
   double distance(GPoint &p)
   {
     double dx = X - p.x();

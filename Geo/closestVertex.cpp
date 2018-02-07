@@ -43,17 +43,22 @@ closestVertexFinder :: closestVertexFinder (GEntity *ge,bool closure):
 closestVertexFinder :: ~closestVertexFinder ()
 {
 #if defined(HAVE_ANN)
-  if(kdtree) delete kdtree;
-  if(vCoord) annDeallocPts(vCoord);
-  if(vertex) delete[] vertex;
-  delete[]index;
-  delete[]dist;
+  if (nbVtcs) {
+    delete kdtree;
+    annDeallocPts(vCoord);
+    delete[] vertex;
+    delete[]index;
+    delete[]dist;
+  }
 #endif
 }
 
 MVertex* closestVertexFinder ::operator() (const SPoint3& p)
 {
 #if defined(HAVE_ANN)
+
+  if (nbVtcs == 0) return NULL;
+
   double xyz[3] = {p.x(),p.y(),p.z()};
   kdtree->annkSearch(xyz, 1, index, dist);
   return vertex[index[0]];
@@ -67,6 +72,9 @@ MVertex* closestVertexFinder ::operator() (const SPoint3& p,
                                            const std::vector<double>& tfo)
 {
 #if defined(HAVE_ANN)
+
+  if (nbVtcs == 0) return NULL;
+
   double ori[4] = {p.x(),p.y(),p.z(),1};
   double xyz[4] = {0,0,0,0};
   if (tfo.size() == 16) {

@@ -14,6 +14,7 @@
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
 #include "SOrientedBoundingBox.h"
+#include "affineTransformation.h"
 
 #define MAX_LC 1.e22
 
@@ -289,6 +290,9 @@ class GEntity {
   GEntity* meshMaster() const;
   void setMeshMaster(GEntity*);
   void setMeshMaster(GEntity*,const std::vector<double>&);
+  void updateCorrespondingVertices();
+  
+  virtual void alignElementsWithMaster() {}
 
   // get the bounding box
   virtual SBoundingBox3d bounds() const { return SBoundingBox3d(); }
