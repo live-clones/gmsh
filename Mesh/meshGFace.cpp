@@ -652,7 +652,7 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers
    std::vector<MTriangle*> &blTris,
    std::set<MVertex*> &verts)
 {
-  if (!buildAdditionalPoints2D (gf))return;
+  if(!buildAdditionalPoints2D (gf)) return;
   BoundaryLayerColumns* _columns = gf->getColumns();
 
   std::set<MEdge,Less_Edge> bedges;
@@ -676,12 +676,13 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers
       addOrRemove(v1,v2,bedges, removed);
       for (unsigned int SIDE = 0 ; SIDE < _columns->_normals.count(dv); SIDE ++){
         std::vector<MElement*> myCol;
-        edgeColumn ec =  _columns->getColumns(v1, v2, SIDE);
+        edgeColumn ec = _columns->getColumns(v1, v2, SIDE);
         const BoundaryLayerData & c1 = ec._c1;
         const BoundaryLayerData & c2 = ec._c2;
-        int N = std::min(c1._column.size(),c2._column.size());
-        for (int l=0;l < N ;++l){
-          MVertex *v11,*v12,*v21,*v22;
+        int N = std::min(c1._column.size(), c2._column.size());
+        if(!N) continue;
+        for (int l = 0; l < N; ++l){
+          MVertex *v11, *v12, *v21, *v22;
           v21 = c1._column[l];
           v22 = c2._column[l];
           if (l == 0){
@@ -692,8 +693,8 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers
             v11 = c1._column[l-1];
             v12 = c2._column[l-1];
           }
-          MQuadrangle *qq = new MQuadrangle(v11,v21,v22,v12);
-	  qq->setPartition (l+1);
+          MQuadrangle *qq = new MQuadrangle(v11, v21, v22, v12);
+	  qq->setPartition(l+1);
           myCol.push_back(qq);
           blQuads.push_back(qq);
           if(ff2)
@@ -708,8 +709,8 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers
           v11 = c1._column[N-1];
           v12 = c2._column[N-1];
           v = c1._column.size() > c2._column.size() ?
-              c1._column[N] : c2._column[N];
-          MTriangle *qq = new MTriangle(v11,v12,v);
+            c1._column[N] : c2._column[N];
+          MTriangle *qq = new MTriangle(v11, v12, v);
           qq->setPartition (N+1);
           myCol.push_back(qq);
           blTris.push_back(qq);
@@ -720,7 +721,8 @@ static void modifyInitialMeshForTakingIntoAccountBoundaryLayers
                     v->x(),v->y(),v->z(),N+1,N+1,N+1);
         }
         // int M = std::max(c1._column.size(),c2._column.size());
-        for (unsigned int l=0;l<myCol.size();l++)_columns->_toFirst[myCol[l]] = myCol[0];
+        for (unsigned int l = 0; l <myCol.size(); l++)
+          _columns->_toFirst[myCol[l]] = myCol[0];
         _columns->_elemColumns[myCol[0]] = myCol;
       }
    }
