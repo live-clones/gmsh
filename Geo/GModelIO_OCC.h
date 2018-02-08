@@ -39,7 +39,7 @@ class OCC_Internals {
   enum BooleanOperator { Union, Intersection, Difference, Section, Fragments };
 
  private :
-  // have the internals changed since the last synchronisation
+  // have the internals changed since the last synchronisation?
   bool _changed;
 
   // maximum tags for each bound entity (shell, wire, vertex, edge, face, solid)
@@ -59,7 +59,7 @@ class OCC_Internals {
   TopTools_DataMapOfIntegerShape _tagWire, _tagShell;
 
   // cache of <dim,tag> pairs corresponding to entities that will need to be
-  // remove from the model at the next synchronization
+  // removed from the model at the next synchronization
   std::set<std::pair<int, int> > _toRemove;
 
   // cache of <dim,tag> pairs corresponding to entities that should not be
@@ -98,7 +98,7 @@ class OCC_Internals {
   // get the tag of a shape of a given dimension
   int _find(int dim, TopoDS_Shape shape);
 
-  // get maximum dimension of shape bound to tag
+  // get maximum dimension of shapes bound to tags
   int _getMaxDim();
 
   // get (dim,tag) of all shapes (that will be) bound to tags
