@@ -782,8 +782,8 @@ class model:
             Gets the mesh elements of the entity of dimension `dim' and `tag' tag. If
             `tag' < 0, gets the elements for all entities of dimension `dim'. If `dim'
             and `tag' are negative, gets all the elements in the mesh. `elementTypes'
-            contains the MSH types of the elements (e.g. `2' for 3-node triangles); the
-            `getElementInfo' function can be used to get information about these types.
+            contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
+            `getElementProperties' to obtain the properties for a given element type).
             `elementTags' is a vector of the same length as `elementTypes'; each entry
             is a vector containing the tags (unique, strictly positive identifiers) of
             the elements of the corresponding type. `vertexTags' is also a vector of
@@ -1031,6 +1031,22 @@ class model:
             if ierr.value != 0 :
                 raise ValueError(
                     "gmshModelMeshSetElements returned non-zero error code : ",
+                    ierr.value)
+
+        @staticmethod
+        def reclassifyVertices():
+            """
+            Redistribute all mesh vertices on their associated geometrical entity,
+            based on the mesh elements. Can be used when importing mesh vertices in
+            bulk (e.g. by associating them all to a single volume), to reclassify them
+            correctly on model surfaces, curves, etc.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshReclassifyVertices(
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshReclassifyVertices returned non-zero error code : ",
                     ierr.value)
 
         @staticmethod

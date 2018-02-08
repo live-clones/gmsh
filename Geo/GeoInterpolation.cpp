@@ -10,8 +10,6 @@
 #include "Numeric.h"
 #include "Context.h"
 
-#define SQU(a)      ((a)*(a))
-
 static void InterpolateCatmullRom(Vertex *v[4], double t, Vertex &V)
 {
   V.lc = (1 - t) * v[1]->lc + t * v[2]->lc;
@@ -620,13 +618,16 @@ static Vertex TransfiniteTriB(Vertex c1, Vertex c1b, Vertex c2,
   return V;
 }
 
+#define SQU(a) ((a)*(a))
+
 static void TransfiniteSph(Vertex S, Vertex center, Vertex *T)
 {
-  double r = sqrt(SQU(S.Pos.X - center.Pos.X) + SQU(S.Pos.Y - center.Pos.Y)
-                  + SQU(S.Pos.Z - center.Pos.Z));
-
-  double s = sqrt(SQU(T->Pos.X - center.Pos.X) + SQU(T->Pos.Y - center.Pos.Y)
-                  + SQU(T->Pos.Z - center.Pos.Z));
+  double r = sqrt(SQU(S.Pos.X - center.Pos.X) +
+                  SQU(S.Pos.Y - center.Pos.Y) +
+                  SQU(S.Pos.Z - center.Pos.Z));
+  double s = sqrt(SQU(T->Pos.X - center.Pos.X) +
+                  SQU(T->Pos.Y - center.Pos.Y) +
+                  SQU(T->Pos.Z - center.Pos.Z));
 
   double dirx = (T->Pos.X - center.Pos.X) / s;
   double diry = (T->Pos.Y - center.Pos.Y) / s;
@@ -902,10 +903,10 @@ Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
     return Vertex(p.x(), p.y(), p.z());
   }
 
-  // Warning: we use the exact extrusion formula so we can create
-  // exact surfaces of revolution. This WILL fail if the surface is
-  // transformed after the extrusion: in that case set the
-  // exactExtrusion option to 0 to use the normal code path
+  // Warning: we use the exact extrusion formula so we can create exact surfaces
+  // of revolution. This WILL fail if the surface is transformed after the
+  // extrusion: in that case set the exactExtrusion option to 0 to use the
+  // normal code path
   if(CTX::instance()->geom.exactExtrusion && s->Extrude &&
      s->Extrude->geo.Mode == EXTRUDED_ENTITY && s->Typ != MSH_SURF_PLAN)
     return InterpolateExtrudedSurface(s, u, v);

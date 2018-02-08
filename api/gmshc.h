@@ -247,8 +247,8 @@ GMSH_API void gmshModelMeshGetVertices(int ** vertexTags, size_t * vertexTags_n,
 /* Gets the mesh elements of the entity of dimension `dim' and `tag' tag. If
  * `tag' < 0, gets the elements for all entities of dimension `dim'. If `dim'
  * and `tag' are negative, gets all the elements in the mesh. `elementTypes'
- * contains the MSH types of the elements (e.g. `2' for 3-node triangles); the
- * `getElementInfo' function can be used to get information about these types.
+ * contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
+ * `getElementProperties' to obtain the properties for a given element type).
  * `elementTags' is a vector of the same length as `elementTypes'; each entry
  * is a vector containing the tags (unique, strictly positive identifiers) of
  * the elements of the corresponding type. `vertexTags' is also a vector of
@@ -359,6 +359,12 @@ GMSH_API void gmshModelMeshSetElements(const int dim,
                                        const int ** elementTags, const size_t * elementTags_n, size_t elementTags_nn,
                                        const int ** vertexTags, const size_t * vertexTags_n, size_t vertexTags_nn,
                                        int * ierr);
+
+/* Redistribute all mesh vertices on their associated geometrical entity,
+ * based on the mesh elements. Can be used when importing mesh vertices in
+ * bulk (e.g. by associating them all to a single volume), to reclassify them
+ * correctly on model surfaces, curves, etc. */
+GMSH_API void gmshModelMeshReclassifyVertices(int * ierr);
 
 /* Gets the coordinates and the parametric coordinates (if any) of the mesh
  * vertex with tag `tag'. This is a useful by inefficient way of accessing

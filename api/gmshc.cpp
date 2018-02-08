@@ -429,6 +429,13 @@ void gmshModelMeshSetElements(const int dim,const int tag,int * types, size_t ty
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
+void gmshModelMeshReclassifyVertices(int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  gmsh::model::mesh::reclassifyVertices();
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
 void gmshModelMeshGetVertex(const int vertexTag,double ** coord, size_t * coord_n,double ** parametricCoord, size_t * parametricCoord_n,int * ierr){
   if(ierr) *ierr = 0;
   try {

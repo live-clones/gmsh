@@ -161,6 +161,9 @@ mesh.add('setVertices',doc,None,iint('dim'),iint('tag'),ivectorint('vertexTags')
 doc = '''Sets the mesh elements of the entity of dimension `dim' and `tag' tag. `types' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh reference manual). `elementTags' is a vector of the same length as `types'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `vertexTags' is also a vector of the same length as `types'; each entry is a vector of length equal to the number of elements of the give type times the number of vertices per element, that contains the vertex tags of all the elements of the given type, concatenated.'''
 mesh.add('setElements',doc,None,iint('dim'),iint('tag'),ivectorint('types'),ivectorvectorint('elementTags'),ivectorvectorint('vertexTags'))
 
+doc = '''Redistribute all mesh vertices on their associated geometrical entity, based on the mesh elements. Can be used when importing mesh vertices in bulk (e.g. by associating them all to a single volume), to reclassify them correctly on model surfaces, curves, etc.'''
+mesh.add('reclassifyVertices',doc,None)
+
 doc = '''Gets the coordinates and the parametric coordinates (if any) of the mesh vertex with tag `tag'. This is a useful by inefficient way of accessing mesh vertex data, as it relies on a cache stored in the model. For large meshes all the vertices in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
 mesh.add('getVertex',doc,None,iint('vertexTag'),ovectordouble('coord'),ovectordouble('parametricCoord'))
 

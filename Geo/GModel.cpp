@@ -1451,7 +1451,6 @@ int GModel::deleteMeshPartitions()
 #endif
 }
 
-
 int GModel::partitionMesh(int numPart)
 {
 #if defined(HAVE_MESH) && (defined(HAVE_METIS))
@@ -1624,10 +1623,9 @@ void GModel::_createGeometryOfDiscreteEntities(bool force)
 
 void GModel::_associateEntityWithMeshVertices()
 {
-  // loop on regions, then on faces, edges and vertices and store the
-  // entity pointer in the the elements' vertices (this way we
-  // associate the entity of lowest geometrical degree with each
-  // vertex)
+  // loop on regions, then on faces, edges and vertices and store the entity
+  // pointer in the the elements' vertices (this way we associate the entity of
+  // lowest geometrical degree with each vertex)
   for(riter it = firstRegion(); it != lastRegion(); ++it){
     _associateEntityWithElementVertices(*it, (*it)->tetrahedra);
     _associateEntityWithElementVertices(*it, (*it)->hexahedra);

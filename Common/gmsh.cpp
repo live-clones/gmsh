@@ -848,6 +848,12 @@ void gmsh::model::mesh::setVertices(const int dim, const int tag,
   }
 }
 
+void gmsh::model::mesh::reclassifyVertices()
+{
+  if(!_isInitialized()){ throw -1; }
+  GModel::current()->pruneMeshVertexAssociations();
+}
+
 template<class T>
 static void _addElements(int dim, int tag, const std::vector<MElement*> &src,
                          std::vector<T*> &dst)
