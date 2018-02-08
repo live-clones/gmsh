@@ -2979,11 +2979,13 @@ Partitions the mesh into @var{expression}, using current partitioning options.
 
 @item Point | Line @{ @var{expression-list} @} In Surface @{ @var{expression} @};
 Embed the point(s) or line(s) in the given surface. The surface mesh
-will conform to the mesh of the point(s) or lines(s). 
+will conform to the mesh of the point(s) or lines(s).
 
-@item Surface @{ @var{expression-list} @} In Volume @{ @var{expression} @};
-Embed the surface in the given volume. The volume mesh will conform to
-the mesh of the surface. 
+@item Point | Line | Surface @{ @var{expression-list} @} In Volume @{ @var{expression} @};
+Embed the point(s), line(s) or surface(s) in the given volume. The
+volume mesh will conform to the mesh of the corresponding point(s),
+line(s) or surface(s). This is only supported with the 3D Delaunay
+algorithm.
 
 @item Periodic Line @{ @var{expression-list} @} = @{ @var{expression-list} @} ;
 Force mesh of lines on the left-hand side (slaves) to match the mesh of
