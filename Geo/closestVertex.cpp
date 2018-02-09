@@ -79,11 +79,7 @@ MVertex* closestVertexFinder ::operator() (const SPoint3& p,
   double xyz[4] = {0,0,0,0};
   if (tfo.size() == 16) {
     int idx=0;
-    // std::cout << "Transforming ";
     for (int i=0;i<4;i++) for (int j=0;j<4;j++) xyz[i] += tfo[idx++] * ori[j];
-    
-    /// std::cout << "(" << ori[0] << "," << ori[1] << "," << ori[2] << ") -> ";
-    /// std::cout << "(" << xyz[0] << "," << xyz[1] << "," << xyz[2] << ")" << std::endl;
   }
   else std::memcpy(xyz,ori,3*sizeof(double));
   kdtree->annkSearch(xyz, 1, index, dist);

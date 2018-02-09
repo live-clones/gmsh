@@ -291,6 +291,7 @@ class GEntity {
   void setMeshMaster(GEntity*);
   void setMeshMaster(GEntity*,const std::vector<double>&);
   void updateCorrespondingVertices();
+  void copyMasterCoordinates();
   
   virtual void alignElementsWithMaster() {}
 

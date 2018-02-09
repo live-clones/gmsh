@@ -662,6 +662,15 @@ static bool apply_periodicity (std::vector<Pair<GEType*, GEType*> >& eCor)
     newTgt->updateCorrespondingVertices();
     newTgt->alignElementsWithMaster();
   }
+
+  if (GEType().dim() < 2) { // required for multiple periodic directions
+    for (srcIter=eMap.begin();srcIter!=eMap.end();++srcIter) {
+      GEType* newTgt = srcIter->second;
+      newTgt->copyMasterCoordinates();
+      newTgt->alignElementsWithMaster();
+    }
+  }
+
   return false;
 }
 
