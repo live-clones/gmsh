@@ -1395,6 +1395,7 @@ static void updatePeriodicEdgesAndFaces(GModel *m)
   modelEdges.insert(modelEdges.end(),m->firstEdge(),m->lastEdge());
   OptHomPeriodicity edgePeriodicity(modelEdges);
   edgePeriodicity.fixPeriodicity();
+  edgePeriodicity.fixPeriodicity(); // apply twice for operation order effects 
 #endif
 
 

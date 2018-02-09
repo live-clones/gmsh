@@ -176,7 +176,7 @@ void OptHomPeriodicity::_copyBackMasterVertices()
           MFaceVertex *sv = dynamic_cast<MFaceVertex*>(vit->first);
           MFaceVertex *mv = dynamic_cast<MFaceVertex*>(vit->second);
           if (mv && mv->onWhat() == master) {
-            GPoint p = _transform(mv, slave, tfo,true); // false);
+            GPoint p = _transform(mv, slave, tfo,false);
             sv->setXYZ(p.x(), p.y(), p.z());
             sv->setParameter(0, p.u());
             sv->setParameter(1, p.v());
@@ -192,7 +192,7 @@ void OptHomPeriodicity::_copyBackMasterVertices()
           MFaceVertex *mv = dynamic_cast<MFaceVertex*>(vit->second);
           
           if (mv && sv && mv->onWhat() == master) {
-            GPoint p = _transform(mv, slave, tfo,true); // false);
+            GPoint p = _transform(mv, slave, tfo,false);
             sv->setXYZ(p.x(), p.y(), p.z());
             sv->setParameter(0, p.u());
             sv->setParameter(1, p.v()); 
