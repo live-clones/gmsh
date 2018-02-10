@@ -986,8 +986,8 @@ StringXNumber MeshOptions_Number[] = {
     "Field format for Nastran BDF files (0=free, 1=small, 2=large)" },
   { F|O, "Binary" , opt_mesh_binary , 0. ,
     "Write mesh files in binary format (if possible)" },
-  { F|O, "SmoothCrossField" , opt_mesh_smooth_cross_field , 0. ,
-    "Apply n barycentric smoothing passes to the cross field" },
+  { F|O, "BoundaryLayerFanPoints" , opt_mesh_boundary_layer_fan_points, 5. ,
+    "Number of interior points (> 1) in 2D boundary layer fans" },
 
   { F|O, "CgnsImportOrder" , opt_mesh_cgns_import_order , 1. ,
    "Enable the creation of high-order mesh from CGNS structured meshes"
@@ -1241,6 +1241,8 @@ StringXNumber MeshOptions_Number[] = {
     "Should second order vertices simply be created by linear interpolation?" },
   { F|O, "Smoothing" , opt_mesh_nb_smoothing , 1. ,
     "Number of smoothing steps applied to the final mesh" },
+  { F|O, "SmoothCrossField" , opt_mesh_smooth_cross_field , 0. ,
+    "Apply n barycentric smoothing passes to the cross field" },
   { F|O, "SmoothNormals" , opt_mesh_smooth_normals , 0. ,
     "Smooth the mesh normals?" },
   { F|O, "SmoothRatio" , opt_mesh_smooth_ratio , 1.8 ,

@@ -5814,6 +5814,16 @@ double opt_mesh_binary(OPT_ARGS_NUM)
   return CTX::instance()->mesh.binary;
 }
 
+double opt_mesh_boundary_layer_fan_points(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET){
+    int fanPoints = (int)val;
+    if(fanPoints < 1) fanPoints = 1;
+    CTX::instance()->mesh.boundaryLayerFanPoints = fanPoints;
+  }
+  return CTX::instance()->mesh.boundaryLayerFanPoints;
+}
+
 double opt_mesh_smooth_cross_field(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

@@ -35,7 +35,7 @@ struct contextMeshOptions {
   std::map<int,int> algo2dPerFace;
   std::map<int,int> curvatureControlPerFace;
   int NewtonConvergenceTestXYZ;
-  int ignorePeriodicity;
+  int ignorePeriodicity, boundaryLayerFanPoints;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
   // mesh IO
   int fileFormat;
