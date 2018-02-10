@@ -163,7 +163,6 @@ static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
         _dirs.push_back(x);
       }
       else if(fan){
-        int fanSize = CTX::instance()->mesh.boundaryLayerFanPoints;
         // if the angle is greater than PI, than reverse the sense
         double alpha1 = atan2(N1[SIDE].y(),N1[SIDE].x());
         double alpha2 = atan2(N2[SIDE].y(),N2[SIDE].x());
@@ -176,18 +175,21 @@ static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
         else {
           ee[0] = e1;ee[1] = e2;
         }
-        if( AMAX - AMIN >= M_PI){
+        if(AMAX - AMIN >= M_PI){
           double temp = AMAX;
           AMAX = AMIN + 2*M_PI;
           AMIN = temp;
           MEdge eee0 = ee[0];
           ee[0] = ee[1];ee[1] = eee0;
         }
+        double frac = fabs(AMAX - AMIN) / M_PI;
+        int n = (int)(frac * CTX::instance()->mesh.boundaryLayerFanPoints + 0.5);
+        int fanSize = fan ? n : 0 ;
         _columns->addFan(_myVert,ee[0],ee[1],true);
         for(int i = -1; i <= fanSize; i++){
-          double t =(double)(i+1)/(fanSize + 1);
-          double alpha = t * AMAX +(1.-t)* AMIN;
-          SVector3 x(cos(alpha),sin(alpha),0);
+          double t =(double)(i + 1)/(fanSize + 1);
+          double alpha = t * AMAX + (1.-t) * AMIN;
+          SVector3 x(cos(alpha), sin(alpha), 0);
           x.normalize();
           _dirs.push_back(x);
         }
@@ -489,14 +491,8 @@ bool buildAdditionalPoints2D(GFace *gf)
         }
       }
       else if(N1.size() == 2){
-	// printf("%g %g --> %g %g \n",e1.getVertex(0)->x(),e1.getVertex(0)->y(),
-	//        e1.getVertex(1)->x(),e1.getVertex(1)->y());
-	// printf("N1.size = %d %g %g %g %g\n",N1.size(),N1[0].x(),N1[0].y(),
-        //        N1[1].x(),N1[1].y());
         SPoint2 p0,p1;
         reparamMeshEdgeOnFace(_connections[0], *it, gf, p0, p1);
-
-        int fanSize = fan ? CTX::instance()->mesh.boundaryLayerFanPoints : 0 ;
         double alpha1 = atan2(N1[0].y(),N1[0].x());
         double alpha2 = atan2(N1[1].y(),N1[1].x());
         double alpha3 = atan2(p1.y()-p0.y(),p1.x()-p0.x());
@@ -512,13 +508,14 @@ bool buildAdditionalPoints2D(GFace *gf)
           AMIN = AMAX - 2 * M_PI;
           AMAX = temp;
         }
+        double frac = fabs(AMAX - AMIN) / M_PI;
+        int n = (int)(frac * CTX::instance()->mesh.boundaryLayerFanPoints + 0.5);
+        int fanSize = fan ? n : 0 ;
 	if(fan) _columns->addFan(*it,e1,e1,true);
-        // printf("%g %g --> %g %g\n",N1[0].x(),N1[0].y(),N1[1].x(),N1[1].y());
         for(int i = -1; i <= fanSize; i++){
-          double t = (double)(i+1)/ (fanSize+1);
-          double alpha = t * AMAX + (1.-t)* AMIN;
-          SVector3 x(cos(alpha),sin(alpha),0);
-          // printf("%d %g %g %g\n",i,x.x(),x.y(),alpha);
+          double t = (double)(i + 1)/ (fanSize + 1);
+          double alpha = t * AMAX + (1.-t) * AMIN;
+          SVector3 x(cos(alpha), sin(alpha), 0);
           x.normalize();
           _dirs.push_back(x);
         }

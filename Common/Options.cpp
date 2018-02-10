@@ -5818,7 +5818,7 @@ double opt_mesh_boundary_layer_fan_points(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     int fanPoints = (int)val;
-    if(fanPoints < 1) fanPoints = 1;
+    if(fanPoints < 0) fanPoints = 0;
     CTX::instance()->mesh.boundaryLayerFanPoints = fanPoints;
   }
   return CTX::instance()->mesh.boundaryLayerFanPoints;

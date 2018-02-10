@@ -987,7 +987,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "Binary" , opt_mesh_binary , 0. ,
     "Write mesh files in binary format (if possible)" },
   { F|O, "BoundaryLayerFanPoints" , opt_mesh_boundary_layer_fan_points, 5. ,
-    "Number of interior points (> 1) in 2D boundary layer fans" },
+    "Number of points (per Pi rad) for 2D boundary layer fans" },
 
   { F|O, "CgnsImportOrder" , opt_mesh_cgns_import_order , 1. ,
    "Enable the creation of high-order mesh from CGNS structured meshes"
