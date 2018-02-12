@@ -30,7 +30,6 @@
 #ifndef _MESHOPTCOMMON_H_
 #define _MESHOPTCOMMON_H_
 
-
 #include <vector>
 #include "GmshMessage.h"
 #include "MeshOptimizerConfig.h"
@@ -40,7 +39,7 @@ class GEntity;
 class SPoint3;
 class ObjContrib;
 
-//ncurses shortcuts
+// ncurses shortcuts
 void mvinit();
 void mvterminate();
 void mvpause();
@@ -49,13 +48,12 @@ void mvprintCenter(int row, const char* fmt, ...);
 void mvprintLeft(int row, const char* fmt, ...);
 void mvprintRight(int row, const char* fmt, ...);
 void mvprintXY(int row, int col, const char* fmt, ...);
-//color scheme: 0=default, 1=last in yellow back, others in white back, 2=even numbers in white back
+// color scheme: 0=default, 1=last in yellow back, others in white back, 2=even
+// numbers in white back
 void mvprintList(int row, int maxSize, std::list<char*> listStr, int colorScheme=0);
 void mvfillRow(int row, char fillWith=' ');
 void mvbold(bool on);
 void mvcolor(int colorScheme, bool on);
-
-
 
 class redirectMessage : public GmshMessage
 {
@@ -119,6 +117,5 @@ class MeshOptParameters {                              // Parameters controlling
   int success;                                          // Success flag: -1 = fail, 0 = partial fail (target not reached), 1 = success
   double CPU;                                           // Time for optimization
 };
-
 
 #endif
