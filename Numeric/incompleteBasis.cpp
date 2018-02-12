@@ -11,25 +11,68 @@
 #include "BasisFactory.h"
 #include "ElementType.h"
 
+void incompleteBasis::_computeCoefficientsTriangle()
+{
+  if (order < 3) {
+    coefficients.resize(0, 0);
+    return;
+  }
+
+  int szInc = getNumShapeFunctions();
+  int szComp = completeBasis->getNumShapeFunctions();
+  coefficients.resize(szComp-szInc, szInc, true);
+
+  std::map<std::pair<int, int>, int> coord2idx;
+  for (int i = 0; i < szInc; ++i) {
+    int u = static_cast<int>(points(i, 0) * order + .5);
+    int v = static_cast<int>(points(i, 1) * order + .5);
+    coord2idx[std::make_pair(u, v)] = i;
+  }
+
+  int &n = order;
+  fullMatrix<double> pts = completeBasis->getReferenceNodes();
+  for (int i = 0; i < szComp-szInc; ++i) {
+    double xi = pts(szInc + i, 0);
+    double eta = pts(szInc + i, 1);
+    int u = static_cast<int>(xi * order + .5);
+    int v = static_cast<int>(eta * order + .5);
+
+    coefficients(i, coord2idx[std::make_pair(u+v,   0)]) = xi;
+    coefficients(i, coord2idx[std::make_pair(  n,   0)]) = -xi;
+    coefficients(i, coord2idx[std::make_pair(n-v,   v)]) = xi;
+    coefficients(i, coord2idx[std::make_pair(  u, n-u)]) = eta;
+    coefficients(i, coord2idx[std::make_pair(  0,   n)]) = -eta;
+    coefficients(i, coord2idx[std::make_pair(  0, u+v)]) = eta;
+    coefficients(i, coord2idx[std::make_pair(  0,   v)]) = 1-xi-eta;
+    coefficients(i, coord2idx[std::make_pair(  0,   0)]) = -(1-xi-eta);
+    coefficients(i, coord2idx[std::make_pair(  u,   0)]) = 1-xi-eta;
+  }
+
+  coefficients.print("coefficients");
+}
 
 incompleteBasis::incompleteBasis(int tag)
+// If the element is complete, compute the incomplete basis anyway
     : nodalBasis(ElementType::getTag(ElementType::ParentTypeFromTag(tag),
                                      ElementType::OrderFromTag(tag), true)),
       polyBasis(NULL), completeBasis(NULL)
-  // If the element is complete, compute the incomplete basis anyway
 {
   int tagComplete = ElementType::getTag(parentType, order, false);
   switch (parentType) {
+    case TYPE_LIN:
     case TYPE_PNT:
     case TYPE_QUA:
     case TYPE_HEX:
       polyBasis = new polynomialBasis(type);
       break;
-    case TYPE_LIN:
-    case TYPE_TRI:
     case TYPE_TET:
     case TYPE_PRI:
+    case TYPE_PYR:
       completeBasis = BasisFactory::getNodalBasis(tagComplete);
+      break;
+    case TYPE_TRI:
+      completeBasis = BasisFactory::getNodalBasis(tagComplete);
+      _computeCoefficientsTriangle();
       break;
   }
 }
@@ -68,7 +111,7 @@ void incompleteBasis::f(const fullMatrix<double> &coord, fullMatrix<double> &sf)
         }
       }
     }
-    sf.resize(sf.size1(), szInc);
+    sf.resize(sf.size1(), szInc, false);
   }
 }
 
@@ -85,7 +128,7 @@ void incompleteBasis::df(const fullMatrix<double> &coord, fullMatrix<double> &df
         }
       }
     }
-    dfm.resize(dfm.size1(), szInc);
+    dfm.resize(dfm.size1(), szInc, false);
   }
 }
 
@@ -153,7 +196,7 @@ void incompleteBasis::dddf(double u, double v, double w, double third[][3][3][3]
           for (int l = 0; l < 3; ++l) {
             for (int m = 0; m < 3; ++m) {
               third[i][k][l][m] =
-                  cthird[szInc + j][k][l][m] * coefficients(j, i);
+                  cthird[szInc+j][k][l][m] * coefficients(j, i);
             }
           }
         }
