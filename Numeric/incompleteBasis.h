@@ -6,19 +6,15 @@
 #ifndef INCOMPLETE_BASIS_H
 #define INCOMPLETE_BASIS_H
 
-//#include <math.h>
-//#include <map>
-//#include <vector>
-//#include "fullMatrix.h"
 #include "nodalBasis.h"
-//#include <iostream>
+#include "polynomialBasis.h"
 
 
 class incompleteBasis : public nodalBasis
 {
 private:
-  nodalBasis *completeBasis;
-  polynomialBasis *polyBasis;
+  const nodalBasis *completeBasis;
+  const polynomialBasis *polyBasis;
   fullMatrix<double> coefficients;
 
 public:
