@@ -12,6 +12,7 @@ set(SRC
   miniBasis.cpp
     nodalBasis.cpp
 	polynomialBasis.cpp
+	incompleteBasis.cpp
 	pyramidalBasis.cpp
 	BergotBasis.cpp
 	jacobiPolynomials.cpp
