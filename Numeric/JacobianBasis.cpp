@@ -164,16 +164,16 @@ GradientBasis::GradientBasis(FuncSpaceData data)
   fullMatrix<double> allDPsi;
   const nodalBasis *mapBasis = BasisFactory::getNodalBasis(_data.elementTag());
   mapBasis->df(samplingPoints, allDPsi);
-  const int numMapNodes = allDPsi.size1();
+  const int numMapNodes = allDPsi.size2();
 
   gradShapeMatX.resize(numSampPnts, numMapNodes);
   gradShapeMatY.resize(numSampPnts, numMapNodes);
   gradShapeMatZ.resize(numSampPnts, numMapNodes);
   for (int i = 0; i < numSampPnts; i++) {
     for (int j = 0; j < numMapNodes; j++) {
-      gradShapeMatX(i, j) = allDPsi(j, 3*i);
-      gradShapeMatY(i, j) = allDPsi(j, 3*i+1);
-      gradShapeMatZ(i, j) = allDPsi(j, 3*i+2);
+      gradShapeMatX(i, j) = allDPsi(3*i+0, j);
+      gradShapeMatY(i, j) = allDPsi(3*i+1, j);
+      gradShapeMatZ(i, j) = allDPsi(3*i+2, j);
     }
   }
 
@@ -343,9 +343,9 @@ JacobianBasis::JacobianBasis(FuncSpaceData data)
   gradShapeMatZFast.resize(numJacNodesFast, numMapNodes);
   for (int i = 0; i < numJacNodesFast; i++) {
     for (int j = 0; j < numMapNodes; j++) {
-      gradShapeMatXFast(i, j) = allDPsiFast(j, 3*i);
-      gradShapeMatYFast(i, j) = allDPsiFast(j, 3*i+1);
-      gradShapeMatZFast(i, j) = allDPsiFast(j, 3*i+2);
+      gradShapeMatXFast(i, j) = allDPsiFast(3*i+0, j);
+      gradShapeMatYFast(i, j) = allDPsiFast(3*i+1, j);
+      gradShapeMatZFast(i, j) = allDPsiFast(3*i+2, j);
     }
   }
 }

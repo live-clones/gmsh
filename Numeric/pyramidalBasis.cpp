@@ -130,14 +130,14 @@ void pyramidalBasis::df(const fullMatrix<double> &coord, fullMatrix<double> &dfm
   const int N = bergot->size(), NPts = coord.size1();
 
   double (*dfv)[3] = new double[N][3];
-  dfm.resize (N, 3*NPts, false);
+  dfm.resize (3*NPts, N, false);
 
   for (int iPt=0; iPt<NPts; iPt++) {
     df(coord(iPt,0), coord(iPt,1), coord(iPt,2), dfv);
     for (int i = 0; i < N; i++) {
-      dfm(i, 3*iPt) = dfv[i][0];
-      dfm(i, 3*iPt+1) = dfv[i][1];
-      dfm(i, 3*iPt+2) = dfv[i][2];
+      dfm(3*iPt+0, i) = dfv[i][0];
+      dfm(3*iPt+1, i) = dfv[i][1];
+      dfm(3*iPt+2, i) = dfv[i][2];
     }
   }
 
