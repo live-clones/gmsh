@@ -2325,7 +2325,7 @@ void deMeshGFace::operator() (GFace *gf)
 }
 
 // for debugging, change value from -1 to -100;
-int debugSurface = -1; //-100;
+int debugSurface = -100; //-100;
 
 void meshGFace::operator() (GFace *gf, bool print)
 {

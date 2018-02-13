@@ -31,7 +31,6 @@ class discreteEdge : public GEdge {
 
   bool getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
   void interpolateInGeometry (MVertex *v, MVertex **v1, MVertex **v2, double &xi) const;
-  void parametrize(std::map<MVertex*,MVertex*>& old2New);
 
   void orderMLines();
   void setBoundVertices();

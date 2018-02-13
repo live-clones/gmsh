@@ -30,6 +30,7 @@ public:
   std::vector<MTriangle> t2d;
   std::vector<MTriangle> t3d;
   std::vector<discreteEdge*> bnd;
+  std::vector<discreteEdge*> emb;
   hxt_reparam_surf ():oct(NULL) {}
   ~hxt_reparam_surf () ;
 };
@@ -41,38 +42,31 @@ class triangulation;
 class discreteFace : public GFace {
  private:
   void checkAndFixOrientation();
-  bool _meshable;
-  void splitDiscreteEdge(GEdge*,GVertex*,discreteEdge*[2]);
-  void setupDiscreteVertex(GVertex*,MVertex*,std::set<MVertex*>*);
-  void setupDiscreteEdge(discreteEdge*,std::vector<MLine*>,std::set<MVertex*>*);
 
 #ifdef HAVE_HXT
   int _current_parametrization;
   std::vector< hxt_reparam_surf > _parametrizations;
+  std::vector<discreteEdge*> e_internals;
+  std::vector<discreteVertex*> v_internals;
   HXTStatus reparametrize_through_hxt ();
   bool compute_topology_of_partition (int nbColors,
 				      int *colors,
 				      int *nNodes,
 				      int *nodes,
 				      double *uv,
+				      double angle_threshold,
 				      std::vector<MVertex*> &c2v,
-				      std::vector<std::vector<MEdge> > &boundaries);
-#else
-  void gatherMeshes();
-  void updateTopology(std::vector<triangulation*>&);
-  std::vector<discreteDiskFace*> _atlas;
-  std::map<MEdge,std::vector<int>,Less_Edge> allEdg2Tri;
-  void fillHoles(triangulation*);
-  void split(triangulation*,std::vector<triangulation*>&,int);
-  void addTriangle(triangulation*,MTriangle*);
+				      std::vector<std::vector<MEdge> > &boundaries,
+				      std::vector<std::vector<MEdge> > &internals );
 #endif
   
  public:
-  discreteFace(GModel *model, int num, bool meshable=false);
+  discreteFace(GModel *model, int num);
   virtual ~discreteFace() {}
   using GFace::point;
   GPoint point(double par1, double par2) const;
   SPoint2 parFromPoint(const SPoint3 &p, bool onSurface=true) const;
+  GPoint closestPoint(const SPoint3 &queryPoint, const double initialGuess[2]) const;
   SVector3 normal(const SPoint2 &param) const;
   double curvatureMax(const SPoint2 &param) const;
   double curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
@@ -87,6 +81,12 @@ class discreteFace : public GFace {
   void setBoundEdges(const std::vector<int> &tagEdges);
   void setBoundEdges(const std::vector<int> &tagEdges,
                      const std::vector<int> &signEdges);
+#ifdef HAVE_HXT
+  GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
+				const SVector3 &p, const double &R,
+				double uv[2]) ;
+#endif
+    
 };
 
 #endif

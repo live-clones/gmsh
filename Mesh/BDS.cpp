@@ -1163,7 +1163,7 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p)
 bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
 {
 
-  if(!p->config_modified) return false;
+  //  if(!p->config_modified) return false;
   if(p->g && p->g->classif_degree <= 1) return false;
   if(p->g && p->g->classif_tag < 0) {
     p->config_modified = true;
@@ -1193,10 +1193,10 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
   std::list<BDS_Edge *>::iterator itede = p->edges.end();
 
   double sTot = 0;
+  const double fact = 1.0;
   while(ited != itede) {
     BDS_Edge  *e = *ited;
     BDS_Point *n = e->othervertex(p);
-    double fact = 1.0;
     sTot += fact;
     U  += n->u * fact;
     V  += n->v * fact;
@@ -1214,7 +1214,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
   ZZ/= (sTot);
 
   GPoint gp;double uv[2];
-  if (isSphere){
+  if (isSphere || gf->geomType() == GEntity::DiscreteSurface){
     gp = gf->closestPoint(SPoint3(XX, YY, ZZ), uv);
     U = gp.u();
     V = gp.v();
@@ -1249,8 +1249,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
     p->v = oldV;
     double sold = fabs(surface_triangle_param(n[0], n[1], n[2]));
     s2 += sold;
-    // printf("%22.15E %22.15E\n", snew, sold);
-    if(snew < .1 * sold) return false;
+    //    if(snew < .1 * sold) return false;
 
     p->X = gp.x();
     p->Y = gp.y();

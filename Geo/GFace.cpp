@@ -1329,7 +1329,7 @@ bool GFace::fillPointCloud(double maxDist,
 #if defined(HAVE_MESH)
 static void meshCompound(GFace* gf, bool verbose)
 {
-  discreteFace *df = new discreteFace(gf->model(), gf->tag() + 100000, true);
+  discreteFace *df = new discreteFace(gf->model(), gf->tag() + 100000);
   std::set<int> ec;
 
   for (unsigned int i = 0; i < gf->_compound.size(); i++){

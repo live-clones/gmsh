@@ -303,7 +303,7 @@ static int edgeSwapTest(GFace *gf, BDS_Edge *e)
 
 void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap)
 {
-  return;
+  //  return;
   int NN1 = m.edges.size();
   int NN2 = 0;
   std::list<BDS_Edge*>::iterator it = m.edges.begin();
@@ -369,6 +369,43 @@ bool edges_sort(std::pair<double, BDS_Edge*> a, std::pair<double, BDS_Edge*> b)
     return (a.first < b.first);
 }
 
+static void middlePoint (GFace *gf, BDS_Edge *e, double &u, double &v)
+{
+  double u1 = e->p1->u;
+  double u2 = e->p2->u;
+  double v1 = e->p1->v;
+  double v2 = e->p2->v;
+  double X1 = e->p1->X;
+  double X2 = e->p2->X;
+  double Y1 = e->p1->Y;
+  double Y2 = e->p2->Y;
+  double Z1 = e->p1->Z;
+  double Z2 = e->p2->Z;
+  //  printf("start : \n");
+  //double l = sqrt((X2-X1)*(X2-X1)+(Y2-Y1)*(Y2-Y1)+(Z2-Z1)*(Z2-Z1));
+  
+  while (1){
+    u = 0.5*(u1+u2);
+    v = 0.5*(v1+v2);
+    GPoint gpp = gf->point(u,v);
+    double X = gpp.x();
+    double Y = gpp.y();
+    double Z = gpp.z();
+    double l1 = sqrt((X-X1)*(X-X1)+(Y-Y1)*(Y-Y1)+(Z-Z1)*(Z-Z1));
+    double l2 = sqrt((X-X2)*(X-X2)+(Y-Y2)*(Y-Y2)+(Z-Z2)*(Z-Z2));
+    // 1 ------ p -- 2
+    if (l1 > 1.2*l2){
+      //      printf("1 %g 2 %g \n",l1,l2);
+      u2 = u; v2 = v;  
+    }
+    else if (l2 > 1.2*l1){
+      //      printf("1 %g 2 %g \n",l1,l2);
+      u1 = u; v1 = v;  
+    }
+    else break;
+  }  
+}
+
 void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 {
   std::list<BDS_Edge*>::iterator it = m.edges.begin();
@@ -389,12 +426,22 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
   //  double radius;
   //  bool isSphere = gf->isSphere (radius, center);
 
+  bool faceDiscrete = gf->geomType() == GEntity::DiscreteSurface;
+  
   for (unsigned int i = 0; i < edges.size(); ++i){
     BDS_Edge *e = edges[i].second;
     if (!e->deleted){
       BDS_Point *mid ;
+
+
       double U = 0.5*(e->p1->u+e->p2->u);
       double V = 0.5*(e->p1->v+e->p2->v);
+      if (0 && faceDiscrete){
+	// Here, something has to be done for discreteFaces where
+	// parametrization can be flaky
+	middlePoint (gf, e, U, V);
+      }
+      
       GPoint gpp = gf->point(U,V);
 
       if ((!isPeriodic || gf->containsParam(SPoint2(U,V))) && gpp.succeeded()){
@@ -471,6 +518,7 @@ static bool revertTriangleSphere (SPoint3 &center, BDS_Point *p, BDS_Point *o){
 
 void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_collaps)
 {
+  //  return;
   std::list<BDS_Edge*>::iterator it = m.edges.begin();
   std::vector<std::pair<double, BDS_Edge*> > edges;
 
@@ -536,7 +584,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_c
 void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q)
 {
   // FIXME SUPER HACK
-  //return;
+  //  return;
   std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
   while(itp != m.points.end()){
     if(m.smooth_point_centroid(*itp, gf,q))

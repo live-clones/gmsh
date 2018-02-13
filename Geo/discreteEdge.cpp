@@ -52,7 +52,9 @@ void discreteEdge::createTopo()
 
 void discreteEdge::orderMLines()
 {
-  //  return;
+  // FIXME
+  return;
+  size_t ss = lines.size();
   std::vector<MEdge> ed;
   std::vector<std::vector<MVertex*> >vs;
   for (unsigned int i = 0; i < lines.size(); i++) {
@@ -63,58 +65,31 @@ void discreteEdge::orderMLines()
   
   if (!SortEdgeConsecutive (ed,vs))
     Msg::Warning ("Discrete edge segments cannot be ordered");
+
+  unsigned int START = 0;
+  for ( ; START < vs[0].size(); START++) if (vs[0][START]->onWhat()->dim() == 0) break;
   
   if (vs.size() != 1) 
     Msg::Warning ("Discrete Edge %d is mutiply connected",tag());
-  
-  for (unsigned int i = 1; i < vs[0].size(); i++)
-    lines.push_back(new MLine(vs[0][i-1],vs[0][i]));  
-  
+
+  unsigned int i = START;
+  while (lines.size() != ss){
+    if (vs[0][i] != vs[0][(i+1)% vs[0].size()])
+      lines.push_back(new MLine(vs[0][i],vs[0][(i+1)% vs[0].size()]));
+    i++;
+  }
+    
   mesh_vertices.clear();
+  //  printf("discrete edge %d :",tag());
   for (unsigned int i = 0; i < lines.size()-1; ++i){
-     MVertex *v1 = lines[i]->getVertex(1);
-     mesh_vertices.push_back(v1);
+    MVertex *v11 = lines[i]->getVertex(1);
+    //    printf("%d ",v11->getNum());
+    mesh_vertices.push_back(v11);
   }
+  //  printf("\n");
 }
 
-
-void discreteEdge::parametrize(std::map<MVertex*, MVertex*>& old2new)
-{
-  if (_pars.empty()){
-    for (unsigned int i = 0; i < lines.size() + 1; i++){
-      _pars.push_back(i);
-    }
-  }
-
-  std::vector<MVertex* > newVertices;
-  std::vector<MLine*> newLines;
-
-  MVertex *vL = getBeginVertex()->mesh_vertices[0];
-  int i = 0;
-  for(i = 0; i < (int)lines.size() - 1; i++){
-    MVertex *vR;
-    vR = lines[i]->getVertex(1);
-    int param = i+1;
-    MVertex *vNEW = new MEdgeVertex(vR->x(),vR->y(),vR->z(), this,
-                                    param, vR->getNum());
-    old2new.insert(std::make_pair(vR,vNEW));
-    newVertices.push_back(vNEW);
-    newLines.push_back(new MLine(vL, vNEW));
-    vL = vNEW;
-  }
-  MVertex *vR = getEndVertex()->mesh_vertices[0];
-  newLines.push_back(new MLine(vL, vR));
-
-  deleteVertexArrays();
-  model()->destroyMeshCaches();
-
-  mesh_vertices = newVertices;
-  lines.clear();
-  lines = newLines;
-}
-
-
-/// WE REWRITE WHAT FOLLOWS : THIS WAS WRONG (PAB -JFR)
+/// We Rewrite WHAT FOLLOWS : THIS WAS WRONG (PAB -JFR)
 
 bool discreteEdge::getLocalParameter(const double &t, int &iLine,
                                      double &tLoc) const
@@ -155,8 +130,11 @@ SVector3 discreteEdge::firstDer(double par) const
   int iEdge;
   if(!getLocalParameter(par, iEdge, tLoc)) return SVector3();
 
+  
   MVertex *vB = discrete_lines[iEdge]->getVertex(0);
   MVertex *vE = discrete_lines[iEdge]->getVertex(1);
+
+  //  printf("%d / %d  %p %p\n",iEdge, discrete_lines.size(),vE,vB);
 
   double dx, dy, dz;
   //  double dt = 1.0;
@@ -193,7 +171,6 @@ void discreteEdge::createGeometry()
     createTopo();
 
     bool reverse = lines[0]->getVertex(0) == getEndVertex()->mesh_vertices[0];
-
     
     // copy the mesh
     for (unsigned int i = 0; i < mesh_vertices.size(); i++){
@@ -216,20 +193,22 @@ void discreteEdge::createGeometry()
     }
     // compute parameters and recompute the vertices
     _pars.push_back(0.0);
-    //    printf("discrete  %d :",tag());    
     for (unsigned int i = 1; i < discrete_lines.size(); i++){
       _pars.push_back((double)i);
       MVertex *newv = discrete_lines[i]->getVertex(0);
       discrete_vertices.push_back(newv);
-      //      printf("%d (%g %g)",newv->getNum(),newv->x(),newv->y());
     }
-    //    printf("\n");
     _pars.push_back((double)discrete_lines.size());
+    mesh_vertices.clear();
+    lines.clear();
   }
 }
 
 MVertex * discreteEdge::getGeometricalVertex (MVertex *v)
 {
+  printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAARGHHHH\n");
+
+  
   std::map<MVertex*,MVertex*>::const_iterator it = v2v.find(v);
   if (it == v2v.end()){
     Msg::Error("fatality %ld %ld %ld", v2v.size(), mesh_vertices.size(),
@@ -254,12 +233,6 @@ void discreteEdge::interpolateInGeometry(MVertex *v, MVertex **v1,
 void discreteEdge::mesh(bool verbose){
 #if defined(HAVE_MESH)
   if (!CTX::instance()->meshDiscrete) return;
-  //  for(unsigned int i =0; i<discrete_vertices.size(); i++){
-  //    double p;
-  //    discrete_vertices[i]->getParameter(0,p);
-  //    printf("%f\t",p);
-  //  }
-  //  printf("\n\n");
   meshGEdge mesher;
   mesher(this);
 #endif
