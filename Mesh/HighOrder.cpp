@@ -483,8 +483,7 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
 // Get new interior vertices for an edge in a 3D element
 static void getEdgeVertices(GRegion *gr, MElement *ele, std::vector<MVertex*> &ve,
                             std::vector<MVertex*> &newHOVert,
-                            edgeContainer &edgeVertices,
-                            bool linear, int nPts = 1)
+                            edgeContainer &edgeVertices, int nPts = 1)
 {
   for(int i = 0; i < ele->getNumEdges(); i++) {
     std::vector<MVertex*> veOld;
@@ -818,6 +817,8 @@ static void getFaceVertices(GRegion *gr, MElement *incomplete, MElement *ele,
     }
     else { // Vertices do not exist, create them by interpolation
       if (linear) { // Interpolate on existing mesh
+        // FIXME: If ele is not an order-1 element, then we do not get linear
+        // points
         std::vector<MVertex*> vfOld;
         ele->getFaceVertices(i,vfOld);
         MElement *faceEl;
@@ -1246,7 +1247,7 @@ static MTetrahedron *setHighOrder(MTetrahedron *t, GRegion *gr,
                                   bool linear, bool incomplete, int nPts)
 {
   std::vector<MVertex*> ve, vf, vr;
-  getEdgeVertices(gr, t, ve, newHOVert, edgeVertices, linear, nPts);
+  getEdgeVertices(gr, t, ve, newHOVert, edgeVertices, nPts);
   if(nPts == 1){
     return new MTetrahedron10(t->getVertex(0), t->getVertex(1), t->getVertex(2),
                               t->getVertex(3), ve[0], ve[1], ve[2], ve[3], ve[4], ve[5],
@@ -1278,7 +1279,7 @@ static MHexahedron *setHighOrder(MHexahedron *h, GRegion *gr,
                                  bool linear, bool incomplete, int nPts)
 {
   std::vector<MVertex*> ve, vf, vr;
-  getEdgeVertices(gr, h, ve, newHOVert, edgeVertices, linear, nPts);
+  getEdgeVertices(gr, h, ve, newHOVert, edgeVertices, nPts);
   if(incomplete){
     if(nPts == 1){
       return new MHexahedron20(h->getVertex(0), h->getVertex(1), h->getVertex(2),
@@ -1338,7 +1339,7 @@ static MPrism *setHighOrder(MPrism *p, GRegion *gr,
                             bool linear, bool incomplete, int nPts)
 {
   std::vector<MVertex*> ve, vf, vr;
-  getEdgeVertices(gr, p, ve, newHOVert, edgeVertices, linear, nPts);
+  getEdgeVertices(gr, p, ve, newHOVert, edgeVertices, nPts);
   if(incomplete){
     if(nPts == 1){
       return new MPrism15(p->getVertex(0), p->getVertex(1), p->getVertex(2),
@@ -1386,7 +1387,7 @@ static MPyramid *setHighOrder(MPyramid *p, GRegion *gr,
                               bool linear, bool incomplete, int nPts)
 {
   std::vector<MVertex*> ve, vf, vr;
-  getEdgeVertices(gr, p, ve, newHOVert, edgeVertices, linear, nPts);
+  getEdgeVertices(gr, p, ve, newHOVert, edgeVertices, nPts);
   MPyramidN incpl(p->getVertex(0), p->getVertex(1), p->getVertex(2),
                   p->getVertex(3), p->getVertex(4), ve, nPts + 1, 0, p->getPartition());
   getFaceVertices(gr, &incpl, p, vf, newHOVert, faceVertices, edgeVertices, linear, nPts);
