@@ -11,7 +11,7 @@
 // interior nodes when only boundary nodes are given.
 // If x^b are x coordinate of boundary nodes, then x coordinate of interior
 // nodes are given by M*x^b.
-// The placement is obtained by using linear transfinite interpolation.
+// The placement is obtained by analogy with linear transfinite interpolation.
 
 fullMatrix<double> gmshGenerateInteriorNodePlacementTriangle(int order);
 fullMatrix<double> gmshGenerateInteriorNodePlacementQuadrangle(int order);
