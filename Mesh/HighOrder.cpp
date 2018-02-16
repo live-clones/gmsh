@@ -540,33 +540,28 @@ static int getNewFacePointsInVolume(MElement *incomplete, int nPts,
   return startFace;
 }
 
-static void getFaceVerticesOnGeo(GFace *gf, MElement *incomplete, const MElement *faceEl,
+static void getFaceVerticesOnGeo(GFace *gf,
+                                 const fullMatrix<double> &coefficients,
+                                 const std::vector<MVertex*> &vertices,
                                  std::vector<MVertex*> &vf, int nPts = 1)
 {
   SPoint2 pts[1000];
   bool reparamOK = true;
-  for(int k = 0; k < incomplete->getNumVertices(); k++)
-    reparamOK &= reparamMeshVertexOnFace(incomplete->getVertex(k), gf, pts[k]);
-  fullMatrix<double> points;
-  int start = (faceEl->getType() == 3) ? 3 * (1 + nPts) : 4 * (1 + nPts);
-  points = faceEl->getFunctionSpace(nPts+1)->points;
-  for(int k = start; k < points.size1(); k++) {
-    MVertex *v;
-    const double t1 = points(k, 0);
-    const double t2 = points(k, 1);
+  for (unsigned int k = 0; k < vertices.size(); ++k)
+    reparamOK &= reparamMeshVertexOnFace(vertices[k], gf, pts[k]);
+  for(int k = 0; k < coefficients.size1(); k++) {
     double X(0), Y(0), Z(0), GUESS[2] = {0, 0};
-    double sf[1256];
-    incomplete->getShapeFunctions(t1, t2, 0, sf);
-    for (int j = 0; j < incomplete->getNumShapeFunctions(); j++){
-      MVertex *vt = incomplete->getShapeFunctionNode(j);
-      X += sf[j] * vt->x();
-      Y += sf[j] * vt->y();
-      Z += sf[j] * vt->z();
+    for (int j = 0; j < coefficients.size2(); j++){
+      MVertex *vt = vertices[j];
+      X += coefficients(k, j) * vt->x();
+      Y += coefficients(k, j) * vt->y();
+      Z += coefficients(k, j) * vt->z();
       if (reparamOK){
-        GUESS[0] += sf[j] * pts[j][0];
-        GUESS[1] += sf[j] * pts[j][1];
+        GUESS[0] += coefficients(k, j) * pts[j][0];
+        GUESS[1] += coefficients(k, j) * pts[j][1];
       }
     }
+    MVertex *v;
     if(reparamOK){
       GPoint gp = gf->point(SPoint2(GUESS[0], GUESS[1]));
       // closest point is not necessary (slow and for high quality HO
@@ -621,26 +616,22 @@ static void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
     linear = true;
 
   MFace face = ele->getFace(0);
-  std::vector<MVertex*> veFace;
+  std::vector<MVertex*> vFace;
   if (!linear) {// Get vertices on geometry if asked...
-    if (ele->getType() == TYPE_TRI) {
-      MTriangleN incomplete(ele->getVertex(0), ele->getVertex(1),
-                            ele->getVertex(2), ve, nPts + 1, 0,
-                            ele->getPartition());
-      getFaceVerticesOnGeo(gf, &incomplete, ele, veFace, nPts);
+    std::vector<MVertex*> vertices;
+    {
+      int nCorner = ele->getType() == TYPE_TRI ? 3 : 4;
+      vertices.reserve(nCorner + ve.size());
+      ele->getVertices(vertices);
+      vertices.insert(vertices.end(), ve.begin(), ve.end());
     }
-    else if (ele->getType() == TYPE_QUA) {
-      MQuadrangleN incomplete(ele->getVertex(0), ele->getVertex(1),
-                              ele->getVertex(2), ele->getVertex(3),
-                              ve, nPts + 1, 0, ele->getPartition());
-      getFaceVerticesOnGeo(gf, &incomplete, ele, veFace, nPts);
-    }
+    getFaceVerticesOnGeo(gf, coefficients, vertices, vFace, nPts);
   }
   else // ... otherwise, create from mesh interpolation
-    interpVerticesInExistingFace(gf, ele, veFace, nPts);
-  newHOVert.insert(newHOVert.end(), veFace.begin(), veFace.end());
-  faceVertices[face].insert(faceVertices[face].end(), veFace.begin(), veFace.end());
-  vf.insert(vf.end(), veFace.begin(), veFace.end());
+    interpVerticesInExistingFace(gf, ele, vFace, nPts);
+  newHOVert.insert(newHOVert.end(), vFace.begin(), vFace.end());
+  faceVertices[face].insert(faceVertices[face].end(), vFace.begin(), vFace.end());
+  vf.insert(vf.end(), vFace.begin(), vFace.end());
 }
 
 // Get new face (excluding edge) vertices for a face of a 3D element
