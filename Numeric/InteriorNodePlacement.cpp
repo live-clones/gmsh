@@ -40,7 +40,6 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementTriangle(int order)
   M.resize(szComp-szInc, szInc, true);
 
   fullMatrix<double> monomials = gmshGenerateMonomialsTriangle(order, false);
-  monomials.print("monomials");
   fullMatrix<int> coordinates;
   double2int(monomials, coordinates);
 
@@ -70,16 +69,6 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementTriangle(int order)
     M(i, coord2idx[std::make_pair(  0,   n)]) -= eta;
     M(i, coord2idx[std::make_pair(  0,   0)]) -= rho;
   }
-
-  M.print("Mtri");
-  for (int i = 0; i < M.size1(); ++i) {
-    double sum = 0;
-    for (int j = 0; j < M.size2(); ++j) {
-      sum += M(i, j);
-    }
-    if (abs(sum-1) > 1e-12)
-      printf("AAARARARARARARRG");
-  }
   return M;
 }
 
@@ -97,7 +86,6 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementQuadrangle(int order)
   M.resize(szComp-szInc, szInc, true);
 
   fullMatrix<double> monomials = gmshGenerateMonomialsQuadrangle(order, false);
-  monomials.print("monomials");
   fullMatrix<int> coordinates;
   double2int(monomials, coordinates);
 
@@ -123,16 +111,6 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementQuadrangle(int order)
     M(i, coord2idx[std::make_pair(n, 0)]) -= xi*(1-eta);
     M(i, coord2idx[std::make_pair(n, n)]) -= xi*eta;
     M(i, coord2idx[std::make_pair(0, n)]) -= (1-xi)*eta;
-  }
-
-  M.print("Mquad");
-  for (int i = 0; i < M.size1(); ++i) {
-    double sum = 0;
-    for (int j = 0; j < M.size2(); ++j) {
-      sum += M(i, j);
-    }
-    if (abs(sum-1) > 1e-12)
-      printf("AAARARARARARARRG");
   }
   return M;
 }
