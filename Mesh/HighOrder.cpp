@@ -620,12 +620,12 @@ static void interpVerticesInExistingFace(GEntity *ge,
 }
 
 // Get new interior vertices for a 2D element
-static void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
-                            std::vector<MVertex*> &vf,
-                            fullMatrix<double> &coefficients,
-                            std::vector<MVertex*> &newHOVert,
-                            faceContainer &faceVertices,
-                            bool linear)
+static void getFaceVertices(GFace *gf, MElement *ele,
+                            const std::vector<MVertex *> &ve,
+                            const fullMatrix<double> &coefficients,
+                            std::vector<MVertex *> &vf,
+                            std::vector<MVertex *> &newHOVert,
+                            faceContainer &faceVertices, bool linear)
 {
   if(gf->geomType() == GEntity::DiscreteSurface ||
      gf->geomType() == GEntity::BoundaryLayerSurface ||
@@ -1035,8 +1035,8 @@ static MTriangle *setHighOrder(MTriangle *t, GFace *gf,
   }
   else{
     if(!incomplete){
-      getFaceVertices(gf, t, ve, vf, coefficients, newHOVert,
-                      faceVertices, linear, nPts);
+      getFaceVertices(gf, t, ve, coefficients,
+                      vf, newHOVert, faceVertices, linear);
       ve.insert(ve.end(), vf.begin(), vf.end());
     }
     return new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
@@ -1066,8 +1066,8 @@ static MQuadrangle *setHighOrder(MQuadrangle *q, GFace *gf,
     }
   }
   else {
-    getFaceVertices(gf, q, ve, vf, coefficients, newHOVert,
-                    faceVertices, linear);
+    getFaceVertices(gf, q, ve, coefficients,
+                    vf, newHOVert, faceVertices, linear);
     ve.insert(ve.end(), vf.begin(), vf.end());
     if(nPts == 1){
       return new MQuadrangle9(q->getVertex(0), q->getVertex(1), q->getVertex(2),
@@ -1726,30 +1726,33 @@ void SetHighOrderComplete(GModel *m, bool onlyVisible)
     if (onlyVisible && !(*it)->getVisibility()) continue;
     std::vector<MVertex*> dumNewHOVert;
     std::vector<MTriangle*> newT;
-    std::vector<MQuadrangle*> newQ;
     for (unsigned int i = 0; i < (*it)->triangles.size(); i++){
       MTriangle *t = (*it)->triangles[i];
       std::vector<MVertex*> vf, vt;
       int nPts = t->getPolynomialOrder() - 1;
-      MTriangle TEMP (t->getVertex(0), t->getVertex(1), t->getVertex(2), 0, t->getPartition());
-      getFaceVertices (*it, t, t, vf, dumNewHOVert, faceVertices, false, nPts);
+      // coefficients are given by gmshGenerateInteriorNodePlacementTriangle()
+      // But need to store them in std::map in order to avoid to compute
+      // them every time!
+      getFaceVertices(*it, t, std::vector<MVertex*>(), coefficients,
+                      vf, dumNewHOVert, faceVertices, false);
       for (int j=3;j<t->getNumVertices();j++)vt.push_back(t->getVertex(j));
       vt.insert(vt.end(), vf.begin(), vf.end());
-      MTriangleN *newTr = new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                                         vt, nPts + 1, 0, t->getPartition());
-      newT.push_back(newTr);
-
+      newT.push_back(new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
+                                    vt, nPts + 1, 0, t->getPartition()));
       delete t;
     }
     (*it)->triangles = newT;
 
+    std::vector<MQuadrangle*> newQ;
     for (unsigned int i = 0; i < (*it)->quadrangles.size(); i++){
       MQuadrangle *t = (*it)->quadrangles[i];
       std::vector<MVertex*> vf, vt;
       int nPts = t->getPolynomialOrder() - 1;
-      MQuadrangle TEMP (t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                        t->getVertex(3), 0, t->getPartition());
-      getFaceVertices (*it, t, &TEMP, vf, dumNewHOVert, faceVertices, false, nPts);
+      // coefficients are given by gmshGenerateInteriorNodePlacementQuadrangle()
+      // But need to store them in std::map in order to avoid to compute
+      // them every time!
+      getFaceVertices(*it, t, std::vector<MVertex*>(), coefficients,
+                      vf, dumNewHOVert, faceVertices, false);
       for (int j=4;j<t->getNumVertices();j++)vt.push_back(t->getVertex(j));
       vt.insert(vt.end(), vf.begin(), vf.end());
       newQ.push_back(new MQuadrangleN(t->getVertex(0), t->getVertex(1),
