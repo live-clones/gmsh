@@ -31,23 +31,23 @@
 #include "OptHomFastCurving.h"
 #endif
 
-static void change_completeness_cb(Fl_Widget *w, void *data)
-{
-  highOrderToolsWindow *o = FlGui::instance()->highordertools;
-  bool onlyVisible = (bool)o->butt[1]->value();
-  if (!o->complete){
-    // BOF BOF BOF -- CG
-    SetHighOrderComplete(GModel::current(), onlyVisible);
-    o->complete = 1;
-  }
-  else if (o->complete){
-    // BOF BOF BOF -- CG
-    SetHighOrderInComplete(GModel::current(), onlyVisible);
-    o->complete = 0;
-  }
-  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
-  drawContext::global()->draw();
-}
+//static void change_completeness_cb(Fl_Widget *w, void *data)
+//{
+//  highOrderToolsWindow *o = FlGui::instance()->highordertools;
+//  bool onlyVisible = (bool)o->butt[1]->value();
+//  if (!o->complete){
+//    // BOF BOF BOF -- CG
+//    SetHighOrderComplete(GModel::current(), onlyVisible);
+//    o->complete = 1;
+//  }
+//  else if (o->complete){
+//    // BOF BOF BOF -- CG
+//    SetHighOrderInComplete(GModel::current(), onlyVisible);
+//    o->complete = 0;
+//  }
+//  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+//  drawContext::global()->draw();
+//}
 
 static void highordertools_runp_cb(Fl_Widget *w, void *data)
 {
@@ -294,10 +294,12 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   y += BH;
 
   butt[0] = new Fl_Check_Button
-    (x, y, width - 4 * WB, BH, "Use incomplete elements");
+    (x, y, width - 4 * WB, BH, "Generate incomplete elements");
   butt[0]->type(FL_TOGGLE_BUTTON);
   butt[0]->value(!complete);
-  butt[0]->callback(change_completeness_cb);
+  // AJ: This is bad a design. Add a proper Fl_Button to toggle between
+  // completeness if needed
+//  butt[0]->callback(change_completeness_cb);
 
   y += BH;
 
