@@ -543,7 +543,7 @@ static int getNewFacePointsInVolume(MElement *incomplete, int nPts,
 static void getFaceVerticesOnGeo(GFace *gf,
                                  const fullMatrix<double> &coefficients,
                                  const std::vector<MVertex*> &vertices,
-                                 std::vector<MVertex*> &vf, int nPts = 1)
+                                 std::vector<MVertex*> &vf)
 {
   SPoint2 pts[1000];
   bool reparamOK = true;
@@ -586,7 +586,7 @@ static void getFaceVerticesOnGeo(GFace *gf,
   }
 }
 
-static void interpVerticesInExistingFace(GEntity *ge, const MElement *faceEl,
+static void interpVerticesInExistingFaceOld(GEntity *ge, const MElement *faceEl,
                                          std::vector<MVertex*> &veFace, int nPts)
 {
   fullMatrix<double> points;
@@ -602,36 +602,55 @@ static void interpVerticesInExistingFace(GEntity *ge, const MElement *faceEl,
   }
 }
 
+static void interpVerticesInExistingFace(GEntity *ge,
+                                         const fullMatrix<double> &coefficients,
+                                         const std::vector<MVertex*> &vertices,
+                                         std::vector<MVertex*> &vFace)
+{
+  for (int k = 0; k < coefficients.size1(); k++) {
+    double x(0), y(0), z(0);
+    for (int j = 0; j < coefficients.size2(); j++){
+      MVertex *v = vertices[j];
+      x += coefficients(k, j) * v->x();
+      y += coefficients(k, j) * v->y();
+      z += coefficients(k, j) * v->z();
+    }
+    vFace.push_back(new MVertex(x, y, z, ge));
+  }
+}
+
 // Get new interior vertices for a 2D element
 static void getFaceVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
                             std::vector<MVertex*> &vf,
                             fullMatrix<double> &coefficients,
                             std::vector<MVertex*> &newHOVert,
                             faceContainer &faceVertices,
-                            bool linear, int nPts = 1)
+                            bool linear)
 {
   if(gf->geomType() == GEntity::DiscreteSurface ||
      gf->geomType() == GEntity::BoundaryLayerSurface ||
      gf->geomType() == GEntity::CompoundSurface)
     linear = true;
 
-  MFace face = ele->getFace(0);
+  std::vector<MVertex*> vertices;
+  {
+    int nCorner = ele->getType() == TYPE_TRI ? 3 : 4;
+    vertices.reserve(nCorner + ve.size());
+    ele->getVertices(vertices);
+    vertices.insert(vertices.end(), ve.begin(), ve.end());
+  }
   std::vector<MVertex*> vFace;
   if (!linear) {// Get vertices on geometry if asked...
-    std::vector<MVertex*> vertices;
-    {
-      int nCorner = ele->getType() == TYPE_TRI ? 3 : 4;
-      vertices.reserve(nCorner + ve.size());
-      ele->getVertices(vertices);
-      vertices.insert(vertices.end(), ve.begin(), ve.end());
-    }
-    getFaceVerticesOnGeo(gf, coefficients, vertices, vFace, nPts);
+    getFaceVerticesOnGeo(gf, coefficients, vertices, vFace);
   }
-  else // ... otherwise, create from mesh interpolation
-    interpVerticesInExistingFace(gf, ele, vFace, nPts);
-  newHOVert.insert(newHOVert.end(), vFace.begin(), vFace.end());
+  else {// ... otherwise, create from mesh interpolation
+    interpVerticesInExistingFace(gf, coefficients, vertices, vFace);
+  }
+
+  MFace face = ele->getFace(0);
   faceVertices[face].insert(faceVertices[face].end(), vFace.begin(), vFace.end());
   vf.insert(vf.end(), vFace.begin(), vFace.end());
+  newHOVert.insert(newHOVert.end(), vFace.begin(), vFace.end());
 }
 
 // Get new face (excluding edge) vertices for a face of a 3D element
@@ -674,7 +693,7 @@ static void getFaceVertices(GRegion *gr, MElement *incomplete, MElement *ele,
           faceEl = new MTriangleN(vfOld, ele->getPolynomialOrder());
         else
           faceEl = new MQuadrangleN(vfOld, ele->getPolynomialOrder());
-        interpVerticesInExistingFace(gr, faceEl, veFace, nPts);
+        interpVerticesInExistingFaceOld(gr, faceEl, veFace, nPts);
         delete faceEl;
       }
       else {
@@ -739,7 +758,7 @@ static void getFaceVertices(GRegion *gr, MElement *incomplete, MElement *ele,
             faceEl = new MTriangleN(vfOld, nPts+1);
           else
             faceEl = new MQuadrangleN(vfOld, nPts+1);
-          interpVerticesInExistingFace(gr, faceEl, veFace, nPts);
+          interpVerticesInExistingFaceOld(gr, faceEl, veFace, nPts);
           delete faceEl;
         }
       }
@@ -1048,7 +1067,7 @@ static MQuadrangle *setHighOrder(MQuadrangle *q, GFace *gf,
   }
   else {
     getFaceVertices(gf, q, ve, vf, coefficients, newHOVert,
-                    faceVertices, linear, nPts);
+                    faceVertices, linear);
     ve.insert(ve.end(), vf.begin(), vf.end());
     if(nPts == 1){
       return new MQuadrangle9(q->getVertex(0), q->getVertex(1), q->getVertex(2),
