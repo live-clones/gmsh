@@ -87,8 +87,8 @@ static bool _isInitialized()
 void gmsh::initialize(int argc, char **argv, bool readConfigFiles)
 {
   if(_initialized){
-    Msg::Error("Gmsh has aleady been initialized");
-    throw 1;
+    Msg::Warning("Gmsh has aleady been initialized");
+    return;
   }
   if(GmshInitialize(argc, argv, readConfigFiles)){
     _initialized = 1;
