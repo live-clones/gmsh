@@ -1604,7 +1604,7 @@ static bool makeBox(TopoDS_Solid &result, double x, double y, double z,
                     double dx, double dy, double dz)
 {
   if(!dx || !dy || !dz){
-    Msg::Error("Degenerate block");
+    Msg::Error("Degenerate box");
     return false;
   }
   try{
@@ -1613,7 +1613,7 @@ static bool makeBox(TopoDS_Solid &result, double x, double y, double z,
     BRepPrimAPI_MakeBox b(P1, P2);
     b.Build();
     if(!b.IsDone()){
-      Msg::Error("Could not create block");
+      Msg::Error("Could not create box");
       return false;
     }
     result = TopoDS::Solid(b.Shape());

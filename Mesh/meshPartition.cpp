@@ -5,11 +5,6 @@
 //
 // Contributed by Anthony Royer.
 
-#include "GmshConfig.h"
-#include "GmshMessage.h"
-
-#if defined(HAVE_METIS)
-
 #include <vector>
 #include <set>
 #include <sstream>
@@ -19,6 +14,9 @@
 #include <stack>
 #include <cstdlib>
 #include <map>
+#include "GmshConfig.h"
+#include "GmshMessage.h"
+#include "GModel.h"
 
 #if __cplusplus >= 201103L
 #include <unordered_map>
@@ -43,6 +41,8 @@
   <MVertex*, std::vector<std::pair<MElement*, std::vector<unsigned int> > > >
 #endif
 
+#if defined(HAVE_METIS)
+
 #include "OS.h"
 #include "Context.h"
 #include "partitionRegion.h"
@@ -54,7 +54,6 @@
 #include "ghostEdge.h"
 #include "MFaceHash.h"
 #include "MEdgeHash.h"
-#include "GModel.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MTetrahedron.h"
@@ -312,33 +311,33 @@ class Graph
       }
     }
   }
-  
+
   void createDualGraph(bool connectedAll)
   {
     int *nptr = new int[_nn+1];
     for(unsigned int i = 0; i < _nn+1; i++) nptr[i] = 0;
     int *nind = new int[_eptr[_ne]];
     for(unsigned int i = 0; i < _eptr[_ne]; i++) nind[i] = 0;
-    
+
     for(unsigned int i = 0; i < _ne; i++){
       for(unsigned int j = _eptr[i]; j < _eptr[i+1]; j++){
         nptr[_eind[j]]++;
       }
     }
-    
+
     for(unsigned int i = 1; i < _nn; i++) nptr[i] += nptr[i-1];
     for(unsigned int i = _nn; i > 0; i--) nptr[i] = nptr[i-1];
     nptr[0] = 0;
-    
+
     for(unsigned int i = 0; i < _ne; i++){
       for(unsigned int j = _eptr[i]; j < _eptr[i+1]; j++){
         nind[nptr[_eind[j]]++] = i;
       }
     }
-    
+
     for(unsigned int i = _nn; i > 0; i--) nptr[i] = nptr[i-1];
     nptr[0] = 0;
-    
+
     _xadj = new unsigned int[_ne+1];
     for(unsigned int i = 0; i < _ne+1; i++) _xadj[i] = 0;
     int *nbrs = new int[_ne];
@@ -347,7 +346,7 @@ class Graph
       nbrs[i] = 0;
       marker[i] = 0;
     }
-    
+
     for(unsigned int i = 0; i < _ne; i++){
       unsigned int l = 0;
       for(unsigned int j = _eptr[i]; j < _eptr[i+1]; j++){
@@ -358,7 +357,7 @@ class Graph
           }
         }
       }
-      
+
       unsigned int nbrsNeighbors = 0;
       for(unsigned int j = 0; j < l; j++){
         if(marker[nbrs[j]] >=
@@ -368,17 +367,17 @@ class Graph
         marker[nbrs[j]] = 0;
         nbrs[j] = 0;
       }
-      
+
       _xadj[i] = nbrsNeighbors;
     }
-    
+
     for(unsigned int i = 1; i < _ne; i++) _xadj[i] = _xadj[i] + _xadj[i-1];
     for(unsigned int i = _ne; i > 0; i--) _xadj[i] = _xadj[i-1];
     _xadj[0] = 0;
-    
+
     _adjncy = new unsigned int[_xadj[_ne]];
     for(unsigned int i = 0; i < _xadj[_ne]; i++) _adjncy[i] = 0;
-    
+
     for(unsigned int i = 0; i < _ne; i++){
       unsigned int l = 0;
       for(unsigned int j = _eptr[i]; j < _eptr[i+1]; j++){
@@ -389,7 +388,7 @@ class Graph
           }
         }
       }
-      
+
       for(unsigned int j = 0; j < l; j++){
         if(marker[nbrs[j]] >=
            (connectedAll ? 1 :
@@ -403,10 +402,10 @@ class Graph
     }
     delete[] nbrs;
     delete[] marker;
-    
+
     for(unsigned int i = _ne; i > 0; i--) _xadj[i] = _xadj[i-1];
     _xadj[0] = 0;
-    
+
     delete[] nptr;
     delete[] nind;
   }
@@ -701,7 +700,7 @@ static int PartitionGraph(Graph &graph)
           }
         }
       }
-      
+
       for(unsigned int j = graph.xadj(i); j < graph.xadj(i+1); j++){
         if(graph.element(i)->getDim() == graph.element(graph.adjncy(j))->getDim()+2){
           if(epart[i] != epart[graph.adjncy(j)]){
@@ -710,7 +709,7 @@ static int PartitionGraph(Graph &graph)
           }
         }
       }
-      
+
       for(unsigned int j = graph.xadj(i); j < graph.xadj(i+1); j++){
         if(graph.element(i)->getDim() == graph.element(graph.adjncy(j))->getDim()+3){
           if(epart[i] != epart[graph.adjncy(j)]){
@@ -1300,7 +1299,7 @@ static bool dividedNonConnectedEntities(GModel *const model, int dim,
       }
     }
   }
-  
+
   return ret;
 }
 
@@ -2013,7 +2012,7 @@ static void CreatePartitionTopology(GModel *const model,
         }
       }
       subGraph.partition(part);
-      
+
       std::vector< std::set<MElement*> > subBoundaryElements =
         subGraph.getBoundaryElements(mapOfPartitionsTag);
 
@@ -2024,12 +2023,12 @@ static void CreatePartitionTopology(GModel *const model,
             edgeToElement[(*it)->getEdge(j)].push_back
             (std::pair<MElement*, std::vector<unsigned int> >
              (*it, mapOfPartitions[i]));
-            
+
           }
         }
       }
     }
-    
+
     int numEdgeEntity = model->getMaxElementaryNumber(1);
     for(hashmapedge::const_iterator it = edgeToElement.begin();
         it != edgeToElement.end(); ++it){
@@ -2609,7 +2608,7 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
   // Check and correct the topology
   for(unsigned int i = 0; i < graph.ne(); i++){
     if(graph.element(i)->getDim() == (int)graph.dim()) continue;
-    
+
     for(unsigned int j = graph.xadj(i); j < graph.xadj(i+1); j++){
       if(graph.element(i)->getDim() == graph.element(graph.adjncy(j))->getDim()+1){
         if(part[i] != part[graph.adjncy(j)]){
@@ -2619,7 +2618,7 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
         }
       }
     }
-    
+
     for(unsigned int j = graph.xadj(i); j < graph.xadj(i+1); j++){
       if(graph.element(i)->getDim() == graph.element(graph.adjncy(j))->getDim()+2){
         if(part[i] != part[graph.adjncy(j)]){
@@ -2629,7 +2628,7 @@ int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
         }
       }
     }
-    
+
     for(unsigned int j = graph.xadj(i); j < graph.xadj(i+1); j++){
       if(graph.element(i)->getDim() == graph.element(graph.adjncy(j))->getDim()+3){
         if(part[i] != part[graph.adjncy(j)]){
@@ -2699,15 +2698,18 @@ int PartitionMesh(GModel *const model)
 
 int UnpartitionMesh(GModel *const model)
 {
+  return 0;
 }
 
 int ConvertOldPartitioningToNewOne(GModel *const model)
 {
+  return 0;
 }
 
 int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
                             hashmap<MElement*, unsigned int> &elmToPartition)
 {
+  return 0;
 }
 
 #endif

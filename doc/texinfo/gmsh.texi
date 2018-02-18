@@ -1742,8 +1742,9 @@ arguement is the command line).
 Changes the name of the current model.
 
 @item SetFactory(@var{char-expression});
-Changes the current geometry kernel. Currently available kernels:
-@code{"Built-in"} and @code{"OpenCASCADE"}.
+Changes the current geometry kernel (i.e. determines the CAD kernel that
+is used for all subsequent geometrical commands). Currently available
+kernels: @code{"Built-in"} and @code{"OpenCASCADE"}.
 
 @item SyncModel;
 Forces an immediate transfer from the old geometrical database into the

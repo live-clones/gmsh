@@ -82,7 +82,7 @@ $headers_cmd
 mkdir -p $gmsh_framework/Headers
 cp $gmsh_git/build_${ios}/Release-${iphoneos}/libgmsh.a $gmsh_framework/gmsh
 cd $gmsh_framework/Headers
-cp $gmsh_git/build_${ios}/Headers/gmsh/* .
+cp $gmsh_git/build_${ios}/Headers/*.h $gmsh_git/build_${ios}/Headers/gmsh/* .
 ln -s . gmsh
 
 # build getdp framework
@@ -97,7 +97,7 @@ $headers_cmd
 mkdir -p $getdp_framework/Headers
 cp $getdp_git/build_${ios}/Release-${iphoneos}/libgetdp.a $getdp_framework/getdp
 cd $getdp_framework/Headers
-cp $getdp_git/build_${ios}/Headers/getdp/* .
+cp $getdp_git/build_${ios}/Headers/*.h $getdp_git/build_${ios}/Headers/getdp/* .
 
 # create xcode project
 mkdir $gmsh_git/contrib/mobile/build_${ios}_${appname}

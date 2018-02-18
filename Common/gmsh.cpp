@@ -87,8 +87,8 @@ static bool _isInitialized()
 void gmsh::initialize(int argc, char **argv, bool readConfigFiles)
 {
   if(_initialized){
-    Msg::Error("Gmsh has aleady been initialized");
-    throw 1;
+    Msg::Warning("Gmsh has aleady been initialized");
+    return;
   }
   if(GmshInitialize(argc, argv, readConfigFiles)){
     _initialized = 1;
@@ -747,9 +747,9 @@ static void _getIntegrationData(const int elementType,
       case 3:
         basis->df(u, v, w, ds);
         for(int j = 0; j < n; j++){
-          fsData[n * 3 * i + j] = ds[j][0];
-          fsData[n * 3 * i + j + 1] = ds[j][1];
-          fsData[n * 3 * i + j + 2] = ds[j][2];
+          fsData[n * 3 * i + 3 * j] = ds[j][0];
+          fsData[n * 3 * i + 3 * j + 1] = ds[j][1];
+          fsData[n * 3 * i + 3 * j + 2] = ds[j][2];
         }
         break;
       }
