@@ -11,10 +11,11 @@
 pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag), bergot(0)
 {
   if (serendip && order > 2) {
-    Msg::Warning("Serendipity pyramid for order %i not yet implemented",order);
+    Msg::Warning("Serendipity pyramid for order %i not yet implemented",
+                 order);
     return;
   }
-  
+
   bergot = new BergotBasis(order,serendip);
 
   int num_points = points.size1();
@@ -41,7 +42,7 @@ pyramidalBasis::pyramidalBasis(int tag) : nodalBasis(tag), bergot(0)
           monomials(idx,0) = i;
           monomials(idx,1) = j;
           monomials(idx,2) = k;
-          
+
           for (int l=0;l<num_points;l++) {
             double oneMinW = std::max(1e-14,1-points(l,2));
             VDM(idx,l)  = std::pow(points(l,0),i);

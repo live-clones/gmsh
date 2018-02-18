@@ -813,7 +813,7 @@ void HighOrderMeshOptimizerNew(std::vector<GEntity*> &entities, OptHomParameters
   HOPatchDefParameters patchDef(p);
   par.patchDef = &patchDef;
   par.displayInterv = 30;
-  par.verbose = 4;
+  par.verbose = 3;
   par.logFileName = "";
   par.nCurses = false;
 

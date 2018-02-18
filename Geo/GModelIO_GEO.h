@@ -58,21 +58,16 @@ class GEO_Internals{
   bool addEllipseArc(int &tag, int startTag, int centerTag, int majorTag,
                      int endTag, double nx = 0., double ny = 0., double nz = 0.);
   bool addSpline(int &tag, const std::vector<int> &vertexTags);
-  bool addBSpline(int &tag, const std::vector<int> &vertexTags);
   bool addBezier(int &tag, const std::vector<int> &vertexTags);
-  bool addNurbs(int &tag, const std::vector<int> &vertexTags,
-                const std::vector<double> &knots);
-  bool addCompoundLine(int &tag, const std::vector<int> &edgeTags);
+  bool addBSpline(int &tag, const std::vector<int> &vertexTags,
+                  const std::vector<double> &seqknots = std::vector<double>());
   bool addLineLoop(int &tag, const std::vector<int> &edgeTags);
   bool addPlaneSurface(int &tag, const std::vector<int> &wireTags);
   bool addDiscreteSurface(int &tag);
   bool addSurfaceFilling(int &tag, const std::vector<int> &wireTags,
                          int sphereCenterTag = -1);
   bool addSurfaceLoop(int &tag, const std::vector<int> &faceTags);
-  bool addCompoundSurface(int &tag, const std::vector<int> &faceTags,
-                          std::vector<int> edgeTags[4] = 0);
   bool addVolume(int &tag, const std::vector<int> &shellTags);
-  bool addCompoundVolume(int &tag, const std::vector<int> &regionTags);
 
   // extrude and revolve
   bool extrude(const std::vector<std::pair<int, int> > &inDimTags,

@@ -30,12 +30,9 @@
 #ifndef _MESHOPTIMIZER_H_
 #define _MESHOPTIMIZER_H_
 
-
 class GEntity;
 class MeshOptParameters;
 
-
 void meshOptimizer(std::vector<GEntity*> &entities, MeshOptParameters &par);
-
 
 #endif

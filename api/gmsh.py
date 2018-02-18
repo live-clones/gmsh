@@ -783,13 +783,14 @@ class model:
             `tag' < 0, gets the elements for all entities of dimension `dim'. If `dim'
             and `tag' are negative, gets all the elements in the mesh. `elementTypes'
             contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
-            the Gmsh reference manual). `elementTags' is a vector of the same length as
-            `elementTypes'; each entry is a vector containing the tags (unique,
-            strictly positive identifiers) of the elements of the corresponding type.
-            `vertexTags' is also a vector of the same length as `elementTypes'; each
-            entry is a vector of length equal to the number of elements of the given
-            type times the number of vertices for this type of element, that contains
-            the vertex tags of all the elements of the given type, concatenated.
+            `getElementProperties' to obtain the properties for a given element type).
+            `elementTags' is a vector of the same length as `elementTypes'; each entry
+            is a vector containing the tags (unique, strictly positive identifiers) of
+            the elements of the corresponding type. `vertexTags' is also a vector of
+            the same length as `elementTypes'; each entry is a vector of length equal
+            to the number of elements of the given type times the number of vertices
+            for this type of element, that contains the vertex tags of all the elements
+            of the given type, concatenated.
 
             return elementTypes, elementTags, vertexTags
             """
@@ -812,6 +813,41 @@ class model:
                 _ovectorint(api_elementTypes_,api_elementTypes_n_.value),
                 _ovectorvectorint(api_elementTags_,api_elementTags_n_,api_elementTags_nn_),
                 _ovectorvectorint(api_vertexTags_,api_vertexTags_n_,api_vertexTags_nn_))
+
+        @staticmethod
+        def getElementProperties(elementType):
+            """
+            Gets the properties of an element of type `elementType': its name
+            (`elementName'), dimension (`dim'), order (`order'), number of vertices
+            (`numVertices') and parametric coordinates of vertices (`parametricCoord'
+            vector, of length `dim' times `numVertices').
+
+            return elementName, dim, order, numVertices, parametricCoord
+            """
+            api_elementName_ = c_char_p()
+            api_dim_ = c_int()
+            api_order_ = c_int()
+            api_numVertices_ = c_int()
+            api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetElementProperties(
+                c_int(elementType),
+                byref(api_elementName_),
+                byref(api_dim_),
+                byref(api_order_),
+                byref(api_numVertices_),
+                byref(api_parametricCoord_),byref(api_parametricCoord_n_),
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshGetElementProperties returned non-zero error code : ",
+                    ierr.value)
+            return (
+                _ostring(api_elementName_),
+                api_dim_.value,
+                api_order_.value,
+                api_numVertices_.value,
+                _ovectordouble(api_parametricCoord_,api_parametricCoord_n_.value))
 
         @staticmethod
         def getIntegrationData(integrationType,functionSpaceType,dim=-1,tag=-1):
@@ -995,6 +1031,22 @@ class model:
             if ierr.value != 0 :
                 raise ValueError(
                     "gmshModelMeshSetElements returned non-zero error code : ",
+                    ierr.value)
+
+        @staticmethod
+        def reclassifyVertices():
+            """
+            Redistribute all mesh vertices on their associated geometrical entity,
+            based on the mesh elements. Can be used when importing mesh vertices in
+            bulk (e.g. by associating them all to a single volume), to reclassify them
+            correctly on model surfaces, curves, etc.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshReclassifyVertices(
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshReclassifyVertices returned non-zero error code : ",
                     ierr.value)
 
         @staticmethod
@@ -1321,9 +1373,8 @@ class model:
             coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
             that point. If `tag' is positive, sets the tag explicitly; otherwise a new
             tag is selected automatically. Returns the tag of the point. (Note that the
-            point will be added in the current model only after
-            gmshModelGeoSynchronize() is called. This behavior holds for all the
-            entities added in the gmshModelGeo module.)
+            point will be added in the current model only after synchronize() is
+            called. This behavior holds for all the entities added in the geo module.)
 
             return int
             """
@@ -1423,7 +1474,8 @@ class model:
             """
             Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If
             `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
-            automatically.  Returns the tag of the spline curve.
+            automatically. Creates a periodic curve if the first and last points are
+            the same. Returns the tag of the spline curve.
 
             return int
             """
@@ -1442,9 +1494,10 @@ class model:
         @staticmethod
         def addBSpline(vertexTags,tag=-1):
             """
-            Adds a b-spline curve with `vertexTags' control points. If `tag' is
+            Adds a cubic b-spline curve with `vertexTags' control points. If `tag' is
             positive, sets the tag explicitly; otherwise a new tag is selected
-            automatically.  Returns the tag of the b-spline curve.
+            automatically. Creates a periodic curve if the first and last points are
+            the same. Returns the tag of the b-spline curve.
 
             return int
             """
@@ -2010,9 +2063,8 @@ class model:
             coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
             that point. If `tag' is positive, sets the tag explicitly; otherwise a new
             tag is selected automatically. Returns the tag of the point. (Note that the
-            point will be added in the current model only after
-            gmshModelGeoSynchronize() is called. This behavior holds for all the
-            entities added in the gmshModelOcc module.)
+            point will be added in the current model only after synchronize() is
+            called. This behavior holds for all the entities added in the occ module.)
 
             return int
             """
@@ -2154,9 +2206,10 @@ class model:
         @staticmethod
         def addSpline(vertexTags,tag=-1):
             """
-            Adds a spline (b-spline) curve going through `vertexTags' points, with a
-            given tolerance. If `tag' is positive, sets the tag explicitly; otherwise a
-            new tag is selected automatically.  Returns the tag of the spline curve.
+            Adds a spline (C2 b-spline) curve going through `vertexTags' points. If
+            `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
+            automatically. Creates a periodic curve if the first and last points are
+            the same. Returns the tag of the spline curve.
 
             return int
             """
@@ -2169,6 +2222,37 @@ class model:
             if ierr.value != 0 :
                 raise ValueError(
                     "gmshModelOccAddSpline returned non-zero error code : ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
+        def addBSpline(vertexTags,tag=-1,degree=3,weights=[],knots=[],multiplicities=[]):
+            """
+            Adds a b-spline curve of degree `degree' with `vertexTags' control points.
+            If `weights', `knots' or `multiplicities' are not provided, default
+            parameters are computed automatically. If `tag' is positive, sets the tag
+            explicitly; otherwise a new tag is selected automatically. Creates a
+            periodic curve if the first and last points are the same. Returns the tag
+            of the b-spline curve.
+
+            return int
+            """
+            api_vertexTags_, api_vertexTags_n_ = _ivectorint(vertexTags)
+            api_weights_, api_weights_n_ = _ivectordouble(weights)
+            api_knots_, api_knots_n_ = _ivectordouble(knots)
+            api_multiplicities_, api_multiplicities_n_ = _ivectorint(multiplicities)
+            ierr = c_int()
+            api__result__ = lib.gmshModelOccAddBSpline(
+                api_vertexTags_, api_vertexTags_n_,
+                c_int(tag),
+                c_int(degree),
+                api_weights_, api_weights_n_,
+                api_knots_, api_knots_n_,
+                api_multiplicities_, api_multiplicities_n_,
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelOccAddBSpline returned non-zero error code : ",
                     ierr.value)
             return api__result__
 
@@ -3093,7 +3177,7 @@ class view:
         """
         Gets the index of the view with tag `tag' in the list of currently loaded
         views. This dynamic index (it can change when views are removed) is used to
-        access view options with the gmshOption functions.
+        access view options.
 
         return int
         """

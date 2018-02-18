@@ -19,6 +19,8 @@
 #include "GModel.h"
 #include "CreateFile.h"
 #include "OS.h"
+#include "GmshGlobal.h"
+#include "StringUtils.h"
 
 #if defined(HAVE_FLTK)
 #include <FL/Fl.H>
@@ -85,6 +87,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-part_split", "Save mesh partitions in separate files"));
   s.push_back(mp("-part_[no_]topo", "Create the partition topology"));
   s.push_back(mp("-part_[no_]ghosts", "Create ghost cells"));
+  s.push_back(mp("-part_[no_]physicals", "Create phsyical groups for partitions"));
   s.push_back(mp("-part_topo_pro", "Save the partition topology .pro file"));
   s.push_back(mp("-preserve_numbering_msh2", "Preserve element numbering in MSH2 format"));
   s.push_back(mp("-save_all", "Save all elements (discard physical group definitions)"));
@@ -150,8 +153,8 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-v int", "Set verbosity level"));
   s.push_back(mp("-nopopup", "Don't popup dialog windows in scripts"));
   s.push_back(mp("-string \"string\"", "Parse command string at startup"));
-  s.push_back(mp("-setnumber name value", "Set constant number name=value"));
-  s.push_back(mp("-setstring name value", "Set constant string name=value"));
+  s.push_back(mp("-setnumber name value", "Set constant or option number name=value"));
+  s.push_back(mp("-setstring name value", "Set constant or option string name=value"));
   s.push_back(mp("-option file", "Parse option file at startup"));
   s.push_back(mp("-convert files", "Convert files into latest binary formats, then exit"));
   s.push_back(mp("-nt int", "Set number of threads"));
@@ -159,6 +162,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-version", "Show version number"));
   s.push_back(mp("-info", "Show detailed version information"));
   s.push_back(mp("-help", "Show command line usage"));
+  s.push_back(mp("-help_options", "Show all options"));
   return s;
 }
 
@@ -473,6 +477,14 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
         opt_mesh_partition_create_topology(0, GMSH_SET, 0.);
         i++;
       }
+      else if(!strcmp(argv[i] + 1, "part_physcals")){
+        opt_mesh_partition_create_physicals(0, GMSH_SET, 1.);
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "part_no_physicals")){
+        opt_mesh_partition_create_physicals(0, GMSH_SET, 0.);
+        i++;
+      }
       else if(!strcmp(argv[i] + 1, "part_ghosts")){
         opt_mesh_partition_create_ghost_cells(0, GMSH_SET, 1.);
         i++;
@@ -596,12 +608,20 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
         else
           Msg::Fatal("Missing string");
       }
-#if defined(HAVE_PARSER)
       else if(!strcmp(argv[i] + 1, "setstring")) {
         i++;
 	if (i + 1 < argc && argv[i][0] != '-' && argv[i + 1][0] != '-') {
-          gmsh_yystringsymbols[argv[i]] = std::vector<std::string>(1, argv[i + 1]);
-          Msg::GetCommandLineStrings()[argv[i]] = argv[i + 1];
+          std::string n(argv[i]), cat, opt, v = argv[i + 1];
+          int index = 0;
+          if(SplitOptionName(n, cat, opt, index)){
+            GmshSetStringOption(cat, opt, v, index);
+          }
+          else{
+#if defined(HAVE_PARSER)
+            gmsh_yystringsymbols[n] = std::vector<std::string>(1, v);
+#endif
+            Msg::GetCommandLineStrings()[n] = v;
+          }
           i += 2;
 	}
         else
@@ -610,8 +630,18 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
       else if (!strcmp(argv[i]+1, "setnumber")) {
         i++;
 	if (i + 1 < argc && argv[i][0] != '-') {
-          gmsh_yysymbols[argv[i]].value = std::vector<double>(1, atof(argv[i + 1]));
-          Msg::GetCommandLineNumbers()[argv[i]] = std::vector<double>(1, atof(argv[i + 1]));
+          std::string n(argv[i]), cat, opt;
+          double v = atof(argv[i + 1]);
+          int index = 0;
+          if(SplitOptionName(n, cat, opt, index)){
+            GmshSetNumberOption(cat, opt, v, index);
+          }
+          else{
+#if defined(HAVE_PARSER)
+            gmsh_yysymbols[n].value = std::vector<double>(1, v);
+#endif
+            Msg::GetCommandLineNumbers()[n] = std::vector<double>(1, v);
+          }
           i += 2;
 	}
         else
@@ -631,13 +661,14 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
           }
           if(j < s)
             Msg::Error("Missing values in list (got %d instead of %d)", j, s);
+#if defined(HAVE_PARSER)
           gmsh_yysymbols[n].value = v;
+#endif
           Msg::GetCommandLineNumbers()[n] = v;
 	}
         else
           Msg::Error("Missing name and/or value for definition of list of numbers");
       }
-#endif
       else if(!strcmp(argv[i] + 1, "option")) {
         i++;
         if(argv[i])
@@ -1043,6 +1074,13 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles)
         fprintf(stderr, "Gmsh, a 3D mesh generator with pre- and post-processing facilities\n");
         fprintf(stderr, "Copyright (C) 1997-2018 C. Geuzaine and J.-F. Remacle\n");
         PrintUsage(argv[0]);
+        Msg::Exit(0);
+      }
+      else if(!strcmp(argv[i] + 1, "help_options")) {
+        std::vector<std::string> s;
+        PrintOptions(0, GMSH_FULLRC, 0, 1, 0, &s);
+        for(unsigned int i = 0; i < s.size(); i++)
+          Msg::Direct("%s\n", s[i].c_str());
         Msg::Exit(0);
       }
       else if(!strcmp(argv[i] + 1, "v") || !strcmp(argv[i] + 1, "verbose")) {

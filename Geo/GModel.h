@@ -67,6 +67,8 @@ class GModel {
   // the maximum vertex and element id number in the mesh
   int _maxVertexNum, _maxElementNum;
   int _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
+  // flag set to true when the model is being destroyed
+  bool _destroying;
  protected:
   // the name of the model
   std::string _name;
@@ -85,7 +87,7 @@ class GModel {
   std::vector<MElement*> _elementVectorCache;
   std::map<int, MElement*> _elementMapCache;
   std::map<int, int> _elementIndexCache;
-  
+
   // ghost cell information (stores partitions for each element acting
   // as a ghost cell)
   // /!\ Use only for compatibility with mesh format msh2 and msh3
@@ -164,7 +166,7 @@ class GModel {
   std::map<std::pair<int, int>, std::string> physicalNames, elementaryNames;
 
   // the set of all used mesh partition numbers
-  unsigned int numPartitions;
+  unsigned int _numPartitions;
 
  public:
   GModel(std::string name="");
@@ -189,6 +191,7 @@ class GModel {
 
   // delete everything in a GModel (optionally keep name and fileName)
   void destroy(bool keepName=false);
+  bool isBeingDestroyed() const { return _destroying; }
 
   // get/set global vertex/element num
   int getMaxVertexNumber(){ return _maxVertexNum; }
@@ -333,9 +336,13 @@ class GModel {
   // return all physical groups (one map per dimension: 0-D to 3-D)
   void getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4]) const;
   void getPhysicalGroups(int dim, std::map<int, std::vector<GEntity*> > &groups) const;
-  std::map<std::pair<int, int>, std::string> getPhysicalNames() const
+  const std::map<std::pair<int, int>, std::string> &getPhysicalNames() const
   {
     return physicalNames;
+  }
+  void setPhysicalNames(const std::map<std::pair<int, int>, std::string> &names)
+  {
+    physicalNames = names;
   }
 
   // remove physical groups in the model
@@ -358,9 +365,13 @@ class GModel {
   // get the number of physical names
   int numPhysicalNames(){ return physicalNames.size(); }
 
+  // get iterators to the last physical name of each dimension
+  void getInnerPhysicalNamesIterators(std::vector<piter> &iterators);
+
   // associate a name with a physical entity of dimension "dim" and
   // number "num" (returns a new number id if "num"==0)
   int setPhysicalName(std::string name, int dim, int num=0);
+  piter setPhysicalName(piter pos, std::string name, int dim, int num=0);
 
   // get the name (if any) of a given physical group of dimension
   // "dim" and id number "num"
@@ -402,7 +413,7 @@ class GModel {
   int getMeshStatus(bool countDiscrete=true);
 
   // return the total number of elements in the mesh
-  int getNumMeshElements();
+  int getNumMeshElements(int dim = -1);
   int getNumMeshParentElements();
 
   // get the number of each type of element in the mesh at the largest
@@ -422,7 +433,7 @@ class GModel {
   void setMeshElementIndex(MElement *e, int index);
 
   // return the total number of vertices in the mesh
-  int getNumMeshVertices() const;
+  int getNumMeshVertices(int dim = -1) const;
 
   // access a mesh vertex by tag, using the vertex cache
   MVertex *getMeshVertexByTag(int n);
@@ -454,8 +465,8 @@ class GModel {
   void removeInvisibleElements();
 
   // the list of partitions
-  unsigned int getNumPartitions() const { return numPartitions; }
-  void setNumPartitions(unsigned int npart){ numPartitions = npart; }
+  unsigned int getNumPartitions() const { return _numPartitions; }
+  void setNumPartitions(unsigned int npart){ _numPartitions = npart; }
 
   // delete all the partitions
   int deleteMeshPartitions();
@@ -466,10 +477,13 @@ class GModel {
   int convertOldPartitioningToNewOne();
   // write the partitioned topology file
   int writePartitionedTopology(std::string &name);
-  
+
   // /!\ Use only for compatibility with mesh format msh2 and msh3
   std::multimap<MElement*, short> &getGhostCells(){ return _ghostCells; }
-  void addGhostCells(MElement* elm, short partition) { _ghostCells.insert(std::pair<MElement*,short>(elm, partition)); }
+  void addGhostCells(MElement* elm, short partition)
+  {
+    _ghostCells.insert(std::pair<MElement*,short>(elm, partition));
+  }
 
   // perform various coherence tests on the mesh
   void checkMeshCoherence(double tolerance);
@@ -675,7 +689,7 @@ class GModel {
   int writeMATLAB(const std::string &name, bool binary=false,
 		  bool saveAll=false, double scalingFactor=1.0);
 
-  
+
   // Tochnog format
   int writeTOCHNOG(const std::string &name,  bool saveGroupsOfNodes=false,
                    bool saveAll=false, double scalingFactor=1.0);

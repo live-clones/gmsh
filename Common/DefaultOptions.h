@@ -986,8 +986,8 @@ StringXNumber MeshOptions_Number[] = {
     "Field format for Nastran BDF files (0=free, 1=small, 2=large)" },
   { F|O, "Binary" , opt_mesh_binary , 0. ,
     "Write mesh files in binary format (if possible)" },
-  { F|O, "SmoothCrossField" , opt_mesh_smooth_cross_field , 0. ,
-    "Apply n barycentric smoothing passes to the cross field" },
+  { F|O, "BoundaryLayerFanPoints" , opt_mesh_boundary_layer_fan_points, 5. ,
+    "Number of points (per Pi rad) for 2D boundary layer fans" },
 
   { F|O, "CgnsImportOrder" , opt_mesh_cgns_import_order , 1. ,
    "Enable the creation of high-order mesh from CGNS structured meshes"
@@ -1104,9 +1104,11 @@ StringXNumber MeshOptions_Number[] = {
     "Weight of tetrahedral element for METIS load balancing" },
   { F|O, "PartitionTriWeight" , opt_mesh_partition_tri_weight , 1 ,
     "Weight of triangle element for METIS load balancing" },
-  { F|O, "PartitionTopology" , opt_mesh_partition_create_topology , 1 ,
-    "Create boundary entities between partitions" },
-  { F|O, "PartitionGhostCells" , opt_mesh_partition_create_ghost_cells , 0 ,
+  { F|O, "PartitionCreateTopology" , opt_mesh_partition_create_topology , 1 ,
+    "Create boundary representation of partitions" },
+  { F|O, "PartitionCreatePhysicals" , opt_mesh_partition_create_physicals , 0 ,
+    "Create physical groups for partitions" },
+  { F|O, "PartitionCreateGhostCells" , opt_mesh_partition_create_ghost_cells , 0 ,
     "Create partition ghost cells" },
   { F|O, "PartitionSplitMeshFiles" , opt_mesh_partition_split_mesh_files , 0 ,
     "Write one file for each mesh partition" },
@@ -1179,6 +1181,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "RandomFactor" , opt_mesh_rand_factor , 1.e-9 ,
     "Random factor used in the 2D meshing algorithm (should be increased if "
     "RandomFactor * size(triangle)/size(model) approaches machine accuracy)" },
+  { F|O, "RandomFactor3D" , opt_mesh_rand_factor3d , 1.e-12 ,
+    "Random factor used in the 3D meshing algorithm" },
   { F|O, "PreserveNumberingMsh2" , opt_mesh_preserve_numbering_msh2 , 0. ,
     "Preserve element numbering in MSH2 format (will break meshes with multiple "
     "physical groups for a single elementary entity)"},
@@ -1237,6 +1241,8 @@ StringXNumber MeshOptions_Number[] = {
     "Should second order vertices simply be created by linear interpolation?" },
   { F|O, "Smoothing" , opt_mesh_nb_smoothing , 1. ,
     "Number of smoothing steps applied to the final mesh" },
+  { F|O, "SmoothCrossField" , opt_mesh_smooth_cross_field , 0. ,
+    "Apply n barycentric smoothing passes to the cross field" },
   { F|O, "SmoothNormals" , opt_mesh_smooth_normals , 0. ,
     "Smooth the mesh normals?" },
   { F|O, "SmoothRatio" , opt_mesh_smooth_ratio , 1.8 ,

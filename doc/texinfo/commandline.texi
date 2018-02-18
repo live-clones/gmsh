@@ -18,12 +18,14 @@ Match geometries and meshes
 @ftable @code
 @item -1, -2, -3
 Perform 1D, 2D or 3D mesh generation, then exit
+@item -save
+Save mesh, then exit
 @item -o file
 Specify output file name
 @item -format string
 Select output mesh format (auto (default), msh, msh1, msh2, msh3, msh4, unv, vrml, ply2, stl, mesh, bdf, cgns, p3d, diff, med, neu, ...)
 @item -bin
-Use binary format when available
+Create binary files when possible
 @item -refine
 Perform uniform mesh refinement, then exit
 @item -reclassify
@@ -34,8 +36,14 @@ Partition after batch mesh generation
 Weight of a triangle/quad/etc. during partitioning
 @item -part_split
 Save mesh partitions in separate files
-@item -part_topo
+@item -part_[no_]topo
+Create the partition topology
+@item -part_[no_]ghosts
+Create ghost cells
+@item -part_topo_pro
 Save the partition topology .pro file
+@item -preserve_numbering_msh2
+Preserve element numbering in MSH2 format
 @item -save_all
 Save all elements (discard physical group definitions)
 @item -save_parametric
@@ -56,8 +64,6 @@ Optimize tetrahedral elements that have a quality less than a threshold
 Optimize high order meshes
 @item -ho_[min,max,nlayers]
 High-order optimization parameters
-@item -optimize_lloyd
-Optimize 2D meshes using Lloyd algorithm
 @item -clscale float
 Set global mesh element size scaling factor
 @item -clmin float
@@ -147,9 +153,9 @@ Don't popup dialog windows in scripts
 @item -string "string"
 Parse command string at startup
 @item -setnumber name value
-Set constant number name=value
+Set constant or option number name=value
 @item -setstring name value
-Set constant string name=value
+Set constant or option string name=value
 @item -option file
 Parse option file at startup
 @item -convert files
@@ -164,4 +170,6 @@ Show version number
 Show detailed version information
 @item -help
 Show command line usage
+@item -help_options
+Show all options
 @end ftable

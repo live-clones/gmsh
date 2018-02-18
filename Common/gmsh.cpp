@@ -27,7 +27,10 @@
 #include "MPrism.h"
 #include "MPyramid.h"
 #include "ExtrudeParams.h"
+#include "StringUtils.h"
 #include "Context.h"
+#include "polynomialBasis.h"
+#include "pyramidalBasis.h"
 
 #if defined(HAVE_MESH)
 #include "Field.h"
@@ -141,37 +144,12 @@ void gmsh::clear()
 
 // gmsh::option
 
-static void _splitOptionName(const std::string &fullName, std::string &category,
-                             std::string &name, int &index)
-{
-  std::string::size_type d = fullName.find_first_of('.');
-  if(d == std::string::npos){
-    name = fullName;
-    return;
-  }
-  category = fullName.substr(0, d);
-  std::string::size_type b1 = fullName.find_first_of('[');
-  std::string::size_type b2 = fullName.find_last_of(']');
-  if(b1 != std::string::npos && b2 != std::string::npos){
-    std::string id = fullName.substr(b1 + 1, b2 - b1 - 1);
-    index = atoi(id.c_str());
-    category = fullName.substr(0, b1);
-    name = fullName.substr(d + 1, b1 - d);
-  }
-  else{
-    index = 0;
-    name = fullName.substr(d + 1);
-  }
-  Msg::Debug("Decoded option name '%s' . '%s' (index %d)", category.c_str(),
-             name.c_str(), index);
-}
-
 void gmsh::option::setNumber(const std::string &name, const double value)
 {
   if(!_isInitialized()){ throw -1; }
   std::string c, n;
   int i;
-  _splitOptionName(name, c, n, i);
+  SplitOptionName(name, c, n, i);
   if(GmshSetOption(c, n, value, i)) return;
   throw 1;
 }
@@ -181,7 +159,7 @@ void gmsh::option::getNumber(const std::string &name, double &value)
   if(!_isInitialized()){ throw -1; }
   std::string c, n;
   int i;
-  _splitOptionName(name, c, n, i);
+  SplitOptionName(name, c, n, i);
   if(GmshGetOption(c, n, value, i)) return;
   throw 1;
 }
@@ -191,7 +169,7 @@ void gmsh::option::setString(const std::string &name, const std::string &value)
   if(!_isInitialized()){ throw -1; }
   std::string c, n;
   int i;
-  _splitOptionName(name, c, n, i);
+  SplitOptionName(name, c, n, i);
   if(GmshSetOption(c, n, value, i)) return;
   throw 1;
 }
@@ -201,7 +179,7 @@ void gmsh::option::getString(const std::string &name, std::string &value)
   if(!_isInitialized()){ throw -1; }
   std::string c, n;
   int i;
-  _splitOptionName(name, c, n, i);
+  SplitOptionName(name, c, n, i);
   if(GmshGetOption(c, n, value, i)) return;
   throw 1;
 }
@@ -331,7 +309,7 @@ void gmsh::model::getEntitiesInBoundingBox(const double xmin, const double ymin,
     dimTags.push_back(std::pair<int, int>(entities[i]->dim(), entities[i]->tag()));
 }
 
-static std::string _entityName(int dim, int tag)
+static std::string _getEntityName(int dim, int tag)
 {
   std::stringstream stream;
   switch(dim){
@@ -351,7 +329,7 @@ void gmsh::model::getBoundingBox(const int dim, const int tag, double &xmin,
   if(!_isInitialized()){ throw -1; }
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   if(!ge){
-    Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     throw 2;
   }
   SBoundingBox3d box = ge->bounds();
@@ -374,7 +352,7 @@ int gmsh::model::addDiscreteEntity(const int dim, const int tag,
   }
   GEntity *e = GModel::current()->getEntityByTag(dim, outTag);
   if(e){
-    Msg::Error("%s already exists", _entityName(dim, outTag).c_str());
+    Msg::Error("%s already exists", _getEntityName(dim, outTag).c_str());
     throw 2;
   }
   // FIXME: check and set boundary entities to construct topology!
@@ -482,7 +460,7 @@ void gmsh::model::mesh::getVertices(std::vector<int> &vertexTags,
   if(dim >= 0 && tag >= 0){
     GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
     if(!ge){
-      Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
       throw 2;
     }
     entities.push_back(ge);
@@ -515,7 +493,7 @@ static void _getElementTypeMap(int dim, int tag,
   if(dim >= 0 && tag >= 0){
     GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
     if(!ge){
-      Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
       throw 2;
     }
     entities.push_back(ge);
@@ -558,10 +536,10 @@ static void _getElementTypeMap(int dim, int tag,
   }
 }
 
-static void _storeElementData(const int elementType,
-                              const std::vector<GEntity*> &entities,
-                              std::vector<int> &elementTags,
-                              std::vector<int> &vertexTags)
+static void _getElementData(const int elementType,
+                            const std::vector<GEntity*> &entities,
+                            std::vector<int> &elementTags,
+                            std::vector<int> &vertexTags)
 {
   for(unsigned int i = 0; i < entities.size(); i++){
     GEntity *ge = entities[i];
@@ -593,7 +571,7 @@ void gmsh::model::mesh::getElements(std::vector<int> &elementTypes,
     elementTypes.push_back(it->first);
     elementTags.push_back(std::vector<int>());
     vertexTags.push_back(std::vector<int>());
-    _storeElementData(it->first, it->second, elementTags.back(), vertexTags.back());
+    _getElementData(it->first, it->second, elementTags.back(), vertexTags.back());
   }
 }
 
@@ -620,8 +598,37 @@ void gmsh::model::mesh::getElementsByType(const int elementType,
   vertexTags.clear();
   std::map<int, std::vector<GEntity*> > typeMap;
   _getElementTypeMap(dim, tag, typeMap);
-  _storeElementData(elementType, typeMap[elementType], elementTags, vertexTags);
+  _getElementData(elementType, typeMap[elementType], elementTags, vertexTags);
 }
+
+void gmsh::model::mesh::getElementProperties(const int elementType,
+                                             std::string &name,
+                                             int &dim, int &order, int &numVertices,
+                                             std::vector<double> &parametricCoord)
+{
+  if(!_isInitialized()){ throw -1; }
+  const char *n;
+  numVertices = MElement::getInfoMSH(elementType, &n);
+  name = n;
+  int parentType = ElementType::ParentTypeFromTag(elementType);
+  nodalBasis *basis = 0;
+  if(parentType == TYPE_PYR)
+    basis = new pyramidalBasis(elementType);
+  else
+    basis = new polynomialBasis(elementType);
+  dim = basis->dimension;
+  order = basis->order;
+  numVertices = basis->points.size1();
+  for(int i = 0; i < basis->points.size1(); i++)
+    for(int j = 0; j < basis->points.size2(); j++)
+      parametricCoord.push_back(basis->points(i, j));
+  delete basis;
+}
+
+// TODO: give access to closures
+// void gmsh::model::mesh::getElementClosures(const int elementType, ...)
+// {
+// }
 
 static bool _getIntegrationInfo(const std::string &intType,
                                 std::string &intName, int &intOrder)
@@ -658,14 +665,14 @@ static bool _getFunctionSpaceInfo(const std::string &fsType,
   return false;
 }
 
-static void _storeIntegrationData(const int elementType,
-                                  const std::vector<GEntity*> &entities,
-                                  const std::string &intType,
-                                  const std::string &fsType,
-                                  std::vector<double> &intPoints,
-                                  std::vector<double> &intData,
-                                  int &fsNumComp,
-                                  std::vector<double> &fsData)
+static void _getIntegrationData(const int elementType,
+                                const std::vector<GEntity*> &entities,
+                                const std::string &intType,
+                                const std::string &fsType,
+                                std::vector<double> &intPoints,
+                                std::vector<double> &intData,
+                                int &fsNumComp,
+                                std::vector<double> &fsData)
 {
   std::string intName = "", fsName = "";
   int intOrder = 0, fsOrder = 0;
@@ -770,8 +777,8 @@ void gmsh::model::mesh::getIntegrationData(const std::string &intType,
     intPoints.push_back(std::vector<double>());
     intData.push_back(std::vector<double>());
     fsData.push_back(std::vector<double>());
-    _storeIntegrationData(it->first, it->second, intType, fsType, intPoints.back(),
-                          intData.back(), fsNumComp, fsData.back());
+    _getIntegrationData(it->first, it->second, intType, fsType, intPoints.back(),
+                        intData.back(), fsNumComp, fsData.back());
   }
 }
 
@@ -791,8 +798,8 @@ void gmsh::model::mesh::getIntegrationDataByType(int elementType,
   fsData.clear();
   std::map<int, std::vector<GEntity*> > typeMap;
   _getElementTypeMap(dim, tag, typeMap);
-  _storeIntegrationData(elementType, typeMap[elementType], intType, fsType, intPoints,
-                        intData, fsNumComp, fsData);
+  _getIntegrationData(elementType, typeMap[elementType], intType, fsType, intPoints,
+                      intData, fsNumComp, fsData);
 }
 
 void gmsh::model::mesh::setVertices(const int dim, const int tag,
@@ -803,7 +810,7 @@ void gmsh::model::mesh::setVertices(const int dim, const int tag,
   if(!_isInitialized()){ throw -1; }
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   if(!ge){
-    Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     throw 2;
   }
   if(coord.size() != 3 * vertexTags.size()){
@@ -841,6 +848,12 @@ void gmsh::model::mesh::setVertices(const int dim, const int tag,
   }
 }
 
+void gmsh::model::mesh::reclassifyVertices()
+{
+  if(!_isInitialized()){ throw -1; }
+  GModel::current()->pruneMeshVertexAssociations();
+}
+
 template<class T>
 static void _addElements(int dim, int tag, const std::vector<MElement*> &src,
                          std::vector<T*> &dst)
@@ -857,7 +870,7 @@ void gmsh::model::mesh::setElements(const int dim, const int tag,
   if(!_isInitialized()){ throw -1; }
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
   if(!ge){
-    Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     throw 2;
   }
   if(types.size() != elementTags.size()){
@@ -931,7 +944,7 @@ void gmsh::model::mesh::setElements(const int dim, const int tag,
       break;
     }
     if(!ok){
-      Msg::Error("Wrong type of element for %s", _entityName(dim, tag).c_str());
+      Msg::Error("Wrong type of element for %s", _getEntityName(dim, tag).c_str());
       throw 2;
     }
   }
@@ -999,7 +1012,7 @@ void gmsh::model::mesh::setTransfiniteLine(const int tag, const int numVertices,
   if(!_isInitialized()){ throw -1; }
   GEdge *ge = GModel::current()->getEdgeByTag(tag);
   if(!ge){
-    Msg::Error("%s does not exist", _entityName(1, tag).c_str());
+    Msg::Error("%s does not exist", _getEntityName(1, tag).c_str());
     throw 2;
   }
   ge->meshAttributes.method = MESH_TRANSFINITE;
@@ -1020,7 +1033,7 @@ void gmsh::model::mesh::setTransfiniteSurface(const int tag,
   if(!_isInitialized()){ throw -1; }
   GFace *gf = GModel::current()->getFaceByTag(tag);
   if(!gf){
-    Msg::Error("%s does not exist", _entityName(2, tag).c_str());
+    Msg::Error("%s does not exist", _getEntityName(2, tag).c_str());
     throw 2;
   }
   gf->meshAttributes.method = MESH_TRANSFINITE;
@@ -1046,7 +1059,7 @@ void gmsh::model::mesh::setTransfiniteVolume(const int tag,
   if(!_isInitialized()){ throw -1; }
   GRegion *gr = GModel::current()->getRegionByTag(tag);
   if(!gr){
-    Msg::Error("%s does not exist", _entityName(3, tag).c_str());
+    Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
     throw 2;
   }
   gr->meshAttributes.method = MESH_TRANSFINITE;
@@ -1065,7 +1078,7 @@ void gmsh::model::mesh::setRecombine(const int dim, const int tag)
   if(dim != 2){ throw 2; }
   GFace *gf = GModel::current()->getFaceByTag(tag);
   if(!gf){
-    Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     throw 2;
   }
   gf->meshAttributes.recombine = 1;
@@ -1078,7 +1091,7 @@ void gmsh::model::mesh::setSmoothing(const int dim, const int tag, const int val
   if(dim != 2){ throw 2; }
   GFace *gf = GModel::current()->getFaceByTag(tag);
   if(!gf){
-    Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     throw 2;
   }
   gf->meshAttributes.transfiniteSmoothing = val;
@@ -1090,7 +1103,7 @@ void gmsh::model::mesh::setReverse(const int dim, const int tag, const bool val)
   if(dim == 1){
     GEdge *ge = GModel::current()->getEdgeByTag(tag);
     if(!ge){
-      Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
       throw 2;
     }
     ge->meshAttributes.reverseMesh = val;
@@ -1098,7 +1111,7 @@ void gmsh::model::mesh::setReverse(const int dim, const int tag, const bool val)
   else if(dim == 2){
     GFace *gf = GModel::current()->getFaceByTag(tag);
     if(!gf){
-      Msg::Error("%s does not exist", _entityName(dim, tag).c_str());
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
       throw 2;
     }
     gf->meshAttributes.reverseMesh = val;
@@ -1112,14 +1125,14 @@ void gmsh::model::mesh::embed(const int dim, const std::vector<int> &tags,
   if(inDim == 2){
     GFace *gf = GModel::current()->getFaceByTag(inTag);
     if(!gf){
-      Msg::Error("%s does not exist", _entityName(2, inTag).c_str());
+      Msg::Error("%s does not exist", _getEntityName(2, inTag).c_str());
       throw 2;
     }
     for(unsigned int i = 0; i < tags.size(); i++){
       if(dim == 0){
         GVertex *gv = GModel::current()->getVertexByTag(tags[i]);
         if(!gv){
-          Msg::Error("%s does not exist", _entityName(0, tags[i]).c_str());
+          Msg::Error("%s does not exist", _getEntityName(0, tags[i]).c_str());
           throw 2;
         }
         gf->addEmbeddedVertex(gv);
@@ -1127,7 +1140,7 @@ void gmsh::model::mesh::embed(const int dim, const std::vector<int> &tags,
       else if(dim == 1){
         GEdge *ge = GModel::current()->getEdgeByTag(tags[i]);
         if(!ge){
-          Msg::Error("%s does not exist", _entityName(1, tags[i]).c_str());
+          Msg::Error("%s does not exist", _getEntityName(1, tags[i]).c_str());
           throw 2;
         }
         gf->addEmbeddedEdge(ge);
@@ -1137,14 +1150,14 @@ void gmsh::model::mesh::embed(const int dim, const std::vector<int> &tags,
   else if(inDim == 3){
     GRegion *gr = GModel::current()->getRegionByTag(inTag);
     if(!gr){
-      Msg::Error("%s does not exist", _entityName(3, inTag).c_str());
+      Msg::Error("%s does not exist", _getEntityName(3, inTag).c_str());
       throw 2;
     }
     for(unsigned int i = 0; i < tags.size(); i++){
       if(dim == 0){
         GVertex *gv = GModel::current()->getVertexByTag(tags[i]);
         if(!gv){
-          Msg::Error("%s does not exist", _entityName(0, tags[i]).c_str());
+          Msg::Error("%s does not exist", _getEntityName(0, tags[i]).c_str());
           throw 2;
         }
         gr->addEmbeddedVertex(gv);
@@ -1152,7 +1165,7 @@ void gmsh::model::mesh::embed(const int dim, const std::vector<int> &tags,
       else if(dim == 1){
         GEdge *ge = GModel::current()->getEdgeByTag(tags[i]);
         if(!ge){
-          Msg::Error("%s does not exist", _entityName(1, tags[i]).c_str());
+          Msg::Error("%s does not exist", _getEntityName(1, tags[i]).c_str());
           throw 2;
         }
         gr->addEmbeddedEdge(ge);
@@ -1160,7 +1173,7 @@ void gmsh::model::mesh::embed(const int dim, const std::vector<int> &tags,
       else if(dim == 2){
         GFace *gf = GModel::current()->getFaceByTag(tags[i]);
         if(!gf){
-          Msg::Error("%s does not exist", _entityName(2, tags[i]).c_str());
+          Msg::Error("%s does not exist", _getEntityName(2, tags[i]).c_str());
           throw 2;
         }
         gr->addEmbeddedFace(gf);
@@ -1360,8 +1373,7 @@ int gmsh::model::geo::addEllipseArc(const int startTag, const int centerTag,
   return outTag;
 }
 
-int gmsh::model::geo::addSpline(const std::vector<int> &vertexTags,
-                                const int tag)
+int gmsh::model::geo::addSpline(const std::vector<int> &vertexTags, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   int outTag = tag;
@@ -1371,8 +1383,7 @@ int gmsh::model::geo::addSpline(const std::vector<int> &vertexTags,
   return outTag;
 }
 
-int gmsh::model::geo::addBSpline(const std::vector<int> &vertexTags,
-                                 const int tag)
+int gmsh::model::geo::addBSpline(const std::vector<int> &vertexTags, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   int outTag = tag;
@@ -1382,8 +1393,7 @@ int gmsh::model::geo::addBSpline(const std::vector<int> &vertexTags,
   return outTag;
 }
 
-int gmsh::model::geo::addBezier(const std::vector<int> &vertexTags,
-                                const int tag)
+int gmsh::model::geo::addBezier(const std::vector<int> &vertexTags, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   int outTag = tag;
@@ -1393,8 +1403,7 @@ int gmsh::model::geo::addBezier(const std::vector<int> &vertexTags,
   return outTag;
 }
 
-int gmsh::model::geo::addLineLoop(const std::vector<int> &edgeTags,
-                                  const int tag)
+int gmsh::model::geo::addLineLoop(const std::vector<int> &edgeTags, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   int outTag = tag;
@@ -1753,6 +1762,20 @@ int gmsh::model::occ::addSpline(const std::vector<int> &vertexTags, const int ta
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addSpline(outTag, vertexTags)){
+    throw 1;
+  }
+  return outTag;
+}
+
+int gmsh::model::occ::addBSpline(const std::vector<int> &vertexTags, const int tag,
+                                 const int degree, const std::vector<double> &weights,
+                                 const std::vector<double> &knots,
+                                 const std::vector<int> &multiplicities)
+{
+  if(!_isInitialized()){ throw -1; }
+  int outTag = tag;
+  if(!GModel::current()->getOCCInternals()->addBSpline
+     (outTag, vertexTags, degree, weights, knots, multiplicities)){
     throw 1;
   }
   return outTag;

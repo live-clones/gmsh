@@ -196,7 +196,7 @@ struct doubleXstring{
 %token tBox tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
 %token tRectangle tDisk tWire tGeoEntity
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
-%token tRelocateMesh tSetFactory tThruSections tWedge tFillet tChamfer
+%token tRelocateMesh tSetFactory tThruSections tWedge tFillet
 %token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic
 %token tUsing tPlugin tDegenerated tRecursive
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
@@ -221,13 +221,13 @@ struct doubleXstring{
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
 %type <i> NumericAffectation NumericIncrement BooleanOperator BooleanOption
 %type <i> PhysicalId_per_dim_entity GeoEntity GeoEntity123 GeoEntity12 GeoEntity02
-%type <i> TransfiniteArrangement RecombineAngle InSphereCenter
+%type <i> TransfiniteArrangement RecombineAngle
 %type <i> Append AppendOrNot
 %type <u> ColorExpr
 %type <c> StringExpr StringExprVar SendToFile tSTRING_Member HomologyCommand
 %type <c> LP RP GetForcedStr_Default
 %type <c> StringIndex String__Index
-%type <l> MultiStringExprVar
+%type <l> MultiStringExprVar SurfaceConstraints
 %type <l> RecursiveListOfStringExprVar Str_BracedRecursiveListOfStringExprVar
 %type <l> BracedOrNotRecursiveListOfStringExprVar BracedRecursiveListOfStringExprVar
 %type <l> FExpr_Multi ListOfDouble ListOfDoubleOrAll RecursiveListOfDouble
@@ -1544,14 +1544,29 @@ PhysicalId_per_dim_entity :
     }
 ;
 
-InSphereCenter :
+SurfaceConstraints :
     // nothing
     {
-      $$ = -1;
+      $$ = 0;
     }
   | tIn tSphere '{' FExpr '}'
     {
-      $$ = (int)$4;
+      $$ = List_Create(1, 1, sizeof(double));
+      double p = $4;
+      List_Add($$, &p);
+    }
+  | tUsing tPoint '{' RecursiveListOfDouble '}'
+    {
+      $$ = $4;
+    }
+  | tUsing tGeoEntity '{' RecursiveListOfDouble '}'
+    {
+      $$ = List_Create(10, 10, sizeof(double));
+      double flag = -1;
+      List_Add($$, &flag);
+      for(int i = 0; i < List_Nbr($4); i++)
+        List_Add($$, List_Pointer($4, i));
+      List_Delete($4);
     }
 ;
 
@@ -1704,7 +1719,7 @@ Shape :
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(0, "BSpline not yet available with OpenCASCADE geometry kernel");
+        r = GModel::current()->getOCCInternals()->addBSpline(num, tags);
       }
       else{
         r = GModel::current()->getGEOInternals()->addBSpline(num, tags);
@@ -1735,16 +1750,26 @@ Shape :
     {
       int num = (int)$3;
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
-      std::vector<double> knots; ListOfDouble2Vector($8, knots);
+      std::vector<double> seqknots; ListOfDouble2Vector($8, seqknots);
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        yymsg(0, "Nurbs not available yet with OpenCASCADE geometry kernel");
+        int degree = (int)$10;
+        std::vector<double> weights, knots;
+        std::vector<int> mults;
+        for(unsigned int i = 0; i < seqknots.size(); i++){
+          if(!i || (i && fabs(seqknots[i] - seqknots[i - 1]) > 1e-12)){
+            knots.push_back(seqknots[i]);
+            mults.push_back(1);
+          }
+          else{
+            mults.back() += 1;
+          }
+        }
+        r = GModel::current()->getOCCInternals()->addBSpline
+          (num, tags, degree, weights, knots, mults);
       }
       else{
-        int order = knots.size() - tags.size() - 1;
-        if(order != (int)$10)
-          yymsg(1, "Incompatible Nurbs order: using %d", order);
-        r = GModel::current()->getGEOInternals()->addNurbs(num, tags, knots);
+        r = GModel::current()->getGEOInternals()->addBSpline(num, tags, seqknots);
       }
       if(!r) yymsg(0, "Could not add nurbs");
       List_Delete($6);
@@ -1803,7 +1828,7 @@ Shape :
       $$.Type = MSH_SURF_PLAN;
       $$.Num = num;
     }
-  | tSurface '(' FExpr ')' tAFFECT ListOfDouble InSphereCenter tEND
+  | tSurface '(' FExpr ')' tAFFECT ListOfDouble SurfaceConstraints tEND
     {
       int num = (int)$3;
       std::vector<int> wires; ListOfDouble2Vector($6, wires);
@@ -1813,25 +1838,61 @@ Shape :
           yymsg(0, "OpenCASCADE face filling requires a single line loop");
         }
         else{
-          r = GModel::current()->getOCCInternals()->addSurfaceFilling(num, wires[0]);
+          std::vector<int> constraints; ListOfDouble2Vector($7, constraints);
+          std::vector<int> points, surfaces, continuity;
+          if(constraints.size() >= 3 && constraints[0] < 0){
+            // {-1, type, ent, type, ent, ...}
+            for(unsigned int i = 2; i < constraints.size(); i+=2){
+              int type = constraints[i - 1];
+              if(type == 0){
+                points.push_back(constraints[i]);
+              }
+              else if(type == 1 || type == 2){
+                surfaces.push_back(constraints[i]);
+                continuity.push_back(type);
+              }
+              else
+                yymsg(0, "Unknown type of constraint for surface filling");
+            }
+          }
+          else if(constraints.size() > 0){
+            // {point, point, ...}
+            points = constraints;
+          }
+          r = GModel::current()->getOCCInternals()->addSurfaceFilling
+            (num, wires[0], points, surfaces, continuity);
         }
       }
       else{
-        r = GModel::current()->getGEOInternals()->addSurfaceFilling(num, wires, $7);
+        int sphereCenter = -1;
+        if(List_Nbr($7) == 1){
+          double d; List_Read($7, 0, &d);
+          sphereCenter = (int)d;
+        }
+        r = GModel::current()->getGEOInternals()->addSurfaceFilling
+          (num, wires, sphereCenter);
       }
       if(!r) yymsg(0, "Could not add surface");
       List_Delete($6);
+      List_Delete($7);
       $$.Type = MSH_SURF_REGL;
       $$.Num = num;
     }
-  | tRuled tSurface '(' FExpr ')' tAFFECT ListOfDouble InSphereCenter tEND
+  | tRuled tSurface '(' FExpr ')' tAFFECT ListOfDouble SurfaceConstraints tEND
     {
       yymsg(2, "'Ruled Surface' command is deprecated: use 'Surface' instead");
       int num = (int)$4;
       std::vector<int> wires; ListOfDouble2Vector($7, wires);
-      bool r = GModel::current()->getGEOInternals()->addSurfaceFilling(num, wires, $8);
+      int sphereCenter = -1;
+      if(List_Nbr($8) == 1){
+        double d; List_Read($8, 0, &d);
+        sphereCenter = (int)d;
+      }
+      bool r = GModel::current()->getGEOInternals()->addSurfaceFilling
+        (num, wires, sphereCenter);
       if(!r) yymsg(0, "Could not add surface");
       List_Delete($7);
+      List_Delete($8);
       $$.Type =  MSH_SURF_REGL;
       $$.Num = num;
     }
@@ -2160,14 +2221,16 @@ Shape :
     }
   | tCompound GeoEntity123 '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
-      yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints instead");
+      yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints "
+            "instead, i.e. Compound %s { ... };", ($2 == 2) ? "Surface" : "Line");
       $$.Type = 0;
       $$.Num = 0;
     }
   | tCompound GeoEntity123 '(' FExpr ')' tAFFECT ListOfDouble tSTRING
       '{' RecursiveListOfListOfDouble '}' tEND
     {
-      yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints instead");
+      yymsg(0, "Compounds entities are deprecated: use Compound meshing constraints "
+            "instead, i.e. Compound %s { ... };", ($2 == 2) ? "Surface" : "Line");
       $$.Type = 0;
       $$.Num = 0;
     }

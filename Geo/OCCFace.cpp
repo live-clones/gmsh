@@ -50,8 +50,8 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
 
 OCCFace::~OCCFace()
 {
-  if(model()->getOCCInternals()){
-    model()->getOCCInternals()->unbind(s, tag());
+  if(model()->getOCCInternals() && !model()->isBeingDestroyed()){
+    model()->getOCCInternals()->unbind(s, tag()); // potentially slow
   }
 }
 
@@ -484,9 +484,9 @@ bool OCCFace::containsParam(const SPoint2 &pt)
     SPoint2 gp2 = stl_vertices[stl_triangles[i + 1]];
     SPoint2 gp3 = stl_vertices[stl_triangles[i + 2]];
 
-    double s1 = robustPredicates::orient2d (gp1,gp2,mine);
-    double s2 = robustPredicates::orient2d (gp2,gp3,mine);
-    double s3 = robustPredicates::orient2d (gp3,gp1,mine);
+    double s1 = robustPredicates::orient2d(gp1, gp2, mine);
+    double s2 = robustPredicates::orient2d(gp2, gp3, mine);
+    double s3 = robustPredicates::orient2d(gp3, gp1, mine);
     /*
     fprintf(F,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1};\n",
 	    gp1.x(),gp1.y(),0.0,

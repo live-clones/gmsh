@@ -58,6 +58,9 @@ class GVertex : public GEntity
   // get the dimension of the vertex (0)
   virtual int dim() const { return 0; }
 
+  // returns the parent entity for partitioned entities
+  virtual GVertex* getParentEntity() { return 0; }
+
   // get the geometric type of the vertex
   virtual GeomType geomType() const { return Point; }
 
@@ -78,11 +81,11 @@ class GVertex : public GEntity
   virtual void writeGEO(FILE *fp, const std::string &meshSizeParameter="");
 
   // get number of elements in the mesh
-  unsigned int getNumMeshElements();
+  unsigned int getNumMeshElements() const;
   void getNumMeshElements(unsigned *const c) const;
 
   // get the element at the given index
-  MElement *getMeshElement(unsigned int index);
+  MElement *getMeshElement(unsigned int index) const;
 
   // return true if this vertex is on a seam of the given face
   bool isOnSeam(const GFace *gf) const;

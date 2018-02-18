@@ -31,8 +31,8 @@ OCCRegion::OCCRegion(GModel *m, TopoDS_Solid _s, int num)
 
 OCCRegion::~OCCRegion()
 {
-  if(model()->getOCCInternals())
-    model()->getOCCInternals()->unbind(s, tag());
+  if(model()->getOCCInternals() && !model()->isBeingDestroyed())
+    model()->getOCCInternals()->unbind(s, tag()); // potentially slow
 }
 
 void OCCRegion::setup()

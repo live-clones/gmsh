@@ -21,8 +21,8 @@ public:
   virtual ~partitionVertex() {}
   virtual GeomType geomType() const { return PartitionVertex; }
   virtual void setParentEntity(GVertex* v) { _parentEntity = v; }
-  virtual GVertex* getParentEntity() const { return _parentEntity; }
-  virtual void setPartition(std::vector<unsigned int> &partitions)
+  virtual GVertex* getParentEntity() { return _parentEntity; }
+  virtual void setPartitions(std::vector<unsigned int> &partitions)
   {
     _partitions = partitions;
   }

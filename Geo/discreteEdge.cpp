@@ -53,7 +53,7 @@ void discreteEdge::createTopo()
 void discreteEdge::orderMLines()
 {
   // FIXME
-  return;
+  //  return;
   size_t ss = lines.size();
   std::vector<MEdge> ed;
   std::vector<std::vector<MVertex*> >vs;

@@ -43,6 +43,9 @@ class GRegion : public GEntity {
   // get the dimension of the region (3)
   virtual int dim() const { return 3; }
 
+  // returns the parent entity for partitioned entities
+  virtual GRegion* getParentEntity() { return 0; }
+
   // set the visibility flag
   virtual void setVisibility(char val, bool recursive=false);
 
@@ -55,10 +58,16 @@ class GRegion : public GEntity {
   void addEmbeddedFace(GFace *f){ embedded_faces.push_back(f); }
 
   // get/set faces that bound the region
+  int delFace(GFace* face);
   virtual std::list<GFace*> faces() const{ return l_faces; }
   virtual std::list<int> faceOrientations() const{ return l_dirs; }
   inline void set(const std::list<GFace*> f) { l_faces = f; }
   inline void setOrientations(const std::list<int> f) { l_dirs= f; }
+  void setFace(GFace* f, int orientation)
+  {
+    l_faces.push_back(f);
+    l_dirs.push_back(orientation);
+  }
 
   // vertices that are embedded in the region
   virtual std::list<GVertex*> &embeddedVertices() { return embedded_vertices; }
@@ -97,7 +106,7 @@ class GRegion : public GEntity {
   int getNumElementTypes() const { return 6; }
 
   // get total/by-type number of elements in the mesh
-  unsigned int getNumMeshElements();
+  unsigned int getNumMeshElements() const;
   unsigned int getNumMeshParentElements();
   void getNumMeshElements(unsigned *const c) const;
 
@@ -105,7 +114,7 @@ class GRegion : public GEntity {
   MElement *const *getStartElementType(int type) const;
 
   // get the element at the given index
-  MElement *getMeshElement(unsigned int index);
+  MElement *getMeshElement(unsigned int index) const;
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();

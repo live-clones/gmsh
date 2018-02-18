@@ -1151,7 +1151,7 @@ void MElement::writeMSH4(FILE *fp, bool binary)
 {
   std::vector<MVertex*> verts;
   getVertices(verts);
-  
+
   if(binary){ //Implemented but not used in practice
     fwrite(&_num, sizeof(int), 1, fp);
     for(unsigned int i = 0; i < verts.size(); i++){
@@ -1332,13 +1332,10 @@ void MElement::writeVTK(FILE *fp, bool binary, bool bigEndian)
 void MElement::writeMATLAB(FILE *fp, bool binary)
 {
   if(!getTypeForMATLAB()) return;
-
-    if(binary)
-    {
-      Msg::Warning("Binary format not available for Matlab, saving into ASCII format");
-      binary = false;
-    }
-
+  if(binary){
+    Msg::Warning("Binary format not available for Matlab, saving into ASCII format");
+    binary = false;
+  }
   int n = getNumVertices();
   for(int i = 0; i < n; i++)
     fprintf(fp, " %d", getVertexMATLAB(i)->getIndex());
@@ -1348,7 +1345,10 @@ void MElement::writeMATLAB(FILE *fp, bool binary)
 void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
 {
   int type = getTypeForUNV();
-  if(!type) return;
+  if(!type){
+    Msg::Warning("Unknown element type for UNV export - output file might be invalid");
+    return;
+  }
 
   int n = getNumVertices();
   int physical_property = elementary;
@@ -1648,7 +1648,7 @@ unsigned int MElement::getInfoMSH(const int typeMSH, const char **const name)
   default:
     Msg::Error("Unknown type of element %d", typeMSH);
     if(name) *name = "Unknown";
-    return 0;
+    return -1;
   }
 }
 

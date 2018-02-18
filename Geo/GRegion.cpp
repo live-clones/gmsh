@@ -57,7 +57,7 @@ void GRegion::deleteMesh(bool onlyDeleteElements)
   model()->destroyMeshCaches();
 }
 
-unsigned int GRegion::getNumMeshElements()
+unsigned int GRegion::getNumMeshElements() const
 {
   return tetrahedra.size() + hexahedra.size() + prisms.size() + pyramids.size() +
     trihedra.size() + polyhedra.size();
@@ -107,7 +107,7 @@ MElement *const *GRegion::getStartElementType(int type) const
   return 0;
 }
 
-MElement *GRegion::getMeshElement(unsigned int index)
+MElement *GRegion::getMeshElement(unsigned int index) const
 {
   if(index < tetrahedra.size())
     return tetrahedra[index];
@@ -147,8 +147,9 @@ SBoundingBox3d GRegion::bounds() const
       res += (*it)->bounds();
   }
   else{
-    for(unsigned int i = 0; i < mesh_vertices.size(); i++)
-      res += mesh_vertices[i]->point();
+    for(unsigned int i = 0; i < getNumMeshElements(); i++)
+      for(unsigned int j = 0; j < getMeshElement(i)->getNumVertices(); j++)
+        res += getMeshElement(i)->getVertex(j)->point();
   }
   return res;
 }
@@ -232,6 +233,31 @@ void GRegion::setColor(unsigned int val, bool recursive)
       ++it;
     }
   }
+}
+
+int GRegion::delFace(GFace* face)
+{
+  std::list<GFace*>::iterator it;
+  int pos = 0;
+  for(it = l_faces.begin(); it != l_faces.end(); ++it){
+    if(*it == face) break;
+    pos++;
+  }
+  l_faces.erase(it);
+  
+  std::list<int>::iterator itOri;
+  int posOri = 0;
+  int orientation = 0;
+  for(itOri = l_dirs.begin(); itOri != l_dirs.end(); ++itOri){
+    if(posOri == pos){
+      orientation = *itOri;
+      break;
+    }
+    posOri++;
+  }
+  l_dirs.erase(itOri);
+  
+  return orientation;
 }
 
 std::string GRegion::getAdditionalInfoString()

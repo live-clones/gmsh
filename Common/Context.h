@@ -18,7 +18,7 @@ class GamePad;
 struct contextMeshOptions {
   // mesh algorithms
   int optimize,  optimizeNetgen, smoothCrossField, refineSteps;
-  double lcFactor, randFactor, lcIntegrationPrecision;
+  double lcFactor, randFactor, randFactor3d, lcIntegrationPrecision;
   double optimizeThreshold, normals, tangents, explode, angleSmoothNormals;
   double allowSwapEdgeAngle;
   double qualityInf, qualitySup, radiusInf, radiusSup;
@@ -35,7 +35,7 @@ struct contextMeshOptions {
   std::map<int,int> algo2dPerFace;
   std::map<int,int> curvatureControlPerFace;
   int NewtonConvergenceTestXYZ;
-  int ignorePeriodicity;
+  int ignorePeriodicity, boundaryLayerFanPoints;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
   // mesh IO
   int fileFormat;
@@ -47,7 +47,7 @@ struct contextMeshOptions {
   int preserveNumberingMsh2;
   // partitioning
   int numPartitions, partitionCreateTopology, partitionCreateGhostCells;
-  int partitionSplitMeshFiles, partitionSaveTopologyFile;
+  int partitionCreatePhysicals, partitionSplitMeshFiles, partitionSaveTopologyFile;
   int partitionTriWeight, partitionQuaWeight, partitionTetWeight, partitionHexWeight;
   int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;
   int metisAlgorithm, metisEdgeMatching, metisRefinementAlgorithm;

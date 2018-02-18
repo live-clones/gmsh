@@ -1913,18 +1913,18 @@ start and end points of the segment.
 
 @item Bezier ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a Bezier curve. The @var{expression-list} contains the
-identification numbers of the control points.
+identification numbers of the control points. 
 
 @item BSpline ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a BSpline. The @var{expression-list} contains the identification
-numbers of the control points. BSplines are currently only available
-with the built-in kernel.
+Creates a cubic BSpline. The @var{expression-list} contains the
+identification numbers of the control points. Creates a periodic curve
+if the first and last points are identical.
 
 @item Spline ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a spline going through the points in @var{expression-list}. With
 the built-in geometry kernel this constructs a Catmull-Rom spline. With
-the OpenCASCADE kernel, this constructs a BSpline passing through the
-points with a given tolerance.
+the OpenCASCADE kernel, this constructs a C2 BSpline. Creates a periodic
+curve if the first and last points are identical.
 
 @item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} <, ...> @};
 Creates a circle arc. The three @var{expression}s on the right-hand-side
@@ -2979,11 +2979,13 @@ Partitions the mesh into @var{expression}, using current partitioning options.
 
 @item Point | Line @{ @var{expression-list} @} In Surface @{ @var{expression} @};
 Embed the point(s) or line(s) in the given surface. The surface mesh
-will conform to the mesh of the point(s) or lines(s). 
+will conform to the mesh of the point(s) or lines(s).
 
-@item Surface @{ @var{expression-list} @} In Volume @{ @var{expression} @};
-Embed the surface in the given volume. The volume mesh will conform to
-the mesh of the surface. 
+@item Point | Line | Surface @{ @var{expression-list} @} In Volume @{ @var{expression} @};
+Embed the point(s), line(s) or surface(s) in the given volume. The
+volume mesh will conform to the mesh of the corresponding point(s),
+line(s) or surface(s). This is only supported with the 3D Delaunay
+algorithm.
 
 @item Periodic Line @{ @var{expression-list} @} = @{ @var{expression-list} @} ;
 Force mesh of lines on the left-hand side (slaves) to match the mesh of
@@ -5359,9 +5361,7 @@ clipboard.
 @enumerate
 @item Does Gmsh support NURBS curves/surfaces?
 
-Yes, but only via STEP, IGES or BREP model import (not in @file{.geo}
-files). Gmsh has to be compiled with OpenCASCADE support for this to
-work.
+Yes, but only with the OpenCASCADE kernel.
 
 @item Gmsh is very slow when I use many transformations (Translate, Rotate, Symmetry, Extrude, etc. ). What's wrong?
 

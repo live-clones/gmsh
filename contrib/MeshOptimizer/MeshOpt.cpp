@@ -44,23 +44,18 @@
 #include "linalg.h"
 #include "optimization.h"
 
-
 namespace {
 
+  void evalObjGradFunc(const alglib::real_1d_array &x, double &Obj,
+                       alglib::real_1d_array &gradObj, void *MOInst)
+  {
+    (static_cast<MeshOpt*>(MOInst))->evalObjGrad(x, Obj, gradObj);
+  }
 
-
-void evalObjGradFunc(const alglib::real_1d_array &x, double &Obj,
-                     alglib::real_1d_array &gradObj, void *MOInst)
-{
-  (static_cast<MeshOpt*>(MOInst))->evalObjGrad(x, Obj, gradObj);
-}
-
-
-void printProgressFunc(const alglib::real_1d_array &x, double Obj, void *MOInst)
-{
-  (static_cast<MeshOpt*>(MOInst))->printProgress(x,Obj);
-}
-
+  void printProgressFunc(const alglib::real_1d_array &x, double Obj, void *MOInst)
+  {
+    (static_cast<MeshOpt*>(MOInst))->printProgress(x,Obj);
+  }
 
 }
 
@@ -68,8 +63,8 @@ MeshOpt::MeshOpt(const std::map<MElement*,GEntity*> &element2entity,
                  const std::map<MElement*, GEntity*> &bndEl2Ent,
                  const std::set<MElement*> &els, std::set<MVertex*> &toFix,
                  const std::set<MElement*> &bndEls, const MeshOptParameters &par) :
-  patch(element2entity, bndEl2Ent, els, toFix, bndEls, par.fixBndNodes), _verbose(0), _nCurses(1),
-  _iPass(0), _iter(0), _intervDisplay(0), _initObj(0)
+  patch(element2entity, bndEl2Ent, els, toFix, bndEls, par.fixBndNodes),
+  _verbose(0), _nCurses(1), _iPass(0), _iter(0), _intervDisplay(0), _initObj(0)
 {
   _allObjFunc.resize(par.pass.size());
   for (int iPass=0; iPass<par.pass.size(); iPass++) {

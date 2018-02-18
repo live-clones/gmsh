@@ -1,8 +1,11 @@
 3.1.0: new C++, C and Python API (in beta); new MSH4 format (in beta); new
-partitioning code based on Metis 5 (removed Chaco); removed GModelFactory,
-G{Edge,Face,Region}Compounds and old reparametrization code; new compound
-entities workflow (as meshing constraints); generalized handling of "all"
-entities in geo file (using {:} notation); various small fixes and enhancements.
+partitioning code based on Metis 5; new 3D tetrahedralization algorithm as
+default; new compound entities workflow for remeshing (as meshing constraints);
+added support for general b-splines with OpenCASCADE kernel; generalized
+handling of "all" entities in geo file (using {:} notation); removed old CAD
+creation factory (GModelFactory), old reparametrization code
+(G{Edge,Face,Region}Compounds) and old partitionning code (Metis 4 and Chaco);
+various cleanups, bug fixes and enhancements.
 
 3.0.6 (November 5, 2017): improved meshing of spheres; improved handling of mesh
 size constraints with OpenCASCADE kernel; implemented "Coherence" for

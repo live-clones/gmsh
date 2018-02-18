@@ -235,18 +235,30 @@ namespace gmsh { // Top-level functions
       // `tag' < 0, gets the elements for all entities of dimension `dim'. If `dim'
       // and `tag' are negative, gets all the elements in the mesh. `elementTypes'
       // contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
-      // the Gmsh reference manual). `elementTags' is a vector of the same length
-      // as `elementTypes'; each entry is a vector containing the tags (unique,
-      // strictly positive identifiers) of the elements of the corresponding type.
-      // `vertexTags' is also a vector of the same length as `elementTypes'; each
-      // entry is a vector of length equal to the number of elements of the given
-      // type times the number of vertices for this type of element, that contains
-      // the vertex tags of all the elements of the given type, concatenated.
+      // `getElementProperties' to obtain the properties for a given element type).
+      // `elementTags' is a vector of the same length as `elementTypes'; each entry
+      // is a vector containing the tags (unique, strictly positive identifiers) of
+      // the elements of the corresponding type. `vertexTags' is also a vector of
+      // the same length as `elementTypes'; each entry is a vector of length equal
+      // to the number of elements of the given type times the number of vertices
+      // for this type of element, that contains the vertex tags of all the
+      // elements of the given type, concatenated.
       GMSH_API void getElements(std::vector<int> & elementTypes,
                                 std::vector<std::vector<int> > & elementTags,
                                 std::vector<std::vector<int> > & vertexTags,
                                 const int dim = -1,
                                 const int tag = -1);
+
+      // Gets the properties of an element of type `elementType': its name
+      // (`elementName'), dimension (`dim'), order (`order'), number of vertices
+      // (`numVertices') and parametric coordinates of vertices (`parametricCoord'
+      // vector, of length `dim' times `numVertices').
+      GMSH_API void getElementProperties(const int elementType,
+                                         std::string & elementName,
+                                         int & dim,
+                                         int & order,
+                                         int & numVertices,
+                                         std::vector<double> & parametricCoord);
 
       // Gets the integration data for mesh elements of the entity of dimension
       // `dim' and `tag' tag. The data is returned by element type and by element,
@@ -327,6 +339,12 @@ namespace gmsh { // Top-level functions
                                 const std::vector<int> & types,
                                 const std::vector<std::vector<int> > & elementTags,
                                 const std::vector<std::vector<int> > & vertexTags);
+
+      // Redistribute all mesh vertices on their associated geometrical entity,
+      // based on the mesh elements. Can be used when importing mesh vertices in
+      // bulk (e.g. by associating them all to a single volume), to reclassify them
+      // correctly on model surfaces, curves, etc.
+      GMSH_API void reclassifyVertices();
 
       // Gets the coordinates and the parametric coordinates (if any) of the mesh
       // vertex with tag `tag'. This is a useful by inefficient way of accessing
@@ -449,9 +467,8 @@ namespace gmsh { // Top-level functions
       // coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
       // that point. If `tag' is positive, sets the tag explicitly; otherwise a new
       // tag is selected automatically. Returns the tag of the point. (Note that
-      // the point will be added in the current model only after
-      // gmshModelGeoSynchronize() is called. This behavior holds for all the
-      // entities added in the gmshModelGeo module.)
+      // the point will be added in the current model only after synchronize() is
+      // called. This behavior holds for all the entities added in the geo module.)
       GMSH_API int addPoint(const double x,
                             const double y,
                             const double z,
@@ -495,13 +512,15 @@ namespace gmsh { // Top-level functions
 
       // Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If
       // `tag' is positive, sets the tag explicitly; otherwise a new tag is
-      // selected automatically.  Returns the tag of the spline curve.
+      // selected automatically. Creates a periodic curve if the first and last
+      // points are the same. Returns the tag of the spline curve.
       GMSH_API int addSpline(const std::vector<int> & vertexTags,
                              const int tag = -1);
 
-      // Adds a b-spline curve with `vertexTags' control points. If `tag' is
+      // Adds a cubic b-spline curve with `vertexTags' control points. If `tag' is
       // positive, sets the tag explicitly; otherwise a new tag is selected
-      // automatically.  Returns the tag of the b-spline curve.
+      // automatically. Creates a periodic curve if the first and last points are
+      // the same. Returns the tag of the b-spline curve.
       GMSH_API int addBSpline(const std::vector<int> & vertexTags,
                               const int tag = -1);
 
@@ -731,9 +750,9 @@ namespace gmsh { // Top-level functions
       // at coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint
       // at that point. If `tag' is positive, sets the tag explicitly; otherwise a
       // new tag is selected automatically. Returns the tag of the point. (Note
-      // that the point will be added in the current model only after
-      // gmshModelGeoSynchronize() is called. This behavior holds for all the
-      // entities added in the gmshModelOcc module.)
+      // that the point will be added in the current model only after synchronize()
+      // is called. This behavior holds for all the entities added in the occ
+      // module.)
       GMSH_API int addPoint(const double x,
                             const double y,
                             const double z,
@@ -791,15 +810,29 @@ namespace gmsh { // Top-level functions
                               const double angle1 = 0.,
                               const double angle2 = 2*M_PI);
 
-      // Adds a spline (b-spline) curve going through `vertexTags' points, with a
-      // given tolerance. If `tag' is positive, sets the tag explicitly; otherwise
-      // a new tag is selected automatically.  Returns the tag of the spline curve.
+      // Adds a spline (C2 b-spline) curve going through `vertexTags' points. If
+      // `tag' is positive, sets the tag explicitly; otherwise a new tag is
+      // selected automatically. Creates a periodic curve if the first and last
+      // points are the same. Returns the tag of the spline curve.
       GMSH_API int addSpline(const std::vector<int> & vertexTags,
                              const int tag = -1);
 
+      // Adds a b-spline curve of degree `degree' with `vertexTags' control points.
+      // If `weights', `knots' or `multiplicities' are not provided, default
+      // parameters are computed automatically. If `tag' is positive, sets the tag
+      // explicitly; otherwise a new tag is selected automatically. Creates a
+      // periodic curve if the first and last points are the same. Returns the tag
+      // of the b-spline curve.
+      GMSH_API int addBSpline(const std::vector<int> & vertexTags,
+                              const int tag = -1,
+                              const int degree = 3,
+                              const std::vector<double> & weights = std::vector<double>(),
+                              const std::vector<double> & knots = std::vector<double>(),
+                              const std::vector<int> & multiplicities = std::vector<int>());
+
       // Adds a Bezier curve with `vertexTags' control points. If `tag' is
       // positive, sets the tag explicitly; otherwise a new tag is selected
-      // automatically.  Returns the tag of the Bezier curve.
+      // automatically. Returns the tag of the Bezier curve.
       GMSH_API int addBezier(const std::vector<int> & vertexTags,
                              const int tag = -1);
 
@@ -1171,7 +1204,7 @@ namespace gmsh { // Top-level functions
 
     // Gets the index of the view with tag `tag' in the list of currently loaded
     // views. This dynamic index (it can change when views are removed) is used to
-    // access view options with the gmshOption functions.
+    // access view options.
     GMSH_API int getIndex(const int tag);
 
     // Gets the tags of all views.

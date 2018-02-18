@@ -155,24 +155,24 @@ class CGNSNameStr
 //    1D second-order elements
 //    MSH_NUM_TYPE+1 is used to place non-cgns elements last.
 static const int msh2cgns[MSH_NUM_TYPE][2] = {
-  {CG_NPE_BAR_2,          16},
-  {CG_NPE_TRI_3,          11},
-  {CG_NPE_QUAD_4,         12},
-  {CG_NPE_TETRA_4,         1},
-  {CG_NPE_HEXA_8,          4},
-  {CG_NPE_PENTA_6,         3},
-  {CG_NPE_PYRA_5,          2},
-  {CG_NPE_BAR_3,          17},
-  {CG_NPE_TRI_6,          13},
-  {CG_NPE_QUAD_9,         15},
-  {CG_NPE_TETRA_10,        5},
-  {CG_NPE_HEXA_27,        10},
-  {CG_NPE_PENTA_18,        8},
-  {CG_NPE_PYRA_14,         6},
+  {CG_BAR_2,          16},
+  {CG_TRI_3,          11},
+  {CG_QUAD_4,         12},
+  {CG_TETRA_4,         1},
+  {CG_HEXA_8,          4},
+  {CG_PENTA_6,         3},
+  {CG_PYRA_5,          2},
+  {CG_BAR_3,          17},
+  {CG_TRI_6,          13},
+  {CG_QUAD_9,         15},
+  {CG_TETRA_10,        5},
+  {CG_HEXA_27,        10},
+  {CG_PENTA_18,        8},
+  {CG_PYRA_14,         6},
   {-1, MSH_NUM_TYPE+1},  // MSH_PNT (NODE in CGNS but not used herein)
-  {CG_NPE_QUAD_8,         14},
-  {CG_NPE_HEXA_20,         9},
-  {CG_NPE_PENTA_15,        7},
+  {CG_QUAD_8,         14},
+  {CG_HEXA_20,         9},
+  {CG_PENTA_15,        7},
   {-1, MSH_NUM_TYPE+1},  // MSH_PYR_13
   {-1, MSH_NUM_TYPE+1},  // MSH_TRI_9
   {-1, MSH_NUM_TYPE+1},  // MSH_TRI_10
@@ -271,7 +271,7 @@ static MElement *createElementMSH(GModel *m, int num, int typeMSH, int reg, int 
   if(physical && (!physicals[dim].count(reg) || !physicals[dim][reg].count(physical)))
     physicals[dim][reg][physical] = "unnamed";
   */
-  if(part) m->getMeshPartitions().insert(part);
+  //if(part) m->getMeshPartitions().insert(part);
   return e;
 }
 
@@ -1434,12 +1434,12 @@ int GModel::writeCGNS(const std::string &name, int zoneDefinition,
 //--entities are then made available in groups[DIM][0].
 
     {
-      numZone = meshPartitions.size();
+      numZone = getNumPartitions();
       if(numZone == 0) zoneDefinition = 0;
       else {
         partitions.resize(numZone);
-        for(int i = 0; i != numZone; ++i)
-          partitions[i].elements.reserve(getMaxPartitionSize());
+        //for(int i = 0; i != numZone; ++i)
+        //  partitions[i].elements.reserve(getMaxPartitionSize());
         unsigned numElem[5];
         meshDim = getNumMeshElements(numElem);
         // Load the dummy entities with the elements in each partition
@@ -2124,8 +2124,10 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
             }
             else {
               int cgIndexSection;
+              stringstream sectionName;
+              sectionName << "Domain_" << cgIndexZone;
               if(cg_section_write
-                 (cgIndexFile, cgIndexBase, cgIndexZone, elemName,
+                 (cgIndexFile, cgIndexBase, cgIndexZone, sectionName.str().c_str(),
                   static_cast<CG_ElementType_t>(typeCGNS), iElemSection + 1,
                   writeZone->zoneElemConn[typeMSHm1].numElem + iElemSection,
                   writeZone->zoneElemConn[typeMSHm1].numBoElem + iElemSection,
@@ -2264,8 +2266,8 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
 
             std::vector<int> iZBV(numBoVert);
             for(int i = 0; i != numBoVert; ++i) iZBV[i] = i;
-            std::sort<int*, ZoneBoVecSort>(&iZBV[0], &iZBV[numBoVert-1],
-                                           ZoneBoVecSort(zoneBoVec));
+            std::sort(iZBV.begin(),iZBV.end(),ZoneBoVecSort(zoneBoVec)); 
+
             dBuffer.reserve(1024);
             iBuffer1.reserve(1024);
 

@@ -12,6 +12,7 @@
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
+#include "discreteFace.h"
 #include "MVertex.h"
 #include "MElement.h"
 #include "Context.h"
@@ -371,6 +372,9 @@ bool edges_sort(std::pair<double, BDS_Edge*> a, std::pair<double, BDS_Edge*> b)
 
 static void middlePoint (GFace *gf, BDS_Edge *e, double &u, double &v)
 {
+  // try that
+
+  
   double u1 = e->p1->u;
   double u2 = e->p2->u;
   double v1 = e->p1->v;
@@ -383,6 +387,20 @@ static void middlePoint (GFace *gf, BDS_Edge *e, double &u, double &v)
   double Z2 = e->p2->Z;
   //  printf("start : \n");
   //double l = sqrt((X2-X1)*(X2-X1)+(Y2-Y1)*(Y2-Y1)+(Z2-Z1)*(Z2-Z1));
+
+  //  discreteFace *df = static_cast<discreteFace*> (gf);
+  //  if (df){
+  //    double XX = 0.5*(X1+X2);
+  //    double YY = 0.5*(Y1+Y2);
+  //    double ZZ = 0.5*(Z1+Z2);
+  //    double uv[2];
+  //    GPoint gp = gf->closestPoint(SPoint3(XX, YY, ZZ), uv);
+  //    u = gp.u();
+  //    v = gp.v();
+  //    return;
+    //    gp = df->closestPoint(SPoint3(XX, YY, ZZ), LC);    
+  //  }
+
   
   while (1){
     u = 0.5*(u1+u2);
@@ -436,7 +454,7 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 
       double U = 0.5*(e->p1->u+e->p2->u);
       double V = 0.5*(e->p1->v+e->p2->v);
-      if (0 && faceDiscrete){
+      if (faceDiscrete){
 	// Here, something has to be done for discreteFaces where
 	// parametrization can be flaky
 	middlePoint (gf, e, U, V);
@@ -451,7 +469,8 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 	mid->lcBGM() = BGM_MeshSize (gf,U,V, mid->X,mid->Y,mid->Z);
 	mid->lc() = 0.5 * (e->p1->lc() +  e->p2->lc());
 
-	//	if (isSphere && !canWeSplitAnEdgeOnASphere (e, mid, center,radius))m.del_point(mid);
+	// if(isSphere && !canWeSplitAnEdgeOnASphere(e, mid, center,radius))
+        //   m.del_point(mid);
 	if(!m.split_edge(e, mid)) m.del_point(mid);
         else nb_split++;
       }
@@ -488,7 +507,8 @@ double getMaxLcWhenCollapsingEdge(GFace *gf, BDS_Mesh &m, BDS_Edge *e, BDS_Point
   return maxLc;
 }
 
-static bool revertTriangleSphere (SPoint3 &center, BDS_Point *p, BDS_Point *o){
+static bool revertTriangleSphere(SPoint3 &center, BDS_Point *p, BDS_Point *o)
+{
   std::list<BDS_Face*> t;
   p->getTriangles(t);
   std::list<BDS_Face*>::iterator it = t.begin();
@@ -514,7 +534,6 @@ static bool revertTriangleSphere (SPoint3 &center, BDS_Point *p, BDS_Point *o){
   }
   return false;
 }
-
 
 void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_collaps)
 {
@@ -579,7 +598,6 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_c
     }
   }
 }
-
 
 void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q)
 {
@@ -732,7 +750,8 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   Msg::Debug(" ---------------------------------------");
 }
 
-void invalidEdgesPeriodic(BDS_Mesh &m, std::map<BDS_Point*, MVertex*,PointLessThan> *recoverMap,
+void invalidEdgesPeriodic(BDS_Mesh &m,
+                          std::map<BDS_Point*, MVertex*,PointLessThan> *recoverMap,
                           std::set<BDS_Edge*, EdgeLessThan> &toSplit)
 {
   // first look for degenerated vertices
@@ -849,9 +868,12 @@ void TRYTOFIXSPHERES(GFace *gf, BDS_Mesh &m,
 	  BDS_Point *n[4];
 	  f->getNodes(n);
 
-	  MVertex *v1 = (recoverMap->find(n[0])==recoverMap->end()) ? NULL : (*recoverMap)[n[0]];
-	  MVertex *v2 = (recoverMap->find(n[1])==recoverMap->end()) ? NULL : (*recoverMap)[n[1]];
-	  MVertex *v3 = (recoverMap->find(n[2])==recoverMap->end()) ? NULL : (*recoverMap)[n[2]];
+	  MVertex *v1 = (recoverMap->find(n[0])==recoverMap->end()) ? NULL
+            : (*recoverMap)[n[0]];
+	  MVertex *v2 = (recoverMap->find(n[1])==recoverMap->end()) ? NULL
+            : (*recoverMap)[n[1]];
+	  MVertex *v3 = (recoverMap->find(n[2])==recoverMap->end()) ? NULL
+            : (*recoverMap)[n[2]];
 
 	  if ((!v1 || (v1 != v2 && v1 != v3)) && (!v2 || v2 != v3)){
 	    normal_triangle(n[0], n[1], n[2], norm);

@@ -21,8 +21,8 @@ public:
   virtual ~partitionFace() {}
   virtual GeomType geomType() const { return PartitionSurface; }
   virtual void setParentEntity(GFace* f) { _parentEntity = f; }
-  virtual GFace* getParentEntity() const { return _parentEntity; }
-  virtual void setPartition(std::vector<unsigned int> &partitions)
+  virtual GFace* getParentEntity() { return _parentEntity; }
+  virtual void setPartitions(std::vector<unsigned int> &partitions)
   {
     _partitions = partitions;
   }

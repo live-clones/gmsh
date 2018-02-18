@@ -137,8 +137,11 @@ mesh.add('getLastVertexError',doc,None,ovectorint('vertexTags'))
 doc = '''Gets the mesh vertices of the entity of dimension `dim' and `tag' tag. If `tag' < 0, gets the vertices for all entities of dimension `dim'. If `dim' and `tag' are negative, gets all the vertices in the mesh. `vertexTags' contains the vertex tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `vertexTags' that contains the (x, y, z) coordinates of the vertices, concatenated. If `dim' >= 0, `parametricCoord' contains the parametric coordinates of the vertices, if available. The length of `parametricCoord' can be 0 or `dim' times the length of `vertexTags'.'''
 mesh.add('getVertices',doc,None,ovectorint('vertexTags'),ovectordouble('coord'),ovectordouble('parametricCoord'),iint('dim', '-1'),iint('tag', '-1'))
 
-doc = '''Gets the mesh elements of the entity of dimension `dim' and `tag' tag. If `tag' < 0, gets the elements for all entities of dimension `dim'. If `dim' and `tag' are negative, gets all the elements in the mesh. `elementTypes' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh reference manual). `elementTags' is a vector of the same length as `elementTypes'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `vertexTags' is also a vector of the same length as `elementTypes'; each entry is a vector of length equal to the number of elements of the given type times the number of vertices for this type of element, that contains the vertex tags of all the elements of the given type, concatenated.'''
+doc = '''Gets the mesh elements of the entity of dimension `dim' and `tag' tag. If `tag' < 0, gets the elements for all entities of dimension `dim'. If `dim' and `tag' are negative, gets all the elements in the mesh. `elementTypes' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see `getElementProperties' to obtain the properties for a given element type). `elementTags' is a vector of the same length as `elementTypes'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `vertexTags' is also a vector of the same length as `elementTypes'; each entry is a vector of length equal to the number of elements of the given type times the number of vertices for this type of element, that contains the vertex tags of all the elements of the given type, concatenated.'''
 mesh.add('getElements',doc,None,ovectorint('elementTypes'),ovectorvectorint('elementTags'),ovectorvectorint('vertexTags'),iint('dim', '-1'),iint('tag', '-1'))
+
+doc = '''Gets the properties of an element of type `elementType': its name (`elementName'), dimension (`dim'), order (`order'), number of vertices (`numVertices') and parametric coordinates of vertices (`parametricCoord' vector, of length `dim' times `numVertices').'''
+mesh.add('getElementProperties',doc,None,iint('elementType'),ostring('elementName'),oint('dim'),oint('order'),oint('numVertices'),ovectordouble('parametricCoord'))
 
 doc = '''Gets the integration data for mesh elements of the entity of dimension `dim' and `tag' tag. The data is returned by element type and by element, in the same order as the data returned by `getElements'. `integrationType' specifies the type of integration (e.g. \"Gauss4\") and `functionSpaceType' specifies the function space (e.g. \"IsoParametric\"). `integrationPoints' contains for each element type a vector (of length 4 times the number of integration points) containing the parametric coordinates (u, v, w) and the weight associated to the integration points. `integrationData' contains for each element type a vector (of size 13 times the number of integration points) containing the (x, y, z) coordinates of the integration point, the determinant of the Jacobian and the 9 entries (by row) of the 3x3 Jacobian matrix. If `functionSpaceType' is provided, `functionSpaceNumComponents' returns the number of components returned by the evaluation of a basis function in the space and `functionSpaceData' contains for each element type the evaluation of the basis functions at the integration points.'''
 mesh.add('getIntegrationData',doc,None,istring('integrationType'),istring('functionSpaceType'),ovectorvectordouble('integrationPoints'),ovectorvectordouble('integrationData'),oint('functionSpaceNumComponents'),ovectorvectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))
@@ -157,6 +160,9 @@ mesh.add('setVertices',doc,None,iint('dim'),iint('tag'),ivectorint('vertexTags')
 
 doc = '''Sets the mesh elements of the entity of dimension `dim' and `tag' tag. `types' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh reference manual). `elementTags' is a vector of the same length as `types'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `vertexTags' is also a vector of the same length as `types'; each entry is a vector of length equal to the number of elements of the give type times the number of vertices per element, that contains the vertex tags of all the elements of the given type, concatenated.'''
 mesh.add('setElements',doc,None,iint('dim'),iint('tag'),ivectorint('types'),ivectorvectorint('elementTags'),ivectorvectorint('vertexTags'))
+
+doc = '''Redistribute all mesh vertices on their associated geometrical entity, based on the mesh elements. Can be used when importing mesh vertices in bulk (e.g. by associating them all to a single volume), to reclassify them correctly on model surfaces, curves, etc.'''
+mesh.add('reclassifyVertices',doc,None)
 
 doc = '''Gets the coordinates and the parametric coordinates (if any) of the mesh vertex with tag `tag'. This is a useful by inefficient way of accessing mesh vertex data, as it relies on a cache stored in the model. For large meshes all the vertices in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
 mesh.add('getVertex',doc,None,iint('vertexTag'),ovectordouble('coord'),ovectordouble('parametricCoord'))
@@ -214,7 +220,7 @@ field.add('setAsBackgroundMesh',doc,None,iint('tag'))
 
 geo = model.add_module('geo','Internal per-model GEO CAD kernel functions')
 
-doc = '''Adds a geometrical point in the internal GEO CAD representation, at coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at that point. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the point. (Note that the point will be added in the current model only after gmshModelGeoSynchronize() is called. This behavior holds for all the entities added in the gmshModelGeo module.)'''
+doc = '''Adds a geometrical point in the internal GEO CAD representation, at coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at that point. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the point. (Note that the point will be added in the current model only after synchronize() is called. This behavior holds for all the entities added in the geo module.)'''
 geo.add('addPoint',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('meshSize','0.'),iint('tag','-1'))
 
 doc = '''Adds a straight line segment between the two points with tags `startTag' and `endTag'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the line.'''
@@ -226,10 +232,10 @@ geo.add('addCircleArc',doc,oint,iint('startTag'),iint('centerTag'),iint('endTag'
 doc = '''Adds an ellipse arc (stricly smaller than Pi) between the two points `startTag' and `endTag', with center `centertag' and major axis point `majorTag'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0), explicitely sets the plane of the circle arc. Returns the tag of the ellipse arc.'''
 geo.add('addEllipseArc',doc,oint,iint('startTag'),iint('centerTag'),iint('majorTag'),iint('endTag'),iint('tag','-1'),idouble('nx','0.'),idouble('ny','0.'),idouble('nz','0.'))
 
-doc = '''Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically.  Returns the tag of the spline curve.'''
+doc = '''Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Creates a periodic curve if the first and last points are the same. Returns the tag of the spline curve.'''
 geo.add('addSpline',doc,oint,ivectorint('vertexTags'),iint('tag','-1'))
 
-doc = '''Adds a b-spline curve with `vertexTags' control points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically.  Returns the tag of the b-spline curve.'''
+doc = '''Adds a cubic b-spline curve with `vertexTags' control points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Creates a periodic curve if the first and last points are the same. Returns the tag of the b-spline curve.'''
 geo.add('addBSpline',doc,oint,ivectorint('vertexTags'),iint('tag','-1'))
 
 doc = '''Adds a Bezier curve with `vertexTags' control points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically.  Returns the tag of the Bezier curve.'''
@@ -312,7 +318,7 @@ mesh.add('setReverse',doc,None,iint('dim'),iint('tag'),ibool('val','true','True'
 
 occ = model.add_module('occ','Internal per-model OpenCASCADE CAD kernel functions')
 
-doc = '''Adds a geometrical point in the internal OpenCASCADE CAD representation, at coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at that point. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the point. (Note that the point will be added in the current model only after gmshModelGeoSynchronize() is called. This behavior holds for all the entities added in the gmshModelOcc module.)'''
+doc = '''Adds a geometrical point in the internal OpenCASCADE CAD representation, at coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at that point. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the point. (Note that the point will be added in the current model only after synchronize() is called. This behavior holds for all the entities added in the occ module.)'''
 occ.add('addPoint',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('meshSize','0.'),iint('tag','-1'))
 
 doc = '''Adds a straight line segment between the two points with tags `startTag' and `endTag'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the line.'''
@@ -330,10 +336,13 @@ occ.add('addEllipseArc',doc,oint,iint('startTag'),iint('centerTag'),iint('endTag
 doc = '''Adds an ellipse of center (`x', `y', `z') and radii `r1' and `r2' along the x- and y-axes respectively. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. If `angle1' and `angle2' are specified, creates an ellipse arc between the two angles. Returns the tag of the ellipse.'''
 occ.add('addEllipse',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('r1'),idouble('r2'),iint('tag','-1'),idouble('angle1','0.'),idouble('angle2','2*M_PI','2*pi'))
 
-doc = '''Adds a spline (b-spline) curve going through `vertexTags' points, with a given tolerance. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically.  Returns the tag of the spline curve.'''
+doc = '''Adds a spline (C2 b-spline) curve going through `vertexTags' points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Creates a periodic curve if the first and last points are the same. Returns the tag of the spline curve.'''
 occ.add('addSpline',doc,oint,ivectorint('vertexTags'),iint('tag','-1'))
 
-doc = '''Adds a Bezier curve with `vertexTags' control points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically.  Returns the tag of the Bezier curve.'''
+doc = '''Adds a b-spline curve of degree `degree' with `vertexTags' control points. If `weights', `knots' or `multiplicities' are not provided, default parameters are computed automatically. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Creates a periodic curve if the first and last points are the same. Returns the tag of the b-spline curve.'''
+occ.add('addBSpline',doc,oint,ivectorint('vertexTags'),iint('tag','-1'),iint('degree','3'),ivectordouble('weights','std::vector<double>()',"[]"),ivectordouble('knots','std::vector<double>()',"[]"),ivectorint('multiplicities','std::vector<int>()',"[]"))
+
+doc = '''Adds a Bezier curve with `vertexTags' control points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the Bezier curve.'''
 occ.add('addBezier',doc,oint,ivectorint('vertexTags'),iint('tag','-1'))
 
 doc = '''Adds a wire (open or closed) formed by `edgeTags'. `edgeTags' should contain (signed) tags of geometrical enties of dimension 1: a negative tag signifies that the underlying edge is considered with reversed orientation. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the wire.'''
@@ -451,7 +460,7 @@ view.add('add',doc,oint,istring('name'),iint('tag','-1'))
 doc = '''Removes the view with tag `tag'.'''
 view.add('remove',doc,None,iint('tag'))
 
-doc = '''Gets the index of the view with tag `tag' in the list of currently loaded views. This dynamic index (it can change when views are removed) is used to access view options with the gmshOption functions.'''
+doc = '''Gets the index of the view with tag `tag' in the list of currently loaded views. This dynamic index (it can change when views are removed) is used to access view options.'''
 view.add('getIndex',doc,oint,iint('tag'))
 
 doc = '''Gets the tags of all views.'''

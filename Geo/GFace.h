@@ -97,9 +97,15 @@ class GFace : public GEntity {
   virtual std::list<int> orientations() const { return l_dirs; }
 
   // edges that bound the face
+  int delEdge(GEdge* edge);
   virtual std::list<GEdge*> edges() const { return l_edges; }
   inline void set(const std::list<GEdge*> f) { l_edges = f; }
   inline void setOrientations(const std::list<int> f) { l_dirs = f; }
+  void setEdge(GEdge* f, int orientation)
+  {
+    l_edges.push_back(f);
+    l_dirs.push_back(orientation);
+  }
   virtual std::list<int> edgeOrientations() const { return l_dirs; }
   inline bool containsEdge (int iEdge) const
   {
@@ -121,6 +127,9 @@ class GFace : public GEntity {
 
   // dimension of the face (2)
   virtual int dim() const { return 2; }
+
+  // returns the parent entity for partitioned entities
+  virtual GFace* getParentEntity() { return 0; }
 
   // set visibility flag
   virtual void setVisibility(char val, bool recursive=false);
@@ -225,7 +234,7 @@ class GFace : public GEntity {
   int getNumElementTypes() const { return 3; }
 
   // get total/by-type number of elements in the mesh
-  unsigned int getNumMeshElements();
+  unsigned int getNumMeshElements() const;
   unsigned int getNumMeshParentElements();
   void getNumMeshElements(unsigned *const c) const;
 
@@ -233,7 +242,7 @@ class GFace : public GEntity {
   MElement *const *getStartElementType(int type) const;
 
   // get the element at the given index
-  MElement *getMeshElement(unsigned int index);
+  MElement *getMeshElement(unsigned int index) const;
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();

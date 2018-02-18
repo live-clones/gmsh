@@ -248,19 +248,32 @@ GMSH_API void gmshModelMeshGetVertices(int ** vertexTags, size_t * vertexTags_n,
  * `tag' < 0, gets the elements for all entities of dimension `dim'. If `dim'
  * and `tag' are negative, gets all the elements in the mesh. `elementTypes'
  * contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
- * the Gmsh reference manual). `elementTags' is a vector of the same length as
- * `elementTypes'; each entry is a vector containing the tags (unique,
- * strictly positive identifiers) of the elements of the corresponding type.
- * `vertexTags' is also a vector of the same length as `elementTypes'; each
- * entry is a vector of length equal to the number of elements of the given
- * type times the number of vertices for this type of element, that contains
- * the vertex tags of all the elements of the given type, concatenated. */
+ * `getElementProperties' to obtain the properties for a given element type).
+ * `elementTags' is a vector of the same length as `elementTypes'; each entry
+ * is a vector containing the tags (unique, strictly positive identifiers) of
+ * the elements of the corresponding type. `vertexTags' is also a vector of
+ * the same length as `elementTypes'; each entry is a vector of length equal
+ * to the number of elements of the given type times the number of vertices
+ * for this type of element, that contains the vertex tags of all the elements
+ * of the given type, concatenated. */
 GMSH_API void gmshModelMeshGetElements(int ** elementTypes, size_t * elementTypes_n,
                                        int *** elementTags, size_t ** elementTags_n, size_t *elementTags_nn,
                                        int *** vertexTags, size_t ** vertexTags_n, size_t *vertexTags_nn,
                                        const int dim,
                                        const int tag,
                                        int * ierr);
+
+/* Gets the properties of an element of type `elementType': its name
+ * (`elementName'), dimension (`dim'), order (`order'), number of vertices
+ * (`numVertices') and parametric coordinates of vertices (`parametricCoord'
+ * vector, of length `dim' times `numVertices'). */
+GMSH_API void gmshModelMeshGetElementProperties(const int elementType,
+                                                char ** elementName,
+                                                int * dim,
+                                                int * order,
+                                                int * numVertices,
+                                                double ** parametricCoord, size_t * parametricCoord_n,
+                                                int * ierr);
 
 /* Gets the integration data for mesh elements of the entity of dimension
  * `dim' and `tag' tag. The data is returned by element type and by element,
@@ -346,6 +359,12 @@ GMSH_API void gmshModelMeshSetElements(const int dim,
                                        const int ** elementTags, const size_t * elementTags_n, size_t elementTags_nn,
                                        const int ** vertexTags, const size_t * vertexTags_n, size_t vertexTags_nn,
                                        int * ierr);
+
+/* Redistribute all mesh vertices on their associated geometrical entity,
+ * based on the mesh elements. Can be used when importing mesh vertices in
+ * bulk (e.g. by associating them all to a single volume), to reclassify them
+ * correctly on model surfaces, curves, etc. */
+GMSH_API void gmshModelMeshReclassifyVertices(int * ierr);
 
 /* Gets the coordinates and the parametric coordinates (if any) of the mesh
  * vertex with tag `tag'. This is a useful by inefficient way of accessing
@@ -474,9 +493,8 @@ GMSH_API void gmshModelMeshFieldSetAsBackgroundMesh(const int tag,
  * coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
  * that point. If `tag' is positive, sets the tag explicitly; otherwise a new
  * tag is selected automatically. Returns the tag of the point. (Note that the
- * point will be added in the current model only after
- * gmshModelGeoSynchronize() is called. This behavior holds for all the
- * entities added in the gmshModelGeo module.) */
+ * point will be added in the current model only after synchronize() is
+ * called. This behavior holds for all the entities added in the geo module.) */
 GMSH_API int gmshModelGeoAddPoint(const double x,
                                   const double y,
                                   const double z,
@@ -524,14 +542,16 @@ GMSH_API int gmshModelGeoAddEllipseArc(const int startTag,
 
 /* Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If
  * `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
- * automatically.  Returns the tag of the spline curve. */
+ * automatically. Creates a periodic curve if the first and last points are
+ * the same. Returns the tag of the spline curve. */
 GMSH_API int gmshModelGeoAddSpline(int * vertexTags, size_t vertexTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* Adds a b-spline curve with `vertexTags' control points. If `tag' is
+/* Adds a cubic b-spline curve with `vertexTags' control points. If `tag' is
  * positive, sets the tag explicitly; otherwise a new tag is selected
- * automatically.  Returns the tag of the b-spline curve. */
+ * automatically. Creates a periodic curve if the first and last points are
+ * the same. Returns the tag of the b-spline curve. */
 GMSH_API int gmshModelGeoAddBSpline(int * vertexTags, size_t vertexTags_n,
                                     const int tag,
                                     int * ierr);
@@ -773,9 +793,8 @@ GMSH_API void gmshModelGeoMeshSetReverse(const int dim,
  * coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
  * that point. If `tag' is positive, sets the tag explicitly; otherwise a new
  * tag is selected automatically. Returns the tag of the point. (Note that the
- * point will be added in the current model only after
- * gmshModelGeoSynchronize() is called. This behavior holds for all the
- * entities added in the gmshModelOcc module.) */
+ * point will be added in the current model only after synchronize() is
+ * called. This behavior holds for all the entities added in the occ module.) */
 GMSH_API int gmshModelOccAddPoint(const double x,
                                   const double y,
                                   const double z,
@@ -839,12 +858,27 @@ GMSH_API int gmshModelOccAddEllipse(const double x,
                                     const double angle2,
                                     int * ierr);
 
-/* Adds a spline (b-spline) curve going through `vertexTags' points, with a
- * given tolerance. If `tag' is positive, sets the tag explicitly; otherwise a
- * new tag is selected automatically.  Returns the tag of the spline curve. */
+/* Adds a spline (C2 b-spline) curve going through `vertexTags' points. If
+ * `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
+ * automatically. Creates a periodic curve if the first and last points are
+ * the same. Returns the tag of the spline curve. */
 GMSH_API int gmshModelOccAddSpline(int * vertexTags, size_t vertexTags_n,
                                    const int tag,
                                    int * ierr);
+
+/* Adds a b-spline curve of degree `degree' with `vertexTags' control points.
+ * If `weights', `knots' or `multiplicities' are not provided, default
+ * parameters are computed automatically. If `tag' is positive, sets the tag
+ * explicitly; otherwise a new tag is selected automatically. Creates a
+ * periodic curve if the first and last points are the same. Returns the tag
+ * of the b-spline curve. */
+GMSH_API int gmshModelOccAddBSpline(int * vertexTags, size_t vertexTags_n,
+                                    const int tag,
+                                    const int degree,
+                                    double * weights, size_t weights_n,
+                                    double * knots, size_t knots_n,
+                                    int * multiplicities, size_t multiplicities_n,
+                                    int * ierr);
 
 /* Adds a Bezier curve with `vertexTags' control points. If `tag' is positive,
  * sets the tag explicitly; otherwise a new tag is selected automatically.
@@ -1248,7 +1282,7 @@ GMSH_API void gmshViewRemove(const int tag,
 
 /* Gets the index of the view with tag `tag' in the list of currently loaded
  * views. This dynamic index (it can change when views are removed) is used to
- * access view options with the gmshOption functions. */
+ * access view options. */
 GMSH_API int gmshViewGetIndex(const int tag,
                               int * ierr);
 

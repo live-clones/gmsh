@@ -50,6 +50,7 @@ struct PartitionDialog
   Fl_Value_Input *inputNumPartition;
   Fl_Check_Button *setGhostCells;
   Fl_Check_Button *setTopology;
+  Fl_Check_Button *setPhysical;
   // Group 1
   Fl_Choice *choiceMetisAlg;
   Fl_Toggle_Button *toggleButtonAdvMetis;
@@ -65,10 +66,12 @@ struct PartitionDialog
   Fl_Value_Input *inputHexWeight;
 
   void write_all_options()
-  {    // Group 0
+  {
+    // Group 0
     CTX::instance()->mesh.numPartitions = static_cast<int>(inputNumPartition->value());
     CTX::instance()->mesh.partitionCreateGhostCells = setGhostCells->value();
     CTX::instance()->mesh.partitionCreateTopology = setTopology->value();
+    CTX::instance()->mesh.partitionCreatePhysicals = setPhysical->value();
 
     // Group 1
     CTX::instance()->mesh.metisAlgorithm = choiceMetisAlg->value() + 1;
@@ -91,6 +94,7 @@ struct PartitionDialog
     inputNumPartition->value(CTX::instance()->mesh.numPartitions);
     setGhostCells->value(CTX::instance()->mesh.partitionCreateGhostCells);
     setTopology->value(CTX::instance()->mesh.partitionCreateTopology);
+    setPhysical->value(CTX::instance()->mesh.partitionCreatePhysicals);
 
     // Group 2
     choiceMetisAlg->value(CTX::instance()->mesh.metisAlgorithm - 1);
@@ -116,8 +120,7 @@ void partition_opt_num_partitions_cb(Fl_Widget *widget, void *data)
 {
   PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
   unsigned val = 0;
-  if(widget == dlg->inputNumPartition)
-  {
+  if(widget == dlg->inputNumPartition){
     val = static_cast<unsigned>(dlg->inputNumPartition->value());
   }
 
@@ -142,11 +145,11 @@ void partition_partition_cb(Fl_Widget *widget, void *data)
   int ier = GModel::current()->partitionMesh(CTX::instance()->mesh.numPartitions);
 
   // Update the screen
-  if(!ier)
-  {
+  if(!ier){
     opt_mesh_zone_definition(0, GMSH_SET, 2.);  // Define zone by partition
     opt_mesh_color_carousel(0, GMSH_SET | GMSH_GUI, 3.);
     CTX::instance()->mesh.changed = ENT_ALL;
+    FlGui::instance()->resetVisibility();
     drawContext::global()->draw();
   }
 }
@@ -164,9 +167,9 @@ void partition_select_groups_cb(Fl_Widget *widget, void *data)
   PartitionDialog *dlg = static_cast<PartitionDialog*>(data);
   // If this callback was made by the "Advanced" toggle buttons, set the label
 
-  if(dlg->toggleButtonAdvMetis == widget)
-  {
-    dlg->toggleButtonAdvMetis->label((dlg->toggleButtonAdvMetis->value()) ? "Advanced @-28->" : "Advanced @-22->");
+  if(dlg->toggleButtonAdvMetis == widget){
+    dlg->toggleButtonAdvMetis->label
+      ((dlg->toggleButtonAdvMetis->value()) ? "Advanced @-28->" : "Advanced @-22->");
   }
 
   // Get the groups
@@ -174,13 +177,11 @@ void partition_select_groups_cb(Fl_Widget *widget, void *data)
   int y = g[0]->h();
   g[1]->show();
   y += g[1]->h();
-  if(dlg->toggleButtonAdvMetis->value())
-  {
+  if(dlg->toggleButtonAdvMetis->value()){
     g[2]->show();
     y += g[2]->h();
   }
-  else
-  {
+  else{
     g[2]->hide();
   }
 
@@ -232,18 +233,19 @@ void partition_dialog()
     {0}
   };
 
-  const int h = 8 * WB + 5 * BH + 4;    // This will be resized based on groups
-                                        // that are displayed
-  const int w = 3 * BB + IW + 3 * WB;   // Window width
+  // This will be resized based on groups that are displayed
+  const int h = 8 * WB + 5 * BH + 4;
+  const int w = 3 * BB + IW + 3 * WB; // Window width
   int y = 0;
 
-  dlg.window = new paletteWindow (w, h, CTX::instance()->nonModalWindows ? true : false, "Partition");
+  dlg.window = new paletteWindow
+    (w, h, CTX::instance()->nonModalWindows ? true : false, "Partition");
   dlg.window->box(GMSH_WINDOW_BOX);
   dlg.window->callback((Fl_Callback *)partition_cancel_cb, &dlg);
 
   // Main options group [0]
   {
-    const int GH = 2*BH + 2 + 4*WB;
+    const int GH = 3*BH + 2 + 5*WB;
     y += WB;
     Fl_Group *g = new Fl_Group(0, y, w, GH);
     // Partitioner
@@ -273,13 +275,18 @@ void partition_dialog()
     {
       Fl_Check_Button *const o = new Fl_Check_Button
         (2*WB + 2*BB, y, 2*BB, BH, "Create ghost cells");
-      o->deactivate();
       dlg.setGhostCells = o;
     }
     {
       Fl_Check_Button *const o = new Fl_Check_Button
         (WB, y, 2*BB, BH, "Create partition topology");
       dlg.setTopology = o;
+    }
+    y += BH + WB;
+    {
+      Fl_Check_Button *const o = new Fl_Check_Button
+      (WB, y, 2*BB, BH, "Create physical groups");
+      dlg.setPhysical = o;
     }
     y += BH + WB;
     // Box (line)
@@ -292,7 +299,6 @@ void partition_dialog()
     g->show();
   }
   const int yMain = y;
-
 
   // Metis options group [1]
   y = yMain;
@@ -308,7 +314,8 @@ void partition_dialog()
     }
     // Advanced Button
     {
-      Fl_Toggle_Button *const o = new Fl_Toggle_Button (w - (WB + BB), y, BB, BH, "Advanced @-22->");
+      Fl_Toggle_Button *const o = new Fl_Toggle_Button
+        (w - (WB + BB), y, BB, BH, "Advanced @-22->");
       dlg.toggleButtonAdvMetis = o;
       o->callback((Fl_Callback *)partition_select_groups_cb, &dlg);
     }
@@ -337,15 +344,17 @@ void partition_dialog()
     }
     // Refinement algorithm
     {
-      Fl_Choice *const o = new Fl_Choice (2*WB + 2*BB, y, BB, BH, "Refinement\nalgorithm");
+      Fl_Choice *const o = new Fl_Choice
+        (2*WB + 2*BB, y, BB, BH, "Refinement\nalgorithm");
       dlg.choiceRefineAlg = o;
       o->menu(metisRefineAlgMenu);
       o->align(FL_ALIGN_RIGHT);
     }
-    y += BH + WB + 1;  // +1 for multiline label
+    y += BH + WB + 1; // +1 for multiline label
     // element weights - line 1
     {
-      Fl_Value_Input *const o = new Fl_Value_Input (WB, y, 2*BB/3, BH, "Triangle");
+      Fl_Value_Input *const o = new Fl_Value_Input
+        (WB, y, 2*BB/3, BH, "Triangle");
       dlg.inputTriWeight = o;
       o->minimum(1);
       o->maximum(std::numeric_limits<int>::max());
@@ -353,7 +362,8 @@ void partition_dialog()
       o->align(FL_ALIGN_RIGHT);
     }
     {
-      Fl_Value_Input *const o = new Fl_Value_Input (2*WB + (w/3-WB), y,2*BB/3, BH, "Tetrahedron");
+      Fl_Value_Input *const o = new Fl_Value_Input
+        (2*WB + (w/3-WB), y,2*BB/3, BH, "Tetrahedron");
       dlg.inputTetWeight = o;
       o->minimum(1);
       o->maximum(std::numeric_limits<int>::max());
@@ -361,7 +371,8 @@ void partition_dialog()
       o->align(FL_ALIGN_RIGHT);
     }
     {
-      Fl_Value_Input *const o = new Fl_Value_Input (3*WB + 2*(w/3-WB), y,2*BB/3, BH, "Prism");
+      Fl_Value_Input *const o = new Fl_Value_Input
+        (3*WB + 2*(w/3-WB), y,2*BB/3, BH, "Prism");
       dlg.inputPriWeight = o;
       o->minimum(1);
       o->maximum(std::numeric_limits<int>::max());
@@ -371,7 +382,8 @@ void partition_dialog()
     y += 2 + WB + BH + 1;
     // element weights - line 2
     {
-      Fl_Value_Input *const o = new Fl_Value_Input (WB, y, 2*BB/3, BH, "Quadrangle");
+      Fl_Value_Input *const o = new Fl_Value_Input
+        (WB, y, 2*BB/3, BH, "Quadrangle");
       dlg.inputQuaWeight = o;
       o->minimum(1);
       o->maximum(std::numeric_limits<int>::max());
@@ -379,7 +391,8 @@ void partition_dialog()
       o->align(FL_ALIGN_RIGHT);
     }
     {
-      Fl_Value_Input *const o = new Fl_Value_Input (2*WB + (w/3-WB), y,2*BB/3, BH, "Hexahedron");
+      Fl_Value_Input *const o = new Fl_Value_Input
+        (2*WB + (w/3-WB), y,2*BB/3, BH, "Hexahedron");
       dlg.inputHexWeight = o;
       o->minimum(1);
       o->maximum(std::numeric_limits<int>::max());
@@ -387,7 +400,8 @@ void partition_dialog()
       o->align(FL_ALIGN_RIGHT);
     }
     {
-      Fl_Value_Input *const o = new Fl_Value_Input (3*WB + 2*(w/3-WB), y,2*BB/3, BH, "Pyramid");
+      Fl_Value_Input *const o = new Fl_Value_Input
+        (3*WB + 2*(w/3-WB), y,2*BB/3, BH, "Pyramid");
       dlg.inputPyrWeight = o;
       o->minimum(1);
       o->maximum(std::numeric_limits<int>::max());

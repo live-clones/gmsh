@@ -57,7 +57,7 @@
 #include <BRep_Tool.hxx>
 #include <ElCLib.hxx>
 #include <GProp_GProps.hxx>
-#include <GeomAPI_PointsToBSpline.hxx>
+#include <GeomAPI_Interpolate.hxx>
 #include <Geom_BSplineCurve.hxx>
 #include <Geom_BezierCurve.hxx>
 #include <Geom_Circle.hxx>
@@ -78,6 +78,9 @@
 #include <Standard_Version.hxx>
 #include <TColgp_Array1OfPnt.hxx>
 #include <TColgp_Array1OfPnt2d.hxx>
+#include <TColgp_HArray1OfPnt.hxx>
+#include <TColStd_Array1OfInteger.hxx>
+#include <TColStd_Array1OfReal.hxx>
 #include <TopExp.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopTools_DataMapIteratorOfDataMapOfIntegerShape.hxx>
@@ -912,7 +915,42 @@ bool OCC_Internals::addEllipse(int &tag, double x, double y, double z, double rx
   return true;
 }
 
-bool OCC_Internals::_addSpline(int &tag, const std::vector<int> &vertexTags, int mode)
+void debugBSpline(const Handle(Geom_BSplineCurve) &curve)
+{
+  int degree = curve->Degree();
+  bool periodic = curve->IsPeriodic();
+  bool rational = curve->IsRational();
+
+  int npoles = curve->NbPoles();
+  TColgp_Array1OfPnt poles(1, npoles);
+  curve->Poles(poles);
+
+  TColStd_Array1OfReal weights(1, npoles);
+  curve->Weights(weights);
+
+  int nknots = curve->NbKnots();
+  TColStd_Array1OfReal knots(1, nknots);
+  curve->Knots(knots);
+
+  TColStd_Array1OfInteger mults(1, nknots);
+  curve->Multiplicities(mults);
+
+  printf("BSpline: degree %d, periodic %d, rational %d\n", degree, periodic,
+         rational);
+  printf("Poles:\n");
+  for(int i = 1; i <= npoles; i++)
+    printf("  %d (%g, %g, %g) weight %g\n", i, poles(i).X(), poles(i).Y(),
+           poles(i).Z(), weights(i));
+  printf("Knots:\n");
+  for(int i = 1; i <= nknots; i++)
+    printf("  %d (%g) mult %d\n", i, knots(i), mults(i));
+}
+
+bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags,
+                                int mode, const int degree,
+                                const std::vector<double> &weights,
+                                const std::vector<double> &knots,
+                                const std::vector<int> &multiplicities)
 {
   if(tag >= 0 && _tagEdge.IsBound(tag)){
     Msg::Error("OpenCASCADE edge with tag %d already exists", tag);
@@ -937,8 +975,21 @@ bool OCC_Internals::_addSpline(int &tag, const std::vector<int> &vertexTags, int
       if(i == 0) start = vertex;
       if(i == vertexTags.size() - 1) end = vertex;
     }
-    if(mode == 0){ // BSpline through points (called "Spline" in Gmsh)
-      Handle(Geom_BSplineCurve) curve = GeomAPI_PointsToBSpline(ctrlPoints).Curve();
+    bool periodic = (vertexTags.front() == vertexTags.back());
+    if(mode == 0){
+      // BSpline through points (called "Spline" in Gmsh; will be C2, whereas it
+      // is only C1 in the GEO kernel; also works for the periodic case,
+      // contrary to GEO kernel)
+      int np = periodic ? ctrlPoints.Length() - 1 : ctrlPoints.Length();
+      Handle(TColgp_HArray1OfPnt) p = new TColgp_HArray1OfPnt(1, np);
+      for(int i = 1; i <= np; i++) p->SetValue(i, ctrlPoints(i));
+      GeomAPI_Interpolate intp(p, periodic, CTX::instance()->geom.tolerance);
+      intp.Perform();
+      if(!intp.IsDone()){
+        Msg::Error("Could not interpolate spline");
+        return false;
+      }
+      Handle(Geom_BSplineCurve) curve = intp.Curve();
       BRepBuilderAPI_MakeEdge e(curve, start, end);
       if(!e.IsDone()){
         Msg::Error("Could not create spline");
@@ -947,6 +998,7 @@ bool OCC_Internals::_addSpline(int &tag, const std::vector<int> &vertexTags, int
       result = e.Edge();
     }
     else if(mode == 1){
+      // Bezier curve
       Handle(Geom_BezierCurve) curve = new Geom_BezierCurve(ctrlPoints);
       BRepBuilderAPI_MakeEdge e(curve, start, end);
       if(!e.IsDone()){
@@ -956,11 +1008,109 @@ bool OCC_Internals::_addSpline(int &tag, const std::vector<int> &vertexTags, int
       result = e.Edge();
     }
     else if(mode == 2){
-      // TODO: BSpline treat periodic case, allow to set order, etc.
-      // Handle(Geom_BSplineCurve) curve = new Geom_BSplineCurve(ctrlPoints, ...);
-      // ...
-      Msg::Error("OpenCASCADE BSpline not implemented yet");
-      return false;
+      // General BSpline curve, polynomial or rational, with explicit degree,
+      // weights, knots and multiplicities
+      if(degree < 0){
+        Msg::Error("BSpline degree (%d) should be > 0", degree);
+        return false;
+      }
+      if(weights.size() != vertexTags.size()){
+        Msg::Error("Number of BSpline weights (%d) and control points (%d) "
+                   "should equal", weights.size(), vertexTags.size());
+        return false;
+      }
+      if(knots.size() != multiplicities.size()){
+        Msg::Error("Number of BSpline knots (%d) and multiplicities (%d) should "
+                   "equal", knots.size(), multiplicities.size());
+        return false;
+      }
+      if(knots.size() < 2){
+        Msg::Error("Number of BSpline knots (%d) should be >= 2", knots.size());
+        return false;
+      }
+      for(unsigned int i = 0; i < knots.size() - 1; i++){
+        if(knots[i] >= knots[i+1]){
+          Msg::Error("BSpline knots should be increasing: knot %d (%g) > "
+                     "knot %d (%g)", i, knots[i], i + 1, knots[i + 1]);
+          return false;
+        }
+      }
+      for(unsigned int i = 0; i < multiplicities.size(); i++){
+        if(multiplicities[i] < 1){
+          Msg::Error("BSpline multiplicities should be >= 1");
+          return false;
+        }
+        if(i != 0 && i != multiplicities.size() - 1 &&
+           multiplicities[i] > degree){
+          Msg::Error("BSpline interior knot multiplicities should be <= degree");
+          return false;
+        }
+        if((i == 0 || i == multiplicities.size() - 1) &&
+           multiplicities[i] > degree + 1){
+          Msg::Error("BSpline end knot multiplicities should be <= degree + 1");
+          return false;
+        }
+      }
+      if(periodic){
+        if(multiplicities.front() != multiplicities.back()){
+          Msg::Error("Periodic BSpline end knot multiplicies (%d and %d) should "
+                     "be equal", multiplicities.front(), multiplicities.back());
+          return false;
+        }
+        int sum = 0;
+        for(unsigned int i = 0; i < multiplicities.size() - 1; i++)
+          sum += multiplicities[i];
+        if(vertexTags.size() - 1 != sum){
+          Msg::Error("Number of control points - 1 for periodic BSpline should "
+                     "be equal to the sum of multiplicities for all knots except "
+                     "the first (or last)");
+          return false;
+        }
+      }
+      else{
+        int sum = 0;
+        for(unsigned int i = 0; i < multiplicities.size(); i++)
+          sum += multiplicities[i];
+        if(vertexTags.size() != sum - degree - 1){
+          Msg::Error("Number of control points for non-periodic BSpline should "
+                     "be equal to the sum of multiplicities - degree - 1");
+          return false;
+        }
+      }
+      int np = (periodic ? ctrlPoints.Length() - 1 : ctrlPoints.Length());
+      TColgp_Array1OfPnt p(1, np);
+      TColStd_Array1OfReal w(1, np);
+      for(int i = 1; i <= np; i++){
+        p.SetValue(i, ctrlPoints(i));
+        w.SetValue(i, weights[i - 1]);
+      }
+      TColStd_Array1OfReal k(1, knots.size());
+      for(unsigned  int i = 0; i < knots.size(); i++)
+        k.SetValue(i + 1, knots[i]);
+      TColStd_Array1OfInteger m(1, multiplicities.size());
+      for(unsigned  int i = 0; i < multiplicities.size(); i++)
+        m.SetValue(i + 1, multiplicities[i]);
+      Handle(Geom_BSplineCurve) curve =
+        new Geom_BSplineCurve(p, w, k, m, degree, periodic);
+      if(curve->StartPoint().IsEqual
+         (BRep_Tool::Pnt(start), CTX::instance()->geom.tolerance) &&
+         curve->EndPoint().IsEqual
+         (BRep_Tool::Pnt(end), CTX::instance()->geom.tolerance)){
+        BRepBuilderAPI_MakeEdge e(curve, start, end);
+        if(!e.IsDone()){
+          Msg::Error("Could not create BSpline curve (with end points)");
+          return false;
+        }
+        result = e.Edge();
+      }
+      else{ // will create new topo vertices as necessary
+        BRepBuilderAPI_MakeEdge e(curve);
+        if(!e.IsDone()){
+          Msg::Error("Could not create BSpline curve (without end points)");
+          return false;
+        }
+        result = e.Edge();
+      }
     }
   }
   catch(Standard_Failure &err){
@@ -974,17 +1124,54 @@ bool OCC_Internals::_addSpline(int &tag, const std::vector<int> &vertexTags, int
 
 bool OCC_Internals::addSpline(int &tag, const std::vector<int> &vertexTags)
 {
-  return _addSpline(tag, vertexTags, 0);
+  return _addBSpline(tag, vertexTags, 0);
 }
 
 bool OCC_Internals::addBezier(int &tag, const std::vector<int> &vertexTags)
 {
-  return _addSpline(tag, vertexTags, 1);
+  return _addBSpline(tag, vertexTags, 1);
 }
 
-bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &vertexTags)
+bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &vertexTags,
+                               const int degree,
+                               const std::vector<double> &weights,
+                               const std::vector<double> &knots,
+                               const std::vector<int> &multiplicities)
 {
-  return _addSpline(tag, vertexTags, 2);
+  int d = degree;
+  std::vector<double> w(weights), k(knots);
+  std::vector<int> m(multiplicities);
+  // degree 3 if not specified:
+  if(d <= 0) d = 3;
+  // automatic default weights if not provided:
+  if(w.empty()) w.resize(vertexTags.size(), 1);
+  // automatic default knots and multiplicities if not provided:
+  if(k.empty()){
+    bool periodic = (vertexTags.front() == vertexTags.back());
+    if(!periodic){
+      int sum_of_all_mult = vertexTags.size() + d + 1;
+      int num_knots = sum_of_all_mult - 2 * d;
+      if(num_knots < 2){
+        Msg::Error("Not enough control points for building BSpline of degree %d", d);
+        return false;
+      }
+      k.resize(num_knots);
+      for(unsigned int i = 0; i < k.size(); i++)
+        k[i] = i;
+      m.resize(num_knots, 1);
+      m.front() = d + 1;
+      m.back() = d + 1;
+    }
+    else{
+      k.resize(vertexTags.size() - 1);
+      for(unsigned int i = 0; i < k.size(); i++)
+        k[i] = i;
+      m.resize(k.size(), 1);
+      m.front() = d - 1;
+      m.back() = d - 1;
+    }
+  }
+  return _addBSpline(tag, vertexTags, 2, d, w, k, m);
 }
 
 bool OCC_Internals::addWire(int &tag, const std::vector<int> &edgeTags,
@@ -1026,8 +1213,8 @@ bool OCC_Internals::addLineLoop(int &tag, const std::vector<int> &edgeTags)
   return addWire(tag, edgeTags, true);
 }
 
-bool OCC_Internals::_makeRectangle(TopoDS_Face &result, double x, double y, double z,
-                                   double dx, double dy, double roundedRadius)
+static bool makeRectangle(TopoDS_Face &result, double x, double y, double z,
+                          double dx, double dy, double roundedRadius)
 {
   if(!dx || !dy){
     Msg::Error("Rectangle with zero width or height");
@@ -1107,15 +1294,15 @@ bool OCC_Internals::addRectangle(int &tag, double x, double y, double z,
     return false;
   }
   TopoDS_Face result;
-  if(!_makeRectangle(result, x, y, z, dx, dy, roundedRadius))
+  if(!makeRectangle(result, x, y, z, dx, dy, roundedRadius))
     return false;
   if(tag < 0) tag = getMaxTag(2) + 1;
   bind(result, tag, true);
   return true;
 }
 
-bool OCC_Internals::_makeDisk(TopoDS_Face &result, double xc, double yc, double zc,
-                              double rx, double ry)
+static bool makeDisk(TopoDS_Face &result, double xc, double yc, double zc,
+                     double rx, double ry)
 {
   if(ry > rx){
     Msg::Error("Major radius rx should be larger than minor radius ry");
@@ -1150,7 +1337,7 @@ bool OCC_Internals::addDisk(int &tag, double xc, double yc, double zc,
     return false;
   }
   TopoDS_Face result;
-  if(!_makeDisk(result, xc, yc, zc, rx, ry))
+  if(!makeDisk(result, xc, yc, zc, rx, ry))
     return false;
   if(tag < 0) tag = getMaxTag(2) + 1;
   bind(result, tag, true);
@@ -1211,7 +1398,10 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
   return true;
 }
 
-bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag)
+bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
+                                      const std::vector<int> &vertexTags,
+                                      const std::vector<int> &faceTags,
+                                      const std::vector<int> &faceContinuity)
 {
   if(tag >= 0 && _tagFace.IsBound(tag)){
     Msg::Error("OpenCASCADE face with tag %d already exists", tag);
@@ -1221,27 +1411,55 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag)
   TopoDS_Face result;
   try{
     BRepOffsetAPI_MakeFilling f;
-    // add edge constraints
+    // bounding edge constraints
     if(!_tagWire.IsBound(wireTag)){
       Msg::Error("Unknown OpenCASCADE line loop with tag %d", wireTag);
       return false;
     }
     TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
     TopExp_Explorer exp0;
+    int i = 0;
     for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()){
       TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
-      f.Add(edge, GeomAbs_C0);
-      // face filling will duplicate the edge
-      if(_edgeTag.IsBound(edge))
-        unbind(edge, _edgeTag.Find(edge), true);
+      if(i < faceTags.size()){ // associated face constraint (does not seem to work...)
+        if(!_tagFace.IsBound(faceTags[i])){
+          Msg::Error("Unknown OpenCASCADE face with tag %d", faceTags[i]);
+          return false;
+        }
+        TopoDS_Face face = TopoDS::Face(_tagFace.Find(faceTags[i]));
+        if(i < faceContinuity.size() && faceContinuity[i] == 2)
+          f.Add(edge, face, GeomAbs_G2);
+        else
+          f.Add(edge, face, GeomAbs_G1);
+      }
+      else{
+        f.Add(edge, GeomAbs_C0);
+      }
+      i++;
     }
-    // TODO: add optional point constraints using f.Add(gp_Pnt(x, y, z);
+    // point constraints
+    for(unsigned int i = 0; i < vertexTags.size(); i++){
+      if(!_tagVertex.IsBound(vertexTags[i])){
+        Msg::Error("Unknown OpenCASCADE vertex with tag %d", vertexTags[i]);
+        return false;
+      }
+      TopoDS_Vertex vertex = TopoDS::Vertex(_tagVertex.Find(vertexTags[i]));
+      f.Add(BRep_Tool::Pnt(vertex));
+    }
     f.Build();
     if(!f.IsDone()){
       Msg::Error("Could not build surface filling");
       return false;
     }
-    result = TopoDS::Face(f.Shape());
+    // face filling duplicates the edges, so we need to go back to the
+    // underlying surface, and remake a new face explicitly with the wire;
+    // applying ShapeFix is mandatory (not sure why...)
+    TopoDS_Face tmp = TopoDS::Face(f.Shape());
+    Handle(Geom_Surface) s = BRep_Tool::Surface(tmp);
+    result = BRepBuilderAPI_MakeFace(s, wire);
+    ShapeFix_Face fix(result);
+    fix.Perform();
+    result = fix.Face();
   }
   catch(Standard_Failure &err){
     Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
@@ -1337,9 +1555,9 @@ bool OCC_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
   return true;
 }
 
-bool OCC_Internals::_makeSphere(TopoDS_Solid &result, double xc, double yc, double zc,
-                                double radius, double angle1, double angle2,
-                                double angle3)
+static bool makeSphere(TopoDS_Solid &result, double xc, double yc, double zc,
+                       double radius, double angle1, double angle2,
+                       double angle3)
 {
   if(radius <= 0){
     Msg::Error("Sphere radius should be positive");
@@ -1375,15 +1593,15 @@ bool OCC_Internals::addSphere(int &tag, double xc, double yc, double zc,
     return false;
   }
   TopoDS_Solid result;
-  if(!_makeSphere(result, xc, yc, zc, radius, angle1, angle2, angle3))
+  if(!makeSphere(result, xc, yc, zc, radius, angle1, angle2, angle3))
     return false;
   if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
   return true;
 }
 
-bool OCC_Internals::_makeBox(TopoDS_Solid &result, double x, double y, double z,
-                             double dx, double dy, double dz)
+static bool makeBox(TopoDS_Solid &result, double x, double y, double z,
+                    double dx, double dy, double dz)
 {
   if(!dx || !dy || !dz){
     Msg::Error("Degenerate block");
@@ -1415,15 +1633,15 @@ bool OCC_Internals::addBox(int &tag, double x, double y, double z,
     return false;
   }
   TopoDS_Solid result;
-  if(!_makeBox(result, x, y, z, dx, dy, dz))
+  if(!makeBox(result, x, y, z, dx, dy, dz))
     return false;
   if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
   return true;
 }
 
-bool OCC_Internals::_makeCylinder(TopoDS_Solid &result, double x, double y, double z,
-                                  double dx, double dy, double dz, double r, double angle)
+static bool makeCylinder(TopoDS_Solid &result, double x, double y, double z,
+                         double dx, double dy, double dz, double r, double angle)
 {
   const double H = sqrt(dx * dx + dy * dy + dz * dz);
   if(!H){
@@ -1462,15 +1680,15 @@ bool OCC_Internals::addCylinder(int &tag, double x, double y, double z,
     return false;
   }
   TopoDS_Solid result;
-  if(!_makeCylinder(result, x, y, z, dx, dy, dz, r, angle))
+  if(!makeCylinder(result, x, y, z, dx, dy, dz, r, angle))
     return false;
   if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
   return true;
 }
 
-bool OCC_Internals::_makeTorus(TopoDS_Solid &result, double x, double y, double z,
-                               double r1, double r2, double angle)
+static bool makeTorus(TopoDS_Solid &result, double x, double y, double z,
+                      double r1, double r2, double angle)
 {
   if(r1 <= 0 || r2 <= 0){
     Msg::Error("Torus radii should be positive");
@@ -1503,16 +1721,16 @@ bool OCC_Internals::addTorus(int &tag, double x, double y, double z,
     return false;
   }
   TopoDS_Solid result;
-  if(!_makeTorus(result, x, y, z, r1, r2, angle))
+  if(!makeTorus(result, x, y, z, r1, r2, angle))
     return false;
   if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
   return true;
 }
 
-bool OCC_Internals::_makeCone(TopoDS_Solid &result, double x, double y, double z,
-                              double dx, double dy, double dz, double r1, double r2,
-                              double angle)
+static bool makeCone(TopoDS_Solid &result, double x, double y, double z,
+                     double dx, double dy, double dz, double r1, double r2,
+                     double angle)
 {
   const double H = sqrt(dx * dx + dy * dy + dz * dz);
   if(!H){
@@ -1551,15 +1769,15 @@ bool OCC_Internals::addCone(int &tag, double x, double y, double z,
     return false;
   }
   TopoDS_Solid result;
-  if(!_makeCone(result, x, y, z, dx, dy, dz, r1, r2, angle))
+  if(!makeCone(result, x, y, z, dx, dy, dz, r1, r2, angle))
     return false;
   if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
   return true;
 }
 
-bool OCC_Internals::_makeWedge(TopoDS_Solid &result, double x, double y, double z,
-                               double dx, double dy, double dz, double ltx)
+static bool makeWedge(TopoDS_Solid &result, double x, double y, double z,
+                      double dx, double dy, double dz, double ltx)
 {
   try{
     gp_Pnt aP(x, y, z);
@@ -1588,7 +1806,7 @@ bool OCC_Internals::addWedge(int &tag, double x, double y, double z,
     return false;
   }
   TopoDS_Solid result;
-  if(!_makeWedge(result, x, y, z, dx, dy, dz, ltx))
+  if(!makeWedge(result, x, y, z, dx, dy, dz, ltx))
     return false;
   if(tag < 0) tag = getMaxTag(3) + 1;
   bind(result, tag, true);
@@ -2667,8 +2885,10 @@ bool OCC_Internals::importShapes(const std::string &fileName, bool highestDimOnl
       }
       reader.Transfer(step_doc);
       // Read in the shape(s) and the colours present in the STEP File
-      Handle_XCAFDoc_ShapeTool step_shape_contents = XCAFDoc_DocumentTool::ShapeTool(step_doc->Main());
-      Handle_XCAFDoc_ColorTool step_colour_contents = XCAFDoc_DocumentTool::ColorTool(step_doc->Main());
+      Handle_XCAFDoc_ShapeTool step_shape_contents =
+        XCAFDoc_DocumentTool::ShapeTool(step_doc->Main());
+      Handle_XCAFDoc_ColorTool step_colour_contents =
+        XCAFDoc_DocumentTool::ColorTool(step_doc->Main());
       TDF_LabelSequence step_shapes;
       step_shape_contents->GetShapes(step_shapes);
       for(int i = 1; i <= step_shapes.Length(); i++){
@@ -3471,11 +3691,11 @@ void OCC_Internals::_healShape(TopoDS_Shape &myshape, double tolerance,
   Msg::Info("-----------------------------------");
 }
 
-bool OCC_Internals::_makeFaceSTL(TopoDS_Face s,
-                                 std::vector<SPoint2> *verticesUV,
-                                 std::vector<SPoint3> *verticesXYZ,
-                                 std::vector<SVector3> *normals,
-                                 std::vector<int> &triangles)
+static bool makeSTL(TopoDS_Face s,
+                    std::vector<SPoint2> *verticesUV,
+                    std::vector<SPoint3> *verticesXYZ,
+                    std::vector<SVector3> *normals,
+                    std::vector<int> &triangles)
 {
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
@@ -3541,13 +3761,14 @@ bool OCC_Internals::_makeFaceSTL(TopoDS_Face s,
 bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint2> &vertices,
                                 std::vector<int> &triangles)
 {
-  return _makeFaceSTL(s, &vertices, 0, 0, triangles);
+  return makeSTL(s, &vertices, 0, 0, triangles);
 }
 
 bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint3> &vertices,
-                                std::vector<SVector3> &normals, std::vector<int> &triangles)
+                                std::vector<SVector3> &normals,
+                                std::vector<int> &triangles)
 {
-  return _makeFaceSTL(s, 0, &vertices, &normals, triangles);
+  return makeSTL(s, 0, &vertices, &normals, triangles);
 }
 
 bool OCC_Internals::makeSolidSTL(TopoDS_Solid s, std::vector<SPoint3> &vertices,
@@ -3557,19 +3778,21 @@ bool OCC_Internals::makeSolidSTL(TopoDS_Solid s, std::vector<SPoint3> &vertices,
   TopExp_Explorer exp0;
   for(exp0.Init(s, TopAbs_FACE); exp0.More(); exp0.Next()){
     TopoDS_Face face = TopoDS::Face(exp0.Current());
-    bool tmp = _makeFaceSTL(TopoDS::Face(face.Oriented(TopAbs_FORWARD)),
-                            0, &vertices, &normals, triangles);
+    bool tmp = makeSTL(TopoDS::Face(face.Oriented(TopAbs_FORWARD)),
+                       0, &vertices, &normals, triangles);
     if(!tmp) ret = false;
   }
   return ret;
 }
 
 bool OCC_Internals::makeRectangleSTL(double x, double y, double z, double dx, double dy,
-                                     double roundedRadius, std::vector<SPoint3> &vertices,
-                                     std::vector<SVector3> &normals, std::vector<int> &triangles)
+                                     double roundedRadius,
+                                     std::vector<SPoint3> &vertices,
+                                     std::vector<SVector3> &normals,
+                                     std::vector<int> &triangles)
 {
   TopoDS_Face result;
-  if(!_makeRectangle(result, x, y, z, dx, dy, roundedRadius))
+  if(!makeRectangle(result, x, y, z, dx, dy, roundedRadius))
     return false;
   if(!makeFaceSTL(result, vertices, normals, triangles))
     return false;
@@ -3577,83 +3800,98 @@ bool OCC_Internals::makeRectangleSTL(double x, double y, double z, double dx, do
 }
 
 bool OCC_Internals::makeDiskSTL(double xc, double yc, double zc, double rx, double ry,
-                                std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+                                std::vector<SPoint3> &vertices,
+                                std::vector<SVector3> &normals,
                                 std::vector<int> &triangles)
 {
   TopoDS_Face result;
-  if(!_makeDisk(result, xc, yc, zc, rx, ry))
+  if(!makeDisk(result, xc, yc, zc, rx, ry))
     return false;
   if(!makeFaceSTL(result, vertices, normals, triangles))
     return false;
   return true;
 }
 
-bool OCC_Internals::makeSphereSTL(double xc, double yc, double zc, double radius, double angle1,
-                                  double angle2, double angle3, std::vector<SPoint3> &vertices,
-                                  std::vector<SVector3> &normals, std::vector<int> &triangles)
+bool OCC_Internals::makeSphereSTL(double xc, double yc, double zc, double radius,
+                                  double angle1, double angle2, double angle3,
+                                  std::vector<SPoint3> &vertices,
+                                  std::vector<SVector3> &normals,
+                                  std::vector<int> &triangles)
 {
   TopoDS_Solid result;
-  if(!_makeSphere(result, xc, yc, zc, radius, angle1, angle2, angle3))
+  if(!makeSphere(result, xc, yc, zc, radius, angle1, angle2, angle3))
     return false;
   if(!makeSolidSTL(result, vertices, normals, triangles))
     return false;
   return true;
 }
 
-bool OCC_Internals::makeBoxSTL(double x, double y, double z, double dx, double dy, double dz,
-                               std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+bool OCC_Internals::makeBoxSTL(double x, double y, double z,
+                               double dx, double dy, double dz,
+                               std::vector<SPoint3> &vertices,
+                               std::vector<SVector3> &normals,
                                std::vector<int> &triangles)
 {
   TopoDS_Solid result;
-  if(!_makeBox(result, x, y, z, dx, dy, dz))
+  if(!makeBox(result, x, y, z, dx, dy, dz))
     return false;
   if(!makeSolidSTL(result, vertices, normals, triangles))
     return false;
   return true;
 }
 
-bool OCC_Internals::makeCylinderSTL(double x, double y, double z, double dx, double dy, double dz,
-                                    double r, double angle, std::vector<SPoint3> &vertices,
-                                    std::vector<SVector3> &normals, std::vector<int> &triangles)
+bool OCC_Internals::makeCylinderSTL(double x, double y, double z,
+                                    double dx, double dy, double dz,
+                                    double r, double angle,
+                                    std::vector<SPoint3> &vertices,
+                                    std::vector<SVector3> &normals,
+                                    std::vector<int> &triangles)
 {
   TopoDS_Solid result;
-  if(!_makeCylinder(result, x, y, z, dx, dy, dz, r, angle))
+  if(!makeCylinder(result, x, y, z, dx, dy, dz, r, angle))
     return false;
   if(!makeSolidSTL(result, vertices, normals, triangles))
     return false;
   return true;
 }
 
-bool OCC_Internals::makeConeSTL(double x, double y, double z, double dx, double dy, double dz,
-                                double r1, double r2, double angle, std::vector<SPoint3> &vertices,
-                                std::vector<SVector3> &normals, std::vector<int> &triangles)
+bool OCC_Internals::makeConeSTL(double x, double y, double z,
+                                double dx, double dy, double dz,
+                                double r1, double r2, double angle,
+                                std::vector<SPoint3> &vertices,
+                                std::vector<SVector3> &normals,
+                                std::vector<int> &triangles)
 {
   TopoDS_Solid result;
-  if(!_makeCone(result, x, y, z, dx, dy, dz, r1, r2, angle))
+  if(!makeCone(result, x, y, z, dx, dy, dz, r1, r2, angle))
     return false;
   if(!makeSolidSTL(result, vertices, normals, triangles))
     return false;
   return true;
 }
 
-bool OCC_Internals::makeWedgeSTL(double x, double y, double z, double dx, double dy, double dz,
-                                 double ltx, std::vector<SPoint3> &vertices,
-                                 std::vector<SVector3> &normals, std::vector<int> &triangles)
-{
-  TopoDS_Solid result;
-  if(!_makeWedge(result, x, y, z, dx, dy, dz, ltx))
-    return false;
-  if(!makeSolidSTL(result, vertices, normals, triangles))
-    return false;
-  return true;
-}
-
-bool OCC_Internals::makeTorusSTL(double x, double y, double z, double r1, double r2, double angle,
-                                 std::vector<SPoint3> &vertices, std::vector<SVector3> &normals,
+bool OCC_Internals::makeWedgeSTL(double x, double y, double z,
+                                 double dx, double dy, double dz, double ltx,
+                                 std::vector<SPoint3> &vertices,
+                                 std::vector<SVector3> &normals,
                                  std::vector<int> &triangles)
 {
   TopoDS_Solid result;
-  if(!_makeTorus(result, x, y, z, r1, r2, angle))
+  if(!makeWedge(result, x, y, z, dx, dy, dz, ltx))
+    return false;
+  if(!makeSolidSTL(result, vertices, normals, triangles))
+    return false;
+  return true;
+}
+
+bool OCC_Internals::makeTorusSTL(double x, double y, double z,
+                                 double r1, double r2, double angle,
+                                 std::vector<SPoint3> &vertices,
+                                 std::vector<SVector3> &normals,
+                                 std::vector<int> &triangles)
+{
+  TopoDS_Solid result;
+  if(!makeTorus(result, x, y, z, r1, r2, angle))
     return false;
   if(!makeSolidSTL(result, vertices, normals, triangles))
     return false;
