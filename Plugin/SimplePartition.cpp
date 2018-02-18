@@ -14,6 +14,7 @@
 #include "MFace.h"
 #include "MEdge.h"
 #include "mathEvaluator.h"
+
 #if defined(HAVE_MESH)
 #include "meshPartition.h"
 #endif
@@ -25,6 +26,9 @@
 #include <map>
 #define hashmap std::map
 #endif
+
+int PartitionUsingThisSplit(GModel *const model, unsigned int npart,
+                            hashmap<MElement*, unsigned int> &elmToPartition);
 
 StringXNumber SimplePartitionOptions_Number[] = {
   {GMSH_FULLRC, "NumSlices", NULL, 4.},
@@ -113,7 +117,7 @@ void GMSH_SimplePartitionPlugin::run()
           elmToPartition.insert(std::pair<MElement*, unsigned int>(e, k+1));
           break;
         }
-        
+
         if(pp[0] == point[direction]){
           elmToPartition.insert(std::pair<MElement*, unsigned int>(e, 0+1));
           break;
@@ -121,9 +125,9 @@ void GMSH_SimplePartitionPlugin::run()
       }
     }
   }
-  
+
   opt_mesh_partition_create_topology(0, GMSH_SET, createTopology);
-  
+
   PartitionUsingThisSplit(m, numSlices, elmToPartition);
 
 #else
