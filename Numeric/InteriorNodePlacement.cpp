@@ -168,7 +168,6 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementTetrahedron(int order)
   M.resize(szComp-szInc, szInc, true);
 
   fullMatrix<double> monomials = gmshGenerateMonomialsTetrahedron(order, false);
-  monomials.print("monomials");
   fullMatrix<int> coordinates;
   double2int(monomials, coordinates);
 
@@ -221,16 +220,6 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementTetrahedron(int order)
     M(i, coord2idx[make_mytuple(0, n, 0)]) += eta;
     M(i, coord2idx[make_mytuple(0, 0, n)]) += zeta;
     M(i, coord2idx[make_mytuple(0, 0, 0)]) += rho;
-  }
-
-  M.print("Mtet");
-  for (int i = 0; i < M.size1(); ++i) {
-    double sum = 0;
-    for (int j = 0; j < M.size2(); ++j) {
-      sum += M(i, j);
-    }
-    if (abs(sum-1) > 1e-12)
-      printf("AAARARARARARARRG");
   }
   return M;
 }
