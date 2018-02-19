@@ -952,6 +952,18 @@ static int retrieveFaceBoundaryVertices(int k, int type, int nPts,
         if (edge < 0) std::reverse(v.end() - nPts, v.end());
       }
       return TYPE_TRI;
+    case TYPE_HEX:
+      v.push_back(vCorner[MHexahedron::faces_hexa(k, 0)]);
+      v.push_back(vCorner[MHexahedron::faces_hexa(k, 1)]);
+      v.push_back(vCorner[MHexahedron::faces_hexa(k, 2)]);
+      v.push_back(vCorner[MHexahedron::faces_hexa(k, 3)]);
+      for (int i = 0; i < 4; ++i) {
+        int edge = MHexahedron::faces2edge_hexa(k, i);
+        int n = std::abs(edge) - 1;
+        v.insert(v.end(), vEdges.begin() + n * nPts, vEdges.begin() + (n+1) * nPts);
+        if (edge < 0) std::reverse(v.end() - nPts, v.end());
+      }
+      return TYPE_QUA;
     default:
       return -1;
   }
@@ -1416,19 +1428,11 @@ static MHexahedron *setHighOrder(MHexahedron *h, GRegion *gr,
     }
   }
   else{
-    // create serendipity element to place internal vertices (we used to
-    // saturate face vertices also, but the corresponding function spaces do
-    // not exist anymore, and there is no theoretical justification for doing
-    // it either way)
-    if(nPts == 1){
-      MHexahedron20 incpl(h->getVertex(0), h->getVertex(1), h->getVertex(2),
-                          h->getVertex(3), h->getVertex(4), h->getVertex(5),
-                          h->getVertex(6), h->getVertex(7), ve[0], ve[1], ve[2],
-                          ve[3], ve[4], ve[5], ve[6], ve[7], ve[8], ve[9], ve[10],
-                          ve[11], 0, h->getPartition());
-      getFaceVerticesOld(gr, &incpl, h, vf, newHOVert, faceVertices,
-                         edgeVertices, linear, nPts);
-      getVolumeVerticesOld(gr, &incpl, h, vr, newHOVert, linear, nPts);
+    getFaceVertices(gr, h, ve, vf, newHOVert, faceVertices, nPts);
+    ve.insert(ve.end(), vf.begin(), vf.end());
+    getVolumeVertices(gr, h, ve, vr, newHOVert, nPts);
+    ve.insert(ve.end(), vr.begin(), vr.end());
+    if(nPts == 1) {
       return new MHexahedron27(h->getVertex(0), h->getVertex(1), h->getVertex(2),
                                h->getVertex(3), h->getVertex(4), h->getVertex(5),
                                h->getVertex(6), h->getVertex(7), ve[0], ve[1], ve[2],
@@ -1437,19 +1441,10 @@ static MHexahedron *setHighOrder(MHexahedron *h, GRegion *gr,
                                0, h->getPartition());
     }
     else {
-      MHexahedronN incpl(h->getVertex(0), h->getVertex(1), h->getVertex(2),
-                         h->getVertex(3), h->getVertex(4), h->getVertex(5),
-                         h->getVertex(6), h->getVertex(7), ve, nPts + 1, 0,
-                         h->getPartition());
-      getFaceVerticesOld(gr, &incpl, h, vf, newHOVert, faceVertices,
-                         edgeVertices, linear, nPts);
-      ve.insert(ve.end(), vf.begin(), vf.end());
-      getVolumeVerticesOld(gr, &incpl, h, vr, newHOVert, linear, nPts);
-      ve.insert(ve.end(), vr.begin(), vr.end());
       return new MHexahedronN(h->getVertex(0), h->getVertex(1), h->getVertex(2),
                               h->getVertex(3), h->getVertex(4), h->getVertex(5),
-                              h->getVertex(6), h->getVertex(7), ve, nPts + 1,
-                              0, h->getPartition());
+                              h->getVertex(6), h->getVertex(7), ve, nPts + 1, 0,
+                              h->getPartition());
     }
   }
 }
