@@ -699,23 +699,37 @@ static void _getIntegrationData(const int elementType,
     intPoints.push_back(pts(i, 2));
     intPoints.push_back(weights(i));
   }
-  for(unsigned int i = 0; i < entities.size(); i++){
-    GEntity *ge = entities[i];
-    for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
-      MElement *e = ge->getMeshElement(j);
-      if(e->getTypeForMSH() == elementType){
-        for(int k = 0; k < weights.size(); k++){
-          SPoint3 p;
-          e->pnt(pts(k, 0), pts(k, 1), pts(k, 2), p);
-          intData.push_back(p.x());
-          intData.push_back(p.y());
-          intData.push_back(p.z());
-          double jac[3][3];
-          double det = e->getJacobian(pts(k, 0), pts(k, 1), pts(k, 2), jac);
-          intData.push_back(det);
-          for(int m = 0; m < 3; m++)
-            for(int n = 0; n < 3; n++)
-              intData.push_back(jac[m][n]);
+  // get quadrature data
+  {
+    int n = 0;
+    for(unsigned int i = 0; i < entities.size(); i++){
+      GEntity *ge = entities[i];
+      for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
+        MElement *e = ge->getMeshElement(j);
+        if(e->getTypeForMSH() == elementType)
+          n++;
+      }
+    }
+    intData.resize(n * weights.size() * 13);
+    int idx = 0;
+    for(unsigned int i = 0; i < entities.size(); i++){
+      GEntity *ge = entities[i];
+      for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
+        MElement *e = ge->getMeshElement(j);
+        if(e->getTypeForMSH() == elementType){
+          for(int k = 0; k < weights.size(); k++){
+            SPoint3 p;
+            e->pnt(pts(k, 0), pts(k, 1), pts(k, 2), p);
+            intData[idx++] = p.x();
+            intData[idx++] = p.y();
+            intData[idx++] = p.z();
+            double jac[3][3];
+            double det = e->getJacobian(pts(k, 0), pts(k, 1), pts(k, 2), jac);
+            intData[idx++] = det;
+            for(int m = 0; m < 3; m++)
+              for(int n = 0; n < 3; n++)
+                intData[idx++] = jac[m][n];
+          }
         }
       }
     }
