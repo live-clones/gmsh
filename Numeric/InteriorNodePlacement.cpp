@@ -23,6 +23,45 @@ namespace {
       }
     }
   }
+
+  std::map<int, fullMatrix<double>*> storedMatrices[6];
+}
+
+
+fullMatrix<double>* getInteriorNodePlacement(int type, int order)
+{
+  if (type < 3 || type > 8)
+    return NULL;
+  std::map<int, fullMatrix<double>*>::iterator it;
+  it = storedMatrices[type-3].find(order);
+  if (it != storedMatrices[type-3].end()) {
+    return it->second;
+  }
+  else {
+    fullMatrix<double> *matrix = new fullMatrix<double>();
+    switch (type) {
+      case TYPE_TRI:
+        *matrix = gmshGenerateInteriorNodePlacementTriangle(order);
+        break;
+      case TYPE_QUA:
+        *matrix = gmshGenerateInteriorNodePlacementQuadrangle(order);
+        break;
+      case TYPE_TET:
+        *matrix = gmshGenerateInteriorNodePlacementTetrahedron(order);
+        break;
+      case TYPE_PRI:
+        *matrix = gmshGenerateInteriorNodePlacementPrism(order);
+        break;
+      case TYPE_HEX:
+        *matrix = gmshGenerateInteriorNodePlacementHexahedron(order);
+        break;
+      case TYPE_PYR:
+        *matrix = gmshGenerateInteriorNodePlacementPyramid(order);
+        break;
+    }
+    storedMatrices[type-3][order] = matrix;
+    return matrix;
+  }
 }
 
 
@@ -392,7 +431,7 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementPyramid(int order)
     int r = n-v-w;
     double xi = (double)u / n;
     double eta = (double)v / n;
-    double zeta = (double)w / n;
+//    double zeta = (double)w / n;
     double rho = (double)q / n;
     double tau = (double)r / n;
     double xip = (double)u / (n-w);

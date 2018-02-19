@@ -13,6 +13,8 @@
 // nodes are given by M*x^b.
 // The placement is obtained by analogy with linear transfinite interpolation.
 
+fullMatrix<double>* getInteriorNodePlacement(int type, int order);
+
 fullMatrix<double> gmshGenerateInteriorNodePlacementTriangle(int order);
 fullMatrix<double> gmshGenerateInteriorNodePlacementQuadrangle(int order);
 fullMatrix<double> gmshGenerateInteriorNodePlacementTetrahedron(int order);
