@@ -238,7 +238,6 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementHexahedron(int order)
   M.resize(szComp-szInc, szInc, true);
 
   fullMatrix<double> monomials = gmshGenerateMonomialsHexahedron(order, false);
-  monomials.print("monomials");
   fullMatrix<int> coordinates;
   double2int(monomials, coordinates);
 
@@ -287,16 +286,6 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementHexahedron(int order)
     M(i, coord2idx[make_mytuple(n, 0, n)]) += xi * (1-eta) * zeta;
     M(i, coord2idx[make_mytuple(n, n, 0)]) += xi * eta * (1-zeta);
     M(i, coord2idx[make_mytuple(n, n, n)]) += xi * eta * zeta;
-  }
-
-  M.print("Mhex");
-  for (int i = 0; i < M.size1(); ++i) {
-    double sum = 0;
-    for (int j = 0; j < M.size2(); ++j) {
-      sum += M(i, j);
-    }
-    if (abs(sum-1) > 1e-12)
-      printf("AAARARARARARARRG");
   }
   return M;
 }
@@ -420,7 +409,6 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementPyramid(int order)
     int r = n-v-w;
     double xi = (double)u / n;
     double eta = (double)v / n;
-//    double zeta = (double)w / n;
     double rho = (double)q / n;
     double tau = (double)r / n;
     double xip = (double)u / (n-w);
