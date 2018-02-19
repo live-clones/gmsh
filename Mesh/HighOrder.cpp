@@ -940,6 +940,7 @@ static int retrieveFaceBoundaryVertices(int k, int type, int nPts,
                                         std::vector<MVertex*> &v)
 {
   v.clear();
+  int nCorner;
   switch (type) {
     case TYPE_TET:
       v.push_back(vCorner[MTetrahedron::faces_tetra(k, 0)]);
@@ -964,6 +965,19 @@ static int retrieveFaceBoundaryVertices(int k, int type, int nPts,
         if (edge < 0) std::reverse(v.end() - nPts, v.end());
       }
       return TYPE_QUA;
+    case TYPE_PRI:
+      nCorner = k < 2 ? 3 : 4;
+      v.push_back(vCorner[MPrism::faces_prism(k, 0)]);
+      v.push_back(vCorner[MPrism::faces_prism(k, 1)]);
+      v.push_back(vCorner[MPrism::faces_prism(k, 2)]);
+      if (nCorner == 4) v.push_back(vCorner[MPrism::faces_prism(k, 3)]);
+      for (int i = 0; i < nCorner; ++i) {
+        int edge = MPrism::faces2edge_prism(k, i);
+        int n = std::abs(edge) - 1;
+        v.insert(v.end(), vEdges.begin() + n * nPts, vEdges.begin() + (n+1) * nPts);
+        if (edge < 0) std::reverse(v.end() - nPts, v.end());
+      }
+      return nCorner == 3 ? TYPE_TRI : TYPE_QUA;
     default:
       return -1;
   }
@@ -1470,16 +1484,8 @@ static MPrism *setHighOrder(MPrism *p, GRegion *gr,
                          ve, nPts + 1, 0, p->getPartition());
     }
   }
-  else{
-    // create serendipity element to place internal vertices (we used to
-    // saturate face vertices also, but the corresponding function spaces do
-    // not exist anymore, and there is no theoretical justification for doing
-    // it either way)
-    MPrismN incpl(p->getVertex(0), p->getVertex(1), p->getVertex(2),
-                  p->getVertex(3), p->getVertex(4), p->getVertex(5),
-                  ve, nPts + 1, 0, p->getPartition());
-    getFaceVerticesOld(gr, &incpl, p, vf, newHOVert, faceVertices, edgeVertices,
-                       linear, nPts);
+  else {
+    getFaceVertices(gr, p, ve, vf, newHOVert, faceVertices, nPts);
     if (nPts == 1) {
       return new MPrism18(p->getVertex(0), p->getVertex(1), p->getVertex(2),
                           p->getVertex(3), p->getVertex(4), p->getVertex(5),
@@ -1489,7 +1495,7 @@ static MPrism *setHighOrder(MPrism *p, GRegion *gr,
     }
     else {
       ve.insert(ve.end(), vf.begin(), vf.end());
-      getVolumeVerticesOld(gr, &incpl, p, vr, newHOVert, linear, nPts);
+      getVolumeVertices(gr, p, ve, vr, newHOVert, nPts);
       ve.insert(ve.end(), vr.begin(), vr.end());
       return new MPrismN(p->getVertex(0), p->getVertex(1), p->getVertex(2),
                          p->getVertex(3), p->getVertex(4), p->getVertex(5),

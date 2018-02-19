@@ -305,7 +305,6 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementPrism(int order)
   M.resize(szComp-szInc, szInc, true);
 
   fullMatrix<double> monomials = gmshGenerateMonomialsPrism(order, false);
-  monomials.print("monomials");
   fullMatrix<int> coordinates;
   double2int(monomials, coordinates);
 
@@ -359,16 +358,6 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementPrism(int order)
     M(i, coord2idx[make_mytuple(n, 0, n)]) += xi * zeta;
     M(i, coord2idx[make_mytuple(0, n, n)]) += eta * zeta;
     M(i, coord2idx[make_mytuple(0, 0, n)]) += rho * zeta;
-  }
-
-  M.print("Mprism");
-  for (int i = 0; i < M.size1(); ++i) {
-    double sum = 0;
-    for (int j = 0; j < M.size2(); ++j) {
-      sum += M(i, j);
-    }
-    if (abs(sum-1) > 1e-12)
-      printf("AAARARARARARARRG");
   }
   return M;
 }
