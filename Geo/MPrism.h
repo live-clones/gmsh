@@ -165,6 +165,19 @@ class MPrism : public MElement {
     };
     return f[face][vert];
   }
+  static int faces2edge_prism(const int face, const int edge)
+  {
+    // return -iedge - 1 if edge is inverted
+    //         iedge + 1 otherwise
+    static const int e[5][4] = {
+        {2, -4, -1, 0},
+        {7, 9, -8, 0},
+        {1, 5, -7, -3},
+        {3, 8, -6, -2},
+        {4, 6, -9, -5}
+    };
+    return e[face][edge];
+  }
   static int faceClosureEdge2edge(const int face, const int edge)
   {
     // Warning: numbering of element edge starts here at 1.
@@ -429,7 +442,7 @@ class MPrismN : public MPrism {
     if (getIsAssimilatedSerendipity())
       return 0;
     else
-      {int n = _order-1; return n * (n * (n+1) / 2);}
+      {int n = _order-1; return n * ((n-1) * n / 2);}
   }
   virtual int getNumEdgesRep(bool curved);
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);

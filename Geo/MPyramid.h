@@ -164,6 +164,19 @@ class MPyramid : public MElement {
     };
     return f[face][vert];
   }
+  static int faces2edge_pyramid(const int face, const int edge)
+  {
+    // return -iedge - 1 if edge is inverted
+    //         iedge + 1 otherwise
+    static const int e[5][4] = {
+        {1, 5, -3, 0},
+        {-2, 3, -8, 0},
+        {4, 7, -5, 0},
+        {6, 8, -7, 0},
+        {2, -6, -4, -1}
+    };
+    return e[face][edge];
+  }
   virtual int numCommonNodesInDualGraph(const MElement *const other) const;
 };
 
