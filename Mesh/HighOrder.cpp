@@ -819,6 +819,19 @@ static int retrieveFaceBoundaryVertices(int k, int type, int nPts,
         if (edge < 0) std::reverse(v.end() - nPts, v.end());
       }
       return nCorner == 3 ? TYPE_TRI : TYPE_QUA;
+    case TYPE_PYR:
+      nCorner = k < 4 ? 3 : 4;
+      v.push_back(vCorner[MPyramid::faces_pyramid(k, 0)]);
+      v.push_back(vCorner[MPyramid::faces_pyramid(k, 1)]);
+      v.push_back(vCorner[MPyramid::faces_pyramid(k, 2)]);
+      if (nCorner == 4) v.push_back(vCorner[MPyramid::faces_pyramid(k, 3)]);
+      for (int i = 0; i < nCorner; ++i) {
+        int edge = MPyramid::faces2edge_pyramid(k, i);
+        int n = std::abs(edge) - 1;
+        v.insert(v.end(), vEdges.begin() + n * nPts, vEdges.begin() + (n+1) * nPts);
+        if (edge < 0) std::reverse(v.end() - nPts, v.end());
+      }
+      return nCorner == 3 ? TYPE_TRI : TYPE_QUA;
     default:
       return -1;
   }
@@ -1263,7 +1276,7 @@ static MHexahedron *setHighOrder(MHexahedron *h, GRegion *gr,
                                  std::vector<MVertex*> &newHOVert,
                                  edgeContainer &edgeVertices,
                                  faceContainer &faceVertices,
-                                 bool linear, bool incomplete, int nPts)
+                                 bool incomplete, int nPts)
 {
   std::vector<MVertex*> ve, vf, vr;
   getEdgeVertices(gr, h, ve, newHOVert, edgeVertices, nPts);
@@ -1308,7 +1321,7 @@ static MPrism *setHighOrder(MPrism *p, GRegion *gr,
                             std::vector<MVertex*> &newHOVert,
                             edgeContainer &edgeVertices,
                             faceContainer &faceVertices,
-                            bool linear, bool incomplete, int nPts)
+                            bool incomplete, int nPts)
 {
   std::vector<MVertex*> ve, vf, vr;
   getEdgeVertices(gr, p, ve, newHOVert, edgeVertices, nPts);
@@ -1349,21 +1362,20 @@ static MPyramid *setHighOrder(MPyramid *p, GRegion *gr,
                               std::vector<MVertex*> &newHOVert,
                               edgeContainer &edgeVertices,
                               faceContainer &faceVertices,
-                              bool linear, bool incomplete, int nPts)
+                               bool incomplete, int nPts)
 {
   std::vector<MVertex*> ve, vf, vr;
   getEdgeVertices(gr, p, ve, newHOVert, edgeVertices, nPts);
-  MPyramidN incpl(p->getVertex(0), p->getVertex(1), p->getVertex(2),
-                  p->getVertex(3), p->getVertex(4), ve, nPts + 1, 0, p->getPartition());
-  getFaceVerticesOld(gr, &incpl, p, vf, newHOVert, faceVertices, edgeVertices,
-                     linear, nPts);
-  // getFaceVerticesOld(gr, 0, p, vf, newHOVert, faceVertices, edgeVertices, linear, nPts);
-  ve.insert(ve.end(), vf.begin(), vf.end());
-  getVolumeVerticesPyramid(gr, p, ve, vr, newHOVert, linear, nPts);
-  ve.insert(ve.end(), vr.begin(), vr.end());
-  return new MPyramidN(p->getVertex(0), p->getVertex(1),
-                       p->getVertex(2), p->getVertex(3),
-                       p->getVertex(4), ve, nPts + 1,
+  if(!incomplete) {
+    getFaceVertices(gr, p, ve, vf, newHOVert, faceVertices, nPts);
+    ve.insert(ve.end(), vf.begin(), vf.end());
+    if (nPts > 1) {
+      getVolumeVertices(gr, p, ve, vr, newHOVert, nPts);
+      ve.insert(ve.end(), vr.begin(), vr.end());
+    }
+  }
+  return new MPyramidN(p->getVertex(0), p->getVertex(1), p->getVertex(2),
+                       p->getVertex(3), p->getVertex(4), ve, nPts + 1,
                        0, p->getPartition());
 }
 
@@ -1385,7 +1397,7 @@ static void setHighOrder(GRegion *gr, std::vector<MVertex*> &newHOVert,
   for(unsigned int i = 0; i < gr->hexahedra.size(); i++){
     MHexahedron *h = gr->hexahedra[i];
     MHexahedron *hNew = setHighOrder(h, gr, newHOVert, edgeVertices,
-                                     faceVertices, linear, incomplete, nPts);
+                                     faceVertices, incomplete, nPts);
     hexahedra2.push_back(hNew);
     delete h;
   }
@@ -1395,21 +1407,21 @@ static void setHighOrder(GRegion *gr, std::vector<MVertex*> &newHOVert,
   for(unsigned int i = 0; i < gr->prisms.size(); i++){
     MPrism *p = gr->prisms[i];
     MPrism *pNew = setHighOrder(p, gr, newHOVert, edgeVertices,
-                                faceVertices, linear, incomplete, nPts);
+                                faceVertices, incomplete, nPts);
     prisms2.push_back(pNew);
     delete p;
   }
   gr->prisms = prisms2;
 
-//  std::vector<MPyramid*> pyramids2;
-//  for(unsigned int i = 0; i < gr->pyramids.size(); i++) {
-//    MPyramid *p = gr->pyramids[i];
-//    MPyramid *pNew = setHighOrder(p, gr, newHOVert, edgeVertices,
-//                                  faceVertices, linear, incomplete, nPts);
-//    pyramids2.push_back(pNew);
-//    delete p;
-//  }
-//  gr->pyramids = pyramids2;
+  std::vector<MPyramid*> pyramids2;
+  for(unsigned int i = 0; i < gr->pyramids.size(); i++) {
+    MPyramid *p = gr->pyramids[i];
+    MPyramid *pNew = setHighOrder(p, gr, newHOVert, edgeVertices,
+                                  faceVertices, incomplete, nPts);
+    pyramids2.push_back(pNew);
+    delete p;
+  }
+  gr->pyramids = pyramids2;
 
   gr->deleteVertexArrays();
 }

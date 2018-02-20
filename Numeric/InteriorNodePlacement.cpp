@@ -377,7 +377,6 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementPyramid(int order)
   M.resize(szComp-szInc, szInc, true);
 
   fullMatrix<double> monomials = gmshGenerateMonomialsPyramid(order, false);
-  monomials.print("monomials");
   fullMatrix<int> coordinates;
   double2int(monomials, coordinates);
 
@@ -385,7 +384,7 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementPyramid(int order)
   for (int i = 0; i < szInc; ++i) {
     int u = coordinates(i, 0);
     int v = coordinates(i, 1);
-    int w = coordinates(i, 2);
+    int w = order - coordinates(i, 2);
     coord2idx[make_mytuple(u, v, w)] = i;
   }
 
@@ -393,7 +392,7 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementPyramid(int order)
   for (int i = 0; i < szComp-szInc; ++i) {
     int u = coordinates(szInc + i, 0);
     int v = coordinates(szInc + i, 1);
-    int w = coordinates(szInc + i, 2);
+    int w = order - coordinates(szInc + i, 2);
     int q = n-u-w;
     int r = n-v-w;
     double xi = (double)u / n;
@@ -432,16 +431,6 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementPyramid(int order)
     M(i, coord2idx[make_mytuple(n, 0, 0)]) += xi * tau;
     M(i, coord2idx[make_mytuple(n, n, 0)]) += xi * eta;
     M(i, coord2idx[make_mytuple(0, n, 0)]) += rho * eta;
-  }
-
-  M.print("Mpyr");
-  for (int i = 0; i < M.size1(); ++i) {
-    double sum = 0;
-    for (int j = 0; j < M.size2(); ++j) {
-      sum += M(i, j);
-    }
-    if (abs(sum-1) > 1e-12)
-      printf("AAARARARARARARRG");
   }
   return M;
 }
