@@ -42,7 +42,7 @@
 //  }
 //  else if (o->complete){
 //    // BOF BOF BOF -- CG
-//    SetHighOrderInComplete(GModel::current(), onlyVisible);
+//    SetHighOrderIncomplete(GModel::current(), onlyVisible);
 //    o->complete = 0;
 //  }
 //  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
@@ -298,7 +298,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   butt[0]->type(FL_TOGGLE_BUTTON);
   butt[0]->value(!complete);
   // AJ: This is bad a design. Add a proper Fl_Button to toggle between
-  // completeness if needed
+  // completeness if needed. Plus: only 2d version implemented for now
 //  butt[0]->callback(change_completeness_cb);
 
   y += BH;

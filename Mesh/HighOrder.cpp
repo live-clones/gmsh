@@ -627,7 +627,8 @@ static void getFaceVertices(GRegion *gr, MElement *ele,
                             faceContainer &faceVertices, int nPts = 1)
 {
   std::vector<MVertex*> vCorner;
-  ele->getVertices(vCorner); // We can get more than corner vertices but we don't care
+  ele->getVertices(vCorner);
+  // NB: We can get more than corner vertices but we use only corners
 
   for(int i = 0; i < ele->getNumFaces(); i++) {
     MFace face = ele->getFace(i);
@@ -1389,9 +1390,15 @@ void SetHighOrderComplete(GModel *m, bool onlyVisible)
       MTriangle *t = (*it)->triangles[i];
       std::vector<MVertex*> vf, vt;
       int nPts = t->getPolynomialOrder() - 1;
-      getFaceVertices(*it, t, std::vector<MVertex*>(),
-                      vf, dumNewHOVert, faceVertices, false, nPts);
-      for (int j=3;j<t->getNumVertices();j++)vt.push_back(t->getVertex(j));
+      std::vector<MVertex*> ve;
+      {
+        t->getVertices(ve);
+        ve.resize(3 + t->getNumEdgeVertices());
+        ve.erase(ve.begin(), ve.begin() + 3);
+      }
+      getFaceVertices(*it, t, ve, vf, dumNewHOVert, faceVertices, false, nPts);
+      for (int j=3;j<t->getNumVertices()-t->getNumFaceVertices();j++)
+        vt.push_back(t->getVertex(j));
       vt.insert(vt.end(), vf.begin(), vf.end());
       newT.push_back(new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
                                     vt, nPts + 1, 0, t->getPartition()));
@@ -1404,9 +1411,15 @@ void SetHighOrderComplete(GModel *m, bool onlyVisible)
       MQuadrangle *t = (*it)->quadrangles[i];
       std::vector<MVertex*> vf, vt;
       int nPts = t->getPolynomialOrder() - 1;
-      getFaceVertices(*it, t, std::vector<MVertex*>(),
-                      vf, dumNewHOVert, faceVertices, false, nPts);
-      for (int j=4;j<t->getNumVertices();j++)vt.push_back(t->getVertex(j));
+      std::vector<MVertex*> ve;
+      {
+        t->getVertices(ve);
+        ve.resize(4 + t->getNumEdgeVertices());
+        ve.erase(ve.begin(), ve.begin() + 4);
+      }
+      getFaceVertices(*it, t, ve, vf, dumNewHOVert, faceVertices, false, nPts);
+      for (int j=4;j<t->getNumVertices()-t->getNumFaceVertices();j++)
+        vt.push_back(t->getVertex(j));
       vt.insert(vt.end(), vf.begin(), vf.end());
       newQ.push_back(new MQuadrangleN(t->getVertex(0), t->getVertex(1),
                                       t->getVertex(2), t->getVertex(3),
@@ -1427,7 +1440,7 @@ void SetHighOrderComplete(GModel *m, bool onlyVisible)
   updatePeriodicEdgesAndFaces(m);
 }
 
-void SetHighOrderInComplete (GModel *m, bool onlyVisible)
+void SetHighOrderIncomplete(GModel *m, bool onlyVisible)
 {
   std::set<MVertex*> toDelete;
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
