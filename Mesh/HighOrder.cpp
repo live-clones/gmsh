@@ -8,6 +8,7 @@
 //
 
 #include <sstream>
+#include <vector>
 #include "GmshConfig.h"
 #include "HighOrder.h"
 #include "MLine.h"
@@ -19,11 +20,8 @@
 #include "MPyramid.h"
 #include "GmshMessage.h"
 #include "OS.h"
-#include "Numeric.h"
-#include "Context.h"
 #include "fullMatrix.h"
 #include "BasisFactory.h"
-#include "MVertexRTree.h"
 #include "InteriorNodePlacement.h"
 
 #if defined(HAVE_OPTHOM)
@@ -618,87 +616,6 @@ static void reorientQuadPoints(std::vector<MVertex*> &vtcs, int orientation,
   }
 }
 
-static int getNewFacePointsInVolume(MElement *incomplete, int nPts,
-                                    fullMatrix<double> &points)
-{
-  int startFace = 0;
-
-  switch (incomplete->getType()){
-  case TYPE_TET :
-    switch (nPts){
-    case 0:
-    case 1: return -1;
-    case 2: points = BasisFactory::getNodalBasis(MSH_TET_20)->points; break;
-    case 3: points = BasisFactory::getNodalBasis(MSH_TET_35)->points; break;
-    case 4: points = BasisFactory::getNodalBasis(MSH_TET_56)->points; break;
-    case 5: points = BasisFactory::getNodalBasis(MSH_TET_84)->points; break;
-    case 6: points = BasisFactory::getNodalBasis(MSH_TET_120)->points; break;
-    case 7: points = BasisFactory::getNodalBasis(MSH_TET_165)->points; break;
-    case 8: points = BasisFactory::getNodalBasis(MSH_TET_220)->points; break;
-    case 9: points = BasisFactory::getNodalBasis(MSH_TET_286)->points; break;
-    default:
-      Msg::Error("getFaceAndInteriorVertices not implemented for order %i", nPts+1);
-      break;
-    }
-    startFace = 4 + nPts*6;
-    break;
-  case TYPE_HEX :
-    switch (nPts){
-    case 0: return -1;
-    case 1: points = BasisFactory::getNodalBasis(MSH_HEX_27)->points; break;
-    case 2: points = BasisFactory::getNodalBasis(MSH_HEX_64)->points; break;
-    case 3: points = BasisFactory::getNodalBasis(MSH_HEX_125)->points; break;
-    case 4: points = BasisFactory::getNodalBasis(MSH_HEX_216)->points; break;
-    case 5: points = BasisFactory::getNodalBasis(MSH_HEX_343)->points; break;
-    case 6: points = BasisFactory::getNodalBasis(MSH_HEX_512)->points; break;
-    case 7: points = BasisFactory::getNodalBasis(MSH_HEX_729)->points; break;
-    case 8: points = BasisFactory::getNodalBasis(MSH_HEX_1000)->points; break;
-    default :
-      Msg::Error("getFaceAndInteriorVertices not implemented for order %i", nPts+1);
-      break;
-    }
-    startFace = 8 + nPts*12 ;
-    break;
-  case TYPE_PRI :
-    switch (nPts){
-    case 0: return -1;
-    case 1: points = BasisFactory::getNodalBasis(MSH_PRI_18)->points; break;
-    case 2: points = BasisFactory::getNodalBasis(MSH_PRI_40)->points; break;
-    case 3: points = BasisFactory::getNodalBasis(MSH_PRI_75)->points; break;
-    case 4: points = BasisFactory::getNodalBasis(MSH_PRI_126)->points; break;
-    case 5: points = BasisFactory::getNodalBasis(MSH_PRI_196)->points; break;
-    case 6: points = BasisFactory::getNodalBasis(MSH_PRI_288)->points; break;
-    case 7: points = BasisFactory::getNodalBasis(MSH_PRI_405)->points; break;
-    case 8: points = BasisFactory::getNodalBasis(MSH_PRI_550)->points; break;
-    default:
-      Msg::Error("getFaceAndInteriorVertices not implemented for order %i", nPts+1);
-      break;
-    }
-    startFace = 6 + nPts*9;
-    break;
-  case TYPE_PYR:
-    switch (nPts){
-    case 0:
-    case 1: points = BasisFactory::getNodalBasis(MSH_PYR_14)->points; break;
-    case 2: points = BasisFactory::getNodalBasis(MSH_PYR_30)->points; break;
-    case 3: points = BasisFactory::getNodalBasis(MSH_PYR_55)->points; break;
-    case 4: points = BasisFactory::getNodalBasis(MSH_PYR_91)->points; break;
-    case 5: points = BasisFactory::getNodalBasis(MSH_PYR_140)->points; break;
-    case 6: points = BasisFactory::getNodalBasis(MSH_PYR_204)->points; break;
-    case 7: points = BasisFactory::getNodalBasis(MSH_PYR_285)->points; break;
-    case 8: points = BasisFactory::getNodalBasis(MSH_PYR_385)->points; break;
-    default :
-      Msg::Error("getFaceAndInteriorVertices not implemented for order %i", nPts+1);
-      break;
-    }
-    startFace = 5 + nPts*8;
-    break;
-
-  }
-
-  return startFace;
-}
-
 static void getFaceVerticesOnGeo(GFace *gf,
                                  const fullMatrix<double> &coefficients,
                                  const std::vector<MVertex*> &vertices,
@@ -742,22 +659,6 @@ static void getFaceVerticesOnGeo(GFace *gf,
         v = new MVertex(X, Y, Z, gf);
     }
     vf.push_back(v);
-  }
-}
-
-static void interpVerticesInExistingFaceOld(GEntity *ge, const MElement *faceEl,
-                                         std::vector<MVertex*> &veFace, int nPts)
-{
-  fullMatrix<double> points;
-  int start = (faceEl->getType() == 3) ? 3 * (1 + nPts) : 4 * (1 + nPts);
-  points = faceEl->getFunctionSpace(nPts+1)->points;
-  for (int k = start; k < points.size1(); k++) {
-    double t1 = points(k, 0);
-    double t2 = points(k, 1);
-    SPoint3 pos;
-    faceEl->pnt(t1, t2, 0, pos);
-    MVertex* v = new MVertex(pos.x(), pos.y(), pos.z(), ge);
-    veFace.push_back(v);
   }
 }
 
@@ -813,125 +714,6 @@ static void getFaceVertices(GFace *gf, MElement *ele,
   faceVertices[face].insert(faceVertices[face].end(), vFace.begin(), vFace.end());
   vf.insert(vf.end(), vFace.begin(), vFace.end());
   newHOVert.insert(newHOVert.end(), vFace.begin(), vFace.end());
-}
-
-// Get new face (excluding edge) vertices for a face of a 3D element
-static void getFaceVerticesOld(GRegion *gr, MElement *incomplete, MElement *ele,
-                               std::vector<MVertex *> &vf,
-                               std::vector<MVertex *> &newHOVert,
-                               faceContainer &faceVertices,
-                               edgeContainer &edgeVertices,
-                               bool linear, int nPts = 1)
-{
-  fullMatrix<double> points;
-  int startFace = incomplete ? getNewFacePointsInVolume(incomplete, nPts, points) : 0;
-  int index = startFace;
-  for(int i = 0; i < ele->getNumFaces(); i++) {
-    MFace face = ele->getFace(i);
-    int numVert = (face.getNumVertices() == 3) ? nPts * (nPts-1) / 2 : nPts * nPts;
-    std::vector<MVertex*> veFace;
-    faceContainer::iterator fIter = faceVertices.find(face);
-    if(fIter != faceVertices.end()){ // Vertices already exist
-      std::vector<MVertex*> vtcs = fIter->second;
-      int orientation;
-      bool swap;
-      if (fIter->first.computeCorrespondence(face, orientation, swap)) {
-        // Check correspondence and apply permutation if needed
-        if(face.getNumVertices() == 3 && nPts > 1)
-          reorientTrianglePoints(vtcs, orientation, swap);
-        else if(face.getNumVertices() == 4)
-          reorientQuadPoints(vtcs, orientation, swap, nPts-1);
-      }
-      else
-        Msg::Error("Error in face lookup for recuperation of high order face nodes");
-      veFace.assign(vtcs.begin(), vtcs.end());
-    }
-    else { // Vertices do not exist, create them by interpolation
-      if (linear) { // Interpolate on existing mesh
-        // FIXME: If ele is not an order-1 element, then we do not get linear
-        // points
-        std::vector<MVertex*> vfOld;
-        ele->getFaceVertices(i,vfOld);
-        MElement *faceEl;
-        if (face.getNumVertices() == 3)
-          faceEl = new MTriangleN(vfOld, ele->getPolynomialOrder());
-        else
-          faceEl = new MQuadrangleN(vfOld, ele->getPolynomialOrder());
-        interpVerticesInExistingFaceOld(gr, faceEl, veFace, nPts);
-        delete faceEl;
-      }
-      else {
-        if (incomplete) { // Interpolate in incomplete 3D element if given
-          for(int k = index; k < index + numVert; k++){
-            MVertex *v;
-            const double t1 = points(k, 0);
-            const double t2 = points(k, 1);
-            const double t3 = points(k, 2);
-            SPoint3 pos;
-            incomplete->pnt(t1, t2, t3, pos);
-            v = new MVertex(pos.x(), pos.y(), pos.z(), gr);
-            veFace.push_back(v);
-          }
-        }
-        else { // TODO: Interpolate in incomplete face constructed on the fly
-//          std::vector<MVertex*> &vtcs = faceVertices[face];
-//          fullMatrix<double> points;
-//          int start = getNewFacePointsInFace(face.getNumVertices(), nPts, points);
-//          if(face.getNumVertices() == 3 && nPts > 1){ // tri face
-//            // construct incomplete element to take into account curved
-//            // edges on surface boundaries
-//            std::vector<MVertex*> hoEdgeNodes;
-//            for (int i = 0; i < 3; i++) {
-//              MVertex* v0 = face.getVertex(i);
-//              MVertex* v1 = face.getVertex((i + 1) % 3);
-//              edgeContainer::iterator eIter = edgeVertices.find
-//                (std::pair<MVertex*,MVertex*>(std::min(v0, v1), std::max(v0, v1)));
-//              if (eIter == edgeVertices.end())
-//                Msg::Error("Could not find ho nodes for an edge");
-//              if (v0 == eIter->first.first)
-//                hoEdgeNodes.insert(hoEdgeNodes.end(), eIter->second.begin(),
-//                                   eIter->second.end());
-//              else
-//                hoEdgeNodes.insert(hoEdgeNodes.end(), eIter->second.rbegin(),
-//                                   eIter->second.rend());
-//            }
-//            MTriangleN incomplete(face.getVertex(0), face.getVertex(1),
-//                                  face.getVertex(2), hoEdgeNodes, nPts + 1);
-//            for (int k = start; k < points.size1(); k++) {
-//              double t1 = points(k, 0);
-//              double t2 = points(k, 1);
-//              SPoint3 pos;
-//              incomplete.pnt(t1, t2, 0, pos);
-//              MVertex* v = new MVertex(pos.x(), pos.y(), pos.z(), gr);
-//              veFace.push_back(v);
-//            }
-//          }
-//          else if(face.getNumVertices() == 4){ // quad face
-//            for (int k = start; k < points.size1(); k++) {
-//              double t1 = points(k, 0);
-//              double t2 = points(k, 1);
-//              SPoint3 pc = face.interpolate(t1, t2);
-//              MVertex *v = new MVertex(pc.x(), pc.y(), pc.z(), gr);
-//              veFace.push_back(v);
-//            }
-//          }
-          std::vector<MVertex*> vfOld;
-          ele->getFaceVertices(i,vfOld);
-          MElement *faceEl;
-          if (face.getNumVertices() == 3)
-            faceEl = new MTriangleN(vfOld, nPts+1);
-          else
-            faceEl = new MQuadrangleN(vfOld, nPts+1);
-          interpVerticesInExistingFaceOld(gr, faceEl, veFace, nPts);
-          delete faceEl;
-        }
-      }
-      newHOVert.insert(newHOVert.end(), veFace.begin(), veFace.end());
-      faceVertices[face].insert(faceVertices[face].end(), veFace.begin(), veFace.end());
-    }
-    vf.insert(vf.end(), veFace.begin(), veFace.end());
-    index += numVert;
-  }
 }
 
 static int retrieveFaceBoundaryVertices(int k, int type, int nPts,
@@ -1038,116 +820,6 @@ static void getFaceVertices(GRegion *gr, MElement *ele,
   }
 }
 
-// --------- Creation of high-order volume vertices -----------
-
-static int getNewVolumePoints(MElement *incomplete, int nPts, fullMatrix<double> &points)
-{
-  int startInter = 0;
-
-  switch (incomplete->getType()){
-  case TYPE_TET :
-    switch (nPts){
-    case 0:
-    case 1: return -1;
-    case 2: points = BasisFactory::getNodalBasis(MSH_TET_20)->points; break;
-    case 3: points = BasisFactory::getNodalBasis(MSH_TET_35)->points; break;
-    case 4: points = BasisFactory::getNodalBasis(MSH_TET_56)->points; break;
-    case 5: points = BasisFactory::getNodalBasis(MSH_TET_84)->points; break;
-    case 6: points = BasisFactory::getNodalBasis(MSH_TET_120)->points; break;
-    case 7: points = BasisFactory::getNodalBasis(MSH_TET_165)->points; break;
-    case 8: points = BasisFactory::getNodalBasis(MSH_TET_220)->points; break;
-    case 9: points = BasisFactory::getNodalBasis(MSH_TET_286)->points; break;
-    default:
-      Msg::Error("getFaceAndInteriorVertices not implemented for order %i", nPts+1);
-      break;
-    }
-    startInter = ((nPts+2)*(nPts+3)*(nPts+4)-(nPts-2)*(nPts-1)*(nPts))/6;
-    // = 4+6*(p-1)+4*(p-2)*(p-1)/2 = 4*(p+1)*(p+2)/2-6*(p-1)-2*4 = 2*p*p+2
-    break;
-  case TYPE_HEX :
-    switch (nPts){
-    case 0: return -1;
-    case 1: points = BasisFactory::getNodalBasis(MSH_HEX_27)->points; break;
-    case 2: points = BasisFactory::getNodalBasis(MSH_HEX_64)->points; break;
-    case 3: points = BasisFactory::getNodalBasis(MSH_HEX_125)->points; break;
-    case 4: points = BasisFactory::getNodalBasis(MSH_HEX_216)->points; break;
-    case 5: points = BasisFactory::getNodalBasis(MSH_HEX_343)->points; break;
-    case 6: points = BasisFactory::getNodalBasis(MSH_HEX_512)->points; break;
-    case 7: points = BasisFactory::getNodalBasis(MSH_HEX_729)->points; break;
-    case 8: points = BasisFactory::getNodalBasis(MSH_HEX_1000)->points; break;
-    default :
-      Msg::Error("getFaceAndInteriorVertices not implemented for order %i", nPts+1);
-      break;
-    }
-    startInter = (nPts+2)*(nPts+2)*(nPts+2) - (nPts)*(nPts)*(nPts) ;
-    // = 6*(p-1)*(p-1)+12*(p-1)+8 = 6*(p+1)*(p+1)-12*(p-1)-2*8 = 6*p*p+2
-    break;
-  case TYPE_PRI :
-    switch (nPts){
-    case 0: return -1;
-    case 1: points = BasisFactory::getNodalBasis(MSH_PRI_18)->points; break;
-    case 2: points = BasisFactory::getNodalBasis(MSH_PRI_40)->points; break;
-    case 3: points = BasisFactory::getNodalBasis(MSH_PRI_75)->points; break;
-    case 4: points = BasisFactory::getNodalBasis(MSH_PRI_126)->points; break;
-    case 5: points = BasisFactory::getNodalBasis(MSH_PRI_196)->points; break;
-    case 6: points = BasisFactory::getNodalBasis(MSH_PRI_288)->points; break;
-    case 7: points = BasisFactory::getNodalBasis(MSH_PRI_405)->points; break;
-    case 8: points = BasisFactory::getNodalBasis(MSH_PRI_550)->points; break;
-    default:
-      Msg::Error("getFaceAndInteriorVertices not implemented for order %i", nPts+1);
-      break;
-    }
-    startInter = 4*(nPts+1)*(nPts+1)+2;
-    // = 4*p*p+2 = 6+9*(p-1)+2*(p-2)*(p-1)/2+3*(p-1)*(p-1)
-    // = 2*(p+1)*(p+2)/2+3*(p+1)*(p+1)-9*(p-1)-2*6
-    break;
-  case TYPE_PYR:
-    switch (nPts){
-    case 0:
-    case 1: return -1;
-    case 2: points = BasisFactory::getNodalBasis(MSH_PYR_30)->points; break;
-    case 3: points = BasisFactory::getNodalBasis(MSH_PYR_55)->points; break;
-    case 4: points = BasisFactory::getNodalBasis(MSH_PYR_91)->points; break;
-    case 5: points = BasisFactory::getNodalBasis(MSH_PYR_140)->points; break;
-    case 6: points = BasisFactory::getNodalBasis(MSH_PYR_204)->points; break;
-    case 7: points = BasisFactory::getNodalBasis(MSH_PYR_285)->points; break;
-    case 8: points = BasisFactory::getNodalBasis(MSH_PYR_385)->points; break;
-    default :
-      Msg::Error("getFaceAndInteriorVertices not implemented for order %i", nPts+1);
-      break;
-    }
-    startInter = ( nPts+2) * ( (nPts+2) + 1) * (2*(nPts+2) + 1) / 6  -
-      (nPts-1) * ( (nPts-1) + 1) * (2*(nPts-1) + 1) / 6;
-    break;
-
-  }
-
-  return startInter;
-}
-
-// Get new interior vertices for a 3D element (except pyramid)
-static void getVolumeVerticesOld(GRegion *gr, MElement *incomplete,
-                                 MElement *ele,
-                                 std::vector<MVertex *> &vr,
-                                 std::vector<MVertex *> &newHOVert,
-                                 bool linear, int nPts = 1)
-{
-  fullMatrix<double> points;
-  int startInter = getNewVolumePoints(incomplete, nPts, points);
-  const MElement *interpEl = linear ? ele : incomplete;
-  for(int k = startInter; k < points.size1(); k++){
-    MVertex *v;
-    const double t1 = points(k, 0);
-    const double t2 = points(k, 1);
-    const double t3 = points(k, 2);
-    SPoint3 pos;
-    interpEl->pnt(t1, t2, t3, pos);
-    v = new MVertex(pos.x(), pos.y(), pos.z(), gr);
-    newHOVert.push_back(v);
-    vr.push_back(v);
-  }
-}
-
 // Get new interior vertices for a 3D element
 static void getVolumeVertices(GRegion *gr, MElement *ele,
                               const std::vector<MVertex*> &vb,
@@ -1177,124 +849,6 @@ static void getVolumeVertices(GRegion *gr, MElement *ele,
     MVertex *v = new MVertex(x, y, z, gr);
     newHOVert.push_back(v);
     vr.push_back(v);
-  }
-}
-
-// Get new interior vertices for a pyramid
-static void getVolumeVerticesPyramid(GRegion *gr, MElement *ele,
-                                     const std::vector<MVertex*> &ve,
-                                     std::vector<MVertex*> &vr,
-                                     std::vector<MVertex*> &newHOVert,
-                                     bool linear, int nPts = 1)
-{
-  vr.reserve((nPts-1)*(nPts)*(2*(nPts-1)+1)/6);
-  int verts_lvl3[12] = {37,40,38,43,46,44,49,52,50,55,58,56};
-  int verts_lvl2[8];
-  if (nPts == 4) {
-    verts_lvl2[0] = 42; verts_lvl2[1] = 41;
-    verts_lvl2[2] = 48; verts_lvl2[3] = 47;
-    verts_lvl2[4] = 54; verts_lvl2[5] = 53;
-    verts_lvl2[6] = 60; verts_lvl2[7] = 59;
-  }
-  else {
-    verts_lvl2[0] = 29; verts_lvl2[1] = 30;
-    verts_lvl2[2] = 35; verts_lvl2[3] = 36;
-    verts_lvl2[4] = 38; verts_lvl2[5] = 39;
-    verts_lvl2[6] = 32; verts_lvl2[7] = 33;
-  }
-  int verts_lvl1[4];
-  switch(nPts) {
-  case(4):
-    verts_lvl1[0] = 39;
-    verts_lvl1[1] = 45;
-    verts_lvl1[2] = 51;
-    verts_lvl1[3] = 57;
-    break;
-  case(3):
-    verts_lvl1[0] = 31;
-    verts_lvl1[1] = 37;
-    verts_lvl1[2] = 40;
-    verts_lvl1[3] = 34;
-    break;
-  case(2):
-    verts_lvl1[0] = 21;
-    verts_lvl1[1] = 23;
-    verts_lvl1[2] = 24;
-    verts_lvl1[3] = 22;
-    break;
-  }
-  for (int q = 0; q < nPts - 1; q++) {
-    std::vector<MVertex*> vq, veq;
-    vq.push_back(ve[2*nPts + q]);
-    vq.push_back(ve[4*nPts + q]);
-    vq.push_back(ve[6*nPts + q]);
-    vq.push_back(ve[7*nPts + q]);
-
-    if (nPts-q == 4)
-      for (int f = 0; f < 12; f++)
-        veq.push_back(ve[verts_lvl3[f]-5]);
-    else if (nPts-q == 3)
-      for (int f = 0; f < 8; f++)
-        veq.push_back(ve[verts_lvl2[f]-5]);
-    else if (nPts-q == 2)
-      for (int f = 0; f < 4; f++)
-        veq.push_back(ve[verts_lvl1[f]-5]);
-
-    if (nPts-q == 2) {
-      MQuadrangle8 incpl2(vq[0], vq[1], vq[2], vq[3],
-                          veq[0], veq[1], veq[2], veq[3]);
-      SPoint3 pointz;
-      incpl2.pnt(0,0,0,pointz);
-      MVertex *v = new MVertex(pointz.x(), pointz.y(), pointz.z(), gr);
-      newHOVert.push_back(v);
-      std::vector<MVertex*>::iterator cursor = vr.begin();
-      cursor += nPts == 2 ? 0 : 4;
-      vr.insert(cursor, v);
-    }
-    else if (nPts-q == 3) {
-      MQuadrangleN incpl2(vq[0], vq[1], vq[2], vq[3], veq, 3);
-      int offsets[4] = {nPts == 4 ? 7 : 0,
-                        nPts == 4 ? 9 : 1,
-                        nPts == 4 ? 11 : 2,
-                        nPts == 4 ? 12 : 3};
-      double quad_v [4][2] = {{-1.0/3.0, -1.0/3.0},
-                              { 1.0/3.0, -1.0/3.0},
-                              { 1.0/3.0,  1.0/3.0},
-                              {-1.0/3.0,  1.0/3.0}};
-      SPoint3 pointz;
-      for (int k = 0; k<4; k++) {
-        incpl2.pnt(quad_v[k][0], quad_v[k][1], 0, pointz);
-        MVertex *v = new MVertex(pointz.x(), pointz.y(), pointz.z(), gr);
-        newHOVert.push_back(v);
-        std::vector<MVertex*>::iterator cursor = vr.begin();
-        cursor += offsets[k];
-        vr.insert(cursor, v);
-      }
-    }
-    else if (nPts-q == 4) {
-      MQuadrangleN incpl2(vq[0], vq[1], vq[2], vq[3], veq, 4);
-      int offsets[9] = {0, 1, 2, 3, 5, 8, 10, 6, 13};
-      double quad_v [9][2] = {
-        { -0.5, -0.5},
-        {  0.5, -0.5},
-        {  0.5,  0.5},
-        { -0.5,  0.5},
-        {  0.0, -0.5},
-        {  0.5,  0.0},
-        {  0.0,  0.5},
-        { -0.5,  0.0},
-        {  0.0,  0.0}
-      };
-      SPoint3 pointz;
-      for (int k = 0; k<9; k++) {
-        incpl2.pnt(quad_v[k][0], quad_v[k][1], 0, pointz);
-        MVertex *v = new MVertex(pointz.x(), pointz.y(), pointz.z(), gr);
-        newHOVert.push_back(v);
-        std::vector<MVertex*>::iterator cursor = vr.begin();
-        cursor += offsets[k];
-        vr.insert(cursor, v);
-      }
-    }
   }
 }
 
@@ -1540,7 +1094,7 @@ static MPyramid *setHighOrder(MPyramid *p, GRegion *gr,
 
 static void setHighOrder(GRegion *gr, std::vector<MVertex*> &newHOVert,
                          edgeContainer &edgeVertices, faceContainer &faceVertices,
-                         bool linear, bool incomplete, int nPts = 1)
+                         bool incomplete, int nPts = 1)
 {
   std::vector<MTetrahedron*> tetrahedra2;
   for(unsigned int i = 0; i < gr->tetrahedra.size(); i++){
@@ -1942,7 +1496,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete, bool onlyVisi
     Msg::Info("Meshing volume %d order %d", (*it)->tag(), order);
     Msg::ProgressMeter(++counter, nTot, false, msg);
     if (onlyVisible && !(*it)->getVisibility())continue;
-    setHighOrder(*it, newHOVert[*it], edgeVertices, faceVertices, linear, incomplete, nPts);
+    setHighOrder(*it, newHOVert[*it], edgeVertices, faceVertices, incomplete, nPts);
     if ((*it)->getColumns() != 0) (*it)->getColumns()->clearElementData();
   }
 
