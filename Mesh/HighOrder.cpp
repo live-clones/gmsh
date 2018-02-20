@@ -621,8 +621,7 @@ static int retrieveFaceBoundaryVertices(int k, int type, int nPts,
 
 // Get new face (excluding edge) vertices for a face of a 3D element
 static void getFaceVertices(GRegion *gr, MElement *ele,
-                            const std::vector<MVertex*> &ve,
-                            std::vector<MVertex*> &vf,
+                            std::vector<MVertex*> &newVertices,
                             std::vector<MVertex*> &newHOVert,
                             faceContainer &faceVertices, int nPts = 1)
 {
@@ -650,32 +649,33 @@ static void getFaceVertices(GRegion *gr, MElement *ele,
       vFace.assign(vtcs.begin(), vtcs.end());
     }
     else { // Vertices do not exist, create them by interpolation
-      std::vector<MVertex*> vertices;
+      std::vector<MVertex*> faceBoundaryVertices;
       int type = retrieveFaceBoundaryVertices(i, ele->getType(), nPts,
-                                              vCorner, ve, vertices);
+                                              vCorner, newVertices,
+                                              faceBoundaryVertices);
       fullMatrix<double> *coefficients = getInteriorNodePlacement(type, nPts+1);
-      interpVerticesInExistingFace(gr, *coefficients, vertices, vFace);
+      interpVerticesInExistingFace(gr, *coefficients, faceBoundaryVertices, vFace);
       newHOVert.insert(newHOVert.end(), vFace.begin(), vFace.end());
       faceVertices[face].insert(faceVertices[face].end(), vFace.begin(), vFace.end());
     }
-    vf.insert(vf.end(), vFace.begin(), vFace.end());
+    newVertices.insert(newVertices.end(), vFace.begin(), vFace.end());
   }
 }
 
 // Get new interior vertices for a 3D element
 static void getVolumeVertices(GRegion *gr, MElement *ele,
-                              const std::vector<MVertex*> &vb,
-                              std::vector<MVertex*> &vr,
+                              std::vector<MVertex*> &newVertices,
                               std::vector<MVertex*> &newHOVert,
                               int nPts = 1)
 {
-  std::vector<MVertex *> vertices;
+  std::vector<MVertex *> boundaryVertices;
   {
     int nCorner = ele->getNumPrimaryVertices();
-    vertices.reserve(nCorner + vb.size());
-    ele->getVertices(vertices);
-    vertices.resize(nCorner);
-    vertices.insert(vertices.end(), vb.begin(), vb.end());
+    boundaryVertices.reserve(nCorner + newVertices.size());
+    ele->getVertices(boundaryVertices);
+    boundaryVertices.resize(nCorner);
+    boundaryVertices.insert(boundaryVertices.end(),
+                            newVertices.begin(), newVertices.end());
   }
   int type = ele->getType();
   fullMatrix<double> &coefficients = *getInteriorNodePlacement(type, nPts + 1);
@@ -683,14 +683,14 @@ static void getVolumeVertices(GRegion *gr, MElement *ele,
   for (int k = 0; k < coefficients.size1(); k++) {
     double x(0), y(0), z(0);
     for (int j = 0; j < coefficients.size2(); j++) {
-      MVertex *v = vertices[j];
+      MVertex *v = boundaryVertices[j];
       x += coefficients(k, j) * v->x();
       y += coefficients(k, j) * v->y();
       z += coefficients(k, j) * v->z();
     }
     MVertex *v = new MVertex(x, y, z, gr);
     newHOVert.push_back(v);
-    vr.push_back(v);
+    newVertices.push_back(v);
   }
 }
 
@@ -804,22 +804,20 @@ static MTetrahedron *setHighOrder(MTetrahedron *t, GRegion *gr,
                                   faceContainer &faceVertices,
                                   bool incomplete, int nPts)
 {
-  std::vector<MVertex*> ve, vf, vr;
-  getEdgeVertices(gr, t, ve, newHOVert, edgeVertices, nPts);
+  std::vector<MVertex*> v;
+  getEdgeVertices(gr, t, v, newHOVert, edgeVertices, nPts);
   if(nPts == 1){
     return new MTetrahedron10(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                              t->getVertex(3), ve[0], ve[1], ve[2], ve[3], ve[4], ve[5],
+                              t->getVertex(3), v[0], v[1], v[2], v[3], v[4], v[5],
                               0, t->getPartition());
   }
   else{
     if(!incomplete){
-      getFaceVertices(gr, t, ve, vf, newHOVert, faceVertices, nPts);
-      ve.insert(ve.end(), vf.begin(), vf.end());
-      getVolumeVertices(gr, t, ve, vr, newHOVert, nPts);
-      ve.insert(ve.end(), vr.begin(), vr.end());
+      getFaceVertices(gr, t, v, newHOVert, faceVertices, nPts);
+      getVolumeVertices(gr, t, v, newHOVert, nPts);
     }
     return new MTetrahedronN(t->getVertex(0), t->getVertex(1),
-                             t->getVertex(2), t->getVertex(3), ve, nPts + 1,
+                             t->getVertex(2), t->getVertex(3), v, nPts + 1,
                              0, t->getPartition());
   }
 }
@@ -830,40 +828,38 @@ static MHexahedron *setHighOrder(MHexahedron *h, GRegion *gr,
                                  faceContainer &faceVertices,
                                  bool incomplete, int nPts)
 {
-  std::vector<MVertex*> ve, vf, vr;
-  getEdgeVertices(gr, h, ve, newHOVert, edgeVertices, nPts);
+  std::vector<MVertex*> v;
+  getEdgeVertices(gr, h, v, newHOVert, edgeVertices, nPts);
   if(incomplete){
     if(nPts == 1){
       return new MHexahedron20(h->getVertex(0), h->getVertex(1), h->getVertex(2),
                                h->getVertex(3), h->getVertex(4), h->getVertex(5),
-                               h->getVertex(6), h->getVertex(7), ve[0], ve[1], ve[2],
-                               ve[3], ve[4], ve[5], ve[6], ve[7], ve[8], ve[9], ve[10],
-                               ve[11], 0, h->getPartition());
+                               h->getVertex(6), h->getVertex(7), v[0], v[1], v[2],
+                               v[3], v[4], v[5], v[6], v[7], v[8], v[9], v[10],
+                               v[11], 0, h->getPartition());
     }
     else{
       return new MHexahedronN(h->getVertex(0), h->getVertex(1), h->getVertex(2),
                               h->getVertex(3), h->getVertex(4), h->getVertex(5),
-                              h->getVertex(6), h->getVertex(7), ve, nPts + 1, 0,
+                              h->getVertex(6), h->getVertex(7), v, nPts + 1, 0,
                               h->getPartition());
     }
   }
   else{
-    getFaceVertices(gr, h, ve, vf, newHOVert, faceVertices, nPts);
-    ve.insert(ve.end(), vf.begin(), vf.end());
-    getVolumeVertices(gr, h, ve, vr, newHOVert, nPts);
-    ve.insert(ve.end(), vr.begin(), vr.end());
+    getFaceVertices(gr, h, v, newHOVert, faceVertices, nPts);
+    getVolumeVertices(gr, h, v, newHOVert, nPts);
     if(nPts == 1) {
       return new MHexahedron27(h->getVertex(0), h->getVertex(1), h->getVertex(2),
                                h->getVertex(3), h->getVertex(4), h->getVertex(5),
-                               h->getVertex(6), h->getVertex(7), ve[0], ve[1], ve[2],
-                               ve[3], ve[4], ve[5], ve[6], ve[7], ve[8], ve[9], ve[10],
-                               ve[11], vf[0], vf[1], vf[2], vf[3], vf[4], vf[5], vr[0],
+                               h->getVertex(6), h->getVertex(7), v[0], v[1], v[2],
+                               v[3], v[4], v[5], v[6], v[7], v[8], v[9], v[10],
+                               v[11], v[12], v[13], v[14], v[15], v[16], v[17], v[18],
                                0, h->getPartition());
     }
     else {
       return new MHexahedronN(h->getVertex(0), h->getVertex(1), h->getVertex(2),
                               h->getVertex(3), h->getVertex(4), h->getVertex(5),
-                              h->getVertex(6), h->getVertex(7), ve, nPts + 1, 0,
+                              h->getVertex(6), h->getVertex(7), v, nPts + 1, 0,
                               h->getPartition());
     }
   }
@@ -875,37 +871,35 @@ static MPrism *setHighOrder(MPrism *p, GRegion *gr,
                             faceContainer &faceVertices,
                             bool incomplete, int nPts)
 {
-  std::vector<MVertex*> ve, vf, vr;
-  getEdgeVertices(gr, p, ve, newHOVert, edgeVertices, nPts);
+  std::vector<MVertex*> v;
+  getEdgeVertices(gr, p, v, newHOVert, edgeVertices, nPts);
   if(incomplete){
     if(nPts == 1){
       return new MPrism15(p->getVertex(0), p->getVertex(1), p->getVertex(2),
                           p->getVertex(3), p->getVertex(4), p->getVertex(5),
-                          ve[0], ve[1], ve[2], ve[3], ve[4], ve[5], ve[6], ve[7], ve[8],
+                          v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8],
                           0, p->getPartition());
     }
     else{
       return new MPrismN(p->getVertex(0), p->getVertex(1), p->getVertex(2),
                          p->getVertex(3), p->getVertex(4), p->getVertex(5),
-                         ve, nPts + 1, 0, p->getPartition());
+                         v, nPts + 1, 0, p->getPartition());
     }
   }
   else {
-    getFaceVertices(gr, p, ve, vf, newHOVert, faceVertices, nPts);
+    getFaceVertices(gr, p, v, newHOVert, faceVertices, nPts);
     if (nPts == 1) {
       return new MPrism18(p->getVertex(0), p->getVertex(1), p->getVertex(2),
                           p->getVertex(3), p->getVertex(4), p->getVertex(5),
-                          ve[0], ve[1], ve[2], ve[3], ve[4], ve[5], ve[6], ve[7], ve[8],
-                          vf[0], vf[1], vf[2],
+                          v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], v[8],
+                          v[9], v[10], v[11],
                           0, p->getPartition());
     }
     else {
-      ve.insert(ve.end(), vf.begin(), vf.end());
-      getVolumeVertices(gr, p, ve, vr, newHOVert, nPts);
-      ve.insert(ve.end(), vr.begin(), vr.end());
+      getVolumeVertices(gr, p, v, newHOVert, nPts);
       return new MPrismN(p->getVertex(0), p->getVertex(1), p->getVertex(2),
                          p->getVertex(3), p->getVertex(4), p->getVertex(5),
-                         ve, nPts + 1, 0, p->getPartition());
+                         v, nPts + 1, 0, p->getPartition());
     }
   }
 }
@@ -916,18 +910,16 @@ static MPyramid *setHighOrder(MPyramid *p, GRegion *gr,
                               faceContainer &faceVertices,
                                bool incomplete, int nPts)
 {
-  std::vector<MVertex*> ve, vf, vr;
-  getEdgeVertices(gr, p, ve, newHOVert, edgeVertices, nPts);
+  std::vector<MVertex*> v;
+  getEdgeVertices(gr, p, v, newHOVert, edgeVertices, nPts);
   if(!incomplete) {
-    getFaceVertices(gr, p, ve, vf, newHOVert, faceVertices, nPts);
-    ve.insert(ve.end(), vf.begin(), vf.end());
+    getFaceVertices(gr, p, v, newHOVert, faceVertices, nPts);
     if (nPts > 1) {
-      getVolumeVertices(gr, p, ve, vr, newHOVert, nPts);
-      ve.insert(ve.end(), vr.begin(), vr.end());
+      getVolumeVertices(gr, p, v, newHOVert, nPts);
     }
   }
   return new MPyramidN(p->getVertex(0), p->getVertex(1), p->getVertex(2),
-                       p->getVertex(3), p->getVertex(4), ve, nPts + 1,
+                       p->getVertex(3), p->getVertex(4), v, nPts + 1,
                        0, p->getPartition());
 }
 
@@ -1257,11 +1249,17 @@ void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
 {
   meshOrder = -1;
   CAD = true;
-  complete = 1;
+  complete = true;
+  // The following code does not allow to determine accurately if elements
+  // are complete or not. To be more precise, we should try to find a hexahedron
+  // if order = 2+, a prism or a pyramid if order = 3+ or a tet if order = 4+
+  // and so on...
+  // But it is more likely that we want complete elements so always
+  // setting true to 'complete' variable is acceptable.
   for (GModel::riter itr = gm->firstRegion(); itr != gm->lastRegion(); ++itr) {
     if ((*itr)->getNumMeshElements()){
       meshOrder = (*itr)->getMeshElement(0)->getPolynomialOrder();
-      complete = (meshOrder <= 2) ? 1 :  (*itr)->getMeshElement(0)->getNumVolumeVertices();
+//      complete = (meshOrder <= 2) ? 1 : (*itr)->getMeshElement(0)->getNumVolumeVertices();
       break;
     }
   }
@@ -1269,7 +1267,7 @@ void getMeshInfoForHighOrder(GModel *gm, int &meshOrder, bool &complete,
     if ((*itf)->getNumMeshElements()){
       if (meshOrder == -1) {
         meshOrder = (*itf)->getMeshElement(0)->getPolynomialOrder();
-        complete = (meshOrder <= 2) ? 1 :  (*itf)->getMeshElement(0)->getNumFaceVertices();
+//        complete = (meshOrder <= 2) ? 1 : (*itf)->getMeshElement(0)->getNumFaceVertices();
         if ((*itf)->geomType() == GEntity::DiscreteSurface)CAD = false;
         break;
       }
