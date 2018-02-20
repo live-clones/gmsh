@@ -478,12 +478,15 @@ void discreteFace::checkAndFixOrientation()
 
 void discreteFace::mesh(bool verbose)
 {
+#ifdef HAVE_HXT
   if(!CTX::instance()->meshDiscrete) return;
   
   std::vector<MTriangle*> _t;
   std::vector<MVertex*> _v;
   std::list<GEdge*> tmp = l_edges;
+  int _tagtemp = tag();
   for (size_t i = 0; i < _parametrizations.size () ; i++){
+    setTag(i);
     l_edges.clear();
     l_edges.insert(l_edges.begin(), _parametrizations[i].bnd.begin(),
 		   _parametrizations[i].bnd.end());
@@ -497,13 +500,18 @@ void discreteFace::mesh(bool verbose)
     _t.insert(_t.begin(), triangles.begin(), triangles.end());
     _v.insert(_v.begin(), mesh_vertices.begin(), mesh_vertices.end());
   }
+  setTag(_tagtemp);
   triangles = _t;
   mesh_vertices = _v;
   l_edges = tmp;
   embedded_edges.clear() ;
   meshStatistics.status = GFace::DONE;
+#else
+  Msg::Error("Cannot mesh a discrete face without HXT");
+#endif
 }
 
+#ifdef HAVE_HXT
 HXTStatus gmsh2hxt (GFace *gf, HXTMesh **pm,
 		    std::map<MVertex*,int> &v2c,
 		    std::vector<MVertex*> &c2v){
@@ -548,6 +556,7 @@ HXTStatus gmsh2hxt (GFace *gf, HXTMesh **pm,
   *pm = m;
   return HXT_STATUS_OK;
 }
+#endif
 
 // create a list of internal edges
 
@@ -784,7 +793,6 @@ bool discreteFace::compute_topology_of_partition (int nbColors,
 
   int TAG = gm->getMaxElementNumber()+1;
 
-
   /// Assign parameters for each vertex of each partition
   std::vector<int> cpt (_parametrizations.size());
   std::vector<MTriangle*> &ts = triangles;
@@ -954,7 +962,7 @@ bool discreteFace::compute_topology_of_partition (int nbColors,
 	    vs[i]->setEntity(gstart);
 	    gstart->mesh_vertices.push_back(vs[i]);
 	    splitDiscreteEdge(de,vs[i],gstart,TAG);
-	    Msg::Info("Splitting discrete Edge %d",de->tag());
+	    Msg::Info("Splitting Existing discrete Edge %d",de->tag());
 	  }
 	}
       }
@@ -966,7 +974,9 @@ bool discreteFace::compute_topology_of_partition (int nbColors,
     std::map<std::pair<int,int> , std::vector<MEdge> >::iterator it =  edges.begin();
     for (; it != edges.end() ; ++it) {
       std::vector< std::vector<MVertex *> >vs;
+
       SortEdgeConsecutive (it->second, vs);
+
       for (size_t k = 0; k< vs.size(); k++){
 	std::vector<MVertex*> &v = vs[k];
 	MVertex *ends[2] = {v[0],v[v.size()-1]};
@@ -995,7 +1005,7 @@ bool discreteFace::compute_topology_of_partition (int nbColors,
       }
     }
   }
-
+  
   // EMBEDDED STUFF
 #if 0
   for (size_t i=0;i<_parametrizations.size();i++){
@@ -1090,8 +1100,10 @@ HXTStatus discreteFace::reparametrize_through_hxt (){
   
   Msg::Info("Face %d split int %d parts",tag(),_parametrizations.size());
   //  Msg::Info("Face %d has %d internal edges",tag(),internals[0].size());
-
+  
+  
   for (size_t i=0;i<_parametrizations.size();i++){
+    //    printf("FACE %d : ",i);
     Less_Edge le;
     std::sort(boundaries[i].begin(),boundaries[i].end(),le);
     std::set<discreteEdge*> des;
@@ -1101,10 +1113,14 @@ HXTStatus discreteFace::reparametrize_through_hxt (){
 	if (std::binary_search (boundaries[i].begin(),boundaries[i].end(),e,le)){
 	  discreteEdge *de = static_cast<discreteEdge*>(*it);
 	  if (!de)Msg::Error("Reparametrization only works for discrete geometries");
-	  des.insert(de);
+	  if (des.find(de) == des.end()){
+	    des.insert(de);
+	    //	    printf(" (%d %d) ",de->getBeginVertex()->tag(),de->getEndVertex()->tag());
+	  }
 	}
       }
     }
+    //    printf("\n");
     _parametrizations[i].bnd.insert (_parametrizations[i].bnd.begin(),
 				     des.begin(), des.end());
   }
