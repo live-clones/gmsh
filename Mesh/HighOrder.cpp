@@ -681,8 +681,7 @@ static void interpVerticesInExistingFace(GEntity *ge,
 
 // Get new interior vertices for a 2D element
 static void getFaceVertices(GFace *gf, MElement *ele,
-                            const std::vector<MVertex *> &ve,
-                            std::vector<MVertex *> &vf,
+                            std::vector<MVertex *> &newVertices,
                             std::vector<MVertex *> &newHOVert,
                             faceContainer &faceVertices,
                             bool linear, int nPts = 1)
@@ -692,27 +691,28 @@ static void getFaceVertices(GFace *gf, MElement *ele,
      gf->geomType() == GEntity::CompoundSurface)
     linear = true;
 
-  std::vector<MVertex*> vertices;
+  std::vector<MVertex*> boundaryVertices;
   {
     int nCorner = ele->getNumPrimaryVertices();
-    vertices.reserve(nCorner + ve.size());
-    ele->getVertices(vertices);
-    vertices.resize(nCorner);
-    vertices.insert(vertices.end(), ve.begin(), ve.end());
+    boundaryVertices.reserve(nCorner + newVertices.size());
+    ele->getVertices(boundaryVertices);
+    boundaryVertices.resize(nCorner);
+    boundaryVertices.insert(boundaryVertices.end(),
+                            newVertices.begin(), newVertices.end());
   }
   int type = ele->getType();
   fullMatrix<double> *coefficients = getInteriorNodePlacement(type, nPts+1);
   std::vector<MVertex*> vFace;
   if (!linear) {// Get vertices on geometry if asked...
-    getFaceVerticesOnGeo(gf, *coefficients, vertices, vFace);
+    getFaceVerticesOnGeo(gf, *coefficients, boundaryVertices, vFace);
   }
   else {// ... otherwise, create from mesh interpolation
-    interpVerticesInExistingFace(gf, *coefficients, vertices, vFace);
+    interpVerticesInExistingFace(gf, *coefficients, boundaryVertices, vFace);
   }
 
   MFace face = ele->getFace(0);
   faceVertices[face].insert(faceVertices[face].end(), vFace.begin(), vFace.end());
-  vf.insert(vf.end(), vFace.begin(), vFace.end());
+  newVertices.insert(newVertices.end(), vFace.begin(), vFace.end());
   newHOVert.insert(newHOVert.end(), vFace.begin(), vFace.end());
 }
 
@@ -882,19 +882,17 @@ static MTriangle *setHighOrder(MTriangle *t, GFace *gf,
                                faceContainer &faceVertices,
                                bool linear, bool incomplete, int nPts)
 {
-  std::vector<MVertex*> ve, vf;
-  getEdgeVertices(gf, t, ve, newHOVert, edgeVertices, linear, nPts);
+  std::vector<MVertex*> v;
+  getEdgeVertices(gf, t, v, newHOVert, edgeVertices, linear, nPts);
   if(nPts == 1){
     return new MTriangle6(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                          ve[0], ve[1], ve[2], 0, t->getPartition());
+                          v[0], v[1], v[2], 0, t->getPartition());
   }
   else{
-    if(!incomplete){
-      getFaceVertices(gf, t, ve, vf, newHOVert, faceVertices, linear, nPts);
-      ve.insert(ve.end(), vf.begin(), vf.end());
-    }
+    if(!incomplete)
+      getFaceVertices(gf, t, v, newHOVert, faceVertices, linear, nPts);
     return new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                          ve, nPts + 1, 0, t->getPartition());
+                          v, nPts + 1, 0, t->getPartition());
   }
 }
 
@@ -904,31 +902,30 @@ static MQuadrangle *setHighOrder(MQuadrangle *q, GFace *gf,
                                  faceContainer &faceVertices,
                                  bool linear, bool incomplete, int nPts)
 {
-  std::vector<MVertex*> ve, vf;
-  getEdgeVertices(gf, q, ve, newHOVert, edgeVertices, linear, nPts);
+  std::vector<MVertex*> v;
+  getEdgeVertices(gf, q, v, newHOVert, edgeVertices, linear, nPts);
   if(incomplete){
     if(nPts == 1){
       return new MQuadrangle8(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-                              q->getVertex(3), ve[0], ve[1], ve[2], ve[3],
+                              q->getVertex(3), v[0], v[1], v[2], v[3],
                               0, q->getPartition());
     }
     else{
       return new MQuadrangleN(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-                              q->getVertex(3), ve, nPts + 1,
+                              q->getVertex(3), v, nPts + 1,
                               0, q->getPartition());
     }
   }
   else {
-    getFaceVertices(gf, q, ve, vf, newHOVert, faceVertices, linear, nPts);
-    ve.insert(ve.end(), vf.begin(), vf.end());
+    getFaceVertices(gf, q, v, newHOVert, faceVertices, linear, nPts);
     if(nPts == 1){
       return new MQuadrangle9(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-                              q->getVertex(3), ve[0], ve[1], ve[2], ve[3], vf[0],
+                              q->getVertex(3), v[0], v[1], v[2], v[3], v[4],
                               0, q->getPartition());
     }
     else{
       return new MQuadrangleN(q->getVertex(0), q->getVertex(1), q->getVertex(2),
-                              q->getVertex(3), ve, nPts + 1,
+                              q->getVertex(3), v, nPts + 1,
                               0, q->getPartition());
     }
   }
@@ -1547,20 +1544,13 @@ void SetHighOrderComplete(GModel *m, bool onlyVisible)
     std::vector<MTriangle*> newT;
     for (unsigned int i = 0; i < (*it)->triangles.size(); i++){
       MTriangle *t = (*it)->triangles[i];
-      std::vector<MVertex*> vf, vt;
-      int nPts = t->getPolynomialOrder() - 1;
-      std::vector<MVertex*> ve;
-      {
-        t->getVertices(ve);
-        ve.resize(3 + t->getNumEdgeVertices());
-        ve.erase(ve.begin(), ve.begin() + 3);
-      }
-      getFaceVertices(*it, t, ve, vf, dumNewHOVert, faceVertices, false, nPts);
+      std::vector<MVertex*> vv;
       for (int j=3;j<t->getNumVertices()-t->getNumFaceVertices();j++)
-        vt.push_back(t->getVertex(j));
-      vt.insert(vt.end(), vf.begin(), vf.end());
+        vv.push_back(t->getVertex(j));
+      int nPts = t->getPolynomialOrder() - 1;
+      getFaceVertices(*it, t, vv, dumNewHOVert, faceVertices, false, nPts);
       newT.push_back(new MTriangleN(t->getVertex(0), t->getVertex(1), t->getVertex(2),
-                                    vt, nPts + 1, 0, t->getPartition()));
+                                    vv, nPts + 1, 0, t->getPartition()));
       delete t;
     }
     (*it)->triangles = newT;
@@ -1568,21 +1558,14 @@ void SetHighOrderComplete(GModel *m, bool onlyVisible)
     std::vector<MQuadrangle*> newQ;
     for (unsigned int i = 0; i < (*it)->quadrangles.size(); i++){
       MQuadrangle *t = (*it)->quadrangles[i];
-      std::vector<MVertex*> vf, vt;
-      int nPts = t->getPolynomialOrder() - 1;
-      std::vector<MVertex*> ve;
-      {
-        t->getVertices(ve);
-        ve.resize(4 + t->getNumEdgeVertices());
-        ve.erase(ve.begin(), ve.begin() + 4);
-      }
-      getFaceVertices(*it, t, ve, vf, dumNewHOVert, faceVertices, false, nPts);
+      std::vector<MVertex*> vv;
       for (int j=4;j<t->getNumVertices()-t->getNumFaceVertices();j++)
-        vt.push_back(t->getVertex(j));
-      vt.insert(vt.end(), vf.begin(), vf.end());
+        vv.push_back(t->getVertex(j));
+      int nPts = t->getPolynomialOrder() - 1;
+      getFaceVertices(*it, t, vv, dumNewHOVert, faceVertices, false, nPts);
       newQ.push_back(new MQuadrangleN(t->getVertex(0), t->getVertex(1),
                                       t->getVertex(2), t->getVertex(3),
-                                      vt, nPts + 1, 0, t->getPartition()));
+                                      vv, nPts + 1, 0, t->getPartition()));
       delete t;
     }
     (*it)->quadrangles = newQ;
@@ -1623,15 +1606,18 @@ void SetHighOrderIncomplete(GModel *m, bool onlyVisible)
 
     std::vector<MQuadrangle*> newQ;
     for (unsigned int i = 0; i < (*it)->quadrangles.size(); i++){
-      MQuadrangle *t = (*it)->quadrangles[i];
+      MQuadrangle *q = (*it)->quadrangles[i];
       std::vector<MVertex*> vt;
-      int nPts = t->getPolynomialOrder() - 1;
-      for (int j = 4; j < t->getNumVertices()-t->getNumFaceVertices(); j++)
-        vt.push_back(t->getVertex(j));
-      newQ.push_back(new MQuadrangleN(t->getVertex(0), t->getVertex(1),
-                                      t->getVertex(2), t->getVertex(3),
-                                      vt, nPts + 1, 0, t->getPartition()));
-      delete t;
+      int nPts = q->getPolynomialOrder() - 1;
+      for (int j = 4; j < q->getNumVertices()-q->getNumFaceVertices(); j++)
+        vt.push_back(q->getVertex(j));
+      for (int j = q->getNumVertices()-q->getNumFaceVertices();
+           j < q->getNumVertices(); j++)
+        toDelete.insert(q->getVertex(j));
+      newQ.push_back(new MQuadrangleN(q->getVertex(0), q->getVertex(1),
+                                      q->getVertex(2), q->getVertex(3),
+                                      vt, nPts + 1, 0, q->getPartition()));
+      delete q;
     }
     (*it)->quadrangles = newQ;
 
