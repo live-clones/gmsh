@@ -811,8 +811,7 @@ double _CoeffDataIGE::_computeLowerBound() const
     raiser->computeCoeff(prox[3], prox[4], prox[5], coeffDen2);
 
     fullVector<double> &coeffNumerator = tmp;
-    bezierBasisRaiser *raiserBis;
-    raiserBis = raiser->getRaisedBezierBasis(3)->getRaiser();
+    bezierBasisRaiser *raiserBis = _bfsDet->getRaiser();
     raiserBis->computeCoeff(coeffNum1, _coeffsJacDet, coeffNumerator);
     raiserBis->computeCoeff(coeffDen1, coeffDen2, coeffDenominator);
 
@@ -842,8 +841,7 @@ double _CoeffDataIGE::_computeLowerBound() const
     raiser->computeCoeff(prox[3], prox[4], prox[5], coeffDen2);
 
     fullVector<double> &coeffNumerator = tmp;
-    bezierBasisRaiser *raiserBis;
-    raiserBis = raiser->getRaisedBezierBasis(3)->getRaiser();
+    bezierBasisRaiser *raiserBis = _bfsDet->getRaiser();
     raiserBis->computeCoeff(coeffNum1, _coeffsJacDet, coeffNumerator);
     raiserBis->computeCoeff(coeffDen1, coeffDen2, coeffDenominator);
 
