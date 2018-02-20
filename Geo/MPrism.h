@@ -441,7 +441,7 @@ class MPrismN : public MPrism {
     if (getIsAssimilatedSerendipity())
       return 0;
     else
-      {int n = _order-1; return n * (n * (n+1) / 2);}
+      {int n = _order-1; return n * ((n-1) * n / 2);}
   }
   virtual int getNumEdgesRep(bool curved);
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
