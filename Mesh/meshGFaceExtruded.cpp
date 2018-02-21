@@ -93,7 +93,9 @@ static void extrudeMesh(GEdge *from, GFace *to, MVertexRTree &pos,
           double x = v->x(), y = v->y(), z = v->z();
           ep->Extrude(j, k + 1, x, y, z);
           if(j != ep->mesh.NbLayer - 1 || k != ep->mesh.NbElmLayer[j] - 1){
-            MVertex *newv = new MVertex(x, y, z, to);
+            SPoint3 xyz(x, y, z);
+            SPoint2 uv = to->parFromPoint(xyz);
+            MVertex *newv = new MFaceVertex(x, y, z, to, uv[0], uv[1]);
             to->mesh_vertices.push_back(newv);
             pos.insert(newv);
 	    extruded_vertices.push_back(newv);
@@ -165,7 +167,9 @@ static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
     double x = v->x(), y = v->y(), z = v->z();
     ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
                 x, y, z);
-    MVertex *newv = new MVertex(x, y, z, to);
+    SPoint3 xyz(x, y, z);
+    SPoint2 uv = to->parFromPoint(xyz);
+    MVertex *newv = new MFaceVertex(x, y, z, to, uv[0], uv[1]);
     to->mesh_vertices.push_back(newv);
     pos.insert(newv);
   }
