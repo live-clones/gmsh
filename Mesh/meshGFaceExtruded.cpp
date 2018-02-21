@@ -93,9 +93,16 @@ static void extrudeMesh(GEdge *from, GFace *to, MVertexRTree &pos,
           double x = v->x(), y = v->y(), z = v->z();
           ep->Extrude(j, k + 1, x, y, z);
           if(j != ep->mesh.NbLayer - 1 || k != ep->mesh.NbElmLayer[j] - 1){
-            SPoint3 xyz(x, y, z);
-            SPoint2 uv = to->parFromPoint(xyz);
-            MVertex *newv = new MFaceVertex(x, y, z, to, uv[0], uv[1]);
+            MVertex *newv = 0;
+            if(to->geomType() != GEntity::DiscreteSurface &&
+               to->geomType() != GEntity::BoundaryLayerSurface){
+              SPoint3 xyz(x, y, z);
+              SPoint2 uv = to->parFromPoint(xyz);
+              newv = new MFaceVertex(x, y, z, to, uv[0], uv[1]);
+            }
+            else{
+              newv = new MVertex(x, y, z, to);
+            }
             to->mesh_vertices.push_back(newv);
             pos.insert(newv);
 	    extruded_vertices.push_back(newv);
@@ -167,9 +174,16 @@ static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
     double x = v->x(), y = v->y(), z = v->z();
     ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
                 x, y, z);
-    SPoint3 xyz(x, y, z);
-    SPoint2 uv = to->parFromPoint(xyz);
-    MVertex *newv = new MFaceVertex(x, y, z, to, uv[0], uv[1]);
+    MVertex *newv = 0;
+    if(to->geomType() != GEntity::DiscreteSurface &&
+       to->geomType() != GEntity::BoundaryLayerSurface){
+      SPoint3 xyz(x, y, z);
+      SPoint2 uv = to->parFromPoint(xyz);
+      newv = new MFaceVertex(x, y, z, to, uv[0], uv[1]);
+    }
+    else{
+      newv = new MVertex(x, y, z, to);
+    }
     to->mesh_vertices.push_back(newv);
     pos.insert(newv);
   }
