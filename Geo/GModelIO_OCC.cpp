@@ -2246,8 +2246,14 @@ bool OCC_Internals::fillet(const std::vector<int> &regionTags,
       return false;
     }
     TopoDS_Shape shape = _find(3, regionTags[i]);
-    b.Add(c, shape);
     if(removeRegion) unbind(shape, 3, regionTags[i], true);
+    if(CTX::instance()->geom.occAutoFix){
+      // make sure the volume is finite
+      ShapeFix_Solid fix(TopoDS::Solid(shape));
+      fix.Perform();
+      shape = fix.Solid();
+    }
+    b.Add(c, shape);
   }
   TopoDS_Shape result;
   try{
