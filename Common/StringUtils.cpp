@@ -1,9 +1,10 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <stdio.h>
+#include <stdlib.h>
 #if defined(__CYGWIN__)
 #include <sys/cygwin.h>
 #endif
@@ -150,4 +151,30 @@ void ConvertToHTML(std::string &str)
   ReplaceSubStringInPlace(">", "&gt;", str);
   ReplaceSubStringInPlace("\n\n", "<p>", str);
   ReplaceSubStringInPlace("\n", "<br>", str);
+}
+
+bool SplitOptionName(const std::string &fullName, std::string &category,
+                     std::string &name, int &index)
+{
+  std::string::size_type d = fullName.find_first_of('.');
+  if(d == std::string::npos){
+    name = fullName;
+    return false;
+  }
+  category = fullName.substr(0, d);
+  std::string::size_type b1 = fullName.find_first_of('[');
+  std::string::size_type b2 = fullName.find_last_of(']');
+  if(b1 != std::string::npos && b2 != std::string::npos){
+    std::string id = fullName.substr(b1 + 1, b2 - b1 - 1);
+    index = atoi(id.c_str());
+    category = fullName.substr(0, b1);
+    name = fullName.substr(d + 1, b1 - d);
+  }
+  else{
+    index = 0;
+    name = fullName.substr(d + 1);
+  }
+  Msg::Debug("Decoded option name '%s' . '%s' (index %d)", category.c_str(),
+             name.c_str(), index);
+  return true;
 }

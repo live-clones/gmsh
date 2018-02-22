@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -12,11 +12,11 @@
 #include "meshGRegion.h"
 #include <fstream>
 #include "Levy3D.h"
-#if defined(HAVE_VORO3D)
+#if defined(HAVE_VOROPP)
 #include "voro++.hh"
 #endif
 
-#if defined(HAVE_VORO3D)
+#if defined(HAVE_VOROPP)
 using namespace voro;
 #endif
 
@@ -80,7 +80,7 @@ void clip::execute(GRegion* gr){
 
 void clip::execute(std::vector<SPoint3>& vertices,std::vector<VoronoiElement>& clipped)
 {
-#if defined(HAVE_VORO3D)
+#if defined(HAVE_VOROPP)
   unsigned int i;
   unsigned int j;
   int start;

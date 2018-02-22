@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -682,7 +682,8 @@ static bool _tryToCollapseThatVertex (GFace *gf,
     }
   }
 
-  //  printf("%d %g %g %g %g\n", count, surface_old, surface_new, worst_quality_old , worst_quality_new);
+  // printf("%d %g %g %g %g\n", count, surface_old, surface_new,
+  //        worst_quality_old , worst_quality_new);
 
   if (worst_quality_new >  worst_quality_old ) {
     v1->x() = pp.x();v1->y() = pp.y();v1->z() = pp.z();

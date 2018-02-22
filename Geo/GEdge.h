@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -35,9 +35,6 @@ class GEdge : public GEntity {
   // be created in const member functions
   mutable std::map<MVertex*, SVector3, std::less<MVertex*> > _normals;
   std::list<GFace *> l_faces;
-  // for specific solid modelers that need to re-do the internal curve
-  // if a topological change ending points is done (glueing)
-  virtual void replaceEndingPointsInternals(GVertex *, GVertex *) {}
  public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
   virtual ~GEdge();
@@ -46,10 +43,15 @@ class GEdge : public GEntity {
   virtual void deleteMesh(bool onlyDeleteElements = false);
 
   // get the start/end vertices of the edge
-  void setBeginVertex(GVertex *gv) { v0=gv; }
-  void setEndVertex(GVertex *gv)  { v1=gv; }
+  void setBeginVertex(GVertex *gv) { v0 = gv; }
+  void setEndVertex(GVertex *gv)  { v1 = gv; }
   virtual GVertex *getBeginVertex() const { return v0; }
   virtual GVertex *getEndVertex() const { return v1; }
+  void setVertex(GVertex* f, const int orientation)
+  {
+    if(orientation > 0) v0 = f;
+    else if(orientation < 0) v1 = f;
+  }
 
   // same or opposite direction to the master
   int masterOrientation;
@@ -68,6 +70,9 @@ class GEdge : public GEntity {
 
   // get the dimension of the edge (1)
   virtual int dim() const { return 1; }
+
+  // returns the parent entity for partitioned entities
+  virtual GEdge* getParentEntity() { return 0; }
 
   // set the visibility flag
   virtual void setVisibility(char val, bool recursive=false);
@@ -155,7 +160,7 @@ class GEdge : public GEntity {
   int getNumElementTypes() const { return 1; }
 
   // get total/by-type number of elements in the mesh
-  unsigned int getNumMeshElements();
+  unsigned int getNumMeshElements() const;
   unsigned int getNumMeshParentElements();
   void getNumMeshElements(unsigned *const c) const;
 
@@ -163,7 +168,7 @@ class GEdge : public GEntity {
   MElement *const *getStartElementType(int type) const;
 
   // get the element at the given index
-  MElement *getMeshElement(unsigned int index);
+  MElement *getMeshElement(unsigned int index) const;
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
@@ -189,9 +194,6 @@ class GEdge : public GEntity {
   virtual bool XYZToU(const double X, const double Y, const double Z,
                       double &U, const double relax=1) const;
 
-  // gluing
-  void replaceEndingPoints(GVertex *, GVertex *);
-
   // relocate mesh vertices using parametric coordinates
   void relocateMeshVertices();
 
@@ -214,7 +216,9 @@ class GEdge : public GEntity {
 
   std::vector<MLine*> lines;
 
-  virtual void addLine(MLine *line){ lines.push_back(line); }
+  void addLine(MLine *line){ lines.push_back(line); }
+  void addElement(int type, MElement *e);
+  void removeElement(int type, MElement *e);
 
   virtual void discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts);
   SPoint3 closestPoint (SPoint3 &p, double tolerance);

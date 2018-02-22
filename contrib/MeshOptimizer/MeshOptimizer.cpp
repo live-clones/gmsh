@@ -553,9 +553,10 @@ void optimizeOneByOne(const vertElVecMap &vertex2elements,
   const int initNumBadElts = badElts.size();
   if (par.nCurses)
     displayResultTable(nbPatchSuccess, initNumBadElts);
-  if (par.verbose > 0) Msg::Info("%d bad elements, starting to iterate...", initNumBadElts);
+  if (par.verbose > 0)
+    Msg::Info("%d bad elements, starting to iterate...", initNumBadElts);
 
-  elElSetMap element2elements;                                                                // Element to element connectivity, built progressively
+  elElSetMap element2elements; // Element to element connectivity, built progressively
 
   // Loop over bad elements
   for (int iBadEl=0; iBadEl<initNumBadElts; iBadEl++) {
@@ -645,12 +646,13 @@ void optimizeOneByOne(const vertElVecMap &vertex2elements,
           distanceFactor *= par.patchDef->distanceAdaptFact;
           maxLayers *= par.patchDef->maxLayersAdaptFact;
           if (par.verbose > 1)
-            Msg::Info("Patch %i failed (adapt #%i), adapting with increased size", iBadEl, iAdapt);
+            Msg::Info("Patch %i failed (adapt #%i), adapting with increased size",
+                      iBadEl, iAdapt);
         }
       }
 
 
-    }                                                                       // End of adaptation loop
+    } // End of adaptation loop
 
     nbPatchSuccess[success+1]++;
     if (par.nCurses){
@@ -714,7 +716,8 @@ void meshOptimizer(std::vector<GEntity*> &entities, MeshOptParameters &par)
     if (entity->dim() != par.dim ||
         (par.onlyVisible && !entity->getVisibility())) continue;
     if (par.nCurses) {
-      mvprintCenter(15, "Computing connectivity and bad elements for entity %3d...", entity->tag());
+      mvprintCenter(15, "Computing connectivity and bad elements for entity %3d...",
+                    entity->tag());
     }
     Msg::Info("Computing connectivity and bad elements for entity %d...",
               entity->tag());
@@ -722,7 +725,7 @@ void meshOptimizer(std::vector<GEntity*> &entities, MeshOptParameters &par)
     if ((par.useGeomForPatches) || (par.useGeomForOpt))
       calcElement2Entity(entity, element2entity);
     if (par.useBoundaries) calcBndInfo(entity, el2BndEl, bndEl2Ent);
-    for (int iEl = 0; iEl < entity->getNumMeshElements(); iEl++) {                               // Detect bad elements
+    for (int iEl = 0; iEl < entity->getNumMeshElements(); iEl++) { // Detect bad elements
       MElement *el = entity->getMeshElement(iEl);
       if (el->getDim() == par.dim) {
         if (par.patchDef->elBadness(el, entity) < 0.) badElts.insert(el);

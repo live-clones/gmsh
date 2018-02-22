@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -31,10 +31,6 @@ class GRegion : public GEntity {
   std::list<GFace *> embedded_faces;
   std::list<GEdge *> embedded_edges;
   std::list<int> l_dirs;
-
-  // replace faces (for gluing) for specific modelers, we have to
-  // re-create internal data ...
-  virtual void replaceFacesInternal (std::list<GFace*> &) {}
   BoundaryLayerColumns _columns;
 
  public:
@@ -46,6 +42,9 @@ class GRegion : public GEntity {
 
   // get the dimension of the region (3)
   virtual int dim() const { return 3; }
+
+  // returns the parent entity for partitioned entities
+  virtual GRegion* getParentEntity() { return 0; }
 
   // set the visibility flag
   virtual void setVisibility(char val, bool recursive=false);
@@ -59,9 +58,16 @@ class GRegion : public GEntity {
   void addEmbeddedFace(GFace *f){ embedded_faces.push_back(f); }
 
   // get/set faces that bound the region
+  int delFace(GFace* face);
   virtual std::list<GFace*> faces() const{ return l_faces; }
   virtual std::list<int> faceOrientations() const{ return l_dirs; }
   inline void set(const std::list<GFace*> f) { l_faces = f; }
+  inline void setOrientations(const std::list<int> f) { l_dirs= f; }
+  void setFace(GFace* f, int orientation)
+  {
+    l_faces.push_back(f);
+    l_dirs.push_back(orientation);
+  }
 
   // vertices that are embedded in the region
   virtual std::list<GVertex*> &embeddedVertices() { return embedded_vertices; }
@@ -86,9 +92,6 @@ class GRegion : public GEntity {
   // check if the region is connected to another region by an edge
   bool edgeConnected(GRegion *r) const;
 
-  // replace edges (gor gluing)
-  void replaceFaces (std::list<GFace*> &);
-
   // compute volume, moment of intertia and center of gravity
   double computeSolidProperties (std::vector<double> cg,
 				 std::vector<double> inertia);
@@ -103,7 +106,7 @@ class GRegion : public GEntity {
   int getNumElementTypes() const { return 6; }
 
   // get total/by-type number of elements in the mesh
-  unsigned int getNumMeshElements();
+  unsigned int getNumMeshElements() const;
   unsigned int getNumMeshParentElements();
   void getNumMeshElements(unsigned *const c) const;
 
@@ -111,7 +114,7 @@ class GRegion : public GEntity {
   MElement *const *getStartElementType(int type) const;
 
   // get the element at the given index
-  MElement *getMeshElement(unsigned int index);
+  MElement *getMeshElement(unsigned int index) const;
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
@@ -147,6 +150,7 @@ class GRegion : public GEntity {
   void addPolyhedron(MPolyhedron *p){ polyhedra.push_back(p); }
   void addTrihedron(MTrihedron *t){ trihedra.push_back(t); }
   void addElement(int type, MElement *e);
+  void removeElement(int type, MElement *e);
 
   // get the boundary layer columns
   BoundaryLayerColumns *getColumns () { return &_columns; }

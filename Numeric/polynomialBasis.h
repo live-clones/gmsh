@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -12,7 +12,6 @@
 #include "fullMatrix.h"
 #include "nodalBasis.h"
 #include <iostream>
-
 
 inline double pow_int(const double &a, const int &n)
 {
@@ -73,8 +72,8 @@ inline double pow_int(const double &a, const double &d)
 class polynomialBasis : public nodalBasis
 {
  public:
-  // for now the only implemented polynomial basis are nodal poly
-  // basis, we use the type of the corresponding gmsh element as type
+  // for now the only implemented polynomial basis are nodal poly basis, we use
+  // the type of the corresponding gmsh element as type
   fullMatrix<double> monomials;
   fullMatrix<double> coefficients;
 
@@ -82,7 +81,7 @@ class polynomialBasis : public nodalBasis
   polynomialBasis(int tag);
   ~polynomialBasis();
 
-  virtual inline int getNumShapeFunctions() const {return coefficients.size1();}
+  virtual inline int getNumShapeFunctions() const { return coefficients.size1(); }
 
   virtual void f(double u, double v, double w, double *sf) const;
   virtual void f(const fullMatrix<double> &coord, fullMatrix<double> &sf) const;
@@ -93,6 +92,5 @@ class polynomialBasis : public nodalBasis
 
   void evaluateMonomials(double u, double v, double w, double p[]) const;
 };
-
 
 #endif

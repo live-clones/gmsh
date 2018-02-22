@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -30,8 +30,8 @@ OCCVertex::OCCVertex(GModel *m, int num, TopoDS_Vertex v, double lc)
 
 OCCVertex::~OCCVertex()
 {
-  if(model()->getOCCInternals())
-    model()->getOCCInternals()->unbind(_v, tag());
+  if(model()->getOCCInternals() && !model()->isBeingDestroyed())
+    model()->getOCCInternals()->unbind(_v, tag()); // potentially slow
 }
 
 void OCCVertex::setPosition(GPoint &p)

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -41,20 +41,34 @@ class GModel {
   std::set<GFace*, GEntityLessThan> _chainFaces;
   std::set<GEdge*, GEntityLessThan> _chainEdges;
   std::set<GVertex*, GEntityLessThan> _chainVertices;
-
   int _readMSH2(const std::string &name);
-  int _writeMSH2(const std::string &name, double version=2.2, bool binary=false,
-                 bool saveAll=false, bool saveParametric=false,
-                 double scalingFactor=1.0, int elementStartNum=0,
-                 int saveSinglePartition=0, bool multipleView=false,
-                 bool renumberVertices=true);
-  int _writePartitionedMSH2(const std::string &baseName, bool binary=false,
-                            bool saveAll=false, bool saveParametric=false,
-                            double scalingFactor=1.0);
-
+  int _writeMSH2(const std::string &name, double version, bool binary,
+                 bool saveAll, bool saveParametric,
+                 double scalingFactor, int elementStartNum,
+                 int saveSinglePartition, bool multipleView,
+                 bool renumberVertices);
+  int _writePartitionedMSH2(const std::string &baseName, bool binary,
+                            bool saveAll, bool saveParametric,
+                            double scalingFactor);
+  int _readMSH3(const std::string &name);
+  int _writeMSH3(const std::string &name, double version, bool binary,
+                 bool saveAll, bool saveParametric,
+                 double scalingFactor, int elementStartNum,
+                 int saveSinglePartition, bool multipleView);
+  int _writePartitionedMSH3(const std::string &baseName, double version,
+                            bool binary, bool saveAll, bool saveParametric,
+                            double scalingFactor);
+  int _readMSH4(const std::string &name);
+  int _writeMSH4(const std::string &name, double version, bool binary,
+                 bool saveAll, bool saveParametric, double scalingFactor);
+  int _writePartitionedMSH4(const std::string &baseName, double version,
+                            bool binary, bool saveAll, bool saveParametric,
+                            double scalingFactor);
   // the maximum vertex and element id number in the mesh
   int _maxVertexNum, _maxElementNum;
   int _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
+  // flag set to true when the model is being destroyed
+  bool _destroying;
  protected:
   // the name of the model
   std::string _name;
@@ -76,6 +90,7 @@ class GModel {
 
   // ghost cell information (stores partitions for each element acting
   // as a ghost cell)
+  // /!\ Use only for compatibility with mesh format msh2 and msh3
   std::multimap<MElement*, short> _ghostCells;
 
   // an octree for fast mesh element lookup
@@ -151,8 +166,7 @@ class GModel {
   std::map<std::pair<int, int>, std::string> physicalNames, elementaryNames;
 
   // the set of all used mesh partition numbers
-  std::set<int> meshPartitions;
-  int partitionSize[2];
+  unsigned int _numPartitions;
 
  public:
   GModel(std::string name="");
@@ -177,6 +191,7 @@ class GModel {
 
   // delete everything in a GModel (optionally keep name and fileName)
   void destroy(bool keepName=false);
+  bool isBeingDestroyed() const { return _destroying; }
 
   // get/set global vertex/element num
   int getMaxVertexNumber(){ return _maxVertexNum; }
@@ -247,6 +262,11 @@ class GModel {
   typedef std::set<GEdge*, GEntityLessThan>::iterator eiter;
   typedef std::set<GVertex*, GEntityLessThan>::iterator viter;
 
+  typedef std::set<GRegion*, GEntityLessThan>::const_iterator const_riter;
+  typedef std::set<GFace*, GEntityLessThan>::const_iterator const_fiter;
+  typedef std::set<GEdge*, GEntityLessThan>::const_iterator const_eiter;
+  typedef std::set<GVertex*, GEntityLessThan>::const_iterator const_viter;
+
   // get an iterator initialized to the first/last entity in this model
   riter firstRegion() { return regions.begin(); }
   fiter firstFace() { return faces.begin(); }
@@ -256,6 +276,20 @@ class GModel {
   fiter lastFace() { return faces.end(); }
   eiter lastEdge() { return edges.end(); }
   viter lastVertex() { return vertices.end(); }
+  const_riter firstRegion() const { return regions.begin(); }
+  const_fiter firstFace() const { return faces.begin(); }
+  const_eiter firstEdge() const { return edges.begin(); }
+  const_viter firstVertex() const { return vertices.begin(); }
+  const_riter lastRegion() const { return regions.end(); }
+  const_fiter lastFace() const { return faces.end(); }
+  const_eiter lastEdge() const { return edges.end(); }
+  const_viter lastVertex() const { return vertices.end(); }
+
+  // get the set of entities
+  std::set<GRegion*, GEntityLessThan> getRegions() const { return regions; };
+  std::set<GFace*, GEntityLessThan> getFaces() const { return faces; };
+  std::set<GEdge*, GEntityLessThan> getEdges() const { return edges; };
+  std::set<GVertex*, GEntityLessThan> getVertices() const { return vertices; };
 
   // find the entity with the given tag
   GRegion *getRegionByTag(int n) const;
@@ -275,6 +309,7 @@ class GModel {
   void remove(GVertex *v);
   void remove(int dim, int tag, bool recursive=false);
   void remove(const std::vector<std::pair<int, int> > &dimTags, bool recursive=false);
+  void remove();
 
   // snap vertices on model edges by using geometry tolerance
   void snapVertices();
@@ -301,10 +336,18 @@ class GModel {
   // return all physical groups (one map per dimension: 0-D to 3-D)
   void getPhysicalGroups(std::map<int, std::vector<GEntity*> > groups[4]) const;
   void getPhysicalGroups(int dim, std::map<int, std::vector<GEntity*> > &groups) const;
+  const std::map<std::pair<int, int>, std::string> &getPhysicalNames() const
+  {
+    return physicalNames;
+  }
+  void setPhysicalNames(const std::map<std::pair<int, int>, std::string> &names)
+  {
+    physicalNames = names;
+  }
 
-  // delete physical groups in the model
-  void deletePhysicalGroups();
-  void deletePhysicalGroup(int dim, int num);
+  // remove physical groups in the model
+  void removePhysicalGroups();
+  void removePhysicalGroup(int dim, int num);
 
   // return the highest number associated with a physical entity of a
   // given dimension (or highest for all dimenions if dim < 0)
@@ -322,9 +365,13 @@ class GModel {
   // get the number of physical names
   int numPhysicalNames(){ return physicalNames.size(); }
 
+  // get iterators to the last physical name of each dimension
+  void getInnerPhysicalNamesIterators(std::vector<piter> &iterators);
+
   // associate a name with a physical entity of dimension "dim" and
   // number "num" (returns a new number id if "num"==0)
   int setPhysicalName(std::string name, int dim, int num=0);
+  piter setPhysicalName(piter pos, std::string name, int dim, int num=0);
 
   // get the name (if any) of a given physical group of dimension
   // "dim" and id number "num"
@@ -366,7 +413,7 @@ class GModel {
   int getMeshStatus(bool countDiscrete=true);
 
   // return the total number of elements in the mesh
-  int getNumMeshElements();
+  int getNumMeshElements(int dim = -1);
   int getNumMeshParentElements();
 
   // get the number of each type of element in the mesh at the largest
@@ -386,7 +433,7 @@ class GModel {
   void setMeshElementIndex(MElement *e, int index);
 
   // return the total number of vertices in the mesh
-  int getNumMeshVertices() const;
+  int getNumMeshVertices(int dim = -1) const;
 
   // access a mesh vertex by tag, using the vertex cache
   MVertex *getMeshVertexByTag(int n);
@@ -418,19 +465,25 @@ class GModel {
   void removeInvisibleElements();
 
   // the list of partitions
-  std::set<int> &getMeshPartitions() { return meshPartitions; }
-  void recomputeMeshPartitions();
+  unsigned int getNumPartitions() const { return _numPartitions; }
+  void setNumPartitions(unsigned int npart){ _numPartitions = npart; }
 
   // delete all the partitions
-  void deleteMeshPartitions();
+  int deleteMeshPartitions();
+  // partition the mesh
+  int partitionMesh(int num);
+  // Import a mesh partitionned by a tag given to the element en create the
+  // topology
+  int convertOldPartitioningToNewOne();
+  // write the partitioned topology file
+  int writePartitionedTopology(std::string &name);
 
-  // store/recall min and max partitions size
-  void setMinPartitionSize(const int pSize) { partitionSize[0] = pSize; }
-  void setMaxPartitionSize(const int pSize) { partitionSize[1] = pSize; }
-  int getMinPartitionSize() const { return partitionSize[0]; }
-  int getMaxPartitionSize() const { return partitionSize[1]; }
-
+  // /!\ Use only for compatibility with mesh format msh2 and msh3
   std::multimap<MElement*, short> &getGhostCells(){ return _ghostCells; }
+  void addGhostCells(MElement* elm, short partition)
+  {
+    _ghostCells.insert(std::pair<MElement*,short>(elm, partition));
+  }
 
   // perform various coherence tests on the mesh
   void checkMeshCoherence(double tolerance);
@@ -475,12 +528,6 @@ class GModel {
 
   // optimize the mesh
   int optimizeMesh(const std::string &how);
-
-  // partition the mesh
-  int partitionMesh(int num);
-
-  // create partition boundaries
-  void createPartitionBoundaries(int createGhostCells, int createAllDims = 0);
 
   // fill the vertex arrays, given the current option and data
   bool fillVertexArrays();
@@ -637,6 +684,11 @@ class GModel {
   int writeVTK(const std::string &name, bool binary=false,
                bool saveAll=false, double scalingFactor=1.0,
                bool bigEndian=false);
+
+  //Matlab format
+  int writeMATLAB(const std::string &name, bool binary=false,
+		  bool saveAll=false, double scalingFactor=1.0);
+
 
   // Tochnog format
   int writeTOCHNOG(const std::string &name,  bool saveGroupsOfNodes=false,

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -58,6 +58,9 @@ class GVertex : public GEntity
   // get the dimension of the vertex (0)
   virtual int dim() const { return 0; }
 
+  // returns the parent entity for partitioned entities
+  virtual GVertex* getParentEntity() { return 0; }
+
   // get the geometric type of the vertex
   virtual GeomType geomType() const { return Point; }
 
@@ -78,11 +81,11 @@ class GVertex : public GEntity
   virtual void writeGEO(FILE *fp, const std::string &meshSizeParameter="");
 
   // get number of elements in the mesh
-  unsigned int getNumMeshElements();
+  unsigned int getNumMeshElements() const;
   void getNumMeshElements(unsigned *const c) const;
 
   // get the element at the given index
-  MElement *getMeshElement(unsigned int index);
+  MElement *getMeshElement(unsigned int index) const;
 
   // return true if this vertex is on a seam of the given face
   bool isOnSeam(const GFace *gf) const;
@@ -93,6 +96,8 @@ class GVertex : public GEntity
   std::vector<MPoint*> points;
 
   void addPoint(MPoint *p){ points.push_back(p); }
+  void addElement(int type, MElement *e);
+  void removeElement(int type, MElement *e);
 };
 
 #endif

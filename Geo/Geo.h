@@ -1,10 +1,14 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #ifndef _GEO_H_
 #define _GEO_H_
+
+// Internal data structures and functions for the built-in CAD kernel. This is
+// legacy code and should never be used directly: use GEO_Internals instead, or
+// the public api.
 
 #include <math.h>
 #include <vector>
@@ -85,7 +89,6 @@ class Curve {
   int degre;
   CircParam Circle;
   gmshSurface *geometry;
-  std::vector<int> compound;
   int ReverseMesh;
   int master;
   std::list<double> affineTransformation;
@@ -121,7 +124,6 @@ class Surface {
   // that this representation should be the only one in gmsh, so parameter
   // "Type" should disappear from the class Surface.
   gmshSurface *geometry;
-  std::vector<int> compound, compoundBoundary[4];
   int ReverseMesh;
   bool degenerate() const;
 };
@@ -144,7 +146,6 @@ class Volume {
   List_T *Surfaces;
   List_T *SurfacesOrientations;
   List_T *SurfacesByTag;
-  std::vector<int> compound;
 };
 
 class PhysicalGroup {

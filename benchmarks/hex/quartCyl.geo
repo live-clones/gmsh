@@ -1,7 +1,6 @@
 Mesh.Algorithm = 9; //8 = delquad or 9= 2D R-tree
 Mesh.Algorithm3D = 9; // 3D R-tree
-Mesh.Recombine3DAll = 1; 
-Mesh.Lloyd = 10;
+Mesh.Recombine3DAll = 1;
 Mesh.Smoothing = 0;
 
 c1 = 0.1;
@@ -43,4 +42,3 @@ Surface(24) = {23};
 
 Surface Loop(25) = {14, 16, 22, 20, 18, 24};
 Volume(26) = {25};
-

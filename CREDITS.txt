@@ -1,7 +1,7 @@
-                 Gmsh is copyright (C) 1997-2017
+                 Gmsh is copyright (C) 1997-2018
 
                        Christophe Geuzaine
-                     <cgeuzaine at ulg.ac.be>
+                     <cgeuzaine at uliege.be>
 
                                and
 
@@ -25,11 +25,39 @@ stero mode), Ashish Negi (Netgen CAD healing), Trevor Strickler
 Benjamin Ruard (Java wrappers), Maxime Graulich (iOS/Android port), Francois
 Henrotte (onelab metamodels), Sebastian Eiser (PGF output), Alexis Salzman
 (compressed IO), Hang Si (TetGen/BR boundary recovery code), Fernando Lorenzo
-(Tochnog support). See comments in the sources for more information. If we
+(Tochnog support), Larry Price (Gambit export), Anthony Royer (new partitioning
+code, MSH4 format). See comments in the sources for more information. If we
 forgot to list your contributions please send us an email!
 
-The TetGen/BR code (Mesh/tetgenBR.{cpp,h}) is copyright (c) 2016 Hang Si, Weierstrass
-Institute for Applied Analysis and Stochatics.
+Thanks to the following folks who have contributed by providing fresh ideas on
+theoretical or programming topics, who have sent patches, requests for changes
+or improvements, or who gave us access to exotic machines for testing Gmsh: Juan
+Abanto, Olivier Adam, Guillaume Alleon, Laurent Champaney, Pascal Dupuis,
+Patrick Dular, Philippe Geuzaine, Johan Gyselinck, Francois Henrotte, Benoit
+Meys, Nicolas Moes, Osamu Nakamura, Chad Schmutzer, Jean-Luc Fl'ejou, Xavier
+Dardenne, Christophe Prud'homme, Sebastien Clerc, Jose Miguel Pasini, Philippe
+Lussou, Jacques Kools, Bayram Yenikaya, Peter Hornby, Krishna Mohan Gundu,
+Christopher Stott, Timmy Schumacher, Carl Osterwisch, Bruno Frackowiak, Philip
+Kelleners, Romuald Conty, Renaud Sizaire, Michel Benhamou, Tom De Vuyst, Kris
+Van den Abeele, Simon Vun, Simon Corbin, Thomas De-Soza, Marcus Drosson, Antoine
+Dechaume, Jose Paulo Moitinho de Almeida, Thomas Pinchard, Corrado Chisari, Axel
+Hackbarth, Peter Wainwright, Jiri Hnidek, Thierry Thomas, Konstantinos Poulios,
+Laurent Van Miegroet, Shahrokh Ghavamian, Geordie McBain, Jose Paulo Moitinho de
+Almeida, Guillaume Demesy, Wendy Merks-Swolfs, Cosmin Stefan Deaconu, Nigel
+Nunn, Serban Georgescu, Julien Troufflard, Michele Mocciola, Matthijs Sypkens
+Smit, Sauli Ruuska.
+
+Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher, Greg Ercolano
+and others for the Fast Light Tool Kit on which Gmsh's GUI is based. See
+http://www.fltk.org for more info on this excellent object-oriented,
+cross-platform toolkit. Special thanks also to EDF for funding the original
+OpenCASCADE and MED integration in 2006-2007.
+
+The TetGen/BR code (Mesh/tetgenBR.{cpp,h}) is copyright (c) 2016 Hang Si,
+Weierstrass Institute for Applied Analysis and Stochatics. It is relicensed
+under the terms of LICENSE.txt for use in Gmsh thanks to a Software License
+Agreement between Weierstrass Institute for Applied Analysis and Stochastics and
+GMESH SPRL.
 
 The AVL tree code (Common/avl.{cpp,h}) and the YUV image code
 (Graphics/gl2yuv.{cpp,h}) are copyright (C) 1988-1993, 1995 The Regents of the
@@ -62,6 +90,25 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+The nanoflann code (Numeric/nanoflann.hpp) is Copyright 2008-2009 Marius Muja,
+2008-2009 David G. Lowe, 2011-2016 Jose Luis Blanco. Redistribution and use in
+source and binary forms, with or without modification, are permitted provided
+that the following conditions are met: 1. Redistributions of source code must
+retain the above copyright notice, this list of conditions and the following
+disclaimer.  2. Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.  THIS
+SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+OF SUCH DAMAGE.
+
 The trackball code (Graphics/Trackball.{cpp.h}) is copyright (C) 1993, 1994,
 Silicon Graphics, Inc. ALL RIGHTS RESERVED. Permission to use, copy, modify, and
 distribute this software for any purpose and without fee is hereby granted,
@@ -89,10 +136,6 @@ codes in the contrib/ directory, each governed by their own license:
 * contrib/ANN copyright (C) 1997-2005 University of Maryland and Sunil Arya and
   David Mount;
 
-* contrib/Chaco written by Bruce Hendrickson and Robert Leland at Sandia
-  National Laboratories under US Department of Energy contract DE-AC04-76DP00789
-  and is copyrighted by Sandia Corporation.
-
 * contrib/gmm copyright (C) 2002-2008 Yves Renard;
 
 * contrib/kbipack copyright (C) 2005 Saku Suuriniemi;
@@ -100,63 +143,35 @@ codes in the contrib/ directory, each governed by their own license:
 * contrib/MathEx based in part on the work of the SSCILIB Library, copyright (C)
   2000-2003 Sadao Massago;
 
-* contrib/Metis written by George Karypis (karypis at cs.umn.edu), copyright (C)
-  1998 Regents of the University of Minnesota;
+* contrib/metis written by George Karypis (karypis at cs.umn.edu), copyright (C)
+  1995-2013 Regents of the University of Minnesota;
 
 * contrib/mpeg_encode copyright (c) 1995 The Regents of the University of
   California;
 
-* contrib/Netgen subdirectory copyright (C) 1994-2004 Joachim Sch"oberl;
+* contrib/Netgen copyright (C) 1994-2004 Joachim Sch"oberl;
 
-* contrib/Tetgen1.5 subdirectory) copyright (C) 2002-2007 Hang Si;
+* contrib/Tetgen1.5 copyright (C) 2002-2007 Hang Si;
 
-* contrib/bamg subdirectory) from Freefem++ copyright (C) Frederic Hecht;
+* contrib/bamg from Freefem++ copyright (C) Frederic Hecht;
 
-* contrib/lbfgs subdirectory) (C) Sergey Bochkanov (ALGLIB project);
+* contrib/lbfgs (C) Sergey Bochkanov (ALGLIB project);
 
-* contrib/mmg3d subdirectory) from MMG3D Version 4.0 (C) 2004-2011 Cecile
-  Dobrzynski and Pascal Frey (IPB - UPMC - INRIA);
+* contrib/mmg3d from MMG3D Version 4.0 (C) 2004-2011 Cecile Dobrzynski and
+  Pascal Frey (IPB - UPMC - INRIA);
 
-* contrib/blossom subdirectory) copyright (C) 1995-1997 Bill Cook et al.;
+* contrib/blossom copyright (C) 1995-1997 Bill Cook et al.;
 
-* contrib/bamg subdirectory) from Freefem++ copyright (C) Frederic Hecht;
+* contrib/bamg from Freefem++ copyright (C) Frederic Hecht;
 
-* contrib/taucs subdirectory) from TAUCS Version 2.0, November 29, 2001,
-  Copyright (c) 2001, 2002, 2003 by Sivan Toledo, Tel-Aviv Univesity,
-  stoledo@tau.ac.il. All Rights Reserved.
+* contrib/voro++ from Voro++ Copyright (c) 2008, The Regents of the University
+  of California, through Lawrence Berkeley National Laboratory (subject to
+  receipt of any required approvals from the U.S. Dept. of Energy). All rights
+  reserved;
 
-* contrib/voro++ subdirectory) from Voro++ Copyright (c) 2008, The Regents of
-  the University of California, through Lawrence Berkeley National Laboratory
-  (subject to receipt of any required approvals from the U.S. Dept. of
-  Energy). All rights reserved;
+* contrib/zipper from MiniZip - Copyright (c) 1998-2010 - by Gilles Vollant -
+  version 1.1 64 bits from Mathias Svensson.
 
-* contrib/zipper subdirectory) from MiniZip - Copyright (c) 1998-2010 - by
-  Gilles Vollant - version 1.1 64 bits from Mathias Svensson.
+Check the configuration options to see which has been enabled and see each
+directory for detailed licensing information.
 
-Check the configuration options to see which has been enabled.
-
-Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher, Greg Ercolano
-and others for the Fast Light Tool Kit on which Gmsh's GUI is based. See
-http://www.fltk.org for more info on this excellent object-oriented,
-cross-platform toolkit.
-
-Special thanks also to EDF for funding the original OpenCASCADE and MED
-integration in 2006-2007.
-
-Thanks to the following folks who have contributed by providing fresh ideas on
-theoretical or programming topics, who have sent patches, requests for changes
-or improvements, or who gave us access to exotic machines for testing Gmsh: Juan
-Abanto, Olivier Adam, Guillaume Alleon, Laurent Champaney, Pascal Dupuis,
-Patrick Dular, Philippe Geuzaine, Johan Gyselinck, Francois Henrotte, Benoit
-Meys, Nicolas Moes, Osamu Nakamura, Chad Schmutzer, Jean-Luc Fl'ejou, Xavier
-Dardenne, Christophe Prud'homme, Sebastien Clerc, Jose Miguel Pasini, Philippe
-Lussou, Jacques Kools, Bayram Yenikaya, Peter Hornby, Krishna Mohan Gundu,
-Christopher Stott, Timmy Schumacher, Carl Osterwisch, Bruno Frackowiak, Philip
-Kelleners, Romuald Conty, Renaud Sizaire, Michel Benhamou, Tom De Vuyst, Kris
-Van den Abeele, Simon Vun, Simon Corbin, Thomas De-Soza, Marcus Drosson, Antoine
-Dechaume, Jose Paulo Moitinho de Almeida, Thomas Pinchard, Corrado Chisari, Axel
-Hackbarth, Peter Wainwright, Jiri Hnidek, Thierry Thomas, Konstantinos Poulios,
-Laurent Van Miegroet, Shahrokh Ghavamian, Geordie McBain, Jose Paulo Moitinho de
-Almeida, Guillaume Demesy, Wendy Merks-Swolfs, Cosmin Stefan Deaconu, Nigel
-Nunn, Serban Georgescu, Julien Troufflard, Michele Mocciola, Matthijs Sypkens
-Smit, Sauli Ruuska, Larry Price.

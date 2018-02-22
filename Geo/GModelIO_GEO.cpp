@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -234,26 +234,6 @@ bool GEO_Internals::addSpline(int &tag, const std::vector<int> &vertexTags)
   return true;
 }
 
-bool GEO_Internals::addBSpline(int &tag, const std::vector<int> &vertexTags)
-{
-  if(tag >= 0 && FindCurve(tag)){
-    Msg::Error("GEO edge with tag %d already exists", tag);
-    return false;
-  }
-  if(tag < 0) tag = getMaxTag(1) + 1;
-  List_T *tmp = List_Create(2, 2, sizeof(int));
-  for(unsigned int i = 0; i < vertexTags.size(); i++){
-    int t = vertexTags[i];
-    List_Add(tmp, &t);
-  }
-  Curve *c = CreateCurve(tag, MSH_SEGM_BSPLN, 2, tmp, NULL, -1, -1, 0., 1.);
-  Tree_Add(Curves, &c);
-  CreateReversedCurve(c);
-  List_Delete(tmp);
-  _changed = true;
-  return true;
-}
-
 bool GEO_Internals::addBezier(int &tag, const std::vector<int> &vertexTags)
 {
   if(tag >= 0 && FindCurve(tag)){
@@ -278,26 +258,32 @@ bool GEO_Internals::addBezier(int &tag, const std::vector<int> &vertexTags)
   return true;
 }
 
-bool GEO_Internals::addNurbs(int &tag, const std::vector<int> &vertexTags,
-                             const std::vector<double> &knots)
+bool GEO_Internals::addBSpline(int &tag, const std::vector<int> &vertexTags,
+                               const std::vector<double> &seqknots)
 {
   if(tag >= 0 && FindCurve(tag)){
     Msg::Error("GEO edge with tag %d already exists", tag);
     return false;
   }
   if(tag < 0) tag = getMaxTag(1) + 1;
-  int order = knots.size() - vertexTags.size() - 1;
   List_T *tmp = List_Create(2, 2, sizeof(int));
   for(unsigned int i = 0; i < vertexTags.size(); i++){
     int t = vertexTags[i];
     List_Add(tmp, &t);
   }
-  List_T *knotsList = List_Create(2, 2, sizeof(double));
-  for(unsigned int i = 0; i < knots.size(); i++){
-    double d = knots[i];
-    List_Add(knotsList, &d);
+  Curve *c;
+  if(seqknots.empty()){
+    c = CreateCurve(tag, MSH_SEGM_BSPLN, 2, tmp, NULL, -1, -1, 0., 1.);
   }
-  Curve *c = CreateCurve(tag, MSH_SEGM_NURBS, order, tmp, knotsList, -1, -1, 0., 1.);
+  else{
+    int order = seqknots.size() - vertexTags.size() - 1;
+    List_T *knotsList = List_Create(2, 2, sizeof(double));
+    for(unsigned int i = 0; i < seqknots.size(); i++){
+      double d = seqknots[i];
+      List_Add(knotsList, &d);
+    }
+    c = CreateCurve(tag, MSH_SEGM_NURBS, order, tmp, knotsList, -1, -1, 0., 1.);
+  }
   Tree_Add(Curves, &c);
   CreateReversedCurve(c);
   List_Delete(tmp);
@@ -1179,7 +1165,7 @@ void GEO_Internals::synchronize(GModel *model)
   // we might want to store physical groups directly in GModel; but this is OK
   // for now. We always start from scratch in GModel, as physical groups are
   // only stored in GEO internals anyway
-  model->deletePhysicalGroups();
+  model->removePhysicalGroups();
   for(int i = 0; i < List_Nbr(PhysicalGroups); i++){
     PhysicalGroup *p;
     List_Read(PhysicalGroups, i, &p);

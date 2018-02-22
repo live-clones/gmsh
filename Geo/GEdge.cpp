@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -141,7 +141,7 @@ void GEdge::reverse()
     (*line)->reverse();
 }
 
-unsigned int GEdge::getNumMeshElements()
+unsigned int GEdge::getNumMeshElements() const
 {
   return lines.size();
 }
@@ -166,7 +166,7 @@ MElement *const *GEdge::getStartElementType(int type) const
   return reinterpret_cast<MElement *const *>(&lines[0]);
 }
 
-MElement *GEdge::getMeshElement(unsigned int index)
+MElement *GEdge::getMeshElement(unsigned int index) const
 {
   if(index < lines.size())
     return lines[index];
@@ -200,7 +200,7 @@ void GEdge::delFace(GFace *f)
 SBoundingBox3d GEdge::bounds() const
 {
   SBoundingBox3d bbox;
-  if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve){
+  if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve && geomType() != PartitionCurve){
     Range<double> tr = parBounds(0);
     const int N = 10;
     for(int i = 0; i < N; i++){
@@ -210,8 +210,9 @@ SBoundingBox3d GEdge::bounds() const
     }
   }
   else{
-    for(unsigned int i = 0; i < mesh_vertices.size(); i++)
-      bbox += mesh_vertices[i]->point();
+    for(unsigned int i = 0; i < getNumMeshElements(); i++)
+      for(unsigned int j = 0; j < getMeshElement(i)->getNumVertices(); j++)
+        bbox += getMeshElement(i)->getVertex(j)->point();
   }
   return bbox;
 }
@@ -531,29 +532,14 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
   }
 
   if(relax > 1.e-2) {
-    //    Msg::Info("point %g %g %g on edge %d : Relaxation factor = %g",
-    //              X, Y, Z, 0.75 * relax);
+    // Msg::Info("point %g %g %g on edge %d : Relaxation factor = %g",
+    //           X, Y, Z, 0.75 * relax);
     return XYZToU(X, Y, Z, u, 0.75 * relax);
   }
 
-  //  Msg::Error("Could not converge reparametrisation of point (%e,%e,%e) on edge %d",
-  //             X, Y, Z, tag());
+  // Msg::Error("Could not converge reparametrisation of point (%e,%e,%e) on edge %d",
+  //            X, Y, Z, tag());
   return false;
-}
-
-void GEdge::replaceEndingPoints(GVertex *replOfv0, GVertex *replOfv1)
-{
-  replaceEndingPointsInternals(replOfv0, replOfv1);
-  if (replOfv0 != v0){
-    if (v0) v0->delEdge(this);
-    replOfv0->addEdge(this);
-    v0 = replOfv0;
-  }
-  if (replOfv1 != v1){
-    if (v1) v1->delEdge(this);
-    replOfv1->addEdge(this);
-    v1 = replOfv1;
-  }
 }
 
 // regions that bound this entity or that this entity bounds.
@@ -631,6 +617,32 @@ static void _discretize(double tol, GEdge * edge, std::vector<sortedPoint> &upts
   upts[pos0].next = posmid;
   _discretize(tol, edge, upts, pos0);
   _discretize(tol, edge, upts, posmid);
+}
+
+void GEdge::addElement(int type, MElement *e)
+{
+  switch (type){
+  case TYPE_LIN:
+    addLine(reinterpret_cast<MLine*>(e));
+    break;
+  default:
+    Msg::Error("Trying to add unsupported element in edge");
+  }
+}
+
+void GEdge::removeElement(int type, MElement *e)
+{
+  switch (type){
+  case TYPE_LIN:
+    {
+      std::vector<MLine*>::iterator it = std::find
+        (lines.begin(), lines.end(), reinterpret_cast<MLine*>(e));
+      if(it != lines.end()) lines.erase(it);
+    }
+    break;
+  default:
+    Msg::Error("Trying to remove unsupported element in edge");
+  }
 }
 
 void GEdge::discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts)

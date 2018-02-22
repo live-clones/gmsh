@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -25,7 +25,6 @@
 #define MSH_SEGM_BND_LAYER     211
 #define MSH_SEGM_DISCRETE      212
 #define MSH_SEGM_FROM_GMODEL   213
-#define MSH_SEGM_COMPOUND      214
 
 #define MSH_SURF_PLAN          300
 #define MSH_SURF_REGL          301
@@ -34,12 +33,10 @@
 #define MSH_SURF_LOOP          304
 #define MSH_SURF_DISCRETE      305
 #define MSH_SURF_FROM_GMODEL   306
-#define MSH_SURF_COMPOUND      307
 
 #define MSH_VOLUME             400
 #define MSH_VOLUME_DISCRETE    401
 #define MSH_VOLUME_FROM_GMODEL 402
-#define MSH_VOLUME_COMPOUND    403
 
 #define MSH_PHYSICAL_POINT     500
 #define MSH_PHYSICAL_LINE      501

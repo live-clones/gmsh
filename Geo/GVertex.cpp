@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -82,7 +82,7 @@ void GVertex::writeGEO(FILE *fp, const std::string &meshSizeParameter)
             tag(), x(), y(), z());
 }
 
-unsigned int GVertex::getNumMeshElements()
+unsigned int GVertex::getNumMeshElements() const
 {
   return points.size();
 }
@@ -92,7 +92,7 @@ void GVertex::getNumMeshElements(unsigned *const c) const
   c[0] += points.size();
 }
 
-MElement *GVertex::getMeshElement(unsigned int index)
+MElement *GVertex::getMeshElement(unsigned int index) const
 {
   if(index < points.size())
     return points[index];
@@ -144,5 +144,31 @@ void GVertex::relocateMeshVertices()
     v->x() = x();
     v->y() = y();
     v->z() = z();
+  }
+}
+
+void GVertex::addElement(int type, MElement *e)
+{
+  switch (type){
+  case TYPE_PNT:
+    addPoint(reinterpret_cast<MPoint*>(e));
+    break;
+  default:
+    Msg::Error("Trying to add unsupported element in vertex");
+  }
+}
+
+void GVertex::removeElement(int type, MElement *e)
+{
+  switch (type){
+  case TYPE_PNT:
+    {
+      std::vector<MPoint*>::iterator it = std::find
+        (points.begin(), points.end(), reinterpret_cast<MPoint*>(e));
+      if(it != points.end()) points.erase(it);
+    }
+    break;
+  default:
+    Msg::Error("Trying to remove unsupported element in vertex");
   }
 }

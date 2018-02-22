@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -7,8 +7,8 @@
 #include "OS.h"
 #include "MTriangle.h"
 
-static bool getVertices(int num, int *indices, std::vector<MVertex*> &vec,
-                        std::vector<MVertex*> &vertices)
+static bool getMeshVertices(int num, int *indices, std::vector<MVertex*> &vec,
+                            std::vector<MVertex*> &vertices)
 {
   for(int i = 0; i < num; i++){
     if(indices[i] < 0 || indices[i] > (int)(vec.size() - 1)){
@@ -64,7 +64,7 @@ int GModel::readGEOM(const std::string &name)
         if(fscanf(fp, "%d %d %d", &n[0], &n[1], &n[2]) != 3) break;
         for(int i = 0; i < 3; i++) n[i]--;
         std::vector<MVertex*> vertices;
-        if(!getVertices(3, n, vertexVector, vertices)) break;
+        if(!getMeshVertices(3, n, vertexVector, vertices)) break;
         elements[0][1].push_back(new MTriangle(vertices));
       }
       break;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -29,7 +29,7 @@ class MTet4Factory;
 
 // Memory usage for 1 million tets:
 //
-// * sizeof(MTet4) = 36 Bytes and sizeof(MTetrahedron) = 28 Bytes 
+// * sizeof(MTet4) = 36 Bytes and sizeof(MTetrahedron) = 28 Bytes
 //   -> 64 MB
 // * rb tree containing all pointers sorted with respect to tet
 //   radius: each bucket of the tree contains 4 pointers (16 Bytes)
@@ -37,10 +37,10 @@ class MTet4Factory;
 // * sizeof(MVertex) = 44 Bytes and there are about 200000 verts per
 //   million tet -> 9MB
 // * vector of char lengths per vertex -> 1.6Mb
-// * vectors in GEntities to store the element and vertex pointers 
+// * vectors in GEntities to store the element and vertex pointers
 //   -> 5Mb
 //
-// Grand total should thus be about 100 MB. 
+// Grand total should thus be about 100 MB.
 //
 // The observed mem usage with "demos/cube.geo -clscale 0.61" is
 // 157MB. Where do the extra 57 MB come from?
@@ -60,14 +60,14 @@ class MTet4
   MTet4 *neigh[4];
   GRegion *gr;
  public :
-  static int radiusNorm; // 2 is euclidian norm, -1 is infinite norm  
+  static int radiusNorm; // 2 is euclidian norm, -1 is infinite norm
   ~MTet4(){}
-  MTet4() 
+  MTet4()
     : deleted(false), circum_radius(0.0), base(0), gr(0)
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
   }
-  MTet4(MTetrahedron *t, double qual) 
+  MTet4(MTetrahedron *t, double qual)
     : deleted(false), circum_radius(qual), base(t), gr(0)
   {
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
@@ -114,7 +114,7 @@ class MTet4
 	     base->getVertex(3)->getIndex());
 
     }
-    */	
+    */
     double lc1 = 0.25*(sizes[base->getVertex(0)->getIndex()]+
                       sizes[base->getVertex(1)->getIndex()]+
                        sizes[base->getVertex(2)->getIndex()]+
@@ -126,9 +126,10 @@ class MTet4
     double lc = Extend2dMeshIn3dVolumes() ? std::min(lc1, lcBGM) : lcBGM;
     circum_radius /= lc;
     deleted = false;
-  } 
+  }
 
-  void setup(MTetrahedron *t, std::vector<double> &sizes, std::vector<double> &sizesBGM, double lcA, double lcB)
+  void setup(MTetrahedron *t, std::vector<double> &sizes,
+             std::vector<double> &sizesBGM, double lcA, double lcB)
   {
     base = t;
     neigh[0] = neigh[1] = neigh[2] = neigh[3] = 0;
@@ -150,7 +151,7 @@ class MTet4
 	     base->getVertex(3)->getIndex());
 
     }
-    */	
+    */
     double lc1 = 0.25*(sizes[base->getVertex(0)->getIndex()]+
                       sizes[base->getVertex(1)->getIndex()]+
                        sizes[base->getVertex(2)->getIndex()]+
@@ -162,22 +163,22 @@ class MTet4
     double lc = Extend2dMeshIn3dVolumes() ? std::min(lc1, lcBGM) : lcBGM;
     circum_radius /= lc;
     deleted = false;
-  } 
+  }
 
   inline GRegion *onWhat() const { return gr; }
   inline void setOnWhat(GRegion *g) { gr = g; }
   inline bool isDeleted() const { return deleted; }
   inline void forceRadius(double r){ circum_radius = r; }
   inline double getRadius() const { return circum_radius; }
-  inline double getQuality() const { return circum_radius; } 
-  inline void setQuality(const double &q){ circum_radius = q; } 
+  inline double getQuality() const { return circum_radius; }
+  inline void setQuality(const double &q){ circum_radius = q; }
   inline MTetrahedron *tet() const { return base; }
   inline MTetrahedron *&tet() { return base; }
   inline void setTet(MTetrahedron *t) { base=t; }
   inline void setNeigh(int iN, MTet4 *n) { neigh[iN] = n; }
   inline MTet4 *getNeigh(int iN) const { return neigh[iN]; }
-  int inCircumSphere(const double *p) const; 
-  inline int inCircumSphere(double x, double y, double z) const 
+  int inCircumSphere(const double *p) const;
+  inline int inCircumSphere(double x, double y, double z) const
   {
     const double p[3] = {x, y, z};
     return inCircumSphere(p);
@@ -186,27 +187,27 @@ class MTet4
   {
     return inCircumSphere(v->x(), v->y(), v->z());
   }
-  inline double getVolume() const { 
-    
-    double pa[3] = {base->getVertex(0)->x(), 
-		    base->getVertex(0)->y(), 
+  inline double getVolume() const {
+
+    double pa[3] = {base->getVertex(0)->x(),
+		    base->getVertex(0)->y(),
 		    base->getVertex(0)->z()};
-    double pb[3] = {base->getVertex(1)->x(), 
+    double pb[3] = {base->getVertex(1)->x(),
 		    base->getVertex(1)->y(),
 		    base->getVertex(1)->z()};
     double pc[3] = {base->getVertex(2)->x(),
-		    base->getVertex(2)->y(), 
+		    base->getVertex(2)->y(),
 		    base->getVertex(2)->z()};
     double pd[3] = {base->getVertex(3)->x(),
 		    base->getVertex(3)->y(),
 		    base->getVertex(3)->z()};
-    return fabs(robustPredicates::orient3d(pa, pb, pc, pd))/6.0; 
+    return fabs(robustPredicates::orient3d(pa, pb, pc, pd))/6.0;
   }
   inline void setDeleted(bool d)
   {
     deleted = d;
   }
-  inline bool assertNeigh() const 
+  inline bool assertNeigh() const
   {
     if (deleted) return true;
     for (int i = 0; i < 4; i++)
@@ -224,17 +225,19 @@ class MTet4
 void connectTets(std::list<MTet4*> &);
 void connectTets(std::vector<MTet4*> &);
 // IN --> Vertices ----  OUT --> Tets
-void delaunayMeshIn3D(std::vector<MVertex*> &, std::vector<MTetrahedron*> &, bool removeBox = true);
-void insertVerticesInRegion(GRegion *gr, int maxVert = 2000000000, bool _classify = true);
+void delaunayMeshIn3D(std::vector<MVertex*> &, std::vector<MTetrahedron*> &,
+                      bool removeBox = true);
+void insertVerticesInRegion(GRegion *gr, int maxVert = 2000000000,
+                            bool _classify = true);
 void bowyerWatsonFrontalLayers(GRegion *gr, bool hex);
 GRegion *getRegionFromBoundingFaces(GModel *model,
                                     std::set<GFace *> &faces_bound);
 
-class compareTet4Ptr 
+class compareTet4Ptr
 {
  public:
   inline bool operator () (const MTet4 *a, const MTet4 *b)  const
-  { 
+  {
     if (a->getRadius() > b->getRadius()) return true;
     if (a->getRadius() < b->getRadius()) return false;
     return a->tet()->getNum() < b->tet()->getNum();
@@ -267,7 +270,7 @@ class MTet4Factory
       return t;
     }
     return getANewSlot();
-  };    
+  };
 #endif
  public :
   MTet4Factory(int _size = 1000000)
@@ -277,13 +280,13 @@ class MTet4Factory
     allSlots = new MTet4[s_alloc];
 #endif
   }
-  ~MTet4Factory() 
+  ~MTet4Factory()
   {
 #ifdef _GMSH_PRE_ALLOCATE_STRATEGY_
     delete [] allSlots;
 #endif
   }
-  MTet4 *Create(MTetrahedron * t, std::vector<double> &sizes, 
+  MTet4 *Create(MTetrahedron * t, std::vector<double> &sizes,
                 std::vector<double> &sizesBGM)
   {
 #ifdef _GMSH_PRE_ALLOCATE_STRATEGY_
@@ -294,7 +297,7 @@ class MTet4Factory
     t4->setup(t, sizes, sizesBGM);
     return t4;
   }
-  MTet4 *Create(MTetrahedron * t, std::vector<double> &sizes, 
+  MTet4 *Create(MTetrahedron * t, std::vector<double> &sizes,
                 std::vector<double> &sizesBGM, double lc1, double lc2)
   {
 #ifdef _GMSH_PRE_ALLOCATE_STRATEGY_

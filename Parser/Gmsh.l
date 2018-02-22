@@ -1,5 +1,5 @@
 %{
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -149,7 +149,6 @@ Call                    return tCall;
 Catenary                return tCatenary;
 CatmullRom		return tSpline;
 Ceil                    return tCeil;
-Chamfer                 return tChamfer;
 Characteristic          return tCharacteristic;
 Circle                  return tCircle;
 CodeName                return tCodeName;

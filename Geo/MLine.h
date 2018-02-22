@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -97,6 +97,10 @@ class MLine : public MElement {
   }
   virtual void getIntegrationPoints(int pOrder, int *npts, IntPt **pts);
   virtual void discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts);
+  virtual int numCommonNodesInDualGraph(const MElement *const other) const
+  {
+    return ((other->getType() == TYPE_LIN || other->getType() == TYPE_PNT) ? 1 : 2);
+  }
 };
 
 /*

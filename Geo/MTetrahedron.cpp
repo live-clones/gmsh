@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -122,6 +122,17 @@ void MTetrahedron::xyz2uvw(double xyz[3], double uvw[3]) const
   b[1] = xyz[1] - getVertex(0)->y();
   b[2] = xyz[2] - getVertex(0)->z();
   sys3x3(mat, b, uvw, &det);
+}
+
+int MTetrahedron::numCommonNodesInDualGraph(const MElement *const other) const
+{
+  switch (other->getType())
+  {
+    case TYPE_PNT: return 1;
+    case TYPE_LIN: return 2;
+    case TYPE_QUA: return 4;
+    default: return 3;
+  }
 }
 
 int MTetrahedron10::getNumEdgesRep(bool curved)

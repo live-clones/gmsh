@@ -1,7 +1,9 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
+//
+// Contributed by Larry Price
 
 #include <time.h>
 #include <algorithm>
@@ -18,20 +20,20 @@
 
 namespace
 {
-  static const unsigned GAMBIT_TYPE_EDGE = 1;
-  static const unsigned GAMBIT_TYPE_QUAD = 2;
-  static const unsigned GAMBIT_TYPE_TRI  = 3;
+  //static const unsigned GAMBIT_TYPE_EDGE = 1;
+  //static const unsigned GAMBIT_TYPE_QUAD = 2;
+  //static const unsigned GAMBIT_TYPE_TRI  = 3;
   static const unsigned GAMBIT_TYPE_TET  = 6;
 
   // This struct allows us to take advantage of C++11 unordered_map while
   // maintaining backwards compatibility with C++03
   template<typename Key, typename Value>
   struct hashMap {
-    #if __cplusplus >= 201103L
+#if __cplusplus >= 201103L
     typedef std::unordered_map<Key, Value> _;
-    #else
+#else
     typedef std::map<Key, Value> _;
-    #endif
+#endif
   };
 
   const hashMap<std::string, unsigned>::_::value_type rawData[] = {

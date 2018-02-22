@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -112,6 +112,7 @@ class MTriangle : public MElement {
   virtual int getTypeForMSH() const { return MSH_TRI_3; }
   virtual int getTypeForUNV() const { return 91; } // thin shell linear triangle
   virtual int getTypeForVTK() const { return 5; }
+  virtual int getTypeForMATLAB() const { return 1; }
   virtual const char *getStringForPOS() const { return "ST"; }
   virtual const char *getStringForBDF() const { return "CTRIA3"; }
   virtual const char *getStringForDIFF() const { return "ElmT3n2D"; }
@@ -160,6 +161,7 @@ class MTriangle : public MElement {
     };
     return e[edge][vert];
   }
+  virtual int numCommonNodesInDualGraph(const MElement *const other) const;
 };
 
 /*

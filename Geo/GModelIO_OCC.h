@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -39,7 +39,7 @@ class OCC_Internals {
   enum BooleanOperator { Union, Intersection, Difference, Section, Fragments };
 
  private :
-  // have the internals changed since the last synchronisation
+  // have the internals changed since the last synchronisation?
   bool _changed;
 
   // maximum tags for each bound entity (shell, wire, vertex, edge, face, solid)
@@ -59,7 +59,7 @@ class OCC_Internals {
   TopTools_DataMapOfIntegerShape _tagWire, _tagShell;
 
   // cache of <dim,tag> pairs corresponding to entities that will need to be
-  // remove from the model at the next synchronization
+  // removed from the model at the next synchronization
   std::set<std::pair<int, int> > _toRemove;
 
   // cache of <dim,tag> pairs corresponding to entities that should not be
@@ -83,8 +83,8 @@ class OCC_Internals {
   // return newly bound entities in outDimTags.
   void _multiBind(TopoDS_Shape shape, int tag,
                   std::vector<std::pair<int, int> > &outDimTags,
-                  bool returnHighestDimOnly, bool recursive=false,
-                  bool returnNewOnly=false);
+                  bool returnHighestDimOnly, bool recursive = false,
+                  bool returnNewOnly = false);
 
   // is the entity of a given dimension and tag bound?
   bool _isBound(int dim, int tag);
@@ -98,37 +98,11 @@ class OCC_Internals {
   // get the tag of a shape of a given dimension
   int _find(int dim, TopoDS_Shape shape);
 
-  // get maximum dimension of shape bound to tag
+  // get maximum dimension of shapes bound to tags
   int _getMaxDim();
 
   // get (dim,tag) of all shapes (that will be) bound to tags
-  void _getAllDimTags(std::vector<std::pair<int, int> > &dimTags, int dim=99);
-
-  // make shapes
-  bool _makeRectangle(TopoDS_Face &result, double x, double y, double z,
-                    double dx, double dy, double roundedRadius=0.);
-  bool _makeDisk(TopoDS_Face &result, double xc, double yc, double zc,
-                 double rx, double ry);
-  bool _makeSphere(TopoDS_Solid &result, double xc, double yc, double zc,
-                   double radius, double angle1, double angle2, double angle3);
-  bool _makeBox(TopoDS_Solid &result, double x, double y, double z,
-                double dx, double dy, double dz);
-  bool _makeCylinder(TopoDS_Solid &result, double x, double y, double z,
-                   double dx, double dy, double dz, double r, double angle);
-  bool _makeCone(TopoDS_Solid &result, double x, double y, double z,
-                 double dx, double dy, double dz, double r1, double r2,
-                 double angle);
-  bool _makeWedge(TopoDS_Solid &result, double x, double y, double z,
-                  double dx, double dy, double dz, double ltx);
-  bool _makeTorus(TopoDS_Solid &result, double x, double y, double z,
-                  double r1, double r2, double angle);
-
-  // make STL triangulation of a face
-  bool _makeFaceSTL(TopoDS_Face s,
-                    std::vector<SPoint2> *verticesUV,
-                    std::vector<SPoint3> *verticesXYZ,
-                    std::vector<SVector3> *normalsXYZ,
-                    std::vector<int> &triangles);
+  void _getAllDimTags(std::vector<std::pair<int, int> > &dimTags, int dim = 99);
 
   // add a shape and all its subshapes to _vmap, _emap, ..., _somap
   void _addShapeToMaps(TopoDS_Shape shape);
@@ -136,7 +110,7 @@ class OCC_Internals {
   // apply various healing algorithms to try to fix the shape
   void _healShape(TopoDS_Shape &myshape, double tolerance, bool fixdegenerated,
                   bool fixsmalledges, bool fixspotstripfaces, bool sewfaces,
-                  bool makesolids=false, double scaling=0.0);
+                  bool makesolids = false, double scaling = 0.0);
 
   // apply a geometrical transformation
   bool _transform(const std::vector<std::pair<int, int> > &inDimTags,
@@ -145,15 +119,19 @@ class OCC_Internals {
   // add circle or ellipse arc
   bool _addArc(int &tag, int startTag, int centerTag, int endTag, int mode);
 
-  // add bezier or bspline
-  bool _addSpline(int &tag, const std::vector<int> &vertexTags, int mode);
+  // add bspline
+  bool _addBSpline(int &tag, const std::vector<int> &vertexTags, int mode,
+                   const int degree = -1,
+                   const std::vector<double> &weights = std::vector<double>(),
+                   const std::vector<double> &knots = std::vector<double>(),
+                   const std::vector<int> &multiplicities = std::vector<int>());
 
   // apply extrusion-like operations
   bool _extrude(int mode, const std::vector<std::pair<int, int> > &inDimTags,
                 double x, double y, double z, double dx, double dy, double dz,
                 double ax, double ay, double az, double angle, int wireTag,
                 std::vector<std::pair<int, int> > &outDimTags,
-                ExtrudeParams *e=0);
+                ExtrudeParams *e = 0);
 
   // set extruded mesh attributes
   void _setExtrudedMeshAttributes(const TopoDS_Compound &c, BRepSweep_Prism *p,
@@ -176,20 +154,20 @@ class OCC_Internals {
 
   // bind and unbind OpenCASCADE shapes to tags (these methods will become
   // private)
-  void bind(TopoDS_Vertex vertex, int tag, bool recursive=false);
-  void bind(TopoDS_Edge edge, int tag, bool recursive=false);
-  void bind(TopoDS_Wire wire, int tag, bool recursive=false);
-  void bind(TopoDS_Face face, int tag, bool recursive=false);
-  void bind(TopoDS_Shell shell, int tag, bool recursive=false);
-  void bind(TopoDS_Solid solid, int tag, bool recursive=false);
-  void bind(TopoDS_Shape shape, int dim, int tag, bool recursive=false);
-  void unbind(TopoDS_Vertex vertex, int tag, bool recursive=false);
-  void unbind(TopoDS_Edge edge, int tag, bool recursive=false);
-  void unbind(TopoDS_Wire wire, int tag, bool recursive=false);
-  void unbind(TopoDS_Face face, int tag, bool recursive=false);
-  void unbind(TopoDS_Shell shell, int tag, bool recursive=false);
-  void unbind(TopoDS_Solid solid, int tag, bool recursive=false);
-  void unbind(TopoDS_Shape shape, int dim, int tag, bool recursive=false);
+  void bind(TopoDS_Vertex vertex, int tag, bool recursive = false);
+  void bind(TopoDS_Edge edge, int tag, bool recursive = false);
+  void bind(TopoDS_Wire wire, int tag, bool recursive = false);
+  void bind(TopoDS_Face face, int tag, bool recursive = false);
+  void bind(TopoDS_Shell shell, int tag, bool recursive = false);
+  void bind(TopoDS_Solid solid, int tag, bool recursive = false);
+  void bind(TopoDS_Shape shape, int dim, int tag, bool recursive = false);
+  void unbind(TopoDS_Vertex vertex, int tag, bool recursive = false);
+  void unbind(TopoDS_Edge edge, int tag, bool recursive = false);
+  void unbind(TopoDS_Wire wire, int tag, bool recursive = false);
+  void unbind(TopoDS_Face face, int tag, bool recursive = false);
+  void unbind(TopoDS_Shell shell, int tag, bool recursive = false);
+  void unbind(TopoDS_Solid solid, int tag, bool recursive = false);
+  void unbind(TopoDS_Shape shape, int dim, int tag, bool recursive = false);
 
   // set/get max tag of entity for each dimension (0, 1, 2, 3), as well as
   // -2 for shells and -1 for wires
@@ -197,7 +175,7 @@ class OCC_Internals {
   int getMaxTag(int dim) const;
 
   // add shapes (if tag is < 0, a new tag is automatically created and returned)
-  bool addVertex(int &tag, double x, double y, double z, double meshSize=MAX_LC);
+  bool addVertex(int &tag, double x, double y, double z, double meshSize = MAX_LC);
   bool addLine(int &tag, int startTag, int endTag);
   bool addLine(int &tag, const std::vector<int> &vertexTags);
   bool addCircleArc(int &tag, int startTag, int centerTag, int endTag);
@@ -208,14 +186,20 @@ class OCC_Internals {
                   double angle1, double angle2);
   bool addSpline(int &tag, const std::vector<int> &vertexTags);
   bool addBezier(int &tag, const std::vector<int> &vertexTags);
-  bool addBSpline(int &tag, const std::vector<int> &vertexTags);
+  bool addBSpline(int &tag, const std::vector<int> &vertexTags, const int degree = -1,
+                   const std::vector<double> &weights = std::vector<double>(),
+                   const std::vector<double> &knots = std::vector<double>(),
+                   const std::vector<int> &multiplicities = std::vector<int>());
   bool addWire(int &tag, const std::vector<int> &edgeTags, bool checkClosed);
   bool addLineLoop(int &tag, const std::vector<int> &edgeTags);
   bool addRectangle(int &tag, double x, double y, double z,
-                    double dx, double dy, double roundedRadius=0.);
+                    double dx, double dy, double roundedRadius = 0.);
   bool addDisk(int &tag, double xc, double yc, double zc, double rx, double ry);
   bool addPlaneSurface(int &tag, const std::vector<int> &wireTags);
-  bool addSurfaceFilling(int &tag, int wireTag);
+  bool addSurfaceFilling(int &tag, int wireTag,
+                         const std::vector<int> &vertexTags = std::vector<int>(),
+                         const std::vector<int> &faceTags = std::vector<int>(),
+                         const std::vector<int> &faceContinuity = std::vector<int>());
   bool addSurfaceLoop(int &tag, const std::vector<int> &faceTags);
   bool addVolume(int &tag, const std::vector<int> &shellTags);
   bool addSphere(int &tag, double xc, double yc, double zc, double radius,
@@ -242,11 +226,11 @@ class OCC_Internals {
   bool extrude(const std::vector<std::pair<int, int> > &inDimTags,
                double dx, double dy, double dz,
                std::vector<std::pair<int, int> > &outDimTags,
-               ExtrudeParams *e=0);
+               ExtrudeParams *e = 0);
   bool revolve(const std::vector<std::pair<int, int> > &inDimTags,
                double x, double y, double z, double ax, double ay, double az,
                double angle, std::vector<std::pair<int, int> > &outDimTags,
-               ExtrudeParams *e=0);
+               ExtrudeParams *e = 0);
   bool addPipe(const std::vector<std::pair<int, int> > &inDimTags, int wireTag,
                std::vector<std::pair<int, int> > &outDimTags);
 
@@ -306,20 +290,20 @@ class OCC_Internals {
   // copy and remove
   bool copy(const std::vector<std::pair<int, int> > &inDimTags,
             std::vector<std::pair<int, int> > &outDimTags);
-  bool remove(int dim, int tag, bool recursive=false);
-  bool remove(const std::vector<std::pair<int, int> > &dimTags, bool recursive=false);
+  bool remove(int dim, int tag, bool recursive = false);
+  bool remove(const std::vector<std::pair<int, int> > &dimTags, bool recursive = false);
 
   // import shapes from file
   bool importShapes(const std::string &fileName, bool highestDimOnly,
                     std::vector<std::pair<int, int> > &outDimTags,
-                    const std::string &format="");
+                    const std::string &format = "");
 
   // import shapes from TopoDS_Shape
   bool importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
                     std::vector<std::pair<int, int> > &outDimTags);
 
   // export all bound shapes to file
-  bool exportShapes(const std::string &fileName, const std::string &format="");
+  bool exportShapes(const std::string &fileName, const std::string &format = "");
 
   // set meshing constraints
   void setMeshSize(int dim, int tag, double size);
@@ -383,7 +367,7 @@ public:
   void reset(){}
   void setMaxTag(int dim, int val){}
   int getMaxTag(int dim) const { return 0; }
-  bool addVertex(int &tag, double x, double y, double z, double meshSize=MAX_LC)
+  bool addVertex(int &tag, double x, double y, double z, double meshSize = MAX_LC)
   {
     return _error("add vertex");
   }
@@ -421,7 +405,10 @@ public:
   {
     return _error("add Bezier");
   }
-  bool addBSpline(int &tag, const std::vector<int> &vertexTags)
+  bool addBSpline(int &tag, const std::vector<int> &vertexTags, const int degree = -1,
+                   const std::vector<double> &weights = std::vector<double>(),
+                   const std::vector<double> &knots = std::vector<double>(),
+                   const std::vector<int> &multiplicities = std::vector<int>())
   {
     return _error("add BSpline");
   }
@@ -434,7 +421,7 @@ public:
     return _error("add line loop");
   }
   bool addRectangle(int &tag, double x, double y, double z,
-                    double dx, double dy, double roundedRadius=0.)
+                    double dx, double dy, double roundedRadius = 0.)
   {
     return _error("add rectangle");
   }
@@ -446,7 +433,10 @@ public:
   {
     return _error("add plane surface");
   }
-  bool addSurfaceFilling(int &tag, int wireTag)
+  bool addSurfaceFilling(int &tag, int wireTag,
+                         const std::vector<int> &vertexTags = std::vector<int>(),
+                         const std::vector<int> &faceTags = std::vector<int>(),
+                         const std::vector<int> &faceContinuity = std::vector<int>())
   {
     return _error("add surface filling");
   }
@@ -502,14 +492,14 @@ public:
   bool extrude(const std::vector<std::pair<int, int> > &inDimTags,
                double dx, double dy, double dz,
                std::vector<std::pair<int, int> > &outDimTags,
-               ExtrudeParams *e=0)
+               ExtrudeParams *e = 0)
   {
     return _error("extrude");
   }
   bool revolve(const std::vector<std::pair<int, int> > &inDimTags,
                double x, double y, double z, double ax, double ay, double az,
                double angle, std::vector<std::pair<int, int> > &outDimTags,
-               ExtrudeParams *e=0)
+               ExtrudeParams *e = 0)
   {
     return _error("revolve");
   }
@@ -604,21 +594,21 @@ public:
   {
     return _error("copy shape");
   }
-  bool remove(int dim, int tag, bool recursive=false)
+  bool remove(int dim, int tag, bool recursive = false)
   {
     return false;
   }
-  bool remove(const std::vector<std::pair<int, int> > &dimTags, bool recursive=false)
+  bool remove(const std::vector<std::pair<int, int> > &dimTags, bool recursive = false)
   {
     return false;
   }
   bool importShapes(const std::string &fileName, bool highestDimOnly,
                     std::vector<std::pair<int, int> > &outDimTags,
-                    const std::string &format="")
+                    const std::string &format = "")
   {
     return _error("import shape");
   }
-  bool exportShapes(const std::string &fileName, const std::string &format="")
+  bool exportShapes(const std::string &fileName, const std::string &format = "")
   {
     return _error("export shape");
   }

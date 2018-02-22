@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -72,7 +72,6 @@ CTX::CTX() : gamepad(0)
   numWindows = numTiles = 1;
   deltaFontSize = 0;
   recentFiles.resize(10);
-  mesh.optimizeLloyd = 0;
   gamepad = 0;
   mesh.switchElementTags = 0;
   terminal = 0;
@@ -90,7 +89,6 @@ CTX::CTX() : gamepad(0)
   mesh.explode = mesh.angleSmoothNormals = 0.;
   mesh.numSubEdges = 0;
   mesh.colorCarousel = 0;
-  mesh.ignorePartBound = 0;
   mesh.saveTri = 0;
   color.mesh.tangents = color.mesh.tetrahedron = color.mesh.triangle = 0;
   color.mesh.prism = color.mesh.pyramid = color.mesh.hexahedron = color.mesh.trihedron = 0;

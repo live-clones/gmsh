@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+@c Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 @c
 @c See the LICENSE.txt file for license information. Please report all
 @c bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -22,7 +22,7 @@
 @c %**starts of header
 @setfilename gmsh.info
 @set GMSH-VERSION 3.1
-@set COPYRIGHT @copyright{} 1997-2017 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@set COPYRIGHT @copyright{} 1997-2018 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @settitle Gmsh @value{GMSH-VERSION}
 @footnotestyle separate
 @setchapternewpage odd
@@ -1742,8 +1742,9 @@ arguement is the command line).
 Changes the name of the current model.
 
 @item SetFactory(@var{char-expression});
-Changes the current geometry kernel. Currently available kernels:
-@code{"Built-in"} and @code{"OpenCASCADE"}.
+Changes the current geometry kernel (i.e. determines the CAD kernel that
+is used for all subsequent geometrical commands). Currently available
+kernels: @code{"Built-in"} and @code{"OpenCASCADE"}.
 
 @item SyncModel;
 Forces an immediate transfer from the old geometrical database into the
@@ -1913,18 +1914,18 @@ start and end points of the segment.
 
 @item Bezier ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a Bezier curve. The @var{expression-list} contains the
-identification numbers of the control points.
+identification numbers of the control points. 
 
 @item BSpline ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a BSpline. The @var{expression-list} contains the identification
-numbers of the control points. BSplines are currently only available
-with the built-in kernel.
+Creates a cubic BSpline. The @var{expression-list} contains the
+identification numbers of the control points. Creates a periodic curve
+if the first and last points are identical.
 
 @item Spline ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a spline going through the points in @var{expression-list}. With
 the built-in geometry kernel this constructs a Catmull-Rom spline. With
-the OpenCASCADE kernel, this constructs a BSpline passing through the
-points with a given tolerance.
+the OpenCASCADE kernel, this constructs a C2 BSpline. Creates a periodic
+curve if the first and last points are identical.
 
 @item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} <, ...> @};
 Creates a circle arc. The three @var{expression}s on the right-hand-side
@@ -2979,11 +2980,13 @@ Partitions the mesh into @var{expression}, using current partitioning options.
 
 @item Point | Line @{ @var{expression-list} @} In Surface @{ @var{expression} @};
 Embed the point(s) or line(s) in the given surface. The surface mesh
-will conform to the mesh of the point(s) or lines(s). 
+will conform to the mesh of the point(s) or lines(s).
 
-@item Surface @{ @var{expression-list} @} In Volume @{ @var{expression} @};
-Embed the surface in the given volume. The volume mesh will conform to
-the mesh of the surface. 
+@item Point | Line | Surface @{ @var{expression-list} @} In Volume @{ @var{expression} @};
+Embed the point(s), line(s) or surface(s) in the given volume. The
+volume mesh will conform to the mesh of the corresponding point(s),
+line(s) or surface(s). This is only supported with the 3D Delaunay
+algorithm.
 
 @item Periodic Line @{ @var{expression-list} @} = @{ @var{expression-list} @} ;
 Force mesh of lines on the left-hand side (slaves) to match the mesh of
@@ -3029,6 +3032,10 @@ default value is 45).
 
 @item MeshAlgorithm Surface @{ @var{expression-list} @} = @var{expression};
 Forces the meshing algorithm per surface.
+
+@item Compound Line | Surface @{ @var{expression-list-or-all} @} ;
+Treats the given entities as a single entity when meshing, i.e. perform
+cross-patch meshing of the entities.
 
 @item Reverse Line | Surface @{ @var{expression-list-or-all} @} ;
 Reverses the mesh of the given line(s) or surface(s).
@@ -4188,7 +4195,7 @@ generalization). We number nodes in the following order:
 @item the volume internal nodes.
 @end itemize
 
-The numbering for internal nodes is recursive, ie. the numbering follows
+The numbering for internal nodes is recursive, i.e. the numbering follows
 that of the nodes of an embedded edge/face/volume of lower order. The
 higher order nodes are assumed to be equispaced. Edges and faces are
 numbered following the lowest order template that generates a single
@@ -5355,9 +5362,7 @@ clipboard.
 @enumerate
 @item Does Gmsh support NURBS curves/surfaces?
 
-Yes, but only via STEP, IGES or BREP model import (not in @file{.geo}
-files). Gmsh has to be compiled with OpenCASCADE support for this to
-work.
+Yes, but only with the OpenCASCADE kernel.
 
 @item Gmsh is very slow when I use many transformations (Translate, Rotate, Symmetry, Extrude, etc. ). What's wrong?
 

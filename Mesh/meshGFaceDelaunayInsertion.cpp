@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -42,7 +42,7 @@ void _printTris(char *name, ITERATOR it,  ITERATOR end, bidimMeshData * data)
     return;
   }
   fprintf(ff,"View\"test\"{\n");
-  while ( it != end ){
+  while (it != end){
     MTri3 *worst = *it;
     if (!worst->isDeleted()){
       if (data)
@@ -320,11 +320,9 @@ MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric, bidimMeshData * data, GF
       const double dy = base->getVertex(0)->y() - center[1];
       const double dz = base->getVertex(0)->z() - center[2];
       circum_radius = sqrt(dx * dx + dy * dy + dz * dz);
-      //      printf("%p %p %p %g %g %g %g %g %g %g %g %g circ %g lc %g\n",base->getVertex(0),base->getVertex(1),base->getVertex(2),pa[0],pa[1],pa[2],pb[0], pb[1],pb[2],pc[0],pc[1],pc[2],circum_radius,lc);
       circum_radius /= lc;
     }
     else {
-
       int index0 = data->getIndex (base->getVertex(0));
       int index1 = data->getIndex (base->getVertex(1));
       int index2 = data->getIndex (base->getVertex(2));
@@ -502,10 +500,10 @@ void recurFindCavityTangentPlane(std::list<edgeXface> &shell,
   }
 }
 
-///*********************
-/// T E S T : project the cavity on the tangent plane in case of bad mapping
+// T E S T : project the cavity on the tangent plane in case of bad mapping
 
-static void computeTangentPlane (GFace *gf, double center[2], SPoint3 &p, SVector3 &t1, SVector3 &t2)
+static void computeTangentPlane (GFace *gf, double center[2], SPoint3 &p,
+                                 SVector3 &t1, SVector3 &t2)
 {
   GPoint gp = gf->point(SPoint2(center[0],center[1]));
   p = SPoint3(gp.x(),gp.y(),gp.z());
@@ -554,7 +552,6 @@ bool findCavityTangentPlane(GFace *gf, double *center,
   }
   return true;
 }
-
 
 void recurFindCavity(std::vector<edgeXface> &shell, std::vector<MTri3*> &cavity,
                      MVertex *v, MTri3 *t)
@@ -731,8 +728,12 @@ bool insertVertexB (std::list<edgeXface> &shell,
     int index1 = data.getIndex (t->getVertex(1));
     int index2 = data.getIndex (t->getVertex(2));
     const double ONE_THIRD = 1./3.;
-    double lc = ONE_THIRD * (data.vSizes[index0] +data.vSizes[index1] +data.vSizes[index2]);
-    double lcBGM = ONE_THIRD * (data.vSizesBGM[index0] +data.vSizesBGM[index1] +data.vSizesBGM[index2]);
+    double lc = ONE_THIRD * (data.vSizes[index0] +
+                             data.vSizes[index1] +
+                             data.vSizes[index2]);
+    double lcBGM = ONE_THIRD * (data.vSizesBGM[index0] +
+                                data.vSizesBGM[index1] +
+                                data.vSizesBGM[index2]);
     double LL = Extend1dMeshIn2dSurfaces() ? std::min(lc, lcBGM) : lcBGM;
 
     MTri3 *t4;
@@ -749,7 +750,7 @@ bool insertVertexB (std::list<edgeXface> &shell,
 
     if ((d1 < LL * .55 || d2 < LL * .55 || cosv < -.9999) && !force) {
       onePointIsTooClose = true;
-      //      printf("%12.5E %12.5E %12.5E %12.5E \n",d1,d2,LL,cosv);
+      // printf("%12.5E %12.5E %12.5E %12.5E \n",d1,d2,LL,cosv);
     }
 
     newTris[k++] = t4;
@@ -765,7 +766,6 @@ bool insertVertexB (std::list<edgeXface> &shell,
     newVolume += ss;
     ++it;
   }
-
 
   if (fabs(oldVolume - newVolume) < 1.e-12 * oldVolume && !onePointIsTooClose){
     connectTris(new_cavity.begin(), new_cavity.end(),conn);
@@ -788,8 +788,10 @@ bool insertVertexB (std::list<edgeXface> &shell,
   // The cavity is NOT star shaped
   else{
 
-    //    printf("(%g %g) %22.15E %22.15E %d %d %d %d %d\n",v->x(),v->y(),oldVolume,  newVolume, shell.size(), onePointIsTooClose, cavity.size(), new_cavity.size(),allTets.size());
-    //    printf("12.5E 12.5E 12.5E 12.5E 12.5E\n",d1,d2,LL,cosv);
+    // printf("(%g %g) %22.15E %22.15E %d %d %d %d %d\n",
+    //        v->x(),v->y(),oldVolume,  newVolume, shell.size(),
+    //        onePointIsTooClose, cavity.size(), new_cavity.size(),allTets.size());
+    // printf("12.5E 12.5E 12.5E 12.5E 12.5E\n",d1,d2,LL,cosv);
 
     ittet = cavity.begin();
     ittete = cavity.end();
@@ -797,15 +799,17 @@ bool insertVertexB (std::list<edgeXface> &shell,
       (*ittet)->setDeleted(false);
       ++ittet;
     }
-    //    _printTris("cavity.pos", cavity.begin(), cavity.end(), Us, Vs, false);
-    //    _printTris("new_cavity.pos", new_cavity.begin(), new_cavity.end(), Us, Vs, false);
-    //    _printTris("newTris.pos", &newTris[0], newTris+shell.size(), Us, Vs, false);
-    //    _printTris("allTris.pos", allTets.begin(),allTets.end(), Us, Vs, false);
-    for (unsigned int i = 0; i < shell.size(); i++) {delete newTris[i]->tri(), delete newTris[i];}
+    // _printTris("cavity.pos", cavity.begin(), cavity.end(), Us, Vs, false);
+    // _printTris("new_cavity.pos", new_cavity.begin(), new_cavity.end(), Us, Vs, false);
+    // _printTris("newTris.pos", &newTris[0], newTris+shell.size(), Us, Vs, false);
+    // _printTris("allTris.pos", allTets.begin(),allTets.end(), Us, Vs, false);
+    for (unsigned int i = 0; i < shell.size(); i++) {
+      delete newTris[i]->tri(), delete newTris[i];
+    }
     delete [] newTris;
-    //    throw;
-    //    double t2 = Cpu();
-    //    DT_INSERT_VERTEX += t2-t1;
+    // throw;
+    // double t2 = Cpu();
+    // DT_INSERT_VERTEX += t2-t1;
     return false;
   }
 }
@@ -836,8 +840,8 @@ bool insertVertex(bool force, GFace *gf, MVertex *v, double *param , MTri3 *t,
 		       oneNewTriangle);
 }
 
-
-bool invMapXY (MTriangle *t, MVertex *v){
+bool invMapXY(MTriangle *t, MVertex *v)
+{
   MVertex *v0 = t->getVertex(0);
   MVertex *v1 = t->getVertex(1);
   MVertex *v2 = t->getVertex(2);
@@ -862,7 +866,8 @@ bool invMapXY (MTriangle *t, MVertex *v){
 
 }
 
-static MTri3* search4Triangle (MTri3 *t, MVertex *v, int maxx, int &ITER) {
+static MTri3* search4Triangle(MTri3 *t, MVertex *v, int maxx, int &ITER)
+{
   bool inside =  invMapXY(t->tri(), v);
   SPoint3 q1 (v->x(),v->y(),0);
   if (inside) return t;
@@ -890,13 +895,12 @@ static MTri3* search4Triangle (MTri3 *t, MVertex *v, int maxx, int &ITER) {
   return 0;
 }
 
-static MTri3* search4Triangle (MTri3 *t, double pt[2], bidimMeshData & data,
-			       std::set<MTri3*,compareTri3Ptr> &AllTris, double uv[2], bool force = false) {
-
+static MTri3* search4Triangle(MTri3 *t, double pt[2], bidimMeshData & data,
+                              std::set<MTri3*,compareTri3Ptr> &AllTris,
+                              double uv[2], bool force = false)
+{
   //  bool inside = t->inCircumCircle(pt);
   bool inside =  invMapUV(t->tri(), pt, data, uv, 1.e-8);
-
-
 
   //  printf("inside = %d (%g %g)\n",inside,pt[0],pt[1]);
   if (inside) return t;
@@ -942,10 +946,6 @@ static MTri3* search4Triangle (MTri3 *t, double pt[2], bidimMeshData & data,
   }
   return 0;
 }
-
-
-
-///*********************
 
 static bool insertAPoint(GFace *gf,
 			 std::set<MTri3*,compareTri3Ptr>::iterator it,
@@ -1006,7 +1006,8 @@ static bool insertAPoint(GFace *gf,
     int index0 = data.getIndex(ptin->tri()->getVertex(0));
     int index1 = data.getIndex(ptin->tri()->getVertex(1));
     int index2 = data.getIndex(ptin->tri()->getVertex(2));
-    lc1 = (1. - uv[0] - uv[1]) * data.vSizes[index0] + uv[0] * data.vSizes[index1] + uv[1] * data.vSizes[index2];
+    lc1 = (1. - uv[0] - uv[1]) * data.vSizes[index0] +
+      uv[0] * data.vSizes[index1] + uv[1] * data.vSizes[index2];
     if (CTX::instance()->mesh.algo2d == ALGO_2D_BAMG)
       lc = 1.;
     else
@@ -1018,30 +1019,33 @@ static bool insertAPoint(GFace *gf,
 
     //    double t1 = Cpu();
 
-    if(!p.succeeded() || !insertVertexB
-       (shell, cavity,false, gf, v, center, ptin, AllTris,ActiveTris, data , metric, oneNewTriangle) ) {
+    if(!p.succeeded() || !insertVertexB(shell, cavity,false, gf, v, center, ptin,
+                                        AllTris,ActiveTris, data , metric,
+                                        oneNewTriangle)) {
       Msg::Debug("Point %g %g cannot be inserted because %d",
 		 center[0], center[1], p.succeeded() );
-      //      printf("Point %g %g cannot be inserted because %d",
-      //	     center[0], center[1], p.succeeded() );
+      // printf("Point %g %g cannot be inserted because %d",
+      //        center[0], center[1], p.succeeded() );
       AllTris.erase(it);
       worst->forceRadius(-1);
       AllTris.insert(worst);
       delete v;
-      for (std::list<MTri3*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc)(*itc)->setDeleted(false);
+      for (std::list<MTri3*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc)
+        (*itc)->setDeleted(false);
       return false;
     }
     else {
-      //      printf("done ! %d\n",AllTris.size());
-      //      double t2 = Cpu();
-      //      DT_INSERT_VERTEX += (t2-t1);
+      // printf("done ! %d\n",AllTris.size());
+      // double t2 = Cpu();
+      // DT_INSERT_VERTEX += (t2-t1);
       gf->mesh_vertices.push_back(v);
       return true;
     }
   }
   else {
     //    MTriangle *base = worst->tri();
-    for (std::list<MTri3*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc)(*itc)->setDeleted(false);
+    for (std::list<MTri3*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc)
+      (*itc)->setDeleted(false);
     AllTris.erase(it);
     worst->forceRadius(0);
     AllTris.insert(worst);
@@ -1138,7 +1142,8 @@ void bowyerWatson(GFace *gf, int MAXPNT,
 */
 
 double lengthInfniteNorm(const double p[2], const double q[2],
-			 const double quadAngle){
+			 const double quadAngle)
+{
   double xp =  p[0] * cos(quadAngle) + p[1] * sin(quadAngle);
   double yp = -p[0] * sin(quadAngle) + p[1] * cos(quadAngle);
   double xq =  q[0] * cos(quadAngle) + q[1] * sin(quadAngle);
@@ -1150,7 +1155,8 @@ double lengthInfniteNorm(const double p[2], const double q[2],
   return std::max(xmax-xmin,ymax-ymin);
 }
 
-void circumCenterInfinite (MTriangle *base, double quadAngle,bidimMeshData & data, double *x)
+void circumCenterInfinite (MTriangle *base, double quadAngle,
+                           bidimMeshData & data, double *x)
 {
   int index0 = data.getIndex(base->getVertex(0));
   int index1 = data.getIndex(base->getVertex(1));
@@ -1204,12 +1210,12 @@ static double lengthMetric(const double p[2], const double q[2],
 
 */
 
-double optimalPointFrontal (GFace *gf,
-			    MTri3* worst,
-			    int active_edge,
-			    bidimMeshData & data,
-			    double newPoint[2],
-			    double metric[3])
+double optimalPointFrontal(GFace *gf,
+                           MTri3* worst,
+                           int active_edge,
+                           bidimMeshData & data,
+                           double newPoint[2],
+                           double metric[3])
 {
   double center[2],r2;
   MTriangle *base = worst->tri();
@@ -1284,12 +1290,12 @@ double optimalPointFrontal (GFace *gf,
    and the edge length
 */
 
-bool optimalPointFrontalB (GFace *gf,
-			   MTri3* worst,
-			   int active_edge,
-			   bidimMeshData & data,
-			   double newPoint[2],
-			   double metric[3])
+bool optimalPointFrontalB(GFace *gf,
+                          MTri3* worst,
+                          int active_edge,
+                          bidimMeshData & data,
+                          double newPoint[2],
+                          double metric[3])
 {
   // as a starting point, let us use the "fast algo"
   double d = optimalPointFrontal (gf,worst,active_edge,data,newPoint,metric);
@@ -1755,9 +1761,10 @@ void bowyerWatsonParallelograms(GFace *gf,
         //      buildMetric(gf, newPoint, metrics[i], metric);
         buildMetric(gf, newPoint, metric);
 
-        bool success = insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA , AllTris, 0, oneNewTriangle, &oneNewTriangle);
+        bool success = insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA,
+                                    AllTris, 0, oneNewTriangle, &oneNewTriangle);
         if (!success) oneNewTriangle = 0;
-        //      if (!success)printf("success %d %d\n",success,AllTris.size());
+        // if (!success)printf("success %d %d\n",success,AllTris.size());
         i++;
       }
 
@@ -1772,7 +1779,7 @@ void bowyerWatsonParallelograms(GFace *gf,
           else
             itd++;
         }
-        //      Msg::Info("cleaning up the memory %d -> %d", n1, AllTris.size());
+        // Msg::Info("cleaning up the memory %d -> %d", n1, AllTris.size());
       }
 
 
@@ -1781,12 +1788,13 @@ void bowyerWatsonParallelograms(GFace *gf,
     double t2 = Cpu();
     double DT = (double)(t2-t1);
     if (packed.size())
-      printf("points inserted DT %12.5E points per minute : %12.5E %d global searches %d searches per insertion\n",
-          DT,60.*packed.size()/DT,N_GLOBAL_SEARCH, (int)(N_SEARCH/packed.size()));
+      printf("points inserted DT %12.5E points per minute : "
+             "%12.5E %d global searches %d searches per insertion\n",
+             DT,60.*packed.size()/DT,N_GLOBAL_SEARCH, (int)(N_SEARCH/packed.size()));
     transferDataStructure(gf, AllTris, DATA);
     backgroundMesh::unset();
 #if defined(HAVE_ANN)
-  if (!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine){
+    if (!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine){
       FieldManager *fields = gf->model()->getFields();
       BoundaryLayerField *blf = 0;
       if(fields->getBoundaryLayerField() > 0){
@@ -1799,11 +1807,11 @@ void bowyerWatsonParallelograms(GFace *gf,
   }
 
 void bowyerWatsonParallelogramsConstrained(GFace *gf,
-		  std::set<MVertex*> constr_vertices,
-		  std::map<MVertex* , MVertex*>* equivalence,
-		  std::map<MVertex*, SPoint2> * parametricCoordinates)
+                                           std::set<MVertex*> constr_vertices,
+                                           std::map<MVertex* , MVertex*>* equivalence,
+                                           std::map<MVertex*, SPoint2> * parametricCoordinates)
 {
-	std::cout<<"   entered bowyerWatsonParallelogramsConstrained"<<std::endl;
+  std::cout<<"   entered bowyerWatsonParallelogramsConstrained"<<std::endl;
   std::set<MTri3*,compareTri3Ptr> AllTris;
   bidimMeshData DATA(equivalence, parametricCoordinates);
   std::vector<MVertex*> packed;
@@ -1850,9 +1858,10 @@ void bowyerWatsonParallelogramsConstrained(GFace *gf,
       //      buildMetric(gf, newPoint, metrics[i], metric);
       buildMetric(gf, newPoint, metric);
 
-      bool success = insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA , AllTris, 0, oneNewTriangle, &oneNewTriangle);
+      bool success = insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA,
+                                  AllTris, 0, oneNewTriangle, &oneNewTriangle);
       if (!success) oneNewTriangle = 0;
-	//      if (!success)printf("success %d %d\n",success,AllTris.size());
+	// if (!success)printf("success %d %d\n",success,AllTris.size());
       i++;
     }
     std::cout<<"   out of first if"<<std::endl;
@@ -1878,17 +1887,21 @@ void bowyerWatsonParallelogramsConstrained(GFace *gf,
   //  printf("%d vertices \n",(int)packed.size());
   //double t2 = Cpu();
   //double DT = t2-t1;
-  //if (packed.size())printf("points inserted DT %12.5E points per minut : %12.5E %d global searches %d seachs per insertion\n",DT,60.*packed.size()/DT,N_GLOBAL_SEARCH,N_SEARCH / packed.size());
+  //if (packed.size())
+  //  printf("points inserted DT %12.5E points per minut : "
+  //         "%12.5E %d global searches %d seachs per insertion\n",
+  //          DT,60.*packed.size()/DT,N_GLOBAL_SEARCH,N_SEARCH / packed.size());
   transferDataStructure(gf, AllTris, DATA);
   std::cout<<"out of transferDataStructure"<<std::endl;
   std::cout<<"testing all vertices of gf"<<std::endl;
   for (unsigned int i = 0; i < gf->getNumMeshVertices();i++){
-	  MVertex* vtest = gf->getMeshVertex(i);
-      std::cout<<"going to test out parameterisation of the point after pacjing and everything"<<std::endl;
-      double para0, para1;
-      vtest->getParameter(0,para0);
-      vtest->getParameter(1,para1);
-      std::cout<<"            point tested: para 1 "<<para0<<" and para 2 "<<para1<<std::endl;
+    MVertex* vtest = gf->getMeshVertex(i);
+    std::cout<<"going to test out parameterisation of the point after packing and everything"
+             <<std::endl;
+    double para0, para1;
+    vtest->getParameter(0,para0);
+    vtest->getParameter(1,para1);
+    std::cout<<"            point tested: para 1 "<<para0<<" and para 2 "<<para1<<std::endl;
   }
   backgroundMesh::unset();
 #if defined(HAVE_ANN)
@@ -1905,275 +1918,282 @@ void bowyerWatsonParallelogramsConstrained(GFace *gf,
   std::cout<<"out of Everything"<<std::endl;
 }
 
-
-  static void initialSquare(std::vector<MVertex*> &v,
-      MVertex *box[4],
-      std::vector<MTri3*> &t){
-    SBoundingBox3d bbox ;
-    for (size_t i=0;i<v.size();i++){
-      MVertex *pv = v[i];
-      bbox += SPoint3(pv->x(),pv->y(),pv->z());
-    }
-    bbox *= 1.3;
-    box[0] = new MVertex (bbox.min().x(),bbox.min().y(),0);
-    box[1] = new MVertex (bbox.max().x(),bbox.min().y(),0);
-    box[2] = new MVertex (bbox.max().x(),bbox.max().y(),0);
-    box[3] = new MVertex (bbox.min().x(),bbox.max().y(),0);
-    MTriangle *t0 = new MTriangle (box[0],box[1],box[2]);
-    MTriangle *t1 = new MTriangle (box[2],box[3],box[0]);
-    t.push_back(new MTri3(t0,0.0));
-    t.push_back(new MTri3(t1,0.0));
-    connectTriangles(t);
+static void initialSquare(std::vector<MVertex*> &v,
+                          MVertex *box[4],
+                          std::vector<MTri3*> &t)
+{
+  SBoundingBox3d bbox ;
+  for (size_t i=0;i<v.size();i++){
+    MVertex *pv = v[i];
+    bbox += SPoint3(pv->x(),pv->y(),pv->z());
   }
+  bbox *= 1.3;
+  box[0] = new MVertex (bbox.min().x(),bbox.min().y(),0);
+  box[1] = new MVertex (bbox.max().x(),bbox.min().y(),0);
+  box[2] = new MVertex (bbox.max().x(),bbox.max().y(),0);
+  box[3] = new MVertex (bbox.min().x(),bbox.max().y(),0);
+  MTriangle *t0 = new MTriangle (box[0],box[1],box[2]);
+  MTriangle *t1 = new MTriangle (box[2],box[3],box[0]);
+  t.push_back(new MTri3(t0,0.0));
+  t.push_back(new MTri3(t1,0.0));
+  connectTriangles(t);
+}
 
 
-  MTri3 * getTriToBreak (MVertex *v, std::vector<MTri3*> &t, int &NB_GLOBAL_SEARCH, int &ITER){
-    // last inserted is used as starting point
-    // we know it is not deleted
-    unsigned int k = t.size() - 1;
-    while(t[k]->isDeleted()){
-      k--;
-    }
-    MTri3 *start = t[k];
-    start = search4Triangle (start,v,(int)t.size(),ITER);
-    if (start)return start;
-    //  printf("Global Search has to be done\n");
-    NB_GLOBAL_SEARCH++;
-    for (size_t i = 0;i<t.size();i++){
-      if (!t[i]->isDeleted() && inCircumCircleXY(t[i]->tri(),v))return t[i];
-    }
-    return 0;
+MTri3 * getTriToBreak(MVertex *v, std::vector<MTri3*> &t,
+                      int &NB_GLOBAL_SEARCH, int &ITER)
+{
+  // last inserted is used as starting point
+  // we know it is not deleted
+  unsigned int k = t.size() - 1;
+  while(t[k]->isDeleted()){
+    k--;
   }
+  MTri3 *start = t[k];
+  start = search4Triangle (start,v,(int)t.size(),ITER);
+  if (start)return start;
+  //  printf("Global Search has to be done\n");
+  NB_GLOBAL_SEARCH++;
+  for (size_t i = 0;i<t.size();i++){
+    if (!t[i]->isDeleted() && inCircumCircleXY(t[i]->tri(),v))return t[i];
+  }
+  return 0;
+}
 
-  bool triOnBox (MTriangle *t, MVertex *box[4]){
-    for (size_t i = 0;i<3;i++){
-      for (size_t j = 0;j<4;j++){
-        if (t->getVertex(i) == box[j])
-          return true;
+bool triOnBox (MTriangle *t, MVertex *box[4])
+{
+  for (size_t i = 0;i<3;i++){
+    for (size_t j = 0;j<4;j++){
+      if (t->getVertex(i) == box[j])
+        return true;
+    }
+  }
+  return false;
+}
+
+// vertices are supposed to be sitting in the XY plane !
+
+void recoverEdges (std::vector<MTri3*> &t, std::vector<MEdge> &edges);
+
+void delaunayMeshIn2D(std::vector<MVertex*> &v,
+                      std::vector<MTriangle*> &result,
+                      bool removeBox,
+                      std::vector<MEdge> *edgesToRecover,
+                      bool hilbertSort)
+{
+  std::vector<MTri3*> t;
+  t.reserve (v.size()*2);
+  std::vector<edgeXface> conn;
+  std::vector<edgeXface> shell;
+  std::vector<MTri3*> cavity;
+  MVertex *box[4];
+  initialSquare (v,box,t);
+
+  int NB_GLOBAL_SEARCH = 0;
+  double AVG_ITER = 0;
+  double AVG_CAVSIZE = 0;
+
+  double t1 = Cpu();
+
+  //  Msg::Info("Delaunay 2D SORTING");
+  if(hilbertSort) SortHilbert(v);
+
+  double ta=0,tb=0,tc=0,td=0,T;
+  //  Msg::Info("Delaunay 2D INSERTING");
+  for (size_t i=0;i<v.size();i++){
+    MVertex *pv = v[i];
+
+    int NITER = 0;
+    T = Cpu();
+    MTri3 * found = getTriToBreak (pv,t,NB_GLOBAL_SEARCH,NITER);
+    ta += Cpu()-T;
+    AVG_ITER += (double)NITER;
+    if(!found) {
+      Msg::Error("Cannot insert a point in 2D Delaunay");
+      continue;
+    }
+    shell.clear();
+    cavity.clear();
+
+    T = Cpu();
+    recurFindCavity(shell, cavity, pv, found);
+    AVG_CAVSIZE += (double)cavity.size();
+    tb += Cpu()-T;
+    //double V = 0.0;
+    //for (unsigned int k=0;k<cavity.size();k++)V+=fabs(cavity[k]->tri()->getVolume());
+
+    std::vector<MTri3*> extended_cavity;
+    //double Vb = 0.0;
+
+    T = Cpu();
+    for (unsigned int count = 0; count < shell.size(); count++){
+      const edgeXface &fxt = shell[count];
+      MTriangle *tr;
+      MTri3 *t3;
+      MVertex *v0 = fxt.v[0];
+      MVertex *v1 = fxt.v[1];
+      MTri3 *otherSide = fxt.t1->getNeigh(fxt.i1);
+      if (count < cavity.size()){
+        t3 = cavity[count];
+        tr = t3->tri() ;
+        tr->setVertex(0,v0);
+        tr->setVertex(1,v1);
+        tr->setVertex(2,pv);
+      }
+      else{
+        tr = new MTriangle(v0,v1,pv);
+        t3 = new MTri3(tr, 0.0);
+        t.push_back(t3);
+      }
+      //Vb+= fabs(tr->getVolume());
+      extended_cavity.push_back(t3);
+      if (otherSide)
+        extended_cavity.push_back(otherSide);
+    }
+    tc += Cpu()-T;
+    //if (fabs(Vb-V) > 1.e-8 * (Vb+V))printf("%12.5E %12.5E\n",Vb,V);
+
+    for (unsigned int k=0;k<std::min(cavity.size(),shell.size());k++){
+      cavity[k]->setDeleted(false);
+      for (unsigned int l=0;l<3;l++){
+        cavity[k]->setNeigh(l,0);
       }
     }
+    T = Cpu();
+    connectTris(extended_cavity.begin(),extended_cavity.end(),conn);
+    td += Cpu()-T;
+  }
+
+  double t2 = Cpu();
+  Msg::Debug("Delaunay 2D done for %d points : CPU = %g, %d global searches, "
+             "AVG walk size %g , AVG cavity size %g",
+             v.size(), t2-t1,NB_GLOBAL_SEARCH,1.+AVG_ITER/v.size(),
+             AVG_CAVSIZE/v.size());
+
+  if (edgesToRecover)recoverEdges (t,*edgesToRecover);
+
+  for (size_t i = 0;i<t.size();i++){
+    if (t[i]->isDeleted() || (removeBox && triOnBox (t[i]->tri(),box))) delete t[i]->tri();
+    else {
+      result.push_back(t[i]->tri());
+    }
+    delete t[i];
+  }
+
+  if (removeBox){for (int i=0;i<4;i++)delete box[i];}
+  else {for (int i=0;i<4;i++)v.push_back(box[i]);}
+}
+
+bool swapedge (MVertex *v1 ,MVertex *v2, MVertex *v3, MVertex *v4, MTri3* t1,
+               int iLocalEdge)
+{
+  MTri3 *t2 = t1->getNeigh(iLocalEdge);
+  if(!t2) return false;
+
+  MTriangle *t1b = new MTriangle(v2, v3, v4);
+  MTriangle *t2b = new MTriangle(v4, v3, v1);
+  double BEFORE = t1->tri()->getVolume()+t2->tri()->getVolume();
+  double AFTER  = t1b->getVolume()+t2b->getVolume();
+  // printf("swapping %d %d %d %d %g %g\n",
+  //        v1->getNum(),v2->getNum(),v3->getNum(),v4->getNum(),BEFORE,AFTER);
+  if (fabs(BEFORE-AFTER)/BEFORE > 1.e-8){
+    delete t1b;
+    delete t2b;
     return false;
   }
+  //  printf("volumes ok\n");
 
-  // vertices are supposed to be sitting in the XY plane !
+  delete t1->tri();
+  delete t2->tri();
+  t1->setTri(t1b);
+  t2->setTri(t2b);
 
-  void recoverEdges (std::vector<MTri3*> &t, std::vector<MEdge> &edges);
-
-  void delaunayMeshIn2D(std::vector<MVertex*> &v,
-      std::vector<MTriangle*> &result,
-      bool removeBox,
-      std::vector<MEdge> *edgesToRecover,
-      bool hilbertSort)
-  {
-    std::vector<MTri3*> t;
-    t.reserve (v.size()*2);
-    std::vector<edgeXface> conn;
-    std::vector<edgeXface> shell;
-    std::vector<MTri3*> cavity;
-    MVertex *box[4];
-    initialSquare (v,box,t);
-
-    int NB_GLOBAL_SEARCH = 0;
-    double AVG_ITER = 0;
-    double AVG_CAVSIZE = 0;
-
-    double t1 = Cpu();
-
-    //  Msg::Info("Delaunay 2D SORTING");
-    if(hilbertSort) SortHilbert(v);
-
-    double ta=0,tb=0,tc=0,td=0,T;
-    //  Msg::Info("Delaunay 2D INSERTING");
-    for (size_t i=0;i<v.size();i++){
-      MVertex *pv = v[i];
-
-      int NITER = 0;
-      T = Cpu();
-      MTri3 * found = getTriToBreak (pv,t,NB_GLOBAL_SEARCH,NITER);
-      ta += Cpu()-T;
-      AVG_ITER += (double)NITER;
-      if(!found) {
-        Msg::Error("Cannot insert a point in 2D Delaunay");
-        continue;
-      }
-      shell.clear();
-      cavity.clear();
-
-      T = Cpu();
-      recurFindCavity(shell, cavity, pv, found);
-      AVG_CAVSIZE += (double)cavity.size();
-      tb += Cpu()-T;
-      //double V = 0.0;
-      //for (unsigned int k=0;k<cavity.size();k++)V+=fabs(cavity[k]->tri()->getVolume());
-
-      std::vector<MTri3*> extended_cavity;
-      //double Vb = 0.0;
-
-      T = Cpu();
-      for (unsigned int count = 0; count < shell.size(); count++){
-        const edgeXface &fxt = shell[count];
-        MTriangle *tr;
-        MTri3 *t3;
-        MVertex *v0 = fxt.v[0];
-        MVertex *v1 = fxt.v[1];
-        MTri3 *otherSide = fxt.t1->getNeigh(fxt.i1);
-        if (count < cavity.size()){
-          t3 = cavity[count];
-          tr = t3->tri() ;
-          tr->setVertex(0,v0);
-          tr->setVertex(1,v1);
-          tr->setVertex(2,pv);
-        }
-        else{
-          tr = new MTriangle(v0,v1,pv);
-          t3 = new MTri3(tr, 0.0);
-          t.push_back(t3);
-        }
-        //Vb+= fabs(tr->getVolume());
-        extended_cavity.push_back(t3);
-        if (otherSide)
-          extended_cavity.push_back(otherSide);
-      }
-      tc += Cpu()-T;
-      //if (fabs(Vb-V) > 1.e-8 * (Vb+V))printf("%12.5E %12.5E\n",Vb,V);
-
-      for (unsigned int k=0;k<std::min(cavity.size(),shell.size());k++){
-        cavity[k]->setDeleted(false);
-        for (unsigned int l=0;l<3;l++){
-          cavity[k]->setNeigh(l,0);
-        }
-      }
-      T = Cpu();
-      connectTris(extended_cavity.begin(),extended_cavity.end(),conn);
-      td += Cpu()-T;
-    }
-
-    double t2 = Cpu();
-    Msg::Debug("Delaunay 2D done for %d points : CPU = %g, %d global searches, AVG walk size %g , AVG cavity size %g",
-        v.size(), t2-t1,NB_GLOBAL_SEARCH,1.+AVG_ITER/v.size(),AVG_CAVSIZE/v.size());
-
-    if (edgesToRecover)recoverEdges (t,*edgesToRecover);
-
-    for (size_t i = 0;i<t.size();i++){
-      if (t[i]->isDeleted() || (removeBox && triOnBox (t[i]->tri(),box))) delete t[i]->tri();
-      else {
-        result.push_back(t[i]->tri());
-      }
-      delete t[i];
-    }
-
-    if (removeBox){for (int i=0;i<4;i++)delete box[i];}
-    else {for (int i=0;i<4;i++)v.push_back(box[i]);}
+  std::set<MTri3*> cavity;
+  cavity.insert(t1);
+  cavity.insert(t2);
+  for(int i = 0; i < 3; i++){
+    if(t1->getNeigh(i))
+      cavity.insert(t1->getNeigh(i));
+    if(t2->getNeigh(i))
+      cavity.insert(t2->getNeigh(i));
   }
+  std::vector<edgeXface> conn;
+  connectTris(cavity.begin(), cavity.end(), conn);
+  return true;
+}
 
-  bool swapedge (MVertex *v1 ,MVertex *v2, MVertex *v3, MVertex *v4, MTri3* t1, int iLocalEdge){
-    MTri3 *t2 = t1->getNeigh(iLocalEdge);
-    if(!t2) return false;
+bool diffend (MVertex *v1, MVertex *v2, MVertex *p1, MVertex *p2)
+{
+  if (v1 == p1 || v2 == p1 || v1 == p2 || v2 == p2)return false;
+  return true;
+}
 
-    MTriangle *t1b = new MTriangle(v2, v3, v4);
-    MTriangle *t2b = new MTriangle(v4, v3, v1);
-    double BEFORE = t1->tri()->getVolume()+t2->tri()->getVolume();
-    double AFTER  = t1b->getVolume()+t2b->getVolume();
-    //  printf("swapping %d %d %d %d %g %g\n",v1->getNum(),v2->getNum(),v3->getNum(),v4->getNum(),BEFORE,AFTER);
-    if (fabs(BEFORE-AFTER)/BEFORE > 1.e-8){
-      delete t1b;
-      delete t2b;
-      return false;
-    }
-    //  printf("volumes ok\n");
-
-    delete t1->tri();
-    delete t2->tri();
-    t1->setTri(t1b);
-    t2->setTri(t2b);
-
-    std::set<MTri3*> cavity;
-    cavity.insert(t1);
-    cavity.insert(t2);
-    for(int i = 0; i < 3; i++){
-      if(t1->getNeigh(i))
-        cavity.insert(t1->getNeigh(i));
-      if(t2->getNeigh(i))
-        cavity.insert(t2->getNeigh(i));
-    }
-    std::vector<edgeXface> conn;
-    connectTris(cavity.begin(), cavity.end(), conn);
-    return true;
-  }
-
-  bool diffend (MVertex *v1, MVertex *v2, MVertex *p1, MVertex *p2){
-    if (v1 == p1 || v2 == p1 || v1 == p2 || v2 == p2)return false;
-    return true;
-  }
-
-  /*
-
-   */
-
-  static bool recoverEdgeBySwaps (std::vector<MTri3*> &t, MVertex *mv1, MVertex *mv2, std::vector<MEdge> &edges){
-
-    SPoint3 pv1 (mv1->x(),mv1->y(),0);
-    SPoint3 pv2 (mv2->x(),mv2->y(),0);
-    double xcc[2];
-    for (unsigned int i=0;i<t.size();i++){
-      for (unsigned int j=0;j<3;j++){
-        MVertex *v1 = t[i]->tri()->getVertex((j+2)%3);
-        MVertex *v2 = t[i]->tri()->getVertex(j);
-        MVertex *v3 = t[i]->tri()->getVertex((j+1)%3);
-        MVertex *o  = t[i]->otherSide(j);
-        if (o){
-          SPoint3 p1 (v1->x(),v1->y(),0);
-          SPoint3 p2 (v2->x(),v2->y(),0);
-          SPoint3 p3 (v3->x(),v3->y(),0);
-          SPoint3 po (o->x(),o->y(),0);
-          if (diffend(v1,v2,mv1,mv2)){
-            if (intersection_segments (p1, p2, pv1, pv2,xcc)){
-              //	    if (std::binary_search(edges.begin(),edges.end(),MEdge(v1,v2),Less_Edge)){
-              //	      Msg::Error("1D mesh self intersects");
-              //	    }
-              if (!intersection_segments(po, p3, pv1, pv2,xcc) || (v3 == mv1 || o == mv1 || v3 == mv2 || o == mv2)){
-                if(swapedge (v1,v2,v3,o,t[i],j))return true;
-              }
+static bool recoverEdgeBySwaps (std::vector<MTri3*> &t, MVertex *mv1, MVertex *mv2,
+                                std::vector<MEdge> &edges)
+{
+  SPoint3 pv1 (mv1->x(),mv1->y(),0);
+  SPoint3 pv2 (mv2->x(),mv2->y(),0);
+  double xcc[2];
+  for (unsigned int i=0;i<t.size();i++){
+    for (unsigned int j=0;j<3;j++){
+      MVertex *v1 = t[i]->tri()->getVertex((j+2)%3);
+      MVertex *v2 = t[i]->tri()->getVertex(j);
+      MVertex *v3 = t[i]->tri()->getVertex((j+1)%3);
+      MVertex *o  = t[i]->otherSide(j);
+      if (o){
+        SPoint3 p1 (v1->x(),v1->y(),0);
+        SPoint3 p2 (v2->x(),v2->y(),0);
+        SPoint3 p3 (v3->x(),v3->y(),0);
+        SPoint3 po (o->x(),o->y(),0);
+        if (diffend(v1,v2,mv1,mv2)){
+          if (intersection_segments (p1, p2, pv1, pv2,xcc)){
+            //if (std::binary_search(edges.begin(),edges.end(),MEdge(v1,v2),Less_Edge)){
+            //  Msg::Error("1D mesh self intersects");
+            //	    }
+            if (!intersection_segments(po, p3, pv1, pv2,xcc) ||
+                (v3 == mv1 || o == mv1 || v3 == mv2 || o == mv2)){
+              if(swapedge (v1,v2,v3,o,t[i],j))return true;
             }
           }
         }
       }
     }
-    return false;
+  }
+  return false;
+}
+
+// recover the edges by edge swapping in the triangulation.
+// edges are not supposed to
+
+void recoverEdges (std::vector<MTri3*> &t, std::vector<MEdge> &edges)
+{
+  Less_Edge le;
+  std::sort(edges.begin(),edges.end(),le);
+  std::set<MEdge,Less_Edge> setOfMeshEdges;
+  for (size_t i = 0;i<t.size();i++){
+    for (int j=0;j<3;j++){
+      setOfMeshEdges.insert(t[i]->tri()->getEdge(j));
+    }
   }
 
-  // recover the edges by edge swapping in the triangulation.
-  // edges are not supposed to
+  std::vector<MEdge> edgesToRecover;
+  for (unsigned int i=0;i<edges.size();i++){
+    if (setOfMeshEdges.find(edges[i])==setOfMeshEdges.end())
+      edgesToRecover.push_back(edges[i]);
+  }
 
-  void recoverEdges (std::vector<MTri3*> &t, std::vector<MEdge> &edges)
-  {
-    Less_Edge le;
-    std::sort(edges.begin(),edges.end(),le);
-    std::set<MEdge,Less_Edge> setOfMeshEdges;
-    for (size_t i = 0;i<t.size();i++){
-      for (int j=0;j<3;j++){
-        setOfMeshEdges.insert(t[i]->tri()->getEdge(j));
-      }
-    }
-
-    std::vector<MEdge> edgesToRecover;
-    for (unsigned int i=0;i<edges.size();i++){
-      if (setOfMeshEdges.find(edges[i])==setOfMeshEdges.end())
-        edgesToRecover.push_back(edges[i]);
-    }
-
-    Msg::Info("%d edges to recover among %d edges",edgesToRecover.size(),edges.size());
-    //  int iter = 0;
-    //  char name[256];
-    //  sprintf(name,"iter%d.pos",iter++);
-    //  _printTris (name, t.begin(),t.end(),0);
-    for (unsigned int i=0;i<edgesToRecover.size();i++){
-      MVertex *mstart = edgesToRecover[i].getVertex(0);
-      MVertex *mend = edgesToRecover[i].getVertex(1);
-      Msg::Info("recovering edge %d %d",mstart->getNum(),mend->getNum());
-      //int iter;
-      while(recoverEdgeBySwaps (t, mstart, mend,edges)) {
-        //iter ++;
-      }
+  Msg::Info("%d edges to recover among %d edges",edgesToRecover.size(),edges.size());
+  //  int iter = 0;
+  //  char name[256];
+  //  sprintf(name,"iter%d.pos",iter++);
+  //  _printTris (name, t.begin(),t.end(),0);
+  for (unsigned int i=0;i<edgesToRecover.size();i++){
+    MVertex *mstart = edgesToRecover[i].getVertex(0);
+    MVertex *mend = edgesToRecover[i].getVertex(1);
+    Msg::Info("recovering edge %d %d",mstart->getNum(),mend->getNum());
+    //int iter;
+    while(recoverEdgeBySwaps (t, mstart, mend,edges)) {
+      //iter ++;
     }
   }
+}

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -42,19 +42,17 @@ static double max_edge_curvature(const GVertex *gv)
   return val;
 }
 
-// the mesh vertex is classified on a model vertex.  we compute the
-// maximum of the curvature of model faces surrounding this point if
-// it is classified on a model edge, we do the same for all model
-// faces surrounding it if it is on a model face, we compute the
-// curvature at this location
-
+// the mesh vertex is classified on a model vertex.  we compute the maximum of
+// the curvature of model faces surrounding this point if it is classified on a
+// model edge, we do the same for all model faces surrounding it if it is on a
+// model face, we compute the curvature at this location
 static double LC_MVertex_CURV(GEntity *ge, double U, double V)
 {
   double Crv = 0;
   switch(ge->dim()){
   case 0:
     Crv = max_edge_curvature((const GVertex *)ge);
-    //Crv = std::max(max_surf_curvature_vertex((const GVertex *)ge), Crv);
+    // Crv = std::max(max_surf_curvature_vertex((const GVertex *)ge), Crv);
     // Crv = max_surf_curvature((const GVertex *)ge);
     break;
   case 1:
@@ -62,7 +60,7 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
       GEdge *ged = (GEdge *)ge;
       Crv = ged->curvature(U);
       Crv = std::max(Crv, max_surf_curvature(ged, U));
-      //      printf("%g %d\n",Crv, CTX::instance()->mesh.minCircPoints);
+      // printf("%g %d\n",Crv, CTX::instance()->mesh.minCircPoints);
       // Crv = max_surf_curvature(ged, U);
     }
     break;
@@ -81,8 +79,8 @@ SMetric3 max_edge_curvature_metric(const GEdge *ge, double u)
 {
   SVector3 t =  ge->firstDer(u);
   t.normalize();
-  double l_t = ((2 * M_PI) /( fabs(ge->curvature(u))
-			      *  CTX::instance()->mesh.minCircPoints ));
+  double l_t = (2 * M_PI) / (fabs(ge->curvature(u)) *
+                             CTX::instance()->mesh.minCircPoints);
   double l_n = 1.e12;
   return buildMetricTangentToCurve(t,l_t,l_n);
 }

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -14,7 +14,6 @@
 #cmakedefine HAVE_BLAS
 #cmakedefine HAVE_BLOSSOM
 #cmakedefine HAVE_CAIRO
-#cmakedefine HAVE_CHACO
 #cmakedefine HAVE_COMPRESSED_IO
 #cmakedefine HAVE_DLOPEN
 #cmakedefine HAVE_DINTEGRATION
@@ -68,7 +67,7 @@
 #cmakedefine HAVE_TAUCS
 #cmakedefine HAVE_TETGEN
 #cmakedefine HAVE_VISUDEV
-#cmakedefine HAVE_VORO3D
+#cmakedefine HAVE_VOROPP
 #cmakedefine HAVE_ZIPPER
 
 #define GMSH_CONFIG_OPTIONS "${GMSH_CONFIG_OPTIONS}"

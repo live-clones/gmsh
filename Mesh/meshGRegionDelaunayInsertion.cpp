@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -380,9 +380,10 @@ int makeCavityStarShaped (std::list<faceXtet> & shell,
     }
   }
   if (wrong.empty()) return 0;
-  //  printf ("cavity %p (shell size %d cavity size %d)is not star shaped (%d faces not visible), correcting it\n",
-  //  	  v,shell.size(),cavity.size(),wrong.size());
-  //  bool doneNothing = true;
+  // printf("cavity %p (shell size %d cavity size %d)is not star shaped "
+  //        "(%d faces not visible), correcting it\n",
+  //         v,shell.size(),cavity.size(),wrong.size());
+  // bool doneNothing = true;
   while (!wrong.empty()){
     faceXtet &fxt = *(wrong.begin());
     std::list<faceXtet>::iterator its = std::find(shell.begin(),shell.end(),fxt);
@@ -401,7 +402,7 @@ int makeCavityStarShaped (std::list<faceXtet> & shell,
     }
     wrong.erase(wrong.begin());
   }
-  //  printf("after : shell size %d cavity size %d\n",shell.size(),cavity.size());
+  // printf("after : shell size %d cavity size %d\n",shell.size(),cavity.size());
   return 1;
 }
 
@@ -922,7 +923,6 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
   double worstA = 0.0;
 
   while (1){
-    //    printf("coucou\n");
     std::vector<MTet4*> newTets;
     /*    for (CONTAINER::iterator it = allTets.begin(); it != allTets.end(); ++it){
       if (!(*it)->isDeleted()){
@@ -938,7 +938,6 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
       }
     }
     */
-    //    printf("coucou\n");
 
     illegals.clear();
     for (int i = 0; i < nbRanges; i++) quality_ranges[i] = 0;
@@ -974,7 +973,6 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
       break;
     }
 
-    //    printf("coucou\n");
     // add all the new tets in the container
     for(unsigned int i = 0; i < newTets.size(); i++){
       if(!newTets[i]->isDeleted()){
@@ -985,7 +983,6 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
         delete newTets[i];
       }
     }
-    //    printf("coucou\n");
 
     // relocate vertices
     if (!gr->hexahedra.size() &&
@@ -1002,7 +999,6 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
       }
     }
 
-    //    printf("coucou\n");
     double totalVolumeb = 0.0;
     double worst = 1.0;
     double avg = 0;
@@ -1017,7 +1013,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
         totalVolumeb += vol;
       }
     }
-    //    printf("coucou\n");
+
     double t2 = Cpu();
     Msg::Info("Opti : (%d,%d,%d) = %12.5E QBAD %12.5E QAVG %12.5E (%8.3f sec)",
               nbESwap, nbFSwap, nbReloc, totalVolumeb, worst, avg / count, t2 - t1);
@@ -1104,14 +1100,6 @@ double tetcircumcenter(double a[3], double b[3], double c[3], double d[3],
   circumcenter[0] =  xcirca + a[0];
   circumcenter[1] =  ycirca + a[1];
   circumcenter[2] =  zcirca + a[2];
-
-  /*
- printf(" %g %g %g %g\n",
-	 sqrt((a[0]-xcirca)*(a[0]-xcirca)+(a[1]-ycirca)*(a[1]-ycirca)+(a[2]-zcirca)*(a[2]-zcirca)),
-	 sqrt((b[0]-xcirca)*(b[0]-xcirca)+(b[1]-ycirca)*(b[1]-ycirca)+(b[2]-zcirca)*(b[2]-zcirca)),
-	 sqrt((c[0]-xcirca)*(c[0]-xcirca)+(c[1]-ycirca)*(c[1]-ycirca)+(c[2]-zcirca)*(c[2]-zcirca)),
-	 sqrt((d[0]-xcirca)*(d[0]-xcirca)+(d[1]-ycirca)*(d[1]-ycirca)+(d[2]-zcirca)*(d[2]-zcirca)) );
-  */
 
   if (xi != (double *) NULL) {
     /* To interpolate a linear function at the circumcenter, define a    */

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -18,10 +18,12 @@ std::string FixRelativePath(const std::string &reference, const std::string &in)
 std::vector<std::string> SplitFileName(const std::string &fileName);
 std::string GetFileNameWithoutPath(const std::string &fileName);
 std::string ConvertFileToString(const std::string &fileName);
-void ReplaceSubStringInPlace(const std::string &olds, const std::string &news, 
+void ReplaceSubStringInPlace(const std::string &olds, const std::string &news,
                              std::string &str);
-std::string ReplaceSubString(const std::string &olds, const std::string &news, 
+std::string ReplaceSubString(const std::string &olds, const std::string &news,
                              const std::string &str);
 void ConvertToHTML(std::string &in);
+bool SplitOptionName(const std::string &fullName, std::string &category,
+                     std::string &name, int &index);
 
 #endif

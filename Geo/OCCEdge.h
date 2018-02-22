@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -49,9 +49,6 @@ class OCCEdge : public GEdge {
   void setTrimmed(OCCFace *);
   bool isSeam(const GFace *) const;
   virtual void writeGEO(FILE *fp);
-  TopoDS_Edge getTopoDS_Edge() const {return c;}
-  TopoDS_Edge getTopoDS_EdgeOld() const {return _replacement;}
-  void replaceEndingPointsInternals(GVertex *, GVertex *);
 };
 
 #endif

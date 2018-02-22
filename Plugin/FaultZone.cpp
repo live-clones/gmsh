@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -667,7 +667,7 @@ void GMSH_FaultZoneMesher::CreateJointElements(GModel* gModel, GFace* gFace,
           gFace->physicals.push_back(pnew->Num);
         }
         List_Remove(gModel->getGEOInternals()->PhysicalGroups, i);
-        gModel->deletePhysicalGroup(1, p->Num);
+        gModel->removePhysicalGroup(1, p->Num);
         i-=1;
       }
       List_Delete(faceEntities);

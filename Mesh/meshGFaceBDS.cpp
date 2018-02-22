@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -404,7 +404,8 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 	mid->lcBGM() = BGM_MeshSize (gf,U,V, mid->X,mid->Y,mid->Z);
 	mid->lc() = 0.5 * (e->p1->lc() +  e->p2->lc());
 
-	//	if (isSphere && !canWeSplitAnEdgeOnASphere (e, mid, center,radius))m.del_point(mid);
+	// if(isSphere && !canWeSplitAnEdgeOnASphere(e, mid, center,radius))
+        //   m.del_point(mid);
 	if(!m.split_edge(e, mid)) m.del_point(mid);
         else nb_split++;
       }
@@ -441,7 +442,8 @@ double getMaxLcWhenCollapsingEdge(GFace *gf, BDS_Mesh &m, BDS_Edge *e, BDS_Point
   return maxLc;
 }
 
-static bool revertTriangleSphere (SPoint3 &center, BDS_Point *p, BDS_Point *o){
+static bool revertTriangleSphere(SPoint3 &center, BDS_Point *p, BDS_Point *o)
+{
   std::list<BDS_Face*> t;
   p->getTriangles(t);
   std::list<BDS_Face*>::iterator it = t.begin();
@@ -467,7 +469,6 @@ static bool revertTriangleSphere (SPoint3 &center, BDS_Point *p, BDS_Point *o){
   }
   return false;
 }
-
 
 void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_collaps)
 {
@@ -531,7 +532,6 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_c
     }
   }
 }
-
 
 void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q)
 {
@@ -684,7 +684,8 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   Msg::Debug(" ---------------------------------------");
 }
 
-void invalidEdgesPeriodic(BDS_Mesh &m, std::map<BDS_Point*, MVertex*,PointLessThan> *recoverMap,
+void invalidEdgesPeriodic(BDS_Mesh &m,
+                          std::map<BDS_Point*, MVertex*,PointLessThan> *recoverMap,
                           std::set<BDS_Edge*, EdgeLessThan> &toSplit)
 {
   // first look for degenerated vertices
@@ -801,9 +802,12 @@ void TRYTOFIXSPHERES(GFace *gf, BDS_Mesh &m,
 	  BDS_Point *n[4];
 	  f->getNodes(n);
 
-	  MVertex *v1 = (recoverMap->find(n[0])==recoverMap->end()) ? NULL : (*recoverMap)[n[0]];
-	  MVertex *v2 = (recoverMap->find(n[1])==recoverMap->end()) ? NULL : (*recoverMap)[n[1]];
-	  MVertex *v3 = (recoverMap->find(n[2])==recoverMap->end()) ? NULL : (*recoverMap)[n[2]];
+	  MVertex *v1 = (recoverMap->find(n[0])==recoverMap->end()) ? NULL
+            : (*recoverMap)[n[0]];
+	  MVertex *v2 = (recoverMap->find(n[1])==recoverMap->end()) ? NULL
+            : (*recoverMap)[n[1]];
+	  MVertex *v3 = (recoverMap->find(n[2])==recoverMap->end()) ? NULL
+            : (*recoverMap)[n[2]];
 
 	  if ((!v1 || (v1 != v2 && v1 != v3)) && (!v2 || v2 != v3)){
 	    normal_triangle(n[0], n[1], n[2], norm);

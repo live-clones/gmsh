@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -15,7 +15,7 @@
 #include "MHexahedron.h"
 #include "Context.h"
 
-static bool getVertices(GModel *m, int num, int *n, std::vector<MVertex*> &vec)
+static bool getMeshVertices(GModel *m, int num, int *n, std::vector<MVertex*> &vec)
 {
   for(int i = 0; i < num; i++){
     MVertex *v = m->getMeshVertexByTag(n[i]);
@@ -40,7 +40,7 @@ int GModel::readSAMCEF(const std::string &name)
   _vertexMapCache.clear();
   std::map<int, std::vector<MElement*> > elements[2];
   char buffer[256], dummy[256];
-  
+
   while(!feof(fp)) {
     if(!fgets(buffer, 256, fp)) break;
     if(!strncmp(buffer, ".NOE", 4)){
@@ -72,14 +72,14 @@ int GModel::readSAMCEF(const std::string &name)
           if(sscanf(buffer, "%s %d %s %d %s %d %d %d", dummy, &num,
                     dummy, &reg, dummy, &n[0], &n[1], &n[2]) != 8)
             return 0;
-          if(!getVertices(this, 3, n, vertices)) break;
+          if(!getMeshVertices(this, 3, n, vertices)) break;
           elements[0][reg].push_back(new MTriangle(vertices, num));
         }
         else if(nn == 9){ // QUAD4
           if(sscanf(buffer, "%s %d %s %d %s %d %d %d %d", dummy, &num,
                     dummy, &reg, dummy, &n[0], &n[1], &n[2], &n[3]) != 9)
             return 0;
-          if(!getVertices(this, 4, n, vertices)) break;
+          if(!getMeshVertices(this, 4, n, vertices)) break;
           elements[1][reg].push_back(new MQuadrangle(vertices, num));
         }
       }
@@ -94,4 +94,3 @@ int GModel::readSAMCEF(const std::string &name)
   fclose(fp);
   return 1;
 }
-

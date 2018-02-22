@@ -44,9 +44,7 @@
 
 #include "ap.h"
 
-
 class MeshOptParameters;
-
 
 class MeshOpt
 {
@@ -69,15 +67,18 @@ public:
   bool _nCurses;
   std::list<char*> _iterHistory, _optHistory;
   int _iPass;
-  std::vector<ObjectiveFunction> _allObjFunc;                                        // Contributions to objective function for current pass
-  ObjectiveFunction *_objFunc;                                                       // Contributions to objective function for current pass
-  int _iter, _intervDisplay;                                                         // Current iteration, interval of iterations for reporting
-  double _initObj;                                                                   // Values for reporting
+  // Contributions to objective function for current pass
+  std::vector<ObjectiveFunction> _allObjFunc;
+  // Contributions to objective function for current pass
+  ObjectiveFunction *_objFunc;
+  // Current iteration, interval of iterations for reporting
+  int _iter, _intervDisplay;
+  // Values for reporting
+  double _initObj;
   void calcScale(alglib::real_1d_array &scale);
   void runOptim(alglib::real_1d_array &x,
                 const alglib::real_1d_array &initGradObj, int itMax, int iBar);
 };
-
 
 #endif
 

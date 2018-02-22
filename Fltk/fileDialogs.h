@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -36,6 +36,7 @@ int gl2psFileDialog(const char *filename, const char *title, int format);
 int optionsFileDialog(const char *filename);
 int meshStatFileDialog(const char *filename);
 int mshFileDialog(const char *filename);
+void format_cb(Fl_Widget *widget, void *data);
 int unvinpFileDialog(const char *filename, const char *title, int format);
 int bdfFileDialog(const char *filename);
 int latexFileDialog(const char *filename);

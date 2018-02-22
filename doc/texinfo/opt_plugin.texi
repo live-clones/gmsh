@@ -219,6 +219,23 @@ Default value: @code{1}
 Default value: @code{-1}
 @end table
 
+@item Plugin(CutMesh)
+Plugin(CutMesh) cuts the mesh of the current GModel with the zero value of the levelset defined with the view 'View'.Sub-elements are created in the new model (polygons in 2D and polyhedra in 3D) and border elements are created on the zero-levelset.@*
+@*
+If `Split' is nonzero, the plugin splits the meshalong the edges of the cut elements in the positive side.@*
+@*
+If 'SaveTri' is nonzero, the sub-elements are saved as simplices.@*
+@*
+Plugin(CutMesh) creates one new GModel.
+Numeric options:
+@table @code
+@item View
+Default value: @code{-1}
+@item Split
+Default value: @code{0}
+@item SaveTri
+Default value: @code{0}
+@end table
 
 @item Plugin(CutParametric)
 Plugin(CutParametric) cuts the view `View' with the parametric function (`X'(u,v), `Y'(u,v), `Z'(u,v)), using `NumPointsU' values of the parameter u in [`MinU', `MaxU'] and `NumPointsV' values of the parameter v in [`MinV', `MaxV'].@*
@@ -910,13 +927,20 @@ Default value: @code{-1}
 @end table
 
 @item Plugin(NewView)
-Plugin(NewView) creates a new view from a mesh.The parameter `Dimension' gives the dimensionof the initialized to zero NodeData vector
+Plugin(NewView) creates a new model-based view from the current mesh, with `NumComp' field components.@*
+@*
+If `ViewTag' is positive, force that tag for the created view.
+String options:
+@table @code
+@item Type
+Default value: @code{"NodeData"}
+@end table
 Numeric options:
 @table @code
-@item View
-Default value: @code{-1}
-@item Dimension
+@item NumComp
 Default value: @code{1}
+@item ViewTag
+Default value: @code{-1}
 @end table
 
 @item Plugin(Particles)
@@ -1098,7 +1122,7 @@ Default value: @code{0}
 @end table
 
 @item Plugin(SimplePartition)
-Plugin(SimplePartition) partitions the current mesh into `NumSlices' slices, along the X-, Y- or Z-axis depending on the value of `Direction' (0,1,2). The plugin creates partition boundaries if `CreateBoundaries' is set.
+Plugin(SimplePartition) partitions the current mesh into `NumSlices' slices, along the X-, Y- or Z-axis depending on the value of `Direction' (0,1,2). The plugin creates partition topology if `CreateTopology' is set.
 String options:
 @table @code
 @item Mapping
@@ -1110,7 +1134,7 @@ Numeric options:
 Default value: @code{4}
 @item Direction
 Default value: @code{0}
-@item CreateBoundaries
+@item CreateTopology
 Default value: @code{1}
 @end table
 
@@ -1218,18 +1242,6 @@ Default value: @code{0}
 @item View
 Default value: @code{-1}
 @item OtherView
-Default value: @code{-1}
-@end table
-
-@item Plugin(Tetrahedralize)
-Plugin(Tetrahedralize) tetrahedralizes the points in the view `View'.@*
-@*
-If `View' < 0, the plugin is run on the current view.@*
-@*
-Plugin(Tetrahedralize) creates one new view.
-Numeric options:
-@table @code
-@item View
 Default value: @code{-1}
 @end table
 

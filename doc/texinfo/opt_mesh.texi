@@ -11,7 +11,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Algorithm3D
 3D mesh algorithm (1=Delaunay, 2=New Delaunay, 4=Frontal, 5=Frontal Delaunay, 6=Frontal Hex, 7=MMG3D, 9=R-tree)@*
-Default value: @code{1}@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.AngleSmoothNormals
@@ -39,11 +39,6 @@ Write mesh files in binary format (if possible)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.Lloyd
-Apply lloyd optimization on surface meshes@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.SmoothCrossField
 Apply n barycentric smoothing passes to the cross field@*
 Default value: @code{0}@*
@@ -52,86 +47,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.CgnsImportOrder
 Enable the creation of high-order mesh from CGNS structured meshes(1, 2, 4, 8, ...)@*
 Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.ChacoArchitecture
-(Adv. Chaco): Parallel architecture topology (0=hypercube, 1-3=mesh dimensions)@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.ChacoEigensolver
-(Adv. Chaco): Type of eigensolver for a spectral algorithm (0=Lanczos, 1=Multilevel RQI/Symmlq)@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.ChacoEigTol
-(Adv. Chaco): Tolerance of the eigensolver for spectral or multilevel-KL algorithms@*
-Default value: @code{0.001}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.ChacoGlobalMethod
-Chaco partitioning algorithm (1=Multilevel-KL, 2=Spectral, 4=Linear, 5=Random, 6=Scattered)@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.ChacoHypercubeDim
-(Adv. Chaco): Dimensional partitioning for a hypercube topology@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.ChacoLocalMethod
-(Adv. Chaco): Local partitioning algorithm@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.ChacoMeshDim1
-(Adv. Chaco): Number of partitions in the first dimension of a mesh topology@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.ChacoMeshDim2
-(Adv. Chaco): Number of partitions in the second dimension of a mesh topology@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.ChacoMeshDim3
-(Adv. Chaco): Number of partitions in the third dimension of a mesh topology@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.ChacoPartitionSection
-(Adv. Chaco): Partition by (1=bisection, 2=quadrisection, 3=octasection@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.ChacoSeed
-(Adv. Chaco): Seed for random number generator@*
-Default value: @code{7.65432e+06}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.ChacoVMax
-(Adv. Chaco): Maximum vertices in a coarse graph (for multilevel-KL algorithm and Multilevel RQI/Symmlq eigensolver)@*
-Default value: @code{250}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.ChacoParamINTERNAL_VERTICES
-(Adv. Chaco): Parameter INTERNAL_VERTICES@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.ChacoParamREFINE_MAP
-(Adv. Chaco): Parameter REFINE_MAP@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.ChacoParamREFINE_PARTITION
-(Adv. Chaco): Parameter REFINE_PARTITION@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.ChacoParamTERMINAL_PROPOGATION
-(Adv. Chaco): Parameter TERMINAL_PROPOGATION@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CharacteristicLengthExtendFromBoundary
@@ -276,7 +191,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LightTwoSide
 Light both sides of surfaces (leads to slower rendering)@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Lines
@@ -315,18 +230,18 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MetisAlgorithm
-METIS partitioning algorithm (1=Recursive, 2=K-way, 3=Nodal weight)@*
+METIS partitioning algorithm (1=Recursive, 2=K-way)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MetisEdgeMatching
-(Adv. METIS): Determines the matching type (1=Random, 2=Heavy-Edge, 3=Sorted Heavy-Edge)@*
-Default value: @code{3}@*
+METIS edge matching type (1=Random, 2=Sorted Heavy-Edge)@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MetisRefinementAlgorithm
-(Adv. METIS): Algorithm for k-way refinement (1=Random, 2=Greedy, 3=Random with minimized connectivity)@*
-Default value: @code{3}@*
+METIS algorithm for k-way refinement (1=FM-based cut, 2=Greedy, 3=Two-sided node FM, 4=One-sided node FM)@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MinimumCirclePoints
@@ -342,11 +257,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.MshFileVersion
 Version of the MSH file format to use@*
 Default value: @code{2.2}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.MshFilePartitioned
-Split MSH file by mesh partition (0: no, 1: yes, 2: create physicals by partition)@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionHexWeight
@@ -380,8 +290,28 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionTriWeight
-Weight of triangle for METIS load balancing@*
+Weight of triangle element for METIS load balancing@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionTopology
+Create boundary entities between partitions@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionGhostCells
+Create partition ghost cells@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionSplitMeshFiles
+Write one file for each mesh partition@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionTopologyFile
+Write a .pro file with the partition topology@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.NbHexahedra
@@ -396,7 +326,7 @@ Saved in: @code{-}
 
 @item Mesh.NbPartitions
 Number of partitions@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.NbPrisms
@@ -457,11 +387,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.OptimizeNetgen
 Optimize the mesh using Netgen to improve the quality of tetrahedral elements@*
 Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.Partitioner
-Partitioner software (1=Chacho, 2=METIS)@*
-Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Points
@@ -532,11 +457,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.RandomFactor
 Random factor used in the 2D meshing algorithm (should be increased if RandomFactor * size(triangle)/size(model) approaches machine accuracy)@*
 Default value: @code{1e-09}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.IgnorePartitionBoundary
-Ignore partitions boundaries (0=no, 1=yes)@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PreserveNumberingMsh2
@@ -625,7 +545,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveGroupsOfNodes
-Save groups of nodes for each physical line and surface (UNV mesh format only)@*
+Save groups of nodes for each physical line and surface (for UNV, INP and Tochnog mesh formats)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

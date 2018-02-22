@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -269,8 +269,9 @@ struct ParseEntity
                    ElementConnectivity *zoneElemConn,
                    const int partition)
   {
-    unsigned numElem[5];
+    unsigned numElem[6];
     numElem[0] = 0; numElem[1] = 0; numElem[2] = 0; numElem[3] = 0; numElem[4] = 0;
+    numElem[5] = 0;
     entity->getNumMeshElements(numElem);
     // Loop over all types of elements
     int nType = entity->getNumElementTypes();

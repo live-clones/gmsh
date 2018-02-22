@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <algorithm>
 #include <string>
+#include <fstream>
 
 #include "GmshMessage.h"
 #include "ElementType.h"
@@ -113,6 +114,9 @@ class MElement
 
   // get the vertex using the VTK ordering
   virtual MVertex *getVertexVTK(int num){ return getVertex(num); }
+
+  // get the vertex using the MATLAB ordering
+  virtual MVertex *getVertexMATLAB(int num){ return getVertex(num); }
 
   // get the vertex using the Tochnog ordering
   virtual MVertex *getVertexTOCHNOG(int num){ return getVertex(num); }
@@ -382,6 +386,7 @@ class MElement
                          int num=0, int elementary=1, int physical=1,
                          int parentNum=0, int dom1Num = 0, int dom2Num = 0,
                          std::vector<short> *ghosts=0);
+  virtual void writeMSH4(FILE *fp, bool binary=false);
   virtual void writePOS(FILE *fp, bool printElementary, bool printElementNumber,
                         bool printSICN, bool printSIGE, bool printGamma,
                         bool printDisto,double scalingFactor=1.0, int elementary=1);
@@ -390,6 +395,7 @@ class MElement
   virtual void writePLY2(FILE *fp);
   virtual void writeUNV(FILE *fp, int num=0, int elementary=1, int physical=1);
   virtual void writeVTK(FILE *fp, bool binary=false, bool bigEndian=false);
+  virtual void writeMATLAB(FILE *fp, bool binary=false);
   virtual void writeTOCHNOG(FILE *fp, int num);
   virtual void writeMESH(FILE *fp, int elementTagType=1, int elementary=1,
                          int physical=0);
@@ -408,6 +414,7 @@ class MElement
   virtual int getTypeForMSH() const { return 0; }
   virtual int getTypeForUNV() const { return 0; }
   virtual int getTypeForVTK() const { return 0; }
+  virtual int getTypeForMATLAB() const { return 0; }
   virtual const char *getStringForTOCHNOG() const { return 0; }
   virtual const char *getStringForPOS() const { return 0; }
   virtual const char *getStringForBDF() const { return 0; }
@@ -423,6 +430,11 @@ class MElement
   virtual MElement *copy(std::map<int, MVertex*> &vertexMap,
                          std::map<MElement*, MElement*> &newParents,
                          std::map<MElement*, MElement*> &newDomains);
+
+  // Return the number of nodes that this element must have with the other in
+  // order to put an edge between them in the dual graph used during the
+  // partitioning.
+  virtual int numCommonNodesInDualGraph(const MElement *const other) const = 0;
 };
 
 class MElementFactory{

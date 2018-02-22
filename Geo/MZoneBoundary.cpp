@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -905,15 +905,17 @@ int MZoneBoundary<DIM>::interiorBoundaryVertices
         {
           // NBN: face is now a pointer, so need to de-reference
         //if((*zFace)->first ==  globalVertData.faces[iGFace].face ) 
-          if((*zFace)->first == *(globalVertData.faces[iGFace].face)) {
-            foundMatch = true;
-            // Faces match - delete from 'globalVertData'.
-            globalVertData.faces.erase(iGFace);
-            // Erasing from the FaceVector swaps the last element into this
-            // index.  We only decrease nGFace if the size is less.
-            nGFace = std::min(globalVertData.faces.size(), nGFace);
-            break;
-          }
+            if(globalVertData.faces[iGFace].face){
+                if((*zFace)->first == *(globalVertData.faces[iGFace].face)) {
+                    foundMatch = true;
+                    // Faces match - delete from 'globalVertData'.
+                    globalVertData.faces.erase(iGFace);
+                    // Erasing from the FaceVector swaps the last element into this
+                    // index.  We only decrease nGFace if the size is less.
+                    nGFace = std::min(globalVertData.faces.size(), nGFace);
+                    break;
+                }
+            }
         }
         if(!foundMatch) {
           // New face - add to 'globalVertData'

@@ -1,9 +1,10 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <sstream>
+#include <algorithm>
 #include "GModel.h"
 #include "GEntity.h"
 #include "MElement.h"
@@ -64,6 +65,14 @@ std::string GEntity::getInfoString()
   return sstream.str();
 }
 
+// removes a MeshVertex
+void GEntity::removeMeshVertex(MVertex *v)
+{
+  std::vector<MVertex*>::iterator it = std::find
+    (mesh_vertices.begin(), mesh_vertices.end(), v);
+  if(it != mesh_vertices.end()) mesh_vertices.erase(it);
+}
+
 GVertex *GEntity::cast2Vertex() { return dynamic_cast<GVertex*>(this); }
 GEdge *GEntity::cast2Edge() { return dynamic_cast<GEdge*>(this); }
 GFace *GEntity::cast2Face() { return dynamic_cast<GFace*>(this); }
@@ -104,44 +113,33 @@ void GEntity::setMeshMaster(GEntity* gMaster,const std::vector<double>& tfo)
 // gets the entity from which the mesh will be copied
 GEntity* GEntity::meshMaster() const { return _meshMaster; }
 
-void GEntity::updateVertices(const std::map<MVertex*,MVertex*>& old2new) {
-
+void GEntity::updateVertices(const std::map<MVertex*,MVertex*>& old2new)
+{
   // update the list of the vertices
-
   std::vector<MVertex*> newMeshVertices;
   std::vector<MVertex*>::iterator mIter = mesh_vertices.begin();
-  for (;mIter!=mesh_vertices.end();++mIter) {
-
+  for (;mIter != mesh_vertices.end(); ++mIter) {
     MVertex* vtx = *mIter;
     std::map<MVertex*,MVertex*>::const_iterator cIter = old2new.find(vtx);
     if (cIter!=old2new.end()) vtx = cIter->second;
     newMeshVertices.push_back(vtx);
   }
-
   mesh_vertices.clear();
   mesh_vertices = newMeshVertices;
 
-
   // update the periodic vertex lists
-
   std::map<MVertex*,MVertex*> newCorrespondingVertices;
-
   std::map<MVertex*,MVertex*>::iterator cIter = correspondingVertices.begin();
   for (;cIter!=correspondingVertices.end();++cIter) {
-    
     MVertex* tgt = cIter->first;
     MVertex* src = cIter->second;
-    
     std::map<MVertex*,MVertex*>::const_iterator tIter = old2new.find(tgt);
     if (tIter!=old2new.end()) tgt = tIter->second;
-    
     std::map<MVertex*,MVertex*>::const_iterator sIter = old2new.find(src);
     if (sIter!=old2new.end()) src = sIter->second;
-    
     newCorrespondingVertices.insert(std::make_pair(tgt,src));
-
   }
-  
+
   correspondingVertices.clear();
   correspondingVertices = newCorrespondingVertices;
 
@@ -149,21 +147,15 @@ void GEntity::updateVertices(const std::map<MVertex*,MVertex*>& old2new) {
 
   std::map<MVertex*,MVertex*>::iterator hIter = correspondingHOPoints.begin();
   for (;hIter!=correspondingHOPoints.end();++hIter) {
-    
     MVertex* tgt = hIter->first;
     MVertex* src = hIter->second;
-    
     std::map<MVertex*,MVertex*>::const_iterator tIter = old2new.find(tgt);
     if (tIter!=old2new.end()) tgt = tIter->second;
-    
     std::map<MVertex*,MVertex*>::const_iterator sIter = old2new.find(src);
     if (sIter!=old2new.end()) src = sIter->second;
-    
     newCorrespondingVertices.insert(std::make_pair(tgt,src));
-
   }
-  
+
   correspondingHOPoints.clear();
   correspondingHOPoints = newCorrespondingVertices;
-
 }

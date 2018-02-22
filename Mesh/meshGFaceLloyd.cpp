@@ -1,10 +1,9 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 //
-// Contributor(s):
-//   Tristan Carrier
+// Contributed by Tristan Carrier
 
 #include <set>
 #include <fstream>
@@ -32,8 +31,6 @@
 #include "GModel.h"
 #include "meshGFaceOptimize.h"
 #include <algorithm>
-
-/****************definitions****************/
 
 class metric{
  private :
@@ -243,9 +240,8 @@ class lpcvt{
   SVector3 boundary_dFdx0(SVector3,SPoint2,SPoint2,SPoint2,SVector3);
 };
 
-/****************functions****************/
-
-bool domain_search(MElementOctree* octree,double x,double y){
+bool domain_search(MElementOctree* octree,double x,double y)
+{
   MElement* element;
 
   element = (MElement*)octree->find(x,y,0.0,2,true);
@@ -253,7 +249,9 @@ bool domain_search(MElementOctree* octree,double x,double y){
   else return 0;
 }
 
-void callback(const alglib::real_1d_array& x,double& func,alglib::real_1d_array& grad,void* ptr){
+void callback(const alglib::real_1d_array& x,double& func,
+              alglib::real_1d_array& grad,void* ptr)
+{
   int i;
   int p;
   int num;
@@ -296,16 +294,16 @@ void callback(const alglib::real_1d_array& x,double& func,alglib::real_1d_array&
 
   index = 0;
   for(i=0;i<num;i++){
-	if(obj.interior(*pointer,gf,i)){
-	  u = x[index];
-	  v = x[index + dimension/2];
-	  inside = domain_search(octree,u,v);
-	  if(!inside) error1 = 1;
-	  pointer->points[i].where.h = u;
-	  pointer->points[i].where.v = v;
-	  pointer->points[i].identificator = index;
-	  index++;
-	}
+    if(obj.interior(*pointer,gf,i)){
+      u = x[index];
+      v = x[index + dimension/2];
+      inside = domain_search(octree,u,v);
+      if(!inside) error1 = 1;
+      pointer->points[i].where.h = u;
+      pointer->points[i].where.v = v;
+      pointer->points[i].identificator = index;
+      index++;
+    }
   }
 
   if(iteration>=max){
@@ -314,30 +312,30 @@ void callback(const alglib::real_1d_array& x,double& func,alglib::real_1d_array&
 
   if(!error1 && !error2){
     pointer->Voronoi();
-	pointer->build_edges();
-	conformity = pointer->delaunay_conformity(gf);
-	if(!conformity) error3 = 1;
-	pointer->clear_edges();
-	if(!error3){
+    pointer->build_edges();
+    conformity = pointer->delaunay_conformity(gf);
+    if(!conformity) error3 = 1;
+    pointer->clear_edges();
+    if(!error3){
       val = obj.seed(*pointer,gf);
       pointer->concave(val.x(),val.y(),gf);
       obj.clip_cells(*pointer,gf);
       obj.swap();
-	  obj.compute_parameters(gf,p);
+      obj.compute_parameters(gf,p);
       obj.get_gauss();
       obj.eval(*pointer,gradients,energy,p);
       func = energy;
-	  //obj.print_voronoi1();
-	  //obj.print_voronoi2();
-	}
+      //obj.print_voronoi1();
+      //obj.print_voronoi2();
+    }
   }
 
   if(error1 || error2 || error3){
-	energy = 1000000000.0;
-	for(i=0;i<num;i++){
-	  gradients[i] = SVector3(0.0,0.0,0.0);
-	}
-	func = energy;
+    energy = 1000000000.0;
+    for(i=0;i<num;i++){
+      gradients[i] = SVector3(0.0,0.0,0.0);
+    }
+    func = energy;
   }
 
   if(error1){
@@ -352,7 +350,7 @@ void callback(const alglib::real_1d_array& x,double& func,alglib::real_1d_array&
 
   if(start>0.0 && !error1 && !error2 && !error3){
     printf("Lloyd: %d %.3f\n",iteration,100.0*(start-energy)/start);
-	w->set_iteration(iteration+1);
+    w->set_iteration(iteration+1);
   }
   else if(!error1 && !error2 && !error3){
     w->set_start(energy);
@@ -360,14 +358,15 @@ void callback(const alglib::real_1d_array& x,double& func,alglib::real_1d_array&
 
   for(i=0;i<num;i++){
     if(obj.interior(*pointer,gf,i)){
-	  identificator = pointer->points[i].identificator;
-	  grad[identificator] = gradients[i].x();
-	  grad[identificator + dimension/2] = gradients[i].y();
-	}
+      identificator = pointer->points[i].identificator;
+      grad[identificator] = gradients[i].x();
+      grad[identificator + dimension/2] = gradients[i].y();
+    }
   }
 }
 
-void verification(alglib::real_1d_array& x,void* ptr){
+void verification(alglib::real_1d_array& x,void* ptr)
+{
   int index;
   int dimension;
   double e;
@@ -406,9 +405,8 @@ void verification(alglib::real_1d_array& x,void* ptr){
   printf("%f %f\n",grad[index],grad[index + dimension/2]);
 }
 
-/****************class smoothing****************/
-
-smoothing::smoothing(int param1,int param2){
+smoothing::smoothing(int param1,int param2)
+{
   ITER_MAX = param1;
   NORM = param2;
 }
@@ -476,8 +474,10 @@ void smoothing::optimize_face(GFace* gf)
   double ratio;
   double factor;
   lpcvt obj;
-  double* initial_conditions = static_cast<double*>(malloc(2*triangulator.numPoints*sizeof(double)));
-  double* variables_scales = static_cast<double*>(malloc(2*triangulator.numPoints*sizeof(double)));
+  double* initial_conditions = static_cast<double*>
+    (malloc(2*triangulator.numPoints*sizeof(double)));
+  double* variables_scales = static_cast<double*>
+    (malloc(2*triangulator.numPoints*sizeof(double)));
   alglib::ae_int_t maxits;
   alglib::minlbfgsstate state;
   alglib::minlbfgsreport rep;
@@ -494,24 +494,26 @@ void smoothing::optimize_face(GFace* gf)
 
   num_interior = 0;
   for(int i=0;i<triangulator.numPoints;i++){
-   	if(obj.interior(triangulator,gf,i)){
-	  num_interior++;
-	}
+    if(obj.interior(triangulator,gf,i)){
+      num_interior++;
+    }
   }
 
   factor = 2.0;
   index = 0;
   for(int i=0;i<triangulator.numPoints;i++){
-	if(obj.interior(triangulator,gf,i)){
-	  varx = triangulator.points[i].where.h;
-	  vary = triangulator.points[i].where.v;
-	  initial_conditions[index] = varx;
-	  initial_conditions[index+num_interior] = vary;
-	  ratio = obj.get_ratio(gf,SPoint2(varx,vary));
-	  variables_scales[index] = factor*backgroundMesh::current()->operator()(varx,vary,0.0)*ratio;
-	  variables_scales[index+num_interior] = factor*backgroundMesh::current()->operator()(varx,vary,0.0)*ratio;
-	  index++;
-	}
+    if(obj.interior(triangulator,gf,i)){
+      varx = triangulator.points[i].where.h;
+      vary = triangulator.points[i].where.v;
+      initial_conditions[index] = varx;
+      initial_conditions[index+num_interior] = vary;
+      ratio = obj.get_ratio(gf,SPoint2(varx,vary));
+      variables_scales[index] = factor*backgroundMesh::current()->operator()
+        (varx,vary,0.0)*ratio;
+      variables_scales[index+num_interior] = factor*backgroundMesh::current()->operator()
+        (varx,vary,0.0)*ratio;
+      index++;
+    }
   }
 
   x.setcontent(2*num_interior,initial_conditions);
@@ -532,29 +534,30 @@ void smoothing::optimize_face(GFace* gf)
 
   if(num_interior>1){
     minlbfgscreate(2*num_interior,4,x,state);
-	minlbfgssetscale(state,scales);
-	minlbfgssetprecscale(state);
+    minlbfgssetscale(state,scales);
+    minlbfgssetprecscale(state);
     minlbfgssetcond(state,epsg,epsf,epsx,maxits);
     minlbfgsoptimize(state,callback,NULL,&w);
     minlbfgsresults(state,x,rep);
   }
 
   /*lpcvt obj2;
-  SPoint2 val = obj2.seed(triangulator,gf);
-  triangulator.concave(val.x(),val.y(),gf);
-  obj2.clip_cells(triangulator,gf);
-  obj2.swap();
-  obj2.compute_parameters(gf,exponent);
-  obj2.get_gauss();
-  obj2.write(triangulator,gf,6);*/
+    SPoint2 val = obj2.seed(triangulator,gf);
+    triangulator.concave(val.x(),val.y(),gf);
+    obj2.clip_cells(triangulator,gf);
+    obj2.swap();
+    obj2.compute_parameters(gf,exponent);
+    obj2.get_gauss();
+    obj2.write(triangulator,gf,6);
+  */
 
   index = 0;
   for(i=0;i<triangulator.numPoints;i++){
-	if(obj.interior(triangulator,gf,i)){
-	  triangulator.points[i].where.h = x[index];
-	  triangulator.points[i].where.v = x[index + num_interior];
-	  index++;
-	}
+    if(obj.interior(triangulator,gf,i)){
+      triangulator.points[i].where.h = x[index];
+      triangulator.points[i].where.v = x[index + num_interior];
+      index++;
+    }
   }
   triangulator.Voronoi();
 
@@ -582,7 +585,9 @@ void smoothing::optimize_face(GFace* gf)
   meshGFace mesher;
   mesher(gf);
 
-  gf->mesh_vertices.insert(gf->mesh_vertices.begin(),gf->additionalVertices.begin(),gf->additionalVertices.end()); //?
+  gf->mesh_vertices.insert(gf->mesh_vertices.begin(),
+                           gf->additionalVertices.begin(),
+                           gf->additionalVertices.end()); //?
   gf->additionalVertices.clear();
 
   gf->setMeshingAlgo(option);
@@ -593,7 +598,8 @@ void smoothing::optimize_face(GFace* gf)
   backgroundMesh::unset();
 }
 
-void smoothing::optimize_model(){
+void smoothing::optimize_model()
+{
   GFace*gf;
   GModel*model = GModel::current();
   GModel::fiter it;
@@ -608,13 +614,12 @@ void smoothing::optimize_model(){
   }
 }
 
-/****************class lpcvt****************/
-
 lpcvt::lpcvt(){}
 
 lpcvt::~lpcvt(){}
 
-double lpcvt::angle(SPoint2 p1,SPoint2 p2,SPoint2 p3){
+double lpcvt::angle(SPoint2 p1,SPoint2 p2,SPoint2 p3)
+{
   double x1,x2;
   double y1,y2;
   double product;
@@ -632,7 +637,8 @@ double lpcvt::angle(SPoint2 p1,SPoint2 p2,SPoint2 p3){
   return angle;
 }
 
-SVector3 lpcvt::normal(SPoint2 p1,SPoint2 p2){
+SVector3 lpcvt::normal(SPoint2 p1,SPoint2 p2)
+{
   double x;
   double y;
   SVector3 val;
@@ -642,7 +648,8 @@ SVector3 lpcvt::normal(SPoint2 p1,SPoint2 p2){
   return val;
 }
 
-SPoint2 lpcvt::mid(SPoint2 p1,SPoint2 p2){
+SPoint2 lpcvt::mid(SPoint2 p1,SPoint2 p2)
+{
   double x;
   double y;
   x = 0.5*(p1.x() + p2.x());
@@ -650,7 +657,8 @@ SPoint2 lpcvt::mid(SPoint2 p1,SPoint2 p2){
   return SPoint2(x,y);
 }
 
-bool lpcvt::same_side(SPoint2 p1,SPoint2 p2,SPoint2 p3,SPoint2 p4){
+bool lpcvt::same_side(SPoint2 p1,SPoint2 p2,SPoint2 p3,SPoint2 p4)
+{
   double x1,y1;
   double x2,y2;
   double x3,y3;
@@ -673,7 +681,8 @@ bool lpcvt::same_side(SPoint2 p1,SPoint2 p2,SPoint2 p3,SPoint2 p4){
   else return 0;
 }
 
-bool lpcvt::interior(DocRecord& triangulator,GFace* gf,int index){
+bool lpcvt::interior(DocRecord& triangulator,GFace* gf,int index)
+{
   PointRecord& temp = triangulator.points[index];
   MVertex* vertex = (MVertex*)temp.data;
   if(vertex->onWhat()==gf && !triangulator.onHull(index)){
@@ -682,7 +691,8 @@ bool lpcvt::interior(DocRecord& triangulator,GFace* gf,int index){
   else return 0;
 }
 
-bool lpcvt::interior(DocRecord& triangulator,segment s1,segment s2,double angle,SPoint2 p){
+bool lpcvt::interior(DocRecord& triangulator,segment s1,segment s2,double angle,SPoint2 p)
+{
   SPoint2 p1,p2,p3,p4;
   SPoint2 reference1,reference2;
   bool condition1,condition2;
@@ -704,7 +714,8 @@ bool lpcvt::interior(DocRecord& triangulator,segment s1,segment s2,double angle,
   }
 }
 
-bool lpcvt::invisible(DocRecord& triangulator,GFace* gf,int index){
+bool lpcvt::invisible(DocRecord& triangulator,GFace* gf,int index)
+{
   int i;
   int num;
   int index2;
@@ -718,11 +729,13 @@ bool lpcvt::invisible(DocRecord& triangulator,GFace* gf,int index){
   return 1;
 }
 
-bool lpcvt::real(DocRecord& triangulator,int index1,int index2,int index3){
+bool lpcvt::real(DocRecord& triangulator,int index1,int index2,int index3)
+{
   return triangulator.contain(index1,index2,index3);
 }
 
-double lpcvt::triangle_area(SPoint2 p1,SPoint2 p2,SPoint2 p3){
+double lpcvt::triangle_area(SPoint2 p1,SPoint2 p2,SPoint2 p3)
+{
   double area;
   double x1,y1;
   double x2,y2;
@@ -734,7 +747,8 @@ double lpcvt::triangle_area(SPoint2 p1,SPoint2 p2,SPoint2 p3){
   return area;
 }
 
-bool lpcvt::sliver(SPoint2 p1,SPoint2 p2,SPoint2 p3){
+bool lpcvt::sliver(SPoint2 p1,SPoint2 p2,SPoint2 p3)
+{
   double area;
   double e;
   e = 0.000000001;
@@ -743,7 +757,9 @@ bool lpcvt::sliver(SPoint2 p1,SPoint2 p2,SPoint2 p3){
   else return 0;
 }
 
-SPoint2 lpcvt::intersection(DocRecord& triangulator,segment s1,segment s2,SPoint2 p1,SPoint2 p2,bool &flag,SVector3& vec,segment& s){
+SPoint2 lpcvt::intersection(DocRecord& triangulator,segment s1,segment s2,
+                            SPoint2 p1,SPoint2 p2,bool &flag,SVector3& vec,segment& s)
+{
   bool flag1;
   bool flag2;
   SPoint2 p3;
@@ -759,26 +775,27 @@ SPoint2 lpcvt::intersection(DocRecord& triangulator,segment s1,segment s2,SPoint
   val1 = intersection(p3,p4,p1,p2,flag1);
   val2 = intersection(p5,p6,p1,p2,flag2);
   if(flag1){
-	flag = 1;
-	vec = normal(p3,p4);
-	s = s1;
-	return val1;
+    flag = 1;
+    vec = normal(p3,p4);
+    s = s1;
+    return val1;
   }
   else if(flag2){
-	flag = 1;
-	vec = normal(p5,p6);
-	s = s2;
-	return val2;
+    flag = 1;
+    vec = normal(p5,p6);
+    s = s2;
+    return val2;
   }
   else{
-	flag = 0;
-	vec = SVector3(0.0,0.0,0.0);
-	s = segment(-1,-1,-1);
-	return SPoint2(0.0,0.0);
+    flag = 0;
+    vec = SVector3(0.0,0.0,0.0);
+    s = segment(-1,-1,-1);
+    return SPoint2(0.0,0.0);
   }
 }
 
-SPoint2 lpcvt::intersection(SPoint2 p1,SPoint2 p2,SPoint2 p3,SPoint2 p4,bool& flag){
+SPoint2 lpcvt::intersection(SPoint2 p1,SPoint2 p2,SPoint2 p3,SPoint2 p4,bool& flag)
+{
   double x1,y1;
   double x2,y2;
   double x3,y3;
@@ -816,14 +833,16 @@ SPoint2 lpcvt::intersection(SPoint2 p1,SPoint2 p2,SPoint2 p3,SPoint2 p4,bool& fl
   }
 }
 
-SPoint2 lpcvt::convert(DocRecord& triangulator,int index){
+SPoint2 lpcvt::convert(DocRecord& triangulator,int index)
+{
   SPoint2 p;
   double _p[2] = {triangulator.points[index].where.h,triangulator.points[index].where.v};
   p = SPoint2(_p[0],_p[1]);
   return p;
 }
 
-SPoint2 lpcvt::circumcircle(DocRecord& triangulator,int index1,int index2,int index3){
+SPoint2 lpcvt::circumcircle(DocRecord& triangulator,int index1,int index2,int index3)
+{
   double _C[2];
   SPoint2 C;
   double _x1[2] = {triangulator.points[index1].where.h,triangulator.points[index1].where.v};
@@ -834,7 +853,8 @@ SPoint2 lpcvt::circumcircle(DocRecord& triangulator,int index1,int index2,int in
   return C;
 }
 
-SPoint2 lpcvt::seed(DocRecord& triangulator,GFace* gf){
+SPoint2 lpcvt::seed(DocRecord& triangulator,GFace* gf)
+{
   int i;
   int j;
   int num;
@@ -845,23 +865,24 @@ SPoint2 lpcvt::seed(DocRecord& triangulator,GFace* gf){
 
   for(i=0;i<triangulator.numPoints;i++){
     if(interior(triangulator,gf,i)){
-	  num = triangulator._adjacencies[i].t_length;
-	  for(j=0;j<num;j++){
-	    index1 = triangulator._adjacencies[i].t[j];
-		index2 = triangulator._adjacencies[i].t[(j+1)%num];
-		x0 = convert(triangulator,i);
-		x1 = convert(triangulator,index1);
-		x2 = convert(triangulator,index2);
-		x = (x0.x() + x1.x() + x2.x())/3.0;
-		y = (x0.y() + x1.y() + x2.y())/3.0;
-		return SPoint2(x,y);
-	  }
-	}
+      num = triangulator._adjacencies[i].t_length;
+      for(j=0;j<num;j++){
+        index1 = triangulator._adjacencies[i].t[j];
+        index2 = triangulator._adjacencies[i].t[(j+1)%num];
+        x0 = convert(triangulator,i);
+        x1 = convert(triangulator,index1);
+        x2 = convert(triangulator,index2);
+        x = (x0.x() + x1.x() + x2.x())/3.0;
+        y = (x0.y() + x1.y() + x2.y())/3.0;
+        return SPoint2(x,y);
+      }
+    }
   }
   return SPoint2(0.0,0.0);
 }
 
-void lpcvt::step1(DocRecord& triangulator,GFace* gf){
+void lpcvt::step1(DocRecord& triangulator,GFace* gf)
+{
   int i;
   int j;
   int num;
@@ -872,39 +893,40 @@ void lpcvt::step1(DocRecord& triangulator,GFace* gf){
   borders.resize(triangulator.numPoints);
   angles.resize(triangulator.numPoints);
   for(i=0;i<triangulator.numPoints;i++){
-	angles[i] = 0.0;
+    angles[i] = 0.0;
   }
   temp.resize(triangulator.numPoints);
 
   for(i=0;i<triangulator.numPoints;i++){
     if(!interior(triangulator,gf,i) && !invisible(triangulator,gf,i)){
-	  num = triangulator._adjacencies[i].t_length;
-	  for(j=0;j<num;j++){
+      num = triangulator._adjacencies[i].t_length;
+      for(j=0;j<num;j++){
         index1 = triangulator._adjacencies[i].t[j];
-	    index2 = triangulator._adjacencies[i].t[(j+1)%num];
-	    index3 = triangulator._adjacencies[i].t[(j+2)%num];
-		x0 = convert(triangulator,i);
-		x1 = convert(triangulator,index1);
-		x2 = convert(triangulator,index2);
-		x3 = convert(triangulator,index3);
-		ok_triangle1 = real(triangulator,i,index1,index2) && !sliver(x0,x1,x2);
-		ok_triangle2 = real(triangulator,i,index2,index3) && !sliver(x0,x2,x3);
-		if(ok_triangle1 && !ok_triangle2){
-	      borders[i].add_segment(i,index2,index1);
-		}
-		else if(!ok_triangle1 && ok_triangle2){
-	      borders[i].add_segment(i,index2,index3);
-		}
+        index2 = triangulator._adjacencies[i].t[(j+1)%num];
+        index3 = triangulator._adjacencies[i].t[(j+2)%num];
+        x0 = convert(triangulator,i);
+        x1 = convert(triangulator,index1);
+        x2 = convert(triangulator,index2);
+        x3 = convert(triangulator,index3);
+        ok_triangle1 = real(triangulator,i,index1,index2) && !sliver(x0,x1,x2);
+        ok_triangle2 = real(triangulator,i,index2,index3) && !sliver(x0,x2,x3);
+        if(ok_triangle1 && !ok_triangle2){
+          borders[i].add_segment(i,index2,index1);
+        }
+        else if(!ok_triangle1 && ok_triangle2){
+          borders[i].add_segment(i,index2,index3);
+        }
 
-		if(ok_triangle1){
-		  angles[i] = angles[i] + angle(x0,x1,x2);
-		}
-	  }
+        if(ok_triangle1){
+          angles[i] = angles[i] + angle(x0,x1,x2);
+        }
+      }
     }
   }
 }
 
-void lpcvt::step2(DocRecord& triangulator,GFace* gf){
+void lpcvt::step2(DocRecord& triangulator,GFace* gf)
+{
   int i;
   int j;
   int num;
@@ -913,22 +935,23 @@ void lpcvt::step2(DocRecord& triangulator,GFace* gf){
   voronoi_vertex vertex;
   for(i=0;i<triangulator.numPoints;i++){
     if(interior(triangulator,gf,i)){
-	  num = triangulator._adjacencies[i].t_length;
-	  for(j=0;j<num;j++){
-	    index1 = triangulator._adjacencies[i].t[j];
-		index2 = triangulator._adjacencies[i].t[(j+1)%num];
-		C = circumcircle(triangulator,i,index1,index2);
-		vertex = voronoi_vertex(C);
-		vertex.set_index1(i);
-		vertex.set_index2(index1);
-		vertex.set_index3(index2);
-		temp[i].add_vertex(vertex);
-	  }
-	}
+      num = triangulator._adjacencies[i].t_length;
+      for(j=0;j<num;j++){
+        index1 = triangulator._adjacencies[i].t[j];
+        index2 = triangulator._adjacencies[i].t[(j+1)%num];
+        C = circumcircle(triangulator,i,index1,index2);
+        vertex = voronoi_vertex(C);
+        vertex.set_index1(i);
+        vertex.set_index2(index1);
+        vertex.set_index3(index2);
+        temp[i].add_vertex(vertex);
+      }
+    }
   }
 }
 
-void lpcvt::step3(DocRecord& triangulator,GFace* gf){
+void lpcvt::step3(DocRecord& triangulator,GFace* gf)
+{
   int i;
   int j;
   int num;
@@ -945,124 +968,125 @@ void lpcvt::step3(DocRecord& triangulator,GFace* gf){
   voronoi_vertex vertex,vertex1,vertex2,vertex3;
   for(i=0;i<triangulator.numPoints;i++){
     if(!interior(triangulator,gf,i) && !invisible(triangulator,gf,i)){
-	  num = triangulator._adjacencies[i].t_length;
-          if(borders[i].get_number_segments() < 2) continue;
-          s1 = borders[i].get_segment(0);
-	  s2 = borders[i].get_segment(1);
-	  angle = angles[i];
-	  for(j=0;j<num;j++){
-	    int index1 = triangulator._adjacencies[i].t[j];
-		int index2 = triangulator._adjacencies[i].t[(j+1)%num];
-		int index3 = triangulator._adjacencies[i].t[(j+2)%num];
-		x0 = convert(triangulator,i);
-		x1 = convert(triangulator,index1);
-		x2 = convert(triangulator,index2);
-		x3 = convert(triangulator,index3);
-		ok_triangle1 = real(triangulator,i,index1,index2) && !sliver(x0,x1,x2);
-		ok_triangle2 = real(triangulator,i,index2,index3) && !sliver(x0,x2,x3);
-		if(ok_triangle1 && ok_triangle2){
-		  C1 = circumcircle(triangulator,i,index1,index2);
-		  C2 = circumcircle(triangulator,i,index2,index3);
-		  is_inside1 = interior(triangulator,s1,s2,angle,C1);
-		  is_inside2 = interior(triangulator,s1,s2,angle,C2);
-		  if(is_inside1 && is_inside2){
-			vertex = voronoi_vertex(C1);
-			vertex.set_index1(i);
-			vertex.set_index2(index1);
-			vertex.set_index3(index2);
-			temp[i].add_vertex(vertex);
-		  }
-		  else if(is_inside1){
-		    val = intersection(triangulator,s1,s2,C1,C2,flag,vec,s);
-			vertex1 = voronoi_vertex(C1);
-			vertex1.set_index1(i);
-			vertex1.set_index2(index1);
-			vertex1.set_index3(index2);
-			vertex2 = voronoi_vertex(val);
-			vertex2.set_index1(i);
-			vertex2.set_index2(index2);
-			vertex2.set_normal(vec);
-			temp[i].add_vertex(vertex1);
-			temp[i].add_vertex(vertex2);
-			flag = borders[index2].add_segment(s);
-			if(flag){
-			  fifo.push(index2);
-			}
-		  }
-		  else if(is_inside2){
-		    val = intersection(triangulator,s1,s2,C1,C2,flag,vec,s);
-			vertex1 = voronoi_vertex(x0);
-			vertex1.set_duplicate(1);
-			vertex2 = voronoi_vertex(val);
-			vertex2.set_index1(i);
-			vertex2.set_index2(index2);
-			vertex2.set_normal(vec);
-			temp[i].add_vertex(vertex1);
-			temp[i].add_vertex(vertex2);
-			flag = borders[index2].add_segment(s);
-			if(flag){
-			  fifo.push(index2);
-			}
-		  }
-		  else{
-			any = intersection(triangulator,s1,s2,C1,C2,flag,vec,s);
-			if(flag){
-			  median = mid(x0,x2);
-			  first = intersection(triangulator,s1,s2,C1,median,flag,vecA,s3);
-			  second = intersection(triangulator,s1,s2,C2,median,flag,vecB,s4);
-			  vertex1 = voronoi_vertex(x0);
-			  vertex1.set_duplicate(1);
-			  vertex2 = voronoi_vertex(first);
-			  vertex2.set_index1(i);
-			  vertex2.set_index2(index2);
-			  vertex2.set_normal(vecA);
-			  vertex3 = voronoi_vertex(second);
-			  vertex3.set_index1(i);
-			  vertex3.set_index2(index2);
-			  vertex3.set_normal(vecB);
-			  temp[i].add_vertex(vertex1);
-			  temp[i].add_vertex(vertex2);
-			  temp[i].add_vertex(vertex3);
-			  flag1 = borders[index2].add_segment(s3);
-			  flag2 = borders[index2].add_segment(s4);
-			  if(flag1 || flag2){
-			    fifo.push(index2);
-			  }
-			}
-		  }
-		}
-		else if(ok_triangle1){
-		  C = circumcircle(triangulator,i,index1,index2);
-		  is_inside = interior(triangulator,s1,s2,angle,C);
-		  if(is_inside){
-		    val = mid(x0,x2);
-			vertex1 = voronoi_vertex(C);
-			vertex1.set_index1(i);
-			vertex1.set_index2(index1);
-			vertex1.set_index3(index2);
-			vertex2 = voronoi_vertex(val);
-			temp[i].add_vertex(vertex1);
-			temp[i].add_vertex(vertex2);
-		  }
-		}
-		else if(ok_triangle2){
-		  C = circumcircle(triangulator,i,index2,index3);
-		  is_inside = interior(triangulator,s1,s2,angle,C);
-		  if(is_inside){
-		    val = mid(x0,x2);
-			vertex1 = voronoi_vertex(x0);
-			vertex1.set_duplicate(1);
-			vertex2 = voronoi_vertex(val);
-			temp[i].add_vertex(vertex1);
-			temp[i].add_vertex(vertex2);
-		  }
-		}
-	  }
+      num = triangulator._adjacencies[i].t_length;
+      if(borders[i].get_number_segments() < 2) continue;
+      s1 = borders[i].get_segment(0);
+      s2 = borders[i].get_segment(1);
+      angle = angles[i];
+      for(j=0;j<num;j++){
+        int index1 = triangulator._adjacencies[i].t[j];
+        int index2 = triangulator._adjacencies[i].t[(j+1)%num];
+        int index3 = triangulator._adjacencies[i].t[(j+2)%num];
+        x0 = convert(triangulator,i);
+        x1 = convert(triangulator,index1);
+        x2 = convert(triangulator,index2);
+        x3 = convert(triangulator,index3);
+        ok_triangle1 = real(triangulator,i,index1,index2) && !sliver(x0,x1,x2);
+        ok_triangle2 = real(triangulator,i,index2,index3) && !sliver(x0,x2,x3);
+        if(ok_triangle1 && ok_triangle2){
+          C1 = circumcircle(triangulator,i,index1,index2);
+          C2 = circumcircle(triangulator,i,index2,index3);
+          is_inside1 = interior(triangulator,s1,s2,angle,C1);
+          is_inside2 = interior(triangulator,s1,s2,angle,C2);
+          if(is_inside1 && is_inside2){
+            vertex = voronoi_vertex(C1);
+            vertex.set_index1(i);
+            vertex.set_index2(index1);
+            vertex.set_index3(index2);
+            temp[i].add_vertex(vertex);
+          }
+          else if(is_inside1){
+            val = intersection(triangulator,s1,s2,C1,C2,flag,vec,s);
+            vertex1 = voronoi_vertex(C1);
+            vertex1.set_index1(i);
+            vertex1.set_index2(index1);
+            vertex1.set_index3(index2);
+            vertex2 = voronoi_vertex(val);
+            vertex2.set_index1(i);
+            vertex2.set_index2(index2);
+            vertex2.set_normal(vec);
+            temp[i].add_vertex(vertex1);
+            temp[i].add_vertex(vertex2);
+            flag = borders[index2].add_segment(s);
+            if(flag){
+              fifo.push(index2);
+            }
+          }
+          else if(is_inside2){
+            val = intersection(triangulator,s1,s2,C1,C2,flag,vec,s);
+            vertex1 = voronoi_vertex(x0);
+            vertex1.set_duplicate(1);
+            vertex2 = voronoi_vertex(val);
+            vertex2.set_index1(i);
+            vertex2.set_index2(index2);
+            vertex2.set_normal(vec);
+            temp[i].add_vertex(vertex1);
+            temp[i].add_vertex(vertex2);
+            flag = borders[index2].add_segment(s);
+            if(flag){
+              fifo.push(index2);
+            }
+          }
+          else{
+            any = intersection(triangulator,s1,s2,C1,C2,flag,vec,s);
+            if(flag){
+              median = mid(x0,x2);
+              first = intersection(triangulator,s1,s2,C1,median,flag,vecA,s3);
+              second = intersection(triangulator,s1,s2,C2,median,flag,vecB,s4);
+              vertex1 = voronoi_vertex(x0);
+              vertex1.set_duplicate(1);
+              vertex2 = voronoi_vertex(first);
+              vertex2.set_index1(i);
+              vertex2.set_index2(index2);
+              vertex2.set_normal(vecA);
+              vertex3 = voronoi_vertex(second);
+              vertex3.set_index1(i);
+              vertex3.set_index2(index2);
+              vertex3.set_normal(vecB);
+              temp[i].add_vertex(vertex1);
+              temp[i].add_vertex(vertex2);
+              temp[i].add_vertex(vertex3);
+              flag1 = borders[index2].add_segment(s3);
+              flag2 = borders[index2].add_segment(s4);
+              if(flag1 || flag2){
+                fifo.push(index2);
+              }
+            }
+          }
+        }
+        else if(ok_triangle1){
+          C = circumcircle(triangulator,i,index1,index2);
+          is_inside = interior(triangulator,s1,s2,angle,C);
+          if(is_inside){
+            val = mid(x0,x2);
+            vertex1 = voronoi_vertex(C);
+            vertex1.set_index1(i);
+            vertex1.set_index2(index1);
+            vertex1.set_index3(index2);
+            vertex2 = voronoi_vertex(val);
+            temp[i].add_vertex(vertex1);
+            temp[i].add_vertex(vertex2);
+          }
+        }
+        else if(ok_triangle2){
+          C = circumcircle(triangulator,i,index2,index3);
+          is_inside = interior(triangulator,s1,s2,angle,C);
+          if(is_inside){
+            val = mid(x0,x2);
+            vertex1 = voronoi_vertex(x0);
+            vertex1.set_duplicate(1);
+            vertex2 = voronoi_vertex(val);
+            temp[i].add_vertex(vertex1);
+            temp[i].add_vertex(vertex2);
+          }
+        }
+      }
     }
   }
 }
 
-void lpcvt::step4(DocRecord& triangulator,GFace* gf){
+void lpcvt::step4(DocRecord& triangulator,GFace* gf)
+{
   int i;
   int j;
   int num;
@@ -1076,44 +1100,45 @@ void lpcvt::step4(DocRecord& triangulator,GFace* gf){
   voronoi_vertex vertex1,vertex2;
   segment s;
   while(!fifo.empty()){
-	index = fifo.front();
-	fifo.pop();
-	num = temp[index].get_number_vertices();
-	if(interior(triangulator,gf,index)){
-	  start = 0;
-	}
-	else start = 2;
-	for(i=start;i<borders[index].get_number_segments();i++){
-	  s = borders[index].get_segment(i);
-	  p1 = convert(triangulator,s.get_index1());
-	  p2 = convert(triangulator,s.get_index2());
-	  for(j=0;j<num;j++){
-		vertex1 = temp[index].get_vertex(j);
-		vertex2 = temp[index].get_vertex((j+1)%num);
-		C1 = vertex1.get_point();
-		C2 = vertex2.get_point();
-		val = intersection(C1,C2,p1,p2,flag1);
-		if(flag1){
-		  if(vertex1.get_index3()!=-1){
-		    opposite = vertex1.get_index3();
-		  }
-		  else if(vertex1.get_index2()!=-1){
-		    opposite = vertex1.get_index2();
-		  }
-		  else if(vertex2.get_index2()!=-1){
-		    opposite = vertex2.get_index2();
-		  }
-		  flag2 = borders[opposite].add_segment(s);
-		  if(flag2){
-			fifo.push(opposite);
-		  }
-		}
-	  }
-	}
+    index = fifo.front();
+    fifo.pop();
+    num = temp[index].get_number_vertices();
+    if(interior(triangulator,gf,index)){
+      start = 0;
+    }
+    else start = 2;
+    for(i=start;i<borders[index].get_number_segments();i++){
+      s = borders[index].get_segment(i);
+      p1 = convert(triangulator,s.get_index1());
+      p2 = convert(triangulator,s.get_index2());
+      for(j=0;j<num;j++){
+        vertex1 = temp[index].get_vertex(j);
+        vertex2 = temp[index].get_vertex((j+1)%num);
+        C1 = vertex1.get_point();
+        C2 = vertex2.get_point();
+        val = intersection(C1,C2,p1,p2,flag1);
+        if(flag1){
+          if(vertex1.get_index3()!=-1){
+            opposite = vertex1.get_index3();
+          }
+          else if(vertex1.get_index2()!=-1){
+            opposite = vertex1.get_index2();
+          }
+          else if(vertex2.get_index2()!=-1){
+            opposite = vertex2.get_index2();
+          }
+          flag2 = borders[opposite].add_segment(s);
+          if(flag2){
+            fifo.push(opposite);
+          }
+        }
+      }
+    }
   }
 }
 
-void lpcvt::step5(DocRecord& triangulator,GFace* gf){
+void lpcvt::step5(DocRecord& triangulator,GFace* gf)
+{
   int i;
   int j;
   int k;
@@ -1128,63 +1153,64 @@ void lpcvt::step5(DocRecord& triangulator,GFace* gf){
   voronoi_cell cell;
   for(i=0;i<triangulator.numPoints;i++){
     cell.clear();
-	if(interior(triangulator,gf,i)){
-	  start = 0;
-	}
-	else start = 2;
-	for(j=start;j<borders[i].get_number_segments();j++){
-	  s = borders[i].get_segment(j);
-	  p3 = convert(triangulator,s.get_index1());
-	  p4 = convert(triangulator,s.get_index2());
-	  reference = convert(triangulator,s.get_reference());
-	  n = normal(p3,p4);
-	  num = temp[i].get_number_vertices();
-	  for(k=0;k<num;k++){
-	    vertex1 = temp[i].get_vertex(k);
-		vertex2 = temp[i].get_vertex((k+1)%num);
-		p1 = vertex1.get_point();
-		p2 = vertex2.get_point();
-		if(same_side(p3,p4,reference,p1)){
-		  cell.add_vertex(vertex1);
-		}
-		val = intersection(p1,p2,p3,p4,flag);
-		if(flag){
-		  if(vertex1.get_index3()!=-1){
-		    opposite = vertex1.get_index3();
-		  }
-		  else if(vertex1.get_index2()!=-1){
-		    opposite = vertex1.get_index2();
-		  }
-		  else if(vertex2.get_index2()!=-1){
-		    opposite = vertex2.get_index2();
-		  }
-		  vertex = voronoi_vertex(val);
-		  vertex.set_index1(i);
-		  vertex.set_index2(opposite);
-		  vertex.set_normal(n);
-		  cell.add_vertex(vertex);
-		}
-	  }
-	  temp[i].clear();
-	  for(k=0;k<cell.get_number_vertices();k++){
-	    temp[i].add_vertex(cell.get_vertex(k));
-	  }
-	  cell.clear();
-	}
-	num = temp[i].get_number_vertices();
-	for(j=0;j<num;j++){
-	  vertex = voronoi_vertex(convert(triangulator,i));
-	  vertex.set_index1(i);
-	  vertex1 = temp[i].get_vertex(j);
-	  vertex2 = temp[i].get_vertex((j+1)%num);
-	  if(!vertex1.get_duplicate() && !vertex2.get_duplicate()){
-	    clipped.push_back(voronoi_element(vertex,vertex1,vertex2));
-	  }
-	}
+    if(interior(triangulator,gf,i)){
+      start = 0;
+    }
+    else start = 2;
+    for(j=start;j<borders[i].get_number_segments();j++){
+      s = borders[i].get_segment(j);
+      p3 = convert(triangulator,s.get_index1());
+      p4 = convert(triangulator,s.get_index2());
+      reference = convert(triangulator,s.get_reference());
+      n = normal(p3,p4);
+      num = temp[i].get_number_vertices();
+      for(k=0;k<num;k++){
+        vertex1 = temp[i].get_vertex(k);
+        vertex2 = temp[i].get_vertex((k+1)%num);
+        p1 = vertex1.get_point();
+        p2 = vertex2.get_point();
+        if(same_side(p3,p4,reference,p1)){
+          cell.add_vertex(vertex1);
+        }
+        val = intersection(p1,p2,p3,p4,flag);
+        if(flag){
+          if(vertex1.get_index3()!=-1){
+            opposite = vertex1.get_index3();
+          }
+          else if(vertex1.get_index2()!=-1){
+            opposite = vertex1.get_index2();
+          }
+          else if(vertex2.get_index2()!=-1){
+            opposite = vertex2.get_index2();
+          }
+          vertex = voronoi_vertex(val);
+          vertex.set_index1(i);
+          vertex.set_index2(opposite);
+          vertex.set_normal(n);
+          cell.add_vertex(vertex);
+        }
+      }
+      temp[i].clear();
+      for(k=0;k<cell.get_number_vertices();k++){
+        temp[i].add_vertex(cell.get_vertex(k));
+      }
+      cell.clear();
+    }
+    num = temp[i].get_number_vertices();
+    for(j=0;j<num;j++){
+      vertex = voronoi_vertex(convert(triangulator,i));
+      vertex.set_index1(i);
+      vertex1 = temp[i].get_vertex(j);
+      vertex2 = temp[i].get_vertex((j+1)%num);
+      if(!vertex1.get_duplicate() && !vertex2.get_duplicate()){
+        clipped.push_back(voronoi_element(vertex,vertex1,vertex2));
+      }
+    }
   }
 }
 
-void lpcvt::clip_cells(DocRecord& triangulator,GFace* gf){
+void lpcvt::clip_cells(DocRecord& triangulator,GFace* gf)
+{
   step1(triangulator,gf);
   step2(triangulator,gf);
   step3(triangulator,gf);
@@ -1192,7 +1218,8 @@ void lpcvt::clip_cells(DocRecord& triangulator,GFace* gf){
   step5(triangulator,gf);
 }
 
-void lpcvt::clear(){
+void lpcvt::clear()
+{
   unsigned int i;
   for(i=0;i<fifo.size();i++){
     fifo.pop();
@@ -1203,7 +1230,8 @@ void lpcvt::clear(){
   temp.clear();
 }
 
-double lpcvt::total_area(){
+double lpcvt::total_area()
+{
   double total;
   SPoint2 p1,p2,p3;
   voronoi_vertex v1,v2,v3;
@@ -1213,15 +1241,16 @@ double lpcvt::total_area(){
     v1 = it->get_v1();
     v2 = it->get_v2();
     v3 = it->get_v3();
-	p1 = v1.get_point();
-	p2 = v2.get_point();
-	p3 = v3.get_point();
-	total = total + triangle_area(p1,p2,p3);
+    p1 = v1.get_point();
+    p2 = v2.get_point();
+    p3 = v3.get_point();
+    total = total + triangle_area(p1,p2,p3);
   }
   return total;
 }
 
-void lpcvt::print_voronoi1(){
+void lpcvt::print_voronoi1()
+{
   SPoint2 p1,p2,p3;
   voronoi_vertex v1,v2,v3;
   std::list<voronoi_element>::iterator it;
@@ -1229,24 +1258,25 @@ void lpcvt::print_voronoi1(){
   file << "View \"test\" {\n";
   for(it=clipped.begin();it!=clipped.end();it++){
     v1 = it->get_v1();
-	v2 = it->get_v2();
-	v3 = it->get_v3();
-	p1 = v1.get_point();
-	p2 = v2.get_point();
-	p3 = v3.get_point();
-	print_segment(p2,p3,file);
-	//metric m = it->get_metric(); //Modification
-	//double h = it->get_h(0,0); //Modification
-	//double x = (p1.x() + p2.x() + p3.x())/3.0; //Modification
-	//double y = (p1.y() + p2.y() + p3.y())/3.0; //Modification
-	//double k = 0.4; //Modification
-	//print_segment(SPoint2(x,y),SPoint2(x+k*h*m.get_a(),y+k*h*m.get_b()),file); //Modification
-	//print_segment(SPoint2(x,y),SPoint2(x+k*h*m.get_c(),y+k*h*m.get_d()),file); //Modification
+    v2 = it->get_v2();
+    v3 = it->get_v3();
+    p1 = v1.get_point();
+    p2 = v2.get_point();
+    p3 = v3.get_point();
+    print_segment(p2,p3,file);
+    //metric m = it->get_metric(); //Modification
+    //double h = it->get_h(0,0); //Modification
+    //double x = (p1.x() + p2.x() + p3.x())/3.0; //Modification
+    //double y = (p1.y() + p2.y() + p3.y())/3.0; //Modification
+    //double k = 0.4; //Modification
+    //print_segment(SPoint2(x,y),SPoint2(x+k*h*m.get_a(),y+k*h*m.get_b()),file); //Modification
+    //print_segment(SPoint2(x,y),SPoint2(x+k*h*m.get_c(),y+k*h*m.get_d()),file); //Modification
   }
   file << "};\n";
 }
 
-void lpcvt::print_voronoi2(){
+void lpcvt::print_voronoi2()
+{
   unsigned int i;
   int j;
   int num;
@@ -1256,18 +1286,19 @@ void lpcvt::print_voronoi2(){
   file << "View \"test\" {\n";
   for(i=0;i<temp.size();i++){
     num = temp[i].get_number_vertices();
-	for(j=0;j<num;j++){
-	  v1 = temp[i].get_vertex(j);
-	  v2 = temp[i].get_vertex((j+1)%num);
-	  p1 = v1.get_point();
-	  p2 = v2.get_point();
-	  print_segment(p1,p2,file);
-	}
+    for(j=0;j<num;j++){
+      v1 = temp[i].get_vertex(j);
+      v2 = temp[i].get_vertex((j+1)%num);
+      p1 = v1.get_point();
+      p2 = v2.get_point();
+      print_segment(p1,p2,file);
+    }
   }
   file << "};\n";
 }
 
-void lpcvt::print_delaunay(DocRecord& triangulator){
+void lpcvt::print_delaunay(DocRecord& triangulator)
+{
   int i;
   int j;
   int num;
@@ -1278,26 +1309,28 @@ void lpcvt::print_delaunay(DocRecord& triangulator){
   file << "View \"test\" {\n";
   for(i=0;i<triangulator.numPoints;i++){
     num = triangulator._adjacencies[i].t_length;
-	for(j=0;j<num;j++){
-	  index1 = triangulator._adjacencies[i].t[j];
-	  index2 = triangulator._adjacencies[i].t[(j+1)%num];
-	  if(triangulator.contain(i,index1,index2)){
-		x1 = convert(triangulator,index1);
-		x2 = convert(triangulator,index2);
-		print_segment(x1,x2,file);
-	  }
-	}
+    for(j=0;j<num;j++){
+      index1 = triangulator._adjacencies[i].t[j];
+      index2 = triangulator._adjacencies[i].t[(j+1)%num];
+      if(triangulator.contain(i,index1,index2)){
+        x1 = convert(triangulator,index1);
+        x2 = convert(triangulator,index2);
+        print_segment(x1,x2,file);
+      }
+    }
   }
   file << "};\n";
 }
 
-void lpcvt::print_segment(SPoint2 p1,SPoint2 p2,std::ofstream& file){
+void lpcvt::print_segment(SPoint2 p1,SPoint2 p2,std::ofstream& file)
+{
   file << "SL (" << p1.x() << ", " << p1.y() << ", 0, "
   << p2.x() << ", " << p2.y() << ", 0){"
   << "10, 20};\n";
 }
 
-void lpcvt::compute_parameters(GFace* gf,int p){
+void lpcvt::compute_parameters(GFace* gf,int p)
+{
   double h1,h2,h3;
   double k;
   double ratio;
@@ -1313,32 +1346,33 @@ void lpcvt::compute_parameters(GFace* gf,int p){
   k = 1.0;
   for(it=clipped.begin();it!=clipped.end();it++){
     v1 = it->get_v1();
-	v2 = it->get_v2();
-	v3 = it->get_v3();
-	p1 = v1.get_point();
-	p2 = v2.get_point();
-	p3 = v3.get_point();
-	center = SPoint2((p1.x()+p2.x()+p3.x())/3.0,(p1.y()+p2.y()+p3.y())/3.0);
-	ratio = get_ratio(gf,center);
-	h1 = k*backgroundMesh::current()->operator()(p1.x(),p1.y(),0.0)*ratio;
-	h2 = k*backgroundMesh::current()->operator()(p2.x(),p2.y(),0.0)*ratio;
-	h3 = k*backgroundMesh::current()->operator()(p3.x(),p3.y(),0.0)*ratio;
-	angle = backgroundMesh::current()->getAngle(p1.x(),p1.y(),0.0);
-	cosinus = cos(angle);
-	sinus = sin(angle);
-	m = metric(cosinus,sinus,-sinus,cosinus);
-	v1.set_h(h1);
-	v2.set_h(h2);
-	v3.set_h(h3);
-	it->set_v1(v1);
-	it->set_v2(v2);
-	it->set_v3(v3);
-	it->deriv_h(p);
-	it->set_metric(m);
+    v2 = it->get_v2();
+    v3 = it->get_v3();
+    p1 = v1.get_point();
+    p2 = v2.get_point();
+    p3 = v3.get_point();
+    center = SPoint2((p1.x()+p2.x()+p3.x())/3.0,(p1.y()+p2.y()+p3.y())/3.0);
+    ratio = get_ratio(gf,center);
+    h1 = k*backgroundMesh::current()->operator()(p1.x(),p1.y(),0.0)*ratio;
+    h2 = k*backgroundMesh::current()->operator()(p2.x(),p2.y(),0.0)*ratio;
+    h3 = k*backgroundMesh::current()->operator()(p3.x(),p3.y(),0.0)*ratio;
+    angle = backgroundMesh::current()->getAngle(p1.x(),p1.y(),0.0);
+    cosinus = cos(angle);
+    sinus = sin(angle);
+    m = metric(cosinus,sinus,-sinus,cosinus);
+    v1.set_h(h1);
+    v2.set_h(h2);
+    v3.set_h(h3);
+    it->set_v1(v1);
+    it->set_v2(v2);
+    it->set_v3(v3);
+    it->deriv_h(p);
+    it->set_metric(m);
   }
 }
 
-double lpcvt::get_ratio(GFace* gf,SPoint2 point){
+double lpcvt::get_ratio(GFace* gf,SPoint2 point)
+{
   double val;
   double uv[2];
   double tab[3];
@@ -1350,13 +1384,15 @@ double lpcvt::get_ratio(GFace* gf,SPoint2 point){
   return val;
 }
 
-double lpcvt::compute_rho(double h,int p){
+double lpcvt::compute_rho(double h,int p)
+{
   double rho;
   rho = pow_int(1.0/h,p+2);
   return rho;
 }
 
-void lpcvt::write(DocRecord& triangulator,GFace* gf,int p){
+void lpcvt::write(DocRecord& triangulator,GFace* gf,int p)
+{
   int i;
   double energy;
   SVector3 grad;
@@ -1368,15 +1404,17 @@ void lpcvt::write(DocRecord& triangulator,GFace* gf,int p){
 
   for(i=0;i<triangulator.numPoints;i++){
     if(interior(triangulator,gf,i)){
-	  grad = gradients[i];
-	  file << grad.x() << "  ";
-	  file << grad.y() << "  ";
-	  file << "\n";
-	}
+      grad = gradients[i];
+      file << grad.x() << "  ";
+      file << grad.y() << "  ";
+      file << "\n";
+    }
   }
 }
 
-void lpcvt::eval(DocRecord& triangulator,std::vector<SVector3>& gradients,double& energy,int p){
+void lpcvt::eval(DocRecord& triangulator,std::vector<SVector3>& gradients,
+                 double& energy,int p)
+{
   unsigned int i;
   int index;
   int index1;
@@ -1398,81 +1436,84 @@ void lpcvt::eval(DocRecord& triangulator,std::vector<SVector3>& gradients,double
   e = 0.000001;
 
   for(it=clipped.begin();it!=clipped.end();it++){
-	if(it->get_quality()<e) continue; //not exact
+    if(it->get_quality()<e) continue; //not exact
     v1 = it->get_v1();
-	v2 = it->get_v2();
-	v3 = it->get_v3();
-	generator = v1.get_point();
-	C1 = v2.get_point();
-	C2 = v3.get_point();
-	index = v1.get_index1();
-	energy = energy + F(*it,p);
-	gradients[index] = gradients[index] + simple(*it,p);
-	grad1 = dF_dC1(*it,p);
-	grad2 = dF_dC2(*it,p);
-	if(v2.get_index3()!=-1){
-	  index1 = v2.get_index1();
-	  index2 = v2.get_index2();
-	  index3 = v2.get_index3();
-	  p1 = convert(triangulator,index1);
-	  p2 = convert(triangulator,index2);
-	  p3 = convert(triangulator,index3);
-	  gradients[index1] = gradients[index1] + inner_dFdx0(grad1,C1,p1,p2,p3);
-	  gradients[index2] = gradients[index2] + inner_dFdx0(grad1,C1,p2,p1,p3);
-	  gradients[index3] = gradients[index3] + inner_dFdx0(grad1,C1,p3,p1,p2);
-	}
-	else if(v2.get_index2()!=-1){
-	  index1 = v2.get_index1();
-	  index2 = v2.get_index2();
-	  normal = v2.get_normal();
-	  p1 = convert(triangulator,index1);
-	  p2 = convert(triangulator,index2);
-	  gradients[index1] = gradients[index1] + boundary_dFdx0(grad1,C1,p1,p2,normal);
-	  gradients[index2] = gradients[index2] + boundary_dFdx0(grad1,C1,p2,p1,normal);
-	}
-	if(v3.get_index3()!=-1){
-	  index1 = v3.get_index1();
-	  index2 = v3.get_index2();
-	  index3 = v3.get_index3();
-	  p1 = convert(triangulator,index1);
-	  p2 = convert(triangulator,index2);
-	  p3 = convert(triangulator,index3);
-	  gradients[index1] = gradients[index1] + inner_dFdx0(grad2,C2,p1,p2,p3);
-	  gradients[index2] = gradients[index2] + inner_dFdx0(grad2,C2,p2,p1,p3);
-	  gradients[index3] = gradients[index3] + inner_dFdx0(grad2,C2,p3,p1,p2);
-	}
-	else if(v3.get_index2()!=-1){
-	  index1 = v3.get_index1();
-	  index2 = v3.get_index2();
-	  normal = v3.get_normal();
-	  p1 = convert(triangulator,index1);
-	  p2 = convert(triangulator,index2);
-	  gradients[index1] = gradients[index1] + boundary_dFdx0(grad2,C2,p1,p2,normal);
-	  gradients[index2] = gradients[index2] + boundary_dFdx0(grad2,C2,p2,p1,normal);
-	}
+    v2 = it->get_v2();
+    v3 = it->get_v3();
+    generator = v1.get_point();
+    C1 = v2.get_point();
+    C2 = v3.get_point();
+    index = v1.get_index1();
+    energy = energy + F(*it,p);
+    gradients[index] = gradients[index] + simple(*it,p);
+    grad1 = dF_dC1(*it,p);
+    grad2 = dF_dC2(*it,p);
+    if(v2.get_index3()!=-1){
+      index1 = v2.get_index1();
+      index2 = v2.get_index2();
+      index3 = v2.get_index3();
+      p1 = convert(triangulator,index1);
+      p2 = convert(triangulator,index2);
+      p3 = convert(triangulator,index3);
+      gradients[index1] = gradients[index1] + inner_dFdx0(grad1,C1,p1,p2,p3);
+      gradients[index2] = gradients[index2] + inner_dFdx0(grad1,C1,p2,p1,p3);
+      gradients[index3] = gradients[index3] + inner_dFdx0(grad1,C1,p3,p1,p2);
+    }
+    else if(v2.get_index2()!=-1){
+      index1 = v2.get_index1();
+      index2 = v2.get_index2();
+      normal = v2.get_normal();
+      p1 = convert(triangulator,index1);
+      p2 = convert(triangulator,index2);
+      gradients[index1] = gradients[index1] + boundary_dFdx0(grad1,C1,p1,p2,normal);
+      gradients[index2] = gradients[index2] + boundary_dFdx0(grad1,C1,p2,p1,normal);
+    }
+    if(v3.get_index3()!=-1){
+      index1 = v3.get_index1();
+      index2 = v3.get_index2();
+      index3 = v3.get_index3();
+      p1 = convert(triangulator,index1);
+      p2 = convert(triangulator,index2);
+      p3 = convert(triangulator,index3);
+      gradients[index1] = gradients[index1] + inner_dFdx0(grad2,C2,p1,p2,p3);
+      gradients[index2] = gradients[index2] + inner_dFdx0(grad2,C2,p2,p1,p3);
+      gradients[index3] = gradients[index3] + inner_dFdx0(grad2,C2,p3,p1,p2);
+    }
+    else if(v3.get_index2()!=-1){
+      index1 = v3.get_index1();
+      index2 = v3.get_index2();
+      normal = v3.get_normal();
+      p1 = convert(triangulator,index1);
+      p2 = convert(triangulator,index2);
+      gradients[index1] = gradients[index1] + boundary_dFdx0(grad2,C2,p1,p2,normal);
+      gradients[index2] = gradients[index2] + boundary_dFdx0(grad2,C2,p2,p1,normal);
+    }
   }
 }
 
-void lpcvt::swap(){
+void lpcvt::swap()
+{
   voronoi_vertex vertex;
   std::list<voronoi_element>::iterator it;
   for(it=clipped.begin();it!=clipped.end();it++){
-	if(J(it->get_v1().get_point(),it->get_v2().get_point(),it->get_v3().get_point())<0.0){
+    if(J(it->get_v1().get_point(),it->get_v2().get_point(),it->get_v3().get_point())<0.0){
       vertex = it->get_v3();
-	  it->set_v3(it->get_v2());
-	  it->set_v2(vertex);
-	}
+      it->set_v3(it->get_v2());
+      it->set_v2(vertex);
+    }
   }
 }
 
-void lpcvt::get_gauss(){
+void lpcvt::get_gauss()
+{
   int order;
   order = 8;
   gaussIntegration::getTriangle(order,gauss_points,gauss_weights);
   gauss_num = gauss_points.size1();
 }
 
-double lpcvt::F(voronoi_element element,int p){
+double lpcvt::F(voronoi_element element,int p)
+{
   int i;
   double u;
   double v;
@@ -1495,20 +1536,21 @@ double lpcvt::F(voronoi_element element,int p){
   m = element.get_metric();
 
   for(i=0;i<gauss_num;i++){
-	u = gauss_points(i,0);
-	v = gauss_points(i,1);
+    u = gauss_points(i,0);
+    v = gauss_points(i,1);
     x = Tx(u,v,generator,C1,C2);
-	y = Ty(u,v,generator,C1,C2);
-	point = SPoint2(x,y);
-	weight = gauss_weights(i);
-	rho = compute_rho(element.get_h(u,v),p);
-	energy = energy + weight*rho*f(generator,point,m,p);
+    y = Ty(u,v,generator,C1,C2);
+    point = SPoint2(x,y);
+    weight = gauss_weights(i);
+    rho = compute_rho(element.get_h(u,v),p);
+    energy = energy + weight*rho*f(generator,point,m,p);
   }
   energy = J(generator,C1,C2)*energy;
   return energy;
 }
 
-SVector3 lpcvt::simple(voronoi_element element,int p){
+SVector3 lpcvt::simple(voronoi_element element,int p)
+{
   int i;
   double u;
   double v;
@@ -1535,22 +1577,23 @@ SVector3 lpcvt::simple(voronoi_element element,int p){
   m = element.get_metric();
 
   for(i=0;i<gauss_num;i++){
-	u = gauss_points(i,0);
-	v = gauss_points(i,1);
+    u = gauss_points(i,0);
+    v = gauss_points(i,1);
     x = Tx(u,v,generator,C1,C2);
-	y = Ty(u,v,generator,C1,C2);
-	point = SPoint2(x,y);
-	weight = gauss_weights(i);
-	rho = compute_rho(element.get_h(u,v),p);
-	comp_x = comp_x + weight*rho*df_dx(generator,point,m,p);
-	comp_y = comp_y + weight*rho*df_dy(generator,point,m,p);
+    y = Ty(u,v,generator,C1,C2);
+    point = SPoint2(x,y);
+    weight = gauss_weights(i);
+    rho = compute_rho(element.get_h(u,v),p);
+    comp_x = comp_x + weight*rho*df_dx(generator,point,m,p);
+    comp_y = comp_y + weight*rho*df_dy(generator,point,m,p);
   }
   comp_x = jacobian*comp_x;
   comp_y = jacobian*comp_y;
   return SVector3(comp_x,comp_y,0.0);
 }
 
-SVector3 lpcvt::dF_dC1(voronoi_element element,int p){
+SVector3 lpcvt::dF_dC1(voronoi_element element,int p)
+{
   int i;
   double u;
   double v;
@@ -1580,27 +1623,28 @@ SVector3 lpcvt::dF_dC1(voronoi_element element,int p){
   m = element.get_metric();
 
   for(i=0;i<gauss_num;i++){
-	u = gauss_points(i,0);
-	v = gauss_points(i,1);
+    u = gauss_points(i,0);
+    v = gauss_points(i,1);
     x = Tx(u,v,generator,C1,C2);
-	y = Ty(u,v,generator,C1,C2);
-	point = SPoint2(x,y);
-	weight = gauss_weights(i);
-	rho = compute_rho(element.get_h(u,v),p);
-	drho_dx = (-p-2)*pow_int(1.0/element.get_h(u,v),p+3)*element.get_dh_dx();
-	drho_dy = (-p-2)*pow_int(1.0/element.get_h(u,v),p+3)*element.get_dh_dy();
-	distance = f(point,generator,m,p);
-	comp_x = comp_x + weight*rho*df_dx(point,generator,m,p)*u*jacobian;
-	comp_x = comp_x + weight*rho*distance*(C2.y()-generator.y());
-	comp_x = comp_x + weight*drho_dx*u*distance*jacobian;
-	comp_y = comp_y + weight*rho*df_dy(point,generator,m,p)*u*jacobian;
-	comp_y = comp_y + weight*rho*distance*(generator.x()-C2.x());
-	comp_y = comp_y + weight*drho_dy*u*distance*jacobian;
+    y = Ty(u,v,generator,C1,C2);
+    point = SPoint2(x,y);
+    weight = gauss_weights(i);
+    rho = compute_rho(element.get_h(u,v),p);
+    drho_dx = (-p-2)*pow_int(1.0/element.get_h(u,v),p+3)*element.get_dh_dx();
+    drho_dy = (-p-2)*pow_int(1.0/element.get_h(u,v),p+3)*element.get_dh_dy();
+    distance = f(point,generator,m,p);
+    comp_x = comp_x + weight*rho*df_dx(point,generator,m,p)*u*jacobian;
+    comp_x = comp_x + weight*rho*distance*(C2.y()-generator.y());
+    comp_x = comp_x + weight*drho_dx*u*distance*jacobian;
+    comp_y = comp_y + weight*rho*df_dy(point,generator,m,p)*u*jacobian;
+    comp_y = comp_y + weight*rho*distance*(generator.x()-C2.x());
+    comp_y = comp_y + weight*drho_dy*u*distance*jacobian;
   }
   return SVector3(comp_x,comp_y,0.0);
 }
 
-SVector3 lpcvt::dF_dC2(voronoi_element element,int p){
+SVector3 lpcvt::dF_dC2(voronoi_element element,int p)
+{
   int i;
   double u;
   double v;
@@ -1630,27 +1674,28 @@ SVector3 lpcvt::dF_dC2(voronoi_element element,int p){
   m = element.get_metric();
 
   for(i=0;i<gauss_num;i++){
-	u = gauss_points(i,0);
-	v = gauss_points(i,1);
-	x = Tx(u,v,generator,C1,C2);
-	y = Ty(u,v,generator,C1,C2);
-	point = SPoint2(x,y);
-	weight = gauss_weights(i);
-	rho = compute_rho(element.get_h(u,v),p);
-	drho_dx = (-p-2)*pow_int(1.0/element.get_h(u,v),p+3)*element.get_dh_dx();
-	drho_dy = (-p-2)*pow_int(1.0/element.get_h(u,v),p+3)*element.get_dh_dy();
-	distance = f(point,generator,m,p);
-	comp_x = comp_x + weight*rho*df_dx(point,generator,m,p)*v*jacobian;
-	comp_x = comp_x + weight*rho*distance*(generator.y()-C1.y());
-	comp_x = comp_x + weight*drho_dx*v*distance*jacobian;
-	comp_y = comp_y + weight*rho*df_dy(point,generator,m,p)*v*jacobian;
-	comp_y = comp_y + weight*rho*distance*(C1.x()-generator.x());
-	comp_y = comp_y + weight*drho_dy*v*distance*jacobian;
+    u = gauss_points(i,0);
+    v = gauss_points(i,1);
+    x = Tx(u,v,generator,C1,C2);
+    y = Ty(u,v,generator,C1,C2);
+    point = SPoint2(x,y);
+    weight = gauss_weights(i);
+    rho = compute_rho(element.get_h(u,v),p);
+    drho_dx = (-p-2)*pow_int(1.0/element.get_h(u,v),p+3)*element.get_dh_dx();
+    drho_dy = (-p-2)*pow_int(1.0/element.get_h(u,v),p+3)*element.get_dh_dy();
+    distance = f(point,generator,m,p);
+    comp_x = comp_x + weight*rho*df_dx(point,generator,m,p)*v*jacobian;
+    comp_x = comp_x + weight*rho*distance*(generator.y()-C1.y());
+    comp_x = comp_x + weight*drho_dx*v*distance*jacobian;
+    comp_y = comp_y + weight*rho*df_dy(point,generator,m,p)*v*jacobian;
+    comp_y = comp_y + weight*rho*distance*(C1.x()-generator.x());
+    comp_y = comp_y + weight*drho_dy*v*distance*jacobian;
   }
   return SVector3(comp_x,comp_y,0.0);
 }
 
-double lpcvt::f(SPoint2 p1,SPoint2 p2,metric m,int p){
+double lpcvt::f(SPoint2 p1,SPoint2 p2,metric m,int p)
+{
   double x1;
   double y1;
   double x2;
@@ -1677,7 +1722,8 @@ double lpcvt::f(SPoint2 p1,SPoint2 p2,metric m,int p){
   return val;
 }
 
-double lpcvt::df_dx(SPoint2 p1,SPoint2 p2,metric m,int p){
+double lpcvt::df_dx(SPoint2 p1,SPoint2 p2,metric m,int p)
+{
   double x1;
   double y1;
   double x2;
@@ -1704,7 +1750,8 @@ double lpcvt::df_dx(SPoint2 p1,SPoint2 p2,metric m,int p){
   return val;
 }
 
-double lpcvt::df_dy(SPoint2 p1,SPoint2 p2,metric m,int p){
+double lpcvt::df_dy(SPoint2 p1,SPoint2 p2,metric m,int p)
+{
   double x1;
   double y1;
   double x2;
@@ -1731,25 +1778,29 @@ double lpcvt::df_dy(SPoint2 p1,SPoint2 p2,metric m,int p){
   return val;
 }
 
-double lpcvt::Tx(double u,double v,SPoint2 p1,SPoint2 p2,SPoint2 p3){
+double lpcvt::Tx(double u,double v,SPoint2 p1,SPoint2 p2,SPoint2 p3)
+{
   double val;
   val = (1.0-u-v)*p1.x() + u*p2.x() + v*p3.x();
   return val;
 }
 
-double lpcvt::Ty(double u,double v,SPoint2 p1,SPoint2 p2,SPoint2 p3){
+double lpcvt::Ty(double u,double v,SPoint2 p1,SPoint2 p2,SPoint2 p3)
+{
   double val;
   val = (1.0-u-v)*p1.y() + u*p2.y() + v*p3.y();
   return val;
 }
 
-double lpcvt::J(SPoint2 p1,SPoint2 p2,SPoint2 p3){
+double lpcvt::J(SPoint2 p1,SPoint2 p2,SPoint2 p3)
+{
   double val;
   val = (p2.x()-p1.x())*(p3.y()-p1.y()) - (p3.x()-p1.x())*(p2.y()-p1.y());
   return val;
 }
 
-SVector3 lpcvt::inner_dFdx0(SVector3 dFdC,SPoint2 C,SPoint2 x0,SPoint2 x1,SPoint2 x2){
+SVector3 lpcvt::inner_dFdx0(SVector3 dFdC,SPoint2 C,SPoint2 x0,SPoint2 x1,SPoint2 x2)
+{
   double det;
   double A[2][2];
   double B[2][2];
@@ -1770,7 +1821,9 @@ SVector3 lpcvt::inner_dFdx0(SVector3 dFdC,SPoint2 C,SPoint2 x0,SPoint2 x1,SPoint
   return SVector3(dFdC.x()*M[0][0]+dFdC.y()*M[1][0],dFdC.x()*M[0][1]+dFdC.y()*M[1][1],0.0);
 }
 
-SVector3 lpcvt::boundary_dFdx0(SVector3 dFdC,SPoint2 C,SPoint2 x0,SPoint2 x1,SVector3 normal){
+SVector3 lpcvt::boundary_dFdx0(SVector3 dFdC,SPoint2 C,SPoint2 x0,SPoint2 x1,
+                               SVector3 normal)
+{
   fullMatrix<double> A(2,2);
   fullMatrix<double> B(2,2);
   fullMatrix<double> M(2,2);
@@ -1792,9 +1845,8 @@ SVector3 lpcvt::boundary_dFdx0(SVector3 dFdC,SPoint2 C,SPoint2 x0,SPoint2 x1,SVe
   return SVector3(_val(0,0),_val(0,1),0.0);
 }
 
-/****************class metric****************/
-
-metric::metric(double new_a,double new_b,double new_c,double new_d){
+metric::metric(double new_a,double new_b,double new_c,double new_d)
+{
   a = new_a;
   b = new_b;
   c = new_c;
@@ -1805,41 +1857,48 @@ metric::metric(){}
 
 metric::~metric(){}
 
-void metric::set_a(double new_a){
+void metric::set_a(double new_a)
+{
   a = new_a;
 }
 
-void metric::set_b(double new_b){
+void metric::set_b(double new_b)
+{
   b = new_b;
 }
 
-void metric::set_c(double new_c){
+void metric::set_c(double new_c)
+{
   c = new_c;
 }
 
-void metric::set_d(double new_d){
+void metric::set_d(double new_d)
+{
   d = new_d;
 }
 
-double metric::get_a(){
+double metric::get_a()
+{
   return a;
 }
 
-double metric::get_b(){
+double metric::get_b()
+{
   return b;
 }
 
-double metric::get_c(){
+double metric::get_c()
+{
   return c;
 }
 
-double metric::get_d(){
+double metric::get_d()
+{
   return d;
 }
 
-/****************class voronoi_vertex****************/
-
-voronoi_vertex::voronoi_vertex(SPoint2 new_point){
+voronoi_vertex::voronoi_vertex(SPoint2 new_point)
+{
   point = new_point;
   index1 = -1;
   index2 = -1;
@@ -1856,61 +1915,74 @@ SPoint2 voronoi_vertex::get_point(){
   return point;
 }
 
-int voronoi_vertex::get_index1(){
+int voronoi_vertex::get_index1()
+{
   return index1;
 }
 
-int voronoi_vertex::get_index2(){
+int voronoi_vertex::get_index2()
+{
   return index2;
 }
 
-int voronoi_vertex::get_index3(){
+int voronoi_vertex::get_index3()
+{
   return index3;
 }
 
-SVector3 voronoi_vertex::get_normal(){
+SVector3 voronoi_vertex::get_normal()
+{
   return normal;
 }
 
-bool voronoi_vertex::get_duplicate(){
+bool voronoi_vertex::get_duplicate()
+{
   return duplicate;
 }
 
-double voronoi_vertex::get_h(){
+double voronoi_vertex::get_h()
+{
   return h;
 }
 
-void voronoi_vertex::set_point(SPoint2 new_point){
+void voronoi_vertex::set_point(SPoint2 new_point)
+{
   point = new_point;
 }
 
-void voronoi_vertex::set_index1(int new_index1){
+void voronoi_vertex::set_index1(int new_index1)
+{
   index1 = new_index1;
 }
 
-void voronoi_vertex::set_index2(int new_index2){
+void voronoi_vertex::set_index2(int new_index2)
+{
   index2 = new_index2;
 }
 
-void voronoi_vertex::set_index3(int new_index3){
+void voronoi_vertex::set_index3(int new_index3)
+{
   index3 = new_index3;
 }
 
-void voronoi_vertex::set_normal(SVector3 new_normal){
+void voronoi_vertex::set_normal(SVector3 new_normal)
+{
   normal = new_normal;
 }
 
-void voronoi_vertex::set_duplicate(bool new_duplicate){
+void voronoi_vertex::set_duplicate(bool new_duplicate)
+{
   duplicate = new_duplicate;
 }
 
-void voronoi_vertex::set_h(double new_h){
+void voronoi_vertex::set_h(double new_h)
+{
   h = new_h;
 }
 
-/****************class voronoi_element****************/
-
-voronoi_element::voronoi_element(voronoi_vertex new_v1,voronoi_vertex new_v2,voronoi_vertex new_v3){
+voronoi_element::voronoi_element(voronoi_vertex new_v1,voronoi_vertex new_v2,
+                                 voronoi_vertex new_v3)
+{
   v1 = new_v1;
   v2 = new_v2;
   v3 = new_v3;
@@ -1920,19 +1992,23 @@ voronoi_element::voronoi_element(){}
 
 voronoi_element::~voronoi_element(){}
 
-voronoi_vertex voronoi_element::get_v1(){
+voronoi_vertex voronoi_element::get_v1()
+{
   return v1;
 }
 
-voronoi_vertex voronoi_element::get_v2(){
+voronoi_vertex voronoi_element::get_v2()
+{
   return v2;
 }
 
-voronoi_vertex voronoi_element::get_v3(){
+voronoi_vertex voronoi_element::get_v3()
+{
   return v3;
 }
 
-double voronoi_element::get_h(double u,double v){
+double voronoi_element::get_h(double u,double v)
+{
   double h1;
   double h2;
   double h3;
@@ -1945,35 +2021,43 @@ double voronoi_element::get_h(double u,double v){
   return h;
 }
 
-double voronoi_element::get_dh_dx(){
+double voronoi_element::get_dh_dx()
+{
   return dh_dx;
 }
 
-double voronoi_element::get_dh_dy(){
+double voronoi_element::get_dh_dy()
+{
   return dh_dy;
 }
 
-metric voronoi_element::get_metric(){
+metric voronoi_element::get_metric()
+{
   return m;
 }
 
-void voronoi_element::set_v1(voronoi_vertex new_v1){
+void voronoi_element::set_v1(voronoi_vertex new_v1)
+{
   v1 = new_v1;
 }
 
-void voronoi_element::set_v2(voronoi_vertex new_v2){
+void voronoi_element::set_v2(voronoi_vertex new_v2)
+{
   v2 = new_v2;
 }
 
-void voronoi_element::set_v3(voronoi_vertex new_v3){
+void voronoi_element::set_v3(voronoi_vertex new_v3)
+{
   v3 = new_v3;
 }
 
-void voronoi_element::set_metric(metric new_m){
+void voronoi_element::set_metric(metric new_m)
+{
   m = new_m;
 }
 
-void voronoi_element::deriv_h(int p){
+void voronoi_element::deriv_h(int p)
+{
   double h1;
   double h2;
   double h3;
@@ -2013,7 +2097,8 @@ void voronoi_element::deriv_h(int p){
   dh_dy = dh_du*du_dy + dh_dv*dv_dy;
 }
 
-double voronoi_element::get_quality(){
+double voronoi_element::get_quality()
+{
   double x1,y1;
   double x2,y2;
   double x3,y3;
@@ -2039,31 +2124,32 @@ double voronoi_element::get_quality(){
   return quality;
 }
 
-/****************class voronoi_cell****************/
-
 voronoi_cell::voronoi_cell(){}
 
 voronoi_cell::~voronoi_cell(){}
 
-int voronoi_cell::get_number_vertices(){
+int voronoi_cell::get_number_vertices()
+{
   return vertices.size();
 }
 
-voronoi_vertex voronoi_cell::get_vertex(int index){
+voronoi_vertex voronoi_cell::get_vertex(int index)
+{
   return vertices[index];
 }
 
-void voronoi_cell::add_vertex(voronoi_vertex vertex){
+void voronoi_cell::add_vertex(voronoi_vertex vertex)
+{
   vertices.push_back(vertex);
 }
 
-void voronoi_cell::clear(){
+void voronoi_cell::clear()
+{
   vertices.clear();
 }
 
-/****************class segment****************/
-
-segment::segment(int new_index1,int new_index2,int new_reference){
+segment::segment(int new_index1,int new_index2,int new_reference)
+{
   index1 = new_index1;
   index2 = new_index2;
   reference = new_reference;
@@ -2073,31 +2159,38 @@ segment::segment(){}
 
 segment::~segment(){}
 
-int segment::get_index1(){
+int segment::get_index1()
+{
   return index1;
 }
 
-int segment::get_index2(){
+int segment::get_index2()
+{
   return index2;
 }
 
-int segment::get_reference(){
+int segment::get_reference()
+{
   return reference;
 }
 
-void segment::set_index1(int new_index1){
+void segment::set_index1(int new_index1)
+{
   index1 = new_index1;
 }
 
-void segment::set_index2(int new_index2){
+void segment::set_index2(int new_index2)
+{
   index2 = new_index2;
 }
 
-void segment::set_reference(int new_reference){
+void segment::set_reference(int new_reference)
+{
   reference = new_reference;
 }
 
-bool segment::equal(int index3,int index4){
+bool segment::equal(int index3,int index4)
+{
   if(index1==index3 && index2==index4){
     return 1;
   }
@@ -2107,103 +2200,120 @@ bool segment::equal(int index3,int index4){
   else return 0;
 }
 
-/****************class list_segment****************/
-
 segment_list::segment_list(){}
 
 segment_list::~segment_list(){}
 
-int segment_list::get_number_segments(){
+int segment_list::get_number_segments()
+{
   return segments.size();
 }
 
-segment segment_list::get_segment(int index){
+segment segment_list::get_segment(int index)
+{
   return segments[index];
 }
 
-bool segment_list::add_segment(int index1,int index2,int reference){
+bool segment_list::add_segment(int index1,int index2,int reference)
+{
   unsigned int i;
   for(i=0;i<segments.size();i++){
-	if(segments[i].equal(index1,index2)) return 0;
+    if(segments[i].equal(index1,index2)) return 0;
   }
   segments.push_back(segment(index1,index2,reference));
   return 1;
 }
 
-bool segment_list::add_segment(segment s){
+bool segment_list::add_segment(segment s)
+{
   return add_segment(s.get_index1(),s.get_index2(),s.get_reference());
 }
 
-/****************class wrapper****************/
-
-wrapper::wrapper(){
+wrapper::wrapper()
+{
   iteration = 0;
   start = -1000000.0;
 }
 
 wrapper::~wrapper(){}
 
-int wrapper::get_p(){
+int wrapper::get_p()
+{
   return p;
 }
 
-void wrapper::set_p(int new_p){
+void wrapper::set_p(int new_p)
+{
   p = new_p;
 }
 
-int wrapper::get_dimension(){
+int wrapper::get_dimension()
+{
   return dimension;
 }
 
-void wrapper::set_dimension(int new_dimension){
+void wrapper::set_dimension(int new_dimension)
+{
   dimension = new_dimension;
 }
 
-GFace* wrapper::get_face(){
+GFace* wrapper::get_face()
+{
   return gf;
 }
 
-void wrapper::set_face(GFace* new_gf){
+void wrapper::set_face(GFace* new_gf)
+{
   gf = new_gf;
 }
 
-int wrapper::get_iteration(){
+int wrapper::get_iteration()
+{
   return iteration;
 }
 
-void wrapper::set_iteration(int new_iteration){
+void wrapper::set_iteration(int new_iteration)
+{
   iteration = new_iteration;
 }
 
-int wrapper::get_max(){
+int wrapper::get_max()
+{
   return max;
 }
 
-void wrapper::set_max(int new_max){
+void wrapper::set_max(int new_max)
+{
   max = new_max;
 }
 
-double wrapper::get_start(){
+double wrapper::get_start()
+{
   return start;
 }
 
-void wrapper::set_start(double new_start){
+void wrapper::set_start(double new_start)
+{
   start = new_start;
 }
 
-DocRecord* wrapper::get_triangulator(){
+DocRecord* wrapper::get_triangulator()
+{
   return triangulator;
 }
 
-void wrapper::set_triangulator(DocRecord* new_triangulator){
+void wrapper::set_triangulator(DocRecord* new_triangulator)
+{
   triangulator = new_triangulator;
 }
 
-MElementOctree* wrapper::get_octree(){
+MElementOctree* wrapper::get_octree()
+{
   return octree;
 }
 
-void wrapper::set_octree(MElementOctree* new_octree){
+void wrapper::set_octree(MElementOctree* new_octree)
+{
   octree = new_octree;
 }
 

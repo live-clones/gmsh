@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
@@ -154,14 +154,12 @@ static void propagateValuesOnFace(GFace *_gf,
 {
 #if defined(HAVE_SOLVER)
   linearSystem<double> *_lsys = 0;
-#if defined(HAVE_PETSC) && !defined(HAVE_TAUCS)
+#if defined(HAVE_PETSC)
   _lsys = new linearSystemPETSc<double>;
-#elif defined(HAVE_GMM) && !defined(HAVE_TAUCS)
+#elif defined(HAVE_GMM)
   linearSystemGmm<double> *_lsysb = new linearSystemGmm<double>;
   _lsysb->setGmres(1);
   _lsys = _lsysb;
-#elif defined(HAVE_TAUCS)
-  _lsys = new linearSystemCSRTaucs<double>;
 #else
   _lsys = new linearSystemFull<double>;
 #endif
@@ -693,8 +691,8 @@ void backgroundMesh::print(const std::string &filename, GFace *gf,
   fclose(f);
 }
 
-MElementOctree* backgroundMesh::get_octree(){
-
+MElementOctree* backgroundMesh::get_octree()
+{
   return _octree;
 }
 

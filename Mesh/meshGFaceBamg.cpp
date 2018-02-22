@@ -1,11 +1,10 @@
-// Gmsh - Copyright (C) 1997-2017 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <iostream>
 #include "meshGFaceBamg.h"
-#include "meshGFaceLloyd.h"
 #include "GmshMessage.h"
 #include "GFace.h"
 #include "GModel.h"
@@ -62,7 +61,6 @@ static void computeMeshMetricsForBamg(GFace *gf, int numV,
     J.mult(M,W);
     W.mult(JT,R);
     bamg::Metric M1(R(0,0),R(1,0),R(1,1));
-    //    printf("%12.5E %12.5E %12.5E vs %12.5E %12.5E %12.5E \n",m(0,0),m(1,0),m(1,1),M1.a11,M1.a21,M1.a22);
     mm11[i] = M1.a11;
     mm12[i] = M1.a21;
     mm22[i] = M1.a22;
@@ -203,10 +201,12 @@ void meshGFaceBamg(GFace *gf)
     Vertex2 &v = refinedBamgMesh->vertices[i];
     if (i >= nbFixedVertices){
       GPoint gp = gf->point(SPoint2(v[0], v[1]));
-      // if (gp.x() > 2.){ printf("wrong vertex index=%d %g %g %g (%g %g)\n", i, gp.x(), gp.y(), gp.z(), v[0], v[1]);
+      // if (gp.x() > 2.){
+      //  printf("wrong vertex index=%d %g %g %g (%g %g)\n",
+      //         i, gp.x(), gp.y(), gp.z(), v[0], v[1]);
       // }
-      //If point not found because compound edges have been remeshed and boundary triangles have changed
-      //then we call our new octree
+      // If point not found because compound edges have been remeshed and
+      //boundary triangles have changed then we call our new octree
       MFaceVertex *x = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, v[0], v[1]);
       yetAnother[i] = x;
       gf->mesh_vertices.push_back(x);
