@@ -1,5 +1,8 @@
 // This file reimplements gmsh/tutorial/t5.geo in C++.
 
+// The same geometry created with the OpenCASCADE CAD kernel (instead of the
+// built-in kernel) is avaiable in t16.cpp.
+
 #include <gmsh.h>
 #include <cstdio>
 

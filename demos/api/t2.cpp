@@ -98,7 +98,7 @@ int main(int argc, char **argv)
   // Mesh sizes associated to geometrical points can be set by passing a vector
   // of (dim, tag) pairs for the corresponding points.
   factory::mesh::setSize({{0,103}, {0,105}, {0,109}, {0,102}, {0,28},
-                            {0, 24}, {0,6}, {0,5}}, lc * 3);
+                          {0, 24}, {0,6}, {0,5}}, lc * 3);
 
   model::addPhysicalGroup(3, {129,130}, 1);
   model::setPhysicalName(3, 1, "The volume");

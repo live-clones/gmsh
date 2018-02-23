@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 
   // Rotational and twisted extrusions are available as well with the built-in
   // CAD kernel. The last (optional) argument for the Extrude/Revolve/Twist
-  // commands specified whether the extruded mesh should be recombined or not.
+  // commands specifies whether the extruded mesh should be recombined or not.
   factory::revolve({{2,28}}, -0.1,0,0.1, 0,1,0, -M_PI/2, ov, {7});
   factory::twist({{2,50}}, 0,0.15,0.25, -2*h,0,0, 1,0,0, angle*M_PI/180.,
                  ov, {10}, {}, true);

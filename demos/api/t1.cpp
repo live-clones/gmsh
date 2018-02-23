@@ -4,7 +4,8 @@
 // in Gmsh, see the comments in the .geo file. Comments here focus on the
 // specifics of the C++ API.
 
-// The Gmsh API is entirely defined in the <gmsh.h> header:
+// The Gmsh API is entirely defined in the <gmsh.h> header. Read this file: it
+// contains the documentation for all the functions in the API.
 #include <gmsh.h>
 
 int main(int argc, char **argv)
