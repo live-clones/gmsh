@@ -70,7 +70,7 @@ GModel::GModel(std::string name)
   : _maxVertexNum(0), _maxElementNum(0),
     _checkPointedMaxVertexNum(0), _checkPointedMaxElementNum(0),
     _destroying(false),
-    _name(name), _visible(1), _octree(0), _geo_internals(0),
+    _name(name), _visible(1), _elementOctree(0), _geo_internals(0),
     _occ_internals(0), _acis_internals(0), _fm_internals(0),
     _fields(0), _currentMeshEntity(0),
     _numPartitions(0), normals(0)
@@ -230,8 +230,8 @@ void GModel::destroyMeshCaches()
   std::map<int, MElement*>().swap(_elementMapCache);
   _elementIndexCache.clear();
   std::map<int, int>().swap(_elementIndexCache);
-  delete _octree;
-  _octree = 0;
+  delete _elementOctree;
+  _elementOctree = 0;
 }
 
 void GModel::deleteMesh(bool deleteOnlyElements)
@@ -1065,15 +1065,15 @@ int GModel::adaptMesh(std::vector<int> technique,
             meshGFaceBamg(*fit);
             laplaceSmoothing(*fit,CTX::instance()->mesh.nbSmoothing);
           }
-          if(_octree) delete _octree;
-          _octree = 0;
+          if(_elementOctree) delete _elementOctree;
+          _elementOctree = 0;
         }
       }
       else if(getDim() == 3){
         for(riter rit = firstRegion(); rit != lastRegion(); ++rit){
           refineMeshMMG(*rit);
-          if(_octree) delete _octree;
-          _octree = 0;
+          if(_elementOctree) delete _elementOctree;
+          _elementOctree = 0;
         }
       }
 
@@ -1207,28 +1207,20 @@ int GModel::getNumMeshElements(unsigned c[6])
 
 MElement *GModel::getMeshElementByCoord(SPoint3 &p, int dim, bool strict)
 {
-  if(!_octree){
+  if(!_elementOctree){
     Msg::Debug("Rebuilding mesh element octree");
-    _octree = new MElementOctree(this);
+    _elementOctree = new MElementOctree(this);
   }
-  return _octree->find(p.x(), p.y(), p.z(), dim, strict);
+  return _elementOctree->find(p.x(), p.y(), p.z(), dim, strict);
 }
 
 std::vector<MElement*> GModel::getMeshElementsByCoord(SPoint3 &p, int dim, bool strict)
 {
-  if(!_octree){
+  if(!_elementOctree){
     Msg::Debug("Rebuilding mesh element octree");
-    _octree = new MElementOctree(this);
+    _elementOctree = new MElementOctree(this);
   }
-  return _octree->findAll(p.x(), p.y(), p.z(), dim, strict);
-}
-
-void GModel::deleteOctree()
-{
-  if(_octree) {
-    delete _octree;
-    _octree = NULL;
-  }
+  return _elementOctree->findAll(p.x(), p.y(), p.z(), dim, strict);
 }
 
 MVertex *GModel::getMeshVertexByTag(int n)
