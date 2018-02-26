@@ -77,7 +77,7 @@ PView *GMSH_SummationPlugin::execute(PView *view)
   for (int i =0; i < nviewmax; i++)
     {
       int iview = (int)SummationOptions_Number[i].def;
-      if(i > 0 && iview > -1)
+      if(i == 0 || iview > -1)
 	{
 	  views_indices.push_back(iview);
 	  pviews.push_back(getView(iview, view));
@@ -109,10 +109,10 @@ PView *GMSH_SummationPlugin::execute(PView *view)
     }
   //get min/max indices of time steps
   int timeBeg = pviewsdata[0]->getFirstNonEmptyTimeStep();
-  int timeEnd = 0;
+  int timeEnd = pviewsdata[0]->getNumTimeSteps();
   int iref = 0; //reference view and time step to get mesh's info
   int stepref=timeBeg;
-  for (int i = 0; i < nviews; i ++)
+  for (int i = 1; i < nviews; i ++)
     {
       if (timeBeg > pviewsdata[i]->getFirstNonEmptyTimeStep())
       {
@@ -120,21 +120,8 @@ PView *GMSH_SummationPlugin::execute(PView *view)
 	iref = i;
 	stepref = timeBeg;
       }
-      if (timeEnd < pviewsdata[i]->getNumTimeSteps())
-	timeEnd = pviewsdata[i]->getNumTimeSteps();
+      timeEnd = std::max(timeEnd, pviewsdata[i]->getNumTimeSteps());
     }
-  //For each time step, get the indice of (the first) view that is not empty
-  std::vector<int> nonemptyview;
-  for (int step =timeBeg; step < timeEnd; step++)
-    {
-      for (int i =0; i < nviews; i ++)
-	{
-	  if(!pviewsdata[i]->hasTimeStep(step)) continue;
-	  nonemptyview.push_back(i);
-	  break;
-	}
-    }
-
   //Init result
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
@@ -173,10 +160,17 @@ PView *GMSH_SummationPlugin::execute(PView *view)
     }
   }
 
-  for(int step = timeBeg; step < timeEnd; step++) {
-    if(!pviewsdata[nonemptyview[step]]->hasTimeStep(step)) continue;
-    data2->Time.push_back(pviewsdata[nonemptyview[step]]->getTime(step));
-  }
+  //Set time
+  for (int step =timeBeg; step < timeEnd; step++)
+    {
+      int iview = 0;
+      for (iview =0; iview < nviews; iview ++)
+	{
+	  if(!pviewsdata[iview]->hasTimeStep(step)) continue;
+	  break;
+	}
+      data2->Time.push_back(pviewsdata[iview]->getTime(step));
+    }
 
 
   std::string outputname = SummationOptions_String[0].def;
