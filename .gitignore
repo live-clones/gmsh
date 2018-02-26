@@ -7,3 +7,6 @@ contrib/Parasolid
 *.db
 .DS_Store
 *~
+*.so
+*.so.*
+*#
