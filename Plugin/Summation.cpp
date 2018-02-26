@@ -11,25 +11,18 @@
 #include <algorithm>
 
 StringXNumber SummationOptions_Number[] = {
-  {GMSH_FULLRC, "ForceInterpolation", NULL, 0.},
-  {GMSH_FULLRC, "PhysicalRegion", NULL, -1.},
   {GMSH_FULLRC, "View 0", NULL, -1.},
   {GMSH_FULLRC, "View 1", NULL, -1.},
   {GMSH_FULLRC, "View 2", NULL, -1.},
-  {GMSH_FULLRC, "View 3", NULL, -1.}
+  {GMSH_FULLRC, "View 3", NULL, -1.},
+  {GMSH_FULLRC, "View 4", NULL, -1.},
+  {GMSH_FULLRC, "View 5", NULL, -1.},
+  {GMSH_FULLRC, "View 6", NULL, -1.},
+  {GMSH_FULLRC, "View 7", NULL, -1.}
 };
 
 StringXString SummationOptions_String[] = {
-  /*  {GMSH_FULLRC, "Expression0", NULL, "Sqrt(v0^2+v1^2+v2^2)"},
-  {GMSH_FULLRC, "Expression1", NULL, ""},
-  {GMSH_FULLRC, "Expression2", NULL, ""},
-  {GMSH_FULLRC, "Expression3", NULL, ""},
-  {GMSH_FULLRC, "Expression4", NULL, ""},
-  {GMSH_FULLRC, "Expression5", NULL, ""},
-  {GMSH_FULLRC, "Expression6", NULL, ""},
-  {GMSH_FULLRC, "Expression7", NULL, ""},
-  {GMSH_FULLRC, "Expression8", NULL, ""}
-  */
+  {GMSH_FULLRC, "Resuling View Name", NULL, "default"}
 };
 
 
@@ -43,7 +36,14 @@ extern "C"
 
 std::string GMSH_SummationPlugin::getHelp() const
 {
-  return "TODO Plugin(Summation) creates a new view";
+  return "Plugin(Summation) sums every time steps "
+    "of 'Reference View' and (every) 'Other View X'"
+    "and store the result in a new view.\n"
+    "If 'View 0' < 0 then the current view is selected.\n"
+    "If 'View 1...8' < 0 then this view is skipped.\n"
+    "Views can have diffrent number of time steps\n"
+    "Warning: the Plugin assume that every views share"
+    "the same mesh and that meshes do not move between time steps!";
 }
 
 int GMSH_SummationPlugin::getNbOptions() const
@@ -68,22 +68,19 @@ StringXString *GMSH_SummationPlugin::getOptionStr(int iopt)
 
 PView *GMSH_SummationPlugin::execute(PView *view)
 {
-  int nviewmax = 4;
+  int nviewmax = 8;
   std::vector<int> views_indices;
   std::vector<PView*> pviews;
   std::vector<PViewData*> pviewsdata;
-  
-  int forceInterpolation = (int)SummationOptions_Number[0].def;
-  int physicalRegion = (int)SummationOptions_Number[1].def;
 
   //Get view indices and PViews
   for (int i =0; i < nviewmax; i++)
     {
       int iview = (int)SummationOptions_Number[i].def;
-      if(iview > -1)
+      if(i > 0 && iview > -1)
 	{
 	  views_indices.push_back(iview);
-	  pviews.push_back(getView(iiew, view));
+	  pviews.push_back(getView(iview, view));
 	  if(!pviews.back()){
 	    Msg::Error("Summation plugin could not find view %i", iview);
 	    return view;
@@ -94,41 +91,78 @@ PView *GMSH_SummationPlugin::execute(PView *view)
 	    return view;
 	  }
 	}
-    }  
-  int nview = pviews.size();
-  //TODO: add check on nb of TimeStep, ...
-  //Right now : only one TimeStep
+    }
+  //Number of view to sum
+  int nviews = pviews.size();
+  //Check if the views share the same mesh
+  //(at least same number of elements and entities)
+  //If a view has an empty timestep: skip it, no problem.
+  for (int j = 1; j<nviews; j++)
+    {
+      if( pviewsdata[j]->getNumEntities() == 0 && 
+	  pviewsdata[j]->getNumElements() == 0)
+	continue; // empty time step
+      if((pviewsdata[0]->getNumEntities() != pviewsdata[j]->getNumEntities()) ||
+	 (pviewsdata[0]->getNumElements() != pviewsdata[j]->getNumElements())){
+	Msg::Error("Summation plugin: views based on different grid.");
+      }
+    }
+  //get min/max indices of time steps
+  int timeBeg = pviewsdata[0]->getFirstNonEmptyTimeStep();
+  int timeEnd = 0;
+  int iref = 0; //reference view and time step to get mesh's info
+  int stepref=timeBeg;
+  for (int i = 0; i < nviews; i ++)
+    {
+      if (timeBeg > pviewsdata[i]->getFirstNonEmptyTimeStep())
+      {
+	timeBeg = pviewsdata[i]->getFirstNonEmptyTimeStep();
+	iref = i;
+	stepref = timeBeg;
+      }
+      if (timeEnd < pviewsdata[i]->getNumTimeSteps())
+	timeEnd = pviewsdata[i]->getNumTimeSteps();
+    }
+  //For each time step, get the indice of (the first) view that is not empty
+  std::vector<int> nonemptyview;
+  for (int step =timeBeg; step < timeEnd; step++)
+    {
+      for (int i =0; i < nviews; i ++)
+	{
+	  if(!pviewsdata[i]->hasTimeStep(step)) continue;
+	  nonemptyview.push_back(i);
+	  break;
+	}
+    }
+
+  //Init result
   PView *v2 = new PView();
   PViewDataList *data2 = getDataList(v2);
-  int firstNonEmptyStep =  pviewdata[0]->getFirstNonEmptyTimeStep();
-  int timeBeg = firstNonEmptyStep;
-  int timeEnd = pviewdata[0]->getNumTimeSteps();
-  for(int ent = 0; ent < pviewdata[0]->getNumEntities(timeBeg); ent++){
-    for(int ele = 0; ele < pviewdata[0]->getNumElements(timeBeg, ent); ele++){
-      if(pviewdata[0]->skipElement(timeBeg, ent, ele)) continue;
-      int numNodes = pviewdata[0]->getNumNodes(timeBeg, ent, ele);
-      int type = pviewdata[0]->getType(timeBeg, ent, ele);
-      int numComp = pviewdata[0]->getNumComponents(timeBeg, ent, ele);
+  
+  for(int ent = 0; ent < pviewsdata[iref]->getNumEntities(stepref); ent++){
+    for(int ele = 0; ele < pviewsdata[iref]->getNumElements(stepref, ent); ele++){
+      //      if(pviewsdata[0]->skipElement(timeBeg, ent, ele)) continue;
+      int numNodes = pviewsdata[iref]->getNumNodes(stepref, ent, ele);
+      int type = pviewsdata[iref]->getType(stepref, ent, ele);
+      int numComp = pviewsdata[iref]->getNumComponents(stepref, ent, ele);
       int numComp2 = numComp;
       std::vector<double> *out = data2->incrementList(numComp2, type, numNodes);
-      std::vector<std::vector<double> > v(nview);
-      for (int i = 0; i < nview; i++)
-	v[i].resize(std::max(9, numComp), 0.);
+      std::vector<double> v(std::max(9, numComp), 0.);
       std::vector<double> x(numNodes), y(numNodes), z(numNodes);
       for(int nod = 0; nod < numNodes; nod++)
-	  pviewdata[0]->getNode(timeBeg, ent, ele, nod, x[nod], y[nod], z[nod]);
+	  pviewsdata[iref]->getNode(stepref, ent, ele, nod, x[nod], y[nod], z[nod]);
       for(int nod = 0; nod < numNodes; nod++) out->push_back(x[nod]);
       for(int nod = 0; nod < numNodes; nod++) out->push_back(y[nod]);
       for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]);
       for(int step = timeBeg; step < timeEnd; step++){
-	if(!pviewdata[0]->hasTimeStep(step)) continue;
         for(int nod = 0; nod < numNodes; nod++){
           for(int comp = 0; comp < numComp; comp++){
 	    v[comp]=0;
-	    for(int iview = 0; iview < nview; iview++)
+	    for(int iview = 0; iview < nviews; iview++)
 	      {
+		if(!pviewsdata[iview]->hasTimeStep(step)) continue;
 		double d;
-		pviewdata[i]->getValue(step, ent, ele, nod, comp, d);
+		pviewsdata[iview]->getValue(step, ent, ele, nod, comp, d);
 		v[comp] +=d;
 	      }
 	  }
@@ -139,13 +173,18 @@ PView *GMSH_SummationPlugin::execute(PView *view)
     }
   }
 
-  for(int i = firstNonEmptyStep; i < pviewdata[0]->getNumTimeSteps(); i++) {
-    if(!pviewdata[0]->hasTimeStep(i)) continue;
-    data2->Time.push_back(pviewdata[0]->getTime(i));
+  for(int step = timeBeg; step < timeEnd; step++) {
+    if(!pviewsdata[nonemptyview[step]]->hasTimeStep(step)) continue;
+    data2->Time.push_back(pviewsdata[nonemptyview[step]]->getTime(step));
   }
 
-  data2->setName(data1->getName() + "_Summation");
-  data2->setFileName(data1->getName() + "_Summation.pos");
+
+  std::string outputname = SummationOptions_String[0].def;
+  if(outputname =="default")
+    outputname = pviewsdata[0]->getName() + "_Summation";
+  
+  data2->setName(outputname);
+  data2->setFileName(outputname + "_Summation.pos");
   data2->finalize();
 
   return v2;
