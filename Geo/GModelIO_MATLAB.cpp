@@ -49,17 +49,11 @@ int GModel::writeMATLAB(const std::string &name, bool binary, bool saveAll, doub
 
   // write mesh vertices
   fprintf(fp, "gVertices = %d;\n", numVertices);
-  fprintf(fp, "gX = zeros(gVertices,1);\n");
-  fprintf(fp, "gY = zeros(gVertices,1);\n");
-  fprintf(fp, "gZ = zeros(gVertices,1);\n");
-  int cpt = 0;
+  fprintf(fp, "gXYZ = [\n", numVertices);
   for(unsigned int i = 0; i < entities.size(); i++)
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
-      {
-	cpt ++;
-	entities[i]->mesh_vertices[j]->writeMATLAB(fp, cpt, scalingFactor);
-      }
-  fprintf(fp, "\n");
+	entities[i]->mesh_vertices[j]->writeMATLAB(fp, scalingFactor);
+  fprintf(fp, "];\n");
 
   // loop over all elements we need to save and count vertices
   int numElements = 0, totalNumInt = 0;

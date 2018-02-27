@@ -101,7 +101,7 @@ class MVertex{
   void writeUNV(FILE *fp, double scalingFactor=1.0);
   void writeVTK(FILE *fp, bool binary=false, double scalingFactor=1.0,
                 bool bigEndian=false);
-  void writeMATLAB(FILE *fp, int index, bool binary=false, double scalingFactor=1.0);
+  void writeMATLAB(FILE *fp, bool binary=false, double scalingFactor=1.0);
   void writeTOCHNOG(FILE *fp, int dim, double scalingFactor=1.0);
   void writeMESH(FILE *fp, double scalingFactor=1.0);
   void writeNEU(FILE *fp, int dim, double scalingFactor=1.0);
