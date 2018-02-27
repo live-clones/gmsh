@@ -1484,19 +1484,19 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSpline(vertexTags,tag=-1):
+        def addSpline(pointTags,tag=-1):
             """
-            Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If
+            Adds a spline (Catmull-Rom) curve going through the points `pointTags'. If
             `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. Creates a periodic curve if the first and last points are
             the same. Returns the tag of the spline curve.
 
             return int
             """
-            api_vertexTags_, api_vertexTags_n_ = _ivectorint(vertexTags)
+            api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddSpline(
-                api_vertexTags_, api_vertexTags_n_,
+                api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
@@ -1506,19 +1506,19 @@ class model:
             return api__result__
 
         @staticmethod
-        def addBSpline(vertexTags,tag=-1):
+        def addBSpline(pointTags,tag=-1):
             """
-            Adds a cubic b-spline curve with `vertexTags' control points. If `tag' is
+            Adds a cubic b-spline curve with `pointTags' control points. If `tag' is
             positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. Creates a periodic curve if the first and last points are
             the same. Returns the tag of the b-spline curve.
 
             return int
             """
-            api_vertexTags_, api_vertexTags_n_ = _ivectorint(vertexTags)
+            api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddBSpline(
-                api_vertexTags_, api_vertexTags_n_,
+                api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
@@ -1528,18 +1528,18 @@ class model:
             return api__result__
 
         @staticmethod
-        def addBezier(vertexTags,tag=-1):
+        def addBezier(pointTags,tag=-1):
             """
-            Adds a Bezier curve with `vertexTags' control points. If `tag' is positive,
+            Adds a Bezier curve with `pointTags' control points. If `tag' is positive,
             sets the tag explicitly; otherwise a new tag is selected automatically.
             Returns the tag of the Bezier curve.
 
             return int
             """
-            api_vertexTags_, api_vertexTags_n_ = _ivectorint(vertexTags)
+            api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddBezier(
-                api_vertexTags_, api_vertexTags_n_,
+                api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
@@ -1549,21 +1549,21 @@ class model:
             return api__result__
 
         @staticmethod
-        def addLineLoop(edgeTags,tag=-1):
+        def addLineLoop(curveTags,tag=-1):
             """
-            Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should
-            contain (signed) tags of geometrical enties of dimension 1 forming a closed
-            loop: a negative tag signifies that the underlying edge is considered with
-            reversed orientation. If `tag' is positive, sets the tag explicitly;
-            otherwise a new tag is selected automatically. Returns the tag of the line
-            loop.
+            Adds a line loop (a closed wire) formed by the curves `curveTags'.
+            `curveTags' should contain (signed) tags of geometrical enties of dimension
+            1 forming a closed loop: a negative tag signifies that the underlying curve
+            is considered with reversed orientation. If `tag' is positive, sets the tag
+            explicitly; otherwise a new tag is selected automatically. Returns the tag
+            of the line loop.
 
             return int
             """
-            api_edgeTags_, api_edgeTags_n_ = _ivectorint(edgeTags)
+            api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddLineLoop(
-                api_edgeTags_, api_edgeTags_n_,
+                api_curveTags_, api_curveTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
@@ -1599,7 +1599,7 @@ class model:
             """
             Adds a surface filling the line loops in `wireTags'. Currently only a
             single line loop is supported; this line loop should be composed by 3 or 4
-            edges only. If `tag' is positive, sets the tag explicitly; otherwise a new
+            curves only. If `tag' is positive, sets the tag explicitly; otherwise a new
             tag is selected automatically. Returns the tag of the surface.
 
             return int
@@ -1618,18 +1618,18 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSurfaceLoop(faceTags,tag=-1):
+        def addSurfaceLoop(surfaceTags,tag=-1):
             """
-            Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is
+            Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
             positive, sets the tag explicitly; otherwise a new tag is selected
-            automatically. Returns the tag of the surface loop.
+            automatically. Returns the tag of the shell.
 
             return int
             """
-            api_faceTags_, api_faceTags_n_ = _ivectorint(faceTags)
+            api_surfaceTags_, api_surfaceTags_n_ = _ivectorint(surfaceTags)
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddSurfaceLoop(
-                api_faceTags_, api_faceTags_n_,
+                api_surfaceTags_, api_surfaceTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
@@ -1641,10 +1641,10 @@ class model:
         @staticmethod
         def addVolume(shellTags,tag=-1):
             """
-            Adds a volume defined by one or more surface loops `shellTags'. The first
-            surface loop defines the exterior boundary; additional surface loop define
-            holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
-            is selected automatically. Returns the tag of the volume.
+            Adds a volume (a region) defined by one or more shells `shellTags'. The
+            first surface loop defines the exterior boundary; additional surface loop
+            define holes. If `tag' is positive, sets the tag explicitly; otherwise a
+            new tag is selected automatically. Returns the tag of the volume.
 
             return int
             """
@@ -2218,19 +2218,19 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSpline(vertexTags,tag=-1):
+        def addSpline(pointTags,tag=-1):
             """
-            Adds a spline (C2 b-spline) curve going through `vertexTags' points. If
+            Adds a spline (C2 b-spline) curve going through the points `pointTags'. If
             `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. Creates a periodic curve if the first and last points are
             the same. Returns the tag of the spline curve.
 
             return int
             """
-            api_vertexTags_, api_vertexTags_n_ = _ivectorint(vertexTags)
+            api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddSpline(
-                api_vertexTags_, api_vertexTags_n_,
+                api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
@@ -2240,9 +2240,9 @@ class model:
             return api__result__
 
         @staticmethod
-        def addBSpline(vertexTags,tag=-1,degree=3,weights=[],knots=[],multiplicities=[]):
+        def addBSpline(pointTags,tag=-1,degree=3,weights=[],knots=[],multiplicities=[]):
             """
-            Adds a b-spline curve of degree `degree' with `vertexTags' control points.
+            Adds a b-spline curve of degree `degree' with `pointTags' control points.
             If `weights', `knots' or `multiplicities' are not provided, default
             parameters are computed automatically. If `tag' is positive, sets the tag
             explicitly; otherwise a new tag is selected automatically. Creates a
@@ -2251,13 +2251,13 @@ class model:
 
             return int
             """
-            api_vertexTags_, api_vertexTags_n_ = _ivectorint(vertexTags)
+            api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             api_weights_, api_weights_n_ = _ivectordouble(weights)
             api_knots_, api_knots_n_ = _ivectordouble(knots)
             api_multiplicities_, api_multiplicities_n_ = _ivectorint(multiplicities)
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddBSpline(
-                api_vertexTags_, api_vertexTags_n_,
+                api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 c_int(degree),
                 api_weights_, api_weights_n_,
@@ -2271,18 +2271,18 @@ class model:
             return api__result__
 
         @staticmethod
-        def addBezier(vertexTags,tag=-1):
+        def addBezier(pointTags,tag=-1):
             """
-            Adds a Bezier curve with `vertexTags' control points. If `tag' is positive,
+            Adds a Bezier curve with `pointTags' control points. If `tag' is positive,
             sets the tag explicitly; otherwise a new tag is selected automatically.
             Returns the tag of the Bezier curve.
 
             return int
             """
-            api_vertexTags_, api_vertexTags_n_ = _ivectorint(vertexTags)
+            api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddBezier(
-                api_vertexTags_, api_vertexTags_n_,
+                api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
@@ -2292,20 +2292,20 @@ class model:
             return api__result__
 
         @staticmethod
-        def addWire(edgeTags,tag=-1,checkClosed=False):
+        def addWire(curveTags,tag=-1,checkClosed=False):
             """
-            Adds a wire (open or closed) formed by `edgeTags'. `edgeTags' should
-            contain (signed) tags of geometrical enties of dimension 1: a negative tag
-            signifies that the underlying edge is considered with reversed orientation.
-            If `tag' is positive, sets the tag explicitly; otherwise a new tag is
-            selected automatically. Returns the tag of the wire.
+            Adds a wire (open or closed) formed by the curves `curveTags'. `curveTags'
+            should contain (signed) tags: a negative tag signifies that the underlying
+            curve is considered with reversed orientation. If `tag' is positive, sets
+            the tag explicitly; otherwise a new tag is selected automatically. Returns
+            the tag of the wire.
 
             return int
             """
-            api_edgeTags_, api_edgeTags_n_ = _ivectorint(edgeTags)
+            api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddWire(
-                api_edgeTags_, api_edgeTags_n_,
+                api_curveTags_, api_curveTags_n_,
                 c_int(tag),
                 c_int(bool(checkClosed)),
                 byref(ierr))
@@ -2316,21 +2316,21 @@ class model:
             return api__result__
 
         @staticmethod
-        def addLineLoop(edgeTags,tag=-1):
+        def addLineLoop(curveTags,tag=-1):
             """
-            Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should
-            contain (signed) tags of geometrical enties of dimension 1 forming a closed
-            loop: a negative tag signifies that the underlying edge is considered with
+            Adds a line loop (a closed wire) formed by the curves `curveTags'.
+            `curveTags' should contain (signed) tags of curves forming a closed loop: a
+            negative tag signifies that the underlying curve is considered with
             reversed orientation. If `tag' is positive, sets the tag explicitly;
             otherwise a new tag is selected automatically. Returns the tag of the line
             loop.
 
             return int
             """
-            api_edgeTags_, api_edgeTags_n_ = _ivectorint(edgeTags)
+            api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddLineLoop(
-                api_edgeTags_, api_edgeTags_n_,
+                api_curveTags_, api_curveTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
@@ -2433,18 +2433,18 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSurfaceLoop(faceTags,tag=-1):
+        def addSurfaceLoop(surfaceTags,tag=-1):
             """
-            Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is
+            Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
             positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. Returns the tag of the surface loop.
 
             return int
             """
-            api_faceTags_, api_faceTags_n_ = _ivectorint(faceTags)
+            api_surfaceTags_, api_surfaceTags_n_ = _ivectorint(surfaceTags)
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddSurfaceLoop(
-                api_faceTags_, api_faceTags_n_,
+                api_surfaceTags_, api_surfaceTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
@@ -2456,10 +2456,10 @@ class model:
         @staticmethod
         def addVolume(shellTags,tag=-1):
             """
-            Adds a volume defined by one or more surface loops `shellTags'. The first
-            surface loop defines the exterior boundary; additional surface loop define
-            holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
-            is selected automatically. Returns the tag of the volume.
+            Adds a volume (a region) defined by one or more surface loops `shellTags'.
+            The first surface loop defines the exterior boundary; additional surface
+            loop define holes. If `tag' is positive, sets the tag explicitly; otherwise
+            a new tag is selected automatically. Returns the tag of the volume.
 
             return int
             """
@@ -2673,22 +2673,22 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def addThickSolid(solidTag,excludeFaceTags,offset,tag=-1):
+        def addThickSolid(volumeTag,excludeSurfaceTags,offset,tag=-1):
             """
-            Adds a hollowed volume built from an initial volume `solidTag' and a set of
-            faces from this volume `excludeFaceTags', which are to be removed. The
-            remaining faces of the volume become the walls of the hollowed solid, with
-            thickness `offset'. If `tag' is positive, sets the tag explicitly;
+            Adds a hollowed volume built from an initial volume `volumeTag' and a set
+            of faces from this volume `excludeSurfaceTags', which are to be removed.
+            The remaining faces of the volume become the walls of the hollowed solid,
+            with thickness `offset'. If `tag' is positive, sets the tag explicitly;
             otherwise a new tag is selected automatically.
 
             return outDimTags
             """
-            api_excludeFaceTags_, api_excludeFaceTags_n_ = _ivectorint(excludeFaceTags)
+            api_excludeSurfaceTags_, api_excludeSurfaceTags_n_ = _ivectorint(excludeSurfaceTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelOccAddThickSolid(
-                c_int(solidTag),
-                api_excludeFaceTags_, api_excludeFaceTags_n_,
+                c_int(volumeTag),
+                api_excludeSurfaceTags_, api_excludeSurfaceTags_n_,
                 c_double(offset),
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
                 c_int(tag),
@@ -2772,7 +2772,7 @@ class model:
         @staticmethod
         def addPipe(dimTags,wireTag):
             """
-            Adds a pipe by extruding the entities `dimTags' along the curve `wireTag'.
+            Adds a pipe by extruding the entities `dimTags' along the wire `wireTag'.
             Returns the pipe in `outDimTags'.
 
             return outDimTags
@@ -2792,24 +2792,24 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def fillet(regionTags,edgeTags,radius,removeRegion=True):
+        def fillet(volumeTags,curveTags,radius,removeVolume=True):
             """
-            Fillets the volumes `regionTags' on the curves `edgeTags' with radius
+            Fillets the volumes `volumeTags' on the curves `curveTags' with radius
             `radius'. Returns the filleted entities in `outDimTags'. Removes the
-            original volume if `removeRegion' is set.
+            original volume if `removeVolume' is set.
 
             return outDimTags
             """
-            api_regionTags_, api_regionTags_n_ = _ivectorint(regionTags)
-            api_edgeTags_, api_edgeTags_n_ = _ivectorint(edgeTags)
+            api_volumeTags_, api_volumeTags_n_ = _ivectorint(volumeTags)
+            api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelOccFillet(
-                api_regionTags_, api_regionTags_n_,
-                api_edgeTags_, api_edgeTags_n_,
+                api_volumeTags_, api_volumeTags_n_,
+                api_curveTags_, api_curveTags_n_,
                 c_double(radius),
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
-                c_int(bool(removeRegion)),
+                c_int(bool(removeVolume)),
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
@@ -2821,7 +2821,7 @@ class model:
         def fuse(objectDimTags,toolDimTags,tag=-1,removeObject=True,removeTool=True):
             """
             Computes the boolean union (the fusion) of the entities `objectDimTags' and
-            `toolDimTags'.Returns the resulting entities in `outDimTags'. If `tag' is
+            `toolDimTags'. Returns the resulting entities in `outDimTags'. If `tag' is
             positive, attemps to set the tag explicitly (ony valid if the boolean
             operation results in a single entity). Removes the object if `removeObject'
             is set. Removes the tool if `removeTool' is set.

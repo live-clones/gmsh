@@ -1398,41 +1398,41 @@ int gmsh::model::geo::addEllipseArc(const int startTag, const int centerTag,
   return outTag;
 }
 
-int gmsh::model::geo::addSpline(const std::vector<int> &vertexTags, const int tag)
+int gmsh::model::geo::addSpline(const std::vector<int> &pointTags, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   int outTag = tag;
-  if(!GModel::current()->getGEOInternals()->addSpline(outTag, vertexTags)){
+  if(!GModel::current()->getGEOInternals()->addSpline(outTag, pointTags)){
     throw 1;
   }
   return outTag;
 }
 
-int gmsh::model::geo::addBSpline(const std::vector<int> &vertexTags, const int tag)
+int gmsh::model::geo::addBSpline(const std::vector<int> &pointTags, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   int outTag = tag;
-  if(!GModel::current()->getGEOInternals()->addBSpline(outTag, vertexTags)){
+  if(!GModel::current()->getGEOInternals()->addBSpline(outTag, pointTags)){
     throw 1;
   }
   return outTag;
 }
 
-int gmsh::model::geo::addBezier(const std::vector<int> &vertexTags, const int tag)
+int gmsh::model::geo::addBezier(const std::vector<int> &pointTags, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   int outTag = tag;
-  if(!GModel::current()->getGEOInternals()->addBezier(outTag, vertexTags)){
+  if(!GModel::current()->getGEOInternals()->addBezier(outTag, pointTags)){
     throw 1;
   }
   return outTag;
 }
 
-int gmsh::model::geo::addLineLoop(const std::vector<int> &edgeTags, const int tag)
+int gmsh::model::geo::addLineLoop(const std::vector<int> &curveTags, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   int outTag = tag;
-  if(!GModel::current()->getGEOInternals()->addLineLoop(outTag, edgeTags)){
+  if(!GModel::current()->getGEOInternals()->addLineLoop(outTag, curveTags)){
     throw 1;
   }
   return outTag;
@@ -1462,12 +1462,12 @@ int gmsh::model::geo::addSurfaceFilling(const std::vector<int> &wireTags,
   return outTag;
 }
 
-int gmsh::model::geo::addSurfaceLoop(const std::vector<int> &faceTags,
+int gmsh::model::geo::addSurfaceLoop(const std::vector<int> &surfaceTags,
                                      const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   int outTag = tag;
-  if(!GModel::current()->getGEOInternals()->addSurfaceLoop(outTag, faceTags)){
+  if(!GModel::current()->getGEOInternals()->addSurfaceLoop(outTag, surfaceTags)){
     throw 1;
   }
   return outTag;
@@ -1781,18 +1781,18 @@ int gmsh::model::occ::addEllipse(const double x, const double y, const double z,
   return outTag;
 }
 
-int gmsh::model::occ::addSpline(const std::vector<int> &vertexTags, const int tag)
+int gmsh::model::occ::addSpline(const std::vector<int> &pointTags, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
-  if(!GModel::current()->getOCCInternals()->addSpline(outTag, vertexTags)){
+  if(!GModel::current()->getOCCInternals()->addSpline(outTag, pointTags)){
     throw 1;
   }
   return outTag;
 }
 
-int gmsh::model::occ::addBSpline(const std::vector<int> &vertexTags, const int tag,
+int gmsh::model::occ::addBSpline(const std::vector<int> &pointTags, const int tag,
                                  const int degree, const std::vector<double> &weights,
                                  const std::vector<double> &knots,
                                  const std::vector<int> &multiplicities)
@@ -1800,42 +1800,42 @@ int gmsh::model::occ::addBSpline(const std::vector<int> &vertexTags, const int t
   if(!_isInitialized()){ throw -1; }
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addBSpline
-     (outTag, vertexTags, degree, weights, knots, multiplicities)){
+     (outTag, pointTags, degree, weights, knots, multiplicities)){
     throw 1;
   }
   return outTag;
 }
 
-int gmsh::model::occ::addBezier(const std::vector<int> &vertexTags, const int tag)
+int gmsh::model::occ::addBezier(const std::vector<int> &pointTags, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
-  if(!GModel::current()->getOCCInternals()->addBezier(outTag, vertexTags)){
+  if(!GModel::current()->getOCCInternals()->addBezier(outTag, pointTags)){
     throw 1;
   }
   return outTag;
 }
 
-int gmsh::model::occ::addWire(const std::vector<int> &edgeTags, const int tag,
+int gmsh::model::occ::addWire(const std::vector<int> &curveTags, const int tag,
                               const bool checkClosed)
 {
   if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
   if(!GModel::current()->getOCCInternals()->addWire
-     (outTag, edgeTags, checkClosed)){
+     (outTag, curveTags, checkClosed)){
     throw 1;
   }
   return outTag;
 }
 
-int gmsh::model::occ::addLineLoop(const std::vector<int> &edgeTags, const int tag)
+int gmsh::model::occ::addLineLoop(const std::vector<int> &curveTags, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
-  if(!GModel::current()->getOCCInternals()->addLineLoop(outTag, edgeTags)){
+  if(!GModel::current()->getOCCInternals()->addLineLoop(outTag, curveTags)){
     throw 1;
   }
   return outTag;
@@ -1891,13 +1891,13 @@ int gmsh::model::occ::addSurfaceFilling(const int wireTag, const int tag)
   return outTag;
 }
 
-int gmsh::model::occ::addSurfaceLoop(const std::vector<int> &faceTags,
+int gmsh::model::occ::addSurfaceLoop(const std::vector<int> &surfaceTags,
                                      const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   _createOcc();
   int outTag = tag;
-  if(!GModel::current()->getOCCInternals()->addSurfaceLoop(outTag, faceTags)){
+  if(!GModel::current()->getOCCInternals()->addSurfaceLoop(outTag, surfaceTags)){
     throw 1;
   }
   return outTag;
@@ -2014,8 +2014,8 @@ void gmsh::model::occ::addThruSections(const std::vector<int> &wireTags,
   }
 }
 
-void gmsh::model::occ::addThickSolid(const int solidTag,
-                                     const std::vector<int> &excludeFaceTags,
+void gmsh::model::occ::addThickSolid(const int volumeTag,
+                                     const std::vector<int> &excludeSurfaceTags,
                                      const double offset, vector_pair &outDimTags,
                                      const int tag)
 {
@@ -2023,7 +2023,7 @@ void gmsh::model::occ::addThickSolid(const int solidTag,
   _createOcc();
   outDimTags.clear();
   if(!GModel::current()->getOCCInternals()->addThickSolid
-     (tag, solidTag, excludeFaceTags, offset, outDimTags)){
+     (tag, volumeTag, excludeSurfaceTags, offset, outDimTags)){
     throw 1;
   }
 }
@@ -2075,16 +2075,16 @@ void gmsh::model::occ::addPipe(const vector_pair &dimTags, const int wireTag,
   }
 }
 
-void gmsh::model::occ::fillet(const std::vector<int> &regionTags,
-                              const std::vector<int> &edgeTags,
+void gmsh::model::occ::fillet(const std::vector<int> &volumeTags,
+                              const std::vector<int> &curveTags,
                               const double radius, vector_pair &outDimTags,
-                              const bool removeRegion)
+                              const bool removeVolume)
 {
   if(!_isInitialized()){ throw -1; }
   _createOcc();
   outDimTags.clear();
   if(!GModel::current()->getOCCInternals()->fillet
-     (regionTags, edgeTags, radius, outDimTags, removeRegion)){
+     (volumeTags, curveTags, radius, outDimTags, removeVolume)){
     throw 1;
   }
 }

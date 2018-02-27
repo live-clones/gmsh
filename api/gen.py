@@ -235,28 +235,28 @@ geo.add('addCircleArc',doc,oint,iint('startTag'),iint('centerTag'),iint('endTag'
 doc = '''Adds an ellipse arc (stricly smaller than Pi) between the two points `startTag' and `endTag', with center `centertag' and major axis point `majorTag'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0), explicitely sets the plane of the circle arc. Returns the tag of the ellipse arc.'''
 geo.add('addEllipseArc',doc,oint,iint('startTag'),iint('centerTag'),iint('majorTag'),iint('endTag'),iint('tag','-1'),idouble('nx','0.'),idouble('ny','0.'),idouble('nz','0.'))
 
-doc = '''Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Creates a periodic curve if the first and last points are the same. Returns the tag of the spline curve.'''
-geo.add('addSpline',doc,oint,ivectorint('vertexTags'),iint('tag','-1'))
+doc = '''Adds a spline (Catmull-Rom) curve going through the points `pointTags'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Creates a periodic curve if the first and last points are the same. Returns the tag of the spline curve.'''
+geo.add('addSpline',doc,oint,ivectorint('pointTags'),iint('tag','-1'))
 
-doc = '''Adds a cubic b-spline curve with `vertexTags' control points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Creates a periodic curve if the first and last points are the same. Returns the tag of the b-spline curve.'''
-geo.add('addBSpline',doc,oint,ivectorint('vertexTags'),iint('tag','-1'))
+doc = '''Adds a cubic b-spline curve with `pointTags' control points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Creates a periodic curve if the first and last points are the same. Returns the tag of the b-spline curve.'''
+geo.add('addBSpline',doc,oint,ivectorint('pointTags'),iint('tag','-1'))
 
-doc = '''Adds a Bezier curve with `vertexTags' control points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically.  Returns the tag of the Bezier curve.'''
-geo.add('addBezier',doc,oint,ivectorint('vertexTags'),iint('tag','-1'))
+doc = '''Adds a Bezier curve with `pointTags' control points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically.  Returns the tag of the Bezier curve.'''
+geo.add('addBezier',doc,oint,ivectorint('pointTags'),iint('tag','-1'))
 
-doc = '''Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should contain (signed) tags of geometrical enties of dimension 1 forming a closed loop: a negative tag signifies that the underlying edge is considered with reversed orientation. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the line loop.'''
-geo.add('addLineLoop',doc,oint,ivectorint('edgeTags'),iint('tag','-1'))
+doc = '''Adds a line loop (a closed wire) formed by the curves `curveTags'. `curveTags' should contain (signed) tags of geometrical enties of dimension 1 forming a closed loop: a negative tag signifies that the underlying curve is considered with reversed orientation. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the line loop.'''
+geo.add('addLineLoop',doc,oint,ivectorint('curveTags'),iint('tag','-1'))
 
 doc = '''Adds a plane surface defined by one or more line loops `wireTags'. The first line loop defines the exterior contour; additional line loop define holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the surface.'''
 geo.add('addPlaneSurface',doc,oint,ivectorint('wireTags'),iint('tag','-1'))
 
-doc = '''Adds a surface filling the line loops in `wireTags'. Currently only a single line loop is supported; this line loop should be composed by 3 or 4 edges only. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the surface.'''
+doc = '''Adds a surface filling the line loops in `wireTags'. Currently only a single line loop is supported; this line loop should be composed by 3 or 4 curves only. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the surface.'''
 geo.add('addSurfaceFilling',doc,oint,ivectorint('wireTags'),iint('tag','-1'),iint('sphereCenterTag','-1'))
 
-doc = '''Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the surface loop.'''
-geo.add('addSurfaceLoop',doc,oint,ivectorint('faceTags'),iint('tag','-1'))
+doc = '''Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the shell.'''
+geo.add('addSurfaceLoop',doc,oint,ivectorint('surfaceTags'),iint('tag','-1'))
 
-doc = '''Adds a volume defined by one or more surface loops `shellTags'. The first surface loop defines the exterior boundary; additional surface loop define holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the volume.'''
+doc = '''Adds a volume (a region) defined by one or more shells `shellTags'. The first surface loop defines the exterior boundary; additional surface loop define holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the volume.'''
 geo.add('addVolume',doc,oint,ivectorint('shellTags'),iint('tag','-1'))
 
 doc = '''Extrudes the geometrical entities `dimTags' by translation along (`dx', `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
@@ -339,20 +339,20 @@ occ.add('addEllipseArc',doc,oint,iint('startTag'),iint('centerTag'),iint('endTag
 doc = '''Adds an ellipse of center (`x', `y', `z') and radii `r1' and `r2' along the x- and y-axes respectively. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. If `angle1' and `angle2' are specified, creates an ellipse arc between the two angles. Returns the tag of the ellipse.'''
 occ.add('addEllipse',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('r1'),idouble('r2'),iint('tag','-1'),idouble('angle1','0.'),idouble('angle2','2*M_PI','2*pi'))
 
-doc = '''Adds a spline (C2 b-spline) curve going through `vertexTags' points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Creates a periodic curve if the first and last points are the same. Returns the tag of the spline curve.'''
-occ.add('addSpline',doc,oint,ivectorint('vertexTags'),iint('tag','-1'))
+doc = '''Adds a spline (C2 b-spline) curve going through the points `pointTags'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Creates a periodic curve if the first and last points are the same. Returns the tag of the spline curve.'''
+occ.add('addSpline',doc,oint,ivectorint('pointTags'),iint('tag','-1'))
 
-doc = '''Adds a b-spline curve of degree `degree' with `vertexTags' control points. If `weights', `knots' or `multiplicities' are not provided, default parameters are computed automatically. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Creates a periodic curve if the first and last points are the same. Returns the tag of the b-spline curve.'''
-occ.add('addBSpline',doc,oint,ivectorint('vertexTags'),iint('tag','-1'),iint('degree','3'),ivectordouble('weights','std::vector<double>()',"[]"),ivectordouble('knots','std::vector<double>()',"[]"),ivectorint('multiplicities','std::vector<int>()',"[]"))
+doc = '''Adds a b-spline curve of degree `degree' with `pointTags' control points. If `weights', `knots' or `multiplicities' are not provided, default parameters are computed automatically. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Creates a periodic curve if the first and last points are the same. Returns the tag of the b-spline curve.'''
+occ.add('addBSpline',doc,oint,ivectorint('pointTags'),iint('tag','-1'),iint('degree','3'),ivectordouble('weights','std::vector<double>()',"[]"),ivectordouble('knots','std::vector<double>()',"[]"),ivectorint('multiplicities','std::vector<int>()',"[]"))
 
-doc = '''Adds a Bezier curve with `vertexTags' control points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the Bezier curve.'''
-occ.add('addBezier',doc,oint,ivectorint('vertexTags'),iint('tag','-1'))
+doc = '''Adds a Bezier curve with `pointTags' control points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the Bezier curve.'''
+occ.add('addBezier',doc,oint,ivectorint('pointTags'),iint('tag','-1'))
 
-doc = '''Adds a wire (open or closed) formed by `edgeTags'. `edgeTags' should contain (signed) tags of geometrical enties of dimension 1: a negative tag signifies that the underlying edge is considered with reversed orientation. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the wire.'''
-occ.add('addWire',doc,oint,ivectorint('edgeTags'),iint('tag','-1'),ibool('checkClosed','false','False'))
+doc = '''Adds a wire (open or closed) formed by the curves `curveTags'. `curveTags' should contain (signed) tags: a negative tag signifies that the underlying curve is considered with reversed orientation. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the wire.'''
+occ.add('addWire',doc,oint,ivectorint('curveTags'),iint('tag','-1'),ibool('checkClosed','false','False'))
 
-doc = '''Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should contain (signed) tags of geometrical enties of dimension 1 forming a closed loop: a negative tag signifies that the underlying edge is considered with reversed orientation. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the line loop.'''
-occ.add('addLineLoop',doc,oint,ivectorint('edgeTags'),iint('tag','-1'))
+doc = '''Adds a line loop (a closed wire) formed by the curves `curveTags'. `curveTags' should contain (signed) tags of curves forming a closed loop: a negative tag signifies that the underlying curve is considered with reversed orientation. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the line loop.'''
+occ.add('addLineLoop',doc,oint,ivectorint('curveTags'),iint('tag','-1'))
 
 doc = '''Adds a rectangle with lower left corner at (`x', `y', `z') and upper right corner at (`x' + `dx', `y' + `dy', `z'). If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Rounds the corners if `roundedRadius' is nonzero. Returns the tag of the rectangle.'''
 occ.add('addRectangle',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),iint('tag','-1'),idouble('roundedRadius','0.'))
@@ -366,10 +366,10 @@ occ.add('addPlaneSurface',doc,oint,ivectorint('wireTags'),iint('tag','-1'))
 doc = '''Adds a surface filling the line loops in `wireTags'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the surface.'''
 occ.add('addSurfaceFilling',doc,oint,iint('wireTag'),iint('tag','-1'))
 
-doc = '''Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the surface loop.'''
-occ.add('addSurfaceLoop',doc,oint,ivectorint('faceTags'),iint('tag','-1'))
+doc = '''Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the surface loop.'''
+occ.add('addSurfaceLoop',doc,oint,ivectorint('surfaceTags'),iint('tag','-1'))
 
-doc = '''Adds a volume defined by one or more surface loops `shellTags'. The first surface loop defines the exterior boundary; additional surface loop define holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the volume.'''
+doc = '''Adds a volume (a region) defined by one or more surface loops `shellTags'. The first surface loop defines the exterior boundary; additional surface loop define holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the volume.'''
 occ.add('addVolume',doc,oint,ivectorint('shellTags'),iint('tag','-1'))
 
 doc = '''Adds a sphere of center (`xc', `yc', `zc') and radius `r'. The optional `angle1' and `angle2' arguments define the polar angle opening (from -Pi/2 to Pi/2). The optional `angle3' argument defines the azimuthal opening (from 0 to 2*Pi). If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the sphere.'''
@@ -393,8 +393,8 @@ occ.add('addTorus',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('r1')
 doc = '''Adds a volume (if the optional argument `makeSolid' is set) or surfaces defined through the open or closed wires `wireTags'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. The new entities are returned in `outDimTags'. If the optional argument `makeRuled' is set, the surfaces created on the boundary are forced to be ruled surfaces.'''
 occ.add('addThruSections',doc,None,ivectorint('wireTags'),ovectorpair('outDimTags'),iint('tag','-1'),ibool('makeSolid','true','True'),ibool('makeRuled','false','False'))
 
-doc = '''Adds a hollowed volume built from an initial volume `solidTag' and a set of faces from this volume `excludeFaceTags', which are to be removed. The remaining faces of the volume become the walls of the hollowed solid, with thickness `offset'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically.'''
-occ.add('addThickSolid',doc,None,iint('solidTag'),ivectorint('excludeFaceTags'),idouble('offset'),ovectorpair('outDimTags'),iint('tag','-1'))
+doc = '''Adds a hollowed volume built from an initial volume `volumeTag' and a set of faces from this volume `excludeSurfaceTags', which are to be removed. The remaining faces of the volume become the walls of the hollowed solid, with thickness `offset'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically.'''
+occ.add('addThickSolid',doc,None,iint('volumeTag'),ivectorint('excludeSurfaceTags'),idouble('offset'),ovectorpair('outDimTags'),iint('tag','-1'))
 
 doc = '''Extrudes the geometrical entities `dimTags' by translation along (`dx', `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
 occ.add('extrude',doc,None,ivectorpair('dimTags'),idouble('dx'),idouble('dy'),idouble('dz'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()',"[]"),ivectordouble('heights','std::vector<double>()',"[]"),ibool('recombine','false','False'))
@@ -402,13 +402,13 @@ occ.add('extrude',doc,None,ivectorpair('dimTags'),idouble('dx'),idouble('dy'),id
 doc = '''Extrudes the geometrical entities `dimTags' by rotation of `angle' radians around the axis of revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay', `az'). Returns extruded entities in `outDimTags'. If `numElements' is not empty, also extrude the mesh: the entries in `numElements' give the number of elements in each layer. If `height' is not empty, it provides the (cummulative) height of the different layers, normalized to 1.'''
 occ.add('revolve',doc,None,ivectorpair('dimTags'),idouble('x'),idouble('y'),idouble('z'),idouble('ax'),idouble('ay'),idouble('az'),idouble('angle'),ovectorpair('outDimTags'),ivectorint('numElements','std::vector<int>()',"[]"),ivectordouble('heights','std::vector<double>()',"[]"),ibool('recombine','false','False'))
 
-doc = '''Adds a pipe by extruding the entities `dimTags' along the curve `wireTag'. Returns the pipe in `outDimTags'.'''
+doc = '''Adds a pipe by extruding the entities `dimTags' along the wire `wireTag'. Returns the pipe in `outDimTags'.'''
 occ.add('addPipe',doc,None,ivectorpair('dimTags'),iint('wireTag'),ovectorpair('outDimTags'))
 
-doc = '''Fillets the volumes `regionTags' on the curves `edgeTags' with radius `radius'. Returns the filleted entities in `outDimTags'. Removes the original volume if `removeRegion' is set.'''
-occ.add('fillet',doc,None,ivectorint('regionTags'),ivectorint('edgeTags'),idouble('radius'),ovectorpair('outDimTags'),ibool('removeRegion','true','True'))
+doc = '''Fillets the volumes `volumeTags' on the curves `curveTags' with radius `radius'. Returns the filleted entities in `outDimTags'. Removes the original volume if `removeVolume' is set.'''
+occ.add('fillet',doc,None,ivectorint('volumeTags'),ivectorint('curveTags'),idouble('radius'),ovectorpair('outDimTags'),ibool('removeVolume','true','True'))
 
-doc = '''Computes the boolean union (the fusion) of the entities `objectDimTags' and `toolDimTags'.Returns the resulting entities in `outDimTags'. If `tag' is positive, attemps to set the tag explicitly (ony valid if the boolean operation results in a single entity). Removes the object if `removeObject' is set. Removes the tool if `removeTool' is set.'''
+doc = '''Computes the boolean union (the fusion) of the entities `objectDimTags' and `toolDimTags'. Returns the resulting entities in `outDimTags'. If `tag' is positive, attemps to set the tag explicitly (ony valid if the boolean operation results in a single entity). Removes the object if `removeObject' is set. Removes the tool if `removeTool' is set.'''
 occ.add('fuse',doc,None,ivectorpair('objectDimTags'),ivectorpair('toolDimTags'),ovectorpair('outDimTags'),ovectorvectorpair('outDimTagsMap'),iint('tag','-1'),ibool('removeObject','true','True'),ibool('removeTool','true','True'))
 
 doc = '''Computes the boolean intersection (the common parts) of the entities `objectDimTags' and `toolDimTags'. Returns the resulting entities in `outDimTags'. If `tag' is positive, attemps to set the tag explicitly (ony valid if the boolean operation results in a single entity). Removes the object if `removeObject' is set. Removes the tool if `removeTool' is set.'''

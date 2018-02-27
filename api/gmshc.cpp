@@ -599,38 +599,38 @@ int gmshModelGeoAddEllipseArc(const int startTag,const int centerTag,const int m
   return result_api_;
 }
 
-int gmshModelGeoAddSpline(int * vertexTags, size_t vertexTags_n,const int tag,int * ierr){
+int gmshModelGeoAddSpline(int * pointTags, size_t pointTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
-  result_api_ = gmsh::model::geo::addSpline(ptr2vector(vertexTags,vertexTags_n),tag);
+  result_api_ = gmsh::model::geo::addSpline(ptr2vector(pointTags,pointTags_n),tag);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
   return result_api_;
 }
 
-int gmshModelGeoAddBSpline(int * vertexTags, size_t vertexTags_n,const int tag,int * ierr){
+int gmshModelGeoAddBSpline(int * pointTags, size_t pointTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
-  result_api_ = gmsh::model::geo::addBSpline(ptr2vector(vertexTags,vertexTags_n),tag);
+  result_api_ = gmsh::model::geo::addBSpline(ptr2vector(pointTags,pointTags_n),tag);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
   return result_api_;
 }
 
-int gmshModelGeoAddBezier(int * vertexTags, size_t vertexTags_n,const int tag,int * ierr){
+int gmshModelGeoAddBezier(int * pointTags, size_t pointTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
-  result_api_ = gmsh::model::geo::addBezier(ptr2vector(vertexTags,vertexTags_n),tag);
+  result_api_ = gmsh::model::geo::addBezier(ptr2vector(pointTags,pointTags_n),tag);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
   return result_api_;
 }
 
-int gmshModelGeoAddLineLoop(int * edgeTags, size_t edgeTags_n,const int tag,int * ierr){
+int gmshModelGeoAddLineLoop(int * curveTags, size_t curveTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
-  result_api_ = gmsh::model::geo::addLineLoop(ptr2vector(edgeTags,edgeTags_n),tag);
+  result_api_ = gmsh::model::geo::addLineLoop(ptr2vector(curveTags,curveTags_n),tag);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
   return result_api_;
 }
@@ -653,11 +653,11 @@ int gmshModelGeoAddSurfaceFilling(int * wireTags, size_t wireTags_n,const int ta
   return result_api_;
 }
 
-int gmshModelGeoAddSurfaceLoop(int * faceTags, size_t faceTags_n,const int tag,int * ierr){
+int gmshModelGeoAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
-  result_api_ = gmsh::model::geo::addSurfaceLoop(ptr2vector(faceTags,faceTags_n),tag);
+  result_api_ = gmsh::model::geo::addSurfaceLoop(ptr2vector(surfaceTags,surfaceTags_n),tag);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
   return result_api_;
 }
@@ -859,47 +859,47 @@ int gmshModelOccAddEllipse(const double x,const double y,const double z,const do
   return result_api_;
 }
 
-int gmshModelOccAddSpline(int * vertexTags, size_t vertexTags_n,const int tag,int * ierr){
+int gmshModelOccAddSpline(int * pointTags, size_t pointTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
-  result_api_ = gmsh::model::occ::addSpline(ptr2vector(vertexTags,vertexTags_n),tag);
+  result_api_ = gmsh::model::occ::addSpline(ptr2vector(pointTags,pointTags_n),tag);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
   return result_api_;
 }
 
-int gmshModelOccAddBSpline(int * vertexTags, size_t vertexTags_n,const int tag,const int degree,double * weights, size_t weights_n,double * knots, size_t knots_n,int * multiplicities, size_t multiplicities_n,int * ierr){
+int gmshModelOccAddBSpline(int * pointTags, size_t pointTags_n,const int tag,const int degree,double * weights, size_t weights_n,double * knots, size_t knots_n,int * multiplicities, size_t multiplicities_n,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
-  result_api_ = gmsh::model::occ::addBSpline(ptr2vector(vertexTags,vertexTags_n),tag,degree,ptr2vector(weights,weights_n),ptr2vector(knots,knots_n),ptr2vector(multiplicities,multiplicities_n));
+  result_api_ = gmsh::model::occ::addBSpline(ptr2vector(pointTags,pointTags_n),tag,degree,ptr2vector(weights,weights_n),ptr2vector(knots,knots_n),ptr2vector(multiplicities,multiplicities_n));
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
   return result_api_;
 }
 
-int gmshModelOccAddBezier(int * vertexTags, size_t vertexTags_n,const int tag,int * ierr){
+int gmshModelOccAddBezier(int * pointTags, size_t pointTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
-  result_api_ = gmsh::model::occ::addBezier(ptr2vector(vertexTags,vertexTags_n),tag);
+  result_api_ = gmsh::model::occ::addBezier(ptr2vector(pointTags,pointTags_n),tag);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
   return result_api_;
 }
 
-int gmshModelOccAddWire(int * edgeTags, size_t edgeTags_n,const int tag,const int checkClosed,int * ierr){
+int gmshModelOccAddWire(int * curveTags, size_t curveTags_n,const int tag,const int checkClosed,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
-  result_api_ = gmsh::model::occ::addWire(ptr2vector(edgeTags,edgeTags_n),tag,checkClosed);
+  result_api_ = gmsh::model::occ::addWire(ptr2vector(curveTags,curveTags_n),tag,checkClosed);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
   return result_api_;
 }
 
-int gmshModelOccAddLineLoop(int * edgeTags, size_t edgeTags_n,const int tag,int * ierr){
+int gmshModelOccAddLineLoop(int * curveTags, size_t curveTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
-  result_api_ = gmsh::model::occ::addLineLoop(ptr2vector(edgeTags,edgeTags_n),tag);
+  result_api_ = gmsh::model::occ::addLineLoop(ptr2vector(curveTags,curveTags_n),tag);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
   return result_api_;
 }
@@ -940,11 +940,11 @@ int gmshModelOccAddSurfaceFilling(const int wireTag,const int tag,int * ierr){
   return result_api_;
 }
 
-int gmshModelOccAddSurfaceLoop(int * faceTags, size_t faceTags_n,const int tag,int * ierr){
+int gmshModelOccAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
-  result_api_ = gmsh::model::occ::addSurfaceLoop(ptr2vector(faceTags,faceTags_n),tag);
+  result_api_ = gmsh::model::occ::addSurfaceLoop(ptr2vector(surfaceTags,surfaceTags_n),tag);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
   return result_api_;
 }
@@ -1021,11 +1021,11 @@ void gmshModelOccAddThruSections(int * wireTags, size_t wireTags_n,int ** outDim
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelOccAddThickSolid(const int solidTag,int * excludeFaceTags, size_t excludeFaceTags_n,const double offset,int ** outDimTags, size_t * outDimTags_n,const int tag,int * ierr){
+void gmshModelOccAddThickSolid(const int volumeTag,int * excludeSurfaceTags, size_t excludeSurfaceTags_n,const double offset,int ** outDimTags, size_t * outDimTags_n,const int tag,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::vector_pair api_outDimTags_;
-  gmsh::model::occ::addThickSolid(solidTag,ptr2vector(excludeFaceTags,excludeFaceTags_n),offset,api_outDimTags_,tag);
+  gmsh::model::occ::addThickSolid(volumeTag,ptr2vector(excludeSurfaceTags,excludeSurfaceTags_n),offset,api_outDimTags_,tag);
   pairvector2intptr(api_outDimTags_,outDimTags,outDimTags_n);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
@@ -1057,11 +1057,11 @@ void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n,const int wireTag,int *
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelOccFillet(int * regionTags, size_t regionTags_n,int * edgeTags, size_t edgeTags_n,const double radius,int ** outDimTags, size_t * outDimTags_n,const int removeRegion,int * ierr){
+void gmshModelOccFillet(int * volumeTags, size_t volumeTags_n,int * curveTags, size_t curveTags_n,const double radius,int ** outDimTags, size_t * outDimTags_n,const int removeVolume,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::vector_pair api_outDimTags_;
-  gmsh::model::occ::fillet(ptr2vector(regionTags,regionTags_n),ptr2vector(edgeTags,edgeTags_n),radius,api_outDimTags_,removeRegion);
+  gmsh::model::occ::fillet(ptr2vector(volumeTags,volumeTags_n),ptr2vector(curveTags,curveTags_n),radius,api_outDimTags_,removeVolume);
   pairvector2intptr(api_outDimTags_,outDimTags,outDimTags_n);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }

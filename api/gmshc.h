@@ -544,36 +544,36 @@ GMSH_API int gmshModelGeoAddEllipseArc(const int startTag,
                                        const double nz,
                                        int * ierr);
 
-/* Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If
+/* Adds a spline (Catmull-Rom) curve going through the points `pointTags'. If
  * `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
  * automatically. Creates a periodic curve if the first and last points are
  * the same. Returns the tag of the spline curve. */
-GMSH_API int gmshModelGeoAddSpline(int * vertexTags, size_t vertexTags_n,
+GMSH_API int gmshModelGeoAddSpline(int * pointTags, size_t pointTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* Adds a cubic b-spline curve with `vertexTags' control points. If `tag' is
+/* Adds a cubic b-spline curve with `pointTags' control points. If `tag' is
  * positive, sets the tag explicitly; otherwise a new tag is selected
  * automatically. Creates a periodic curve if the first and last points are
  * the same. Returns the tag of the b-spline curve. */
-GMSH_API int gmshModelGeoAddBSpline(int * vertexTags, size_t vertexTags_n,
+GMSH_API int gmshModelGeoAddBSpline(int * pointTags, size_t pointTags_n,
                                     const int tag,
                                     int * ierr);
 
-/* Adds a Bezier curve with `vertexTags' control points. If `tag' is positive,
+/* Adds a Bezier curve with `pointTags' control points. If `tag' is positive,
  * sets the tag explicitly; otherwise a new tag is selected automatically.
  * Returns the tag of the Bezier curve. */
-GMSH_API int gmshModelGeoAddBezier(int * vertexTags, size_t vertexTags_n,
+GMSH_API int gmshModelGeoAddBezier(int * pointTags, size_t pointTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should
- * contain (signed) tags of geometrical enties of dimension 1 forming a closed
- * loop: a negative tag signifies that the underlying edge is considered with
- * reversed orientation. If `tag' is positive, sets the tag explicitly;
- * otherwise a new tag is selected automatically. Returns the tag of the line
- * loop. */
-GMSH_API int gmshModelGeoAddLineLoop(int * edgeTags, size_t edgeTags_n,
+/* Adds a line loop (a closed wire) formed by the curves `curveTags'.
+ * `curveTags' should contain (signed) tags of geometrical enties of dimension
+ * 1 forming a closed loop: a negative tag signifies that the underlying curve
+ * is considered with reversed orientation. If `tag' is positive, sets the tag
+ * explicitly; otherwise a new tag is selected automatically. Returns the tag
+ * of the line loop. */
+GMSH_API int gmshModelGeoAddLineLoop(int * curveTags, size_t curveTags_n,
                                      const int tag,
                                      int * ierr);
 
@@ -587,24 +587,24 @@ GMSH_API int gmshModelGeoAddPlaneSurface(int * wireTags, size_t wireTags_n,
 
 /* Adds a surface filling the line loops in `wireTags'. Currently only a
  * single line loop is supported; this line loop should be composed by 3 or 4
- * edges only. If `tag' is positive, sets the tag explicitly; otherwise a new
+ * curves only. If `tag' is positive, sets the tag explicitly; otherwise a new
  * tag is selected automatically. Returns the tag of the surface. */
 GMSH_API int gmshModelGeoAddSurfaceFilling(int * wireTags, size_t wireTags_n,
                                            const int tag,
                                            const int sphereCenterTag,
                                            int * ierr);
 
-/* Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is
+/* Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
  * positive, sets the tag explicitly; otherwise a new tag is selected
- * automatically. Returns the tag of the surface loop. */
-GMSH_API int gmshModelGeoAddSurfaceLoop(int * faceTags, size_t faceTags_n,
+ * automatically. Returns the tag of the shell. */
+GMSH_API int gmshModelGeoAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n,
                                         const int tag,
                                         int * ierr);
 
-/* Adds a volume defined by one or more surface loops `shellTags'. The first
- * surface loop defines the exterior boundary; additional surface loop define
- * holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
- * is selected automatically. Returns the tag of the volume. */
+/* Adds a volume (a region) defined by one or more shells `shellTags'. The
+ * first surface loop defines the exterior boundary; additional surface loop
+ * define holes. If `tag' is positive, sets the tag explicitly; otherwise a
+ * new tag is selected automatically. Returns the tag of the volume. */
 GMSH_API int gmshModelGeoAddVolume(int * shellTags, size_t shellTags_n,
                                    const int tag,
                                    int * ierr);
@@ -862,21 +862,21 @@ GMSH_API int gmshModelOccAddEllipse(const double x,
                                     const double angle2,
                                     int * ierr);
 
-/* Adds a spline (C2 b-spline) curve going through `vertexTags' points. If
+/* Adds a spline (C2 b-spline) curve going through the points `pointTags'. If
  * `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
  * automatically. Creates a periodic curve if the first and last points are
  * the same. Returns the tag of the spline curve. */
-GMSH_API int gmshModelOccAddSpline(int * vertexTags, size_t vertexTags_n,
+GMSH_API int gmshModelOccAddSpline(int * pointTags, size_t pointTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* Adds a b-spline curve of degree `degree' with `vertexTags' control points.
+/* Adds a b-spline curve of degree `degree' with `pointTags' control points.
  * If `weights', `knots' or `multiplicities' are not provided, default
  * parameters are computed automatically. If `tag' is positive, sets the tag
  * explicitly; otherwise a new tag is selected automatically. Creates a
  * periodic curve if the first and last points are the same. Returns the tag
  * of the b-spline curve. */
-GMSH_API int gmshModelOccAddBSpline(int * vertexTags, size_t vertexTags_n,
+GMSH_API int gmshModelOccAddBSpline(int * pointTags, size_t pointTags_n,
                                     const int tag,
                                     const int degree,
                                     double * weights, size_t weights_n,
@@ -884,30 +884,30 @@ GMSH_API int gmshModelOccAddBSpline(int * vertexTags, size_t vertexTags_n,
                                     int * multiplicities, size_t multiplicities_n,
                                     int * ierr);
 
-/* Adds a Bezier curve with `vertexTags' control points. If `tag' is positive,
+/* Adds a Bezier curve with `pointTags' control points. If `tag' is positive,
  * sets the tag explicitly; otherwise a new tag is selected automatically.
  * Returns the tag of the Bezier curve. */
-GMSH_API int gmshModelOccAddBezier(int * vertexTags, size_t vertexTags_n,
+GMSH_API int gmshModelOccAddBezier(int * pointTags, size_t pointTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* Adds a wire (open or closed) formed by `edgeTags'. `edgeTags' should
- * contain (signed) tags of geometrical enties of dimension 1: a negative tag
- * signifies that the underlying edge is considered with reversed orientation.
- * If `tag' is positive, sets the tag explicitly; otherwise a new tag is
- * selected automatically. Returns the tag of the wire. */
-GMSH_API int gmshModelOccAddWire(int * edgeTags, size_t edgeTags_n,
+/* Adds a wire (open or closed) formed by the curves `curveTags'. `curveTags'
+ * should contain (signed) tags: a negative tag signifies that the underlying
+ * curve is considered with reversed orientation. If `tag' is positive, sets
+ * the tag explicitly; otherwise a new tag is selected automatically. Returns
+ * the tag of the wire. */
+GMSH_API int gmshModelOccAddWire(int * curveTags, size_t curveTags_n,
                                  const int tag,
                                  const int checkClosed,
                                  int * ierr);
 
-/* Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should
- * contain (signed) tags of geometrical enties of dimension 1 forming a closed
- * loop: a negative tag signifies that the underlying edge is considered with
+/* Adds a line loop (a closed wire) formed by the curves `curveTags'.
+ * `curveTags' should contain (signed) tags of curves forming a closed loop: a
+ * negative tag signifies that the underlying curve is considered with
  * reversed orientation. If `tag' is positive, sets the tag explicitly;
  * otherwise a new tag is selected automatically. Returns the tag of the line
  * loop. */
-GMSH_API int gmshModelOccAddLineLoop(int * edgeTags, size_t edgeTags_n,
+GMSH_API int gmshModelOccAddLineLoop(int * curveTags, size_t curveTags_n,
                                      const int tag,
                                      int * ierr);
 
@@ -951,17 +951,17 @@ GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag,
                                            const int tag,
                                            int * ierr);
 
-/* Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is
+/* Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
  * positive, sets the tag explicitly; otherwise a new tag is selected
  * automatically. Returns the tag of the surface loop. */
-GMSH_API int gmshModelOccAddSurfaceLoop(int * faceTags, size_t faceTags_n,
+GMSH_API int gmshModelOccAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n,
                                         const int tag,
                                         int * ierr);
 
-/* Adds a volume defined by one or more surface loops `shellTags'. The first
- * surface loop defines the exterior boundary; additional surface loop define
- * holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
- * is selected automatically. Returns the tag of the volume. */
+/* Adds a volume (a region) defined by one or more surface loops `shellTags'.
+ * The first surface loop defines the exterior boundary; additional surface
+ * loop define holes. If `tag' is positive, sets the tag explicitly; otherwise
+ * a new tag is selected automatically. Returns the tag of the volume. */
 GMSH_API int gmshModelOccAddVolume(int * shellTags, size_t shellTags_n,
                                    const int tag,
                                    int * ierr);
@@ -1070,13 +1070,13 @@ GMSH_API void gmshModelOccAddThruSections(int * wireTags, size_t wireTags_n,
                                           const int makeRuled,
                                           int * ierr);
 
-/* Adds a hollowed volume built from an initial volume `solidTag' and a set of
- * faces from this volume `excludeFaceTags', which are to be removed. The
- * remaining faces of the volume become the walls of the hollowed solid, with
- * thickness `offset'. If `tag' is positive, sets the tag explicitly;
+/* Adds a hollowed volume built from an initial volume `volumeTag' and a set
+ * of faces from this volume `excludeSurfaceTags', which are to be removed.
+ * The remaining faces of the volume become the walls of the hollowed solid,
+ * with thickness `offset'. If `tag' is positive, sets the tag explicitly;
  * otherwise a new tag is selected automatically. */
-GMSH_API void gmshModelOccAddThickSolid(const int solidTag,
-                                        int * excludeFaceTags, size_t excludeFaceTags_n,
+GMSH_API void gmshModelOccAddThickSolid(const int volumeTag,
+                                        int * excludeSurfaceTags, size_t excludeSurfaceTags_n,
                                         const double offset,
                                         int ** outDimTags, size_t * outDimTags_n,
                                         const int tag,
@@ -1118,25 +1118,25 @@ GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n,
                                   const int recombine,
                                   int * ierr);
 
-/* Adds a pipe by extruding the entities `dimTags' along the curve `wireTag'.
+/* Adds a pipe by extruding the entities `dimTags' along the wire `wireTag'.
  * Returns the pipe in `outDimTags'. */
 GMSH_API void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n,
                                   const int wireTag,
                                   int ** outDimTags, size_t * outDimTags_n,
                                   int * ierr);
 
-/* Fillets the volumes `regionTags' on the curves `edgeTags' with radius
+/* Fillets the volumes `volumeTags' on the curves `curveTags' with radius
  * `radius'. Returns the filleted entities in `outDimTags'. Removes the
- * original volume if `removeRegion' is set. */
-GMSH_API void gmshModelOccFillet(int * regionTags, size_t regionTags_n,
-                                 int * edgeTags, size_t edgeTags_n,
+ * original volume if `removeVolume' is set. */
+GMSH_API void gmshModelOccFillet(int * volumeTags, size_t volumeTags_n,
+                                 int * curveTags, size_t curveTags_n,
                                  const double radius,
                                  int ** outDimTags, size_t * outDimTags_n,
-                                 const int removeRegion,
+                                 const int removeVolume,
                                  int * ierr);
 
 /* Computes the boolean union (the fusion) of the entities `objectDimTags' and
- * `toolDimTags'.Returns the resulting entities in `outDimTags'. If `tag' is
+ * `toolDimTags'. Returns the resulting entities in `outDimTags'. If `tag' is
  * positive, attemps to set the tag explicitly (ony valid if the boolean
  * operation results in a single entity). Removes the object if `removeObject'
  * is set. Removes the tool if `removeTool' is set. */

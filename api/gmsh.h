@@ -513,33 +513,33 @@ namespace gmsh { // Top-level functions
                                  const double ny = 0.,
                                  const double nz = 0.);
 
-      // Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If
+      // Adds a spline (Catmull-Rom) curve going through the points `pointTags'. If
       // `tag' is positive, sets the tag explicitly; otherwise a new tag is
       // selected automatically. Creates a periodic curve if the first and last
       // points are the same. Returns the tag of the spline curve.
-      GMSH_API int addSpline(const std::vector<int> & vertexTags,
+      GMSH_API int addSpline(const std::vector<int> & pointTags,
                              const int tag = -1);
 
-      // Adds a cubic b-spline curve with `vertexTags' control points. If `tag' is
+      // Adds a cubic b-spline curve with `pointTags' control points. If `tag' is
       // positive, sets the tag explicitly; otherwise a new tag is selected
       // automatically. Creates a periodic curve if the first and last points are
       // the same. Returns the tag of the b-spline curve.
-      GMSH_API int addBSpline(const std::vector<int> & vertexTags,
+      GMSH_API int addBSpline(const std::vector<int> & pointTags,
                               const int tag = -1);
 
-      // Adds a Bezier curve with `vertexTags' control points. If `tag' is
-      // positive, sets the tag explicitly; otherwise a new tag is selected
-      // automatically.  Returns the tag of the Bezier curve.
-      GMSH_API int addBezier(const std::vector<int> & vertexTags,
+      // Adds a Bezier curve with `pointTags' control points. If `tag' is positive,
+      // sets the tag explicitly; otherwise a new tag is selected automatically.
+      // Returns the tag of the Bezier curve.
+      GMSH_API int addBezier(const std::vector<int> & pointTags,
                              const int tag = -1);
 
-      // Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should
-      // contain (signed) tags of geometrical enties of dimension 1 forming a
-      // closed loop: a negative tag signifies that the underlying edge is
-      // considered with reversed orientation. If `tag' is positive, sets the tag
-      // explicitly; otherwise a new tag is selected automatically. Returns the tag
-      // of the line loop.
-      GMSH_API int addLineLoop(const std::vector<int> & edgeTags,
+      // Adds a line loop (a closed wire) formed by the curves `curveTags'.
+      // `curveTags' should contain (signed) tags of geometrical enties of
+      // dimension 1 forming a closed loop: a negative tag signifies that the
+      // underlying curve is considered with reversed orientation. If `tag' is
+      // positive, sets the tag explicitly; otherwise a new tag is selected
+      // automatically. Returns the tag of the line loop.
+      GMSH_API int addLineLoop(const std::vector<int> & curveTags,
                                const int tag = -1);
 
       // Adds a plane surface defined by one or more line loops `wireTags'. The
@@ -551,22 +551,22 @@ namespace gmsh { // Top-level functions
 
       // Adds a surface filling the line loops in `wireTags'. Currently only a
       // single line loop is supported; this line loop should be composed by 3 or 4
-      // edges only. If `tag' is positive, sets the tag explicitly; otherwise a new
-      // tag is selected automatically. Returns the tag of the surface.
+      // curves only. If `tag' is positive, sets the tag explicitly; otherwise a
+      // new tag is selected automatically. Returns the tag of the surface.
       GMSH_API int addSurfaceFilling(const std::vector<int> & wireTags,
                                      const int tag = -1,
                                      const int sphereCenterTag = -1);
 
-      // Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is
+      // Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
       // positive, sets the tag explicitly; otherwise a new tag is selected
-      // automatically. Returns the tag of the surface loop.
-      GMSH_API int addSurfaceLoop(const std::vector<int> & faceTags,
+      // automatically. Returns the tag of the shell.
+      GMSH_API int addSurfaceLoop(const std::vector<int> & surfaceTags,
                                   const int tag = -1);
 
-      // Adds a volume defined by one or more surface loops `shellTags'. The first
-      // surface loop defines the exterior boundary; additional surface loop define
-      // holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
-      // is selected automatically. Returns the tag of the volume.
+      // Adds a volume (a region) defined by one or more shells `shellTags'. The
+      // first surface loop defines the exterior boundary; additional surface loop
+      // define holes. If `tag' is positive, sets the tag explicitly; otherwise a
+      // new tag is selected automatically. Returns the tag of the volume.
       GMSH_API int addVolume(const std::vector<int> & shellTags,
                              const int tag = -1);
 
@@ -813,48 +813,48 @@ namespace gmsh { // Top-level functions
                               const double angle1 = 0.,
                               const double angle2 = 2*M_PI);
 
-      // Adds a spline (C2 b-spline) curve going through `vertexTags' points. If
+      // Adds a spline (C2 b-spline) curve going through the points `pointTags'. If
       // `tag' is positive, sets the tag explicitly; otherwise a new tag is
       // selected automatically. Creates a periodic curve if the first and last
       // points are the same. Returns the tag of the spline curve.
-      GMSH_API int addSpline(const std::vector<int> & vertexTags,
+      GMSH_API int addSpline(const std::vector<int> & pointTags,
                              const int tag = -1);
 
-      // Adds a b-spline curve of degree `degree' with `vertexTags' control points.
+      // Adds a b-spline curve of degree `degree' with `pointTags' control points.
       // If `weights', `knots' or `multiplicities' are not provided, default
       // parameters are computed automatically. If `tag' is positive, sets the tag
       // explicitly; otherwise a new tag is selected automatically. Creates a
       // periodic curve if the first and last points are the same. Returns the tag
       // of the b-spline curve.
-      GMSH_API int addBSpline(const std::vector<int> & vertexTags,
+      GMSH_API int addBSpline(const std::vector<int> & pointTags,
                               const int tag = -1,
                               const int degree = 3,
                               const std::vector<double> & weights = std::vector<double>(),
                               const std::vector<double> & knots = std::vector<double>(),
                               const std::vector<int> & multiplicities = std::vector<int>());
 
-      // Adds a Bezier curve with `vertexTags' control points. If `tag' is
-      // positive, sets the tag explicitly; otherwise a new tag is selected
-      // automatically. Returns the tag of the Bezier curve.
-      GMSH_API int addBezier(const std::vector<int> & vertexTags,
+      // Adds a Bezier curve with `pointTags' control points. If `tag' is positive,
+      // sets the tag explicitly; otherwise a new tag is selected automatically.
+      // Returns the tag of the Bezier curve.
+      GMSH_API int addBezier(const std::vector<int> & pointTags,
                              const int tag = -1);
 
-      // Adds a wire (open or closed) formed by `edgeTags'. `edgeTags' should
-      // contain (signed) tags of geometrical enties of dimension 1: a negative tag
-      // signifies that the underlying edge is considered with reversed
-      // orientation. If `tag' is positive, sets the tag explicitly; otherwise a
-      // new tag is selected automatically. Returns the tag of the wire.
-      GMSH_API int addWire(const std::vector<int> & edgeTags,
+      // Adds a wire (open or closed) formed by the curves `curveTags'. `curveTags'
+      // should contain (signed) tags: a negative tag signifies that the underlying
+      // curve is considered with reversed orientation. If `tag' is positive, sets
+      // the tag explicitly; otherwise a new tag is selected automatically. Returns
+      // the tag of the wire.
+      GMSH_API int addWire(const std::vector<int> & curveTags,
                            const int tag = -1,
                            const bool checkClosed = false);
 
-      // Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should
-      // contain (signed) tags of geometrical enties of dimension 1 forming a
-      // closed loop: a negative tag signifies that the underlying edge is
-      // considered with reversed orientation. If `tag' is positive, sets the tag
-      // explicitly; otherwise a new tag is selected automatically. Returns the tag
-      // of the line loop.
-      GMSH_API int addLineLoop(const std::vector<int> & edgeTags,
+      // Adds a line loop (a closed wire) formed by the curves `curveTags'.
+      // `curveTags' should contain (signed) tags of curves forming a closed loop:
+      // a negative tag signifies that the underlying curve is considered with
+      // reversed orientation. If `tag' is positive, sets the tag explicitly;
+      // otherwise a new tag is selected automatically. Returns the tag of the line
+      // loop.
+      GMSH_API int addLineLoop(const std::vector<int> & curveTags,
                                const int tag = -1);
 
       // Adds a rectangle with lower left corner at (`x', `y', `z') and upper right
@@ -894,16 +894,17 @@ namespace gmsh { // Top-level functions
       GMSH_API int addSurfaceFilling(const int wireTag,
                                      const int tag = -1);
 
-      // Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is
+      // Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
       // positive, sets the tag explicitly; otherwise a new tag is selected
       // automatically. Returns the tag of the surface loop.
-      GMSH_API int addSurfaceLoop(const std::vector<int> & faceTags,
+      GMSH_API int addSurfaceLoop(const std::vector<int> & surfaceTags,
                                   const int tag = -1);
 
-      // Adds a volume defined by one or more surface loops `shellTags'. The first
-      // surface loop defines the exterior boundary; additional surface loop define
-      // holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
-      // is selected automatically. Returns the tag of the volume.
+      // Adds a volume (a region) defined by one or more surface loops `shellTags'.
+      // The first surface loop defines the exterior boundary; additional surface
+      // loop define holes. If `tag' is positive, sets the tag explicitly;
+      // otherwise a new tag is selected automatically. Returns the tag of the
+      // volume.
       GMSH_API int addVolume(const std::vector<int> & shellTags,
                              const int tag = -1);
 
@@ -1004,13 +1005,13 @@ namespace gmsh { // Top-level functions
                                     const bool makeSolid = true,
                                     const bool makeRuled = false);
 
-      // Adds a hollowed volume built from an initial volume `solidTag' and a set
-      // of faces from this volume `excludeFaceTags', which are to be removed. The
-      // remaining faces of the volume become the walls of the hollowed solid, with
-      // thickness `offset'. If `tag' is positive, sets the tag explicitly;
+      // Adds a hollowed volume built from an initial volume `volumeTag' and a set
+      // of faces from this volume `excludeSurfaceTags', which are to be removed.
+      // The remaining faces of the volume become the walls of the hollowed solid,
+      // with thickness `offset'. If `tag' is positive, sets the tag explicitly;
       // otherwise a new tag is selected automatically.
-      GMSH_API void addThickSolid(const int solidTag,
-                                  const std::vector<int> & excludeFaceTags,
+      GMSH_API void addThickSolid(const int volumeTag,
+                                  const std::vector<int> & excludeSurfaceTags,
                                   const double offset,
                                   gmsh::vector_pair & outDimTags,
                                   const int tag = -1);
@@ -1049,25 +1050,25 @@ namespace gmsh { // Top-level functions
                             const std::vector<double> & heights = std::vector<double>(),
                             const bool recombine = false);
 
-      // Adds a pipe by extruding the entities `dimTags' along the curve `wireTag'.
+      // Adds a pipe by extruding the entities `dimTags' along the wire `wireTag'.
       // Returns the pipe in `outDimTags'.
       GMSH_API void addPipe(const gmsh::vector_pair & dimTags,
                             const int wireTag,
                             gmsh::vector_pair & outDimTags);
 
-      // Fillets the volumes `regionTags' on the curves `edgeTags' with radius
+      // Fillets the volumes `volumeTags' on the curves `curveTags' with radius
       // `radius'. Returns the filleted entities in `outDimTags'. Removes the
-      // original volume if `removeRegion' is set.
-      GMSH_API void fillet(const std::vector<int> & regionTags,
-                           const std::vector<int> & edgeTags,
+      // original volume if `removeVolume' is set.
+      GMSH_API void fillet(const std::vector<int> & volumeTags,
+                           const std::vector<int> & curveTags,
                            const double radius,
                            gmsh::vector_pair & outDimTags,
-                           const bool removeRegion = true);
+                           const bool removeVolume = true);
 
       // Computes the boolean union (the fusion) of the entities `objectDimTags'
-      // and `toolDimTags'.Returns the resulting entities in `outDimTags'. If `tag'
-      // is positive, attemps to set the tag explicitly (ony valid if the boolean
-      // operation results in a single entity). Removes the object if
+      // and `toolDimTags'. Returns the resulting entities in `outDimTags'. If
+      // `tag' is positive, attemps to set the tag explicitly (ony valid if the
+      // boolean operation results in a single entity). Removes the object if
       // `removeObject' is set. Removes the tool if `removeTool' is set.
       GMSH_API void fuse(const gmsh::vector_pair & objectDimTags,
                          const gmsh::vector_pair & toolDimTags,

@@ -719,49 +719,49 @@ the circle arc. Returns the tag of the ellipse arc.
 @end table
 
 @item addSpline
-Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If `tag' is
-positive, sets the tag explicitly; otherwise a new tag is selected
+Adds a spline (Catmull-Rom) curve going through the points `pointTags'. If `tag'
+is positive, sets the tag explicitly; otherwise a new tag is selected
 automatically. Creates a periodic curve if the first and last points are the
 same. Returns the tag of the spline curve.
 
 @table @code
-@item Input: vertexTags, tag
+@item Input: pointTags, tag
 @item Output: -
 @item Return: integer
 @end table
 
 @item addBSpline
-Adds a cubic b-spline curve with `vertexTags' control points. If `tag' is
+Adds a cubic b-spline curve with `pointTags' control points. If `tag' is
 positive, sets the tag explicitly; otherwise a new tag is selected
 automatically. Creates a periodic curve if the first and last points are the
 same. Returns the tag of the b-spline curve.
 
 @table @code
-@item Input: vertexTags, tag
+@item Input: pointTags, tag
 @item Output: -
 @item Return: integer
 @end table
 
 @item addBezier
-Adds a Bezier curve with `vertexTags' control points. If `tag' is positive, sets
+Adds a Bezier curve with `pointTags' control points. If `tag' is positive, sets
 the tag explicitly; otherwise a new tag is selected automatically.  Returns the
 tag of the Bezier curve.
 
 @table @code
-@item Input: vertexTags, tag
+@item Input: pointTags, tag
 @item Output: -
 @item Return: integer
 @end table
 
 @item addLineLoop
-Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should contain
-(signed) tags of geometrical enties of dimension 1 forming a closed loop: a
-negative tag signifies that the underlying edge is considered with reversed
-orientation. If `tag' is positive, sets the tag explicitly; otherwise a new tag
-is selected automatically. Returns the tag of the line loop.
+Adds a line loop (a closed wire) formed by the curves `curveTags'. `curveTags'
+should contain (signed) tags of geometrical enties of dimension 1 forming a
+closed loop: a negative tag signifies that the underlying curve is considered
+with reversed orientation. If `tag' is positive, sets the tag explicitly;
+otherwise a new tag is selected automatically. Returns the tag of the line loop.
 
 @table @code
-@item Input: edgeTags, tag
+@item Input: curveTags, tag
 @item Output: -
 @item Return: integer
 @end table
@@ -780,7 +780,7 @@ automatically. Returns the tag of the surface.
 
 @item addSurfaceFilling
 Adds a surface filling the line loops in `wireTags'. Currently only a single
-line loop is supported; this line loop should be composed by 3 or 4 edges only.
+line loop is supported; this line loop should be composed by 3 or 4 curves only.
 If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
 automatically. Returns the tag of the surface.
 
@@ -791,18 +791,18 @@ automatically. Returns the tag of the surface.
 @end table
 
 @item addSurfaceLoop
-Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is
+Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
 positive, sets the tag explicitly; otherwise a new tag is selected
-automatically. Returns the tag of the surface loop.
+automatically. Returns the tag of the shell.
 
 @table @code
-@item Input: faceTags, tag
+@item Input: surfaceTags, tag
 @item Output: -
 @item Return: integer
 @end table
 
 @item addVolume
-Adds a volume defined by one or more surface loops `shellTags'. The first
+Adds a volume (a region) defined by one or more shells `shellTags'. The first
 surface loop defines the exterior boundary; additional surface loop define
 holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag is
 selected automatically. Returns the tag of the volume.
@@ -1099,63 +1099,63 @@ ellipse.
 @end table
 
 @item addSpline
-Adds a spline (C2 b-spline) curve going through `vertexTags' points. If `tag' is
-positive, sets the tag explicitly; otherwise a new tag is selected
+Adds a spline (C2 b-spline) curve going through the points `pointTags'. If `tag'
+is positive, sets the tag explicitly; otherwise a new tag is selected
 automatically. Creates a periodic curve if the first and last points are the
 same. Returns the tag of the spline curve.
 
 @table @code
-@item Input: vertexTags, tag
+@item Input: pointTags, tag
 @item Output: -
 @item Return: integer
 @end table
 
 @item addBSpline
-Adds a b-spline curve of degree `degree' with `vertexTags' control points. If
+Adds a b-spline curve of degree `degree' with `pointTags' control points. If
 `weights', `knots' or `multiplicities' are not provided, default parameters are
 computed automatically. If `tag' is positive, sets the tag explicitly; otherwise
 a new tag is selected automatically. Creates a periodic curve if the first and
 last points are the same. Returns the tag of the b-spline curve.
 
 @table @code
-@item Input: vertexTags, tag, degree, weights, knots, multiplicities
+@item Input: pointTags, tag, degree, weights, knots, multiplicities
 @item Output: -
 @item Return: integer
 @end table
 
 @item addBezier
-Adds a Bezier curve with `vertexTags' control points. If `tag' is positive, sets
+Adds a Bezier curve with `pointTags' control points. If `tag' is positive, sets
 the tag explicitly; otherwise a new tag is selected automatically. Returns the
 tag of the Bezier curve.
 
 @table @code
-@item Input: vertexTags, tag
+@item Input: pointTags, tag
 @item Output: -
 @item Return: integer
 @end table
 
 @item addWire
-Adds a wire (open or closed) formed by `edgeTags'. `edgeTags' should contain
-(signed) tags of geometrical enties of dimension 1: a negative tag signifies
-that the underlying edge is considered with reversed orientation. If `tag' is
-positive, sets the tag explicitly; otherwise a new tag is selected
-automatically. Returns the tag of the wire.
+Adds a wire (open or closed) formed by the curves `curveTags'. `curveTags'
+should contain (signed) tags: a negative tag signifies that the underlying curve
+is considered with reversed orientation. If `tag' is positive, sets the tag
+explicitly; otherwise a new tag is selected automatically. Returns the tag of
+the wire.
 
 @table @code
-@item Input: edgeTags, tag, checkClosed
+@item Input: curveTags, tag, checkClosed
 @item Output: -
 @item Return: integer
 @end table
 
 @item addLineLoop
-Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should contain
-(signed) tags of geometrical enties of dimension 1 forming a closed loop: a
-negative tag signifies that the underlying edge is considered with reversed
-orientation. If `tag' is positive, sets the tag explicitly; otherwise a new tag
-is selected automatically. Returns the tag of the line loop.
+Adds a line loop (a closed wire) formed by the curves `curveTags'. `curveTags'
+should contain (signed) tags of curves forming a closed loop: a negative tag
+signifies that the underlying curve is considered with reversed orientation. If
+`tag' is positive, sets the tag explicitly; otherwise a new tag is selected
+automatically. Returns the tag of the line loop.
 
 @table @code
-@item Input: edgeTags, tag
+@item Input: curveTags, tag
 @item Output: -
 @item Return: integer
 @end table
@@ -1207,19 +1207,19 @@ tag of the surface.
 @end table
 
 @item addSurfaceLoop
-Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is
+Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
 positive, sets the tag explicitly; otherwise a new tag is selected
 automatically. Returns the tag of the surface loop.
 
 @table @code
-@item Input: faceTags, tag
+@item Input: surfaceTags, tag
 @item Output: -
 @item Return: integer
 @end table
 
 @item addVolume
-Adds a volume defined by one or more surface loops `shellTags'. The first
-surface loop defines the exterior boundary; additional surface loop define
+Adds a volume (a region) defined by one or more surface loops `shellTags'. The
+first surface loop defines the exterior boundary; additional surface loop define
 holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag is
 selected automatically. Returns the tag of the volume.
 
@@ -1319,14 +1319,14 @@ surfaces created on the boundary are forced to be ruled surfaces.
 @end table
 
 @item addThickSolid
-Adds a hollowed volume built from an initial volume `solidTag' and a set of
-faces from this volume `excludeFaceTags', which are to be removed. The remaining
-faces of the volume become the walls of the hollowed solid, with thickness
-`offset'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is
-selected automatically.
+Adds a hollowed volume built from an initial volume `volumeTag' and a set of
+faces from this volume `excludeSurfaceTags', which are to be removed. The
+remaining faces of the volume become the walls of the hollowed solid, with
+thickness `offset'. If `tag' is positive, sets the tag explicitly; otherwise a
+new tag is selected automatically.
 
 @table @code
-@item Input: solidTag, excludeFaceTags, offset, tag
+@item Input: volumeTag, excludeSurfaceTags, offset, tag
 @item Output: outDimTags
 @item Return: -
 @end table
@@ -1359,7 +1359,7 @@ the (cummulative) height of the different layers, normalized to 1.
 @end table
 
 @item addPipe
-Adds a pipe by extruding the entities `dimTags' along the curve `wireTag'.
+Adds a pipe by extruding the entities `dimTags' along the wire `wireTag'.
 Returns the pipe in `outDimTags'.
 
 @table @code
@@ -1369,19 +1369,19 @@ Returns the pipe in `outDimTags'.
 @end table
 
 @item fillet
-Fillets the volumes `regionTags' on the curves `edgeTags' with radius `radius'.
+Fillets the volumes `volumeTags' on the curves `curveTags' with radius `radius'.
 Returns the filleted entities in `outDimTags'. Removes the original volume if
-`removeRegion' is set.
+`removeVolume' is set.
 
 @table @code
-@item Input: regionTags, edgeTags, radius, removeRegion
+@item Input: volumeTags, curveTags, radius, removeVolume
 @item Output: outDimTags
 @item Return: -
 @end table
 
 @item fuse
 Computes the boolean union (the fusion) of the entities `objectDimTags' and
-`toolDimTags'.Returns the resulting entities in `outDimTags'. If `tag' is
+`toolDimTags'. Returns the resulting entities in `outDimTags'. If `tag' is
 positive, attemps to set the tag explicitly (ony valid if the boolean operation
 results in a single entity). Removes the object if `removeObject' is set.
 Removes the tool if `removeTool' is set.
