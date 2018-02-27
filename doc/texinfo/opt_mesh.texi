@@ -39,9 +39,9 @@ Write mesh files in binary format (if possible)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.SmoothCrossField
-Apply n barycentric smoothing passes to the cross field@*
-Default value: @code{0}@*
+@item Mesh.BoundaryLayerFanPoints
+Number of points (per Pi rad) for 2D boundary layer fans@*
+Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CgnsImportOrder
@@ -294,12 +294,17 @@ Weight of triangle element for METIS load balancing@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.PartitionTopology
-Create boundary entities between partitions@*
+@item Mesh.PartitionCreateTopology
+Create boundary representation of partitions@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.PartitionGhostCells
+@item Mesh.PartitionCreatePhysicals
+Create physical groups for partitions@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.PartitionCreateGhostCells
 Create partition ghost cells@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
@@ -459,6 +464,11 @@ Random factor used in the 2D meshing algorithm (should be increased if RandomFac
 Default value: @code{1e-09}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.RandomFactor3D
+Random factor used in the 3D meshing algorithm@*
+Default value: @code{1e-12}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.PreserveNumberingMsh2
 Preserve element numbering in MSH2 format (will break meshes with multiple physical groups for a single elementary entity)@*
 Default value: @code{0}@*
@@ -572,6 +582,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.Smoothing
 Number of smoothing steps applied to the final mesh@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.SmoothCrossField
+Apply n barycentric smoothing passes to the cross field@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SmoothNormals

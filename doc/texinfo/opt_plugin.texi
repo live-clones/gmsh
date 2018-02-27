@@ -1245,6 +1245,37 @@ Default value: @code{-1}
 Default value: @code{-1}
 @end table
 
+@item Plugin(Summation)
+Plugin(Summation) sums every time steps of 'Reference View' and (every) 'Other View X'and store the result in a new view.@*
+If 'View 0' < 0 then the current view is selected.@*
+If 'View 1...8' < 0 then this view is skipped.@*
+Views can have diffrent number of time steps@*
+Warning: the Plugin assume that every views sharethe same mesh and that meshes do not move between time steps!
+String options:
+@table @code
+@item Resuling View Name
+Default value: @code{"default"}
+@end table
+Numeric options:
+@table @code
+@item View 0
+Default value: @code{-1}
+@item View 1
+Default value: @code{-1}
+@item View 2
+Default value: @code{-1}
+@item View 3
+Default value: @code{-1}
+@item View 4
+Default value: @code{-1}
+@item View 5
+Default value: @code{-1}
+@item View 6
+Default value: @code{-1}
+@item View 7
+Default value: @code{-1}
+@end table
+
 @item Plugin(ThinLayerFixMesh)
 Fix the mesh in thin parts
 

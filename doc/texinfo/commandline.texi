@@ -40,6 +40,8 @@ Save mesh partitions in separate files
 Create the partition topology
 @item -part_[no_]ghosts
 Create ghost cells
+@item -part_[no_]physicals
+Create phsyical groups for partitions
 @item -part_topo_pro
 Save the partition topology .pro file
 @item -preserve_numbering_msh2
