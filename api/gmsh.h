@@ -454,8 +454,11 @@ namespace gmsh { // Top-level functions
                                  const std::string & option,
                                  const std::vector<double> & value);
 
-        // Sets the field `tag' as background mesh size field.
+        // Sets the field `tag' as the background mesh size field.
         GMSH_API void setAsBackgroundMesh(const int tag);
+
+        // Sets the field `tag' as the boundary layer size field.
+        GMSH_API void setAsBoundaryLayer(const int tag);
 
       } // namespace field
 

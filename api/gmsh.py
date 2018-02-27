@@ -1349,7 +1349,7 @@ class model:
             @staticmethod
             def setAsBackgroundMesh(tag):
                 """
-                Sets the field `tag' as background mesh size field.
+                Sets the field `tag' as the background mesh size field.
                 """
                 ierr = c_int()
                 lib.gmshModelMeshFieldSetAsBackgroundMesh(
@@ -1358,6 +1358,20 @@ class model:
                 if ierr.value != 0 :
                     raise ValueError(
                         "gmshModelMeshFieldSetAsBackgroundMesh returned non-zero error code : ",
+                        ierr.value)
+
+            @staticmethod
+            def setAsBoundaryLayer(tag):
+                """
+                Sets the field `tag' as the boundary layer size field.
+                """
+                ierr = c_int()
+                lib.gmshModelMeshFieldSetAsBoundaryLayer(
+                    c_int(tag),
+                    byref(ierr))
+                if ierr.value != 0 :
+                    raise ValueError(
+                        "gmshModelMeshFieldSetAsBoundaryLayer returned non-zero error code : ",
                         ierr.value)
 
 

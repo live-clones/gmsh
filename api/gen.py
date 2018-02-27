@@ -213,8 +213,11 @@ field.add('setString',doc,None,iint('tag'),istring('option'),istring('value'))
 doc = '''Sets the numerical list option `option' to value `value' for field `tag'.'''
 field.add('setNumbers',doc,None,iint('tag'),istring('option'),ivectordouble('value'))
 
-doc = '''Sets the field `tag' as background mesh size field.'''
+doc = '''Sets the field `tag' as the background mesh size field.'''
 field.add('setAsBackgroundMesh',doc,None,iint('tag'))
+
+doc = '''Sets the field `tag' as the boundary layer size field.'''
+field.add('setAsBoundaryLayer',doc,None,iint('tag'))
 
 ################################################################################
 
@@ -535,3 +538,4 @@ onelab.add('run',doc,None,istring('name', '""'),istring('command', '""'))
 api.write_cpp()
 api.write_c()
 api.write_python()
+api.write_texi()

@@ -1333,6 +1333,17 @@ void gmsh::model::mesh::field::setAsBackgroundMesh(const int tag)
 #endif
 }
 
+void gmsh::model::mesh::field::setAsBoundaryLayer(const int tag)
+{
+  if(!_isInitialized()){ throw -1; }
+#if defined(HAVE_MESH)
+  GModel::current()->getFields()->setBoundaryLayerFieldId(tag);
+#else
+  Msg::Error("Fields require the mesh module");
+  throw -1;
+#endif
+}
+
 // gmsh::model::geo
 
 int gmsh::model::geo::addPoint(const double x, const double y, const double z,

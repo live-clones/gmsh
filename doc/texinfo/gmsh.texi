@@ -4902,7 +4902,11 @@ enable optional modules or features. Here is the list of CMake options:
 @appendix Gmsh API
 
 The Gmsh Application Programming Interface (API) allows you to integrate
-the Gmsh library in your own application.
+the Gmsh library in your own application. Examples on how to use the API
+are available in the
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/,demos/api}
+directory. In particular, this directory contains C++ and Python
+versions of several of the @code{.geo} tutorials from @ref{Tutorial}.
 
 By design, the Gmsh API is purely functional, and only uses elementary
 types from the target language. Currently supported languages are C++, C
@@ -4916,13 +4920,16 @@ automatically from the master API definition file
 @item Python API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.py,gmsh.py}
 @end itemize
 
-The documentation for each function in the API is included in the
-relevant header and module files.
+The functions availa ble in the API are given below (see the relevant
+header and module file for the exact definition in each supported
+language@footnote{In C++ @code{gmsh/model/geo/addPoint} will lead to a
+namespaced function @code{gmsh::model::geo::addPoint}, while in Python
+it will lead to @code{gmsh.model.geo.addPoint}, and in C to
+@code{gmshModelGeoAddPoint}. Output values are passed by reference in
+C++, as pointers in C and directly returned (after the @code{Return
+value}, if any) in Python.}):
 
-Examples on how to use the API are available in the
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/,demos/api}
-directory. In particular, this directory contains C++ and Python
-versions of several of the @code{.geo} tutorials from @ref{Tutorial}.
+@include api.texi
 
 @c =========================================================================
 @c Information for developers

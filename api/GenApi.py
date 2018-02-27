@@ -46,6 +46,7 @@ def iint(name,value=None,python_value=None):
 class oint(arg):
     rtype_cpp = "int"
     rtype_c = "int"
+    rtype_texi = "integer"
     def __init__(self,name,value=None,python_value=None):
         arg.__init__(self,name,value,python_value,"int &","int *",True)
         self.c_arg = "*"+name
@@ -705,3 +706,28 @@ class API:
             f.write(python_header)
             for module in self.modules:
                 write_module(f,module,"","")
+
+    def write_texi(self):
+        def write_module(module, parent) :
+            full = parent + "/" + module.name
+            f.write("@heading Module @code{" + full + "}\n");
+            f.write("@ftable @code\n");
+            for rtype,name,args,doc in module.fs:
+                f.write("@item " + name + "\n");
+                f.write("\n".join(textwrap.wrap(doc,80)) + "\n")
+                f.write("@table @code\n");
+                iargs = list(a for a in args if not a.out)
+                oargs = list(a for a in args if a.out)
+                f.write("@item " + "Input values: " +
+                        (", ".join(iarg.name for iarg in iargs) if len(iargs) else "-") + "\n")
+                f.write("@item " + "Output values: " +
+                        (", ".join(oarg.name for oarg in oargs) if len(oargs) else "-") + "\n")
+                f.write("@item " + "Return value: " +
+                        (rtype.rtype_texi if rtype else "-") + "\n")
+                f.write("@end table\n");
+            f.write("@end ftable\n");
+            for m in module.submodules :
+                write_module(m, full)
+        with open("api.texi","w") as f:
+            for m in self.modules:
+                write_module(m, "")

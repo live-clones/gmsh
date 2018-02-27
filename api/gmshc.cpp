@@ -556,6 +556,13 @@ void gmshModelMeshFieldSetAsBackgroundMesh(const int tag,int * ierr){
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
+void gmshModelMeshFieldSetAsBoundaryLayer(const int tag,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  gmsh::model::mesh::field::setAsBoundaryLayer(tag);
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
 int gmshModelGeoAddPoint(const double x,const double y,const double z,const double meshSize,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
