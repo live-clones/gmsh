@@ -714,7 +714,7 @@ class API:
             f.write("@ftable @code\n");
             for rtype,name,args,doc in module.fs:
                 f.write("@item " + name + "\n");
-                f.write("\n".join(textwrap.wrap(doc,80)) + "\n")
+                f.write("\n".join(textwrap.wrap(doc,80)) + "\n\n")
                 f.write("@table @code\n");
                 iargs = list(a for a in args if not a.out)
                 oargs = list(a for a in args if a.out)
@@ -724,8 +724,8 @@ class API:
                         (", ".join(oarg.name for oarg in oargs) if len(oargs) else "-") + "\n")
                 f.write("@item " + "Return value: " +
                         (rtype.rtype_texi if rtype else "-") + "\n")
-                f.write("@end table\n");
-            f.write("@end ftable\n");
+                f.write("@end table\n\n");
+            f.write("@end ftable\n\n");
             for m in module.submodules :
                 write_module(m, full)
         with open("api.texi","w") as f:
