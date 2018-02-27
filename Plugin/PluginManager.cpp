@@ -67,6 +67,7 @@
 #include "ShowNeighborElements.h"
 #include "GaussPoints.h"
 #include "VoroMetal.h"
+#include "Summation.h"
 
 // for testing purposes only :-)
 #undef HAVE_DLOPEN
@@ -267,6 +268,8 @@ void PluginManager::registerDefaultPlugins()
                       ("MeshSubEntities", GMSH_RegisterMeshSubEntitiesPlugin()));
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("GaussPoints", GMSH_RegisterGaussPointsPlugin()));
+    allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
+                      ("Summation", GMSH_RegisterSummationPlugin()));
 #if defined(HAVE_MESH)
     allPlugins.insert(std::pair<std::string, GMSH_Plugin*>
                       ("AnalyseCurvedMesh", GMSH_RegisterAnalyseCurvedMeshPlugin()));
