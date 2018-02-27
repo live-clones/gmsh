@@ -76,8 +76,8 @@ void OptHomPeriodicity::_relocateMasterVertices()
         std::map<MVertex*, MVertex*>::iterator vit;
         for (vit = vertS2M.begin(); vit != vertS2M.end(); ++vit) {
           MFaceVertex *v = dynamic_cast<MFaceVertex*>(vit->second);
-          if (v && v->onWhat() == master) { // treat only nodes classified on the surface
-            GPoint p = _transform(vit->first, master, tfo);
+          if (v && v->onWhat() == master) { 
+            GPoint p = _transform(vit->first, master, tfo,false);
             SPoint3 p3 ((v->x()+p.x())/2, (v->y()+p.y())/2, (v->z()+p.z())/2);
             SPoint2 p2 = master->parFromPoint(p3);
             GPoint gp = master->point(p2);
@@ -91,7 +91,7 @@ void OptHomPeriodicity::_relocateMasterVertices()
         for (vit = pointS2M.begin(); vit != pointS2M.end(); ++vit) {
           MFaceVertex *v = dynamic_cast<MFaceVertex*>(vit->second);
           if (v && v->onWhat() == master) {
-            GPoint p = _transform(vit->first, master, tfo);
+            GPoint p = _transform(vit->first, master, tfo,false);
             SPoint3 p3 ((v->x()+p.x())/2, (v->y()+p.y())/2, (v->z()+p.z())/2);
             SPoint2 p2 = master->parFromPoint(p3);
             GPoint gp = master->point(p2);
@@ -111,8 +111,22 @@ void OptHomPeriodicity::_relocateMasterVertices()
           if (i > 0) ++it;
           GEntity *slave = it->second;
 
-          Msg::Info("Relocating vertices of master edge %i using slave %i",
-                    master->tag(),slave->tag());
+          
+          GEdge* me = dynamic_cast<GEdge*>(master);
+          GEdge* se = dynamic_cast<GEdge*>(slave); 
+
+          // std::cout << "Copying "
+          //           << slave->correspondingVertices.size()  << " main and " 
+          //           << slave->correspondingHOPoints.size() << " ho points from " 
+          //           << slave->tag() << " to " << master->tag() << std::endl;
+          
+          Msg::Info("Relocating %d main and %d high order vertices for %d points "
+                    "of master edge %i (%i-%i) using slave %i (%i-%i)",
+                    slave->correspondingVertices.size(),
+                    slave->correspondingHOPoints.size(),
+                    master->getNumMeshVertices(),
+                    me->tag(),me->getBeginVertex()->tag(),me->getEndVertex()->tag(),
+                    se->tag(),se->getBeginVertex()->tag(),se->getEndVertex()->tag());
 
           std::vector<double> tfo = _inverse(slave->affineTransform);
           std::map<MVertex*, MVertex*>::iterator vit;
@@ -139,11 +153,21 @@ void OptHomPeriodicity::_relocateMasterVertices()
         for (unsigned int k = 0; k < master->getNumMeshVertices(); ++k) {
           MEdgeVertex *v = dynamic_cast<MEdgeVertex*>(master->getMeshVertex(k));
           if (v && v->onWhat() == master) {
+            
             SPoint3 p3 (v->x()*coeff, v->y()*coeff, v->z()*coeff);
-            double u = master->parFromPoint(p3);
-            GPoint gp = master->point(u);
-            v->setXYZ(gp.x(), gp.y(), gp.z());
-            v->setParameter(0, gp.u());
+            double u;
+            bool reparam = master->XYZToU(p3.x(),p3.y(),p3.z(),u);
+            
+            if (!reparam) {
+              Msg::Error("Could not position master periodic point %i on edge %i",
+                         v->getNum(),master->tag());
+              // v->setXYZ(p3.x(),p3.y(),p3.z());
+            }
+            // else {
+              GPoint gp = master->point(u);
+              v->setXYZ(gp.x(), gp.y(), gp.z());
+              v->setParameter(0, gp.u());
+              // }
           }
         }
         break;
@@ -176,7 +200,7 @@ void OptHomPeriodicity::_copyBackMasterVertices()
           MFaceVertex *sv = dynamic_cast<MFaceVertex*>(vit->first);
           MFaceVertex *mv = dynamic_cast<MFaceVertex*>(vit->second);
           if (mv && mv->onWhat() == master) {
-            GPoint p = _transform(mv, slave, tfo,false);
+            GPoint p = _transform(mv, slave, tfo,true);
             sv->setXYZ(p.x(), p.y(), p.z());
             sv->setParameter(0, p.u());
             sv->setParameter(1, p.v());
@@ -192,7 +216,7 @@ void OptHomPeriodicity::_copyBackMasterVertices()
           MFaceVertex *mv = dynamic_cast<MFaceVertex*>(vit->second);
           
           if (mv && sv && mv->onWhat() == master) {
-            GPoint p = _transform(mv, slave, tfo,false);
+            GPoint p = _transform(mv, slave, tfo,true);
             sv->setXYZ(p.x(), p.y(), p.z());
             sv->setParameter(0, p.u());
             sv->setParameter(1, p.v()); 
@@ -217,18 +241,21 @@ void OptHomPeriodicity::_copyBackMasterVertices()
           MEdgeVertex *mv = dynamic_cast<MEdgeVertex*>(vit->second);
 
           if (mv && mv->onWhat() == master) {
-            GPoint p = _transform(vit->second, slave, tfo,false);
+            GPoint p = _transform(vit->second, slave, tfo,true);
             sv->setXYZ(p.x(), p.y(), p.z());
             sv->setParameter(0, p.u());
           }
         }
+
+        Msg::Info("Copying high order control points from edge %d to %d",
+                  master->tag(),slave->tag());
 
         std::map<MVertex*, MVertex*> &pointS2M = slave->correspondingHOPoints;
         for (vit = pointS2M.begin(); vit != pointS2M.end(); ++vit) {
           MEdgeVertex *sv = dynamic_cast<MEdgeVertex*>(vit->first);
           MEdgeVertex *mv = dynamic_cast<MEdgeVertex*>(vit->second);
           if (mv && mv->onWhat() == master) {
-            GPoint p = _transform(vit->second, slave, tfo,false);
+            GPoint p = _transform(vit->second, slave, tfo,true);
             sv->setXYZ(p.x(), p.y(), p.z());
             sv->setParameter(0, p.u());
           }
@@ -252,6 +279,8 @@ GPoint OptHomPeriodicity::_transform(MVertex *vsource,
     for(int j = 0; j < 4; j++)
       res[i] +=  tfo[idx++] * ps[j];
 
+  // Msg::Info("Localizing point %i on entity %i",vsource->getNum(),target->tag());
+
   SPoint3 p3 (res[0], res[1], res[2]); 
   if (target->dim() == 2) {
     SPoint2 p2 = dynamic_cast<GFace*>(target)->parFromPoint(p3); 
@@ -259,7 +288,21 @@ GPoint OptHomPeriodicity::_transform(MVertex *vsource,
     else         return GPoint(p3.x(),p3.y(),p3.z(),target,p2.x(),p2.y());
   }
   else if (target->dim() == 1) {
-    double u = dynamic_cast<GEdge*>(target)->parFromPoint(p3);
+
+    GEdge* gt = dynamic_cast<GEdge*>(target); 
+    double u;
+    bool reparam = gt->XYZToU(res[0],res[1],res[2],u);
+
+    if (!reparam) {
+      Msg::Error("Could not compute parameter for periodic point %i on edge %i, "
+                 "only correcting physical coordinates",
+                 vsource->getNum(),gt->tag());
+      // MEdgeVertex* ve = dynamic_cast<MEdgeVertex*>(vsource);
+      // ve->getParameter(0,u);
+    }
+    
+    // double u = gt->parFromPoint(p3);
+    // if (project && reparam) 
     if (project) return dynamic_cast<GEdge*>(target)->point(u);
     else         return GPoint(p3.x(),p3.y(),p3.z(),target,u);
   }

@@ -658,13 +658,30 @@ static bool apply_periodicity (std::vector<Pair<GEType*, GEType*> >& eCor)
 
   int dim = -1;
 
+  unsigned idx = 1;
   for (;srcIter!=eMap.end();++srcIter) {
-
+    
+    GEType* newSrc = srcIter->first;
     GEType* newTgt = srcIter->second;
     newTgt->updateCorrespondingVertices();
     newTgt->alignElementsWithMaster();
 
     if (dim == -1) dim = newTgt->dim();
+
+    switch(dim) {
+    case 0:
+      Msg::Info("Matched new periodic node %i with %i (%i on %i)",
+                newTgt->tag(),newSrc->tag(),idx++,eMap.size());
+      break;
+    case 1:
+      Msg::Info("Matched new periodic edge %i with %i (%i on %i)",
+                newTgt->tag(),newSrc->tag(),idx++,eMap.size());
+      break;
+    case 2:
+      Msg::Info("Matched new periodic face %i with %i (%i on %i)",
+                newTgt->tag(),newSrc->tag(),idx++,eMap.size());
+      break;
+    }
   }
 
   if (dim<2) { // required for multiple periodic directions
@@ -674,7 +691,7 @@ static bool apply_periodicity (std::vector<Pair<GEType*, GEType*> >& eCor)
       newTgt->alignElementsWithMaster();
     }
   }
-
+  
   return false;
 }
 

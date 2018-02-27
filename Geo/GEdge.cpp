@@ -481,61 +481,88 @@ double GEdge::parFromPoint(const SPoint3 &P) const
   return t;
 }
 
+bool GEdge::refineProjection(const SVector3& Q,
+                             double& u,
+                             int MaxIter,
+                             double relax,
+                             double tol,
+                             double& err) const {
+
+  SVector3 P = position(u);
+  SVector3 dPQ = P - Q;
+  
+  Range<double> uu = parBounds(0);
+  double uMin = uu.low();
+  double uMax = uu.high();  
+  err = dPQ.norm();
+  
+  int iter = 0;
+  while(iter++ < MaxIter && err > tol * CTX::instance()->lc) {
+    SVector3 der = firstDer(u);
+    double du = dot(dPQ,der) / dot(der,der);
+
+    if (fabs(du) < tol) break;
+    
+    double uNew = u - relax * du;
+    uNew = std::min(uMax,std::max(uMin,uNew));
+    P = position(uNew);
+    
+    dPQ = P - Q;
+    err = dPQ.norm();
+    //err2 = fabs(uNew - u);
+    u = uNew;
+  }
+  
+  if (err <= tol * CTX::instance()->lc) return true;
+  return false;
+  
+}
+  
+                    
+
 bool GEdge::XYZToU(const double X, const double Y, const double Z,
                    double &u, const double relax) const
 {
   const int MaxIter = 25;
   const int NumInitGuess = 11;
 
-  double err;//, err2;
-  int iter;
+  double err;
+  double tol = 1e-6;
 
   Range<double> uu = parBounds(0);
   double uMin = uu.low();
   double uMax = uu.high();
 
   const SVector3 Q(X, Y, Z);
-
-  double init[NumInitGuess];
-
-  for (int i = 0; i < NumInitGuess; i++)
-    init[i] = uMin + (uMax - uMin) / (NumInitGuess - 1) * i;
-
+  
   for(int i = 0; i < NumInitGuess; i++){
-    u = init[i];
-    double uNew = u;
-    //err2 = 1.0;
-    iter = 1;
-
-    SVector3 P = position(u);
-    SVector3 dPQ = P - Q;
-    err = dPQ.norm();
-
-    if (err < 1.e-8 * CTX::instance()->lc) return true;
-
-    while(iter++ < MaxIter && err > 1e-8 * CTX::instance()->lc) {
-      SVector3 der = firstDer(u);
-      uNew = u - relax * dot(dPQ,der) / dot(der,der);
-      uNew = std::min(uMax,std::max(uMin,uNew));
-      P = position(uNew);
-
-      dPQ = P - Q;
-      err = dPQ.norm();
-      //err2 = fabs(uNew - u);
-      u = uNew;
-    }
-
-    if (err < 1e-8 * CTX::instance()->lc) return true;
+    double uTry = uMin + (uMax - uMin) / (NumInitGuess - 1) * i;
+    if (refineProjection(Q,uTry,MaxIter,relax,tol,err)) {u = uTry;return true;}
   }
+  
+  double uTry;
+  GPoint closest = closestPoint(SPoint3(Q.x(),Q.y(),Q.z()),uTry);
 
-  if(relax > 1.e-2) {
-    //    Msg::Info("point %g %g %g on edge %d : Relaxation factor = %g",
-    //              X, Y, Z, 0.75 * relax);
+  Msg::Info("Projecting point %g,%g,%g on edge %d : trying closest point"
+            " (%g,%g,%g) at parameter %g",
+            X,Y,Z,tag(),closest.x(),closest.y(),closest.z(),uTry);
+
+  // std::cout << "Closest point is " << uTry << std::endl;
+
+  if (refineProjection(Q,uTry,MaxIter,relax,tol,err)) {u = uTry; return true;}
+
+  // std::cout << "After projection we have " << uTry << std::endl;
+  
+  if(relax > 1.e-1) {
+    Msg::Info("Projecting point (%g,%g,%g) on edge %d : "
+              "Changed relaxation factor to %g, current error = %g (tol = %g)",
+              X, Y, Z, tag(), 0.75 * relax,err,1e-8*CTX::instance()->lc);
     return XYZToU(X, Y, Z, u, 0.75 * relax);
   }
 
-  Msg::Error("Could not converge reparametrisation of point (%e,%e,%e) on edge %d",
+  Msg::Error("Could not converge reparametrisation of point (%g,%g,%g) on edge %d",
              X, Y, Z, tag());
+  
   return false;
 }
 
