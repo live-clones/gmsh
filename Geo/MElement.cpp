@@ -1329,17 +1329,34 @@ void MElement::writeVTK(FILE *fp, bool binary, bool bigEndian)
   }
 }
 
-void MElement::writeMATLAB(FILE *fp, bool binary)
+void MElement::writeMATLAB(FILE *fp, int filetype, int elementary, int physical, bool binary)
 {
-  if(!getTypeForMATLAB()) return;
+  //Matlab use the same names as MSH
+  if(!getTypeForMSH()) return;
   if(binary){
     Msg::Warning("Binary format not available for Matlab, saving into ASCII format");
     binary = false;
   }
-  int n = getNumVertices();
-  for(int i = 0; i < n; i++)
-    fprintf(fp, " %d", getVertexMATLAB(i)->getIndex());
-  fprintf(fp, ";\n");
+
+  //Simple version
+  if(filetype == 0)
+    {
+      int n = getNumVertices();
+      for(int i = 0; i < n; i++)
+	fprintf(fp, " %d", getVertexMATLAB(i)->getIndex());
+      fprintf(fp, ";\n");
+    }
+  //same as load_gmsh2.m
+  if(filetype==1)
+    {
+      if(physical < 0) reverse();
+
+      for(int i = 0; i < getNumVertices(); i++)
+	fprintf(fp, " %d", getVertex(i)->getIndex());
+      fprintf(fp, " %d\n", physical ? abs(physical) : elementary);
+      
+      if(physical < 0) reverse();
+    }
 }
 
 void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)
