@@ -1835,7 +1835,7 @@ Shape :
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(wires.size() != 1){
-          yymsg(0, "OpenCASCADE face filling requires a single line loop");
+          yymsg(0, "OpenCASCADE surface filling requires a single line loop");
         }
         else{
           std::vector<int> constraints; ListOfDouble2Vector($7, constraints);
@@ -4252,7 +4252,7 @@ Constraints :
                 if(gv)
                   gf->meshAttributes.corners.push_back(gv);
                 else
-                  yymsg(0, "Unknown model vertex with tag %d", corners[j]);
+                  yymsg(0, "Unknown model point with tag %d", corners[j]);
               }
             }
             else{
@@ -4294,7 +4294,7 @@ Constraints :
                 if(gv)
                   gr->meshAttributes.corners.push_back(gv);
                 else
-                  yymsg(0, "Unknown model vertex with tag %d", corners[i]);
+                  yymsg(0, "Unknown model point with tag %d", corners[i]);
               }
             }
           }
@@ -4455,7 +4455,7 @@ Constraints :
     '{' RecursiveListOfDouble '}' PeriodicTransform tEND
     {
       if (List_Nbr($4) != List_Nbr($8)){
-        yymsg(0, "Number of master faces (%d) different from number of "
+        yymsg(0, "Number of master surfaces (%d) different from number of "
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
       else{
@@ -4482,7 +4482,7 @@ Constraints :
     '{' RecursiveListOfDouble '}' tRotate '{' VExpr ',' VExpr ',' FExpr '}' tEND
     {
       if (List_Nbr($4) != List_Nbr($8)){
-        yymsg(0, "Number of master edges (%d) different from number of "
+        yymsg(0, "Number of master curves (%d) different from number of "
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
       else{
@@ -4508,7 +4508,7 @@ Constraints :
     '{' RecursiveListOfDouble '}' tRotate '{' VExpr ',' VExpr ',' FExpr '}' tEND
     {
       if (List_Nbr($4) != List_Nbr($8)){
-        yymsg(0, "Number of master faces (%d) different from number of "
+        yymsg(0, "Number of master surfaces (%d) different from number of "
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
       else{
@@ -4534,7 +4534,7 @@ Constraints :
     '{' RecursiveListOfDouble '}' tTranslate VExpr tEND
     {
       if (List_Nbr($4) != List_Nbr($8)){
-        yymsg(0, "Number of master edges (%d) different from number of "
+        yymsg(0, "Number of master curves (%d) different from number of "
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
       else{
@@ -4560,7 +4560,7 @@ Constraints :
     '{' RecursiveListOfDouble '}' tTranslate VExpr tEND
     {
       if (List_Nbr($4) != List_Nbr($8)){
-        yymsg(0, "Number of master faces (%d) different from number of "
+        yymsg(0, "Number of master surfaces (%d) different from number of "
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
       else{
@@ -4586,8 +4586,8 @@ Constraints :
     tAFFECT FExpr '{' RecursiveListOfDouble '}' tEND
     {
       if (List_Nbr($5) != List_Nbr($10)){
-        yymsg(0, "Number of master surface edges (%d) different from number of "
-              "slave (%d) edges", List_Nbr($10), List_Nbr($5));
+        yymsg(0, "Number of master surface curves (%d) different from number of "
+              "slave (%d) curves", List_Nbr($10), List_Nbr($5));
       }
       else{
         int j_master = (int)$8;
@@ -5428,7 +5428,7 @@ FExpr_Multi :
           z = gv->z();
         }
         else{
-          yymsg(0, "Unknown model vertex with tag %d", tag);
+          yymsg(0, "Unknown model point with tag %d", tag);
         }
       }
       List_Add($$, &x);
@@ -6548,7 +6548,7 @@ void addPeriodicFace(int iTarget, int iSource,
   GFace *target = GModel::current()->getFaceByTag(std::abs(iTarget));
   GFace *source = GModel::current()->getFaceByTag(std::abs(iSource));
   if (!target || !source) {
-    Msg::Error("Could not find edge slave %d or master %d for periodic copy",
+    Msg::Error("Could not find curve slave %d or master %d for periodic copy",
                iTarget, iSource);
   }
   else target->setMeshMaster(source, affineTransform);
@@ -6649,7 +6649,7 @@ void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
   if(dim2 == 2){
     GFace *gf = GModel::current()->getFaceByTag(tag2);
     if(!gf){
-      yymsg(0, "Unknown model face with tag %d", tag2);
+      yymsg(0, "Unknown model surface with tag %d", tag2);
       return;
     }
     for(unsigned int i = 0; i < tags.size(); i++){
@@ -6658,21 +6658,21 @@ void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
         if(gv)
           gf->addEmbeddedVertex(gv);
         else
-          yymsg(0, "Unknown model vertex %d", tags[i]);
+          yymsg(0, "Unknown model point %d", tags[i]);
       }
       else if(dim == 1){
         GEdge *ge = GModel::current()->getEdgeByTag(tags[i]);
         if(ge)
           gf->addEmbeddedEdge(ge);
         else
-          yymsg(0, "Unknown model edge %d", tags[i]);
+          yymsg(0, "Unknown model curve %d", tags[i]);
       }
     }
   }
   else if(dim2 == 3){
     GRegion *gr = GModel::current()->getRegionByTag(tag2);
     if(!gr){
-      yymsg(0, "Unknown model region with tag %d", tag2);
+      yymsg(0, "Unknown model volume with tag %d", tag2);
       return;
     }
     for(unsigned int i = 0; i < tags.size(); i++){
@@ -6681,21 +6681,21 @@ void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
         if(gv)
           gr->addEmbeddedVertex(gv);
         else
-          yymsg(0, "Unknown model vertex with tag %d", tags[i]);
+          yymsg(0, "Unknown model point with tag %d", tags[i]);
       }
       else if(dim == 1){
         GEdge *ge = GModel::current()->getEdgeByTag(tags[i]);
         if(ge)
           gr->addEmbeddedEdge(ge);
         else
-          yymsg(0, "Unknown model edge with tag %d", tags[i]);
+          yymsg(0, "Unknown model curve with tag %d", tags[i]);
       }
       else if(dim == 2){
         GFace *gf = GModel::current()->getFaceByTag(tags[i]);
         if(gf)
           gr->addEmbeddedFace(gf);
         else
-          yymsg(0, "Unknown model face with tag %d", tags[i]);
+          yymsg(0, "Unknown model surface with tag %d", tags[i]);
       }
     }
   }

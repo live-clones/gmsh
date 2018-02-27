@@ -96,7 +96,7 @@ int GEO_Internals::getMaxTag(int dim) const
 bool GEO_Internals::addVertex(int &tag, double x, double y, double z, double lc)
 {
   if(tag >= 0 && FindPoint(tag)){
-    Msg::Error("GEO vertex with tag %d already exists", tag);
+    Msg::Error("GEO point with tag %d already exists", tag);
     return false;
   }
   if(tag < 0) tag = getMaxTag(0) + 1;
@@ -111,7 +111,7 @@ bool GEO_Internals::addVertex(int &tag, double x, double y, gmshSurface *surface
                               double lc)
 {
   if(tag >= 0 && FindPoint(tag)){
-    Msg::Error("GEO vertex with tag %d already exists", tag);
+    Msg::Error("GEO point with tag %d already exists", tag);
     return false;
   }
   if(tag < 0) tag = getMaxTag(0) + 1;
@@ -132,7 +132,7 @@ bool GEO_Internals::addLine(int &tag, int startTag, int endTag)
 bool GEO_Internals::addLine(int &tag, const std::vector<int> &pointTags)
 {
   if(tag >= 0 && FindCurve(tag)){
-    Msg::Error("GEO edge with tag %d already exists", tag);
+    Msg::Error("GEO curve with tag %d already exists", tag);
     return false;
   }
   if(tag < 0) tag = getMaxTag(1) + 1;
@@ -153,7 +153,7 @@ bool GEO_Internals::addCircleArc(int &tag, int startTag, int centerTag, int endT
                                  double nx, double ny, double nz)
 {
   if(tag >= 0 && FindCurve(tag)){
-    Msg::Error("GEO edge with tag %d already exists", tag);
+    Msg::Error("GEO curve with tag %d already exists", tag);
     return false;
   }
   if(tag < 0) tag = getMaxTag(1) + 1;
@@ -185,7 +185,7 @@ bool GEO_Internals::addEllipseArc(int &tag, int startTag, int centerTag, int maj
                                   int endTag, double nx, double ny, double nz)
 {
   if(tag >= 0 && FindCurve(tag)){
-    Msg::Error("GEO edge with tag %d already exists", tag);
+    Msg::Error("GEO curve with tag %d already exists", tag);
     return false;
   }
   if(tag < 0) tag = getMaxTag(1) + 1;
@@ -217,7 +217,7 @@ bool GEO_Internals::addEllipseArc(int &tag, int startTag, int centerTag, int maj
 bool GEO_Internals::addSpline(int &tag, const std::vector<int> &pointTags)
 {
   if(tag >= 0 && FindCurve(tag)){
-    Msg::Error("GEO edge with tag %d already exists", tag);
+    Msg::Error("GEO curve with tag %d already exists", tag);
     return false;
   }
   if(tag < 0) tag = getMaxTag(1) + 1;
@@ -237,7 +237,7 @@ bool GEO_Internals::addSpline(int &tag, const std::vector<int> &pointTags)
 bool GEO_Internals::addBezier(int &tag, const std::vector<int> &pointTags)
 {
   if(tag >= 0 && FindCurve(tag)){
-    Msg::Error("GEO edge with tag %d already exists", tag);
+    Msg::Error("GEO curve with tag %d already exists", tag);
     return false;
   }
   if(tag < 0) tag = getMaxTag(1) + 1;
@@ -262,7 +262,7 @@ bool GEO_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
                                const std::vector<double> &seqknots)
 {
   if(tag >= 0 && FindCurve(tag)){
-    Msg::Error("GEO edge with tag %d already exists", tag);
+    Msg::Error("GEO curve with tag %d already exists", tag);
     return false;
   }
   if(tag < 0) tag = getMaxTag(1) + 1;
@@ -314,7 +314,7 @@ bool GEO_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags)
 bool GEO_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
 {
   if(tag >= 0 && FindSurface(tag)){
-    Msg::Error("GEO face with tag %d already exists", tag);
+    Msg::Error("GEO surface with tag %d already exists", tag);
     return false;
   }
   if(tag < 0) tag = getMaxTag(2) + 1;
@@ -339,7 +339,7 @@ bool GEO_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
 bool GEO_Internals::addDiscreteSurface(int &tag)
 {
   if(tag >= 0 && FindSurface(tag)){
-    Msg::Error("GEO face with tag %d already exists", tag);
+    Msg::Error("GEO surface with tag %d already exists", tag);
     return false;
   }
   if(tag < 0) tag = getMaxTag(2) + 1;
@@ -353,12 +353,12 @@ bool GEO_Internals::addSurfaceFilling(int &tag, const std::vector<int> &wireTags
                                       int sphereCenterTag)
 {
   if(tag >= 0 && FindSurface(tag)){
-    Msg::Error("GEO face with tag %d already exists", tag);
+    Msg::Error("GEO surface with tag %d already exists", tag);
     return false;
   }
   if(tag < 0) tag = getMaxTag(2) + 1;
   if(wireTags.empty()){
-    Msg::Error("Face requires at least one line loop");
+    Msg::Error("Surface requires at least one line loop");
     return false;
   }
   int ll = (int)std::abs(wireTags[0]);
@@ -373,7 +373,7 @@ bool GEO_Internals::addSurfaceFilling(int &tag, const std::vector<int> &wireTags
   else if(j == 3)
     type = MSH_SURF_TRIC;
   else{
-    Msg::Error("Wrong definition of face %d: %d borders instead of 3 or 4",
+    Msg::Error("Wrong definition of surface %d: %d borders instead of 3 or 4",
                tag, j);
     return false;
   }
@@ -420,7 +420,7 @@ bool GEO_Internals::addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags
 bool GEO_Internals::addVolume(int &tag, const std::vector<int> &shellTags)
 {
   if(tag >= 0 && FindVolume(tag)){
-    Msg::Error("GEO region with tag %d already exists", tag);
+    Msg::Error("GEO volume with tag %d already exists", tag);
     return false;
   }
   if(tag < 0) tag = getMaxTag(3) + 1;
@@ -629,7 +629,7 @@ bool GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
     if(dim == 0){
       Vertex *v = FindPoint(tag);
       if(!v){
-        Msg::Error("Unknown GEO vertex with tag %d", tag);
+        Msg::Error("Unknown GEO point with tag %d", tag);
         ret = false;
       }
       else{
@@ -662,7 +662,7 @@ bool GEO_Internals::copy(const std::vector<std::pair<int, int> > &inDimTags,
     else if(dim == 3){
       Volume *v = FindVolume(tag);
       if(!v){
-        Msg::Error("Unknown GEO region with tag %d", tag);
+        Msg::Error("Unknown GEO volume with tag %d", tag);
         ret = false;
       }
       else{
@@ -774,7 +774,7 @@ bool GEO_Internals::mergeVertices(const std::vector<int> &tags)
   if(tags.size() < 2) return true;
   Vertex *target = FindPoint(tags[0]);
   if(!target){
-    Msg::Error("Could not find GEO vertex with tag %d", tags[0]);
+    Msg::Error("Could not find GEO point with tag %d", tags[0]);
     return false;
   }
 
@@ -782,7 +782,7 @@ bool GEO_Internals::mergeVertices(const std::vector<int> &tags)
   for(unsigned int i = 1; i < tags.size(); i++){
     Vertex *source = FindPoint(tags[i]);
     if(!source){
-      Msg::Error("Could not find GEO vertex with tag %d", tags[i]);
+      Msg::Error("Could not find GEO point with tag %d", tags[i]);
       return false;
     }
     source->Typ = target->Typ;
@@ -806,7 +806,7 @@ void GEO_Internals::setCompoundMesh(int dim, const std::vector<int> &tags)
 void GEO_Internals::setMeshSize(int dim, int tag, double size)
 {
   if(dim != 0){
-    Msg::Error("Setting mesh size only available on GEO vertices");
+    Msg::Error("Setting mesh size only available on GEO points");
     return;
   }
   Vertex *v = FindPoint(tag);
@@ -874,11 +874,11 @@ void GEO_Internals::setTransfiniteSurface(int tag, int arrangement,
           if(v)
             List_Add(s->TrsfPoints, &v);
           else
-            Msg::Error("Unknown GEO vertex with tag %d", cornerTags[j]);
+            Msg::Error("Unknown GEO point with tag %d", cornerTags[j]);
         }
       }
       else{
-        Msg::Error("Transfinite surface requires 3 or 4 corner vertices");
+        Msg::Error("Transfinite surface requires 3 or 4 corner points");
       }
     }
   }
@@ -908,7 +908,7 @@ void GEO_Internals::setTransfiniteVolume(int tag, const std::vector<int> &corner
           if(vert)
             List_Add(v->TrsfPoints, &vert);
           else
-            Msg::Error("Unknown GEO vertex with tag %d", cornerTags[i]);
+            Msg::Error("Unknown GEO point with tag %d", cornerTags[i]);
         }
       }
     }
@@ -1239,12 +1239,12 @@ gmshSurface *GEO_Internals::newGeometrySphere(int tag, int centerTag, int pointT
 {
   Vertex *v1 = FindPoint(centerTag);
   if(!v1){
-    Msg::Error("Unknown sphere center vertex %d", centerTag);
+    Msg::Error("Unknown sphere center point %d", centerTag);
     return 0;
   }
   Vertex *v2 = FindPoint(pointTag);
   if(!v2){
-    Msg::Error("Unknown sphere vertex %d", pointTag);
+    Msg::Error("Unknown sphere point %d", pointTag);
     return 0;
   }
   return gmshSphere::NewSphere
@@ -1258,12 +1258,12 @@ gmshSurface *GEO_Internals::newGeometryPolarSphere(int tag, int centerTag, int p
 {
   Vertex *v1 = FindPoint(centerTag);
   if(!v1){
-    Msg::Error("Unknown polar sphere center vertex %d", centerTag);
+    Msg::Error("Unknown polar sphere center point %d", centerTag);
     return 0;
   }
   Vertex *v2 = FindPoint(pointTag);
   if(!v2){
-    Msg::Error("Unknown polar sphere vertex %d", pointTag);
+    Msg::Error("Unknown polar sphere point %d", pointTag);
     return 0;
   }
   return gmshPolarSphere::NewPolarSphere
