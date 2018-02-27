@@ -129,7 +129,7 @@ bool GEO_Internals::addLine(int &tag, int startTag, int endTag)
   return addLine(tag, points);
 }
 
-bool GEO_Internals::addLine(int &tag, const std::vector<int> &vertexTags)
+bool GEO_Internals::addLine(int &tag, const std::vector<int> &pointTags)
 {
   if(tag >= 0 && FindCurve(tag)){
     Msg::Error("GEO edge with tag %d already exists", tag);
@@ -137,8 +137,8 @@ bool GEO_Internals::addLine(int &tag, const std::vector<int> &vertexTags)
   }
   if(tag < 0) tag = getMaxTag(1) + 1;
   List_T *tmp = List_Create(2, 2, sizeof(int));
-  for(unsigned int i = 0; i < vertexTags.size(); i++){
-    int t = vertexTags[i];
+  for(unsigned int i = 0; i < pointTags.size(); i++){
+    int t = pointTags[i];
     List_Add(tmp, &t);
   }
   Curve *c = CreateCurve(tag, MSH_SEGM_LINE, 1, tmp, NULL, -1, -1, 0., 1.);
@@ -214,7 +214,7 @@ bool GEO_Internals::addEllipseArc(int &tag, int startTag, int centerTag, int maj
   return true;
 }
 
-bool GEO_Internals::addSpline(int &tag, const std::vector<int> &vertexTags)
+bool GEO_Internals::addSpline(int &tag, const std::vector<int> &pointTags)
 {
   if(tag >= 0 && FindCurve(tag)){
     Msg::Error("GEO edge with tag %d already exists", tag);
@@ -222,8 +222,8 @@ bool GEO_Internals::addSpline(int &tag, const std::vector<int> &vertexTags)
   }
   if(tag < 0) tag = getMaxTag(1) + 1;
   List_T *tmp = List_Create(2, 2, sizeof(int));
-  for(unsigned int i = 0; i < vertexTags.size(); i++){
-    int t = vertexTags[i];
+  for(unsigned int i = 0; i < pointTags.size(); i++){
+    int t = pointTags[i];
     List_Add(tmp, &t);
   }
   Curve *c = CreateCurve(tag, MSH_SEGM_SPLN, 3, tmp, NULL, -1, -1, 0., 1.);
@@ -234,20 +234,20 @@ bool GEO_Internals::addSpline(int &tag, const std::vector<int> &vertexTags)
   return true;
 }
 
-bool GEO_Internals::addBezier(int &tag, const std::vector<int> &vertexTags)
+bool GEO_Internals::addBezier(int &tag, const std::vector<int> &pointTags)
 {
   if(tag >= 0 && FindCurve(tag)){
     Msg::Error("GEO edge with tag %d already exists", tag);
     return false;
   }
   if(tag < 0) tag = getMaxTag(1) + 1;
-  if(vertexTags.size() < 4){
+  if(pointTags.size() < 4){
     Msg::Error("Bezier curve requires at least 4 control points");
     return false;
   }
   List_T *tmp = List_Create(2, 2, sizeof(int));
-  for(unsigned int i = 0; i < vertexTags.size(); i++){
-    int t = vertexTags[i];
+  for(unsigned int i = 0; i < pointTags.size(); i++){
+    int t = pointTags[i];
     List_Add(tmp, &t);
   }
   Curve *c = CreateCurve(tag, MSH_SEGM_BEZIER, 2, tmp, NULL, -1, -1, 0., 1.);
@@ -258,7 +258,7 @@ bool GEO_Internals::addBezier(int &tag, const std::vector<int> &vertexTags)
   return true;
 }
 
-bool GEO_Internals::addBSpline(int &tag, const std::vector<int> &vertexTags,
+bool GEO_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
                                const std::vector<double> &seqknots)
 {
   if(tag >= 0 && FindCurve(tag)){
@@ -267,8 +267,8 @@ bool GEO_Internals::addBSpline(int &tag, const std::vector<int> &vertexTags,
   }
   if(tag < 0) tag = getMaxTag(1) + 1;
   List_T *tmp = List_Create(2, 2, sizeof(int));
-  for(unsigned int i = 0; i < vertexTags.size(); i++){
-    int t = vertexTags[i];
+  for(unsigned int i = 0; i < pointTags.size(); i++){
+    int t = pointTags[i];
     List_Add(tmp, &t);
   }
   Curve *c;
@@ -276,7 +276,7 @@ bool GEO_Internals::addBSpline(int &tag, const std::vector<int> &vertexTags,
     c = CreateCurve(tag, MSH_SEGM_BSPLN, 2, tmp, NULL, -1, -1, 0., 1.);
   }
   else{
-    int order = seqknots.size() - vertexTags.size() - 1;
+    int order = seqknots.size() - pointTags.size() - 1;
     List_T *knotsList = List_Create(2, 2, sizeof(double));
     for(unsigned int i = 0; i < seqknots.size(); i++){
       double d = seqknots[i];
@@ -291,7 +291,7 @@ bool GEO_Internals::addBSpline(int &tag, const std::vector<int> &vertexTags,
   return true;
 }
 
-bool GEO_Internals::addLineLoop(int &tag, const std::vector<int> &edgeTags)
+bool GEO_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags)
 {
   if(tag >= 0 && FindEdgeLoop(tag)){
     Msg::Error("GEO line loop with tag %d already exists", tag);
@@ -299,8 +299,8 @@ bool GEO_Internals::addLineLoop(int &tag, const std::vector<int> &edgeTags)
   }
   if(tag < 0) tag = getMaxTag(-1) + 1;
   List_T *tmp = List_Create(2, 2, sizeof(int));
-  for(unsigned int i = 0; i < edgeTags.size(); i++){
-    int t = edgeTags[i];
+  for(unsigned int i = 0; i < curveTags.size(); i++){
+    int t = curveTags[i];
     List_Add(tmp, &t);
   }
   SortEdgesInLoop(tag, tmp);
@@ -397,7 +397,7 @@ bool GEO_Internals::addSurfaceFilling(int &tag, const std::vector<int> &wireTags
   return true;
 }
 
-bool GEO_Internals::addSurfaceLoop(int &tag, const std::vector<int> &faceTags)
+bool GEO_Internals::addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags)
 {
   if(tag >= 0 && FindSurfaceLoop(tag)){
     Msg::Error("GEO surface loop with tag %d already exists", tag);
@@ -406,8 +406,8 @@ bool GEO_Internals::addSurfaceLoop(int &tag, const std::vector<int> &faceTags)
   if(tag < 0) tag = getMaxTag(-2) + 1;
 
   List_T *tmp = List_Create(2, 2, sizeof(int));
-  for(unsigned int i = 0; i < faceTags.size(); i++){
-    int t = faceTags[i];
+  for(unsigned int i = 0; i < surfaceTags.size(); i++){
+    int t = surfaceTags[i];
     List_Add(tmp, &t);
   }
   SurfaceLoop *l = CreateSurfaceLoop(tag, tmp);
@@ -572,12 +572,12 @@ bool GEO_Internals::symmetry(const std::vector<std::pair<int, int> > &dimTags,
   return _transform(3, dimTags, 0, 0, 0, 0, 0, 0, a, b, c, d);
 }
 
-bool GEO_Internals::splitCurve(int tag, const std::vector<int> &vertexTags,
-                               std::vector<int> &edgeTags)
+bool GEO_Internals::splitCurve(int tag, const std::vector<int> &pointTags,
+                               std::vector<int> &curveTags)
 {
   List_T *tmp = List_Create(10, 10, sizeof(int));
-  for(unsigned int i = 0; i < vertexTags.size(); i++){
-    int t = vertexTags[i];
+  for(unsigned int i = 0; i < pointTags.size(); i++){
+    int t = pointTags[i];
     List_Add(tmp, &t);
   }
   List_T *curves = List_Create(10, 10, sizeof(Curve *));
@@ -585,7 +585,7 @@ bool GEO_Internals::splitCurve(int tag, const std::vector<int> &vertexTags,
   for(int i = 0; i < List_Nbr(curves); i++){
     Curve *c;
     List_Read(curves, i, &c);
-    edgeTags.push_back(c->Num);
+    curveTags.push_back(c->Num);
   }
   List_Delete(tmp);
   List_Delete(curves);
@@ -593,22 +593,22 @@ bool GEO_Internals::splitCurve(int tag, const std::vector<int> &vertexTags,
   return true;
 }
 
-bool GEO_Internals::intersectCurvesWithSurface(const std::vector<int> &edgeTags,
-                                               int faceTag,
-                                               std::vector<int> &vertexTags)
+bool GEO_Internals::intersectCurvesWithSurface(const std::vector<int> &curveTags,
+                                               int surfaceTag,
+                                               std::vector<int> &pointTags)
 {
   List_T *curves = List_Create(10, 10, sizeof(double));
   List_T *shapes = List_Create(10, 10, sizeof(Shape));
-  for(unsigned int i = 0; i < edgeTags.size(); i++){
-    double d = edgeTags[i];
+  for(unsigned int i = 0; i < curveTags.size(); i++){
+    double d = curveTags[i];
     List_Add(curves, &d);
   }
-  IntersectCurvesWithSurface(curves, faceTag, shapes);
+  IntersectCurvesWithSurface(curves, surfaceTag, shapes);
   for(int i = 0; i < List_Nbr(shapes); i++){
     Shape s;
     List_Read(shapes, i, &s);
     if(s.Type == MSH_POINT){
-      vertexTags.push_back(s.Num);
+      pointTags.push_back(s.Num);
     }
     else{
       Msg::Error("Degenerated curve-surface intersection not implemented");

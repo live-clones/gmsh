@@ -736,10 +736,10 @@ bool OCC_Internals::addLine(int &tag, int startTag, int endTag)
   return true;
 }
 
-bool OCC_Internals::addLine(int &tag, const std::vector<int> &vertexTags)
+bool OCC_Internals::addLine(int &tag, const std::vector<int> &pointTags)
 {
-  if(vertexTags.size() == 2)
-    return addLine(tag, vertexTags[0], vertexTags[1]);
+  if(pointTags.size() == 2)
+    return addLine(tag, pointTags[0], pointTags[1]);
 
   // FIXME: if tag < 0 we could create multiple lines
   Msg::Error("OpenCASCADE polyline currently not supported");
@@ -946,7 +946,7 @@ void debugBSpline(const Handle(Geom_BSplineCurve) &curve)
     printf("  %d (%g) mult %d\n", i, knots(i), mults(i));
 }
 
-bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags,
+bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
                                 int mode, const int degree,
                                 const std::vector<double> &weights,
                                 const std::vector<double> &knots,
@@ -956,26 +956,26 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags,
     Msg::Error("OpenCASCADE edge with tag %d already exists", tag);
     return false;
   }
-  if(vertexTags.size() < 2){
+  if(pointTags.size() < 2){
     Msg::Error("Number of control points should be at least 2");
     return false;
   }
 
   TopoDS_Edge result;
   try{
-    TColgp_Array1OfPnt ctrlPoints(1, vertexTags.size());
+    TColgp_Array1OfPnt ctrlPoints(1, pointTags.size());
     TopoDS_Vertex start, end;
-    for(unsigned int i = 0; i < vertexTags.size(); i++){
-      if(!_tagVertex.IsBound(vertexTags[i])){
-        Msg::Error("Unknown OpenCASCADE vertex with tag %d", vertexTags[i]);
+    for(unsigned int i = 0; i < pointTags.size(); i++){
+      if(!_tagVertex.IsBound(pointTags[i])){
+        Msg::Error("Unknown OpenCASCADE vertex with tag %d", pointTags[i]);
         return false;
       }
-      TopoDS_Vertex vertex = TopoDS::Vertex(_tagVertex.Find(vertexTags[i]));
+      TopoDS_Vertex vertex = TopoDS::Vertex(_tagVertex.Find(pointTags[i]));
       ctrlPoints.SetValue(i + 1, BRep_Tool::Pnt(vertex));
       if(i == 0) start = vertex;
-      if(i == vertexTags.size() - 1) end = vertex;
+      if(i == pointTags.size() - 1) end = vertex;
     }
-    bool periodic = (vertexTags.front() == vertexTags.back());
+    bool periodic = (pointTags.front() == pointTags.back());
     if(mode == 0){
       // BSpline through points (called "Spline" in Gmsh; will be C2, whereas it
       // is only C1 in the GEO kernel; also works for the periodic case,
@@ -1014,9 +1014,9 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags,
         Msg::Error("BSpline degree (%d) should be > 0", degree);
         return false;
       }
-      if(weights.size() != vertexTags.size()){
+      if(weights.size() != pointTags.size()){
         Msg::Error("Number of BSpline weights (%d) and control points (%d) "
-                   "should equal", weights.size(), vertexTags.size());
+                   "should equal", weights.size(), pointTags.size());
         return false;
       }
       if(knots.size() != multiplicities.size()){
@@ -1060,7 +1060,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags,
         int sum = 0;
         for(unsigned int i = 0; i < multiplicities.size() - 1; i++)
           sum += multiplicities[i];
-        if(vertexTags.size() - 1 != sum){
+        if(pointTags.size() - 1 != sum){
           Msg::Error("Number of control points - 1 for periodic BSpline should "
                      "be equal to the sum of multiplicities for all knots except "
                      "the first (or last)");
@@ -1071,7 +1071,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags,
         int sum = 0;
         for(unsigned int i = 0; i < multiplicities.size(); i++)
           sum += multiplicities[i];
-        if(vertexTags.size() != sum - degree - 1){
+        if(pointTags.size() != sum - degree - 1){
           Msg::Error("Number of control points for non-periodic BSpline should "
                      "be equal to the sum of multiplicities - degree - 1");
           return false;
@@ -1122,17 +1122,17 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &vertexTags,
   return true;
 }
 
-bool OCC_Internals::addSpline(int &tag, const std::vector<int> &vertexTags)
+bool OCC_Internals::addSpline(int &tag, const std::vector<int> &pointTags)
 {
-  return _addBSpline(tag, vertexTags, 0);
+  return _addBSpline(tag, pointTags, 0);
 }
 
-bool OCC_Internals::addBezier(int &tag, const std::vector<int> &vertexTags)
+bool OCC_Internals::addBezier(int &tag, const std::vector<int> &pointTags)
 {
-  return _addBSpline(tag, vertexTags, 1);
+  return _addBSpline(tag, pointTags, 1);
 }
 
-bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &vertexTags,
+bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &pointTags,
                                const int degree,
                                const std::vector<double> &weights,
                                const std::vector<double> &knots,
@@ -1144,12 +1144,12 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &vertexTags,
   // degree 3 if not specified:
   if(d <= 0) d = 3;
   // automatic default weights if not provided:
-  if(w.empty()) w.resize(vertexTags.size(), 1);
+  if(w.empty()) w.resize(pointTags.size(), 1);
   // automatic default knots and multiplicities if not provided:
   if(k.empty()){
-    bool periodic = (vertexTags.front() == vertexTags.back());
+    bool periodic = (pointTags.front() == pointTags.back());
     if(!periodic){
-      int sum_of_all_mult = vertexTags.size() + d + 1;
+      int sum_of_all_mult = pointTags.size() + d + 1;
       int num_knots = sum_of_all_mult - 2 * d;
       if(num_knots < 2){
         Msg::Error("Not enough control points for building BSpline of degree %d", d);
@@ -1163,7 +1163,7 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &vertexTags,
       m.back() = d + 1;
     }
     else{
-      k.resize(vertexTags.size() - 1);
+      k.resize(pointTags.size() - 1);
       for(unsigned int i = 0; i < k.size(); i++)
         k[i] = i;
       m.resize(k.size(), 1);
@@ -1171,10 +1171,10 @@ bool OCC_Internals::addBSpline(int &tag, const std::vector<int> &vertexTags,
       m.back() = d - 1;
     }
   }
-  return _addBSpline(tag, vertexTags, 2, d, w, k, m);
+  return _addBSpline(tag, pointTags, 2, d, w, k, m);
 }
 
-bool OCC_Internals::addWire(int &tag, const std::vector<int> &edgeTags,
+bool OCC_Internals::addWire(int &tag, const std::vector<int> &curveTags,
                             bool checkClosed)
 {
   if(tag >= 0 && _tagWire.IsBound(tag)){
@@ -1185,12 +1185,12 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &edgeTags,
   TopoDS_Wire result;
   try{
     BRepBuilderAPI_MakeWire w;
-    for (unsigned int i = 0; i < edgeTags.size(); i++) {
-      if(!_tagEdge.IsBound(edgeTags[i])){
-        Msg::Error("Unknown OpenCASCADE edge with tag %d", edgeTags[i]);
+    for (unsigned int i = 0; i < curveTags.size(); i++) {
+      if(!_tagEdge.IsBound(curveTags[i])){
+        Msg::Error("Unknown OpenCASCADE edge with tag %d", curveTags[i]);
         return false;
       }
-      TopoDS_Edge edge = TopoDS::Edge(_tagEdge.Find(edgeTags[i]));
+      TopoDS_Edge edge = TopoDS::Edge(_tagEdge.Find(curveTags[i]));
       w.Add(edge);
     }
     result = w.Wire();
@@ -1208,9 +1208,9 @@ bool OCC_Internals::addWire(int &tag, const std::vector<int> &edgeTags,
   return true;
 }
 
-bool OCC_Internals::addLineLoop(int &tag, const std::vector<int> &edgeTags)
+bool OCC_Internals::addLineLoop(int &tag, const std::vector<int> &curveTags)
 {
-  return addWire(tag, edgeTags, true);
+  return addWire(tag, curveTags, true);
 }
 
 static bool makeRectangle(TopoDS_Face &result, double x, double y, double z,
@@ -1399,9 +1399,9 @@ bool OCC_Internals::addPlaneSurface(int &tag, const std::vector<int> &wireTags)
 }
 
 bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
-                                      const std::vector<int> &vertexTags,
-                                      const std::vector<int> &faceTags,
-                                      const std::vector<int> &faceContinuity)
+                                      const std::vector<int> &pointTags,
+                                      const std::vector<int> &surfaceTags,
+                                      const std::vector<int> &surfaceContinuity)
 {
   if(tag >= 0 && _tagFace.IsBound(tag)){
     Msg::Error("OpenCASCADE face with tag %d already exists", tag);
@@ -1421,13 +1421,13 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
     int i = 0;
     for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()){
       TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
-      if(i < faceTags.size()){ // associated face constraint (does not seem to work...)
-        if(!_tagFace.IsBound(faceTags[i])){
-          Msg::Error("Unknown OpenCASCADE face with tag %d", faceTags[i]);
+      if(i < surfaceTags.size()){ // associated face constraint (does not seem to work...)
+        if(!_tagFace.IsBound(surfaceTags[i])){
+          Msg::Error("Unknown OpenCASCADE face with tag %d", surfaceTags[i]);
           return false;
         }
-        TopoDS_Face face = TopoDS::Face(_tagFace.Find(faceTags[i]));
-        if(i < faceContinuity.size() && faceContinuity[i] == 2)
+        TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTags[i]));
+        if(i < surfaceContinuity.size() && surfaceContinuity[i] == 2)
           f.Add(edge, face, GeomAbs_G2);
         else
           f.Add(edge, face, GeomAbs_G1);
@@ -1438,12 +1438,12 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
       i++;
     }
     // point constraints
-    for(unsigned int i = 0; i < vertexTags.size(); i++){
-      if(!_tagVertex.IsBound(vertexTags[i])){
-        Msg::Error("Unknown OpenCASCADE vertex with tag %d", vertexTags[i]);
+    for(unsigned int i = 0; i < pointTags.size(); i++){
+      if(!_tagVertex.IsBound(pointTags[i])){
+        Msg::Error("Unknown OpenCASCADE vertex with tag %d", pointTags[i]);
         return false;
       }
-      TopoDS_Vertex vertex = TopoDS::Vertex(_tagVertex.Find(vertexTags[i]));
+      TopoDS_Vertex vertex = TopoDS::Vertex(_tagVertex.Find(pointTags[i]));
       f.Add(BRep_Tool::Pnt(vertex));
     }
     f.Build();
@@ -1471,7 +1471,7 @@ bool OCC_Internals::addSurfaceFilling(int &tag, int wireTag,
   return true;
 }
 
-bool OCC_Internals::addSurfaceLoop(int &tag, const std::vector<int> &faceTags)
+bool OCC_Internals::addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags)
 {
   if(tag >= 0 && _tagShell.IsBound(tag)){
     Msg::Error("OpenCASCADE surface loop with tag %d already exists", tag);
@@ -1481,12 +1481,12 @@ bool OCC_Internals::addSurfaceLoop(int &tag, const std::vector<int> &faceTags)
   TopoDS_Shape result;
   try{
     BRepBuilderAPI_Sewing s;
-    for (unsigned int i = 0; i < faceTags.size(); i++) {
-      if(!_tagFace.IsBound(faceTags[i])){
-        Msg::Error("Unknown OpenCASCADE face with tag %d", faceTags[i]);
+    for (unsigned int i = 0; i < surfaceTags.size(); i++) {
+      if(!_tagFace.IsBound(surfaceTags[i])){
+        Msg::Error("Unknown OpenCASCADE face with tag %d", surfaceTags[i]);
         return false;
       }
-      TopoDS_Face face = TopoDS::Face(_tagFace.Find(faceTags[i]));
+      TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTags[i]));
       s.Add(face);
     }
     s.Perform();
@@ -2222,31 +2222,31 @@ bool OCC_Internals::addPipe(const std::vector<std::pair<int, int> > &inDimTags,
                   outDimTags);
 }
 
-bool OCC_Internals::fillet(const std::vector<int> &regionTags,
-                           const std::vector<int> &edgeTags, double radius,
+bool OCC_Internals::fillet(const std::vector<int> &volumeTags,
+                           const std::vector<int> &curveTags, double radius,
                            std::vector<std::pair<int, int> > &outDimTags,
-                           bool removeRegion)
+                           bool removeVolume)
 {
   std::vector<TopoDS_Edge> edges;
-  for(unsigned int i = 0; i < edgeTags.size(); i++){
-    if(!_tagEdge.IsBound(edgeTags[i])){
-      Msg::Error("Unknown OpenCASCADE edge with tag %d", edgeTags[i]);
+  for(unsigned int i = 0; i < curveTags.size(); i++){
+    if(!_tagEdge.IsBound(curveTags[i])){
+      Msg::Error("Unknown OpenCASCADE edge with tag %d", curveTags[i]);
       return false;
     }
-    edges.push_back(TopoDS::Edge(_tagEdge.Find(edgeTags[i])));
+    edges.push_back(TopoDS::Edge(_tagEdge.Find(curveTags[i])));
   }
 
   // build a single compound shape
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
-  for(unsigned int i = 0; i < regionTags.size(); i++){
-    if(!_isBound(3, regionTags[i])){
-      Msg::Error("Unknown OpenCASCADE region with tag %d", regionTags[i]);
+  for(unsigned int i = 0; i < volumeTags.size(); i++){
+    if(!_isBound(3, volumeTags[i])){
+      Msg::Error("Unknown OpenCASCADE region with tag %d", volumeTags[i]);
       return false;
     }
-    TopoDS_Shape shape = _find(3, regionTags[i]);
-    if(removeRegion) unbind(shape, 3, regionTags[i], true);
+    TopoDS_Shape shape = _find(3, volumeTags[i]);
+    if(removeVolume) unbind(shape, 3, volumeTags[i], true);
     if(CTX::instance()->geom.occAutoFix){
       // make sure the volume is finite
       ShapeFix_Solid fix(TopoDS::Solid(shape));
