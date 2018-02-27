@@ -976,8 +976,8 @@ void gmsh::model::mesh::getVertex(const int vertexTag,
   }
   coord.clear();
   coord.push_back(v->x());
-  coord.push_back(v->x());
-  coord.push_back(v->x());
+  coord.push_back(v->y());
+  coord.push_back(v->z());
   parametricCoord.clear();
   double u;
   if(v->getParameter(0, u))
