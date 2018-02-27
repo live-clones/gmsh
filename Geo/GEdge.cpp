@@ -488,6 +488,8 @@ bool GEdge::refineProjection(const SVector3& Q,
                              double tol,
                              double& err) const {
 
+  double maxDist = tol * CTX::instance()->lc;
+
   SVector3 P = position(u);
   SVector3 dPQ = P - Q;
   
@@ -497,11 +499,13 @@ bool GEdge::refineProjection(const SVector3& Q,
   err = dPQ.norm();
   
   int iter = 0;
-  while(iter++ < MaxIter && err > tol * CTX::instance()->lc) {
+  while(iter++ < MaxIter && err > maxDist) {
     SVector3 der = firstDer(u);
     double du = dot(dPQ,der) / dot(der,der);
+    
+    if (du < tol && dPQ.norm() > maxDist) du = 1;
 
-    if (fabs(du) < tol) break;
+    // if (fabs(du) < tol) break;
     
     double uNew = u - relax * du;
     uNew = std::min(uMax,std::max(uMin,uNew));
@@ -513,18 +517,20 @@ bool GEdge::refineProjection(const SVector3& Q,
     u = uNew;
   }
   
-  if (err <= tol * CTX::instance()->lc) return true;
+  if (err <= maxDist) return true;
   return false;
   
 }
-  
-                    
 
 bool GEdge::XYZToU(const double X, const double Y, const double Z,
                    double &u, const double relax) const
 {
-  const int MaxIter = 25;
-  const int NumInitGuess = 11;
+  const int MaxIter = 250;
+  const int NumInitGuess = 21;
+
+  
+  std::map<double,double> errorVsParameter;
+  
 
   double err;
   double tol = 1e-6;
@@ -538,30 +544,35 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
   for(int i = 0; i < NumInitGuess; i++){
     double uTry = uMin + (uMax - uMin) / (NumInitGuess - 1) * i;
     if (refineProjection(Q,uTry,MaxIter,relax,tol,err)) {u = uTry;return true;}
+    errorVsParameter[err] = uTry;
   }
   
   double uTry;
-  GPoint closest = closestPoint(SPoint3(Q.x(),Q.y(),Q.z()),uTry);
+  //GPoint closest = 
+  closestPoint(SPoint3(Q.x(),Q.y(),Q.z()),uTry);
 
-  Msg::Info("Projecting point %g,%g,%g on edge %d : trying closest point"
-            " (%g,%g,%g) at parameter %g",
-            X,Y,Z,tag(),closest.x(),closest.y(),closest.z(),uTry);
-
-  // std::cout << "Closest point is " << uTry << std::endl;
-
+  // Msg::Info("Projecting point %g,%g,%g on edge %d : trying closest point"
+  //           " (%g,%g,%g) at parameter %g",
+  //           X,Y,Z,tag(),closest.x(),closest.y(),closest.z(),uTry);
+  
   if (refineProjection(Q,uTry,MaxIter,relax,tol,err)) {u = uTry; return true;}
 
-  // std::cout << "After projection we have " << uTry << std::endl;
-  
+  errorVsParameter[err] = uTry;
+
   if(relax > 1.e-1) {
-    Msg::Info("Projecting point (%g,%g,%g) on edge %d : "
-              "Changed relaxation factor to %g, current error = %g (tol = %g)",
-              X, Y, Z, tag(), 0.75 * relax,err,1e-8*CTX::instance()->lc);
-    return XYZToU(X, Y, Z, u, 0.75 * relax);
+    // Msg::Info("Projecting point (%g,%g,%g) on edge %d : "
+    //           "Changed relaxation factor to %g, current error = %g (tol = %g)",
+    //           X, Y, Z, tag(), 0.75 * relax,err,tol*CTX::instance()->lc);
+    if (XYZToU(X, Y, Z, uTry, 0.75 * relax)) {u = uTry; return true;}
+    SVector3 P = position(uTry);
+    SVector3 dPQ = P - Q;
+    errorVsParameter[dPQ.norm()] = uTry;
   }
 
-  Msg::Error("Could not converge reparametrisation of point (%g,%g,%g) on edge %d",
-             X, Y, Z, tag());
+  u = errorVsParameter.begin()->second;
+
+  // Msg::Error("Could not converge reparametrisation of point (%g,%g,%g) on edge %d "
+  //            "taking parameter with lowest error ",X, Y, Z, tag());
   
   return false;
 }

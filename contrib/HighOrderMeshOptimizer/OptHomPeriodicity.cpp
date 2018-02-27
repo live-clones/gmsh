@@ -161,13 +161,10 @@ void OptHomPeriodicity::_relocateMasterVertices()
             if (!reparam) {
               Msg::Error("Could not position master periodic point %i on edge %i",
                          v->getNum(),master->tag());
-              // v->setXYZ(p3.x(),p3.y(),p3.z());
             }
-            // else {
-              GPoint gp = master->point(u);
-              v->setXYZ(gp.x(), gp.y(), gp.z());
-              v->setParameter(0, gp.u());
-              // }
+            GPoint gp = master->point(u);
+            v->setXYZ(gp.x(), gp.y(), gp.z());
+            v->setParameter(0, gp.u());
           }
         }
         break;
@@ -177,6 +174,9 @@ void OptHomPeriodicity::_relocateMasterVertices()
 }
 
 #include <iostream>
+
+// remark : points are not replaced by their reparametrisations on the face/edges 
+//          to avoid small errors in periodicity !!
 
 void OptHomPeriodicity::_copyBackMasterVertices()
 {
@@ -200,7 +200,7 @@ void OptHomPeriodicity::_copyBackMasterVertices()
           MFaceVertex *sv = dynamic_cast<MFaceVertex*>(vit->first);
           MFaceVertex *mv = dynamic_cast<MFaceVertex*>(vit->second);
           if (mv && mv->onWhat() == master) {
-            GPoint p = _transform(mv, slave, tfo,true);
+            GPoint p = _transform(mv, slave, tfo,false);
             sv->setXYZ(p.x(), p.y(), p.z());
             sv->setParameter(0, p.u());
             sv->setParameter(1, p.v());
@@ -216,7 +216,7 @@ void OptHomPeriodicity::_copyBackMasterVertices()
           MFaceVertex *mv = dynamic_cast<MFaceVertex*>(vit->second);
           
           if (mv && sv && mv->onWhat() == master) {
-            GPoint p = _transform(mv, slave, tfo,true);
+            GPoint p = _transform(mv, slave, tfo,false);
             sv->setXYZ(p.x(), p.y(), p.z());
             sv->setParameter(0, p.u());
             sv->setParameter(1, p.v()); 
@@ -241,7 +241,7 @@ void OptHomPeriodicity::_copyBackMasterVertices()
           MEdgeVertex *mv = dynamic_cast<MEdgeVertex*>(vit->second);
 
           if (mv && mv->onWhat() == master) {
-            GPoint p = _transform(vit->second, slave, tfo,true);
+            GPoint p = _transform(vit->second, slave, tfo,false);
             sv->setXYZ(p.x(), p.y(), p.z());
             sv->setParameter(0, p.u());
           }
@@ -255,7 +255,7 @@ void OptHomPeriodicity::_copyBackMasterVertices()
           MEdgeVertex *sv = dynamic_cast<MEdgeVertex*>(vit->first);
           MEdgeVertex *mv = dynamic_cast<MEdgeVertex*>(vit->second);
           if (mv && mv->onWhat() == master) {
-            GPoint p = _transform(vit->second, slave, tfo,true);
+            GPoint p = _transform(vit->second, slave, tfo,false);
             sv->setXYZ(p.x(), p.y(), p.z());
             sv->setParameter(0, p.u());
           }
@@ -294,15 +294,10 @@ GPoint OptHomPeriodicity::_transform(MVertex *vsource,
     bool reparam = gt->XYZToU(res[0],res[1],res[2],u);
 
     if (!reparam) {
-      Msg::Error("Could not compute parameter for periodic point %i on edge %i, "
-                 "only correcting physical coordinates",
+      Msg::Error("Could not compute parameter for periodic point %i on edge %i within tolerance",
                  vsource->getNum(),gt->tag());
-      // MEdgeVertex* ve = dynamic_cast<MEdgeVertex*>(vsource);
-      // ve->getParameter(0,u);
     }
     
-    // double u = gt->parFromPoint(p3);
-    // if (project && reparam) 
     if (project) return dynamic_cast<GEdge*>(target)->point(u);
     else         return GPoint(p3.x(),p3.y(),p3.z(),target,u);
   }
