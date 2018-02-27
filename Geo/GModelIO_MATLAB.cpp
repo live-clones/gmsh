@@ -50,6 +50,8 @@ int GModel::writeMATLAB(const std::string &name, bool binary, bool saveAll, doub
   int SIMPLE = 0; // very simple with only triangles
   int LOAD_GMSH2 = 1; // structure same as utils/converters/matlab/load_gmsh2.m
 
+  //Hardcoded...
+  filetype = LOAD_GMSH2;
   
   if(binary)
     {
