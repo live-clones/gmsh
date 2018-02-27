@@ -7,18 +7,18 @@ the command line arguments in the Gmsh app. If `readConfigFiles' is set, reads
 system Gmsh configuration files (gmshrc and gmsh-options).
 
 @table @code
-@item Input values: argv, readConfigFiles
-@item Output values: -
-@item Return value: -
+@item Input: argv, readConfigFiles
+@item Output: -
+@item Return: -
 @end table
 
 @item finalize
 Finalizes Gmsh. This must be called when you are done using the Gmsh API.
 
 @table @code
-@item Input values: -
-@item Output values: -
-@item Return value: -
+@item Input: -
+@item Output: -
+@item Return: -
 @end table
 
 @item open
@@ -26,9 +26,9 @@ Opens a file. Equivalent to the `File->Open' menu in the Gmsh app. Handling of
 the file depends on its extension and/or its contents.
 
 @table @code
-@item Input values: fileName
-@item Output values: -
-@item Return value: -
+@item Input: fileName
+@item Output: -
+@item Return: -
 @end table
 
 @item merge
@@ -36,27 +36,27 @@ Merges a file. Equivalent to the `File->Merge' menu in the Gmsh app. Handling of
 the file depends on its extension and/or its contents.
 
 @table @code
-@item Input values: fileName
-@item Output values: -
-@item Return value: -
+@item Input: fileName
+@item Output: -
+@item Return: -
 @end table
 
 @item write
 Writes a file. The export format is determined by the file extension.
 
 @table @code
-@item Input values: fileName
-@item Output values: -
-@item Return value: -
+@item Input: fileName
+@item Output: -
+@item Return: -
 @end table
 
 @item clear
 Clears all loaded models and post-processing data, and adds a new empty model.
 
 @table @code
-@item Input values: -
-@item Output values: -
-@item Return value: -
+@item Input: -
+@item Output: -
+@item Return: -
 @end table
 
 @end ftable
@@ -69,36 +69,36 @@ Sets a numerical option to `value'. `name' is of the form "category.option" or
 reference manual.
 
 @table @code
-@item Input values: name, value
-@item Output values: -
-@item Return value: -
+@item Input: name, value
+@item Output: -
+@item Return: -
 @end table
 
 @item getNumber
 Gets the `value' of a numerical option.
 
 @table @code
-@item Input values: name
-@item Output values: value
-@item Return value: -
+@item Input: name
+@item Output: value
+@item Return: -
 @end table
 
 @item setString
 Sets a string option to `value'.
 
 @table @code
-@item Input values: name, value
-@item Output values: -
-@item Return value: -
+@item Input: name, value
+@item Output: -
+@item Return: -
 @end table
 
 @item getString
 Gets the `value' of a string option.
 
 @table @code
-@item Input values: name
-@item Output values: value
-@item Return value: -
+@item Input: name
+@item Output: value
+@item Return: -
 @end table
 
 @end ftable
@@ -109,27 +109,27 @@ Gets the `value' of a string option.
 Adds a new model, with name `name', and sets it as the current model.
 
 @table @code
-@item Input values: name
-@item Output values: -
-@item Return value: -
+@item Input: name
+@item Output: -
+@item Return: -
 @end table
 
 @item remove
 Removes the current model.
 
 @table @code
-@item Input values: -
-@item Output values: -
-@item Return value: -
+@item Input: -
+@item Output: -
+@item Return: -
 @end table
 
 @item list
 Lists the names of all models.
 
 @table @code
-@item Input values: -
-@item Output values: names
-@item Return value: -
+@item Input: -
+@item Output: names
+@item Return: -
 @end table
 
 @item setCurrent
@@ -137,9 +137,9 @@ Sets the current model to the model with name `name'. If several models have the
 same name, selects the one that was added first.
 
 @table @code
-@item Input values: name
-@item Output values: -
-@item Return value: -
+@item Input: name
+@item Output: -
+@item Return: -
 @end table
 
 @item getEntities
@@ -148,9 +148,9 @@ Gets all the (elementary) geometrical entities in the current model. If `dim' is
 == 0). The entities are returned as a vector of (dim, tag) integer pairs.
 
 @table @code
-@item Input values: dim
-@item Output values: dimTags
-@item Return value: -
+@item Input: dim
+@item Output: dimTags
+@item Return: -
 @end table
 
 @item getPhysicalGroups
@@ -159,9 +159,9 @@ only the entities of the specified dimension (e.g. physical points if `dim' ==
 0). The entities are returned as a vector of (dim, tag) integer pairs.
 
 @table @code
-@item Input values: dim
-@item Output values: dimTags
-@item Return value: -
+@item Input: dim
+@item Output: dimTags
+@item Return: -
 @end table
 
 @item getEntitiesForPhysicalGroup
@@ -169,9 +169,9 @@ Gets the tags of all the (elementary) geometrical entities making up the
 physical group of dimension `dim' and tag `tag'.
 
 @table @code
-@item Input values: dim, tag
-@item Output values: tags
-@item Return value: -
+@item Input: dim, tag
+@item Output: tags
+@item Return: -
 @end table
 
 @item addPhysicalGroup
@@ -180,27 +180,27 @@ tags `tags'. The function returns the tag of the physical group, equal to `tag'
 if `tag' is positive, or a new tag if `tag' < 0.
 
 @table @code
-@item Input values: dim, tags, tag
-@item Output values: -
-@item Return value: integer
+@item Input: dim, tags, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item setPhysicalName
 Sets the name of the physical group of dimension `dim' and tag `tag'.
 
 @table @code
-@item Input values: dim, tag, name
-@item Output values: -
-@item Return value: -
+@item Input: dim, tag, name
+@item Output: -
+@item Return: -
 @end table
 
 @item getPhysicalName
 Gets the name of the physical group of dimension `dim' and tag `tag'.
 
 @table @code
-@item Input values: dim, tag
-@item Output values: name
-@item Return value: -
+@item Input: dim, tag
+@item Output: name
+@item Return: -
 @end table
 
 @item getBoundary
@@ -212,9 +212,9 @@ is true. Applies the boundary operator recursively down to dimension 0 (i.e. to
 points) if `recursive' is true.
 
 @table @code
-@item Input values: dimTags, combined, oriented, recursive
-@item Output values: outDimTags
-@item Return value: -
+@item Input: dimTags, combined, oriented, recursive
+@item Output: outDimTags
+@item Return: -
 @end table
 
 @item getEntitiesInBoundingBox
@@ -224,9 +224,9 @@ two points (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >=
 0).
 
 @table @code
-@item Input values: xmin, ymin, zmin, xmax, ymax, zmax, dim
-@item Output values: tags
-@item Return value: -
+@item Input: xmin, ymin, zmin, xmax, ymax, zmax, dim
+@item Output: tags
+@item Return: -
 @end table
 
 @item getBoundingBox
@@ -234,9 +234,9 @@ Gets the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of the
 geometrical entity of dimension `dim' and tag `tag'.
 
 @table @code
-@item Input values: dim, tag
-@item Output values: xmin, ymin, zmin, xmax, ymax, zmax
-@item Return value: -
+@item Input: dim, tag
+@item Output: xmin, ymin, zmin, xmax, ymax, zmax
+@item Return: -
 @end table
 
 @item addDiscreteEntity
@@ -247,9 +247,9 @@ tags of the entities on the boundary of the discrete entity, if any. Specyfing
 `boundary' allows Gmsh to construct the topology of the overall model.
 
 @table @code
-@item Input values: dim, tag, boundary
-@item Output values: -
-@item Return value: integer
+@item Input: dim, tag, boundary
+@item Output: -
+@item Return: integer
 @end table
 
 @item removeEntities
@@ -257,9 +257,9 @@ Removes the entities `dimTags' of the current model. If `recursive' is true,
 removes all the entities on their boundaries, down to dimension 0.
 
 @table @code
-@item Input values: dimTags, recursive
-@item Output values: -
-@item Return value: -
+@item Input: dimTags, recursive
+@item Output: -
+@item Return: -
 @end table
 
 @end ftable
@@ -270,45 +270,45 @@ removes all the entities on their boundaries, down to dimension 0.
 Generates a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).
 
 @table @code
-@item Input values: dim
-@item Output values: -
-@item Return value: -
+@item Input: dim
+@item Output: -
+@item Return: -
 @end table
 
 @item partition
 Partitions the mesh of the current model into `numPart' partitions.
 
 @table @code
-@item Input values: numPart
-@item Output values: -
-@item Return value: -
+@item Input: numPart
+@item Output: -
+@item Return: -
 @end table
 
 @item refine
 Refines the mesh of the current model by uniformly splitting the elements.
 
 @table @code
-@item Input values: -
-@item Output values: -
-@item Return value: -
+@item Input: -
+@item Output: -
+@item Return: -
 @end table
 
 @item setOrder
 Sets the order of the elements in the mesh of the current model to `order'.
 
 @table @code
-@item Input values: order
-@item Output values: -
-@item Return value: -
+@item Input: order
+@item Output: -
+@item Return: -
 @end table
 
 @item removeDuplicateVertices
 Removes duplicate mesh vertices in the mesh of the current model.
 
 @table @code
-@item Input values: -
-@item Output values: -
-@item Return value: -
+@item Input: -
+@item Output: -
+@item Return: -
 @end table
 
 @item getLastEntityError
@@ -316,9 +316,9 @@ Gets the last entities (if any) where a meshing error occurred. Currently only
 populated by the new 3D meshing algorithms.
 
 @table @code
-@item Input values: -
-@item Output values: dimTags
-@item Return value: -
+@item Input: -
+@item Output: dimTags
+@item Return: -
 @end table
 
 @item getLastVertexError
@@ -326,9 +326,9 @@ Gets the last mesh vertices (if any) where a meshing error occurred. Currently
 only populated by the new 3D meshing algorithms.
 
 @table @code
-@item Input values: -
-@item Output values: vertexTags
-@item Return value: -
+@item Input: -
+@item Output: vertexTags
+@item Return: -
 @end table
 
 @item getVertices
@@ -342,9 +342,9 @@ contains the parametric coordinates of the vertices, if available. The length of
 `parametricCoord' can be 0 or `dim' times the length of `vertexTags'.
 
 @table @code
-@item Input values: dim, tag
-@item Output values: vertexTags, coord, parametricCoord
-@item Return value: -
+@item Input: dim, tag
+@item Output: vertexTags, coord, parametricCoord
+@item Return: -
 @end table
 
 @item getElements
@@ -361,9 +361,9 @@ times the number of vertices for this type of element, that contains the vertex
 tags of all the elements of the given type, concatenated.
 
 @table @code
-@item Input values: dim, tag
-@item Output values: elementTypes, elementTags, vertexTags
-@item Return value: -
+@item Input: dim, tag
+@item Output: elementTypes, elementTags, vertexTags
+@item Return: -
 @end table
 
 @item getElementProperties
@@ -373,9 +373,9 @@ Gets the properties of an element of type `elementType': its name
 vector, of length `dim' times `numVertices').
 
 @table @code
-@item Input values: elementType
-@item Output values: elementName, dim, order, numVertices, parametricCoord
-@item Return value: -
+@item Input: elementType
+@item Output: elementName, dim, order, numVertices, parametricCoord
+@item Return: -
 @end table
 
 @item getIntegrationData
@@ -396,9 +396,9 @@ each element type the evaluation of the basis functions at the integration
 points.
 
 @table @code
-@item Input values: integrationType, functionSpaceType, dim, tag
-@item Output values: integrationPoints, integrationData, functionSpaceNumComponents, functionSpaceData
-@item Return value: -
+@item Input: integrationType, functionSpaceType, dim, tag
+@item Output: integrationPoints, integrationData, functionSpaceNumComponents, functionSpaceData
+@item Return: -
 @end table
 
 @item getElementTypes
@@ -407,9 +407,9 @@ If `tag' < 0, gets the types for all entities of dimension `dim'. If `dim' and
 `tag' are negative, gets all the types in the mesh.
 
 @table @code
-@item Input values: dim, tag
-@item Output values: elementTypes
-@item Return value: -
+@item Input: dim, tag
+@item Output: elementTypes
+@item Return: -
 @end table
 
 @item getElementsByType
@@ -417,9 +417,9 @@ Gets the mesh elements in the same way as `getElements', but for a single
 `elementType'.
 
 @table @code
-@item Input values: elementType, dim, tag
-@item Output values: elementTags, vertexTags
-@item Return value: -
+@item Input: elementType, dim, tag
+@item Output: elementTags, vertexTags
+@item Return: -
 @end table
 
 @item getIntegrationDataByType
@@ -427,9 +427,9 @@ Gets the integration data for mesh elements in the same way as
 `getIntegrationData', but for a single `elementType'.
 
 @table @code
-@item Input values: elementType, integrationType, functionSpaceType, dim, tag
-@item Output values: integrationPoints, integrationData, functionSpaceNumComponents, functionSpaceData
-@item Return value: -
+@item Input: elementType, integrationType, functionSpaceType, dim, tag
+@item Output: integrationPoints, integrationData, functionSpaceNumComponents, functionSpaceData
+@item Return: -
 @end table
 
 @item setVertices
@@ -442,9 +442,9 @@ coordinates of the vertices, if any. The length of `parametricCoord' can be 0 or
 `dim' times the length of `vertexTags'.
 
 @table @code
-@item Input values: dim, tag, vertexTags, coord, parametricCoord
-@item Output values: -
-@item Return value: -
+@item Input: dim, tag, vertexTags, coord, parametricCoord
+@item Output: -
+@item Return: -
 @end table
 
 @item setElements
@@ -459,9 +459,9 @@ element, that contains the vertex tags of all the elements of the given type,
 concatenated.
 
 @table @code
-@item Input values: dim, tag, types, elementTags, vertexTags
-@item Output values: -
-@item Return value: -
+@item Input: dim, tag, types, elementTags, vertexTags
+@item Output: -
+@item Return: -
 @end table
 
 @item reclassifyVertices
@@ -471,9 +471,9 @@ associating them all to a single volume), to reclassify them correctly on model
 surfaces, curves, etc.
 
 @table @code
-@item Input values: -
-@item Output values: -
-@item Return value: -
+@item Input: -
+@item Output: -
+@item Return: -
 @end table
 
 @item getVertex
@@ -485,9 +485,9 @@ to N to maintain reasonnable performance (in this case the internal cache is
 based on a vector; otherwise it uses a map).
 
 @table @code
-@item Input values: vertexTag
-@item Output values: coord, parametricCoord
-@item Return value: -
+@item Input: vertexTag
+@item Output: coord, parametricCoord
+@item Return: -
 @end table
 
 @item getElement
@@ -499,9 +499,9 @@ performance (in this case the internal cache is based on a vector; otherwise it
 uses a map).
 
 @table @code
-@item Input values: elementTag
-@item Output values: type, vertexTags
-@item Return value: -
+@item Input: elementTag
+@item Output: type, vertexTags
+@item Return: -
 @end table
 
 @item setSize
@@ -509,9 +509,9 @@ Sets a mesh size constraint on the geometrical entities `dimTags'. Currently
 only entities of dimension 0 (points) are handled.
 
 @table @code
-@item Input values: dimTags, size
-@item Output values: -
-@item Return value: -
+@item Input: dimTags, size
+@item Output: -
+@item Return: -
 @end table
 
 @item setTransfiniteLine
@@ -521,9 +521,9 @@ are "Progression" (geometrical progression with power `coef') and "Bump"
 (refinement toward both extreminties of the line).
 
 @table @code
-@item Input values: tag, numVertices, type, coef
-@item Output values: -
-@item Return value: -
+@item Input: tag, numVertices, type, coef
+@item Output: -
+@item Return: -
 @end table
 
 @item setTransfiniteSurface
@@ -535,9 +535,9 @@ the transfinite interpolation explicitly; specifying the corners explicitly is
 mandatory if the surface has more that 3 or 4 points on its boundary.
 
 @table @code
-@item Input values: tag, arrangement, cornerTags
-@item Output values: -
-@item Return value: -
+@item Input: tag, arrangement, cornerTags
+@item Output: -
+@item Return: -
 @end table
 
 @item setTransfiniteVolume
@@ -546,9 +546,9 @@ used to specify the (6 or 8) corners of the transfinite interpolation
 explicitly.
 
 @table @code
-@item Input values: tag, cornerTags
-@item Output values: -
-@item Return value: -
+@item Input: tag, cornerTags
+@item Output: -
+@item Return: -
 @end table
 
 @item setRecombine
@@ -557,9 +557,9 @@ Sets a recombination meshing constraint on the geometrical entity of dimension
 triangles into quadrangles) are supported.
 
 @table @code
-@item Input values: dim, tag
-@item Output values: -
-@item Return value: -
+@item Input: dim, tag
+@item Output: -
+@item Return: -
 @end table
 
 @item setSmoothing
@@ -567,9 +567,9 @@ Sets a smoothing meshing constraint on the geometrical entity of dimension `dim'
 and tag `tag'. `val' iterations of a Laplace smoother are applied.
 
 @table @code
-@item Input values: dim, tag, val
-@item Output values: -
-@item Return value: -
+@item Input: dim, tag, val
+@item Output: -
+@item Return: -
 @end table
 
 @item setReverse
@@ -580,9 +580,9 @@ the orientation of the geometrical entity). If `val' is false, the mesh is left
 as-is.
 
 @table @code
-@item Input values: dim, tag, val
-@item Output values: -
-@item Return value: -
+@item Input: dim, tag, val
+@item Output: -
+@item Return: -
 @end table
 
 @item embed
@@ -590,9 +590,9 @@ Emebds the geometrical entities of dimension `dim' and tags `tags' in the
 (inDim, inTag) geometrical entity. `inDim' must be strictly greater than `dim'.
 
 @table @code
-@item Input values: dim, tags, inDim, inTag
-@item Output values: -
-@item Return value: -
+@item Input: dim, tags, inDim, inTag
+@item Output: -
+@item Return: -
 @end table
 
 @end ftable
@@ -604,63 +604,63 @@ Adds a new mesh size field of type `type'. If `tag' is positive, assign the tag
 explcitly; otherwise a new tag is assigned automatically. Returns the field tag.
 
 @table @code
-@item Input values: type, tag
-@item Output values: -
-@item Return value: integer
+@item Input: type, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item remove
 Removes the field with tag `tag'.
 
 @table @code
-@item Input values: tag
-@item Output values: -
-@item Return value: -
+@item Input: tag
+@item Output: -
+@item Return: -
 @end table
 
 @item setNumber
 Sets the numerical option `option' to value `value' for field `tag'.
 
 @table @code
-@item Input values: tag, option, value
-@item Output values: -
-@item Return value: -
+@item Input: tag, option, value
+@item Output: -
+@item Return: -
 @end table
 
 @item setString
 Sets the string option `option' to value `value' for field `tag'.
 
 @table @code
-@item Input values: tag, option, value
-@item Output values: -
-@item Return value: -
+@item Input: tag, option, value
+@item Output: -
+@item Return: -
 @end table
 
 @item setNumbers
 Sets the numerical list option `option' to value `value' for field `tag'.
 
 @table @code
-@item Input values: tag, option, value
-@item Output values: -
-@item Return value: -
+@item Input: tag, option, value
+@item Output: -
+@item Return: -
 @end table
 
 @item setAsBackgroundMesh
 Sets the field `tag' as the background mesh size field.
 
 @table @code
-@item Input values: tag
-@item Output values: -
-@item Return value: -
+@item Input: tag
+@item Output: -
+@item Return: -
 @end table
 
 @item setAsBoundaryLayer
 Sets the field `tag' as the boundary layer size field.
 
 @table @code
-@item Input values: tag
-@item Output values: -
-@item Return value: -
+@item Input: tag
+@item Output: -
+@item Return: -
 @end table
 
 @end ftable
@@ -676,9 +676,9 @@ in the current model only after synchronize() is called. This behavior holds for
 all the entities added in the geo module.)
 
 @table @code
-@item Input values: x, y, z, meshSize, tag
-@item Output values: -
-@item Return value: integer
+@item Input: x, y, z, meshSize, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addLine
@@ -687,9 +687,9 @@ Adds a straight line segment between the two points with tags `startTag' and
 selected automatically. Returns the tag of the line.
 
 @table @code
-@item Input values: startTag, endTag, tag
-@item Output values: -
-@item Return value: integer
+@item Input: startTag, endTag, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addCircleArc
@@ -700,9 +700,9 @@ tag explicitly; otherwise a new tag is selected automatically. If (`nx', `ny',
 of the circle arc.
 
 @table @code
-@item Input values: startTag, centerTag, endTag, tag, nx, ny, nz
-@item Output values: -
-@item Return value: integer
+@item Input: startTag, centerTag, endTag, tag, nx, ny, nz
+@item Output: -
+@item Return: integer
 @end table
 
 @item addEllipseArc
@@ -713,9 +713,9 @@ automatically. If (`nx', `ny', `nz') != (0,0,0), explicitely sets the plane of
 the circle arc. Returns the tag of the ellipse arc.
 
 @table @code
-@item Input values: startTag, centerTag, majorTag, endTag, tag, nx, ny, nz
-@item Output values: -
-@item Return value: integer
+@item Input: startTag, centerTag, majorTag, endTag, tag, nx, ny, nz
+@item Output: -
+@item Return: integer
 @end table
 
 @item addSpline
@@ -725,9 +725,9 @@ automatically. Creates a periodic curve if the first and last points are the
 same. Returns the tag of the spline curve.
 
 @table @code
-@item Input values: vertexTags, tag
-@item Output values: -
-@item Return value: integer
+@item Input: vertexTags, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addBSpline
@@ -737,9 +737,9 @@ automatically. Creates a periodic curve if the first and last points are the
 same. Returns the tag of the b-spline curve.
 
 @table @code
-@item Input values: vertexTags, tag
-@item Output values: -
-@item Return value: integer
+@item Input: vertexTags, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addBezier
@@ -748,9 +748,9 @@ the tag explicitly; otherwise a new tag is selected automatically.  Returns the
 tag of the Bezier curve.
 
 @table @code
-@item Input values: vertexTags, tag
-@item Output values: -
-@item Return value: integer
+@item Input: vertexTags, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addLineLoop
@@ -761,9 +761,9 @@ orientation. If `tag' is positive, sets the tag explicitly; otherwise a new tag
 is selected automatically. Returns the tag of the line loop.
 
 @table @code
-@item Input values: edgeTags, tag
-@item Output values: -
-@item Return value: integer
+@item Input: edgeTags, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addPlaneSurface
@@ -773,9 +773,9 @@ line loop defines the exterior contour; additional line loop define holes. If
 automatically. Returns the tag of the surface.
 
 @table @code
-@item Input values: wireTags, tag
-@item Output values: -
-@item Return value: integer
+@item Input: wireTags, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addSurfaceFilling
@@ -785,9 +785,9 @@ If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
 automatically. Returns the tag of the surface.
 
 @table @code
-@item Input values: wireTags, tag, sphereCenterTag
-@item Output values: -
-@item Return value: integer
+@item Input: wireTags, tag, sphereCenterTag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addSurfaceLoop
@@ -796,9 +796,9 @@ positive, sets the tag explicitly; otherwise a new tag is selected
 automatically. Returns the tag of the surface loop.
 
 @table @code
-@item Input values: faceTags, tag
-@item Output values: -
-@item Return value: integer
+@item Input: faceTags, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addVolume
@@ -808,9 +808,9 @@ holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag is
 selected automatically. Returns the tag of the volume.
 
 @table @code
-@item Input values: shellTags, tag
-@item Output values: -
-@item Return value: integer
+@item Input: shellTags, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item extrude
@@ -821,9 +821,9 @@ in each layer. If `height' is not empty, it provides the (cummulative) height of
 the different layers, normalized to 1.
 
 @table @code
-@item Input values: dimTags, dx, dy, dz, numElements, heights, recombine
-@item Output values: outDimTags
-@item Return value: -
+@item Input: dimTags, dx, dy, dz, numElements, heights, recombine
+@item Output: outDimTags
+@item Return: -
 @end table
 
 @item revolve
@@ -835,9 +835,9 @@ give the number of elements in each layer. If `height' is not empty, it provides
 the (cummulative) height of the different layers, normalized to 1.
 
 @table @code
-@item Input values: dimTags, x, y, z, ax, ay, az, angle, numElements, heights, recombine
-@item Output values: outDimTags
-@item Return value: -
+@item Input: dimTags, x, y, z, ax, ay, az, angle, numElements, heights, recombine
+@item Output: outDimTags
+@item Return: -
 @end table
 
 @item twist
@@ -850,18 +850,18 @@ in each layer. If `height' is not empty, it provides the (cummulative) height of
 the different layers, normalized to 1.
 
 @table @code
-@item Input values: dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements, heights, recombine
-@item Output values: outDimTags
-@item Return value: -
+@item Input: dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements, heights, recombine
+@item Output: outDimTags
+@item Return: -
 @end table
 
 @item translate
 Translates the geometrical entities `dimTags' along (`dx', `dy', `dz').
 
 @table @code
-@item Input values: dimTags, dx, dy, dz
-@item Output values: -
-@item Return value: -
+@item Input: dimTags, dx, dy, dz
+@item Output: -
+@item Return: -
 @end table
 
 @item rotate
@@ -870,9 +870,9 @@ revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay',
 `az').
 
 @table @code
-@item Input values: dimTags, x, y, z, ax, ay, az, angle
-@item Output values: -
-@item Return value: -
+@item Input: dimTags, x, y, z, ax, ay, az, angle
+@item Output: -
+@item Return: -
 @end table
 
 @item dilate
@@ -881,9 +881,9 @@ three coordinate axes; use (`x', `y', `z') as the center of the homothetic
 transformation.
 
 @table @code
-@item Input values: dimTags, x, y, z, a, b, c
-@item Output values: -
-@item Return value: -
+@item Input: dimTags, x, y, z, a, b, c
+@item Output: -
+@item Return: -
 @end table
 
 @item symmetry
@@ -891,18 +891,18 @@ Applies a symmetry transformation to the geometrical entities `dimTag', with
 respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
 
 @table @code
-@item Input values: dimTags, a, b, c, d
-@item Output values: -
-@item Return value: -
+@item Input: dimTags, a, b, c, d
+@item Output: -
+@item Return: -
 @end table
 
 @item copy
 Copies the entities `dimTags'; the new entities are returned in `outDimTags'.
 
 @table @code
-@item Input values: dimTags
-@item Output values: outDimTags
-@item Return value: -
+@item Input: dimTags
+@item Output: outDimTags
+@item Return: -
 @end table
 
 @item remove
@@ -910,9 +910,9 @@ Removes the entities `dimTags'. If `recursive' is true, removes all the entities
 on their boundaries, down to dimension 0.
 
 @table @code
-@item Input values: dimTags, recursive
-@item Output values: -
-@item Return value: -
+@item Input: dimTags, recursive
+@item Output: -
+@item Return: -
 @end table
 
 @item removeAllDuplicates
@@ -920,9 +920,9 @@ Removes all duplicate entities (different entities at the same geometrical
 location).
 
 @table @code
-@item Input values: -
-@item Output values: -
-@item Return value: -
+@item Input: -
+@item Output: -
+@item Return: -
 @end table
 
 @item synchronize
@@ -931,9 +931,9 @@ This can be called at any time, but since it involves a non trivial amount of
 processing, the number of synchronization points should normally be minimized.
 
 @table @code
-@item Input values: -
-@item Output values: -
-@item Return value: -
+@item Input: -
+@item Output: -
+@item Return: -
 @end table
 
 @end ftable
@@ -945,9 +945,9 @@ Sets a mesh size constraint on the geometrical entities `dimTags'. Currently
 only entities of dimension 0 (points) are handled.
 
 @table @code
-@item Input values: dimTags, size
-@item Output values: -
-@item Return value: -
+@item Input: dimTags, size
+@item Output: -
+@item Return: -
 @end table
 
 @item setTransfiniteLine
@@ -957,9 +957,9 @@ are "Progression" (geometrical progression with power `coef') and "Bump"
 (refinement toward both extreminties of the line).
 
 @table @code
-@item Input values: tag, nPoints, type, coef
-@item Output values: -
-@item Return value: -
+@item Input: tag, nPoints, type, coef
+@item Output: -
+@item Return: -
 @end table
 
 @item setTransfiniteSurface
@@ -971,9 +971,9 @@ the transfinite interpolation explicitly; specifying the corners explicitly is
 mandatory if the surface has more that 3 or 4 points on its boundary.
 
 @table @code
-@item Input values: tag, arrangement, cornerTags
-@item Output values: -
-@item Return value: -
+@item Input: tag, arrangement, cornerTags
+@item Output: -
+@item Return: -
 @end table
 
 @item setTransfiniteVolume
@@ -982,9 +982,9 @@ used to specify the (6 or 8) corners of the transfinite interpolation
 explicitly.
 
 @table @code
-@item Input values: tag, cornerTags
-@item Output values: -
-@item Return value: -
+@item Input: tag, cornerTags
+@item Output: -
+@item Return: -
 @end table
 
 @item setRecombine
@@ -993,9 +993,9 @@ Sets a recombination meshing constraint on the geometrical entity of dimension
 triangles into quadrangles) are supported.
 
 @table @code
-@item Input values: dim, tag, angle
-@item Output values: -
-@item Return value: -
+@item Input: dim, tag, angle
+@item Output: -
+@item Return: -
 @end table
 
 @item setSmoothing
@@ -1003,9 +1003,9 @@ Sets a smoothing meshing constraint on the geometrical entity of dimension `dim'
 and tag `tag'. `val' iterations of a Laplace smoother are applied.
 
 @table @code
-@item Input values: dim, tag, val
-@item Output values: -
-@item Return value: -
+@item Input: dim, tag, val
+@item Output: -
+@item Return: -
 @end table
 
 @item setReverse
@@ -1016,9 +1016,9 @@ the orientation of the geometrical entity). If `val' is false, the mesh is left
 as-is.
 
 @table @code
-@item Input values: dim, tag, val
-@item Output values: -
-@item Return value: -
+@item Input: dim, tag, val
+@item Output: -
+@item Return: -
 @end table
 
 @end ftable
@@ -1034,9 +1034,9 @@ be added in the current model only after synchronize() is called. This behavior
 holds for all the entities added in the occ module.)
 
 @table @code
-@item Input values: x, y, z, meshSize, tag
-@item Output values: -
-@item Return value: integer
+@item Input: x, y, z, meshSize, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addLine
@@ -1045,9 +1045,9 @@ Adds a straight line segment between the two points with tags `startTag' and
 selected automatically. Returns the tag of the line.
 
 @table @code
-@item Input values: startTag, endTag, tag
-@item Output values: -
-@item Return value: integer
+@item Input: startTag, endTag, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addCircleArc
@@ -1056,9 +1056,9 @@ center `centerTag'. If `tag' is positive, sets the tag explicitly; otherwise a
 new tag is selected automatically. Returns the tag of the circle arc.
 
 @table @code
-@item Input values: startTag, centerTag, endTag, tag
-@item Output values: -
-@item Return value: integer
+@item Input: startTag, centerTag, endTag, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addCircle
@@ -1068,9 +1068,9 @@ sets the tag explicitly; otherwise a new tag is selected automatically. If
 angles. Returns the tag of the circle.
 
 @table @code
-@item Input values: x, y, z, r, tag, angle1, angle2
-@item Output values: -
-@item Return value: integer
+@item Input: x, y, z, r, tag, angle1, angle2
+@item Output: -
+@item Return: integer
 @end table
 
 @item addEllipseArc
@@ -1080,9 +1080,9 @@ otherwise a new tag is selected automatically. Returns the tag of the ellipse
 arc.
 
 @table @code
-@item Input values: startTag, centerTag, endTag, tag
-@item Output values: -
-@item Return value: integer
+@item Input: startTag, centerTag, endTag, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addEllipse
@@ -1093,9 +1093,9 @@ specified, creates an ellipse arc between the two angles. Returns the tag of the
 ellipse.
 
 @table @code
-@item Input values: x, y, z, r1, r2, tag, angle1, angle2
-@item Output values: -
-@item Return value: integer
+@item Input: x, y, z, r1, r2, tag, angle1, angle2
+@item Output: -
+@item Return: integer
 @end table
 
 @item addSpline
@@ -1105,9 +1105,9 @@ automatically. Creates a periodic curve if the first and last points are the
 same. Returns the tag of the spline curve.
 
 @table @code
-@item Input values: vertexTags, tag
-@item Output values: -
-@item Return value: integer
+@item Input: vertexTags, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addBSpline
@@ -1118,9 +1118,9 @@ a new tag is selected automatically. Creates a periodic curve if the first and
 last points are the same. Returns the tag of the b-spline curve.
 
 @table @code
-@item Input values: vertexTags, tag, degree, weights, knots, multiplicities
-@item Output values: -
-@item Return value: integer
+@item Input: vertexTags, tag, degree, weights, knots, multiplicities
+@item Output: -
+@item Return: integer
 @end table
 
 @item addBezier
@@ -1129,9 +1129,9 @@ the tag explicitly; otherwise a new tag is selected automatically. Returns the
 tag of the Bezier curve.
 
 @table @code
-@item Input values: vertexTags, tag
-@item Output values: -
-@item Return value: integer
+@item Input: vertexTags, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addWire
@@ -1142,9 +1142,9 @@ positive, sets the tag explicitly; otherwise a new tag is selected
 automatically. Returns the tag of the wire.
 
 @table @code
-@item Input values: edgeTags, tag, checkClosed
-@item Output values: -
-@item Return value: integer
+@item Input: edgeTags, tag, checkClosed
+@item Output: -
+@item Return: integer
 @end table
 
 @item addLineLoop
@@ -1155,9 +1155,9 @@ orientation. If `tag' is positive, sets the tag explicitly; otherwise a new tag
 is selected automatically. Returns the tag of the line loop.
 
 @table @code
-@item Input values: edgeTags, tag
-@item Output values: -
-@item Return value: integer
+@item Input: edgeTags, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addRectangle
@@ -1167,9 +1167,9 @@ explicitly; otherwise a new tag is selected automatically. Rounds the corners if
 `roundedRadius' is nonzero. Returns the tag of the rectangle.
 
 @table @code
-@item Input values: x, y, z, dx, dy, tag, roundedRadius
-@item Output values: -
-@item Return value: integer
+@item Input: x, y, z, dx, dy, tag, roundedRadius
+@item Output: -
+@item Return: integer
 @end table
 
 @item addDisk
@@ -1178,9 +1178,9 @@ Adds a disk with center (`xc', `yc', `zc') and radius `rx' along the x-axis and
 a new tag is selected automatically. Returns the tag of the disk.
 
 @table @code
-@item Input values: xc, yc, zc, rx, ry, tag
-@item Output values: -
-@item Return value: integer
+@item Input: xc, yc, zc, rx, ry, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addPlaneSurface
@@ -1190,9 +1190,9 @@ loop define holes. If `tag' is positive, sets the tag explicitly; otherwise a
 new tag is selected automatically. Returns the tag of the surface.
 
 @table @code
-@item Input values: wireTags, tag
-@item Output values: -
-@item Return value: integer
+@item Input: wireTags, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addSurfaceFilling
@@ -1201,9 +1201,9 @@ the tag explicitly; otherwise a new tag is selected automatically. Returns the
 tag of the surface.
 
 @table @code
-@item Input values: wireTag, tag
-@item Output values: -
-@item Return value: integer
+@item Input: wireTag, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addSurfaceLoop
@@ -1212,9 +1212,9 @@ positive, sets the tag explicitly; otherwise a new tag is selected
 automatically. Returns the tag of the surface loop.
 
 @table @code
-@item Input values: faceTags, tag
-@item Output values: -
-@item Return value: integer
+@item Input: faceTags, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addVolume
@@ -1224,9 +1224,9 @@ holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag is
 selected automatically. Returns the tag of the volume.
 
 @table @code
-@item Input values: shellTags, tag
-@item Output values: -
-@item Return value: integer
+@item Input: shellTags, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addSphere
@@ -1237,9 +1237,9 @@ optional `angle3' argument defines the azimuthal opening (from 0 to 2*Pi). If
 automatically. Returns the tag of the sphere.
 
 @table @code
-@item Input values: xc, yc, zc, radius, tag, angle1, angle2, angle3
-@item Output values: -
-@item Return value: integer
+@item Input: xc, yc, zc, radius, tag, angle1, angle2, angle3
+@item Output: -
+@item Return: integer
 @end table
 
 @item addBox
@@ -1248,9 +1248,9 @@ along the x-, y- and z-axes. If `tag' is positive, sets the tag explicitly;
 otherwise a new tag is selected automatically. Returns the tag of the box.
 
 @table @code
-@item Input values: x, y, z, dx, dy, dz, tag
-@item Output values: -
-@item Return value: integer
+@item Input: x, y, z, dx, dy, dz, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item addCylinder
@@ -1261,9 +1261,9 @@ its radius `r'. The optional `angle' argument defines the angular opening (from
 is selected automatically. Returns the tag of the cylinder.
 
 @table @code
-@item Input values: x, y, z, dx, dy, dz, r, tag, angle
-@item Output values: -
-@item Return value: integer
+@item Input: x, y, z, dx, dy, dz, r, tag, angle
+@item Output: -
+@item Return: integer
 @end table
 
 @item addCone
@@ -1275,9 +1275,9 @@ automatically. `angle' defines the optional angular opening (from 0 to 2*Pi).
 Returns the tag of the cone.
 
 @table @code
-@item Input values: x, y, z, dx, dy, dz, r1, r2, tag, angle
-@item Output values: -
-@item Return value: integer
+@item Input: x, y, z, dx, dy, dz, r1, r2, tag, angle
+@item Output: -
+@item Return: integer
 @end table
 
 @item addWedge
@@ -1288,9 +1288,9 @@ automatically. The optional argument `ltx' defines the top extent along the
 x-axis. Returns the tag of the wedge.
 
 @table @code
-@item Input values: x, y, z, dx, dy, dz, tag, ltx
-@item Output values: -
-@item Return value: integer
+@item Input: x, y, z, dx, dy, dz, tag, ltx
+@item Output: -
+@item Return: integer
 @end table
 
 @item addTorus
@@ -1300,9 +1300,9 @@ selected automatically. The optional argument `angle' defines the angular
 opening (from 0 to 2*Pi). Returns the tag of the wedge.
 
 @table @code
-@item Input values: x, y, z, r1, r2, tag, angle
-@item Output values: -
-@item Return value: integer
+@item Input: x, y, z, r1, r2, tag, angle
+@item Output: -
+@item Return: integer
 @end table
 
 @item addThruSections
@@ -1313,9 +1313,9 @@ returned in `outDimTags'. If the optional argument `makeRuled' is set, the
 surfaces created on the boundary are forced to be ruled surfaces.
 
 @table @code
-@item Input values: wireTags, tag, makeSolid, makeRuled
-@item Output values: outDimTags
-@item Return value: -
+@item Input: wireTags, tag, makeSolid, makeRuled
+@item Output: outDimTags
+@item Return: -
 @end table
 
 @item addThickSolid
@@ -1326,9 +1326,9 @@ faces of the volume become the walls of the hollowed solid, with thickness
 selected automatically.
 
 @table @code
-@item Input values: solidTag, excludeFaceTags, offset, tag
-@item Output values: outDimTags
-@item Return value: -
+@item Input: solidTag, excludeFaceTags, offset, tag
+@item Output: outDimTags
+@item Return: -
 @end table
 
 @item extrude
@@ -1339,9 +1339,9 @@ in each layer. If `height' is not empty, it provides the (cummulative) height of
 the different layers, normalized to 1.
 
 @table @code
-@item Input values: dimTags, dx, dy, dz, numElements, heights, recombine
-@item Output values: outDimTags
-@item Return value: -
+@item Input: dimTags, dx, dy, dz, numElements, heights, recombine
+@item Output: outDimTags
+@item Return: -
 @end table
 
 @item revolve
@@ -1353,9 +1353,9 @@ give the number of elements in each layer. If `height' is not empty, it provides
 the (cummulative) height of the different layers, normalized to 1.
 
 @table @code
-@item Input values: dimTags, x, y, z, ax, ay, az, angle, numElements, heights, recombine
-@item Output values: outDimTags
-@item Return value: -
+@item Input: dimTags, x, y, z, ax, ay, az, angle, numElements, heights, recombine
+@item Output: outDimTags
+@item Return: -
 @end table
 
 @item addPipe
@@ -1363,9 +1363,9 @@ Adds a pipe by extruding the entities `dimTags' along the curve `wireTag'.
 Returns the pipe in `outDimTags'.
 
 @table @code
-@item Input values: dimTags, wireTag
-@item Output values: outDimTags
-@item Return value: -
+@item Input: dimTags, wireTag
+@item Output: outDimTags
+@item Return: -
 @end table
 
 @item fillet
@@ -1374,9 +1374,9 @@ Returns the filleted entities in `outDimTags'. Removes the original volume if
 `removeRegion' is set.
 
 @table @code
-@item Input values: regionTags, edgeTags, radius, removeRegion
-@item Output values: outDimTags
-@item Return value: -
+@item Input: regionTags, edgeTags, radius, removeRegion
+@item Output: outDimTags
+@item Return: -
 @end table
 
 @item fuse
@@ -1387,9 +1387,9 @@ results in a single entity). Removes the object if `removeObject' is set.
 Removes the tool if `removeTool' is set.
 
 @table @code
-@item Input values: objectDimTags, toolDimTags, tag, removeObject, removeTool
-@item Output values: outDimTags, outDimTagsMap
-@item Return value: -
+@item Input: objectDimTags, toolDimTags, tag, removeObject, removeTool
+@item Output: outDimTags, outDimTagsMap
+@item Return: -
 @end table
 
 @item intersect
@@ -1400,9 +1400,9 @@ if the boolean operation results in a single entity). Removes the object if
 `removeObject' is set. Removes the tool if `removeTool' is set.
 
 @table @code
-@item Input values: objectDimTags, toolDimTags, tag, removeObject, removeTool
-@item Output values: outDimTags, outDimTagsMap
-@item Return value: -
+@item Input: objectDimTags, toolDimTags, tag, removeObject, removeTool
+@item Output: outDimTags, outDimTagsMap
+@item Return: -
 @end table
 
 @item cut
@@ -1413,9 +1413,9 @@ results in a single entity). Removes the object if `removeObject' is set.
 Removes the tool if `removeTool' is set.
 
 @table @code
-@item Input values: objectDimTags, toolDimTags, tag, removeObject, removeTool
-@item Output values: outDimTags, outDimTagsMap
-@item Return value: -
+@item Input: objectDimTags, toolDimTags, tag, removeObject, removeTool
+@item Output: outDimTags, outDimTagsMap
+@item Return: -
 @end table
 
 @item fragment
@@ -1426,18 +1426,18 @@ results in a single entity). Removes the object if `removeObject' is set.
 Removes the tool if `removeTool' is set.
 
 @table @code
-@item Input values: objectDimTags, toolDimTags, tag, removeObject, removeTool
-@item Output values: outDimTags, outDimTagsMap
-@item Return value: -
+@item Input: objectDimTags, toolDimTags, tag, removeObject, removeTool
+@item Output: outDimTags, outDimTagsMap
+@item Return: -
 @end table
 
 @item translate
 Translates the geometrical entities `dimTags' along (`dx', `dy', `dz').
 
 @table @code
-@item Input values: dimTags, dx, dy, dz
-@item Output values: -
-@item Return value: -
+@item Input: dimTags, dx, dy, dz
+@item Output: -
+@item Return: -
 @end table
 
 @item rotate
@@ -1446,9 +1446,9 @@ revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay',
 `az').
 
 @table @code
-@item Input values: dimTags, x, y, z, ax, ay, az, angle
-@item Output values: -
-@item Return value: -
+@item Input: dimTags, x, y, z, ax, ay, az, angle
+@item Output: -
+@item Return: -
 @end table
 
 @item dilate
@@ -1457,9 +1457,9 @@ three coordinate axes; use (`x', `y', `z') as the center of the homothetic
 transformation.
 
 @table @code
-@item Input values: dimTags, x, y, z, a, b, c
-@item Output values: -
-@item Return value: -
+@item Input: dimTags, x, y, z, a, b, c
+@item Output: -
+@item Return: -
 @end table
 
 @item symmetry
@@ -1467,18 +1467,18 @@ Applies a symmetry transformation to the geometrical entities `dimTag', with
 respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
 
 @table @code
-@item Input values: dimTags, a, b, c, d
-@item Output values: -
-@item Return value: -
+@item Input: dimTags, a, b, c, d
+@item Output: -
+@item Return: -
 @end table
 
 @item copy
 Copies the entities `dimTags'; the new entities are returned in `outDimTags'.
 
 @table @code
-@item Input values: dimTags
-@item Output values: outDimTags
-@item Return value: -
+@item Input: dimTags
+@item Output: outDimTags
+@item Return: -
 @end table
 
 @item remove
@@ -1486,9 +1486,9 @@ Removes the entities `dimTags'. If `recursive' is true, removes all the entities
 on their boundaries, down to dimension 0.
 
 @table @code
-@item Input values: dimTags, recursive
-@item Output values: -
-@item Return value: -
+@item Input: dimTags, recursive
+@item Output: -
+@item Return: -
 @end table
 
 @item removeAllDuplicates
@@ -1497,9 +1497,9 @@ location) after intersecting (using boolean fragments) all highest dimensional
 entities.
 
 @table @code
-@item Input values: -
-@item Output values: -
-@item Return value: -
+@item Input: -
+@item Output: -
+@item Return: -
 @end table
 
 @item importShapes
@@ -1510,9 +1510,9 @@ argument `format' can be used to force the format of the file (currently "brep",
 "step" or "iges").
 
 @table @code
-@item Input values: fileName, highestDimOnly, format
-@item Output values: outDimTags
-@item Return value: -
+@item Input: fileName, highestDimOnly, format
+@item Output: outDimTags
+@item Return: -
 @end table
 
 @item setMeshSize
@@ -1520,9 +1520,9 @@ Sets a mesh size constraint on the geometrical entities `dimTags'. Currently
 only entities of dimension 0 (points) are handled.
 
 @table @code
-@item Input values: dimTags, size
-@item Output values: -
-@item Return value: -
+@item Input: dimTags, size
+@item Output: -
+@item Return: -
 @end table
 
 @item synchronize
@@ -1532,9 +1532,9 @@ amount of processing, the number of synchronization points should normally be
 minimized.
 
 @table @code
-@item Input values: -
-@item Output values: -
-@item Return value: -
+@item Input: -
+@item Output: -
+@item Return: -
 @end table
 
 @end ftable
@@ -1547,18 +1547,18 @@ Adds a new post-processing view, with name `name'. If `tag' is positive use it
 new tag. Returns the view tag.
 
 @table @code
-@item Input values: name, tag
-@item Output values: -
-@item Return value: integer
+@item Input: name, tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item remove
 Removes the view with tag `tag'.
 
 @table @code
-@item Input values: tag
-@item Output values: -
-@item Return value: -
+@item Input: tag
+@item Output: -
+@item Return: -
 @end table
 
 @item getIndex
@@ -1567,18 +1567,18 @@ This dynamic index (it can change when views are removed) is used to access view
 options.
 
 @table @code
-@item Input values: tag
-@item Output values: -
-@item Return value: integer
+@item Input: tag
+@item Output: -
+@item Return: integer
 @end table
 
 @item getTags
 Gets the tags of all views.
 
 @table @code
-@item Input values: -
-@item Output values: tags
-@item Return value: -
+@item Input: -
+@item Output: tags
+@item Return: -
 @end table
 
 @item addModelData
@@ -1596,9 +1596,9 @@ possible) from the input data. `partition' allows to specify data in several
 sub-sets.
 
 @table @code
-@item Input values: tag, step, modelName, dataType, tags, data, time, numComponents, partition
-@item Output values: -
-@item Return value: -
+@item Input: tag, step, modelName, dataType, tags, data, time, numComponents, partition
+@item Output: -
+@item Return: -
 @end table
 
 @item getModelData
@@ -1607,9 +1607,9 @@ Gets model-based post-processing data from the view with tag `tag' at step
 `tags', as well as the `dataType' and the number of components `numComponents'.
 
 @table @code
-@item Input values: tag, step
-@item Output values: dataType, tags, data, time, numComponents
-@item Return value: -
+@item Input: tag, step
+@item Output: dataType, tags, data, time, numComponents
+@item Return: -
 @end table
 
 @item addListData
@@ -1619,9 +1619,9 @@ identifies the data: "SP" for scalar points, "VP", for vector points, etc.
 the `numEle' elements.
 
 @table @code
-@item Input values: tag, type, numEle, data
-@item Output values: -
-@item Return value: -
+@item Input: tag, type, numEle, data
+@item Output: -
+@item Return: -
 @end table
 
 @item getListData
@@ -1630,9 +1630,9 @@ types `dataTypes', the number of elements `numElements' for each data type and
 the `data' for each data type.
 
 @table @code
-@item Input values: tag
-@item Output values: dataType, numElements, data
-@item Return value: -
+@item Input: tag
+@item Output: dataType, numElements, data
+@item Return: -
 @end table
 
 @item probe
@@ -1645,9 +1645,9 @@ described by its coordinates if `xElementCoord', `yElementCoord' and
 `zElementCoord' are provided.
 
 @table @code
-@item Input values: tag, x, y, z, step, numComp, gradient, tolerance, xElemCoord, yElemCoord, zElemCoord
-@item Output values: value
-@item Return value: -
+@item Input: tag, x, y, z, step, numComp, gradient, tolerance, xElemCoord, yElemCoord, zElemCoord
+@item Output: value
+@item Return: -
 @end table
 
 @item write
@@ -1655,9 +1655,9 @@ Writes the view to a file `fileName'. The export format is determined by the
 file extension. Appends to the file if `append' is set.
 
 @table @code
-@item Input values: tag, fileName, append
-@item Output values: -
-@item Return value: -
+@item Input: tag, fileName, append
+@item Output: -
+@item Return: -
 @end table
 
 @end ftable
@@ -1668,27 +1668,27 @@ file extension. Appends to the file if `append' is set.
 Sets the numerical option `option' to the value `value' for plugin `name'.
 
 @table @code
-@item Input values: name, option, value
-@item Output values: -
-@item Return value: -
+@item Input: name, option, value
+@item Output: -
+@item Return: -
 @end table
 
 @item setString
 Sets the string option `option' to the value `value' for plugin `name'.
 
 @table @code
-@item Input values: name, option, value
-@item Output values: -
-@item Return value: -
+@item Input: name, option, value
+@item Output: -
+@item Return: -
 @end table
 
 @item run
 Runs the plugin `name'.
 
 @table @code
-@item Input values: name
-@item Output values: -
-@item Return value: -
+@item Input: name
+@item Output: -
+@item Return: -
 @end table
 
 @end ftable
@@ -1699,9 +1699,9 @@ Runs the plugin `name'.
 Draws all the OpenGL scenes.
 
 @table @code
-@item Input values: -
-@item Output values: -
-@item Return value: -
+@item Input: -
+@item Output: -
+@item Return: -
 @end table
 
 @end ftable
@@ -1712,9 +1712,9 @@ Draws all the OpenGL scenes.
 Creates the Fltk graphical user interface.
 
 @table @code
-@item Input values: -
-@item Output values: -
-@item Return value: -
+@item Input: -
+@item Output: -
+@item Return: -
 @end table
 
 @item wait
@@ -1723,9 +1723,9 @@ Waits at most `time' seconds for user interface events and returns. If `time' <
 not yet been initialized.
 
 @table @code
-@item Input values: time
-@item Output values: -
-@item Return value: -
+@item Input: time
+@item Output: -
+@item Return: -
 @end table
 
 @item run
@@ -1734,9 +1734,9 @@ Runs the event loop of the Fltk graphical user interface, i.e. repeatedly calls
 initialized.
 
 @table @code
-@item Input values: -
-@item Output values: -
-@item Return value: -
+@item Input: -
+@item Output: -
+@item Return: -
 @end table
 
 @end ftable
@@ -1747,18 +1747,18 @@ initialized.
 Gets data from the Onelab server.
 
 @table @code
-@item Input values: format
-@item Output values: data
-@item Return value: -
+@item Input: format
+@item Output: data
+@item Return: -
 @end table
 
 @item set
 Sets data in the Onelab server.
 
 @table @code
-@item Input values: data, format
-@item Output values: -
-@item Return value: -
+@item Input: data, format
+@item Output: -
+@item Return: -
 @end table
 
 @item run
@@ -1766,9 +1766,9 @@ Runs a onelab client. If no name is given, attemps to run a client that might be
 linked to the processed input files.
 
 @table @code
-@item Input values: name, command
-@item Output values: -
-@item Return value: -
+@item Input: name, command
+@item Output: -
+@item Return: -
 @end table
 
 @end ftable
