@@ -364,6 +364,11 @@ namespace onelabUtils {
       setFirstComputationFlag(false);
       // nothing more to do: "check" will be called right afterwards
     }
+    else if(action == "check_always"){
+      redraw = true;
+      OpenProject(GModel::current()->getFileName());
+      onelab::server::instance()->thresholdChanged(2, "Gmsh");
+    }
     else if(action == "check"){
       if(changed > 2){
         redraw = true;

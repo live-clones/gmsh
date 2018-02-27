@@ -633,8 +633,9 @@ void onelab_reload_cb(Fl_Widget *w, void *data)
 
 void geometry_reload_cb(Fl_Widget *w, void *data)
 {
-  if(onelabUtils::haveSolverToRun())
-    onelab_cb(0, (void*)"check"); // will call OpenProject
+  if(onelabUtils::haveSolverToRun()){
+    onelab_cb(0, (void*)"check_always");
+  }
   else
     OpenProject(GModel::current()->getFileName());
   drawContext::global()->draw();
@@ -2230,7 +2231,7 @@ static void mesh_partition_cb(Fl_Widget *w, void *data)
 static void mesh_unpartition_cb(Fl_Widget *w, void *data)
 {
   int ier = GModel::current()->deleteMeshPartitions();
-  
+
   // Update the screen
   if(!ier) {
     opt_mesh_zone_definition(0, GMSH_SET, 0.);
@@ -2243,7 +2244,7 @@ static void mesh_unpartition_cb(Fl_Widget *w, void *data)
 static void mesh_convert_old_partitioning_cb(Fl_Widget *w, void *data)
 {
   int ier = GModel::current()->convertOldPartitioningToNewOne();
-  
+
   // Update the screen
   if(!ier) {
     opt_mesh_zone_definition(0, GMSH_SET, 0.);
