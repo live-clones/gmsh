@@ -4901,6 +4901,9 @@ enable optional modules or features. Here is the list of CMake options:
 @node Gmsh API, Information for developers, Compiling the source code, Top
 @appendix Gmsh API
 
+@cindex API
+@cindex Programming, API
+
 The Gmsh Application Programming Interface (API) allows you to integrate
 the Gmsh library in your own application. Examples on how to use the API
 are available in the
@@ -4920,9 +4923,9 @@ automatically from the master API definition file
 @item Python API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.py,gmsh.py}
 @end itemize
 
-The functions availa ble in the API are given below (see the relevant
-header and module file for the exact definition in each supported
-language@footnote{In C++ @code{gmsh/model/geo/addPoint} will lead to a
+The functions available in the API are given below (see the relevant
+header/module file for the exact definition in each supported
+language@footnote{In C++ @code{/gmsh/model/geo/addPoint} will lead to a
 namespaced function @code{gmsh::model::geo::addPoint}, while in Python
 it will lead to @code{gmsh.model.geo.addPoint}, and in C to
 @code{gmshModelGeoAddPoint}. Output values are passed by reference in
