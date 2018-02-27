@@ -222,8 +222,8 @@ class MTet4
   }
 };
 
-void connectTets(std::list<MTet4*> &);
-void connectTets(std::vector<MTet4*> &);
+void connectTets(std::list<MTet4*> &, const std::set<MFace, Less_Face> * = nullptr);
+void connectTets(std::vector<MTet4*> &, const std::set<MFace, Less_Face> * = nullptr);
 // IN --> Vertices ----  OUT --> Tets
 void delaunayMeshIn3D(std::vector<MVertex*> &, std::vector<MTetrahedron*> &,
                       bool removeBox = true);
