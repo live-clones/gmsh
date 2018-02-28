@@ -4901,8 +4901,15 @@ enable optional modules or features. Here is the list of CMake options:
 @node Gmsh API, Information for developers, Compiling the source code, Top
 @appendix Gmsh API
 
+@cindex API
+@cindex Programming, API
+
 The Gmsh Application Programming Interface (API) allows you to integrate
-the Gmsh library in your own application.
+the Gmsh library in your own application. Examples on how to use the API
+are available in the
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/,demos/api}
+directory. In particular, this directory contains C++ and Python
+versions of several of the @code{.geo} tutorials from @ref{Tutorial}.
 
 By design, the Gmsh API is purely functional, and only uses elementary
 types from the target language. Currently supported languages are C++, C
@@ -4916,13 +4923,16 @@ automatically from the master API definition file
 @item Python API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.py,gmsh.py}
 @end itemize
 
-The documentation for each function in the API is included in the
-relevant header and module files.
+The functions available in the API are given below (see the relevant
+header/module file for the exact definition in each supported
+language@footnote{In C++ @code{/gmsh/model/geo/addPoint} will lead to a
+namespaced function @code{gmsh::model::geo::addPoint}, while in Python
+it will lead to @code{gmsh.model.geo.addPoint}, and in C to
+@code{gmshModelGeoAddPoint}. Output values are passed by reference in
+C++, as pointers in C and directly returned (after the return value, if
+any) in Python.}):
 
-Examples on how to use the API are available in the
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/,demos/api}
-directory. In particular, this directory contains C++ and Python
-versions of several of the @code{.geo} tutorials from @ref{Tutorial}.
+@include api.texi
 
 @c =========================================================================
 @c Information for developers
@@ -4943,8 +4953,11 @@ source code is provided in @ref{Compiling the source code} (see also
 @ref{Frequently asked questions}).
 
 This section is for developers who would like to contribute directly to
-the Gmsh source code. If you want to integrate Gmsh in your own
-application, you should use the @ref{Gmsh API} instead.
+the Gmsh source code. Gmsh's official GIT repository is located at
+@uref{https://gitlab.onelab.info/gmsh/gmsh}. The wiki
+(@uref{https://gitlab.onelab.info/gmsh/gmsh/wikis/Git-cheat-sheet})
+contains instructions on how to create feature branches and submit merge
+requests.
 
 @menu
 * Source code structure::       
@@ -5001,8 +5014,11 @@ to make the code easy to read/debug/maintain:
 
 @enumerate
 @item
-Please enable full warnings for your compiler (e.g. @code{-Wall} with
-@code{g++}) and don't commit until there is no warning left.
+See @uref{https://gitlab.onelab.info/gmsh/gmsh/wikis/Git-cheat-sheet}
+for instructions on how to contribute to Gmsh's GIT source code
+repository. All branches are tested; make sure that all tests pass and
+that your code does not produce any warning before submitting merge
+requests.
 @item
 Use memory checking tools to detect memory leaks and other nasty memory
 problems. For example, you can use
@@ -5031,13 +5047,13 @@ Memprof
 @dots{}
 @end itemize
 @item
-always use the @code{Msg::} class to print information or errors
+Always use the @code{Msg::} class to print information or errors
 @item 
-indent your files (2 spaces) and convert all tabs to spaces
+Indent your files (2 spaces) and convert all tabs to spaces.
 @item 
-follow the style used in the existing code when adding something new
+Follow the style used in the existing code when adding something new
 (spaces after commas, opening braces for functions on a separate line,
-opening braces for loops and tests on the same line, etc.)
+opening braces for loops and tests on the same line, etc.).
 @end enumerate
 
 @c -------------------------------------------------------------------------
@@ -5071,115 +5087,6 @@ create the handling routine @code{opt_XXX} in
 optional: create the associated widget in
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Fltk/optionWindow.cpp,Fltk/optionWindow.h};
 @end enumerate
-
-@c -------------------------------------------------------------------------
-@c Using Gmsh as a library
-@c -------------------------------------------------------------------------
-
-@c @node Using Gmsh as a library,  , Coding style, Information for developers
-@c @section Using Gmsh as a library
-
-@c Notes on thread-safety
-@c   All the operations in the Gmsh library are not thread safe.
-@c   For example, the MeshAdapt algorithm is, while the Delaunay/Frontal
-@c   are not.
-
-@c -------------------------------------------------------------------------
-@c Compiling with OpenCASCADE
-@c -------------------------------------------------------------------------
-
-@c @node Compiling with OpenCASCADE,  , Coding style, Information for developers
-@c @section Compiling with OpenCASCADE
-
-@c How to build OpenCASCADE 6.3 (OCC) for Gmsh:
-
-@c - Get the source distribution of OCC and unpack it (you only need the
-@c   "ros" subdirectory). In the following <OpenCascade dir> refers to
-@c   the directory where OCC is installed (e.g ~/OpenCASCADE6.3.0)
-
-@c - OS/compiler specific stuff:
-
-@c    * On Windows, use Visual C++ to compile the libraries, or use the
-@c      precompiled DLLs directly. (The MinGW compiler used to work with
-@c      OCC 6.2 but do not anymore with 6.3.)
-
-@c    * on Mac OS X unfortunately you cannot build universal libs simply
-@c      by using "-arch i386 -arch ppc" (the code depends on
-@c      configure-time endinanness checks). So, first configure and build
-@c      with
-
-@c      export CFLAGS="-arch i386"
-@c      export CXXFLAGS="-arch i386" 
-
-@c      and then do "make distclean" and configure and build again
-@c      with 
-     
-@c      export CFLAGS="-arch ppc"
-@c      export CXXFLAGS="-arch ppc"
-
-@c      after the install step, use "lipo" to merge both archs, e.g.
-
-@c      lipo -create libi386.a libppc.a -output libuniversal.a
-
-@c - Go to the <OpenCASCADE dir>/ros directory and type
-
-@c   ./configure --prefix=/usr/local/opencascade --enable-debug=no 
-@c     --enable-production=yes --enable-static=yes --enable-shared=no
-@c     --disable-dependency-tracking
-
-@c - Then go to the <OpenCASCADE dir>/ros/adm/make/ directory and
-@c   run "make" in the following subdirectories, e.g. by running the
-@c   following bash script:
-
-@c     #!/bin/bash
-@c     for lib in TKernel TKMath TKAdvTools TKG2d TKG3d TKGeomBase TKBRep 
-@c       TKGeomAlgo TKTopAlgo TKPrim TKBO TKHLR TKMesh TKShHealing TKBool 
-@c       TKFillet TKFeat TKOffset TKXSBase TKIGES TKSTEPBase TKSTEPAttr 
-@c       TKSTEP209 TKSTEP; do
-@c         cd $lib && make; cd ..;
-@c     done
-
-@c    Note that this is the same as doing "make FoundationClasses", "make
-@c    ModelingData", "make ModelingAlgorithms" and part of "make
-@c    DataExchange"
-
-@c - Finally, run this other bash script in the same directory (to install
-@c   the libraries)
-
-@c     #!/bin/bash
-@c     for lib in TKernel TKMath TKAdvTools TKG2d TKG3d TKGeomBase TKBRep 
-@c       TKGeomAlgo TKTopAlgo TKPrim TKBO TKHLR TKMesh TKShHealing TKBool 
-@c       TKFillet TKFeat TKOffset TKXSBase TKIGES TKSTEPBase TKSTEPAttr 
-@c       TKSTEP209 TKSTEP; do
-@c         cd $lib && make install; cd ..;
-@c     done
-
-@c   and copy config.h and the <OpenCASCADE dir>/ros/inc/ subdirectory
-@c   to /usr/local/opencascade (This is the same as a doing a partial 
-@c   'make install')
-
-@c OpenCASCADE is now installed and ready to be used by Gmsh. To compile
-@c Gmsh with OpenCASCADE support:
-
-@c - Go to the gmsh source directory
-
-@c - Run "./configure --enable-occ --with-occ-prefix=/usr/local/opencascade" and
-@c   then "make"
-
-@c - If you get errors like
-
-@c     undefined reference to `pthread_create'
-@c     undefined reference to `pthread_detach'
-@c     ...
-
-@c   edit the "variables" file and add "-pthread" to the OPTIM variable, e.g.:
-
-@c     OPTIM="-g -O2 -pthread"
-   
-@c   and run make again
-
-@c - If compiling is successful then you are done and you can enjoy
-@c   importing IGES/STEP/BREP files into Gmsh!
 
 @c =========================================================================
 @c Frequently asked questions
