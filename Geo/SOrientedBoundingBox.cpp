@@ -172,48 +172,43 @@ bool SOrientedBoundingBox::intersects(SOrientedBoundingBox& obb)
   return true;
 }
 
-SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertices)
+
+SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3>& vertices)
 {
 #if defined(HAVE_MESH)
+
   int num_vertices = vertices.size();
   // First organize the data
+  
+  std::set<SPoint3> unique;
+  unique.insert(vertices.begin(),vertices.end());
+  
+  num_vertices = unique.size();
   fullMatrix<double> data(3,num_vertices);
-  int tmp = 0;
-  for (int i = 0; i < num_vertices; i++) {
-    bool okay = true;
-    for (int j = 0; j < tmp; j++) {
-      if((data(0,j) == vertices[i].x()) &&
-         (data(1,j) == vertices[i].y()) &&
-         (data(2,j) == vertices[i].z())) {
-        okay = false;
-        break;
-      }
-    }
-    if (okay) {
-      data(0,tmp) = vertices[i].x();
-      data(1,tmp) = vertices[i].y();
-      data(2,tmp) = vertices[i].z();
-      tmp++;
-    }
-  }
-  num_vertices = tmp;
 
-  // Compute the empirical means
   fullVector<double> mean(3);
   fullVector<double> vmins(3);
   fullVector<double> vmaxs(3);
-  for (int i = 0; i < 3; i++) {
-    mean(i) = 0;
-    vmins(i) = DBL_MAX;
-    vmaxs(i) = -DBL_MAX;
-    for (int j = 0; j < num_vertices; j++) {
-      mean(i) += data(i,j);
-      vmaxs(i) =std::max(vmaxs(i),data(i,j));
-      vmins(i) = std::min(vmins(i),data(i,j));
+
+  mean.setAll(0);
+  vmins.setAll(DBL_MAX);
+  vmaxs.setAll(-DBL_MAX);
+
+  size_t idx = 0;
+  for (std::set<SPoint3>::iterator uIter=unique.begin();uIter!=unique.end();++uIter) {
+    
+    const SPoint3& pp = *uIter;
+    for (int d=0;d<3;d++) {
+      data(d,idx) = pp[d];
+      vmins(d) = std::min(vmins(d),pp[d]);
+      vmaxs(d) = std::max(vmaxs(d),pp[d]);
+      mean(d) += pp[d];
     }
-    mean(i) /= (double)num_vertices;
+    idx++;
   }
 
+  for (int i=0;i<3;i++) mean(i) /= num_vertices;
+  
   // Get the deviation from the mean
   fullMatrix<double> B(3,num_vertices);
   for (int i = 0; i < 3; i++) {
@@ -555,6 +550,7 @@ SOrientedBoundingBox* SOrientedBoundingBox::buildOBB(std::vector<SPoint3> vertic
 
   Msg::Info("Volume : %f", size[0]*size[1]*size[2]);
   */
+
   return (new SOrientedBoundingBox(center,
           size[0], size[1], size[2], Axis1, Axis2, Axis3));
 #else

@@ -199,7 +199,7 @@ class GEdge : public GEntity {
   
   // compute the parameter U from a point XYZ
   virtual bool XYZToU(const double X, const double Y, const double Z,
-                      double &U, const double relax=1) const;
+                      double &U, const double relax=1,bool first=true) const;
 
   // compound
   void setCompound(GEdgeCompound *gec) { compound = gec; }

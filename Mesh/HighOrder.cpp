@@ -294,11 +294,15 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
     const bool increasing = getMinMaxVert(veOld[0], veOld[1], vMin, vMax);
     std::pair<MVertex*, MVertex*> p(vMin, vMax);
     std::vector<MVertex*> veEdge;
-    if(edgeVertices.count(p)) { // Vertices already exist
+
+    edgeContainer::iterator eIter = edgeVertices.find(p);
+
+    if(eIter!=edgeVertices.end()) { // Vertices already exist
+      std::vector<MVertex*>& eVtcs = eIter->second;
       if(increasing)
-        veEdge.assign(edgeVertices[p].begin(), edgeVertices[p].end());
+        veEdge.assign(eVtcs.begin(), eVtcs.end());
       else
-        veEdge.assign(edgeVertices[p].rbegin(), edgeVertices[p].rend());
+        veEdge.assign(eVtcs.rbegin(), eVtcs.rend());
     }
     else { // Vertices do not exist, create them
       // Get vertices on geometry if asked
@@ -310,10 +314,13 @@ static void getEdgeVertices(GFace *gf, MElement *ele, std::vector<MVertex*> &ve,
         interpVerticesInExistingEdge(gf, &edgeEl, veEdge, nPts);
       }
       newHOVert.insert(newHOVert.end(), veEdge.begin(), veEdge.end());
+
+      std::vector<MVertex*>& eVtcs = edgeVertices[p];
+
       if(increasing) // Add newly created vertices to list
-        edgeVertices[p].insert(edgeVertices[p].end(), veEdge.begin(), veEdge.end());
+        eVtcs.insert(eVtcs.end(), veEdge.begin(), veEdge.end());
       else
-        edgeVertices[p].insert(edgeVertices[p].end(), veEdge.rbegin(), veEdge.rend());
+        eVtcs.insert(eVtcs.end(), veEdge.rbegin(), veEdge.rend());
     }
     ve.insert(ve.end(), veEdge.begin(), veEdge.end());
   }

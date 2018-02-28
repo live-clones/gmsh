@@ -658,30 +658,11 @@ static bool apply_periodicity (std::vector<Pair<GEType*, GEType*> >& eCor)
 
   int dim = -1;
 
-  unsigned idx = 1;
   for (;srcIter!=eMap.end();++srcIter) {
-    
-    GEType* newSrc = srcIter->first;
     GEType* newTgt = srcIter->second;
     newTgt->updateCorrespondingVertices();
     newTgt->alignElementsWithMaster();
-
     if (dim == -1) dim = newTgt->dim();
-
-    switch(dim) {
-    case 0:
-      Msg::Info("Matched new periodic node %i with %i (%i on %i)",
-                newTgt->tag(),newSrc->tag(),idx++,eMap.size());
-      break;
-    case 1:
-      Msg::Info("Matched new periodic edge %i with %i (%i on %i)",
-                newTgt->tag(),newSrc->tag(),idx++,eMap.size());
-      break;
-    case 2:
-      Msg::Info("Matched new periodic face %i with %i (%i on %i)",
-                newTgt->tag(),newSrc->tag(),idx++,eMap.size());
-      break;
-    }
   }
 
   if (dim<2) { // required for multiple periodic directions
@@ -883,14 +864,18 @@ int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
   std::map<MVertex*,MVertex*> _mesh_to_geom;
   
   if (ok) {
-
-    copy_vertices(geom,mesh,_mesh_to_geom,coresp_v,coresp_e,coresp_f,coresp_r);
-    copy_elements(geom,mesh,_mesh_to_geom,coresp_v,coresp_e,coresp_f,coresp_r);
     
+    copy_vertices(geom,mesh,_mesh_to_geom,coresp_v,coresp_e,coresp_f,coresp_r);
+    
+    double t00 = Cpu();
+    copy_elements(geom,mesh,_mesh_to_geom,coresp_v,coresp_e,coresp_f,coresp_r);
+    Msg::Info("Copying mesh elements to CAD model entities took %g s",Cpu()-t00);
+    
+    t00 = Cpu();
     if (!apply_periodicity(*coresp_v)) copy_periodicity(*coresp_v,_mesh_to_geom);
     if (!apply_periodicity(*coresp_e)) copy_periodicity(*coresp_e,_mesh_to_geom);
     if (!apply_periodicity(*coresp_f)) copy_periodicity(*coresp_f,_mesh_to_geom);
-  
+    Msg::Info("Applying periodicity to CAD model entities took %g s",Cpu()-t00);
   }
   
   if (coresp_v) delete coresp_v;
@@ -898,7 +883,7 @@ int GeomMeshMatcher::match(GModel *geom, GModel *mesh)
   if (coresp_f) delete coresp_f;
   if (coresp_r) delete coresp_r;
 
-  if (ok) Msg::StatusBar(true,"Matched successfully mesh to CAD",Cpu()-t1);
+  if (ok) Msg::StatusBar(true,"Matched successfully mesh to CAD in %g s",Cpu()-t1);
   else    Msg::Error("Failed to match mesh to CAD, please check");
   
 

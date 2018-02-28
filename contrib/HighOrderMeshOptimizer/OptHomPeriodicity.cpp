@@ -114,11 +114,6 @@ void OptHomPeriodicity::_relocateMasterVertices()
           
           GEdge* me = dynamic_cast<GEdge*>(master);
           GEdge* se = dynamic_cast<GEdge*>(slave); 
-
-          // std::cout << "Copying "
-          //           << slave->correspondingVertices.size()  << " main and " 
-          //           << slave->correspondingHOPoints.size() << " ho points from " 
-          //           << slave->tag() << " to " << master->tag() << std::endl;
           
           Msg::Info("Relocating %d main and %d high order vertices for %d points "
                     "of master edge %i (%i-%i) using slave %i (%i-%i)",

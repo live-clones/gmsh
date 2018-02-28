@@ -523,9 +523,9 @@ bool GEdge::refineProjection(const SVector3& Q,
 }
 
 bool GEdge::XYZToU(const double X, const double Y, const double Z,
-                   double &u, const double relax) const
+                   double &u, const double relax,bool first) const
 {
-  const int MaxIter = 250;
+  const int MaxIter = 25;
   const int NumInitGuess = 21;
   
   std::map<double,double> errorVsParameter;
@@ -547,29 +547,15 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
     errorVsParameter[err] = uTry;
   }
   
-  // double uTry;
-  // GPoint closest = closestPoint(SPoint3(Q.x(),Q.y(),Q.z()),uTry);
-
-  // Msg::Info("Projecting point %g,%g,%g on edge %d : trying closest point"
-  //           " (%g,%g,%g) at parameter %g",
-  //           X,Y,Z,tag(),closest.x(),closest.y(),closest.z(),uTry);
-  
-  // if (refineProjection(Q,uTry,MaxIter,relax,tol,err)) {u = uTry; return true;}
-
-  // errorVsParameter[err] = uTry;
-
   if(relax > 1.e-1) {
-    // Msg::Info("Projecting point (%g,%g,%g) on edge %d : "
-    //           "Changed relaxation factor to %g, current error = %g (tol = %g)",
-    // X, Y, Z, tag(), 0.75 * relax,err,tol*CTX::instance()->lc);
-    if (XYZToU(X, Y, Z, uTry, 0.75 * relax)) {u = uTry; return true;}
+    if (XYZToU(X, Y, Z, uTry, 0.75 * relax,false)) {u = uTry; return true;}
     SVector3 P = position(uTry);
     SVector3 dPQ = P - Q;
     errorVsParameter[dPQ.norm()] = uTry;
   }
 
   u = errorVsParameter.begin()->second;
-  if (relax == 1) {
+  if (first) {
     Msg::Warning("Could not converge parametrisation of (%g,%g,%g) on edge %d, "
                  "taking parameter with lowest error ",X, Y, Z, tag());
   }
