@@ -45,7 +45,7 @@ Point(24)= { 0, h1+h3+h4+R2, 0, Lc2}; Point(25)= { 0, h1+h3-R2,    0, Lc2};
 Line(1)  = {1 , 17};
 Line(2)  = {17, 16};
 
-// Gmsh provides other curve primitives than stright lines: splines, B-splines,
+// Gmsh provides other curve primitives than straight lines: splines, B-splines,
 // circle arcs, ellipse arcs, etc. Here we define a new circle arc, starting at
 // point 14 and ending at point 16, with the circle's center being the point 15:
 
@@ -62,16 +62,16 @@ Circle(16) = {21,20,24}; Circle(17) = {24,20,19};
 Circle(18) = {18,23,25}; Circle(19) = {25,23,22};
 Line(20) = {21,22};
 
-Line Loop(21) = {17,-15,18,19,-20,16};
+Curve Loop(21) = {17,-15,18,19,-20,16};
 Plane Surface(22) = {21};
 
 // But we still need to define the exterior surface. Since this surface has a
-// hole, its definition now requires two lines loops:
+// hole, its definition now requires two curves loops:
 
-Line Loop(23) = {11,-12,13,14,1,2,-3,4,5,6,7,-8,9,10};
+Curve Loop(23) = {11,-12,13,14,1,2,-3,4,5,6,7,-8,9,10};
 Plane Surface(24) = {23,21};
 
-// As a general rule, if a surface has N holes, it is defined by N+1 line loops:
+// As a general rule, if a surface has N holes, it is defined by N+1 curve loops:
 // the first loop defines the exterior boundary; the other loops define the
 // boundaries of the holes.
 
@@ -108,12 +108,12 @@ View "comments" {
 // Views and geometrical entities can be made to respond to double-click events:
 
 View[0].DoubleClickedCommand = "Printf('View[0] has been double-clicked!');";
-Geometry.DoubleClickedLineCommand = "Printf('Line %g has been double-clicked!',
+Geometry.DoubleClickedLineCommand = "Printf('Curve %g has been double-clicked!',
   Geometry.DoubleClickedEntityTag);";
 
 // We can also change the color of some mesh entities:
 
 Color Grey50{ Surface{ 22 }; }
 Color Purple{ Surface{ 24 }; }
-Color Red{ Line{ 1:14 }; }
-Color Yellow{ Line{ 15:20 }; }
+Color Red{ Curve{ 1:14 }; }
+Color Yellow{ Curve{ 15:20 }; }

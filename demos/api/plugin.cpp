@@ -9,11 +9,11 @@ int main(int argc, char **argv)
   // Copied from discrete.cpp...
   gmsh::model::add("test");
   gmsh::model::addDiscreteEntity(2, 1);
-  gmsh::model::mesh::setVertices(2, 1, {1, 2, 3, 4},
-                                 {0., 0., 0.,
-                                  1., 0., 0.,
-                                  1., 1., 0.,
-                                  0., 1., 0.});
+  gmsh::model::mesh::setNodes(2, 1, {1, 2, 3, 4},
+                              {0., 0., 0.,
+                               1., 0., 0.,
+                               1., 1., 0.,
+                               0., 1., 0.});
   gmsh::model::mesh::setElements(2, 1, {2}, {{1, 2}},
                                  {{1, 2, 3,
                                    1, 3, 4}});
@@ -62,4 +62,3 @@ int main(int argc, char **argv)
   gmsh::finalize();
   return 0;
 }
-

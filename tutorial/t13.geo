@@ -18,7 +18,7 @@ General.MeshDiscrete = 1;
 // in Gmsh, so that we could split it along sharp geometrical features.
 Merge "t13_data.msh";
 
-// We can now define a compound line (resp. surface) for each discrete line
+// We can now define a compound curve (resp. surface) for each discrete curve
 // (resp. surface) in the model
 ss[] = Surface {:};
 

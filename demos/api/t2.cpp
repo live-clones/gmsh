@@ -26,7 +26,7 @@ int main(int argc, char **argv)
   factory::addLine(3, 2, 2);
   factory::addLine(3, 4, 3);
   factory::addLine(4, 1, 4);
-  factory::addLineLoop({4, 1, -2, 3}, 1);
+  factory::addCurveLoop({4, 1, -2, 3}, 1);
   factory::addPlaneSurface({1}, 1);
   model::addPhysicalGroup(0, {1, 2}, 1);
   model::addPhysicalGroup(1, {1, 2}, 2);
@@ -52,7 +52,7 @@ int main(int argc, char **argv)
 
   factory::addLine(3, ov[0].second, 7);
   factory::addLine(ov[0].second, 5, 8);
-  factory::addLineLoop({5,-8,-7,3}, 10);
+  factory::addCurveLoop({5,-8,-7,3}, 10);
   factory::addPlaneSurface({10}, 11);
 
   factory::copy({{2, 1}, {2, 11}}, ov);
@@ -74,19 +74,19 @@ int main(int argc, char **argv)
   factory::addLine(101, 102, 116);
   factory::addLine(102, 103, 117);
 
-  factory::addLineLoop({115, -111, 3, 110}, 118);
+  factory::addCurveLoop({115, -111, 3, 110}, 118);
   factory::addPlaneSurface({118}, 119);
-  factory::addLineLoop({111, 116, -112, -7}, 120);
+  factory::addCurveLoop({111, 116, -112, -7}, 120);
   factory::addPlaneSurface({120}, 121);
-  factory::addLineLoop({112, 117, -113, -8}, 122);
+  factory::addCurveLoop({112, 117, -113, -8}, 122);
   factory::addPlaneSurface({122}, 123);
-  factory::addLineLoop({114, -110, 5, 113}, 124);
+  factory::addCurveLoop({114, -110, 5, 113}, 124);
   factory::addPlaneSurface({124}, 125);
-  factory::addLineLoop({115, 116, 117, 114}, 126);
+  factory::addCurveLoop({115, 116, 117, 114}, 126);
   factory::addPlaneSurface({126}, 127);
 
   // The API to create surface loops ("shells") and volumes is similar to the
-  // one used to create line loops and surfaces.
+  // one used to create curve loops and surfaces.
   factory::addSurfaceLoop({127, 119, 121, 123, 125, 11}, 128);
   factory::addVolume({128}, 129);
 

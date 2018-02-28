@@ -12,7 +12,7 @@
 
 Include "t1.geo";
 
-// We can then add new points and lines in the same way as we did in `t1.geo':
+// We can then add new points and curves in the same way as we did in `t1.geo':
 
 Point(5) = {0, .4, 0, lc};
 Line(5) = {4, 5};
@@ -35,7 +35,7 @@ Translate {0, 0.1, 0} { Duplicata{ Point{3}; } }
 
 Line(7) = {3, 6};
 Line(8) = {6, 5};
-Line Loop(10) = {5,-8,-7,3};
+Curve Loop(10) = {5,-8,-7,3};
 Plane Surface(11) = {10};
 
 // Using the graphical user interface to obtain the ids of newly created
@@ -58,7 +58,7 @@ Printf("New surfaces '%g' and '%g'", my_new_surfs[0], my_new_surfs[1]);
 // mylist[2]};). Note that list indexing starts at 0.
 
 // Volumes are the fourth type of elementary entities in Gmsh. In the same way
-// one defines line loops to build surfaces, one has to define surface loops
+// one defines curve loops to build surfaces, one has to define surface loops
 // (i.e. `shells') to build volumes. The following volume does not have holes
 // and thus consists of a single surface loop:
 
@@ -70,20 +70,20 @@ Line(112) = {6, 102};   Line(113) = {5, 103};
 Line(114) = {103, 100}; Line(115) = {100, 101};
 Line(116) = {101, 102}; Line(117) = {102, 103};
 
-Line Loop(118) = {115, -111, 3, 110};  Plane Surface(119) = {118};
-Line Loop(120) = {111, 116, -112, -7}; Plane Surface(121) = {120};
-Line Loop(122) = {112, 117, -113, -8}; Plane Surface(123) = {122};
-Line Loop(124) = {114, -110, 5, 113};  Plane Surface(125) = {124};
-Line Loop(126) = {115, 116, 117, 114}; Plane Surface(127) = {126};
+Curve Loop(118) = {115, -111, 3, 110};  Plane Surface(119) = {118};
+Curve Loop(120) = {111, 116, -112, -7}; Plane Surface(121) = {120};
+Curve Loop(122) = {112, 117, -113, -8}; Plane Surface(123) = {122};
+Curve Loop(124) = {114, -110, 5, 113};  Plane Surface(125) = {124};
+Curve Loop(126) = {115, 116, 117, 114}; Plane Surface(127) = {126};
 
 Surface Loop(128) = {127, 119, 121, 123, 125, 11};
 Volume(129) = {128};
 
 // When a volume can be extruded from a surface, it is usually easier to use the
-// Extrude command directly instead of creating all the points, lines and
+// Extrude command directly instead of creating all the points, curves and
 // surfaces by hand. For example, the following command extrudes the surface 11
 // along the z axis and automatically creates a new volume (as well as all the
-// needed points, lines and surfaces):
+// needed points, curves and surfaces):
 
 Extrude {0, 0, 0.12} { Surface{my_new_surfs[1]}; }
 
@@ -104,4 +104,4 @@ Characteristic Length {103, 105, 109, 102, 28, 24, 6, 5} = lc * 3;
 // To save all the tetrahedra discretizing the volumes 129 and 130 with a common
 // region number, we finally define a physical volume:
 
-Physical Volume ("The volume", 1) = {129,130};
+Physical Volume("The volume", 1) = {129,130};

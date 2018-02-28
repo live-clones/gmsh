@@ -821,8 +821,8 @@ int FlGui::testGlobalShortcuts(int event)
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 'l')) {
-    opt_geometry_lines
-      (0, GMSH_SET | GMSH_GUI, !opt_geometry_lines(0, GMSH_GET, 0));
+    opt_geometry_curves
+      (0, GMSH_SET | GMSH_GUI, !opt_geometry_curves(0, GMSH_GET, 0));
     status = 2;
   }
   else if(Fl::test_shortcut(FL_ALT + 's')) {

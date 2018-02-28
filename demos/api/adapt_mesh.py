@@ -13,7 +13,7 @@ def triangle_max_edge(x):
 class Mesh:
 
     def __init__(self):
-        self.vtags, vxyz, _ = gmsh.model.mesh.getVertices()
+        self.vtags, vxyz, _ = gmsh.model.mesh.getNodes()
         self.vxyz = vxyz.reshape((-1,3))
         vmap = dict({j:i for i,j in enumerate(self.vtags)})
         self.triangles_tags, evtags = gmsh.model.mesh.getElementsByType(2)
@@ -27,7 +27,7 @@ def my_function(xyz):
     return f
 
 
-def compute_interpolation_error(vertices, triangles, f):
+def compute_interpolation_error(nodes, triangles, f):
     quvwo,qdata,fnum,sf = gmsh.model.mesh.getIntegrationDataByType(2,"Gauss2", "Lagrange")
     weights = quvwo.reshape([-1,4])[:,3]
     sf = sf.reshape((weights.shape[0],-1))
@@ -35,14 +35,14 @@ def compute_interpolation_error(vertices, triangles, f):
     qx = qd[:,:,:3]
     det = np.abs(qd[:,:,3])
 
-    f_vert = f(vertices)
+    f_vert = f(nodes)
     f_fem = np.dot(f_vert[triangles],sf)
     err_tri = np.sum((f_fem-f(qx))**2*det*weights,1)
     return f_vert, np.sqrt(err_tri)
 
 
-def compute_size_field(vertices, triangles, err, N):
-    x = vertices[triangles]
+def compute_size_field(nodes, triangles, err, N):
+    x = nodes[triangles]
     a = 2.
     d = 2.
     fact = (a**((2.+a)/(1.+a)) + a**(1./(1.+a))) * np.sum(err**(2./(1.+a)))

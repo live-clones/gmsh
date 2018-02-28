@@ -21,13 +21,13 @@ Point(5) = {0.02, 0.02, 0, lc};
 Point{5} In Surface{1};
 
 // In the same way, one can force a curve to be embedded in the 2D mesh using
-// the "Line in Surface" command:
+// the "Curve in Surface" command:
 Point(6) = {0.02, 0.12, 0, lc};
 Point(7) = {0.04, 0.18, 0, lc};
 Line(5) = {6, 7};
-Line{5} In Surface{1};
+Curve{5} In Surface{1};
 
-// One can also embed points and lines in a volume using the "Line/Point In
+// One can also embed points and curves in a volume using the "Curve/Point In
 // Volume" commands:
 Extrude {0, 0, 0.1}{ Surface {1}; }
 
@@ -38,7 +38,7 @@ Point{p} In Volume {1};
 l = newl;
 Point(p+1) = {0.025, 0.15, 0.025, lc};
 Line(l) = {7, p+1};
-Line{l} In Volume {1};
+Curve{l} In Volume {1};
 
 // Finally, one can also embed a surface in a volume using the "Surface In
 // Volume" command:
@@ -51,7 +51,7 @@ Line(l+2) = {p+3, p+4};
 Line(l+3) = {p+4, p+5};
 Line(l+4) = {p+5, p+2};
 ll = newll;
-Line Loop(ll) = {l+1:l+4};
+Curve Loop(ll) = {l+1:l+4};
 s = news;
 Plane Surface(s) = {ll};
 Surface{s} In Volume{1};

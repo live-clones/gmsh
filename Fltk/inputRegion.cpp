@@ -67,12 +67,12 @@ void inputRegion::_add_butt_cb(Fl_Widget *w, void *data)
   inputRegion *b = (inputRegion*)data;
 
   int oldp = opt_geometry_points(0, GMSH_GET, 0);
-  int oldl = opt_geometry_lines(0, GMSH_GET, 0);
+  int oldl = opt_geometry_curves(0, GMSH_GET, 0);
   int olds = opt_geometry_surfaces(0, GMSH_GET, 0);
   int oldv = opt_geometry_volumes(0, GMSH_GET, 0);
 
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+  opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
   drawContext::global()->draw();
@@ -102,7 +102,7 @@ void inputRegion::_add_butt_cb(Fl_Widget *w, void *data)
 
   GModel::current()->setSelection(0);
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, oldp);
-  opt_geometry_lines(0, GMSH_SET | GMSH_GUI, oldl);
+  opt_geometry_curves(0, GMSH_SET | GMSH_GUI, oldl);
   opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, olds);
   opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, oldv);
   drawContext::global()->draw();

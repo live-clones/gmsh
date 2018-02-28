@@ -2,9 +2,10 @@
 @ftable @code
 @item initialize
 Initializes Gmsh. This must be called before any call to the other functions in
-the API. If argc and argv are provided, they will be handled in the same way as
-the command line arguments in the Gmsh app. If @code{readConfigFiles} is set,
-reads system Gmsh configuration files (gmshrc and gmsh-options).
+the API. If @code{argc} and @code{argv} are provided, they will be handled in
+the same way as the command line arguments in the Gmsh app. If
+@code{readConfigFiles} is set, reads system Gmsh configuration files (gmshrc and
+gmsh-options).
 
 @table @asis
 @item Input:
@@ -394,8 +395,8 @@ Sets the order of the elements in the mesh of the current model to @code{order}.
 -
 @end table
 
-@item removeDuplicateVertices
-Removes duplicate mesh vertices in the mesh of the current model.
+@item removeDuplicateNodes
+Removes duplicate mesh nodes in the mesh of the current model.
 
 @table @asis
 @item Input:
@@ -419,35 +420,35 @@ populated by the new 3D meshing algorithms.
 -
 @end table
 
-@item getLastVertexError
-Gets the last mesh vertices (if any) where a meshing error occurred. Currently
-only populated by the new 3D meshing algorithms.
+@item getLastNodeError
+Gets the last mesh nodes (if any) where a meshing error occurred. Currently only
+populated by the new 3D meshing algorithms.
 
 @table @asis
 @item Input:
 -
 @item Output:
-@code{vertexTags}
+@code{nodeTags}
 @item Return:
 -
 @end table
 
-@item getVertices
-Gets the mesh vertices of the entity of dimension @code{dim} and @code{tag} tag.
-If @code{tag} < 0, gets the vertices for all entities of dimension @code{dim}.
-If @code{dim} and @code{tag} are negative, gets all the vertices in the mesh.
-@code{vertexTags} contains the vertex tags (their unique, strictly positive
+@item getNodes
+Gets the mesh nodes of the entity of dimension @code{dim} and @code{tag} tag. If
+@code{tag} < 0, gets the nodes for all entities of dimension @code{dim}. If
+@code{dim} and @code{tag} are negative, gets all the nodes in the mesh.
+@code{nodeTags} contains the node tags (their unique, strictly positive
 identification numbers). @code{coord} is a vector of length 3 times the length
-of @code{vertexTags} that contains the (x, y, z) coordinates of the vertices,
+of @code{nodeTags} that contains the (x, y, z) coordinates of the nodes,
 concatenated. If @code{dim} >= 0, @code{parametricCoord} contains the parametric
-coordinates of the vertices, if available. The length of @code{parametricCoord}
-can be 0 or @code{dim} times the length of @code{vertexTags}.
+coordinates of the nodes, if available. The length of @code{parametricCoord} can
+be 0 or @code{dim} times the length of @code{nodeTags}.
 
 @table @asis
 @item Input:
 @code{dim}, @code{tag}
 @item Output:
-@code{vertexTags}, @code{coord}, @code{parametricCoord}
+@code{nodeTags}, @code{coord}, @code{parametricCoord}
 @item Return:
 -
 @end table
@@ -461,16 +462,16 @@ If @code{dim} and @code{tag} are negative, gets all the elements in the mesh.
 given element type). @code{elementTags} is a vector of the same length as
 @code{elementTypes}; each entry is a vector containing the tags (unique,
 strictly positive identifiers) of the elements of the corresponding type.
-@code{vertexTags} is also a vector of the same length as @code{elementTypes};
-each entry is a vector of length equal to the number of elements of the given
-type times the number of vertices for this type of element, that contains the
-vertex tags of all the elements of the given type, concatenated.
+@code{nodeTags} is also a vector of the same length as @code{elementTypes}; each
+entry is a vector of length equal to the number of elements of the given type
+times the number of nodes for this type of element, that contains the node tags
+of all the elements of the given type, concatenated.
 
 @table @asis
 @item Input:
 @code{dim}, @code{tag}
 @item Output:
-@code{elementTypes}, @code{elementTags}, @code{vertexTags}
+@code{elementTypes}, @code{elementTags}, @code{nodeTags}
 @item Return:
 -
 @end table
@@ -478,14 +479,14 @@ vertex tags of all the elements of the given type, concatenated.
 @item getElementProperties
 Gets the properties of an element of type @code{elementType}: its name
 (@code{elementName}), dimension (@code{dim}), order (@code{order}), number of
-vertices (@code{numVertices}) and parametric coordinates of vertices
-(@code{parametricCoord} vector, of length @code{dim} times @code{numVertices}).
+nodes (@code{numNodes}) and parametric coordinates of nodes
+(@code{parametricCoord} vector, of length @code{dim} times @code{numNodes}).
 
 @table @asis
 @item Input:
 @code{elementType}
 @item Output:
-@code{elementName}, @code{dim}, @code{order}, @code{numVertices}, @code{parametricCoord}
+@code{elementName}, @code{dim}, @code{order}, @code{numNodes}, @code{parametricCoord}
 @item Return:
 -
 @end table
@@ -540,7 +541,7 @@ Gets the mesh elements in the same way as @code{getElements}, but for a single
 @item Input:
 @code{elementType}, @code{dim}, @code{tag}
 @item Output:
-@code{elementTags}, @code{vertexTags}
+@code{elementTags}, @code{nodeTags}
 @item Return:
 -
 @end table
@@ -558,19 +559,18 @@ Gets the integration data for mesh elements in the same way as
 -
 @end table
 
-@item setVertices
-Sets the mesh vertices in the geometrical entity of dimension @code{dim} and tag
-@code{tag}. @code{vertextags} contains the vertex tags (their unique, strictly
+@item setNodes
+Sets the mesh nodes in the geometrical entity of dimension @code{dim} and tag
+@code{tag}. @code{nodetags} contains the node tags (their unique, strictly
 positive identification numbers). @code{coord} is a vector of length 3 times the
-length of @code{vertexTags} that contains the (x, y, z) coordinates of the
-vertices, concatenated. The optional @code{parametricCoord} vector contains the
-parametric coordinates of the vertices, if any. The length of
-@code{parametricCoord} can be 0 or @code{dim} times the length of
-@code{vertexTags}.
+length of @code{nodeTags} that contains the (x, y, z) coordinates of the nodes,
+concatenated. The optional @code{parametricCoord} vector contains the parametric
+coordinates of the nodes, if any. The length of @code{parametricCoord} can be 0
+or @code{dim} times the length of @code{nodeTags}.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}, @code{vertexTags}, @code{coord}, @code{parametricCoord}
+@code{dim}, @code{tag}, @code{nodeTags}, @code{coord}, @code{parametricCoord}
 @item Output:
 -
 @item Return:
@@ -583,23 +583,23 @@ Sets the mesh elements of the entity of dimension @code{dim} and @code{tag} tag.
 triangles: see the Gmsh reference manual). @code{elementTags} is a vector of the
 same length as @code{types}; each entry is a vector containing the tags (unique,
 strictly positive identifiers) of the elements of the corresponding type.
-@code{vertexTags} is also a vector of the same length as @code{types}; each
-entry is a vector of length equal to the number of elements of the give type
-times the number of vertices per element, that contains the vertex tags of all
-the elements of the given type, concatenated.
+@code{nodeTags} is also a vector of the same length as @code{types}; each entry
+is a vector of length equal to the number of elements of the give type times the
+number of nodes per element, that contains the node tags of all the elements of
+the given type, concatenated.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}, @code{types}, @code{elementTags}, @code{vertexTags}
+@code{dim}, @code{tag}, @code{types}, @code{elementTags}, @code{nodeTags}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item reclassifyVertices
-Redistribute all mesh vertices on their associated geometrical entity, based on
-the mesh elements. Can be used when importing mesh vertices in bulk (e.g. by
+@item reclassifyNodes
+Redistributes all mesh nodes on their associated geometrical entity, based on
+the mesh elements. Can be used when importing mesh nodes in bulk (e.g. by
 associating them all to a single volume), to reclassify them correctly on model
 surfaces, curves, etc.
 
@@ -612,17 +612,17 @@ surfaces, curves, etc.
 -
 @end table
 
-@item getVertex
-Gets the coordinates and the parametric coordinates (if any) of the mesh vertex
-with tag @code{tag}. This is a useful by inefficient way of accessing mesh
-vertex data, as it relies on a cache stored in the model. For large meshes all
-the vertices in the model should be numbered in a continuous sequence of tags
-from 1 to N to maintain reasonnable performance (in this case the internal cache
-is based on a vector; otherwise it uses a map).
+@item getNode
+Gets the coordinates and the parametric coordinates (if any) of the mesh node
+with tag @code{tag}. This is a useful by inefficient way of accessing mesh node
+data, as it relies on a cache stored in the model. For large meshes all the
+nodes in the model should be numbered in a continuous sequence of tags from 1 to
+N to maintain reasonnable performance (in this case the internal cache is based
+on a vector; otherwise it uses a map).
 
 @table @asis
 @item Input:
-@code{vertexTag}
+@code{nodeTag}
 @item Output:
 @code{coord}, @code{parametricCoord}
 @item Return:
@@ -630,7 +630,7 @@ is based on a vector; otherwise it uses a map).
 @end table
 
 @item getElement
-Gets the type and vertex tags of the mesh element with tag @code{tag}. This is a
+Gets the type and node tags of the mesh element with tag @code{tag}. This is a
 useful but inefficient way of accessing mesh element data, as it relies on a
 cache stored in the model. For large meshes all the elements in the model should
 be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable
@@ -641,7 +641,7 @@ uses a map).
 @item Input:
 @code{elementTag}
 @item Output:
-@code{type}, @code{vertexTags}
+@code{type}, @code{nodeTags}
 @item Return:
 -
 @end table
@@ -659,16 +659,15 @@ Currently only entities of dimension 0 (points) are handled.
 -
 @end table
 
-@item setTransfiniteLine
-Sets a transfinite meshing constraint on the line @code{tag}, with
-@code{numVertices} mesh vertices distributed according to @code{type} and
-@code{coef}. Currently supported types are "Progression" (geometrical
-progression with power @code{coef}) and "Bump" (refinement toward both
-extreminties of the line).
+@item setTransfiniteCurve
+Sets a transfinite meshing constraint on the curve @code{tag}, with
+@code{numNodes} mesh nodes distributed according to @code{type} and @code{coef}.
+Currently supported types are "Progression" (geometrical progression with power
+@code{coef}) and "Bump" (refinement toward both extremities of the curve).
 
 @table @asis
 @item Input:
-@code{tag}, @code{numVertices}, @code{type}, @code{coef}
+@code{tag}, @code{numNodes}, @code{type}, @code{coef}
 @item Output:
 -
 @item Return:
@@ -969,13 +968,13 @@ automatically.  Returns the tag of the Bezier curve.
 integer
 @end table
 
-@item addLineLoop
-Adds a line loop (a closed wire) formed by the curves @code{curveTags}.
+@item addCurveLoop
+Adds a curve loop (a closed wire) formed by the curves @code{curveTags}.
 @code{curveTags} should contain (signed) tags of geometrical enties of dimension
 1 forming a closed loop: a negative tag signifies that the underlying curve is
 considered with reversed orientation. If @code{tag} is positive, sets the tag
 explicitly; otherwise a new tag is selected automatically. Returns the tag of
-the line loop.
+the curve loop.
 
 @table @asis
 @item Input:
@@ -987,10 +986,10 @@ integer
 @end table
 
 @item addPlaneSurface
-Adds a plane surface defined by one or more line loops @code{wireTags}. The
-first line loop defines the exterior contour; additional line loop define holes.
-If @code{tag} is positive, sets the tag explicitly; otherwise a new tag is
-selected automatically. Returns the tag of the surface.
+Adds a plane surface defined by one or more curve loops @code{wireTags}. The
+first curve loop defines the exterior contour; additional curve loop define
+holes. If @code{tag} is positive, sets the tag explicitly; otherwise a new tag
+is selected automatically. Returns the tag of the surface.
 
 @table @asis
 @item Input:
@@ -1002,8 +1001,8 @@ integer
 @end table
 
 @item addSurfaceFilling
-Adds a surface filling the line loops in @code{wireTags}. Currently only a
-single line loop is supported; this line loop should be composed by 3 or 4
+Adds a surface filling the curve loops in @code{wireTags}. Currently only a
+single curve loop is supported; this curve loop should be composed by 3 or 4
 curves only. If @code{tag} is positive, sets the tag explicitly; otherwise a new
 tag is selected automatically. Returns the tag of the surface.
 
@@ -1224,12 +1223,11 @@ Currently only entities of dimension 0 (points) are handled.
 -
 @end table
 
-@item setTransfiniteLine
-Sets a transfinite meshing constraint on the line @code{tag}, with
-@code{numVertices} mesh vertices distributed according to @code{type} and
-@code{coef}. Currently supported types are "Progression" (geometrical
-progression with power @code{coef}) and "Bump" (refinement toward both
-extreminties of the line).
+@item setTransfiniteCurve
+Sets a transfinite meshing constraint on the curve @code{tag}, with
+@code{numNodes} mesh nodes distributed according to @code{type} and @code{coef}.
+Currently supported types are "Progression" (geometrical progression with power
+@code{coef}) and "Bump" (refinement toward both extreminties of the curve).
 
 @table @asis
 @item Input:
@@ -1474,12 +1472,12 @@ automatically. Returns the tag of the wire.
 integer
 @end table
 
-@item addLineLoop
-Adds a line loop (a closed wire) formed by the curves @code{curveTags}.
+@item addCurveLoop
+Adds a curve loop (a closed wire) formed by the curves @code{curveTags}.
 @code{curveTags} should contain (signed) tags of curves forming a closed loop: a
 negative tag signifies that the underlying curve is considered with reversed
 orientation. If @code{tag} is positive, sets the tag explicitly; otherwise a new
-tag is selected automatically. Returns the tag of the line loop.
+tag is selected automatically. Returns the tag of the curve loop.
 
 @table @asis
 @item Input:
@@ -1522,9 +1520,9 @@ integer
 @end table
 
 @item addPlaneSurface
-Adds a plane surface defined by one or more line loops (or closed wires)
-@code{wireTags}. The first line loop defines the exterior contour; additional
-line loop define holes. If @code{tag} is positive, sets the tag explicitly;
+Adds a plane surface defined by one or more curve loops (or closed wires)
+@code{wireTags}. The first curve loop defines the exterior contour; additional
+curve loop define holes. If @code{tag} is positive, sets the tag explicitly;
 otherwise a new tag is selected automatically. Returns the tag of the surface.
 
 @table @asis
@@ -1537,7 +1535,7 @@ integer
 @end table
 
 @item addSurfaceFilling
-Adds a surface filling the line loops in @code{wireTags}. If @code{tag} is
+Adds a surface filling the curve loops in @code{wireTags}. If @code{tag} is
 positive, sets the tag explicitly; otherwise a new tag is selected
 automatically. Returns the tag of the surface.
 
@@ -2038,7 +2036,7 @@ Adds model-based post-processing data to the view with tag @code{tag}.
 @code{modelName} identifies the model the data is attached to. @code{dataType}
 specifies the type of data, currently either "NodeData", "ElementData" or
 "ElementNodeData". @code{step} specifies the identifier (>= 0) of the data in a
-sequence. @code{tags} gives the tags of the vertices or elements in the mesh to
+sequence. @code{tags} gives the tags of the nodes or elements in the mesh to
 which the data is associated. @code{data} is a vector of the same length as
 @code{tags}: each entry is the vector of double precision numbers representing
 the data associated with the corresponding tag. The optional @code{time}
@@ -2058,7 +2056,7 @@ data. @code{partition} allows to specify data in several sub-sets.
 
 @item getModelData
 Gets model-based post-processing data from the view with tag @code{tag} at step
-@code{step}. Returns the @code{data} associated to the vertices or the elements
+@code{step}. Returns the @code{data} associated to the nodes or the elements
 with tags @code{tags}, as well as the @code{dataType} and the number of
 components @code{numComponents}.
 

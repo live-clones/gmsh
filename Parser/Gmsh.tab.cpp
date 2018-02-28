@@ -164,7 +164,7 @@
      tPoint = 345,
      tCircle = 346,
      tEllipse = 347,
-     tLine = 348,
+     tCurve = 348,
      tSphere = 349,
      tPolarSphere = 350,
      tSurface = 351,
@@ -389,7 +389,7 @@
 #define tPoint 345
 #define tCircle 346
 #define tEllipse 347
-#define tLine 348
+#define tCurve 348
 #define tSphere 349
 #define tPolarSphere 350
 #define tSurface 351
@@ -1504,7 +1504,7 @@ static const char *const yytname[] =
   "tTotalMemory", "tCreateTopology", "tDistanceFunction",
   "tDefineConstant", "tUndefineConstant", "tDefineNumber", "tDefineStruct",
   "tNameStruct", "tDimNameSpace", "tAppend", "tDefineString", "tSetNumber",
-  "tSetString", "tPoint", "tCircle", "tEllipse", "tLine", "tSphere",
+  "tSetString", "tPoint", "tCircle", "tEllipse", "tCurve", "tSphere",
   "tPolarSphere", "tSurface", "tSpline", "tVolume", "tBox", "tCylinder",
   "tCone", "tTorus", "tEllipsoid", "tQuadric", "tShapeFromFile",
   "tRectangle", "tDisk", "tWire", "tGeoEntity", "tCharacteristic",

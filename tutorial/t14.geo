@@ -28,8 +28,8 @@ Line(4) = {2, 3};  Line(5) = {3, 12}; Line(6) = {12, 11};
 Line(7) = {11, 4}; Line(8) = {4, 1};  Line(9) = {5, 6};
 Line(10) = {6, 7}; Line(11) = {7, 8}; Line(12) = {8, 5};
 
-Line Loop(13) = {6, 7, 8, 1, 2, 3, 4, 5};
-Line Loop(14) = {11, 12, 9, 10};
+Curve Loop(13) = {6, 7, 8, 1, 2, 3, 4, 5};
+Curve Loop(14) = {11, 12, 9, 10};
 Plane Surface(15) = {13, 14};
 
 Extrude {0, 0, h}{ Surface{15}; }

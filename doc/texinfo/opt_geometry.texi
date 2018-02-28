@@ -95,12 +95,12 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.LineSelectWidth
-Display width of selected lines (in pixels)@*
+Display width of selected curves (in pixels)@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.LineType
-Display lines as solid color segments (0), 3D cylinders (1) or tapered cylinders (2)@*
+Display curves as solid color segments (0), 3D cylinders (1) or tapered cylinders (2)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

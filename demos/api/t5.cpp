@@ -34,14 +34,14 @@ void cheeseHole(double x, double y, double z, double r, double lc,
   int c11 = factory::addCircleArc(p4,p1,p6);
   int c12 = factory::addCircleArc(p6,p1,p7);
 
-  int l1 = factory::addLineLoop({c5,c10,c4});
-  int l2 = factory::addLineLoop({c9,-c5,c1});
-  int l3 = factory::addLineLoop({c12,-c8,-c1});
-  int l4 = factory::addLineLoop({c8,-c4,c11});
-  int l5 = factory::addLineLoop({-c10,c6,c3});
-  int l6 = factory::addLineLoop({-c11,-c3,c7});
-  int l7 = factory::addLineLoop({-c2,-c7,-c12});
-  int l8 = factory::addLineLoop({-c6,-c9,c2});
+  int l1 = factory::addCurveLoop({c5,c10,c4});
+  int l2 = factory::addCurveLoop({c9,-c5,c1});
+  int l3 = factory::addCurveLoop({c12,-c8,-c1});
+  int l4 = factory::addCurveLoop({c8,-c4,c11});
+  int l5 = factory::addCurveLoop({-c10,c6,c3});
+  int l6 = factory::addCurveLoop({-c11,-c3,c7});
+  int l7 = factory::addCurveLoop({-c2,-c7,-c12});
+  int l8 = factory::addCurveLoop({-c6,-c9,c2});
 
   int s1 = factory::addSurfaceFilling({l1});
   int s2 = factory::addSurfaceFilling({l2});
@@ -104,23 +104,23 @@ int main(int argc, char **argv)
   factory::addLine(7,8, 20);
   factory::addLine(6,14, 21);
 
-  factory::addLineLoop({-11,-19,-15,-18}, 22);
+  factory::addCurveLoop({-11,-19,-15,-18}, 22);
   factory::addPlaneSurface({22}, 23);
-  factory::addLineLoop({16,17,14,15}, 24);
+  factory::addCurveLoop({16,17,14,15}, 24);
   factory::addPlaneSurface({24}, 25);
-  factory::addLineLoop({-17,20,1,5,-21,13}, 26);
+  factory::addCurveLoop({-17,20,1,5,-21,13}, 26);
   factory::addPlaneSurface({26}, 27);
-  factory::addLineLoop({-4,-1,-2,-3}, 28);
+  factory::addCurveLoop({-4,-1,-2,-3}, 28);
   factory::addPlaneSurface({28}, 29);
-  factory::addLineLoop({-7,2,-5,-6}, 30);
+  factory::addCurveLoop({-7,2,-5,-6}, 30);
   factory::addPlaneSurface({30}, 31);
-  factory::addLineLoop({6,-9,10,11,12,21}, 32);
+  factory::addCurveLoop({6,-9,10,11,12,21}, 32);
   factory::addPlaneSurface({32}, 33);
-  factory::addLineLoop({7,3,8,9}, 34);
+  factory::addCurveLoop({7,3,8,9}, 34);
   factory::addPlaneSurface({34}, 35);
-  factory::addLineLoop({-10,18,-16,-20,4,-8}, 36);
+  factory::addCurveLoop({-10,18,-16,-20,4,-8}, 36);
   factory::addPlaneSurface({36}, 37);
-  factory::addLineLoop({-14,-13,-12,19}, 38);
+  factory::addCurveLoop({-14,-13,-12,19}, 38);
   factory::addPlaneSurface({38}, 39);
 
   std::vector<int> shells, volumes;

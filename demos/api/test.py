@@ -20,7 +20,7 @@ factory.addLine(2,3,2)
 factory.addLine(3,4,3)
 line4 = factory.addLine(4,1)
 print("line4 received tag ", line4)
-factory.addLineLoop([1,2,3,line4],1)
+factory.addCurveLoop([1,2,3,line4],1)
 factory.addPlaneSurface([1],6)
 factory.synchronize()
 

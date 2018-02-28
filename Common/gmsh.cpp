@@ -314,7 +314,7 @@ static std::string _getEntityName(int dim, int tag)
   std::stringstream stream;
   switch(dim){
   case 0 : stream << "Point "; break;
-  case 1 : stream << "Line "; break;
+  case 1 : stream << "Curve "; break;
   case 2 : stream << "Surface "; break;
   case 3 : stream << "Volume "; break;
   }
@@ -422,7 +422,7 @@ void gmsh::model::mesh::setOrder(const int order)
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
-void gmsh::model::mesh::removeDuplicateVertices()
+void gmsh::model::mesh::removeDuplicateNodes()
 {
   if(!_isInitialized()){ throw -1; }
   GModel::current()->removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
@@ -438,22 +438,22 @@ void gmsh::model::mesh::getLastEntityError(vector_pair &dimTags)
     dimTags.push_back(std::pair<int, int>(e[i]->dim(), e[i]->tag()));
 }
 
-void gmsh::model::mesh::getLastVertexError(std::vector<int> &vertexTags)
+void gmsh::model::mesh::getLastNodeError(std::vector<int> &nodeTags)
 {
   if(!_isInitialized()){ throw -1; }
   std::vector<MVertex*> v = GModel::current()->getLastMeshVertexError();
-  vertexTags.clear();
+  nodeTags.clear();
   for(unsigned int i = 0; i < v.size(); i++)
-    vertexTags.push_back(v[i]->getNum());
+    nodeTags.push_back(v[i]->getNum());
 }
 
-void gmsh::model::mesh::getVertices(std::vector<int> &vertexTags,
-                                    std::vector<double> &coord,
-                                    std::vector<double> &parametricCoord,
-                                    const int dim, const int tag)
+void gmsh::model::mesh::getNodes(std::vector<int> &nodeTags,
+                                 std::vector<double> &coord,
+                                 std::vector<double> &parametricCoord,
+                                 const int dim, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
-  vertexTags.clear();
+  nodeTags.clear();
   coord.clear();
   parametricCoord.clear();
   std::vector<GEntity*> entities;
@@ -472,7 +472,7 @@ void gmsh::model::mesh::getVertices(std::vector<int> &vertexTags,
     GEntity *ge = entities[i];
     for(unsigned int j = 0; j < ge->mesh_vertices.size(); j++){
       MVertex *v = ge->mesh_vertices[j];
-      vertexTags.push_back(v->getNum());
+      nodeTags.push_back(v->getNum());
       coord.push_back(v->x());
       coord.push_back(v->y());
       coord.push_back(v->z());
@@ -539,7 +539,7 @@ static void _getElementTypeMap(int dim, int tag,
 static void _getElementData(const int elementType,
                             const std::vector<GEntity*> &entities,
                             std::vector<int> &elementTags,
-                            std::vector<int> &vertexTags)
+                            std::vector<int> &nodeTags)
 {
   for(unsigned int i = 0; i < entities.size(); i++){
     GEntity *ge = entities[i];
@@ -548,7 +548,7 @@ static void _getElementData(const int elementType,
       if(e->getTypeForMSH() == elementType){
         elementTags.push_back(e->getNum());
         for(int k = 0; k < e->getNumVertices(); k++){
-          vertexTags.push_back(e->getVertex(k)->getNum());
+          nodeTags.push_back(e->getVertex(k)->getNum());
         }
       }
     }
@@ -557,21 +557,21 @@ static void _getElementData(const int elementType,
 
 void gmsh::model::mesh::getElements(std::vector<int> &elementTypes,
                                     std::vector<std::vector<int> > &elementTags,
-                                    std::vector<std::vector<int> > &vertexTags,
+                                    std::vector<std::vector<int> > &nodeTags,
                                     const int dim, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   elementTypes.clear();
   elementTags.clear();
-  vertexTags.clear();
+  nodeTags.clear();
   std::map<int, std::vector<GEntity*> > typeMap;
   _getElementTypeMap(dim, tag, typeMap);
   for(std::map<int, std::vector<GEntity*> >::const_iterator it = typeMap.begin();
       it != typeMap.end(); it++){
     elementTypes.push_back(it->first);
     elementTags.push_back(std::vector<int>());
-    vertexTags.push_back(std::vector<int>());
-    _getElementData(it->first, it->second, elementTags.back(), vertexTags.back());
+    nodeTags.push_back(std::vector<int>());
+    _getElementData(it->first, it->second, elementTags.back(), nodeTags.back());
   }
 }
 
@@ -590,25 +590,25 @@ void gmsh::model::mesh::getElementTypes(std::vector<int> &elementTypes,
 
 void gmsh::model::mesh::getElementsByType(const int elementType,
                                           std::vector<int> &elementTags,
-                                          std::vector<int> &vertexTags,
+                                          std::vector<int> &nodeTags,
                                           const int dim, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   elementTags.clear();
-  vertexTags.clear();
+  nodeTags.clear();
   std::map<int, std::vector<GEntity*> > typeMap;
   _getElementTypeMap(dim, tag, typeMap);
-  _getElementData(elementType, typeMap[elementType], elementTags, vertexTags);
+  _getElementData(elementType, typeMap[elementType], elementTags, nodeTags);
 }
 
 void gmsh::model::mesh::getElementProperties(const int elementType,
                                              std::string &name,
-                                             int &dim, int &order, int &numVertices,
+                                             int &dim, int &order, int &numNodes,
                                              std::vector<double> &parametricCoord)
 {
   if(!_isInitialized()){ throw -1; }
   const char *n;
-  numVertices = MElement::getInfoMSH(elementType, &n);
+  numNodes = MElement::getInfoMSH(elementType, &n);
   name = n;
   int parentType = ElementType::ParentTypeFromTag(elementType);
   nodalBasis *basis = 0;
@@ -618,7 +618,7 @@ void gmsh::model::mesh::getElementProperties(const int elementType,
     basis = new polynomialBasis(elementType);
   dim = basis->dimension;
   order = basis->order;
-  numVertices = basis->points.size1();
+  numNodes = basis->points.size1();
   for(int i = 0; i < basis->points.size1(); i++)
     for(int j = 0; j < basis->points.size2(); j++)
       parametricCoord.push_back(basis->points(i, j));
@@ -816,10 +816,10 @@ void gmsh::model::mesh::getIntegrationDataByType(int elementType,
                       intData, fsNumComp, fsData);
 }
 
-void gmsh::model::mesh::setVertices(const int dim, const int tag,
-                                    const std::vector<int> &vertexTags,
-                                    const std::vector<double> &coord,
-                                    const std::vector<double> &parametricCoord)
+void gmsh::model::mesh::setNodes(const int dim, const int tag,
+                                 const std::vector<int> &nodeTags,
+                                 const std::vector<double> &coord,
+                                 const std::vector<double> &parametricCoord)
 {
   if(!_isInitialized()){ throw -1; }
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
@@ -827,22 +827,22 @@ void gmsh::model::mesh::setVertices(const int dim, const int tag,
     Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     throw 2;
   }
-  if(coord.size() != 3 * vertexTags.size()){
+  if(coord.size() != 3 * nodeTags.size()){
     Msg::Error("Wrong number of coord");
     throw 2;
   }
   bool param = false;
   if(parametricCoord.size()){
-    if(parametricCoord.size() != dim * vertexTags.size()){
+    if(parametricCoord.size() != dim * nodeTags.size()){
       Msg::Error("Wrong number of parametric coord");
       throw 2;
     }
     param = true;
   }
-  // delete vertices and elements; this will also delete the model mesh cache
+  // delete nodes and elements; this will also delete the model mesh cache
   ge->deleteMesh();
-  for(unsigned int i = 0; i < vertexTags.size(); i++){
-    int n = vertexTags[i];
+  for(unsigned int i = 0; i < nodeTags.size(); i++){
+    int n = nodeTags[i];
     double x = coord[3 * i];
     double y = coord[3 * i + 1];
     double z = coord[3 * i + 2];
@@ -862,7 +862,7 @@ void gmsh::model::mesh::setVertices(const int dim, const int tag,
   }
 }
 
-void gmsh::model::mesh::reclassifyVertices()
+void gmsh::model::mesh::reclassifyNodes()
 {
   if(!_isInitialized()){ throw -1; }
   GModel::current()->pruneMeshVertexAssociations();
@@ -879,7 +879,7 @@ static void _addElements(int dim, int tag, const std::vector<MElement*> &src,
 void gmsh::model::mesh::setElements(const int dim, const int tag,
                                     const std::vector<int> &types,
                                     const std::vector<std::vector<int> > &elementTags,
-                                    const std::vector<std::vector<int> > &vertexTags)
+                                    const std::vector<std::vector<int> > &nodeTags)
 {
   if(!_isInitialized()){ throw -1; }
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
@@ -891,8 +891,8 @@ void gmsh::model::mesh::setElements(const int dim, const int tag,
     Msg::Error("Wrong number of element tags");
     throw 2;
   }
-  if(types.size() != vertexTags.size()){
-    Msg::Error("Wrong number of vertex tags");
+  if(types.size() != nodeTags.size()){
+    Msg::Error("Wrong number of node tags");
     throw 2;
   }
   // delete only elements; this will also delete the model mesh cache
@@ -902,25 +902,25 @@ void gmsh::model::mesh::setElements(const int dim, const int tag,
     unsigned int numEle = elementTags[i].size();
     unsigned int numVertPerEle = MElement::getInfoMSH(type);
     if(!numEle) continue;
-    if(numEle * numVertPerEle != vertexTags[i].size()){
-      Msg::Error("Wrong number of vertex tags for element type %d", type);
+    if(numEle * numVertPerEle != nodeTags[i].size()){
+      Msg::Error("Wrong number of node tags for element type %d", type);
       throw 2;
     }
     std::vector<MElement*> elements(numEle);
-    std::vector<MVertex*> vertices(numVertPerEle);
+    std::vector<MVertex*> nodes(numVertPerEle);
     for(unsigned int j = 0; j < numEle; j++){
       int etag = elementTags[i][j];
       MElementFactory f;
       for(unsigned int k = 0; k < numVertPerEle; k++){
-        int vtag = vertexTags[i][numVertPerEle * j + k];
-        // this will rebuild the vertex cache if necessary
-        vertices[k] = GModel::current()->getMeshVertexByTag(vtag);
-        if(!vertices[k]){
-          Msg::Error("Unknown mesh vertex %d", vtag);
+        int vtag = nodeTags[i][numVertPerEle * j + k];
+        // this will rebuild the node cache if necessary
+        nodes[k] = GModel::current()->getMeshVertexByTag(vtag);
+        if(!nodes[k]){
+          Msg::Error("Unknown mesh node %d", vtag);
           throw 2;
         }
       }
-      elements[j] = f.create(type, vertices, etag);
+      elements[j] = f.create(type, nodes, etag);
     }
     bool ok = true;
     switch(dim){
@@ -964,14 +964,14 @@ void gmsh::model::mesh::setElements(const int dim, const int tag,
   }
 }
 
-void gmsh::model::mesh::getVertex(const int vertexTag,
-                                  std::vector<double> &coord,
-                                  std::vector<double> &parametricCoord)
+void gmsh::model::mesh::getNode(const int nodeTag,
+                                std::vector<double> &coord,
+                                std::vector<double> &parametricCoord)
 {
   if(!_isInitialized()){ throw -1; }
-  MVertex *v = GModel::current()->getMeshVertexByTag(vertexTag);
+  MVertex *v = GModel::current()->getMeshVertexByTag(nodeTag);
   if(!v){
-    Msg::Error("Unknown mesh vertex %d", vertexTag);
+    Msg::Error("Unknown mesh node %d", nodeTag);
     throw 2;
   }
   coord.clear();
@@ -987,7 +987,7 @@ void gmsh::model::mesh::getVertex(const int vertexTag,
 }
 
 void gmsh::model::mesh::getElement(const int elementTag, int &type,
-                                   std::vector<int> &vertexTags)
+                                   std::vector<int> &nodeTags)
 {
   if(!_isInitialized()){ throw -1; }
   MElement *e = GModel::current()->getMeshElementByTag(elementTag);
@@ -996,14 +996,14 @@ void gmsh::model::mesh::getElement(const int elementTag, int &type,
     throw 2;
   }
   type = e->getTypeForMSH();
-  vertexTags.clear();
+  nodeTags.clear();
   for(int i = 0; i < e->getNumVertices(); i++){
     MVertex *v = e->getVertex(i);
     if(!v){
-      Msg::Error("Unknown mesh vertex in element %d", elementTag);
+      Msg::Error("Unknown mesh node in element %d", elementTag);
       throw 2;
     }
-    vertexTags.push_back(v->getNum());
+    nodeTags.push_back(v->getNum());
   }
 }
 
@@ -1019,9 +1019,9 @@ void gmsh::model::mesh::setSize(const vector_pair &dimTags, const double size)
   }
 }
 
-void gmsh::model::mesh::setTransfiniteLine(const int tag, const int numVertices,
-                                           const std::string &type,
-                                           const double coef)
+void gmsh::model::mesh::setTransfiniteCurve(const int tag, const int numNodes,
+                                            const std::string &type,
+                                            const double coef)
 {
   if(!_isInitialized()){ throw -1; }
   GEdge *ge = GModel::current()->getEdgeByTag(tag);
@@ -1030,7 +1030,7 @@ void gmsh::model::mesh::setTransfiniteLine(const int tag, const int numVertices,
     throw 2;
   }
   ge->meshAttributes.method = MESH_TRANSFINITE;
-  ge->meshAttributes.nbPointsTransfinite = numVertices;
+  ge->meshAttributes.nbPointsTransfinite = numNodes;
   ge->meshAttributes.typeTransfinite =
     (type == "Progression" || type == "Power") ? 1 :
     (type == "Bump") ? 2 :
@@ -1428,7 +1428,7 @@ int gmsh::model::geo::addBezier(const std::vector<int> &pointTags, const int tag
   return outTag;
 }
 
-int gmsh::model::geo::addLineLoop(const std::vector<int> &curveTags, const int tag)
+int gmsh::model::geo::addCurveLoop(const std::vector<int> &curveTags, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   int outTag = tag;
@@ -1630,7 +1630,7 @@ void gmsh::model::geo::synchronize()
 
 // gmsh::model::geo::mesh
 
-void gmsh::model::geo::mesh::setTransfiniteLine(const int tag, const int nPoints,
+void gmsh::model::geo::mesh::setTransfiniteCurve(const int tag, const int nPoints,
                                                 const std::string &type,
                                                 const double coef)
 {
@@ -1830,7 +1830,7 @@ int gmsh::model::occ::addWire(const std::vector<int> &curveTags, const int tag,
   return outTag;
 }
 
-int gmsh::model::occ::addLineLoop(const std::vector<int> &curveTags, const int tag)
+int gmsh::model::occ::addCurveLoop(const std::vector<int> &curveTags, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   _createOcc();
