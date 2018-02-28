@@ -925,7 +925,7 @@ GMSH_API int gmshModelOccAddRectangle(const double x,
                                       int * ierr);
 
 /* Adds a disk with center (`xc', `yc', `zc') and radius `rx' along the x-axis
- * and `ry; along the y-axis. If `tag' is positive, sets the tag explicitly;
+ * and `ry' along the y-axis. If `tag' is positive, sets the tag explicitly;
  * otherwise a new tag is selected automatically. Returns the tag of the disk. */
 GMSH_API int gmshModelOccAddDisk(const double xc,
                                  const double yc,
@@ -1318,7 +1318,7 @@ GMSH_API void gmshViewAddModelData(const int tag,
                                    int * ierr);
 
 /* Gets model-based post-processing data from the view with tag `tag' at step
- * `step. Returns the `data' associated to the vertices or the elements with
+ * `step'. Returns the `data' associated to the vertices or the elements with
  * tags `tags', as well as the `dataType' and the number of components
  * `numComponents'. */
 GMSH_API void gmshViewGetModelData(const int tag,
@@ -1406,7 +1406,7 @@ GMSH_API void gmshFltkWait(const double time,
                            int * ierr);
 
 /* Runs the event loop of the Fltk graphical user interface, i.e. repeatedly
- * calls `wait()`. First automatically creates the user interface if it has
+ * calls `wait()'. First automatically creates the user interface if it has
  * not yet been initialized. */
 GMSH_API void gmshFltkRun(int * ierr);
 

@@ -714,15 +714,18 @@ class API:
             f.write("@ftable @code\n");
             for rtype,name,args,doc in module.fs:
                 f.write("@item " + name + "\n");
-                f.write("\n".join(textwrap.wrap(doc,80)) + "\n\n")
-                f.write("@table @code\n");
+                tdoc = doc.replace("`", "@code{").replace("'", "}")
+                f.write("\n".join(textwrap.wrap(tdoc,80)) + "\n\n")
+                f.write("@table @asis\n");
                 iargs = list(a for a in args if not a.out)
                 oargs = list(a for a in args if a.out)
-                f.write("@item " + "Input: " +
-                        (", ".join(iarg.name for iarg in iargs) if len(iargs) else "-") + "\n")
-                f.write("@item " + "Output: " +
-                        (", ".join(oarg.name for oarg in oargs) if len(oargs) else "-") + "\n")
-                f.write("@item " + "Return: " +
+                f.write("@item " + "Input:\n" +
+                        (", ".join(("@code{" + iarg.name + "}") for iarg in iargs)
+                         if len(iargs) else "-") + "\n")
+                f.write("@item " + "Output:\n" +
+                        (", ".join(("@code{" + oarg.name + "}") for oarg in oargs)
+                         if len(oargs) else "-") + "\n")
+                f.write("@item " + "Return:\n" +
                         (rtype.rtype_texi if rtype else "-") + "\n")
                 f.write("@end table\n\n");
             f.write("@end ftable\n\n");

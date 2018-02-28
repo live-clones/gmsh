@@ -870,7 +870,7 @@ namespace gmsh { // Top-level functions
                                 const double roundedRadius = 0.);
 
       // Adds a disk with center (`xc', `yc', `zc') and radius `rx' along the
-      // x-axis and `ry; along the y-axis. If `tag' is positive, sets the tag
+      // x-axis and `ry' along the y-axis. If `tag' is positive, sets the tag
       // explicitly; otherwise a new tag is selected automatically. Returns the tag
       // of the disk.
       GMSH_API int addDisk(const double xc,
@@ -1237,7 +1237,7 @@ namespace gmsh { // Top-level functions
                                const int partition = 0);
 
     // Gets model-based post-processing data from the view with tag `tag' at step
-    // `step. Returns the `data' associated to the vertices or the elements with
+    // `step'. Returns the `data' associated to the vertices or the elements with
     // tags `tags', as well as the `dataType' and the number of components
     // `numComponents'.
     GMSH_API void getModelData(const int tag,
@@ -1328,7 +1328,7 @@ namespace gmsh { // Top-level functions
     GMSH_API void wait(const double time = -1.);
 
     // Runs the event loop of the Fltk graphical user interface, i.e. repeatedly
-    // calls `wait()`. First automatically creates the user interface if it has not
+    // calls `wait()'. First automatically creates the user interface if it has not
     // yet been initialized.
     GMSH_API void run();
 

@@ -357,7 +357,7 @@ occ.add('addLineLoop',doc,oint,ivectorint('curveTags'),iint('tag','-1'))
 doc = '''Adds a rectangle with lower left corner at (`x', `y', `z') and upper right corner at (`x' + `dx', `y' + `dy', `z'). If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Rounds the corners if `roundedRadius' is nonzero. Returns the tag of the rectangle.'''
 occ.add('addRectangle',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),iint('tag','-1'),idouble('roundedRadius','0.'))
 
-doc = '''Adds a disk with center (`xc', `yc', `zc') and radius `rx' along the x-axis and `ry; along the y-axis. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the disk.'''
+doc = '''Adds a disk with center (`xc', `yc', `zc') and radius `rx' along the x-axis and `ry' along the y-axis. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the disk.'''
 occ.add('addDisk',doc,oint,idouble('xc'),idouble('yc'),idouble('zc'),idouble('rx'),idouble('ry'),iint('tag','-1'))
 
 doc = '''Adds a plane surface defined by one or more line loops (or closed wires) `wireTags'. The first line loop defines the exterior contour; additional line loop define holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the surface.'''
@@ -472,7 +472,7 @@ view.add('getTags',doc,None,ovectorint('tags'))
 doc = '''Adds model-based post-processing data to the view with tag `tag'. `modelName' identifies the model the data is attached to. `dataType' specifies the type of data, currently either "NodeData", "ElementData" or "ElementNodeData". `step' specifies the identifier (>= 0) of the data in a sequence. `tags' gives the tags of the vertices or elements in the mesh to which the data is associated. `data' is a vector of the same length as `tags': each entry is the vector of double precision numbers representing the data associated with the corresponding tag. The optional `time' argument associate a time value with the data. `numComponents' gives the number of data components (1 for scalar data, 3 for vector data, etc.) per entity; if negative, it is automatically inferred (when possible) from the input data. `partition' allows to specify data in several sub-sets.'''
 view.add('addModelData',doc,None,iint('tag'),iint('step'),istring('modelName'),istring('dataType'),ivectorint('tags'),ivectorvectordouble('data'),idouble('time','0.'),iint('numComponents','-1'),iint('partition','0'))
 
-doc = '''Gets model-based post-processing data from the view with tag `tag' at step `step. Returns the `data' associated to the vertices or the elements with tags `tags', as well as the `dataType' and the number of components `numComponents'.'''
+doc = '''Gets model-based post-processing data from the view with tag `tag' at step `step'. Returns the `data' associated to the vertices or the elements with tags `tags', as well as the `dataType' and the number of components `numComponents'.'''
 view.add('getModelData',doc,None,iint('tag'),iint('step'),ostring('dataType'),ovectorint('tags'),ovectorvectordouble('data'),odouble('time'),oint('numComponents'))
 
 doc = '''Adds list-based post-processing data to the view with tag `tag'. `type' identifies the data: "SP" for scalar points, "VP", for vector points, etc. `numEle' gives the number of elements in the data. `data' contains the data for the `numEle' elements.'''
@@ -517,7 +517,7 @@ fltk.add('initialize',doc,None)
 doc = '''Waits at most `time' seconds for user interface events and returns. If `time' < 0, waits indefinitely. First automatically creates the user interface if it has not yet been initialized.'''
 fltk.add('wait',doc,None,idouble('time', '-1.'))
 
-doc = '''Runs the event loop of the Fltk graphical user interface, i.e. repeatedly calls `wait()`. First automatically creates the user interface if it has not yet been initialized.'''
+doc = '''Runs the event loop of the Fltk graphical user interface, i.e. repeatedly calls `wait()'. First automatically creates the user interface if it has not yet been initialized.'''
 fltk.add('run',doc,None)
 
 ################################################################################

@@ -4929,8 +4929,8 @@ language@footnote{In C++ @code{/gmsh/model/geo/addPoint} will lead to a
 namespaced function @code{gmsh::model::geo::addPoint}, while in Python
 it will lead to @code{gmsh.model.geo.addPoint}, and in C to
 @code{gmshModelGeoAddPoint}. Output values are passed by reference in
-C++, as pointers in C and directly returned (after the @code{Return}
-value, if any) in Python.}):
+C++, as pointers in C and directly returned (after the return value, if
+any) in Python.}):
 
 @include api.texi
 
