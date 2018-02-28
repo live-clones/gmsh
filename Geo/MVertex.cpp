@@ -287,13 +287,18 @@ void MVertex::writeVTK(FILE *fp, bool binary, double scalingFactor, bool bigEndi
   }
 }
 
-void MVertex::writeMATLAB(FILE *fp, int i, bool binary, double scalingFactor)
+void MVertex::writeMATLAB(FILE *fp, int filetype, bool binary, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
-
-  fprintf(fp, "gX(%d) = %.16g;\n", i, x() * scalingFactor);
-  fprintf(fp, "gY(%d) = %.16g;\n", i, y() * scalingFactor);
-  fprintf(fp, "gZ(%d) = %.16g;\n", i, z() * scalingFactor);
+  if(binary)
+    {
+      Msg::Warning("Binary format not available for Matlab, saving into ASCII format");
+      binary = false;
+    }
+  fprintf(fp, "%.16g %.16g %.16g;\n",
+	  x() * scalingFactor,
+	  y() * scalingFactor,
+	  z() * scalingFactor);
 }
 
 void MVertex::writeTOCHNOG(FILE *fp, int dim, double scalingFactor)

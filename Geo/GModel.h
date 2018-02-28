@@ -686,7 +686,7 @@ class GModel {
 
   //Matlab format
   int writeMATLAB(const std::string &name, bool binary=false,
-		  bool saveAll=false, double scalingFactor=1.0);
+		  bool saveAll=false, double scalingFactor=1.0, int filetype = 1);
 
 
   // Tochnog format
