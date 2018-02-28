@@ -91,7 +91,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
   s.push_back(mp("-part_topo_pro", "Save the partition topology .pro file"));
   s.push_back(mp("-preserve_numbering_msh2", "Preserve element numbering in MSH2 format"));
   s.push_back(mp("-save_all", "Save all elements (discard physical group definitions)"));
-  s.push_back(mp("-save_parametric", "Save vertices with their parametric coordinates"));
+  s.push_back(mp("-save_parametric", "Save nodes with their parametric coordinates"));
   s.push_back(mp("-save_topology", "Save model topology"));
   s.push_back(mp("-algo string", "Select mesh algorithm (meshadapt, del2d, front2d, "
                  "delquad, del3d, front3d, mmg3d, pack)"));
