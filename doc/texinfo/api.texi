@@ -2,9 +2,10 @@
 @ftable @code
 @item initialize
 Initializes Gmsh. This must be called before any call to the other functions in
-the API. If argc and argv are provided, they will be handled in the same way as
-the command line arguments in the Gmsh app. If @code{readConfigFiles} is set,
-reads system Gmsh configuration files (gmshrc and gmsh-options).
+the API. If @code{argc} and @code{argv} are provided, they will be handled in
+the same way as the command line arguments in the Gmsh app. If
+@code{readConfigFiles} is set, reads system Gmsh configuration files (gmshrc and
+gmsh-options).
 
 @table @asis
 @item Input:
@@ -598,7 +599,7 @@ the elements of the given type, concatenated.
 @end table
 
 @item reclassifyVertices
-Redistribute all mesh vertices on their associated geometrical entity, based on
+Redistributes all mesh vertices on their associated geometrical entity, based on
 the mesh elements. Can be used when importing mesh vertices in bulk (e.g. by
 associating them all to a single volume), to reclassify them correctly on model
 surfaces, curves, etc.
@@ -659,12 +660,12 @@ Currently only entities of dimension 0 (points) are handled.
 -
 @end table
 
-@item setTransfiniteLine
-Sets a transfinite meshing constraint on the line @code{tag}, with
+@item setTransfiniteCurve
+Sets a transfinite meshing constraint on the curve @code{tag}, with
 @code{numVertices} mesh vertices distributed according to @code{type} and
 @code{coef}. Currently supported types are "Progression" (geometrical
 progression with power @code{coef}) and "Bump" (refinement toward both
-extreminties of the line).
+extremities of the curve).
 
 @table @asis
 @item Input:
@@ -969,13 +970,13 @@ automatically.  Returns the tag of the Bezier curve.
 integer
 @end table
 
-@item addLineLoop
-Adds a line loop (a closed wire) formed by the curves @code{curveTags}.
+@item addCurveLoop
+Adds a curve loop (a closed wire) formed by the curves @code{curveTags}.
 @code{curveTags} should contain (signed) tags of geometrical enties of dimension
 1 forming a closed loop: a negative tag signifies that the underlying curve is
 considered with reversed orientation. If @code{tag} is positive, sets the tag
 explicitly; otherwise a new tag is selected automatically. Returns the tag of
-the line loop.
+the curve loop.
 
 @table @asis
 @item Input:
@@ -987,10 +988,10 @@ integer
 @end table
 
 @item addPlaneSurface
-Adds a plane surface defined by one or more line loops @code{wireTags}. The
-first line loop defines the exterior contour; additional line loop define holes.
-If @code{tag} is positive, sets the tag explicitly; otherwise a new tag is
-selected automatically. Returns the tag of the surface.
+Adds a plane surface defined by one or more curve loops @code{wireTags}. The
+first curve loop defines the exterior contour; additional curve loop define
+holes. If @code{tag} is positive, sets the tag explicitly; otherwise a new tag
+is selected automatically. Returns the tag of the surface.
 
 @table @asis
 @item Input:
@@ -1002,8 +1003,8 @@ integer
 @end table
 
 @item addSurfaceFilling
-Adds a surface filling the line loops in @code{wireTags}. Currently only a
-single line loop is supported; this line loop should be composed by 3 or 4
+Adds a surface filling the curve loops in @code{wireTags}. Currently only a
+single curve loop is supported; this curve loop should be composed by 3 or 4
 curves only. If @code{tag} is positive, sets the tag explicitly; otherwise a new
 tag is selected automatically. Returns the tag of the surface.
 
@@ -1224,12 +1225,12 @@ Currently only entities of dimension 0 (points) are handled.
 -
 @end table
 
-@item setTransfiniteLine
-Sets a transfinite meshing constraint on the line @code{tag}, with
+@item setTransfiniteCurve
+Sets a transfinite meshing constraint on the curve @code{tag}, with
 @code{numVertices} mesh vertices distributed according to @code{type} and
 @code{coef}. Currently supported types are "Progression" (geometrical
 progression with power @code{coef}) and "Bump" (refinement toward both
-extreminties of the line).
+extreminties of the curve).
 
 @table @asis
 @item Input:
@@ -1474,12 +1475,12 @@ automatically. Returns the tag of the wire.
 integer
 @end table
 
-@item addLineLoop
-Adds a line loop (a closed wire) formed by the curves @code{curveTags}.
+@item addCurveLoop
+Adds a curve loop (a closed wire) formed by the curves @code{curveTags}.
 @code{curveTags} should contain (signed) tags of curves forming a closed loop: a
 negative tag signifies that the underlying curve is considered with reversed
 orientation. If @code{tag} is positive, sets the tag explicitly; otherwise a new
-tag is selected automatically. Returns the tag of the line loop.
+tag is selected automatically. Returns the tag of the curve loop.
 
 @table @asis
 @item Input:
@@ -1522,9 +1523,9 @@ integer
 @end table
 
 @item addPlaneSurface
-Adds a plane surface defined by one or more line loops (or closed wires)
-@code{wireTags}. The first line loop defines the exterior contour; additional
-line loop define holes. If @code{tag} is positive, sets the tag explicitly;
+Adds a plane surface defined by one or more curve loops (or closed wires)
+@code{wireTags}. The first curve loop defines the exterior contour; additional
+curve loop define holes. If @code{tag} is positive, sets the tag explicitly;
 otherwise a new tag is selected automatically. Returns the tag of the surface.
 
 @table @asis
@@ -1537,7 +1538,7 @@ integer
 @end table
 
 @item addSurfaceFilling
-Adds a surface filling the line loops in @code{wireTags}. If @code{tag} is
+Adds a surface filling the curve loops in @code{wireTags}. If @code{tag} is
 positive, sets the tag explicitly; otherwise a new tag is selected
 automatically. Returns the tag of the surface.
 

@@ -23,7 +23,7 @@ int main(int argc, char **argv)
   factory::addLine(3, 2, 2);
   factory::addLine(3, 4, 3);
   factory::addLine(4, 1, 4);
-  factory::addLineLoop({4, 1, -2, 3}, 1);
+  factory::addCurveLoop({4, 1, -2, 3}, 1);
   factory::addPlaneSurface({1}, 1);
   model::addPhysicalGroup(0, {1, 2}, 1);
   model::addPhysicalGroup(1, {1, 2}, 2);

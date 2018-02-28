@@ -75,11 +75,11 @@ factory.addCircleArc(18,23,25, 18)
 factory.addCircleArc(25,23,22, 19)
 factory.addLine(21,22, 20)
 
-factory.addLineLoop([17,-15,18,19,-20,16], 21)
+factory.addCurveLoop([17,-15,18,19,-20,16], 21)
 factory.addPlaneSurface([21], 22)
-factory.addLineLoop([11,-12,13,14,1,2,-3,4,5,6,7,-8,9,10], 23)
+factory.addCurveLoop([11,-12,13,14,1,2,-3,4,5,6,7,-8,9,10], 23)
 
-# A surface with one hole is specified using 2 line loops:
+# A surface with one hole is specified using 2 curve loops:
 factory.addPlaneSurface([23,21], 24)
 
 # FIXME: this will be implemented through the gmshView API

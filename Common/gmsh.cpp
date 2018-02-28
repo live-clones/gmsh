@@ -314,7 +314,7 @@ static std::string _getEntityName(int dim, int tag)
   std::stringstream stream;
   switch(dim){
   case 0 : stream << "Point "; break;
-  case 1 : stream << "Line "; break;
+  case 1 : stream << "Curve "; break;
   case 2 : stream << "Surface "; break;
   case 3 : stream << "Volume "; break;
   }
@@ -1019,7 +1019,7 @@ void gmsh::model::mesh::setSize(const vector_pair &dimTags, const double size)
   }
 }
 
-void gmsh::model::mesh::setTransfiniteLine(const int tag, const int numVertices,
+void gmsh::model::mesh::setTransfiniteCurve(const int tag, const int numVertices,
                                            const std::string &type,
                                            const double coef)
 {
@@ -1428,7 +1428,7 @@ int gmsh::model::geo::addBezier(const std::vector<int> &pointTags, const int tag
   return outTag;
 }
 
-int gmsh::model::geo::addLineLoop(const std::vector<int> &curveTags, const int tag)
+int gmsh::model::geo::addCurveLoop(const std::vector<int> &curveTags, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   int outTag = tag;
@@ -1630,7 +1630,7 @@ void gmsh::model::geo::synchronize()
 
 // gmsh::model::geo::mesh
 
-void gmsh::model::geo::mesh::setTransfiniteLine(const int tag, const int nPoints,
+void gmsh::model::geo::mesh::setTransfiniteCurve(const int tag, const int nPoints,
                                                 const std::string &type,
                                                 const double coef)
 {
@@ -1830,7 +1830,7 @@ int gmsh::model::occ::addWire(const std::vector<int> &curveTags, const int tag,
   return outTag;
 }
 
-int gmsh::model::occ::addLineLoop(const std::vector<int> &curveTags, const int tag)
+int gmsh::model::occ::addCurveLoop(const std::vector<int> &curveTags, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   _createOcc();

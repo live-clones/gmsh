@@ -43,13 +43,13 @@ gmsh.model.geo.addLine(3, 2, 2)
 gmsh.model.geo.addLine(3, 4, 3)
 gmsh.model.geo.addLine(4, 1, 4)
 
-# The philosophy to construct line loops and surfaces is similar: the first
+# The philosophy to construct curve loops and surfaces is similar: the first
 # argument is now a vector of integers.
-gmsh.model.geo.addLineLoop([4, 1, -2, 3], 1)
+gmsh.model.geo.addCurveLoop([4, 1, -2, 3], 1)
 gmsh.model.geo.addPlaneSurface([1], 1)
 
 # Physical groups are defined by providing the dimension of the group (0 for
-# physical points, 1 for physical lines, 2 for physical surfaces and 3 for
+# physical points, 1 for physical curves, 2 for physical surfaces and 3 for
 # phsyical volumes) followed by a vector of entity tags. The last (optional)
 # argument is the tag of the new group to create.
 gmsh.model.addPhysicalGroup(0, [1, 2], 1)

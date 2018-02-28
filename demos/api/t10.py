@@ -23,7 +23,7 @@ factory.addLine(2,3, 2);
 factory.addLine(3,4, 3);
 factory.addLine(4,1, 4);
 
-factory.addLineLoop([1,2,3,4], 5)
+factory.addCurveLoop([1,2,3,4], 5)
 factory.addPlaneSurface([5], 6)
 
 model.mesh.field.add("Attractor", 1)

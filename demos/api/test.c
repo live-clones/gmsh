@@ -24,7 +24,7 @@ void genGeometry() {
   int line4 = gmshModelGeoAddLine(4,1,-1,&ierr); chk(ierr);
   printf("line4 received tag %i\n\n", line4);
   int ll[] = {1,2,3,line4};
-  gmshModelGeoAddLineLoop(ll,4,1,&ierr); chk(ierr);
+  gmshModelGeoAddCurveLoop(ll,4,1,&ierr); chk(ierr);
   int s[] = {1};
   gmshModelGeoAddPlaneSurface(ll,1,6,&ierr); chk(ierr);
   gmshModelGeoSynchronize(&ierr); chk(ierr);
