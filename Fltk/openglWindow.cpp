@@ -366,9 +366,9 @@ int openglWindow::handle(int event)
         CTX::instance()->geom.doubleClickedEntityTag = vertices[0]->tag();
         ParseString(CTX::instance()->geom.doubleClickedPointCommand, true);
       }
-      else if(edges.size() && CTX::instance()->geom.doubleClickedLineCommand.size()){
+      else if(edges.size() && CTX::instance()->geom.doubleClickedCurveCommand.size()){
         CTX::instance()->geom.doubleClickedEntityTag = edges[0]->tag();
-        ParseString(CTX::instance()->geom.doubleClickedLineCommand, true);
+        ParseString(CTX::instance()->geom.doubleClickedCurveCommand, true);
       }
       else if(faces.size() && CTX::instance()->geom.doubleClickedSurfaceCommand.size()){
         CTX::instance()->geom.doubleClickedEntityTag = faces[0]->tag();
@@ -658,7 +658,7 @@ int openglWindow::handle(int event)
                            vertices, edges, faces, regions, elements, points, views);
         if((_selection == ENT_ALL && res) ||
            (_selection == ENT_POINT && vertices.size()) ||
-           (_selection == ENT_LINE && edges.size()) ||
+           (_selection == ENT_CURVE && edges.size()) ||
            (_selection == ENT_SURFACE && faces.size()) ||
            (_selection == ENT_VOLUME && regions.size()))
           cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
@@ -671,7 +671,7 @@ int openglWindow::handle(int event)
         }
         else if(edges.size()){
           text = edges[0]->getInfoString();
-          cmd = CTX::instance()->geom.doubleClickedLineCommand;
+          cmd = CTX::instance()->geom.doubleClickedCurveCommand;
         }
         else if(faces.size()){
           text = faces[0]->getInfoString();

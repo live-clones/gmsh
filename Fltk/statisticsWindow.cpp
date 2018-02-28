@@ -111,7 +111,7 @@ statisticsWindow::statisticsWindow(int deltaFontSize)
     {
       group[1] = new Fl_Group
         (WB, WB + BH, width - 2 * WB, height - 3 * WB - 2 * BH, "Mesh");
-      value[num++] = new Fl_Output(2 * WB, 2 * WB + 1 * BH, IW, BH, "Vertices");
+      value[num++] = new Fl_Output(2 * WB, 2 * WB + 1 * BH, IW, BH, "Nodes");
       value[num++] = new Fl_Output(2 * WB, 2 * WB + 2 * BH, IW, BH, "Points");
       value[num++] = new Fl_Output(2 * WB, 2 * WB + 3 * BH, IW, BH, "Lines");
       value[num++] = new Fl_Output(2 * WB, 2 * WB + 4 * BH, IW, BH, "Triangles");

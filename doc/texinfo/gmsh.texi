@@ -268,8 +268,8 @@ them intersect, they do so along a face, an edge or a node, and never
 otherwise. All the finite element meshes produced by Gmsh are considered
 as ``unstructured'', even if they were generated in a ``structured'' way
 (e.g., by extrusion). This implies that the elementary geometrical
-elements are defined only by an ordered list of their nodes but that no
-predefined order relation is assumed between any two elements.
+elements are defined only by an ordered list of their nodes but that
+no predefined order relation is assumed between any two elements.
 
 The mesh generation is performed in the same bottom-up flow as the
 geometry creation: curves are discretized first; the mesh of the curves
@@ -282,7 +282,7 @@ the boundary of a volume; the line elements discretizing a curve will be
 forced to be edges of tetrahedra in the final 3D mesh only if the curve
 is part of the boundary of a surface, itself part of the boundary of a
 volume; a single node discretizing a point in the middle of a volume
-will be forced to be a vertex of one of the tetrahedra in the final 3D
+will be forced to be a node of one of the tetrahedra in the final 3D
 mesh only if this point is connected to a curve, itself part of the
 boundary of a surface, itself part of the boundary of a volume. This
 automatically assures the conformity of the mesh when, for example, two
@@ -1687,8 +1687,8 @@ after new geometrical entities are added or after files are included or
 merged). The bounding box is computed as follows:
 @enumerate
 @item
-If there is a mesh (i.e., at least one mesh vertex), the bounding
-box is taken as the box enclosing all the mesh vertices;
+If there is a mesh (i.e., at least one mesh node), the bounding
+box is taken as the box enclosing all the mesh nodes;
 @item
 If there is no mesh but there is a geometry (i.e., at least one geometrical
 point), the bounding box is taken as the box enclosing all the geometrical
@@ -2629,7 +2629,7 @@ defined, the output mesh only contains those elements that belong to
 physical entities. Other file formats each treat physical entities in
 slightly different ways, depending on their capability to define groups.
 
-Note that in some mesh file formats Gmsh reindexes the mesh vertices and
+Note that in some mesh file formats Gmsh reindexes the mesh nodes and
 elements so that they are numbered in a continuous sequence in the
 output files. Note that the numbers displayed on screen after mesh
 generation can thus differ from the ones saved in the mesh files,
@@ -2826,19 +2826,19 @@ volumes. (They have no effect for 1D or 2D extrusions.)
 @code{QuadTriNoNewVerts} subdivides any of the region's quad-faced 3D
 elements that touch these boundary triangles into pyramids, prisms, or
 tetrahedra as necessary, all WITHOUT adding new
-vertices. @code{QuadTriAddVerts} works in a simular way, but subdivides
-3D elements touching the boundary triangles by adding a new vertex
-inside each element at the vertex-based centroid. Either method results
+nodes. @code{QuadTriAddVerts} works in a simular way, but subdivides
+3D elements touching the boundary triangles by adding a new node
+inside each element at the node-based centroid. Either method results
 in a structured extrusion with an outer layer of subdivided elements
 that interface the inner, unmodified elements to the triangle-meshed
 region boundaries.
 
 In some rare cases, due to certain lateral boundary conditions, it may
 not be possible make a valid element subdivision with
-@code{QuadTriNoNewVerts} without adding additional vertices. In this
-case, an internal vertex is created at the vertex-based centroid of the
-element. The element is then divided using that vertex. When an internal
-vertex is created with @code{QuadTriNoNewVerts}, the user is alerted by
+@code{QuadTriNoNewVerts} without adding additional nodes. In this
+case, an internal node is created at the node-based centroid of the
+element. The element is then divided using that node. When an internal
+node is created with @code{QuadTriNoNewVerts}, the user is alerted by
 a warning message sent for each instance; however, the mesh will still
 be valid and conformal.
 
@@ -2886,12 +2886,12 @@ several independent boundary layers (with independent normal smoothing).
 
 @code{ScaleLastLayer} scales the height of the last (top) layer of each
 normal's extrusion by the average length of the edges in all the source
-elements that contain the source vertex (actually, the average of the
-averages for each element--edges actually touching the source vertex are
+elements that contain the source node (actually, the average of the
+averages for each element--edges actually touching the source node are
 counted twice). This allows the height of the last layer to vary along
 with the size of the source elements in order to achieve better element
 quality. For example, in a boundary layer extruded with the Layers
-definition 'Layers@{ @{1,4,2@}, @{0.5, 0.6, 1.6@} @},' a source vertex
+definition 'Layers@{ @{1,4,2@}, @{0.5, 0.6, 1.6@} @},' a source node
 adjacent to elements with an overall average edge length of 5.0 will
 extrude to have a last layer height = (1.6-0.6) * 5.0 = 5.0.
 
@@ -2958,7 +2958,7 @@ Generates @var{expression}-D mesh.
 
 @item RefineMesh;
 Refines the current mesh by splitting all elements. If
-@code{Mesh.SecondOrderLinear} is set, the new vertices are inserted by
+@code{Mesh.SecondOrderLinear} is set, the new nodes are inserted by
 linear interpolatinon. Otherwise they are snapped on the actual
 geometry.
 
@@ -2970,8 +2970,8 @@ Optimizes the current mesh with the given algorithm (currently
 Performs adaptive mesh generation. Documentation not yet available.
 
 @item RelocateMesh Point | Curve | Surface @{ @var{expression-list-or-all} @};
-Relocates the mesh vertices on the given entities using the parametric
-coordinates stored in the vertices. Useful for creating perturbation of
+Relocates the mesh nodes on the given entities using the parametric
+coordinates stored in the nodes. Useful for creating perturbation of
 meshes e.g. for sensitivity analyzes.
 
 @item SetOrder @var{expression};
@@ -3007,7 +3007,7 @@ transform matrix given by row; @code{Rotate} and @code{Translate} are
 specified as in @ref{Transformations}.
 
 @item Coherence Mesh;
-Removes all duplicate mesh vertices.
+Removes all duplicate mesh nodes.
 
 @item SetPartition @var{expression} @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Sets the partition tag of the mesh elements in the entities in @var{expression-list} to @var{expression}.
@@ -4195,9 +4195,9 @@ that of the nodes of an embedded edge/face/volume of lower order. The
 higher order nodes are assumed to be equispaced. Edges and faces are
 numbered following the lowest order template that generates a single
 high-order on this edge/face. Furthermore, an edge is oriented from the
-vertex with the lowest to the highest index. The orientation of a face
+node with the lowest to the highest index. The orientation of a face
 is such that the computed normal points outward; the starting point is
-the vertex with the lowest index.
+the node with the lowest index.
 
 @c -------------------------------------------------------------------------
 @c Legacy formats
@@ -5433,9 +5433,9 @@ SIGE ~ signed inverse error on the gradient of FE solution
 For the exact definitions, see Geo/MElement.cpp. The graphs plot the
 the number of elements vs. the quality measure.
 
-@item Why don't the vertex and/or elememt numbers on the screen match the numbers in the mesh file?
+@item Why don't the node and/or elememt numbers on the screen match the numbers in the mesh file?
 
-Gmsh reindexes the mesh vertices and elements so that they are
+Gmsh reindexes the mesh nodes and elements so that they are
 numbered in a continuous sequence in the output files. The numbers
 displayed on screen after mesh generation thus usually differ from the
 ones saved in the mesh files. To check the actual numbers saved in the

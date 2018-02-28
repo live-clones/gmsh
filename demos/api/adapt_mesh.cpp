@@ -25,19 +25,19 @@ class myVertex{
 class myElement{
  private:
   int _tag;
-  std::vector<myVertex*> _vertices;
+  std::vector<myVertex*> _nodes;
   std::vector<double> _qu, _qv, _qw, _qweight, _qx, _qy, _qz, _qdet, _qjac;
  public:
-  myElement(int tag, const std::vector<myVertex*> &vertices,
+  myElement(int tag, const std::vector<myVertex*> &nodes,
             const std::vector<double> &qu, const std::vector<double> &qv,
             const std::vector<double> &qw, const std::vector<double> &qweight,
             const std::vector<double> &qx, const std::vector<double> &qy,
             const std::vector<double> &qz, const std::vector<double> &qdet,
             const std::vector<double> &qjac)
-    : _tag(tag), _vertices(vertices), _qu(qu), _qv(qv), _qw(qw),
+    : _tag(tag), _nodes(nodes), _qu(qu), _qv(qv), _qw(qw),
       _qweight(qweight), _qx(qx), _qy(qy), _qz(qz), _qdet(qdet), _qjac(qjac) {}
   int tag() const { return _tag; }
-  const std::vector<myVertex*> &vertices() const { return _vertices; }
+  const std::vector<myVertex*> &nodes() const { return _nodes; }
   const std::vector<double> &qu() const { return _qu; }
   const std::vector<double> &qv() const { return _qv; }
   const std::vector<double> &qw() const { return _qw; }
@@ -49,10 +49,10 @@ class myElement{
   const std::vector<double> &qjac() const { return _qjac; }
   double maxEdge() const
   {
-    if(_vertices.size() == 3){
-      double a = _vertices[0]->distance(*_vertices[1]);
-      double b = _vertices[0]->distance(*_vertices[2]);
-      double c = _vertices[1]->distance(*_vertices[2]);
+    if(_nodes.size() == 3){
+      double a = _nodes[0]->distance(*_nodes[1]);
+      double b = _nodes[0]->distance(*_nodes[2]);
+      double c = _nodes[1]->distance(*_nodes[2]);
       return std::max(a, std::max(b, c));
     }
     else{
@@ -64,14 +64,14 @@ class myElement{
 
 class myMesh{
  private:
-  std::map<int, myVertex*> _vertices;
+  std::map<int, myVertex*> _nodes;
   std::map<int, myElement*> _elements;
  public:
   myMesh()
   {
     std::vector<int> vtags;
     std::vector<double> vxyz, vuvw;
-    gmsh::model::mesh::getVertices(vtags, vxyz, vuvw);
+    gmsh::model::mesh::getNodes(vtags, vxyz, vuvw);
     std::vector<int> etypes;
     std::vector<std::vector<int> > etags, evtags;
     gmsh::model::mesh::getElements(etypes, etags, evtags);
@@ -79,7 +79,7 @@ class myMesh{
     int fscomp;
     gmsh::model::mesh::getIntegrationData("Gauss2", "None", quvwo, qdata, fscomp, fsdata);
     for(unsigned int i = 0; i < vtags.size(); i++){
-      _vertices[vtags[i]] = new myVertex
+      _nodes[vtags[i]] = new myVertex
         (vtags[i], vxyz[3*i], vxyz[3*i+1], vxyz[3*i+2]);
     }
     for(unsigned int i = 0; i < etypes.size(); i++){
@@ -95,7 +95,7 @@ class myMesh{
       for(unsigned int j = 0; j < etags[i].size(); j++){
         std::vector<myVertex*> ev;
         for(unsigned int k = nev * j; k < nev * (j + 1); k++)
-          ev.push_back(_vertices[evtags[i][k]]);
+          ev.push_back(_nodes[evtags[i][k]]);
         std::vector<double> qx, qy, qz, qdet, qjac;
         for(unsigned int k = 13*nq*j; k < 13*nq*(j+1); k += 13){
           qx.push_back(qdata[i][k]);
@@ -110,7 +110,7 @@ class myMesh{
       }
     }
   }
-  const std::map<int, myVertex*> &vertices() const { return _vertices; }
+  const std::map<int, myVertex*> &nodes() const { return _nodes; }
   const std::map<int, myElement*> &elements() const { return _elements; }
 };
 
@@ -128,9 +128,9 @@ void computeInterpolationError(const myMesh &mesh, const myFunction &f,
                                std::map<int, double> &f_nod,
                                std::map<int, double> &err_ele)
 {
-  // evaluate f at the vertices
-  for(std::map<int, myVertex*>::const_iterator it = mesh.vertices().begin();
-      it != mesh.vertices().end(); it++){
+  // evaluate f at the nodes
+  for(std::map<int, myVertex*>::const_iterator it = mesh.nodes().begin();
+      it != mesh.nodes().end(); it++){
     myVertex *v = it->second;
     f_nod[it->first] = f(v->x(), v->y(), v->z());
   }
@@ -138,11 +138,11 @@ void computeInterpolationError(const myMesh &mesh, const myFunction &f,
   for(std::map<int, myElement*>::const_iterator it = mesh.elements().begin();
       it != mesh.elements().end(); it++){
     myElement *e = it->second;
-    if(e->vertices().size() == 3){
+    if(e->nodes().size() == 3){
       double err = 0.;
-      int t0 = e->vertices()[0]->tag();
-      int t1 = e->vertices()[1]->tag();
-      int t2 = e->vertices()[2]->tag();
+      int t0 = e->nodes()[0]->tag();
+      int t1 = e->nodes()[1]->tag();
+      int t2 = e->nodes()[2]->tag();
       for(unsigned int i = 0; i < e->qweight().size(); i++){
         double u = e->qu()[i], v = e->qv()[i], w = e->qw()[i];
         double weight = e->qweight()[i];
@@ -275,4 +275,3 @@ int main(int argc, char **argv)
   gmsh::finalize();
   return 0;
 }
-

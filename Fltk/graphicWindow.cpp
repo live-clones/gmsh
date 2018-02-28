@@ -818,7 +818,7 @@ static void add_new_point_based_entity(const std::string &what, int pane)
 static void add_new_multiline(std::string type)
 {
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+  opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
   drawContext::global()->draw();
 
   std::vector<int> p;
@@ -870,7 +870,7 @@ static void add_new_multiline(std::string type)
 static void add_new_line()
 {
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+  opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
   drawContext::global()->draw();
 
   std::vector<int> p;
@@ -918,7 +918,7 @@ static void add_new_line()
 static void add_new_circle_arc()
 {
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+  opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
   drawContext::global()->draw();
 
   std::vector<int> p;
@@ -969,7 +969,7 @@ static void add_new_circle_arc()
 static void add_new_ellipse_arc()
 {
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+  opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
   drawContext::global()->draw();
 
   std::vector<int> p;
@@ -1025,7 +1025,7 @@ static int selectContour(int type, int num, List_T * List)
   int k = 0;
 
   switch (type) {
-  case ENT_LINE:
+  case ENT_CURVE:
     k = allEdgesLinked(num, List);
     for(int i = 0; i < List_Nbr(List); i++) {
       int ip;
@@ -1060,8 +1060,8 @@ static void add_new_surface_volume(int mode)
     opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
   }
   else {
-    type = ENT_LINE;
-    opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+    type = ENT_CURVE;
+    opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
     opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   }
   drawContext::global()->draw();
@@ -1071,7 +1071,7 @@ static void add_new_surface_volume(int mode)
     List_Reset(List2);
 
     while(1) {
-      if(type == ENT_LINE){
+      if(type == ENT_CURVE){
         if(!List_Nbr(List1))
           Msg::StatusGl("Select surface boundary\n"
                         "[Press 'q' to abort]");
@@ -1098,7 +1098,7 @@ static void add_new_surface_volume(int mode)
         if(List_Nbr(List1) > 0){
           int num;
           List_Read(List1, List_Nbr(List1)-1, &num);
-          if(type == ENT_LINE){
+          if(type == ENT_CURVE){
             GEdge *ge = GModel::current()->getEdgeByTag(abs(num));
             if(ge) ge->setSelection(0);
           }
@@ -1115,11 +1115,11 @@ static void add_new_surface_volume(int mode)
                      "surface/volume creation");
       }
       if(ib == 'l') {
-        int num = (type == ENT_LINE) ?
+        int num = (type == ENT_CURVE) ?
           FlGui::instance()->selectedEdges[0]->tag() :
           FlGui::instance()->selectedFaces[0]->tag();
         if(selectContour(type, num, List1)) {
-          if(type == ENT_LINE)
+          if(type == ENT_CURVE)
             add_lineloop(List1, GModel::current()->getFileName(), &num);
           else
             add_surfloop(List1, GModel::current()->getFileName(), &num);
@@ -1149,7 +1149,7 @@ static void add_new_surface_volume(int mode)
               if(List_Nbr(List1) > 0){
                 int num;
                 List_Read(List1, List_Nbr(List1)-1, &num);
-                if(type == ENT_LINE){
+                if(type == ENT_CURVE){
                   GEdge *ge = GModel::current()->getEdgeByTag(abs(num));
                   if(ge) ge->setSelection(0);
                 }
@@ -1162,15 +1162,15 @@ static void add_new_surface_volume(int mode)
               }
             }
             if(ib == 'l') {
-              int size = (type == ENT_LINE) ?
+              int size = (type == ENT_CURVE) ?
                 FlGui::instance()->selectedEdges.size() :
                 FlGui::instance()->selectedFaces.size();
               for(int i=0;i<size;i++){
-                int num = (type == ENT_LINE) ?
+                int num = (type == ENT_CURVE) ?
                   FlGui::instance()->selectedEdges[i]->tag() :
                   FlGui::instance()->selectedFaces[i]->tag();
                 if(selectContour(type, num, List1)) {
-                  if(type == ENT_LINE)
+                  if(type == ENT_CURVE)
                     add_lineloop(List1, GModel::current()->getFileName(), &num);
                   else
                     add_surfloop(List1, GModel::current()->getFileName(), &num);
@@ -1278,7 +1278,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
   if(what == "Point")
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   else if(what == "Curve")
-    opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+    opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
   else if(what == "Surface")
     opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   else if(what == "Volume")
@@ -1295,7 +1295,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
     }
     else if(what == "Curve"){
       str = "curves";
-      type = ENT_LINE;
+      type = ENT_CURVE;
     }
     else if(what == "Surface"){
       str = "surfaces";
@@ -1308,7 +1308,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
     else{
       switch(FlGui::instance()->transformContext->choice->value()){
       case 1: str = "points"; type = ENT_POINT; break;
-      case 2: str = "curves"; type = ENT_LINE; break;
+      case 2: str = "curves"; type = ENT_CURVE; break;
       case 3: str = "surfaces"; type = ENT_SURFACE; break;
       case 4: str = "volumes"; type = ENT_VOLUME; break;
       default: str = "entities"; type = ENT_ALL; break;
@@ -1645,7 +1645,7 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
     int type = ENT_ALL;
     switch(FlGui::instance()->transformContext->choice->value()){
     case 1: type = ENT_POINT; break;
-    case 2: type = ENT_LINE; break;
+    case 2: type = ENT_CURVE; break;
     case 3: type = ENT_SURFACE; break;
     case 4: type = ENT_VOLUME; break;
     }
@@ -1735,7 +1735,7 @@ static void geometry_elementary_boolean_cb(Fl_Widget *w, void *data)
 static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
 {
   opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1);
-  opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+  opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
 
   FlGui::instance()->transformContext->show(5, false, false);
 
@@ -1758,7 +1758,7 @@ static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
                     "[Press 'e' to end selection, 'u' to undo last selection or "
                     "'q' to abort]");
 
-    char ib = FlGui::instance()->selectEntity(selectRegions ? ENT_VOLUME : ENT_LINE);
+    char ib = FlGui::instance()->selectEntity(selectRegions ? ENT_VOLUME : ENT_CURVE);
     if(ib == 'l') {
       for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
         if(FlGui::instance()->selectedEdges[i]->getSelection() != 1){
@@ -1821,13 +1821,13 @@ static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
 static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
 {
   if(!data) return;
-  opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+  opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
   drawContext::global()->draw();
   Msg::StatusGl("Select curve to split\n"
                 "[Press 'q' to abort]");
   GEdge* edge_to_split = 0;
   while(1){
-    char ib = FlGui::instance()->selectEntity(ENT_LINE);
+    char ib = FlGui::instance()->selectEntity(ENT_CURVE);
     if(ib == 'q')
       break;
     if(!FlGui::instance()->selectedEdges.empty()){
@@ -1938,7 +1938,7 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
   }
   else if(!strcmp(str, "curves")){
     CTX::instance()->pickElements = 0;
-    what = ENT_LINE;
+    what = ENT_CURVE;
   }
   else if(!strcmp(str, "surfaces")){
     CTX::instance()->pickElements = 0;
@@ -2072,7 +2072,7 @@ static std::vector<std::string> getInfoStrings(MElement *ele)
   }
   {
     std::ostringstream sstream;
-    sstream << " Vertices:";
+    sstream << " Nodes:";
     for(int i = 0; i < ele->getNumVertices(); i++)
       sstream << " " << ele->getVertex(i)->getNum();
     info.push_back(sstream.str());
@@ -2176,7 +2176,7 @@ static void mesh_degree_cb(Fl_Widget *w, void *data)
     SetOrderN(GModel::current(), degree,
 	      CTX::instance()->mesh.secondOrderLinear,
               CTX::instance()->mesh.secondOrderIncomplete);
-  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();
 }
 
@@ -2270,7 +2270,7 @@ static void mesh_define_transfinite(int dim)
 {
   opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   switch (dim) {
-  case 1: opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1); break;
+  case 1: opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1); break;
   case 2: opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1); break;
   case 3: opt_geometry_volumes(0, GMSH_SET | GMSH_GUI, 1); break;
   }
@@ -2288,7 +2288,7 @@ static void mesh_define_transfinite(int dim)
         Msg::StatusGl("Select curves\n"
                       "[Press 'e' to end selection, 'u' to undo last selection "
                       "or 'q' to abort]");
-      ib = FlGui::instance()->selectEntity(ENT_LINE);
+      ib = FlGui::instance()->selectEntity(ENT_CURVE);
       break;
     case 2:
       Msg::StatusGl("Select surface\n[Press 'q' to abort]");
@@ -2452,8 +2452,8 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
     opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(what == "Curve"){
-    type = ENT_LINE; str = "curves";
-    opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+    type = ENT_CURVE; str = "curves";
+    opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(what == "Point"){
     type = ENT_POINT; str = "points";
@@ -2477,7 +2477,7 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
     int t = type;
     if(!selectEntities){
       switch(FlGui::instance()->transformContext->choice->value()){
-      case 2: t = ENT_LINE; break;
+      case 2: t = ENT_CURVE; break;
       case 3: t = ENT_SURFACE; break;
       case 4: t = ENT_VOLUME; break;
       default: t = ENT_ALL; break;
@@ -2860,8 +2860,8 @@ void quick_access_cb(Fl_Widget *w, void *data)
     opt_geometry_points(0, GMSH_SET|GMSH_GUI,
                         !opt_geometry_points(0, GMSH_GET, 0));
   else if(what == "geometry_curves")
-    opt_geometry_lines(0, GMSH_SET|GMSH_GUI,
-                       !opt_geometry_lines(0, GMSH_GET, 0));
+    opt_geometry_curves(0, GMSH_SET|GMSH_GUI,
+                       !opt_geometry_curves(0, GMSH_GET, 0));
   else if(what == "geometry_surfaces")
     opt_geometry_surfaces(0, GMSH_SET|GMSH_GUI,
                           !opt_geometry_surfaces(0, GMSH_GET, 0));
@@ -3115,17 +3115,17 @@ void status_options_cb(Fl_Widget *w, void *data)
       { "All geometry options...", 0, quick_access_cb, (void*)"geometry",
         FL_MENU_DIVIDER, 0, FL_ITALIC },
       { "Mesh visibility", 0, 0, 0, FL_SUBMENU },
-         { "Vertices", FL_ALT + FL_SHIFT + 'p', quick_access_cb, (void*)"mesh_points",
+         { "Nodes", FL_ALT + FL_SHIFT + 'p', quick_access_cb, (void*)"mesh_points",
            FL_MENU_TOGGLE },
-         { "Curve edges", FL_ALT + FL_SHIFT + 'l', quick_access_cb, (void*)"mesh_lines",
+         { "1D elements", FL_ALT + FL_SHIFT + 'l', quick_access_cb, (void*)"mesh_lines",
            FL_MENU_TOGGLE },
-         { "Surface edges ", FL_ALT + FL_SHIFT + 's', quick_access_cb,
+         { "2D element edges ", FL_ALT + FL_SHIFT + 's', quick_access_cb,
            (void*)"mesh_surfaces_edges", FL_MENU_TOGGLE },
-         { "Surface faces", FL_ALT + FL_SHIFT + 'd', quick_access_cb,
+         { "2D element faces", FL_ALT + FL_SHIFT + 'd', quick_access_cb,
            (void*)"mesh_surfaces_faces", FL_MENU_TOGGLE },
-         { "Volume edges", FL_ALT + FL_SHIFT + 'v', quick_access_cb,
+         { "3D element edges", FL_ALT + FL_SHIFT + 'v', quick_access_cb,
            (void*)"mesh_volumes_edges", FL_MENU_TOGGLE },
-         { "Volume faces", FL_ALT + FL_SHIFT + 'b', quick_access_cb,
+         { "3D element faces", FL_ALT + FL_SHIFT + 'b', quick_access_cb,
            (void*)"mesh_volumes_faces", FL_MENU_TOGGLE },
          { 0 },
       { "Toggle mesh display", FL_ALT + 'm', quick_access_cb, (void*)"mesh_toggle" },
@@ -3160,7 +3160,7 @@ void status_options_cb(Fl_Widget *w, void *data)
       if(opt_view_visible(i, GMSH_GET, 0) && opt_view_axes(i, GMSH_GET, 0))
         menu[a + 0].set();
     if(opt_geometry_points(0, GMSH_GET, 0)) menu[a + 7].set(); else menu[a + 7].clear();
-    if(opt_geometry_lines(0, GMSH_GET, 0)) menu[a + 8].set(); else menu[a + 8].clear();
+    if(opt_geometry_curves(0, GMSH_GET, 0)) menu[a + 8].set(); else menu[a + 8].clear();
     if(opt_geometry_surfaces(0, GMSH_GET, 0)) menu[a + 9].set(); else menu[a + 9].clear();
     if(opt_geometry_volumes(0, GMSH_GET, 0)) menu[a + 10].set(); else menu[a + 10].clear();
     if(opt_mesh_points(0, GMSH_GET, 0)) menu[a + 14].set(); else menu[a + 14].clear();

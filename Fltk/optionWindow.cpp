@@ -414,11 +414,11 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   o->activate((const char*)data);
 
   opt_geometry_points(0, GMSH_SET, o->geo.butt[0]->value());
-  opt_geometry_lines(0, GMSH_SET, o->geo.butt[1]->value());
+  opt_geometry_curves(0, GMSH_SET, o->geo.butt[1]->value());
   opt_geometry_surfaces(0, GMSH_SET, o->geo.butt[2]->value());
   opt_geometry_volumes(0, GMSH_SET, o->geo.butt[3]->value());
   opt_geometry_points_num(0, GMSH_SET, o->geo.butt[4]->value());
-  opt_geometry_lines_num(0, GMSH_SET, o->geo.butt[5]->value());
+  opt_geometry_curves_num(0, GMSH_SET, o->geo.butt[5]->value());
   opt_geometry_surfaces_num(0, GMSH_SET, o->geo.butt[6]->value());
   opt_geometry_volumes_num(0, GMSH_SET, o->geo.butt[7]->value());
   opt_geometry_auto_coherence(0, GMSH_SET, o->geo.butt[8]->value());
@@ -437,9 +437,9 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_tangents(0, GMSH_SET, o->geo.value[1]->value());
   opt_geometry_tolerance(0, GMSH_SET, o->geo.value[2]->value());
   opt_geometry_point_size(0, GMSH_SET, o->geo.value[3]->value());
-  opt_geometry_line_width(0, GMSH_SET, o->geo.value[4]->value());
+  opt_geometry_curve_width(0, GMSH_SET, o->geo.value[4]->value());
   opt_geometry_point_sel_size(0, GMSH_SET, o->geo.value[5]->value());
-  opt_geometry_line_sel_width(0, GMSH_SET, o->geo.value[6]->value());
+  opt_geometry_curve_sel_width(0, GMSH_SET, o->geo.value[6]->value());
   opt_geometry_transform00(0, GMSH_SET, o->geo.value[7]->value());
   opt_geometry_transform01(0, GMSH_SET, o->geo.value[8]->value());
   opt_geometry_transform02(0, GMSH_SET, o->geo.value[9]->value());
@@ -455,7 +455,7 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_num_sub_edges(0, GMSH_SET, o->geo.value[19]->value());
 
   opt_geometry_point_type(0, GMSH_SET, o->geo.choice[0]->value());
-  opt_geometry_line_type(0, GMSH_SET, o->geo.choice[1]->value());
+  opt_geometry_curve_type(0, GMSH_SET, o->geo.choice[1]->value());
   opt_geometry_surface_type(0, GMSH_SET, o->geo.choice[2]->value());
   opt_geometry_transform(0, GMSH_SET, o->geo.choice[3]->value());
   opt_geometry_label_type(0, GMSH_SET, o->geo.choice[4]->value() + 1);
@@ -2404,43 +2404,43 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Visibility");
 
       mesh.butt[6] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Vertices");
+        (L + 2 * WB, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Nodes");
       mesh.butt[6]->tooltip("(Alt+Shift+p)");
       mesh.butt[6]->type(FL_TOGGLE_BUTTON);
       mesh.butt[6]->callback(mesh_options_ok_cb);
 
       mesh.butt[7] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Curve edges");
+        (L + 2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "1D elements");
       mesh.butt[7]->tooltip("(Alt+Shift+l)");
       mesh.butt[7]->type(FL_TOGGLE_BUTTON);
       mesh.butt[7]->callback(mesh_options_ok_cb);
 
       mesh.butt[8] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surface edges");
+        (L + 2 * WB, 2 * WB + 3 * BH, BW / 2 - WB, BH, "2D element edges");
       mesh.butt[8]->tooltip("(Alt+Shift+s)");
       mesh.butt[8]->type(FL_TOGGLE_BUTTON);
       mesh.butt[8]->callback(mesh_options_ok_cb);
 
       mesh.butt[9] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Surface faces");
+        (L + 2 * WB, 2 * WB + 4 * BH, BW / 2 - WB, BH, "2D element faces");
       mesh.butt[9]->tooltip("(Alt+Shift+d)");
       mesh.butt[9]->type(FL_TOGGLE_BUTTON);
       mesh.butt[9]->callback(mesh_options_ok_cb);
 
       mesh.butt[10] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 5 * BH, BW / 2 - WB, BH, "Volume edges");
+        (L + 2 * WB, 2 * WB + 5 * BH, BW / 2 - WB, BH, "3D element edges");
       mesh.butt[10]->tooltip("(Alt+Shift+v)");
       mesh.butt[10]->type(FL_TOGGLE_BUTTON);
       mesh.butt[10]->callback(mesh_options_ok_cb);
 
       mesh.butt[11] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 6 * BH, BW / 2 - WB, BH, "Volume faces");
+        (L + 2 * WB, 2 * WB + 6 * BH, BW / 2 - WB, BH, "3D element faces");
       mesh.butt[11]->tooltip("(Alt+Shift+b)");
       mesh.butt[11]->type(FL_TOGGLE_BUTTON);
       mesh.butt[11]->callback(mesh_options_ok_cb);
 
       mesh.butt[12] = new Fl_Check_Button
-        (L + width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Vertex labels");
+        (L + width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Node labels");
       mesh.butt[12]->type(FL_TOGGLE_BUTTON);
       mesh.butt[12]->callback(mesh_options_ok_cb);
 
@@ -3406,7 +3406,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       static Fl_Menu_Item menu_glyph_loc[] = {
         {"Barycenter", 0, 0, 0},
-        {"Vertex", 0, 0, 0},
+        {"Node", 0, 0, 0},
         {0}
       };
       view.choice[3] = new Fl_Choice

@@ -227,10 +227,10 @@
 // Geometric entities
 #define ENT_NONE     0
 #define ENT_POINT    (1<<0)
-#define ENT_LINE     (1<<1)
+#define ENT_CURVE    (1<<1)
 #define ENT_SURFACE  (1<<2)
 #define ENT_VOLUME   (1<<3)
-#define ENT_ALL      (ENT_POINT | ENT_LINE | ENT_SURFACE | ENT_VOLUME)
+#define ENT_ALL      (ENT_POINT | ENT_CURVE | ENT_SURFACE | ENT_VOLUME)
 
 // 2D meshing algorithms (numbers should not be changed)
 #define ALGO_2D_MESHADAPT      1

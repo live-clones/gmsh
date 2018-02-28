@@ -133,16 +133,16 @@ class drawGEdge {
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
     if(e->getSelection()) {
-      glLineWidth((float)CTX::instance()->geom.selectedLineWidth);
-      gl2psLineWidth((float)(CTX::instance()->geom.selectedLineWidth *
+      glLineWidth((float)CTX::instance()->geom.selectedCurveWidth);
+      gl2psLineWidth((float)(CTX::instance()->geom.selectedCurveWidth *
                              CTX::instance()->print.epsLineWidthFactor));
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.selection);
     }
     else {
-      glLineWidth((float)CTX::instance()->geom.lineWidth);
-      gl2psLineWidth((float)(CTX::instance()->geom.lineWidth *
+      glLineWidth((float)CTX::instance()->geom.curveWidth);
+      gl2psLineWidth((float)(CTX::instance()->geom.curveWidth *
                              CTX::instance()->print.epsLineWidthFactor));
-      glColor4ubv((GLubyte *) & CTX::instance()->color.geom.line);
+      glColor4ubv((GLubyte *) & CTX::instance()->color.geom.curve);
     }
 
     if(CTX::instance()->geom.highlightOrphans){
@@ -157,9 +157,9 @@ class drawGEdge {
     double t_min = t_bounds.low();
     double t_max = t_bounds.high();
 
-    if(CTX::instance()->geom.lines) {
+    if(CTX::instance()->geom.curves) {
       int N = e->minimumDrawSegments() + 1;
-      if(CTX::instance()->geom.lineType > 0) {
+      if(CTX::instance()->geom.curveType > 0) {
         for(int i = 0; i < N - 1; i++) {
           double t1 = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
           GPoint p1 = e->point(t1);
@@ -170,8 +170,8 @@ class drawGEdge {
           double z[2] = {p1.z(), p2.z()};
           _ctx->transform(x[0], y[0], z[0]);
           _ctx->transform(x[1], y[1], z[1]);
-          _ctx->drawCylinder(e->getSelection() ? CTX::instance()->geom.selectedLineWidth :
-                             CTX::instance()->geom.lineWidth, x, y, z,
+          _ctx->drawCylinder(e->getSelection() ? CTX::instance()->geom.selectedCurveWidth :
+                             CTX::instance()->geom.curveWidth, x, y, z,
                              CTX::instance()->geom.light);
         }
       }
@@ -188,9 +188,9 @@ class drawGEdge {
       }
     }
 
-    if(CTX::instance()->geom.linesNum) {
+    if(CTX::instance()->geom.curvesNum) {
       GPoint p = e->point(t_min + 0.5 * (t_max - t_min));
-      double offset = (0.5 * CTX::instance()->geom.lineWidth +
+      double offset = (0.5 * CTX::instance()->geom.curveWidth +
                        0.1 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
       double x = p.x(), y = p.y(), z = p.z();
       _ctx->transform(x, y, z);
@@ -427,14 +427,14 @@ class drawGFace {
     }
 
     if(f->getSelection()) {
-      glLineWidth((float)(CTX::instance()->geom.selectedLineWidth / 2.));
-      gl2psLineWidth((float)(CTX::instance()->geom.selectedLineWidth / 2. *
+      glLineWidth((float)(CTX::instance()->geom.selectedCurveWidth / 2.));
+      gl2psLineWidth((float)(CTX::instance()->geom.selectedCurveWidth / 2. *
                              CTX::instance()->print.epsLineWidthFactor));
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.selection);
     }
     else {
-      glLineWidth((float)(CTX::instance()->geom.lineWidth / 2.));
-      gl2psLineWidth((float)(CTX::instance()->geom.lineWidth / 2. *
+      glLineWidth((float)(CTX::instance()->geom.curveWidth / 2.));
+      gl2psLineWidth((float)(CTX::instance()->geom.curveWidth / 2. *
                              CTX::instance()->print.epsLineWidthFactor));
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.surface);
     }
@@ -522,7 +522,7 @@ void drawContext::drawGeom()
     if(m->getVisibility() && isVisible(m)){
       if(CTX::instance()->geom.points || CTX::instance()->geom.pointsNum)
         std::for_each(m->firstVertex(), m->lastVertex(), drawGVertex(this));
-      if(CTX::instance()->geom.lines || CTX::instance()->geom.linesNum ||
+      if(CTX::instance()->geom.curves || CTX::instance()->geom.curvesNum ||
          CTX::instance()->geom.tangents)
         std::for_each(m->firstEdge(), m->lastEdge(), drawGEdge(this));
       if(CTX::instance()->geom.surfaces || CTX::instance()->geom.surfacesNum ||

@@ -307,10 +307,10 @@ void gmshModelMeshSetOrder(const int order,int * ierr){
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshRemoveDuplicateVertices(int * ierr){
+void gmshModelMeshRemoveDuplicateNodes(int * ierr){
   if(ierr) *ierr = 0;
   try {
-  gmsh::model::mesh::removeDuplicateVertices();
+  gmsh::model::mesh::removeDuplicateNodes();
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
@@ -323,47 +323,47 @@ void gmshModelMeshGetLastEntityError(int ** dimTags, size_t * dimTags_n,int * ie
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshGetLastVertexError(int ** vertexTags, size_t * vertexTags_n,int * ierr){
+void gmshModelMeshGetLastNodeError(int ** nodeTags, size_t * nodeTags_n,int * ierr){
   if(ierr) *ierr = 0;
   try {
-  std::vector<int> api_vertexTags_;
-  gmsh::model::mesh::getLastVertexError(api_vertexTags_);
-  vector2ptr(api_vertexTags_,vertexTags,vertexTags_n);
+  std::vector<int> api_nodeTags_;
+  gmsh::model::mesh::getLastNodeError(api_nodeTags_);
+  vector2ptr(api_nodeTags_,nodeTags,nodeTags_n);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshGetVertices(int ** vertexTags, size_t * vertexTags_n,double ** coord, size_t * coord_n,double ** parametricCoord, size_t * parametricCoord_n,const int dim,const int tag,int * ierr){
+void gmshModelMeshGetNodes(int ** nodeTags, size_t * nodeTags_n,double ** coord, size_t * coord_n,double ** parametricCoord, size_t * parametricCoord_n,const int dim,const int tag,int * ierr){
   if(ierr) *ierr = 0;
   try {
-  std::vector<int> api_vertexTags_;
+  std::vector<int> api_nodeTags_;
   std::vector<double> api_coord_;
   std::vector<double> api_parametricCoord_;
-  gmsh::model::mesh::getVertices(api_vertexTags_,api_coord_,api_parametricCoord_,dim,tag);
-  vector2ptr(api_vertexTags_,vertexTags,vertexTags_n);
+  gmsh::model::mesh::getNodes(api_nodeTags_,api_coord_,api_parametricCoord_,dim,tag);
+  vector2ptr(api_nodeTags_,nodeTags,nodeTags_n);
   vector2ptr(api_coord_,coord,coord_n);
   vector2ptr(api_parametricCoord_,parametricCoord,parametricCoord_n);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshGetElements(int ** elementTypes, size_t * elementTypes_n,int *** elementTags, size_t ** elementTags_n, size_t *elementTags_nn,int *** vertexTags, size_t ** vertexTags_n, size_t *vertexTags_nn,const int dim,const int tag,int * ierr){
+void gmshModelMeshGetElements(int ** elementTypes, size_t * elementTypes_n,int *** elementTags, size_t ** elementTags_n, size_t *elementTags_nn,int *** nodeTags, size_t ** nodeTags_n, size_t *nodeTags_nn,const int dim,const int tag,int * ierr){
   if(ierr) *ierr = 0;
   try {
   std::vector<int> api_elementTypes_;
   std::vector<std::vector<int> > api_elementTags_;
-  std::vector<std::vector<int> > api_vertexTags_;
-  gmsh::model::mesh::getElements(api_elementTypes_,api_elementTags_,api_vertexTags_,dim,tag);
+  std::vector<std::vector<int> > api_nodeTags_;
+  gmsh::model::mesh::getElements(api_elementTypes_,api_elementTags_,api_nodeTags_,dim,tag);
   vector2ptr(api_elementTypes_,elementTypes,elementTypes_n);
   vectorvector2ptrptr(api_elementTags_,elementTags,elementTags_n,elementTags_nn);
-  vectorvector2ptrptr(api_vertexTags_,vertexTags,vertexTags_n,vertexTags_nn);
+  vectorvector2ptrptr(api_nodeTags_,nodeTags,nodeTags_n,nodeTags_nn);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshGetElementProperties(const int elementType,char ** elementName,int * dim,int * order,int * numVertices,double ** parametricCoord, size_t * parametricCoord_n,int * ierr){
+void gmshModelMeshGetElementProperties(const int elementType,char ** elementName,int * dim,int * order,int * numNodes,double ** parametricCoord, size_t * parametricCoord_n,int * ierr){
   if(ierr) *ierr = 0;
   try {
   std::string api_elementName_;
   std::vector<double> api_parametricCoord_;
-  gmsh::model::mesh::getElementProperties(elementType,api_elementName_,*dim,*order,*numVertices,api_parametricCoord_);
+  gmsh::model::mesh::getElementProperties(elementType,api_elementName_,*dim,*order,*numNodes,api_parametricCoord_);
   *elementName = _strdup(api_elementName_.c_str());
   vector2ptr(api_parametricCoord_,parametricCoord,parametricCoord_n);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
@@ -391,14 +391,14 @@ void gmshModelMeshGetElementTypes(int ** elementTypes, size_t * elementTypes_n,c
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshGetElementsByType(const int elementType,int ** elementTags, size_t * elementTags_n,int ** vertexTags, size_t * vertexTags_n,const int dim,const int tag,int * ierr){
+void gmshModelMeshGetElementsByType(const int elementType,int ** elementTags, size_t * elementTags_n,int ** nodeTags, size_t * nodeTags_n,const int dim,const int tag,int * ierr){
   if(ierr) *ierr = 0;
   try {
   std::vector<int> api_elementTags_;
-  std::vector<int> api_vertexTags_;
-  gmsh::model::mesh::getElementsByType(elementType,api_elementTags_,api_vertexTags_,dim,tag);
+  std::vector<int> api_nodeTags_;
+  gmsh::model::mesh::getElementsByType(elementType,api_elementTags_,api_nodeTags_,dim,tag);
   vector2ptr(api_elementTags_,elementTags,elementTags_n);
-  vector2ptr(api_vertexTags_,vertexTags,vertexTags_n);
+  vector2ptr(api_nodeTags_,nodeTags,nodeTags_n);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
@@ -415,44 +415,44 @@ void gmshModelMeshGetIntegrationDataByType(const int elementType,const char * in
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshSetVertices(const int dim,const int tag,int * vertexTags, size_t vertexTags_n,double * coord, size_t coord_n,double * parametricCoord, size_t parametricCoord_n,int * ierr){
+void gmshModelMeshSetNodes(const int dim,const int tag,int * nodeTags, size_t nodeTags_n,double * coord, size_t coord_n,double * parametricCoord, size_t parametricCoord_n,int * ierr){
   if(ierr) *ierr = 0;
   try {
-  gmsh::model::mesh::setVertices(dim,tag,ptr2vector(vertexTags,vertexTags_n),ptr2vector(coord,coord_n),ptr2vector(parametricCoord,parametricCoord_n));
+  gmsh::model::mesh::setNodes(dim,tag,ptr2vector(nodeTags,nodeTags_n),ptr2vector(coord,coord_n),ptr2vector(parametricCoord,parametricCoord_n));
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshSetElements(const int dim,const int tag,int * types, size_t types_n,const int ** elementTags, const size_t * elementTags_n, size_t elementTags_nn,const int ** vertexTags, const size_t * vertexTags_n, size_t vertexTags_nn,int * ierr){
+void gmshModelMeshSetElements(const int dim,const int tag,int * types, size_t types_n,const int ** elementTags, const size_t * elementTags_n, size_t elementTags_nn,const int ** nodeTags, const size_t * nodeTags_n, size_t nodeTags_nn,int * ierr){
   if(ierr) *ierr = 0;
   try {
-  gmsh::model::mesh::setElements(dim,tag,ptr2vector(types,types_n),ptrptr2vectorvector(elementTags,elementTags_n,elementTags_nn),ptrptr2vectorvector(vertexTags,vertexTags_n,vertexTags_nn));
+  gmsh::model::mesh::setElements(dim,tag,ptr2vector(types,types_n),ptrptr2vectorvector(elementTags,elementTags_n,elementTags_nn),ptrptr2vectorvector(nodeTags,nodeTags_n,nodeTags_nn));
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshReclassifyVertices(int * ierr){
+void gmshModelMeshReclassifyNodes(int * ierr){
   if(ierr) *ierr = 0;
   try {
-  gmsh::model::mesh::reclassifyVertices();
+  gmsh::model::mesh::reclassifyNodes();
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshGetVertex(const int vertexTag,double ** coord, size_t * coord_n,double ** parametricCoord, size_t * parametricCoord_n,int * ierr){
+void gmshModelMeshGetNode(const int nodeTag,double ** coord, size_t * coord_n,double ** parametricCoord, size_t * parametricCoord_n,int * ierr){
   if(ierr) *ierr = 0;
   try {
   std::vector<double> api_coord_;
   std::vector<double> api_parametricCoord_;
-  gmsh::model::mesh::getVertex(vertexTag,api_coord_,api_parametricCoord_);
+  gmsh::model::mesh::getNode(nodeTag,api_coord_,api_parametricCoord_);
   vector2ptr(api_coord_,coord,coord_n);
   vector2ptr(api_parametricCoord_,parametricCoord,parametricCoord_n);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshGetElement(const int elementTag,int * type,int ** vertexTags, size_t * vertexTags_n,int * ierr){
+void gmshModelMeshGetElement(const int elementTag,int * type,int ** nodeTags, size_t * nodeTags_n,int * ierr){
   if(ierr) *ierr = 0;
   try {
-  std::vector<int> api_vertexTags_;
-  gmsh::model::mesh::getElement(elementTag,*type,api_vertexTags_);
-  vector2ptr(api_vertexTags_,vertexTags,vertexTags_n);
+  std::vector<int> api_nodeTags_;
+  gmsh::model::mesh::getElement(elementTag,*type,api_nodeTags_);
+  vector2ptr(api_nodeTags_,nodeTags,nodeTags_n);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
@@ -463,10 +463,10 @@ void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n,const double size,int 
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshSetTransfiniteCurve(const int tag,const int numVertices,const char * type,const double coef,int * ierr){
+void gmshModelMeshSetTransfiniteCurve(const int tag,const int numNodes,const char * type,const double coef,int * ierr){
   if(ierr) *ierr = 0;
   try {
-  gmsh::model::mesh::setTransfiniteCurve(tag,numVertices,type,coef);
+  gmsh::model::mesh::setTransfiniteCurve(tag,numNodes,type,coef);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 

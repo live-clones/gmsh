@@ -128,9 +128,9 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
      CTX::instance()->mesh.volumesFaces ||
      CTX::instance()->mesh.surfacesFaces){ // by element type
     if(v->getPolynomialOrder() > 1)
-      glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
+      glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.nodeSup);
     else
-      glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);
+      glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.node);
   }
   else{
     unsigned int col = getColorByEntity(e);
@@ -154,9 +154,9 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
            CTX::instance()->mesh.volumesFaces ||
            CTX::instance()->mesh.surfacesFaces){ // by element type
           if(v->getPolynomialOrder() > 1)
-            glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
+            glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.nodeSup);
           else
-            glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);
+            glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.node);
         }
         else{
           unsigned int col = getColorByEntity(e);
@@ -175,9 +175,9 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
            CTX::instance()->mesh.volumesFaces ||
            CTX::instance()->mesh.surfacesFaces){ // by element type
           if(v->getPolynomialOrder() > 1)
-            glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
+            glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.nodeSup);
           else
-            glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);
+            glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.node);
         }
         else{
           unsigned int col = getColorByEntity(e);
@@ -212,9 +212,9 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
              CTX::instance()->mesh.volumesFaces ||
              CTX::instance()->mesh.surfacesFaces){ // by element type
             if(v->getPolynomialOrder() > 1)
-              glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertexSup);
+              glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.nodeSup);
             else
-              glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.vertex);
+              glColor4ubv((GLubyte *) & CTX::instance()->color.mesh.node);
           }
           else{
             unsigned int col = getColorByEntity(e);

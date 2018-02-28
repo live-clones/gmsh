@@ -1018,8 +1018,8 @@ static void selection_mode_cb(Fl_Widget *w, void *data)
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
     break;
   case 2:
-    mode = ENT_LINE;
-    opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+    mode = ENT_CURVE;
+    opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
     break;
   case 3:
     mode = ENT_SURFACE;

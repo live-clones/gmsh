@@ -332,7 +332,7 @@ static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
   // if the browser is not empty, get the selections made in the
   // browser and apply them into the model
   if(VisibilityList::instance()->getNumEntities()){
-    CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+    CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
     bool recursive = FlGui::instance()->visibility->butt[0]->value() ? true : false;
     bool allmodels = FlGui::instance()->visibility->butt[1]->value() ? true : false;
     VisibilityList::VisibilityType type;
@@ -664,7 +664,7 @@ static void _recur_update_selected(Fl_Tree_Item *n)
 
 static void visibility_tree_apply_cb(Fl_Widget *w, void *data)
 {
-  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
   bool recursive = FlGui::instance()->visibility->butt[0]->value() ? true : false;
 
   Fl_Tree_Item *root = FlGui::instance()->visibility->tree->root();
@@ -931,7 +931,7 @@ static void _apply_visibility(char mode, bool physical,
 
 static void visibility_number_cb(Fl_Widget *w, void *data)
 {
-  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
 
   // what = 0 for nodes, 1 for elements, 2 for points, 3 for lines, 4
   // for surfaces, 5 for volumes, 6 for physical points, 7 for
@@ -980,9 +980,9 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   }
   else if(str == "curves to hide" || str == "physical curves to hide"){
     CTX::instance()->pickElements = 0;
-    what = ENT_LINE;
+    what = ENT_CURVE;
     mode = 0;
-    opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+    opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(str == "surfaces to hide" || str == "physical surfaces to hide"){
     CTX::instance()->pickElements = 0;
@@ -1011,9 +1011,9 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   }
   else if(str == "curves to show" || str == "physical curves to show"){
     CTX::instance()->pickElements = 0;
-    what = ENT_LINE;
+    what = ENT_CURVE;
     mode = 1;
-    opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+    opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(str == "surfaces to show" || str == "physical surfaces to show"){
     CTX::instance()->pickElements = 0;
@@ -1274,8 +1274,8 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
       yy += BH;
     }
 
-    input[0]->label("Vertex");
-    input[0]->tooltip("Enter vertex number, or *");
+    input[0]->label("Node");
+    input[0]->tooltip("Enter node number, or *");
 
     input[1]->label("Element");
     input[1]->tooltip("Enter element number, or *");

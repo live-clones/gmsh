@@ -125,23 +125,23 @@ mesh.add('refine',doc,None)
 doc = '''Sets the order of the elements in the mesh of the current model to `order'.'''
 mesh.add('setOrder',doc,None,iint('order'))
 
-doc = '''Removes duplicate mesh vertices in the mesh of the current model.'''
-mesh.add('removeDuplicateVertices',doc,None)
+doc = '''Removes duplicate mesh nodes in the mesh of the current model.'''
+mesh.add('removeDuplicateNodes',doc,None)
 
 doc = '''Gets the last entities (if any) where a meshing error occurred. Currently only populated by the new 3D meshing algorithms.'''
 mesh.add('getLastEntityError',doc,None,ovectorpair('dimTags'))
 
-doc = '''Gets the last mesh vertices (if any) where a meshing error occurred. Currently only populated by the new 3D meshing algorithms.'''
-mesh.add('getLastVertexError',doc,None,ovectorint('vertexTags'))
+doc = '''Gets the last mesh nodes (if any) where a meshing error occurred. Currently only populated by the new 3D meshing algorithms.'''
+mesh.add('getLastNodeError',doc,None,ovectorint('nodeTags'))
 
-doc = '''Gets the mesh vertices of the entity of dimension `dim' and `tag' tag. If `tag' < 0, gets the vertices for all entities of dimension `dim'. If `dim' and `tag' are negative, gets all the vertices in the mesh. `vertexTags' contains the vertex tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `vertexTags' that contains the (x, y, z) coordinates of the vertices, concatenated. If `dim' >= 0, `parametricCoord' contains the parametric coordinates of the vertices, if available. The length of `parametricCoord' can be 0 or `dim' times the length of `vertexTags'.'''
-mesh.add('getVertices',doc,None,ovectorint('vertexTags'),ovectordouble('coord'),ovectordouble('parametricCoord'),iint('dim', '-1'),iint('tag', '-1'))
+doc = '''Gets the mesh nodes of the entity of dimension `dim' and `tag' tag. If `tag' < 0, gets the nodes for all entities of dimension `dim'. If `dim' and `tag' are negative, gets all the nodes in the mesh. `nodeTags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the (x, y, z) coordinates of the nodes, concatenated. If `dim' >= 0, `parametricCoord' contains the parametric coordinates of the nodes, if available. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'.'''
+mesh.add('getNodes',doc,None,ovectorint('nodeTags'),ovectordouble('coord'),ovectordouble('parametricCoord'),iint('dim', '-1'),iint('tag', '-1'))
 
-doc = '''Gets the mesh elements of the entity of dimension `dim' and `tag' tag. If `tag' < 0, gets the elements for all entities of dimension `dim'. If `dim' and `tag' are negative, gets all the elements in the mesh. `elementTypes' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see `getElementProperties' to obtain the properties for a given element type). `elementTags' is a vector of the same length as `elementTypes'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `vertexTags' is also a vector of the same length as `elementTypes'; each entry is a vector of length equal to the number of elements of the given type times the number of vertices for this type of element, that contains the vertex tags of all the elements of the given type, concatenated.'''
-mesh.add('getElements',doc,None,ovectorint('elementTypes'),ovectorvectorint('elementTags'),ovectorvectorint('vertexTags'),iint('dim', '-1'),iint('tag', '-1'))
+doc = '''Gets the mesh elements of the entity of dimension `dim' and `tag' tag. If `tag' < 0, gets the elements for all entities of dimension `dim'. If `dim' and `tag' are negative, gets all the elements in the mesh. `elementTypes' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see `getElementProperties' to obtain the properties for a given element type). `elementTags' is a vector of the same length as `elementTypes'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is also a vector of the same length as `elementTypes'; each entry is a vector of length equal to the number of elements of the given type times the number of nodes for this type of element, that contains the node tags of all the elements of the given type, concatenated.'''
+mesh.add('getElements',doc,None,ovectorint('elementTypes'),ovectorvectorint('elementTags'),ovectorvectorint('nodeTags'),iint('dim', '-1'),iint('tag', '-1'))
 
-doc = '''Gets the properties of an element of type `elementType': its name (`elementName'), dimension (`dim'), order (`order'), number of vertices (`numVertices') and parametric coordinates of vertices (`parametricCoord' vector, of length `dim' times `numVertices').'''
-mesh.add('getElementProperties',doc,None,iint('elementType'),ostring('elementName'),oint('dim'),oint('order'),oint('numVertices'),ovectordouble('parametricCoord'))
+doc = '''Gets the properties of an element of type `elementType': its name (`elementName'), dimension (`dim'), order (`order'), number of nodes (`numNodes') and parametric coordinates of nodes (`parametricCoord' vector, of length `dim' times `numNodes').'''
+mesh.add('getElementProperties',doc,None,iint('elementType'),ostring('elementName'),oint('dim'),oint('order'),oint('numNodes'),ovectordouble('parametricCoord'))
 
 doc = '''Gets the integration data for mesh elements of the entity of dimension `dim' and `tag' tag. The data is returned by element type and by element, in the same order as the data returned by `getElements'. `integrationType' specifies the type of integration (e.g. \"Gauss4\") and `functionSpaceType' specifies the function space (e.g. \"IsoParametric\"). `integrationPoints' contains for each element type a vector (of length 4 times the number of integration points) containing the parametric coordinates (u, v, w) and the weight associated to the integration points. `integrationData' contains for each element type a vector (of size 13 times the number of integration points) containing the (x, y, z) coordinates of the integration point, the determinant of the Jacobian and the 9 entries (by row) of the 3x3 Jacobian matrix. If `functionSpaceType' is provided, `functionSpaceNumComponents' returns the number of components returned by the evaluation of a basis function in the space and `functionSpaceData' contains for each element type the evaluation of the basis functions at the integration points.'''
 mesh.add('getIntegrationData',doc,None,istring('integrationType'),istring('functionSpaceType'),ovectorvectordouble('integrationPoints'),ovectorvectordouble('integrationData'),oint('functionSpaceNumComponents'),ovectorvectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))
@@ -150,31 +150,31 @@ doc = '''Gets the types of mesh elements in the entity of dimension `dim' and `t
 mesh.add('getElementTypes',doc,None,ovectorint('elementTypes'),iint('dim', '-1'),iint('tag', '-1'))
 
 doc = '''Gets the mesh elements in the same way as `getElements', but for a single `elementType'.'''
-mesh.add('getElementsByType',doc,None,iint('elementType'),ovectorint('elementTags'),ovectorint('vertexTags'),iint('dim', '-1'),iint('tag', '-1'))
+mesh.add('getElementsByType',doc,None,iint('elementType'),ovectorint('elementTags'),ovectorint('nodeTags'),iint('dim', '-1'),iint('tag', '-1'))
 
 doc = '''Gets the integration data for mesh elements in the same way as `getIntegrationData', but for a single `elementType'.'''
 mesh.add('getIntegrationDataByType',doc,None,iint('elementType'),istring('integrationType'),istring('functionSpaceType'),ovectordouble('integrationPoints'),ovectordouble('integrationData'),oint('functionSpaceNumComponents'),ovectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))
 
-doc = '''Sets the mesh vertices in the geometrical entity of dimension `dim' and tag `tag'. `vertextags' contains the vertex tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `vertexTags' that contains the (x, y, z) coordinates of the vertices, concatenated. The optional `parametricCoord' vector contains the parametric coordinates of the vertices, if any. The length of `parametricCoord' can be 0 or `dim' times the length of `vertexTags'.'''
-mesh.add('setVertices',doc,None,iint('dim'),iint('tag'),ivectorint('vertexTags'),ivectordouble('coord'),ivectordouble('parametricCoord','std::vector<double>()',"[]"))
+doc = '''Sets the mesh nodes in the geometrical entity of dimension `dim' and tag `tag'. `nodetags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the (x, y, z) coordinates of the nodes, concatenated. The optional `parametricCoord' vector contains the parametric coordinates of the nodes, if any. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'.'''
+mesh.add('setNodes',doc,None,iint('dim'),iint('tag'),ivectorint('nodeTags'),ivectordouble('coord'),ivectordouble('parametricCoord','std::vector<double>()',"[]"))
 
-doc = '''Sets the mesh elements of the entity of dimension `dim' and `tag' tag. `types' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh reference manual). `elementTags' is a vector of the same length as `types'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `vertexTags' is also a vector of the same length as `types'; each entry is a vector of length equal to the number of elements of the give type times the number of vertices per element, that contains the vertex tags of all the elements of the given type, concatenated.'''
-mesh.add('setElements',doc,None,iint('dim'),iint('tag'),ivectorint('types'),ivectorvectorint('elementTags'),ivectorvectorint('vertexTags'))
+doc = '''Sets the mesh elements of the entity of dimension `dim' and `tag' tag. `types' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh reference manual). `elementTags' is a vector of the same length as `types'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is also a vector of the same length as `types'; each entry is a vector of length equal to the number of elements of the give type times the number of nodes per element, that contains the node tags of all the elements of the given type, concatenated.'''
+mesh.add('setElements',doc,None,iint('dim'),iint('tag'),ivectorint('types'),ivectorvectorint('elementTags'),ivectorvectorint('nodeTags'))
 
-doc = '''Redistributes all mesh vertices on their associated geometrical entity, based on the mesh elements. Can be used when importing mesh vertices in bulk (e.g. by associating them all to a single volume), to reclassify them correctly on model surfaces, curves, etc.'''
-mesh.add('reclassifyVertices',doc,None)
+doc = '''Redistributes all mesh nodes on their associated geometrical entity, based on the mesh elements. Can be used when importing mesh nodes in bulk (e.g. by associating them all to a single volume), to reclassify them correctly on model surfaces, curves, etc.'''
+mesh.add('reclassifyNodes',doc,None)
 
-doc = '''Gets the coordinates and the parametric coordinates (if any) of the mesh vertex with tag `tag'. This is a useful by inefficient way of accessing mesh vertex data, as it relies on a cache stored in the model. For large meshes all the vertices in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
-mesh.add('getVertex',doc,None,iint('vertexTag'),ovectordouble('coord'),ovectordouble('parametricCoord'))
+doc = '''Gets the coordinates and the parametric coordinates (if any) of the mesh node with tag `tag'. This is a useful by inefficient way of accessing mesh node data, as it relies on a cache stored in the model. For large meshes all the nodes in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
+mesh.add('getNode',doc,None,iint('nodeTag'),ovectordouble('coord'),ovectordouble('parametricCoord'))
 
-doc = '''Gets the type and vertex tags of the mesh element with tag `tag'. This is a useful but inefficient way of accessing mesh element data, as it relies on a cache stored in the model. For large meshes all the elements in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
-mesh.add('getElement',doc,None,iint('elementTag'),oint('type'),ovectorint('vertexTags'))
+doc = '''Gets the type and node tags of the mesh element with tag `tag'. This is a useful but inefficient way of accessing mesh element data, as it relies on a cache stored in the model. For large meshes all the elements in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
+mesh.add('getElement',doc,None,iint('elementTag'),oint('type'),ovectorint('nodeTags'))
 
 doc = '''Sets a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize',doc,None,ivectorpair('dimTags'),idouble('size'))
 
-doc = '''Sets a transfinite meshing constraint on the curve `tag', with `numVertices' mesh vertices distributed according to `type' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extremities of the curve).'''
-mesh.add('setTransfiniteCurve',doc,None,iint('tag'),iint('numVertices'),istring('type','"Progression"'),idouble('coef','1.'))
+doc = '''Sets a transfinite meshing constraint on the curve `tag', with `numNodes' mesh nodes distributed according to `type' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extremities of the curve).'''
+mesh.add('setTransfiniteCurve',doc,None,iint('tag'),iint('numNodes'),istring('type','"Progression"'),idouble('coef','1.'))
 
 doc = '''Sets a transfinite meshing constraint on the surface `tag'. `arrangement' describes the arrangement of the triangles when the surface is not flagged as recombined: currently supported values are "Left", "Right", "AlternateLeft" and "AlternateRight". `cornerTags' can be used to specify the (3 or 4) corners of the transfinite interpolation explicitly; specifying the corners explicitly is mandatory if the surface has more that 3 or 4 points on its boundary.'''
 mesh.add('setTransfiniteSurface',doc,None,iint('tag'),istring('arrangement','"Left"'),ivectorint('cornerTags','std::vector<int>()',"[]"))
@@ -299,7 +299,7 @@ mesh = geo.add_module('mesh','geo-specific meshing constraints')
 doc = '''Sets a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize',doc,None,ivectorpair('dimTags'),idouble('size'))
 
-doc = '''Sets a transfinite meshing constraint on the curve `tag', with `numVertices' mesh vertices distributed according to `type' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extreminties of the curve).'''
+doc = '''Sets a transfinite meshing constraint on the curve `tag', with `numNodes' mesh nodes distributed according to `type' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extreminties of the curve).'''
 mesh.add('setTransfiniteCurve',doc,None,iint('tag'),iint('nPoints'),istring('type','"Progression"'),idouble('coef','1.'))
 
 doc = '''Sets a transfinite meshing constraint on the surface `tag'. `arrangement' describes the arrangement of the triangles when the surface is not flagged as recombined: currently supported values are "Left", "Right", "AlternateLeft" and "AlternateRight". `cornerTags' can be used to specify the (3 or 4) corners of the transfinite interpolation explicitly; specifying the corners explicitly is mandatory if the surface has more that 3 or 4 points on its boundary.'''
@@ -469,10 +469,10 @@ view.add('getIndex',doc,oint,iint('tag'))
 doc = '''Gets the tags of all views.'''
 view.add('getTags',doc,None,ovectorint('tags'))
 
-doc = '''Adds model-based post-processing data to the view with tag `tag'. `modelName' identifies the model the data is attached to. `dataType' specifies the type of data, currently either "NodeData", "ElementData" or "ElementNodeData". `step' specifies the identifier (>= 0) of the data in a sequence. `tags' gives the tags of the vertices or elements in the mesh to which the data is associated. `data' is a vector of the same length as `tags': each entry is the vector of double precision numbers representing the data associated with the corresponding tag. The optional `time' argument associate a time value with the data. `numComponents' gives the number of data components (1 for scalar data, 3 for vector data, etc.) per entity; if negative, it is automatically inferred (when possible) from the input data. `partition' allows to specify data in several sub-sets.'''
+doc = '''Adds model-based post-processing data to the view with tag `tag'. `modelName' identifies the model the data is attached to. `dataType' specifies the type of data, currently either "NodeData", "ElementData" or "ElementNodeData". `step' specifies the identifier (>= 0) of the data in a sequence. `tags' gives the tags of the nodes or elements in the mesh to which the data is associated. `data' is a vector of the same length as `tags': each entry is the vector of double precision numbers representing the data associated with the corresponding tag. The optional `time' argument associate a time value with the data. `numComponents' gives the number of data components (1 for scalar data, 3 for vector data, etc.) per entity; if negative, it is automatically inferred (when possible) from the input data. `partition' allows to specify data in several sub-sets.'''
 view.add('addModelData',doc,None,iint('tag'),iint('step'),istring('modelName'),istring('dataType'),ivectorint('tags'),ivectorvectordouble('data'),idouble('time','0.'),iint('numComponents','-1'),iint('partition','0'))
 
-doc = '''Gets model-based post-processing data from the view with tag `tag' at step `step'. Returns the `data' associated to the vertices or the elements with tags `tags', as well as the `dataType' and the number of components `numComponents'.'''
+doc = '''Gets model-based post-processing data from the view with tag `tag' at step `step'. Returns the `data' associated to the nodes or the elements with tags `tags', as well as the `dataType' and the number of components `numComponents'.'''
 view.add('getModelData',doc,None,iint('tag'),iint('step'),ostring('dataType'),ovectorint('tags'),ovectorvectordouble('data'),odouble('time'),oint('numComponents'))
 
 doc = '''Adds list-based post-processing data to the view with tag `tag'. `type' identifies the data: "SP" for scalar points, "VP", for vector points, etc. `numEle' gives the number of elements in the data. `data' contains the data for the `numEle' elements.'''
