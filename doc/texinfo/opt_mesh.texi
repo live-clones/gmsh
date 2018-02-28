@@ -395,7 +395,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Points
-Display mesh vertices (nodes)?@*
+Display mesh nodes (vertices)?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -405,12 +405,12 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PointSize
-Display size of mesh vertices (in pixels)@*
+Display size of mesh nodes (in pixels)@*
 Default value: @code{4}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PointType
-Display mesh vertices as solid color dots (0) or 3D spheres (1)@*
+Display mesh nodes as solid color dots (0) or 3D spheres (1)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -575,7 +575,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SecondOrderLinear
-Should second order vertices simply be created by linear interpolation?@*
+Should second order nodes simply be created by linear interpolation?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -595,7 +595,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SmoothRatio
-Ratio between mesh sizes at vertices of a same edeg (used in BAMG)@*
+Ratio between mesh sizes at nodes of a same edge (used in BAMG)@*
 Default value: @code{1.8}@*
 Saved in: @code{General.OptionsFileName}
 
