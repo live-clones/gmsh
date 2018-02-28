@@ -192,7 +192,7 @@ struct doubleXstring{
 %token tDistanceFunction tDefineConstant tUndefineConstant
 %token tDefineNumber tDefineStruct tNameStruct tDimNameSpace tAppend
 %token tDefineString tSetNumber tSetString
-%token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
+%token tPoint tCircle tEllipse tCurve tSphere tPolarSphere tSurface tSpline tVolume
 %token tBox tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
 %token tRectangle tDisk tWire tGeoEntity
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
@@ -1604,7 +1604,7 @@ Shape :
       $$.Type = MSH_POINT;
       $$.Num = num;
     }
-  | tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tCurve '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
@@ -1793,7 +1793,7 @@ Shape :
       $$.Type = MSH_SEGM_LOOP;
       $$.Num = num;
     }
-  | tLine tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tCurve tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
       std::vector<int> tags; ListOfDouble2Vector($7, tags);
@@ -2266,7 +2266,7 @@ Shape :
 GeoEntity :
     tPoint
     { $$ = 0; }
-  | tLine
+  | tCurve
     { $$ = 1; }
   | tSurface
     { $$ = 2; }
@@ -2280,7 +2280,7 @@ GeoEntity :
 ;
 
 GeoEntity123 :
-    tLine
+    tCurve
     { $$ = 1; }
   | tSurface
     { $$ = 2; }
@@ -2294,7 +2294,7 @@ GeoEntity123 :
 ;
 
 GeoEntity12 :
-    tLine
+    tCurve
     { $$ = 1; }
   | tSurface
     { $$ = 2; }
@@ -2308,7 +2308,7 @@ GeoEntity12 :
 GeoEntity02 :
     tPoint
     { $$ = 0; }
-  | tLine
+  | tCurve
     { $$ = 1; }
   | tSurface
     { $$ = 2; }
@@ -2439,7 +2439,7 @@ Transform :
       VectorOfPairs2ListOfShapes(outDimTags, $$);
       Free($1);
     }
-  | tIntersect tLine '{' RecursiveListOfDouble '}' tSurface '{' FExpr '}'
+  | tIntersect tCurve '{' RecursiveListOfDouble '}' tSurface '{' FExpr '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       bool r = true;
@@ -2461,7 +2461,7 @@ Transform :
       List_Delete($4);
     }
   // syntax is wrong: should use {} around FExpr
-  | tSplit tLine '(' FExpr ')' '{' RecursiveListOfDouble '}' tEND
+  | tSplit tCurve '(' FExpr ')' '{' RecursiveListOfDouble '}' tEND
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       bool r = true;
@@ -4179,7 +4179,7 @@ Constraints :
       }
       List_Delete(tmp);
     }
-  | tTransfinite tLine ListOfDoubleOrAll tAFFECT FExpr TransfiniteType tEND
+  | tTransfinite tCurve ListOfDoubleOrAll tAFFECT FExpr TransfiniteType tEND
     {
       // transfinite constraints are stored in GEO internals in addition to
       // GModel, as they can be copied around during GEO operations
@@ -4419,7 +4419,7 @@ Constraints :
         List_Delete($3);
       }
     }
-  | tPeriodic tLine '{' RecursiveListOfDouble '}' tAFFECT
+  | tPeriodic tCurve '{' RecursiveListOfDouble '}' tAFFECT
     '{' RecursiveListOfDouble '}' PeriodicTransform tEND
     {
       if (List_Nbr($4) != List_Nbr($8)){
@@ -4478,7 +4478,7 @@ Constraints :
       List_Delete($4);
       List_Delete($8);
     }
-  | tPeriodic tLine '{' RecursiveListOfDouble '}' tAFFECT
+  | tPeriodic tCurve '{' RecursiveListOfDouble '}' tAFFECT
     '{' RecursiveListOfDouble '}' tRotate '{' VExpr ',' VExpr ',' FExpr '}' tEND
     {
       if (List_Nbr($4) != List_Nbr($8)){
@@ -4530,7 +4530,7 @@ Constraints :
       List_Delete($4);
       List_Delete($8);
     }
-  | tPeriodic tLine '{' RecursiveListOfDouble '}' tAFFECT
+  | tPeriodic tCurve '{' RecursiveListOfDouble '}' tAFFECT
     '{' RecursiveListOfDouble '}' tTranslate VExpr tEND
     {
       if (List_Nbr($4) != List_Nbr($8)){
@@ -4712,7 +4712,7 @@ Constraints :
         List_Delete($3);
       }
     }
-  | tDegenerated tLine ListOfDouble tEND
+  | tDegenerated tCurve ListOfDouble tEND
     {
       for(int i = 0; i < List_Nbr($3); i++){
 	double dnum;
@@ -5822,7 +5822,7 @@ StringExprVar :
       $$ = (char*)Malloc((name.size() + 1) * sizeof(char));
       strcpy($$, name.c_str());
     }
-  | tPhysical tLine '{' FExpr '}'
+  | tPhysical tCurve '{' FExpr '}'
     {
       std::string name = GModel::current()->getPhysicalName(1, (int)$4);
       $$ = (char*)Malloc((name.size() + 1) * sizeof(char));

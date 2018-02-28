@@ -10,7 +10,7 @@
 Include "t1.geo";
 
 // Delete the left line and replace it with 3 new ones
-Delete{ Surface{1}; Line{4}; }
+Delete{ Surface{1}; Curve{4}; }
 
 p1 = newp; Point(p1) = {-0.05, 0.05, 0, lc};
 p2 = newp; Point(p2) = {-0.05, 0.1, 0, lc};
@@ -20,22 +20,22 @@ l2 = newl; Line(l2) = {p1, p2};
 l3 = newl; Line(l3) = {p2, 4};
 
 // Create surface
-Line Loop(2) = {2, -1, l1, l2, l3, -3};
+Curve Loop(2) = {2, -1, l1, l2, l3, -3};
 Plane Surface(1) = {-2};
 
 // Put 20 points with a refinement toward the extremities on curve 2
-Transfinite Line{2} = 20 Using Bump 0.05;
+Transfinite Curve{2} = 20 Using Bump 0.05;
 
 // Put 20 points total on combination of curves l1, l2 and l3 (beware that the
 // points p1 and p2 are shared by the curves, so we do not create 6 + 6 + 10 =
 // 22 points, but 20!)
-Transfinite Line{l1} = 6;
-Transfinite Line{l2} = 6;
-Transfinite Line{l3} = 10;
+Transfinite Curve{l1} = 6;
+Transfinite Curve{l2} = 6;
+Transfinite Curve{l3} = 10;
 
 // Put 30 points following a geometric progression on curve 1 (reversed) and on
 // curve 3
-Transfinite Line{-1,3} = 30 Using Progression 1.2;
+Transfinite Curve{-1,3} = 30 Using Progression 1.2;
 
 // Define the Surface as transfinite, by specifying the four corners of the
 // transfinite interpolation
@@ -66,8 +66,8 @@ Line(10) = {8, 11};
 Line(11) = {11, 10};
 Line(12) = {10, 7};
 Line(13) = {7, 8};
-Line Loop(14) = {13, 10, 11, 12};
+Curve Loop(14) = {13, 10, 11, 12};
 Plane Surface(15) = {14};
-Transfinite Line {10:13} = 10;
+Transfinite Curve {10:13} = 10;
 Transfinite Surface{15};
 Physical Surface(2) = 15;

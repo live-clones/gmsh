@@ -1985,7 +1985,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[0]->callback(geometry_options_ok_cb);
 
       geo.butt[1] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Lines");
+        (L + 2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Curves");
       geo.butt[1]->tooltip("(Alt+l)");
       geo.butt[1]->type(FL_TOGGLE_BUTTON);
       geo.butt[1]->callback(geometry_options_ok_cb);
@@ -2008,7 +2008,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[4]->callback(geometry_options_ok_cb);
 
       geo.butt[5] = new Fl_Check_Button
-        (L + width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Line labels");
+        (L + width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Curve labels");
       geo.butt[5]->type(FL_TOGGLE_BUTTON);
       geo.butt[5]->callback(geometry_options_ok_cb);
 
@@ -2141,13 +2141,13 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.value[5]->callback(geometry_options_ok_cb);
 
       geo.choice[1] = new Fl_Choice
-        (L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Line display");
+        (L + 2 * WB, 2 * WB + 4 * BH, IW, BH, "Curve display");
       geo.choice[1]->menu(menu_line_display);
       geo.choice[1]->align(FL_ALIGN_RIGHT);
       geo.choice[1]->callback(geometry_options_ok_cb);
 
       geo.value[4] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Line width");
+        (L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Curve width");
       geo.value[4]->minimum(0.1);
       geo.value[4]->maximum(50);
       geo.value[4]->step(0.1);
@@ -2155,7 +2155,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.value[4]->callback(geometry_options_ok_cb);
 
       geo.value[6] = new Fl_Value_Input
-        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Selected line width");
+        (L + 2 * WB, 2 * WB + 6 * BH, IW, BH, "Selected curve width");
       geo.value[6]->minimum(0.1);
       geo.value[6]->maximum(50);
       geo.value[6]->step(0.1);
@@ -2404,13 +2404,13 @@ optionWindow::optionWindow(int deltaFontSize)
         (L + WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Visibility");
 
       mesh.butt[6] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Nodes");
+        (L + 2 * WB, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Vertices");
       mesh.butt[6]->tooltip("(Alt+Shift+p)");
       mesh.butt[6]->type(FL_TOGGLE_BUTTON);
       mesh.butt[6]->callback(mesh_options_ok_cb);
 
       mesh.butt[7] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Lines");
+        (L + 2 * WB, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Curve edges");
       mesh.butt[7]->tooltip("(Alt+Shift+l)");
       mesh.butt[7]->type(FL_TOGGLE_BUTTON);
       mesh.butt[7]->callback(mesh_options_ok_cb);
@@ -2440,22 +2440,22 @@ optionWindow::optionWindow(int deltaFontSize)
       mesh.butt[11]->callback(mesh_options_ok_cb);
 
       mesh.butt[12] = new Fl_Check_Button
-        (L + width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Node labels");
+        (L + width / 2, 2 * WB + 1 * BH, BW / 2 - WB, BH, "Vertex labels");
       mesh.butt[12]->type(FL_TOGGLE_BUTTON);
       mesh.butt[12]->callback(mesh_options_ok_cb);
 
       mesh.butt[13] = new Fl_Check_Button
-        (L + width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "Line labels");
+        (L + width / 2, 2 * WB + 2 * BH, BW / 2 - WB, BH, "1D element labels");
       mesh.butt[13]->type(FL_TOGGLE_BUTTON);
       mesh.butt[13]->callback(mesh_options_ok_cb);
 
       mesh.butt[14] = new Fl_Check_Button
-        (L + width / 2, 2 * WB + 3 * BH, BW / 2 - WB, BH, "Surface labels");
+        (L + width / 2, 2 * WB + 3 * BH, BW / 2 - WB, BH, "2D element labels");
       mesh.butt[14]->type(FL_TOGGLE_BUTTON);
       mesh.butt[14]->callback(mesh_options_ok_cb);
 
       mesh.butt[15] = new Fl_Check_Button
-        (L + width / 2, 2 * WB + 4 * BH, BW / 2 - WB, BH, "Volume labels");
+        (L + width / 2, 2 * WB + 4 * BH, BW / 2 - WB, BH, "3D element labels");
       mesh.butt[15]->type(FL_TOGGLE_BUTTON);
       mesh.butt[15]->callback(mesh_options_ok_cb);
 

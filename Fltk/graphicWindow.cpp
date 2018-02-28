@@ -888,7 +888,7 @@ static void add_new_line()
       p.push_back(FlGui::instance()->selectedVertices[0]->tag());
     }
     if(ib == 'r') {
-      Msg::Warning("Entity de-selection not supported yet during line creation");
+      Msg::Warning("Entity de-selection not supported yet during curve creation");
     }
     if(ib == 'u') {
       if(p.size()){
@@ -1277,7 +1277,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
   std::string what(onwhat);
   if(what == "Point")
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
-  else if(what == "Line")
+  else if(what == "Curve")
     opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   else if(what == "Surface")
     opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
@@ -1293,8 +1293,8 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
       str = "points";
       type = ENT_POINT;
     }
-    else if(what == "Line"){
-      str = "lines";
+    else if(what == "Curve"){
+      str = "curves";
       type = ENT_LINE;
     }
     else if(what == "Surface"){
@@ -1308,7 +1308,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
     else{
       switch(FlGui::instance()->transformContext->choice->value()){
       case 1: str = "points"; type = ENT_POINT; break;
-      case 2: str = "lines"; type = ENT_LINE; break;
+      case 2: str = "curves"; type = ENT_LINE; break;
       case 3: str = "surfaces"; type = ENT_SURFACE; break;
       case 4: str = "volumes"; type = ENT_VOLUME; break;
       default: str = "entities"; type = ENT_ALL; break;
@@ -1474,7 +1474,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
             std::vector<int> tags;
             for(unsigned int i = 0; i < dimTags.size(); i++){
               if((dimTags[i].first == 0 && what == "Point") ||
-                 (dimTags[i].first == 1 && what == "Line") ||
+                 (dimTags[i].first == 1 && what == "Curve") ||
                  (dimTags[i].first == 2 && what == "Surface") ||
                  (dimTags[i].first == 3 && what == "Volume"))
                 tags.push_back(dimTags[i].second);
@@ -1516,7 +1516,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
           {
             std::vector<int> tags;
             for(unsigned int i = 0; i < dimTags.size(); i++){
-              if((dimTags[i].first == 1 && what == "Line") ||
+              if((dimTags[i].first == 1 && what == "Curve") ||
                  (dimTags[i].first == 2 && what == "Surface") ||
                  (dimTags[i].first == 3 && what == "Volume"))
                 tags.push_back(dimTags[i].second);
@@ -1528,7 +1528,7 @@ static void action_point_line_surface_volume(int action, const std::string &onwh
           if(dimTagsSaved.empty()){
             dimTagsSaved = dimTags;
             dimTags.clear();
-            what = "Line";
+            what = "Curve";
             continue;
           }
           else{
@@ -1751,10 +1751,10 @@ static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
                     "[Press 'e' to end selection, 'u' to undo last selection or "
                     "'q' to abort]");
     else if(edges.empty())
-      Msg::StatusGl("Select line\n"
+      Msg::StatusGl("Select curve\n"
                     "[Press 'e' to end selection or 'q' to abort]");
     else
-      Msg::StatusGl("Select line\n"
+      Msg::StatusGl("Select curve\n"
                     "[Press 'e' to end selection, 'u' to undo last selection or "
                     "'q' to abort]");
 
@@ -1796,7 +1796,7 @@ static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
           selectRegions = false;
       }
       else if(edges.empty()){
-        Msg::Error("At least one line must be selected");
+        Msg::Error("At least one curve must be selected");
       }
       else{
         apply_fillet(GModel::current()->getFileName(), regions, edges,
@@ -1823,7 +1823,7 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
   if(!data) return;
   opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   drawContext::global()->draw();
-  Msg::StatusGl("Select line to split\n"
+  Msg::StatusGl("Select curve to split\n"
                 "[Press 'q' to abort]");
   GEdge* edge_to_split = 0;
   while(1){
@@ -1875,7 +1875,7 @@ static void geometry_physical_add_cb(Fl_Widget *w, void *data)
   std::string str((const char*)data);
   if(str == "Point")
     FlGui::instance()->callForSolverPlugin(0);
-  else if(str == "Line")
+  else if(str == "Curve")
     FlGui::instance()->callForSolverPlugin(1);
   FlGui::instance()->physicalContext->show(false);
   action_point_line_surface_volume(7, str);
@@ -1936,7 +1936,7 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
     CTX::instance()->pickElements = 1;
     what = ENT_ALL;
   }
-  else if(!strcmp(str, "lines")){
+  else if(!strcmp(str, "curves")){
     CTX::instance()->pickElements = 0;
     what = ENT_LINE;
   }
@@ -2282,10 +2282,10 @@ static void mesh_define_transfinite(int dim)
     switch (dim) {
     case 1:
       if(p.empty())
-        Msg::StatusGl("Select lines\n"
+        Msg::StatusGl("Select curves\n"
                       "[Press 'e' to end selection or 'q' to abort]");
       else
-        Msg::StatusGl("Select lines\n"
+        Msg::StatusGl("Select curves\n"
                       "[Press 'e' to end selection, 'u' to undo last selection "
                       "or 'q' to abort]");
       ib = FlGui::instance()->selectEntity(ENT_LINE);
@@ -2451,8 +2451,8 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
     type = ENT_SURFACE; str = "surfaces";
     opt_geometry_surfaces(0, GMSH_SET | GMSH_GUI, 1);
   }
-  else if(what == "Line"){
-    type = ENT_LINE; str = "lines";
+  else if(what == "Curve"){
+    type = ENT_LINE; str = "curves";
     opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(what == "Point"){
@@ -2493,7 +2493,7 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
           }
         }
       }
-      else if(selectEntities && what == "Line"){
+      else if(selectEntities && what == "Curve"){
         for(unsigned int i = 0; i < FlGui::instance()->selectedEdges.size(); i++){
           if(FlGui::instance()->selectedEdges[i]->getSelection() != 1){
             FlGui::instance()->selectedEdges[i]->setSelection(1);
@@ -2530,7 +2530,7 @@ static void mesh_define_embedded_cb(Fl_Widget *w, void *data)
     }
     if(ib == 'u') {
       if(selectEntities && entities.size()){
-        int dim = (what == "Surface") ? 2 : (what == "Line") ? 1 : 0;
+        int dim = (what == "Surface") ? 2 : (what == "Curve") ? 1 : 0;
         GEntity *ge = GModel::current()->getEntityByTag(dim, entities.back());
         if(ge) ge->setSelection(0);
         entities.pop_back();
@@ -2859,7 +2859,7 @@ void quick_access_cb(Fl_Widget *w, void *data)
   else if(what == "geometry_points")
     opt_geometry_points(0, GMSH_SET|GMSH_GUI,
                         !opt_geometry_points(0, GMSH_GET, 0));
-  else if(what == "geometry_lines")
+  else if(what == "geometry_curves")
     opt_geometry_lines(0, GMSH_SET|GMSH_GUI,
                        !opt_geometry_lines(0, GMSH_GET, 0));
   else if(what == "geometry_surfaces")
@@ -3105,7 +3105,7 @@ void status_options_cb(Fl_Widget *w, void *data)
       { "Geometry visibility", 0, 0, 0, FL_SUBMENU },
          { "Points", FL_ALT + 'p', quick_access_cb, (void*)"geometry_points",
            FL_MENU_TOGGLE },
-         { "Lines", FL_ALT + 'l', quick_access_cb, (void*)"geometry_lines",
+         { "Curves", FL_ALT + 'l', quick_access_cb, (void*)"geometry_curves",
            FL_MENU_TOGGLE },
          { "Surfaces ", FL_ALT + 's', quick_access_cb, (void*)"geometry_surfaces",
          FL_MENU_TOGGLE },
@@ -3115,9 +3115,9 @@ void status_options_cb(Fl_Widget *w, void *data)
       { "All geometry options...", 0, quick_access_cb, (void*)"geometry",
         FL_MENU_DIVIDER, 0, FL_ITALIC },
       { "Mesh visibility", 0, 0, 0, FL_SUBMENU },
-         { "Nodes", FL_ALT + FL_SHIFT + 'p', quick_access_cb, (void*)"mesh_points",
+         { "Vertices", FL_ALT + FL_SHIFT + 'p', quick_access_cb, (void*)"mesh_points",
            FL_MENU_TOGGLE },
-         { "Lines", FL_ALT + FL_SHIFT + 'l', quick_access_cb, (void*)"mesh_lines",
+         { "Curve edges", FL_ALT + FL_SHIFT + 'l', quick_access_cb, (void*)"mesh_lines",
            FL_MENU_TOGGLE },
          { "Surface edges ", FL_ALT + FL_SHIFT + 's', quick_access_cb,
            (void*)"mesh_surfaces_edges", FL_MENU_TOGGLE },
@@ -4190,7 +4190,7 @@ static menuItem static_modules[] = {
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Parameter"} ,
   {"0Modules/Geometry/Elementary entities/Add/Point",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Point"} ,
-  {"0Modules/Geometry/Elementary entities/Add/Straight line",
+  {"0Modules/Geometry/Elementary entities/Add/Line",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Line"} ,
   {"0Modules/Geometry/Elementary entities/Add/Spline",
    (Fl_Callback *)geometry_elementary_add_new_cb, (void*)"Spline"} ,
@@ -4252,24 +4252,24 @@ static menuItem static_modules[] = {
    (Fl_Callback *)geometry_elementary_boolean_cb, (void*)"BooleanFragments"} ,
   {"0Modules/Geometry/Elementary entities/Fillet",
    (Fl_Callback *)geometry_elementary_fillet_cb},
-  {"0Modules/Geometry/Elementary entities/Split line",
-   (Fl_Callback *)geometry_elementary_split_cb, (void*)"Line"},
+  {"0Modules/Geometry/Elementary entities/Split curve",
+   (Fl_Callback *)geometry_elementary_split_cb, (void*)"Curve"},
   {"0Modules/Geometry/Elementary entities/Delete",
    (Fl_Callback *)geometry_elementary_delete_cb} ,
   {"0Modules/Geometry/Elementary entities/Coherence",
    (Fl_Callback *)geometry_elementary_coherence_cb} ,
   {"0Modules/Geometry/Physical groups/Add/Point",
    (Fl_Callback *)geometry_physical_add_cb, (void*)"Point" } ,
-  {"0Modules/Geometry/Physical groups/Add/Line",
-   (Fl_Callback *)geometry_physical_add_cb, (void*)"Line" } ,
+  {"0Modules/Geometry/Physical groups/Add/Curve",
+   (Fl_Callback *)geometry_physical_add_cb, (void*)"Curve" } ,
   {"0Modules/Geometry/Physical groups/Add/Surface",
    (Fl_Callback *)geometry_physical_add_cb, (void*)"Surface" } ,
   {"0Modules/Geometry/Physical groups/Add/Volume",
    (Fl_Callback *)geometry_physical_add_cb, (void*)"Volume" } ,
   {"0Modules/Geometry/Physical groups/Remove/Point",
    (Fl_Callback *)geometry_physical_remove_cb, (void*)"Point" } ,
-  {"0Modules/Geometry/Physical groups/Remove/Line",
-   (Fl_Callback *)geometry_physical_remove_cb, (void*)"Line" } ,
+  {"0Modules/Geometry/Physical groups/Remove/Curve",
+   (Fl_Callback *)geometry_physical_remove_cb, (void*)"Curve" } ,
   {"0Modules/Geometry/Physical groups/Remove/Surface",
    (Fl_Callback *)geometry_physical_remove_cb, (void*)"Surface" } ,
   {"0Modules/Geometry/Physical groups/Remove/Volume",
@@ -4286,18 +4286,18 @@ static menuItem static_modules[] = {
    (Fl_Callback *)field_cb},
   {"0Modules/Mesh/Define/Embedded/Point",
    (Fl_Callback *)mesh_define_embedded_cb, (void*)"Point" } ,
-  {"0Modules/Mesh/Define/Embedded/Line",
-   (Fl_Callback *)mesh_define_embedded_cb, (void*)"Line" } ,
+  {"0Modules/Mesh/Define/Embedded/Curve",
+   (Fl_Callback *)mesh_define_embedded_cb, (void*)"Curve" } ,
   {"0Modules/Mesh/Define/Embedded/Surface",
    (Fl_Callback *)mesh_define_embedded_cb, (void*)"Surface" } ,
-  {"0Modules/Mesh/Define/Transfinite/Line",
+  {"0Modules/Mesh/Define/Transfinite/Curve",
    (Fl_Callback *)mesh_define_transfinite_line_cb} ,
   {"0Modules/Mesh/Define/Transfinite/Surface",
    (Fl_Callback *)mesh_define_transfinite_surface_cb} ,
   {"0Modules/Mesh/Define/Transfinite/Volume",
    (Fl_Callback *)mesh_define_transfinite_volume_cb} ,
-  {"0Modules/Mesh/Define/Compound/Line",
-   (Fl_Callback *)mesh_define_compound_entity_cb, (void*)"Line"} ,
+  {"0Modules/Mesh/Define/Compound/Curve",
+   (Fl_Callback *)mesh_define_compound_entity_cb, (void*)"Curve"} ,
   {"0Modules/Mesh/Define/Compound/Surface",
    (Fl_Callback *)mesh_define_compound_entity_cb, (void*)"Surface"} ,
   {"0Modules/Mesh/Define/Compound/Volume",
@@ -4348,8 +4348,8 @@ static menuItem static_modules[] = {
 #endif
   {"0Modules/Mesh/Delete/Elements",
    (Fl_Callback *)mesh_delete_parts_cb, (void*)"elements"} ,
-  {"0Modules/Mesh/Delete/Lines",
-   (Fl_Callback *)mesh_delete_parts_cb, (void*)"lines"} ,
+  {"0Modules/Mesh/Delete/Curves",
+   (Fl_Callback *)mesh_delete_parts_cb, (void*)"curves"} ,
   {"0Modules/Mesh/Delete/Surfaces",
    (Fl_Callback *)mesh_delete_parts_cb, (void*)"surfaces"} ,
   {"0Modules/Mesh/Delete/Volumes",

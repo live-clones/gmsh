@@ -26,7 +26,7 @@ api = API()
 
 gmsh = api.add_module('gmsh','Top-level functions')
 
-doc = '''Initializes Gmsh. This must be called before any call to the other functions in the API. If argc and argv are provided, they will be handled in the same way as the command line arguments in the Gmsh app. If `readConfigFiles' is set, reads system Gmsh configuration files (gmshrc and gmsh-options).'''
+doc = '''Initializes Gmsh. This must be called before any call to the other functions in the API. If `argc' and `argv' are provided, they will be handled in the same way as the command line arguments in the Gmsh app. If `readConfigFiles' is set, reads system Gmsh configuration files (gmshrc and gmsh-options).'''
 gmsh.add('initialize',doc,None,argcargv(),ibool('readConfigFiles','true','True'))
 
 doc = '''Finalizes Gmsh. This must be called when you are done using the Gmsh API.'''
@@ -161,7 +161,7 @@ mesh.add('setVertices',doc,None,iint('dim'),iint('tag'),ivectorint('vertexTags')
 doc = '''Sets the mesh elements of the entity of dimension `dim' and `tag' tag. `types' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh reference manual). `elementTags' is a vector of the same length as `types'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `vertexTags' is also a vector of the same length as `types'; each entry is a vector of length equal to the number of elements of the give type times the number of vertices per element, that contains the vertex tags of all the elements of the given type, concatenated.'''
 mesh.add('setElements',doc,None,iint('dim'),iint('tag'),ivectorint('types'),ivectorvectorint('elementTags'),ivectorvectorint('vertexTags'))
 
-doc = '''Redistribute all mesh vertices on their associated geometrical entity, based on the mesh elements. Can be used when importing mesh vertices in bulk (e.g. by associating them all to a single volume), to reclassify them correctly on model surfaces, curves, etc.'''
+doc = '''Redistributes all mesh vertices on their associated geometrical entity, based on the mesh elements. Can be used when importing mesh vertices in bulk (e.g. by associating them all to a single volume), to reclassify them correctly on model surfaces, curves, etc.'''
 mesh.add('reclassifyVertices',doc,None)
 
 doc = '''Gets the coordinates and the parametric coordinates (if any) of the mesh vertex with tag `tag'. This is a useful by inefficient way of accessing mesh vertex data, as it relies on a cache stored in the model. For large meshes all the vertices in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
@@ -173,8 +173,8 @@ mesh.add('getElement',doc,None,iint('elementTag'),oint('type'),ovectorint('verte
 doc = '''Sets a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize',doc,None,ivectorpair('dimTags'),idouble('size'))
 
-doc = '''Sets a transfinite meshing constraint on the line `tag', with `numVertices' mesh vertices distributed according to `type' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extreminties of the line).'''
-mesh.add('setTransfiniteLine',doc,None,iint('tag'),iint('numVertices'),istring('type','"Progression"'),idouble('coef','1.'))
+doc = '''Sets a transfinite meshing constraint on the curve `tag', with `numVertices' mesh vertices distributed according to `type' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extremities of the curve).'''
+mesh.add('setTransfiniteCurve',doc,None,iint('tag'),iint('numVertices'),istring('type','"Progression"'),idouble('coef','1.'))
 
 doc = '''Sets a transfinite meshing constraint on the surface `tag'. `arrangement' describes the arrangement of the triangles when the surface is not flagged as recombined: currently supported values are "Left", "Right", "AlternateLeft" and "AlternateRight". `cornerTags' can be used to specify the (3 or 4) corners of the transfinite interpolation explicitly; specifying the corners explicitly is mandatory if the surface has more that 3 or 4 points on its boundary.'''
 mesh.add('setTransfiniteSurface',doc,None,iint('tag'),istring('arrangement','"Left"'),ivectorint('cornerTags','std::vector<int>()',"[]"))
@@ -244,13 +244,13 @@ geo.add('addBSpline',doc,oint,ivectorint('pointTags'),iint('tag','-1'))
 doc = '''Adds a Bezier curve with `pointTags' control points. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically.  Returns the tag of the Bezier curve.'''
 geo.add('addBezier',doc,oint,ivectorint('pointTags'),iint('tag','-1'))
 
-doc = '''Adds a line loop (a closed wire) formed by the curves `curveTags'. `curveTags' should contain (signed) tags of geometrical enties of dimension 1 forming a closed loop: a negative tag signifies that the underlying curve is considered with reversed orientation. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the line loop.'''
-geo.add('addLineLoop',doc,oint,ivectorint('curveTags'),iint('tag','-1'))
+doc = '''Adds a curve loop (a closed wire) formed by the curves `curveTags'. `curveTags' should contain (signed) tags of geometrical enties of dimension 1 forming a closed loop: a negative tag signifies that the underlying curve is considered with reversed orientation. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the curve loop.'''
+geo.add('addCurveLoop',doc,oint,ivectorint('curveTags'),iint('tag','-1'))
 
-doc = '''Adds a plane surface defined by one or more line loops `wireTags'. The first line loop defines the exterior contour; additional line loop define holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the surface.'''
+doc = '''Adds a plane surface defined by one or more curve loops `wireTags'. The first curve loop defines the exterior contour; additional curve loop define holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the surface.'''
 geo.add('addPlaneSurface',doc,oint,ivectorint('wireTags'),iint('tag','-1'))
 
-doc = '''Adds a surface filling the line loops in `wireTags'. Currently only a single line loop is supported; this line loop should be composed by 3 or 4 curves only. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the surface.'''
+doc = '''Adds a surface filling the curve loops in `wireTags'. Currently only a single curve loop is supported; this curve loop should be composed by 3 or 4 curves only. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the surface.'''
 geo.add('addSurfaceFilling',doc,oint,ivectorint('wireTags'),iint('tag','-1'),iint('sphereCenterTag','-1'))
 
 doc = '''Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the shell.'''
@@ -299,8 +299,8 @@ mesh = geo.add_module('mesh','geo-specific meshing constraints')
 doc = '''Sets a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize',doc,None,ivectorpair('dimTags'),idouble('size'))
 
-doc = '''Sets a transfinite meshing constraint on the line `tag', with `numVertices' mesh vertices distributed according to `type' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extreminties of the line).'''
-mesh.add('setTransfiniteLine',doc,None,iint('tag'),iint('nPoints'),istring('type','"Progression"'),idouble('coef','1.'))
+doc = '''Sets a transfinite meshing constraint on the curve `tag', with `numVertices' mesh vertices distributed according to `type' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extreminties of the curve).'''
+mesh.add('setTransfiniteCurve',doc,None,iint('tag'),iint('nPoints'),istring('type','"Progression"'),idouble('coef','1.'))
 
 doc = '''Sets a transfinite meshing constraint on the surface `tag'. `arrangement' describes the arrangement of the triangles when the surface is not flagged as recombined: currently supported values are "Left", "Right", "AlternateLeft" and "AlternateRight". `cornerTags' can be used to specify the (3 or 4) corners of the transfinite interpolation explicitly; specifying the corners explicitly is mandatory if the surface has more that 3 or 4 points on its boundary.'''
 mesh.add('setTransfiniteSurface',doc,None,iint('tag'),istring('arrangement','"Left"'),ivectorint('cornerTags','std::vector<int>()',"[]"))
@@ -351,8 +351,8 @@ occ.add('addBezier',doc,oint,ivectorint('pointTags'),iint('tag','-1'))
 doc = '''Adds a wire (open or closed) formed by the curves `curveTags'. `curveTags' should contain (signed) tags: a negative tag signifies that the underlying curve is considered with reversed orientation. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the wire.'''
 occ.add('addWire',doc,oint,ivectorint('curveTags'),iint('tag','-1'),ibool('checkClosed','false','False'))
 
-doc = '''Adds a line loop (a closed wire) formed by the curves `curveTags'. `curveTags' should contain (signed) tags of curves forming a closed loop: a negative tag signifies that the underlying curve is considered with reversed orientation. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the line loop.'''
-occ.add('addLineLoop',doc,oint,ivectorint('curveTags'),iint('tag','-1'))
+doc = '''Adds a curve loop (a closed wire) formed by the curves `curveTags'. `curveTags' should contain (signed) tags of curves forming a closed loop: a negative tag signifies that the underlying curve is considered with reversed orientation. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the curve loop.'''
+occ.add('addCurveLoop',doc,oint,ivectorint('curveTags'),iint('tag','-1'))
 
 doc = '''Adds a rectangle with lower left corner at (`x', `y', `z') and upper right corner at (`x' + `dx', `y' + `dy', `z'). If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Rounds the corners if `roundedRadius' is nonzero. Returns the tag of the rectangle.'''
 occ.add('addRectangle',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),iint('tag','-1'),idouble('roundedRadius','0.'))
@@ -360,10 +360,10 @@ occ.add('addRectangle',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('
 doc = '''Adds a disk with center (`xc', `yc', `zc') and radius `rx' along the x-axis and `ry' along the y-axis. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the disk.'''
 occ.add('addDisk',doc,oint,idouble('xc'),idouble('yc'),idouble('zc'),idouble('rx'),idouble('ry'),iint('tag','-1'))
 
-doc = '''Adds a plane surface defined by one or more line loops (or closed wires) `wireTags'. The first line loop defines the exterior contour; additional line loop define holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the surface.'''
+doc = '''Adds a plane surface defined by one or more curve loops (or closed wires) `wireTags'. The first curve loop defines the exterior contour; additional curve loop define holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the surface.'''
 occ.add('addPlaneSurface',doc,oint,ivectorint('wireTags'),iint('tag','-1'))
 
-doc = '''Adds a surface filling the line loops in `wireTags'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the surface.'''
+doc = '''Adds a surface filling the curve loops in `wireTags'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the surface.'''
 occ.add('addSurfaceFilling',doc,oint,iint('wireTag'),iint('tag','-1'))
 
 doc = '''Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the surface loop.'''

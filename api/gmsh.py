@@ -146,8 +146,8 @@ def _iargcargv(o) :
 def initialize(argv=[],readConfigFiles=True):
     """
     Initializes Gmsh. This must be called before any call to the other
-    functions in the API. If argc and argv are provided, they will be handled
-    in the same way as the command line arguments in the Gmsh app. If
+    functions in the API. If `argc' and `argv' are provided, they will be
+    handled in the same way as the command line arguments in the Gmsh app. If
     `readConfigFiles' is set, reads system Gmsh configuration files (gmshrc and
     gmsh-options).
     """
@@ -1036,7 +1036,7 @@ class model:
         @staticmethod
         def reclassifyVertices():
             """
-            Redistribute all mesh vertices on their associated geometrical entity,
+            Redistributes all mesh vertices on their associated geometrical entity,
             based on the mesh elements. Can be used when importing mesh vertices in
             bulk (e.g. by associating them all to a single volume), to reclassify them
             correctly on model surfaces, curves, etc.
@@ -1123,15 +1123,15 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def setTransfiniteLine(tag,numVertices,type="Progression",coef=1.):
+        def setTransfiniteCurve(tag,numVertices,type="Progression",coef=1.):
             """
-            Sets a transfinite meshing constraint on the line `tag', with `numVertices'
-            mesh vertices distributed according to `type' and `coef'. Currently
-            supported types are "Progression" (geometrical progression with power
-            `coef') and "Bump" (refinement toward both extreminties of the line).
+            Sets a transfinite meshing constraint on the curve `tag', with
+            `numVertices' mesh vertices distributed according to `type' and `coef'.
+            Currently supported types are "Progression" (geometrical progression with
+            power `coef') and "Bump" (refinement toward both extremities of the curve).
             """
             ierr = c_int()
-            lib.gmshModelMeshSetTransfiniteLine(
+            lib.gmshModelMeshSetTransfiniteCurve(
                 c_int(tag),
                 c_int(numVertices),
                 c_char_p(type.encode()),
@@ -1139,7 +1139,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
-                    "gmshModelMeshSetTransfiniteLine returned non-zero error code : ",
+                    "gmshModelMeshSetTransfiniteCurve returned non-zero error code : ",
                     ierr.value)
 
         @staticmethod
@@ -1549,34 +1549,34 @@ class model:
             return api__result__
 
         @staticmethod
-        def addLineLoop(curveTags,tag=-1):
+        def addCurveLoop(curveTags,tag=-1):
             """
-            Adds a line loop (a closed wire) formed by the curves `curveTags'.
+            Adds a curve loop (a closed wire) formed by the curves `curveTags'.
             `curveTags' should contain (signed) tags of geometrical enties of dimension
             1 forming a closed loop: a negative tag signifies that the underlying curve
             is considered with reversed orientation. If `tag' is positive, sets the tag
             explicitly; otherwise a new tag is selected automatically. Returns the tag
-            of the line loop.
+            of the curve loop.
 
             return int
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelGeoAddLineLoop(
+            api__result__ = lib.gmshModelGeoAddCurveLoop(
                 api_curveTags_, api_curveTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
-                    "gmshModelGeoAddLineLoop returned non-zero error code : ",
+                    "gmshModelGeoAddCurveLoop returned non-zero error code : ",
                     ierr.value)
             return api__result__
 
         @staticmethod
         def addPlaneSurface(wireTags,tag=-1):
             """
-            Adds a plane surface defined by one or more line loops `wireTags'. The
-            first line loop defines the exterior contour; additional line loop define
+            Adds a plane surface defined by one or more curve loops `wireTags'. The
+            first curve loop defines the exterior contour; additional curve loop define
             holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
             is selected automatically. Returns the tag of the surface.
 
@@ -1597,10 +1597,10 @@ class model:
         @staticmethod
         def addSurfaceFilling(wireTags,tag=-1,sphereCenterTag=-1):
             """
-            Adds a surface filling the line loops in `wireTags'. Currently only a
-            single line loop is supported; this line loop should be composed by 3 or 4
-            curves only. If `tag' is positive, sets the tag explicitly; otherwise a new
-            tag is selected automatically. Returns the tag of the surface.
+            Adds a surface filling the curve loops in `wireTags'. Currently only a
+            single curve loop is supported; this curve loop should be composed by 3 or
+            4 curves only. If `tag' is positive, sets the tag explicitly; otherwise a
+            new tag is selected automatically. Returns the tag of the surface.
 
             return int
             """
@@ -1949,15 +1949,16 @@ class model:
                         ierr.value)
 
             @staticmethod
-            def setTransfiniteLine(tag,nPoints,type="Progression",coef=1.):
+            def setTransfiniteCurve(tag,nPoints,type="Progression",coef=1.):
                 """
-                Sets a transfinite meshing constraint on the line `tag', with `numVertices'
-                mesh vertices distributed according to `type' and `coef'. Currently
-                supported types are "Progression" (geometrical progression with power
-                `coef') and "Bump" (refinement toward both extreminties of the line).
+                Sets a transfinite meshing constraint on the curve `tag', with
+                `numVertices' mesh vertices distributed according to `type' and `coef'.
+                Currently supported types are "Progression" (geometrical progression with
+                power `coef') and "Bump" (refinement toward both extreminties of the
+                curve).
                 """
                 ierr = c_int()
-                lib.gmshModelGeoMeshSetTransfiniteLine(
+                lib.gmshModelGeoMeshSetTransfiniteCurve(
                     c_int(tag),
                     c_int(nPoints),
                     c_char_p(type.encode()),
@@ -1965,7 +1966,7 @@ class model:
                     byref(ierr))
                 if ierr.value != 0 :
                     raise ValueError(
-                        "gmshModelGeoMeshSetTransfiniteLine returned non-zero error code : ",
+                        "gmshModelGeoMeshSetTransfiniteCurve returned non-zero error code : ",
                         ierr.value)
 
             @staticmethod
@@ -2316,26 +2317,26 @@ class model:
             return api__result__
 
         @staticmethod
-        def addLineLoop(curveTags,tag=-1):
+        def addCurveLoop(curveTags,tag=-1):
             """
-            Adds a line loop (a closed wire) formed by the curves `curveTags'.
+            Adds a curve loop (a closed wire) formed by the curves `curveTags'.
             `curveTags' should contain (signed) tags of curves forming a closed loop: a
             negative tag signifies that the underlying curve is considered with
             reversed orientation. If `tag' is positive, sets the tag explicitly;
-            otherwise a new tag is selected automatically. Returns the tag of the line
+            otherwise a new tag is selected automatically. Returns the tag of the curve
             loop.
 
             return int
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddLineLoop(
+            api__result__ = lib.gmshModelOccAddCurveLoop(
                 api_curveTags_, api_curveTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
-                    "gmshModelOccAddLineLoop returned non-zero error code : ",
+                    "gmshModelOccAddCurveLoop returned non-zero error code : ",
                     ierr.value)
             return api__result__
 
@@ -2392,9 +2393,9 @@ class model:
         @staticmethod
         def addPlaneSurface(wireTags,tag=-1):
             """
-            Adds a plane surface defined by one or more line loops (or closed wires)
-            `wireTags'. The first line loop defines the exterior contour; additional
-            line loop define holes. If `tag' is positive, sets the tag explicitly;
+            Adds a plane surface defined by one or more curve loops (or closed wires)
+            `wireTags'. The first curve loop defines the exterior contour; additional
+            curve loop define holes. If `tag' is positive, sets the tag explicitly;
             otherwise a new tag is selected automatically. Returns the tag of the
             surface.
 
@@ -2415,7 +2416,7 @@ class model:
         @staticmethod
         def addSurfaceFilling(wireTag,tag=-1):
             """
-            Adds a surface filling the line loops in `wireTags'. If `tag' is positive,
+            Adds a surface filling the curve loops in `wireTags'. If `tag' is positive,
             sets the tag explicitly; otherwise a new tag is selected automatically.
             Returns the tag of the surface.
 

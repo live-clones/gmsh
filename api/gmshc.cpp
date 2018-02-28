@@ -463,10 +463,10 @@ void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n,const double size,int 
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshSetTransfiniteLine(const int tag,const int numVertices,const char * type,const double coef,int * ierr){
+void gmshModelMeshSetTransfiniteCurve(const int tag,const int numVertices,const char * type,const double coef,int * ierr){
   if(ierr) *ierr = 0;
   try {
-  gmsh::model::mesh::setTransfiniteLine(tag,numVertices,type,coef);
+  gmsh::model::mesh::setTransfiniteCurve(tag,numVertices,type,coef);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
@@ -626,11 +626,11 @@ int gmshModelGeoAddBezier(int * pointTags, size_t pointTags_n,const int tag,int 
   return result_api_;
 }
 
-int gmshModelGeoAddLineLoop(int * curveTags, size_t curveTags_n,const int tag,int * ierr){
+int gmshModelGeoAddCurveLoop(int * curveTags, size_t curveTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
-  result_api_ = gmsh::model::geo::addLineLoop(ptr2vector(curveTags,curveTags_n),tag);
+  result_api_ = gmsh::model::geo::addCurveLoop(ptr2vector(curveTags,curveTags_n),tag);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
   return result_api_;
 }
@@ -763,10 +763,10 @@ void gmshModelGeoMeshSetSize(int * dimTags, size_t dimTags_n,const double size,i
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelGeoMeshSetTransfiniteLine(const int tag,const int nPoints,const char * type,const double coef,int * ierr){
+void gmshModelGeoMeshSetTransfiniteCurve(const int tag,const int nPoints,const char * type,const double coef,int * ierr){
   if(ierr) *ierr = 0;
   try {
-  gmsh::model::geo::mesh::setTransfiniteLine(tag,nPoints,type,coef);
+  gmsh::model::geo::mesh::setTransfiniteCurve(tag,nPoints,type,coef);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
@@ -895,11 +895,11 @@ int gmshModelOccAddWire(int * curveTags, size_t curveTags_n,const int tag,const 
   return result_api_;
 }
 
-int gmshModelOccAddLineLoop(int * curveTags, size_t curveTags_n,const int tag,int * ierr){
+int gmshModelOccAddCurveLoop(int * curveTags, size_t curveTags_n,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
   try {
-  result_api_ = gmsh::model::occ::addLineLoop(ptr2vector(curveTags,curveTags_n),tag);
+  result_api_ = gmsh::model::occ::addCurveLoop(ptr2vector(curveTags,curveTags_n),tag);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
   return result_api_;
 }

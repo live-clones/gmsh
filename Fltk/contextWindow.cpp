@@ -1002,7 +1002,7 @@ void elementaryContextWindow::show(int pane)
 static Fl_Menu_Item menu_selection_mode[] = {
   {"All entities", 0, 0, 0},
   {"Points", 0, 0, 0},
-  {"Lines", 0, 0, 0},
+  {"Curves", 0, 0, 0},
   {"Surfaces", 0, 0, 0},
   {"Volumes", 0, 0, 0},
   {0}
@@ -1399,7 +1399,7 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
     // 1: Transfinite line
     {
       group[1] = new Fl_Group
-        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Transfinite Line");
+        (WB, WB + BH, width - 2 * WB, height - 2 * WB - BH, "Transfinite curve");
       input[1] = new Fl_Input(2 * WB, 2 * WB + 1 * BH, IW, BH, "Number of points");
       input[1]->value("10");
       input[2] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Parameter");

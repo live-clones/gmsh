@@ -2,8 +2,8 @@
  *
  *  Gmsh tutorial 1
  *
- *  Variables, elementary entities (points, lines, surfaces), physical
- *  entities (points, lines, surfaces)
+ *  Variables, elementary entities (points, curves, surfaces), physical
+ *  entities (points, curves, surfaces)
  *
  *********************************************************************/
 
@@ -40,13 +40,13 @@ Line(3) = {3,4} ;
 Line(4) = {4,1} ;
 
 // The third elementary entity is the surface. In order to define a simple
-// rectangular surface from the four lines defined above, a line loop has first
-// to be defined. A line loop is a list of connected lines, a sign being
-// associated with each line (depending on the orientation of the line):
+// rectangular surface from the four curves defined above, a curve loop has first
+// to be defined. A curve loop is a list of connected curves, a sign being
+// associated with each curve (depending on the orientation of the curve):
 
-Line Loop(1) = {4,1,-2,3} ;
+Curve Loop(1) = {4,1,-2,3} ;
 
-// We can then define the surface as a list of line loops (only one here, since
+// We can then define the surface as a list of curve loops (only one here, since
 // there are no holes--see `t4.geo'):
 
 Plane Surface(1) = {1} ;
@@ -54,7 +54,7 @@ Plane Surface(1) = {1} ;
 // At this level, Gmsh knows everything to display the rectangular surface 6 and
 // to mesh it. An optional step is needed if we want to associate specific
 // region numbers to the various elements in the mesh (e.g. to the line segments
-// discretizing lines 1 to 4 or to the triangles discretizing surface 1). This
+// discretizing curves 1 to 4 or to the triangles discretizing surface 1). This
 // is achieved by the definition of `physical entities'. Physical entities will
 // group elements belonging to several elementary entities by giving them a
 // common number (a region number).
@@ -64,21 +64,21 @@ Plane Surface(1) = {1} ;
 Physical Point(1) = {1,2} ;
 
 // Consequently, two punctual elements will be saved in the output mesh file,
-// both with the region number 1. The mechanism is identical for line or surface
+// both with the region number 1. The mechanism is identical for curve or surface
 // elements:
 
-MY_LINE = 2;
-Physical Line(MY_LINE) = {1,2} ;
-Physical Line("My second line (automatic physical id)") = {3} ;
-Physical Line("My third line (physical id 5)", 5) = {4} ;
+MY_CURVE = 2;
+Physical Curve(MY_CURVE) = {1,2} ;
+Physical Curve("My second curve (automatic physical tag)") = {3} ;
+Physical Curve("My third curve (physical tag 5)", 5) = {4} ;
 Physical Surface("My surface") = {1} ;
 
-// All the line elements created during the meshing of lines 1 and 2 will be
-// saved in the output mesh file with the physical id 2. The elements from line
+// All the line elements created during the meshing of curves 1 and 2 will be
+// saved in the output mesh file with the physical tag 2. The elements from curve
 // 3 will be saved in the output mesh file with an automatic physical id,
-// associated with the label "My second line (automatic physical id)". The
-// elements from line 4 will be saved with physical id 5, associated with the
-// label "My third line (physical id 5)". And finally, all the triangular
+// associated with the label "My second curve (automatic physical tag)". The
+// elements from curve 4 will be saved with physical tag 5, associated with the
+// label "My third curve (physical tag 5)". And finally, all the triangular
 // elements resulting from the discretization of surface 6 will be given an
 // automatic physical id associated with the label "My surface").
 //

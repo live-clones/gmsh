@@ -42,9 +42,9 @@ namespace gmsh {
 namespace gmsh { // Top-level functions
 
   // Initializes Gmsh. This must be called before any call to the other functions
-  // in the API. If argc and argv are provided, they will be handled in the same
-  // way as the command line arguments in the Gmsh app. If `readConfigFiles' is
-  // set, reads system Gmsh configuration files (gmshrc and gmsh-options).
+  // in the API. If `argc' and `argv' are provided, they will be handled in the
+  // same way as the command line arguments in the Gmsh app. If `readConfigFiles'
+  // is set, reads system Gmsh configuration files (gmshrc and gmsh-options).
   GMSH_API void initialize(int argc = 0, char ** argv = 0,
                            const bool readConfigFiles = true);
 
@@ -340,7 +340,7 @@ namespace gmsh { // Top-level functions
                                 const std::vector<std::vector<int> > & elementTags,
                                 const std::vector<std::vector<int> > & vertexTags);
 
-      // Redistribute all mesh vertices on their associated geometrical entity,
+      // Redistributes all mesh vertices on their associated geometrical entity,
       // based on the mesh elements. Can be used when importing mesh vertices in
       // bulk (e.g. by associating them all to a single volume), to reclassify them
       // correctly on model surfaces, curves, etc.
@@ -371,15 +371,15 @@ namespace gmsh { // Top-level functions
       GMSH_API void setSize(const gmsh::vector_pair & dimTags,
                             const double size);
 
-      // Sets a transfinite meshing constraint on the line `tag', with
+      // Sets a transfinite meshing constraint on the curve `tag', with
       // `numVertices' mesh vertices distributed according to `type' and `coef'.
       // Currently supported types are "Progression" (geometrical progression with
-      // power `coef') and "Bump" (refinement toward both extreminties of the
-      // line).
-      GMSH_API void setTransfiniteLine(const int tag,
-                                       const int numVertices,
-                                       const std::string & type = "Progression",
-                                       const double coef = 1.);
+      // power `coef') and "Bump" (refinement toward both extremities of the
+      // curve).
+      GMSH_API void setTransfiniteCurve(const int tag,
+                                        const int numVertices,
+                                        const std::string & type = "Progression",
+                                        const double coef = 1.);
 
       // Sets a transfinite meshing constraint on the surface `tag'. `arrangement'
       // describes the arrangement of the triangles when the surface is not flagged
@@ -533,25 +533,25 @@ namespace gmsh { // Top-level functions
       GMSH_API int addBezier(const std::vector<int> & pointTags,
                              const int tag = -1);
 
-      // Adds a line loop (a closed wire) formed by the curves `curveTags'.
+      // Adds a curve loop (a closed wire) formed by the curves `curveTags'.
       // `curveTags' should contain (signed) tags of geometrical enties of
       // dimension 1 forming a closed loop: a negative tag signifies that the
       // underlying curve is considered with reversed orientation. If `tag' is
       // positive, sets the tag explicitly; otherwise a new tag is selected
-      // automatically. Returns the tag of the line loop.
-      GMSH_API int addLineLoop(const std::vector<int> & curveTags,
-                               const int tag = -1);
+      // automatically. Returns the tag of the curve loop.
+      GMSH_API int addCurveLoop(const std::vector<int> & curveTags,
+                                const int tag = -1);
 
-      // Adds a plane surface defined by one or more line loops `wireTags'. The
-      // first line loop defines the exterior contour; additional line loop define
-      // holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
-      // is selected automatically. Returns the tag of the surface.
+      // Adds a plane surface defined by one or more curve loops `wireTags'. The
+      // first curve loop defines the exterior contour; additional curve loop
+      // define holes. If `tag' is positive, sets the tag explicitly; otherwise a
+      // new tag is selected automatically. Returns the tag of the surface.
       GMSH_API int addPlaneSurface(const std::vector<int> & wireTags,
                                    const int tag = -1);
 
-      // Adds a surface filling the line loops in `wireTags'. Currently only a
-      // single line loop is supported; this line loop should be composed by 3 or 4
-      // curves only. If `tag' is positive, sets the tag explicitly; otherwise a
+      // Adds a surface filling the curve loops in `wireTags'. Currently only a
+      // single curve loop is supported; this curve loop should be composed by 3 or
+      // 4 curves only. If `tag' is positive, sets the tag explicitly; otherwise a
       // new tag is selected automatically. Returns the tag of the surface.
       GMSH_API int addSurfaceFilling(const std::vector<int> & wireTags,
                                      const int tag = -1,
@@ -693,15 +693,15 @@ namespace gmsh { // Top-level functions
         GMSH_API void setSize(const gmsh::vector_pair & dimTags,
                               const double size);
 
-        // Sets a transfinite meshing constraint on the line `tag', with
+        // Sets a transfinite meshing constraint on the curve `tag', with
         // `numVertices' mesh vertices distributed according to `type' and `coef'.
         // Currently supported types are "Progression" (geometrical progression
         // with power `coef') and "Bump" (refinement toward both extreminties of
-        // the line).
-        GMSH_API void setTransfiniteLine(const int tag,
-                                         const int nPoints,
-                                         const std::string & type = "Progression",
-                                         const double coef = 1.);
+        // the curve).
+        GMSH_API void setTransfiniteCurve(const int tag,
+                                          const int nPoints,
+                                          const std::string & type = "Progression",
+                                          const double coef = 1.);
 
         // Sets a transfinite meshing constraint on the surface `tag'.
         // `arrangement' describes the arrangement of the triangles when the
@@ -848,14 +848,14 @@ namespace gmsh { // Top-level functions
                            const int tag = -1,
                            const bool checkClosed = false);
 
-      // Adds a line loop (a closed wire) formed by the curves `curveTags'.
+      // Adds a curve loop (a closed wire) formed by the curves `curveTags'.
       // `curveTags' should contain (signed) tags of curves forming a closed loop:
       // a negative tag signifies that the underlying curve is considered with
       // reversed orientation. If `tag' is positive, sets the tag explicitly;
-      // otherwise a new tag is selected automatically. Returns the tag of the line
-      // loop.
-      GMSH_API int addLineLoop(const std::vector<int> & curveTags,
-                               const int tag = -1);
+      // otherwise a new tag is selected automatically. Returns the tag of the
+      // curve loop.
+      GMSH_API int addCurveLoop(const std::vector<int> & curveTags,
+                                const int tag = -1);
 
       // Adds a rectangle with lower left corner at (`x', `y', `z') and upper right
       // corner at (`x' + `dx', `y' + `dy', `z'). If `tag' is positive, sets the
@@ -880,17 +880,17 @@ namespace gmsh { // Top-level functions
                            const double ry,
                            const int tag = -1);
 
-      // Adds a plane surface defined by one or more line loops (or closed wires)
-      // `wireTags'. The first line loop defines the exterior contour; additional
-      // line loop define holes. If `tag' is positive, sets the tag explicitly;
+      // Adds a plane surface defined by one or more curve loops (or closed wires)
+      // `wireTags'. The first curve loop defines the exterior contour; additional
+      // curve loop define holes. If `tag' is positive, sets the tag explicitly;
       // otherwise a new tag is selected automatically. Returns the tag of the
       // surface.
       GMSH_API int addPlaneSurface(const std::vector<int> & wireTags,
                                    const int tag = -1);
 
-      // Adds a surface filling the line loops in `wireTags'. If `tag' is positive,
-      // sets the tag explicitly; otherwise a new tag is selected automatically.
-      // Returns the tag of the surface.
+      // Adds a surface filling the curve loops in `wireTags'. If `tag' is
+      // positive, sets the tag explicitly; otherwise a new tag is selected
+      // automatically. Returns the tag of the surface.
       GMSH_API int addSurfaceFilling(const int wireTag,
                                      const int tag = -1);
 
