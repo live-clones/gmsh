@@ -114,6 +114,7 @@ int GModel::writeMATLAB(const std::string &name, bool binary, bool saveAll, doub
   //  int nelemtype = 0; //number of element type
   if(filetype == LOAD_GMSH2)
     {
+      fprintf(fp, "clear msh;\n");
       fprintf(fp, "msh.nbNod = %d;\n", numVertices);
       fprintf(fp, "msh.POS = [\n");
       for(unsigned int i = 0; i < entities.size(); i++)
@@ -159,7 +160,7 @@ std::string getMATLABName(int type)
 {
   switch(type){
   case  MSH_LIN_2   : return "LINES";
-  case  MSH_TRI_3   : return "TRIANGLE";
+  case  MSH_TRI_3   : return "TRIANGLES";
   case  MSH_QUA_4   : return "QUADS";
   case  MSH_TET_4   : return "TETS";
   case  MSH_HEX_8   : return "HEXAS";
