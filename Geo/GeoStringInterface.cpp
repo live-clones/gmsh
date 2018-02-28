@@ -186,7 +186,7 @@ static std::string dimTags2String(const std::vector<std::pair<int, int> > &l)
   for(unsigned int i = 0; i < l.size(); i++){
     switch(l[i].first){
     case 0: sstream << "Point{" << l[i].second << "}; "; break;
-    case 1: sstream << "Line{" << l[i].second << "}; "; break;
+    case 1: sstream << "Curve{" << l[i].second << "}; "; break;
     case 2: sstream << "Surface{" << l[i].second << "}; "; break;
     case 3: sstream << "Volume{" << l[i].second << "}; "; break;
     }
@@ -221,7 +221,7 @@ void add_trsfline(std::vector<int> &l, const std::string &fileName,
                   const std::string &pts)
 {
   std::ostringstream sstream;
-  sstream << "Transfinite Line {";
+  sstream << "Transfinite Curve {";
   for(unsigned int i = 0; i < l.size(); i++){
     if(i) sstream << ", ";
     sstream << l[i];
@@ -373,7 +373,7 @@ void add_lineloop(List_T *list, const std::string &fileName, int *numloop)
     *numloop = std::max
       (*numloop, GModel::current()->getOCCInternals()->getMaxTag(-1) + 1);
   std::ostringstream sstream;
-  sstream << "Line Loop(" << *numloop << ") = {" << list2String(list) << "};";
+  sstream << "Curve Loop(" << *numloop << ") = {" << list2String(list) << "};";
   add_infile(sstream.str(), fileName);
 }
 
@@ -439,7 +439,7 @@ void add_compound(const std::string &fileName, const std::string &type,
             << GModel::current()->getMaxElementaryNumber(2) + 1 << ") = {"
 	    << vector2String(l) << "};";
   }
-  else if (type == "Line"){
+  else if (type == "Curve"){
     sstream << "Compound " << type << "("
             << GModel::current()->getMaxElementaryNumber(1) + 1 << ") = {"
 	    << vector2String(l) << "};";
@@ -700,7 +700,7 @@ void add_pipe(const std::string &fileName, const std::vector<std::pair<int, int>
 void split_edge(int edge_id, List_T *vertices, const std::string &fileName)
 {
   std::ostringstream sstream;
-  sstream << "Split Line(" << edge_id << ") {" << list2String(vertices) << "};";
+  sstream << "Split Curve(" << edge_id << ") {" << list2String(vertices) << "};";
   add_infile(sstream.str(), fileName);
 }
 
