@@ -1,6 +1,6 @@
 SetFactory("OpenCASCADE");
 
-Mesh.CharacteristicLengthMin = 0.4;
+Mesh.CharacteristicLengthMin = 0.02;
 Mesh.CharacteristicLengthMax = 0.4;
 
 Circle(1) = {0,0,0, 2, Pi};
@@ -14,3 +14,5 @@ Rotate {{1, 0, 0}, {0, 0, 4}, Pi/2} {Surface{9};}
 Rotate {{0, 0, 1}, {0, 0, 4}, Pi/6} {Surface{9};}
 
 BooleanFragments{ Surface{1,9}; Delete; }{}
+Recursive Delete{ Surface{3,4}; }
+Characteristic Length{7, 8} = 0.02;
