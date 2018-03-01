@@ -777,9 +777,6 @@ GPoint discreteFace::intersectionWithCircle(const SVector3 &n1, const SVector3 &
   return pp;
 }
 
-
-
-
 bool discreteFace::compute_topology_of_partition (int nbColors,
 						  int *colors,
 						  int *nNodes,

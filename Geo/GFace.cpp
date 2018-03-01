@@ -1367,9 +1367,9 @@ static void meshCompound(GFace* gf, bool verbose)
       else ec.erase(found);
     }
     df->triangles.insert(df->triangles.end(), c->triangles.begin(),
-                         c->triangles.end());
+			 c->triangles.end());
     df->mesh_vertices.insert(df->mesh_vertices.end(), c->mesh_vertices.begin(),
-                             c->mesh_vertices.end());
+			     c->mesh_vertices.end());
     c->triangles.clear();
     c->mesh_vertices.clear();
   }
@@ -1379,7 +1379,11 @@ static void meshCompound(GFace* gf, bool verbose)
   df->setBoundEdges(cedges);
   df->createGeometry();
   df->mesh(verbose);
-  delete df;
+  gf->mesh_vertices = df->mesh_vertices;
+  gf->triangles = df->triangles;
+  df->triangles.clear();
+  df->mesh_vertices.clear();
+  //  delete df;
 }
 #endif
 
