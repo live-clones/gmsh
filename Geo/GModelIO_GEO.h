@@ -52,21 +52,21 @@ class GEO_Internals{
   bool addVertex(int &tag, double x, double y, double z, double lc);
   bool addVertex(int &tag, double x, double y, gmshSurface *s, double lc);
   bool addLine(int &tag, int startTag, int endTag);
-  bool addLine(int &tag, const std::vector<int> &vertexTags);
+  bool addLine(int &tag, const std::vector<int> &pointTags);
   bool addCircleArc(int &tag, int startTag, int centerTag, int endTag,
                     double nx = 0., double ny = 0., double nz = 0.);
   bool addEllipseArc(int &tag, int startTag, int centerTag, int majorTag,
                      int endTag, double nx = 0., double ny = 0., double nz = 0.);
-  bool addSpline(int &tag, const std::vector<int> &vertexTags);
-  bool addBezier(int &tag, const std::vector<int> &vertexTags);
-  bool addBSpline(int &tag, const std::vector<int> &vertexTags,
+  bool addSpline(int &tag, const std::vector<int> &pointTags);
+  bool addBezier(int &tag, const std::vector<int> &pointTags);
+  bool addBSpline(int &tag, const std::vector<int> &pointTags,
                   const std::vector<double> &seqknots = std::vector<double>());
-  bool addLineLoop(int &tag, const std::vector<int> &edgeTags);
+  bool addLineLoop(int &tag, const std::vector<int> &curveTags);
   bool addPlaneSurface(int &tag, const std::vector<int> &wireTags);
   bool addDiscreteSurface(int &tag);
   bool addSurfaceFilling(int &tag, const std::vector<int> &wireTags,
                          int sphereCenterTag = -1);
-  bool addSurfaceLoop(int &tag, const std::vector<int> &faceTags);
+  bool addSurfaceLoop(int &tag, const std::vector<int> &surfaceTags);
   bool addVolume(int &tag, const std::vector<int> &shellTags);
 
   // extrude and revolve
@@ -102,10 +102,10 @@ class GEO_Internals{
                 double a, double b, double c, double d);
 
   // split entities
-  bool splitCurve(int tag, const std::vector<int> &vertexTags,
-                  std::vector<int> &edgeTags);
-  bool intersectCurvesWithSurface(const std::vector<int> &edgeTags,
-                                  int faceTag, std::vector<int> &vertexTags);
+  bool splitCurve(int tag, const std::vector<int> &pointTags,
+                  std::vector<int> &curveTags);
+  bool intersectCurvesWithSurface(const std::vector<int> &curveTags,
+                                  int surfaceTag, std::vector<int> &pointTags);
 
   // copy and remove
   bool copy(const std::vector<std::pair<int, int> > &inDimTags,

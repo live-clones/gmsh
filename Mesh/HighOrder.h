@@ -24,7 +24,7 @@ void SetOrderN(GModel *m, int order, bool linear=true, bool incomplete=false,
                bool onlyVisible=false);
 
 void SetHighOrderComplete(GModel *m, bool onlyVisible);
-void SetHighOrderInComplete(GModel *m, bool onlyVisible);
+void SetHighOrderIncomplete(GModel *m, bool onlyVisible);
 
 void checkHighOrderTriangles(const char* cc, GModel *m,
                              std::vector<MElement*> &bad, double &minJGlob);

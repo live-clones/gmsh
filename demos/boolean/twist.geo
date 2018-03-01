@@ -18,14 +18,14 @@ Ellipse(2) = {3, 5, 4};
 Ellipse(3) = {1, 5, 4};
 Ellipse(4) = {1, 5, 2};
 l~{1}() = {1:4};
-Line Loop(1) = l~{1}();
+Curve Loop(1) = l~{1}();
 
 N = DefineNumber[3, Name "Parameters/Number of slices", Min 2, Max 10, Step 1];
 angle = DefineNumber[Pi/4, Name "Parameters/Angle", Min 0, Max 2*Pi, Step 0.1];
 For i In {2:N}
-  l~{i}() = Translate{0,0,1/(N-1)}{ Duplicata{ Line{l~{i-1}()}; } };
-  Rotate {{0, 0, 1}, {0, 0, 0}, angle/(N-1)} { Line{l~{i}()}; }
-  Line Loop(i) = l~{i}();
+  l~{i}() = Translate{0,0,1/(N-1)}{ Duplicata{ Curve{l~{i-1}()}; } };
+  Rotate {{0, 0, 1}, {0, 0, 0}, angle/(N-1)} { Curve{l~{i}()}; }
+  Curve Loop(i) = l~{i}();
 EndFor
 
 ThruSections(1) = {1:N};

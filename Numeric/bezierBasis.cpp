@@ -961,19 +961,6 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
   }
 }
 
-const bezierBasis* bezierBasisRaiser::getRaisedBezierBasis(int mult2or3)
-{
-  if(mult2or3 != 2 && mult2or3 != 3){
-    Msg::Error("There is no reason that I give you the bezier basis of order "
-               "%d times greater. Ask to another class/object", mult2or3);
-    return NULL;
-  }
-  FuncSpaceData initFuncSpace = _bfs->getFuncSpaceData();
-  int newOrder = initFuncSpace.spaceOrder() * mult2or3;
-  FuncSpaceData raisedFuncSpace(initFuncSpace, newOrder);
-  return BasisFactory::getBezierBasis(raisedFuncSpace);
-}
-
 void bezierBasisRaiser::computeCoeff(const fullVector<double> &coeffA,
                                      const fullVector<double> &coeffB,
                                      fullVector<double> &coeffSquare)

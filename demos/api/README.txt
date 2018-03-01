@@ -27,6 +27,6 @@ Then, to build and run the C++ examples:
 To run the Python examples, add the top-level api directory to your PYTHON_PATH
 and simply run the examples with Python:
 
-  export PYTHON_PATH=/path/to/gmsh/api
+  export PYTHONPATH=/path/to/gmsh/api
   python t1.py
   python t2.py

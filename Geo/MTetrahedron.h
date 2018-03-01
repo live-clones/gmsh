@@ -170,7 +170,7 @@ class MTetrahedron : public MElement {
     };
     return f[face][vert];
   }
-  static int faces2edge_tetra(const int face, const int vert)
+  static int faces2edge_tetra(const int face, const int edge)
   {
     // return -iedge - 1 if edge is inverted
     //         iedge + 1 otherwise
@@ -180,7 +180,7 @@ class MTetrahedron : public MElement {
       {-4,  5,  3},
       { 6,  2, -5}
     };
-    return e[face][vert];
+    return e[face][edge];
   }
   virtual int numCommonNodesInDualGraph(const MElement *const other) const;
 };

@@ -167,6 +167,7 @@ Cpu                     return tCpu;
 CreateTopology          return tCreateTopology;
 CurrentDir              return tCurrentDirectory;
 CurrentDirectory        return tCurrentDirectory;
+Curve                   return tCurve;
 Cylinder                return tCylinder;
 
 DefineConstant          return tDefineConstant;
@@ -235,7 +236,7 @@ Layers                  return tLayers;
 Length                  return tLength;
 Levelset                return tLevelset;
 LinSpace                return tLinSpace;
-Line                    return tLine;
+Line                    return tCurve;
 List                    return tList;
 ListFromFile            return tListFromFile;
 Log                     return tLog;

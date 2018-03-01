@@ -35,5 +35,5 @@ lin6 = newreg ; Line(lin6) = {p6, p9} ;
 
 lin7 = newreg ; Line(lin7) = {p9, p1} ;
 
-reg1 = newreg ; Line Loop(reg1) = {lin1,arc1,arc2,lin6,lin7} ;
+reg1 = newreg ; Curve Loop(reg1) = {lin1,arc1,arc2,lin6,lin7} ;
 reg2 = newreg ; Plane Surface(reg2) = {reg1} ; 

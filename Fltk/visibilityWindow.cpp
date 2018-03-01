@@ -100,7 +100,7 @@ class VisElementary : public Vis {
   std::string getType() const
   {
     if(_e->dim() == 0) return "Point";
-    else if(_e->dim() == 1) return "Line";
+    else if(_e->dim() == 1) return "Curve";
     else if(_e->dim() == 2) return "Surface";
     else return "Volume";
   }
@@ -127,7 +127,7 @@ class VisPhysical : public Vis {
   std::string getType() const
   {
     if(_dim == 0) return "Point";
-    else if(_dim == 1) return "Line";
+    else if(_dim == 1) return "Curve";
     else if(_dim == 2) return "Surface";
     else return "Volume";
   }
@@ -332,7 +332,7 @@ static void visibility_browser_apply_cb(Fl_Widget *w, void *data)
   // if the browser is not empty, get the selections made in the
   // browser and apply them into the model
   if(VisibilityList::instance()->getNumEntities()){
-    CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+    CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
     bool recursive = FlGui::instance()->visibility->butt[0]->value() ? true : false;
     bool allmodels = FlGui::instance()->visibility->butt[1]->value() ? true : false;
     VisibilityList::VisibilityType type;
@@ -468,7 +468,7 @@ static void _add_vertex(GVertex *gv, Fl_Tree *tree, std::string path)
 static void _add_edge(GEdge *ge, Fl_Tree *tree, std::string path)
 {
   std::ostringstream edge;
-  edge << path << "Line " << ge->tag() << "/";
+  edge << path << "Curve " << ge->tag() << "/";
   Fl_Tree_Item *n = tree->add(edge.str().c_str());
   if(!n) return;
   if(ge->getVisibility()) n->select(1);
@@ -536,7 +536,7 @@ static void _add_physical_group(int dim, int num, std::vector<GEntity*> &ge,
       _add_face((GFace*)ge[i], tree, group.str());
     break;
   case 1:
-    group << "Physical Line " << num << name << "/";
+    group << "Physical Curve " << num << name << "/";
     n = tree->add(group.str().c_str());
     if(n) n->close();
     for(unsigned int i = 0; i < ge.size(); i++)
@@ -664,7 +664,7 @@ static void _recur_update_selected(Fl_Tree_Item *n)
 
 static void visibility_tree_apply_cb(Fl_Widget *w, void *data)
 {
-  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
   bool recursive = FlGui::instance()->visibility->butt[0]->value() ? true : false;
 
   Fl_Tree_Item *root = FlGui::instance()->visibility->tree->root();
@@ -756,7 +756,7 @@ static void visibility_save_cb(Fl_Widget *w, void *data)
     (*it)->getVisibility() ?
       state[3][1].push_back((*it)->tag()) : state[3][0].push_back((*it)->tag());
   char tmp[256];
-  const char *labels[4] = {"Point", "Line", "Surface", "Volume"};
+  const char *labels[4] = {"Point", "Curve", "Surface", "Volume"};
   std::string str;
   int mode;
   int on = 0, off = 0;
@@ -931,7 +931,7 @@ static void _apply_visibility(char mode, bool physical,
 
 static void visibility_number_cb(Fl_Widget *w, void *data)
 {
-  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
 
   // what = 0 for nodes, 1 for elements, 2 for points, 3 for lines, 4
   // for surfaces, 5 for volumes, 6 for physical points, 7 for
@@ -978,11 +978,11 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
     mode = 0;
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   }
-  else if(str == "lines to hide" || str == "physical lines to hide"){
+  else if(str == "curves to hide" || str == "physical curves to hide"){
     CTX::instance()->pickElements = 0;
-    what = ENT_LINE;
+    what = ENT_CURVE;
     mode = 0;
-    opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+    opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(str == "surfaces to hide" || str == "physical surfaces to hide"){
     CTX::instance()->pickElements = 0;
@@ -1009,11 +1009,11 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
     mode = 1;
     opt_geometry_points(0, GMSH_SET | GMSH_GUI, 1);
   }
-  else if(str == "lines to show" || str == "physical lines to show"){
+  else if(str == "curves to show" || str == "physical curves to show"){
     CTX::instance()->pickElements = 0;
-    what = ENT_LINE;
+    what = ENT_CURVE;
     mode = 1;
-    opt_geometry_lines(0, GMSH_SET | GMSH_GUI, 1);
+    opt_geometry_curves(0, GMSH_SET | GMSH_GUI, 1);
   }
   else if(str == "surfaces to show" || str == "physical surfaces to show"){
     CTX::instance()->pickElements = 0;
@@ -1031,7 +1031,7 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   }
   else if(str == "show all"){
     bool allmodels = FlGui::instance()->visibility->butt[1]->value() ? true : false;
-    for(int i = 1; i <= 5; i++) // elements, points, lines, surfaces, volumes
+    for(int i = 1; i <= 5; i++) // elements, points, curves, surfaces, volumes
       _set_visibility_by_number(i, -1, 1, false, allmodels);
     CTX::instance()->mesh.changed = ENT_ALL;
     drawContext::global()->draw();
@@ -1283,8 +1283,8 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     input[2]->label("Point");
     input[2]->tooltip("Enter point number, or *");
 
-    input[3]->label("Line");
-    input[3]->tooltip("Enter line number, or *");
+    input[3]->label("Curve");
+    input[3]->tooltip("Enter curve number, or *");
 
     input[4]->label("Surface");
     input[4]->tooltip("Enter surface number, or *");
@@ -1295,8 +1295,8 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     input[6]->label("Point");
     input[6]->tooltip("Enter point number, or *");
 
-    input[7]->label("Line");
-    input[7]->tooltip("Enter line number, or *");
+    input[7]->label("Curve");
+    input[7]->tooltip("Enter curve number, or *");
 
     input[8]->label("Surface");
     input[8]->tooltip("Enter surface number, or *");
@@ -1346,10 +1346,10 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     bb[2]->callback(visibility_interactive_cb, (void *)"points to hide");
     bb[3]->label("Show points");
     bb[3]->callback(visibility_interactive_cb, (void *)"points to show");
-    bb[4]->label("Hide lines");
-    bb[4]->callback(visibility_interactive_cb, (void *)"lines to hide");
-    bb[5]->label("Show lines");
-    bb[5]->callback(visibility_interactive_cb, (void *)"lines to show");
+    bb[4]->label("Hide curves");
+    bb[4]->callback(visibility_interactive_cb, (void *)"curves to hide");
+    bb[5]->label("Show curves");
+    bb[5]->callback(visibility_interactive_cb, (void *)"curves to show");
     bb[6]->label("Hide surfaces");
     bb[6]->callback(visibility_interactive_cb, (void *)"surfaces to hide");
     bb[7]->label("Show surfaces");
@@ -1362,10 +1362,10 @@ visibilityWindow::visibilityWindow(int deltaFontSize)
     bb[10]->callback(visibility_interactive_cb, (void *)"physical points to hide");
     bb[11]->label("Show points");
     bb[11]->callback(visibility_interactive_cb, (void *)"physical points to show");
-    bb[12]->label("Hide lines");
-    bb[12]->callback(visibility_interactive_cb, (void *)"physical lines to hide");
-    bb[13]->label("Show lines");
-    bb[13]->callback(visibility_interactive_cb, (void *)"physical lines to show");
+    bb[12]->label("Hide curves");
+    bb[12]->callback(visibility_interactive_cb, (void *)"physical curves to hide");
+    bb[13]->label("Show curves");
+    bb[13]->callback(visibility_interactive_cb, (void *)"physical curves to show");
     bb[14]->label("Hide surfaces");
     bb[14]->callback(visibility_interactive_cb, (void *)"physical surfaces to hide");
     bb[15]->label("Show surfaces");

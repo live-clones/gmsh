@@ -1282,7 +1282,7 @@ void delaunayTrgl(const unsigned int numThreads,
 	      else if(neigh->getFace(3) == bndK[i].f)neigh->T[3] = t;
 	      else {
                 Msg::Error("Datatrsucture Broken in Triangulation");
-                return;
+                break;
               }
 	    }
 	    computeAdjacencies(t,1,faceToTet);

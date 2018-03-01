@@ -75,7 +75,7 @@ static double correctLC_(BDS_Point *p1,BDS_Point *p2, GFace *f)
 {
   double l1 = NewGetLc(p1);
   double l2 = NewGetLc(p2);
-  double l = 0.5 * (l1 + l2);
+  double l = .5*(l1+l2);
 
   const double coord = 0.5;
   double U = coord * p1->u + (1 - coord) * p2->u;
@@ -100,7 +100,7 @@ double NewGetLc(BDS_Edge *e, GFace *f)
 {
   double linearLength = computeEdgeLinearLength(e, f);
   double l = correctLC_ (e->p1,e->p2,f);
-  //printf("BDS correct lc =%g lreal=%g \n", l,linearLength);
+  //  printf("BDS %d %d %g %g correct lc =%g lreal=%g \n",e->p1->iD, e->p2->iD,e->p1->lc(),e->p2->lc(),l,linearLength);
   return linearLength / l;
 }
 
@@ -496,8 +496,9 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
       
       GPoint gpp = gf->point(U,V);
 
+      
       if ((!isPeriodic || gf->containsParam(SPoint2(U,V))) && gpp.succeeded()){
-        mid  = m.add_point(++m.MAXPOINTNUMBER, gpp.x(),gpp.y(),gpp.z());
+	mid  = m.add_point(++m.MAXPOINTNUMBER, gpp.x(),gpp.y(),gpp.z());
         mid->u = U;
         mid->v = V;
 	mid->lcBGM() = BGM_MeshSize (gf,U,V, mid->X,mid->Y,mid->Z);

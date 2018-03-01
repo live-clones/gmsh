@@ -18,13 +18,13 @@ Point(5) = {0.2,.5,0,lc};
 
 Line(1) = {1,2}; Line(2) = {2,3}; Line(3) = {3,4}; Line(4) = {4,1};
 
-Line Loop(5) = {1,2,3,4}; Plane Surface(6) = {5};
+Curve Loop(5) = {1,2,3,4}; Plane Surface(6) = {5};
 
-// Say we would like to obtain mesh elements with size lc/30 near line 1 and
+// Say we would like to obtain mesh elements with size lc/30 near curve 1 and
 // point 5, and size lc elsewhere. To achieve this, we can use two fields:
 // "Attractor", and "Threshold". We first define an Attractor field (Field[1])
-// on points 5 and on line 1. This field returns the distance to point 5 and to
-// (100 equidistant points on) line 1.
+// on points 5 and on curve 1. This field returns the distance to point 5 and to
+// (100 equidistant points on) curve 1.
 Field[1] = Attractor;
 Field[1].NodesList = {5};
 Field[1].NNodesByEdge = 100;
@@ -32,7 +32,7 @@ Field[1].EdgesList = {2};
 
 // We then define a Threshold field, which uses the return value of the
 // Attractor Field[1] in order to define a simple change in element size around
-// the attractors (i.e., around point 5 and line 1)
+// the attractors (i.e., around point 5 and curve 1)
 //
 // LcMax -                         /------------------
 //                               /

@@ -163,19 +163,24 @@ void GetStatistics(double stat[50], double quality[3][100])
   stat[45] = physicals[0].size() + physicals[1].size() +
     physicals[2].size() + physicals[3].size();
 
-  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it)
+  for(GModel::viter it = m->firstVertex(); it != m->lastVertex(); ++it){
     stat[4] += (*it)->mesh_vertices.size();
+    stat[5] += (*it)->points.size();
+  }
+
+  for(GModel::eiter it = m->firstEdge(); it != m->lastEdge(); ++it){
+    stat[4] += (*it)->mesh_vertices.size();
+    stat[6] += (*it)->lines.size();
+  }
 
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
-    // TODO: make this an option! if((*it)->getVisibility()){
-    stat[5] += (*it)->mesh_vertices.size();
+    stat[4] += (*it)->mesh_vertices.size();
     stat[7] += (*it)->triangles.size();
     stat[8] += (*it)->quadrangles.size();
-    //}
   }
 
   for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
-    stat[6] += (*it)->mesh_vertices.size();
+    stat[4] += (*it)->mesh_vertices.size();
     stat[9] += (*it)->tetrahedra.size();
     stat[10] += (*it)->hexahedra.size();
     stat[11] += (*it)->prisms.size();

@@ -94,7 +94,7 @@ class GModel {
   std::multimap<MElement*, short> _ghostCells;
 
   // an octree for fast mesh element lookup
-  MElementOctree *_octree;
+  MElementOctree *_elementOctree;
 
   // Geo (Gmsh native) model internal data
   GEO_Internals *_geo_internals;
@@ -423,7 +423,6 @@ class GModel {
   // access a mesh element by coordinates (using an octree search)
   MElement *getMeshElementByCoord(SPoint3 &p, int dim=-1, bool strict=true);
   std::vector<MElement*> getMeshElementsByCoord(SPoint3 &p, int dim=-1, bool strict=true);
-  void deleteOctree();
 
   // access a mesh element by tag, using the element cache
   MElement *getMeshElementByTag(int n);
@@ -687,7 +686,7 @@ class GModel {
 
   //Matlab format
   int writeMATLAB(const std::string &name, bool binary=false,
-		  bool saveAll=false, double scalingFactor=1.0);
+		  bool saveAll=false, double scalingFactor=1.0, int filetype = 1);
 
 
   // Tochnog format

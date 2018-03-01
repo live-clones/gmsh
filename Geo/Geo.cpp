@@ -514,7 +514,7 @@ Curve *CreateCurve(int Num, int Typ, int Order, List_T *Liste,
       if((v = FindPoint(iPnt)))
         List_Add(pC->Control_Points, &v);
       else{
-        Msg::Error("Unknown control point %d in GEO edge %d", iPnt, pC->Num);
+        Msg::Error("Unknown control point %d in GEO curve %d", iPnt, pC->Num);
       }
     }
     if(p1 < 0) {
@@ -1396,7 +1396,7 @@ static void ApplicationOnShapes(double matrix[4][4], List_T *shapes)
       if(v)
         ApplyTransformationToPoint(matrix, v);
       else
-        Msg::Error("Unknown GEO vertex with tag %d", O.Num);
+        Msg::Error("Unknown GEO point with tag %d", O.Num);
       break;
     case MSH_SEGM_LINE:
     case MSH_SEGM_SPLN:
@@ -1411,7 +1411,7 @@ static void ApplicationOnShapes(double matrix[4][4], List_T *shapes)
       if(c)
         ApplyTransformationToCurve(matrix, c);
       else
-        Msg::Error("Unknown GEO edge with tag %d", O.Num);
+        Msg::Error("Unknown GEO curve with tag %d", O.Num);
       break;
     case MSH_SURF_REGL:
     case MSH_SURF_TRIC:
@@ -1420,14 +1420,14 @@ static void ApplicationOnShapes(double matrix[4][4], List_T *shapes)
       if(s)
         ApplyTransformationToSurface(matrix, s);
       else
-        Msg::Error("Unknown GEO face with tag %d", O.Num);
+        Msg::Error("Unknown GEO surface with tag %d", O.Num);
       break;
     case MSH_VOLUME:
       vol = FindVolume(O.Num);
       if(vol)
         ApplyTransformationToVolume(matrix, vol);
       else
-        Msg::Error("Unknown GEO region with tag %d", O.Num);
+        Msg::Error("Unknown GEO volume with tag %d", O.Num);
       break;
     default:
       Msg::Error("Impossible to transform entity %d (of type %d)", O.Num,
@@ -1937,7 +1937,7 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
       if(!Tree_Search(allNonDuplicatedCurves, &c)) {
         Tree_Insert(allNonDuplicatedCurves, &c);
         if(!(c2 = FindCurve(-c->Num))) {
-          Msg::Error("Unknown GEO edge with tag %d", -c->Num);
+          Msg::Error("Unknown GEO curve with tag %d", -c->Num);
           List_Delete(All);
           List_T *tmp = Tree2List(curves2delete);
           for(int i = 0; i < List_Nbr(tmp); i++)
@@ -1953,7 +1953,7 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
       else {
         Tree_Suppress(GModel::current()->getGEOInternals()->Curves, &c);
         if(!(c2 = FindCurve(-c->Num))) {
-          Msg::Error("Unknown GEO edge with tag %d", -c->Num);
+          Msg::Error("Unknown GEO curve with tag %d", -c->Num);
           break;
         }
         Tree_Suppress(GModel::current()->getGEOInternals()->Curves, &c2);
@@ -2008,7 +2008,7 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
       c2 = FindCurve(std::abs(c->Extrude->geo.Source), curves2delete);
       if(c2){
         if(!(pc2 = (Curve **)Tree_PQuery(allNonDuplicatedCurves, &c2)))
-          Msg::Error("Could not replace GEO edge with tag %d in Coherence", c2->Num);
+          Msg::Error("Could not replace GEO curve with tag %d in Coherence", c2->Num);
         else
           c->Extrude->geo.Source = (*pc2)->Num;
       }
@@ -2024,7 +2024,7 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
     for(int j = 0; j < List_Nbr(s->Generatrices); j++) {
       pc = (Curve **)List_Pointer(s->Generatrices, j);
       if(!(pc2 = (Curve **)Tree_PQuery(allNonDuplicatedCurves, pc)))
-        Msg::Error("Could not replace GEO edge with tag %d in Coherence", (*pc)->Num);
+        Msg::Error("Could not replace GEO curve with tag %d in Coherence", (*pc)->Num);
       else {
         List_Write(s->Generatrices, j, pc2);
         // arghhh: check CompareTwoCurves!
@@ -2036,7 +2036,7 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
       c2 = FindCurve(std::abs(s->Extrude->geo.Source), curves2delete);
       if(c2){
         if(!(pc2 = (Curve **)Tree_PQuery(allNonDuplicatedCurves, &c2)))
-          Msg::Error("Could not replace GEO edge with tag %d in Coherence", c2->Num);
+          Msg::Error("Could not replace GEO curve with tag %d in Coherence", c2->Num);
         else
           s->Extrude->geo.Source = (*pc2)->Num;
       }
@@ -2055,7 +2055,7 @@ static void ReplaceDuplicateCurves(std::map<int, int> * c_report = 0)
         c2 = FindCurve(std::abs(num), curves2delete);
         if(c2){
           if(!(pc2 = (Curve **)Tree_PQuery(allNonDuplicatedCurves, &c2)))
-            Msg::Error("Could not replace GEO edge with tag %d in Coherence", c2->Num);
+            Msg::Error("Could not replace GEO curve with tag %d in Coherence", c2->Num);
           else
             List_Write(p->Entities, j, &(*pc2)->Num);
         }
@@ -2103,7 +2103,7 @@ static void RemoveDegenerateCurves()
 	}
       }
       if (List_Nbr(ll) != List_Nbr(s->Generatrices))
-        Msg::Info("Coherence: face %d goes from %d to %d boundary edges",
+        Msg::Info("Coherence: surface %d goes from %d to %d boundary edges",
                   s->Num, List_Nbr(ll), List_Nbr(s->Generatrices));
       List_Delete(ll);
     }
@@ -2138,7 +2138,7 @@ static void RemoveDegenerateVolumes()
       else unique.erase(it);
     }
     if(N - unique.size())
-      Msg::Info("Coherence: removing %d seams on region %d", N-unique.size(), v->Num);
+      Msg::Info("Coherence: removing %d seams on volume %d", N-unique.size(), v->Num);
 
     List_T *ll = v->Surfaces;
     List_T *ll2 = v->SurfacesOrientations;
@@ -2155,7 +2155,7 @@ static void RemoveDegenerateVolumes()
     List_Delete(ll);
     List_Delete(ll2);
     if (List_Nbr(v->Surfaces) == 0){
-      Msg::Info("Coherence: region %d is removed (degenerated)",v->Num);
+      Msg::Info("Coherence: volume %d is removed (degenerated)",v->Num);
       DeleteVolume(v->Num);
     }
   }
@@ -2179,7 +2179,7 @@ static void RemoveDegenerateSurfaces()
     }
 
     if (N-unique.size())
-      Msg::Info("Coherence: removing %d seams on face %d", N-unique.size(),s->Num);
+      Msg::Info("Coherence: removing %d seams on surface %d", N-unique.size(),s->Num);
 
     List_T *ll = s->Generatrices;
     s->Generatrices = List_Create(4, 1, sizeof(Curve *));
@@ -2196,7 +2196,7 @@ static void RemoveDegenerateSurfaces()
     List_Delete(ll);
 
     if(s->degenerate()) {
-      Msg::Info("Coherence: face %d is removed (degenerated)", s->Num);
+      Msg::Info("Coherence: surfface %d is removed (degenerated)", s->Num);
       List_T *Vols = Tree2List(GModel::current()->getGEOInternals()->Volumes);
       for(int k = 0; k < List_Nbr(Vols); k++) {
 	Volume *v;
@@ -2278,7 +2278,7 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
     return;
   }
 
-  Msg::Debug("Removed %d duplicate faces", start - end);
+  Msg::Debug("Removed %d duplicate surfaces", start - end);
 
   if(CTX::instance()->geom.oldNewreg) {
     GModel::current()->getGEOInternals()->setMaxTag(2, 0);
@@ -2294,7 +2294,7 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
       s2 = FindSurface(std::abs(s->Extrude->geo.Source), surfaces2delete);
       if(s2){
         if(!(ps2 = (Surface **)Tree_PQuery(allNonDuplicatedSurfaces, &s2)))
-          Msg::Error("Could not replace face %d in Coherence", s2->Num);
+          Msg::Error("Could not replace surface %d in Coherence", s2->Num);
         else
           s->Extrude->geo.Source = (*ps2)->Num;
       }
@@ -2310,7 +2310,7 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
     for(int j = 0; j < List_Nbr(vol->Surfaces); j++) {
       ps = (Surface **)List_Pointer(vol->Surfaces, j);
       if(!(ps2 = (Surface **)Tree_PQuery(allNonDuplicatedSurfaces, ps)))
-        Msg::Error("Could not replace face %d in Coherence", (*ps)->Num);
+        Msg::Error("Could not replace surface %d in Coherence", (*ps)->Num);
       else
         List_Write(vol->Surfaces, j, ps2);
     }
@@ -2319,7 +2319,7 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
       s2 = FindSurface(std::abs(vol->Extrude->geo.Source), surfaces2delete);
       if(s2){
         if(!(ps2 = (Surface **)Tree_PQuery(allNonDuplicatedSurfaces, &s2)))
-          Msg::Error("Could not replace face %d in Coherence", s2->Num);
+          Msg::Error("Could not replace surface %d in Coherence", s2->Num);
         else
           vol->Extrude->geo.Source = (*ps2)->Num;
       }
@@ -2338,7 +2338,7 @@ static void ReplaceDuplicateSurfaces(std::map<int, int> *s_report = 0)
         s2 = FindSurface(std::abs(num), surfaces2delete);
         if(s2){
           if(!(ps2 = (Surface **)Tree_PQuery(allNonDuplicatedSurfaces, &s2)))
-            Msg::Error("Could not replace face %d in Coherence", s2->Num);
+            Msg::Error("Could not replace surface %d in Coherence", s2->Num);
           else
             List_Write(p->Entities, j, &(*ps2)->Num);
         }
@@ -2624,7 +2624,7 @@ int ExtrudeCurve(int type, int ic,
   }
 
   if(!pc->beg || !pc->end){
-    Msg::Error("Cannot extrude edge with no begin/end points");
+    Msg::Error("Cannot extrude curve with no begin/end points");
     return 0;
   }
 
@@ -2826,7 +2826,7 @@ int ExtrudeSurface(int type, int is,
     if(c->Num < 0){
       int nn = -c->Num;
       if(!(c = FindCurve(nn))) {
-        Msg::Error("Unknown GEO edge with tag %d", nn);
+        Msg::Error("Unknown GEO curve with tag %d", nn);
         return ps->Num;
       }
     }

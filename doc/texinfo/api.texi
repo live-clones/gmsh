@@ -1,0 +1,2277 @@
+@heading Module @code{/gmsh}
+@ftable @code
+@item initialize
+Initializes Gmsh. This must be called before any call to the other functions in
+the API. If @code{argc} and @code{argv} are provided, they will be handled in
+the same way as the command line arguments in the Gmsh app. If
+@code{readConfigFiles} is set, reads system Gmsh configuration files (gmshrc and
+gmsh-options).
+
+@table @asis
+@item Input:
+@code{argv}, @code{readConfigFiles}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item finalize
+Finalizes Gmsh. This must be called when you are done using the Gmsh API.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item open
+Opens a file. Equivalent to the @code{File->Open} menu in the Gmsh app. Handling
+of the file depends on its extension and/or its contents.
+
+@table @asis
+@item Input:
+@code{fileName}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item merge
+Merges a file. Equivalent to the @code{File->Merge} menu in the Gmsh app.
+Handling of the file depends on its extension and/or its contents.
+
+@table @asis
+@item Input:
+@code{fileName}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item write
+Writes a file. The export format is determined by the file extension.
+
+@table @asis
+@item Input:
+@code{fileName}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item clear
+Clears all loaded models and post-processing data, and adds a new empty model.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@end ftable
+
+@heading Module @code{/gmsh/option}
+@ftable @code
+@item setNumber
+Sets a numerical option to @code{value}. @code{name} is of the form
+"category.option" or "category[num].option". Available categories and options
+are listed in the Gmsh reference manual.
+
+@table @asis
+@item Input:
+@code{name}, @code{value}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item getNumber
+Gets the @code{value} of a numerical option.
+
+@table @asis
+@item Input:
+@code{name}
+@item Output:
+@code{value}
+@item Return:
+-
+@end table
+
+@item setString
+Sets a string option to @code{value}.
+
+@table @asis
+@item Input:
+@code{name}, @code{value}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item getString
+Gets the @code{value} of a string option.
+
+@table @asis
+@item Input:
+@code{name}
+@item Output:
+@code{value}
+@item Return:
+-
+@end table
+
+@end ftable
+
+@heading Module @code{/gmsh/model}
+@ftable @code
+@item add
+Adds a new model, with name @code{name}, and sets it as the current model.
+
+@table @asis
+@item Input:
+@code{name}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item remove
+Removes the current model.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item list
+Lists the names of all models.
+
+@table @asis
+@item Input:
+-
+@item Output:
+@code{names}
+@item Return:
+-
+@end table
+
+@item setCurrent
+Sets the current model to the model with name @code{name}. If several models
+have the same name, selects the one that was added first.
+
+@table @asis
+@item Input:
+@code{name}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item getEntities
+Gets all the (elementary) geometrical entities in the current model. If
+@code{dim} is >= 0, returns only the entities of the specified dimension (e.g.
+points if @code{dim} == 0). The entities are returned as a vector of (dim, tag)
+integer pairs.
+
+@table @asis
+@item Input:
+@code{dim}
+@item Output:
+@code{dimTags}
+@item Return:
+-
+@end table
+
+@item getPhysicalGroups
+Gets all the physical groups in the current model. If @code{dim} is >= 0,
+returns only the entities of the specified dimension (e.g. physical points if
+@code{dim} == 0). The entities are returned as a vector of (dim, tag) integer
+pairs.
+
+@table @asis
+@item Input:
+@code{dim}
+@item Output:
+@code{dimTags}
+@item Return:
+-
+@end table
+
+@item getEntitiesForPhysicalGroup
+Gets the tags of all the (elementary) geometrical entities making up the
+physical group of dimension @code{dim} and tag @code{tag}.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{tags}
+@item Return:
+-
+@end table
+
+@item addPhysicalGroup
+Adds a physical group of dimension @code{dim}, grouping the elementary entities
+with tags @code{tags}. The function returns the tag of the physical group, equal
+to @code{tag} if @code{tag} is positive, or a new tag if @code{tag} < 0.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tags}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item setPhysicalName
+Sets the name of the physical group of dimension @code{dim} and tag @code{tag}.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{name}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item getPhysicalName
+Gets the name of the physical group of dimension @code{dim} and tag @code{tag}.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{name}
+@item Return:
+-
+@end table
+
+@item getBoundary
+Gets the boundary of the geometrical entities @code{dimTags}. Returns in
+@code{outDimTags} the boundary of the individual entities (if @code{combined} is
+false) or the boundary of the combined geometrical shape formed by all input
+entities (if @code{combined} is true). Returns tags multiplied by the sign of
+the boundary entity if @code{oriented} is true. Applies the boundary operator
+recursively down to dimension 0 (i.e. to points) if @code{recursive} is true.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{combined}, @code{oriented}, @code{recursive}
+@item Output:
+@code{outDimTags}
+@item Return:
+-
+@end table
+
+@item getEntitiesInBoundingBox
+Gets the (elementary) geometrical entities in the bounding box defined by the
+two points (@code{xmin}, @code{ymin}, @code{zmin}) and (@code{xmax},
+@code{ymax}, @code{zmax}). If @code{dim} is >= 0, returns only the entities of
+the specified dimension (e.g. points if @code{dim} == 0).
+
+@table @asis
+@item Input:
+@code{xmin}, @code{ymin}, @code{zmin}, @code{xmax}, @code{ymax}, @code{zmax}, @code{dim}
+@item Output:
+@code{tags}
+@item Return:
+-
+@end table
+
+@item getBoundingBox
+Gets the bounding box (@code{xmin}, @code{ymin}, @code{zmin}), (@code{xmax},
+@code{ymax}, @code{zmax}) of the geometrical entity of dimension @code{dim} and
+tag @code{tag}.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{xmin}, @code{ymin}, @code{zmin}, @code{xmax}, @code{ymax}, @code{zmax}
+@item Return:
+-
+@end table
+
+@item addDiscreteEntity
+Adds a discrete geometrical entity (defined by a mesh) of dimension @code{dim}
+in the current model. The function returns the tag of the new discrete entity,
+equal to @code{tag} if @code{tag} is positive, or a new tag if @code{tag} < 0.
+@code{boundary} specifies the tags of the entities on the boundary of the
+discrete entity, if any. Specyfing @code{boundary} allows Gmsh to construct the
+topology of the overall model.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{boundary}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item removeEntities
+Removes the entities @code{dimTags} of the current model. If @code{recursive} is
+true, removes all the entities on their boundaries, down to dimension 0.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{recursive}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@end ftable
+
+@heading Module @code{/gmsh/model/mesh}
+@ftable @code
+@item generate
+Generates a mesh of the current model, up to dimension @code{dim} (0, 1, 2 or
+3).
+
+@table @asis
+@item Input:
+@code{dim}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item partition
+Partitions the mesh of the current model into @code{numPart} partitions.
+
+@table @asis
+@item Input:
+@code{numPart}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item refine
+Refines the mesh of the current model by uniformly splitting the elements.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setOrder
+Sets the order of the elements in the mesh of the current model to @code{order}.
+
+@table @asis
+@item Input:
+@code{order}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item removeDuplicateNodes
+Removes duplicate mesh nodes in the mesh of the current model.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item getLastEntityError
+Gets the last entities (if any) where a meshing error occurred. Currently only
+populated by the new 3D meshing algorithms.
+
+@table @asis
+@item Input:
+-
+@item Output:
+@code{dimTags}
+@item Return:
+-
+@end table
+
+@item getLastNodeError
+Gets the last mesh nodes (if any) where a meshing error occurred. Currently only
+populated by the new 3D meshing algorithms.
+
+@table @asis
+@item Input:
+-
+@item Output:
+@code{nodeTags}
+@item Return:
+-
+@end table
+
+@item getNodes
+Gets the mesh nodes of the entity of dimension @code{dim} and @code{tag} tag. If
+@code{tag} < 0, gets the nodes for all entities of dimension @code{dim}. If
+@code{dim} and @code{tag} are negative, gets all the nodes in the mesh.
+@code{nodeTags} contains the node tags (their unique, strictly positive
+identification numbers). @code{coord} is a vector of length 3 times the length
+of @code{nodeTags} that contains the (x, y, z) coordinates of the nodes,
+concatenated. If @code{dim} >= 0, @code{parametricCoord} contains the parametric
+coordinates of the nodes, if available. The length of @code{parametricCoord} can
+be 0 or @code{dim} times the length of @code{nodeTags}.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{nodeTags}, @code{coord}, @code{parametricCoord}
+@item Return:
+-
+@end table
+
+@item getElements
+Gets the mesh elements of the entity of dimension @code{dim} and @code{tag} tag.
+If @code{tag} < 0, gets the elements for all entities of dimension @code{dim}.
+If @code{dim} and @code{tag} are negative, gets all the elements in the mesh.
+@code{elementTypes} contains the MSH types of the elements (e.g. @code{2} for
+3-node triangles: see @code{getElementProperties} to obtain the properties for a
+given element type). @code{elementTags} is a vector of the same length as
+@code{elementTypes}; each entry is a vector containing the tags (unique,
+strictly positive identifiers) of the elements of the corresponding type.
+@code{nodeTags} is also a vector of the same length as @code{elementTypes}; each
+entry is a vector of length equal to the number of elements of the given type
+times the number of nodes for this type of element, that contains the node tags
+of all the elements of the given type, concatenated.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{elementTypes}, @code{elementTags}, @code{nodeTags}
+@item Return:
+-
+@end table
+
+@item getElementProperties
+Gets the properties of an element of type @code{elementType}: its name
+(@code{elementName}), dimension (@code{dim}), order (@code{order}), number of
+nodes (@code{numNodes}) and parametric coordinates of nodes
+(@code{parametricCoord} vector, of length @code{dim} times @code{numNodes}).
+
+@table @asis
+@item Input:
+@code{elementType}
+@item Output:
+@code{elementName}, @code{dim}, @code{order}, @code{numNodes}, @code{parametricCoord}
+@item Return:
+-
+@end table
+
+@item getIntegrationData
+Gets the integration data for mesh elements of the entity of dimension
+@code{dim} and @code{tag} tag. The data is returned by element type and by
+element, in the same order as the data returned by @code{getElements}.
+@code{integrationType} specifies the type of integration (e.g. "Gauss4") and
+@code{functionSpaceType} specifies the function space (e.g. "IsoParametric").
+@code{integrationPoints} contains for each element type a vector (of length 4
+times the number of integration points) containing the parametric coordinates
+(u, v, w) and the weight associated to the integration points.
+@code{integrationData} contains for each element type a vector (of size 13 times
+the number of integration points) containing the (x, y, z) coordinates of the
+integration point, the determinant of the Jacobian and the 9 entries (by row) of
+the 3x3 Jacobian matrix. If @code{functionSpaceType} is provided,
+@code{functionSpaceNumComponents} returns the number of components returned by
+the evaluation of a basis function in the space and @code{functionSpaceData}
+contains for each element type the evaluation of the basis functions at the
+integration points.
+
+@table @asis
+@item Input:
+@code{integrationType}, @code{functionSpaceType}, @code{dim}, @code{tag}
+@item Output:
+@code{integrationPoints}, @code{integrationData}, @code{functionSpaceNumComponents}, @code{functionSpaceData}
+@item Return:
+-
+@end table
+
+@item getElementTypes
+Gets the types of mesh elements in the entity of dimension @code{dim} and
+@code{tag} tag. If @code{tag} < 0, gets the types for all entities of dimension
+@code{dim}. If @code{dim} and @code{tag} are negative, gets all the types in the
+mesh.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{elementTypes}
+@item Return:
+-
+@end table
+
+@item getElementsByType
+Gets the mesh elements in the same way as @code{getElements}, but for a single
+@code{elementType}.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{dim}, @code{tag}
+@item Output:
+@code{elementTags}, @code{nodeTags}
+@item Return:
+-
+@end table
+
+@item getIntegrationDataByType
+Gets the integration data for mesh elements in the same way as
+@code{getIntegrationData}, but for a single @code{elementType}.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{integrationType}, @code{functionSpaceType}, @code{dim}, @code{tag}
+@item Output:
+@code{integrationPoints}, @code{integrationData}, @code{functionSpaceNumComponents}, @code{functionSpaceData}
+@item Return:
+-
+@end table
+
+@item setNodes
+Sets the mesh nodes in the geometrical entity of dimension @code{dim} and tag
+@code{tag}. @code{nodetags} contains the node tags (their unique, strictly
+positive identification numbers). @code{coord} is a vector of length 3 times the
+length of @code{nodeTags} that contains the (x, y, z) coordinates of the nodes,
+concatenated. The optional @code{parametricCoord} vector contains the parametric
+coordinates of the nodes, if any. The length of @code{parametricCoord} can be 0
+or @code{dim} times the length of @code{nodeTags}.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{nodeTags}, @code{coord}, @code{parametricCoord}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setElements
+Sets the mesh elements of the entity of dimension @code{dim} and @code{tag} tag.
+@code{types} contains the MSH types of the elements (e.g. @code{2} for 3-node
+triangles: see the Gmsh reference manual). @code{elementTags} is a vector of the
+same length as @code{types}; each entry is a vector containing the tags (unique,
+strictly positive identifiers) of the elements of the corresponding type.
+@code{nodeTags} is also a vector of the same length as @code{types}; each entry
+is a vector of length equal to the number of elements of the give type times the
+number of nodes per element, that contains the node tags of all the elements of
+the given type, concatenated.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{types}, @code{elementTags}, @code{nodeTags}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item reclassifyNodes
+Redistributes all mesh nodes on their associated geometrical entity, based on
+the mesh elements. Can be used when importing mesh nodes in bulk (e.g. by
+associating them all to a single volume), to reclassify them correctly on model
+surfaces, curves, etc.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item getNode
+Gets the coordinates and the parametric coordinates (if any) of the mesh node
+with tag @code{tag}. This is a useful by inefficient way of accessing mesh node
+data, as it relies on a cache stored in the model. For large meshes all the
+nodes in the model should be numbered in a continuous sequence of tags from 1 to
+N to maintain reasonnable performance (in this case the internal cache is based
+on a vector; otherwise it uses a map).
+
+@table @asis
+@item Input:
+@code{nodeTag}
+@item Output:
+@code{coord}, @code{parametricCoord}
+@item Return:
+-
+@end table
+
+@item getElement
+Gets the type and node tags of the mesh element with tag @code{tag}. This is a
+useful but inefficient way of accessing mesh element data, as it relies on a
+cache stored in the model. For large meshes all the elements in the model should
+be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable
+performance (in this case the internal cache is based on a vector; otherwise it
+uses a map).
+
+@table @asis
+@item Input:
+@code{elementTag}
+@item Output:
+@code{type}, @code{nodeTags}
+@item Return:
+-
+@end table
+
+@item setSize
+Sets a mesh size constraint on the geometrical entities @code{dimTags}.
+Currently only entities of dimension 0 (points) are handled.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{size}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setTransfiniteCurve
+Sets a transfinite meshing constraint on the curve @code{tag}, with
+@code{numNodes} mesh nodes distributed according to @code{type} and @code{coef}.
+Currently supported types are "Progression" (geometrical progression with power
+@code{coef}) and "Bump" (refinement toward both extremities of the curve).
+
+@table @asis
+@item Input:
+@code{tag}, @code{numNodes}, @code{type}, @code{coef}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setTransfiniteSurface
+Sets a transfinite meshing constraint on the surface @code{tag}.
+@code{arrangement} describes the arrangement of the triangles when the surface
+is not flagged as recombined: currently supported values are "Left", "Right",
+"AlternateLeft" and "AlternateRight". @code{cornerTags} can be used to specify
+the (3 or 4) corners of the transfinite interpolation explicitly; specifying the
+corners explicitly is mandatory if the surface has more that 3 or 4 points on
+its boundary.
+
+@table @asis
+@item Input:
+@code{tag}, @code{arrangement}, @code{cornerTags}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setTransfiniteVolume
+Sets a transfinite meshing constraint on the surface @code{tag}.
+@code{cornerTags} can be used to specify the (6 or 8) corners of the transfinite
+interpolation explicitly.
+
+@table @asis
+@item Input:
+@code{tag}, @code{cornerTags}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setRecombine
+Sets a recombination meshing constraint on the geometrical entity of dimension
+@code{dim} and tag @code{tag}. Currently only entities of dimension 2 (to
+recombine triangles into quadrangles) are supported.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setSmoothing
+Sets a smoothing meshing constraint on the geometrical entity of dimension
+@code{dim} and tag @code{tag}. @code{val} iterations of a Laplace smoother are
+applied.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{val}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setReverse
+Sets a reverse meshing constraint on the geometrical entity of dimension
+@code{dim} and tag @code{tag}. If @code{val} is true, the mesh orientation will
+be reversed with respect to the natural mesh orientation (i.e. the orientation
+consistent with the orientation of the geometrical entity). If @code{val} is
+false, the mesh is left as-is.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{val}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item embed
+Emebds the geometrical entities of dimension @code{dim} and tags @code{tags} in
+the (inDim, inTag) geometrical entity. @code{inDim} must be strictly greater
+than @code{dim}.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tags}, @code{inDim}, @code{inTag}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@end ftable
+
+@heading Module @code{/gmsh/model/mesh/field}
+@ftable @code
+@item add
+Adds a new mesh size field of type @code{type}. If @code{tag} is positive,
+assign the tag explcitly; otherwise a new tag is assigned automatically. Returns
+the field tag.
+
+@table @asis
+@item Input:
+@code{type}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item remove
+Removes the field with tag @code{tag}.
+
+@table @asis
+@item Input:
+@code{tag}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setNumber
+Sets the numerical option @code{option} to value @code{value} for field
+@code{tag}.
+
+@table @asis
+@item Input:
+@code{tag}, @code{option}, @code{value}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setString
+Sets the string option @code{option} to value @code{value} for field @code{tag}.
+
+@table @asis
+@item Input:
+@code{tag}, @code{option}, @code{value}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setNumbers
+Sets the numerical list option @code{option} to value @code{value} for field
+@code{tag}.
+
+@table @asis
+@item Input:
+@code{tag}, @code{option}, @code{value}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setAsBackgroundMesh
+Sets the field @code{tag} as the background mesh size field.
+
+@table @asis
+@item Input:
+@code{tag}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setAsBoundaryLayer
+Sets the field @code{tag} as the boundary layer size field.
+
+@table @asis
+@item Input:
+@code{tag}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@end ftable
+
+@heading Module @code{/gmsh/model/geo}
+@ftable @code
+@item addPoint
+Adds a geometrical point in the internal GEO CAD representation, at coordinates
+(x, y, z). If @code{meshSize} is > 0, adds a meshing constraint at that point.
+If @code{tag} is positive, sets the tag explicitly; otherwise a new tag is
+selected automatically. Returns the tag of the point. (Note that the point will
+be added in the current model only after synchronize() is called. This behavior
+holds for all the entities added in the geo module.)
+
+@table @asis
+@item Input:
+@code{x}, @code{y}, @code{z}, @code{meshSize}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addLine
+Adds a straight line segment between the two points with tags @code{startTag}
+and @code{endTag}. If @code{tag} is positive, sets the tag explicitly; otherwise
+a new tag is selected automatically. Returns the tag of the line.
+
+@table @asis
+@item Input:
+@code{startTag}, @code{endTag}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addCircleArc
+Adds a circle arc (stricly smaller than Pi) between the two points with tags
+@code{startTag} and @code{endTag}, with center @code{centertag}. If @code{tag}
+is positive, sets the tag explicitly; otherwise a new tag is selected
+automatically. If (@code{nx}, @code{ny}, @code{nz}) != (0,0,0), explicitely sets
+the plane of the circle arc. Returns the tag of the circle arc.
+
+@table @asis
+@item Input:
+@code{startTag}, @code{centerTag}, @code{endTag}, @code{tag}, @code{nx}, @code{ny}, @code{nz}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addEllipseArc
+Adds an ellipse arc (stricly smaller than Pi) between the two points
+@code{startTag} and @code{endTag}, with center @code{centertag} and major axis
+point @code{majorTag}. If @code{tag} is positive, sets the tag explicitly;
+otherwise a new tag is selected automatically. If (@code{nx}, @code{ny},
+@code{nz}) != (0,0,0), explicitely sets the plane of the circle arc. Returns the
+tag of the ellipse arc.
+
+@table @asis
+@item Input:
+@code{startTag}, @code{centerTag}, @code{majorTag}, @code{endTag}, @code{tag}, @code{nx}, @code{ny}, @code{nz}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addSpline
+Adds a spline (Catmull-Rom) curve going through the points @code{pointTags}. If
+@code{tag} is positive, sets the tag explicitly; otherwise a new tag is selected
+automatically. Creates a periodic curve if the first and last points are the
+same. Returns the tag of the spline curve.
+
+@table @asis
+@item Input:
+@code{pointTags}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addBSpline
+Adds a cubic b-spline curve with @code{pointTags} control points. If @code{tag}
+is positive, sets the tag explicitly; otherwise a new tag is selected
+automatically. Creates a periodic curve if the first and last points are the
+same. Returns the tag of the b-spline curve.
+
+@table @asis
+@item Input:
+@code{pointTags}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addBezier
+Adds a Bezier curve with @code{pointTags} control points. If @code{tag} is
+positive, sets the tag explicitly; otherwise a new tag is selected
+automatically.  Returns the tag of the Bezier curve.
+
+@table @asis
+@item Input:
+@code{pointTags}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addCurveLoop
+Adds a curve loop (a closed wire) formed by the curves @code{curveTags}.
+@code{curveTags} should contain (signed) tags of geometrical enties of dimension
+1 forming a closed loop: a negative tag signifies that the underlying curve is
+considered with reversed orientation. If @code{tag} is positive, sets the tag
+explicitly; otherwise a new tag is selected automatically. Returns the tag of
+the curve loop.
+
+@table @asis
+@item Input:
+@code{curveTags}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addPlaneSurface
+Adds a plane surface defined by one or more curve loops @code{wireTags}. The
+first curve loop defines the exterior contour; additional curve loop define
+holes. If @code{tag} is positive, sets the tag explicitly; otherwise a new tag
+is selected automatically. Returns the tag of the surface.
+
+@table @asis
+@item Input:
+@code{wireTags}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addSurfaceFilling
+Adds a surface filling the curve loops in @code{wireTags}. Currently only a
+single curve loop is supported; this curve loop should be composed by 3 or 4
+curves only. If @code{tag} is positive, sets the tag explicitly; otherwise a new
+tag is selected automatically. Returns the tag of the surface.
+
+@table @asis
+@item Input:
+@code{wireTags}, @code{tag}, @code{sphereCenterTag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addSurfaceLoop
+Adds a surface loop (a closed shell) formed by @code{surfaceTags}.  If
+@code{tag} is positive, sets the tag explicitly; otherwise a new tag is selected
+automatically. Returns the tag of the shell.
+
+@table @asis
+@item Input:
+@code{surfaceTags}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addVolume
+Adds a volume (a region) defined by one or more shells @code{shellTags}. The
+first surface loop defines the exterior boundary; additional surface loop define
+holes. If @code{tag} is positive, sets the tag explicitly; otherwise a new tag
+is selected automatically. Returns the tag of the volume.
+
+@table @asis
+@item Input:
+@code{shellTags}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item extrude
+Extrudes the geometrical entities @code{dimTags} by translation along
+(@code{dx}, @code{dy}, @code{dz}). Returns extruded entities in
+@code{outDimTags}. If @code{numElements} is not empty, also extrude the mesh:
+the entries in @code{numElements} give the number of elements in each layer. If
+@code{height} is not empty, it provides the (cummulative) height of the
+different layers, normalized to 1.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{dx}, @code{dy}, @code{dz}, @code{numElements}, @code{heights}, @code{recombine}
+@item Output:
+@code{outDimTags}
+@item Return:
+-
+@end table
+
+@item revolve
+Extrudes the geometrical entities @code{dimTags} by rotation of @code{angle}
+radians around the axis of revolution defined by the point (@code{x}, @code{y},
+@code{z}) and the direction (@code{ax}, @code{ay}, @code{az}). Returns extruded
+entities in @code{outDimTags}. If @code{numElements} is not empty, also extrude
+the mesh: the entries in @code{numElements} give the number of elements in each
+layer. If @code{height} is not empty, it provides the (cummulative) height of
+the different layers, normalized to 1.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{x}, @code{y}, @code{z}, @code{ax}, @code{ay}, @code{az}, @code{angle}, @code{numElements}, @code{heights}, @code{recombine}
+@item Output:
+@code{outDimTags}
+@item Return:
+-
+@end table
+
+@item twist
+Extrudes the geometrical entities @code{dimTags} by a combined translation and
+rotation of @code{angle} radians, along (@code{dx}, @code{dy}, @code{dz}) and
+around the axis of revolution defined by the point (@code{x}, @code{y},
+@code{z}) and the direction (@code{ax}, @code{ay}, @code{az}). Returns extruded
+entities in @code{outDimTags}. If @code{numElements} is not empty, also extrude
+the mesh: the entries in @code{numElements} give the number of elements in each
+layer. If @code{height} is not empty, it provides the (cummulative) height of
+the different layers, normalized to 1.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{ax}, @code{ay}, @code{az}, @code{angle}, @code{numElements}, @code{heights}, @code{recombine}
+@item Output:
+@code{outDimTags}
+@item Return:
+-
+@end table
+
+@item translate
+Translates the geometrical entities @code{dimTags} along (@code{dx}, @code{dy},
+@code{dz}).
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{dx}, @code{dy}, @code{dz}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item rotate
+Rotates the geometrical entities @code{dimTags} of @code{angle} radians around
+the axis of revolution defined by the point (@code{x}, @code{y}, @code{z}) and
+the direction (@code{ax}, @code{ay}, @code{az}).
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{x}, @code{y}, @code{z}, @code{ax}, @code{ay}, @code{az}, @code{angle}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item dilate
+Scales the geometrical entities @code{dimTag} by factors @code{a}, @code{b} and
+@code{c} along the three coordinate axes; use (@code{x}, @code{y}, @code{z}) as
+the center of the homothetic transformation.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{x}, @code{y}, @code{z}, @code{a}, @code{b}, @code{c}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item symmetry
+Applies a symmetry transformation to the geometrical entities @code{dimTag},
+with respect to the plane of equation @code{a} * x + @code{b} * y + @code{c} * z
++ @code{d} = 0.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{a}, @code{b}, @code{c}, @code{d}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item copy
+Copies the entities @code{dimTags}; the new entities are returned in
+@code{outDimTags}.
+
+@table @asis
+@item Input:
+@code{dimTags}
+@item Output:
+@code{outDimTags}
+@item Return:
+-
+@end table
+
+@item remove
+Removes the entities @code{dimTags}. If @code{recursive} is true, removes all
+the entities on their boundaries, down to dimension 0.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{recursive}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item removeAllDuplicates
+Removes all duplicate entities (different entities at the same geometrical
+location).
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item synchronize
+Synchronize the internal GEO CAD representation with the current Gmsh model.
+This can be called at any time, but since it involves a non trivial amount of
+processing, the number of synchronization points should normally be minimized.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@end ftable
+
+@heading Module @code{/gmsh/model/geo/mesh}
+@ftable @code
+@item setSize
+Sets a mesh size constraint on the geometrical entities @code{dimTags}.
+Currently only entities of dimension 0 (points) are handled.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{size}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setTransfiniteCurve
+Sets a transfinite meshing constraint on the curve @code{tag}, with
+@code{numNodes} mesh nodes distributed according to @code{type} and @code{coef}.
+Currently supported types are "Progression" (geometrical progression with power
+@code{coef}) and "Bump" (refinement toward both extreminties of the curve).
+
+@table @asis
+@item Input:
+@code{tag}, @code{nPoints}, @code{type}, @code{coef}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setTransfiniteSurface
+Sets a transfinite meshing constraint on the surface @code{tag}.
+@code{arrangement} describes the arrangement of the triangles when the surface
+is not flagged as recombined: currently supported values are "Left", "Right",
+"AlternateLeft" and "AlternateRight". @code{cornerTags} can be used to specify
+the (3 or 4) corners of the transfinite interpolation explicitly; specifying the
+corners explicitly is mandatory if the surface has more that 3 or 4 points on
+its boundary.
+
+@table @asis
+@item Input:
+@code{tag}, @code{arrangement}, @code{cornerTags}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setTransfiniteVolume
+Sets a transfinite meshing constraint on the surface @code{tag}.
+@code{cornerTags} can be used to specify the (6 or 8) corners of the transfinite
+interpolation explicitly.
+
+@table @asis
+@item Input:
+@code{tag}, @code{cornerTags}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setRecombine
+Sets a recombination meshing constraint on the geometrical entity of dimension
+@code{dim} and tag @code{tag}. Currently only entities of dimension 2 (to
+recombine triangles into quadrangles) are supported.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{angle}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setSmoothing
+Sets a smoothing meshing constraint on the geometrical entity of dimension
+@code{dim} and tag @code{tag}. @code{val} iterations of a Laplace smoother are
+applied.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{val}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setReverse
+Sets a reverse meshing constraint on the geometrical entity of dimension
+@code{dim} and tag @code{tag}. If @code{val} is true, the mesh orientation will
+be reversed with respect to the natural mesh orientation (i.e. the orientation
+consistent with the orientation of the geometrical entity). If @code{val} is
+false, the mesh is left as-is.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}, @code{val}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@end ftable
+
+@heading Module @code{/gmsh/model/occ}
+@ftable @code
+@item addPoint
+Adds a geometrical point in the internal OpenCASCADE CAD representation, at
+coordinates (x, y, z). If @code{meshSize} is > 0, adds a meshing constraint at
+that point. If @code{tag} is positive, sets the tag explicitly; otherwise a new
+tag is selected automatically. Returns the tag of the point. (Note that the
+point will be added in the current model only after synchronize() is called.
+This behavior holds for all the entities added in the occ module.)
+
+@table @asis
+@item Input:
+@code{x}, @code{y}, @code{z}, @code{meshSize}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addLine
+Adds a straight line segment between the two points with tags @code{startTag}
+and @code{endTag}. If @code{tag} is positive, sets the tag explicitly; otherwise
+a new tag is selected automatically. Returns the tag of the line.
+
+@table @asis
+@item Input:
+@code{startTag}, @code{endTag}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addCircleArc
+Adds a circle arc between the two points with tags @code{startTag} and
+@code{endTag}, with center @code{centerTag}. If @code{tag} is positive, sets the
+tag explicitly; otherwise a new tag is selected automatically. Returns the tag
+of the circle arc.
+
+@table @asis
+@item Input:
+@code{startTag}, @code{centerTag}, @code{endTag}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addCircle
+Adds a circle of center (@code{x}, @code{y}, @code{z}) and radius @code{r}. If
+@code{tag} is positive, sets the tag explicitly; otherwise a new tag is selected
+automatically. If @code{angle1} and @code{angle2} are specified, creates a
+circle arc between the two angles. Returns the tag of the circle.
+
+@table @asis
+@item Input:
+@code{x}, @code{y}, @code{z}, @code{r}, @code{tag}, @code{angle1}, @code{angle2}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addEllipseArc
+Adds an ellipse arc between the two points with tags @code{startTag} and
+@code{endTag}, with center @code{centerTag}. If @code{tag} is positive, sets the
+tag explicitly; otherwise a new tag is selected automatically. Returns the tag
+of the ellipse arc.
+
+@table @asis
+@item Input:
+@code{startTag}, @code{centerTag}, @code{endTag}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addEllipse
+Adds an ellipse of center (@code{x}, @code{y}, @code{z}) and radii @code{r1} and
+@code{r2} along the x- and y-axes respectively. If @code{tag} is positive, sets
+the tag explicitly; otherwise a new tag is selected automatically. If
+@code{angle1} and @code{angle2} are specified, creates an ellipse arc between
+the two angles. Returns the tag of the ellipse.
+
+@table @asis
+@item Input:
+@code{x}, @code{y}, @code{z}, @code{r1}, @code{r2}, @code{tag}, @code{angle1}, @code{angle2}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addSpline
+Adds a spline (C2 b-spline) curve going through the points @code{pointTags}. If
+@code{tag} is positive, sets the tag explicitly; otherwise a new tag is selected
+automatically. Creates a periodic curve if the first and last points are the
+same. Returns the tag of the spline curve.
+
+@table @asis
+@item Input:
+@code{pointTags}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addBSpline
+Adds a b-spline curve of degree @code{degree} with @code{pointTags} control
+points. If @code{weights}, @code{knots} or @code{multiplicities} are not
+provided, default parameters are computed automatically. If @code{tag} is
+positive, sets the tag explicitly; otherwise a new tag is selected
+automatically. Creates a periodic curve if the first and last points are the
+same. Returns the tag of the b-spline curve.
+
+@table @asis
+@item Input:
+@code{pointTags}, @code{tag}, @code{degree}, @code{weights}, @code{knots}, @code{multiplicities}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addBezier
+Adds a Bezier curve with @code{pointTags} control points. If @code{tag} is
+positive, sets the tag explicitly; otherwise a new tag is selected
+automatically. Returns the tag of the Bezier curve.
+
+@table @asis
+@item Input:
+@code{pointTags}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addWire
+Adds a wire (open or closed) formed by the curves @code{curveTags}.
+@code{curveTags} should contain (signed) tags: a negative tag signifies that the
+underlying curve is considered with reversed orientation. If @code{tag} is
+positive, sets the tag explicitly; otherwise a new tag is selected
+automatically. Returns the tag of the wire.
+
+@table @asis
+@item Input:
+@code{curveTags}, @code{tag}, @code{checkClosed}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addCurveLoop
+Adds a curve loop (a closed wire) formed by the curves @code{curveTags}.
+@code{curveTags} should contain (signed) tags of curves forming a closed loop: a
+negative tag signifies that the underlying curve is considered with reversed
+orientation. If @code{tag} is positive, sets the tag explicitly; otherwise a new
+tag is selected automatically. Returns the tag of the curve loop.
+
+@table @asis
+@item Input:
+@code{curveTags}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addRectangle
+Adds a rectangle with lower left corner at (@code{x}, @code{y}, @code{z}) and
+upper right corner at (@code{x} + @code{dx}, @code{y} + @code{dy}, @code{z}). If
+@code{tag} is positive, sets the tag explicitly; otherwise a new tag is selected
+automatically. Rounds the corners if @code{roundedRadius} is nonzero. Returns
+the tag of the rectangle.
+
+@table @asis
+@item Input:
+@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{tag}, @code{roundedRadius}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addDisk
+Adds a disk with center (@code{xc}, @code{yc}, @code{zc}) and radius @code{rx}
+along the x-axis and @code{ry} along the y-axis. If @code{tag} is positive, sets
+the tag explicitly; otherwise a new tag is selected automatically. Returns the
+tag of the disk.
+
+@table @asis
+@item Input:
+@code{xc}, @code{yc}, @code{zc}, @code{rx}, @code{ry}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addPlaneSurface
+Adds a plane surface defined by one or more curve loops (or closed wires)
+@code{wireTags}. The first curve loop defines the exterior contour; additional
+curve loop define holes. If @code{tag} is positive, sets the tag explicitly;
+otherwise a new tag is selected automatically. Returns the tag of the surface.
+
+@table @asis
+@item Input:
+@code{wireTags}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addSurfaceFilling
+Adds a surface filling the curve loops in @code{wireTags}. If @code{tag} is
+positive, sets the tag explicitly; otherwise a new tag is selected
+automatically. Returns the tag of the surface.
+
+@table @asis
+@item Input:
+@code{wireTag}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addSurfaceLoop
+Adds a surface loop (a closed shell) formed by @code{surfaceTags}.  If
+@code{tag} is positive, sets the tag explicitly; otherwise a new tag is selected
+automatically. Returns the tag of the surface loop.
+
+@table @asis
+@item Input:
+@code{surfaceTags}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addVolume
+Adds a volume (a region) defined by one or more surface loops @code{shellTags}.
+The first surface loop defines the exterior boundary; additional surface loop
+define holes. If @code{tag} is positive, sets the tag explicitly; otherwise a
+new tag is selected automatically. Returns the tag of the volume.
+
+@table @asis
+@item Input:
+@code{shellTags}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addSphere
+Adds a sphere of center (@code{xc}, @code{yc}, @code{zc}) and radius @code{r}.
+The optional @code{angle1} and @code{angle2} arguments define the polar angle
+opening (from -Pi/2 to Pi/2). The optional @code{angle3} argument defines the
+azimuthal opening (from 0 to 2*Pi). If @code{tag} is positive, sets the tag
+explicitly; otherwise a new tag is selected automatically. Returns the tag of
+the sphere.
+
+@table @asis
+@item Input:
+@code{xc}, @code{yc}, @code{zc}, @code{radius}, @code{tag}, @code{angle1}, @code{angle2}, @code{angle3}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addBox
+Adds a parallelepipedic box defined by a point (@code{x}, @code{y}, @code{z})
+and the extents along the x-, y- and z-axes. If @code{tag} is positive, sets the
+tag explicitly; otherwise a new tag is selected automatically. Returns the tag
+of the box.
+
+@table @asis
+@item Input:
+@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addCylinder
+Adds a cylinder, defined by the center (@code{x}, @code{y}, @code{z}) of its
+first circular face, the 3 components (@code{dx}, @code{dy}, @code{dz}) of the
+vector defining its axis and its radius @code{r}. The optional @code{angle}
+argument defines the angular opening (from 0 to 2*Pi). If @code{tag} is
+positive, sets the tag explicitly; otherwise a new tag is selected
+automatically. Returns the tag of the cylinder.
+
+@table @asis
+@item Input:
+@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{r}, @code{tag}, @code{angle}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addCone
+Add a cone, defined by the center (@code{x}, @code{y}, @code{z}) of its first
+circular face, the 3 components of the vector (@code{dx}, @code{dy}, @code{dz})
+defining its axis and the two radii @code{r1} and @code{r2} of the faces (these
+radii can be zero). If @code{tag} is positive, sets the tag explicitly;
+otherwise a new tag is selected automatically. @code{angle} defines the optional
+angular opening (from 0 to 2*Pi). Returns the tag of the cone.
+
+@table @asis
+@item Input:
+@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{r1}, @code{r2}, @code{tag}, @code{angle}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addWedge
+Add a right angular wedge, defined by the right-angle point (@code{x}, @code{y},
+@code{z}) and the 3 extends along the x-, y- and z-axes (@code{dx}, @code{dy},
+@code{dz}). If @code{tag} is positive, sets the tag explicitly; otherwise a new
+tag is selected automatically. The optional argument @code{ltx} defines the top
+extent along the x-axis. Returns the tag of the wedge.
+
+@table @asis
+@item Input:
+@code{x}, @code{y}, @code{z}, @code{dx}, @code{dy}, @code{dz}, @code{tag}, @code{ltx}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addTorus
+Adds a torus, defined by its center (@code{x}, @code{y}, @code{z}) and its 2
+radii @code{r} and @code{r2}. If @code{tag} is positive, sets the tag
+explicitly; otherwise a new tag is selected automatically. The optional argument
+@code{angle} defines the angular opening (from 0 to 2*Pi). Returns the tag of
+the wedge.
+
+@table @asis
+@item Input:
+@code{x}, @code{y}, @code{z}, @code{r1}, @code{r2}, @code{tag}, @code{angle}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item addThruSections
+Adds a volume (if the optional argument @code{makeSolid} is set) or surfaces
+defined through the open or closed wires @code{wireTags}. If @code{tag} is
+positive, sets the tag explicitly; otherwise a new tag is selected
+automatically. The new entities are returned in @code{outDimTags}. If the
+optional argument @code{makeRuled} is set, the surfaces created on the boundary
+are forced to be ruled surfaces.
+
+@table @asis
+@item Input:
+@code{wireTags}, @code{tag}, @code{makeSolid}, @code{makeRuled}
+@item Output:
+@code{outDimTags}
+@item Return:
+-
+@end table
+
+@item addThickSolid
+Adds a hollowed volume built from an initial volume @code{volumeTag} and a set
+of faces from this volume @code{excludeSurfaceTags}, which are to be removed.
+The remaining faces of the volume become the walls of the hollowed solid, with
+thickness @code{offset}. If @code{tag} is positive, sets the tag explicitly;
+otherwise a new tag is selected automatically.
+
+@table @asis
+@item Input:
+@code{volumeTag}, @code{excludeSurfaceTags}, @code{offset}, @code{tag}
+@item Output:
+@code{outDimTags}
+@item Return:
+-
+@end table
+
+@item extrude
+Extrudes the geometrical entities @code{dimTags} by translation along
+(@code{dx}, @code{dy}, @code{dz}). Returns extruded entities in
+@code{outDimTags}. If @code{numElements} is not empty, also extrude the mesh:
+the entries in @code{numElements} give the number of elements in each layer. If
+@code{height} is not empty, it provides the (cummulative) height of the
+different layers, normalized to 1.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{dx}, @code{dy}, @code{dz}, @code{numElements}, @code{heights}, @code{recombine}
+@item Output:
+@code{outDimTags}
+@item Return:
+-
+@end table
+
+@item revolve
+Extrudes the geometrical entities @code{dimTags} by rotation of @code{angle}
+radians around the axis of revolution defined by the point (@code{x}, @code{y},
+@code{z}) and the direction (@code{ax}, @code{ay}, @code{az}). Returns extruded
+entities in @code{outDimTags}. If @code{numElements} is not empty, also extrude
+the mesh: the entries in @code{numElements} give the number of elements in each
+layer. If @code{height} is not empty, it provides the (cummulative) height of
+the different layers, normalized to 1.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{x}, @code{y}, @code{z}, @code{ax}, @code{ay}, @code{az}, @code{angle}, @code{numElements}, @code{heights}, @code{recombine}
+@item Output:
+@code{outDimTags}
+@item Return:
+-
+@end table
+
+@item addPipe
+Adds a pipe by extruding the entities @code{dimTags} along the wire
+@code{wireTag}. Returns the pipe in @code{outDimTags}.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{wireTag}
+@item Output:
+@code{outDimTags}
+@item Return:
+-
+@end table
+
+@item fillet
+Fillets the volumes @code{volumeTags} on the curves @code{curveTags} with radius
+@code{radius}. Returns the filleted entities in @code{outDimTags}. Removes the
+original volume if @code{removeVolume} is set.
+
+@table @asis
+@item Input:
+@code{volumeTags}, @code{curveTags}, @code{radius}, @code{removeVolume}
+@item Output:
+@code{outDimTags}
+@item Return:
+-
+@end table
+
+@item fuse
+Computes the boolean union (the fusion) of the entities @code{objectDimTags} and
+@code{toolDimTags}. Returns the resulting entities in @code{outDimTags}. If
+@code{tag} is positive, attemps to set the tag explicitly (ony valid if the
+boolean operation results in a single entity). Removes the object if
+@code{removeObject} is set. Removes the tool if @code{removeTool} is set.
+
+@table @asis
+@item Input:
+@code{objectDimTags}, @code{toolDimTags}, @code{tag}, @code{removeObject}, @code{removeTool}
+@item Output:
+@code{outDimTags}, @code{outDimTagsMap}
+@item Return:
+-
+@end table
+
+@item intersect
+Computes the boolean intersection (the common parts) of the entities
+@code{objectDimTags} and @code{toolDimTags}. Returns the resulting entities in
+@code{outDimTags}. If @code{tag} is positive, attemps to set the tag explicitly
+(ony valid if the boolean operation results in a single entity). Removes the
+object if @code{removeObject} is set. Removes the tool if @code{removeTool} is
+set.
+
+@table @asis
+@item Input:
+@code{objectDimTags}, @code{toolDimTags}, @code{tag}, @code{removeObject}, @code{removeTool}
+@item Output:
+@code{outDimTags}, @code{outDimTagsMap}
+@item Return:
+-
+@end table
+
+@item cut
+Computes the boolean difference between the entities @code{objectDimTags} and
+@code{toolDimTags}. Returns the resulting entities in @code{outDimTags}. If
+@code{tag} is positive, attemps to set the tag explicitly (ony valid if the
+boolean operation results in a single entity). Removes the object if
+@code{removeObject} is set. Removes the tool if @code{removeTool} is set.
+
+@table @asis
+@item Input:
+@code{objectDimTags}, @code{toolDimTags}, @code{tag}, @code{removeObject}, @code{removeTool}
+@item Output:
+@code{outDimTags}, @code{outDimTagsMap}
+@item Return:
+-
+@end table
+
+@item fragment
+Copmutes the boolean fragments (general fuse) of the entities
+@code{objectDimTags} and @code{toolDimTags}. Returns the resulting entities in
+@code{outDimTags}. If @code{tag} is positive, attemps to set the tag explicitly
+(ony valid if the boolean operation results in a single entity). Removes the
+object if @code{removeObject} is set. Removes the tool if @code{removeTool} is
+set.
+
+@table @asis
+@item Input:
+@code{objectDimTags}, @code{toolDimTags}, @code{tag}, @code{removeObject}, @code{removeTool}
+@item Output:
+@code{outDimTags}, @code{outDimTagsMap}
+@item Return:
+-
+@end table
+
+@item translate
+Translates the geometrical entities @code{dimTags} along (@code{dx}, @code{dy},
+@code{dz}).
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{dx}, @code{dy}, @code{dz}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item rotate
+Rotates the geometrical entities @code{dimTags} of @code{angle} radians around
+the axis of revolution defined by the point (@code{x}, @code{y}, @code{z}) and
+the direction (@code{ax}, @code{ay}, @code{az}).
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{x}, @code{y}, @code{z}, @code{ax}, @code{ay}, @code{az}, @code{angle}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item dilate
+Scales the geometrical entities @code{dimTag} by factors @code{a}, @code{b} and
+@code{c} along the three coordinate axes; use (@code{x}, @code{y}, @code{z}) as
+the center of the homothetic transformation.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{x}, @code{y}, @code{z}, @code{a}, @code{b}, @code{c}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item symmetry
+Applies a symmetry transformation to the geometrical entities @code{dimTag},
+with respect to the plane of equation @code{a} * x + @code{b} * y + @code{c} * z
++ @code{d} = 0.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{a}, @code{b}, @code{c}, @code{d}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item copy
+Copies the entities @code{dimTags}; the new entities are returned in
+@code{outDimTags}.
+
+@table @asis
+@item Input:
+@code{dimTags}
+@item Output:
+@code{outDimTags}
+@item Return:
+-
+@end table
+
+@item remove
+Removes the entities @code{dimTags}. If @code{recursive} is true, removes all
+the entities on their boundaries, down to dimension 0.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{recursive}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item removeAllDuplicates
+Removes all duplicate entities (different entities at the same geometrical
+location) after intersecting (using boolean fragments) all highest dimensional
+entities.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item importShapes
+Imports BREP, STEP or IGES shapes from the file @code{fileName}. The imported
+entities are returned in @code{outDimTags}. If the optional argument
+@code{highestDimOnly} is set, only import the highest dimensional entities in
+the file. The optional argument @code{format} can be used to force the format of
+the file (currently "brep", "step" or "iges").
+
+@table @asis
+@item Input:
+@code{fileName}, @code{highestDimOnly}, @code{format}
+@item Output:
+@code{outDimTags}
+@item Return:
+-
+@end table
+
+@item setMeshSize
+Sets a mesh size constraint on the geometrical entities @code{dimTags}.
+Currently only entities of dimension 0 (points) are handled.
+
+@table @asis
+@item Input:
+@code{dimTags}, @code{size}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item synchronize
+Synchronize the internal OpenCASCADE CAD representation with the current Gmsh
+model. This can be called at any time, but since it involves a non trivial
+amount of processing, the number of synchronization points should normally be
+minimized.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@end ftable
+
+@heading Module @code{/gmsh/view}
+@ftable @code
+@item add
+Adds a new post-processing view, with name @code{name}. If @code{tag} is
+positive use it (and remove the view with that tag if it already exists),
+otherwise associate a new tag. Returns the view tag.
+
+@table @asis
+@item Input:
+@code{name}, @code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item remove
+Removes the view with tag @code{tag}.
+
+@table @asis
+@item Input:
+@code{tag}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item getIndex
+Gets the index of the view with tag @code{tag} in the list of currently loaded
+views. This dynamic index (it can change when views are removed) is used to
+access view options.
+
+@table @asis
+@item Input:
+@code{tag}
+@item Output:
+-
+@item Return:
+integer
+@end table
+
+@item getTags
+Gets the tags of all views.
+
+@table @asis
+@item Input:
+-
+@item Output:
+@code{tags}
+@item Return:
+-
+@end table
+
+@item addModelData
+Adds model-based post-processing data to the view with tag @code{tag}.
+@code{modelName} identifies the model the data is attached to. @code{dataType}
+specifies the type of data, currently either "NodeData", "ElementData" or
+"ElementNodeData". @code{step} specifies the identifier (>= 0) of the data in a
+sequence. @code{tags} gives the tags of the nodes or elements in the mesh to
+which the data is associated. @code{data} is a vector of the same length as
+@code{tags}: each entry is the vector of double precision numbers representing
+the data associated with the corresponding tag. The optional @code{time}
+argument associate a time value with the data. @code{numComponents} gives the
+number of data components (1 for scalar data, 3 for vector data, etc.) per
+entity; if negative, it is automatically inferred (when possible) from the input
+data. @code{partition} allows to specify data in several sub-sets.
+
+@table @asis
+@item Input:
+@code{tag}, @code{step}, @code{modelName}, @code{dataType}, @code{tags}, @code{data}, @code{time}, @code{numComponents}, @code{partition}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item getModelData
+Gets model-based post-processing data from the view with tag @code{tag} at step
+@code{step}. Returns the @code{data} associated to the nodes or the elements
+with tags @code{tags}, as well as the @code{dataType} and the number of
+components @code{numComponents}.
+
+@table @asis
+@item Input:
+@code{tag}, @code{step}
+@item Output:
+@code{dataType}, @code{tags}, @code{data}, @code{time}, @code{numComponents}
+@item Return:
+-
+@end table
+
+@item addListData
+Adds list-based post-processing data to the view with tag @code{tag}.
+@code{type} identifies the data: "SP" for scalar points, "VP", for vector
+points, etc. @code{numEle} gives the number of elements in the data. @code{data}
+contains the data for the @code{numEle} elements.
+
+@table @asis
+@item Input:
+@code{tag}, @code{type}, @code{numEle}, @code{data}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item getListData
+Gets list-based post-processing data from the view with tag @code{tag}. Returns
+the types @code{dataTypes}, the number of elements @code{numElements} for each
+data type and the @code{data} for each data type.
+
+@table @asis
+@item Input:
+@code{tag}
+@item Output:
+@code{dataType}, @code{numElements}, @code{data}
+@item Return:
+-
+@end table
+
+@item probe
+Probes the view @code{tag} for its @code{value} at point (@code{x}, @code{y},
+@code{z}). Returns only the value at step @code{step} is @code{step} is
+positive. Returns only values with @code{numComp} if @code{numComp} is positive.
+Returns the gradient of the @code{value} if @code{gradient} is set. Probes with
+a geometrical tolerance (in the reference unit cube) of @code{tolerance} if
+@code{tolerance} is not zero. Returns the result from the element described by
+its coordinates if @code{xElementCoord}, @code{yElementCoord} and
+@code{zElementCoord} are provided.
+
+@table @asis
+@item Input:
+@code{tag}, @code{x}, @code{y}, @code{z}, @code{step}, @code{numComp}, @code{gradient}, @code{tolerance}, @code{xElemCoord}, @code{yElemCoord}, @code{zElemCoord}
+@item Output:
+@code{value}
+@item Return:
+-
+@end table
+
+@item write
+Writes the view to a file @code{fileName}. The export format is determined by
+the file extension. Appends to the file if @code{append} is set.
+
+@table @asis
+@item Input:
+@code{tag}, @code{fileName}, @code{append}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@end ftable
+
+@heading Module @code{/gmsh/plugin}
+@ftable @code
+@item setNumber
+Sets the numerical option @code{option} to the value @code{value} for plugin
+@code{name}.
+
+@table @asis
+@item Input:
+@code{name}, @code{option}, @code{value}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item setString
+Sets the string option @code{option} to the value @code{value} for plugin
+@code{name}.
+
+@table @asis
+@item Input:
+@code{name}, @code{option}, @code{value}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item run
+Runs the plugin @code{name}.
+
+@table @asis
+@item Input:
+@code{name}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@end ftable
+
+@heading Module @code{/gmsh/graphics}
+@ftable @code
+@item draw
+Draws all the OpenGL scenes.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@end ftable
+
+@heading Module @code{/gmsh/fltk}
+@ftable @code
+@item initialize
+Creates the Fltk graphical user interface.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item wait
+Waits at most @code{time} seconds for user interface events and returns. If
+@code{time} < 0, waits indefinitely. First automatically creates the user
+interface if it has not yet been initialized.
+
+@table @asis
+@item Input:
+@code{time}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item run
+Runs the event loop of the Fltk graphical user interface, i.e. repeatedly calls
+@code{wait()}. First automatically creates the user interface if it has not yet
+been initialized.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@end ftable
+
+@heading Module @code{/gmsh/onelab}
+@ftable @code
+@item get
+Gets data from the Onelab server.
+
+@table @asis
+@item Input:
+@code{format}
+@item Output:
+@code{data}
+@item Return:
+-
+@end table
+
+@item set
+Sets data in the Onelab server.
+
+@table @asis
+@item Input:
+@code{data}, @code{format}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item run
+Runs a onelab client. If no name is given, attemps to run a client that might be
+linked to the processed input files.
+
+@table @asis
+@item Input:
+@code{name}, @code{command}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@end ftable
+
