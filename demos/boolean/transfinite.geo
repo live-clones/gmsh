@@ -14,11 +14,11 @@ l() = Unique(Abs(Boundary{ Surface{s()}; }));
 N = DefineNumber[ 10, Name "Parameters/N" ];
 
 // simple transfinite mesh
-Transfinite Line {l()} = N;
+Transfinite Curve{l()} = N;
 Transfinite Surface{5};
 
 // transfinite mesh with explicit corners
-Transfinite Line {9} = 2*N-1;
+Transfinite Curve{9} = 2*N-1;
 l4() = Abs(Boundary{ Surface{4}; });
-p4() = Unique(Abs(Boundary{ Line{l4()}; }));
+p4() = Unique(Abs(Boundary{ Curve{l4()}; }));
 Transfinite Surface{4} = {p4({0:3})};

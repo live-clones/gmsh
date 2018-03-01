@@ -12,7 +12,7 @@ Line(1) = {1,2};
 Line(2) = {2,3};
 Line(3) = {3,4};
 Line(4) = {4,1};
-Line Loop(1) = {1,2,3,4};
+Curve Loop(1) = {1,2,3,4};
 Plane Surface(1) = {1};
 
 Point(5) = {0.2,0.2,0};
@@ -23,7 +23,7 @@ Line(5) = {5,6};
 Line(6) = {6,7};
 Line(7) = {7,8};
 Line(8) = {8,5};
-Line Loop(2) = {5,6,7,8};
+Curve Loop(2) = {5,6,7,8};
 Plane Surface(2) = {2};
 
 Disk(3) = {0.6, 0.6, 0, 0.5, 0.3};

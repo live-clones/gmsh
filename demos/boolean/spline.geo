@@ -21,7 +21,7 @@ Point(105) = {0.7,-1,0,0.1};
 
 // periodic bspline (C2) through the control points
 Spline(100) = {103,102,101,104,105,103};
-Line Loop(100) = {100};
+Curve Loop(100) = {100};
 Plane Surface(100) = {100};
 
 // periodic bspline with given control points and default parameters (order 3,

@@ -23,23 +23,23 @@ Line(10) = {1,5};
 Line(11) = {4,8};
 Line(12) = {2,6};
 Line(13) = {3,7};
-Line Loop(14) = {3,4,1,2};
+Curve Loop(14) = {3,4,1,2};
 Plane Surface(15) = {14};
-Line Loop(16) = {6,7,8,9};
+Curve Loop(16) = {6,7,8,9};
 Plane Surface(17) = {16};
-Line Loop(18) = {10,-9,-11,-4};
+Curve Loop(18) = {10,-9,-11,-4};
 Plane Surface(19) = {18};
-Line Loop(20) = {8,-11,1,13};
+Curve Loop(20) = {8,-11,1,13};
 Plane Surface(21) = {20};
-Line Loop(22) = {12,7,-13,2};
+Curve Loop(22) = {12,7,-13,2};
 Plane Surface(23) = {22};
-Line Loop(24) = {6,-12,3,10};
+Curve Loop(24) = {6,-12,3,10};
 Plane Surface(25) = {24};
 Surface Loop(1) = {17,-25,-23,-21,19,15};
 Volume(1) = {1};
 /*
 By hand:
-Transfinite Line{1:4,6:13} = N+1;
+Transfinite Curve{1:4,6:13} = N+1;
 Transfinite Surface {15} = {1,2,3,4};
 Transfinite Surface {17} = {5,6,7,8};
 Transfinite Surface {19} = {1,5,8,4};
@@ -50,7 +50,7 @@ Transfinite Volume{1} = {1,2,3,4,5,6,7,8};
 
 Or automatically:
 */
-Transfinite Line {:} = N+1;
+Transfinite Curve {:} = N+1;
 Transfinite Surface {:};
 Transfinite Volume {:};
 Recombine Surface {:};
@@ -65,9 +65,9 @@ Line(51) = {54,53};
 Line(52) = {53,52};
 Line(53) = {52,51};
 Line(54) = {51,54};
-Line Loop(55) = {52,53,54,51};
+Curve Loop(55) = {52,53,54,51};
 Plane Surface(56) = {55};
-Transfinite Line{51:54} = N+1;
+Transfinite Curve{51:54} = N+1;
 Transfinite Surface{56} = {51,52,53,54};
 Recombine Surface{56};
 Extrude {0,0,1} {
@@ -81,7 +81,7 @@ l[] = Extrude {1,0,0}{
   Point{100}; Layers{N};
 };
 s[] = Extrude {0,1,0}{
-  Line{l[1]}; Layers{N}; Recombine;
+  Curve{l[1]}; Layers{N}; Recombine;
 };
 Extrude {0,0,1}{
   Surface{s[1]}; Layers{N}; Recombine;
