@@ -35,11 +35,11 @@ p = newp;
 l = newl;
   Bezier(l) = {p,p+4,p+3,p+2}; Line(l+1) = {p+2,p+1}; Line(l+2) = {p+1,p};
 ll = newll;
-  Line Loop(ll) = {l:l+2};
+  Curve Loop(ll) = {l:l+2};
 Plane Surface(news) = {ll};
 
 l = newl; Circle(l) = {x++,y,0, 0.3}; Circle(l+1) = {x-1,y-0.1,0, 0.1};
-ll = newll; Line Loop(ll) = l; Line Loop(ll+1) = l+1;
+ll = newll; Curve Loop(ll) = l; Curve Loop(ll+1) = l+1;
 Plane Surface(news) = {ll, ll+1};
 
 p = newp;
@@ -48,7 +48,7 @@ p = newp;
 l = newl;
   Bezier(l) = {p,p+4,p+3,p+2}; Line(l+1) = {p+2,p+1}; Line(l+2) = {p+1,p};
 ll = newll;
-  Line Loop(ll) = {l:l+2};
+  Curve Loop(ll) = {l:l+2};
 Surface(news) = {ll};
 
 // 1D

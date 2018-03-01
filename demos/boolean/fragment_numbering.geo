@@ -29,6 +29,6 @@ EndFor
 
 Printf("disk tags: ", b());
 
-c() = BooleanFragments{ Line{t}; Surface{1:6,b()}; Delete; }{};
+c() = BooleanFragments{ Curve{t}; Surface{1:6,b()}; Delete; }{};
 
 Printf("all tags (disk and top line tags should be unchanged!): ", c());

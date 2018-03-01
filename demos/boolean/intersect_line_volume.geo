@@ -27,6 +27,6 @@ ddz = flag_Symmetry_Z ? dz / 2 : dz;
 v_box=newv;
 Box(newv) = {x_min_, y_min_, z_min_, ddx, ddy, ddz};
 
-l_wire[] = BooleanIntersection { Line{l_wire[]}; Delete; }{ Volume{v_box}; };
+l_wire[] = BooleanIntersection { Curve{l_wire[]}; Delete; }{ Volume{v_box}; };
 
 Printf("after intersection: new l_wire[] = ", l_wire[]);

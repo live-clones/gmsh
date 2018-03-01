@@ -1,42 +1,42 @@
 // The two longitudinal bars
 
-f4 = 0.6 ; 
-f5 = 1.33 ; 
+f4 = 0.6 ;
+f5 = 1.33 ;
 
 xmin =-27.e-3 ;
-LL   = 1821.3e-3 ; 
-ll   = 20.e-3 ; 
+LL   = 1821.3e-3 ;
+ll   = 20.e-3 ;
 hh   = 20.e-3 ;
 dc   = 8.e-3 ;
-em   = 8.e-3/2 ; 
+em   = 8.e-3/2 ;
 eM   = 40.e-3/2 ;
 t    = ArcTan(eM/2-em/2/LL) ;
 
-Point(1) = {xmin, -em-hh, -ll/2, f4*ll/2} ; Point(5) = {xmin, em, -ll/2, f4*ll/2} ; 
-Point(2) = {xmin, -em-hh,  ll/2, f4*ll/2} ; Point(6) = {xmin, em,  ll/2, f4*ll/2} ; 
-Point(3) = {xmin, -em,    -ll/2, f4*ll/2} ; Point(7) = {xmin, em+hh, -ll/2, f4*ll/2} ; 
-Point(4) = {xmin, -em,     ll/2, f4*ll/2} ; Point(8) = {xmin, em+hh,  ll/2, f4*ll/2} ; 
+Point(1) = {xmin, -em-hh, -ll/2, f4*ll/2} ; Point(5) = {xmin, em, -ll/2, f4*ll/2} ;
+Point(2) = {xmin, -em-hh,  ll/2, f4*ll/2} ; Point(6) = {xmin, em,  ll/2, f4*ll/2} ;
+Point(3) = {xmin, -em,    -ll/2, f4*ll/2} ; Point(7) = {xmin, em+hh, -ll/2, f4*ll/2} ;
+Point(4) = {xmin, -em,     ll/2, f4*ll/2} ; Point(8) = {xmin, em+hh,  ll/2, f4*ll/2} ;
 
-Point(9)  = {xmin+LL, -eM-hh, -ll/2, f5*ll/2} ; Point(13) = {xmin+LL, eM, -ll/2, f5*ll/2} ; 
-Point(10) = {xmin+LL, -eM-hh,  ll/2, f5*ll/2} ; Point(14) = {xmin+LL, eM,  ll/2, f5*ll/2} ; 
-Point(11) = {xmin+LL, -eM,    -ll/2, f5*ll/2} ; Point(15) = {xmin+LL, eM+hh, -ll/2, f5*ll/2} ; 
-Point(12) = {xmin+LL, -eM,     ll/2, f5*ll/2} ; Point(16) = {xmin+LL, eM+hh,  ll/2, f5*ll/2} ; 
+Point(9)  = {xmin+LL, -eM-hh, -ll/2, f5*ll/2} ; Point(13) = {xmin+LL, eM, -ll/2, f5*ll/2} ;
+Point(10) = {xmin+LL, -eM-hh,  ll/2, f5*ll/2} ; Point(14) = {xmin+LL, eM,  ll/2, f5*ll/2} ;
+Point(11) = {xmin+LL, -eM,    -ll/2, f5*ll/2} ; Point(15) = {xmin+LL, eM+hh, -ll/2, f5*ll/2} ;
+Point(12) = {xmin+LL, -eM,     ll/2, f5*ll/2} ; Point(16) = {xmin+LL, eM+hh,  ll/2, f5*ll/2} ;
 
 Line(1) = {5,6};  Line(11) = {13,14};
 Line(2) = {6,8};  Line(12) = {14,16};
 Line(3) = {8,7};  Line(13) = {16,15};
 Line(4) = {7,5};  Line(14) = {15,13};
-Line(5) = {1,2};  Line(15) = {9,10}; 
+Line(5) = {1,2};  Line(15) = {9,10};
 Line(6) = {2,4};  Line(16) = {10,12};
 Line(7) = {4,3};  Line(17) = {12,11};
-Line(8) = {3,1};  Line(18) = {11,9}; 
+Line(8) = {3,1};  Line(18) = {11,9};
 Line(9) = {4,6};  Line(19) = {12,14};
 Line(10) = {3,5}; Line(20) = {11,13};
 
-Line(21) = {8,16}; Line(25) = {2,10}; 
-Line(22) = {7,15}; Line(26) = {4,12}; 
-Line(23) = {6,14}; Line(27) = {3,11}; 
-Line(24) = {5,13}; Line(28) = {1,9};  
+Line(21) = {8,16}; Line(25) = {2,10};
+Line(22) = {7,15}; Line(26) = {4,12};
+Line(23) = {6,14}; Line(27) = {3,11};
+Line(24) = {5,13}; Line(28) = {1,9};
 
 // The 22 resonators
 
@@ -89,30 +89,30 @@ dx = d20; rx = r20; sx = s20; lx = l20; e =-e20; x =2000; Include "antenna.i1" ;
 dx = d21; rx = r21; sx = s21; lx = l21; e = e21; x =2100; Include "antenna.i1" ;
 dx = d22; rx = r22; sx = s22; lx = l22; e =-e22; x =2200; Include "antenna.i1" ;
 
-// Surfaces for longitudinal bars  
+// Surfaces for longitudinal bars
 
-Line Loop(3001) = {-13,-21,3,22};  Plane Surface(3101) = {3001}; // ymax 
-Line Loop(3002) = {23,-11,-24,1};  Plane Surface(3102) = {3002}; // ymax - eps 
-Line Loop(3003) = {-27,-7,26,17};  Plane Surface(3103) = {3003}; // ymin + eps
-Line Loop(3004) = {25,-15,-28,5};  Plane Surface(3104) = {3004}; // ymin 
-Line Loop(3005) = {3,4,1,2};       Plane Surface(3105) = {3005}; // left top
-Line Loop(3006) = {7,8,5,6};       Plane Surface(3106) = {3006}; // left bottom
-Line Loop(3007) = {11,12,13,14};   Plane Surface(3107) = {3007}; // right top
-Line Loop(3008) = {18,15,16,17};   Plane Surface(3108) = {3008}; // right bottom
-	   					  	
-Line Loop(3011) = {-9,7,10,1};     Plane Surface(3111) = {3011}; // input
-Line Loop(3012) = {-11,-20,-17,19};Plane Surface(3112) = {3012}; // output
+Curve Loop(3001) = {-13,-21,3,22};  Plane Surface(3101) = {3001}; // ymax
+Curve Loop(3002) = {23,-11,-24,1};  Plane Surface(3102) = {3002}; // ymax - eps
+Curve Loop(3003) = {-27,-7,26,17};  Plane Surface(3103) = {3003}; // ymin + eps
+Curve Loop(3004) = {25,-15,-28,5};  Plane Surface(3104) = {3004}; // ymin
+Curve Loop(3005) = {3,4,1,2};       Plane Surface(3105) = {3005}; // left top
+Curve Loop(3006) = {7,8,5,6};       Plane Surface(3106) = {3006}; // left bottom
+Curve Loop(3007) = {11,12,13,14};   Plane Surface(3107) = {3007}; // right top
+Curve Loop(3008) = {18,15,16,17};   Plane Surface(3108) = {3008}; // right bottom
 
-Line Loop(3013) = {-26,-6,25,16};
-Line Loop(3014) = {-28,-8,27,18};
-Line Loop(3015) = {-21,-2,23,12};
-Line Loop(3016) = {-24,-4,22,14};
+Curve Loop(3011) = {-9,7,10,1};     Plane Surface(3111) = {3011}; // input
+Curve Loop(3012) = {-11,-20,-17,19};Plane Surface(3112) = {3012}; // output
+
+Curve Loop(3013) = {-26,-6,25,16};
+Curve Loop(3014) = {-28,-8,27,18};
+Curve Loop(3015) = {-21,-2,23,12};
+Curve Loop(3016) = {-24,-4,22,14};
 Plane Surface(3113) = {3013,203,403,603,803,1003,1203,1403,1603,1803,2003,2203} ;
 Plane Surface(3114) = {3014,101,301,501,701,901,1101,1301,1501,1701,1901,2101};
 Plane Surface(3115) = {3015,103,303,503,703,903,1103,1303,1503,1703,1903,2103};
 Plane Surface(3116) = {3016,201,401,601,801,1001,1201,1401,1601,1801,2001,2201};
 
-// The physical entities 
+// The physical entities
 
 AIR       = 8001 ;
 XM        = 8002 ;
@@ -131,8 +131,8 @@ CLBEM     = 9005 ;
 Physical Surface(CLINPUT) = {3111};
 Physical Surface(CLBEM) = {4119,4106,4115,4111,4122,4124};
 Physical Surface(CLLONG) = {3102,3115,3101,3116,3105,3107,3103,3114,3104,3113,3108,3106};
-Physical Surface(CLBAR) = 
-{ 
+Physical Surface(CLBAR) =
+{
   122,125,126,127,128,
   124,129,130,131,132,
   222,225,226,227,228,
@@ -176,5 +176,5 @@ Physical Surface(CLBAR) =
   2122,2125,2126,2127,2128,
   2124,2129,2130,2131,2132,
   2222,2225,2226,2227,2228,
-  2224,2229,2230,2231,2232 
+  2224,2229,2230,2231,2232
  };
