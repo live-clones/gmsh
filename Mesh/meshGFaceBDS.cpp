@@ -370,10 +370,52 @@ bool edges_sort(std::pair<double, BDS_Edge*> a, std::pair<double, BDS_Edge*> b)
     return (a.first < b.first);
 }
 
-static void middlePoint (GFace *gf, BDS_Edge *e, double &u, double &v)
+
+static bool middlePoint2 (GFace *gf, BDS_Edge *e, double &u, double &v)
+{
+  discreteFace *df = static_cast<discreteFace*> (gf);
+  if (df){
+    double X1 = e->p1->X;
+    double X2 = e->p2->X;
+    double Y1 = e->p1->Y;
+    double Y2 = e->p2->Y;
+    double Z1 = e->p1->Z;
+    double Z2 = e->p2->Z;
+    double XX = 0.5*(X1+X2);
+    double YY = 0.5*(Y1+Y2);
+    double ZZ = 0.5*(Z1+Z2);
+    double uv[2];
+    GPoint gp = gf->closestPoint(SPoint3(XX, YY, ZZ), uv);
+    u = gp.u();
+    v = gp.v();
+
+    BDS_Point *op[2];
+    BDS_Point *p1 = e->p1;
+    BDS_Point *p2 = e->p2;
+
+    e->oppositeof(op);
+
+    double _p1 [2] = {p1->u,p1->v};
+    double _p2 [2] = {p2->u,p2->v};
+    double _op1[2] = {op[0]->u,op[0]->v};
+    double _op2[2] = {op[1]->u,op[1]->v};
+    double _mid[2] = {u,v};
+    
+    double ori1 = robustPredicates::orient2d(_mid, _p1, _op2);
+    double ori2 = robustPredicates::orient2d(_mid, _op2, _p2);
+    double ori3 = robustPredicates::orient2d(_mid, _p2, _op1);
+    double ori4 = robustPredicates::orient2d(_mid, _op1, _p1);
+    
+    if (ori1 * ori2 < 0 || ori1 * ori3 < 0 || ori1 * ori4 < 0) {
+      return false;
+    }        
+  }
+  return true;
+}
+
+static bool middlePoint (GFace *gf, BDS_Edge *e, double &u, double &v)
 {
   // try that
-
   
   double u1 = e->p1->u;
   double u2 = e->p2->u;
@@ -385,23 +427,8 @@ static void middlePoint (GFace *gf, BDS_Edge *e, double &u, double &v)
   double Y2 = e->p2->Y;
   double Z1 = e->p1->Z;
   double Z2 = e->p2->Z;
-  //  printf("start : \n");
-  //double l = sqrt((X2-X1)*(X2-X1)+(Y2-Y1)*(Y2-Y1)+(Z2-Z1)*(Z2-Z1));
 
-  //  discreteFace *df = static_cast<discreteFace*> (gf);
-  //  if (df){
-  //    double XX = 0.5*(X1+X2);
-  //    double YY = 0.5*(Y1+Y2);
-  //    double ZZ = 0.5*(Z1+Z2);
-  //    double uv[2];
-  //    GPoint gp = gf->closestPoint(SPoint3(XX, YY, ZZ), uv);
-  //    u = gp.u();
-  //    v = gp.v();
-  //    return;
-    //    gp = df->closestPoint(SPoint3(XX, YY, ZZ), LC);    
-  //  }
-
-  
+  int iter = 0;
   while (1){
     u = 0.5*(u1+u2);
     v = 0.5*(v1+v2);
@@ -421,7 +448,13 @@ static void middlePoint (GFace *gf, BDS_Edge *e, double &u, double &v)
       u1 = u; v1 = v;  
     }
     else break;
+    if (iter++ > 10){
+      u = 0.5*(e->p1->u+e->p2->u);
+      v = 0.5*(e->p1->v+e->p2->v);
+      return false;
+    }
   }  
+  return true;
 }
 
 void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
@@ -457,6 +490,7 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
       if (faceDiscrete){
 	// Here, something has to be done for discreteFaces where
 	// parametrization can be flaky
+	//	if (!middlePoint2 (gf, e, U, V))
 	middlePoint (gf, e, U, V);
       }
       
@@ -602,7 +636,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP, int &nb_c
 void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q)
 {
   // FIXME SUPER HACK
-  //  return;
+  //    return;
   std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
   while(itp != m.points.end()){
     if(m.smooth_point_centroid(*itp, gf,q))

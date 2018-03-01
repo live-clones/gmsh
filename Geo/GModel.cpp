@@ -1601,6 +1601,7 @@ void GModel::_createGeometryOfDiscreteEntities(bool force)
     createTopologyFromMeshNew();
     exportDiscreteGEOInternals();
   }
+  //  return;
   if (CTX::instance()->meshDiscrete){
     Msg::Info("Creating the geometry of discrete surfaces");
     for(fiter it = firstFace(); it != lastFace(); ++it){

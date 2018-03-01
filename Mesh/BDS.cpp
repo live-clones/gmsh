@@ -635,12 +635,29 @@ bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid)
      //  p1,op2,mid +
   */
 
+  
   BDS_Point *op[2];
   BDS_Point *p1 = e->p1;
   BDS_Point *p2 = e->p2;
 
   e->oppositeof(op);
 
+  //  double _p1 [2] = {p1->u,p1->v};
+  //  double _p2 [2] = {p2->u,p2->v};
+  //  double _op1[2] = {op[0]->u,op[0]->v};
+  //  double _op2[2] = {op[1]->u,op[1]->v};
+  //  double _mid[2] = {mid->u,mid->v};
+  
+  //  double ori1 = robustPredicates::orient2d(_mid, _p1, _op2);
+  //  double ori2 = robustPredicates::orient2d(_mid, _op2, _p2);
+  //  double ori3 = robustPredicates::orient2d(_mid, _p2, _op1);
+  //  double ori4 = robustPredicates::orient2d(_mid, _op1, _p1);
+
+  //  if (ori1 * ori2 < 0 || ori1 * ori3 < 0 || ori1 * ori4 < 0) {
+    //    printf("oufti\n");
+  //    return false;
+  //  }
+  
   BDS_Point *pts1[4];
   e->faces(0)->getNodes(pts1);
 
@@ -1163,7 +1180,7 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p)
 
 bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
 {
-
+  //  printf("coucou\n");
   //  if(!p->config_modified) return false;
   if(p->g && p->g->classif_degree <= 1) return false;
   if(p->g && p->g->classif_tag < 0) {

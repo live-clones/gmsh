@@ -920,6 +920,15 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   // build a set with all points of the boundaries
   std::set<MVertex*, MVertexLessThanNum> all_vertices, boundary;
   std::list<GEdge*>::iterator ite = edges.begin();
+
+  FILE *fdeb = NULL;
+  if(debug && RECUR_ITER == 0){
+    char name[245];
+    sprintf(name, "surface%d-boundary-real.pos", gf->tag());
+    fdeb = fopen (name,"w");
+    fprintf(fdeb,"View \"\"{\n");
+  }
+
   while(ite != edges.end()){
     if((*ite)->isSeam(gf)) return false;
     if(!(*ite)->isMeshDegenerated()){
@@ -929,6 +938,12 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       for(unsigned int i = 0; i< (*ite)->lines.size(); i++){
         MVertex *v1 = (*ite)->lines[i]->getVertex(0);
         MVertex *v2 = (*ite)->lines[i]->getVertex(1);
+
+	if (fdeb){
+	  fprintf(fdeb,"SL(%g,%g,%g,%g,%g,%g){%d,%d};\n",
+		  v1->x(),v1->y(),v1->z(),v2->x(),v2->y(),v2->z(),(*ite)->tag(),(*ite)->tag());
+	}
+	
         all_vertices.insert(v1);
         all_vertices.insert(v2);
         if(boundary.find(v1) == boundary.end())
@@ -946,9 +961,13 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     ++ite;
   }
 
+  if (fdeb){
+    fprintf(fdeb,"};\n");
+    fclose(fdeb);
+  }
 
   if(boundary.size()){
-    Msg::Error("The 1D mesh seems not to be forming a closed loop");
+    Msg::Error("The 1D mesh seems not to be forming a closed loop (%d boundary points are considered once)",boundary.size());
     gf->meshStatistics.status = GFace::FAILED;
     return false;
   }
