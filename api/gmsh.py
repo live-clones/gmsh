@@ -75,7 +75,7 @@ def _ovectordouble(ptr,size):
     return v
 
 def _ovectorstring(ptr,size):
-    v = list(_ostring(cast(ptr[i],c_char_p) for i in range(size)))
+    v = list(_ostring(cast(ptr[i],c_char_p)) for i in range(size))
     lib.gmshFree(ptr)
     return v
 
