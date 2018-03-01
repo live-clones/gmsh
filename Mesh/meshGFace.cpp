@@ -1857,6 +1857,10 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     }
   }
 
+
+  
+  
+
   if(nbPointsTotal < 3){
     Msg::Warning("Mesh Generation of Model Face %d Skipped: "
                  "Only %d Mesh Vertices on The Contours",
@@ -1881,10 +1885,49 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 
   // Use a divide & conquer type algorithm to create a triangulation.  We add to
   // the triangulation a box with 4 points that encloses the domain.
+
+
 #if 1 //OLD_CODE_DELAUNAY
   {
     DocRecord doc(nbPointsTotal + 4);
     int count = 0;
+
+    /////////////////////////////////////////////////////////////////
+    // Embedded Vertices
+    // add embedded vertices
+    std::list<GVertex*> emb_vertx = gf->embeddedVertices();
+    std::list<GVertex*>::iterator itvx = emb_vertx.begin();
+
+    int pNum = m->MAXPOINTNUMBER;
+
+    
+    
+    while(itvx != emb_vertx.end()){
+      MVertex *v = (*itvx)->mesh_vertices[0];
+      double uv[2]={0,0};
+      GPoint gp = gf->closestPoint (SPoint3(v->x(),v->y(),v->z()),uv);      
+      BDS_Point *pp = m->add_point(++pNum, gp.u(), gp.v(), gf);
+      m->add_geom(-(*itvx)->tag(),0);
+      pp->g = m->get_geom(-(*itvx)->tag(),0);
+      pp->lcBGM() = BGM_MeshSize(*itvx, 0, 0, v->x(),v->y(),v->z());
+      pp->lc() = pp->lcBGM();
+      //      printf("%g\n",pp->lc());
+      recoverMap[pp] = v; 
+      double XX = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
+	(double)RAND_MAX;
+      double YY = CTX::instance()->mesh.randFactor * LC2D * (double)rand() /
+	(double)RAND_MAX;
+      doc.points[count].where.h = pp->u + XX;
+      doc.points[count].where.v = pp->v + YY;
+      doc.points[count].adjacent = NULL;
+      doc.points[count].data = pp;
+      count++;
+      ++itvx;
+    }
+    nbPointsTotal += count;
+    /////////////////////////////////////////////////////////////////
+
+
     for(unsigned int i = 0; i < edgeLoops_BDS.size(); i++){
       std::vector<BDS_Point*> &edgeLoop_BDS = edgeLoops_BDS[i];
       for(unsigned int j = 0; j < edgeLoop_BDS.size(); j++){
@@ -2012,6 +2055,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   }
 #endif
 
+  
   // Recover the boundary edges and compute characteristic lenghts using mesh
   // edge spacing
   BDS_GeomEntity CLASS_F(1, 2);
