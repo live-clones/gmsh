@@ -1900,14 +1900,14 @@ if(NOT DISABLE_GMSH_TESTS)
   include(CTest)
   file(GLOB_RECURSE TESTFILES
        tutorial/*.geo demos/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo
-       benchmarks/boolean/*.geo)
+       benchmarks/occ/*.geo)
   foreach(TESTFILE ${TESTFILES})
     # use relative path for cygwin/mingw (the pure win exe built with the mingw
     # compilers does not understand a full cygwin-style path)
     FILE(RELATIVE_PATH TEST ${CMAKE_CURRENT_BINARY_DIR} ${TESTFILE})
-    if(HAVE_OCC OR NOT ${TEST} MATCHES "boolean")
+    if(HAVE_OCC OR NOT ${TEST} MATCHES "boolean" OR NOT ${TEST} MATCHES "occ")
       add_test(${TEST} ./gmsh ${TEST} -3 -nopopup -o ./tmp.msh)
-    endif(HAVE_OCC OR NOT ${TEST} MATCHES "boolean")
+    endif(HAVE_OCC OR NOT ${TEST} MATCHES "boolean" OR NOT ${TEST} MATCHES "occ")
   endforeach()
 endif(NOT DISABLE_GMSH_TESTS)
 
