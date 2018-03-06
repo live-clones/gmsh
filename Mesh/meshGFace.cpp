@@ -1960,8 +1960,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
         GPoint firstPoint = edge->point(parBounds.low());
         GPoint lastPoint = edge->point(parBounds.high());
         double param;
-        if (v->point().distance(SPoint3{firstPoint.x(), firstPoint.y(), firstPoint.z()})
-          < v->point().distance(SPoint3{lastPoint.x(), lastPoint.y(), lastPoint.z()})) {
+        if (v->point().distance(SPoint3(firstPoint.x(), firstPoint.y(), firstPoint.z()))
+          < v->point().distance(SPoint3(lastPoint.x(), lastPoint.y(), lastPoint.z()))) {
           // Vertex lies on first point of edge
           param = parBounds.low();
         }
