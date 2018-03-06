@@ -1984,9 +1984,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
             v->getNum(), gf->tag());
         }
       }
-      else
-      {
-        pp = *(std::prev(it->second.end()));
+      else {
+        pp = *(it->second.begin());
       }
       facile[v] = pp;
     }
