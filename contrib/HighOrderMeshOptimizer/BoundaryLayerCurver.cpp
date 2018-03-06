@@ -2245,8 +2245,40 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
 #endif
 }
 
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+// compute adjacencies of boundary elements, thus of columns
+void computeAdjacencies(VecPairMElemVecMElem &bndEl2column,
+                        std::vector<std::pair<int, int> > &adjacencies)
+{
+  std::map<MEdge, int> edge2element;
+  for (int i = 0; i < bndEl2column.size(); ++i) {
+    MElement *el = bndEl2column[i].first;
+    for (int j = 0; j < el->getNumEdges(); ++j) {
+      MEdge e = el->getEdge(j);
+      std::map<MEdge, int>::iterator it = edge2element.find(e);
+      if (it != edge2element.end()) {
+        adjacencies.push_back(std::make_pair(i, it->second));
+        // This is for debug purpose, we expect that two elements at most
+        // share a given edge.
+        it->second = -1;
+      }
+      else {
+        edge2element[e] = i;
+      }
+    }
+  }
+}
+
 void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column)
 {
+  std::vector<std::pair<int, int> > adjacencies;
+  computeAdjacencies(bndEl2column, adjacencies);
+
+//  curveInterfaces(bndEl2column, adjacencies);
+
   for (int i = 0; i < bndEl2column.size(); ++i) {
     Msg::Info("el %d, size %d", bndEl2column[i].first->getNum(), bndEl2column[i].second.size());
   }
