@@ -1028,6 +1028,7 @@ void curveMeshFromBndElt(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
 //  dbgOutCol.write("col_OK", bndElt->getNum());
 }
 
+
 void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
                                      MFaceVecMEltMap &face2el,
                                      GEntity *ent, GEntity *bndEnt,
@@ -1131,6 +1132,52 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
 }
 
 
+void gather3Dcolumns(
+    MFaceVecMEltMap &face2el, GEntity *ent, GEntity *bndEnt,
+    const FastCurvingParameters &p,
+    std::vector<std::pair<MElement*, std::vector<MElement*> > > &bndEl2column)
+{
+  // inspired from curveMeshFromBnd and curveMeshFromBndElt
+
+  if (bndEnt->dim() != 2) {
+    Msg::Error("Cannot process model entity %i of dim %i", bndEnt->tag(),
+               bndEnt->dim());
+    return;
+  }
+
+  std::list<MElement*> bndElts;
+  GFace *gFace = bndEnt->cast2Face();
+  for(unsigned int i = 0; i< gFace->triangles.size(); i++)
+    bndElts.push_back(gFace->triangles[i]);
+  for(unsigned int i = 0; i< gFace->quadrangles.size(); i++)
+    bndElts.push_back(gFace->quadrangles[i]);
+
+  std::vector<MElement*> aboveElements;
+  std::list<MElement*>::iterator it = bndElts.begin();
+  while (it != bndElts.end()) {
+    MElement *bndEl = *it;
+    const int bndType = bndEl->getType();
+    bool foundCol;
+    std::vector<MVertex*> baseVert, topPrimVert;
+
+    MVertex *vb0 = bndEl->getVertex(0);
+    MVertex *vb1 = bndEl->getVertex(1);
+    MVertex *vb2 = bndEl->getVertex(2);
+    MVertex *vb3 = NULL;
+    if (bndType == TYPE_QUA) vb3 = bndEl->getVertex(3);
+    MFace baseFace(vb0, vb1, vb2, vb3);
+    bndEl2column.push_back(std::make_pair(bndEl, std::vector<MElement*>()));
+    aboveElements.push_back(NULL);
+    foundCol = getColumn3D(face2el, p, baseFace, baseVert, topPrimVert,
+                           bndEl2column.back().second, aboveElements.back());
+
+    if (!foundCol || bndEl2column.back().second.empty()) {
+      bndEl2column.pop_back();
+    } // Skip bnd. el. if top vertices not found
+
+    ++it;
+  }
+}
 
 
 
@@ -1208,6 +1255,8 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
     else calcFace2Elements(gEnt, face2el);
 
     // Curve mesh from each boundary entity
+    std::vector<std::pair<MElement*, std::vector<MElement*> > > bndEl2column;
+
     for (int iBndEnt = 0; iBndEnt < bndEnts.size(); iBndEnt++) {
       GEntity* &bndEnt = bndEnts[iBndEnt];
       if (p.onlyVisible && !bndEnt->getVisibility()) continue;                  // Skip if "only visible" required and entity is invisible
@@ -1217,8 +1266,14 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
       if ((bndType == GEntity::Line) || (bndType == GEntity::Plane)) continue;  // Skip if boundary is straight
       Msg::Info("Curving elements in entity %d for boundary entity %d...",
                 gEnt->tag(), bndEnt->tag());
-      curveMeshFromBnd(ed2el, face2el, gEnt, bndEnt, p, normals);
+      if (p.dim == 2 || !p.thickness)
+        curveMeshFromBnd(ed2el, face2el, gEnt, bndEnt, p, normals);
+      else
+        gather3Dcolumns(face2el, gEnt, bndEnt, p, bndEl2column);
     }
+
+    if (p.thickness && p.dim == 3)
+      curve3DBoundaryLayer(bndEl2column);
   }
 
   double t2 = Cpu();

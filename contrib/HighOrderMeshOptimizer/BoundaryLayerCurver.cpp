@@ -2247,5 +2247,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
 
 void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column)
 {
-
+  for (int i = 0; i < bndEl2column.size(); ++i) {
+    Msg::Info("el %d, size %d", bndEl2column[i].first->getNum(), bndEl2column[i].second.size());
+  }
 }
