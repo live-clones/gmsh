@@ -2254,9 +2254,9 @@ void computeAdjacencies(VecPairMElemVecMElem &bndEl2column,
                         std::vector<std::pair<int, int> > &adjacencies)
 {
   std::map<MEdge, int> edge2element;
-  for (int i = 0; i < bndEl2column.size(); ++i) {
+  for (unsigned int i = 0; i < bndEl2column.size(); ++i) {
     MElement *el = bndEl2column[i].first;
-    for (int j = 0; j < el->getNumEdges(); ++j) {
+    for (unsigned int j = 0; j < el->getNumEdges(); ++j) {
       MEdge e = el->getEdge(j);
       std::map<MEdge, int>::iterator it = edge2element.find(e);
       if (it != edge2element.end()) {
@@ -2272,12 +2272,28 @@ void computeAdjacencies(VecPairMElemVecMElem &bndEl2column,
   }
 }
 
+
+// compute then curve interfaces between columns
+void curveInterfaces(VecPairMElemVecMElem &bndEl2column,
+                     std::vector<std::pair<int, int> > &adjacencies)
+{
+  for (unsigned int i = 0; i < adjacencies.size(); ++i) {
+    MElement *bottomEdge;
+    std::vector<MElement*> column;
+//    computeInterface(bndEl2column[adjacencies[i].first],
+//                     bndEl2column[adjacencies[i].second],
+//                     bottomEdge, column);
+//    curveInterface(bottomEdge, column);
+  }
+}
+
+
 void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column)
 {
   std::vector<std::pair<int, int> > adjacencies;
   computeAdjacencies(bndEl2column, adjacencies);
 
-//  curveInterfaces(bndEl2column, adjacencies);
+  curveInterfaces(bndEl2column, adjacencies);
 
   for (int i = 0; i < bndEl2column.size(); ++i) {
     Msg::Info("el %d, size %d", bndEl2column[i].first->getNum(), bndEl2column[i].second.size());
