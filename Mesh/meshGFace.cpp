@@ -1955,8 +1955,34 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     if (it != invertedRecoverMap.end())
     {
       if (it->second.size() > 1) {
-        Msg::Error("Embedded edge vertex %d is on the seam edge of surface %d and no appropriate point could be found!\n",
-          v->getNum(), gf->tag());
+        const GEdge *edge = (*ite);
+        const Range<double> parBounds = edge->parBounds(0);
+        GPoint firstPoint = edge->point(parBounds.low());
+        GPoint lastPoint = edge->point(parBounds.high());
+        double param;
+        if (v->point().distance(SPoint3{firstPoint.x(), firstPoint.y(), firstPoint.z()})
+          < v->point().distance(SPoint3{lastPoint.x(), lastPoint.y(), lastPoint.z()})) {
+          // Vertex lies on first point of edge
+          param = parBounds.low();
+        }
+        else {
+          // Vertex lies on last point of edge
+          param = parBounds.high();
+        }
+        SPoint2 pointOnSurface = edge->reparamOnFace(gf, param, 1);
+
+        const std::set<BDS_Point*> &possiblePoints = it->second;
+        for (std::set<BDS_Point*>::iterator pntIt = possiblePoints.begin(); pntIt != possiblePoints.end();
+          ++pntIt) {
+          if (pointOnSurface.distance(SPoint2{(*pntIt)->u, (*pntIt)->v}) < 1e-10) {
+            pp = (*pntIt);
+            break;
+          }
+        }
+        if (pp == 0){
+          Msg::Error("Embedded edge vertex %d is on the seam edge of surface %d and no appropriate point could be found!\n",
+            v->getNum(), gf->tag());
+        }
       }
       else
       {
