@@ -1890,6 +1890,12 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     std::list<GVertex*> emb_vertx = gf->embeddedVertices();
     std::list<GVertex*>::iterator itvx = emb_vertx.begin();
 
+    std::map<MVertex*, std::set<BDS_Point*>> invertedRecoverMap;
+    for (std::map<BDS_Point*, MVertex*, PointLessThan>::iterator it = recoverMap.begin();
+      it != recoverMap.end(); it++){
+      invertedRecoverMap[it->second].emplace(it->first);
+    }
+
     int pNum = m->MAXPOINTNUMBER;
     nbPointsTotal +=  emb_vertx.size();
     {
@@ -1900,7 +1906,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 	for(unsigned int i = 0; i< (*ite)->lines.size(); i++){
 	  for(unsigned int j = 0; j< 2; j++){
 	    MVertex *v = (*ite)->lines[i]->getVertex(j);
-	    if (vs.find(v) == vs.end()){
+      if (invertedRecoverMap.find(v) == invertedRecoverMap.end() && vs.find(v) == vs.end()){
 	      vs.insert(v);
 	    }
 	  }
@@ -1944,7 +1950,21 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
       for(unsigned int i = 0; i< (*ite)->lines.size(); i++){
 	for(unsigned int j = 0; j< 2; j++){
 	  MVertex *v = (*ite)->lines[i]->getVertex(j);
-	  if (vs.find(v) == vs.end()){
+    BDS_Point *pp = 0;
+    const std::map<MVertex*, std::set<BDS_Point*>>::iterator it = invertedRecoverMap.find(v);
+    if (it != invertedRecoverMap.end())
+    {
+      if (it->second.size() > 1) {
+        Msg::Error("Embedded edge vertex %d is on the seam edge of surface %d and no appropriate point could be found!\n",
+          v->getNum(), gf->tag());
+      }
+      else
+      {
+        pp = *(std::prev(it->second.end()));
+      }
+      facile[v] = pp;
+    }
+	  if (pp == 0 && vs.find(v) == vs.end()){
 	    vs.insert(v);
 	    double uv[2]={0,0};
 	    GPoint gp = gf->closestPoint (SPoint3(v->x(),v->y(),v->z()),uv);      
