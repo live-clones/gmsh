@@ -1974,7 +1974,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
         const std::set<BDS_Point*> &possiblePoints = it->second;
         for (std::set<BDS_Point*>::iterator pntIt = possiblePoints.begin(); pntIt != possiblePoints.end();
           ++pntIt) {
-          if (pointOnSurface.distance(SPoint2{(*pntIt)->u, (*pntIt)->v}) < 1e-10) {
+          if (pointOnSurface.distance(SPoint2((*pntIt)->u, (*pntIt)->v)) < 1e-10) {
             pp = (*pntIt);
             break;
           }
