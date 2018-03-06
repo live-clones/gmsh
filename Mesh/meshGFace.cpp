@@ -1890,10 +1890,10 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     std::list<GVertex*> emb_vertx = gf->embeddedVertices();
     std::list<GVertex*>::iterator itvx = emb_vertx.begin();
 
-    std::map<MVertex*, std::set<BDS_Point*>> invertedRecoverMap;
+    std::map<MVertex*, std::set<BDS_Point*> > invertedRecoverMap;
     for (std::map<BDS_Point*, MVertex*, PointLessThan>::iterator it = recoverMap.begin();
       it != recoverMap.end(); it++){
-      invertedRecoverMap[it->second].emplace(it->first);
+      invertedRecoverMap[it->second].insert(it->first);
     }
 
     int pNum = m->MAXPOINTNUMBER;
@@ -1951,7 +1951,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 	for(unsigned int j = 0; j< 2; j++){
 	  MVertex *v = (*ite)->lines[i]->getVertex(j);
     BDS_Point *pp = 0;
-    const std::map<MVertex*, std::set<BDS_Point*>>::iterator it = invertedRecoverMap.find(v);
+    const std::map<MVertex*, std::set<BDS_Point*> >::iterator it = invertedRecoverMap.find(v);
     if (it != invertedRecoverMap.end())
     {
       if (it->second.size() > 1) {
