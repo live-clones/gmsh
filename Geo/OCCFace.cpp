@@ -128,7 +128,7 @@ void OCCFace::setup()
   vmax += fabs(dv) / 100.0;
   occface = BRep_Tool::Surface(s);
 
-  for(exp2.Init(s, TopAbs_VERTEX); exp2.More(); exp2.Next()){
+  for(exp2.Init(s.Oriented(TopAbs_FORWARD), TopAbs_VERTEX, TopAbs_EDGE); exp2.More(); exp2.Next()){
     TopoDS_Vertex vertex = TopoDS::Vertex(exp2.Current());
     GVertex *v = 0;
     if(model()->getOCCInternals())
