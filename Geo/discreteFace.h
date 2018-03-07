@@ -86,7 +86,7 @@ class discreteFace : public GFace {
   void setBoundEdges(const std::vector<int> &tagEdges,
                      const std::vector<int> &signEdges);
 #ifdef HAVE_HXT
-  int trianglePosition(double par1, double par2) const;
+  int trianglePosition(double par1, double par2, double &u, double &v) const;
   GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
 				const SVector3 &p, const double &R,
 				double uv[2]) ;

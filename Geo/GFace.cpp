@@ -1360,6 +1360,7 @@ static void meshCompound(GFace* gf, bool verbose)
   discreteFace *df = new discreteFace(gf->model(), gf->tag() + 100000);
 
   std::vector< GFace* > triangles_tag;
+  std::vector< SPoint2 > triangles_uv;
 
   for (unsigned int i = 0; i < gf->_compound.size(); i++){
     GFace *c = (GFace*)gf->_compound[i];
@@ -1367,7 +1368,14 @@ static void meshCompound(GFace* gf, bool verbose)
 			 c->triangles.end());
     df->mesh_vertices.insert(df->mesh_vertices.end(), c->mesh_vertices.begin(),
 			     c->mesh_vertices.end());
-    for (unsigned int j=0;j<c->triangles.size();j++)triangles_tag.push_back(c);
+    for (unsigned int j=0;j<c->triangles.size();j++){
+      triangles_tag.push_back(c);
+      for (int k=0;k<3;k++){
+	SPoint2 param;
+	reparamMeshVertexOnFace(c->triangles[j]->getVertex(k), c, param);
+	triangles_uv.push_back (param);
+      }
+    }
     c->triangles.clear();
     c->mesh_vertices.clear();
   }
@@ -1380,16 +1388,26 @@ static void meshCompound(GFace* gf, bool verbose)
     double u,v;
     df->mesh_vertices[i]->getParameter(0,u);
     df->mesh_vertices[i]->getParameter(1,v);
-    int position = df->trianglePosition(u,v);
+    double U,V;
+    int position = df->trianglePosition(u,v,U,V);
     if (position != -1) {
       triangles_tag[position]->mesh_vertices.push_back(df->mesh_vertices[i]);
       df->mesh_vertices[i]->setEntity(triangles_tag[position]);
+      SPoint2 p0 = triangles_uv[3*position + 0];
+      SPoint2 p1 = triangles_uv[3*position + 1];
+      SPoint2 p2 = triangles_uv[3*position + 2];
+      SPoint2 p = p0 *(1-U-V) + p1 * U + p2 * V; 
+      GPoint gp = triangles_tag[position]->point(p);
+      df->mesh_vertices[i]->setParameter(0,p.x());
+      df->mesh_vertices[i]->setParameter(1,p.y());
+      df->mesh_vertices[i]->x() = gp.x(); 
+      df->mesh_vertices[i]->y() = gp.y(); 
+      df->mesh_vertices[i]->z() = gp.z(); 
     }
     else {
       df->mesh_vertices.push_back(df->mesh_vertices[i]);
       df->mesh_vertices[i]->setEntity(gf);
     }
-    // Recompute parameter in original surface and project
   }
 
   for (int i=0;i<df->triangles.size();i++){
