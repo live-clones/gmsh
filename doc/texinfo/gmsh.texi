@@ -912,7 +912,7 @@ value is automatically used.
 @code{DefineNumber} allows to define a ONELAB variable in-line. The
 @var{expression} given as the first argument is the default value; this
 is followed by the various ONELAB options. See
-@uref{https://gitlab.onelab.info/doc/tutorials/wikis/Onelab-syntax-for-gmsh-and-getdp}
+@uref{https://gitlab.onelab.info/doc/tutorials/wikis/ONELAB-syntax-for-Gmsh-and-GetDP}
 for more information.
 
 @cindex Expressions, lists
@@ -1073,7 +1073,7 @@ string.
 @code{DefineString} allows to define a ONELAB variable in-line. The
 @var{char-expression} given as the first argument is the default value;
 this is followed by the various ONELAB options. See
-@uref{https://gitlab.onelab.info/doc/tutorial/wikis/ONELAB_Syntax_for_Gmsh_and_GetDP}
+@uref{https://gitlab.onelab.info/doc/tutorial/wikis/ONELAB-syntax-for-Gmsh-and-GetDP}
 for more information.
 
 Character expressions are mostly used to specify non-numeric options and
@@ -1603,7 +1603,7 @@ Creates a new expression identifier @var{string}, with value
 @item DefineConstant[ @var{string} = @{ @var{expression}|@var{char-expression}, @var{onelab-options} @} <, ...>];
 Same as the previous case, except that the variable is also exchanged
 with the ONELAB database if it has not been defined before. See
-@uref{https://gitlab.onelab.info/doc/tutorial/wikis/ONELAB_Syntax_for_Gmsh_and_GetDP}
+@uref{https://gitlab.onelab.info/doc/tutorial/wikis/ONELAB-syntax-for-Gmsh-and-GetDP}
 for more information.
 
 @item SetNumber( @var{char-expression} , @var{expression} );
