@@ -10,6 +10,8 @@
 #include "Numeric.h"
 #include "Context.h"
 
+static double fd_eps = 1e-8;
+
 static void InterpolateCatmullRom(Vertex *v[4], double t, Vertex &V)
 {
   V.lc = (1 - t) * v[1]->lc + t * v[2]->lc;
@@ -315,8 +317,8 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
       V.u = u;
       break;
     default :
-      double eps1 = (u < 1e-5) ? 0 : 1.e-5;
-      double eps2 = (u > 1 - 1e-5) ? 0 : 1.e-5;
+      double eps1 = (u < fd_eps) ? 0 : fd_eps;
+      double eps2 = (u > 1 - fd_eps) ? 0 : fd_eps;
       Vertex D[2];
       D[0] = InterpolateCurve(c, u - eps1, 0);
       D[1] = InterpolateCurve(c, u + eps2, 0);
@@ -342,8 +344,8 @@ Vertex InterpolateCurve(Curve *c, double u, int derivee)
       V.u = u;
       break;
     default :
-      double eps1 = (u < 1e-5) ? 0 : 1.e-5;
-      double eps2 = (u > 1 - 1e-5) ? 0 : 1.e-5;
+      double eps1 = (u < fd_eps) ? 0 : fd_eps;
+      double eps2 = (u > 1 - fd_eps) ? 0 : fd_eps;
       Vertex D[2];
       D[0] = InterpolateCurve(c, u - eps1, 1);
       D[1] = InterpolateCurve(c, u + eps2, 1);
@@ -834,68 +836,66 @@ static Vertex InterpolateExtrudedSurface(Surface *s, double u, double v)
 Vertex InterpolateSurface(Surface *s, double u, double v, int derivee, int u_v)
 {
   if(derivee == 1) {
-    double eps = 1.e-8;
     Vertex D[4];
     if(u_v == 1) {
-      if(u - eps < 0.0) {
+      if(u - fd_eps < 0.0) {
         D[0] = InterpolateSurface(s, u, v, 0, 0);
-        D[1] = InterpolateSurface(s, u + eps, v, 0, 0);
+        D[1] = InterpolateSurface(s, u + fd_eps, v, 0, 0);
       }
       else {
-        D[0] = InterpolateSurface(s, u - eps, v, 0, 0);
+        D[0] = InterpolateSurface(s, u - fd_eps, v, 0, 0);
         D[1] = InterpolateSurface(s, u, v, 0, 0);
       }
     }
     else {
-      if(v - eps < 0.0) {
+      if(v - fd_eps < 0.0) {
         D[0] = InterpolateSurface(s, u, v, 0, 0);
-        D[1] = InterpolateSurface(s, u, v + eps, 0, 0);
+        D[1] = InterpolateSurface(s, u, v + fd_eps, 0, 0);
       }
       else {
-        D[0] = InterpolateSurface(s, u, v - eps, 0, 0);
+        D[0] = InterpolateSurface(s, u, v - fd_eps, 0, 0);
         D[1] = InterpolateSurface(s, u, v, 0, 0);
       }
     }
-    return Vertex((D[1].Pos.X - D[0].Pos.X) / eps,
-                  (D[1].Pos.Y - D[0].Pos.Y) / eps,
-                  (D[1].Pos.Z - D[0].Pos.Z) / eps);
+    return Vertex((D[1].Pos.X - D[0].Pos.X) / fd_eps,
+                  (D[1].Pos.Y - D[0].Pos.Y) / fd_eps,
+                  (D[1].Pos.Z - D[0].Pos.Z) / fd_eps);
   }
   else if (derivee == 2) {
-    double eps = 1.e-6;
     Vertex D[2];
     if(u_v == 1) { // dudu
-      if(u - eps < 0.0) {
+      if(u - fd_eps < 0.0) {
         D[0] = InterpolateSurface(s, u, v, 1, 1);
-        D[1] = InterpolateSurface(s, u + eps, v, 1, 1);
+        D[1] = InterpolateSurface(s, u + fd_eps, v, 1, 1);
       }
       else {
-        D[0] = InterpolateSurface(s, u - eps, v, 1, 1);
+        D[0] = InterpolateSurface(s, u - fd_eps, v, 1, 1);
         D[1] = InterpolateSurface(s, u, v, 1, 1);
       }
     }
     else if(u_v == 2) { // dvdv
-      if(v - eps < 0.0) {
+      if(v - fd_eps < 0.0) {
         D[0] = InterpolateSurface(s, u, v, 1, 2);
-        D[1] = InterpolateSurface(s, u, v + eps, 1, 2);
+        D[1] = InterpolateSurface(s, u, v + fd_eps, 1, 2);
       }
       else {
-        D[0] = InterpolateSurface(s, u, v - eps, 1, 2);
+        D[0] = InterpolateSurface(s, u, v - fd_eps, 1, 2);
         D[1] = InterpolateSurface(s, u, v, 1, 2);
       }
     }
     else { // dudv
-      if(v - eps < 0.0) {
+      if(v - fd_eps < 0.0) {
         D[0] = InterpolateSurface(s, u, v, 1, 1);
-        D[1] = InterpolateSurface(s, u, v + eps, 1, 1);
+        D[1] = InterpolateSurface(s, u, v + fd_eps, 1, 1);
       }
       else {
-        D[0] = InterpolateSurface(s, u, v - eps, 1, 1);
+        D[0] = InterpolateSurface(s, u, v - fd_eps, 1, 1);
         D[1] = InterpolateSurface(s, u, v, 1, 1);
       }
     }
-    return Vertex((D[1].Pos.X - D[0].Pos.X) / eps,
-                  (D[1].Pos.Y - D[0].Pos.Y) / eps,
-                  (D[1].Pos.Z - D[0].Pos.Z) / eps);
+    return Vertex((D[1].Pos.X - D[0].Pos.X) / fd_eps,
+                  (D[1].Pos.Y - D[0].Pos.Y) / fd_eps,
+                  (D[1].Pos.Z - D[0].Pos.Z) / fd_eps);
   }
 
   if(s->geometry){

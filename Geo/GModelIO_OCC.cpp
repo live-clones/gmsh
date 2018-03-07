@@ -2149,11 +2149,15 @@ bool OCC_Internals::_extrude(int mode,
         return false;
       }
       TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
-      BRepOffsetAPI_MakePipe p(wire, c, GeomFill_IsCorrectedFrenet);
-      /* GeomFill_IsCorrectedFrenet, GeomFill_IsFixed, GeomFill_IsFrenet,
-         GeomFill_IsConstantNormal, GeomFill_IsDarboux, GeomFill_IsGuideAC,
-         GeomFill_IsGuidePlan, GeomFill_IsGuideACWithContact,
-         GeomFill_IsGuidePlanWithContact, GeomFill_IsDiscreteTrihedron */
+      BRepOffsetAPI_MakePipe p(wire, c, GeomFill_IsDiscreteTrihedron);
+      // Available choices:
+      //   GeomFill_IsCorrectedFrenet, GeomFill_IsFixed, GeomFill_IsFrenet,
+      //   GeomFill_IsConstantNormal, GeomFill_IsDarboux, GeomFill_IsGuideAC,
+      //   GeomFill_IsGuidePlan, GeomFill_IsGuideACWithContact,
+      //   GeomFill_IsGuidePlanWithContact, GeomFill_IsDiscreteTrihedron
+      // DiscreteTrihedron seems the most robust; CorrectedFrenet e.g. fails on
+      // very simple cases with straight extrusions. We might want to make this
+      // an option.
       p.Build();
       if(!p.IsDone()){
         Msg::Error("Could not create pipe");
