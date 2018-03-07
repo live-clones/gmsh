@@ -118,6 +118,8 @@ int discreteFace::trianglePosition(double par1, double par2, double &u, double &
   u = uv[0];
   v = uv[1];
   return position;
+#else
+  return 0;
 #endif
 }
 
@@ -163,7 +165,7 @@ class dfWrapper{
 
 static SVector3 _NORMAL_ ( const MTriangle &t3d)
 {
-  
+
   SVector3 v31 (t3d.getVertex(2)->x()- t3d.getVertex(0)->x(),
 		t3d.getVertex(2)->y()- t3d.getVertex(0)->y(),
 		t3d.getVertex(2)->z()- t3d.getVertex(0)->z());
@@ -171,7 +173,7 @@ static SVector3 _NORMAL_ ( const MTriangle &t3d)
 		t3d.getVertex(1)->y()- t3d.getVertex(0)->y(),
 		t3d.getVertex(1)->z()- t3d.getVertex(0)->z());
   SVector3 n = crossprod(v31,v21);
-  
+
   n.normalize();
   return n;
 }
@@ -243,7 +245,7 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint,  double maxDistance
 GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[2]) const
 {
 #ifdef HAVE_HXT
-  return closestPoint(queryPoint,  0.0001);  
+  return closestPoint(queryPoint,  0.0001);
 #else
   Msg::Error("Cannot evaluate closest point on discrete face without HXT");
   return GPoint();
@@ -264,14 +266,19 @@ SPoint2 discreteFace::parFromPoint(const SPoint3 &p, bool onSurface) const
 
 SVector3 discreteFace::normal(const SPoint2 &param) const
 {
+#ifdef HAVE_HXT
   MElement *e = _parametrizations[_current_parametrization].oct->find(param.x(),param.y(),0.0);
   if (!e){
     Msg::Warning("discreteFace::normal << triangle not found %g %g",param[0],param[1]);
     return SVector3(0,0,0);
   }
-  int position = (int)((MTriangle*)e - &_parametrizations[_current_parametrization].t2d[0]);  
+  int position = (int)((MTriangle*)e - &_parametrizations[_current_parametrization].t2d[0]);
   const MTriangle &t3d = _parametrizations[_current_parametrization].t3d[position];
   return _NORMAL_ (t3d);
+#else
+  Msg::Error("Cannot evaluate normal on discrete face without HXT");
+  return SVector3();
+#endif
 }
 
 double discreteFace::curvatureMax(const SPoint2 &param) const
@@ -640,7 +647,7 @@ GPoint discreteFace::intersectionWithCircle(const SVector3 &n1, const SVector3 &
     int position = (int)(t2d - &_parametrizations[_current_parametrization].t2d[0]);
     t3d = &_parametrizations[_current_parametrization].t3d[position];
   }
-  
+
   SVector3 n = crossprod(n1,n2);
   n.normalize();
 
