@@ -16,11 +16,12 @@ endif(APPNAME)
 
 # find all benchmarks who provide infos.xml
 if("${APPNAME}" STREQUAL "BBEMG")
-  find_path(BENCHMARKSDIR benchmarks_private/)
+  find_path(BENCHMARKSDIR benchmarks_private/ HINTS ../../../getdp/)
   file(GLOB BENCHMARKSDIR ${BENCHMARKSDIR}/benchmarks_private/bbemg*)
 else("${APPNAME}" STREQUAL "BBEMG")
-  find_path(BENCHMARKSDIR benchmarks/)
-  file(GLOB BENCHMARKSDIR ${BENCHMARKSDIR}/benchmarks/*)
+  find_path(BENCHMARKSDIR models/ HINTS ../../../onelab_doc/)
+  message("HEY ${BENCHMARKSDIR}")
+  file(GLOB BENCHMARKSDIR ${BENCHMARKSDIR}/models/*)
 endif("${APPNAME}" STREQUAL "BBEMG")
 
 foreach(SUBDIR ${BENCHMARKSDIR})
