@@ -1393,16 +1393,18 @@ static void meshCompound(GFace* gf, bool verbose)
     if (position != -1) {
       triangles_tag[position]->mesh_vertices.push_back(df->mesh_vertices[i]);
       df->mesh_vertices[i]->setEntity(triangles_tag[position]);
-      SPoint2 p0 = triangles_uv[3*position + 0];
-      SPoint2 p1 = triangles_uv[3*position + 1];
-      SPoint2 p2 = triangles_uv[3*position + 2];
-      SPoint2 p = p0 *(1-U-V) + p1 * U + p2 * V; 
-      GPoint gp = triangles_tag[position]->point(p);
-      df->mesh_vertices[i]->setParameter(0,p.x());
-      df->mesh_vertices[i]->setParameter(1,p.y());
-      df->mesh_vertices[i]->x() = gp.x(); 
-      df->mesh_vertices[i]->y() = gp.y(); 
-      df->mesh_vertices[i]->z() = gp.z(); 
+      if (triangles_tag[position]->geomType() != GEntity::DiscreteSurface){
+	SPoint2 p0 = triangles_uv[3*position + 0];
+	SPoint2 p1 = triangles_uv[3*position + 1];
+	SPoint2 p2 = triangles_uv[3*position + 2];
+	SPoint2 p = p0 *(1-U-V) + p1 * U + p2 * V; 
+	GPoint gp = triangles_tag[position]->point(p);
+	df->mesh_vertices[i]->setParameter(0,p.x());
+	df->mesh_vertices[i]->setParameter(1,p.y());
+	df->mesh_vertices[i]->x() = gp.x(); 
+	df->mesh_vertices[i]->y() = gp.y(); 
+	df->mesh_vertices[i]->z() = gp.z();
+      }
     }
     else {
       df->mesh_vertices.push_back(df->mesh_vertices[i]);
