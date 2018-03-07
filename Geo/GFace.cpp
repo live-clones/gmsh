@@ -1353,19 +1353,13 @@ bool GFace::fillPointCloud(double maxDist,
 
 
 #if defined(HAVE_MESH)
+
+
 static void meshCompound(GFace* gf, bool verbose)
 {
   discreteFace *df = new discreteFace(gf->model(), gf->tag() + 100000);
-  std::set<int> ec;
-
   for (unsigned int i = 0; i < gf->_compound.size(); i++){
     GFace *c = (GFace*)gf->_compound[i];
-    std::list<GEdge*> edges = c->edges();
-    for (std::list<GEdge*>::iterator it = edges.begin() ; it != edges.end(); ++it){
-      std::set<int>::iterator found = ec.find((*it)->tag());
-      if (found == ec.end())ec.insert((*it)->tag());
-      else ec.erase(found);
-    }
     df->triangles.insert(df->triangles.end(), c->triangles.begin(),
 			 c->triangles.end());
     df->mesh_vertices.insert(df->mesh_vertices.end(), c->mesh_vertices.begin(),
@@ -1374,16 +1368,14 @@ static void meshCompound(GFace* gf, bool verbose)
     c->mesh_vertices.clear();
   }
 
-  std::vector<int> cedges;
-  cedges.insert(cedges.begin(), ec.begin(), ec.end());
-  df->setBoundEdges(cedges);
   df->createGeometry();
   df->mesh(verbose);
   gf->mesh_vertices = df->mesh_vertices;
+  for (int i=0;i<gf->mesh_vertices.size();i++)gf->mesh_vertices[i]->setEntity(gf);
   gf->triangles = df->triangles;
   df->triangles.clear();
   df->mesh_vertices.clear();
-  //  delete df;
+  delete df;
 }
 #endif
 
@@ -1404,6 +1396,7 @@ void GFace::mesh(bool verbose)
       }
       else{
 	meshCompound(this, verbose);
+        meshStatistics.status = GFace::DONE;
 	return;
       }
     }

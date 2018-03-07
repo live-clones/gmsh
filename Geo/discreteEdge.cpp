@@ -86,6 +86,14 @@ void discreteEdge::orderMLines()
     //    printf("%d ",v11->getNum());
     mesh_vertices.push_back(v11);
   }
+  GVertex *g0 = static_cast<GVertex*>(lines[0]->getVertex(0)->onWhat());
+  if (!g0)Msg::Error ("Compound Edge with non consecutive lines");
+  GVertex *g1 = static_cast<GVertex*>(lines[lines.size()-1]->getVertex(1)->onWhat());
+  if (!g1)Msg::Error ("Compound Edge with non consecutive lines");
+  //  printf("%d --> %d\n",g0->tag(),g1->tag());
+  setBeginVertex (g0);
+  setEndVertex (g1);
+  
   //  printf("\n");
 }
 
@@ -235,7 +243,7 @@ void discreteEdge::interpolateInGeometry(MVertex *v, MVertex **v1,
 void discreteEdge::mesh(bool verbose)
 {
 #if defined(HAVE_MESH)
-  if (!CTX::instance()->meshDiscrete) return;
+  if (discrete_lines.empty()) return;
   meshGEdge mesher;
   mesher(this);
 #endif

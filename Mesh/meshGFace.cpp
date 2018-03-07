@@ -932,6 +932,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   while(ite != edges.end()){
     if((*ite)->isSeam(gf)) return false;
     if(!(*ite)->isMeshDegenerated()){
+      //      printf("edge %d\n",(*ite)->tag());
       for(unsigned int i = 0; i< (*ite)->lines.size(); i++)
         medgesToRecover.push_back(MEdge((*ite)->lines[i]->getVertex(0),
                                        (*ite)->lines[i]->getVertex(1)));
@@ -2392,7 +2393,7 @@ void deMeshGFace::operator()(GFace *gf)
 }
 
 // for debugging, change value from -1 to -100;
-int debugSurface = -100; //-100;
+int debugSurface = -1; //-100;
 
 void meshGFace::operator()(GFace *gf, bool print)
 {

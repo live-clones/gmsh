@@ -1197,6 +1197,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
   double radius;
   SPoint3 center;
   bool isSphere = gf->isSphere(radius, center);
+  //  bool isBSplineSurface = gf->geomType() == GEntity::BSplineSurface;
   double XX=0,YY=0,ZZ=0;
 
   double U = 0;
@@ -1233,7 +1234,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
 
   GPoint gp;double uv[2];
   SVector3 normal;
-  if (isSphere){
+  if (isSphere /*|| isBSplineSurface*/){
     gp = gf->closestPoint(SPoint3(XX, YY, ZZ), uv);
     U = gp.u();
     V = gp.v();

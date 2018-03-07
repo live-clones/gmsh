@@ -215,6 +215,11 @@ class GEdge : public GEntity {
   } meshStatistics;
 
   std::vector<MLine*> lines;
+  /************************************************************************/
+  // when a compound of edges is created, both meshes should be kept alive
+  // this is due to Gmsh's flow and it only applies to model edges
+  GEdge *compound_edge;
+  /************************************************************************/
 
   void addLine(MLine *line){ lines.push_back(line); }
   void addElement(int type, MElement *e);
