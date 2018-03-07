@@ -27,7 +27,7 @@ extern "C" {
 class hxt_reparam_surf {
 public:
   MElementOctree *oct;
-  RTree< std::pair<MTriangle*,MTriangle*> *,double,3> rtree3d;
+  mutable RTree< std::pair<MTriangle*,MTriangle*> *,double,3> rtree3d;
   std::vector<MVertex>   v2d;
   std::vector<MVertex>   v3d;
   std::vector<MTriangle> t2d;
@@ -69,7 +69,7 @@ class discreteFace : public GFace {
   using GFace::point;
   GPoint point(double par1, double par2) const;
   SPoint2 parFromPoint(const SPoint3 &p, bool onSurface=true) const;
-  GPoint closestPoint(const SPoint3 &queryPoint, double maxDistance, SVector3 *normal = NULL) ;
+  GPoint closestPoint(const SPoint3 &queryPoint, double maxDistance, SVector3 *normal = NULL) const;
   GPoint closestPoint(const SPoint3 &queryPoint, const double initialGuess[2]) const;
   SVector3 normal(const SPoint2 &param) const;
   double curvatureMax(const SPoint2 &param) const;

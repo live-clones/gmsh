@@ -561,12 +561,12 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
 bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
                              bool onSurface)
 {
-#if defined(HAVE_ANN) && defined(HAVE_SOLVER)
-  if (gf->geomType() == GEntity::DiscreteSurface ){
-    param=gf->parFromPoint(SPoint3(v->x(),v->y(),v->z()));
-    return true;
-  }
-#endif
+  //#if defined(HAVE_ANN) && defined(HAVE_SOLVER)
+  //  if (gf->geomType() == GEntity::DiscreteSurface ){
+  //    param=gf->parFromPoint(SPoint3(v->x(),v->y(),v->z()));
+  //    return true;
+  //  }
+  //#endif
 
   if(v->onWhat()->geomType() == GEntity::DiscreteCurve ||
      v->onWhat()->geomType() == GEntity::BoundaryLayerCurve){
@@ -575,6 +575,11 @@ bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
   }
 
   if(v->onWhat()->dim() == 0){
+    if (gf->geomType() == GEntity::DiscreteSurface ){
+      param=gf->parFromPoint(SPoint3(v->x(),v->y(),v->z()));
+      return true;
+    }
+
     GVertex *gv = (GVertex*)v->onWhat();
     // hack for bug in periodic curves
     if (gv->getNativeType() == GEntity::GmshModel && gf->geomType() == GEntity::Plane)
@@ -587,6 +592,12 @@ bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
       if((*it)->isSeam(gf)) return false;
   }
   else if(v->onWhat()->dim() == 1){
+
+    if (gf->geomType() == GEntity::DiscreteSurface ){
+      param=gf->parFromPoint(SPoint3(v->x(),v->y(),v->z()));
+      return true;
+    }
+    
     GEdge *ge = (GEdge*)v->onWhat();
     double t;
     v->getParameter(0, t);

@@ -161,6 +161,22 @@ class dfWrapper{
     : _p(p) , _distance (1.e22) , _t3d(NULL), _t2d(NULL){}
 };
 
+static SVector3 _NORMAL_ ( const MTriangle &t3d)
+{
+  
+  SVector3 v31 (t3d.getVertex(2)->x()- t3d.getVertex(0)->x(),
+		t3d.getVertex(2)->y()- t3d.getVertex(0)->y(),
+		t3d.getVertex(2)->z()- t3d.getVertex(0)->z());
+  SVector3 v21 (t3d.getVertex(1)->x()- t3d.getVertex(0)->x(),
+		t3d.getVertex(1)->y()- t3d.getVertex(0)->y(),
+		t3d.getVertex(1)->z()- t3d.getVertex(0)->z());
+  SVector3 n = crossprod(v31,v21);
+  
+  n.normalize();
+  return n;
+}
+
+
 bool discreteFace_rtree_callback(std::pair<MTriangle*,MTriangle*> *t,void* w)
 {
   dfWrapper* wrapper = static_cast<dfWrapper*>(w);
@@ -183,24 +199,18 @@ bool discreteFace_rtree_callback(std::pair<MTriangle*,MTriangle*> *t,void* w)
   return true;
 }
 
-GPoint discreteFace::closestPoint(const SPoint3 &queryPoint,  double maxDistance, SVector3 *normal)
+GPoint discreteFace::closestPoint(const SPoint3 &queryPoint,  double maxDistance, SVector3 *normal) const
 {
 #ifdef HAVE_HXT
 
-  //  printf("coucou1 %12.5E\n",maxDistance);
-  //  printf("CLOSEST POINT\n");
-
   dfWrapper wrapper (queryPoint);
   do {
-    //    printf("maxdist %g\n",maxDistance);
     wrapper._distance = 1.e22;
     double MIN[3] = {queryPoint.x() - maxDistance, queryPoint.y() - maxDistance, queryPoint.z() - maxDistance };
     double MAX[3] = {queryPoint.x() + maxDistance, queryPoint.y() + maxDistance, queryPoint.z() + maxDistance };
     _parametrizations[_current_parametrization].rtree3d.Search(MIN, MAX,discreteFace_rtree_callback,&wrapper);
     maxDistance *= 2.0;
   }while (!wrapper._t3d);
-
-  //  printf("done\n");
 
   if (normal){
     SVector3 t1 (wrapper._t3d->getVertex(1)->x() - wrapper._t3d->getVertex(0)->x(),
@@ -213,20 +223,17 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint,  double maxDistance
     normal->normalize();
   }
 
-
   double xyz[3]={wrapper._closestPoint.x(),wrapper._closestPoint.y(),wrapper._closestPoint.z()};
   double uvw[3];
   wrapper._t3d->xyz2uvw (xyz,uvw);
-  //  printf("inverted\n");
   const MVertex *v0 = wrapper._t2d->getVertex(0);
   const MVertex *v1 = wrapper._t2d->getVertex(1);
   const MVertex *v2 = wrapper._t2d->getVertex(2);
   double U = 1-uvw[0]-uvw[1];
   double V = uvw[0];
   double W = uvw[1];
-  SPoint2 pp(U*v0->x()+V*v1->x()+W*v2->x(),U*v0->y()+V*v1->y()+W*v2->y());
-  //  printf("coucou1\n");
-  //  printf("CLOSEST POINT DONE\n");
+  SPoint2 pp(U*v0->x()+V*v1->x()+W*v2->x(),
+	     U*v0->y()+V*v1->y()+W*v2->y());
   return GPoint (xyz[0],xyz[1],xyz[2],this,pp);
 #else
   return GPoint ();
@@ -236,36 +243,7 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint,  double maxDistance
 GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, const double initialGuess[2]) const
 {
 #ifdef HAVE_HXT
-
-  double cd = 1.e22;
-  SPoint3 cp;
-  int ip;
-  for (size_t i = 0 ; i< _parametrizations[_current_parametrization].t3d.size();i++){
-    const MTriangle &t3d = _parametrizations[_current_parametrization].t3d[i];
-    SPoint3 closePt;
-    double d;
-    signedDistancePointTriangle(SPoint3 (t3d.getVertex(0)->x(),t3d.getVertex(0)->y(),t3d.getVertex(0)->z()),
-				SPoint3 (t3d.getVertex(1)->x(),t3d.getVertex(1)->y(),t3d.getVertex(1)->z()),
-				SPoint3 (t3d.getVertex(2)->x(),t3d.getVertex(2)->y(),t3d.getVertex(2)->z()),
-				queryPoint, d, closePt);
-    if (fabs(d) < cd){
-      cd = fabs(d);
-      cp = closePt;
-      ip = i;
-    }
-  }
-  //  printf("%d %g\n",ip,cd);
-  double xyz[3]={cp.x(),cp.y(),cp.z()};
-  double uvw[3];
-  _parametrizations[_current_parametrization].t3d[ip].xyz2uvw (xyz,uvw);
-  const MVertex *v0 = _parametrizations[_current_parametrization].t2d[ip].getVertex(0);
-  const MVertex *v1 = _parametrizations[_current_parametrization].t2d[ip].getVertex(1);
-  const MVertex *v2 = _parametrizations[_current_parametrization].t2d[ip].getVertex(2);
-  double U = 1-uvw[0]-uvw[1];
-  double V = uvw[0];
-  double W = uvw[1];
-  SPoint2 pp(U*v0->x()+V*v1->x()+W*v2->x(),U*v0->y()+V*v1->y()+W*v2->y());
-  return GPoint (cp.x(),cp.y(),cp.z(),this,pp);
+  return closestPoint(queryPoint,  0.0001);  
 #else
   Msg::Error("Cannot evaluate closest point on discrete face without HXT");
   return GPoint();
@@ -276,48 +254,8 @@ GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, const double initia
 SPoint2 discreteFace::parFromPoint(const SPoint3 &p, bool onSurface) const
 {
 #ifdef HAVE_HXT
-  // could be better but it is already ok
-  double eps = 1.e-8;
-  for (size_t i = 0 ; i< _parametrizations[_current_parametrization].t3d.size();i++){
-    const MTriangle &t3d = _parametrizations[_current_parametrization].t3d[i];
-    const MTriangle &t2d = _parametrizations[_current_parametrization].t2d[i];
-
-    SVector3 v31 (t3d.getVertex(2)->x()- t3d.getVertex(0)->x(),
-		  t3d.getVertex(2)->y()- t3d.getVertex(0)->y(),
-		  t3d.getVertex(2)->z()- t3d.getVertex(0)->z());
-    SVector3 v21 (t3d.getVertex(1)->x()- t3d.getVertex(0)->x(),
-		  t3d.getVertex(1)->y()- t3d.getVertex(0)->y(),
-		  t3d.getVertex(1)->z()- t3d.getVertex(0)->z());
-    SVector3 vp1 (p.x()-t3d.getVertex(0)->x(),
-		  p.y()-t3d.getVertex(0)->y(),
-		  p.z()-t3d.getVertex(0)->z());
-    SVector3 n = crossprod(v31,v21);
-    //    printf("n %g %g %g\n",n.x(),n.y(),n.z());
-
-    double dd = n.norm();
-    double dist = fabs(dot(n,vp1))/dd;
-    if( dist < eps){
-      double xyz[3]={p.x(),p.y(),p.z()};
-      double uvw[3];
-      t3d.xyz2uvw (xyz,uvw);
-      double U = 1-uvw[0]-uvw[1];
-      double V = uvw[0];
-      double W = uvw[1];
-      if (U > -eps && V > -eps && W > -eps){
-	const MVertex *v0 = t2d.getVertex(0);
-	const MVertex *v1 = t2d.getVertex(1);
-	const MVertex *v2 = t2d.getVertex(2);
-	double U2 = U*v0->x()+V*v1->x()+W*v2->x();
-	double V2 = U*v0->y()+V*v1->y()+W*v2->y();
-	GPoint ppw = point(U2,V2);
-	SVector3 ppp (ppw.x()-p.x(),ppw.y()-p.y(),ppw.z()-p.z());
-	if (ppp.norm() > 1.e-5)Msg::Error ("parFromPoint failed");
-	return SPoint2(U2,V2);
-      }
-    }
-
-  }
-  Msg::Error("Par from point failed");
+  GPoint gp = closestPoint(p,  0.0001);
+  return SPoint2 (gp.u(), gp.v());
 #else
   Msg::Error("Cannot evaluate par from point on discrete face without HXT");
   return SPoint2();
@@ -326,8 +264,14 @@ SPoint2 discreteFace::parFromPoint(const SPoint3 &p, bool onSurface) const
 
 SVector3 discreteFace::normal(const SPoint2 &param) const
 {
-  Msg::Error("function discreteFace::normal not implemented");
-  return SVector3();
+  MElement *e = _parametrizations[_current_parametrization].oct->find(param.x(),param.y(),0.0);
+  if (!e){
+    Msg::Warning("discreteFace::normal << triangle not found %g %g",param[0],param[1]);
+    return SVector3(0,0,0);
+  }
+  int position = (int)((MTriangle*)e - &_parametrizations[_current_parametrization].t2d[0]);  
+  const MTriangle &t3d = _parametrizations[_current_parametrization].t3d[position];
+  return _NORMAL_ (t3d);
 }
 
 double discreteFace::curvatureMax(const SPoint2 &param) const

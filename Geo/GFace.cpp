@@ -1393,7 +1393,7 @@ static void meshCompound(GFace* gf, bool verbose)
     if (position != -1) {
       triangles_tag[position]->mesh_vertices.push_back(df->mesh_vertices[i]);
       df->mesh_vertices[i]->setEntity(triangles_tag[position]);
-      if (triangles_tag[position]->geomType() != GEntity::DiscreteSurface){
+      if (0 && triangles_tag[position]->geomType() != GEntity::DiscreteSurface){
 	SPoint2 p0 = triangles_uv[3*position + 0];
 	SPoint2 p1 = triangles_uv[3*position + 1];
 	SPoint2 p2 = triangles_uv[3*position + 2];
