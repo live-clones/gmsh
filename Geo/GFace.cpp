@@ -1358,21 +1358,48 @@ bool GFace::fillPointCloud(double maxDist,
 static void meshCompound(GFace* gf, bool verbose)
 {
   discreteFace *df = new discreteFace(gf->model(), gf->tag() + 100000);
+
+  std::vector< GFace* > triangles_tag;
+
   for (unsigned int i = 0; i < gf->_compound.size(); i++){
     GFace *c = (GFace*)gf->_compound[i];
     df->triangles.insert(df->triangles.end(), c->triangles.begin(),
 			 c->triangles.end());
     df->mesh_vertices.insert(df->mesh_vertices.end(), c->mesh_vertices.begin(),
 			     c->mesh_vertices.end());
+    for (unsigned int j=0;j<c->triangles.size();j++)triangles_tag.push_back(c);
     c->triangles.clear();
     c->mesh_vertices.clear();
   }
 
+  
   df->createGeometry();
   df->mesh(verbose);
-  gf->mesh_vertices = df->mesh_vertices;
-  for (int i=0;i<gf->mesh_vertices.size();i++)gf->mesh_vertices[i]->setEntity(gf);
-  gf->triangles = df->triangles;
+
+  for (int i=0;i<df->mesh_vertices.size();i++){
+    double u,v;
+    df->mesh_vertices[i]->getParameter(0,u);
+    df->mesh_vertices[i]->getParameter(1,v);
+    int position = df->trianglePosition(u,v);
+    if (position != -1) {
+      triangles_tag[position]->mesh_vertices.push_back(df->mesh_vertices[i]);
+      df->mesh_vertices[i]->setEntity(triangles_tag[position]);
+    }
+    else {
+      df->mesh_vertices.push_back(df->mesh_vertices[i]);
+      df->mesh_vertices[i]->setEntity(gf);
+    }
+    // Recompute parameter in original surface and project
+  }
+
+  for (int i=0;i<df->triangles.size();i++){
+    MTriangle *t = df->triangles[i];
+    if (t->getVertex(0)->onWhat()->dim() == 2)((GFace*)t->getVertex(0)->onWhat())->triangles.push_back(t);
+    else if (t->getVertex(1)->onWhat()->dim() == 2)((GFace*)t->getVertex(1)->onWhat())->triangles.push_back(t);
+    else if (t->getVertex(2)->onWhat()->dim() == 2)((GFace*)t->getVertex(2)->onWhat())->triangles.push_back(t);
+    else gf->triangles.push_back(t); /// FIXME COULD BE BETTER !
+  }  
+  //  gf->triangles = df->triangles;
   df->triangles.clear();
   df->mesh_vertices.clear();
   delete df;

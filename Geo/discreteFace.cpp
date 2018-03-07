@@ -106,6 +106,16 @@ void discreteFace::writeGEO(FILE *fp)
   fprintf(fp, "};\n");
 }
 
+int discreteFace::trianglePosition(double par1, double par2) const
+{
+#ifdef HAVE_HXT
+  const MElement *e = _parametrizations[_current_parametrization].oct->find(par1,par2,0.0);
+  if (!e) return -1;
+  int position = (int)((MTriangle*)e - &_parametrizations[_current_parametrization].t2d[0]);
+  return position;
+#endif
+}
+
 GPoint discreteFace::point(double par1, double par2) const
 {
 #ifdef HAVE_HXT
