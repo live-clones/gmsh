@@ -20,6 +20,9 @@
 #include "rtree.h"
 class MElementOctree;
 extern "C" {
+#ifndef __func__
+#define __func__ ""
+#endif
 #include "hxt_mesh.h"
 #include "hxt_parametrization.h"
 #include "hxt_linear_system.h"
@@ -34,8 +37,8 @@ public:
   std::vector<MTriangle> t3d;
   std::vector<discreteEdge*> bnd;
   std::vector<discreteEdge*> emb;
-  hxt_reparam_surf ():oct(NULL) {}
-  ~hxt_reparam_surf () ;
+  hxt_reparam_surf() : oct(NULL) {}
+  ~hxt_reparam_surf();
 };
 #else
 class discreteDiskFace;
@@ -51,16 +54,16 @@ class discreteFace : public GFace {
   std::vector< hxt_reparam_surf > _parametrizations;
   std::vector<discreteEdge*> e_internals;
   std::vector<discreteVertex*> v_internals;
-  HXTStatus reparametrize_through_hxt ();
-  bool compute_topology_of_partition (int nbColors,
-				      int *colors,
-				      int *nNodes,
-				      int *nodes,
-				      double *uv,
-				      double angle_threshold,
-				      std::vector<MVertex*> &c2v,
-				      std::vector<std::vector<MEdge> > &boundaries,
-				      std::vector<std::vector<MEdge> > &internals );
+  HXTStatus reparametrize_through_hxt();
+  bool compute_topology_of_partition(int nbColors,
+                                     int *colors,
+                                     int *nNodes,
+                                     int *nodes,
+                                     double *uv,
+                                     double angle_threshold,
+                                     std::vector<MVertex*> &c2v,
+                                     std::vector<std::vector<MEdge> > &boundaries,
+                                     std::vector<std::vector<MEdge> > &internals);
 #endif
 
  public:
@@ -69,7 +72,8 @@ class discreteFace : public GFace {
   using GFace::point;
   GPoint point(double par1, double par2) const;
   SPoint2 parFromPoint(const SPoint3 &p, bool onSurface=true) const;
-  GPoint closestPoint(const SPoint3 &queryPoint, double maxDistance, SVector3 *normal = NULL) const;
+  GPoint closestPoint(const SPoint3 &queryPoint, double maxDistance,
+                      SVector3 *normal = NULL) const;
   GPoint closestPoint(const SPoint3 &queryPoint, const double initialGuess[2]) const;
   SVector3 normal(const SPoint2 &param) const;
   double curvatureMax(const SPoint2 &param) const;
