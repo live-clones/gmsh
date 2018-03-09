@@ -12,14 +12,14 @@
 
 class discreteEdge : public GEdge {
  protected:
-  std::map<MVertex*,MVertex*> v2v;
   std::vector<double> _pars;
-  bool createdTopo;
   std::vector<MVertex*> discrete_vertices;
   std::vector<MLine*>  discrete_lines;
+  void orderMLines();
+  bool getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
  public:
   discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1);
-  virtual ~discreteEdge() {}
+  virtual ~discreteEdge();
   virtual GeomType geomType() const { return DiscreteCurve; }
   virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
@@ -28,19 +28,11 @@ class discreteEdge : public GEdge {
                             double *curvMax, double *curvMin) const;
   virtual bool haveParametrization(){ return !_pars.empty(); }
   virtual Range<double> parBounds(int) const;
-
-  bool getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
-  void interpolateInGeometry (MVertex *v, MVertex **v1, MVertex **v2, double &xi) const;
-
-  void orderMLines();
-  void setBoundVertices();
-  void setTopo(std::vector<MLine*>);
-  void createTopo();
   void createGeometry();
   virtual void mesh(bool verbose) ;
   void writeGEO(FILE *fp);
   int minimumDrawSegments() const {return 2*_pars.size();}
-  MVertex * getGeometricalVertex (MVertex *v);
+  //  MVertex * getGeometricalVertex (MVertex *v);
 };
 
 #endif
