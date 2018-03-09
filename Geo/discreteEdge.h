@@ -32,7 +32,6 @@ class discreteEdge : public GEdge {
   virtual void mesh(bool verbose) ;
   void writeGEO(FILE *fp);
   int minimumDrawSegments() const {return 2*_pars.size();}
-  //  MVertex * getGeometricalVertex (MVertex *v);
 };
 
 #endif

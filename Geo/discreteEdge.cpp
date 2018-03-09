@@ -25,13 +25,13 @@ discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
   CreateReversedCurve(c);
 }
 
-discreteEdge::~discreteEdge() {
+discreteEdge::~discreteEdge()
+{
   for (unsigned int i=0 ; i<discrete_lines.size(); i++)delete discrete_lines[i];
   for (unsigned int i=0 ; i<discrete_vertices.size(); i++)delete discrete_vertices[i];
   discrete_lines.clear();
   discrete_vertices.clear();
 }
-
 
 void discreteEdge::orderMLines()
 {
@@ -169,7 +169,7 @@ void discreteEdge::createGeometry()
 	}
       }
     }
-    
+
     std::vector<MLine*> _temp;
     discrete_lines.resize(lines.size());
     for (unsigned int i = 0; i < lines.size(); i++){

@@ -39,7 +39,7 @@ class MEdge {
   inline MVertex *getSortedVertex(const int i) const { return _v[int(_si[i])]; }
   inline MVertex *getMinVertex() const { return _v[int(_si[0])]; }
   inline MVertex *getMaxVertex() const { return _v[int(_si[1])]; }
-  
+
   inline int computeCorrespondence(MEdge& other) {
     if (other.getVertex(0) == _v[0] && other.getVertex(1) == _v[1]) return 1;
     else if (other.getVertex(0) == _v[1] && other.getVertex(1) == _v[0]) return -1;
@@ -124,6 +124,7 @@ struct Less_Edge : public std::binary_function<MEdge, MEdge, bool> {
 };
 
 // assume a set of MEdge, give consecutive list of vertices
-bool SortEdgeConsecutive (const std::vector<MEdge> &,
-			  std::vector<std::vector<MVertex*> >&vs);
+bool SortEdgeConsecutive(const std::vector<MEdge> &,
+                         std::vector<std::vector<MVertex*> >&vs);
+
 #endif

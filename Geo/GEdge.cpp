@@ -664,8 +664,6 @@ void GEdge::discretize(double tol, std::vector<SPoint3> &dpts, std::vector<doubl
   }
 }
 
-
-
 #if defined(HAVE_MESH)
 static void meshCompound(GEdge* ge)
 {
@@ -673,16 +671,14 @@ static void meshCompound(GEdge* ge)
   for (unsigned int i = 0; i < ge->_compound.size(); i++){
     GEdge *c = (GEdge*)ge->_compound[i];
     for (unsigned int j = 0; j<c->lines.size(); j++){
-      lines.push_back(new MLine(c->lines[j]->getVertex(0),c->lines[j]->getVertex(1)));
+      lines.push_back(new MLine(c->lines[j]->getVertex(0),
+                                c->lines[j]->getVertex(1)));
     }
-  }  
-  //  printf("%d lines %d curves in compound\n",lines.size(),ge->_compound.size());
-  discreteEdge *de = new discreteEdge(ge->model(), ge->tag() + 100000, NULL, NULL);  
+  }
+  discreteEdge *de = new discreteEdge(ge->model(), ge->tag() + 100000, NULL, NULL);
   ge->model()->add(de);
   de->lines = lines;
   de->createGeometry();
-  //  printf("geometry done\n");
-     
   de->mesh(false);
   ge->compound_edge = de;
 }
@@ -694,7 +690,7 @@ void GEdge::mesh(bool verbose)
   meshGEdge mesher;
   mesher(this);
   if(_compound.size()){ // Some faces are meshed together
-    if(_compound[0] == this){ //  I'm the one that makes the compound job
+    if(_compound[0] == this){ // I'm the one that makes the compound job
       bool ok = true;
       for(unsigned int i = 0; i < _compound.size(); i++){
 	GEdge *ge = (GEdge*)_compound[i];
@@ -704,7 +700,6 @@ void GEdge::mesh(bool verbose)
         meshStatistics.status = GEdge::PENDING;
       }
       else{
-	//	printf("meshing compound\n");
 	meshCompound(this);
         meshStatistics.status = GEdge::DONE;
 	return;

@@ -7,7 +7,7 @@
 #include "MEdge.h"
 #include "Numeric.h"
 
-// FIXME 
+// FIXME
 // remove that when MElementCut is removed
 bool MEdge::isInside(MVertex *v) const
 {
@@ -64,15 +64,11 @@ bool MEdge::isInside(MVertex *v) const
   return true;
 }
 
-bool SortEdgeConsecutive (const std::vector<MEdge> &e,
-			  std::vector<std::vector<MVertex*> >&vs)
+bool SortEdgeConsecutive(const std::vector<MEdge> &e,
+                         std::vector<std::vector<MVertex*> >&vs)
 {
-
-  //   for (int i=0;i<e.size();i++)printf("%d %d -- ", e[i].getVertex(0)->getNum(),e[i].getVertex(1)->getNum());
-  //    printf("\n");
-  
-  if (e.empty())return true;
-  std::map<MVertex*, std::pair<MVertex*,MVertex*> > c;
+  if(e.empty()) return true;
+  std::map<MVertex*, std::pair<MVertex*, MVertex*> > c;
   for (size_t i = 0; i<e.size();i++){
     MVertex *v0 = e[i].getVertex(0);
     MVertex *v1 = e[i].getVertex(1);
@@ -85,7 +81,6 @@ bool SortEdgeConsecutive (const std::vector<MEdge> &e,
   }
 
   while (!c.empty()){
-    //    printf("size of c is %d\n",c.size());
     std::vector<MVertex*> v;
     MVertex *start = NULL;
     {
@@ -95,16 +90,14 @@ bool SortEdgeConsecutive (const std::vector<MEdge> &e,
 	if (it->second.second == NULL){
 	  start = it->first;
 	  break;
-	}    
+	}
       }
     }
     std::map<MVertex*, std::pair<MVertex*,MVertex*> >::iterator it = c.find(start);
     MVertex *prev    = (it->second.second == start) ? it->second.first : it->second.second;
     MVertex *current = start;
     do {
-      //        printf("%d %d\n",prev?prev->getNum():-1,current->getNum());
       v.push_back(current);
-      //      if (v.size() == e.size() + 1)break;
       std::map<MVertex*, std::pair<MVertex*,MVertex*> >::iterator it = c.find(current);
       c.erase(it);
       MVertex *v1 = it->second.first;
@@ -119,10 +112,9 @@ bool SortEdgeConsecutive (const std::vector<MEdge> &e,
       if (current == start) {
 	v.push_back(current);
       }
-    }while (current != start && current != NULL);
-    //printf("something discovered of size %d\n",v.size());
+    } while (current != start && current != NULL);
     vs.push_back(v);
   }
-  //  printf("barlouf\n");
-  return true;    
+
+  return true;
 }

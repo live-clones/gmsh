@@ -118,7 +118,7 @@ int GFace::delEdge(GEdge* edge)
     pos++;
   }
   l_edges.erase(it);
-  
+
   std::list<int>::iterator itOri;
   int posOri = 0;
   int orientation = 0;
@@ -130,7 +130,7 @@ int GFace::delEdge(GEdge* edge)
     posOri++;
   }
   l_dirs.erase(itOri);
-  
+
   return orientation;
 }
 
@@ -1370,39 +1370,38 @@ static void meshCompound(GFace* gf, bool verbose)
 			     c->mesh_vertices.end());
     for (unsigned int j=0;j<c->triangles.size();j++){
       triangles_tag.push_back(c);
-      for (int k=0;k<3;k++){
+      for (int k = 0; k < 3; k++){
 	SPoint2 param;
 	reparamMeshVertexOnFace(c->triangles[j]->getVertex(k), c, param);
-	triangles_uv.push_back (param);
+	triangles_uv.push_back(param);
       }
     }
     c->triangles.clear();
     c->mesh_vertices.clear();
   }
 
-  
   df->createGeometry();
   df->mesh(verbose);
 
-  for (int i=0;i<df->mesh_vertices.size();i++){
+  for (int i = 0; i < df->mesh_vertices.size(); i++){
     double u,v;
-    df->mesh_vertices[i]->getParameter(0,u);
-    df->mesh_vertices[i]->getParameter(1,v);
+    df->mesh_vertices[i]->getParameter(0, u);
+    df->mesh_vertices[i]->getParameter(1, v);
     double U,V;
-    int position = df->trianglePosition(u,v,U,V);
-    if (position != -1) {
+    int position = df->trianglePosition(u, v, U, V);
+    if(position != -1) {
       triangles_tag[position]->mesh_vertices.push_back(df->mesh_vertices[i]);
       df->mesh_vertices[i]->setEntity(triangles_tag[position]);
       if (0 && triangles_tag[position]->geomType() != GEntity::DiscreteSurface){
 	SPoint2 p0 = triangles_uv[3*position + 0];
 	SPoint2 p1 = triangles_uv[3*position + 1];
 	SPoint2 p2 = triangles_uv[3*position + 2];
-	SPoint2 p = p0 *(1-U-V) + p1 * U + p2 * V; 
+	SPoint2 p = p0 *(1-U-V) + p1 * U + p2 * V;
 	GPoint gp = triangles_tag[position]->point(p);
 	df->mesh_vertices[i]->setParameter(0,p.x());
 	df->mesh_vertices[i]->setParameter(1,p.y());
-	df->mesh_vertices[i]->x() = gp.x(); 
-	df->mesh_vertices[i]->y() = gp.y(); 
+	df->mesh_vertices[i]->x() = gp.x();
+	df->mesh_vertices[i]->y() = gp.y();
 	df->mesh_vertices[i]->z() = gp.z();
       }
     }
@@ -1412,14 +1411,17 @@ static void meshCompound(GFace* gf, bool verbose)
     }
   }
 
-  for (int i=0;i<df->triangles.size();i++){
+  for (int i = 0; i < df->triangles.size(); i++){
     MTriangle *t = df->triangles[i];
-    if (t->getVertex(0)->onWhat()->dim() == 2)((GFace*)t->getVertex(0)->onWhat())->triangles.push_back(t);
-    else if (t->getVertex(1)->onWhat()->dim() == 2)((GFace*)t->getVertex(1)->onWhat())->triangles.push_back(t);
-    else if (t->getVertex(2)->onWhat()->dim() == 2)((GFace*)t->getVertex(2)->onWhat())->triangles.push_back(t);
-    else gf->triangles.push_back(t); /// FIXME COULD BE BETTER !
-  }  
-  //  gf->triangles = df->triangles;
+    if (t->getVertex(0)->onWhat()->dim() == 2)
+      ((GFace*)t->getVertex(0)->onWhat())->triangles.push_back(t);
+    else if (t->getVertex(1)->onWhat()->dim() == 2)
+      ((GFace*)t->getVertex(1)->onWhat())->triangles.push_back(t);
+    else if (t->getVertex(2)->onWhat()->dim() == 2)
+      ((GFace*)t->getVertex(2)->onWhat())->triangles.push_back(t);
+    else gf->triangles.push_back(t); // FIXME could be better!
+  }
+  // gf->triangles = df->triangles;
   df->triangles.clear();
   df->mesh_vertices.clear();
   delete df;
@@ -1432,7 +1434,7 @@ void GFace::mesh(bool verbose)
   meshGFace mesher;
   mesher(this, verbose);
   if(_compound.size()){ // Some faces are meshed together
-    if(_compound[0] == this){ //  I'm the one that makes the compound job
+    if(_compound[0] == this){ // I'm the one that makes the compound job
       bool ok = true;
       for(unsigned int i = 0; i < _compound.size(); i++){
 	GFace *gf = (GFace*)_compound[i];
@@ -1479,10 +1481,7 @@ void GFace::replaceEdges(std::list<GEdge*> &new_edges)
 
 void GFace::moveToValidRange(SPoint2 &pt) const
 {
-  //  printf("coucou %8d %12.5E %12.5E %d %d\n",
-  //	 tag(),pt.x(),pt.y(),
-  //	 periodic(0),periodic(1));
-  for(int i=0; i < 2; i++){
+  for(int i = 0; i < 2; i++){
     if(periodic(i)){
       Range<double> range = parBounds(i);
       double tol = 1e-6*(range.high()-range.low());
@@ -1622,7 +1621,8 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
                  "for periodic connection of surface %d to %d "
                  "using the specified transformation"
                  "Minimum distance is %g with a tolerance of %g",
-                 m_vertex->tag(),master->tag(),tag(),dist_min, CTX::instance()->geom.tolerance * CTX::instance()->lc);
+                 m_vertex->tag(), master->tag(), tag(), dist_min,
+                 CTX::instance()->geom.tolerance * CTX::instance()->lc);
       return;
     }
     gVertexCounterparts[l_vertex] = m_vertex;
@@ -1647,7 +1647,7 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
 
     std::pair<GVertex*,GVertex*> mPair(gVertexCounterparts[lPair.first],
                                        gVertexCounterparts[lPair.second]);
-		int sign = 1;
+    int sign = 1;
     std::map<std::pair<GVertex*,GVertex*>,GEdge*>::iterator mv2eIter = m_vtxToEdge.find(mPair);
     if (mv2eIter == m_vtxToEdge.end()) {
       sign *= -1;
@@ -1702,6 +1702,7 @@ struct myPlane {
     return n.x() * x + n.y() * y + n.z() * z + a;
   }
 };
+
 struct myLine {
   SPoint3 p;
   SVector3 t;
