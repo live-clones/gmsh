@@ -21,7 +21,7 @@
 @c =========================================================================
 @c %**starts of header
 @setfilename gmsh.info
-@set GMSH-VERSION 3.1
+@set GMSH-VERSION 4.0
 @set COPYRIGHT @copyright{} 1997-2018 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @settitle Gmsh @value{GMSH-VERSION}
 @footnotestyle separate
@@ -228,13 +228,13 @@ your own C++, C or Python code: @ref{Gmsh API}.) A brief description of
 the four modules is given hereafter.
 
 @menu
-* Geometry::                    
-* Mesh::                        
-* Solver::                      
-* Post-processing::             
-* What Gmsh is pretty good at::  
-* and what Gmsh is not so good at::  
-* Bug reports::                 
+* Geometry::
+* Mesh::
+* Solver::
+* Post-processing::
+* What Gmsh is pretty good at::
+* and what Gmsh is not so good at::
+* Bug reports::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -518,7 +518,7 @@ see @ref{Gmsh API} for more information.
 @c -------------------------------------------------------------------------
 
 @menu
-* Syntactic rules::             
+* Syntactic rules::
 @end menu
 
 @node Syntactic rules,  , How to read this manual?, How to read this manual?
@@ -562,11 +562,11 @@ preceding rule.
 @cindex Running Gmsh
 
 @menu
-* Interactive mode::            
-* Non-interactive mode::        
-* Command-line options::        
-* Mouse actions::               
-* Keyboard shortcuts::          
+* Interactive mode::
+* Non-interactive mode::
+* Command-line options::
+* Mouse actions::
+* Keyboard shortcuts::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -761,14 +761,14 @@ modules''. Commands peculiar to these modules will be introduced in
 @ref{Post-processing module}, respectively.
 
 @menu
-* Comments::                    
-* Expressions::                 
-* Operators::                   
-* Built-in functions::          
-* User-defined macros::         
-* Loops and conditionals::      
-* General commands::            
-* General options::             
+* Comments::
+* Expressions::
+* Operators::
+* Built-in functions::
+* User-defined macros::
+* Loops and conditionals::
+* General commands::
+* General options::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -812,9 +812,9 @@ The two constant types used in Gmsh scripts are @var{real} and
 meaning and syntax as in the C or C++ programming languages.
 
 @menu
-* Floating point expressions::  
-* Character expressions::       
-* Color expressions::           
+* Floating point expressions::
+* Character expressions::
+* Color expressions::
 @end menu
 
 @c .........................................................................
@@ -1829,8 +1829,8 @@ be assigned a unique tag. See @ref{Mesh module}, for more information
 about how physical entities affect the way meshes are saved.
 
 @menu
-* Geometry commands::           
-* Geometry options::            
+* Geometry commands::
+* Geometry options::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -1851,14 +1851,14 @@ is enclosed between parentheses. If an @var{expression} refers to a
 previously defined entity, it is enclosed between braces.''
 
 @menu
-* Points::                      
-* Curves::                       
-* Surfaces::                    
-* Volumes::                     
-* Extrusions::                  
-* Boolean operations::          
-* Transformations::             
-* Miscellaneous geometry commands::  
+* Points::
+* Curves::
+* Surfaces::
+* Volumes::
+* Extrusions::
+* Boolean operations::
+* Transformations::
+* Miscellaneous geometry commands::
 @end menu
 
 @c .........................................................................
@@ -2487,10 +2487,10 @@ algorithm can be quite poor.
 @c primitives, etc.)
 
 @menu
-* Choosing the right unstructured algorithm::  
-* Elementary vs physical entities::  
-* Mesh commands::               
-* Mesh options::                
+* Choosing the right unstructured algorithm::
+* Elementary vs physical entities::
+* Mesh commands::
+* Mesh options::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -2654,9 +2654,9 @@ given either in the GUI or on the command line (see @ref{Running Gmsh on
 your system}, and @ref{Command-line options}).
 
 @menu
-* Specifying mesh element sizes::  
-* Structured grids::            
-* Miscellaneous mesh commands::  
+* Specifying mesh element sizes::
+* Structured grids::
+* Miscellaneous mesh commands::
 @end menu
 
 @c .........................................................................
@@ -3118,7 +3118,7 @@ the sources of GetDP (@url{http://getdp.info} for a more comprehensive
 example.
 
 @menu
-* Solver options::              
+* Solver options::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -3210,9 +3210,9 @@ files). The ``parsed'' format is defined in the next section (cf. the
 @code{View} command); the MSH format is defined in @ref{File formats}.
 
 @menu
-* Post-processing commands::    
-* Post-processing plugins::     
-* Post-processing options::     
+* Post-processing commands::
+* Post-processing plugins::
+* Post-processing options::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -3538,8 +3538,8 @@ for some examples.
 
 This chapter describes Gmsh's native ``MSH'' file format, used to store
 meshes and associated post-processing datasets. The MSH format exists in
-two flavors: ASCII and binary. The format has a version number
-(currently: 2.2) that is independent of Gmsh's main version number.
+two flavors: ASCII and binary. The format has a version number that is
+independent of Gmsh's main version number.
 
 (Remember that for small post-processing datasets you can also use
 human-readable ``parsed'' post-processing views, as described in
@@ -3548,34 +3548,31 @@ underlying mesh, and can therefore be easier to use in some
 cases.)
 
 @menu
-* MSH ASCII file format::       
-* MSH binary file format::      
-* Node ordering::               
-* Legacy formats::              
+* MSH4 file format::
+* Node ordering::
+* Legacy formats::
 @end menu
 
 @c -------------------------------------------------------------------------
-@c MSH ASCII file format
+@c MSH4 file format
 @c -------------------------------------------------------------------------
 
-@node MSH ASCII file format, MSH binary file format, File formats, File formats
-@section MSH ASCII file format
+@node MSH4 file format, Node ordering, File formats, File formats
+@section MSH4 file format
 
 @cindex Mesh, file format
 @cindex File format, mesh
-@cindex MSH file
+@cindex MSH4 file
 
-The MSH ASCII file format contains one mandatory section giving
-information about the file (@code{$MeshFormat}), followed by several
-optional sections defining the nodes (@code{$Nodes}), elements
-(@code{$Elements}), region names (@code{$PhysicalName}), periodicity
-relations (@code{$Periodic}) and post-processing datasets
-(@code{$NodeData}, @code{$ElementData}, @code{$ElementNodeData}).
-
-When @code{$Elements} are given, @code{$Nodes} should also be provided,
-before the @code{$Elements} section. Currently only one @code{$Nodes}
-and one @code{$Elements} section are allowed per file. (This might/will
-change in the future.) 
+The MSH4 file format contains one mandatory section giving information
+about the file (@code{$MeshFormat}), followed by several sections
+defining the physical group names (@code{$PhysicalName}, optional), the
+entities (@code{Entities}), the partitioned entities
+(@code{PartitionedEntities}, optional), nodes (@code{$Nodes}), elements
+(@code{$Elements}), periodicity relations (@code{$Periodic}, optional),
+ghost elements (@code{GhostElements}, optional) and post-processing
+datasets (@code{$NodeData}, @code{$ElementData},
+@code{$ElementNodeData}, all optional).
 
 Important note about efficiency. Node and element tags can be "sparse",
 i.e., do not have to constitute a continuous list of indexes starting at
@@ -3595,120 +3592,153 @@ Sections can be repeated in the same file, and post-processing sections
 can be put into separate files (e.g. one file per time step).  Nodes are
 assumed to be defined before elements.
 
-The format is defined as follows:
-
 @example
-$MeshFormat
-@var{version-number} @var{file-type} @var{data-size}
+$MeshFormat // same as MSH2
+  version(double) binary(int) size(unsigned long)
+  <swapping bit for binary format>
 $EndMeshFormat
-$PhysicalNames
-@var{number-of-names}
-@var{physical-dimension} @var{physical-tag} "@var{physical-name}"
-@dots{}
-$EndPhysicalNames
+
+<$PhysicalNames> // same as MSH2
+  numPhysicalNames(int)
+  dimension(int) tag(int) name(127 characters max)
+  ...
+<$EndPhysicalNames>
+
+$Entities
+  numVertices(unsigned long) numEdges(unsigned long) 
+    numFaces(unsigned long) numRegions(unsigned long)
+  // vertices
+  tag(int) boxMinX(double) boxMinY(double) boxMinZ(double) 
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
+    numPhysicals(unsigned long) phyisicalTag[...](int)
+  ...
+  // edges
+  tag(int) boxMinX(double) boxMinY(double) boxMinZ(double)
+     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
+     numPhysicals(unsigned long) physicalTag[...](int) 
+     numBREPVert(unsigned long) tagBREPVert[...](int)
+  ...
+  // faces
+  tag(int) boxMinX(double) boxMinY(double) boxMinZ(double)
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
+    numPhysicals(unsigned long) physicalTag[...](int) 
+    numBREPEdge(unsigned long) tagBREPEdge[...](int)
+  ...
+  // regions
+  tag(int) boxMinX(double) boxMinY(double) boxMinZ(double) 
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
+    numPhysicals(unsigned long) physicalTag[...](int) 
+    numBREPFaces(unsigned long) tagBREPFaces[...](int)
+  ...
+$EndEntities
+
+<$PartitionedEntities>
+  numPartitions(int)
+  numGhostEntities(int)
+  ghostTag(int) ghostPart(int)
+  ...
+  numVertices(unsigned long) numEdges(unsigned long) 
+    numFaces(unsigned long) numRegions(unsigned long)
+  //vertices
+  tag(int) parentTag(int) numPartitions(int) partitionTag[...](int)
+    boxMinX(double) boxMinY(double) boxMinZ(double) 
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
+    numPhyiscals(unsigned long) physicalTag[...](int)
+  ...
+  //edges
+  tag(int) parentTag(int) numPartitions(int) partitionTag[...](int)
+    boxMinX(double) boxMinY(double) boxMinZ(double) 
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
+    numPhysicals(unsigned long) physicalTag[...](int)
+    numBREPVert(unsigned long) tagBREPVert[...](int)
+  ...
+  //faces
+  tag(int) parentTag(int) numPartitions(int) partitionTag[...](int) 
+    boxMinX(double) boxMinY(double) boxMinZ(double) 
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
+    numPhysicals(unsigned long) physicalTag[...](int) 
+    numBREPEdge(unsigned long) tagBREPEdge[...](int)
+  ...
+  //regions
+  tag(int) parentTag(int) numPartitions(int) partitionTag[...](int)
+    boxMinX(double) boxMinY(double) boxMinZ(double) 
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
+    numPhysicals(unsigned long) physicalTag[...](int) 
+    numBREPFaces(unsigned long) tagBREPFaces[...](int)
+  ...
+<$EndPartitionedEntities>
+
 $Nodes
-@var{number-of-nodes}
-@var{node-number} @var{x-coord} @var{y-coord} @var{z-coord}
-@dots{}
+  numEntityBlocks(unsigned long) numNodes(unsigned long)
+  tagEntity(int) dimEntity(int) typeNode(int) numNodes(unsigned long)
+    tag(int) x(double) y(double) z(double) 
+    ...
+  ...
 $EndNodes
+
 $Elements
-@var{number-of-elements}
-@var{elm-number} @var{elm-type} @var{number-of-tags} < @var{tag} > @dots{} @var{node-number-list}
-@dots{}
+  numEntityBlocks(unsigned long) numElements(unsigned long)
+  tagEntity(int) dimEntity(int) typeEle(int) numElements(unsigned long)
+    tag(int) numVert[...](int)
+    ...
+  ...
 $EndElements
-$Periodic
-@var{number-of-periodic-entities}
-@var{dimension} @var{slave-entity-tag} @var{master-entity-tag}
-@var{number-of-nodes}
-@var{slave-node-number master-node-number}
-@dots{}
-$EndPeriodic
-$NodeData
-@var{number-of-string-tags}
-< "@var{string-tag}" >
-@dots{}
-@var{number-of-real-tags}
-< @var{real-tag} >
-@dots{}
-@var{number-of-integer-tags}
-< @var{integer-tag} >
-@dots{}
-@var{node-number} @var{value} @dots{}
-@dots{}
-$EndNodeData
-$ElementData
-@var{number-of-string-tags}
-< "@var{string-tag}" >
-@dots{}
-@var{number-of-real-tags}
-< @var{real-tag} >
-@dots{}
-@var{number-of-integer-tags}
-< @var{integer-tag} >
-@dots{}
-@var{elm-number} @var{value} @dots{}
-@dots{}
-$EndElementData
-$ElementNodeData
-@var{number-of-string-tags}
-< "@var{string-tag}" >
-@dots{}
-@var{number-of-real-tags}
-< @var{real-tag} >
-@dots{}
-@var{number-of-integer-tags}
-< @var{integer-tag} >
-@dots{}
-@var{elm-number} @var{number-of-nodes-per-element} @var{value} @dots{}
-@dots{}
-$EndElementNodeData
-$InterpolationScheme
-"@var{name}"
-@var{number-of-element-topologies}
-@var{elm-topology}
-@var{number-of-interpolation-matrices}
-@var{num-rows} @var{num-columns} @var{value} @dots{}
-@dots{}
-$EndInterpolationScheme
+
+<$Periodic> // same as in MSH2 and MSH3
+  numPeriodicLinks(int)
+  slaveDim(int) slaveTag(int) masterTag(int)
+    < Affine values[...](double) >
+    correspondingVertexSize(unsigned long)
+      numVert(int) numVert(int)
+      ...
+  ...
+<$EndPeriodic>
+
+<$GhostElements>
+  numGhostElement(int)
+  elementTag(int) partition(int) GhostCellOwner(int) GhostCellOwnerPartition(int) ...
+<$EndGhostElements>
+
+<$NodeData>
+  numStringTags(int)
+  stringTag(string) ...
+  numRealTags(int)
+  realTag(double) ...
+  numIntegerTags(int)
+  integerTag(int) ...
+  nodeNumber(int) value(double) ...
+<$EndNodeData>
+
+<$ElementData>
+  numStringTags(int)
+  stringTag(string) ...
+  numRealTags(int)
+  realTag(double) ...
+  numIntegerTags(int)
+  integerTag(int) ...
+  elementNumber(int) value(double) ...
+<$EndElementData>
+
+<$ElementNodeData>
+  numStringTags(int)
+  stringTag(string) ...
+  numRealTags(int)
+  realTag(double) ...
+  numIntegerTags(int)
+  integerTag(int) ...
+  elementNumber(int) numNodesPerElement(int) value(double) ...
+<$EndElementNodeData>
+
+<$InterpolationScheme>
+  name(string)
+  numElementTopologies(int)
+  elementTopology
+  numInterpolationMatrices(int)
+  numRows(int) numColumns(int) value(double) ...
+<$EndInterpolationScheme>
 @end example
 
-@noindent
-where
-@table @code
-@item @var{version-number}
-is a real number equal to 2.2
-
-@item @var{file-type}
-is an integer equal to 0 in the ASCII file format.
-
-@item @var{data-size}
-is an integer equal to the size of the floating point numbers used in the
-file (currently only @var{data-size} = sizeof(double) is supported).
-
-@item @var{number-of-nodes}
-is the number of nodes in the mesh.
-
-@item @var{node-number}
-is the number (index) of the @var{n}-th node in the mesh;
-@var{node-number} must be a postive (non-zero) integer. Note that the
-@w{@var{node-number}s} do not necessarily have to form a dense nor an
-ordered sequence.
-
-@item @var{x-coord} @var{y-coord} @var{z-coord}
-are the floating point values giving the X, Y and Z coordinates of the
-@var{n}-th node.
-
-@item @var{number-of-elements}
-is the number of elements in the mesh.
-
-@item @var{elm-number}
-is the number (index) of the @var{n}-th element in the mesh;
-@var{elm-number} must be a postive (non-zero) integer. Note that the
-@w{@var{elm-number}s} do not necessarily have to form a dense nor an
-ordered sequence.
-
-@item @var{elm-type}
-defines the geometrical type of the @var{n}-th element:
+@code{typeEle} is e.g.:
 @table @code
 @item 1
 2-node line.
@@ -3804,226 +3834,14 @@ with the edges, 54 with the faces, 27 in the volume)
 @end table
 See below for the ordering of the nodes.
 
-@item @var{number-of-tags}
-gives the number of integer tags that follow for the @var{n}-th
-element. By default, the first @var{tag} is the tag of the physical
-entity to which the element belongs; the second is the tag of the
-elementary geometrical entity to which the element belongs; the third is
-the number of mesh partitions to which the element belongs, followed by
-the partition ids (negative partition ids indicate ghost cells). A zero
-tag is equivalent to no tag. Gmsh and most codes using the MSH 2 format
-require at least the first two tags (physical and elementary tags).
-
-@item @var{node-number-list}
-is the list of the node numbers of the @var{n}-th element. The ordering of
-the nodes is given in @ref{Node ordering}.
-
-@item @var{number-of-string-tags}
-gives the number of string tags that follow. By default the first
-@var{string-tag} is interpreted as the name of the post-processing view
-and the second as the name of the interpolation scheme. The
-interpolation scheme is provided in the @code{$InterpolationScheme}
-section (see below). 
-
-@item @var{number-of-real-tags}
-gives the number of real number tags that follow. By default the first
-@var{real-tag} is interpreted as a time value associated with the
-dataset.
-
-@item @var{number-of-integer-tags}
-gives the number of integer tags that follow. By default the first
-@var{integer-tag} is interpreted as a time step index (starting at 0),
-the second as the number of field components of the data in the view (1,
-3 or 9), the third as the number of entities (nodes or elements) in the
-view, and the fourth as the partition index for the view data (0 for no
-partition).
-
-@item @var{number-of-nodes-per-elements}
-gives the number of node values for an element in an element-based view.
-
-@item @var{value}
-is a real number giving the value associated with a node or an
-element. For @code{NodeData} (respectively @code{ElementData}) views,
-there are @var{ncomp} values per node (resp. per element), where
-@var{ncomp} is the number of field components. For
-@code{ElementNodeData} views, there are @var{ncomp} times
-@var{number-of-nodes-per-elements} values per element.
-
-@item @var{number-of-element-topologies}
-is the number of element topologies for which interpolation matrices are
-provided
-
-@item @var{elm-topology}
-is the id tag of a given element topology: 1 for points, 2 for lines, 3
-for triangles, 4 for quadrangles, 5 for tetrahedra, 6 for pyramids, 7
-for prisms, 8 for hexahedra, 9 for polygons and 10 for polyhedra.
-
-@item @var{number-of-interpolation-matrices} 
-is the number of interpolation matrices provided for the element
-topology @var{elm-topology}. Currently you should provide 2 matrices,
-i.e., the matrices that specify how to interpolate the data (they have
-the same meaning as in @ref{Post-processing commands}). The matrices are
-specified by 2 integers (@var{num-rows} and @var{num-columns}) followed
-by the values.
-
-@end table
-
-Below is a small example (a mesh consisting of two quadrangles with an
-associated nodal scalar dataset; the comments are not part of the actual
-file!):
-
-@smallexample
-$MeshFormat
-2.2 0 8
-$EndMeshFormat
-$Nodes
-6                      @emph{six mesh nodes:}
-1 0.0 0.0 0.0          @emph{  node #1: coordinates (0.0, 0.0, 0.0)}
-2 1.0 0.0 0.0          @emph{  node #2: coordinates (1.0, 0.0, 0.0)}
-3 1.0 1.0 0.0          @emph{  etc.}
-4 0.0 1.0 0.0
-5 2.0 0.0 0.0
-6 2.0 1.0 0.0
-$EndNodes
-$Elements
-2                      @emph{two elements:}
-1 3 2 99 2 1 2 3 4     @emph{  quad #1: type 3, physical 99, elementary 2, nodes 1 2 3 4}
-2 3 2 99 2 2 5 6 3     @emph{  quad #2: type 3, physical 99, elementary 2, nodes 2 5 6 3}
-$EndElements 
-$NodeData
-1                      @emph{one string tag:}
-"A scalar view"        @emph{  the name of the view ("A scalar view")}
-1                      @emph{one real tag:}
-0.0                    @emph{  the time value (0.0)}
-3                      @emph{three integer tags:}
-0                      @emph{  the time step (0; time steps always start at 0)}
-1                      @emph{  1-component (scalar) field}
-6                      @emph{  six associated nodal values}
-1 0.0                  @emph{value associated with node #1 (0.0)}
-2 0.1                  @emph{value associated with node #2 (0.1)}
-3 0.2                  @emph{etc.}
-4 0.0
-5 0.2
-6 0.4
-$EndNodeData 
-@end smallexample
-
-
-@c -------------------------------------------------------------------------
-@c MSH binary file format
-@c -------------------------------------------------------------------------
-
-@node MSH binary file format, Node ordering, MSH ASCII file format, File formats
-@section MSH binary file format
-
-The binary file format is similar to the ASCII format described above:
-
-@example
-$MeshFormat
-@var{version-number} @var{file-type} @var{data-size}
-@var{one-binary}
-$EndMeshFormat
-$Nodes
-@var{number-of-nodes}
-@var{nodes-binary}
-$EndNodes
-$Elements
-@var{number-of-elements}
-@var{element-header-binary}
-@var{elements-binary}
-@var{element-header-binary}
-@var{elements-binary}
-@dots{}
-$EndElements
-
-[ All other sections are identical to ASCII, except that @var{node-number},
-  @var{elm-number}, @var{number-of-nodes-per-element} and @var{values} are written in
-  binary format. Beware that all the $End tags must start on a new line. ]
-@end example
-
-@noindent
-where
-@table @code
-@item @var{version-number}
-is a real number equal to 2.2.
-
-@item @var{file-type}
-is an integer equal to 1.
-
-@item @var{data-size}
-has the same meaning as in the ASCII file format. Currently only
-@var{data-size} = sizeof(double) is supported.
-
-@item @var{one-binary}
-is an integer of value 1 written in binary form. This integer is used
-for detecting if the computer on which the binary file was written and
-the computer on which the file is read are of the same type (little or
-big endian).
-
-Here is a pseudo C code to write @var{one-binary}:
-@example
-int one = 1;
-fwrite(&one, sizeof(int), 1, file);
-@end example
-
-@item @var{number-of-nodes}
-has the same meaning as in the ASCII file format.
-
-@item @var{nodes-binary}
-is the list of nodes in binary form, i.e., a array of
-@var{number-of-nodes} * (4 + 3 * @var{data-size}) bytes. For each node,
-the first 4 bytes contain the node number and the next (3 *
-@var{data-size}) bytes contain the three floating point coordinates.
-
-Here is a pseudo C code to write @var{nodes-binary}:
-@example
-for(i = 0; i < number_of_nodes; i++)@{
-  fwrite(&num_i, sizeof(int), 1, file);
-  double xyz[3] = @{node_i_x, node_i_y, node_i_z@};
-  fwrite(xyz, sizeof(double), 3, file);
-@}
-@end example
-
-@item @var{number-of-elements}
-has the same meaning as in the ASCII file format.
-
-@item @var{element-header-binary}
-is a list of 3 integers in binary form, i.e., an array of (3 * 4) bytes:
-the first four bytes contain the type of the elements that follow (same
-as @var{elm-type} in the ASCII format), the next four contain the number
-of elements that follow, and the last four contain the number of tags
-per element (same as @var{number-of-tags} in the ASCII format).
-
-Here is a pseudo C code to write @var{element-header-binary}:
-@example
-int header[3] = @{elm_type, num_elm_follow, num_tags@};
-fwrite(header, sizeof(int), 3, file);
-@end example
-
-@item @var{elements-binary}
-is a list of elements in binary form, i.e., an array of ``number of
-elements that follow'' * (4 + @var{number-of-tags} * 4 +
-#@var{node-number-list} * 4) bytes. For each element, the first four
-bytes contain the element number, the next (@var{number-of-tags} * 4)
-contain the tags, and the last (#@var{node-number-list} * 4) contain the
-node indices.
-
-Here is a pseudo C code to write @var{elements-binary} for triangles
-with the 2 standard tags (the physical and elementary regions):
-@example
-for(i = 0; i < number_of_triangles; i++)@{
-  int data[6] = @{num_i, physical, elementary, 
-                 node_i_1, node_i_2, node_i_3@};
-  fwrite(data, sizeof(int), 6, file);
-@}
-@end example
-@end table
+The post-processing sections are identical to the ones in the MSH2 file
+format (see below).
 
 @c -------------------------------------------------------------------------
 @c Node ordering
 @c -------------------------------------------------------------------------
 
-@node Node ordering, Legacy formats, MSH binary file format, File formats
+@node Node ordering, Legacy formats, MSH4 file format, File formats
 @section Node ordering
 
 @cindex Nodes, ordering
@@ -4210,21 +4028,356 @@ This section describes Gmsh's older native file formats. Future versions
 of Gmsh will continue to support these formats, but we recommend that
 you do not use them in new applications.
 
-@c .........................................................................
-@c MSH file format version 1.0
-@c .........................................................................
-
 @menu
-* MSH file format version 1.0::  
-* POS ASCII file format::       
-* POS binary file format::      
+* MSH file format version 2::
+* MSH file format version 1::
+* POS ASCII file format::
+* POS binary file format::
 @end menu
 
-@node MSH file format version 1.0, POS ASCII file format, Legacy formats, Legacy formats
-@subsection MSH file format version 1.0 (Legacy)
+@c .........................................................................
+@c MSH file format version 2
+@c .........................................................................
 
-The MSH file format version 1.0 is Gmsh's old native mesh file format,
-now superseded by the format described in @ref{MSH ASCII file
+@node MSH file format version 2, MSH file format version 1, Legacy formats, Legacy formats
+@subsection MSH file format version 2
+
+The MSH file format version 2 is Gmsh's previous native mesh file
+format, now superseded by the format described in @ref{MSH4 file
+format}. It is defined as follows:
+
+The format is defined as follows:
+
+@example
+$MeshFormat
+@var{version-number} @var{file-type} @var{data-size}
+$EndMeshFormat
+$PhysicalNames
+@var{number-of-names}
+@var{physical-dimension} @var{physical-tag} "@var{physical-name}"
+@dots{}
+$EndPhysicalNames
+$Nodes
+@var{number-of-nodes}
+@var{node-number} @var{x-coord} @var{y-coord} @var{z-coord}
+@dots{}
+$EndNodes
+$Elements
+@var{number-of-elements}
+@var{elm-number} @var{elm-type} @var{number-of-tags} < @var{tag} > @dots{} @var{node-number-list}
+@dots{}
+$EndElements
+$Periodic
+@var{number-of-periodic-entities}
+@var{dimension} @var{slave-entity-tag} @var{master-entity-tag}
+@var{number-of-nodes}
+@var{slave-node-number master-node-number}
+@dots{}
+$EndPeriodic
+$NodeData
+@var{number-of-string-tags}
+< "@var{string-tag}" >
+@dots{}
+@var{number-of-real-tags}
+< @var{real-tag} >
+@dots{}
+@var{number-of-integer-tags}
+< @var{integer-tag} >
+@dots{}
+@var{node-number} @var{value} @dots{}
+@dots{}
+$EndNodeData
+$ElementData
+@var{number-of-string-tags}
+< "@var{string-tag}" >
+@dots{}
+@var{number-of-real-tags}
+< @var{real-tag} >
+@dots{}
+@var{number-of-integer-tags}
+< @var{integer-tag} >
+@dots{}
+@var{elm-number} @var{value} @dots{}
+@dots{}
+$EndElementData
+$ElementNodeData
+@var{number-of-string-tags}
+< "@var{string-tag}" >
+@dots{}
+@var{number-of-real-tags}
+< @var{real-tag} >
+@dots{}
+@var{number-of-integer-tags}
+< @var{integer-tag} >
+@dots{}
+@var{elm-number} @var{number-of-nodes-per-element} @var{value} @dots{}
+@dots{}
+$EndElementNodeData
+$InterpolationScheme
+"@var{name}"
+@var{number-of-element-topologies}
+@var{elm-topology}
+@var{number-of-interpolation-matrices}
+@var{num-rows} @var{num-columns} @var{value} @dots{}
+@dots{}
+$EndInterpolationScheme
+@end example
+
+@noindent
+where
+@table @code
+@item @var{version-number}
+is a real number equal to 2.2
+
+@item @var{file-type}
+is an integer equal to 0 in the ASCII file format.
+
+@item @var{data-size}
+is an integer equal to the size of the floating point numbers used in the
+file (currently only @var{data-size} = sizeof(double) is supported).
+
+@item @var{number-of-nodes}
+is the number of nodes in the mesh.
+
+@item @var{node-number}
+is the number (index) of the @var{n}-th node in the mesh;
+@var{node-number} must be a postive (non-zero) integer. Note that the
+@w{@var{node-number}s} do not necessarily have to form a dense nor an
+ordered sequence.
+
+@item @var{x-coord} @var{y-coord} @var{z-coord}
+are the floating point values giving the X, Y and Z coordinates of the
+@var{n}-th node.
+
+@item @var{number-of-elements}
+is the number of elements in the mesh.
+
+@item @var{elm-number}
+is the number (index) of the @var{n}-th element in the mesh;
+@var{elm-number} must be a postive (non-zero) integer. Note that the
+@w{@var{elm-number}s} do not necessarily have to form a dense nor an
+ordered sequence.
+
+@item @var{elm-type}
+defines the geometrical type of the @var{n}-th element: see @ref{MSH4
+file format}.
+
+@item @var{number-of-tags}
+gives the number of integer tags that follow for the @var{n}-th
+element. By default, the first @var{tag} is the tag of the physical
+entity to which the element belongs; the second is the tag of the
+elementary geometrical entity to which the element belongs; the third is
+the number of mesh partitions to which the element belongs, followed by
+the partition ids (negative partition ids indicate ghost cells). A zero
+tag is equivalent to no tag. Gmsh and most codes using the MSH 2 format
+require at least the first two tags (physical and elementary tags).
+
+@item @var{node-number-list}
+is the list of the node numbers of the @var{n}-th element. The ordering of
+the nodes is given in @ref{Node ordering}.
+
+@item @var{number-of-string-tags}
+gives the number of string tags that follow. By default the first
+@var{string-tag} is interpreted as the name of the post-processing view
+and the second as the name of the interpolation scheme. The
+interpolation scheme is provided in the @code{$InterpolationScheme}
+section (see below). 
+
+@item @var{number-of-real-tags}
+gives the number of real number tags that follow. By default the first
+@var{real-tag} is interpreted as a time value associated with the
+dataset.
+
+@item @var{number-of-integer-tags}
+gives the number of integer tags that follow. By default the first
+@var{integer-tag} is interpreted as a time step index (starting at 0),
+the second as the number of field components of the data in the view (1,
+3 or 9), the third as the number of entities (nodes or elements) in the
+view, and the fourth as the partition index for the view data (0 for no
+partition).
+
+@item @var{number-of-nodes-per-elements}
+gives the number of node values for an element in an element-based view.
+
+@item @var{value}
+is a real number giving the value associated with a node or an
+element. For @code{NodeData} (respectively @code{ElementData}) views,
+there are @var{ncomp} values per node (resp. per element), where
+@var{ncomp} is the number of field components. For
+@code{ElementNodeData} views, there are @var{ncomp} times
+@var{number-of-nodes-per-elements} values per element.
+
+@item @var{number-of-element-topologies}
+is the number of element topologies for which interpolation matrices are
+provided
+
+@item @var{elm-topology}
+is the id tag of a given element topology: 1 for points, 2 for lines, 3
+for triangles, 4 for quadrangles, 5 for tetrahedra, 6 for pyramids, 7
+for prisms, 8 for hexahedra, 9 for polygons and 10 for polyhedra.
+
+@item @var{number-of-interpolation-matrices} 
+is the number of interpolation matrices provided for the element
+topology @var{elm-topology}. Currently you should provide 2 matrices,
+i.e., the matrices that specify how to interpolate the data (they have
+the same meaning as in @ref{Post-processing commands}). The matrices are
+specified by 2 integers (@var{num-rows} and @var{num-columns}) followed
+by the values.
+
+@end table
+
+Below is a small example (a mesh consisting of two quadrangles with an
+associated nodal scalar dataset; the comments are not part of the actual
+file!):
+
+@smallexample
+$MeshFormat
+2.2 0 8
+$EndMeshFormat
+$Nodes
+6                      @emph{six mesh nodes:}
+1 0.0 0.0 0.0          @emph{  node #1: coordinates (0.0, 0.0, 0.0)}
+2 1.0 0.0 0.0          @emph{  node #2: coordinates (1.0, 0.0, 0.0)}
+3 1.0 1.0 0.0          @emph{  etc.}
+4 0.0 1.0 0.0
+5 2.0 0.0 0.0
+6 2.0 1.0 0.0
+$EndNodes
+$Elements
+2                      @emph{two elements:}
+1 3 2 99 2 1 2 3 4     @emph{  quad #1: type 3, physical 99, elementary 2, nodes 1 2 3 4}
+2 3 2 99 2 2 5 6 3     @emph{  quad #2: type 3, physical 99, elementary 2, nodes 2 5 6 3}
+$EndElements 
+$NodeData
+1                      @emph{one string tag:}
+"A scalar view"        @emph{  the name of the view ("A scalar view")}
+1                      @emph{one real tag:}
+0.0                    @emph{  the time value (0.0)}
+3                      @emph{three integer tags:}
+0                      @emph{  the time step (0; time steps always start at 0)}
+1                      @emph{  1-component (scalar) field}
+6                      @emph{  six associated nodal values}
+1 0.0                  @emph{value associated with node #1 (0.0)}
+2 0.1                  @emph{value associated with node #2 (0.1)}
+3 0.2                  @emph{etc.}
+4 0.0
+5 0.2
+6 0.4
+$EndNodeData 
+@end smallexample
+
+The binary file format is similar to the ASCII format described above:
+
+@example
+$MeshFormat
+@var{version-number} @var{file-type} @var{data-size}
+@var{one-binary}
+$EndMeshFormat
+$Nodes
+@var{number-of-nodes}
+@var{nodes-binary}
+$EndNodes
+$Elements
+@var{number-of-elements}
+@var{element-header-binary}
+@var{elements-binary}
+@var{element-header-binary}
+@var{elements-binary}
+@dots{}
+$EndElements
+
+[ All other sections are identical to ASCII, except that @var{node-number},
+  @var{elm-number}, @var{number-of-nodes-per-element} and @var{values} are written in
+  binary format. Beware that all the $End tags must start on a new line. ]
+@end example
+
+@noindent
+where
+@table @code
+@item @var{version-number}
+is a real number equal to 2.2.
+
+@item @var{file-type}
+is an integer equal to 1.
+
+@item @var{data-size}
+has the same meaning as in the ASCII file format. Currently only
+@var{data-size} = sizeof(double) is supported.
+
+@item @var{one-binary}
+is an integer of value 1 written in binary form. This integer is used
+for detecting if the computer on which the binary file was written and
+the computer on which the file is read are of the same type (little or
+big endian).
+
+Here is a pseudo C code to write @var{one-binary}:
+@example
+int one = 1;
+fwrite(&one, sizeof(int), 1, file);
+@end example
+
+@item @var{number-of-nodes}
+has the same meaning as in the ASCII file format.
+
+@item @var{nodes-binary}
+is the list of nodes in binary form, i.e., a array of
+@var{number-of-nodes} * (4 + 3 * @var{data-size}) bytes. For each node,
+the first 4 bytes contain the node number and the next (3 *
+@var{data-size}) bytes contain the three floating point coordinates.
+
+Here is a pseudo C code to write @var{nodes-binary}:
+@example
+for(i = 0; i < number_of_nodes; i++)@{
+  fwrite(&num_i, sizeof(int), 1, file);
+  double xyz[3] = @{node_i_x, node_i_y, node_i_z@};
+  fwrite(xyz, sizeof(double), 3, file);
+@}
+@end example
+
+@item @var{number-of-elements}
+has the same meaning as in the ASCII file format.
+
+@item @var{element-header-binary}
+is a list of 3 integers in binary form, i.e., an array of (3 * 4) bytes:
+the first four bytes contain the type of the elements that follow (same
+as @var{elm-type} in the ASCII format), the next four contain the number
+of elements that follow, and the last four contain the number of tags
+per element (same as @var{number-of-tags} in the ASCII format).
+
+Here is a pseudo C code to write @var{element-header-binary}:
+@example
+int header[3] = @{elm_type, num_elm_follow, num_tags@};
+fwrite(header, sizeof(int), 3, file);
+@end example
+
+@item @var{elements-binary}
+is a list of elements in binary form, i.e., an array of ``number of
+elements that follow'' * (4 + @var{number-of-tags} * 4 +
+#@var{node-number-list} * 4) bytes. For each element, the first four
+bytes contain the element number, the next (@var{number-of-tags} * 4)
+contain the tags, and the last (#@var{node-number-list} * 4) contain the
+node indices.
+
+Here is a pseudo C code to write @var{elements-binary} for triangles
+with the 2 standard tags (the physical and elementary regions):
+@example
+for(i = 0; i < number_of_triangles; i++)@{
+  int data[6] = @{num_i, physical, elementary, 
+                 node_i_1, node_i_2, node_i_3@};
+  fwrite(data, sizeof(int), 6, file);
+@}
+@end example
+@end table
+
+@c .........................................................................
+@c MSH file format version 1
+@c .........................................................................
+
+@node MSH file format version 1, POS ASCII file format, MSH file format version 2, Legacy formats
+@subsection MSH file format version 1
+
+The MSH file format version 1 is Gmsh's original native mesh file
+format, now superseded by the format described in @ref{MSH4 file
 format}. It is defined as follows:
 
 @example
@@ -4343,11 +4496,11 @@ element. The ordering of the nodes is given in @ref{Node ordering}.
 @c POS ASCII file format
 @c .........................................................................
 
-@node POS ASCII file format, POS binary file format, MSH file format version 1.0, Legacy formats
+@node POS ASCII file format, POS binary file format, MSH file format version 1, Legacy formats
 @subsection POS ASCII file format (Legacy)
 
 The POS ASCII file is Gmsh's old native post-processing format, now
-superseded by the format described in @ref{MSH ASCII file format}. It is
+superseded by the format described in @ref{MSH4 file format}. It is
 defined as follows:
 
 @example
@@ -4594,22 +4747,22 @@ system}. Screencasts that show how to use the GUI are available on
 @uref{http://gmsh.info/screencasts/}.
 
 @menu
-* t1.geo::                      
-* t2.geo::                      
-* t3.geo::                      
-* t4.geo::                      
-* t5.geo::                      
-* t6.geo::                      
-* t7.geo::                      
-* t8.geo::                      
-* t9.geo::                      
-* t10.geo::                     
-* t11.geo::                     
-* t12.geo::                     
-* t13.geo::                     
-* t14.geo::                     
-* t15.geo::                     
-* t16.geo::                     
+* t1.geo::
+* t2.geo::
+* t3.geo::
+* t4.geo::
+* t5.geo::
+* t6.geo::
+* t7.geo::
+* t8.geo::
+* t9.geo::
+* t10.geo::
+* t11.geo::
+* t12.geo::
+* t13.geo::
+* t14.geo::
+* t15.geo::
+* t16.geo::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -4785,11 +4938,11 @@ by hand.
 @c All the included files are generated automatically with `gmsh -doc'
 
 @menu
-* General options list::        
-* Geometry options list::       
-* Mesh options list::           
-* Solver options list::         
-* Post-processing options list::  
+* General options list::
+* Geometry options list::
+* Mesh options list::
+* Solver options list::
+* Post-processing options list::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -4955,9 +5108,9 @@ contains instructions on how to create feature branches and submit merge
 requests.
 
 @menu
-* Source code structure::       
-* Coding style::                
-* Adding a new option::         
+* Source code structure::
+* Coding style::
+* Adding a new option::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -5095,13 +5248,13 @@ optional: create the associated widget in
 @cindex FAQ
 
 @menu
-* The basics::                  
-* Installation problems::       
-* General questions::           
-* Geometry module questions::   
-* Mesh module questions::       
-* Solver module questions::     
-* Post-processing module questions::  
+* The basics::
+* Installation problems::
+* General questions::
+* Geometry module questions::
+* Mesh module questions::
+* Solver module questions::
+* Post-processing module questions::
 @end menu
 
 @c -------------------------------------------------------------------------
