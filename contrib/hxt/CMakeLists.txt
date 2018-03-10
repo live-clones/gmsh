@@ -6,6 +6,7 @@
 set(SRC
   hxt_bbox.c
   hxt_context.c
+  hxt_curvature.c
   hxt_edge.c
   hxt_linear_system.c
   hxt_linear_system_lu.c

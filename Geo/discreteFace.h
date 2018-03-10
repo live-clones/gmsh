@@ -23,6 +23,7 @@ extern "C" {
 #include "hxt_mesh.h"
 #include "hxt_parametrization.h"
 #include "hxt_linear_system.h"
+#include "hxt_curvature.h"
 }
 class hxt_reparam_surf {
 public:

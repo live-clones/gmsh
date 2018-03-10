@@ -10,7 +10,6 @@
 #include "GModelIO_GEO.h"
 #include "Geo.h"
 #include "Context.h"
-#include "OS.h"
 #include "MPoint.h"
 
 #include "MElementOctree.h"
@@ -1095,6 +1094,12 @@ HXTStatus discreteFace::reparametrize_through_hxt()
                                       &nodes, &uv, &nc,&m));
   HXT_CHECK(hxtParametrizationWrite(parametrization, "hop"));
 
+  // compute curvatures
+  HXTEdges* edges;
+  double *crossField,*nodalCurvatures;
+  HXT_CHECK(hxtEdgesCreate(m,&edges));
+  HXT_CHECK(hxtCurvatureRusinkiewicz (m, &nodalCurvatures, &crossField, edges, true));
+  
   _parametrizations.resize(nc);
   std::vector<std::vector<MEdge> > boundaries (nc);
   std::vector<std::vector<MEdge> > internals (nc);
