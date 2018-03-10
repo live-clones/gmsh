@@ -20,9 +20,6 @@
 #include "rtree.h"
 class MElementOctree;
 extern "C" {
-#ifndef __func__
-#define __func__ ""
-#endif
 #include "hxt_mesh.h"
 #include "hxt_parametrization.h"
 #include "hxt_linear_system.h"
