@@ -52,6 +52,7 @@ opt(GETDP "Enable GetDP solver (as a directly linked library)" ${DEFAULT})
 opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
 opt(GMP "Enable GMP for Kbipack (advanced)" ON)
 opt(GRAPHICS "Enable building graphics lib even without GUI (advanced)" OFF)
+opt(HXT "Enable HXT library" ${DEFAULT})
 opt(INTERNAL_DEVELOPER_API "Enable internal developer API" OFF)
 opt(KBIPACK "Enable Kbipack (neeeded by homology solver)" ${DEFAULT})
 opt(MATHEX "Enable math expression parser (used by plugins and options)" ${DEFAULT})
@@ -1046,6 +1047,14 @@ if(HAVE_SOLVER)
     endif(GETDP_LIB AND GETDP_INC)
   endif(ENABLE_GETDP)
 endif(HAVE_SOLVER)
+
+
+if (ENABLE_HXT)
+  set_config_option(HAVE_HXT "Hxt")
+  add_subdirectory(contrib/hxt)
+  include_directories(BEFORE contrib/hxt)
+ endif(ENABLE_HXT)
+
 
 if(ENABLE_OCC)
   set(OCC_MINIMAL_VERSION "6.9.1")

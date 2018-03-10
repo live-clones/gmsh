@@ -1593,21 +1593,22 @@ void GModel::_createGeometryOfDiscreteEntities(bool force)
     createTopologyFromMeshNew();
     exportDiscreteGEOInternals();
   }
-  if(force || CTX::instance()->meshDiscrete){
-    Msg::Info("Creating the geometry of discrete curves");
-    for(eiter it = firstEdge(); it != lastEdge(); ++it){
-      if((*it)->geomType() == GEntity::DiscreteCurve) {
-	discreteEdge *de = dynamic_cast<discreteEdge*> (*it);
-	if(de) de->createGeometry();
-      }
-    }
-  }
-  if(CTX::instance()->meshDiscrete){
+  //  return;
+  if (CTX::instance()->meshDiscrete){
     Msg::Info("Creating the geometry of discrete surfaces");
     for(fiter it = firstFace(); it != lastFace(); ++it){
       if((*it)->geomType() == GEntity::DiscreteSurface) {
 	discreteFace *df = dynamic_cast<discreteFace*> (*it);
 	if(df) df->createGeometry();
+      }
+    }
+  }
+  if (force || CTX::instance()->meshDiscrete){
+    Msg::Info("Creating the geometry of discrete curves");
+    for(eiter it = firstEdge(); it != lastEdge(); ++it){
+      if((*it)->geomType() == GEntity::DiscreteCurve) {
+	discreteEdge *de = dynamic_cast<discreteEdge*> (*it);
+	if(de) de->createGeometry();
       }
     }
   }

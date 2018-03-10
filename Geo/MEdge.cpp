@@ -7,6 +7,8 @@
 #include "MEdge.h"
 #include "Numeric.h"
 
+// FIXME
+// remove that when MElementCut is removed
 bool MEdge::isInside(MVertex *v) const
 {
   double tol = MVertexLessThanLexicographic::getTolerance();
@@ -62,3 +64,57 @@ bool MEdge::isInside(MVertex *v) const
   return true;
 }
 
+bool SortEdgeConsecutive(const std::vector<MEdge> &e,
+                         std::vector<std::vector<MVertex*> >&vs)
+{
+  if(e.empty()) return true;
+  std::map<MVertex*, std::pair<MVertex*, MVertex*> > c;
+  for (size_t i = 0; i<e.size();i++){
+    MVertex *v0 = e[i].getVertex(0);
+    MVertex *v1 = e[i].getVertex(1);
+    std::map<MVertex*, std::pair<MVertex*,MVertex*> >::iterator it0 = c.find(v0);
+    std::map<MVertex*, std::pair<MVertex*,MVertex*> >::iterator it1 = c.find(v1);
+    if (it0 == c.end()) c[v0] = std::make_pair(v1,(MVertex*)NULL);
+    else it0->second.second = v1;
+    if (it1 == c.end()) c[v1] = std::make_pair(v0,(MVertex*)NULL);
+    else it1->second.second = v0;
+  }
+
+  while (!c.empty()){
+    std::vector<MVertex*> v;
+    MVertex *start = NULL;
+    {
+      std::map<MVertex*, std::pair<MVertex*,MVertex*> >::iterator it = c.begin();
+      start = it->first;
+      for (; it != c.end(); ++it) {
+	if (it->second.second == NULL){
+	  start = it->first;
+	  break;
+	}
+      }
+    }
+    std::map<MVertex*, std::pair<MVertex*,MVertex*> >::iterator it = c.find(start);
+    MVertex *prev    = (it->second.second == start) ? it->second.first : it->second.second;
+    MVertex *current = start;
+    do {
+      v.push_back(current);
+      std::map<MVertex*, std::pair<MVertex*,MVertex*> >::iterator it = c.find(current);
+      c.erase(it);
+      MVertex *v1 = it->second.first;
+      MVertex *v2 = it->second.second;
+      MVertex *temp = current;
+      if (v1 == prev)current = v2;
+      else if (v2 == prev)current = v1;
+      else {
+	break;
+      }
+      prev = temp;
+      if (current == start) {
+	v.push_back(current);
+      }
+    } while (current != start && current != NULL);
+    vs.push_back(v);
+  }
+
+  return true;
+}

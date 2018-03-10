@@ -23,7 +23,7 @@
 #include "MQuadrangle.h"
 #include "Field.h"
 #include "GModel.h"
-#include "discreteDiskFace.h"
+#include "discreteFace.h"
 #include "intersectCurveSurface.h"
 #include "HilbertCurve.h"
 
@@ -32,6 +32,18 @@ static int  N_GLOBAL_SEARCH;
 static int  N_SEARCH;
 static double DT_INSERT_VERTEX;
 int MTri3::radiusNorm = 2;
+
+
+static inline bool intersection_segments_2(double *p1, double* p2, double *q1, double *q2)
+{
+  double a = robustPredicates::orient2d(p1,p2,q1);
+  double b = robustPredicates::orient2d(p1,p2,q2);
+  if (a*b > 0)return 0;
+  a = robustPredicates::orient2d(q1,q2,p1);
+  b = robustPredicates::orient2d(q1,q2,p2);
+  if (a*b > 0)return 0;
+  return 1;
+}
 
 template <class ITERATOR>
 void _printTris(char *name, ITERATOR it,  ITERATOR end, bidimMeshData * data)
@@ -881,8 +893,7 @@ static MTri3* search4Triangle(MTri3 *t, MVertex *v, int maxx, int &ITER)
       MVertex *v2 = t->tri()->getVertex(i2);
       SPoint3 p1 (v1->x(),v1->y(),0);
       SPoint3 p2 (v2->x(),v2->y(),0);
-      double xcc[2];
-      if (intersection_segments(p1, p2, q1, q2, xcc)) break;
+      if (intersection_segments_2(p1, p2, q1, q2)) break;
     }
     if (i >= 3) break;
     t = t->getNeigh(i);
@@ -920,14 +931,12 @@ static MTri3* search4Triangle(MTri3 *t, double pt[2], bidimMeshData & data,
       int i2 = data.getIndex (t->tri()->getVertex(i) );
       SPoint3 p1 (data.Us[i1],data.Vs[i1],0);
       SPoint3 p2 (data.Us[i2],data.Vs[i2],0);
-      double xcc[2];
-      if (intersection_segments(p1, p2, q1, q2, xcc)) break;
+      if (intersection_segments_2(p1, p2, q1, q2)) break;
     }
-    if (i >= 3) break;
+    if (i >= 3) { printf("impossible\n");break;}
     t = t->getNeigh(i);
     if (!t) break;
     bool inside = invMapUV(t->tri(), pt, data, uv, 1.e-8);
-    //    printf("ITER %d %d\n",ITER,inside);
     if (inside) return t;
     if (ITER++ > (int)AllTris.size()) break;
   }
@@ -944,6 +953,7 @@ static MTri3* search4Triangle(MTri3 *t, double pt[2], bidimMeshData & data,
       }
     }
   }
+  printf("argh %g %g!!!!\n",pt[0],pt[1]);
   return 0;
 }
 
@@ -1024,8 +1034,6 @@ static bool insertAPoint(GFace *gf,
                                         oneNewTriangle)) {
       Msg::Debug("Point %g %g cannot be inserted because %d",
 		 center[0], center[1], p.succeeded() );
-      // printf("Point %g %g cannot be inserted because %d",
-      //        center[0], center[1], p.succeeded() );
       AllTris.erase(it);
       worst->forceRadius(-1);
       AllTris.insert(worst);
@@ -1043,9 +1051,7 @@ static bool insertAPoint(GFace *gf,
     }
   }
   else {
-    //    MTriangle *base = worst->tri();
-    for (std::list<MTri3*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc)
-      (*itc)->setDeleted(false);
+    for (std::list<MTri3*>::iterator itc = cavity.begin(); itc != cavity.end(); ++itc)(*itc)->setDeleted(false);
     AllTris.erase(it);
     worst->forceRadius(0);
     AllTris.insert(worst);
@@ -1315,18 +1321,14 @@ bool optimalPointFrontalB(GFace *gf,
   // we look for a point that is
   // P = d * (n1 cos(t) + n2 sin(t)) that is on the surface
   // so we have to find t, starting with t = 0
+  //  return true;
 
-
-#if defined(HAVE_ANN) && defined(HAVE_SOLVER)
-  if (gf->geomType() == GEntity::DiscreteDiskSurface){
-    discreteDiskFace *ddf = dynamic_cast<discreteDiskFace*> (gf);
+#if defined(HAVE_HXT)
+  if (gf->geomType() == GEntity::DiscreteSurface){
+    discreteFace *ddf = dynamic_cast<discreteFace*> (gf);
     if (ddf){
       GPoint gp = ddf->intersectionWithCircle(n1,n2,middle,d,newPoint);
-      if (gp.succeeded()){
-	newPoint[0] = gp.u();
-	newPoint[1] = gp.v();
-	return true;
-      }
+      if (gp.succeeded())return true;
       return false;
     }
   }
@@ -1377,7 +1379,7 @@ void bowyerWatsonFrontal(GFace *gf,
   while (1){
     ++ITERATION;
     /*
-      if(ITERATION % 10== 0 && CTX::instance()->mesh.saveAll){
+      if(ITERATION % 1== 0 && CTX::instance()->mesh.saveAll){
       char name[245];
       sprintf(name,"delFrontal_GFace_%d_Layer_%d.pos",gf->tag(),ITERATION);
       _printTris (name, AllTris.begin(), AllTris.end(), &DATA);
@@ -1385,6 +1387,7 @@ void bowyerWatsonFrontal(GFace *gf,
       _printTris (name, ActiveTris.begin(), ActiveTris.end(), &DATA);
       }
     */
+    //    printf("%d active tris \n",ActiveTris.size());
     if (!ActiveTris.size())break;
     MTri3 *worst = (*ActiveTris.begin());
     ActiveTris.erase(ActiveTris.begin());
@@ -1401,7 +1404,7 @@ void bowyerWatsonFrontal(GFace *gf,
       }
     }
   }
-
+  
   nbSwaps = edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
 
   transferDataStructure(gf, AllTris, DATA);

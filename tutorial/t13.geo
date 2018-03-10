@@ -10,7 +10,7 @@
 // them to remesh STL files, even if in this case there's usually only a single
 // elementary geometrical entity per compound.
 
-// FIXME: compute parametrization of discrete surfaces read from mesh file
+// Compute parametrization of discrete surfaces read from mesh file
 General.MeshDiscrete = 1;
 
 // Let's merge the mesh that we would like to remesh. This mesh was reclassified
@@ -26,9 +26,8 @@ ss[] = Surface {:};
 // discrete):
 Compound Surface{ss[]};
 
-// FIXME: re-add this when we use a good parametrization
-//Surface Loop(1) = {ss[]};
-//Volume(1) = {1};
+Surface Loop(1) = {ss[]};
+Volume(1) = {1};
 
 // element size imposed by a size field
 Field[1] = MathEval;

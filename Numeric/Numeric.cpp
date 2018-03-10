@@ -1302,6 +1302,7 @@ int intersection_segments(const SPoint2 &p1, const SPoint2 &p2,
                           const SPoint2 &q1, const SPoint2 &q2,
                           double x[2])
 {
+
   double xp_max = std::max(p1.x(), p2.x());
   double yp_max = std::max(p1.y(), p2.y());
   double xq_max = std::max(q1.x(), q2.x());
