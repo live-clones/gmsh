@@ -2253,12 +2253,12 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
 void computeAdjacencies(VecPairMElemVecMElem &bndEl2column,
                         std::vector<std::pair<int, int> > &adjacencies)
 {
-  std::map<MEdge, int> edge2element;
+  std::map<MEdge, int, Less_Edge> edge2element;
   for (unsigned int i = 0; i < bndEl2column.size(); ++i) {
     MElement *el = bndEl2column[i].first;
     for (unsigned int j = 0; j < el->getNumEdges(); ++j) {
       MEdge e = el->getEdge(j);
-      std::map<MEdge, int>::iterator it = edge2element.find(e);
+      std::map<MEdge, int, Less_Edge>::iterator it = edge2element.find(e);
       if (it != edge2element.end()) {
         adjacencies.push_back(std::make_pair(i, it->second));
         // This is for debug purpose, we expect that two elements at most
