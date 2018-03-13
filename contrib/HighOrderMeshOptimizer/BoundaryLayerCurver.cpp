@@ -2273,13 +2273,65 @@ void computeAdjacencies(VecPairMElemVecMElem &bndEl2column,
 }
 
 
+bool areSameFaces(MFace &f1, MFace &f2)
+{
+  int nVertices = f1.getNumVertices();
+  if (f2.getNumVertices() != nVertices) return false;
+
+  MVertex *v = f1.getVertex(0);
+
+  // Find the vertex in f2
+  int k = 0;
+  while (k < nVertices && f2.getVertex(k) != v) ++k;
+  if (k == nVertices) return false;
+
+  // Just in case
+  if (nVertices == 1) return true;
+
+  // Determine which orientation
+  int inc = 0;
+  if (f2.getVertex((k+1)%nVertices) == f1.getVertex(1)) inc = 1;
+  else if (f2.getVertex((k+nVertices-1)%nVertices) == f1.getVertex(1)) inc = -1;
+  if (inc == 0) return false;
+
+  for (int i = 2; i < nVertices; ++i) {
+    if (f1.getVertex(i) != f2.getVertex((k+nVertices+inc*i) % nVertices))
+      return false;
+  }
+  return true;
+}
+
+
+bool computeCommonFace(MElement *e1, MElement *e2, MFace &f)
+{
+  for (int i = 0; i < e1->getNumFaces(); ++i) {
+    f = e1->getFace(i);
+    for (int j = 0; j < e2->getNumFaces(); ++j) {
+      MFace f2 = e2->getFace(j);
+      if (areSameFaces(f, f2)) return true;
+    }
+  }
+  f = MFace();
+  return false;
+}
+
+
+bool faceContainsVertex(MFace &f, MVertex *v)
+{
+  for (int i = 0; i < f.getNumVertices(); ++i) {
+    if (f.getVertex(i) == v) return true;
+  }
+  return false;
+}
+
+
 void computeStackPrimaryVertices(PairMElemVecMElem &c1,
                                  std::vector<MVertex*> &stack)
 {
   int numVertexPerLayer = c1.first->getNumVertices();
-  int numLayers = (int) c1.second.size();
+  unsigned int numLayers = (int) c1.second.size();
   stack.clear();
-  stack.resize((unsigned int) numVertexPerLayer * (numLayers + 1));
+  stack.resize(numVertexPerLayer * (numLayers + 1));
   for (unsigned int i = 0; i < stack.size(); ++i) {
     stack[i] = NULL;
   }
@@ -2288,12 +2340,51 @@ void computeStackPrimaryVertices(PairMElemVecMElem &c1,
   for (int i = 0; i < numVertexPerLayer; ++i) {
     stack[k++] = c1.first->getVertex(i);
   }
-  for (int i = 0; i < numLayers; ++i) {
-    // compute bottom face and top faces
-    // then loop on edges of current element.
-      // if not in bootom or top
-      // add new vertex
-    // for empty vertex, copy bottom
+  MFace bottomFace = c1.first->getFace(0);
+  for (unsigned int i = 0; i < numLayers; ++i) {
+    MElement *currentElement = c1.second[i];
+    MFace topFace;
+    if (!computeCommonFace(currentElement, c1.second[i+1], topFace)) {
+      Msg::Error("Did not find common face");
+    }
+
+    // For every edge that is not in bottom face nor in top face,
+    // the top node is the node of the edge not contained in bottom face
+    for (int j = 0; j < currentElement->getNumEdges(); ++j) {
+      MEdge edge = currentElement->getEdge(j);
+      bool v0InBottomFace = faceContainsVertex(bottomFace, edge.getVertex(0));
+      bool v1InBottomFace = faceContainsVertex(bottomFace, edge.getVertex(1));
+      bool v0InTopFace = faceContainsVertex(topFace, edge.getVertex(0));
+      bool v1InTopFace = faceContainsVertex(topFace, edge.getVertex(1));
+      if (   (v0InBottomFace && v1InBottomFace)
+          || (v0InTopFace && v1InTopFace)      ) continue;
+
+      MVertex *vbot, *vtop;
+      if (v0InBottomFace) {
+        vbot = edge.getVertex(0);
+        vtop = edge.getVertex(1);
+      }
+      else {
+        vbot = edge.getVertex(1);
+        vtop = edge.getVertex(0);
+      }
+
+      for (int l = k-numVertexPerLayer; l < k; ++l) {
+        if (stack[l] == vbot) {
+          stack[l+numVertexPerLayer] = vtop;
+        }
+      }
+    }
+
+    // If there remains NULL values, it is because the vertex is the same
+    // on bottom face and top face.
+    for (int l = k; l < k+numVertexPerLayer; ++l) {
+      if (stack[l] == NULL) {
+        stack[l] = stack[l-numVertexPerLayer];
+      }
+    }
+
+    k += numVertexPerLayer;
   }
 }
 
@@ -2301,6 +2392,7 @@ void computeStackPrimaryVertices(PairMElemVecMElem &c1,
 void computeInterface(PairMElemVecMElem &c1, PairMElemVecMElem &c2,
                       MEdge &bottomEdge, std::vector<MElement*> &interface)
 {
+  // Find common edge on boundary
   MElement *bottomElement1 = c1.first;
   MElement *bottomElement2 = c2.first;
   bool foundCommon = false;
@@ -2315,21 +2407,75 @@ void computeInterface(PairMElemVecMElem &c1, PairMElemVecMElem &c2,
     }
     if (foundCommon) break;
   }
-
   if (!foundCommon) {
     Msg::Error("Couldn't find common edge on bottom elements");
     return;
   }
 
-  std::vector<MElement*> stack;
-  if (c1.second.size() < c2.second.size())
-    stack = c2.second;
-  else
-    stack = c1.second;
+  // Choose biggest column
+  PairMElemVecMElem column;
+  std::vector<MElement*> stackElements;
+  MElement *bottomElement;
+  if (c1.second.size() < c2.second.size()) {
+    column = c2;
+    stackElements = c2.second;
+    bottomElement = bottomElement2;
+  }
+  else {
+    column = c1;
+    stackElements = c1.second;
+    bottomElement = bottomElement1;
+  }
 
+  // Compute stack of Primary vertices
+  std::vector<MVertex*> allPrimaryVertices;
+  computeStackPrimaryVertices(column, allPrimaryVertices);
+
+  std::vector<MVertex*> interfacePrimaryVertices;
+  {
+    int nVertexPerLayer = bottomElement->getNumVertices();
+    int n0 = -1;
+    int n1 = -1;
+    for (int i = 0; i < nVertexPerLayer; ++i) {
+      if (bottomEdge.getVertex(0) == allPrimaryVertices[i]) n0 = i;
+      if (bottomEdge.getVertex(1) == allPrimaryVertices[i]) n1 = i;
+    }
+    if (n0 == -1 || n1 == -1) {
+      Msg::Error("Error in computeInterface");
+      return;
+    }
+    interfacePrimaryVertices.resize(2*(stackElements.size()+1));
+    for (unsigned int i = 0; i < stackElements.size()+1; ++i) {
+      interfacePrimaryVertices[2*i+0] = allPrimaryVertices[nVertexPerLayer*i+n0];
+      interfacePrimaryVertices[2*i+1] = allPrimaryVertices[nVertexPerLayer*i+n1];
+    }
+  }
+
+  // Compute interface
   interface.clear();
-  for (int i = 0; i < c1.second.size(); ++i) {
-
+  for (int i = 0; i < stackElements.size(); ++i) {
+    MVertex *v0 = interfacePrimaryVertices[2*i+0];
+    MVertex *v1 = interfacePrimaryVertices[2*i+1];
+    MVertex *v2 = interfacePrimaryVertices[2*i+3];
+    MVertex *v3 = interfacePrimaryVertices[2*i+2];
+    if (v2 == v1 && v3 == v0) {
+      Msg::Error("Error in computeInterface: not an element");
+    }
+    if (v2 == v1) {
+      v2 = v3;
+      v3 = NULL;
+    }
+    else if (v3 == v0) {
+      v3 = NULL;
+    }
+    if (v3 == NULL) {
+      // TODO: insert HO elements!!!!
+      interface.push_back(new MTriangle(v0, v1, v2));
+    }
+    else {
+      // TODO: insert HO elements!!!!
+      interface.push_back(new MQuadrangle(v0, v1, v2, v3));
+    }
   }
 }
 
