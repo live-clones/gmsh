@@ -2273,12 +2273,73 @@ void computeAdjacencies(VecPairMElemVecMElem &bndEl2column,
 }
 
 
+void computeStackPrimaryVertices(PairMElemVecMElem &c1,
+                                 std::vector<MVertex*> &stack)
+{
+  int numVertexPerLayer = c1.first->getNumVertices();
+  int numLayers = (int) c1.second.size();
+  stack.clear();
+  stack.resize((unsigned int) numVertexPerLayer * (numLayers + 1));
+  for (unsigned int i = 0; i < stack.size(); ++i) {
+    stack[i] = NULL;
+  }
+
+  int k = 0;
+  for (int i = 0; i < numVertexPerLayer; ++i) {
+    stack[k++] = c1.first->getVertex(i);
+  }
+  for (int i = 0; i < numLayers; ++i) {
+    // compute bottom face and top faces
+    // then loop on edges of current element.
+      // if not in bootom or top
+      // add new vertex
+    // for empty vertex, copy bottom
+  }
+}
+
+
+void computeInterface(PairMElemVecMElem &c1, PairMElemVecMElem &c2,
+                      MEdge &bottomEdge, std::vector<MElement*> &interface)
+{
+  MElement *bottomElement1 = c1.first;
+  MElement *bottomElement2 = c2.first;
+  bool foundCommon = false;
+  for (int i = 0; i < bottomElement1->getNumEdges(); ++i) {
+    bottomEdge = bottomElement1->getEdge(i);
+    for (int j = 0; j < bottomElement2->getNumEdges(); ++j) {
+      MEdge thisEdge = bottomElement2->getEdge(j);
+      if (thisEdge == bottomEdge) {
+        foundCommon = true;
+        break;
+      }
+    }
+    if (foundCommon) break;
+  }
+
+  if (!foundCommon) {
+    Msg::Error("Couldn't find common edge on bottom elements");
+    return;
+  }
+
+  std::vector<MElement*> stack;
+  if (c1.second.size() < c2.second.size())
+    stack = c2.second;
+  else
+    stack = c1.second;
+
+  interface.clear();
+  for (int i = 0; i < c1.second.size(); ++i) {
+
+  }
+}
+
+
 // compute then curve interfaces between columns
 void curveInterfaces(VecPairMElemVecMElem &bndEl2column,
                      std::vector<std::pair<int, int> > &adjacencies)
 {
   for (unsigned int i = 0; i < adjacencies.size(); ++i) {
-    MElement *bottomEdge;
+    MEdge bottomEdge;
     std::vector<MElement*> column;
 //    computeInterface(bndEl2column[adjacencies[i].first],
 //                     bndEl2column[adjacencies[i].second],
