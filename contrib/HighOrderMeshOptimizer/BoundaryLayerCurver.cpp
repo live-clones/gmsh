@@ -2328,10 +2328,10 @@ bool faceContainsVertex(MFace &f, MVertex *v)
 void computeStackPrimaryVertices(PairMElemVecMElem &c1,
                                  std::vector<MVertex*> &stack)
 {
-  int numVertexPerLayer = c1.first->getNumVertices();
-  unsigned int numLayers = (int) c1.second.size();
+  int numVertexPerLayer = c1.first->getNumPrimaryVertices();
+  unsigned int numLayers = c1.second.size();
   stack.clear();
-  stack.resize(numVertexPerLayer * (numLayers + 1));
+  stack.resize(numVertexPerLayer * numLayers);
   for (unsigned int i = 0; i < stack.size(); ++i) {
     stack[i] = NULL;
   }
@@ -2341,15 +2341,15 @@ void computeStackPrimaryVertices(PairMElemVecMElem &c1,
     stack[k++] = c1.first->getVertex(i);
   }
   MFace bottomFace = c1.first->getFace(0);
-  for (unsigned int i = 0; i < numLayers; ++i) {
+  for (unsigned int i = 0; i < numLayers - 1; ++i) {
     MElement *currentElement = c1.second[i];
     MFace topFace;
     if (!computeCommonFace(currentElement, c1.second[i+1], topFace)) {
       Msg::Error("Did not find common face");
     }
 
-    // For every edge that is not in bottom face nor in top face,
-    // the top node is the node of the edge not contained in bottom face
+    // Eeach edge that is not in bottom face nor in top face links a bottom
+    // node with the corresponding top node
     for (int j = 0; j < currentElement->getNumEdges(); ++j) {
       MEdge edge = currentElement->getEdge(j);
       bool v0InBottomFace = faceContainsVertex(bottomFace, edge.getVertex(0));
@@ -2385,6 +2385,7 @@ void computeStackPrimaryVertices(PairMElemVecMElem &c1,
     }
 
     k += numVertexPerLayer;
+    bottomFace = topFace;
   }
 }
 
@@ -2433,7 +2434,7 @@ void computeInterface(PairMElemVecMElem &c1, PairMElemVecMElem &c2,
 
   std::vector<MVertex*> interfacePrimaryVertices;
   {
-    int nVertexPerLayer = bottomElement->getNumVertices();
+    int nVertexPerLayer = bottomElement->getNumPrimaryVertices();
     int n0 = -1;
     int n1 = -1;
     for (int i = 0; i < nVertexPerLayer; ++i) {
@@ -2444,8 +2445,8 @@ void computeInterface(PairMElemVecMElem &c1, PairMElemVecMElem &c2,
       Msg::Error("Error in computeInterface");
       return;
     }
-    interfacePrimaryVertices.resize(2*(stackElements.size()+1));
-    for (unsigned int i = 0; i < stackElements.size()+1; ++i) {
+    interfacePrimaryVertices.resize(2*(stackElements.size()));
+    for (unsigned int i = 0; i < stackElements.size(); ++i) {
       interfacePrimaryVertices[2*i+0] = allPrimaryVertices[nVertexPerLayer*i+n0];
       interfacePrimaryVertices[2*i+1] = allPrimaryVertices[nVertexPerLayer*i+n1];
     }
@@ -2487,9 +2488,9 @@ void curveInterfaces(VecPairMElemVecMElem &bndEl2column,
   for (unsigned int i = 0; i < adjacencies.size(); ++i) {
     MEdge bottomEdge;
     std::vector<MElement*> column;
-//    computeInterface(bndEl2column[adjacencies[i].first],
-//                     bndEl2column[adjacencies[i].second],
-//                     bottomEdge, column);
+    computeInterface(bndEl2column[adjacencies[i].first],
+                     bndEl2column[adjacencies[i].second],
+                     bottomEdge, column);
 //    curveInterface(bottomEdge, column);
   }
 }

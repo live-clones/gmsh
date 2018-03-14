@@ -1152,7 +1152,6 @@ void gather3Dcolumns(
   for(unsigned int i = 0; i< gFace->quadrangles.size(); i++)
     bndElts.push_back(gFace->quadrangles[i]);
 
-  std::vector<MElement*> aboveElements;
   std::list<MElement*>::iterator it = bndElts.begin();
   while (it != bndElts.end()) {
     MElement *bndEl = *it;
@@ -1167,13 +1166,15 @@ void gather3Dcolumns(
     if (bndType == TYPE_QUA) vb3 = bndEl->getVertex(3);
     MFace baseFace(vb0, vb1, vb2, vb3);
     bndEl2column.push_back(std::make_pair(bndEl, std::vector<MElement*>()));
-    aboveElements.push_back(NULL);
+    MElement *aboveElement;
     foundCol = getColumn3D(face2el, p, baseFace, baseVert, topPrimVert,
-                           bndEl2column.back().second, aboveElements.back());
+                           bndEl2column.back().second, aboveElement);
 
     if (!foundCol || bndEl2column.back().second.empty()) {
       bndEl2column.pop_back();
     } // Skip bnd. el. if top vertices not found
+    else
+      bndEl2column.back().second.push_back(aboveElement);
 
     ++it;
   }
