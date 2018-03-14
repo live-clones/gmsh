@@ -50,7 +50,7 @@ MFace::MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3)
   sortVertices(_v, _si);
 }
 
-MFace::MFace(std::vector<MVertex*> v)
+MFace::MFace(const std::vector<MVertex*> &v)
 {
   for(unsigned int i = 0; i < v.size(); i++)
     _v.push_back(v[i]);
@@ -94,4 +94,12 @@ bool MFace::computeCorrespondence(const MFace &other,
     return true;
   }
   return false;
+}
+
+MFaceN::MFaceN(int type, int order, const std::vector<MVertex*> &v)
+    : _type(type), _order(order)
+{
+  _v.reserve(v.size());
+  for(unsigned int i = 0; i < v.size(); i++)
+    _v.push_back(v[i]);
 }

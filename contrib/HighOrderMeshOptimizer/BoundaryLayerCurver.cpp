@@ -2391,7 +2391,7 @@ void computeStackPrimaryVertices(PairMElemVecMElem &c1,
 
 
 void computeInterface(PairMElemVecMElem &c1, PairMElemVecMElem &c2,
-                      MEdge &bottomEdge, std::vector<MElement*> &interface)
+                      MEdge &bottomEdge, std::vector<MFaceN> &interface)
 {
   // Find common edge on boundary
   MElement *bottomElement1 = c1.first;
@@ -2470,12 +2470,10 @@ void computeInterface(PairMElemVecMElem &c1, PairMElemVecMElem &c2,
       v3 = NULL;
     }
     if (v3 == NULL) {
-      // TODO: insert HO elements!!!!
-      interface.push_back(new MTriangle(v0, v1, v2));
+      interface.push_back(stackElements[i]->getHighOrderFace(MFace(v0, v1, v2)));
     }
     else {
-      // TODO: insert HO elements!!!!
-      interface.push_back(new MQuadrangle(v0, v1, v2, v3));
+      interface.push_back(stackElements[i]->getHighOrderFace(MFace(v0, v1, v2, v3)));
     }
   }
 }

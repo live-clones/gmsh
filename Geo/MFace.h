@@ -12,6 +12,7 @@
 #include "MEdge.h"
 #include "SVector3.h"
 #include "GmshMessage.h"
+#include "GmshDefines.h"
 
 // A mesh face.
 class MFace {
@@ -22,7 +23,7 @@ class MFace {
  public:
   MFace() {}
   MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3=0);
-  MFace(const std::vector<MVertex*> v);
+  MFace(const std::vector<MVertex*> &v);
   inline int getNumVertices() const { return (int)_v.size(); }
   inline MVertex *getVertex(const int i) const { return _v[i]; }
   inline MVertex *getSortedVertex(const int i) const { return _v[int(_si[i])]; }
@@ -142,5 +143,19 @@ struct Less_Face : public std::binary_function<MFace, MFace, bool> {
   }
 };
 
+class MFaceN {
+private:
+  int _type;
+  int _order;
+  std::vector<MVertex *> _v;
+
+public:
+  MFaceN() {}
+  MFaceN(int type, int order, const std::vector<MVertex*> &v);
+  inline int getNumVertices() const { return (int)_v.size(); }
+  inline int getNumPrimaryVertices() const { return type == TYPE_TRI ? 3 : 4; }
+  inline MVertex *getVertex(const int i) const { return _v[i]; }
+  inline std::vector<MVertex*> &getVertices() const { return _v; }
+};
 
 #endif
