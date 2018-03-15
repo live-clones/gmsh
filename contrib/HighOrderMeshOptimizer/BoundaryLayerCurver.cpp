@@ -2470,13 +2470,25 @@ void computeInterface(PairMElemVecMElem &c1, PairMElemVecMElem &c2,
       v3 = NULL;
     }
     if (v3 == NULL) {
-//      interface.push_back(stackElements[i]->getHighOrderFace(MFace(v0, v1, v2)));
+      interface.push_back(stackElements[i]->getHighOrderFace(MFace(v0, v1, v2)));
+      if (   v0 != interface.back().getVertex(0)
+          || v1 != interface.back().getVertex(1)
+          || v2 != interface.back().getVertex(2))
+        Msg::Error("did not get the faceN I wanted!");
+//      std::cout << "vertices: " << v0->getNum() << " " << v1->getNum() << " " << v2->getNum() << std::endl;
+//      std::cout << "vertices: " << interface.back().getVertex(0)->getNum() << " " << interface.back().getVertex(1)->getNum() << " ";
+//      std::cout <<                 interface.back().getVertex(2)->getNum() << std::endl;
     }
     else {
       interface.push_back(stackElements[i]->getHighOrderFace(MFace(v0, v1, v2, v3)));
-      std::cout << "vertices: " << v0->getNum() << " " << v1->getNum() << " " << v2->getNum() << " " << v3->getNum() << std::endl;
-      std::cout << "vertices: " << interface.back().getVertex(0)->getNum() << " " << interface.back().getVertex(1)->getNum() << " ";
-      std::cout <<                 interface.back().getVertex(2)->getNum() << " " << interface.back().getVertex(3)->getNum() << std::endl;
+      if (   v0 != interface.back().getVertex(0)
+          || v1 != interface.back().getVertex(1)
+          || v2 != interface.back().getVertex(2)
+          || v3 != interface.back().getVertex(3))
+        Msg::Error("did not get the faceN I wanted!");
+//      std::cout << "vertices: " << v0->getNum() << " " << v1->getNum() << " " << v2->getNum() << " " << v3->getNum() << std::endl;
+//      std::cout << "vertices: " << interface.back().getVertex(0)->getNum() << " " << interface.back().getVertex(1)->getNum() << " ";
+//      std::cout <<                 interface.back().getVertex(2)->getNum() << " " << interface.back().getVertex(3)->getNum() << std::endl;
     }
   }
 }
