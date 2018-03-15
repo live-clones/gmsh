@@ -464,9 +464,12 @@ class MHexahedron27 : public MHexahedron {
  */
 
 typedef std::vector<int> IndicesReversed;
+//typedef std::vector<int> IndicesHighOrderFace;
+//typedef std::pair<std::pair<int,int>, std::pair<int,int> > TupleHighOrderFace;
 
 class MHexahedronN : public MHexahedron {
   static std::map<int, IndicesReversed> _order2indicesReversedHex;
+//  static std::map<TupleHighOrderFace, IndicesHighOrderFace> _tuple2indicesHighOrderFace;
 
  protected:
   const char _order;

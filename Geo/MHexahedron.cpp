@@ -472,3 +472,24 @@ void MHexahedronN::reverse()
     _vs[i] = oldv[indices[8+i]];
   }
 }
+
+//void _getIndicesHighOrderFace(int order, int numFace, int sign, int rot,
+//                              IndicesHighOrderFace &indices)
+//{
+//  fullMatrix<double> ref = gmshGenerateMonomialsHexahedron(order);
+//
+// faceClosure ???
+//
+//  indices.resize(ref.size1());
+//  for (int i = 0; i < ref.size1(); ++i) {
+//    const double u = ref(i, 0);
+//    const double v = ref(i, 1);
+//    const double w = ref(i, 2);
+//    for (int j = 0; j < ref.size1(); ++j) {
+//      if (u == ref(j, 1) && v == ref(j, 0) && w == ref(j, 2)) {
+//        indices[i] = j;
+//        break;
+//      }
+//    }
+//  }
+//}

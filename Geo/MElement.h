@@ -161,6 +161,17 @@ class MElement
   // get the faces
   virtual int getNumFaces() = 0;
   virtual MFace getFace(int num) const = 0;
+  virtual MFaceN getHighOrderFace(int num, int sign, int rot) const
+  {
+    Msg::Error("High-order face not available for this element");
+  }
+  virtual MFaceN getHighOrderFace(const MFace & face) const
+  {
+    int num, sign, rot;
+    if (!getFaceInfo(face, num, sign, rot))
+      return MFaceN();
+    return getHighOrderFace(num, sign, rot);
+  }
 
   // give an MFace as input and get its local number, sign and rotation
   virtual bool getFaceInfo(const MFace & face, int &ithFace, int &sign,
