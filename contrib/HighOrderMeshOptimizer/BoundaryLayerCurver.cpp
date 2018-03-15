@@ -2454,7 +2454,7 @@ void computeInterface(PairMElemVecMElem &c1, PairMElemVecMElem &c2,
 
   // Compute interface
   interface.clear();
-  for (int i = 0; i < stackElements.size(); ++i) {
+  for (int i = 0; i < stackElements.size() - 1; ++i) {
     MVertex *v0 = interfacePrimaryVertices[2*i+0];
     MVertex *v1 = interfacePrimaryVertices[2*i+1];
     MVertex *v2 = interfacePrimaryVertices[2*i+3];
@@ -2470,10 +2470,13 @@ void computeInterface(PairMElemVecMElem &c1, PairMElemVecMElem &c2,
       v3 = NULL;
     }
     if (v3 == NULL) {
-      interface.push_back(stackElements[i]->getHighOrderFace(MFace(v0, v1, v2)));
+//      interface.push_back(stackElements[i]->getHighOrderFace(MFace(v0, v1, v2)));
     }
     else {
       interface.push_back(stackElements[i]->getHighOrderFace(MFace(v0, v1, v2, v3)));
+      std::cout << "vertices: " << v0->getNum() << " " << v1->getNum() << " " << v2->getNum() << " " << v3->getNum() << std::endl;
+      std::cout << "vertices: " << interface.back().getVertex(0)->getNum() << " " << interface.back().getVertex(1)->getNum() << " ";
+      std::cout <<                 interface.back().getVertex(2)->getNum() << " " << interface.back().getVertex(3)->getNum() << std::endl;
     }
   }
 }
@@ -2485,7 +2488,7 @@ void curveInterfaces(VecPairMElemVecMElem &bndEl2column,
 {
   for (unsigned int i = 0; i < adjacencies.size(); ++i) {
     MEdge bottomEdge;
-    std::vector<MElement*> column;
+    std::vector<MFaceN> column;
     computeInterface(bndEl2column[adjacencies[i].first],
                      bndEl2column[adjacencies[i].second],
                      bottomEdge, column);

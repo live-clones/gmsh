@@ -79,7 +79,7 @@ class MPrism : public MElement {
     _getEdgeVertices(num, v);
   }
   virtual int getNumFaces(){ return 5; }
-  virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
+  virtual bool getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
   virtual MFace getFace(int num) const
   {
     if(num < 2)

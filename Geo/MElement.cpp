@@ -151,6 +151,25 @@ char MElement::getVisibility() const
   return _visible;
 }
 
+MFaceN MElement::getHighOrderFace(int num, int sign, int rot)
+{
+  const nodalBasis *fs = getFunctionSpace();
+  int id = fs->getClosureId(num, sign, rot);
+  const std::vector<int> &closure = fs->getClosure(id);
+  std::cout << "closure " << getType() << " " << getPolynomialOrder() << " " << num << " " << sign << " " << rot << std::endl;
+  for (int i = 0; i < closure.size(); ++i) {
+    std::cout << " " << closure[i];
+  }
+  std::cout << std::endl;
+  Msg::Error("High-order face not available for this element");
+  std::vector<MVertex*> vertices;
+  vertices.resize(closure.size());
+  for (unsigned int i = 0; i < closure.size(); ++i) {
+    vertices[i] = getVertex(closure[i]);
+  }
+  return MFaceN(getType(), getPolynomialOrder(), vertices);
+}
+
 double MElement::minEdge()
 {
   double m = 1.e25;

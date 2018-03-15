@@ -99,7 +99,7 @@ bool MFace::computeCorrespondence(const MFace &other,
 MFaceN::MFaceN(int type, int order, const std::vector<MVertex*> &v)
     : _type(type), _order(order)
 {
-  _v.reserve(v.size());
+  _v.resize(v.size());
   for(unsigned int i = 0; i < v.size(); i++)
-    _v.push_back(v[i]);
+    _v[i] = v[i];
 }
