@@ -223,10 +223,10 @@ class MPyramid : public MElement {
 
 //------------------------------------------------------------------------------
 
-typedef std::vector<int> indicesReversed;
+typedef std::vector<int> IndicesReversed;
 
 class MPyramidN : public MPyramid {
-  static std::map<int, indicesReversed> _order2indicesReversedPyr;
+  static std::map<int, IndicesReversed> _order2indicesReversedPyr;
 
  protected:
   std::vector<MVertex*> _vs;

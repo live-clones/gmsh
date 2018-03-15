@@ -16,7 +16,7 @@
 #include "qualityMeasures.h"
 #endif
 
-std::map<int, indicesReversed> MHexahedronN::_order2indicesReversedHex;
+std::map<int, IndicesReversed> MHexahedronN::_order2indicesReversedHex;
 
 void MHexahedron::getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                              SVector3 *n)
@@ -85,13 +85,12 @@ double MHexahedron::getInnerRadius()
   return innerRadius;
 }
 
-void MHexahedron::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) const
+bool MHexahedron::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) const
 {
   for (ithFace = 0; ithFace < 6; ithFace++){
-    if (_getFaceInfo(getFace(ithFace), face, sign, rot)) break;
+    if (_getFaceInfo(getFace(ithFace), face, sign, rot)) return true;
   }
-  if (ithFace == 6)
-    Msg::Error("Could not get face information for hexahedron %d", getNum());
+  return false;
 }
 
 int MHexahedron::numCommonNodesInDualGraph(const MElement *const other) const
@@ -429,7 +428,7 @@ int MHexahedronN::getNumFacesRep(bool curved)
          MHexahedron::getNumFacesRep(curved);
 }
 
-void _getIndicesReversedHex(int order, indicesReversed &indices)
+void _getIndicesReversedHex(int order, IndicesReversed &indices)
 {
   fullMatrix<double> ref = gmshGenerateMonomialsHexahedron(order);
 
@@ -449,16 +448,16 @@ void _getIndicesReversedHex(int order, indicesReversed &indices)
 
 void MHexahedronN::reverse()
 {
-  std::map<int, indicesReversed>::iterator it;
+  std::map<int, IndicesReversed>::iterator it;
   it = _order2indicesReversedHex.find(_order);
   if (it == _order2indicesReversedHex.end()) {
-    indicesReversed indices;
+    IndicesReversed indices;
     _getIndicesReversedHex(_order, indices);
     _order2indicesReversedHex[_order] = indices;
     it = _order2indicesReversedHex.find(_order);
   }
 
-  indicesReversed &indices = it->second;
+  IndicesReversed &indices = it->second;
 
   // copy vertices
   std::vector<MVertex*> oldv(8 + _vs.size());

@@ -163,10 +163,11 @@ class MElement
   virtual MFace getFace(int num) const = 0;
 
   // give an MFace as input and get its local number, sign and rotation
-  virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign,
+  virtual bool getFaceInfo(const MFace & face, int &ithFace, int &sign,
                            int &rot) const
   {
     Msg::Error("Face information not available for this element");
+    return false;
   }
 
   // get a face representation for drawing

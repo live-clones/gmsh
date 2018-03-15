@@ -10,7 +10,7 @@
 #include "BasisFactory.h"
 #include "pointsGenerators.h"
 
-std::map<int, indicesReversed> MPyramidN::_order2indicesReversedPyr;
+std::map<int, IndicesReversed> MPyramidN::_order2indicesReversedPyr;
 
 int MPyramid::getVolumeSign()
 {
@@ -36,13 +36,12 @@ void MPyramid::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   *pts = getGQPyrPts(pOrder);
 }
 
-void MPyramid::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) const
+bool MPyramid::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot) const
 {
   for (ithFace = 0; ithFace < 5; ++ithFace) {
-    if (_getFaceInfo(getFace(ithFace), face, sign, rot)) break;
+    if (_getFaceInfo(getFace(ithFace), face, sign, rot)) return true;
   }
-  if (ithFace == 5)
-    Msg::Error("Could not get face information for pyramid %d", getNum());
+  return false;
 }
 
 MPyramidN::~MPyramidN() {}
@@ -390,7 +389,7 @@ void MPyramidN::getFaceRep(bool curved, int num,
   else MPyramid::getFaceRep(false, num, x, y, z, n);
 }
 
-void _getIndicesReversedPyr(int order, indicesReversed &indices)
+void _getIndicesReversedPyr(int order, IndicesReversed &indices)
 {
   fullMatrix<double> ref = gmshGenerateMonomialsPyramid(order);
 
@@ -410,16 +409,16 @@ void _getIndicesReversedPyr(int order, indicesReversed &indices)
 
 void MPyramidN::reverse()
 {
-  std::map<int, indicesReversed>::iterator it;
+  std::map<int, IndicesReversed>::iterator it;
   it = _order2indicesReversedPyr.find(_order);
   if (it == _order2indicesReversedPyr.end()) {
-    indicesReversed indices;
+    IndicesReversed indices;
     _getIndicesReversedPyr(_order, indices);
     _order2indicesReversedPyr[_order] = indices;
     it = _order2indicesReversedPyr.find(_order);
   }
 
-  indicesReversed &indices = it->second;
+  IndicesReversed &indices = it->second;
 
   // copy vertices
   std::vector<MVertex*> oldv(5 + _vs.size());
