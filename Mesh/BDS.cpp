@@ -381,14 +381,21 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
       return eee;
     }
 
-    int ichoice = ix++ % intersected.size();
-    bool success =
-      swap_edge(intersected[ichoice], BDS_SwapEdgeTestQuality(false, false));
-    if(success && ichoice < intersected.size() - 1) --ix; // To avoid that a possible swap is skipped
+    int ichoice = 0;
+    bool success = false;
+    while (!success && ichoice < intersected.size())
+    {
+      success = swap_edge(intersected[ichoice++], BDS_SwapEdgeTestQuality(false, false));
+    }
 
-    // printf("trying to swop %d %d = %d (%d %d)\n", intersected[ichoice]->p1->iD,
-    //        intersected[ichoice]->p2->iD, success, intersected[ichoice]->deleted,
-    //        intersected[ichoice]->numfaces());
+    if (!success)
+    {
+      Msg::Debug("edge %d %d cannot be recovered at all\n", num1, num2);
+      _fatal = true;
+      return 0;
+    }
+
+    ix++;
   }
   return 0;
 }
