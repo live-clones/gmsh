@@ -72,19 +72,9 @@ class MTriangle : public MElement {
   {
     return MEdge(_v[edges_tri(num, 0)], _v[edges_tri(num, 1)]);
   }
-  virtual void getEdgeInfo (const MEdge & edge, int &ithEdge, int &sign) const
+  virtual int numEdge2numVertex(int numEdge, int numVert) const
   {
-    for (ithEdge = 0; ithEdge < 3; ithEdge++){
-      const MVertex *v0 = _v[edges_tri(ithEdge, 0)];
-      const MVertex *v1 = _v[edges_tri(ithEdge, 1)];
-      if (v0 == edge.getVertex(0) && v1 == edge.getVertex(1)){
-        sign = 1; return;
-      }
-      if (v1 == edge.getVertex(0) && v0 == edge.getVertex(1)){
-        sign = -1; return;
-      }
-    }
-    Msg::Error("Could not get edge information for triangle %d", getNum());
+    return edges_tri(numEdge, numVert);
   }
   virtual int getNumEdgesRep(bool curved){ return 3; }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);

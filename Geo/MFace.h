@@ -154,8 +154,8 @@ public:
   MFaceN(int type, int order, const std::vector<MVertex*> &v);
   inline int getNumVertices() const { return (int)_v.size(); }
   inline int getNumPrimaryVertices() const { return _type == TYPE_TRI ? 3 : 4; }
-  inline MVertex *getVertex(const int i) const { return _v[i]; }
-  inline std::vector<MVertex*> &getVertices() { return _v; }
+  inline MVertex *getVertex(int i) const { return _v[i]; }
+  inline const std::vector<MVertex*> &getVertices() const { return _v; }
 };
 
 #endif

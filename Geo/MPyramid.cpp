@@ -41,6 +41,7 @@ bool MPyramid::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &rot)
   for (ithFace = 0; ithFace < 5; ++ithFace) {
     if (_getFaceInfo(getFace(ithFace), face, sign, rot)) return true;
   }
+  Msg::Error("Could not get face information for pyramid %d", getNum());
   return false;
 }
 

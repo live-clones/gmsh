@@ -62,3 +62,9 @@ bool MEdge::isInside(MVertex *v) const
   return true;
 }
 
+MEdgeN::MEdgeN(const std::vector<MVertex*> &v)
+{
+  _v.resize(v.size());
+  for(unsigned int i = 0; i < v.size(); i++)
+    _v[i] = v[i];
+}

@@ -74,6 +74,10 @@ class MPyramid : public MElement {
   {
     return MEdge(_v[edges_pyramid(num, 0)], _v[edges_pyramid(num, 1)]);
   }
+  virtual int numEdge2numVertex(int numEdge, int numVert) const
+  {
+    return edges_pyramid(numEdge, numVert);
+  }
   virtual int getNumEdgesRep(bool curved){ return 8; }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n)

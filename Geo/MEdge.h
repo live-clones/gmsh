@@ -123,4 +123,16 @@ struct Less_Edge : public std::binary_function<MEdge, MEdge, bool> {
   }
 };
 
+class MEdgeN {
+private:
+  std::vector<MVertex *> _v;
+
+public:
+  MEdgeN() {}
+  MEdgeN(const std::vector<MVertex*> &v);
+  inline int getNumVertices() const { return (int)_v.size(); }
+  inline MVertex *getVertex(int i) const { return _v[i]; }
+  inline const std::vector<MVertex*> &getVertices() const { return _v; }
+};
+
 #endif

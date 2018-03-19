@@ -151,6 +151,44 @@ char MElement::getVisibility() const
   return _visible;
 }
 
+MEdgeN MElement::getHighOrderEdge(int num, int sign)
+{
+  const int order = getPolynomialOrder();
+  std::vector<MVertex*> vertices((unsigned int) order + 1);
+  vertices[0] = getVertex(numEdge2numVertex(num, sign > 0 ? 0 : 1));
+  vertices[1] = getVertex(numEdge2numVertex(num, sign > 0 ? 1 : 0));
+  const int start = getNumPrimaryVertices() + num * (order - 1);
+  const int end = getNumPrimaryVertices() + (num + 1) * (order - 1);
+  int k = 1;
+  if (sign > 0) {
+    for (int i = start; i < end; ++i) {
+      vertices[++k] = getVertex(i);
+    }
+  }
+  else {
+    for (int i = end - 1; i >= start; --i) {
+      vertices[++k] = getVertex(i);
+    }
+  }
+  return MEdgeN(vertices);
+}
+
+bool MElement::getEdgeInfo(const MEdge &edge, int &ithEdge, int &sign) const
+{
+  for (ithEdge = 0; ithEdge < getNumEdges(); ithEdge++) {
+    const MVertex *v0 = getVertex(numEdge2numVertex(ithEdge, 0));
+    const MVertex *v1 = getVertex(numEdge2numVertex(ithEdge, 1));
+    if (v0 == edge.getVertex(0) && v1 == edge.getVertex(1)){
+      sign = 1; return true;
+    }
+    if (v1 == edge.getVertex(0) && v0 == edge.getVertex(1)){
+      sign = -1; return true;
+    }
+  }
+  Msg::Error("Could not get edge information for element %d", getNum());
+  return false;
+}
+
 MFaceN MElement::getHighOrderFace(int num, int sign, int rot)
 {
   const nodalBasis *fs = getFunctionSpace();

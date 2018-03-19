@@ -90,6 +90,7 @@ bool MHexahedron::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &r
   for (ithFace = 0; ithFace < 6; ithFace++){
     if (_getFaceInfo(getFace(ithFace), face, sign, rot)) return true;
   }
+  Msg::Error("Could not get face information for hexahedron %d", getNum());
   return false;
 }
 

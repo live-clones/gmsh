@@ -146,11 +146,20 @@ class MElement
   // get the edges
   virtual int getNumEdges() const = 0;
   virtual MEdge getEdge(int num) const= 0;
+  virtual MEdgeN getHighOrderEdge(int num, int sign);
+  virtual MEdgeN getHighOrderEdge(const MEdge &edge)
+  {
+    int num, sign;
+    if (!getEdgeInfo(edge, num, sign)) return MEdgeN();
+    return getHighOrderEdge(num, sign);
+  }
 
   // give an MEdge as input and get its local number and sign
-  virtual void getEdgeInfo(const MEdge & edge, int &ithEdge, int &sign) const
+  virtual bool getEdgeInfo(const MEdge & edge, int &ithEdge, int &sign) const;
+  virtual int numEdge2numVertex(int numEdge, int numVert) const
   {
     Msg::Error("Edge information not available for this element");
+    return -1;
   }
 
   // get an edge representation for drawing
@@ -162,7 +171,7 @@ class MElement
   virtual int getNumFaces() = 0;
   virtual MFace getFace(int num) const = 0;
   virtual MFaceN getHighOrderFace(int num, int sign, int rot);
-  virtual MFaceN getHighOrderFace(const MFace & face)
+  virtual MFaceN getHighOrderFace(const MFace &face)
   {
     int num, sign, rot;
     if (!getFaceInfo(face, num, sign, rot))

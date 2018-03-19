@@ -305,6 +305,7 @@ bool MTetrahedron::getFaceInfo(const MFace &face, int &ithFace, int &sign, int &
   for (ithFace = 0; ithFace < 4; ithFace++){
     if (_getFaceInfo(getFace(ithFace), face, sign, rot)) return true;
   }
+  Msg::Error("Could not get face information for tetrahedron %d", getNum());
   return false;
 }
 

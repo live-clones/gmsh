@@ -67,6 +67,10 @@ class MTetrahedron : public MElement {
   {
     return MEdge(_v[edges_tetra(num, 0)], _v[edges_tetra(num, 1)]);
   }
+  virtual int numEdge2numVertex(int numEdge, int numVert) const
+  {
+    return edges_tetra(numEdge, numVert);
+  }
   virtual int getNumEdgesRep(bool curved){ return 6; }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
