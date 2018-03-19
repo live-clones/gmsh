@@ -402,15 +402,12 @@ void MElement::signedInvGradErrorRange(double &minSIGE, double &maxSIGE)
 
 void MElement::getNode(int num, double &u, double &v, double &w) const
 {
-  // only for MElements that don't have a lookup table for this
-  // (currently only 1st order elements have)
-  double uvw[3];
-  const MVertex* ver = getVertex(num);
-  double xyz[3] = {ver->x(), ver->y(), ver->z()};
-  xyz2uvw(xyz, uvw);
-  u = uvw[0];
-  v = uvw[1];
-  w = uvw[2];
+  // Should we always do this instead of using lookup table for linear elements?
+  const nodalBasis *nb = getFunctionSpace();
+  const fullMatrix<double> &refpnts = nb->getReferenceNodes();
+  u = refpnts(num, 0);
+  v = getDim() > 1 ? refpnts(num, 1) : 0;
+  v = getDim() > 2 ? refpnts(num, 2) : 0;
 }
 
 void MElement::getShapeFunctions(double u, double v, double w, double s[], int o) const
@@ -868,12 +865,15 @@ void MElement::xyz2uvw(double xyz[3], double uvw[3]) const
     }
     double inv[3][3];
     inv3x3(jac, inv);
-    double un = uvw[0] + inv[0][0] * (xyz[0] - xn) +
-      inv[1][0] * (xyz[1] - yn) + inv[2][0] * (xyz[2] - zn);
-    double vn = uvw[1] + inv[0][1] * (xyz[0] - xn) +
-      inv[1][1] * (xyz[1] - yn) + inv[2][1] * (xyz[2] - zn);
-    double wn = uvw[2] + inv[0][2] * (xyz[0] - xn) +
-      inv[1][2] * (xyz[1] - yn) + inv[2][2] * (xyz[2] - zn);
+    double un = uvw[0] + inv[0][0] * (xyz[0] - xn)
+                       + inv[1][0] * (xyz[1] - yn)
+                       + inv[2][0] * (xyz[2] - zn);
+    double vn = uvw[1] + inv[0][1] * (xyz[0] - xn)
+                       + inv[1][1] * (xyz[1] - yn)
+                       + inv[2][1] * (xyz[2] - zn);
+    double wn = uvw[2] + inv[0][2] * (xyz[0] - xn)
+                       + inv[1][2] * (xyz[1] - yn)
+                       + inv[2][2] * (xyz[2] - zn);
     error = sqrt(SQU(un - uvw[0]) + SQU(vn - uvw[1]) + SQU(wn - uvw[2]));
     uvw[0] = un;
     uvw[1] = vn;
