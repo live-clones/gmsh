@@ -2402,8 +2402,9 @@ bool computeCommonEdge(MElement *el1, MElement *el2, MEdge &e)
 }
 
 
-void computeInterface(PairMElemVecMElem &c1, PairMElemVecMElem &c2,
-                      MEdgeN &bottomEdge, std::vector<MFaceN> &interface)
+void computeInterface(const PairMElemVecMElem &c1, const PairMElemVecMElem &c2,
+                      std::vector<MFaceN> &interface, MEdgeN &bottomEdge,
+                      MEdgeN &topEdge)
 {
   // Find common edge on boundary
   MElement *bottomElement1 = c1.first;
@@ -2493,49 +2494,43 @@ void computeInterface(PairMElemVecMElem &c1, PairMElemVecMElem &c2,
 //      std::cout <<                 interface.back().getVertex(2)->getNum() << " " << interface.back().getVertex(3)->getNum() << std::endl;
     }
   }
+  topEdge = interface.back().getEdgeN(0, 1);
 }
 
 
 void computeExtremityCoefficients(const MElement *bottom1, const MElement *bottom2,
-                                  const std::vector<MVertex*> &baseVert,
-                                  const std::vector<MVertex*> &topVert,
+                                  const MEdgeN &baseEdge, const MEdgeN &topEdge,
                                   Parameters3DCurve &parameters)
 {
-  int tagLine = ElementType::getTag(TYPE_LIN, baseVert.size() - 1);
-  const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
-  double sf[100][3];
+  MVertex *vBase, *vTop;
+  SVector3 t, n, w, h, n1, n2;
 
-  SVector3 t, n, w, h;
+  vBase = baseEdge.getVertex(0);
+  vTop = topEdge.getVertex(0);
+  // Compute normal n1 and n2 of two base faces at point vBase
   {
-    double dx = 0, dy = 0, dz = 0;
-    fs->df(-1, 0, 0, sf);
-    for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
-      const MVertex *v = baseVert[j];
-      dx += sf[j][0] * v->x();
-      dy += sf[j][0] * v->y();
-      dz += sf[j][0] * v->z();
+    int i1, i2;
+    for (i1 = 0; i1 < 4; ++i1) {
+      if (bottom1->getVertex(i1) == vBase) break;
     }
-    t = SVector3(dx, dy, dz).unit();
-
-    SVector3 n1, n2;
-    {
-      double u, v, w;
-      double gradients[3][3];
-
-      for (int i = 0; i < 4; ++i) {
-        if (bottom1->getVertex(i) == baseVert[0])
-          bottom1->getNode(i, u, v, w);
-      }
-      bottom1->getJacobian(u, v, w, gradients);
-      n1 = SVector3(gradients[2][0], gradients[2][1], gradients[2][2]);
-
-      for (int i = 0; i < 4; ++i) {
-        if (bottom2->getVertex(i) == baseVert[0])
-          bottom2->getNode(i, u, v, w);
-      }
-      bottom2->getJacobian(u, v, w, gradients);
-      n2 = SVector3(gradients[2][0], gradients[2][1], gradients[2][2]);
+    for (i2 = 0; i2 < 4; ++i2) {
+      if (bottom2->getVertex(i2) == vBase) break;
     }
+    if (i1 > 3 || i2 > 3) {
+      Msg::Error("Incoherence for computeExtremityCoefficients");
+    }
+
+    double u, v, w;
+    double gradients[3][3];
+
+    bottom1->getNode(i1, u, v, w);
+    bottom1->getJacobian(u, v, w, gradients);
+    n1 = SVector3(gradients[2][0], gradients[2][1], gradients[2][2]);
+
+    bottom2->getNode(i1, u, v, w);
+    bottom2->getJacobian(u, v, w, gradients);
+    n2 = SVector3(gradients[2][0], gradients[2][1], gradients[2][2]);
+
     if (dot(n1, n2) < 0) {
       // This should never happen!
       Msg::Warning("Boundary elements have opposite normals for boundary layer curving");
@@ -2544,24 +2539,73 @@ void computeExtremityCoefficients(const MElement *bottom1, const MElement *botto
       // negate one of the normals.
       n1.negate();
     }
-    n = n1 + n2;
-    n.normalize();
-
-    w = crossprod(t, n);
-
-    h = SVector3(topVert[0]->x() - baseVert[0]->x(),
-                 topVert[0]->y() - baseVert[0]->y(),
-                 topVert[0]->z() - baseVert[0]->z());
   }
+  n = n1 + n2;
+  n.normalize();
+  t = baseEdge.tangent(-1);
+  w = crossprod(t, n);
+  h = SVector3(vTop->x() - vBase->x(),
+               vTop->y() - vBase->y(),
+               vTop->z() - vBase->z());
+
+
   parameters.thickness[0] = dot(h, n);
   parameters.coeffb[0] = dot(h, t);
   parameters.coeffc[0] = dot(h, w);
-  // compute plane of
+
+  vBase = baseEdge.getVertex(1);
+  vTop = topEdge.getVertex(1);
+  // Compute normal n1 and n2 of two base faces at point vBase
+  {
+    int i1, i2;
+    for (i1 = 0; i1 < 4; ++i1) {
+      if (bottom1->getVertex(i1) == vBase) break;
+    }
+    for (i2 = 0; i2 < 4; ++i2) {
+      if (bottom2->getVertex(i2) == vBase) break;
+    }
+    if (i1 > 3 || i2 > 3) {
+      Msg::Error("Incoherence for computeExtremityCoefficients");
+    }
+
+    double u, v, w;
+    double gradients[3][3];
+
+    bottom1->getNode(i1, u, v, w);
+    bottom1->getJacobian(u, v, w, gradients);
+    n1 = SVector3(gradients[2][0], gradients[2][1], gradients[2][2]);
+
+    bottom2->getNode(i1, u, v, w);
+    bottom2->getJacobian(u, v, w, gradients);
+    n2 = SVector3(gradients[2][0], gradients[2][1], gradients[2][2]);
+
+    if (dot(n1, n2) < 0) {
+      // This should never happen!
+      Msg::Warning("Boundary elements have opposite normals for boundary layer curving");
+      // If really cannot prevent opposite normals, then  we should ideally
+      // compare to the geometry normal or something... For now, arbitrarily
+      // negate one of the normals.
+      n1.negate();
+    }
+  }
+  n = n1 + n2;
+  n.normalize();
+  t = baseEdge.tangent(1);
+  w = crossprod(t, n);
+  h = SVector3(vTop->x() - vBase->x(),
+               vTop->y() - vBase->y(),
+               vTop->z() - vBase->z());
+
+
+  parameters.thickness[1] = dot(h, n);
+  parameters.coeffb[1] = dot(h, t);
+  parameters.coeffc[1] = dot(h, w);
 }
 
 
-bool curveInterface(MElement *bottom1, MElement *bottom2,
-                    std::vector<MFaceN> &column,
+bool curveInterface(std::vector<MFaceN> &column,
+                    const MElement *bottom1, const MElement *bottom2,
+                    MEdgeN &baseEdge, MEdgeN &topEdge,
                     double dampingFactor, GEntity *bndEnt,
                     bool linear)
 {
@@ -2570,7 +2614,7 @@ bool curveInterface(MElement *bottom1, MElement *bottom2,
 
 
   Parameters3DCurve parameters;
-//  computeExtremityCoefficients(bottom1, bottom2, bottomVertices, topVertices, parameters);
+  computeExtremityCoefficients(bottom1, bottom2, baseEdge, topEdge, parameters);
 
 
 //  if (linear)
@@ -2682,12 +2726,13 @@ void curveInterfaces(VecPairMElemVecMElem &bndEl2column,
                      std::vector<std::pair<int, int> > &adjacencies)
 {
   for (unsigned int i = 0; i < adjacencies.size(); ++i) {
-    MEdgeN bottomEdge;
+    MEdgeN bottomEdge, topEdge;
     std::vector<MFaceN> interface;
     PairMElemVecMElem &column1 = bndEl2column[adjacencies[i].first];
     PairMElemVecMElem &column2 = bndEl2column[adjacencies[i].second];
-    computeInterface(column1, column2, bottomEdge, interface);
-    curveInterface(column1.first, column2.first, interface, 0, NULL, true);
+    computeInterface(column1, column2, interface, bottomEdge, topEdge);
+    curveInterface(interface, column1.first, column2.first, bottomEdge,
+                   topEdge, 0, NULL, true);
   }
 }
 

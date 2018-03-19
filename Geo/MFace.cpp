@@ -103,3 +103,26 @@ MFaceN::MFaceN(int type, int order, const std::vector<MVertex*> &v)
   for(unsigned int i = 0; i < v.size(); i++)
     _v[i] = v[i];
 }
+
+MEdgeN MFaceN::getEdgeN(int num, int sign) const
+{
+  int nCorner = getNumPrimaryVertices();
+  std::vector<MVertex*> vertices((unsigned int)_order + 1);
+  if (sign == 1) {
+    vertices[0] = _v[num];
+    vertices[1] = _v[(num + 1) % nCorner];
+  }
+  else {
+    vertices[0] = _v[(num + 1) % nCorner];
+    vertices[1] = _v[num];
+  }
+  int start = nCorner + num * (_order - 1);
+  int end = nCorner + (num + 1) * (_order - 1);
+  int k = 1;
+  if (sign == 1) {
+    for (int i = start; i < end; ++i) vertices[++k] = _v[i];
+  }
+  else {
+    for (int i = end-1; i >= start; --i) vertices[++k] = _v[i];
+  }
+}

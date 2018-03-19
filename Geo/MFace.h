@@ -156,6 +156,8 @@ public:
   inline int getNumPrimaryVertices() const { return _type == TYPE_TRI ? 3 : 4; }
   inline MVertex *getVertex(int i) const { return _v[i]; }
   inline const std::vector<MVertex*> &getVertices() const { return _v; }
+
+  MEdgeN getEdgeN(int num, int sign) const;
 };
 
 #endif

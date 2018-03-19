@@ -133,6 +133,9 @@ public:
   inline int getNumVertices() const { return (int)_v.size(); }
   inline MVertex *getVertex(int i) const { return _v[i]; }
   inline const std::vector<MVertex*> &getVertices() const { return _v; }
+
+
+  SVector3 tangent(double u) const;
 };
 
 #endif

@@ -6,6 +6,10 @@
 #include <algorithm>
 #include "MEdge.h"
 #include "Numeric.h"
+#include "GmshDefines.h"
+#include "ElementType.h"
+#include "nodalBasis.h"
+#include "BasisFactory.h"
 
 bool MEdge::isInside(MVertex *v) const
 {
@@ -67,4 +71,20 @@ MEdgeN::MEdgeN(const std::vector<MVertex*> &v)
   _v.resize(v.size());
   for(unsigned int i = 0; i < v.size(); i++)
     _v[i] = v[i];
+}
+
+SVector3 MEdgeN::tangent(double u) const
+{
+  int tagLine = ElementType::getTag(TYPE_LIN, (int)_v.size() - 1);
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
+  double sf[100][3];
+
+  double dx = 0, dy = 0, dz = 0;
+  fs->df(u, 0, 0, sf);
+  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+    dx += sf[j][0] * _v[j]->x();
+    dy += sf[j][0] * _v[j]->y();
+    dz += sf[j][0] * _v[j]->z();
+  }
+  return SVector3(dx, dy, dz).unit();
 }
