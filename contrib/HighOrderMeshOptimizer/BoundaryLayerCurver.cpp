@@ -2390,28 +2390,30 @@ void computeStackPrimaryVertices(PairMElemVecMElem &c1,
 }
 
 
+bool computeCommonEdge(MElement *el1, MElement *el2, MEdge &e)
+{
+  for (int i = 0; i < el1->getNumEdges(); ++i) {
+    e = el1->getEdge(i);
+    for (int j = 0; j < el2->getNumEdges(); ++j) {
+      MEdge thisEdge = el2->getEdge(j);
+      if (thisEdge == e) return true;
+    }
+  }
+}
+
+
 void computeInterface(PairMElemVecMElem &c1, PairMElemVecMElem &c2,
-                      MEdge &bottomEdge, std::vector<MFaceN> &interface)
+                      MEdgeN &bottomEdge, std::vector<MFaceN> &interface)
 {
   // Find common edge on boundary
   MElement *bottomElement1 = c1.first;
   MElement *bottomElement2 = c2.first;
-  bool foundCommon = false;
-  for (int i = 0; i < bottomElement1->getNumEdges(); ++i) {
-    bottomEdge = bottomElement1->getEdge(i);
-    for (int j = 0; j < bottomElement2->getNumEdges(); ++j) {
-      MEdge thisEdge = bottomElement2->getEdge(j);
-      if (thisEdge == bottomEdge) {
-        foundCommon = true;
-        break;
-      }
-    }
-    if (foundCommon) break;
-  }
-  if (!foundCommon) {
+  MEdge commonEdge;
+  if (!computeCommonEdge(bottomElement1, bottomElement2, commonEdge)) {
     Msg::Error("Couldn't find common edge on bottom elements");
     return;
   }
+  bottomEdge = bottomElement1->getHighOrderEdge(commonEdge);
 
   // Choose biggest column
   PairMElemVecMElem column;
@@ -2499,12 +2501,11 @@ void curveInterfaces(VecPairMElemVecMElem &bndEl2column,
                      std::vector<std::pair<int, int> > &adjacencies)
 {
   for (unsigned int i = 0; i < adjacencies.size(); ++i) {
-    MEdge bottomEdge;
-    std::vector<MFaceN> column;
-    computeInterface(bndEl2column[adjacencies[i].first],
-                     bndEl2column[adjacencies[i].second],
-                     bottomEdge, column);
-//    curveInterface(bottomEdge, column);
+    MEdgeN bottomEdge;
+    std::vector<MFaceN> interface;
+    PairMElemVecMElem &column1 = bndEl2column[adjacencies[i].first];
+    PairMElemVecMElem &column2 = bndEl2column[adjacencies[i].second];
+    computeInterface(column1, column2, bottomEdge, interface);
   }
 }
 
