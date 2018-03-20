@@ -73,6 +73,22 @@ MEdgeN::MEdgeN(const std::vector<MVertex*> &v)
     _v[i] = v[i];
 }
 
+SPoint3 MEdgeN::pnt(double u) const
+{
+  int tagLine = ElementType::getTag(TYPE_LIN, (int)_v.size() - 1);
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
+  double f[100];
+
+  double x = 0, y = 0, z = 0;
+  fs->f(u, 0, 0, f);
+  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+    x += f[j] * _v[j]->x();
+    y += f[j] * _v[j]->y();
+    z += f[j] * _v[j]->z();
+  }
+  return SPoint3(x, y, z);
+}
+
 SVector3 MEdgeN::tangent(double u) const
 {
   int tagLine = ElementType::getTag(TYPE_LIN, (int)_v.size() - 1);

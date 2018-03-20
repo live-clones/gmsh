@@ -125,4 +125,5 @@ MEdgeN MFaceN::getEdgeN(int num, int sign) const
   else {
     for (int i = end-1; i >= start; --i) vertices[++k] = _v[i];
   }
+  return MEdgeN(vertices);
 }

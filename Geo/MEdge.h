@@ -134,7 +134,7 @@ public:
   inline MVertex *getVertex(int i) const { return _v[i]; }
   inline const std::vector<MVertex*> &getVertices() const { return _v; }
 
-
+  SPoint3 pnt(double u) const;
   SVector3 tangent(double u) const;
 };
 
