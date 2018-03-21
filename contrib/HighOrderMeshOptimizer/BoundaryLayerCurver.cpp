@@ -1809,7 +1809,6 @@ namespace BoundaryLayerCurver
   {
     // Here, we assume that "thickness" is identical on the left and on the
     // right part of the column => identical eta_i
-    std::vector<MVertex *> bottomVertices;
     MVertex *vbot = globalBottomVertices[0];
     MVertex *vtop = globalTopVertices[0];
     double dX = vtop->x() - vbot->x();
@@ -1817,6 +1816,7 @@ namespace BoundaryLayerCurver
     bool lookAtX = std::abs(dX) > std::abs(dY);
 
     // Go trough the whole column and compute TFI position of topVertices
+    std::vector<MVertex *> bottomVertices;
     for (int i = (int)column.size() - 1; i >= 0; --i) {
       MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
       quad->getEdgeVertices(0, bottomVertices);
@@ -2782,9 +2782,48 @@ void computeExtremityCoefficients(const MElement *bottom1, const MElement *botto
 }
 
 
+void linearTFI(std::vector<MFaceN> &column,
+               const MEdgeN &baseEdge, const MEdgeN &topEdge)
+{
+  // Here, we assume that "thickness" is identical on the left and on the
+  // right part of the column => identical eta_i
+  MVertex *vbot = baseEdge.getVertex(0);
+  MVertex *vtop = topEdge.getVertex(0);
+  double dX = vtop->x() - vbot->x();
+  double dY = vtop->y() - vbot->y();
+  double dZ = vtop->z() - vbot->z();
+  int componentToLookAt = 0;
+  if (std::abs(dY) > std::abs(dX)) {
+    if (std::abs(dZ) > std::abs(dY)) componentToLookAt = 2;
+    else componentToLookAt = 1;
+  }
+  else if(std::abs(dZ) > std::abs(dX)) componentToLookAt = 2;
+
+  // Go trough the whole column and compute TFI position of topVertices
+  for (int i = 1; i < (int)column.size() - 1; ++i) {
+    MEdgeN e = column[i].getEdgeN(0, 1);
+    MVertex *v = e.getVertex(0);
+    double factor;
+    switch (componentToLookAt) {
+      case 0: factor = (v->x() - vbot->x()) / dX; break;
+      case 1: factor = (v->y() - vbot->y()) / dY; break;
+      case 2: factor = (v->z() - vbot->z()) / dZ; break;
+    }
+    for (int j = 2; j < e.getNumVertices(); ++j) {
+      MVertex *vbot = baseEdge.getVertex(j);
+      MVertex *vtop = topEdge.getVertex(j);
+      MVertex *v = e.getVertex(j);
+      v->x() = (1 - factor) * vbot->x() + factor * vtop->x();
+      v->y() = (1 - factor) * vbot->y() + factor * vtop->y();
+      v->z() = (1 - factor) * vbot->z() + factor * vtop->z();
+    }
+  }
+}
+
+
 bool curveInterface(std::vector<MFaceN> &column,
                     const MElement *bottom1, const MElement *bottom2,
-                    MEdgeN &baseEdge, MEdgeN &topEdge,
+                    const MEdgeN &baseEdge, MEdgeN &topEdge,
                     double dampingFactor, GFace *bndEnt,
                     bool linear)
 {
@@ -2794,13 +2833,16 @@ bool curveInterface(std::vector<MFaceN> &column,
   computeExtremityCoefficients(bottom1, bottom2, baseEdge, topEdge, parameters);
   computePosition3DEdge(bottom1, bottom2, baseEdge, topEdge, parameters,
                         0, dampingFactor, bndEnt);
-  Msg::Error("RETURN"); return true;
-  for (unsigned int i = 1; i < column.size() - 1; ++i) {
-    MEdgeN e = column[i].getEdgeN(0, 1);
-    computeExtremityCoefficients(bottom1, bottom2, baseEdge, e, parameters);
-    computePosition3DEdge(bottom1, bottom2, baseEdge, e, parameters,
-                          0, dampingFactor, bndEnt);
-  }
+
+  linearTFI(column, baseEdge, topEdge);
+
+//  Msg::Error("RETURN"); return true;
+//  for (unsigned int i = 1; i < column.size() - 1; ++i) {
+//    MEdgeN e = column[i].getEdgeN(0, 1);
+//    computeExtremityCoefficients(bottom1, bottom2, baseEdge, e, parameters);
+//    computePosition3DEdge(bottom1, bottom2, baseEdge, e, parameters,
+//                          0, dampingFactor, bndEnt);
+//  }
 
 //
 ////    int deriv = 5;
@@ -2883,10 +2925,10 @@ void curveInterfaces(VecPairMElemVecMElem &bndEl2column,
     PairMElemVecMElem &column1 = bndEl2column[adjacencies[i].first];
     PairMElemVecMElem &column2 = bndEl2column[adjacencies[i].second];
     bool doIt = true;
-    if (column1.first->getNum() != 861 && column1.first->getNum() != 467)
-      doIt = false;
-    if (column2.first->getNum() != 861 && column2.first->getNum() != 467)
-      doIt = false;
+//    if (column1.first->getNum() != 861 && column1.first->getNum() != 467)
+//      doIt = false;
+//    if (column2.first->getNum() != 861 && column2.first->getNum() != 467)
+//      doIt = false;
 
     if (doIt) {
       computeInterface(column1, column2, interface, bottomEdge, topEdge);
@@ -2898,12 +2940,42 @@ void curveInterfaces(VecPairMElemVecMElem &bndEl2column,
 }
 
 
+//// compute then curve interfaces between columns
+//void curveColumns(VecPairMElemVecMElem &bndEl2column,
+//                  GFace *boundary)
+//{
+//  for (unsigned int i = 0; i < bndEl2column.size(); ++i) {
+//
+//
+//
+//    MEdgeN bottomEdge, topEdge;
+//    std::vector<MFaceN> interface;
+//    PairMElemVecMElem &column1 = bndEl2column[adjacencies[i].first];
+//    PairMElemVecMElem &column2 = bndEl2column[adjacencies[i].second];
+//    bool doIt = true;
+////    if (column1.first->getNum() != 861 && column1.first->getNum() != 467)
+////      doIt = false;
+////    if (column2.first->getNum() != 861 && column2.first->getNum() != 467)
+////      doIt = false;
+//
+//    if (doIt) {
+//      computeInterface(column1, column2, interface, bottomEdge, topEdge);
+//      curveInterface(interface, column1.first, column2.first, bottomEdge,
+//                     topEdge, 0, boundary, true);
+////      Msg::Error("RETURN"); return;
+//    }
+//  }
+//}
+
+
 void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, GFace *boundary)
 {
   std::vector<std::pair<int, int> > adjacencies;
   computeAdjacencies(bndEl2column, adjacencies);
 
   curveInterfaces(bndEl2column, adjacencies, boundary);
+
+//  curveColumns(bndEl2column, boundary);
 
   for (int i = 0; i < bndEl2column.size(); ++i) {
     Msg::Info("el %d, size %d", bndEl2column[i].first->getNum(), bndEl2column[i].second.size());
