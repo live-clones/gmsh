@@ -2511,7 +2511,7 @@ SVector3 getBisectorAtCommonCornerVertex(const MElement *surface1,
     if (surface1->getVertex(i1) == corner) break;
   }
   for (i2 = 0; i2 < surface2->getNumPrimaryVertices(); ++i2) {
-    if (surface1->getVertex(i2) == corner) break;
+    if (surface2->getVertex(i2) == corner) break;
   }
   if (i1 > 3 || i2 > 3)
     Msg::Error("Incoherence for computeExtremityCoefficients");
@@ -2525,7 +2525,7 @@ SVector3 getBisectorAtCommonCornerVertex(const MElement *surface1,
   surface1->getJacobian(u, v, w, gradients);
   n1 = SVector3(gradients[2][0], gradients[2][1], gradients[2][2]);
 
-  surface2->getNode(i1, u, v, w);
+  surface2->getNode(i2, u, v, w);
   surface2->getJacobian(u, v, w, gradients);
   n2 = SVector3(gradients[2][0], gradients[2][1], gradients[2][2]);
 
@@ -2560,12 +2560,13 @@ void idealPositionEdge(const MElement *bottom1, const MElement *bottom2,
     {
       double xyz[3], uvw[3];
       pnt.position(xyz);
-      // TODO: more efficient function? (than xyz2uvw)
-      bottom1->xyz2uvw(xyz, uvw);
 
+      // TODO: more efficient function? (than xyz2uvw)
       double gradients[3][3];
+      bottom1->xyz2uvw(xyz, uvw);
       bottom1->getJacobian(uvw[0], uvw[1], uvw[2], gradients);
       n = SVector3(gradients[2][0], gradients[2][1], gradients[2][2]);
+      bottom2->xyz2uvw(xyz, uvw);
       bottom2->getJacobian(uvw[0], uvw[1], uvw[2], gradients);
       SVector3 n2 = SVector3(gradients[2][0], gradients[2][1], gradients[2][2]);
 
