@@ -474,6 +474,102 @@ namespace
     // TODO remove this
     return true;
   }
+
+  void draw3DFrame(SPoint3 &p, SVector3 &t, SVector3 &n, SVector3 &w,
+                   double unitDimension, GFace *gFace)
+  {
+    // Make sure to have 2 vector that are perpendicular to t assuming n != alpha * t, forall alpha
+    SVector3 a = n;
+    SVector3 b = crossprod(t, n).unit();
+    a = crossprod(t, b).unit();
+    a *= unitDimension;
+    b *= unitDimension;
+
+    SPoint3 pnt = p + a.point();
+    MVertex *previous = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
+   gFace->addMeshVertex(previous);
+
+    const int N = 30;
+    for (int j = 1; j <= N; ++j) {
+      const double theta = (double) j / N * 2 * M_PI;
+      SPoint3 pnt = p + a.point() * std::cos(theta) + b.point() * std::sin(theta);
+      MVertex *current = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
+      gFace->addMeshVertex(current);
+      MLine *line = new MLine(previous, current);
+      gFace->edges().front()->addLine(line);
+      previous = current;
+    }
+
+    MVertex *v = new MVertex(p.x(), p.y(), p.z(), gFace);
+    pnt = p + n.point() * unitDimension;
+    MVertex *vn = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
+    pnt = p + w.point() * unitDimension;
+    MVertex *vw = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
+    gFace->addMeshVertex(v);
+    gFace->addMeshVertex(vn);
+    gFace->addMeshVertex(vw);
+    MLine *line = new MLine(v, vn);
+    gFace->edges().front()->addLine(line);
+    line = new MLine(v, vw);
+    gFace->edges().front()->addLine(line);
+  }
+
+  void drawIdealPositionEdge(const MElement *bottom1, const MElement *bottom2,
+                             const MEdgeN &baseEdge,
+                             const Parameters3DCurve &parameters, GFace *gFace,
+                             int triDirection = 0)
+  {
+    int N = 40;
+
+    MVertex *previous = NULL;
+
+    for (int i = 0; i < N+1; ++i) {
+      const double u = (double)i / N * 2 - 1;
+      SPoint3 pnt = baseEdge.pnt(u);
+      SVector3 t = baseEdge.tangent(u);
+
+      SVector3 n;
+      {
+        double xyz[3];
+        pnt.position(xyz);
+
+        // TODO: more efficient function? (than xyz2uvw)
+        double uvw[3], gradients[3][3];
+        bottom1->xyz2uvw(xyz, uvw);
+        bottom1->getJacobian(uvw[0], uvw[1], uvw[2], gradients);
+        n = SVector3(gradients[2][0], gradients[2][1], gradients[2][2]);
+        bottom2->xyz2uvw(xyz, uvw);
+        bottom2->getJacobian(uvw[0], uvw[1], uvw[2], gradients);
+        SVector3 n2 = SVector3(gradients[2][0], gradients[2][1], gradients[2][2]);
+
+        if (dot(n, n2) < 0) {
+          Msg::Warning("Boundary elements have opposite normals (2) %d -- %d",
+                       bottom1->getNum(), bottom2->getNum());
+          n.negate();
+        }
+        n.axpy(1, n2);
+        n.normalize();
+      }
+
+      SVector3 w = crossprod(t, n);
+
+      int &d = triDirection;
+      SVector3 h = parameters.thicknessAtPoint(u, d) * n
+                   + parameters.coeffbAtPoint(u, d) * t
+                   + parameters.coeffcAtPoint(u, d) * w;
+      double x = pnt.x() + h.x();
+      double y = pnt.y() + h.y();
+      double z = pnt.z() + h.z();
+
+      MVertex *current = new MVertex(x, y, z, gFace);
+      gFace->addMeshVertex(current);
+      if (previous) {
+        MLine *line = new MLine(previous, current);
+        gFace->edges().front()->addLine(line);
+      }
+      previous = current;
+    }
+  }
 }
 
 namespace BoundaryLayerCurver
@@ -2524,14 +2620,17 @@ SVector3 getBisectorAtCommonCornerVertex(const MElement *surface1,
   surface1->getNode(i1, u, v, w);
   surface1->getJacobian(u, v, w, gradients);
   n1 = SVector3(gradients[2][0], gradients[2][1], gradients[2][2]);
+//  Msg::Info("surf1 (%g, %g, %g)", u, v, w);
 
   surface2->getNode(i2, u, v, w);
   surface2->getJacobian(u, v, w, gradients);
   n2 = SVector3(gradients[2][0], gradients[2][1], gradients[2][2]);
+//  Msg::Info("surf2 (%g, %g, %g)", u, v, w);
 
   if (dot(n1, n2) < 0) {
     // This should never happen!
-    Msg::Warning("Boundary elements have opposite normals for boundary layer curving");
+    Msg::Warning("Boundary elements have opposite normals (1) %d -- %d",
+                 surface1->getNum(), surface2->getNum());
     // If really cannot prevent opposite normals, then  we should ideally
     // compare to the geometry normal or something... For now, arbitrarily
     // negate one of the normals.
@@ -2549,8 +2648,13 @@ void idealPositionEdge(const MElement *bottom1, const MElement *bottom2,
                        const Parameters3DCurve &parameters,
                        int nbPoints, const IntPt *points,
                        fullMatrix<double> &xyz, int triDirection = 0,
-                       GEntity *bndEnt = NULL)
+                       GFace *gFace = NULL)
 {
+//  static int ITER = 0;
+//  ++ITER;
+//  int MOD = 1;
+//  int START = 0;
+
   for (int i = 0; i < nbPoints; ++i) {
     const double &u = points[i].pt[0];
     SPoint3 pnt = baseEdge.pnt(u);
@@ -2571,7 +2675,8 @@ void idealPositionEdge(const MElement *bottom1, const MElement *bottom2,
       SVector3 n2 = SVector3(gradients[2][0], gradients[2][1], gradients[2][2]);
 
       if (dot(n, n2) < 0) {
-        Msg::Warning("Boundary elements have opposite normals for boundary layer curving");
+        Msg::Warning("Boundary elements have opposite normals (2) %d -- %d",
+                     bottom1->getNum(), bottom2->getNum());
         n.negate();
       }
       n.axpy(1, n2);
@@ -2579,6 +2684,9 @@ void idealPositionEdge(const MElement *bottom1, const MElement *bottom2,
     }
 
     SVector3 w = crossprod(t, n);
+
+//    if (ITER % MOD == START)
+//      draw3DFrame(pnt, t, n, w, .25, gFace);
 
     int &d = triDirection;
     SVector3 h = parameters.thicknessAtPoint(u, d) * n
@@ -2595,7 +2703,7 @@ void computePosition3DEdge(const MElement *bottom1, const MElement *bottom2,
                            const MEdgeN &baseEdge, const MEdgeN &topEdge,
                            const Parameters3DCurve &parameters,
                            int triDirection, double dampingFactor,
-                           GEntity *bndEnt)
+                           GFace *gFace)
 {
   // Let (t, n, w) be the local reference frame on 'baseEdge'
   // where t(u) is the unit tangent of the 'baseEdge'
@@ -2615,7 +2723,8 @@ void computePosition3DEdge(const MElement *bottom1, const MElement *bottom2,
 
   fullMatrix<double> xyz(sizeSystem + 2, 3);
   idealPositionEdge(bottom1, bottom2, baseEdge, parameters, sizeSystem,
-                    gaussPnts, xyz, triDirection, bndEnt);
+                    gaussPnts, xyz, triDirection, gFace);
+//  drawIdealPositionEdge(bottom1, bottom2, baseEdge, parameters, gFace, triDirection);
   for (int i = 0; i < 2; ++i) {
     xyz(sizeSystem+i, 0) = topEdge.getVertex(i)->x();
     xyz(sizeSystem+i, 1) = topEdge.getVertex(i)->y();
@@ -2647,8 +2756,8 @@ void computeExtremityCoefficients(const MElement *bottom1, const MElement *botto
 
   vBase = baseEdge.getVertex(0);
   vTop = topEdge.getVertex(0);
-  n = getBisectorAtCommonCornerVertex(bottom1, bottom2, vBase);
   t = baseEdge.tangent(-1);
+  n = getBisectorAtCommonCornerVertex(bottom1, bottom2, vBase);
   w = crossprod(t, n);
   h = SVector3(vTop->x() - vBase->x(),
                vTop->y() - vBase->y(),
@@ -2660,8 +2769,8 @@ void computeExtremityCoefficients(const MElement *bottom1, const MElement *botto
 
   vBase = baseEdge.getVertex(1);
   vTop = topEdge.getVertex(1);
-  n = getBisectorAtCommonCornerVertex(bottom1, bottom2, vBase);
   t = baseEdge.tangent(1);
+  n = getBisectorAtCommonCornerVertex(bottom1, bottom2, vBase);
   w = crossprod(t, n);
   h = SVector3(vTop->x() - vBase->x(),
                vTop->y() - vBase->y(),
@@ -2676,7 +2785,7 @@ void computeExtremityCoefficients(const MElement *bottom1, const MElement *botto
 bool curveInterface(std::vector<MFaceN> &column,
                     const MElement *bottom1, const MElement *bottom2,
                     MEdgeN &baseEdge, MEdgeN &topEdge,
-                    double dampingFactor, GEntity *bndEnt,
+                    double dampingFactor, GFace *bndEnt,
                     bool linear)
 {
   // inspired from curve2DQuadColumnTFI
@@ -2685,6 +2794,13 @@ bool curveInterface(std::vector<MFaceN> &column,
   computeExtremityCoefficients(bottom1, bottom2, baseEdge, topEdge, parameters);
   computePosition3DEdge(bottom1, bottom2, baseEdge, topEdge, parameters,
                         0, dampingFactor, bndEnt);
+  Msg::Error("RETURN"); return true;
+  for (unsigned int i = 1; i < column.size() - 1; ++i) {
+    MEdgeN e = column[i].getEdgeN(0, 1);
+    computeExtremityCoefficients(bottom1, bottom2, baseEdge, e, parameters);
+    computePosition3DEdge(bottom1, bottom2, baseEdge, e, parameters,
+                          0, dampingFactor, bndEnt);
+  }
 
 //
 ////    int deriv = 5;
@@ -2758,26 +2874,36 @@ bool curveInterface(std::vector<MFaceN> &column,
 
 // compute then curve interfaces between columns
 void curveInterfaces(VecPairMElemVecMElem &bndEl2column,
-                     std::vector<std::pair<int, int> > &adjacencies)
+                     std::vector<std::pair<int, int> > &adjacencies,
+                     GFace *boundary)
 {
   for (unsigned int i = 0; i < adjacencies.size(); ++i) {
     MEdgeN bottomEdge, topEdge;
     std::vector<MFaceN> interface;
     PairMElemVecMElem &column1 = bndEl2column[adjacencies[i].first];
     PairMElemVecMElem &column2 = bndEl2column[adjacencies[i].second];
-    computeInterface(column1, column2, interface, bottomEdge, topEdge);
-    curveInterface(interface, column1.first, column2.first, bottomEdge,
-                   topEdge, 0, NULL, true);
+    bool doIt = true;
+    if (column1.first->getNum() != 861 && column1.first->getNum() != 467)
+      doIt = false;
+    if (column2.first->getNum() != 861 && column2.first->getNum() != 467)
+      doIt = false;
+
+    if (doIt) {
+      computeInterface(column1, column2, interface, bottomEdge, topEdge);
+      curveInterface(interface, column1.first, column2.first, bottomEdge,
+                     topEdge, 0, boundary, true);
+//      Msg::Error("RETURN"); return;
+    }
   }
 }
 
 
-void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column)
+void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, GFace *boundary)
 {
   std::vector<std::pair<int, int> > adjacencies;
   computeAdjacencies(bndEl2column, adjacencies);
 
-  curveInterfaces(bndEl2column, adjacencies);
+  curveInterfaces(bndEl2column, adjacencies, boundary);
 
   for (int i = 0; i < bndEl2column.size(); ++i) {
     Msg::Info("el %d, size %d", bndEl2column[i].first->getNum(), bndEl2column[i].second.size());

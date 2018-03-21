@@ -1084,7 +1084,7 @@ void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
   else
     normal = SVector3(0, 0, 1);
   if (p.dim == 2) curve2DBoundaryLayer(bndEl2column, aboveElements, normal, bndEnt);
-  else curve3DBoundaryLayer(bndEl2column);
+//  else curve3DBoundaryLayer(bndEl2column);
 }
 
 
@@ -1274,7 +1274,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
     }
 
     if (p.thickness && p.dim == 3)
-      curve3DBoundaryLayer(bndEl2column);
+      curve3DBoundaryLayer(bndEl2column, (GFace*) bndEnts[0]);
   }
 
   double t2 = Cpu();
