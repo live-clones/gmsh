@@ -2421,7 +2421,7 @@ bool faceContainsVertex(MFace &f, MVertex *v)
 }
 
 
-void computeStackPrimaryVertices(PairMElemVecMElem &c1,
+void computeStackPrimaryVertices(const PairMElemVecMElem &c1,
                                  std::vector<MVertex*> &stack)
 {
   int numVertexPerLayer = c1.first->getNumPrimaryVertices();
@@ -2782,8 +2782,9 @@ void computeExtremityCoefficients(const MElement *bottom1, const MElement *botto
 }
 
 
-void linearTFI(std::vector<MFaceN> &column,
-               const MEdgeN &baseEdge, const MEdgeN &topEdge)
+void computePositionInteriorEdgesLinearTFI(std::vector<MFaceN> &column,
+                                           const MEdgeN &baseEdge,
+                                           const MEdgeN &topEdge)
 {
   // Here, we assume that "thickness" is identical on the left and on the
   // right part of the column => identical eta_i
@@ -2834,84 +2835,7 @@ bool curveInterface(std::vector<MFaceN> &column,
   computePosition3DEdge(bottom1, bottom2, baseEdge, topEdge, parameters,
                         0, dampingFactor, bndEnt);
 
-  linearTFI(column, baseEdge, topEdge);
-
-//  Msg::Error("RETURN"); return true;
-//  for (unsigned int i = 1; i < column.size() - 1; ++i) {
-//    MEdgeN e = column[i].getEdgeN(0, 1);
-//    computeExtremityCoefficients(bottom1, bottom2, baseEdge, e, parameters);
-//    computePosition3DEdge(bottom1, bottom2, baseEdge, e, parameters,
-//                          0, dampingFactor, bndEnt);
-//  }
-
-//
-////    int deriv = 5;
-////    double scale = 1, dx = 2; // Strange
-////    double scale = 1, dx = 8; // Good
-//  int deriv = 6;
-//  double scale = 10, dx = 2; // Strange
-////    double scale = 1, dx = 2; // Good
-//  drawBezierControlPolygon(globalBottomVertices, bndEnt);
-//  drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(0, -10, 0), &deriv, scale);
-//  drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(-dx, -10, 0), &deriv, scale);
-//  damping3(globalBottomVertices, .3, 10000, bndEnt, true);
-//  drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(dx, -10, 0), &deriv, scale);
-//  drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(-dx, -10, 0), &deriv, scale);
-//  damping3(globalBottomVertices, .3, 10000, bndEnt, true);
-//  drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(2*dx, -10, 0), &deriv, scale);
-//  drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(-dx, -10, 0), &deriv, scale);
-//  damping3(globalBottomVertices, .3, 10000, bndEnt, true);
-//  drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(3*dx, -10, 0), &deriv, scale);
-//  drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(-dx, -10, 0), &deriv, scale);
-//  damping3(globalBottomVertices, .3, 10000, bndEnt, true);
-//  drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(4*dx, -10, 0), &deriv, scale);
-//  drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(-dx, -10, 0), &deriv, scale);
-//  damping3(globalBottomVertices, .3, 10000, bndEnt, true);
-//  drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(5*dx, -10, 0), &deriv, scale);
-//  drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(-dx, -10, 0), &deriv, scale);
-//
-//  // Curve last layer
-//  Parameters2DCurve parameters;
-//  computeExtremityCoefficients(globalBottomVertices, globalBottomVertices,
-//                               globalTopVertices, parameters, w);
-//  computePositionEdgeVert(globalBottomVertices, globalBottomVertices,
-//                          globalTopVertices, parameters, w,
-//                          dampingFactor, bndEnt, -1, true);
-//
-//  drawIdealCurve(globalBottomVertices, parameters, w, bndEnt, true, false, true);
-//
-//  double remainingDamping = distDamping;
-//  double delta = 1;
-////      std::cout << "remain:" << remainingDamping << std::endl;
-//  while (remainingDamping > 1e-12 && delta > 1e-4 * lengthFirst) {
-//    delta = damping3(topVertices, .1, remainingDamping, bndEnt, false);
-//    remainingDamping -= delta;
-//  }
-//
-//  // Choose between linear and hermite
-//  if (linear) {
-//    linearTFI(column, globalBottomVertices, globalTopVertices);
-//  }
-//  else {
-//    computeExtremityCoefficients(globalBottomVertices, globalBottomVertices,
-//                                 allLayerVertices[1], parameters, w);
-//    computePositionEdgeVert(globalBottomVertices, globalBottomVertices,
-//                            allLayerVertices[1], parameters, w,
-//                            dampingFactor, bndEnt, -1, true);
-////      int N = 0;
-////      switch (bottomEdge->getNum()) {
-////        case 1102: N = 0; break;
-////      }
-////      for (int i = 0; i < N; ++i) {
-////        damping2(allLayerVertices[1], .1, bndEnt);
-////      }
-//
-//    hermiteTFI(allLayerVertices);
-//    for (int i = 0; i < (int)column.size(); ++i)
-//      repositionInteriorNodes(column[i]);
-//  }
-//
-//  return true;
+  computePositionInteriorEdgesLinearTFI(column, baseEdge, topEdge);
 }
 
 // compute then curve interfaces between columns
@@ -2940,32 +2864,42 @@ void curveInterfaces(VecPairMElemVecMElem &bndEl2column,
 }
 
 
-//// compute then curve interfaces between columns
-//void curveColumns(VecPairMElemVecMElem &bndEl2column,
-//                  GFace *boundary)
-//{
-//  for (unsigned int i = 0; i < bndEl2column.size(); ++i) {
-//
-//
-//
-//    MEdgeN bottomEdge, topEdge;
-//    std::vector<MFaceN> interface;
-//    PairMElemVecMElem &column1 = bndEl2column[adjacencies[i].first];
-//    PairMElemVecMElem &column2 = bndEl2column[adjacencies[i].second];
-//    bool doIt = true;
-////    if (column1.first->getNum() != 861 && column1.first->getNum() != 467)
-////      doIt = false;
-////    if (column2.first->getNum() != 861 && column2.first->getNum() != 467)
-////      doIt = false;
-//
-//    if (doIt) {
-//      computeInterface(column1, column2, interface, bottomEdge, topEdge);
-//      curveInterface(interface, column1.first, column2.first, bottomEdge,
-//                     topEdge, 0, boundary, true);
-////      Msg::Error("RETURN"); return;
-//    }
-//  }
-//}
+void computeStackHighOrderFaces(const PairMElemVecMElem &bndEl2column,
+                                std::vector<MFaceN> &stack)
+{
+  std::vector<MElement*> &column = bndEl2column.second;
+  stack.resize(column.size());
+
+  std::vector<MVertex *> allPrimaryVertices;
+  computeStackPrimaryVertices(bndEl2column, allPrimaryVertices);
+  // FIXME already calculated in computeInterfaces. Reuse them?
+
+  int nVertexPerLayer = bndEl2column.first->getNumPrimaryVertices();
+  for (unsigned int j = 0; j < stack.size(); ++j) {
+    MFace f;
+    if (nVertexPerLayer == 3)
+      f = MFace(allPrimaryVertices[j*3+0],
+                allPrimaryVertices[j*3+1],
+                allPrimaryVertices[j*3+2]);
+    else
+      f = MFace(allPrimaryVertices[j*3+0],
+                allPrimaryVertices[j*3+1],
+                allPrimaryVertices[j*3+2],
+                allPrimaryVertices[j*3+3]);
+    stack[j] = column[j]->getHighOrderFace(f);
+  }
+}
+
+
+void curveColumns(VecPairMElemVecMElem &bndEl2column,
+                  GFace *boundary)
+{
+  for (unsigned int i = 0; i < bndEl2column.size(); ++i) {
+    std::vector<MFaceN> stackFaces;
+    computeStackHighOrderFaces(bndEl2column[i], stackFaces);
+
+  }
+}
 
 
 void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, GFace *boundary)
@@ -2975,7 +2909,7 @@ void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, GFace *boundary)
 
   curveInterfaces(bndEl2column, adjacencies, boundary);
 
-//  curveColumns(bndEl2column, boundary);
+  curveColumns(bndEl2column, boundary);
 
   for (int i = 0; i < bndEl2column.size(); ++i) {
     Msg::Info("el %d, size %d", bndEl2column[i].first->getNum(), bndEl2column[i].second.size());
