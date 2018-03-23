@@ -8,6 +8,9 @@
 #include "GmshConfig.h"
 #include "MFace.h"
 #include "Numeric.h"
+#include "ElementType.h"
+#include "nodalBasis.h"
+#include "BasisFactory.h"
 
 bool compare(const MVertex *const v0, const MVertex *const v1){ return v0->getNum() < v1->getNum(); }
 
@@ -126,4 +129,116 @@ MEdgeN MFaceN::getEdgeN(int num, int sign) const
     for (int i = end-1; i >= start; --i) vertices[++k] = _v[i];
   }
   return MEdgeN(vertices);
+}
+
+SPoint3 MFaceN::pnt(double u, double v) const
+{
+  int tag = ElementType::getTag(_type, _order);
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
+
+  double f[100];
+  fs->f(u, v, 0, f);
+
+  double x = 0, y = 0, z = 0;
+  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+    x += f[j] * _v[j]->x();
+    y += f[j] * _v[j]->y();
+    z += f[j] * _v[j]->z();
+  }
+  return SPoint3(x, y, z);
+}
+
+SVector3 MFaceN::tangent(double u, double v, int num) const
+{
+  if (num != 0 && num != 1) num = 0;
+
+  int tag = ElementType::getTag(_type, _order);
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
+
+  double sf[100][3];
+  fs->df(u, v, 0, sf);
+
+  double dx = 0, dy = 0, dz = 0;
+  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+    dx += sf[j][num] * _v[j]->x();
+    dy += sf[j][num] * _v[j]->y();
+    dz += sf[j][num] * _v[j]->z();
+  }
+  return SVector3(dx, dy, dz).unit();
+}
+
+SVector3 MFaceN::normal(double u, double v) const
+{
+  int tag = ElementType::getTag(_type, _order);
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
+
+  double sf[100][3];
+  fs->df(u, v, 0, sf);
+
+  double dx[2] = {0, 0}, dy[2] = {0, 0}, dz[2] = {0, 0};
+  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+    for (int k = 0; k < 1; ++k) {
+      dx[k] += sf[j][k] * _v[j]->x();
+      dy[k] += sf[j][k] * _v[j]->y();
+      dz[k] += sf[j][k] * _v[j]->z();
+    }
+  }
+
+  SVector3 t0 = SVector3(dx[0], dy[0], dz[0]);
+  SVector3 t1 = SVector3(dx[1], dy[1], dz[1]);
+
+  return crossprod(t0, t1).unit();
+}
+
+void MFaceN::frame(double u, double v,
+                   SVector3 &t0, SVector3 &t1, SVector3 &n) const
+{
+  int tag = ElementType::getTag(_type, _order);
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
+
+  double sf[100][3];
+  fs->df(u, v, 0, sf);
+
+  double dx[2] = {0, 0}, dy[2] = {0, 0}, dz[2] = {0, 0};
+  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+    for (int k = 0; k < 1; ++k) {
+      dx[k] += sf[j][k] * _v[j]->x();
+      dy[k] += sf[j][k] * _v[j]->y();
+      dz[k] += sf[j][k] * _v[j]->z();
+    }
+  }
+
+  t0 = SVector3(dx[0], dy[0], dz[0]).unit();
+  t1 = SVector3(dx[1], dy[1], dz[1]).unit();
+  n =  crossprod(t0, t1);
+}
+
+void MFaceN::frame(double u, double v, SPoint3 &p,
+                   SVector3 &t0, SVector3 &t1, SVector3 &n) const
+{
+  int tag = ElementType::getTag(_type, _order);
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
+
+  double f[100];
+  double sf[100][3];
+  fs->f(u, v, 0, f);
+  fs->df(u, v, 0, sf);
+
+  double x = 0, y = 0, z = 0;
+  double dx[2] = {0, 0}, dy[2] = {0, 0}, dz[2] = {0, 0};
+  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+    x += f[j] * _v[j]->x();
+    y += f[j] * _v[j]->y();
+    z += f[j] * _v[j]->z();
+    for (int k = 0; k < 1; ++k) {
+      dx[k] += sf[j][k] * _v[j]->x();
+      dy[k] += sf[j][k] * _v[j]->y();
+      dz[k] += sf[j][k] * _v[j]->z();
+    }
+  }
+
+  p = SPoint3(x, y, z);
+  t0 = SVector3(dx[0], dy[0], dz[0]).unit();
+  t1 = SVector3(dx[1], dy[1], dz[1]).unit();
+  n =  crossprod(t0, t1);
 }

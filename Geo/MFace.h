@@ -158,6 +158,12 @@ public:
   inline const std::vector<MVertex*> &getVertices() const { return _v; }
 
   MEdgeN getEdgeN(int num, int sign) const;
+
+  SPoint3 pnt(double u, double v) const;
+  SVector3 tangent(double u, double v, int num) const;
+  SVector3 normal(double u, double v) const;
+  void frame(double u, double v, SVector3 &, SVector3 &, SVector3 &) const;
+  void frame(double u, double v, SPoint3 &, SVector3 &, SVector3 &, SVector3 &) const;
 };
 
 #endif

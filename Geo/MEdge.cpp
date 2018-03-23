@@ -77,10 +77,11 @@ SPoint3 MEdgeN::pnt(double u) const
 {
   int tagLine = ElementType::getTag(TYPE_LIN, (int)_v.size() - 1);
   const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
+
   double f[100];
+  fs->f(u, 0, 0, f);
 
   double x = 0, y = 0, z = 0;
-  fs->f(u, 0, 0, f);
   for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
     x += f[j] * _v[j]->x();
     y += f[j] * _v[j]->y();
@@ -93,10 +94,11 @@ SVector3 MEdgeN::tangent(double u) const
 {
   int tagLine = ElementType::getTag(TYPE_LIN, (int)_v.size() - 1);
   const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
+
   double sf[100][3];
+  fs->df(u, 0, 0, sf);
 
   double dx = 0, dy = 0, dz = 0;
-  fs->df(u, 0, 0, sf);
   for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
     dx += sf[j][0] * _v[j]->x();
     dy += sf[j][0] * _v[j]->y();
