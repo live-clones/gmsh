@@ -14,6 +14,9 @@
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 
+template <class t> class fullMatrix;
+
+
 // A mesh face.
 class MFace {
  private:
@@ -156,6 +159,7 @@ public:
   inline int getNumPrimaryVertices() const { return _type == TYPE_TRI ? 3 : 4; }
   inline MVertex *getVertex(int i) const { return _v[i]; }
   inline const std::vector<MVertex*> &getVertices() const { return _v; }
+  int order() const;
 
   MEdgeN getEdgeN(int num, int sign) const;
 
@@ -164,6 +168,8 @@ public:
   SVector3 normal(double u, double v) const;
   void frame(double u, double v, SVector3 &, SVector3 &, SVector3 &) const;
   void frame(double u, double v, SPoint3 &, SVector3 &, SVector3 &, SVector3 &) const;
+
+  void repositionInteriorNodes(const fullMatrix<double>*);
 };
 
 #endif

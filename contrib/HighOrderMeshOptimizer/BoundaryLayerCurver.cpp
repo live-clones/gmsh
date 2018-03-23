@@ -47,6 +47,7 @@
 #endif
 #include "Options.h"
 #include "AnalyseCurvedMesh.h"
+#include "InteriorNodePlacement.h"
 
 //#include "MElement.h"
 //#include "MLine.h"
@@ -2822,6 +2823,82 @@ void computePositionInteriorEdgesLinearTFI(std::vector<MFaceN> &column,
 }
 
 
+namespace InteriorNodePlacementMatrices {
+  fullMatrix<double>* triangle[10] = {NULL, NULL, NULL, NULL, NULL,
+                                      NULL, NULL, NULL, NULL, NULL};
+  fullMatrix<double>* quadrangle[10] = {NULL, NULL, NULL, NULL, NULL,
+                                        NULL, NULL, NULL, NULL, NULL};
+  fullMatrix<double>* linearTriangle0[10] = {NULL, NULL, NULL, NULL, NULL,
+                                             NULL, NULL, NULL, NULL, NULL};
+  fullMatrix<double>* linearTriangle2[10] = {NULL, NULL, NULL, NULL, NULL,
+                                             NULL, NULL, NULL, NULL, NULL};
+  fullMatrix<double>* linearQuadrangle[10] = {NULL, NULL, NULL, NULL, NULL,
+                                              NULL, NULL, NULL, NULL, NULL};
+
+  const fullMatrix<double>* forTriangle(int order, bool linear, int edge = 2)
+  {
+    if (!linear) {
+      if (!triangle[order]) {
+        triangle[order] = new fullMatrix<double>();
+        *triangle[order] = gmshGenerateInteriorNodePlacementTriangle(order);
+      }
+      return triangle[order];
+    }
+    else if (edge == 0) {
+      if (!linearTriangle0[order]) {
+        linearTriangle0[order] = new fullMatrix<double>();
+        *linearTriangle0[order] =
+            gmshGenerateInteriorNodePlacementTriangleLinear(order, 0);
+      }
+      return linearTriangle0[order];
+    }
+    else if (edge == 2) {
+      if (!linearTriangle2[order]) {
+        linearTriangle2[order] = new fullMatrix<double>();
+        *linearTriangle2[order] =
+            gmshGenerateInteriorNodePlacementTriangleLinear(order, 2);
+      }
+      return linearTriangle2[order];
+    }
+  }
+
+  const fullMatrix<double>* forQuadrangle(int order, bool linear)
+  {
+    if (!linear) {
+      if (!quadrangle[order]) {
+        quadrangle[order] = new fullMatrix<double>();
+        *quadrangle[order] = gmshGenerateInteriorNodePlacementQuadrangle(order);
+      }
+      return quadrangle[order];
+    }
+    else {
+      if (!linearQuadrangle[order]) {
+        linearQuadrangle[order] = new fullMatrix<double>();
+        *linearQuadrangle[order] =
+            gmshGenerateInteriorNodePlacementQuadrangleLinear(order);
+      }
+      return linearQuadrangle[order];
+    }
+  }
+}
+
+
+void repositionInteriorNodes(std::vector<MFaceN> &column)
+{
+  for (unsigned int i = 0; i < column.size(); ++i) {
+    MFaceN &f = column[i];
+    const fullMatrix<double> *placement = NULL;
+    if (f.getNumPrimaryVertices() == 3) {
+      // TODO Determine if edge 0 or 2
+    }
+    else {
+      placement = InteriorNodePlacementMatrices::forQuadrangle(f.order(), true);
+    }
+    f.repositionInteriorNodes(placement);
+  }
+}
+
+
 bool curveInterface(std::vector<MFaceN> &column,
                     const MElement *bottom1, const MElement *bottom2,
                     const MEdgeN &baseEdge, MEdgeN &topEdge,
@@ -2836,6 +2913,7 @@ bool curveInterface(std::vector<MFaceN> &column,
                         0, dampingFactor, bndEnt);
 
   computePositionInteriorEdgesLinearTFI(column, baseEdge, topEdge);
+  repositionInteriorNodes(column);
 }
 
 // compute then curve interfaces between columns
@@ -2867,7 +2945,7 @@ void curveInterfaces(VecPairMElemVecMElem &bndEl2column,
 void computeStackHighOrderFaces(const PairMElemVecMElem &bndEl2column,
                                 std::vector<MFaceN> &stack)
 {
-  std::vector<MElement*> &column = bndEl2column.second;
+  const std::vector<MElement*> &column = bndEl2column.second;
   stack.resize(column.size());
 
   std::vector<MVertex *> allPrimaryVertices;

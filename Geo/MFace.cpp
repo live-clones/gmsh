@@ -242,3 +242,26 @@ void MFaceN::frame(double u, double v, SPoint3 &p,
   t1 = SVector3(dx[1], dy[1], dz[1]).unit();
   n =  crossprod(t0, t1);
 }
+
+int MFaceN::order() const
+{
+  return _order;
+}
+
+void MFaceN::repositionInteriorNodes(const fullMatrix<double> *placement)
+{
+  int nCorner = getNumPrimaryVertices();
+  int start = nCorner + (_order - 1) * nCorner;
+  for (int i = start; i < (int)_v.size(); ++i) {
+    MVertex *v = _v[i];
+    v->x() = 0;
+    v->y() = 0;
+    v->z() = 0;
+    for (int j = 0; j < placement->size2(); ++j) {
+      const double coeff = (*placement)(i - start, j);
+      v->x() += coeff * _v[j]->x();
+      v->y() += coeff * _v[j]->y();
+      v->z() += coeff * _v[j]->z();
+    }
+  }
+}
