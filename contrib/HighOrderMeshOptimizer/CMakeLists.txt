@@ -19,5 +19,5 @@ set(SRC
   BoundaryLayerCurver3D.cpp
 )
 
-file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.hpp)
+file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(contrib/HighOrderMeshOptimizer "${SRC};${HDR}")
