@@ -93,6 +93,14 @@ namespace BoundaryLayerCurver
     fullMatrix<double> T1;
   };
 
+
+  // Least square data
+  typedef std::pair<int, std::pair<int, int> > TupleLeastSquareData;
+  static std::map<TupleLeastSquareData, LeastSquareData*> leastSquareData;
+  LeastSquareData* getLeastSquareData(int typeElement, int order,
+                                      int orderGauss);
+  LeastSquareData* constructLeastSquareData(int typeElement, int order,
+                                            int orderGauss);
 }
 
 
