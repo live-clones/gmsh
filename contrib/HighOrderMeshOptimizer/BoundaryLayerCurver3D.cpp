@@ -151,6 +151,121 @@ namespace
 
 namespace BoundaryLayerCurver
 {
+  namespace InteriorNodePlacementMatrices {
+    fullMatrix<double>* triangle[10] = {NULL, NULL, NULL, NULL, NULL,
+                                        NULL, NULL, NULL, NULL, NULL};
+    fullMatrix<double>* quadrangle[10] = {NULL, NULL, NULL, NULL, NULL,
+                                          NULL, NULL, NULL, NULL, NULL};
+    fullMatrix<double>* linearTriangle0[10] = {NULL, NULL, NULL, NULL, NULL,
+                                               NULL, NULL, NULL, NULL, NULL};
+    fullMatrix<double>* linearTriangle2[10] = {NULL, NULL, NULL, NULL, NULL,
+                                               NULL, NULL, NULL, NULL, NULL};
+    fullMatrix<double>* linearQuadrangle[10] = {NULL, NULL, NULL, NULL, NULL,
+                                                NULL, NULL, NULL, NULL, NULL};
+
+    const fullMatrix<double>* forTriangle(int order, bool linear, int edge = 2)
+    {
+      if (!linear) {
+        if (!triangle[order]) {
+          triangle[order] = new fullMatrix<double>();
+          *triangle[order] = gmshGenerateInteriorNodePlacementTriangle(order);
+        }
+        return triangle[order];
+      }
+      else if (edge == 0) {
+        if (!linearTriangle0[order]) {
+          linearTriangle0[order] = new fullMatrix<double>();
+          *linearTriangle0[order] =
+              gmshGenerateInteriorNodePlacementTriangleLinear(order, 0);
+        }
+        return linearTriangle0[order];
+      }
+      else if (edge == 2) {
+        if (!linearTriangle2[order]) {
+          linearTriangle2[order] = new fullMatrix<double>();
+          *linearTriangle2[order] =
+              gmshGenerateInteriorNodePlacementTriangleLinear(order, 2);
+        }
+        return linearTriangle2[order];
+      }
+    }
+
+    const fullMatrix<double>* forQuadrangle(int order, bool linear)
+    {
+      if (!linear) {
+        if (!quadrangle[order]) {
+          quadrangle[order] = new fullMatrix<double>();
+          *quadrangle[order] = gmshGenerateInteriorNodePlacementQuadrangle(order);
+        }
+        return quadrangle[order];
+      }
+      else {
+        if (!linearQuadrangle[order]) {
+          linearQuadrangle[order] = new fullMatrix<double>();
+          *linearQuadrangle[order] =
+              gmshGenerateInteriorNodePlacementQuadrangleLinear(order);
+        }
+        return linearQuadrangle[order];
+      }
+    }
+  }
+
+  void Parameters3DFace::computeParameters(const MFaceN &baseFace,
+                                           const MFaceN &topFace)
+  {
+    _nCorner = baseFace.getNumPrimaryVertices();
+    _order = baseFace.getOrder();
+    int nVerticesOnBoundary = _nCorner * _order;
+    int sizeParameters = nVerticesOnBoundary;
+    // Currently, incomplete polynomial space of triangles is not symmetrical,
+    // we use complete space
+    if (_nCorner == 3) sizeParameters = (_order + 1) * (_order + 2) / 2;
+    // TODO Make sure every element is 0
+    _thickness.resize(sizeParameters, 0);
+    _coeffb.resize(sizeParameters, 0);
+    _coeffc.resize(sizeParameters, 0);
+
+    int tag = ElementType::getTag(_nCorner == 4 ? TYPE_QUA : TYPE_TRI, _order);
+    const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
+    const fullMatrix<double> &refPoints = fs->getReferenceNodes();
+    for (int i = 0; i < nVerticesOnBoundary; ++i) {
+      // FIXME Better idea?
+      const double &u = refPoints(i, 0);
+      const double &v = refPoints(i, 1);
+      SVector3 t0, t1, n, h;
+      baseFace.frame(u, v, t0, t1, n);
+      MVertex *vBase = baseFace.getVertex(i);
+      MVertex *vTop = topFace.getVertex(i);
+      h = SVector3(vTop->x() - vBase->x(),
+                   vTop->y() - vBase->y(),
+                   vTop->z() - vBase->z());
+
+      _thickness[i] = dot(h, n);
+      _coeffb[i] = dot(h, t0);
+      _coeffc[i] = dot(h, t1);
+    }
+
+    // Compute interior values for triangle (this is needed if we use complete
+    // polynomial space to interpolate on triangles)
+    if (_nCorner == 3) {
+      const fullMatrix<double> *interpolator;
+      interpolator = InteriorNodePlacementMatrices::forTriangle(_order, false);
+      for (int i = nVerticesOnBoundary; i < sizeParameters; ++i) {
+        for (int j = 0; j < interpolator->size2(); ++j) {
+          const double coeff = (*interpolator)(i - nVerticesOnBoundary, j);
+          _thickness[i] += coeff * _thickness[j];
+          _coeffb[i] += coeff * _coeffb[j];
+          _coeffc[i] += coeff * _coeffc[j];
+        }
+      }
+    }
+
+    // Reset factorDegenerate
+    for (int i = 0; i < 4; ++i) {
+      _factorDegenerate[i] = 1;
+    }
+  }
+
 // compute adjacencies of boundary elements, thus of columns
   void computeAdjacencies(VecPairMElemVecMElem &bndEl2column,
                           std::vector<std::pair<int, int> > &adjacencies)
@@ -628,66 +743,6 @@ namespace BoundaryLayerCurver
   }
 
 
-  namespace InteriorNodePlacementMatrices {
-    fullMatrix<double>* triangle[10] = {NULL, NULL, NULL, NULL, NULL,
-                                        NULL, NULL, NULL, NULL, NULL};
-    fullMatrix<double>* quadrangle[10] = {NULL, NULL, NULL, NULL, NULL,
-                                          NULL, NULL, NULL, NULL, NULL};
-    fullMatrix<double>* linearTriangle0[10] = {NULL, NULL, NULL, NULL, NULL,
-                                               NULL, NULL, NULL, NULL, NULL};
-    fullMatrix<double>* linearTriangle2[10] = {NULL, NULL, NULL, NULL, NULL,
-                                               NULL, NULL, NULL, NULL, NULL};
-    fullMatrix<double>* linearQuadrangle[10] = {NULL, NULL, NULL, NULL, NULL,
-                                                NULL, NULL, NULL, NULL, NULL};
-
-    const fullMatrix<double>* forTriangle(int order, bool linear, int edge = 2)
-    {
-      if (!linear) {
-        if (!triangle[order]) {
-          triangle[order] = new fullMatrix<double>();
-          *triangle[order] = gmshGenerateInteriorNodePlacementTriangle(order);
-        }
-        return triangle[order];
-      }
-      else if (edge == 0) {
-        if (!linearTriangle0[order]) {
-          linearTriangle0[order] = new fullMatrix<double>();
-          *linearTriangle0[order] =
-              gmshGenerateInteriorNodePlacementTriangleLinear(order, 0);
-        }
-        return linearTriangle0[order];
-      }
-      else if (edge == 2) {
-        if (!linearTriangle2[order]) {
-          linearTriangle2[order] = new fullMatrix<double>();
-          *linearTriangle2[order] =
-              gmshGenerateInteriorNodePlacementTriangleLinear(order, 2);
-        }
-        return linearTriangle2[order];
-      }
-    }
-
-    const fullMatrix<double>* forQuadrangle(int order, bool linear)
-    {
-      if (!linear) {
-        if (!quadrangle[order]) {
-          quadrangle[order] = new fullMatrix<double>();
-          *quadrangle[order] = gmshGenerateInteriorNodePlacementQuadrangle(order);
-        }
-        return quadrangle[order];
-      }
-      else {
-        if (!linearQuadrangle[order]) {
-          linearQuadrangle[order] = new fullMatrix<double>();
-          *linearQuadrangle[order] =
-              gmshGenerateInteriorNodePlacementQuadrangleLinear(order);
-        }
-        return linearQuadrangle[order];
-      }
-    }
-  }
-
-
   void repositionInteriorNodes(std::vector<MFaceN> &column)
   {
     for (unsigned int i = 0; i < column.size(); ++i) {
@@ -697,7 +752,7 @@ namespace BoundaryLayerCurver
         // TODO Determine if edge 0 or 2
       }
       else {
-        placement = InteriorNodePlacementMatrices::forQuadrangle(f.order(), true);
+        placement = InteriorNodePlacementMatrices::forQuadrangle(f.getOrder(), true);
       }
       f.repositionInteriorNodes(placement);
     }
@@ -773,6 +828,50 @@ namespace BoundaryLayerCurver
     }
   }
 
+//  void computePosition3DFace(const MFaceN &baseFace, MFaceN &topFace,
+//                             const Parameters3DFace &parameters,
+//                             GFace *gFace)
+//  {
+//    // Let (t, n, w) be the local reference frame on 'baseEdge'
+//    // where t(u) is the unit tangent of the 'baseEdge'
+//    //       n(u) is unit, normal to 't' and such that (t, n) is bisector of faces
+//    //            'bottom1' and 'bottom2' at corresponding point
+//    //       w = t x n
+//    // We seek for each component the polynomial function that fit the best
+//    //   x1(u) = x0(u) + h(u) * n(u) + b(u) * t(u) + c(u) * w(u)
+//    // in the least square sense.
+//    // where x0(u) is the position of 'baseEdge' and h, b, c are given by
+//    //       'parameters'
+//
+//    const int orderCurve = baseEdge.getNumVertices() - 1;
+//    const int orderGauss = orderCurve * 2;
+//    const int sizeSystem = getNGQLPts(orderGauss);
+//    const IntPt *gaussPnts = getGQLPts(orderGauss);
+//
+//    fullMatrix<double> xyz(sizeSystem + 2, 3);
+//    idealPositionEdge(bottom1, bottom2, baseEdge, parameters, sizeSystem,
+//                      gaussPnts, xyz, triDirection, gFace);
+////  drawIdealPositionEdge(bottom1, bottom2, baseEdge, parameters, gFace, triDirection);
+//    for (int i = 0; i < 2; ++i) {
+//      xyz(sizeSystem+i, 0) = topEdge.getVertex(i)->x();
+//      xyz(sizeSystem+i, 1) = topEdge.getVertex(i)->y();
+//      xyz(sizeSystem+i, 2) = topEdge.getVertex(i)->z();
+//    }
+//
+//    BoundaryLayerCurver::LeastSquareData *data =
+//        BoundaryLayerCurver::getLeastSquareData(TYPE_LIN, orderCurve, orderGauss);
+//
+//    fullMatrix<double> coeff(orderCurve + 1, 3);
+//    fullMatrix<double> newxyz(orderCurve + 1, 3);
+//    data->invA.mult(xyz, coeff);
+//    data->Leg2Lag.mult(coeff, newxyz);
+//
+//    for (int i = 2; i < topEdge.getNumVertices(); ++i) {
+//      topEdge.getVertex(i)->x() = newxyz(i, 0);
+//      topEdge.getVertex(i)->y() = newxyz(i, 1);
+//      topEdge.getVertex(i)->z() = newxyz(i, 2);
+//    }
+//  }
 
   void curveColumns(VecPairMElemVecMElem &bndEl2column,
                     GFace *boundary)
@@ -780,6 +879,13 @@ namespace BoundaryLayerCurver
     for (unsigned int i = 0; i < bndEl2column.size(); ++i) {
       std::vector<MFaceN> stackFaces;
       computeStackHighOrderFaces(bndEl2column[i], stackFaces);
+
+      MFaceN &baseFace = stackFaces[0];
+      MFaceN &topFace = stackFaces.back();
+
+//      computeExtremityCoefficients(bottom1, bottom2, baseEdge, topEdge, parameters);
+//      computePosition3DFace(baseFace, topFace, parameters,
+//                            0, dampingFactor, bndEnt);
     }
   }
 }

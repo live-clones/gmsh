@@ -243,7 +243,7 @@ void MFaceN::frame(double u, double v, SPoint3 &p,
   n =  crossprod(t0, t1);
 }
 
-int MFaceN::order() const
+int MFaceN::getOrder() const
 {
   return _order;
 }

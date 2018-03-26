@@ -159,15 +159,16 @@ public:
   inline int getNumPrimaryVertices() const { return _type == TYPE_TRI ? 3 : 4; }
   inline MVertex *getVertex(int i) const { return _v[i]; }
   inline const std::vector<MVertex*> &getVertices() const { return _v; }
-  int order() const;
+  int getOrder() const;
 
   MEdgeN getEdgeN(int num, int sign) const;
 
   SPoint3 pnt(double u, double v) const;
   SVector3 tangent(double u, double v, int num) const;
   SVector3 normal(double u, double v) const;
-  void frame(double u, double v, SVector3 &, SVector3 &, SVector3 &) const;
-  void frame(double u, double v, SPoint3 &, SVector3 &, SVector3 &, SVector3 &) const;
+  void frame(double u, double v, SVector3 &t0, SVector3 &t1, SVector3 &n) const;
+  void frame(double u, double v,
+             SPoint3 &p, SVector3 &t0, SVector3 &t1, SVector3 &n) const;
 
   void repositionInteriorNodes(const fullMatrix<double>*);
 };
