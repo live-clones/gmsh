@@ -150,8 +150,14 @@ inline SVector3 operator*(const SVector3 &v1, const SVector3 &v2)
 inline SVector3 operator+(const SVector3 &a,const SVector3 &b)
 { return SVector3(a[0] + b[0], a[1] + b[1], a[2] + b[2]); }
 
+inline SPoint3 operator+(const SPoint3 &a,const SVector3 &b)
+{ return SPoint3(a[0] + b[0], a[1] + b[1], a[2] + b[2]); }
+
 inline SVector3 operator-(const SVector3 &a,const SVector3 &b)
 { return SVector3(a[0] - b[0], a[1] - b[1], a[2] - b[2]); }
+
+inline SPoint3 operator-(const SPoint3 &a,const SVector3 &b)
+{ return SPoint3(a[0] - b[0], a[1] - b[1], a[2] - b[2]); }
 
 inline SVector3 operator-(const SVector3 &a)
 { return SVector3(-a[0], -a[1], -a[2]); }
