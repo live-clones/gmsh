@@ -2960,10 +2960,10 @@ void computeStackHighOrderFaces(const PairMElemVecMElem &bndEl2column,
                 allPrimaryVertices[j*3+1],
                 allPrimaryVertices[j*3+2]);
     else
-      f = MFace(allPrimaryVertices[j*3+0],
-                allPrimaryVertices[j*3+1],
-                allPrimaryVertices[j*3+2],
-                allPrimaryVertices[j*3+3]);
+      f = MFace(allPrimaryVertices[j*4+0],
+                allPrimaryVertices[j*4+1],
+                allPrimaryVertices[j*4+2],
+                allPrimaryVertices[j*4+3]);
     stack[j] = column[j]->getHighOrderFace(f);
   }
 }
@@ -2975,7 +2975,6 @@ void curveColumns(VecPairMElemVecMElem &bndEl2column,
   for (unsigned int i = 0; i < bndEl2column.size(); ++i) {
     std::vector<MFaceN> stackFaces;
     computeStackHighOrderFaces(bndEl2column[i], stackFaces);
-
   }
 }
 
