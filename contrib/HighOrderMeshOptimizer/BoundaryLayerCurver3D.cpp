@@ -61,14 +61,14 @@ namespace
     a *= unitDimension;
     b *= unitDimension;
 
-    SPoint3 pnt = p + a.point();
+    SPoint3 pnt = p + a;
     MVertex *previous = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
    gFace->addMeshVertex(previous);
 
     const int N = 30;
     for (int j = 1; j <= N; ++j) {
       const double theta = (double) j / N * 2 * M_PI;
-      SPoint3 pnt = p + a.point() * std::cos(theta) + b.point() * std::sin(theta);
+      SPoint3 pnt = p + a * std::cos(theta) + b * std::sin(theta);
       MVertex *current = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
       gFace->addMeshVertex(current);
       MLine *line = new MLine(previous, current);
@@ -77,9 +77,9 @@ namespace
     }
 
     MVertex *v = new MVertex(p.x(), p.y(), p.z(), gFace);
-    pnt = p + n.point() * unitDimension;
+    pnt = p + n * unitDimension;
     MVertex *vn = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
-    pnt = p + w.point() * unitDimension;
+    pnt = p + w * unitDimension;
     MVertex *vw = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
     gFace->addMeshVertex(v);
     gFace->addMeshVertex(vn);
@@ -225,9 +225,12 @@ namespace BoundaryLayerCurver
     _coeffb.resize(sizeParameters, 0);
     _coeffc.resize(sizeParameters, 0);
 
+    int tagPrimary = ElementType::getTag(_nCorner == 4 ? TYPE_QUA : TYPE_TRI, 1);
+    _primaryFs = BasisFactory::getNodalBasis(tagPrimary);
+
     int tag = ElementType::getTag(_nCorner == 4 ? TYPE_QUA : TYPE_TRI, _order);
-    const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
-    const fullMatrix<double> &refPoints = fs->getReferenceNodes();
+    _fs = BasisFactory::getNodalBasis(tag);
+    const fullMatrix<double> &refPoints = _fs->getReferenceNodes();
     for (int i = 0; i < nVerticesOnBoundary; ++i) {
       // FIXME Better idea?
       const double &u = refPoints(i, 0);
@@ -264,6 +267,37 @@ namespace BoundaryLayerCurver
     for (int i = 0; i < 4; ++i) {
       _factorDegenerate[i] = 1;
     }
+  }
+
+  SPoint3 Parameters3DFace::computeIdealPositionTopFace(const MFaceN &baseFace,
+                                                        double u, double v)
+  {
+    SPoint3 p;
+    SVector3 t0, t1, n;
+    baseFace.frame(u, v, p, t0, t1, n);
+
+    double f[100];
+    _fs->f(u, v, 0, f);
+
+    double thickness = 0;
+    double coeffb = 0;
+    double coeffc = 0;
+    for (int j = 0; j < _fs->getNumShapeFunctions(); j++) {
+      thickness += f[j] * _thickness[j];
+      coeffb    += f[j] * _coeffb[j];
+      coeffc    += f[j] * _coeffc[j];
+    }
+
+    _primaryFs->f(u, v, 0, f);
+
+    double factorThickness = 1;
+    for (int j = 0; j < _primaryFs->getNumShapeFunctions(); j++) {
+      factorThickness += f[j] * _factorDegenerate[j];
+    }
+
+    return p + n * factorThickness * thickness
+             + t0 * coeffb
+             + t1 * coeffc;
   }
 
 // compute adjacencies of boundary elements, thus of columns

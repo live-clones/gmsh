@@ -42,6 +42,7 @@ class MElement;
 class GEntity;
 class MVertex;
 struct IntPt;
+struct nodalBasis;
 
 typedef std::pair<MElement *, std::vector<MElement *> > PairMElemVecMElem;
 typedef std::vector<PairMElemVecMElem> VecPairMElemVecMElem;
@@ -114,36 +115,17 @@ namespace BoundaryLayerCurver
     int _nCorner;
     int _order;
     double _factorDegenerate[4];
+    const nodalBasis *_fs, *_primaryFs;
+//    const MFaceN baseFace;
 
     Parameters3DFace();
     ~Parameters3DFace();
 
     void computeParameters(const MFaceN &baseFace, const MFaceN &topFace);
 
-//    double thicknessAtPoint(double xi, int triDirection = 0) const {
-//      if (triDirection == 0)
-//        return thickness[0] * (1 - xi) / 2 + thickness[1] * (1 + xi) / 2;
-//      else if (triDirection > 0)
-//        return thickness[1] * (1 + xi) / 2;
-//      else
-//        return thickness[0] * (1 - xi) / 2;
-//    }
-//    double coeffbAtPoint(double xi, int triDirection = 0) const {
-//      if (triDirection == 0)
-//        return coeffb[0] * (1 - xi) / 2 + coeffb[1] * (1 + xi) / 2;
-//      else if (triDirection > 0)
-//        return coeffb[1] * (1 + xi) / 2;
-//      else
-//        return coeffb[0] * (1 - xi) / 2;
-//    }
-//    double coeffcAtPoint(double xi, int triDirection = 0) const {
-//      if (triDirection == 0)
-//        return coeffc[0] * (1 - xi) / 2 + coeffc[1] * (1 + xi) / 2;
-//      else if (triDirection > 0)
-//        return coeffc[1] * (1 + xi) / 2;
-//      else
-//        return coeffc[0] * (1 - xi) / 2;
-//    }
+    SPoint3 computeIdealPositionTopFace(const MFaceN &baseFace,
+                                        double u, double v);
+
 //    double characteristicThickness() {
 //      return std::min(std::abs(thickness[0]), std::abs(thickness[1]));
 //    }
