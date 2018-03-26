@@ -1311,11 +1311,38 @@ bool optimalPointFrontalB(GFace *gf,
   MVertex *v1 = worst->tri()->getVertex(ip1);
   MVertex *v2 = worst->tri()->getVertex(ip2);
   MVertex *v3 = worst->tri()->getVertex(ip3);
-  SVector3 middle ((v1->x()+v2->x())*.5,(v1->y()+v2->y())*.5,(v1->z()+v2->z())*.5);
-  SVector3 v1v2 (v2->x()-v1->x(),v2->y()-v1->y(),v2->z()-v1->z());
-  SVector3 tmp (v3->x()-middle.x(),v3->y()-middle.y(),v3->z()-middle.z());
-  SVector3 n1 = crossprod(v1v2,tmp);
-  SVector3 n2 = crossprod(n1,v1v2);
+  const double tolerance = 1e-14;
+  SVector3 n1, n2, v1v2, middle;
+  if (v1->distance(v2) < tolerance || v2->distance(v3) < tolerance || v1->distance(v3) < tolerance)
+  {
+    MVertex *vUniqueOtherPoint;
+    if (v1->distance(v3) < tolerance)
+    {
+      // v1 overlaps v3
+      vUniqueOtherPoint = v2;
+    }
+    else
+    {
+      // v1 overlaps v2 or v3 overlaps v2: only consider v1 and v3
+      vUniqueOtherPoint = v3;
+
+    }
+    v1v2 = SVector3(vUniqueOtherPoint->x() - v1->x(), vUniqueOtherPoint->y() - v1->y(), vUniqueOtherPoint->z() - vUniqueOtherPoint->z());
+    middle = SVector3((v1->x() + vUniqueOtherPoint->x())*.5, (v1->y() + vUniqueOtherPoint->y())*.5, (v1->z() + vUniqueOtherPoint->z())*.5);
+    double uv[2] = {0, 0};
+    GPoint projectedPoint = gf->closestPoint(middle.point(), uv);
+    n1 = gf->normal(SPoint2(projectedPoint.u(), projectedPoint.v()));
+    n1.negate(); // As normal of triangle is opposite to normal of surface
+  }
+  else
+  {
+    middle = SVector3((v1->x() + v2->x())*.5, (v1->y() + v2->y())*.5, (v1->z() + v2->z())*.5);
+    v1v2 = SVector3(v2->x() - v1->x(), v2->y() - v1->y(), v2->z() - v1->z());
+    SVector3 tmp(v3->x() - middle.x(), v3->y() - middle.y(), v3->z() - middle.z());
+    n1 = crossprod(v1v2, tmp);
+  }
+  n2 = crossprod(n1, v1v2);
+
   n1.normalize();
   n2.normalize();
   // we look for a point that is
