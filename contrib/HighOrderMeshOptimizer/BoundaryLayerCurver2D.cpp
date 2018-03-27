@@ -48,6 +48,7 @@
 #include "Options.h"
 #include "AnalyseCurvedMesh.h"
 #include "InteriorNodePlacement.h"
+#include "pointsGenerators.h"
 
 namespace
 {
@@ -252,6 +253,105 @@ namespace
           drawBezierControlPolygon(controlPointsDeriv, entity);
         }
       }
+    }
+  }
+
+  void drawAngleChange(const std::vector<MVertex *> &vertices,
+                       GEntity *entity, SVector3 w, double fact = 1)
+  {
+    const int nVert = vertices.size();
+
+    fullMatrix<double> controlPoints(nVert, 3);
+    {
+      const bezierBasis *fs = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 1);
+      fullMatrix<double> xyz(nVert, 3);
+      for (int i = 0; i < nVert; ++i) {
+        xyz(i, 0) = vertices[i]->x();
+        xyz(i, 1) = vertices[i]->y();
+        xyz(i, 2) = vertices[i]->z();
+      }
+      fs->lag2Bez(xyz, controlPoints);
+    }
+//    controlPoints.print("controlPoints");
+
+    fullMatrix<double> deriv1(nVert-1, 3);
+    fullMatrix<double> deriv2(nVert-2, 3);
+    for (int j = 0; j < 3; ++j) {
+      deriv1(0, j) = controlPoints(2, j) - controlPoints(0, j);
+      deriv1(1, j) = controlPoints(1, j) - controlPoints(nVert-1, j);
+      for (int i = 2; i < nVert-1; ++i) {
+        deriv1(i, j) = controlPoints(i+1, j) - controlPoints(i, j);
+      }
+      deriv1.scale(nVert-1);
+      deriv2(0, j) = deriv1(2, j) - deriv1(0, j);
+      deriv2(1, j) = deriv1(1, j) - deriv1(nVert-2, j);
+      for (int i = 2; i < nVert-2; ++i) {
+        deriv2(i, j) = deriv1(i+1, j) - deriv1(i, j);
+      }
+      deriv2.scale(nVert-2);
+    }
+//    deriv1.print("deriv1");
+//    deriv2.print("deriv2");
+
+    fullMatrix<double> points(2*nVert-4, 3);
+    {
+      fullMatrix<double> interp1;
+      fullMatrix<double> interp2;
+      const int order = 2 * nVert - 5;
+      fullMatrix<double> refPoints = gmshGeneratePointsLine(order);
+//      refPoints.print("refPoints");
+      const bezierBasis *fs1 = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 2);
+      const bezierBasis *fs2 = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 3);
+      fs1->interpolate(deriv1, refPoints, interp1);
+      fs2->interpolate(deriv2, refPoints, interp2);
+//      interp1.print("interp1");
+//      interp2.print("interp2");
+
+      fullVector<double> angleChangeBez(order+1);
+      for (int i = 0; i < order+1; ++i) {
+        angleChangeBez(i) = interp1(i, 0) * interp2(i, 1)
+                          - interp1(i, 1) * interp2(i, 0);
+//        angleChangeBez(i) /= interp1(i, 0) * interp1(i, 0)
+//                           + interp1(i, 1) * interp1(i, 1);
+      }
+//      angleChangeBez.print("angleChangeBez");
+
+      fullVector<double> angleChange(order+1);
+      const bezierBasis *fs3 = BasisFactory::getBezierBasis(TYPE_LIN, order);
+      fs3->matrixBez2Lag.mult(angleChangeBez, angleChange);
+      angleChange.scale(fact);
+//      angleChange.print("angleChange");
+
+      const bezierBasis *fs0 = BasisFactory::getBezierBasis(TYPE_LIN, 1);
+      fs0->interpolate(controlPoints, refPoints, points);
+
+      SVector3 v = SVector3(vertices[1]->x() - vertices[0]->x(),
+                            vertices[1]->y() - vertices[0]->y(),
+                            vertices[1]->z() - vertices[0]->z());
+      SVector3 n = crossprod(w, v).unit();
+      for (int i = 0; i < 2*nVert-4; ++i) {
+        points(i, 0) += n.x() * angleChange(i);
+        points(i, 1) += n.y() * angleChange(i);
+        points(i, 2) += n.z() * angleChange(i);
+      }
+    }
+//    points.print("points");
+
+    std::vector<MVertex*> newVert(2*nVert-4);
+    for (int i = 0; i < (int)newVert.size(); ++i) {
+      newVert[i] = new MVertex(points(i, 0), points(i, 1), points(i, 2));
+    ((GEdge *) entity)->addMeshVertex(newVert[i]);
+    }
+    MLineN *line = new MLineN(newVert);
+    ((GEdge *) entity)->addLine(line);
+
+    {
+      MLine *line = new MLine(vertices[0], vertices[1]);
+      ((GEdge *) entity)->addLine(line);
+      line = new MLine(vertices[0], newVert[0]);
+      ((GEdge *) entity)->addLine(line);
+      line = new MLine(vertices[1], newVert[1]);
+      ((GEdge *) entity)->addLine(line);
     }
   }
 
@@ -662,7 +762,7 @@ namespace BoundaryLayerCurver
 
       int nbDofh = refNodesh.size1();
 
-      refNodesh.print("refNodesh");
+//      refNodesh.print("refNodesh");
 
       Mh.resize(nbDofh, nbDof);
       for (int i = 0; i < nbDofh; ++i) {
@@ -672,7 +772,7 @@ namespace BoundaryLayerCurver
           Mh(i, j) = sf[j];
         }
       }
-      Mh.print("Mh");
+//      Mh.print("Mh");
 
       M0.resize(nbDofh, nbDofh, true);
       M1.resize(nbDofh, nbDofh, true);
@@ -680,8 +780,8 @@ namespace BoundaryLayerCurver
         M0(i, i) = .5 - refNodesh(i, 0) / 2;
         M1(i, i) = .5 + refNodesh(i, 0) / 2;
       }
-      M0.print("M0");
-      M1.print("M1");
+//      M0.print("M0");
+//      M1.print("M1");
 
       Ml.resize(nbDof, nbDofh);
       {
@@ -699,11 +799,11 @@ namespace BoundaryLayerCurver
 
         fullMatrix<double> tmp;
         vandermonde.invert(tmp);
-        vandermonde.print("vandermonde");
-        tmp.print("tmp");
+//        vandermonde.print("vandermonde");
+//        tmp.print("tmp");
         Ml.copy(tmp, 0, nbDof, 0, nbDofh, 0, 0);
       }
-      Ml.print("Ml");
+//      Ml.print("Ml");
 
       Me.resize(nbDof, nbDof);
       {
@@ -718,7 +818,7 @@ namespace BoundaryLayerCurver
         }
         delete val;
       }
-      Me.print("Me");
+//      Me.print("Me");
 
       fullMatrix<double> tmp0(nbDofh, nbDof);
       fullMatrix<double> tmp1(nbDofh, nbDof);
@@ -726,14 +826,14 @@ namespace BoundaryLayerCurver
       M1.mult(Mh, tmp1);
       fullMatrix<double> tmp(nbDof, nbDofh);
       Me.mult(Ml, tmp);
-      tmp.print("tmp");
+//      tmp.print("tmp");
       data->T0.resize(nbDof, nbDof);
       data->T1.resize(nbDof, nbDof);
       tmp.mult(tmp0, data->T0);
       tmp.mult(tmp1, data->T1);
 
-      data->T0.print("data->T0");
-      data->T1.print("data->T1");
+//      data->T0.print("data->T0");
+//      data->T1.print("data->T1");
     }
 
 //    fullVector<double> x(nbDof);
@@ -1462,6 +1562,215 @@ namespace BoundaryLayerCurver
     }
   }
 
+  double computeMeanSquareError(const std::vector<MVertex *> &verticesCurve1,
+                                const std::vector<MVertex *> &verticesCurve2)
+  {
+    const int orderCurve = (int)verticesCurve1.size() - 1;
+    const int orderGauss = orderCurve * 2;
+    int nPts = getNGQLPts(orderGauss);
+    IntPt *gPts = getGQLPts(orderGauss);
+
+    double mse = 0;
+
+    for (int i = 0; i < nPts; ++i) {
+      const double xi = gPts[i].pt[0];
+
+      int tagLine = ElementType::getTag(TYPE_LIN, orderCurve);
+      const nodalBasis* fs = BasisFactory::getNodalBasis(tagLine);
+      double sf[100];
+      fs->f(xi, 0, 0, sf);
+
+      double x1 = 0., y1 = 0., z1 = 0.;
+      double x2 = 0., y2 = 0., z2 = 0.;
+      for (int j = 0; j < orderCurve+1; j++) {
+        const MVertex *v1 = verticesCurve1[i];
+        const MVertex *v2 = verticesCurve2[i];
+        x1 += sf[j] * v1->x();
+        y1 += sf[j] * v1->y();
+        z1 += sf[j] * v1->z();
+        x2 += sf[j] * v2->x();
+        y2 += sf[j] * v2->y();
+        z2 += sf[j] * v2->z();
+      }
+
+      mse += (x1-x2) * (x1-x2) * gPts[i].weight;
+      mse += (y1-y2) * (y1-y2) * gPts[i].weight;
+      mse += (z1-z2) * (z1-z2) * gPts[i].weight;
+
+      const double w = gPts[i].weight;
+    }
+    return mse;
+  }
+
+  double objectiveFunction(const std::vector<MVertex *> &baseVert,
+                           const std::vector<MVertex *> &topVert,
+                           std::vector<MVertex *> &bottomVertFromTop, SVector3 w,
+                           GEntity *bndEnt)
+  {
+    Parameters2DCurve parameters;
+    computeExtremityCoefficients(topVert, topVert, bottomVertFromTop, parameters, w);
+    computePositionEdgeVert(topVert, topVert,
+                            bottomVertFromTop, parameters, w,
+                            0, bndEnt, -1);
+    return computeMeanSquareError(baseVert, bottomVertFromTop);
+  }
+
+  double computeGradientsOptimization(std::vector<std::vector<double> > &gradients,
+                                      const std::vector<MVertex *> &baseVert,
+                                      const std::vector<MVertex *> &topVert,
+                                      std::vector<MVertex *> &bottomVertFromTop,
+                                      SVector3 w, GEntity *bndEnt)
+  {
+    if (gradients[0].empty()) {
+      for (int i = 0; i < (int)gradients.size(); ++i) {
+        gradients[i].resize(3);
+      }
+    }
+    gradients[0][0] = 0;
+    gradients[0][1] = 0;
+    gradients[0][2] = 0;
+    gradients[1][0] = 0;
+    gradients[1][1] = 0;
+    gradients[1][2] = 0;
+
+//    double F = objectiveFunction(baseVert, topVert, bottomVertFromTop, w, bndEnt);
+    const double step = 1e-6;
+    double Fp, Fm;
+
+    for (int i = 2; i < baseVert.size(); ++i) {
+      const double x = topVert[i]->x();
+      topVert[i]->x() += step;
+      Fp = objectiveFunction(baseVert, topVert, bottomVertFromTop, w, bndEnt);
+      topVert[i]->x() -= 2*step;
+      Fm = objectiveFunction(baseVert, topVert, bottomVertFromTop, w, bndEnt);
+      topVert[i]->x() = x;
+      gradients[i][0] = (Fp-Fm)/2/step;
+
+      const double y = topVert[i]->y();
+      topVert[i]->y() += step;
+      Fp = objectiveFunction(baseVert, topVert, bottomVertFromTop, w, bndEnt);
+      topVert[i]->y() -= 2*step;
+      Fm = objectiveFunction(baseVert, topVert, bottomVertFromTop, w, bndEnt);
+      topVert[i]->y() = y;
+      gradients[i][1] = (Fp-Fm)/2/step;
+
+      const double z = topVert[i]->z();
+      topVert[i]->z() += step;
+      Fp = objectiveFunction(baseVert, topVert, bottomVertFromTop, w, bndEnt);
+      topVert[i]->z() -= 2*step;
+      Fm = objectiveFunction(baseVert, topVert, bottomVertFromTop, w, bndEnt);
+      topVert[i]->z() = z;
+      gradients[i][2] = (Fp-Fm)/2/step;
+    }
+  }
+
+  void moveTopVerticesOptimization(const std::vector<MVertex *> &topVert,
+                                   std::vector<MVertex *> &topVertCopy,
+                                   const std::vector<std::vector<double> > &gradients,
+                                   double a)
+  {
+    for (int i = 0; i < topVert.size(); ++i) {
+      MVertex *v0 = topVert[i];
+      MVertex *v1 = topVertCopy[i];
+      v1->x() = v0->x() - a * gradients[i][0];
+      v1->y() = v0->y() - a * gradients[i][1];
+      v1->z() = v0->z() - a * gradients[i][2];
+    }
+  }
+
+  void optimizePositionEdgeVert(const std::vector<MVertex *> &baseVert,
+                                std::vector<MVertex *> &topVert, SVector3 w,
+                                GEntity *bndEnt)
+  {
+    std::vector<MVertex *> baseVertCopy;
+    std::vector<MVertex *> topVertCopy;
+    for (int i = 0; i < baseVert.size(); ++i) {
+      const MVertex *v = baseVert[i];
+      const MVertex *v2 = topVert[i];
+      baseVertCopy.push_back(new MVertex(v->x(),v->y(),v->z()));
+      topVertCopy.push_back(new MVertex(v2->x(),v2->y(),v2->z()));
+    }
+    double obj = objectiveFunction(baseVert, topVert, baseVertCopy, w, bndEnt);
+    double dxFirstGuess = 1e-4;
+
+    damping3(topVertCopy, .1, 1e100, bndEnt, false);
+    double objDamp = objectiveFunction(baseVert, topVertCopy, baseVertCopy, w, bndEnt);
+    while (objDamp < obj) {
+      obj = objDamp;
+      for (int i = 2; i < topVert.size(); ++i) {
+        topVert[i]->x() = topVertCopy[i]->x();
+        topVert[i]->y() = topVertCopy[i]->y();
+        topVert[i]->z() = topVertCopy[i]->z();
+      }
+      damping3(topVertCopy, .1, 1e100, bndEnt, false);
+      objDamp = objectiveFunction(baseVert, topVertCopy, baseVertCopy, w, bndEnt);
+    }
+
+    for (int i = 2; i < topVert.size(); ++i) {
+      const double xi = (i-1)/((double)topVert.size()-1);
+      topVertCopy[i]->x() = (1-xi) * topVert[0]->x() + xi * topVert[1]->x();
+      topVertCopy[i]->y() = (1-xi) * topVert[0]->y() + xi * topVert[1]->y();
+      topVertCopy[i]->z() = (1-xi) * topVert[0]->z() + xi * topVert[1]->z();
+    }
+    double objLin = objectiveFunction(baseVert, topVertCopy, baseVertCopy, w, bndEnt);
+
+    if (objLin < obj) {
+      obj = objLin;
+      for (int i = 2; i < topVert.size(); ++i) {
+        topVert[i]->x() = topVertCopy[i]->x();
+        topVert[i]->y() = topVertCopy[i]->y();
+        topVert[i]->z() = topVertCopy[i]->z();
+      }
+    }
+
+    int maxIteration = 10000, iter = 0;
+    while (obj > 1e-6 && ++iter < maxIteration) {
+      std::vector<std::vector<double> > gradients(baseVert.size());
+      computeGradientsOptimization(gradients, baseVert, topVert,
+                                   baseVertCopy, w, bndEnt);
+      double maxGradient = 0;
+      for (int i = 0; i < (int)baseVert.size(); ++i) {
+        maxGradient = std::max(maxGradient,  gradients[i][0]*gradients[i][0]
+                                           + gradients[i][1]*gradients[i][1]
+                                           + gradients[i][2]*gradients[i][2]);
+      }
+      maxGradient = std::sqrt(maxGradient);
+
+      double a = dxFirstGuess / maxGradient;
+      moveTopVerticesOptimization(topVert, topVertCopy, gradients, a);
+      double newobj = objectiveFunction(baseVert, topVertCopy, baseVertCopy, w, bndEnt);
+      if (newobj > obj) {
+        obj = newobj;
+        a /= 2;
+        moveTopVerticesOptimization(topVert, topVertCopy, gradients, a);
+        newobj = objectiveFunction(baseVert, topVertCopy, baseVertCopy, w, bndEnt);
+        while (newobj < obj) {
+          a /= 2;
+          obj = newobj;
+          moveTopVerticesOptimization(topVert, topVertCopy, gradients, a);
+          newobj = objectiveFunction(baseVert, topVertCopy, baseVertCopy, w, bndEnt);
+        }
+        a *= 2;
+      }
+      else {
+        while (newobj < obj) {
+          a *= 2;
+          obj = newobj;
+          moveTopVerticesOptimization(topVert, topVertCopy, gradients, a);
+          newobj = objectiveFunction(baseVert, topVertCopy, baseVertCopy, w, bndEnt);
+        }
+        a /= 2;
+      }
+
+      // Test
+      moveTopVerticesOptimization(topVert, topVert, gradients, a);
+
+//      obj = objectiveFunction(baseVert, topVert, baseVertCopy, w, bndEnt);
+    }
+
+    std::cout << "obj: " << obj << " " << baseVert[2]->getNum() << std::endl;
+  }
+
   InteriorPlacementData* constructInteriorPlacementData(int tag)
   {
     const int order = ElementType::OrderFromTag(tag);
@@ -1673,6 +1982,7 @@ namespace BoundaryLayerCurver
 //                              dampingFactor, bndEnt, i, -i == column.size()-1);
       computePositionEdgeVert(bottomVertices, bottomVertices, topVertices, parameters, w,
                               dampingFactor, bndEnt, i, -i == column.size()-1);
+      //optimizePositionEdgeVert(bottomVertices, topVertices, w, bndEnt);
       repositionInteriorNodes(quad);
       bottom = MEdge(topVertices[0], topVertices[1]);
 
@@ -1850,6 +2160,7 @@ namespace BoundaryLayerCurver
 
   double getDistDamping(int num)
   {
+    return 0;
     switch (num) {
       case 1157: return .05;
       case 1156: return .10;
@@ -1899,6 +2210,9 @@ namespace BoundaryLayerCurver
       bottom = MEdge(topVertices[0], topVertices[1]);
     }
 
+//    drawAngleChange(globalBottomVertices, bndEnt, w, 1e-2);
+
+    /*
 //    int deriv = 5;
 //    double scale = 1, dx = 2; // Strange
 //    double scale = 1, dx = 8; // Good
@@ -1923,6 +2237,7 @@ namespace BoundaryLayerCurver
     damping3(globalBottomVertices, .3, 10000, bndEnt, true);
     drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(5*dx, -10, 0), &deriv, scale);
     drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(-dx, -10, 0), &deriv, scale);
+     */
 
     // Curve last layer
     Parameters2DCurve parameters;
@@ -1932,13 +2247,22 @@ namespace BoundaryLayerCurver
                             globalTopVertices, parameters, w,
                             dampingFactor, bndEnt, -1, true);
 
-    drawIdealCurve(globalBottomVertices, parameters, w, bndEnt, true, false, true);
+//    Parameters2DCurve parameters2;
+//    computeExtremityCoefficients(globalTopVertices, globalTopVertices,
+//                                 globalBottomVertices, parameters2, w);
+//    drawIdealCurve(globalTopVertices, parameters2, w, bndEnt);
+//    optimizePositionEdgeVert(globalBottomVertices, globalTopVertices, w, bndEnt);
+//    computeExtremityCoefficients(globalTopVertices, globalTopVertices,
+//                                 globalBottomVertices, parameters2, w);
+//    drawIdealCurve(globalTopVertices, parameters2, w, bndEnt);
+
+//    drawIdealCurve(globalBottomVertices, parameters, w, bndEnt, true, false, true);
 
     double remainingDamping = distDamping;
     double delta = 1;
 //      std::cout << "remain:" << remainingDamping << std::endl;
     while (remainingDamping > 1e-12 && delta > 1e-4 * lengthFirst) {
-      delta = damping3(topVertices, .1, remainingDamping, bndEnt, false);
+      delta = damping3(globalTopVertices, .1, remainingDamping, bndEnt, false);
       remainingDamping -= delta;
     }
 
@@ -1952,6 +2276,7 @@ namespace BoundaryLayerCurver
       computePositionEdgeVert(globalBottomVertices, globalBottomVertices,
                               allLayerVertices[1], parameters, w,
                               dampingFactor, bndEnt, -1, true);
+//      optimizePositionEdgeVert(globalBottomVertices, allLayerVertices[1], w, bndEnt);
 //      int N = 0;
 //      switch (bottomEdge->getNum()) {
 //        case 1102: N = 0; break;
@@ -2045,6 +2370,123 @@ namespace BoundaryLayerCurver
 
       // Check validity of first and last layer:
       if ((i == 0 || i == column.size()-1) && quad->getValidity() != 1) return false;
+    }
+    return true;
+  }
+
+  double feedbackMeasure(const std::vector<MVertex *> &baseVert,
+                         const std::vector<MVertex *> &topVert,
+                         std::vector<MVertex *> &baseVertCopy,
+                         SVector3 &w, GEntity *bndEnt)
+  {
+    Parameters2DCurve parameters;
+    computeExtremityCoefficients(topVert, topVert, baseVertCopy, parameters, w);
+    computePositionEdgeVert(topVert, topVert, baseVertCopy, parameters, w, 0, bndEnt, -1, false);
+
+    return computeMeanSquareError(baseVert, baseVertCopy);
+  }
+
+  void computeTopFeedback(const std::vector<MVertex *> &baseVert,
+                          std::vector<MVertex *> &topVert,
+                          SVector3 &w, GEntity *bndEnt)
+  {
+    std::vector<MVertex *> baseNormal0, baseNormal1, basePosition0, basePosition1;
+    std::vector<MVertex *> dummy;
+    for (int i = 0; i < baseVert.size(); ++i) {
+      const MVertex *v = baseVert[i];
+      baseNormal0.push_back(new MVertex(v->x(),v->y(),v->z()));
+      baseNormal1.push_back(new MVertex(v->x(),v->y(),v->z()));
+      basePosition0.push_back(new MVertex(v->x(),v->y(),v->z()));
+      basePosition1.push_back(new MVertex(v->x(),v->y(),v->z()));
+      dummy.push_back(new MVertex(v->x(),v->y(),v->z()));
+    }
+    Parameters2DCurve parameters;
+    computeExtremityCoefficients(basePosition0, baseNormal0, topVert, parameters, w);
+    computePositionEdgeVert(basePosition0, baseNormal0, topVert, parameters, w,
+                            0, bndEnt, -1, false);
+    double error = feedbackMeasure(baseVert, topVert, dummy, w, bndEnt);
+
+    double maxFact = .001;
+    double limit = 1e10;
+    damping3(baseNormal1, maxFact, limit, bndEnt, false);
+    damping3(basePosition1, maxFact, limit, bndEnt, false);
+
+    computeExtremityCoefficients(basePosition0, baseNormal1, topVert, parameters, w);
+    computePositionEdgeVert(basePosition0, baseNormal1, topVert, parameters, w,
+                            0, bndEnt, -1, false);
+    double errorNormal = feedbackMeasure(baseVert, topVert, dummy, w, bndEnt);
+
+    computeExtremityCoefficients(basePosition1, baseNormal0, topVert, parameters, w);
+    computePositionEdgeVert(basePosition1, baseNormal0, topVert, parameters, w,
+                            0, bndEnt, -1, false);
+    double errorPosition = feedbackMeasure(baseVert, topVert, dummy, w, bndEnt);
+
+    while (errorPosition < error || errorNormal < error) {
+      if (errorPosition < errorNormal) {
+        error = errorPosition;
+        damping3(basePosition0, maxFact, limit, bndEnt, false);
+        damping3(basePosition1, maxFact, limit, bndEnt, false);
+      }
+      else {
+        error = errorNormal;
+        damping3(baseNormal0, maxFact, limit, bndEnt, false);
+        damping3(baseNormal1, maxFact, limit, bndEnt, false);
+      }
+
+      computeExtremityCoefficients(basePosition0, baseNormal1, topVert, parameters, w);
+      computePositionEdgeVert(basePosition0, baseNormal1, topVert, parameters, w,
+                              0, bndEnt, -1, false);
+      errorNormal = feedbackMeasure(baseVert, topVert, dummy, w, bndEnt);
+
+      computeExtremityCoefficients(basePosition1, baseNormal0, topVert, parameters, w);
+      computePositionEdgeVert(basePosition1, baseNormal0, topVert, parameters, w,
+                              0, bndEnt, -1, false);
+      errorPosition = feedbackMeasure(baseVert, topVert, dummy, w, bndEnt);
+    }
+    computeExtremityCoefficients(basePosition0, baseNormal0, topVert, parameters, w);
+    computePositionEdgeVert(basePosition0, baseNormal0, topVert, parameters, w,
+                            0, bndEnt, -1, false);
+
+    std::vector<MVertex *> &topVertCopy = baseNormal0;
+    for (int i = 0; i < topVert.size(); ++i) {
+      MVertex *v = topVertCopy[i];
+      MVertex *v2 = topVert[i];
+      v->x() = v2->x();
+      v->y() = v2->y();
+      v->z() = v2->z();
+    }
+
+    damping3(topVertCopy, maxFact, limit, bndEnt, false);
+    double errorDamping = feedbackMeasure(baseVert, topVertCopy, dummy, w, bndEnt);
+    while (errorDamping < error) {
+      error = errorDamping;
+      damping3(topVertCopy, maxFact, limit, bndEnt, false);
+      damping3(topVert, maxFact, limit, bndEnt, false);
+      errorDamping = feedbackMeasure(baseVert, topVertCopy, dummy, w, bndEnt);
+    }
+  }
+
+  bool curve2DQuadColumnFeedback(MElement *bottomEdge, std::vector<MElement *> &column,
+                                 SVector3 &w, GEntity *bndEnt)
+  {
+    opt_general_default_filename(0, GMSH_SET, "feedback");
+    MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
+    std::vector<MVertex *> bottomVertices, topVertices;
+
+    for (int i = 0; i < column.size(); ++i) {
+      MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
+      int iBottom, sign;
+      quad->getEdgeInfo(bottom, iBottom, sign);
+      // Reorientation makes function repositionInteriorNodes() simpler
+      if (iBottom != 0) quad->reorient(4 - iBottom, false);
+      quad->getEdgeVertices(0, bottomVertices);
+      quad->getEdgeVertices(2, topVertices);
+      std::reverse(topVertices.begin(), topVertices.begin() + 2);
+      std::reverse(topVertices.begin() + 2, topVertices.end());
+
+      computeTopFeedback(bottomVertices, topVertices, w, bndEnt);
+      repositionInteriorNodes(quad);
+      bottom = MEdge(topVertices[0], topVertices[1]);
     }
     return true;
   }
@@ -2181,7 +2623,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
     MElement *bottomEdge = bndEl2column[i].first;
 //    if (bottomEdge->getNum() != 1079) continue; // Good
 //    if (bottomEdge->getNum() != 1078) continue; // Next to good
-//    if (bottomEdge->getNum() != 1102) continue; // Bad HO
+    if (bottomEdge->getNum() != 1102) continue; // Bad HO
 //    if (bottomEdge->getNum() != 1136) continue; // Bad linear
 //    if (bottomEdge->getNum() != 1150) continue; // concave
 //    if (bottomEdge->getNum() != 1151) continue; // symetric of concave
@@ -2204,9 +2646,11 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
 //        success = BoundaryLayerCurver::curve2DQuadColumnFirst(bottomEdge, column,
 //                                                              n, dampingFactor,
 //                                                              bndEnt);
-        success = BoundaryLayerCurver::curve2DQuadColumnTFI(bottomEdge, column,
-                                                            n, dampingFactor,
-                                                            bndEnt, false);
+//        success = BoundaryLayerCurver::curve2DQuadColumnTFI(bottomEdge, column,
+//                                                            n, dampingFactor,
+//                                                            bndEnt, true);
+      success = BoundaryLayerCurver::curve2DQuadColumnFeedback(bottomEdge, column,
+                                                               n, bndEnt);
       if (dampingFactor == 0) dampingFactor = .01;
       else dampingFactor *= 2;
     }

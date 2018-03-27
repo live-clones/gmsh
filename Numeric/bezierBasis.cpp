@@ -491,24 +491,33 @@ void bezierBasis::generateBezierPoints(fullMatrix<double> &points) const
 
 void bezierBasis::_FEpoints2BezPoints(fullMatrix<double> &points) const
 {
-  switch(_data.elementType()){
+  fullMatrix<double> tmp;
+  switch(_data.elementType()) {
   case TYPE_TRI:
   case TYPE_TET:
     break;
 
+  case TYPE_LIN:
+    tmp.setAsProxy(points, 0, 1);
+    tmp.add(1);
+    tmp.scale(.5);
+    break;
+
   case TYPE_QUA:
+    tmp.setAsProxy(points, 0, 2);
+    tmp.add(1);
+    tmp.scale(.5);
+    break;
+
   case TYPE_HEX:
     points.add(1);
     points.scale(.5);
     break;
 
   case TYPE_PRI:
-    {
-      fullMatrix<double> tmp;
-      tmp.setAsProxy(points, 2, 1);
-      tmp.add(1);
-      tmp.scale(.5);
-    }
+    tmp.setAsProxy(points, 2, 1);
+    tmp.add(1);
+    tmp.scale(.5);
     break;
 
   case TYPE_PYR:
