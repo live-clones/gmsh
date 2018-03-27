@@ -2092,7 +2092,7 @@ void gmsh::model::occ::fillet(const std::vector<int> &volumeTags,
 void gmsh::model::occ::fuse(const vector_pair &objectDimTags,
                             const vector_pair &toolDimTags,
                             vector_pair &outDimTags,
-                            std::vector<vector_pair > &outDimTagsMap,
+                            std::vector<vector_pair> &outDimTagsMap,
                             const int tag,
                             const bool removeObject,
                             const bool removeTool)
