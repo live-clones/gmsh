@@ -210,10 +210,10 @@ namespace BoundaryLayerCurver
     }
   }
 
-  void Parameters3DFace::computeParameters(const MFaceN &baseFace,
+  void Parameters3DSurface::computeParameters(const MFaceN &baseFace,
                                            const MFaceN &topFace)
   {
-    _nCorner = baseFace.getNumPrimaryVertices();
+    _nCorner = baseFace.getNumCorners();
     _order = baseFace.getOrder();
     int nVerticesOnBoundary = _nCorner * _order;
     int sizeParameters = nVerticesOnBoundary;
@@ -273,8 +273,8 @@ namespace BoundaryLayerCurver
     }
   }
 
-  SPoint3 Parameters3DFace::computeIdealPositionTopFace(const MFaceN &baseFace,
-                                                        double u, double v)
+  SPoint3 Parameters3DSurface::computeIdealPositionTopFace(const MFaceN &baseFace,
+                                                           double u, double v) const
   {
     SPoint3 p;
     SVector3 t0, t1, n;
@@ -671,7 +671,7 @@ namespace BoundaryLayerCurver
     // where x0(u) is the position of 'baseEdge' and h, b, c are given by
     //       'parameters'
 
-    const int orderCurve = baseEdge.getNumVertices() - 1;
+    const int orderCurve = baseEdge.getOrder();
     const int orderGauss = orderCurve * 2;
     const int sizeSystem = getNGQLPts(orderGauss);
     const IntPt *gaussPnts = getGQLPts(orderGauss);
@@ -681,9 +681,10 @@ namespace BoundaryLayerCurver
                       gaussPnts, xyz, triDirection, gFace);
 //  drawIdealPositionEdge(bottom1, bottom2, baseEdge, parameters, gFace, triDirection);
     for (int i = 0; i < 2; ++i) {
-      xyz(sizeSystem+i, 0) = topEdge.getVertex(i)->x();
-      xyz(sizeSystem+i, 1) = topEdge.getVertex(i)->y();
-      xyz(sizeSystem+i, 2) = topEdge.getVertex(i)->z();
+      MVertex *v = topEdge.getVertex(i);
+      xyz(sizeSystem+i, 0) = v->x();
+      xyz(sizeSystem+i, 1) = v->y();
+      xyz(sizeSystem+i, 2) = v->z();
     }
 
     BoundaryLayerCurver::LeastSquareData *data =
@@ -695,9 +696,10 @@ namespace BoundaryLayerCurver
     data->Leg2Lag.mult(coeff, newxyz);
 
     for (int i = 2; i < topEdge.getNumVertices(); ++i) {
-      topEdge.getVertex(i)->x() = newxyz(i, 0);
-      topEdge.getVertex(i)->y() = newxyz(i, 1);
-      topEdge.getVertex(i)->z() = newxyz(i, 2);
+      MVertex *v = topEdge.getVertex(i);
+      v->x() = newxyz(i, 0);
+      v->y() = newxyz(i, 1);
+      v->z() = newxyz(i, 2);
     }
   }
 
@@ -782,7 +784,7 @@ namespace BoundaryLayerCurver
     for (unsigned int i = 0; i < column.size(); ++i) {
       MFaceN &f = column[i];
       const fullMatrix<double> *placement = NULL;
-      if (f.getNumPrimaryVertices() == 3) {
+      if (f.isTriangular()) {
         // TODO Determine if edge 0 or 2
       }
       else {
@@ -862,64 +864,85 @@ namespace BoundaryLayerCurver
     }
   }
 
-//  void computePosition3DFace(const MFaceN &baseFace, MFaceN &topFace,
-//                             const Parameters3DFace &parameters,
-//                             GFace *gFace)
-//  {
-//    // Let (t, n, w) be the local reference frame on 'baseEdge'
-//    // where t(u) is the unit tangent of the 'baseEdge'
-//    //       n(u) is unit, normal to 't' and such that (t, n) is bisector of faces
-//    //            'bottom1' and 'bottom2' at corresponding point
-//    //       w = t x n
-//    // We seek for each component the polynomial function that fit the best
-//    //   x1(u) = x0(u) + h(u) * n(u) + b(u) * t(u) + c(u) * w(u)
-//    // in the least square sense.
-//    // where x0(u) is the position of 'baseEdge' and h, b, c are given by
-//    //       'parameters'
-//
-//    const int orderCurve = baseEdge.getNumVertices() - 1;
-//    const int orderGauss = orderCurve * 2;
-//    const int sizeSystem = getNGQLPts(orderGauss);
-//    const IntPt *gaussPnts = getGQLPts(orderGauss);
-//
-//    fullMatrix<double> xyz(sizeSystem + 2, 3);
-//    idealPositionEdge(bottom1, bottom2, baseEdge, parameters, sizeSystem,
-//                      gaussPnts, xyz, triDirection, gFace);
-////  drawIdealPositionEdge(bottom1, bottom2, baseEdge, parameters, gFace, triDirection);
-//    for (int i = 0; i < 2; ++i) {
-//      xyz(sizeSystem+i, 0) = topEdge.getVertex(i)->x();
-//      xyz(sizeSystem+i, 1) = topEdge.getVertex(i)->y();
-//      xyz(sizeSystem+i, 2) = topEdge.getVertex(i)->z();
-//    }
-//
-//    BoundaryLayerCurver::LeastSquareData *data =
-//        BoundaryLayerCurver::getLeastSquareData(TYPE_LIN, orderCurve, orderGauss);
-//
-//    fullMatrix<double> coeff(orderCurve + 1, 3);
-//    fullMatrix<double> newxyz(orderCurve + 1, 3);
-//    data->invA.mult(xyz, coeff);
-//    data->Leg2Lag.mult(coeff, newxyz);
-//
-//    for (int i = 2; i < topEdge.getNumVertices(); ++i) {
-//      topEdge.getVertex(i)->x() = newxyz(i, 0);
-//      topEdge.getVertex(i)->y() = newxyz(i, 1);
-//      topEdge.getVertex(i)->z() = newxyz(i, 2);
-//    }
-//  }
+  void idealPositionFace(const MFaceN &baseFace,
+                         const Parameters3DSurface &parameters,
+                         int nbPoints, const IntPt *points,
+                         fullMatrix<double> &xyz)
+  {
+    for (int i = 0; i < nbPoints; ++i) {
+      const double &u = points[i].pt[0];
+      const double &v = points[i].pt[1];
+      SPoint3 p = parameters.computeIdealPositionTopFace(baseFace, u, v);
+      xyz(i, 0) = p.x();
+      xyz(i, 1) = p.y();
+      xyz(i, 2) = p.z();
+    }
+  }
+
+  void computePosition3DFace(const MFaceN &baseFace, MFaceN &topFace,
+                             const Parameters3DSurface &parameters,
+                             GFace *gFace)
+  {
+    // Let (t0, t1, n) be the local reference frame on 'baseFace'
+    // We seek, for each component, the polynomial function that fit the best
+    //   x1(u) = x0(u) + h(u) * n(u) + b(u) * t0(u) + c(u) * t1(u)
+    // in the least square sense.
+    // where x0(u) is the position of 'baseFace' and h, b, c are given by
+    //       'parameters'
+
+    const int orderSurface = baseFace.getOrder();
+    const int orderGauss = orderSurface * 2;
+    const int nVerticesBoundary = baseFace.getNumVerticesOnBoundary();
+    int sizeSystem;
+    IntPt *gaussPnts;
+    if (baseFace.isTriangular()) {
+      sizeSystem = getNGQTPts(orderGauss);
+      gaussPnts = getGQTPts(orderGauss);
+
+    }
+    else {
+      sizeSystem = getNGQQPts(orderGauss);
+      gaussPnts = getGQQPts(orderGauss);
+    }
+
+    fullMatrix<double> xyz(sizeSystem + nVerticesBoundary, 3);
+    idealPositionFace(baseFace, parameters, sizeSystem, gaussPnts, xyz);
+    for (int i = 0; i < nVerticesBoundary; ++i) {
+      MVertex *v = topFace.getVertex(i);
+      xyz(sizeSystem+i, 0) = v->x();
+      xyz(sizeSystem+i, 1) = v->y();
+      xyz(sizeSystem+i, 2) = v->z();
+    }
+
+    BoundaryLayerCurver::LeastSquareData *data =
+        BoundaryLayerCurver::getLeastSquareData(baseFace.getType(), orderSurface,
+                                                orderGauss);
+
+    fullMatrix<double> coeff(data->invA.size2(), 3);
+    fullMatrix<double> newxyz(data->Leg2Lag.size2(), 3);
+    data->invA.mult(xyz, coeff);
+    data->Leg2Lag.mult(coeff, newxyz);
+
+    for (int i = nVerticesBoundary; i < topFace.getNumVertices(); ++i) {
+      MVertex *v = topFace.getVertex(i);
+      v->x() = newxyz(i, 0);
+      v->y() = newxyz(i, 1);
+      v->z() = newxyz(i, 2);
+    }
+  }
 
   void curveColumns(VecPairMElemVecMElem &bndEl2column,
                     GFace *boundary)
   {
+    Parameters3DSurface parameters;
     for (unsigned int i = 0; i < bndEl2column.size(); ++i) {
       std::vector<MFaceN> stackFaces;
       computeStackHighOrderFaces(bndEl2column[i], stackFaces);
 
       MFaceN &baseFace = stackFaces[0];
       MFaceN &topFace = stackFaces.back();
-
-//      computeExtremityCoefficients(bottom1, bottom2, baseEdge, topEdge, parameters);
-//      computePosition3DFace(baseFace, topFace, parameters,
-//                            0, dampingFactor, bndEnt);
+      parameters.computeParameters(baseFace, topFace);
+      computePosition3DFace(baseFace, topFace, parameters, boundary);
     }
   }
 }

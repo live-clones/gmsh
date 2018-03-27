@@ -155,11 +155,16 @@ private:
 public:
   MFaceN() {}
   MFaceN(int type, int order, const std::vector<MVertex*> &v);
+
+  inline int getOrder() const {return _order;}
+  inline int getType() const {return _type;}
+  inline bool isTriangular() const {return _type == TYPE_TRI;}
   inline int getNumVertices() const { return (int)_v.size(); }
-  inline int getNumPrimaryVertices() const { return _type == TYPE_TRI ? 3 : 4; }
+  inline int getNumCorners() const { return isTriangular() ? 3 : 4; }
+  inline int getNumVerticesOnBoundary() const { return getNumCorners() * _order; }
+
   inline MVertex *getVertex(int i) const { return _v[i]; }
   inline const std::vector<MVertex*> &getVertices() const { return _v; }
-  int getOrder() const;
 
   MEdgeN getEdgeN(int num, int sign) const;
 

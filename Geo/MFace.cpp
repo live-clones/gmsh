@@ -109,7 +109,7 @@ MFaceN::MFaceN(int type, int order, const std::vector<MVertex*> &v)
 
 MEdgeN MFaceN::getEdgeN(int num, int sign) const
 {
-  int nCorner = getNumPrimaryVertices();
+  int nCorner = getNumCorners();
   std::vector<MVertex*> vertices((unsigned int)_order + 1);
   if (sign == 1) {
     vertices[0] = _v[num];
@@ -243,14 +243,9 @@ void MFaceN::frame(double u, double v, SPoint3 &p,
   n =  crossprod(t0, t1);
 }
 
-int MFaceN::getOrder() const
-{
-  return _order;
-}
-
 void MFaceN::repositionInteriorNodes(const fullMatrix<double> *placement)
 {
-  int nCorner = getNumPrimaryVertices();
+  int nCorner = getNumCorners();
   int start = nCorner + (_order - 1) * nCorner;
   for (int i = start; i < (int)_v.size(); ++i) {
     MVertex *v = _v[i];

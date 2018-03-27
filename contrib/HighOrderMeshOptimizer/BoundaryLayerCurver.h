@@ -108,7 +108,7 @@ namespace BoundaryLayerCurver
     }
   };
 
-  class Parameters3DFace {
+  class Parameters3DSurface {
     std::vector<double> _thickness;
     std::vector<double> _coeffb;
     std::vector<double> _coeffc;
@@ -118,13 +118,14 @@ namespace BoundaryLayerCurver
     const nodalBasis *_fs, *_primaryFs;
 //    const MFaceN baseFace;
 
-    Parameters3DFace();
-    ~Parameters3DFace();
+  public:
+    Parameters3DSurface() {}
+    ~Parameters3DSurface() {}
 
     void computeParameters(const MFaceN &baseFace, const MFaceN &topFace);
 
     SPoint3 computeIdealPositionTopFace(const MFaceN &baseFace,
-                                        double u, double v);
+                                        double u, double v) const;
 
 //    double characteristicThickness() {
 //      return std::min(std::abs(thickness[0]), std::abs(thickness[1]));
