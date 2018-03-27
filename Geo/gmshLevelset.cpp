@@ -172,10 +172,8 @@ void computeLevelset(GModel *gm, cartesianBox<double> &box)
       }
     }
     else{
-      printf(" CAD surface \n");
-      //look in utils_api_demos maincartesian
-      // for (GModel::fiter fit = _model->firstFace(); fit != _model->lastFace(); fit++){
-      // for (int i = 0; i < (*fit)->stl_triangles.size(); i += 3){
+      // we should use the STL here
+      Msg::Info("Levelset computation on CAD surface not implemented");
     }
   }
 
