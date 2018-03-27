@@ -1315,20 +1315,24 @@ bool optimalPointFrontalB(GFace *gf,
   SVector3 n1, n2, v1v2, middle;
   if (v1->distance(v2) < tolerance || v2->distance(v3) < tolerance || v1->distance(v3) < tolerance)
   {
-    MVertex *vUniqueOtherPoint;
-    if (v1->distance(v3) < tolerance)
+    MVertex *vUniqueFirstPoint, *vUniqueSecondPoint;
+    if (v1->distance(v2) < tolerance)
     {
-      // v1 overlaps v3
-      vUniqueOtherPoint = v2;
+      // v1 overlaps v2: take v2 -> v3
+      vUniqueFirstPoint = v2;
+      vUniqueSecondPoint = v3;
     }
     else
     {
-      // v1 overlaps v2 or v3 overlaps v2: only consider v1 and v3
-      vUniqueOtherPoint = v3;
+      // v3 overlaps v1 or v3 overlaps v2: take v1 -> v2
+      vUniqueFirstPoint = v1;
+      vUniqueSecondPoint = v2;
 
     }
-    v1v2 = SVector3(vUniqueOtherPoint->x() - v1->x(), vUniqueOtherPoint->y() - v1->y(), vUniqueOtherPoint->z() - vUniqueOtherPoint->z());
-    middle = SVector3((v1->x() + vUniqueOtherPoint->x())*.5, (v1->y() + vUniqueOtherPoint->y())*.5, (v1->z() + vUniqueOtherPoint->z())*.5);
+    v1v2 = SVector3(vUniqueSecondPoint->x() - vUniqueFirstPoint->x(), vUniqueSecondPoint->y() - vUniqueFirstPoint->y(),
+      vUniqueSecondPoint->z() - vUniqueFirstPoint->z());
+    middle = SVector3((vUniqueFirstPoint->x() + vUniqueSecondPoint->x())*.5, 
+      (vUniqueFirstPoint->y() + vUniqueSecondPoint->y())*.5, (vUniqueFirstPoint->z() + vUniqueSecondPoint->z())*.5);
     double uv[2] = {0, 0};
     GPoint projectedPoint = gf->closestPoint(middle.point(), uv);
     n1 = gf->normal(SPoint2(projectedPoint.u(), projectedPoint.v()));
