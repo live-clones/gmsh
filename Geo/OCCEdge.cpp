@@ -188,10 +188,11 @@ GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const
 // True if the edge is a seam for the given face
 bool OCCEdge::isSeam(const GFace *face) const
 {
-  
+
   if (face->geomType() == GEntity::CompoundSurface) return false;
   if (face->getNativeType() != GEntity::OpenCascadeModel) return false;
-  if (!face->periodic(0) && !face->periodic(1)) return false;
+  // this breaks demos/thrusections.geo:
+  //if (!face->periodic(0) && !face->periodic(1)) return false;
   bool ret;
   const TopoDS_Face *s = (TopoDS_Face*) face->getNativePtr();
   // This function was horribly slow... until ...
