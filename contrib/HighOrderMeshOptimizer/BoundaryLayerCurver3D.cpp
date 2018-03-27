@@ -217,18 +217,22 @@ namespace BoundaryLayerCurver
     _order = baseFace.getOrder();
     int nVerticesOnBoundary = _nCorner * _order;
     int sizeParameters = nVerticesOnBoundary;
+    bool incomplete = true;
     // Currently, incomplete polynomial space of triangles is not symmetrical,
     // we use complete space
-    if (_nCorner == 3) sizeParameters = (_order + 1) * (_order + 2) / 2;
-    // TODO Make sure every element is 0
-    _thickness.resize(sizeParameters, 0);
-    _coeffb.resize(sizeParameters, 0);
-    _coeffc.resize(sizeParameters, 0);
+    if (_nCorner == 3) {
+      sizeParameters = (_order + 1) * (_order + 2) / 2;
+      incomplete = false;
+    }
+    _thickness.assign(sizeParameters, 0);
+    _coeffb.assign(sizeParameters, 0);
+    _coeffc.assign(sizeParameters, 0);
 
     int tagPrimary = ElementType::getTag(_nCorner == 4 ? TYPE_QUA : TYPE_TRI, 1);
     _primaryFs = BasisFactory::getNodalBasis(tagPrimary);
 
-    int tag = ElementType::getTag(_nCorner == 4 ? TYPE_QUA : TYPE_TRI, _order);
+    int tag = ElementType::getTag(_nCorner == 4 ? TYPE_QUA : TYPE_TRI, _order,
+                                  incomplete);
     _fs = BasisFactory::getNodalBasis(tag);
     const fullMatrix<double> &refPoints = _fs->getReferenceNodes();
     for (int i = 0; i < nVerticesOnBoundary; ++i) {
@@ -381,11 +385,7 @@ namespace BoundaryLayerCurver
   {
     int numVertexPerLayer = c1.first->getNumPrimaryVertices();
     unsigned int numLayers = c1.second.size();
-    stack.clear();
-    stack.resize(numVertexPerLayer * numLayers);
-    for (unsigned int i = 0; i < stack.size(); ++i) {
-      stack[i] = NULL;
-    }
+    stack.assign(numVertexPerLayer * numLayers, NULL);
 
     int k = 0;
     for (int i = 0; i < numVertexPerLayer; ++i) {
