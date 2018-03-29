@@ -867,8 +867,8 @@ Adds a geometrical point in the internal GEO CAD representation, at coordinates
 (x, y, z). If @code{meshSize} is > 0, adds a meshing constraint at that point.
 If @code{tag} is positive, sets the tag explicitly; otherwise a new tag is
 selected automatically. Returns the tag of the point. (Note that the point will
-be added in the current model only after synchronize() is called. This behavior
-holds for all the entities added in the geo module.)
+be added in the current model only after @code{synchronize} is called. This
+behavior holds for all the entities added in the geo module.)
 
 @table @asis
 @item Input:
@@ -1325,8 +1325,8 @@ Adds a geometrical point in the internal OpenCASCADE CAD representation, at
 coordinates (x, y, z). If @code{meshSize} is > 0, adds a meshing constraint at
 that point. If @code{tag} is positive, sets the tag explicitly; otherwise a new
 tag is selected automatically. Returns the tag of the point. (Note that the
-point will be added in the current model only after synchronize() is called.
-This behavior holds for all the entities added in the occ module.)
+point will be added in the current model only after @code{synchronize} is
+called. This behavior holds for all the entities added in the occ module.)
 
 @table @asis
 @item Input:
@@ -2222,7 +2222,7 @@ interface if it has not yet been initialized.
 
 @item run
 Runs the event loop of the Fltk graphical user interface, i.e. repeatedly calls
-@code{wait()}. First automatically creates the user interface if it has not yet
+@code{wait}. First automatically creates the user interface if it has not yet
 been initialized.
 
 @table @asis

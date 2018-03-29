@@ -497,7 +497,7 @@ GMSH_API void gmshModelMeshFieldSetAsBoundaryLayer(const int tag,
  * coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
  * that point. If `tag' is positive, sets the tag explicitly; otherwise a new
  * tag is selected automatically. Returns the tag of the point. (Note that the
- * point will be added in the current model only after synchronize() is
+ * point will be added in the current model only after `synchronize' is
  * called. This behavior holds for all the entities added in the geo module.) */
 GMSH_API int gmshModelGeoAddPoint(const double x,
                                   const double y,
@@ -797,7 +797,7 @@ GMSH_API void gmshModelGeoMeshSetReverse(const int dim,
  * coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
  * that point. If `tag' is positive, sets the tag explicitly; otherwise a new
  * tag is selected automatically. Returns the tag of the point. (Note that the
- * point will be added in the current model only after synchronize() is
+ * point will be added in the current model only after `synchronize' is
  * called. This behavior holds for all the entities added in the occ module.) */
 GMSH_API int gmshModelOccAddPoint(const double x,
                                   const double y,
@@ -1406,8 +1406,8 @@ GMSH_API void gmshFltkWait(const double time,
                            int * ierr);
 
 /* Runs the event loop of the Fltk graphical user interface, i.e. repeatedly
- * calls `wait()'. First automatically creates the user interface if it has
- * not yet been initialized. */
+ * calls `wait'. First automatically creates the user interface if it has not
+ * yet been initialized. */
 GMSH_API void gmshFltkRun(int * ierr);
 
 /* Gets data from the Onelab server. */
