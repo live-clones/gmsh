@@ -623,46 +623,6 @@ namespace BoundaryLayerCurver
       fullMatrix<double> invM1;
       M1.invert(invM1);
 
-//      fullMatrix<double> Leg2Leg(sz1+2, sz1+2, true);
-//      {
-//        fullMatrix<double> MM1(sz1+2, sz1+2, true);
-//        fullMatrix<double> &MM2 = Leg2Leg;
-//        int tagLine = ElementType::getTag(TYPE_LIN, order);
-//        const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
-//        const fullMatrix<double> &refNodes = fs->getReferenceNodes();
-//        double *val = new double[sz1];
-//        double *valc = new double[sz1];
-//        for (int i = 0; i < sz1; ++i) {
-//          legendre.f(refNodes(i, 0), val);
-//          legendre.fc(refNodes(i, 0), valc);
-//          for (int j = 0; j < sz1; ++j) {
-//            MM1(i, j) = val[j];
-//            MM2(i, j) = valc[j];
-//          }
-//        }
-//        MM1(sz1, sz1) = MM1(sz1+1, sz1+1) = 1;
-//        MM2(sz1, sz1) = MM2(sz1+1, sz1+1) = 1;
-//        fullMatrix<double> invMM2(sz1+2, sz1+2, true);
-//        MM2.invert(invMM2);
-//        invMM2.mult(MM1, Leg2Leg);
-//      }
-//
-//      data->Leg2Lag.resize(sz1, sz1, true);
-//      {
-//        int tagLine = ElementType::getTag(TYPE_LIN, order);
-//        const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
-//        const fullMatrix<double> &refNodes = fs->getReferenceNodes();
-//        double *val = new double[sz1];
-//        for (int i = 0; i < sz1; ++i) {
-//          legendre.fc(refNodes(i, 0), val);
-//          for (int j = 0; j < sz1; ++j) {
-//            data->Leg2Lag(i, j) = val[j];
-//          }
-////          data->Leg2Lag.print("data->Leg2Lag");
-//        }
-//        //data->Leg2Lag(sz1, sz1) = data->Leg2Lag(sz1+1, sz1+1) = 1;
-//      }
-
       fullMatrix<double> Leg2Lag(sz1+2, sz1+2, true);
       {
         int tagLine = ElementType::getTag(TYPE_LIN, order);
@@ -679,38 +639,13 @@ namespace BoundaryLayerCurver
       }
       Leg2Lag.print("Leg2Lag");
 
-//      data->Leg2p.resize(sz2, sz1, true);
-//      {
-//        int tagLine = ElementType::getTag(TYPE_LIN, order);
-//        const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
-//        const fullMatrix<double> &refNodes = fs->getReferenceNodes();
-//        double *val = new double[sz1];
-//        for (int i = 0; i < sz2; ++i) {
-//          legendre.fc(data->intPoints[i].pt[0], val);
-//          for (int j = 0; j < sz1; ++j) {
-//            data->Leg2p(i, j) = val[j];
-//          }
-////          data->Leg2p.print("data->Leg2Lag");
-//        }
-//      }
-
-//      M1.print("M1");
-//      invM1.print("invM1");
-//      M2.print("M2");
-//      Leg2Leg.print("Leg2Leg");
-//      data->Leg2Lag.print("data->Leg2Lag");
-
       fullMatrix<double> tmp(sz1+2, sz2+2, false);
       invM1.mult(M2, tmp);
-//      tmp.print("tmp");
-
       fullMatrix<double> tmp2(sz1+2, sz2+2, false);
       Leg2Lag.mult(tmp, tmp2);
-//      tmp2.print("tmp2");
 
       data->invA.resize(sz1, sz2+2, false);
       data->invA.copy(tmp2, 0, sz1, 0, sz2+2, 0, 0);
-//      data->invA.print("invA");
       return data;
     }
     else if (typeElement == TYPE_QUA) {
