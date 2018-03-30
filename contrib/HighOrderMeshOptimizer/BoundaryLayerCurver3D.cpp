@@ -689,11 +689,8 @@ namespace BoundaryLayerCurver
 
     BoundaryLayerCurver::LeastSquareData *data =
         BoundaryLayerCurver::getLeastSquareData(TYPE_LIN, orderCurve, orderGauss);
-
-    fullMatrix<double> coeff(orderCurve + 1, 3);
     fullMatrix<double> newxyz(orderCurve + 1, 3);
-    data->invA.mult(xyz, coeff);
-    data->Leg2Lag.mult(coeff, newxyz);
+    data->invA.mult(xyz, newxyz);
 
     for (int i = 2; i < topEdge.getNumVertices(); ++i) {
       MVertex *v = topEdge.getVertex(i);
@@ -898,7 +895,6 @@ namespace BoundaryLayerCurver
     if (baseFace.isTriangular()) {
       sizeSystem = getNGQTPts(orderGauss);
       gaussPnts = getGQTPts(orderGauss);
-
     }
     else {
       sizeSystem = getNGQQPts(orderGauss);
@@ -917,11 +913,8 @@ namespace BoundaryLayerCurver
     BoundaryLayerCurver::LeastSquareData *data =
         BoundaryLayerCurver::getLeastSquareData(baseFace.getType(), orderSurface,
                                                 orderGauss);
-
-    fullMatrix<double> coeff(data->invA.size2(), 3);
-    fullMatrix<double> newxyz(data->Leg2Lag.size2(), 3);
-    data->invA.mult(xyz, coeff);
-    data->Leg2Lag.mult(coeff, newxyz);
+    fullMatrix<double> newxyz(data->invA.size2(), 3);
+    data->invA.mult(xyz, newxyz);
 
     for (int i = nVerticesBoundary; i < topFace.getNumVertices(); ++i) {
       MVertex *v = topFace.getVertex(i);
