@@ -587,6 +587,22 @@ class model:
             api_zmax_.value)
 
     @staticmethod
+    def getDim():
+        """
+        Gets the dimension of the current model.
+
+        return int
+        """
+        ierr = c_int()
+        api__result__ = lib.gmshModelGetDim(
+            byref(ierr))
+        if ierr.value != 0 :
+            raise ValueError(
+                "gmshModelGetDim returned non-zero error code : ",
+                ierr.value)
+        return api__result__
+
+    @staticmethod
     def addDiscreteEntity(dim,tag=-1,boundary=[]):
         """
         Adds a discrete geometrical entity (defined by a mesh) of dimension `dim'

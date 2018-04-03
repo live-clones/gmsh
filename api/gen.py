@@ -103,6 +103,9 @@ model.add('getEntitiesInBoundingBox',doc,None,idouble('xmin'),idouble('ymin'),id
 doc = '''Gets the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of the geometrical entity of dimension `dim' and tag `tag'.'''
 model.add('getBoundingBox',doc,None,iint('dim'),iint('tag'),odouble('xmin'),odouble('ymin'),odouble('zmin'),odouble('xmax'),odouble('ymax'),odouble('zmax'))
 
+doc = '''Gets the dimension of the current model.'''
+model.add('getDim',doc,oint)
+
 doc = '''Adds a discrete geometrical entity (defined by a mesh) of dimension `dim' in the current model. The function returns the tag of the new discrete entity, equal to `tag' if `tag' is positive, or a new tag if `tag' < 0. `boundary' specifies the tags of the entities on the boundary of the discrete entity, if any. Specyfing `boundary' allows Gmsh to construct the topology of the overall model.'''
 model.add('addDiscreteEntity',doc,oint,iint('dim'),iint('tag','-1'),ivectorint('boundary','std::vector<int>()',"[]"))
 

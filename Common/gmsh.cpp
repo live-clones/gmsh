@@ -342,6 +342,13 @@ void gmsh::model::getBoundingBox(const int dim, const int tag, double &xmin,
   zmax = box.max().z();
 }
 
+int gmsh::model::getDim()
+{
+  if(!_isInitialized()){ throw -1; }
+  
+  return GModel::current()->getDim();
+}
+
 int gmsh::model::addDiscreteEntity(const int dim, const int tag,
                                    const std::vector<int> &boundary)
 {

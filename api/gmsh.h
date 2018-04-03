@@ -174,6 +174,9 @@ namespace gmsh { // Top-level functions
                                  double & ymax,
                                  double & zmax);
 
+    // Gets the dimension of the current model.
+    GMSH_API int getDim();
+
     // Adds a discrete geometrical entity (defined by a mesh) of dimension `dim' in
     // the current model. The function returns the tag of the new discrete entity,
     // equal to `tag' if `tag' is positive, or a new tag if `tag' < 0. `boundary'

@@ -263,6 +263,15 @@ void gmshModelGetBoundingBox(const int dim,const int tag,double * xmin,double * 
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
+int gmshModelGetDim(int * ierr){
+  int result_api_;
+  if(ierr) *ierr = 0;
+  try {
+  result_api_ = gmsh::model::getDim();
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+  return result_api_;
+}
+
 int gmshModelAddDiscreteEntity(const int dim,const int tag,int * boundary, size_t boundary_n,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
