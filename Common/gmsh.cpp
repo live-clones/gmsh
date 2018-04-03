@@ -332,7 +332,15 @@ void gmsh::model::getBoundingBox(const int dim, const int tag, double &xmin,
     Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     throw 2;
   }
-  SBoundingBox3d box = ge->bounds();
+  
+  SBoundingBox3d box;
+  if(dim < 0 && tag < 0){
+    GModel::current()->bounds();
+    if(box.empty()){ throw(3); }
+  }
+  else{
+    box = ge->bounds();
+  }
   if(box.empty()){ throw(3); }
   xmin = box.min().x();
   ymin = box.min().y();

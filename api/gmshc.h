@@ -171,7 +171,8 @@ GMSH_API void gmshModelGetEntitiesInBoundingBox(const double xmin,
                                                 int * ierr);
 
 /* Gets the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
- * the geometrical entity of dimension `dim' and tag `tag'. */
+ * the geometrical entity of dimension `dim' and tag `tag'. If `dim' and `tag'
+ * are < 0, returns the bounding box of the current model. */
 GMSH_API void gmshModelGetBoundingBox(const int dim,
                                       const int tag,
                                       double * xmin,
