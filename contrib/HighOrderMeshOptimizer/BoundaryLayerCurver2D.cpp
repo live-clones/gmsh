@@ -592,60 +592,63 @@ namespace BoundaryLayerCurver
     // from
     //     the values of function f at Gauss points
     //   + value of function f at extremities
+
     LeastSquareData *data = new LeastSquareData;
+
     if (typeElement == TYPE_LIN) {
       data->nbPoints = getNGQLPts(orderGauss);
       data->intPoints = getGQLPts(orderGauss);
       LegendrePolynomials legendre(order);
 
-      int sz1 = order + 1;
-      int sz2 = data->nbPoints;
-      fullMatrix<double> M2(sz1+2, sz2+2, true);
+      const int szSpace = order + 1;
+      const int nGP = data->nbPoints;
+
+      fullMatrix<double> M2(szSpace+2, nGP+2, true);
       {
-        double *val = new double[sz1];
-        for (int j = 0; j < sz2; ++j) {
+        double *val = new double[szSpace];
+        for (int j = 0; j < nGP; ++j) {
           legendre.f(data->intPoints[j].pt[0], val);
-          for (int i = 0; i < sz1; ++i) {
-            M2(i, j) = 2 * val[i] * data->intPoints[j].weight;
+          for (int i = 0; i < szSpace; ++i) {
+            M2(i, j) = val[i] * data->intPoints[j].weight;
           }
         }
-        M2(sz1, sz2) = M2(sz1+1, sz2+1) = 1;
+        M2(szSpace, nGP) = M2(szSpace+1, nGP+1) = 1;
         delete val;
       }
 
-      fullMatrix<double> M1(sz1+2, sz1+2, true);
-      for (int k = 0; k < sz1; ++k) {
+      fullMatrix<double> M1(szSpace+2, szSpace+2, true);
+      for (int k = 0; k < szSpace; ++k) {
         const int sign = k % 2 == 0 ? 1 : -1;
-        M1(sz1, k) = M1(k, sz1) = sign;
-        M1(sz1+1, k) = M1(k, sz1+1) = 1;
-        M1(k, k) = 4. / (1 + 2*k);
+        M1(szSpace, k) = M1(k, szSpace) = sign;
+        M1(szSpace+1, k) = M1(k, szSpace+1) = 1;
+        M1(k, k) = 2. / (1 + 2*k);
       }
       fullMatrix<double> invM1;
       M1.invert(invM1);
 
-      fullMatrix<double> Leg2Lag(sz1+2, sz1+2, true);
+      fullMatrix<double> Leg2Lag(szSpace+2, szSpace+2, true);
       {
         int tagLine = ElementType::getTag(TYPE_LIN, order);
         const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
         const fullMatrix<double> &refNodes = fs->getReferenceNodes();
-        double *val = new double[sz1];
-        for (int i = 0; i < sz1; ++i) {
+        double *val = new double[szSpace];
+        for (int i = 0; i < szSpace; ++i) {
           legendre.f(refNodes(i, 0), val);
-          for (int j = 0; j < sz1; ++j) {
+          for (int j = 0; j < szSpace; ++j) {
             Leg2Lag(i, j) = val[j];
           }
         }
-        Leg2Lag(sz1, sz1) = Leg2Lag(sz1+1, sz1+1) = 1;
+        Leg2Lag(szSpace, szSpace) = Leg2Lag(szSpace+1, szSpace+1) = 1;
       }
       Leg2Lag.print("Leg2Lag");
 
-      fullMatrix<double> tmp(sz1+2, sz2+2, false);
+      fullMatrix<double> tmp(szSpace+2, nGP+2, false);
       invM1.mult(M2, tmp);
-      fullMatrix<double> tmp2(sz1+2, sz2+2, false);
+      fullMatrix<double> tmp2(szSpace+2, nGP+2, false);
       Leg2Lag.mult(tmp, tmp2);
 
-      data->invA.resize(sz1, sz2+2, false);
-      data->invA.copy(tmp2, 0, sz1, 0, sz2+2, 0, 0);
+      data->invA.resize(szSpace, nGP+2, false);
+      data->invA.copy(tmp2, 0, szSpace, 0, nGP+2, 0, 0);
       return data;
     }
     else if (typeElement == TYPE_QUA) {
