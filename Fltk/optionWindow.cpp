@@ -458,7 +458,7 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_curve_type(0, GMSH_SET, o->geo.choice[1]->value());
   opt_geometry_surface_type(0, GMSH_SET, o->geo.choice[2]->value());
   opt_geometry_transform(0, GMSH_SET, o->geo.choice[3]->value());
-  opt_geometry_label_type(0, GMSH_SET, o->geo.choice[4]->value() + 1);
+  opt_geometry_label_type(0, GMSH_SET, o->geo.choice[4]->value());
 
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
@@ -2023,6 +2023,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[7]->callback(geometry_options_ok_cb);
 
       static Fl_Menu_Item menu_label_type[] = {
+        {"Description", 0, 0, 0},
         {"Elementary tags", 0, 0, 0},
         {"Physical tags", 0, 0, 0},
         {0}

@@ -4580,13 +4580,13 @@ double opt_geometry_label_type(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET){
     CTX::instance()->geom.labelType = (int)val;
-    if(CTX::instance()->geom.labelType < 1 || CTX::instance()->geom.labelType > 2)
-      CTX::instance()->geom.labelType = 1;
+    if(CTX::instance()->geom.labelType < 0 || CTX::instance()->geom.labelType > 2)
+      CTX::instance()->geom.labelType = 0;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)){
     FlGui::instance()->options->geo.choice[4]->value
-      (CTX::instance()->geom.labelType - 1);
+      (CTX::instance()->geom.labelType);
   }
 #endif
   return CTX::instance()->geom.labelType;

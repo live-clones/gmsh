@@ -306,12 +306,12 @@ GEntity *GModel::getEntityByTag(int dim, int n) const
   return 0;
 }
 
-std::vector<int> GModel::getTagsForPhysicalName(int dim, const std::string tag)
+std::vector<int> GModel::getTagsForPhysicalName(int dim, const std::string &name)
 {
   std::vector<int> tags;
   std::map<int, std::vector<GEntity*> > physicalGroups;
   getPhysicalGroups(dim, physicalGroups);
-  std::vector<GEntity*> entities = physicalGroups[getPhysicalNumber(dim, tag)];
+  std::vector<GEntity*> entities = physicalGroups[getPhysicalNumber(dim, name)];
   for(std::vector<GEntity*>::iterator it = entities.begin(); it != entities.end(); it++){
     GEntity *ge = *it;
     tags.push_back(ge->tag());

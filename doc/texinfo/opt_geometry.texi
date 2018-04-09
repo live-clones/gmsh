@@ -67,8 +67,8 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.LabelType
-Type of entity label (1=elementary number, 2=physical number)@*
-Default value: @code{1}@*
+Type of entity label (0=description, 1=elementary number, 2=physical number)@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Light

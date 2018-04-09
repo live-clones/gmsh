@@ -15,8 +15,11 @@
 static void drawEntityLabel(drawContext *ctx, GEntity *e,
                             double x, double y, double z, double offset)
 {
-  char str[256];
-  if(CTX::instance()->geom.labelType == 1){
+  char str[1024];
+  if(CTX::instance()->geom.labelType == 0){
+    strcpy(str, e->getInfoString(false).c_str());
+  }
+  else if(CTX::instance()->geom.labelType == 1){
     sprintf(str, "%d", e->tag());
   }
   else{
@@ -84,7 +87,7 @@ class drawGVertex {
     double x = v->x(), y = v->y(), z = v->z();
     _ctx->transform(x, y, z);
 
-    if(CTX::instance()->geom.points) {
+    if(CTX::instance()->geom.points || v->getSelection() > 1) {
       if(CTX::instance()->geom.pointType > 0) {
         if(v->getSelection())
           _ctx->drawSphere(sps, x, y, z, CTX::instance()->geom.light);
@@ -98,7 +101,7 @@ class drawGVertex {
       }
     }
 
-    if(CTX::instance()->geom.pointsNum) {
+    if(CTX::instance()->geom.pointsNum || v->getSelection() > 1) {
       double offset = (0.5 * ps +
                        0.1 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
       drawEntityLabel(_ctx, v, x, y, z, offset);
@@ -157,7 +160,7 @@ class drawGEdge {
     double t_min = t_bounds.low();
     double t_max = t_bounds.high();
 
-    if(CTX::instance()->geom.curves) {
+    if(CTX::instance()->geom.curves || e->getSelection() > 1) {
       int N = e->minimumDrawSegments() + 1;
       if(CTX::instance()->geom.curveType > 0) {
         for(int i = 0; i < N - 1; i++) {
@@ -188,7 +191,7 @@ class drawGEdge {
       }
     }
 
-    if(CTX::instance()->geom.curvesNum) {
+    if(CTX::instance()->geom.curvesNum || e->getSelection() > 1) {
       GPoint p = e->point(t_min + 0.5 * (t_max - t_min));
       double offset = (0.5 * CTX::instance()->geom.curveWidth +
                        0.1 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
@@ -280,7 +283,7 @@ class drawGFace {
     double u2 = 0.5 * (ubounds.high() + ubounds.low());
     double v2 = 0.5 * (vbounds.high() + vbounds.low());
 
-    if(CTX::instance()->geom.surfaces){
+    if(CTX::instance()->geom.surfaces || f->getSelection() > 1){
       if(CTX::instance()->geom.surfaceType > 0 && f->va_geom_triangles){
         bool selected = false;
         if (f->getSelection())
@@ -330,7 +333,7 @@ class drawGFace {
       }
     }
 
-    if(CTX::instance()->geom.surfacesNum) {
+    if(CTX::instance()->geom.surfacesNum || f->getSelection() > 1) {
       GPoint p = f->point(uav, vav);
       double offset = 0.1 * CTX::instance()->glFontSize * _ctx->pixel_equiv_x;
       double x = p.x(), y = p.y(), z = p.z();
@@ -360,7 +363,7 @@ class drawGFace {
        CTX::instance()->geom.surfacesNum || CTX::instance()->geom.normals)
       f->buildRepresentationCross();
 
-    if(CTX::instance()->geom.surfaces) {
+    if(CTX::instance()->geom.surfaces || f->getSelection() > 1){
       //bool selected = false;
       if(CTX::instance()->geom.surfaceType > 0 && f->va_geom_triangles){
         _drawVertexArray(f->va_geom_triangles, CTX::instance()->geom.light,
@@ -384,7 +387,7 @@ class drawGFace {
 
     if(f->cross.size() < 2) return;
 
-    if(CTX::instance()->geom.surfacesNum) {
+    if(CTX::instance()->geom.surfacesNum || f->getSelection() > 1) {
       double offset = 0.1 * CTX::instance()->glFontSize * _ctx->pixel_equiv_x;
       double x = 0.5 * (f->cross[0].x() + f->cross[1].x());
       double y = 0.5 * (f->cross[0].y() + f->cross[1].y());
@@ -488,10 +491,10 @@ class drawGRegion {
     double x = p.x(), y = p.y(), z = p.z();
     _ctx->transform(x, y, z);
 
-    if(CTX::instance()->geom.volumes)
+    if(CTX::instance()->geom.volumes || r->getSelection() > 1)
       _ctx->drawSphere(size, x, y, z, CTX::instance()->geom.light);
 
-    if(CTX::instance()->geom.volumesNum){
+    if(CTX::instance()->geom.volumesNum || r->getSelection() > 1){
       double offset = (0.5 * size + 0.1 * CTX::instance()->glFontSize) *
         _ctx->pixel_equiv_x;
       drawEntityLabel(_ctx, r, x, y, z, offset);
@@ -520,17 +523,10 @@ void drawContext::drawGeom()
   for(unsigned int i = 0; i < GModel::list.size(); i++){
     GModel *m = GModel::list[i];
     if(m->getVisibility() && isVisible(m)){
-      if(CTX::instance()->geom.points || CTX::instance()->geom.pointsNum)
-        std::for_each(m->firstVertex(), m->lastVertex(), drawGVertex(this));
-      if(CTX::instance()->geom.curves || CTX::instance()->geom.curvesNum ||
-         CTX::instance()->geom.tangents)
-        std::for_each(m->firstEdge(), m->lastEdge(), drawGEdge(this));
-      if(CTX::instance()->geom.surfaces || CTX::instance()->geom.surfacesNum ||
-         CTX::instance()->geom.normals) {
-        std::for_each(m->firstFace(), m->lastFace(), drawGFace(this));
-      }
-      if(CTX::instance()->geom.volumes || CTX::instance()->geom.volumesNum)
-        std::for_each(m->firstRegion(), m->lastRegion(), drawGRegion(this));
+      std::for_each(m->firstVertex(), m->lastVertex(), drawGVertex(this));
+      std::for_each(m->firstEdge(), m->lastEdge(), drawGEdge(this));
+      std::for_each(m->firstFace(), m->lastFace(), drawGFace(this));
+      std::for_each(m->firstRegion(), m->lastRegion(), drawGRegion(this));
     }
   }
 

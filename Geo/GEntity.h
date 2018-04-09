@@ -314,7 +314,7 @@ class GEntity {
   virtual bool useColor();
 
   // return an information string for the entity
-  virtual std::string getInfoString();
+  virtual std::string getInfoString(bool additional=true);
 
   // return a type-specific additional information string
   virtual std::string getAdditionalInfoString() { return std::string(""); }

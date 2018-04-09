@@ -47,19 +47,29 @@ bool GEntity::useColor()
   return true;
 }
 
-std::string GEntity::getInfoString()
+std::string GEntity::getInfoString(bool additional)
 {
   std::ostringstream sstream;
   sstream << getTypeString() << " " << tag();
 
-  std::string info = getAdditionalInfoString();
-  if(info.size()) sstream << " " << info;
+  if(additional){
+    std::string info = getAdditionalInfoString();
+    if(info.size()) sstream << " " << info;
+  }
 
   if(physicals.size()){
-    sstream << " (Physical:";
-    for(unsigned int i = 0; i < physicals.size(); i++)
+    sstream << ": Physical ";
+    switch(dim()){
+    case 0: sstream << "Point "; break;
+    case 1: sstream << "Curve "; break;
+    case 2: sstream << "Surface "; break;
+    case 3: sstream << "Volume "; break;
+    }
+    for(unsigned int i = 0; i < physicals.size(); i++){
       sstream << " " << physicals[i];
-    sstream << ")";
+      std::string name = model()->getPhysicalName(dim(), physicals[i]);
+      if(name.size()) sstream << " " << "(" << name << ")";
+    }
   }
 
   return sstream.str();

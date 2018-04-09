@@ -38,7 +38,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildOptions
 Gmsh build options (read-only)@*
-Default value: @code{" 64Bit Ann Bamg Bfgs Blas(VecLib) Blossom DIntegration Dlopen Fltk GMP Gmm Jpeg(Fltk) Kbipack Lapack(VecLib) MathEx Med Mesh Metis Mmg3d Mpeg NativeFileChooser Netgen ONELAB ONELABMetamodel OpenCASCADE OpenGL OptHom PETSc Parser Plugins Png(Fltk) Post SLEPc Solver TetGen/BR Voro++ Zlib"}@*
+Default value: @code{" 64Bit Ann Bamg Bfgs Blas(VecLib) Blossom DIntegration Dlopen Fltk GMP Gmm Hxt Jpeg(Fltk) Kbipack Lapack(VecLib) MathEx Med Mesh Metis Mmg3d Mpeg NativeFileChooser Netgen ONELAB ONELABMetamodel OpenCASCADE OpenGL OptHom PETSc Parser Plugins Png(Fltk) Post SLEPc Solver TetGen/BR Voro++ Zlib"}@*
 Saved in: @code{-}
 
 @item General.DefaultFileName
