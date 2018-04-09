@@ -1161,6 +1161,33 @@ static void view_group_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
 }
 
+static void highlight_physical_group_cb(Fl_Widget *w, void *data)
+{
+  if(!data) return;
+  std::string group((char*)data);
+  if(group.empty()) return;
+  if(group.find("Physical Point") != std::string::npos){
+    int num = atoi(group.substr(15).c_str());
+    printf("will highlight physical point %d\n", num);
+  }
+  else if(group.find("Physical Curve") != std::string::npos){
+    int num = atoi(group.substr(15).c_str());
+    printf("will highlight physical curve %d\n", num);
+  }
+  else if(group.find("Physical Surface") != std::string::npos){
+    int num = atoi(group.substr(17).c_str());
+    printf("will highlight physical surface %d\n", num);
+  }
+  else if(group.find("Physical Volume") != std::string::npos){
+    int num = atoi(group.substr(16).c_str());
+    printf("will highlight physical volume %d\n", num);
+  }
+  else{
+    printf("will highlight physical group with name '%s'\n", group.c_str());
+  }
+  drawContext::global()->draw();
+}
+
 void onelabGroup::rebuildTree(bool deleteWidgets)
 {
   setButtonVisibility();
@@ -1245,6 +1272,16 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
         char *group = strdup(getPath(n).substr(24).c_str());
         _treeStrings.push_back(group);
         but->callback(view_group_cb, (void*)group);
+      }
+      else if(getPath(n).find("Physical group: ") != std::string::npos){
+        but = new Fl_Button(1, 1, ww, hh);
+        but->box(FL_NO_BOX);
+        but->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+        but->tooltip("Toggle highlight of physical group");
+        std::string::size_type pos = getPath(n).find("Physical group: ");
+        char *group = strdup(getPath(n).substr(pos + 16).c_str());
+        _treeStrings.push_back(group);
+        but->callback(highlight_physical_group_cb, (void*)group);
       }
       else{
         but = new Fl_Box(1, 1, ww, hh);
@@ -1500,4 +1537,3 @@ void onelabGroup::addSolver(const std::string &name, const std::string &executab
   // initialize the client
   onelab_cb(0, (void*)"initialize");
 }
-
