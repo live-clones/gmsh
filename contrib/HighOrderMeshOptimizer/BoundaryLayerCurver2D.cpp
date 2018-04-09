@@ -652,50 +652,73 @@ namespace BoundaryLayerCurver
       return data;
     }
     else if (typeElement == TYPE_QUA) {
-//      data->nbPoints = getNGQQPts(orderGauss);
-//      data->intPoints = getGQQPts(orderGauss);
-//      LegendrePolynomials legendre(order);
-//
-//      int sz1 = order + 1;
-//      int sz2 = data->nbPoints;
-//      fullMatrix<double> M2(sz1+2, sz2+2, true);
+      data->nbPoints = getNGQQPts(orderGauss);
+      data->intPoints = getGQQPts(orderGauss);
+      LegendrePolynomials legendre(order);
+
+      fullMatrix<double> node2idxUV = gmshGenerateMonomialsQuadrangle(order);
+      fullMatrix<double> node2uv = gmshGeneratePointsQuadrangle(order, true);
+
+      const int szSpace = (order + 1) * (order + 1);
+      const int nGP = data->nbPoints;
+      const int nConstraint = 4 * order;
+
+      double *valu = new double[szSpace];
+      double *valv = new double[szSpace];
+
+      fullMatrix<double> M2(szSpace+nConstraint, nGP+nConstraint, true);
+      {
+        for (int j = 0; j < nGP; ++j) {
+          legendre.f(data->intPoints[j].pt[0], valu);
+          legendre.f(data->intPoints[j].pt[1], valv);
+          for (int i = 0; i < szSpace; ++i) {
+            int iu = (int) node2idxUV(i, 0);
+            int iv = (int) node2idxUV(i, 1);
+            M2(i, j) = valu[iu] * valv[iv] * data->intPoints[j].weight;
+          }
+        }
+        for (int i = 0; i < nConstraint; ++i) {
+          M2(szSpace+i, nGP+i) = 1;
+        }
+      }
+
+      fullMatrix<double> M1(szSpace+nConstraint, szSpace+nConstraint, true);
+      {
+        for (int k = 0; k < szSpace; ++k) {
+          int iu = (int) node2idxUV(k, 0);
+          int iv = (int) node2idxUV(k, 1);
+          M1(k, k) = 4. / (1 + 2*iu) / (1 + 2*iv);
+        }
+        for (int i = 0; i < nConstraint; ++i) {
+          double u = node2uv(i, 0);
+          double v = node2uv(i, 1);
+          legendre.f(u, valu);
+          legendre.f(v, valv);
+          for (int k = 0; k < szSpace; ++k) {
+            M1(szSpace+i, k) = M1(k, szSpace+i) = valu[k] * valv[k];
+          }
+        }
+      }
+      fullMatrix<double> invM1;
+      M1.invert(invM1);
+
+      delete valu, valv;
+
+//      data->Leg2Lag.resize(szSpace, szSpace, true);
 //      {
-//        double *val = new double[sz1];
-//        for (int j = 0; j < sz2; ++j) {
-//          legendre.f(data->intPoints[j].pt[0], val);
-//          for (int i = 0; i < sz1; ++i) {
-//            M2(i, j) = 2 * val[i] * data->intPoints[j].weight;
+//        int tagLine = ElementType::getTag(TYPE_LIN, order);
+//        const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
+//        const fullMatrix<double> &refNodes = fs->getReferenceNodes();
+//        double *val = new double[szSpace];
+//        for (int i = 0; i < szSpace; ++i) {
+//          legendre.fc(refNodes(i, 0), val);
+//          for (int j = 0; j < szSpace; ++j) {
+//            data->Leg2Lag(i, j) = val[j];
 //          }
+////          data->Leg2Lag.print("data->Leg2Lag");
 //        }
-//        M2(sz1, sz2) = M2(sz1+1, sz2+1) = 1;
-//        delete val;
+//        //data->Leg2Lag(szSpace, szSpace) = data->Leg2Lag(szSpace+1, szSpace+1) = 1;
 //      }
-//
-//      fullMatrix<double> M1(sz1+2, sz1+2, true);
-//      for (int k = 0; k < sz1; ++k) {
-//        const int sign = k % 2 == 0 ? 1 : -1;
-//        M1(sz1, k) = M1(k, sz1) = sign;
-//        M1(sz1+1, k) = M1(k, sz1+1) = 1;
-//        M1(k, k) = 4. / (1 + 2*k);
-//      }
-//      fullMatrix<double> invM1;
-//      M1.invert(invM1);
-//
-////      data->Leg2Lag.resize(sz1, sz1, true);
-////      {
-////        int tagLine = ElementType::getTag(TYPE_LIN, order);
-////        const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
-////        const fullMatrix<double> &refNodes = fs->getReferenceNodes();
-////        double *val = new double[sz1];
-////        for (int i = 0; i < sz1; ++i) {
-////          legendre.fc(refNodes(i, 0), val);
-////          for (int j = 0; j < sz1; ++j) {
-////            data->Leg2Lag(i, j) = val[j];
-////          }
-//////          data->Leg2Lag.print("data->Leg2Lag");
-////        }
-////        //data->Leg2Lag(sz1, sz1) = data->Leg2Lag(sz1+1, sz1+1) = 1;
-////      }
 
 
       Msg::Error("Implement data for quad");
