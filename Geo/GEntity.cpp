@@ -60,10 +60,10 @@ std::string GEntity::getInfoString(bool additional)
   if(physicals.size()){
     sstream << ": Physical ";
     switch(dim()){
-    case 0: sstream << "Point "; break;
-    case 1: sstream << "Curve "; break;
-    case 2: sstream << "Surface "; break;
-    case 3: sstream << "Volume "; break;
+    case 0: sstream << "Point"; break;
+    case 1: sstream << "Curve"; break;
+    case 2: sstream << "Surface"; break;
+    case 3: sstream << "Volume"; break;
     }
     for(unsigned int i = 0; i < physicals.size(); i++){
       sstream << " " << physicals[i];
