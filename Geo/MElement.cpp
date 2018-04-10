@@ -199,7 +199,12 @@ MFaceN MElement::getHighOrderFace(int num, int sign, int rot)
   for (unsigned int i = 0; i < closure.size(); ++i) {
     vertices[i] = getVertex(closure[i]);
   }
-  return MFaceN(getType(), getPolynomialOrder(), vertices);
+
+  static int type2numTriFaces[9] = {0, 0, 0, 1, 0, 4, 4, 2, 0};
+  int typeFace = TYPE_TRI;
+  if (num >= type2numTriFaces[getType()]) typeFace = TYPE_QUA;
+
+  return MFaceN(typeFace, getPolynomialOrder(), vertices);
 }
 
 double MElement::minEdge()

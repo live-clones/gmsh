@@ -887,6 +887,9 @@ namespace BoundaryLayerCurver
     // where x0(u) is the position of 'baseFace' and h, b, c are given by
     //       'parameters'
 
+    if (baseFace.getType() == TYPE_TRI)
+      return;
+
     const int orderSurface = baseFace.getOrder();
     const int orderGauss = orderSurface * 2;
     const int nVerticesBoundary = baseFace.getNumVerticesOnBoundary();
@@ -910,17 +913,26 @@ namespace BoundaryLayerCurver
       xyz(sizeSystem+i, 2) = v->z();
     }
 
+//    for (int i = 0; i < sizeSystem; ++i) {
+//      MVertex *v = new MVertex(xyz(sizeSystem+i, 0), xyz(sizeSystem+i, 1), xyz(sizeSystem+i, 2));
+//      gFace->addMeshVertex(v);
+//    }
+
     BoundaryLayerCurver::LeastSquareData *data =
         BoundaryLayerCurver::getLeastSquareData(baseFace.getType(), orderSurface,
                                                 orderGauss);
-    fullMatrix<double> newxyz(data->invA.size2(), 3);
+    fullMatrix<double> newxyz(data->invA.size1(), 3);
     data->invA.mult(xyz, newxyz);
 
+//    std::vector<double> old_xyz;
+//    std::vector<double> new_xyz;
     for (int i = nVerticesBoundary; i < topFace.getNumVertices(); ++i) {
       MVertex *v = topFace.getVertex(i);
+//      old_xyz.push_back(v->x());
       v->x() = newxyz(i, 0);
       v->y() = newxyz(i, 1);
       v->z() = newxyz(i, 2);
+//      new_xyz.push_back(v->x());
     }
   }
 
@@ -933,7 +945,7 @@ namespace BoundaryLayerCurver
       computeStackHighOrderFaces(bndEl2column[i], stackFaces);
 
       MFaceN &baseFace = stackFaces[0];
-      MFaceN &topFace = stackFaces.back();
+      MFaceN &topFace = stackFaces.rbegin()[1]; // last but one element
       parameters.computeParameters(baseFace, topFace);
       computePosition3DFace(baseFace, topFace, parameters, boundary);
     }
