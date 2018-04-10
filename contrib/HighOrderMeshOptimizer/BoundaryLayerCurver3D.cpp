@@ -913,26 +913,17 @@ namespace BoundaryLayerCurver
       xyz(sizeSystem+i, 2) = v->z();
     }
 
-//    for (int i = 0; i < sizeSystem; ++i) {
-//      MVertex *v = new MVertex(xyz(i, 0), xyz(i, 1), xyz(i, 2));
-//      gFace->addMeshVertex(v);
-//    }
-
     BoundaryLayerCurver::LeastSquareData *data =
         BoundaryLayerCurver::getLeastSquareData(baseFace.getType(), orderSurface,
                                                 orderGauss);
     fullMatrix<double> newxyz(data->invA.size1(), 3);
     data->invA.mult(xyz, newxyz);
 
-//    std::vector<double> old_xyz;
-//    std::vector<double> new_xyz;
     for (int i = nVerticesBoundary; i < topFace.getNumVertices(); ++i) {
       MVertex *v = topFace.getVertex(i);
-//      old_xyz.push_back(v->x());
       v->x() = newxyz(i, 0);
       v->y() = newxyz(i, 1);
       v->z() = newxyz(i, 2);
-//      new_xyz.push_back(v->x());
     }
   }
 

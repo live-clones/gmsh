@@ -626,7 +626,7 @@ namespace BoundaryLayerCurver
       fullMatrix<double> invM1;
       M1.invert(invM1);
 
-      fullMatrix<double> Leg2Lag(szSpace+2, szSpace+2, true);
+      fullMatrix<double> Leg2Lag(szSpace, szSpace, true);
       {
         int tagLine = ElementType::getTag(TYPE_LIN, order);
         const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
@@ -638,31 +638,22 @@ namespace BoundaryLayerCurver
             Leg2Lag(i, j) = val[j];
           }
         }
-//        Leg2Lag(szSpace, szSpace) = Leg2Lag(szSpace+1, szSpace+1) = 1;
       }
 
       fullMatrix<double> tmp(szSpace+2, nGP+2, false);
       invM1.mult(M2, tmp);
-      fullMatrix<double> tmp2(szSpace+2, nGP+2, false);
-      Leg2Lag.mult(tmp, tmp2);
+      fullMatrix<double> tmp2(szSpace, nGP+2, false);
+      tmp2.copy(tmp, 0, szSpace, 0, nGP+2, 0, 0);
 
       data->invA.resize(szSpace, nGP+2, false);
-      data->invA.copy(tmp2, 0, szSpace, 0, nGP+2, 0, 0);
+      Leg2Lag.mult(tmp2, data->invA);
       return data;
     }
+
     else if (typeElement == TYPE_QUA) {
       data->nbPoints = getNGQQPts(orderGauss);
       data->intPoints = getGQQPts(orderGauss);
       LegendrePolynomials legendre(order);
-
-      {
-        fullMatrix<double> intPts(data->nbPoints, 2);
-        for (int i = 0; i < data->nbPoints; ++i) {
-          intPts(i, 0) = data->intPoints[i].pt[0];
-          intPts(i, 1) = data->intPoints[i].pt[1];
-        }
-        intPts.print("intPts");
-      }
 
       fullMatrix<int> node2idxUV;
       {
@@ -698,7 +689,6 @@ namespace BoundaryLayerCurver
           M2(szSpace+i, nGP+i) = 1;
         }
       }
-      M2.print("M2");
 
       fullMatrix<double> M1(szSpace+nConstraint, szSpace+nConstraint, true);
       {
@@ -719,15 +709,8 @@ namespace BoundaryLayerCurver
       }
       fullMatrix<double> invM1;
       M1.invert(invM1);
-      M1.print("M1");
-      for (int i = 0; i < invM1.size1(); ++i) {
-        for (int j = 0; j < invM1.size2(); ++j) {
-          if (std::abs(invM1(i,j)) < 1e-15) invM1(i,j) = 0;
-        }
-      }
-      invM1.print("invM1");
 
-      fullMatrix<double> Leg2Lag(szSpace+nConstraint, szSpace+nConstraint, true);
+      fullMatrix<double> Leg2Lag(szSpace, szSpace, true);
       {
         for (int i = 0; i < szSpace; ++i) {
           legendre.f(node2uv(i, 0), valu);
@@ -738,31 +721,20 @@ namespace BoundaryLayerCurver
             Leg2Lag(i, j) = valu[ju] * valv[jv];
           }
         }
-//        for (int k = szSpace; k < szSpace + nConstraint; ++k) {
-//          Leg2Lag(k, k) = 1;
-//        }
       }
-      Leg2Lag.print("Leg2Lag");
 
       delete valu, valv;
 
       fullMatrix<double> tmp(szSpace+nConstraint, nGP+nConstraint, false);
       invM1.mult(M2, tmp);
-      tmp.print("tmp");
-      fullMatrix<double> tmp2(szSpace+nConstraint, nGP+nConstraint, false);
-      Leg2Lag.mult(tmp, tmp2);
-      for (int i = 0; i < tmp2.size1(); ++i) {
-        for (int j = 0; j < tmp2.size2(); ++j) {
-          if (std::abs(tmp2(i,j)) < 1e-15) tmp2(i,j) = 0;
-        }
-      }
-      tmp2.print("tmp2");
+      fullMatrix<double> tmp2(szSpace, nGP+nConstraint, false);
+      tmp2.copy(tmp, 0, szSpace, 0, nGP+nConstraint, 0, 0);
 
       data->invA.resize(szSpace, nGP+nConstraint, false);
-      data->invA.copy(tmp2, 0, szSpace, 0, nGP+nConstraint, 0, 0);
-      data->invA.print("data->invA");
+      Leg2Lag.mult(tmp2, data->invA);
       return data;
     }
+
     else if (typeElement == TYPE_TRI) {
       Msg::Error("Implement data for tri");
     }
