@@ -819,18 +819,18 @@ namespace BoundaryLayerCurver
       std::vector<MFaceN> interface;
       PairMElemVecMElem &column1 = bndEl2column[adjacencies[i].first];
       PairMElemVecMElem &column2 = bndEl2column[adjacencies[i].second];
-      bool doIt = true;
+//      bool doIt = true;
 //    if (column1.first->getNum() != 861 && column1.first->getNum() != 467)
 //      doIt = false;
 //    if (column2.first->getNum() != 861 && column2.first->getNum() != 467)
 //      doIt = false;
 
-      if (doIt) {
+//      if (doIt) {
         computeInterface(column1, column2, interface, bottomEdge, topEdge);
         curveInterface(interface, column1.first, column2.first, bottomEdge,
                        topEdge, 0, boundary, true);
 //      Msg::Error("RETURN"); return;
-      }
+//      }
     }
   }
 
@@ -927,6 +927,45 @@ namespace BoundaryLayerCurver
     }
   }
 
+  void computePositionInteriorFacesLinearTFI(std::vector<MFaceN> &column,
+                                             const MFaceN &baseFace,
+                                             const MFaceN &topFace)
+  {
+    // Here, we assume that "thickness" is identical on the boundary
+    // => identical eta_i
+    MVertex *vbot = baseFace.getVertex(0);
+    MVertex *vtop = topFace.getVertex(0);
+    double dX = vtop->x() - vbot->x();
+    double dY = vtop->y() - vbot->y();
+    double dZ = vtop->z() - vbot->z();
+    int componentToLookAt = 0;
+    if (std::abs(dY) > std::abs(dX)) {
+      if (std::abs(dZ) > std::abs(dY)) componentToLookAt = 2;
+      else componentToLookAt = 1;
+    }
+    else if(std::abs(dZ) > std::abs(dX)) componentToLookAt = 2;
+
+    // Go trough the whole column and compute TFI position of topVertices
+    for (int i = 1; i < (int)column.size() - 1; ++i) {
+      MFaceN &f = column[i];
+      MVertex *v = f.getVertex(0);
+      double factor;
+      switch (componentToLookAt) {
+        case 0: factor = (v->x() - vbot->x()) / dX; break;
+        case 1: factor = (v->y() - vbot->y()) / dY; break;
+        case 2: factor = (v->z() - vbot->z()) / dZ; break;
+      }
+      for (int j = f.getNumVerticesOnBoundary(); j < f.getNumVertices(); ++j) {
+        MVertex *vbot = baseFace.getVertex(j);
+        MVertex *vtop = topFace.getVertex(j);
+        MVertex *v = f.getVertex(j);
+        v->x() = (1 - factor) * vbot->x() + factor * vtop->x();
+        v->y() = (1 - factor) * vbot->y() + factor * vtop->y();
+        v->z() = (1 - factor) * vbot->z() + factor * vtop->z();
+      }
+    }
+  }
+
   void curveColumns(VecPairMElemVecMElem &bndEl2column,
                     GFace *boundary)
   {
@@ -941,6 +980,8 @@ namespace BoundaryLayerCurver
       MFaceN &topFace = stackFaces.rbegin()[1]; // last but one element
       parameters.computeParameters(baseFace, topFace);
       computePosition3DFace(baseFace, topFace, parameters, boundary);
+
+      computePositionInteriorFacesLinearTFI(stackFaces, baseFace, topFace);
     }
   }
 }
