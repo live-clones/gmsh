@@ -640,7 +640,6 @@ namespace BoundaryLayerCurver
         }
         Leg2Lag(szSpace, szSpace) = Leg2Lag(szSpace+1, szSpace+1) = 1;
       }
-      Leg2Lag.print("Leg2Lag");
 
       fullMatrix<double> tmp(szSpace+2, nGP+2, false);
       invM1.mult(M2, tmp);
@@ -656,8 +655,16 @@ namespace BoundaryLayerCurver
       data->intPoints = getGQQPts(orderGauss);
       LegendrePolynomials legendre(order);
 
-      fullMatrix<double> node2idxUV = gmshGenerateMonomialsQuadrangle(order);
-      fullMatrix<double> node2uv = gmshGeneratePointsQuadrangle(order, true);
+      fullMatrix<int> node2idxUV;
+      {
+        fullMatrix<double> tmp = gmshGenerateMonomialsQuadrangle(order);
+        for (int i = 0; i < tmp.size1(); ++i) {
+          for (int j = 0; j < tmp.size2(); ++j) {
+            node2idxUV(i, j) = (int) (tmp(i, j) + .5);
+          }
+        }
+      }
+      fullMatrix<double> node2uv = gmshGeneratePointsQuadrangle(order);
 
       const int szSpace = (order + 1) * (order + 1);
       const int nGP = data->nbPoints;
@@ -672,8 +679,8 @@ namespace BoundaryLayerCurver
           legendre.f(data->intPoints[j].pt[0], valu);
           legendre.f(data->intPoints[j].pt[1], valv);
           for (int i = 0; i < szSpace; ++i) {
-            int iu = (int) node2idxUV(i, 0);
-            int iv = (int) node2idxUV(i, 1);
+            int iu = node2idxUV(i, 0);
+            int iv = node2idxUV(i, 1);
             M2(i, j) = valu[iu] * valv[iv] * data->intPoints[j].weight;
           }
         }
@@ -685,15 +692,13 @@ namespace BoundaryLayerCurver
       fullMatrix<double> M1(szSpace+nConstraint, szSpace+nConstraint, true);
       {
         for (int k = 0; k < szSpace; ++k) {
-          int iu = (int) node2idxUV(k, 0);
-          int iv = (int) node2idxUV(k, 1);
-          M1(k, k) = 4. / (1 + 2*iu) / (1 + 2*iv);
+          int ku = node2idxUV(k, 0);
+          int kv = node2idxUV(k, 1);
+          M1(k, k) = 4. / (1 + 2*ku) / (1 + 2*kv);
         }
         for (int i = 0; i < nConstraint; ++i) {
-          double u = node2uv(i, 0);
-          double v = node2uv(i, 1);
-          legendre.f(u, valu);
-          legendre.f(v, valv);
+          legendre.f(node2uv(i, 0), valu);
+          legendre.f(node2uv(i, 1), valv);
           for (int k = 0; k < szSpace; ++k) {
             M1(szSpace+i, k) = M1(k, szSpace+i) = valu[k] * valv[k];
           }
@@ -702,26 +707,32 @@ namespace BoundaryLayerCurver
       fullMatrix<double> invM1;
       M1.invert(invM1);
 
+      fullMatrix<double> Leg2Lag(szSpace+nConstraint, szSpace+nConstraint, true);
+      {
+        for (int i = 0; i < szSpace; ++i) {
+          legendre.f(node2uv(i, 0), valu);
+          legendre.f(node2uv(i, 1), valv);
+          for (int j = 0; j < szSpace; ++j) {
+            int ju = node2idxUV(j, 0);
+            int jv = node2idxUV(j, 1);
+            Leg2Lag(i, j) = valu[ju] * valv[jv];
+          }
+        }
+        for (int k = szSpace; k < szSpace + nConstraint; ++k) {
+          Leg2Lag(k, k) = 1;
+        }
+      }
+
       delete valu, valv;
 
-//      data->Leg2Lag.resize(szSpace, szSpace, true);
-//      {
-//        int tagLine = ElementType::getTag(TYPE_LIN, order);
-//        const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
-//        const fullMatrix<double> &refNodes = fs->getReferenceNodes();
-//        double *val = new double[szSpace];
-//        for (int i = 0; i < szSpace; ++i) {
-//          legendre.fc(refNodes(i, 0), val);
-//          for (int j = 0; j < szSpace; ++j) {
-//            data->Leg2Lag(i, j) = val[j];
-//          }
-////          data->Leg2Lag.print("data->Leg2Lag");
-//        }
-//        //data->Leg2Lag(szSpace, szSpace) = data->Leg2Lag(szSpace+1, szSpace+1) = 1;
-//      }
+      fullMatrix<double> tmp(szSpace+nConstraint, nGP+nConstraint, false);
+      invM1.mult(M2, tmp);
+      fullMatrix<double> tmp2(szSpace+nConstraint, nGP+nConstraint, false);
+      Leg2Lag.mult(tmp, tmp2);
 
-
-      Msg::Error("Implement data for quad");
+      data->invA.resize(szSpace, nGP+nConstraint, false);
+      data->invA.copy(tmp2, 0, szSpace, 0, nGP+nConstraint, 0, 0);
+      return data;
     }
     else if (typeElement == TYPE_TRI) {
       Msg::Error("Implement data for tri");
