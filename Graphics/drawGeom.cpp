@@ -11,15 +11,24 @@
 #include "GModel.h"
 #include "SBoundingBox3d.h"
 #include "GmshMessage.h"
+#include "StringUtils.h"
 
 static void drawEntityLabel(drawContext *ctx, GEntity *e,
                             double x, double y, double z, double offset)
 {
-  char str[1024];
+  double xx = x + offset / ctx->s[0];
+  double yy = y + offset / ctx->s[1];
+  double zz = z + offset / ctx->s[2];
+
   if(CTX::instance()->geom.labelType == 0){
-    strcpy(str, e->getInfoString(false).c_str());
+    std::vector<std::string> info = SplitString(e->getInfoString(false, true), '\n');
+    for(int line = 0; line < (int)info.size(); line++)
+      ctx->drawString(info[line].c_str(), xx, yy, zz, line);
+    return;
   }
-  else if(CTX::instance()->geom.labelType == 1){
+
+  char str[1024];
+  if(CTX::instance()->geom.labelType == 1){
     sprintf(str, "%d", e->tag());
   }
   else{
@@ -31,10 +40,7 @@ static void drawEntityLabel(drawContext *ctx, GEntity *e,
       strcat(str, tmp);
     }
   }
-  ctx->drawString(str,
-                  x + offset / ctx->s[0],
-                  y + offset / ctx->s[1],
-                  z + offset / ctx->s[2]);
+  ctx->drawString(str, xx, yy, zz);
 }
 
 class drawGVertex {

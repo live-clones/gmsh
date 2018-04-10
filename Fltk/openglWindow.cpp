@@ -665,24 +665,25 @@ int openglWindow::handle(int event)
         else
           cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
         std::string text, cmd;
+        bool multiline = CTX::instance()->tooltips;
         if(vertices.size()){
-          text = vertices[0]->getInfoString();
+          text = vertices[0]->getInfoString(true, multiline);
           cmd = CTX::instance()->geom.doubleClickedPointCommand;
         }
         else if(edges.size()){
-          text = edges[0]->getInfoString();
+          text = edges[0]->getInfoString(true, multiline);
           cmd = CTX::instance()->geom.doubleClickedCurveCommand;
         }
         else if(faces.size()){
-          text = faces[0]->getInfoString();
+          text = faces[0]->getInfoString(true, multiline);
           cmd = CTX::instance()->geom.doubleClickedSurfaceCommand;
         }
         else if(regions.size()){
-          text = regions[0]->getInfoString();
+          text = regions[0]->getInfoString(true, multiline);
           cmd = CTX::instance()->geom.doubleClickedVolumeCommand;
         }
         else if(elements.size()){
-          text = elements[0]->getInfoString();
+          text = elements[0]->getInfoString(multiline);
         }
         else if(points.size()){
           char tmp[256];

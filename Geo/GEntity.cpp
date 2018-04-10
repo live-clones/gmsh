@@ -47,18 +47,24 @@ bool GEntity::useColor()
   return true;
 }
 
-std::string GEntity::getInfoString(bool additional)
+std::string GEntity::getInfoString(bool additional, bool multiline)
 {
   std::ostringstream sstream;
   sstream << getTypeString() << " " << tag();
 
   if(additional){
-    std::string info = getAdditionalInfoString();
-    if(info.size()) sstream << " " << info;
+    std::string info = getAdditionalInfoString(multiline);
+    if(info.size()){
+      if(multiline) sstream << "\n";
+      else sstream << " ";
+      sstream << info;
+    }
   }
 
   if(physicals.size()){
-    sstream << ": Physical ";
+    if(multiline) sstream << "\n";
+    else sstream << ": ";
+    sstream << "Physical ";
     switch(dim()){
     case 0: sstream << "Point"; break;
     case 1: sstream << "Curve"; break;

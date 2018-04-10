@@ -75,10 +75,10 @@ class GEdge : public GEntity {
   virtual GEdge* getParentEntity() { return 0; }
 
   // set the visibility flag
-  virtual void setVisibility(char val, bool recursive=false);
+  virtual void setVisibility(char val, bool recursive = false);
 
   // set color
-  virtual void setColor(unsigned int val, bool recursive=false);
+  virtual void setColor(unsigned int val, bool recursive = false);
 
   // true if the edge is a seam for the given face.
   virtual bool isSeam(const GFace *face) const { return false; }
@@ -128,7 +128,7 @@ class GEdge : public GEntity {
   virtual int minimumDrawSegments() const { return 1; }
 
   // return a type-specific additional information string
-  virtual std::string getAdditionalInfoString();
+  virtual std::string getAdditionalInfoString(bool multline = false);
 
   // export in GEO format
   virtual void writeGEO(FILE *fp);

@@ -337,30 +337,35 @@ void GFace::setColor(unsigned int val, bool recursive)
   }
 }
 
-std::string GFace::getAdditionalInfoString()
+std::string GFace::getAdditionalInfoString(bool multline)
 {
   std::ostringstream sstream;
   if(l_edges.size() > 20){
-    sstream << "{" << l_edges.front()->tag() << ",...," << l_edges.back()->tag() << "}";
+    sstream << "Boundary curves: " << l_edges.front()->tag() << ", ...," << l_edges.back()->tag();
   }
   else if(l_edges.size()){
-    sstream << "{";
+    sstream << "Boundary curves: ";
     for(std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it){
-      if(it != l_edges.begin()) sstream << " ";
+      if(it != l_edges.begin()) sstream << ", ";
       sstream << (*it)->tag();
     }
-    sstream << "}";
   }
-
-  if(meshAttributes.recombine)
-    sstream << " recombined";
-  if(meshAttributes.method == MESH_TRANSFINITE)
-    sstream << " transfinite";
-  if(meshAttributes.extrude)
-    sstream << " extruded";
-  if(meshAttributes.reverseMesh)
-    sstream << " reverse";
-
+  if(meshAttributes.recombine || meshAttributes.method == MESH_TRANSFINITE ||
+     meshAttributes.extrude || meshAttributes.reverseMesh){
+    if(l_edges.size()){
+      if(multline) sstream << "\n";
+      else sstream << " ";
+    }
+    sstream << "Mesh attributes: ";
+    if(meshAttributes.recombine)
+      sstream << " recombined";
+    if(meshAttributes.method == MESH_TRANSFINITE)
+      sstream << " transfinite";
+    if(meshAttributes.extrude)
+      sstream << " extruded";
+    if(meshAttributes.reverseMesh)
+      sstream << " reverse";
+  }
   return sstream.str();
 }
 

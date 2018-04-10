@@ -235,12 +235,16 @@ class drawContext {
   void drawScales();
   void drawString(const std::string &s, double x, double y, double z,
                   const std::string &font_name, int font_enum,
-                  int font_size, int align);
-  void drawString(const std::string &s, double x, double y, double z);
-  void drawStringCenter(const std::string &s, double x, double y, double z);
-  void drawStringRight(const std::string &s, double x, double y, double z);
-  void drawString(const std::string &s, double x, double y, double z, double style);
-  void drawImage(const std::string &s, double x, double y, double z, int align=0);
+                  int font_size, int align, int line_num = 0);
+  void drawString(const std::string &s, double x, double y, double z,
+                  int line_num = 0);
+  void drawStringCenter(const std::string &s, double x, double y, double z,
+                        int line_num = 0);
+  void drawStringRight(const std::string &s, double x, double y, double z,
+                       int line_num = 0);
+  void drawString(const std::string &s, double x, double y, double z, double style,
+                  int line_num = 0);
+  void drawImage(const std::string &s, double x, double y, double z, int align = 0);
   void drawSphere(double R, double x, double y, double z, int n1, int n2, int light);
   void drawEllipsoid(double x, double y, double z, float v0[3], float v1[3],
                      float v2[3], int light);

@@ -178,3 +178,35 @@ bool SplitOptionName(const std::string &fullName, std::string &category,
              name.c_str(), index);
   return true;
 }
+
+static std::string getNextTokenInString(const std::string &msg,
+                                        std::string::size_type &first,
+                                        char separator)
+{
+  if(first == std::string::npos) return "";
+  std::string::size_type last = msg.find_first_of(separator, first);
+  std::string next("");
+  if(last == std::string::npos){
+    next = msg.substr(first);
+    first = last;
+  }
+  else if(first == last){
+    next = "";
+    first = last + 1;
+  }
+  else{
+    next = msg.substr(first, last - first);
+    first = last + 1;
+  }
+  return next;
+}
+
+std::vector<std::string> SplitString(const std::string &msg,
+                                     char separator)
+{
+  std::vector<std::string> out;
+  std::string::size_type first = 0;
+  while(first != std::string::npos)
+    out.push_back(getNextTokenInString(msg, first, separator));
+  return out;
+}
