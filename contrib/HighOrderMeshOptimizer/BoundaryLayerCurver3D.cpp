@@ -294,7 +294,7 @@ namespace BoundaryLayerCurver
 
     _primaryFs->f(u, v, 0, f);
 
-    double factorThickness = 1;
+    double factorThickness = 0;
     for (int j = 0; j < _primaryFs->getNumShapeFunctions(); j++) {
       factorThickness += f[j] * _factorDegenerate[j];
     }
@@ -914,7 +914,7 @@ namespace BoundaryLayerCurver
     }
 
 //    for (int i = 0; i < sizeSystem; ++i) {
-//      MVertex *v = new MVertex(xyz(sizeSystem+i, 0), xyz(sizeSystem+i, 1), xyz(sizeSystem+i, 2));
+//      MVertex *v = new MVertex(xyz(i, 0), xyz(i, 1), xyz(i, 2));
 //      gFace->addMeshVertex(v);
 //    }
 
@@ -941,6 +941,8 @@ namespace BoundaryLayerCurver
   {
     Parameters3DSurface parameters;
     for (unsigned int i = 0; i < bndEl2column.size(); ++i) {
+//      if (bndEl2column[i].first->getNum() != 855) continue;
+
       std::vector<MFaceN> stackFaces;
       computeStackHighOrderFaces(bndEl2column[i], stackFaces);
 

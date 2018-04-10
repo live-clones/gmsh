@@ -201,7 +201,7 @@ void MFaceN::frame(double u, double v,
 
   double dx[2] = {0, 0}, dy[2] = {0, 0}, dz[2] = {0, 0};
   for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
-    for (int k = 0; k < 1; ++k) {
+    for (int k = 0; k < 2; ++k) {
       dx[k] += sf[j][k] * _v[j]->x();
       dy[k] += sf[j][k] * _v[j]->y();
       dz[k] += sf[j][k] * _v[j]->z();
@@ -230,7 +230,7 @@ void MFaceN::frame(double u, double v, SPoint3 &p,
     x += f[j] * _v[j]->x();
     y += f[j] * _v[j]->y();
     z += f[j] * _v[j]->z();
-    for (int k = 0; k < 1; ++k) {
+    for (int k = 0; k < 2; ++k) {
       dx[k] += sf[j][k] * _v[j]->x();
       dy[k] += sf[j][k] * _v[j]->y();
       dz[k] += sf[j][k] * _v[j]->z();
