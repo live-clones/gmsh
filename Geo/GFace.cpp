@@ -341,7 +341,8 @@ std::string GFace::getAdditionalInfoString(bool multline)
 {
   std::ostringstream sstream;
   if(l_edges.size() > 20){
-    sstream << "Boundary curves: " << l_edges.front()->tag() << ", ...," << l_edges.back()->tag();
+    sstream << "Boundary curves: " << l_edges.front()->tag()
+            << ", ...," << l_edges.back()->tag();
   }
   else if(l_edges.size()){
     sstream << "Boundary curves: ";
@@ -356,7 +357,7 @@ std::string GFace::getAdditionalInfoString(bool multline)
       if(multline) sstream << "\n";
       else sstream << " ";
     }
-    sstream << "Mesh attributes: ";
+    sstream << "Mesh attributes:";
     if(meshAttributes.recombine)
       sstream << " recombined";
     if(meshAttributes.method == MESH_TRANSFINITE)
