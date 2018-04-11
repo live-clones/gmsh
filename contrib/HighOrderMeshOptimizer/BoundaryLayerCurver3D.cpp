@@ -152,79 +152,79 @@ namespace
 namespace BoundaryLayerCurver
 {
   namespace InteriorNodePlacementMatrices {
-    fullMatrix<double>* triangle[10] = {NULL, NULL, NULL, NULL, NULL,
-                                        NULL, NULL, NULL, NULL, NULL};
-    fullMatrix<double>* quadrangle[10] = {NULL, NULL, NULL, NULL, NULL,
-                                          NULL, NULL, NULL, NULL, NULL};
-    fullMatrix<double>* linearTriangle0[10] = {NULL, NULL, NULL, NULL, NULL,
-                                               NULL, NULL, NULL, NULL, NULL};
-    fullMatrix<double>* linearTriangle2[10] = {NULL, NULL, NULL, NULL, NULL,
-                                               NULL, NULL, NULL, NULL, NULL};
-    fullMatrix<double>* linearQuadrangle[10] = {NULL, NULL, NULL, NULL, NULL,
+    fullMatrix<double>* _triangle[10] = {NULL, NULL, NULL, NULL, NULL,
+                                         NULL, NULL, NULL, NULL, NULL};
+    fullMatrix<double>* _quadrangle[10] = {NULL, NULL, NULL, NULL, NULL,
+                                           NULL, NULL, NULL, NULL, NULL};
+    fullMatrix<double>* _linearTriangle0[10] = {NULL, NULL, NULL, NULL, NULL,
                                                 NULL, NULL, NULL, NULL, NULL};
-    fullMatrix<double>* hexahedron[10] = {NULL, NULL, NULL, NULL, NULL,
-                                          NULL, NULL, NULL, NULL, NULL};
-    fullMatrix<double>* linearHexahedron[3][10] = {{NULL, NULL, NULL, NULL, NULL,
-                                                    NULL, NULL, NULL, NULL, NULL},
-                                                   {NULL, NULL, NULL, NULL, NULL,
-                                                    NULL, NULL, NULL, NULL, NULL},
-                                                   {NULL, NULL, NULL, NULL, NULL,
-                                                    NULL, NULL, NULL, NULL, NULL}};
+    fullMatrix<double>* _linearTriangle2[10] = {NULL, NULL, NULL, NULL, NULL,
+                                                NULL, NULL, NULL, NULL, NULL};
+    fullMatrix<double>* _linearQuadrangle[10] = {NULL, NULL, NULL, NULL, NULL,
+                                                 NULL, NULL, NULL, NULL, NULL};
+    fullMatrix<double>* _hexahedron[10] = {NULL, NULL, NULL, NULL, NULL,
+                                           NULL, NULL, NULL, NULL, NULL};
+    fullMatrix<double>* _linearHexahedron[3][10] = {{NULL, NULL, NULL, NULL, NULL,
+                                                     NULL, NULL, NULL, NULL, NULL},
+                                                    {NULL, NULL, NULL, NULL, NULL,
+                                                     NULL, NULL, NULL, NULL, NULL},
+                                                    {NULL, NULL, NULL, NULL, NULL,
+                                                     NULL, NULL, NULL, NULL, NULL}};
 
-    const fullMatrix<double>* forTriangle(int order, bool linear, int edge = 2)
+    const fullMatrix<double>* triangle(int order, bool linear, int edge = 2)
     {
       if (!linear) {
-        if (!triangle[order]) {
-          triangle[order] = new fullMatrix<double>();
-          *triangle[order] = gmshGenerateInteriorNodePlacementTriangle(order);
+        if (!_triangle[order]) {
+          _triangle[order] = new fullMatrix<double>();
+          *_triangle[order] = gmshGenerateInteriorNodePlacementTriangle(order);
         }
-        return triangle[order];
+        return _triangle[order];
       }
       else if (edge == 0) {
-        if (!linearTriangle0[order]) {
-          linearTriangle0[order] = new fullMatrix<double>();
-          *linearTriangle0[order] =
+        if (!_linearTriangle0[order]) {
+          _linearTriangle0[order] = new fullMatrix<double>();
+          *_linearTriangle0[order] =
               gmshGenerateInteriorNodePlacementTriangleLinear(order, 0);
         }
-        return linearTriangle0[order];
+        return _linearTriangle0[order];
       }
       else if (edge == 2) {
-        if (!linearTriangle2[order]) {
-          linearTriangle2[order] = new fullMatrix<double>();
-          *linearTriangle2[order] =
+        if (!_linearTriangle2[order]) {
+          _linearTriangle2[order] = new fullMatrix<double>();
+          *_linearTriangle2[order] =
               gmshGenerateInteriorNodePlacementTriangleLinear(order, 2);
         }
-        return linearTriangle2[order];
+        return _linearTriangle2[order];
       }
     }
 
-    const fullMatrix<double>* forQuadrangle(int order, bool linear)
+    const fullMatrix<double>* quadrangle(int order, bool linear)
     {
       if (!linear) {
-        if (!quadrangle[order]) {
-          quadrangle[order] = new fullMatrix<double>();
-          *quadrangle[order] = gmshGenerateInteriorNodePlacementQuadrangle(order);
+        if (!_quadrangle[order]) {
+          _quadrangle[order] = new fullMatrix<double>();
+          *_quadrangle[order] = gmshGenerateInteriorNodePlacementQuadrangle(order);
         }
-        return quadrangle[order];
+        return _quadrangle[order];
       }
       else {
-        if (!linearQuadrangle[order]) {
-          linearQuadrangle[order] = new fullMatrix<double>();
-          *linearQuadrangle[order] =
+        if (!_linearQuadrangle[order]) {
+          _linearQuadrangle[order] = new fullMatrix<double>();
+          *_linearQuadrangle[order] =
               gmshGenerateInteriorNodePlacementQuadrangleLinear(order);
         }
-        return linearQuadrangle[order];
+        return _linearQuadrangle[order];
       }
     }
 
-    const fullMatrix<double>* forHexahedron(int order, bool linear, int face = 0)
+    const fullMatrix<double>* hexahedron(int order, bool linear, int face = 0)
     {
       if (!linear) {
-        if (!hexahedron[order]) {
-          hexahedron[order] = new fullMatrix<double>();
-          *hexahedron[order] = gmshGenerateInteriorNodePlacementHexahedron(order);
+        if (!_hexahedron[order]) {
+          _hexahedron[order] = new fullMatrix<double>();
+          *_hexahedron[order] = gmshGenerateInteriorNodePlacementHexahedron(order);
         }
-        return hexahedron[order];
+        return _hexahedron[order];
       }
       else {
         int dir;
@@ -234,12 +234,12 @@ namespace BoundaryLayerCurver
           case 1: case 4: dir = 1; break;
           case 2: case 3: dir = 0; break;
         }
-        if (!linearHexahedron[dir][order]) {
-          linearHexahedron[dir][order] = new fullMatrix<double>();
-          *linearHexahedron[dir][order] =
+        if (!_linearHexahedron[dir][order]) {
+          _linearHexahedron[dir][order] = new fullMatrix<double>();
+          *_linearHexahedron[dir][order] =
               gmshGenerateInteriorNodePlacementHexahedronLinear(order, dir);
         }
-        return linearHexahedron[dir][order];
+        return _linearHexahedron[dir][order];
       }
     }
   }
@@ -290,7 +290,7 @@ namespace BoundaryLayerCurver
     // polynomial space to interpolate on triangles)
     if (_nCorner == 3) {
       const fullMatrix<double> *interpolator;
-      interpolator = InteriorNodePlacementMatrices::forTriangle(_order, false);
+      interpolator = InteriorNodePlacementMatrices::triangle(_order, false);
       for (int i = nVerticesOnBoundary; i < sizeParameters; ++i) {
         for (int j = 0; j < interpolator->size2(); ++j) {
           const double coeff = (*interpolator)(i - nVerticesOnBoundary, j);
@@ -819,7 +819,8 @@ namespace BoundaryLayerCurver
         // TODO Determine if edge 0 or 2
       }
       else {
-        placement = InteriorNodePlacementMatrices::forQuadrangle(f.getOrder(), true);
+        placement = InteriorNodePlacementMatrices::quadrangle(f.getOrder(),
+                                                              true);
       }
       f.repositionInteriorNodes(placement);
     }
@@ -1028,11 +1029,15 @@ namespace BoundaryLayerCurver
       int nFace, sign, rot;
       switch(el->getType()) {
         case TYPE_TET:
-//          placement = InteriorNodePlacementMatrices::forQuadrangle(order, true);
+//          placement = InteriorNodePlacementMatrices::tetrahedron(order, true);
           break;
         case TYPE_HEX:
           el->getFaceInfo(stackFaces[i].getFace(), nFace, sign, rot);
-          placement = InteriorNodePlacementMatrices::forHexahedron(order, true, nFace);
+          placement = InteriorNodePlacementMatrices::hexahedron(order, true,
+                                                                nFace);
+          break;
+        case TYPE_PRI:
+//          placement = InteriorNodePlacementMatrices::prism(order, true);
           break;
       }
       if (placement)
