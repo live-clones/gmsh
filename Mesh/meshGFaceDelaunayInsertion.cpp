@@ -99,7 +99,10 @@ static bool isActive(MTri3 *t, double limit_, int &active)
   for (active = 0; active < 3; active++){
     MTri3 *neigh = t->getNeigh(active);
     if (!neigh || (neigh->getRadius() < limit_ && neigh->getRadius() > 0)) {
-      return true;
+      //            int ip1 = active - 1 < 0 ? 2 : active - 1;
+      //            int ip2 = active;
+      //            if (distance(t->tri()->getVertex(ip1),t->tri()->getVertex(ip2)) > 1.e-12)
+	return true;
     }
   }
   return false;
@@ -283,10 +286,30 @@ int inCircumCircleAniso(GFace *gf, double *p1, double *p2, double *p3,
   return d3 < Radius2 - 1e-12;
 }
 
+int inCircumCircleOsculatory(GFace *gf, MTriangle *base, const double *uv)
+{
+  /********* T E S T **********************/
+  double r;
+  SPoint3 c;
+  if (gf->isSphere(r,c)){
+    GPoint gp = gf->point (uv[0],uv[1]);
+    double pa [3] = {base->getVertex(0)->x(),base->getVertex(0)->y(),base->getVertex(0)->z()};
+    double pb [3] = {base->getVertex(1)->x(),base->getVertex(1)->y(),base->getVertex(1)->z()};
+    double pc [3] = {base->getVertex(2)->x(),base->getVertex(2)->y(),base->getVertex(2)->z()};
+    double pd [3] = {gp.x(),gp.y(),gp.z()};
+    double a1 = robustPredicates::orient3d(pa, pb, pc, c);    
+    double a2 = robustPredicates::orient3d(pa, pb, pc, pd);
+    //    printf("%g %g\n",a1,a2);
+    if (a1 < 0) return a1*a2 < 0 ;
+  }  
+  /********* E N D T E S T **********************/
+}
+
 int inCircumCircleAniso(GFace *gf, MTriangle *base,
                         const double *uv, const double *metricb,
 			bidimMeshData & data)
 {
+  
   double x[2], Radius2;
   double metric[3];
   if (!metricb){
@@ -1315,6 +1338,7 @@ bool optimalPointFrontalB(GFace *gf,
   SVector3 v1v2 (v2->x()-v1->x(),v2->y()-v1->y(),v2->z()-v1->z());
   SVector3 tmp (v3->x()-middle.x(),v3->y()-middle.y(),v3->z()-middle.z());
   SVector3 n1 = crossprod(v1v2,tmp);
+  if (n1.norm() < 1.e-12)return true;
   SVector3 n2 = crossprod(n1,v1v2);
   n1.normalize();
   n2.normalize();
@@ -1343,7 +1367,9 @@ bool optimalPointFrontalB(GFace *gf,
     newPoint[1] = uvt[1];
   }
   else {
-    Msg::Debug("--- Non optimal point found -----------");
+    //    Msg::Debug("--- Non optimal point found -----------");
+    //    Msg::Debug("--- %g %g %g -- %g %g %g    -----------", n1.x(),n1.y(),n1.z(),n2.x(),n2.y(),n2.z());
+    //    Msg::Debug("--- %g %g %g -- %g %g %g  -- %g %g %g ", v1->x(),v1->y(),v1->z(),v2->x(),v2->y(),v2->z(),v3->x(),v3->y(),v3->z());
     return false;
     return true;
     //    Msg::Info("--- Non optimal point found -----------");

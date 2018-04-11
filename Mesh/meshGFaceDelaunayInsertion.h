@@ -137,12 +137,12 @@ class MTri3
 
 class compareTri3Ptr
 {
+  Less_Face lf;
  public:
   inline bool operator () (const MTri3 *a, const MTri3 *b)  const
   {
     if(a->getRadius() > b->getRadius()) return true;
     if(a->getRadius() < b->getRadius()) return false;
-    Less_Face lf;
     return lf(a->tri()->getFace(0), b->tri()->getFace(0));
   }
 };

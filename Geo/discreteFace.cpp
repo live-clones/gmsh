@@ -1099,6 +1099,7 @@ HXTStatus discreteFace::reparametrize_through_hxt()
   double *crossField,*nodalCurvatures;
   HXT_CHECK(hxtEdgesCreate(m,&edges));
   HXT_CHECK(hxtCurvatureRusinkiewicz (m, &nodalCurvatures, &crossField, edges, true));
+  HXT_CHECK(hxtEdgesDelete(&edges));
   
   _parametrizations.resize(nc);
   std::vector<std::vector<MEdge> > boundaries (nc);

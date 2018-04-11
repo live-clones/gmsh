@@ -368,7 +368,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
     // }
     // printf("%d %d\n",intersected.size(),ix);
 
-    if(!intersected.size() || ix > 1000){
+    if(!intersected.size() || ix > 100000){
       BDS_Edge *eee = find_edge(num1, num2);
       if(!eee){
         outputScalarField(triangles, "debugp.pos", 1);
@@ -381,7 +381,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
       return eee;
     }
 
-    int ichoice = ix++ % intersected.size();
+    int ichoice = rand() /*ix++*/ % intersected.size();
     //bool success =
       swap_edge(intersected[ichoice], BDS_SwapEdgeTestQuality(false, false));
     // printf("trying to swop %d %d = %d (%d %d)\n", intersected[ichoice]->p1->iD,
