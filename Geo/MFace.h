@@ -166,7 +166,8 @@ public:
   inline MVertex *getVertex(int i) const { return _v[i]; }
   inline const std::vector<MVertex*> &getVertices() const { return _v; }
 
-  MEdgeN getEdgeN(int num, int sign) const;
+  MEdgeN getHighOrderEdge(int num, int sign) const;
+  MFace getFace() const;
 
   SPoint3 pnt(double u, double v) const;
   SVector3 tangent(double u, double v, int num) const;

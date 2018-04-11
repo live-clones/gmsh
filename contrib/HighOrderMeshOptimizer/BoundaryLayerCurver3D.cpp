@@ -162,6 +162,14 @@ namespace BoundaryLayerCurver
                                                NULL, NULL, NULL, NULL, NULL};
     fullMatrix<double>* linearQuadrangle[10] = {NULL, NULL, NULL, NULL, NULL,
                                                 NULL, NULL, NULL, NULL, NULL};
+    fullMatrix<double>* hexahedron[10] = {NULL, NULL, NULL, NULL, NULL,
+                                          NULL, NULL, NULL, NULL, NULL};
+    fullMatrix<double>* linearHexahedron[3][10] = {{NULL, NULL, NULL, NULL, NULL,
+                                                    NULL, NULL, NULL, NULL, NULL},
+                                                   {NULL, NULL, NULL, NULL, NULL,
+                                                    NULL, NULL, NULL, NULL, NULL},
+                                                   {NULL, NULL, NULL, NULL, NULL,
+                                                    NULL, NULL, NULL, NULL, NULL}};
 
     const fullMatrix<double>* forTriangle(int order, bool linear, int edge = 2)
     {
@@ -206,6 +214,32 @@ namespace BoundaryLayerCurver
               gmshGenerateInteriorNodePlacementQuadrangleLinear(order);
         }
         return linearQuadrangle[order];
+      }
+    }
+
+    const fullMatrix<double>* forHexahedron(int order, bool linear, int face = 0)
+    {
+      if (!linear) {
+        if (!hexahedron[order]) {
+          hexahedron[order] = new fullMatrix<double>();
+          *hexahedron[order] = gmshGenerateInteriorNodePlacementHexahedron(order);
+        }
+        return hexahedron[order];
+      }
+      else {
+        int dir;
+        switch (face) {
+          default:
+          case 0: case 5: dir = 3; break;
+          case 1: case 4: dir = 1; break;
+          case 2: case 3: dir = 0; break;
+        }
+        if (!linearHexahedron[dir][order]) {
+          linearHexahedron[dir][order] = new fullMatrix<double>();
+          *linearHexahedron[dir][order] =
+              gmshGenerateInteriorNodePlacementHexahedronLinear(order, dir);
+        }
+        return linearHexahedron[dir][order];
       }
     }
   }
@@ -545,7 +579,7 @@ namespace BoundaryLayerCurver
 //      std::cout <<                 interface.back().getVertex(2)->getNum() << " " << interface.back().getVertex(3)->getNum() << std::endl;
       }
     }
-    topEdge = interface.back().getEdgeN(0, 1);
+    topEdge = interface.back().getHighOrderEdge(0, 1);
   }
 
 
@@ -756,7 +790,7 @@ namespace BoundaryLayerCurver
 
     // Go trough the whole column and compute TFI position of topVertices
     for (int i = 1; i < (int)column.size() - 1; ++i) {
-      MEdgeN e = column[i].getEdgeN(0, 1);
+      MEdgeN e = column[i].getHighOrderEdge(0, 1);
       MVertex *v = e.getVertex(0);
       double factor;
       switch (componentToLookAt) {
@@ -966,6 +1000,48 @@ namespace BoundaryLayerCurver
     }
   }
 
+  void repositionInteriorNodes(MElement *el, const fullMatrix<double> &placement)
+  {
+    int start = el->getNumVertices() - el->getNumVolumeVertices();
+    for (int i = start; i < el->getNumVertices(); ++i) {
+      MVertex *v = el->getVertex(i);
+      v->x() = 0;
+      v->y() = 0;
+      v->z() = 0;
+      for (int j = 0; j < placement.size2(); ++j) {
+        const double coeff = placement(i - start, j);
+        MVertex *other = el->getVertex(j);
+        v->x() += coeff * other->x();
+        v->y() += coeff * other->y();
+        v->z() += coeff * other->z();
+      }
+    }
+  }
+
+  void repositionInteriorNodes(const std::vector<MFaceN> &stackFaces,
+                               const std::vector<MElement*> &column)
+  {
+    for (unsigned int i = 0; i < column.size(); ++i) {
+      MElement *el = column[i];
+      const fullMatrix<double> *placement = NULL;
+      const int order = el->getPolynomialOrder();
+      int nFace, sign, rot;
+      switch(el->getType()) {
+        case TYPE_TET:
+//          placement = InteriorNodePlacementMatrices::forQuadrangle(order, true);
+          break;
+        case TYPE_HEX:
+          el->getFaceInfo(stackFaces[i].getFace(), nFace, sign, rot);
+          placement = InteriorNodePlacementMatrices::forHexahedron(order, true, nFace);
+          break;
+      }
+      if (placement)
+        repositionInteriorNodes(el, *placement);
+      else
+        Msg::Error("Implement placement for type %d", el->getType());
+    }
+  }
+
   void curveColumns(VecPairMElemVecMElem &bndEl2column,
                     GFace *boundary)
   {
@@ -982,6 +1058,7 @@ namespace BoundaryLayerCurver
       computePosition3DFace(baseFace, topFace, parameters, boundary);
 
       computePositionInteriorFacesLinearTFI(stackFaces, baseFace, topFace);
+      repositionInteriorNodes(stackFaces, bndEl2column[i].second);
     }
   }
 }

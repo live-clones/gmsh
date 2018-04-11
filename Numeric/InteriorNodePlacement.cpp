@@ -522,4 +522,58 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementQuadrangleLinear(int order)
   return M;
 }
 
+fullMatrix<double> gmshGenerateInteriorNodePlacementHexahedronLinear(int order,
+                                                                     int dir)
+{
+  fullMatrix<double> M;
+
+  if (order < 2) {
+    M.resize(0, 0);
+    return M;
+  }
+
+  int szComp = (order + 1) * (order + 1) * (order + 1);
+  int szInc = szComp - (order - 1) * (order - 1) * (order - 1);
+  M.resize(szComp-szInc, szInc, true);
+
+  fullMatrix<double> monomials = gmshGenerateMonomialsHexahedron(order, false);
+  fullMatrix<int> coordinates;
+  double2int(monomials, coordinates);
+
+  std::map<mytuple, int> coord2idx;
+  for (int i = 0; i < szInc; ++i) {
+    int u = coordinates(i, 0);
+    int v = coordinates(i, 1);
+    int w = coordinates(i, 2);
+    coord2idx[make_mytuple(u, v, w)] = i;
+  }
+
+  int &n = order;
+  for (int i = 0; i < szComp-szInc; ++i) {
+    int u = coordinates(szInc + i, 0);
+    int v = coordinates(szInc + i, 1);
+    int w = coordinates(szInc + i, 2);
+    double eta;
+    switch (dir) {
+      case 0:
+        eta = (double)u / n;
+        M(i, coord2idx[make_mytuple(0, v, w)]) += 1-eta;
+        M(i, coord2idx[make_mytuple(n, v, w)]) += eta;
+        break;
+      case 1:
+        eta = (double)v / n;
+        M(i, coord2idx[make_mytuple(u, 0, w)]) += 1-eta;
+        M(i, coord2idx[make_mytuple(u, n, w)]) += eta;
+        break;
+      default:
+      case 3:
+        eta = (double)w / n;
+        M(i, coord2idx[make_mytuple(u, v, 0)]) += 1-eta;
+        M(i, coord2idx[make_mytuple(u, v, n)]) += eta;
+        break;
+    }
+  }
+  return M;
+}
+
 #undef make_mytuple

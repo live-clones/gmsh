@@ -107,7 +107,7 @@ MFaceN::MFaceN(int type, int order, const std::vector<MVertex*> &v)
     _v[i] = v[i];
 }
 
-MEdgeN MFaceN::getEdgeN(int num, int sign) const
+MEdgeN MFaceN::getHighOrderEdge(int num, int sign) const
 {
   int nCorner = getNumCorners();
   std::vector<MVertex*> vertices((unsigned int)_order + 1);
@@ -129,6 +129,14 @@ MEdgeN MFaceN::getEdgeN(int num, int sign) const
     for (int i = end-1; i >= start; --i) vertices[++k] = _v[i];
   }
   return MEdgeN(vertices);
+}
+
+MFace MFaceN::getFace() const
+{
+  if (_type == TYPE_TRI)
+    return MFace(_v[0], _v[1], _v[2]);
+  else
+    return MFace(_v[0], _v[1], _v[2], _v[3]);
 }
 
 SPoint3 MFaceN::pnt(double u, double v) const
