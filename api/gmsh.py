@@ -913,6 +913,82 @@ class model:
                 _ovectorvectordouble(api_functionSpaceData_,api_functionSpaceData_n_,api_functionSpaceData_nn_))
 
         @staticmethod
+        def getJacobianData(integrationType,dim=-1,tag=-1):
+            """
+            Gets the Jacobian data for mesh elements of the entity of dimension `dim'
+            and `tag' tag. The data is returned by element type and by element, in the
+            same order as the data returned by `getElements'. `integrationType'
+            specifies the type of integration (e.g. "Gauss4"). `nbrIntegrationPoints'
+            contains for each element type, the number of integration points that
+            corresponds to `integrationType'. `jacobian' contains for each element type
+            a vector (of size 9 times the number of integration points) containing the
+            9 entries (by column) of the 3x3 Jacobian matrix and `determinant' contains
+            for each element type a vector containing the determinant of the Jacobian.
+
+            return nbrIntegrationPoints, jacobian, determinant
+            """
+            api_nbrIntegrationPoints_, api_nbrIntegrationPoints_n_ = POINTER(c_int)(), c_size_t()
+            api_jacobian_, api_jacobian_n_, api_jacobian_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
+            api_determinant_, api_determinant_n_, api_determinant_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetJacobianData(
+                c_char_p(integrationType.encode()),
+                byref(api_nbrIntegrationPoints_),byref(api_nbrIntegrationPoints_n_),
+                byref(api_jacobian_),byref(api_jacobian_n_),byref(api_jacobian_nn_),
+                byref(api_determinant_),byref(api_determinant_n_),byref(api_determinant_nn_),
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshGetJacobianData returned non-zero error code : ",
+                    ierr.value)
+            return (
+                _ovectorint(api_nbrIntegrationPoints_,api_nbrIntegrationPoints_n_.value),
+                _ovectorvectordouble(api_jacobian_,api_jacobian_n_,api_jacobian_nn_),
+                _ovectorvectordouble(api_determinant_,api_determinant_n_,api_determinant_nn_))
+
+        @staticmethod
+        def getFunctionSpaceData(integrationType,functionSpaceType,dim=-1,tag=-1):
+            """
+            Gets the function space data for mesh elements of the entity of dimension
+            `dim' and `tag' tag. The data is returned by element type and by element,
+            in the same order as the data returned by `getElements'. `integrationType'
+            specifies the type of integration (e.g. "Gauss4") and `functionSpaceType'
+            specifies the function space (e.g. "IsoParametric"). `integrationPoints'
+            contains for each element type a vector (of length 4 times the number of
+            integration points) containing the parametric coordinates (u, v, w) and the
+            weight associated to the integration points. If `functionSpaceType' is
+            provided, `functionSpaceNumComponents' returns the number of components
+            returned by the evaluation of a basis function in the space and
+            `functionSpaceData' contains for each element type the evaluation of the
+            basis functions at the integration points.
+
+            return integrationPoints, functionSpaceNumComponents, functionSpaceData
+            """
+            api_integrationPoints_, api_integrationPoints_n_, api_integrationPoints_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
+            api_functionSpaceNumComponents_ = c_int()
+            api_functionSpaceData_, api_functionSpaceData_n_, api_functionSpaceData_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetFunctionSpaceData(
+                c_char_p(integrationType.encode()),
+                c_char_p(functionSpaceType.encode()),
+                byref(api_integrationPoints_),byref(api_integrationPoints_n_),byref(api_integrationPoints_nn_),
+                byref(api_functionSpaceNumComponents_),
+                byref(api_functionSpaceData_),byref(api_functionSpaceData_n_),byref(api_functionSpaceData_nn_),
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshGetFunctionSpaceData returned non-zero error code : ",
+                    ierr.value)
+            return (
+                _ovectorvectordouble(api_integrationPoints_,api_integrationPoints_n_,api_integrationPoints_nn_),
+                api_functionSpaceNumComponents_.value,
+                _ovectorvectordouble(api_functionSpaceData_,api_functionSpaceData_n_,api_functionSpaceData_nn_))
+
+        @staticmethod
         def getElementTypes(dim=-1,tag=-1):
             """
             Gets the types of mesh elements in the entity of dimension `dim' and `tag'
@@ -991,6 +1067,67 @@ class model:
             return (
                 _ovectordouble(api_integrationPoints_,api_integrationPoints_n_.value),
                 _ovectordouble(api_integrationData_,api_integrationData_n_.value),
+                api_functionSpaceNumComponents_.value,
+                _ovectordouble(api_functionSpaceData_,api_functionSpaceData_n_.value))
+
+        @staticmethod
+        def getJacobianDataByType(elementType,integrationType,dim=-1,tag=-1):
+            """
+            Gets the Jacobian data for mesh elements in the same way as
+            `getJacobianData', but for a single `elementType'.
+
+            return nbrIntegrationPoints, jacobian, determinant
+            """
+            api_nbrIntegrationPoints_ = c_int()
+            api_jacobian_, api_jacobian_n_ = POINTER(c_double)(), c_size_t()
+            api_determinant_, api_determinant_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetJacobianDataByType(
+                c_int(elementType),
+                c_char_p(integrationType.encode()),
+                byref(api_nbrIntegrationPoints_),
+                byref(api_jacobian_),byref(api_jacobian_n_),
+                byref(api_determinant_),byref(api_determinant_n_),
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshGetJacobianDataByType returned non-zero error code : ",
+                    ierr.value)
+            return (
+                api_nbrIntegrationPoints_.value,
+                _ovectordouble(api_jacobian_,api_jacobian_n_.value),
+                _ovectordouble(api_determinant_,api_determinant_n_.value))
+
+        @staticmethod
+        def getFunctionSpaceDataByType(elementType,integrationType,functionSpaceType,dim=-1,tag=-1):
+            """
+            Gets the function space data for mesh elements in the same way as
+            `getFunctionSpaceData', but for a single `elementType'.
+
+            return integrationPoints, functionSpaceNumComponents, functionSpaceData
+            """
+            api_integrationPoints_, api_integrationPoints_n_ = POINTER(c_double)(), c_size_t()
+            api_functionSpaceNumComponents_ = c_int()
+            api_functionSpaceData_, api_functionSpaceData_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetFunctionSpaceDataByType(
+                c_int(elementType),
+                c_char_p(integrationType.encode()),
+                c_char_p(functionSpaceType.encode()),
+                byref(api_integrationPoints_),byref(api_integrationPoints_n_),
+                byref(api_functionSpaceNumComponents_),
+                byref(api_functionSpaceData_),byref(api_functionSpaceData_n_),
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshGetFunctionSpaceDataByType returned non-zero error code : ",
+                    ierr.value)
+            return (
+                _ovectordouble(api_integrationPoints_,api_integrationPoints_n_.value),
                 api_functionSpaceNumComponents_.value,
                 _ovectordouble(api_functionSpaceData_,api_functionSpaceData_n_.value))
 

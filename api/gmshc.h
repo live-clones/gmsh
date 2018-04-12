@@ -304,6 +304,44 @@ GMSH_API void gmshModelMeshGetIntegrationData(const char * integrationType,
                                               const int tag,
                                               int * ierr);
 
+/* Gets the Jacobian data for mesh elements of the entity of dimension `dim'
+ * and `tag' tag. The data is returned by element type and by element, in the
+ * same order as the data returned by `getElements'. `integrationType'
+ * specifies the type of integration (e.g. "Gauss4"). `nbrIntegrationPoints'
+ * contains for each element type, the number of integration points that
+ * corresponds to `integrationType'. `jacobian' contains for each element type
+ * a vector (of size 9 times the number of integration points) containing the
+ * 9 entries (by column) of the 3x3 Jacobian matrix and `determinant' contains
+ * for each element type a vector containing the determinant of the Jacobian. */
+GMSH_API void gmshModelMeshGetJacobianData(const char * integrationType,
+                                           int ** nbrIntegrationPoints, size_t * nbrIntegrationPoints_n,
+                                           double *** jacobian, size_t ** jacobian_n, size_t *jacobian_nn,
+                                           double *** determinant, size_t ** determinant_n, size_t *determinant_nn,
+                                           const int dim,
+                                           const int tag,
+                                           int * ierr);
+
+/* Gets the function space data for mesh elements of the entity of dimension
+ * `dim' and `tag' tag. The data is returned by element type and by element,
+ * in the same order as the data returned by `getElements'. `integrationType'
+ * specifies the type of integration (e.g. "Gauss4") and `functionSpaceType'
+ * specifies the function space (e.g. "IsoParametric"). `integrationPoints'
+ * contains for each element type a vector (of length 4 times the number of
+ * integration points) containing the parametric coordinates (u, v, w) and the
+ * weight associated to the integration points. If `functionSpaceType' is
+ * provided, `functionSpaceNumComponents' returns the number of components
+ * returned by the evaluation of a basis function in the space and
+ * `functionSpaceData' contains for each element type the evaluation of the
+ * basis functions at the integration points. */
+GMSH_API void gmshModelMeshGetFunctionSpaceData(const char * integrationType,
+                                                const char * functionSpaceType,
+                                                double *** integrationPoints, size_t ** integrationPoints_n, size_t *integrationPoints_nn,
+                                                int * functionSpaceNumComponents,
+                                                double *** functionSpaceData, size_t ** functionSpaceData_n, size_t *functionSpaceData_nn,
+                                                const int dim,
+                                                const int tag,
+                                                int * ierr);
+
 /* Gets the types of mesh elements in the entity of dimension `dim' and `tag'
  * tag. If `tag' < 0, gets the types for all entities of dimension `dim'. If
  * `dim' and `tag' are negative, gets all the types in the mesh. */
@@ -333,6 +371,29 @@ GMSH_API void gmshModelMeshGetIntegrationDataByType(const int elementType,
                                                     const int dim,
                                                     const int tag,
                                                     int * ierr);
+
+/* Gets the Jacobian data for mesh elements in the same way as
+ * `getJacobianData', but for a single `elementType'. */
+GMSH_API void gmshModelMeshGetJacobianDataByType(const int elementType,
+                                                 const char * integrationType,
+                                                 int * nbrIntegrationPoints,
+                                                 double ** jacobian, size_t * jacobian_n,
+                                                 double ** determinant, size_t * determinant_n,
+                                                 const int dim,
+                                                 const int tag,
+                                                 int * ierr);
+
+/* Gets the function space data for mesh elements in the same way as
+ * `getFunctionSpaceData', but for a single `elementType'. */
+GMSH_API void gmshModelMeshGetFunctionSpaceDataByType(const int elementType,
+                                                      const char * integrationType,
+                                                      const char * functionSpaceType,
+                                                      double ** integrationPoints, size_t * integrationPoints_n,
+                                                      int * functionSpaceNumComponents,
+                                                      double ** functionSpaceData, size_t * functionSpaceData_n,
+                                                      const int dim,
+                                                      const int tag,
+                                                      int * ierr);
 
 /* Sets the mesh nodes in the geometrical entity of dimension `dim' and tag
  * `tag'. `nodetags' contains the node tags (their unique, strictly positive

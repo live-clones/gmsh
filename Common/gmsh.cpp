@@ -786,6 +786,133 @@ static void _getIntegrationData(const int elementType,
   }
 }
 
+static void _getJacobianData(const int elementType,
+                             const std::vector<GEntity*> &entities,
+                             const std::string &intType,
+                             int &nbrIntegrationPoints,
+                             std::vector<double> &jacobian,
+                             std::vector<double> &determinant)
+{
+  std::string intName = "", fsName = "";
+  int intOrder = 0;
+  if(!_getIntegrationInfo(intType, intName, intOrder)){
+    Msg::Error("Unknown quadrature type '%s'", intType.c_str());
+    throw 2;
+  }
+  // get quadrature info
+  int familyType = ElementType::ParentTypeFromTag(elementType);
+  fullMatrix<double> pts;
+  fullVector<double> weights;
+  gaussIntegration::get(familyType, intOrder, pts, weights);
+  if(pts.size1() != weights.size() || pts.size2() != 3){
+    Msg::Error("Wrong integration point format");
+    throw 3;
+  }
+  nbrIntegrationPoints = weights.size();
+  // get quadrature data
+  {
+    int n = 0;
+    for(unsigned int i = 0; i < entities.size(); i++){
+      GEntity *ge = entities[i];
+      for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
+        MElement *e = ge->getMeshElement(j);
+        if(e->getTypeForMSH() == elementType)
+          n++;
+      }
+    }
+    jacobian.resize(n * nbrIntegrationPoints * 9);
+    determinant.resize(n * nbrIntegrationPoints);
+    int idx = 0;
+    for(unsigned int i = 0; i < entities.size(); i++){
+      GEntity *ge = entities[i];
+      for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
+        MElement *e = ge->getMeshElement(j);
+        if(e->getTypeForMSH() == elementType){
+          for(int k = 0; k < nbrIntegrationPoints; k++){
+            double jac[3][3];
+            double det = e->getJacobian(pts(k, 0), pts(k, 1), pts(k, 2), jac);
+            determinant[idx] = det;
+            for(int n = 0; n < 3; n++)
+              for(int m = 0; m < 3; m++)
+                jacobian[idx*9 + n*3 + m] = jac[m][n];
+            idx++;
+          }
+        }
+      }
+    }
+  }
+}
+
+static void _getFunctionSpaceData(const int elementType,
+                                  const std::vector<GEntity*> &entities,
+                                  const std::string &intType,
+                                  const std::string &fsType,
+                                  std::vector<double> &intPoints,
+                                  int &fsNumComp,
+                                  std::vector<double> &fsData)
+{
+  std::string intName = "", fsName = "";
+  int intOrder = 0, fsOrder = 0;
+  if(!_getIntegrationInfo(intType, intName, intOrder)){
+    Msg::Error("Unknown quadrature type '%s'", intType.c_str());
+    throw 2;
+  }
+  if(!_getFunctionSpaceInfo(fsType, fsName, fsOrder, fsNumComp)){
+    Msg::Error("Unknown function space type '%s'", fsType.c_str());
+    throw 2;
+  }
+  // get quadrature info
+  int familyType = ElementType::ParentTypeFromTag(elementType);
+  fullMatrix<double> pts;
+  fullVector<double> weights;
+  gaussIntegration::get(familyType, intOrder, pts, weights);
+  if(pts.size1() != weights.size() || pts.size2() != 3){
+    Msg::Error("Wrong integration point format");
+    throw 3;
+  }
+  for(int i = 0; i < pts.size1(); i++){
+    intPoints.push_back(pts(i, 0));
+    intPoints.push_back(pts(i, 1));
+    intPoints.push_back(pts(i, 2));
+    intPoints.push_back(weights(i));
+  }
+  // get function space info
+  const nodalBasis *basis = 0;
+  if(fsNumComp){
+    if(fsOrder == -1){ // isoparametric
+      basis = BasisFactory::getNodalBasis(elementType);
+    }
+    else{
+      int newType = ElementType::getTag(familyType, fsOrder, false);
+      basis = BasisFactory::getNodalBasis(newType);
+    }
+  }
+  if(basis){
+    int nq = weights.size();
+    int n = basis->getNumShapeFunctions();
+    fsData.resize(n * fsNumComp * nq, 0.);
+    double s[1256], ds[1256][3];
+    for(int i = 0; i < nq; i++){
+      double u = pts(i, 0), v = pts(i, 1), w = pts(i, 2);
+      switch(fsNumComp){
+        case 1:
+          basis->f(u, v, w, s);
+          for(int j = 0; j < n; j++)
+            fsData[n * i + j] = s[j];
+          break;
+        case 3:
+          basis->df(u, v, w, ds);
+          for(int j = 0; j < n; j++){
+            fsData[n * 3 * i + 3 * j] = ds[j][0];
+            fsData[n * 3 * i + 3 * j + 1] = ds[j][1];
+            fsData[n * 3 * i + 3 * j + 2] = ds[j][2];
+          }
+          break;
+      }
+    }
+  }
+}
+
 void gmsh::model::mesh::getIntegrationData(const std::string &intType,
                                            const std::string &fsType,
                                            std::vector<std::vector<double> > &intPoints,
@@ -811,7 +938,51 @@ void gmsh::model::mesh::getIntegrationData(const std::string &intType,
   }
 }
 
-void gmsh::model::mesh::getIntegrationDataByType(int elementType,
+void gmsh::model::mesh::getJacobianData(const std::string &intType,
+                                        std::vector<int> &nbrIntegrationPoints,
+                                        std::vector<std::vector<double> > &jacobian,
+                                        std::vector<std::vector<double> > &determinant,
+                                        const int dim, const int tag)
+{
+  if(!_isInitialized()){ throw -1; }
+  jacobian.clear();
+  determinant.clear();
+  nbrIntegrationPoints.clear();
+  std::map<int, std::vector<GEntity*> > typeMap;
+  _getElementTypeMap(dim, tag, typeMap);
+  for(std::map<int, std::vector<GEntity*> >::const_iterator it = typeMap.begin();
+      it != typeMap.end(); it++){
+    nbrIntegrationPoints.push_back(0);
+    jacobian.push_back(std::vector<double>());
+    determinant.push_back(std::vector<double>());
+    _getJacobianData(it->first, it->second, intType, nbrIntegrationPoints.back(),
+                     jacobian.back(), determinant.back());
+  }
+}
+
+void gmsh::model::mesh::getFunctionSpaceData(const std::string & intType,
+                                             const std::string & fsType,
+                                             std::vector<std::vector<double> > & intPoints,
+                                             int & fsNumComp,
+                                             std::vector<std::vector<double> > & fsData,
+                                             const int dim, const int tag)
+{
+  if(!_isInitialized()){ throw -1; }
+  intPoints.clear();
+  fsNumComp = 0;
+  fsData.clear();
+  std::map<int, std::vector<GEntity*> > typeMap;
+  _getElementTypeMap(dim, tag, typeMap);
+  for(std::map<int, std::vector<GEntity*> >::const_iterator it = typeMap.begin();
+      it != typeMap.end(); it++){
+    intPoints.push_back(std::vector<double>());
+    fsData.push_back(std::vector<double>());
+    _getFunctionSpaceData(it->first, it->second, intType, fsType, intPoints.back(),
+                          fsNumComp, fsData.back());
+  }
+}
+
+void gmsh::model::mesh::getIntegrationDataByType(const int elementType,
                                                  const std::string &intType,
                                                  const std::string &fsType,
                                                  std::vector<double> &intPoints,
@@ -829,6 +1000,41 @@ void gmsh::model::mesh::getIntegrationDataByType(int elementType,
   _getElementTypeMap(dim, tag, typeMap);
   _getIntegrationData(elementType, typeMap[elementType], intType, fsType, intPoints,
                       intData, fsNumComp, fsData);
+}
+
+void gmsh::model::mesh::getJacobianDataByType(const int elementType,
+                                              const std::string &intType,
+                                              int &nbrIntegrationPoints,
+                                              std::vector<double> &jacobian,
+                                              std::vector<double> &determinant,
+                                              const int dim, const int tag)
+{
+  if(!_isInitialized()){ throw -1; }
+  jacobian.clear();
+  determinant.clear();
+  nbrIntegrationPoints = 0;
+  std::map<int, std::vector<GEntity*> > typeMap;
+  _getElementTypeMap(dim, tag, typeMap);
+  _getJacobianData(elementType, typeMap[elementType], intType, nbrIntegrationPoints,
+                   jacobian, determinant);
+}
+
+void gmsh::model::mesh::getFunctionSpaceDataByType(const int elementType,
+                                                   const std::string &intType,
+                                                   const std::string &fsType,
+                                                   std::vector<double> &intPoints,
+                                                   int &fsNumComp,
+                                                   std::vector<double> &fsData,
+                                                   const int dim, const int tag)
+{
+  if(!_isInitialized()){ throw -1; }
+  intPoints.clear();
+  fsNumComp = 0;
+  fsData.clear();
+  std::map<int, std::vector<GEntity*> > typeMap;
+  _getElementTypeMap(dim, tag, typeMap);
+  _getFunctionSpaceData(elementType, typeMap[elementType], intType, fsType, intPoints,
+                        fsNumComp, fsData);
 }
 
 void gmsh::model::mesh::setNodes(const int dim, const int tag,

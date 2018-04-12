@@ -391,6 +391,30 @@ void gmshModelMeshGetIntegrationData(const char * integrationType,const char * f
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
+void gmshModelMeshGetJacobianData(const char * integrationType,int ** nbrIntegrationPoints, size_t * nbrIntegrationPoints_n,double *** jacobian, size_t ** jacobian_n, size_t *jacobian_nn,double *** determinant, size_t ** determinant_n, size_t *determinant_nn,const int dim,const int tag,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  std::vector<int> api_nbrIntegrationPoints_;
+  std::vector<std::vector<double> > api_jacobian_;
+  std::vector<std::vector<double> > api_determinant_;
+  gmsh::model::mesh::getJacobianData(integrationType,api_nbrIntegrationPoints_,api_jacobian_,api_determinant_,dim,tag);
+  vector2ptr(api_nbrIntegrationPoints_,nbrIntegrationPoints,nbrIntegrationPoints_n);
+  vectorvector2ptrptr(api_jacobian_,jacobian,jacobian_n,jacobian_nn);
+  vectorvector2ptrptr(api_determinant_,determinant,determinant_n,determinant_nn);
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
+void gmshModelMeshGetFunctionSpaceData(const char * integrationType,const char * functionSpaceType,double *** integrationPoints, size_t ** integrationPoints_n, size_t *integrationPoints_nn,int * functionSpaceNumComponents,double *** functionSpaceData, size_t ** functionSpaceData_n, size_t *functionSpaceData_nn,const int dim,const int tag,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  std::vector<std::vector<double> > api_integrationPoints_;
+  std::vector<std::vector<double> > api_functionSpaceData_;
+  gmsh::model::mesh::getFunctionSpaceData(integrationType,functionSpaceType,api_integrationPoints_,*functionSpaceNumComponents,api_functionSpaceData_,dim,tag);
+  vectorvector2ptrptr(api_integrationPoints_,integrationPoints,integrationPoints_n,integrationPoints_nn);
+  vectorvector2ptrptr(api_functionSpaceData_,functionSpaceData,functionSpaceData_n,functionSpaceData_nn);
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
 void gmshModelMeshGetElementTypes(int ** elementTypes, size_t * elementTypes_n,const int dim,const int tag,int * ierr){
   if(ierr) *ierr = 0;
   try {
@@ -420,6 +444,28 @@ void gmshModelMeshGetIntegrationDataByType(const int elementType,const char * in
   gmsh::model::mesh::getIntegrationDataByType(elementType,integrationType,functionSpaceType,api_integrationPoints_,api_integrationData_,*functionSpaceNumComponents,api_functionSpaceData_,dim,tag);
   vector2ptr(api_integrationPoints_,integrationPoints,integrationPoints_n);
   vector2ptr(api_integrationData_,integrationData,integrationData_n);
+  vector2ptr(api_functionSpaceData_,functionSpaceData,functionSpaceData_n);
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
+void gmshModelMeshGetJacobianDataByType(const int elementType,const char * integrationType,int * nbrIntegrationPoints,double ** jacobian, size_t * jacobian_n,double ** determinant, size_t * determinant_n,const int dim,const int tag,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  std::vector<double> api_jacobian_;
+  std::vector<double> api_determinant_;
+  gmsh::model::mesh::getJacobianDataByType(elementType,integrationType,*nbrIntegrationPoints,api_jacobian_,api_determinant_,dim,tag);
+  vector2ptr(api_jacobian_,jacobian,jacobian_n);
+  vector2ptr(api_determinant_,determinant,determinant_n);
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
+void gmshModelMeshGetFunctionSpaceDataByType(const int elementType,const char * integrationType,const char * functionSpaceType,double ** integrationPoints, size_t * integrationPoints_n,int * functionSpaceNumComponents,double ** functionSpaceData, size_t * functionSpaceData_n,const int dim,const int tag,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  std::vector<double> api_integrationPoints_;
+  std::vector<double> api_functionSpaceData_;
+  gmsh::model::mesh::getFunctionSpaceDataByType(elementType,integrationType,functionSpaceType,api_integrationPoints_,*functionSpaceNumComponents,api_functionSpaceData_,dim,tag);
+  vector2ptr(api_integrationPoints_,integrationPoints,integrationPoints_n);
   vector2ptr(api_functionSpaceData_,functionSpaceData,functionSpaceData_n);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }

@@ -289,6 +289,43 @@ namespace gmsh { // Top-level functions
                                        const int dim = -1,
                                        const int tag = -1);
 
+      // Gets the Jacobian data for mesh elements of the entity of dimension `dim'
+      // and `tag' tag. The data is returned by element type and by element, in the
+      // same order as the data returned by `getElements'. `integrationType'
+      // specifies the type of integration (e.g. "Gauss4"). `nbrIntegrationPoints'
+      // contains for each element type, the number of integration points that
+      // corresponds to `integrationType'. `jacobian' contains for each element
+      // type a vector (of size 9 times the number of integration points)
+      // containing the 9 entries (by column) of the 3x3 Jacobian matrix and
+      // `determinant' contains for each element type a vector containing the
+      // determinant of the Jacobian.
+      GMSH_API void getJacobianData(const std::string & integrationType,
+                                    std::vector<int> & nbrIntegrationPoints,
+                                    std::vector<std::vector<double> > & jacobian,
+                                    std::vector<std::vector<double> > & determinant,
+                                    const int dim = -1,
+                                    const int tag = -1);
+
+      // Gets the function space data for mesh elements of the entity of dimension
+      // `dim' and `tag' tag. The data is returned by element type and by element,
+      // in the same order as the data returned by `getElements'. `integrationType'
+      // specifies the type of integration (e.g. "Gauss4") and `functionSpaceType'
+      // specifies the function space (e.g. "IsoParametric"). `integrationPoints'
+      // contains for each element type a vector (of length 4 times the number of
+      // integration points) containing the parametric coordinates (u, v, w) and
+      // the weight associated to the integration points. If `functionSpaceType' is
+      // provided, `functionSpaceNumComponents' returns the number of components
+      // returned by the evaluation of a basis function in the space and
+      // `functionSpaceData' contains for each element type the evaluation of the
+      // basis functions at the integration points.
+      GMSH_API void getFunctionSpaceData(const std::string & integrationType,
+                                         const std::string & functionSpaceType,
+                                         std::vector<std::vector<double> > & integrationPoints,
+                                         int & functionSpaceNumComponents,
+                                         std::vector<std::vector<double> > & functionSpaceData,
+                                         const int dim = -1,
+                                         const int tag = -1);
+
       // Gets the types of mesh elements in the entity of dimension `dim' and `tag'
       // tag. If `tag' < 0, gets the types for all entities of dimension `dim'. If
       // `dim' and `tag' are negative, gets all the types in the mesh.
@@ -315,6 +352,27 @@ namespace gmsh { // Top-level functions
                                              std::vector<double> & functionSpaceData,
                                              const int dim = -1,
                                              const int tag = -1);
+
+      // Gets the Jacobian data for mesh elements in the same way as
+      // `getJacobianData', but for a single `elementType'.
+      GMSH_API void getJacobianDataByType(const int elementType,
+                                          const std::string & integrationType,
+                                          int & nbrIntegrationPoints,
+                                          std::vector<double> & jacobian,
+                                          std::vector<double> & determinant,
+                                          const int dim = -1,
+                                          const int tag = -1);
+
+      // Gets the function space data for mesh elements in the same way as
+      // `getFunctionSpaceData', but for a single `elementType'.
+      GMSH_API void getFunctionSpaceDataByType(const int elementType,
+                                               const std::string & integrationType,
+                                               const std::string & functionSpaceType,
+                                               std::vector<double> & integrationPoints,
+                                               int & functionSpaceNumComponents,
+                                               std::vector<double> & functionSpaceData,
+                                               const int dim = -1,
+                                               const int tag = -1);
 
       // Sets the mesh nodes in the geometrical entity of dimension `dim' and tag
       // `tag'. `nodetags' contains the node tags (their unique, strictly positive
