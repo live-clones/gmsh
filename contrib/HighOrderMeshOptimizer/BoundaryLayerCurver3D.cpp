@@ -247,7 +247,7 @@ namespace BoundaryLayerCurver
       if (!linear) {
         if (!_tetrahedron[order]) {
           _tetrahedron[order] = new fullMatrix<double>();
-          *_tetrahedron[order] = gmshGenerateInteriorNodePlacementPrism(order);
+          *_tetrahedron[order] = gmshGenerateInteriorNodePlacementTetrahedron(order);
         }
         return _tetrahedron[order];
       }
@@ -263,12 +263,12 @@ namespace BoundaryLayerCurver
           case 4*1+3: case 4*3+1: dir = 2; break;
           case 4*2+3: case 4*3+2: dir = 0; break;
         }
-        if (!_linearPrism[dir][order]) {
-          _linearPrism[dir][order] = new fullMatrix<double>();
-          *_linearPrism[dir][order] =
-              gmshGenerateInteriorNodePlacementPrismLinear(order, dir);
+        if (!_linearTet[dir][order]) {
+          _linearTet[dir][order] = new fullMatrix<double>();
+          *_linearTet[dir][order] =
+              gmshGenerateInteriorNodePlacementTetrahedronLinear(order, dir);
         }
-        return _linearPrism[dir][order];
+        return _linearTet[dir][order];
       }
     }
 
@@ -971,7 +971,6 @@ namespace BoundaryLayerCurver
                   allPrimaryVertices[j*3+2]);
       else
         f = MFace(allPrimaryVertices[j*4+0],
-                  allPrimaryVertices[j*4+1],
                   allPrimaryVertices[j*4+2],
                   allPrimaryVertices[j*4+3]);
       stack[j] = column[j]->getHighOrderFace(f);

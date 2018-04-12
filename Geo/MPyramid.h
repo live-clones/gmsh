@@ -283,7 +283,7 @@ class MPyramidN : public MPyramid {
                : v.resize((_order+1) * (_order+2) / 2);
     }
 
-    // FIXME continue fix serendipity
+    // FIXME Amaury continue fix serendipity
 
     int j = 3;
     if (num == 4) {
