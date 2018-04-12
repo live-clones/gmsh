@@ -25,8 +25,9 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementPrism(int order);
 fullMatrix<double> gmshGenerateInteriorNodePlacementPyramid(int order);
 
 fullMatrix<double> gmshGenerateInteriorNodePlacementTriangleLinear(int order,
-                                                                   int edge);
+                                                                   int dir);
 fullMatrix<double> gmshGenerateInteriorNodePlacementQuadrangleLinear(int order);
 fullMatrix<double> gmshGenerateInteriorNodePlacementHexahedronLinear(int order, int dir);
+fullMatrix<double> gmshGenerateInteriorNodePlacementPrismLinear(int order, int dir);
 
 #endif //GMSH_INTERIORNODEPLACEMENT_H

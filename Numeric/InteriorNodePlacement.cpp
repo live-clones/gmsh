@@ -437,7 +437,7 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementPyramid(int order)
 
 
 fullMatrix<double> gmshGenerateInteriorNodePlacementTriangleLinear(int order,
-                                                                   int edge)
+                                                                   int dir)
 {
   fullMatrix<double> M;
 
@@ -465,21 +465,25 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementTriangleLinear(int order,
   for (int i = 0; i < szComp-szInc; ++i) {
     int u = coordinates(szInc + i, 0);
     int v = coordinates(szInc + i, 1);
+    double mu;
 
-    if (edge == 0) {
-      double mu = (double)u / (n-v);
-      M(i, coord2idx[std::make_pair(  0, v)]) += 1-mu;
-      M(i, coord2idx[std::make_pair(n-v, v)]) += mu;
-    }
-    else if (edge == 1) {
-      double mu = (double)v / (u+v);
-      M(i, coord2idx[std::make_pair(u+v,   0)]) += 1-mu;
-      M(i, coord2idx[std::make_pair(  0, u+v)]) += mu;
-    }
-    else {
-      double mu = (double)v / (n-u);
-      M(i, coord2idx[std::make_pair(u,   0)]) += 1-mu;
-      M(i, coord2idx[std::make_pair(u, n-u)]) += mu;
+    switch (dir) {
+      case 0:
+        mu = (double)u / (n-v);
+        M(i, coord2idx[std::make_pair(  0, v)]) += 1-mu;
+        M(i, coord2idx[std::make_pair(n-v, v)]) += mu;
+        break;
+      case 1:
+        mu = (double)v / (u+v);
+        M(i, coord2idx[std::make_pair(u+v,   0)]) += 1-mu;
+        M(i, coord2idx[std::make_pair(  0, u+v)]) += mu;
+        break;
+      default:
+      case 2:
+        mu = (double)v / (n-u);
+        M(i, coord2idx[std::make_pair(u,   0)]) += 1-mu;
+        M(i, coord2idx[std::make_pair(u, n-u)]) += mu;
+        break;
     }
   }
 
@@ -554,6 +558,7 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementHexahedronLinear(int order,
     int v = coordinates(szInc + i, 1);
     int w = coordinates(szInc + i, 2);
     double eta;
+
     switch (dir) {
       case 0:
         eta = (double)u / n;
@@ -564,6 +569,66 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementHexahedronLinear(int order,
         eta = (double)v / n;
         M(i, coord2idx[make_mytuple(u, 0, w)]) += 1-eta;
         M(i, coord2idx[make_mytuple(u, n, w)]) += eta;
+        break;
+      default:
+      case 2:
+        eta = (double)w / n;
+        M(i, coord2idx[make_mytuple(u, v, 0)]) += 1-eta;
+        M(i, coord2idx[make_mytuple(u, v, n)]) += eta;
+        break;
+    }
+  }
+  return M;
+}
+
+fullMatrix<double> gmshGenerateInteriorNodePlacementPrismLinear(int order, int dir)
+{
+  fullMatrix<double> M;
+
+  if (order < 3) {
+    M.resize(0, 0);
+    return M;
+  }
+
+  const int szInt = (order - 1) * (order - 2) * (order - 1) / 2;
+  const int szComp = (order + 1) * (order + 1) * (order + 2) / 2;
+  const int szInc = szComp - szInt;
+  M.resize(szInt, szInc, true);
+
+  fullMatrix<double> monomials = gmshGenerateMonomialsPrism(order, false);
+  fullMatrix<int> coordinates;
+  double2int(monomials, coordinates);
+
+  std::map<mytuple, int> coord2idx;
+  for (int i = 0; i < szInc; ++i) {
+    int u = coordinates(i, 0);
+    int v = coordinates(i, 1);
+    int w = coordinates(i, 2);
+    coord2idx[make_mytuple(u, v, w)] = i;
+  }
+
+  int &n = order;
+  for (int i = 0; i < szInt; ++i) {
+    int u = coordinates(szInc + i, 0);
+    int v = coordinates(szInc + i, 1);
+    int w = coordinates(szInc + i, 2);
+    double eta, mu;
+    
+    switch (dir) {
+      case 0:
+        mu = (double)u / (n-v);
+        M(i, coord2idx[make_mytuple(  0, v, w)]) += 1-mu;
+        M(i, coord2idx[make_mytuple(n-v, v, w)]) += mu;
+        break;
+      case 1:
+        mu = (double)v / (u+v);
+        M(i, coord2idx[make_mytuple(u+v,   0, w)]) += 1-mu;
+        M(i, coord2idx[make_mytuple(  0, u+v, w)]) += mu;
+        break;
+      case 2:
+        mu = (double)v / (n-u);
+        M(i, coord2idx[make_mytuple(u,   0, w)]) += 1-mu;
+        M(i, coord2idx[make_mytuple(u, n-u, w)]) += mu;
         break;
       default:
       case 3:

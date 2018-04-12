@@ -170,6 +170,16 @@ namespace BoundaryLayerCurver
                                                      NULL, NULL, NULL, NULL, NULL},
                                                     {NULL, NULL, NULL, NULL, NULL,
                                                      NULL, NULL, NULL, NULL, NULL}};
+    fullMatrix<double>* _prism[10] = {NULL, NULL, NULL, NULL, NULL,
+                                      NULL, NULL, NULL, NULL, NULL};
+    fullMatrix<double>* _linearPrism[4][10] = {{NULL, NULL, NULL, NULL, NULL,
+                                                NULL, NULL, NULL, NULL, NULL},
+                                               {NULL, NULL, NULL, NULL, NULL,
+                                                NULL, NULL, NULL, NULL, NULL},
+                                               {NULL, NULL, NULL, NULL, NULL,
+                                                NULL, NULL, NULL, NULL, NULL},
+                                               {NULL, NULL, NULL, NULL, NULL,
+                                                NULL, NULL, NULL, NULL, NULL}};
 
     const fullMatrix<double>* triangle(int order, bool linear, int edge = 2)
     {
@@ -230,7 +240,7 @@ namespace BoundaryLayerCurver
         int dir;
         switch (face) {
           default:
-          case 0: case 5: dir = 3; break;
+          case 0: case 5: dir = 2; break;
           case 1: case 4: dir = 1; break;
           case 2: case 3: dir = 0; break;
         }
@@ -240,6 +250,33 @@ namespace BoundaryLayerCurver
               gmshGenerateInteriorNodePlacementHexahedronLinear(order, dir);
         }
         return _linearHexahedron[dir][order];
+      }
+    }
+
+    const fullMatrix<double>* prism(int order, bool linear, int face = 0)
+    {
+      if (!linear) {
+        if (!_prism[order]) {
+          _prism[order] = new fullMatrix<double>();
+          *_prism[order] = gmshGenerateInteriorNodePlacementPrism(order);
+        }
+        return _prism[order];
+      }
+      else {
+        int dir;
+        switch (face) {
+          default:
+          case 0: case 1: dir = 3; break;
+          case 2: dir = 1; break;
+          case 3: dir = 0; break;
+          case 4: dir = 0; break;
+        }
+        if (!_linearPrism[dir][order]) {
+          _linearPrism[dir][order] = new fullMatrix<double>();
+          *_linearPrism[dir][order] =
+              gmshGenerateInteriorNodePlacementPrismLinear(order, dir);
+        }
+        return _linearPrism[dir][order];
       }
     }
   }
@@ -1022,7 +1059,8 @@ namespace BoundaryLayerCurver
   void repositionInteriorNodes(const std::vector<MFaceN> &stackFaces,
                                const std::vector<MElement*> &column)
   {
-    for (unsigned int i = 0; i < column.size(); ++i) {
+    // TODO: reposition last elements
+    for (unsigned int i = 0; i < column.size() - 1; ++i) {
       MElement *el = column[i];
       const fullMatrix<double> *placement = NULL;
       const int order = el->getPolynomialOrder();
@@ -1037,7 +1075,18 @@ namespace BoundaryLayerCurver
                                                                 nFace);
           break;
         case TYPE_PRI:
-//          placement = InteriorNodePlacementMatrices::prism(order, true);
+          el->getFaceInfo(stackFaces[i].getFace(), nFace, sign, rot);
+          if (nFace > 1) {
+            int nOtherFace;
+            el->getFaceInfo(stackFaces[i+1].getFace(), nOtherFace, sign, rot);
+            if (nFace != 2 && nOtherFace != 2)
+              nFace = 2;
+            else if (nFace != 3 && nOtherFace != 3)
+              nFace = 3;
+            else
+              nFace = 4;
+          }
+          placement = InteriorNodePlacementMatrices::prism(order, true, nFace);
           break;
       }
       if (placement)
