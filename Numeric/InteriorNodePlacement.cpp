@@ -492,6 +492,73 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementQuadrangleLinear(int order)
   return M;
 }
 
+fullMatrix<double> gmshGenerateInteriorNodePlacementTetrahedronLinear(int order,
+                                                                      int dir)
+{
+  // 'dir' corresponds to the number of edge
+  if (order < 4) return fullMatrix<double>(0, 0);
+
+  const int szInt = (order - 3) * (order - 2) * (order - 1) / 6;
+  const int szComp = (order + 1) * (order + 2) * (order + 3) / 6;
+  const int szInc = szComp - szInt;
+
+  fullMatrix<double> monomials = gmshGenerateMonomialsTetrahedron(order, false);
+  fullMatrix<int> coordinates;
+  double2int(monomials, coordinates);
+
+  std::map<mytuple, int> coord2idx;
+  for (int i = 0; i < szInc; ++i) {
+    int u = coordinates(i, 0);
+    int v = coordinates(i, 1);
+    int w = coordinates(i, 2);
+    coord2idx[make_mytuple(u, v, w)] = i;
+  }
+
+  int &n = order;
+  fullMatrix<double> M(szInt, szInc, true);
+  for (int i = 0; i < szInt; ++i) {
+    int u = coordinates(szInc + i, 0);
+    int v = coordinates(szInc + i, 1);
+    int w = coordinates(szInc + i, 2);
+    double mu;
+
+    switch (dir) {
+      case 0:
+        mu = (double)u / (n-v-w);
+        M(i, coord2idx[make_mytuple(    0, v, w)]) += 1-mu;
+        M(i, coord2idx[make_mytuple(n-v-w, v, w)]) += mu;
+        break;
+      case 2:
+        mu = (double)v / (n-u-w);
+        M(i, coord2idx[make_mytuple(u,     0, w)]) += 1-mu;
+        M(i, coord2idx[make_mytuple(u, n-u-w, w)]) += mu;
+        break;
+      default:
+      case 3:
+        mu = (double)w / (n-u-v);
+        M(i, coord2idx[make_mytuple(u, v,     0)]) += 1-mu;
+        M(i, coord2idx[make_mytuple(u, v, n-u-v)]) += mu;
+        break;
+      case 1:
+        mu = (double)v / (u+v);
+        M(i, coord2idx[make_mytuple(u+v,   0, w)]) += 1-mu;
+        M(i, coord2idx[make_mytuple(  0, u+v, w)]) += mu;
+        break;
+      case 4:
+        mu = (double)w / (v+w);
+        M(i, coord2idx[make_mytuple(u, v+w,   0)]) += 1-mu;
+        M(i, coord2idx[make_mytuple(u,   0, v+w)]) += mu;
+        break;
+      case 5:
+        mu = (double)w / (u+w);
+        M(i, coord2idx[make_mytuple(u+w, v,   0)]) += 1-mu;
+        M(i, coord2idx[make_mytuple(  0, v, u+w)]) += mu;
+        break;
+    }
+  }
+  return M;
+}
+
 fullMatrix<double> gmshGenerateInteriorNodePlacementHexahedronLinear(int order,
                                                                      int dir)
 {

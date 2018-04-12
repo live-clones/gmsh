@@ -13,7 +13,7 @@
 // nodes are given by M*x^b.
 // The placement is obtained by analogy with linear transfinite interpolation.
 
-// TODO: Create sparseMatrix
+// TODO Amaury: Create sparseMatrix
 
 fullMatrix<double>* getInteriorNodePlacement(int type, int order);
 
@@ -27,6 +27,7 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementPyramid(int order);
 fullMatrix<double> gmshGenerateInteriorNodePlacementTriangleLinear(int order,
                                                                    int dir);
 fullMatrix<double> gmshGenerateInteriorNodePlacementQuadrangleLinear(int order);
+fullMatrix<double> gmshGenerateInteriorNodePlacementTetrahedronLinear(int order, int dir);
 fullMatrix<double> gmshGenerateInteriorNodePlacementHexahedronLinear(int order, int dir);
 fullMatrix<double> gmshGenerateInteriorNodePlacementPrismLinear(int order, int dir);
 

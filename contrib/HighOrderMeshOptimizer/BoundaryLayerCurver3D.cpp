@@ -180,6 +180,20 @@ namespace BoundaryLayerCurver
                                                 NULL, NULL, NULL, NULL, NULL},
                                                {NULL, NULL, NULL, NULL, NULL,
                                                 NULL, NULL, NULL, NULL, NULL}};
+    fullMatrix<double>* _tetrahedron[10] = {NULL, NULL, NULL, NULL, NULL,
+                                            NULL, NULL, NULL, NULL, NULL};
+    fullMatrix<double>* _linearTet[6][10] = {{NULL, NULL, NULL, NULL, NULL,
+                                              NULL, NULL, NULL, NULL, NULL},
+                                             {NULL, NULL, NULL, NULL, NULL,
+                                              NULL, NULL, NULL, NULL, NULL},
+                                             {NULL, NULL, NULL, NULL, NULL,
+                                              NULL, NULL, NULL, NULL, NULL},
+                                             {NULL, NULL, NULL, NULL, NULL,
+                                              NULL, NULL, NULL, NULL, NULL},
+                                             {NULL, NULL, NULL, NULL, NULL,
+                                              NULL, NULL, NULL, NULL, NULL},
+                                             {NULL, NULL, NULL, NULL, NULL,
+                                              NULL, NULL, NULL, NULL, NULL}};
 
     const fullMatrix<double>* triangle(int order, bool linear, int edge = 2)
     {
@@ -224,6 +238,37 @@ namespace BoundaryLayerCurver
               gmshGenerateInteriorNodePlacementQuadrangleLinear(order);
         }
         return _linearQuadrangle[order];
+      }
+    }
+
+    const fullMatrix<double>* tetrahedron(int order, bool linear, int face = 0,
+                                          int otherFace = 0)
+    {
+      if (!linear) {
+        if (!_tetrahedron[order]) {
+          _tetrahedron[order] = new fullMatrix<double>();
+          *_tetrahedron[order] = gmshGenerateInteriorNodePlacementPrism(order);
+        }
+        return _tetrahedron[order];
+      }
+      else {
+        int dir;
+        const int hash = face * 4 + otherFace;
+        switch (hash) {
+          case 4*0+1: case 4*1+0: dir = 4; break;
+          case 4*0+2: case 4*2+0: dir = 5; break;
+          default:
+          case 4*0+3: case 4*3+0: dir = 3; break;
+          case 4*1+2: case 4*2+1: dir = 1; break;
+          case 4*1+3: case 4*3+1: dir = 2; break;
+          case 4*2+3: case 4*3+2: dir = 0; break;
+        }
+        if (!_linearPrism[dir][order]) {
+          _linearPrism[dir][order] = new fullMatrix<double>();
+          *_linearPrism[dir][order] =
+              gmshGenerateInteriorNodePlacementPrismLinear(order, dir);
+        }
+        return _linearPrism[dir][order];
       }
     }
 
@@ -1064,10 +1109,13 @@ namespace BoundaryLayerCurver
       MElement *el = column[i];
       const fullMatrix<double> *placement = NULL;
       const int order = el->getPolynomialOrder();
-      int nFace, sign, rot;
+      int nFace, nOtherFace, sign, rot;
       switch(el->getType()) {
         case TYPE_TET:
-//          placement = InteriorNodePlacementMatrices::tetrahedron(order, true);
+          el->getFaceInfo(stackFaces[i].getFace(), nFace, sign, rot);
+          el->getFaceInfo(stackFaces[i+1].getFace(), nOtherFace, sign, rot);
+          placement = InteriorNodePlacementMatrices::tetrahedron(order, true,
+                                                                 nFace, nOtherFace);
           break;
         case TYPE_HEX:
           el->getFaceInfo(stackFaces[i].getFace(), nFace, sign, rot);
@@ -1077,7 +1125,6 @@ namespace BoundaryLayerCurver
         case TYPE_PRI:
           el->getFaceInfo(stackFaces[i].getFace(), nFace, sign, rot);
           if (nFace > 1) {
-            int nOtherFace;
             el->getFaceInfo(stackFaces[i+1].getFace(), nOtherFace, sign, rot);
             if (nFace != 2 && nOtherFace != 2)
               nFace = 2;
