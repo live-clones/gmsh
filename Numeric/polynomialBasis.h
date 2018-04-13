@@ -13,61 +13,6 @@
 #include "nodalBasis.h"
 #include <iostream>
 
-inline double pow_int(const double &a, const int &n)
-{
-  switch (n) {
-  case 0 : return 1.0;
-  case 1 : return a;
-  case 2 : return a*a;
-  case 3 : return a*a*a;
-  case 4 :
-    {
-      const double a2 = a*a;
-      return a2*a2;
-    }
-  case 5 :
-    {
-      const double a2 = a*a;
-      return a2*a2*a;
-    }
-  case 6 :
-    {
-      const double a3 = a*a*a;
-      return a3*a3;
-    }
-  case 7 :
-    {
-      const double a3 = a*a*a;
-      return a3*a3*a;
-    }
-  case 8 :
-    {
-      const double a2 = a*a;
-      const double a4 = a2*a2;
-      return a4*a4;
-    }
-  case 9 :
-    {
-      const double a3 = a*a*a;
-      return a3*a3*a3;
-    }
-  case 10 :
-    {
-      const double a2 = a*a;
-      const double a4 = a2*a2;
-      return a4*a4*a2;
-    }
-  default :
-    return pow_int(a, n-9) * pow_int(a, 9);
-  }
-}
-
-inline double pow_int(const double &a, const double &d)
-{
-  // Round double !
-  int n = static_cast<int>(d + .5);
-  return pow_int(a, n);
-}
 
 class polynomialBasis : public nodalBasis
 {

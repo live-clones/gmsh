@@ -15,6 +15,7 @@
 #include "polynomialBasis.h"
 #include "GaussIntegration.h"
 #include "pointsGenerators.h"
+#include "Numeric.h"
 #include <limits>
 
 namespace {

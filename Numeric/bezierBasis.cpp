@@ -8,7 +8,6 @@
 #include "bezierBasis.h"
 #include "GmshDefines.h"
 #include "GmshMessage.h"
-#include "polynomialBasis.h"
 #include "pyramidalBasis.h"
 #include "pointsGenerators.h"
 #include "BasisFactory.h"

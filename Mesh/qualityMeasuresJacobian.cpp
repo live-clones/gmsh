@@ -9,6 +9,7 @@
 #include "BasisFactory.h"
 #include "bezierBasis.h"
 #include "JacobianBasis.h"
+#include "Numeric.h"
 
 // For debugging
 #include <sstream>
