@@ -6,7 +6,53 @@
 #include <vector>
 #include <algorithm>
 #include "orthogonalBasis.h"
+#include "FuncSpaceData.h"
 
+
+orthogonalBasis::orthogonalBasis(const FuncSpaceData &_data)
+    : _type(_data.elementType()), _order(_data.spaceOrder())
+{}
+
+void orthogonalBasis::f(double u, double v, double w, double *sf) const
+{
+  static double sf0[100];
+  static double sf1[100];
+  int k;
+  switch (_type) {
+    case TYPE_LIN:
+      LegendrePolynomials::f(_order, u, sf);
+      return;
+    case TYPE_QUA:
+      LegendrePolynomials::f(_order, u, sf0);
+      LegendrePolynomials::f(_order, v, sf1);
+      k = 0;
+      for (int i = 0; i < _order + 1; ++i) {
+        for (int j = 0; j < _order + 1; ++j) {
+          sf[k++] = sf0[i] * sf1[j];
+        }
+      }
+      return;
+  }
+}
+
+void orthogonalBasis::integralfSquared(double *val) const
+{
+  int k;
+  switch (_type) {
+    case TYPE_LIN:
+      for (int i = 0; i < _order + 1; ++i) {
+        val[i] = 2. / (1 + 2*i);
+      }
+      return;
+    case TYPE_QUA:
+      k = 0;
+      for (int i = 0; i < _order + 1; ++i) {
+        for (int j = 0; j < _order + 1; ++j) {
+          val[k++] = 4. / (1 + 2*i) / (1 + 2*j);
+        }
+      }
+  }
+}
 
 namespace LegendrePolynomials {
   void f(int n, double u, double *val)

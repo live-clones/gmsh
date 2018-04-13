@@ -5,13 +5,24 @@
 #ifndef GMSH_ORTHOGONALBASIS_H
 #define GMSH_ORTHOGONALBASIS_H
 
-// Orthogonal bases:
-// - Line: Legendre
-// - Quadrangle: Legendre x Legendre
-// - Triangle: Legendre x Jacobi
+class FuncSpaceData;
 
 class orthogonalBasis {
+  // - Line: Legendre
+  // - Quadrangle: Legendre x Legendre
+  // - Triangle: Legendre x Jacobi
+private:
+  const int _type;
+  const int _order;
 
+public:
+  orthogonalBasis();
+  explicit orthogonalBasis(const FuncSpaceData &_data);
+  orthogonalBasis(int type, int order) : _type(type), _order(order) {}
+  ~orthogonalBasis() {}
+
+  void f(double u, double v, double w, double *sf) const;
+  void integralfSquared(double *val) const;
 };
 
 namespace LegendrePolynomials {

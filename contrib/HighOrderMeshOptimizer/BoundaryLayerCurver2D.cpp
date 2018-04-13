@@ -593,6 +593,7 @@ namespace BoundaryLayerCurver
     //     the values of function f at Gauss points
     //   + value of function f at extremities
 
+    orthogonalBasis basis(typeElement, order);
     LeastSquareData *data = new LeastSquareData;
 
     if (typeElement == TYPE_LIN) {
@@ -602,25 +603,32 @@ namespace BoundaryLayerCurver
       const int szSpace = order + 1;
       const int nGP = data->nbPoints;
 
+      double *val = new double[szSpace];
+
       fullMatrix<double> M2(szSpace+2, nGP+2, true);
       {
-        double *val = new double[szSpace];
         for (int j = 0; j < nGP; ++j) {
-          LegendrePolynomials::f(order, data->intPoints[j].pt[0], val);
+          basis.f(data->intPoints[j].pt[0], 0, 0, val);
           for (int i = 0; i < szSpace; ++i) {
             M2(i, j) = val[i] * data->intPoints[j].weight;
           }
         }
         M2(szSpace, nGP) = M2(szSpace+1, nGP+1) = 1;
-        delete val;
       }
 
       fullMatrix<double> M1(szSpace+2, szSpace+2, true);
-      for (int k = 0; k < szSpace; ++k) {
-        const int sign = k % 2 == 0 ? 1 : -1;
-        M1(szSpace, k) = M1(k, szSpace) = sign;
-        M1(szSpace+1, k) = M1(k, szSpace+1) = 1;
-        M1(k, k) = 2. / (1 + 2*k);
+      {
+        basis.integralfSquared(val);
+        for (int k = 0; k < szSpace; ++k)
+          M1(k, k) = val[k];
+
+        basis.f(-1, 0, 0, val);
+        for (int k = 0; k < szSpace; ++k)
+          M1(szSpace, k) = M1(k, szSpace) = val[k];
+
+        basis.f( 1, 0, 0, val);
+        for (int k = 0; k < szSpace; ++k)
+          M1(szSpace+1, k) = M1(k, szSpace+1) = val[k];
       }
       fullMatrix<double> invM1;
       M1.invert(invM1);
@@ -630,14 +638,15 @@ namespace BoundaryLayerCurver
         int tagLine = ElementType::getTag(TYPE_LIN, order);
         const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
         const fullMatrix<double> &refNodes = fs->getReferenceNodes();
-        double *val = new double[szSpace];
         for (int i = 0; i < szSpace; ++i) {
-          LegendrePolynomials::f(order, refNodes(i, 0), val);
+          basis.f(refNodes(i, 0), 0, 0, val);
           for (int j = 0; j < szSpace; ++j) {
             Leg2Lag(i, j) = val[j];
           }
         }
       }
+
+      delete val;
 
       fullMatrix<double> tmp(szSpace+2, nGP+2, false);
       invM1.mult(M2, tmp);
@@ -653,6 +662,7 @@ namespace BoundaryLayerCurver
       data->nbPoints = getNGQQPts(orderGauss);
       data->intPoints = getGQQPts(orderGauss);
 
+      //TODO REMOVE
       fullMatrix<int> node2idxUV;
       {
         fullMatrix<double> tmp = gmshGenerateMonomialsQuadrangle(order);
@@ -669,67 +679,105 @@ namespace BoundaryLayerCurver
       const int nGP = data->nbPoints;
       const int nConstraint = 4 * order;
 
+      double *val = new double[szSpace];
+      //TODO REMOVE
       double *valu = new double[order + 1];
       double *valv = new double[order + 1];
 
       fullMatrix<double> M2(szSpace+nConstraint, nGP+nConstraint, true);
       {
         for (int j = 0; j < nGP; ++j) {
-          LegendrePolynomials::f(order, data->intPoints[j].pt[0], valu);
-          LegendrePolynomials::f(order, data->intPoints[j].pt[1], valv);
+          basis.f(data->intPoints[j].pt[0], data->intPoints[j].pt[1], 0, val);
           for (int i = 0; i < szSpace; ++i) {
-            int iu = node2idxUV(i, 0);
-            int iv = node2idxUV(i, 1);
-            M2(i, j) = valu[iu] * valv[iv] * data->intPoints[j].weight;
+            M2(i, j) = val[i] * data->intPoints[j].weight;
           }
         }
         for (int i = 0; i < nConstraint; ++i) {
           M2(szSpace+i, nGP+i) = 1;
         }
+//        M2.resize(szSpace+nConstraint, nGP+nConstraint, true);
+//        for (int j = 0; j < nGP; ++j) {
+//          LegendrePolynomials::f(order, data->intPoints[j].pt[0], valu);
+//          LegendrePolynomials::f(order, data->intPoints[j].pt[1], valv);
+//          for (int i = 0; i < szSpace; ++i) {
+//            int iu = node2idxUV(i, 0);
+//            int iv = node2idxUV(i, 1);
+//            M2(i, j) = valu[iu] * valv[iv] * data->intPoints[j].weight;
+//          }
+//        }
+//        for (int i = 0; i < nConstraint; ++i) {
+//          M2(szSpace+i, nGP+i) = 1;
+//        }
       }
+      M2.print("M2");
 
       fullMatrix<double> M1(szSpace+nConstraint, szSpace+nConstraint, true);
       {
-        for (int k = 0; k < szSpace; ++k) {
-          int ku = node2idxUV(k, 0);
-          int kv = node2idxUV(k, 1);
-          M1(k, k) = 4. / (1 + 2*ku) / (1 + 2*kv);
-        }
+        basis.integralfSquared(val);
+        for (int k = 0; k < szSpace; ++k)
+          M1(k, k) = val[k];
+
         for (int i = 0; i < nConstraint; ++i) {
-          LegendrePolynomials::f(order, node2uv(i, 0), valu);
-          LegendrePolynomials::f(order, node2uv(i, 1), valv);
+          basis.f(node2uv(i, 0), node2uv(i, 1), 0, val);
           for (int k = 0; k < szSpace; ++k) {
-            int ku = node2idxUV(k, 0);
-            int kv = node2idxUV(k, 1);
-            M1(szSpace+i, k) = M1(k, szSpace+i) = valu[ku] * valv[kv];
+            M1(szSpace+i, k) = M1(k, szSpace+i) = val[k];
           }
         }
+//        M1.resize(szSpace+nConstraint, szSpace+nConstraint, true);
+//        for (int k = 0; k < szSpace; ++k) {
+//          int ku = node2idxUV(k, 0);
+//          int kv = node2idxUV(k, 1);
+//          M1(k, k) = 4. / (1 + 2*ku) / (1 + 2*kv);
+//        }
+//        for (int i = 0; i < nConstraint; ++i) {
+//          LegendrePolynomials::f(order, node2uv(i, 0), valu);
+//          LegendrePolynomials::f(order, node2uv(i, 1), valv);
+//          for (int k = 0; k < szSpace; ++k) {
+//            int ku = node2idxUV(k, 0);
+//            int kv = node2idxUV(k, 1);
+//            M1(szSpace+i, k) = M1(k, szSpace+i) = valu[ku] * valv[kv];
+//          }
+//        }
       }
+      M1.print("M1");
       fullMatrix<double> invM1;
       M1.invert(invM1);
+      invM1.print("invM1");
 
       fullMatrix<double> Leg2Lag(szSpace, szSpace, true);
       {
         for (int i = 0; i < szSpace; ++i) {
-          LegendrePolynomials::f(order, node2uv(i, 0), valu);
-          LegendrePolynomials::f(order, node2uv(i, 1), valv);
+          basis.f(node2uv(i, 0), node2uv(i, 1), 0, val);
           for (int j = 0; j < szSpace; ++j) {
-            int ju = node2idxUV(j, 0);
-            int jv = node2idxUV(j, 1);
-            Leg2Lag(i, j) = valu[ju] * valv[jv];
+            Leg2Lag(i, j) = val[j];
           }
         }
+//        Leg2Lag.print("Leg2LagNEW");
+//        Leg2Lag.resize(szSpace, szSpace, true);
+//        for (int i = 0; i < szSpace; ++i) {
+//          LegendrePolynomials::f(order, node2uv(i, 0), valu);
+//          LegendrePolynomials::f(order, node2uv(i, 1), valv);
+//          for (int j = 0; j < szSpace; ++j) {
+//            int ju = node2idxUV(j, 0);
+//            int jv = node2idxUV(j, 1);
+//            Leg2Lag(i, j) = valu[ju] * valv[jv];
+//          }
+//        }
       }
+      Leg2Lag.print("Leg2Lag");
 
-      delete valu, valv;
+      delete val;
 
       fullMatrix<double> tmp(szSpace+nConstraint, nGP+nConstraint, false);
       invM1.mult(M2, tmp);
+      tmp.print("tmp");
       fullMatrix<double> tmp2(szSpace, nGP+nConstraint, false);
       tmp2.copy(tmp, 0, szSpace, 0, nGP+nConstraint, 0, 0);
+      tmp2.print("tmp2");
 
       data->invA.resize(szSpace, nGP+nConstraint, false);
       Leg2Lag.mult(tmp2, data->invA);
+      data->invA.print("data->invA");
       return data;
     }
 

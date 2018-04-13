@@ -32,7 +32,6 @@
 #include "MTriangle.h"
 #include "BasisFactory.h"
 #include "GFace.h"
-#include "legendrePolynomials.h"
 #include "bezierBasis.h"
 
 #include "gmshVertex.h"
