@@ -93,12 +93,12 @@ const JacobianBasis* BasisFactory::getJacobianBasis(int tag, int order)
 
 const JacobianBasis* BasisFactory::getJacobianBasis(int tag)
 {
-  const int order = JacobianBasis::jacobianOrder(tag);
+  const int jacOrder = JacobianBasis::jacobianOrder(tag);
   const int type = ElementType::ParentTypeFromTag(tag);
   if (type != TYPE_PYR)
-    return getJacobianBasis(FuncSpaceData(true, tag, order));
+    return getJacobianBasis(FuncSpaceData(true, tag, jacOrder));
   else
-    return getJacobianBasis(FuncSpaceData(true, tag, false, order+2, order));
+    return getJacobianBasis(FuncSpaceData(true, tag, false, jacOrder+2, jacOrder));
 }
 
 const CondNumBasis* BasisFactory::getCondNumBasis(int tag, int cnOrder)

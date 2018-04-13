@@ -600,7 +600,8 @@ const nodalBasis* MElement::getFunctionSpace(int order, bool serendip) const
 const JacobianBasis* MElement::getJacobianFuncSpace(int order) const
 {
   if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-  return BasisFactory::getJacobianBasis(FuncSpaceData(this, order));
+  int tag = ElementType::getTag(getType(), order);
+  return BasisFactory::getJacobianBasis(tag);
 }
 
 static double _computeDeterminantAndRegularize(const MElement *ele, double jac[3][3])

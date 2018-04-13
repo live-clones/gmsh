@@ -104,7 +104,7 @@ void BergotBasis::df(double u, double v, double w, double grads[][3]) const
     wf.resize(kMax+1);
     wg.resize(kMax+1);
     JacobiPolynomials::f(kMax, 2.*mIJ+2., 0., what, &(wf[0]));
-    JacobiPolynomials::f(kMax, 2.*mIJ+2., 0., what, &(wg[0]));
+    JacobiPolynomials::df(kMax, 2.*mIJ+2., 0., what, &(wg[0]));
   }
 
   // Recombine to find the shape function gradients
