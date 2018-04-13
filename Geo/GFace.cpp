@@ -1139,77 +1139,84 @@ SVector3 GFace::normal(const SPoint2 &param) const
 
 bool GFace::buildRepresentationCross(bool force)
 {
-  if(cross.size()){
-    if(force)
-      cross.clear();
+  if(cross[0].size()){
+    if(force){
+      cross[0].clear();
+      cross[0].clear();
+    }
     else
       return true;
   }
 
-  if(geomType() != Plane){
-    cross.clear();
-    cross.push_back(SPoint3(0., 0., 0.));
-    return false;
+  Range<double> ubounds = parBounds(0);
+  Range<double> vbounds = parBounds(1);
+  // try to compute something better for Gmsh surfaces
+  if(getNativeType() == GmshModel && geomType() == Plane){
+    SBoundingBox3d bb;
+    std::list<GEdge*> ed = edges();
+    for(std::list<GEdge*>::iterator it = ed.begin(); it != ed.end(); it++){
+      GEdge *ge = *it;
+      if(ge->geomType() != DiscreteCurve &&
+         ge->geomType() != BoundaryLayerCurve){
+        Range<double> t_bounds = ge->parBounds(0);
+        const int N = 5;
+        double t0 = t_bounds.low(), dt = t_bounds.high() - t_bounds.low();
+        for(int i = 0; i < N; i++){
+          double t = t0 + dt / (double)(N - 1) * i;
+          GPoint p = ge->point(t);
+          SPoint2 uv = parFromPoint(SPoint3(p.x(), p.y(), p.z()));
+          bb += SPoint3(uv.x(), uv.y(), 0.);
+        }
+      }
+    }
+    if(!bb.empty()){
+      ubounds = Range<double>(bb.min().x(), bb.max().x());
+      vbounds = Range<double>(bb.min().y(), bb.max().y());
+    }
   }
 
-  std::list<GEdge*> ed = edges();
-  SBoundingBox3d bb;
-  for(std::list<GEdge*>::iterator it = ed.begin(); it != ed.end(); it++){
-    GEdge *ge = *it;
-    if(ge->geomType() == GEntity::DiscreteCurve ||
-       ge->geomType() == GEntity::BoundaryLayerCurve){
-      cross.clear();
-      cross.push_back(SPoint3(0., 0., 0.));
-      return false;
-    }
-    else{
-      Range<double> t_bounds = ge->parBounds(0);
-      GPoint p[3] = {ge->point(t_bounds.low()),
-                     ge->point(0.5 * (t_bounds.low() + t_bounds.high())),
-                     ge->point(t_bounds.high())};
-      for(int i = 0; i < 3; i++){
-        SPoint2 uv = parFromPoint(SPoint3(p[i].x(), p[i].y(), p[i].z()));
-        bb += SPoint3(uv.x(), uv.y(), 0.);
-      }
-    }
-  }
-  bb *= 1.1;
-  GPoint v0 = point(bb.min().x(), bb.min().y());
-  GPoint v1 = point(bb.max().x(), bb.min().y());
-  GPoint v2 = point(bb.max().x(), bb.max().y());
-  GPoint v3 = point(bb.min().x(), bb.max().y());
+  bool tri = (geomType() == RuledSurface && edges().size() == 3);
+  if(CTX::instance()->geom.oldRuledSurface) tri = false;
+  double c = tri ? 0.75 : 0.5;
+  double uav = c * (ubounds.high() + ubounds.low());
+  double vav = (1-c) * (vbounds.high() + vbounds.low());
+  double u2 = 0.5 * (ubounds.high() + ubounds.low());
+  double v2 = 0.5 * (vbounds.high() + vbounds.low());
+  double ud = (ubounds.high() - ubounds.low());
+  double vd = (vbounds.high() - vbounds.low());
   const int N = 100;
   for(int dir = 0; dir < 2; dir++) {
-    int end_line = 0;
-    SPoint3 pt, pt_last_inside;
+    cross[dir].push_back(std::vector<SPoint3>());
     for(int i = 0; i < N; i++) {
       double t = (double)i / (double)(N - 1);
-      double x, y, z;
+      SPoint2 uv;
       if(!dir){
-        x = 0.5 * (t * (v0.x() + v1.x()) + (1. - t) * (v2.x() + v3.x()));
-        y = 0.5 * (t * (v0.y() + v1.y()) + (1. - t) * (v2.y() + v3.y()));
-        z = 0.5 * (t * (v0.z() + v1.z()) + (1. - t) * (v2.z() + v3.z()));
+        if(tri)
+          uv.setPosition(u2 + u2 * t, vbounds.low() + v2 * t);
+        else
+          uv.setPosition(ubounds.low() + ud * t, vav);
       }
       else{
-        x = 0.5 * (t * (v0.x() + v3.x()) + (1. - t) * (v2.x() + v1.x()));
-        y = 0.5 * (t * (v0.y() + v3.y()) + (1. - t) * (v2.y() + v1.y()));
-        z = 0.5 * (t * (v0.z() + v3.z()) + (1. - t) * (v2.z() + v1.z()));
+        if(tri)
+          uv.setPosition(u2 + u2 * t, v2 - v2 * t);
+        else
+          uv.setPosition(uav, vbounds.low() + vd * t);
       }
-      pt.setPosition(x, y, z);
-      if(containsPoint(pt)){
-        pt_last_inside.setPosition(x, y, z);
-        if(!end_line) { cross.push_back(pt); end_line = 1; }
+      GPoint p = point(uv);
+      SPoint3 pt(p.x(), p.y(), p.z());
+      bool inside = (geomType() == Plane) ? containsPoint(pt) : containsParam(uv);
+      if(inside){
+        cross[dir].back().push_back(pt);
       }
-      else {
-        if(end_line) { cross.push_back(pt_last_inside); end_line = 0; }
+      else{
+        if(cross[dir].back().size()) cross[dir].push_back(std::vector<SPoint3>());
       }
     }
-    if(end_line) cross.push_back(pt_last_inside);
   }
-  // if we couldn't determine a cross, add a dummy point so that we
-  // won't try again unless we force the recomputation
-  if(!cross.size()){
-    cross.push_back(SPoint3(0., 0., 0.));
+  // if we couldn't determine a cross, add a dummy one so that we won't try
+  // again unless we force the recomputation
+  if(cross[0].empty()){
+    cross[0].push_back(std::vector<SPoint3>());
     return false;
   }
   return true;
@@ -1679,9 +1686,9 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
     }
     gEdgeCounterparts[localEdge] = std::make_pair(masterEdge,sign);
   }
-  // complete the information at the edge level
 
-  edgeCounterparts   = gEdgeCounterparts;
+  // complete the information at the edge level
+  edgeCounterparts = gEdgeCounterparts;
   vertexCounterparts = gVertexCounterparts;
   GEntity::setMeshMaster(master,tfo);
 }

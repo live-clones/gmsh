@@ -867,7 +867,7 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "Normals" , opt_geometry_normals , 0. ,
     "Display size of normal vectors (in pixels)" },
-  { F|O, "NumSubEdges" , opt_geometry_num_sub_edges , 20. ,
+  { F|O, "NumSubEdges" , opt_geometry_num_sub_edges , 40. ,
     "Number of edge subdivisions between control points when displaying curves" },
 
   { F|O, "OCCAutoFix" , opt_geometry_occ_auto_fix , 1. ,

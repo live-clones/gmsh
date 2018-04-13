@@ -274,151 +274,6 @@ class drawGFace {
     glDisableClientState(GL_NORMAL_ARRAY);
     glDisableClientState(GL_COLOR_ARRAY);
   }
-  void _drawParametricGFace(GFace *f)
-  {
-    if(CTX::instance()->geom.surfaceType > 0)
-      f->fillVertexArray(f->geomType() == GEntity::ProjectionFace);
-
-    Range<double> ubounds = f->parBounds(0);
-    Range<double> vbounds = f->parBounds(1);
-    bool tri = (f->geomType() == GEntity::RuledSurface && f->edges().size() == 3);
-    if(CTX::instance()->geom.oldRuledSurface) tri = false;
-    double c = tri ? 0.75 : 0.5;
-    double uav = c * (ubounds.high() + ubounds.low());
-    double vav = (1-c) * (vbounds.high() + vbounds.low());
-    double u2 = 0.5 * (ubounds.high() + ubounds.low());
-    double v2 = 0.5 * (vbounds.high() + vbounds.low());
-
-    if(CTX::instance()->geom.surfaces || f->getSelection() > 1){
-      if(CTX::instance()->geom.surfaceType > 0 && f->va_geom_triangles){
-        bool selected = false;
-        if (f->getSelection())
-          selected = true;
-        _drawVertexArray
-          (f->va_geom_triangles, CTX::instance()->geom.light,
-           (f->geomType() == GEntity::ProjectionFace) ? true : selected,
-           (f->geomType() == GEntity::ProjectionFace) ?
-           CTX::instance()->color.geom.projection :
-           CTX::instance()->color.geom.selection);
-      }
-      else{
-        glEnable(GL_LINE_STIPPLE);
-        glLineStipple(1, 0x1F1F);
-        gl2psEnable(GL2PS_LINE_STIPPLE);
-        const double ud = (ubounds.high() - ubounds.low());
-        const double vd = (vbounds.high() - vbounds.low());
-        int N = 20;
-        GPoint p;
-        glBegin(GL_LINE_STRIP);
-        for(int i = 0; i < N; i++) {
-          if(tri)
-            p = f->point(u2 + u2 * (double)i / (double)(N - 1),
-                         vbounds.low() + v2 * (double)i / (double)(N - 1));
-          else
-            p = f->point(ubounds.low() + ud * (double)i / (double)(N - 1), vav);
-          double x = p.x(), y = p.y(), z = p.z();
-          _ctx->transform(x, y, z);
-          glVertex3d(x, y, z);
-        }
-        glEnd();
-        glBegin(GL_LINE_STRIP);
-        for(int i = 0; i < N; i++) {
-          if(tri)
-            p = f->point(u2 + u2 * (double)i / (double)(N - 1),
-                         v2 - v2 * (double)i / (double)(N - 1));
-          else
-            p = f->point(uav, vbounds.low() + vd * (double)i / (double)(N - 1));
-          double x = p.x(), y = p.y(), z = p.z();
-          _ctx->transform(x, y, z);
-          glVertex3d(x, y, z);
-        }
-        glEnd();
-
-        glDisable(GL_LINE_STIPPLE);
-        gl2psDisable(GL2PS_LINE_STIPPLE);
-      }
-    }
-
-    if(CTX::instance()->geom.surfacesNum || f->getSelection() > 1) {
-      GPoint p = f->point(uav, vav);
-      double offset = 0.1 * CTX::instance()->glFontSize * _ctx->pixel_equiv_x;
-      double x = p.x(), y = p.y(), z = p.z();
-      _ctx->transform(x, y, z);
-      drawEntityLabel(_ctx, f, x, y, z, offset);
-    }
-
-    if(CTX::instance()->geom.normals) {
-      GPoint p = f->point(uav, vav);
-      SVector3 n = f->normal(SPoint2(uav, vav));
-      for(int i = 0; i < 3; i++)
-        n[i] *= CTX::instance()->geom.normals * _ctx->pixel_equiv_x / _ctx->s[i];
-      glColor4ubv((GLubyte *) & CTX::instance()->color.geom.normals);
-      double x = p.x(), y = p.y(), z = p.z();
-      _ctx->transform(x, y, z);
-      _ctx->transformTwoForm(n[0], n[1], n[2]);
-      _ctx->drawVector(CTX::instance()->vectorType, 0, x, y, z, n[0], n[1], n[2],
-                       CTX::instance()->geom.light);
-    }
-  }
-  void _drawPlaneGFace(GFace *f)
-  {
-    if(CTX::instance()->geom.surfaceType > 0)
-      f->fillVertexArray();
-
-    if(!CTX::instance()->geom.surfaceType || !f->va_geom_triangles ||
-       CTX::instance()->geom.surfacesNum || CTX::instance()->geom.normals)
-      f->buildRepresentationCross();
-
-    if(CTX::instance()->geom.surfaces || f->getSelection() > 1){
-      //bool selected = false;
-      if(CTX::instance()->geom.surfaceType > 0 && f->va_geom_triangles){
-        _drawVertexArray(f->va_geom_triangles, CTX::instance()->geom.light,
-                         f->getSelection(), CTX::instance()->color.geom.selection);
-      }
-      else{
-        glEnable(GL_LINE_STIPPLE);
-        glLineStipple(1, 0x1F1F);
-        gl2psEnable(GL2PS_LINE_STIPPLE);
-        glBegin(GL_LINES);
-        for(unsigned int i = 0; i < f->cross.size(); i++){
-          double x = f->cross[i].x(), y = f->cross[i].y(), z = f->cross[i].z();
-          _ctx->transform(x, y, z);
-          glVertex3d(x, y, z);
-        }
-        glEnd();
-        glDisable(GL_LINE_STIPPLE);
-        gl2psDisable(GL2PS_LINE_STIPPLE);
-      }
-    }
-
-    if(f->cross.size() < 2) return;
-
-    if(CTX::instance()->geom.surfacesNum || f->getSelection() > 1) {
-      double offset = 0.1 * CTX::instance()->glFontSize * _ctx->pixel_equiv_x;
-      double x = 0.5 * (f->cross[0].x() + f->cross[1].x());
-      double y = 0.5 * (f->cross[0].y() + f->cross[1].y());
-      double z = 0.5 * (f->cross[0].z() + f->cross[1].z());
-      _ctx->transform(x, y, z);
-      drawEntityLabel(_ctx, f, x, y, z, offset);
-    }
-
-    if(CTX::instance()->geom.normals) {
-      SPoint3 p(0.5 * (f->cross[0].x() + f->cross[1].x()),
-                0.5 * (f->cross[0].y() + f->cross[1].y()),
-                0.5 * (f->cross[0].z() + f->cross[1].z()));
-      SPoint2 uv = f->parFromPoint(p);
-      SVector3 n = f->normal(uv);
-      for(int i = 0; i < 3; i++)
-        n[i] *= CTX::instance()->geom.normals * _ctx->pixel_equiv_x / _ctx->s[i];
-      glColor4ubv((GLubyte *) & CTX::instance()->color.geom.normals);
-      double x = p.x(), y = p.y(), z = p.z();
-      _ctx->transform(x, y, z);
-      _ctx->transformTwoForm(n[0], n[1], n[2]);
-      _ctx->drawVector(CTX::instance()->vectorType, 0, x, y, z, n[0], n[1], n[2],
-                       CTX::instance()->geom.light);
-    }
-  }
-
  public :
   drawGFace(drawContext *ctx) : _ctx(ctx) {}
   void operator () (GFace *f)
@@ -453,10 +308,74 @@ class drawGFace {
     else
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
-    if(f->geomType() == GEntity::Plane)
-      _drawPlaneGFace(f);
-    else
-      _drawParametricGFace(f);
+    if(CTX::instance()->geom.surfaceType > 0)
+      f->fillVertexArray(f->geomType() == GEntity::ProjectionFace);
+
+    if(!CTX::instance()->geom.surfaceType || !f->va_geom_triangles ||
+       CTX::instance()->geom.surfacesNum || CTX::instance()->geom.normals)
+      f->buildRepresentationCross();
+
+    if(CTX::instance()->geom.surfaces || f->getSelection() > 1){
+      if(CTX::instance()->geom.surfaceType > 0 && f->va_geom_triangles){
+        bool selected = false;
+        if (f->getSelection())
+          selected = true;
+        _drawVertexArray
+          (f->va_geom_triangles, CTX::instance()->geom.light,
+           (f->geomType() == GEntity::ProjectionFace) ? true : selected,
+           (f->geomType() == GEntity::ProjectionFace) ?
+           CTX::instance()->color.geom.projection :
+           CTX::instance()->color.geom.selection);
+      }
+      else{
+        glEnable(GL_LINE_STIPPLE);
+        glLineStipple(1, 0x1F1F);
+        gl2psEnable(GL2PS_LINE_STIPPLE);
+        for(int dim = 0; dim < 2; dim++){
+          for(unsigned int i = 0; i < f->cross[dim].size(); i++){
+            glBegin(GL_LINE_STRIP);
+            for(unsigned int j = 0; j < f->cross[dim][i].size(); j++){
+              double x = f->cross[dim][i][j].x();
+              double y = f->cross[dim][i][j].y();
+              double z = f->cross[dim][i][j].z();
+              _ctx->transform(x, y, z);
+              glVertex3d(x, y, z);
+            }
+            glEnd();
+          }
+        }
+        glDisable(GL_LINE_STIPPLE);
+        gl2psDisable(GL2PS_LINE_STIPPLE);
+      }
+    }
+
+    if(f->cross[0].size() && f->cross[0][0].size() >= 2){
+      int idx = f->cross[0][0].size() / 2;
+      if(CTX::instance()->geom.surfacesNum || f->getSelection() > 1) {
+        double offset = 0.1 * CTX::instance()->glFontSize * _ctx->pixel_equiv_x;
+        double x = f->cross[0][0][idx].x();
+        double y = f->cross[0][0][idx].y();
+        double z = f->cross[0][0][idx].z();
+        _ctx->transform(x, y, z);
+        drawEntityLabel(_ctx, f, x, y, z, offset);
+      }
+
+      if(CTX::instance()->geom.normals) {
+        SPoint3 p(f->cross[0][0][idx].x(),
+                  f->cross[0][0][idx].y(),
+                  f->cross[0][0][idx].z());
+        SPoint2 uv = f->parFromPoint(p);
+        SVector3 n = f->normal(uv);
+        for(int i = 0; i < 3; i++)
+          n[i] *= CTX::instance()->geom.normals * _ctx->pixel_equiv_x / _ctx->s[i];
+        glColor4ubv((GLubyte *) & CTX::instance()->color.geom.normals);
+        double x = p.x(), y = p.y(), z = p.z();
+        _ctx->transform(x, y, z);
+        _ctx->transformTwoForm(n[0], n[1], n[2]);
+        _ctx->drawVector(CTX::instance()->vectorType, 0, x, y, z, n[0], n[1], n[2],
+                         CTX::instance()->geom.light);
+      }
+    }
 
     if(select) {
       glPopName();

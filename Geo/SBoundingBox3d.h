@@ -19,8 +19,10 @@
 // A bounding box class - add points and it grows to be the bounding
 // box of the point set
 class SBoundingBox3d {
+ private:
+  SPoint3 MinPt, MaxPt;
  public:
-  SBoundingBox3d() 
+  SBoundingBox3d()
     : MinPt(DBL_MAX,DBL_MAX,DBL_MAX), MaxPt(-DBL_MAX,-DBL_MAX,-DBL_MAX) {}
   SBoundingBox3d(const SPoint3 &pt)
     : MinPt(pt), MaxPt(pt) {}
@@ -30,7 +32,7 @@ class SBoundingBox3d {
   bool empty()
   {
     if(MinPt.x() == DBL_MAX || MinPt.y() == DBL_MAX || MinPt.z() == DBL_MAX ||
-       MaxPt.x() == -DBL_MAX || MaxPt.y() == -DBL_MAX || MaxPt.z() == -DBL_MAX) 
+       MaxPt.x() == -DBL_MAX || MaxPt.y() == -DBL_MAX || MaxPt.z() == -DBL_MAX)
       return true;
     return false;
   }
@@ -47,12 +49,12 @@ class SBoundingBox3d {
       MinPt[0] = pt[0];
     if (pt[0] > MaxPt[0])
       MaxPt[0] = pt[0];
-    
+
     if(pt[1] < MinPt[1])
       MinPt[1] = pt[1];
     if (pt[1] > MaxPt[1])
       MaxPt[1] = pt[1];
-    
+
     if(pt[2] < MinPt[2])
       MinPt[2] = pt[2];
     if (pt[2] > MaxPt[2])
@@ -91,10 +93,10 @@ class SBoundingBox3d {
   {
     SVector3 len = MaxPt - MinPt;
     SPoint3 cc = center();
-    MaxPt = cc + SPoint3(1,1,1);
-    MinPt = cc + SPoint3(-1,-1,-1);
+    MaxPt = cc + SPoint3(1, 1, 1);
+    MinPt = cc + SPoint3(-1, -1, -1);
     double sc = len.norm() * 0.5;
-    scale (sc,sc,sc);
+    scale(sc, sc, sc);
   }
   bool contains(const SBoundingBox3d &bound)
   {
@@ -104,11 +106,28 @@ class SBoundingBox3d {
        bound.MaxPt.x() <= MaxPt.x() &&
        bound.MaxPt.y() <= MaxPt.y() &&
        bound.MaxPt.z() <= MaxPt.z()) return true;
-    
     return false;
   }
- private:
-  SPoint3 MinPt, MaxPt;
+  bool contains(const SPoint3 &p)
+  {
+    if(p.x() >= MinPt.x() &&
+       p.y() >= MinPt.y() &&
+       p.z() >= MinPt.z() &&
+       p.x() <= MaxPt.x() &&
+       p.y() <= MaxPt.y() &&
+       p.z() <= MaxPt.z()) return true;
+    return false;
+  }
+  bool contains(double x, double y, double z)
+  {
+    if(x >= MinPt.x() &&
+       y >= MinPt.y() &&
+       z >= MinPt.z() &&
+       x <= MaxPt.x() &&
+       y <= MaxPt.y() &&
+       z <= MaxPt.z()) return true;
+    return false;
+  }
 };
 
 #endif

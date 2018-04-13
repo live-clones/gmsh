@@ -118,7 +118,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.NumSubEdges
 Number of edge subdivisions between control points when displaying curves@*
-Default value: @code{20}@*
+Default value: @code{40}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCAutoFix
