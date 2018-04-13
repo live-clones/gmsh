@@ -1223,10 +1223,9 @@ std::vector<MElement*> GModel::getMeshElementsByCoord(SPoint3 &p, int dim, bool 
   return _elementOctree->findAll(p.x(), p.y(), p.z(), dim, strict);
 }
 
-MVertex *GModel::getMeshVertexByTag(int n)
+void GModel::rebuildMeshVertexCache(bool onlyIfNecessary)
 {
-  if(_vertexVectorCache.empty() && _vertexMapCache.empty()){
-    Msg::Debug("Rebuilding mesh vertex cache");
+  if(!onlyIfNecessary || (_vertexVectorCache.empty() && _vertexMapCache.empty())){
     _vertexVectorCache.clear();
     _vertexMapCache.clear();
     bool dense = (getNumMeshVertices() == _maxVertexNum);
@@ -1239,14 +1238,22 @@ MVertex *GModel::getMeshVertexByTag(int n)
       for(unsigned int i = 0; i < entities.size(); i++)
         for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
           _vertexVectorCache[entities[i]->mesh_vertices[j]->getNum()] =
-            entities[i]->mesh_vertices[j];
+          entities[i]->mesh_vertices[j];
     }
     else{
       for(unsigned int i = 0; i < entities.size(); i++)
         for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
           _vertexMapCache[entities[i]->mesh_vertices[j]->getNum()] =
-            entities[i]->mesh_vertices[j];
+          entities[i]->mesh_vertices[j];
     }
+  }
+}
+
+MVertex *GModel::getMeshVertexByTag(int n)
+{
+  if(_vertexVectorCache.empty() && _vertexMapCache.empty()){
+    Msg::Debug("Rebuilding mesh vertex cache");
+    rebuildMeshVertexCache();
   }
 
   if(n < (int)_vertexVectorCache.size())

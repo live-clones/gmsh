@@ -232,6 +232,9 @@ GMSH_API void gmshModelMeshGetLastEntityError(int ** dimTags, size_t * dimTags_n
 GMSH_API void gmshModelMeshGetLastNodeError(int ** nodeTags, size_t * nodeTags_n,
                                             int * ierr);
 
+/* Initialize the mesh node cache ONLY it has not already done. */
+GMSH_API void gmshModelMeshInitializeNodeCache(int * ierr);
+
 /* Gets the mesh nodes of the entity of dimension `dim' and `tag' tag. If
  * `tag' < 0, gets the nodes for all entities of dimension `dim'. If `dim' and
  * `tag' are negative, gets all the nodes in the mesh. `nodeTags' contains the

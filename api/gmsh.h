@@ -220,6 +220,9 @@ namespace gmsh { // Top-level functions
       // Currently only populated by the new 3D meshing algorithms.
       GMSH_API void getLastNodeError(std::vector<int> & nodeTags);
 
+      // Initialize the mesh node cache ONLY it has not already done.
+      GMSH_API void initializeNodeCache();
+
       // Gets the mesh nodes of the entity of dimension `dim' and `tag' tag. If
       // `tag' < 0, gets the nodes for all entities of dimension `dim'. If `dim'
       // and `tag' are negative, gets all the nodes in the mesh. `nodeTags'

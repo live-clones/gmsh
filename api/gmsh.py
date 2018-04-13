@@ -759,6 +759,19 @@ class model:
             return _ovectorint(api_nodeTags_,api_nodeTags_n_.value)
 
         @staticmethod
+        def initializeNodeCache():
+            """
+            Initialize the mesh node cache ONLY it has not already done.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshInitializeNodeCache(
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshInitializeNodeCache returned non-zero error code : ",
+                    ierr.value)
+
+        @staticmethod
         def getNodes(dim=-1,tag=-1):
             """
             Gets the mesh nodes of the entity of dimension `dim' and `tag' tag. If

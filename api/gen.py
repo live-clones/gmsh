@@ -137,6 +137,9 @@ mesh.add('getLastEntityError',doc,None,ovectorpair('dimTags'))
 doc = '''Gets the last mesh nodes (if any) where a meshing error occurred. Currently only populated by the new 3D meshing algorithms.'''
 mesh.add('getLastNodeError',doc,None,ovectorint('nodeTags'))
 
+doc = '''Initialize the mesh node cache ONLY it has not already done.'''
+mesh.add('initializeNodeCache',doc,None)
+
 doc = '''Gets the mesh nodes of the entity of dimension `dim' and `tag' tag. If `tag' < 0, gets the nodes for all entities of dimension `dim'. If `dim' and `tag' are negative, gets all the nodes in the mesh. `nodeTags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the (x, y, z) coordinates of the nodes, concatenated. If `dim' >= 0, `parametricCoord' contains the parametric coordinates of the nodes, if available. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'.'''
 mesh.add('getNodes',doc,None,ovectorint('nodeTags'),ovectordouble('coord'),ovectordouble('parametricCoord'),iint('dim', '-1'),iint('tag', '-1'))
 

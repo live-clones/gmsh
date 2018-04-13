@@ -341,6 +341,13 @@ void gmshModelMeshGetLastNodeError(int ** nodeTags, size_t * nodeTags_n,int * ie
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
+void gmshModelMeshInitializeNodeCache(int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  gmsh::model::mesh::initializeNodeCache();
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
 void gmshModelMeshGetNodes(int ** nodeTags, size_t * nodeTags_n,double ** coord, size_t * coord_n,double ** parametricCoord, size_t * parametricCoord_n,const int dim,const int tag,int * ierr){
   if(ierr) *ierr = 0;
   try {

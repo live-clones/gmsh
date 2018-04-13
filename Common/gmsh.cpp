@@ -462,6 +462,12 @@ void gmsh::model::mesh::getLastNodeError(std::vector<int> &nodeTags)
     nodeTags.push_back(v[i]->getNum());
 }
 
+void gmsh::model::mesh::initializeNodeCache()
+{
+  if(!_isInitialized()){ throw -1; }
+  GModel::current()->rebuildMeshVertexCache(true);
+}
+
 void gmsh::model::mesh::getNodes(std::vector<int> &nodeTags,
                                  std::vector<double> &coord,
                                  std::vector<double> &parametricCoord,

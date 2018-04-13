@@ -433,6 +433,9 @@ class GModel {
 
   // return the total number of vertices in the mesh
   int getNumMeshVertices(int dim = -1) const;
+  
+  // recompute _vertexVectorCache if there is a dense vertex numbering or _vertexMapCache if not.
+  void rebuildMeshVertexCache(bool onlyIfNecessary = false);
 
   // access a mesh vertex by tag, using the vertex cache
   MVertex *getMeshVertexByTag(int n);
