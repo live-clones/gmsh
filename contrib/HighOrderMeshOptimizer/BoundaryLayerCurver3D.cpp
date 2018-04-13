@@ -971,6 +971,7 @@ namespace BoundaryLayerCurver
                   allPrimaryVertices[j*3+2]);
       else
         f = MFace(allPrimaryVertices[j*4+0],
+                  allPrimaryVertices[j*4+1],
                   allPrimaryVertices[j*4+2],
                   allPrimaryVertices[j*4+3]);
       stack[j] = column[j]->getHighOrderFace(f);

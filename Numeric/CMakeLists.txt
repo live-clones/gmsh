@@ -15,8 +15,7 @@ set(SRC
 	incompleteBasis.cpp
 	pyramidalBasis.cpp
 	BergotBasis.cpp
-	jacobiPolynomials.cpp
-	legendrePolynomials.cpp
+	orthogonalBasis.cpp
     bezierBasis.cpp
     JacobianBasis.cpp
     CondNumBasis.cpp

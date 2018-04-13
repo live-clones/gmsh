@@ -32,7 +32,7 @@
 #include "MTriangle.h"
 #include "BasisFactory.h"
 #include "GFace.h"
-#include "legendrePolynomials.h"
+#include "orthogonalBasis.h"
 #include "bezierBasis.h"
 
 #include "gmshVertex.h"
@@ -598,7 +598,6 @@ namespace BoundaryLayerCurver
     if (typeElement == TYPE_LIN) {
       data->nbPoints = getNGQLPts(orderGauss);
       data->intPoints = getGQLPts(orderGauss);
-      LegendrePolynomials legendre(order);
 
       const int szSpace = order + 1;
       const int nGP = data->nbPoints;
@@ -607,7 +606,7 @@ namespace BoundaryLayerCurver
       {
         double *val = new double[szSpace];
         for (int j = 0; j < nGP; ++j) {
-          legendre.f(data->intPoints[j].pt[0], val);
+          LegendrePolynomials::f(order, data->intPoints[j].pt[0], val);
           for (int i = 0; i < szSpace; ++i) {
             M2(i, j) = val[i] * data->intPoints[j].weight;
           }
@@ -633,7 +632,7 @@ namespace BoundaryLayerCurver
         const fullMatrix<double> &refNodes = fs->getReferenceNodes();
         double *val = new double[szSpace];
         for (int i = 0; i < szSpace; ++i) {
-          legendre.f(refNodes(i, 0), val);
+          LegendrePolynomials::f(order, refNodes(i, 0), val);
           for (int j = 0; j < szSpace; ++j) {
             Leg2Lag(i, j) = val[j];
           }
@@ -653,7 +652,6 @@ namespace BoundaryLayerCurver
     else if (typeElement == TYPE_QUA) {
       data->nbPoints = getNGQQPts(orderGauss);
       data->intPoints = getGQQPts(orderGauss);
-      LegendrePolynomials legendre(order);
 
       fullMatrix<int> node2idxUV;
       {
@@ -677,8 +675,8 @@ namespace BoundaryLayerCurver
       fullMatrix<double> M2(szSpace+nConstraint, nGP+nConstraint, true);
       {
         for (int j = 0; j < nGP; ++j) {
-          legendre.f(data->intPoints[j].pt[0], valu);
-          legendre.f(data->intPoints[j].pt[1], valv);
+          LegendrePolynomials::f(order, data->intPoints[j].pt[0], valu);
+          LegendrePolynomials::f(order, data->intPoints[j].pt[1], valv);
           for (int i = 0; i < szSpace; ++i) {
             int iu = node2idxUV(i, 0);
             int iv = node2idxUV(i, 1);
@@ -698,8 +696,8 @@ namespace BoundaryLayerCurver
           M1(k, k) = 4. / (1 + 2*ku) / (1 + 2*kv);
         }
         for (int i = 0; i < nConstraint; ++i) {
-          legendre.f(node2uv(i, 0), valu);
-          legendre.f(node2uv(i, 1), valv);
+          LegendrePolynomials::f(order, node2uv(i, 0), valu);
+          LegendrePolynomials::f(order, node2uv(i, 1), valv);
           for (int k = 0; k < szSpace; ++k) {
             int ku = node2idxUV(k, 0);
             int kv = node2idxUV(k, 1);
@@ -713,8 +711,8 @@ namespace BoundaryLayerCurver
       fullMatrix<double> Leg2Lag(szSpace, szSpace, true);
       {
         for (int i = 0; i < szSpace; ++i) {
-          legendre.f(node2uv(i, 0), valu);
-          legendre.f(node2uv(i, 1), valv);
+          LegendrePolynomials::f(order, node2uv(i, 0), valu);
+          LegendrePolynomials::f(order, node2uv(i, 1), valv);
           for (int j = 0; j < szSpace; ++j) {
             int ju = node2idxUV(j, 0);
             int jv = node2idxUV(j, 1);
@@ -801,11 +799,10 @@ namespace BoundaryLayerCurver
       Ml.resize(nbDof, nbDofh);
       {
         fullMatrix<double> vandermonde(nbDofh, nbDofh);
-        LegendrePolynomials legendre(order + 1);
 
         double *val = new double[nbDofh];
         for (int i = 0; i < nbDofh; ++i) {
-          legendre.fc(refNodesh(i,0), val);
+          LegendrePolynomials::fc(order+1, refNodesh(i,0), val);
           for (int j = 0; j < nbDofh; ++j) {
             vandermonde(i, j) = val[j];
           }
@@ -822,11 +819,9 @@ namespace BoundaryLayerCurver
 
       Me.resize(nbDof, nbDof);
       {
-        LegendrePolynomials legendre(order);
-
         double *val = new double[nbDof];
         for (int i = 0; i < nbDof; ++i) {
-          legendre.fc(refNodes(i, 0), val);
+          LegendrePolynomials::fc(order, refNodes(i, 0), val);
           for (int j = 0; j < nbDof; ++j) {
             Me(i, j) = val[j];
           }
