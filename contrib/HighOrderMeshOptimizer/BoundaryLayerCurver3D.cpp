@@ -1003,9 +1003,6 @@ namespace BoundaryLayerCurver
     // where x0(u) is the position of 'baseFace' and h, b, c are given by
     //       'parameters'
 
-    if (baseFace.getType() == TYPE_TRI)
-      return;
-
     const int orderSurface = baseFace.getOrder();
     const int orderGauss = orderSurface * 2;
     const int nVerticesBoundary = baseFace.getNumVerticesOnBoundary();

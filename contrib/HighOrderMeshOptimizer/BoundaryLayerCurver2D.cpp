@@ -722,7 +722,73 @@ namespace BoundaryLayerCurver
     }
 
     else if (typeElement == TYPE_TRI) {
-      Msg::Error("Implement data for tri");
+      data->nbPoints = getNGQTPts(orderGauss);
+      data->intPoints = getGQTPts(orderGauss);
+
+      fullMatrix<double> refNodes = gmshGeneratePointsTriangle(order);
+
+      const int szSpace = (order + 1) * (order + 2) / 2;
+      const int nGP = data->nbPoints;
+      const int nConstraint = 3 * order;
+
+      double *val = new double[szSpace];
+
+      fullMatrix<double> M2(szSpace+nConstraint, nGP+nConstraint, true);
+      {
+        for (int j = 0; j < nGP; ++j) {
+          basis.f(data->intPoints[j].pt[0], data->intPoints[j].pt[1], 0, val);
+          for (int i = 0; i < szSpace; ++i) {
+            M2(i, j) = val[i] * data->intPoints[j].weight;
+          }
+        }
+        for (int i = 0; i < nConstraint; ++i) {
+          M2(szSpace+i, nGP+i) = 1;
+        }
+      }
+      M2.print("M2");
+
+      fullMatrix<double> M1(szSpace+nConstraint, szSpace+nConstraint, true);
+      {
+        basis.integralfSquared(val);
+        for (int k = 0; k < szSpace; ++k)
+          M1(k, k) = val[k];
+
+        for (int i = 0; i < nConstraint; ++i) {
+          basis.f(refNodes(i, 0), refNodes(i, 1), 0, val);
+          for (int k = 0; k < szSpace; ++k) {
+            M1(szSpace+i, k) = M1(k, szSpace+i) = val[k];
+          }
+        }
+      }
+      M1.print("M1");
+      fullMatrix<double> invM1;
+      M1.invert(invM1);
+      invM1.print("invM1");
+
+      fullMatrix<double> Leg2Lag(szSpace, szSpace, true);
+      {
+        for (int i = 0; i < szSpace; ++i) {
+          basis.f(refNodes(i, 0), refNodes(i, 1), 0, val);
+          for (int j = 0; j < szSpace; ++j) {
+            Leg2Lag(i, j) = val[j];
+          }
+        }
+      }
+      Leg2Lag.print("Leg2Lag");
+
+      delete val;
+
+      fullMatrix<double> tmp(szSpace+nConstraint, nGP+nConstraint, false);
+      invM1.mult(M2, tmp);
+      tmp.print("tmp");
+      fullMatrix<double> tmp2(szSpace, nGP+nConstraint, false);
+      tmp2.copy(tmp, 0, szSpace, 0, nGP+nConstraint, 0, 0);
+      tmp2.print("tmp2");
+
+      data->invA.resize(szSpace, nGP+nConstraint, false);
+      Leg2Lag.mult(tmp2, data->invA);
+      data->invA.print("data->invA");
+      return data;
     }
   }
 
