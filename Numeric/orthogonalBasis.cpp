@@ -25,11 +25,11 @@ void orthogonalBasis::f(double u, double v, double w, double *sf) const
       return;
     case TYPE_TRI:
       if (u >= 1.) {
-        for (int i = 0; i <= _order; ++i) {
-          sf[k++] = 1 + i;
-          for (int j = 1; j <= _order-i; ++j) {
-            sf[k++] = 0;
-          }
+        for (int k = 0; k <= _order; ++k) {
+          sf[k] = k+1;
+        }
+        for (int k = _order; k < (_order + 1) * (_order + 2) / 2; ++k) {
+          sf[k] = 0;
         }
         return;
       }
@@ -68,7 +68,7 @@ void orthogonalBasis::integralfSquared(double *val) const
       return;
     case TYPE_TRI:
       for (int i = 0; i <= _order; ++i) {
-        for (int j = 1; j <= _order-i; ++j) {
+        for (int j = 0; j <= _order-i; ++j) {
           val[k++] = .5 / (1 + i+j) / (1 + 2*i);
         }
       }
@@ -81,6 +81,7 @@ void orthogonalBasis::integralfSquared(double *val) const
       }
   }
 }
+
 
 namespace LegendrePolynomials {
   void f(int n, double u, double *val)

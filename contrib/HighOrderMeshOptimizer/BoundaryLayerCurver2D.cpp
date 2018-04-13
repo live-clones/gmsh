@@ -745,7 +745,6 @@ namespace BoundaryLayerCurver
           M2(szSpace+i, nGP+i) = 1;
         }
       }
-      M2.print("M2");
 
       fullMatrix<double> M1(szSpace+nConstraint, szSpace+nConstraint, true);
       {
@@ -760,10 +759,8 @@ namespace BoundaryLayerCurver
           }
         }
       }
-      M1.print("M1");
       fullMatrix<double> invM1;
       M1.invert(invM1);
-      invM1.print("invM1");
 
       fullMatrix<double> Leg2Lag(szSpace, szSpace, true);
       {
@@ -774,20 +771,16 @@ namespace BoundaryLayerCurver
           }
         }
       }
-      Leg2Lag.print("Leg2Lag");
 
       delete val;
 
       fullMatrix<double> tmp(szSpace+nConstraint, nGP+nConstraint, false);
       invM1.mult(M2, tmp);
-      tmp.print("tmp");
       fullMatrix<double> tmp2(szSpace, nGP+nConstraint, false);
       tmp2.copy(tmp, 0, szSpace, 0, nGP+nConstraint, 0, 0);
-      tmp2.print("tmp2");
 
       data->invA.resize(szSpace, nGP+nConstraint, false);
       Leg2Lag.mult(tmp2, data->invA);
-      data->invA.print("data->invA");
       return data;
     }
   }
