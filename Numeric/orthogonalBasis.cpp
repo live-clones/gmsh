@@ -7,6 +7,7 @@
 #include <algorithm>
 #include "orthogonalBasis.h"
 #include "FuncSpaceData.h"
+#include "Numeric.h"
 
 
 orthogonalBasis::orthogonalBasis(const FuncSpaceData &_data)
@@ -22,12 +23,35 @@ void orthogonalBasis::f(double u, double v, double w, double *sf) const
     case TYPE_LIN:
       LegendrePolynomials::f(_order, u, sf);
       return;
+    case TYPE_TRI:
+      if (u >= 1.) {
+        for (int i = 0; i <= _order; ++i) {
+          sf[k++] = 1 + i;
+          for (int j = 1; j <= _order-i; ++j) {
+            sf[k++] = 0;
+          }
+        }
+        return;
+      }
+      LegendrePolynomials::f(_order, 2*v/(1-u)-1, sf0);
+      k = 0;
+      for (int i = 0; i <= _order; ++i) {
+        JacobiPolynomials::f(_order-i, 2*i+1, 0, 2*u-1, sf1);
+        double coeff = pow_int(1-u, i);
+        for (int j = 0; j <= _order-i; ++j) {
+          sf1[j] *= coeff;
+        }
+        for (int j = 0; j <= _order-i; ++j) {
+          sf[k++] = sf0[i] * sf1[j];
+        }
+      }
+      return;
     case TYPE_QUA:
       LegendrePolynomials::f(_order, u, sf0);
       LegendrePolynomials::f(_order, v, sf1);
       k = 0;
-      for (int i = 0; i < _order + 1; ++i) {
-        for (int j = 0; j < _order + 1; ++j) {
+      for (int i = 0; i <= _order; ++i) {
+        for (int j = 0; j <= _order; ++j) {
           sf[k++] = sf0[i] * sf1[j];
         }
       }
@@ -40,14 +64,21 @@ void orthogonalBasis::integralfSquared(double *val) const
   int k;
   switch (_type) {
     case TYPE_LIN:
-      for (int i = 0; i < _order + 1; ++i) {
+      for (int i = 0; i <= _order; ++i) {
         val[i] = 2. / (1 + 2*i);
+      }
+      return;
+    case TYPE_TRI:
+      for (int i = 0; i <= _order; ++i) {
+        for (int j = 1; j <= _order-i; ++j) {
+          val[k++] = .5 / (1 + i+j) / (1 + 2*i);
+        }
       }
       return;
     case TYPE_QUA:
       k = 0;
-      for (int i = 0; i < _order + 1; ++i) {
-        for (int j = 0; j < _order + 1; ++j) {
+      for (int i = 0; i <= _order; ++i) {
+        for (int j = 0; j <= _order; ++j) {
           val[k++] = 4. / (1 + 2*i) / (1 + 2*j);
         }
       }
