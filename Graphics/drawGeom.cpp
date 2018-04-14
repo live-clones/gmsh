@@ -110,6 +110,8 @@ class drawGVertex {
     if(CTX::instance()->geom.pointsNum || v->getSelection() > 1) {
       double offset = (0.5 * ps +
                        0.1 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
+      if(v->getSelection() > 1)
+        glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
       drawEntityLabel(_ctx, v, x, y, z, offset);
     }
 
@@ -203,6 +205,8 @@ class drawGEdge {
                        0.1 * CTX::instance()->glFontSize) * _ctx->pixel_equiv_x;
       double x = p.x(), y = p.y(), z = p.z();
       _ctx->transform(x, y, z);
+      if(e->getSelection() > 1)
+        glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
       drawEntityLabel(_ctx, e, x, y, z, offset);
     }
 
@@ -329,7 +333,7 @@ class drawGFace {
       }
       else{
         glEnable(GL_LINE_STIPPLE);
-        glLineStipple(1, 0x1F1F);
+        glLineStipple(1, 0x0F0F);
         gl2psEnable(GL2PS_LINE_STIPPLE);
         for(int dim = 0; dim < 2; dim++){
           for(unsigned int i = 0; i < f->cross[dim].size(); i++){
@@ -357,6 +361,8 @@ class drawGFace {
         double y = f->cross[0][0][idx].y();
         double z = f->cross[0][0][idx].z();
         _ctx->transform(x, y, z);
+        if(f->getSelection() > 1)
+          glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
         drawEntityLabel(_ctx, f, x, y, z, offset);
       }
 
@@ -420,8 +426,10 @@ class drawGRegion {
       _ctx->drawSphere(size, x, y, z, CTX::instance()->geom.light);
 
     if(CTX::instance()->geom.volumesNum || r->getSelection() > 1){
-      double offset = (0.5 * size + 0.1 * CTX::instance()->glFontSize) *
+      double offset = (1. * size + 0.1 * CTX::instance()->glFontSize) *
         _ctx->pixel_equiv_x;
+      if(r->getSelection() > 1)
+        glColor4ubv((GLubyte *) & CTX::instance()->color.fg);
       drawEntityLabel(_ctx, r, x, y, z, offset);
     }
 

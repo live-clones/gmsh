@@ -854,7 +854,7 @@ StringXNumber GeometryOptions_Number[] = {
     "Display geometry curves?" },
   { F|O, "LineNumbers" , opt_geometry_curves_num , 0. ,
     "Display curve numbers?" },
-  { F|O, "LineSelectWidth" , opt_geometry_curve_sel_width , 2. ,
+  { F|O, "LineSelectWidth" , opt_geometry_curve_sel_width , 3. ,
     "Display width of selected curves (in pixels)" },
   { F|O, "LineType" , opt_geometry_curve_type , 0. ,
     "Display curves as solid color segments (0), 3D cylinders (1) or tapered "
@@ -907,7 +907,7 @@ StringXNumber GeometryOptions_Number[] = {
     "Display geometry points?" },
   { F|O, "PointNumbers" , opt_geometry_points_num , 0. ,
     "Display points numbers?" },
-  { F|O, "PointSelectSize" , opt_geometry_point_sel_size , 5. ,
+  { F|O, "PointSelectSize" , opt_geometry_point_sel_size , 6. ,
     "Display size of selected points (in pixels)" },
   { F|O, "PointSize" , opt_geometry_point_size , 4. ,
     "Display size of points (in pixels)" },
