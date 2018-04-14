@@ -873,6 +873,8 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "OCCAutoFix" , opt_geometry_occ_auto_fix , 1. ,
     "Automatically fix orientation of wires, faces, shells and volumes when creating"
     " new entities" },
+  { F|O, "OCCDisableSTL" , opt_geometry_occ_disable_stl , 0. ,
+    "Disable STL computation" },
   { F|O, "OCCFixDegenerated" , opt_geometry_occ_fix_degenerated , 0. ,
     "Fix degenerated edges/faces in STEP, IGES and BRep models" },
   { F|O, "OCCFixSmallEdges" , opt_geometry_occ_fix_small_edges , 0. ,

@@ -126,6 +126,11 @@ Automatically fix orientation of wires, faces, shells and volumes when creating 
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCDisableSTL
+Disable STL computation@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.OCCFixDegenerated
 Fix degenerated edges/faces in STEP, IGES and BRep models@*
 Default value: @code{0}@*

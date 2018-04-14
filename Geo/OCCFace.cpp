@@ -451,7 +451,7 @@ bool OCCFace::buildSTLTriangulation(bool force)
   return true;
 }
 
-bool OCCFace::isSphere (double &radius, SPoint3 &center) const
+bool OCCFace::isSphere(double &radius, SPoint3 &center) const
 {
   switch(geomType()){
   case GEntity::Sphere:

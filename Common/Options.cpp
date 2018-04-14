@@ -4717,6 +4717,13 @@ double opt_geometry_occ_auto_fix(OPT_ARGS_NUM)
   return CTX::instance()->geom.occAutoFix;
 }
 
+double opt_geometry_occ_disable_stl(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occDisableSTL = val ? 1 : 0;
+  return CTX::instance()->geom.occDisableSTL;
+}
+
 double opt_geometry_occ_fix_degenerated(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
