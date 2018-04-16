@@ -1328,7 +1328,8 @@ endif(WALL AND NOT MSVC)
 # don't issue warnings for contributed libraries
 check_cxx_compiler_flag("-w" NOWARN)
 if(NOWARN)
-  file(GLOB_RECURSE NOWARN_SRC contrib/*.cpp contrib/*.cc contrib/*.cxx contrib/*.c
+  file(GLOB_RECURSE NOWARN_SRC contrib/*.cpp contrib/*.cc contrib/*.cxx
+       #contrib/*.c
       ${CMAKE_CURRENT_BINARY_DIR}/contrib/taucs/*.c)
   set_compile_flags(NOWARN_SRC "-w")
 endif(NOWARN)
