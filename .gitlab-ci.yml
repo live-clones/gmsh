@@ -55,7 +55,7 @@ windows64_msvc_ci:
   script:
     - md build
     - cd build
-    - cmake -DGMSH_EXTRA_VERSION=%EXTRA_VERSION:~0,13% -DENABLE_HXT=0 ..
+    - cmake -DGMSH_EXTRA_VERSION=%EXTRA_VERSION:~0,13% ..
     - msbuild package.vcxproj
   tags:
     - windows64

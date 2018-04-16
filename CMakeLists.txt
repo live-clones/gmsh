@@ -1058,13 +1058,16 @@ if(HAVE_SOLVER)
   endif(ENABLE_GETDP)
 endif(HAVE_SOLVER)
 
-
-if (ENABLE_HXT)
+if(ENABLE_HXT)
   set_config_option(HAVE_HXT "Hxt")
   add_subdirectory(contrib/hxt)
   include_directories(BEFORE contrib/hxt)
- endif(ENABLE_HXT)
-
+  if(MSVC)
+    # Visual C++ does not support C99 - force compilation as C++ code
+    file(GLOB_RECURSE HXT_SRC contrib/hxt/*.c)
+    set_compile_flags(HXT_SRC "/TP")
+  endif(MSVC)
+endif(ENABLE_HXT)
 
 if(ENABLE_OCC)
   set(OCC_MINIMAL_VERSION "6.9.1")
