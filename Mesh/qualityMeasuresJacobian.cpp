@@ -189,17 +189,6 @@ void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
   fullVector<double> coeffBez(jfs->getNumJacNodes());
   jfs->getSignedJacobian(nodesXYZ, coeffLag, normals);
   jfs->lag2Bez(coeffLag, coeffBez);
-//  nodesXYZ.print("nodesXYZ");
-//  coeffLag.print("coeffLag");
-//  coeffBez.print("coeffBez");
-//
-//  const JacobianBasis *jfs1 = el->getJacobianFuncSpace(1);
-//  fullVector<double> coeffLag1(jfs1->getNumJacNodes());
-//  fullVector<double> coeffBez1(jfs1->getNumJacNodes());
-//  jfs1->getSignedJacobian(nodesXYZ, coeffLag1, normals);
-//  jfs1->lag2Bez(coeffLag1, coeffBez1);
-//  coeffLag1.print("coeffLag1");
-//  coeffBez1.print("coeffBez1");
 
   std::vector<_CoeffData*> domains;
   domains.push_back(new _CoeffDataJac(coeffBez, jfs->getBezier(), 0));
@@ -298,13 +287,10 @@ double minIGEMeasure(MElement *el, bool knownValid, bool reversedOk)
   );
 
   _subdivideDomains(domains);
-
-//  Msg::Info("element %d, type %d, numSub %d", el->getNum(), el->getType(),
-//      domains.size()/7);
-  if (domains.size()/7 > 500) {//fordebug
-    Msg::Info("S too much subdivision: %d (el %d, type %d, tag %d)",
-        domains.size()/7, el->getNum(), el->getType(), el->getTypeForMSH());
-  }
+//  if (domains.size()/7 > 500) {//fordebug
+//    Msg::Info("S too much subdivision: %d (el %d, type %d, tag %d)",
+//        domains.size()/7, el->getNum(), el->getType(), el->getTypeForMSH());
+//  }
 
   return _getMinAndDeleteDomains(domains);
 }
@@ -393,10 +379,10 @@ double minICNMeasure(MElement *el,
   );
 
   _subdivideDomains(domains);
-  if (domains.size()/7 > 500) {//fordebug
-    Msg::Info("I too much subdivision: %d (el %d, type %d, tag %d)",
-               domains.size()/7, el->getNum(), el->getType(), el->getTypeForMSH());
-  }
+//  if (domains.size()/7 > 500) {//fordebug
+//    Msg::Info("I too much subdivision: %d (el %d, type %d, tag %d)",
+//               domains.size()/7, el->getNum(), el->getType(), el->getTypeForMSH());
+//  }
 
   return _getMinAndDeleteDomains(domains);
 }
@@ -680,36 +666,11 @@ _CoeffDataIGE::_CoeffDataIGE(fullVector<double> &det,
   const_cast<fullVector<double>&>(_coeffsJacDet).setOwnData(true);
   const_cast<fullMatrix<double>&>(_coeffsJacMat).setOwnData(true);
 
-//  _coeffsJacDet.print("_coeffsJacDet");
-//  for (int i = 0; i < _coeffsJacMat.size1(); ++i) {
-//    for (int j = 0; j < _coeffsJacMat.size2(); ++j) {
-//      if (std::abs(_coeffsJacMat(i, j)) < 1e-13)
-//        const_cast<fullMatrix<double>&>(_coeffsJacMat)(i, j) = 0;
-//    }
-//  }
-//  _coeffsJacMat.print("_coeffsJacMat");
-
   _computeAtCorner(_minL, _maxL);
 
     _minB = 0;
     if (boundsOk(_minL, _maxL)) return;
     else _minB = _computeLowerBound();
-//  Msg::Info("%g %g %g", _minB, _minL, _maxL); //fordebug
-
-//    for (int i = 0; i < _depth; ++i) {
-//      std::cout << "  ";
-//    }
-//    std::cout << _depth << "> ";
-//    std::cout << std::setw(8) << std::left << _minB << " ";
-//    std::cout << std::setw(8) << std::left << _minL << " ";
-//    std::cout << std::setw(8) << std::left << _maxL << " ";
-//    std::cout << std::setw(8) << std::left << _minL-_minB;
-//    if (_minL-_minB < 1e-3)
-//      std::cout << " ok";
-//    std::cout << std::endl;
-
-//  _coeffsJacDet.print("_coeffsJacDet");
-//  _coeffsJacMat.print("_coeffsJacMat");
   // computation of _maxB not implemented for now
 }
 
@@ -718,19 +679,6 @@ bool _CoeffDataIGE::boundsOk(double minL, double maxL) const
   static const double tolmin = 1e-3;
   static const double tolmax = 1e-2;
   const double tol = tolmin + (tolmax-tolmin) * std::max(_minB, .0);
-//  std::cout << "=> bound " << _minB << " " << minL << " " << minL - _minB << std::endl;
-//  if (_minB > 0) {
-//    for (int i = 0; i < _depth; ++i) {
-//      std::cout << "  ";
-//    }
-//    std::cout << _depth << ") ";
-//    std::cout << std::setw(8) << std::left << _minB << " ";
-//    std::cout << std::setw(8) << std::left << minL << " ";
-//    std::cout << std::setw(8) << std::left << minL-_minB;
-//    if (minL-_minB < tol)
-//      std::cout << " ok";
-//    std::cout << std::endl;
-//  }
   return minL - _minB < tol;
 }
 
@@ -1008,9 +956,6 @@ _CoeffDataICN::_CoeffDataICN(fullVector<double> &det,
   _minB = 0;
   if (boundsOk(_minL, _maxL)) return;
   else _minB = _computeLowerBound();
-//  Msg::Info("%g %g %g ", _minB, _minL, _maxL);
-//  _coeffsJacDet.print("_coeffsJacDet");
-//  _coeffsJacMat.print("_coeffsJacMat");
 
   // _maxB not used for now
 }
@@ -1108,33 +1053,10 @@ double _CoeffDataICN::_computeLowerBound() const
     _bfsMat->getRaiser()->computeCoeff(P, P, P, coeffDenominator);
   }
 
-  return 3*std::pow(_computeBoundRational(_coeffsJacDet,
-                                          coeffDenominator, true), 2/3.);
+  const double boundFraction =
+      _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
 
-//  // 3D element OLD
-//  fullVector<double> coeffNumerator;
-//  _bfsDet->getRaiser()->computeCoeff(_coeffsJacDet, _coeffsJacDet, coeffNumerator);
-//
-//  fullVector<double> coeffDenominator;
-//  {
-//    fullVector<double> coeffDenCbrt;
-//    bezierBasisRaiser *raiser = _bfsMat->getRaiser();
-//
-//    fullVector<double> prox;
-//    for (int k = 0; k < _coeffsJacMat.size2(); ++k) {
-//      prox.setAsProxy(_coeffsJacMat, k);
-//      fullVector<double> tmp;
-//      raiser->computeCoeff(prox, prox, tmp);
-//      if (k == 0) coeffDenCbrt.resize(tmp.size());
-//      coeffDenCbrt.axpy(tmp, 1);
-//    }
-//
-//    bezierBasisRaiser *raiser2 = raiser->getRaisedBezierBasis(2)->getRaiser();
-//    raiser2->computeCoeff(coeffDenCbrt, coeffDenCbrt, coeffDenCbrt, coeffDenominator);
-//  }
-//
-//  return 3*std::pow(_computeBoundRational(coeffNumerator,
-//                                          coeffDenominator, true), 1/3.);
+  return 3*std::cbrt(boundFraction * boundFraction);
 }
 
 // Miscellaneous
