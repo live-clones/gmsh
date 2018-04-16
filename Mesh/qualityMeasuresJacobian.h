@@ -131,6 +131,7 @@ double _computeBoundRational(const fullVector<double> &numerator,
                              bool lower, bool positiveDenom = true);
 
 void _subdivideDomains(std::vector<_CoeffData*> &domains);
+double _getMinAndDeleteDomains(std::vector<_CoeffData*> &domains);
 
 }
 

@@ -189,6 +189,17 @@ void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
   fullVector<double> coeffBez(jfs->getNumJacNodes());
   jfs->getSignedJacobian(nodesXYZ, coeffLag, normals);
   jfs->lag2Bez(coeffLag, coeffBez);
+//  nodesXYZ.print("nodesXYZ");
+//  coeffLag.print("coeffLag");
+//  coeffBez.print("coeffBez");
+//
+//  const JacobianBasis *jfs1 = el->getJacobianFuncSpace(1);
+//  fullVector<double> coeffLag1(jfs1->getNumJacNodes());
+//  fullVector<double> coeffBez1(jfs1->getNumJacNodes());
+//  jfs1->getSignedJacobian(nodesXYZ, coeffLag1, normals);
+//  jfs1->lag2Bez(coeffLag1, coeffBez1);
+//  coeffLag1.print("coeffLag1");
+//  coeffBez1.print("coeffBez1");
 
   std::vector<_CoeffData*> domains;
   domains.push_back(new _CoeffDataJac(coeffBez, jfs->getBezier(), 0));
@@ -295,13 +306,7 @@ double minIGEMeasure(MElement *el, bool knownValid, bool reversedOk)
         domains.size()/7, el->getNum(), el->getType(), el->getTypeForMSH());
   }
 
-  double min = domains[0]->minB();
-  delete domains[0];
-  for (unsigned int i = 1; i < domains.size(); ++i) {
-    min = std::min(min, domains[i]->minB());
-    delete domains[i];
-  }
-  return min;
+  return _getMinAndDeleteDomains(domains);
 }
 
 double minICNMeasure(MElement *el,
@@ -393,14 +398,7 @@ double minICNMeasure(MElement *el,
                domains.size()/7, el->getNum(), el->getType(), el->getTypeForMSH());
   }
 
-
-  double min = domains[0]->minB();
-  delete domains[0];
-  for (unsigned int i = 1; i < domains.size(); ++i) {
-    min = std::min(min, domains[i]->minB());
-    delete domains[i];
-  }
-  return min;
+  return _getMinAndDeleteDomains(domains);
 }
 
 void sampleIGEMeasure(MElement *el, int deg, double &min, double &max)
@@ -682,9 +680,34 @@ _CoeffDataIGE::_CoeffDataIGE(fullVector<double> &det,
   const_cast<fullVector<double>&>(_coeffsJacDet).setOwnData(true);
   const_cast<fullMatrix<double>&>(_coeffsJacMat).setOwnData(true);
 
+//  _coeffsJacDet.print("_coeffsJacDet");
+//  for (int i = 0; i < _coeffsJacMat.size1(); ++i) {
+//    for (int j = 0; j < _coeffsJacMat.size2(); ++j) {
+//      if (std::abs(_coeffsJacMat(i, j)) < 1e-13)
+//        const_cast<fullMatrix<double>&>(_coeffsJacMat)(i, j) = 0;
+//    }
+//  }
+//  _coeffsJacMat.print("_coeffsJacMat");
+
   _computeAtCorner(_minL, _maxL);
-  _minB = _computeLowerBound();
-//  Msg::Info("%g %g %g", _minB, _minL, _maxL);//fordebug
+
+    _minB = 0;
+    if (boundsOk(_minL, _maxL)) return;
+    else _minB = _computeLowerBound();
+//  Msg::Info("%g %g %g", _minB, _minL, _maxL); //fordebug
+
+//    for (int i = 0; i < _depth; ++i) {
+//      std::cout << "  ";
+//    }
+//    std::cout << _depth << "> ";
+//    std::cout << std::setw(8) << std::left << _minB << " ";
+//    std::cout << std::setw(8) << std::left << _minL << " ";
+//    std::cout << std::setw(8) << std::left << _maxL << " ";
+//    std::cout << std::setw(8) << std::left << _minL-_minB;
+//    if (_minL-_minB < 1e-3)
+//      std::cout << " ok";
+//    std::cout << std::endl;
+
 //  _coeffsJacDet.print("_coeffsJacDet");
 //  _coeffsJacMat.print("_coeffsJacMat");
   // computation of _maxB not implemented for now
@@ -692,7 +715,22 @@ _CoeffDataIGE::_CoeffDataIGE(fullVector<double> &det,
 
 bool _CoeffDataIGE::boundsOk(double minL, double maxL) const
 {
-  static double tol = 1e-3;
+  static const double tolmin = 1e-3;
+  static const double tolmax = 1e-2;
+  const double tol = tolmin + (tolmax-tolmin) * std::max(_minB, .0);
+//  std::cout << "=> bound " << _minB << " " << minL << " " << minL - _minB << std::endl;
+//  if (_minB > 0) {
+//    for (int i = 0; i < _depth; ++i) {
+//      std::cout << "  ";
+//    }
+//    std::cout << _depth << ") ";
+//    std::cout << std::setw(8) << std::left << _minB << " ";
+//    std::cout << std::setw(8) << std::left << minL << " ";
+//    std::cout << std::setw(8) << std::left << minL-_minB;
+//    if (minL-_minB < tol)
+//      std::cout << " ok";
+//    std::cout << std::endl;
+//  }
   return minL - _minB < tol;
 }
 
@@ -979,8 +1017,10 @@ _CoeffDataICN::_CoeffDataICN(fullVector<double> &det,
 
 bool _CoeffDataICN::boundsOk(double minL, double maxL) const
 {
-  static double tol = 1e-3;
-  return minL < tol*1e-3 || (_minB > minL-tol && _minB > minL*(1-100*tol));
+  static const double tolmin = 1e-3;
+  static const double tolmax = 1e-2;
+  const double tol = tolmin + (tolmax-tolmin) * std::max(_minB, .0);
+  return minL - _minB < tol;
 }
 
 void _CoeffDataICN::getSubCoeff(std::vector<_CoeffData*> &v) const
@@ -1106,7 +1146,8 @@ void _subdivideDomainsMinOrMax(std::vector<_CoeffData*> &domains,
   std::vector<_CoeffData*> subs;
   make_heap(domains.begin(), domains.end(), Comp());
   int k = 0;
-  while (!domains[0]->boundsOk(minL, maxL) && k++ < 1000) {
+  const int max_subdivision = 1000;
+  while (!domains[0]->boundsOk(minL, maxL) && k++ < max_subdivision) {
     _CoeffData *cd = domains[0];
     pop_heap(domains.begin(), domains.end(), Comp());
     domains.pop_back();
@@ -1120,8 +1161,8 @@ void _subdivideDomainsMinOrMax(std::vector<_CoeffData*> &domains,
       push_heap(domains.begin(), domains.end(), Comp());
     }
   }
-  if (k > 1000) {
-    Msg::Error("Max subdivision (1000) (size %d)", domains.size());
+  if (k > max_subdivision) {
+    Msg::Error("Max subdivision (%d) (size %d)", max_subdivision, domains.size());
   }
 }
 
@@ -1140,6 +1181,20 @@ void _subdivideDomains(std::vector<_CoeffData*> &domains)
 
   _subdivideDomainsMinOrMax<_lessMinB>(domains, minL, maxL);
   _subdivideDomainsMinOrMax<_lessMaxB>(domains, minL, maxL);
+}
+
+double _getMinAndDeleteDomains(std::vector<_CoeffData*> &domains)
+{
+  double minB = domains[0]->minB();
+  double minL = domains[0]->minL();
+  delete domains[0];
+  for (unsigned int i = 1; i < domains.size(); ++i) {
+    minB = std::min(minB, domains[i]->minB());
+    minL = std::min(minL, domains[i]->minL());
+    delete domains[i];
+  }
+  double fact = .5 * (minB + minL);
+  return fact * minL + (1-fact) * minB;
 }
 
 double _computeBoundRational(const fullVector<double> &numerator,
