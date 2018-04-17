@@ -99,7 +99,6 @@ public:
 private:
   void _computeAtCorner(double &min, double &max) const;
   double _computeLowerBound() const;
-  void _getCoeffLengthVectors(fullMatrix<double> &, bool corners = false) const;
 };
 
 class _CoeffDataICN: public _CoeffData
