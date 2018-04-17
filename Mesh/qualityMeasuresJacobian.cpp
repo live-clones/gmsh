@@ -19,7 +19,7 @@
 
 static const double cTri = 2/std::sqrt(3);
 static const double cTet = std::sqrt(2);
-static const double cPyr = std::sqrt(2);
+static const double cPyr = 4*std::sqrt(2);
 
 static inline void computeCoeffLengthVectors_(const fullMatrix<double> &mat,
                                               fullMatrix<double> &coeff,
@@ -668,9 +668,9 @@ _CoeffDataIGE::_CoeffDataIGE(fullVector<double> &det,
 
   _computeAtCorner(_minL, _maxL);
 
-    _minB = 0;
-    if (boundsOk(_minL, _maxL)) return;
-    else _minB = _computeLowerBound();
+  _minB = 0;
+  if (boundsOk(_minL, _maxL)) return;
+  else _minB = _computeLowerBound();
   // computation of _maxB not implemented for now
 }
 
@@ -869,7 +869,6 @@ _CoeffDataICN::_CoeffDataICN(fullVector<double> &det,
   _minB = 0;
   if (boundsOk(_minL, _maxL)) return;
   else _minB = _computeLowerBound();
-
   // _maxB not used for now
 }
 
