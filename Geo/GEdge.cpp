@@ -279,14 +279,12 @@ std::string GEdge::getAdditionalInfoString(bool multline)
 
   if(v0 && v1){
     sstream << "Boundary points: " << v0->tag() << ", " << v1->tag();
+    if(multline) sstream << "\n";
+    else sstream << " ";
   }
 
   if(meshAttributes.method == MESH_TRANSFINITE || meshAttributes.extrude ||
      meshAttributes.reverseMesh){
-    if(v0 && v1){
-      if(multline) sstream << "\n";
-      else sstream << " ";
-    }
     sstream << "Mesh attributes:";
     if(meshAttributes.method == MESH_TRANSFINITE){
       sstream << " transfinite " << meshAttributes.nbPointsTransfinite;
@@ -301,7 +299,9 @@ std::string GEdge::getAdditionalInfoString(bool multline)
     if(meshAttributes.reverseMesh)
       sstream << " reversed";
   }
-  return sstream.str();
+  std::string str = sstream.str();
+  if(str.back() == '\n' || str.back() == ' ') str.resize(str.size() - 1);
+  return str;
 }
 
 void GEdge::writeGEO(FILE *fp)

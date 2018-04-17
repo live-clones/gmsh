@@ -265,24 +265,55 @@ std::string GRegion::getAdditionalInfoString(bool multline)
   std::ostringstream sstream;
   if(l_faces.size()){
     sstream << "Boundary surfaces: ";
-    for(std::list<GFace*>::iterator it = l_faces.begin(); it != l_faces.end(); ++it){
+    for(std::list<GFace*>::iterator it = l_faces.begin();
+        it != l_faces.end(); ++it){
       if(it != l_faces.begin()) sstream << ", ";
       sstream << (*it)->tag();
     }
+    if(multline) sstream << "\n";
+    else sstream << " ";
+  }
+  if(embedded_faces.size()){
+    sstream << "Embedded surfaces: ";
+    for(std::list<GFace*>::iterator it = embedded_faces.begin();
+        it != embedded_faces.end(); ++it){
+      if(it != embedded_faces.begin()) sstream << ", ";
+      sstream << (*it)->tag();
+    }
+    if(multline) sstream << "\n";
+    else sstream << " ";
+  }
+  if(embedded_edges.size()){
+    sstream << "Embedded curves: ";
+    for(std::list<GEdge*>::iterator it = embedded_edges.begin();
+        it != embedded_edges.end(); ++it){
+      if(it != embedded_edges.begin()) sstream << ", ";
+      sstream << (*it)->tag();
+    }
+    if(multline) sstream << "\n";
+    else sstream << " ";
+  }
+  if(embedded_vertices.size()){
+    sstream << "Embedded points: ";
+    for(std::list<GVertex*>::iterator it = embedded_vertices.begin();
+        it != embedded_vertices.end(); ++it){
+      if(it != embedded_vertices.begin()) sstream << ", ";
+      sstream << (*it)->tag();
+    }
+    if(multline) sstream << "\n";
+    else sstream << " ";
   }
 
   if(meshAttributes.method == MESH_TRANSFINITE || meshAttributes.extrude){
-    if(l_faces.size()){
-      if(multline) sstream << "\n";
-      else sstream << " ";
-    }
     sstream << "Mesh attributes:";
     if(meshAttributes.method == MESH_TRANSFINITE)
       sstream << " transfinite";
     if(meshAttributes.extrude)
       sstream << " extruded";
   }
-  return sstream.str();
+  std::string str = sstream.str();
+  if(str.back() == '\n' || str.back() == ' ') str.resize(str.size() - 1);
+  return str;
 }
 
 void GRegion::writeGEO(FILE *fp)

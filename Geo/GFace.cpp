@@ -343,6 +343,8 @@ std::string GFace::getAdditionalInfoString(bool multline)
   if(l_edges.size() > 20){
     sstream << "Boundary curves: " << l_edges.front()->tag()
             << ", ...," << l_edges.back()->tag();
+    if(multline) sstream << "\n";
+    else sstream << " ";
   }
   else if(l_edges.size()){
     sstream << "Boundary curves: ";
@@ -350,13 +352,34 @@ std::string GFace::getAdditionalInfoString(bool multline)
       if(it != l_edges.begin()) sstream << ", ";
       sstream << (*it)->tag();
     }
+    if(multline) sstream << "\n";
+    else sstream << " ";
   }
+
+  if(embedded_edges.size()){
+    sstream << "Embedded curves: ";
+    for(std::list<GEdge*>::iterator it = embedded_edges.begin();
+        it != embedded_edges.end(); ++it){
+      if(it != embedded_edges.begin()) sstream << ", ";
+      sstream << (*it)->tag();
+    }
+    if(multline) sstream << "\n";
+    else sstream << " ";
+  }
+
+  if(embedded_vertices.size()){
+    sstream << "Embedded points: ";
+    for(std::list<GVertex*>::iterator it = embedded_vertices.begin();
+        it != embedded_vertices.end(); ++it){
+      if(it != embedded_vertices.begin()) sstream << ", ";
+      sstream << (*it)->tag();
+    }
+    if(multline) sstream << "\n";
+    else sstream << " ";
+  }
+
   if(meshAttributes.recombine || meshAttributes.method == MESH_TRANSFINITE ||
      meshAttributes.extrude || meshAttributes.reverseMesh){
-    if(l_edges.size()){
-      if(multline) sstream << "\n";
-      else sstream << " ";
-    }
     sstream << "Mesh attributes:";
     if(meshAttributes.recombine)
       sstream << " recombined";
@@ -367,7 +390,9 @@ std::string GFace::getAdditionalInfoString(bool multline)
     if(meshAttributes.reverseMesh)
       sstream << " reverse";
   }
-  return sstream.str();
+  std::string str = sstream.str();
+  if(str.back() == '\n' || str.back() == ' ') str.resize(str.size() - 1);
+  return str;
 }
 
 void GFace::writeGEO(FILE *fp)
@@ -1544,7 +1569,7 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
     l_vtxToEdge[std::make_pair(v0,v1)] = (*eIter);
   }
 
-  for (eIter=embedded_edges.begin();eIter!=embedded_edges.end(); ++eIter) {
+  for (eIter = embedded_edges.begin(); eIter != embedded_edges.end(); ++eIter) {
     GVertex* v0 = (*eIter)->getBeginVertex();
     GVertex* v1 = (*eIter)->getEndVertex();
     l_vertices.insert(v0);
@@ -1569,7 +1594,7 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
 
   std::list<GEdge*> m_embedded_edges = master->embeddedEdges();
 
-  for (eIter=m_embedded_edges.begin();eIter!=m_embedded_edges.end();eIter++) {
+  for (eIter = m_embedded_edges.begin(); eIter != m_embedded_edges.end(); eIter++) {
     GVertex* v0 = (*eIter)->getBeginVertex();
     GVertex* v1 = (*eIter)->getEndVertex();
     m_vertices.insert(v0);
@@ -1578,7 +1603,7 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
   }
 
   std::list<GVertex*> m_embedded_vertices = master->embeddedVertices();
-  m_vertices.insert(m_embedded_vertices.begin(),m_embedded_vertices.end());
+  m_vertices.insert(m_embedded_vertices.begin(), m_embedded_vertices.end());
 
   // check topological correspondence
 
