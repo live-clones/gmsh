@@ -314,7 +314,7 @@ GMSH_API void gmshModelMeshGetIntegrationData(const char * integrationType,
  * contains for each element type, the number of integration points that
  * corresponds to `integrationType'. `jacobian' contains for each element type
  * a vector (of size 9 times the number of integration points) containing the
- * 9 entries (by column) of the 3x3 Jacobian matrix and `determinant' contains
+ * 9 entries (by row) of the 3x3 Jacobian matrix and `determinant' contains
  * for each element type a vector containing the determinant of the Jacobian. */
 GMSH_API void gmshModelMeshGetJacobianData(const char * integrationType,
                                            int ** nbrIntegrationPoints, size_t * nbrIntegrationPoints_n,
@@ -1493,6 +1493,19 @@ GMSH_API void gmshOnelabSet(const char * data,
 GMSH_API void gmshOnelabRun(const char * name,
                             const char * command,
                             int * ierr);
+
+/* Gets the Jacobian data for mesh elements in the same way as
+ * `getJacobianData', but for a single `elementType'. */
+GMSH_API void gmshParallelModelMeshGetJacobianDataByType(const int elementType,
+                                                         const char * integrationType,
+                                                         int * nbrIntegrationPoints,
+                                                         double ** jacobian, size_t * jacobian_n,
+                                                         double ** determinant, size_t * determinant_n,
+                                                         const int dim,
+                                                         const int tag,
+                                                         const int myThread,
+                                                         const int nbrThreads,
+                                                         int * ierr);
 
 #undef GMSH_API
 

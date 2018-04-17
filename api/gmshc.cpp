@@ -1408,3 +1408,14 @@ void gmshOnelabRun(const char * name,const char * command,int * ierr){
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
+void gmshParallelModelMeshGetJacobianDataByType(const int elementType,const char * integrationType,int * nbrIntegrationPoints,double ** jacobian, size_t * jacobian_n,double ** determinant, size_t * determinant_n,const int dim,const int tag,const int myThread,const int nbrThreads,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  std::vector<double> api_jacobian_;
+  std::vector<double> api_determinant_;
+  gmsh::parallel::model::mesh::getJacobianDataByType(elementType,integrationType,*nbrIntegrationPoints,api_jacobian_,api_determinant_,dim,tag,myThread,nbrThreads);
+  vector2ptr(api_jacobian_,jacobian,jacobian_n);
+  vector2ptr(api_determinant_,determinant,determinant_n);
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+

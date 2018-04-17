@@ -935,7 +935,7 @@ class model:
             contains for each element type, the number of integration points that
             corresponds to `integrationType'. `jacobian' contains for each element type
             a vector (of size 9 times the number of integration points) containing the
-            9 entries (by column) of the 3x3 Jacobian matrix and `determinant' contains
+            9 entries (by row) of the 3x3 Jacobian matrix and `determinant' contains
             for each element type a vector containing the determinant of the Jacobian.
 
             return nbrIntegrationPoints, jacobian, determinant
@@ -3741,3 +3741,53 @@ class onelab:
             raise ValueError(
                 "gmshOnelabRun returned non-zero error code : ",
                 ierr.value)
+
+
+class parallel:
+    """
+    Function build to work in parallel
+    """
+
+
+    class model:
+        """
+        Per-model functions
+        """
+
+
+        class mesh:
+            """
+            Per-model meshing functions
+            """
+
+            @staticmethod
+            def getJacobianDataByType(elementType,integrationType,dim=-1,tag=-1,myThread=0,nbrThreads=1):
+                """
+                Gets the Jacobian data for mesh elements in the same way as
+                `getJacobianData', but for a single `elementType'.
+
+                return nbrIntegrationPoints, jacobian, determinant
+                """
+                api_nbrIntegrationPoints_ = c_int()
+                api_jacobian_, api_jacobian_n_ = POINTER(c_double)(), c_size_t()
+                api_determinant_, api_determinant_n_ = POINTER(c_double)(), c_size_t()
+                ierr = c_int()
+                lib.gmshParallelModelMeshGetJacobianDataByType(
+                    c_int(elementType),
+                    c_char_p(integrationType.encode()),
+                    byref(api_nbrIntegrationPoints_),
+                    byref(api_jacobian_),byref(api_jacobian_n_),
+                    byref(api_determinant_),byref(api_determinant_n_),
+                    c_int(dim),
+                    c_int(tag),
+                    c_int(myThread),
+                    c_int(nbrThreads),
+                    byref(ierr))
+                if ierr.value != 0 :
+                    raise ValueError(
+                        "gmshParallelModelMeshGetJacobianDataByType returned non-zero error code : ",
+                        ierr.value)
+                return (
+                    api_nbrIntegrationPoints_.value,
+                    _ovectordouble(api_jacobian_,api_jacobian_n_.value),
+                    _ovectordouble(api_determinant_,api_determinant_n_.value))

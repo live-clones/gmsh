@@ -299,7 +299,7 @@ namespace gmsh { // Top-level functions
       // contains for each element type, the number of integration points that
       // corresponds to `integrationType'. `jacobian' contains for each element
       // type a vector (of size 9 times the number of integration points)
-      // containing the 9 entries (by column) of the 3x3 Jacobian matrix and
+      // containing the 9 entries (by row) of the 3x3 Jacobian matrix and
       // `determinant' contains for each element type a vector containing the
       // determinant of the Jacobian.
       GMSH_API void getJacobianData(const std::string & integrationType,
@@ -1414,6 +1414,30 @@ namespace gmsh { // Top-level functions
                       const std::string & command = "");
 
   } // namespace onelab
+
+  namespace parallel { // Function build to work in parallel
+
+    namespace model { // Per-model functions
+
+      namespace mesh { // Per-model meshing functions
+
+        // Gets the Jacobian data for mesh elements in the same way as
+        // `getJacobianData', but for a single `elementType'.
+        GMSH_API void getJacobianDataByType(const int elementType,
+                                            const std::string & integrationType,
+                                            int & nbrIntegrationPoints,
+                                            std::vector<double> & jacobian,
+                                            std::vector<double> & determinant,
+                                            const int dim = -1,
+                                            const int tag = -1,
+                                            const int myThread = 0,
+                                            const int nbrThreads = 1);
+
+      } // namespace mesh
+
+    } // namespace model
+
+  } // namespace parallel
 
 } // namespace gmsh
 

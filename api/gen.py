@@ -152,7 +152,7 @@ mesh.add('getElementProperties',doc,None,iint('elementType'),ostring('elementNam
 doc = '''Gets the integration data for mesh elements of the entity of dimension `dim' and `tag' tag. The data is returned by element type and by element, in the same order as the data returned by `getElements'. `integrationType' specifies the type of integration (e.g. \"Gauss4\") and `functionSpaceType' specifies the function space (e.g. \"IsoParametric\"). `integrationPoints' contains for each element type a vector (of length 4 times the number of integration points) containing the parametric coordinates (u, v, w) and the weight associated to the integration points. `integrationData' contains for each element type a vector (of size 13 times the number of integration points) containing the (x, y, z) coordinates of the integration point, the determinant of the Jacobian and the 9 entries (by row) of the 3x3 Jacobian matrix. If `functionSpaceType' is provided, `functionSpaceNumComponents' returns the number of components returned by the evaluation of a basis function in the space and `functionSpaceData' contains for each element type the evaluation of the basis functions at the integration points.'''
 mesh.add('getIntegrationData',doc,None,istring('integrationType'),istring('functionSpaceType'),ovectorvectordouble('integrationPoints'),ovectorvectordouble('integrationData'),oint('functionSpaceNumComponents'),ovectorvectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))
 
-doc = '''Gets the Jacobian data for mesh elements of the entity of dimension `dim' and `tag' tag. The data is returned by element type and by element, in the same order as the data returned by `getElements'. `integrationType' specifies the type of integration (e.g. \"Gauss4\"). `nbrIntegrationPoints' contains for each element type, the number of integration points that corresponds to `integrationType'. `jacobian' contains for each element type a vector (of size 9 times the number of integration points) containing the 9 entries (by column) of the 3x3 Jacobian matrix and `determinant' contains for each element type a vector containing the determinant of the Jacobian.'''
+doc = '''Gets the Jacobian data for mesh elements of the entity of dimension `dim' and `tag' tag. The data is returned by element type and by element, in the same order as the data returned by `getElements'. `integrationType' specifies the type of integration (e.g. \"Gauss4\"). `nbrIntegrationPoints' contains for each element type, the number of integration points that corresponds to `integrationType'. `jacobian' contains for each element type a vector (of size 9 times the number of integration points) containing the 9 entries (by row) of the 3x3 Jacobian matrix and `determinant' contains for each element type a vector containing the determinant of the Jacobian.'''
 mesh.add('getJacobianData',doc,None,istring('integrationType'),ovectorint('nbrIntegrationPoints'),ovectorvectordouble('jacobian'),ovectorvectordouble('determinant'),iint('dim', '-1'),iint('tag', '-1'))
 
 doc = '''Gets the function space data for mesh elements of the entity of dimension `dim' and `tag' tag. The data is returned by element type and by element, in the same order as the data returned by `getElements'. `integrationType' specifies the type of integration (e.g. \"Gauss4\") and `functionSpaceType' specifies the function space (e.g. \"IsoParametric\"). `integrationPoints' contains for each element type a vector (of length 4 times the number of integration points) containing the parametric coordinates (u, v, w) and the weight associated to the integration points. If `functionSpaceType' is provided, `functionSpaceNumComponents' returns the number of components returned by the evaluation of a basis function in the space and `functionSpaceData' contains for each element type the evaluation of the basis functions at the integration points.'''
@@ -552,6 +552,22 @@ doc = '''Runs a onelab client. If no name is given, attemps to run a client that
 onelab.add('run',doc,None,istring('name', '""'),istring('command', '""'))
 
 ################################################################################
+
+parallel = gmsh.add_module('parallel','Function build to work in parallel')
+
+# P ############################################################################
+
+p_model = parallel.add_module('model','Per-model functions')
+
+# P ############################################################################
+
+p_mesh = p_model.add_module('mesh','Per-model meshing functions')
+
+doc = '''Gets the Jacobian data for mesh elements in the same way as `getJacobianData', but for a single `elementType'.'''
+p_mesh.add('getJacobianDataByType',doc,None,iint('elementType'),istring('integrationType'),oint('nbrIntegrationPoints'),ovectordouble('jacobian'),ovectordouble('determinant'),iint('dim', '-1'),iint('tag', '-1'), iint('myThread', '0'), iint('nbrThreads', '1'))
+
+
+
 
 api.write_cpp()
 api.write_c()

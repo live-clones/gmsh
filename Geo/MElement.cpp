@@ -624,7 +624,7 @@ double MElement::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])
   for (int i = 0; i < getNumShapeFunctions(); i++) {
     const MVertex *v = getShapeFunctionNode(i);
     for (int j = 0; j < 3; j++) {
-      double mult = gsf[i][j];
+      const double mult = gsf[i][j];
       jac[j][0] += v->x() * mult;
       jac[j][1] += v->y() * mult;
       jac[j][2] += v->z() * mult;

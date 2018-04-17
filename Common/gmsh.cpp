@@ -797,7 +797,8 @@ static void _getJacobianData(const int elementType,
                              const std::string &intType,
                              int &nbrIntegrationPoints,
                              std::vector<double> &jacobian,
-                             std::vector<double> &determinant)
+                             std::vector<double> &determinant,
+                             const int myThread, const int nbrThreads)
 {
   std::string intName = "", fsName = "";
   int intOrder = 0;
@@ -826,24 +827,44 @@ static void _getJacobianData(const int elementType,
           n++;
       }
     }
-    jacobian.resize(n * nbrIntegrationPoints * 9);
-    determinant.resize(n * nbrIntegrationPoints);
+    const int begin = myThread*n/nbrThreads;
+    const int end = (myThread+1)*n/nbrThreads;
+    jacobian.resize((end-begin) * nbrIntegrationPoints * 9);
+    determinant.resize((end-begin) * nbrIntegrationPoints);
+    std::vector< std::vector<SVector3> > gsf;
+    n = 0;
     int idx = 0;
     for(unsigned int i = 0; i < entities.size(); i++){
       GEntity *ge = entities[i];
       for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
-        MElement *e = ge->getMeshElement(j);
-        if(e->getTypeForMSH() == elementType){
-          for(int k = 0; k < nbrIntegrationPoints; k++){
-            double jac[3][3];
-            double det = e->getJacobian(pts(k, 0), pts(k, 1), pts(k, 2), jac);
-            determinant[idx] = det;
-            for(int n = 0; n < 3; n++)
+        if(n >= begin && n < end)
+        {
+          MElement *e = ge->getMeshElement(j);
+          if(e->getTypeForMSH() == elementType){
+            if(gsf.size() == 0){
+              gsf.resize(nbrIntegrationPoints);
+              for(int k = 0; k < nbrIntegrationPoints; k++){
+                double value[1256][3];
+                e->getGradShapeFunctions(pts(k, 0), pts(k, 1), pts(k, 2), value);
+                gsf[k].resize(e->getNumShapeFunctions());
+                for(int l = 0; l < e->getNumShapeFunctions(); l++) {
+                  gsf[k][l][0] = value[l][0];
+                  gsf[k][l][1] = value[l][1];
+                  gsf[k][l][2] = value[l][2];
+                }
+              }
+            }
+            for(int k = 0; k < nbrIntegrationPoints; k++){
+              double jac[3][3];
+              determinant[idx] = e->getJacobian(gsf[k], jac);
               for(int m = 0; m < 3; m++)
-                jacobian[idx*9 + n*3 + m] = jac[m][n];
-            idx++;
+                for(int n = 0; n < 3; n++)
+                  jacobian[idx*9 + m*3 + n] = jac[m][n];
+              idx++;
+            }
           }
         }
+        n++;
       }
     }
   }
@@ -962,7 +983,7 @@ void gmsh::model::mesh::getJacobianData(const std::string &intType,
     jacobian.push_back(std::vector<double>());
     determinant.push_back(std::vector<double>());
     _getJacobianData(it->first, it->second, intType, nbrIntegrationPoints.back(),
-                     jacobian.back(), determinant.back());
+                     jacobian.back(), determinant.back(), 0, 1);
   }
 }
 
@@ -1022,7 +1043,7 @@ void gmsh::model::mesh::getJacobianDataByType(const int elementType,
   std::map<int, std::vector<GEntity*> > typeMap;
   _getElementTypeMap(dim, tag, typeMap);
   _getJacobianData(elementType, typeMap[elementType], intType, nbrIntegrationPoints,
-                   jacobian, determinant);
+                   jacobian, determinant, 0, 1);
 }
 
 void gmsh::model::mesh::getFunctionSpaceDataByType(const int elementType,
@@ -1201,10 +1222,10 @@ void gmsh::model::mesh::getNode(const int nodeTag,
     Msg::Error("Unknown mesh node %d", nodeTag);
     throw 2;
   }
-  coord.clear();
-  coord.push_back(v->x());
-  coord.push_back(v->y());
-  coord.push_back(v->z());
+  coord.resize(3);
+  coord[0] = v->x();
+  coord[1] = v->y();
+  coord[2] = v->z();
   parametricCoord.clear();
   double u;
   if(v->getParameter(0, u))
@@ -2997,4 +3018,22 @@ void gmsh::onelab::run(const std::string &name, const std::string &command)
 #if defined(HAVE_ONELAB)
   onelabUtils::runClient(name, command);
 #endif
+}
+
+void gmsh::parallel::model::mesh::getJacobianDataByType(const int elementType,
+                                                        const std::string &intType,
+                                                        int &nbrIntegrationPoints,
+                                                        std::vector<double> &jacobian,
+                                                        std::vector<double> &determinant,
+                                                        const int dim, const int tag,
+                                                        const int myThread, const int nbrThreads)
+{
+  if(!_isInitialized()){ throw -1; }
+  jacobian.clear();
+  determinant.clear();
+  nbrIntegrationPoints = 0;
+  std::map<int, std::vector<GEntity*> > typeMap;
+  _getElementTypeMap(dim, tag, typeMap);
+  _getJacobianData(elementType, typeMap[elementType], intType, nbrIntegrationPoints,
+                   jacobian, determinant, myThread, nbrThreads);
 }
