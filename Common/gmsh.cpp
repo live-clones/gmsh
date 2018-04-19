@@ -3075,7 +3075,6 @@ static void _getJacobianData(const int elementType,
     std::vector< std::vector<SVector3> > gsf;
     int o = 0;
     int idx = begin*nbrIntegrationPoints;
-  std::cout << begin << " : " << end << "(" << nbrIntegrationPoints << ")" << std::endl;
     for(unsigned int i = 0; i < entities.size(); i++){
       GEntity *ge = entities[i];
       for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
@@ -3096,7 +3095,6 @@ static void _getJacobianData(const int elementType,
               }
             }
             for(int k = 0; k < nbrIntegrationPoints; k++){
-              std::cout << idx << std::endl;
               double jac[3][3];
               determinant[idx] = e->getJacobian(gsf[k], jac);
               for(int m = 0; m < 3; m++)
@@ -3120,7 +3118,6 @@ void gmsh::parallel::model::mesh::getJacobianDataByType(const int elementType,
                                                         const int dim, const int tag,
                                                         const int myThread, const int nbrThreads)
 {
-  std::cout << determinant.size() << std::endl;
   if(!_isInitialized()){ throw -1; }
   nbrIntegrationPoints = 0;
   std::map<int, std::vector<GEntity*> > typeMap;
