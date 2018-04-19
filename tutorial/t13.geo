@@ -10,7 +10,7 @@
 // them to remesh STL files, even if in this case there's usually only a single
 // elementary geometrical entity per compound.
 
-// FIXME: compute parametrization of discrete surfaces read from mesh file
+// Compute parametrization of discrete surfaces read from mesh file
 General.MeshDiscrete = 1;
 
 // Let's merge the mesh that we would like to remesh. This mesh was reclassified
@@ -18,7 +18,7 @@ General.MeshDiscrete = 1;
 // in Gmsh, so that we could split it along sharp geometrical features.
 Merge "t13_data.msh";
 
-// We can now define a compound line (resp. surface) for each discrete line
+// We can now define a compound curve (resp. surface) for each discrete curve
 // (resp. surface) in the model
 ss[] = Surface {:};
 
@@ -26,9 +26,8 @@ ss[] = Surface {:};
 // discrete):
 Compound Surface{ss[]};
 
-// FIXME: re-add this when we use a good parametrization
-//Surface Loop(1) = {ss[]};
-//Volume(1) = {1};
+Surface Loop(1) = {ss[]};
+Volume(1) = {1};
 
 // element size imposed by a size field
 Field[1] = MathEval;

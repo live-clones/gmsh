@@ -216,7 +216,8 @@ void BuildSwapPattern7(SwapPattern *sc)
 bool edgeSwap(std::vector<MTet4 *> &newTets,
               MTet4 *tet,
               int iLocalEdge,
-              const qmTetrahedron::Measures &cr)
+              const qmTetrahedron::Measures &cr,
+              const std::set<MFace, Less_Face> &embeddedFaces)
 {
 
   //static int edges[6][2] =    {{0,1},{0,2},{0,3},{1,2},{1,3},{2,3}};
@@ -324,7 +325,7 @@ bool edgeSwap(std::vector<MTet4 *> &newTets,
 
   for(unsigned int i = 0; i < cavity.size(); i++) cavity[i]->setDeleted(true);
 
-  connectTets(outside);
+  connectTets(outside, &embeddedFaces);
 
   return true;
 }
@@ -364,7 +365,7 @@ bool edgeSplit(std::vector<MTet4 *> &newTets, MTet4 *tet, MVertex *newVertex,
 
 // swap a face i.e. remove a face shared by 2 tets
 bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
-              const qmTetrahedron::Measures &cr)
+              const qmTetrahedron::Measures &cr, const std::set<MFace, Less_Face> &embeddedFaces)
 {
   MTet4 *t2 = t1->getNeigh(iLocalFace);
   if (!t2) return false;
@@ -447,7 +448,7 @@ bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
   newTets.push_back(t41);
   newTets.push_back(t42);
   newTets.push_back(t43);
-  connectTets(outside);
+  connectTets(outside, &embeddedFaces);
   return true;
 }
 

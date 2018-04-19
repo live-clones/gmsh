@@ -268,7 +268,7 @@ void connectTets_vector2_templ(size_t _size, ITER beg, ITER end,
 
 
 template <class ITER>
-void connectTets(ITER beg, ITER end, std::set<MFace, Less_Face> *allEmbeddedFaces = 0)
+void connectTets(ITER beg, ITER end, const std::set<MFace, Less_Face> *allEmbeddedFaces = 0)
 {
   std::set<faceXtet> conn;
   while (beg != end){
@@ -294,8 +294,8 @@ void connectTets(ITER beg, ITER end, std::set<MFace, Less_Face> *allEmbeddedFace
 }
 
 
-void connectTets(std::list<MTet4*> &l) { connectTets(l.begin(), l.end()); }
-void connectTets(std::vector<MTet4*> &l) { connectTets(l.begin(), l.end()); }
+void connectTets(std::list<MTet4*> &l, const std::set<MFace, Less_Face> *embeddedFaces) { connectTets(l.begin(), l.end(), embeddedFaces); }
+void connectTets(std::vector<MTet4*> &l, const std::set<MFace, Less_Face> *embeddedFaces) { connectTets(l.begin(), l.end(), embeddedFaces); }
 void connectTets_vector2(std::list<MTet4*> &l, std::vector<faceXtet> &conn)
 { connectTets_vector2_templ(l.size(), l.begin(), l.end(), conn);
 }
@@ -730,7 +730,7 @@ void adaptMeshGRegion::operator () (GRegion *gr)
         double qq = (*it)->getQuality();
         if (qq < qMin){
           for (int i = 0; i < 4; i++){
-            if (faceSwap(newTets, *it, i, qm)){
+            if (faceSwap(newTets, *it, i, qm, allEmbeddedFaces)){
               nbFSwap++;
               break;
             }
@@ -749,7 +749,7 @@ void adaptMeshGRegion::operator () (GRegion *gr)
           for (int i = 0; i < 6; i++){
 	    MEdge ed = (*it)->tet()->getEdge(i);
 	    if (allEmbeddedEdges.find(ed) == allEmbeddedEdges.end()){
-	      if (edgeSwap(newTets, *it, i, qm)) {
+          if (edgeSwap(newTets, *it, i, qm, allEmbeddedFaces)) {
 		nbESwap++;
 		break;
 	      }
@@ -929,7 +929,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
         double qq = (*it)->getQuality();
         if (qq < qMin){
           for (int i = 0; i < 4; i++){
-            if (faceSwap(newTets, *it, i, qm)){
+            if (faceSwap(newTets, *it, i, qm, allEmbeddedFaces)){
               nbFSwap++;
               break;
             }
@@ -950,7 +950,7 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
           for (int i = 0; i < 6; i++){
 	    MEdge ed = (*it)->tet()->getEdge(i);
 	    if (allEmbeddedEdges.find(ed) == allEmbeddedEdges.end()){
-	      if (edgeSwap(newTets, *it, i, qm)) {
+          if (edgeSwap(newTets, *it, i, qm, allEmbeddedFaces)) {
 		nbESwap++;
 		break;
 	      }

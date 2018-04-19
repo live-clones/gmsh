@@ -21,7 +21,7 @@
 @c =========================================================================
 @c %**starts of header
 @setfilename gmsh.info
-@set GMSH-VERSION 3.1
+@set GMSH-VERSION 4.0
 @set COPYRIGHT @copyright{} 1997-2018 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @settitle Gmsh @value{GMSH-VERSION}
 @footnotestyle separate
@@ -228,13 +228,13 @@ your own C++, C or Python code: @ref{Gmsh API}.) A brief description of
 the four modules is given hereafter.
 
 @menu
-* Geometry::                    
-* Mesh::                        
-* Solver::                      
-* Post-processing::             
-* What Gmsh is pretty good at::  
-* and what Gmsh is not so good at::  
-* Bug reports::                 
+* Geometry::
+* Mesh::
+* Solver::
+* Post-processing::
+* What Gmsh is pretty good at::
+* and what Gmsh is not so good at::
+* Bug reports::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -246,7 +246,7 @@ the four modules is given hereafter.
 
 Gmsh uses a boundary representation (``BRep'') to describe geometries.
 Models are created in a bottom-up flow by successively defining points,
-oriented lines (line segments, circles, ellipses, splines, @dots{}),
+oriented curves (line segments, circles, ellipses, splines, @dots{}),
 oriented surfaces (plane surfaces, surfaces, triangulated
 surfaces, @dots{}) and volumes. Groups of geometrical entities (called
 ``physical groups'') can also be defined, based on these elementary
@@ -268,13 +268,13 @@ them intersect, they do so along a face, an edge or a node, and never
 otherwise. All the finite element meshes produced by Gmsh are considered
 as ``unstructured'', even if they were generated in a ``structured'' way
 (e.g., by extrusion). This implies that the elementary geometrical
-elements are defined only by an ordered list of their nodes but that no
-predefined order relation is assumed between any two elements.
+elements are defined only by an ordered list of their nodes but that
+no predefined order relation is assumed between any two elements.
 
 The mesh generation is performed in the same bottom-up flow as the
-geometry creation: lines are discretized first; the mesh of the lines is
-then used to mesh the surfaces; then the mesh of the surfaces is used to
-mesh the volumes. In this process, the mesh of an entity is only
+geometry creation: curves are discretized first; the mesh of the curves
+is then used to mesh the surfaces; then the mesh of the surfaces is used
+to mesh the volumes. In this process, the mesh of an entity is only
 constrained by the mesh of its boundary. For example, in three
 dimensions, the triangles discretizing a surface will be forced to be
 faces of tetrahedra in the final 3D mesh only if the surface is part of
@@ -282,11 +282,11 @@ the boundary of a volume; the line elements discretizing a curve will be
 forced to be edges of tetrahedra in the final 3D mesh only if the curve
 is part of the boundary of a surface, itself part of the boundary of a
 volume; a single node discretizing a point in the middle of a volume
-will be forced to be a vertex of one of the tetrahedra in the final 3D
+will be forced to be a node of one of the tetrahedra in the final 3D
 mesh only if this point is connected to a curve, itself part of the
 boundary of a surface, itself part of the boundary of a volume. This
 automatically assures the conformity of the mesh when, for example, two
-surfaces share a common line. But this also implies that the
+surfaces share a common curve. But this also implies that the
 discretization of an ``isolated'' (@var{n}-1)-th dimensional entity
 inside an @var{n}-th dimensional entity does @emph{not} constrain the
 @var{n}-th dimensional mesh---unless it is explicitly told to do so
@@ -331,7 +331,7 @@ directory).
 
 Gmsh can load and manipulate multiple post-processing scalar, vector or
 tensor maps along with the geometry and the mesh. Scalar fields are
-represented by iso-value lines/surfaces or color maps, while vector
+represented by iso-value curves/surfaces or color maps, while vector
 fields are represented by three-dimensional arrows or displacement
 maps. Post-processing functions include section computation, offset,
 elevation, boundary and component extraction, color map and range
@@ -518,7 +518,7 @@ see @ref{Gmsh API} for more information.
 @c -------------------------------------------------------------------------
 
 @menu
-* Syntactic rules::             
+* Syntactic rules::
 @end menu
 
 @node Syntactic rules,  , How to read this manual?, How to read this manual?
@@ -562,11 +562,11 @@ preceding rule.
 @cindex Running Gmsh
 
 @menu
-* Interactive mode::            
-* Non-interactive mode::        
-* Command-line options::        
-* Mouse actions::               
-* Keyboard shortcuts::          
+* Interactive mode::
+* Non-interactive mode::
+* Command-line options::
+* Mouse actions::
+* Keyboard shortcuts::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -602,7 +602,7 @@ line, i.e.:
 
 To perform the mesh generation, go to the mesh module (by selecting
 `Mesh' in the tree) and choose the dimension (`1D' will mesh all the
-lines; `2D' will mesh all the surfaces---as well as all the lines if
+curves; `2D' will mesh all the surfaces---as well as all the curves if
 `1D' was not called before; `3D' will mesh all the volumes---and all the
 surfaces if `2D' was not called before). To save the resulting mesh in
 the current mesh format click on `Save', or select the appropriate
@@ -622,7 +622,7 @@ string is automatically added at the end of the current script file. You
 can edit the script file by hand at any time by pressing the `Edit'
 button in the `Geometry' menu and then reloading the model by pressing
 `Reload'. For example, it is often faster to define variables and points
-directly in the script file, and then use the GUI to define the lines,
+directly in the script file, and then use the GUI to define the curves,
 the surfaces and the volumes interactively.
 
 Several files can be loaded simultaneously in Gmsh. When specified on
@@ -761,14 +761,14 @@ modules''. Commands peculiar to these modules will be introduced in
 @ref{Post-processing module}, respectively.
 
 @menu
-* Comments::                    
-* Expressions::                 
-* Operators::                   
-* Built-in functions::          
-* User-defined macros::         
-* Loops and conditionals::      
-* General commands::            
-* General options::             
+* Comments::
+* Expressions::
+* Operators::
+* Built-in functions::
+* User-defined macros::
+* Loops and conditionals::
+* General commands::
+* General options::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -812,9 +812,9 @@ The two constant types used in Gmsh scripts are @var{real} and
 meaning and syntax as in the C or C++ programming languages.
 
 @menu
-* Floating point expressions::  
-* Character expressions::       
-* Color expressions::           
+* Floating point expressions::
+* Character expressions::
+* Color expressions::
 @end menu
 
 @c .........................................................................
@@ -912,8 +912,8 @@ value is automatically used.
 @code{DefineNumber} allows to define a ONELAB variable in-line. The
 @var{expression} given as the first argument is the default value; this
 is followed by the various ONELAB options. See
-@uref{http://onelab.info/wiki/ONELAB_Syntax_for_Gmsh_and_GetDP} for more
-information.
+@uref{https://gitlab.onelab.info/doc/tutorials/wikis/ONELAB-syntax-for-Gmsh-and-GetDP}
+for more information.
 
 @cindex Expressions, lists
 
@@ -945,11 +945,11 @@ List of expressions are also widely used, and are defined as:
   @var{transform} |
   @var{extrude} |
   @var{boolean} |
-  Point|Line|Surface|Volume In BoundingBox @{ @var{expression-list} @} |
-  BoundingBox Point|Line|Surface|Volume @{ @var{expression} @}
+  Point|Curve|Surface|Volume In BoundingBox @{ @var{expression-list} @} |
+  BoundingBox Point|Curve|Surface|Volume @{ @var{expression} @}
   Point @{ @var{expression} @} |
-  Physical Point|Line|Surface|Volume @{ @var{expression-list} @} |
-  <Physical> Point|Line|Surface|Volume @{ : @} |
+  Physical Point|Curve|Surface|Volume @{ @var{expression-list} @} |
+  <Physical> Point|Curve|Surface|Volume @{ : @} |
 @c  @var{duplicata} - already implemented: should we explain this?
 @end example
 
@@ -974,8 +974,8 @@ operations}). The next two cases allow to retrieve entities in a given
 bounding box, or get the bounding box of a given entity. The last three
 cases permit to retrieve the coordinates of a given geometry point
 (@pxref{Points}), to retrieve the elementary entities making up physical
-groups, and to retrieve the id numbers of all (physical or elementary)
-points, lines, surfaces or volumes in the model,
+groups, and to retrieve the tags of all (physical or elementary) points,
+curves, surfaces or volumes in the model,
 
 To see the practical use of such expressions, have a look at the first
 couple of examples in @ref{Tutorial}. Note that, in order to lighten the
@@ -995,7 +995,7 @@ as:
 @end example
 
 The meaning of ``all'' (@code{:}) depends on context. For example,
-@code{Line @{ : @}} will get the ids of all the existing lines in the
+@code{Curve @{ : @}} will get the ids of all the existing curves in the
 model, while @code{Surface @{ : @}} will get the ids of all existing
 surfaces.
 
@@ -1071,10 +1071,10 @@ and @code{Sprintf}). @code{NameToString} converts a variable name into a
 string.
 
 @code{DefineString} allows to define a ONELAB variable in-line. The
-@var{char-expression} given as the first argument is the default value; this
-is followed by the various ONELAB options. See
-@uref{http://onelab.info/wiki/ONELAB_Syntax_for_Gmsh_and_GetDP} for more
-information.
+@var{char-expression} given as the first argument is the default value;
+this is followed by the various ONELAB options. See
+@uref{https://gitlab.onelab.info/doc/tutorial/wikis/ONELAB-syntax-for-Gmsh-and-GetDP}
+for more information.
 
 Character expressions are mostly used to specify non-numeric options and
 input/output file names. See @ref{t8.geo}, for an interesting usage of
@@ -1494,33 +1494,33 @@ Returns the current memory usage (in Mb).
 Returns the total memory available (in Mb).
 
 @item newp
-Returns the next available point number. As explained in @ref{Geometry
-module}, a unique number must be associated with every geometrical point:
-@code{newp} permits to know the highest number already attributed (plus
+Returns the next available point tag. As explained in @ref{Geometry
+module}, a unique tag must be associated with every geometrical point:
+@code{newp} permits to know the highest tag already attributed (plus
 one). This is mostly useful when writing user-defined macros
 (@pxref{User-defined macros}) or general geometric primitives, when one
-does not know @emph{a priori} which numbers are already attributed, and
+does not know @emph{a priori} which tags are already attributed, and
 which ones are still available.
 
 @item newl
-Returns the next available line number.
+Returns the next available curve tag.
 
 @item news
-Returns the next available surface number.
+Returns the next available surface tag.
 
 @item newv
-Returns the next available volume number.
+Returns the next available volume tag.
 
 @item newll
-Returns the next available line loop number.
+Returns the next available curve loop tag.
 
 @item newsl
-Returns the next available surface loop number.
+Returns the next available surface loop tag.
 
 @item newreg
-Returns the next available region number. That is, @code{newreg} returns
+Returns the next available region tag. That is, @code{newreg} returns
 the maximum of @code{newp}, @code{newl}, @code{news}, @code{newv},
-@code{newll}, @code{newsl} and all physical entity numbers@footnote{For
+@code{newll}, @code{newsl} and all physical entity tags@footnote{For
 compatibility purposes, the behavior of @code{newl}, @code{news},
 @code{newv} and @code{newreg} can be modified with the
 @code{Geometry.OldNewReg} option (@pxref{Geometry options list}).}.
@@ -1603,8 +1603,8 @@ Creates a new expression identifier @var{string}, with value
 @item DefineConstant[ @var{string} = @{ @var{expression}|@var{char-expression}, @var{onelab-options} @} <, ...>];
 Same as the previous case, except that the variable is also exchanged
 with the ONELAB database if it has not been defined before. See
-@uref{http://onelab.info/wiki/ONELAB_Syntax_for_Gmsh_and_GetDP} for more
-information.
+@uref{https://gitlab.onelab.info/doc/tutorial/wikis/ONELAB-syntax-for-Gmsh-and-GetDP}
+for more information.
 
 @item SetNumber( @var{char-expression} , @var{expression} );
 Sets the value a numeric ONELAB variable @var{char-expression}.
@@ -1669,7 +1669,7 @@ is not absolute, @var{char-expression} is appended to the path of the
 current file.
 
 @item ShapeFromFile( @var{char-expression} );
-Merges a BREP or STEP file and returns the identification numbers of the
+Merges a BREP or STEP file and returns the tags of the
 highest-dimensional entities. Only available with the OpenCASCADE
 geometry kernel.
 
@@ -1687,8 +1687,8 @@ after new geometrical entities are added or after files are included or
 merged). The bounding box is computed as follows:
 @enumerate
 @item
-If there is a mesh (i.e., at least one mesh vertex), the bounding
-box is taken as the box enclosing all the mesh vertices;
+If there is a mesh (i.e., at least one mesh node), the bounding
+box is taken as the box enclosing all the mesh nodes;
 @item
 If there is no mesh but there is a geometry (i.e., at least one geometrical
 point), the bounding box is taken as the box enclosing all the geometrical
@@ -1787,45 +1787,50 @@ the same time.
 @cindex Geometry, module
 @cindex Module, geometry
 
-Gmsh's geometry module provides a simple CAD engine, using a boundary
-representation (``BRep'') approach: you need to first define points
-(using the @code{Point} command: see below), then lines (using
-@code{Line}, @code{Circle}, @code{Spline}, @dots{}, commands or by
-extruding points), then surfaces (using for example the @code{Plane
-Surface} or @code{Surface} commands, or by extruding lines), and finally
-volumes (using the @code{Volume} command or by extruding surfaces).
+Geometries can be constructed in Gmsh using different underlying CAD
+kernels, specified in @code{.geo} files with the @code{SetFactory}
+command.
+
+The built-in CAD kernel (@code{SetFactory("built-in")}) provides a
+simple CAD engine based on a boundary representation (``BRep'')
+approach: you need to first define points (using the @code{Point}
+command: see below), then curves (using @code{Line}, @code{Circle},
+@code{Spline}, @dots{}, commands or by extruding points), then surfaces
+(using for example the @code{Plane Surface} or @code{Surface} commands,
+or by extruding curves), and finally volumes (using the @code{Volume}
+command or by extruding surfaces). The OpenCASCADE CAD kernel
+(@code{SetFactory("OpenCASCADE")}) uses the open source OpenCASCADE 
 
 These geometrical entities are called ``elementary'' in Gmsh's jargon,
-and are assigned identification numbers (stricly positive) when they are
-created:
+and are assigned tags (stricly positive identification numbers) when
+they are created:
 
 @enumerate
-@item each elementary point must possess a unique identification number;
-@item each elementary line must possess a unique identification number;
-@item each elementary surface must possess a unique identification number;
-@item each elementary volume must possess a unique identification number.
+@item each elementary point must possess a unique tag;
+@item each elementary curve must possess a unique tag;
+@item each elementary surface must possess a unique tag;
+@item each elementary volume must possess a unique tag.
 @end enumerate
 
 @noindent Elementary geometrical entities can then be manipulated in various
 ways, for example using the @code{Translate}, @code{Rotate},
 @code{Scale} or @code{Symmetry} commands. They can be deleted with the
 @code{Delete} command, provided that no higher-dimension entity
-references them. Zero or negative identification numbers are reserved by
-the system for special uses: do not use them in your scripts.
+references them. Zero or negative tags are reserved by the system for
+special uses: do not use them in your scripts.
 
 Groups of elementary geometrical entities can also be defined and are
 called ``physical'' entities. These physical entities cannot be modified
 by geometry commands: their only purpose is to assemble elementary
 entities into larger groups so that they can be referred to by the mesh
 module as single entities. As is the case with elementary entities, each
-physical point, physical line, physical surface or physical volume must
-be assigned a unique identification number. See @ref{Mesh module}, for
-more information about how physical entities affect the way meshes are
-saved.
+physical point, physical curve, physical surface or physical volume must
+be assigned a unique tag. See @ref{Mesh module}, for more information
+about how physical entities affect the way meshes are saved.
 
 @menu
-* Geometry commands::           
-* Geometry options::            
+* Geometry commands::
+* Geometry options::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -1846,21 +1851,21 @@ is enclosed between parentheses. If an @var{expression} refers to a
 previously defined entity, it is enclosed between braces.''
 
 @menu
-* Points::                      
-* Lines::                       
-* Surfaces::                    
-* Volumes::                     
-* Extrusions::                  
-* Boolean operations::          
-* Transformations::             
-* Miscellaneous geometry commands::  
+* Points::
+* Curves::
+* Surfaces::
+* Volumes::
+* Extrusions::
+* Boolean operations::
+* Transformations::
+* Miscellaneous geometry commands::
 @end menu
 
 @c .........................................................................
 @c Points
 @c .........................................................................
 
-@node Points, Lines, Geometry commands, Geometry commands
+@node Points, Curves, Geometry commands, Geometry commands
 @subsection Points
 
 @cindex Elementary points
@@ -1871,55 +1876,54 @@ previously defined entity, it is enclosed between braces.''
 @ftable @code
 @item Point ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} <, @var{expression} > @};
 Creates an elementary point. The @var{expression} inside the parentheses
-is the point's identification number; the three first
-@w{@var{expression}s} inside the braces on the right hand side give the
-three X, Y and Z coordinates of the point in the three-dimensional
-Euclidean space; the optional last @var{expression} sets the prescribed
-mesh element size at that point. See @ref{Specifying mesh element
-sizes}, for more information about how this value is used in the meshing
-process.
+is the point's tag; the three first @w{@var{expression}s} inside the
+braces on the right hand side give the three X, Y and Z coordinates of
+the point in the three-dimensional Euclidean space; the optional last
+@var{expression} sets the prescribed mesh element size at that
+point. See @ref{Specifying mesh element sizes}, for more information
+about how this value is used in the meshing process.
 
 @item Physical Point ( @var{expression} | @var{char-expression} <, @var{expression}> ) <+|->= @{ @var{expression-list} @};
 Creates a physical point. The @var{expression} inside the parentheses is
-the physical point's identification number; the @var{expression-list} on
-the right hand side should contain the identification numbers of all the
-elementary points that need to be grouped inside the physical point.  If
-a @var{char-expression} is given instead instead of @var{expression}
-inside the parentheses, a string label is associated with the physical
-identification number, which can be either provided explicitly (after
-the comma) or not (in which case a unique identification number is
-automatically created).
+the physical point's tag; the @var{expression-list} on the right hand
+side should contain the tags of all the elementary points that need to
+be grouped inside the physical point.  If a @var{char-expression} is
+given instead instead of @var{expression} inside the parentheses, a
+string label is associated with the physical tag, which can be either
+provided explicitly (after the comma) or not (in which case a unique
+tag is automatically created).
 
 @end ftable
 
 @c .........................................................................
-@c Lines
+@c Curves
 @c .........................................................................
 
-@node Lines, Surfaces, Points, Geometry commands
-@subsection Lines
+@node Curves, Surfaces, Points, Geometry commands
+@subsection Curves
 
-@cindex Elementary lines
-@cindex Lines, elementary
-@cindex Physical lines
-@cindex Lines, physical
+@cindex Elementary curves
+@cindex Curves, elementary
+@cindex Physical curves
+@cindex Curves, physical
+@cindex Lines
 
 @ftable @code
 @item Line ( @var{expression} ) = @{ @var{expression}, @var{expression} @};
-Creates a straight line segment. The @var{expression} inside the parentheses
-is the line segment's identification number; the two @w{@var{expression}s}
-inside the braces on the right hand side give identification numbers of the
-start and end points of the segment.
+Creates a straight line segment. The @var{expression} inside the
+parentheses is the line segment's tag; the two @w{@var{expression}s}
+inside the braces on the right hand side give tags of the start and end
+points of the segment.
 @c todo: multi-lines not authorized yet
 
 @item Bezier ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a Bezier curve. The @var{expression-list} contains the
-identification numbers of the control points. 
+tags of the control points. 
 
 @item BSpline ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a cubic BSpline. The @var{expression-list} contains the
-identification numbers of the control points. Creates a periodic curve
-if the first and last points are identical.
+Creates a cubic BSpline. The @var{expression-list} contains the tags of
+the control points. Creates a periodic curve if the first and last
+points are identical.
 
 @item Spline ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a spline going through the points in @var{expression-list}. With
@@ -1945,37 +1949,35 @@ with the OpenCASCADE kernel. With the OpenCASCADE kernel additional
 expressions define the radii along X and Y) or en ellipse arc (next 2
 expressions).
 
-@item Line Loop ( @var{expression} ) = @{ @var{expression-list} @};
-Creates an oriented line loop. The @var{expression} inside the parentheses
-is the line loop's identification number; the @var{expression-list} on the
-right hand side should contain the identification numbers of all the
-elementary lines that constitute the line loop. A line loop must be a closed
-loop, and the elementary lines should be ordered and oriented (using
-negative identification numbers to specify reverse orientation). If the
+@item Curve Loop ( @var{expression} ) = @{ @var{expression-list} @};
+Creates an oriented loop of curves, i.e. a closed wire. The
+@var{expression} inside the parentheses is the curve loop's tag; the
+@var{expression-list} on the right hand side should contain the tags of
+all the elementary curves that constitute the curve loop. A curve loop must
+be a closed loop, and the elementary curves should be ordered and
+oriented (using negative tags to specify reverse orientation). If the
 orientation is correct, but the ordering is wrong, Gmsh will actually
 reorder the list internally to create a consistent loop. Although Gmsh
-supports it, it is not recommended to specify multiple line loops (or
-subloops) in a single @code{Line Loop} command. (Line loops are used to
-create surfaces: see @ref{Surfaces}.)
+supports it, it is not recommended to specify multiple curve loops (or
+subloops) in a single @code{Curve Loop} command. (Curve loops are used
+to create surfaces: see @ref{Surfaces}.)
 
 @item Wire ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a path made of lines. Wires are only available with the
+Creates a path made of curves. Wires are only available with the
 OpenCASCADE kernel. They are used to create @code{ThruSections} and
 extrusions along paths.
 
-@item Physical Line ( @var{expression} | @var{char-expression} <, @var{expression}> ) <+|->= @{ @var{expression-list} @};
-Creates a physical line. The @var{expression} inside the parentheses is
-the physical line's identification number; the @var{expression-list} on
-the right hand side should contain the identification numbers of all the
-elementary lines that need to be grouped inside the physical line. If a
-@var{char-expression} is given instead instead of @var{expression}
-inside the parentheses, a string label is associated with the physical
-identification number, which can be either provided explicitly (after
-the comma) or not (in which case a unique identification number is
-automatically created). Specifying negative identification numbers in
-the @var{expression-list} will reverse the orientation of the mesh
-elements belonging to the corresponding elementary lines in the saved
-mesh file.
+@item Physical Curve ( @var{expression} | @var{char-expression} <, @var{expression}> ) <+|->= @{ @var{expression-list} @};
+Creates a physical curve. The @var{expression} inside the parentheses is
+the physical curve's tag; the @var{expression-list} on the right hand
+side should contain the tags of all the elementary curves that need to be
+grouped inside the physical curve. If a @var{char-expression} is given
+instead instead of @var{expression} inside the parentheses, a string
+label is associated with the physical tag, which can be either provided
+explicitly (after the comma) or not (in which case a unique tag is
+automatically created). Specifying negative tags in the
+@var{expression-list} will reverse the orientation of the mesh elements
+belonging to the corresponding elementary curves in the saved mesh file.
 
 @end ftable
 
@@ -1983,7 +1985,7 @@ mesh file.
 @c Surfaces
 @c .........................................................................
 
-@node Surfaces, Volumes, Lines, Geometry commands
+@node Surfaces, Volumes, Curves, Geometry commands
 @subsection Surfaces
 
 @cindex Elementary surfaces
@@ -1993,23 +1995,23 @@ mesh file.
 
 @ftable @code
 @item Plane Surface ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a plane surface. The @var{expression} inside the parentheses is the
-plane surface's identification number; the @var{expression-list} on the
-right hand side should contain the identification numbers of all the line
-loops defining the surface. The first line loop defines the exterior
-boundary of the surface; all other line loops define holes in the surface.
-A line loop defining a hole should not have any lines in common with the
-exterior line loop (in which case it is not a hole, and the two surfaces
-should be defined separately). Likewise, a line loop defining a hole should
-not have any lines in common with another line loop defining a hole in the
-same surface (in which case the two line loops should be combined).
+Creates a plane surface. The @var{expression} inside the parentheses is
+the plane surface's tag; the @var{expression-list} on the right hand
+side should contain the tags of all the curve loops defining the
+surface. The first curve loop defines the exterior boundary of the
+surface; all other curve loops define holes in the surface.  A curve loop
+defining a hole should not have any curves in common with the exterior
+curve loop (in which case it is not a hole, and the two surfaces should
+be defined separately). Likewise, a curve loop defining a hole should not
+have any curves in common with another curve loop defining a hole in the
+same surface (in which case the two curve loops should be combined).
 
 @item Surface ( @var{expression} ) = @{ @var{expression-list} @} < In Sphere @{ @var{expression} @} >;
-Creates a surface filling. With the built-in kernel, the first line loop
-should be composed of either three or four elementary lines. With the
+Creates a surface filling. With the built-in kernel, the first curve loop
+should be composed of either three or four elementary curves. With the
 built-in kernel, the optional @code{In Sphere} argument forces the
 surface to be a spherical patch (the extra parameter gives the
-identification number of the center of the sphere).
+tag of the center of the sphere).
 
 @item Disk ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a disk. When four expressions are provided on the right hand
@@ -2025,25 +2027,25 @@ corners. @code{Rectangle} is only available with the OpenCASCADE kernel.
 
 @item Surface Loop ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a surface loop (a shell). The @var{expression} inside the
-parentheses is the surface loop's identification number; the
-@var{expression-list} on the right hand side should contain the
-identification numbers of all the elementary surfaces that constitute the
-surface loop. A surface loop must always represent a closed shell, and the
-elementary surfaces should be oriented consistently (using negative
-identification numbers to specify reverse orientation). (Surface loops are
-used to create volumes: see @ref{Volumes}.)
+parentheses is the surface loop's tag; the @var{expression-list} on the
+right hand side should contain the tags of all the elementary surfaces
+that constitute the surface loop. A surface loop must always represent a
+closed shell, and the elementary surfaces should be oriented
+consistently (using negative tags to specify reverse
+orientation). (Surface loops are used to create volumes: see
+@ref{Volumes}.)
 
 @item Physical Surface ( @var{expression} | @var{char-expression} <, @var{expression}> ) <+|->= @{ @var{expression-list} @};
 Creates a physical surface. The @var{expression} inside the parentheses
-is the physical surface's identification number; the
+is the physical surface's tag; the
 @var{expression-list} on the right hand side should contain the
-identification numbers of all the elementary surfaces that need to be
+tags of all the elementary surfaces that need to be
 grouped inside the physical surface.  If a @var{char-expression} is
 given instead instead of @var{expression} inside the parentheses, a
-string label is associated with the physical identification number,
+string label is associated with the physical tag,
 which can be either provided explicitly (after the comma) or not (in
-which case a unique identification number is automatically created).
-Specifying negative identification numbers in the @var{expression-list}
+which case a unique tag is automatically created).
+Specifying negative tags in the @var{expression-list}
 will reverse the orientation of the mesh elements belonging to the
 corresponding elementary surfaces in the saved mesh file.
 
@@ -2064,8 +2066,8 @@ corresponding elementary surfaces in the saved mesh file.
 @ftable @code
 @item Volume ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a volume. The @var{expression} inside the parentheses is the
-volume's identification number; the @var{expression-list} on the right hand
-side should contain the identification numbers of all the surface loops
+volume's tag; the @var{expression-list} on the right hand
+side should contain the tags of all the surface loops
 defining the volume. The first surface loop defines the exterior boundary of
 the volume; all other surface loops define holes in the volume.  A surface
 loop defining a hole should not have any surfaces in common with the
@@ -2109,7 +2111,7 @@ top X extent (zero by default). @code{Wedge} is only available with the
 OpenCASCADE kernel.
 
 @item ThruSections ( @var{expression} ) = @{ @var{expression-list} @};
-Creates a volume defined through line loops. @code{ThruSections} is only
+Creates a volume defined through curve loops. @code{ThruSections} is only
 available with the OpenCASCADE kernel.
 
 @item Ruled ThruSections ( @var{expression} ) = @{ @var{expression-list} @};
@@ -2122,14 +2124,14 @@ the OpenCASCADE kernel.
 
 @item Physical Volume ( @var{expression} | @var{char-expression} <, @var{expression}> ) <+|->= @{ @var{expression-list} @};
 Creates a physical volume. The @var{expression} inside the parentheses
-is the physical volume's identification number; the
+is the physical volume's tag; the
 @var{expression-list} on the right hand side should contain the
-identification numbers of all the elementary volumes that need to be
+tags of all the elementary volumes that need to be
 grouped inside the physical volume. If a @var{char-expression} is given
 instead instead of @var{expression} inside the parentheses, a string
-label is associated with the physical identification number, which can
+label is associated with the physical tag, which can
 be either provided explicitly (after the comma) or not (in which case a
-unique identification number is automatically created).
+unique tag is automatically created).
 
 @end ftable
 
@@ -2144,21 +2146,21 @@ unique identification number is automatically created).
 @cindex Geometry, extrusion
 @findex @var{extrude}
 
-Lines, surfaces and volumes can also be created through extrusion of points,
-lines and surfaces, respectively. Here is the syntax of the geometrical
+Curves, surfaces and volumes can also be created through extrusion of points,
+curves and surfaces, respectively. Here is the syntax of the geometrical
 extrusion commands (go to @ref{Structured grids}, to see how these commands
 can be extended in order to also extrude the mesh):
 
 @var{extrude}:
 @ftable @code
 @item Extrude @{ @var{expression-list} @}  @{ @var{extrude-list} @}
-Extrudes all elementary entities (points, lines or surfaces) in
+Extrudes all elementary entities (points, curves or surfaces) in
 @var{extrude-list} using a translation. The @var{expression-list} should
 contain three @w{@var{expression}s} giving the X, Y and Z components of
 the translation vector.
 
 @item Extrude @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{extrude-list} @}
-Extrudes all elementary entities (points, lines or surfaces) in
+Extrudes all elementary entities (points, curves or surfaces) in
 @var{extrude-list} using a rotation. The first @var{expression-list}
 should contain three @w{@var{expression}s} giving the X, Y and Z
 direction of the rotation axis; the second @var{expression-list} should
@@ -2167,7 +2169,7 @@ any point on this axis; the last @var{expression} should contain the
 rotation angle (in radians).
 
 @item Extrude @{ @{ @var{expression-list} @}, @{ @var{expression-list} @}, @{ @var{expression-list} @}, @var{expression} @} @{ @var{extrude-list} @}
-Extrudes all elementary entities (points, lines or surfaces) in
+Extrudes all elementary entities (points, curves or surfaces) in
 @var{extrude-list} using a translation combined with a rotation (to
 produce a ``twist''). The first @var{expression-list} should contain
 three @w{@var{expression}s} giving the X, Y and Z components of the
@@ -2187,12 +2189,12 @@ Extrudes entities in @var{extrude-list} along the give wire. Only
 available with the OpenCASCADE geometry kernel.
 
 @item ThruSections @{ @var{expression-list} @}
-Creates surfaces through the given line loops or
+Creates surfaces through the given curve loops or
 wires. @code{ThruSections} is only available with the OpenCASCADE
 kernel.
 
 @item Ruled ThruSections @{ @var{expression-list} @}
-Creates ruled surfaces through the given line loops or
+Creates ruled surfaces through the given curve loops or
 wires. @code{Ruled ThruSections} is only available with the OpenCASCADE
 kernel.
 
@@ -2206,23 +2208,23 @@ kernel.
 
 @example
 @var{extrude-list}: 
-  <Physical> Point | Line | Surface @{ @var{expression-list-or-all} @}; @dots{}
+  <Physical> Point | Curve | Surface @{ @var{expression-list-or-all} @}; @dots{}
 @end example
 
 As explained in @ref{Floating point expressions}, @var{extrude} can be
-used in an expression, in which case it returns a list of identification
-numbers. By default, the list contains the ``top'' of the extruded
-entity at index 0 and the extruded entity at index 1, followed by the
-``sides'' of the extruded entity at indices 2, 3, etc.  For example:
+used in an expression, in which case it returns a list of tags. By
+default, the list contains the ``top'' of the extruded entity at index 0
+and the extruded entity at index 1, followed by the ``sides'' of the
+extruded entity at indices 2, 3, etc.  For example:
 
 @example
   Point(1) = @{0,0,0@};
   Point(2) = @{1,0,0@};
   Line(1) = @{1, 2@};
-  out[] = Extrude@{0,1,0@}@{ Line@{1@}; @};
-  Printf("top line = %g", out[0]);
+  out[] = Extrude@{0,1,0@}@{ Curve@{1@}; @};
+  Printf("top curve = %g", out[0]);
   Printf("surface = %g", out[1]);
-  Printf("side lines = %g and %g", out[2], out[3]);
+  Printf("side curves = %g and %g", out[2], out[3]);
 @end example
 
 This behaviour can be changed with the
@@ -2244,7 +2246,7 @@ options list}).
 @cindex Geometry, fragments
 @findex @var{boolean}
 
-Boolean operations can be applied on lines, surfaces and volumes. All
+Boolean operations can be applied on curves, surfaces and volumes. All
 boolean operation act on two lists of elementary entities. The first
 list represents the object; the second represents the tool. The general
 syntax for boolean operations is as follows:
@@ -2266,7 +2268,7 @@ with
 
 @example
 @var{boolean-list}: 
-  <Physical> Line | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} |
+  <Physical> Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} |
   Delete ;
 @end example
 
@@ -2275,7 +2277,7 @@ the object is deleted.
 
 As explained in @ref{Floating point expressions}, @var{boolean} can be
 used in an expression, in which case it returns the list of
-identification numbers of the highest dimensional entities created by
+tags of the highest dimensional entities created by
 the boolean operation.  See
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/boolean/,demos/boolean}
 for examples.
@@ -2288,13 +2290,13 @@ when it is known beforehand that the operation will result in a single
 @ftable @code
 @item BooleanIntersection ( @var{expression} ) = @{ @var{boolean-list} @} @{ @var{boolean-list} @};
 Computes the intersection of the object and the tool and assign the
-result the identification number @var{expression}.
+result the tag @var{expression}.
 @item BooleanUnion @{ @var{boolean-list} @} @{ @var{boolean-list} @}
 Computes the union of the object and the tool and assign the result
-the identification number @var{expression}.
+the tag @var{expression}.
 @item BooleanDifference @{ @var{boolean-list} @} @{ @var{boolean-list} @}
 Subtract the tool from the object and assign the result the
-identification number @var{expression}.
+tag @var{expression}.
 @end ftable
 
 Again, see
@@ -2372,8 +2374,8 @@ entities, combined as if a single entity, in
 boundary of the elementary entities. Useful to compute the boundary of a
 complex part.
 
-@c @item Intersect Line @{ @var{expression-list} @} Surface @{ @var{expression} @}
-@c (Not a transformation per-se.) Returns the intersections of the lines
+@c @item Intersect Curve @{ @var{expression-list} @} Surface @{ @var{expression} @}
+@c (Not a transformation per-se.) Returns the intersections of the curves
 @c given in @var{expression-list} with the specified surface.
 @end ftable
 
@@ -2381,8 +2383,8 @@ complex part.
 
 @example
 @var{transform-list}: 
-  <Physical> Point | Line | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} |
-  Duplicata @{ <Physical> Point | Line | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @} |
+  <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} |
+  Duplicata @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @} |
   @var{transform}
 @end example
 
@@ -2405,15 +2407,15 @@ set to zero (@pxref{Geometry options list}). With the OpenCASCADE
 geoemtry kernel, @code{Coherence} is simply a shortcut for a
 @code{BooleanFragments} operation on all entities.
 
-@item < Recursive > Delete @{ <Physical> Point | Line | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
-Deletes all elementary entities whose identification numbers are given
+@item < Recursive > Delete @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
+Deletes all elementary entities whose tags are given
 in @var{expression-list-or-all}. If an entity is linked to another
 entity (for example, if a point is used as a control point of a curve),
-@code{Delete} has no effect (the line will have to be deleted before the
+@code{Delete} has no effect (the curve will have to be deleted before the
 point can). The @code{Recursive} variant deletes the entities as well as
 all its sub-entities of lower dimension.
 
-@item < Recursive > Hide @{ <Physical> Point | Line | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
+@item < Recursive > Hide @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Hide the entities listed in @var{expression-list-or-all}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{1}.
 
@@ -2421,7 +2423,7 @@ Hide the entities listed in @var{expression-list-or-all}, if
 Hide all entities, if @code{General.VisibilityMode} is set to @code{0}
 or @code{1}.
 
-@item < Recursive > Show @{ <Physical> Point | Line | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
+@item < Recursive > Show @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Show the entities listed in @var{expression-list-or-all}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{1}.
 
@@ -2485,10 +2487,10 @@ algorithm can be quite poor.
 @c primitives, etc.)
 
 @menu
-* Choosing the right unstructured algorithm::  
-* Elementary vs physical entities::  
-* Mesh commands::               
-* Mesh options::                
+* Choosing the right unstructured algorithm::
+* Elementary vs physical entities::
+* Mesh commands::
+* Mesh options::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -2591,11 +2593,11 @@ important the mesh optimizer(s) should be applied.
 If only elementary geometrical entities are defined (or if the
 @code{Mesh.SaveAll} option is set; see @ref{Mesh options list}), the
 grid produced by the mesh module will be saved ``as is''. That is, all
-the elements in the grid will be saved using the identification number
+the elements in the grid will be saved using the tag
 of the elementary entities they discretize as their elementary region
-number (and 0 as their physical region number@footnote{This behaviour
+tag (and 0 as their physical region tag@footnote{This behaviour
 was introduced in Gmsh 2.0. In older versions, both the elementary and
-the physical region numbers would be set to the identification number of
+the physical region tags would be set to the tag of
 the elementary region.}; @ref{File formats}). This can sometimes be
 inconvenient:
 
@@ -2627,7 +2629,7 @@ defined, the output mesh only contains those elements that belong to
 physical entities. Other file formats each treat physical entities in
 slightly different ways, depending on their capability to define groups.
 
-Note that in some mesh file formats Gmsh reindexes the mesh vertices and
+Note that in some mesh file formats Gmsh reindexes the mesh nodes and
 elements so that they are numbered in a continuous sequence in the
 output files. Note that the numbers displayed on screen after mesh
 generation can thus differ from the ones saved in the mesh files,
@@ -2646,15 +2648,15 @@ file just load the file back using `File->Open'.
 
 The mesh module commands mostly permit to modify the mesh element sizes
 and specify structured grid parameters. The actual mesh ``actions''
-(i.e., ``mesh the lines'', ``mesh the surfaces'' and ``mesh the
+(i.e., ``mesh the curves'', ``mesh the surfaces'' and ``mesh the
 volumes'') cannot be specified in the script files. They have to be
 given either in the GUI or on the command line (see @ref{Running Gmsh on
 your system}, and @ref{Command-line options}).
 
 @menu
-* Specifying mesh element sizes::  
-* Structured grids::            
-* Miscellaneous mesh commands::  
+* Specifying mesh element sizes::
+* Structured grids::
+* Miscellaneous mesh commands::
 @end menu
 
 @c .........................................................................
@@ -2718,7 +2720,7 @@ of a parallelepipedic region.
 @item 
 A @code{Threshold} field specifies the size of the mesh according to the
 distance to some geometrical entities. These entities can for example be
-geometry points and lines specified by an @code{Attractor} field.
+geometry points and curves specified by an @code{Attractor} field.
 @item 
 A @code{MathEval} field specifies the size of the mesh using an explicit
 mathematical function.
@@ -2747,10 +2749,10 @@ mesh element sizes:
 @ftable @code
 @item Characteristic Length @{ @var{expression-list} @} = @var{expression};
 Modify the prescribed mesh element size of the points whose
-identification numbers are listed in @var{expression-list}. The new
+tags are listed in @var{expression-list}. The new
 value is given by @var{expression}.
 @item Field[@var{expression}] = @var{string};
-Create a new field (with id number @var{expression}), of type
+Create a new field (with tag @var{expression}), of type
 @var{string}.
 @item Field[@var{expression}].@var{string} = @var{char-expression} | @var{expression} | @var{expression-list};
 Set the option @var{string} of the @var{expression}-th field.
@@ -2801,17 +2803,17 @@ normalized height of each layer (the list should contain a sequence of
 @var{n} numbers 0 < @var{h1} < @var{h2} < @dots{} < @var{hn} <= 1). See
 @ref{t3.geo}, for an example.
 
-For line extrusions, the @code{Recombine} option will recombine triangles
+For curve extrusions, the @code{Recombine} option will recombine triangles
 into quadrangles when possible.  For surface extrusions, the
 @code{Recombine} option will recombine tetrahedra into prisms, hexahedra or
 pyramids.
 
-Please note that, starting with Gmsh 2.0, region numbers cannot be
+Please note that, starting with Gmsh 2.0, region tags cannot be
 specified explicitly anymore in @code{Layers} commands. Instead, as with
 all other geometry commands, you must use the automatically created
 entity identifier created by the extrusion command. For example, the
-following extrusion command will return the id of the new ``top''
-surface in @code{num[0]} and the id of the new volume in @code{num[1]}:
+following extrusion command will return the tag of the new ``top''
+surface in @code{num[0]} and the tag of the new volume in @code{num[1]}:
 @example
 num[] = Extrude @{0,0,1@} @{ Surface@{1@}; Layers@{10@}; @};
 @end example
@@ -2824,19 +2826,19 @@ volumes. (They have no effect for 1D or 2D extrusions.)
 @code{QuadTriNoNewVerts} subdivides any of the region's quad-faced 3D
 elements that touch these boundary triangles into pyramids, prisms, or
 tetrahedra as necessary, all WITHOUT adding new
-vertices. @code{QuadTriAddVerts} works in a simular way, but subdivides
-3D elements touching the boundary triangles by adding a new vertex
-inside each element at the vertex-based centroid. Either method results
+nodes. @code{QuadTriAddVerts} works in a simular way, but subdivides
+3D elements touching the boundary triangles by adding a new node
+inside each element at the node-based centroid. Either method results
 in a structured extrusion with an outer layer of subdivided elements
 that interface the inner, unmodified elements to the triangle-meshed
 region boundaries.
 
 In some rare cases, due to certain lateral boundary conditions, it may
 not be possible make a valid element subdivision with
-@code{QuadTriNoNewVerts} without adding additional vertices. In this
-case, an internal vertex is created at the vertex-based centroid of the
-element. The element is then divided using that vertex. When an internal
-vertex is created with @code{QuadTriNoNewVerts}, the user is alerted by
+@code{QuadTriNoNewVerts} without adding additional nodes. In this
+case, an internal node is created at the node-based centroid of the
+element. The element is then divided using that node. When an internal
+node is created with @code{QuadTriNoNewVerts}, the user is alerted by
 a warning message sent for each instance; however, the mesh will still
 be valid and conformal.
 
@@ -2884,20 +2886,20 @@ several independent boundary layers (with independent normal smoothing).
 
 @code{ScaleLastLayer} scales the height of the last (top) layer of each
 normal's extrusion by the average length of the edges in all the source
-elements that contain the source vertex (actually, the average of the
-averages for each element--edges actually touching the source vertex are
+elements that contain the source node (actually, the average of the
+averages for each element--edges actually touching the source node are
 counted twice). This allows the height of the last layer to vary along
 with the size of the source elements in order to achieve better element
 quality. For example, in a boundary layer extruded with the Layers
-definition 'Layers@{ @{1,4,2@}, @{0.5, 0.6, 1.6@} @},' a source vertex
+definition 'Layers@{ @{1,4,2@}, @{0.5, 0.6, 1.6@} @},' a source node
 adjacent to elements with an overall average edge length of 5.0 will
 extrude to have a last layer height = (1.6-0.6) * 5.0 = 5.0.
 
 
-@item Transfinite Line @{ @var{expression-list-or-all} @} = @var{expression} < Using Progression | Bump @var{expression} >;
-Selects the lines in @var{expression-list} to be meshed with the 1D
+@item Transfinite Curve @{ @var{expression-list-or-all} @} = @var{expression} < Using Progression | Bump @var{expression} >;
+Selects the curves in @var{expression-list} to be meshed with the 1D
 transfinite algorithm. The @var{expression} on the right hand side gives
-the number of nodes that will be created on the line (this overrides any
+the number of nodes that will be created on the curve (this overrides any
 other mesh element size prescription---see @ref{Specifying mesh element
 sizes}). The optional argument `@code{Using Progression
 @var{expression}}' instructs the transfinite algorithm to distribute the
@@ -2905,14 +2907,14 @@ nodes following a geometric progression (@code{Progression 2} meaning
 for example that each line element in the series will be twice as long
 as the preceding one). The optional argument `@code{Using Bump
 @var{expression}}' instructs the transfinite algorithm to distribute the
-nodes with a refinement at both ends of the line.
+nodes with a refinement at both ends of the curve.
 
 @item Transfinite Surface @{ @var{expression-list-or-all}  @}  < = @{ @var{expression-list} @} > < Left | Right | Alternate | AlternateRight | AlternateLeft > ;
 Selects surfaces to be meshed with the 2D transfinite algorithm. The
 @var{expression-list} on the right-hand-side should contain the
-identification numbers of three or four points on the boundary of the
+tags of three or four points on the boundary of the
 surface that define the corners of the transfinite interpolation. If no
-identification numbers are given, the transfinite algorithm will try to
+tags are given, the transfinite algorithm will try to
 find the corners automatically. The optional argument specifies the way
 the triangles are oriented when the mesh is not
 recombined. (@code{Alternate} is a synonym for @code{AlternateRight}).
@@ -2920,9 +2922,9 @@ recombined. (@code{Alternate} is a synonym for @code{AlternateRight}).
 @item Transfinite Volume @{ @var{expression-list} @} < = @{ @var{expression-list} @} > ;
 Selects five- or six-face volumes to be meshed with the 3D transfinite
 algorithm.  The @var{expression-list} on the right-hand-side should
-contain the identification numbers of the six or eight points on the
+contain the tags of the six or eight points on the
 boundary of the volume that define the corners of the transfinite
-interpolation. If no identification numbers are given, the transfinite
+interpolation. If no tags are given, the transfinite
 algorithm will try to find the corners automatically.
 
 @item TransfQuadTri @{ @var{expression-list} @} ;
@@ -2956,7 +2958,7 @@ Generates @var{expression}-D mesh.
 
 @item RefineMesh;
 Refines the current mesh by splitting all elements. If
-@code{Mesh.SecondOrderLinear} is set, the new vertices are inserted by
+@code{Mesh.SecondOrderLinear} is set, the new nodes are inserted by
 linear interpolatinon. Otherwise they are snapped on the actual
 geometry.
 
@@ -2967,9 +2969,9 @@ Optimizes the current mesh with the given algorithm (currently
 @item AdaptMesh @{ @var{expression-list} @} @{ @var{expression-list} @} @{ @{ @var{expression-list} < , @dots{} >  @} @};
 Performs adaptive mesh generation. Documentation not yet available.
 
-@item RelocateMesh Point | Line | Surface @{ @var{expression-list-or-all} @};
-Relocates the mesh vertices on the given entities using the parametric
-coordinates stored in the vertices. Useful for creating perturbation of
+@item RelocateMesh Point | Curve | Surface @{ @var{expression-list-or-all} @};
+Relocates the mesh nodes on the given entities using the parametric
+coordinates stored in the nodes. Useful for creating perturbation of
 meshes e.g. for sensitivity analyzes.
 
 @item SetOrder @var{expression};
@@ -2978,42 +2980,42 @@ Changes the order of the elements in the current mesh.
 @item PartitionMesh @var{expression};
 Partitions the mesh into @var{expression}, using current partitioning options.
 
-@item Point | Line @{ @var{expression-list} @} In Surface @{ @var{expression} @};
-Embed the point(s) or line(s) in the given surface. The surface mesh
-will conform to the mesh of the point(s) or lines(s).
+@item Point | Curve @{ @var{expression-list} @} In Surface @{ @var{expression} @};
+Embed the point(s) or curve(s) in the given surface. The surface mesh
+will conform to the mesh of the point(s) or curves(s).
 
-@item Point | Line | Surface @{ @var{expression-list} @} In Volume @{ @var{expression} @};
-Embed the point(s), line(s) or surface(s) in the given volume. The
+@item Point | Curve | Surface @{ @var{expression-list} @} In Volume @{ @var{expression} @};
+Embed the point(s), curve(s) or surface(s) in the given volume. The
 volume mesh will conform to the mesh of the corresponding point(s),
-line(s) or surface(s). This is only supported with the 3D Delaunay
+curve(s) or surface(s). This is only supported with the 3D Delaunay
 algorithm.
 
-@item Periodic Line @{ @var{expression-list} @} = @{ @var{expression-list} @} ;
-Force mesh of lines on the left-hand side (slaves) to match the mesh of
-the lines on the right-hand side (masters). 
+@item Periodic Curve @{ @var{expression-list} @} = @{ @var{expression-list} @} ;
+Force mesh of curves on the left-hand side (slaves) to match the mesh of
+the curves on the right-hand side (masters). 
 
 @item Periodic Surface @var{expression} @{ @var{expression-list} @} = @var{expression} @{ @var{expression-list} @} ;
 Force mesh of the surface on the left-hand side (slave, with boundary
 edges specified between braces) to match the mesh of the surface on the
 right-hand side (master, with boundary edges specified between braces).
 
-@item Periodic Line | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Affine | Rotate | Translate @{ @var{expression-list} @} ;
-Force mesh of lines or surfaces on the left-hand side (slaves) to match
-the mesh of the lines on the right-hand side (masters), using prescribed
+@item Periodic Curve | Surface @{ @var{expression-list} @} = @{ @var{expression-list} @} Affine | Rotate | Translate @{ @var{expression-list} @} ;
+Force mesh of curves or surfaces on the left-hand side (slaves) to match
+the mesh of the curves on the right-hand side (masters), using prescribed
 geometrical transformations. @code{Affine} takes a 4 x 4 affine
 transform matrix given by row; @code{Rotate} and @code{Translate} are
 specified as in @ref{Transformations}.
 
 @item Coherence Mesh;
-Removes all duplicate mesh vertices.
+Removes all duplicate mesh nodes.
 
-@item SetPartition @var{expression} @{ <Physical> Point | Line | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
+@item SetPartition @var{expression} @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Sets the partition tag of the mesh elements in the entities in @var{expression-list} to @var{expression}.
 
-@item < Recursive > Color @var{color-expression} @{ <Physical> Point | Line | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
+@item < Recursive > Color @var{color-expression} @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Sets the mesh color of the entities in @var{expression-list} to @var{color-expression}.
 
-@item < Recursive > Hide @{ <Physical> Point | Line | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
+@item < Recursive > Hide @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Hides the mesh of the entities in @var{expression-list}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{2}.
 
@@ -3033,12 +3035,12 @@ default value is 45).
 @item MeshAlgorithm Surface @{ @var{expression-list} @} = @var{expression};
 Forces the meshing algorithm per surface.
 
-@item Compound Line | Surface @{ @var{expression-list-or-all} @} ;
+@item Compound Curve | Surface @{ @var{expression-list-or-all} @} ;
 Treats the given entities as a single entity when meshing, i.e. perform
 cross-patch meshing of the entities.
 
-@item Reverse Line | Surface @{ @var{expression-list-or-all} @} ;
-Reverses the mesh of the given line(s) or surface(s).
+@item Reverse Curve | Surface @{ @var{expression-list-or-all} @} ;
+Reverses the mesh of the given curve(s) or surface(s).
 
 @item Save @var{char-expression};
 Saves the mesh in a file named @var{char-expression}, using the current
@@ -3046,7 +3048,7 @@ Saves the mesh in a file named @var{char-expression}, using the current
 @var{char-expression} is not absolute, @var{char-expression} is appended
 to the path of the current file.
 
-@item < Recursive > Show @{ <Physical> Point | Line | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
+@item < Recursive > Show @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @}
 Shows the mesh of the entities in @var{expression-list}, if
 @code{General.VisibilityMode} is set to @code{0} or @code{2}.
 
@@ -3116,7 +3118,7 @@ the sources of GetDP (@url{http://getdp.info} for a more comprehensive
 example.
 
 @menu
-* Solver options::              
+* Solver options::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -3155,7 +3157,7 @@ or binary files with @file{.msh} extensions: see @ref{File formats}), or
 in standard third-party formats (like MED:
 @uref{http://www.code-aster.org/outils/med/}).
 
-Once loaded into Gmsh, scalar fields can be displayed as iso-value lines
+Once loaded into Gmsh, scalar fields can be displayed as iso-value curves
 and surfaces or color maps, whereas vector fields can be represented
 either by three-dimensional arrows or by displacement maps. (Tensor
 fields are currently displayed as Von-Mises effective stresses, min/max
@@ -3171,7 +3173,7 @@ or globally (see the @code{PostProcessing.Link} option in
 @ref{Post-processing options list}).
 
 By default, Gmsh treats all post-processing views as three-dimensional
-plots, i.e., draws the scalar, vector and tensor primitives (points, lines,
+plots, i.e., draws the scalar, vector and tensor primitives (points, curves,
 triangles, tetrahedra, etc.) in 3D space. But Gmsh can also represent each
 post-processing view containing @emph{scalar points} as two-dimensional
 (``X-Y'') plots, either space- or time-oriented:
@@ -3208,9 +3210,9 @@ files). The ``parsed'' format is defined in the next section (cf. the
 @code{View} command); the MSH format is defined in @ref{File formats}.
 
 @menu
-* Post-processing commands::    
-* Post-processing plugins::     
-* Post-processing options::     
+* Post-processing commands::
+* Post-processing plugins::
+* Post-processing options::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -3278,14 +3280,14 @@ combination will fail if the meshes in all the views are not identical.
 
 @item Delete View[@var{expression}];
 Deletes (removes) the @var{expression}-th post-processing view. Note that
-post-processing view numbers start at 0.
+post-processing view indices start at 0.
 
 @item Delete Empty Views;
 Deletes (removes) all the empty post-processing views.
 
 @item Background Mesh View[@var{expression}];
 Applies the @var{expression}-th post-processing view as the current
-background mesh. Note that post-processing view numbers start at 0.
+background mesh. Note that post-processing view indices start at 0.
 
 @item Plugin (@var{string}) . Run;
 Executes the plugin @var{string}. The list of default plugins is given in
@@ -3536,8 +3538,8 @@ for some examples.
 
 This chapter describes Gmsh's native ``MSH'' file format, used to store
 meshes and associated post-processing datasets. The MSH format exists in
-two flavors: ASCII and binary. The format has a version number
-(currently: 2.2) that is independent of Gmsh's main version number.
+two flavors: ASCII and binary. The format has a version number that is
+independent of Gmsh's main version number.
 
 (Remember that for small post-processing datasets you can also use
 human-readable ``parsed'' post-processing views, as described in
@@ -3546,34 +3548,31 @@ underlying mesh, and can therefore be easier to use in some
 cases.)
 
 @menu
-* MSH ASCII file format::       
-* MSH binary file format::      
-* Node ordering::               
-* Legacy formats::              
+* MSH4 file format::
+* Node ordering::
+* Legacy formats::
 @end menu
 
 @c -------------------------------------------------------------------------
-@c MSH ASCII file format
+@c MSH4 file format
 @c -------------------------------------------------------------------------
 
-@node MSH ASCII file format, MSH binary file format, File formats, File formats
-@section MSH ASCII file format
+@node MSH4 file format, Node ordering, File formats, File formats
+@section MSH4 file format
 
 @cindex Mesh, file format
 @cindex File format, mesh
-@cindex MSH file
+@cindex MSH4 file
 
-The MSH ASCII file format contains one mandatory section giving
-information about the file (@code{$MeshFormat}), followed by several
-optional sections defining the nodes (@code{$Nodes}), elements
-(@code{$Elements}), region names (@code{$PhysicalName}), periodicity
-relations (@code{$Periodic}) and post-processing datasets
-(@code{$NodeData}, @code{$ElementData}, @code{$ElementNodeData}).
-
-When @code{$Elements} are given, @code{$Nodes} should also be provided,
-before the @code{$Elements} section. Currently only one @code{$Nodes}
-and one @code{$Elements} section are allowed per file. (This might/will
-change in the future.) 
+The MSH4 file format contains one mandatory section giving information
+about the file (@code{$MeshFormat}), followed by several sections
+defining the physical group names (@code{$PhysicalName}, optional), the
+entities (@code{Entities}), the partitioned entities
+(@code{PartitionedEntities}, optional), nodes (@code{$Nodes}), elements
+(@code{$Elements}), periodicity relations (@code{$Periodic}, optional),
+ghost elements (@code{GhostElements}, optional) and post-processing
+datasets (@code{$NodeData}, @code{$ElementData},
+@code{$ElementNodeData}, all optional).
 
 Important note about efficiency. Node and element tags can be "sparse",
 i.e., do not have to constitute a continuous list of indexes starting at
@@ -3593,127 +3592,153 @@ Sections can be repeated in the same file, and post-processing sections
 can be put into separate files (e.g. one file per time step).  Nodes are
 assumed to be defined before elements.
 
-The format is defined as follows:
-
-@c For MSH3:
-@c $Nodes
-@c node_num x y z entity_id < dimension parameter ... >
-@c If entity_id == 0, no dimension and no parameters are given (there's no parametric info)
-@c If entity_id != 0, the next integer is the dimension of the entity (==
-@c the number of parameters that follow), followed by the parameters.
-
 @example
-$MeshFormat
-@var{version-number} @var{file-type} @var{data-size}
+$MeshFormat // same as MSH2
+  version(double) binary(int) size(unsigned long)
+  <swapping bit for binary format>
 $EndMeshFormat
-$PhysicalNames
-@var{number-of-names}
-@var{physical-dimension} @var{physical-number} "@var{physical-name}"
-@dots{}
-$EndPhysicalNames
+
+<$PhysicalNames> // same as MSH2
+  numPhysicalNames(int)
+  dimension(int) tag(int) name(127 characters max)
+  ...
+<$EndPhysicalNames>
+
+$Entities
+  numVertices(unsigned long) numEdges(unsigned long) 
+    numFaces(unsigned long) numRegions(unsigned long)
+  // vertices
+  tag(int) boxMinX(double) boxMinY(double) boxMinZ(double) 
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
+    numPhysicals(unsigned long) phyisicalTag[...](int)
+  ...
+  // edges
+  tag(int) boxMinX(double) boxMinY(double) boxMinZ(double)
+     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
+     numPhysicals(unsigned long) physicalTag[...](int) 
+     numBREPVert(unsigned long) tagBREPVert[...](int)
+  ...
+  // faces
+  tag(int) boxMinX(double) boxMinY(double) boxMinZ(double)
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
+    numPhysicals(unsigned long) physicalTag[...](int) 
+    numBREPEdge(unsigned long) tagBREPEdge[...](int)
+  ...
+  // regions
+  tag(int) boxMinX(double) boxMinY(double) boxMinZ(double) 
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
+    numPhysicals(unsigned long) physicalTag[...](int) 
+    numBREPFaces(unsigned long) tagBREPFaces[...](int)
+  ...
+$EndEntities
+
+<$PartitionedEntities>
+  numPartitions(int)
+  numGhostEntities(int)
+  ghostTag(int) ghostPart(int)
+  ...
+  numVertices(unsigned long) numEdges(unsigned long) 
+    numFaces(unsigned long) numRegions(unsigned long)
+  //vertices
+  tag(int) parentTag(int) numPartitions(int) partitionTag[...](int)
+    boxMinX(double) boxMinY(double) boxMinZ(double) 
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
+    numPhyiscals(unsigned long) physicalTag[...](int)
+  ...
+  //edges
+  tag(int) parentTag(int) numPartitions(int) partitionTag[...](int)
+    boxMinX(double) boxMinY(double) boxMinZ(double) 
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
+    numPhysicals(unsigned long) physicalTag[...](int)
+    numBREPVert(unsigned long) tagBREPVert[...](int)
+  ...
+  //faces
+  tag(int) parentTag(int) numPartitions(int) partitionTag[...](int) 
+    boxMinX(double) boxMinY(double) boxMinZ(double) 
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
+    numPhysicals(unsigned long) physicalTag[...](int) 
+    numBREPEdge(unsigned long) tagBREPEdge[...](int)
+  ...
+  //regions
+  tag(int) parentTag(int) numPartitions(int) partitionTag[...](int)
+    boxMinX(double) boxMinY(double) boxMinZ(double) 
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
+    numPhysicals(unsigned long) physicalTag[...](int) 
+    numBREPFaces(unsigned long) tagBREPFaces[...](int)
+  ...
+<$EndPartitionedEntities>
+
 $Nodes
-@var{number-of-nodes}
-@var{node-number} @var{x-coord} @var{y-coord} @var{z-coord}
-@dots{}
+  numEntityBlocks(unsigned long) numNodes(unsigned long)
+  tagEntity(int) dimEntity(int) typeNode(int) numNodes(unsigned long)
+    tag(int) x(double) y(double) z(double) 
+    ...
+  ...
 $EndNodes
+
 $Elements
-@var{number-of-elements}
-@var{elm-number} @var{elm-type} @var{number-of-tags} < @var{tag} > @dots{} @var{node-number-list}
-@dots{}
+  numEntityBlocks(unsigned long) numElements(unsigned long)
+  tagEntity(int) dimEntity(int) typeEle(int) numElements(unsigned long)
+    tag(int) numVert[...](int)
+    ...
+  ...
 $EndElements
-$Periodic
-@var{number-of-periodic-entities}
-@var{dimension} @var{slave-entity-tag} @var{master-entity-tag}
-@var{number-of-nodes}
-@var{slave-node-number master-node-number}
-@dots{}
-$EndPeriodic
-$NodeData
-@var{number-of-string-tags}
-< "@var{string-tag}" >
-@dots{}
-@var{number-of-real-tags}
-< @var{real-tag} >
-@dots{}
-@var{number-of-integer-tags}
-< @var{integer-tag} >
-@dots{}
-@var{node-number} @var{value} @dots{}
-@dots{}
-$EndNodeData
-$ElementData
-@var{number-of-string-tags}
-< "@var{string-tag}" >
-@dots{}
-@var{number-of-real-tags}
-< @var{real-tag} >
-@dots{}
-@var{number-of-integer-tags}
-< @var{integer-tag} >
-@dots{}
-@var{elm-number} @var{value} @dots{}
-@dots{}
-$EndElementData
-$ElementNodeData
-@var{number-of-string-tags}
-< "@var{string-tag}" >
-@dots{}
-@var{number-of-real-tags}
-< @var{real-tag} >
-@dots{}
-@var{number-of-integer-tags}
-< @var{integer-tag} >
-@dots{}
-@var{elm-number} @var{number-of-nodes-per-element} @var{value} @dots{}
-@dots{}
-$EndElementNodeData
-$InterpolationScheme
-"@var{name}"
-@var{number-of-element-topologies}
-@var{elm-topology}
-@var{number-of-interpolation-matrices}
-@var{num-rows} @var{num-columns} @var{value} @dots{}
-@dots{}
-$EndInterpolationScheme
+
+<$Periodic> // same as in MSH2 and MSH3
+  numPeriodicLinks(int)
+  slaveDim(int) slaveTag(int) masterTag(int)
+    < Affine values[...](double) >
+    correspondingVertexSize(unsigned long)
+      numVert(int) numVert(int)
+      ...
+  ...
+<$EndPeriodic>
+
+<$GhostElements>
+  numGhostElement(int)
+  elementTag(int) partition(int) GhostCellOwner(int) GhostCellOwnerPartition(int) ...
+<$EndGhostElements>
+
+<$NodeData>
+  numStringTags(int)
+  stringTag(string) ...
+  numRealTags(int)
+  realTag(double) ...
+  numIntegerTags(int)
+  integerTag(int) ...
+  nodeNumber(int) value(double) ...
+<$EndNodeData>
+
+<$ElementData>
+  numStringTags(int)
+  stringTag(string) ...
+  numRealTags(int)
+  realTag(double) ...
+  numIntegerTags(int)
+  integerTag(int) ...
+  elementNumber(int) value(double) ...
+<$EndElementData>
+
+<$ElementNodeData>
+  numStringTags(int)
+  stringTag(string) ...
+  numRealTags(int)
+  realTag(double) ...
+  numIntegerTags(int)
+  integerTag(int) ...
+  elementNumber(int) numNodesPerElement(int) value(double) ...
+<$EndElementNodeData>
+
+<$InterpolationScheme>
+  name(string)
+  numElementTopologies(int)
+  elementTopology
+  numInterpolationMatrices(int)
+  numRows(int) numColumns(int) value(double) ...
+<$EndInterpolationScheme>
 @end example
 
-@noindent
-where
-@table @code
-@item @var{version-number}
-is a real number equal to 2.2
-
-@item @var{file-type}
-is an integer equal to 0 in the ASCII file format.
-
-@item @var{data-size}
-is an integer equal to the size of the floating point numbers used in the
-file (currently only @var{data-size} = sizeof(double) is supported).
-
-@item @var{number-of-nodes}
-is the number of nodes in the mesh.
-
-@item @var{node-number}
-is the number (index) of the @var{n}-th node in the mesh;
-@var{node-number} must be a postive (non-zero) integer. Note that the
-@w{@var{node-number}s} do not necessarily have to form a dense nor an
-ordered sequence.
-
-@item @var{x-coord} @var{y-coord} @var{z-coord}
-are the floating point values giving the X, Y and Z coordinates of the
-@var{n}-th node.
-
-@item @var{number-of-elements}
-is the number of elements in the mesh.
-
-@item @var{elm-number}
-is the number (index) of the @var{n}-th element in the mesh;
-@var{elm-number} must be a postive (non-zero) integer. Note that the
-@w{@var{elm-number}s} do not necessarily have to form a dense nor an
-ordered sequence.
-
-@item @var{elm-type}
-defines the geometrical type of the @var{n}-th element:
+@code{typeEle} is e.g.:
 @table @code
 @item 1
 2-node line.
@@ -3809,226 +3834,14 @@ with the edges, 54 with the faces, 27 in the volume)
 @end table
 See below for the ordering of the nodes.
 
-@item @var{number-of-tags}
-gives the number of integer tags that follow for the @var{n}-th
-element. By default, the first @var{tag} is the number of the physical
-entity to which the element belongs; the second is the number of the
-elementary geometrical entity to which the element belongs; the third is
-the number of mesh partitions to which the element belongs, followed by
-the partition ids (negative partition ids indicate ghost cells). A zero
-tag is equivalent to no tag. Gmsh and most codes using the MSH 2 format
-require at least the first two tags (physical and elementary tags).
-
-@item @var{node-number-list}
-is the list of the node numbers of the @var{n}-th element. The ordering of
-the nodes is given in @ref{Node ordering}.
-
-@item @var{number-of-string-tags}
-gives the number of string tags that follow. By default the first
-@var{string-tag} is interpreted as the name of the post-processing view
-and the second as the name of the interpolation scheme. The
-interpolation scheme is provided in the @code{$InterpolationScheme}
-section (see below). 
-
-@item @var{number-of-real-tags}
-gives the number of real number tags that follow. By default the first
-@var{real-tag} is interpreted as a time value associated with the
-dataset.
-
-@item @var{number-of-integer-tags}
-gives the number of integer tags that follow. By default the first
-@var{integer-tag} is interpreted as a time step index (starting at 0),
-the second as the number of field components of the data in the view (1,
-3 or 9), the third as the number of entities (nodes or elements) in the
-view, and the fourth as the partition index for the view data (0 for no
-partition).
-
-@item @var{number-of-nodes-per-elements}
-gives the number of node values for an element in an element-based view.
-
-@item @var{value}
-is a real number giving the value associated with a node or an
-element. For @code{NodeData} (respectively @code{ElementData}) views,
-there are @var{ncomp} values per node (resp. per element), where
-@var{ncomp} is the number of field components. For
-@code{ElementNodeData} views, there are @var{ncomp} times
-@var{number-of-nodes-per-elements} values per element.
-
-@item @var{number-of-element-topologies}
-is the number of element topologies for which interpolation matrices are
-provided
-
-@item @var{elm-topology}
-is the id tag of a given element topology: 1 for points, 2 for lines, 3
-for triangles, 4 for quadrangles, 5 for tetrahedra, 6 for pyramids, 7
-for prisms, 8 for hexahedra, 9 for polygons and 10 for polyhedra.
-
-@item @var{number-of-interpolation-matrices} 
-is the number of interpolation matrices provided for the element
-topology @var{elm-topology}. Currently you should provide 2 matrices,
-i.e., the matrices that specify how to interpolate the data (they have
-the same meaning as in @ref{Post-processing commands}). The matrices are
-specified by 2 integers (@var{num-rows} and @var{num-columns}) followed
-by the values.
-
-@end table
-
-Below is a small example (a mesh consisting of two quadrangles with an
-associated nodal scalar dataset; the comments are not part of the actual
-file!):
-
-@smallexample
-$MeshFormat
-2.2 0 8
-$EndMeshFormat
-$Nodes
-6                      @emph{six mesh nodes:}
-1 0.0 0.0 0.0          @emph{  node #1: coordinates (0.0, 0.0, 0.0)}
-2 1.0 0.0 0.0          @emph{  node #2: coordinates (1.0, 0.0, 0.0)}
-3 1.0 1.0 0.0          @emph{  etc.}
-4 0.0 1.0 0.0
-5 2.0 0.0 0.0
-6 2.0 1.0 0.0
-$EndNodes
-$Elements
-2                      @emph{two elements:}
-1 3 2 99 2 1 2 3 4     @emph{  quad #1: type 3, physical 99, elementary 2, nodes 1 2 3 4}
-2 3 2 99 2 2 5 6 3     @emph{  quad #2: type 3, physical 99, elementary 2, nodes 2 5 6 3}
-$EndElements 
-$NodeData
-1                      @emph{one string tag:}
-"A scalar view"        @emph{  the name of the view ("A scalar view")}
-1                      @emph{one real tag:}
-0.0                    @emph{  the time value (0.0)}
-3                      @emph{three integer tags:}
-0                      @emph{  the time step (0; time steps always start at 0)}
-1                      @emph{  1-component (scalar) field}
-6                      @emph{  six associated nodal values}
-1 0.0                  @emph{value associated with node #1 (0.0)}
-2 0.1                  @emph{value associated with node #2 (0.1)}
-3 0.2                  @emph{etc.}
-4 0.0
-5 0.2
-6 0.4
-$EndNodeData 
-@end smallexample
-
-
-@c -------------------------------------------------------------------------
-@c MSH binary file format
-@c -------------------------------------------------------------------------
-
-@node MSH binary file format, Node ordering, MSH ASCII file format, File formats
-@section MSH binary file format
-
-The binary file format is similar to the ASCII format described above:
-
-@example
-$MeshFormat
-@var{version-number} @var{file-type} @var{data-size}
-@var{one-binary}
-$EndMeshFormat
-$Nodes
-@var{number-of-nodes}
-@var{nodes-binary}
-$EndNodes
-$Elements
-@var{number-of-elements}
-@var{element-header-binary}
-@var{elements-binary}
-@var{element-header-binary}
-@var{elements-binary}
-@dots{}
-$EndElements
-
-[ All other sections are identical to ASCII, except that @var{node-number},
-  @var{elm-number}, @var{number-of-nodes-per-element} and @var{values} are written in
-  binary format. Beware that all the $End tags must start on a new line. ]
-@end example
-
-@noindent
-where
-@table @code
-@item @var{version-number}
-is a real number equal to 2.2.
-
-@item @var{file-type}
-is an integer equal to 1.
-
-@item @var{data-size}
-has the same meaning as in the ASCII file format. Currently only
-@var{data-size} = sizeof(double) is supported.
-
-@item @var{one-binary}
-is an integer of value 1 written in binary form. This integer is used
-for detecting if the computer on which the binary file was written and
-the computer on which the file is read are of the same type (little or
-big endian).
-
-Here is a pseudo C code to write @var{one-binary}:
-@example
-int one = 1;
-fwrite(&one, sizeof(int), 1, file);
-@end example
-
-@item @var{number-of-nodes}
-has the same meaning as in the ASCII file format.
-
-@item @var{nodes-binary}
-is the list of nodes in binary form, i.e., a array of
-@var{number-of-nodes} * (4 + 3 * @var{data-size}) bytes. For each node,
-the first 4 bytes contain the node number and the next (3 *
-@var{data-size}) bytes contain the three floating point coordinates.
-
-Here is a pseudo C code to write @var{nodes-binary}:
-@example
-for(i = 0; i < number_of_nodes; i++)@{
-  fwrite(&num_i, sizeof(int), 1, file);
-  double xyz[3] = @{node_i_x, node_i_y, node_i_z@};
-  fwrite(xyz, sizeof(double), 3, file);
-@}
-@end example
-
-@item @var{number-of-elements}
-has the same meaning as in the ASCII file format.
-
-@item @var{element-header-binary}
-is a list of 3 integers in binary form, i.e., an array of (3 * 4) bytes:
-the first four bytes contain the type of the elements that follow (same
-as @var{elm-type} in the ASCII format), the next four contain the number
-of elements that follow, and the last four contain the number of tags
-per element (same as @var{number-of-tags} in the ASCII format).
-
-Here is a pseudo C code to write @var{element-header-binary}:
-@example
-int header[3] = @{elm_type, num_elm_follow, num_tags@};
-fwrite(header, sizeof(int), 3, file);
-@end example
-
-@item @var{elements-binary}
-is a list of elements in binary form, i.e., an array of ``number of
-elements that follow'' * (4 + @var{number-of-tags} * 4 +
-#@var{node-number-list} * 4) bytes. For each element, the first four
-bytes contain the element number, the next (@var{number-of-tags} * 4)
-contain the tags, and the last (#@var{node-number-list} * 4) contain the
-node indices.
-
-Here is a pseudo C code to write @var{elements-binary} for triangles
-with the 2 standard tags (the physical and elementary regions):
-@example
-for(i = 0; i < number_of_triangles; i++)@{
-  int data[6] = @{num_i, physical, elementary, 
-                 node_i_1, node_i_2, node_i_3@};
-  fwrite(data, sizeof(int), 6, file);
-@}
-@end example
-@end table
+The post-processing sections are identical to the ones in the MSH2 file
+format (see below).
 
 @c -------------------------------------------------------------------------
 @c Node ordering
 @c -------------------------------------------------------------------------
 
-@node Node ordering, Legacy formats, MSH binary file format, File formats
+@node Node ordering, Legacy formats, MSH4 file format, File formats
 @section Node ordering
 
 @cindex Nodes, ordering
@@ -4200,9 +4013,9 @@ that of the nodes of an embedded edge/face/volume of lower order. The
 higher order nodes are assumed to be equispaced. Edges and faces are
 numbered following the lowest order template that generates a single
 high-order on this edge/face. Furthermore, an edge is oriented from the
-vertex with the lowest to the highest index. The orientation of a face
+node with the lowest to the highest index. The orientation of a face
 is such that the computed normal points outward; the starting point is
-the vertex with the lowest index.
+the node with the lowest index.
 
 @c -------------------------------------------------------------------------
 @c Legacy formats
@@ -4215,21 +4028,356 @@ This section describes Gmsh's older native file formats. Future versions
 of Gmsh will continue to support these formats, but we recommend that
 you do not use them in new applications.
 
-@c .........................................................................
-@c MSH file format version 1.0
-@c .........................................................................
-
 @menu
-* MSH file format version 1.0::  
-* POS ASCII file format::       
-* POS binary file format::      
+* MSH file format version 2::
+* MSH file format version 1::
+* POS ASCII file format::
+* POS binary file format::
 @end menu
 
-@node MSH file format version 1.0, POS ASCII file format, Legacy formats, Legacy formats
-@subsection MSH file format version 1.0 (Legacy)
+@c .........................................................................
+@c MSH file format version 2
+@c .........................................................................
 
-The MSH file format version 1.0 is Gmsh's old native mesh file format,
-now superseded by the format described in @ref{MSH ASCII file
+@node MSH file format version 2, MSH file format version 1, Legacy formats, Legacy formats
+@subsection MSH file format version 2
+
+The MSH file format version 2 is Gmsh's previous native mesh file
+format, now superseded by the format described in @ref{MSH4 file
+format}. It is defined as follows:
+
+The format is defined as follows:
+
+@example
+$MeshFormat
+@var{version-number} @var{file-type} @var{data-size}
+$EndMeshFormat
+$PhysicalNames
+@var{number-of-names}
+@var{physical-dimension} @var{physical-tag} "@var{physical-name}"
+@dots{}
+$EndPhysicalNames
+$Nodes
+@var{number-of-nodes}
+@var{node-number} @var{x-coord} @var{y-coord} @var{z-coord}
+@dots{}
+$EndNodes
+$Elements
+@var{number-of-elements}
+@var{elm-number} @var{elm-type} @var{number-of-tags} < @var{tag} > @dots{} @var{node-number-list}
+@dots{}
+$EndElements
+$Periodic
+@var{number-of-periodic-entities}
+@var{dimension} @var{slave-entity-tag} @var{master-entity-tag}
+@var{number-of-nodes}
+@var{slave-node-number master-node-number}
+@dots{}
+$EndPeriodic
+$NodeData
+@var{number-of-string-tags}
+< "@var{string-tag}" >
+@dots{}
+@var{number-of-real-tags}
+< @var{real-tag} >
+@dots{}
+@var{number-of-integer-tags}
+< @var{integer-tag} >
+@dots{}
+@var{node-number} @var{value} @dots{}
+@dots{}
+$EndNodeData
+$ElementData
+@var{number-of-string-tags}
+< "@var{string-tag}" >
+@dots{}
+@var{number-of-real-tags}
+< @var{real-tag} >
+@dots{}
+@var{number-of-integer-tags}
+< @var{integer-tag} >
+@dots{}
+@var{elm-number} @var{value} @dots{}
+@dots{}
+$EndElementData
+$ElementNodeData
+@var{number-of-string-tags}
+< "@var{string-tag}" >
+@dots{}
+@var{number-of-real-tags}
+< @var{real-tag} >
+@dots{}
+@var{number-of-integer-tags}
+< @var{integer-tag} >
+@dots{}
+@var{elm-number} @var{number-of-nodes-per-element} @var{value} @dots{}
+@dots{}
+$EndElementNodeData
+$InterpolationScheme
+"@var{name}"
+@var{number-of-element-topologies}
+@var{elm-topology}
+@var{number-of-interpolation-matrices}
+@var{num-rows} @var{num-columns} @var{value} @dots{}
+@dots{}
+$EndInterpolationScheme
+@end example
+
+@noindent
+where
+@table @code
+@item @var{version-number}
+is a real number equal to 2.2
+
+@item @var{file-type}
+is an integer equal to 0 in the ASCII file format.
+
+@item @var{data-size}
+is an integer equal to the size of the floating point numbers used in the
+file (currently only @var{data-size} = sizeof(double) is supported).
+
+@item @var{number-of-nodes}
+is the number of nodes in the mesh.
+
+@item @var{node-number}
+is the number (index) of the @var{n}-th node in the mesh;
+@var{node-number} must be a postive (non-zero) integer. Note that the
+@w{@var{node-number}s} do not necessarily have to form a dense nor an
+ordered sequence.
+
+@item @var{x-coord} @var{y-coord} @var{z-coord}
+are the floating point values giving the X, Y and Z coordinates of the
+@var{n}-th node.
+
+@item @var{number-of-elements}
+is the number of elements in the mesh.
+
+@item @var{elm-number}
+is the number (index) of the @var{n}-th element in the mesh;
+@var{elm-number} must be a postive (non-zero) integer. Note that the
+@w{@var{elm-number}s} do not necessarily have to form a dense nor an
+ordered sequence.
+
+@item @var{elm-type}
+defines the geometrical type of the @var{n}-th element: see @ref{MSH4
+file format}.
+
+@item @var{number-of-tags}
+gives the number of integer tags that follow for the @var{n}-th
+element. By default, the first @var{tag} is the tag of the physical
+entity to which the element belongs; the second is the tag of the
+elementary geometrical entity to which the element belongs; the third is
+the number of mesh partitions to which the element belongs, followed by
+the partition ids (negative partition ids indicate ghost cells). A zero
+tag is equivalent to no tag. Gmsh and most codes using the MSH 2 format
+require at least the first two tags (physical and elementary tags).
+
+@item @var{node-number-list}
+is the list of the node numbers of the @var{n}-th element. The ordering of
+the nodes is given in @ref{Node ordering}.
+
+@item @var{number-of-string-tags}
+gives the number of string tags that follow. By default the first
+@var{string-tag} is interpreted as the name of the post-processing view
+and the second as the name of the interpolation scheme. The
+interpolation scheme is provided in the @code{$InterpolationScheme}
+section (see below). 
+
+@item @var{number-of-real-tags}
+gives the number of real number tags that follow. By default the first
+@var{real-tag} is interpreted as a time value associated with the
+dataset.
+
+@item @var{number-of-integer-tags}
+gives the number of integer tags that follow. By default the first
+@var{integer-tag} is interpreted as a time step index (starting at 0),
+the second as the number of field components of the data in the view (1,
+3 or 9), the third as the number of entities (nodes or elements) in the
+view, and the fourth as the partition index for the view data (0 for no
+partition).
+
+@item @var{number-of-nodes-per-elements}
+gives the number of node values for an element in an element-based view.
+
+@item @var{value}
+is a real number giving the value associated with a node or an
+element. For @code{NodeData} (respectively @code{ElementData}) views,
+there are @var{ncomp} values per node (resp. per element), where
+@var{ncomp} is the number of field components. For
+@code{ElementNodeData} views, there are @var{ncomp} times
+@var{number-of-nodes-per-elements} values per element.
+
+@item @var{number-of-element-topologies}
+is the number of element topologies for which interpolation matrices are
+provided
+
+@item @var{elm-topology}
+is the id tag of a given element topology: 1 for points, 2 for lines, 3
+for triangles, 4 for quadrangles, 5 for tetrahedra, 6 for pyramids, 7
+for prisms, 8 for hexahedra, 9 for polygons and 10 for polyhedra.
+
+@item @var{number-of-interpolation-matrices} 
+is the number of interpolation matrices provided for the element
+topology @var{elm-topology}. Currently you should provide 2 matrices,
+i.e., the matrices that specify how to interpolate the data (they have
+the same meaning as in @ref{Post-processing commands}). The matrices are
+specified by 2 integers (@var{num-rows} and @var{num-columns}) followed
+by the values.
+
+@end table
+
+Below is a small example (a mesh consisting of two quadrangles with an
+associated nodal scalar dataset; the comments are not part of the actual
+file!):
+
+@smallexample
+$MeshFormat
+2.2 0 8
+$EndMeshFormat
+$Nodes
+6                      @emph{six mesh nodes:}
+1 0.0 0.0 0.0          @emph{  node #1: coordinates (0.0, 0.0, 0.0)}
+2 1.0 0.0 0.0          @emph{  node #2: coordinates (1.0, 0.0, 0.0)}
+3 1.0 1.0 0.0          @emph{  etc.}
+4 0.0 1.0 0.0
+5 2.0 0.0 0.0
+6 2.0 1.0 0.0
+$EndNodes
+$Elements
+2                      @emph{two elements:}
+1 3 2 99 2 1 2 3 4     @emph{  quad #1: type 3, physical 99, elementary 2, nodes 1 2 3 4}
+2 3 2 99 2 2 5 6 3     @emph{  quad #2: type 3, physical 99, elementary 2, nodes 2 5 6 3}
+$EndElements 
+$NodeData
+1                      @emph{one string tag:}
+"A scalar view"        @emph{  the name of the view ("A scalar view")}
+1                      @emph{one real tag:}
+0.0                    @emph{  the time value (0.0)}
+3                      @emph{three integer tags:}
+0                      @emph{  the time step (0; time steps always start at 0)}
+1                      @emph{  1-component (scalar) field}
+6                      @emph{  six associated nodal values}
+1 0.0                  @emph{value associated with node #1 (0.0)}
+2 0.1                  @emph{value associated with node #2 (0.1)}
+3 0.2                  @emph{etc.}
+4 0.0
+5 0.2
+6 0.4
+$EndNodeData 
+@end smallexample
+
+The binary file format is similar to the ASCII format described above:
+
+@example
+$MeshFormat
+@var{version-number} @var{file-type} @var{data-size}
+@var{one-binary}
+$EndMeshFormat
+$Nodes
+@var{number-of-nodes}
+@var{nodes-binary}
+$EndNodes
+$Elements
+@var{number-of-elements}
+@var{element-header-binary}
+@var{elements-binary}
+@var{element-header-binary}
+@var{elements-binary}
+@dots{}
+$EndElements
+
+[ All other sections are identical to ASCII, except that @var{node-number},
+  @var{elm-number}, @var{number-of-nodes-per-element} and @var{values} are written in
+  binary format. Beware that all the $End tags must start on a new line. ]
+@end example
+
+@noindent
+where
+@table @code
+@item @var{version-number}
+is a real number equal to 2.2.
+
+@item @var{file-type}
+is an integer equal to 1.
+
+@item @var{data-size}
+has the same meaning as in the ASCII file format. Currently only
+@var{data-size} = sizeof(double) is supported.
+
+@item @var{one-binary}
+is an integer of value 1 written in binary form. This integer is used
+for detecting if the computer on which the binary file was written and
+the computer on which the file is read are of the same type (little or
+big endian).
+
+Here is a pseudo C code to write @var{one-binary}:
+@example
+int one = 1;
+fwrite(&one, sizeof(int), 1, file);
+@end example
+
+@item @var{number-of-nodes}
+has the same meaning as in the ASCII file format.
+
+@item @var{nodes-binary}
+is the list of nodes in binary form, i.e., a array of
+@var{number-of-nodes} * (4 + 3 * @var{data-size}) bytes. For each node,
+the first 4 bytes contain the node number and the next (3 *
+@var{data-size}) bytes contain the three floating point coordinates.
+
+Here is a pseudo C code to write @var{nodes-binary}:
+@example
+for(i = 0; i < number_of_nodes; i++)@{
+  fwrite(&num_i, sizeof(int), 1, file);
+  double xyz[3] = @{node_i_x, node_i_y, node_i_z@};
+  fwrite(xyz, sizeof(double), 3, file);
+@}
+@end example
+
+@item @var{number-of-elements}
+has the same meaning as in the ASCII file format.
+
+@item @var{element-header-binary}
+is a list of 3 integers in binary form, i.e., an array of (3 * 4) bytes:
+the first four bytes contain the type of the elements that follow (same
+as @var{elm-type} in the ASCII format), the next four contain the number
+of elements that follow, and the last four contain the number of tags
+per element (same as @var{number-of-tags} in the ASCII format).
+
+Here is a pseudo C code to write @var{element-header-binary}:
+@example
+int header[3] = @{elm_type, num_elm_follow, num_tags@};
+fwrite(header, sizeof(int), 3, file);
+@end example
+
+@item @var{elements-binary}
+is a list of elements in binary form, i.e., an array of ``number of
+elements that follow'' * (4 + @var{number-of-tags} * 4 +
+#@var{node-number-list} * 4) bytes. For each element, the first four
+bytes contain the element number, the next (@var{number-of-tags} * 4)
+contain the tags, and the last (#@var{node-number-list} * 4) contain the
+node indices.
+
+Here is a pseudo C code to write @var{elements-binary} for triangles
+with the 2 standard tags (the physical and elementary regions):
+@example
+for(i = 0; i < number_of_triangles; i++)@{
+  int data[6] = @{num_i, physical, elementary, 
+                 node_i_1, node_i_2, node_i_3@};
+  fwrite(data, sizeof(int), 6, file);
+@}
+@end example
+@end table
+
+@c .........................................................................
+@c MSH file format version 1
+@c .........................................................................
+
+@node MSH file format version 1, POS ASCII file format, MSH file format version 2, Legacy formats
+@subsection MSH file format version 1
+
+The MSH file format version 1 is Gmsh's original native mesh file
+format, now superseded by the format described in @ref{MSH4 file
 format}. It is defined as follows:
 
 @example
@@ -4326,13 +4474,13 @@ with the edges).
 See below for the ordering of the nodes.
 
 @item @var{reg-phys}
-is the number of the physical entity to which the element belongs;
+is the tag of the physical entity to which the element belongs;
 @var{reg-phys} must be a postive integer, or zero. If @var{reg-phys} is
 equal to zero, the element is considered not to belong to any physical
 entity.
 
 @item @var{reg-elem}
-is the number of the elementary entity to which the element belongs;
+is the tag of the elementary entity to which the element belongs;
 @var{reg-elem} must be a postive (non-zero) integer.
 
 @item @var{number-of-nodes}
@@ -4348,11 +4496,11 @@ element. The ordering of the nodes is given in @ref{Node ordering}.
 @c POS ASCII file format
 @c .........................................................................
 
-@node POS ASCII file format, POS binary file format, MSH file format version 1.0, Legacy formats
+@node POS ASCII file format, POS binary file format, MSH file format version 1, Legacy formats
 @subsection POS ASCII file format (Legacy)
 
 The POS ASCII file is Gmsh's old native post-processing format, now
-superseded by the format described in @ref{MSH ASCII file format}. It is
+superseded by the format described in @ref{MSH4 file format}. It is
 defined as follows:
 
 @example
@@ -4599,22 +4747,22 @@ system}. Screencasts that show how to use the GUI are available on
 @uref{http://gmsh.info/screencasts/}.
 
 @menu
-* t1.geo::                      
-* t2.geo::                      
-* t3.geo::                      
-* t4.geo::                      
-* t5.geo::                      
-* t6.geo::                      
-* t7.geo::                      
-* t8.geo::                      
-* t9.geo::                      
-* t10.geo::                     
-* t11.geo::                     
-* t12.geo::                     
-* t13.geo::                     
-* t14.geo::                     
-* t15.geo::                     
-* t16.geo::                     
+* t1.geo::
+* t2.geo::
+* t3.geo::
+* t4.geo::
+* t5.geo::
+* t6.geo::
+* t7.geo::
+* t8.geo::
+* t9.geo::
+* t10.geo::
+* t11.geo::
+* t12.geo::
+* t13.geo::
+* t14.geo::
+* t15.geo::
+* t16.geo::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -4790,11 +4938,11 @@ by hand.
 @c All the included files are generated automatically with `gmsh -doc'
 
 @menu
-* General options list::        
-* Geometry options list::       
-* Mesh options list::           
-* Solver options list::         
-* Post-processing options list::  
+* General options list::
+* Geometry options list::
+* Mesh options list::
+* Solver options list::
+* Post-processing options list::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -4901,8 +5049,15 @@ enable optional modules or features. Here is the list of CMake options:
 @node Gmsh API, Information for developers, Compiling the source code, Top
 @appendix Gmsh API
 
+@cindex API
+@cindex Programming, API
+
 The Gmsh Application Programming Interface (API) allows you to integrate
-the Gmsh library in your own application.
+the Gmsh library in your own application. Examples on how to use the API
+are available in the
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/,demos/api}
+directory. In particular, this directory contains C++ and Python
+versions of several of the @code{.geo} tutorials from @ref{Tutorial}.
 
 By design, the Gmsh API is purely functional, and only uses elementary
 types from the target language. Currently supported languages are C++, C
@@ -4916,13 +5071,16 @@ automatically from the master API definition file
 @item Python API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.py,gmsh.py}
 @end itemize
 
-The documentation for each function in the API is included in the
-relevant header and module files.
+The functions available in the API are given below (see the relevant
+header/module file for the exact definition in each supported
+language@footnote{In C++ @code{/gmsh/model/geo/addPoint} will lead to a
+namespaced function @code{gmsh::model::geo::addPoint}, while in Python
+it will lead to @code{gmsh.model.geo.addPoint}, and in C to
+@code{gmshModelGeoAddPoint}. Output values are passed by reference in
+C++, as pointers in C and directly returned (after the return value, if
+any) in Python.}):
 
-Examples on how to use the API are available in the
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/,demos/api}
-directory. In particular, this directory contains C++ and Python
-versions of several of the @code{.geo} tutorials from @ref{Tutorial}.
+@include api.texi
 
 @c =========================================================================
 @c Information for developers
@@ -4943,13 +5101,16 @@ source code is provided in @ref{Compiling the source code} (see also
 @ref{Frequently asked questions}).
 
 This section is for developers who would like to contribute directly to
-the Gmsh source code. If you want to integrate Gmsh in your own
-application, you should use the @ref{Gmsh API} instead.
+the Gmsh source code. Gmsh's official GIT repository is located at
+@uref{https://gitlab.onelab.info/gmsh/gmsh}. The wiki
+(@uref{https://gitlab.onelab.info/gmsh/gmsh/wikis/Git-cheat-sheet})
+contains instructions on how to create feature branches and submit merge
+requests.
 
 @menu
-* Source code structure::       
-* Coding style::                
-* Adding a new option::         
+* Source code structure::
+* Coding style::
+* Adding a new option::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -5001,8 +5162,11 @@ to make the code easy to read/debug/maintain:
 
 @enumerate
 @item
-Please enable full warnings for your compiler (e.g. @code{-Wall} with
-@code{g++}) and don't commit until there is no warning left.
+See @uref{https://gitlab.onelab.info/gmsh/gmsh/wikis/Git-cheat-sheet}
+for instructions on how to contribute to Gmsh's GIT source code
+repository. All branches are tested; make sure that all tests pass and
+that your code does not produce any warning before submitting merge
+requests.
 @item
 Use memory checking tools to detect memory leaks and other nasty memory
 problems. For example, you can use
@@ -5031,13 +5195,13 @@ Memprof
 @dots{}
 @end itemize
 @item
-always use the @code{Msg::} class to print information or errors
+Always use the @code{Msg::} class to print information or errors
 @item 
-indent your files (2 spaces) and convert all tabs to spaces
+Indent your files (2 spaces) and convert all tabs to spaces.
 @item 
-follow the style used in the existing code when adding something new
+Follow the style used in the existing code when adding something new
 (spaces after commas, opening braces for functions on a separate line,
-opening braces for loops and tests on the same line, etc.)
+opening braces for loops and tests on the same line, etc.).
 @end enumerate
 
 @c -------------------------------------------------------------------------
@@ -5072,115 +5236,6 @@ optional: create the associated widget in
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/Fltk/optionWindow.cpp,Fltk/optionWindow.h};
 @end enumerate
 
-@c -------------------------------------------------------------------------
-@c Using Gmsh as a library
-@c -------------------------------------------------------------------------
-
-@c @node Using Gmsh as a library,  , Coding style, Information for developers
-@c @section Using Gmsh as a library
-
-@c Notes on thread-safety
-@c   All the operations in the Gmsh library are not thread safe.
-@c   For example, the MeshAdapt algorithm is, while the Delaunay/Frontal
-@c   are not.
-
-@c -------------------------------------------------------------------------
-@c Compiling with OpenCASCADE
-@c -------------------------------------------------------------------------
-
-@c @node Compiling with OpenCASCADE,  , Coding style, Information for developers
-@c @section Compiling with OpenCASCADE
-
-@c How to build OpenCASCADE 6.3 (OCC) for Gmsh:
-
-@c - Get the source distribution of OCC and unpack it (you only need the
-@c   "ros" subdirectory). In the following <OpenCascade dir> refers to
-@c   the directory where OCC is installed (e.g ~/OpenCASCADE6.3.0)
-
-@c - OS/compiler specific stuff:
-
-@c    * On Windows, use Visual C++ to compile the libraries, or use the
-@c      precompiled DLLs directly. (The MinGW compiler used to work with
-@c      OCC 6.2 but do not anymore with 6.3.)
-
-@c    * on Mac OS X unfortunately you cannot build universal libs simply
-@c      by using "-arch i386 -arch ppc" (the code depends on
-@c      configure-time endinanness checks). So, first configure and build
-@c      with
-
-@c      export CFLAGS="-arch i386"
-@c      export CXXFLAGS="-arch i386" 
-
-@c      and then do "make distclean" and configure and build again
-@c      with 
-     
-@c      export CFLAGS="-arch ppc"
-@c      export CXXFLAGS="-arch ppc"
-
-@c      after the install step, use "lipo" to merge both archs, e.g.
-
-@c      lipo -create libi386.a libppc.a -output libuniversal.a
-
-@c - Go to the <OpenCASCADE dir>/ros directory and type
-
-@c   ./configure --prefix=/usr/local/opencascade --enable-debug=no 
-@c     --enable-production=yes --enable-static=yes --enable-shared=no
-@c     --disable-dependency-tracking
-
-@c - Then go to the <OpenCASCADE dir>/ros/adm/make/ directory and
-@c   run "make" in the following subdirectories, e.g. by running the
-@c   following bash script:
-
-@c     #!/bin/bash
-@c     for lib in TKernel TKMath TKAdvTools TKG2d TKG3d TKGeomBase TKBRep 
-@c       TKGeomAlgo TKTopAlgo TKPrim TKBO TKHLR TKMesh TKShHealing TKBool 
-@c       TKFillet TKFeat TKOffset TKXSBase TKIGES TKSTEPBase TKSTEPAttr 
-@c       TKSTEP209 TKSTEP; do
-@c         cd $lib && make; cd ..;
-@c     done
-
-@c    Note that this is the same as doing "make FoundationClasses", "make
-@c    ModelingData", "make ModelingAlgorithms" and part of "make
-@c    DataExchange"
-
-@c - Finally, run this other bash script in the same directory (to install
-@c   the libraries)
-
-@c     #!/bin/bash
-@c     for lib in TKernel TKMath TKAdvTools TKG2d TKG3d TKGeomBase TKBRep 
-@c       TKGeomAlgo TKTopAlgo TKPrim TKBO TKHLR TKMesh TKShHealing TKBool 
-@c       TKFillet TKFeat TKOffset TKXSBase TKIGES TKSTEPBase TKSTEPAttr 
-@c       TKSTEP209 TKSTEP; do
-@c         cd $lib && make install; cd ..;
-@c     done
-
-@c   and copy config.h and the <OpenCASCADE dir>/ros/inc/ subdirectory
-@c   to /usr/local/opencascade (This is the same as a doing a partial 
-@c   'make install')
-
-@c OpenCASCADE is now installed and ready to be used by Gmsh. To compile
-@c Gmsh with OpenCASCADE support:
-
-@c - Go to the gmsh source directory
-
-@c - Run "./configure --enable-occ --with-occ-prefix=/usr/local/opencascade" and
-@c   then "make"
-
-@c - If you get errors like
-
-@c     undefined reference to `pthread_create'
-@c     undefined reference to `pthread_detach'
-@c     ...
-
-@c   edit the "variables" file and add "-pthread" to the OPTIM variable, e.g.:
-
-@c     OPTIM="-g -O2 -pthread"
-   
-@c   and run make again
-
-@c - If compiling is successful then you are done and you can enjoy
-@c   importing IGES/STEP/BREP files into Gmsh!
-
 @c =========================================================================
 @c Frequently asked questions
 @c =========================================================================
@@ -5193,13 +5248,13 @@ optional: create the associated widget in
 @cindex FAQ
 
 @menu
-* The basics::                  
-* Installation problems::       
-* General questions::           
-* Geometry module questions::   
-* Mesh module questions::       
-* Solver module questions::     
-* Post-processing module questions::  
+* The basics::
+* Installation problems::
+* General questions::
+* Geometry module questions::
+* Mesh module questions::
+* Solver module questions::
+* Post-processing module questions::
 @end menu
 
 @c -------------------------------------------------------------------------
@@ -5367,7 +5422,7 @@ Yes, but only with the OpenCASCADE kernel.
 @item Gmsh is very slow when I use many transformations (Translate, Rotate, Symmetry, Extrude, etc. ). What's wrong?
 
 The default behavior of Gmsh is to check and suppress all duplicate
-entities (points, lines and surfaces) each time a transformation command
+entities (points, curves and surfaces) each time a transformation command
 is issued. This can slow down things a lot if many transformations are
 performed. There are two solutions to this problem: 
 @itemize
@@ -5378,16 +5433,15 @@ file.geo -0), and use this new file for subsequent computations;
 or you may set the @code{Geometry.AutoCoherence} option to 0. This will
 prevent any automatic duplicate check/replacement. If you still need to
 remove the duplicates entities, simply add @code{Coherence;} at strategic
-locations in your geo files (e.g. before the creation of line loops,
+locations in your geo files (e.g. before the creation of curve loops,
 etc.).
 @end itemize
 
 @item How can I display only selected parts of my model?
 
 Use `Tools->Visibility'. This allows you to select elementary entities
-and physical groups, as well as mesh elements, in a variety of ways
-(in a list or tree browser, by identification number, interactively,
-or per window).
+and physical groups, as well as mesh elements, in a variety of ways (in
+a list or tree browser, by tag, interactively, or per window).
 
 @item Can I edit STEP/IGES/BRep models?
 
@@ -5439,7 +5493,7 @@ system and and the full geometry.
 If physical entities are defined, the output mesh only contains those
 elements that belong to physical entities. So to save only 3D elements,
 simply define one (or more) physical volume(s) and don't define any
-physical surfaces or lines.
+physical surfaces or curves.
 
 @item My 2D meshes of IGES files present gaps between surfaces
 
@@ -5449,8 +5503,8 @@ two (close) curves as actually being identical.
 
 The best solution is to @emph{not use IGES and use STEP} instead. If you
 really have to use IGES, check that you don't have duplicate curves
-(e.g. by displaying their numbers in the GUI with
-`Tools->Options->Geometry->Visibility->Line numbers'). If there are
+(e.g. by displaying their tags in the GUI with
+`Tools->Options->Geometry->Visibility->Curve labels'). If there are
 duplicates, try to change the geometrical tolerance and sew the faces
 (see options in `Tools->Options->Geometry->General').
 
@@ -5468,10 +5522,10 @@ hexahedra instead of tetrahedra.
 
 Only in simple geometrical cases. We need your help to improve this.
 
-@item Can I explicitly assign region numbers to extruded layers?
+@item Can I explicitly assign region tags to extruded layers?
 
 No, this feature has been removed in Gmsh 2.0. You must use the
-standard entity number instead.
+standard entity tag instead.
 
 @item Did you remove the elliptic mesh generator in Gmsh 2.0?
 
@@ -5499,7 +5553,7 @@ boundary conditions or material properties---this is a job best left to
 the solver. Instead, Gmsh provides a simple mechanism to tag groups of
 elements, and it is up to the solver to interpret these tags as boundary
 conditions, materials, etc. Associating tags with elements in Gmsh is
-done by defining Physical entities (Physical Points, Physical Lines,
+done by defining Physical entities (Physical Points, Physical Curves,
 Physical Surfaces and Physical Volumes). See the reference manual as
 well as the tutorials (in particular @ref{t1.geo}) for a detailed
 description and some examples.
@@ -5532,9 +5586,9 @@ SIGE ~ signed inverse error on the gradient of FE solution
 For the exact definitions, see Geo/MElement.cpp. The graphs plot the
 the number of elements vs. the quality measure.
 
-@item Why don't the vertex and/or elememt numbers on the screen match the numbers in the mesh file?
+@item Why don't the node and/or elememt numbers on the screen match the numbers in the mesh file?
 
-Gmsh reindexes the mesh vertices and elements so that they are
+Gmsh reindexes the mesh nodes and elements so that they are
 numbered in a continuous sequence in the output files. The numbers
 displayed on screen after mesh generation thus usually differ from the
 ones saved in the mesh files. To check the actual numbers saved in the

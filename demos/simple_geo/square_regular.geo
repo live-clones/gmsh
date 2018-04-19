@@ -9,9 +9,9 @@ Line(2) = {3,2} ;
 Line(3) = {3,4} ;
 Line(4) = {4,1} ;
 
-Line Loop(5) = {4,1,-2,3} ;
+Curve Loop(5) = {4,1,-2,3} ;
 Plane Surface(6) = {5} ;
 
-Transfinite Line{1:4} = 10;
+Transfinite Curve{1:4} = 10;
 Transfinite Surface{6} Alternate;
 Mesh.ElementOrder = 2;

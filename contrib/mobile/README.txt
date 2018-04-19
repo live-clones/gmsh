@@ -1,28 +1,27 @@
-This directory contains the source code for Onelab/Mobile, the mobile version of
-ONELAB for iOS and Android devices.
+This directory contains the source code for the ONELAB app, the mobile version
+of ONELAB for iOS and Android devices.
 
-Copyright (C) 2014-2017 Christophe Geuzaine and Maxime Graulich, University of Liege
+Copyright (C) 2014-2018 Christophe Geuzaine and Maxime Graulich, University of Liege
 
-Onelab/Mobile (http://onelab.info) is a finite element package based on the open
-source mesh generator Gmsh (http://gmsh.info) and the solver GetDP
+The ONELAB (http://onelab.info) mobile app is a finite element package based on
+the open source mesh generator Gmsh (http://gmsh.info) and the solver GetDP
 (http://getdp.info). It can be used to simulate a wide variety of multi-physic
-problems: electromagnetics, thermics, mechanics...
+problems: electromagnetics, thermics, mechanics... It comes packaged with a
+selection of ready-to-use examples. New models can be added simply by opening
+the corresponding zip archive on your device.
 
-Onelab/Mobile comes packaged with a selection of ready-to-use examples. New
-models can be added simply by opening the corresponding zip archive on your
-device: see http://onelab.info/wiki/Mobile for more information.
-
-Onelab/Mobile is available on the AppStore and the Google Play store:
+The ONELAB mobile app is available on the AppStore and the Google Play store:
 
 https://itunes.apple.com/us/app/onelab/id845930897
 https://play.google.com/store/apps/details?id=org.geuz.onelab
 
-Sample scripts for building Onelab/Mobile are available in utils/*_build.sh
+Sample scripts for building the ONELAB mobile app are available in
+utils/*_build.sh
 
                               ***
 
-Onelab/Mobile is provided under the terms of the GNU General Public License
-(GPL), Version 2 or later.
+The ONELAB mobile app is provided under the terms of the GNU General Public
+License (GPL), Version 2 or later.
 
 		    GNU GENERAL PUBLIC LICENSE
 		       Version 2, June 1991

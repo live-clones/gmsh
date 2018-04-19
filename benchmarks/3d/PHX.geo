@@ -5,10 +5,10 @@
 //////////////////////////////////
 
 
-i_mesh = 1;             // ( 1 : maillage sortie coeur + collecteur chaud - 0 : maillage sortie coeur uniquement) 
+i_mesh = 1;             // ( 1 : maillage sortie coeur + collecteur chaud - 0 : maillage sortie coeur uniquement)
 
 
-//////////////////////////////// 
+////////////////////////////////
 // Caracteristiques geometriques
 ////////////////////////////////
 
@@ -41,14 +41,14 @@ h3   =  100.;		// distance sortie coeur - bcc
 h4   =  100.;		// hauteur entree fluide echangeur
 
 
-/////////////////////////////// 
+///////////////////////////////
 // paramètres de discrétisation
 ///////////////////////////////
- 
+
 lcar  = 0.9*ep_ass;	// longeur caracteristique associee aux assemblages - reflecteurs - P.N.L.
 lcar2 = 2.*lcar;	// longeur caracteristique associee a la partie inferieure de la virole du Collecteur Chaud (en-dessous de l'epaulement)
 //lcar2 = 7.*lcar;	// longeur caracteristique associee a la partie inferieure de la virole du Collecteur Chaud (en-dessous de l'epaulement)
-lcar3 = 10.*lcar;	// longeur caracteristique associee a la partie superieure de la virole du Collecteur Chaud (au-dessus de l'epaulement)
+lcar3 = 2.*lcar;	// longeur caracteristique associee a la partie superieure de la virole du Collecteur Chaud (au-dessus de l'epaulement)
 
 Mesh.Algorithm    = 6;  // 2D mesh algorithm (1=MeshAdapt+Delaunay, 4=MeshAdapt, 5=Delaunay, 6=Frontal)
 Mesh.Algorithm3D  = 4;  // 3D mesh algorithm (1=Tetgen+Delaunay, 4=Netgen)
@@ -94,7 +94,7 @@ indice++; c[indice]=newreg; Line(c[indice]) = { p4, p5 } ;
 indice++; c[indice]=newreg; Line(c[indice]) = { p5, p6 } ;
 indice++; c[indice]=newreg; Line(c[indice]) = { p6, p1 } ;
 
-nassemblage++; lbord[nassemblage]=newreg; 
+nassemblage++; lbord[nassemblage]=newreg;
 Line Loop(lbord[nassemblage]) = { c[{ indice-5:indice }] } ;
 ass[nassemblage]=newreg; Plane Surface(ass[nassemblage]) = { lbord[nassemblage] } ;
 
@@ -119,7 +119,7 @@ indice2++; c2[indice2]=newreg; Line(c2[indice2]) = { p4, p5 } ;
 indice2++; c2[indice2]=newreg; Line(c2[indice2]) = { p5, p6 } ;
 indice2++; c2[indice2]=newreg; Line(c2[indice2]) = { p6, p1 } ;
 
-nreflecteur++; lbord2[nreflecteur]=newreg; 
+nreflecteur++; lbord2[nreflecteur]=newreg;
 Line Loop(lbord2[nreflecteur]) = { c2[{ indice2-5:indice2 }] } ;
 refl[nreflecteur]=newreg; Plane Surface(refl[nreflecteur]) = { lbord2[nreflecteur] } ;
 
@@ -153,7 +153,7 @@ indice4++; c4[indice4]=newreg; Line(c4[indice4]) = { p4, p5 } ;
 indice4++; c4[indice4]=newreg; Line(c4[indice4]) = { p5, p6 } ;
 indice4++; c4[indice4]=newreg; Line(c4[indice4]) = { p6, p1 } ;
 
-npnl++; lbord3[npnl]=newreg; 
+npnl++; lbord3[npnl]=newreg;
 Line Loop(lbord3[npnl]) = { c4[{ indice4-5:indice4 }] } ;
 pnl[npnl]=newreg; Plane Surface(pnl[npnl]) = { lbord3[npnl] } ;
 
@@ -181,7 +181,7 @@ indice4++; c4[indice4]=newreg; Circle(c4[indice4]) = { p2, centre_pnl, p3 } ;
 indice4++; c4[indice4]=newreg; Circle(c4[indice4]) = { p3, centre_pnl, p4 } ;
 indice4++; c4[indice4]=newreg; Circle(c4[indice4]) = { p4, centre_pnl, p1 } ;
 
-npnl++; lbord3[npnl]=newreg; 
+npnl++; lbord3[npnl]=newreg;
 Line Loop(lbord3[npnl]) = { c4[{ indice4-3:indice4 }] } ;
 pnl[npnl]=newreg; Plane Surface(pnl[npnl]) = { lbord3[npnl] } ;
 
@@ -216,7 +216,7 @@ indice4++; c4[indice4]=newreg; Line(c4[indice4]) = { p7, p8 } ;
 indice4++; c4[indice4]=newreg; Line(c4[indice4]) = { p8, p1 } ;
 
 
-npnl++; lbord3[npnl]=newreg; 
+npnl++; lbord3[npnl]=newreg;
 Line Loop(lbord3[npnl]) = { c4[{ indice4-7:indice4 }] } ;
 pnl[npnl]=newreg; Plane Surface(pnl[npnl]) = { lbord3[npnl] } ;
 
@@ -296,22 +296,22 @@ Return
 
 
 /////////////////////////////
-// Generation des assemblages 
+// Generation des assemblages
 /////////////////////////////
 
    xc = x0;
    yc = y0;
-   
+
    nbass=0;
-   
+
    R_ass2= R_ass*R_ass;
-   
+
    ind_max = Floor(1.16*R_ass)+1;
-   
+
 
 For i In { -ind_max:ind_max }
  For j In { -ind_max:ind_max }
- 
+
  R_ij2 = i*i+j*j+i*j;
 
  If (R_ij2<=R_ass2)
@@ -320,21 +320,21 @@ For i In { -ind_max:ind_max }
    Call assemblage;
    nbass++;
  EndIf
- 
+
  EndFor
 EndFor
 
 Printf(" %g assemblages créés " , nbass ) ;
 
 /////////////////////////////
-// Generation des reflecteurs 
+// Generation des reflecteurs
 /////////////////////////////
 
 If (R_ref>0.)
 
    xc = x0;
    yc = y0;
-   
+
    nbrefl=0;
 
    R_ref2 = R_ref*R_ref;
@@ -343,7 +343,7 @@ If (R_ref>0.)
 
 For i In { -ind_max:ind_max }
  For j In { -ind_max:ind_max }
- 
+
  R_ij2 = i*i+j*j+i*j;
 
  If (R_ij2>R_ass2)
@@ -354,7 +354,7 @@ For i In { -ind_max:ind_max }
    nbrefl++;
   EndIf
  EndIf
- 
+
  EndFor
 EndFor
 
@@ -363,29 +363,29 @@ Printf(" %g reflecteurs créés " , nbrefl ) ;
 EndIf
 
 /////////////////////////////
-// Generation des P.N.L. 
+// Generation des P.N.L.
 /////////////////////////////
 
 If (R_pnl>0.)
 
    xc = x0;
    yc = y0;
-   
+
    nbpnl=0;
-   
+
    R_pnl2=R_pnl*R_pnl;
 
    ind_max = Floor(1.16*R_pnl)+1;
 
 For i In { -ind_max:ind_max }
  For j In { -ind_max:ind_max }
- 
+
  R_ij2 = i*i+j*j+i*j;
 
  If(R_ref==0.)
   R_ref2 = R_ass2;
- EndIf 
- 
+ EndIf
+
  If (R_ij2>R_ref2)
   If (R_ij2<=R_pnl2)
    xc = x0+i*0.5*rac3*pas_ass;
@@ -394,7 +394,7 @@ For i In { -ind_max:ind_max }
    nbpnl++;
   EndIf
  EndIf
- 
+
  EndFor
 EndFor
 
@@ -570,7 +570,7 @@ For i In { 0:2 }  // Pompes
   yc = (y0+r4)*Sin(i*2*Pi/3);
 
 Call pompe_echangeur ;
- 
+
 EndFor
 
 
@@ -582,7 +582,7 @@ For i In { 0:2 }  // Echangeurs_gauche
   yc = (y0+r4)*Sin(i*2*Pi/3+alpha);
 
 Call pompe_echangeur ;
- 
+
 EndFor
 
 For i In { 0:2 }  // Echangeurs_droite
@@ -591,7 +591,7 @@ For i In { 0:2 }  // Echangeurs_droite
   yc = (y0+r4)*Sin(i*2*Pi/3-alpha);
 
 Call pompe_echangeur ;
- 
+
 EndFor
 
 
@@ -599,10 +599,10 @@ EndFor
 // Generation des surfaces et des volumes du collecteur
 ///////////////////////////////////////////////////////
 
-l1 = newreg; Line(l1) = { p21 , p31 } ;  l5 = newreg; Line(l5) = { p41 , p51 } ; 
-l2 = newreg; Line(l2) = { p22 , p32 } ;  l6 = newreg; Line(l6) = { p42 , p52 } ; 
-l3 = newreg; Line(l3) = { p23 , p33 } ;  l7 = newreg; Line(l7) = { p43 , p53 } ; 
-l4 = newreg; Line(l4) = { p24 , p34 } ;  l8 = newreg; Line(l8) = { p44 , p54 } ; 
+l1 = newreg; Line(l1) = { p21 , p31 } ;  l5 = newreg; Line(l5) = { p41 , p51 } ;
+l2 = newreg; Line(l2) = { p22 , p32 } ;  l6 = newreg; Line(l6) = { p42 , p52 } ;
+l3 = newreg; Line(l3) = { p23 , p33 } ;  l7 = newreg; Line(l7) = { p43 , p53 } ;
+l4 = newreg; Line(l4) = { p24 , p34 } ;  l8 = newreg; Line(l8) = { p44 , p54 } ;
 
 l1b = newreg; Line(l1b) = { p11 , p11b } ;
 l2b = newreg; Line(l2b) = { p12 , p12b } ;
@@ -633,7 +633,7 @@ collecteur[0] = newreg ;
 
 If (kle==1) // assemblages seuls
 Surface Loop(collecteur[0]) = { surf1, surf3, surf4, inter_ass,
- 				ass[], 
+ 				ass[],
 				sl1, sl2, sl3, sl4, sl1b, sl2b, sl3b, sl4b, sl5, sl6, sl7, sl8 ,
 				sl9[], sl10[], sl11[], sl12[],
 				sl13[], sl14[],	sl15[], sl16[]  } ;
@@ -641,15 +641,15 @@ EndIf
 
 If (kle==3) // assemblages + reflecteurs
 Surface Loop(collecteur[0]) = { surf1, surf3, surf4, inter_ass,
- 				ass[], refl[], 
+ 				ass[], refl[],
 				sl1, sl2, sl3, sl4, sl1b, sl2b, sl3b, sl4b, sl5, sl6, sl7, sl8 ,
 				sl9[], sl10[], sl11[], sl12[],
 				sl13[], sl14[],	sl15[], sl16[]  } ;
 EndIf
- 
+
 If (kle==5) // assemblages + PNL
 Surface Loop(collecteur[0]) = { surf1, surf3, surf4, inter_ass,
- 				ass[], pnl[], 
+ 				ass[], pnl[],
 				sl1, sl2, sl3, sl4, sl1b, sl2b, sl3b, sl4b, sl5, sl6, sl7, sl8 ,
 				sl9[], sl10[], sl11[], sl12[],
 				sl13[], sl14[],	sl15[], sl16[]  } ;
@@ -657,7 +657,7 @@ EndIf
 
 If(kle==7) // assemblages + reflecteurs + PNL
 Surface Loop(collecteur[0]) = { surf1, surf3, surf4, inter_ass,
- 				ass[], refl[], pnl[], 
+ 				ass[], refl[], pnl[],
 				sl1, sl2, sl3, sl4, sl1b, sl2b, sl3b, sl4b, sl5, sl6, sl7, sl8 ,
 				sl9[], sl10[], sl11[], sl12[],
 				sl13[], sl14[],	sl15[], sl16[]  } ;

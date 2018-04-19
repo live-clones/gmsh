@@ -20,10 +20,10 @@ Macro dendrite
       Circle(numc+1) = {nump+2,nump,nump+3};
       Circle(numc+2) = {nump+3,nump,nump+4};
       Circle(numc+3) = {nump+4,nump,nump+1};
-      Line Loop(numw) = {numc:numc+3};
+      Curve Loop(numw) = {numc:numc+3};
     Else // single periodic surface
       Circle(numw) = {x,y,z, r};
-      Line Loop(numw) = numw;
+      Curve Loop(numw) = numw;
     EndIf
     ll() += numw;
   EndFor

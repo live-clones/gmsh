@@ -296,7 +296,7 @@ class MElement
   int getValidity();
 
   // return an information string for the element
-  virtual std::string getInfoString();
+  virtual std::string getInfoString(bool multline);
 
   // get the function space for the element
   virtual const nodalBasis* getFunctionSpace(int order=-1, bool serendip=false) const;
@@ -413,7 +413,7 @@ class MElement
   virtual void writePLY2(FILE *fp);
   virtual void writeUNV(FILE *fp, int num=0, int elementary=1, int physical=1);
   virtual void writeVTK(FILE *fp, bool binary=false, bool bigEndian=false);
-  virtual void writeMATLAB(FILE *fp, bool binary=false);
+  virtual void writeMATLAB(FILE *fp, int filetype, int elementary =0, int physical= 0, bool binary=false);
   virtual void writeTOCHNOG(FILE *fp, int num);
   virtual void writeMESH(FILE *fp, int elementTagType=1, int elementary=1,
                          int physical=0);
@@ -432,7 +432,6 @@ class MElement
   virtual int getTypeForMSH() const { return 0; }
   virtual int getTypeForUNV() const { return 0; }
   virtual int getTypeForVTK() const { return 0; }
-  virtual int getTypeForMATLAB() const { return 0; }
   virtual const char *getStringForTOCHNOG() const { return 0; }
   virtual const char *getStringForPOS() const { return 0; }
   virtual const char *getStringForBDF() const { return 0; }

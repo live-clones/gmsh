@@ -70,7 +70,7 @@ GModel::GModel(std::string name)
   : _maxVertexNum(0), _maxElementNum(0),
     _checkPointedMaxVertexNum(0), _checkPointedMaxElementNum(0),
     _destroying(false),
-    _name(name), _visible(1), _octree(0), _geo_internals(0),
+    _name(name), _visible(1), _elementOctree(0), _geo_internals(0),
     _occ_internals(0), _acis_internals(0), _fm_internals(0),
     _fields(0), _currentMeshEntity(0),
     _numPartitions(0), normals(0)
@@ -230,8 +230,8 @@ void GModel::destroyMeshCaches()
   std::map<int, MElement*>().swap(_elementMapCache);
   _elementIndexCache.clear();
   std::map<int, int>().swap(_elementIndexCache);
-  delete _octree;
-  _octree = 0;
+  delete _elementOctree;
+  _elementOctree = 0;
 }
 
 void GModel::deleteMesh(bool deleteOnlyElements)
@@ -306,12 +306,12 @@ GEntity *GModel::getEntityByTag(int dim, int n) const
   return 0;
 }
 
-std::vector<int> GModel::getTagsForPhysicalName(int dim, const std::string tag)
+std::vector<int> GModel::getTagsForPhysicalName(int dim, const std::string &name)
 {
   std::vector<int> tags;
   std::map<int, std::vector<GEntity*> > physicalGroups;
   getPhysicalGroups(dim, physicalGroups);
-  std::vector<GEntity*> entities = physicalGroups[getPhysicalNumber(dim, tag)];
+  std::vector<GEntity*> entities = physicalGroups[getPhysicalNumber(dim, name)];
   for(std::vector<GEntity*>::iterator it = entities.begin(); it != entities.end(); it++){
     GEntity *ge = *it;
     tags.push_back(ge->tag());
@@ -1065,15 +1065,15 @@ int GModel::adaptMesh(std::vector<int> technique,
             meshGFaceBamg(*fit);
             laplaceSmoothing(*fit,CTX::instance()->mesh.nbSmoothing);
           }
-          if(_octree) delete _octree;
-          _octree = 0;
+          if(_elementOctree) delete _elementOctree;
+          _elementOctree = 0;
         }
       }
       else if(getDim() == 3){
         for(riter rit = firstRegion(); rit != lastRegion(); ++rit){
           refineMeshMMG(*rit);
-          if(_octree) delete _octree;
-          _octree = 0;
+          if(_elementOctree) delete _elementOctree;
+          _elementOctree = 0;
         }
       }
 
@@ -1207,28 +1207,20 @@ int GModel::getNumMeshElements(unsigned c[6])
 
 MElement *GModel::getMeshElementByCoord(SPoint3 &p, int dim, bool strict)
 {
-  if(!_octree){
+  if(!_elementOctree){
     Msg::Debug("Rebuilding mesh element octree");
-    _octree = new MElementOctree(this);
+    _elementOctree = new MElementOctree(this);
   }
-  return _octree->find(p.x(), p.y(), p.z(), dim, strict);
+  return _elementOctree->find(p.x(), p.y(), p.z(), dim, strict);
 }
 
 std::vector<MElement*> GModel::getMeshElementsByCoord(SPoint3 &p, int dim, bool strict)
 {
-  if(!_octree){
+  if(!_elementOctree){
     Msg::Debug("Rebuilding mesh element octree");
-    _octree = new MElementOctree(this);
+    _elementOctree = new MElementOctree(this);
   }
-  return _octree->findAll(p.x(), p.y(), p.z(), dim, strict);
-}
-
-void GModel::deleteOctree()
-{
-  if(_octree) {
-    delete _octree;
-    _octree = NULL;
-  }
+  return _elementOctree->findAll(p.x(), p.y(), p.z(), dim, strict);
 }
 
 MVertex *GModel::getMeshVertexByTag(int n)
@@ -1601,21 +1593,22 @@ void GModel::_createGeometryOfDiscreteEntities(bool force)
     createTopologyFromMeshNew();
     exportDiscreteGEOInternals();
   }
-  if(force || CTX::instance()->meshDiscrete){
-    Msg::Info("Creating the geometry of discrete curves");
-    for(eiter it = firstEdge(); it != lastEdge(); ++it){
-      if((*it)->geomType() == GEntity::DiscreteCurve) {
-	discreteEdge *de = dynamic_cast<discreteEdge*> (*it);
-	if(de) de->createGeometry();
-      }
-    }
-  }
-  if(CTX::instance()->meshDiscrete){
+  //  return;
+  if (CTX::instance()->meshDiscrete){
     Msg::Info("Creating the geometry of discrete surfaces");
     for(fiter it = firstFace(); it != lastFace(); ++it){
       if((*it)->geomType() == GEntity::DiscreteSurface) {
 	discreteFace *df = dynamic_cast<discreteFace*> (*it);
 	if(df) df->createGeometry();
+      }
+    }
+  }
+  if (force || CTX::instance()->meshDiscrete){
+    Msg::Info("Creating the geometry of discrete curves");
+    for(eiter it = firstEdge(); it != lastEdge(); ++it){
+      if((*it)->geomType() == GEntity::DiscreteCurve) {
+	discreteEdge *de = dynamic_cast<discreteEdge*> (*it);
+	if(de) de->createGeometry();
       }
     }
   }

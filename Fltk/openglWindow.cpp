@@ -366,9 +366,9 @@ int openglWindow::handle(int event)
         CTX::instance()->geom.doubleClickedEntityTag = vertices[0]->tag();
         ParseString(CTX::instance()->geom.doubleClickedPointCommand, true);
       }
-      else if(edges.size() && CTX::instance()->geom.doubleClickedLineCommand.size()){
+      else if(edges.size() && CTX::instance()->geom.doubleClickedCurveCommand.size()){
         CTX::instance()->geom.doubleClickedEntityTag = edges[0]->tag();
-        ParseString(CTX::instance()->geom.doubleClickedLineCommand, true);
+        ParseString(CTX::instance()->geom.doubleClickedCurveCommand, true);
       }
       else if(faces.size() && CTX::instance()->geom.doubleClickedSurfaceCommand.size()){
         CTX::instance()->geom.doubleClickedEntityTag = faces[0]->tag();
@@ -658,31 +658,32 @@ int openglWindow::handle(int event)
                            vertices, edges, faces, regions, elements, points, views);
         if((_selection == ENT_ALL && res) ||
            (_selection == ENT_POINT && vertices.size()) ||
-           (_selection == ENT_LINE && edges.size()) ||
+           (_selection == ENT_CURVE && edges.size()) ||
            (_selection == ENT_SURFACE && faces.size()) ||
            (_selection == ENT_VOLUME && regions.size()))
           cursor(FL_CURSOR_CROSS, FL_BLACK, FL_WHITE);
         else
           cursor(FL_CURSOR_DEFAULT, FL_BLACK, FL_WHITE);
         std::string text, cmd;
+        bool multiline = CTX::instance()->tooltips;
         if(vertices.size()){
-          text = vertices[0]->getInfoString();
+          text = vertices[0]->getInfoString(true, multiline);
           cmd = CTX::instance()->geom.doubleClickedPointCommand;
         }
         else if(edges.size()){
-          text = edges[0]->getInfoString();
-          cmd = CTX::instance()->geom.doubleClickedLineCommand;
+          text = edges[0]->getInfoString(true, multiline);
+          cmd = CTX::instance()->geom.doubleClickedCurveCommand;
         }
         else if(faces.size()){
-          text = faces[0]->getInfoString();
+          text = faces[0]->getInfoString(true, multiline);
           cmd = CTX::instance()->geom.doubleClickedSurfaceCommand;
         }
         else if(regions.size()){
-          text = regions[0]->getInfoString();
+          text = regions[0]->getInfoString(true, multiline);
           cmd = CTX::instance()->geom.doubleClickedVolumeCommand;
         }
         else if(elements.size()){
-          text = elements[0]->getInfoString();
+          text = elements[0]->getInfoString(multiline);
         }
         else if(points.size()){
           char tmp[256];

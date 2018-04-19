@@ -203,7 +203,7 @@ class GFace : public GEntity {
                             double *curvMax, double *curvMin) const;
 
   // return a type-specific additional information string
-  virtual std::string getAdditionalInfoString();
+  virtual std::string getAdditionalInfoString(bool multline = false);
 
   // export in GEO format
   virtual void writeGEO(FILE *fp);
@@ -259,8 +259,8 @@ class GFace : public GEntity {
   // points are at most maxDist apart
   bool fillPointCloud(double maxDist,
 		      std::vector<SPoint3> *points,
-		      std::vector<SPoint2> *uvpoints=0,
-                      std::vector<SVector3> *normals=0);
+		      std::vector<SPoint2> *uvpoints = 0,
+                      std::vector<SVector3> *normals = 0);
 
   // apply Lloyd's algorithm to the mesh
   void lloyd(int nIter, int infNorm = 0);
@@ -310,9 +310,9 @@ class GFace : public GEntity {
     int nbGoodQuality, nbGoodLength;
   } meshStatistics;
 
-  // a crude graphical representation using a "cross" defined by pairs
-  // of start/end points
-  std::vector<SPoint3> cross;
+  // a crude graphical representation using a "cross" represented by points
+  // along u and v parameter lines
+  std::vector<std::vector<SPoint3> > cross[2];
 
   // the STL mesh
   std::vector<SPoint2> stl_vertices;

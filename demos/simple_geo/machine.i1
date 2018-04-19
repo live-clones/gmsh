@@ -43,6 +43,6 @@ arc2 = newreg ; Circle (arc2) = {p7,p3,p4} ;
 lin2 = newreg ; Line(lin2)    = {p4,p5} ;
 arc3 = newreg ; Circle(arc3)  = {p5,p6,p1} ;
 
-reg1 = newreg ; Line Loop(reg1) = {lin1,arc1,arc2,lin2,arc3};
+reg1 = newreg ; Curve Loop(reg1) = {lin1,arc1,arc2,lin2,arc3};
 reg2 = newreg ; Plane Surface(reg2) = {reg1};
 

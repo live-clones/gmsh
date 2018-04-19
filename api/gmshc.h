@@ -33,8 +33,8 @@
 GMSH_API void gmshFree(void *p);
 
 /* Initializes Gmsh. This must be called before any call to the other
- * functions in the API. If argc and argv are provided, they will be handled
- * in the same way as the command line arguments in the Gmsh app. If
+ * functions in the API. If `argc' and `argv' are provided, they will be
+ * handled in the same way as the command line arguments in the Gmsh app. If
  * `readConfigFiles' is set, reads system Gmsh configuration files (gmshrc and
  * gmsh-options). */
 GMSH_API void gmshInitialize(int argc, char ** argv,
@@ -215,34 +215,34 @@ GMSH_API void gmshModelMeshRefine(int * ierr);
 GMSH_API void gmshModelMeshSetOrder(const int order,
                                     int * ierr);
 
-/* Removes duplicate mesh vertices in the mesh of the current model. */
-GMSH_API void gmshModelMeshRemoveDuplicateVertices(int * ierr);
+/* Removes duplicate mesh nodes in the mesh of the current model. */
+GMSH_API void gmshModelMeshRemoveDuplicateNodes(int * ierr);
 
 /* Gets the last entities (if any) where a meshing error occurred. Currently
  * only populated by the new 3D meshing algorithms. */
 GMSH_API void gmshModelMeshGetLastEntityError(int ** dimTags, size_t * dimTags_n,
                                               int * ierr);
 
-/* Gets the last mesh vertices (if any) where a meshing error occurred.
- * Currently only populated by the new 3D meshing algorithms. */
-GMSH_API void gmshModelMeshGetLastVertexError(int ** vertexTags, size_t * vertexTags_n,
-                                              int * ierr);
+/* Gets the last mesh nodes (if any) where a meshing error occurred. Currently
+ * only populated by the new 3D meshing algorithms. */
+GMSH_API void gmshModelMeshGetLastNodeError(int ** nodeTags, size_t * nodeTags_n,
+                                            int * ierr);
 
-/* Gets the mesh vertices of the entity of dimension `dim' and `tag' tag. If
- * `tag' < 0, gets the vertices for all entities of dimension `dim'. If `dim'
- * and `tag' are negative, gets all the vertices in the mesh. `vertexTags'
- * contains the vertex tags (their unique, strictly positive identification
- * numbers). `coord' is a vector of length 3 times the length of `vertexTags'
- * that contains the (x, y, z) coordinates of the vertices, concatenated. If
- * `dim' >= 0, `parametricCoord' contains the parametric coordinates of the
- * vertices, if available. The length of `parametricCoord' can be 0 or `dim'
- * times the length of `vertexTags'. */
-GMSH_API void gmshModelMeshGetVertices(int ** vertexTags, size_t * vertexTags_n,
-                                       double ** coord, size_t * coord_n,
-                                       double ** parametricCoord, size_t * parametricCoord_n,
-                                       const int dim,
-                                       const int tag,
-                                       int * ierr);
+/* Gets the mesh nodes of the entity of dimension `dim' and `tag' tag. If
+ * `tag' < 0, gets the nodes for all entities of dimension `dim'. If `dim' and
+ * `tag' are negative, gets all the nodes in the mesh. `nodeTags' contains the
+ * node tags (their unique, strictly positive identification numbers). `coord'
+ * is a vector of length 3 times the length of `nodeTags' that contains the
+ * (x, y, z) coordinates of the nodes, concatenated. If `dim' >= 0,
+ * `parametricCoord' contains the parametric coordinates of the nodes, if
+ * available. The length of `parametricCoord' can be 0 or `dim' times the
+ * length of `nodeTags'. */
+GMSH_API void gmshModelMeshGetNodes(int ** nodeTags, size_t * nodeTags_n,
+                                    double ** coord, size_t * coord_n,
+                                    double ** parametricCoord, size_t * parametricCoord_n,
+                                    const int dim,
+                                    const int tag,
+                                    int * ierr);
 
 /* Gets the mesh elements of the entity of dimension `dim' and `tag' tag. If
  * `tag' < 0, gets the elements for all entities of dimension `dim'. If `dim'
@@ -251,27 +251,27 @@ GMSH_API void gmshModelMeshGetVertices(int ** vertexTags, size_t * vertexTags_n,
  * `getElementProperties' to obtain the properties for a given element type).
  * `elementTags' is a vector of the same length as `elementTypes'; each entry
  * is a vector containing the tags (unique, strictly positive identifiers) of
- * the elements of the corresponding type. `vertexTags' is also a vector of
- * the same length as `elementTypes'; each entry is a vector of length equal
- * to the number of elements of the given type times the number of vertices
- * for this type of element, that contains the vertex tags of all the elements
- * of the given type, concatenated. */
+ * the elements of the corresponding type. `nodeTags' is also a vector of the
+ * same length as `elementTypes'; each entry is a vector of length equal to
+ * the number of elements of the given type times the number of nodes for this
+ * type of element, that contains the node tags of all the elements of the
+ * given type, concatenated. */
 GMSH_API void gmshModelMeshGetElements(int ** elementTypes, size_t * elementTypes_n,
                                        int *** elementTags, size_t ** elementTags_n, size_t *elementTags_nn,
-                                       int *** vertexTags, size_t ** vertexTags_n, size_t *vertexTags_nn,
+                                       int *** nodeTags, size_t ** nodeTags_n, size_t *nodeTags_nn,
                                        const int dim,
                                        const int tag,
                                        int * ierr);
 
 /* Gets the properties of an element of type `elementType': its name
- * (`elementName'), dimension (`dim'), order (`order'), number of vertices
- * (`numVertices') and parametric coordinates of vertices (`parametricCoord'
- * vector, of length `dim' times `numVertices'). */
+ * (`elementName'), dimension (`dim'), order (`order'), number of nodes
+ * (`numNodes') and parametric coordinates of nodes (`parametricCoord' vector,
+ * of length `dim' times `numNodes'). */
 GMSH_API void gmshModelMeshGetElementProperties(const int elementType,
                                                 char ** elementName,
                                                 int * dim,
                                                 int * order,
-                                                int * numVertices,
+                                                int * numNodes,
                                                 double ** parametricCoord, size_t * parametricCoord_n,
                                                 int * ierr);
 
@@ -312,7 +312,7 @@ GMSH_API void gmshModelMeshGetElementTypes(int ** elementTypes, size_t * element
  * `elementType'. */
 GMSH_API void gmshModelMeshGetElementsByType(const int elementType,
                                              int ** elementTags, size_t * elementTags_n,
-                                             int ** vertexTags, size_t * vertexTags_n,
+                                             int ** nodeTags, size_t * nodeTags_n,
                                              const int dim,
                                              const int tag,
                                              int * ierr);
@@ -330,54 +330,54 @@ GMSH_API void gmshModelMeshGetIntegrationDataByType(const int elementType,
                                                     const int tag,
                                                     int * ierr);
 
-/* Sets the mesh vertices in the geometrical entity of dimension `dim' and tag
- * `tag'. `vertextags' contains the vertex tags (their unique, strictly
- * positive identification numbers). `coord' is a vector of length 3 times the
- * length of `vertexTags' that contains the (x, y, z) coordinates of the
- * vertices, concatenated. The optional `parametricCoord' vector contains the
- * parametric coordinates of the vertices, if any. The length of
- * `parametricCoord' can be 0 or `dim' times the length of `vertexTags'. */
-GMSH_API void gmshModelMeshSetVertices(const int dim,
-                                       const int tag,
-                                       int * vertexTags, size_t vertexTags_n,
-                                       double * coord, size_t coord_n,
-                                       double * parametricCoord, size_t parametricCoord_n,
-                                       int * ierr);
+/* Sets the mesh nodes in the geometrical entity of dimension `dim' and tag
+ * `tag'. `nodetags' contains the node tags (their unique, strictly positive
+ * identification numbers). `coord' is a vector of length 3 times the length
+ * of `nodeTags' that contains the (x, y, z) coordinates of the nodes,
+ * concatenated. The optional `parametricCoord' vector contains the parametric
+ * coordinates of the nodes, if any. The length of `parametricCoord' can be 0
+ * or `dim' times the length of `nodeTags'. */
+GMSH_API void gmshModelMeshSetNodes(const int dim,
+                                    const int tag,
+                                    int * nodeTags, size_t nodeTags_n,
+                                    double * coord, size_t coord_n,
+                                    double * parametricCoord, size_t parametricCoord_n,
+                                    int * ierr);
 
 /* Sets the mesh elements of the entity of dimension `dim' and `tag' tag.
  * `types' contains the MSH types of the elements (e.g. `2' for 3-node
  * triangles: see the Gmsh reference manual). `elementTags' is a vector of the
  * same length as `types'; each entry is a vector containing the tags (unique,
  * strictly positive identifiers) of the elements of the corresponding type.
- * `vertexTags' is also a vector of the same length as `types'; each entry is
- * a vector of length equal to the number of elements of the give type times
- * the number of vertices per element, that contains the vertex tags of all
- * the elements of the given type, concatenated. */
+ * `nodeTags' is also a vector of the same length as `types'; each entry is a
+ * vector of length equal to the number of elements of the give type times the
+ * number of nodes per element, that contains the node tags of all the
+ * elements of the given type, concatenated. */
 GMSH_API void gmshModelMeshSetElements(const int dim,
                                        const int tag,
                                        int * types, size_t types_n,
                                        const int ** elementTags, const size_t * elementTags_n, size_t elementTags_nn,
-                                       const int ** vertexTags, const size_t * vertexTags_n, size_t vertexTags_nn,
+                                       const int ** nodeTags, const size_t * nodeTags_n, size_t nodeTags_nn,
                                        int * ierr);
 
-/* Redistribute all mesh vertices on their associated geometrical entity,
- * based on the mesh elements. Can be used when importing mesh vertices in
- * bulk (e.g. by associating them all to a single volume), to reclassify them
- * correctly on model surfaces, curves, etc. */
-GMSH_API void gmshModelMeshReclassifyVertices(int * ierr);
+/* Redistributes all mesh nodes on their associated geometrical entity, based
+ * on the mesh elements. Can be used when importing mesh nodes in bulk (e.g.
+ * by associating them all to a single volume), to reclassify them correctly
+ * on model surfaces, curves, etc. */
+GMSH_API void gmshModelMeshReclassifyNodes(int * ierr);
 
 /* Gets the coordinates and the parametric coordinates (if any) of the mesh
- * vertex with tag `tag'. This is a useful by inefficient way of accessing
- * mesh vertex data, as it relies on a cache stored in the model. For large
- * meshes all the vertices in the model should be numbered in a continuous
- * sequence of tags from 1 to N to maintain reasonnable performance (in this
- * case the internal cache is based on a vector; otherwise it uses a map). */
-GMSH_API void gmshModelMeshGetVertex(const int vertexTag,
-                                     double ** coord, size_t * coord_n,
-                                     double ** parametricCoord, size_t * parametricCoord_n,
-                                     int * ierr);
+ * node with tag `tag'. This is a useful by inefficient way of accessing mesh
+ * node data, as it relies on a cache stored in the model. For large meshes
+ * all the nodes in the model should be numbered in a continuous sequence of
+ * tags from 1 to N to maintain reasonnable performance (in this case the
+ * internal cache is based on a vector; otherwise it uses a map). */
+GMSH_API void gmshModelMeshGetNode(const int nodeTag,
+                                   double ** coord, size_t * coord_n,
+                                   double ** parametricCoord, size_t * parametricCoord_n,
+                                   int * ierr);
 
-/* Gets the type and vertex tags of the mesh element with tag `tag'. This is a
+/* Gets the type and node tags of the mesh element with tag `tag'. This is a
  * useful but inefficient way of accessing mesh element data, as it relies on
  * a cache stored in the model. For large meshes all the elements in the model
  * should be numbered in a continuous sequence of tags from 1 to N to maintain
@@ -385,7 +385,7 @@ GMSH_API void gmshModelMeshGetVertex(const int vertexTag,
  * vector; otherwise it uses a map). */
 GMSH_API void gmshModelMeshGetElement(const int elementTag,
                                       int * type,
-                                      int ** vertexTags, size_t * vertexTags_n,
+                                      int ** nodeTags, size_t * nodeTags_n,
                                       int * ierr);
 
 /* Sets a mesh size constraint on the geometrical entities `dimTags'.
@@ -394,15 +394,15 @@ GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n,
                                    const double size,
                                    int * ierr);
 
-/* Sets a transfinite meshing constraint on the line `tag', with `numVertices'
- * mesh vertices distributed according to `type' and `coef'. Currently
- * supported types are "Progression" (geometrical progression with power
- * `coef') and "Bump" (refinement toward both extreminties of the line). */
-GMSH_API void gmshModelMeshSetTransfiniteLine(const int tag,
-                                              const int numVertices,
-                                              const char * type,
-                                              const double coef,
-                                              int * ierr);
+/* Sets a transfinite meshing constraint on the curve `tag', with `numNodes'
+ * mesh nodes distributed according to `type' and `coef'. Currently supported
+ * types are "Progression" (geometrical progression with power `coef') and
+ * "Bump" (refinement toward both extremities of the curve). */
+GMSH_API void gmshModelMeshSetTransfiniteCurve(const int tag,
+                                               const int numNodes,
+                                               const char * type,
+                                               const double coef,
+                                               int * ierr);
 
 /* Sets a transfinite meshing constraint on the surface `tag'. `arrangement'
  * describes the arrangement of the triangles when the surface is not flagged
@@ -485,15 +485,19 @@ GMSH_API void gmshModelMeshFieldSetNumbers(const int tag,
                                            double * value, size_t value_n,
                                            int * ierr);
 
-/* Sets the field `tag' as background mesh size field. */
+/* Sets the field `tag' as the background mesh size field. */
 GMSH_API void gmshModelMeshFieldSetAsBackgroundMesh(const int tag,
                                                     int * ierr);
+
+/* Sets the field `tag' as the boundary layer size field. */
+GMSH_API void gmshModelMeshFieldSetAsBoundaryLayer(const int tag,
+                                                   int * ierr);
 
 /* Adds a geometrical point in the internal GEO CAD representation, at
  * coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
  * that point. If `tag' is positive, sets the tag explicitly; otherwise a new
  * tag is selected automatically. Returns the tag of the point. (Note that the
- * point will be added in the current model only after synchronize() is
+ * point will be added in the current model only after `synchronize' is
  * called. This behavior holds for all the entities added in the geo module.) */
 GMSH_API int gmshModelGeoAddPoint(const double x,
                                   const double y,
@@ -540,67 +544,67 @@ GMSH_API int gmshModelGeoAddEllipseArc(const int startTag,
                                        const double nz,
                                        int * ierr);
 
-/* Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If
+/* Adds a spline (Catmull-Rom) curve going through the points `pointTags'. If
  * `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
  * automatically. Creates a periodic curve if the first and last points are
  * the same. Returns the tag of the spline curve. */
-GMSH_API int gmshModelGeoAddSpline(int * vertexTags, size_t vertexTags_n,
+GMSH_API int gmshModelGeoAddSpline(int * pointTags, size_t pointTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* Adds a cubic b-spline curve with `vertexTags' control points. If `tag' is
+/* Adds a cubic b-spline curve with `pointTags' control points. If `tag' is
  * positive, sets the tag explicitly; otherwise a new tag is selected
  * automatically. Creates a periodic curve if the first and last points are
  * the same. Returns the tag of the b-spline curve. */
-GMSH_API int gmshModelGeoAddBSpline(int * vertexTags, size_t vertexTags_n,
+GMSH_API int gmshModelGeoAddBSpline(int * pointTags, size_t pointTags_n,
                                     const int tag,
                                     int * ierr);
 
-/* Adds a Bezier curve with `vertexTags' control points. If `tag' is positive,
+/* Adds a Bezier curve with `pointTags' control points. If `tag' is positive,
  * sets the tag explicitly; otherwise a new tag is selected automatically.
  * Returns the tag of the Bezier curve. */
-GMSH_API int gmshModelGeoAddBezier(int * vertexTags, size_t vertexTags_n,
+GMSH_API int gmshModelGeoAddBezier(int * pointTags, size_t pointTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should
- * contain (signed) tags of geometrical enties of dimension 1 forming a closed
- * loop: a negative tag signifies that the underlying edge is considered with
- * reversed orientation. If `tag' is positive, sets the tag explicitly;
- * otherwise a new tag is selected automatically. Returns the tag of the line
- * loop. */
-GMSH_API int gmshModelGeoAddLineLoop(int * edgeTags, size_t edgeTags_n,
-                                     const int tag,
-                                     int * ierr);
+/* Adds a curve loop (a closed wire) formed by the curves `curveTags'.
+ * `curveTags' should contain (signed) tags of geometrical enties of dimension
+ * 1 forming a closed loop: a negative tag signifies that the underlying curve
+ * is considered with reversed orientation. If `tag' is positive, sets the tag
+ * explicitly; otherwise a new tag is selected automatically. Returns the tag
+ * of the curve loop. */
+GMSH_API int gmshModelGeoAddCurveLoop(int * curveTags, size_t curveTags_n,
+                                      const int tag,
+                                      int * ierr);
 
-/* Adds a plane surface defined by one or more line loops `wireTags'. The
- * first line loop defines the exterior contour; additional line loop define
+/* Adds a plane surface defined by one or more curve loops `wireTags'. The
+ * first curve loop defines the exterior contour; additional curve loop define
  * holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
  * is selected automatically. Returns the tag of the surface. */
 GMSH_API int gmshModelGeoAddPlaneSurface(int * wireTags, size_t wireTags_n,
                                          const int tag,
                                          int * ierr);
 
-/* Adds a surface filling the line loops in `wireTags'. Currently only a
- * single line loop is supported; this line loop should be composed by 3 or 4
- * edges only. If `tag' is positive, sets the tag explicitly; otherwise a new
- * tag is selected automatically. Returns the tag of the surface. */
+/* Adds a surface filling the curve loops in `wireTags'. Currently only a
+ * single curve loop is supported; this curve loop should be composed by 3 or
+ * 4 curves only. If `tag' is positive, sets the tag explicitly; otherwise a
+ * new tag is selected automatically. Returns the tag of the surface. */
 GMSH_API int gmshModelGeoAddSurfaceFilling(int * wireTags, size_t wireTags_n,
                                            const int tag,
                                            const int sphereCenterTag,
                                            int * ierr);
 
-/* Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is
+/* Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
  * positive, sets the tag explicitly; otherwise a new tag is selected
- * automatically. Returns the tag of the surface loop. */
-GMSH_API int gmshModelGeoAddSurfaceLoop(int * faceTags, size_t faceTags_n,
+ * automatically. Returns the tag of the shell. */
+GMSH_API int gmshModelGeoAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n,
                                         const int tag,
                                         int * ierr);
 
-/* Adds a volume defined by one or more surface loops `shellTags'. The first
- * surface loop defines the exterior boundary; additional surface loop define
- * holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
- * is selected automatically. Returns the tag of the volume. */
+/* Adds a volume (a region) defined by one or more shells `shellTags'. The
+ * first surface loop defines the exterior boundary; additional surface loop
+ * define holes. If `tag' is positive, sets the tag explicitly; otherwise a
+ * new tag is selected automatically. Returns the tag of the volume. */
 GMSH_API int gmshModelGeoAddVolume(int * shellTags, size_t shellTags_n,
                                    const int tag,
                                    int * ierr);
@@ -735,15 +739,15 @@ GMSH_API void gmshModelGeoMeshSetSize(int * dimTags, size_t dimTags_n,
                                       const double size,
                                       int * ierr);
 
-/* Sets a transfinite meshing constraint on the line `tag', with `numVertices'
- * mesh vertices distributed according to `type' and `coef'. Currently
- * supported types are "Progression" (geometrical progression with power
- * `coef') and "Bump" (refinement toward both extreminties of the line). */
-GMSH_API void gmshModelGeoMeshSetTransfiniteLine(const int tag,
-                                                 const int nPoints,
-                                                 const char * type,
-                                                 const double coef,
-                                                 int * ierr);
+/* Sets a transfinite meshing constraint on the curve `tag', with `numNodes'
+ * mesh nodes distributed according to `type' and `coef'. Currently supported
+ * types are "Progression" (geometrical progression with power `coef') and
+ * "Bump" (refinement toward both extreminties of the curve). */
+GMSH_API void gmshModelGeoMeshSetTransfiniteCurve(const int tag,
+                                                  const int nPoints,
+                                                  const char * type,
+                                                  const double coef,
+                                                  int * ierr);
 
 /* Sets a transfinite meshing constraint on the surface `tag'. `arrangement'
  * describes the arrangement of the triangles when the surface is not flagged
@@ -793,7 +797,7 @@ GMSH_API void gmshModelGeoMeshSetReverse(const int dim,
  * coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
  * that point. If `tag' is positive, sets the tag explicitly; otherwise a new
  * tag is selected automatically. Returns the tag of the point. (Note that the
- * point will be added in the current model only after synchronize() is
+ * point will be added in the current model only after `synchronize' is
  * called. This behavior holds for all the entities added in the occ module.) */
 GMSH_API int gmshModelOccAddPoint(const double x,
                                   const double y,
@@ -858,21 +862,21 @@ GMSH_API int gmshModelOccAddEllipse(const double x,
                                     const double angle2,
                                     int * ierr);
 
-/* Adds a spline (C2 b-spline) curve going through `vertexTags' points. If
+/* Adds a spline (C2 b-spline) curve going through the points `pointTags'. If
  * `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
  * automatically. Creates a periodic curve if the first and last points are
  * the same. Returns the tag of the spline curve. */
-GMSH_API int gmshModelOccAddSpline(int * vertexTags, size_t vertexTags_n,
+GMSH_API int gmshModelOccAddSpline(int * pointTags, size_t pointTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* Adds a b-spline curve of degree `degree' with `vertexTags' control points.
+/* Adds a b-spline curve of degree `degree' with `pointTags' control points.
  * If `weights', `knots' or `multiplicities' are not provided, default
  * parameters are computed automatically. If `tag' is positive, sets the tag
  * explicitly; otherwise a new tag is selected automatically. Creates a
  * periodic curve if the first and last points are the same. Returns the tag
  * of the b-spline curve. */
-GMSH_API int gmshModelOccAddBSpline(int * vertexTags, size_t vertexTags_n,
+GMSH_API int gmshModelOccAddBSpline(int * pointTags, size_t pointTags_n,
                                     const int tag,
                                     const int degree,
                                     double * weights, size_t weights_n,
@@ -880,32 +884,32 @@ GMSH_API int gmshModelOccAddBSpline(int * vertexTags, size_t vertexTags_n,
                                     int * multiplicities, size_t multiplicities_n,
                                     int * ierr);
 
-/* Adds a Bezier curve with `vertexTags' control points. If `tag' is positive,
+/* Adds a Bezier curve with `pointTags' control points. If `tag' is positive,
  * sets the tag explicitly; otherwise a new tag is selected automatically.
  * Returns the tag of the Bezier curve. */
-GMSH_API int gmshModelOccAddBezier(int * vertexTags, size_t vertexTags_n,
+GMSH_API int gmshModelOccAddBezier(int * pointTags, size_t pointTags_n,
                                    const int tag,
                                    int * ierr);
 
-/* Adds a wire (open or closed) formed by `edgeTags'. `edgeTags' should
- * contain (signed) tags of geometrical enties of dimension 1: a negative tag
- * signifies that the underlying edge is considered with reversed orientation.
- * If `tag' is positive, sets the tag explicitly; otherwise a new tag is
- * selected automatically. Returns the tag of the wire. */
-GMSH_API int gmshModelOccAddWire(int * edgeTags, size_t edgeTags_n,
+/* Adds a wire (open or closed) formed by the curves `curveTags'. `curveTags'
+ * should contain (signed) tags: a negative tag signifies that the underlying
+ * curve is considered with reversed orientation. If `tag' is positive, sets
+ * the tag explicitly; otherwise a new tag is selected automatically. Returns
+ * the tag of the wire. */
+GMSH_API int gmshModelOccAddWire(int * curveTags, size_t curveTags_n,
                                  const int tag,
                                  const int checkClosed,
                                  int * ierr);
 
-/* Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should
- * contain (signed) tags of geometrical enties of dimension 1 forming a closed
- * loop: a negative tag signifies that the underlying edge is considered with
+/* Adds a curve loop (a closed wire) formed by the curves `curveTags'.
+ * `curveTags' should contain (signed) tags of curves forming a closed loop: a
+ * negative tag signifies that the underlying curve is considered with
  * reversed orientation. If `tag' is positive, sets the tag explicitly;
- * otherwise a new tag is selected automatically. Returns the tag of the line
+ * otherwise a new tag is selected automatically. Returns the tag of the curve
  * loop. */
-GMSH_API int gmshModelOccAddLineLoop(int * edgeTags, size_t edgeTags_n,
-                                     const int tag,
-                                     int * ierr);
+GMSH_API int gmshModelOccAddCurveLoop(int * curveTags, size_t curveTags_n,
+                                      const int tag,
+                                      int * ierr);
 
 /* Adds a rectangle with lower left corner at (`x', `y', `z') and upper right
  * corner at (`x' + `dx', `y' + `dy', `z'). If `tag' is positive, sets the tag
@@ -921,7 +925,7 @@ GMSH_API int gmshModelOccAddRectangle(const double x,
                                       int * ierr);
 
 /* Adds a disk with center (`xc', `yc', `zc') and radius `rx' along the x-axis
- * and `ry; along the y-axis. If `tag' is positive, sets the tag explicitly;
+ * and `ry' along the y-axis. If `tag' is positive, sets the tag explicitly;
  * otherwise a new tag is selected automatically. Returns the tag of the disk. */
 GMSH_API int gmshModelOccAddDisk(const double xc,
                                  const double yc,
@@ -931,33 +935,33 @@ GMSH_API int gmshModelOccAddDisk(const double xc,
                                  const int tag,
                                  int * ierr);
 
-/* Adds a plane surface defined by one or more line loops (or closed wires)
- * `wireTags'. The first line loop defines the exterior contour; additional
- * line loop define holes. If `tag' is positive, sets the tag explicitly;
+/* Adds a plane surface defined by one or more curve loops (or closed wires)
+ * `wireTags'. The first curve loop defines the exterior contour; additional
+ * curve loop define holes. If `tag' is positive, sets the tag explicitly;
  * otherwise a new tag is selected automatically. Returns the tag of the
  * surface. */
 GMSH_API int gmshModelOccAddPlaneSurface(int * wireTags, size_t wireTags_n,
                                          const int tag,
                                          int * ierr);
 
-/* Adds a surface filling the line loops in `wireTags'. If `tag' is positive,
+/* Adds a surface filling the curve loops in `wireTags'. If `tag' is positive,
  * sets the tag explicitly; otherwise a new tag is selected automatically.
  * Returns the tag of the surface. */
 GMSH_API int gmshModelOccAddSurfaceFilling(const int wireTag,
                                            const int tag,
                                            int * ierr);
 
-/* Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is
+/* Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
  * positive, sets the tag explicitly; otherwise a new tag is selected
  * automatically. Returns the tag of the surface loop. */
-GMSH_API int gmshModelOccAddSurfaceLoop(int * faceTags, size_t faceTags_n,
+GMSH_API int gmshModelOccAddSurfaceLoop(int * surfaceTags, size_t surfaceTags_n,
                                         const int tag,
                                         int * ierr);
 
-/* Adds a volume defined by one or more surface loops `shellTags'. The first
- * surface loop defines the exterior boundary; additional surface loop define
- * holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
- * is selected automatically. Returns the tag of the volume. */
+/* Adds a volume (a region) defined by one or more surface loops `shellTags'.
+ * The first surface loop defines the exterior boundary; additional surface
+ * loop define holes. If `tag' is positive, sets the tag explicitly; otherwise
+ * a new tag is selected automatically. Returns the tag of the volume. */
 GMSH_API int gmshModelOccAddVolume(int * shellTags, size_t shellTags_n,
                                    const int tag,
                                    int * ierr);
@@ -1066,13 +1070,13 @@ GMSH_API void gmshModelOccAddThruSections(int * wireTags, size_t wireTags_n,
                                           const int makeRuled,
                                           int * ierr);
 
-/* Adds a hollowed volume built from an initial volume `solidTag' and a set of
- * faces from this volume `excludeFaceTags', which are to be removed. The
- * remaining faces of the volume become the walls of the hollowed solid, with
- * thickness `offset'. If `tag' is positive, sets the tag explicitly;
+/* Adds a hollowed volume built from an initial volume `volumeTag' and a set
+ * of faces from this volume `excludeSurfaceTags', which are to be removed.
+ * The remaining faces of the volume become the walls of the hollowed solid,
+ * with thickness `offset'. If `tag' is positive, sets the tag explicitly;
  * otherwise a new tag is selected automatically. */
-GMSH_API void gmshModelOccAddThickSolid(const int solidTag,
-                                        int * excludeFaceTags, size_t excludeFaceTags_n,
+GMSH_API void gmshModelOccAddThickSolid(const int volumeTag,
+                                        int * excludeSurfaceTags, size_t excludeSurfaceTags_n,
                                         const double offset,
                                         int ** outDimTags, size_t * outDimTags_n,
                                         const int tag,
@@ -1114,25 +1118,25 @@ GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n,
                                   const int recombine,
                                   int * ierr);
 
-/* Adds a pipe by extruding the entities `dimTags' along the curve `wireTag'.
+/* Adds a pipe by extruding the entities `dimTags' along the wire `wireTag'.
  * Returns the pipe in `outDimTags'. */
 GMSH_API void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n,
                                   const int wireTag,
                                   int ** outDimTags, size_t * outDimTags_n,
                                   int * ierr);
 
-/* Fillets the volumes `regionTags' on the curves `edgeTags' with radius
+/* Fillets the volumes `volumeTags' on the curves `curveTags' with radius
  * `radius'. Returns the filleted entities in `outDimTags'. Removes the
- * original volume if `removeRegion' is set. */
-GMSH_API void gmshModelOccFillet(int * regionTags, size_t regionTags_n,
-                                 int * edgeTags, size_t edgeTags_n,
+ * original volume if `removeVolume' is set. */
+GMSH_API void gmshModelOccFillet(int * volumeTags, size_t volumeTags_n,
+                                 int * curveTags, size_t curveTags_n,
                                  const double radius,
                                  int ** outDimTags, size_t * outDimTags_n,
-                                 const int removeRegion,
+                                 const int removeVolume,
                                  int * ierr);
 
 /* Computes the boolean union (the fusion) of the entities `objectDimTags' and
- * `toolDimTags'.Returns the resulting entities in `outDimTags'. If `tag' is
+ * `toolDimTags'. Returns the resulting entities in `outDimTags'. If `tag' is
  * positive, attemps to set the tag explicitly (ony valid if the boolean
  * operation results in a single entity). Removes the object if `removeObject'
  * is set. Removes the tool if `removeTool' is set. */
@@ -1294,7 +1298,7 @@ GMSH_API void gmshViewGetTags(int ** tags, size_t * tags_n,
  * `modelName' identifies the model the data is attached to. `dataType'
  * specifies the type of data, currently either "NodeData", "ElementData" or
  * "ElementNodeData". `step' specifies the identifier (>= 0) of the data in a
- * sequence. `tags' gives the tags of the vertices or elements in the mesh to
+ * sequence. `tags' gives the tags of the nodes or elements in the mesh to
  * which the data is associated. `data' is a vector of the same length as
  * `tags': each entry is the vector of double precision numbers representing
  * the data associated with the corresponding tag. The optional `time'
@@ -1314,7 +1318,7 @@ GMSH_API void gmshViewAddModelData(const int tag,
                                    int * ierr);
 
 /* Gets model-based post-processing data from the view with tag `tag' at step
- * `step. Returns the `data' associated to the vertices or the elements with
+ * `step'. Returns the `data' associated to the nodes or the elements with
  * tags `tags', as well as the `dataType' and the number of components
  * `numComponents'. */
 GMSH_API void gmshViewGetModelData(const int tag,
@@ -1402,8 +1406,8 @@ GMSH_API void gmshFltkWait(const double time,
                            int * ierr);
 
 /* Runs the event loop of the Fltk graphical user interface, i.e. repeatedly
- * calls `wait()`. First automatically creates the user interface if it has
- * not yet been initialized. */
+ * calls `wait'. First automatically creates the user interface if it has not
+ * yet been initialized. */
 GMSH_API void gmshFltkRun(int * ierr);
 
 /* Gets data from the Onelab server. */

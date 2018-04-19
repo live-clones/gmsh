@@ -15,13 +15,14 @@
 #include "GaussLegendre1D.h"
 #include "Context.h"
 #include "closestPoint.h"
+#include "discreteEdge.h"
 #if defined(HAVE_MESH)
 #include "meshGEdge.h"
 #endif
 
 GEdge::GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1)
   : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(0),
-    v0(_v0), v1(_v1), masterOrientation(0)
+    v0(_v0), v1(_v1), masterOrientation(0), compound_edge(NULL)
 {
   if(v0) v0->addEdge(this);
   if(v1 && v1 != v0) v1->addEdge(this);
@@ -271,28 +272,37 @@ void GEdge::setColor(unsigned int val, bool recursive)
   }
 }
 
-std::string GEdge::getAdditionalInfoString()
+std::string GEdge::getAdditionalInfoString(bool multline)
 {
   std::ostringstream sstream;
   sstream.precision(12);
 
-  if(v0 && v1) sstream << "{" << v0->tag() << " " << v1->tag() << "}";
-
-  if(meshAttributes.method == MESH_TRANSFINITE){
-    sstream << " transfinite (" << meshAttributes.nbPointsTransfinite;
-    int type = meshAttributes.typeTransfinite;
-    if(std::abs(type) == 1)
-      sstream << ", progression " << gmsh_sign(type) * meshAttributes.coeffTransfinite;
-    else if(std::abs(type) == 2)
-      sstream << ", bump " << meshAttributes.coeffTransfinite;
-    sstream << ")";
+  if(v0 && v1){
+    sstream << "Boundary points: " << v0->tag() << ", " << v1->tag();
+    if(multline) sstream << "\n";
+    else sstream << " ";
   }
-  if(meshAttributes.extrude)
-    sstream << " extruded";
-  if(meshAttributes.reverseMesh)
-    sstream << " reversed";
 
-  return sstream.str();
+  if(meshAttributes.method == MESH_TRANSFINITE || meshAttributes.extrude ||
+     meshAttributes.reverseMesh){
+    sstream << "Mesh attributes:";
+    if(meshAttributes.method == MESH_TRANSFINITE){
+      sstream << " transfinite " << meshAttributes.nbPointsTransfinite;
+      int type = meshAttributes.typeTransfinite;
+      if(std::abs(type) == 1)
+        sstream << ", progression " << gmsh_sign(type) * meshAttributes.coeffTransfinite;
+      else if(std::abs(type) == 2)
+        sstream << ", bump " << meshAttributes.coeffTransfinite;
+    }
+    if(meshAttributes.extrude)
+      sstream << " extruded";
+    if(meshAttributes.reverseMesh)
+      sstream << " reversed";
+  }
+  std::string str = sstream.str();
+  if(str.size() && (str[str.size()-1] == '\n' || str[str.size()-1] == ' '))
+     str.resize(str.size() - 1);
+  return str;
 }
 
 void GEdge::writeGEO(FILE *fp)
@@ -663,10 +673,47 @@ void GEdge::discretize(double tol, std::vector<SPoint3> &dpts, std::vector<doubl
   }
 }
 
+#if defined(HAVE_MESH)
+static void meshCompound(GEdge* ge)
+{
+  std::vector<MLine*> lines;
+  for (unsigned int i = 0; i < ge->_compound.size(); i++){
+    GEdge *c = (GEdge*)ge->_compound[i];
+    for (unsigned int j = 0; j<c->lines.size(); j++){
+      lines.push_back(new MLine(c->lines[j]->getVertex(0),
+                                c->lines[j]->getVertex(1)));
+    }
+  }
+  discreteEdge *de = new discreteEdge(ge->model(), ge->tag() + 100000, NULL, NULL);
+  ge->model()->add(de);
+  de->lines = lines;
+  de->createGeometry();
+  de->mesh(false);
+  ge->compound_edge = de;
+}
+#endif
+
 void GEdge::mesh(bool verbose)
 {
 #if defined(HAVE_MESH)
   meshGEdge mesher;
   mesher(this);
+  if(_compound.size()){ // Some faces are meshed together
+    if(_compound[0] == this){ // I'm the one that makes the compound job
+      bool ok = true;
+      for(unsigned int i = 0; i < _compound.size(); i++){
+	GEdge *ge = (GEdge*)_compound[i];
+	ok &= (ge->meshStatistics.status == GEdge::DONE);
+      }
+      if(!ok){
+        meshStatistics.status = GEdge::PENDING;
+      }
+      else{
+	meshCompound(this);
+        meshStatistics.status = GEdge::DONE;
+	return;
+      }
+    }
+  }
 #endif
 }

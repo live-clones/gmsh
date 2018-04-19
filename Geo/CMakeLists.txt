@@ -14,7 +14,7 @@ set(SRC
     gmshSurface.cpp
     OCCVertex.cpp OCCEdge.cpp OCCFace.cpp OCCRegion.cpp
     GenericVertex.cpp GenericEdge.cpp GenericFace.cpp GenericRegion.cpp
-    discreteEdge.cpp discreteFace.cpp discreteDiskFace.cpp discreteRegion.cpp
+    discreteEdge.cpp discreteFace.cpp discreteRegion.cpp
     fourierEdge.cpp fourierFace.cpp fourierProjectionFace.cpp
     ACISVertex.cpp ACISEdge.cpp ACISFace.cpp
   GModel.cpp

@@ -75,7 +75,7 @@ def _ovectordouble(ptr,size):
     return v
 
 def _ovectorstring(ptr,size):
-    v = list(_ostring(cast(ptr[i],c_char_p) for i in range(size)))
+    v = list(_ostring(cast(ptr[i],c_char_p)) for i in range(size))
     lib.gmshFree(ptr)
     return v
 
@@ -146,8 +146,8 @@ def _iargcargv(o) :
 def initialize(argv=[],readConfigFiles=True):
     """
     Initializes Gmsh. This must be called before any call to the other
-    functions in the API. If argc and argv are provided, they will be handled
-    in the same way as the command line arguments in the Gmsh app. If
+    functions in the API. If `argc' and `argv' are provided, they will be
+    handled in the same way as the command line arguments in the Gmsh app. If
     `readConfigFiles' is set, reads system Gmsh configuration files (gmshrc and
     gmsh-options).
     """
@@ -691,16 +691,16 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def removeDuplicateVertices():
+        def removeDuplicateNodes():
             """
-            Removes duplicate mesh vertices in the mesh of the current model.
+            Removes duplicate mesh nodes in the mesh of the current model.
             """
             ierr = c_int()
-            lib.gmshModelMeshRemoveDuplicateVertices(
+            lib.gmshModelMeshRemoveDuplicateNodes(
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
-                    "gmshModelMeshRemoveDuplicateVertices returned non-zero error code : ",
+                    "gmshModelMeshRemoveDuplicateNodes returned non-zero error code : ",
                     ierr.value)
 
         @staticmethod
@@ -723,45 +723,45 @@ class model:
             return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
 
         @staticmethod
-        def getLastVertexError():
+        def getLastNodeError():
             """
-            Gets the last mesh vertices (if any) where a meshing error occurred.
-            Currently only populated by the new 3D meshing algorithms.
+            Gets the last mesh nodes (if any) where a meshing error occurred. Currently
+            only populated by the new 3D meshing algorithms.
 
-            return vertexTags
+            return nodeTags
             """
-            api_vertexTags_, api_vertexTags_n_ = POINTER(c_int)(), c_size_t()
+            api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetLastVertexError(
-                byref(api_vertexTags_),byref(api_vertexTags_n_),
+            lib.gmshModelMeshGetLastNodeError(
+                byref(api_nodeTags_),byref(api_nodeTags_n_),
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
-                    "gmshModelMeshGetLastVertexError returned non-zero error code : ",
+                    "gmshModelMeshGetLastNodeError returned non-zero error code : ",
                     ierr.value)
-            return _ovectorint(api_vertexTags_,api_vertexTags_n_.value)
+            return _ovectorint(api_nodeTags_,api_nodeTags_n_.value)
 
         @staticmethod
-        def getVertices(dim=-1,tag=-1):
+        def getNodes(dim=-1,tag=-1):
             """
-            Gets the mesh vertices of the entity of dimension `dim' and `tag' tag. If
-            `tag' < 0, gets the vertices for all entities of dimension `dim'. If `dim'
-            and `tag' are negative, gets all the vertices in the mesh. `vertexTags'
-            contains the vertex tags (their unique, strictly positive identification
-            numbers). `coord' is a vector of length 3 times the length of `vertexTags'
-            that contains the (x, y, z) coordinates of the vertices, concatenated. If
-            `dim' >= 0, `parametricCoord' contains the parametric coordinates of the
-            vertices, if available. The length of `parametricCoord' can be 0 or `dim'
-            times the length of `vertexTags'.
+            Gets the mesh nodes of the entity of dimension `dim' and `tag' tag. If
+            `tag' < 0, gets the nodes for all entities of dimension `dim'. If `dim' and
+            `tag' are negative, gets all the nodes in the mesh. `nodeTags' contains the
+            node tags (their unique, strictly positive identification numbers). `coord'
+            is a vector of length 3 times the length of `nodeTags' that contains the
+            (x, y, z) coordinates of the nodes, concatenated. If `dim' >= 0,
+            `parametricCoord' contains the parametric coordinates of the nodes, if
+            available. The length of `parametricCoord' can be 0 or `dim' times the
+            length of `nodeTags'.
 
-            return vertexTags, coord, parametricCoord
+            return nodeTags, coord, parametricCoord
             """
-            api_vertexTags_, api_vertexTags_n_ = POINTER(c_int)(), c_size_t()
+            api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
             api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetVertices(
-                byref(api_vertexTags_),byref(api_vertexTags_n_),
+            lib.gmshModelMeshGetNodes(
+                byref(api_nodeTags_),byref(api_nodeTags_n_),
                 byref(api_coord_),byref(api_coord_n_),
                 byref(api_parametricCoord_),byref(api_parametricCoord_n_),
                 c_int(dim),
@@ -769,10 +769,10 @@ class model:
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
-                    "gmshModelMeshGetVertices returned non-zero error code : ",
+                    "gmshModelMeshGetNodes returned non-zero error code : ",
                     ierr.value)
             return (
-                _ovectorint(api_vertexTags_,api_vertexTags_n_.value),
+                _ovectorint(api_nodeTags_,api_nodeTags_n_.value),
                 _ovectordouble(api_coord_,api_coord_n_.value),
                 _ovectordouble(api_parametricCoord_,api_parametricCoord_n_.value))
 
@@ -786,22 +786,22 @@ class model:
             `getElementProperties' to obtain the properties for a given element type).
             `elementTags' is a vector of the same length as `elementTypes'; each entry
             is a vector containing the tags (unique, strictly positive identifiers) of
-            the elements of the corresponding type. `vertexTags' is also a vector of
-            the same length as `elementTypes'; each entry is a vector of length equal
-            to the number of elements of the given type times the number of vertices
-            for this type of element, that contains the vertex tags of all the elements
-            of the given type, concatenated.
+            the elements of the corresponding type. `nodeTags' is also a vector of the
+            same length as `elementTypes'; each entry is a vector of length equal to
+            the number of elements of the given type times the number of nodes for this
+            type of element, that contains the node tags of all the elements of the
+            given type, concatenated.
 
-            return elementTypes, elementTags, vertexTags
+            return elementTypes, elementTags, nodeTags
             """
             api_elementTypes_, api_elementTypes_n_ = POINTER(c_int)(), c_size_t()
             api_elementTags_, api_elementTags_n_, api_elementTags_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
-            api_vertexTags_, api_vertexTags_n_, api_vertexTags_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
+            api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetElements(
                 byref(api_elementTypes_),byref(api_elementTypes_n_),
                 byref(api_elementTags_),byref(api_elementTags_n_),byref(api_elementTags_nn_),
-                byref(api_vertexTags_),byref(api_vertexTags_n_),byref(api_vertexTags_nn_),
+                byref(api_nodeTags_),byref(api_nodeTags_n_),byref(api_nodeTags_nn_),
                 c_int(dim),
                 c_int(tag),
                 byref(ierr))
@@ -812,22 +812,22 @@ class model:
             return (
                 _ovectorint(api_elementTypes_,api_elementTypes_n_.value),
                 _ovectorvectorint(api_elementTags_,api_elementTags_n_,api_elementTags_nn_),
-                _ovectorvectorint(api_vertexTags_,api_vertexTags_n_,api_vertexTags_nn_))
+                _ovectorvectorint(api_nodeTags_,api_nodeTags_n_,api_nodeTags_nn_))
 
         @staticmethod
         def getElementProperties(elementType):
             """
             Gets the properties of an element of type `elementType': its name
-            (`elementName'), dimension (`dim'), order (`order'), number of vertices
-            (`numVertices') and parametric coordinates of vertices (`parametricCoord'
-            vector, of length `dim' times `numVertices').
+            (`elementName'), dimension (`dim'), order (`order'), number of nodes
+            (`numNodes') and parametric coordinates of nodes (`parametricCoord' vector,
+            of length `dim' times `numNodes').
 
-            return elementName, dim, order, numVertices, parametricCoord
+            return elementName, dim, order, numNodes, parametricCoord
             """
             api_elementName_ = c_char_p()
             api_dim_ = c_int()
             api_order_ = c_int()
-            api_numVertices_ = c_int()
+            api_numNodes_ = c_int()
             api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetElementProperties(
@@ -835,7 +835,7 @@ class model:
                 byref(api_elementName_),
                 byref(api_dim_),
                 byref(api_order_),
-                byref(api_numVertices_),
+                byref(api_numNodes_),
                 byref(api_parametricCoord_),byref(api_parametricCoord_n_),
                 byref(ierr))
             if ierr.value != 0 :
@@ -846,7 +846,7 @@ class model:
                 _ostring(api_elementName_),
                 api_dim_.value,
                 api_order_.value,
-                api_numVertices_.value,
+                api_numNodes_.value,
                 _ovectordouble(api_parametricCoord_,api_parametricCoord_n_.value))
 
         @staticmethod
@@ -923,15 +923,15 @@ class model:
             Gets the mesh elements in the same way as `getElements', but for a single
             `elementType'.
 
-            return elementTags, vertexTags
+            return elementTags, nodeTags
             """
             api_elementTags_, api_elementTags_n_ = POINTER(c_int)(), c_size_t()
-            api_vertexTags_, api_vertexTags_n_ = POINTER(c_int)(), c_size_t()
+            api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetElementsByType(
                 c_int(elementType),
                 byref(api_elementTags_),byref(api_elementTags_n_),
-                byref(api_vertexTags_),byref(api_vertexTags_n_),
+                byref(api_nodeTags_),byref(api_nodeTags_n_),
                 c_int(dim),
                 c_int(tag),
                 byref(ierr))
@@ -941,7 +941,7 @@ class model:
                     ierr.value)
             return (
                 _ovectorint(api_elementTags_,api_elementTags_n_.value),
-                _ovectorint(api_vertexTags_,api_vertexTags_n_.value))
+                _ovectorint(api_nodeTags_,api_nodeTags_n_.value))
 
         @staticmethod
         def getIntegrationDataByType(elementType,integrationType,functionSpaceType,dim=-1,tag=-1):
@@ -978,55 +978,55 @@ class model:
                 _ovectordouble(api_functionSpaceData_,api_functionSpaceData_n_.value))
 
         @staticmethod
-        def setVertices(dim,tag,vertexTags,coord,parametricCoord=[]):
+        def setNodes(dim,tag,nodeTags,coord,parametricCoord=[]):
             """
-            Sets the mesh vertices in the geometrical entity of dimension `dim' and tag
-            `tag'. `vertextags' contains the vertex tags (their unique, strictly
-            positive identification numbers). `coord' is a vector of length 3 times the
-            length of `vertexTags' that contains the (x, y, z) coordinates of the
-            vertices, concatenated. The optional `parametricCoord' vector contains the
-            parametric coordinates of the vertices, if any. The length of
-            `parametricCoord' can be 0 or `dim' times the length of `vertexTags'.
+            Sets the mesh nodes in the geometrical entity of dimension `dim' and tag
+            `tag'. `nodetags' contains the node tags (their unique, strictly positive
+            identification numbers). `coord' is a vector of length 3 times the length
+            of `nodeTags' that contains the (x, y, z) coordinates of the nodes,
+            concatenated. The optional `parametricCoord' vector contains the parametric
+            coordinates of the nodes, if any. The length of `parametricCoord' can be 0
+            or `dim' times the length of `nodeTags'.
             """
-            api_vertexTags_, api_vertexTags_n_ = _ivectorint(vertexTags)
+            api_nodeTags_, api_nodeTags_n_ = _ivectorint(nodeTags)
             api_coord_, api_coord_n_ = _ivectordouble(coord)
             api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
             ierr = c_int()
-            lib.gmshModelMeshSetVertices(
+            lib.gmshModelMeshSetNodes(
                 c_int(dim),
                 c_int(tag),
-                api_vertexTags_, api_vertexTags_n_,
+                api_nodeTags_, api_nodeTags_n_,
                 api_coord_, api_coord_n_,
                 api_parametricCoord_, api_parametricCoord_n_,
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
-                    "gmshModelMeshSetVertices returned non-zero error code : ",
+                    "gmshModelMeshSetNodes returned non-zero error code : ",
                     ierr.value)
 
         @staticmethod
-        def setElements(dim,tag,types,elementTags,vertexTags):
+        def setElements(dim,tag,types,elementTags,nodeTags):
             """
             Sets the mesh elements of the entity of dimension `dim' and `tag' tag.
             `types' contains the MSH types of the elements (e.g. `2' for 3-node
             triangles: see the Gmsh reference manual). `elementTags' is a vector of the
             same length as `types'; each entry is a vector containing the tags (unique,
             strictly positive identifiers) of the elements of the corresponding type.
-            `vertexTags' is also a vector of the same length as `types'; each entry is
-            a vector of length equal to the number of elements of the give type times
-            the number of vertices per element, that contains the vertex tags of all
-            the elements of the given type, concatenated.
+            `nodeTags' is also a vector of the same length as `types'; each entry is a
+            vector of length equal to the number of elements of the give type times the
+            number of nodes per element, that contains the node tags of all the
+            elements of the given type, concatenated.
             """
             api_types_, api_types_n_ = _ivectorint(types)
             api_elementTags_, api_elementTags_n_, api_elementTags_nn_ = _ivectorvectorint(elementTags)
-            api_vertexTags_, api_vertexTags_n_, api_vertexTags_nn_ = _ivectorvectorint(vertexTags)
+            api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_ = _ivectorvectorint(nodeTags)
             ierr = c_int()
             lib.gmshModelMeshSetElements(
                 c_int(dim),
                 c_int(tag),
                 api_types_, api_types_n_,
                 api_elementTags_, api_elementTags_n_, api_elementTags_nn_,
-                api_vertexTags_, api_vertexTags_n_, api_vertexTags_nn_,
+                api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_,
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
@@ -1034,44 +1034,44 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def reclassifyVertices():
+        def reclassifyNodes():
             """
-            Redistribute all mesh vertices on their associated geometrical entity,
-            based on the mesh elements. Can be used when importing mesh vertices in
-            bulk (e.g. by associating them all to a single volume), to reclassify them
-            correctly on model surfaces, curves, etc.
+            Redistributes all mesh nodes on their associated geometrical entity, based
+            on the mesh elements. Can be used when importing mesh nodes in bulk (e.g.
+            by associating them all to a single volume), to reclassify them correctly
+            on model surfaces, curves, etc.
             """
             ierr = c_int()
-            lib.gmshModelMeshReclassifyVertices(
+            lib.gmshModelMeshReclassifyNodes(
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
-                    "gmshModelMeshReclassifyVertices returned non-zero error code : ",
+                    "gmshModelMeshReclassifyNodes returned non-zero error code : ",
                     ierr.value)
 
         @staticmethod
-        def getVertex(vertexTag):
+        def getNode(nodeTag):
             """
             Gets the coordinates and the parametric coordinates (if any) of the mesh
-            vertex with tag `tag'. This is a useful by inefficient way of accessing
-            mesh vertex data, as it relies on a cache stored in the model. For large
-            meshes all the vertices in the model should be numbered in a continuous
-            sequence of tags from 1 to N to maintain reasonnable performance (in this
-            case the internal cache is based on a vector; otherwise it uses a map).
+            node with tag `tag'. This is a useful by inefficient way of accessing mesh
+            node data, as it relies on a cache stored in the model. For large meshes
+            all the nodes in the model should be numbered in a continuous sequence of
+            tags from 1 to N to maintain reasonnable performance (in this case the
+            internal cache is based on a vector; otherwise it uses a map).
 
             return coord, parametricCoord
             """
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
             api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetVertex(
-                c_int(vertexTag),
+            lib.gmshModelMeshGetNode(
+                c_int(nodeTag),
                 byref(api_coord_),byref(api_coord_n_),
                 byref(api_parametricCoord_),byref(api_parametricCoord_n_),
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
-                    "gmshModelMeshGetVertex returned non-zero error code : ",
+                    "gmshModelMeshGetNode returned non-zero error code : ",
                     ierr.value)
             return (
                 _ovectordouble(api_coord_,api_coord_n_.value),
@@ -1080,22 +1080,22 @@ class model:
         @staticmethod
         def getElement(elementTag):
             """
-            Gets the type and vertex tags of the mesh element with tag `tag'. This is a
+            Gets the type and node tags of the mesh element with tag `tag'. This is a
             useful but inefficient way of accessing mesh element data, as it relies on
             a cache stored in the model. For large meshes all the elements in the model
             should be numbered in a continuous sequence of tags from 1 to N to maintain
             reasonnable performance (in this case the internal cache is based on a
             vector; otherwise it uses a map).
 
-            return type, vertexTags
+            return type, nodeTags
             """
             api_type_ = c_int()
-            api_vertexTags_, api_vertexTags_n_ = POINTER(c_int)(), c_size_t()
+            api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetElement(
                 c_int(elementTag),
                 byref(api_type_),
-                byref(api_vertexTags_),byref(api_vertexTags_n_),
+                byref(api_nodeTags_),byref(api_nodeTags_n_),
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
@@ -1103,7 +1103,7 @@ class model:
                     ierr.value)
             return (
                 api_type_.value,
-                _ovectorint(api_vertexTags_,api_vertexTags_n_.value))
+                _ovectorint(api_nodeTags_,api_nodeTags_n_.value))
 
         @staticmethod
         def setSize(dimTags,size):
@@ -1123,23 +1123,23 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def setTransfiniteLine(tag,numVertices,type="Progression",coef=1.):
+        def setTransfiniteCurve(tag,numNodes,type="Progression",coef=1.):
             """
-            Sets a transfinite meshing constraint on the line `tag', with `numVertices'
-            mesh vertices distributed according to `type' and `coef'. Currently
-            supported types are "Progression" (geometrical progression with power
-            `coef') and "Bump" (refinement toward both extreminties of the line).
+            Sets a transfinite meshing constraint on the curve `tag', with `numNodes'
+            mesh nodes distributed according to `type' and `coef'. Currently supported
+            types are "Progression" (geometrical progression with power `coef') and
+            "Bump" (refinement toward both extremities of the curve).
             """
             ierr = c_int()
-            lib.gmshModelMeshSetTransfiniteLine(
+            lib.gmshModelMeshSetTransfiniteCurve(
                 c_int(tag),
-                c_int(numVertices),
+                c_int(numNodes),
                 c_char_p(type.encode()),
                 c_double(coef),
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
-                    "gmshModelMeshSetTransfiniteLine returned non-zero error code : ",
+                    "gmshModelMeshSetTransfiniteCurve returned non-zero error code : ",
                     ierr.value)
 
         @staticmethod
@@ -1349,7 +1349,7 @@ class model:
             @staticmethod
             def setAsBackgroundMesh(tag):
                 """
-                Sets the field `tag' as background mesh size field.
+                Sets the field `tag' as the background mesh size field.
                 """
                 ierr = c_int()
                 lib.gmshModelMeshFieldSetAsBackgroundMesh(
@@ -1358,6 +1358,20 @@ class model:
                 if ierr.value != 0 :
                     raise ValueError(
                         "gmshModelMeshFieldSetAsBackgroundMesh returned non-zero error code : ",
+                        ierr.value)
+
+            @staticmethod
+            def setAsBoundaryLayer(tag):
+                """
+                Sets the field `tag' as the boundary layer size field.
+                """
+                ierr = c_int()
+                lib.gmshModelMeshFieldSetAsBoundaryLayer(
+                    c_int(tag),
+                    byref(ierr))
+                if ierr.value != 0 :
+                    raise ValueError(
+                        "gmshModelMeshFieldSetAsBoundaryLayer returned non-zero error code : ",
                         ierr.value)
 
 
@@ -1373,7 +1387,7 @@ class model:
             coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
             that point. If `tag' is positive, sets the tag explicitly; otherwise a new
             tag is selected automatically. Returns the tag of the point. (Note that the
-            point will be added in the current model only after synchronize() is
+            point will be added in the current model only after `synchronize' is
             called. This behavior holds for all the entities added in the geo module.)
 
             return int
@@ -1470,19 +1484,19 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSpline(vertexTags,tag=-1):
+        def addSpline(pointTags,tag=-1):
             """
-            Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If
+            Adds a spline (Catmull-Rom) curve going through the points `pointTags'. If
             `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. Creates a periodic curve if the first and last points are
             the same. Returns the tag of the spline curve.
 
             return int
             """
-            api_vertexTags_, api_vertexTags_n_ = _ivectorint(vertexTags)
+            api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddSpline(
-                api_vertexTags_, api_vertexTags_n_,
+                api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
@@ -1492,19 +1506,19 @@ class model:
             return api__result__
 
         @staticmethod
-        def addBSpline(vertexTags,tag=-1):
+        def addBSpline(pointTags,tag=-1):
             """
-            Adds a cubic b-spline curve with `vertexTags' control points. If `tag' is
+            Adds a cubic b-spline curve with `pointTags' control points. If `tag' is
             positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. Creates a periodic curve if the first and last points are
             the same. Returns the tag of the b-spline curve.
 
             return int
             """
-            api_vertexTags_, api_vertexTags_n_ = _ivectorint(vertexTags)
+            api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddBSpline(
-                api_vertexTags_, api_vertexTags_n_,
+                api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
@@ -1514,18 +1528,18 @@ class model:
             return api__result__
 
         @staticmethod
-        def addBezier(vertexTags,tag=-1):
+        def addBezier(pointTags,tag=-1):
             """
-            Adds a Bezier curve with `vertexTags' control points. If `tag' is positive,
+            Adds a Bezier curve with `pointTags' control points. If `tag' is positive,
             sets the tag explicitly; otherwise a new tag is selected automatically.
             Returns the tag of the Bezier curve.
 
             return int
             """
-            api_vertexTags_, api_vertexTags_n_ = _ivectorint(vertexTags)
+            api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddBezier(
-                api_vertexTags_, api_vertexTags_n_,
+                api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
@@ -1535,34 +1549,34 @@ class model:
             return api__result__
 
         @staticmethod
-        def addLineLoop(edgeTags,tag=-1):
+        def addCurveLoop(curveTags,tag=-1):
             """
-            Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should
-            contain (signed) tags of geometrical enties of dimension 1 forming a closed
-            loop: a negative tag signifies that the underlying edge is considered with
-            reversed orientation. If `tag' is positive, sets the tag explicitly;
-            otherwise a new tag is selected automatically. Returns the tag of the line
-            loop.
+            Adds a curve loop (a closed wire) formed by the curves `curveTags'.
+            `curveTags' should contain (signed) tags of geometrical enties of dimension
+            1 forming a closed loop: a negative tag signifies that the underlying curve
+            is considered with reversed orientation. If `tag' is positive, sets the tag
+            explicitly; otherwise a new tag is selected automatically. Returns the tag
+            of the curve loop.
 
             return int
             """
-            api_edgeTags_, api_edgeTags_n_ = _ivectorint(edgeTags)
+            api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelGeoAddLineLoop(
-                api_edgeTags_, api_edgeTags_n_,
+            api__result__ = lib.gmshModelGeoAddCurveLoop(
+                api_curveTags_, api_curveTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
-                    "gmshModelGeoAddLineLoop returned non-zero error code : ",
+                    "gmshModelGeoAddCurveLoop returned non-zero error code : ",
                     ierr.value)
             return api__result__
 
         @staticmethod
         def addPlaneSurface(wireTags,tag=-1):
             """
-            Adds a plane surface defined by one or more line loops `wireTags'. The
-            first line loop defines the exterior contour; additional line loop define
+            Adds a plane surface defined by one or more curve loops `wireTags'. The
+            first curve loop defines the exterior contour; additional curve loop define
             holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
             is selected automatically. Returns the tag of the surface.
 
@@ -1583,10 +1597,10 @@ class model:
         @staticmethod
         def addSurfaceFilling(wireTags,tag=-1,sphereCenterTag=-1):
             """
-            Adds a surface filling the line loops in `wireTags'. Currently only a
-            single line loop is supported; this line loop should be composed by 3 or 4
-            edges only. If `tag' is positive, sets the tag explicitly; otherwise a new
-            tag is selected automatically. Returns the tag of the surface.
+            Adds a surface filling the curve loops in `wireTags'. Currently only a
+            single curve loop is supported; this curve loop should be composed by 3 or
+            4 curves only. If `tag' is positive, sets the tag explicitly; otherwise a
+            new tag is selected automatically. Returns the tag of the surface.
 
             return int
             """
@@ -1604,18 +1618,18 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSurfaceLoop(faceTags,tag=-1):
+        def addSurfaceLoop(surfaceTags,tag=-1):
             """
-            Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is
+            Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
             positive, sets the tag explicitly; otherwise a new tag is selected
-            automatically. Returns the tag of the surface loop.
+            automatically. Returns the tag of the shell.
 
             return int
             """
-            api_faceTags_, api_faceTags_n_ = _ivectorint(faceTags)
+            api_surfaceTags_, api_surfaceTags_n_ = _ivectorint(surfaceTags)
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddSurfaceLoop(
-                api_faceTags_, api_faceTags_n_,
+                api_surfaceTags_, api_surfaceTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
@@ -1627,10 +1641,10 @@ class model:
         @staticmethod
         def addVolume(shellTags,tag=-1):
             """
-            Adds a volume defined by one or more surface loops `shellTags'. The first
-            surface loop defines the exterior boundary; additional surface loop define
-            holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
-            is selected automatically. Returns the tag of the volume.
+            Adds a volume (a region) defined by one or more shells `shellTags'. The
+            first surface loop defines the exterior boundary; additional surface loop
+            define holes. If `tag' is positive, sets the tag explicitly; otherwise a
+            new tag is selected automatically. Returns the tag of the volume.
 
             return int
             """
@@ -1935,15 +1949,15 @@ class model:
                         ierr.value)
 
             @staticmethod
-            def setTransfiniteLine(tag,nPoints,type="Progression",coef=1.):
+            def setTransfiniteCurve(tag,nPoints,type="Progression",coef=1.):
                 """
-                Sets a transfinite meshing constraint on the line `tag', with `numVertices'
-                mesh vertices distributed according to `type' and `coef'. Currently
-                supported types are "Progression" (geometrical progression with power
-                `coef') and "Bump" (refinement toward both extreminties of the line).
+                Sets a transfinite meshing constraint on the curve `tag', with `numNodes'
+                mesh nodes distributed according to `type' and `coef'. Currently supported
+                types are "Progression" (geometrical progression with power `coef') and
+                "Bump" (refinement toward both extreminties of the curve).
                 """
                 ierr = c_int()
-                lib.gmshModelGeoMeshSetTransfiniteLine(
+                lib.gmshModelGeoMeshSetTransfiniteCurve(
                     c_int(tag),
                     c_int(nPoints),
                     c_char_p(type.encode()),
@@ -1951,7 +1965,7 @@ class model:
                     byref(ierr))
                 if ierr.value != 0 :
                     raise ValueError(
-                        "gmshModelGeoMeshSetTransfiniteLine returned non-zero error code : ",
+                        "gmshModelGeoMeshSetTransfiniteCurve returned non-zero error code : ",
                         ierr.value)
 
             @staticmethod
@@ -2063,7 +2077,7 @@ class model:
             coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
             that point. If `tag' is positive, sets the tag explicitly; otherwise a new
             tag is selected automatically. Returns the tag of the point. (Note that the
-            point will be added in the current model only after synchronize() is
+            point will be added in the current model only after `synchronize' is
             called. This behavior holds for all the entities added in the occ module.)
 
             return int
@@ -2204,19 +2218,19 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSpline(vertexTags,tag=-1):
+        def addSpline(pointTags,tag=-1):
             """
-            Adds a spline (C2 b-spline) curve going through `vertexTags' points. If
+            Adds a spline (C2 b-spline) curve going through the points `pointTags'. If
             `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. Creates a periodic curve if the first and last points are
             the same. Returns the tag of the spline curve.
 
             return int
             """
-            api_vertexTags_, api_vertexTags_n_ = _ivectorint(vertexTags)
+            api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddSpline(
-                api_vertexTags_, api_vertexTags_n_,
+                api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
@@ -2226,9 +2240,9 @@ class model:
             return api__result__
 
         @staticmethod
-        def addBSpline(vertexTags,tag=-1,degree=3,weights=[],knots=[],multiplicities=[]):
+        def addBSpline(pointTags,tag=-1,degree=3,weights=[],knots=[],multiplicities=[]):
             """
-            Adds a b-spline curve of degree `degree' with `vertexTags' control points.
+            Adds a b-spline curve of degree `degree' with `pointTags' control points.
             If `weights', `knots' or `multiplicities' are not provided, default
             parameters are computed automatically. If `tag' is positive, sets the tag
             explicitly; otherwise a new tag is selected automatically. Creates a
@@ -2237,13 +2251,13 @@ class model:
 
             return int
             """
-            api_vertexTags_, api_vertexTags_n_ = _ivectorint(vertexTags)
+            api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             api_weights_, api_weights_n_ = _ivectordouble(weights)
             api_knots_, api_knots_n_ = _ivectordouble(knots)
             api_multiplicities_, api_multiplicities_n_ = _ivectorint(multiplicities)
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddBSpline(
-                api_vertexTags_, api_vertexTags_n_,
+                api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 c_int(degree),
                 api_weights_, api_weights_n_,
@@ -2257,18 +2271,18 @@ class model:
             return api__result__
 
         @staticmethod
-        def addBezier(vertexTags,tag=-1):
+        def addBezier(pointTags,tag=-1):
             """
-            Adds a Bezier curve with `vertexTags' control points. If `tag' is positive,
+            Adds a Bezier curve with `pointTags' control points. If `tag' is positive,
             sets the tag explicitly; otherwise a new tag is selected automatically.
             Returns the tag of the Bezier curve.
 
             return int
             """
-            api_vertexTags_, api_vertexTags_n_ = _ivectorint(vertexTags)
+            api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddBezier(
-                api_vertexTags_, api_vertexTags_n_,
+                api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
@@ -2278,20 +2292,20 @@ class model:
             return api__result__
 
         @staticmethod
-        def addWire(edgeTags,tag=-1,checkClosed=False):
+        def addWire(curveTags,tag=-1,checkClosed=False):
             """
-            Adds a wire (open or closed) formed by `edgeTags'. `edgeTags' should
-            contain (signed) tags of geometrical enties of dimension 1: a negative tag
-            signifies that the underlying edge is considered with reversed orientation.
-            If `tag' is positive, sets the tag explicitly; otherwise a new tag is
-            selected automatically. Returns the tag of the wire.
+            Adds a wire (open or closed) formed by the curves `curveTags'. `curveTags'
+            should contain (signed) tags: a negative tag signifies that the underlying
+            curve is considered with reversed orientation. If `tag' is positive, sets
+            the tag explicitly; otherwise a new tag is selected automatically. Returns
+            the tag of the wire.
 
             return int
             """
-            api_edgeTags_, api_edgeTags_n_ = _ivectorint(edgeTags)
+            api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddWire(
-                api_edgeTags_, api_edgeTags_n_,
+                api_curveTags_, api_curveTags_n_,
                 c_int(tag),
                 c_int(bool(checkClosed)),
                 byref(ierr))
@@ -2302,26 +2316,26 @@ class model:
             return api__result__
 
         @staticmethod
-        def addLineLoop(edgeTags,tag=-1):
+        def addCurveLoop(curveTags,tag=-1):
             """
-            Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should
-            contain (signed) tags of geometrical enties of dimension 1 forming a closed
-            loop: a negative tag signifies that the underlying edge is considered with
+            Adds a curve loop (a closed wire) formed by the curves `curveTags'.
+            `curveTags' should contain (signed) tags of curves forming a closed loop: a
+            negative tag signifies that the underlying curve is considered with
             reversed orientation. If `tag' is positive, sets the tag explicitly;
-            otherwise a new tag is selected automatically. Returns the tag of the line
+            otherwise a new tag is selected automatically. Returns the tag of the curve
             loop.
 
             return int
             """
-            api_edgeTags_, api_edgeTags_n_ = _ivectorint(edgeTags)
+            api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
-            api__result__ = lib.gmshModelOccAddLineLoop(
-                api_edgeTags_, api_edgeTags_n_,
+            api__result__ = lib.gmshModelOccAddCurveLoop(
+                api_curveTags_, api_curveTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
-                    "gmshModelOccAddLineLoop returned non-zero error code : ",
+                    "gmshModelOccAddCurveLoop returned non-zero error code : ",
                     ierr.value)
             return api__result__
 
@@ -2355,7 +2369,7 @@ class model:
         def addDisk(xc,yc,zc,rx,ry,tag=-1):
             """
             Adds a disk with center (`xc', `yc', `zc') and radius `rx' along the x-axis
-            and `ry; along the y-axis. If `tag' is positive, sets the tag explicitly;
+            and `ry' along the y-axis. If `tag' is positive, sets the tag explicitly;
             otherwise a new tag is selected automatically. Returns the tag of the disk.
 
             return int
@@ -2378,9 +2392,9 @@ class model:
         @staticmethod
         def addPlaneSurface(wireTags,tag=-1):
             """
-            Adds a plane surface defined by one or more line loops (or closed wires)
-            `wireTags'. The first line loop defines the exterior contour; additional
-            line loop define holes. If `tag' is positive, sets the tag explicitly;
+            Adds a plane surface defined by one or more curve loops (or closed wires)
+            `wireTags'. The first curve loop defines the exterior contour; additional
+            curve loop define holes. If `tag' is positive, sets the tag explicitly;
             otherwise a new tag is selected automatically. Returns the tag of the
             surface.
 
@@ -2401,7 +2415,7 @@ class model:
         @staticmethod
         def addSurfaceFilling(wireTag,tag=-1):
             """
-            Adds a surface filling the line loops in `wireTags'. If `tag' is positive,
+            Adds a surface filling the curve loops in `wireTags'. If `tag' is positive,
             sets the tag explicitly; otherwise a new tag is selected automatically.
             Returns the tag of the surface.
 
@@ -2419,18 +2433,18 @@ class model:
             return api__result__
 
         @staticmethod
-        def addSurfaceLoop(faceTags,tag=-1):
+        def addSurfaceLoop(surfaceTags,tag=-1):
             """
-            Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is
+            Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
             positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. Returns the tag of the surface loop.
 
             return int
             """
-            api_faceTags_, api_faceTags_n_ = _ivectorint(faceTags)
+            api_surfaceTags_, api_surfaceTags_n_ = _ivectorint(surfaceTags)
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddSurfaceLoop(
-                api_faceTags_, api_faceTags_n_,
+                api_surfaceTags_, api_surfaceTags_n_,
                 c_int(tag),
                 byref(ierr))
             if ierr.value != 0 :
@@ -2442,10 +2456,10 @@ class model:
         @staticmethod
         def addVolume(shellTags,tag=-1):
             """
-            Adds a volume defined by one or more surface loops `shellTags'. The first
-            surface loop defines the exterior boundary; additional surface loop define
-            holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
-            is selected automatically. Returns the tag of the volume.
+            Adds a volume (a region) defined by one or more surface loops `shellTags'.
+            The first surface loop defines the exterior boundary; additional surface
+            loop define holes. If `tag' is positive, sets the tag explicitly; otherwise
+            a new tag is selected automatically. Returns the tag of the volume.
 
             return int
             """
@@ -2659,22 +2673,22 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def addThickSolid(solidTag,excludeFaceTags,offset,tag=-1):
+        def addThickSolid(volumeTag,excludeSurfaceTags,offset,tag=-1):
             """
-            Adds a hollowed volume built from an initial volume `solidTag' and a set of
-            faces from this volume `excludeFaceTags', which are to be removed. The
-            remaining faces of the volume become the walls of the hollowed solid, with
-            thickness `offset'. If `tag' is positive, sets the tag explicitly;
+            Adds a hollowed volume built from an initial volume `volumeTag' and a set
+            of faces from this volume `excludeSurfaceTags', which are to be removed.
+            The remaining faces of the volume become the walls of the hollowed solid,
+            with thickness `offset'. If `tag' is positive, sets the tag explicitly;
             otherwise a new tag is selected automatically.
 
             return outDimTags
             """
-            api_excludeFaceTags_, api_excludeFaceTags_n_ = _ivectorint(excludeFaceTags)
+            api_excludeSurfaceTags_, api_excludeSurfaceTags_n_ = _ivectorint(excludeSurfaceTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelOccAddThickSolid(
-                c_int(solidTag),
-                api_excludeFaceTags_, api_excludeFaceTags_n_,
+                c_int(volumeTag),
+                api_excludeSurfaceTags_, api_excludeSurfaceTags_n_,
                 c_double(offset),
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
                 c_int(tag),
@@ -2758,7 +2772,7 @@ class model:
         @staticmethod
         def addPipe(dimTags,wireTag):
             """
-            Adds a pipe by extruding the entities `dimTags' along the curve `wireTag'.
+            Adds a pipe by extruding the entities `dimTags' along the wire `wireTag'.
             Returns the pipe in `outDimTags'.
 
             return outDimTags
@@ -2778,24 +2792,24 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def fillet(regionTags,edgeTags,radius,removeRegion=True):
+        def fillet(volumeTags,curveTags,radius,removeVolume=True):
             """
-            Fillets the volumes `regionTags' on the curves `edgeTags' with radius
+            Fillets the volumes `volumeTags' on the curves `curveTags' with radius
             `radius'. Returns the filleted entities in `outDimTags'. Removes the
-            original volume if `removeRegion' is set.
+            original volume if `removeVolume' is set.
 
             return outDimTags
             """
-            api_regionTags_, api_regionTags_n_ = _ivectorint(regionTags)
-            api_edgeTags_, api_edgeTags_n_ = _ivectorint(edgeTags)
+            api_volumeTags_, api_volumeTags_n_ = _ivectorint(volumeTags)
+            api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelOccFillet(
-                api_regionTags_, api_regionTags_n_,
-                api_edgeTags_, api_edgeTags_n_,
+                api_volumeTags_, api_volumeTags_n_,
+                api_curveTags_, api_curveTags_n_,
                 c_double(radius),
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
-                c_int(bool(removeRegion)),
+                c_int(bool(removeVolume)),
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
@@ -2807,7 +2821,7 @@ class model:
         def fuse(objectDimTags,toolDimTags,tag=-1,removeObject=True,removeTool=True):
             """
             Computes the boolean union (the fusion) of the entities `objectDimTags' and
-            `toolDimTags'.Returns the resulting entities in `outDimTags'. If `tag' is
+            `toolDimTags'. Returns the resulting entities in `outDimTags'. If `tag' is
             positive, attemps to set the tag explicitly (ony valid if the boolean
             operation results in a single entity). Removes the object if `removeObject'
             is set. Removes the tool if `removeTool' is set.
@@ -3216,7 +3230,7 @@ class view:
         `modelName' identifies the model the data is attached to. `dataType'
         specifies the type of data, currently either "NodeData", "ElementData" or
         "ElementNodeData". `step' specifies the identifier (>= 0) of the data in a
-        sequence. `tags' gives the tags of the vertices or elements in the mesh to
+        sequence. `tags' gives the tags of the nodes or elements in the mesh to
         which the data is associated. `data' is a vector of the same length as
         `tags': each entry is the vector of double precision numbers representing
         the data associated with the corresponding tag. The optional `time'
@@ -3248,7 +3262,7 @@ class view:
     def getModelData(tag,step):
         """
         Gets model-based post-processing data from the view with tag `tag' at step
-        `step. Returns the `data' associated to the vertices or the elements with
+        `step'. Returns the `data' associated to the nodes or the elements with
         tags `tags', as well as the `dataType' and the number of components
         `numComponents'.
 
@@ -3494,8 +3508,8 @@ class fltk:
     def run():
         """
         Runs the event loop of the Fltk graphical user interface, i.e. repeatedly
-        calls `wait()`. First automatically creates the user interface if it has
-        not yet been initialized.
+        calls `wait'. First automatically creates the user interface if it has not
+        yet been initialized.
         """
         ierr = c_int()
         lib.gmshFltkRun(

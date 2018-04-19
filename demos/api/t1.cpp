@@ -4,7 +4,8 @@
 // in Gmsh, see the comments in the .geo file. Comments here focus on the
 // specifics of the C++ API.
 
-// The Gmsh API is entirely defined in the <gmsh.h> header:
+// The Gmsh API is entirely defined in the <gmsh.h> header. Read this file: it
+// contains the documentation for all the functions in the API.
 #include <gmsh.h>
 
 int main(int argc, char **argv)
@@ -46,13 +47,13 @@ int main(int argc, char **argv)
   gmsh::model::geo::addLine(3, 4, 3);
   gmsh::model::geo::addLine(4, 1, 4);
 
-  // The philosophy to construct line loops and surfaces is similar: the first
+  // The philosophy to construct curve loops and surfaces is similar: the first
   // argument is now a vector of integers.
-  gmsh::model::geo::addLineLoop({4, 1, -2, 3}, 1);
+  gmsh::model::geo::addCurveLoop({4, 1, -2, 3}, 1);
   gmsh::model::geo::addPlaneSurface({1}, 1);
 
   // Physical groups are defined by providing the dimension of the group (0 for
-  // physical points, 1 for physical lines, 2 for physical surfaces and 3 for
+  // physical points, 1 for physical curves, 2 for physical surfaces and 3 for
   // phsyical volumes) followed by a vector of entity tags. The last (optional)
   // argument is the tag of the new group to create.
   gmsh::model::addPhysicalGroup(0, {1, 2}, 1);

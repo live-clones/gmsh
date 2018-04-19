@@ -74,6 +74,7 @@ struct contextGeometryOptions {
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
   int occAutoFix, occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
   int occSewFaces, occParallel, occBooleanPreserveNumbering;
+  int occDisableSTL;
   double occScaling;
   std::string occTargetUnit;
   int copyMeshingMethod, exactExtrusion;
@@ -81,14 +82,14 @@ struct contextGeometryOptions {
   int orientedPhysicals;
   int reparamOnFaceRobust;
   // geometry display
-  int draw, light, lightTwoSide, points, lines, surfaces, volumes;
-  int pointsNum, linesNum, surfacesNum, volumesNum, labelType;
-  double pointSize, lineWidth, selectedPointSize, selectedLineWidth;
-  int pointType, lineType, surfaceType, numSubEdges;
+  int draw, light, lightTwoSide, points, curves, surfaces, volumes;
+  int pointsNum, curvesNum, surfacesNum, volumesNum, labelType;
+  double pointSize, curveWidth, selectedPointSize, selectedCurveWidth;
+  int pointType, curveType, surfaceType, numSubEdges;
   double normals, tangents, scalingFactor;
   int highlightOrphans, clip, useTransform;
   int doubleClickedEntityTag;
-  std::string doubleClickedPointCommand, doubleClickedLineCommand;
+  std::string doubleClickedPointCommand, doubleClickedCurveCommand;
   std::string doubleClickedSurfaceCommand, doubleClickedVolumeCommand;
 };
 
@@ -303,12 +304,12 @@ class CTX {
     unsigned int bg, bgGrad, fg, text, axes, smallAxes;
     unsigned int ambientLight[6], diffuseLight[6], specularLight[6];
     struct{
-      unsigned int point, line, surface, volume;
+      unsigned int point, curve, surface, volume;
       unsigned int selection, highlight[3], projection;
       unsigned int tangents, normals;
     } geom;
     struct{
-      unsigned int vertex, vertexSup, line, triangle, quadrangle;
+      unsigned int node, nodeSup, line, triangle, quadrangle;
       unsigned int tetrahedron, hexahedron, prism, pyramid, trihedron;
       unsigned int carousel[20];
       unsigned int tangents, normals;

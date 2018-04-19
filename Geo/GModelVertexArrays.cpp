@@ -58,7 +58,7 @@ static unsigned int getColorByElement(MElement *ele)
     case TYPE_PRI: return CTX::instance()->color.mesh.prism;
     case TYPE_PYR: return CTX::instance()->color.mesh.pyramid;
     case TYPE_TRIH: return CTX::instance()->color.mesh.trihedron;
-    default: return CTX::instance()->color.mesh.vertex;
+    default: return CTX::instance()->color.mesh.node;
     }
   }
   else if(CTX::instance()->mesh.colorCarousel == 3){ // by partition
@@ -421,7 +421,7 @@ bool GModel::fillVertexArrays()
 
   int status = getMeshStatus();
 
-  if(status >= 1 && CTX::instance()->mesh.changed & ENT_LINE)
+  if(status >= 1 && CTX::instance()->mesh.changed & ENT_CURVE)
     std::for_each(firstEdge(), lastEdge(), initMeshGEdge());
 
   if(status >= 2 && CTX::instance()->mesh.changed & ENT_SURFACE){

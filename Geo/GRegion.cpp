@@ -244,7 +244,7 @@ int GRegion::delFace(GFace* face)
     pos++;
   }
   l_faces.erase(it);
-  
+
   std::list<int>::iterator itOri;
   int posOri = 0;
   int orientation = 0;
@@ -256,28 +256,65 @@ int GRegion::delFace(GFace* face)
     posOri++;
   }
   l_dirs.erase(itOri);
-  
+
   return orientation;
 }
 
-std::string GRegion::getAdditionalInfoString()
+std::string GRegion::getAdditionalInfoString(bool multline)
 {
   std::ostringstream sstream;
   if(l_faces.size()){
-    sstream << "{";
-    for(std::list<GFace*>::iterator it = l_faces.begin(); it != l_faces.end(); ++it){
-      if(it != l_faces.begin()) sstream << " ";
+    sstream << "Boundary surfaces: ";
+    for(std::list<GFace*>::iterator it = l_faces.begin();
+        it != l_faces.end(); ++it){
+      if(it != l_faces.begin()) sstream << ", ";
       sstream << (*it)->tag();
     }
-    sstream << "}";
+    if(multline) sstream << "\n";
+    else sstream << " ";
+  }
+  if(embedded_faces.size()){
+    sstream << "Embedded surfaces: ";
+    for(std::list<GFace*>::iterator it = embedded_faces.begin();
+        it != embedded_faces.end(); ++it){
+      if(it != embedded_faces.begin()) sstream << ", ";
+      sstream << (*it)->tag();
+    }
+    if(multline) sstream << "\n";
+    else sstream << " ";
+  }
+  if(embedded_edges.size()){
+    sstream << "Embedded curves: ";
+    for(std::list<GEdge*>::iterator it = embedded_edges.begin();
+        it != embedded_edges.end(); ++it){
+      if(it != embedded_edges.begin()) sstream << ", ";
+      sstream << (*it)->tag();
+    }
+    if(multline) sstream << "\n";
+    else sstream << " ";
+  }
+  if(embedded_vertices.size()){
+    sstream << "Embedded points: ";
+    for(std::list<GVertex*>::iterator it = embedded_vertices.begin();
+        it != embedded_vertices.end(); ++it){
+      if(it != embedded_vertices.begin()) sstream << ", ";
+      sstream << (*it)->tag();
+    }
+    if(multline) sstream << "\n";
+    else sstream << " ";
   }
 
-  if(meshAttributes.method == MESH_TRANSFINITE)
-    sstream << " transfinite";
-  if(meshAttributes.extrude)
-    sstream << " extruded";
-
-  return sstream.str();
+  if(meshAttributes.method == MESH_TRANSFINITE || meshAttributes.extrude){
+    sstream << "Mesh attributes:";
+    if(meshAttributes.method == MESH_TRANSFINITE)
+      sstream << " transfinite";
+    if(meshAttributes.extrude)
+      sstream << " extruded";
+  }
+  std::string str = sstream.str();
+  if(str.size() && (str[str.size()-1] == '\n' || str[str.size()-1] == ' '))
+     str.resize(str.size() - 1);
+  return str;
 }
 
 void GRegion::writeGEO(FILE *fp)

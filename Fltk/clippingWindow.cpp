@@ -111,7 +111,7 @@ static void clip_update_cb(Fl_Widget *w, void *data)
      FlGui::instance()->clipping->butt[0]->value()){
     for(int clip = 0; clip < 6; clip++){
       if(CTX::instance()->mesh.clip)
-        CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+        CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
       for(unsigned int index = 0; index < PView::list.size(); index++)
         if(PView::list[index]->getOptions()->clip)
           PView::list[index]->setChanged(true);
@@ -165,7 +165,7 @@ static void clip_reset_cb(Fl_Widget *w, void *data)
   CTX::instance()->clipPlane[5][3] = 1.;
 
   if(CTX::instance()->clipWholeElements){
-    CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+    CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
     for(unsigned int index = 0; index < PView::list.size(); index++)
       PView::list[index]->setChanged(true);
   }

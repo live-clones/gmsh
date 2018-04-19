@@ -59,13 +59,17 @@ SPoint2 GVertex::reparamOnFace(const GFace *gf, int) const
   return gf->parFromPoint(SPoint3(x(), y(), z()));
 }
 
-std::string GVertex::getAdditionalInfoString()
+std::string GVertex::getAdditionalInfoString(bool multline)
 {
   std::ostringstream sstream;
   sstream.precision(12);
-  sstream << "{" << x() << "," << y() << "," << z() << "}";
+  sstream << "Position (" << x() << ", " << y() << ", " << z() << ")";
   double lc = prescribedMeshSizeAtVertex();
-  if(lc < MAX_LC) sstream << " (mesh size: " << lc << ")";
+  if(lc < MAX_LC){
+    if(multline) sstream << "\n";
+    else sstream << " ";
+    sstream << "Mesh attributes: size " << lc;
+  }
   return sstream.str();
 }
 

@@ -20,6 +20,7 @@
 #include "GmshConfig.h"
 
 #if defined(HAVE_GMP)
+#include <cstddef>
 #include "gmp.h"
 #else
 

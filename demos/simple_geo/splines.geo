@@ -14,7 +14,7 @@ Line(l+1) = {p+2,p+1};
 Line(l+2) = {p+1,p};
 Line(l+3) = {p,p+3};
 s = newreg;
-Line Loop(s) = {-l,-(l+1),-(l+2),-(l+3)};
+Curve Loop(s) = {-l,-(l+1),-(l+2),-(l+3)};
 Plane Surface(s+1) = {s};
 
 xx += 1;
@@ -29,7 +29,7 @@ l = newreg;
 BSpline(l) = {p+3,p+2,p+1,p+1,p};
 Line(l+1) = {p,p+3};
 s = newreg;
-Line Loop(s) = {-l,-(l+1)};
+Curve Loop(s) = {-l,-(l+1)};
 Plane Surface(s+1) = s;
 
 xx += 1;
@@ -44,7 +44,7 @@ l = newreg;
 Spline(l) = {p+3,p+2,p+1,p};
 Line(l+1) = {p,p+3};
 s = newreg;
-Line Loop(s) = {-l,-(l+1)};
+Curve Loop(s) = {-l,-(l+1)};
 Plane Surface(s+1) = s;
 
 xx += 1;
@@ -59,7 +59,7 @@ l = newreg;
 Bezier(l) = {p+3,p+2,p+1,p}; // Bezier curves are broken
 Line(l+1) = {p,p+3};
 s = newreg;
-Line Loop(s) = {-l,-(l+1)};
+Curve Loop(s) = {-l,-(l+1)};
 Plane Surface(s+1) = s;
 
 // Duplicate the surfaces, and use uniform mesh

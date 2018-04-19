@@ -102,7 +102,6 @@ class MTriangle : public MElement {
   virtual int getTypeForMSH() const { return MSH_TRI_3; }
   virtual int getTypeForUNV() const { return 91; } // thin shell linear triangle
   virtual int getTypeForVTK() const { return 5; }
-  virtual int getTypeForMATLAB() const { return 1; }
   virtual const char *getStringForPOS() const { return "ST"; }
   virtual const char *getStringForBDF() const { return "CTRIA3"; }
   virtual const char *getStringForDIFF() const { return "ElmT3n2D"; }

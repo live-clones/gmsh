@@ -8,7 +8,7 @@ Line(1) = {3,2};
 Line(2) = {2,1};
 Line(3) = {1,4};
 Line(4) = {4,3};
-Line Loop(5) = {1,2,3,4};
+Curve Loop(5) = {1,2,3,4};
 Plane Surface(6) = {5};
 
 // Attractor field on points 5 and on line 1. This field returns the
@@ -54,7 +54,7 @@ Field[5].F = Sprintf("F4^3 + %g", lc / 100);
 Field[6] = Box;
 Field[6].VIn = lc / 15;
 Field[6].VOut = lc;
-Field[6].XMin = 0.3; 
+Field[6].XMin = 0.3;
 Field[6].XMax = 0.6;
 Field[6].YMin = 0.3;
 Field[6].YMax = 0.6;

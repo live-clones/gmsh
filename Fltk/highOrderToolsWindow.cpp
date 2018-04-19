@@ -45,7 +45,7 @@
 //    SetHighOrderIncomplete(GModel::current(), onlyVisible);
 //    o->complete = 0;
 //  }
-//  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+//  CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
 //  drawContext::global()->draw();
 //}
 
@@ -73,7 +73,7 @@ static void highordertools_runp_cb(Fl_Widget *w, void *data)
   }
   */
 
-  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();
 }
 
@@ -235,7 +235,7 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
   Msg::Error("High-order mesh optimization requires the OPTHOM module");
 #endif
 
-  CTX::instance()->mesh.changed |= (ENT_LINE | ENT_SURFACE | ENT_VOLUME);
+  CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
   drawContext::global()->draw();
 }
 
@@ -281,7 +281,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   {
     y += BH;
     Fl_Box *b = new Fl_Box
-      (x - WB, y, width, BH, "1. Generation of high order vertices");
+      (x - WB, y, width, BH, "1. Generation of high order nodes");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   }
 
@@ -388,7 +388,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
     {0}
   };
   choice[0] = new Fl_Choice
-    (x, y, IW, BH, "Boundary vertices");
+    (x, y, IW, BH, "Boundary nodes");
   choice[0]->menu(menu_objf);
   choice[0]->align(FL_ALIGN_RIGHT);
 

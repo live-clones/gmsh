@@ -583,11 +583,55 @@ int MElement::getValidity()
 #endif
 }
 
-std::string MElement::getInfoString()
+std::string MElement::getInfoString(bool multline)
 {
-  char tmp[256];
-  sprintf(tmp, "Element %d", getNum());
-  return std::string(tmp);
+  std::ostringstream sstream;
+  sstream.precision(12);
+
+  sstream << "Element " << getNum() << ":";
+  if(multline) sstream << "\n";
+
+  const char *name;
+  MElement::getInfoMSH(getTypeForMSH(), &name);
+  sstream << " " << name
+          << " (MSH type " << getTypeForMSH()
+          << ", dimension "<< getDim()
+          << ", order "<< getPolynomialOrder()
+          << ", partition " << getPartition()
+          << ")";
+  if(multline) sstream << "\n";
+
+  sstream << " Nodes:";
+  for(int i = 0; i < getNumVertices(); i++)
+    sstream << " " << getVertex(i)->getNum();
+  if(multline) sstream << "\n";
+
+  SPoint3 pt = barycenter();
+  sstream << " Barycenter: (" << pt[0] << ", " << pt[1] << ", " << pt[2] << ")";
+  if(multline) sstream << "\n";
+
+  sstream << " Edge length: "
+          << "min = " << minEdge() << " "
+          << "max = " << maxEdge();
+  if(multline) sstream << "\n";
+
+  sstream << " Quality: "
+          << "gamma = " << gammaShapeMeasure();
+  if(multline) sstream << "\n";
+
+  double sICNMin, sICNMax;
+  signedInvCondNumRange(sICNMin, sICNMax);
+  sstream << " SICN range: " << sICNMin << " " << sICNMax;
+  if(multline) sstream << "\n";
+
+  double sIGEMin, sIGEMax;
+  signedInvGradErrorRange(sIGEMin, sIGEMax);
+  sstream << " SIGE range: " << sIGEMin << " " << sIGEMax;
+  if(multline) sstream << "\n";
+
+  sstream << " Inner / outer radius: "
+          << getInnerRadius() << " / " << getOuterRadius();
+  return sstream.str();
 }
 
 const nodalBasis* MElement::getFunctionSpace(int order, bool serendip) const
@@ -1426,17 +1470,34 @@ void MElement::writeVTK(FILE *fp, bool binary, bool bigEndian)
   }
 }
 
-void MElement::writeMATLAB(FILE *fp, bool binary)
+void MElement::writeMATLAB(FILE *fp, int filetype, int elementary, int physical, bool binary)
 {
-  if(!getTypeForMATLAB()) return;
+  //Matlab use the same names as MSH
+  if(!getTypeForMSH()) return;
   if(binary){
     Msg::Warning("Binary format not available for Matlab, saving into ASCII format");
     binary = false;
   }
-  int n = getNumVertices();
-  for(int i = 0; i < n; i++)
-    fprintf(fp, " %d", getVertexMATLAB(i)->getIndex());
-  fprintf(fp, ";\n");
+
+  //Simple version
+  if(filetype == 0)
+    {
+      int n = getNumVertices();
+      for(int i = 0; i < n; i++)
+	fprintf(fp, " %d", getVertexMATLAB(i)->getIndex());
+      fprintf(fp, ";\n");
+    }
+  //same as load_gmsh2.m
+  if(filetype==1)
+    {
+      if(physical < 0) reverse();
+
+      for(int i = 0; i < getNumVertices(); i++)
+	fprintf(fp, " %d", getVertex(i)->getIndex());
+      fprintf(fp, " %d\n", physical ? abs(physical) : elementary);
+
+      if(physical < 0) reverse();
+    }
 }
 
 void MElement::writeUNV(FILE *fp, int num, int elementary, int physical)

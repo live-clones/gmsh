@@ -42,9 +42,9 @@ namespace gmsh {
 namespace gmsh { // Top-level functions
 
   // Initializes Gmsh. This must be called before any call to the other functions
-  // in the API. If argc and argv are provided, they will be handled in the same
-  // way as the command line arguments in the Gmsh app. If `readConfigFiles' is
-  // set, reads system Gmsh configuration files (gmshrc and gmsh-options).
+  // in the API. If `argc' and `argv' are provided, they will be handled in the
+  // same way as the command line arguments in the Gmsh app. If `readConfigFiles'
+  // is set, reads system Gmsh configuration files (gmshrc and gmsh-options).
   GMSH_API void initialize(int argc = 0, char ** argv = 0,
                            const bool readConfigFiles = true);
 
@@ -205,31 +205,31 @@ namespace gmsh { // Top-level functions
       // `order'.
       GMSH_API void setOrder(const int order);
 
-      // Removes duplicate mesh vertices in the mesh of the current model.
-      GMSH_API void removeDuplicateVertices();
+      // Removes duplicate mesh nodes in the mesh of the current model.
+      GMSH_API void removeDuplicateNodes();
 
       // Gets the last entities (if any) where a meshing error occurred. Currently
       // only populated by the new 3D meshing algorithms.
       GMSH_API void getLastEntityError(gmsh::vector_pair & dimTags);
 
-      // Gets the last mesh vertices (if any) where a meshing error occurred.
+      // Gets the last mesh nodes (if any) where a meshing error occurred.
       // Currently only populated by the new 3D meshing algorithms.
-      GMSH_API void getLastVertexError(std::vector<int> & vertexTags);
+      GMSH_API void getLastNodeError(std::vector<int> & nodeTags);
 
-      // Gets the mesh vertices of the entity of dimension `dim' and `tag' tag. If
-      // `tag' < 0, gets the vertices for all entities of dimension `dim'. If `dim'
-      // and `tag' are negative, gets all the vertices in the mesh. `vertexTags'
-      // contains the vertex tags (their unique, strictly positive identification
-      // numbers). `coord' is a vector of length 3 times the length of `vertexTags'
-      // that contains the (x, y, z) coordinates of the vertices, concatenated. If
+      // Gets the mesh nodes of the entity of dimension `dim' and `tag' tag. If
+      // `tag' < 0, gets the nodes for all entities of dimension `dim'. If `dim'
+      // and `tag' are negative, gets all the nodes in the mesh. `nodeTags'
+      // contains the node tags (their unique, strictly positive identification
+      // numbers). `coord' is a vector of length 3 times the length of `nodeTags'
+      // that contains the (x, y, z) coordinates of the nodes, concatenated. If
       // `dim' >= 0, `parametricCoord' contains the parametric coordinates of the
-      // vertices, if available. The length of `parametricCoord' can be 0 or `dim'
-      // times the length of `vertexTags'.
-      GMSH_API void getVertices(std::vector<int> & vertexTags,
-                                std::vector<double> & coord,
-                                std::vector<double> & parametricCoord,
-                                const int dim = -1,
-                                const int tag = -1);
+      // nodes, if available. The length of `parametricCoord' can be 0 or `dim'
+      // times the length of `nodeTags'.
+      GMSH_API void getNodes(std::vector<int> & nodeTags,
+                             std::vector<double> & coord,
+                             std::vector<double> & parametricCoord,
+                             const int dim = -1,
+                             const int tag = -1);
 
       // Gets the mesh elements of the entity of dimension `dim' and `tag' tag. If
       // `tag' < 0, gets the elements for all entities of dimension `dim'. If `dim'
@@ -238,26 +238,26 @@ namespace gmsh { // Top-level functions
       // `getElementProperties' to obtain the properties for a given element type).
       // `elementTags' is a vector of the same length as `elementTypes'; each entry
       // is a vector containing the tags (unique, strictly positive identifiers) of
-      // the elements of the corresponding type. `vertexTags' is also a vector of
-      // the same length as `elementTypes'; each entry is a vector of length equal
-      // to the number of elements of the given type times the number of vertices
-      // for this type of element, that contains the vertex tags of all the
-      // elements of the given type, concatenated.
+      // the elements of the corresponding type. `nodeTags' is also a vector of the
+      // same length as `elementTypes'; each entry is a vector of length equal to
+      // the number of elements of the given type times the number of nodes for
+      // this type of element, that contains the node tags of all the elements of
+      // the given type, concatenated.
       GMSH_API void getElements(std::vector<int> & elementTypes,
                                 std::vector<std::vector<int> > & elementTags,
-                                std::vector<std::vector<int> > & vertexTags,
+                                std::vector<std::vector<int> > & nodeTags,
                                 const int dim = -1,
                                 const int tag = -1);
 
       // Gets the properties of an element of type `elementType': its name
-      // (`elementName'), dimension (`dim'), order (`order'), number of vertices
-      // (`numVertices') and parametric coordinates of vertices (`parametricCoord'
-      // vector, of length `dim' times `numVertices').
+      // (`elementName'), dimension (`dim'), order (`order'), number of nodes
+      // (`numNodes') and parametric coordinates of nodes (`parametricCoord'
+      // vector, of length `dim' times `numNodes').
       GMSH_API void getElementProperties(const int elementType,
                                          std::string & elementName,
                                          int & dim,
                                          int & order,
-                                         int & numVertices,
+                                         int & numNodes,
                                          std::vector<double> & parametricCoord);
 
       // Gets the integration data for mesh elements of the entity of dimension
@@ -296,7 +296,7 @@ namespace gmsh { // Top-level functions
       // `elementType'.
       GMSH_API void getElementsByType(const int elementType,
                                       std::vector<int> & elementTags,
-                                      std::vector<int> & vertexTags,
+                                      std::vector<int> & nodeTags,
                                       const int dim = -1,
                                       const int tag = -1);
 
@@ -312,74 +312,73 @@ namespace gmsh { // Top-level functions
                                              const int dim = -1,
                                              const int tag = -1);
 
-      // Sets the mesh vertices in the geometrical entity of dimension `dim' and
-      // tag `tag'. `vertextags' contains the vertex tags (their unique, strictly
-      // positive identification numbers). `coord' is a vector of length 3 times
-      // the length of `vertexTags' that contains the (x, y, z) coordinates of the
-      // vertices, concatenated. The optional `parametricCoord' vector contains the
-      // parametric coordinates of the vertices, if any. The length of
-      // `parametricCoord' can be 0 or `dim' times the length of `vertexTags'.
-      GMSH_API void setVertices(const int dim,
-                                const int tag,
-                                const std::vector<int> & vertexTags,
-                                const std::vector<double> & coord,
-                                const std::vector<double> & parametricCoord = std::vector<double>());
+      // Sets the mesh nodes in the geometrical entity of dimension `dim' and tag
+      // `tag'. `nodetags' contains the node tags (their unique, strictly positive
+      // identification numbers). `coord' is a vector of length 3 times the length
+      // of `nodeTags' that contains the (x, y, z) coordinates of the nodes,
+      // concatenated. The optional `parametricCoord' vector contains the
+      // parametric coordinates of the nodes, if any. The length of
+      // `parametricCoord' can be 0 or `dim' times the length of `nodeTags'.
+      GMSH_API void setNodes(const int dim,
+                             const int tag,
+                             const std::vector<int> & nodeTags,
+                             const std::vector<double> & coord,
+                             const std::vector<double> & parametricCoord = std::vector<double>());
 
       // Sets the mesh elements of the entity of dimension `dim' and `tag' tag.
       // `types' contains the MSH types of the elements (e.g. `2' for 3-node
       // triangles: see the Gmsh reference manual). `elementTags' is a vector of
       // the same length as `types'; each entry is a vector containing the tags
       // (unique, strictly positive identifiers) of the elements of the
-      // corresponding type. `vertexTags' is also a vector of the same length as
+      // corresponding type. `nodeTags' is also a vector of the same length as
       // `types'; each entry is a vector of length equal to the number of elements
-      // of the give type times the number of vertices per element, that contains
-      // the vertex tags of all the elements of the given type, concatenated.
+      // of the give type times the number of nodes per element, that contains the
+      // node tags of all the elements of the given type, concatenated.
       GMSH_API void setElements(const int dim,
                                 const int tag,
                                 const std::vector<int> & types,
                                 const std::vector<std::vector<int> > & elementTags,
-                                const std::vector<std::vector<int> > & vertexTags);
+                                const std::vector<std::vector<int> > & nodeTags);
 
-      // Redistribute all mesh vertices on their associated geometrical entity,
-      // based on the mesh elements. Can be used when importing mesh vertices in
-      // bulk (e.g. by associating them all to a single volume), to reclassify them
-      // correctly on model surfaces, curves, etc.
-      GMSH_API void reclassifyVertices();
+      // Redistributes all mesh nodes on their associated geometrical entity, based
+      // on the mesh elements. Can be used when importing mesh nodes in bulk (e.g.
+      // by associating them all to a single volume), to reclassify them correctly
+      // on model surfaces, curves, etc.
+      GMSH_API void reclassifyNodes();
 
       // Gets the coordinates and the parametric coordinates (if any) of the mesh
-      // vertex with tag `tag'. This is a useful by inefficient way of accessing
-      // mesh vertex data, as it relies on a cache stored in the model. For large
-      // meshes all the vertices in the model should be numbered in a continuous
-      // sequence of tags from 1 to N to maintain reasonnable performance (in this
-      // case the internal cache is based on a vector; otherwise it uses a map).
-      GMSH_API void getVertex(const int vertexTag,
-                              std::vector<double> & coord,
-                              std::vector<double> & parametricCoord);
+      // node with tag `tag'. This is a useful by inefficient way of accessing mesh
+      // node data, as it relies on a cache stored in the model. For large meshes
+      // all the nodes in the model should be numbered in a continuous sequence of
+      // tags from 1 to N to maintain reasonnable performance (in this case the
+      // internal cache is based on a vector; otherwise it uses a map).
+      GMSH_API void getNode(const int nodeTag,
+                            std::vector<double> & coord,
+                            std::vector<double> & parametricCoord);
 
-      // Gets the type and vertex tags of the mesh element with tag `tag'. This is
-      // a useful but inefficient way of accessing mesh element data, as it relies
-      // on a cache stored in the model. For large meshes all the elements in the
+      // Gets the type and node tags of the mesh element with tag `tag'. This is a
+      // useful but inefficient way of accessing mesh element data, as it relies on
+      // a cache stored in the model. For large meshes all the elements in the
       // model should be numbered in a continuous sequence of tags from 1 to N to
       // maintain reasonnable performance (in this case the internal cache is based
       // on a vector; otherwise it uses a map).
       GMSH_API void getElement(const int elementTag,
                                int & type,
-                               std::vector<int> & vertexTags);
+                               std::vector<int> & nodeTags);
 
       // Sets a mesh size constraint on the geometrical entities `dimTags'.
       // Currently only entities of dimension 0 (points) are handled.
       GMSH_API void setSize(const gmsh::vector_pair & dimTags,
                             const double size);
 
-      // Sets a transfinite meshing constraint on the line `tag', with
-      // `numVertices' mesh vertices distributed according to `type' and `coef'.
-      // Currently supported types are "Progression" (geometrical progression with
-      // power `coef') and "Bump" (refinement toward both extreminties of the
-      // line).
-      GMSH_API void setTransfiniteLine(const int tag,
-                                       const int numVertices,
-                                       const std::string & type = "Progression",
-                                       const double coef = 1.);
+      // Sets a transfinite meshing constraint on the curve `tag', with `numNodes'
+      // mesh nodes distributed according to `type' and `coef'. Currently supported
+      // types are "Progression" (geometrical progression with power `coef') and
+      // "Bump" (refinement toward both extremities of the curve).
+      GMSH_API void setTransfiniteCurve(const int tag,
+                                        const int numNodes,
+                                        const std::string & type = "Progression",
+                                        const double coef = 1.);
 
       // Sets a transfinite meshing constraint on the surface `tag'. `arrangement'
       // describes the arrangement of the triangles when the surface is not flagged
@@ -454,8 +453,11 @@ namespace gmsh { // Top-level functions
                                  const std::string & option,
                                  const std::vector<double> & value);
 
-        // Sets the field `tag' as background mesh size field.
+        // Sets the field `tag' as the background mesh size field.
         GMSH_API void setAsBackgroundMesh(const int tag);
+
+        // Sets the field `tag' as the boundary layer size field.
+        GMSH_API void setAsBoundaryLayer(const int tag);
 
       } // namespace field
 
@@ -467,7 +469,7 @@ namespace gmsh { // Top-level functions
       // coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
       // that point. If `tag' is positive, sets the tag explicitly; otherwise a new
       // tag is selected automatically. Returns the tag of the point. (Note that
-      // the point will be added in the current model only after synchronize() is
+      // the point will be added in the current model only after `synchronize' is
       // called. This behavior holds for all the entities added in the geo module.)
       GMSH_API int addPoint(const double x,
                             const double y,
@@ -510,60 +512,60 @@ namespace gmsh { // Top-level functions
                                  const double ny = 0.,
                                  const double nz = 0.);
 
-      // Adds a spline (Catmull-Rom) curve going through `vertexTags' points. If
+      // Adds a spline (Catmull-Rom) curve going through the points `pointTags'. If
       // `tag' is positive, sets the tag explicitly; otherwise a new tag is
       // selected automatically. Creates a periodic curve if the first and last
       // points are the same. Returns the tag of the spline curve.
-      GMSH_API int addSpline(const std::vector<int> & vertexTags,
+      GMSH_API int addSpline(const std::vector<int> & pointTags,
                              const int tag = -1);
 
-      // Adds a cubic b-spline curve with `vertexTags' control points. If `tag' is
+      // Adds a cubic b-spline curve with `pointTags' control points. If `tag' is
       // positive, sets the tag explicitly; otherwise a new tag is selected
       // automatically. Creates a periodic curve if the first and last points are
       // the same. Returns the tag of the b-spline curve.
-      GMSH_API int addBSpline(const std::vector<int> & vertexTags,
+      GMSH_API int addBSpline(const std::vector<int> & pointTags,
                               const int tag = -1);
 
-      // Adds a Bezier curve with `vertexTags' control points. If `tag' is
-      // positive, sets the tag explicitly; otherwise a new tag is selected
-      // automatically.  Returns the tag of the Bezier curve.
-      GMSH_API int addBezier(const std::vector<int> & vertexTags,
+      // Adds a Bezier curve with `pointTags' control points. If `tag' is positive,
+      // sets the tag explicitly; otherwise a new tag is selected automatically.
+      // Returns the tag of the Bezier curve.
+      GMSH_API int addBezier(const std::vector<int> & pointTags,
                              const int tag = -1);
 
-      // Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should
-      // contain (signed) tags of geometrical enties of dimension 1 forming a
-      // closed loop: a negative tag signifies that the underlying edge is
-      // considered with reversed orientation. If `tag' is positive, sets the tag
-      // explicitly; otherwise a new tag is selected automatically. Returns the tag
-      // of the line loop.
-      GMSH_API int addLineLoop(const std::vector<int> & edgeTags,
-                               const int tag = -1);
+      // Adds a curve loop (a closed wire) formed by the curves `curveTags'.
+      // `curveTags' should contain (signed) tags of geometrical enties of
+      // dimension 1 forming a closed loop: a negative tag signifies that the
+      // underlying curve is considered with reversed orientation. If `tag' is
+      // positive, sets the tag explicitly; otherwise a new tag is selected
+      // automatically. Returns the tag of the curve loop.
+      GMSH_API int addCurveLoop(const std::vector<int> & curveTags,
+                                const int tag = -1);
 
-      // Adds a plane surface defined by one or more line loops `wireTags'. The
-      // first line loop defines the exterior contour; additional line loop define
-      // holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
-      // is selected automatically. Returns the tag of the surface.
+      // Adds a plane surface defined by one or more curve loops `wireTags'. The
+      // first curve loop defines the exterior contour; additional curve loop
+      // define holes. If `tag' is positive, sets the tag explicitly; otherwise a
+      // new tag is selected automatically. Returns the tag of the surface.
       GMSH_API int addPlaneSurface(const std::vector<int> & wireTags,
                                    const int tag = -1);
 
-      // Adds a surface filling the line loops in `wireTags'. Currently only a
-      // single line loop is supported; this line loop should be composed by 3 or 4
-      // edges only. If `tag' is positive, sets the tag explicitly; otherwise a new
-      // tag is selected automatically. Returns the tag of the surface.
+      // Adds a surface filling the curve loops in `wireTags'. Currently only a
+      // single curve loop is supported; this curve loop should be composed by 3 or
+      // 4 curves only. If `tag' is positive, sets the tag explicitly; otherwise a
+      // new tag is selected automatically. Returns the tag of the surface.
       GMSH_API int addSurfaceFilling(const std::vector<int> & wireTags,
                                      const int tag = -1,
                                      const int sphereCenterTag = -1);
 
-      // Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is
+      // Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
       // positive, sets the tag explicitly; otherwise a new tag is selected
-      // automatically. Returns the tag of the surface loop.
-      GMSH_API int addSurfaceLoop(const std::vector<int> & faceTags,
+      // automatically. Returns the tag of the shell.
+      GMSH_API int addSurfaceLoop(const std::vector<int> & surfaceTags,
                                   const int tag = -1);
 
-      // Adds a volume defined by one or more surface loops `shellTags'. The first
-      // surface loop defines the exterior boundary; additional surface loop define
-      // holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
-      // is selected automatically. Returns the tag of the volume.
+      // Adds a volume (a region) defined by one or more shells `shellTags'. The
+      // first surface loop defines the exterior boundary; additional surface loop
+      // define holes. If `tag' is positive, sets the tag explicitly; otherwise a
+      // new tag is selected automatically. Returns the tag of the volume.
       GMSH_API int addVolume(const std::vector<int> & shellTags,
                              const int tag = -1);
 
@@ -690,15 +692,15 @@ namespace gmsh { // Top-level functions
         GMSH_API void setSize(const gmsh::vector_pair & dimTags,
                               const double size);
 
-        // Sets a transfinite meshing constraint on the line `tag', with
-        // `numVertices' mesh vertices distributed according to `type' and `coef'.
+        // Sets a transfinite meshing constraint on the curve `tag', with
+        // `numNodes' mesh nodes distributed according to `type' and `coef'.
         // Currently supported types are "Progression" (geometrical progression
         // with power `coef') and "Bump" (refinement toward both extreminties of
-        // the line).
-        GMSH_API void setTransfiniteLine(const int tag,
-                                         const int nPoints,
-                                         const std::string & type = "Progression",
-                                         const double coef = 1.);
+        // the curve).
+        GMSH_API void setTransfiniteCurve(const int tag,
+                                          const int nPoints,
+                                          const std::string & type = "Progression",
+                                          const double coef = 1.);
 
         // Sets a transfinite meshing constraint on the surface `tag'.
         // `arrangement' describes the arrangement of the triangles when the
@@ -750,7 +752,7 @@ namespace gmsh { // Top-level functions
       // at coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint
       // at that point. If `tag' is positive, sets the tag explicitly; otherwise a
       // new tag is selected automatically. Returns the tag of the point. (Note
-      // that the point will be added in the current model only after synchronize()
+      // that the point will be added in the current model only after `synchronize'
       // is called. This behavior holds for all the entities added in the occ
       // module.)
       GMSH_API int addPoint(const double x,
@@ -810,49 +812,49 @@ namespace gmsh { // Top-level functions
                               const double angle1 = 0.,
                               const double angle2 = 2*M_PI);
 
-      // Adds a spline (C2 b-spline) curve going through `vertexTags' points. If
+      // Adds a spline (C2 b-spline) curve going through the points `pointTags'. If
       // `tag' is positive, sets the tag explicitly; otherwise a new tag is
       // selected automatically. Creates a periodic curve if the first and last
       // points are the same. Returns the tag of the spline curve.
-      GMSH_API int addSpline(const std::vector<int> & vertexTags,
+      GMSH_API int addSpline(const std::vector<int> & pointTags,
                              const int tag = -1);
 
-      // Adds a b-spline curve of degree `degree' with `vertexTags' control points.
+      // Adds a b-spline curve of degree `degree' with `pointTags' control points.
       // If `weights', `knots' or `multiplicities' are not provided, default
       // parameters are computed automatically. If `tag' is positive, sets the tag
       // explicitly; otherwise a new tag is selected automatically. Creates a
       // periodic curve if the first and last points are the same. Returns the tag
       // of the b-spline curve.
-      GMSH_API int addBSpline(const std::vector<int> & vertexTags,
+      GMSH_API int addBSpline(const std::vector<int> & pointTags,
                               const int tag = -1,
                               const int degree = 3,
                               const std::vector<double> & weights = std::vector<double>(),
                               const std::vector<double> & knots = std::vector<double>(),
                               const std::vector<int> & multiplicities = std::vector<int>());
 
-      // Adds a Bezier curve with `vertexTags' control points. If `tag' is
-      // positive, sets the tag explicitly; otherwise a new tag is selected
-      // automatically. Returns the tag of the Bezier curve.
-      GMSH_API int addBezier(const std::vector<int> & vertexTags,
+      // Adds a Bezier curve with `pointTags' control points. If `tag' is positive,
+      // sets the tag explicitly; otherwise a new tag is selected automatically.
+      // Returns the tag of the Bezier curve.
+      GMSH_API int addBezier(const std::vector<int> & pointTags,
                              const int tag = -1);
 
-      // Adds a wire (open or closed) formed by `edgeTags'. `edgeTags' should
-      // contain (signed) tags of geometrical enties of dimension 1: a negative tag
-      // signifies that the underlying edge is considered with reversed
-      // orientation. If `tag' is positive, sets the tag explicitly; otherwise a
-      // new tag is selected automatically. Returns the tag of the wire.
-      GMSH_API int addWire(const std::vector<int> & edgeTags,
+      // Adds a wire (open or closed) formed by the curves `curveTags'. `curveTags'
+      // should contain (signed) tags: a negative tag signifies that the underlying
+      // curve is considered with reversed orientation. If `tag' is positive, sets
+      // the tag explicitly; otherwise a new tag is selected automatically. Returns
+      // the tag of the wire.
+      GMSH_API int addWire(const std::vector<int> & curveTags,
                            const int tag = -1,
                            const bool checkClosed = false);
 
-      // Adds a line loop (a closed wire) formed by `edgeTags'. `edgeTags' should
-      // contain (signed) tags of geometrical enties of dimension 1 forming a
-      // closed loop: a negative tag signifies that the underlying edge is
-      // considered with reversed orientation. If `tag' is positive, sets the tag
-      // explicitly; otherwise a new tag is selected automatically. Returns the tag
-      // of the line loop.
-      GMSH_API int addLineLoop(const std::vector<int> & edgeTags,
-                               const int tag = -1);
+      // Adds a curve loop (a closed wire) formed by the curves `curveTags'.
+      // `curveTags' should contain (signed) tags of curves forming a closed loop:
+      // a negative tag signifies that the underlying curve is considered with
+      // reversed orientation. If `tag' is positive, sets the tag explicitly;
+      // otherwise a new tag is selected automatically. Returns the tag of the
+      // curve loop.
+      GMSH_API int addCurveLoop(const std::vector<int> & curveTags,
+                                const int tag = -1);
 
       // Adds a rectangle with lower left corner at (`x', `y', `z') and upper right
       // corner at (`x' + `dx', `y' + `dy', `z'). If `tag' is positive, sets the
@@ -867,7 +869,7 @@ namespace gmsh { // Top-level functions
                                 const double roundedRadius = 0.);
 
       // Adds a disk with center (`xc', `yc', `zc') and radius `rx' along the
-      // x-axis and `ry; along the y-axis. If `tag' is positive, sets the tag
+      // x-axis and `ry' along the y-axis. If `tag' is positive, sets the tag
       // explicitly; otherwise a new tag is selected automatically. Returns the tag
       // of the disk.
       GMSH_API int addDisk(const double xc,
@@ -877,30 +879,31 @@ namespace gmsh { // Top-level functions
                            const double ry,
                            const int tag = -1);
 
-      // Adds a plane surface defined by one or more line loops (or closed wires)
-      // `wireTags'. The first line loop defines the exterior contour; additional
-      // line loop define holes. If `tag' is positive, sets the tag explicitly;
+      // Adds a plane surface defined by one or more curve loops (or closed wires)
+      // `wireTags'. The first curve loop defines the exterior contour; additional
+      // curve loop define holes. If `tag' is positive, sets the tag explicitly;
       // otherwise a new tag is selected automatically. Returns the tag of the
       // surface.
       GMSH_API int addPlaneSurface(const std::vector<int> & wireTags,
                                    const int tag = -1);
 
-      // Adds a surface filling the line loops in `wireTags'. If `tag' is positive,
-      // sets the tag explicitly; otherwise a new tag is selected automatically.
-      // Returns the tag of the surface.
+      // Adds a surface filling the curve loops in `wireTags'. If `tag' is
+      // positive, sets the tag explicitly; otherwise a new tag is selected
+      // automatically. Returns the tag of the surface.
       GMSH_API int addSurfaceFilling(const int wireTag,
                                      const int tag = -1);
 
-      // Adds a surface loop (a closed shell) formed by `faceTags'.  If `tag' is
+      // Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
       // positive, sets the tag explicitly; otherwise a new tag is selected
       // automatically. Returns the tag of the surface loop.
-      GMSH_API int addSurfaceLoop(const std::vector<int> & faceTags,
+      GMSH_API int addSurfaceLoop(const std::vector<int> & surfaceTags,
                                   const int tag = -1);
 
-      // Adds a volume defined by one or more surface loops `shellTags'. The first
-      // surface loop defines the exterior boundary; additional surface loop define
-      // holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
-      // is selected automatically. Returns the tag of the volume.
+      // Adds a volume (a region) defined by one or more surface loops `shellTags'.
+      // The first surface loop defines the exterior boundary; additional surface
+      // loop define holes. If `tag' is positive, sets the tag explicitly;
+      // otherwise a new tag is selected automatically. Returns the tag of the
+      // volume.
       GMSH_API int addVolume(const std::vector<int> & shellTags,
                              const int tag = -1);
 
@@ -1001,13 +1004,13 @@ namespace gmsh { // Top-level functions
                                     const bool makeSolid = true,
                                     const bool makeRuled = false);
 
-      // Adds a hollowed volume built from an initial volume `solidTag' and a set
-      // of faces from this volume `excludeFaceTags', which are to be removed. The
-      // remaining faces of the volume become the walls of the hollowed solid, with
-      // thickness `offset'. If `tag' is positive, sets the tag explicitly;
+      // Adds a hollowed volume built from an initial volume `volumeTag' and a set
+      // of faces from this volume `excludeSurfaceTags', which are to be removed.
+      // The remaining faces of the volume become the walls of the hollowed solid,
+      // with thickness `offset'. If `tag' is positive, sets the tag explicitly;
       // otherwise a new tag is selected automatically.
-      GMSH_API void addThickSolid(const int solidTag,
-                                  const std::vector<int> & excludeFaceTags,
+      GMSH_API void addThickSolid(const int volumeTag,
+                                  const std::vector<int> & excludeSurfaceTags,
                                   const double offset,
                                   gmsh::vector_pair & outDimTags,
                                   const int tag = -1);
@@ -1046,25 +1049,25 @@ namespace gmsh { // Top-level functions
                             const std::vector<double> & heights = std::vector<double>(),
                             const bool recombine = false);
 
-      // Adds a pipe by extruding the entities `dimTags' along the curve `wireTag'.
+      // Adds a pipe by extruding the entities `dimTags' along the wire `wireTag'.
       // Returns the pipe in `outDimTags'.
       GMSH_API void addPipe(const gmsh::vector_pair & dimTags,
                             const int wireTag,
                             gmsh::vector_pair & outDimTags);
 
-      // Fillets the volumes `regionTags' on the curves `edgeTags' with radius
+      // Fillets the volumes `volumeTags' on the curves `curveTags' with radius
       // `radius'. Returns the filleted entities in `outDimTags'. Removes the
-      // original volume if `removeRegion' is set.
-      GMSH_API void fillet(const std::vector<int> & regionTags,
-                           const std::vector<int> & edgeTags,
+      // original volume if `removeVolume' is set.
+      GMSH_API void fillet(const std::vector<int> & volumeTags,
+                           const std::vector<int> & curveTags,
                            const double radius,
                            gmsh::vector_pair & outDimTags,
-                           const bool removeRegion = true);
+                           const bool removeVolume = true);
 
       // Computes the boolean union (the fusion) of the entities `objectDimTags'
-      // and `toolDimTags'.Returns the resulting entities in `outDimTags'. If `tag'
-      // is positive, attemps to set the tag explicitly (ony valid if the boolean
-      // operation results in a single entity). Removes the object if
+      // and `toolDimTags'. Returns the resulting entities in `outDimTags'. If
+      // `tag' is positive, attemps to set the tag explicitly (ony valid if the
+      // boolean operation results in a single entity). Removes the object if
       // `removeObject' is set. Removes the tool if `removeTool' is set.
       GMSH_API void fuse(const gmsh::vector_pair & objectDimTags,
                          const gmsh::vector_pair & toolDimTags,
@@ -1214,7 +1217,7 @@ namespace gmsh { // Top-level functions
     // `modelName' identifies the model the data is attached to. `dataType'
     // specifies the type of data, currently either "NodeData", "ElementData" or
     // "ElementNodeData". `step' specifies the identifier (>= 0) of the data in a
-    // sequence. `tags' gives the tags of the vertices or elements in the mesh to
+    // sequence. `tags' gives the tags of the nodes or elements in the mesh to
     // which the data is associated. `data' is a vector of the same length as
     // `tags': each entry is the vector of double precision numbers representing
     // the data associated with the corresponding tag. The optional `time' argument
@@ -1233,8 +1236,8 @@ namespace gmsh { // Top-level functions
                                const int partition = 0);
 
     // Gets model-based post-processing data from the view with tag `tag' at step
-    // `step. Returns the `data' associated to the vertices or the elements with
-    // tags `tags', as well as the `dataType' and the number of components
+    // `step'. Returns the `data' associated to the nodes or the elements with tags
+    // `tags', as well as the `dataType' and the number of components
     // `numComponents'.
     GMSH_API void getModelData(const int tag,
                                const int step,
@@ -1324,7 +1327,7 @@ namespace gmsh { // Top-level functions
     GMSH_API void wait(const double time = -1.);
 
     // Runs the event loop of the Fltk graphical user interface, i.e. repeatedly
-    // calls `wait()`. First automatically creates the user interface if it has not
+    // calls `wait'. First automatically creates the user interface if it has not
     // yet been initialized.
     GMSH_API void run();
 

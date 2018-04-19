@@ -89,33 +89,37 @@ GEntity::GeomType gmshEdge::geomType() const
   }
 }
 
-std::string gmshEdge::getAdditionalInfoString()
+std::string gmshEdge::getAdditionalInfoString(bool multline)
 {
   if(List_Nbr(c->Control_Points) > 0){
     std::ostringstream sstream;
-    sstream << "{";
+    sstream << "Control points: ";
     for(int i = 0; i < List_Nbr(c->Control_Points); i++){
-      if(i) sstream << " ";
+      if(i) sstream << ", ";
       Vertex *v;
       List_Read(c->Control_Points, i, &v);
       sstream << v->Num;
     }
-    sstream << "}";
 
-    if(meshAttributes.method == MESH_TRANSFINITE){
-      sstream << " transfinite (" << meshAttributes.nbPointsTransfinite;
-      int type = meshAttributes.typeTransfinite;
-      if(std::abs(type) == 1)
-        sstream << ", progression " << gmsh_sign(type) * meshAttributes.coeffTransfinite;
-      else if(std::abs(type) == 2)
-        sstream << ", bump " << meshAttributes.coeffTransfinite;
-      sstream << ")";
+    if(meshAttributes.method == MESH_TRANSFINITE ||
+       meshAttributes.extrude || meshAttributes.reverseMesh){
+      if(multline) sstream << "\n";
+      else sstream << " ";
+      sstream << "Mesh attributes:";
+      if(meshAttributes.method == MESH_TRANSFINITE){
+        sstream << " transfinite (" << meshAttributes.nbPointsTransfinite;
+        int type = meshAttributes.typeTransfinite;
+        if(std::abs(type) == 1)
+          sstream << ", progression " << gmsh_sign(type) * meshAttributes.coeffTransfinite;
+        else if(std::abs(type) == 2)
+          sstream << ", bump " << meshAttributes.coeffTransfinite;
+        sstream << ")";
+      }
+      if(meshAttributes.extrude)
+        sstream << " extruded";
+      if(meshAttributes.reverseMesh)
+        sstream << " reversed";
     }
-    if(meshAttributes.extrude)
-      sstream << " extruded";
-    if(meshAttributes.reverseMesh)
-      sstream << " reversed";
-
     return sstream.str();
   }
   else

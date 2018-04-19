@@ -192,7 +192,7 @@ struct doubleXstring{
 %token tDistanceFunction tDefineConstant tUndefineConstant
 %token tDefineNumber tDefineStruct tNameStruct tDimNameSpace tAppend
 %token tDefineString tSetNumber tSetString
-%token tPoint tCircle tEllipse tLine tSphere tPolarSphere tSurface tSpline tVolume
+%token tPoint tCircle tEllipse tCurve tSphere tPolarSphere tSurface tSpline tVolume
 %token tBox tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
 %token tRectangle tDisk tWire tGeoEntity
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
@@ -1604,7 +1604,7 @@ Shape :
       $$.Type = MSH_POINT;
       $$.Num = num;
     }
-  | tLine '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tCurve '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$3;
       std::vector<int> tags; ListOfDouble2Vector($6, tags);
@@ -1793,7 +1793,7 @@ Shape :
       $$.Type = MSH_SEGM_LOOP;
       $$.Num = num;
     }
-  | tLine tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
+  | tCurve tSTRING '(' FExpr ')' tAFFECT ListOfDouble tEND
     {
       int num = (int)$4;
       std::vector<int> tags; ListOfDouble2Vector($7, tags);
@@ -1835,7 +1835,7 @@ Shape :
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
         if(wires.size() != 1){
-          yymsg(0, "OpenCASCADE face filling requires a single line loop");
+          yymsg(0, "OpenCASCADE surface filling requires a single line loop");
         }
         else{
           std::vector<int> constraints; ListOfDouble2Vector($7, constraints);
@@ -2266,7 +2266,7 @@ Shape :
 GeoEntity :
     tPoint
     { $$ = 0; }
-  | tLine
+  | tCurve
     { $$ = 1; }
   | tSurface
     { $$ = 2; }
@@ -2280,7 +2280,7 @@ GeoEntity :
 ;
 
 GeoEntity123 :
-    tLine
+    tCurve
     { $$ = 1; }
   | tSurface
     { $$ = 2; }
@@ -2294,7 +2294,7 @@ GeoEntity123 :
 ;
 
 GeoEntity12 :
-    tLine
+    tCurve
     { $$ = 1; }
   | tSurface
     { $$ = 2; }
@@ -2308,7 +2308,7 @@ GeoEntity12 :
 GeoEntity02 :
     tPoint
     { $$ = 0; }
-  | tLine
+  | tCurve
     { $$ = 1; }
   | tSurface
     { $$ = 2; }
@@ -2439,7 +2439,7 @@ Transform :
       VectorOfPairs2ListOfShapes(outDimTags, $$);
       Free($1);
     }
-  | tIntersect tLine '{' RecursiveListOfDouble '}' tSurface '{' FExpr '}'
+  | tIntersect tCurve '{' RecursiveListOfDouble '}' tSurface '{' FExpr '}'
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       bool r = true;
@@ -2461,7 +2461,7 @@ Transform :
       List_Delete($4);
     }
   // syntax is wrong: should use {} around FExpr
-  | tSplit tLine '(' FExpr ')' '{' RecursiveListOfDouble '}' tEND
+  | tSplit tCurve '(' FExpr ')' '{' RecursiveListOfDouble '}' tEND
     {
       $$ = List_Create(2, 1, sizeof(Shape));
       bool r = true;
@@ -4179,7 +4179,7 @@ Constraints :
       }
       List_Delete(tmp);
     }
-  | tTransfinite tLine ListOfDoubleOrAll tAFFECT FExpr TransfiniteType tEND
+  | tTransfinite tCurve ListOfDoubleOrAll tAFFECT FExpr TransfiniteType tEND
     {
       // transfinite constraints are stored in GEO internals in addition to
       // GModel, as they can be copied around during GEO operations
@@ -4252,7 +4252,7 @@ Constraints :
                 if(gv)
                   gf->meshAttributes.corners.push_back(gv);
                 else
-                  yymsg(0, "Unknown model vertex with tag %d", corners[j]);
+                  yymsg(0, "Unknown model point with tag %d", corners[j]);
               }
             }
             else{
@@ -4294,7 +4294,7 @@ Constraints :
                 if(gv)
                   gr->meshAttributes.corners.push_back(gv);
                 else
-                  yymsg(0, "Unknown model vertex with tag %d", corners[i]);
+                  yymsg(0, "Unknown model point with tag %d", corners[i]);
               }
             }
           }
@@ -4419,7 +4419,7 @@ Constraints :
         List_Delete($3);
       }
     }
-  | tPeriodic tLine '{' RecursiveListOfDouble '}' tAFFECT
+  | tPeriodic tCurve '{' RecursiveListOfDouble '}' tAFFECT
     '{' RecursiveListOfDouble '}' PeriodicTransform tEND
     {
       if (List_Nbr($4) != List_Nbr($8)){
@@ -4455,7 +4455,7 @@ Constraints :
     '{' RecursiveListOfDouble '}' PeriodicTransform tEND
     {
       if (List_Nbr($4) != List_Nbr($8)){
-        yymsg(0, "Number of master faces (%d) different from number of "
+        yymsg(0, "Number of master surfaces (%d) different from number of "
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
       else{
@@ -4478,11 +4478,11 @@ Constraints :
       List_Delete($4);
       List_Delete($8);
     }
-  | tPeriodic tLine '{' RecursiveListOfDouble '}' tAFFECT
+  | tPeriodic tCurve '{' RecursiveListOfDouble '}' tAFFECT
     '{' RecursiveListOfDouble '}' tRotate '{' VExpr ',' VExpr ',' FExpr '}' tEND
     {
       if (List_Nbr($4) != List_Nbr($8)){
-        yymsg(0, "Number of master edges (%d) different from number of "
+        yymsg(0, "Number of master curves (%d) different from number of "
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
       else{
@@ -4508,7 +4508,7 @@ Constraints :
     '{' RecursiveListOfDouble '}' tRotate '{' VExpr ',' VExpr ',' FExpr '}' tEND
     {
       if (List_Nbr($4) != List_Nbr($8)){
-        yymsg(0, "Number of master faces (%d) different from number of "
+        yymsg(0, "Number of master surfaces (%d) different from number of "
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
       else{
@@ -4530,11 +4530,11 @@ Constraints :
       List_Delete($4);
       List_Delete($8);
     }
-  | tPeriodic tLine '{' RecursiveListOfDouble '}' tAFFECT
+  | tPeriodic tCurve '{' RecursiveListOfDouble '}' tAFFECT
     '{' RecursiveListOfDouble '}' tTranslate VExpr tEND
     {
       if (List_Nbr($4) != List_Nbr($8)){
-        yymsg(0, "Number of master edges (%d) different from number of "
+        yymsg(0, "Number of master curves (%d) different from number of "
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
       else{
@@ -4560,7 +4560,7 @@ Constraints :
     '{' RecursiveListOfDouble '}' tTranslate VExpr tEND
     {
       if (List_Nbr($4) != List_Nbr($8)){
-        yymsg(0, "Number of master faces (%d) different from number of "
+        yymsg(0, "Number of master surfaces (%d) different from number of "
               "slaves (%d) ", List_Nbr($8), List_Nbr($4));
       }
       else{
@@ -4586,8 +4586,8 @@ Constraints :
     tAFFECT FExpr '{' RecursiveListOfDouble '}' tEND
     {
       if (List_Nbr($5) != List_Nbr($10)){
-        yymsg(0, "Number of master surface edges (%d) different from number of "
-              "slave (%d) edges", List_Nbr($10), List_Nbr($5));
+        yymsg(0, "Number of master surface curves (%d) different from number of "
+              "slave (%d) curves", List_Nbr($10), List_Nbr($5));
       }
       else{
         int j_master = (int)$8;
@@ -4712,7 +4712,7 @@ Constraints :
         List_Delete($3);
       }
     }
-  | tDegenerated tLine ListOfDouble tEND
+  | tDegenerated tCurve ListOfDouble tEND
     {
       for(int i = 0; i < List_Nbr($3); i++){
 	double dnum;
@@ -5428,7 +5428,7 @@ FExpr_Multi :
           z = gv->z();
         }
         else{
-          yymsg(0, "Unknown model vertex with tag %d", tag);
+          yymsg(0, "Unknown model point with tag %d", tag);
         }
       }
       List_Add($$, &x);
@@ -5822,7 +5822,7 @@ StringExprVar :
       $$ = (char*)Malloc((name.size() + 1) * sizeof(char));
       strcpy($$, name.c_str());
     }
-  | tPhysical tLine '{' FExpr '}'
+  | tPhysical tCurve '{' FExpr '}'
     {
       std::string name = GModel::current()->getPhysicalName(1, (int)$4);
       $$ = (char*)Malloc((name.size() + 1) * sizeof(char));
@@ -6548,7 +6548,7 @@ void addPeriodicFace(int iTarget, int iSource,
   GFace *target = GModel::current()->getFaceByTag(std::abs(iTarget));
   GFace *source = GModel::current()->getFaceByTag(std::abs(iSource));
   if (!target || !source) {
-    Msg::Error("Could not find edge slave %d or master %d for periodic copy",
+    Msg::Error("Could not find curve slave %d or master %d for periodic copy",
                iTarget, iSource);
   }
   else target->setMeshMaster(source, affineTransform);
@@ -6649,7 +6649,7 @@ void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
   if(dim2 == 2){
     GFace *gf = GModel::current()->getFaceByTag(tag2);
     if(!gf){
-      yymsg(0, "Unknown model face with tag %d", tag2);
+      yymsg(0, "Unknown model surface with tag %d", tag2);
       return;
     }
     for(unsigned int i = 0; i < tags.size(); i++){
@@ -6658,21 +6658,21 @@ void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
         if(gv)
           gf->addEmbeddedVertex(gv);
         else
-          yymsg(0, "Unknown model vertex %d", tags[i]);
+          yymsg(0, "Unknown model point %d", tags[i]);
       }
       else if(dim == 1){
         GEdge *ge = GModel::current()->getEdgeByTag(tags[i]);
         if(ge)
           gf->addEmbeddedEdge(ge);
         else
-          yymsg(0, "Unknown model edge %d", tags[i]);
+          yymsg(0, "Unknown model curve %d", tags[i]);
       }
     }
   }
   else if(dim2 == 3){
     GRegion *gr = GModel::current()->getRegionByTag(tag2);
     if(!gr){
-      yymsg(0, "Unknown model region with tag %d", tag2);
+      yymsg(0, "Unknown model volume with tag %d", tag2);
       return;
     }
     for(unsigned int i = 0; i < tags.size(); i++){
@@ -6681,21 +6681,21 @@ void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
         if(gv)
           gr->addEmbeddedVertex(gv);
         else
-          yymsg(0, "Unknown model vertex with tag %d", tags[i]);
+          yymsg(0, "Unknown model point with tag %d", tags[i]);
       }
       else if(dim == 1){
         GEdge *ge = GModel::current()->getEdgeByTag(tags[i]);
         if(ge)
           gr->addEmbeddedEdge(ge);
         else
-          yymsg(0, "Unknown model edge with tag %d", tags[i]);
+          yymsg(0, "Unknown model curve with tag %d", tags[i]);
       }
       else if(dim == 2){
         GFace *gf = GModel::current()->getFaceByTag(tags[i]);
         if(gf)
           gr->addEmbeddedFace(gf);
         else
-          yymsg(0, "Unknown model face with tag %d", tags[i]);
+          yymsg(0, "Unknown model surface with tag %d", tags[i]);
       }
     }
   }

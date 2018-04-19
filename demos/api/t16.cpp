@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 
   double eps = 1e-3;
   model::getEntitiesInBoundingBox(0.5-eps, 0.5-eps, 0.5-eps,
-                                        0.5+eps, 0.5+eps, 0.5+eps, ov, 0);
+                                  0.5+eps, 0.5+eps, 0.5+eps, ov, 0);
   model::mesh::setSize(ov, lcar2);
 
   model::mesh::generate(3);

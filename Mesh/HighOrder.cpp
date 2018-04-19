@@ -430,7 +430,7 @@ static void getEdgeVertices(GEdge *ge, MElement *ele, std::vector<MVertex*> &ve,
     else
       edgeVertices[p].insert(edgeVertices[p].end(), veEdge.rbegin(), veEdge.rend());
   }
-  else {  // Vertices already exist
+  else if (p.first != p.second) { // Vertices already exist and edge is not a degenerated edge
     Msg::Error("Edges from different entities share vertices: create a finer mesh");
   }
   ve.insert(ve.end(), veEdge.begin(), veEdge.end());

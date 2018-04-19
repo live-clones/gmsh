@@ -245,7 +245,7 @@ static int needPolygonOffset()
 {
   GModel *m = GModel::current();
   if(m->getMeshStatus() == 2 &&
-     (CTX::instance()->mesh.surfacesEdges || CTX::instance()->geom.lines ||
+     (CTX::instance()->mesh.surfacesEdges || CTX::instance()->geom.curves ||
       CTX::instance()->geom.surfaces))
     return 1;
   if(m->getMeshStatus() == 3 &&
@@ -992,7 +992,7 @@ bool drawContext::select(int type, bool multiple, bool mesh, bool post,
     if((type == ENT_ALL) ||
        (type == ENT_NONE && hits[i].type == typmin) ||
        (type == ENT_POINT && hits[i].type == 0) ||
-       (type == ENT_LINE && hits[i].type == 1) ||
+       (type == ENT_CURVE && hits[i].type == 1) ||
        (type == ENT_SURFACE && hits[i].type == 2) ||
        (type == ENT_VOLUME && hits[i].type == 3)){
       switch (hits[i].type) {
