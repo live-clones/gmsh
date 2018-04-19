@@ -2240,8 +2240,8 @@ namespace BoundaryLayerCurver
     std::vector<MVertex *> globalBottomVertices, globalTopVertices;
     std::vector<std::vector<MVertex *> > allLayerVertices; // for general TFI
 
-    double lengthFirst = bottom.length();
-    double distDamping = getDistDamping(bottomEdge->getNum()) * lengthFirst;
+//    double lengthFirst = bottom.length();
+//    double distDamping = getDistDamping(bottomEdge->getNum()) * lengthFirst;
 
     for (int i = 0; i < column.size(); ++i) {
       MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
@@ -2312,13 +2312,13 @@ namespace BoundaryLayerCurver
 
 //    drawIdealCurve(globalBottomVertices, parameters, w, bndEnt, true, false, true);
 
-    double remainingDamping = distDamping;
-    double delta = 1;
+//    double remainingDamping = distDamping;
+//    double delta = 1;
 //      std::cout << "remain:" << remainingDamping << std::endl;
-    while (remainingDamping > 1e-12 && delta > 1e-4 * lengthFirst) {
-      delta = damping3(globalTopVertices, .1, remainingDamping, bndEnt, false);
-      remainingDamping -= delta;
-    }
+//    while (remainingDamping > 1e-12 && delta > 1e-4 * lengthFirst) {
+//      delta = damping3(globalTopVertices, .1, remainingDamping, bndEnt, false);
+//      remainingDamping -= delta;
+//    }
 
     // Choose between linear and hermite
     if (linear) {
@@ -2677,7 +2677,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
     MElement *bottomEdge = bndEl2column[i].first;
 //    if (bottomEdge->getNum() != 1079) continue; // Good
 //    if (bottomEdge->getNum() != 1078) continue; // Next to good
-    if (bottomEdge->getNum() != 1102) continue; // Bad HO
+//    if (bottomEdge->getNum() != 1102) continue; // Bad HO
 //    if (bottomEdge->getNum() != 1136) continue; // Bad linear
 //    if (bottomEdge->getNum() != 1150) continue; // concave
 //    if (bottomEdge->getNum() != 1151) continue; // symetric of concave
@@ -2700,11 +2700,11 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
 //        success = BoundaryLayerCurver::curve2DQuadColumnFirst(bottomEdge, column,
 //                                                              n, dampingFactor,
 //                                                              bndEnt);
-//        success = BoundaryLayerCurver::curve2DQuadColumnTFI(bottomEdge, column,
-//                                                            n, dampingFactor,
-//                                                            bndEnt, true);
-      success = BoundaryLayerCurver::curve2DQuadColumnFeedback(bottomEdge, column,
-                                                               n, bndEnt);
+        success = BoundaryLayerCurver::curve2DQuadColumnTFI(bottomEdge, column,
+                                                            n, dampingFactor,
+                                                            bndEnt, true);
+//      success = BoundaryLayerCurver::curve2DQuadColumnFeedback(bottomEdge, column,
+//                                                               n, bndEnt);
       if (dampingFactor == 0) dampingFactor = .01;
       else dampingFactor *= 2;
     }

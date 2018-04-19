@@ -301,6 +301,8 @@ bool getColumn2D(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
   el->getEdgeVertices(iFirstElEd, baseVert);
   MEdge elBaseEd(baseVert[0], baseVert[1]);
 
+  // FIXME elBaseEd is baseEd no?
+
   // Sweep column upwards by choosing largest edges in each element
   if (el->getType() == TYPE_TRI)
     getColumnTri(ed2el, p, elBaseEd, blob, aboveElt);
@@ -1053,6 +1055,15 @@ void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
       MVertex *vb0 = bndEl->getVertex(0);
       MVertex *vb1 = bndEl->getVertex(1);
       MEdge baseEd(vb0, vb1);
+
+      // Check if baseEd is adjacent to an element of the face
+      // (the contrary can happen with degenerate edge, see fix b91a1b822)
+      MEdgeVecMEltMap::iterator myit = ed2el.find(baseEd);
+      if (myit == ed2el.end()) {
+        ++it;
+        continue;
+      }
+
       std::vector<MElement*> vec;
       bndEl2column.push_back(std::make_pair(bndEl, std::vector<MElement*>()));
       aboveElements.push_back(NULL);
@@ -1273,7 +1284,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
         gather3Dcolumns(face2el, gEnt, bndEnt, p, bndEl2column);
     }
 
-    if (p.thickness && p.dim == 3)
+    if (p.thickness && p.dim == 3 && bndEnts.size())
       curve3DBoundaryLayer(bndEl2column, (GFace*) bndEnts[0]);
   }
 
