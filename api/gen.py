@@ -212,6 +212,9 @@ mesh.add('setReverse',doc,None,iint('dim'),iint('tag'),ibool('val','true','True'
 doc = '''Emebds the geometrical entities of dimension `dim' and tags `tags' in the (inDim, inTag) geometrical entity. `inDim' must be strictly greater than `dim'.'''
 mesh.add('embed',doc,None,iint('dim'),ivectorint('tags'),iint('inDim'),iint('inTag'))
 
+doc = '''Gets the number of intergation points corresponding to 'elementType' and 'integrationType'.'''
+mesh.add('getNumberIntegrationPoints',doc,oint,iint('elementType'),istring('integrationType'))
+
 ################################################################################
 
 field = mesh.add_module('field','Per-model mesh size field functions')

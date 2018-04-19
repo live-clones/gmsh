@@ -1424,6 +1424,25 @@ class model:
                     "gmshModelMeshEmbed returned non-zero error code : ",
                     ierr.value)
 
+        @staticmethod
+        def getNumberIntegrationPoints(elementType,integrationType):
+            """
+            Gets the number of intergation points corresponding to 'elementType' and
+            'integrationType'.
+
+            return int
+            """
+            ierr = c_int()
+            api__result__ = lib.gmshModelMeshGetNumberIntegrationPoints(
+                c_int(elementType),
+                c_char_p(integrationType.encode()),
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshGetNumberIntegrationPoints returned non-zero error code : ",
+                    ierr.value)
+            return api__result__
+
 
         class field:
             """

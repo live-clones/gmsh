@@ -491,6 +491,11 @@ namespace gmsh { // Top-level functions
                           const int inDim,
                           const int inTag);
 
+      // Gets the number of intergation points corresponding to 'elementType' and
+      // 'integrationType'.
+      GMSH_API int getNumberIntegrationPoints(const int elementType,
+                                              const std::string & integrationType);
+
       namespace field { // Per-model mesh size field functions
 
         // Adds a new mesh size field of type `type'. If `tag' is positive, assign

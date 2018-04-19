@@ -524,6 +524,12 @@ GMSH_API void gmshModelMeshEmbed(const int dim,
                                  const int inTag,
                                  int * ierr);
 
+/* Gets the number of intergation points corresponding to 'elementType' and
+ * 'integrationType'. */
+GMSH_API int gmshModelMeshGetNumberIntegrationPoints(const int elementType,
+                                                     const char * integrationType,
+                                                     int * ierr);
+
 /* Adds a new mesh size field of type `type'. If `tag' is positive, assign the
  * tag explcitly; otherwise a new tag is assigned automatically. Returns the
  * field tag. */

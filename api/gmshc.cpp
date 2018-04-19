@@ -574,6 +574,15 @@ void gmshModelMeshEmbed(const int dim,int * tags, size_t tags_n,const int inDim,
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
+int gmshModelMeshGetNumberIntegrationPoints(const int elementType,const char * integrationType,int * ierr){
+  int result_api_;
+  if(ierr) *ierr = 0;
+  try {
+  result_api_ = gmsh::model::mesh::getNumberIntegrationPoints(elementType,integrationType);
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+  return result_api_;
+}
+
 int gmshModelMeshFieldAdd(const char * type,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;
