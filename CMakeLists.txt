@@ -54,7 +54,6 @@ opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
 opt(GMP "Enable GMP for Kbipack (advanced)" ON)
 opt(GRAPHICS "Enable building graphics lib even without GUI (advanced)" OFF)
 opt(HXT "Enable HXT library" ${DEFAULT})
-opt(INTERNAL_DEVELOPER_API "Enable internal developer API" OFF)
 opt(KBIPACK "Enable Kbipack (neeeded by homology solver)" ${DEFAULT})
 opt(MATHEX "Enable math expression parser (used by plugins and options)" ${DEFAULT})
 opt(MED "Enable MED mesh and post file formats" ${DEFAULT})
@@ -82,6 +81,7 @@ opt(PETSC "Enable PETSc linear solvers (required for SLEPc)" ${DEFAULT})
 opt(PLUGINS "Enable post-processing plugins" ${DEFAULT})
 opt(POST "Enable post-processing module (required by GUI)" ${DEFAULT})
 opt(POPPLER "Enable Poppler for displaying PDF documents (experimental)" OFF)
+opt(PRIVATE_API "Enable private API" OFF)
 opt(REVOROPT "Enable Revoropt (used for CVT remeshing)" OFF)
 opt(SLEPC "Enable SLEPc eigensolvers (required for conformal compounds)" ${DEFAULT})
 opt(SOLVER "Enable built-in finite element solvers (required for compounds)" ${DEFAULT})
@@ -89,8 +89,8 @@ opt(TCMALLOC "Enable libtcmalloc, a fast malloc implementation but that does not
 opt(TETGEN "Enable Tetgen 3D initial mesh generator" OFF)
 opt(VISUDEV "Enable additional visualization capabilities for development purpose" OFF)
 opt(VOROPP "Enable voro++ (for hex meshing, experimental)" ${DEFAULT})
-opt(WRAP_JAVA "Enable generation of Java wrappers for internal developer API" OFF)
-opt(WRAP_PYTHON "Enable generation of Python wrappers for internal developer API" OFF)
+opt(WRAP_JAVA "Enable generation of Java wrappers for private API" OFF)
+opt(WRAP_PYTHON "Enable generation of Python wrappers for private API" OFF)
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 3)
@@ -104,22 +104,24 @@ set(GMSH_SHORT_LICENSE "GNU General Public License")
 
 set(GMSH_API api/gmsh.h api/gmshc.h)
 
-if(ENABLE_INTERNAL_DEVELOPER_API)
-  message(WARNING "The internal developer API is unsupported and undocumented. "
-          "It is meant for Gmsh (and related projects) developers, not for wide "
-          "distribution. If you are packaging Gmsh for redistribution, please "
-          "DO NOT enable this and just ship the stable API (api/gmsh.h) instead.")
+if(ENABLE_PRIVATE_API)
+  message(WARNING "The private API is unsupported and undocumented. It is meant "
+          "for expert Gmsh developers, not for regular Gmsh users, who should rely "
+          "on the stable public API (api/gmsh.h) instead. If you are packaging Gmsh "
+          "for redistribution (e.g. for a Linux distro), please DO NOT distribute the "
+          "private API (i.e. all the internal header files), and ship the stable "
+          "public API instead (i.e. api/gmsh.h).")
   file(GLOB_RECURSE HEADERS Common/*.h Numeric/*.h Geo/*.h Mesh/*.h Solver/*.h 
     Post/*.h Graphics/*.h contrib/kbipack/*.h contrib/DiscreteIntegration/*.h
     contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
     contrib/MeshQualityOptimizer/*.h contrib/MathEx/*.h)
-  set(GMSH_INTERNAL_DEVELOPER_API ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h
+  set(GMSH_PRIVATE_API ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h
       ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h ${HEADERS})
   get_property(IAMCHILD DIRECTORY  PROPERTY PARENT_DIRECTORY)
   if(IAMCHILD)
-    set(GMSH_INTERNAL_DEVELOPER_API ${GMSH_INTERNAL_DEVELOPER_API} PARENT_SCOPE)
+    set(GMSH_PRIVATE_API ${GMSH_PRIVATE_API} PARENT_SCOPE)
   endif(IAMCHILD)
-endif(ENABLE_INTERNAL_DEVELOPER_API)
+endif(ENABLE_PRIVATE_API)
 
 set(ONELAB_PY contrib/onelab/python/onelab.py)
 set(GMSH_PY api/gmsh.py)
@@ -1048,7 +1050,7 @@ if(HAVE_SOLVER)
   endif(ENABLE_GETDP)
 endif(HAVE_SOLVER)
 
-if(ENABLE_HXT)
+if(ENABLE_HXT AND HAVE_METIS)
   set_config_option(HAVE_HXT "Hxt")
   add_subdirectory(contrib/hxt)
   include_directories(BEFORE contrib/hxt)
@@ -1057,7 +1059,7 @@ if(ENABLE_HXT)
     file(GLOB_RECURSE HXT_SRC contrib/hxt/*.c)
     set_compile_flags(HXT_SRC "/TP")
   endif(MSVC)
-endif(ENABLE_HXT)
+endif(ENABLE_HXT AND HAVE_METIS)
 
 if(ENABLE_OCC)
   set(OCC_MINIMAL_VERSION "6.9.1")
@@ -1199,7 +1201,7 @@ if(ENABLE_ZIPPER)
   endif(HAVE_LIBZ)
 endif(ENABLE_ZIPPER)
 
-if(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_PYTHON)
+if(ENABLE_PRIVATE_API AND ENABLE_WRAP_PYTHON)
   find_package(SWIG REQUIRED)
   include(${SWIG_USE_FILE})
   find_package(PythonLibs)
@@ -1240,7 +1242,7 @@ if(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_PYTHON)
       endif(HAVE_PETSC)
     endif(SWIG_MAJOR_VERSION EQUAL 1)
   endif(SWIG_FOUND AND PYTHONLIBS_FOUND)
-endif(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_PYTHON)
+endif(ENABLE_PRIVATE_API AND ENABLE_WRAP_PYTHON)
 
 check_function_exists(vsnprintf HAVE_VSNPRINTF)
 if(NOT HAVE_VSNPRINTF AND NOT ENABLE_BUILD_IOS AND NOT ENABLE_BUILD_ANDROID)
@@ -1628,9 +1630,9 @@ if(WIN32 OR CYGWIN)
   endif(ENABLE_OS_SPECIFIC_INSTALL)
   if(CYGWIN)
     unix2dos(GMSH_API)
-    if(ENABLE_INTERNAL_DEVELOPER_API)
-      unix2dos(GMSH_INTERNAL_DEVELOPER_API)
-    endif(ENABLE_INTERNAL_DEVELOPER_API)
+    if(ENABLE_PRIVATE_API)
+      unix2dos(GMSH_PRIVATE_API)
+    endif(ENABLE_PRIVATE_API)
     unix2dos(WELCOME_FILE)
     unix2dos(LICENSE_FILE)
     unix2dos(CREDITS_FILE)
@@ -1719,9 +1721,9 @@ if(ENABLE_ONELAB)
 endif(ENABLE_ONELAB)
 if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   install(FILES ${GMSH_API} DESTINATION ${GMSH_INC})
-  if(ENABLE_INTERNAL_DEVELOPER_API)
-    install(FILES ${GMSH_INTERNAL_DEVELOPER_API} DESTINATION ${GMSH_INC}/gmsh)
-  endif(ENABLE_INTERNAL_DEVELOPER_API)
+  if(ENABLE_PRIVATE_API)
+    install(FILES ${GMSH_PRIVATE_API} DESTINATION ${GMSH_INC}/gmsh)
+  endif(ENABLE_PRIVATE_API)
 endif(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 install(FILES ${WELCOME_FILE} DESTINATION ${GMSH_DOC} RENAME README.txt)
 install(FILES ${LICENSE_FILE} DESTINATION ${GMSH_DOC})
@@ -1745,13 +1747,13 @@ foreach(FILE ${GMSH_API})
     -E copy_if_different ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Headers/
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endforeach(FILE)
-if(ENABLE_INTERNAL_DEVELOPER_API)
-  foreach(FILE ${GMSH_INTERNAL_DEVELOPER_API})
+if(ENABLE_PRIVATE_API)
+  foreach(FILE ${GMSH_PRIVATE_API})
     add_custom_command(TARGET get_headers POST_BUILD COMMAND ${CMAKE_COMMAND}
       -E copy_if_different ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Headers/gmsh/
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   endforeach(FILE)
-endif(ENABLE_INTERNAL_DEVELOPER_API)
+endif(ENABLE_PRIVATE_API)
 
 find_program(MAKEINFO makeinfo)
 if(MAKEINFO)
@@ -1823,13 +1825,13 @@ if(APPLE AND ENABLE_BUILD_LIB)
         ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/gmsh.framework/Headers/
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   endforeach(FILE)
-  if(ENABLE_INTERNAL_DEVELOPER_API)
-    foreach(FILE ${GMSH_INTERNAL_DEVELOPER_API})
+  if(ENABLE_PRIVATE_API)
+    foreach(FILE ${GMSH_PRIVATE_API})
       add_custom_command(TARGET framework POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy
           ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/gmsh.framework/Headers/
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     endforeach(FILE)
-  endif(ENABLE_INTERNAL_DEVELOPER_API)
+  endif(ENABLE_PRIVATE_API)
 endif(APPLE AND ENABLE_BUILD_LIB)
 
 set(CPACK_PACKAGE_VENDOR "Christophe Geuzaine and Jean-Francois Remacle")
@@ -1892,13 +1894,13 @@ else(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
   set(CPACK_GENERATOR TGZ)
 endif(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
 
-if(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_PYTHON AND HAVE_PYTHON)
+if(ENABLE_PRIVATE_API AND ENABLE_WRAP_PYTHON AND HAVE_PYTHON)
   add_subdirectory(wrappers/gmshpy)
-endif(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_PYTHON AND HAVE_PYTHON)
+endif(ENABLE_PRIVATE_API AND ENABLE_WRAP_PYTHON AND HAVE_PYTHON)
 
-if(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_JAVA)
+if(ENABLE_PRIVATE_API AND ENABLE_WRAP_JAVA)
   add_subdirectory(wrappers/java)
-endif(ENABLE_INTERNAL_DEVELOPER_API AND ENABLE_WRAP_JAVA)
+endif(ENABLE_PRIVATE_API AND ENABLE_WRAP_JAVA)
 
 include(CPack)
 
