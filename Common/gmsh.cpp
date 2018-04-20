@@ -3125,3 +3125,8 @@ void gmsh::parallel::model::mesh::getJacobianDataByType(const int elementType,
   _getJacobianData(elementType, typeMap[elementType], intType, nbrIntegrationPoints,
                    jacobian, determinant, myThread, nbrThreads);
 }
+
+void gmsh::parallel::model::mesh::precomputeBasicFunction(const int elementType)
+{
+  BasisFactory::getNodalBasis(elementType);
+}

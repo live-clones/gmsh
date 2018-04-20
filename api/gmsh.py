@@ -3810,3 +3810,17 @@ class parallel:
                     api_nbrIntegrationPoints_.value,
                     _ovectordouble(api_jacobian_,api_jacobian_n_.value),
                     _ovectordouble(api_determinant_,api_determinant_n_.value))
+
+            @staticmethod
+            def precomputeBasicFunction(elementType):
+                """
+                Precomputes the basic function corresponding to 'elementType'.
+                """
+                ierr = c_int()
+                lib.gmshParallelModelMeshPrecomputeBasicFunction(
+                    c_int(elementType),
+                    byref(ierr))
+                if ierr.value != 0 :
+                    raise ValueError(
+                        "gmshParallelModelMeshPrecomputeBasicFunction returned non-zero error code : ",
+                        ierr.value)

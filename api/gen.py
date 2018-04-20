@@ -569,6 +569,9 @@ p_mesh = p_model.add_module('mesh','Per-model meshing functions')
 doc = '''Gets the Jacobian data for mesh elements in the same way as `getJacobianData', but for a single `elementType'.'''
 p_mesh.add('getJacobianDataByType',doc,None,iint('elementType'),istring('integrationType'),oint('nbrIntegrationPoints'),ovectordouble('jacobian'),ovectordouble('determinant'),iint('dim', '-1'),iint('tag', '-1'), iint('myThread', '0'), iint('nbrThreads', '1'))
 
+doc = '''Precomputes the basic function corresponding to 'elementType'.'''
+p_mesh.add('precomputeBasicFunction',doc,None,iint('elementType'))
+
 
 
 

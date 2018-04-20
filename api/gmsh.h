@@ -1438,6 +1438,9 @@ namespace gmsh { // Top-level functions
                                             const int myThread = 0,
                                             const int nbrThreads = 1);
 
+        // Precomputes the basic function corresponding to 'elementType'.
+        GMSH_API void precomputeBasicFunction(const int elementType);
+
       } // namespace mesh
 
     } // namespace model

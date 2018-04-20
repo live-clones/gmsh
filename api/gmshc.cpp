@@ -1428,3 +1428,10 @@ void gmshParallelModelMeshGetJacobianDataByType(const int elementType,const char
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
+void gmshParallelModelMeshPrecomputeBasicFunction(const int elementType,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  gmsh::parallel::model::mesh::precomputeBasicFunction(elementType);
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+

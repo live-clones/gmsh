@@ -1513,6 +1513,10 @@ GMSH_API void gmshParallelModelMeshGetJacobianDataByType(const int elementType,
                                                          const int nbrThreads,
                                                          int * ierr);
 
+/* Precomputes the basic function corresponding to 'elementType'. */
+GMSH_API void gmshParallelModelMeshPrecomputeBasicFunction(const int elementType,
+                                                           int * ierr);
+
 #undef GMSH_API
 
 #endif
