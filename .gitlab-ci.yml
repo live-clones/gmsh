@@ -5,7 +5,7 @@
 
 variables:
   EXTRA_VERSION: "-git-$CI_COMMIT_SHA"
-  EXTRA_OPTION:
+  EXTRA_OPTION: ""
 
 # -----------------------
 # Builds for all branches
