@@ -196,7 +196,7 @@ macos64_official_snapshot:
 
 macos64-dev_official_snapshot:
   variables:
-    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1"
+    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1"
   <<: *macos_official
   tags:
     - macos64
