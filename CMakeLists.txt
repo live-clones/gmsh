@@ -107,10 +107,10 @@ set(GMSH_API api/gmsh.h api/gmshc.h)
 if(ENABLE_PRIVATE_API)
   message(WARNING "The private API is unsupported and undocumented. It is meant "
           "for expert Gmsh developers, not for regular Gmsh users, who should rely "
-          "on the stable public API (api/gmsh.h) instead. If you are packaging Gmsh "
+          "on the stable public API (gmsh.h) instead. If you are packaging Gmsh "
           "for redistribution (e.g. for a Linux distro), please DO NOT distribute the "
           "private API (i.e. all the internal header files), and ship the stable "
-          "public API instead (i.e. api/gmsh.h).")
+          "public API instead (i.e. gmsh.h).")
   file(GLOB_RECURSE HEADERS Common/*.h Numeric/*.h Geo/*.h Mesh/*.h Solver/*.h 
     Post/*.h Graphics/*.h contrib/kbipack/*.h contrib/DiscreteIntegration/*.h
     contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
@@ -198,6 +198,10 @@ if(NOT ENABLE_BUILD_SHARED)
     set(ENABLE_BUILD_DYNAMIC ON)
   endif(ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
 endif(NOT ENABLE_BUILD_SHARED)
+
+if(ENABLE_BUILD_DYNAMIC)
+  set(GMSH_OS "${GMSH_OS}-dev")
+endif(ENABLE_BUILD_DYNAMIC)
 
 if(MSVC)
   # remove annoying warning about bool/int cast performance
@@ -1721,6 +1725,7 @@ if(ENABLE_ONELAB)
 endif(ENABLE_ONELAB)
 if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   install(FILES ${GMSH_API} DESTINATION ${GMSH_INC})
+  install(FILES ${GMSH_PY} DESTINATION ${GMSH_BIN})
   if(ENABLE_PRIVATE_API)
     install(FILES ${GMSH_PRIVATE_API} DESTINATION ${GMSH_INC}/gmsh)
   endif(ENABLE_PRIVATE_API)

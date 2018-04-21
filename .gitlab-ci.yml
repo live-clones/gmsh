@@ -5,6 +5,7 @@
 
 variables:
   EXTRA_VERSION: "-git-$CI_COMMIT_SHA"
+  EXTRA_OPTION:
 
 # -----------------------
 # Builds for all branches
@@ -15,7 +16,7 @@ linux64_docker_ci:
   script:
     - mkdir build
     - cd build
-    - cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} ..
+    - cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} ${EXTRA_OPTION} ..
     - make -j 4
     - ctest -j 4 --output-on-failure
   tags:
@@ -30,7 +31,7 @@ linux64_docker_cxx98_compat_ci:
     - mkdir build
     - cd build
     - export CXXFLAGS=-std=c++98
-    - cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DENABLE_CXX11=0 -DENABLE_OCC=0 ..
+    - cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DENABLE_CXX11=0 -DENABLE_OCC=0 ${EXTRA_OPTION} ..
     - make -j 4
   tags:
     - linux64
@@ -43,7 +44,7 @@ linux64_docker_minimal_ci:
   script:
     - mkdir build
     - cd build
-    - cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 ..
+    - cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DDEFAULT=0 -DENABLE_PARSER=1 -DENABLE_POST=1 ${EXTRA_OPTION} ..
     - make -j 4
   tags:
     - linux64
@@ -55,7 +56,7 @@ windows64_msvc_ci:
   script:
     - md build
     - cd build
-    - cmake -DGMSH_EXTRA_VERSION=%EXTRA_VERSION:~0,13% -DENABLE_HXT=0 ..
+    - cmake -DGMSH_EXTRA_VERSION=%EXTRA_VERSION:~0,13% -DENABLE_HXT=0 ${EXTRA_OPTION} ..
     - msbuild package.vcxproj
   tags:
     - windows64
@@ -73,7 +74,7 @@ windows64_msvc_ci:
   script:
     - mkdir build
     - cd build
-    - /usr/local/bin/cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DENABLE_NATIVE_FILE_CHOOSER:bool=FALSE -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc-3.7.5 -DSLEPC_DIR=/home/geuzaine/src/slepc-3.7.3 ..
+    - /usr/local/bin/cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DENABLE_NATIVE_FILE_CHOOSER:bool=FALSE -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc-3.7.5 -DSLEPC_DIR=/home/geuzaine/src/slepc-3.7.3 ${EXTRA_OPTION} ..
     - make package -j 1
     - PKG=`ls gmsh-*.tar*`; scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
     - /usr/local/bin/ctest -D Experimental -j 1 --output-on-failure
@@ -124,7 +125,7 @@ linux32_official_release:
   script:
     - md build
     - cd build
-    - bash -c "/usr/bin/cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/mingw32-windres.exe -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc-3.7.5 -DSLEPC_DIR=/home/geuzaine/src/slepc-3.7.3 -DENABLE_OS_SPECIFIC_INSTALL=1 .."
+    - bash -c "/usr/bin/cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/mingw32-windres.exe -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc-3.7.5 -DSLEPC_DIR=/home/geuzaine/src/slepc-3.7.3 -DENABLE_OS_SPECIFIC_INSTALL=1 ${EXTRA_OPTION} .."
     - bash -c "/usr/bin/make package -j 2"
     - bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
     - bash -c "/usr/bin/ctest -D Experimental -j 2 --output-on-failure"
@@ -176,7 +177,7 @@ windows32_official_release:
   script:
     - mkdir build
     - cd build
-    - /usr/local/bin/cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DCMAKE_C_COMPILER=/opt/local/bin/clang-mp-3.9 -DCMAKE_CXX_COMPILER=/opt/local/bin/clang++-mp-3.9 -DENABLE_CAIRO=0 -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc-3.7.5 -DSLEPC_DIR=/Users/geuzaine/src/slepc-3.7.3 -DBLAS_LAPACK_LIBRARIES=/usr/local/lib/libopenblas.a -DENABLE_OS_SPECIFIC_INSTALL=1 ..
+    - /usr/local/bin/cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DCMAKE_C_COMPILER=/opt/local/bin/clang-mp-3.9 -DCMAKE_CXX_COMPILER=/opt/local/bin/clang++-mp-3.9 -DENABLE_CAIRO=0 -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc-3.7.5 -DSLEPC_DIR=/Users/geuzaine/src/slepc-3.7.3 -DBLAS_LAPACK_LIBRARIES=/usr/local/lib/libopenblas.a -DENABLE_OS_SPECIFIC_INSTALL=1 ${EXTRA_OPTION} ..
     - make package -j 2
     - PKG=`ls gmsh-*.dmg`
     - scp ${PKG} ace@ace36.montefiore.ulg.ac.be:/tmp
@@ -186,6 +187,16 @@ windows32_official_release:
     - /usr/local/bin/ctest -D Experimental -j 2 --output-on-failure
 
 macos64_official_snapshot:
+  <<: *macos_official
+  tags:
+    - macos64
+    - official
+  except:
+    - tags
+
+macos64-dev_official_snapshot:
+  variables:
+    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1"
   <<: *macos_official
   tags:
     - macos64
@@ -213,7 +224,7 @@ macos64_official_release:
   script:
     - mkdir build_src
     - cd build_src
-    - /usr/local/bin/cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} ..
+    - /usr/local/bin/cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} ${EXTRA_OPTION} ..
     - make package_source
     - PKG=`ls gmsh-*.tar*`; scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/src/${PKG/\.tar\.gz/\.tgz}
 
