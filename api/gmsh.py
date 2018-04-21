@@ -25,11 +25,11 @@ from math import pi
 signal.signal(signal.SIGINT,signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == 'Windows':
-    lib = CDLL(libdir+"/gmshc.dll")
+    lib = CDLL(libdir+"/gmsh.dll")
 elif platform.system() == 'Darwin':
-    lib = CDLL(libdir+"/libgmshc.dylib")
+    lib = CDLL(libdir+"/libgmsh.dylib")
 else:
-    lib = CDLL(libdir+"/libgmshc.so")
+    lib = CDLL(libdir+"/libgmsh.so")
 
 use_numpy = False
 try :

@@ -169,7 +169,7 @@ windows64_official_release:
   only:
     - /^gmsh_.*$/
 
-windows64-dev_official_snapshot:
+.windows64-dev_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1"
   <<: *windows_official
@@ -198,7 +198,7 @@ windows32_official_release:
   only:
     - /^gmsh_.*$/
 
-windows32-dev_official_snapshot:
+.windows32-dev_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1"
   <<: *windows_official
