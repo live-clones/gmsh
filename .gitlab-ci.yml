@@ -180,7 +180,7 @@ windows32_official_release:
     - cd build
     - /usr/local/bin/cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DCMAKE_C_COMPILER=/opt/local/bin/clang-mp-3.9 -DCMAKE_CXX_COMPILER=/opt/local/bin/clang++-mp-3.9 -DENABLE_CAIRO=0 -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc-3.7.5 -DSLEPC_DIR=/Users/geuzaine/src/slepc-3.7.3 -DBLAS_LAPACK_LIBRARIES=/usr/local/lib/libopenblas.a -DENABLE_OS_SPECIFIC_INSTALL=1 ${EXTRA_OPTION} ..
     - make package -j 2
-    - PKG=`ls gmsh-*.dmg`
+    - PKG=`ls gmsh-*.dmg 2>/dev/null`
     - if [ -n "$PKG" ]; then scp ${PKG} ace@ace36.montefiore.ulg.ac.be:/tmp; fi
     - if [ -n "$PKG" ]; then ssh ace@ace36.montefiore.ulg.ac.be /Users/ace/re-sign.sh /tmp/${PKG}; fi
     - if [ -n "$PKG" ]; then scp ace@ace36.montefiore.ulg.ac.be:/tmp/${PKG} .; fi
