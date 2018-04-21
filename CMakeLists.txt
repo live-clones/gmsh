@@ -1492,10 +1492,10 @@ endif(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 # binary targets
 if(HAVE_FLTK)
   if(ENABLE_BUILD_DYNAMIC)
-    add_executable(gmsh WIN32 Fltk/Main.cpp)
+    add_executable(gmsh WIN32 Common/Main.cpp)
     target_link_libraries(gmsh shared)
   else(ENABLE_BUILD_DYNAMIC)
-    add_executable(gmsh WIN32 Fltk/Main.cpp ${GMSH_SRC})
+    add_executable(gmsh WIN32 Common/Main.cpp ${GMSH_SRC})
   endif(ENABLE_BUILD_DYNAMIC)
   # we could add this to create a minimal app bundle even without install
   # if(APPLE AND NOT ENABLE_OS_SPECIFIC_INSTALL)
