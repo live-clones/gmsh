@@ -98,6 +98,16 @@ linux64_official_release:
   only:
     - /^gmsh_.*$/
 
+linux64-dev_official_snapshot:
+  variables:
+    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1"
+  <<: *linux_official
+  tags:
+    - linux64
+    - official
+  except:
+    - tags
+
 linux32_official_snapshot:
   <<: *linux_official
   tags:
@@ -115,6 +125,16 @@ linux32_official_release:
     - official
   only:
     - /^gmsh_.*$/
+
+linux32-dev_official_snapshot:
+  variables:
+    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1"
+  <<: *linux_official
+  tags:
+    - linux32
+    - official
+  except:
+    - tags
 
 # --------------------------------------------
 # Official Windows builds (master branch only)
@@ -195,16 +215,6 @@ macos64_official_snapshot:
   except:
     - tags
 
-macos64-dev_official_snapshot:
-  variables:
-    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DDISABLE_GMSH_TESTS=1 -DENABLE_BUILD_DYNAMIC=1"
-  <<: *macos_official
-  tags:
-    - macos64
-    - official
-  except:
-    - tags
-
 macos64_official_release:
   variables:
     EXTRA_VERSION: ""
@@ -214,6 +224,16 @@ macos64_official_release:
     - official
   only:
     - /^gmsh_.*$/
+
+macos64-dev_official_snapshot:
+  variables:
+    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1"
+  <<: *macos_official
+  tags:
+    - macos64
+    - official
+  except:
+    - tags
 
 # ----------------------------------------------
 # Official source snapshots (master branch only)
