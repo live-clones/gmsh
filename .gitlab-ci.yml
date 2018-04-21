@@ -76,7 +76,8 @@ windows64_msvc_ci:
     - cd build
     - /usr/local/bin/cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DENABLE_NATIVE_FILE_CHOOSER:bool=FALSE -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc-3.7.5 -DSLEPC_DIR=/home/geuzaine/src/slepc-3.7.3 ${EXTRA_OPTION} ..
     - make package -j 1
-    - PKG=`ls gmsh-*.tar*`; scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
+    - PKG=`ls gmsh-*.tar*`
+    - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
     - /usr/local/bin/ctest -D Experimental -j 1 --output-on-failure
 
 linux64_official_snapshot:
@@ -180,10 +181,11 @@ windows32_official_release:
     - /usr/local/bin/cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DCMAKE_C_COMPILER=/opt/local/bin/clang-mp-3.9 -DCMAKE_CXX_COMPILER=/opt/local/bin/clang++-mp-3.9 -DENABLE_CAIRO=0 -DPETSC_ARCH=complex_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc-3.7.5 -DSLEPC_DIR=/Users/geuzaine/src/slepc-3.7.3 -DBLAS_LAPACK_LIBRARIES=/usr/local/lib/libopenblas.a -DENABLE_OS_SPECIFIC_INSTALL=1 ${EXTRA_OPTION} ..
     - make package -j 2
     - PKG=`ls gmsh-*.dmg`
-    - scp ${PKG} ace@ace36.montefiore.ulg.ac.be:/tmp
-    - ssh ace@ace36.montefiore.ulg.ac.be /Users/ace/re-sign.sh /tmp/${PKG}
-    - scp ace@ace36.montefiore.ulg.ac.be:/tmp/${PKG} .
-    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/MacOSX/${PKG}
+    - if [ -n "$PKG" ]; then scp ${PKG} ace@ace36.montefiore.ulg.ac.be:/tmp; fi
+    - if [ -n "$PKG" ]; then ssh ace@ace36.montefiore.ulg.ac.be /Users/ace/re-sign.sh /tmp/${PKG}; fi
+    - if [ -n "$PKG" ]; then scp ace@ace36.montefiore.ulg.ac.be:/tmp/${PKG} .; fi
+    - if [ -z "$PKG" ]; then PKG=`ls gmsh-*.tar*`; fi
+    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/MacOSX/${PKG/\.tar\.gz/\.tgz}
     - /usr/local/bin/ctest -D Experimental -j 2 --output-on-failure
 
 macos64_official_snapshot:
@@ -196,7 +198,7 @@ macos64_official_snapshot:
 
 macos64-dev_official_snapshot:
   variables:
-    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1"
+    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DDISABLE_GMSH_TESTS=1 -DENABLE_BUILD_DYNAMIC=1"
   <<: *macos_official
   tags:
     - macos64
@@ -226,7 +228,8 @@ macos64_official_release:
     - cd build_src
     - /usr/local/bin/cmake -DGMSH_EXTRA_VERSION=${EXTRA_VERSION:0:13} ${EXTRA_OPTION} ..
     - make package_source
-    - PKG=`ls gmsh-*.tar*`; scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/src/${PKG/\.tar\.gz/\.tgz}
+    - PKG=`ls gmsh-*.tar*`
+    - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/src/${PKG/\.tar\.gz/\.tgz}
 
 source_official_snapshot:
   <<: *source_official
