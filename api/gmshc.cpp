@@ -7,14 +7,7 @@ extern "C" {
     #include "gmshc.h"
 }
 #include "gmsh.h"
-#include <cstring>
-
-char * _strdup(const char *i) {
-  size_t len = strlen(i);
-  char *o = (char*)malloc(sizeof(char)*(len+1));
-  memcpy(o,i,len+1);
-  return o;
-}
+#include <string.h>
 
 template<typename t>
 std::vector<t> ptr2vector(const t *p,size_t size) {
@@ -50,7 +43,7 @@ void pairvector2intptr(const gmsh::vector_pair &v,int **p,size_t *size) {
 void stringvector2charpp(const std::vector<std::string> &v,char ***p,size_t *size) {
   *p = (char**)malloc(sizeof(char*)*(v.size()*2));
   for (size_t i = 0; i < v.size(); ++i){
-    (*p)[i] = _strdup(v[i].c_str());
+    (*p)[i] = strdup(v[i].c_str());
   }
   *size = v.size();
 }
@@ -152,7 +145,7 @@ void gmshOptionGetString(const char * name,char ** value,int * ierr){
   try {
   std::string api_value_;
   gmsh::option::getString(name,api_value_);
-  *value = _strdup(api_value_.c_str());
+  *value = strdup(api_value_.c_str());
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
@@ -234,7 +227,7 @@ void gmshModelGetPhysicalName(const int dim,const int tag,char ** name,int * ier
   try {
   std::string api_name_;
   gmsh::model::getPhysicalName(dim,tag,api_name_);
-  *name = _strdup(api_name_.c_str());
+  *name = strdup(api_name_.c_str());
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
@@ -364,7 +357,7 @@ void gmshModelMeshGetElementProperties(const int elementType,char ** elementName
   std::string api_elementName_;
   std::vector<double> api_parametricCoord_;
   gmsh::model::mesh::getElementProperties(elementType,api_elementName_,*dim,*order,*numNodes,api_parametricCoord_);
-  *elementName = _strdup(api_elementName_.c_str());
+  *elementName = strdup(api_elementName_.c_str());
   vector2ptr(api_parametricCoord_,parametricCoord,parametricCoord_n);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
@@ -1232,7 +1225,7 @@ void gmshViewGetModelData(const int tag,const int step,char ** dataType,int ** t
   std::vector<int> api_tags_;
   std::vector<std::vector<double> > api_data_;
   gmsh::view::getModelData(tag,step,api_dataType_,api_tags_,api_data_,*time,*numComponents);
-  *dataType = _strdup(api_dataType_.c_str());
+  *dataType = strdup(api_dataType_.c_str());
   vector2ptr(api_tags_,tags,tags_n);
   vectorvector2ptrptr(api_data_,data,data_n,data_nn);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
@@ -1328,7 +1321,7 @@ void gmshOnelabGet(char ** data,const char * format,int * ierr){
   try {
   std::string api_data_;
   gmsh::onelab::get(api_data_,format);
-  *data = _strdup(api_data_.c_str());
+  *data = strdup(api_data_.c_str());
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 

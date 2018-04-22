@@ -78,7 +78,7 @@ def ostring(name,value=None,python_value=None):
     a = arg(name,value,python_value,"std::string &","char **",True)
     a.c_arg = "api_"+name+"_"
     a.c_pre = "  std::string "+a.c_arg +";\n"
-    a.c_post = "  *"+name+" = _strdup("+a.c_arg+".c_str());\n"
+    a.c_post = "  *"+name+" = strdup("+a.c_arg+".c_str());\n"
     name_ = "api_"+name+"_"
     a.python_pre = name_+" = c_char_p()"
     a.python_arg = "byref("+name_+")"
@@ -351,14 +351,7 @@ extern \"C\" {
     #include "gmshc.h"
 }
 #include "gmsh.h"
-#include <cstring>
-
-char * _strdup(const char *i) {
-  size_t len = strlen(i);
-  char *o = (char*)malloc(sizeof(char)*(len+1));
-  memcpy(o,i,len+1);
-  return o;
-}
+#include <string.h>
 
 template<typename t>
 std::vector<t> ptr2vector(const t *p,size_t size) {
@@ -394,7 +387,7 @@ void pairvector2intptr(const gmsh::vector_pair &v,int **p,size_t *size) {
 void stringvector2charpp(const std::vector<std::string> &v,char ***p,size_t *size) {
   *p = (char**)malloc(sizeof(char*)*(v.size()*2));
   for (size_t i = 0; i < v.size(); ++i){
-    (*p)[i] = _strdup(v[i].c_str());
+    (*p)[i] = strdup(v[i].c_str());
   }
   *size = v.size();
 }
