@@ -296,8 +296,7 @@ namespace gmsh {
 
 """
 
-cpp_footer="""#undef GMSH_API
-
+cpp_footer="""
 #endif
 """
 
@@ -341,7 +340,6 @@ GMSH_API void gmshFree(void *p);
 """
 
 c_footer="""
-#undef GMSH_API
 
 #endif
 """
@@ -351,11 +349,12 @@ c_cpp_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
-extern \"C\" {
-    #include "gmshc.h"
-}
-#include "gmsh.h"
 #include <string.h>
+#include "gmsh.h"
+
+extern \"C\" {
+  #include "gmshc.h"
+}
 
 template<typename t>
 std::vector<t> ptr2vector(const t *p,size_t size) {
@@ -618,7 +617,7 @@ class API:
                 f.write(fnameapi
                         +(",\n" + ' ' * len(fnameapi)).join(list((a.c for a in args+(oint("ierr"),))))
                         + ");\n")
-                fc.write(rtype.rtype_c if rtype else "void")
+                fc.write("GMSH_API "+(rtype.rtype_c if rtype else "void"))
                 fc.write(" "+fname+"("
                     +",".join(list((a.c for a in args+(oint("ierr"),))))+"){\n")
                 if rtype:

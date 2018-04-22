@@ -1430,6 +1430,5 @@ GMSH_API void gmshOnelabRun(const char * name,
                             const char * command,
                             int * ierr);
 
-#undef GMSH_API
 
 #endif

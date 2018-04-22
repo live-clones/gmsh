@@ -1356,6 +1356,5 @@ namespace gmsh { // Top-level functions
 
 } // namespace gmsh
 
-#undef GMSH_API
 
 #endif
