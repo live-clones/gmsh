@@ -11,6 +11,6 @@ int main(int argc, char *argv[])
 #if defined(HAVE_FLTK)
   return GmshMainFLTK(argc, argv);
 #else
-  return GmshMain(argc, argv);
+  return GmshMainBatch(argc, argv);
 #endif
 }

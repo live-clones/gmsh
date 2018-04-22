@@ -455,7 +455,9 @@ int GmshMainFLTK(int argc, char **argv)
   // user-defined options)
   if(argc == 2 && std::string(argv[1]) == "-doc"){
     InitOptions(0);
+#if defined(HAVE_PLUGINS)
     PluginManager::instance()->registerDefaultPlugins();
+#endif
     PrintOptionsDoc();
     exit(0);
   }

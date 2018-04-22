@@ -273,8 +273,12 @@ cpp_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 #include <vector>
 #include <string>
 
+#if defined(GMSH_DLL)
 #if defined(GMSH_DLL_EXPORT)
 #define GMSH_API __declspec(dllexport)
+#else
+#define GMSH_API __declspec(dllimport)
+#endif
 #else
 #define GMSH_API
 #endif

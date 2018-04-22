@@ -53,7 +53,7 @@ int GmshFLTK(int argc = 0, char **argv = 0);
 // functions of the official stable API, so that we can also build the main Gmsh
 // binary directly from the DLL
 
-#if defined(WIN32)
+#if defined(GMSH_DLL)
 #if defined(GMSH_DLL_EXPORT)
 #define GMSH_API __declspec(dllexport)
 #else
