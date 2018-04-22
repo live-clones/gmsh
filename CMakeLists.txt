@@ -1472,9 +1472,9 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
     # FIXME: change this once we understand rpaths
     set(CMAKE_MACOSX_RPATH 0)
   endif(APPLE)
-  if(WIN32)
+  if(WIN32 OR CYGWIN)
     add_definitions(-DGMSH_DLL -DGMSH_DLL_EXPORT)
-  endif(WIN32)
+  endif(WIN32 OR CYGWIN)
   add_library(shared SHARED ${GMSH_SRC})
   set_target_properties(shared PROPERTIES OUTPUT_NAME gmsh
     VERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}
@@ -1486,9 +1486,9 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
     message(STATUS "Note: By enabling ENABLE_MSVC_STATIC_RUNTIME, shared library "
             "won't link. In MSVC change /MT to /MD in the shared project properties")
   endif(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
-  if(WIN32)
+  if(WIN32 OR CYGWIN)
     set_target_properties(shared PROPERTIES PREFIX "")
-  endif(WIN32)
+  endif(WIN32 OR CYGWIN)
   target_link_libraries(shared ${LINK_LIBRARIES})
 endif(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 
