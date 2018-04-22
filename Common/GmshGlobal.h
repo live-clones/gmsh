@@ -63,8 +63,10 @@ int GmshFLTK(int argc = 0, char **argv = 0);
 #define GMSH_API
 #endif
 
-GMSH_API int GmshMainBatch(int argc, char **argv);
-GMSH_API int GmshMainFLTK(int argc, char **argv);
+extern "C" {
+  GMSH_API int GmshMainBatch(int argc, char **argv);
+  GMSH_API int GmshMainFLTK(int argc, char **argv);
+}
 
 #undef GMSH_API
 
