@@ -80,7 +80,7 @@ windows64_msvc_ci:
     - scp -o StrictHostKeyChecking=no -i /home/gitlab-runner/.ssh/id_rsa ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
     - /usr/local/bin/ctest -D Experimental -j 1 --output-on-failure
 
-.linux64_official_snapshot:
+linux64_official_snapshot:
   <<: *linux_official
   tags:
     - linux64
@@ -102,13 +102,15 @@ linux64-dev_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1"
   <<: *linux_official
+  only:
+    - dll@gmsh/gmsh
   tags:
     - linux64
     - official
   except:
     - tags
 
-.linux32_official_snapshot:
+linux32_official_snapshot:
   <<: *linux_official
   tags:
     - linux32
@@ -130,6 +132,8 @@ linux32-dev_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1"
   <<: *linux_official
+  only:
+    - dll@gmsh/gmsh
   tags:
     - linux32
     - official
@@ -151,7 +155,7 @@ linux32-dev_official_snapshot:
     - bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
     - bash -c "/usr/bin/ctest -D Experimental -j 2 --output-on-failure"
 
-.windows64_official_snapshot:
+windows64_official_snapshot:
   <<: *windows_official
   tags:
     - windows64
@@ -173,13 +177,15 @@ windows64-dev_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1"
   <<: *windows_official
+  only:
+    - dll@gmsh/gmsh
   tags:
     - windows64
     - official
   except:
     - tags
 
-.windows32_official_snapshot:
+windows32_official_snapshot:
   <<: *windows_official
   tags:
     - windows32
@@ -202,6 +208,8 @@ windows32-dev_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1"
   <<: *windows_official
+  only:
+    - dll@gmsh/gmsh
   tags:
     - windows32
     - official
@@ -227,7 +235,7 @@ windows32-dev_official_snapshot:
     - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/MacOSX/${PKG/\.tar\.gz/\.tgz}
     - /usr/local/bin/ctest -D Experimental -j 2 --output-on-failure
 
-.macos64_official_snapshot:
+macos64_official_snapshot:
   <<: *macos_official
   tags:
     - macos64
@@ -249,6 +257,8 @@ macos64-dev_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1"
   <<: *macos_official
+  only:
+    - dll@gmsh/gmsh
   tags:
     - macos64
     - official
