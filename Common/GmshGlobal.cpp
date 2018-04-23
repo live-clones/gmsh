@@ -425,7 +425,7 @@ int GmshFLTK(int argc, char **argv)
 #endif
 }
 
-int GmshMainBatch(int argc, char **argv)
+GMSH_API int GmshMainBatch(int argc, char **argv)
 {
   if(argc < 2){
     CTX::instance()->terminal = 1;
@@ -446,7 +446,7 @@ int GmshMainBatch(int argc, char **argv)
   return 1;
 }
 
-int GmshMainFLTK(int argc, char **argv)
+GMSH_API int GmshMainFLTK(int argc, char **argv)
 {
   // Create a new model
   new GModel();

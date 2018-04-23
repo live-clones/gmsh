@@ -66,6 +66,4 @@ int GmshFLTK(int argc = 0, char **argv = 0);
 GMSH_API int GmshMainBatch(int argc, char **argv);
 GMSH_API int GmshMainFLTK(int argc, char **argv);
 
-#undef GMSH_API
-
 #endif
