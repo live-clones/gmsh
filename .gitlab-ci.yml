@@ -98,7 +98,7 @@ linux64_official_release:
   only:
     - /^gmsh_.*$/
 
-linux64-dev_official_snapshot:
+linux64-sdk_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1"
   <<: *linux_official
@@ -107,6 +107,17 @@ linux64-dev_official_snapshot:
     - official
   except:
     - tags
+
+linux64-sdk_official_release:
+  variables:
+    EXTRA_VERSION: ""
+    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1"
+  <<: *linux_official
+  tags:
+    - linux64
+    - official
+  only:
+    - /^gmsh_.*$/
 
 linux32_official_snapshot:
   <<: *linux_official
@@ -126,7 +137,7 @@ linux32_official_release:
   only:
     - /^gmsh_.*$/
 
-linux32-dev_official_snapshot:
+linux32-sdk_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1"
   <<: *linux_official
@@ -135,6 +146,17 @@ linux32-dev_official_snapshot:
     - official
   except:
     - tags
+
+linux32-sdk_official_release:
+  variables:
+    EXTRA_VERSION: ""
+    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1"
+  <<: *linux_official
+  tags:
+    - linux32
+    - official
+  only:
+    - /^gmsh_.*$/
 
 # --------------------------------------------
 # Official Windows builds (master branch only)
@@ -169,7 +191,7 @@ windows64_official_release:
   only:
     - /^gmsh_.*$/
 
-windows64-dev_official_snapshot:
+windows64-sdk_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1"
   <<: *windows_official
@@ -179,6 +201,17 @@ windows64-dev_official_snapshot:
   except:
     - tags
 
+windows64-sdk_official_release:
+  variables:
+    EXTRA_VERSION: ""
+    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1"
+  <<: *windows_official
+  tags:
+    - windows64
+    - official
+  only:
+    - /^gmsh_.*$/
+
 windows32_official_snapshot:
   <<: *windows_official
   tags:
@@ -186,7 +219,6 @@ windows32_official_snapshot:
     - official
   except:
     - tags
-  allow_failure: true
 
 windows32_official_release:
   variables:
@@ -198,7 +230,7 @@ windows32_official_release:
   only:
     - /^gmsh_.*$/
 
-windows32-dev_official_snapshot:
+windows32-sdk_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1"
   <<: *windows_official
@@ -207,6 +239,17 @@ windows32-dev_official_snapshot:
     - official
   except:
     - tags
+
+windows32-sdk_official_release:
+  variables:
+    EXTRA_VERSION: ""
+    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1"
+  <<: *windows_official
+  tags:
+    - windows32
+    - official
+  only:
+    - /^gmsh_.*$/
 
 # ------------------------------------------
 # Official MacOS builds (master branch only)
@@ -245,7 +288,7 @@ macos64_official_release:
   only:
     - /^gmsh_.*$/
 
-macos64-dev_official_snapshot:
+macos64-sdk_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1"
   <<: *macos_official
@@ -254,6 +297,17 @@ macos64-dev_official_snapshot:
     - official
   except:
     - tags
+
+macos64-sdk_official_release:
+  variables:
+    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1"
+    EXTRA_VERSION: ""
+  <<: *macos_official
+  tags:
+    - macos64
+    - official
+  only:
+    - /^gmsh_.*$/
 
 # ----------------------------------------------
 # Official source snapshots (master branch only)
