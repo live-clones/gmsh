@@ -100,7 +100,7 @@ linux64_official_release:
 
 linux64-sdk_official_snapshot:
   variables:
-    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1"
+    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
   tags:
     - linux64
@@ -111,7 +111,7 @@ linux64-sdk_official_snapshot:
 linux64-sdk_official_release:
   variables:
     EXTRA_VERSION: ""
-    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1"
+    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
   tags:
     - linux64
@@ -139,7 +139,7 @@ linux32_official_release:
 
 linux32-sdk_official_snapshot:
   variables:
-    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1"
+    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
   tags:
     - linux32
@@ -150,7 +150,7 @@ linux32-sdk_official_snapshot:
 linux32-sdk_official_release:
   variables:
     EXTRA_VERSION: ""
-    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1"
+    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
   tags:
     - linux32
@@ -193,7 +193,7 @@ windows64_official_release:
 
 windows64-sdk_official_snapshot:
   variables:
-    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1"
+    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *windows_official
   tags:
     - windows64
@@ -204,7 +204,7 @@ windows64-sdk_official_snapshot:
 windows64-sdk_official_release:
   variables:
     EXTRA_VERSION: ""
-    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1"
+    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *windows_official
   tags:
     - windows64
@@ -232,7 +232,7 @@ windows32_official_release:
 
 windows32-sdk_official_snapshot:
   variables:
-    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1"
+    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *windows_official
   tags:
     - windows32
@@ -243,7 +243,7 @@ windows32-sdk_official_snapshot:
 windows32-sdk_official_release:
   variables:
     EXTRA_VERSION: ""
-    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1"
+    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *windows_official
   tags:
     - windows32
@@ -290,7 +290,7 @@ macos64_official_release:
 
 macos64-sdk_official_snapshot:
   variables:
-    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1"
+    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *macos_official
   tags:
     - macos64
@@ -300,7 +300,7 @@ macos64-sdk_official_snapshot:
 
 macos64-sdk_official_release:
   variables:
-    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1"
+    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
     EXTRA_VERSION: ""
   <<: *macos_official
   tags:
