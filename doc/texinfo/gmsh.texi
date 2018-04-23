@@ -5391,7 +5391,7 @@ post-processing data sets, or to change parameters according to
 @code{Print.Parameter}. To create fully customized animations or to use
 different output formats (AVI, MP4, etc.) you should write a
 script. Have a look at @ref{t8.geo} or
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/anim.script,demos/anim.script}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/post_processing/anim.script,demos/post_processing/anim.script}
 for some examples.
 
 @item Can I change values in input fields with the mouse in the GUI?
@@ -5544,7 +5544,7 @@ panel. From the command line, you can also use @code{-order 2}.
 
 Yes, you can import a surface mesh in any one of the supported mesh file
 formats, define a volume, and mesh it. For an example see
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/sphere-discrete.geo,demos/sphere-discrete.geo}.
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/simple_geo/sphere-discrete.geo,demos/simple_geo/sphere-discrete.geo}.
 
 @item How do I define boundary conditions or material properties in Gmsh?
 
@@ -5705,7 +5705,7 @@ Evaluate plugin.
 You can save simple MPEG animations directly from the `File->Export'
 menu. For other formats you should write a script. Have a look at
 @ref{t8.geo} or
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/anim.script,demos/anim.script}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/post_processing/anim.script,demos/post_processing/anim.script}
 for some examples.
 
 @item Is there a way to visualize only certain components of vector/tensor fields?
