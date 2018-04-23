@@ -1476,9 +1476,9 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
     add_definitions(-DGMSH_DLL)
   endif(WIN32 OR CYGWIN)
   add_library(shared SHARED ${GMSH_SRC})
-  set_target_properties(shared PROPERTIES OUTPUT_NAME gmsh
-    VERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}
-    SOVERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
+  set_target_properties(shared PROPERTIES OUTPUT_NAME gmsh)
+  set_target_properties(shared PROPERTIES VERSION
+                        ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
   if(HAVE_LAPACK AND LAPACK_FLAGS)
     set_target_properties(shared PROPERTIES LINK_FLAGS ${LAPACK_FLAGS})
   endif(HAVE_LAPACK AND LAPACK_FLAGS)
@@ -1526,18 +1526,16 @@ if(WIN32 AND NOT MSVC OR CYGWIN)
   endif(HAVE_64BIT_SIZE_T)
   if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
     set(FLAGS "${FLAGS} -Wl,-Bstatic -lgfortran")
-    set_target_properties(gmsh PROPERTIES
-      LINK_FLAGS "${FLAGS} -Wl,--enable-auto-import")
+    set_target_properties(gmsh PROPERTIES LINK_FLAGS
+                          "${FLAGS} -Wl,--enable-auto-import")
   else(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
-    set_target_properties(gmsh PROPERTIES
-      LINK_FLAGS "${FLAGS} -static")
+    set_target_properties(gmsh PROPERTIES LINK_FLAGS "${FLAGS} -static")
     # remove -Wl,-Bdynamic flags
     set(CMAKE_EXE_LINK_DYNAMIC_C_FLAGS)
     set(CMAKE_EXE_LINK_DYNAMIC_CXX_FLAGS)
   endif(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
 elseif(MSVC)
-  set_target_properties(gmsh PROPERTIES LINK_FLAGS
-    "/STACK:16777216 /SAFESEH:NO")
+  set_target_properties(gmsh PROPERTIES LINK_FLAGS "/STACK:16777216 /SAFESEH:NO")
 endif(WIN32 AND NOT MSVC OR CYGWIN)
 
 # android target
