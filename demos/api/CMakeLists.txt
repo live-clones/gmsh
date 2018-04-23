@@ -43,11 +43,9 @@ foreach(DEMO ${DEMOS})
   target_link_libraries(${DEMONAME} ${GMSH_LIB} ${EXTRA_LIBS})
 endforeach(DEMO)
 
-find_library(GMSHC_LIB gmshc)
-
 file(GLOB DEMOS *.c)
 foreach(DEMO ${DEMOS})
   get_filename_component(DEMONAME ${DEMO} NAME_WE)
   add_executable(${DEMONAME}c ${DEMO})
-  target_link_libraries(${DEMONAME}c ${GMSHC_LIB} ${GMSH_LIB} ${EXTRA_LIBS})
+  target_link_libraries(${DEMONAME}c ${GMSH_LIB} ${EXTRA_LIBS})
 endforeach(DEMO)
