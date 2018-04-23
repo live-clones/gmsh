@@ -451,7 +451,7 @@ from math import pi
 signal.signal(signal.SIGINT,signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == 'Windows':
-    lib = CDLL(libdir+"/gmsh-3.0.dll")
+    lib = CDLL(libdir+"/gmsh-{0}.dll")
 elif platform.system() == 'Darwin':
     lib = CDLL(libdir+"/libgmsh.dylib")
 else:
@@ -572,7 +572,8 @@ def _iargcargv(o) :
 
 class API:
 
-    def __init__(self):
+    def __init__(self,version):
+        self.api_version = version
         self.modules = []
 
     def add_module(self,name,doc):
@@ -701,7 +702,7 @@ class API:
                 f.write(indentm+'"""\n')
                 write_module(f,module,modulepath,indentm)
         with open("gmsh.py","w") as f :
-            f.write(python_header)
+            f.write(python_header.format(self.api_version))
             for module in self.modules:
                 write_module(f,module,"","")
 
