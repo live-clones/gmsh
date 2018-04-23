@@ -14,18 +14,21 @@ typedef unsigned long intptr_t;
 #include "GmshVersion.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
+#include "GmshGlobal.h"
 #include "GmshRemote.h"
 #include "GModel.h"
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "Options.h"
-#if defined(HAVE_PARSER)
-#include "Parser.h"
-#endif
 #include "CommandLine.h"
 #include "OS.h"
 #include "Context.h"
 #include "robustPredicates.h"
+
+#if defined(HAVE_PARSER)
+#include "Parser.h"
+#endif
+
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
