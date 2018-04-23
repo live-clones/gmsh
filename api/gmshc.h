@@ -18,7 +18,7 @@
  * `gmsh/api/gen.py': see `gmsh.h' and `gmsh.py'.
  *
  * See `gmsh/demos/api' for examples on how to use the Gmsh API. In particular,
- * this directory contains C++ and Python versions of several of the `.geo'
+ * `gmsh/demos/api' contains C++ and Python versions of several of the `.geo'
  * tutorials from `gmsh/tutorials'.
  */
 
@@ -1429,6 +1429,5 @@ GMSH_API void gmshOnelabSet(const char * data,
 GMSH_API void gmshOnelabRun(const char * name,
                             const char * command,
                             int * ierr);
-
 
 #endif
