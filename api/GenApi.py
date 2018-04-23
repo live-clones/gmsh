@@ -451,7 +451,7 @@ from math import pi
 signal.signal(signal.SIGINT,signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == 'Windows':
-    lib = CDLL(libdir+"/gmsh.dll")
+    lib = CDLL(libdir+"/gmsh-3.0.dll")
 elif platform.system() == 'Darwin':
     lib = CDLL(libdir+"/libgmsh.dylib")
 else:
