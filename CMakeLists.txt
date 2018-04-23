@@ -363,7 +363,7 @@ if(ENABLE_BLAS_LAPACK)
       endif(LAPACK_LIBRARIES)
     elseif(${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
       # on SunOS we know blas and lapack are available in sunperf
-      set(LAPACK_FLAGS -library=sunperf)
+      set(LAPACK_LIBRARIES -library=sunperf)
       set_config_option(HAVE_BLAS "Blas(SunPerf)")
       set_config_option(HAVE_LAPACK "Lapack(SunPerf)")
     elseif(APPLE)
@@ -1481,18 +1481,15 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
                         ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION})
   set_target_properties(shared PROPERTIES SOVERSION
                         ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
-  if(HAVE_LAPACK AND LAPACK_FLAGS)
-    set_target_properties(shared PROPERTIES LINK_FLAGS ${LAPACK_FLAGS})
-  endif(HAVE_LAPACK AND LAPACK_FLAGS)
-  if(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
-    message(STATUS "Note: By enabling ENABLE_MSVC_STATIC_RUNTIME, shared library "
-            "won't link. In MSVC change /MT to /MD in the shared project properties")
-  endif(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
   if(WIN32 OR CYGWIN)
     set_target_properties(shared PROPERTIES PREFIX "")
     set_target_properties(shared PROPERTIES COMPILE_FLAGS -DGMSH_DLL_EXPORT)
   endif(WIN32 OR CYGWIN)
   target_link_libraries(shared ${LINK_LIBRARIES})
+  if(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
+    message(STATUS "Note: By enabling ENABLE_MSVC_STATIC_RUNTIME, shared library "
+            "won't link. In MSVC change /MT to /MD in the shared project properties")
+  endif(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
 endif(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
 
 # binary targets
