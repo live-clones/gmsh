@@ -168,7 +168,7 @@ doc = '''Gets the integration data for mesh elements in the same way as `getInte
 mesh.add('getIntegrationDataByType',doc,None,iint('elementType'),istring('integrationType'),istring('functionSpaceType'),ovectordouble('integrationPoints'),ovectordouble('integrationData'),oint('functionSpaceNumComponents'),ovectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))
 
 doc = '''Gets the Jacobian data for mesh elements in the same way as `getJacobianData', but for a single `elementType'.'''
-mesh.add('getJacobianDataByType',doc,None,iint('elementType'),istring('integrationType'),oint('nbrIntegrationPoints'),ovectordouble('jacobian'),ovectordouble('determinant'),iint('dim', '-1'),iint('tag', '-1'))
+mesh.add('getJacobianDataByType',doc,None,iint('elementType'),istring('integrationType'),oint('nbrIntegrationPoints'),ovectordouble('jacobian'),ovectordouble('determinant'),iint('dim', '-1'),iint('tag', '-1'),iint('myThread', '0'),iint('nbrThreads', '1'))
 
 doc = '''Gets the function space data for mesh elements in the same way as `getFunctionSpaceData', but for a single `elementType'.'''
 mesh.add('getFunctionSpaceDataByType',doc,None,iint('elementType'),istring('integrationType'),istring('functionSpaceType'),ovectordouble('integrationPoints'),oint('functionSpaceNumComponents'),ovectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))
@@ -214,6 +214,9 @@ mesh.add('embed',doc,None,iint('dim'),ivectorint('tags'),iint('inDim'),iint('inT
 
 doc = '''Gets the number of intergation points corresponding to 'elementType' and 'integrationType'.'''
 mesh.add('getNumberIntegrationPoints',doc,oint,iint('elementType'),istring('integrationType'))
+
+doc = '''Precomputes the basic function corresponding to 'elementType'.'''
+mesh.add('precomputeBasicFunction',doc,None,iint('elementType'))
 
 ################################################################################
 
@@ -555,22 +558,6 @@ doc = '''Runs a onelab client. If no name is given, attemps to run a client that
 onelab.add('run',doc,None,istring('name', '""'),istring('command', '""'))
 
 ################################################################################
-
-parallel = gmsh.add_module('parallel','Function build to work in parallel')
-
-# P ############################################################################
-
-p_model = parallel.add_module('model','Per-model functions')
-
-# P ############################################################################
-
-p_mesh = p_model.add_module('mesh','Per-model meshing functions')
-
-doc = '''Gets the Jacobian data for mesh elements in the same way as `getJacobianData', but for a single `elementType'.'''
-p_mesh.add('getJacobianDataByType',doc,None,iint('elementType'),istring('integrationType'),oint('nbrIntegrationPoints'),ovectordouble('jacobian'),ovectordouble('determinant'),iint('dim', '-1'),iint('tag', '-1'), iint('myThread', '0'), iint('nbrThreads', '1'))
-
-doc = '''Precomputes the basic function corresponding to 'elementType'.'''
-p_mesh.add('precomputeBasicFunction',doc,None,iint('elementType'))
 
 
 

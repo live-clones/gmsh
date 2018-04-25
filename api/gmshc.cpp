@@ -455,12 +455,12 @@ void gmshModelMeshGetIntegrationDataByType(const int elementType,const char * in
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
-void gmshModelMeshGetJacobianDataByType(const int elementType,const char * integrationType,int * nbrIntegrationPoints,double ** jacobian, size_t * jacobian_n,double ** determinant, size_t * determinant_n,const int dim,const int tag,int * ierr){
+void gmshModelMeshGetJacobianDataByType(const int elementType,const char * integrationType,int * nbrIntegrationPoints,double ** jacobian, size_t * jacobian_n,double ** determinant, size_t * determinant_n,const int dim,const int tag,const int myThread,const int nbrThreads,int * ierr){
   if(ierr) *ierr = 0;
   try {
   std::vector<double> api_jacobian_;
   std::vector<double> api_determinant_;
-  gmsh::model::mesh::getJacobianDataByType(elementType,integrationType,*nbrIntegrationPoints,api_jacobian_,api_determinant_,dim,tag);
+  gmsh::model::mesh::getJacobianDataByType(elementType,integrationType,*nbrIntegrationPoints,api_jacobian_,api_determinant_,dim,tag,myThread,nbrThreads);
   vector2ptr(api_jacobian_,jacobian,jacobian_n);
   vector2ptr(api_determinant_,determinant,determinant_n);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
@@ -581,6 +581,13 @@ int gmshModelMeshGetNumberIntegrationPoints(const int elementType,const char * i
   result_api_ = gmsh::model::mesh::getNumberIntegrationPoints(elementType,integrationType);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
   return result_api_;
+}
+
+void gmshModelMeshPrecomputeBasicFunction(const int elementType,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  gmsh::model::mesh::precomputeBasicFunction(elementType);
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
 int gmshModelMeshFieldAdd(const char * type,const int tag,int * ierr){
@@ -1414,24 +1421,6 @@ void gmshOnelabRun(const char * name,const char * command,int * ierr){
   if(ierr) *ierr = 0;
   try {
   gmsh::onelab::run(name,command);
-  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
-}
-
-void gmshParallelModelMeshGetJacobianDataByType(const int elementType,const char * integrationType,int * nbrIntegrationPoints,double ** jacobian, size_t * jacobian_n,double ** determinant, size_t * determinant_n,const int dim,const int tag,const int myThread,const int nbrThreads,int * ierr){
-  if(ierr) *ierr = 0;
-  try {
-  std::vector<double> api_jacobian_;
-  std::vector<double> api_determinant_;
-  gmsh::parallel::model::mesh::getJacobianDataByType(elementType,integrationType,*nbrIntegrationPoints,api_jacobian_,api_determinant_,dim,tag,myThread,nbrThreads);
-  vector2ptr(api_jacobian_,jacobian,jacobian_n);
-  vector2ptr(api_determinant_,determinant,determinant_n);
-  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
-}
-
-void gmshParallelModelMeshPrecomputeBasicFunction(const int elementType,int * ierr){
-  if(ierr) *ierr = 0;
-  try {
-  gmsh::parallel::model::mesh::precomputeBasicFunction(elementType);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 

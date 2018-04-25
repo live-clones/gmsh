@@ -1084,7 +1084,7 @@ class model:
                 _ovectordouble(api_functionSpaceData_,api_functionSpaceData_n_.value))
 
         @staticmethod
-        def getJacobianDataByType(elementType,integrationType,dim=-1,tag=-1):
+        def getJacobianDataByType(elementType,integrationType,dim=-1,tag=-1,myThread=0,nbrThreads=1):
             """
             Gets the Jacobian data for mesh elements in the same way as
             `getJacobianData', but for a single `elementType'.
@@ -1103,6 +1103,8 @@ class model:
                 byref(api_determinant_),byref(api_determinant_n_),
                 c_int(dim),
                 c_int(tag),
+                c_int(myThread),
+                c_int(nbrThreads),
                 byref(ierr))
             if ierr.value != 0 :
                 raise ValueError(
@@ -1442,6 +1444,20 @@ class model:
                     "gmshModelMeshGetNumberIntegrationPoints returned non-zero error code : ",
                     ierr.value)
             return api__result__
+
+        @staticmethod
+        def precomputeBasicFunction(elementType):
+            """
+            Precomputes the basic function corresponding to 'elementType'.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshPrecomputeBasicFunction(
+                c_int(elementType),
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshPrecomputeBasicFunction returned non-zero error code : ",
+                    ierr.value)
 
 
         class field:
@@ -3760,67 +3776,3 @@ class onelab:
             raise ValueError(
                 "gmshOnelabRun returned non-zero error code : ",
                 ierr.value)
-
-
-class parallel:
-    """
-    Function build to work in parallel
-    """
-
-
-    class model:
-        """
-        Per-model functions
-        """
-
-
-        class mesh:
-            """
-            Per-model meshing functions
-            """
-
-            @staticmethod
-            def getJacobianDataByType(elementType,integrationType,dim=-1,tag=-1,myThread=0,nbrThreads=1):
-                """
-                Gets the Jacobian data for mesh elements in the same way as
-                `getJacobianData', but for a single `elementType'.
-
-                return nbrIntegrationPoints, jacobian, determinant
-                """
-                api_nbrIntegrationPoints_ = c_int()
-                api_jacobian_, api_jacobian_n_ = POINTER(c_double)(), c_size_t()
-                api_determinant_, api_determinant_n_ = POINTER(c_double)(), c_size_t()
-                ierr = c_int()
-                lib.gmshParallelModelMeshGetJacobianDataByType(
-                    c_int(elementType),
-                    c_char_p(integrationType.encode()),
-                    byref(api_nbrIntegrationPoints_),
-                    byref(api_jacobian_),byref(api_jacobian_n_),
-                    byref(api_determinant_),byref(api_determinant_n_),
-                    c_int(dim),
-                    c_int(tag),
-                    c_int(myThread),
-                    c_int(nbrThreads),
-                    byref(ierr))
-                if ierr.value != 0 :
-                    raise ValueError(
-                        "gmshParallelModelMeshGetJacobianDataByType returned non-zero error code : ",
-                        ierr.value)
-                return (
-                    api_nbrIntegrationPoints_.value,
-                    _ovectordouble(api_jacobian_,api_jacobian_n_.value),
-                    _ovectordouble(api_determinant_,api_determinant_n_.value))
-
-            @staticmethod
-            def precomputeBasicFunction(elementType):
-                """
-                Precomputes the basic function corresponding to 'elementType'.
-                """
-                ierr = c_int()
-                lib.gmshParallelModelMeshPrecomputeBasicFunction(
-                    c_int(elementType),
-                    byref(ierr))
-                if ierr.value != 0 :
-                    raise ValueError(
-                        "gmshParallelModelMeshPrecomputeBasicFunction returned non-zero error code : ",
-                        ierr.value)

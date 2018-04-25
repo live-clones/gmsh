@@ -364,7 +364,9 @@ namespace gmsh { // Top-level functions
                                           std::vector<double> & jacobian,
                                           std::vector<double> & determinant,
                                           const int dim = -1,
-                                          const int tag = -1);
+                                          const int tag = -1,
+                                          const int myThread = 0,
+                                          const int nbrThreads = 1);
 
       // Gets the function space data for mesh elements in the same way as
       // `getFunctionSpaceData', but for a single `elementType'.
@@ -495,6 +497,9 @@ namespace gmsh { // Top-level functions
       // 'integrationType'.
       GMSH_API int getNumberIntegrationPoints(const int elementType,
                                               const std::string & integrationType);
+
+      // Precomputes the basic function corresponding to 'elementType'.
+      GMSH_API void precomputeBasicFunction(const int elementType);
 
       namespace field { // Per-model mesh size field functions
 
@@ -1419,33 +1424,6 @@ namespace gmsh { // Top-level functions
                       const std::string & command = "");
 
   } // namespace onelab
-
-  namespace parallel { // Function build to work in parallel
-
-    namespace model { // Per-model functions
-
-      namespace mesh { // Per-model meshing functions
-
-        // Gets the Jacobian data for mesh elements in the same way as
-        // `getJacobianData', but for a single `elementType'.
-        GMSH_API void getJacobianDataByType(const int elementType,
-                                            const std::string & integrationType,
-                                            int & nbrIntegrationPoints,
-                                            std::vector<double> & jacobian,
-                                            std::vector<double> & determinant,
-                                            const int dim = -1,
-                                            const int tag = -1,
-                                            const int myThread = 0,
-                                            const int nbrThreads = 1);
-
-        // Precomputes the basic function corresponding to 'elementType'.
-        GMSH_API void precomputeBasicFunction(const int elementType);
-
-      } // namespace mesh
-
-    } // namespace model
-
-  } // namespace parallel
 
 } // namespace gmsh
 

@@ -384,6 +384,8 @@ GMSH_API void gmshModelMeshGetJacobianDataByType(const int elementType,
                                                  double ** determinant, size_t * determinant_n,
                                                  const int dim,
                                                  const int tag,
+                                                 const int myThread,
+                                                 const int nbrThreads,
                                                  int * ierr);
 
 /* Gets the function space data for mesh elements in the same way as
@@ -529,6 +531,10 @@ GMSH_API void gmshModelMeshEmbed(const int dim,
 GMSH_API int gmshModelMeshGetNumberIntegrationPoints(const int elementType,
                                                      const char * integrationType,
                                                      int * ierr);
+
+/* Precomputes the basic function corresponding to 'elementType'. */
+GMSH_API void gmshModelMeshPrecomputeBasicFunction(const int elementType,
+                                                   int * ierr);
 
 /* Adds a new mesh size field of type `type'. If `tag' is positive, assign the
  * tag explcitly; otherwise a new tag is assigned automatically. Returns the
@@ -1499,23 +1505,6 @@ GMSH_API void gmshOnelabSet(const char * data,
 GMSH_API void gmshOnelabRun(const char * name,
                             const char * command,
                             int * ierr);
-
-/* Gets the Jacobian data for mesh elements in the same way as
- * `getJacobianData', but for a single `elementType'. */
-GMSH_API void gmshParallelModelMeshGetJacobianDataByType(const int elementType,
-                                                         const char * integrationType,
-                                                         int * nbrIntegrationPoints,
-                                                         double ** jacobian, size_t * jacobian_n,
-                                                         double ** determinant, size_t * determinant_n,
-                                                         const int dim,
-                                                         const int tag,
-                                                         const int myThread,
-                                                         const int nbrThreads,
-                                                         int * ierr);
-
-/* Precomputes the basic function corresponding to 'elementType'. */
-GMSH_API void gmshParallelModelMeshPrecomputeBasicFunction(const int elementType,
-                                                           int * ierr);
 
 #undef GMSH_API
 
