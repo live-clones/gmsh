@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 
-# TODO: Gmsh will should create a cmake file when installing the lib, so all the
+# TODO: Gmsh should create a cmake file when installing the lib, so all the
 # external dependencies can be obtained automatically
 
 set(CMAKE_CXX_STANDARD 11)
@@ -15,7 +15,7 @@ if(NOT GMSH_INC)
   message(FATAL_ERROR "Could not find gmsh.h")
 endif(NOT GMSH_INC)
 
-if(GMSH_LIB MATCHES ".a")
+if(GMSH_LIB MATCHES ".a") # FIXME - generalize this
   find_library(BLAS_LIB blas)
   if(BLAS_LIB)
     list(APPEND EXTRA_LIBS ${BLAS_LIB})
@@ -43,11 +43,9 @@ foreach(DEMO ${DEMOS})
   target_link_libraries(${DEMONAME} ${GMSH_LIB} ${EXTRA_LIBS})
 endforeach(DEMO)
 
-find_library(GMSHC_LIB gmshc)
-
 file(GLOB DEMOS *.c)
 foreach(DEMO ${DEMOS})
   get_filename_component(DEMONAME ${DEMO} NAME_WE)
   add_executable(${DEMONAME}c ${DEMO})
-  target_link_libraries(${DEMONAME}c ${GMSHC_LIB} ${GMSH_LIB} ${EXTRA_LIBS})
+  target_link_libraries(${DEMONAME}c ${GMSH_LIB} ${EXTRA_LIBS})
 endforeach(DEMO)

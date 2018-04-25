@@ -534,6 +534,7 @@ void meshGEdge::operator() (GEdge *ge)
 {
   ge->model()->setCurrentMeshEntity(ge);
 
+  if (ge->degenerate(1)) return;
   // if(ge->geomType() == GEntity::DiscreteCurve) return;
   if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
   if(ge->meshAttributes.method == MESH_NONE) return;

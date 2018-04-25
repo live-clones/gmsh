@@ -32,6 +32,8 @@ Enable Cairo to render fonts (experimental) (default: ON)
 Enable compressed (gzip) input/output using zlib (default: OFF)
 @item ENABLE_CXX11
 Enable C++11 (default: ON)
+@item ENABLE_C99
+Enable C99 (default: ON)
 @item ENABLE_DINTEGRATION
 Enable discrete integration (needed for levelsets) (default: ON)
 @item ENABLE_FLTK
@@ -46,8 +48,8 @@ Enable GMM linear solvers (simple alternative to PETSc) (default: ON)
 Enable GMP for Kbipack (advanced) (default: ON)
 @item ENABLE_GRAPHICS
 Enable building graphics lib even without GUI (advanced) (default: OFF)
-@item ENABLE_INTERNAL_DEVELOPER_API
-Enable internal developer API (default: OFF)
+@item ENABLE_HXT
+Enable HXT library (default: ON)
 @item ENABLE_KBIPACK
 Enable Kbipack (neeeded by homology solver) (default: ON)
 @item ENABLE_MATHEX
@@ -102,8 +104,8 @@ Enable post-processing plugins (default: ON)
 Enable post-processing module (required by GUI) (default: ON)
 @item ENABLE_POPPLER
 Enable Poppler for displaying PDF documents (experimental) (default: OFF)
-@item ENABLE_QT
-Enable dummy QT graphical interface proof-of-concept (experimental) (default: OFF)
+@item ENABLE_PRIVATE_API
+Enable private API (default: OFF)
 @item ENABLE_REVOROPT
 Enable Revoropt (used for CVT remeshing) (default: OFF)
 @item ENABLE_SLEPC
@@ -119,8 +121,8 @@ Enable additional visualization capabilities for development purpose (default: O
 @item ENABLE_VOROPP
 Enable voro++ (for hex meshing, experimental) (default: ON)
 @item ENABLE_WRAP_JAVA
-Enable generation of Java wrappers for internal developer API (default: OFF)
+Enable generation of Java wrappers for private API (default: OFF)
 @item ENABLE_WRAP_PYTHON
-Enable generation of Python wrappers for internal developer API (default: OFF)
+Enable generation of Python wrappers for private API (default: OFF)
 @item ENABLE_ZIPPER
 Enable Zip file compression/decompression (default: OFF)
