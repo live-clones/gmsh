@@ -1240,7 +1240,7 @@ class model:
         @staticmethod
         def embed(dim,tags,inDim,inTag):
             """
-            Emebds the geometrical entities of dimension `dim' and tags `tags' in the
+            Embeds the geometrical entities of dimension `dim' and tags `tags' in the
             (inDim, inTag) geometrical entity. `inDim' must be strictly greater than
             `dim'.
             """
@@ -1255,6 +1255,29 @@ class model:
             if ierr.value != 0 :
                 raise ValueError(
                     "gmshModelMeshEmbed returned non-zero error code : ",
+                    ierr.value)
+
+        @staticmethod
+        def setPeriodic(dim,tag,tagSource,affineTransformation):
+            """
+            Sets the meshes of the entities of dimension `dim' and tag `tags' as
+            periodic copies of the meshes of entities `tagsSource', using the affine
+            transformation specified in `affineTransformation' (16 entries of a 4x4
+            matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.
+            """
+            api_tag_, api_tag_n_ = _ivectorint(tag)
+            api_tagSource_, api_tagSource_n_ = _ivectorint(tagSource)
+            api_affineTransformation_, api_affineTransformation_n_ = _ivectordouble(affineTransformation)
+            ierr = c_int()
+            lib.gmshModelMeshSetPeriodic(
+                c_int(dim),
+                api_tag_, api_tag_n_,
+                api_tagSource_, api_tagSource_n_,
+                api_affineTransformation_, api_affineTransformation_n_,
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshSetPeriodic returned non-zero error code : ",
                     ierr.value)
 
 

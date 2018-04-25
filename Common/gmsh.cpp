@@ -863,13 +863,13 @@ GMSH_API void gmsh::model::mesh::setNodes(const int dim,
     throw 2;
   }
   if(coord.size() != 3 * nodeTags.size()){
-    Msg::Error("Wrong number of coord");
+    Msg::Error("Wrong number of coordinates");
     throw 2;
   }
   bool param = false;
   if(parametricCoord.size()){
     if(parametricCoord.size() != dim * nodeTags.size()){
-      Msg::Error("Wrong number of parametric coord");
+      Msg::Error("Wrong number of parametric coordinates");
       throw 2;
     }
     param = true;
@@ -1238,6 +1238,51 @@ GMSH_API void gmsh::model::mesh::embed(const int dim,
         }
         gr->addEmbeddedFace(gf);
       }
+    }
+  }
+}
+
+GMSH_API void gmsh::model::mesh::setPeriodic(const int dim,
+                                             const std::vector<int> &tags,
+                                             const std::vector<int> &tagsSource,
+                                             const std::vector<double> &affineTransform)
+{
+  if(!_isInitialized()){ throw -1; }
+  if(tags.size() != tagsSource.size()){
+    Msg::Error("Incompatible number of tags and source tags for periodic mesh");
+    throw 2;
+  }
+  if(affineTransform.size() != 16){
+    Msg::Error("Wrong number of elements in affine transformation (%d != 16)",
+               (int)affineTransform.size());
+    throw 2;
+  }
+  for(unsigned int i = 0; i < tags.size(); i++){
+    if(dim == 1){
+      GEdge *target = GModel::current()->getEdgeByTag(tags[i]);
+      if(!target){
+        Msg::Error("%s does not exist", _getEntityName(dim, tags[i]).c_str());
+        throw 2;
+      }
+      GEdge *source = GModel::current()->getEdgeByTag(tagsSource[i]);
+      if(!source){
+        Msg::Error("%s does not exist", _getEntityName(dim, tagsSource[i]).c_str());
+        throw 2;
+      }
+      target->setMeshMaster(source, affineTransform);
+    }
+    else if(dim == 2){
+      GFace *target = GModel::current()->getFaceByTag(tags[i]);
+      if(!target){
+        Msg::Error("%s does not exist", _getEntityName(dim, tags[i]).c_str());
+        throw 2;
+      }
+      GFace *source = GModel::current()->getFaceByTag(tagsSource[i]);
+      if(!source){
+        Msg::Error("%s does not exist", _getEntityName(dim, tagsSource[i]).c_str());
+        throw 2;
+      }
+      target->setMeshMaster(source, affineTransform);
     }
   }
 }

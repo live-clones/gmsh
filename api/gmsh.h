@@ -422,13 +422,22 @@ namespace gmsh { // Top-level functions
                                const int tag,
                                const bool val = true);
 
-      // Emebds the geometrical entities of dimension `dim' and tags `tags' in the
+      // Embeds the geometrical entities of dimension `dim' and tags `tags' in the
       // (inDim, inTag) geometrical entity. `inDim' must be strictly greater than
       // `dim'.
       GMSH_API void embed(const int dim,
                           const std::vector<int> & tags,
                           const int inDim,
                           const int inTag);
+
+      // Sets the meshes of the entities of dimension `dim' and tag `tags' as
+      // periodic copies of the meshes of entities `tagsSource', using the affine
+      // transformation specified in `affineTransformation' (16 entries of a 4x4
+      // matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.
+      GMSH_API void setPeriodic(const int dim,
+                                const std::vector<int> & tag,
+                                const std::vector<int> & tagSource,
+                                const std::vector<double> & affineTransformation);
 
       namespace field { // Per-model mesh size field functions
 

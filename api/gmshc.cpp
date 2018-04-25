@@ -506,6 +506,13 @@ GMSH_API void gmshModelMeshEmbed(const int dim,int * tags, size_t tags_n,const i
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
+GMSH_API void gmshModelMeshSetPeriodic(const int dim,int * tag, size_t tag_n,int * tagSource, size_t tagSource_n,double * affineTransformation, size_t affineTransformation_n,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  gmsh::model::mesh::setPeriodic(dim,ptr2vector(tag,tag_n),ptr2vector(tagSource,tagSource_n),ptr2vector(affineTransformation,affineTransformation_n));
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
 GMSH_API int gmshModelMeshFieldAdd(const char * type,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;

@@ -451,7 +451,7 @@ GMSH_API void gmshModelMeshSetReverse(const int dim,
                                       const int val,
                                       int * ierr);
 
-/* Emebds the geometrical entities of dimension `dim' and tags `tags' in the
+/* Embeds the geometrical entities of dimension `dim' and tags `tags' in the
  * (inDim, inTag) geometrical entity. `inDim' must be strictly greater than
  * `dim'. */
 GMSH_API void gmshModelMeshEmbed(const int dim,
@@ -459,6 +459,16 @@ GMSH_API void gmshModelMeshEmbed(const int dim,
                                  const int inDim,
                                  const int inTag,
                                  int * ierr);
+
+/* Sets the meshes of the entities of dimension `dim' and tag `tags' as
+ * periodic copies of the meshes of entities `tagsSource', using the affine
+ * transformation specified in `affineTransformation' (16 entries of a 4x4
+ * matrix, by row). Currently only available for `dim' == 1 and `dim' == 2. */
+GMSH_API void gmshModelMeshSetPeriodic(const int dim,
+                                       int * tag, size_t tag_n,
+                                       int * tagSource, size_t tagSource_n,
+                                       double * affineTransformation, size_t affineTransformation_n,
+                                       int * ierr);
 
 /* Adds a new mesh size field of type `type'. If `tag' is positive, assign the
  * tag explcitly; otherwise a new tag is assigned automatically. Returns the
