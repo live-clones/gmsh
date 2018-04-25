@@ -584,6 +584,13 @@ GMSH_API void gmshModelMeshPrecomputeBasicFunction(const int elementType,int * i
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
+GMSH_API void gmshModelMeshReorderedMeshElements(const int elementType,const int dim,const int tag,int * order, size_t order_n,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  gmsh::model::mesh::reorderedMeshElements(elementType,dim,tag,ptr2vector(order,order_n));
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
 GMSH_API int gmshModelMeshFieldAdd(const char * type,const int tag,int * ierr){
   int result_api_;
   if(ierr) *ierr = 0;

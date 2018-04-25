@@ -154,6 +154,9 @@ class GRegion : public GEntity {
 
   // get the boundary layer columns
   BoundaryLayerColumns *getColumns () { return &_columns; }
+  
+  // reordered the mesh elements given by elementType according to order
+  virtual bool reordered(const int elementType, const std::vector<int> &order);
 };
 
 #endif

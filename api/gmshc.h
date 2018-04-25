@@ -540,6 +540,14 @@ GMSH_API int gmshModelMeshGetNumberIntegrationPoints(const int elementType,
 GMSH_API void gmshModelMeshPrecomputeBasicFunction(const int elementType,
                                                    int * ierr);
 
+/* Reorders the mesh elements corresponding to 'elementType' of entity given
+ * by 'dim' and 'tag' according to 'order'. */
+GMSH_API void gmshModelMeshReorderedMeshElements(const int elementType,
+                                                 const int dim,
+                                                 const int tag,
+                                                 int * order, size_t order_n,
+                                                 int * ierr);
+
 /* Adds a new mesh size field of type `type'. If `tag' is positive, assign the
  * tag explcitly; otherwise a new tag is assigned automatically. Returns the
  * field tag. */

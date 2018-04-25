@@ -218,6 +218,9 @@ mesh.add('getNumberIntegrationPoints',doc,oint,iint('elementType'),istring('inte
 doc = '''Precomputes the basic function corresponding to 'elementType'.'''
 mesh.add('precomputeBasicFunction',doc,None,iint('elementType'))
 
+doc = '''Reorders the mesh elements corresponding to 'elementType' of entity given by 'dim' and 'tag' according to 'order'.'''
+mesh.add('reorderedMeshElements',doc,None,iint('elementType'),iint('dim'),iint('tag'),ivectorint('order'))
+
 ################################################################################
 
 field = mesh.add_module('field','Per-model mesh size field functions')

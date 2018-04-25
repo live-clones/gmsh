@@ -1459,6 +1459,25 @@ class model:
                     "gmshModelMeshPrecomputeBasicFunction returned non-zero error code : ",
                     ierr.value)
 
+        @staticmethod
+        def reorderedMeshElements(elementType,dim,tag,order):
+            """
+            Reorders the mesh elements corresponding to 'elementType' of entity given
+            by 'dim' and 'tag' according to 'order'.
+            """
+            api_order_, api_order_n_ = _ivectorint(order)
+            ierr = c_int()
+            lib.gmshModelMeshReorderedMeshElements(
+                c_int(elementType),
+                c_int(dim),
+                c_int(tag),
+                api_order_, api_order_n_,
+                byref(ierr))
+            if ierr.value != 0 :
+                raise ValueError(
+                    "gmshModelMeshReorderedMeshElements returned non-zero error code : ",
+                    ierr.value)
+
 
         class field:
             """

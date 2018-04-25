@@ -1513,7 +1513,27 @@ int gmsh::model::mesh::getNumberIntegrationPoints(const int elementType, const s
 
 void gmsh::model::mesh::precomputeBasicFunction(const int elementType)
 {
+  if(!_isInitialized()){ throw -1; }
   BasisFactory::getNodalBasis(elementType);
+}
+
+void gmsh::model::mesh::reorderedMeshElements(const int elementType,
+                                              const int dim, const int tag,
+                                              const std::vector<int> &order)
+{
+  if(!_isInitialized()){ throw -1; }
+  if(dim < 0 || tag < 0){
+    Msg::Error("'dim' and/or 'tag' must be positif");
+    throw 1;
+  }
+  std::map<int, std::vector<GEntity*> > typeMap;
+  _getElementTypeMap(dim, tag, typeMap);
+  if(typeMap[elementType].size() == 0){
+    Msg::Error("No mesh elements found of type 'elementType' into entity given by 'dim' and 'tag'");
+    throw 2;
+  }
+  
+  typeMap[elementType][0]->reordered(elementType, order);
 }
 
 // gmsh::model::mesh::field

@@ -505,6 +505,13 @@ namespace gmsh { // Top-level functions
       // Precomputes the basic function corresponding to 'elementType'.
       GMSH_API void precomputeBasicFunction(const int elementType);
 
+      // Reorders the mesh elements corresponding to 'elementType' of entity given
+      // by 'dim' and 'tag' according to 'order'.
+      GMSH_API void reorderedMeshElements(const int elementType,
+                                          const int dim,
+                                          const int tag,
+                                          const std::vector<int> & order);
+
       namespace field { // Per-model mesh size field functions
 
         // Adds a new mesh size field of type `type'. If `tag' is positive, assign

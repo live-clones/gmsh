@@ -176,3 +176,24 @@ void GVertex::removeElement(int type, MElement *e)
     Msg::Error("Trying to remove unsupported element in vertex");
   }
 }
+
+bool GVertex::reordered(const int elementType, const std::vector<int> &order)
+{
+  if(points.front()->getTypeForMSH() == elementType){
+    if(order.size() != points.size()) return false;
+    
+    std::vector<MPoint*> newPointsOrder(points.size());
+    for(unsigned int i = 0; i < order.size(); i++){
+      newPointsOrder[i] = points[order[i]];
+    }
+#if __cplusplus >= 201103L
+    points = std::move(newPointsOrder);
+#else
+    points = newPointsOrder;
+#endif
+    
+    return true;
+  }
+  
+  return false;
+}

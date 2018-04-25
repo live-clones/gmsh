@@ -2007,3 +2007,56 @@ void GFace::removeElement(int type, MElement *e)
     Msg::Error("Trying to remove unsupported element in face");
   }
 }
+
+bool GFace::reordered(const int elementType, const std::vector<int> &order)
+{
+  if(triangles.front()->getTypeForMSH() == elementType){
+    if(order.size() != triangles.size()) return false;
+    
+    std::vector<MTriangle*> newTrianglesOrder(triangles.size());
+    for(unsigned int i = 0; i < order.size(); i++){
+      newTrianglesOrder[i] = triangles[order[i]];
+    }
+#if __cplusplus >= 201103L
+    triangles = std::move(newTrianglesOrder);
+#else
+    triangles = newTrianglesOrder;
+#endif
+    
+    return true;
+  }
+  
+  if(quadrangles.front()->getTypeForMSH() == elementType){
+    if(order.size() != quadrangles.size()) return false;
+    
+    std::vector<MQuadrangle*> newQuadranglesOrder(quadrangles.size());
+    for(unsigned int i = 0; i < order.size(); i++){
+      newQuadranglesOrder[i] = quadrangles[order[i]];
+    }
+#if __cplusplus >= 201103L
+    quadrangles = std::move(newQuadranglesOrder);
+#else
+    quadrangles = newQuadranglesOrder;
+#endif
+    
+    return true;
+  }
+  
+  if(polygons.front()->getTypeForMSH() == elementType){
+    if(order.size() != polygons.size()) return false;
+    
+    std::vector<MPolygon*> newPolygonsOrder(polygons.size());
+    for(unsigned int i = 0; i < order.size(); i++){
+      newPolygonsOrder[i] = polygons[order[i]];
+    }
+#if __cplusplus >= 201103L
+    polygons = std::move(newPolygonsOrder);
+#else
+    polygons = newPolygonsOrder;
+#endif
+    
+    return true;
+  }
+  
+  return false;
+}
