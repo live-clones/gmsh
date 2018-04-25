@@ -1086,13 +1086,20 @@ Affectation :
 
   // Fields
 
-  | String__Index tField tAFFECT FExpr tEND
+  | String__Index tField tAFFECT ListOfDouble tEND
     {
 #if defined(HAVE_MESH)
-      if(!strcmp($1,"Background"))
-	GModel::current()->getFields()->setBackgroundFieldId((int)$4);
+      std::vector<int> tags; ListOfDouble2Vector($4, tags);
+      if(!strcmp($1,"Background")) {
+	if (tags.size() > 1)
+	  yymsg(0, "Only 1 field can be set as a background field.");
+	else if (tags.size() == 0)
+	  yymsg(1, "No field given (Background Field).");
+	else
+	  GModel::current()->getFields()->setBackgroundFieldId((int)tags[0]);
+	  }
       else if(!strcmp($1,"BoundaryLayer"))
-	GModel::current()->getFields()->setBoundaryLayerFieldId((int)$4);
+	GModel::current()->getFields()->addBoundaryLayerFieldId(tags);
       else
 	yymsg(0, "Unknown command '%s Field'", $1);
 #endif

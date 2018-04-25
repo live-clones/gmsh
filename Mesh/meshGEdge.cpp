@@ -134,15 +134,6 @@ static double F_Lc(GEdge *ge, double t)
 
 static double F_Lc_aniso(GEdge *ge, double t)
 {
-#if defined(HAVE_ANN)
-  FieldManager *fields = ge->model()->getFields();
-  BoundaryLayerField *blf = 0;
-  Field *bl_field = fields->get(fields->getBoundaryLayerField());
-  blf = dynamic_cast<BoundaryLayerField*> (bl_field);
-#else
-  bool blf = false;
-#endif
-
   GPoint p = ge->point(t);
   SMetric3 lc_here;
 
@@ -158,7 +149,14 @@ static double F_Lc_aniso(GEdge *ge, double t)
     lc_here = BGM_MeshMetric(ge, t, 0, p.x(), p.y(), p.z());
 
 #if defined(HAVE_ANN)
-  if (blf && !blf->isEdgeBL(ge->tag())){
+  FieldManager *fields = ge->model()->getFields();
+  int n = fields->getNumBoundaryLayerFields();
+
+  for (int i = 0; i < n; ++i) {
+    Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
+    if(bl_field == NULL) continue;
+    BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField*> (bl_field);
+    if(blf->isEdgeBL(ge->tag())) break;
     SMetric3 lc_bgm;
     blf->computeFor1dMesh ( p.x(), p.y(), p.z() , lc_bgm );
     lc_here = intersection_conserveM1 (lc_here, lc_bgm );
@@ -471,38 +469,63 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
                                    std::vector<MVertex*> &_addEnd)
 {
 #if defined(HAVE_ANN)
+  _addBegin.clear();
+  _addEnd.clear();
+
   // t_begin/t_end may change the left/right parameter of the interval
   // _addBegin/_addEnd : additional points @ left/right
-  BoundaryLayerField *blf = 0;
   FieldManager *fields = ge->model()->getFields();
-  Field *bl_field = fields->get(fields->getBoundaryLayerField());
-  blf = dynamic_cast<BoundaryLayerField*> (bl_field);
-  if(blf) blf->setupFor1d(ge->tag());
-  if(!blf) return;
-  if(blf->isEdgeBL(ge->tag())) return;
+  int n = fields->getNumBoundaryLayerFields();
+  if (n == 0) return;
+
+  // Check if edge is a BL edge
+  for (int i = 0; i < n; ++i) {
+    Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
+    if(bl_field == NULL) continue;
+    BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField*> (bl_field);
+    if(blf->isEdgeBL(ge->tag())) return;
+  }
+
   SVector3 dir(ge->getEndVertex()->x() - ge->getBeginVertex()->x(),
                ge->getEndVertex()->y() - ge->getBeginVertex()->y(),
                ge->getEndVertex()->z() - ge->getBeginVertex()->z());
   dir.normalize();
   GVertex *gvb = ge->getBeginVertex();
   GVertex *gve = ge->getEndVertex();
-  if(blf->isEndNode(gvb->tag())){
-    if(ge->geomType() != GEntity::Line){
-      Msg::Error("Boundary layer end point %d should lie on a straight line",
-                 gvb->tag());
-      return;
+
+  // Check if extremity nodes are BL node
+  for (int i = 0; i < n; ++i) {
+    Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
+    if(bl_field == NULL) continue;
+    BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField*> (bl_field);
+    blf->setupFor1d(ge->tag());
+
+    if(blf->isEndNode(gvb->tag())){
+      if(ge->geomType() != GEntity::Line){
+        Msg::Error("Boundary layer end point %d should lie on a straight line",
+                   gvb->tag());
+        return;
+      }
+      if (_addBegin.size()) {
+        Msg::Error("Different boundary layers cannot touch each other");
+        return;
+      }
+      createPoints(gvb, ge, blf, _addBegin, dir);
+      if(!_addBegin.empty()) _addBegin[_addBegin.size()-1]->getParameter(0, t_begin);
     }
-    createPoints(gvb, ge, blf, _addBegin, dir);
-    if(!_addBegin.empty()) _addBegin[_addBegin.size()-1]->getParameter(0, t_begin);
-  }
-  if (blf->isEndNode(gve->tag())){
-    if (ge->geomType() != GEntity::Line){
-      Msg::Error("Boundary layer end point %d should lie on a straight line",
-                 gve->tag());
-      return;
+    if (blf->isEndNode(gve->tag())){
+      if (ge->geomType() != GEntity::Line){
+        Msg::Error("Boundary layer end point %d should lie on a straight line",
+                   gve->tag());
+        return;
+      }
+      if (_addEnd.size()) {
+        Msg::Error("Different boundary layers cannot touch each other");
+        return;
+      }
+      createPoints(gve, ge, blf, _addEnd, dir * -1.0);
+      if(!_addEnd.empty()) _addEnd[_addEnd.size()-1]->getParameter(0, t_end);
     }
-    createPoints(gve, ge, blf, _addEnd, dir * -1.0);
-    if(!_addEnd.empty()) _addEnd[_addEnd.size()-1]->getParameter(0, t_end);
   }
 #endif
 }

@@ -1147,7 +1147,16 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
   // Retrieve geometric entities and boundary layer field
   std::vector<GEntity*> allGEnt;
   gm->getEntities(allGEnt);
-  BoundaryLayerField *blField = getBLField(gm);
+  std::vector<BoundaryLayerField*> blFields;
+  {
+    FieldManager *fields = gm->getFields();
+    int n = fields->getNumBoundaryLayerFields();
+    for (int i = 0; i < n; ++i) {
+      Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
+      if (bl_field == NULL) continue;
+      blFields.push_back(dynamic_cast<BoundaryLayerField*>(bl_field));
+    }
+  }
 
   // Curve mesh for non-straight boundary entities
   for (int iEnt = 0; iEnt < allGEnt.size(); ++iEnt) {
@@ -1188,8 +1197,11 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
       bndEnts = std::vector<GEntity*>(gEds.begin(), gEds.end());
       for (int iBndEnt = 0; iBndEnt < bndEnts.size(); iBndEnt++) {
         GEntity* &bndEnt = bndEnts[iBndEnt];
-        if ((blField != 0) && blField->isEdgeBL(bndEnt->tag())) {
-          blBndEnts.insert(bndEnt);
+        for (unsigned int k = 0; k < blFields.size(); ++k) {
+          if (blFields[k]->isEdgeBL(bndEnt->tag())) {
+            blBndEnts.insert(bndEnt);
+            break;
+          }
         }
       }
     }
