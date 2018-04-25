@@ -27,8 +27,9 @@ gmshFace::gmshFace(GModel *m, Surface *face)
   resetMeshAttributes();
 }
 
-// a face is degenerate if 
-bool gmshFace::degenerate(int dim) const {
+// a face is degenerate if
+bool gmshFace::degenerate(int dim) const
+{
   std::list<GEdge*> eds = edges();
   int numNonDegenerate = 0;
   std::set<GEdge*> t;
@@ -44,7 +45,6 @@ bool gmshFace::degenerate(int dim) const {
   //  printf("%d \n",numNonDegenerate);
   return numNonDegenerate <= 1;
 }
-
 
 void gmshFace::resetNativePtr(Surface *face)
 {
@@ -104,7 +104,6 @@ void gmshFace::resetNativePtr(Surface *face)
   // always compute and store the mean plane for plane surfaces (using
   // the bounding vertices)
   if(s->Typ == MSH_SURF_PLAN) computeMeanPlane();
-
 }
 
 double gmshFace::getMetricEigenvalue(const SPoint2 &pt)

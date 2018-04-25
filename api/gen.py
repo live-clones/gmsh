@@ -14,13 +14,13 @@
 #
 # By design, the Gmsh API is purely functional, and only uses elementary types.
 #
-# See `gmsh/demos/api' for examples on how to use the Gmsh API. In particular,
-# this directory contains C++ and Python versions of several of the `.geo'
-# tutorials from `gmsh/tutorials'.
+# See `demos/api' for examples on how to use the Gmsh API. In particular, this
+# directory contains C++ and Python versions of several of the `.geo' tutorials
+# from `tutorials'.
 
 from GenApi import *
 
-api = API()
+api = API('3.0')
 
 ################################################################################
 

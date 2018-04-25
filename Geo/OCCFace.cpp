@@ -118,8 +118,7 @@ void OCCFace::setup()
   ShapeAnalysis::GetFaceUVBounds(s, umin, umax, vmin, vmax);
   Msg::Debug("OCC Face %d with %d parameter bounds (%g,%g)(%g,%g)",
              tag(), l_edges.size(), umin, umax, vmin, vmax);
-  // we do that for the projections to converge on the borders of the
-  // surface
+  // we do that for the projections to converge on the borders of the surface
   const double du = umax - umin;
   const double dv = vmax - vmin;
   umin -= fabs(du) / 100.0;
@@ -128,7 +127,8 @@ void OCCFace::setup()
   vmax += fabs(dv) / 100.0;
   occface = BRep_Tool::Surface(s);
 
-  for(exp2.Init(s.Oriented(TopAbs_FORWARD), TopAbs_VERTEX, TopAbs_EDGE); exp2.More(); exp2.Next()){
+  for(exp2.Init(s.Oriented(TopAbs_FORWARD), TopAbs_VERTEX, TopAbs_EDGE);
+      exp2.More(); exp2.Next()){
     TopoDS_Vertex vertex = TopoDS::Vertex(exp2.Current());
     GVertex *v = 0;
     if(model()->getOCCInternals())
@@ -411,7 +411,7 @@ bool OCCFace::buildSTLTriangulation(bool force)
       return true;
   }
   if(!model()->getOCCInternals()->makeFaceSTL(s, stl_vertices, stl_triangles)){
-    Msg::Warning("OpenCASCADE triangulation of surface %d failed", tag());
+    Msg::Info("OpenCASCADE triangulation of surface %d failed", tag());
     // add a dummy triangle so that we won't try again
     stl_vertices.push_back(SPoint2(0., 0.));
     stl_triangles.push_back(0);
@@ -451,14 +451,12 @@ bool OCCFace::buildSTLTriangulation(bool force)
   return true;
 }
 
-bool OCCFace::isSphere (double &radius, SPoint3 &center) const
+bool OCCFace::isSphere(double &radius, SPoint3 &center) const
 {
   switch(geomType()){
   case GEntity::Sphere:
-    {
-      radius = _radius;
-      center = _center;
-    }
+    radius = _radius;
+    center = _center;
     return true;
   default:
     return false;
@@ -467,43 +465,21 @@ bool OCCFace::isSphere (double &radius, SPoint3 &center) const
 
 bool OCCFace::containsParam(const SPoint2 &pt)
 {
-  //  return GFace::containsParam(pt);
   if(!buildSTLTriangulation(false)){
-    Msg::Warning ("Inacurate computation in OCCFace::containsParam");
+    Msg::Info("Inacurate computation in OCCFace::containsParam");
     return GFace::containsParam(pt);
   }
-  //  FILE *F = fopen("HOP.pos","w");
-  //  fprintf(F,"View \" \"{\n");
-  ///  fprintf(F,"SP(%g,%g,%g){2,2,2};\n",pt.x(),pt.y(),1.0);
   SPoint2 mine = pt;
-
-  //  bool ok = false;
-
   for(unsigned int i = 0; i < stl_triangles.size(); i += 3){
     SPoint2 gp1 = stl_vertices[stl_triangles[i]];
     SPoint2 gp2 = stl_vertices[stl_triangles[i + 1]];
     SPoint2 gp3 = stl_vertices[stl_triangles[i + 2]];
-
     double s1 = robustPredicates::orient2d(gp1, gp2, mine);
     double s2 = robustPredicates::orient2d(gp2, gp3, mine);
     double s3 = robustPredicates::orient2d(gp3, gp1, mine);
-    /*
-    fprintf(F,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){1,1,1};\n",
-	    gp1.x(),gp1.y(),0.0,
-	    gp2.x(),gp2.y(),0.0,
-	    gp3.x(),gp3.y(),0.0);
-
-    printf("%g %g %g\n",s1,s2,s3);
-    */
-    if (s1*s2 >= 0 && s1*s3 >=0){
-      //ok = true;
+    if(s1*s2 >= 0 && s1*s3 >=0)
       return true;
-    }
   }
-  //  printf("gasp\n");
-  //  fprintf(F,"};\n");
-  //  fclose(F);
-  //  return ok;
   return false;
 }
 

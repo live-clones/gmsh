@@ -458,7 +458,7 @@ static void geometry_options_ok_cb(Fl_Widget *w, void *data)
   opt_geometry_curve_type(0, GMSH_SET, o->geo.choice[1]->value());
   opt_geometry_surface_type(0, GMSH_SET, o->geo.choice[2]->value());
   opt_geometry_transform(0, GMSH_SET, o->geo.choice[3]->value());
-  opt_geometry_label_type(0, GMSH_SET, o->geo.choice[4]->value() + 1);
+  opt_geometry_label_type(0, GMSH_SET, o->geo.choice[4]->value());
 
   if(CTX::instance()->fastRedraw)
     CTX::instance()->post.draw = CTX::instance()->mesh.draw = 0;
@@ -2023,6 +2023,7 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.butt[7]->callback(geometry_options_ok_cb);
 
       static Fl_Menu_Item menu_label_type[] = {
+        {"Description", 0, 0, 0},
         {"Elementary tags", 0, 0, 0},
         {"Physical tags", 0, 0, 0},
         {0}
@@ -2050,11 +2051,6 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.value[1]->align(FL_ALIGN_RIGHT);
       geo.value[1]->when(FL_WHEN_RELEASE);
       geo.value[1]->callback(geometry_options_ok_cb);
-
-      geo.butt[17] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Hide entities making up coumpounds");
-      geo.butt[17]->type(FL_TOGGLE_BUTTON);
-      geo.butt[17]->callback(geometry_options_ok_cb);
 
       o->end();
     }

@@ -272,28 +272,37 @@ void GEdge::setColor(unsigned int val, bool recursive)
   }
 }
 
-std::string GEdge::getAdditionalInfoString()
+std::string GEdge::getAdditionalInfoString(bool multline)
 {
   std::ostringstream sstream;
   sstream.precision(12);
 
-  if(v0 && v1) sstream << "{" << v0->tag() << " " << v1->tag() << "}";
-
-  if(meshAttributes.method == MESH_TRANSFINITE){
-    sstream << " transfinite (" << meshAttributes.nbPointsTransfinite;
-    int type = meshAttributes.typeTransfinite;
-    if(std::abs(type) == 1)
-      sstream << ", progression " << gmsh_sign(type) * meshAttributes.coeffTransfinite;
-    else if(std::abs(type) == 2)
-      sstream << ", bump " << meshAttributes.coeffTransfinite;
-    sstream << ")";
+  if(v0 && v1){
+    sstream << "Boundary points: " << v0->tag() << ", " << v1->tag();
+    if(multline) sstream << "\n";
+    else sstream << " ";
   }
-  if(meshAttributes.extrude)
-    sstream << " extruded";
-  if(meshAttributes.reverseMesh)
-    sstream << " reversed";
 
-  return sstream.str();
+  if(meshAttributes.method == MESH_TRANSFINITE || meshAttributes.extrude ||
+     meshAttributes.reverseMesh){
+    sstream << "Mesh attributes:";
+    if(meshAttributes.method == MESH_TRANSFINITE){
+      sstream << " transfinite " << meshAttributes.nbPointsTransfinite;
+      int type = meshAttributes.typeTransfinite;
+      if(std::abs(type) == 1)
+        sstream << ", progression " << gmsh_sign(type) * meshAttributes.coeffTransfinite;
+      else if(std::abs(type) == 2)
+        sstream << ", bump " << meshAttributes.coeffTransfinite;
+    }
+    if(meshAttributes.extrude)
+      sstream << " extruded";
+    if(meshAttributes.reverseMesh)
+      sstream << " reversed";
+  }
+  std::string str = sstream.str();
+  if(str.size() && (str[str.size()-1] == '\n' || str[str.size()-1] == ' '))
+     str.resize(str.size() - 1);
+  return str;
 }
 
 void GEdge::writeGEO(FILE *fp)

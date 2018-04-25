@@ -2050,81 +2050,6 @@ static void mesh_delete_parts_cb(Fl_Widget *w, void *data)
   Msg::StatusGl("");
 }
 
-static std::vector<std::string> getInfoStrings(MElement *ele)
-{
-  std::vector<std::string> info;
-  {
-    std::ostringstream sstream;
-    sstream << "Element " << ele->getNum() << ":";
-    info.push_back(sstream.str());
-  }
-  {
-    std::ostringstream sstream;
-    const char *name;
-    MElement::getInfoMSH(ele->getTypeForMSH(), &name);
-    sstream << " " << name
-            << " (MSH type " << ele->getTypeForMSH()
-            << ", dimension "<< ele->getDim()
-            << ", order "<< ele->getPolynomialOrder()
-            << ", partition " << ele->getPartition()
-            << ")";
-    info.push_back(sstream.str());
-  }
-  {
-    std::ostringstream sstream;
-    sstream << " Nodes:";
-    for(int i = 0; i < ele->getNumVertices(); i++)
-      sstream << " " << ele->getVertex(i)->getNum();
-    info.push_back(sstream.str());
-  }
-  {
-    std::ostringstream sstream;
-    sstream.precision(12);
-    SPoint3 pt = ele->barycenter();
-    sstream << " Barycenter: (" << pt[0] << ", " << pt[1] << ", " << pt[2] << ")";
-    info.push_back(sstream.str());
-  }
-  {
-    std::ostringstream sstream;
-    sstream.precision(12);
-    sstream << " Edge length: "
-            << "min = " << ele->minEdge() << " "
-            << "max = " << ele->maxEdge();
-    info.push_back(sstream.str());
-  }
-  {
-    std::ostringstream sstream;
-    sstream.precision(12);
-    sstream << " Quality: "
-            << "gamma = " << ele->gammaShapeMeasure();
-    info.push_back(sstream.str());
-  }
-  {
-    std::ostringstream sstream;
-    sstream.precision(12);
-    double sICNMin, sICNMax;
-    ele->signedInvCondNumRange(sICNMin, sICNMax);
-    sstream << " SICN range: " << sICNMin << " " << sICNMax;
-    info.push_back(sstream.str());
-  }
-  {
-    std::ostringstream sstream;
-    sstream.precision(12);
-    double sIGEMin, sIGEMax;
-    ele->signedInvGradErrorRange(sIGEMin, sIGEMax);
-    sstream << " SIGE range: " << sIGEMin << " " << sIGEMax;
-    info.push_back(sstream.str());
-  }
-  {
-    std::ostringstream sstream;
-    sstream.precision(12);
-    sstream << " Inner / outer radius: "
-            << ele->getInnerRadius() << " / " << ele->getOuterRadius();
-    info.push_back(sstream.str());
-  }
-  return info;
-}
-
 static void mesh_inspect_cb(Fl_Widget *w, void *data)
 {
   CTX::instance()->pickElements = 1;
@@ -2141,7 +2066,7 @@ static void mesh_inspect_cb(Fl_Widget *w, void *data)
         ele->setVisibility(2);
         CTX::instance()->mesh.changed = ENT_ALL;
         drawContext::global()->draw();
-        std::vector<std::string> info = getInfoStrings(ele);
+        std::vector<std::string> info = SplitString(ele->getInfoString(true), '\n');
         for(unsigned int i = 0; i < info.size(); i++)
           Msg::Direct("%s", info[i].c_str());
         if(CTX::instance()->tooltips){

@@ -3707,6 +3707,8 @@ static bool makeSTL(TopoDS_Face s,
                     std::vector<SVector3> *normals,
                     std::vector<int> &triangles)
 {
+  if(CTX::instance()->geom.occDisableSTL) return false;
+
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
 

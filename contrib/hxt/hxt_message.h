@@ -8,6 +8,10 @@
 #define STR(x) #x
 #define STRINGIFY(x) STR(x)
 
+#ifdef _MSC_VER
+#define __func__ __FUNCTION__
+#endif
+
 #define HXT_INFO(...)                 hxtMessageInfo(__func__, __FILE__, STRINGIFY(__LINE__), ## __VA_ARGS__ )
 #define HXT_INFO_COND(cond, ...)      ((cond)?HXT_INFO(__VA_ARGS__):HXT_STATUS_OK)
 #define HXT_WARNING(...)              hxtMessageWarning(__func__, __FILE__, STRINGIFY(__LINE__), ## __VA_ARGS__ )

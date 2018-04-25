@@ -461,7 +461,7 @@ void smoothing::optimize_face(GFace* gf)
   // compute the Voronoi diagram
   triangulator.Voronoi();
   //printf("hullSize = %d\n",triangulator.hullSize());
-  triangulator.makePosView("LloydInit.pos");
+  //triangulator.makePosView("LloydInit.pos");
   //triangulator.printMedialAxis("medialAxis.pos");
 
   int exponent;

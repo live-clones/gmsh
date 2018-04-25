@@ -844,8 +844,8 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "HighlightOrphans" , opt_geometry_highlight_orphans, 0. ,
     "Highlight orphan entities (lines connected to a single surface, etc.)?" },
 
-  { F|O, "LabelType" , opt_geometry_label_type , 1. ,
-    "Type of entity label (1=elementary number, 2=physical number)" },
+  { F|O, "LabelType" , opt_geometry_label_type , 0. ,
+    "Type of entity label (0=description, 1=elementary number, 2=physical number)" },
   { F|O, "Light" , opt_geometry_light , 1. ,
     "Enable lighting for the geometry" },
   { F|O, "LightTwoSide" , opt_geometry_light_two_side , 1. ,
@@ -854,7 +854,7 @@ StringXNumber GeometryOptions_Number[] = {
     "Display geometry curves?" },
   { F|O, "LineNumbers" , opt_geometry_curves_num , 0. ,
     "Display curve numbers?" },
-  { F|O, "LineSelectWidth" , opt_geometry_curve_sel_width , 2. ,
+  { F|O, "LineSelectWidth" , opt_geometry_curve_sel_width , 3. ,
     "Display width of selected curves (in pixels)" },
   { F|O, "LineType" , opt_geometry_curve_type , 0. ,
     "Display curves as solid color segments (0), 3D cylinders (1) or tapered "
@@ -867,12 +867,14 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "Normals" , opt_geometry_normals , 0. ,
     "Display size of normal vectors (in pixels)" },
-  { F|O, "NumSubEdges" , opt_geometry_num_sub_edges , 20. ,
+  { F|O, "NumSubEdges" , opt_geometry_num_sub_edges , 40. ,
     "Number of edge subdivisions between control points when displaying curves" },
 
   { F|O, "OCCAutoFix" , opt_geometry_occ_auto_fix , 1. ,
     "Automatically fix orientation of wires, faces, shells and volumes when creating"
     " new entities" },
+  { F|O, "OCCDisableSTL" , opt_geometry_occ_disable_stl , 0. ,
+    "Disable STL computation" },
   { F|O, "OCCFixDegenerated" , opt_geometry_occ_fix_degenerated , 0. ,
     "Fix degenerated edges/faces in STEP, IGES and BRep models" },
   { F|O, "OCCFixSmallEdges" , opt_geometry_occ_fix_small_edges , 0. ,
@@ -905,7 +907,7 @@ StringXNumber GeometryOptions_Number[] = {
     "Display geometry points?" },
   { F|O, "PointNumbers" , opt_geometry_points_num , 0. ,
     "Display points numbers?" },
-  { F|O, "PointSelectSize" , opt_geometry_point_sel_size , 5. ,
+  { F|O, "PointSelectSize" , opt_geometry_point_sel_size , 6. ,
     "Display size of selected points (in pixels)" },
   { F|O, "PointSize" , opt_geometry_point_size , 4. ,
     "Display size of points (in pixels)" },

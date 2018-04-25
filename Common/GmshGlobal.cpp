@@ -14,18 +14,21 @@ typedef unsigned long intptr_t;
 #include "GmshVersion.h"
 #include "GmshMessage.h"
 #include "GmshDefines.h"
+#include "GmshGlobal.h"
 #include "GmshRemote.h"
 #include "GModel.h"
 #include "OpenFile.h"
 #include "CreateFile.h"
 #include "Options.h"
-#if defined(HAVE_PARSER)
-#include "Parser.h"
-#endif
 #include "CommandLine.h"
 #include "OS.h"
 #include "Context.h"
 #include "robustPredicates.h"
+
+#if defined(HAVE_PARSER)
+#include "Parser.h"
+#endif
+
 #if defined(HAVE_POST)
 #include "PView.h"
 #include "PViewData.h"
@@ -348,17 +351,6 @@ int GmshBatch()
   return 1;
 }
 
-int GmshBatch(int argc, char **argv)
-{
-  new GModel();
-  GmshInitialize(argc, argv, true);
-  if(!Msg::GetGmshClient()) CTX::instance()->terminal = 1;
-  CTX::instance()->noPopup = 1;
-  GmshBatch();
-  GmshFinalize();
-  return 1;
-}
-
 int GmshFLTK(int argc, char **argv)
 {
 #if defined(HAVE_FLTK) && defined(HAVE_POST)
@@ -434,4 +426,56 @@ int GmshFLTK(int argc, char **argv)
   Msg::Error("GmshFLTK unavailable: please recompile with FLTK support");
   return 0;
 #endif
+}
+
+GMSH_API int GmshMainBatch(int argc, char **argv)
+{
+  if(argc < 2){
+    CTX::instance()->terminal = 1;
+    PrintUsage(argv[0]);
+    exit(0);
+  }
+
+  new GModel();
+  GmshInitialize(argc, argv, true);
+
+  if(!Msg::GetGmshClient()) CTX::instance()->terminal = 1;
+  CTX::instance()->noPopup = 1;
+
+  GmshBatch();
+  GmshFinalize();
+
+  Msg::Exit(0);
+  return 1;
+}
+
+GMSH_API int GmshMainFLTK(int argc, char **argv)
+{
+  // Create a new model
+  new GModel();
+
+  // Hack to generate automatic documentation (before getting
+  // user-defined options)
+  if(argc == 2 && std::string(argv[1]) == "-doc"){
+    InitOptions(0);
+#if defined(HAVE_PLUGINS)
+    PluginManager::instance()->registerDefaultPlugins();
+#endif
+    PrintOptionsDoc();
+    exit(0);
+  }
+
+  // Initialize static stuff (parser symbols, options)
+  GmshInitialize(argc, argv, true);
+
+  // Non-interactive Gmsh
+  if(CTX::instance()->batch) {
+    if(!Msg::GetGmshClient()) CTX::instance()->terminal = 1;
+    GmshBatch();
+    //GmshFinalize();
+    Msg::Exit(0);
+  }
+
+  // Interactive Gmsh with FLTK GUI
+  return GmshFLTK(argc, argv);
 }

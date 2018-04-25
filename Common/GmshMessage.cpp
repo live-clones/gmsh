@@ -1464,8 +1464,8 @@ void Msg::ImportPhysicalGroupsInOnelab()
         std::string name = GModel::current()->getPhysicalName(dim, it->first);
         char tmp[256];
         if(name.empty()){
-          sprintf(tmp, "Physical %s %d", (dim == 3) ? "Volume " : (dim == 2) ? "Surface " :
-                  (dim == 1) ? "Line " : "Point ", num);
+          sprintf(tmp, "Physical %s %d", (dim == 3) ? "Volume" : (dim == 2) ? "Surface" :
+                  (dim == 1) ? "Curve" : "Point", num);
           name = tmp;
         }
         sprintf(tmp, "Gmsh/Physical group %d/", index);

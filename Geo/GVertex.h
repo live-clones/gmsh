@@ -25,7 +25,7 @@ class GVertex : public GEntity
   std::list<GEdge*> l_edges;
   double meshSize;
  public:
-  GVertex(GModel *m, int tag, double ms=MAX_LC);
+  GVertex(GModel *m, int tag, double ms = MAX_LC);
   virtual ~GVertex();
 
   // delete mesh data
@@ -75,10 +75,10 @@ class GVertex : public GEntity
   virtual SPoint2 reparamOnFace(const GFace *gf, int) const;
 
   // return a type-specific additional information string
-  virtual std::string getAdditionalInfoString();
+  virtual std::string getAdditionalInfoString(bool multline = false);
 
   // export in GEO format
-  virtual void writeGEO(FILE *fp, const std::string &meshSizeParameter="");
+  virtual void writeGEO(FILE *fp, const std::string &meshSizeParameter = "");
 
   // get number of elements in the mesh
   unsigned int getNumMeshElements() const;
