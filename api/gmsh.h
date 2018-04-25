@@ -460,8 +460,8 @@ namespace gmsh { // Top-level functions
         // Sets the field `tag' as the background mesh size field.
         GMSH_API void setAsBackgroundMesh(const int tag);
 
-        // Add the field `tag' as a boundary layer size field.
-        GMSH_API void addBoundaryLayer(const int tag);
+        // Sets the field `tag' as a boundary layer size field.
+        GMSH_API void setAsBoundaryLayer(const int tag);
 
       } // namespace field
 

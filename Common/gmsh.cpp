@@ -1383,7 +1383,7 @@ GMSH_API void gmsh::model::mesh::field::setAsBackgroundMesh(const int tag)
 #endif
 }
 
-GMSH_API void gmsh::model::mesh::field::addBoundaryLayer(const int tag)
+GMSH_API void gmsh::model::mesh::field::setAsBoundaryLayer(const int tag)
 {
   if(!_isInitialized()){ throw -1; }
 #if defined(HAVE_MESH)
