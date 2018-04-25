@@ -1,15 +1,25 @@
-This is the Software Development Kit (SDK) for Gmsh, an automatic
-three-dimensional finite element mesh generator with built-in pre- and
-post-processing facilities.
+This is the binary Software Development Kit (SDK) for Gmsh ${GMSH_VERSION}:
 
-Gmsh is distributed under the terms of the GNU General Public License. See the
-share/doc/gmsh/LICENSE.txt and share/doc/gmsh/CREDITS.txt files for more
-information.
+  Operating system: ${GMSH_OS} (${CMAKE_SYSTEM_NAME})
+  C++ compiler: ${CMAKE_CXX_COMPILER}
+  C++ compiler ID: ${CMAKE_CXX_COMPILER_ID}
+  C++ compiler version: ${CXX_COMPILER_VERSION}
+  C++ compiler flags:${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}
+  Build options:${GMSH_CONFIG_OPTIONS}
 
-The dynamic Gmsh library is located in the lib/ directory, as is the Python API
-(gmsh.py) module. The C++ API (gmsh.h) and C API (gmshc.h) header files are
-located in the include/ directory. The bin/ directory contains a full-featured
-Gmsh executable linked with the dynamic library.
+Gmsh is distributed under the terms of the GNU General Public License: see
+share/doc/gmsh/LICENSE.txt and share/doc/gmsh/CREDITS.txt. For additional Gmsh
+resources, see http://gmsh.info.
 
-Examples on how to use the Gmsh API from C++, C or Python are provided in the
-share/doc/gmsh/demos/api/ directory.
+SDK layout:
+
+  lib/${CMAKE_SHARED_LIBRARY_PREFIX}gmsh${CMAKE_SHARED_LIBRARY_SUFFIX}: shared Gmsh library
+  lib/gmsh.py: Python module
+  bin/gmsh: gmsh executable (linked with the shared Gmsh library)
+  include/gmsh.h: C++ API header
+  include/gmshc.h: C API header
+  share/doc/gmsh/demos/api : API usage example in C++, Python and C
+
+The C API (and the Python bindings, which use the C API internally) should work
+with most compilers. The C++ API will only work if your compiler has the same
+ABI as the compiler used to build this SDK.
