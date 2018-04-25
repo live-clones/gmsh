@@ -193,6 +193,11 @@ namespace gmsh { // Top-level functions
     GMSH_API void removeEntities(const gmsh::vector_pair & dimTags,
                                  const bool recursive = false);
 
+    // Gets the type of the entity of dimension `dim' and tag `tag'.
+    GMSH_API void getType(const int dim,
+                          const int tag,
+                          std::string & type);
+
     namespace mesh { // Per-model meshing functions
 
       // Generates a mesh of the current model, up to dimension `dim' (0, 1, 2 or

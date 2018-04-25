@@ -273,6 +273,15 @@ GMSH_API void gmshModelRemoveEntities(int * dimTags, size_t dimTags_n,const int 
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
+GMSH_API void gmshModelGetType(const int dim,const int tag,char ** type,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  std::string api_type_;
+  gmsh::model::getType(dim,tag,api_type_);
+  *type = strdup(api_type_.c_str());
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
 GMSH_API void gmshModelMeshGenerate(const int dim,int * ierr){
   if(ierr) *ierr = 0;
   try {

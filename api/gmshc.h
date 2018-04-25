@@ -203,6 +203,12 @@ GMSH_API void gmshModelRemoveEntities(int * dimTags, size_t dimTags_n,
                                       const int recursive,
                                       int * ierr);
 
+/* Gets the type of the entity of dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelGetType(const int dim,
+                               const int tag,
+                               char ** type,
+                               int * ierr);
+
 /* Generates a mesh of the current model, up to dimension `dim' (0, 1, 2 or
  * 3). */
 GMSH_API void gmshModelMeshGenerate(const int dim,

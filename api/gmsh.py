@@ -628,6 +628,26 @@ class model:
                 "gmshModelRemoveEntities returned non-zero error code : ",
                 ierr.value)
 
+    @staticmethod
+    def getType(dim,tag):
+        """
+        Gets the type of the entity of dimension `dim' and tag `tag'.
+
+        return type
+        """
+        api_type_ = c_char_p()
+        ierr = c_int()
+        lib.gmshModelGetType(
+            c_int(dim),
+            c_int(tag),
+            byref(api_type_),
+            byref(ierr))
+        if ierr.value != 0 :
+            raise ValueError(
+                "gmshModelGetType returned non-zero error code : ",
+                ierr.value)
+        return _ostring(api_type_)
+
 
     class mesh:
         """

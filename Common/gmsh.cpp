@@ -416,6 +416,19 @@ GMSH_API void gmsh::model::removeEntities(const vector_pair &dimTags,
   GModel::current()->remove(dimTags, recursive);
 }
 
+GMSH_API void gmsh::model::getType(const int dim,
+                                   const int tag,
+                                   std::string &type)
+{
+  if(!_isInitialized()){ throw -1; }
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge){
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    throw 2;
+  }
+  type = ge->getTypeString();
+}
+
 // gmsh::model::mesh
 
 GMSH_API void gmsh::model::mesh::generate(const int dim)

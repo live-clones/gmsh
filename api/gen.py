@@ -109,6 +109,9 @@ model.add('addDiscreteEntity',doc,oint,iint('dim'),iint('tag','-1'),ivectorint('
 doc = '''Removes the entities `dimTags' of the current model. If `recursive' is true, removes all the entities on their boundaries, down to dimension 0.'''
 model.add('removeEntities',doc,None,ivectorpair('dimTags'),ibool('recursive','false','False'))
 
+doc = '''Gets the type of the entity of dimension `dim' and tag `tag'.'''
+model.add('getType',doc,None,iint('dim'),iint('tag'),ostring('type'))
+
 ################################################################################
 
 mesh = model.add_module('mesh','Per-model meshing functions')
