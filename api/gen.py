@@ -222,7 +222,7 @@ field.add('setNumbers',doc,None,iint('tag'),istring('option'),ivectordouble('val
 doc = '''Sets the field `tag' as the background mesh size field.'''
 field.add('setAsBackgroundMesh',doc,None,iint('tag'))
 
-doc = '''Sets the field `tag' as the boundary layer size field.'''
+doc = '''Sets the field `tag' as a boundary layer size field.'''
 field.add('setAsBoundaryLayer',doc,None,iint('tag'))
 
 ################################################################################

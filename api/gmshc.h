@@ -509,7 +509,7 @@ GMSH_API void gmshModelMeshFieldSetNumbers(const int tag,
 GMSH_API void gmshModelMeshFieldSetAsBackgroundMesh(const int tag,
                                                     int * ierr);
 
-/* Sets the field `tag' as the boundary layer size field. */
+/* Sets the field `tag' as a boundary layer size field. */
 GMSH_API void gmshModelMeshFieldSetAsBoundaryLayer(const int tag,
                                                    int * ierr);
 

@@ -1445,7 +1445,7 @@ GMSH_API void gmsh::model::mesh::field::setAsBoundaryLayer(const int tag)
 {
   if(!_isInitialized()){ throw -1; }
 #if defined(HAVE_MESH)
-  GModel::current()->getFields()->setBoundaryLayerFieldId(tag);
+  GModel::current()->getFields()->addBoundaryLayerFieldId(tag);
 #else
   Msg::Error("Fields require the mesh module");
   throw -1;

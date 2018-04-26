@@ -847,7 +847,7 @@ Sets the field @code{tag} as the background mesh size field.
 @end table
 
 @item setAsBoundaryLayer
-Sets the field @code{tag} as the boundary layer size field.
+Sets the field @code{tag} as a boundary layer size field.
 
 @table @asis
 @item Input:
