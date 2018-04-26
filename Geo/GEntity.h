@@ -176,7 +176,10 @@ class GEntity {
       "Partition vertex",
       "Partition curve",
       "Partition surface",
-      "Partition volume"
+      "Partition volume",
+      "Ghost curve",
+      "Ghost surface",
+      "Ghost volume"
     };
     unsigned int type = (unsigned int)geomType();
     if(type >= sizeof(name) / sizeof(name[0]))

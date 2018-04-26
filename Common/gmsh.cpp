@@ -431,6 +431,19 @@ GMSH_API void gmsh::model::removeEntities(const vector_pair &dimTags,
   GModel::current()->remove(dimTags, recursive);
 }
 
+GMSH_API void gmsh::model::getType(const int dim,
+                                   const int tag,
+                                   std::string &type)
+{
+  if(!_isInitialized()){ throw -1; }
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge){
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    throw 2;
+  }
+  type = ge->getTypeString();
+}
+
 // gmsh::model::mesh
 
 GMSH_API void gmsh::model::mesh::generate(const int dim)
@@ -1112,13 +1125,13 @@ GMSH_API void gmsh::model::mesh::setNodes(const int dim,
     throw 2;
   }
   if(coord.size() != 3 * nodeTags.size()){
-    Msg::Error("Wrong number of coord");
+    Msg::Error("Wrong number of coordinates");
     throw 2;
   }
   bool param = false;
   if(parametricCoord.size()){
     if(parametricCoord.size() != dim * nodeTags.size()){
-      Msg::Error("Wrong number of parametric coord");
+      Msg::Error("Wrong number of parametric coordinates");
       throw 2;
     }
     param = true;
@@ -1491,7 +1504,7 @@ GMSH_API void gmsh::model::mesh::embed(const int dim,
   }
 }
 
-int gmsh::model::mesh::getNumberIntegrationPoints(const int elementType, const std::string &intType)
+GMSH_API int gmsh::model::mesh::getNumberIntegrationPoints(const int elementType, const std::string &intType)
 {
   if(!_isInitialized()){ throw -1; }
   std::string intName = "", fsName = "";
@@ -1518,7 +1531,7 @@ void gmsh::model::mesh::precomputeBasicFunction(const int elementType)
   BasisFactory::getNodalBasis(elementType);
 }
 
-void gmsh::model::mesh::reorderedMeshElements(const int elementType,
+GMSH_API void gmsh::model::mesh::reorderedMeshElements(const int elementType,
                                               const int dim, const int tag,
                                               const std::vector<int> &order)
 {
@@ -1536,6 +1549,51 @@ void gmsh::model::mesh::reorderedMeshElements(const int elementType,
   
   if(!typeMap[elementType][0]->reordered(elementType, order)){
     throw 3;
+  }
+}
+
+GMSH_API void gmsh::model::mesh::setPeriodic(const int dim,
+                                             const std::vector<int> &tags,
+                                             const std::vector<int> &tagsSource,
+                                             const std::vector<double> &affineTransform)
+{
+  if(!_isInitialized()){ throw -1; }
+  if(tags.size() != tagsSource.size()){
+    Msg::Error("Incompatible number of tags and source tags for periodic mesh");
+    throw 2;
+  }
+  if(affineTransform.size() != 16){
+    Msg::Error("Wrong number of elements in affine transformation (%d != 16)",
+               (int)affineTransform.size());
+    throw 2;
+  }
+  for(unsigned int i = 0; i < tags.size(); i++){
+    if(dim == 1){
+      GEdge *target = GModel::current()->getEdgeByTag(tags[i]);
+      if(!target){
+        Msg::Error("%s does not exist", _getEntityName(dim, tags[i]).c_str());
+        throw 2;
+      }
+      GEdge *source = GModel::current()->getEdgeByTag(tagsSource[i]);
+      if(!source){
+        Msg::Error("%s does not exist", _getEntityName(dim, tagsSource[i]).c_str());
+        throw 2;
+      }
+      target->setMeshMaster(source, affineTransform);
+    }
+    else if(dim == 2){
+      GFace *target = GModel::current()->getFaceByTag(tags[i]);
+      if(!target){
+        Msg::Error("%s does not exist", _getEntityName(dim, tags[i]).c_str());
+        throw 2;
+      }
+      GFace *source = GModel::current()->getFaceByTag(tagsSource[i]);
+      if(!source){
+        Msg::Error("%s does not exist", _getEntityName(dim, tagsSource[i]).c_str());
+        throw 2;
+      }
+      target->setMeshMaster(source, affineTransform);
+    }
   }
 }
 
@@ -1684,7 +1742,7 @@ GMSH_API void gmsh::model::mesh::field::setAsBoundaryLayer(const int tag)
 {
   if(!_isInitialized()){ throw -1; }
 #if defined(HAVE_MESH)
-  GModel::current()->getFields()->setBoundaryLayerFieldId(tag);
+  GModel::current()->getFields()->addBoundaryLayerFieldId(tag);
 #else
   Msg::Error("Fields require the mesh module");
   throw -1;

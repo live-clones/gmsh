@@ -282,6 +282,15 @@ GMSH_API void gmshModelRemoveEntities(int * dimTags, size_t dimTags_n,const int 
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 
+GMSH_API void gmshModelGetType(const int dim,const int tag,char ** type,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  std::string api_type_;
+  gmsh::model::getType(dim,tag,api_type_);
+  *type = strdup(api_type_.c_str());
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
 GMSH_API void gmshModelMeshGenerate(const int dim,int * ierr){
   if(ierr) *ierr = 0;
   try {
@@ -588,6 +597,13 @@ GMSH_API void gmshModelMeshReorderedMeshElements(const int elementType,const int
   if(ierr) *ierr = 0;
   try {
   gmsh::model::mesh::reorderedMeshElements(elementType,dim,tag,ptr2vector(order,order_n));
+  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
+}
+
+GMSH_API void gmshModelMeshSetPeriodic(const int dim,int * tag, size_t tag_n,int * tagSource, size_t tagSource_n,double * affineTransformation, size_t affineTransformation_n,int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+  gmsh::model::mesh::setPeriodic(dim,ptr2vector(tag,tag_n),ptr2vector(tagSource,tagSource_n),ptr2vector(affineTransformation,affineTransformation_n));
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
 }
 

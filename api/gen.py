@@ -112,6 +112,9 @@ model.add('addDiscreteEntity',doc,oint,iint('dim'),iint('tag','-1'),ivectorint('
 doc = '''Removes the entities `dimTags' of the current model. If `recursive' is true, removes all the entities on their boundaries, down to dimension 0.'''
 model.add('removeEntities',doc,None,ivectorpair('dimTags'),ibool('recursive','false','False'))
 
+doc = '''Gets the type of the entity of dimension `dim' and tag `tag'.'''
+model.add('getType',doc,None,iint('dim'),iint('tag'),ostring('type'))
+
 ################################################################################
 
 mesh = model.add_module('mesh','Per-model meshing functions')
@@ -209,7 +212,7 @@ mesh.add('setSmoothing',doc,None,iint('dim'),iint('tag'),iint('val'))
 doc = '''Sets a reverse meshing constraint on the geometrical entity of dimension `dim' and tag `tag'. If `val' is true, the mesh orientation will be reversed with respect to the natural mesh orientation (i.e. the orientation consistent with the orientation of the geometrical entity). If `val' is false, the mesh is left as-is.'''
 mesh.add('setReverse',doc,None,iint('dim'),iint('tag'),ibool('val','true','True'))
 
-doc = '''Emebds the geometrical entities of dimension `dim' and tags `tags' in the (inDim, inTag) geometrical entity. `inDim' must be strictly greater than `dim'.'''
+doc = '''Embeds the geometrical entities of dimension `dim' and tags `tags' in the (inDim, inTag) geometrical entity. `inDim' must be strictly greater than `dim'.'''
 mesh.add('embed',doc,None,iint('dim'),ivectorint('tags'),iint('inDim'),iint('inTag'))
 
 doc = '''Gets the number of intergation points corresponding to 'elementType' and 'integrationType'.'''
@@ -220,6 +223,10 @@ mesh.add('precomputeBasicFunction',doc,None,iint('elementType'))
 
 doc = '''Reorders the mesh elements corresponding to 'elementType' of entity given by 'dim' and 'tag' according to 'order'.'''
 mesh.add('reorderedMeshElements',doc,None,iint('elementType'),iint('dim'),iint('tag'),ivectorint('order'))
+
+doc = '''Sets the meshes of the entities of dimension `dim' and tag `tags' as periodic copies of the meshes of entities `tagsSource', using the affine transformation specified in `affineTransformation' (16 entries of a 4x4 matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.'''
+mesh.add('setPeriodic',doc,None,iint('dim'),ivectorint('tag'),ivectorint('tagSource'),ivectordouble('affineTransformation'))
+
 
 ################################################################################
 
@@ -243,7 +250,7 @@ field.add('setNumbers',doc,None,iint('tag'),istring('option'),ivectordouble('val
 doc = '''Sets the field `tag' as the background mesh size field.'''
 field.add('setAsBackgroundMesh',doc,None,iint('tag'))
 
-doc = '''Sets the field `tag' as the boundary layer size field.'''
+doc = '''Sets the field `tag' as a boundary layer size field.'''
 field.add('setAsBoundaryLayer',doc,None,iint('tag'))
 
 ################################################################################

@@ -254,16 +254,6 @@ static void treat3Connections(GFace *gf, MVertex *_myVert, MEdge &e1,
   _dirs.push_back(x2);
 }
 
-BoundaryLayerField *getBLField(GModel *gm)
-{
-  FieldManager *fields = gm->getFields();
-  if(fields->getBoundaryLayerField() <= 0){
-    return 0;
-  }
-  Field *bl_field = fields->get(fields->getBoundaryLayerField());
-  return dynamic_cast<BoundaryLayerField*>(bl_field);
-}
-
 static bool isEdgeOfFaceBL(GFace *gf, GEdge *ge, BoundaryLayerField *blf)
 {
   if(blf->isEdgeBL(ge->tag()))return true;
@@ -408,160 +398,170 @@ bool buildAdditionalPoints2D(GFace *gf)
   BoundaryLayerColumns *_columns = gf->getColumns();
   _columns->clearData();
 
-  // GET THE FIELD THAT DEFINES THE DISTANCE FUNCTION
-  BoundaryLayerField *blf = getBLField(gf->model());
+  FieldManager *fields = gf->model()->getFields();
+  int nBL = fields->getNumBoundaryLayerFields();
+  if (nBL == 0) return false;
 
-  if(!blf)return false;
+  // Note: boundary layers must be separate (must not touch each other)
+  bool addedAdditionalPoints = false;
+  for (int i = 0; i < nBL; ++i) {
+    // GET THE FIELD THAT DEFINES THE DISTANCE FUNCTION
+    Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
+    if (bl_field == NULL) continue;
+    BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField*>(bl_field);
 
-  blf->setupFor2d(gf->tag());
+    blf->setupFor2d(gf->tag());
 
-  std::set<MVertex*> _vertices;
-  std::set<MEdge,Less_Edge> allEdges;
-  std::multimap<MVertex*,MVertex*> tangents;
+    std::set<MVertex*> _vertices;
+    std::set<MEdge,Less_Edge> allEdges;
+    std::multimap<MVertex*,MVertex*> tangents;
 
-  getEdgesData( gf, blf, _columns, _vertices , allEdges , tangents );
+    getEdgesData( gf, blf, _columns, _vertices , allEdges , tangents );
 
-  if(!_vertices.size())return false;
+    if(!_vertices.size()) continue;
 
-  getNormals(gf, blf, _columns, allEdges);
+    getNormals(gf, blf, _columns, allEdges);
 
-  // for all boundry points
-  for(std::set<MVertex*>::iterator it = _vertices.begin(); it != _vertices.end() ; ++it){
+    // for all boundry points
+    for(std::set<MVertex*>::iterator it = _vertices.begin(); it != _vertices.end() ; ++it){
 
-    bool endOfTheBL = false;
-    SVector3 dirEndOfBL;
-    std::vector<MVertex*> columnEndOfBL;
+      bool endOfTheBL = false;
+      SVector3 dirEndOfBL;
+      std::vector<MVertex*> columnEndOfBL;
 
-    std::vector<MVertex*> _connections;
-    std::vector<SVector3> _dirs;
-    // get all vertices that are connected  to that
-    // vertex among all boundary layer vertices !
+      std::vector<MVertex*> _connections;
+      std::vector<SVector3> _dirs;
+      // get all vertices that are connected  to that
+      // vertex among all boundary layer vertices !
 
-    bool fan = (*it)->onWhat()->dim() == 0 && blf->isFanNode((*it)->onWhat()->tag());
+      bool fan = (*it)->onWhat()->dim() == 0 && blf->isFanNode((*it)->onWhat()->tag());
 
-    for(std::multimap<MVertex*,MVertex*>::iterator itm =
+      for(std::multimap<MVertex*,MVertex*>::iterator itm =
           _columns->_non_manifold_edges.lower_bound(*it);
-        itm != _columns->_non_manifold_edges.upper_bound(*it); ++itm)
-      _connections.push_back(itm->second);
+          itm != _columns->_non_manifold_edges.upper_bound(*it); ++itm)
+        _connections.push_back(itm->second);
 
-    // A trailing edge topology : 3 edges incident to a vertex
-    if(_connections.size() == 3){
-      MEdge e1(*it,_connections[0]);
-      MEdge e2(*it,_connections[1]);
-      MEdge e3(*it,_connections[2]);
-      treat3Connections(gf, *it,e1,e2,e3, _columns, _dirs);
-    }
-    // STANDARD CASE, one vertex connected to two neighboring vertices
-    else if(_connections.size() == 2){
-      MEdge e1(*it,_connections[0]);
-      MEdge e2(*it,_connections[1]);
-      treat2Connections(gf, *it,e1,e2, _columns, _dirs, fan);
-    }
-    else if(_connections.size() == 1){
-      MEdge e1(*it,_connections[0]);
-      std::vector<SVector3> N1;
-      for(std::multimap<MEdge,SVector3,Less_Edge>::iterator itm =
-              _columns->_normals.lower_bound(e1);
-           itm != _columns->_normals.upper_bound(e1); ++itm) N1.push_back(itm->second);
-      // one point has only one side and one normal : it has to be at the end of the BL
-      // then, we have the tangent to the connecting edge
+      // A trailing edge topology : 3 edges incident to a vertex
+      if(_connections.size() == 3){
+        MEdge e1(*it,_connections[0]);
+        MEdge e2(*it,_connections[1]);
+        MEdge e3(*it,_connections[2]);
+        treat3Connections(gf, *it,e1,e2,e3, _columns, _dirs);
+      }
+        // STANDARD CASE, one vertex connected to two neighboring vertices
+      else if(_connections.size() == 2){
+        MEdge e1(*it,_connections[0]);
+        MEdge e2(*it,_connections[1]);
+        treat2Connections(gf, *it,e1,e2, _columns, _dirs, fan);
+      }
+      else if(_connections.size() == 1){
+        MEdge e1(*it,_connections[0]);
+        std::vector<SVector3> N1;
+        std::multimap<MEdge,SVector3,Less_Edge>::iterator itm;
+        for(itm  = _columns->_normals.lower_bound(e1);
+            itm != _columns->_normals.upper_bound(e1); ++itm)
+          N1.push_back(itm->second);
+        // one point has only one side and one normal : it has to be at the end of the BL
+        // then, we have the tangent to the connecting edge
 
-      //          *it          _connections[0]
-      // --------- + -----------
-      //   NO BL          BL
+        //          *it          _connections[0]
+        // --------- + -----------
+        //   NO BL          BL
 
-      if(N1.size() == 1){
-        std::vector<MVertex*> Ts;
-        for(std::multimap<MVertex*,MVertex*>::iterator itm =
-               tangents.lower_bound(*it);
-             itm != tangents.upper_bound(*it); ++itm) Ts.push_back(itm->second);
-        // end of the BL --> let's add a column that correspond to the
-        // model edge that lies after the end of teh BL
-        if(Ts.size() == 1){
-          // printf("HERE WE ARE IN FACE %d %d\n",gf->tag(),Ts.size());
-          // printf("Classif dim %d %d\n",(*it)->onWhat()->dim(),Ts[0]->onWhat()->dim());
-          GEdge *ge = dynamic_cast<GEdge*>(Ts[0]->onWhat());
-          GVertex *gv = dynamic_cast<GVertex*>((*it)->onWhat());
-          if(ge && gv){
-            addColumnAtTheEndOfTheBL(ge,gv,_columns,blf);
+        if(N1.size() == 1){
+          std::vector<MVertex*> Ts;
+          for(std::multimap<MVertex*,MVertex*>::iterator itm =
+              tangents.lower_bound(*it);
+              itm != tangents.upper_bound(*it); ++itm) Ts.push_back(itm->second);
+          // end of the BL --> let's add a column that correspond to the
+          // model edge that lies after the end of teh BL
+          if(Ts.size() == 1){
+            // printf("HERE WE ARE IN FACE %d %d\n",gf->tag(),Ts.size());
+            // printf("Classif dim %d %d\n",(*it)->onWhat()->dim(),Ts[0]->onWhat()->dim());
+            GEdge *ge = dynamic_cast<GEdge*>(Ts[0]->onWhat());
+            GVertex *gv = dynamic_cast<GVertex*>((*it)->onWhat());
+            if(ge && gv){
+              addColumnAtTheEndOfTheBL(ge,gv,_columns,blf);
+            }
+          }
+          else {
+            Msg::Error("Impossible BL Configuration -- One Edge -- Tscp.size() = %d",Ts.size());
           }
         }
+        else if(N1.size() == 2){
+          SPoint2 p0,p1;
+          reparamMeshEdgeOnFace(_connections[0], *it, gf, p0, p1);
+          double alpha1 = atan2(N1[0].y(),N1[0].x());
+          double alpha2 = atan2(N1[1].y(),N1[1].x());
+          double alpha3 = atan2(p1.y()-p0.y(),p1.x()-p0.x());
+          double AMAX = std::max(alpha1,alpha2);
+          double AMIN = std::min(alpha1,alpha2);
+          if(alpha3 > AMAX){
+            double temp = AMAX;
+            AMAX = AMIN + 2*M_PI;
+            AMIN = temp;
+          }
+          if(alpha3 < AMIN) {
+            double temp = AMIN;
+            AMIN = AMAX - 2 * M_PI;
+            AMAX = temp;
+          }
+          double frac = fabs(AMAX - AMIN) / M_PI;
+          int n = (int)(frac * CTX::instance()->mesh.boundaryLayerFanPoints + 0.5);
+          int fanSize = fan ? n : 0 ;
+          if(fan) _columns->addFan(*it,e1,e1,true);
+          for(int i = -1; i <= fanSize; i++){
+            double t = (double)(i + 1)/ (fanSize + 1);
+            double alpha = t * AMAX + (1.-t) * AMIN;
+            SVector3 x(cos(alpha), sin(alpha), 0);
+            x.normalize();
+            _dirs.push_back(x);
+          }
+        }
+      }
+
+      // if(_dirs.size() > 1)printf("%d directions\n",_dirs.size());
+
+      // now create the BL points
+      for(unsigned int DIR=0;DIR<_dirs.size();DIR++){
+        SVector3 n = _dirs[DIR];
+
+        // < ------------------------------- > //
+        //   N = X(p0+ e n) - X(p0)            //
+        //     = e * (dX/du n_u + dX/dv n_v)   //
+        // < ------------------------------- > //
+
+        /*      if (endOfTheBL){
+          printf("%g %g %d %d %g\n", (*it)->x(), (*it)->y(), DIR, (int)_dirs.size(),
+                 dot(n, dirEndOfBL));
+        }
+        */
+        if(endOfTheBL && dot(n,dirEndOfBL) > .99){
+          // printf( "coucou c'est moi\n");
+        }
         else {
-          Msg::Error("Impossible BL Configuration -- One Edge -- Tscp.size() = %d",Ts.size());
-        }
-      }
-      else if(N1.size() == 2){
-        SPoint2 p0,p1;
-        reparamMeshEdgeOnFace(_connections[0], *it, gf, p0, p1);
-        double alpha1 = atan2(N1[0].y(),N1[0].x());
-        double alpha2 = atan2(N1[1].y(),N1[1].x());
-        double alpha3 = atan2(p1.y()-p0.y(),p1.x()-p0.x());
-        double AMAX = std::max(alpha1,alpha2);
-        double AMIN = std::min(alpha1,alpha2);
-        if(alpha3 > AMAX){
-          double temp = AMAX;
-          AMAX = AMIN + 2*M_PI;
-          AMIN = temp;
-        }
-        if(alpha3 < AMIN) {
-          double temp = AMIN;
-          AMIN = AMAX - 2 * M_PI;
-          AMAX = temp;
-        }
-        double frac = fabs(AMAX - AMIN) / M_PI;
-        int n = (int)(frac * CTX::instance()->mesh.boundaryLayerFanPoints + 0.5);
-        int fanSize = fan ? n : 0 ;
-	if(fan) _columns->addFan(*it,e1,e1,true);
-        for(int i = -1; i <= fanSize; i++){
-          double t = (double)(i + 1)/ (fanSize + 1);
-          double alpha = t * AMAX + (1.-t) * AMIN;
-          SVector3 x(cos(alpha), sin(alpha), 0);
-          x.normalize();
-          _dirs.push_back(x);
+          MVertex *first = *it;
+          double hwall;
+          getLocalInfoAtNode(first, blf, hwall);
+          std::vector<MVertex*> _column;
+          SPoint2 par = gf->parFromPoint(SPoint3(first->x(),first->y(),first->z()));
+          double L = hwall;
+          while(1){
+            // printf("L = %g\n",L);
+            if(L > blf->thickness) break;
+            SPoint2 pnew(par.x() + L * n.x(), par.y() + L * n.y());
+            GPoint pp = gf->point(pnew);
+            MFaceVertex *_current = new MFaceVertex(pp.x(),pp.y(),pp.z(),gf,pnew.x(),pnew.y());
+            _current->bl_data = new MVertexBoundaryLayerData;
+            _column.push_back(_current);
+            int ith = _column.size() ;
+            L+= hwall * pow(blf->ratio, ith);
+          }
+          _columns->addColumn(n,*it, _column /*,_metrics*/);
         }
       }
     }
-
-    // if(_dirs.size() > 1)printf("%d directions\n",_dirs.size());
-
-    // now create the BL points
-    for(unsigned int DIR=0;DIR<_dirs.size();DIR++){
-      SVector3 n = _dirs[DIR];
-
-      // < ------------------------------- > //
-      //   N = X(p0+ e n) - X(p0)            //
-      //     = e * (dX/du n_u + dX/dv n_v)   //
-      // < ------------------------------- > //
-
-      /*      if (endOfTheBL){
-        printf("%g %g %d %d %g\n", (*it)->x(), (*it)->y(), DIR, (int)_dirs.size(),
-               dot(n, dirEndOfBL));
-      }
-      */
-      if(endOfTheBL && dot(n,dirEndOfBL) > .99){
-        // printf( "coucou c'est moi\n");
-      }
-      else {
-        MVertex *first = *it;
-        double hwall;
-        getLocalInfoAtNode(first, blf, hwall);
-        std::vector<MVertex*> _column;
-        SPoint2 par = gf->parFromPoint(SPoint3(first->x(),first->y(),first->z()));
-        double L = hwall;
-        while(1){
-          // printf("L = %g\n",L);
-          if(L > blf->thickness) break;
-          SPoint2 pnew(par.x() + L * n.x(), par.y() + L * n.y());
-          GPoint pp = gf->point(pnew);
-          MFaceVertex *_current = new MFaceVertex(pp.x(),pp.y(),pp.z(),gf,pnew.x(),pnew.y());
-          _current->bl_data = new MVertexBoundaryLayerData;
-          _column.push_back(_current);
-          int ith = _column.size() ;
-          L+= hwall * pow(blf->ratio, ith);
-        }
-        _columns->addColumn(n,*it, _column /*,_metrics*/);
-      }
-    }
+    addedAdditionalPoints = true;
   }
 
 #if 0 // DEBUG STUFF
@@ -585,7 +585,7 @@ bool buildAdditionalPoints2D(GFace *gf)
   }
 #endif
 
-  return 1;
+  return addedAdditionalPoints;
 }
 
 #endif

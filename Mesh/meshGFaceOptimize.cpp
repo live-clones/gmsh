@@ -25,6 +25,7 @@
 #include "SPoint3.h"
 #include "robustPredicates.h"
 #include "meshGRegionRelocateVertex.h"
+#include "Field.h"
 
 #if defined(HAVE_BLOSSOM)
 extern "C" struct CCdatagroup;
@@ -1579,4 +1580,28 @@ void quadsToTriangles(GFace *gf, double minqual)
     }
   }
   _columns->_elemColumns = newElemColumns;
+}
+
+void splitElementsInBoundaryLayerIfNeeded(GFace *gf)
+{
+#if defined(HAVE_ANN)
+  if (!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine) {
+    int numSplit = 0;
+    int numNoSplit = 0;
+    FieldManager *fields = gf->model()->getFields();
+    int n = fields->getNumBoundaryLayerFields();
+    for (int i = 0; i < n; ++i) {
+      Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
+      if (bl_field == NULL) continue;
+      BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField*> (bl_field);
+      if (blf->iRecombine) ++numNoSplit;
+      else ++numSplit;
+    }
+
+    if (numSplit > 0 && numNoSplit > 0)
+      Msg::Warning("Cannot generate simplicial and non-simplicial boundary "
+                   "layers together. Keeping them non-simplicial...");
+    if (numNoSplit == 0 && numSplit > 0) quadsToTriangles(gf,10000);
+  }
+#endif
 }

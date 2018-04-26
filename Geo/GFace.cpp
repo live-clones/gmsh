@@ -1656,10 +1656,9 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
     }
 
     if (l_vertex==NULL) {
-      Msg::Error("Was not able to find corresponding node %d "
+      Msg::Error("Unable to find corresponding node %d "
                  "for periodic connection of surface %d to %d "
-                 "using the specified transformation"
-                 "Minimum distance is %g with a tolerance of %g",
+                 "(min distance is %g with a tolerance of %g)",
                  m_vertex->tag(), master->tag(), tag(), dist_min,
                  CTX::instance()->geom.tolerance * CTX::instance()->lc);
       return;

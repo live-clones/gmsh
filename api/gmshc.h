@@ -207,6 +207,12 @@ GMSH_API void gmshModelRemoveEntities(int * dimTags, size_t dimTags_n,
                                       const int recursive,
                                       int * ierr);
 
+/* Gets the type of the entity of dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelGetType(const int dim,
+                               const int tag,
+                               char ** type,
+                               int * ierr);
+
 /* Generates a mesh of the current model, up to dimension `dim' (0, 1, 2 or
  * 3). */
 GMSH_API void gmshModelMeshGenerate(const int dim,
@@ -521,7 +527,7 @@ GMSH_API void gmshModelMeshSetReverse(const int dim,
                                       const int val,
                                       int * ierr);
 
-/* Emebds the geometrical entities of dimension `dim' and tags `tags' in the
+/* Embeds the geometrical entities of dimension `dim' and tags `tags' in the
  * (inDim, inTag) geometrical entity. `inDim' must be strictly greater than
  * `dim'. */
 GMSH_API void gmshModelMeshEmbed(const int dim,
@@ -547,6 +553,16 @@ GMSH_API void gmshModelMeshReorderedMeshElements(const int elementType,
                                                  const int tag,
                                                  int * order, size_t order_n,
                                                  int * ierr);
+
+/* Sets the meshes of the entities of dimension `dim' and tag `tags' as
+ * periodic copies of the meshes of entities `tagsSource', using the affine
+ * transformation specified in `affineTransformation' (16 entries of a 4x4
+ * matrix, by row). Currently only available for `dim' == 1 and `dim' == 2. */
+GMSH_API void gmshModelMeshSetPeriodic(const int dim,
+                                       int * tag, size_t tag_n,
+                                       int * tagSource, size_t tagSource_n,
+                                       double * affineTransformation, size_t affineTransformation_n,
+                                       int * ierr);
 
 /* Adds a new mesh size field of type `type'. If `tag' is positive, assign the
  * tag explcitly; otherwise a new tag is assigned automatically. Returns the
@@ -581,7 +597,7 @@ GMSH_API void gmshModelMeshFieldSetNumbers(const int tag,
 GMSH_API void gmshModelMeshFieldSetAsBackgroundMesh(const int tag,
                                                     int * ierr);
 
-/* Sets the field `tag' as the boundary layer size field. */
+/* Sets the field `tag' as a boundary layer size field. */
 GMSH_API void gmshModelMeshFieldSetAsBoundaryLayer(const int tag,
                                                    int * ierr);
 
