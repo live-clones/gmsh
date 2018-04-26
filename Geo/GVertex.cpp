@@ -182,6 +182,10 @@ bool GVertex::reordered(const int elementType, const std::vector<int> &order)
   if(points.front()->getTypeForMSH() == elementType){
     if(order.size() != points.size()) return false;
     
+    for(std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it){
+      if(*it < 0 || *it >= points.size()) return false;
+    }
+    
     std::vector<MPoint*> newPointsOrder(points.size());
     for(unsigned int i = 0; i < order.size(); i++){
       newPointsOrder[i] = points[order[i]];

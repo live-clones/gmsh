@@ -723,6 +723,10 @@ bool GEdge::reordered(const int elementType, const std::vector<int> &order)
   if(lines.front()->getTypeForMSH() == elementType){
     if(order.size() != lines.size()) return false;
     
+    for(std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it){
+      if(*it < 0 || *it >= lines.size()) return false;
+    }
+    
     std::vector<MLine*> newLinesOrder(lines.size());
     for(unsigned int i = 0; i < order.size(); i++){
       newLinesOrder[i] = lines[order[i]];

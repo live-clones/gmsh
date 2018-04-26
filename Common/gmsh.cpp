@@ -1534,7 +1534,9 @@ void gmsh::model::mesh::reorderedMeshElements(const int elementType,
     throw 2;
   }
   
-  typeMap[elementType][0]->reordered(elementType, order);
+  if(!typeMap[elementType][0]->reordered(elementType, order)){
+    throw 3;
+  }
 }
 
 // gmsh::model::mesh::field
