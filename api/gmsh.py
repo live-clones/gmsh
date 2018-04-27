@@ -1278,21 +1278,21 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def setPeriodic(dim,tag,tagSource,affineTransformation):
+        def setPeriodic(dim,tags,tagsSource,affineTransformation):
             """
             Sets the meshes of the entities of dimension `dim' and tag `tags' as
             periodic copies of the meshes of entities `tagsSource', using the affine
             transformation specified in `affineTransformation' (16 entries of a 4x4
             matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.
             """
-            api_tag_, api_tag_n_ = _ivectorint(tag)
-            api_tagSource_, api_tagSource_n_ = _ivectorint(tagSource)
+            api_tags_, api_tags_n_ = _ivectorint(tags)
+            api_tagsSource_, api_tagsSource_n_ = _ivectorint(tagsSource)
             api_affineTransformation_, api_affineTransformation_n_ = _ivectordouble(affineTransformation)
             ierr = c_int()
             lib.gmshModelMeshSetPeriodic(
                 c_int(dim),
-                api_tag_, api_tag_n_,
-                api_tagSource_, api_tagSource_n_,
+                api_tags_, api_tags_n_,
+                api_tagsSource_, api_tagsSource_n_,
                 api_affineTransformation_, api_affineTransformation_n_,
                 byref(ierr))
             if ierr.value != 0 :
@@ -1309,9 +1309,9 @@ class model:
             @staticmethod
             def add(type,tag=-1):
                 """
-                Adds a new mesh size field of type `type'. If `tag' is positive, assign the
-                tag explcitly; otherwise a new tag is assigned automatically. Returns the
-                field tag.
+                Adds a new mesh size field of type `type'. If `tag' is positive, assigns
+                the tag explcitly; otherwise a new tag is assigned automatically. Returns
+                the field tag.
 
                 return int
                 """
@@ -1406,7 +1406,7 @@ class model:
             @staticmethod
             def setAsBoundaryLayer(tag):
                 """
-                Sets the field `tag' as the boundary layer size field.
+                Sets the field `tag' as a boundary layer size field.
                 """
                 ierr = c_int()
                 lib.gmshModelMeshFieldSetAsBoundaryLayer(
@@ -2605,7 +2605,7 @@ class model:
         @staticmethod
         def addCone(x,y,z,dx,dy,dz,r1,r2,tag=-1,angle=2*pi):
             """
-            Add a cone, defined by the center (`x', `y', `z') of its first circular
+            Adds a cone, defined by the center (`x', `y', `z') of its first circular
             face, the 3 components of the vector (`dx', `dy', `dz') defining its axis
             and the two radii `r1' and `r2' of the faces (these radii can be zero). If
             `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
@@ -2636,9 +2636,9 @@ class model:
         @staticmethod
         def addWedge(x,y,z,dx,dy,dz,tag=-1,ltx=0.):
             """
-            Add a right angular wedge, defined by the right-angle point (`x', `y', `z')
-            and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If `tag'
-            is positive, sets the tag explicitly; otherwise a new tag is selected
+            Adds a right angular wedge, defined by the right-angle point (`x', `y',
+            `z') and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If
+            `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. The optional argument `ltx' defines the top extent along the
             x-axis. Returns the tag of the wedge.
 

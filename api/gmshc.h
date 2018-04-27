@@ -471,14 +471,14 @@ GMSH_API void gmshModelMeshEmbed(const int dim,
  * transformation specified in `affineTransformation' (16 entries of a 4x4
  * matrix, by row). Currently only available for `dim' == 1 and `dim' == 2. */
 GMSH_API void gmshModelMeshSetPeriodic(const int dim,
-                                       int * tag, size_t tag_n,
-                                       int * tagSource, size_t tagSource_n,
+                                       int * tags, size_t tags_n,
+                                       int * tagsSource, size_t tagsSource_n,
                                        double * affineTransformation, size_t affineTransformation_n,
                                        int * ierr);
 
-/* Adds a new mesh size field of type `type'. If `tag' is positive, assign the
- * tag explcitly; otherwise a new tag is assigned automatically. Returns the
- * field tag. */
+/* Adds a new mesh size field of type `type'. If `tag' is positive, assigns
+ * the tag explcitly; otherwise a new tag is assigned automatically. Returns
+ * the field tag. */
 GMSH_API int gmshModelMeshFieldAdd(const char * type,
                                    const int tag,
                                    int * ierr);
@@ -1031,7 +1031,7 @@ GMSH_API int gmshModelOccAddCylinder(const double x,
                                      const double angle,
                                      int * ierr);
 
-/* Add a cone, defined by the center (`x', `y', `z') of its first circular
+/* Adds a cone, defined by the center (`x', `y', `z') of its first circular
  * face, the 3 components of the vector (`dx', `dy', `dz') defining its axis
  * and the two radii `r1' and `r2' of the faces (these radii can be zero). If
  * `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
@@ -1049,9 +1049,9 @@ GMSH_API int gmshModelOccAddCone(const double x,
                                  const double angle,
                                  int * ierr);
 
-/* Add a right angular wedge, defined by the right-angle point (`x', `y', `z')
- * and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If `tag'
- * is positive, sets the tag explicitly; otherwise a new tag is selected
+/* Adds a right angular wedge, defined by the right-angle point (`x', `y',
+ * `z') and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If
+ * `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
  * automatically. The optional argument `ltx' defines the top extent along the
  * x-axis. Returns the tag of the wedge. */
 GMSH_API int gmshModelOccAddWedge(const double x,
