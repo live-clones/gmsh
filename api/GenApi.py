@@ -663,10 +663,10 @@ class API:
             f.write(indent+'"""\n')
             f.write(indent+("\n"+indent).join(textwrap.wrap(doc,75))+"\n")
             if rtype or oargs :
-                f.write("\n"+indent+"return " + ", ".join(
-                    ([rtype.rtype_c] if rtype else[])
-                    +[a.name for a in oargs])
-                +"\n")
+                f.write("\n"+indent+"Returns " + ", ".join(
+                    (["an " + rtype.rtype_texi] if rtype else[])
+                    +[("`" + a.name + "'") for a in oargs])
+                +".\n")
             f.write(indent+'"""\n')
             for a in args :
                 if a.python_pre : f.write(indent+a.python_pre+"\n")

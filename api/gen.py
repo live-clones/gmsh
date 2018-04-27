@@ -528,15 +528,15 @@ fltk.add('run',doc,None)
 
 ################################################################################
 
-onelab = gmsh.add_module('onelab','Onelab server functions')
+onelab = gmsh.add_module('onelab','ONELAB server functions')
 
-doc = '''Gets data from the Onelab server.'''
+doc = '''Gets `data' from the ONELAB server.'''
 onelab.add('get',doc,None,ostring('data'),istring('format', '"json"'))
 
-doc = '''Sets data in the Onelab server.'''
+doc = '''Sets `data' in the ONELAB server.'''
 onelab.add('set',doc,None,istring('data'),istring('format', '"json"'))
 
-doc = '''Runs a onelab client. If no name is given, attemps to run a client that might be linked to the processed input files.'''
+doc = '''Runs a ONELAB client. If `name' is provided, creates a new ONELAB client with name `name' and executes `command'. If not, attemps to run a client that might be linked to the processed input files.'''
 onelab.add('run',doc,None,istring('name', '""'),istring('command', '""'))
 
 ################################################################################

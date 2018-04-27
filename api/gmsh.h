@@ -1351,18 +1351,19 @@ namespace gmsh { // Top-level functions
 
   } // namespace fltk
 
-  namespace onelab { // Onelab server functions
+  namespace onelab { // ONELAB server functions
 
-    // Gets data from the Onelab server.
+    // Gets `data' from the ONELAB server.
     GMSH_API void get(std::string & data,
                       const std::string & format = "json");
 
-    // Sets data in the Onelab server.
+    // Sets `data' in the ONELAB server.
     GMSH_API void set(const std::string & data,
                       const std::string & format = "json");
 
-    // Runs a onelab client. If no name is given, attemps to run a client that
-    // might be linked to the processed input files.
+    // Runs a ONELAB client. If `name' is provided, creates a new ONELAB client
+    // with name `name' and executes `command'. If not, attemps to run a client
+    // that might be linked to the processed input files.
     GMSH_API void run(const std::string & name = "",
                       const std::string & command = "");
 

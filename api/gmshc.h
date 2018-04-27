@@ -1430,18 +1430,19 @@ GMSH_API void gmshFltkWait(const double time,
  * yet been initialized. */
 GMSH_API void gmshFltkRun(int * ierr);
 
-/* Gets data from the Onelab server. */
+/* Gets `data' from the ONELAB server. */
 GMSH_API void gmshOnelabGet(char ** data,
                             const char * format,
                             int * ierr);
 
-/* Sets data in the Onelab server. */
+/* Sets `data' in the ONELAB server. */
 GMSH_API void gmshOnelabSet(const char * data,
                             const char * format,
                             int * ierr);
 
-/* Runs a onelab client. If no name is given, attemps to run a client that
- * might be linked to the processed input files. */
+/* Runs a ONELAB client. If `name' is provided, creates a new ONELAB client
+ * with name `name' and executes `command'. If not, attemps to run a client
+ * that might be linked to the processed input files. */
 GMSH_API void gmshOnelabRun(const char * name,
                             const char * command,
                             int * ierr);
