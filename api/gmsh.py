@@ -1406,7 +1406,7 @@ class model:
             @staticmethod
             def setAsBoundaryLayer(tag):
                 """
-                Sets the field `tag' as the boundary layer size field.
+                Sets the field `tag' as a boundary layer size field.
                 """
                 ierr = c_int()
                 lib.gmshModelMeshFieldSetAsBoundaryLayer(
