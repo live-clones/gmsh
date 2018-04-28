@@ -440,13 +440,13 @@ namespace gmsh { // Top-level functions
       // transformation specified in `affineTransformation' (16 entries of a 4x4
       // matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.
       GMSH_API void setPeriodic(const int dim,
-                                const std::vector<int> & tag,
-                                const std::vector<int> & tagSource,
+                                const std::vector<int> & tags,
+                                const std::vector<int> & tagsSource,
                                 const std::vector<double> & affineTransformation);
 
       namespace field { // Per-model mesh size field functions
 
-        // Adds a new mesh size field of type `type'. If `tag' is positive, assign
+        // Adds a new mesh size field of type `type'. If `tag' is positive, assigns
         // the tag explcitly; otherwise a new tag is assigned automatically.
         // Returns the field tag.
         GMSH_API int add(const std::string & type,
@@ -967,7 +967,7 @@ namespace gmsh { // Top-level functions
                                const int tag = -1,
                                const double angle = 2*M_PI);
 
-      // Add a cone, defined by the center (`x', `y', `z') of its first circular
+      // Adds a cone, defined by the center (`x', `y', `z') of its first circular
       // face, the 3 components of the vector (`dx', `dy', `dz') defining its axis
       // and the two radii `r1' and `r2' of the faces (these radii can be zero). If
       // `tag' is positive, sets the tag explicitly; otherwise a new tag is
@@ -984,7 +984,7 @@ namespace gmsh { // Top-level functions
                            const int tag = -1,
                            const double angle = 2*M_PI);
 
-      // Add a right angular wedge, defined by the right-angle point (`x', `y',
+      // Adds a right angular wedge, defined by the right-angle point (`x', `y',
       // `z') and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If
       // `tag' is positive, sets the tag explicitly; otherwise a new tag is
       // selected automatically. The optional argument `ltx' defines the top extent
@@ -1351,18 +1351,19 @@ namespace gmsh { // Top-level functions
 
   } // namespace fltk
 
-  namespace onelab { // Onelab server functions
+  namespace onelab { // ONELAB server functions
 
-    // Gets data from the Onelab server.
+    // Gets `data' from the ONELAB server.
     GMSH_API void get(std::string & data,
                       const std::string & format = "json");
 
-    // Sets data in the Onelab server.
+    // Sets `data' in the ONELAB server.
     GMSH_API void set(const std::string & data,
                       const std::string & format = "json");
 
-    // Runs a onelab client. If no name is given, attemps to run a client that
-    // might be linked to the processed input files.
+    // Runs a ONELAB client. If `name' is provided, creates a new ONELAB client
+    // with name `name' and executes `command'. If not, attemps to run a client
+    // that might be linked to the processed input files.
     GMSH_API void run(const std::string & name = "",
                       const std::string & command = "");
 

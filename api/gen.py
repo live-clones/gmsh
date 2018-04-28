@@ -198,13 +198,13 @@ doc = '''Embeds the geometrical entities of dimension `dim' and tags `tags' in t
 mesh.add('embed',doc,None,iint('dim'),ivectorint('tags'),iint('inDim'),iint('inTag'))
 
 doc = '''Sets the meshes of the entities of dimension `dim' and tag `tags' as periodic copies of the meshes of entities `tagsSource', using the affine transformation specified in `affineTransformation' (16 entries of a 4x4 matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.'''
-mesh.add('setPeriodic',doc,None,iint('dim'),ivectorint('tag'),ivectorint('tagSource'),ivectordouble('affineTransformation'))
+mesh.add('setPeriodic',doc,None,iint('dim'),ivectorint('tags'),ivectorint('tagsSource'),ivectordouble('affineTransformation'))
 
 ################################################################################
 
 field = mesh.add_module('field','Per-model mesh size field functions')
 
-doc = '''Adds a new mesh size field of type `type'. If `tag' is positive, assign the tag explcitly; otherwise a new tag is assigned automatically. Returns the field tag.'''
+doc = '''Adds a new mesh size field of type `type'. If `tag' is positive, assigns the tag explcitly; otherwise a new tag is assigned automatically. Returns the field tag.'''
 field.add('add',doc,oint,istring('type'),iint('tag','-1'))
 
 doc = '''Removes the field with tag `tag'.'''
@@ -387,10 +387,10 @@ occ.add('addBox',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),i
 doc = '''Adds a cylinder, defined by the center (`x', `y', `z') of its first circular face, the 3 components (`dx', `dy', `dz') of the vector defining its axis and its radius `r'. The optional `angle' argument defines the angular opening (from 0 to 2*Pi). If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the cylinder.'''
 occ.add('addCylinder',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),idouble('r'),iint('tag','-1'),idouble('angle','2*M_PI','2*pi'))
 
-doc = '''Add a cone, defined by the center (`x', `y', `z') of its first circular face, the 3 components of the vector (`dx', `dy', `dz') defining its axis and the two radii `r1' and `r2' of the faces (these radii can be zero). If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle' defines the optional angular opening (from 0 to 2*Pi). Returns the tag of the cone.'''
+doc = '''Adds a cone, defined by the center (`x', `y', `z') of its first circular face, the 3 components of the vector (`dx', `dy', `dz') defining its axis and the two radii `r1' and `r2' of the faces (these radii can be zero). If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. `angle' defines the optional angular opening (from 0 to 2*Pi). Returns the tag of the cone.'''
 occ.add('addCone',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),idouble('r1'),idouble('r2'),iint('tag','-1'),idouble('angle','2*M_PI','2*pi'))
 
-doc = '''Add a right angular wedge, defined by the right-angle point (`x', `y', `z') and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. The optional argument `ltx' defines the top extent along the x-axis. Returns the tag of the wedge.'''
+doc = '''Adds a right angular wedge, defined by the right-angle point (`x', `y', `z') and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. The optional argument `ltx' defines the top extent along the x-axis. Returns the tag of the wedge.'''
 occ.add('addWedge',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('dx'),idouble('dy'),idouble('dz'),iint('tag','-1'),idouble('ltx','0.'))
 
 doc = '''Adds a torus, defined by its center (`x', `y', `z') and its 2 radii `r' and `r2'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. The optional argument `angle' defines the angular opening (from 0 to 2*Pi). Returns the tag of the wedge.'''
@@ -528,15 +528,15 @@ fltk.add('run',doc,None)
 
 ################################################################################
 
-onelab = gmsh.add_module('onelab','Onelab server functions')
+onelab = gmsh.add_module('onelab','ONELAB server functions')
 
-doc = '''Gets data from the Onelab server.'''
+doc = '''Gets `data' from the ONELAB server.'''
 onelab.add('get',doc,None,ostring('data'),istring('format', '"json"'))
 
-doc = '''Sets data in the Onelab server.'''
+doc = '''Sets `data' in the ONELAB server.'''
 onelab.add('set',doc,None,istring('data'),istring('format', '"json"'))
 
-doc = '''Runs a onelab client. If no name is given, attemps to run a client that might be linked to the processed input files.'''
+doc = '''Runs a ONELAB client. If `name' is provided, creates a new ONELAB client with name `name' and executes `command'. If not, attemps to run a client that might be linked to the processed input files.'''
 onelab.add('run',doc,None,istring('name', '""'),istring('command', '""'))
 
 ################################################################################

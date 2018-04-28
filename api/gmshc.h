@@ -471,14 +471,14 @@ GMSH_API void gmshModelMeshEmbed(const int dim,
  * transformation specified in `affineTransformation' (16 entries of a 4x4
  * matrix, by row). Currently only available for `dim' == 1 and `dim' == 2. */
 GMSH_API void gmshModelMeshSetPeriodic(const int dim,
-                                       int * tag, size_t tag_n,
-                                       int * tagSource, size_t tagSource_n,
+                                       int * tags, size_t tags_n,
+                                       int * tagsSource, size_t tagsSource_n,
                                        double * affineTransformation, size_t affineTransformation_n,
                                        int * ierr);
 
-/* Adds a new mesh size field of type `type'. If `tag' is positive, assign the
- * tag explcitly; otherwise a new tag is assigned automatically. Returns the
- * field tag. */
+/* Adds a new mesh size field of type `type'. If `tag' is positive, assigns
+ * the tag explcitly; otherwise a new tag is assigned automatically. Returns
+ * the field tag. */
 GMSH_API int gmshModelMeshFieldAdd(const char * type,
                                    const int tag,
                                    int * ierr);
@@ -1031,7 +1031,7 @@ GMSH_API int gmshModelOccAddCylinder(const double x,
                                      const double angle,
                                      int * ierr);
 
-/* Add a cone, defined by the center (`x', `y', `z') of its first circular
+/* Adds a cone, defined by the center (`x', `y', `z') of its first circular
  * face, the 3 components of the vector (`dx', `dy', `dz') defining its axis
  * and the two radii `r1' and `r2' of the faces (these radii can be zero). If
  * `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
@@ -1049,9 +1049,9 @@ GMSH_API int gmshModelOccAddCone(const double x,
                                  const double angle,
                                  int * ierr);
 
-/* Add a right angular wedge, defined by the right-angle point (`x', `y', `z')
- * and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If `tag'
- * is positive, sets the tag explicitly; otherwise a new tag is selected
+/* Adds a right angular wedge, defined by the right-angle point (`x', `y',
+ * `z') and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If
+ * `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
  * automatically. The optional argument `ltx' defines the top extent along the
  * x-axis. Returns the tag of the wedge. */
 GMSH_API int gmshModelOccAddWedge(const double x,
@@ -1430,18 +1430,19 @@ GMSH_API void gmshFltkWait(const double time,
  * yet been initialized. */
 GMSH_API void gmshFltkRun(int * ierr);
 
-/* Gets data from the Onelab server. */
+/* Gets `data' from the ONELAB server. */
 GMSH_API void gmshOnelabGet(char ** data,
                             const char * format,
                             int * ierr);
 
-/* Sets data in the Onelab server. */
+/* Sets `data' in the ONELAB server. */
 GMSH_API void gmshOnelabSet(const char * data,
                             const char * format,
                             int * ierr);
 
-/* Runs a onelab client. If no name is given, attemps to run a client that
- * might be linked to the processed input files. */
+/* Runs a ONELAB client. If `name' is provided, creates a new ONELAB client
+ * with name `name' and executes `command'. If not, attemps to run a client
+ * that might be linked to the processed input files. */
 GMSH_API void gmshOnelabRun(const char * name,
                             const char * command,
                             int * ierr);

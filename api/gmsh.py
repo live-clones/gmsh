@@ -256,7 +256,7 @@ class option:
         """
         Gets the `value' of a numerical option.
 
-        return value
+        Returns `value'.
         """
         api_value_ = c_double()
         ierr = c_int()
@@ -290,7 +290,7 @@ class option:
         """
         Gets the `value' of a string option.
 
-        return value
+        Returns `value'.
         """
         api_value_ = c_char_p()
         ierr = c_int()
@@ -342,7 +342,7 @@ class model:
         """
         Lists the names of all models.
 
-        return names
+        Returns `names'.
         """
         api_names_, api_names_n_ = POINTER(POINTER(c_char))(), c_size_t()
         ierr = c_int()
@@ -378,7 +378,7 @@ class model:
         points if `dim' == 0). The entities are returned as a vector of (dim, tag)
         integer pairs.
 
-        return dimTags
+        Returns `dimTags'.
         """
         api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
@@ -400,7 +400,7 @@ class model:
         if `dim' == 0). The entities are returned as a vector of (dim, tag) integer
         pairs.
 
-        return dimTags
+        Returns `dimTags'.
         """
         api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
@@ -420,7 +420,7 @@ class model:
         Gets the tags of all the (elementary) geometrical entities making up the
         physical group of dimension `dim' and tag `tag'.
 
-        return tags
+        Returns `tags'.
         """
         api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
@@ -442,7 +442,7 @@ class model:
         with tags `tags'. The function returns the tag of the physical group, equal
         to `tag' if `tag' is positive, or a new tag if `tag' < 0.
 
-        return int
+        Returns an integer.
         """
         api_tags_, api_tags_n_ = _ivectorint(tags)
         ierr = c_int()
@@ -478,7 +478,7 @@ class model:
         """
         Gets the name of the physical group of dimension `dim' and tag `tag'.
 
-        return name
+        Returns `name'.
         """
         api_name_ = c_char_p()
         ierr = c_int()
@@ -503,7 +503,7 @@ class model:
         of the boundary entity if `oriented' is true. Applies the boundary operator
         recursively down to dimension 0 (i.e. to points) if `recursive' is true.
 
-        return outDimTags
+        Returns `outDimTags'.
         """
         api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
         api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -529,7 +529,7 @@ class model:
         `dim' is >= 0, returns only the entities of the specified dimension (e.g.
         points if `dim' == 0).
 
-        return tags
+        Returns `tags'.
         """
         api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
@@ -555,7 +555,7 @@ class model:
         Gets the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
         the geometrical entity of dimension `dim' and tag `tag'.
 
-        return xmin, ymin, zmin, xmax, ymax, zmax
+        Returns `xmin', `ymin', `zmin', `xmax', `ymax', `zmax'.
         """
         api_xmin_ = c_double()
         api_ymin_ = c_double()
@@ -596,7 +596,7 @@ class model:
         discrete entity, if any. Specyfing `boundary' allows Gmsh to construct the
         topology of the overall model.
 
-        return int
+        Returns an integer.
         """
         api_boundary_, api_boundary_n_ = _ivectorint(boundary)
         ierr = c_int()
@@ -633,7 +633,7 @@ class model:
         """
         Gets the type of the entity of dimension `dim' and tag `tag'.
 
-        return type
+        Returns `type'.
         """
         api_type_ = c_char_p()
         ierr = c_int()
@@ -729,7 +729,7 @@ class model:
             Gets the last entities (if any) where a meshing error occurred. Currently
             only populated by the new 3D meshing algorithms.
 
-            return dimTags
+            Returns `dimTags'.
             """
             api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
@@ -748,7 +748,7 @@ class model:
             Gets the last mesh nodes (if any) where a meshing error occurred. Currently
             only populated by the new 3D meshing algorithms.
 
-            return nodeTags
+            Returns `nodeTags'.
             """
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
@@ -774,7 +774,7 @@ class model:
             available. The length of `parametricCoord' can be 0 or `dim' times the
             length of `nodeTags'.
 
-            return nodeTags, coord, parametricCoord
+            Returns `nodeTags', `coord', `parametricCoord'.
             """
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
@@ -812,7 +812,7 @@ class model:
             type of element, that contains the node tags of all the elements of the
             given type, concatenated.
 
-            return elementTypes, elementTags, nodeTags
+            Returns `elementTypes', `elementTags', `nodeTags'.
             """
             api_elementTypes_, api_elementTypes_n_ = POINTER(c_int)(), c_size_t()
             api_elementTags_, api_elementTags_n_, api_elementTags_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
@@ -842,7 +842,7 @@ class model:
             (`numNodes') and parametric coordinates of nodes (`parametricCoord' vector,
             of length `dim' times `numNodes').
 
-            return elementName, dim, order, numNodes, parametricCoord
+            Returns `elementName', `dim', `order', `numNodes', `parametricCoord'.
             """
             api_elementName_ = c_char_p()
             api_dim_ = c_int()
@@ -888,7 +888,7 @@ class model:
             function in the space and `functionSpaceData' contains for each element
             type the evaluation of the basis functions at the integration points.
 
-            return integrationPoints, integrationData, functionSpaceNumComponents, functionSpaceData
+            Returns `integrationPoints', `integrationData', `functionSpaceNumComponents', `functionSpaceData'.
             """
             api_integrationPoints_, api_integrationPoints_n_, api_integrationPoints_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
             api_integrationData_, api_integrationData_n_, api_integrationData_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
@@ -922,7 +922,7 @@ class model:
             tag. If `tag' < 0, gets the types for all entities of dimension `dim'. If
             `dim' and `tag' are negative, gets all the types in the mesh.
 
-            return elementTypes
+            Returns `elementTypes'.
             """
             api_elementTypes_, api_elementTypes_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
@@ -943,7 +943,7 @@ class model:
             Gets the mesh elements in the same way as `getElements', but for a single
             `elementType'.
 
-            return elementTags, nodeTags
+            Returns `elementTags', `nodeTags'.
             """
             api_elementTags_, api_elementTags_n_ = POINTER(c_int)(), c_size_t()
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
@@ -969,7 +969,7 @@ class model:
             Gets the integration data for mesh elements in the same way as
             `getIntegrationData', but for a single `elementType'.
 
-            return integrationPoints, integrationData, functionSpaceNumComponents, functionSpaceData
+            Returns `integrationPoints', `integrationData', `functionSpaceNumComponents', `functionSpaceData'.
             """
             api_integrationPoints_, api_integrationPoints_n_ = POINTER(c_double)(), c_size_t()
             api_integrationData_, api_integrationData_n_ = POINTER(c_double)(), c_size_t()
@@ -1079,7 +1079,7 @@ class model:
             tags from 1 to N to maintain reasonnable performance (in this case the
             internal cache is based on a vector; otherwise it uses a map).
 
-            return coord, parametricCoord
+            Returns `coord', `parametricCoord'.
             """
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
             api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
@@ -1107,7 +1107,7 @@ class model:
             reasonnable performance (in this case the internal cache is based on a
             vector; otherwise it uses a map).
 
-            return type, nodeTags
+            Returns `type', `nodeTags'.
             """
             api_type_ = c_int()
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
@@ -1278,21 +1278,21 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def setPeriodic(dim,tag,tagSource,affineTransformation):
+        def setPeriodic(dim,tags,tagsSource,affineTransformation):
             """
             Sets the meshes of the entities of dimension `dim' and tag `tags' as
             periodic copies of the meshes of entities `tagsSource', using the affine
             transformation specified in `affineTransformation' (16 entries of a 4x4
             matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.
             """
-            api_tag_, api_tag_n_ = _ivectorint(tag)
-            api_tagSource_, api_tagSource_n_ = _ivectorint(tagSource)
+            api_tags_, api_tags_n_ = _ivectorint(tags)
+            api_tagsSource_, api_tagsSource_n_ = _ivectorint(tagsSource)
             api_affineTransformation_, api_affineTransformation_n_ = _ivectordouble(affineTransformation)
             ierr = c_int()
             lib.gmshModelMeshSetPeriodic(
                 c_int(dim),
-                api_tag_, api_tag_n_,
-                api_tagSource_, api_tagSource_n_,
+                api_tags_, api_tags_n_,
+                api_tagsSource_, api_tagsSource_n_,
                 api_affineTransformation_, api_affineTransformation_n_,
                 byref(ierr))
             if ierr.value != 0 :
@@ -1309,11 +1309,11 @@ class model:
             @staticmethod
             def add(type,tag=-1):
                 """
-                Adds a new mesh size field of type `type'. If `tag' is positive, assign the
-                tag explcitly; otherwise a new tag is assigned automatically. Returns the
-                field tag.
+                Adds a new mesh size field of type `type'. If `tag' is positive, assigns
+                the tag explcitly; otherwise a new tag is assigned automatically. Returns
+                the field tag.
 
-                return int
+                Returns an integer.
                 """
                 ierr = c_int()
                 api__result__ = lib.gmshModelMeshFieldAdd(
@@ -1433,7 +1433,7 @@ class model:
             point will be added in the current model only after `synchronize' is
             called. This behavior holds for all the entities added in the geo module.)
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddPoint(
@@ -1456,7 +1456,7 @@ class model:
             and `endTag'. If `tag' is positive, sets the tag explicitly; otherwise a
             new tag is selected automatically. Returns the tag of the line.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddLine(
@@ -1479,7 +1479,7 @@ class model:
             automatically. If (`nx', `ny', `nz') != (0,0,0), explicitely sets the plane
             of the circle arc. Returns the tag of the circle arc.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddCircleArc(
@@ -1507,7 +1507,7 @@ class model:
             explicitely sets the plane of the circle arc. Returns the tag of the
             ellipse arc.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddEllipseArc(
@@ -1534,7 +1534,7 @@ class model:
             automatically. Creates a periodic curve if the first and last points are
             the same. Returns the tag of the spline curve.
 
-            return int
+            Returns an integer.
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -1556,7 +1556,7 @@ class model:
             automatically. Creates a periodic curve if the first and last points are
             the same. Returns the tag of the b-spline curve.
 
-            return int
+            Returns an integer.
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -1577,7 +1577,7 @@ class model:
             sets the tag explicitly; otherwise a new tag is selected automatically.
             Returns the tag of the Bezier curve.
 
-            return int
+            Returns an integer.
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -1601,7 +1601,7 @@ class model:
             explicitly; otherwise a new tag is selected automatically. Returns the tag
             of the curve loop.
 
-            return int
+            Returns an integer.
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
@@ -1623,7 +1623,7 @@ class model:
             holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
             is selected automatically. Returns the tag of the surface.
 
-            return int
+            Returns an integer.
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             ierr = c_int()
@@ -1645,7 +1645,7 @@ class model:
             4 curves only. If `tag' is positive, sets the tag explicitly; otherwise a
             new tag is selected automatically. Returns the tag of the surface.
 
-            return int
+            Returns an integer.
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             ierr = c_int()
@@ -1667,7 +1667,7 @@ class model:
             positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. Returns the tag of the shell.
 
-            return int
+            Returns an integer.
             """
             api_surfaceTags_, api_surfaceTags_n_ = _ivectorint(surfaceTags)
             ierr = c_int()
@@ -1689,7 +1689,7 @@ class model:
             define holes. If `tag' is positive, sets the tag explicitly; otherwise a
             new tag is selected automatically. Returns the tag of the volume.
 
-            return int
+            Returns an integer.
             """
             api_shellTags_, api_shellTags_n_ = _ivectorint(shellTags)
             ierr = c_int()
@@ -1712,7 +1712,7 @@ class model:
             number of elements in each layer. If `height' is not empty, it provides the
             (cummulative) height of the different layers, normalized to 1.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -1746,7 +1746,7 @@ class model:
             empty, it provides the (cummulative) height of the different layers,
             normalized to 1.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -1784,7 +1784,7 @@ class model:
             number of elements in each layer. If `height' is not empty, it provides the
             (cummulative) height of the different layers, normalized to 1.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -1906,7 +1906,7 @@ class model:
             Copies the entities `dimTags'; the new entities are returned in
             `outDimTags'.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -2123,7 +2123,7 @@ class model:
             point will be added in the current model only after `synchronize' is
             called. This behavior holds for all the entities added in the occ module.)
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddPoint(
@@ -2146,7 +2146,7 @@ class model:
             and `endTag'. If `tag' is positive, sets the tag explicitly; otherwise a
             new tag is selected automatically. Returns the tag of the line.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddLine(
@@ -2168,7 +2168,7 @@ class model:
             otherwise a new tag is selected automatically. Returns the tag of the
             circle arc.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddCircleArc(
@@ -2191,7 +2191,7 @@ class model:
             automatically. If `angle1' and `angle2' are specified, creates a circle arc
             between the two angles. Returns the tag of the circle.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddCircle(
@@ -2217,7 +2217,7 @@ class model:
             explicitly; otherwise a new tag is selected automatically. Returns the tag
             of the ellipse arc.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddEllipseArc(
@@ -2241,7 +2241,7 @@ class model:
             specified, creates an ellipse arc between the two angles. Returns the tag
             of the ellipse.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddEllipse(
@@ -2268,7 +2268,7 @@ class model:
             automatically. Creates a periodic curve if the first and last points are
             the same. Returns the tag of the spline curve.
 
-            return int
+            Returns an integer.
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -2292,7 +2292,7 @@ class model:
             periodic curve if the first and last points are the same. Returns the tag
             of the b-spline curve.
 
-            return int
+            Returns an integer.
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             api_weights_, api_weights_n_ = _ivectordouble(weights)
@@ -2320,7 +2320,7 @@ class model:
             sets the tag explicitly; otherwise a new tag is selected automatically.
             Returns the tag of the Bezier curve.
 
-            return int
+            Returns an integer.
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -2343,7 +2343,7 @@ class model:
             the tag explicitly; otherwise a new tag is selected automatically. Returns
             the tag of the wire.
 
-            return int
+            Returns an integer.
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
@@ -2368,7 +2368,7 @@ class model:
             otherwise a new tag is selected automatically. Returns the tag of the curve
             loop.
 
-            return int
+            Returns an integer.
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
@@ -2390,7 +2390,7 @@ class model:
             explicitly; otherwise a new tag is selected automatically. Rounds the
             corners if `roundedRadius' is nonzero. Returns the tag of the rectangle.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddRectangle(
@@ -2415,7 +2415,7 @@ class model:
             and `ry' along the y-axis. If `tag' is positive, sets the tag explicitly;
             otherwise a new tag is selected automatically. Returns the tag of the disk.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddDisk(
@@ -2441,7 +2441,7 @@ class model:
             otherwise a new tag is selected automatically. Returns the tag of the
             surface.
 
-            return int
+            Returns an integer.
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             ierr = c_int()
@@ -2462,7 +2462,7 @@ class model:
             sets the tag explicitly; otherwise a new tag is selected automatically.
             Returns the tag of the surface.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddSurfaceFilling(
@@ -2482,7 +2482,7 @@ class model:
             positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. Returns the tag of the surface loop.
 
-            return int
+            Returns an integer.
             """
             api_surfaceTags_, api_surfaceTags_n_ = _ivectorint(surfaceTags)
             ierr = c_int()
@@ -2504,7 +2504,7 @@ class model:
             loop define holes. If `tag' is positive, sets the tag explicitly; otherwise
             a new tag is selected automatically. Returns the tag of the volume.
 
-            return int
+            Returns an integer.
             """
             api_shellTags_, api_shellTags_n_ = _ivectorint(shellTags)
             ierr = c_int()
@@ -2527,7 +2527,7 @@ class model:
             (from 0 to 2*Pi). If `tag' is positive, sets the tag explicitly; otherwise
             a new tag is selected automatically. Returns the tag of the sphere.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddSphere(
@@ -2554,7 +2554,7 @@ class model:
             explicitly; otherwise a new tag is selected automatically. Returns the tag
             of the box.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddBox(
@@ -2582,7 +2582,7 @@ class model:
             explicitly; otherwise a new tag is selected automatically. Returns the tag
             of the cylinder.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddCylinder(
@@ -2605,14 +2605,14 @@ class model:
         @staticmethod
         def addCone(x,y,z,dx,dy,dz,r1,r2,tag=-1,angle=2*pi):
             """
-            Add a cone, defined by the center (`x', `y', `z') of its first circular
+            Adds a cone, defined by the center (`x', `y', `z') of its first circular
             face, the 3 components of the vector (`dx', `dy', `dz') defining its axis
             and the two radii `r1' and `r2' of the faces (these radii can be zero). If
             `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. `angle' defines the optional angular opening (from 0 to
             2*Pi). Returns the tag of the cone.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddCone(
@@ -2636,13 +2636,13 @@ class model:
         @staticmethod
         def addWedge(x,y,z,dx,dy,dz,tag=-1,ltx=0.):
             """
-            Add a right angular wedge, defined by the right-angle point (`x', `y', `z')
-            and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If `tag'
-            is positive, sets the tag explicitly; otherwise a new tag is selected
+            Adds a right angular wedge, defined by the right-angle point (`x', `y',
+            `z') and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If
+            `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. The optional argument `ltx' defines the top extent along the
             x-axis. Returns the tag of the wedge.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddWedge(
@@ -2669,7 +2669,7 @@ class model:
             selected automatically. The optional argument `angle' defines the angular
             opening (from 0 to 2*Pi). Returns the tag of the wedge.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddTorus(
@@ -2697,7 +2697,7 @@ class model:
             `makeRuled' is set, the surfaces created on the boundary are forced to be
             ruled surfaces.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -2724,7 +2724,7 @@ class model:
             with thickness `offset'. If `tag' is positive, sets the tag explicitly;
             otherwise a new tag is selected automatically.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_excludeSurfaceTags_, api_excludeSurfaceTags_n_ = _ivectorint(excludeSurfaceTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -2751,7 +2751,7 @@ class model:
             number of elements in each layer. If `height' is not empty, it provides the
             (cummulative) height of the different layers, normalized to 1.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -2785,7 +2785,7 @@ class model:
             empty, it provides the (cummulative) height of the different layers,
             normalized to 1.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -2818,7 +2818,7 @@ class model:
             Adds a pipe by extruding the entities `dimTags' along the wire `wireTag'.
             Returns the pipe in `outDimTags'.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -2841,7 +2841,7 @@ class model:
             `radius'. Returns the filleted entities in `outDimTags'. Removes the
             original volume if `removeVolume' is set.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_volumeTags_, api_volumeTags_n_ = _ivectorint(volumeTags)
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
@@ -2869,7 +2869,7 @@ class model:
             operation results in a single entity). Removes the object if `removeObject'
             is set. Removes the tool if `removeTool' is set.
 
-            return outDimTags, outDimTagsMap
+            Returns `outDimTags', `outDimTagsMap'.
             """
             api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
             api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
@@ -2902,7 +2902,7 @@ class model:
             valid if the boolean operation results in a single entity). Removes the
             object if `removeObject' is set. Removes the tool if `removeTool' is set.
 
-            return outDimTags, outDimTagsMap
+            Returns `outDimTags', `outDimTagsMap'.
             """
             api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
             api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
@@ -2935,7 +2935,7 @@ class model:
             operation results in a single entity). Removes the object if `removeObject'
             is set. Removes the tool if `removeTool' is set.
 
-            return outDimTags, outDimTagsMap
+            Returns `outDimTags', `outDimTagsMap'.
             """
             api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
             api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
@@ -2968,7 +2968,7 @@ class model:
             valid if the boolean operation results in a single entity). Removes the
             object if `removeObject' is set. Removes the tool if `removeTool' is set.
 
-            return outDimTags, outDimTagsMap
+            Returns `outDimTags', `outDimTagsMap'.
             """
             api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
             api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
@@ -3084,7 +3084,7 @@ class model:
             Copies the entities `dimTags'; the new entities are returned in
             `outDimTags'.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -3140,7 +3140,7 @@ class model:
             the file. The optional argument `format' can be used to force the format of
             the file (currently "brep", "step" or "iges").
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
@@ -3202,7 +3202,7 @@ class view:
         it (and remove the view with that tag if it already exists), otherwise
         associate a new tag. Returns the view tag.
 
-        return int
+        Returns an integer.
         """
         ierr = c_int()
         api__result__ = lib.gmshViewAdd(
@@ -3236,7 +3236,7 @@ class view:
         views. This dynamic index (it can change when views are removed) is used to
         access view options.
 
-        return int
+        Returns an integer.
         """
         ierr = c_int()
         api__result__ = lib.gmshViewGetIndex(
@@ -3253,7 +3253,7 @@ class view:
         """
         Gets the tags of all views.
 
-        return tags
+        Returns `tags'.
         """
         api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
@@ -3309,7 +3309,7 @@ class view:
         tags `tags', as well as the `dataType' and the number of components
         `numComponents'.
 
-        return dataType, tags, data, time, numComponents
+        Returns `dataType', `tags', `data', `time', `numComponents'.
         """
         api_dataType_ = c_char_p()
         api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
@@ -3365,7 +3365,7 @@ class view:
         the types `dataTypes', the number of elements `numElements' for each data
         type and the `data' for each data type.
 
-        return dataType, numElements, data
+        Returns `dataType', `numElements', `data'.
         """
         api_dataType_, api_dataType_n_ = POINTER(POINTER(c_char))(), c_size_t()
         api_numElements_, api_numElements_n_ = POINTER(c_int)(), c_size_t()
@@ -3397,7 +3397,7 @@ class view:
         result from the element described by its coordinates if `xElementCoord',
         `yElementCoord' and `zElementCoord' are provided.
 
-        return value
+        Returns `value'.
         """
         api_value_, api_value_n_ = POINTER(c_double)(), c_size_t()
         api_xElemCoord_, api_xElemCoord_n_ = _ivectordouble(xElemCoord)
@@ -3565,15 +3565,15 @@ class fltk:
 
 class onelab:
     """
-    Onelab server functions
+    ONELAB server functions
     """
 
     @staticmethod
     def get(format="json"):
         """
-        Gets data from the Onelab server.
+        Gets `data' from the ONELAB server.
 
-        return data
+        Returns `data'.
         """
         api_data_ = c_char_p()
         ierr = c_int()
@@ -3590,7 +3590,7 @@ class onelab:
     @staticmethod
     def set(data,format="json"):
         """
-        Sets data in the Onelab server.
+        Sets `data' in the ONELAB server.
         """
         ierr = c_int()
         lib.gmshOnelabSet(
@@ -3605,8 +3605,9 @@ class onelab:
     @staticmethod
     def run(name="",command=""):
         """
-        Runs a onelab client. If no name is given, attemps to run a client that
-        might be linked to the processed input files.
+        Runs a ONELAB client. If `name' is provided, creates a new ONELAB client
+        with name `name' and executes `command'. If not, attemps to run a client
+        that might be linked to the processed input files.
         """
         ierr = c_int()
         lib.gmshOnelabRun(
