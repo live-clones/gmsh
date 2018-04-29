@@ -2,7 +2,7 @@ This directory contains examples on how to use the Gmsh API.
 
 The files t1.{cpp,py}, t2.{cpp,py}, ... are reimplementations in C++ and Python
 of the corresponding .geo tutorials. The other files show how to use various
-Gmsh API functions.
+other Gmsh API functions.
 
 To run the examples, you need the Gmsh dynamic library and the associated header
 files (for C++ and C) or module (for Python). The library and the associated
