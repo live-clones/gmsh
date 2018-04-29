@@ -5,7 +5,7 @@ of the corresponding .geo tutorials. The other files show how to use various
 other Gmsh API functions.
 
 To run the examples, you need the Gmsh dynamic library and the associated header
-files (for C++ and C) or module (for Python). The library and the associated
+files (for C++ and C) or module (for Python). This library and the associated
 files can be either obtained from the binary Software Development Kit (SDK), or
 can be rebuilt using the Gmsh source code.
 
