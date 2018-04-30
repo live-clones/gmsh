@@ -58,81 +58,86 @@ def istring(name, value=None, python_value=None):
 
 def ivectorint(name, value=None, python_value=None):
     a = arg(name, value, python_value, "const std::vector<int> &", "const int *", False)
-    a.c_pre = "  std::vector<int> api_" + name + "_(" + name + ", " + name + " + " + name + "_n);\n"
-    a.c_arg = "api_" + name + "_"
+    api_name = "api_" + name + "_"
+    api_name_n = "api_" + name + "_n_"
+    a.c_pre = "    std::vector<int> " + api_name + "(" + name + ", " + name + " + " + name + "_n);\n"
+    a.c_arg = api_name
     a.c = "int * " + name + ", size_t " + name + "_n"
     a.cwrap_arg = "&" + name + "[0], " + name + ".size()"
-    a.python_pre = "api_" + name + "_, api_" + name + "_n_ = _ivectorint(" + name + ")"
-    a.python_arg = "api_" + name + "_, api_" + name + "_n_"
+    a.python_pre = api_name + ", " + api_name_n + " = _ivectorint(" + name + ")"
+    a.python_arg = api_name + ", " + api_name_n
     return a
 
 def ivectordouble(name, value=None, python_value=None):
     a = arg(name, value, python_value, "const std::vector<double> &", "double **", False)
-    a.c_pre = "  std::vector<double> api_" + name + "_(" + name + ", " + name + " + " + name + "_n);\n"
-    a.c_arg = "api_" + name + "_"
-    a.c  = "double * " + name + ", size_t " + name + "_n"
+    api_name = "api_" + name + "_"
+    api_name_n = "api_" + name + "_n_"
+    a.c_pre = "    std::vector<double> " + api_name + "(" + name + ", " + name + " + " + name + "_n);\n"
+    a.c_arg = api_name
+    a.c = "double * " + name + ", size_t " + name + "_n"
     a.cwrap_arg = "&" + name + "[0], " + name + ".size()"
-    a.python_pre = "api_" + name + "_, api_" + name + "_n_ = _ivectordouble(" + name + ")"
-    a.python_arg = "api_" + name + "_, api_" + name + "_n_"
+    a.python_pre = api_name + ", " + api_name_n + " = _ivectordouble(" + name + ")"
+    a.python_arg = api_name + ", " + api_name_n
     return a
 
 def ivectorpair(name, value=None, python_value=None):
     a = arg(name, value, python_value, "const gmsh::vector_pair &", "const int *", False)
-    a.c_pre = "  gmsh::vector_pair api_" + name + "_(" + name + "_n/2);\n" + \
-              "  for(size_t i = 0; i < " + name + "_n/2; ++i){\n" + \
-              "    api_" + name + "_[i].first = " + name + "[i * 2 + 0];\n" + \
-              "    api_" + name + "_[i].second = " + name + "[i * 2 + 1];\n" + \
-              "  }\n"
-    a.c_arg = "api_" + name + "_"
+    api_name = "api_" + name + "_"
+    api_name_n = "api_" + name + "_n_"
+    a.c_pre = "    gmsh::vector_pair " + api_name + "(" + name + "_n/2);\n" + \
+              "    for(size_t i = 0; i < " + name + "_n/2; ++i){\n" + \
+              "      " + api_name + "[i].first = " + name + "[i * 2 + 0];\n" + \
+              "      " + api_name + "[i].second = " + name + "[i * 2 + 1];\n" + \
+              "    }\n"
+    a.c_arg = api_name
     a.c = "int * " + name + ", size_t " + name + "_n"
-    a.cwrap_pre = "int *api_" + name + "_; size_t api_" + name + "_n_; " + \
-                  "pairvector2intptr(" + name + ", &api_" + name + "_, &api_" + name + "_n_);\n"
-    a.cwrap_arg = "api_" + name + "_, api_" + name + "_n_"
-    a.cwrap_post = "gmshFree(api_" + name + "_);\n"
-    a.python_pre = "api_" + name + "_, api_" + name + "_n_ = _ivectorpair(" + name + ")"
-    a.python_arg = "api_" + name + "_, api_" + name + "_n_"
+    a.cwrap_pre = "int *" + api_name + "; size_t " + api_name_n + "; " + \
+                  "pairvector2intptr(" + name + ", &" + api_name + ", &" + api_name_n + ");\n"
+    a.cwrap_arg = api_name + ", " + api_name_n
+    a.cwrap_post = "gmshFree(" + api_name + ");\n"
+    a.python_pre = api_name + ", " + api_name_n + " = _ivectorpair(" + name + ")"
+    a.python_arg = api_name + ", " + api_name_n
     return a
 
 def ivectorvectorint(name, value=None, python_value=None):
     a = arg(name, value, python_value, "const std::vector<std::vector<int> > &", "const int **", False)
-    a.c_pre = "  std::vector<std::vector<int> > api_" + name + "_(" + name + "_nn);\n" + \
-              "  for(size_t i = 0; i < " + name + "_nn; ++i)\n" + \
-              "    api_" + name + "_[i] = std::vector<int>(" + name + "[i], " + name + "[i] + " + name + "_n[i]);\n"
-    a.c_arg = "api_" + name + "_"
+    api_name = "api_" + name + "_"
+    api_name_n = "api_" + name + "_n_"
+    api_name_nn = "api_" + name + "_nn_"
+    a.c_pre = "    std::vector<std::vector<int> > " + api_name + "(" + name + "_nn);\n" + \
+              "    for(size_t i = 0; i < " + name + "_nn; ++i)\n" + \
+              "      " + api_name + "[i] = std::vector<int>(" + name + "[i], " + name + "[i] + " + name + "_n[i]);\n"
+    a.c_arg = api_name
     a.c = "const int ** " + name + ", const size_t * " + name + "_n, " + "size_t " + name + "_nn"
-    a.cwrap_pre = "int **api_" + name + "_; size_t *api_" + name + "_n_, api_" + name + "_nn_; " + \
-                  "vectorvector2ptrptr(" + name + ", &api_" + name + "_, &api_" + name + "_n_, &api_" + name + "_nn_);\n"
-    a.cwrap_arg = "api_" + name + "_, api_" + name + "_n_, api_" + name + "_nn_"
-    a.cwrap_post = "for(size_t i = 0; i < api_" + name + "_nn_; ++i){ gmshFree(api_" + name + "_[i]); } " + \
-                    "gmshFree(api_" + name + "_); gmshFree(api_" + name + "_n_);\n"
-    a.python_pre = "api_" + name + "_, api_" + name + "_n_, api_" + name + "_nn_ = _ivectorvectorint(" + name + ")"
-    a.python_arg = "api_" + name + "_, api_" + name + "_n_, api_" + name + "_nn_"
+    a.cwrap_pre = "int **" + api_name + "; size_t *" + api_name_n + ", " + api_name_nn + "; " + \
+                  "vectorvector2ptrptr(" + name + ", &" + api_name + ", &" + api_name_n + ", &" + api_name_nn + ");\n"
+    a.cwrap_arg = api_name + ", " + api_name_n + ", " + api_name_nn
+    a.cwrap_post = "for(size_t i = 0; i < " + api_name_nn + "; ++i){ gmshFree(" + api_name + "[i]); } " + \
+                    "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n"
+    a.python_pre = api_name + ", " + api_name_n + ", " + api_name_nn + " = _ivectorvectorint(" + name + ")"
+    a.python_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     return a
 
 def ivectorvectordouble(name, value=None, python_value=None):
     a = arg(name, value, python_value, "const std::vector<std::vector<double> > &", "const double**", False)
-    a.c_pre = "  std::vector<std::vector<double> > api_" + name + "_(" + name + "_nn);\n" + \
-              "  for(size_t i = 0; i < " + name + "_nn; ++i)\n" + \
-              "    api_" + name + "_[i] = std::vector<double>(" + name + "[i], " + name + "[i] + " + name + "_n[i]);\n"
-    a.c_arg = "api_" + name + "_"
+    api_name = "api_" + name + "_"
+    api_name_n = "api_" + name + "_n_"
+    api_name_nn = "api_" + name + "_nn_"
+    a.c_pre = "    std::vector<std::vector<double> > " + api_name + "(" + name + "_nn);\n" + \
+              "    for(size_t i = 0; i < " + name + "_nn; ++i)\n" + \
+              "      " + api_name + "[i] = std::vector<double>(" + name + "[i], " + name + "[i] + " + name + "_n[i]);\n"
+    a.c_arg = api_name
     a.c = "const double ** " + name + ", const size_t * " + name + "_n, " + "size_t " + name + "_nn"
-    a.cwrap_pre = "double **api_" + name + "_; size_t *api_" + name + "_n_, api_" + name + "_nn_; " + \
-                  "vectorvector2ptrptr(" + name + ", &api_" + name + "_, &api_" + name + "_n_, &api_" + name + "_nn_);\n"
-    a.cwrap_arg = "api_" + name + "_, api_" + name + "_n_, api_" + name + "_nn_"
-    a.cwrap_post = "for(size_t i = 0; i < api_" + name + "_nn_; ++i){ gmshFree(api_" + name + "_[i]); } " + \
-                    "gmshFree(api_" + name + "_); gmshFree(api_" + name + "_n_);\n"
-    a.python_pre = "api_" + name + "_, api_" + name + "_n_, api_" + name + "_nn_ = _ivectorvectordouble(" + name + ")"
-    a.python_arg = "api_" + name + "_, api_" + name + "_n_, api_" + name + "_nn_"
+    a.cwrap_pre = "double **" + api_name + "; size_t *" + api_name_n + ", " + api_name_nn + "; " + \
+                  "vectorvector2ptrptr(" + name + ", &" + api_name + ", &" + api_name_n + ", &" + api_name_nn + ");\n"
+    a.cwrap_arg = api_name + ", " + api_name_n + ", " + api_name_nn
+    a.cwrap_post = "for(size_t i = 0; i < " + api_name_nn + "; ++i){ gmshFree(" + api_name + "[i]); } " + \
+                    "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n"
+    a.python_pre = api_name + ", " + api_name_n + ", " + api_name_nn + " = _ivectorvectordouble(" + name + ")"
+    a.python_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     return a
 
 # output types
-
-def obool(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "bool &", "int *", True)
-    a.c_arg = "api_" + name + "_"
-    a.c_pre = "  bool " + a.c_arg + ";\n"
-    a.c_post = "  *" + name + " = (int)" + a.c_arg + ";\n"
-    return a
 
 class oint(arg):
     rtype_cpp = "int"
@@ -140,124 +145,129 @@ class oint(arg):
     rtype_texi = "integer"
     def __init__(self, name, value=None, python_value=None):
         arg.__init__(self, name, value, python_value, "int &", "int *", True)
+        api_name = "api_" + name + "_"
         self.c_arg = "*" + name
-        name_ = "api_" + name + "_"
-        self.python_pre = name_ + " = c_int()"
-        self.python_arg = "byref(" + name_ + ")"
-        self.python_return = name_ + ".value"
+        self.cwrap_arg = "&" + name
+        self.python_pre = api_name + " = c_int()"
+        self.python_arg = "byref(" + api_name + ")"
+        self.python_return = api_name + ".value"
 
 def odouble(name, value=None, python_value=None):
     a = arg(name, value, python_value, "double &", "double *", True)
+    api_name = "api_" + name + "_"
     a.c_arg = "*" + name
-    name_ = "api_" + name + "_"
-    a.python_pre = name_ + " = c_double()"
-    a.python_arg = "byref(" + name_ + ")"
-    a.python_return = name_ + ".value"
+    a.cwrap_arg = "&" + name
+    a.python_pre = api_name + " = c_double()"
+    a.python_arg = "byref(" + api_name + ")"
+    a.python_return = api_name + ".value"
     return a
 
 def ostring(name, value=None, python_value=None):
     a = arg(name, value, python_value, "std::string &", "char **", True)
-    a.c_arg = "api_" + name + "_"
-    a.c_pre = "  std::string " + a.c_arg + ";\n"
-    a.c_post = "  *" + name + " = strdup(" + a.c_arg + ".c_str());\n"
-    name_ = "api_" + name + "_"
-    a.python_pre = name_ + " = c_char_p()"
-    a.python_arg = "byref(" + name_ + ")"
-    a.python_return = "_ostring(" + name_ + ")"
+    api_name = "api_" + name + "_"
+    a.c_pre = "    std::string " + api_name + ";\n"
+    a.c_arg = api_name
+    a.c_post = "    *" + name + " = strdup(" + api_name + ".c_str());\n"
+    a.cwrap_pre = "char *" + api_name + ";\n"
+    a.cwrap_arg = "&" + api_name
+    a.cwrap_post = name + " = *" + api_name + "; gmshFree(" + api_name + ");\n"
+    a.python_pre = api_name + " = c_char_p()"
+    a.python_arg = "byref(" + api_name + ")"
+    a.python_return = "_ostring(" + api_name + ")"
     return a
 
 def ovectorint(name, value=None, python_value=None):
     a = arg(name, value, python_value, "std::vector<int> &", "int **", True)
-    name_ = "api_" + name + "_"
-    name_n = name_ + "n_"
-    a.c_arg = name_
-    a.c_pre = "  std::vector<int> " + name_ + ";\n"
-    a.c_post = "  vector2ptr(" + name_ + ", " + name + ", " + name + "_n);\n"
+    api_name = "api_" + name + "_"
+    api_name_n = api_name + "n_"
+    a.c_pre = "    std::vector<int> " + api_name + ";\n"
+    a.c_arg = api_name
+    a.c_post = "    vector2ptr(" + api_name + ", " + name + ", " + name + "_n);\n"
     a.c = "int ** " + name + ", size_t * " + name + "_n"
-    a.python_pre = name_ + ", " + name_n + " = POINTER(c_int)(), c_size_t()"
-    a.python_arg = "byref(" + name_ + "), byref(" + name_n + ")"
-    a.python_return = "_ovectorint(" + name_ + ", " + name_n + ".value)"
+    a.python_pre = api_name + ", " + api_name_n + " = POINTER(c_int)(), c_size_t()"
+    a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
+    a.python_return = "_ovectorint(" + api_name + ", " + api_name_n + ".value)"
     return a
 
 def ovectordouble(name, value=None, python_value=None):
     a = arg(name, value, python_value, "std::vector<double> &", "double *", True)
-    name_ = "api_" + name + "_"
-    name_n = name_ + "n_"
-    a.c_arg = name_
-    a.c_pre = "  std::vector<double> " + a.c_arg + ";\n"
-    a.c_post = "  vector2ptr(" + name_ + ", " + name + ", " + name + "_n);\n"
+    api_name = "api_" + name + "_"
+    api_name_n = api_name + "n_"
+    a.c_pre = "    std::vector<double> " + api_name + ";\n"
+    a.c_arg = api_name
+    a.c_post = "    vector2ptr(" + api_name + ", " + name + ", " + name + "_n);\n"
     a.c  = "double ** " + name + ", size_t * " + name + "_n"
-    a.python_pre = name_ + ", " + name_n + " = POINTER(c_double)(), c_size_t()"
-    a.python_arg = "byref(" + name_ + "), byref(" + name_n + ")"
-    a.python_return = "_ovectordouble(" + name_ + ", " + name_n + ".value)"
+    a.python_pre = api_name + ", " + api_name_n + " = POINTER(c_double)(), c_size_t()"
+    a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
+    a.python_return = "_ovectordouble(" + api_name + ", " + api_name_n + ".value)"
     return a
 
 def ovectorstring(name, value=None, python_value=None):
     a = arg(name, value, python_value, "std::vector<std::string> &", "char **", True)
-    name_ = "api_" + name + "_"
-    name_n = name_ + "n_"
-    a.c_arg = name_
-    a.c_pre = "  std::vector<std::string> " + name_ + ";\n"
-    a.c_post = "  stringvector2charpp(" + name_ + ", " + name + ", " + name + "_n);\n"
+    api_name = "api_" + name + "_"
+    api_name_n = api_name + "n_"
+    a.c_pre = "    std::vector<std::string> " + api_name + ";\n"
+    a.c_arg = api_name
+    a.c_post = "    stringvector2charpp(" + api_name + ", " + name + ", " + name + "_n);\n"
     a.c = "char *** " + name + ", size_t * " + name + "_n"
-    a.python_pre = name_ + ", " + name_n + " = POINTER(POINTER(c_char))(), c_size_t()"
-    a.python_arg = "byref(" + name_ + "), byref(" + name_n + ")"
-    a.python_return = "_ovectorstring(" + name_ + ", " + name_n + ".value)"
+    a.python_pre = api_name + ", " + api_name_n + " = POINTER(POINTER(c_char))(), c_size_t()"
+    a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
+    a.python_return = "_ovectorstring(" + api_name + ", " + api_name_n + ".value)"
     return a
 
 def ovectorpair(name, value=None, python_value=None):
     a = arg(name, value, python_value, "gmsh::vector_pair &", "int **", True)
-    name_ = "api_" + name + "_"
-    name_n = name_ + "n_"
-    a.c_arg = name_
-    a.c_pre = "  gmsh::vector_pair " + name_ + ";\n"
-    a.c_post = "  pairvector2intptr(" + name_ + ", " + name + ", " + name + "_n);\n"
+    api_name = "api_" + name + "_"
+    api_name_n = api_name + "n_"
+    a.c_pre = "    gmsh::vector_pair " + api_name + ";\n"
+    a.c_arg = api_name
+    a.c_post = "    pairvector2intptr(" + api_name + ", " + name + ", " + name + "_n);\n"
     a.c = "int ** " + name + ", size_t * " + name + "_n"
-    a.python_pre = name_ + ", " + name_n + " = POINTER(c_int)(), c_size_t()"
-    a.python_arg = "byref(" + name_ + "), byref(" + name_n + ")"
-    a.python_return = "_ovectorpair(" + name_ + ", " + name_n + ".value)"
+    a.python_pre = api_name + ", " + api_name_n + " = POINTER(c_int)(), c_size_t()"
+    a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
+    a.python_return = "_ovectorpair(" + api_name + ", " + api_name_n + ".value)"
     return a
 
 def ovectorvectorint(name, value=None, python_value=None):
     a = arg(name, value, python_value, "std::vector<std::vector<int> > &", "int **", True)
-    name_ = "api_" + name + "_"
-    name_n = name_ + "n_"
-    name_nn = name_ + "nn_"
-    a.c_arg = name_
-    a.c_pre = "  std::vector<std::vector<int> > " + a.c_arg + ";\n"
-    a.c_post = "  vectorvector2ptrptr(" + name_ + ", " + name + ", " + name + "_n, " + name + "_nn);\n"
+    api_name = "api_" + name + "_"
+    api_name_n = api_name + "n_"
+    api_name_nn = api_name + "nn_"
+    a.c_pre = "    std::vector<std::vector<int> > " + api_name + ";\n"
+    a.c_arg = api_name
+    a.c_post = "    vectorvector2ptrptr(" + api_name + ", " + name + ", " + name + "_n, " + name + "_nn);\n"
     a.c  = "int *** " + name + ", size_t ** " + name + "_n, size_t *" + name + "_nn"
-    a.python_pre = name_ + ", " + name_n + ", " + name_nn + " = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()"
-    a.python_arg = "byref(" + name_ + "), byref(" + name_n + "), byref(" + name_nn + ")"
-    a.python_return = "_ovectorvectorint(" + name_ + ", " + name_n + ", " + name_nn + ")"
+    a.python_pre = api_name + ", " + api_name_n + ", " + api_name_nn + " = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()"
+    a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + "), byref(" + api_name_nn + ")"
+    a.python_return = "_ovectorvectorint(" + api_name + ", " + api_name_n + ", " + api_name_nn + ")"
     return a
 
 def ovectorvectordouble(name, value=None, python_value=None):
     a = arg(name, value, python_value, "std::vector<std::vector<double> > &", "double **", True)
-    name_ = "api_" + name + "_"
-    name_n = name_ + "n_"
-    name_nn = name_ + "nn_"
-    a.c_arg = name_
-    a.c_pre = "  std::vector<std::vector<double> > " + a.c_arg + ";\n"
-    a.c_post = "  vectorvector2ptrptr(" + name_ + ", " + name + ", " + name + "_n, " + name + "_nn);\n"
+    api_name = "api_" + name + "_"
+    api_name_n = api_name + "n_"
+    api_name_nn = api_name + "nn_"
+    a.c_pre = "    std::vector<std::vector<double> > " + api_name + ";\n"
+    a.c_arg = api_name
+    a.c_post = "    vectorvector2ptrptr(" + api_name + ", " + name + ", " + name + "_n, " + name + "_nn);\n"
     a.c  = "double *** " + name + ", size_t ** " + name + "_n, size_t *" + name + "_nn"
-    a.python_pre = name_ + ", " + name_n + ", " + name_nn + " = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()"
-    a.python_arg = "byref(" + name_ + "), byref(" + name_n + "), byref(" + name_nn + ")"
-    a.python_return = "_ovectorvectordouble(" + name_ + ", " + name_n + ", " + name_nn + ")"
+    a.python_pre = api_name + ", " + api_name_n + ", " + api_name_nn + " = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()"
+    a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + "), byref(" + api_name_nn + ")"
+    a.python_return = "_ovectorvectordouble(" + api_name + ", " + api_name_n + ", " + api_name_nn + ")"
     return a
 
 def ovectorvectorpair(name, value=None, python_value=None):
     a = arg(name, value, python_value, "std::vector<gmsh::vector_pair> &", "int **", True)
-    name_ = "api_" + name + "_"
-    name_n = name_ + "n_"
-    name_nn = name_ + "nn_"
-    a.c_arg = name_
-    a.c_pre = "  std::vector<gmsh::vector_pair >" + name_ + ";\n"
-    a.c_post = "  pairvectorvector2intptrptr(" + name_ + ", " + name + ", " + name + "_n, " + name + "_nn);\n"
+    api_name = "api_" + name + "_"
+    api_name_n = api_name + "n_"
+    api_name_nn = api_name + "nn_"
+    a.c_pre = "    std::vector<gmsh::vector_pair >" + api_name + ";\n"
+    a.c_arg = api_name
+    a.c_post = "    pairvectorvector2intptrptr(" + api_name + ", " + name + ", " + name + "_n, " + name + "_nn);\n"
     a.c  = "int *** " + name + ", size_t ** " + name + "_n, size_t *" + name + "_nn"
-    a.python_pre = name_ + ", " + name_n + ", " + name_nn + " = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()"
-    a.python_arg = "byref(" + name_ + "), byref(" + name_n + "), byref(" + name_nn + ")"
-    a.python_return = "_ovectorvectorpair(" + name_ + ", " + name_n + ", " + name_nn + ")"
+    a.python_pre = api_name + ", " + api_name_n + ", " + api_name_nn + " = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()"
+    a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + "), byref(" + api_name_nn + ")"
+    a.python_return = "_ovectorvectorpair(" + api_name + ", " + api_name_n + ", " + api_name_nn + ")"
     return a
 
 def argcargv():
@@ -711,20 +721,20 @@ class API:
                     # gmshc.cpp
                     fc.write("GMSH_API " + (rtype.rtype_c if rtype else "void"))
                     fc.write(" " + fname + "("
-                             + ", ".join(list((a.c for a in args + (oint("ierr"), )))) + "){\n")
+                             + ", ".join(list((a.c for a in args + (oint("ierr"), )))) + ")\n{\n")
                     if rtype:
                         fc.write("  " + rtype.rtype_c + " result_api_;\n")
                     fc.write("  if(ierr) *ierr = 0;\n");
                     fc.write("  try {\n");
                     fc.write("".join((a.c_pre for a in args)))
-                    fc.write("  ")
+                    fc.write("    ")
                     if rtype:
                         fc.write("result_api_ = ")
                     fc.write(cpp_namespace + name + "(" + ", ".join(
                         list((a.c_arg for a in args))) + 
                              ");\n")
                     fc.write("".join((a.c_post for a in args)))
-                    fc.write("  } catch(int api_ierr_) {if(ierr) *ierr = api_ierr_;}\n");
+                    fc.write("  }\n  catch(int api_ierr_){\n    if(ierr) *ierr = api_ierr_;\n  }\n");
                     if rtype:
                         fc.write("  return result_api_;\n");
                     fc.write("}\n\n")
@@ -763,6 +773,7 @@ class API:
                     f.write(c_header)
                     fc.write(c_cpp_header)
                     fc.write(c_cpp_utils)
+                    fc.write("\n")
                     fcwrap.write(cwrap_header)
                     fcwrap.write("namespace gmsh {\n")
                     s = string.split(c_cpp_utils, '\n')
