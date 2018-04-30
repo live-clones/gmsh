@@ -1971,7 +1971,7 @@ class model:
 
         class mesh:
             """
-            geo-specific meshing constraints
+            GEO-specific meshing constraints
             """
 
             @staticmethod

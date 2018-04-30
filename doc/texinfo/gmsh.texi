@@ -5071,6 +5071,18 @@ automatically from the master API definition file
 @item Python API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.py,gmsh.py}
 @end itemize
 
+The additional
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.h_cwrap,gmsh.h_cwrap}
+header redefines the C++ API in terms of the C API. This is provided as
+a convenience for users of the @url{http://gmsh.info/bin,binary Gmsh
+Software Development Kit (SDK)} whose C++ compiler Application Binary
+Interface (ABI) is not compatible with the ABI of the C++ compiler used
+to create the SDK. To use these C++ bindings of the C API instead of the
+native C++ API, simply rename @code{gmsh.h_cwrap} as @code{gmsh.h}. Note
+that this will lead to (slightly) reduced performance compared to using
+the native Gmsh C++ API, as it entails additional data copies between
+the C++ wrapper, the C API and the native C++ code.
+
 The functions available in the API are given below (see the relevant
 header/module file for the exact definition in each supported
 language@footnote{In C++ @code{/gmsh/model/geo/addPoint} will lead to a

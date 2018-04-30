@@ -708,7 +708,7 @@ namespace gmsh { // Top-level functions
       // be minimized.
       GMSH_API void synchronize();
 
-      namespace mesh { // geo-specific meshing constraints
+      namespace mesh { // GEO-specific meshing constraints
 
         // Sets a mesh size constraint on the geometrical entities `dimTags'.
         // Currently only entities of dimension 0 (points) are handled.

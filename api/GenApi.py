@@ -506,7 +506,7 @@ cwrap_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 
 // This file redefines the C++ API in terms of the Gmsh C API. 
 //
-// This is provided as a convenience for users of the binary Gmsh SDK, whose C++
+// This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create 
 // the SDK (and who can thus not directly use the C++ API defined in `gmsh.h').
 //

@@ -303,7 +303,7 @@ geo.add('synchronize',doc,None)
 
 ################################################################################
 
-mesh = geo.add_module('mesh','geo-specific meshing constraints')
+mesh = geo.add_module('mesh','GEO-specific meshing constraints')
 
 doc = '''Sets a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize',doc,None,ivectorpair('dimTags'),idouble('size'))
