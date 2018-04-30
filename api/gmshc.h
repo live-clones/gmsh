@@ -22,6 +22,8 @@
  * tutorials from `tutorials'.
  */
 
+#include <stdlib.h>
+
 #if defined(GMSH_DLL)
 #if defined(GMSH_DLL_EXPORT)
 #define GMSH_API __declspec(dllexport)
@@ -31,8 +33,6 @@
 #else
 #define GMSH_API
 #endif
-
-#include <stdlib.h>
 
 GMSH_API void gmshFree(void *p);
 

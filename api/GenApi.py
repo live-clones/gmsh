@@ -6,6 +6,7 @@
 # Contributed by Jonathan Lambrechts
 
 import textwrap
+import string
 
 class arg:
     def __init__(self, name, value, python_value, type_cpp, type_c, out):
@@ -78,12 +79,12 @@ def ivectorpair(name, value=None, python_value=None):
     a = arg(name, value, python_value, "const gmsh::vector_pair &", "const int *", False)
     a.c_pre = "  gmsh::vector_pair api_" + name + "_(" + name + "_n/2);\n" + \
               "  for(size_t i = 0; i < " + name + "_n/2; ++i){\n" + \
-              "    api_" + name + "_[i].first = " + name + "[i*2 + 0];\n" + \
-              "    api_" + name + "_[i].second = " + name + "[i*2 + 1];\n" + \
+              "    api_" + name + "_[i].first = " + name + "[i * 2 + 0];\n" + \
+              "    api_" + name + "_[i].second = " + name + "[i * 2 + 1];\n" + \
               "  }\n"
     a.c_arg = "api_" + name + "_"
     a.c = "int * " + name + ", size_t " + name + "_n"
-    a.cwrap_pre = "TODO pre vector pair\n"
+    #a.cwrap_pre = "int * api_" + name + "= (int*)malloc("TODO pre vector pair\n"
     a.cwrap_arg = "TODO arg vector pair"
     a.cwrap_post = "TODO post vector pair\n"
     a.python_pre = "api_" + name + "_, api_" + name + "_n_ = _ivectorpair(" + name + ")"
@@ -362,6 +363,8 @@ c_header="""/*
  * tutorials from `tutorials'.
  */
 
+#include <stdlib.h>
+
 #if defined(GMSH_DLL)
 #if defined(GMSH_DLL_EXPORT)
 #define GMSH_API __declspec(dllexport)
@@ -371,8 +374,6 @@ c_header="""/*
 #else
 #define GMSH_API
 #endif
-
-#include <stdlib.h>
 
 GMSH_API void gmshFree(void *p);
 """
@@ -393,26 +394,36 @@ extern \"C\" {
   #include "gmshc.h"
 }
 
+void gmshFree(void *p)
+{
+  if(p) free(p);
+}
+"""
+
+c_cpp_utils="""
 template<typename t>
-void vector2ptr(const std::vector<t>&v, t **p, size_t *size) {
-  *p = (t*)malloc(sizeof(t)*(v.size()));
+void vector2ptr(const std::vector<t> &v, t **p, size_t *size)
+{
+  *p = (t*)malloc(sizeof(t) * v.size());
   for (size_t i = 0; i < v.size(); ++i){
     (*p)[i] = v[i];
   }
   *size = v.size();
 }
 
-void pairvector2intptr(const gmsh::vector_pair &v, int **p, size_t *size) {
-  *p = (int*)malloc(sizeof(int)*(v.size()*2));
+void pairvector2intptr(const gmsh::vector_pair &v, int **p, size_t *size)
+{
+  *p = (int*)malloc(sizeof(int) * v.size() * 2);
   for (size_t i = 0; i < v.size(); ++i){
-    (*p)[i*2 + 0] = v[i].first;
-    (*p)[i*2 + 1] = v[i].second;
+    (*p)[i * 2 + 0] = v[i].first;
+    (*p)[i * 2 + 1] = v[i].second;
   }
-  *size = v.size()*2;
+  *size = v.size() * 2;
 }
 
-void stringvector2charpp(const std::vector<std::string> &v, char ***p, size_t *size) {
-  *p = (char**)malloc(sizeof(char*)*(v.size()*2));
+void stringvector2charpp(const std::vector<std::string> &v, char ***p, size_t *size)
+{
+  *p = (char**)malloc(sizeof(char*) * v.size() * 2);
   for (size_t i = 0; i < v.size(); ++i){
     (*p)[i] = strdup(v[i].c_str());
   }
@@ -420,26 +431,23 @@ void stringvector2charpp(const std::vector<std::string> &v, char ***p, size_t *s
 }
 
 template<typename t>
-void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t **size, size_t *sizeSize) {
-  *p = (t**)malloc(sizeof(t*)*v.size());
-  *size = (size_t*)malloc(sizeof(size_t)*v.size()); 
+void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t **size, size_t *sizeSize)
+{
+  *p = (t**)malloc(sizeof(t*) * v.size());
+  *size = (size_t*)malloc(sizeof(size_t) * v.size());
   for (size_t i = 0; i < v.size(); ++i)
     vector2ptr(v[i], &((*p)[i]), &((*size)[i]));
   *sizeSize = v.size();
 }
 
-void pairvectorvector2intptrptr(const std::vector<gmsh::vector_pair > &v, int ***p, size_t **size, size_t *sizeSize) {
-  *p = (int**)malloc(sizeof(int*)*v.size());
-  *size = (size_t*)malloc(sizeof(size_t)*v.size());
+void pairvectorvector2intptrptr(const std::vector<gmsh::vector_pair > &v, int ***p, size_t **size, size_t *sizeSize)
+{
+  *p = (int**)malloc(sizeof(int*) * v.size());
+  *size = (size_t*)malloc(sizeof(size_t) * v.size());
   for (size_t i = 0; i < v.size(); ++i)
     pairvector2intptr(v[i], &(*p)[i], &((*size)[i]));
   *sizeSize = v.size();
 }
-
-void gmshFree(void *p) {
-  if(p) free(p);
-}
-
 """
 
 cwrap_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
@@ -497,7 +505,7 @@ namespace gmsh {
 
 cwrap_footer="""#endif
 """
-
+  
 python_header = """# Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
@@ -552,7 +560,7 @@ def _ovectorpair(ptr, size):
         v = numpy.ctypeslib.as_array(ptr, (size//2, 2))
         weakreffinalize(v, lib.gmshFree, ptr)
     else:
-        v = list((ptr[i*2], ptr[i*2 + 1]) for i in range(size//2))
+        v = list((ptr[i * 2], ptr[i * 2 + 1]) for i in range(size//2))
         lib.gmshFree(ptr)
     return v
 
@@ -635,9 +643,9 @@ def _ivectorpair(o):
         array = numpy.ascontiguousarray(o, numpy.int32)
         ct = array.ctypes
         ct.array = array
-        return  ct, c_size_t(len(o)*2)
+        return  ct, c_size_t(len(o) * 2)
     else:
-        return ((c_int*2)*len(o))(*o), c_size_t(len(o)*2)
+        return ((c_int * 2) * len(o))(*o), c_size_t(len(o) * 2)
 
 def _iargcargv(o):
     return c_int(len(o)), (c_char_p*len(o))(*(s.encode() for s in o))
@@ -748,7 +756,13 @@ class API:
                 with open("gmsh.h_cwrap", "w") as fcwrap:
                     f.write(c_header)
                     fc.write(c_cpp_header)
+                    fc.write(c_cpp_utils)
                     fcwrap.write(cwrap_header)
+                    fcwrap.write("namespace gmsh {\n")
+                    s = string.split(c_cpp_utils, '\n')
+                    for line in s:
+                        fcwrap.write("  " + line + "\n")
+                    fcwrap.write("}\n\n")
                     for module in self.modules:
                         write_module(module, "", "", "")
                     f.write(c_footer)

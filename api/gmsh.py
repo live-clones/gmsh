@@ -52,7 +52,7 @@ def _ovectorpair(ptr, size):
         v = numpy.ctypeslib.as_array(ptr, (size//2, 2))
         weakreffinalize(v, lib.gmshFree, ptr)
     else:
-        v = list((ptr[i*2], ptr[i*2 + 1]) for i in range(size//2))
+        v = list((ptr[i * 2], ptr[i * 2 + 1]) for i in range(size//2))
         lib.gmshFree(ptr)
     return v
 
@@ -135,9 +135,9 @@ def _ivectorpair(o):
         array = numpy.ascontiguousarray(o, numpy.int32)
         ct = array.ctypes
         ct.array = array
-        return  ct, c_size_t(len(o)*2)
+        return  ct, c_size_t(len(o) * 2)
     else:
-        return ((c_int*2)*len(o))(*o), c_size_t(len(o)*2)
+        return ((c_int * 2) * len(o))(*o), c_size_t(len(o) * 2)
 
 def _iargcargv(o):
     return c_int(len(o)), (c_char_p*len(o))(*(s.encode() for s in o))

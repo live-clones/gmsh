@@ -10,26 +10,34 @@ extern "C" {
   #include "gmshc.h"
 }
 
+void gmshFree(void *p)
+{
+  if(p) free(p);
+}
+
 template<typename t>
-void vector2ptr(const std::vector<t>&v, t **p, size_t *size) {
-  *p = (t*)malloc(sizeof(t)*(v.size()));
+void vector2ptr(const std::vector<t> &v, t **p, size_t *size)
+{
+  *p = (t*)malloc(sizeof(t) * v.size());
   for (size_t i = 0; i < v.size(); ++i){
     (*p)[i] = v[i];
   }
   *size = v.size();
 }
 
-void pairvector2intptr(const gmsh::vector_pair &v, int **p, size_t *size) {
-  *p = (int*)malloc(sizeof(int)*(v.size()*2));
+void pairvector2intptr(const gmsh::vector_pair &v, int **p, size_t *size)
+{
+  *p = (int*)malloc(sizeof(int) * v.size() * 2);
   for (size_t i = 0; i < v.size(); ++i){
-    (*p)[i*2 + 0] = v[i].first;
-    (*p)[i*2 + 1] = v[i].second;
+    (*p)[i * 2 + 0] = v[i].first;
+    (*p)[i * 2 + 1] = v[i].second;
   }
-  *size = v.size()*2;
+  *size = v.size() * 2;
 }
 
-void stringvector2charpp(const std::vector<std::string> &v, char ***p, size_t *size) {
-  *p = (char**)malloc(sizeof(char*)*(v.size()*2));
+void stringvector2charpp(const std::vector<std::string> &v, char ***p, size_t *size)
+{
+  *p = (char**)malloc(sizeof(char*) * v.size() * 2);
   for (size_t i = 0; i < v.size(); ++i){
     (*p)[i] = strdup(v[i].c_str());
   }
@@ -37,26 +45,23 @@ void stringvector2charpp(const std::vector<std::string> &v, char ***p, size_t *s
 }
 
 template<typename t>
-void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t **size, size_t *sizeSize) {
-  *p = (t**)malloc(sizeof(t*)*v.size());
-  *size = (size_t*)malloc(sizeof(size_t)*v.size()); 
+void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t **size, size_t *sizeSize)
+{
+  *p = (t**)malloc(sizeof(t*) * v.size());
+  *size = (size_t*)malloc(sizeof(size_t) * v.size());
   for (size_t i = 0; i < v.size(); ++i)
     vector2ptr(v[i], &((*p)[i]), &((*size)[i]));
   *sizeSize = v.size();
 }
 
-void pairvectorvector2intptrptr(const std::vector<gmsh::vector_pair > &v, int ***p, size_t **size, size_t *sizeSize) {
-  *p = (int**)malloc(sizeof(int*)*v.size());
-  *size = (size_t*)malloc(sizeof(size_t)*v.size());
+void pairvectorvector2intptrptr(const std::vector<gmsh::vector_pair > &v, int ***p, size_t **size, size_t *sizeSize)
+{
+  *p = (int**)malloc(sizeof(int*) * v.size());
+  *size = (size_t*)malloc(sizeof(size_t) * v.size());
   for (size_t i = 0; i < v.size(); ++i)
     pairvector2intptr(v[i], &(*p)[i], &((*size)[i]));
   *sizeSize = v.size();
 }
-
-void gmshFree(void *p) {
-  if(p) free(p);
-}
-
 GMSH_API void gmshInitialize(int argc, char ** argv, const int readConfigFiles, int * ierr){
   if(ierr) *ierr = 0;
   try {
@@ -217,8 +222,8 @@ GMSH_API void gmshModelGetBoundary(int * dimTags, size_t dimTags_n, int ** outDi
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::vector_pair api_outDimTags_;
   gmsh::model::getBoundary(api_dimTags_, api_outDimTags_, combined, oriented, recursive);
@@ -257,8 +262,8 @@ GMSH_API void gmshModelRemoveEntities(int * dimTags, size_t dimTags_n, const int
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::model::removeEntities(api_dimTags_, recursive);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
@@ -465,8 +470,8 @@ GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n, const double
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::model::mesh::setSize(api_dimTags_, size);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
@@ -707,8 +712,8 @@ GMSH_API void gmshModelGeoExtrude(int * dimTags, size_t dimTags_n, const double 
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::vector_pair api_outDimTags_;
   std::vector<int> api_numElements_(numElements, numElements + numElements_n);
@@ -723,8 +728,8 @@ GMSH_API void gmshModelGeoRevolve(int * dimTags, size_t dimTags_n, const double 
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::vector_pair api_outDimTags_;
   std::vector<int> api_numElements_(numElements, numElements + numElements_n);
@@ -739,8 +744,8 @@ GMSH_API void gmshModelGeoTwist(int * dimTags, size_t dimTags_n, const double x,
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::vector_pair api_outDimTags_;
   std::vector<int> api_numElements_(numElements, numElements + numElements_n);
@@ -755,8 +760,8 @@ GMSH_API void gmshModelGeoTranslate(int * dimTags, size_t dimTags_n, const doubl
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::model::geo::translate(api_dimTags_, dx, dy, dz);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
@@ -767,8 +772,8 @@ GMSH_API void gmshModelGeoRotate(int * dimTags, size_t dimTags_n, const double x
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::model::geo::rotate(api_dimTags_, x, y, z, ax, ay, az, angle);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
@@ -779,8 +784,8 @@ GMSH_API void gmshModelGeoDilate(int * dimTags, size_t dimTags_n, const double x
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::model::geo::dilate(api_dimTags_, x, y, z, a, b, c);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
@@ -791,8 +796,8 @@ GMSH_API void gmshModelGeoSymmetry(int * dimTags, size_t dimTags_n, const double
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::model::geo::symmetry(api_dimTags_, a, b, c, d);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
@@ -803,8 +808,8 @@ GMSH_API void gmshModelGeoCopy(int * dimTags, size_t dimTags_n, int ** outDimTag
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::vector_pair api_outDimTags_;
   gmsh::model::geo::copy(api_dimTags_, api_outDimTags_);
@@ -817,8 +822,8 @@ GMSH_API void gmshModelGeoRemove(int * dimTags, size_t dimTags_n, const int recu
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::model::geo::remove(api_dimTags_, recursive);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
@@ -843,8 +848,8 @@ GMSH_API void gmshModelGeoMeshSetSize(int * dimTags, size_t dimTags_n, const dou
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::model::geo::mesh::setSize(api_dimTags_, size);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
@@ -1137,8 +1142,8 @@ GMSH_API void gmshModelOccExtrude(int * dimTags, size_t dimTags_n, const double 
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::vector_pair api_outDimTags_;
   std::vector<int> api_numElements_(numElements, numElements + numElements_n);
@@ -1153,8 +1158,8 @@ GMSH_API void gmshModelOccRevolve(int * dimTags, size_t dimTags_n, const double 
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::vector_pair api_outDimTags_;
   std::vector<int> api_numElements_(numElements, numElements + numElements_n);
@@ -1169,8 +1174,8 @@ GMSH_API void gmshModelOccAddPipe(int * dimTags, size_t dimTags_n, const int wir
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::vector_pair api_outDimTags_;
   gmsh::model::occ::addPipe(api_dimTags_, wireTag, api_outDimTags_);
@@ -1194,13 +1199,13 @@ GMSH_API void gmshModelOccFuse(int * objectDimTags, size_t objectDimTags_n, int 
   try {
   gmsh::vector_pair api_objectDimTags_(objectDimTags_n/2);
   for(size_t i = 0; i < objectDimTags_n/2; ++i){
-    api_objectDimTags_[i].first = objectDimTags[i*2 + 0];
-    api_objectDimTags_[i].second = objectDimTags[i*2 + 1];
+    api_objectDimTags_[i].first = objectDimTags[i * 2 + 0];
+    api_objectDimTags_[i].second = objectDimTags[i * 2 + 1];
   }
   gmsh::vector_pair api_toolDimTags_(toolDimTags_n/2);
   for(size_t i = 0; i < toolDimTags_n/2; ++i){
-    api_toolDimTags_[i].first = toolDimTags[i*2 + 0];
-    api_toolDimTags_[i].second = toolDimTags[i*2 + 1];
+    api_toolDimTags_[i].first = toolDimTags[i * 2 + 0];
+    api_toolDimTags_[i].second = toolDimTags[i * 2 + 1];
   }
   gmsh::vector_pair api_outDimTags_;
   std::vector<gmsh::vector_pair >api_outDimTagsMap_;
@@ -1215,13 +1220,13 @@ GMSH_API void gmshModelOccIntersect(int * objectDimTags, size_t objectDimTags_n,
   try {
   gmsh::vector_pair api_objectDimTags_(objectDimTags_n/2);
   for(size_t i = 0; i < objectDimTags_n/2; ++i){
-    api_objectDimTags_[i].first = objectDimTags[i*2 + 0];
-    api_objectDimTags_[i].second = objectDimTags[i*2 + 1];
+    api_objectDimTags_[i].first = objectDimTags[i * 2 + 0];
+    api_objectDimTags_[i].second = objectDimTags[i * 2 + 1];
   }
   gmsh::vector_pair api_toolDimTags_(toolDimTags_n/2);
   for(size_t i = 0; i < toolDimTags_n/2; ++i){
-    api_toolDimTags_[i].first = toolDimTags[i*2 + 0];
-    api_toolDimTags_[i].second = toolDimTags[i*2 + 1];
+    api_toolDimTags_[i].first = toolDimTags[i * 2 + 0];
+    api_toolDimTags_[i].second = toolDimTags[i * 2 + 1];
   }
   gmsh::vector_pair api_outDimTags_;
   std::vector<gmsh::vector_pair >api_outDimTagsMap_;
@@ -1236,13 +1241,13 @@ GMSH_API void gmshModelOccCut(int * objectDimTags, size_t objectDimTags_n, int *
   try {
   gmsh::vector_pair api_objectDimTags_(objectDimTags_n/2);
   for(size_t i = 0; i < objectDimTags_n/2; ++i){
-    api_objectDimTags_[i].first = objectDimTags[i*2 + 0];
-    api_objectDimTags_[i].second = objectDimTags[i*2 + 1];
+    api_objectDimTags_[i].first = objectDimTags[i * 2 + 0];
+    api_objectDimTags_[i].second = objectDimTags[i * 2 + 1];
   }
   gmsh::vector_pair api_toolDimTags_(toolDimTags_n/2);
   for(size_t i = 0; i < toolDimTags_n/2; ++i){
-    api_toolDimTags_[i].first = toolDimTags[i*2 + 0];
-    api_toolDimTags_[i].second = toolDimTags[i*2 + 1];
+    api_toolDimTags_[i].first = toolDimTags[i * 2 + 0];
+    api_toolDimTags_[i].second = toolDimTags[i * 2 + 1];
   }
   gmsh::vector_pair api_outDimTags_;
   std::vector<gmsh::vector_pair >api_outDimTagsMap_;
@@ -1257,13 +1262,13 @@ GMSH_API void gmshModelOccFragment(int * objectDimTags, size_t objectDimTags_n, 
   try {
   gmsh::vector_pair api_objectDimTags_(objectDimTags_n/2);
   for(size_t i = 0; i < objectDimTags_n/2; ++i){
-    api_objectDimTags_[i].first = objectDimTags[i*2 + 0];
-    api_objectDimTags_[i].second = objectDimTags[i*2 + 1];
+    api_objectDimTags_[i].first = objectDimTags[i * 2 + 0];
+    api_objectDimTags_[i].second = objectDimTags[i * 2 + 1];
   }
   gmsh::vector_pair api_toolDimTags_(toolDimTags_n/2);
   for(size_t i = 0; i < toolDimTags_n/2; ++i){
-    api_toolDimTags_[i].first = toolDimTags[i*2 + 0];
-    api_toolDimTags_[i].second = toolDimTags[i*2 + 1];
+    api_toolDimTags_[i].first = toolDimTags[i * 2 + 0];
+    api_toolDimTags_[i].second = toolDimTags[i * 2 + 1];
   }
   gmsh::vector_pair api_outDimTags_;
   std::vector<gmsh::vector_pair >api_outDimTagsMap_;
@@ -1278,8 +1283,8 @@ GMSH_API void gmshModelOccTranslate(int * dimTags, size_t dimTags_n, const doubl
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::model::occ::translate(api_dimTags_, dx, dy, dz);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
@@ -1290,8 +1295,8 @@ GMSH_API void gmshModelOccRotate(int * dimTags, size_t dimTags_n, const double x
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::model::occ::rotate(api_dimTags_, x, y, z, ax, ay, az, angle);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
@@ -1302,8 +1307,8 @@ GMSH_API void gmshModelOccDilate(int * dimTags, size_t dimTags_n, const double x
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::model::occ::dilate(api_dimTags_, x, y, z, a, b, c);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
@@ -1314,8 +1319,8 @@ GMSH_API void gmshModelOccSymmetry(int * dimTags, size_t dimTags_n, const double
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::model::occ::symmetry(api_dimTags_, a, b, c, d);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
@@ -1326,8 +1331,8 @@ GMSH_API void gmshModelOccCopy(int * dimTags, size_t dimTags_n, int ** outDimTag
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::vector_pair api_outDimTags_;
   gmsh::model::occ::copy(api_dimTags_, api_outDimTags_);
@@ -1340,8 +1345,8 @@ GMSH_API void gmshModelOccRemove(int * dimTags, size_t dimTags_n, const int recu
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::model::occ::remove(api_dimTags_, recursive);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
@@ -1368,8 +1373,8 @@ GMSH_API void gmshModelOccSetMeshSize(int * dimTags, size_t dimTags_n, const dou
   try {
   gmsh::vector_pair api_dimTags_(dimTags_n/2);
   for(size_t i = 0; i < dimTags_n/2; ++i){
-    api_dimTags_[i].first = dimTags[i*2 + 0];
-    api_dimTags_[i].second = dimTags[i*2 + 1];
+    api_dimTags_[i].first = dimTags[i * 2 + 0];
+    api_dimTags_[i].second = dimTags[i * 2 + 1];
   }
   gmsh::model::occ::setMeshSize(api_dimTags_, size);
   } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}
