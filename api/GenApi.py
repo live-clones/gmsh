@@ -37,7 +37,7 @@ class arg:
 def ibool(name, value=None, python_value=None):
     a = arg(name, value, python_value, "const bool", "const int", False)
     a.python_arg = "c_int(bool(" + name + "))"
-    a.cwrap_arg = "int(" + name + ")"
+    a.cwrap_arg = "(int)" + name
     return a
 
 def iint(name, value=None, python_value=None):
@@ -63,7 +63,10 @@ def ivectorint(name, value=None, python_value=None):
     a.c_pre = "    std::vector<int> " + api_name + "(" + name + ", " + name + " + " + name + "_n);\n"
     a.c_arg = api_name
     a.c = "int * " + name + ", size_t " + name + "_n"
-    a.cwrap_arg = "&" + name + "[0], " + name + ".size()"
+    a.cwrap_pre = "int *" + api_name + "; size_t " + api_name_n + "; " + \
+                  "vector2ptr(" + name + ", &" + api_name + ", &" + api_name_n + ");\n"
+    a.cwrap_arg = api_name + ", " + api_name_n
+    a.cwrap_post = "gmshFree(" + api_name + ");\n"
     a.python_pre = api_name + ", " + api_name_n + " = _ivectorint(" + name + ")"
     a.python_arg = api_name + ", " + api_name_n
     return a
@@ -75,7 +78,10 @@ def ivectordouble(name, value=None, python_value=None):
     a.c_pre = "    std::vector<double> " + api_name + "(" + name + ", " + name + " + " + name + "_n);\n"
     a.c_arg = api_name
     a.c = "double * " + name + ", size_t " + name + "_n"
-    a.cwrap_arg = "&" + name + "[0], " + name + ".size()"
+    a.cwrap_pre = "double *" + api_name + "; size_t " + api_name_n + "; " + \
+                  "vector2ptr(" + name + ", &" + api_name + ", &" + api_name_n + ");\n"
+    a.cwrap_arg = api_name + ", " + api_name_n
+    a.cwrap_post = "gmshFree(" + api_name + ");\n"
     a.python_pre = api_name + ", " + api_name_n + " = _ivectordouble(" + name + ")"
     a.python_arg = api_name + ", " + api_name_n
     return a
@@ -111,7 +117,7 @@ def ivectorvectorint(name, value=None, python_value=None):
     a.c = "const int ** " + name + ", const size_t * " + name + "_n, " + "size_t " + name + "_nn"
     a.cwrap_pre = "int **" + api_name + "; size_t *" + api_name_n + ", " + api_name_nn + "; " + \
                   "vectorvector2ptrptr(" + name + ", &" + api_name + ", &" + api_name_n + ", &" + api_name_nn + ");\n"
-    a.cwrap_arg = api_name + ", " + api_name_n + ", " + api_name_nn
+    a.cwrap_arg = "(const int **)" + api_name + ", " + api_name_n + ", " + api_name_nn
     a.cwrap_post = "for(size_t i = 0; i < " + api_name_nn + "; ++i){ gmshFree(" + api_name + "[i]); } " + \
                     "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n"
     a.python_pre = api_name + ", " + api_name_n + ", " + api_name_nn + " = _ivectorvectorint(" + name + ")"
@@ -130,7 +136,7 @@ def ivectorvectordouble(name, value=None, python_value=None):
     a.c = "const double ** " + name + ", const size_t * " + name + "_n, " + "size_t " + name + "_nn"
     a.cwrap_pre = "double **" + api_name + "; size_t *" + api_name_n + ", " + api_name_nn + "; " + \
                   "vectorvector2ptrptr(" + name + ", &" + api_name + ", &" + api_name_n + ", &" + api_name_nn + ");\n"
-    a.cwrap_arg = api_name + ", " + api_name_n + ", " + api_name_nn
+    a.cwrap_arg = "(const double **)" + api_name + ", " + api_name_n + ", " + api_name_nn
     a.cwrap_post = "for(size_t i = 0; i < " + api_name_nn + "; ++i){ gmshFree(" + api_name + "[i]); } " + \
                     "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n"
     a.python_pre = api_name + ", " + api_name_n + ", " + api_name_nn + " = _ivectorvectordouble(" + name + ")"
@@ -240,7 +246,8 @@ def ovectorpair(name, value=None, python_value=None):
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
     a.cwrap_post = name + ".resize(" + api_name_n + " / 2); " +\
                    "for(size_t i = 0; i < " + api_name_n + " / 2; ++i){ " +\
-                   name + "[i].first = " + api_name + "[i * 2 + 0]); " + name + "[i].second = " + api_name + "[i * 2 + 1]); } " +\
+                   name + "[i].first = " + api_name + "[i * 2 + 0]; " + \
+                   name + "[i].second = " + api_name + "[i * 2 + 1]; } " +\
                    "gmshFree(" + api_name + ");\n"
     a.python_pre = api_name + ", " + api_name_n + " = POINTER(c_int)(), c_size_t()"
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
@@ -301,7 +308,7 @@ def ovectorvectorpair(name, value=None, python_value=None):
     a.cwrap_post = name + ".resize(" + api_name_nn + "); " +\
                    "for(size_t i = 0; i < " + api_name_nn + "; ++i){ " +\
                    name + "[i].resize(" + api_name_n + "[i] / 2); " +\
-                   "for(size_t j = 0; j < " + api_name_n + " / 2; ++j){ " +\
+                   "for(size_t j = 0; j < " + api_name_n + "[i] / 2; ++j){ " +\
                    name + "[i][j].first = " + api_name + "[i][j * 2 + 0]; " +\
                    name + "[i][j].second = " + api_name + "[i][j * 2 + 1]; } " +\
                    "gmshFree(" + api_name + "[i]); } " +\
@@ -524,8 +531,9 @@ cwrap_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 // To use this header file in your C++ code, simply rename it as `gmsh.h'.
 //
 // Warning: using this header file will lead to (slightly) reduced performance
-// compared to using the native Gmsh C++ API, as it entails additional data copies
-// between this C++ wrapper, the C API and the native C++ code.
+// compared to using the native Gmsh C++ API in the original `gmsh.h', as it 
+// entails additional data copies between this C++ wrapper, the C API and the
+// native C++ code.
 //
 // Do not edit this file directly: it is automatically generated by `api/gen.py'.
 
