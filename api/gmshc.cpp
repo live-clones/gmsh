@@ -4,6 +4,7 @@
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <string.h>
+#include <stdlib.h>
 #include "gmsh.h"
 
 extern "C" {

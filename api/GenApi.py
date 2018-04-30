@@ -458,6 +458,7 @@ c_cpp_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <string.h>
+#include <stdlib.h>
 #include "gmsh.h"
 
 extern \"C\" {
