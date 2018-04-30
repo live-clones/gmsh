@@ -5,14 +5,17 @@
 
 # This is the master definition file for the Gmsh API.
 #
-# Running this script will generate
+# Running `python gen.py' will generate
 #
-#  - gmsh.h: the header defining the Gmsh C++ API
-#  - gmshc.h: the header defining the Gmsh C API
-#  - gmshc.cpp: the wrapper for the Gmsh C API
-#  - gmsh.py: the module defining the Gmsh Python API
+#  - gmsh.h: the Gmsh C++ API header
+#  - gmsh.py: the Gmsh Python API module
+#  - gmshc.h: the Gmsh C API header
+#  - gmsh.h_cwrap: the Gmsh C++ API refined in terms of the C API
+#  - gmshc.cpp: the C to C++ wrapper code used by the Gmsh C API
+#  - api.texi: the texinfo API documentation
 #
-# By design, the Gmsh API is purely functional, and only uses elementary types.
+# By design, the Gmsh API is purely functional, and only uses elementary types
+# of the target language.
 #
 # See `demos/api' for examples on how to use the Gmsh API. In particular, this
 # directory contains C++ and Python versions of several of the `.geo' tutorials
