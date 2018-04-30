@@ -25,6 +25,7 @@
 #include <cmath>
 #include <vector>
 #include <string>
+#include <utility>
 
 #if defined(GMSH_DLL)
 #if defined(GMSH_DLL_EXPORT)

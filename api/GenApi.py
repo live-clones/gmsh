@@ -380,6 +380,7 @@ cpp_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 #include <cmath>
 #include <vector>
 #include <string>
+#include <utility>
 
 #if defined(GMSH_DLL)
 #if defined(GMSH_DLL_EXPORT)
@@ -431,7 +432,7 @@ c_header="""/*
  * tutorials from `tutorials'.
  */
 
-#include <stdlib.h>
+#include <stddef.h>
 
 #if defined(GMSH_DLL)
 #if defined(GMSH_DLL_EXPORT)
@@ -524,6 +525,7 @@ cwrap_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 #include <cmath>
 #include <vector>
 #include <string>
+#include <utility>
 
 #if defined(GMSH_DLL)
 #if defined(GMSH_DLL_EXPORT)

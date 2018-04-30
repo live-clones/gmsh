@@ -22,7 +22,7 @@
  * tutorials from `tutorials'.
  */
 
-#include <stdlib.h>
+#include <stddef.h>
 
 #if defined(GMSH_DLL)
 #if defined(GMSH_DLL_EXPORT)
