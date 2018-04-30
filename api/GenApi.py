@@ -202,7 +202,8 @@ def ovectordouble(name, value=None, python_value=None):
     a.c = "double ** " + name + ", size_t * " + name + "_n"
     a.cwrap_pre = "double *" + api_name + "; size_t " + api_name_n + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
-    a.cwrap_post = name + ".assign(" + api_name + ", " + api_name + " + " + api_name_n + "); gmshFree(" + api_name + ");\n"
+    a.cwrap_post = name + ".assign(" + api_name + ", " + api_name + " + " + api_name_n + "); " +\
+                   "gmshFree(" + api_name + ");\n"
     a.python_pre = api_name + ", " + api_name_n + " = POINTER(c_double)(), c_size_t()"
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectordouble(" + api_name + ", " + api_name_n + ".value)"
@@ -216,6 +217,12 @@ def ovectorstring(name, value=None, python_value=None):
     a.c_arg = api_name
     a.c_post = "    stringvector2charpp(" + api_name + ", " + name + ", " + name + "_n);\n"
     a.c = "char *** " + name + ", size_t * " + name + "_n"
+    a.cwrap_pre = "char **" + api_name + "; size_t " + api_name_n + ";\n"
+    a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
+    a.cwrap_post = name + ".resize(" + api_name_n + "); " +\
+                   "for(size_t i = 0; i < " + api_name_n + "; ++i){ " +\
+                   name + "[i] = std::string(" + api_name + "[i]); gmshFree(" + api_name + "[i]); } " +\
+                   "gmshFree(" + api_name + ");\n"
     a.python_pre = api_name + ", " + api_name_n + " = POINTER(POINTER(c_char))(), c_size_t()"
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectorstring(" + api_name + ", " + api_name_n + ".value)"
@@ -229,6 +236,12 @@ def ovectorpair(name, value=None, python_value=None):
     a.c_arg = api_name
     a.c_post = "    pairvector2intptr(" + api_name + ", " + name + ", " + name + "_n);\n"
     a.c = "int ** " + name + ", size_t * " + name + "_n"
+    a.cwrap_pre = "int *" + api_name + "; size_t " + api_name_n + ";\n"
+    a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
+    a.cwrap_post = name + ".resize(" + api_name_n + " / 2); " +\
+                   "for(size_t i = 0; i < " + api_name_n + " / 2; ++i){ " +\
+                   name + "[i].first = " + api_name + "[i * 2 + 0]); " + name + "[i].second = " + api_name + "[i * 2 + 1]); } " +\
+                   "gmshFree(" + api_name + ");\n"
     a.python_pre = api_name + ", " + api_name_n + " = POINTER(c_int)(), c_size_t()"
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectorpair(" + api_name + ", " + api_name_n + ".value)"
@@ -243,6 +256,12 @@ def ovectorvectorint(name, value=None, python_value=None):
     a.c_arg = api_name
     a.c_post = "    vectorvector2ptrptr(" + api_name + ", " + name + ", " + name + "_n, " + name + "_nn);\n"
     a.c  = "int *** " + name + ", size_t ** " + name + "_n, size_t *" + name + "_nn"
+    a.cwrap_pre = "int **" + api_name + "; size_t *" + api_name_n + ", " + api_name_nn + ";\n"
+    a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n + ", " + "&" + api_name_nn
+    a.cwrap_post = name + ".resize(" + api_name_nn + "); " +\
+                   "for(size_t i = 0; i < " + api_name_nn + "; ++i){ " +\
+                   name + "[i].assign(" + api_name + "[i], " + api_name + "[i] + " + api_name_n + "[i]); gmshFree(" + api_name + "[i]); } " +\
+                   "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n"
     a.python_pre = api_name + ", " + api_name_n + ", " + api_name_nn + " = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()"
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + "), byref(" + api_name_nn + ")"
     a.python_return = "_ovectorvectorint(" + api_name + ", " + api_name_n + ", " + api_name_nn + ")"
@@ -257,6 +276,12 @@ def ovectorvectordouble(name, value=None, python_value=None):
     a.c_arg = api_name
     a.c_post = "    vectorvector2ptrptr(" + api_name + ", " + name + ", " + name + "_n, " + name + "_nn);\n"
     a.c  = "double *** " + name + ", size_t ** " + name + "_n, size_t *" + name + "_nn"
+    a.cwrap_pre = "double **" + api_name + "; size_t *" + api_name_n + ", " + api_name_nn + ";\n"
+    a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n + ", " + "&" + api_name_nn
+    a.cwrap_post = name + ".resize(" + api_name_nn + "); " +\
+                   "for(size_t i = 0; i < " + api_name_nn + "; ++i){ " +\
+                   name + "[i].assign(" + api_name + "[i], " + api_name + "[i] + " + api_name_n + "[i]); gmshFree(" + api_name + "[i]); } " +\
+                   "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n"
     a.python_pre = api_name + ", " + api_name_n + ", " + api_name_nn + " = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()"
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + "), byref(" + api_name_nn + ")"
     a.python_return = "_ovectorvectordouble(" + api_name + ", " + api_name_n + ", " + api_name_nn + ")"
@@ -271,6 +296,16 @@ def ovectorvectorpair(name, value=None, python_value=None):
     a.c_arg = api_name
     a.c_post = "    pairvectorvector2intptrptr(" + api_name + ", " + name + ", " + name + "_n, " + name + "_nn);\n"
     a.c  = "int *** " + name + ", size_t ** " + name + "_n, size_t *" + name + "_nn"
+    a.cwrap_pre = "int **" + api_name + "; size_t *" + api_name_n + ", " + api_name_nn + ";\n"
+    a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n + ", " + "&" + api_name_nn
+    a.cwrap_post = name + ".resize(" + api_name_nn + "); " +\
+                   "for(size_t i = 0; i < " + api_name_nn + "; ++i){ " +\
+                   name + "[i].resize(" + api_name_n + "[i] / 2); " +\
+                   "for(size_t j = 0; j < " + api_name_n + " / 2; ++j){ " +\
+                   name + "[i][j].first = " + api_name + "[i][j * 2 + 0]; " +\
+                   name + "[i][j].second = " + api_name + "[i][j * 2 + 1]; } " +\
+                   "gmshFree(" + api_name + "[i]); } " +\
+                   "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n"
     a.python_pre = api_name + ", " + api_name_n + ", " + api_name_nn + " = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()"
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + "), byref(" + api_name_nn + ")"
     a.python_return = "_ovectorvectorpair(" + api_name + ", " + api_name_n + ", " + api_name_nn + ")"
