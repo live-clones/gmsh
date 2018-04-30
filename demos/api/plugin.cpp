@@ -37,6 +37,7 @@ int main(int argc, char **argv)
     std::cout << " " << tags[i];
   std::cout << std::endl;
 
+
   // compute the iso-curve at value 11
   gmsh::plugin::setNumber("Isosurface", "Value", 11.);
   gmsh::plugin::run("Isosurface");

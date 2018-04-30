@@ -102,7 +102,7 @@ set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
 set(GMSH_VERSION "${GMSH_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}")
 set(GMSH_SHORT_LICENSE "GNU General Public License")
 
-set(GMSH_API api/gmsh.h api/gmshc.h)
+set(GMSH_API api/gmsh.h api/gmshc.h api/gmsh.h_cwrap)
 
 if(ENABLE_PRIVATE_API)
   message(WARNING "The private API is unsupported and undocumented. It is meant "

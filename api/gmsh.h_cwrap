@@ -197,7 +197,7 @@ namespace gmsh { // Top-level functions
       char *api_value_;
       gmshOptionGetString(name.c_str(), &api_value_, &ierr);
       if(ierr) throw ierr;
-      value = *api_value_; gmshFree(api_value_);
+      value = std::string(api_value_); gmshFree(api_value_);
     }
 
   } // namespace option
@@ -313,7 +313,7 @@ namespace gmsh { // Top-level functions
       char *api_name_;
       gmshModelGetPhysicalName(dim, tag, &api_name_, &ierr);
       if(ierr) throw ierr;
-      name = *api_name_; gmshFree(api_name_);
+      name = std::string(api_name_); gmshFree(api_name_);
     }
 
     // Gets the boundary of the geometrical entities `dimTags'. Returns in
@@ -412,7 +412,7 @@ namespace gmsh { // Top-level functions
       char *api_type_;
       gmshModelGetType(dim, tag, &api_type_, &ierr);
       if(ierr) throw ierr;
-      type = *api_type_; gmshFree(api_type_);
+      type = std::string(api_type_); gmshFree(api_type_);
     }
 
     namespace mesh { // Per-model meshing functions
@@ -552,7 +552,7 @@ namespace gmsh { // Top-level functions
         double *api_parametricCoord_; size_t api_parametricCoord_n_;
         gmshModelMeshGetElementProperties(elementType, &api_elementName_, &dim, &order, &numNodes, &api_parametricCoord_, &api_parametricCoord_n_, &ierr);
         if(ierr) throw ierr;
-        elementName = *api_elementName_; gmshFree(api_elementName_);
+        elementName = std::string(api_elementName_); gmshFree(api_elementName_);
         parametricCoord.assign(api_parametricCoord_, api_parametricCoord_ + api_parametricCoord_n_); gmshFree(api_parametricCoord_);
       }
 
@@ -2335,7 +2335,7 @@ namespace gmsh { // Top-level functions
       double **api_data_; size_t *api_data_n_, api_data_nn_;
       gmshViewGetModelData(tag, step, &api_dataType_, &api_tags_, &api_tags_n_, &api_data_, &api_data_n_, &api_data_nn_, &time, &numComponents, &ierr);
       if(ierr) throw ierr;
-      dataType = *api_dataType_; gmshFree(api_dataType_);
+      dataType = std::string(api_dataType_); gmshFree(api_dataType_);
       tags.assign(api_tags_, api_tags_ + api_tags_n_); gmshFree(api_tags_);
       data.resize(api_data_nn_); for(size_t i = 0; i < api_data_nn_; ++i){ data[i].assign(api_data_[i], api_data_[i] + api_data_n_[i]); gmshFree(api_data_[i]); } gmshFree(api_data_); gmshFree(api_data_n_);
     }
@@ -2507,7 +2507,7 @@ namespace gmsh { // Top-level functions
       char *api_data_;
       gmshOnelabGet(&api_data_, format.c_str(), &ierr);
       if(ierr) throw ierr;
-      data = *api_data_; gmshFree(api_data_);
+      data = std::string(api_data_); gmshFree(api_data_);
     }
 
     // Sets `data' in the ONELAB server.

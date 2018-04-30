@@ -176,7 +176,7 @@ def ostring(name, value=None, python_value=None):
     a.c_post = "    *" + name + " = strdup(" + api_name + ".c_str());\n"
     a.cwrap_pre = "char *" + api_name + ";\n"
     a.cwrap_arg = "&" + api_name
-    a.cwrap_post = name + " = *" + api_name + "; gmshFree(" + api_name + ");\n"
+    a.cwrap_post = name + " = std::string(" + api_name + "); gmshFree(" + api_name + ");\n"
     a.python_pre = api_name + " = c_char_p()"
     a.python_arg = "byref(" + api_name + ")"
     a.python_return = "_ostring(" + api_name + ")"
