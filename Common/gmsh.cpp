@@ -7,6 +7,7 @@
 #include "GmshConfig.h"
 #include "GmshDefines.h"
 #include "GmshGlobal.h"
+#include "MallocUtils.h"
 #include "GModel.h"
 #include "GModelIO_GEO.h"
 #include "GModelIO_OCC.h"
@@ -61,7 +62,11 @@
 #include "onelabUtils.h"
 #endif
 
-#include "gmsh.h" // automatically generated, in gmsh/api
+// automtically generated C++ and C headers (in gmsh/api)
+#include "gmsh.h"
+extern "C" {
+  #include "gmshc.h"
+}
 
 static int _initialized = 0;
 static int _argc = 0;
@@ -2728,6 +2733,78 @@ GMSH_API void gmsh::view::getModelData(const int tag,
 #else
   Msg::Error("Views require the post-processing module");
   throw -1;
+#endif
+}
+
+// for better performance, manual C implementation of gmsh::view::getModelData
+GMSH_API void gmshViewGetModelData(const int tag,
+                                   const int step,
+                                   char ** dataType,
+                                   int ** tags,
+                                   size_t * tags_n,
+                                   double *** data,
+                                   size_t ** data_n,
+                                   size_t * data_nn,
+                                   double * time,
+                                   int * numComponents,
+                                   int * ierr)
+{
+  if(!_isInitialized()){ if(ierr) *ierr = -1; }
+#if defined(HAVE_POST)
+  PView *view = PView::getViewByTag(tag);
+  if(!view){
+    Msg::Error("Unknown view with tag %d", tag);
+    if(ierr) *ierr = 2;
+  }
+  PViewDataGModel *d = dynamic_cast<PViewDataGModel*>(view->getData());
+  if(!d){
+    Msg::Error("View with tag %d does not contain model data", tag);
+    return;
+  }
+  if(d->getType() == PViewDataGModel::NodeData)
+    *dataType = strdup("NodeData");
+  else if(d->getType() == PViewDataGModel::ElementData)
+    *dataType = strdup("ElementData");
+  else if(d->getType() == PViewDataGModel::ElementNodeData)
+    *dataType = strdup("ElementNodeData");
+  else if(d->getType() == PViewDataGModel::GaussPointData)
+    *dataType = strdup("GaussPointData");
+  else if(d->getType() == PViewDataGModel::BeamData)
+    *dataType = strdup("Beam");
+  else
+    *dataType = strdup("Unknown");
+  stepData<double> *s = d->getStepData(step);
+  if(!s){
+    Msg::Error("View with tag %d does not contain model data for step %d",
+               tag, step);
+    if(ierr) *ierr = 2;
+  }
+  *tags_n = 0;
+  *data_nn = 0;
+  *time = s->getTime();
+  *numComponents = s->getNumComponents();
+  int numEnt = 0;
+  for(int i = 0; i < s->getNumData(); i++){
+    if(s->getData(i)) numEnt++;
+  }
+  if(!numEnt) return;
+  *data = (double**)Malloc(numEnt * sizeof(double*));
+  *tags = (int*)Malloc(numEnt * sizeof(int));
+  int j = 0;
+  for(int i = 0; i < s->getNumData(); i++){
+    double *dd = s->getData(i);
+    if(dd){
+      (*tags)[j] = i;
+      int mult = s->getMult(i);
+      (*data)[j] = (double*)Malloc(*numComponents * mult * sizeof(double));
+      for(int k = 0; k < *numComponents * mult; k++)
+        (*data)[j][k] = dd[k];
+      j++;
+    }
+  }
+#else
+  Msg::Error("Views require the post-processing module");
+  if(ierr) *ierr = -1;
 #endif
 }
 

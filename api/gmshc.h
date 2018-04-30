@@ -22,6 +22,8 @@
  * tutorials from `tutorials'.
  */
 
+#include <stdlib.h>
+
 #if defined(GMSH_DLL)
 #if defined(GMSH_DLL_EXPORT)
 #define GMSH_API __declspec(dllexport)
@@ -31,8 +33,6 @@
 #else
 #define GMSH_API
 #endif
-
-#include <stdlib.h>
 
 GMSH_API void gmshFree(void *p);
 
@@ -96,7 +96,7 @@ GMSH_API void gmshModelAdd(const char * name,
 GMSH_API void gmshModelRemove(int * ierr);
 
 /* Lists the names of all models. */
-GMSH_API void gmshModelList(char *** names,size_t * names_n,
+GMSH_API void gmshModelList(char *** names, size_t * names_n,
                             int * ierr);
 
 /* Sets the current model to the model with name `name'. If several models
@@ -1364,7 +1364,7 @@ GMSH_API void gmshViewAddListData(const int tag,
  * the types `dataTypes', the number of elements `numElements' for each data
  * type and the `data' for each data type. */
 GMSH_API void gmshViewGetListData(const int tag,
-                                  char *** dataType,size_t * dataType_n,
+                                  char *** dataType, size_t * dataType_n,
                                   int ** numElements, size_t * numElements_n,
                                   double *** data, size_t ** data_n, size_t *data_nn,
                                   int * ierr);
