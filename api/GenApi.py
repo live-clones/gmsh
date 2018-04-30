@@ -22,7 +22,7 @@ class arg:
         self.c_post = ""
         self.c = type_c + " " + name
 
-        self.hpp_arg = self.name
+        self.cwrap_arg = self.name
                 
         self.python_arg = "not_implemented"
         self.python_return = "not_implemented"
@@ -33,7 +33,7 @@ class arg:
 def ibool(name, value=None, python_value=None):
     a = arg(name, value, python_value, "const bool", "const int", False)
     a.python_arg = "c_int(bool(" + name + "))"
-    a.hpp_arg = "int(" + name + ")"
+    a.cwrap_arg = "int(" + name + ")"
     return a
 
 def iint(name, value=None, python_value=None):
@@ -42,14 +42,14 @@ def iint(name, value=None, python_value=None):
     return a
 
 def idouble(name, value=None, python_value=None):
-     a = arg(name, value, python_value, "const double", "const double", False)
-     a.python_arg = "c_double(" + name + ")"
-     return a
+    a = arg(name, value, python_value, "const double", "const double", False)
+    a.python_arg = "c_double(" + name + ")"
+    return a
 
 def istring(name, value=None, python_value=None):
     a = arg(name, value, python_value, "const std::string &", "const char *", False)
     a.python_arg = "c_char_p(" + name + ".encode())"
-    a.hpp_arg = name + ".c_str()"
+    a.cwrap_arg = name + ".c_str()"
     return a
 
 def ivectorint(name, value=None, python_value=None):
@@ -57,6 +57,7 @@ def ivectorint(name, value=None, python_value=None):
     a.c_pre = "  std::vector<int> api_" + name + "_(" + name + ", " + name + " + " + name + "_n);\n"
     a.c_arg = "api_" + name + "_"
     a.c = "int * " + name + ", size_t " + name + "_n"
+    a.cwrap_arg = "&" + name + "[0], " + name + ".size()"
     a.python_pre = "api_" + name + "_, api_" + name + "_n_ = _ivectorint(" + name + ")"
     a.python_arg = "api_" + name + "_, api_" + name + "_n_"
     return a
@@ -66,6 +67,7 @@ def ivectordouble(name, value=None, python_value=None):
     a.c_pre = "  std::vector<double> api_" + name + "_(" + name + ", " + name + " + " + name + "_n);\n"
     a.c_arg = "api_" + name + "_"
     a.c  = "double * " + name + ", size_t " + name + "_n"
+    a.cwrap_arg = "&" + name + "[0], " + name + ".size()"
     a.python_pre = "api_" + name + "_, api_" + name + "_n_ = _ivectordouble(" + name + ")"
     a.python_arg = "api_" + name + "_, api_" + name + "_n_"
     return a
@@ -79,6 +81,9 @@ def ivectorpair(name, value=None, python_value=None):
               "  }\n"
     a.c_arg = "api_" + name + "_"
     a.c = "int * " + name + ", size_t " + name + "_n"
+    a.cwrap_pre = "TODO pre vector pair\n"
+    a.cwrap_arg = "TODO arg vector pair"
+    a.cwrap_post = "TODO post vector pair\n"
     a.python_pre = "api_" + name + "_, api_" + name + "_n_ = _ivectorpair(" + name + ")"
     a.python_arg = "api_" + name + "_, api_" + name + "_n_"
     return a
@@ -90,6 +95,9 @@ def ivectorvectorint(name, value=None, python_value=None):
               "    api_" + name + "_[i] = std::vector<int>(" + name + "[i], " + name + "[i] + " + name + "_n[i]);\n"
     a.c_arg = "api_" + name + "_"
     a.c = "const int ** " + name + ", const size_t * " + name + "_n, " + "size_t " + name + "_nn"
+    a.cwrap_pre = "TODO pre vector int\n"
+    a.cwrap_arg = "TODO arg vector int"
+    a.cwrap_post = "TODO post vector int\n"
     a.python_pre = "api_" + name + "_, api_" + name + "_n_, api_" + name + "_nn_ = _ivectorvectorint(" + name + ")"
     a.python_arg = "api_" + name + "_, api_" + name + "_n_, api_" + name + "_nn_"
     return a
@@ -101,6 +109,9 @@ def ivectorvectordouble(name, value=None, python_value=None):
               "    api_" + name + "_[i] = std::vector<double>(" + name + "[i], " + name + "[i] + " + name + "_n[i]);\n"
     a.c_arg = "api_" + name + "_"
     a.c = "const double ** " + name + ", const size_t * " + name + "_n, " + "size_t " + name + "_nn"
+    a.cwrap_pre = "TODO pre vector vector double\n"
+    a.cwrap_arg = "TODO arg vector vector double"
+    a.cwrap_post = "TODO post vector vector double\n"
     a.python_pre = "api_" + name + "_, api_" + name + "_n_, api_" + name + "_nn_ = _ivectorvectordouble(" + name + ")"
     a.python_arg = "api_" + name + "_, api_" + name + "_n_, api_" + name + "_nn_"
     return a
@@ -240,13 +251,14 @@ def ovectorvectorpair(name, value=None, python_value=None):
     a.python_return = "_ovectorvectorpair(" + name_ + ", " + name_n + ", " + name_nn + ")"
     return a
 
-def argcargv() : 
+def argcargv():
     a = arg("", None, None, "", "", False)
     a.cpp = "int argc = 0, char ** argv = 0"
     a.c_arg = "argc, argv"
     a.c = "int argc, char ** argv"
     a.c_pre = ""
     a.c_post = ""
+    a.cwrap_arg = "argc, argv"
     a.name = "argv"
     a.python_value = "[]"
     a.python_arg = "api_argc_, api_argv_"
@@ -268,7 +280,7 @@ class Module:
     def add_rawc(self, name, doc, rtype, *args):
         self.fs.append((rtype, name, args, doc, True))
         
-    def add_module(self, name, doc) :
+    def add_module(self, name, doc):
         module = Module(name, doc)
         self.submodules.append(module)
         return module
@@ -428,23 +440,25 @@ void gmshFree(void *p) {
 
 """
 
-c_hpp_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+cwrap_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file for license information. Please report all
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
-#ifndef _GMSHC_HPP_
-#define _GMSHC_HPP_
+#ifndef _GMSH_H_
+#define _GMSH_H_
 
-// This file defines C++ bindings for the Gmsh C API. This file is provided
-// as a convenience for users of the binary Gmsh SDK, whose C++ compiler ABI
-// is not compatible with the ABI of the C++ compiler used to create the SDK
+// This file redefines the C++ API in terms of the Gmsh C API. This file is
+// provided as a convenience for users of the binary Gmsh SDK, whose C++ compiler
+// ABI is not compatible with the ABI of the C++ compiler used to create the SDK
 // (and who can thus not directly use the C++ API defined in `gmsh.h').
 //
-// Using this header file will lead to (slightly) reduced performance compared
-// to using the native Gmsh C++ API defined in `gmsh.h', as it entails 
-// additional data copies between this C++ wrapper, the C API and the native
-// C++ code.
+// To use these C++ bindings of the C API instead of the native C++ API, simply
+// rename this file as `gmsh.h'.
+//
+// Warning: using this header file will lead to (slightly) reduced performance
+// compared to using the native Gmsh C++ API, as it entails additional data copies
+// between this C++ wrapper, the C API and the native C++ code.
 //
 // Do not edit this file directly: it is automatically generated by `api/gen.py'.
 
@@ -479,7 +493,7 @@ namespace gmsh {
 
 """
 
-c_hpp_footer="""#endif
+cwrap_footer="""#endif
 """
 
 python_header = """# Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
@@ -516,44 +530,44 @@ else:
     lib = CDLL(libdir + "/libgmsh.so")
 
 use_numpy = False
-try :
+try:
     import numpy
-    try : 
+    try:
         from weakref import finalize as weakreffinalize
-    except :
+    except:
         from backports.weakref import finalize as weakreffinalize
     use_numpy = True
-except :
+except:
     pass
 
-def _ostring(s) :
+def _ostring(s):
     sp = s.value.decode("utf-8")
     lib.gmshFree(s)
     return sp
 
 def _ovectorpair(ptr, size):
-    if use_numpy :
+    if use_numpy:
         v = numpy.ctypeslib.as_array(ptr, (size//2, 2))
         weakreffinalize(v, lib.gmshFree, ptr)
-    else :
+    else:
         v = list((ptr[i*2], ptr[i*2 + 1]) for i in range(size//2))
         lib.gmshFree(ptr)
     return v
 
 def _ovectorint(ptr, size):
-    if use_numpy :
+    if use_numpy:
         v = numpy.ctypeslib.as_array(ptr, (size, ))
         weakreffinalize(v, lib.gmshFree, ptr)
-    else :
+    else:
         v = list(ptr[i] for i in range(size))
         lib.gmshFree(ptr)
     return v
 
 def _ovectordouble(ptr, size):
-    if use_numpy :
+    if use_numpy:
         v = numpy.ctypeslib.as_array(ptr, (size, ))
         weakreffinalize(v, lib.gmshFree, ptr)
-    else :
+    else:
         v = list(ptr[i] for i in range(size))
         lib.gmshFree(ptr)
     return v
@@ -582,9 +596,9 @@ def _ovectorvectorpair(ptr, size, n):
     return v
 
 def _ivectorint(o):
-    if use_numpy :
+    if use_numpy:
         return numpy.ascontiguousarray(o, numpy.int32).ctypes, c_size_t(len(o))
-    else :
+    else:
         return (c_int*len(o))(*o), c_size_t(len(o))
 
 def _ivectorvectorint(os):
@@ -606,24 +620,24 @@ def _ivectorvectordouble(os):
     return arrays, sizes, size
 
 def _ivectordouble(o):
-    if use_numpy :
+    if use_numpy:
         array = numpy.ascontiguousarray(o, numpy.float64)
         ct = array.ctypes
         ct.array = array
         return  ct, c_size_t(len(o))
-    else :
+    else:
         return (c_double*len(o))(*o), c_size_t(len(o))
 
 def _ivectorpair(o):
-    if use_numpy :
+    if use_numpy:
         array = numpy.ascontiguousarray(o, numpy.int32)
         ct = array.ctypes
         ct.array = array
         return  ct, c_size_t(len(o)*2)
-    else :
+    else:
         return ((c_int*2)*len(o))(*o), c_size_t(len(o)*2)
 
-def _iargcargv(o) :
+def _iargcargv(o):
     return c_int(len(o)), (c_char_p*len(o))(*(s.encode() for s in o))
 
 """
@@ -640,7 +654,7 @@ class API:
         return module
 
     def write_cpp(self):
-        def write_module(module, indent) :
+        def write_module(module, indent):
             f.write(indent + "namespace " + module.name + " { // " + module.doc + "\n\n")
             indent += "  "
             for rtype, name, args, doc, rawc in module.fs:
@@ -648,10 +662,10 @@ class API:
                 rt = rtype.rtype_cpp if rtype else "void"
                 fnameapi = indent + "GMSH_API " + rt + " " + name + "(";
                 f.write(fnameapi)
-                if args :
+                if args:
                     f.write((",\n" + ' ' * len(fnameapi)).join(a.cpp for a in args))
                 f.write(");\n\n")
-            for m in module.submodules :
+            for m in module.submodules:
                 write_module(m, indent)
             f.write(indent[:-2] + "} // namespace " + module.name + "\n\n")
         with open("gmsh.h", "w") as f:
@@ -661,13 +675,13 @@ class API:
             f.write(cpp_footer)
 
     def write_c(self):
-        def write_module(module, c_namespace, cpp_namespace, indent) :
+        def write_module(module, c_namespace, cpp_namespace, indent):
             cpp_namespace += module.name + "::"
-            if c_namespace :
+            if c_namespace:
                 c_namespace += module.name[0].upper() + module.name[1:]
-            else :
+            else:
                 c_namespace = module.name
-            fhpp.write(indent + "namespace " + module.name + " { // " + module.doc + "\n\n")
+            fcwrap.write(indent + "namespace " + module.name + " { // " + module.doc + "\n\n")
             indent += "  "
             for rtype, name, args, doc, rawc in module.fs:
                 # gmshc.h
@@ -695,51 +709,52 @@ class API:
                              ");\n")
                     fc.write("".join((a.c_post for a in args)))
                     fc.write("  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}\n");
-                    if rtype :
+                    if rtype:
                         fc.write("  return result_api_;\n");
                     fc.write("}\n\n")
-                # gmshc.hpp
-                fhpp.write(indent + "// " + ("\n" + indent + "// ").join(textwrap.wrap(doc, 80-len(indent))) + "\n")
+                # gmsh.h_cwrap
+                fcwrap.write(indent + "// " + ("\n" + indent + "// ").join(textwrap.wrap(doc, 80-len(indent))) + "\n")
                 rt = rtype.rtype_cpp if rtype else "void"
                 fnameapi = indent + "GMSH_API " + rt + " " + name + "(";
-                fhpp.write(fnameapi)
-                if args :
-                    fhpp.write((",\n" + ' ' * len(fnameapi)).join(a.cpp for a in args))
-                fhpp.write(")\n" + indent + "{\n" + indent + "  int ierr = 0;\n" + indent + "  ")
+                fcwrap.write(fnameapi)
+                if args:
+                    fcwrap.write((",\n" + ' ' * len(fnameapi)).join(a.cpp for a in args))
+                fcwrap.write(")\n" + indent + "{\n" + indent + "  int ierr = 0;\n" + indent + "  ")
                 if rtype:
-                    fhpp.write("int result_api_ = ")
-                fhpp.write(fname + "(")
+                    fcwrap.write("int result_api_ = ")
+                fcwrap.write(fname + "(" + ", ".join((a.cwrap_arg for a in args)))
 
-                fhpp.write(", ".join((a.hpp_arg for a in args)))
-
-                fhpp.write(", &ierr);\n")
-                fhpp.write(indent + "  " + "if(ierr) throw ierr;\n");
+                if args:
+                    fcwrap.write(", &ierr);\n")
+                else:
+                    fcwrap.write("&ierr);\n")
+                fcwrap.write(indent + "  " + "if(ierr) throw ierr;\n");
                 if rtype:
-                    fhpp.write(indent + "  return result_api_;\n")
-                fhpp.write(indent + "}\n\n")
-            for m in module.submodules :
+                    fcwrap.write(indent + "  return result_api_;\n")
+                fcwrap.write(indent + "}\n\n")
+            for m in module.submodules:
                 write_module(m, c_namespace, cpp_namespace, indent)
-            fhpp.write(indent[:-2] + "} // namespace " + module.name + "\n\n")
-        with open("gmshc.h", "w") as f :
-            with open("gmshc.cpp", "w") as fc :
-                with open("gmshc.hpp", "w") as fhpp :
+            fcwrap.write(indent[:-2] + "} // namespace " + module.name + "\n\n")
+        with open("gmshc.h", "w") as f:
+            with open("gmshc.cpp", "w") as fc:
+                with open("gmsh.h_cwrap", "w") as fcwrap:
                     f.write(c_header)
                     fc.write(c_cpp_header)
-                    fhpp.write(c_hpp_header)
+                    fcwrap.write(cwrap_header)
                     for module in self.modules:
                         write_module(module, "", "", "")
                     f.write(c_footer)
-                    fhpp.write(c_hpp_footer)
+                    fcwrap.write(cwrap_footer)
 
-    def write_python(self) :
-        def parg(a) :
+    def write_python(self):
+        def parg(a):
             return a.name + (("=" + a.python_value) if a.python_value else "")
         def write_function(f, fun, modulepath, indent):
             (rtype, name, args, doc, rawc) = fun
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write("\n")
-            if (modulepath != "gmsh") :
+            if (modulepath != "gmsh"):
                 f.write(indent + "@staticmethod\n")
             f.write(indent + "def " + name + "("
                    + ", ".join((parg(a) for a in iargs))
@@ -747,52 +762,52 @@ class API:
             indent += "    "
             f.write(indent + '"""\n')
             f.write(indent + ("\n" + indent).join(textwrap.wrap(doc, 75)) + "\n")
-            if rtype or oargs :
+            if rtype or oargs:
                 f.write("\n" + indent + "Returns " + ", ".join(
                     (["an " + rtype.rtype_texi] if rtype else[])
                    + [("`" + a.name + "'") for a in oargs])
                + ".\n")
             f.write(indent + '"""\n')
-            for a in args :
-                if a.python_pre : f.write(indent + a.python_pre + "\n")
+            for a in args:
+                if a.python_pre: f.write(indent + a.python_pre + "\n")
             f.write(indent + "ierr = c_int()\n")
             f.write(indent + "api__result__ = " if rtype is oint else (indent))
             c_name = modulepath + name[0].upper() + name[1:]
             f.write("lib." + c_name + "(\n    " + indent
                    + (",\n" + indent + "    ").join(tuple((a.python_arg for a in args)) + ("byref(ierr)", ))
                    + ")\n")
-            f.write(indent + "if ierr.value != 0 :\n")
+            f.write(indent + "if ierr.value != 0:\n")
             f.write(indent + "    raise ValueError(\n")
-            f.write(indent + "        \"" + c_name + " returned non-zero error code : \",\n")
+            f.write(indent + "        \"" + c_name + " returned non-zero error code: \",\n")
             f.write(indent + "        ierr.value)\n")
             r = (["api__result__"]) if rtype else []
             r += list((o.python_return for o in oargs))
-            if len(r) != 0 :
-                if len(r) == 1 :
+            if len(r) != 0:
+                if len(r) == 1:
                     f.write(indent + "return " + r[0] + "\n")
-                else :
+                else:
                     f.write(indent + "return (\n" + indent + "    " + (",\n" + indent + "    ").join(r) + ")\n")
-        def write_module(f, m, modulepath, indent) :
-            if modulepath :
+        def write_module(f, m, modulepath, indent):
+            if modulepath:
                 modulepath += m.name[0].upper() + m.name[1:]
-            else :
+            else:
                 modulepath = m.name
-            for fun in m.fs :
+            for fun in m.fs:
                 write_function(f, fun, modulepath, indent)
-            for module in m.submodules :
+            for module in m.submodules:
                 f.write("\n\n" + indent + "class " + module.name + ":\n")
                 indentm = indent + "    "
                 f.write(indentm + '"""\n')
                 f.write(indentm + ("\n" + indentm).join(textwrap.wrap(module.doc, 75)) + "\n")
                 f.write(indentm + '"""\n')
                 write_module(f, module, modulepath, indentm)
-        with open("gmsh.py", "w") as f :
+        with open("gmsh.py", "w") as f:
             f.write(python_header.format(self.api_version))
             for module in self.modules:
                 write_module(f, module, "", "")
 
     def write_texi(self):
-        def write_module(module, parent) :
+        def write_module(module, parent):
             full = parent + "/" + module.name
             f.write("@heading Module @code{" + full + "}\n");
             f.write("@ftable @code\n");
@@ -813,7 +828,7 @@ class API:
                         (rtype.rtype_texi if rtype else "-") + "\n")
                 f.write("@end table\n\n");
             f.write("@end ftable\n\n");
-            for m in module.submodules :
+            for m in module.submodules:
                 write_module(m, full)
         with open("api.texi", "w") as f:
             f.write("@c This file was generated by api/gen.py: do not edit manually!\n\n")
