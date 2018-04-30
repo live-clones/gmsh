@@ -3,7 +3,8 @@
 # See the LICENSE.txt file for license information. Please report all
 # bugs and problems to the public mailing list <gmsh@onelab.info>.
 
-# Contributed by Jonathan Lambrechts
+# Contributor(s):
+#   Jonathan Lambrechts
 
 import textwrap
 import string
@@ -84,9 +85,10 @@ def ivectorpair(name, value=None, python_value=None):
               "  }\n"
     a.c_arg = "api_" + name + "_"
     a.c = "int * " + name + ", size_t " + name + "_n"
-    #a.cwrap_pre = "int * api_" + name + "= (int*)malloc("TODO pre vector pair\n"
-    a.cwrap_arg = "TODO arg vector pair"
-    a.cwrap_post = "TODO post vector pair\n"
+    a.cwrap_pre = "int *api_" + name + "_; size_t api_" + name + "_n_; " + \
+                  "pairvector2intptr(" + name + ", &api_" + name + "_, &api_" + name + "_n_);\n"
+    a.cwrap_arg = "api_" + name + "_, api_" + name + "_n_"
+    a.cwrap_post = "gmshFree(api_" + name + "_);\n"
     a.python_pre = "api_" + name + "_, api_" + name + "_n_ = _ivectorpair(" + name + ")"
     a.python_arg = "api_" + name + "_, api_" + name + "_n_"
     return a
@@ -94,13 +96,15 @@ def ivectorpair(name, value=None, python_value=None):
 def ivectorvectorint(name, value=None, python_value=None):
     a = arg(name, value, python_value, "const std::vector<std::vector<int> > &", "const int **", False)
     a.c_pre = "  std::vector<std::vector<int> > api_" + name + "_(" + name + "_nn);\n" + \
-              "  for (size_t i = 0; i < " + name + "_nn; ++i)\n" + \
+              "  for(size_t i = 0; i < " + name + "_nn; ++i)\n" + \
               "    api_" + name + "_[i] = std::vector<int>(" + name + "[i], " + name + "[i] + " + name + "_n[i]);\n"
     a.c_arg = "api_" + name + "_"
     a.c = "const int ** " + name + ", const size_t * " + name + "_n, " + "size_t " + name + "_nn"
-    a.cwrap_pre = "TODO pre vector int\n"
-    a.cwrap_arg = "TODO arg vector int"
-    a.cwrap_post = "TODO post vector int\n"
+    a.cwrap_pre = "int **api_" + name + "_; size_t *api_" + name + "_n_, api_" + name + "_nn_; " + \
+                  "vectorvector2ptrptr(" + name + ", &api_" + name + "_, &api_" + name + "_n_, &api_" + name + "_nn_);\n"
+    a.cwrap_arg = "api_" + name + "_, api_" + name + "_n_, api_" + name + "_nn_"
+    a.cwrap_post = "for(size_t i = 0; i < api_" + name + "_nn_; ++i){ gmshFree(api_" + name + "_[i]); } " + \
+                    "gmshFree(api_" + name + "_); gmshFree(api_" + name + "_n_);\n"
     a.python_pre = "api_" + name + "_, api_" + name + "_n_, api_" + name + "_nn_ = _ivectorvectorint(" + name + ")"
     a.python_arg = "api_" + name + "_, api_" + name + "_n_, api_" + name + "_nn_"
     return a
@@ -108,13 +112,15 @@ def ivectorvectorint(name, value=None, python_value=None):
 def ivectorvectordouble(name, value=None, python_value=None):
     a = arg(name, value, python_value, "const std::vector<std::vector<double> > &", "const double**", False)
     a.c_pre = "  std::vector<std::vector<double> > api_" + name + "_(" + name + "_nn);\n" + \
-              "  for (size_t i = 0; i < " + name + "_nn; ++i)\n" + \
+              "  for(size_t i = 0; i < " + name + "_nn; ++i)\n" + \
               "    api_" + name + "_[i] = std::vector<double>(" + name + "[i], " + name + "[i] + " + name + "_n[i]);\n"
     a.c_arg = "api_" + name + "_"
     a.c = "const double ** " + name + ", const size_t * " + name + "_n, " + "size_t " + name + "_nn"
-    a.cwrap_pre = "TODO pre vector vector double\n"
-    a.cwrap_arg = "TODO arg vector vector double"
-    a.cwrap_post = "TODO post vector vector double\n"
+    a.cwrap_pre = "double **api_" + name + "_; size_t *api_" + name + "_n_, api_" + name + "_nn_; " + \
+                  "vectorvector2ptrptr(" + name + ", &api_" + name + "_, &api_" + name + "_n_, &api_" + name + "_nn_);\n"
+    a.cwrap_arg = "api_" + name + "_, api_" + name + "_n_, api_" + name + "_nn_"
+    a.cwrap_post = "for(size_t i = 0; i < api_" + name + "_nn_; ++i){ gmshFree(api_" + name + "_[i]); } " + \
+                    "gmshFree(api_" + name + "_); gmshFree(api_" + name + "_n_);\n"
     a.python_pre = "api_" + name + "_, api_" + name + "_n_, api_" + name + "_nn_ = _ivectorvectordouble(" + name + ")"
     a.python_arg = "api_" + name + "_, api_" + name + "_n_, api_" + name + "_nn_"
     return a
@@ -405,7 +411,7 @@ template<typename t>
 void vector2ptr(const std::vector<t> &v, t **p, size_t *size)
 {
   *p = (t*)malloc(sizeof(t) * v.size());
-  for (size_t i = 0; i < v.size(); ++i){
+  for(size_t i = 0; i < v.size(); ++i){
     (*p)[i] = v[i];
   }
   *size = v.size();
@@ -414,7 +420,7 @@ void vector2ptr(const std::vector<t> &v, t **p, size_t *size)
 void pairvector2intptr(const gmsh::vector_pair &v, int **p, size_t *size)
 {
   *p = (int*)malloc(sizeof(int) * v.size() * 2);
-  for (size_t i = 0; i < v.size(); ++i){
+  for(size_t i = 0; i < v.size(); ++i){
     (*p)[i * 2 + 0] = v[i].first;
     (*p)[i * 2 + 1] = v[i].second;
   }
@@ -424,7 +430,7 @@ void pairvector2intptr(const gmsh::vector_pair &v, int **p, size_t *size)
 void stringvector2charpp(const std::vector<std::string> &v, char ***p, size_t *size)
 {
   *p = (char**)malloc(sizeof(char*) * v.size() * 2);
-  for (size_t i = 0; i < v.size(); ++i){
+  for(size_t i = 0; i < v.size(); ++i){
     (*p)[i] = strdup(v[i].c_str());
   }
   *size = v.size();
@@ -435,7 +441,7 @@ void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t *
 {
   *p = (t**)malloc(sizeof(t*) * v.size());
   *size = (size_t*)malloc(sizeof(size_t) * v.size());
-  for (size_t i = 0; i < v.size(); ++i)
+  for(size_t i = 0; i < v.size(); ++i)
     vector2ptr(v[i], &((*p)[i]), &((*size)[i]));
   *sizeSize = v.size();
 }
@@ -444,7 +450,7 @@ void pairvectorvector2intptrptr(const std::vector<gmsh::vector_pair > &v, int **
 {
   *p = (int**)malloc(sizeof(int*) * v.size());
   *size = (size_t*)malloc(sizeof(size_t) * v.size());
-  for (size_t i = 0; i < v.size(); ++i)
+  for(size_t i = 0; i < v.size(); ++i)
     pairvector2intptr(v[i], &(*p)[i], &((*size)[i]));
   *sizeSize = v.size();
 }
@@ -609,13 +615,13 @@ def _ivectorint(o):
     if use_numpy:
         return numpy.ascontiguousarray(o, numpy.int32).ctypes, c_size_t(len(o))
     else:
-        return (c_int*len(o))(*o), c_size_t(len(o))
+        return (c_int * len(o))(*o), c_size_t(len(o))
 
 def _ivectorvectorint(os):
     n = len(os)
     parrays = [_ivectorint(o) for o in os]
-    sizes = (c_size_t*n)(*(a[1] for a in parrays))
-    arrays = (POINTER(c_int)*n)(*(cast(a[0], POINTER(c_int)) for a in parrays))
+    sizes = (c_size_t * n)(*(a[1] for a in parrays))
+    arrays = (POINTER(c_int) * n)(*(cast(a[0], POINTER(c_int)) for a in parrays))
     arrays.ref = [a[0] for a in parrays]
     size = c_size_t(n)
     return arrays, sizes, size
@@ -623,8 +629,8 @@ def _ivectorvectorint(os):
 def _ivectorvectordouble(os):
     n = len(os)
     parrays = [_ivectordouble(o) for o in os]
-    sizes = (c_size_t*n)(*(a[1] for a in parrays))
-    arrays = (POINTER(c_double)*n)(*(cast(a[0], POINTER(c_double)) for a in parrays))
+    sizes = (c_size_t * n)(*(a[1] for a in parrays))
+    arrays = (POINTER(c_double) * n)(*(cast(a[0], POINTER(c_double)) for a in parrays))
     arrays.ref = [a[0] for a in parrays]
     size = c_size_t(n)
     return arrays, sizes, size
@@ -636,7 +642,7 @@ def _ivectordouble(o):
         ct.array = array
         return  ct, c_size_t(len(o))
     else:
-        return (c_double*len(o))(*o), c_size_t(len(o))
+        return (c_double * len(o))(*o), c_size_t(len(o))
 
 def _ivectorpair(o):
     if use_numpy:
@@ -648,7 +654,7 @@ def _ivectorpair(o):
         return ((c_int * 2) * len(o))(*o), c_size_t(len(o) * 2)
 
 def _iargcargv(o):
-    return c_int(len(o)), (c_char_p*len(o))(*(s.encode() for s in o))
+    return c_int(len(o)), (c_char_p * len(o))(*(s.encode() for s in o))
 
 """
 
@@ -718,7 +724,7 @@ class API:
                         list((a.c_arg for a in args))) + 
                              ");\n")
                     fc.write("".join((a.c_post for a in args)))
-                    fc.write("  } catch(int api_ierr_) {if (ierr) *ierr = api_ierr_;}\n");
+                    fc.write("  } catch(int api_ierr_) {if(ierr) *ierr = api_ierr_;}\n");
                     if rtype:
                         fc.write("  return result_api_;\n");
                     fc.write("}\n\n")
@@ -776,7 +782,7 @@ class API:
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write("\n")
-            if (modulepath != "gmsh"):
+            if modulepath != "gmsh":
                 f.write(indent + "@staticmethod\n")
             f.write(indent + "def " + name + "("
                    + ", ".join((parg(a) for a in iargs))

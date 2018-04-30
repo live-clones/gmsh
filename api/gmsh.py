@@ -101,13 +101,13 @@ def _ivectorint(o):
     if use_numpy:
         return numpy.ascontiguousarray(o, numpy.int32).ctypes, c_size_t(len(o))
     else:
-        return (c_int*len(o))(*o), c_size_t(len(o))
+        return (c_int * len(o))(*o), c_size_t(len(o))
 
 def _ivectorvectorint(os):
     n = len(os)
     parrays = [_ivectorint(o) for o in os]
-    sizes = (c_size_t*n)(*(a[1] for a in parrays))
-    arrays = (POINTER(c_int)*n)(*(cast(a[0], POINTER(c_int)) for a in parrays))
+    sizes = (c_size_t * n)(*(a[1] for a in parrays))
+    arrays = (POINTER(c_int) * n)(*(cast(a[0], POINTER(c_int)) for a in parrays))
     arrays.ref = [a[0] for a in parrays]
     size = c_size_t(n)
     return arrays, sizes, size
@@ -115,8 +115,8 @@ def _ivectorvectorint(os):
 def _ivectorvectordouble(os):
     n = len(os)
     parrays = [_ivectordouble(o) for o in os]
-    sizes = (c_size_t*n)(*(a[1] for a in parrays))
-    arrays = (POINTER(c_double)*n)(*(cast(a[0], POINTER(c_double)) for a in parrays))
+    sizes = (c_size_t * n)(*(a[1] for a in parrays))
+    arrays = (POINTER(c_double) * n)(*(cast(a[0], POINTER(c_double)) for a in parrays))
     arrays.ref = [a[0] for a in parrays]
     size = c_size_t(n)
     return arrays, sizes, size
@@ -128,7 +128,7 @@ def _ivectordouble(o):
         ct.array = array
         return  ct, c_size_t(len(o))
     else:
-        return (c_double*len(o))(*o), c_size_t(len(o))
+        return (c_double * len(o))(*o), c_size_t(len(o))
 
 def _ivectorpair(o):
     if use_numpy:
@@ -140,7 +140,7 @@ def _ivectorpair(o):
         return ((c_int * 2) * len(o))(*o), c_size_t(len(o) * 2)
 
 def _iargcargv(o):
-    return c_int(len(o)), (c_char_p*len(o))(*(s.encode() for s in o))
+    return c_int(len(o)), (c_char_p * len(o))(*(s.encode() for s in o))
 
 
 def initialize(argv=[], readConfigFiles=True):
