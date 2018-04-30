@@ -465,12 +465,12 @@ extern \"C\" {
   #include "gmshc.h"
 }
 
-void *gmshMalloc(size_t n)
+GMSH_API void *gmshMalloc(size_t n)
 {
   return malloc(n);
 }
 
-void gmshFree(void *p)
+GMSH_API void gmshFree(void *p)
 {
   if(p) free(p);
 }
