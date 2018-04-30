@@ -23,6 +23,8 @@ class arg:
         self.c = type_c + " " + name
 
         self.cwrap_arg = self.name
+        self.cwrap_pre = ""
+        self.cwrap_post = ""
                 
         self.python_arg = "not_implemented"
         self.python_return = "not_implemented"
@@ -719,18 +721,24 @@ class API:
                 fcwrap.write(fnameapi)
                 if args:
                     fcwrap.write((",\n" + ' ' * len(fnameapi)).join(a.cpp for a in args))
-                fcwrap.write(")\n" + indent + "{\n" + indent + "  int ierr = 0;\n" + indent + "  ")
+                fcwrap.write(")\n" + indent + "{\n" + indent + "  int ierr = 0;\n")
+                for a in args:
+                    if a.cwrap_pre:
+                        fcwrap.write(indent + "  " + a.cwrap_pre)
+                fcwrap.write(indent + "  ")
                 if rtype:
                     fcwrap.write("int result_api_ = ")
                 fcwrap.write(fname + "(" + ", ".join((a.cwrap_arg for a in args)))
-
                 if args:
                     fcwrap.write(", &ierr);\n")
                 else:
                     fcwrap.write("&ierr);\n")
                 fcwrap.write(indent + "  " + "if(ierr) throw ierr;\n");
+                for a in args:
+                    if a.cwrap_post:
+                        fcwrap.write(indent + "  " + a.cwrap_post)
                 if rtype:
-                    fcwrap.write(indent + "  return result_api_;\n")
+                    fcwrap.write(indent + "  " + "return result_api_;\n")
                 fcwrap.write(indent + "}\n\n")
             for m in module.submodules:
                 write_module(m, c_namespace, cpp_namespace, indent)
