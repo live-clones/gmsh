@@ -184,6 +184,9 @@ def ovectorint(name, value=None, python_value=None):
     a.c_arg = api_name
     a.c_post = "    vector2ptr(" + api_name + ", " + name + ", " + name + "_n);\n"
     a.c = "int ** " + name + ", size_t * " + name + "_n"
+    a.cwrap_pre = "int *" + api_name + "; size_t " + api_name_n + ";\n"
+    a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
+    a.cwrap_post = name + ".assign(" + api_name + ", " + api_name + " + " + api_name_n + "); gmshFree(" + api_name + ");\n"
     a.python_pre = api_name + ", " + api_name_n + " = POINTER(c_int)(), c_size_t()"
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectorint(" + api_name + ", " + api_name_n + ".value)"
@@ -196,7 +199,10 @@ def ovectordouble(name, value=None, python_value=None):
     a.c_pre = "    std::vector<double> " + api_name + ";\n"
     a.c_arg = api_name
     a.c_post = "    vector2ptr(" + api_name + ", " + name + ", " + name + "_n);\n"
-    a.c  = "double ** " + name + ", size_t * " + name + "_n"
+    a.c = "double ** " + name + ", size_t * " + name + "_n"
+    a.cwrap_pre = "double *" + api_name + "; size_t " + api_name_n + ";\n"
+    a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
+    a.cwrap_post = name + ".assign(" + api_name + ", " + api_name + " + " + api_name_n + "); gmshFree(" + api_name + ");\n"
     a.python_pre = api_name + ", " + api_name_n + " = POINTER(c_double)(), c_size_t()"
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectordouble(" + api_name + ", " + api_name_n + ".value)"
@@ -474,13 +480,13 @@ cwrap_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 #ifndef _GMSH_H_
 #define _GMSH_H_
 
-// This file redefines the C++ API in terms of the Gmsh C API. This file is
-// provided as a convenience for users of the binary Gmsh SDK, whose C++ compiler
-// ABI is not compatible with the ABI of the C++ compiler used to create the SDK
-// (and who can thus not directly use the C++ API defined in `gmsh.h').
+// This file redefines the C++ API in terms of the Gmsh C API. 
 //
-// To use these C++ bindings of the C API instead of the native C++ API, simply
-// rename this file as `gmsh.h'.
+// This is provided as a convenience for users of the binary Gmsh SDK, whose C++
+// compiler ABI is not compatible with the ABI of the C++ compiler used to create 
+// the SDK (and who can thus not directly use the C++ API defined in `gmsh.h').
+//
+// To use this header file in your C++ code, simply rename it as `gmsh.h'.
 //
 // Warning: using this header file will lead to (slightly) reduced performance
 // compared to using the native Gmsh C++ API, as it entails additional data copies
