@@ -15,9 +15,9 @@ reduced performance compared to using the native Gmsh C++ API, as it entails
 additional data copies between the C++ wrapper, the C API and the native C++
 code.
 
-See `gmsh/demos/api' for examples on how to use the Gmsh API. In particular,
-this directory contains C++ and Python versions of several of the `.geo'
-tutorials from `gmsh/tutorials'.
+See `demos/api' for examples on how to use the Gmsh API. In particular,
+`demos/api' contains C++ and Python versions of several of the `.geo' tutorials
+from `tutorials'.
 
 To add a new function in the Gmsh API:
 
