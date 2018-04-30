@@ -531,7 +531,7 @@ cwrap_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 // To use this header file in your C++ code, simply rename it as `gmsh.h'.
 //
 // Warning: using this header file will lead to (slightly) reduced performance
-// compared to using the native Gmsh C++ API in the original `gmsh.h', as it 
+// compared to using the native Gmsh C++ API from the original `gmsh.h', as it 
 // entails additional data copies between this C++ wrapper, the C API and the
 // native C++ code.
 //
