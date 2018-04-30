@@ -72,15 +72,6 @@ namespace gmsh {
     *size = v.size() * 2;
   }
   
-  void stringvector2charpp(const std::vector<std::string> &v, char ***p, size_t *size)
-  {
-    *p = (char**)malloc(sizeof(char*) * v.size() * 2);
-    for(size_t i = 0; i < v.size(); ++i){
-      (*p)[i] = strdup(v[i].c_str());
-    }
-    *size = v.size();
-  }
-  
   template<typename t>
   void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t **size, size_t *sizeSize)
   {
@@ -88,15 +79,6 @@ namespace gmsh {
     *size = (size_t*)malloc(sizeof(size_t) * v.size());
     for(size_t i = 0; i < v.size(); ++i)
       vector2ptr(v[i], &((*p)[i]), &((*size)[i]));
-    *sizeSize = v.size();
-  }
-  
-  void pairvectorvector2intptrptr(const std::vector<gmsh::vector_pair > &v, int ***p, size_t **size, size_t *sizeSize)
-  {
-    *p = (int**)malloc(sizeof(int*) * v.size());
-    *size = (size_t*)malloc(sizeof(size_t) * v.size());
-    for(size_t i = 0; i < v.size(); ++i)
-      pairvector2intptr(v[i], &(*p)[i], &((*size)[i]));
     *sizeSize = v.size();
   }
   

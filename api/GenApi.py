@@ -465,26 +465,6 @@ void gmshFree(void *p)
 """
 
 c_cpp_utils="""
-template<typename t>
-void vector2ptr(const std::vector<t> &v, t **p, size_t *size)
-{
-  *p = (t*)malloc(sizeof(t) * v.size());
-  for(size_t i = 0; i < v.size(); ++i){
-    (*p)[i] = v[i];
-  }
-  *size = v.size();
-}
-
-void pairvector2intptr(const gmsh::vector_pair &v, int **p, size_t *size)
-{
-  *p = (int*)malloc(sizeof(int) * v.size() * 2);
-  for(size_t i = 0; i < v.size(); ++i){
-    (*p)[i * 2 + 0] = v[i].first;
-    (*p)[i * 2 + 1] = v[i].second;
-  }
-  *size = v.size() * 2;
-}
-
 void stringvector2charpp(const std::vector<std::string> &v, char ***p, size_t *size)
 {
   *p = (char**)malloc(sizeof(char*) * v.size() * 2);
@@ -492,16 +472,6 @@ void stringvector2charpp(const std::vector<std::string> &v, char ***p, size_t *s
     (*p)[i] = strdup(v[i].c_str());
   }
   *size = v.size();
-}
-
-template<typename t>
-void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t **size, size_t *sizeSize)
-{
-  *p = (t**)malloc(sizeof(t*) * v.size());
-  *size = (size_t*)malloc(sizeof(size_t) * v.size());
-  for(size_t i = 0; i < v.size(); ++i)
-    vector2ptr(v[i], &((*p)[i]), &((*size)[i]));
-  *sizeSize = v.size();
 }
 
 void pairvectorvector2intptrptr(const std::vector<gmsh::vector_pair > &v, int ***p, size_t **size, size_t *sizeSize)
@@ -566,6 +536,38 @@ namespace gmsh {
 
 }
 
+"""
+
+cwrap_utils="""
+template<typename t>
+void vector2ptr(const std::vector<t> &v, t **p, size_t *size)
+{
+  *p = (t*)malloc(sizeof(t) * v.size());
+  for(size_t i = 0; i < v.size(); ++i){
+    (*p)[i] = v[i];
+  }
+  *size = v.size();
+}
+
+void pairvector2intptr(const gmsh::vector_pair &v, int **p, size_t *size)
+{
+  *p = (int*)malloc(sizeof(int) * v.size() * 2);
+  for(size_t i = 0; i < v.size(); ++i){
+    (*p)[i * 2 + 0] = v[i].first;
+    (*p)[i * 2 + 1] = v[i].second;
+  }
+  *size = v.size() * 2;
+}
+
+template<typename t>
+void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t **size, size_t *sizeSize)
+{
+  *p = (t**)malloc(sizeof(t*) * v.size());
+  *size = (size_t*)malloc(sizeof(size_t) * v.size());
+  for(size_t i = 0; i < v.size(); ++i)
+    vector2ptr(v[i], &((*p)[i]), &((*size)[i]));
+  *sizeSize = v.size();
+}
 """
 
 cwrap_footer="""#endif
@@ -821,11 +823,12 @@ class API:
                 with open("gmsh.h_cwrap", "w") as fcwrap:
                     f.write(c_header)
                     fc.write(c_cpp_header)
+                    fc.write(cwrap_utils)
                     fc.write(c_cpp_utils)
                     fc.write("\n")
                     fcwrap.write(cwrap_header)
                     fcwrap.write("namespace gmsh {\n")
-                    s = string.split(c_cpp_utils, '\n')
+                    s = string.split(cwrap_utils, '\n')
                     for line in s:
                         fcwrap.write("  " + line + "\n")
                     fcwrap.write("}\n\n")
