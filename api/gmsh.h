@@ -18,6 +18,10 @@
 // `demos/api' contains C++ and Python versions of several of the `.geo'
 // tutorials from `tutorials'.
 
+#if defined(_MSC_VER)
+#define _USE_MATH_DEFINES
+#endif
+
 #include <cmath>
 #include <vector>
 #include <string>

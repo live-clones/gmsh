@@ -35,6 +35,7 @@
 #endif
 
 GMSH_API void gmshFree(void *p);
+GMSH_API void *gmshMalloc(size_t n);
 
 /* Initializes Gmsh. This must be called before any call to the other
  * functions in the API. If `argc' and `argv' are provided, they will be
