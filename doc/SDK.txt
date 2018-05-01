@@ -26,10 +26,10 @@ Notes:
   * The C API (and the Python bindings, which use the C API internally) should
     work with most compilers.
 
-  * The C++ API will only work if your compiler has the same ABI as the compiler
-    used to build this SDK. (The SDKs compiled with GNU g++ currently use g++ 4;
-    you will need to specify "-D_GLIBCXX_USE_CXX11_ABI=0" if you use g++ 5 or
-    newer.)
+  * The C++ API will only work if your compiler has the same Application Binary
+    Interface (ABI) as the compiler used to build this SDK. (The SDKs compiled
+    with GNU g++ currently use g++ 4; you will need to specify
+    "-D_GLIBCXX_USE_CXX11_ABI=0" if you use g++ 5 or newer.)
 
   * If your C++ compiler does not provide the same ABI as the C++ compiler used
     to build the SDK, you can rename `gmsh.h_cwrap' as `gmsh.h': this
