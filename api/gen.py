@@ -10,7 +10,7 @@
 #  - gmsh.h: the Gmsh C++ API header
 #  - gmsh.py: the Gmsh Python API module
 #  - gmshc.h: the Gmsh C API header
-#  - gmsh.h_cwrap: the Gmsh C++ API refined in terms of the C API
+#  - gmsh.h_cwrap: the Gmsh C++ API redefined in terms of the C API
 #  - gmshc.cpp: the C to C++ wrapper code used by the Gmsh C API
 #  - api.texi: the texinfo API documentation
 #
