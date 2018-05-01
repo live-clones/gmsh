@@ -55,7 +55,7 @@ table.menu { border: 0; }
 
 p, div.p { margin: .8em 0 .8em 0; }
 /* class="highlight" for getdp and gmsh pages */
-p.highlight { padding: 1ex; background-color: #f3f7ff; font-weight: bold; }
+div.highlight { padding: 1ex; background-color: #f3f7ff; font-weight: bold; }
 
 code { font-size: 95%; }
 
