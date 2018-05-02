@@ -504,7 +504,7 @@ cwrap_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 #ifndef _GMSH_H_
 #define _GMSH_H_
 
-// This file redefines the C++ API in terms of the Gmsh C API. 
+// This file redefines the Gmsh C++ API in terms of the C API.
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create 
@@ -512,7 +512,7 @@ cwrap_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 //
 // To use this header file in your C++ code, simply rename it as `gmsh.h'.
 //
-// Warning: using this header file will lead to (slightly) reduced performance
+// Note that using this header file will lead to (slightly) reduced performance
 // compared to using the native Gmsh C++ API from the original `gmsh.h', as it 
 // entails additional data copies between this C++ wrapper, the C API and the
 // native C++ code.
@@ -871,7 +871,7 @@ class API:
             f.write(indent + '"""\n')
             f.write(indent + ("\n" + indent).join(textwrap.wrap(doc, 75)) + "\n")
             if rtype or oargs:
-                f.write("\n" + indent + "Returns " + ", ".join(
+                f.write("\n" + indent + "Return " + ", ".join(
                     (["an " + rtype.rtype_texi] if rtype else[])
                    + [("`" + a.name + "'") for a in oargs])
                + ".\n")

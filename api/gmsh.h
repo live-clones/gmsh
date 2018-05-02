@@ -50,47 +50,47 @@ namespace gmsh {
 
 namespace gmsh { // Top-level functions
 
-  // Initializes Gmsh. This must be called before any call to the other functions
-  // in the API. If `argc' and `argv' are provided, they will be handled in the
-  // same way as the command line arguments in the Gmsh app. If `readConfigFiles'
-  // is set, reads system Gmsh configuration files (gmshrc and gmsh-options).
+  // Initialize Gmsh. This must be called before any call to the other functions in
+  // the API. If `argc' and `argv' are provided, they will be handled in the same
+  // way as the command line arguments in the Gmsh app. If `readConfigFiles' is
+  // set, read system Gmsh configuration files (gmshrc and gmsh-options).
   GMSH_API void initialize(int argc = 0, char ** argv = 0,
                            const bool readConfigFiles = true);
 
-  // Finalizes Gmsh. This must be called when you are done using the Gmsh API.
+  // Finalize Gmsh. This must be called when you are done using the Gmsh API.
   GMSH_API void finalize();
 
-  // Opens a file. Equivalent to the `File->Open' menu in the Gmsh app. Handling of
+  // Open a file. Equivalent to the `File->Open' menu in the Gmsh app. Handling of
   // the file depends on its extension and/or its contents.
   GMSH_API void open(const std::string & fileName);
 
-  // Merges a file. Equivalent to the `File->Merge' menu in the Gmsh app. Handling
+  // Merge a file. Equivalent to the `File->Merge' menu in the Gmsh app. Handling
   // of the file depends on its extension and/or its contents.
   GMSH_API void merge(const std::string & fileName);
 
-  // Writes a file. The export format is determined by the file extension.
+  // Write a file. The export format is determined by the file extension.
   GMSH_API void write(const std::string & fileName);
 
-  // Clears all loaded models and post-processing data, and adds a new empty model.
+  // Clear all loaded models and post-processing data, and add a new empty model.
   GMSH_API void clear();
 
   namespace option { // Global option handling functions
 
-    // Sets a numerical option to `value'. `name' is of the form "category.option"
+    // Set a numerical option to `value'. `name' is of the form "category.option"
     // or "category[num].option". Available categories and options are listed in
     // the Gmsh reference manual.
     GMSH_API void setNumber(const std::string & name,
                             const double value);
 
-    // Gets the `value' of a numerical option.
+    // Get the `value' of a numerical option.
     GMSH_API void getNumber(const std::string & name,
                             double & value);
 
-    // Sets a string option to `value'.
+    // Set a string option to `value'.
     GMSH_API void setString(const std::string & name,
                             const std::string & value);
 
-    // Gets the `value' of a string option.
+    // Get the `value' of a string option.
     GMSH_API void getString(const std::string & name,
                             std::string & value);
 
@@ -98,60 +98,60 @@ namespace gmsh { // Top-level functions
 
   namespace model { // Per-model functions
 
-    // Adds a new model, with name `name', and sets it as the current model.
+    // Add a new model, with name `name', and set it as the current model.
     GMSH_API void add(const std::string & name);
 
-    // Removes the current model.
+    // Remove the current model.
     GMSH_API void remove();
 
-    // Lists the names of all models.
+    // List the names of all models.
     GMSH_API void list(std::vector<std::string> & names);
 
-    // Sets the current model to the model with name `name'. If several models have
-    // the same name, selects the one that was added first.
+    // Set the current model to the model with name `name'. If several models have
+    // the same name, select the one that was added first.
     GMSH_API void setCurrent(const std::string & name);
 
-    // Gets all the (elementary) geometrical entities in the current model. If
-    // `dim' is >= 0, returns only the entities of the specified dimension (e.g.
-    // points if `dim' == 0). The entities are returned as a vector of (dim, tag)
-    // integer pairs.
+    // Get all the (elementary) geometrical entities in the current model. If `dim'
+    // is >= 0, return only the entities of the specified dimension (e.g. points if
+    // `dim' == 0). The entities are returned as a vector of (dim, tag) integer
+    // pairs.
     GMSH_API void getEntities(gmsh::vector_pair & dimTags,
                               const int dim = -1);
 
-    // Gets all the physical groups in the current model. If `dim' is >= 0, returns
+    // Get all the physical groups in the current model. If `dim' is >= 0, return
     // only the entities of the specified dimension (e.g. physical points if `dim'
     // == 0). The entities are returned as a vector of (dim, tag) integer pairs.
     GMSH_API void getPhysicalGroups(gmsh::vector_pair & dimTags,
                                     const int dim = -1);
 
-    // Gets the tags of all the (elementary) geometrical entities making up the
+    // Get the tags of all the (elementary) geometrical entities making up the
     // physical group of dimension `dim' and tag `tag'.
     GMSH_API void getEntitiesForPhysicalGroup(const int dim,
                                               const int tag,
                                               std::vector<int> & tags);
 
-    // Adds a physical group of dimension `dim', grouping the elementary entities
-    // with tags `tags'. The function returns the tag of the physical group, equal
-    // to `tag' if `tag' is positive, or a new tag if `tag' < 0.
+    // Add a physical group of dimension `dim', grouping the elementary entities
+    // with tags `tags'. Return the tag of the physical group, equal to `tag' if
+    // `tag' is positive, or a new tag if `tag' < 0.
     GMSH_API int addPhysicalGroup(const int dim,
                                   const std::vector<int> & tags,
                                   const int tag = -1);
 
-    // Sets the name of the physical group of dimension `dim' and tag `tag'.
+    // Set the name of the physical group of dimension `dim' and tag `tag'.
     GMSH_API void setPhysicalName(const int dim,
                                   const int tag,
                                   const std::string & name);
 
-    // Gets the name of the physical group of dimension `dim' and tag `tag'.
+    // Get the name of the physical group of dimension `dim' and tag `tag'.
     GMSH_API void getPhysicalName(const int dim,
                                   const int tag,
                                   std::string & name);
 
-    // Gets the boundary of the geometrical entities `dimTags'. Returns in
+    // Get the boundary of the geometrical entities `dimTags'. Return in
     // `outDimTags' the boundary of the individual entities (if `combined' is
     // false) or the boundary of the combined geometrical shape formed by all input
-    // entities (if `combined' is true). Returns tags multiplied by the sign of the
-    // boundary entity if `oriented' is true. Applies the boundary operator
+    // entities (if `combined' is true). Return tags multiplied by the sign of the
+    // boundary entity if `oriented' is true. Apply the boundary operator
     // recursively down to dimension 0 (i.e. to points) if `recursive' is true.
     GMSH_API void getBoundary(const gmsh::vector_pair & dimTags,
                               gmsh::vector_pair & outDimTags,
@@ -159,10 +159,10 @@ namespace gmsh { // Top-level functions
                               const bool oriented = true,
                               const bool recursive = false);
 
-    // Gets the (elementary) geometrical entities in the bounding box defined by
-    // the two points (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If
-    // `dim' is >= 0, returns only the entities of the specified dimension (e.g.
-    // points if `dim' == 0).
+    // Get the (elementary) geometrical entities in the bounding box defined by the
+    // two points (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim'
+    // is >= 0, return only the entities of the specified dimension (e.g. points if
+    // `dim' == 0).
     GMSH_API void getEntitiesInBoundingBox(const double xmin,
                                            const double ymin,
                                            const double zmin,
@@ -172,7 +172,7 @@ namespace gmsh { // Top-level functions
                                            gmsh::vector_pair & tags,
                                            const int dim = -1);
 
-    // Gets the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
+    // Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
     // the geometrical entity of dimension `dim' and tag `tag'.
     GMSH_API void getBoundingBox(const int dim,
                                  const int tag,
@@ -183,71 +183,70 @@ namespace gmsh { // Top-level functions
                                  double & ymax,
                                  double & zmax);
 
-    // Adds a discrete geometrical entity (defined by a mesh) of dimension `dim' in
-    // the current model. The function returns the tag of the new discrete entity,
-    // equal to `tag' if `tag' is positive, or a new tag if `tag' < 0. `boundary'
-    // specifies the tags of the entities on the boundary of the discrete entity,
-    // if any. Specyfing `boundary' allows Gmsh to construct the topology of the
-    // overall model.
+    // Add a discrete geometrical entity (defined by a mesh) of dimension `dim' in
+    // the current model. Return the tag of the new discrete entity, equal to `tag'
+    // if `tag' is positive, or a new tag if `tag' < 0. `boundary' specifies the
+    // tags of the entities on the boundary of the discrete entity, if any.
+    // Specyfing `boundary' allows Gmsh to construct the topology of the overall
+    // model.
     GMSH_API int addDiscreteEntity(const int dim,
                                    const int tag = -1,
                                    const std::vector<int> & boundary = std::vector<int>());
 
-    // Removes the entities `dimTags' of the current model. If `recursive' is true,
-    // removes all the entities on their boundaries, down to dimension 0.
+    // Remove the entities `dimTags' of the current model. If `recursive' is true,
+    // remove all the entities on their boundaries, down to dimension 0.
     GMSH_API void removeEntities(const gmsh::vector_pair & dimTags,
                                  const bool recursive = false);
 
-    // Gets the type of the entity of dimension `dim' and tag `tag'.
+    // Get the type of the entity of dimension `dim' and tag `tag'.
     GMSH_API void getType(const int dim,
                           const int tag,
                           std::string & type);
 
     namespace mesh { // Per-model meshing functions
 
-      // Generates a mesh of the current model, up to dimension `dim' (0, 1, 2 or
+      // Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or
       // 3).
-      GMSH_API void generate(const int dim);
+      GMSH_API void generate(const int dim = 3);
 
-      // Partitions the mesh of the current model into `numPart' partitions.
+      // Partition the mesh of the current model into `numPart' partitions.
       GMSH_API void partition(const int numPart);
 
-      // Refines the mesh of the current model by uniformly splitting the elements.
+      // Refine the mesh of the current model by uniformly splitting the elements.
       GMSH_API void refine();
 
-      // Sets the order of the elements in the mesh of the current model to
-      // `order'.
+      // Set the order of the elements in the mesh of the current model to `order'.
       GMSH_API void setOrder(const int order);
 
-      // Removes duplicate mesh nodes in the mesh of the current model.
+      // Remove duplicate mesh nodes in the mesh of the current model.
       GMSH_API void removeDuplicateNodes();
 
-      // Gets the last entities (if any) where a meshing error occurred. Currently
+      // Get the last entities (if any) where a meshing error occurred. Currently
       // only populated by the new 3D meshing algorithms.
       GMSH_API void getLastEntityError(gmsh::vector_pair & dimTags);
 
-      // Gets the last mesh nodes (if any) where a meshing error occurred.
-      // Currently only populated by the new 3D meshing algorithms.
+      // Get the last mesh nodes (if any) where a meshing error occurred. Currently
+      // only populated by the new 3D meshing algorithms.
       GMSH_API void getLastNodeError(std::vector<int> & nodeTags);
 
-      // Gets the mesh nodes of the entity of dimension `dim' and `tag' tag. If
-      // `tag' < 0, gets the nodes for all entities of dimension `dim'. If `dim'
-      // and `tag' are negative, gets all the nodes in the mesh. `nodeTags'
-      // contains the node tags (their unique, strictly positive identification
-      // numbers). `coord' is a vector of length 3 times the length of `nodeTags'
-      // that contains the (x, y, z) coordinates of the nodes, concatenated. If
-      // `dim' >= 0, `parametricCoord' contains the parametric coordinates of the
-      // nodes, if available. The length of `parametricCoord' can be 0 or `dim'
-      // times the length of `nodeTags'.
+      // Get the mesh nodes of the entity of dimension `dim' and `tag' tag. If
+      // `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and
+      // `tag' are negative, get all the nodes in the mesh. `nodeTags' contains the
+      // node tags (their unique, strictly positive identification numbers).
+      // `coord' is a vector of length 3 times the length of `nodeTags' that
+      // contains the (x, y, z) coordinates of the nodes, concatenated. If `dim' >=
+      // 0, `parametricCoord' contains the parametric coordinates of the nodes, if
+      // available. The length of `parametricCoord' can be 0 or `dim' times the
+      // length of `nodeTags'.
       GMSH_API void getNodes(std::vector<int> & nodeTags,
                              std::vector<double> & coord,
                              std::vector<double> & parametricCoord,
                              const int dim = -1,
                              const int tag = -1);
 
-      // Gets the mesh elements of the entity of dimension `dim' and `tag' tag. If
-      // `tag' < 0, gets the elements for all entities of dimension `dim'. If `dim'
-      // and `tag' are negative, gets all the elements in the mesh. `elementTypes'
+      // Get the mesh elements of the entity of dimension `dim' and `tag' tag. If
+      // `tag' < 0, get the elements for all entities of dimension `dim'. If `dim'
+      // and `tag' are negative, get all the elements in the mesh. `elementTypes'
       // contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
       // `getElementProperties' to obtain the properties for a given element type).
       // `elementTags' is a vector of the same length as `elementTypes'; each entry
@@ -263,7 +262,7 @@ namespace gmsh { // Top-level functions
                                 const int dim = -1,
                                 const int tag = -1);
 
-      // Gets the properties of an element of type `elementType': its name
+      // Get the properties of an element of type `elementType': its name
       // (`elementName'), dimension (`dim'), order (`order'), number of nodes
       // (`numNodes') and parametric coordinates of nodes (`parametricCoord'
       // vector, of length `dim' times `numNodes').
@@ -274,7 +273,7 @@ namespace gmsh { // Top-level functions
                                          int & numNodes,
                                          std::vector<double> & parametricCoord);
 
-      // Gets the integration data for mesh elements of the entity of dimension
+      // Get the integration data for mesh elements of the entity of dimension
       // `dim' and `tag' tag. The data is returned by element type and by element,
       // in the same order as the data returned by `getElements'. `integrationType'
       // specifies the type of integration (e.g. "Gauss4") and `functionSpaceType'
@@ -286,7 +285,7 @@ namespace gmsh { // Top-level functions
       // integration points) containing the (x, y, z) coordinates of the
       // integration point, the determinant of the Jacobian and the 9 entries (by
       // row) of the 3x3 Jacobian matrix. If `functionSpaceType' is provided,
-      // `functionSpaceNumComponents' returns the number of components returned by
+      // `functionSpaceNumComponents' return the number of components returned by
       // the evaluation of a basis function in the space and `functionSpaceData'
       // contains for each element type the evaluation of the basis functions at
       // the integration points.
@@ -299,14 +298,14 @@ namespace gmsh { // Top-level functions
                                        const int dim = -1,
                                        const int tag = -1);
 
-      // Gets the types of mesh elements in the entity of dimension `dim' and `tag'
-      // tag. If `tag' < 0, gets the types for all entities of dimension `dim'. If
-      // `dim' and `tag' are negative, gets all the types in the mesh.
+      // Get the types of mesh elements in the entity of dimension `dim' and `tag'
+      // tag. If `tag' < 0, get the types for all entities of dimension `dim'. If
+      // `dim' and `tag' are negative, get all the types in the mesh.
       GMSH_API void getElementTypes(std::vector<int> & elementTypes,
                                     const int dim = -1,
                                     const int tag = -1);
 
-      // Gets the mesh elements in the same way as `getElements', but for a single
+      // Get the mesh elements in the same way as `getElements', but for a single
       // `elementType'.
       GMSH_API void getElementsByType(const int elementType,
                                       std::vector<int> & elementTags,
@@ -314,7 +313,7 @@ namespace gmsh { // Top-level functions
                                       const int dim = -1,
                                       const int tag = -1);
 
-      // Gets the integration data for mesh elements in the same way as
+      // Get the integration data for mesh elements in the same way as
       // `getIntegrationData', but for a single `elementType'.
       GMSH_API void getIntegrationDataByType(const int elementType,
                                              const std::string & integrationType,
@@ -326,7 +325,7 @@ namespace gmsh { // Top-level functions
                                              const int dim = -1,
                                              const int tag = -1);
 
-      // Sets the mesh nodes in the geometrical entity of dimension `dim' and tag
+      // Set the mesh nodes in the geometrical entity of dimension `dim' and tag
       // `tag'. `nodetags' contains the node tags (their unique, strictly positive
       // identification numbers). `coord' is a vector of length 3 times the length
       // of `nodeTags' that contains the (x, y, z) coordinates of the nodes,
@@ -339,7 +338,7 @@ namespace gmsh { // Top-level functions
                              const std::vector<double> & coord,
                              const std::vector<double> & parametricCoord = std::vector<double>());
 
-      // Sets the mesh elements of the entity of dimension `dim' and `tag' tag.
+      // Set the mesh elements of the entity of dimension `dim' and `tag' tag.
       // `types' contains the MSH types of the elements (e.g. `2' for 3-node
       // triangles: see the Gmsh reference manual). `elementTags' is a vector of
       // the same length as `types'; each entry is a vector containing the tags
@@ -354,13 +353,13 @@ namespace gmsh { // Top-level functions
                                 const std::vector<std::vector<int> > & elementTags,
                                 const std::vector<std::vector<int> > & nodeTags);
 
-      // Redistributes all mesh nodes on their associated geometrical entity, based
+      // Redistribute all mesh nodes on their associated geometrical entity, based
       // on the mesh elements. Can be used when importing mesh nodes in bulk (e.g.
       // by associating them all to a single volume), to reclassify them correctly
       // on model surfaces, curves, etc.
       GMSH_API void reclassifyNodes();
 
-      // Gets the coordinates and the parametric coordinates (if any) of the mesh
+      // Get the coordinates and the parametric coordinates (if any) of the mesh
       // node with tag `tag'. This is a useful by inefficient way of accessing mesh
       // node data, as it relies on a cache stored in the model. For large meshes
       // all the nodes in the model should be numbered in a continuous sequence of
@@ -370,7 +369,7 @@ namespace gmsh { // Top-level functions
                             std::vector<double> & coord,
                             std::vector<double> & parametricCoord);
 
-      // Gets the type and node tags of the mesh element with tag `tag'. This is a
+      // Get the type and node tags of the mesh element with tag `tag'. This is a
       // useful but inefficient way of accessing mesh element data, as it relies on
       // a cache stored in the model. For large meshes all the elements in the
       // model should be numbered in a continuous sequence of tags from 1 to N to
@@ -380,12 +379,12 @@ namespace gmsh { // Top-level functions
                                int & type,
                                std::vector<int> & nodeTags);
 
-      // Sets a mesh size constraint on the geometrical entities `dimTags'.
+      // Set a mesh size constraint on the geometrical entities `dimTags'.
       // Currently only entities of dimension 0 (points) are handled.
       GMSH_API void setSize(const gmsh::vector_pair & dimTags,
                             const double size);
 
-      // Sets a transfinite meshing constraint on the curve `tag', with `numNodes'
+      // Set a transfinite meshing constraint on the curve `tag', with `numNodes'
       // mesh nodes distributed according to `type' and `coef'. Currently supported
       // types are "Progression" (geometrical progression with power `coef') and
       // "Bump" (refinement toward both extremities of the curve).
@@ -394,7 +393,7 @@ namespace gmsh { // Top-level functions
                                         const std::string & type = "Progression",
                                         const double coef = 1.);
 
-      // Sets a transfinite meshing constraint on the surface `tag'. `arrangement'
+      // Set a transfinite meshing constraint on the surface `tag'. `arrangement'
       // describes the arrangement of the triangles when the surface is not flagged
       // as recombined: currently supported values are "Left", "Right",
       // "AlternateLeft" and "AlternateRight". `cornerTags' can be used to specify
@@ -405,25 +404,25 @@ namespace gmsh { // Top-level functions
                                           const std::string & arrangement = "Left",
                                           const std::vector<int> & cornerTags = std::vector<int>());
 
-      // Sets a transfinite meshing constraint on the surface `tag'. `cornerTags'
+      // Set a transfinite meshing constraint on the surface `tag'. `cornerTags'
       // can be used to specify the (6 or 8) corners of the transfinite
       // interpolation explicitly.
       GMSH_API void setTransfiniteVolume(const int tag,
                                          const std::vector<int> & cornerTags = std::vector<int>());
 
-      // Sets a recombination meshing constraint on the geometrical entity of
+      // Set a recombination meshing constraint on the geometrical entity of
       // dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to
       // recombine triangles into quadrangles) are supported.
       GMSH_API void setRecombine(const int dim,
                                  const int tag);
 
-      // Sets a smoothing meshing constraint on the geometrical entity of dimension
+      // Set a smoothing meshing constraint on the geometrical entity of dimension
       // `dim' and tag `tag'. `val' iterations of a Laplace smoother are applied.
       GMSH_API void setSmoothing(const int dim,
                                  const int tag,
                                  const int val);
 
-      // Sets a reverse meshing constraint on the geometrical entity of dimension
+      // Set a reverse meshing constraint on the geometrical entity of dimension
       // `dim' and tag `tag'. If `val' is true, the mesh orientation will be
       // reversed with respect to the natural mesh orientation (i.e. the
       // orientation consistent with the orientation of the geometrical entity). If
@@ -432,7 +431,7 @@ namespace gmsh { // Top-level functions
                                const int tag,
                                const bool val = true);
 
-      // Embeds the geometrical entities of dimension `dim' and tags `tags' in the
+      // Embed the geometrical entities of dimension `dim' and tags `tags' in the
       // (inDim, inTag) geometrical entity. `inDim' must be strictly greater than
       // `dim'.
       GMSH_API void embed(const int dim,
@@ -440,7 +439,7 @@ namespace gmsh { // Top-level functions
                           const int inDim,
                           const int inTag);
 
-      // Sets the meshes of the entities of dimension `dim' and tag `tags' as
+      // Set the meshes of the entities of dimension `dim' and tag `tags' as
       // periodic copies of the meshes of entities `tagsSource', using the affine
       // transformation specified in `affineTransformation' (16 entries of a 4x4
       // matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.
@@ -451,35 +450,34 @@ namespace gmsh { // Top-level functions
 
       namespace field { // Per-model mesh size field functions
 
-        // Adds a new mesh size field of type `type'. If `tag' is positive, assigns
-        // the tag explcitly; otherwise a new tag is assigned automatically.
-        // Returns the field tag.
+        // Add a new mesh size field of type `type'. If `tag' is positive, assign
+        // the tag explcitly; otherwise a new tag is assigned automatically. Return
+        // the field tag.
         GMSH_API int add(const std::string & type,
                          const int tag = -1);
 
-        // Removes the field with tag `tag'.
+        // Remove the field with tag `tag'.
         GMSH_API void remove(const int tag);
 
-        // Sets the numerical option `option' to value `value' for field `tag'.
+        // Set the numerical option `option' to value `value' for field `tag'.
         GMSH_API void setNumber(const int tag,
                                 const std::string & option,
                                 const double value);
 
-        // Sets the string option `option' to value `value' for field `tag'.
+        // Set the string option `option' to value `value' for field `tag'.
         GMSH_API void setString(const int tag,
                                 const std::string & option,
                                 const std::string & value);
 
-        // Sets the numerical list option `option' to value `value' for field
-        // `tag'.
+        // Set the numerical list option `option' to value `value' for field `tag'.
         GMSH_API void setNumbers(const int tag,
                                  const std::string & option,
                                  const std::vector<double> & value);
 
-        // Sets the field `tag' as the background mesh size field.
+        // Set the field `tag' as the background mesh size field.
         GMSH_API void setAsBackgroundMesh(const int tag);
 
-        // Sets the field `tag' as a boundary layer size field.
+        // Set the field `tag' as a boundary layer size field.
         GMSH_API void setAsBoundaryLayer(const int tag);
 
       } // namespace field
@@ -488,11 +486,11 @@ namespace gmsh { // Top-level functions
 
     namespace geo { // Internal per-model GEO CAD kernel functions
 
-      // Adds a geometrical point in the internal GEO CAD representation, at
-      // coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
-      // that point. If `tag' is positive, sets the tag explicitly; otherwise a new
-      // tag is selected automatically. Returns the tag of the point. (Note that
-      // the point will be added in the current model only after `synchronize' is
+      // Add a geometrical point in the internal GEO CAD representation, at
+      // coordinates (x, y, z). If `meshSize' is > 0, add a meshing constraint at
+      // that point. If `tag' is positive, set the tag explicitly; otherwise a new
+      // tag is selected automatically. Return the tag of the point. (Note that the
+      // point will be added in the current model only after `synchronize' is
       // called. This behavior holds for all the entities added in the geo module.)
       GMSH_API int addPoint(const double x,
                             const double y,
@@ -500,18 +498,18 @@ namespace gmsh { // Top-level functions
                             const double meshSize = 0.,
                             const int tag = -1);
 
-      // Adds a straight line segment between the two points with tags `startTag'
-      // and `endTag'. If `tag' is positive, sets the tag explicitly; otherwise a
-      // new tag is selected automatically. Returns the tag of the line.
+      // Add a straight line segment between the two points with tags `startTag'
+      // and `endTag'. If `tag' is positive, set the tag explicitly; otherwise a
+      // new tag is selected automatically. Return the tag of the line.
       GMSH_API int addLine(const int startTag,
                            const int endTag,
                            const int tag = -1);
 
-      // Adds a circle arc (stricly smaller than Pi) between the two points with
+      // Add a circle arc (stricly smaller than Pi) between the two points with
       // tags `startTag' and `endTag', with center `centertag'. If `tag' is
-      // positive, sets the tag explicitly; otherwise a new tag is selected
-      // automatically. If (`nx', `ny', `nz') != (0,0,0), explicitely sets the
-      // plane of the circle arc. Returns the tag of the circle arc.
+      // positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. If (`nx', `ny', `nz') != (0,0,0), explicitely set the plane
+      // of the circle arc. Return the tag of the circle arc.
       GMSH_API int addCircleArc(const int startTag,
                                 const int centerTag,
                                 const int endTag,
@@ -520,12 +518,12 @@ namespace gmsh { // Top-level functions
                                 const double ny = 0.,
                                 const double nz = 0.);
 
-      // Adds an ellipse arc (stricly smaller than Pi) between the two points
+      // Add an ellipse arc (stricly smaller than Pi) between the two points
       // `startTag' and `endTag', with center `centertag' and major axis point
-      // `majorTag'. If `tag' is positive, sets the tag explicitly; otherwise a new
+      // `majorTag'. If `tag' is positive, set the tag explicitly; otherwise a new
       // tag is selected automatically. If (`nx', `ny', `nz') != (0,0,0),
-      // explicitely sets the plane of the circle arc. Returns the tag of the
-      // ellipse arc.
+      // explicitely set the plane of the circle arc. Return the tag of the ellipse
+      // arc.
       GMSH_API int addEllipseArc(const int startTag,
                                  const int centerTag,
                                  const int majorTag,
@@ -535,66 +533,66 @@ namespace gmsh { // Top-level functions
                                  const double ny = 0.,
                                  const double nz = 0.);
 
-      // Adds a spline (Catmull-Rom) curve going through the points `pointTags'. If
-      // `tag' is positive, sets the tag explicitly; otherwise a new tag is
-      // selected automatically. Creates a periodic curve if the first and last
-      // points are the same. Returns the tag of the spline curve.
+      // Add a spline (Catmull-Rom) curve going through the points `pointTags'. If
+      // `tag' is positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. Create a periodic curve if the first and last points are
+      // the same. Return the tag of the spline curve.
       GMSH_API int addSpline(const std::vector<int> & pointTags,
                              const int tag = -1);
 
       // Adds a cubic b-spline curve with `pointTags' control points. If `tag' is
       // positive, sets the tag explicitly; otherwise a new tag is selected
       // automatically. Creates a periodic curve if the first and last points are
-      // the same. Returns the tag of the b-spline curve.
+      // the same. Return the tag of the b-spline curve.
       GMSH_API int addBSpline(const std::vector<int> & pointTags,
                               const int tag = -1);
 
-      // Adds a Bezier curve with `pointTags' control points. If `tag' is positive,
-      // sets the tag explicitly; otherwise a new tag is selected automatically.
-      // Returns the tag of the Bezier curve.
+      // Add a Bezier curve with `pointTags' control points. If `tag' is positive,
+      // set the tag explicitly; otherwise a new tag is selected automatically.
+      // Return the tag of the Bezier curve.
       GMSH_API int addBezier(const std::vector<int> & pointTags,
                              const int tag = -1);
 
-      // Adds a curve loop (a closed wire) formed by the curves `curveTags'.
+      // Add a curve loop (a closed wire) formed by the curves `curveTags'.
       // `curveTags' should contain (signed) tags of geometrical enties of
       // dimension 1 forming a closed loop: a negative tag signifies that the
       // underlying curve is considered with reversed orientation. If `tag' is
-      // positive, sets the tag explicitly; otherwise a new tag is selected
-      // automatically. Returns the tag of the curve loop.
+      // positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. Return the tag of the curve loop.
       GMSH_API int addCurveLoop(const std::vector<int> & curveTags,
                                 const int tag = -1);
 
-      // Adds a plane surface defined by one or more curve loops `wireTags'. The
+      // Add a plane surface defined by one or more curve loops `wireTags'. The
       // first curve loop defines the exterior contour; additional curve loop
-      // define holes. If `tag' is positive, sets the tag explicitly; otherwise a
-      // new tag is selected automatically. Returns the tag of the surface.
+      // define holes. If `tag' is positive, set the tag explicitly; otherwise a
+      // new tag is selected automatically. Return the tag of the surface.
       GMSH_API int addPlaneSurface(const std::vector<int> & wireTags,
                                    const int tag = -1);
 
-      // Adds a surface filling the curve loops in `wireTags'. Currently only a
+      // Add a surface filling the curve loops in `wireTags'. Currently only a
       // single curve loop is supported; this curve loop should be composed by 3 or
-      // 4 curves only. If `tag' is positive, sets the tag explicitly; otherwise a
-      // new tag is selected automatically. Returns the tag of the surface.
+      // 4 curves only. If `tag' is positive, set the tag explicitly; otherwise a
+      // new tag is selected automatically. Return the tag of the surface.
       GMSH_API int addSurfaceFilling(const std::vector<int> & wireTags,
                                      const int tag = -1,
                                      const int sphereCenterTag = -1);
 
-      // Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
-      // positive, sets the tag explicitly; otherwise a new tag is selected
-      // automatically. Returns the tag of the shell.
+      // Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
+      // positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. Return the tag of the shell.
       GMSH_API int addSurfaceLoop(const std::vector<int> & surfaceTags,
                                   const int tag = -1);
 
-      // Adds a volume (a region) defined by one or more shells `shellTags'. The
+      // Add a volume (a region) defined by one or more shells `shellTags'. The
       // first surface loop defines the exterior boundary; additional surface loop
-      // define holes. If `tag' is positive, sets the tag explicitly; otherwise a
-      // new tag is selected automatically. Returns the tag of the volume.
+      // define holes. If `tag' is positive, set the tag explicitly; otherwise a
+      // new tag is selected automatically. Return the tag of the volume.
       GMSH_API int addVolume(const std::vector<int> & shellTags,
                              const int tag = -1);
 
-      // Extrudes the geometrical entities `dimTags' by translation along (`dx',
-      // `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements'
-      // is not empty, also extrude the mesh: the entries in `numElements' give the
+      // Extrude the geometrical entities `dimTags' by translation along (`dx',
+      // `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is
+      // not empty, also extrude the mesh: the entries in `numElements' give the
       // number of elements in each layer. If `height' is not empty, it provides
       // the (cummulative) height of the different layers, normalized to 1.
       GMSH_API void extrude(const gmsh::vector_pair & dimTags,
@@ -606,10 +604,10 @@ namespace gmsh { // Top-level functions
                             const std::vector<double> & heights = std::vector<double>(),
                             const bool recombine = false);
 
-      // Extrudes the geometrical entities `dimTags' by rotation of `angle' radians
+      // Extrude the geometrical entities `dimTags' by rotation of `angle' radians
       // around the axis of revolution defined by the point (`x', `y', `z') and the
-      // direction (`ax', `ay', `az'). Returns extruded entities in `outDimTags'.
-      // If `numElements' is not empty, also extrude the mesh: the entries in
+      // direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
+      // `numElements' is not empty, also extrude the mesh: the entries in
       // `numElements' give the number of elements in each layer. If `height' is
       // not empty, it provides the (cummulative) height of the different layers,
       // normalized to 1.
@@ -626,10 +624,10 @@ namespace gmsh { // Top-level functions
                             const std::vector<double> & heights = std::vector<double>(),
                             const bool recombine = false);
 
-      // Extrudes the geometrical entities `dimTags' by a combined translation and
+      // Extrude the geometrical entities `dimTags' by a combined translation and
       // rotation of `angle' radians, along (`dx', `dy', `dz') and around the axis
       // of revolution defined by the point (`x', `y', `z') and the direction
-      // (`ax', `ay', `az'). Returns extruded entities in `outDimTags'. If
+      // (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
       // `numElements' is not empty, also extrude the mesh: the entries in
       // `numElements' give the number of elements in each layer. If `height' is
       // not empty, it provides the (cummulative) height of the different layers,
@@ -650,13 +648,13 @@ namespace gmsh { // Top-level functions
                           const std::vector<double> & heights = std::vector<double>(),
                           const bool recombine = false);
 
-      // Translates the geometrical entities `dimTags' along (`dx', `dy', `dz').
+      // Translate the geometrical entities `dimTags' along (`dx', `dy', `dz').
       GMSH_API void translate(const gmsh::vector_pair & dimTags,
                               const double dx,
                               const double dy,
                               const double dz);
 
-      // Rotates the geometrical entities `dimTags' of `angle' radians around the
+      // Rotate the geometrical entities `dimTags' of `angle' radians around the
       // axis of revolution defined by the point (`x', `y', `z') and the direction
       // (`ax', `ay', `az').
       GMSH_API void rotate(const gmsh::vector_pair & dimTags,
@@ -668,7 +666,7 @@ namespace gmsh { // Top-level functions
                            const double az,
                            const double angle);
 
-      // Scales the geometrical entities `dimTag' by factors `a', `b' and `c' along
+      // Scale the geometrical entities `dimTag' by factors `a', `b' and `c' along
       // the three coordinate axes; use (`x', `y', `z') as the center of the
       // homothetic transformation.
       GMSH_API void dilate(const gmsh::vector_pair & dimTags,
@@ -679,26 +677,25 @@ namespace gmsh { // Top-level functions
                            const double b,
                            const double c);
 
-      // Applies a symmetry transformation to the geometrical entities `dimTag',
-      // with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' =
-      // 0.
+      // Apply a symmetry transformation to the geometrical entities `dimTag', with
+      // respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
       GMSH_API void symmetry(const gmsh::vector_pair & dimTags,
                              const double a,
                              const double b,
                              const double c,
                              const double d);
 
-      // Copies the entities `dimTags'; the new entities are returned in
+      // Copy the entities `dimTags'; the new entities are returned in
       // `outDimTags'.
       GMSH_API void copy(const gmsh::vector_pair & dimTags,
                          gmsh::vector_pair & outDimTags);
 
-      // Removes the entities `dimTags'. If `recursive' is true, removes all the
+      // Remove the entities `dimTags'. If `recursive' is true, remove all the
       // entities on their boundaries, down to dimension 0.
       GMSH_API void remove(const gmsh::vector_pair & dimTags,
                            const bool recursive = false);
 
-      // Removes all duplicate entities (different entities at the same geometrical
+      // Remove all duplicate entities (different entities at the same geometrical
       // location).
       GMSH_API void removeAllDuplicates();
 
@@ -710,53 +707,52 @@ namespace gmsh { // Top-level functions
 
       namespace mesh { // GEO-specific meshing constraints
 
-        // Sets a mesh size constraint on the geometrical entities `dimTags'.
+        // Set a mesh size constraint on the geometrical entities `dimTags'.
         // Currently only entities of dimension 0 (points) are handled.
         GMSH_API void setSize(const gmsh::vector_pair & dimTags,
                               const double size);
 
-        // Sets a transfinite meshing constraint on the curve `tag', with
-        // `numNodes' mesh nodes distributed according to `type' and `coef'.
-        // Currently supported types are "Progression" (geometrical progression
-        // with power `coef') and "Bump" (refinement toward both extreminties of
-        // the curve).
+        // Set a transfinite meshing constraint on the curve `tag', with `numNodes'
+        // mesh nodes distributed according to `type' and `coef'. Currently
+        // supported types are "Progression" (geometrical progression with power
+        // `coef') and "Bump" (refinement toward both extreminties of the curve).
         GMSH_API void setTransfiniteCurve(const int tag,
                                           const int nPoints,
                                           const std::string & type = "Progression",
                                           const double coef = 1.);
 
-        // Sets a transfinite meshing constraint on the surface `tag'.
-        // `arrangement' describes the arrangement of the triangles when the
-        // surface is not flagged as recombined: currently supported values are
-        // "Left", "Right", "AlternateLeft" and "AlternateRight". `cornerTags' can
-        // be used to specify the (3 or 4) corners of the transfinite interpolation
+        // Set a transfinite meshing constraint on the surface `tag'. `arrangement'
+        // describes the arrangement of the triangles when the surface is not
+        // flagged as recombined: currently supported values are "Left", "Right",
+        // "AlternateLeft" and "AlternateRight". `cornerTags' can be used to
+        // specify the (3 or 4) corners of the transfinite interpolation
         // explicitly; specifying the corners explicitly is mandatory if the
         // surface has more that 3 or 4 points on its boundary.
         GMSH_API void setTransfiniteSurface(const int tag,
                                             const std::string & arrangement = "Left",
                                             const std::vector<int> & cornerTags = std::vector<int>());
 
-        // Sets a transfinite meshing constraint on the surface `tag'. `cornerTags'
+        // Set a transfinite meshing constraint on the surface `tag'. `cornerTags'
         // can be used to specify the (6 or 8) corners of the transfinite
         // interpolation explicitly.
         GMSH_API void setTransfiniteVolume(const int tag,
                                            const std::vector<int> & cornerTags = std::vector<int>());
 
-        // Sets a recombination meshing constraint on the geometrical entity of
+        // Set a recombination meshing constraint on the geometrical entity of
         // dimension `dim' and tag `tag'. Currently only entities of dimension 2
         // (to recombine triangles into quadrangles) are supported.
         GMSH_API void setRecombine(const int dim,
                                    const int tag,
                                    const double angle = 45.);
 
-        // Sets a smoothing meshing constraint on the geometrical entity of
+        // Set a smoothing meshing constraint on the geometrical entity of
         // dimension `dim' and tag `tag'. `val' iterations of a Laplace smoother
         // are applied.
         GMSH_API void setSmoothing(const int dim,
                                    const int tag,
                                    const int val);
 
-        // Sets a reverse meshing constraint on the geometrical entity of dimension
+        // Set a reverse meshing constraint on the geometrical entity of dimension
         // `dim' and tag `tag'. If `val' is true, the mesh orientation will be
         // reversed with respect to the natural mesh orientation (i.e. the
         // orientation consistent with the orientation of the geometrical entity).
@@ -771,39 +767,38 @@ namespace gmsh { // Top-level functions
 
     namespace occ { // Internal per-model OpenCASCADE CAD kernel functions
 
-      // Adds a geometrical point in the internal OpenCASCADE CAD representation,
-      // at coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint
-      // at that point. If `tag' is positive, sets the tag explicitly; otherwise a
-      // new tag is selected automatically. Returns the tag of the point. (Note
-      // that the point will be added in the current model only after `synchronize'
-      // is called. This behavior holds for all the entities added in the occ
-      // module.)
+      // Add a geometrical point in the internal OpenCASCADE CAD representation, at
+      // coordinates (x, y, z). If `meshSize' is > 0, add a meshing constraint at
+      // that point. If `tag' is positive, set the tag explicitly; otherwise a new
+      // tag is selected automatically. Return the tag of the point. (Note that the
+      // point will be added in the current model only after `synchronize' is
+      // called. This behavior holds for all the entities added in the occ module.)
       GMSH_API int addPoint(const double x,
                             const double y,
                             const double z,
                             const double meshSize = 0.,
                             const int tag = -1);
 
-      // Adds a straight line segment between the two points with tags `startTag'
-      // and `endTag'. If `tag' is positive, sets the tag explicitly; otherwise a
-      // new tag is selected automatically. Returns the tag of the line.
+      // Add a straight line segment between the two points with tags `startTag'
+      // and `endTag'. If `tag' is positive, set the tag explicitly; otherwise a
+      // new tag is selected automatically. Return the tag of the line.
       GMSH_API int addLine(const int startTag,
                            const int endTag,
                            const int tag = -1);
 
-      // Adds a circle arc between the two points with tags `startTag' and
-      // `endTag', with center `centerTag'. If `tag' is positive, sets the tag
-      // explicitly; otherwise a new tag is selected automatically. Returns the tag
-      // of the circle arc.
+      // Add a circle arc between the two points with tags `startTag' and `endTag',
+      // with center `centerTag'. If `tag' is positive, set the tag explicitly;
+      // otherwise a new tag is selected automatically. Return the tag of the
+      // circle arc.
       GMSH_API int addCircleArc(const int startTag,
                                 const int centerTag,
                                 const int endTag,
                                 const int tag = -1);
 
-      // Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is
-      // positive, sets the tag explicitly; otherwise a new tag is selected
-      // automatically. If `angle1' and `angle2' are specified, creates a circle
-      // arc between the two angles. Returns the tag of the circle.
+      // Add a circle of center (`x', `y', `z') and radius `r'. If `tag' is
+      // positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. If `angle1' and `angle2' are specified, create a circle arc
+      // between the two angles. Return the tag of the circle.
       GMSH_API int addCircle(const double x,
                              const double y,
                              const double z,
@@ -812,20 +807,20 @@ namespace gmsh { // Top-level functions
                              const double angle1 = 0.,
                              const double angle2 = 2*M_PI);
 
-      // Adds an ellipse arc between the two points with tags `startTag' and
-      // `endTag', with center `centerTag'. If `tag' is positive, sets the tag
-      // explicitly; otherwise a new tag is selected automatically. Returns the tag
+      // Add an ellipse arc between the two points with tags `startTag' and
+      // `endTag', with center `centerTag'. If `tag' is positive, set the tag
+      // explicitly; otherwise a new tag is selected automatically. Return the tag
       // of the ellipse arc.
       GMSH_API int addEllipseArc(const int startTag,
                                  const int centerTag,
                                  const int endTag,
                                  const int tag = -1);
 
-      // Adds an ellipse of center (`x', `y', `z') and radii `r1' and `r2' along
-      // the x- and y-axes respectively. If `tag' is positive, sets the tag
-      // explicitly; otherwise a new tag is selected automatically. If `angle1' and
-      // `angle2' are specified, creates an ellipse arc between the two angles.
-      // Returns the tag of the ellipse.
+      // Add an ellipse of center (`x', `y', `z') and radii `r1' and `r2' along the
+      // x- and y-axes respectively. If `tag' is positive, set the tag explicitly;
+      // otherwise a new tag is selected automatically. If `angle1' and `angle2'
+      // are specified, create an ellipse arc between the two angles. Return the
+      // tag of the ellipse.
       GMSH_API int addEllipse(const double x,
                               const double y,
                               const double z,
@@ -835,18 +830,18 @@ namespace gmsh { // Top-level functions
                               const double angle1 = 0.,
                               const double angle2 = 2*M_PI);
 
-      // Adds a spline (C2 b-spline) curve going through the points `pointTags'. If
-      // `tag' is positive, sets the tag explicitly; otherwise a new tag is
-      // selected automatically. Creates a periodic curve if the first and last
-      // points are the same. Returns the tag of the spline curve.
+      // Add a spline (C2 b-spline) curve going through the points `pointTags'. If
+      // `tag' is positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. Create a periodic curve if the first and last points are
+      // the same. Return the tag of the spline curve.
       GMSH_API int addSpline(const std::vector<int> & pointTags,
                              const int tag = -1);
 
-      // Adds a b-spline curve of degree `degree' with `pointTags' control points.
+      // Add a b-spline curve of degree `degree' with `pointTags' control points.
       // If `weights', `knots' or `multiplicities' are not provided, default
-      // parameters are computed automatically. If `tag' is positive, sets the tag
-      // explicitly; otherwise a new tag is selected automatically. Creates a
-      // periodic curve if the first and last points are the same. Returns the tag
+      // parameters are computed automatically. If `tag' is positive, set the tag
+      // explicitly; otherwise a new tag is selected automatically. Create a
+      // periodic curve if the first and last points are the same. Return the tag
       // of the b-spline curve.
       GMSH_API int addBSpline(const std::vector<int> & pointTags,
                               const int tag = -1,
@@ -855,34 +850,34 @@ namespace gmsh { // Top-level functions
                               const std::vector<double> & knots = std::vector<double>(),
                               const std::vector<int> & multiplicities = std::vector<int>());
 
-      // Adds a Bezier curve with `pointTags' control points. If `tag' is positive,
-      // sets the tag explicitly; otherwise a new tag is selected automatically.
-      // Returns the tag of the Bezier curve.
+      // Add a Bezier curve with `pointTags' control points. If `tag' is positive,
+      // set the tag explicitly; otherwise a new tag is selected automatically.
+      // Return the tag of the Bezier curve.
       GMSH_API int addBezier(const std::vector<int> & pointTags,
                              const int tag = -1);
 
-      // Adds a wire (open or closed) formed by the curves `curveTags'. `curveTags'
+      // Add a wire (open or closed) formed by the curves `curveTags'. `curveTags'
       // should contain (signed) tags: a negative tag signifies that the underlying
-      // curve is considered with reversed orientation. If `tag' is positive, sets
-      // the tag explicitly; otherwise a new tag is selected automatically. Returns
+      // curve is considered with reversed orientation. If `tag' is positive, set
+      // the tag explicitly; otherwise a new tag is selected automatically. Return
       // the tag of the wire.
       GMSH_API int addWire(const std::vector<int> & curveTags,
                            const int tag = -1,
                            const bool checkClosed = false);
 
-      // Adds a curve loop (a closed wire) formed by the curves `curveTags'.
+      // Add a curve loop (a closed wire) formed by the curves `curveTags'.
       // `curveTags' should contain (signed) tags of curves forming a closed loop:
       // a negative tag signifies that the underlying curve is considered with
-      // reversed orientation. If `tag' is positive, sets the tag explicitly;
-      // otherwise a new tag is selected automatically. Returns the tag of the
-      // curve loop.
+      // reversed orientation. If `tag' is positive, set the tag explicitly;
+      // otherwise a new tag is selected automatically. Return the tag of the curve
+      // loop.
       GMSH_API int addCurveLoop(const std::vector<int> & curveTags,
                                 const int tag = -1);
 
-      // Adds a rectangle with lower left corner at (`x', `y', `z') and upper right
-      // corner at (`x' + `dx', `y' + `dy', `z'). If `tag' is positive, sets the
-      // tag explicitly; otherwise a new tag is selected automatically. Rounds the
-      // corners if `roundedRadius' is nonzero. Returns the tag of the rectangle.
+      // Add a rectangle with lower left corner at (`x', `y', `z') and upper right
+      // corner at (`x' + `dx', `y' + `dy', `z'). If `tag' is positive, set the tag
+      // explicitly; otherwise a new tag is selected automatically. Round the
+      // corners if `roundedRadius' is nonzero. Return the tag of the rectangle.
       GMSH_API int addRectangle(const double x,
                                 const double y,
                                 const double z,
@@ -891,10 +886,9 @@ namespace gmsh { // Top-level functions
                                 const int tag = -1,
                                 const double roundedRadius = 0.);
 
-      // Adds a disk with center (`xc', `yc', `zc') and radius `rx' along the
-      // x-axis and `ry' along the y-axis. If `tag' is positive, sets the tag
-      // explicitly; otherwise a new tag is selected automatically. Returns the tag
-      // of the disk.
+      // Add a disk with center (`xc', `yc', `zc') and radius `rx' along the x-axis
+      // and `ry' along the y-axis. If `tag' is positive, set the tag explicitly;
+      // otherwise a new tag is selected automatically. Return the tag of the disk.
       GMSH_API int addDisk(const double xc,
                            const double yc,
                            const double zc,
@@ -902,39 +896,38 @@ namespace gmsh { // Top-level functions
                            const double ry,
                            const int tag = -1);
 
-      // Adds a plane surface defined by one or more curve loops (or closed wires)
+      // Add a plane surface defined by one or more curve loops (or closed wires)
       // `wireTags'. The first curve loop defines the exterior contour; additional
-      // curve loop define holes. If `tag' is positive, sets the tag explicitly;
-      // otherwise a new tag is selected automatically. Returns the tag of the
+      // curve loop define holes. If `tag' is positive, set the tag explicitly;
+      // otherwise a new tag is selected automatically. Return the tag of the
       // surface.
       GMSH_API int addPlaneSurface(const std::vector<int> & wireTags,
                                    const int tag = -1);
 
-      // Adds a surface filling the curve loops in `wireTags'. If `tag' is
-      // positive, sets the tag explicitly; otherwise a new tag is selected
-      // automatically. Returns the tag of the surface.
+      // Add a surface filling the curve loops in `wireTags'. If `tag' is positive,
+      // set the tag explicitly; otherwise a new tag is selected automatically.
+      // Return the tag of the surface.
       GMSH_API int addSurfaceFilling(const int wireTag,
                                      const int tag = -1);
 
-      // Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
-      // positive, sets the tag explicitly; otherwise a new tag is selected
-      // automatically. Returns the tag of the surface loop.
+      // Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
+      // positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. Return the tag of the surface loop.
       GMSH_API int addSurfaceLoop(const std::vector<int> & surfaceTags,
                                   const int tag = -1);
 
-      // Adds a volume (a region) defined by one or more surface loops `shellTags'.
+      // Add a volume (a region) defined by one or more surface loops `shellTags'.
       // The first surface loop defines the exterior boundary; additional surface
-      // loop define holes. If `tag' is positive, sets the tag explicitly;
-      // otherwise a new tag is selected automatically. Returns the tag of the
-      // volume.
+      // loop define holes. If `tag' is positive, set the tag explicitly; otherwise
+      // a new tag is selected automatically. Return the tag of the volume.
       GMSH_API int addVolume(const std::vector<int> & shellTags,
                              const int tag = -1);
 
-      // Adds a sphere of center (`xc', `yc', `zc') and radius `r'. The optional
+      // Add a sphere of center (`xc', `yc', `zc') and radius `r'. The optional
       // `angle1' and `angle2' arguments define the polar angle opening (from -Pi/2
       // to Pi/2). The optional `angle3' argument defines the azimuthal opening
-      // (from 0 to 2*Pi). If `tag' is positive, sets the tag explicitly; otherwise
-      // a new tag is selected automatically. Returns the tag of the sphere.
+      // (from 0 to 2*Pi). If `tag' is positive, set the tag explicitly; otherwise
+      // a new tag is selected automatically. Return the tag of the sphere.
       GMSH_API int addSphere(const double xc,
                              const double yc,
                              const double zc,
@@ -944,9 +937,9 @@ namespace gmsh { // Top-level functions
                              const double angle2 = M_PI/2,
                              const double angle3 = 2*M_PI);
 
-      // Adds a parallelepipedic box defined by a point (`x', `y', `z') and the
-      // extents along the x-, y- and z-axes. If `tag' is positive, sets the tag
-      // explicitly; otherwise a new tag is selected automatically. Returns the tag
+      // Add a parallelepipedic box defined by a point (`x', `y', `z') and the
+      // extents along the x-, y- and z-axes. If `tag' is positive, set the tag
+      // explicitly; otherwise a new tag is selected automatically. Return the tag
       // of the box.
       GMSH_API int addBox(const double x,
                           const double y,
@@ -956,11 +949,11 @@ namespace gmsh { // Top-level functions
                           const double dz,
                           const int tag = -1);
 
-      // Adds a cylinder, defined by the center (`x', `y', `z') of its first
+      // Add a cylinder, defined by the center (`x', `y', `z') of its first
       // circular face, the 3 components (`dx', `dy', `dz') of the vector defining
       // its axis and its radius `r'. The optional `angle' argument defines the
-      // angular opening (from 0 to 2*Pi). If `tag' is positive, sets the tag
-      // explicitly; otherwise a new tag is selected automatically. Returns the tag
+      // angular opening (from 0 to 2*Pi). If `tag' is positive, set the tag
+      // explicitly; otherwise a new tag is selected automatically. Return the tag
       // of the cylinder.
       GMSH_API int addCylinder(const double x,
                                const double y,
@@ -972,12 +965,12 @@ namespace gmsh { // Top-level functions
                                const int tag = -1,
                                const double angle = 2*M_PI);
 
-      // Adds a cone, defined by the center (`x', `y', `z') of its first circular
+      // Add a cone, defined by the center (`x', `y', `z') of its first circular
       // face, the 3 components of the vector (`dx', `dy', `dz') defining its axis
       // and the two radii `r1' and `r2' of the faces (these radii can be zero). If
-      // `tag' is positive, sets the tag explicitly; otherwise a new tag is
-      // selected automatically. `angle' defines the optional angular opening (from
-      // 0 to 2*Pi). Returns the tag of the cone.
+      // `tag' is positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. `angle' defines the optional angular opening (from 0 to
+      // 2*Pi). Return the tag of the cone.
       GMSH_API int addCone(const double x,
                            const double y,
                            const double z,
@@ -989,11 +982,11 @@ namespace gmsh { // Top-level functions
                            const int tag = -1,
                            const double angle = 2*M_PI);
 
-      // Adds a right angular wedge, defined by the right-angle point (`x', `y',
+      // Add a right angular wedge, defined by the right-angle point (`x', `y',
       // `z') and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If
-      // `tag' is positive, sets the tag explicitly; otherwise a new tag is
-      // selected automatically. The optional argument `ltx' defines the top extent
-      // along the x-axis. Returns the tag of the wedge.
+      // `tag' is positive, set the tag explicitly; otherwise a new tag is selected
+      // automatically. The optional argument `ltx' defines the top extent along
+      // the x-axis. Return the tag of the wedge.
       GMSH_API int addWedge(const double x,
                             const double y,
                             const double z,
@@ -1003,10 +996,10 @@ namespace gmsh { // Top-level functions
                             const int tag = -1,
                             const double ltx = 0.);
 
-      // Adds a torus, defined by its center (`x', `y', `z') and its 2 radii `r'
-      // and `r2'. If `tag' is positive, sets the tag explicitly; otherwise a new
-      // tag is selected automatically. The optional argument `angle' defines the
-      // angular opening (from 0 to 2*Pi). Returns the tag of the wedge.
+      // Add a torus, defined by its center (`x', `y', `z') and its 2 radii `r' and
+      // `r2'. If `tag' is positive, sets the tag explicitly; otherwise a new tag
+      // is selected automatically. The optional argument `angle' defines the
+      // angular opening (from 0 to 2*Pi). Return the tag of the wedge.
       GMSH_API int addTorus(const double x,
                             const double y,
                             const double z,
@@ -1015,10 +1008,10 @@ namespace gmsh { // Top-level functions
                             const int tag = -1,
                             const double angle = 2*M_PI);
 
-      // Adds a volume (if the optional argument `makeSolid' is set) or surfaces
+      // Add a volume (if the optional argument `makeSolid' is set) or surfaces
       // defined through the open or closed wires `wireTags'. If `tag' is positive,
-      // sets the tag explicitly; otherwise a new tag is selected automatically.
-      // The new entities are returned in `outDimTags'. If the optional argument
+      // set the tag explicitly; otherwise a new tag is selected automatically. The
+      // new entities are returned in `outDimTags'. If the optional argument
       // `makeRuled' is set, the surfaces created on the boundary are forced to be
       // ruled surfaces.
       GMSH_API void addThruSections(const std::vector<int> & wireTags,
@@ -1027,10 +1020,10 @@ namespace gmsh { // Top-level functions
                                     const bool makeSolid = true,
                                     const bool makeRuled = false);
 
-      // Adds a hollowed volume built from an initial volume `volumeTag' and a set
+      // Add a hollowed volume built from an initial volume `volumeTag' and a set
       // of faces from this volume `excludeSurfaceTags', which are to be removed.
       // The remaining faces of the volume become the walls of the hollowed solid,
-      // with thickness `offset'. If `tag' is positive, sets the tag explicitly;
+      // with thickness `offset'. If `tag' is positive, set the tag explicitly;
       // otherwise a new tag is selected automatically.
       GMSH_API void addThickSolid(const int volumeTag,
                                   const std::vector<int> & excludeSurfaceTags,
@@ -1038,9 +1031,9 @@ namespace gmsh { // Top-level functions
                                   gmsh::vector_pair & outDimTags,
                                   const int tag = -1);
 
-      // Extrudes the geometrical entities `dimTags' by translation along (`dx',
-      // `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements'
-      // is not empty, also extrude the mesh: the entries in `numElements' give the
+      // Extrude the geometrical entities `dimTags' by translation along (`dx',
+      // `dy', `dz'). Return extruded entities in `outDimTags'. If `numElements' is
+      // not empty, also extrude the mesh: the entries in `numElements' give the
       // number of elements in each layer. If `height' is not empty, it provides
       // the (cummulative) height of the different layers, normalized to 1.
       GMSH_API void extrude(const gmsh::vector_pair & dimTags,
@@ -1052,10 +1045,10 @@ namespace gmsh { // Top-level functions
                             const std::vector<double> & heights = std::vector<double>(),
                             const bool recombine = false);
 
-      // Extrudes the geometrical entities `dimTags' by rotation of `angle' radians
+      // Extrude the geometrical entities `dimTags' by rotation of `angle' radians
       // around the axis of revolution defined by the point (`x', `y', `z') and the
-      // direction (`ax', `ay', `az'). Returns extruded entities in `outDimTags'.
-      // If `numElements' is not empty, also extrude the mesh: the entries in
+      // direction (`ax', `ay', `az'). Return extruded entities in `outDimTags'. If
+      // `numElements' is not empty, also extrude the mesh: the entries in
       // `numElements' give the number of elements in each layer. If `height' is
       // not empty, it provides the (cummulative) height of the different layers,
       // normalized to 1.
@@ -1072,14 +1065,14 @@ namespace gmsh { // Top-level functions
                             const std::vector<double> & heights = std::vector<double>(),
                             const bool recombine = false);
 
-      // Adds a pipe by extruding the entities `dimTags' along the wire `wireTag'.
-      // Returns the pipe in `outDimTags'.
+      // Add a pipe by extruding the entities `dimTags' along the wire `wireTag'.
+      // Return the pipe in `outDimTags'.
       GMSH_API void addPipe(const gmsh::vector_pair & dimTags,
                             const int wireTag,
                             gmsh::vector_pair & outDimTags);
 
-      // Fillets the volumes `volumeTags' on the curves `curveTags' with radius
-      // `radius'. Returns the filleted entities in `outDimTags'. Removes the
+      // Fillet the volumes `volumeTags' on the curves `curveTags' with radius
+      // `radius'. Return the filleted entities in `outDimTags'. Remove the
       // original volume if `removeVolume' is set.
       GMSH_API void fillet(const std::vector<int> & volumeTags,
                            const std::vector<int> & curveTags,
@@ -1087,11 +1080,11 @@ namespace gmsh { // Top-level functions
                            gmsh::vector_pair & outDimTags,
                            const bool removeVolume = true);
 
-      // Computes the boolean union (the fusion) of the entities `objectDimTags'
-      // and `toolDimTags'. Returns the resulting entities in `outDimTags'. If
-      // `tag' is positive, attemps to set the tag explicitly (ony valid if the
-      // boolean operation results in a single entity). Removes the object if
-      // `removeObject' is set. Removes the tool if `removeTool' is set.
+      // Compute the boolean union (the fusion) of the entities `objectDimTags' and
+      // `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is
+      // positive, try to set the tag explicitly (ony valid if the boolean
+      // operation results in a single entity). Remove the object if `removeObject'
+      // is set. Remove the tool if `removeTool' is set.
       GMSH_API void fuse(const gmsh::vector_pair & objectDimTags,
                          const gmsh::vector_pair & toolDimTags,
                          gmsh::vector_pair & outDimTags,
@@ -1100,11 +1093,11 @@ namespace gmsh { // Top-level functions
                          const bool removeObject = true,
                          const bool removeTool = true);
 
-      // Computes the boolean intersection (the common parts) of the entities
-      // `objectDimTags' and `toolDimTags'. Returns the resulting entities in
-      // `outDimTags'. If `tag' is positive, attemps to set the tag explicitly (ony
-      // valid if the boolean operation results in a single entity). Removes the
-      // object if `removeObject' is set. Removes the tool if `removeTool' is set.
+      // Compute the boolean intersection (the common parts) of the entities
+      // `objectDimTags' and `toolDimTags'. Return the resulting entities in
+      // `outDimTags'. If `tag' is positive, try to set the tag explicitly (ony
+      // valid if the boolean operation results in a single entity). Remove the
+      // object if `removeObject' is set. Remove the tool if `removeTool' is set.
       GMSH_API void intersect(const gmsh::vector_pair & objectDimTags,
                               const gmsh::vector_pair & toolDimTags,
                               gmsh::vector_pair & outDimTags,
@@ -1113,11 +1106,11 @@ namespace gmsh { // Top-level functions
                               const bool removeObject = true,
                               const bool removeTool = true);
 
-      // Computes the boolean difference between the entities `objectDimTags' and
-      // `toolDimTags'. Returns the resulting entities in `outDimTags'. If `tag' is
-      // positive, attemps to set the tag explicitly (ony valid if the boolean
-      // operation results in a single entity). Removes the object if
-      // `removeObject' is set. Removes the tool if `removeTool' is set.
+      // Compute the boolean difference between the entities `objectDimTags' and
+      // `toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is
+      // positive, try to set the tag explicitly (ony valid if the boolean
+      // operation results in a single entity). Remove the object if `removeObject'
+      // is set. Remove the tool if `removeTool' is set.
       GMSH_API void cut(const gmsh::vector_pair & objectDimTags,
                         const gmsh::vector_pair & toolDimTags,
                         gmsh::vector_pair & outDimTags,
@@ -1126,11 +1119,11 @@ namespace gmsh { // Top-level functions
                         const bool removeObject = true,
                         const bool removeTool = true);
 
-      // Copmutes the boolean fragments (general fuse) of the entities
-      // `objectDimTags' and `toolDimTags'. Returns the resulting entities in
-      // `outDimTags'. If `tag' is positive, attemps to set the tag explicitly (ony
-      // valid if the boolean operation results in a single entity). Removes the
-      // object if `removeObject' is set. Removes the tool if `removeTool' is set.
+      // Compute the boolean fragments (general fuse) of the entities
+      // `objectDimTags' and `toolDimTags'. Return the resulting entities in
+      // `outDimTags'. If `tag' is positive, try to set the tag explicitly (ony
+      // valid if the boolean operation results in a single entity). Remove the
+      // object if `removeObject' is set. Remove the tool if `removeTool' is set.
       GMSH_API void fragment(const gmsh::vector_pair & objectDimTags,
                              const gmsh::vector_pair & toolDimTags,
                              gmsh::vector_pair & outDimTags,
@@ -1139,13 +1132,13 @@ namespace gmsh { // Top-level functions
                              const bool removeObject = true,
                              const bool removeTool = true);
 
-      // Translates the geometrical entities `dimTags' along (`dx', `dy', `dz').
+      // Translate the geometrical entities `dimTags' along (`dx', `dy', `dz').
       GMSH_API void translate(const gmsh::vector_pair & dimTags,
                               const double dx,
                               const double dy,
                               const double dz);
 
-      // Rotates the geometrical entities `dimTags' of `angle' radians around the
+      // Rotate the geometrical entities `dimTags' of `angle' radians around the
       // axis of revolution defined by the point (`x', `y', `z') and the direction
       // (`ax', `ay', `az').
       GMSH_API void rotate(const gmsh::vector_pair & dimTags,
@@ -1157,7 +1150,7 @@ namespace gmsh { // Top-level functions
                            const double az,
                            const double angle);
 
-      // Scales the geometrical entities `dimTag' by factors `a', `b' and `c' along
+      // Scale the geometrical entities `dimTag' by factors `a', `b' and `c' along
       // the three coordinate axes; use (`x', `y', `z') as the center of the
       // homothetic transformation.
       GMSH_API void dilate(const gmsh::vector_pair & dimTags,
@@ -1168,31 +1161,30 @@ namespace gmsh { // Top-level functions
                            const double b,
                            const double c);
 
-      // Applies a symmetry transformation to the geometrical entities `dimTag',
-      // with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' =
-      // 0.
+      // Apply a symmetry transformation to the geometrical entities `dimTag', with
+      // respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
       GMSH_API void symmetry(const gmsh::vector_pair & dimTags,
                              const double a,
                              const double b,
                              const double c,
                              const double d);
 
-      // Copies the entities `dimTags'; the new entities are returned in
+      // Copy the entities `dimTags'; the new entities are returned in
       // `outDimTags'.
       GMSH_API void copy(const gmsh::vector_pair & dimTags,
                          gmsh::vector_pair & outDimTags);
 
-      // Removes the entities `dimTags'. If `recursive' is true, removes all the
+      // Remove the entities `dimTags'. If `recursive' is true, remove all the
       // entities on their boundaries, down to dimension 0.
       GMSH_API void remove(const gmsh::vector_pair & dimTags,
                            const bool recursive = false);
 
-      // Removes all duplicate entities (different entities at the same geometrical
+      // Remove all duplicate entities (different entities at the same geometrical
       // location) after intersecting (using boolean fragments) all highest
       // dimensional entities.
       GMSH_API void removeAllDuplicates();
 
-      // Imports BREP, STEP or IGES shapes from the file `fileName'. The imported
+      // Import BREP, STEP or IGES shapes from the file `fileName'. The imported
       // entities are returned in `outDimTags'. If the optional argument
       // `highestDimOnly' is set, only import the highest dimensional entities in
       // the file. The optional argument `format' can be used to force the format
@@ -1202,7 +1194,7 @@ namespace gmsh { // Top-level functions
                                  const bool highestDimOnly = true,
                                  const std::string & format = "");
 
-      // Sets a mesh size constraint on the geometrical entities `dimTags'.
+      // Set a mesh size constraint on the geometrical entities `dimTags'.
       // Currently only entities of dimension 0 (points) are handled.
       GMSH_API void setMeshSize(const gmsh::vector_pair & dimTags,
                                 const double size);
@@ -1219,35 +1211,35 @@ namespace gmsh { // Top-level functions
 
   namespace view { // Post-processing view functions
 
-    // Adds a new post-processing view, with name `name'. If `tag' is positive use
+    // Add a new post-processing view, with name `name'. If `tag' is positive use
     // it (and remove the view with that tag if it already exists), otherwise
-    // associate a new tag. Returns the view tag.
+    // associate a new tag. Return the view tag.
     GMSH_API int add(const std::string & name,
                      const int tag = -1);
 
-    // Removes the view with tag `tag'.
+    // Remove the view with tag `tag'.
     GMSH_API void remove(const int tag);
 
-    // Gets the index of the view with tag `tag' in the list of currently loaded
+    // Get the index of the view with tag `tag' in the list of currently loaded
     // views. This dynamic index (it can change when views are removed) is used to
     // access view options.
     GMSH_API int getIndex(const int tag);
 
-    // Gets the tags of all views.
+    // Get the tags of all views.
     GMSH_API void getTags(std::vector<int> & tags);
 
-    // Adds model-based post-processing data to the view with tag `tag'.
-    // `modelName' identifies the model the data is attached to. `dataType'
-    // specifies the type of data, currently either "NodeData", "ElementData" or
-    // "ElementNodeData". `step' specifies the identifier (>= 0) of the data in a
-    // sequence. `tags' gives the tags of the nodes or elements in the mesh to
-    // which the data is associated. `data' is a vector of the same length as
-    // `tags': each entry is the vector of double precision numbers representing
-    // the data associated with the corresponding tag. The optional `time' argument
-    // associate a time value with the data. `numComponents' gives the number of
-    // data components (1 for scalar data, 3 for vector data, etc.) per entity; if
-    // negative, it is automatically inferred (when possible) from the input data.
-    // `partition' allows to specify data in several sub-sets.
+    // Add model-based post-processing data to the view with tag `tag'. `modelName'
+    // identifies the model the data is attached to. `dataType' specifies the type
+    // of data, currently either "NodeData", "ElementData" or "ElementNodeData".
+    // `step' specifies the identifier (>= 0) of the data in a sequence. `tags'
+    // gives the tags of the nodes or elements in the mesh to which the data is
+    // associated. `data' is a vector of the same length as `tags': each entry is
+    // the vector of double precision numbers representing the data associated with
+    // the corresponding tag. The optional `time' argument associate a time value
+    // with the data. `numComponents' gives the number of data components (1 for
+    // scalar data, 3 for vector data, etc.) per entity; if negative, it is
+    // automatically inferred (when possible) from the input data. `partition'
+    // allows to specify data in several sub-sets.
     GMSH_API void addModelData(const int tag,
                                const int step,
                                const std::string & modelName,
@@ -1258,8 +1250,8 @@ namespace gmsh { // Top-level functions
                                const int numComponents = -1,
                                const int partition = 0);
 
-    // Gets model-based post-processing data from the view with tag `tag' at step
-    // `step'. Returns the `data' associated to the nodes or the elements with tags
+    // Get model-based post-processing data from the view with tag `tag' at step
+    // `step'. Return the `data' associated to the nodes or the elements with tags
     // `tags', as well as the `dataType' and the number of components
     // `numComponents'.
     GMSH_API void getModelData(const int tag,
@@ -1270,7 +1262,7 @@ namespace gmsh { // Top-level functions
                                double & time,
                                int & numComponents);
 
-    // Adds list-based post-processing data to the view with tag `tag'. `type'
+    // Add list-based post-processing data to the view with tag `tag'. `type'
     // identifies the data: "SP" for scalar points, "VP", for vector points, etc.
     // `numEle' gives the number of elements in the data. `data' contains the data
     // for the `numEle' elements.
@@ -1279,21 +1271,21 @@ namespace gmsh { // Top-level functions
                               const int numEle,
                               const std::vector<double> & data);
 
-    // Gets list-based post-processing data from the view with tag `tag'. Returns
-    // the types `dataTypes', the number of elements `numElements' for each data
-    // type and the `data' for each data type.
+    // Get list-based post-processing data from the view with tag `tag'. Return the
+    // types `dataTypes', the number of elements `numElements' for each data type
+    // and the `data' for each data type.
     GMSH_API void getListData(const int tag,
                               std::vector<std::string> & dataType,
                               std::vector<int> & numElements,
                               std::vector<std::vector<double> > & data);
 
-    // Probes the view `tag' for its `value' at point (`x', `y', `z'). Returns only
-    // the value at step `step' is `step' is positive. Returns only values with
-    // `numComp' if `numComp' is positive. Returns the gradient of the `value' if
+    // Probe the view `tag' for its `value' at point (`x', `y', `z'). Return only
+    // the value at step `step' is `step' is positive. Return only values with
+    // `numComp' if `numComp' is positive. Return the gradient of the `value' if
     // `gradient' is set. Probes with a geometrical tolerance (in the reference
-    // unit cube) of `tolerance' if `tolerance' is not zero. Returns the result
-    // from the element described by its coordinates if `xElementCoord',
-    // `yElementCoord' and `zElementCoord' are provided.
+    // unit cube) of `tolerance' if `tolerance' is not zero. Return the result from
+    // the element described by its coordinates if `xElementCoord', `yElementCoord'
+    // and `zElementCoord' are provided.
     GMSH_API void probe(const int tag,
                         const double x,
                         const double y,
@@ -1307,8 +1299,8 @@ namespace gmsh { // Top-level functions
                         const std::vector<double> & yElemCoord = std::vector<double>(),
                         const std::vector<double> & zElemCoord = std::vector<double>());
 
-    // Writes the view to a file `fileName'. The export format is determined by the
-    // file extension. Appends to the file if `append' is set.
+    // Write the view to a file `fileName'. The export format is determined by the
+    // file extension. Append to the file if `append' is set.
     GMSH_API void write(const int tag,
                         const std::string & fileName,
                         const bool append = false);
@@ -1317,40 +1309,40 @@ namespace gmsh { // Top-level functions
 
   namespace plugin { // Plugin functions
 
-    // Sets the numerical option `option' to the value `value' for plugin `name'.
+    // Set the numerical option `option' to the value `value' for plugin `name'.
     GMSH_API void setNumber(const std::string & name,
                             const std::string & option,
                             const double value);
 
-    // Sets the string option `option' to the value `value' for plugin `name'.
+    // Set the string option `option' to the value `value' for plugin `name'.
     GMSH_API void setString(const std::string & name,
                             const std::string & option,
                             const std::string & value);
 
-    // Runs the plugin `name'.
+    // Run the plugin `name'.
     GMSH_API void run(const std::string & name);
 
   } // namespace plugin
 
   namespace graphics { // Graphics functions
 
-    // Draws all the OpenGL scenes.
+    // Draw all the OpenGL scenes.
     GMSH_API void draw();
 
   } // namespace graphics
 
   namespace fltk { // Fltk graphical user interface functions
 
-    // Creates the Fltk graphical user interface.
+    // Create the Fltk graphical user interface.
     GMSH_API void initialize();
 
-    // Waits at most `time' seconds for user interface events and returns. If
-    // `time' < 0, waits indefinitely. First automatically creates the user
-    // interface if it has not yet been initialized.
+    // Wait at most `time' seconds for user interface events and return. If `time'
+    // < 0, wait indefinitely. First automatically create the user interface if it
+    // has not yet been initialized.
     GMSH_API void wait(const double time = -1.);
 
-    // Runs the event loop of the Fltk graphical user interface, i.e. repeatedly
-    // calls `wait'. First automatically creates the user interface if it has not
+    // Run the event loop of the Fltk graphical user interface, i.e. repeatedly
+    // calls `wait'. First automatically create the user interface if it has not
     // yet been initialized.
     GMSH_API void run();
 
@@ -1358,17 +1350,17 @@ namespace gmsh { // Top-level functions
 
   namespace onelab { // ONELAB server functions
 
-    // Gets `data' from the ONELAB server.
+    // Get `data' from the ONELAB server.
     GMSH_API void get(std::string & data,
                       const std::string & format = "json");
 
-    // Sets `data' in the ONELAB server.
+    // Set `data' in the ONELAB server.
     GMSH_API void set(const std::string & data,
                       const std::string & format = "json");
 
-    // Runs a ONELAB client. If `name' is provided, creates a new ONELAB client
-    // with name `name' and executes `command'. If not, attemps to run a client
-    // that might be linked to the processed input files.
+    // Run a ONELAB client. If `name' is provided, create a new ONELAB client with
+    // name `name' and executes `command'. If not, try to run a client that might
+    // be linked to the processed input files.
     GMSH_API void run(const std::string & name = "",
                       const std::string & command = "");
 
