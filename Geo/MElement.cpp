@@ -662,7 +662,8 @@ double MElement::getJacobian(const fullMatrix<double> &gsf, double jac[3][3]) co
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
   jac[2][0] = jac[2][1] = jac[2][2] = 0.;
 
-  for (int i = 0; i < getNumShapeFunctions(); i++) {
+  const int numShapeFunctions = getNumShapeFunctions();
+  for (int i = 0; i < numShapeFunctions; i++) {
     const MVertex *v = getShapeFunctionNode(i);
     for (int j = 0; j < gsf.size2(); j++) {
       jac[j][0] += v->x() * gsf(i, j);
@@ -679,7 +680,8 @@ double MElement::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])
   jac[1][0] = jac[1][1] = jac[1][2] = 0.;
   jac[2][0] = jac[2][1] = jac[2][2] = 0.;
 
-  for (int i = 0; i < getNumShapeFunctions(); i++) {
+  const int numShapeFunctions = getNumVertices();
+  for (int i = 0; i < numShapeFunctions; i++) {
     const MVertex *v = getShapeFunctionNode(i);
     for (int j = 0; j < 3; j++) {
       const double mult = gsf[i][j];
