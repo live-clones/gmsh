@@ -198,7 +198,7 @@ doc = '''Gets barycenter of element with tag 'tag'. If 'fast' is true the baryce
 mesh.add('getBarycenter',doc,None,iint('elementTag'),ibool('fast'),ibool('primary'),ovectordouble('barycenter'))
 
 doc = '''Gets barycenters of all elements corresponding to 'elementType' into entity of dimension `dim' and tag `tag'.'''
-mesh.add('getBarycenters',doc,None,iint('elementType'),iint('dim'),iint('tag'),ibool('fast'),ibool('primary'),ovectordouble('barycenters'))
+mesh.add('getBarycenters',doc,None,iint('elementType'),iint('dim'),iint('tag'),ibool('fast'),ibool('primary'),ovectordouble('barycenters'),iint('myThread', '0'),iint('nbrThreads', '1'))
 
 doc = '''Sets a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize',doc,None,ivectorpair('dimTags'),idouble('size'))

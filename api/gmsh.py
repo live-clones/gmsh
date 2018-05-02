@@ -1318,7 +1318,7 @@ class model:
             return _ovectordouble(api_barycenter_, api_barycenter_n_.value)
 
         @staticmethod
-        def getBarycenters(elementType, dim, tag, fast, primary):
+        def getBarycenters(elementType, dim, tag, fast, primary, myThread=0, nbrThreads=1):
             """
             Gets barycenters of all elements corresponding to 'elementType' into entity
             of dimension `dim' and tag `tag'.
@@ -1334,6 +1334,8 @@ class model:
                 c_int(bool(fast)),
                 c_int(bool(primary)),
                 byref(api_barycenters_), byref(api_barycenters_n_),
+                c_int(myThread),
+                c_int(nbrThreads),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

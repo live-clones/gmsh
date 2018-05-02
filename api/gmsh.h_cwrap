@@ -869,11 +869,13 @@ namespace gmsh { // Top-level functions
                                    const int tag,
                                    const bool fast,
                                    const bool primary,
-                                   std::vector<double> & barycenters)
+                                   std::vector<double> & barycenters,
+                                   const int myThread = 0,
+                                   const int nbrThreads = 1)
       {
         int ierr = 0;
         double *api_barycenters_; size_t api_barycenters_n_;
-        gmshModelMeshGetBarycenters(elementType, dim, tag, (int)fast, (int)primary, &api_barycenters_, &api_barycenters_n_, &ierr);
+        gmshModelMeshGetBarycenters(elementType, dim, tag, (int)fast, (int)primary, &api_barycenters_, &api_barycenters_n_, myThread, nbrThreads, &ierr);
         if(ierr) throw ierr;
         barycenters.assign(api_barycenters_, api_barycenters_ + api_barycenters_n_); gmshFree(api_barycenters_);
       }

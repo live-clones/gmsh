@@ -1340,12 +1340,12 @@ GMSH_API void gmsh::model::mesh::getBarycenter(const int elementTag,
 GMSH_API void gmsh::model::mesh::getBarycenters(const int elementType,
                                                 const int dim, const int tag,
                                                 const bool fast, const bool primary,
-                                                std::vector<double> &barycenters)
+                                                std::vector<double> &barycenters,
+                                                const int myThread, const int nbrThreads)
 {
   if(!_isInitialized()){ throw -1; }
   std::map<int, std::vector<GEntity*> > typeMap;
   _getElementTypeMap(dim, tag, typeMap);
-  barycenters.clear();
 
   int n = 0;
   for(unsigned int i = 0; i < typeMap[elementType].size(); i++){
@@ -1356,16 +1356,29 @@ GMSH_API void gmsh::model::mesh::getBarycenters(const int elementType,
         n++;
     }
   }
+  const int begin = (myThread*n)/nbrThreads;
+  const int end = ((myThread+1)*n)/nbrThreads;
+  if(3*end > barycenters.size()){
+    Msg::Error("Vector barycenters is too small");
+    throw 4;
+  }
   
-  barycenters.reserve(3*n);
+  int o = 0;
+  int idx = 3*begin;
   if(fast){
     for(unsigned int i = 0; i < typeMap[elementType].size(); i++){
       GEntity *ge = typeMap[elementType][i];
       for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
-        SPoint3 p = ge->getMeshElement(j)->fastBarycenter(primary);
-        barycenters.push_back(p[0]);
-        barycenters.push_back(p[1]);
-        barycenters.push_back(p[2]);
+        MElement *e = ge->getMeshElement(j);
+        if(e->getTypeForMSH() == elementType){
+          if(o >= begin && o < end){
+            SPoint3 p = e->fastBarycenter(primary);
+            barycenters[idx++] = p[0];
+            barycenters[idx++] = p[1];
+            barycenters[idx++] = p[2];
+          }
+          o++;
+        }
       }
     }
   }
@@ -1373,10 +1386,16 @@ GMSH_API void gmsh::model::mesh::getBarycenters(const int elementType,
     for(unsigned int i = 0; i < typeMap[elementType].size(); i++){
       GEntity *ge = typeMap[elementType][i];
       for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
-        SPoint3 p = ge->getMeshElement(j)->barycenter(primary);
-        barycenters.push_back(p[0]);
-        barycenters.push_back(p[1]);
-        barycenters.push_back(p[2]);
+        MElement *e = ge->getMeshElement(j);
+        if(e->getTypeForMSH() == elementType){
+          if(o >= begin && o < end){
+            SPoint3 p = e->barycenter(primary);
+            barycenters[idx++] = p[0];
+            barycenters[idx++] = p[1];
+            barycenters[idx++] = p[2];
+          }
+          o++;
+        }
       }
     }
   }

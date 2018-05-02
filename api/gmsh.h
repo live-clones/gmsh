@@ -463,7 +463,9 @@ namespace gmsh { // Top-level functions
                                    const int tag,
                                    const bool fast,
                                    const bool primary,
-                                   std::vector<double> & barycenters);
+                                   std::vector<double> & barycenters,
+                                   const int myThread = 0,
+                                   const int nbrThreads = 1);
 
       // Sets a mesh size constraint on the geometrical entities `dimTags'.
       // Currently only entities of dimension 0 (points) are handled.

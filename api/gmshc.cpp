@@ -751,12 +751,12 @@ GMSH_API void gmshModelMeshGetBarycenter(const int elementTag, const int fast, c
   }
 }
 
-GMSH_API void gmshModelMeshGetBarycenters(const int elementType, const int dim, const int tag, const int fast, const int primary, double ** barycenters, size_t * barycenters_n, int * ierr)
+GMSH_API void gmshModelMeshGetBarycenters(const int elementType, const int dim, const int tag, const int fast, const int primary, double ** barycenters, size_t * barycenters_n, const int myThread, const int nbrThreads, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_barycenters_;
-    gmsh::model::mesh::getBarycenters(elementType, dim, tag, fast, primary, api_barycenters_);
+    gmsh::model::mesh::getBarycenters(elementType, dim, tag, fast, primary, api_barycenters_, myThread, nbrThreads);
     vector2ptr(api_barycenters_, barycenters, barycenters_n);
   }
   catch(int api_ierr_){

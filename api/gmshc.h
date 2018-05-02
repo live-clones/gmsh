@@ -486,6 +486,8 @@ GMSH_API void gmshModelMeshGetBarycenters(const int elementType,
                                           const int fast,
                                           const int primary,
                                           double ** barycenters, size_t * barycenters_n,
+                                          const int myThread,
+                                          const int nbrThreads,
                                           int * ierr);
 
 /* Sets a mesh size constraint on the geometrical entities `dimTags'.
