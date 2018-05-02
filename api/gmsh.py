@@ -1295,6 +1295,53 @@ class model:
                 _ovectorint(api_nodeTags_, api_nodeTags_n_.value))
 
         @staticmethod
+        def getBarycenter(elementTag, fast, primary):
+            """
+            Gets barycenter of element with tag 'tag'. If 'fast' is true the barycenter
+            compute is equal to the real barycenter multiplied by the number of nodes.
+            If 'primary' is true, only the primary nodes is taking into account.
+
+            Returns `barycenter'.
+            """
+            api_barycenter_, api_barycenter_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetBarycenter(
+                c_int(elementTag),
+                c_int(bool(fast)),
+                c_int(bool(primary)),
+                byref(api_barycenter_), byref(api_barycenter_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetBarycenter returned non-zero error code: ",
+                    ierr.value)
+            return _ovectordouble(api_barycenter_, api_barycenter_n_.value)
+
+        @staticmethod
+        def getBarycenters(elementType, dim, tag, fast, primary):
+            """
+            Gets barycenters of all elements corresponding to 'elementType' into entity
+            of dimension `dim' and tag `tag'.
+
+            Returns `barycenters'.
+            """
+            api_barycenters_, api_barycenters_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetBarycenters(
+                c_int(elementType),
+                c_int(dim),
+                c_int(tag),
+                c_int(bool(fast)),
+                c_int(bool(primary)),
+                byref(api_barycenters_), byref(api_barycenters_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetBarycenters returned non-zero error code: ",
+                    ierr.value)
+            return _ovectordouble(api_barycenters_, api_barycenters_n_.value)
+
+        @staticmethod
         def setSize(dimTags, size):
             """
             Sets a mesh size constraint on the geometrical entities `dimTags'.

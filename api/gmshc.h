@@ -469,6 +469,25 @@ GMSH_API void gmshModelMeshGetElement(const int elementTag,
                                       int ** nodeTags, size_t * nodeTags_n,
                                       int * ierr);
 
+/* Gets barycenter of element with tag 'tag'. If 'fast' is true the barycenter
+ * compute is equal to the real barycenter multiplied by the number of nodes.
+ * If 'primary' is true, only the primary nodes is taking into account. */
+GMSH_API void gmshModelMeshGetBarycenter(const int elementTag,
+                                         const int fast,
+                                         const int primary,
+                                         double ** barycenter, size_t * barycenter_n,
+                                         int * ierr);
+
+/* Gets barycenters of all elements corresponding to 'elementType' into entity
+ * of dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelMeshGetBarycenters(const int elementType,
+                                          const int dim,
+                                          const int tag,
+                                          const int fast,
+                                          const int primary,
+                                          double ** barycenters, size_t * barycenters_n,
+                                          int * ierr);
+
 /* Sets a mesh size constraint on the geometrical entities `dimTags'.
  * Currently only entities of dimension 0 (points) are handled. */
 GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n,

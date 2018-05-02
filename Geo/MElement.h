@@ -251,6 +251,8 @@ class MElement
 
   // compute the barycenter
   virtual SPoint3 barycenter(bool primary = false) const;
+  // compute the barycenter without divided by the number of nodes
+  virtual SPoint3 fastBarycenter(bool primary = false) const;
   virtual SPoint3 barycenterUVW() const;
   // compute the barycenter in infinity norm
   virtual SPoint3 barycenter_infty() const;

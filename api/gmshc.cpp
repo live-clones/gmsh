@@ -738,6 +738,32 @@ GMSH_API void gmshModelMeshGetElement(const int elementTag, int * type, int ** n
   }
 }
 
+GMSH_API void gmshModelMeshGetBarycenter(const int elementTag, const int fast, const int primary, double ** barycenter, size_t * barycenter_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_barycenter_;
+    gmsh::model::mesh::getBarycenter(elementTag, fast, primary, api_barycenter_);
+    vector2ptr(api_barycenter_, barycenter, barycenter_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshGetBarycenters(const int elementType, const int dim, const int tag, const int fast, const int primary, double ** barycenters, size_t * barycenters_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_barycenters_;
+    gmsh::model::mesh::getBarycenters(elementType, dim, tag, fast, primary, api_barycenters_);
+    vector2ptr(api_barycenters_, barycenters, barycenters_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n, const double size, int * ierr)
 {
   if(ierr) *ierr = 0;

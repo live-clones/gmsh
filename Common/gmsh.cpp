@@ -1281,7 +1281,7 @@ GMSH_API void gmsh::model::mesh::getNode(const int nodeTag,
   coord[0] = v->x();
   coord[1] = v->y();
   coord[2] = v->z();
-  parametricCoord.clear();
+  parametricCoord.reserve(2);
   double u;
   if(v->getParameter(0, u))
     parametricCoord.push_back(u);
@@ -1308,6 +1308,77 @@ GMSH_API void gmsh::model::mesh::getElement(const int elementTag,
       throw 2;
     }
     nodeTags.push_back(v->getNum());
+  }
+}
+
+GMSH_API void gmsh::model::mesh::getBarycenter(const int elementTag,
+                                               const bool fast, const bool primary,
+                                               std::vector<double> &barycenter)
+{
+  if(!_isInitialized()){ throw -1; }
+  MElement *e = GModel::current()->getMeshElementByTag(elementTag);
+  if(!e){
+    Msg::Error("Unknown mesh element %d", elementTag);
+    throw 2;
+  }
+  
+  barycenter.reserve(3);
+  if(fast){
+    SPoint3 p = e->fastBarycenter(primary);
+    barycenter[0] = p[0];
+    barycenter[1] = p[1];
+    barycenter[2] = p[2];
+  }
+  else{
+    SPoint3 p = e->barycenter(primary);
+    barycenter[0] = p[0];
+    barycenter[1] = p[1];
+    barycenter[2] = p[2];
+  }
+}
+
+GMSH_API void gmsh::model::mesh::getBarycenters(const int elementType,
+                                                const int dim, const int tag,
+                                                const bool fast, const bool primary,
+                                                std::vector<double> &barycenters)
+{
+  if(!_isInitialized()){ throw -1; }
+  std::map<int, std::vector<GEntity*> > typeMap;
+  _getElementTypeMap(dim, tag, typeMap);
+  barycenters.clear();
+
+  int n = 0;
+  for(unsigned int i = 0; i < typeMap[elementType].size(); i++){
+    GEntity *ge = typeMap[elementType][i];
+    for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
+      MElement *e = ge->getMeshElement(j);
+      if(e->getTypeForMSH() == elementType)
+        n++;
+    }
+  }
+  
+  barycenters.reserve(3*n);
+  if(fast){
+    for(unsigned int i = 0; i < typeMap[elementType].size(); i++){
+      GEntity *ge = typeMap[elementType][i];
+      for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
+        SPoint3 p = ge->getMeshElement(j)->fastBarycenter(primary);
+        barycenters.push_back(p[0]);
+        barycenters.push_back(p[1]);
+        barycenters.push_back(p[2]);
+      }
+    }
+  }
+  else{
+    for(unsigned int i = 0; i < typeMap[elementType].size(); i++){
+      GEntity *ge = typeMap[elementType][i];
+      for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
+        SPoint3 p = ge->getMeshElement(j)->barycenter(primary);
+        barycenters.push_back(p[0]);
+        barycenters.push_back(p[1]);
+        barycenters.push_back(p[2]);
+      }
+    }
   }
 }
 

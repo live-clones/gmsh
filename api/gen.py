@@ -194,6 +194,12 @@ mesh.add('getNode',doc,None,iint('nodeTag'),ovectordouble('coord'),ovectordouble
 doc = '''Gets the type and node tags of the mesh element with tag `tag'. This is a useful but inefficient way of accessing mesh element data, as it relies on a cache stored in the model. For large meshes all the elements in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
 mesh.add('getElement',doc,None,iint('elementTag'),oint('type'),ovectorint('nodeTags'))
 
+doc = '''Gets barycenter of element with tag 'tag'. If 'fast' is true the barycenter compute is equal to the real barycenter multiplied by the number of nodes. If 'primary' is true, only the primary nodes is taking into account.'''
+mesh.add('getBarycenter',doc,None,iint('elementTag'),ibool('fast'),ibool('primary'),ovectordouble('barycenter'))
+
+doc = '''Gets barycenters of all elements corresponding to 'elementType' into entity of dimension `dim' and tag `tag'.'''
+mesh.add('getBarycenters',doc,None,iint('elementType'),iint('dim'),iint('tag'),ibool('fast'),ibool('primary'),ovectordouble('barycenters'))
+
 doc = '''Sets a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize',doc,None,ivectorpair('dimTags'),idouble('size'))
 

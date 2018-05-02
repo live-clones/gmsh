@@ -447,6 +447,24 @@ namespace gmsh { // Top-level functions
                                int & type,
                                std::vector<int> & nodeTags);
 
+      // Gets barycenter of element with tag 'tag'. If 'fast' is true the
+      // barycenter compute is equal to the real barycenter multiplied by the
+      // number of nodes. If 'primary' is true, only the primary nodes is taking
+      // into account.
+      GMSH_API void getBarycenter(const int elementTag,
+                                  const bool fast,
+                                  const bool primary,
+                                  std::vector<double> & barycenter);
+
+      // Gets barycenters of all elements corresponding to 'elementType' into
+      // entity of dimension `dim' and tag `tag'.
+      GMSH_API void getBarycenters(const int elementType,
+                                   const int dim,
+                                   const int tag,
+                                   const bool fast,
+                                   const bool primary,
+                                   std::vector<double> & barycenters);
+
       // Sets a mesh size constraint on the geometrical entities `dimTags'.
       // Currently only entities of dimension 0 (points) are handled.
       GMSH_API void setSize(const gmsh::vector_pair & dimTags,

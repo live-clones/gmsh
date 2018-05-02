@@ -427,6 +427,20 @@ SPoint3 MElement::barycenter(bool primary) const
   return p;
 }
 
+SPoint3 MElement::fastBarycenter(bool primary) const
+{
+  SPoint3 p(0., 0., 0.);
+  int n = primary ? getNumPrimaryVertices() : getNumVertices();
+  for(int i = 0; i < n; i++) {
+    const MVertex *v = getVertex(i);
+    p[0] += v->x();
+    p[1] += v->y();
+    p[2] += v->z();
+  }
+
+  return p;
+}
+
 SPoint3 MElement::barycenterUVW() const
 {
   SPoint3 p(0., 0., 0.);
