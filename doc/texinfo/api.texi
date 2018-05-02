@@ -344,6 +344,18 @@ true, removes all the entities on their boundaries, down to dimension 0.
 -
 @end table
 
+@item getType
+Gets the type of the entity of dimension @code{dim} and tag @code{tag}.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{type}
+@item Return:
+-
+@end table
+
 @end ftable
 
 @heading Module @code{/gmsh/model/mesh}
@@ -753,7 +765,7 @@ false, the mesh is left as-is.
 @end table
 
 @item embed
-Emebds the geometrical entities of dimension @code{dim} and tags @code{tags} in
+Embeds the geometrical entities of dimension @code{dim} and tags @code{tags} in
 the (inDim, inTag) geometrical entity. @code{inDim} must be strictly greater
 than @code{dim}.
 
@@ -766,14 +778,30 @@ than @code{dim}.
 -
 @end table
 
+@item setPeriodic
+Sets the meshes of the entities of dimension @code{dim} and tag @code{tags} as
+periodic copies of the meshes of entities @code{tagsSource}, using the affine
+transformation specified in @code{affineTransformation} (16 entries of a 4x4
+matrix, by row). Currently only available for @code{dim} == 1 and @code{dim} ==
+2.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tags}, @code{tagsSource}, @code{affineTransformation}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @end ftable
 
 @heading Module @code{/gmsh/model/mesh/field}
 @ftable @code
 @item add
 Adds a new mesh size field of type @code{type}. If @code{tag} is positive,
-assign the tag explcitly; otherwise a new tag is assigned automatically. Returns
-the field tag.
+assigns the tag explcitly; otherwise a new tag is assigned automatically.
+Returns the field tag.
 
 @table @asis
 @item Input:
@@ -1629,7 +1657,7 @@ integer
 @end table
 
 @item addCone
-Add a cone, defined by the center (@code{x}, @code{y}, @code{z}) of its first
+Adds a cone, defined by the center (@code{x}, @code{y}, @code{z}) of its first
 circular face, the 3 components of the vector (@code{dx}, @code{dy}, @code{dz})
 defining its axis and the two radii @code{r1} and @code{r2} of the faces (these
 radii can be zero). If @code{tag} is positive, sets the tag explicitly;
@@ -1646,11 +1674,11 @@ integer
 @end table
 
 @item addWedge
-Add a right angular wedge, defined by the right-angle point (@code{x}, @code{y},
-@code{z}) and the 3 extends along the x-, y- and z-axes (@code{dx}, @code{dy},
-@code{dz}). If @code{tag} is positive, sets the tag explicitly; otherwise a new
-tag is selected automatically. The optional argument @code{ltx} defines the top
-extent along the x-axis. Returns the tag of the wedge.
+Adds a right angular wedge, defined by the right-angle point (@code{x},
+@code{y}, @code{z}) and the 3 extends along the x-, y- and z-axes (@code{dx},
+@code{dy}, @code{dz}). If @code{tag} is positive, sets the tag explicitly;
+otherwise a new tag is selected automatically. The optional argument @code{ltx}
+defines the top extent along the x-axis. Returns the tag of the wedge.
 
 @table @asis
 @item Input:
@@ -2239,7 +2267,7 @@ been initialized.
 @heading Module @code{/gmsh/onelab}
 @ftable @code
 @item get
-Gets data from the Onelab server.
+Gets @code{data} from the ONELAB server.
 
 @table @asis
 @item Input:
@@ -2251,7 +2279,7 @@ Gets data from the Onelab server.
 @end table
 
 @item set
-Sets data in the Onelab server.
+Sets @code{data} in the ONELAB server.
 
 @table @asis
 @item Input:
@@ -2263,8 +2291,9 @@ Sets data in the Onelab server.
 @end table
 
 @item run
-Runs a onelab client. If no name is given, attemps to run a client that might be
-linked to the processed input files.
+Runs a ONELAB client. If @code{name} is provided, creates a new ONELAB client
+with name @code{name} and executes @code{command}. If not, attemps to run a
+client that might be linked to the processed input files.
 
 @table @asis
 @item Input:

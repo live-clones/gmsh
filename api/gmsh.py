@@ -22,92 +22,92 @@ import os
 import platform
 from math import pi
 
-signal.signal(signal.SIGINT,signal.SIG_DFL)
+signal.signal(signal.SIGINT, signal.SIG_DFL)
 libdir = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == 'Windows':
-    lib = CDLL(libdir+"/gmsh-3.0.dll")
+    lib = CDLL(libdir + "/gmsh-3.0.dll")
 elif platform.system() == 'Darwin':
-    lib = CDLL(libdir+"/libgmsh.dylib")
+    lib = CDLL(libdir + "/libgmsh.dylib")
 else:
-    lib = CDLL(libdir+"/libgmsh.so")
+    lib = CDLL(libdir + "/libgmsh.so")
 
 use_numpy = False
-try :
+try:
     import numpy
-    try : 
+    try:
         from weakref import finalize as weakreffinalize
-    except :
+    except:
         from backports.weakref import finalize as weakreffinalize
     use_numpy = True
-except :
+except:
     pass
 
-def _ostring(s) :
+def _ostring(s):
     sp = s.value.decode("utf-8")
     lib.gmshFree(s)
     return sp
 
-def _ovectorpair(ptr,size):
-    if use_numpy :
-        v = numpy.ctypeslib.as_array(ptr, (size//2,2))
+def _ovectorpair(ptr, size):
+    if use_numpy:
+        v = numpy.ctypeslib.as_array(ptr, (size//2, 2))
         weakreffinalize(v, lib.gmshFree, ptr)
-    else :
-        v = list((ptr[i*2],ptr[i*2+1]) for i in range(size//2))
+    else:
+        v = list((ptr[i * 2], ptr[i * 2 + 1]) for i in range(size//2))
         lib.gmshFree(ptr)
     return v
 
-def _ovectorint(ptr,size):
-    if use_numpy :
-        v = numpy.ctypeslib.as_array(ptr, (size,))
+def _ovectorint(ptr, size):
+    if use_numpy:
+        v = numpy.ctypeslib.as_array(ptr, (size, ))
         weakreffinalize(v, lib.gmshFree, ptr)
-    else :
+    else:
         v = list(ptr[i] for i in range(size))
         lib.gmshFree(ptr)
     return v
 
-def _ovectordouble(ptr,size):
-    if use_numpy :
-        v = numpy.ctypeslib.as_array(ptr, (size,))
+def _ovectordouble(ptr, size):
+    if use_numpy:
+        v = numpy.ctypeslib.as_array(ptr, (size, ))
         weakreffinalize(v, lib.gmshFree, ptr)
-    else :
+    else:
         v = list(ptr[i] for i in range(size))
         lib.gmshFree(ptr)
     return v
 
-def _ovectorstring(ptr,size):
-    v = list(_ostring(cast(ptr[i],c_char_p)) for i in range(size))
+def _ovectorstring(ptr, size):
+    v = list(_ostring(cast(ptr[i], c_char_p)) for i in range(size))
     lib.gmshFree(ptr)
     return v
 
-def _ovectorvectorint(ptr,size,n):
-    v = [_ovectorint(pointer(ptr[i].contents),size[i]) for i in range(n.value)]
+def _ovectorvectorint(ptr, size, n):
+    v = [_ovectorint(pointer(ptr[i].contents), size[i]) for i in range(n.value)]
     lib.gmshFree(size)
     lib.gmshFree(ptr)
     return v
 
-def _ovectorvectordouble(ptr,size,n):
-    v = [_ovectordouble(pointer(ptr[i].contents),size[i]) for i in range(n.value)]
+def _ovectorvectordouble(ptr, size, n):
+    v = [_ovectordouble(pointer(ptr[i].contents), size[i]) for i in range(n.value)]
     lib.gmshFree(size)
     lib.gmshFree(ptr)
     return v
 
-def _ovectorvectorpair(ptr,size,n):
-    v = [_ovectorpair(pointer(ptr[i].contents),size[i]) for i in range(n.value)]
+def _ovectorvectorpair(ptr, size, n):
+    v = [_ovectorpair(pointer(ptr[i].contents), size[i]) for i in range(n.value)]
     lib.gmshFree(size)
     lib.gmshFree(ptr)
     return v
 
 def _ivectorint(o):
-    if use_numpy :
-        return numpy.ascontiguousarray(o,numpy.int32).ctypes, c_size_t(len(o))
-    else :
-        return (c_int*len(o))(*o), c_size_t(len(o))
+    if use_numpy:
+        return numpy.ascontiguousarray(o, numpy.int32).ctypes, c_size_t(len(o))
+    else:
+        return (c_int * len(o))(*o), c_size_t(len(o))
 
 def _ivectorvectorint(os):
     n = len(os)
     parrays = [_ivectorint(o) for o in os]
-    sizes = (c_size_t*n)(*(a[1] for a in parrays))
-    arrays = (POINTER(c_int)*n)(*(cast(a[0],POINTER(c_int)) for a in parrays))
+    sizes = (c_size_t * n)(*(a[1] for a in parrays))
+    arrays = (POINTER(c_int) * n)(*(cast(a[0], POINTER(c_int)) for a in parrays))
     arrays.ref = [a[0] for a in parrays]
     size = c_size_t(n)
     return arrays, sizes, size
@@ -115,35 +115,35 @@ def _ivectorvectorint(os):
 def _ivectorvectordouble(os):
     n = len(os)
     parrays = [_ivectordouble(o) for o in os]
-    sizes = (c_size_t*n)(*(a[1] for a in parrays))
-    arrays = (POINTER(c_double)*n)(*(cast(a[0],POINTER(c_double)) for a in parrays))
+    sizes = (c_size_t * n)(*(a[1] for a in parrays))
+    arrays = (POINTER(c_double) * n)(*(cast(a[0], POINTER(c_double)) for a in parrays))
     arrays.ref = [a[0] for a in parrays]
     size = c_size_t(n)
     return arrays, sizes, size
 
 def _ivectordouble(o):
-    if use_numpy :
-        array = numpy.ascontiguousarray(o,numpy.float64)
+    if use_numpy:
+        array = numpy.ascontiguousarray(o, numpy.float64)
         ct = array.ctypes
         ct.array = array
         return  ct, c_size_t(len(o))
-    else :
-        return (c_double*len(o))(*o), c_size_t(len(o))
+    else:
+        return (c_double * len(o))(*o), c_size_t(len(o))
 
 def _ivectorpair(o):
-    if use_numpy :
-        array = numpy.ascontiguousarray(o,numpy.int32)
+    if use_numpy:
+        array = numpy.ascontiguousarray(o, numpy.int32)
         ct = array.ctypes
         ct.array = array
-        return  ct, c_size_t(len(o)*2)
-    else :
-        return ((c_int*2)*len(o))(*o), c_size_t(len(o)*2)
+        return  ct, c_size_t(len(o) * 2)
+    else:
+        return ((c_int * 2) * len(o))(*o), c_size_t(len(o) * 2)
 
-def _iargcargv(o) :
-    return c_int(len(o)), (c_char_p*len(o))(*(s.encode() for s in o))
+def _iargcargv(o):
+    return c_int(len(o)), (c_char_p * len(o))(*(s.encode() for s in o))
 
 
-def initialize(argv=[],readConfigFiles=True):
+def initialize(argv=[], readConfigFiles=True):
     """
     Initializes Gmsh. This must be called before any call to the other
     functions in the API. If `argc' and `argv' are provided, they will be
@@ -157,9 +157,9 @@ def initialize(argv=[],readConfigFiles=True):
         api_argc_, api_argv_,
         c_int(bool(readConfigFiles)),
         byref(ierr))
-    if ierr.value != 0 :
+    if ierr.value != 0:
         raise ValueError(
-            "gmshInitialize returned non-zero error code : ",
+            "gmshInitialize returned non-zero error code: ",
             ierr.value)
 
 def finalize():
@@ -169,9 +169,9 @@ def finalize():
     ierr = c_int()
     lib.gmshFinalize(
         byref(ierr))
-    if ierr.value != 0 :
+    if ierr.value != 0:
         raise ValueError(
-            "gmshFinalize returned non-zero error code : ",
+            "gmshFinalize returned non-zero error code: ",
             ierr.value)
 
 def open(fileName):
@@ -183,9 +183,9 @@ def open(fileName):
     lib.gmshOpen(
         c_char_p(fileName.encode()),
         byref(ierr))
-    if ierr.value != 0 :
+    if ierr.value != 0:
         raise ValueError(
-            "gmshOpen returned non-zero error code : ",
+            "gmshOpen returned non-zero error code: ",
             ierr.value)
 
 def merge(fileName):
@@ -197,9 +197,9 @@ def merge(fileName):
     lib.gmshMerge(
         c_char_p(fileName.encode()),
         byref(ierr))
-    if ierr.value != 0 :
+    if ierr.value != 0:
         raise ValueError(
-            "gmshMerge returned non-zero error code : ",
+            "gmshMerge returned non-zero error code: ",
             ierr.value)
 
 def write(fileName):
@@ -210,9 +210,9 @@ def write(fileName):
     lib.gmshWrite(
         c_char_p(fileName.encode()),
         byref(ierr))
-    if ierr.value != 0 :
+    if ierr.value != 0:
         raise ValueError(
-            "gmshWrite returned non-zero error code : ",
+            "gmshWrite returned non-zero error code: ",
             ierr.value)
 
 def clear():
@@ -223,9 +223,9 @@ def clear():
     ierr = c_int()
     lib.gmshClear(
         byref(ierr))
-    if ierr.value != 0 :
+    if ierr.value != 0:
         raise ValueError(
-            "gmshClear returned non-zero error code : ",
+            "gmshClear returned non-zero error code: ",
             ierr.value)
 
 
@@ -235,7 +235,7 @@ class option:
     """
 
     @staticmethod
-    def setNumber(name,value):
+    def setNumber(name, value):
         """
         Sets a numerical option to `value'. `name' is of the form "category.option"
         or "category[num].option". Available categories and options are listed in
@@ -246,9 +246,9 @@ class option:
             c_char_p(name.encode()),
             c_double(value),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshOptionSetNumber returned non-zero error code : ",
+                "gmshOptionSetNumber returned non-zero error code: ",
                 ierr.value)
 
     @staticmethod
@@ -256,7 +256,7 @@ class option:
         """
         Gets the `value' of a numerical option.
 
-        return value
+        Returns `value'.
         """
         api_value_ = c_double()
         ierr = c_int()
@@ -264,14 +264,14 @@ class option:
             c_char_p(name.encode()),
             byref(api_value_),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshOptionGetNumber returned non-zero error code : ",
+                "gmshOptionGetNumber returned non-zero error code: ",
                 ierr.value)
         return api_value_.value
 
     @staticmethod
-    def setString(name,value):
+    def setString(name, value):
         """
         Sets a string option to `value'.
         """
@@ -280,9 +280,9 @@ class option:
             c_char_p(name.encode()),
             c_char_p(value.encode()),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshOptionSetString returned non-zero error code : ",
+                "gmshOptionSetString returned non-zero error code: ",
                 ierr.value)
 
     @staticmethod
@@ -290,7 +290,7 @@ class option:
         """
         Gets the `value' of a string option.
 
-        return value
+        Returns `value'.
         """
         api_value_ = c_char_p()
         ierr = c_int()
@@ -298,9 +298,9 @@ class option:
             c_char_p(name.encode()),
             byref(api_value_),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshOptionGetString returned non-zero error code : ",
+                "gmshOptionGetString returned non-zero error code: ",
                 ierr.value)
         return _ostring(api_value_)
 
@@ -319,9 +319,9 @@ class model:
         lib.gmshModelAdd(
             c_char_p(name.encode()),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshModelAdd returned non-zero error code : ",
+                "gmshModelAdd returned non-zero error code: ",
                 ierr.value)
 
     @staticmethod
@@ -332,9 +332,9 @@ class model:
         ierr = c_int()
         lib.gmshModelRemove(
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshModelRemove returned non-zero error code : ",
+                "gmshModelRemove returned non-zero error code: ",
                 ierr.value)
 
     @staticmethod
@@ -342,16 +342,16 @@ class model:
         """
         Lists the names of all models.
 
-        return names
+        Returns `names'.
         """
         api_names_, api_names_n_ = POINTER(POINTER(c_char))(), c_size_t()
         ierr = c_int()
         lib.gmshModelList(
             byref(api_names_), byref(api_names_n_),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshModelList returned non-zero error code : ",
+                "gmshModelList returned non-zero error code: ",
                 ierr.value)
         return _ovectorstring(api_names_, api_names_n_.value)
 
@@ -365,9 +365,9 @@ class model:
         lib.gmshModelSetCurrent(
             c_char_p(name.encode()),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshModelSetCurrent returned non-zero error code : ",
+                "gmshModelSetCurrent returned non-zero error code: ",
                 ierr.value)
 
     @staticmethod
@@ -378,7 +378,7 @@ class model:
         points if `dim' == 0). The entities are returned as a vector of (dim, tag)
         integer pairs.
 
-        return dimTags
+        Returns `dimTags'.
         """
         api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
@@ -386,9 +386,9 @@ class model:
             byref(api_dimTags_), byref(api_dimTags_n_),
             c_int(dim),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshModelGetEntities returned non-zero error code : ",
+                "gmshModelGetEntities returned non-zero error code: ",
                 ierr.value)
         return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
 
@@ -400,7 +400,7 @@ class model:
         if `dim' == 0). The entities are returned as a vector of (dim, tag) integer
         pairs.
 
-        return dimTags
+        Returns `dimTags'.
         """
         api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
@@ -408,41 +408,41 @@ class model:
             byref(api_dimTags_), byref(api_dimTags_n_),
             c_int(dim),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshModelGetPhysicalGroups returned non-zero error code : ",
+                "gmshModelGetPhysicalGroups returned non-zero error code: ",
                 ierr.value)
         return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
 
     @staticmethod
-    def getEntitiesForPhysicalGroup(dim,tag):
+    def getEntitiesForPhysicalGroup(dim, tag):
         """
         Gets the tags of all the (elementary) geometrical entities making up the
         physical group of dimension `dim' and tag `tag'.
 
-        return tags
+        Returns `tags'.
         """
         api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
         lib.gmshModelGetEntitiesForPhysicalGroup(
             c_int(dim),
             c_int(tag),
-            byref(api_tags_),byref(api_tags_n_),
+            byref(api_tags_), byref(api_tags_n_),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshModelGetEntitiesForPhysicalGroup returned non-zero error code : ",
+                "gmshModelGetEntitiesForPhysicalGroup returned non-zero error code: ",
                 ierr.value)
-        return _ovectorint(api_tags_,api_tags_n_.value)
+        return _ovectorint(api_tags_, api_tags_n_.value)
 
     @staticmethod
-    def addPhysicalGroup(dim,tags,tag=-1):
+    def addPhysicalGroup(dim, tags, tag=-1):
         """
         Adds a physical group of dimension `dim', grouping the elementary entities
         with tags `tags'. The function returns the tag of the physical group, equal
         to `tag' if `tag' is positive, or a new tag if `tag' < 0.
 
-        return int
+        Returns an integer.
         """
         api_tags_, api_tags_n_ = _ivectorint(tags)
         ierr = c_int()
@@ -451,14 +451,14 @@ class model:
             api_tags_, api_tags_n_,
             c_int(tag),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshModelAddPhysicalGroup returned non-zero error code : ",
+                "gmshModelAddPhysicalGroup returned non-zero error code: ",
                 ierr.value)
         return api__result__
 
     @staticmethod
-    def setPhysicalName(dim,tag,name):
+    def setPhysicalName(dim, tag, name):
         """
         Sets the name of the physical group of dimension `dim' and tag `tag'.
         """
@@ -468,17 +468,17 @@ class model:
             c_int(tag),
             c_char_p(name.encode()),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshModelSetPhysicalName returned non-zero error code : ",
+                "gmshModelSetPhysicalName returned non-zero error code: ",
                 ierr.value)
 
     @staticmethod
-    def getPhysicalName(dim,tag):
+    def getPhysicalName(dim, tag):
         """
         Gets the name of the physical group of dimension `dim' and tag `tag'.
 
-        return name
+        Returns `name'.
         """
         api_name_ = c_char_p()
         ierr = c_int()
@@ -487,14 +487,14 @@ class model:
             c_int(tag),
             byref(api_name_),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshModelGetPhysicalName returned non-zero error code : ",
+                "gmshModelGetPhysicalName returned non-zero error code: ",
                 ierr.value)
         return _ostring(api_name_)
 
     @staticmethod
-    def getBoundary(dimTags,combined=True,oriented=True,recursive=False):
+    def getBoundary(dimTags, combined=True, oriented=True, recursive=False):
         """
         Gets the boundary of the geometrical entities `dimTags'. Returns in
         `outDimTags' the boundary of the individual entities (if `combined' is
@@ -503,7 +503,7 @@ class model:
         of the boundary entity if `oriented' is true. Applies the boundary operator
         recursively down to dimension 0 (i.e. to points) if `recursive' is true.
 
-        return outDimTags
+        Returns `outDimTags'.
         """
         api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
         api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -515,21 +515,21 @@ class model:
             c_int(bool(oriented)),
             c_int(bool(recursive)),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshModelGetBoundary returned non-zero error code : ",
+                "gmshModelGetBoundary returned non-zero error code: ",
                 ierr.value)
         return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
     @staticmethod
-    def getEntitiesInBoundingBox(xmin,ymin,zmin,xmax,ymax,zmax,dim=-1):
+    def getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim=-1):
         """
         Gets the (elementary) geometrical entities in the bounding box defined by
         the two points (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If
         `dim' is >= 0, returns only the entities of the specified dimension (e.g.
         points if `dim' == 0).
 
-        return tags
+        Returns `tags'.
         """
         api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
@@ -543,20 +543,20 @@ class model:
             byref(api_tags_), byref(api_tags_n_),
             c_int(dim),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshModelGetEntitiesInBoundingBox returned non-zero error code : ",
+                "gmshModelGetEntitiesInBoundingBox returned non-zero error code: ",
                 ierr.value)
         return _ovectorpair(api_tags_, api_tags_n_.value)
 
     @staticmethod
-    def getBoundingBox(dim,tag):
+    def getBoundingBox(dim, tag):
         """
         Gets the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of
         the geometrical entity of dimension `dim' and tag `tag'. If `dim' and `tag'
         are < 0, returns the bounding box of the current model.
 
-        return xmin, ymin, zmin, xmax, ymax, zmax
+        Returns `xmin', `ymin', `zmin', `xmax', `ymax', `zmax'.
         """
         api_xmin_ = c_double()
         api_ymin_ = c_double()
@@ -575,9 +575,9 @@ class model:
             byref(api_ymax_),
             byref(api_zmax_),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshModelGetBoundingBox returned non-zero error code : ",
+                "gmshModelGetBoundingBox returned non-zero error code: ",
                 ierr.value)
         return (
             api_xmin_.value,
@@ -592,19 +592,19 @@ class model:
         """
         Gets the dimension of the current model.
 
-        return int
+        Returns an integer.
         """
         ierr = c_int()
         api__result__ = lib.gmshModelGetDim(
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshModelGetDim returned non-zero error code : ",
+                "gmshModelGetDim returned non-zero error code: ",
                 ierr.value)
         return api__result__
 
     @staticmethod
-    def addDiscreteEntity(dim,tag=-1,boundary=[]):
+    def addDiscreteEntity(dim, tag=-1, boundary=[]):
         """
         Adds a discrete geometrical entity (defined by a mesh) of dimension `dim'
         in the current model. The function returns the tag of the new discrete
@@ -613,7 +613,7 @@ class model:
         discrete entity, if any. Specyfing `boundary' allows Gmsh to construct the
         topology of the overall model.
 
-        return int
+        Returns an integer.
         """
         api_boundary_, api_boundary_n_ = _ivectorint(boundary)
         ierr = c_int()
@@ -622,14 +622,14 @@ class model:
             c_int(tag),
             api_boundary_, api_boundary_n_,
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshModelAddDiscreteEntity returned non-zero error code : ",
+                "gmshModelAddDiscreteEntity returned non-zero error code: ",
                 ierr.value)
         return api__result__
 
     @staticmethod
-    def removeEntities(dimTags,recursive=False):
+    def removeEntities(dimTags, recursive=False):
         """
         Removes the entities `dimTags' of the current model. If `recursive' is
         true, removes all the entities on their boundaries, down to dimension 0.
@@ -640,17 +640,17 @@ class model:
             api_dimTags_, api_dimTags_n_,
             c_int(bool(recursive)),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshModelRemoveEntities returned non-zero error code : ",
+                "gmshModelRemoveEntities returned non-zero error code: ",
                 ierr.value)
 
     @staticmethod
-    def getType(dim,tag):
+    def getType(dim, tag):
         """
         Gets the type of the entity of dimension `dim' and tag `tag'.
 
-        return type
+        Returns `type'.
         """
         api_type_ = c_char_p()
         ierr = c_int()
@@ -659,9 +659,9 @@ class model:
             c_int(tag),
             byref(api_type_),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshModelGetType returned non-zero error code : ",
+                "gmshModelGetType returned non-zero error code: ",
                 ierr.value)
         return _ostring(api_type_)
 
@@ -681,9 +681,9 @@ class model:
             lib.gmshModelMeshGenerate(
                 c_int(dim),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGenerate returned non-zero error code : ",
+                    "gmshModelMeshGenerate returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -695,9 +695,9 @@ class model:
             lib.gmshModelMeshPartition(
                 c_int(numPart),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshPartition returned non-zero error code : ",
+                    "gmshModelMeshPartition returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -708,9 +708,9 @@ class model:
             ierr = c_int()
             lib.gmshModelMeshRefine(
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshRefine returned non-zero error code : ",
+                    "gmshModelMeshRefine returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -722,9 +722,9 @@ class model:
             lib.gmshModelMeshSetOrder(
                 c_int(order),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshSetOrder returned non-zero error code : ",
+                    "gmshModelMeshSetOrder returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -735,9 +735,9 @@ class model:
             ierr = c_int()
             lib.gmshModelMeshRemoveDuplicateNodes(
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshRemoveDuplicateNodes returned non-zero error code : ",
+                    "gmshModelMeshRemoveDuplicateNodes returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -746,16 +746,16 @@ class model:
             Gets the last entities (if any) where a meshing error occurred. Currently
             only populated by the new 3D meshing algorithms.
 
-            return dimTags
+            Returns `dimTags'.
             """
             api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetLastEntityError(
                 byref(api_dimTags_), byref(api_dimTags_n_),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetLastEntityError returned non-zero error code : ",
+                    "gmshModelMeshGetLastEntityError returned non-zero error code: ",
                     ierr.value)
             return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
 
@@ -765,18 +765,18 @@ class model:
             Gets the last mesh nodes (if any) where a meshing error occurred. Currently
             only populated by the new 3D meshing algorithms.
 
-            return nodeTags
+            Returns `nodeTags'.
             """
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetLastNodeError(
-                byref(api_nodeTags_),byref(api_nodeTags_n_),
+                byref(api_nodeTags_), byref(api_nodeTags_n_),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetLastNodeError returned non-zero error code : ",
+                    "gmshModelMeshGetLastNodeError returned non-zero error code: ",
                     ierr.value)
-            return _ovectorint(api_nodeTags_,api_nodeTags_n_.value)
+            return _ovectorint(api_nodeTags_, api_nodeTags_n_.value)
 
         @staticmethod
         def initializeNodeCache():
@@ -786,13 +786,13 @@ class model:
             ierr = c_int()
             lib.gmshModelMeshInitializeNodeCache(
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshInitializeNodeCache returned non-zero error code : ",
+                    "gmshModelMeshInitializeNodeCache returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def getNodes(dim=-1,tag=-1):
+        def getNodes(dim=-1, tag=-1):
             """
             Gets the mesh nodes of the entity of dimension `dim' and `tag' tag. If
             `tag' < 0, gets the nodes for all entities of dimension `dim'. If `dim' and
@@ -804,30 +804,30 @@ class model:
             available. The length of `parametricCoord' can be 0 or `dim' times the
             length of `nodeTags'.
 
-            return nodeTags, coord, parametricCoord
+            Returns `nodeTags', `coord', `parametricCoord'.
             """
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
             api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetNodes(
-                byref(api_nodeTags_),byref(api_nodeTags_n_),
-                byref(api_coord_),byref(api_coord_n_),
-                byref(api_parametricCoord_),byref(api_parametricCoord_n_),
+                byref(api_nodeTags_), byref(api_nodeTags_n_),
+                byref(api_coord_), byref(api_coord_n_),
+                byref(api_parametricCoord_), byref(api_parametricCoord_n_),
                 c_int(dim),
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetNodes returned non-zero error code : ",
+                    "gmshModelMeshGetNodes returned non-zero error code: ",
                     ierr.value)
             return (
-                _ovectorint(api_nodeTags_,api_nodeTags_n_.value),
-                _ovectordouble(api_coord_,api_coord_n_.value),
-                _ovectordouble(api_parametricCoord_,api_parametricCoord_n_.value))
+                _ovectorint(api_nodeTags_, api_nodeTags_n_.value),
+                _ovectordouble(api_coord_, api_coord_n_.value),
+                _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
 
         @staticmethod
-        def getElements(dim=-1,tag=-1):
+        def getElements(dim=-1, tag=-1):
             """
             Gets the mesh elements of the entity of dimension `dim' and `tag' tag. If
             `tag' < 0, gets the elements for all entities of dimension `dim'. If `dim'
@@ -842,27 +842,27 @@ class model:
             type of element, that contains the node tags of all the elements of the
             given type, concatenated.
 
-            return elementTypes, elementTags, nodeTags
+            Returns `elementTypes', `elementTags', `nodeTags'.
             """
             api_elementTypes_, api_elementTypes_n_ = POINTER(c_int)(), c_size_t()
             api_elementTags_, api_elementTags_n_, api_elementTags_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
             api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetElements(
-                byref(api_elementTypes_),byref(api_elementTypes_n_),
-                byref(api_elementTags_),byref(api_elementTags_n_),byref(api_elementTags_nn_),
-                byref(api_nodeTags_),byref(api_nodeTags_n_),byref(api_nodeTags_nn_),
+                byref(api_elementTypes_), byref(api_elementTypes_n_),
+                byref(api_elementTags_), byref(api_elementTags_n_), byref(api_elementTags_nn_),
+                byref(api_nodeTags_), byref(api_nodeTags_n_), byref(api_nodeTags_nn_),
                 c_int(dim),
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetElements returned non-zero error code : ",
+                    "gmshModelMeshGetElements returned non-zero error code: ",
                     ierr.value)
             return (
-                _ovectorint(api_elementTypes_,api_elementTypes_n_.value),
-                _ovectorvectorint(api_elementTags_,api_elementTags_n_,api_elementTags_nn_),
-                _ovectorvectorint(api_nodeTags_,api_nodeTags_n_,api_nodeTags_nn_))
+                _ovectorint(api_elementTypes_, api_elementTypes_n_.value),
+                _ovectorvectorint(api_elementTags_, api_elementTags_n_, api_elementTags_nn_),
+                _ovectorvectorint(api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_))
 
         @staticmethod
         def getElementProperties(elementType):
@@ -872,7 +872,7 @@ class model:
             (`numNodes') and parametric coordinates of nodes (`parametricCoord' vector,
             of length `dim' times `numNodes').
 
-            return elementName, dim, order, numNodes, parametricCoord
+            Returns `elementName', `dim', `order', `numNodes', `parametricCoord'.
             """
             api_elementName_ = c_char_p()
             api_dim_ = c_int()
@@ -886,21 +886,21 @@ class model:
                 byref(api_dim_),
                 byref(api_order_),
                 byref(api_numNodes_),
-                byref(api_parametricCoord_),byref(api_parametricCoord_n_),
+                byref(api_parametricCoord_), byref(api_parametricCoord_n_),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetElementProperties returned non-zero error code : ",
+                    "gmshModelMeshGetElementProperties returned non-zero error code: ",
                     ierr.value)
             return (
                 _ostring(api_elementName_),
                 api_dim_.value,
                 api_order_.value,
                 api_numNodes_.value,
-                _ovectordouble(api_parametricCoord_,api_parametricCoord_n_.value))
+                _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
 
         @staticmethod
-        def getIntegrationData(integrationType,functionSpaceType,dim=-1,tag=-1):
+        def getIntegrationData(integrationType, functionSpaceType, dim=-1, tag=-1):
             """
             Gets the integration data for mesh elements of the entity of dimension
             `dim' and `tag' tag. The data is returned by element type and by element,
@@ -918,7 +918,7 @@ class model:
             function in the space and `functionSpaceData' contains for each element
             type the evaluation of the basis functions at the integration points.
 
-            return integrationPoints, integrationData, functionSpaceNumComponents, functionSpaceData
+            Returns `integrationPoints', `integrationData', `functionSpaceNumComponents', `functionSpaceData'.
             """
             api_integrationPoints_, api_integrationPoints_n_, api_integrationPoints_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
             api_integrationData_, api_integrationData_n_, api_integrationData_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
@@ -928,25 +928,25 @@ class model:
             lib.gmshModelMeshGetIntegrationData(
                 c_char_p(integrationType.encode()),
                 c_char_p(functionSpaceType.encode()),
-                byref(api_integrationPoints_),byref(api_integrationPoints_n_),byref(api_integrationPoints_nn_),
-                byref(api_integrationData_),byref(api_integrationData_n_),byref(api_integrationData_nn_),
+                byref(api_integrationPoints_), byref(api_integrationPoints_n_), byref(api_integrationPoints_nn_),
+                byref(api_integrationData_), byref(api_integrationData_n_), byref(api_integrationData_nn_),
                 byref(api_functionSpaceNumComponents_),
-                byref(api_functionSpaceData_),byref(api_functionSpaceData_n_),byref(api_functionSpaceData_nn_),
+                byref(api_functionSpaceData_), byref(api_functionSpaceData_n_), byref(api_functionSpaceData_nn_),
                 c_int(dim),
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetIntegrationData returned non-zero error code : ",
+                    "gmshModelMeshGetIntegrationData returned non-zero error code: ",
                     ierr.value)
             return (
-                _ovectorvectordouble(api_integrationPoints_,api_integrationPoints_n_,api_integrationPoints_nn_),
-                _ovectorvectordouble(api_integrationData_,api_integrationData_n_,api_integrationData_nn_),
+                _ovectorvectordouble(api_integrationPoints_, api_integrationPoints_n_, api_integrationPoints_nn_),
+                _ovectorvectordouble(api_integrationData_, api_integrationData_n_, api_integrationData_nn_),
                 api_functionSpaceNumComponents_.value,
-                _ovectorvectordouble(api_functionSpaceData_,api_functionSpaceData_n_,api_functionSpaceData_nn_))
+                _ovectorvectordouble(api_functionSpaceData_, api_functionSpaceData_n_, api_functionSpaceData_nn_))
 
         @staticmethod
-        def getJacobianData(integrationType,dim=-1,tag=-1):
+        def getJacobianData(integrationType, dim=-1, tag=-1):
             """
             Gets the Jacobian data for mesh elements of the entity of dimension `dim'
             and `tag' tag. The data is returned by element type and by element, in the
@@ -958,7 +958,7 @@ class model:
             9 entries (by row) of the 3x3 Jacobian matrix and `determinant' contains
             for each element type a vector containing the determinant of the Jacobian.
 
-            return nbrIntegrationPoints, jacobian, determinant
+            Returns `nbrIntegrationPoints', `jacobian', `determinant'.
             """
             api_nbrIntegrationPoints_, api_nbrIntegrationPoints_n_ = POINTER(c_int)(), c_size_t()
             api_jacobian_, api_jacobian_n_, api_jacobian_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
@@ -966,23 +966,23 @@ class model:
             ierr = c_int()
             lib.gmshModelMeshGetJacobianData(
                 c_char_p(integrationType.encode()),
-                byref(api_nbrIntegrationPoints_),byref(api_nbrIntegrationPoints_n_),
-                byref(api_jacobian_),byref(api_jacobian_n_),byref(api_jacobian_nn_),
-                byref(api_determinant_),byref(api_determinant_n_),byref(api_determinant_nn_),
+                byref(api_nbrIntegrationPoints_), byref(api_nbrIntegrationPoints_n_),
+                byref(api_jacobian_), byref(api_jacobian_n_), byref(api_jacobian_nn_),
+                byref(api_determinant_), byref(api_determinant_n_), byref(api_determinant_nn_),
                 c_int(dim),
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetJacobianData returned non-zero error code : ",
+                    "gmshModelMeshGetJacobianData returned non-zero error code: ",
                     ierr.value)
             return (
-                _ovectorint(api_nbrIntegrationPoints_,api_nbrIntegrationPoints_n_.value),
-                _ovectorvectordouble(api_jacobian_,api_jacobian_n_,api_jacobian_nn_),
-                _ovectorvectordouble(api_determinant_,api_determinant_n_,api_determinant_nn_))
+                _ovectorint(api_nbrIntegrationPoints_, api_nbrIntegrationPoints_n_.value),
+                _ovectorvectordouble(api_jacobian_, api_jacobian_n_, api_jacobian_nn_),
+                _ovectorvectordouble(api_determinant_, api_determinant_n_, api_determinant_nn_))
 
         @staticmethod
-        def getFunctionSpaceData(integrationType,functionSpaceType,dim=-1,tag=-1):
+        def getFunctionSpaceData(integrationType, functionSpaceType, dim=-1, tag=-1):
             """
             Gets the function space data for mesh elements of the entity of dimension
             `dim' and `tag' tag. The data is returned by element type and by element,
@@ -997,7 +997,7 @@ class model:
             `functionSpaceData' contains for each element type the evaluation of the
             basis functions at the integration points.
 
-            return integrationPoints, functionSpaceNumComponents, functionSpaceData
+            Returns `integrationPoints', `functionSpaceNumComponents', `functionSpaceData'.
             """
             api_integrationPoints_, api_integrationPoints_n_, api_integrationPoints_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
             api_functionSpaceNumComponents_ = c_int()
@@ -1006,76 +1006,76 @@ class model:
             lib.gmshModelMeshGetFunctionSpaceData(
                 c_char_p(integrationType.encode()),
                 c_char_p(functionSpaceType.encode()),
-                byref(api_integrationPoints_),byref(api_integrationPoints_n_),byref(api_integrationPoints_nn_),
+                byref(api_integrationPoints_), byref(api_integrationPoints_n_), byref(api_integrationPoints_nn_),
                 byref(api_functionSpaceNumComponents_),
-                byref(api_functionSpaceData_),byref(api_functionSpaceData_n_),byref(api_functionSpaceData_nn_),
+                byref(api_functionSpaceData_), byref(api_functionSpaceData_n_), byref(api_functionSpaceData_nn_),
                 c_int(dim),
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetFunctionSpaceData returned non-zero error code : ",
+                    "gmshModelMeshGetFunctionSpaceData returned non-zero error code: ",
                     ierr.value)
             return (
-                _ovectorvectordouble(api_integrationPoints_,api_integrationPoints_n_,api_integrationPoints_nn_),
+                _ovectorvectordouble(api_integrationPoints_, api_integrationPoints_n_, api_integrationPoints_nn_),
                 api_functionSpaceNumComponents_.value,
-                _ovectorvectordouble(api_functionSpaceData_,api_functionSpaceData_n_,api_functionSpaceData_nn_))
+                _ovectorvectordouble(api_functionSpaceData_, api_functionSpaceData_n_, api_functionSpaceData_nn_))
 
         @staticmethod
-        def getElementTypes(dim=-1,tag=-1):
+        def getElementTypes(dim=-1, tag=-1):
             """
             Gets the types of mesh elements in the entity of dimension `dim' and `tag'
             tag. If `tag' < 0, gets the types for all entities of dimension `dim'. If
             `dim' and `tag' are negative, gets all the types in the mesh.
 
-            return elementTypes
+            Returns `elementTypes'.
             """
             api_elementTypes_, api_elementTypes_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetElementTypes(
-                byref(api_elementTypes_),byref(api_elementTypes_n_),
+                byref(api_elementTypes_), byref(api_elementTypes_n_),
                 c_int(dim),
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetElementTypes returned non-zero error code : ",
+                    "gmshModelMeshGetElementTypes returned non-zero error code: ",
                     ierr.value)
-            return _ovectorint(api_elementTypes_,api_elementTypes_n_.value)
+            return _ovectorint(api_elementTypes_, api_elementTypes_n_.value)
 
         @staticmethod
-        def getElementsByType(elementType,dim=-1,tag=-1):
+        def getElementsByType(elementType, dim=-1, tag=-1):
             """
             Gets the mesh elements in the same way as `getElements', but for a single
             `elementType'.
 
-            return elementTags, nodeTags
+            Returns `elementTags', `nodeTags'.
             """
             api_elementTags_, api_elementTags_n_ = POINTER(c_int)(), c_size_t()
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetElementsByType(
                 c_int(elementType),
-                byref(api_elementTags_),byref(api_elementTags_n_),
-                byref(api_nodeTags_),byref(api_nodeTags_n_),
+                byref(api_elementTags_), byref(api_elementTags_n_),
+                byref(api_nodeTags_), byref(api_nodeTags_n_),
                 c_int(dim),
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetElementsByType returned non-zero error code : ",
+                    "gmshModelMeshGetElementsByType returned non-zero error code: ",
                     ierr.value)
             return (
-                _ovectorint(api_elementTags_,api_elementTags_n_.value),
-                _ovectorint(api_nodeTags_,api_nodeTags_n_.value))
+                _ovectorint(api_elementTags_, api_elementTags_n_.value),
+                _ovectorint(api_nodeTags_, api_nodeTags_n_.value))
 
         @staticmethod
-        def getIntegrationDataByType(elementType,integrationType,functionSpaceType,dim=-1,tag=-1):
+        def getIntegrationDataByType(elementType, integrationType, functionSpaceType, dim=-1, tag=-1):
             """
             Gets the integration data for mesh elements in the same way as
             `getIntegrationData', but for a single `elementType'.
 
-            return integrationPoints, integrationData, functionSpaceNumComponents, functionSpaceData
+            Returns `integrationPoints', `integrationData', `functionSpaceNumComponents', `functionSpaceData'.
             """
             api_integrationPoints_, api_integrationPoints_n_ = POINTER(c_double)(), c_size_t()
             api_integrationData_, api_integrationData_n_ = POINTER(c_double)(), c_size_t()
@@ -1086,30 +1086,30 @@ class model:
                 c_int(elementType),
                 c_char_p(integrationType.encode()),
                 c_char_p(functionSpaceType.encode()),
-                byref(api_integrationPoints_),byref(api_integrationPoints_n_),
-                byref(api_integrationData_),byref(api_integrationData_n_),
+                byref(api_integrationPoints_), byref(api_integrationPoints_n_),
+                byref(api_integrationData_), byref(api_integrationData_n_),
                 byref(api_functionSpaceNumComponents_),
-                byref(api_functionSpaceData_),byref(api_functionSpaceData_n_),
+                byref(api_functionSpaceData_), byref(api_functionSpaceData_n_),
                 c_int(dim),
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetIntegrationDataByType returned non-zero error code : ",
+                    "gmshModelMeshGetIntegrationDataByType returned non-zero error code: ",
                     ierr.value)
             return (
-                _ovectordouble(api_integrationPoints_,api_integrationPoints_n_.value),
-                _ovectordouble(api_integrationData_,api_integrationData_n_.value),
+                _ovectordouble(api_integrationPoints_, api_integrationPoints_n_.value),
+                _ovectordouble(api_integrationData_, api_integrationData_n_.value),
                 api_functionSpaceNumComponents_.value,
-                _ovectordouble(api_functionSpaceData_,api_functionSpaceData_n_.value))
+                _ovectordouble(api_functionSpaceData_, api_functionSpaceData_n_.value))
 
         @staticmethod
-        def getJacobianDataByType(elementType,integrationType,dim=-1,tag=-1,myThread=0,nbrThreads=1):
+        def getJacobianDataByType(elementType, integrationType, dim=-1, tag=-1, myThread=0, nbrThreads=1):
             """
             Gets the Jacobian data for mesh elements in the same way as
             `getJacobianData', but for a single `elementType'.
 
-            return nbrIntegrationPoints, jacobian, determinant
+            Returns `nbrIntegrationPoints', `jacobian', `determinant'.
             """
             api_nbrIntegrationPoints_ = c_int()
             api_jacobian_, api_jacobian_n_ = POINTER(c_double)(), c_size_t()
@@ -1119,29 +1119,29 @@ class model:
                 c_int(elementType),
                 c_char_p(integrationType.encode()),
                 byref(api_nbrIntegrationPoints_),
-                byref(api_jacobian_),byref(api_jacobian_n_),
-                byref(api_determinant_),byref(api_determinant_n_),
+                byref(api_jacobian_), byref(api_jacobian_n_),
+                byref(api_determinant_), byref(api_determinant_n_),
                 c_int(dim),
                 c_int(tag),
                 c_int(myThread),
                 c_int(nbrThreads),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetJacobianDataByType returned non-zero error code : ",
+                    "gmshModelMeshGetJacobianDataByType returned non-zero error code: ",
                     ierr.value)
             return (
                 api_nbrIntegrationPoints_.value,
-                _ovectordouble(api_jacobian_,api_jacobian_n_.value),
-                _ovectordouble(api_determinant_,api_determinant_n_.value))
+                _ovectordouble(api_jacobian_, api_jacobian_n_.value),
+                _ovectordouble(api_determinant_, api_determinant_n_.value))
 
         @staticmethod
-        def getFunctionSpaceDataByType(elementType,integrationType,functionSpaceType,dim=-1,tag=-1):
+        def getFunctionSpaceDataByType(elementType, integrationType, functionSpaceType, dim=-1, tag=-1):
             """
             Gets the function space data for mesh elements in the same way as
             `getFunctionSpaceData', but for a single `elementType'.
 
-            return integrationPoints, functionSpaceNumComponents, functionSpaceData
+            Returns `integrationPoints', `functionSpaceNumComponents', `functionSpaceData'.
             """
             api_integrationPoints_, api_integrationPoints_n_ = POINTER(c_double)(), c_size_t()
             api_functionSpaceNumComponents_ = c_int()
@@ -1151,23 +1151,23 @@ class model:
                 c_int(elementType),
                 c_char_p(integrationType.encode()),
                 c_char_p(functionSpaceType.encode()),
-                byref(api_integrationPoints_),byref(api_integrationPoints_n_),
+                byref(api_integrationPoints_), byref(api_integrationPoints_n_),
                 byref(api_functionSpaceNumComponents_),
-                byref(api_functionSpaceData_),byref(api_functionSpaceData_n_),
+                byref(api_functionSpaceData_), byref(api_functionSpaceData_n_),
                 c_int(dim),
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetFunctionSpaceDataByType returned non-zero error code : ",
+                    "gmshModelMeshGetFunctionSpaceDataByType returned non-zero error code: ",
                     ierr.value)
             return (
-                _ovectordouble(api_integrationPoints_,api_integrationPoints_n_.value),
+                _ovectordouble(api_integrationPoints_, api_integrationPoints_n_.value),
                 api_functionSpaceNumComponents_.value,
-                _ovectordouble(api_functionSpaceData_,api_functionSpaceData_n_.value))
+                _ovectordouble(api_functionSpaceData_, api_functionSpaceData_n_.value))
 
         @staticmethod
-        def setNodes(dim,tag,nodeTags,coord,parametricCoord=[]):
+        def setNodes(dim, tag, nodeTags, coord, parametricCoord=[]):
             """
             Sets the mesh nodes in the geometrical entity of dimension `dim' and tag
             `tag'. `nodetags' contains the node tags (their unique, strictly positive
@@ -1188,13 +1188,13 @@ class model:
                 api_coord_, api_coord_n_,
                 api_parametricCoord_, api_parametricCoord_n_,
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshSetNodes returned non-zero error code : ",
+                    "gmshModelMeshSetNodes returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def setElements(dim,tag,types,elementTags,nodeTags):
+        def setElements(dim, tag, types, elementTags, nodeTags):
             """
             Sets the mesh elements of the entity of dimension `dim' and `tag' tag.
             `types' contains the MSH types of the elements (e.g. `2' for 3-node
@@ -1217,9 +1217,9 @@ class model:
                 api_elementTags_, api_elementTags_n_, api_elementTags_nn_,
                 api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_,
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshSetElements returned non-zero error code : ",
+                    "gmshModelMeshSetElements returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -1233,9 +1233,9 @@ class model:
             ierr = c_int()
             lib.gmshModelMeshReclassifyNodes(
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshReclassifyNodes returned non-zero error code : ",
+                    "gmshModelMeshReclassifyNodes returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -1248,23 +1248,23 @@ class model:
             tags from 1 to N to maintain reasonnable performance (in this case the
             internal cache is based on a vector; otherwise it uses a map).
 
-            return coord, parametricCoord
+            Returns `coord', `parametricCoord'.
             """
             api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
             api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetNode(
                 c_int(nodeTag),
-                byref(api_coord_),byref(api_coord_n_),
-                byref(api_parametricCoord_),byref(api_parametricCoord_n_),
+                byref(api_coord_), byref(api_coord_n_),
+                byref(api_parametricCoord_), byref(api_parametricCoord_n_),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetNode returned non-zero error code : ",
+                    "gmshModelMeshGetNode returned non-zero error code: ",
                     ierr.value)
             return (
-                _ovectordouble(api_coord_,api_coord_n_.value),
-                _ovectordouble(api_parametricCoord_,api_parametricCoord_n_.value))
+                _ovectordouble(api_coord_, api_coord_n_.value),
+                _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
 
         @staticmethod
         def getElement(elementTag):
@@ -1276,7 +1276,7 @@ class model:
             reasonnable performance (in this case the internal cache is based on a
             vector; otherwise it uses a map).
 
-            return type, nodeTags
+            Returns `type', `nodeTags'.
             """
             api_type_ = c_int()
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
@@ -1284,18 +1284,18 @@ class model:
             lib.gmshModelMeshGetElement(
                 c_int(elementTag),
                 byref(api_type_),
-                byref(api_nodeTags_),byref(api_nodeTags_n_),
+                byref(api_nodeTags_), byref(api_nodeTags_n_),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetElement returned non-zero error code : ",
+                    "gmshModelMeshGetElement returned non-zero error code: ",
                     ierr.value)
             return (
                 api_type_.value,
-                _ovectorint(api_nodeTags_,api_nodeTags_n_.value))
+                _ovectorint(api_nodeTags_, api_nodeTags_n_.value))
 
         @staticmethod
-        def setSize(dimTags,size):
+        def setSize(dimTags, size):
             """
             Sets a mesh size constraint on the geometrical entities `dimTags'.
             Currently only entities of dimension 0 (points) are handled.
@@ -1306,13 +1306,13 @@ class model:
                 api_dimTags_, api_dimTags_n_,
                 c_double(size),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshSetSize returned non-zero error code : ",
+                    "gmshModelMeshSetSize returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def setTransfiniteCurve(tag,numNodes,type="Progression",coef=1.):
+        def setTransfiniteCurve(tag, numNodes, type="Progression", coef=1.):
             """
             Sets a transfinite meshing constraint on the curve `tag', with `numNodes'
             mesh nodes distributed according to `type' and `coef'. Currently supported
@@ -1326,13 +1326,13 @@ class model:
                 c_char_p(type.encode()),
                 c_double(coef),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshSetTransfiniteCurve returned non-zero error code : ",
+                    "gmshModelMeshSetTransfiniteCurve returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def setTransfiniteSurface(tag,arrangement="Left",cornerTags=[]):
+        def setTransfiniteSurface(tag, arrangement="Left", cornerTags=[]):
             """
             Sets a transfinite meshing constraint on the surface `tag'. `arrangement'
             describes the arrangement of the triangles when the surface is not flagged
@@ -1349,13 +1349,13 @@ class model:
                 c_char_p(arrangement.encode()),
                 api_cornerTags_, api_cornerTags_n_,
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshSetTransfiniteSurface returned non-zero error code : ",
+                    "gmshModelMeshSetTransfiniteSurface returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def setTransfiniteVolume(tag,cornerTags=[]):
+        def setTransfiniteVolume(tag, cornerTags=[]):
             """
             Sets a transfinite meshing constraint on the surface `tag'. `cornerTags'
             can be used to specify the (6 or 8) corners of the transfinite
@@ -1367,13 +1367,13 @@ class model:
                 c_int(tag),
                 api_cornerTags_, api_cornerTags_n_,
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshSetTransfiniteVolume returned non-zero error code : ",
+                    "gmshModelMeshSetTransfiniteVolume returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def setRecombine(dim,tag):
+        def setRecombine(dim, tag):
             """
             Sets a recombination meshing constraint on the geometrical entity of
             dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to
@@ -1384,13 +1384,13 @@ class model:
                 c_int(dim),
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshSetRecombine returned non-zero error code : ",
+                    "gmshModelMeshSetRecombine returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def setSmoothing(dim,tag,val):
+        def setSmoothing(dim, tag, val):
             """
             Sets a smoothing meshing constraint on the geometrical entity of dimension
             `dim' and tag `tag'. `val' iterations of a Laplace smoother are applied.
@@ -1401,13 +1401,13 @@ class model:
                 c_int(tag),
                 c_int(val),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshSetSmoothing returned non-zero error code : ",
+                    "gmshModelMeshSetSmoothing returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def setReverse(dim,tag,val=True):
+        def setReverse(dim, tag, val=True):
             """
             Sets a reverse meshing constraint on the geometrical entity of dimension
             `dim' and tag `tag'. If `val' is true, the mesh orientation will be
@@ -1421,13 +1421,13 @@ class model:
                 c_int(tag),
                 c_int(bool(val)),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshSetReverse returned non-zero error code : ",
+                    "gmshModelMeshSetReverse returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def embed(dim,tags,inDim,inTag):
+        def embed(dim, tags, inDim, inTag):
             """
             Embeds the geometrical entities of dimension `dim' and tags `tags' in the
             (inDim, inTag) geometrical entity. `inDim' must be strictly greater than
@@ -1441,27 +1441,27 @@ class model:
                 c_int(inDim),
                 c_int(inTag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshEmbed returned non-zero error code : ",
+                    "gmshModelMeshEmbed returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def getNumberIntegrationPoints(elementType,integrationType):
+        def getNumberIntegrationPoints(elementType, integrationType):
             """
             Gets the number of intergation points corresponding to 'elementType' and
             'integrationType'.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelMeshGetNumberIntegrationPoints(
                 c_int(elementType),
                 c_char_p(integrationType.encode()),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetNumberIntegrationPoints returned non-zero error code : ",
+                    "gmshModelMeshGetNumberIntegrationPoints returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
@@ -1474,13 +1474,13 @@ class model:
             lib.gmshModelMeshPrecomputeBasicFunction(
                 c_int(elementType),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshPrecomputeBasicFunction returned non-zero error code : ",
+                    "gmshModelMeshPrecomputeBasicFunction returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def reorderedMeshElements(elementType,dim,tag,order):
+        def reorderedMeshElements(elementType, dim, tag, order):
             """
             Reorders the mesh elements corresponding to 'elementType' of entity given
             by 'dim' and 'tag' according to 'order'.
@@ -1493,32 +1493,32 @@ class model:
                 c_int(tag),
                 api_order_, api_order_n_,
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshReorderedMeshElements returned non-zero error code : ",
+                    "gmshModelMeshReorderedMeshElements returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def setPeriodic(dim,tag,tagSource,affineTransformation):
+        def setPeriodic(dim, tags, tagsSource, affineTransformation):
             """
             Sets the meshes of the entities of dimension `dim' and tag `tags' as
             periodic copies of the meshes of entities `tagsSource', using the affine
             transformation specified in `affineTransformation' (16 entries of a 4x4
             matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.
             """
-            api_tag_, api_tag_n_ = _ivectorint(tag)
-            api_tagSource_, api_tagSource_n_ = _ivectorint(tagSource)
+            api_tags_, api_tags_n_ = _ivectorint(tags)
+            api_tagsSource_, api_tagsSource_n_ = _ivectorint(tagsSource)
             api_affineTransformation_, api_affineTransformation_n_ = _ivectordouble(affineTransformation)
             ierr = c_int()
             lib.gmshModelMeshSetPeriodic(
                 c_int(dim),
-                api_tag_, api_tag_n_,
-                api_tagSource_, api_tagSource_n_,
+                api_tags_, api_tags_n_,
+                api_tagsSource_, api_tagsSource_n_,
                 api_affineTransformation_, api_affineTransformation_n_,
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshSetPeriodic returned non-zero error code : ",
+                    "gmshModelMeshSetPeriodic returned non-zero error code: ",
                     ierr.value)
 
 
@@ -1528,22 +1528,22 @@ class model:
             """
 
             @staticmethod
-            def add(type,tag=-1):
+            def add(type, tag=-1):
                 """
-                Adds a new mesh size field of type `type'. If `tag' is positive, assign the
-                tag explcitly; otherwise a new tag is assigned automatically. Returns the
-                field tag.
+                Adds a new mesh size field of type `type'. If `tag' is positive, assigns
+                the tag explcitly; otherwise a new tag is assigned automatically. Returns
+                the field tag.
 
-                return int
+                Returns an integer.
                 """
                 ierr = c_int()
                 api__result__ = lib.gmshModelMeshFieldAdd(
                     c_char_p(type.encode()),
                     c_int(tag),
                     byref(ierr))
-                if ierr.value != 0 :
+                if ierr.value != 0:
                     raise ValueError(
-                        "gmshModelMeshFieldAdd returned non-zero error code : ",
+                        "gmshModelMeshFieldAdd returned non-zero error code: ",
                         ierr.value)
                 return api__result__
 
@@ -1556,13 +1556,13 @@ class model:
                 lib.gmshModelMeshFieldRemove(
                     c_int(tag),
                     byref(ierr))
-                if ierr.value != 0 :
+                if ierr.value != 0:
                     raise ValueError(
-                        "gmshModelMeshFieldRemove returned non-zero error code : ",
+                        "gmshModelMeshFieldRemove returned non-zero error code: ",
                         ierr.value)
 
             @staticmethod
-            def setNumber(tag,option,value):
+            def setNumber(tag, option, value):
                 """
                 Sets the numerical option `option' to value `value' for field `tag'.
                 """
@@ -1572,13 +1572,13 @@ class model:
                     c_char_p(option.encode()),
                     c_double(value),
                     byref(ierr))
-                if ierr.value != 0 :
+                if ierr.value != 0:
                     raise ValueError(
-                        "gmshModelMeshFieldSetNumber returned non-zero error code : ",
+                        "gmshModelMeshFieldSetNumber returned non-zero error code: ",
                         ierr.value)
 
             @staticmethod
-            def setString(tag,option,value):
+            def setString(tag, option, value):
                 """
                 Sets the string option `option' to value `value' for field `tag'.
                 """
@@ -1588,13 +1588,13 @@ class model:
                     c_char_p(option.encode()),
                     c_char_p(value.encode()),
                     byref(ierr))
-                if ierr.value != 0 :
+                if ierr.value != 0:
                     raise ValueError(
-                        "gmshModelMeshFieldSetString returned non-zero error code : ",
+                        "gmshModelMeshFieldSetString returned non-zero error code: ",
                         ierr.value)
 
             @staticmethod
-            def setNumbers(tag,option,value):
+            def setNumbers(tag, option, value):
                 """
                 Sets the numerical list option `option' to value `value' for field `tag'.
                 """
@@ -1605,9 +1605,9 @@ class model:
                     c_char_p(option.encode()),
                     api_value_, api_value_n_,
                     byref(ierr))
-                if ierr.value != 0 :
+                if ierr.value != 0:
                     raise ValueError(
-                        "gmshModelMeshFieldSetNumbers returned non-zero error code : ",
+                        "gmshModelMeshFieldSetNumbers returned non-zero error code: ",
                         ierr.value)
 
             @staticmethod
@@ -1619,9 +1619,9 @@ class model:
                 lib.gmshModelMeshFieldSetAsBackgroundMesh(
                     c_int(tag),
                     byref(ierr))
-                if ierr.value != 0 :
+                if ierr.value != 0:
                     raise ValueError(
-                        "gmshModelMeshFieldSetAsBackgroundMesh returned non-zero error code : ",
+                        "gmshModelMeshFieldSetAsBackgroundMesh returned non-zero error code: ",
                         ierr.value)
 
             @staticmethod
@@ -1633,9 +1633,9 @@ class model:
                 lib.gmshModelMeshFieldSetAsBoundaryLayer(
                     c_int(tag),
                     byref(ierr))
-                if ierr.value != 0 :
+                if ierr.value != 0:
                     raise ValueError(
-                        "gmshModelMeshFieldSetAsBoundaryLayer returned non-zero error code : ",
+                        "gmshModelMeshFieldSetAsBoundaryLayer returned non-zero error code: ",
                         ierr.value)
 
 
@@ -1645,7 +1645,7 @@ class model:
         """
 
         @staticmethod
-        def addPoint(x,y,z,meshSize=0.,tag=-1):
+        def addPoint(x, y, z, meshSize=0., tag=-1):
             """
             Adds a geometrical point in the internal GEO CAD representation, at
             coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
@@ -1654,7 +1654,7 @@ class model:
             point will be added in the current model only after `synchronize' is
             called. This behavior holds for all the entities added in the geo module.)
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddPoint(
@@ -1664,20 +1664,20 @@ class model:
                 c_double(meshSize),
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoAddPoint returned non-zero error code : ",
+                    "gmshModelGeoAddPoint returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addLine(startTag,endTag,tag=-1):
+        def addLine(startTag, endTag, tag=-1):
             """
             Adds a straight line segment between the two points with tags `startTag'
             and `endTag'. If `tag' is positive, sets the tag explicitly; otherwise a
             new tag is selected automatically. Returns the tag of the line.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddLine(
@@ -1685,14 +1685,14 @@ class model:
                 c_int(endTag),
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoAddLine returned non-zero error code : ",
+                    "gmshModelGeoAddLine returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addCircleArc(startTag,centerTag,endTag,tag=-1,nx=0.,ny=0.,nz=0.):
+        def addCircleArc(startTag, centerTag, endTag, tag=-1, nx=0., ny=0., nz=0.):
             """
             Adds a circle arc (stricly smaller than Pi) between the two points with
             tags `startTag' and `endTag', with center `centertag'. If `tag' is
@@ -1700,7 +1700,7 @@ class model:
             automatically. If (`nx', `ny', `nz') != (0,0,0), explicitely sets the plane
             of the circle arc. Returns the tag of the circle arc.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddCircleArc(
@@ -1712,14 +1712,14 @@ class model:
                 c_double(ny),
                 c_double(nz),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoAddCircleArc returned non-zero error code : ",
+                    "gmshModelGeoAddCircleArc returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addEllipseArc(startTag,centerTag,majorTag,endTag,tag=-1,nx=0.,ny=0.,nz=0.):
+        def addEllipseArc(startTag, centerTag, majorTag, endTag, tag=-1, nx=0., ny=0., nz=0.):
             """
             Adds an ellipse arc (stricly smaller than Pi) between the two points
             `startTag' and `endTag', with center `centertag' and major axis point
@@ -1728,7 +1728,7 @@ class model:
             explicitely sets the plane of the circle arc. Returns the tag of the
             ellipse arc.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelGeoAddEllipseArc(
@@ -1741,21 +1741,21 @@ class model:
                 c_double(ny),
                 c_double(nz),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoAddEllipseArc returned non-zero error code : ",
+                    "gmshModelGeoAddEllipseArc returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addSpline(pointTags,tag=-1):
+        def addSpline(pointTags, tag=-1):
             """
             Adds a spline (Catmull-Rom) curve going through the points `pointTags'. If
             `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. Creates a periodic curve if the first and last points are
             the same. Returns the tag of the spline curve.
 
-            return int
+            Returns an integer.
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -1763,21 +1763,21 @@ class model:
                 api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoAddSpline returned non-zero error code : ",
+                    "gmshModelGeoAddSpline returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addBSpline(pointTags,tag=-1):
+        def addBSpline(pointTags, tag=-1):
             """
             Adds a cubic b-spline curve with `pointTags' control points. If `tag' is
             positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. Creates a periodic curve if the first and last points are
             the same. Returns the tag of the b-spline curve.
 
-            return int
+            Returns an integer.
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -1785,20 +1785,20 @@ class model:
                 api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoAddBSpline returned non-zero error code : ",
+                    "gmshModelGeoAddBSpline returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addBezier(pointTags,tag=-1):
+        def addBezier(pointTags, tag=-1):
             """
             Adds a Bezier curve with `pointTags' control points. If `tag' is positive,
             sets the tag explicitly; otherwise a new tag is selected automatically.
             Returns the tag of the Bezier curve.
 
-            return int
+            Returns an integer.
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -1806,14 +1806,14 @@ class model:
                 api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoAddBezier returned non-zero error code : ",
+                    "gmshModelGeoAddBezier returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addCurveLoop(curveTags,tag=-1):
+        def addCurveLoop(curveTags, tag=-1):
             """
             Adds a curve loop (a closed wire) formed by the curves `curveTags'.
             `curveTags' should contain (signed) tags of geometrical enties of dimension
@@ -1822,7 +1822,7 @@ class model:
             explicitly; otherwise a new tag is selected automatically. Returns the tag
             of the curve loop.
 
-            return int
+            Returns an integer.
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
@@ -1830,21 +1830,21 @@ class model:
                 api_curveTags_, api_curveTags_n_,
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoAddCurveLoop returned non-zero error code : ",
+                    "gmshModelGeoAddCurveLoop returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addPlaneSurface(wireTags,tag=-1):
+        def addPlaneSurface(wireTags, tag=-1):
             """
             Adds a plane surface defined by one or more curve loops `wireTags'. The
             first curve loop defines the exterior contour; additional curve loop define
             holes. If `tag' is positive, sets the tag explicitly; otherwise a new tag
             is selected automatically. Returns the tag of the surface.
 
-            return int
+            Returns an integer.
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             ierr = c_int()
@@ -1852,21 +1852,21 @@ class model:
                 api_wireTags_, api_wireTags_n_,
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoAddPlaneSurface returned non-zero error code : ",
+                    "gmshModelGeoAddPlaneSurface returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addSurfaceFilling(wireTags,tag=-1,sphereCenterTag=-1):
+        def addSurfaceFilling(wireTags, tag=-1, sphereCenterTag=-1):
             """
             Adds a surface filling the curve loops in `wireTags'. Currently only a
             single curve loop is supported; this curve loop should be composed by 3 or
             4 curves only. If `tag' is positive, sets the tag explicitly; otherwise a
             new tag is selected automatically. Returns the tag of the surface.
 
-            return int
+            Returns an integer.
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             ierr = c_int()
@@ -1875,20 +1875,20 @@ class model:
                 c_int(tag),
                 c_int(sphereCenterTag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoAddSurfaceFilling returned non-zero error code : ",
+                    "gmshModelGeoAddSurfaceFilling returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addSurfaceLoop(surfaceTags,tag=-1):
+        def addSurfaceLoop(surfaceTags, tag=-1):
             """
             Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
             positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. Returns the tag of the shell.
 
-            return int
+            Returns an integer.
             """
             api_surfaceTags_, api_surfaceTags_n_ = _ivectorint(surfaceTags)
             ierr = c_int()
@@ -1896,21 +1896,21 @@ class model:
                 api_surfaceTags_, api_surfaceTags_n_,
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoAddSurfaceLoop returned non-zero error code : ",
+                    "gmshModelGeoAddSurfaceLoop returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addVolume(shellTags,tag=-1):
+        def addVolume(shellTags, tag=-1):
             """
             Adds a volume (a region) defined by one or more shells `shellTags'. The
             first surface loop defines the exterior boundary; additional surface loop
             define holes. If `tag' is positive, sets the tag explicitly; otherwise a
             new tag is selected automatically. Returns the tag of the volume.
 
-            return int
+            Returns an integer.
             """
             api_shellTags_, api_shellTags_n_ = _ivectorint(shellTags)
             ierr = c_int()
@@ -1918,14 +1918,14 @@ class model:
                 api_shellTags_, api_shellTags_n_,
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoAddVolume returned non-zero error code : ",
+                    "gmshModelGeoAddVolume returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def extrude(dimTags,dx,dy,dz,numElements=[],heights=[],recombine=False):
+        def extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False):
             """
             Extrudes the geometrical entities `dimTags' by translation along (`dx',
             `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements' is
@@ -1933,7 +1933,7 @@ class model:
             number of elements in each layer. If `height' is not empty, it provides the
             (cummulative) height of the different layers, normalized to 1.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -1950,14 +1950,14 @@ class model:
                 api_heights_, api_heights_n_,
                 c_int(bool(recombine)),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoExtrude returned non-zero error code : ",
+                    "gmshModelGeoExtrude returned non-zero error code: ",
                     ierr.value)
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def revolve(dimTags,x,y,z,ax,ay,az,angle,numElements=[],heights=[],recombine=False):
+        def revolve(dimTags, x, y, z, ax, ay, az, angle, numElements=[], heights=[], recombine=False):
             """
             Extrudes the geometrical entities `dimTags' by rotation of `angle' radians
             around the axis of revolution defined by the point (`x', `y', `z') and the
@@ -1967,7 +1967,7 @@ class model:
             empty, it provides the (cummulative) height of the different layers,
             normalized to 1.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -1988,14 +1988,14 @@ class model:
                 api_heights_, api_heights_n_,
                 c_int(bool(recombine)),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoRevolve returned non-zero error code : ",
+                    "gmshModelGeoRevolve returned non-zero error code: ",
                     ierr.value)
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def twist(dimTags,x,y,z,dx,dy,dz,ax,ay,az,angle,numElements=[],heights=[],recombine=False):
+        def twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements=[], heights=[], recombine=False):
             """
             Extrudes the geometrical entities `dimTags' by a combined translation and
             rotation of `angle' radians, along (`dx', `dy', `dz') and around the axis
@@ -2005,7 +2005,7 @@ class model:
             number of elements in each layer. If `height' is not empty, it provides the
             (cummulative) height of the different layers, normalized to 1.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -2029,14 +2029,14 @@ class model:
                 api_heights_, api_heights_n_,
                 c_int(bool(recombine)),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoTwist returned non-zero error code : ",
+                    "gmshModelGeoTwist returned non-zero error code: ",
                     ierr.value)
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def translate(dimTags,dx,dy,dz):
+        def translate(dimTags, dx, dy, dz):
             """
             Translates the geometrical entities `dimTags' along (`dx', `dy', `dz').
             """
@@ -2048,13 +2048,13 @@ class model:
                 c_double(dy),
                 c_double(dz),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoTranslate returned non-zero error code : ",
+                    "gmshModelGeoTranslate returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def rotate(dimTags,x,y,z,ax,ay,az,angle):
+        def rotate(dimTags, x, y, z, ax, ay, az, angle):
             """
             Rotates the geometrical entities `dimTags' of `angle' radians around the
             axis of revolution defined by the point (`x', `y', `z') and the direction
@@ -2072,13 +2072,13 @@ class model:
                 c_double(az),
                 c_double(angle),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoRotate returned non-zero error code : ",
+                    "gmshModelGeoRotate returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def dilate(dimTags,x,y,z,a,b,c):
+        def dilate(dimTags, x, y, z, a, b, c):
             """
             Scales the geometrical entities `dimTag' by factors `a', `b' and `c' along
             the three coordinate axes; use (`x', `y', `z') as the center of the
@@ -2095,13 +2095,13 @@ class model:
                 c_double(b),
                 c_double(c),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoDilate returned non-zero error code : ",
+                    "gmshModelGeoDilate returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def symmetry(dimTags,a,b,c,d):
+        def symmetry(dimTags, a, b, c, d):
             """
             Applies a symmetry transformation to the geometrical entities `dimTag',
             with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' =
@@ -2116,9 +2116,9 @@ class model:
                 c_double(c),
                 c_double(d),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoSymmetry returned non-zero error code : ",
+                    "gmshModelGeoSymmetry returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -2127,7 +2127,7 @@ class model:
             Copies the entities `dimTags'; the new entities are returned in
             `outDimTags'.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -2136,14 +2136,14 @@ class model:
                 api_dimTags_, api_dimTags_n_,
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoCopy returned non-zero error code : ",
+                    "gmshModelGeoCopy returned non-zero error code: ",
                     ierr.value)
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def remove(dimTags,recursive=False):
+        def remove(dimTags, recursive=False):
             """
             Removes the entities `dimTags'. If `recursive' is true, removes all the
             entities on their boundaries, down to dimension 0.
@@ -2154,9 +2154,9 @@ class model:
                 api_dimTags_, api_dimTags_n_,
                 c_int(bool(recursive)),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoRemove returned non-zero error code : ",
+                    "gmshModelGeoRemove returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -2168,9 +2168,9 @@ class model:
             ierr = c_int()
             lib.gmshModelGeoRemoveAllDuplicates(
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoRemoveAllDuplicates returned non-zero error code : ",
+                    "gmshModelGeoRemoveAllDuplicates returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -2184,19 +2184,19 @@ class model:
             ierr = c_int()
             lib.gmshModelGeoSynchronize(
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelGeoSynchronize returned non-zero error code : ",
+                    "gmshModelGeoSynchronize returned non-zero error code: ",
                     ierr.value)
 
 
         class mesh:
             """
-            geo-specific meshing constraints
+            GEO-specific meshing constraints
             """
 
             @staticmethod
-            def setSize(dimTags,size):
+            def setSize(dimTags, size):
                 """
                 Sets a mesh size constraint on the geometrical entities `dimTags'.
                 Currently only entities of dimension 0 (points) are handled.
@@ -2207,13 +2207,13 @@ class model:
                     api_dimTags_, api_dimTags_n_,
                     c_double(size),
                     byref(ierr))
-                if ierr.value != 0 :
+                if ierr.value != 0:
                     raise ValueError(
-                        "gmshModelGeoMeshSetSize returned non-zero error code : ",
+                        "gmshModelGeoMeshSetSize returned non-zero error code: ",
                         ierr.value)
 
             @staticmethod
-            def setTransfiniteCurve(tag,nPoints,type="Progression",coef=1.):
+            def setTransfiniteCurve(tag, nPoints, type="Progression", coef=1.):
                 """
                 Sets a transfinite meshing constraint on the curve `tag', with `numNodes'
                 mesh nodes distributed according to `type' and `coef'. Currently supported
@@ -2227,13 +2227,13 @@ class model:
                     c_char_p(type.encode()),
                     c_double(coef),
                     byref(ierr))
-                if ierr.value != 0 :
+                if ierr.value != 0:
                     raise ValueError(
-                        "gmshModelGeoMeshSetTransfiniteCurve returned non-zero error code : ",
+                        "gmshModelGeoMeshSetTransfiniteCurve returned non-zero error code: ",
                         ierr.value)
 
             @staticmethod
-            def setTransfiniteSurface(tag,arrangement="Left",cornerTags=[]):
+            def setTransfiniteSurface(tag, arrangement="Left", cornerTags=[]):
                 """
                 Sets a transfinite meshing constraint on the surface `tag'. `arrangement'
                 describes the arrangement of the triangles when the surface is not flagged
@@ -2250,13 +2250,13 @@ class model:
                     c_char_p(arrangement.encode()),
                     api_cornerTags_, api_cornerTags_n_,
                     byref(ierr))
-                if ierr.value != 0 :
+                if ierr.value != 0:
                     raise ValueError(
-                        "gmshModelGeoMeshSetTransfiniteSurface returned non-zero error code : ",
+                        "gmshModelGeoMeshSetTransfiniteSurface returned non-zero error code: ",
                         ierr.value)
 
             @staticmethod
-            def setTransfiniteVolume(tag,cornerTags=[]):
+            def setTransfiniteVolume(tag, cornerTags=[]):
                 """
                 Sets a transfinite meshing constraint on the surface `tag'. `cornerTags'
                 can be used to specify the (6 or 8) corners of the transfinite
@@ -2268,13 +2268,13 @@ class model:
                     c_int(tag),
                     api_cornerTags_, api_cornerTags_n_,
                     byref(ierr))
-                if ierr.value != 0 :
+                if ierr.value != 0:
                     raise ValueError(
-                        "gmshModelGeoMeshSetTransfiniteVolume returned non-zero error code : ",
+                        "gmshModelGeoMeshSetTransfiniteVolume returned non-zero error code: ",
                         ierr.value)
 
             @staticmethod
-            def setRecombine(dim,tag,angle=45.):
+            def setRecombine(dim, tag, angle=45.):
                 """
                 Sets a recombination meshing constraint on the geometrical entity of
                 dimension `dim' and tag `tag'. Currently only entities of dimension 2 (to
@@ -2286,13 +2286,13 @@ class model:
                     c_int(tag),
                     c_double(angle),
                     byref(ierr))
-                if ierr.value != 0 :
+                if ierr.value != 0:
                     raise ValueError(
-                        "gmshModelGeoMeshSetRecombine returned non-zero error code : ",
+                        "gmshModelGeoMeshSetRecombine returned non-zero error code: ",
                         ierr.value)
 
             @staticmethod
-            def setSmoothing(dim,tag,val):
+            def setSmoothing(dim, tag, val):
                 """
                 Sets a smoothing meshing constraint on the geometrical entity of dimension
                 `dim' and tag `tag'. `val' iterations of a Laplace smoother are applied.
@@ -2303,13 +2303,13 @@ class model:
                     c_int(tag),
                     c_int(val),
                     byref(ierr))
-                if ierr.value != 0 :
+                if ierr.value != 0:
                     raise ValueError(
-                        "gmshModelGeoMeshSetSmoothing returned non-zero error code : ",
+                        "gmshModelGeoMeshSetSmoothing returned non-zero error code: ",
                         ierr.value)
 
             @staticmethod
-            def setReverse(dim,tag,val=True):
+            def setReverse(dim, tag, val=True):
                 """
                 Sets a reverse meshing constraint on the geometrical entity of dimension
                 `dim' and tag `tag'. If `val' is true, the mesh orientation will be
@@ -2323,9 +2323,9 @@ class model:
                     c_int(tag),
                     c_int(bool(val)),
                     byref(ierr))
-                if ierr.value != 0 :
+                if ierr.value != 0:
                     raise ValueError(
-                        "gmshModelGeoMeshSetReverse returned non-zero error code : ",
+                        "gmshModelGeoMeshSetReverse returned non-zero error code: ",
                         ierr.value)
 
 
@@ -2335,7 +2335,7 @@ class model:
         """
 
         @staticmethod
-        def addPoint(x,y,z,meshSize=0.,tag=-1):
+        def addPoint(x, y, z, meshSize=0., tag=-1):
             """
             Adds a geometrical point in the internal OpenCASCADE CAD representation, at
             coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
@@ -2344,7 +2344,7 @@ class model:
             point will be added in the current model only after `synchronize' is
             called. This behavior holds for all the entities added in the occ module.)
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddPoint(
@@ -2354,20 +2354,20 @@ class model:
                 c_double(meshSize),
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddPoint returned non-zero error code : ",
+                    "gmshModelOccAddPoint returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addLine(startTag,endTag,tag=-1):
+        def addLine(startTag, endTag, tag=-1):
             """
             Adds a straight line segment between the two points with tags `startTag'
             and `endTag'. If `tag' is positive, sets the tag explicitly; otherwise a
             new tag is selected automatically. Returns the tag of the line.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddLine(
@@ -2375,21 +2375,21 @@ class model:
                 c_int(endTag),
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddLine returned non-zero error code : ",
+                    "gmshModelOccAddLine returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addCircleArc(startTag,centerTag,endTag,tag=-1):
+        def addCircleArc(startTag, centerTag, endTag, tag=-1):
             """
             Adds a circle arc between the two points with tags `startTag' and `endTag',
             with center `centerTag'. If `tag' is positive, sets the tag explicitly;
             otherwise a new tag is selected automatically. Returns the tag of the
             circle arc.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddCircleArc(
@@ -2398,21 +2398,21 @@ class model:
                 c_int(endTag),
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddCircleArc returned non-zero error code : ",
+                    "gmshModelOccAddCircleArc returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addCircle(x,y,z,r,tag=-1,angle1=0.,angle2=2*pi):
+        def addCircle(x, y, z, r, tag=-1, angle1=0., angle2=2*pi):
             """
             Adds a circle of center (`x', `y', `z') and radius `r'. If `tag' is
             positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. If `angle1' and `angle2' are specified, creates a circle arc
             between the two angles. Returns the tag of the circle.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddCircle(
@@ -2424,21 +2424,21 @@ class model:
                 c_double(angle1),
                 c_double(angle2),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddCircle returned non-zero error code : ",
+                    "gmshModelOccAddCircle returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addEllipseArc(startTag,centerTag,endTag,tag=-1):
+        def addEllipseArc(startTag, centerTag, endTag, tag=-1):
             """
             Adds an ellipse arc between the two points with tags `startTag' and
             `endTag', with center `centerTag'. If `tag' is positive, sets the tag
             explicitly; otherwise a new tag is selected automatically. Returns the tag
             of the ellipse arc.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddEllipseArc(
@@ -2447,14 +2447,14 @@ class model:
                 c_int(endTag),
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddEllipseArc returned non-zero error code : ",
+                    "gmshModelOccAddEllipseArc returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addEllipse(x,y,z,r1,r2,tag=-1,angle1=0.,angle2=2*pi):
+        def addEllipse(x, y, z, r1, r2, tag=-1, angle1=0., angle2=2*pi):
             """
             Adds an ellipse of center (`x', `y', `z') and radii `r1' and `r2' along the
             x- and y-axes respectively. If `tag' is positive, sets the tag explicitly;
@@ -2462,7 +2462,7 @@ class model:
             specified, creates an ellipse arc between the two angles. Returns the tag
             of the ellipse.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddEllipse(
@@ -2475,21 +2475,21 @@ class model:
                 c_double(angle1),
                 c_double(angle2),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddEllipse returned non-zero error code : ",
+                    "gmshModelOccAddEllipse returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addSpline(pointTags,tag=-1):
+        def addSpline(pointTags, tag=-1):
             """
             Adds a spline (C2 b-spline) curve going through the points `pointTags'. If
             `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. Creates a periodic curve if the first and last points are
             the same. Returns the tag of the spline curve.
 
-            return int
+            Returns an integer.
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -2497,14 +2497,14 @@ class model:
                 api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddSpline returned non-zero error code : ",
+                    "gmshModelOccAddSpline returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addBSpline(pointTags,tag=-1,degree=3,weights=[],knots=[],multiplicities=[]):
+        def addBSpline(pointTags, tag=-1, degree=3, weights=[], knots=[], multiplicities=[]):
             """
             Adds a b-spline curve of degree `degree' with `pointTags' control points.
             If `weights', `knots' or `multiplicities' are not provided, default
@@ -2513,7 +2513,7 @@ class model:
             periodic curve if the first and last points are the same. Returns the tag
             of the b-spline curve.
 
-            return int
+            Returns an integer.
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             api_weights_, api_weights_n_ = _ivectordouble(weights)
@@ -2528,20 +2528,20 @@ class model:
                 api_knots_, api_knots_n_,
                 api_multiplicities_, api_multiplicities_n_,
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddBSpline returned non-zero error code : ",
+                    "gmshModelOccAddBSpline returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addBezier(pointTags,tag=-1):
+        def addBezier(pointTags, tag=-1):
             """
             Adds a Bezier curve with `pointTags' control points. If `tag' is positive,
             sets the tag explicitly; otherwise a new tag is selected automatically.
             Returns the tag of the Bezier curve.
 
-            return int
+            Returns an integer.
             """
             api_pointTags_, api_pointTags_n_ = _ivectorint(pointTags)
             ierr = c_int()
@@ -2549,14 +2549,14 @@ class model:
                 api_pointTags_, api_pointTags_n_,
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddBezier returned non-zero error code : ",
+                    "gmshModelOccAddBezier returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addWire(curveTags,tag=-1,checkClosed=False):
+        def addWire(curveTags, tag=-1, checkClosed=False):
             """
             Adds a wire (open or closed) formed by the curves `curveTags'. `curveTags'
             should contain (signed) tags: a negative tag signifies that the underlying
@@ -2564,7 +2564,7 @@ class model:
             the tag explicitly; otherwise a new tag is selected automatically. Returns
             the tag of the wire.
 
-            return int
+            Returns an integer.
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
@@ -2573,14 +2573,14 @@ class model:
                 c_int(tag),
                 c_int(bool(checkClosed)),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddWire returned non-zero error code : ",
+                    "gmshModelOccAddWire returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addCurveLoop(curveTags,tag=-1):
+        def addCurveLoop(curveTags, tag=-1):
             """
             Adds a curve loop (a closed wire) formed by the curves `curveTags'.
             `curveTags' should contain (signed) tags of curves forming a closed loop: a
@@ -2589,7 +2589,7 @@ class model:
             otherwise a new tag is selected automatically. Returns the tag of the curve
             loop.
 
-            return int
+            Returns an integer.
             """
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
             ierr = c_int()
@@ -2597,21 +2597,21 @@ class model:
                 api_curveTags_, api_curveTags_n_,
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddCurveLoop returned non-zero error code : ",
+                    "gmshModelOccAddCurveLoop returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addRectangle(x,y,z,dx,dy,tag=-1,roundedRadius=0.):
+        def addRectangle(x, y, z, dx, dy, tag=-1, roundedRadius=0.):
             """
             Adds a rectangle with lower left corner at (`x', `y', `z') and upper right
             corner at (`x' + `dx', `y' + `dy', `z'). If `tag' is positive, sets the tag
             explicitly; otherwise a new tag is selected automatically. Rounds the
             corners if `roundedRadius' is nonzero. Returns the tag of the rectangle.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddRectangle(
@@ -2623,20 +2623,20 @@ class model:
                 c_int(tag),
                 c_double(roundedRadius),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddRectangle returned non-zero error code : ",
+                    "gmshModelOccAddRectangle returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addDisk(xc,yc,zc,rx,ry,tag=-1):
+        def addDisk(xc, yc, zc, rx, ry, tag=-1):
             """
             Adds a disk with center (`xc', `yc', `zc') and radius `rx' along the x-axis
             and `ry' along the y-axis. If `tag' is positive, sets the tag explicitly;
             otherwise a new tag is selected automatically. Returns the tag of the disk.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddDisk(
@@ -2647,14 +2647,14 @@ class model:
                 c_double(ry),
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddDisk returned non-zero error code : ",
+                    "gmshModelOccAddDisk returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addPlaneSurface(wireTags,tag=-1):
+        def addPlaneSurface(wireTags, tag=-1):
             """
             Adds a plane surface defined by one or more curve loops (or closed wires)
             `wireTags'. The first curve loop defines the exterior contour; additional
@@ -2662,7 +2662,7 @@ class model:
             otherwise a new tag is selected automatically. Returns the tag of the
             surface.
 
-            return int
+            Returns an integer.
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             ierr = c_int()
@@ -2670,40 +2670,40 @@ class model:
                 api_wireTags_, api_wireTags_n_,
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddPlaneSurface returned non-zero error code : ",
+                    "gmshModelOccAddPlaneSurface returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addSurfaceFilling(wireTag,tag=-1):
+        def addSurfaceFilling(wireTag, tag=-1):
             """
             Adds a surface filling the curve loops in `wireTags'. If `tag' is positive,
             sets the tag explicitly; otherwise a new tag is selected automatically.
             Returns the tag of the surface.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddSurfaceFilling(
                 c_int(wireTag),
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddSurfaceFilling returned non-zero error code : ",
+                    "gmshModelOccAddSurfaceFilling returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addSurfaceLoop(surfaceTags,tag=-1):
+        def addSurfaceLoop(surfaceTags, tag=-1):
             """
             Adds a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
             positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. Returns the tag of the surface loop.
 
-            return int
+            Returns an integer.
             """
             api_surfaceTags_, api_surfaceTags_n_ = _ivectorint(surfaceTags)
             ierr = c_int()
@@ -2711,21 +2711,21 @@ class model:
                 api_surfaceTags_, api_surfaceTags_n_,
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddSurfaceLoop returned non-zero error code : ",
+                    "gmshModelOccAddSurfaceLoop returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addVolume(shellTags,tag=-1):
+        def addVolume(shellTags, tag=-1):
             """
             Adds a volume (a region) defined by one or more surface loops `shellTags'.
             The first surface loop defines the exterior boundary; additional surface
             loop define holes. If `tag' is positive, sets the tag explicitly; otherwise
             a new tag is selected automatically. Returns the tag of the volume.
 
-            return int
+            Returns an integer.
             """
             api_shellTags_, api_shellTags_n_ = _ivectorint(shellTags)
             ierr = c_int()
@@ -2733,14 +2733,14 @@ class model:
                 api_shellTags_, api_shellTags_n_,
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddVolume returned non-zero error code : ",
+                    "gmshModelOccAddVolume returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addSphere(xc,yc,zc,radius,tag=-1,angle1=-pi/2,angle2=pi/2,angle3=2*pi):
+        def addSphere(xc, yc, zc, radius, tag=-1, angle1=-pi/2, angle2=pi/2, angle3=2*pi):
             """
             Adds a sphere of center (`xc', `yc', `zc') and radius `r'. The optional
             `angle1' and `angle2' arguments define the polar angle opening (from -Pi/2
@@ -2748,7 +2748,7 @@ class model:
             (from 0 to 2*Pi). If `tag' is positive, sets the tag explicitly; otherwise
             a new tag is selected automatically. Returns the tag of the sphere.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddSphere(
@@ -2761,21 +2761,21 @@ class model:
                 c_double(angle2),
                 c_double(angle3),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddSphere returned non-zero error code : ",
+                    "gmshModelOccAddSphere returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addBox(x,y,z,dx,dy,dz,tag=-1):
+        def addBox(x, y, z, dx, dy, dz, tag=-1):
             """
             Adds a parallelepipedic box defined by a point (`x', `y', `z') and the
             extents along the x-, y- and z-axes. If `tag' is positive, sets the tag
             explicitly; otherwise a new tag is selected automatically. Returns the tag
             of the box.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddBox(
@@ -2787,14 +2787,14 @@ class model:
                 c_double(dz),
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddBox returned non-zero error code : ",
+                    "gmshModelOccAddBox returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addCylinder(x,y,z,dx,dy,dz,r,tag=-1,angle=2*pi):
+        def addCylinder(x, y, z, dx, dy, dz, r, tag=-1, angle=2*pi):
             """
             Adds a cylinder, defined by the center (`x', `y', `z') of its first
             circular face, the 3 components (`dx', `dy', `dz') of the vector defining
@@ -2803,7 +2803,7 @@ class model:
             explicitly; otherwise a new tag is selected automatically. Returns the tag
             of the cylinder.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddCylinder(
@@ -2817,23 +2817,23 @@ class model:
                 c_int(tag),
                 c_double(angle),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddCylinder returned non-zero error code : ",
+                    "gmshModelOccAddCylinder returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addCone(x,y,z,dx,dy,dz,r1,r2,tag=-1,angle=2*pi):
+        def addCone(x, y, z, dx, dy, dz, r1, r2, tag=-1, angle=2*pi):
             """
-            Add a cone, defined by the center (`x', `y', `z') of its first circular
+            Adds a cone, defined by the center (`x', `y', `z') of its first circular
             face, the 3 components of the vector (`dx', `dy', `dz') defining its axis
             and the two radii `r1' and `r2' of the faces (these radii can be zero). If
             `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. `angle' defines the optional angular opening (from 0 to
             2*Pi). Returns the tag of the cone.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddCone(
@@ -2848,22 +2848,22 @@ class model:
                 c_int(tag),
                 c_double(angle),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddCone returned non-zero error code : ",
+                    "gmshModelOccAddCone returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addWedge(x,y,z,dx,dy,dz,tag=-1,ltx=0.):
+        def addWedge(x, y, z, dx, dy, dz, tag=-1, ltx=0.):
             """
-            Add a right angular wedge, defined by the right-angle point (`x', `y', `z')
-            and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If `tag'
-            is positive, sets the tag explicitly; otherwise a new tag is selected
+            Adds a right angular wedge, defined by the right-angle point (`x', `y',
+            `z') and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If
+            `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
             automatically. The optional argument `ltx' defines the top extent along the
             x-axis. Returns the tag of the wedge.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddWedge(
@@ -2876,21 +2876,21 @@ class model:
                 c_int(tag),
                 c_double(ltx),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddWedge returned non-zero error code : ",
+                    "gmshModelOccAddWedge returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addTorus(x,y,z,r1,r2,tag=-1,angle=2*pi):
+        def addTorus(x, y, z, r1, r2, tag=-1, angle=2*pi):
             """
             Adds a torus, defined by its center (`x', `y', `z') and its 2 radii `r' and
             `r2'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is
             selected automatically. The optional argument `angle' defines the angular
             opening (from 0 to 2*Pi). Returns the tag of the wedge.
 
-            return int
+            Returns an integer.
             """
             ierr = c_int()
             api__result__ = lib.gmshModelOccAddTorus(
@@ -2902,14 +2902,14 @@ class model:
                 c_int(tag),
                 c_double(angle),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddTorus returned non-zero error code : ",
+                    "gmshModelOccAddTorus returned non-zero error code: ",
                     ierr.value)
             return api__result__
 
         @staticmethod
-        def addThruSections(wireTags,tag=-1,makeSolid=True,makeRuled=False):
+        def addThruSections(wireTags, tag=-1, makeSolid=True, makeRuled=False):
             """
             Adds a volume (if the optional argument `makeSolid' is set) or surfaces
             defined through the open or closed wires `wireTags'. If `tag' is positive,
@@ -2918,7 +2918,7 @@ class model:
             `makeRuled' is set, the surfaces created on the boundary are forced to be
             ruled surfaces.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_wireTags_, api_wireTags_n_ = _ivectorint(wireTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -2930,14 +2930,14 @@ class model:
                 c_int(bool(makeSolid)),
                 c_int(bool(makeRuled)),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddThruSections returned non-zero error code : ",
+                    "gmshModelOccAddThruSections returned non-zero error code: ",
                     ierr.value)
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def addThickSolid(volumeTag,excludeSurfaceTags,offset,tag=-1):
+        def addThickSolid(volumeTag, excludeSurfaceTags, offset, tag=-1):
             """
             Adds a hollowed volume built from an initial volume `volumeTag' and a set
             of faces from this volume `excludeSurfaceTags', which are to be removed.
@@ -2945,7 +2945,7 @@ class model:
             with thickness `offset'. If `tag' is positive, sets the tag explicitly;
             otherwise a new tag is selected automatically.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_excludeSurfaceTags_, api_excludeSurfaceTags_n_ = _ivectorint(excludeSurfaceTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -2957,14 +2957,14 @@ class model:
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
                 c_int(tag),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddThickSolid returned non-zero error code : ",
+                    "gmshModelOccAddThickSolid returned non-zero error code: ",
                     ierr.value)
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def extrude(dimTags,dx,dy,dz,numElements=[],heights=[],recombine=False):
+        def extrude(dimTags, dx, dy, dz, numElements=[], heights=[], recombine=False):
             """
             Extrudes the geometrical entities `dimTags' by translation along (`dx',
             `dy', `dz'). Returns extruded entities in `outDimTags'. If `numElements' is
@@ -2972,7 +2972,7 @@ class model:
             number of elements in each layer. If `height' is not empty, it provides the
             (cummulative) height of the different layers, normalized to 1.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -2989,14 +2989,14 @@ class model:
                 api_heights_, api_heights_n_,
                 c_int(bool(recombine)),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccExtrude returned non-zero error code : ",
+                    "gmshModelOccExtrude returned non-zero error code: ",
                     ierr.value)
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def revolve(dimTags,x,y,z,ax,ay,az,angle,numElements=[],heights=[],recombine=False):
+        def revolve(dimTags, x, y, z, ax, ay, az, angle, numElements=[], heights=[], recombine=False):
             """
             Extrudes the geometrical entities `dimTags' by rotation of `angle' radians
             around the axis of revolution defined by the point (`x', `y', `z') and the
@@ -3006,7 +3006,7 @@ class model:
             empty, it provides the (cummulative) height of the different layers,
             normalized to 1.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -3027,19 +3027,19 @@ class model:
                 api_heights_, api_heights_n_,
                 c_int(bool(recombine)),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccRevolve returned non-zero error code : ",
+                    "gmshModelOccRevolve returned non-zero error code: ",
                     ierr.value)
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def addPipe(dimTags,wireTag):
+        def addPipe(dimTags, wireTag):
             """
             Adds a pipe by extruding the entities `dimTags' along the wire `wireTag'.
             Returns the pipe in `outDimTags'.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -3049,20 +3049,20 @@ class model:
                 c_int(wireTag),
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccAddPipe returned non-zero error code : ",
+                    "gmshModelOccAddPipe returned non-zero error code: ",
                     ierr.value)
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def fillet(volumeTags,curveTags,radius,removeVolume=True):
+        def fillet(volumeTags, curveTags, radius, removeVolume=True):
             """
             Fillets the volumes `volumeTags' on the curves `curveTags' with radius
             `radius'. Returns the filleted entities in `outDimTags'. Removes the
             original volume if `removeVolume' is set.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_volumeTags_, api_volumeTags_n_ = _ivectorint(volumeTags)
             api_curveTags_, api_curveTags_n_ = _ivectorint(curveTags)
@@ -3075,14 +3075,14 @@ class model:
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
                 c_int(bool(removeVolume)),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccFillet returned non-zero error code : ",
+                    "gmshModelOccFillet returned non-zero error code: ",
                     ierr.value)
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def fuse(objectDimTags,toolDimTags,tag=-1,removeObject=True,removeTool=True):
+        def fuse(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
             """
             Computes the boolean union (the fusion) of the entities `objectDimTags' and
             `toolDimTags'. Returns the resulting entities in `outDimTags'. If `tag' is
@@ -3090,7 +3090,7 @@ class model:
             operation results in a single entity). Removes the object if `removeObject'
             is set. Removes the tool if `removeTool' is set.
 
-            return outDimTags, outDimTagsMap
+            Returns `outDimTags', `outDimTagsMap'.
             """
             api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
             api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
@@ -3101,21 +3101,21 @@ class model:
                 api_objectDimTags_, api_objectDimTags_n_,
                 api_toolDimTags_, api_toolDimTags_n_,
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
-                byref(api_outDimTagsMap_),byref(api_outDimTagsMap_n_),byref(api_outDimTagsMap_nn_),
+                byref(api_outDimTagsMap_), byref(api_outDimTagsMap_n_), byref(api_outDimTagsMap_nn_),
                 c_int(tag),
                 c_int(bool(removeObject)),
                 c_int(bool(removeTool)),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccFuse returned non-zero error code : ",
+                    "gmshModelOccFuse returned non-zero error code: ",
                     ierr.value)
             return (
                 _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
-                _ovectorvectorpair(api_outDimTagsMap_,api_outDimTagsMap_n_,api_outDimTagsMap_nn_))
+                _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
 
         @staticmethod
-        def intersect(objectDimTags,toolDimTags,tag=-1,removeObject=True,removeTool=True):
+        def intersect(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
             """
             Computes the boolean intersection (the common parts) of the entities
             `objectDimTags' and `toolDimTags'. Returns the resulting entities in
@@ -3123,7 +3123,7 @@ class model:
             valid if the boolean operation results in a single entity). Removes the
             object if `removeObject' is set. Removes the tool if `removeTool' is set.
 
-            return outDimTags, outDimTagsMap
+            Returns `outDimTags', `outDimTagsMap'.
             """
             api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
             api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
@@ -3134,21 +3134,21 @@ class model:
                 api_objectDimTags_, api_objectDimTags_n_,
                 api_toolDimTags_, api_toolDimTags_n_,
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
-                byref(api_outDimTagsMap_),byref(api_outDimTagsMap_n_),byref(api_outDimTagsMap_nn_),
+                byref(api_outDimTagsMap_), byref(api_outDimTagsMap_n_), byref(api_outDimTagsMap_nn_),
                 c_int(tag),
                 c_int(bool(removeObject)),
                 c_int(bool(removeTool)),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccIntersect returned non-zero error code : ",
+                    "gmshModelOccIntersect returned non-zero error code: ",
                     ierr.value)
             return (
                 _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
-                _ovectorvectorpair(api_outDimTagsMap_,api_outDimTagsMap_n_,api_outDimTagsMap_nn_))
+                _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
 
         @staticmethod
-        def cut(objectDimTags,toolDimTags,tag=-1,removeObject=True,removeTool=True):
+        def cut(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
             """
             Computes the boolean difference between the entities `objectDimTags' and
             `toolDimTags'. Returns the resulting entities in `outDimTags'. If `tag' is
@@ -3156,7 +3156,7 @@ class model:
             operation results in a single entity). Removes the object if `removeObject'
             is set. Removes the tool if `removeTool' is set.
 
-            return outDimTags, outDimTagsMap
+            Returns `outDimTags', `outDimTagsMap'.
             """
             api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
             api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
@@ -3167,21 +3167,21 @@ class model:
                 api_objectDimTags_, api_objectDimTags_n_,
                 api_toolDimTags_, api_toolDimTags_n_,
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
-                byref(api_outDimTagsMap_),byref(api_outDimTagsMap_n_),byref(api_outDimTagsMap_nn_),
+                byref(api_outDimTagsMap_), byref(api_outDimTagsMap_n_), byref(api_outDimTagsMap_nn_),
                 c_int(tag),
                 c_int(bool(removeObject)),
                 c_int(bool(removeTool)),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccCut returned non-zero error code : ",
+                    "gmshModelOccCut returned non-zero error code: ",
                     ierr.value)
             return (
                 _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
-                _ovectorvectorpair(api_outDimTagsMap_,api_outDimTagsMap_n_,api_outDimTagsMap_nn_))
+                _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
 
         @staticmethod
-        def fragment(objectDimTags,toolDimTags,tag=-1,removeObject=True,removeTool=True):
+        def fragment(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
             """
             Copmutes the boolean fragments (general fuse) of the entities
             `objectDimTags' and `toolDimTags'. Returns the resulting entities in
@@ -3189,7 +3189,7 @@ class model:
             valid if the boolean operation results in a single entity). Removes the
             object if `removeObject' is set. Removes the tool if `removeTool' is set.
 
-            return outDimTags, outDimTagsMap
+            Returns `outDimTags', `outDimTagsMap'.
             """
             api_objectDimTags_, api_objectDimTags_n_ = _ivectorpair(objectDimTags)
             api_toolDimTags_, api_toolDimTags_n_ = _ivectorpair(toolDimTags)
@@ -3200,21 +3200,21 @@ class model:
                 api_objectDimTags_, api_objectDimTags_n_,
                 api_toolDimTags_, api_toolDimTags_n_,
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
-                byref(api_outDimTagsMap_),byref(api_outDimTagsMap_n_),byref(api_outDimTagsMap_nn_),
+                byref(api_outDimTagsMap_), byref(api_outDimTagsMap_n_), byref(api_outDimTagsMap_nn_),
                 c_int(tag),
                 c_int(bool(removeObject)),
                 c_int(bool(removeTool)),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccFragment returned non-zero error code : ",
+                    "gmshModelOccFragment returned non-zero error code: ",
                     ierr.value)
             return (
                 _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
-                _ovectorvectorpair(api_outDimTagsMap_,api_outDimTagsMap_n_,api_outDimTagsMap_nn_))
+                _ovectorvectorpair(api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_))
 
         @staticmethod
-        def translate(dimTags,dx,dy,dz):
+        def translate(dimTags, dx, dy, dz):
             """
             Translates the geometrical entities `dimTags' along (`dx', `dy', `dz').
             """
@@ -3226,13 +3226,13 @@ class model:
                 c_double(dy),
                 c_double(dz),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccTranslate returned non-zero error code : ",
+                    "gmshModelOccTranslate returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def rotate(dimTags,x,y,z,ax,ay,az,angle):
+        def rotate(dimTags, x, y, z, ax, ay, az, angle):
             """
             Rotates the geometrical entities `dimTags' of `angle' radians around the
             axis of revolution defined by the point (`x', `y', `z') and the direction
@@ -3250,13 +3250,13 @@ class model:
                 c_double(az),
                 c_double(angle),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccRotate returned non-zero error code : ",
+                    "gmshModelOccRotate returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def dilate(dimTags,x,y,z,a,b,c):
+        def dilate(dimTags, x, y, z, a, b, c):
             """
             Scales the geometrical entities `dimTag' by factors `a', `b' and `c' along
             the three coordinate axes; use (`x', `y', `z') as the center of the
@@ -3273,13 +3273,13 @@ class model:
                 c_double(b),
                 c_double(c),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccDilate returned non-zero error code : ",
+                    "gmshModelOccDilate returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def symmetry(dimTags,a,b,c,d):
+        def symmetry(dimTags, a, b, c, d):
             """
             Applies a symmetry transformation to the geometrical entities `dimTag',
             with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' =
@@ -3294,9 +3294,9 @@ class model:
                 c_double(c),
                 c_double(d),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccSymmetry returned non-zero error code : ",
+                    "gmshModelOccSymmetry returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -3305,7 +3305,7 @@ class model:
             Copies the entities `dimTags'; the new entities are returned in
             `outDimTags'.
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
@@ -3314,14 +3314,14 @@ class model:
                 api_dimTags_, api_dimTags_n_,
                 byref(api_outDimTags_), byref(api_outDimTags_n_),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccCopy returned non-zero error code : ",
+                    "gmshModelOccCopy returned non-zero error code: ",
                     ierr.value)
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def remove(dimTags,recursive=False):
+        def remove(dimTags, recursive=False):
             """
             Removes the entities `dimTags'. If `recursive' is true, removes all the
             entities on their boundaries, down to dimension 0.
@@ -3332,9 +3332,9 @@ class model:
                 api_dimTags_, api_dimTags_n_,
                 c_int(bool(recursive)),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccRemove returned non-zero error code : ",
+                    "gmshModelOccRemove returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -3347,13 +3347,13 @@ class model:
             ierr = c_int()
             lib.gmshModelOccRemoveAllDuplicates(
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccRemoveAllDuplicates returned non-zero error code : ",
+                    "gmshModelOccRemoveAllDuplicates returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
-        def importShapes(fileName,highestDimOnly=True,format=""):
+        def importShapes(fileName, highestDimOnly=True, format=""):
             """
             Imports BREP, STEP or IGES shapes from the file `fileName'. The imported
             entities are returned in `outDimTags'. If the optional argument
@@ -3361,7 +3361,7 @@ class model:
             the file. The optional argument `format' can be used to force the format of
             the file (currently "brep", "step" or "iges").
 
-            return outDimTags
+            Returns `outDimTags'.
             """
             api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
@@ -3371,14 +3371,14 @@ class model:
                 c_int(bool(highestDimOnly)),
                 c_char_p(format.encode()),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccImportShapes returned non-zero error code : ",
+                    "gmshModelOccImportShapes returned non-zero error code: ",
                     ierr.value)
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def setMeshSize(dimTags,size):
+        def setMeshSize(dimTags, size):
             """
             Sets a mesh size constraint on the geometrical entities `dimTags'.
             Currently only entities of dimension 0 (points) are handled.
@@ -3389,9 +3389,9 @@ class model:
                 api_dimTags_, api_dimTags_n_,
                 c_double(size),
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccSetMeshSize returned non-zero error code : ",
+                    "gmshModelOccSetMeshSize returned non-zero error code: ",
                     ierr.value)
 
         @staticmethod
@@ -3405,9 +3405,9 @@ class model:
             ierr = c_int()
             lib.gmshModelOccSynchronize(
                 byref(ierr))
-            if ierr.value != 0 :
+            if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelOccSynchronize returned non-zero error code : ",
+                    "gmshModelOccSynchronize returned non-zero error code: ",
                     ierr.value)
 
 
@@ -3417,22 +3417,22 @@ class view:
     """
 
     @staticmethod
-    def add(name,tag=-1):
+    def add(name, tag=-1):
         """
         Adds a new post-processing view, with name `name'. If `tag' is positive use
         it (and remove the view with that tag if it already exists), otherwise
         associate a new tag. Returns the view tag.
 
-        return int
+        Returns an integer.
         """
         ierr = c_int()
         api__result__ = lib.gmshViewAdd(
             c_char_p(name.encode()),
             c_int(tag),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshViewAdd returned non-zero error code : ",
+                "gmshViewAdd returned non-zero error code: ",
                 ierr.value)
         return api__result__
 
@@ -3445,9 +3445,9 @@ class view:
         lib.gmshViewRemove(
             c_int(tag),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshViewRemove returned non-zero error code : ",
+                "gmshViewRemove returned non-zero error code: ",
                 ierr.value)
 
     @staticmethod
@@ -3457,15 +3457,15 @@ class view:
         views. This dynamic index (it can change when views are removed) is used to
         access view options.
 
-        return int
+        Returns an integer.
         """
         ierr = c_int()
         api__result__ = lib.gmshViewGetIndex(
             c_int(tag),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshViewGetIndex returned non-zero error code : ",
+                "gmshViewGetIndex returned non-zero error code: ",
                 ierr.value)
         return api__result__
 
@@ -3474,21 +3474,21 @@ class view:
         """
         Gets the tags of all views.
 
-        return tags
+        Returns `tags'.
         """
         api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
         ierr = c_int()
         lib.gmshViewGetTags(
-            byref(api_tags_),byref(api_tags_n_),
+            byref(api_tags_), byref(api_tags_n_),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshViewGetTags returned non-zero error code : ",
+                "gmshViewGetTags returned non-zero error code: ",
                 ierr.value)
-        return _ovectorint(api_tags_,api_tags_n_.value)
+        return _ovectorint(api_tags_, api_tags_n_.value)
 
     @staticmethod
-    def addModelData(tag,step,modelName,dataType,tags,data,time=0.,numComponents=-1,partition=0):
+    def addModelData(tag, step, modelName, dataType, tags, data, time=0., numComponents=-1, partition=0):
         """
         Adds model-based post-processing data to the view with tag `tag'.
         `modelName' identifies the model the data is attached to. `dataType'
@@ -3517,20 +3517,20 @@ class view:
             c_int(numComponents),
             c_int(partition),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshViewAddModelData returned non-zero error code : ",
+                "gmshViewAddModelData returned non-zero error code: ",
                 ierr.value)
 
     @staticmethod
-    def getModelData(tag,step):
+    def getModelData(tag, step):
         """
         Gets model-based post-processing data from the view with tag `tag' at step
         `step'. Returns the `data' associated to the nodes or the elements with
         tags `tags', as well as the `dataType' and the number of components
         `numComponents'.
 
-        return dataType, tags, data, time, numComponents
+        Returns `dataType', `tags', `data', `time', `numComponents'.
         """
         api_dataType_ = c_char_p()
         api_tags_, api_tags_n_ = POINTER(c_int)(), c_size_t()
@@ -3542,24 +3542,24 @@ class view:
             c_int(tag),
             c_int(step),
             byref(api_dataType_),
-            byref(api_tags_),byref(api_tags_n_),
-            byref(api_data_),byref(api_data_n_),byref(api_data_nn_),
+            byref(api_tags_), byref(api_tags_n_),
+            byref(api_data_), byref(api_data_n_), byref(api_data_nn_),
             byref(api_time_),
             byref(api_numComponents_),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshViewGetModelData returned non-zero error code : ",
+                "gmshViewGetModelData returned non-zero error code: ",
                 ierr.value)
         return (
             _ostring(api_dataType_),
-            _ovectorint(api_tags_,api_tags_n_.value),
-            _ovectorvectordouble(api_data_,api_data_n_,api_data_nn_),
+            _ovectorint(api_tags_, api_tags_n_.value),
+            _ovectorvectordouble(api_data_, api_data_n_, api_data_nn_),
             api_time_.value,
             api_numComponents_.value)
 
     @staticmethod
-    def addListData(tag,type,numEle,data):
+    def addListData(tag, type, numEle, data):
         """
         Adds list-based post-processing data to the view with tag `tag'. `type'
         identifies the data: "SP" for scalar points, "VP", for vector points, etc.
@@ -3574,9 +3574,9 @@ class view:
             c_int(numEle),
             api_data_, api_data_n_,
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshViewAddListData returned non-zero error code : ",
+                "gmshViewAddListData returned non-zero error code: ",
                 ierr.value)
 
     @staticmethod
@@ -3586,7 +3586,7 @@ class view:
         the types `dataTypes', the number of elements `numElements' for each data
         type and the `data' for each data type.
 
-        return dataType, numElements, data
+        Returns `dataType', `numElements', `data'.
         """
         api_dataType_, api_dataType_n_ = POINTER(POINTER(c_char))(), c_size_t()
         api_numElements_, api_numElements_n_ = POINTER(c_int)(), c_size_t()
@@ -3595,20 +3595,20 @@ class view:
         lib.gmshViewGetListData(
             c_int(tag),
             byref(api_dataType_), byref(api_dataType_n_),
-            byref(api_numElements_),byref(api_numElements_n_),
-            byref(api_data_),byref(api_data_n_),byref(api_data_nn_),
+            byref(api_numElements_), byref(api_numElements_n_),
+            byref(api_data_), byref(api_data_n_), byref(api_data_nn_),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshViewGetListData returned non-zero error code : ",
+                "gmshViewGetListData returned non-zero error code: ",
                 ierr.value)
         return (
             _ovectorstring(api_dataType_, api_dataType_n_.value),
-            _ovectorint(api_numElements_,api_numElements_n_.value),
-            _ovectorvectordouble(api_data_,api_data_n_,api_data_nn_))
+            _ovectorint(api_numElements_, api_numElements_n_.value),
+            _ovectorvectordouble(api_data_, api_data_n_, api_data_nn_))
 
     @staticmethod
-    def probe(tag,x,y,z,step=-1,numComp=-1,gradient=False,tolerance=0.,xElemCoord=[],yElemCoord=[],zElemCoord=[]):
+    def probe(tag, x, y, z, step=-1, numComp=-1, gradient=False, tolerance=0., xElemCoord=[], yElemCoord=[], zElemCoord=[]):
         """
         Probes the view `tag' for its `value' at point (`x', `y', `z'). Returns
         only the value at step `step' is `step' is positive. Returns only values
@@ -3618,7 +3618,7 @@ class view:
         result from the element described by its coordinates if `xElementCoord',
         `yElementCoord' and `zElementCoord' are provided.
 
-        return value
+        Returns `value'.
         """
         api_value_, api_value_n_ = POINTER(c_double)(), c_size_t()
         api_xElemCoord_, api_xElemCoord_n_ = _ivectordouble(xElemCoord)
@@ -3630,7 +3630,7 @@ class view:
             c_double(x),
             c_double(y),
             c_double(z),
-            byref(api_value_),byref(api_value_n_),
+            byref(api_value_), byref(api_value_n_),
             c_int(step),
             c_int(numComp),
             c_int(bool(gradient)),
@@ -3639,14 +3639,14 @@ class view:
             api_yElemCoord_, api_yElemCoord_n_,
             api_zElemCoord_, api_zElemCoord_n_,
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshViewProbe returned non-zero error code : ",
+                "gmshViewProbe returned non-zero error code: ",
                 ierr.value)
-        return _ovectordouble(api_value_,api_value_n_.value)
+        return _ovectordouble(api_value_, api_value_n_.value)
 
     @staticmethod
-    def write(tag,fileName,append=False):
+    def write(tag, fileName, append=False):
         """
         Writes the view to a file `fileName'. The export format is determined by
         the file extension. Appends to the file if `append' is set.
@@ -3657,9 +3657,9 @@ class view:
             c_char_p(fileName.encode()),
             c_int(bool(append)),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshViewWrite returned non-zero error code : ",
+                "gmshViewWrite returned non-zero error code: ",
                 ierr.value)
 
 
@@ -3669,7 +3669,7 @@ class plugin:
     """
 
     @staticmethod
-    def setNumber(name,option,value):
+    def setNumber(name, option, value):
         """
         Sets the numerical option `option' to the value `value' for plugin `name'.
         """
@@ -3679,13 +3679,13 @@ class plugin:
             c_char_p(option.encode()),
             c_double(value),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshPluginSetNumber returned non-zero error code : ",
+                "gmshPluginSetNumber returned non-zero error code: ",
                 ierr.value)
 
     @staticmethod
-    def setString(name,option,value):
+    def setString(name, option, value):
         """
         Sets the string option `option' to the value `value' for plugin `name'.
         """
@@ -3695,9 +3695,9 @@ class plugin:
             c_char_p(option.encode()),
             c_char_p(value.encode()),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshPluginSetString returned non-zero error code : ",
+                "gmshPluginSetString returned non-zero error code: ",
                 ierr.value)
 
     @staticmethod
@@ -3709,9 +3709,9 @@ class plugin:
         lib.gmshPluginRun(
             c_char_p(name.encode()),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshPluginRun returned non-zero error code : ",
+                "gmshPluginRun returned non-zero error code: ",
                 ierr.value)
 
 
@@ -3728,9 +3728,9 @@ class graphics:
         ierr = c_int()
         lib.gmshGraphicsDraw(
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshGraphicsDraw returned non-zero error code : ",
+                "gmshGraphicsDraw returned non-zero error code: ",
                 ierr.value)
 
 
@@ -3747,9 +3747,9 @@ class fltk:
         ierr = c_int()
         lib.gmshFltkInitialize(
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshFltkInitialize returned non-zero error code : ",
+                "gmshFltkInitialize returned non-zero error code: ",
                 ierr.value)
 
     @staticmethod
@@ -3763,9 +3763,9 @@ class fltk:
         lib.gmshFltkWait(
             c_double(time),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshFltkWait returned non-zero error code : ",
+                "gmshFltkWait returned non-zero error code: ",
                 ierr.value)
 
     @staticmethod
@@ -3778,23 +3778,23 @@ class fltk:
         ierr = c_int()
         lib.gmshFltkRun(
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshFltkRun returned non-zero error code : ",
+                "gmshFltkRun returned non-zero error code: ",
                 ierr.value)
 
 
 class onelab:
     """
-    Onelab server functions
+    ONELAB server functions
     """
 
     @staticmethod
     def get(format="json"):
         """
-        Gets data from the Onelab server.
+        Gets `data' from the ONELAB server.
 
-        return data
+        Returns `data'.
         """
         api_data_ = c_char_p()
         ierr = c_int()
@@ -3802,39 +3802,40 @@ class onelab:
             byref(api_data_),
             c_char_p(format.encode()),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshOnelabGet returned non-zero error code : ",
+                "gmshOnelabGet returned non-zero error code: ",
                 ierr.value)
         return _ostring(api_data_)
 
     @staticmethod
-    def set(data,format="json"):
+    def set(data, format="json"):
         """
-        Sets data in the Onelab server.
+        Sets `data' in the ONELAB server.
         """
         ierr = c_int()
         lib.gmshOnelabSet(
             c_char_p(data.encode()),
             c_char_p(format.encode()),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshOnelabSet returned non-zero error code : ",
+                "gmshOnelabSet returned non-zero error code: ",
                 ierr.value)
 
     @staticmethod
-    def run(name="",command=""):
+    def run(name="", command=""):
         """
-        Runs a onelab client. If no name is given, attemps to run a client that
-        might be linked to the processed input files.
+        Runs a ONELAB client. If `name' is provided, creates a new ONELAB client
+        with name `name' and executes `command'. If not, attemps to run a client
+        that might be linked to the processed input files.
         """
         ierr = c_int()
         lib.gmshOnelabRun(
             c_char_p(name.encode()),
             c_char_p(command.encode()),
             byref(ierr))
-        if ierr.value != 0 :
+        if ierr.value != 0:
             raise ValueError(
-                "gmshOnelabRun returned non-zero error code : ",
+                "gmshOnelabRun returned non-zero error code: ",
                 ierr.value)

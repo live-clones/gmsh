@@ -22,6 +22,8 @@
  * tutorials from `tutorials'.
  */
 
+#include <stddef.h>
+
 #if defined(GMSH_DLL)
 #if defined(GMSH_DLL_EXPORT)
 #define GMSH_API __declspec(dllexport)
@@ -32,9 +34,8 @@
 #define GMSH_API
 #endif
 
-#include <stdlib.h>
-
 GMSH_API void gmshFree(void *p);
+GMSH_API void *gmshMalloc(size_t n);
 
 /* Initializes Gmsh. This must be called before any call to the other
  * functions in the API. If `argc' and `argv' are provided, they will be
@@ -96,7 +97,7 @@ GMSH_API void gmshModelAdd(const char * name,
 GMSH_API void gmshModelRemove(int * ierr);
 
 /* Lists the names of all models. */
-GMSH_API void gmshModelList(char *** names,size_t * names_n,
+GMSH_API void gmshModelList(char *** names, size_t * names_n,
                             int * ierr);
 
 /* Sets the current model to the model with name `name'. If several models
@@ -559,14 +560,14 @@ GMSH_API void gmshModelMeshReorderedMeshElements(const int elementType,
  * transformation specified in `affineTransformation' (16 entries of a 4x4
  * matrix, by row). Currently only available for `dim' == 1 and `dim' == 2. */
 GMSH_API void gmshModelMeshSetPeriodic(const int dim,
-                                       int * tag, size_t tag_n,
-                                       int * tagSource, size_t tagSource_n,
+                                       int * tags, size_t tags_n,
+                                       int * tagsSource, size_t tagsSource_n,
                                        double * affineTransformation, size_t affineTransformation_n,
                                        int * ierr);
 
-/* Adds a new mesh size field of type `type'. If `tag' is positive, assign the
- * tag explcitly; otherwise a new tag is assigned automatically. Returns the
- * field tag. */
+/* Adds a new mesh size field of type `type'. If `tag' is positive, assigns
+ * the tag explcitly; otherwise a new tag is assigned automatically. Returns
+ * the field tag. */
 GMSH_API int gmshModelMeshFieldAdd(const char * type,
                                    const int tag,
                                    int * ierr);
@@ -1119,7 +1120,7 @@ GMSH_API int gmshModelOccAddCylinder(const double x,
                                      const double angle,
                                      int * ierr);
 
-/* Add a cone, defined by the center (`x', `y', `z') of its first circular
+/* Adds a cone, defined by the center (`x', `y', `z') of its first circular
  * face, the 3 components of the vector (`dx', `dy', `dz') defining its axis
  * and the two radii `r1' and `r2' of the faces (these radii can be zero). If
  * `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
@@ -1137,9 +1138,9 @@ GMSH_API int gmshModelOccAddCone(const double x,
                                  const double angle,
                                  int * ierr);
 
-/* Add a right angular wedge, defined by the right-angle point (`x', `y', `z')
- * and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If `tag'
- * is positive, sets the tag explicitly; otherwise a new tag is selected
+/* Adds a right angular wedge, defined by the right-angle point (`x', `y',
+ * `z') and the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If
+ * `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
  * automatically. The optional argument `ltx' defines the top extent along the
  * x-axis. Returns the tag of the wedge. */
 GMSH_API int gmshModelOccAddWedge(const double x,
@@ -1452,7 +1453,7 @@ GMSH_API void gmshViewAddListData(const int tag,
  * the types `dataTypes', the number of elements `numElements' for each data
  * type and the `data' for each data type. */
 GMSH_API void gmshViewGetListData(const int tag,
-                                  char *** dataType,size_t * dataType_n,
+                                  char *** dataType, size_t * dataType_n,
                                   int ** numElements, size_t * numElements_n,
                                   double *** data, size_t ** data_n, size_t *data_nn,
                                   int * ierr);
@@ -1518,18 +1519,19 @@ GMSH_API void gmshFltkWait(const double time,
  * yet been initialized. */
 GMSH_API void gmshFltkRun(int * ierr);
 
-/* Gets data from the Onelab server. */
+/* Gets `data' from the ONELAB server. */
 GMSH_API void gmshOnelabGet(char ** data,
                             const char * format,
                             int * ierr);
 
-/* Sets data in the Onelab server. */
+/* Sets `data' in the ONELAB server. */
 GMSH_API void gmshOnelabSet(const char * data,
                             const char * format,
                             int * ierr);
 
-/* Runs a onelab client. If no name is given, attemps to run a client that
- * might be linked to the processed input files. */
+/* Runs a ONELAB client. If `name' is provided, creates a new ONELAB client
+ * with name `name' and executes `command'. If not, attemps to run a client
+ * that might be linked to the processed input files. */
 GMSH_API void gmshOnelabRun(const char * name,
                             const char * command,
                             int * ierr);
