@@ -87,10 +87,10 @@ def ivectordouble(name, value=None, python_value=None):
     return a
 
 def ivectorpair(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "const gmsh::vector_pair &", "const int *", False)
+    a = arg(name, value, python_value, "const gmsh::vectorpair &", "const int *", False)
     api_name = "api_" + name + "_"
     api_name_n = "api_" + name + "_n_"
-    a.c_pre = "    gmsh::vector_pair " + api_name + "(" + name + "_n/2);\n" + \
+    a.c_pre = "    gmsh::vectorpair " + api_name + "(" + name + "_n/2);\n" + \
               "    for(size_t i = 0; i < " + name + "_n/2; ++i){\n" + \
               "      " + api_name + "[i].first = " + name + "[i * 2 + 0];\n" + \
               "      " + api_name + "[i].second = " + name + "[i * 2 + 1];\n" + \
@@ -98,7 +98,7 @@ def ivectorpair(name, value=None, python_value=None):
     a.c_arg = api_name
     a.c = "int * " + name + ", size_t " + name + "_n"
     a.cwrap_pre = "int *" + api_name + "; size_t " + api_name_n + "; " + \
-                  "pairvector2intptr(" + name + ", &" + api_name + ", &" + api_name_n + ");\n"
+                  "vectorpair2intptr(" + name + ", &" + api_name + ", &" + api_name_n + ");\n"
     a.cwrap_arg = api_name + ", " + api_name_n
     a.cwrap_post = "gmshFree(" + api_name + ");\n"
     a.python_pre = api_name + ", " + api_name_n + " = _ivectorpair(" + name + ")"
@@ -221,7 +221,7 @@ def ovectorstring(name, value=None, python_value=None):
     api_name_n = api_name + "n_"
     a.c_pre = "    std::vector<std::string> " + api_name + ";\n"
     a.c_arg = api_name
-    a.c_post = "    stringvector2charpp(" + api_name + ", " + name + ", " + name + "_n);\n"
+    a.c_post = "    vectorstring2charptrptr(" + api_name + ", " + name + ", " + name + "_n);\n"
     a.c = "char *** " + name + ", size_t * " + name + "_n"
     a.cwrap_pre = "char **" + api_name + "; size_t " + api_name_n + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
@@ -235,12 +235,12 @@ def ovectorstring(name, value=None, python_value=None):
     return a
 
 def ovectorpair(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "gmsh::vector_pair &", "int **", True)
+    a = arg(name, value, python_value, "gmsh::vectorpair &", "int **", True)
     api_name = "api_" + name + "_"
     api_name_n = api_name + "n_"
-    a.c_pre = "    gmsh::vector_pair " + api_name + ";\n"
+    a.c_pre = "    gmsh::vectorpair " + api_name + ";\n"
     a.c_arg = api_name
-    a.c_post = "    pairvector2intptr(" + api_name + ", " + name + ", " + name + "_n);\n"
+    a.c_post = "    vectorpair2intptr(" + api_name + ", " + name + ", " + name + "_n);\n"
     a.c = "int ** " + name + ", size_t * " + name + "_n"
     a.cwrap_pre = "int *" + api_name + "; size_t " + api_name_n + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
@@ -295,13 +295,13 @@ def ovectorvectordouble(name, value=None, python_value=None):
     return a
 
 def ovectorvectorpair(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "std::vector<gmsh::vector_pair> &", "int **", True)
+    a = arg(name, value, python_value, "std::vector<gmsh::vectorpair> &", "int **", True)
     api_name = "api_" + name + "_"
     api_name_n = api_name + "n_"
     api_name_nn = api_name + "nn_"
-    a.c_pre = "    std::vector<gmsh::vector_pair >" + api_name + ";\n"
+    a.c_pre = "    std::vector<gmsh::vectorpair >" + api_name + ";\n"
     a.c_arg = api_name
-    a.c_post = "    pairvectorvector2intptrptr(" + api_name + ", " + name + ", " + name + "_n, " + name + "_nn);\n"
+    a.c_post = "    vectorvectorpair2intptrptr(" + api_name + ", " + name + ", " + name + "_n, " + name + "_nn);\n"
     a.c  = "int *** " + name + ", size_t ** " + name + "_n, size_t *" + name + "_nn"
     a.cwrap_pre = "int **" + api_name + "; size_t *" + api_name_n + ", " + api_name_nn + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n + ", " + "&" + api_name_nn
@@ -399,7 +399,7 @@ namespace gmsh {
   // identifier). When dealing with multiple geometrical entities of possibly
   // different dimensions, the entities are packed as a vector of (dim, tag)
   // integer pairs.
-  typedef std::vector<std::pair<int, int> > vector_pair;
+  typedef std::vector<std::pair<int, int> > vectorpair;
 
 }
 
@@ -477,21 +477,21 @@ GMSH_API void gmshFree(void *p)
 """
 
 c_cpp_utils="""
-void stringvector2charpp(const std::vector<std::string> &v, char ***p, size_t *size)
+void vectorstring2charptrptr(const std::vector<std::string> &v, char ***p, size_t *size)
 {
-  *p = (char**)gmshMalloc(sizeof(char*) * v.size() * 2);
+  *p = (char**)gmshMalloc(sizeof(char*) * v.size());
   for(size_t i = 0; i < v.size(); ++i){
     (*p)[i] = strdup(v[i].c_str());
   }
   *size = v.size();
 }
 
-void pairvectorvector2intptrptr(const std::vector<gmsh::vector_pair > &v, int ***p, size_t **size, size_t *sizeSize)
+void vectorvectorpair2intptrptr(const std::vector<gmsh::vectorpair > &v, int ***p, size_t **size, size_t *sizeSize)
 {
   *p = (int**)gmshMalloc(sizeof(int*) * v.size());
   *size = (size_t*)gmshMalloc(sizeof(size_t) * v.size());
   for(size_t i = 0; i < v.size(); ++i)
-    pairvector2intptr(v[i], &(*p)[i], &((*size)[i]));
+    vectorpair2intptr(v[i], &(*p)[i], &((*size)[i]));
   *sizeSize = v.size();
 }
 """
@@ -549,7 +549,7 @@ namespace gmsh {
   // identifier). When dealing with multiple geometrical entities of possibly
   // different dimensions, the entities are packed as a vector of (dim, tag)
   // integer pairs.
-  typedef std::vector<std::pair<int, int> > vector_pair;
+  typedef std::vector<std::pair<int, int> > vectorpair;
 
 }
 
@@ -566,7 +566,7 @@ void vector2ptr(const std::vector<t> &v, t **p, size_t *size)
   *size = v.size();
 }
 
-void pairvector2intptr(const gmsh::vector_pair &v, int **p, size_t *size)
+void vectorpair2intptr(const gmsh::vectorpair &v, int **p, size_t *size)
 {
   *p = (int*)gmshMalloc(sizeof(int) * v.size() * 2);
   for(size_t i = 0; i < v.size(); ++i){
