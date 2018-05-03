@@ -668,6 +668,30 @@ namespace gmsh { // Top-level functions
         elementTypes.assign(api_elementTypes_, api_elementTypes_ + api_elementTypes_n_); gmshFree(api_elementTypes_);
       }
 
+      // Gets the number of mesh elements in the entity of dimension `dim' and
+      // `tag' tag for a single `elementType'. If `tag' < 0, gets the types for all
+      // entities of dimension `dim'. If `dim' and `tag' are negative, gets all the
+      // types in the mesh.
+      GMSH_API int getNumberElementByType(const int elementType,
+                                          const int dim = -1,
+                                          const int tag = -1)
+      {
+        int ierr = 0;
+        int result_api_ = gmshModelMeshGetNumberElementByType(elementType, dim, tag, &ierr);
+        if(ierr) throw ierr;
+        return result_api_;
+      }
+
+      // Gets the number of mesh nodes by element type (e.g. a triangle of order 1
+      // has 3 nodes)
+      GMSH_API int getNumberNodeByElementType(const int elementType)
+      {
+        int ierr = 0;
+        int result_api_ = gmshModelMeshGetNumberNodeByElementType(elementType, &ierr);
+        if(ierr) throw ierr;
+        return result_api_;
+      }
+
       // Gets the mesh elements in the same way as `getElements', but for a single
       // `elementType'.
       GMSH_API void getElementsByType(const int elementType,
@@ -682,6 +706,21 @@ namespace gmsh { // Top-level functions
         gmshModelMeshGetElementsByType(elementType, &api_elementTags_, &api_elementTags_n_, &api_nodeTags_, &api_nodeTags_n_, dim, tag, &ierr);
         if(ierr) throw ierr;
         elementTags.assign(api_elementTags_, api_elementTags_ + api_elementTags_n_); gmshFree(api_elementTags_);
+        nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
+      }
+
+      // Gets the mesh nodes in the same way as `getElementsByType'.
+      GMSH_API void getNodesByType(const int elementType,
+                                   std::vector<int> & nodeTags,
+                                   const int dim = -1,
+                                   const int tag = -1,
+                                   const int myThread = 0,
+                                   const int nbrThreads = 1)
+      {
+        int ierr = 0;
+        int *api_nodeTags_; size_t api_nodeTags_n_;
+        gmshModelMeshGetNodesByType(elementType, &api_nodeTags_, &api_nodeTags_n_, dim, tag, myThread, nbrThreads, &ierr);
+        if(ierr) throw ierr;
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
       }
 

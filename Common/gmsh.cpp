@@ -656,6 +656,75 @@ GMSH_API void gmsh::model::mesh::getElementTypes(std::vector<int> &elementTypes,
   }
 }
 
+GMSH_API int gmsh::model::mesh::getNumberElementByType(const int elementType,
+                                                       const int dim,
+                                                       const int tag)
+{
+  if(!_isInitialized()){ throw -1; }
+  
+  std::vector<GEntity*> entities;
+  if(dim >= 0 && tag >= 0){
+    GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+    if(!ge){
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+      throw 2;
+    }
+    entities.push_back(ge);
+  }
+  else{
+    GModel::current()->getEntities(entities, dim);
+  }
+  int numberElement = 0;
+  for(unsigned int i = 0; i < entities.size(); i++){
+    GEntity *ge = entities[i];
+    switch(ge->dim()){
+      case 0: {
+        GVertex *v = static_cast<GVertex*>(ge);
+        if(v->points.size())
+          if(v->points.front()->getTypeForMSH() == elementType)
+            numberElement += v->points.size();
+        break; }
+      case 1: {
+        GEdge *e = static_cast<GEdge*>(ge);
+        if(e->lines.size())
+          if(e->lines.front()->getTypeForMSH() == elementType)
+            numberElement += e->lines.size();
+        break; }
+      case 2: {
+        GFace *f = static_cast<GFace*>(ge);
+        if(f->triangles.size())
+          if(f->triangles.front()->getTypeForMSH() == elementType)
+            numberElement += f->triangles.size();
+        if(f->quadrangles.size())
+          if(f->quadrangles.front()->getTypeForMSH() == elementType)
+            numberElement += f->quadrangles.size();
+        break; }
+      case 3: {
+        GRegion *r = static_cast<GRegion*>(ge);
+        if(r->tetrahedra.size())
+          if(r->tetrahedra.front()->getTypeForMSH() == elementType)
+            numberElement += r->tetrahedra.size();
+        if(r->hexahedra.size())
+          if(r->hexahedra.front()->getTypeForMSH() == elementType)
+            numberElement += r->hexahedra.size();
+        if(r->prisms.size())
+          if(r->prisms.front()->getTypeForMSH() == elementType)
+            numberElement += r->prisms.size();
+        if(r->pyramids.size())
+          if(r->pyramids.front()->getTypeForMSH() == elementType)
+            numberElement += r->pyramids.size();
+        break; }
+    }
+  }
+  
+  return numberElement;
+}
+
+GMSH_API int gmsh::model::mesh::getNumberNodeByElementType(const int elementType)
+{
+  return ElementType::NumberOfVertices(elementType);
+}
+
 GMSH_API void gmsh::model::mesh::getElementsByType(const int elementType,
                                                    std::vector<int> &elementTags,
                                                    std::vector<int> &nodeTags,
@@ -668,6 +737,40 @@ GMSH_API void gmsh::model::mesh::getElementsByType(const int elementType,
   std::map<int, std::vector<GEntity*> > typeMap;
   _getElementTypeMap(dim, tag, typeMap);
   _getElementData(elementType, typeMap[elementType], elementTags, nodeTags);
+}
+
+GMSH_API void gmsh::model::mesh::getNodesByType(const int elementType,
+                                                std::vector<int> &nodeTags,
+                                                const int dim, const int tag,
+                                                const int myThread, const int nbrThreads)
+{
+  if(!_isInitialized()){ throw -1; }
+  std::map<int, std::vector<GEntity*> > typeMap;
+  _getElementTypeMap(dim, tag, typeMap);
+  const int nbrElements = getNumberElementByType(elementType, dim, tag);
+  const int nbrNodes = ElementType::NumberOfVertices(elementType);
+  const int begin = (myThread*nbrElements)/nbrThreads;
+  const int end = ((myThread+1)*nbrElements)/nbrThreads;
+  if(nodeTags.size() < nbrElements*nbrNodes){
+    Msg::Error("Vector size is too small");
+    throw 4;
+  }
+  int o = 0;
+  int idx = begin*nbrNodes;
+  for(unsigned int i = 0; i < typeMap[elementType].size(); i++){
+    GEntity *ge = typeMap[elementType][i];
+    for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
+      MElement *e = ge->getMeshElement(j);
+      if(e->getTypeForMSH() == elementType){
+        if(o >= begin && o < end){
+          for(int k = 0; k < e->getNumVertices(); k++){
+            nodeTags[idx++] = e->getVertex(k)->getNum();
+          }
+        }
+        o++;
+      }
+    }
+  }
 }
 
 GMSH_API void gmsh::model::mesh::getElementProperties(const int elementType,

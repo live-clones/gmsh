@@ -350,6 +350,18 @@ namespace gmsh { // Top-level functions
                                     const int dim = -1,
                                     const int tag = -1);
 
+      // Gets the number of mesh elements in the entity of dimension `dim' and
+      // `tag' tag for a single `elementType'. If `tag' < 0, gets the types for all
+      // entities of dimension `dim'. If `dim' and `tag' are negative, gets all the
+      // types in the mesh.
+      GMSH_API int getNumberElementByType(const int elementType,
+                                          const int dim = -1,
+                                          const int tag = -1);
+
+      // Gets the number of mesh nodes by element type (e.g. a triangle of order 1
+      // has 3 nodes)
+      GMSH_API int getNumberNodeByElementType(const int elementType);
+
       // Gets the mesh elements in the same way as `getElements', but for a single
       // `elementType'.
       GMSH_API void getElementsByType(const int elementType,
@@ -357,6 +369,14 @@ namespace gmsh { // Top-level functions
                                       std::vector<int> & nodeTags,
                                       const int dim = -1,
                                       const int tag = -1);
+
+      // Gets the mesh nodes in the same way as `getElementsByType'.
+      GMSH_API void getNodesByType(const int elementType,
+                                   std::vector<int> & nodeTags,
+                                   const int dim = -1,
+                                   const int tag = -1,
+                                   const int myThread = 0,
+                                   const int nbrThreads = 1);
 
       // Gets the integration data for mesh elements in the same way as
       // `getIntegrationData', but for a single `elementType'.

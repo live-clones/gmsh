@@ -364,6 +364,20 @@ GMSH_API void gmshModelMeshGetElementTypes(int ** elementTypes, size_t * element
                                            const int tag,
                                            int * ierr);
 
+/* Gets the number of mesh elements in the entity of dimension `dim' and `tag'
+ * tag for a single `elementType'. If `tag' < 0, gets the types for all
+ * entities of dimension `dim'. If `dim' and `tag' are negative, gets all the
+ * types in the mesh. */
+GMSH_API int gmshModelMeshGetNumberElementByType(const int elementType,
+                                                 const int dim,
+                                                 const int tag,
+                                                 int * ierr);
+
+/* Gets the number of mesh nodes by element type (e.g. a triangle of order 1
+ * has 3 nodes) */
+GMSH_API int gmshModelMeshGetNumberNodeByElementType(const int elementType,
+                                                     int * ierr);
+
 /* Gets the mesh elements in the same way as `getElements', but for a single
  * `elementType'. */
 GMSH_API void gmshModelMeshGetElementsByType(const int elementType,
@@ -372,6 +386,15 @@ GMSH_API void gmshModelMeshGetElementsByType(const int elementType,
                                              const int dim,
                                              const int tag,
                                              int * ierr);
+
+/* Gets the mesh nodes in the same way as `getElementsByType'. */
+GMSH_API void gmshModelMeshGetNodesByType(const int elementType,
+                                          int ** nodeTags, size_t * nodeTags_n,
+                                          const int dim,
+                                          const int tag,
+                                          const int myThread,
+                                          const int nbrThreads,
+                                          int * ierr);
 
 /* Gets the integration data for mesh elements in the same way as
  * `getIntegrationData', but for a single `elementType'. */

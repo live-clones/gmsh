@@ -605,6 +605,32 @@ GMSH_API void gmshModelMeshGetElementTypes(int ** elementTypes, size_t * element
   }
 }
 
+GMSH_API int gmshModelMeshGetNumberElementByType(const int elementType, const int dim, const int tag, int * ierr)
+{
+  int result_api_;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::mesh::getNumberElementByType(elementType, dim, tag);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelMeshGetNumberNodeByElementType(const int elementType, int * ierr)
+{
+  int result_api_;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::mesh::getNumberNodeByElementType(elementType);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+  return result_api_;
+}
+
 GMSH_API void gmshModelMeshGetElementsByType(const int elementType, int ** elementTags, size_t * elementTags_n, int ** nodeTags, size_t * nodeTags_n, const int dim, const int tag, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -613,6 +639,19 @@ GMSH_API void gmshModelMeshGetElementsByType(const int elementType, int ** eleme
     std::vector<int> api_nodeTags_;
     gmsh::model::mesh::getElementsByType(elementType, api_elementTags_, api_nodeTags_, dim, tag);
     vector2ptr(api_elementTags_, elementTags, elementTags_n);
+    vector2ptr(api_nodeTags_, nodeTags, nodeTags_n);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshGetNodesByType(const int elementType, int ** nodeTags, size_t * nodeTags_n, const int dim, const int tag, const int myThread, const int nbrThreads, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_nodeTags_;
+    gmsh::model::mesh::getNodesByType(elementType, api_nodeTags_, dim, tag, myThread, nbrThreads);
     vector2ptr(api_nodeTags_, nodeTags, nodeTags_n);
   }
   catch(int api_ierr_){

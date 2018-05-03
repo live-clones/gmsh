@@ -1044,6 +1044,46 @@ class model:
             return _ovectorint(api_elementTypes_, api_elementTypes_n_.value)
 
         @staticmethod
+        def getNumberElementByType(elementType, dim=-1, tag=-1):
+            """
+            Gets the number of mesh elements in the entity of dimension `dim' and `tag'
+            tag for a single `elementType'. If `tag' < 0, gets the types for all
+            entities of dimension `dim'. If `dim' and `tag' are negative, gets all the
+            types in the mesh.
+
+            Returns an integer.
+            """
+            ierr = c_int()
+            api__result__ = lib.gmshModelMeshGetNumberElementByType(
+                c_int(elementType),
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetNumberElementByType returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
+        def getNumberNodeByElementType(elementType):
+            """
+            Gets the number of mesh nodes by element type (e.g. a triangle of order 1
+            has 3 nodes)
+
+            Returns an integer.
+            """
+            ierr = c_int()
+            api__result__ = lib.gmshModelMeshGetNumberNodeByElementType(
+                c_int(elementType),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetNumberNodeByElementType returned non-zero error code: ",
+                    ierr.value)
+            return api__result__
+
+        @staticmethod
         def getElementsByType(elementType, dim=-1, tag=-1):
             """
             Gets the mesh elements in the same way as `getElements', but for a single
@@ -1068,6 +1108,29 @@ class model:
             return (
                 _ovectorint(api_elementTags_, api_elementTags_n_.value),
                 _ovectorint(api_nodeTags_, api_nodeTags_n_.value))
+
+        @staticmethod
+        def getNodesByType(elementType, dim=-1, tag=-1, myThread=0, nbrThreads=1):
+            """
+            Gets the mesh nodes in the same way as `getElementsByType'.
+
+            Returns `nodeTags'.
+            """
+            api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetNodesByType(
+                c_int(elementType),
+                byref(api_nodeTags_), byref(api_nodeTags_n_),
+                c_int(dim),
+                c_int(tag),
+                c_int(myThread),
+                c_int(nbrThreads),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetNodesByType returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorint(api_nodeTags_, api_nodeTags_n_.value)
 
         @staticmethod
         def getIntegrationDataByType(elementType, integrationType, functionSpaceType, dim=-1, tag=-1):

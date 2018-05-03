@@ -335,6 +335,148 @@ int ElementType::DimensionFromTag(int tag)
   }
 }
 
+// Give the number of node corresponding to a msh type 'tag'.
+int ElementType::NumberOfVertices(int tag)
+{
+  switch (tag) {
+    case MSH_PNT     : return 1;
+    case MSH_LIN_1   : return 1;
+    case MSH_LIN_2   : return 2;
+    case MSH_LIN_3   : return 3;
+    case MSH_LIN_4   : return 4;
+    case MSH_LIN_5   : return 5;
+    case MSH_LIN_6   : return 6;
+    case MSH_LIN_7   : return 7;
+    case MSH_LIN_8   : return 8;
+    case MSH_LIN_9   : return 9;
+    case MSH_LIN_10  : return 10;
+    case MSH_LIN_11  : return 11;
+    case MSH_TRI_1   : return 1;
+    case MSH_TRI_3   : return 3;
+    case MSH_TRI_6   : return 6;
+    case MSH_TRI_10  : return 10;
+    case MSH_TRI_15  : return 15;
+    case MSH_TRI_21  : return 21;
+    case MSH_TRI_28  : return 28;
+    case MSH_TRI_36  : return 36;
+    case MSH_TRI_45  : return 45;
+    case MSH_TRI_55  : return 55;
+    case MSH_TRI_66  : return 66;
+    case MSH_TRI_9   : return 9;
+    case MSH_TRI_12  : return 12;
+    case MSH_TRI_15I : return 15;
+    case MSH_TRI_18  : return 18;
+    case MSH_TRI_21I : return 21;
+    case MSH_TRI_24  : return 24;
+    case MSH_TRI_27  : return 27;
+    case MSH_TRI_30  : return 30;
+    //case MSH_TRI_MINI  : return 0;
+    //case MSH_POLYG_  : return 0;
+    //case MSH_POLYG_B : return 0;
+    case MSH_TET_1   : return 1;
+    case MSH_TET_4   : return 4;
+    case MSH_TET_10  : return 10;
+    case MSH_TET_20  : return 20;
+    case MSH_TET_35  : return 35;
+    case MSH_TET_56  : return 56;
+    case MSH_TET_84  : return 84;
+    case MSH_TET_120 : return 120;
+    case MSH_TET_165 : return 165;
+    case MSH_TET_220 : return 220;
+    case MSH_TET_286 : return 286;
+    case MSH_TET_16  : return 16;
+    case MSH_TET_22  : return 22;
+    case MSH_TET_28  : return 28;
+    case MSH_TET_34  : return 34;
+    case MSH_TET_40  : return 40;
+    case MSH_TET_46  : return 46;
+    case MSH_TET_52  : return 52;
+    case MSH_TET_58  : return 58;
+    //case MSH_TET_MINI  : return 0;
+    case MSH_QUA_1   : return 1;
+    case MSH_QUA_4   : return 4;
+    case MSH_QUA_9   : return 9;
+    case MSH_QUA_16  : return 16;
+    case MSH_QUA_25  : return 25;
+    case MSH_QUA_36  : return 36;
+    case MSH_QUA_49  : return 49;
+    case MSH_QUA_64  : return 64;
+    case MSH_QUA_81  : return 81;
+    case MSH_QUA_100 : return 100;
+    case MSH_QUA_121 : return 121;
+    case MSH_QUA_8   : return 8;
+    case MSH_QUA_12  : return 12;
+    case MSH_QUA_16I : return 16;
+    case MSH_QUA_20  : return 20;
+    case MSH_QUA_24  : return 24;
+    case MSH_QUA_28  : return 28;
+    case MSH_QUA_32  : return 32;
+    case MSH_QUA_36I : return 36;
+    case MSH_QUA_40  : return 40;
+    case MSH_PRI_1   : return 1;
+    case MSH_PRI_6   : return 6;
+    case MSH_PRI_18  : return 18;
+    case MSH_PRI_40  : return 40;
+    case MSH_PRI_75  : return 75;
+    case MSH_PRI_126 : return 126;
+    case MSH_PRI_196 : return 196;
+    case MSH_PRI_288 : return 288;
+    case MSH_PRI_405 : return 405;
+    case MSH_PRI_550 : return 550;
+    case MSH_PRI_15  : return 15;
+    case MSH_PRI_24  : return 24;
+    case MSH_PRI_33  : return 33;
+    case MSH_PRI_42 : return 42;
+    case MSH_PRI_51 : return 51;
+    case MSH_PRI_60 : return 60;
+    case MSH_PRI_69 : return 69;
+    case MSH_PRI_78 : return 78;
+    case MSH_HEX_1   : return 1;
+    case MSH_HEX_8   : return 8;
+    case MSH_HEX_27  : return 27;
+    case MSH_HEX_64  : return 64;
+    case MSH_HEX_125 : return 125;
+    case MSH_HEX_216 : return 216;
+    case MSH_HEX_343 : return 343;
+    case MSH_HEX_512 : return 512;
+    case MSH_HEX_729 : return 729;
+    case MSH_HEX_1000: return 1000;
+    case MSH_HEX_20  : return 20;
+    case MSH_HEX_32  : return 32;
+    case MSH_HEX_44  : return 44;
+    case MSH_HEX_56 : return 56;
+    case MSH_HEX_68 : return 68;
+    case MSH_HEX_80 : return 80;
+    case MSH_HEX_92 : return 92;
+    case MSH_HEX_104 : return 104;
+    case MSH_PYR_1   : return 1;
+    case MSH_PYR_5   : return 5;
+    case MSH_PYR_14  : return 14;
+    case MSH_PYR_30  : return 30;
+    case MSH_PYR_55  : return 55;
+    case MSH_PYR_91  : return 91;
+    case MSH_PYR_140 : return 140;
+    case MSH_PYR_204 : return 204;
+    case MSH_PYR_285 : return 285;
+    case MSH_PYR_385 : return 385;
+    case MSH_PYR_13  : return 13;
+    case MSH_PYR_21  : return 21;
+    case MSH_PYR_29  : return 29;
+    case MSH_PYR_37  : return 37;
+    case MSH_PYR_45 : return 45;
+    case MSH_PYR_53 : return 53;
+    case MSH_PYR_61 : return 61;
+    case MSH_PYR_69 : return 69;
+    case MSH_TRIH_4 : return 4;
+    //case MSH_POLYH_ : return 0;
+    default :
+      Msg::Warning("Unknown element tag %d",tag);
+      return 0;
+  }
+  
+  return 0;
+}
+
 // Gives > 0 if element tag is in Serendipity Family.
 // Gives < 2 if element tag is in 'Normal' Family.
 // 1 is for element that is either Serendipity or not !

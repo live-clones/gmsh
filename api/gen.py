@@ -167,8 +167,17 @@ mesh.add('getFunctionSpaceData',doc,None,istring('integrationType'),istring('fun
 doc = '''Gets the types of mesh elements in the entity of dimension `dim' and `tag' tag. If `tag' < 0, gets the types for all entities of dimension `dim'. If `dim' and `tag' are negative, gets all the types in the mesh.'''
 mesh.add('getElementTypes',doc,None,ovectorint('elementTypes'),iint('dim', '-1'),iint('tag', '-1'))
 
+doc = '''Gets the number of mesh elements in the entity of dimension `dim' and `tag' tag for a single `elementType'. If `tag' < 0, gets the types for all entities of dimension `dim'. If `dim' and `tag' are negative, gets all the types in the mesh.'''
+mesh.add('getNumberElementByType',doc,oint,iint('elementType'),iint('dim', '-1'),iint('tag', '-1'))
+
+doc = '''Gets the number of mesh nodes by element type (e.g. a triangle of order 1 has 3 nodes)'''
+mesh.add('getNumberNodeByElementType',doc,oint,iint('elementType'))
+
 doc = '''Gets the mesh elements in the same way as `getElements', but for a single `elementType'.'''
 mesh.add('getElementsByType',doc,None,iint('elementType'),ovectorint('elementTags'),ovectorint('nodeTags'),iint('dim', '-1'),iint('tag', '-1'))
+
+doc = '''Gets the mesh nodes in the same way as `getElementsByType'.'''
+mesh.add('getNodesByType',doc,None,iint('elementType'),ovectorint('nodeTags'),iint('dim', '-1'),iint('tag', '-1'),iint('myThread', '0'),iint('nbrThreads', '1'))
 
 doc = '''Gets the integration data for mesh elements in the same way as `getIntegrationData', but for a single `elementType'.'''
 mesh.add('getIntegrationDataByType',doc,None,iint('elementType'),istring('integrationType'),istring('functionSpaceType'),ovectordouble('integrationPoints'),ovectordouble('integrationData'),oint('functionSpaceNumComponents'),ovectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))

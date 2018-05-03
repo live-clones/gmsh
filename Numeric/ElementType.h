@@ -12,6 +12,9 @@ namespace ElementType
   int ParentTypeFromTag(int tag);
   int OrderFromTag(int tag);
   int DimensionFromTag(int tag);
+  
+  // Give the number of node corresponding to a msh type 'tag'.
+  int NumberOfVertices(int tag);
 
   // Gives > 0 if element tag is in Serendipity Family.
   // Gives < 2 if element tag is in 'Normal' Family.
