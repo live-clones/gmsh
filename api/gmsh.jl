@@ -8,7 +8,7 @@ const clib = "libgmsh"
 """
 Test test test
 """
-function initialize(argv::Vector{String} = Vector{String}(), readConfigFiles::Bool = true)
+function initialize(argv = Vector{String}(), readConfigFiles = true)
     ierr = Vector{Cint}(1)
     ccall(("gmshInitialize", clib), Void,
           (Cint, Ptr{Ptr{Cchar}}, Cint, Ptr{Cint}),
@@ -16,7 +16,7 @@ function initialize(argv::Vector{String} = Vector{String}(), readConfigFiles::Bo
     println(ierr[1])
 end
 
-function open(name::String)
+function open(name)
     ierr = Vector{Cint}(1)
     ccall(("gmshOpen", clib), Void, 
           (Cstring, Ptr{Cint}), 
@@ -27,7 +27,7 @@ module option
 
 import ..gmsh
 
-function setNumber(name::String, value::Float64)
+function setNumber(name, value)
     ierr = Vector{Cint}(1)
     ccall(("gmshOptionSetNumber", gmsh.clib), Void,
           (Cstring, Cdouble, Ptr{Cint}),
@@ -44,14 +44,14 @@ module mesh
 
 import ...gmsh
 
-function generate(dim::Int = 3)
+function generate(dim = 3)
     ierr = Vector{Cint}(1)
     ccall(("gmshModelMeshGenerate", gmsh.clib), Void,
           (Cint, Ptr{Cint}),
           dim, ierr)
 end
 
-function getNodes(dim::Int = -1, tag::Int = -1)
+function getNodes(dim = -1, tag = -1)
     ierr = Vector{Cint}(1)
     api_nodeTags_ = Vector{Ptr{Cint}}(1)
     api_coord_ = Vector{Ptr{Cdouble}}(1)
@@ -82,7 +82,7 @@ function getNodes(dim::Int = -1, tag::Int = -1)
     return nodeTags, coord, parametricCoord
 end
 
-function getElements(dim::Int = -1, tag::Int = -1)
+function getElements(dim = -1, tag = -1)
     ierr = Vector{Cint}(1)
     api_elementTypes_ = Vector{Ptr{Cint}}(1)
     api_elementTags_ = Vector{Ptr{Ptr{Cint}}}(1)
@@ -108,14 +108,13 @@ function getElements(dim::Int = -1, tag::Int = -1)
           dim,
           tag,
           ierr)
-    elementTypes = unsafe_wrap(Array, api_elementTypes_[1],
-                               api_elementTypes_n_[1], true)
-    elementTags = [ unsafe_wrap(Array, unsafe_load(api_elementTags_[1], i),
-                                unsafe_load(api_elementTags_n_[1], i), true)
-                    for i in 1:api_elementTags_nn_[1] ]
-    nodeTags = [ unsafe_wrap(Array, unsafe_load(api_nodeTags_[1], i),
-                             unsafe_load(api_nodeTags_n_[1], i), true)
-                 for i in 1:api_nodeTags_nn_[1] ]
+    elementTypes = unsafe_wrap(Array, api_elementTypes_[1], api_elementTypes_n_[1], true)
+    api_tmp_elementTags_ = unsafe_wrap(Array, api_elementTags_[1], api_elementTags_nn_[1], true)
+    api_tmp_elementTags_n_ = unsafe_wrap(Array, api_elementTags_n_[1], api_elementTags_nn_[1], true)
+    elementTags = [ unsafe_wrap(Array, api_tmp_elementTags_[i], api_tmp_elementTags_n_[i], true) for i in 1:api_elementTags_nn_[1] ]
+    api_tmp_nodeTags_ = unsafe_wrap(Array, api_nodeTags_[1], api_nodeTags_nn_[1], true)
+    api_tmp_nodeTags_n_ = unsafe_wrap(Array, api_nodeTags_n_[1], api_nodeTags_nn_[1], true)
+    nodeTags = [ unsafe_wrap(Array, api_tmp_nodeTags_[i], api_tmp_nodeTags_n_[i], true) for i in 1:api_nodeTags_nn_[1] ]
     return elementTypes, elementTags, nodeTags
 end
 
