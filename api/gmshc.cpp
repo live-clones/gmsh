@@ -428,20 +428,6 @@ GMSH_API void gmshModelMeshCohomology(int * domainTags, size_t domainTags_n, int
   }
 }
 
-GMSH_API void gmshModelMeshBetti(int * domainTags, size_t domainTags_n, int * subdomainTags, size_t subdomainTags_n, int * dims, size_t dims_n, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    std::vector<int> api_domainTags_(domainTags, domainTags + domainTags_n);
-    std::vector<int> api_subdomainTags_(subdomainTags, subdomainTags + subdomainTags_n);
-    std::vector<int> api_dims_(dims, dims + dims_n);
-    gmsh::model::mesh::betti(api_domainTags_, api_subdomainTags_, api_dims_);
-  }
-  catch(int api_ierr_){
-    if(ierr) *ierr = api_ierr_;
-  }
-}
-
 GMSH_API void gmshModelMeshPartition(const int numPart, int * ierr)
 {
   if(ierr) *ierr = 0;
