@@ -209,6 +209,21 @@ namespace gmsh { // Top-level functions
       // 3).
       GMSH_API void generate(const int dim = 3);
 
+      // Homology
+      GMSH_API void homology(const std::vector<int> & domainTags = std::vector<int>(),
+                             const std::vector<int> & subdomainTags = std::vector<int>(),
+                             const std::vector<int> & dims = std::vector<int>());
+
+      // Cohomology
+      GMSH_API void cohomology(const std::vector<int> & domainTags = std::vector<int>(),
+                               const std::vector<int> & subdomainTags = std::vector<int>(),
+                               const std::vector<int> & dims = std::vector<int>());
+
+      // Betti
+      GMSH_API void betti(const std::vector<int> & domainTags = std::vector<int>(),
+                          const std::vector<int> & subdomainTags = std::vector<int>(),
+                          const std::vector<int> & dims = std::vector<int>());
+
       // Partition the mesh of the current model into `numPart' partitions.
       GMSH_API void partition(const int numPart);
 

@@ -668,6 +668,63 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def homology(domainTags=[], subdomainTags=[], dims=[]):
+            """
+            Homology
+            """
+            api_domainTags_, api_domainTags_n_ = _ivectorint(domainTags)
+            api_subdomainTags_, api_subdomainTags_n_ = _ivectorint(subdomainTags)
+            api_dims_, api_dims_n_ = _ivectorint(dims)
+            ierr = c_int()
+            lib.gmshModelMeshHomology(
+                api_domainTags_, api_domainTags_n_,
+                api_subdomainTags_, api_subdomainTags_n_,
+                api_dims_, api_dims_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshHomology returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def cohomology(domainTags=[], subdomainTags=[], dims=[]):
+            """
+            Cohomology
+            """
+            api_domainTags_, api_domainTags_n_ = _ivectorint(domainTags)
+            api_subdomainTags_, api_subdomainTags_n_ = _ivectorint(subdomainTags)
+            api_dims_, api_dims_n_ = _ivectorint(dims)
+            ierr = c_int()
+            lib.gmshModelMeshCohomology(
+                api_domainTags_, api_domainTags_n_,
+                api_subdomainTags_, api_subdomainTags_n_,
+                api_dims_, api_dims_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshCohomology returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def betti(domainTags=[], subdomainTags=[], dims=[]):
+            """
+            Betti
+            """
+            api_domainTags_, api_domainTags_n_ = _ivectorint(domainTags)
+            api_subdomainTags_, api_subdomainTags_n_ = _ivectorint(subdomainTags)
+            api_dims_, api_dims_n_ = _ivectorint(dims)
+            ierr = c_int()
+            lib.gmshModelMeshBetti(
+                api_domainTags_, api_domainTags_n_,
+                api_subdomainTags_, api_subdomainTags_n_,
+                api_dims_, api_dims_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshBetti returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def partition(numPart):
             """
             Partition the mesh of the current model into `numPart' partitions.

@@ -213,6 +213,24 @@ GMSH_API void gmshModelGetType(const int dim,
 GMSH_API void gmshModelMeshGenerate(const int dim,
                                     int * ierr);
 
+/* Homology */
+GMSH_API void gmshModelMeshHomology(int * domainTags, size_t domainTags_n,
+                                    int * subdomainTags, size_t subdomainTags_n,
+                                    int * dims, size_t dims_n,
+                                    int * ierr);
+
+/* Cohomology */
+GMSH_API void gmshModelMeshCohomology(int * domainTags, size_t domainTags_n,
+                                      int * subdomainTags, size_t subdomainTags_n,
+                                      int * dims, size_t dims_n,
+                                      int * ierr);
+
+/* Betti */
+GMSH_API void gmshModelMeshBetti(int * domainTags, size_t domainTags_n,
+                                 int * subdomainTags, size_t subdomainTags_n,
+                                 int * dims, size_t dims_n,
+                                 int * ierr);
+
 /* Partition the mesh of the current model into `numPart' partitions. */
 GMSH_API void gmshModelMeshPartition(const int numPart,
                                      int * ierr);
