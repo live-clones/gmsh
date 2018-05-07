@@ -147,6 +147,13 @@ unsigned int GEdge::getNumMeshElements() const
   return lines.size();
 }
 
+unsigned int GEdge::getNumMeshElementsByType(const int familyType) const
+{
+  if(familyType == TYPE_LIN) return lines.size();
+  
+  return 0;
+}
+
 unsigned int GEdge::getNumMeshParentElements()
 {
   unsigned int n = 0;
@@ -171,6 +178,13 @@ MElement *GEdge::getMeshElement(unsigned int index) const
 {
   if(index < lines.size())
     return lines[index];
+  return 0;
+}
+
+MElement *GEdge::getMeshElementByType(const int familyType, const unsigned int index) const
+{
+  if(familyType == TYPE_LIN) return lines[index];
+  
   return 0;
 }
 

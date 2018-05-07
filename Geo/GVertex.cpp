@@ -91,6 +91,13 @@ unsigned int GVertex::getNumMeshElements() const
   return points.size();
 }
 
+unsigned int GVertex::getNumMeshElementsByType(const int familyType) const
+{
+  if(familyType == TYPE_PNT) return points.size();
+  
+  return 0;
+}
+
 void GVertex::getNumMeshElements(unsigned *const c) const
 {
   c[0] += points.size();
@@ -100,6 +107,13 @@ MElement *GVertex::getMeshElement(unsigned int index) const
 {
   if(index < points.size())
     return points[index];
+  return 0;
+}
+
+MElement *GVertex::getMeshElementByType(const int familyType, const unsigned int index) const
+{
+  if(familyType == TYPE_PNT) return points[index];
+  
   return 0;
 }
 

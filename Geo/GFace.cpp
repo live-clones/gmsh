@@ -156,6 +156,15 @@ unsigned int GFace::getNumMeshElements() const
   return triangles.size() + quadrangles.size() + polygons.size();
 }
 
+unsigned int GFace::getNumMeshElementsByType(const int familyType) const
+{
+  if(familyType == TYPE_TRI) return triangles.size();
+  else if(familyType == TYPE_QUA) return quadrangles.size();
+  else if(familyType == TYPE_POLYG) return polygons.size();
+  
+  return 0;
+}
+
 unsigned int GFace::getNumMeshParentElements()
 {
   unsigned int n = 0;
@@ -196,6 +205,15 @@ MElement *GFace::getMeshElement(unsigned int index) const
     return quadrangles[index - triangles.size()];
   else if(index < triangles.size() + quadrangles.size() + polygons.size())
     return polygons[index - triangles.size() - quadrangles.size()];
+  return 0;
+}
+
+MElement *GFace::getMeshElementByType(const int familyType, const unsigned int index) const
+{
+  if(familyType == TYPE_TRI) return triangles[index];
+  else if(familyType == TYPE_QUA) return quadrangles[index];
+  else if(familyType == TYPE_POLYG) return polygons[index];
+  
   return 0;
 }
 

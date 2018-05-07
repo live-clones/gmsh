@@ -333,6 +333,7 @@ class GEntity {
 
   // get the number of mesh elements (total and by type) in the entity
   virtual unsigned int getNumMeshElements() const { return 0; }
+  virtual unsigned int getNumMeshElementsByType(const int familyType) const { return 0; }
   virtual unsigned int getNumMeshParentElements() { return 0; }
   virtual void getNumMeshElements(unsigned *const c) const { }
 
@@ -341,6 +342,8 @@ class GEntity {
 
   // get the element at the given index
   virtual MElement *getMeshElement(unsigned int index) const { return 0; }
+  // get the element at the given index for a given familyType
+  virtual MElement *getMeshElementByType(const int familyType, const unsigned int index) const { return 0; }
 
   // get/set all mesh element visibility flag
   bool getAllElementsVisible(){ return _allElementsVisible ? true : false; }

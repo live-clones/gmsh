@@ -63,6 +63,18 @@ unsigned int GRegion::getNumMeshElements() const
     trihedra.size() + polyhedra.size();
 }
 
+unsigned int GRegion::getNumMeshElementsByType(const int familyType) const
+{
+  if(familyType == TYPE_TET) return tetrahedra.size();
+  else if(familyType == TYPE_HEX) return hexahedra.size();
+  else if(familyType == TYPE_PRI) return prisms.size();
+  else if(familyType == TYPE_PYR) return pyramids.size();
+  else if(familyType == TYPE_TRIH) return trihedra.size();
+  else if(familyType == TYPE_POLYH) return polyhedra.size();
+  
+  return 0;
+}
+
 unsigned int GRegion::getNumMeshParentElements()
 {
   unsigned int n = 0;
@@ -127,6 +139,18 @@ MElement *GRegion::getMeshElement(unsigned int index) const
     return polyhedra[index - tetrahedra.size() - hexahedra.size() - prisms.size() -
                      pyramids.size() - trihedra.size()];
 
+  return 0;
+}
+
+MElement *GRegion::getMeshElementByType(const int familyType, const unsigned int index) const
+{
+  if(familyType == TYPE_TET) return tetrahedra[index];
+  else if(familyType == TYPE_HEX) return hexahedra[index];
+  else if(familyType == TYPE_PRI) return prisms[index];
+  else if(familyType == TYPE_PYR) return pyramids[index];
+  else if(familyType == TYPE_TRIH) return trihedra[index];
+  else if(familyType == TYPE_POLYH) return polyhedra[index];
+  
   return 0;
 }
 

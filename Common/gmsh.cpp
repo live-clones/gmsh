@@ -758,17 +758,16 @@ GMSH_API void gmsh::model::mesh::getNodesByType(const int elementType,
   int o = 0;
   int idx = begin*nbrNodes;
   for(unsigned int i = 0; i < typeMap[elementType].size(); i++){
+    int familyType = ElementType::ParentTypeFromTag(elementType);
     GEntity *ge = typeMap[elementType][i];
-    for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
-      MElement *e = ge->getMeshElement(j);
-      if(e->getTypeForMSH() == elementType){
-        if(o >= begin && o < end){
-          for(int k = 0; k < e->getNumVertices(); k++){
-            nodeTags[idx++] = e->getVertex(k)->getNum();
-          }
+    for(unsigned int j = 0; j < ge->getNumMeshElementsByType(familyType); j++){
+      if(o >= begin && o < end){
+        MElement *e = ge->getMeshElementByType(familyType, j);
+        for(int k = 0; k < e->getNumVertices(); k++){
+          nodeTags[idx++] = e->getVertex(k)->getNum();
         }
-        o++;
       }
+      o++;
     }
   }
 }
@@ -975,11 +974,7 @@ static void _getJacobianData(const int elementType,
     int n = 0;
     for(unsigned int i = 0; i < entities.size(); i++){
       GEntity *ge = entities[i];
-      for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
-        MElement *e = ge->getMeshElement(j);
-        if(e->getTypeForMSH() == elementType)
-          n++;
-      }
+      n += ge->getNumMeshElementsByType(familyType);
     }
     const int begin = (myThread*n)/nbrThreads;
     const int end = ((myThread+1)*n)/nbrThreads;
@@ -992,34 +987,32 @@ static void _getJacobianData(const int elementType,
     int idx = begin*nbrIPoint;
     for(unsigned int i = 0; i < entities.size(); i++){
       GEntity *ge = entities[i];
-      for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
-        MElement *e = ge->getMeshElement(j);
-        if(e->getTypeForMSH() == elementType){
-          if(o >= begin && o < end){
-            if(gsf.size() == 0){
-              gsf.resize(nbrIPoint);
-              for(int k = 0; k < nbrIPoint; k++){
-                double value[1256][3];
-                e->getGradShapeFunctions(pts(k, 0), pts(k, 1), pts(k, 2), value);
-                gsf[k].resize(e->getNumShapeFunctions());
-                for(int l = 0; l < e->getNumShapeFunctions(); l++) {
-                  gsf[k][l][0] = value[l][0];
-                  gsf[k][l][1] = value[l][1];
-                  gsf[k][l][2] = value[l][2];
-                }
+      for(unsigned int j = 0; j < ge->getNumMeshElementsByType(familyType); j++){
+        if(o >= begin && o < end){
+          MElement *e = ge->getMeshElementByType(familyType, j);
+          if(gsf.size() == 0){
+            gsf.resize(nbrIPoint);
+            for(int k = 0; k < nbrIPoint; k++){
+              double value[1256][3];
+              e->getGradShapeFunctions(pts(k, 0), pts(k, 1), pts(k, 2), value);
+              gsf[k].resize(e->getNumShapeFunctions());
+              for(int l = 0; l < e->getNumShapeFunctions(); l++) {
+                gsf[k][l][0] = value[l][0];
+                gsf[k][l][1] = value[l][1];
+                gsf[k][l][2] = value[l][2];
               }
             }
-            for(int k = 0; k < nbrIPoint; k++){
-              double jac[3][3];
-              determinant[idx] = e->getJacobian(gsf[k], jac);
-              for(int m = 0; m < 3; m++)
-                for(int n = 0; n < 3; n++)
-                  jacobian[idx*9 + m*3 + n] = jac[m][n];
-              idx++;
-            }
           }
-          o++;
+          for(int k = 0; k < nbrIPoint; k++){
+            double jac[3][3];
+            determinant[idx] = e->getJacobian(gsf[k], jac);
+            for(int m = 0; m < 3; m++)
+              for(int n = 0; n < 3; n++)
+                jacobian[idx*9 + m*3 + n] = jac[m][n];
+            idx++;
+          }
         }
+        o++;
       }
     }
   }
