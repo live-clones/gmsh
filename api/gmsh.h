@@ -209,6 +209,30 @@ namespace gmsh { // Top-level functions
       // 3).
       GMSH_API void generate(const int dim = 3);
 
+      // Compute a basis representation for homology spaces after a mesh has been
+      // generated. The computation domain is given in a list of physical group
+      // tags `domainTags'; if empty, the whole mesh is the domain. The computation
+      // subdomain for relative homology computation is given in a list of physical
+      // group tags `subdomainTags'; if empty, absolute homology is computed. The
+      // dimensions homology bases to be computed are given in the list `dim'; if
+      // empty, all bases are computed. Resulting basis representation chains are
+      // stored as physical groups in the mesh.
+      GMSH_API void homology(const std::vector<int> & domainTags = std::vector<int>(),
+                             const std::vector<int> & subdomainTags = std::vector<int>(),
+                             const std::vector<int> & dims = std::vector<int>());
+
+      // Compute a basis representation for cohomology spaces after a mesh has been
+      // generated. The computation domain is given in a list of physical group
+      // tags `domainTags'; if empty, the whole mesh is the domain. The computation
+      // subdomain for relative cohomology computation is given in a list of
+      // physical group tags `subdomainTags'; if empty, absolute cohomology is
+      // computed. The dimensions homology bases to be computed are given in the
+      // list `dim'; if empty, all bases are computed. Resulting basis
+      // representation cochains are stored as physical groups in the mesh.
+      GMSH_API void cohomology(const std::vector<int> & domainTags = std::vector<int>(),
+                               const std::vector<int> & subdomainTags = std::vector<int>(),
+                               const std::vector<int> & dims = std::vector<int>());
+
       // Partition the mesh of the current model into `numPart' partitions.
       GMSH_API void partition(const int numPart);
 

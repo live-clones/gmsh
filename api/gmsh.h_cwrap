@@ -413,6 +413,52 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
       }
 
+      // Compute a basis representation for homology spaces after a mesh has been
+      // generated. The computation domain is given in a list of physical group
+      // tags `domainTags'; if empty, the whole mesh is the domain. The computation
+      // subdomain for relative homology computation is given in a list of physical
+      // group tags `subdomainTags'; if empty, absolute homology is computed. The
+      // dimensions homology bases to be computed are given in the list `dim'; if
+      // empty, all bases are computed. Resulting basis representation chains are
+      // stored as physical groups in the mesh.
+      GMSH_API void homology(const std::vector<int> & domainTags = std::vector<int>(),
+                             const std::vector<int> & subdomainTags = std::vector<int>(),
+                             const std::vector<int> & dims = std::vector<int>())
+      {
+        int ierr = 0;
+        int *api_domainTags_; size_t api_domainTags_n_; vector2ptr(domainTags, &api_domainTags_, &api_domainTags_n_);
+        int *api_subdomainTags_; size_t api_subdomainTags_n_; vector2ptr(subdomainTags, &api_subdomainTags_, &api_subdomainTags_n_);
+        int *api_dims_; size_t api_dims_n_; vector2ptr(dims, &api_dims_, &api_dims_n_);
+        gmshModelMeshHomology(api_domainTags_, api_domainTags_n_, api_subdomainTags_, api_subdomainTags_n_, api_dims_, api_dims_n_, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_domainTags_);
+        gmshFree(api_subdomainTags_);
+        gmshFree(api_dims_);
+      }
+
+      // Compute a basis representation for cohomology spaces after a mesh has been
+      // generated. The computation domain is given in a list of physical group
+      // tags `domainTags'; if empty, the whole mesh is the domain. The computation
+      // subdomain for relative cohomology computation is given in a list of
+      // physical group tags `subdomainTags'; if empty, absolute cohomology is
+      // computed. The dimensions homology bases to be computed are given in the
+      // list `dim'; if empty, all bases are computed. Resulting basis
+      // representation cochains are stored as physical groups in the mesh.
+      GMSH_API void cohomology(const std::vector<int> & domainTags = std::vector<int>(),
+                               const std::vector<int> & subdomainTags = std::vector<int>(),
+                               const std::vector<int> & dims = std::vector<int>())
+      {
+        int ierr = 0;
+        int *api_domainTags_; size_t api_domainTags_n_; vector2ptr(domainTags, &api_domainTags_, &api_domainTags_n_);
+        int *api_subdomainTags_; size_t api_subdomainTags_n_; vector2ptr(subdomainTags, &api_subdomainTags_, &api_subdomainTags_n_);
+        int *api_dims_; size_t api_dims_n_; vector2ptr(dims, &api_dims_, &api_dims_n_);
+        gmshModelMeshCohomology(api_domainTags_, api_domainTags_n_, api_subdomainTags_, api_subdomainTags_n_, api_dims_, api_dims_n_, &ierr);
+        if(ierr) throw ierr;
+        gmshFree(api_domainTags_);
+        gmshFree(api_subdomainTags_);
+        gmshFree(api_dims_);
+      }
+
       // Partition the mesh of the current model into `numPart' partitions.
       GMSH_API void partition(const int numPart)
       {

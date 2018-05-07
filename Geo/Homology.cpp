@@ -470,32 +470,38 @@ std::vector<int> Homology::_addToModel(int dim, bool co, bool post, int physical
   return physicals;
 }
 
-void Homology::addChainsToModel(int dim, bool post, int physicalNumRequest) const
+std::vector<int> Homology::addChainsToModel(int dim, bool post, int physicalNumRequest) const
 {
+  std::vector<int> physicals;
   if(dim > -1 && !_homologyComputed[dim])
     Msg::Warning("%d-Homology is not computed", dim);
   if(dim == -1) {
     for(int j = 0; j < 4; j++) {
-      _addToModel(j, false, post, physicalNumRequest);
+      std::vector<int> p = _addToModel(j, false, post, physicalNumRequest);
+      physicals.insert(physicals.end(), p.begin(), p.end());
     }
   }
   else if (dim > -1 && dim < 4) {
-    _addToModel(dim, false, post, physicalNumRequest);
+    physicals = _addToModel(dim, false, post, physicalNumRequest);
   }
+  return physicals;
 }
 
-void Homology::addCochainsToModel(int dim, bool post, int physicalNumRequest) const
+std::vector<int> Homology::addCochainsToModel(int dim, bool post, int physicalNumRequest) const
 {
+  std::vector<int> physicals;
   if(dim > -1 && !_cohomologyComputed[dim])
     Msg::Warning("%d-Cohomology is not computed", dim);
   if(dim == -1) {
     for(int j = 0; j < 4; j++) {
-      _addToModel(j, true, post, physicalNumRequest);
+      std::vector<int> p = _addToModel(j, true, post, physicalNumRequest);
+      physicals.insert(physicals.end(), p.begin(), p.end());
     }
   }
   else if (dim > -1 && dim < 4) {
-    _addToModel(dim, true, post, physicalNumRequest);
+    physicals = _addToModel(dim, true, post, physicalNumRequest);
   }
+  return physicals;
 }
 
 void Homology::getHomologyBasis(int dim, std::vector<Chain<int> >& hom)

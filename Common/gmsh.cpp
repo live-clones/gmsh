@@ -62,7 +62,7 @@
 #include "onelabUtils.h"
 #endif
 
-// automtically generated C++ and C headers (in gmsh/api)
+// automatically generated C++ and C headers (in gmsh/api)
 #include "gmsh.h"
 extern "C" {
   #include "gmshc.h"
@@ -441,6 +441,28 @@ GMSH_API void gmsh::model::mesh::generate(const int dim)
   if(!_isInitialized()){ throw -1; }
   GModel::current()->mesh(dim);
   CTX::instance()->mesh.changed = ENT_ALL;
+}
+
+GMSH_API void gmsh::model::mesh::homology(const std::vector<int> &domainTags,
+					  const std::vector<int> &subdomainTags,
+					  const std::vector<int> &dims)
+{
+  if(!_isInitialized()){ throw -1; }
+  GModel::current()->addHomologyRequest("Homology",
+					domainTags,
+					subdomainTags,
+					dims);
+}
+
+GMSH_API void gmsh::model::mesh::cohomology(const std::vector<int> &domainTags,
+					    const std::vector<int> &subdomainTags,
+					    const std::vector<int> &dims)
+{
+  if(!_isInitialized()){ throw -1; }
+  GModel::current()->addHomologyRequest("Cohomology",
+					domainTags,
+					subdomainTags,
+					dims);
 }
 
 GMSH_API void gmsh::model::mesh::partition(const int numPart)

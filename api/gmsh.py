@@ -668,6 +668,58 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def homology(domainTags=[], subdomainTags=[], dims=[]):
+            """
+            Compute a basis representation for homology spaces after a mesh has been
+            generated. The computation domain is given in a list of physical group tags
+            `domainTags'; if empty, the whole mesh is the domain. The computation
+            subdomain for relative homology computation is given in a list of physical
+            group tags `subdomainTags'; if empty, absolute homology is computed. The
+            dimensions homology bases to be computed are given in the list `dim'; if
+            empty, all bases are computed. Resulting basis representation chains are
+            stored as physical groups in the mesh.
+            """
+            api_domainTags_, api_domainTags_n_ = _ivectorint(domainTags)
+            api_subdomainTags_, api_subdomainTags_n_ = _ivectorint(subdomainTags)
+            api_dims_, api_dims_n_ = _ivectorint(dims)
+            ierr = c_int()
+            lib.gmshModelMeshHomology(
+                api_domainTags_, api_domainTags_n_,
+                api_subdomainTags_, api_subdomainTags_n_,
+                api_dims_, api_dims_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshHomology returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def cohomology(domainTags=[], subdomainTags=[], dims=[]):
+            """
+            Compute a basis representation for cohomology spaces after a mesh has been
+            generated. The computation domain is given in a list of physical group tags
+            `domainTags'; if empty, the whole mesh is the domain. The computation
+            subdomain for relative cohomology computation is given in a list of
+            physical group tags `subdomainTags'; if empty, absolute cohomology is
+            computed. The dimensions homology bases to be computed are given in the
+            list `dim'; if empty, all bases are computed. Resulting basis
+            representation cochains are stored as physical groups in the mesh.
+            """
+            api_domainTags_, api_domainTags_n_ = _ivectorint(domainTags)
+            api_subdomainTags_, api_subdomainTags_n_ = _ivectorint(subdomainTags)
+            api_dims_, api_dims_n_ = _ivectorint(dims)
+            ierr = c_int()
+            lib.gmshModelMeshCohomology(
+                api_domainTags_, api_domainTags_n_,
+                api_subdomainTags_, api_subdomainTags_n_,
+                api_dims_, api_dims_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshCohomology returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def partition(numPart):
             """
             Partition the mesh of the current model into `numPart' partitions.
