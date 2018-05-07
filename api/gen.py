@@ -122,6 +122,12 @@ mesh = model.add_module('mesh','Per-model meshing functions')
 doc = '''Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).'''
 mesh.add('generate',doc,None,iint('dim', '3'))
 
+doc = '''Compute a basis representation for homology spaces after a mesh has been generated. The computation domain is given in a list of physical group tags `domainTags'; if empty, the whole mesh is the domain. The computation subdomain for relative homology computation is given in a list of physical group tags `subdomainTags'; if empty, absolute homology is computed. The dimensions homology bases to be computed are given in the list `dim'; if empty, all bases are computed. Resulting basis representation chains are stored as physical groups in the mesh.'''
+mesh.add('homology',doc,None,ivectorint('domainTags','std::vector<int>()',"[]"),ivectorint('subdomainTags','std::vector<int>()',"[]"),ivectorint('dims','std::vector<int>()',"[]"))
+
+doc = '''Compute a basis representation for cohomology spaces after a mesh has been generated. The computation domain is given in a list of physical group tags `domainTags'; if empty, the whole mesh is the domain. The computation subdomain for relative cohomology computation is given in a list of physical group tags `subdomainTags'; if empty, absolute cohomology is computed. The dimensions homology bases to be computed are given in the list `dim'; if empty, all bases are computed. Resulting basis representation cochains are stored as physical groups in the mesh.'''
+mesh.add('cohomology',doc,None,ivectorint('domainTags','std::vector<int>()',"[]"),ivectorint('subdomainTags','std::vector<int>()',"[]"),ivectorint('dims','std::vector<int>()',"[]"))
+
 doc = '''Partition the mesh of the current model into `numPart' partitions.'''
 mesh.add('partition',doc,None,iint('numPart'))
 
