@@ -8,19 +8,19 @@
 # Running `python gen.py' will generate
 #
 #  - gmsh.h: the Gmsh C++ API header
+#  - gmshc.h: the Gmsh C API header
+#  - gmshc.cpp: the C to C++ wrapper code used by the Gmsh C API
+#  - gmsh.h_cwrap: the Gmsh C++ API redefined in terms of the C API
 #  - gmsh.py: the Gmsh Python API module
 #  - gmsh.jl: the Gmsh Julia API module
-#  - gmshc.h: the Gmsh C API header
-#  - gmsh.h_cwrap: the Gmsh C++ API redefined in terms of the C API
-#  - gmshc.cpp: the C to C++ wrapper code used by the Gmsh C API
 #  - api.texi: the texinfo API documentation
 #
 # By design, the Gmsh API is purely functional, and only uses elementary types
-# of the target language.
+# from the target language.
 #
-# See `demos/api' for examples on how to use the Gmsh API. In particular, this
-# directory contains C++ and Python versions of several of the `.geo' tutorials
-# from `tutorials'.
+# See `demos/api' for examples on how to use the Gmsh API. In particular,
+# `demos/api' contains C++, C, Python and Julia versions of several of the
+# `.geo' tutorials from `tutorials'.
 
 from GenApi import *
 

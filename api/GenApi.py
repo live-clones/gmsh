@@ -328,6 +328,13 @@ def ovectorpair(name, value=None, python_value=None, julia_value=None):
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectorpair(" + api_name + ", " + api_name_n + ".value)"
     a.julia_ctype = "Ptr{Ptr{Cint}}, Ptr{Csize_t}"
+    a.julia_pre = (api_name + "= Vector{Ptr{Cint}}(1)\n    " +
+                   api_name_n + "= Vector{Csize_t}(1)")
+    a.julia_arg = api_name + ", " + api_name_n
+    a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[1], " +
+                    api_name_n + "[1], true)\n    " +
+                    name + " = [ (tmp_" + api_name + "[i], tmp_" + api_name + "[i+1]) " +
+                    "for i in 1:2:length(tmp_" + api_name + ") ]")
     return a
 
 def ovectorvectorint(name, value=None, python_value=None, julia_value=None):
