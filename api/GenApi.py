@@ -24,8 +24,8 @@ class arg:
         self.cwrap_pre = ""
         self.cwrap_post = ""
         self.python_value = python_value if python_value is not None else value
-        self.python_arg = "not_implemented"
-        self.python_return = "not_implemented"
+        self.python_arg = ""
+        self.python_return = ""
         self.python_pre = ""
         self.julia_value = julia_value if julia_value is not None else value
         self.julia_arg = name
@@ -1103,9 +1103,8 @@ class API:
                         tuple(a.julia_arg for a in args) + ("ierr",)) + ")\n")
             for a in args:
                 if a.julia_post: f.write("    " + a.julia_post + "\n")
-            f.write("    if ierr[1] != 0\n")
-            f.write("      println(ierr[1])\n")
-            f.write("    end\n")
+            f.write('    ierr[1] != 0 && error("' + c_name +
+                    ' returned non-zero error code: " * string(ierr[1]))\n')
             r = (["api__result__"]) if rtype else []
             r += list((o.name for o in oargs))
             if len(r) != 0:
