@@ -11,14 +11,14 @@ The additional file `gmsh.h_cwrap' redefines the C++ API in terms of the C API.
 This is provided as a convenience for users of the binary Gmsh SDK whose C++
 compiler ABI is not compatible with the ABI of the C++ compiler used to create
 the SDK. To use these C++ bindings of the C API instead of the native C++ API,
-simply rename `gmsh.h_cwrap' as `gmsh.h'. Warning: this will lead to (slightly)
+simply rename `gmsh.h_cwrap' as `gmsh.h'. Note that this will lead to (slightly)
 reduced performance compared to using the native Gmsh C++ API, as it entails
 additional data copies between the C++ wrapper, the C API and the native C++
 code.
 
 See `demos/api' for examples on how to use the Gmsh API. In particular,
-`demos/api' contains C++ and Python versions of several of the `.geo' tutorials
-from `tutorials'.
+`demos/api' contains C++, C Python and Julia versions of several of the `.geo'
+tutorials from `tutorials'.
 
 To add a new function in the Gmsh API:
 
