@@ -18,7 +18,7 @@ Top-level functions
 """
 module gmsh
 
-const clib = "libgmsh"
+const clib = is_windows() ? "gmsh-3.0" : "libgmsh"
 
 """
 
@@ -232,7 +232,7 @@ List the names of all models.
 Return `names'.
 """
 function list()
-    api_names_ = Vector{Ptr{Cstring}}(1)
+    api_names_ = Vector{Ptr{Ptr{Cchar}}}(1)
     api_names_n_ = Vector{Csize_t}(1)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelList, gmsh.clib), Void,
@@ -2943,7 +2943,7 @@ the 'data' for each data type.
 Return `dataType', `numElements', `data'.
 """
 function getListData(tag)
-    api_dataType_ = Vector{Ptr{Cstring}}(1)
+    api_dataType_ = Vector{Ptr{Ptr{Cchar}}}(1)
     api_dataType_n_ = Vector{Csize_t}(1)
     api_numElements_ = Vector{Ptr{Cint}}(1)
     api_numElements_n_ = Vector{Csize_t}(1)

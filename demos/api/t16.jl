@@ -12,7 +12,7 @@ model.add("t16")
 
 factory.addBox(0,0,0, 1,1,1, 1)
 factory.addBox(0,0,0, 0.5,0.5,0.5, 2)
-factory.cut([(3,1)], [(3,2000)], 3)
+factory.cut([(3,1)], [(3,2)], 3)
 
 x = 0; y = 0.75; z = 0; r = 0.09
 

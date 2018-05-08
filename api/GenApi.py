@@ -306,7 +306,7 @@ def ovectorstring(name, value=None, python_value=None, julia_value=None):
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectorstring(" + api_name + ", " + api_name_n + ".value)"
     a.julia_ctype = "Ptr{Ptr{Cchar}}, Ptr{Csize_t}"
-    a.julia_pre = (api_name + " = Vector{Ptr{Cstring}}(1)\n    " +
+    a.julia_pre = (api_name + " = Vector{Ptr{Ptr{Cchar}}}(1)\n    " +
                    api_name_n + " = Vector{Csize_t}(1)")
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[1], " +
@@ -1040,7 +1040,7 @@ class API:
                     ")\n")
             f.write(indent + "if ierr.value != 0:\n")
             f.write(indent + "    raise ValueError(\n")
-            f.write(indent + "        \"" + c_name + " returned non-zero error code: \",\n")
+            f.write(indent + '        "' + c_name + ' returned non-zero error code: ",\n')
             f.write(indent + "        ierr.value)\n")
             r = (["api__result__"]) if rtype else []
             r += list((o.python_return for o in oargs))
@@ -1117,7 +1117,8 @@ class API:
             f.write('"""\n')
             f.write("module " + m.name + "\n\n")
             if level == 1:
-                f.write("const clib = \"libgmsh\"\n")
+                f.write('const clib = is_windows() ? "gmsh-' + self.api_version +
+                        '" : "libgmsh"\n')
             else:
                 f.write("import " + ("." * level) + "gmsh\n")
             if c_mpath:
