@@ -11,6 +11,9 @@
 # types. See `demos/api' for examples.
 
 """
+
+    module gmsh
+
 Top-level functions
 """
 module gmsh
@@ -18,9 +21,12 @@ module gmsh
 const clib = "libgmsh"
 
 """
+
+    gmsh.initialize(argv = Vector{String}(), readConfigFiles = true)
+
 Initialize Gmsh. This must be called before any call to the other functions in
-the API. If `argc' and `argv' are provided, they will be handled in the same way
-as the command line arguments in the Gmsh app. If `readConfigFiles' is set, read
+the API. If 'argc' and 'argv' are provided, they will be handled in the same way
+as the command line arguments in the Gmsh app. If 'readConfigFiles' is set, read
 system Gmsh configuration files (gmshrc and gmsh-options).
 """
 function initialize(argv = Vector{String}(), readConfigFiles = true)
@@ -34,6 +40,9 @@ function initialize(argv = Vector{String}(), readConfigFiles = true)
 end
 
 """
+
+    gmsh.finalize()
+
 Finalize Gmsh. This must be called when you are done using the Gmsh API.
 """
 function finalize()
@@ -47,7 +56,10 @@ function finalize()
 end
 
 """
-Open a file. Equivalent to the `File->Open' menu in the Gmsh app. Handling of
+
+    gmsh.open(fileName)
+
+Open a file. Equivalent to the 'File->Open' menu in the Gmsh app. Handling of
 the file depends on its extension and/or its contents.
 """
 function open(fileName)
@@ -61,7 +73,10 @@ function open(fileName)
 end
 
 """
-Merge a file. Equivalent to the `File->Merge' menu in the Gmsh app. Handling of
+
+    gmsh.merge(fileName)
+
+Merge a file. Equivalent to the 'File->Merge' menu in the Gmsh app. Handling of
 the file depends on its extension and/or its contents.
 """
 function merge(fileName)
@@ -75,6 +90,9 @@ function merge(fileName)
 end
 
 """
+
+    gmsh.write(fileName)
+
 Write a file. The export format is determined by the file extension.
 """
 function write(fileName)
@@ -88,6 +106,9 @@ function write(fileName)
 end
 
 """
+
+    gmsh.clear()
+
 Clear all loaded models and post-processing data, and add a new empty model.
 """
 function clear()
@@ -101,6 +122,9 @@ function clear()
 end
 
 """
+
+    module gmsh.option
+
 Global option handling functions
 """
 module option
@@ -108,7 +132,10 @@ module option
 import ..gmsh
 
 """
-Set a numerical option to `value'. `name' is of the form "category.option" or
+
+    gmsh.option.setNumber(name, value)
+
+Set a numerical option to 'value'. 'name' is of the form "category.option" or
 "category[num].option". Available categories and options are listed in the Gmsh
 reference manual.
 """
@@ -123,7 +150,10 @@ function setNumber(name, value)
 end
 
 """
-Get the `value' of a numerical option.
+
+    gmsh.option.getNumber(name, value)
+
+Get the 'value' of a numerical option.
 
 Return `value'.
 """
@@ -139,7 +169,10 @@ function getNumber(name)
 end
 
 """
-Set a string option to `value'.
+
+    gmsh.option.setString(name, value)
+
+Set a string option to 'value'.
 """
 function setString(name, value)
     ierr = Vector{Cint}(1)
@@ -152,7 +185,10 @@ function setString(name, value)
 end
 
 """
-Get the `value' of a string option.
+
+    gmsh.option.getString(name, value)
+
+Get the 'value' of a string option.
 
 Return `value'.
 """
@@ -170,6 +206,9 @@ end
 end # end of module option
 
 """
+
+    module gmsh.model
+
 Per-model functions
 """
 module model
@@ -177,7 +216,10 @@ module model
 import ..gmsh
 
 """
-Add a new model, with name `name', and set it as the current model.
+
+    gmsh.model.add(name)
+
+Add a new model, with name 'name', and set it as the current model.
 """
 function add(name)
     ierr = Vector{Cint}(1)
@@ -190,6 +232,9 @@ function add(name)
 end
 
 """
+
+    gmsh.model.remove()
+
 Remove the current model.
 """
 function remove()
@@ -203,6 +248,9 @@ function remove()
 end
 
 """
+
+    gmsh.model.list(names)
+
 List the names of all models.
 
 Return `names'.
@@ -219,7 +267,10 @@ function list()
 end
 
 """
-Set the current model to the model with name `name'. If several models have the
+
+    gmsh.model.setCurrent(name)
+
+Set the current model to the model with name 'name'. If several models have the
 same name, select the one that was added first.
 """
 function setCurrent(name)
@@ -233,8 +284,11 @@ function setCurrent(name)
 end
 
 """
-Get all the (elementary) geometrical entities in the current model. If `dim' is
->= 0, return only the entities of the specified dimension (e.g. points if `dim'
+
+    gmsh.model.getEntities(dimTags, dim = -1)
+
+Get all the (elementary) geometrical entities in the current model. If 'dim' is
+>= 0, return only the entities of the specified dimension (e.g. points if 'dim'
 == 0). The entities are returned as a vector of (dim, tag) integer pairs.
 
 Return `dimTags'.
@@ -251,8 +305,11 @@ function getEntities(dim = -1)
 end
 
 """
-Get all the physical groups in the current model. If `dim' is >= 0, return only
-the entities of the specified dimension (e.g. physical points if `dim' == 0).
+
+    gmsh.model.getPhysicalGroups(dimTags, dim = -1)
+
+Get all the physical groups in the current model. If 'dim' is >= 0, return only
+the entities of the specified dimension (e.g. physical points if 'dim' == 0).
 The entities are returned as a vector of (dim, tag) integer pairs.
 
 Return `dimTags'.
@@ -269,8 +326,11 @@ function getPhysicalGroups(dim = -1)
 end
 
 """
+
+    gmsh.model.getEntitiesForPhysicalGroup(dim, tag, tags)
+
 Get the tags of all the (elementary) geometrical entities making up the physical
-group of dimension `dim' and tag `tag'.
+group of dimension 'dim' and tag 'tag'.
 
 Return `tags'.
 """
@@ -289,9 +349,12 @@ function getEntitiesForPhysicalGroup(dim, tag)
 end
 
 """
-Add a physical group of dimension `dim', grouping the elementary entities with
-tags `tags'. Return the tag of the physical group, equal to `tag' if `tag' is
-positive, or a new tag if `tag' < 0.
+
+    gmsh.model.addPhysicalGroup(dim, tags, tag = -1)
+
+Add a physical group of dimension 'dim', grouping the elementary entities with
+tags 'tags'. Return the tag of the physical group, equal to 'tag' if 'tag' is
+positive, or a new tag if 'tag' < 0.
 
 Return an integer.
 """
@@ -307,7 +370,10 @@ function addPhysicalGroup(dim, tags, tag = -1)
 end
 
 """
-Set the name of the physical group of dimension `dim' and tag `tag'.
+
+    gmsh.model.setPhysicalName(dim, tag, name)
+
+Set the name of the physical group of dimension 'dim' and tag 'tag'.
 """
 function setPhysicalName(dim, tag, name)
     ierr = Vector{Cint}(1)
@@ -320,7 +386,10 @@ function setPhysicalName(dim, tag, name)
 end
 
 """
-Get the name of the physical group of dimension `dim' and tag `tag'.
+
+    gmsh.model.getPhysicalName(dim, tag, name)
+
+Get the name of the physical group of dimension 'dim' and tag 'tag'.
 
 Return `name'.
 """
@@ -336,12 +405,15 @@ function getPhysicalName(dim, tag)
 end
 
 """
-Get the boundary of the geometrical entities `dimTags'. Return in `outDimTags'
-the boundary of the individual entities (if `combined' is false) or the boundary
-of the combined geometrical shape formed by all input entities (if `combined' is
-true). Return tags multiplied by the sign of the boundary entity if `oriented'
+
+    gmsh.model.getBoundary(dimTags, outDimTags, combined = true, oriented = true, recursive = false)
+
+Get the boundary of the geometrical entities 'dimTags'. Return in 'outDimTags'
+the boundary of the individual entities (if 'combined' is false) or the boundary
+of the combined geometrical shape formed by all input entities (if 'combined' is
+true). Return tags multiplied by the sign of the boundary entity if 'oriented'
 is true. Apply the boundary operator recursively down to dimension 0 (i.e. to
-points) if `recursive' is true.
+points) if 'recursive' is true.
 
 Return `outDimTags'.
 """
@@ -349,7 +421,7 @@ function getBoundary(dimTags, combined = true, oriented = true, recursive = fals
     ierr = Vector{Cint}(1)
     ccall((:gmshModelGetBoundary, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
-          dimTags, outDimTags, combined, oriented, recursive, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), outDimTags, combined, oriented, recursive, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
@@ -357,9 +429,12 @@ function getBoundary(dimTags, combined = true, oriented = true, recursive = fals
 end
 
 """
+
+    gmsh.model.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, tags, dim = -1)
+
 Get the (elementary) geometrical entities in the bounding box defined by the two
-points (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0,
-return only the entities of the specified dimension (e.g. points if `dim' == 0).
+points ('xmin', 'ymin', 'zmin') and ('xmax', 'ymax', 'zmax'). If 'dim' is >= 0,
+return only the entities of the specified dimension (e.g. points if 'dim' == 0).
 
 Return `tags'.
 """
@@ -375,8 +450,11 @@ function getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
 end
 
 """
-Get the bounding box (`xmin', `ymin', `zmin'), (`xmax', `ymax', `zmax') of the
-geometrical entity of dimension `dim' and tag `tag'.
+
+    gmsh.model.getBoundingBox(dim, tag, xmin, ymin, zmin, xmax, ymax, zmax)
+
+Get the bounding box ('xmin', 'ymin', 'zmin'), ('xmax', 'ymax', 'zmax') of the
+geometrical entity of dimension 'dim' and tag 'tag'.
 
 Return `xmin', `ymin', `zmin', `xmax', `ymax', `zmax'.
 """
@@ -392,15 +470,18 @@ function getBoundingBox(dim, tag)
 end
 
 """
-Add a discrete geometrical entity (defined by a mesh) of dimension `dim' in the
-current model. Return the tag of the new discrete entity, equal to `tag' if
-`tag' is positive, or a new tag if `tag' < 0. `boundary' specifies the tags of
+
+    gmsh.model.addDiscreteEntity(dim, tag = -1, boundary = [])
+
+Add a discrete geometrical entity (defined by a mesh) of dimension 'dim' in the
+current model. Return the tag of the new discrete entity, equal to 'tag' if
+'tag' is positive, or a new tag if 'tag' < 0. 'boundary' specifies the tags of
 the entities on the boundary of the discrete entity, if any. Specyfing
-`boundary' allows Gmsh to construct the topology of the overall model.
+'boundary' allows Gmsh to construct the topology of the overall model.
 
 Return an integer.
 """
-function addDiscreteEntity(dim, tag = -1, boundary = std::vector<int>())
+function addDiscreteEntity(dim, tag = -1, boundary = [])
     ierr = Vector{Cint}(1)
     api__result__ = ccall((:gmshModelAddDiscreteEntity, gmsh.clib), Cint,
           (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
@@ -412,21 +493,27 @@ function addDiscreteEntity(dim, tag = -1, boundary = std::vector<int>())
 end
 
 """
-Remove the entities `dimTags' of the current model. If `recursive' is true,
+
+    gmsh.model.removeEntities(dimTags, recursive = false)
+
+Remove the entities 'dimTags' of the current model. If 'recursive' is true,
 remove all the entities on their boundaries, down to dimension 0.
 """
 function removeEntities(dimTags, recursive = false)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelRemoveEntities, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
-          dimTags, recursive, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), recursive, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
 end
 
 """
-Get the type of the entity of dimension `dim' and tag `tag'.
+
+    gmsh.model.getType(dim, tag, entityType)
+
+Get the type of the entity of dimension 'dim' and tag 'tag'.
 
 Return `entityType'.
 """
@@ -442,6 +529,9 @@ function getType(dim, tag)
 end
 
 """
+
+    module gmsh.model.mesh
+
 Per-model meshing functions
 """
 module mesh
@@ -449,7 +539,10 @@ module mesh
 import ...gmsh
 
 """
-Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3).
+
+    gmsh.model.mesh.generate(dim = 3)
+
+Generate a mesh of the current model, up to dimension 'dim' (0, 1, 2 or 3).
 """
 function generate(dim = 3)
     ierr = Vector{Cint}(1)
@@ -462,16 +555,19 @@ function generate(dim = 3)
 end
 
 """
+
+    gmsh.model.mesh.homology(domainTags = [], subdomainTags = [], dims = [])
+
 Compute a basis representation for homology spaces after a mesh has been
 generated. The computation domain is given in a list of physical group tags
-`domainTags'; if empty, the whole mesh is the domain. The computation subdomain
+'domainTags'; if empty, the whole mesh is the domain. The computation subdomain
 for relative homology computation is given in a list of physical group tags
-`subdomainTags'; if empty, absolute homology is computed. The dimensions
-homology bases to be computed are given in the list `dim'; if empty, all bases
+'subdomainTags'; if empty, absolute homology is computed. The dimensions
+homology bases to be computed are given in the list 'dim'; if empty, all bases
 are computed. Resulting basis representation chains are stored as physical
 groups in the mesh.
 """
-function homology(domainTags = std::vector<int>(), subdomainTags = std::vector<int>(), dims = std::vector<int>())
+function homology(domainTags = [], subdomainTags = [], dims = [])
     ierr = Vector{Cint}(1)
     ccall((:gmshModelMeshHomology, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
@@ -482,16 +578,19 @@ function homology(domainTags = std::vector<int>(), subdomainTags = std::vector<i
 end
 
 """
+
+    gmsh.model.mesh.cohomology(domainTags = [], subdomainTags = [], dims = [])
+
 Compute a basis representation for cohomology spaces after a mesh has been
 generated. The computation domain is given in a list of physical group tags
-`domainTags'; if empty, the whole mesh is the domain. The computation subdomain
+'domainTags'; if empty, the whole mesh is the domain. The computation subdomain
 for relative cohomology computation is given in a list of physical group tags
-`subdomainTags'; if empty, absolute cohomology is computed. The dimensions
-homology bases to be computed are given in the list `dim'; if empty, all bases
+'subdomainTags'; if empty, absolute cohomology is computed. The dimensions
+homology bases to be computed are given in the list 'dim'; if empty, all bases
 are computed. Resulting basis representation cochains are stored as physical
 groups in the mesh.
 """
-function cohomology(domainTags = std::vector<int>(), subdomainTags = std::vector<int>(), dims = std::vector<int>())
+function cohomology(domainTags = [], subdomainTags = [], dims = [])
     ierr = Vector{Cint}(1)
     ccall((:gmshModelMeshCohomology, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
@@ -502,7 +601,10 @@ function cohomology(domainTags = std::vector<int>(), subdomainTags = std::vector
 end
 
 """
-Partition the mesh of the current model into `numPart' partitions.
+
+    gmsh.model.mesh.partition(numPart)
+
+Partition the mesh of the current model into 'numPart' partitions.
 """
 function partition(numPart)
     ierr = Vector{Cint}(1)
@@ -515,6 +617,9 @@ function partition(numPart)
 end
 
 """
+
+    gmsh.model.mesh.refine()
+
 Refine the mesh of the current model by uniformly splitting the elements.
 """
 function refine()
@@ -528,7 +633,10 @@ function refine()
 end
 
 """
-Set the order of the elements in the mesh of the current model to `order'.
+
+    gmsh.model.mesh.setOrder(order)
+
+Set the order of the elements in the mesh of the current model to 'order'.
 """
 function setOrder(order)
     ierr = Vector{Cint}(1)
@@ -541,6 +649,9 @@ function setOrder(order)
 end
 
 """
+
+    gmsh.model.mesh.removeDuplicateNodes()
+
 Remove duplicate mesh nodes in the mesh of the current model.
 """
 function removeDuplicateNodes()
@@ -554,6 +665,9 @@ function removeDuplicateNodes()
 end
 
 """
+
+    gmsh.model.mesh.getLastEntityError(dimTags)
+
 Get the last entities (if any) where a meshing error occurred. Currently only
 populated by the new 3D meshing algorithms.
 
@@ -571,6 +685,9 @@ function getLastEntityError()
 end
 
 """
+
+    gmsh.model.mesh.getLastNodeError(nodeTags)
+
 Get the last mesh nodes (if any) where a meshing error occurred. Currently only
 populated by the new 3D meshing algorithms.
 
@@ -591,14 +708,17 @@ function getLastNodeError()
 end
 
 """
-Get the mesh nodes of the entity of dimension `dim' and `tag' tag. If `tag' < 0,
-get the nodes for all entities of dimension `dim'. If `dim' and `tag' are
-negative, get all the nodes in the mesh. `nodeTags' contains the node tags
-(their unique, strictly positive identification numbers). `coord' is a vector of
-length 3 times the length of `nodeTags' that contains the (x, y, z) coordinates
-of the nodes, concatenated. If `dim' >= 0, `parametricCoord' contains the
+
+    gmsh.model.mesh.getNodes(nodeTags, coord, parametricCoord, dim = -1, tag = -1)
+
+Get the mesh nodes of the entity of dimension 'dim' and 'tag' tag. If 'tag' < 0,
+get the nodes for all entities of dimension 'dim'. If 'dim' and 'tag' are
+negative, get all the nodes in the mesh. 'nodeTags' contains the node tags
+(their unique, strictly positive identification numbers). 'coord' is a vector of
+length 3 times the length of 'nodeTags' that contains the (x, y, z) coordinates
+of the nodes, concatenated. If 'dim' >= 0, 'parametricCoord' contains the
 parametric coordinates of the nodes, if available. The length of
-`parametricCoord' can be 0 or `dim' times the length of `nodeTags'.
+'parametricCoord' can be 0 or 'dim' times the length of 'nodeTags'.
 
 Return `nodeTags', `coord', `parametricCoord'.
 """
@@ -623,14 +743,17 @@ function getNodes(dim = -1, tag = -1)
 end
 
 """
-Get the mesh elements of the entity of dimension `dim' and `tag' tag. If `tag' <
-0, get the elements for all entities of dimension `dim'. If `dim' and `tag' are
-negative, get all the elements in the mesh. `elementTypes' contains the MSH
-types of the elements (e.g. `2' for 3-node triangles: see `getElementProperties'
-to obtain the properties for a given element type). `elementTags' is a vector of
-the same length as `elementTypes'; each entry is a vector containing the tags
+
+    gmsh.model.mesh.getElements(elementTypes, elementTags, nodeTags, dim = -1, tag = -1)
+
+Get the mesh elements of the entity of dimension 'dim' and 'tag' tag. If 'tag' <
+0, get the elements for all entities of dimension 'dim'. If 'dim' and 'tag' are
+negative, get all the elements in the mesh. 'elementTypes' contains the MSH
+types of the elements (e.g. '2' for 3-node triangles: see 'getElementProperties'
+to obtain the properties for a given element type). 'elementTags' is a vector of
+the same length as 'elementTypes'; each entry is a vector containing the tags
 (unique, strictly positive identifiers) of the elements of the corresponding
-type. `nodeTags' is also a vector of the same length as `elementTypes'; each
+type. 'nodeTags' is also a vector of the same length as 'elementTypes'; each
 entry is a vector of length equal to the number of elements of the given type
 times the number of nodes for this type of element, that contains the node tags
 of all the elements of the given type, concatenated.
@@ -664,10 +787,13 @@ function getElements(dim = -1, tag = -1)
 end
 
 """
-Get the properties of an element of type `elementType': its name
-(`elementName'), dimension (`dim'), order (`order'), number of nodes
-(`numNodes') and parametric coordinates of nodes (`parametricCoord' vector, of
-length `dim' times `numNodes').
+
+    gmsh.model.mesh.getElementProperties(elementType, elementName, dim, order, numNodes, parametricCoord)
+
+Get the properties of an element of type 'elementType': its name
+('elementName'), dimension ('dim'), order ('order'), number of nodes
+('numNodes') and parametric coordinates of nodes ('parametricCoord' vector, of
+length 'dim' times 'numNodes').
 
 Return `elementName', `dim', `order', `numNodes', `parametricCoord'.
 """
@@ -686,19 +812,22 @@ function getElementProperties(elementType)
 end
 
 """
-Get the integration data for mesh elements of the entity of dimension `dim' and
-`tag' tag. The data is returned by element type and by element, in the same
-order as the data returned by `getElements'. `integrationType' specifies the
-type of integration (e.g. "Gauss4") and `functionSpaceType' specifies the
-function space (e.g. "IsoParametric"). `integrationPoints' contains for each
+
+    gmsh.model.mesh.getIntegrationData(integrationType, functionSpaceType, integrationPoints, integrationData, functionSpaceNumComponents, functionSpaceData, dim = -1, tag = -1)
+
+Get the integration data for mesh elements of the entity of dimension 'dim' and
+'tag' tag. The data is returned by element type and by element, in the same
+order as the data returned by 'getElements'. 'integrationType' specifies the
+type of integration (e.g. "Gauss4") and 'functionSpaceType' specifies the
+function space (e.g. "IsoParametric"). 'integrationPoints' contains for each
 element type a vector (of length 4 times the number of integration points)
 containing the parametric coordinates (u, v, w) and the weight associated to the
-integration points. `integrationData' contains for each element type a vector
+integration points. 'integrationData' contains for each element type a vector
 (of size 13 times the number of integration points) containing the (x, y, z)
 coordinates of the integration point, the determinant of the Jacobian and the 9
-entries (by row) of the 3x3 Jacobian matrix. If `functionSpaceType' is provided,
-`functionSpaceNumComponents' return the number of components returned by the
-evaluation of a basis function in the space and `functionSpaceData' contains for
+entries (by row) of the 3x3 Jacobian matrix. If 'functionSpaceType' is provided,
+'functionSpaceNumComponents' return the number of components returned by the
+evaluation of a basis function in the space and 'functionSpaceData' contains for
 each element type the evaluation of the basis functions at the integration
 points.
 
@@ -716,9 +845,12 @@ function getIntegrationData(integrationType, functionSpaceType, dim = -1, tag = 
 end
 
 """
-Get the types of mesh elements in the entity of dimension `dim' and `tag' tag.
-If `tag' < 0, get the types for all entities of dimension `dim'. If `dim' and
-`tag' are negative, get all the types in the mesh.
+
+    gmsh.model.mesh.getElementTypes(elementTypes, dim = -1, tag = -1)
+
+Get the types of mesh elements in the entity of dimension 'dim' and 'tag' tag.
+If 'tag' < 0, get the types for all entities of dimension 'dim'. If 'dim' and
+'tag' are negative, get all the types in the mesh.
 
 Return `elementTypes'.
 """
@@ -737,8 +869,11 @@ function getElementTypes(dim = -1, tag = -1)
 end
 
 """
-Get the mesh elements in the same way as `getElements', but for a single
-`elementType'.
+
+    gmsh.model.mesh.getElementsByType(elementType, elementTags, nodeTags, dim = -1, tag = -1)
+
+Get the mesh elements in the same way as 'getElements', but for a single
+'elementType'.
 
 Return `elementTags', `nodeTags'.
 """
@@ -760,8 +895,11 @@ function getElementsByType(elementType, dim = -1, tag = -1)
 end
 
 """
+
+    gmsh.model.mesh.getIntegrationDataByType(elementType, integrationType, functionSpaceType, integrationPoints, integrationData, functionSpaceNumComponents, functionSpaceData, dim = -1, tag = -1)
+
 Get the integration data for mesh elements in the same way as
-`getIntegrationData', but for a single `elementType'.
+'getIntegrationData', but for a single 'elementType'.
 
 Return `integrationPoints', `integrationData', `functionSpaceNumComponents', `functionSpaceData'.
 """
@@ -786,15 +924,18 @@ function getIntegrationDataByType(elementType, integrationType, functionSpaceTyp
 end
 
 """
-Set the mesh nodes in the geometrical entity of dimension `dim' and tag `tag'.
-`nodetags' contains the node tags (their unique, strictly positive
-identification numbers). `coord' is a vector of length 3 times the length of
-`nodeTags' that contains the (x, y, z) coordinates of the nodes, concatenated.
-The optional `parametricCoord' vector contains the parametric coordinates of the
-nodes, if any. The length of `parametricCoord' can be 0 or `dim' times the
-length of `nodeTags'.
+
+    gmsh.model.mesh.setNodes(dim, tag, nodeTags, coord, parametricCoord = [])
+
+Set the mesh nodes in the geometrical entity of dimension 'dim' and tag 'tag'.
+'nodetags' contains the node tags (their unique, strictly positive
+identification numbers). 'coord' is a vector of length 3 times the length of
+'nodeTags' that contains the (x, y, z) coordinates of the nodes, concatenated.
+The optional 'parametricCoord' vector contains the parametric coordinates of the
+nodes, if any. The length of 'parametricCoord' can be 0 or 'dim' times the
+length of 'nodeTags'.
 """
-function setNodes(dim, tag, nodeTags, coord, parametricCoord = std::vector<double>())
+function setNodes(dim, tag, nodeTags, coord, parametricCoord = [])
     ierr = Vector{Cint}(1)
     ccall((:gmshModelMeshSetNodes, gmsh.clib), Void,
           (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
@@ -805,26 +946,34 @@ function setNodes(dim, tag, nodeTags, coord, parametricCoord = std::vector<doubl
 end
 
 """
-Set the mesh elements of the entity of dimension `dim' and `tag' tag. `types'
-contains the MSH types of the elements (e.g. `2' for 3-node triangles: see the
-Gmsh reference manual). `elementTags' is a vector of the same length as `types';
+
+    gmsh.model.mesh.setElements(dim, tag, elementTypes, elementTags, nodeTags)
+
+Set the mesh elements of the entity of dimension 'dim' and 'tag' tag. 'types'
+contains the MSH types of the elements (e.g. '2' for 3-node triangles: see the
+Gmsh reference manual). 'elementTags' is a vector of the same length as 'types';
 each entry is a vector containing the tags (unique, strictly positive
-identifiers) of the elements of the corresponding type. `nodeTags' is also a
-vector of the same length as `types'; each entry is a vector of length equal to
+identifiers) of the elements of the corresponding type. 'nodeTags' is also a
+vector of the same length as 'types'; each entry is a vector of length equal to
 the number of elements of the give type times the number of nodes per element,
 that contains the node tags of all the elements of the given type, concatenated.
 """
 function setElements(dim, tag, elementTypes, elementTags, nodeTags)
+    api_elementTags_n_ = [ length(elementTags[i]) for i in 1:length(elementTags) ]
+    api_nodeTags_n_ = [ length(nodeTags[i]) for i in 1:length(nodeTags) ]
     ierr = Vector{Cint}(1)
     ccall((:gmshModelMeshSetElements, gmsh.clib), Void,
           (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
-          dim, tag, convert(Vector{Cint}, elementTypes), length(elementTypes), elementTags, nodeTags, ierr)
+          dim, tag, convert(Vector{Cint}, elementTypes), length(elementTypes), convert(Vector{Vector{Cint}},elementTags), api_elementTags_n_, length(elementTags), convert(Vector{Vector{Cint}},nodeTags), api_nodeTags_n_, length(nodeTags), ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
 end
 
 """
+
+    gmsh.model.mesh.reclassifyNodes()
+
 Redistribute all mesh nodes on their associated geometrical entity, based on the
 mesh elements. Can be used when importing mesh nodes in bulk (e.g. by
 associating them all to a single volume), to reclassify them correctly on model
@@ -841,8 +990,11 @@ function reclassifyNodes()
 end
 
 """
+
+    gmsh.model.mesh.getNode(nodeTag, coord, parametricCoord)
+
 Get the coordinates and the parametric coordinates (if any) of the mesh node
-with tag `tag'. This is a useful by inefficient way of accessing mesh node data,
+with tag 'tag'. This is a useful by inefficient way of accessing mesh node data,
 as it relies on a cache stored in the model. For large meshes all the nodes in
 the model should be numbered in a continuous sequence of tags from 1 to N to
 maintain reasonnable performance (in this case the internal cache is based on a
@@ -868,7 +1020,10 @@ function getNode(nodeTag)
 end
 
 """
-Get the type and node tags of the mesh element with tag `tag'. This is a useful
+
+    gmsh.model.mesh.getElement(elementTag, elementType, nodeTags)
+
+Get the type and node tags of the mesh element with tag 'tag'. This is a useful
 but inefficient way of accessing mesh element data, as it relies on a cache
 stored in the model. For large meshes all the elements in the model should be
 numbered in a continuous sequence of tags from 1 to N to maintain reasonnable
@@ -892,23 +1047,29 @@ function getElement(elementTag)
 end
 
 """
-Set a mesh size constraint on the geometrical entities `dimTags'. Currently only
+
+    gmsh.model.mesh.setSize(dimTags, size)
+
+Set a mesh size constraint on the geometrical entities 'dimTags'. Currently only
 entities of dimension 0 (points) are handled.
 """
 function setSize(dimTags, size)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelMeshSetSize, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Ptr{Cint}),
-          dimTags, size, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), size, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
 end
 
 """
-Set a transfinite meshing constraint on the curve `tag', with `numNodes' mesh
-nodes distributed according to `meshType' and `coef'. Currently supported types
-are "Progression" (geometrical progression with power `coef') and "Bump"
+
+    gmsh.model.mesh.setTransfiniteCurve(tag, numNodes, meshType = "Progression", coef = 1.)
+
+Set a transfinite meshing constraint on the curve 'tag', with 'numNodes' mesh
+nodes distributed according to 'meshType' and 'coef'. Currently supported types
+are "Progression" (geometrical progression with power 'coef') and "Bump"
 (refinement toward both extremities of the curve).
 """
 function setTransfiniteCurve(tag, numNodes, meshType = "Progression", coef = 1.)
@@ -922,14 +1083,17 @@ function setTransfiniteCurve(tag, numNodes, meshType = "Progression", coef = 1.)
 end
 
 """
-Set a transfinite meshing constraint on the surface `tag'. `arrangement'
+
+    gmsh.model.mesh.setTransfiniteSurface(tag, arrangement = "Left", cornerTags = [])
+
+Set a transfinite meshing constraint on the surface 'tag'. 'arrangement'
 describes the arrangement of the triangles when the surface is not flagged as
 recombined: currently supported values are "Left", "Right", "AlternateLeft" and
-"AlternateRight". `cornerTags' can be used to specify the (3 or 4) corners of
+"AlternateRight". 'cornerTags' can be used to specify the (3 or 4) corners of
 the transfinite interpolation explicitly; specifying the corners explicitly is
 mandatory if the surface has more that 3 or 4 points on its boundary.
 """
-function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = std::vector<int>())
+function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = [])
     ierr = Vector{Cint}(1)
     ccall((:gmshModelMeshSetTransfiniteSurface, gmsh.clib), Void,
           (Cint, Ptr{Cchar}, Ptr{Cint}, Csize_t, Ptr{Cint}),
@@ -940,11 +1104,14 @@ function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = std::vect
 end
 
 """
-Set a transfinite meshing constraint on the surface `tag'. `cornerTags' can be
+
+    gmsh.model.mesh.setTransfiniteVolume(tag, cornerTags = [])
+
+Set a transfinite meshing constraint on the surface 'tag'. 'cornerTags' can be
 used to specify the (6 or 8) corners of the transfinite interpolation
 explicitly.
 """
-function setTransfiniteVolume(tag, cornerTags = std::vector<int>())
+function setTransfiniteVolume(tag, cornerTags = [])
     ierr = Vector{Cint}(1)
     ccall((:gmshModelMeshSetTransfiniteVolume, gmsh.clib), Void,
           (Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
@@ -955,8 +1122,11 @@ function setTransfiniteVolume(tag, cornerTags = std::vector<int>())
 end
 
 """
+
+    gmsh.model.mesh.setRecombine(dim, tag)
+
 Set a recombination meshing constraint on the geometrical entity of dimension
-`dim' and tag `tag'. Currently only entities of dimension 2 (to recombine
+'dim' and tag 'tag'. Currently only entities of dimension 2 (to recombine
 triangles into quadrangles) are supported.
 """
 function setRecombine(dim, tag)
@@ -970,8 +1140,11 @@ function setRecombine(dim, tag)
 end
 
 """
-Set a smoothing meshing constraint on the geometrical entity of dimension `dim'
-and tag `tag'. `val' iterations of a Laplace smoother are applied.
+
+    gmsh.model.mesh.setSmoothing(dim, tag, val)
+
+Set a smoothing meshing constraint on the geometrical entity of dimension 'dim'
+and tag 'tag'. 'val' iterations of a Laplace smoother are applied.
 """
 function setSmoothing(dim, tag, val)
     ierr = Vector{Cint}(1)
@@ -984,10 +1157,13 @@ function setSmoothing(dim, tag, val)
 end
 
 """
-Set a reverse meshing constraint on the geometrical entity of dimension `dim'
-and tag `tag'. If `val' is true, the mesh orientation will be reversed with
+
+    gmsh.model.mesh.setReverse(dim, tag, val = true)
+
+Set a reverse meshing constraint on the geometrical entity of dimension 'dim'
+and tag 'tag'. If 'val' is true, the mesh orientation will be reversed with
 respect to the natural mesh orientation (i.e. the orientation consistent with
-the orientation of the geometrical entity). If `val' is false, the mesh is left
+the orientation of the geometrical entity). If 'val' is false, the mesh is left
 as-is.
 """
 function setReverse(dim, tag, val = true)
@@ -1001,8 +1177,11 @@ function setReverse(dim, tag, val = true)
 end
 
 """
-Embed the geometrical entities of dimension `dim' and tags `tags' in the (inDim,
-inTag) geometrical entity. `inDim' must be strictly greater than `dim'.
+
+    gmsh.model.mesh.embed(dim, tags, inDim, inTag)
+
+Embed the geometrical entities of dimension 'dim' and tags 'tags' in the (inDim,
+inTag) geometrical entity. 'inDim' must be strictly greater than 'dim'.
 """
 function embed(dim, tags, inDim, inTag)
     ierr = Vector{Cint}(1)
@@ -1015,10 +1194,13 @@ function embed(dim, tags, inDim, inTag)
 end
 
 """
-Set the meshes of the entities of dimension `dim' and tag `tags' as periodic
-copies of the meshes of entities `tagsSource', using the affine transformation
-specified in `affineTransformation' (16 entries of a 4x4 matrix, by row).
-Currently only available for `dim' == 1 and `dim' == 2.
+
+    gmsh.model.mesh.setPeriodic(dim, tags, tagsSource, affineTransformation)
+
+Set the meshes of the entities of dimension 'dim' and tag 'tags' as periodic
+copies of the meshes of entities 'tagsSource', using the affine transformation
+specified in 'affineTransformation' (16 entries of a 4x4 matrix, by row).
+Currently only available for 'dim' == 1 and 'dim' == 2.
 """
 function setPeriodic(dim, tags, tagsSource, affineTransformation)
     ierr = Vector{Cint}(1)
@@ -1031,6 +1213,9 @@ function setPeriodic(dim, tags, tagsSource, affineTransformation)
 end
 
 """
+
+    module gmsh.model.mesh.field
+
 Per-model mesh size field functions
 """
 module field
@@ -1038,7 +1223,10 @@ module field
 import ....gmsh
 
 """
-Add a new mesh size field of type `fieldType'. If `tag' is positive, assign the
+
+    gmsh.model.mesh.field.add(fieldType, tag = -1)
+
+Add a new mesh size field of type 'fieldType'. If 'tag' is positive, assign the
 tag explcitly; otherwise a new tag is assigned automatically. Return the field
 tag.
 
@@ -1056,7 +1244,10 @@ function add(fieldType, tag = -1)
 end
 
 """
-Remove the field with tag `tag'.
+
+    gmsh.model.mesh.field.remove(tag)
+
+Remove the field with tag 'tag'.
 """
 function remove(tag)
     ierr = Vector{Cint}(1)
@@ -1069,7 +1260,10 @@ function remove(tag)
 end
 
 """
-Set the numerical option `option' to value `value' for field `tag'.
+
+    gmsh.model.mesh.field.setNumber(tag, option, value)
+
+Set the numerical option 'option' to value 'value' for field 'tag'.
 """
 function setNumber(tag, option, value)
     ierr = Vector{Cint}(1)
@@ -1082,7 +1276,10 @@ function setNumber(tag, option, value)
 end
 
 """
-Set the string option `option' to value `value' for field `tag'.
+
+    gmsh.model.mesh.field.setString(tag, option, value)
+
+Set the string option 'option' to value 'value' for field 'tag'.
 """
 function setString(tag, option, value)
     ierr = Vector{Cint}(1)
@@ -1095,7 +1292,10 @@ function setString(tag, option, value)
 end
 
 """
-Set the numerical list option `option' to value `value' for field `tag'.
+
+    gmsh.model.mesh.field.setNumbers(tag, option, value)
+
+Set the numerical list option 'option' to value 'value' for field 'tag'.
 """
 function setNumbers(tag, option, value)
     ierr = Vector{Cint}(1)
@@ -1108,7 +1308,10 @@ function setNumbers(tag, option, value)
 end
 
 """
-Set the field `tag' as the background mesh size field.
+
+    gmsh.model.mesh.field.setAsBackgroundMesh(tag)
+
+Set the field 'tag' as the background mesh size field.
 """
 function setAsBackgroundMesh(tag)
     ierr = Vector{Cint}(1)
@@ -1121,7 +1324,10 @@ function setAsBackgroundMesh(tag)
 end
 
 """
-Set the field `tag' as a boundary layer size field.
+
+    gmsh.model.mesh.field.setAsBoundaryLayer(tag)
+
+Set the field 'tag' as a boundary layer size field.
 """
 function setAsBoundaryLayer(tag)
     ierr = Vector{Cint}(1)
@@ -1138,6 +1344,9 @@ end # end of module field
 end # end of module mesh
 
 """
+
+    module gmsh.model.geo
+
 Internal per-model GEO CAD kernel functions
 """
 module geo
@@ -1145,11 +1354,14 @@ module geo
 import ...gmsh
 
 """
+
+    gmsh.model.geo.addPoint(x, y, z, meshSize = 0., tag = -1)
+
 Add a geometrical point in the internal GEO CAD representation, at coordinates
-(x, y, z). If `meshSize' is > 0, add a meshing constraint at that point. If
-`tag' is positive, set the tag explicitly; otherwise a new tag is selected
+(x, y, z). If 'meshSize' is > 0, add a meshing constraint at that point. If
+'tag' is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. Return the tag of the point. (Note that the point will be added
-in the current model only after `synchronize' is called. This behavior holds for
+in the current model only after 'synchronize' is called. This behavior holds for
 all the entities added in the geo module.)
 
 Return an integer.
@@ -1166,8 +1378,11 @@ function addPoint(x, y, z, meshSize = 0., tag = -1)
 end
 
 """
-Add a straight line segment between the two points with tags `startTag' and
-`endTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is
+
+    gmsh.model.geo.addLine(startTag, endTag, tag = -1)
+
+Add a straight line segment between the two points with tags 'startTag' and
+'endTag'. If 'tag' is positive, set the tag explicitly; otherwise a new tag is
 selected automatically. Return the tag of the line.
 
 Return an integer.
@@ -1184,10 +1399,13 @@ function addLine(startTag, endTag, tag = -1)
 end
 
 """
+
+    gmsh.model.geo.addCircleArc(startTag, centerTag, endTag, tag = -1, nx = 0., ny = 0., nz = 0.)
+
 Add a circle arc (stricly smaller than Pi) between the two points with tags
-`startTag' and `endTag', with center `centertag'. If `tag' is positive, set the
-tag explicitly; otherwise a new tag is selected automatically. If (`nx', `ny',
-`nz') != (0,0,0), explicitely set the plane of the circle arc. Return the tag of
+'startTag' and 'endTag', with center 'centertag'. If 'tag' is positive, set the
+tag explicitly; otherwise a new tag is selected automatically. If ('nx', 'ny',
+'nz') != (0,0,0), explicitely set the plane of the circle arc. Return the tag of
 the circle arc.
 
 Return an integer.
@@ -1204,10 +1422,13 @@ function addCircleArc(startTag, centerTag, endTag, tag = -1, nx = 0., ny = 0., n
 end
 
 """
-Add an ellipse arc (stricly smaller than Pi) between the two points `startTag'
-and `endTag', with center `centertag' and major axis point `majorTag'. If `tag'
+
+    gmsh.model.geo.addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1, nx = 0., ny = 0., nz = 0.)
+
+Add an ellipse arc (stricly smaller than Pi) between the two points 'startTag'
+and 'endTag', with center 'centertag' and major axis point 'majorTag'. If 'tag'
 is positive, set the tag explicitly; otherwise a new tag is selected
-automatically. If (`nx', `ny', `nz') != (0,0,0), explicitely set the plane of
+automatically. If ('nx', 'ny', 'nz') != (0,0,0), explicitely set the plane of
 the circle arc. Return the tag of the ellipse arc.
 
 Return an integer.
@@ -1224,7 +1445,10 @@ function addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1, nx = 0.,
 end
 
 """
-Add a spline (Catmull-Rom) curve going through the points `pointTags'. If `tag'
+
+    gmsh.model.geo.addSpline(pointTags, tag = -1)
+
+Add a spline (Catmull-Rom) curve going through the points 'pointTags'. If 'tag'
 is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. Create a periodic curve if the first and last points are the
 same. Return the tag of the spline curve.
@@ -1243,7 +1467,10 @@ function addSpline(pointTags, tag = -1)
 end
 
 """
-Adds a cubic b-spline curve with `pointTags' control points. If `tag' is
+
+    gmsh.model.geo.addBSpline(pointTags, tag = -1)
+
+Adds a cubic b-spline curve with 'pointTags' control points. If 'tag' is
 positive, sets the tag explicitly; otherwise a new tag is selected
 automatically. Creates a periodic curve if the first and last points are the
 same. Return the tag of the b-spline curve.
@@ -1262,7 +1489,10 @@ function addBSpline(pointTags, tag = -1)
 end
 
 """
-Add a Bezier curve with `pointTags' control points. If `tag' is positive, set
+
+    gmsh.model.geo.addBezier(pointTags, tag = -1)
+
+Add a Bezier curve with 'pointTags' control points. If 'tag' is positive, set
 the tag explicitly; otherwise a new tag is selected automatically.  Return the
 tag of the Bezier curve.
 
@@ -1280,10 +1510,13 @@ function addBezier(pointTags, tag = -1)
 end
 
 """
-Add a curve loop (a closed wire) formed by the curves `curveTags'. `curveTags'
+
+    gmsh.model.geo.addCurveLoop(curveTags, tag = -1)
+
+Add a curve loop (a closed wire) formed by the curves 'curveTags'. 'curveTags'
 should contain (signed) tags of geometrical enties of dimension 1 forming a
 closed loop: a negative tag signifies that the underlying curve is considered
-with reversed orientation. If `tag' is positive, set the tag explicitly;
+with reversed orientation. If 'tag' is positive, set the tag explicitly;
 otherwise a new tag is selected automatically. Return the tag of the curve loop.
 
 Return an integer.
@@ -1300,9 +1533,12 @@ function addCurveLoop(curveTags, tag = -1)
 end
 
 """
-Add a plane surface defined by one or more curve loops `wireTags'. The first
+
+    gmsh.model.geo.addPlaneSurface(wireTags, tag = -1)
+
+Add a plane surface defined by one or more curve loops 'wireTags'. The first
 curve loop defines the exterior contour; additional curve loop define holes. If
-`tag' is positive, set the tag explicitly; otherwise a new tag is selected
+'tag' is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. Return the tag of the surface.
 
 Return an integer.
@@ -1319,9 +1555,12 @@ function addPlaneSurface(wireTags, tag = -1)
 end
 
 """
-Add a surface filling the curve loops in `wireTags'. Currently only a single
+
+    gmsh.model.geo.addSurfaceFilling(wireTags, tag = -1, sphereCenterTag = -1)
+
+Add a surface filling the curve loops in 'wireTags'. Currently only a single
 curve loop is supported; this curve loop should be composed by 3 or 4 curves
-only. If `tag' is positive, set the tag explicitly; otherwise a new tag is
+only. If 'tag' is positive, set the tag explicitly; otherwise a new tag is
 selected automatically. Return the tag of the surface.
 
 Return an integer.
@@ -1338,7 +1577,10 @@ function addSurfaceFilling(wireTags, tag = -1, sphereCenterTag = -1)
 end
 
 """
-Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
+
+    gmsh.model.geo.addSurfaceLoop(surfaceTags, tag = -1)
+
+Add a surface loop (a closed shell) formed by 'surfaceTags'.  If 'tag' is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
 Return the tag of the shell.
 
@@ -1356,9 +1598,12 @@ function addSurfaceLoop(surfaceTags, tag = -1)
 end
 
 """
-Add a volume (a region) defined by one or more shells `shellTags'. The first
+
+    gmsh.model.geo.addVolume(shellTags, tag = -1)
+
+Add a volume (a region) defined by one or more shells 'shellTags'. The first
 surface loop defines the exterior boundary; additional surface loop define
-holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is
+holes. If 'tag' is positive, set the tag explicitly; otherwise a new tag is
 selected automatically. Return the tag of the volume.
 
 Return an integer.
@@ -1375,19 +1620,22 @@ function addVolume(shellTags, tag = -1)
 end
 
 """
-Extrude the geometrical entities `dimTags' by translation along (`dx', `dy',
-`dz'). Return extruded entities in `outDimTags'. If `numElements' is not empty,
-also extrude the mesh: the entries in `numElements' give the number of elements
-in each layer. If `height' is not empty, it provides the (cummulative) height of
+
+    gmsh.model.geo.extrude(dimTags, dx, dy, dz, outDimTags, numElements = [], heights = [], recombine = false)
+
+Extrude the geometrical entities 'dimTags' by translation along ('dx', 'dy',
+'dz'). Return extruded entities in 'outDimTags'. If 'numElements' is not empty,
+also extrude the mesh: the entries in 'numElements' give the number of elements
+in each layer. If 'height' is not empty, it provides the (cummulative) height of
 the different layers, normalized to 1.
 
 Return `outDimTags'.
 """
-function extrude(dimTags, dx, dy, dz, numElements = std::vector<int>(), heights = std::vector<double>(), recombine = false)
+function extrude(dimTags, dx, dy, dz, numElements = [], heights = [], recombine = false)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelGeoExtrude, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          dimTags, dx, dy, dz, outDimTags, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, outDimTags, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
@@ -1395,20 +1643,23 @@ function extrude(dimTags, dx, dy, dz, numElements = std::vector<int>(), heights 
 end
 
 """
-Extrude the geometrical entities `dimTags' by rotation of `angle' radians around
-the axis of revolution defined by the point (`x', `y', `z') and the direction
-(`ax', `ay', `az'). Return extruded entities in `outDimTags'. If `numElements'
-is not empty, also extrude the mesh: the entries in `numElements' give the
-number of elements in each layer. If `height' is not empty, it provides the
+
+    gmsh.model.geo.revolve(dimTags, x, y, z, ax, ay, az, angle, outDimTags, numElements = [], heights = [], recombine = false)
+
+Extrude the geometrical entities 'dimTags' by rotation of 'angle' radians around
+the axis of revolution defined by the point ('x', 'y', 'z') and the direction
+('ax', 'ay', 'az'). Return extruded entities in 'outDimTags'. If 'numElements'
+is not empty, also extrude the mesh: the entries in 'numElements' give the
+number of elements in each layer. If 'height' is not empty, it provides the
 (cummulative) height of the different layers, normalized to 1.
 
 Return `outDimTags'.
 """
-function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = std::vector<int>(), heights = std::vector<double>(), recombine = false)
+function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = [], heights = [], recombine = false)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelGeoRevolve, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          dimTags, x, y, z, ax, ay, az, angle, outDimTags, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, outDimTags, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
@@ -1416,21 +1667,24 @@ function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = std::vector<
 end
 
 """
-Extrude the geometrical entities `dimTags' by a combined translation and
-rotation of `angle' radians, along (`dx', `dy', `dz') and around the axis of
-revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay',
-`az'). Return extruded entities in `outDimTags'. If `numElements' is not empty,
-also extrude the mesh: the entries in `numElements' give the number of elements
-in each layer. If `height' is not empty, it provides the (cummulative) height of
+
+    gmsh.model.geo.twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, outDimTags, numElements = [], heights = [], recombine = false)
+
+Extrude the geometrical entities 'dimTags' by a combined translation and
+rotation of 'angle' radians, along ('dx', 'dy', 'dz') and around the axis of
+revolution defined by the point ('x', 'y', 'z') and the direction ('ax', 'ay',
+'az'). Return extruded entities in 'outDimTags'. If 'numElements' is not empty,
+also extrude the mesh: the entries in 'numElements' give the number of elements
+in each layer. If 'height' is not empty, it provides the (cummulative) height of
 the different layers, normalized to 1.
 
 Return `outDimTags'.
 """
-function twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements = std::vector<int>(), heights = std::vector<double>(), recombine = false)
+function twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements = [], heights = [], recombine = false)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelGeoTwist, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, outDimTags, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, dx, dy, dz, ax, ay, az, angle, outDimTags, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
@@ -1438,64 +1692,79 @@ function twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements = st
 end
 
 """
-Translate the geometrical entities `dimTags' along (`dx', `dy', `dz').
+
+    gmsh.model.geo.translate(dimTags, dx, dy, dz)
+
+Translate the geometrical entities 'dimTags' along ('dx', 'dy', 'dz').
 """
 function translate(dimTags, dx, dy, dz)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelGeoTranslate, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          dimTags, dx, dy, dz, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
 end
 
 """
-Rotate the geometrical entities `dimTags' of `angle' radians around the axis of
-revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay',
-`az').
+
+    gmsh.model.geo.rotate(dimTags, x, y, z, ax, ay, az, angle)
+
+Rotate the geometrical entities 'dimTags' of 'angle' radians around the axis of
+revolution defined by the point ('x', 'y', 'z') and the direction ('ax', 'ay',
+'az').
 """
 function rotate(dimTags, x, y, z, ax, ay, az, angle)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelGeoRotate, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          dimTags, x, y, z, ax, ay, az, angle, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
 end
 
 """
-Scale the geometrical entities `dimTag' by factors `a', `b' and `c' along the
-three coordinate axes; use (`x', `y', `z') as the center of the homothetic
+
+    gmsh.model.geo.dilate(dimTags, x, y, z, a, b, c)
+
+Scale the geometrical entities 'dimTag' by factors 'a', 'b' and 'c' along the
+three coordinate axes; use ('x', 'y', 'z') as the center of the homothetic
 transformation.
 """
 function dilate(dimTags, x, y, z, a, b, c)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelGeoDilate, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          dimTags, x, y, z, a, b, c, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, a, b, c, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
 end
 
 """
-Apply a symmetry transformation to the geometrical entities `dimTag', with
-respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+
+    gmsh.model.geo.symmetry(dimTags, a, b, c, d)
+
+Apply a symmetry transformation to the geometrical entities 'dimTag', with
+respect to the plane of equation 'a' * x + 'b' * y + 'c' * z + 'd' = 0.
 """
 function symmetry(dimTags, a, b, c, d)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelGeoSymmetry, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          dimTags, a, b, c, d, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), a, b, c, d, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
 end
 
 """
-Copy the entities `dimTags'; the new entities are returned in `outDimTags'.
+
+    gmsh.model.geo.copy(dimTags, outDimTags)
+
+Copy the entities 'dimTags'; the new entities are returned in 'outDimTags'.
 
 Return `outDimTags'.
 """
@@ -1503,7 +1772,7 @@ function copy(dimTags)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelGeoCopy, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          dimTags, outDimTags, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), outDimTags, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
@@ -1511,20 +1780,26 @@ function copy(dimTags)
 end
 
 """
-Remove the entities `dimTags'. If `recursive' is true, remove all the entities
+
+    gmsh.model.geo.remove(dimTags, recursive = false)
+
+Remove the entities 'dimTags'. If 'recursive' is true, remove all the entities
 on their boundaries, down to dimension 0.
 """
 function remove(dimTags, recursive = false)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelGeoRemove, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
-          dimTags, recursive, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), recursive, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
 end
 
 """
+
+    gmsh.model.geo.removeAllDuplicates()
+
 Remove all duplicate entities (different entities at the same geometrical
 location).
 """
@@ -1539,6 +1814,9 @@ function removeAllDuplicates()
 end
 
 """
+
+    gmsh.model.geo.synchronize()
+
 Synchronize the internal GEO CAD representation with the current Gmsh model.
 This can be called at any time, but since it involves a non trivial amount of
 processing, the number of synchronization points should normally be minimized.
@@ -1554,6 +1832,9 @@ function synchronize()
 end
 
 """
+
+    module gmsh.model.geo.mesh
+
 GEO-specific meshing constraints
 """
 module mesh
@@ -1561,23 +1842,29 @@ module mesh
 import ....gmsh
 
 """
-Set a mesh size constraint on the geometrical entities `dimTags'. Currently only
+
+    gmsh.model.geo.mesh.setSize(dimTags, size)
+
+Set a mesh size constraint on the geometrical entities 'dimTags'. Currently only
 entities of dimension 0 (points) are handled.
 """
 function setSize(dimTags, size)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelGeoMeshSetSize, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Ptr{Cint}),
-          dimTags, size, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), size, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
 end
 
 """
-Set a transfinite meshing constraint on the curve `tag', with `numNodes' mesh
-nodes distributed according to `meshType' and `coef'. Currently supported types
-are "Progression" (geometrical progression with power `coef') and "Bump"
+
+    gmsh.model.geo.mesh.setTransfiniteCurve(tag, nPoints, meshType = "Progression", coef = 1.)
+
+Set a transfinite meshing constraint on the curve 'tag', with 'numNodes' mesh
+nodes distributed according to 'meshType' and 'coef'. Currently supported types
+are "Progression" (geometrical progression with power 'coef') and "Bump"
 (refinement toward both extreminties of the curve).
 """
 function setTransfiniteCurve(tag, nPoints, meshType = "Progression", coef = 1.)
@@ -1591,14 +1878,17 @@ function setTransfiniteCurve(tag, nPoints, meshType = "Progression", coef = 1.)
 end
 
 """
-Set a transfinite meshing constraint on the surface `tag'. `arrangement'
+
+    gmsh.model.geo.mesh.setTransfiniteSurface(tag, arrangement = "Left", cornerTags = [])
+
+Set a transfinite meshing constraint on the surface 'tag'. 'arrangement'
 describes the arrangement of the triangles when the surface is not flagged as
 recombined: currently supported values are "Left", "Right", "AlternateLeft" and
-"AlternateRight". `cornerTags' can be used to specify the (3 or 4) corners of
+"AlternateRight". 'cornerTags' can be used to specify the (3 or 4) corners of
 the transfinite interpolation explicitly; specifying the corners explicitly is
 mandatory if the surface has more that 3 or 4 points on its boundary.
 """
-function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = std::vector<int>())
+function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = [])
     ierr = Vector{Cint}(1)
     ccall((:gmshModelGeoMeshSetTransfiniteSurface, gmsh.clib), Void,
           (Cint, Ptr{Cchar}, Ptr{Cint}, Csize_t, Ptr{Cint}),
@@ -1609,11 +1899,14 @@ function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = std::vect
 end
 
 """
-Set a transfinite meshing constraint on the surface `tag'. `cornerTags' can be
+
+    gmsh.model.geo.mesh.setTransfiniteVolume(tag, cornerTags = [])
+
+Set a transfinite meshing constraint on the surface 'tag'. 'cornerTags' can be
 used to specify the (6 or 8) corners of the transfinite interpolation
 explicitly.
 """
-function setTransfiniteVolume(tag, cornerTags = std::vector<int>())
+function setTransfiniteVolume(tag, cornerTags = [])
     ierr = Vector{Cint}(1)
     ccall((:gmshModelGeoMeshSetTransfiniteVolume, gmsh.clib), Void,
           (Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
@@ -1624,8 +1917,11 @@ function setTransfiniteVolume(tag, cornerTags = std::vector<int>())
 end
 
 """
+
+    gmsh.model.geo.mesh.setRecombine(dim, tag, angle = 45.)
+
 Set a recombination meshing constraint on the geometrical entity of dimension
-`dim' and tag `tag'. Currently only entities of dimension 2 (to recombine
+'dim' and tag 'tag'. Currently only entities of dimension 2 (to recombine
 triangles into quadrangles) are supported.
 """
 function setRecombine(dim, tag, angle = 45.)
@@ -1639,8 +1935,11 @@ function setRecombine(dim, tag, angle = 45.)
 end
 
 """
-Set a smoothing meshing constraint on the geometrical entity of dimension `dim'
-and tag `tag'. `val' iterations of a Laplace smoother are applied.
+
+    gmsh.model.geo.mesh.setSmoothing(dim, tag, val)
+
+Set a smoothing meshing constraint on the geometrical entity of dimension 'dim'
+and tag 'tag'. 'val' iterations of a Laplace smoother are applied.
 """
 function setSmoothing(dim, tag, val)
     ierr = Vector{Cint}(1)
@@ -1653,10 +1952,13 @@ function setSmoothing(dim, tag, val)
 end
 
 """
-Set a reverse meshing constraint on the geometrical entity of dimension `dim'
-and tag `tag'. If `val' is true, the mesh orientation will be reversed with
+
+    gmsh.model.geo.mesh.setReverse(dim, tag, val = true)
+
+Set a reverse meshing constraint on the geometrical entity of dimension 'dim'
+and tag 'tag'. If 'val' is true, the mesh orientation will be reversed with
 respect to the natural mesh orientation (i.e. the orientation consistent with
-the orientation of the geometrical entity). If `val' is false, the mesh is left
+the orientation of the geometrical entity). If 'val' is false, the mesh is left
 as-is.
 """
 function setReverse(dim, tag, val = true)
@@ -1674,6 +1976,9 @@ end # end of module mesh
 end # end of module geo
 
 """
+
+    module gmsh.model.occ
+
 Internal per-model OpenCASCADE CAD kernel functions
 """
 module occ
@@ -1681,11 +1986,14 @@ module occ
 import ...gmsh
 
 """
+
+    gmsh.model.occ.addPoint(x, y, z, meshSize = 0., tag = -1)
+
 Add a geometrical point in the internal OpenCASCADE CAD representation, at
-coordinates (x, y, z). If `meshSize' is > 0, add a meshing constraint at that
-point. If `tag' is positive, set the tag explicitly; otherwise a new tag is
+coordinates (x, y, z). If 'meshSize' is > 0, add a meshing constraint at that
+point. If 'tag' is positive, set the tag explicitly; otherwise a new tag is
 selected automatically. Return the tag of the point. (Note that the point will
-be added in the current model only after `synchronize' is called. This behavior
+be added in the current model only after 'synchronize' is called. This behavior
 holds for all the entities added in the occ module.)
 
 Return an integer.
@@ -1702,8 +2010,11 @@ function addPoint(x, y, z, meshSize = 0., tag = -1)
 end
 
 """
-Add a straight line segment between the two points with tags `startTag' and
-`endTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is
+
+    gmsh.model.occ.addLine(startTag, endTag, tag = -1)
+
+Add a straight line segment between the two points with tags 'startTag' and
+'endTag'. If 'tag' is positive, set the tag explicitly; otherwise a new tag is
 selected automatically. Return the tag of the line.
 
 Return an integer.
@@ -1720,8 +2031,11 @@ function addLine(startTag, endTag, tag = -1)
 end
 
 """
-Add a circle arc between the two points with tags `startTag' and `endTag', with
-center `centerTag'. If `tag' is positive, set the tag explicitly; otherwise a
+
+    gmsh.model.occ.addCircleArc(startTag, centerTag, endTag, tag = -1)
+
+Add a circle arc between the two points with tags 'startTag' and 'endTag', with
+center 'centerTag'. If 'tag' is positive, set the tag explicitly; otherwise a
 new tag is selected automatically. Return the tag of the circle arc.
 
 Return an integer.
@@ -1738,14 +2052,17 @@ function addCircleArc(startTag, centerTag, endTag, tag = -1)
 end
 
 """
-Add a circle of center (`x', `y', `z') and radius `r'. If `tag' is positive, set
-the tag explicitly; otherwise a new tag is selected automatically. If `angle1'
-and `angle2' are specified, create a circle arc between the two angles. Return
+
+    gmsh.model.occ.addCircle(x, y, z, r, tag = -1, angle1 = 0., angle2 = 2*pi)
+
+Add a circle of center ('x', 'y', 'z') and radius 'r'. If 'tag' is positive, set
+the tag explicitly; otherwise a new tag is selected automatically. If 'angle1'
+and 'angle2' are specified, create a circle arc between the two angles. Return
 the tag of the circle.
 
 Return an integer.
 """
-function addCircle(x, y, z, r, tag = -1, angle1 = 0., angle2 = 2*M_PI)
+function addCircle(x, y, z, r, tag = -1, angle1 = 0., angle2 = 2*pi)
     ierr = Vector{Cint}(1)
     api__result__ = ccall((:gmshModelOccAddCircle, gmsh.clib), Cint,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Cdouble, Ptr{Cint}),
@@ -1757,8 +2074,11 @@ function addCircle(x, y, z, r, tag = -1, angle1 = 0., angle2 = 2*M_PI)
 end
 
 """
-Add an ellipse arc between the two points with tags `startTag' and `endTag',
-with center `centerTag'. If `tag' is positive, set the tag explicitly; otherwise
+
+    gmsh.model.occ.addEllipseArc(startTag, centerTag, endTag, tag = -1)
+
+Add an ellipse arc between the two points with tags 'startTag' and 'endTag',
+with center 'centerTag'. If 'tag' is positive, set the tag explicitly; otherwise
 a new tag is selected automatically. Return the tag of the ellipse arc.
 
 Return an integer.
@@ -1775,14 +2095,17 @@ function addEllipseArc(startTag, centerTag, endTag, tag = -1)
 end
 
 """
-Add an ellipse of center (`x', `y', `z') and radii `r1' and `r2' along the x-
-and y-axes respectively. If `tag' is positive, set the tag explicitly; otherwise
-a new tag is selected automatically. If `angle1' and `angle2' are specified,
+
+    gmsh.model.occ.addEllipse(x, y, z, r1, r2, tag = -1, angle1 = 0., angle2 = 2*pi)
+
+Add an ellipse of center ('x', 'y', 'z') and radii 'r1' and 'r2' along the x-
+and y-axes respectively. If 'tag' is positive, set the tag explicitly; otherwise
+a new tag is selected automatically. If 'angle1' and 'angle2' are specified,
 create an ellipse arc between the two angles. Return the tag of the ellipse.
 
 Return an integer.
 """
-function addEllipse(x, y, z, r1, r2, tag = -1, angle1 = 0., angle2 = 2*M_PI)
+function addEllipse(x, y, z, r1, r2, tag = -1, angle1 = 0., angle2 = 2*pi)
     ierr = Vector{Cint}(1)
     api__result__ = ccall((:gmshModelOccAddEllipse, gmsh.clib), Cint,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Cdouble, Ptr{Cint}),
@@ -1794,7 +2117,10 @@ function addEllipse(x, y, z, r1, r2, tag = -1, angle1 = 0., angle2 = 2*M_PI)
 end
 
 """
-Add a spline (C2 b-spline) curve going through the points `pointTags'. If `tag'
+
+    gmsh.model.occ.addSpline(pointTags, tag = -1)
+
+Add a spline (C2 b-spline) curve going through the points 'pointTags'. If 'tag'
 is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. Create a periodic curve if the first and last points are the
 same. Return the tag of the spline curve.
@@ -1813,15 +2139,18 @@ function addSpline(pointTags, tag = -1)
 end
 
 """
-Add a b-spline curve of degree `degree' with `pointTags' control points. If
-`weights', `knots' or `multiplicities' are not provided, default parameters are
-computed automatically. If `tag' is positive, set the tag explicitly; otherwise
+
+    gmsh.model.occ.addBSpline(pointTags, tag = -1, degree = 3, weights = [], knots = [], multiplicities = [])
+
+Add a b-spline curve of degree 'degree' with 'pointTags' control points. If
+'weights', 'knots' or 'multiplicities' are not provided, default parameters are
+computed automatically. If 'tag' is positive, set the tag explicitly; otherwise
 a new tag is selected automatically. Create a periodic curve if the first and
 last points are the same. Return the tag of the b-spline curve.
 
 Return an integer.
 """
-function addBSpline(pointTags, tag = -1, degree = 3, weights = std::vector<double>(), knots = std::vector<double>(), multiplicities = std::vector<int>())
+function addBSpline(pointTags, tag = -1, degree = 3, weights = [], knots = [], multiplicities = [])
     ierr = Vector{Cint}(1)
     api__result__ = ccall((:gmshModelOccAddBSpline, gmsh.clib), Cint,
           (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
@@ -1833,7 +2162,10 @@ function addBSpline(pointTags, tag = -1, degree = 3, weights = std::vector<doubl
 end
 
 """
-Add a Bezier curve with `pointTags' control points. If `tag' is positive, set
+
+    gmsh.model.occ.addBezier(pointTags, tag = -1)
+
+Add a Bezier curve with 'pointTags' control points. If 'tag' is positive, set
 the tag explicitly; otherwise a new tag is selected automatically. Return the
 tag of the Bezier curve.
 
@@ -1851,9 +2183,12 @@ function addBezier(pointTags, tag = -1)
 end
 
 """
-Add a wire (open or closed) formed by the curves `curveTags'. `curveTags' should
+
+    gmsh.model.occ.addWire(curveTags, tag = -1, checkClosed = false)
+
+Add a wire (open or closed) formed by the curves 'curveTags'. 'curveTags' should
 contain (signed) tags: a negative tag signifies that the underlying curve is
-considered with reversed orientation. If `tag' is positive, set the tag
+considered with reversed orientation. If 'tag' is positive, set the tag
 explicitly; otherwise a new tag is selected automatically. Return the tag of the
 wire.
 
@@ -1871,10 +2206,13 @@ function addWire(curveTags, tag = -1, checkClosed = false)
 end
 
 """
-Add a curve loop (a closed wire) formed by the curves `curveTags'. `curveTags'
+
+    gmsh.model.occ.addCurveLoop(curveTags, tag = -1)
+
+Add a curve loop (a closed wire) formed by the curves 'curveTags'. 'curveTags'
 should contain (signed) tags of curves forming a closed loop: a negative tag
 signifies that the underlying curve is considered with reversed orientation. If
-`tag' is positive, set the tag explicitly; otherwise a new tag is selected
+'tag' is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. Return the tag of the curve loop.
 
 Return an integer.
@@ -1891,10 +2229,13 @@ function addCurveLoop(curveTags, tag = -1)
 end
 
 """
-Add a rectangle with lower left corner at (`x', `y', `z') and upper right corner
-at (`x' + `dx', `y' + `dy', `z'). If `tag' is positive, set the tag explicitly;
+
+    gmsh.model.occ.addRectangle(x, y, z, dx, dy, tag = -1, roundedRadius = 0.)
+
+Add a rectangle with lower left corner at ('x', 'y', 'z') and upper right corner
+at ('x' + 'dx', 'y' + 'dy', 'z'). If 'tag' is positive, set the tag explicitly;
 otherwise a new tag is selected automatically. Round the corners if
-`roundedRadius' is nonzero. Return the tag of the rectangle.
+'roundedRadius' is nonzero. Return the tag of the rectangle.
 
 Return an integer.
 """
@@ -1910,8 +2251,11 @@ function addRectangle(x, y, z, dx, dy, tag = -1, roundedRadius = 0.)
 end
 
 """
-Add a disk with center (`xc', `yc', `zc') and radius `rx' along the x-axis and
-`ry' along the y-axis. If `tag' is positive, set the tag explicitly; otherwise a
+
+    gmsh.model.occ.addDisk(xc, yc, zc, rx, ry, tag = -1)
+
+Add a disk with center ('xc', 'yc', 'zc') and radius 'rx' along the x-axis and
+'ry' along the y-axis. If 'tag' is positive, set the tag explicitly; otherwise a
 new tag is selected automatically. Return the tag of the disk.
 
 Return an integer.
@@ -1928,9 +2272,12 @@ function addDisk(xc, yc, zc, rx, ry, tag = -1)
 end
 
 """
+
+    gmsh.model.occ.addPlaneSurface(wireTags, tag = -1)
+
 Add a plane surface defined by one or more curve loops (or closed wires)
-`wireTags'. The first curve loop defines the exterior contour; additional curve
-loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new
+'wireTags'. The first curve loop defines the exterior contour; additional curve
+loop define holes. If 'tag' is positive, set the tag explicitly; otherwise a new
 tag is selected automatically. Return the tag of the surface.
 
 Return an integer.
@@ -1947,7 +2294,10 @@ function addPlaneSurface(wireTags, tag = -1)
 end
 
 """
-Add a surface filling the curve loops in `wireTags'. If `tag' is positive, set
+
+    gmsh.model.occ.addSurfaceFilling(wireTag, tag = -1)
+
+Add a surface filling the curve loops in 'wireTags'. If 'tag' is positive, set
 the tag explicitly; otherwise a new tag is selected automatically. Return the
 tag of the surface.
 
@@ -1965,7 +2315,10 @@ function addSurfaceFilling(wireTag, tag = -1)
 end
 
 """
-Add a surface loop (a closed shell) formed by `surfaceTags'.  If `tag' is
+
+    gmsh.model.occ.addSurfaceLoop(surfaceTags, tag = -1)
+
+Add a surface loop (a closed shell) formed by 'surfaceTags'.  If 'tag' is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
 Return the tag of the surface loop.
 
@@ -1983,9 +2336,12 @@ function addSurfaceLoop(surfaceTags, tag = -1)
 end
 
 """
-Add a volume (a region) defined by one or more surface loops `shellTags'. The
+
+    gmsh.model.occ.addVolume(shellTags, tag = -1)
+
+Add a volume (a region) defined by one or more surface loops 'shellTags'. The
 first surface loop defines the exterior boundary; additional surface loop define
-holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is
+holes. If 'tag' is positive, set the tag explicitly; otherwise a new tag is
 selected automatically. Return the tag of the volume.
 
 Return an integer.
@@ -2002,15 +2358,18 @@ function addVolume(shellTags, tag = -1)
 end
 
 """
-Add a sphere of center (`xc', `yc', `zc') and radius `r'. The optional `angle1'
-and `angle2' arguments define the polar angle opening (from -Pi/2 to Pi/2). The
-optional `angle3' argument defines the azimuthal opening (from 0 to 2*Pi). If
-`tag' is positive, set the tag explicitly; otherwise a new tag is selected
+
+    gmsh.model.occ.addSphere(xc, yc, zc, radius, tag = -1, angle1 = -pi/2, angle2 = pi/2, angle3 = 2*pi)
+
+Add a sphere of center ('xc', 'yc', 'zc') and radius 'r'. The optional 'angle1'
+and 'angle2' arguments define the polar angle opening (from -Pi/2 to Pi/2). The
+optional 'angle3' argument defines the azimuthal opening (from 0 to 2*Pi). If
+'tag' is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. Return the tag of the sphere.
 
 Return an integer.
 """
-function addSphere(xc, yc, zc, radius, tag = -1, angle1 = -M_PI/2, angle2 = M_PI/2, angle3 = 2*M_PI)
+function addSphere(xc, yc, zc, radius, tag = -1, angle1 = -pi/2, angle2 = pi/2, angle3 = 2*pi)
     ierr = Vector{Cint}(1)
     api__result__ = ccall((:gmshModelOccAddSphere, gmsh.clib), Cint,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
@@ -2022,8 +2381,11 @@ function addSphere(xc, yc, zc, radius, tag = -1, angle1 = -M_PI/2, angle2 = M_PI
 end
 
 """
-Add a parallelepipedic box defined by a point (`x', `y', `z') and the extents
-along the x-, y- and z-axes. If `tag' is positive, set the tag explicitly;
+
+    gmsh.model.occ.addBox(x, y, z, dx, dy, dz, tag = -1)
+
+Add a parallelepipedic box defined by a point ('x', 'y', 'z') and the extents
+along the x-, y- and z-axes. If 'tag' is positive, set the tag explicitly;
 otherwise a new tag is selected automatically. Return the tag of the box.
 
 Return an integer.
@@ -2040,15 +2402,18 @@ function addBox(x, y, z, dx, dy, dz, tag = -1)
 end
 
 """
-Add a cylinder, defined by the center (`x', `y', `z') of its first circular
-face, the 3 components (`dx', `dy', `dz') of the vector defining its axis and
-its radius `r'. The optional `angle' argument defines the angular opening (from
-0 to 2*Pi). If `tag' is positive, set the tag explicitly; otherwise a new tag is
+
+    gmsh.model.occ.addCylinder(x, y, z, dx, dy, dz, r, tag = -1, angle = 2*pi)
+
+Add a cylinder, defined by the center ('x', 'y', 'z') of its first circular
+face, the 3 components ('dx', 'dy', 'dz') of the vector defining its axis and
+its radius 'r'. The optional 'angle' argument defines the angular opening (from
+0 to 2*Pi). If 'tag' is positive, set the tag explicitly; otherwise a new tag is
 selected automatically. Return the tag of the cylinder.
 
 Return an integer.
 """
-function addCylinder(x, y, z, dx, dy, dz, r, tag = -1, angle = 2*M_PI)
+function addCylinder(x, y, z, dx, dy, dz, r, tag = -1, angle = 2*pi)
     ierr = Vector{Cint}(1)
     api__result__ = ccall((:gmshModelOccAddCylinder, gmsh.clib), Cint,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Ptr{Cint}),
@@ -2060,16 +2425,19 @@ function addCylinder(x, y, z, dx, dy, dz, r, tag = -1, angle = 2*M_PI)
 end
 
 """
-Add a cone, defined by the center (`x', `y', `z') of its first circular face,
-the 3 components of the vector (`dx', `dy', `dz') defining its axis and the two
-radii `r1' and `r2' of the faces (these radii can be zero). If `tag' is
+
+    gmsh.model.occ.addCone(x, y, z, dx, dy, dz, r1, r2, tag = -1, angle = 2*pi)
+
+Add a cone, defined by the center ('x', 'y', 'z') of its first circular face,
+the 3 components of the vector ('dx', 'dy', 'dz') defining its axis and the two
+radii 'r1' and 'r2' of the faces (these radii can be zero). If 'tag' is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
-`angle' defines the optional angular opening (from 0 to 2*Pi). Return the tag of
+'angle' defines the optional angular opening (from 0 to 2*Pi). Return the tag of
 the cone.
 
 Return an integer.
 """
-function addCone(x, y, z, dx, dy, dz, r1, r2, tag = -1, angle = 2*M_PI)
+function addCone(x, y, z, dx, dy, dz, r1, r2, tag = -1, angle = 2*pi)
     ierr = Vector{Cint}(1)
     api__result__ = ccall((:gmshModelOccAddCone, gmsh.clib), Cint,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Ptr{Cint}),
@@ -2081,10 +2449,13 @@ function addCone(x, y, z, dx, dy, dz, r1, r2, tag = -1, angle = 2*M_PI)
 end
 
 """
-Add a right angular wedge, defined by the right-angle point (`x', `y', `z') and
-the 3 extends along the x-, y- and z-axes (`dx', `dy', `dz'). If `tag' is
+
+    gmsh.model.occ.addWedge(x, y, z, dx, dy, dz, tag = -1, ltx = 0.)
+
+Add a right angular wedge, defined by the right-angle point ('x', 'y', 'z') and
+the 3 extends along the x-, y- and z-axes ('dx', 'dy', 'dz'). If 'tag' is
 positive, set the tag explicitly; otherwise a new tag is selected automatically.
-The optional argument `ltx' defines the top extent along the x-axis. Return the
+The optional argument 'ltx' defines the top extent along the x-axis. Return the
 tag of the wedge.
 
 Return an integer.
@@ -2101,14 +2472,17 @@ function addWedge(x, y, z, dx, dy, dz, tag = -1, ltx = 0.)
 end
 
 """
-Add a torus, defined by its center (`x', `y', `z') and its 2 radii `r' and `r2'.
-If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected
-automatically. The optional argument `angle' defines the angular opening (from 0
+
+    gmsh.model.occ.addTorus(x, y, z, r1, r2, tag = -1, angle = 2*pi)
+
+Add a torus, defined by its center ('x', 'y', 'z') and its 2 radii 'r' and 'r2'.
+If 'tag' is positive, sets the tag explicitly; otherwise a new tag is selected
+automatically. The optional argument 'angle' defines the angular opening (from 0
 to 2*Pi). Return the tag of the wedge.
 
 Return an integer.
 """
-function addTorus(x, y, z, r1, r2, tag = -1, angle = 2*M_PI)
+function addTorus(x, y, z, r1, r2, tag = -1, angle = 2*pi)
     ierr = Vector{Cint}(1)
     api__result__ = ccall((:gmshModelOccAddTorus, gmsh.clib), Cint,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Ptr{Cint}),
@@ -2120,10 +2494,13 @@ function addTorus(x, y, z, r1, r2, tag = -1, angle = 2*M_PI)
 end
 
 """
-Add a volume (if the optional argument `makeSolid' is set) or surfaces defined
-through the open or closed wires `wireTags'. If `tag' is positive, set the tag
+
+    gmsh.model.occ.addThruSections(wireTags, outDimTags, tag = -1, makeSolid = true, makeRuled = false)
+
+Add a volume (if the optional argument 'makeSolid' is set) or surfaces defined
+through the open or closed wires 'wireTags'. If 'tag' is positive, set the tag
 explicitly; otherwise a new tag is selected automatically. The new entities are
-returned in `outDimTags'. If the optional argument `makeRuled' is set, the
+returned in 'outDimTags'. If the optional argument 'makeRuled' is set, the
 surfaces created on the boundary are forced to be ruled surfaces.
 
 Return `outDimTags'.
@@ -2140,10 +2517,13 @@ function addThruSections(wireTags, tag = -1, makeSolid = true, makeRuled = false
 end
 
 """
-Add a hollowed volume built from an initial volume `volumeTag' and a set of
-faces from this volume `excludeSurfaceTags', which are to be removed. The
+
+    gmsh.model.occ.addThickSolid(volumeTag, excludeSurfaceTags, offset, outDimTags, tag = -1)
+
+Add a hollowed volume built from an initial volume 'volumeTag' and a set of
+faces from this volume 'excludeSurfaceTags', which are to be removed. The
 remaining faces of the volume become the walls of the hollowed solid, with
-thickness `offset'. If `tag' is positive, set the tag explicitly; otherwise a
+thickness 'offset'. If 'tag' is positive, set the tag explicitly; otherwise a
 new tag is selected automatically.
 
 Return `outDimTags'.
@@ -2160,19 +2540,22 @@ function addThickSolid(volumeTag, excludeSurfaceTags, offset, tag = -1)
 end
 
 """
-Extrude the geometrical entities `dimTags' by translation along (`dx', `dy',
-`dz'). Return extruded entities in `outDimTags'. If `numElements' is not empty,
-also extrude the mesh: the entries in `numElements' give the number of elements
-in each layer. If `height' is not empty, it provides the (cummulative) height of
+
+    gmsh.model.occ.extrude(dimTags, dx, dy, dz, outDimTags, numElements = [], heights = [], recombine = false)
+
+Extrude the geometrical entities 'dimTags' by translation along ('dx', 'dy',
+'dz'). Return extruded entities in 'outDimTags'. If 'numElements' is not empty,
+also extrude the mesh: the entries in 'numElements' give the number of elements
+in each layer. If 'height' is not empty, it provides the (cummulative) height of
 the different layers, normalized to 1.
 
 Return `outDimTags'.
 """
-function extrude(dimTags, dx, dy, dz, numElements = std::vector<int>(), heights = std::vector<double>(), recombine = false)
+function extrude(dimTags, dx, dy, dz, numElements = [], heights = [], recombine = false)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelOccExtrude, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          dimTags, dx, dy, dz, outDimTags, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, outDimTags, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
@@ -2180,20 +2563,23 @@ function extrude(dimTags, dx, dy, dz, numElements = std::vector<int>(), heights 
 end
 
 """
-Extrude the geometrical entities `dimTags' by rotation of `angle' radians around
-the axis of revolution defined by the point (`x', `y', `z') and the direction
-(`ax', `ay', `az'). Return extruded entities in `outDimTags'. If `numElements'
-is not empty, also extrude the mesh: the entries in `numElements' give the
-number of elements in each layer. If `height' is not empty, it provides the
+
+    gmsh.model.occ.revolve(dimTags, x, y, z, ax, ay, az, angle, outDimTags, numElements = [], heights = [], recombine = false)
+
+Extrude the geometrical entities 'dimTags' by rotation of 'angle' radians around
+the axis of revolution defined by the point ('x', 'y', 'z') and the direction
+('ax', 'ay', 'az'). Return extruded entities in 'outDimTags'. If 'numElements'
+is not empty, also extrude the mesh: the entries in 'numElements' give the
+number of elements in each layer. If 'height' is not empty, it provides the
 (cummulative) height of the different layers, normalized to 1.
 
 Return `outDimTags'.
 """
-function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = std::vector<int>(), heights = std::vector<double>(), recombine = false)
+function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = [], heights = [], recombine = false)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelOccRevolve, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          dimTags, x, y, z, ax, ay, az, angle, outDimTags, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, outDimTags, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
@@ -2201,8 +2587,11 @@ function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = std::vector<
 end
 
 """
-Add a pipe by extruding the entities `dimTags' along the wire `wireTag'. Return
-the pipe in `outDimTags'.
+
+    gmsh.model.occ.addPipe(dimTags, wireTag, outDimTags)
+
+Add a pipe by extruding the entities 'dimTags' along the wire 'wireTag'. Return
+the pipe in 'outDimTags'.
 
 Return `outDimTags'.
 """
@@ -2210,7 +2599,7 @@ function addPipe(dimTags, wireTag)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelOccAddPipe, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          dimTags, wireTag, outDimTags, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), wireTag, outDimTags, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
@@ -2218,9 +2607,12 @@ function addPipe(dimTags, wireTag)
 end
 
 """
-Fillet the volumes `volumeTags' on the curves `curveTags' with radius `radius'.
-Return the filleted entities in `outDimTags'. Remove the original volume if
-`removeVolume' is set.
+
+    gmsh.model.occ.fillet(volumeTags, curveTags, radius, outDimTags, removeVolume = true)
+
+Fillet the volumes 'volumeTags' on the curves 'curveTags' with radius 'radius'.
+Return the filleted entities in 'outDimTags'. Remove the original volume if
+'removeVolume' is set.
 
 Return `outDimTags'.
 """
@@ -2236,11 +2628,14 @@ function fillet(volumeTags, curveTags, radius, removeVolume = true)
 end
 
 """
-Compute the boolean union (the fusion) of the entities `objectDimTags' and
-`toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is
+
+    gmsh.model.occ.fuse(objectDimTags, toolDimTags, outDimTags, outDimTagsMap, tag = -1, removeObject = true, removeTool = true)
+
+Compute the boolean union (the fusion) of the entities 'objectDimTags' and
+'toolDimTags'. Return the resulting entities in 'outDimTags'. If 'tag' is
 positive, try to set the tag explicitly (ony valid if the boolean operation
-results in a single entity). Remove the object if `removeObject' is set. Remove
-the tool if `removeTool' is set.
+results in a single entity). Remove the object if 'removeObject' is set. Remove
+the tool if 'removeTool' is set.
 
 Return `outDimTags', `outDimTagsMap'.
 """
@@ -2248,7 +2643,7 @@ function fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeT
     ierr = Vector{Cint}(1)
     ccall((:gmshModelOccFuse, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
-          objectDimTags, toolDimTags, outDimTags, outDimTagsMap, tag, removeObject, removeTool, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(objectDimTags))), 2 * length(objectDimTags), convert(Vector{Cint}, collect(Iterators.flatten(toolDimTags))), 2 * length(toolDimTags), outDimTags, outDimTagsMap, tag, removeObject, removeTool, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
@@ -2256,11 +2651,14 @@ function fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeT
 end
 
 """
+
+    gmsh.model.occ.intersect(objectDimTags, toolDimTags, outDimTags, outDimTagsMap, tag = -1, removeObject = true, removeTool = true)
+
 Compute the boolean intersection (the common parts) of the entities
-`objectDimTags' and `toolDimTags'. Return the resulting entities in
-`outDimTags'. If `tag' is positive, try to set the tag explicitly (ony valid if
+'objectDimTags' and 'toolDimTags'. Return the resulting entities in
+'outDimTags'. If 'tag' is positive, try to set the tag explicitly (ony valid if
 the boolean operation results in a single entity). Remove the object if
-`removeObject' is set. Remove the tool if `removeTool' is set.
+'removeObject' is set. Remove the tool if 'removeTool' is set.
 
 Return `outDimTags', `outDimTagsMap'.
 """
@@ -2268,7 +2666,7 @@ function intersect(objectDimTags, toolDimTags, tag = -1, removeObject = true, re
     ierr = Vector{Cint}(1)
     ccall((:gmshModelOccIntersect, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
-          objectDimTags, toolDimTags, outDimTags, outDimTagsMap, tag, removeObject, removeTool, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(objectDimTags))), 2 * length(objectDimTags), convert(Vector{Cint}, collect(Iterators.flatten(toolDimTags))), 2 * length(toolDimTags), outDimTags, outDimTagsMap, tag, removeObject, removeTool, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
@@ -2276,11 +2674,14 @@ function intersect(objectDimTags, toolDimTags, tag = -1, removeObject = true, re
 end
 
 """
-Compute the boolean difference between the entities `objectDimTags' and
-`toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is
+
+    gmsh.model.occ.cut(objectDimTags, toolDimTags, outDimTags, outDimTagsMap, tag = -1, removeObject = true, removeTool = true)
+
+Compute the boolean difference between the entities 'objectDimTags' and
+'toolDimTags'. Return the resulting entities in 'outDimTags'. If 'tag' is
 positive, try to set the tag explicitly (ony valid if the boolean operation
-results in a single entity). Remove the object if `removeObject' is set. Remove
-the tool if `removeTool' is set.
+results in a single entity). Remove the object if 'removeObject' is set. Remove
+the tool if 'removeTool' is set.
 
 Return `outDimTags', `outDimTagsMap'.
 """
@@ -2288,7 +2689,7 @@ function cut(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTo
     ierr = Vector{Cint}(1)
     ccall((:gmshModelOccCut, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
-          objectDimTags, toolDimTags, outDimTags, outDimTagsMap, tag, removeObject, removeTool, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(objectDimTags))), 2 * length(objectDimTags), convert(Vector{Cint}, collect(Iterators.flatten(toolDimTags))), 2 * length(toolDimTags), outDimTags, outDimTagsMap, tag, removeObject, removeTool, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
@@ -2296,11 +2697,14 @@ function cut(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTo
 end
 
 """
-Compute the boolean fragments (general fuse) of the entities `objectDimTags' and
-`toolDimTags'. Return the resulting entities in `outDimTags'. If `tag' is
+
+    gmsh.model.occ.fragment(objectDimTags, toolDimTags, outDimTags, outDimTagsMap, tag = -1, removeObject = true, removeTool = true)
+
+Compute the boolean fragments (general fuse) of the entities 'objectDimTags' and
+'toolDimTags'. Return the resulting entities in 'outDimTags'. If 'tag' is
 positive, try to set the tag explicitly (ony valid if the boolean operation
-results in a single entity). Remove the object if `removeObject' is set. Remove
-the tool if `removeTool' is set.
+results in a single entity). Remove the object if 'removeObject' is set. Remove
+the tool if 'removeTool' is set.
 
 Return `outDimTags', `outDimTagsMap'.
 """
@@ -2308,7 +2712,7 @@ function fragment(objectDimTags, toolDimTags, tag = -1, removeObject = true, rem
     ierr = Vector{Cint}(1)
     ccall((:gmshModelOccFragment, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
-          objectDimTags, toolDimTags, outDimTags, outDimTagsMap, tag, removeObject, removeTool, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(objectDimTags))), 2 * length(objectDimTags), convert(Vector{Cint}, collect(Iterators.flatten(toolDimTags))), 2 * length(toolDimTags), outDimTags, outDimTagsMap, tag, removeObject, removeTool, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
@@ -2316,64 +2720,79 @@ function fragment(objectDimTags, toolDimTags, tag = -1, removeObject = true, rem
 end
 
 """
-Translate the geometrical entities `dimTags' along (`dx', `dy', `dz').
+
+    gmsh.model.occ.translate(dimTags, dx, dy, dz)
+
+Translate the geometrical entities 'dimTags' along ('dx', 'dy', 'dz').
 """
 function translate(dimTags, dx, dy, dz)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelOccTranslate, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          dimTags, dx, dy, dz, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
 end
 
 """
-Rotate the geometrical entities `dimTags' of `angle' radians around the axis of
-revolution defined by the point (`x', `y', `z') and the direction (`ax', `ay',
-`az').
+
+    gmsh.model.occ.rotate(dimTags, x, y, z, ax, ay, az, angle)
+
+Rotate the geometrical entities 'dimTags' of 'angle' radians around the axis of
+revolution defined by the point ('x', 'y', 'z') and the direction ('ax', 'ay',
+'az').
 """
 function rotate(dimTags, x, y, z, ax, ay, az, angle)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelOccRotate, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          dimTags, x, y, z, ax, ay, az, angle, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
 end
 
 """
-Scale the geometrical entities `dimTag' by factors `a', `b' and `c' along the
-three coordinate axes; use (`x', `y', `z') as the center of the homothetic
+
+    gmsh.model.occ.dilate(dimTags, x, y, z, a, b, c)
+
+Scale the geometrical entities 'dimTag' by factors 'a', 'b' and 'c' along the
+three coordinate axes; use ('x', 'y', 'z') as the center of the homothetic
 transformation.
 """
 function dilate(dimTags, x, y, z, a, b, c)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelOccDilate, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          dimTags, x, y, z, a, b, c, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, a, b, c, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
 end
 
 """
-Apply a symmetry transformation to the geometrical entities `dimTag', with
-respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.
+
+    gmsh.model.occ.symmetry(dimTags, a, b, c, d)
+
+Apply a symmetry transformation to the geometrical entities 'dimTag', with
+respect to the plane of equation 'a' * x + 'b' * y + 'c' * z + 'd' = 0.
 """
 function symmetry(dimTags, a, b, c, d)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelOccSymmetry, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          dimTags, a, b, c, d, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), a, b, c, d, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
 end
 
 """
-Copy the entities `dimTags'; the new entities are returned in `outDimTags'.
+
+    gmsh.model.occ.copy(dimTags, outDimTags)
+
+Copy the entities 'dimTags'; the new entities are returned in 'outDimTags'.
 
 Return `outDimTags'.
 """
@@ -2381,7 +2800,7 @@ function copy(dimTags)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelOccCopy, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          dimTags, outDimTags, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), outDimTags, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
@@ -2389,20 +2808,26 @@ function copy(dimTags)
 end
 
 """
-Remove the entities `dimTags'. If `recursive' is true, remove all the entities
+
+    gmsh.model.occ.remove(dimTags, recursive = false)
+
+Remove the entities 'dimTags'. If 'recursive' is true, remove all the entities
 on their boundaries, down to dimension 0.
 """
 function remove(dimTags, recursive = false)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelOccRemove, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
-          dimTags, recursive, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), recursive, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
 end
 
 """
+
+    gmsh.model.occ.removeAllDuplicates()
+
 Remove all duplicate entities (different entities at the same geometrical
 location) after intersecting (using boolean fragments) all highest dimensional
 entities.
@@ -2418,10 +2843,13 @@ function removeAllDuplicates()
 end
 
 """
-Import BREP, STEP or IGES shapes from the file `fileName'. The imported entities
-are returned in `outDimTags'. If the optional argument `highestDimOnly' is set,
+
+    gmsh.model.occ.importShapes(fileName, outDimTags, highestDimOnly = true, format = "")
+
+Import BREP, STEP or IGES shapes from the file 'fileName'. The imported entities
+are returned in 'outDimTags'. If the optional argument 'highestDimOnly' is set,
 only import the highest dimensional entities in the file. The optional argument
-`format' can be used to force the format of the file (currently "brep", "step"
+'format' can be used to force the format of the file (currently "brep", "step"
 or "iges").
 
 Return `outDimTags'.
@@ -2438,20 +2866,26 @@ function importShapes(fileName, highestDimOnly = true, format = "")
 end
 
 """
-Set a mesh size constraint on the geometrical entities `dimTags'. Currently only
+
+    gmsh.model.occ.setMeshSize(dimTags, size)
+
+Set a mesh size constraint on the geometrical entities 'dimTags'. Currently only
 entities of dimension 0 (points) are handled.
 """
 function setMeshSize(dimTags, size)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelOccSetMeshSize, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Ptr{Cint}),
-          dimTags, size, ierr)
+          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), size, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
 end
 
 """
+
+    gmsh.model.occ.synchronize()
+
 Synchronize the internal OpenCASCADE CAD representation with the current Gmsh
 model. This can be called at any time, but since it involves a non trivial
 amount of processing, the number of synchronization points should normally be
@@ -2472,6 +2906,9 @@ end # end of module occ
 end # end of module model
 
 """
+
+    module gmsh.view
+
 Post-processing view functions
 """
 module view
@@ -2479,7 +2916,10 @@ module view
 import ..gmsh
 
 """
-Add a new post-processing view, with name `name'. If `tag' is positive use it
+
+    gmsh.view.add(name, tag = -1)
+
+Add a new post-processing view, with name 'name'. If 'tag' is positive use it
 (and remove the view with that tag if it already exists), otherwise associate a
 new tag. Return the view tag.
 
@@ -2497,7 +2937,10 @@ function add(name, tag = -1)
 end
 
 """
-Remove the view with tag `tag'.
+
+    gmsh.view.remove(tag)
+
+Remove the view with tag 'tag'.
 """
 function remove(tag)
     ierr = Vector{Cint}(1)
@@ -2510,7 +2953,10 @@ function remove(tag)
 end
 
 """
-Get the index of the view with tag `tag' in the list of currently loaded views.
+
+    gmsh.view.getIndex(tag)
+
+Get the index of the view with tag 'tag' in the list of currently loaded views.
 This dynamic index (it can change when views are removed) is used to access view
 options.
 
@@ -2528,6 +2974,9 @@ function getIndex(tag)
 end
 
 """
+
+    gmsh.view.getTags(tags)
+
 Get the tags of all views.
 
 Return `tags'.
@@ -2547,33 +2996,40 @@ function getTags()
 end
 
 """
-Add model-based post-processing data to the view with tag `tag'. `modelName'
-identifies the model the data is attached to. `dataType' specifies the type of
-data, currently either "NodeData", "ElementData" or "ElementNodeData". `step'
-specifies the identifier (>= 0) of the data in a sequence. `tags' gives the tags
-of the nodes or elements in the mesh to which the data is associated. `data' is
-a vector of the same length as `tags': each entry is the vector of double
+
+    gmsh.view.addModelData(tag, step, modelName, dataType, tags, data, time = 0., numComponents = -1, partition = 0)
+
+Add model-based post-processing data to the view with tag 'tag'. 'modelName'
+identifies the model the data is attached to. 'dataType' specifies the type of
+data, currently either "NodeData", "ElementData" or "ElementNodeData". 'step'
+specifies the identifier (>= 0) of the data in a sequence. 'tags' gives the tags
+of the nodes or elements in the mesh to which the data is associated. 'data' is
+a vector of the same length as 'tags': each entry is the vector of double
 precision numbers representing the data associated with the corresponding tag.
-The optional `time' argument associate a time value with the data.
-`numComponents' gives the number of data components (1 for scalar data, 3 for
+The optional 'time' argument associate a time value with the data.
+'numComponents' gives the number of data components (1 for scalar data, 3 for
 vector data, etc.) per entity; if negative, it is automatically inferred (when
-possible) from the input data. `partition' allows to specify data in several
+possible) from the input data. 'partition' allows to specify data in several
 sub-sets.
 """
 function addModelData(tag, step, modelName, dataType, tags, data, time = 0., numComponents = -1, partition = 0)
+    api_data_n_ = [ length(data[i]) for i in 1:length(data) ]
     ierr = Vector{Cint}(1)
     ccall((:gmshViewAddModelData, gmsh.clib), Void,
           (Cint, Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Cint}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Csize_t, Cdouble, Cint, Cint, Ptr{Cint}),
-          tag, step, modelName, dataType, convert(Vector{Cint}, tags), length(tags), data, time, numComponents, partition, ierr)
+          tag, step, modelName, dataType, convert(Vector{Cint}, tags), length(tags), convert(Vector{Vector{Cdouble}},data), api_data_n_, length(data), time, numComponents, partition, ierr)
     if ierr[1] != 0
       println(ierr[1])
     end
 end
 
 """
-Get model-based post-processing data from the view with tag `tag' at step
-`step'. Return the `data' associated to the nodes or the elements with tags
-`tags', as well as the `dataType' and the number of components `numComponents'.
+
+    gmsh.view.getModelData(tag, step, dataType, tags, data, time, numComponents)
+
+Get model-based post-processing data from the view with tag 'tag' at step
+'step'. Return the 'data' associated to the nodes or the elements with tags
+'tags', as well as the 'dataType' and the number of components 'numComponents'.
 
 Return `dataType', `tags', `data', `time', `numComponents'.
 """
@@ -2592,10 +3048,13 @@ function getModelData(tag, step)
 end
 
 """
-Add list-based post-processing data to the view with tag `tag'. `dataType'
+
+    gmsh.view.addListData(tag, dataType, numEle, data)
+
+Add list-based post-processing data to the view with tag 'tag'. 'dataType'
 identifies the data: "SP" for scalar points, "VP", for vector points, etc.
-`numEle' gives the number of elements in the data. `data' contains the data for
-the `numEle' elements.
+'numEle' gives the number of elements in the data. 'data' contains the data for
+the 'numEle' elements.
 """
 function addListData(tag, dataType, numEle, data)
     ierr = Vector{Cint}(1)
@@ -2608,9 +3067,12 @@ function addListData(tag, dataType, numEle, data)
 end
 
 """
-Get list-based post-processing data from the view with tag `tag'. Return the
-types `dataTypes', the number of elements `numElements' for each data type and
-the `data' for each data type.
+
+    gmsh.view.getListData(tag, dataType, numElements, data)
+
+Get list-based post-processing data from the view with tag 'tag'. Return the
+types 'dataTypes', the number of elements 'numElements' for each data type and
+the 'data' for each data type.
 
 Return `dataType', `numElements', `data'.
 """
@@ -2629,17 +3091,20 @@ function getListData(tag)
 end
 
 """
-Probe the view `tag' for its `value' at point (`x', `y', `z'). Return only the
-value at step `step' is `step' is positive. Return only values with `numComp' if
-`numComp' is positive. Return the gradient of the `value' if `gradient' is set.
-Probes with a geometrical tolerance (in the reference unit cube) of `tolerance'
-if `tolerance' is not zero. Return the result from the element described by its
-coordinates if `xElementCoord', `yElementCoord' and `zElementCoord' are
+
+    gmsh.view.probe(tag, x, y, z, value, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = [], yElemCoord = [], zElemCoord = [])
+
+Probe the view 'tag' for its 'value' at point ('x', 'y', 'z'). Return only the
+value at step 'step' is 'step' is positive. Return only values with 'numComp' if
+'numComp' is positive. Return the gradient of the 'value' if 'gradient' is set.
+Probes with a geometrical tolerance (in the reference unit cube) of 'tolerance'
+if 'tolerance' is not zero. Return the result from the element described by its
+coordinates if 'xElementCoord', 'yElementCoord' and 'zElementCoord' are
 provided.
 
 Return `value'.
 """
-function probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = std::vector<double>(), yElemCoord = std::vector<double>(), zElemCoord = std::vector<double>())
+function probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = [], yElemCoord = [], zElemCoord = [])
     api_value_= Vector{Ptr{Cdouble}}(1)
     api_value_n_= Vector{Csize_t}(1)
     ierr = Vector{Cint}(1)
@@ -2654,8 +3119,11 @@ function probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, toleranc
 end
 
 """
-Write the view to a file `fileName'. The export format is determined by the file
-extension. Append to the file if `append' is set.
+
+    gmsh.view.write(tag, fileName, append = false)
+
+Write the view to a file 'fileName'. The export format is determined by the file
+extension. Append to the file if 'append' is set.
 """
 function write(tag, fileName, append = false)
     ierr = Vector{Cint}(1)
@@ -2670,6 +3138,9 @@ end
 end # end of module view
 
 """
+
+    module gmsh.plugin
+
 Plugin functions
 """
 module plugin
@@ -2677,7 +3148,10 @@ module plugin
 import ..gmsh
 
 """
-Set the numerical option `option' to the value `value' for plugin `name'.
+
+    gmsh.plugin.setNumber(name, option, value)
+
+Set the numerical option 'option' to the value 'value' for plugin 'name'.
 """
 function setNumber(name, option, value)
     ierr = Vector{Cint}(1)
@@ -2690,7 +3164,10 @@ function setNumber(name, option, value)
 end
 
 """
-Set the string option `option' to the value `value' for plugin `name'.
+
+    gmsh.plugin.setString(name, option, value)
+
+Set the string option 'option' to the value 'value' for plugin 'name'.
 """
 function setString(name, option, value)
     ierr = Vector{Cint}(1)
@@ -2703,7 +3180,10 @@ function setString(name, option, value)
 end
 
 """
-Run the plugin `name'.
+
+    gmsh.plugin.run(name)
+
+Run the plugin 'name'.
 """
 function run(name)
     ierr = Vector{Cint}(1)
@@ -2718,6 +3198,9 @@ end
 end # end of module plugin
 
 """
+
+    module gmsh.graphics
+
 Graphics functions
 """
 module graphics
@@ -2725,6 +3208,9 @@ module graphics
 import ..gmsh
 
 """
+
+    gmsh.graphics.draw()
+
 Draw all the OpenGL scenes.
 """
 function draw()
@@ -2740,6 +3226,9 @@ end
 end # end of module graphics
 
 """
+
+    module gmsh.fltk
+
 Fltk graphical user interface functions
 """
 module fltk
@@ -2747,6 +3236,9 @@ module fltk
 import ..gmsh
 
 """
+
+    gmsh.fltk.initialize()
+
 Create the Fltk graphical user interface.
 """
 function initialize()
@@ -2760,7 +3252,10 @@ function initialize()
 end
 
 """
-Wait at most `time' seconds for user interface events and return. If `time' < 0,
+
+    gmsh.fltk.wait(time = -1.)
+
+Wait at most 'time' seconds for user interface events and return. If 'time' < 0,
 wait indefinitely. First automatically create the user interface if it has not
 yet been initialized.
 """
@@ -2775,8 +3270,11 @@ function wait(time = -1.)
 end
 
 """
+
+    gmsh.fltk.run()
+
 Run the event loop of the Fltk graphical user interface, i.e. repeatedly calls
-`wait'. First automatically create the user interface if it has not yet been
+'wait'. First automatically create the user interface if it has not yet been
 initialized.
 """
 function run()
@@ -2792,6 +3290,9 @@ end
 end # end of module fltk
 
 """
+
+    module gmsh.onelab
+
 ONELAB server functions
 """
 module onelab
@@ -2799,7 +3300,10 @@ module onelab
 import ..gmsh
 
 """
-Get `data' from the ONELAB server.
+
+    gmsh.onelab.get(data, format = "json")
+
+Get 'data' from the ONELAB server.
 
 Return `data'.
 """
@@ -2815,7 +3319,10 @@ function get(format = "json")
 end
 
 """
-Set `data' in the ONELAB server.
+
+    gmsh.onelab.set(data, format = "json")
+
+Set 'data' in the ONELAB server.
 """
 function set(data, format = "json")
     ierr = Vector{Cint}(1)
@@ -2828,8 +3335,11 @@ function set(data, format = "json")
 end
 
 """
-Run a ONELAB client. If `name' is provided, create a new ONELAB client with name
-`name' and executes `command'. If not, try to run a client that might be linked
+
+    gmsh.onelab.run(name = "", command = "")
+
+Run a ONELAB client. If 'name' is provided, create a new ONELAB client with name
+'name' and executes 'command'. If not, try to run a client that might be linked
 to the processed input files.
 """
 function run(name = "", command = "")

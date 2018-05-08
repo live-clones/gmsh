@@ -123,6 +123,8 @@ def ivectorpair(name, value=None, python_value=None, julia_value=None):
     a.python_pre = api_name + ", " + api_name_n + " = _ivectorpair(" + name + ")"
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Cint}, Csize_t"
+    a.julia_arg = ("convert(Vector{Cint}, collect(Iterators.flatten(" + name + "))), " +
+                   "2 * length(" + name + ")")
     return a
 
 def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
@@ -150,6 +152,10 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
                     api_name_nn + " = _ivectorvectorint(" + name + ")")
     a.python_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     a.julia_ctype = "Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t"
+    a.julia_pre = (api_name_n + " = [ length(" + name + "[i]) for i in 1:length(" +
+                   name + ") ]")
+    a.julia_arg = ("convert(Vector{Vector{Cint}}," + name + "), " + api_name_n +
+                   ", length(" + name + ")")
     return a
 
 def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
@@ -178,6 +184,10 @@ def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
                     " = _ivectorvectordouble(" + name + ")")
     a.python_arg = api_name + ", " + api_name_n + ", " + api_name_nn
     a.julia_ctype = "Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Csize_t"
+    a.julia_pre = (api_name_n + " = [ length(" + name + "[i]) for i in 1:length(" +
+                   name + ") ]")
+    a.julia_arg = ("convert(Vector{Vector{Cdouble}}," + name + "), " + api_name_n +
+                   ", length(" + name + ")")
     return a
 
 # output types
@@ -1023,12 +1033,13 @@ class API:
     def write_julia(self):
         def parg(a):
             return a.name + ((" = " + a.julia_value) if a.julia_value else "")
-        def write_function(f, fun, modulepath):
+        def write_function(f, fun, c_mpath, jl_mpath):
             (rtype, name, args, doc, rawc) = fun
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
-            f.write('\n"""\n')
-            f.write("\n".join(textwrap.wrap(doc, 80)) + "\n")
+            f.write('\n"""\n\n    ')
+            f.write(jl_mpath + name + "(" + ", ".join(parg(a) for a in args) + ")\n\n")
+            f.write("\n".join(textwrap.wrap(doc, 80)).replace("`", "'") + "\n")
             if rtype or oargs:
                 f.write("\nReturn " + ", ".join(
                     (["an " + rtype.rtexi_type] if rtype else[])
@@ -1042,9 +1053,9 @@ class API:
                 if a.julia_pre: f.write("    " + a.julia_pre + "\n")
             f.write("    ierr = Vector{Cint}(1)\n    ")
             f.write("api__result__ = " if rtype is oint else "")
-            c_name = modulepath + name[0].upper() + name[1:]
+            c_name = c_mpath + name[0].upper() + name[1:]
             f.write("ccall((:" + c_name + ", " +
-                    ("" if modulepath == "gmsh" else "gmsh.") + "clib), " +
+                    ("" if c_mpath == "gmsh" else "gmsh.") + "clib), " +
                     ("Void" if rtype is None else rtype.rjulia_type) + ",\n" +
                     " " * 10 + "(" + ", ".join(
                         (tuple(a.julia_ctype for a in args) + ("Ptr{Cint}",))) +
@@ -1061,8 +1072,9 @@ class API:
             if len(r) != 0:
                 f.write("    return " + ", ".join(r) + "\n")
             f.write("end\n")
-        def write_module(f, m, modulepath, level):
-            f.write('\n"""\n')
+        def write_module(f, m, c_mpath, jl_mpath, level):
+            f.write('\n"""\n\n    ')
+            f.write("module " + jl_mpath + m.name + "\n\n")
             f.write("\n".join(textwrap.wrap(m.doc, 80)) + "\n")
             f.write('"""\n')
             f.write("module " + m.name + "\n\n")
@@ -1070,19 +1082,21 @@ class API:
                 f.write("const clib = \"libgmsh\"\n")
             else:
                 f.write("import " + ("." * level) + "gmsh\n")
-            if modulepath:
-                modulepath += m.name[0].upper() + m.name[1:]
+            if c_mpath:
+                c_mpath += m.name[0].upper() + m.name[1:]
+                jl_mpath += m.name + "."
             else:
-                modulepath = m.name
+                c_mpath = m.name
+                jl_mpath = m.name + "."
             for fun in m.fs:
-                write_function(f, fun, modulepath)
+                write_function(f, fun, c_mpath, jl_mpath)
             for module in m.submodules:
-                write_module(f, module, modulepath, level + 1)
+                write_module(f, module, c_mpath, jl_mpath, level + 1)
             f.write("\nend # end of module " + m.name + "\n")
         with open("gmsh.jl", "w") as f:
             f.write(julia_header.format(self.api_version))
             for module in self.modules:
-                write_module(f, module, "", 1)
+                write_module(f, module, "", "", 1)
 
     def write_texi(self):
         def write_module(module, parent):
