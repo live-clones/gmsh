@@ -978,8 +978,12 @@ static void _getJacobianData(const int elementType,
     }
     const int begin = (myThread*n)/nbrThreads;
     const int end = ((myThread+1)*n)/nbrThreads;
-    if(end*nbrIPoint > determinant.size() || 9*end*nbrIPoint > jacobian.size()){
-      Msg::Error("Vector size is too small");
+    if(end*nbrIPoint > determinant.size()){
+      Msg::Error("Vector 'determinant' is small (%d < %d)", determinant.size(), end*nbrIPoint);
+      throw 4;
+    }
+    if(9*end*nbrIPoint > jacobian.size()){
+      Msg::Error("Vector 'jacobian' is small (%d < %d)", jacobian.size(), 9*end*nbrIPoint);
       throw 4;
     }
     std::vector< std::vector<SVector3> > gsf;
