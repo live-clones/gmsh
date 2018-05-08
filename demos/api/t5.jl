@@ -64,7 +64,7 @@ shells = []
 
 # When the tag is not specified, a new one is automatically provided
 sl = factory.addSurfaceLoop([35,31,29,37,33,23,39,25,27])
-append!(shells, sl)
+push!(shells, sl)
 
 function cheeseHole(x, y, z, r, lc, shells)
     p1 = factory.addPoint(x,  y,  z,   lc)
@@ -108,7 +108,7 @@ function cheeseHole(x, y, z, r, lc, shells)
     
     sl = factory.addSurfaceLoop([s1, s2, s3, s4, s5, s6, s7, s8])
     v = factory.addVolume([sl])
-    append!(shells, sl)
+    push!(shells, sl)
     return v
 end
 

@@ -254,8 +254,8 @@ def ovectorint(name, value=None, python_value=None, julia_value=None):
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectorint(" + api_name + ", " + api_name_n + ".value)"
     a.julia_ctype = "Ptr{Ptr{Cint}}, Ptr{Csize_t}"
-    a.julia_pre = (api_name + "= Vector{Ptr{Cint}}(1)\n    " +
-                   api_name_n + "= Vector{Csize_t}(1)")
+    a.julia_pre = (api_name + " = Vector{Ptr{Cint}}(1)\n    " +
+                   api_name_n + " = Vector{Csize_t}(1)")
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = (name + " = unsafe_wrap(Array, " + api_name + "[1], " +
                     api_name_n + "[1], true)")
@@ -278,8 +278,8 @@ def ovectordouble(name, value=None, python_value=None, julia_value=None):
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectordouble(" + api_name + ", " + api_name_n + ".value)"
     a.julia_ctype = "Ptr{Ptr{Cdouble}}, Ptr{Csize_t}"
-    a.julia_pre = (api_name + "= Vector{Ptr{Cdouble}}(1)\n    " +
-                   api_name_n + "= Vector{Csize_t}(1)")
+    a.julia_pre = (api_name + " = Vector{Ptr{Cdouble}}(1)\n    " +
+                   api_name_n + " = Vector{Csize_t}(1)")
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = (name + " = unsafe_wrap(Array, " + api_name + "[1], " +
                     api_name_n + "[1], true)")
@@ -306,6 +306,13 @@ def ovectorstring(name, value=None, python_value=None, julia_value=None):
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectorstring(" + api_name + ", " + api_name_n + ".value)"
     a.julia_ctype = "Ptr{Ptr{Cchar}}, Ptr{Csize_t}"
+    a.julia_pre = (api_name + " = Vector{Ptr{Cstring}}(1)\n    " +
+                   api_name_n + " = Vector{Csize_t}(1)")
+    a.julia_arg = api_name + ", " + api_name_n
+    a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[1], " +
+                    api_name_n + "[1], true)\n    " +
+                    name + " = [unsafe_string(tmp_" + api_name + "[i]) for i in 1:length(tmp_" +
+                    api_name + ") ]")
     return a
 
 def ovectorpair(name, value=None, python_value=None, julia_value=None):
@@ -328,8 +335,8 @@ def ovectorpair(name, value=None, python_value=None, julia_value=None):
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectorpair(" + api_name + ", " + api_name_n + ".value)"
     a.julia_ctype = "Ptr{Ptr{Cint}}, Ptr{Csize_t}"
-    a.julia_pre = (api_name + "= Vector{Ptr{Cint}}(1)\n    " +
-                   api_name_n + "= Vector{Csize_t}(1)")
+    a.julia_pre = (api_name + " = Vector{Ptr{Cint}}(1)\n    " +
+                   api_name_n + " = Vector{Csize_t}(1)")
     a.julia_arg = api_name + ", " + api_name_n
     a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[1], " +
                     api_name_n + "[1], true)\n    " +
@@ -362,13 +369,13 @@ def ovectorvectorint(name, value=None, python_value=None, julia_value=None):
     a.python_return = ("_ovectorvectorint(" + api_name + ", " + api_name_n + ", " +
                        api_name_nn + ")")
     a.julia_ctype = "Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}"
-    a.julia_pre = (api_name + "= Vector{Ptr{Ptr{Cint}}}(1)\n    " +
-                   api_name_n + "= Vector{Ptr{Csize_t}}(1)\n    " +
-                   api_name_nn + "= Vector{Csize_t}(1)")
+    a.julia_pre = (api_name + " = Vector{Ptr{Ptr{Cint}}}(1)\n    " +
+                   api_name_n + " = Vector{Ptr{Csize_t}}(1)\n    " +
+                   api_name_nn + " = Vector{Csize_t}(1)")
     a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
-    a.julia_post = ("tmp_" + api_name + "= unsafe_wrap(Array, " + api_name + "[1], " +
+    a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[1], " +
                     api_name_nn + "[1], true)\n    " +
-                    "tmp_" + api_name_n + "= unsafe_wrap(Array, " + api_name_n + "[1], " +
+                    "tmp_" + api_name_n + " = unsafe_wrap(Array, " + api_name_n + "[1], " +
                     api_name_nn + "[1], true)\n    " +
                     name + " = [ unsafe_wrap(Array, tmp_" + api_name + "[i], " +
                     "tmp_" + api_name_n + "[i], true) for i in 1:" +
@@ -401,6 +408,17 @@ def ovectorvectordouble(name, value=None, python_value=None, julia_value=None):
     a.python_return = ("_ovectorvectordouble(" + api_name + ", " + api_name_n + ", " +
                        api_name_nn + ")")
     a.julia_ctype = "Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}"
+    a.julia_pre = (api_name + " = Vector{Ptr{Ptr{Cdouble}}}(1)\n    " +
+                   api_name_n + " = Vector{Ptr{Csize_t}}(1)\n    " +
+                   api_name_nn + " = Vector{Csize_t}(1)")
+    a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
+    a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[1], " +
+                    api_name_nn + "[1], true)\n    " +
+                    "tmp_" + api_name_n + " = unsafe_wrap(Array, " + api_name_n + "[1], " +
+                    api_name_nn + "[1], true)\n    " +
+                    name + " = [ unsafe_wrap(Array, tmp_" + api_name + "[i], " +
+                    "tmp_" + api_name_n + "[i], true) for i in 1:" +
+                    api_name_nn + "[1] ]")
     return a
 
 def ovectorvectorpair(name, value=None, python_value=None, julia_value=None):
@@ -413,7 +431,7 @@ def ovectorvectorpair(name, value=None, python_value=None, julia_value=None):
     a.c_arg = api_name
     a.c_post = ("    vectorvectorpair2intptrptr(" + api_name + ", " + name +
                 ", " + name + "_n, " + name + "_nn);\n")
-    a.c  = "int *** " + name + ", size_t ** " + name + "_n, size_t *" + name + "_nn"
+    a.c = "int *** " + name + ", size_t ** " + name + "_n, size_t *" + name + "_nn"
     a.cwrap_pre = "int **" + api_name + "; size_t *" + api_name_n + ", " + api_name_nn + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n + ", " + "&" + api_name_nn
     a.cwrap_post = (name + ".resize(" + api_name_nn + "); " +
@@ -431,6 +449,20 @@ def ovectorvectorpair(name, value=None, python_value=None, julia_value=None):
     a.python_return = ("_ovectorvectorpair(" + api_name + ", " + api_name_n + ", " +
                        api_name_nn + ")")
     a.julia_ctype = "Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}"
+    a.julia_pre = (api_name + " = Vector{Ptr{Ptr{Cint}}}(1)\n    " +
+                   api_name_n + " = Vector{Ptr{Csize_t}}(1)\n    " +
+                   api_name_nn + " = Vector{Csize_t}(1)")
+    a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
+    a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[1], " +
+                    api_name_nn + "[1], true)\n    " +
+                    "tmp_" + api_name_n + " = unsafe_wrap(Array, " + api_name_n + "[1], " +
+                    api_name_nn + "[1], true)\n    " +
+                    name + " = []\n    " +
+                    "for i in 1:" + api_name_nn + "[1]\n    " +
+                    "    tmp = unsafe_wrap(Array, tmp_" + api_name + "[i], tmp_" +
+                    api_name_n + "[i], true)\n    " +
+                    "    push!(" + name + ", [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)])\n    " +
+                    "end")
     return a
 
 def argcargv():
