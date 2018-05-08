@@ -113,7 +113,7 @@ doc = '''Remove the entities `dimTags' of the current model. If `recursive' is t
 model.add('removeEntities',doc,None,ivectorpair('dimTags'),ibool('recursive','false','False'))
 
 doc = '''Get the type of the entity of dimension `dim' and tag `tag'.'''
-model.add('getType',doc,None,iint('dim'),iint('tag'),ostring('type'))
+model.add('getType',doc,None,iint('dim'),iint('tag'),ostring('entityType'))
 
 ################################################################################
 
@@ -180,13 +180,13 @@ doc = '''Get the coordinates and the parametric coordinates (if any) of the mesh
 mesh.add('getNode',doc,None,iint('nodeTag'),ovectordouble('coord'),ovectordouble('parametricCoord'))
 
 doc = '''Get the type and node tags of the mesh element with tag `tag'. This is a useful but inefficient way of accessing mesh element data, as it relies on a cache stored in the model. For large meshes all the elements in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
-mesh.add('getElement',doc,None,iint('elementTag'),oint('type'),ovectorint('nodeTags'))
+mesh.add('getElement',doc,None,iint('elementTag'),oint('elementType'),ovectorint('nodeTags'))
 
 doc = '''Set a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize',doc,None,ivectorpair('dimTags'),idouble('size'))
 
-doc = '''Set a transfinite meshing constraint on the curve `tag', with `numNodes' mesh nodes distributed according to `type' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extremities of the curve).'''
-mesh.add('setTransfiniteCurve',doc,None,iint('tag'),iint('numNodes'),istring('type','"Progression"'),idouble('coef','1.'))
+doc = '''Set a transfinite meshing constraint on the curve `tag', with `numNodes' mesh nodes distributed according to `meshType' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extremities of the curve).'''
+mesh.add('setTransfiniteCurve',doc,None,iint('tag'),iint('numNodes'),istring('meshType','"Progression"'),idouble('coef','1.'))
 
 doc = '''Set a transfinite meshing constraint on the surface `tag'. `arrangement' describes the arrangement of the triangles when the surface is not flagged as recombined: currently supported values are "Left", "Right", "AlternateLeft" and "AlternateRight". `cornerTags' can be used to specify the (3 or 4) corners of the transfinite interpolation explicitly; specifying the corners explicitly is mandatory if the surface has more that 3 or 4 points on its boundary.'''
 mesh.add('setTransfiniteSurface',doc,None,iint('tag'),istring('arrangement','"Left"'),ivectorint('cornerTags','std::vector<int>()',"[]"))
@@ -213,8 +213,8 @@ mesh.add('setPeriodic',doc,None,iint('dim'),ivectorint('tags'),ivectorint('tagsS
 
 field = mesh.add_module('field','Per-model mesh size field functions')
 
-doc = '''Add a new mesh size field of type `type'. If `tag' is positive, assign the tag explcitly; otherwise a new tag is assigned automatically. Return the field tag.'''
-field.add('add',doc,oint,istring('type'),iint('tag','-1'))
+doc = '''Add a new mesh size field of type `fieldType'. If `tag' is positive, assign the tag explcitly; otherwise a new tag is assigned automatically. Return the field tag.'''
+field.add('add',doc,oint,istring('fieldType'),iint('tag','-1'))
 
 doc = '''Remove the field with tag `tag'.'''
 field.add('remove',doc,None,iint('tag'))
@@ -314,8 +314,8 @@ mesh = geo.add_module('mesh','GEO-specific meshing constraints')
 doc = '''Set a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize',doc,None,ivectorpair('dimTags'),idouble('size'))
 
-doc = '''Set a transfinite meshing constraint on the curve `tag', with `numNodes' mesh nodes distributed according to `type' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extreminties of the curve).'''
-mesh.add('setTransfiniteCurve',doc,None,iint('tag'),iint('nPoints'),istring('type','"Progression"'),idouble('coef','1.'))
+doc = '''Set a transfinite meshing constraint on the curve `tag', with `numNodes' mesh nodes distributed according to `meshType' and `coef'. Currently supported types are "Progression" (geometrical progression with power `coef') and "Bump" (refinement toward both extreminties of the curve).'''
+mesh.add('setTransfiniteCurve',doc,None,iint('tag'),iint('nPoints'),istring('meshType','"Progression"'),idouble('coef','1.'))
 
 doc = '''Set a transfinite meshing constraint on the surface `tag'. `arrangement' describes the arrangement of the triangles when the surface is not flagged as recombined: currently supported values are "Left", "Right", "AlternateLeft" and "AlternateRight". `cornerTags' can be used to specify the (3 or 4) corners of the transfinite interpolation explicitly; specifying the corners explicitly is mandatory if the surface has more that 3 or 4 points on its boundary.'''
 mesh.add('setTransfiniteSurface',doc,None,iint('tag'),istring('arrangement','"Left"'),ivectorint('cornerTags','std::vector<int>()',"[]"))
@@ -490,8 +490,8 @@ view.add('addModelData',doc,None,iint('tag'),iint('step'),istring('modelName'),i
 doc = '''Get model-based post-processing data from the view with tag `tag' at step `step'. Return the `data' associated to the nodes or the elements with tags `tags', as well as the `dataType' and the number of components `numComponents'.'''
 view.add_rawc('getModelData',doc,None,iint('tag'),iint('step'),ostring('dataType'),ovectorint('tags'),ovectorvectordouble('data'),odouble('time'),oint('numComponents'))
 
-doc = '''Add list-based post-processing data to the view with tag `tag'. `type' identifies the data: "SP" for scalar points, "VP", for vector points, etc. `numEle' gives the number of elements in the data. `data' contains the data for the `numEle' elements.'''
-view.add('addListData',doc,None,iint('tag'),istring('type'),iint('numEle'),ivectordouble('data'))
+doc = '''Add list-based post-processing data to the view with tag `tag'. `dataType' identifies the data: "SP" for scalar points, "VP", for vector points, etc. `numEle' gives the number of elements in the data. `data' contains the data for the `numEle' elements.'''
+view.add('addListData',doc,None,iint('tag'),istring('dataType'),iint('numEle'),ivectordouble('data'))
 
 doc = '''Get list-based post-processing data from the view with tag `tag'. Return the types `dataTypes', the number of elements `numElements' for each data type and the `data' for each data type.'''
 view.add('getListData',doc,None,iint('tag'),ovectorstring('dataType'),ovectorint('numElements'),ovectorvectordouble('data'))
