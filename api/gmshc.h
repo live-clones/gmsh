@@ -201,7 +201,7 @@ GMSH_API void gmshModelRemoveEntities(int * dimTags, size_t dimTags_n,
 /* Get the type of the entity of dimension `dim' and tag `tag'. */
 GMSH_API void gmshModelGetType(const int dim,
                                const int tag,
-                               char ** type,
+                               char ** entityType,
                                int * ierr);
 
 /* Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3). */
@@ -384,7 +384,7 @@ GMSH_API void gmshModelMeshSetNodes(const int dim,
  * elements of the given type, concatenated. */
 GMSH_API void gmshModelMeshSetElements(const int dim,
                                        const int tag,
-                                       int * types, size_t types_n,
+                                       int * elementTypes, size_t elementTypes_n,
                                        const int ** elementTags, const size_t * elementTags_n, size_t elementTags_nn,
                                        const int ** nodeTags, const size_t * nodeTags_n, size_t nodeTags_nn,
                                        int * ierr);
@@ -413,7 +413,7 @@ GMSH_API void gmshModelMeshGetNode(const int nodeTag,
  * reasonnable performance (in this case the internal cache is based on a
  * vector; otherwise it uses a map). */
 GMSH_API void gmshModelMeshGetElement(const int elementTag,
-                                      int * type,
+                                      int * elementType,
                                       int ** nodeTags, size_t * nodeTags_n,
                                       int * ierr);
 
@@ -424,12 +424,12 @@ GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n,
                                    int * ierr);
 
 /* Set a transfinite meshing constraint on the curve `tag', with `numNodes'
- * mesh nodes distributed according to `type' and `coef'. Currently supported
- * types are "Progression" (geometrical progression with power `coef') and
- * "Bump" (refinement toward both extremities of the curve). */
+ * mesh nodes distributed according to `meshType' and `coef'. Currently
+ * supported types are "Progression" (geometrical progression with power
+ * `coef') and "Bump" (refinement toward both extremities of the curve). */
 GMSH_API void gmshModelMeshSetTransfiniteCurve(const int tag,
                                                const int numNodes,
-                                               const char * type,
+                                               const char * meshType,
                                                const double coef,
                                                int * ierr);
 
@@ -495,10 +495,10 @@ GMSH_API void gmshModelMeshSetPeriodic(const int dim,
                                        double * affineTransformation, size_t affineTransformation_n,
                                        int * ierr);
 
-/* Add a new mesh size field of type `type'. If `tag' is positive, assign the
- * tag explcitly; otherwise a new tag is assigned automatically. Return the
- * field tag. */
-GMSH_API int gmshModelMeshFieldAdd(const char * type,
+/* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
+ * the tag explcitly; otherwise a new tag is assigned automatically. Return
+ * the field tag. */
+GMSH_API int gmshModelMeshFieldAdd(const char * fieldType,
                                    const int tag,
                                    int * ierr);
 
@@ -777,12 +777,12 @@ GMSH_API void gmshModelGeoMeshSetSize(int * dimTags, size_t dimTags_n,
                                       int * ierr);
 
 /* Set a transfinite meshing constraint on the curve `tag', with `numNodes'
- * mesh nodes distributed according to `type' and `coef'. Currently supported
- * types are "Progression" (geometrical progression with power `coef') and
- * "Bump" (refinement toward both extreminties of the curve). */
+ * mesh nodes distributed according to `meshType' and `coef'. Currently
+ * supported types are "Progression" (geometrical progression with power
+ * `coef') and "Bump" (refinement toward both extreminties of the curve). */
 GMSH_API void gmshModelGeoMeshSetTransfiniteCurve(const int tag,
                                                   const int nPoints,
-                                                  const char * type,
+                                                  const char * meshType,
                                                   const double coef,
                                                   int * ierr);
 
@@ -1365,12 +1365,12 @@ GMSH_API void gmshViewGetModelData(const int tag,
                                    int * numComponents,
                                    int * ierr);
 
-/* Add list-based post-processing data to the view with tag `tag'. `type'
+/* Add list-based post-processing data to the view with tag `tag'. `dataType'
  * identifies the data: "SP" for scalar points, "VP", for vector points, etc.
  * `numEle' gives the number of elements in the data. `data' contains the data
  * for the `numEle' elements. */
 GMSH_API void gmshViewAddListData(const int tag,
-                                  const char * type,
+                                  const char * dataType,
                                   const int numEle,
                                   double * data, size_t data_n,
                                   int * ierr);

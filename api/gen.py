@@ -9,6 +9,7 @@
 #
 #  - gmsh.h: the Gmsh C++ API header
 #  - gmsh.py: the Gmsh Python API module
+#  - gmsh.jl: the Gmsh Julia API module
 #  - gmshc.h: the Gmsh C API header
 #  - gmsh.h_cwrap: the Gmsh C++ API redefined in terms of the C API
 #  - gmshc.cpp: the C to C++ wrapper code used by the Gmsh C API
@@ -171,7 +172,7 @@ doc = '''Set the mesh nodes in the geometrical entity of dimension `dim' and tag
 mesh.add('setNodes',doc,None,iint('dim'),iint('tag'),ivectorint('nodeTags'),ivectordouble('coord'),ivectordouble('parametricCoord','std::vector<double>()',"[]"))
 
 doc = '''Set the mesh elements of the entity of dimension `dim' and `tag' tag. `types' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh reference manual). `elementTags' is a vector of the same length as `types'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is also a vector of the same length as `types'; each entry is a vector of length equal to the number of elements of the give type times the number of nodes per element, that contains the node tags of all the elements of the given type, concatenated.'''
-mesh.add('setElements',doc,None,iint('dim'),iint('tag'),ivectorint('types'),ivectorvectorint('elementTags'),ivectorvectorint('nodeTags'))
+mesh.add('setElements',doc,None,iint('dim'),iint('tag'),ivectorint('elementTypes'),ivectorvectorint('elementTags'),ivectorvectorint('nodeTags'))
 
 doc = '''Redistribute all mesh nodes on their associated geometrical entity, based on the mesh elements. Can be used when importing mesh nodes in bulk (e.g. by associating them all to a single volume), to reclassify them correctly on model surfaces, curves, etc.'''
 mesh.add('reclassifyNodes',doc,None)

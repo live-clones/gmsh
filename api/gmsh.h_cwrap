@@ -393,13 +393,13 @@ namespace gmsh { // Top-level functions
     // Get the type of the entity of dimension `dim' and tag `tag'.
     GMSH_API void getType(const int dim,
                           const int tag,
-                          std::string & type)
+                          std::string & entityType)
     {
       int ierr = 0;
-      char *api_type_;
-      gmshModelGetType(dim, tag, &api_type_, &ierr);
+      char *api_entityType_;
+      gmshModelGetType(dim, tag, &api_entityType_, &ierr);
       if(ierr) throw ierr;
-      type = std::string(api_type_); gmshFree(api_type_);
+      entityType = std::string(api_entityType_); gmshFree(api_entityType_);
     }
 
     namespace mesh { // Per-model meshing functions
@@ -713,17 +713,17 @@ namespace gmsh { // Top-level functions
       // node tags of all the elements of the given type, concatenated.
       GMSH_API void setElements(const int dim,
                                 const int tag,
-                                const std::vector<int> & types,
+                                const std::vector<int> & elementTypes,
                                 const std::vector<std::vector<int> > & elementTags,
                                 const std::vector<std::vector<int> > & nodeTags)
       {
         int ierr = 0;
-        int *api_types_; size_t api_types_n_; vector2ptr(types, &api_types_, &api_types_n_);
+        int *api_elementTypes_; size_t api_elementTypes_n_; vector2ptr(elementTypes, &api_elementTypes_, &api_elementTypes_n_);
         int **api_elementTags_; size_t *api_elementTags_n_, api_elementTags_nn_; vectorvector2ptrptr(elementTags, &api_elementTags_, &api_elementTags_n_, &api_elementTags_nn_);
         int **api_nodeTags_; size_t *api_nodeTags_n_, api_nodeTags_nn_; vectorvector2ptrptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_, &api_nodeTags_nn_);
-        gmshModelMeshSetElements(dim, tag, api_types_, api_types_n_, (const int **)api_elementTags_, api_elementTags_n_, api_elementTags_nn_, (const int **)api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_, &ierr);
+        gmshModelMeshSetElements(dim, tag, api_elementTypes_, api_elementTypes_n_, (const int **)api_elementTags_, api_elementTags_n_, api_elementTags_nn_, (const int **)api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_, &ierr);
         if(ierr) throw ierr;
-        gmshFree(api_types_);
+        gmshFree(api_elementTypes_);
         for(size_t i = 0; i < api_elementTags_nn_; ++i){ gmshFree(api_elementTags_[i]); } gmshFree(api_elementTags_); gmshFree(api_elementTags_n_);
         for(size_t i = 0; i < api_nodeTags_nn_; ++i){ gmshFree(api_nodeTags_[i]); } gmshFree(api_nodeTags_); gmshFree(api_nodeTags_n_);
       }
@@ -765,12 +765,12 @@ namespace gmsh { // Top-level functions
       // maintain reasonnable performance (in this case the internal cache is based
       // on a vector; otherwise it uses a map).
       GMSH_API void getElement(const int elementTag,
-                               int & type,
+                               int & elementType,
                                std::vector<int> & nodeTags)
       {
         int ierr = 0;
         int *api_nodeTags_; size_t api_nodeTags_n_;
-        gmshModelMeshGetElement(elementTag, &type, &api_nodeTags_, &api_nodeTags_n_, &ierr);
+        gmshModelMeshGetElement(elementTag, &elementType, &api_nodeTags_, &api_nodeTags_n_, &ierr);
         if(ierr) throw ierr;
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
       }
@@ -788,16 +788,16 @@ namespace gmsh { // Top-level functions
       }
 
       // Set a transfinite meshing constraint on the curve `tag', with `numNodes'
-      // mesh nodes distributed according to `type' and `coef'. Currently supported
-      // types are "Progression" (geometrical progression with power `coef') and
-      // "Bump" (refinement toward both extremities of the curve).
+      // mesh nodes distributed according to `meshType' and `coef'. Currently
+      // supported types are "Progression" (geometrical progression with power
+      // `coef') and "Bump" (refinement toward both extremities of the curve).
       GMSH_API void setTransfiniteCurve(const int tag,
                                         const int numNodes,
-                                        const std::string & type = "Progression",
+                                        const std::string & meshType = "Progression",
                                         const double coef = 1.)
       {
         int ierr = 0;
-        gmshModelMeshSetTransfiniteCurve(tag, numNodes, type.c_str(), coef, &ierr);
+        gmshModelMeshSetTransfiniteCurve(tag, numNodes, meshType.c_str(), coef, &ierr);
         if(ierr) throw ierr;
       }
 
@@ -905,14 +905,14 @@ namespace gmsh { // Top-level functions
 
       namespace field { // Per-model mesh size field functions
 
-        // Add a new mesh size field of type `type'. If `tag' is positive, assign
-        // the tag explcitly; otherwise a new tag is assigned automatically. Return
-        // the field tag.
-        GMSH_API int add(const std::string & type,
+        // Add a new mesh size field of type `fieldType'. If `tag' is positive,
+        // assign the tag explcitly; otherwise a new tag is assigned automatically.
+        // Return the field tag.
+        GMSH_API int add(const std::string & fieldType,
                          const int tag = -1)
         {
           int ierr = 0;
-          int result_api_ = gmshModelMeshFieldAdd(type.c_str(), tag, &ierr);
+          int result_api_ = gmshModelMeshFieldAdd(fieldType.c_str(), tag, &ierr);
           if(ierr) throw ierr;
           return result_api_;
         }
@@ -1394,16 +1394,16 @@ namespace gmsh { // Top-level functions
         }
 
         // Set a transfinite meshing constraint on the curve `tag', with `numNodes'
-        // mesh nodes distributed according to `type' and `coef'. Currently
+        // mesh nodes distributed according to `meshType' and `coef'. Currently
         // supported types are "Progression" (geometrical progression with power
         // `coef') and "Bump" (refinement toward both extreminties of the curve).
         GMSH_API void setTransfiniteCurve(const int tag,
                                           const int nPoints,
-                                          const std::string & type = "Progression",
+                                          const std::string & meshType = "Progression",
                                           const double coef = 1.)
         {
           int ierr = 0;
-          gmshModelGeoMeshSetTransfiniteCurve(tag, nPoints, type.c_str(), coef, &ierr);
+          gmshModelGeoMeshSetTransfiniteCurve(tag, nPoints, meshType.c_str(), coef, &ierr);
           if(ierr) throw ierr;
         }
 
@@ -2365,18 +2365,18 @@ namespace gmsh { // Top-level functions
       data.resize(api_data_nn_); for(size_t i = 0; i < api_data_nn_; ++i){ data[i].assign(api_data_[i], api_data_[i] + api_data_n_[i]); gmshFree(api_data_[i]); } gmshFree(api_data_); gmshFree(api_data_n_);
     }
 
-    // Add list-based post-processing data to the view with tag `tag'. `type'
+    // Add list-based post-processing data to the view with tag `tag'. `dataType'
     // identifies the data: "SP" for scalar points, "VP", for vector points, etc.
     // `numEle' gives the number of elements in the data. `data' contains the data
     // for the `numEle' elements.
     GMSH_API void addListData(const int tag,
-                              const std::string & type,
+                              const std::string & dataType,
                               const int numEle,
                               const std::vector<double> & data)
     {
       int ierr = 0;
       double *api_data_; size_t api_data_n_; vector2ptr(data, &api_data_, &api_data_n_);
-      gmshViewAddListData(tag, type.c_str(), numEle, api_data_, api_data_n_, &ierr);
+      gmshViewAddListData(tag, dataType.c_str(), numEle, api_data_, api_data_n_, &ierr);
       if(ierr) throw ierr;
       gmshFree(api_data_);
     }

@@ -423,7 +423,7 @@ GMSH_API void gmsh::model::removeEntities(const vectorpair &dimTags,
 
 GMSH_API void gmsh::model::getType(const int dim,
                                    const int tag,
-                                   std::string &type)
+                                   std::string &entityType)
 {
   if(!_isInitialized()){ throw -1; }
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
@@ -431,7 +431,7 @@ GMSH_API void gmsh::model::getType(const int dim,
     Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     throw 2;
   }
-  type = ge->getTypeString();
+  entityType = ge->getTypeString();
 }
 
 // gmsh::model::mesh
@@ -953,7 +953,7 @@ static void _addElements(int dim, int tag, const std::vector<MElement*> &src,
 
 GMSH_API void gmsh::model::mesh::setElements(const int dim,
                                              const int tag,
-                                             const std::vector<int> &types,
+                                             const std::vector<int> &elementTypes,
                                              const std::vector<std::vector<int> > &elementTags,
                                              const std::vector<std::vector<int> > &nodeTags)
 {
@@ -963,18 +963,18 @@ GMSH_API void gmsh::model::mesh::setElements(const int dim,
     Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     throw 2;
   }
-  if(types.size() != elementTags.size()){
+  if(elementTypes.size() != elementTags.size()){
     Msg::Error("Wrong number of element tags");
     throw 2;
   }
-  if(types.size() != nodeTags.size()){
+  if(elementTypes.size() != nodeTags.size()){
     Msg::Error("Wrong number of node tags");
     throw 2;
   }
   // delete only elements; this will also delete the model mesh cache
   ge->deleteMesh(true);
-  for(unsigned int i = 0; i < types.size(); i++){
-    int type = types[i];
+  for(unsigned int i = 0; i < elementTypes.size(); i++){
+    int type = elementTypes[i];
     unsigned int numEle = elementTags[i].size();
     unsigned int numVertPerEle = MElement::getInfoMSH(type);
     if(!numEle) continue;
@@ -1063,7 +1063,7 @@ GMSH_API void gmsh::model::mesh::getNode(const int nodeTag,
 }
 
 GMSH_API void gmsh::model::mesh::getElement(const int elementTag,
-                                            int &type,
+                                            int &elementType,
                                             std::vector<int> &nodeTags)
 {
   if(!_isInitialized()){ throw -1; }
@@ -1072,7 +1072,7 @@ GMSH_API void gmsh::model::mesh::getElement(const int elementTag,
     Msg::Error("Unknown mesh element %d", elementTag);
     throw 2;
   }
-  type = e->getTypeForMSH();
+  elementType = e->getTypeForMSH();
   nodeTags.clear();
   for(int i = 0; i < e->getNumVertices(); i++){
     MVertex *v = e->getVertex(i);
@@ -1099,7 +1099,7 @@ GMSH_API void gmsh::model::mesh::setSize(const vectorpair &dimTags,
 
 GMSH_API void gmsh::model::mesh::setTransfiniteCurve(const int tag,
                                                      const int numNodes,
-                                                     const std::string &type,
+                                                     const std::string &meshType,
                                                      const double coef)
 {
   if(!_isInitialized()){ throw -1; }
@@ -1111,8 +1111,8 @@ GMSH_API void gmsh::model::mesh::setTransfiniteCurve(const int tag,
   ge->meshAttributes.method = MESH_TRANSFINITE;
   ge->meshAttributes.nbPointsTransfinite = numNodes;
   ge->meshAttributes.typeTransfinite =
-    (type == "Progression" || type == "Power") ? 1 :
-    (type == "Bump") ? 2 :
+    (meshType == "Progression" || meshType == "Power") ? 1 :
+    (meshType == "Bump") ? 2 :
     1;
   ge->meshAttributes.coeffTransfinite = std::abs(coef);
   // in .geo file we use a negative tag to do this trick; it's a bad idea
@@ -1329,7 +1329,7 @@ GMSH_API void gmsh::model::mesh::setPeriodic(const int dim,
 
 // gmsh::model::mesh::field
 
-GMSH_API int gmsh::model::mesh::field::add(const std::string &type,
+GMSH_API int gmsh::model::mesh::field::add(const std::string &fieldType,
                                            const int tag)
 {
   if(!_isInitialized()){ throw -1; }
@@ -1338,8 +1338,8 @@ GMSH_API int gmsh::model::mesh::field::add(const std::string &type,
   if(outTag < 0){
     outTag = GModel::current()->getFields()->newId();
   }
-  if(!GModel::current()->getFields()->newField(outTag, type)){
-    Msg::Error("Cannot add Field %i of type '%s'", outTag, type.c_str());
+  if(!GModel::current()->getFields()->newField(outTag, fieldType)){
+    Msg::Error("Cannot add Field %i of type '%s'", outTag, fieldType.c_str());
     throw 1;
   }
 #if defined(HAVE_FLTK)
@@ -1813,13 +1813,13 @@ GMSH_API void gmsh::model::geo::synchronize()
 
 GMSH_API void gmsh::model::geo::mesh::setTransfiniteCurve(const int tag,
                                                           const int nPoints,
-                                                          const std::string &type,
+                                                          const std::string &meshType,
                                                           const double coef)
 {
   if(!_isInitialized()){ throw -1; }
   int t =
-    (type == "Progression" || type == "Power") ? 1 :
-    (type == "Bump") ? 2 :
+    (meshType == "Progression" || meshType == "Power") ? 1 :
+    (meshType == "Bump") ? 2 :
     1;
   double c = std::abs(coef);
   // in .geo file we use a negative tag to do this trick; it's a bad idea

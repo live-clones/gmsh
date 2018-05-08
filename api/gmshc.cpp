@@ -376,13 +376,13 @@ GMSH_API void gmshModelRemoveEntities(int * dimTags, size_t dimTags_n, const int
   }
 }
 
-GMSH_API void gmshModelGetType(const int dim, const int tag, char ** type, int * ierr)
+GMSH_API void gmshModelGetType(const int dim, const int tag, char ** entityType, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::string api_type_;
-    gmsh::model::getType(dim, tag, api_type_);
-    *type = strdup(api_type_.c_str());
+    std::string api_entityType_;
+    gmsh::model::getType(dim, tag, api_entityType_);
+    *entityType = strdup(api_entityType_.c_str());
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -623,18 +623,18 @@ GMSH_API void gmshModelMeshSetNodes(const int dim, const int tag, int * nodeTags
   }
 }
 
-GMSH_API void gmshModelMeshSetElements(const int dim, const int tag, int * types, size_t types_n, const int ** elementTags, const size_t * elementTags_n, size_t elementTags_nn, const int ** nodeTags, const size_t * nodeTags_n, size_t nodeTags_nn, int * ierr)
+GMSH_API void gmshModelMeshSetElements(const int dim, const int tag, int * elementTypes, size_t elementTypes_n, const int ** elementTags, const size_t * elementTags_n, size_t elementTags_nn, const int ** nodeTags, const size_t * nodeTags_n, size_t nodeTags_nn, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<int> api_types_(types, types + types_n);
+    std::vector<int> api_elementTypes_(elementTypes, elementTypes + elementTypes_n);
     std::vector<std::vector<int> > api_elementTags_(elementTags_nn);
     for(size_t i = 0; i < elementTags_nn; ++i)
       api_elementTags_[i] = std::vector<int>(elementTags[i], elementTags[i] + elementTags_n[i]);
     std::vector<std::vector<int> > api_nodeTags_(nodeTags_nn);
     for(size_t i = 0; i < nodeTags_nn; ++i)
       api_nodeTags_[i] = std::vector<int>(nodeTags[i], nodeTags[i] + nodeTags_n[i]);
-    gmsh::model::mesh::setElements(dim, tag, api_types_, api_elementTags_, api_nodeTags_);
+    gmsh::model::mesh::setElements(dim, tag, api_elementTypes_, api_elementTags_, api_nodeTags_);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -667,12 +667,12 @@ GMSH_API void gmshModelMeshGetNode(const int nodeTag, double ** coord, size_t * 
   }
 }
 
-GMSH_API void gmshModelMeshGetElement(const int elementTag, int * type, int ** nodeTags, size_t * nodeTags_n, int * ierr)
+GMSH_API void gmshModelMeshGetElement(const int elementTag, int * elementType, int ** nodeTags, size_t * nodeTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_nodeTags_;
-    gmsh::model::mesh::getElement(elementTag, *type, api_nodeTags_);
+    gmsh::model::mesh::getElement(elementTag, *elementType, api_nodeTags_);
     vector2ptr(api_nodeTags_, nodeTags, nodeTags_n);
   }
   catch(int api_ierr_){
@@ -696,11 +696,11 @@ GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n, const double
   }
 }
 
-GMSH_API void gmshModelMeshSetTransfiniteCurve(const int tag, const int numNodes, const char * type, const double coef, int * ierr)
+GMSH_API void gmshModelMeshSetTransfiniteCurve(const int tag, const int numNodes, const char * meshType, const double coef, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::setTransfiniteCurve(tag, numNodes, type, coef);
+    gmsh::model::mesh::setTransfiniteCurve(tag, numNodes, meshType, coef);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -790,12 +790,12 @@ GMSH_API void gmshModelMeshSetPeriodic(const int dim, int * tags, size_t tags_n,
   }
 }
 
-GMSH_API int gmshModelMeshFieldAdd(const char * type, const int tag, int * ierr)
+GMSH_API int gmshModelMeshFieldAdd(const char * fieldType, const int tag, int * ierr)
 {
   int result_api_;
   if(ierr) *ierr = 0;
   try {
-    result_api_ = gmsh::model::mesh::field::add(type, tag);
+    result_api_ = gmsh::model::mesh::field::add(fieldType, tag);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -1230,11 +1230,11 @@ GMSH_API void gmshModelGeoMeshSetSize(int * dimTags, size_t dimTags_n, const dou
   }
 }
 
-GMSH_API void gmshModelGeoMeshSetTransfiniteCurve(const int tag, const int nPoints, const char * type, const double coef, int * ierr)
+GMSH_API void gmshModelGeoMeshSetTransfiniteCurve(const int tag, const int nPoints, const char * meshType, const double coef, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::geo::mesh::setTransfiniteCurve(tag, nPoints, type, coef);
+    gmsh::model::geo::mesh::setTransfiniteCurve(tag, nPoints, meshType, coef);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;
@@ -2023,12 +2023,12 @@ GMSH_API void gmshViewAddModelData(const int tag, const int step, const char * m
   }
 }
 
-GMSH_API void gmshViewAddListData(const int tag, const char * type, const int numEle, double * data, size_t data_n, int * ierr)
+GMSH_API void gmshViewAddListData(const int tag, const char * dataType, const int numEle, double * data, size_t data_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_data_(data, data + data_n);
-    gmsh::view::addListData(tag, type, numEle, api_data_);
+    gmsh::view::addListData(tag, dataType, numEle, api_data_);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

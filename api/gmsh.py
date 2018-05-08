@@ -627,20 +627,20 @@ class model:
         """
         Get the type of the entity of dimension `dim' and tag `tag'.
 
-        Return `type'.
+        Return `entityType'.
         """
-        api_type_ = c_char_p()
+        api_entityType_ = c_char_p()
         ierr = c_int()
         lib.gmshModelGetType(
             c_int(dim),
             c_int(tag),
-            byref(api_type_),
+            byref(api_entityType_),
             byref(ierr))
         if ierr.value != 0:
             raise ValueError(
                 "gmshModelGetType returned non-zero error code: ",
                 ierr.value)
-        return _ostring(api_type_)
+        return _ostring(api_entityType_)
 
 
     class mesh:
@@ -1069,7 +1069,7 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def setElements(dim, tag, types, elementTags, nodeTags):
+        def setElements(dim, tag, elementTypes, elementTags, nodeTags):
             """
             Set the mesh elements of the entity of dimension `dim' and `tag' tag.
             `types' contains the MSH types of the elements (e.g. `2' for 3-node
@@ -1081,14 +1081,14 @@ class model:
             number of nodes per element, that contains the node tags of all the
             elements of the given type, concatenated.
             """
-            api_types_, api_types_n_ = _ivectorint(types)
+            api_elementTypes_, api_elementTypes_n_ = _ivectorint(elementTypes)
             api_elementTags_, api_elementTags_n_, api_elementTags_nn_ = _ivectorvectorint(elementTags)
             api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_ = _ivectorvectorint(nodeTags)
             ierr = c_int()
             lib.gmshModelMeshSetElements(
                 c_int(dim),
                 c_int(tag),
-                api_types_, api_types_n_,
+                api_elementTypes_, api_elementTypes_n_,
                 api_elementTags_, api_elementTags_n_, api_elementTags_nn_,
                 api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_,
                 byref(ierr))
@@ -1151,14 +1151,14 @@ class model:
             reasonnable performance (in this case the internal cache is based on a
             vector; otherwise it uses a map).
 
-            Return `type', `nodeTags'.
+            Return `elementType', `nodeTags'.
             """
-            api_type_ = c_int()
+            api_elementType_ = c_int()
             api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetElement(
                 c_int(elementTag),
-                byref(api_type_),
+                byref(api_elementType_),
                 byref(api_nodeTags_), byref(api_nodeTags_n_),
                 byref(ierr))
             if ierr.value != 0:
@@ -1166,7 +1166,7 @@ class model:
                     "gmshModelMeshGetElement returned non-zero error code: ",
                     ierr.value)
             return (
-                api_type_.value,
+                api_elementType_.value,
                 _ovectorint(api_nodeTags_, api_nodeTags_n_.value))
 
         @staticmethod
@@ -1187,18 +1187,18 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def setTransfiniteCurve(tag, numNodes, type="Progression", coef=1.):
+        def setTransfiniteCurve(tag, numNodes, meshType="Progression", coef=1.):
             """
             Set a transfinite meshing constraint on the curve `tag', with `numNodes'
-            mesh nodes distributed according to `type' and `coef'. Currently supported
-            types are "Progression" (geometrical progression with power `coef') and
-            "Bump" (refinement toward both extremities of the curve).
+            mesh nodes distributed according to `meshType' and `coef'. Currently
+            supported types are "Progression" (geometrical progression with power
+            `coef') and "Bump" (refinement toward both extremities of the curve).
             """
             ierr = c_int()
             lib.gmshModelMeshSetTransfiniteCurve(
                 c_int(tag),
                 c_int(numNodes),
-                c_char_p(type.encode()),
+                c_char_p(meshType.encode()),
                 c_double(coef),
                 byref(ierr))
             if ierr.value != 0:
@@ -1351,17 +1351,17 @@ class model:
             """
 
             @staticmethod
-            def add(type, tag=-1):
+            def add(fieldType, tag=-1):
                 """
-                Add a new mesh size field of type `type'. If `tag' is positive, assign the
-                tag explcitly; otherwise a new tag is assigned automatically. Return the
-                field tag.
+                Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
+                the tag explcitly; otherwise a new tag is assigned automatically. Return
+                the field tag.
 
                 Return an integer.
                 """
                 ierr = c_int()
                 api__result__ = lib.gmshModelMeshFieldAdd(
-                    c_char_p(type.encode()),
+                    c_char_p(fieldType.encode()),
                     c_int(tag),
                     byref(ierr))
                 if ierr.value != 0:
@@ -2034,18 +2034,18 @@ class model:
                         ierr.value)
 
             @staticmethod
-            def setTransfiniteCurve(tag, nPoints, type="Progression", coef=1.):
+            def setTransfiniteCurve(tag, nPoints, meshType="Progression", coef=1.):
                 """
                 Set a transfinite meshing constraint on the curve `tag', with `numNodes'
-                mesh nodes distributed according to `type' and `coef'. Currently supported
-                types are "Progression" (geometrical progression with power `coef') and
-                "Bump" (refinement toward both extreminties of the curve).
+                mesh nodes distributed according to `meshType' and `coef'. Currently
+                supported types are "Progression" (geometrical progression with power
+                `coef') and "Bump" (refinement toward both extreminties of the curve).
                 """
                 ierr = c_int()
                 lib.gmshModelGeoMeshSetTransfiniteCurve(
                     c_int(tag),
                     c_int(nPoints),
-                    c_char_p(type.encode()),
+                    c_char_p(meshType.encode()),
                     c_double(coef),
                     byref(ierr))
                 if ierr.value != 0:
@@ -3378,9 +3378,9 @@ class view:
             api_numComponents_.value)
 
     @staticmethod
-    def addListData(tag, type, numEle, data):
+    def addListData(tag, dataType, numEle, data):
         """
-        Add list-based post-processing data to the view with tag `tag'. `type'
+        Add list-based post-processing data to the view with tag `tag'. `dataType'
         identifies the data: "SP" for scalar points, "VP", for vector points, etc.
         `numEle' gives the number of elements in the data. `data' contains the data
         for the `numEle' elements.
@@ -3389,7 +3389,7 @@ class view:
         ierr = c_int()
         lib.gmshViewAddListData(
             c_int(tag),
-            c_char_p(type.encode()),
+            c_char_p(dataType.encode()),
             c_int(numEle),
             api_data_, api_data_n_,
             byref(ierr))

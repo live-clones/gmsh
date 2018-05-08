@@ -196,7 +196,7 @@ namespace gmsh { // Top-level functions
     // Get the type of the entity of dimension `dim' and tag `tag'.
     GMSH_API void getType(const int dim,
                           const int tag,
-                          std::string & type);
+                          std::string & entityType);
 
     namespace mesh { // Per-model meshing functions
 
@@ -368,7 +368,7 @@ namespace gmsh { // Top-level functions
       // node tags of all the elements of the given type, concatenated.
       GMSH_API void setElements(const int dim,
                                 const int tag,
-                                const std::vector<int> & types,
+                                const std::vector<int> & elementTypes,
                                 const std::vector<std::vector<int> > & elementTags,
                                 const std::vector<std::vector<int> > & nodeTags);
 
@@ -395,7 +395,7 @@ namespace gmsh { // Top-level functions
       // maintain reasonnable performance (in this case the internal cache is based
       // on a vector; otherwise it uses a map).
       GMSH_API void getElement(const int elementTag,
-                               int & type,
+                               int & elementType,
                                std::vector<int> & nodeTags);
 
       // Set a mesh size constraint on the geometrical entities `dimTags'.
@@ -404,12 +404,12 @@ namespace gmsh { // Top-level functions
                             const double size);
 
       // Set a transfinite meshing constraint on the curve `tag', with `numNodes'
-      // mesh nodes distributed according to `type' and `coef'. Currently supported
-      // types are "Progression" (geometrical progression with power `coef') and
-      // "Bump" (refinement toward both extremities of the curve).
+      // mesh nodes distributed according to `meshType' and `coef'. Currently
+      // supported types are "Progression" (geometrical progression with power
+      // `coef') and "Bump" (refinement toward both extremities of the curve).
       GMSH_API void setTransfiniteCurve(const int tag,
                                         const int numNodes,
-                                        const std::string & type = "Progression",
+                                        const std::string & meshType = "Progression",
                                         const double coef = 1.);
 
       // Set a transfinite meshing constraint on the surface `tag'. `arrangement'
@@ -469,10 +469,10 @@ namespace gmsh { // Top-level functions
 
       namespace field { // Per-model mesh size field functions
 
-        // Add a new mesh size field of type `type'. If `tag' is positive, assign
-        // the tag explcitly; otherwise a new tag is assigned automatically. Return
-        // the field tag.
-        GMSH_API int add(const std::string & type,
+        // Add a new mesh size field of type `fieldType'. If `tag' is positive,
+        // assign the tag explcitly; otherwise a new tag is assigned automatically.
+        // Return the field tag.
+        GMSH_API int add(const std::string & fieldType,
                          const int tag = -1);
 
         // Remove the field with tag `tag'.
@@ -732,12 +732,12 @@ namespace gmsh { // Top-level functions
                               const double size);
 
         // Set a transfinite meshing constraint on the curve `tag', with `numNodes'
-        // mesh nodes distributed according to `type' and `coef'. Currently
+        // mesh nodes distributed according to `meshType' and `coef'. Currently
         // supported types are "Progression" (geometrical progression with power
         // `coef') and "Bump" (refinement toward both extreminties of the curve).
         GMSH_API void setTransfiniteCurve(const int tag,
                                           const int nPoints,
-                                          const std::string & type = "Progression",
+                                          const std::string & meshType = "Progression",
                                           const double coef = 1.);
 
         // Set a transfinite meshing constraint on the surface `tag'. `arrangement'
@@ -1281,12 +1281,12 @@ namespace gmsh { // Top-level functions
                                double & time,
                                int & numComponents);
 
-    // Add list-based post-processing data to the view with tag `tag'. `type'
+    // Add list-based post-processing data to the view with tag `tag'. `dataType'
     // identifies the data: "SP" for scalar points, "VP", for vector points, etc.
     // `numEle' gives the number of elements in the data. `data' contains the data
     // for the `numEle' elements.
     GMSH_API void addListData(const int tag,
-                              const std::string & type,
+                              const std::string & dataType,
                               const int numEle,
                               const std::vector<double> & data);
 
