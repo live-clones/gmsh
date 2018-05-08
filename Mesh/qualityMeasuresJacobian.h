@@ -19,10 +19,12 @@ void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
                                const fullMatrix<double> *normals = NULL);
 double minIGEMeasure(MElement *el,
                      bool knownValid = false,
-                     bool reversedOk = false);
+                     bool reversedOk = false,
+                     const fullMatrix<double> *normals = NULL);
 double minICNMeasure(MElement *el,
                      bool knownValid = false,
-                     bool reversedOk = false);
+                     bool reversedOk = false,
+                     const fullMatrix<double> *normals = NULL);
 void sampleIGEMeasure(MElement *el, int order, double &min, double &max);
 void sampleJacobian(MElement *el, int order, fullVector<double> &jac,
                     const fullMatrix<double> *normals = NULL);

@@ -205,14 +205,15 @@ void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
   }
 }
 
-double minIGEMeasure(MElement *el, bool knownValid, bool reversedOk)
+double minIGEMeasure(MElement *el, bool knownValid, bool reversedOk,
+                     const fullMatrix<double> *normals)
 {
   bool isReversed = false;
   if (!knownValid) {
     // Computation of the measure should never
     // be performed to invalid elements (for which the measure is 0).
     double jmin, jmax;
-    minMaxJacobianDeterminant(el, jmin, jmax);
+    minMaxJacobianDeterminant(el, jmin, jmax, normals);
     if (jmax < 0) {
       if (!reversedOk) return 0;
       isReversed = true;
@@ -262,7 +263,7 @@ double minIGEMeasure(MElement *el, bool knownValid, bool reversedOk)
   fullVector<double> coeffDetBez;
   {
     fullVector<double> coeffDetLag(jacBasis->getNumJacNodes());
-    jacBasis->getSignedJacobian(nodesXYZ, coeffDetLag);
+    jacBasis->getSignedJacobian(nodesXYZ, coeffDetLag, normals);
 
     coeffDetBez.resize(jacBasis->getNumJacNodes());
     jacBasis->lag2Bez(coeffDetLag, coeffDetBez);
@@ -295,16 +296,15 @@ double minIGEMeasure(MElement *el, bool knownValid, bool reversedOk)
   return _getMinAndDeleteDomains(domains);
 }
 
-double minICNMeasure(MElement *el,
-                     bool knownValid,
-                     bool reversedOk)
+double minICNMeasure(MElement *el, bool knownValid, bool reversedOk,
+                     const fullMatrix<double> *normals)
 {
   bool isReversed = false;
   if (!knownValid) {
     // Computation of the measure should never
     // be performed to invalid elements (for which the measure is 0).
     double jmin, jmax;
-    minMaxJacobianDeterminant(el, jmin, jmax);
+    minMaxJacobianDeterminant(el, jmin, jmax, normals);
     if (jmax < 0) {
       if (!reversedOk) return 0;
       isReversed = true;
@@ -354,7 +354,7 @@ double minICNMeasure(MElement *el,
   fullVector<double> coeffDetBez;
   {
     fullVector<double> coeffDetLag(jacBasis->getNumJacNodes());
-    jacBasis->getSignedIdealJacobian(nodesXYZ, coeffDetLag);
+    jacBasis->getSignedIdealJacobian(nodesXYZ, coeffDetLag, normals);
 
     coeffDetBez.resize(jacBasis->getNumJacNodes());
     jacBasis->lag2Bez(coeffDetLag, coeffDetBez);
