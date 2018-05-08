@@ -10,180 +10,236 @@ import textwrap
 import string
 
 class arg:
-    def __init__(self, name, value, python_value, type_cpp, type_c, out):
+    def __init__(self, name, value, python_value, julia_value,
+                 cpp_type, c_type, out):
         self.name = name
         self.value = value
-        self.python_value = python_value if python_value is not None else value
         self.out = out
-        self.type_cpp = type_cpp
-        self.type_c = type_c
-        self.cpp = self.type_cpp + " " + self.name + ((" = " + value) if value else "")
-
-        self.c_arg = self.name
+        self.cpp = cpp_type + " " + name + ((" = " + value) if value else "")
+        self.c_arg = name
         self.c_pre = ""
         self.c_post = ""
-        self.c = type_c + " " + name
-
+        self.c = c_type + " " + name
         self.cwrap_arg = self.name
         self.cwrap_pre = ""
         self.cwrap_post = ""
-                
-        self.python_arg = "not_implemented"
-        self.python_return = "not_implemented"
+        self.python_value = python_value if python_value is not None else value
+        self.python_arg = ""
+        self.python_return = ""
         self.python_pre = ""
+        self.julia_value = julia_value if julia_value is not None else value
+        self.julia_arg = name
+        self.julia_ctype = ""
+        self.julia_pre = ""
+        self.julia_post = ""
 
 # input types
 
-def ibool(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "const bool", "const int", False)
+def ibool(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "const bool", "const int", False)
     a.python_arg = "c_int(bool(" + name + "))"
     a.cwrap_arg = "(int)" + name
+    a.julia_ctype = "Cint"
     return a
 
-def iint(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "const int", "const int", False)
+def iint(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "const int", "const int", False)
     a.python_arg = "c_int(" + name + ")"
+    a.julia_ctype = "Cint"
     return a
 
-def idouble(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "const double", "const double", False)
+def idouble(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "const double", "const double", False)
     a.python_arg = "c_double(" + name + ")"
+    a.julia_ctype = "Cdouble"
     return a
 
-def istring(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "const std::string &", "const char *", False)
+def istring(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "const std::string &", "const char *", False)
     a.python_arg = "c_char_p(" + name + ".encode())"
     a.cwrap_arg = name + ".c_str()"
+    a.julia_ctype = "Ptr{Cchar}"
     return a
 
-def ivectorint(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "const std::vector<int> &", "const int *", False)
+def ivectorint(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "const std::vector<int> &", "const int *", False)
     api_name = "api_" + name + "_"
     api_name_n = "api_" + name + "_n_"
-    a.c_pre = "    std::vector<int> " + api_name + "(" + name + ", " + name + " + " + name + "_n);\n"
+    a.c_pre = ("    std::vector<int> " + api_name + "(" + name + ", " + name +
+               " + " + name + "_n);\n")
     a.c_arg = api_name
     a.c = "int * " + name + ", size_t " + name + "_n"
-    a.cwrap_pre = "int *" + api_name + "; size_t " + api_name_n + "; " + \
-                  "vector2ptr(" + name + ", &" + api_name + ", &" + api_name_n + ");\n"
+    a.cwrap_pre = ("int *" + api_name + "; size_t " + api_name_n + "; " +
+                   "vector2ptr(" + name + ", &" + api_name + ", &" + api_name_n + ");\n")
     a.cwrap_arg = api_name + ", " + api_name_n
     a.cwrap_post = "gmshFree(" + api_name + ");\n"
     a.python_pre = api_name + ", " + api_name_n + " = _ivectorint(" + name + ")"
     a.python_arg = api_name + ", " + api_name_n
+    a.julia_ctype = "Ptr{Cint}, Csize_t"
+    a.julia_arg = "convert(Vector{Cint}, " + name + "), length(" + name + ")"
     return a
 
-def ivectordouble(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "const std::vector<double> &", "double **", False)
+def ivectordouble(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "const std::vector<double> &", "double **", False)
     api_name = "api_" + name + "_"
     api_name_n = "api_" + name + "_n_"
-    a.c_pre = "    std::vector<double> " + api_name + "(" + name + ", " + name + " + " + name + "_n);\n"
+    a.c_pre = ("    std::vector<double> " + api_name + "(" + name + ", " +
+               name + " + " + name + "_n);\n")
     a.c_arg = api_name
     a.c = "double * " + name + ", size_t " + name + "_n"
-    a.cwrap_pre = "double *" + api_name + "; size_t " + api_name_n + "; " + \
-                  "vector2ptr(" + name + ", &" + api_name + ", &" + api_name_n + ");\n"
+    a.cwrap_pre = ("double *" + api_name + "; size_t " + api_name_n + "; " +
+                   "vector2ptr(" + name + ", &" + api_name + ", &" + api_name_n + ");\n")
     a.cwrap_arg = api_name + ", " + api_name_n
     a.cwrap_post = "gmshFree(" + api_name + ");\n"
     a.python_pre = api_name + ", " + api_name_n + " = _ivectordouble(" + name + ")"
     a.python_arg = api_name + ", " + api_name_n
+    a.julia_ctype = "Ptr{Cdouble}, Csize_t"
+    a.julia_arg = name + ", length(" + name + ")"
     return a
 
-def ivectorpair(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "const gmsh::vectorpair &", "const int *", False)
+def ivectorpair(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "const gmsh::vectorpair &", "const int *", False)
     api_name = "api_" + name + "_"
     api_name_n = "api_" + name + "_n_"
-    a.c_pre = "    gmsh::vectorpair " + api_name + "(" + name + "_n/2);\n" + \
-              "    for(size_t i = 0; i < " + name + "_n/2; ++i){\n" + \
-              "      " + api_name + "[i].first = " + name + "[i * 2 + 0];\n" + \
-              "      " + api_name + "[i].second = " + name + "[i * 2 + 1];\n" + \
-              "    }\n"
+    a.c_pre = ("    gmsh::vectorpair " + api_name + "(" + name + "_n/2);\n" +
+               "    for(size_t i = 0; i < " + name + "_n/2; ++i){\n" +
+               "      " + api_name + "[i].first = " + name + "[i * 2 + 0];\n" +
+               "      " + api_name + "[i].second = " + name + "[i * 2 + 1];\n" +
+               "    }\n")
     a.c_arg = api_name
     a.c = "int * " + name + ", size_t " + name + "_n"
-    a.cwrap_pre = "int *" + api_name + "; size_t " + api_name_n + "; " + \
-                  "vectorpair2intptr(" + name + ", &" + api_name + ", &" + api_name_n + ");\n"
+    a.cwrap_pre = ("int *" + api_name + "; size_t " + api_name_n + "; " +
+                   "vectorpair2intptr(" + name + ", &" + api_name + ", &" +
+                   api_name_n + ");\n")
     a.cwrap_arg = api_name + ", " + api_name_n
     a.cwrap_post = "gmshFree(" + api_name + ");\n"
     a.python_pre = api_name + ", " + api_name_n + " = _ivectorpair(" + name + ")"
     a.python_arg = api_name + ", " + api_name_n
+    a.julia_ctype = "Ptr{Cint}, Csize_t"
+    a.julia_arg = ("convert(Vector{Cint}, collect(Iterators.flatten(" + name + "))), " +
+                   "2 * length(" + name + ")")
     return a
 
-def ivectorvectorint(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "const std::vector<std::vector<int> > &", "const int **", False)
+def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "const std::vector<std::vector<int> > &", "const int **", False)
     api_name = "api_" + name + "_"
     api_name_n = "api_" + name + "_n_"
     api_name_nn = "api_" + name + "_nn_"
-    a.c_pre = "    std::vector<std::vector<int> > " + api_name + "(" + name + "_nn);\n" + \
-              "    for(size_t i = 0; i < " + name + "_nn; ++i)\n" + \
-              "      " + api_name + "[i] = std::vector<int>(" + name + "[i], " + name + "[i] + " + name + "_n[i]);\n"
+    a.c_pre = ("    std::vector<std::vector<int> > " + api_name +
+               "(" + name + "_nn);\n" +
+               "    for(size_t i = 0; i < " + name + "_nn; ++i)\n" +
+               "      " + api_name + "[i] = std::vector<int>(" + name + "[i], " +
+               name + "[i] + " + name + "_n[i]);\n")
     a.c_arg = api_name
-    a.c = "const int ** " + name + ", const size_t * " + name + "_n, " + "size_t " + name + "_nn"
-    a.cwrap_pre = "int **" + api_name + "; size_t *" + api_name_n + ", " + api_name_nn + "; " + \
-                  "vectorvector2ptrptr(" + name + ", &" + api_name + ", &" + api_name_n + ", &" + api_name_nn + ");\n"
+    a.c = ("const int ** " + name + ", const size_t * " + name + "_n, " +
+           "size_t " + name + "_nn")
+    a.cwrap_pre = ("int **" + api_name + "; size_t *" + api_name_n + ", " +
+                   api_name_nn + "; " + "vectorvector2ptrptr(" + name + ", &" +
+                   api_name + ", &" + api_name_n + ", &" + api_name_nn + ");\n")
     a.cwrap_arg = "(const int **)" + api_name + ", " + api_name_n + ", " + api_name_nn
-    a.cwrap_post = "for(size_t i = 0; i < " + api_name_nn + "; ++i){ gmshFree(" + api_name + "[i]); } " + \
-                    "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n"
-    a.python_pre = api_name + ", " + api_name_n + ", " + api_name_nn + " = _ivectorvectorint(" + name + ")"
+    a.cwrap_post = ("for(size_t i = 0; i < " + api_name_nn + "; ++i){ " +
+                    "gmshFree(" + api_name + "[i]); } " +
+                    "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n")
+    a.python_pre = (api_name + ", " + api_name_n + ", " +
+                    api_name_nn + " = _ivectorvectorint(" + name + ")")
     a.python_arg = api_name + ", " + api_name_n + ", " + api_name_nn
+    a.julia_ctype = "Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t"
+    a.julia_pre = (api_name_n + " = [ length(" + name + "[i]) for i in 1:length(" +
+                   name + ") ]")
+    a.julia_arg = ("convert(Vector{Vector{Cint}}," + name + "), " + api_name_n +
+                   ", length(" + name + ")")
     return a
 
-def ivectorvectordouble(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "const std::vector<std::vector<double> > &", "const double**", False)
+def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "const std::vector<std::vector<double> > &", "const double**", False)
     api_name = "api_" + name + "_"
     api_name_n = "api_" + name + "_n_"
     api_name_nn = "api_" + name + "_nn_"
-    a.c_pre = "    std::vector<std::vector<double> > " + api_name + "(" + name + "_nn);\n" + \
-              "    for(size_t i = 0; i < " + name + "_nn; ++i)\n" + \
-              "      " + api_name + "[i] = std::vector<double>(" + name + "[i], " + name + "[i] + " + name + "_n[i]);\n"
+    a.c_pre = ("    std::vector<std::vector<double> > " + api_name +
+               "(" + name + "_nn);\n" +
+               "    for(size_t i = 0; i < " + name + "_nn; ++i)\n" +
+               "      " + api_name + "[i] = std::vector<double>(" + name + "[i], " +
+               name + "[i] + " + name + "_n[i]);\n")
     a.c_arg = api_name
-    a.c = "const double ** " + name + ", const size_t * " + name + "_n, " + "size_t " + name + "_nn"
-    a.cwrap_pre = "double **" + api_name + "; size_t *" + api_name_n + ", " + api_name_nn + "; " + \
-                  "vectorvector2ptrptr(" + name + ", &" + api_name + ", &" + api_name_n + ", &" + api_name_nn + ");\n"
+    a.c = ("const double ** " + name + ", const size_t * " + name + "_n, " +
+           "size_t " + name + "_nn")
+    a.cwrap_pre = ("double **" + api_name + "; size_t *" + api_name_n + ", " +
+                   api_name_nn + "; " +
+                   "vectorvector2ptrptr(" + name + ", &" + api_name + ", &" +
+                   api_name_n + ", &" + api_name_nn + ");\n")
     a.cwrap_arg = "(const double **)" + api_name + ", " + api_name_n + ", " + api_name_nn
-    a.cwrap_post = "for(size_t i = 0; i < " + api_name_nn + "; ++i){ gmshFree(" + api_name + "[i]); } " + \
-                    "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n"
-    a.python_pre = api_name + ", " + api_name_n + ", " + api_name_nn + " = _ivectorvectordouble(" + name + ")"
+    a.cwrap_post = ("for(size_t i = 0; i < " + api_name_nn + "; ++i){ " +
+                    "gmshFree(" + api_name + "[i]); } " +
+                    "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n")
+    a.python_pre = (api_name + ", " + api_name_n + ", " + api_name_nn +
+                    " = _ivectorvectordouble(" + name + ")")
     a.python_arg = api_name + ", " + api_name_n + ", " + api_name_nn
+    a.julia_ctype = "Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Csize_t"
+    a.julia_pre = (api_name_n + " = [ length(" + name + "[i]) for i in 1:length(" +
+                   name + ") ]")
+    a.julia_arg = ("convert(Vector{Vector{Cdouble}}," + name + "), " + api_name_n +
+                   ", length(" + name + ")")
     return a
 
 # output types
 
 class oint(arg):
-    rtype_cpp = "int"
-    rtype_c = "int"
-    rtype_texi = "integer"
-    def __init__(self, name, value=None, python_value=None):
-        arg.__init__(self, name, value, python_value, "int &", "int *", True)
+    rcpp_type = "int"
+    rc_type = "int"
+    rtexi_type = "integer"
+    rjulia_type = "Cint"
+    def __init__(self, name, value=None, python_value=None, julia_value=None):
+        arg.__init__(self, name, value, python_value, julia_value,
+                     "int &", "int *", True)
         api_name = "api_" + name + "_"
         self.c_arg = "*" + name
         self.cwrap_arg = "&" + name
         self.python_pre = api_name + " = c_int()"
         self.python_arg = "byref(" + api_name + ")"
         self.python_return = api_name + ".value"
+        self.julia_ctype = "Ptr{Cint}"
 
-def odouble(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "double &", "double *", True)
+def odouble(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "double &", "double *", True)
     api_name = "api_" + name + "_"
     a.c_arg = "*" + name
     a.cwrap_arg = "&" + name
     a.python_pre = api_name + " = c_double()"
     a.python_arg = "byref(" + api_name + ")"
     a.python_return = api_name + ".value"
+    a.julia_ctype = "Ptr{Cdouble}"
     return a
 
-def ostring(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "std::string &", "char **", True)
+def ostring(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "std::string &", "char **", True)
     api_name = "api_" + name + "_"
     a.c_pre = "    std::string " + api_name + ";\n"
     a.c_arg = api_name
     a.c_post = "    *" + name + " = strdup(" + api_name + ".c_str());\n"
     a.cwrap_pre = "char *" + api_name + ";\n"
     a.cwrap_arg = "&" + api_name
-    a.cwrap_post = name + " = std::string(" + api_name + "); gmshFree(" + api_name + ");\n"
+    a.cwrap_post = (name + " = std::string(" + api_name + "); " +
+                    "gmshFree(" + api_name + ");\n")
     a.python_pre = api_name + " = c_char_p()"
     a.python_arg = "byref(" + api_name + ")"
     a.python_return = "_ostring(" + api_name + ")"
+    a.julia_ctype = "Ptr{Ptr{Cchar}}"
     return a
 
-def ovectorint(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "std::vector<int> &", "int **", True)
+def ovectorint(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "std::vector<int> &", "int **", True)
     api_name = "api_" + name + "_"
     api_name_n = api_name + "n_"
     a.c_pre = "    std::vector<int> " + api_name + ";\n"
@@ -192,14 +248,22 @@ def ovectorint(name, value=None, python_value=None):
     a.c = "int ** " + name + ", size_t * " + name + "_n"
     a.cwrap_pre = "int *" + api_name + "; size_t " + api_name_n + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
-    a.cwrap_post = name + ".assign(" + api_name + ", " + api_name + " + " + api_name_n + "); gmshFree(" + api_name + ");\n"
+    a.cwrap_post = (name + ".assign(" + api_name + ", " + api_name + " + " +
+                    api_name_n + "); gmshFree(" + api_name + ");\n")
     a.python_pre = api_name + ", " + api_name_n + " = POINTER(c_int)(), c_size_t()"
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectorint(" + api_name + ", " + api_name_n + ".value)"
+    a.julia_ctype = "Ptr{Ptr{Cint}}, Ptr{Csize_t}"
+    a.julia_pre = (api_name + " = Vector{Ptr{Cint}}(1)\n    " +
+                   api_name_n + " = Vector{Csize_t}(1)")
+    a.julia_arg = api_name + ", " + api_name_n
+    a.julia_post = (name + " = unsafe_wrap(Array, " + api_name + "[1], " +
+                    api_name_n + "[1], true)")
     return a
 
-def ovectordouble(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "std::vector<double> &", "double *", True)
+def ovectordouble(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "std::vector<double> &", "double *", True)
     api_name = "api_" + name + "_"
     api_name_n = api_name + "n_"
     a.c_pre = "    std::vector<double> " + api_name + ";\n"
@@ -208,34 +272,52 @@ def ovectordouble(name, value=None, python_value=None):
     a.c = "double ** " + name + ", size_t * " + name + "_n"
     a.cwrap_pre = "double *" + api_name + "; size_t " + api_name_n + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
-    a.cwrap_post = name + ".assign(" + api_name + ", " + api_name + " + " + api_name_n + "); " +\
-                   "gmshFree(" + api_name + ");\n"
+    a.cwrap_post = (name + ".assign(" + api_name + ", " + api_name + " + " +
+                    api_name_n + "); " + "gmshFree(" + api_name + ");\n")
     a.python_pre = api_name + ", " + api_name_n + " = POINTER(c_double)(), c_size_t()"
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectordouble(" + api_name + ", " + api_name_n + ".value)"
+    a.julia_ctype = "Ptr{Ptr{Cdouble}}, Ptr{Csize_t}"
+    a.julia_pre = (api_name + " = Vector{Ptr{Cdouble}}(1)\n    " +
+                   api_name_n + " = Vector{Csize_t}(1)")
+    a.julia_arg = api_name + ", " + api_name_n
+    a.julia_post = (name + " = unsafe_wrap(Array, " + api_name + "[1], " +
+                    api_name_n + "[1], true)")
     return a
 
-def ovectorstring(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "std::vector<std::string> &", "char **", True)
+def ovectorstring(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "std::vector<std::string> &", "char **", True)
     api_name = "api_" + name + "_"
     api_name_n = api_name + "n_"
     a.c_pre = "    std::vector<std::string> " + api_name + ";\n"
     a.c_arg = api_name
-    a.c_post = "    vectorstring2charptrptr(" + api_name + ", " + name + ", " + name + "_n);\n"
+    a.c_post = ("    vectorstring2charptrptr(" + api_name + ", " + name + ", " +
+                name + "_n);\n")
     a.c = "char *** " + name + ", size_t * " + name + "_n"
     a.cwrap_pre = "char **" + api_name + "; size_t " + api_name_n + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
-    a.cwrap_post = name + ".resize(" + api_name_n + "); " +\
-                   "for(size_t i = 0; i < " + api_name_n + "; ++i){ " +\
-                   name + "[i] = std::string(" + api_name + "[i]); gmshFree(" + api_name + "[i]); } " +\
-                   "gmshFree(" + api_name + ");\n"
+    a.cwrap_post = (name + ".resize(" + api_name_n + "); " +
+                    "for(size_t i = 0; i < " + api_name_n + "; ++i){ " +
+                    name + "[i] = std::string(" + api_name + "[i]); " +
+                    "gmshFree(" + api_name + "[i]); } " +
+                    "gmshFree(" + api_name + ");\n")
     a.python_pre = api_name + ", " + api_name_n + " = POINTER(POINTER(c_char))(), c_size_t()"
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectorstring(" + api_name + ", " + api_name_n + ".value)"
+    a.julia_ctype = "Ptr{Ptr{Cchar}}, Ptr{Csize_t}"
+    a.julia_pre = (api_name + " = Vector{Ptr{Cstring}}(1)\n    " +
+                   api_name_n + " = Vector{Csize_t}(1)")
+    a.julia_arg = api_name + ", " + api_name_n
+    a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[1], " +
+                    api_name_n + "[1], true)\n    " +
+                    name + " = [unsafe_string(tmp_" + api_name + "[i]) for i in 1:length(tmp_" +
+                    api_name + ") ]")
     return a
 
-def ovectorpair(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "gmsh::vectorpair &", "int **", True)
+def ovectorpair(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "gmsh::vectorpair &", "int **", True)
     api_name = "api_" + name + "_"
     api_name_n = api_name + "n_"
     a.c_pre = "    gmsh::vectorpair " + api_name + ";\n"
@@ -244,82 +326,147 @@ def ovectorpair(name, value=None, python_value=None):
     a.c = "int ** " + name + ", size_t * " + name + "_n"
     a.cwrap_pre = "int *" + api_name + "; size_t " + api_name_n + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n
-    a.cwrap_post = name + ".resize(" + api_name_n + " / 2); " +\
-                   "for(size_t i = 0; i < " + api_name_n + " / 2; ++i){ " +\
-                   name + "[i].first = " + api_name + "[i * 2 + 0]; " + \
-                   name + "[i].second = " + api_name + "[i * 2 + 1]; } " +\
-                   "gmshFree(" + api_name + ");\n"
+    a.cwrap_post = (name + ".resize(" + api_name_n + " / 2); " +
+                    "for(size_t i = 0; i < " + api_name_n + " / 2; ++i){ " +
+                    name + "[i].first = " + api_name + "[i * 2 + 0]; " +
+                    name + "[i].second = " + api_name + "[i * 2 + 1]; } " +
+                    "gmshFree(" + api_name + ");\n")
     a.python_pre = api_name + ", " + api_name_n + " = POINTER(c_int)(), c_size_t()"
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectorpair(" + api_name + ", " + api_name_n + ".value)"
+    a.julia_ctype = "Ptr{Ptr{Cint}}, Ptr{Csize_t}"
+    a.julia_pre = (api_name + " = Vector{Ptr{Cint}}(1)\n    " +
+                   api_name_n + " = Vector{Csize_t}(1)")
+    a.julia_arg = api_name + ", " + api_name_n
+    a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[1], " +
+                    api_name_n + "[1], true)\n    " +
+                    name + " = [ (tmp_" + api_name + "[i], tmp_" + api_name + "[i+1]) " +
+                    "for i in 1:2:length(tmp_" + api_name + ") ]")
     return a
 
-def ovectorvectorint(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "std::vector<std::vector<int> > &", "int **", True)
+def ovectorvectorint(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "std::vector<std::vector<int> > &", "int **", True)
     api_name = "api_" + name + "_"
     api_name_n = api_name + "n_"
     api_name_nn = api_name + "nn_"
     a.c_pre = "    std::vector<std::vector<int> > " + api_name + ";\n"
     a.c_arg = api_name
-    a.c_post = "    vectorvector2ptrptr(" + api_name + ", " + name + ", " + name + "_n, " + name + "_nn);\n"
+    a.c_post = ("    vectorvector2ptrptr(" + api_name + ", " + name + ", " +
+                name + "_n, " + name + "_nn);\n")
     a.c  = "int *** " + name + ", size_t ** " + name + "_n, size_t *" + name + "_nn"
     a.cwrap_pre = "int **" + api_name + "; size_t *" + api_name_n + ", " + api_name_nn + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n + ", " + "&" + api_name_nn
-    a.cwrap_post = name + ".resize(" + api_name_nn + "); " +\
-                   "for(size_t i = 0; i < " + api_name_nn + "; ++i){ " +\
-                   name + "[i].assign(" + api_name + "[i], " + api_name + "[i] + " + api_name_n + "[i]); gmshFree(" + api_name + "[i]); } " +\
-                   "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n"
-    a.python_pre = api_name + ", " + api_name_n + ", " + api_name_nn + " = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()"
-    a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + "), byref(" + api_name_nn + ")"
-    a.python_return = "_ovectorvectorint(" + api_name + ", " + api_name_n + ", " + api_name_nn + ")"
+    a.cwrap_post = (name + ".resize(" + api_name_nn + "); " +
+                    "for(size_t i = 0; i < " + api_name_nn + "; ++i){ " +
+                    name + "[i].assign(" + api_name + "[i], " + api_name + "[i] + " +
+                    api_name_n + "[i]); gmshFree(" + api_name + "[i]); } " +
+                    "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n")
+    a.python_pre = (api_name + ", " + api_name_n + ", " + api_name_nn +
+                    " = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()")
+    a.python_arg = ("byref(" + api_name + "), byref(" + api_name_n + "), byref(" +
+                    api_name_nn + ")")
+    a.python_return = ("_ovectorvectorint(" + api_name + ", " + api_name_n + ", " +
+                       api_name_nn + ")")
+    a.julia_ctype = "Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}"
+    a.julia_pre = (api_name + " = Vector{Ptr{Ptr{Cint}}}(1)\n    " +
+                   api_name_n + " = Vector{Ptr{Csize_t}}(1)\n    " +
+                   api_name_nn + " = Vector{Csize_t}(1)")
+    a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
+    a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[1], " +
+                    api_name_nn + "[1], true)\n    " +
+                    "tmp_" + api_name_n + " = unsafe_wrap(Array, " + api_name_n + "[1], " +
+                    api_name_nn + "[1], true)\n    " +
+                    name + " = [ unsafe_wrap(Array, tmp_" + api_name + "[i], " +
+                    "tmp_" + api_name_n + "[i], true) for i in 1:" +
+                    api_name_nn + "[1] ]")
     return a
 
-def ovectorvectordouble(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "std::vector<std::vector<double> > &", "double **", True)
+def ovectorvectordouble(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "std::vector<std::vector<double> > &", "double **", True)
     api_name = "api_" + name + "_"
     api_name_n = api_name + "n_"
     api_name_nn = api_name + "nn_"
     a.c_pre = "    std::vector<std::vector<double> > " + api_name + ";\n"
     a.c_arg = api_name
-    a.c_post = "    vectorvector2ptrptr(" + api_name + ", " + name + ", " + name + "_n, " + name + "_nn);\n"
+    a.c_post = ("    vectorvector2ptrptr(" + api_name + ", " + name + ", " + name +
+                "_n, " + name + "_nn);\n")
     a.c  = "double *** " + name + ", size_t ** " + name + "_n, size_t *" + name + "_nn"
-    a.cwrap_pre = "double **" + api_name + "; size_t *" + api_name_n + ", " + api_name_nn + ";\n"
+    a.cwrap_pre = ("double **" + api_name + "; size_t *" + api_name_n + ", " +
+                   api_name_nn + ";\n")
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n + ", " + "&" + api_name_nn
-    a.cwrap_post = name + ".resize(" + api_name_nn + "); " +\
-                   "for(size_t i = 0; i < " + api_name_nn + "; ++i){ " +\
-                   name + "[i].assign(" + api_name + "[i], " + api_name + "[i] + " + api_name_n + "[i]); gmshFree(" + api_name + "[i]); } " +\
-                   "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n"
-    a.python_pre = api_name + ", " + api_name_n + ", " + api_name_nn + " = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()"
-    a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + "), byref(" + api_name_nn + ")"
-    a.python_return = "_ovectorvectordouble(" + api_name + ", " + api_name_n + ", " + api_name_nn + ")"
+    a.cwrap_post = (name + ".resize(" + api_name_nn + "); " +
+                    "for(size_t i = 0; i < " + api_name_nn + "; ++i){ " +
+                    name + "[i].assign(" + api_name + "[i], " + api_name + "[i] + " +
+                    api_name_n + "[i]); gmshFree(" + api_name + "[i]); } " +
+                    "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n")
+    a.python_pre = (api_name + ", " + api_name_n + ", " + api_name_nn +
+                    " = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()")
+    a.python_arg = ("byref(" + api_name + "), byref(" + api_name_n + "), byref(" +
+                    api_name_nn + ")")
+    a.python_return = ("_ovectorvectordouble(" + api_name + ", " + api_name_n + ", " +
+                       api_name_nn + ")")
+    a.julia_ctype = "Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}"
+    a.julia_pre = (api_name + " = Vector{Ptr{Ptr{Cdouble}}}(1)\n    " +
+                   api_name_n + " = Vector{Ptr{Csize_t}}(1)\n    " +
+                   api_name_nn + " = Vector{Csize_t}(1)")
+    a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
+    a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[1], " +
+                    api_name_nn + "[1], true)\n    " +
+                    "tmp_" + api_name_n + " = unsafe_wrap(Array, " + api_name_n + "[1], " +
+                    api_name_nn + "[1], true)\n    " +
+                    name + " = [ unsafe_wrap(Array, tmp_" + api_name + "[i], " +
+                    "tmp_" + api_name_n + "[i], true) for i in 1:" +
+                    api_name_nn + "[1] ]")
     return a
 
-def ovectorvectorpair(name, value=None, python_value=None):
-    a = arg(name, value, python_value, "std::vector<gmsh::vectorpair> &", "int **", True)
+def ovectorvectorpair(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+            "std::vector<gmsh::vectorpair> &", "int **", True)
     api_name = "api_" + name + "_"
     api_name_n = api_name + "n_"
     api_name_nn = api_name + "nn_"
     a.c_pre = "    std::vector<gmsh::vectorpair >" + api_name + ";\n"
     a.c_arg = api_name
-    a.c_post = "    vectorvectorpair2intptrptr(" + api_name + ", " + name + ", " + name + "_n, " + name + "_nn);\n"
-    a.c  = "int *** " + name + ", size_t ** " + name + "_n, size_t *" + name + "_nn"
+    a.c_post = ("    vectorvectorpair2intptrptr(" + api_name + ", " + name +
+                ", " + name + "_n, " + name + "_nn);\n")
+    a.c = "int *** " + name + ", size_t ** " + name + "_n, size_t *" + name + "_nn"
     a.cwrap_pre = "int **" + api_name + "; size_t *" + api_name_n + ", " + api_name_nn + ";\n"
     a.cwrap_arg = "&" + api_name + ", " + "&" + api_name_n + ", " + "&" + api_name_nn
-    a.cwrap_post = name + ".resize(" + api_name_nn + "); " +\
-                   "for(size_t i = 0; i < " + api_name_nn + "; ++i){ " +\
-                   name + "[i].resize(" + api_name_n + "[i] / 2); " +\
-                   "for(size_t j = 0; j < " + api_name_n + "[i] / 2; ++j){ " +\
-                   name + "[i][j].first = " + api_name + "[i][j * 2 + 0]; " +\
-                   name + "[i][j].second = " + api_name + "[i][j * 2 + 1]; } " +\
-                   "gmshFree(" + api_name + "[i]); } " +\
-                   "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n"
-    a.python_pre = api_name + ", " + api_name_n + ", " + api_name_nn + " = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()"
-    a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + "), byref(" + api_name_nn + ")"
-    a.python_return = "_ovectorvectorpair(" + api_name + ", " + api_name_n + ", " + api_name_nn + ")"
+    a.cwrap_post = (name + ".resize(" + api_name_nn + "); " +
+                    "for(size_t i = 0; i < " + api_name_nn + "; ++i){ " +
+                    name + "[i].resize(" + api_name_n + "[i] / 2); " +
+                    "for(size_t j = 0; j < " + api_name_n + "[i] / 2; ++j){ " +
+                    name + "[i][j].first = " + api_name + "[i][j * 2 + 0]; " +
+                    name + "[i][j].second = " + api_name + "[i][j * 2 + 1]; } " +
+                    "gmshFree(" + api_name + "[i]); } " +
+                    "gmshFree(" + api_name + "); gmshFree(" + api_name_n + ");\n")
+    a.python_pre = (api_name + ", " + api_name_n + ", " + api_name_nn +
+                    " = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()")
+    a.python_arg = ("byref(" + api_name + "), byref(" + api_name_n + "), byref(" +
+                    api_name_nn + ")")
+    a.python_return = ("_ovectorvectorpair(" + api_name + ", " + api_name_n + ", " +
+                       api_name_nn + ")")
+    a.julia_ctype = "Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}"
+    a.julia_pre = (api_name + " = Vector{Ptr{Ptr{Cint}}}(1)\n    " +
+                   api_name_n + " = Vector{Ptr{Csize_t}}(1)\n    " +
+                   api_name_nn + " = Vector{Csize_t}(1)")
+    a.julia_arg = api_name + ", " + api_name_n + ", " + api_name_nn
+    a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[1], " +
+                    api_name_nn + "[1], true)\n    " +
+                    "tmp_" + api_name_n + " = unsafe_wrap(Array, " + api_name_n + "[1], " +
+                    api_name_nn + "[1], true)\n    " +
+                    name + " = []\n    " +
+                    "for i in 1:" + api_name_nn + "[1]\n    " +
+                    "    tmp = unsafe_wrap(Array, tmp_" + api_name + "[i], tmp_" +
+                    api_name_n + "[i], true)\n    " +
+                    "    push!(" + name + ", [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)])\n    " +
+                    "end")
     return a
 
 def argcargv():
-    a = arg("", None, None, "", "", False)
+    a = arg("", None, None, None, "", "", False)
     a.cpp = "int argc = 0, char ** argv = 0"
     a.c_arg = "argc, argv"
     a.c = "int argc, char ** argv"
@@ -328,8 +475,11 @@ def argcargv():
     a.cwrap_arg = "argc, argv"
     a.name = "argv"
     a.python_value = "[]"
+    a.julia_value = "Vector{String}()"
     a.python_arg = "api_argc_, api_argv_"
     a.python_pre = "api_argc_, api_argv_ = _iargcargv(argv)"
+    a.julia_ctype = "Cint, Ptr{Ptr{Cchar}}"
+    a.julia_arg = "length(argv), argv"
     return a
 
 class Module:
@@ -366,12 +516,7 @@ cpp_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 // Do not edit it directly: it is automatically generated by `api/gen.py'.
 //
 // By design, the Gmsh C++ API is purely functional, and only uses elementary
-// types from the standard library. A pure C as well as a Python API are also
-// automatically generated by `api/gen.py': see `gmshc.h' and `gmsh.py'.
-//
-// See `demos/api' for examples on how to use the Gmsh API. In particular,
-// `demos/api' contains C++ and Python versions of several of the `.geo'
-// tutorials from `tutorials'.
+// types from the standard library. See `demos/api' for examples.
 
 #if defined(_MSC_VER)
 #define _USE_MATH_DEFINES
@@ -424,12 +569,7 @@ c_header="""/*
  * Do not edit it directly: it is automatically generated by `api/gen.py'.
  *
  * By design, the Gmsh C API is purely functional, and only uses elementary
- * types. A C++ as well as a Python API are also automatically generated by
- * `api/gen.py': see `gmsh.h' and `gmsh.py'.
- *
- * See `demos/api' for examples on how to use the Gmsh API. In particular,
- * `demos/api' contains C++ and Python versions of several of the `.geo'
- * tutorials from `tutorials'.
+ * types. See `demos/api' for examples.
  */
 
 #include <stddef.h>
@@ -595,18 +735,13 @@ python_header = """# Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 # See the LICENSE.txt file for license information. Please report all
 # bugs and problems to the public mailing list <gmsh@onelab.info>.
 
-# This file defines the Gmsh Pyhton API.
+# This file defines the Gmsh Python API.
 #
 # Do not edit it directly: it is automatically generated by `api/gen.py'.
 #
-# By design, the Gmsh Pyhton API is purely functional, and only uses elementary
-# types (as well as `numpy' arrays if `numpy' is avaiable). A C++ as well as a
-# pure C API are also automatically generated by `api/gen.py': see `gmsh.h'
-# and `gmshc.h'.
-#
-# See `demos/api' for examples on how to use the Gmsh API. In particular,
-# `demos/api' contains C++ and Python versions of several of the `.geo'
-# tutorials from `tutorials'.
+# By design, the Gmsh Python API is purely functional, and only uses elementary
+# types (as well as `numpy' arrays if `numpy' is avaiable). See `demos/api' for
+# examples.
 
 from ctypes import *
 import signal
@@ -736,6 +871,19 @@ def _iargcargv(o):
 
 """
 
+julia_header = """# Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
+#
+# See the LICENSE.txt file for license information. Please report all
+# bugs and problems to the public mailing list <gmsh@onelab.info>.
+
+# This file defines the Gmsh Julia API.
+#
+# Do not edit it directly: it is automatically generated by `api/gen.py'.
+#
+# By design, the Gmsh Julia API is purely functional, and only uses elementary
+# types. See `demos/api' for examples.
+"""
+
 class API:
 
     def __init__(self, version):
@@ -752,8 +900,9 @@ class API:
             f.write(indent + "namespace " + module.name + " { // " + module.doc + "\n\n")
             indent += "  "
             for rtype, name, args, doc, rawc in module.fs:
-                f.write(indent + "// " + ("\n" + indent + "// ").join(textwrap.wrap(doc, 80-len(indent))) + "\n")
-                rt = rtype.rtype_cpp if rtype else "void"
+                f.write(indent + "// " + ("\n" + indent + "// ").join(
+                    textwrap.wrap(doc, 80-len(indent))) + "\n")
+                rt = rtype.rcpp_type if rtype else "void"
                 fnameapi = indent + "GMSH_API " + rt + " " + name + "(";
                 f.write(fnameapi)
                 if args:
@@ -781,17 +930,19 @@ class API:
                 # gmshc.h
                 fname = c_namespace + name[0].upper() + name[1:]
                 f.write("\n/* " + "\n * ".join(textwrap.wrap(doc, 75)) + " */\n")
-                fnameapi = "GMSH_API " + (rtype.rtype_c if rtype else "void") + " " + fname + "("
+                fnameapi = "GMSH_API " + (rtype.rc_type if rtype else "void") + " " + fname + "("
                 f.write(fnameapi
-                        + (",\n" + ' ' * len(fnameapi)).join(list((a.c for a in args + (oint("ierr"), ))))
+                        + (",\n" + ' ' * len(fnameapi)).join(
+                            list((a.c for a in args + (oint("ierr"), ))))
                         + ");\n")
                 if not rawc:
                     # gmshc.cpp
-                    fc.write("GMSH_API " + (rtype.rtype_c if rtype else "void"))
-                    fc.write(" " + fname + "("
-                             + ", ".join(list((a.c for a in args + (oint("ierr"), )))) + ")\n{\n")
+                    fc.write("GMSH_API " + (rtype.rc_type if rtype else "void"))
+                    fc.write(" " + fname + "(" +
+                             ", ".join(list((a.c for a in args + (oint("ierr"), )))) +
+                             ")\n{\n")
                     if rtype:
-                        fc.write("  " + rtype.rtype_c + " result_api_;\n")
+                        fc.write("  " + rtype.rc_type + " result_api_;\n")
                     fc.write("  if(ierr) *ierr = 0;\n");
                     fc.write("  try {\n");
                     fc.write("".join((a.c_pre for a in args)))
@@ -802,13 +953,15 @@ class API:
                         list((a.c_arg for a in args))) + 
                              ");\n")
                     fc.write("".join((a.c_post for a in args)))
-                    fc.write("  }\n  catch(int api_ierr_){\n    if(ierr) *ierr = api_ierr_;\n  }\n");
+                    fc.write("  }\n  catch(int api_ierr_){\n    " +
+                             "if(ierr) *ierr = api_ierr_;\n  }\n");
                     if rtype:
                         fc.write("  return result_api_;\n");
                     fc.write("}\n\n")
                 # gmsh.h_cwrap
-                fcwrap.write(indent + "// " + ("\n" + indent + "// ").join(textwrap.wrap(doc, 80-len(indent))) + "\n")
-                rt = rtype.rtype_cpp if rtype else "void"
+                fcwrap.write(indent + "// " + ("\n" + indent + "// ").join
+                             (textwrap.wrap(doc, 80-len(indent))) + "\n")
+                rt = rtype.rcpp_type if rtype else "void"
                 fnameapi = indent + "GMSH_API " + rt + " " + name + "(";
                 fcwrap.write(fnameapi)
                 if args:
@@ -872,7 +1025,7 @@ class API:
             f.write(indent + ("\n" + indent).join(textwrap.wrap(doc, 75)) + "\n")
             if rtype or oargs:
                 f.write("\n" + indent + "Return " + ", ".join(
-                    (["an " + rtype.rtype_texi] if rtype else[])
+                    (["an " + rtype.rtexi_type] if rtype else[])
                    + [("`" + a.name + "'") for a in oargs])
                + ".\n")
             f.write(indent + '"""\n')
@@ -881,9 +1034,10 @@ class API:
             f.write(indent + "ierr = c_int()\n")
             f.write(indent + "api__result__ = " if rtype is oint else (indent))
             c_name = modulepath + name[0].upper() + name[1:]
-            f.write("lib." + c_name + "(\n    " + indent
-                   + (",\n" + indent + "    ").join(tuple((a.python_arg for a in args)) + ("byref(ierr)", ))
-                   + ")\n")
+            f.write("lib." + c_name + "(\n    " + indent +
+                    (",\n" + indent + "    ").join(
+                        tuple((a.python_arg for a in args)) + ("byref(ierr)", )) +
+                    ")\n")
             f.write(indent + "if ierr.value != 0:\n")
             f.write(indent + "    raise ValueError(\n")
             f.write(indent + "        \"" + c_name + " returned non-zero error code: \",\n")
@@ -894,7 +1048,8 @@ class API:
                 if len(r) == 1:
                     f.write(indent + "return " + r[0] + "\n")
                 else:
-                    f.write(indent + "return (\n" + indent + "    " + (",\n" + indent + "    ").join(r) + ")\n")
+                    f.write(indent + "return (\n" + indent + "    " +
+                            (",\n" + indent + "    ").join(r) + ")\n")
         def write_module(f, m, modulepath, indent):
             if modulepath:
                 modulepath += m.name[0].upper() + m.name[1:]
@@ -913,6 +1068,73 @@ class API:
             f.write(python_header.format(self.api_version))
             for module in self.modules:
                 write_module(f, module, "", "")
+
+    def write_julia(self):
+        def parg(a):
+            return a.name + ((" = " + a.julia_value) if a.julia_value else "")
+        def write_function(f, fun, c_mpath, jl_mpath):
+            (rtype, name, args, doc, rawc) = fun
+            iargs = list(a for a in args if not a.out)
+            oargs = list(a for a in args if a.out)
+            f.write('\n"""\n\n    ')
+            f.write(jl_mpath + name + "(" + ", ".join(parg(a) for a in args) + ")\n\n")
+            f.write("\n".join(textwrap.wrap(doc, 80)).replace("`", "'") + "\n")
+            if rtype or oargs:
+                f.write("\nReturn " + ", ".join(
+                    (["an " + rtype.rtexi_type] if rtype else[])
+                   + [("`" + a.name + "'") for a in oargs])
+               + ".\n")
+            f.write('"""\n')
+            f.write("function " + name + "("
+                   + ", ".join((parg(a) for a in iargs))
+                   + ")\n")
+            for a in args:
+                if a.julia_pre: f.write("    " + a.julia_pre + "\n")
+            f.write("    ierr = Vector{Cint}(1)\n    ")
+            f.write("api__result__ = " if rtype is oint else "")
+            c_name = c_mpath + name[0].upper() + name[1:]
+            f.write("ccall((:" + c_name + ", " +
+                    ("" if c_mpath == "gmsh" else "gmsh.") + "clib), " +
+                    ("Void" if rtype is None else rtype.rjulia_type) + ",\n" +
+                    " " * 10 + "(" + ", ".join(
+                        (tuple(a.julia_ctype for a in args) + ("Ptr{Cint}",))) +
+                    ("," if not len(args) else "") + "),\n" +
+                    " " * 10 + ", ".join(
+                        tuple(a.julia_arg for a in args) + ("ierr",)) + ")\n")
+            for a in args:
+                if a.julia_post: f.write("    " + a.julia_post + "\n")
+            f.write('    ierr[1] != 0 && error("' + c_name +
+                    ' returned non-zero error code: " * string(ierr[1]))\n')
+            r = (["api__result__"]) if rtype else []
+            r += list((o.name for o in oargs))
+            if len(r) != 0:
+                f.write("    return " + ", ".join(r) + "\n")
+            f.write("end\n")
+        def write_module(f, m, c_mpath, jl_mpath, level):
+            f.write('\n"""\n\n    ')
+            f.write("module " + jl_mpath + m.name + "\n\n")
+            f.write("\n".join(textwrap.wrap(m.doc, 80)) + "\n")
+            f.write('"""\n')
+            f.write("module " + m.name + "\n\n")
+            if level == 1:
+                f.write("const clib = \"libgmsh\"\n")
+            else:
+                f.write("import " + ("." * level) + "gmsh\n")
+            if c_mpath:
+                c_mpath += m.name[0].upper() + m.name[1:]
+                jl_mpath += m.name + "."
+            else:
+                c_mpath = m.name
+                jl_mpath = m.name + "."
+            for fun in m.fs:
+                write_function(f, fun, c_mpath, jl_mpath)
+            for module in m.submodules:
+                write_module(f, module, c_mpath, jl_mpath, level + 1)
+            f.write("\nend # end of module " + m.name + "\n")
+        with open("gmsh.jl", "w") as f:
+            f.write(julia_header.format(self.api_version))
+            for module in self.modules:
+                write_module(f, module, "", "", 1)
 
     def write_texi(self):
         def write_module(module, parent):
@@ -933,7 +1155,7 @@ class API:
                         (", ".join(("@code{" + oarg.name + "}") for oarg in oargs)
                          if len(oargs) else "-") + "\n")
                 f.write("@item " + "Return:\n" + 
-                        (rtype.rtype_texi if rtype else "-") + "\n")
+                        (rtype.rtexi_type if rtype else "-") + "\n")
                 f.write("@end table\n\n");
             f.write("@end ftable\n\n");
             for m in module.submodules:

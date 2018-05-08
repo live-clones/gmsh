@@ -1,7 +1,6 @@
-# This file reimplements gmsh/tutorial/t16.geo in Python.
+# This file reimplements gmsh/tutorial/t16.geo in Julia.
 
 import gmsh
-import math
 
 model = gmsh.model
 factory = model.occ
@@ -18,14 +17,15 @@ factory.cut([(3,1)], [(3,2000)], 3)
 x = 0; y = 0.75; z = 0; r = 0.09
 
 holes = []
-for t in range(1, 6):
+for t in 1:5
     x += 0.166
     z += 0.166
     factory.addSphere(x,y,z,r, 3 + t)
-    holes.append((3, 3 + t))
+    t = (3, 3 + t)
+    push!(holes, t)
+end
 
-ov, ovv = factory.fragment([(3,3)], holes)
-
+ov = factory.fragment([(3,3)], holes)
 factory.synchronize()
 
 lcar1 = .1
@@ -35,7 +35,7 @@ lcar3 = .055
 ov = model.getEntities(0);
 model.mesh.setSize(ov, lcar1);
 
-ov = model.getBoundary(holes, False, False, True);
+ov = model.getBoundary(holes, false, false, true);
 model.mesh.setSize(ov, lcar3);
 
 eps = 1e-3
