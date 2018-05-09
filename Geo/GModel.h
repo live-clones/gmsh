@@ -35,8 +35,8 @@ class MElementOctree;
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel {
  private:
-  std::multimap<std::pair<std::vector<int>, std::vector<int> >,
-                std::pair<std::string, std::vector<int> > > _homologyRequests;
+  std::multimap<std::pair<const std::vector<int>, const std::vector<int> >,
+    std::pair<const std::string, const std::vector<int> > > _homologyRequests;
   std::set<GRegion*, GEntityLessThan> _chainRegions;
   std::set<GFace*, GEntityLessThan> _chainFaces;
   std::set<GEdge*, GEntityLessThan> _chainEdges;
@@ -573,8 +573,10 @@ class GModel {
                   std::map<int, std::map<int, std::string> > &physicalMap);
 
   // request homology computation
-  void addHomologyRequest(const std::string &type, std::vector<int> &domain,
-                          std::vector<int> &subdomain, std::vector<int> &dim);
+  void addHomologyRequest(const std::string &type,
+			  const std::vector<int> &domain,
+			  const std::vector<int> &subdomain,
+			  const std::vector<int> &dim);
   void computeHomology();
 
   // "automatic" IO based on Gmsh global functions

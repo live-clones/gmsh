@@ -224,8 +224,8 @@ language.  Interactive actions generate language bits in the input
 files, and vice versa. This makes it possible to automate all
 treatments, using loops, conditionals and external system calls. (A
 programming API is also available, for integrating Gmsh as a library in
-your own C++, C or Python code: @ref{Gmsh API}.) A brief description of
-the four modules is given hereafter.
+your own C++, C, Python or Julia code: @ref{Gmsh API}.) A brief
+description of the four modules is given hereafter.
 
 @menu
 * Geometry::
@@ -426,9 +426,9 @@ Gmsh's scripting language is quite limited, providing only very crude
 loop controls and user-defined macros, with no local variables. For more
 complex workflows, or for integrating Gmsh as a library directly in
 other software tools, a application programming interface is
-available. This allows to directly access Gmsh features from C++, C or
-Python. The C interface also makes other bulding addintional interfaces
-(to Javascript, Julia, etc.) relatively easy.
+available. This allows to directly access Gmsh features from C++, C,
+Python or Julia. The C interface makes it relatively easy to build
+interfaces to additional languages (e.g. Javascript, Java or Go).
 @end itemize
 
 If you have the skills and some free time, feel free to join the
@@ -510,8 +510,8 @@ built: check the `File->Export' menu for a list of available formats.
 
 Finally, to use Gmsh at the third level (i.e., to link the Gmsh library
 with your own code), you will need to learn the Gmsh Application
-Programming Interface (API). This API is available in C++, C and Python:
-see @ref{Gmsh API} for more information.
+Programming Interface (API). This API is available in C++, C, Python and
+Julia: see @ref{Gmsh API} for more information.
 
 @c -------------------------------------------------------------------------
 @c Syntactic rules used in the manual
@@ -5056,12 +5056,13 @@ The Gmsh Application Programming Interface (API) allows you to integrate
 the Gmsh library in your own application. Examples on how to use the API
 are available in the
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/,demos/api}
-directory. In particular, this directory contains C++ and Python
-versions of several of the @code{.geo} tutorials from @ref{Tutorial}.
+directory. In particular, this directory contains C++, C Python and
+Julia versions of several of the @code{.geo} tutorials from
+@ref{Tutorial}.
 
 By design, the Gmsh API is purely functional, and only uses elementary
-types from the target language. Currently supported languages are C++, C
-and Python. The different versions of the API are generated
+types from the target language. Currently supported languages are C++,
+C, Python and Julia. The different versions of the API are generated
 automatically from the master API definition file
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gen.py,api/gen.py}:
 
@@ -5069,6 +5070,7 @@ automatically from the master API definition file
 @item C++ API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.h,gmsh.h}
 @item C API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmshc.h,gmshc.h}
 @item Python API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.py,gmsh.py}
+@item Julia API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.jl,gmsh.jl}
 @end itemize
 
 The additional
@@ -5087,10 +5089,10 @@ The functions available in the API are given below (see the relevant
 header/module file for the exact definition in each supported
 language@footnote{In C++ @code{/gmsh/model/geo/addPoint} will lead to a
 namespaced function @code{gmsh::model::geo::addPoint}, while in Python
-it will lead to @code{gmsh.model.geo.addPoint}, and in C to
+and Julia it will lead to @code{gmsh.model.geo.addPoint}, and in C to
 @code{gmshModelGeoAddPoint}. Output values are passed by reference in
 C++, as pointers in C and directly returned (after the return value, if
-any) in Python.}):
+any) in Python and Julia.}):
 
 @include api.texi
 

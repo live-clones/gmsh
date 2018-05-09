@@ -15,6 +15,7 @@ SDK layout:
 
   * lib/*gmsh*.{so,dll,dylib}: shared Gmsh library
   * lib/gmsh.py: Python module
+  * lib/gmsh.jl: Julia module
   * include/gmsh.h: C++ API header
   * include/gmshc.h: C API header
   * include/gmsh.h_cwrap: C++ wrapper of the C API (see the `Notes' below)

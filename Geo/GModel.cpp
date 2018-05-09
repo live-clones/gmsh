@@ -3092,12 +3092,12 @@ void GModel::classifyFaces(std::set<GFace*> &_faces)
 }
 
 void GModel::addHomologyRequest(const std::string &type,
-                                std::vector<int> &domain,
-                                std::vector<int> &subdomain,
-                                std::vector<int> &dim)
+                                const std::vector<int> &domain,
+                                const std::vector<int> &subdomain,
+                                const std::vector<int> &dim)
 {
-  typedef std::pair<std::vector<int>, std::vector<int> > dpair;
-  typedef std::pair<std::string, std::vector<int> > tpair;
+  typedef std::pair<const std::vector<int>, const std::vector<int> > dpair;
+  typedef std::pair<const std::string, const std::vector<int> > tpair;
   dpair p(domain, subdomain);
   tpair p2(type, dim);
   _homologyRequests.insert(std::pair<dpair, tpair>(p, p2));
@@ -3111,8 +3111,8 @@ void GModel::computeHomology()
   double t1 = Cpu();
 
   // find unique domain/subdomain requests
-  typedef std::pair<std::vector<int>, std::vector<int> > dpair;
-  typedef std::pair<std::string, std::vector<int> > tpair;
+  typedef std::pair<const std::vector<int>, const std::vector<int> > dpair;
+  typedef std::pair<const std::string, const std::vector<int> > tpair;
   std::set<dpair> domains;
   for(std::multimap<dpair, tpair>::iterator it = _homologyRequests.begin();
       it != _homologyRequests.end(); it++)
@@ -3134,6 +3134,7 @@ void GModel::computeHomology()
         itt != itp.second; itt++){
       std::string type = itt->second.first;
       std::vector<int> dim0 = itt->second.second;
+      if(dim0.empty()) for(int i = 0; i < getDim(); i++) dim0.push_back(i);
       std::vector<int> dim;
 
       std::stringstream ss;
@@ -3154,7 +3155,10 @@ void GModel::computeHomology()
       if(type != "Homology" && type != "Cohomology" && type != "Betti") {
         Msg::Error("Unknown type of homology computation: %s", type.c_str());
       }
-      else if(dim.empty() || type == "Betti") {
+      else if(dim.empty()) {
+	Msg::Error("Invalid homology computation dimensions given");
+      }
+      else if(type == "Betti") {
         homology->findBettiNumbers();
       }
       else if(type == "Homology" && !homology->isHomologyComputed(dim)) {

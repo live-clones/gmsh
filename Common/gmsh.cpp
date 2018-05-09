@@ -62,7 +62,7 @@
 #include "onelabUtils.h"
 #endif
 
-// automtically generated C++ and C headers (in gmsh/api)
+// automatically generated C++ and C headers (in gmsh/api)
 #include "gmsh.h"
 extern "C" {
   #include "gmshc.h"
@@ -227,7 +227,7 @@ GMSH_API void gmsh::model::setCurrent(const std::string &name)
   GModel::setCurrent(m);
 }
 
-GMSH_API void gmsh::model::getEntities(vector_pair &dimTags,
+GMSH_API void gmsh::model::getEntities(vectorpair &dimTags,
                                        const int dim)
 {
   if(!_isInitialized()){ throw -1; }
@@ -238,7 +238,7 @@ GMSH_API void gmsh::model::getEntities(vector_pair &dimTags,
     dimTags.push_back(std::pair<int, int>(entities[i]->dim(), entities[i]->tag()));
 }
 
-GMSH_API void gmsh::model::getPhysicalGroups(vector_pair &dimTags,
+GMSH_API void gmsh::model::getPhysicalGroups(vectorpair &dimTags,
                                              const int dim)
 {
   if(!_isInitialized()){ throw -1; }
@@ -301,8 +301,8 @@ GMSH_API void gmsh::model::getPhysicalName(const int dim,
   name = GModel::current()->getPhysicalName(dim, tag);
 }
 
-GMSH_API void gmsh::model::getBoundary(const vector_pair &dimTags,
-                                       vector_pair &outDimTags,
+GMSH_API void gmsh::model::getBoundary(const vectorpair &dimTags,
+                                       vectorpair &outDimTags,
                                        const bool combined,
                                        const bool oriented,
                                        const bool recursive)
@@ -321,7 +321,7 @@ GMSH_API void gmsh::model::getEntitiesInBoundingBox(const double xmin,
                                                     const double xmax,
                                                     const double ymax,
                                                     const double zmax,
-                                                    vector_pair &dimTags,
+                                                    vectorpair &dimTags,
                                                     const int dim)
 {
   if(!_isInitialized()){ throw -1; }
@@ -429,7 +429,7 @@ GMSH_API int gmsh::model::addDiscreteEntity(const int dim,
   return outTag;
 }
 
-GMSH_API void gmsh::model::removeEntities(const vector_pair &dimTags,
+GMSH_API void gmsh::model::removeEntities(const vectorpair &dimTags,
                                           const bool recursive)
 {
   if(!_isInitialized()){ throw -1; }
@@ -438,7 +438,7 @@ GMSH_API void gmsh::model::removeEntities(const vector_pair &dimTags,
 
 GMSH_API void gmsh::model::getType(const int dim,
                                    const int tag,
-                                   std::string &type)
+                                   std::string &entityType)
 {
   if(!_isInitialized()){ throw -1; }
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
@@ -446,7 +446,7 @@ GMSH_API void gmsh::model::getType(const int dim,
     Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     throw 2;
   }
-  type = ge->getTypeString();
+  entityType = ge->getTypeString();
 }
 
 // gmsh::model::mesh
@@ -456,6 +456,28 @@ GMSH_API void gmsh::model::mesh::generate(const int dim)
   if(!_isInitialized()){ throw -1; }
   GModel::current()->mesh(dim);
   CTX::instance()->mesh.changed = ENT_ALL;
+}
+
+GMSH_API void gmsh::model::mesh::homology(const std::vector<int> &domainTags,
+					  const std::vector<int> &subdomainTags,
+					  const std::vector<int> &dims)
+{
+  if(!_isInitialized()){ throw -1; }
+  GModel::current()->addHomologyRequest("Homology",
+					domainTags,
+					subdomainTags,
+					dims);
+}
+
+GMSH_API void gmsh::model::mesh::cohomology(const std::vector<int> &domainTags,
+					    const std::vector<int> &subdomainTags,
+					    const std::vector<int> &dims)
+{
+  if(!_isInitialized()){ throw -1; }
+  GModel::current()->addHomologyRequest("Cohomology",
+					domainTags,
+					subdomainTags,
+					dims);
 }
 
 GMSH_API void gmsh::model::mesh::partition(const int numPart)
@@ -488,7 +510,7 @@ GMSH_API void gmsh::model::mesh::removeDuplicateNodes()
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
-GMSH_API void gmsh::model::mesh::getLastEntityError(vector_pair &dimTags)
+GMSH_API void gmsh::model::mesh::getLastEntityError(vectorpair &dimTags)
 {
   if(!_isInitialized()){ throw -1; }
   std::vector<GEntity*> e = GModel::current()->getLastMeshEntityError();
@@ -1280,7 +1302,7 @@ static void _addElements(int dim, int tag, const std::vector<MElement*> &src,
 
 GMSH_API void gmsh::model::mesh::setElements(const int dim,
                                              const int tag,
-                                             const std::vector<int> &types,
+                                             const std::vector<int> &elementTypes,
                                              const std::vector<std::vector<int> > &elementTags,
                                              const std::vector<std::vector<int> > &nodeTags)
 {
@@ -1290,18 +1312,18 @@ GMSH_API void gmsh::model::mesh::setElements(const int dim,
     Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     throw 2;
   }
-  if(types.size() != elementTags.size()){
+  if(elementTypes.size() != elementTags.size()){
     Msg::Error("Wrong number of element tags");
     throw 2;
   }
-  if(types.size() != nodeTags.size()){
+  if(elementTypes.size() != nodeTags.size()){
     Msg::Error("Wrong number of node tags");
     throw 2;
   }
   // delete only elements; this will also delete the model mesh cache
   ge->deleteMesh(true);
-  for(unsigned int i = 0; i < types.size(); i++){
-    int type = types[i];
+  for(unsigned int i = 0; i < elementTypes.size(); i++){
+    int type = elementTypes[i];
     unsigned int numEle = elementTags[i].size();
     unsigned int numVertPerEle = MElement::getInfoMSH(type);
     if(!numEle) continue;
@@ -1390,7 +1412,7 @@ GMSH_API void gmsh::model::mesh::getNode(const int nodeTag,
 }
 
 GMSH_API void gmsh::model::mesh::getElement(const int elementTag,
-                                            int &type,
+                                            int &elementType,
                                             std::vector<int> &nodeTags)
 {
   if(!_isInitialized()){ throw -1; }
@@ -1399,7 +1421,7 @@ GMSH_API void gmsh::model::mesh::getElement(const int elementTag,
     Msg::Error("Unknown mesh element %d", elementTag);
     throw 2;
   }
-  type = e->getTypeForMSH();
+  elementType = e->getTypeForMSH();
   nodeTags.clear();
   for(int i = 0; i < e->getNumVertices(); i++){
     MVertex *v = e->getVertex(i);
@@ -1501,7 +1523,7 @@ GMSH_API void gmsh::model::mesh::getBarycenters(const int elementType,
   }
 }
 
-GMSH_API void gmsh::model::mesh::setSize(const vector_pair &dimTags,
+GMSH_API void gmsh::model::mesh::setSize(const vectorpair &dimTags,
                                          const double size)
 {
   if(!_isInitialized()){ throw -1; }
@@ -1516,7 +1538,7 @@ GMSH_API void gmsh::model::mesh::setSize(const vector_pair &dimTags,
 
 GMSH_API void gmsh::model::mesh::setTransfiniteCurve(const int tag,
                                                      const int numNodes,
-                                                     const std::string &type,
+                                                     const std::string &meshType,
                                                      const double coef)
 {
   if(!_isInitialized()){ throw -1; }
@@ -1528,8 +1550,8 @@ GMSH_API void gmsh::model::mesh::setTransfiniteCurve(const int tag,
   ge->meshAttributes.method = MESH_TRANSFINITE;
   ge->meshAttributes.nbPointsTransfinite = numNodes;
   ge->meshAttributes.typeTransfinite =
-    (type == "Progression" || type == "Power") ? 1 :
-    (type == "Bump") ? 2 :
+    (meshType == "Progression" || meshType == "Power") ? 1 :
+    (meshType == "Bump") ? 2 :
     1;
   ge->meshAttributes.coeffTransfinite = std::abs(coef);
   // in .geo file we use a negative tag to do this trick; it's a bad idea
@@ -1794,7 +1816,7 @@ GMSH_API void gmsh::model::mesh::setPeriodic(const int dim,
 
 // gmsh::model::mesh::field
 
-GMSH_API int gmsh::model::mesh::field::add(const std::string &type,
+GMSH_API int gmsh::model::mesh::field::add(const std::string &fieldType,
                                            const int tag)
 {
   if(!_isInitialized()){ throw -1; }
@@ -1803,8 +1825,8 @@ GMSH_API int gmsh::model::mesh::field::add(const std::string &type,
   if(outTag < 0){
     outTag = GModel::current()->getFields()->newId();
   }
-  if(!GModel::current()->getFields()->newField(outTag, type)){
-    Msg::Error("Cannot add Field %i of type '%s'", outTag, type.c_str());
+  if(!GModel::current()->getFields()->newField(outTag, fieldType)){
+    Msg::Error("Cannot add Field %i of type '%s'", outTag, fieldType.c_str());
     throw 1;
   }
 #if defined(HAVE_FLTK)
@@ -2123,11 +2145,11 @@ static ExtrudeParams *_getExtrudeParams(const std::vector<int> &numElements,
   return e;
 }
 
-GMSH_API void gmsh::model::geo::extrude(const vector_pair &dimTags,
+GMSH_API void gmsh::model::geo::extrude(const vectorpair &dimTags,
                                         const double dx,
                                         const double dy,
                                         const double dz,
-                                        vector_pair &outDimTags,
+                                        vectorpair &outDimTags,
                                         const std::vector<int> &numElements,
                                         const std::vector<double> &heights,
                                         const bool recombine)
@@ -2141,7 +2163,7 @@ GMSH_API void gmsh::model::geo::extrude(const vector_pair &dimTags,
   }
 }
 
-GMSH_API void gmsh::model::geo::revolve(const vector_pair &dimTags,
+GMSH_API void gmsh::model::geo::revolve(const vectorpair &dimTags,
                                         const double x,
                                         const double y,
                                         const double z,
@@ -2149,7 +2171,7 @@ GMSH_API void gmsh::model::geo::revolve(const vector_pair &dimTags,
                                         const double ay,
                                         const double az,
                                         const double angle,
-                                        vector_pair &outDimTags,
+                                        vectorpair &outDimTags,
                                         const std::vector<int> &numElements,
                                         const std::vector<double> &heights,
                                         const bool recombine)
@@ -2163,7 +2185,7 @@ GMSH_API void gmsh::model::geo::revolve(const vector_pair &dimTags,
   }
 }
 
-GMSH_API void gmsh::model::geo::twist(const vector_pair &dimTags,
+GMSH_API void gmsh::model::geo::twist(const vectorpair &dimTags,
                                       const double x,
                                       const double y,
                                       const double z,
@@ -2174,7 +2196,7 @@ GMSH_API void gmsh::model::geo::twist(const vector_pair &dimTags,
                                       const double ay,
                                       const double az,
                                       const double angle,
-                                      vector_pair &outDimTags,
+                                      vectorpair &outDimTags,
                                       const std::vector<int> &numElements,
                                       const std::vector<double> &heights,
                                       const bool recombine)
@@ -2188,7 +2210,7 @@ GMSH_API void gmsh::model::geo::twist(const vector_pair &dimTags,
   }
 }
 
-GMSH_API void gmsh::model::geo::translate(const vector_pair &dimTags,
+GMSH_API void gmsh::model::geo::translate(const vectorpair &dimTags,
                                           const double dx,
                                           const double dy,
                                           const double dz)
@@ -2199,7 +2221,7 @@ GMSH_API void gmsh::model::geo::translate(const vector_pair &dimTags,
   }
 }
 
-GMSH_API void gmsh::model::geo::rotate(const vector_pair &dimTags,
+GMSH_API void gmsh::model::geo::rotate(const vectorpair &dimTags,
                                        const double x,
                                        const double y,
                                        const double z,
@@ -2215,7 +2237,7 @@ GMSH_API void gmsh::model::geo::rotate(const vector_pair &dimTags,
   }
 }
 
-GMSH_API void gmsh::model::geo::dilate(const vector_pair &dimTags,
+GMSH_API void gmsh::model::geo::dilate(const vectorpair &dimTags,
                                        const double x,
                                        const double y,
                                        const double z,
@@ -2230,7 +2252,7 @@ GMSH_API void gmsh::model::geo::dilate(const vector_pair &dimTags,
   }
 }
 
-GMSH_API void gmsh::model::geo::symmetry(const vector_pair &dimTags,
+GMSH_API void gmsh::model::geo::symmetry(const vectorpair &dimTags,
                                          const double a,
                                          const double b,
                                          const double c,
@@ -2243,8 +2265,8 @@ GMSH_API void gmsh::model::geo::symmetry(const vector_pair &dimTags,
   }
 }
 
-GMSH_API void gmsh::model::geo::copy(const vector_pair &dimTags,
-                                     vector_pair &outDimTags)
+GMSH_API void gmsh::model::geo::copy(const vectorpair &dimTags,
+                                     vectorpair &outDimTags)
 {
   if(!_isInitialized()){ throw -1; }
   outDimTags.clear();
@@ -2253,7 +2275,7 @@ GMSH_API void gmsh::model::geo::copy(const vector_pair &dimTags,
   }
 }
 
-GMSH_API void gmsh::model::geo::remove(const vector_pair &dimTags,
+GMSH_API void gmsh::model::geo::remove(const vectorpair &dimTags,
                                        const bool recursive)
 {
   if(!_isInitialized()){ throw -1; }
@@ -2278,13 +2300,13 @@ GMSH_API void gmsh::model::geo::synchronize()
 
 GMSH_API void gmsh::model::geo::mesh::setTransfiniteCurve(const int tag,
                                                           const int nPoints,
-                                                          const std::string &type,
+                                                          const std::string &meshType,
                                                           const double coef)
 {
   if(!_isInitialized()){ throw -1; }
   int t =
-    (type == "Progression" || type == "Power") ? 1 :
-    (type == "Bump") ? 2 :
+    (meshType == "Progression" || meshType == "Power") ? 1 :
+    (meshType == "Bump") ? 2 :
     1;
   double c = std::abs(coef);
   // in .geo file we use a negative tag to do this trick; it's a bad idea
@@ -2339,7 +2361,7 @@ GMSH_API void gmsh::model::geo::mesh::setReverse(const int dim,
   GModel::current()->getGEOInternals()->setReverseMesh(dim, tag, val);
 }
 
-GMSH_API void gmsh::model::geo::mesh::setSize(const vector_pair &dimTags,
+GMSH_API void gmsh::model::geo::mesh::setSize(const vectorpair &dimTags,
                                               const double size)
 {
   if(!_isInitialized()){ throw -1; }
@@ -2715,7 +2737,7 @@ GMSH_API int gmsh::model::occ::addTorus(const double x,
 }
 
 GMSH_API void gmsh::model::occ::addThruSections(const std::vector<int> &wireTags,
-                                                vector_pair &outDimTags,
+                                                vectorpair &outDimTags,
                                                 const int tag,
                                                 const bool makeSolid,
                                                 const bool makeRuled)
@@ -2732,7 +2754,7 @@ GMSH_API void gmsh::model::occ::addThruSections(const std::vector<int> &wireTags
 GMSH_API void gmsh::model::occ::addThickSolid(const int volumeTag,
                                               const std::vector<int> &excludeSurfaceTags,
                                               const double offset,
-                                              vector_pair &outDimTags,
+                                              vectorpair &outDimTags,
                                               const int tag)
 {
   if(!_isInitialized()){ throw -1; }
@@ -2744,11 +2766,11 @@ GMSH_API void gmsh::model::occ::addThickSolid(const int volumeTag,
   }
 }
 
-GMSH_API void gmsh::model::occ::extrude(const vector_pair &dimTags,
+GMSH_API void gmsh::model::occ::extrude(const vectorpair &dimTags,
                                         const double dx,
                                         const double dy,
                                         const double dz,
-                                        vector_pair &outDimTags,
+                                        vectorpair &outDimTags,
                                         const std::vector<int> &numElements,
                                         const std::vector<double> &heights,
                                         const bool recombine)
@@ -2763,14 +2785,14 @@ GMSH_API void gmsh::model::occ::extrude(const vector_pair &dimTags,
   }
 }
 
-GMSH_API void gmsh::model::occ::revolve(const vector_pair &dimTags,
+GMSH_API void gmsh::model::occ::revolve(const vectorpair &dimTags,
                                         const double x,
                                         const double y,
                                         const double z,
                                         const double ax,
                                         const double ay,
                                         const double az,
-                                        const double angle, vector_pair &outDimTags,
+                                        const double angle, vectorpair &outDimTags,
                                         const std::vector<int> &numElements,
                                         const std::vector<double> &heights,
                                         const bool recombine)
@@ -2785,9 +2807,9 @@ GMSH_API void gmsh::model::occ::revolve(const vector_pair &dimTags,
   }
 }
 
-GMSH_API void gmsh::model::occ::addPipe(const vector_pair &dimTags,
+GMSH_API void gmsh::model::occ::addPipe(const vectorpair &dimTags,
                                         const int wireTag,
-                                        vector_pair &outDimTags)
+                                        vectorpair &outDimTags)
 {
   if(!_isInitialized()){ throw -1; }
   _createOcc();
@@ -2801,7 +2823,7 @@ GMSH_API void gmsh::model::occ::addPipe(const vector_pair &dimTags,
 GMSH_API void gmsh::model::occ::fillet(const std::vector<int> &volumeTags,
                                        const std::vector<int> &curveTags,
                                        const double radius,
-                                       vector_pair &outDimTags,
+                                       vectorpair &outDimTags,
                                        const bool removeVolume)
 {
   if(!_isInitialized()){ throw -1; }
@@ -2813,10 +2835,10 @@ GMSH_API void gmsh::model::occ::fillet(const std::vector<int> &volumeTags,
   }
 }
 
-GMSH_API void gmsh::model::occ::fuse(const vector_pair &objectDimTags,
-                                     const vector_pair &toolDimTags,
-                                     vector_pair &outDimTags,
-                                     std::vector<vector_pair> &outDimTagsMap,
+GMSH_API void gmsh::model::occ::fuse(const vectorpair &objectDimTags,
+                                     const vectorpair &toolDimTags,
+                                     vectorpair &outDimTags,
+                                     std::vector<vectorpair> &outDimTagsMap,
                                      const int tag,
                                      const bool removeObject,
                                      const bool removeTool)
@@ -2832,10 +2854,10 @@ GMSH_API void gmsh::model::occ::fuse(const vector_pair &objectDimTags,
   }
 }
 
-GMSH_API void gmsh::model::occ::intersect(const vector_pair &objectDimTags,
-                                          const vector_pair &toolDimTags,
-                                          vector_pair &outDimTags,
-                                          std::vector<vector_pair> &outDimTagsMap,
+GMSH_API void gmsh::model::occ::intersect(const vectorpair &objectDimTags,
+                                          const vectorpair &toolDimTags,
+                                          vectorpair &outDimTags,
+                                          std::vector<vectorpair> &outDimTagsMap,
                                           const int tag,
                                           const bool removeObject,
                                           const bool removeTool)
@@ -2851,10 +2873,10 @@ GMSH_API void gmsh::model::occ::intersect(const vector_pair &objectDimTags,
   }
 }
 
-GMSH_API void gmsh::model::occ::cut(const vector_pair &objectDimTags,
-                                    const vector_pair &toolDimTags,
-                                    vector_pair &outDimTags,
-                                    std::vector<vector_pair> &outDimTagsMap,
+GMSH_API void gmsh::model::occ::cut(const vectorpair &objectDimTags,
+                                    const vectorpair &toolDimTags,
+                                    vectorpair &outDimTags,
+                                    std::vector<vectorpair> &outDimTagsMap,
                                     const int tag,
                                     const bool removeObject,
                                     const bool removeTool)
@@ -2870,10 +2892,10 @@ GMSH_API void gmsh::model::occ::cut(const vector_pair &objectDimTags,
   }
 }
 
-GMSH_API void gmsh::model::occ::fragment(const vector_pair &objectDimTags,
-                                         const vector_pair &toolDimTags,
-                                         vector_pair &outDimTags,
-                                         std::vector<vector_pair> &outDimTagsMap,
+GMSH_API void gmsh::model::occ::fragment(const vectorpair &objectDimTags,
+                                         const vectorpair &toolDimTags,
+                                         vectorpair &outDimTags,
+                                         std::vector<vectorpair> &outDimTagsMap,
                                          const int tag,
                                          const bool removeObject,
                                          const bool removeTool)
@@ -2889,7 +2911,7 @@ GMSH_API void gmsh::model::occ::fragment(const vector_pair &objectDimTags,
   }
 }
 
-GMSH_API void gmsh::model::occ::translate(const vector_pair &dimTags,
+GMSH_API void gmsh::model::occ::translate(const vectorpair &dimTags,
                                           const double dx,
                                           const double dy,
                                           const double dz)
@@ -2901,7 +2923,7 @@ GMSH_API void gmsh::model::occ::translate(const vector_pair &dimTags,
   }
 }
 
-GMSH_API void gmsh::model::occ::rotate(const vector_pair &dimTags,
+GMSH_API void gmsh::model::occ::rotate(const vectorpair &dimTags,
                                        const double x,
                                        const double y,
                                        const double z,
@@ -2918,7 +2940,7 @@ GMSH_API void gmsh::model::occ::rotate(const vector_pair &dimTags,
   }
 }
 
-GMSH_API void gmsh::model::occ::dilate(const vector_pair &dimTags,
+GMSH_API void gmsh::model::occ::dilate(const vectorpair &dimTags,
                                        const double x,
                                        const double y,
                                        const double z,
@@ -2934,7 +2956,7 @@ GMSH_API void gmsh::model::occ::dilate(const vector_pair &dimTags,
   }
 }
 
-GMSH_API void gmsh::model::occ::symmetry(const vector_pair &dimTags,
+GMSH_API void gmsh::model::occ::symmetry(const vectorpair &dimTags,
                                          const double a,
                                          const double b,
                                          const double c,
@@ -2947,8 +2969,8 @@ GMSH_API void gmsh::model::occ::symmetry(const vector_pair &dimTags,
   }
 }
 
-GMSH_API void gmsh::model::occ::copy(const vector_pair &dimTags,
-                                     vector_pair &outDimTags)
+GMSH_API void gmsh::model::occ::copy(const vectorpair &dimTags,
+                                     vectorpair &outDimTags)
 {
   if(!_isInitialized()){ throw -1; }
   _createOcc();
@@ -2958,7 +2980,7 @@ GMSH_API void gmsh::model::occ::copy(const vector_pair &dimTags,
   }
 }
 
-GMSH_API void gmsh::model::occ::remove(const vector_pair &dimTags,
+GMSH_API void gmsh::model::occ::remove(const vectorpair &dimTags,
                                        const bool recursive)
 {
   if(!_isInitialized()){ throw -1; }
@@ -2976,7 +2998,7 @@ GMSH_API void gmsh::model::occ::removeAllDuplicates()
 }
 
 GMSH_API void gmsh::model::occ::importShapes(const std::string &fileName,
-                                             vector_pair &outDimTags,
+                                             vectorpair &outDimTags,
                                              const bool highestDimOnly,
                                              const std::string &format)
 {
@@ -2990,7 +3012,7 @@ GMSH_API void gmsh::model::occ::importShapes(const std::string &fileName,
 }
 
 // GMSH_API void gmsh::model::occ::importShapesNativePointer(const void *shape,
-//                                                          vector_pair &outDimTags,
+//                                                          vectorpair &outDimTags,
 //                                                          const bool highestDimOnly)
 // {
 //   if(!_isInitialized()){ throw -1; }
@@ -3007,7 +3029,7 @@ GMSH_API void gmsh::model::occ::importShapes(const std::string &fileName,
 // #endif
 // }
 
-GMSH_API void gmsh::model::occ::setMeshSize(const vector_pair &dimTags,
+GMSH_API void gmsh::model::occ::setMeshSize(const vectorpair &dimTags,
                                             const double size)
 {
   if(!_isInitialized()){ throw -1; }
