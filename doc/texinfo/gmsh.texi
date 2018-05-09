@@ -3567,10 +3567,10 @@ cases.)
 The MSH4 file format contains one mandatory section giving information
 about the file (@code{$MeshFormat}), followed by several sections
 defining the physical group names (@code{$PhysicalName}, optional), the
-entities (@code{Entities}), the partitioned entities
-(@code{PartitionedEntities}, optional), nodes (@code{$Nodes}), elements
+entities (@code{$Entities}), the partitioned entities
+(@code{$PartitionedEntities}, optional), nodes (@code{$Nodes}), elements
 (@code{$Elements}), periodicity relations (@code{$Periodic}, optional),
-ghost elements (@code{GhostElements}, optional) and post-processing
+ghost elements (@code{$GhostElements}, optional) and post-processing
 datasets (@code{$NodeData}, @code{$ElementData},
 @code{$ElementNodeData}, all optional).
 
@@ -3580,7 +3580,7 @@ i.e., do not have to constitute a continuous list of indexes starting at
 degradation. For meshes, non-continuous indexing forces Gmsh to use a
 map instead of a vector to access nodes and elements. The performance
 hit is on speed. For post-processing datasets, which always use vectors
-to access data, the performance hit is on memory. A @code{NodeData} with
+to access data, the performance hit is on memory. A @code{$NodeData} with
 two nodes, tagged 1 and 1000000, will allocate a (mostly empty) vector
 of 1000000 elements.
 
@@ -3605,30 +3605,30 @@ $EndMeshFormat
 <$EndPhysicalNames>
 
 $Entities
-  numVertices(unsigned long) numEdges(unsigned long) 
-    numFaces(unsigned long) numRegions(unsigned long)
-  // vertices
+  numPoints(unsigned long) numCurves(unsigned long)
+    numSurfaces(unsigned long) numVolumes(unsigned long)
+  // points
   tag(int) boxMinX(double) boxMinY(double) boxMinZ(double) 
     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
     numPhysicals(unsigned long) phyisicalTag[...](int)
   ...
-  // edges
+  // curves
   tag(int) boxMinX(double) boxMinY(double) boxMinZ(double)
      boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
-     numPhysicals(unsigned long) physicalTag[...](int) 
+     numPhysicals(unsigned long) physicalTag[...](int)
      numBREPVert(unsigned long) tagBREPVert[...](int)
   ...
-  // faces
+  // surfaces
   tag(int) boxMinX(double) boxMinY(double) boxMinZ(double)
     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
     numPhysicals(unsigned long) physicalTag[...](int) 
-    numBREPEdge(unsigned long) tagBREPEdge[...](int)
+    numBREPCurve(unsigned long) tagBREPCurve[...](int)
   ...
-  // regions
+  // volumes
   tag(int) boxMinX(double) boxMinY(double) boxMinZ(double) 
     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
     numPhysicals(unsigned long) physicalTag[...](int) 
-    numBREPFaces(unsigned long) tagBREPFaces[...](int)
+    numBREPSurfaces(unsigned long) tagBREPSurfaces[...](int)
   ...
 $EndEntities
 
@@ -3637,34 +3637,34 @@ $EndEntities
   numGhostEntities(int)
   ghostTag(int) ghostPart(int)
   ...
-  numVertices(unsigned long) numEdges(unsigned long) 
-    numFaces(unsigned long) numRegions(unsigned long)
-  //vertices
+  numPoints(unsigned long) numCurves(unsigned long)
+    numSurfaces(unsigned long) numVolumes(unsigned long)
+  // points
   tag(int) parentTag(int) numPartitions(int) partitionTag[...](int)
     boxMinX(double) boxMinY(double) boxMinZ(double) 
     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
     numPhyiscals(unsigned long) physicalTag[...](int)
   ...
-  //edges
+  // curves
   tag(int) parentTag(int) numPartitions(int) partitionTag[...](int)
     boxMinX(double) boxMinY(double) boxMinZ(double) 
     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
     numPhysicals(unsigned long) physicalTag[...](int)
     numBREPVert(unsigned long) tagBREPVert[...](int)
   ...
-  //faces
+  // surfaces
   tag(int) parentTag(int) numPartitions(int) partitionTag[...](int) 
     boxMinX(double) boxMinY(double) boxMinZ(double) 
     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
     numPhysicals(unsigned long) physicalTag[...](int) 
-    numBREPEdge(unsigned long) tagBREPEdge[...](int)
+    numBREPCurve(unsigned long) tagBREPCurve[...](int)
   ...
-  //regions
+  // volumes
   tag(int) parentTag(int) numPartitions(int) partitionTag[...](int)
     boxMinX(double) boxMinY(double) boxMinZ(double) 
     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
     numPhysicals(unsigned long) physicalTag[...](int) 
-    numBREPFaces(unsigned long) tagBREPFaces[...](int)
+    numBREPSurfaces(unsigned long) tagBREPSurfaces[...](int)
   ...
 <$EndPartitionedEntities>
 
