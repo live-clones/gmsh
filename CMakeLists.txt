@@ -1527,10 +1527,10 @@ if(WIN32 AND NOT MSVC OR CYGWIN)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "${FLAGS} -static")
   if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
     set_target_properties(shared PROPERTIES LINK_FLAGS -static)
-    # remove -Wl,-Bdynamic flags
-    set(CMAKE_EXE_LINK_DYNAMIC_C_FLAGS)
-    set(CMAKE_EXE_LINK_DYNAMIC_CXX_FLAGS)
   endif(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
+  # remove -Wl,-Bdynamic flags
+  set(CMAKE_EXE_LINK_DYNAMIC_C_FLAGS)
+  set(CMAKE_EXE_LINK_DYNAMIC_CXX_FLAGS)
 elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "/STACK:16777216 /SAFESEH:NO")
 endif(WIN32 AND NOT MSVC OR CYGWIN)
