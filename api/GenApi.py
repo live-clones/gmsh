@@ -1082,7 +1082,7 @@ class API:
             if rtype or oargs:
                 f.write("\nReturn " + ", ".join(
                     (["an " + rtype.rtexi_type] if rtype else[])
-                   + [("`" + a.name + "'") for a in oargs])
+                   + [("'" + a.name + "'") for a in oargs])
                + ".\n")
             f.write('"""\n')
             f.write("function " + name + "("

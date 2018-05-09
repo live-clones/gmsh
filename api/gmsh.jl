@@ -141,7 +141,7 @@ end
 
 Get the 'value' of a numerical option.
 
-Return `value'.
+Return 'value'.
 """
 function getNumber(name)
     ierr = Vector{Cint}(1)
@@ -172,7 +172,7 @@ end
 
 Get the 'value' of a string option.
 
-Return `value'.
+Return 'value'.
 """
 function getString(name)
     ierr = Vector{Cint}(1)
@@ -229,7 +229,7 @@ end
 
 List the names of all models.
 
-Return `names'.
+Return 'names'.
 """
 function list()
     api_names_ = Vector{Ptr{Ptr{Cchar}}}(1)
@@ -267,7 +267,7 @@ Get all the (elementary) geometrical entities in the current model. If 'dim' is
 >= 0, return only the entities of the specified dimension (e.g. points if 'dim'
 == 0). The entities are returned as a vector of (dim, tag) integer pairs.
 
-Return `dimTags'.
+Return 'dimTags'.
 """
 function getEntities(dim = -1)
     api_dimTags_ = Vector{Ptr{Cint}}(1)
@@ -290,7 +290,7 @@ Get all the physical groups in the current model. If 'dim' is >= 0, return only
 the entities of the specified dimension (e.g. physical points if 'dim' == 0).
 The entities are returned as a vector of (dim, tag) integer pairs.
 
-Return `dimTags'.
+Return 'dimTags'.
 """
 function getPhysicalGroups(dim = -1)
     api_dimTags_ = Vector{Ptr{Cint}}(1)
@@ -312,7 +312,7 @@ end
 Get the tags of all the (elementary) geometrical entities making up the physical
 group of dimension 'dim' and tag 'tag'.
 
-Return `tags'.
+Return 'tags'.
 """
 function getEntitiesForPhysicalGroup(dim, tag)
     api_tags_ = Vector{Ptr{Cint}}(1)
@@ -365,7 +365,7 @@ end
 
 Get the name of the physical group of dimension 'dim' and tag 'tag'.
 
-Return `name'.
+Return 'name'.
 """
 function getPhysicalName(dim, tag)
     ierr = Vector{Cint}(1)
@@ -387,7 +387,7 @@ true). Return tags multiplied by the sign of the boundary entity if 'oriented'
 is true. Apply the boundary operator recursively down to dimension 0 (i.e. to
 points) if 'recursive' is true.
 
-Return `outDimTags'.
+Return 'outDimTags'.
 """
 function getBoundary(dimTags, combined = true, oriented = true, recursive = false)
     api_outDimTags_ = Vector{Ptr{Cint}}(1)
@@ -410,7 +410,7 @@ Get the (elementary) geometrical entities in the bounding box defined by the two
 points ('xmin', 'ymin', 'zmin') and ('xmax', 'ymax', 'zmax'). If 'dim' is >= 0,
 return only the entities of the specified dimension (e.g. points if 'dim' == 0).
 
-Return `tags'.
+Return 'tags'.
 """
 function getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
     api_tags_ = Vector{Ptr{Cint}}(1)
@@ -432,7 +432,7 @@ end
 Get the bounding box ('xmin', 'ymin', 'zmin'), ('xmax', 'ymax', 'zmax') of the
 geometrical entity of dimension 'dim' and tag 'tag'.
 
-Return `xmin', `ymin', `zmin', `xmax', `ymax', `zmax'.
+Return 'xmin', 'ymin', 'zmin', 'xmax', 'ymax', 'zmax'.
 """
 function getBoundingBox(dim, tag)
     ierr = Vector{Cint}(1)
@@ -485,7 +485,7 @@ end
 
 Get the type of the entity of dimension 'dim' and tag 'tag'.
 
-Return `entityType'.
+Return 'entityType'.
 """
 function getType(dim, tag)
     ierr = Vector{Cint}(1)
@@ -625,7 +625,7 @@ end
 Get the last entities (if any) where a meshing error occurred. Currently only
 populated by the new 3D meshing algorithms.
 
-Return `dimTags'.
+Return 'dimTags'.
 """
 function getLastEntityError()
     api_dimTags_ = Vector{Ptr{Cint}}(1)
@@ -647,7 +647,7 @@ end
 Get the last mesh nodes (if any) where a meshing error occurred. Currently only
 populated by the new 3D meshing algorithms.
 
-Return `nodeTags'.
+Return 'nodeTags'.
 """
 function getLastNodeError()
     api_nodeTags_ = Vector{Ptr{Cint}}(1)
@@ -674,7 +674,7 @@ of the nodes, concatenated. If 'dim' >= 0, 'parametricCoord' contains the
 parametric coordinates of the nodes, if available. The length of
 'parametricCoord' can be 0 or 'dim' times the length of 'nodeTags'.
 
-Return `nodeTags', `coord', `parametricCoord'.
+Return 'nodeTags', 'coord', 'parametricCoord'.
 """
 function getNodes(dim = -1, tag = -1)
     api_nodeTags_ = Vector{Ptr{Cint}}(1)
@@ -710,7 +710,7 @@ entry is a vector of length equal to the number of elements of the given type
 times the number of nodes for this type of element, that contains the node tags
 of all the elements of the given type, concatenated.
 
-Return `elementTypes', `elementTags', `nodeTags'.
+Return 'elementTypes', 'elementTags', 'nodeTags'.
 """
 function getElements(dim = -1, tag = -1)
     api_elementTypes_ = Vector{Ptr{Cint}}(1)
@@ -745,7 +745,7 @@ Get the properties of an element of type 'elementType': its name
 ('numNodes') and parametric coordinates of nodes ('parametricCoord' vector, of
 length 'dim' times 'numNodes').
 
-Return `elementName', `dim', `order', `numNodes', `parametricCoord'.
+Return 'elementName', 'dim', 'order', 'numNodes', 'parametricCoord'.
 """
 function getElementProperties(elementType)
     api_parametricCoord_ = Vector{Ptr{Cdouble}}(1)
@@ -779,7 +779,7 @@ evaluation of a basis function in the space and 'functionSpaceData' contains for
 each element type the evaluation of the basis functions at the integration
 points.
 
-Return `integrationPoints', `integrationData', `functionSpaceNumComponents', `functionSpaceData'.
+Return 'integrationPoints', 'integrationData', 'functionSpaceNumComponents', 'functionSpaceData'.
 """
 function getIntegrationData(integrationType, functionSpaceType, dim = -1, tag = -1)
     api_integrationPoints_ = Vector{Ptr{Ptr{Cdouble}}}(1)
@@ -816,7 +816,7 @@ Get the types of mesh elements in the entity of dimension 'dim' and 'tag' tag.
 If 'tag' < 0, get the types for all entities of dimension 'dim'. If 'dim' and
 'tag' are negative, get all the types in the mesh.
 
-Return `elementTypes'.
+Return 'elementTypes'.
 """
 function getElementTypes(dim = -1, tag = -1)
     api_elementTypes_ = Vector{Ptr{Cint}}(1)
@@ -837,7 +837,7 @@ end
 Get the mesh elements in the same way as 'getElements', but for a single
 'elementType'.
 
-Return `elementTags', `nodeTags'.
+Return 'elementTags', 'nodeTags'.
 """
 function getElementsByType(elementType, dim = -1, tag = -1)
     api_elementTags_ = Vector{Ptr{Cint}}(1)
@@ -861,7 +861,7 @@ end
 Get the integration data for mesh elements in the same way as
 'getIntegrationData', but for a single 'elementType'.
 
-Return `integrationPoints', `integrationData', `functionSpaceNumComponents', `functionSpaceData'.
+Return 'integrationPoints', 'integrationData', 'functionSpaceNumComponents', 'functionSpaceData'.
 """
 function getIntegrationDataByType(elementType, integrationType, functionSpaceType, dim = -1, tag = -1)
     api_integrationPoints_ = Vector{Ptr{Cdouble}}(1)
@@ -952,7 +952,7 @@ the model should be numbered in a continuous sequence of tags from 1 to N to
 maintain reasonnable performance (in this case the internal cache is based on a
 vector; otherwise it uses a map).
 
-Return `coord', `parametricCoord'.
+Return 'coord', 'parametricCoord'.
 """
 function getNode(nodeTag)
     api_coord_ = Vector{Ptr{Cdouble}}(1)
@@ -980,7 +980,7 @@ numbered in a continuous sequence of tags from 1 to N to maintain reasonnable
 performance (in this case the internal cache is based on a vector; otherwise it
 uses a map).
 
-Return `elementType', `nodeTags'.
+Return 'elementType', 'nodeTags'.
 """
 function getElement(elementTag)
     api_nodeTags_ = Vector{Ptr{Cint}}(1)
@@ -1521,7 +1521,7 @@ also extrude the mesh: the entries in 'numElements' give the number of elements
 in each layer. If 'height' is not empty, it provides the (cummulative) height of
 the different layers, normalized to 1.
 
-Return `outDimTags'.
+Return 'outDimTags'.
 """
 function extrude(dimTags, dx, dy, dz, numElements = [], heights = [], recombine = false)
     api_outDimTags_ = Vector{Ptr{Cint}}(1)
@@ -1547,7 +1547,7 @@ is not empty, also extrude the mesh: the entries in 'numElements' give the
 number of elements in each layer. If 'height' is not empty, it provides the
 (cummulative) height of the different layers, normalized to 1.
 
-Return `outDimTags'.
+Return 'outDimTags'.
 """
 function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = [], heights = [], recombine = false)
     api_outDimTags_ = Vector{Ptr{Cint}}(1)
@@ -1574,7 +1574,7 @@ also extrude the mesh: the entries in 'numElements' give the number of elements
 in each layer. If 'height' is not empty, it provides the (cummulative) height of
 the different layers, normalized to 1.
 
-Return `outDimTags'.
+Return 'outDimTags'.
 """
 function twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements = [], heights = [], recombine = false)
     api_outDimTags_ = Vector{Ptr{Cint}}(1)
@@ -1656,7 +1656,7 @@ end
 
 Copy the entities 'dimTags'; the new entities are returned in 'outDimTags'.
 
-Return `outDimTags'.
+Return 'outDimTags'.
 """
 function copy(dimTags)
     api_outDimTags_ = Vector{Ptr{Cint}}(1)
@@ -2329,7 +2329,7 @@ explicitly; otherwise a new tag is selected automatically. The new entities are
 returned in 'outDimTags'. If the optional argument 'makeRuled' is set, the
 surfaces created on the boundary are forced to be ruled surfaces.
 
-Return `outDimTags'.
+Return 'outDimTags'.
 """
 function addThruSections(wireTags, tag = -1, makeSolid = true, makeRuled = false)
     api_outDimTags_ = Vector{Ptr{Cint}}(1)
@@ -2354,7 +2354,7 @@ remaining faces of the volume become the walls of the hollowed solid, with
 thickness 'offset'. If 'tag' is positive, set the tag explicitly; otherwise a
 new tag is selected automatically.
 
-Return `outDimTags'.
+Return 'outDimTags'.
 """
 function addThickSolid(volumeTag, excludeSurfaceTags, offset, tag = -1)
     api_outDimTags_ = Vector{Ptr{Cint}}(1)
@@ -2379,7 +2379,7 @@ also extrude the mesh: the entries in 'numElements' give the number of elements
 in each layer. If 'height' is not empty, it provides the (cummulative) height of
 the different layers, normalized to 1.
 
-Return `outDimTags'.
+Return 'outDimTags'.
 """
 function extrude(dimTags, dx, dy, dz, numElements = [], heights = [], recombine = false)
     api_outDimTags_ = Vector{Ptr{Cint}}(1)
@@ -2405,7 +2405,7 @@ is not empty, also extrude the mesh: the entries in 'numElements' give the
 number of elements in each layer. If 'height' is not empty, it provides the
 (cummulative) height of the different layers, normalized to 1.
 
-Return `outDimTags'.
+Return 'outDimTags'.
 """
 function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = [], heights = [], recombine = false)
     api_outDimTags_ = Vector{Ptr{Cint}}(1)
@@ -2427,7 +2427,7 @@ end
 Add a pipe by extruding the entities 'dimTags' along the wire 'wireTag'. Return
 the pipe in 'outDimTags'.
 
-Return `outDimTags'.
+Return 'outDimTags'.
 """
 function addPipe(dimTags, wireTag)
     api_outDimTags_ = Vector{Ptr{Cint}}(1)
@@ -2450,7 +2450,7 @@ Fillet the volumes 'volumeTags' on the curves 'curveTags' with radius 'radius'.
 Return the filleted entities in 'outDimTags'. Remove the original volume if
 'removeVolume' is set.
 
-Return `outDimTags'.
+Return 'outDimTags'.
 """
 function fillet(volumeTags, curveTags, radius, removeVolume = true)
     api_outDimTags_ = Vector{Ptr{Cint}}(1)
@@ -2475,7 +2475,7 @@ positive, try to set the tag explicitly (ony valid if the boolean operation
 results in a single entity). Remove the object if 'removeObject' is set. Remove
 the tool if 'removeTool' is set.
 
-Return `outDimTags', `outDimTagsMap'.
+Return 'outDimTags', 'outDimTagsMap'.
 """
 function fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
     api_outDimTags_ = Vector{Ptr{Cint}}(1)
@@ -2510,7 +2510,7 @@ Compute the boolean intersection (the common parts) of the entities
 the boolean operation results in a single entity). Remove the object if
 'removeObject' is set. Remove the tool if 'removeTool' is set.
 
-Return `outDimTags', `outDimTagsMap'.
+Return 'outDimTags', 'outDimTagsMap'.
 """
 function intersect(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
     api_outDimTags_ = Vector{Ptr{Cint}}(1)
@@ -2545,7 +2545,7 @@ positive, try to set the tag explicitly (ony valid if the boolean operation
 results in a single entity). Remove the object if 'removeObject' is set. Remove
 the tool if 'removeTool' is set.
 
-Return `outDimTags', `outDimTagsMap'.
+Return 'outDimTags', 'outDimTagsMap'.
 """
 function cut(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
     api_outDimTags_ = Vector{Ptr{Cint}}(1)
@@ -2580,7 +2580,7 @@ positive, try to set the tag explicitly (ony valid if the boolean operation
 results in a single entity). Remove the object if 'removeObject' is set. Remove
 the tool if 'removeTool' is set.
 
-Return `outDimTags', `outDimTagsMap'.
+Return 'outDimTags', 'outDimTagsMap'.
 """
 function fragment(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
     api_outDimTags_ = Vector{Ptr{Cint}}(1)
@@ -2672,7 +2672,7 @@ end
 
 Copy the entities 'dimTags'; the new entities are returned in 'outDimTags'.
 
-Return `outDimTags'.
+Return 'outDimTags'.
 """
 function copy(dimTags)
     api_outDimTags_ = Vector{Ptr{Cint}}(1)
@@ -2728,7 +2728,7 @@ only import the highest dimensional entities in the file. The optional argument
 'format' can be used to force the format of the file (currently "brep", "step"
 or "iges").
 
-Return `outDimTags'.
+Return 'outDimTags'.
 """
 function importShapes(fileName, highestDimOnly = true, format = "")
     api_outDimTags_ = Vector{Ptr{Cint}}(1)
@@ -2847,7 +2847,7 @@ end
 
 Get the tags of all views.
 
-Return `tags'.
+Return 'tags'.
 """
 function getTags()
     api_tags_ = Vector{Ptr{Cint}}(1)
@@ -2895,7 +2895,7 @@ Get model-based post-processing data from the view with tag 'tag' at step
 'step'. Return the 'data' associated to the nodes or the elements with tags
 'tags', as well as the 'dataType' and the number of components 'numComponents'.
 
-Return `dataType', `tags', `data', `time', `numComponents'.
+Return 'dataType', 'tags', 'data', 'time', 'numComponents'.
 """
 function getModelData(tag, step)
     api_tags_ = Vector{Ptr{Cint}}(1)
@@ -2940,7 +2940,7 @@ Get list-based post-processing data from the view with tag 'tag'. Return the
 types 'dataTypes', the number of elements 'numElements' for each data type and
 the 'data' for each data type.
 
-Return `dataType', `numElements', `data'.
+Return 'dataType', 'numElements', 'data'.
 """
 function getListData(tag)
     api_dataType_ = Vector{Ptr{Ptr{Cchar}}}(1)
@@ -2976,7 +2976,7 @@ if 'tolerance' is not zero. Return the result from the element described by its
 coordinates if 'xElementCoord', 'yElementCoord' and 'zElementCoord' are
 provided.
 
-Return `value'.
+Return 'value'.
 """
 function probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = [], yElemCoord = [], zElemCoord = [])
     api_value_ = Vector{Ptr{Cdouble}}(1)
@@ -3161,7 +3161,7 @@ import ..gmsh
 
 Get 'data' from the ONELAB server.
 
-Return `data'.
+Return 'data'.
 """
 function get(format = "json")
     ierr = Vector{Cint}(1)
