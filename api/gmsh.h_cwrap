@@ -6,7 +6,7 @@
 #ifndef _GMSH_H_
 #define _GMSH_H_
 
-// This file redefines the Gmsh C++ API in terms of the C API.
+// This file redefines the Gmsh C++ API in terms of the C API (v3.0).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create 
@@ -29,16 +29,6 @@
 #include <vector>
 #include <string>
 #include <utility>
-
-#if defined(GMSH_DLL)
-#if defined(GMSH_DLL_EXPORT)
-#define GMSH_API __declspec(dllexport)
-#else
-#define GMSH_API __declspec(dllimport)
-#endif
-#else
-#define GMSH_API
-#endif
 
 extern "C" {
   #include "gmshc.h"
