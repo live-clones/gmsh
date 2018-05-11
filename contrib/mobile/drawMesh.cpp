@@ -30,9 +30,9 @@ void drawMeshVertex(GVertex *e)
     if(CTX::instance()->mesh.colorCarousel == 0 ||
        CTX::instance()->mesh.volumesFaces || CTX::instance()->mesh.surfacesFaces) {
       if(v->getPolynomialOrder() > 1)
-        col = CTX::instance()->color.mesh.vertexSup;
+        col = CTX::instance()->color.mesh.nodeSup;
       else
-        col = CTX::instance()->color.mesh.vertex;
+        col = CTX::instance()->color.mesh.node;
     }
     else
       col = getColorByEntity(e);

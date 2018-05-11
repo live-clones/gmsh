@@ -151,7 +151,7 @@
       }
       else if(indexPath.row == 1) {
         [lblOptions setText:@"Show geometry lines"];
-        [showHideOptions setOn:(CTX::instance()->geom.lines)];
+        [showHideOptions setOn:(CTX::instance()->geom.curves)];
         [showHideOptions addTarget:self action:@selector(setShowGeomLines:)
                   forControlEvents:UIControlEventValueChanged];
       }
@@ -225,7 +225,7 @@
 
 - (void)setShowGeomLines:(UISwitch*)sender
 {
-  CTX::instance()->geom.lines = sender.on;
+  CTX::instance()->geom.curves = sender.on;
   [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
 }
 
