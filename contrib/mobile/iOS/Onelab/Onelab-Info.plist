@@ -50,6 +50,8 @@
     <string>iPhoneiPodStoryboard</string>
     <key>UIMainStoryboardFile~ipad</key>
     <string>iPadStoryboard</string>
+    <key>UILaunchStoryboardName</key>
+    <string>LaunchScreen</string>   
     <key>UIRequiresFullScreen</key>
     <true/>
     <key>UIRequiredDeviceCapabilities</key>
