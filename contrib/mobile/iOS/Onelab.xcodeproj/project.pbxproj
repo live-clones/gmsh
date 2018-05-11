@@ -14,6 +14,7 @@
 		2988FF1E18E59558001435B6 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2988FF1C18E59558001435B6 /* Accelerate.framework */; };
 		2988FF1F18E59558001435B6 /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2988FF1D18E59558001435B6 /* Accelerate.framework */; };
 		29A4AC80193CE6DA0007B5A5 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 29A4AC7F193CE6DA0007B5A5 /* Images.xcassets */; };
+		29D83C8320A5E24700970050 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2924309A20A5D3830055B9AB /* LaunchScreen.storyboard */; };
 		9C1B9912194F4E0400507EFD /* slepc.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C1B9911194F4E0400507EFD /* slepc.framework */; };
 		9C1C10FA17BA5E7D00BFD483 /* OptionsViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9C1C10F917BA5E7D00BFD483 /* OptionsViewController.mm */; };
 		9C2C3A1E187FDF9200E87F78 /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C2C3A1D187FDF9200E87F78 /* libc++.tbd */; };
@@ -59,8 +60,8 @@
 		291191DA1E93ACF700069C0C /* occt.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = occt.framework; path = Onelab/frameworks/occt.framework; sourceTree = "<group>"; };
 		2924309A20A5D3830055B9AB /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		295056601D9AF3D200B9D9C4 /* MessageUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MessageUI.framework; path = System/Library/Frameworks/MessageUI.framework; sourceTree = SDKROOT; };
-               2988FF1C18E59558001435B6 /* libf2cblas.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2cblas.a; path = Onelab/frameworks/petsc.framework/libf2cblas.a; sourceTree = "<group>"; };
-               2988FF1D18E59558001435B6 /* libf2clapack.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2clapack.a; path = Onelab/frameworks/petsc.framework/libf2clapack.a; sourceTree = "<group>"; };
+                2988FF1C18E59558001435B6 /* libf2cblas.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2cblas.a; path = Onelab/frameworks/petsc.framework/libf2cblas.a; sourceTree = "<group>"; };
+                2988FF1D18E59558001435B6 /* libf2clapack.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libf2clapack.a; path = Onelab/frameworks/petsc.framework/libf2clapack.a; sourceTree = "<group>"; };
 		29A4AC7F193CE6DA0007B5A5 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		9C1B9911194F4E0400507EFD /* slepc.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = slepc.framework; path = Onelab/frameworks/slepc.framework; sourceTree = "<group>"; };
 		9C1C10F817BA5E7D00BFD483 /* OptionsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OptionsViewController.h; sourceTree = "<group>"; };
@@ -317,6 +318,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9C9608AC1712EF0900E1D4A0 /* iPadStoryboard.storyboard in Resources */,
+				29D83C8320A5E24700970050 /* LaunchScreen.storyboard in Resources */,
 				9CB1CD9818DB2D8700110882 /* icon_rotate.png in Resources */,
 				9CC85C021790286C00F241C4 /* files in Resources */,
 				29A4AC80193CE6DA0007B5A5 /* Images.xcassets in Resources */,
