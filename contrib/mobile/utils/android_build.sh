@@ -36,19 +36,21 @@ gmsh_git="${HOME}/src/gmsh"
 getdp_git="${HOME}/src/getdp"
 frameworks_dir="${HOME}/src/gmsh/contrib/mobile/frameworks_${android}"
 
-if [ -f ${getdp_git}/benchmarks/cleanup.sh ]; then
-  cd ${getdp_git}/benchmarks && ./cleanup.sh
-fi
-if [ -f ${getdp_git}/benchmarks_private/cleanup.sh ]; then
-  cd ${getdp_git}/benchmarks_private && ./cleanup.sh
-fi
-
 petsc_lib="$frameworks_dir/petsc"
 slepc_lib="$frameworks_dir/slepc"
 occ_lib="$frameworks_dir/occt/lib"
 occ_inc="$frameworks_dir/occt/inc"
 android_ndk="${HOME}/Library/Android/sdk/ndk-bundle/" 
 android_sdk="${HOME}/Library/Android/sdk/"
+
+if [ "$appname" != "Onelab" ] ; then
+  models_dir="${HOME}/src/getdp/benchmarks_private"
+else
+  models_dir="${HOME}/src/onelab_doc/models"
+fi
+if [ -f ${models_dir}/cleanup.sh ]; then
+  cd ${models_dir} && ./cleanup.sh
+fi
 
 if [ $enable_simulator != 0 ]; then
   cmake_default="-DDEFAULT=0 -DENABLE_PRIVATE_API=1 -DCMAKE_TOOLCHAIN_FILE=${android_ndk}/build/cmake/android.toolchain.cmake -DANDROID_STL_FORCE_FEATURES=1 -DENABLE_BUILD_ANDROID=1 -DCMAKE_BUILD_TYPE=Release -DANDROID_ABI=x86_64"
@@ -101,11 +103,10 @@ fi
 cd $gmsh_git/contrib/mobile/build_${android}_${appname}
 
 cmake $cmake_default -DAPPNAME:STRING=${appname} \
-      -DCMAKE_INCLUDE_PATH="$getdp_git/" \
+      -DMODELS_DIR="$models_dir" \
       -DBLAS_LIB="$petsc_lib/libf2cblas.so" -DLAPACK_LIB="$petsc_lib/libf2clapack.so" \
       -DPETSC_LIB="$petsc_lib/libpetsc.so" -DSLEPC_LIB="$slepc_lib/libslepc.so" \
       -DGMSH_INC="$gmsh_git/build_${android}/Headers" -DGMSH_LIB="$gmsh_git/build_${android}/libs/libgmsh.so" \
-      -DBENCHMARKSDIR="$getdp_git/" \
       -DGETDP_INC="$getdp_git/build_${android}/Headers" -DGETDP_LIB="$getdp_git/build_${android}/libs/libgetdp.so" ..
 check
 make androidOnelab -j$cmake_thread

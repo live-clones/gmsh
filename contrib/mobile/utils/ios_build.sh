@@ -39,19 +39,20 @@ fi
 gmsh_git="${HOME}/src/gmsh/"
 getdp_git="${HOME}/src/getdp/"
 frameworks_dir="${HOME}/src/gmsh/contrib/mobile/frameworks_${ios}/"
-
-if [ -f ${getdp_git}/benchmarks/cleanup.sh ]; then
-  cd ${getdp_git}/benchmarks && ./cleanup.sh
-fi
-if [ -f ${getdp_git}/benchmarks_private/cleanup.sh ]; then
-  cd ${getdp_git}/benchmarks_private && ./cleanup.sh
-fi
-
 petsc_framework="$frameworks_dir/petsc.framework"
 slepc_framework="$frameworks_dir/slepc.framework"
 gmsh_framework="$frameworks_dir/gmsh.framework"
 getdp_framework="$frameworks_dir/getdp.framework"
 occt_framework="$frameworks_dir/occt.framework"
+
+if [ "$appname" != "Onelab" ] ; then
+  models_dir="${HOME}/src/getdp/benchmarks_private"
+else
+  models_dir="${HOME}/src/onelab_doc/models"
+fi
+if [ -f ${models_dir}/cleanup.sh ]; then
+  cd ${models_dir} && ./cleanup.sh
+fi
 
 if [ $enable_simulator != 0 ]; then
   cmake_default="-DDEFAULT=0 -DENABLE_PRIVATE_API=1 -DCMAKE_TOOLCHAIN_FILE=$gmsh_git/contrib/mobile/utils/iOS.cmake -DIOS_PLATFORM=SIMULATOR -DENABLE_BUILD_IOS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64 -GXcode"
@@ -102,7 +103,7 @@ cp $getdp_git/build_${ios}/Headers/*.h $getdp_git/build_${ios}/Headers/getdp/* .
 # create xcode project
 mkdir $gmsh_git/contrib/mobile/build_${ios}_${appname}
 cd $gmsh_git/contrib/mobile/build_${ios}_${appname}
-cmake -DCMAKE_INCLUDE_PATH="$frameworks_dir;$getdp_git" -DAPPNAME:STRING=${appname} ..
+cmake -DMODELS_DIR="$models_dir" -DCMAKE_INCLUDE_PATH="$frameworks_dir" -DAPPNAME:STRING=${appname} ..
 make xcodeProject
 
 if [ $enable_simulator != 0 ]; then

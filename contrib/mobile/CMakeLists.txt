@@ -15,14 +15,7 @@ else(APPNAME)
 endif(APPNAME)
 
 # find all benchmarks who provide infos.xml
-if("${APPNAME}" STREQUAL "BBEMG")
-  find_path(BENCHMARKSDIR benchmarks_private/ HINTS ../../../getdp/)
-  file(GLOB BENCHMARKSDIR ${BENCHMARKSDIR}/benchmarks_private/bbemg*)
-else("${APPNAME}" STREQUAL "BBEMG")
-  find_path(BENCHMARKSDIR models/ HINTS ../../../onelab_doc/)
-  file(GLOB BENCHMARKSDIR ${BENCHMARKSDIR}/models/*)
-endif("${APPNAME}" STREQUAL "BBEMG")
-
+file(GLOB BENCHMARKSDIR ${MODELS_DIR}/*)
 foreach(SUBDIR ${BENCHMARKSDIR})
   if(IS_DIRECTORY ${SUBDIR})
     file(GLOB INFOSFILE ${SUBDIR}/infos.xml)
@@ -205,10 +198,13 @@ if(ENABLE_BUILD_ANDROID)
   )
   add_custom_command(TARGET androidProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove_directory
                     ${CMAKE_CURRENT_BINARY_DIR}/models)
+  add_custom_command(TARGET androidProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory
+                    ${CMAKE_CURRENT_BINARY_DIR}/models)
   add_custom_command(TARGET androidProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove
                     ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/res/raw/models.zip)
   foreach(DIR ${BENCHMARKS})
     get_filename_component(DIRNAME ${DIR} NAME)
+
     add_custom_command(TARGET androidProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
                       ${DIR} ${CMAKE_CURRENT_BINARY_DIR}/models/${DIRNAME})
   endforeach(DIR)
