@@ -1,4 +1,4 @@
-# This file reimplements gmsh/tutorial/t1.geo in Julia. 
+# This file reimplements gmsh/tutorial/t1.geo in Julia.
 
 # For all the elementary explanations about the general philosphy of entities in
 # Gmsh, see the comments in the .geo file. Comments here focus on the specifics
@@ -12,17 +12,17 @@ gmsh.initialize()
 
 # By default Gmsh will not print out any messages: in order to output messages
 # on the terminal, just set the standard Gmsh option "General.Terminal" (same
-# format and meaning as in .geo files) using gmshOptionSetNumber():
+# format and meaning as in .geo files):
 gmsh.option.setNumber("General.Terminal", 1)
 
-# This creates a new model, named "t1". If gmshModelCreate() is not called, a
-# new default (unnamed) model will be created on the fly, if necessary.
+# Next we add a new model named "t1" (if gmsh.model.add() is not called a new
+# unnamed model will be created on the fly, if necessary):
 gmsh.model.add("t1")
 
 # The Julia API provides direct access to the internal CAD kernels. The
 # built-in CAD kernel was used in t1.geo: the corresponding API functions have
-# the "gmshModeGeo" prefix. To create geometrical points with the built-in CAD
-# kernel, one thus uses gmshModelGeoAddPoint():
+# the "gmsh.model.geo" prefix. To create geometrical points with the built-in
+# CAD kernel, one thus uses gmsh.model.geo.addPoint():
 #
 # - the first 3 arguments are the point coordinates (x, y, z)
 #
@@ -43,7 +43,6 @@ gmsh.model.geo.addLine(3, 2, 2)
 gmsh.model.geo.addLine(3, 4, 3)
 gmsh.model.geo.addLine(4, 1, 4)
 
-
 # The philosophy to construct curve loops and surfaces is similar: the first
 # argument is now a vector of integers.
 gmsh.model.geo.addCurveLoop([4, 1, -2, 3], 1)
@@ -63,7 +62,7 @@ gmsh.model.setPhysicalName(2, 6, "My surface")
 
 # Before it can be meshed, the internal CAD representation must be synchronized
 # with the Gmsh model, which will create the relevant Gmsh data structures. This
-# is achieved by the gmshModelGeoSynchronize() API call for the built-in CAD
+# is achieved by the gmsh.model.geo.synchronize() API call for the built-in CAD
 # kernel. Synchronizations can be called at any time, but they involve a non
 # trivial amount of processing; so while you could synchronize the internal CAD
 # data after every CAD command, it is usually better to minimize the number of
