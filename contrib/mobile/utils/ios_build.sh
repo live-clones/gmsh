@@ -3,6 +3,8 @@
 appname=Onelab
 enable_occ=1
 enable_simulator=0
+#buildtype=Debug
+buildtype=Release
 
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -55,13 +57,13 @@ if [ -f ${models_dir}/cleanup.sh ]; then
 fi
 
 if [ $enable_simulator != 0 ]; then
-  cmake_default="-DDEFAULT=0 -DENABLE_PRIVATE_API=1 -DCMAKE_TOOLCHAIN_FILE=$gmsh_git/contrib/mobile/utils/iOS.cmake -DIOS_PLATFORM=SIMULATOR -DENABLE_BUILD_IOS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=x86_64 -GXcode"
+  cmake_default="-DDEFAULT=0 -DENABLE_PRIVATE_API=1 -DCMAKE_TOOLCHAIN_FILE=$gmsh_git/contrib/mobile/utils/iOS.cmake -DIOS_PLATFORM=SIMULATOR -DENABLE_BUILD_IOS=1 -DCMAKE_BUILD_TYPE=${buildtype} -DCMAKE_OSX_ARCHITECTURES=x86_64 -GXcode"
 else
-  cmake_default="-DDEFAULT=0 -DENABLE_PRIVATE_API=1 -DCMAKE_TOOLCHAIN_FILE=$gmsh_git/contrib/mobile/utils/iOS.cmake -DIOS_PLATFORM=OS -DENABLE_BUILD_IOS=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=armv7;armv7s;arm64 -GXcode"
+  cmake_default="-DDEFAULT=0 -DENABLE_PRIVATE_API=1 -DCMAKE_TOOLCHAIN_FILE=$gmsh_git/contrib/mobile/utils/iOS.cmake -DIOS_PLATFORM=OS -DENABLE_BUILD_IOS=1 -DCMAKE_BUILD_TYPE=${buildtype} -DCMAKE_OSX_ARCHITECTURES=armv7;armv7s;arm64 -GXcode"
 fi
 
-build_cmd="xcodebuild -target lib -configuration Release"
-headers_cmd="xcodebuild -target get_headers -configuration Release"
+build_cmd="xcodebuild -target lib -configuration ${buildtype}"
+headers_cmd="xcodebuild -target get_headers -configuration ${buildtype}"
 
 function check {
   return_code=$?
@@ -81,7 +83,7 @@ $build_cmd OTHER_CFLAGS="-m${iphoneos_version}-min=8.0 -fembed-bitcode" OTHER_CP
 check
 $headers_cmd
 mkdir -p $gmsh_framework/Headers
-cp $gmsh_git/build_${ios}/Release-${iphoneos}/libgmsh.a $gmsh_framework/gmsh
+cp $gmsh_git/build_${ios}/${buildtype}-${iphoneos}/libgmsh.a $gmsh_framework/gmsh
 cd $gmsh_framework/Headers
 cp $gmsh_git/build_${ios}/Headers/*.h $gmsh_git/build_${ios}/Headers/gmsh/* .
 ln -s . gmsh
@@ -96,7 +98,7 @@ $build_cmd OTHER_CFLAGS="-m${iphoneos_version}-min=8.0 -fembed-bitcode" OTHER_CP
 check
 $headers_cmd
 mkdir -p $getdp_framework/Headers
-cp $getdp_git/build_${ios}/Release-${iphoneos}/libgetdp.a $getdp_framework/getdp
+cp $getdp_git/build_${ios}/${buildtype}-${iphoneos}/libgetdp.a $getdp_framework/getdp
 cd $getdp_framework/Headers
 cp $getdp_git/build_${ios}/Headers/*.h $getdp_git/build_${ios}/Headers/getdp/* .
 
