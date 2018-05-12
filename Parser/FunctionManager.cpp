@@ -17,13 +17,13 @@ class File_Position
   std::string filename;
 };
 
-class mystack
+class FunctionManagerStack
 {
  public:
   std::stack<File_Position> s;
 };
 
-class mymap
+class FunctionManagerMap
 {
  public:
   std::map<std::string, File_Position> m;
@@ -33,8 +33,8 @@ FunctionManager *FunctionManager::instance = 0;
 
 FunctionManager::FunctionManager()
 {
-  functions = new mymap;
-  calls = new mystack;
+  functions = new FunctionManagerMap;
+  calls = new FunctionManagerStack;
 }
 
 FunctionManager *FunctionManager::Instance()
