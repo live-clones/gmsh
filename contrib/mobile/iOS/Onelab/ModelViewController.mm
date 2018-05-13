@@ -8,14 +8,6 @@
 
 #import "AppDelegate.h"
 
-@implementation UIErrorAlertView
-
--(void)dismissWithClickedButtonIndex:(NSInteger)buttonIndex animated:(BOOL)animated
-{
-  if(buttonIndex == 0) [super dismissWithClickedButtonIndex:buttonIndex animated:animated];
-}
-@end
-
 @interface ModelViewController ()
 - (void)configureView;
 @end
@@ -133,6 +125,8 @@
 
 - (void)compute
 {
+  AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+  appDelegate->compute = YES;
   [_runStopButton setAction:@selector(stop)];
   [_runStopButton setTitle:@"Stop"];
   [_progressLabel setText:@""];
@@ -140,10 +134,7 @@
   [_progressIndicator setHidden:NO];
   [_progressIndicator startAnimating];
   [[UIApplication sharedApplication] cancelAllLocalNotifications];
-  AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
-  appDelegate->compute = YES;
-  dispatch_queue_t queue = dispatch_queue_create("org.geuz.onelab", NULL);
-  dispatch_async(queue, ^{
+  dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
       onelab_cb("compute");
       dispatch_async(dispatch_get_main_queue(), ^{
           AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
@@ -243,23 +234,28 @@
 
 - (void) showModelsList
 {
-  if(((AppDelegate *)[UIApplication sharedApplication].delegate)->compute) {
-    UIAlertView *alert;
-    alert = [[UIAlertView alloc] initWithTitle:@"Can't show the model list"
-                                       message:@"The computation has to complete before you can select another model."
-                                      delegate:nil
-                             cancelButtonTitle:@"Ok"
-                             otherButtonTitles:nil, nil];
-    [alert show];
+  AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
+  if(appDelegate->compute) {
+    UIAlertController *alert =
+      [UIAlertController
+        alertControllerWithTitle:@"Cannot show model list"
+                         message:@"Computation has to complete before a new model can be selected"
+                  preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *dismissButton =
+      [UIAlertAction actionWithTitle:@"Dismiss"
+                               style:UIAlertActionStyleDefault
+                             handler:^(UIAlertAction * action) { }];
+    [alert addAction:dismissButton];
+    [self presentViewController:alert animated:YES completion:nil];
     return;
   }
   if([[UIDevice currentDevice].model isEqualToString:@"iPad"] ||
      [[UIDevice currentDevice].model isEqualToString:@"iPad Simulator"]){
-    AppDelegate *appDelegate = (AppDelegate *)[UIApplication sharedApplication].delegate;
     [UIView transitionWithView:appDelegate.window
                       duration:0.5
                        options:UIViewAnimationOptionTransitionFlipFromRight
-                    animations:^{ appDelegate.window.rootViewController = appDelegate.modelListController; }
+                    animations:^{
+        appDelegate.window.rootViewController = appDelegate.modelListController; }
     completion:nil];
   }
   [self.navigationController popToRootViewControllerAnimated:YES];
@@ -328,15 +324,21 @@ void messageFromCpp (void *self, std::string level, std::string msg)
 
 -(void)showError:(NSString *)msg
 {
-  // only show first error
-  if(_errorAlert != nil && _errorAlert.visible) return;
   // remove document path from error message
   NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
   NSString *docPath = [[paths objectAtIndex:0] stringByAppendingString:@"/"];
   NSString *str = [msg stringByReplacingOccurrencesOfString:docPath withString:@""];
-  _errorAlert = [[UIErrorAlertView alloc] initWithTitle:@"Error" message:str delegate:self
-                                      cancelButtonTitle:@"Dismiss" otherButtonTitles:nil, nil];
-  [_errorAlert show];
+  UIAlertController *alert =
+    [UIAlertController
+        alertControllerWithTitle:@"Error"
+                         message:str
+                  preferredStyle:UIAlertControllerStyleAlert];
+  UIAlertAction *dismissButton =
+    [UIAlertAction actionWithTitle:@"Dismiss"
+                             style:UIAlertActionStyleDefault
+                           handler:^(UIAlertAction * action) { }];
+  [alert addAction:dismissButton];
+  [self presentViewController:alert animated:YES completion:nil];
 }
 
 -(void)handleProgressIndicatorTap:(id)sender
@@ -379,9 +381,10 @@ void getBitmap(void *self, const char *text, int textsize, unsigned char **map,
   NSUInteger bytesPerPixel = 4;
   NSUInteger bytesPerRow = bytesPerPixel * *width;
   NSUInteger bitsPerComponent = 8;
-  CGContextRef context = CGBitmapContextCreate(rawData, *width, *height,
-                                               bitsPerComponent, bytesPerRow, colorSpace,
-                                               kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+  CGContextRef context = CGBitmapContextCreate
+    (rawData, *width, *height,
+     bitsPerComponent, bytesPerRow, colorSpace,
+     kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
   CGColorSpaceRelease(colorSpace);
 
   CGContextDrawImage(context, CGRectMake(0, 0, *width, *height), bitmap);
