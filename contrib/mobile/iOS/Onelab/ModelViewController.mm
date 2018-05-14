@@ -42,9 +42,10 @@
   _progressIndicator.frame = CGRectMake(20, self.view.frame.size.height - 25,
                                         _progressIndicator.frame.size.width,
                                         _progressIndicator.frame.size.height);
-  [_progressIndicator addGestureRecognizer:[[UITapGestureRecognizer alloc]
-                                             initWithTarget:self
-                                                     action:@selector(handleProgressIndicatorTap:)]];
+  [_progressIndicator
+    addGestureRecognizer:
+      [[UITapGestureRecognizer alloc] initWithTarget:self
+                                              action:@selector(handleProgressIndicatorTap:)]];
   [_progressLabel setHidden:YES];
   [_progressIndicator setHidden:YES];
   [self.navigationController setToolbarHidden:YES animated:NO];
