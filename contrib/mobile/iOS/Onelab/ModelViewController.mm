@@ -134,6 +134,8 @@
   [_progressLabel setHidden:NO];
   [_progressIndicator setHidden:NO];
   [_progressIndicator startAnimating];
+  self.navigationItem.hidesBackButton = YES;
+
   [[UIApplication sharedApplication] cancelAllLocalNotifications];
   dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
       onelab_cb("compute");
@@ -146,6 +148,7 @@
           [_progressLabel setHidden:YES];
           [_progressIndicator stopAnimating];
           [_progressIndicator setHidden:YES];
+          self.navigationItem.hidesBackButton = NO;
         });
     });
 }
