@@ -46,7 +46,7 @@ android_sdk="${HOME}/Library/Android/sdk/"
 if [ "$appname" != "Onelab" ] ; then
   models_dir="${HOME}/src/getdp/benchmarks_private"
 else
-  models_dir="${HOME}/src/onelab_doc/models"
+  models_dir="${HOME}/src/onelab_doc"
 fi
 if [ -f ${models_dir}/cleanup.sh ]; then
   cd ${models_dir} && ./cleanup.sh
