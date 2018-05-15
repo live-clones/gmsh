@@ -854,7 +854,7 @@ void _relocateVertex(GFace *gf, MVertex *ver,
   ver->getParameter(1, initv);
 
   // compute the vertices connected to that one
-  std::map<MVertex*,SPoint2> pts;
+  std::map<MVertex*,SPoint2,MVertexLessThanNum> pts;
   for(unsigned int i = 0; i < lt.size(); i++){
     for (int j=0;j<lt[i]->getNumEdges();j++){
       MEdge e = lt[i]->getEdge(j);
