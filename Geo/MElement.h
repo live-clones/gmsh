@@ -307,7 +307,9 @@ class MElement
   virtual double getJacobian(const fullMatrix<double> &gsf, double jac[3][3]) const;
   // To be compatible with _vgrads of functionSpace without having to put under
   // fullMatrix form
-  virtual double getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])const ;
+  virtual double getJacobian(const std::vector<SVector3> &gsf, double jac[3][3]) const;
+  // jac is an row-major order array 
+  virtual double getJacobian(const std::vector<SVector3> &gsf, double *jac) const;
   virtual double getJacobian(double u, double v, double w, double jac[3][3]) const;
   inline double getJacobian(double u, double v, double w, fullMatrix<double> &j) const{
     double JAC[3][3];

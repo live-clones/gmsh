@@ -635,6 +635,82 @@ static double _computeDeterminantAndRegularize(const MElement *ele, double jac[3
   return dJ;
 }
 
+static double _computeDeterminantAndRegularize(const MElement *ele, double *jac)
+{
+  double dJ = 0;
+  
+  /**
+   * 'jac' is a row-major order array :
+   *
+   *  |0 1 2|
+   *  |3 4 5|
+   *  |6 7 8|
+   *
+   */
+  
+  switch (ele->getDim()) {
+    
+    case 0:
+    {
+    dJ = 1.0;
+    jac[0] = jac[4] = jac[8] = 1.0;
+    jac[1] = jac[2] = jac[3] = 0.0;
+    jac[5] = jac[6] = jac[7] = 0.0;
+    break;
+    }
+    case 1:
+    {
+    dJ = sqrt(SQU(jac[0]) + SQU(jac[1]) + SQU(jac[2]));
+    
+    // regularize matrix
+    double a[3], b[3], c[3];
+    a[0] = jac[0];
+    a[1] = jac[1];
+    a[2] = jac[2];
+    if((fabs(a[0]) >= fabs(a[1]) && fabs(a[0]) >= fabs(a[2])) ||
+       (fabs(a[1]) >= fabs(a[0]) && fabs(a[1]) >= fabs(a[2]))) {
+      b[0] = a[1]; b[1] = -a[0]; b[2] = 0.;
+    }
+    else {
+      b[0] = 0.; b[1] = a[2]; b[2] = -a[1];
+    }
+    norme(b);
+    prodve(a, b, c);
+    norme(c);
+    jac[3] = b[0]; jac[4] = b[1]; jac[5] = b[2];
+    jac[6] = c[0]; jac[7] = c[1]; jac[8] = c[2];
+    break;
+    }
+    case 2:
+    {
+    dJ = sqrt(SQU(jac[0] * jac[4] - jac[1] * jac[3]) +
+              SQU(jac[2] * jac[3] - jac[0] * jac[5]) +
+              SQU(jac[1] * jac[5] - jac[2] * jac[4]));
+    
+    // regularize matrix
+    double a[3], b[3], c[3];
+    a[0] = jac[0];
+    a[1] = jac[1];
+    a[2] = jac[2];
+    b[0] = jac[3];
+    b[1] = jac[4];
+    b[2] = jac[5];
+    prodve(a, b, c);
+    norme(c);
+    jac[6] = c[0]; jac[7] = c[1]; jac[8] = c[2];
+    break;
+    }
+    case 3:
+    {
+    dJ = (jac[0] * jac[4] * jac[8] + jac[2] * jac[3] * jac[7] +
+          jac[1] * jac[5] * jac[7] - jac[3] * jac[4] * jac[6] -
+          jac[0] * jac[5] * jac[7] - jac[1] * jac[3] * jac[8]);
+    break;
+    }
+  }
+  return dJ;
+}
+
 double MElement::getJacobian(double u, double v, double w, double jac[3][3]) const
 {
   jac[0][0] = jac[0][1] = jac[0][2] = 0.;
@@ -688,6 +764,25 @@ double MElement::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])
       jac[j][0] += v->x() * mult;
       jac[j][1] += v->y() * mult;
       jac[j][2] += v->z() * mult;
+    }
+  }
+  return _computeDeterminantAndRegularize(this, jac);
+}
+
+double MElement::getJacobian(const std::vector<SVector3> &gsf, double *jac) const
+{
+  for(unsigned int i = 0; i < 9; i++){
+    jac[i] = 0.;
+  }
+  
+  const int numShapeFunctions = getNumVertices();
+  for (int i = 0; i < numShapeFunctions; i++) {
+    const MVertex *v = getShapeFunctionNode(i);
+    for (int j = 0; j < 3; j++) {
+      const double mult = gsf[i][j];
+      jac[3*j+0] += v->x() * mult;
+      jac[3*j+1] += v->y() * mult;
+      jac[3*j+2] += v->z() * mult;
     }
   }
   return _computeDeterminantAndRegularize(this, jac);

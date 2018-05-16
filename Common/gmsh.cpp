@@ -1013,7 +1013,8 @@ static void _getJacobianData(const int elementType,
     int idx = begin*nbrIPoint;
     for(unsigned int i = 0; i < entities.size(); i++){
       GEntity *ge = entities[i];
-      for(unsigned int j = 0; j < ge->getNumMeshElementsByType(familyType); j++){
+      const unsigned int numMeshElements = ge->getNumMeshElementsByType(familyType);
+      for(unsigned int j = 0; j < numMeshElements; j++){
         if(o >= begin && o < end){
           MElement *e = ge->getMeshElementByType(familyType, j);
           if(gsf.size() == 0){
@@ -1030,11 +1031,7 @@ static void _getJacobianData(const int elementType,
             }
           }
           for(int k = 0; k < nbrIPoint; k++){
-            double jac[3][3];
-            determinant[idx] = e->getJacobian(gsf[k], jac);
-            for(int m = 0; m < 3; m++)
-              for(int n = 0; n < 3; n++)
-                jacobian[idx*9 + m*3 + n] = jac[m][n];
+            determinant[idx] = e->getJacobian(gsf[k], &jacobian[idx*9]);
             idx++;
           }
         }
