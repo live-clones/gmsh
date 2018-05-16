@@ -7,8 +7,8 @@
 #include "GmshDefines.h"
 
 StringXNumber HarmonicToTimeOptions_Number[] = {
-  {GMSH_FULLRC, "RealPart", NULL, 0.},
-  {GMSH_FULLRC, "ImaginaryPart", NULL, 1.},
+  {GMSH_FULLRC, "RealPartCoefficient", NULL, 0.},
+  {GMSH_FULLRC, "ImaginaryPartCoefficient", NULL, 1.},
   {GMSH_FULLRC, "NumSteps", NULL, 20.},
   {GMSH_FULLRC, "TimeSign", NULL, -1.},
   {GMSH_FULLRC, "Frequency", NULL, 1},
@@ -30,9 +30,11 @@ std::string GMSH_HarmonicToTimePlugin::getHelp() const
     "time steps `RealPart' and `ImaginaryPart' of "
     "the view `View', and creates a new view "
     "containing\n\n"
-    "`View'[`RealPart'] * cos(p) +- `View'[`ImaginaryPart'] * sin(p)\n\n"
-    "with p = 2*Pi*k/`NumSteps', k = 0, ..., `NumSteps'-1.\n"
-    "The + or - sign is controlled by `TimeSign'.\n\n"
+    "`View'[`RealPart'] * cos(p) +- `View'[`ImaginaryPart'] * sin(p)\n"
+    "with\n p = 2*Pi*k/`NumSteps', k = 0, ..., `NumSteps'-1\n"
+    "and 'NumSteps' the total number of time steps\n"
+    "over 'NumPeriods' periods at frequency 'Frequency' [Hz].\n"
+    "The '+' sign is used if `TimeSign'>0, the '-' sign otherwise.\n\n"
     "If `View' < 0, the plugin is run on the current view.\n\n"
     "Plugin(HarmonicToTime) creates one new view.";
 }
