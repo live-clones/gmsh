@@ -7,8 +7,8 @@
 #include "GmshDefines.h"
 
 StringXNumber HarmonicToTimeOptions_Number[] = {
-  {GMSH_FULLRC, "RealPartCoefficient", NULL, 0.},
-  {GMSH_FULLRC, "ImaginaryPartCoefficient", NULL, 1.},
+  {GMSH_FULLRC, "RealPart", NULL, 0.},
+  {GMSH_FULLRC, "ImaginaryPart", NULL, 1.},
   {GMSH_FULLRC, "NumSteps", NULL, 20.},
   {GMSH_FULLRC, "TimeSign", NULL, -1.},
   {GMSH_FULLRC, "Frequency", NULL, 1},
