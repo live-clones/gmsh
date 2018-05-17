@@ -162,7 +162,6 @@ namespace BoundaryLayerCurver
 }
 
 void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
-                          std::vector<MElement*> aboveElements,
                           SVector3 normal, GEntity *bndEnt);
 
 void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, GFace*);

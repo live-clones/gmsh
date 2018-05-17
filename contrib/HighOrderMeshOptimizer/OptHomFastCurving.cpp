@@ -1089,12 +1089,16 @@ void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
     ++it;
   }
 
+  for (unsigned int i = 0; i < bndEl2column.size(); ++i) {
+    bndEl2column[i].second.push_back(aboveElements[i]);
+  }
+
   SVector3 normal;
   if (normals)
     normal = SVector3((*normals)(0, 0), (*normals)(0, 1), (*normals)(0, 2));
   else
     normal = SVector3(0, 0, 1);
-  if (p.dim == 2) curve2DBoundaryLayer(bndEl2column, aboveElements, normal, bndEnt);
+  if (p.dim == 2) curve2DBoundaryLayer(bndEl2column, normal, bndEnt);
 //  else curve3DBoundaryLayer(bndEl2column);
 }
 

@@ -1941,22 +1941,19 @@ namespace BoundaryLayerCurver
     return MEdge();
   }
 
-  bool curve2DTriColumn(MElement *bottomEdge, MElement *extElem,
-                        std::vector<MElement *> &column,
+  bool curve2DTriColumn(MElement *bottomEdge, std::vector<MElement *> &column,
                         SVector3 &w, double dampingFactor, GEntity *bndEnt)
   {
     MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
     std::vector<MVertex *> bottomVertices, topVertices, midVertices;
 
-    for (int i = 0; i < column.size(); i += 2) {
+    for (int i = 0; i < column.size() - 1; i += 2) {
       MTriangle *tri0 = dynamic_cast<MTriangle *>(column[i]);
       MTriangle *tri1 = dynamic_cast<MTriangle *>(column[i+1]);
       MEdge common = commonEdge(tri0, tri1);
       MEdge top;
-      if (i == column.size() - 2)
-        top = commonEdge(tri1, extElem);
-      else
-        top = commonEdge(tri1, dynamic_cast<MTriangle *>(column[i+2]));
+      // FIXME last element can be none-triangular
+      top = commonEdge(tri1, dynamic_cast<MTriangle *>(column[i+2]));
 
       // Reorient if needed (makes function repositionInteriorNodes() simpler)
       int iBottom, iTop, sign;
@@ -2080,7 +2077,7 @@ namespace BoundaryLayerCurver
 
     // Go trough the whole column and compute TFI position of topVertices
     std::vector<MVertex *> bottomVertices;
-    for (int i = (int)column.size() - 1; i >= 0; --i) {
+    for (unsigned int i = 1; i < column.size() - 1; ++i) {
       MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
       quad->getEdgeVertices(0, bottomVertices);
       MVertex *v = bottomVertices[0];
@@ -2095,6 +2092,9 @@ namespace BoundaryLayerCurver
         v->y() = (1 - factor) * vbot->y() + factor * vtop->y();
         v->z() = (1 - factor) * vbot->z() + factor * vtop->z();
       }
+    }
+    for (unsigned int i = 0; i < column.size() - 1; ++i) {
+      MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
       repositionInteriorNodes(quad);
     }
   }
@@ -2243,7 +2243,7 @@ namespace BoundaryLayerCurver
 //    double lengthFirst = bottom.length();
 //    double distDamping = getDistDamping(bottomEdge->getNum()) * lengthFirst;
 
-    for (int i = 0; i < column.size(); ++i) {
+    for (int i = 0; i < column.size() - 1; ++i) {
       MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
       int iBottom, sign;
       quad->getEdgeInfo(bottom, iBottom, sign);
@@ -2259,7 +2259,7 @@ namespace BoundaryLayerCurver
         allLayerVertices.push_back(bottomVertices);
       }
       allLayerVertices.push_back(topVertices);
-      if (i == column.size() - 1) globalTopVertices = topVertices;
+      if (i == column.size() - 2) globalTopVertices = topVertices;
 
       bottom = MEdge(topVertices[0], topVertices[1]);
     }
@@ -2664,7 +2664,6 @@ namespace BoundaryLayerCurver
 
 
 void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
-                          std::vector<MElement*> aboveElements,
                           SVector3 n, GEntity *bndEnt)
 {
 #ifdef _OPENMP
@@ -2679,6 +2678,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
 //    if (bottomEdge->getNum() != 1078) continue; // Next to good
 //    if (bottomEdge->getNum() != 1102) continue; // Bad HO
 //    if (bottomEdge->getNum() != 1136) continue; // Bad linear
+//    if (bottomEdge->getNum() != 1149) continue; // shorter
 //    if (bottomEdge->getNum() != 1150) continue; // concave
 //    if (bottomEdge->getNum() != 1151) continue; // symetric of concave
 //    if (bottomEdge->getNum() != 1156) continue; // Strange
@@ -2690,7 +2690,6 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
     if (!success && dampingFactor < 1000) {
       if (column[0]->getType() == TYPE_TRI)
         success = BoundaryLayerCurver::curve2DTriColumn(bottomEdge,
-                                                        aboveElements[i],
                                                         column, n,
                                                         dampingFactor, bndEnt);
       else
