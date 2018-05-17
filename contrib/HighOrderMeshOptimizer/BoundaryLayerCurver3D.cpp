@@ -194,7 +194,7 @@ namespace BoundaryLayerCurver
                                              {NULL, NULL, NULL, NULL, NULL,
                                               NULL, NULL, NULL, NULL, NULL}};
 
-    const fullMatrix<double>* triangle(int order, bool linear, int edge = 2)
+    const fullMatrix<double>* triangle(int order, bool linear, int edge)
     {
       if (!linear) {
         if (!_triangle[order]) {
@@ -240,8 +240,8 @@ namespace BoundaryLayerCurver
       }
     }
 
-    const fullMatrix<double>* tetrahedron(int order, bool linear, int face = 0,
-                                          int otherFace = 0)
+    const fullMatrix<double>* tetrahedron(int order, bool linear, int face,
+                                          int otherFace)
     {
       if (!linear) {
         if (!_tetrahedron[order]) {
@@ -271,7 +271,7 @@ namespace BoundaryLayerCurver
       }
     }
 
-    const fullMatrix<double>* hexahedron(int order, bool linear, int face = 0)
+    const fullMatrix<double>* hexahedron(int order, bool linear, int face)
     {
       if (!linear) {
         if (!_hexahedron[order]) {
@@ -297,7 +297,7 @@ namespace BoundaryLayerCurver
       }
     }
 
-    const fullMatrix<double>* prism(int order, bool linear, int face = 0)
+    const fullMatrix<double>* prism(int order, bool linear, int face)
     {
       if (!linear) {
         if (!_prism[order]) {

@@ -49,6 +49,7 @@
 #include "AnalyseCurvedMesh.h"
 #include "InteriorNodePlacement.h"
 #include "pointsGenerators.h"
+#include "qualityMeasuresJacobian.h"
 
 namespace
 {
@@ -1881,8 +1882,24 @@ namespace BoundaryLayerCurver
     return data;
   }
 
-  void repositionInteriorNodes(MElement *el)
+  void repositionInteriorNodes(MElement *el, bool external = false)
   {
+    if (external) {
+      const fullMatrix<double> *placement = NULL;
+      int type = el->getType();
+      int order = el->getPolynomialOrder();
+      if (type == TYPE_QUA) {
+        placement = InteriorNodePlacementMatrices::quadrangle(order, false);
+      }
+      else {
+        placement = InteriorNodePlacementMatrices::triangle(order, false);
+      }
+      // FIXME dirty code (creation of MFaceN to reposition interior vertices)
+      MFaceN f = el->getHighOrderFace(0, 0, 0);
+      f.repositionInteriorNodes(placement);
+      return;
+    }
+
     int tag = el->getTypeForMSH();
     InteriorPlacementData *data;
 
@@ -1901,6 +1918,22 @@ namespace BoundaryLayerCurver
       v->x() = data->factor[i] * v0->x() + (1 - data->factor[i]) * v1->x();
       v->y() = data->factor[i] * v0->y() + (1 - data->factor[i]) * v1->y();
       v->z() = data->factor[i] * v0->z() + (1 - data->factor[i]) * v1->z();
+    }
+  }
+
+  void reduceCurving(std::vector<MVertex *> edge)
+  {
+    int order = (int)edge.size() - 1;
+
+    MVertex *v0 = edge[0];
+    MVertex *v1 = edge[1];
+
+    for (int i = 2; i < order + 1; ++i) {
+      double f = (double)(i-1) / order;
+      MVertex *v = edge[i];
+      v->x() = .5 * v->x() + .5 * ((1-f) * v0->x() + f * v1->x());
+      v->y() = .5 * v->y() + .5 * ((1-f) * v0->y() + f * v1->y());
+      v->z() = .5 * v->z() + .5 * ((1-f) * v0->z() + f * v1->z());
     }
   }
 
@@ -2300,6 +2333,24 @@ namespace BoundaryLayerCurver
     computePositionEdgeVert(globalBottomVertices, globalBottomVertices,
                             globalTopVertices, parameters, w,
                             dampingFactor, bndEnt, -1, true);
+
+    // Check if outer element is of good quality:
+    MElement *el = column.back();
+    repositionInteriorNodes(el, true);
+    fullMatrix<double> normal(1, 3);
+    normal(0, 0) = w.x();
+    normal(0, 1) = w.y();
+    normal(0, 2) = w.z();
+    double qual = jacobianBasedQuality::minIGEMeasure(el, false, true, &normal);
+
+    int nIter = 0;
+    while (nIter < 100 && qual < .3) {
+      reduceCurving(globalTopVertices);
+      repositionInteriorNodes(el, true);
+      qual = jacobianBasedQuality::minIGEMeasure(el, false, true, &normal);
+      ++nIter;
+    }
+
 
 //    Parameters2DCurve parameters2;
 //    computeExtremityCoefficients(globalTopVertices, globalTopVertices,

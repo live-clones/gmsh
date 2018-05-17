@@ -191,11 +191,22 @@ bool MElement::getEdgeInfo(const MEdge &edge, int &ithEdge, int &sign) const
 
 MFaceN MElement::getHighOrderFace(int num, int sign, int rot)
 {
+  if (getDim() < 2 || getDim() > 3) {
+    Msg::Error("Wrong dimension for getHighOrderFace");
+    return MFaceN();
+  }
+
+  if (getDim() == 2) {
+    std::vector<MVertex *> vertices(getNumVertices());
+    getVertices(vertices);
+    return MFaceN(getType(), getPolynomialOrder(), vertices);
+  }
+
   const nodalBasis *fs = getFunctionSpace();
   int id = fs->getClosureId(num, sign, rot);
   const std::vector<int> &closure = fs->getClosure(id);
 
-  std::vector<MVertex*> vertices(closure.size());
+  std::vector<MVertex *> vertices(closure.size());
   for (unsigned int i = 0; i < closure.size(); ++i) {
     vertices[i] = getVertex(closure[i]);
   }

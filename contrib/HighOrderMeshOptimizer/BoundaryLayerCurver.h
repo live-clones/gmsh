@@ -159,6 +159,16 @@ namespace BoundaryLayerCurver
                                       int orderGauss);
   LeastSquareData* constructLeastSquareData(int typeElement, int order,
                                             int orderGauss);
+
+  namespace InteriorNodePlacementMatrices {
+    const fullMatrix<double> *triangle(int order, bool linear, int edge = 2);
+    const fullMatrix<double> *quadrangle(int order, bool linear);
+    const fullMatrix<double>* tetrahedron(int order, bool linear, int face = 0,
+                                          int otherFace = 0);
+    const fullMatrix<double>* hexahedron(int order, bool linear, int face = 0);
+    const fullMatrix<double>* prism(int order, bool linear, int face = 0);
+  }
+
 }
 
 void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
