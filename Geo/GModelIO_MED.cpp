@@ -370,7 +370,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
     std::map<int, std::vector<MElement*> > elements;
     MElementFactory factory;
     for(int j = 0; j < numEle; j++){
-      std::vector<MVertex*> v(numNodPerEle, 0);
+      std::vector<MVertex*> v(numNodPerEle);
       bool ok = true;
       for(int k = 0; k < numNodPerEle; k++){
         int idx = conn[numNodPerEle * j + med2mshNodeIndex(type, k)] - 1;
