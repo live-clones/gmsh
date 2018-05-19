@@ -854,7 +854,7 @@ void _relocateVertex(GFace *gf, MVertex *ver,
   ver->getParameter(1, initv);
 
   // compute the vertices connected to that one
-  std::map<MVertex*,SPoint2> pts;
+  std::map<MVertex*,SPoint2,MVertexLessThanNum> pts;
   for(unsigned int i = 0; i < lt.size(); i++){
     for (int j=0;j<lt[i]->getNumEdges();j++){
       MEdge e = lt[i]->getEdge(j);
@@ -875,7 +875,7 @@ void _relocateVertex(GFace *gf, MVertex *ver,
   SPoint2 after(0,0);
   double COUNT = 0.0;
   // printf("weights :");
-  for(std::map<MVertex*,SPoint2>::iterator it = pts.begin(); it != pts.end() ; ++it) {
+  for(std::map<MVertex*,SPoint2,MVertexLessThanNum>::iterator it = pts.begin(); it != pts.end() ; ++it) {
     SPoint2  adj = it->second;
     SVector3 d(adj.x() - before.x(), adj.y() - before.y(), 0.0);
     d.normalize();

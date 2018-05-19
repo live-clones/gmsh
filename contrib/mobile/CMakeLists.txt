@@ -14,22 +14,25 @@ else(APPNAME)
   set(APPNAME Onelab)
 endif(APPNAME)
 
-# find all benchmarks who provide infos.xml
-if("${APPNAME}" STREQUAL "BBEMG")
-  find_path(BENCHMARKSDIR benchmarks_private/ HINTS ../../../getdp/)
-  file(GLOB BENCHMARKSDIR ${BENCHMARKSDIR}/benchmarks_private/bbemg*)
-else("${APPNAME}" STREQUAL "BBEMG")
-  find_path(BENCHMARKSDIR models/ HINTS ../../../onelab_doc/)
-  message("HEY ${BENCHMARKSDIR}")
-  file(GLOB BENCHMARKSDIR ${BENCHMARKSDIR}/models/*)
-endif("${APPNAME}" STREQUAL "BBEMG")
-
+# find all benchmarks (in a two-level dir hierarchy) who provide infos.xml
+file(GLOB BENCHMARKSDIR ${MODELS_DIR}/*)
 foreach(SUBDIR ${BENCHMARKSDIR})
   if(IS_DIRECTORY ${SUBDIR})
     file(GLOB INFOSFILE ${SUBDIR}/infos.xml)
     if(INFOSFILE)
       message(STATUS "Found benchmark ${SUBDIR}")
       list(APPEND BENCHMARKS ${SUBDIR})
+    else()
+      file(GLOB BENCHMARKSDIR2 ${SUBDIR}/*)
+      foreach(SUBDIR2 ${BENCHMARKSDIR2})
+        if(IS_DIRECTORY ${SUBDIR2})
+          file(GLOB INFOSFILE ${SUBDIR2}/infos.xml)
+          if(INFOSFILE)
+            message(STATUS "Found benchmark ${SUBDIR2}")
+            list(APPEND BENCHMARKS ${SUBDIR2})
+          endif()
+        endif()
+      endforeach()
     endif()
   endif()
 endforeach()
@@ -116,14 +119,6 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     get_filename_component(DIRNAME ${DIR} NAME)
     add_custom_command(TARGET xcodeProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
                        ${DIR} ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/files/${DIRNAME})
-    file(GLOB PNG ${DIR}/*.png)
-    foreach(IMG ${PNG})
-      get_filename_component(IMGNAME ${IMG} NAME)
-      if(NOT (IMGNAME MATCHES ".*_128.png"))
-        add_custom_command(TARGET xcodeProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove
-                          "${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/${APPNAME}/files/${DIRNAME}/${IMGNAME}")
-      endif()
-    endforeach(IMG)
   endforeach(DIR)
   if("${APPNAME}" STREQUAL "BBEMG")
     add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
@@ -131,9 +126,9 @@ if(ENABLE_BUILD_IOS_EMULATOR OR ENABLE_BUILD_IOS)
     add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
       sed -e \"s|Images.xcassets|Images_BBEMG.xcassets|g\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG.xcodeproj/project.pbxproj")
     add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
-      sed -e \"s|ONELAB|BBEMG|g\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG/en.lproj/iPhoneiPodStoryboard.storyboard")
+      sed -e \"s|ONELAB|BBEMG|g\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG/iPhoneiPodStoryboard.storyboard")
     add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
-      sed -e \"s|ONELAB|BBEMG|g\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG/en.lproj/iPadStoryboard.storyboard")
+      sed -e \"s|ONELAB|BBEMG|g\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG/iPadStoryboard.storyboard")
     add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
       sed -e \"s|Onelab/Mobile|BBEMG|g\" -i \"\" "${CMAKE_CURRENT_BINARY_DIR}/BBEMG/BBEMG/AboutViewController.mm")
     add_custom_command(TARGET xcodeProject POST_BUILD COMMAND 
@@ -214,20 +209,15 @@ if(ENABLE_BUILD_ANDROID)
   )
   add_custom_command(TARGET androidProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove_directory
                     ${CMAKE_CURRENT_BINARY_DIR}/models)
+  add_custom_command(TARGET androidProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory
+                    ${CMAKE_CURRENT_BINARY_DIR}/models)
   add_custom_command(TARGET androidProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove
                     ${CMAKE_CURRENT_BINARY_DIR}/${APPNAME}/app/src/main/res/raw/models.zip)
   foreach(DIR ${BENCHMARKS})
     get_filename_component(DIRNAME ${DIR} NAME)
+
     add_custom_command(TARGET androidProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_directory
                       ${DIR} ${CMAKE_CURRENT_BINARY_DIR}/models/${DIRNAME})
-    file(GLOB PNG ${DIR}/*.png)
-    foreach(IMG ${PNG})
-      get_filename_component(IMGNAME ${IMG} NAME)
-      if(NOT (IMGNAME MATCHES ".*_128.png"))
-        add_custom_command(TARGET androidProject POST_BUILD COMMAND ${CMAKE_COMMAND} -E remove
-                           "${CMAKE_CURRENT_BINARY_DIR}/models/${DIRNAME}/${IMGNAME}")
-      endif()
-    endforeach(IMG)
   endforeach(DIR)
   find_program(ZIP_COMMAND zip)
   add_custom_command(TARGET androidProject POST_BUILD COMMAND cd ${CMAKE_CURRENT_BINARY_DIR}/models/ && zip -r
