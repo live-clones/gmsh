@@ -842,36 +842,42 @@ end
 
 """
 
-    gmsh.model.mesh.getJacobianData(integrationType, nbrIntegrationPoints, jacobiansAndDeterminants, dim = -1, tag = -1)
+    gmsh.model.mesh.getJacobianData(integrationType, nbrIntegrationPoints, jacobian, determinant, dim = -1, tag = -1)
 
 Get the Jacobian data for mesh elements of the entity of dimension 'dim' and
 'tag' tag. The data is returned by element type and by element, in the same
 order as the data returned by 'getElements'. 'integrationType' specifies the
 type of integration (e.g. "Gauss4"). 'nbrIntegrationPoints' contains for each
 element type, the number of integration points that corresponds to
-'integrationType'. 'jacobiansAndDeterminants' contains for each element type a
-vector (of size 9 times the number of integration points) containing the 9
-entries (by row) of the 3x3 Jacobian matrix and the determinant of the Jacobian
-at the 9th position.
+'integrationType'. 'jacobian' contains for each element type a vector (of size 9
+times the number of integration points) containing the 9 entries (by row) of the
+3x3 Jacobian matrix and 'determinant' contains for each element type a vector
+containing the determinant of the Jacobian.
 
-Return 'nbrIntegrationPoints', 'jacobiansAndDeterminants'.
+Return `nbrIntegrationPoints', `jacobian', `determinant'.
 """
 function getJacobianData(integrationType, dim = -1, tag = -1)
     api_nbrIntegrationPoints_ = Vector{Ptr{Cint}}(1)
     api_nbrIntegrationPoints_n_ = Vector{Csize_t}(1)
-    api_jacobiansAndDeterminants_ = Vector{Ptr{Ptr{Cdouble}}}(1)
-    api_jacobiansAndDeterminants_n_ = Vector{Ptr{Csize_t}}(1)
-    api_jacobiansAndDeterminants_nn_ = Vector{Csize_t}(1)
+    api_jacobian_ = Vector{Ptr{Ptr{Cdouble}}}(1)
+    api_jacobian_n_ = Vector{Ptr{Csize_t}}(1)
+    api_jacobian_nn_ = Vector{Csize_t}(1)
+    api_determinant_ = Vector{Ptr{Ptr{Cdouble}}}(1)
+    api_determinant_n_ = Vector{Ptr{Csize_t}}(1)
+    api_determinant_nn_ = Vector{Csize_t}(1)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelMeshGetJacobianData, gmsh.clib), Void,
-          (Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          integrationType, api_nbrIntegrationPoints_, api_nbrIntegrationPoints_n_, api_jacobiansAndDeterminants_, api_jacobiansAndDeterminants_n_, api_jacobiansAndDeterminants_nn_, dim, tag, ierr)
+          (Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          integrationType, api_nbrIntegrationPoints_, api_nbrIntegrationPoints_n_, api_jacobian_, api_jacobian_n_, api_jacobian_nn_, api_determinant_, api_determinant_n_, api_determinant_nn_, dim, tag, ierr)
     nbrIntegrationPoints = unsafe_wrap(Array, api_nbrIntegrationPoints_[1], api_nbrIntegrationPoints_n_[1], true)
-    tmp_api_jacobiansAndDeterminants_ = unsafe_wrap(Array, api_jacobiansAndDeterminants_[1], api_jacobiansAndDeterminants_nn_[1], true)
-    tmp_api_jacobiansAndDeterminants_n_ = unsafe_wrap(Array, api_jacobiansAndDeterminants_n_[1], api_jacobiansAndDeterminants_nn_[1], true)
-    jacobiansAndDeterminants = [ unsafe_wrap(Array, tmp_api_jacobiansAndDeterminants_[i], tmp_api_jacobiansAndDeterminants_n_[i], true) for i in 1:api_jacobiansAndDeterminants_nn_[1] ]
+    tmp_api_jacobian_ = unsafe_wrap(Array, api_jacobian_[1], api_jacobian_nn_[1], true)
+    tmp_api_jacobian_n_ = unsafe_wrap(Array, api_jacobian_n_[1], api_jacobian_nn_[1], true)
+    jacobian = [ unsafe_wrap(Array, tmp_api_jacobian_[i], tmp_api_jacobian_n_[i], true) for i in 1:api_jacobian_nn_[1] ]
+    tmp_api_determinant_ = unsafe_wrap(Array, api_determinant_[1], api_determinant_nn_[1], true)
+    tmp_api_determinant_n_ = unsafe_wrap(Array, api_determinant_n_[1], api_determinant_nn_[1], true)
+    determinant = [ unsafe_wrap(Array, tmp_api_determinant_[i], tmp_api_determinant_n_[i], true) for i in 1:api_determinant_nn_[1] ]
     ierr[1] != 0 && error("gmshModelMeshGetJacobianData returned non-zero error code: " * string(ierr[1]))
-    return nbrIntegrationPoints, jacobiansAndDeterminants
+    return nbrIntegrationPoints, jacobian, determinant
 end
 
 """
@@ -891,7 +897,7 @@ evaluation of a basis function in the space and 'functionSpaceData' contains for
 each element type the evaluation of the basis functions at the integration
 points.
 
-Return 'integrationPoints', 'functionSpaceNumComponents', 'functionSpaceData'.
+Return `integrationPoints', `functionSpaceNumComponents', `functionSpaceData'.
 """
 function getFunctionSpaceData(integrationType, functionSpaceType, dim = -1, tag = -1)
     api_integrationPoints_ = Vector{Ptr{Ptr{Cdouble}}}(1)
@@ -1003,7 +1009,7 @@ end
 
 Get the mesh nodes in the same way as 'getElementsByType'.
 
-Return 'nodeTags'.
+Return `nodeTags'.
 """
 function getNodesByType(elementType, dim = -1, tag = -1, myThread = 0, nbrThreads = 1)
     api_nodeTags_ = Vector{Ptr{Cint}}(1)
@@ -1046,23 +1052,26 @@ end
 
 """
 
-    gmsh.model.mesh.getJacobianDataByType(elementType, integrationType, nbrIntegrationPoints, jacobiansAndDeterminants, dim = -1, tag = -1, myThread = 0, nbrThreads = 1)
+    gmsh.model.mesh.getJacobianDataByType(elementType, integrationType, nbrIntegrationPoints, jacobian, determinant, dim = -1, tag = -1, myThread = 0, nbrThreads = 1)
 
 Get the Jacobian data for mesh elements in the same way as 'getJacobianData',
 but for a single 'elementType'.
 
-Return 'nbrIntegrationPoints', 'jacobiansAndDeterminants'.
+Return `nbrIntegrationPoints', `jacobian', `determinant'.
 """
 function getJacobianDataByType(elementType, integrationType, dim = -1, tag = -1, myThread = 0, nbrThreads = 1)
-    api_jacobiansAndDeterminants_ = Vector{Ptr{Cdouble}}(1)
-    api_jacobiansAndDeterminants_n_ = Vector{Csize_t}(1)
+    api_jacobian_ = Vector{Ptr{Cdouble}}(1)
+    api_jacobian_n_ = Vector{Csize_t}(1)
+    api_determinant_ = Vector{Ptr{Cdouble}}(1)
+    api_determinant_n_ = Vector{Csize_t}(1)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelMeshGetJacobianDataByType, gmsh.clib), Void,
-          (Cint, Ptr{Cchar}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Cint, Cint, Ptr{Cint}),
-          elementType, integrationType, nbrIntegrationPoints, api_jacobiansAndDeterminants_, api_jacobiansAndDeterminants_n_, dim, tag, myThread, nbrThreads, ierr)
-    jacobiansAndDeterminants = unsafe_wrap(Array, api_jacobiansAndDeterminants_[1], api_jacobiansAndDeterminants_n_[1], true)
+          (Cint, Ptr{Cchar}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Cint, Cint, Ptr{Cint}),
+          elementType, integrationType, nbrIntegrationPoints, api_jacobian_, api_jacobian_n_, api_determinant_, api_determinant_n_, dim, tag, myThread, nbrThreads, ierr)
+    jacobian = unsafe_wrap(Array, api_jacobian_[1], api_jacobian_n_[1], true)
+    determinant = unsafe_wrap(Array, api_determinant_[1], api_determinant_n_[1], true)
     ierr[1] != 0 && error("gmshModelMeshGetJacobianDataByType returned non-zero error code: " * string(ierr[1]))
-    return nbrIntegrationPoints, jacobiansAndDeterminants
+    return nbrIntegrationPoints, jacobian, determinant
 end
 
 """
@@ -1072,7 +1081,7 @@ end
 Get the function space data for mesh elements in the same way as
 'getFunctionSpaceData', but for a single 'elementType'.
 
-Return 'integrationPoints', 'functionSpaceNumComponents', 'functionSpaceData'.
+Return `integrationPoints', `functionSpaceNumComponents', `functionSpaceData'.
 """
 function getFunctionSpaceDataByType(elementType, integrationType, functionSpaceType, dim = -1, tag = -1)
     api_integrationPoints_ = Vector{Ptr{Cdouble}}(1)
@@ -1210,7 +1219,7 @@ Get barycenter of element with tag 'tag'. If 'fast' is true the barycenter
 compute is equal to the real barycenter multiplied by the number of nodes. If
 'primary' is true, only the primary nodes is taking into account.
 
-Return 'barycenter'.
+Return `barycenter'.
 """
 function getBarycenter(elementTag, fast, primary)
     api_barycenter_ = Vector{Ptr{Cdouble}}(1)
@@ -1231,7 +1240,7 @@ end
 Get barycenters of all elements corresponding to 'elementType' into entity of
 dimension 'dim' and tag 'tag'.
 
-Return 'barycenters'.
+Return `barycenters'.
 """
 function getBarycenters(elementType, dim, tag, fast, primary, myThread = 0, nbrThreads = 1)
     api_barycenters_ = Vector{Ptr{Cdouble}}(1)

@@ -342,13 +342,14 @@ GMSH_API void gmshModelMeshGetIntegrationData(const char * integrationType,
  * same order as the data returned by `getElements'. `integrationType'
  * specifies the type of integration (e.g. "Gauss4"). `nbrIntegrationPoints'
  * contains for each element type, the number of integration points that
- * corresponds to `integrationType'. `jacobiansAndDeterminants' contains for
- * each element type a vector (of size 9 times the number of integration
- * points) containing the 9 entries (by row) of the 3x3 Jacobian matrix and
- * the determinant of the Jacobian at the 9th position. */
+ * corresponds to `integrationType'. `jacobian' contains for each element type
+ * a vector (of size 9 times the number of integration points) containing the
+ * 9 entries (by row) of the 3x3 Jacobian matrix and `determinant' contains
+ * for each element type a vector containing the determinant of the Jacobian. */
 GMSH_API void gmshModelMeshGetJacobianData(const char * integrationType,
                                            int ** nbrIntegrationPoints, size_t * nbrIntegrationPoints_n,
-                                           double *** jacobiansAndDeterminants, size_t ** jacobiansAndDeterminants_n, size_t *jacobiansAndDeterminants_nn,
+                                           double *** jacobian, size_t ** jacobian_n, size_t *jacobian_nn,
+                                           double *** determinant, size_t ** determinant_n, size_t *determinant_nn,
                                            const int dim,
                                            const int tag,
                                            int * ierr);
@@ -432,7 +433,8 @@ GMSH_API void gmshModelMeshGetIntegrationDataByType(const int elementType,
 GMSH_API void gmshModelMeshGetJacobianDataByType(const int elementType,
                                                  const char * integrationType,
                                                  int * nbrIntegrationPoints,
-                                                 double ** jacobiansAndDeterminants, size_t * jacobiansAndDeterminants_n,
+                                                 double ** jacobian, size_t * jacobian_n,
+                                                 double ** determinant, size_t * determinant_n,
                                                  const int dim,
                                                  const int tag,
                                                  const int myThread,

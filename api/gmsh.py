@@ -998,20 +998,22 @@ class model:
             same order as the data returned by `getElements'. `integrationType'
             specifies the type of integration (e.g. "Gauss4"). `nbrIntegrationPoints'
             contains for each element type, the number of integration points that
-            corresponds to `integrationType'. `jacobiansAndDeterminants' contains for
-            each element type a vector (of size 9 times the number of integration
-            points) containing the 9 entries (by row) of the 3x3 Jacobian matrix and
-            the determinant of the Jacobian at the 9th position.
+            corresponds to `integrationType'. `jacobian' contains for each element type
+            a vector (of size 9 times the number of integration points) containing the
+            9 entries (by row) of the 3x3 Jacobian matrix and `determinant' contains
+            for each element type a vector containing the determinant of the Jacobian.
 
-            Return `nbrIntegrationPoints', `jacobiansAndDeterminants'.
+            Return `nbrIntegrationPoints', `jacobian', `determinant'.
             """
             api_nbrIntegrationPoints_, api_nbrIntegrationPoints_n_ = POINTER(c_int)(), c_size_t()
-            api_jacobiansAndDeterminants_, api_jacobiansAndDeterminants_n_, api_jacobiansAndDeterminants_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
+            api_jacobian_, api_jacobian_n_, api_jacobian_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
+            api_determinant_, api_determinant_n_, api_determinant_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetJacobianData(
                 c_char_p(integrationType.encode()),
                 byref(api_nbrIntegrationPoints_), byref(api_nbrIntegrationPoints_n_),
-                byref(api_jacobiansAndDeterminants_), byref(api_jacobiansAndDeterminants_n_), byref(api_jacobiansAndDeterminants_nn_),
+                byref(api_jacobian_), byref(api_jacobian_n_), byref(api_jacobian_nn_),
+                byref(api_determinant_), byref(api_determinant_n_), byref(api_determinant_nn_),
                 c_int(dim),
                 c_int(tag),
                 byref(ierr))
@@ -1021,7 +1023,8 @@ class model:
                     ierr.value)
             return (
                 _ovectorint(api_nbrIntegrationPoints_, api_nbrIntegrationPoints_n_.value),
-                _ovectorvectordouble(api_jacobiansAndDeterminants_, api_jacobiansAndDeterminants_n_, api_jacobiansAndDeterminants_nn_))
+                _ovectorvectordouble(api_jacobian_, api_jacobian_n_, api_jacobian_nn_),
+                _ovectorvectordouble(api_determinant_, api_determinant_n_, api_determinant_nn_))
 
         @staticmethod
         def getFunctionSpaceData(integrationType, functionSpaceType, dim=-1, tag=-1):
@@ -1214,16 +1217,18 @@ class model:
             Get the Jacobian data for mesh elements in the same way as
             `getJacobianData', but for a single `elementType'.
 
-            Return `nbrIntegrationPoints', `jacobiansAndDeterminants'.
+            Return `nbrIntegrationPoints', `jacobian', `determinant'.
             """
             api_nbrIntegrationPoints_ = c_int()
-            api_jacobiansAndDeterminants_, api_jacobiansAndDeterminants_n_ = POINTER(c_double)(), c_size_t()
+            api_jacobian_, api_jacobian_n_ = POINTER(c_double)(), c_size_t()
+            api_determinant_, api_determinant_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetJacobianDataByType(
                 c_int(elementType),
                 c_char_p(integrationType.encode()),
                 byref(api_nbrIntegrationPoints_),
-                byref(api_jacobiansAndDeterminants_), byref(api_jacobiansAndDeterminants_n_),
+                byref(api_jacobian_), byref(api_jacobian_n_),
+                byref(api_determinant_), byref(api_determinant_n_),
                 c_int(dim),
                 c_int(tag),
                 c_int(myThread),
@@ -1235,7 +1240,8 @@ class model:
                     ierr.value)
             return (
                 api_nbrIntegrationPoints_.value,
-                _ovectordouble(api_jacobiansAndDeterminants_, api_jacobiansAndDeterminants_n_.value))
+                _ovectordouble(api_jacobian_, api_jacobian_n_.value),
+                _ovectordouble(api_determinant_, api_determinant_n_.value))
 
         @staticmethod
         def getFunctionSpaceDataByType(elementType, integrationType, functionSpaceType, dim=-1, tag=-1):
