@@ -330,13 +330,15 @@ namespace gmsh { // Top-level functions
       // same order as the data returned by `getElements'. `integrationType'
       // specifies the type of integration (e.g. "Gauss4"). `nbrIntegrationPoints'
       // contains for each element type, the number of integration points that
-      // corresponds to `integrationType'. `jacobiansAndDeterminants' contains for
-      // each element type a vector (of size 9 times the number of integration
-      // points) containing the 9 entries (by row) of the 3x3 Jacobian matrix and
-      // the determinant of the Jacobian at the 9th position.
+      // corresponds to `integrationType'. `jacobian' contains for each element
+      // type a vector (of size 9 times the number of integration points)
+      // containing the 9 entries (by row) of the 3x3 Jacobian matrix and
+      // `determinant' contains for each element type a vector containing the
+      // determinant of the Jacobian.
       GMSH_API void getJacobianData(const std::string & integrationType,
                                     std::vector<int> & nbrIntegrationPoints,
-                                    std::vector<std::vector<double> > & jacobiansAndDeterminants,
+                                    std::vector<std::vector<double> > & jacobian,
+                                    std::vector<std::vector<double> > & determinant,
                                     const int dim = -1,
                                     const int tag = -1);
 
@@ -412,7 +414,8 @@ namespace gmsh { // Top-level functions
       GMSH_API void getJacobianDataByType(const int elementType,
                                           const std::string & integrationType,
                                           int & nbrIntegrationPoints,
-                                          std::vector<double> & jacobiansAndDeterminants,
+                                          std::vector<double> & jacobian,
+                                          std::vector<double> & determinant,
                                           const int dim = -1,
                                           const int tag = -1,
                                           const int myThread = 0,
