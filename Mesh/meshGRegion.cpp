@@ -951,7 +951,7 @@ int intersect_line_triangle(double X[3], double Y[3], double Z[3] ,
   }
 }
 
-void setRand(double r[6])
+static void setRand(double r[6])
 {
   for(int i = 0; i < 6; i++)
     r[i] = 0.0001 * ((double)rand() / (double)RAND_MAX);

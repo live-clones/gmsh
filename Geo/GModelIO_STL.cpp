@@ -223,11 +223,11 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
 
   for(fiter it = firstFace(); it != lastFace(); ++it) {
     if(saveAll || (*it)->physicals.size()){
-      if(useGeoSTL){
+      if(useGeoSTL && (*it)->stl_vertices_uv.size()){
         for (unsigned int i = 0; i < (*it)->stl_triangles.size(); i += 3){
-          SPoint2 &p1((*it)->stl_vertices[(*it)->stl_triangles[i]]);
-          SPoint2 &p2((*it)->stl_vertices[(*it)->stl_triangles[i + 1]]);
-          SPoint2 &p3((*it)->stl_vertices[(*it)->stl_triangles[i + 2]]);
+          SPoint2 &p1((*it)->stl_vertices_uv[(*it)->stl_triangles[i]]);
+          SPoint2 &p2((*it)->stl_vertices_uv[(*it)->stl_triangles[i + 1]]);
+          SPoint2 &p3((*it)->stl_vertices_uv[(*it)->stl_triangles[i + 2]]);
           GPoint gp1 = (*it)->point(p1);
           GPoint gp2 = (*it)->point(p2);
           GPoint gp3 = (*it)->point(p3);
@@ -278,4 +278,3 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
   fclose(fp);
   return 1;
 }
-

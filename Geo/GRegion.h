@@ -154,6 +154,8 @@ class GRegion : public GEntity {
 
   // get the boundary layer columns
   BoundaryLayerColumns *getColumns () { return &_columns; }
+
+  void setOutwardOrientationMeshingConstraint();
 };
 
 #endif
