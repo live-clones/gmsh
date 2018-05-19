@@ -636,27 +636,23 @@ namespace gmsh { // Top-level functions
       // same order as the data returned by `getElements'. `integrationType'
       // specifies the type of integration (e.g. "Gauss4"). `nbrIntegrationPoints'
       // contains for each element type, the number of integration points that
-      // corresponds to `integrationType'. `jacobian' contains for each element
-      // type a vector (of size 9 times the number of integration points)
-      // containing the 9 entries (by row) of the 3x3 Jacobian matrix and
-      // `determinant' contains for each element type a vector containing the
-      // determinant of the Jacobian.
+      // corresponds to `integrationType'. `jacobiansAndDeterminants' contains for
+      // each element type a vector (of size 9 times the number of integration
+      // points) containing the 9 entries (by row) of the 3x3 Jacobian matrix and
+      // the determinant of the Jacobian at the 9th position.
       GMSH_API void getJacobianData(const std::string & integrationType,
                                     std::vector<int> & nbrIntegrationPoints,
-                                    std::vector<std::vector<double> > & jacobian,
-                                    std::vector<std::vector<double> > & determinant,
+                                    std::vector<std::vector<double> > & jacobiansAndDeterminants,
                                     const int dim = -1,
                                     const int tag = -1)
       {
         int ierr = 0;
         int *api_nbrIntegrationPoints_; size_t api_nbrIntegrationPoints_n_;
-        double **api_jacobian_; size_t *api_jacobian_n_, api_jacobian_nn_;
-        double **api_determinant_; size_t *api_determinant_n_, api_determinant_nn_;
-        gmshModelMeshGetJacobianData(integrationType.c_str(), &api_nbrIntegrationPoints_, &api_nbrIntegrationPoints_n_, &api_jacobian_, &api_jacobian_n_, &api_jacobian_nn_, &api_determinant_, &api_determinant_n_, &api_determinant_nn_, dim, tag, &ierr);
+        double **api_jacobiansAndDeterminants_; size_t *api_jacobiansAndDeterminants_n_, api_jacobiansAndDeterminants_nn_;
+        gmshModelMeshGetJacobianData(integrationType.c_str(), &api_nbrIntegrationPoints_, &api_nbrIntegrationPoints_n_, &api_jacobiansAndDeterminants_, &api_jacobiansAndDeterminants_n_, &api_jacobiansAndDeterminants_nn_, dim, tag, &ierr);
         if(ierr) throw ierr;
         nbrIntegrationPoints.assign(api_nbrIntegrationPoints_, api_nbrIntegrationPoints_ + api_nbrIntegrationPoints_n_); gmshFree(api_nbrIntegrationPoints_);
-        jacobian.resize(api_jacobian_nn_); for(size_t i = 0; i < api_jacobian_nn_; ++i){ jacobian[i].assign(api_jacobian_[i], api_jacobian_[i] + api_jacobian_n_[i]); gmshFree(api_jacobian_[i]); } gmshFree(api_jacobian_); gmshFree(api_jacobian_n_);
-        determinant.resize(api_determinant_nn_); for(size_t i = 0; i < api_determinant_nn_; ++i){ determinant[i].assign(api_determinant_[i], api_determinant_[i] + api_determinant_n_[i]); gmshFree(api_determinant_[i]); } gmshFree(api_determinant_); gmshFree(api_determinant_n_);
+        jacobiansAndDeterminants.resize(api_jacobiansAndDeterminants_nn_); for(size_t i = 0; i < api_jacobiansAndDeterminants_nn_; ++i){ jacobiansAndDeterminants[i].assign(api_jacobiansAndDeterminants_[i], api_jacobiansAndDeterminants_[i] + api_jacobiansAndDeterminants_n_[i]); gmshFree(api_jacobiansAndDeterminants_[i]); } gmshFree(api_jacobiansAndDeterminants_); gmshFree(api_jacobiansAndDeterminants_n_);
       }
 
       // Get the function space data for mesh elements of the entity of dimension
@@ -786,20 +782,17 @@ namespace gmsh { // Top-level functions
       GMSH_API void getJacobianDataByType(const int elementType,
                                           const std::string & integrationType,
                                           int & nbrIntegrationPoints,
-                                          std::vector<double> & jacobian,
-                                          std::vector<double> & determinant,
+                                          std::vector<double> & jacobiansAndDeterminants,
                                           const int dim = -1,
                                           const int tag = -1,
                                           const int myThread = 0,
                                           const int nbrThreads = 1)
       {
         int ierr = 0;
-        double *api_jacobian_; size_t api_jacobian_n_;
-        double *api_determinant_; size_t api_determinant_n_;
-        gmshModelMeshGetJacobianDataByType(elementType, integrationType.c_str(), &nbrIntegrationPoints, &api_jacobian_, &api_jacobian_n_, &api_determinant_, &api_determinant_n_, dim, tag, myThread, nbrThreads, &ierr);
+        double *api_jacobiansAndDeterminants_; size_t api_jacobiansAndDeterminants_n_;
+        gmshModelMeshGetJacobianDataByType(elementType, integrationType.c_str(), &nbrIntegrationPoints, &api_jacobiansAndDeterminants_, &api_jacobiansAndDeterminants_n_, dim, tag, myThread, nbrThreads, &ierr);
         if(ierr) throw ierr;
-        jacobian.assign(api_jacobian_, api_jacobian_ + api_jacobian_n_); gmshFree(api_jacobian_);
-        determinant.assign(api_determinant_, api_determinant_ + api_determinant_n_); gmshFree(api_determinant_);
+        jacobiansAndDeterminants.assign(api_jacobiansAndDeterminants_, api_jacobiansAndDeterminants_ + api_jacobiansAndDeterminants_n_); gmshFree(api_jacobiansAndDeterminants_);
       }
 
       // Get the function space data for mesh elements in the same way as

@@ -970,8 +970,7 @@ static void _getJacobianData(const int elementType,
                              const std::vector<GEntity*> &entities,
                              const std::string &intType,
                              int &nbrIntegrationPoints,
-                             std::vector<double> &jacobian,
-                             std::vector<double> &determinant,
+                             std::vector<double> &jacobiansAndDeterminants,
                              const int myThread, const int nbrThreads)
 {
   std::string intName = "", fsName = "";
@@ -1000,12 +999,8 @@ static void _getJacobianData(const int elementType,
     }
     const int begin = (myThread*n)/nbrThreads;
     const int end = ((myThread+1)*n)/nbrThreads;
-    if(end*nbrIPoint > determinant.size()){
-      Msg::Error("Vector 'determinant' is small (%d < %d)", determinant.size(), end*nbrIPoint);
-      throw 4;
-    }
-    if(9*end*nbrIPoint > jacobian.size()){
-      Msg::Error("Vector 'jacobian' is small (%d < %d)", jacobian.size(), 9*end*nbrIPoint);
+    if(10*end*nbrIPoint > jacobiansAndDeterminants.size()){
+      Msg::Error("Vector 'jacobiansAndDeterminants' is small (%d < %d)", jacobiansAndDeterminants.size(), 10*end*nbrIPoint);
       throw 4;
     }
     std::vector< std::vector<SVector3> > gsf;
@@ -1031,7 +1026,7 @@ static void _getJacobianData(const int elementType,
             }
           }
           for(int k = 0; k < nbrIPoint; k++){
-            determinant[idx] = e->getJacobian(gsf[k], &jacobian[idx*9]);
+            e->getJacobian(gsf[k], &jacobiansAndDeterminants[idx*10]);
             idx++;
           }
         }
@@ -1139,23 +1134,20 @@ GMSH_API void gmsh::model::mesh::getIntegrationData(const std::string &intType,
 
 GMSH_API void gmsh::model::mesh::getJacobianData(const std::string &intType,
                                         std::vector<int> &nbrIntegrationPoints,
-                                        std::vector<std::vector<double> > &jacobian,
-                                        std::vector<std::vector<double> > &determinant,
+                                        std::vector<std::vector<double> > &jacobiansAndDeterminants,
                                         const int dim, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
-  jacobian.clear();
-  determinant.clear();
+  jacobiansAndDeterminants.clear();
   nbrIntegrationPoints.clear();
   std::map<int, std::vector<GEntity*> > typeMap;
   _getElementTypeMap(dim, tag, typeMap);
   for(std::map<int, std::vector<GEntity*> >::const_iterator it = typeMap.begin();
       it != typeMap.end(); it++){
     nbrIntegrationPoints.push_back(0);
-    jacobian.push_back(std::vector<double>());
-    determinant.push_back(std::vector<double>());
+    jacobiansAndDeterminants.push_back(std::vector<double>());
     _getJacobianData(it->first, it->second, intType, nbrIntegrationPoints.back(),
-                     jacobian.back(), determinant.back(), 0, 1);
+                     jacobiansAndDeterminants.back(), 0, 1);
   }
 }
 
@@ -1205,8 +1197,7 @@ GMSH_API void gmsh::model::mesh::getIntegrationDataByType(int elementType,
 GMSH_API void gmsh::model::mesh::getJacobianDataByType(const int elementType,
                                               const std::string &intType,
                                               int &nbrIntegrationPoints,
-                                              std::vector<double> &jacobian,
-                                              std::vector<double> &determinant,
+                                              std::vector<double> &jacobiansAndDeterminants,
                                               const int dim, const int tag,
                                               const int myThread, const int nbrThreads)
 {
@@ -1215,7 +1206,7 @@ GMSH_API void gmsh::model::mesh::getJacobianDataByType(const int elementType,
   std::map<int, std::vector<GEntity*> > typeMap;
   _getElementTypeMap(dim, tag, typeMap);
   _getJacobianData(elementType, typeMap[elementType], intType, nbrIntegrationPoints,
-                   jacobian, determinant, myThread, nbrThreads);
+                   jacobiansAndDeterminants, myThread, nbrThreads);
 }
 
 GMSH_API void gmsh::model::mesh::getFunctionSpaceDataByType(const int elementType,

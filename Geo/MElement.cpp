@@ -635,10 +635,8 @@ static double _computeDeterminantAndRegularize(const MElement *ele, double jac[3
   return dJ;
 }
 
-static double _computeDeterminantAndRegularize(const MElement *ele, double *jac)
+static void _computeDeterminantAndRegularize(const MElement *ele, double *jac)
 {
-  double dJ = 0;
-  
   /**
    * 'jac' is a row-major order array :
    *
@@ -652,7 +650,7 @@ static double _computeDeterminantAndRegularize(const MElement *ele, double *jac)
     
     case 0:
     {
-    dJ = 1.0;
+    jac[9]  = 1.0;
     jac[0] = jac[4] = jac[8] = 1.0;
     jac[1] = jac[2] = jac[3] = 0.0;
     jac[5] = jac[6] = jac[7] = 0.0;
@@ -660,7 +658,7 @@ static double _computeDeterminantAndRegularize(const MElement *ele, double *jac)
     }
     case 1:
     {
-    dJ = sqrt(SQU(jac[0]) + SQU(jac[1]) + SQU(jac[2]));
+    jac[9] = sqrt(SQU(jac[0]) + SQU(jac[1]) + SQU(jac[2]));
     
     // regularize matrix
     double a[3], b[3], c[3];
@@ -683,9 +681,9 @@ static double _computeDeterminantAndRegularize(const MElement *ele, double *jac)
     }
     case 2:
     {
-    dJ = sqrt(SQU(jac[0] * jac[4] - jac[1] * jac[3]) +
-              SQU(jac[2] * jac[3] - jac[0] * jac[5]) +
-              SQU(jac[1] * jac[5] - jac[2] * jac[4]));
+    jac[9] = sqrt(SQU(jac[0] * jac[4] - jac[1] * jac[3]) +
+                  SQU(jac[2] * jac[3] - jac[0] * jac[5]) +
+                  SQU(jac[1] * jac[5] - jac[2] * jac[4]));
     
     // regularize matrix
     double a[3], b[3], c[3];
@@ -702,13 +700,12 @@ static double _computeDeterminantAndRegularize(const MElement *ele, double *jac)
     }
     case 3:
     {
-    dJ = (jac[0] * jac[4] * jac[8] + jac[2] * jac[3] * jac[7] +
-          jac[1] * jac[5] * jac[7] - jac[3] * jac[4] * jac[6] -
-          jac[0] * jac[5] * jac[7] - jac[1] * jac[3] * jac[8]);
+    jac[9] = (jac[0] * jac[4] * jac[8] + jac[2] * jac[3] * jac[7] +
+              jac[1] * jac[5] * jac[7] - jac[3] * jac[4] * jac[6] -
+              jac[0] * jac[5] * jac[7] - jac[1] * jac[3] * jac[8]);
     break;
     }
   }
-  return dJ;
 }
 
 double MElement::getJacobian(double u, double v, double w, double jac[3][3]) const
@@ -769,9 +766,9 @@ double MElement::getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])
   return _computeDeterminantAndRegularize(this, jac);
 }
 
-double MElement::getJacobian(const std::vector<SVector3> &gsf, double *jac) const
+void MElement::getJacobian(const std::vector<SVector3> &gsf, double *jac) const
 {
-  for(unsigned int i = 0; i < 9; i++){
+  for(unsigned int i = 0; i < 10; i++){
     jac[i] = 0.;
   }
   
@@ -785,7 +782,7 @@ double MElement::getJacobian(const std::vector<SVector3> &gsf, double *jac) cons
       jac[3*j+2] += v->z() * mult;
     }
   }
-  return _computeDeterminantAndRegularize(this, jac);
+  _computeDeterminantAndRegularize(this, jac);
 }
 
 double MElement::getPrimaryJacobian(double u, double v, double w, double jac[3][3]) const
