@@ -1466,14 +1466,11 @@ GMSH_API void gmsh::model::mesh::getBarycenters(const int elementType,
   std::map<int, std::vector<GEntity*> > typeMap;
   _getElementTypeMap(dim, tag, typeMap);
 
+  int familyType = ElementType::ParentTypeFromTag(elementType);
   int n = 0;
   for(unsigned int i = 0; i < typeMap[elementType].size(); i++){
     GEntity *ge = typeMap[elementType][i];
-    for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
-      MElement *e = ge->getMeshElement(j);
-      if(e->getTypeForMSH() == elementType)
-        n++;
-    }
+    n += ge->getNumMeshElementsByType(familyType);
   }
   const int begin = (myThread*n)/nbrThreads;
   const int end = ((myThread+1)*n)/nbrThreads;
@@ -1487,34 +1484,32 @@ GMSH_API void gmsh::model::mesh::getBarycenters(const int elementType,
   if(fast){
     for(unsigned int i = 0; i < typeMap[elementType].size(); i++){
       GEntity *ge = typeMap[elementType][i];
-      for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
-        MElement *e = ge->getMeshElement(j);
-        if(e->getTypeForMSH() == elementType){
-          if(o >= begin && o < end){
+      const unsigned int numMeshElements = ge->getNumMeshElementsByType(familyType);
+      for(unsigned int j = 0; j < numMeshElements; j++){
+        if(o >= begin && o < end){
+            MElement *e = ge->getMeshElementByType(familyType, j);
             SPoint3 p = e->fastBarycenter(primary);
             barycenters[idx++] = p[0];
             barycenters[idx++] = p[1];
             barycenters[idx++] = p[2];
-          }
-          o++;
         }
+        o++;
       }
     }
   }
   else{
     for(unsigned int i = 0; i < typeMap[elementType].size(); i++){
       GEntity *ge = typeMap[elementType][i];
-      for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
-        MElement *e = ge->getMeshElement(j);
-        if(e->getTypeForMSH() == elementType){
-          if(o >= begin && o < end){
-            SPoint3 p = e->barycenter(primary);
-            barycenters[idx++] = p[0];
-            barycenters[idx++] = p[1];
-            barycenters[idx++] = p[2];
-          }
-          o++;
+      const unsigned int numMeshElements = ge->getNumMeshElementsByType(familyType);
+      for(unsigned int j = 0; j < numMeshElements; j++){
+        if(o >= begin && o < end){
+          MElement *e = ge->getMeshElementByType(familyType, j);
+          SPoint3 p = e->barycenter(primary);
+          barycenters[idx++] = p[0];
+          barycenters[idx++] = p[1];
+          barycenters[idx++] = p[2];
         }
+        o++;
       }
     }
   }
