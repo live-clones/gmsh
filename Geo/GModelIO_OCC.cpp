@@ -3734,12 +3734,15 @@ static bool makeSTL(TopoDS_Face s,
   if(verticesUV && !triangulation->HasUVNodes())
     return false;
 
+  if(normals && !triangulation->HasUVNodes())
+    return false;
+
   int start = 0;
   if(verticesUV) start = verticesUV->size();
   if(verticesXYZ) start = verticesXYZ->size();
   for(int i = 1; i <= triangulation->NbNodes(); i++){
-    gp_Pnt2d p = (triangulation->UVNodes())(i);
     if(verticesUV){
+      gp_Pnt2d p = (triangulation->UVNodes())(i);
       verticesUV->push_back(SPoint2(p.X(), p.Y()));
     }
     if(verticesXYZ){
@@ -3747,6 +3750,7 @@ static bool makeSTL(TopoDS_Face s,
       verticesXYZ->push_back(SPoint3(pp.X(), pp.Y(), pp.Z()));
     }
     if(normals){
+      gp_Pnt2d p = (triangulation->UVNodes())(i);
       Handle(Geom_Surface) sur = BRep_Tool::Surface(s);
       gp_Pnt pnt;
       gp_Vec du, dv;
@@ -3759,13 +3763,35 @@ static bool makeSTL(TopoDS_Face s,
       normals->push_back(n);
     }
   }
+  bool reverse = false;
   for(int i = 1; i <= triangulation->NbTriangles(); i++){
     Poly_Triangle triangle = (triangulation->Triangles())(i);
     int p1, p2, p3;
     triangle.Get(p1, p2, p3);
+    if(i == 1 && normals){ // verify orientation
+      SVector3 nn = (*normals)[start + p1 - 1];
+      gp_Pnt pp1 = (triangulation->Nodes())(p1);
+      gp_Pnt pp2 = (triangulation->Nodes())(p2);
+      gp_Pnt pp3 = (triangulation->Nodes())(p3);
+      double n[3];
+      normal3points(pp1.X(), pp1.Y(), pp1.Z(),
+                    pp2.X(), pp2.Y(), pp2.Z(),
+                    pp3.X(), pp3.Y(), pp3.Z(), n);
+      SVector3 ne(n[0], n[1], n[2]);
+      if(dot(ne, nn) < 0){
+        Msg::Debug("Reversing orientation of STL mesh");
+        reverse = true;
+      }
+    }
     triangles.push_back(start + p1 - 1);
-    triangles.push_back(start + p2 - 1);
-    triangles.push_back(start + p3 - 1);
+    if(!reverse){
+      triangles.push_back(start + p2 - 1);
+      triangles.push_back(start + p3 - 1);
+    }
+    else{
+      triangles.push_back(start + p3 - 1);
+      triangles.push_back(start + p2 - 1);
+    }
   }
   return true;
 }

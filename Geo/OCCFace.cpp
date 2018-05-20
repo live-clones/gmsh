@@ -422,36 +422,6 @@ bool OCCFace::buildSTLTriangulation(bool force)
     stl_triangles.push_back(0);
     return false;
   }
-
-  bool reverse = false;
-  for(unsigned int i = 0; i < stl_triangles.size(); i += 3){
-    if(i == 0){
-      SPoint2 gp1 = stl_vertices_uv[stl_triangles[i]];
-      SPoint2 gp2 = stl_vertices_uv[stl_triangles[i + 1]];
-      SPoint2 gp3 = stl_vertices_uv[stl_triangles[i + 2]];
-      SPoint2 b = gp1 + gp2 + gp2;
-      b *= 1. / 3.;
-      SVector3 nf = normal(b);
-      GPoint sp1 = point(gp1.x(), gp1.y());
-      GPoint sp2 = point(gp2.x(), gp2.y());
-      GPoint sp3 = point(gp3.x(), gp3.y());
-      double n[3];
-      normal3points(sp1.x(), sp1.y(), sp1.z(),
-                    sp2.x(), sp2.y(), sp2.z(),
-                    sp3.x(), sp3.y(), sp3.z(), n);
-      SVector3 ne(n[0], n[1], n[2]);
-      if(dot(ne, nf) < 0){
-        Msg::Debug("Reversing orientation of STL mesh in face %d", tag());
-        printf("*** OCC REVERSED? %d\n", s.Orientation() == TopAbs_REVERSED);
-        reverse = true;
-      }
-    }
-    if(reverse){
-      int tmp = stl_triangles[i + 1];
-      stl_triangles[i + 1] = stl_triangles[i + 2];
-      stl_triangles[i + 2] = tmp;
-    }
-  }
   return true;
 }
 
