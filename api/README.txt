@@ -17,7 +17,7 @@ additional data copies between the C++ wrapper, the C API and the native C++
 code.
 
 See `demos/api' for examples on how to use the Gmsh API. In particular,
-`demos/api' contains C++, C Python and Julia versions of several of the `.geo'
+`demos/api' contains C++, C, Python and Julia versions of several of the `.geo'
 tutorials from `tutorials'.
 
 To add a new function in the Gmsh API:
