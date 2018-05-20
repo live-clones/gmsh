@@ -1324,27 +1324,55 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def setPeriodic(dim, tags, tagsSource, affineTransformation):
+        def setPeriodic(dim, tags, tagsMaster, affineTransformation):
             """
             Set the meshes of the entities of dimension `dim' and tag `tags' as
-            periodic copies of the meshes of entities `tagsSource', using the affine
+            periodic copies of the meshes of entities `tagsMaster', using the affine
             transformation specified in `affineTransformation' (16 entries of a 4x4
             matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.
             """
             api_tags_, api_tags_n_ = _ivectorint(tags)
-            api_tagsSource_, api_tagsSource_n_ = _ivectorint(tagsSource)
+            api_tagsMaster_, api_tagsMaster_n_ = _ivectorint(tagsMaster)
             api_affineTransformation_, api_affineTransformation_n_ = _ivectordouble(affineTransformation)
             ierr = c_int()
             lib.gmshModelMeshSetPeriodic(
                 c_int(dim),
                 api_tags_, api_tags_n_,
-                api_tagsSource_, api_tagsSource_n_,
+                api_tagsMaster_, api_tagsMaster_n_,
                 api_affineTransformation_, api_affineTransformation_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
                     "gmshModelMeshSetPeriodic returned non-zero error code: ",
                     ierr.value)
+
+        @staticmethod
+        def getPeriodicNodes(dim, tag):
+            """
+            Get the master entity, periodic node pairs and affine transform for the
+            entity of dimension `dim' and tag `tag'.
+
+            Return `tagMaster', `nodes', `affineTransform'.
+            """
+            api_tagMaster_ = c_int()
+            api_nodes_, api_nodes_n_ = POINTER(c_int)(), c_size_t()
+            api_affineTransform_, api_affineTransform_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetPeriodicNodes(
+                c_int(dim),
+                c_int(tag),
+                byref(api_tagMaster_),
+                byref(api_nodes_), byref(api_nodes_n_),
+                byref(api_affineTransform_), byref(api_affineTransform_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetPeriodicNodes returned non-zero error code: ",
+                    ierr.value)
+            return (
+                api_tagMaster_.value,
+                _ovectorpair(api_nodes_, api_nodes_n_.value),
+                _ovectordouble(api_affineTransform_, api_affineTransform_n_.value))
 
 
         class field:

@@ -488,14 +488,23 @@ GMSH_API void gmshModelMeshEmbed(const int dim,
                                  int * ierr);
 
 /* Set the meshes of the entities of dimension `dim' and tag `tags' as
- * periodic copies of the meshes of entities `tagsSource', using the affine
+ * periodic copies of the meshes of entities `tagsMaster', using the affine
  * transformation specified in `affineTransformation' (16 entries of a 4x4
  * matrix, by row). Currently only available for `dim' == 1 and `dim' == 2. */
 GMSH_API void gmshModelMeshSetPeriodic(const int dim,
                                        int * tags, size_t tags_n,
-                                       int * tagsSource, size_t tagsSource_n,
+                                       int * tagsMaster, size_t tagsMaster_n,
                                        double * affineTransformation, size_t affineTransformation_n,
                                        int * ierr);
+
+/* Get the master entity, periodic node pairs and affine transform for the
+ * entity of dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim,
+                                            const int tag,
+                                            int * tagMaster,
+                                            int ** nodes, size_t * nodes_n,
+                                            double ** affineTransform, size_t * affineTransform_n,
+                                            int * ierr);
 
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explcitly; otherwise a new tag is assigned automatically. Return

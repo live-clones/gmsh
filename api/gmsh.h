@@ -461,13 +461,21 @@ namespace gmsh { // Top-level functions
                           const int inTag);
 
       // Set the meshes of the entities of dimension `dim' and tag `tags' as
-      // periodic copies of the meshes of entities `tagsSource', using the affine
+      // periodic copies of the meshes of entities `tagsMaster', using the affine
       // transformation specified in `affineTransformation' (16 entries of a 4x4
       // matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.
       GMSH_API void setPeriodic(const int dim,
                                 const std::vector<int> & tags,
-                                const std::vector<int> & tagsSource,
+                                const std::vector<int> & tagsMaster,
                                 const std::vector<double> & affineTransformation);
+
+      // Get the master entity, periodic node pairs and affine transform for the
+      // entity of dimension `dim' and tag `tag'.
+      GMSH_API void getPeriodicNodes(const int dim,
+                                     const int tag,
+                                     int & tagMaster,
+                                     gmsh::vectorpair & nodes,
+                                     std::vector<double> & affineTransform);
 
       namespace field { // Per-model mesh size field functions
 

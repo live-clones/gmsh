@@ -1128,19 +1128,44 @@ end
 
 """
 
-    gmsh.model.mesh.setPeriodic(dim, tags, tagsSource, affineTransformation)
+    gmsh.model.mesh.setPeriodic(dim, tags, tagsMaster, affineTransformation)
 
 Set the meshes of the entities of dimension 'dim' and tag 'tags' as periodic
-copies of the meshes of entities 'tagsSource', using the affine transformation
+copies of the meshes of entities 'tagsMaster', using the affine transformation
 specified in 'affineTransformation' (16 entries of a 4x4 matrix, by row).
 Currently only available for 'dim' == 1 and 'dim' == 2.
 """
-function setPeriodic(dim, tags, tagsSource, affineTransformation)
+function setPeriodic(dim, tags, tagsMaster, affineTransformation)
     ierr = Vector{Cint}(1)
     ccall((:gmshModelMeshSetPeriodic, gmsh.clib), Void,
           (Cint, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          dim, convert(Vector{Cint}, tags), length(tags), convert(Vector{Cint}, tagsSource), length(tagsSource), affineTransformation, length(affineTransformation), ierr)
+          dim, convert(Vector{Cint}, tags), length(tags), convert(Vector{Cint}, tagsMaster), length(tagsMaster), affineTransformation, length(affineTransformation), ierr)
     ierr[1] != 0 && error("gmshModelMeshSetPeriodic returned non-zero error code: " * string(ierr[1]))
+end
+
+"""
+
+    gmsh.model.mesh.getPeriodicNodes(dim, tag, tagMaster, nodes, affineTransform)
+
+Get the master entity, periodic node pairs and affine transform for the entity
+of dimension 'dim' and tag 'tag'.
+
+Return 'tagMaster', 'nodes', 'affineTransform'.
+"""
+function getPeriodicNodes(dim, tag)
+    api_nodes_ = Vector{Ptr{Cint}}(1)
+    api_nodes_n_ = Vector{Csize_t}(1)
+    api_affineTransform_ = Vector{Ptr{Cdouble}}(1)
+    api_affineTransform_n_ = Vector{Csize_t}(1)
+    ierr = Vector{Cint}(1)
+    ccall((:gmshModelMeshGetPeriodicNodes, gmsh.clib), Void,
+          (Cint, Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, tagMaster, api_nodes_, api_nodes_n_, api_affineTransform_, api_affineTransform_n_, ierr)
+    tmp_api_nodes_ = unsafe_wrap(Array, api_nodes_[1], api_nodes_n_[1], true)
+    nodes = [ (tmp_api_nodes_[i], tmp_api_nodes_[i+1]) for i in 1:2:length(tmp_api_nodes_) ]
+    affineTransform = unsafe_wrap(Array, api_affineTransform_[1], api_affineTransform_n_[1], true)
+    ierr[1] != 0 && error("gmshModelMeshGetPeriodicNodes returned non-zero error code: " * string(ierr[1]))
+    return tagMaster, nodes, affineTransform
 end
 
 """
