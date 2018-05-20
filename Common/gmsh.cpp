@@ -97,7 +97,7 @@ GMSH_API void gmsh::initialize(int argc,
     Msg::Warning("Gmsh has aleady been initialized");
     return;
   }
-  if(GmshInitialize(argc, argv, readConfigFiles)){
+  if(GmshInitialize(argc, argv, readConfigFiles, false)){
     _initialized = 1;
     _argc = argc;
     _argv = new char*[_argc + 1];
@@ -1284,12 +1284,12 @@ GMSH_API void gmsh::model::mesh::embed(const int dim,
 
 GMSH_API void gmsh::model::mesh::setPeriodic(const int dim,
                                              const std::vector<int> &tags,
-                                             const std::vector<int> &tagsSource,
+                                             const std::vector<int> &tagsMaster,
                                              const std::vector<double> &affineTransform)
 {
   if(!_isInitialized()){ throw -1; }
-  if(tags.size() != tagsSource.size()){
-    Msg::Error("Incompatible number of tags and source tags for periodic mesh");
+  if(tags.size() != tagsMaster.size()){
+    Msg::Error("Incompatible number of tags and master tags for periodic mesh");
     throw 2;
   }
   if(affineTransform.size() != 16){
@@ -1304,9 +1304,9 @@ GMSH_API void gmsh::model::mesh::setPeriodic(const int dim,
         Msg::Error("%s does not exist", _getEntityName(dim, tags[i]).c_str());
         throw 2;
       }
-      GEdge *source = GModel::current()->getEdgeByTag(tagsSource[i]);
+      GEdge *source = GModel::current()->getEdgeByTag(tagsMaster[i]);
       if(!source){
-        Msg::Error("%s does not exist", _getEntityName(dim, tagsSource[i]).c_str());
+        Msg::Error("%s does not exist", _getEntityName(dim, tagsMaster[i]).c_str());
         throw 2;
       }
       target->setMeshMaster(source, affineTransform);
@@ -1317,13 +1317,38 @@ GMSH_API void gmsh::model::mesh::setPeriodic(const int dim,
         Msg::Error("%s does not exist", _getEntityName(dim, tags[i]).c_str());
         throw 2;
       }
-      GFace *source = GModel::current()->getFaceByTag(tagsSource[i]);
+      GFace *source = GModel::current()->getFaceByTag(tagsMaster[i]);
       if(!source){
-        Msg::Error("%s does not exist", _getEntityName(dim, tagsSource[i]).c_str());
+        Msg::Error("%s does not exist", _getEntityName(dim, tagsMaster[i]).c_str());
         throw 2;
       }
       target->setMeshMaster(source, affineTransform);
     }
+  }
+}
+
+GMSH_API void gmsh::model::mesh::getPeriodicNodes(const int dim, const int tag,
+                                                  int &tagSource,
+                                                  gmsh::vectorpair &nodes,
+                                                  std::vector<double> &affineTransform)
+{
+  if(!_isInitialized()){ throw -1; }
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge){
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    throw 2;
+  }
+  if(ge->meshMaster() != ge){
+    tagSource = ge->meshMaster()->tag();
+    for(std::map<MVertex*,MVertex*>::iterator it = ge->correspondingVertices.begin();
+        it != ge->correspondingVertices.end(); ++it)
+      nodes.push_back(std::pair<int, int>(it->first->getNum(), it->second->getNum()));
+    affineTransform = ge->affineTransform;
+  }
+  else{
+    tagSource = tag;
+    nodes.clear();
+    affineTransform.clear();
   }
 }
 

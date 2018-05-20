@@ -201,7 +201,7 @@ static void discretizeCurve(Curve *c, double tol, std::vector<SPoint3> &pts,
       break;
     }
   default :
-    Msg::Fatal("not implemented");
+    Msg::Error("discretizeCurve not implemented for curve type %d", c->Typ);
   }
   discrete.sort(pts, ts);
 }

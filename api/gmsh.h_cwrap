@@ -874,23 +874,40 @@ namespace gmsh { // Top-level functions
       }
 
       // Set the meshes of the entities of dimension `dim' and tag `tags' as
-      // periodic copies of the meshes of entities `tagsSource', using the affine
+      // periodic copies of the meshes of entities `tagsMaster', using the affine
       // transformation specified in `affineTransformation' (16 entries of a 4x4
       // matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.
       GMSH_API void setPeriodic(const int dim,
                                 const std::vector<int> & tags,
-                                const std::vector<int> & tagsSource,
+                                const std::vector<int> & tagsMaster,
                                 const std::vector<double> & affineTransformation)
       {
         int ierr = 0;
         int *api_tags_; size_t api_tags_n_; vector2ptr(tags, &api_tags_, &api_tags_n_);
-        int *api_tagsSource_; size_t api_tagsSource_n_; vector2ptr(tagsSource, &api_tagsSource_, &api_tagsSource_n_);
+        int *api_tagsMaster_; size_t api_tagsMaster_n_; vector2ptr(tagsMaster, &api_tagsMaster_, &api_tagsMaster_n_);
         double *api_affineTransformation_; size_t api_affineTransformation_n_; vector2ptr(affineTransformation, &api_affineTransformation_, &api_affineTransformation_n_);
-        gmshModelMeshSetPeriodic(dim, api_tags_, api_tags_n_, api_tagsSource_, api_tagsSource_n_, api_affineTransformation_, api_affineTransformation_n_, &ierr);
+        gmshModelMeshSetPeriodic(dim, api_tags_, api_tags_n_, api_tagsMaster_, api_tagsMaster_n_, api_affineTransformation_, api_affineTransformation_n_, &ierr);
         if(ierr) throw ierr;
         gmshFree(api_tags_);
-        gmshFree(api_tagsSource_);
+        gmshFree(api_tagsMaster_);
         gmshFree(api_affineTransformation_);
+      }
+
+      // Get the master entity, periodic node pairs and affine transform for the
+      // entity of dimension `dim' and tag `tag'.
+      GMSH_API void getPeriodicNodes(const int dim,
+                                     const int tag,
+                                     int & tagMaster,
+                                     gmsh::vectorpair & nodes,
+                                     std::vector<double> & affineTransform)
+      {
+        int ierr = 0;
+        int *api_nodes_; size_t api_nodes_n_;
+        double *api_affineTransform_; size_t api_affineTransform_n_;
+        gmshModelMeshGetPeriodicNodes(dim, tag, &tagMaster, &api_nodes_, &api_nodes_n_, &api_affineTransform_, &api_affineTransform_n_, &ierr);
+        if(ierr) throw ierr;
+        nodes.resize(api_nodes_n_ / 2); for(size_t i = 0; i < api_nodes_n_ / 2; ++i){ nodes[i].first = api_nodes_[i * 2 + 0]; nodes[i].second = api_nodes_[i * 2 + 1]; } gmshFree(api_nodes_);
+        affineTransform.assign(api_affineTransform_, api_affineTransform_ + api_affineTransform_n_); gmshFree(api_affineTransform_);
       }
 
       namespace field { // Per-model mesh size field functions

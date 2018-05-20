@@ -14,4 +14,8 @@ gmsh.model.mesh.setSize([(0,1)], 0.01);
 gmsh.model.mesh.setPeriodic(2, [2], [1], [1,0,0,R, 0,1,0,0, 0,0,1,0, 0,0,0,0])
 
 gmsh.model.mesh.generate(3)
+
+masterTag, nodes, tfo = gmsh.model.mesh.getPeriodicNodes(2, 2)
+# print masterTag, nodes, tfo
+
 gmsh.write("periodic.msh")

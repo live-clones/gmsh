@@ -11,6 +11,7 @@
 #include "Context.h"
 #include "Options.h"
 #include "OpenFile.h"
+#include "CreateFile.h"
 #include "OS.h"
 
 #if defined(HAVE_OPENGL)
@@ -32,56 +33,60 @@
 
 int GetFileFormatFromExtension(const std::string &ext)
 {
-  if     (ext == ".geo_unrolled")  return FORMAT_GEO;
-  else if(ext == ".msh")  return FORMAT_MSH;
-  else if(ext == ".x3d")  return FORMAT_X3D;
-  else if(ext == ".pos")  return FORMAT_POS;
-  else if(ext == ".pvtu") return FORMAT_PVTU;
-  else if(ext == ".opt")  return FORMAT_OPT;
-  else if(ext == ".unv")  return FORMAT_UNV;
-  else if(ext == ".vtk")  return FORMAT_VTK;
-  else if(ext == ".m")    return FORMAT_MATLAB;
-  else if(ext == ".dat")  return FORMAT_TOCHNOG;
-  else if(ext == ".txt")  return FORMAT_TXT;
-  else if(ext == ".stl")  return FORMAT_STL;
-  else if(ext == ".cgns") return FORMAT_CGNS;
-  else if(ext == ".med")  return FORMAT_MED;
-  else if(ext == ".rmed") return FORMAT_RMED;
-  else if(ext == ".ir3")  return FORMAT_IR3;
-  else if(ext == ".mesh") return FORMAT_MESH;
-  else if(ext == ".mail") return FORMAT_MAIL;
-  else if(ext == ".bdf")  return FORMAT_BDF;
-  else if(ext == ".diff") return FORMAT_DIFF;
-  else if(ext == ".inp")  return FORMAT_INP;
-  else if(ext == ".celum")return FORMAT_CELUM;
-  else if(ext == ".su2")  return FORMAT_SU2;
-  else if(ext == ".nas")  return FORMAT_BDF;
-  else if(ext == ".p3d")  return FORMAT_P3D;
-  else if(ext == ".wrl")  return FORMAT_VRML;
-  else if(ext == ".vrml") return FORMAT_VRML;
-  else if(ext == ".ply2") return FORMAT_PLY2;
-  else if(ext == ".gif")  return FORMAT_GIF;
-  else if(ext == ".jpg")  return FORMAT_JPEG;
-  else if(ext == ".jpeg") return FORMAT_JPEG;
-  else if(ext == ".mpg")  return FORMAT_MPEG;
-  else if(ext == ".mpeg") return FORMAT_MPEG;
-  else if(ext == ".png")  return FORMAT_PNG;
-  else if(ext == ".pgf")  return FORMAT_PGF;
-  else if(ext == ".ps")   return FORMAT_PS;
-  else if(ext == ".eps")  return FORMAT_EPS;
-  else if(ext == ".pdf")  return FORMAT_PDF;
-  else if(ext == ".tex")  return FORMAT_TEX;
-  else if(ext == ".svg")  return FORMAT_SVG;
-  else if(ext == ".tikz") return FORMAT_TIKZ;
-  else if(ext == ".ppm")  return FORMAT_PPM;
-  else if(ext == ".yuv")  return FORMAT_YUV;
-  else if(ext == ".brep") return FORMAT_BREP;
-  else if(ext == ".step") return FORMAT_STEP;
-  else if(ext == ".stp")  return FORMAT_STEP;
-  else if(ext == ".iges") return FORMAT_IGES;
-  else if(ext == ".igs")  return FORMAT_IGES;
-  else if(ext == ".neu")  return FORMAT_NEU;
-  else                           return -1;
+  if(ext == ".geo_unrolled")  return FORMAT_GEO;
+  else if(ext == ".msh")      return FORMAT_MSH;
+  else if(ext == ".msh1")     return FORMAT_MSH;
+  else if(ext == ".msh2")     return FORMAT_MSH;
+  else if(ext == ".msh3")     return FORMAT_MSH;
+  else if(ext == ".msh4")     return FORMAT_MSH;
+  else if(ext == ".x3d")      return FORMAT_X3D;
+  else if(ext == ".pos")      return FORMAT_POS;
+  else if(ext == ".pvtu")     return FORMAT_PVTU;
+  else if(ext == ".opt")      return FORMAT_OPT;
+  else if(ext == ".unv")      return FORMAT_UNV;
+  else if(ext == ".vtk")      return FORMAT_VTK;
+  else if(ext == ".m")        return FORMAT_MATLAB;
+  else if(ext == ".dat")      return FORMAT_TOCHNOG;
+  else if(ext == ".txt")      return FORMAT_TXT;
+  else if(ext == ".stl")      return FORMAT_STL;
+  else if(ext == ".cgns")     return FORMAT_CGNS;
+  else if(ext == ".med")      return FORMAT_MED;
+  else if(ext == ".rmed")     return FORMAT_RMED;
+  else if(ext == ".ir3")      return FORMAT_IR3;
+  else if(ext == ".mesh")     return FORMAT_MESH;
+  else if(ext == ".mail")     return FORMAT_MAIL;
+  else if(ext == ".bdf")      return FORMAT_BDF;
+  else if(ext == ".diff")     return FORMAT_DIFF;
+  else if(ext == ".inp")      return FORMAT_INP;
+  else if(ext == ".celum")    return FORMAT_CELUM;
+  else if(ext == ".su2")      return FORMAT_SU2;
+  else if(ext == ".nas")      return FORMAT_BDF;
+  else if(ext == ".p3d")      return FORMAT_P3D;
+  else if(ext == ".wrl")      return FORMAT_VRML;
+  else if(ext == ".vrml")     return FORMAT_VRML;
+  else if(ext == ".ply2")     return FORMAT_PLY2;
+  else if(ext == ".gif")      return FORMAT_GIF;
+  else if(ext == ".jpg")      return FORMAT_JPEG;
+  else if(ext == ".jpeg")     return FORMAT_JPEG;
+  else if(ext == ".mpg")      return FORMAT_MPEG;
+  else if(ext == ".mpeg")     return FORMAT_MPEG;
+  else if(ext == ".png")      return FORMAT_PNG;
+  else if(ext == ".pgf")      return FORMAT_PGF;
+  else if(ext == ".ps")       return FORMAT_PS;
+  else if(ext == ".eps")      return FORMAT_EPS;
+  else if(ext == ".pdf")      return FORMAT_PDF;
+  else if(ext == ".tex")      return FORMAT_TEX;
+  else if(ext == ".svg")      return FORMAT_SVG;
+  else if(ext == ".tikz")     return FORMAT_TIKZ;
+  else if(ext == ".ppm")      return FORMAT_PPM;
+  else if(ext == ".yuv")      return FORMAT_YUV;
+  else if(ext == ".brep")     return FORMAT_BREP;
+  else if(ext == ".step")     return FORMAT_STEP;
+  else if(ext == ".stp")      return FORMAT_STEP;
+  else if(ext == ".iges")     return FORMAT_IGES;
+  else if(ext == ".igs")      return FORMAT_IGES;
+  else if(ext == ".neu")      return FORMAT_NEU;
+  else                        return -1;
 }
 
 int GuessFileFormatFromFileName(const std::string &fileName)
@@ -90,56 +95,77 @@ int GuessFileFormatFromFileName(const std::string &fileName)
   return GetFileFormatFromExtension(ext);
 }
 
+std::string GetDefaultFileExtension(int format, bool onlyMeshFormats)
+{
+  std::string name;
+  bool mesh = false;
+  switch(format){
+  case FORMAT_GEO:     name = ".geo_unrolled"; break;
+  case FORMAT_MSH:     name = ".msh"; mesh = true; break;
+  case FORMAT_POS:     name = ".pos"; break;
+  case FORMAT_X3D:     name = ".x3d"; mesh = true; break;
+  case FORMAT_PVTU:    name = ".pvtu"; break;
+  case FORMAT_OPT:     name = ".opt"; break;
+  case FORMAT_UNV:     name = ".unv"; mesh = true; break;
+  case FORMAT_VTK:     name = ".vtk"; mesh = true; break;
+  case FORMAT_MATLAB:  name = ".m"; mesh = true; break;
+  case FORMAT_TOCHNOG: name = ".dat"; mesh = true; break;
+  case FORMAT_STL:     name = ".stl"; mesh = true; break;
+  case FORMAT_CGNS:    name = ".cgns"; mesh = true; break;
+  case FORMAT_MED:     name = ".med"; mesh = true; break;
+  case FORMAT_RMED:    name = ".rmed"; break;
+  case FORMAT_IR3:     name = ".ir3"; mesh = true; break;
+  case FORMAT_MESH:    name = ".mesh"; mesh = true; break;
+  case FORMAT_MAIL:    name = ".mail"; mesh = true; break;
+  case FORMAT_BDF:     name = ".bdf"; mesh = true; break;
+  case FORMAT_DIFF:    name = ".diff"; mesh = true; break;
+  case FORMAT_INP:     name = ".inp"; mesh = true; break;
+  case FORMAT_CELUM:   name = ".celum"; mesh = true; break;
+  case FORMAT_SU2:     name = ".su2"; mesh = true; break;
+  case FORMAT_P3D:     name = ".p3d"; mesh = true; break;
+  case FORMAT_VRML:    name = ".wrl"; mesh = true; break;
+  case FORMAT_PLY2:    name = ".ply2"; mesh = true; break;
+  case FORMAT_GIF:     name = ".gif"; break;
+  case FORMAT_JPEG:    name = ".jpg"; break;
+  case FORMAT_MPEG:    name = ".mpg"; break;
+  case FORMAT_PNG:     name = ".png"; break;
+  case FORMAT_PGF:     name = ".pgf"; break;
+  case FORMAT_PS:      name = ".ps"; break;
+  case FORMAT_EPS:     name = ".eps"; break;
+  case FORMAT_PDF:     name = ".pdf"; break;
+  case FORMAT_TEX:     name = ".tex"; break;
+  case FORMAT_SVG:     name = ".svg"; break;
+  case FORMAT_TIKZ:    name = ".tikz"; break;
+  case FORMAT_PPM:     name = ".ppm"; break;
+  case FORMAT_YUV:     name = ".yuv"; break;
+  case FORMAT_BREP:    name = ".brep"; break;
+  case FORMAT_IGES:    name = ".iges"; break;
+  case FORMAT_STEP:    name = ".step"; break;
+  case FORMAT_NEU:     name = ".neu"; mesh = true; break;
+  default:             name = ""; break;
+  }
+  if(onlyMeshFormats && !mesh) return "";
+  return name;
+}
+
 std::string GetDefaultFileName(int format)
 {
   std::vector<std::string> split = SplitFileName(GModel::current()->getFileName());
   std::string name = split[0] + split[1];
-  switch(format){
-  case FORMAT_GEO:  name += ".geo_unrolled"; break;
-  case FORMAT_MSH:  name += ".msh"; break;
-  case FORMAT_POS:  name += ".pos"; break;
-  case FORMAT_X3D:  name += ".x3d"; break;
-  case FORMAT_PVTU:  name += ".pvtu"; break;
-  case FORMAT_OPT:  name += ".opt"; break;
-  case FORMAT_UNV:  name += ".unv"; break;
-  case FORMAT_VTK:  name += ".vtk"; break;
-  case FORMAT_MATLAB:  name += ".m"; break;
-  case FORMAT_TOCHNOG: name += ".dat"; break;
-  case FORMAT_STL:  name += ".stl"; break;
-  case FORMAT_CGNS: name += ".cgns"; break;
-  case FORMAT_MED:  name += ".med"; break;
-  case FORMAT_RMED: name += ".rmed"; break;
-  case FORMAT_IR3:  name += ".ir3"; break;
-  case FORMAT_MESH: name += ".mesh"; break;
-  case FORMAT_MAIL: name += ".mail"; break;
-  case FORMAT_BDF:  name += ".bdf"; break;
-  case FORMAT_DIFF: name += ".diff"; break;
-  case FORMAT_INP:  name += ".inp"; break;
-  case FORMAT_CELUM:name += ".celum"; break;
-  case FORMAT_SU2:  name += ".su2"; break;
-  case FORMAT_P3D:  name += ".p3d"; break;
-  case FORMAT_VRML: name += ".wrl"; break;
-  case FORMAT_PLY2: name += ".ply2"; break;
-  case FORMAT_GIF:  name += ".gif"; break;
-  case FORMAT_JPEG: name += ".jpg"; break;
-  case FORMAT_MPEG: name += ".mpg"; break;
-  case FORMAT_PNG:  name += ".png"; break;
-  case FORMAT_PGF:  name += ".pgf"; break;
-  case FORMAT_PS:   name += ".ps"; break;
-  case FORMAT_EPS:  name += ".eps"; break;
-  case FORMAT_PDF:  name += ".pdf"; break;
-  case FORMAT_TEX:  name += ".tex"; break;
-  case FORMAT_SVG:  name += ".svg"; break;
-  case FORMAT_TIKZ: name += ".tikz"; break;
-  case FORMAT_PPM:  name += ".ppm"; break;
-  case FORMAT_YUV:  name += ".yuv"; break;
-  case FORMAT_BREP: name += ".brep"; break;
-  case FORMAT_IGES: name += ".iges"; break;
-  case FORMAT_STEP: name += ".step"; break;
-  case FORMAT_NEU: name += ".neu"; break;
-  default: break;
+  std::string ext = GetDefaultFileExtension(format);
+  return name + ext;
+}
+
+std::string GetKnownFileFormats(bool onlyMeshFormats)
+{
+  std::string all = "auto, msh1, msh2, msh3, msh4";
+  for(int i = 1; i < 1000; i++){
+    std::string ext = GetDefaultFileExtension(i, onlyMeshFormats);
+    if(ext.size() > 1){
+      all += ", " + ext.substr(1);
+    }
   }
-  return name;
+  return all;
 }
 
 #if defined(HAVE_FLTK)
@@ -421,7 +447,10 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_JPEG:
   case FORMAT_PNG:
     {
-      if(!FlGui::available()) break;
+      if(!FlGui::available()){
+        Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
+        break;
+      }
 
       FILE *fp = Fopen(name.c_str(), "wb");
       if(!fp){
@@ -459,7 +488,10 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_SVG:
   case FORMAT_TIKZ:
     {
-      if(!FlGui::available()) break;
+      if(!FlGui::available()){
+        Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
+        break;
+      }
 
       FILE *fp = Fopen(name.c_str(), "wb");
       if(!fp){
@@ -531,7 +563,10 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   case FORMAT_TEX:
     {
-      if(!FlGui::available()) break;
+      if(!FlGui::available()){
+        Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
+        break;
+      }
 
       FILE *fp = Fopen(name.c_str(), "w");
       if(!fp){
@@ -562,7 +597,11 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   case FORMAT_PGF:
     {
-      if(!FlGui::available()) break;
+      if(!FlGui::available()){
+        Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
+        break;
+      }
+
       // fill pixel buffer without colorbar and axes
       int restoreGeneralAxis = (int) opt_general_axes(0, GMSH_GET, 0);
       int restoreSmallAxis = (int) opt_general_small_axes(0, GMSH_GET, 0);
@@ -596,6 +635,11 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_MPEG:
   case FORMAT_MPEG_PREVIEW:
     {
+      if(!FlGui::available()){
+        Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
+        break;
+      }
+
       std::string parFileName = CTX::instance()->homeDir + ".gmsh-mpeg_encode.par";
       FILE *fp = 0;
       if(format != FORMAT_MPEG_PREVIEW){

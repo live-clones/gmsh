@@ -521,7 +521,7 @@ inline MYFACE builder (MElement *e, int num)
 		     e->getVertex (1),
 		     e->getVertex (2));
   }
-  Msg::Fatal("JF : finish the code of createtopologyfrommesh");
+  Msg::Fatal("createTopologyFromMesh not implemented without MFace");
   return topoFace (e->getVertex (0),
                    e->getVertex (1),
                    e->getVertex (2));
