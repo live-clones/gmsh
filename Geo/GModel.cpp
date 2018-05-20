@@ -920,8 +920,10 @@ void GModel::setAllVolumesPositiveTopology()
   }
   std::vector< std::pair <MElement *, bool > > queue;
   std::set<MElement*> queued;
-  if( (*regions.begin())->tetrahedra.size() == 0)
-    Msg::Fatal("setAllVolumePositiveTopology needs at least one tetrahedron to start");
+  if((*regions.begin())->tetrahedra.size() == 0){
+    Msg::Error("setAllVolumePositiveTopology needs at least one tetrahedron to start");
+    return;
+  }
   el = (*regions.begin())->tetrahedra[0];
   queue.push_back(std::make_pair(el, true));
   for(size_t i = 0; i < queue.size(); i++){

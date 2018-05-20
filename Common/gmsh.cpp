@@ -97,7 +97,7 @@ GMSH_API void gmsh::initialize(int argc,
     Msg::Warning("Gmsh has aleady been initialized");
     return;
   }
-  if(GmshInitialize(argc, argv, readConfigFiles)){
+  if(GmshInitialize(argc, argv, readConfigFiles, false)){
     _initialized = 1;
     _argc = argc;
     _argv = new char*[_argc + 1];

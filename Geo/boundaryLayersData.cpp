@@ -238,7 +238,7 @@ static void treat3Connections(GFace *gf, MVertex *_myVert, MEdge &e1,
     N3 = temp;
   }
   else {
-    Msg::Fatal("IMPOSSIBLE BL CONFIGURATION");
+    Msg::Error("Impossible boundary layer configuration");
   }
   if(dot(N1[0],N2[0]) > dot(N1[0],N3[0])){
     x1 = N1[0]*1.01+N2[0];

@@ -57,7 +57,8 @@ typedef unsigned long intptr_t;
 #include "onelabGroup.h"
 #endif
 
-int GmshInitialize(int argc, char **argv, bool readConfigFiles)
+int GmshInitialize(int argc, char **argv, bool readConfigFiles,
+                   bool exitOnCommandLineError)
 {
   Msg::SetNumThreads(1);
 
@@ -80,7 +81,7 @@ int GmshInitialize(int argc, char **argv, bool readConfigFiles)
   InitOptions(0);
 
   // Read configuration files and command line options
-  GetOptions(argc, argv, readConfigFiles);
+  GetOptions(argc, argv, readConfigFiles, exitOnCommandLineError);
 
   // Make sure we have enough resources (stack)
   CheckResources();
