@@ -370,22 +370,14 @@ bool gmshFace::buildSTLTriangulation(bool force)
 {
   return false;
 
-  if(stl_triangles.size()){
-    if(force){
-      stl_vertices_uv.clear();
-      stl_vertices_xyz.clear();
-      stl_triangles.clear();
-    }
-    else
-      return true;
-  }
-
+  if(stl_triangles.size() && !force) return true;
   stl_vertices_uv.clear();
   stl_vertices_xyz.clear();
   stl_triangles.clear();
 
 #if defined(HAVE_MESH)
   if (!triangles.size()){
+    // FIXME: mesh only this surface...
     model()->mesh(2);
   }
 #endif
@@ -394,9 +386,10 @@ bool gmshFace::buildSTLTriangulation(bool force)
   int COUNT = 0;
   for (unsigned int j = 0; j < triangles.size(); j++){
     for (int i = 0; i < 3; i++){
-      std::map<MVertex*,int>::iterator it = _v.find(triangles[j]->getVertex(i));
-      if (it != _v.end()){
-        _v[triangles[j]->getVertex(i)] = COUNT;
+      MVertex *v = triangles[j]->getVertex(i);
+      std::map<MVertex*,int>::iterator it = _v.find(v);
+      if (it == _v.end()){
+        _v[v] = COUNT;
         stl_triangles.push_back(COUNT);
         COUNT++;
       }

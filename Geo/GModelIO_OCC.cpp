@@ -3728,8 +3728,8 @@ static bool makeSTL(TopoDS_Face s,
   TopLoc_Location loc;
   Handle(Poly_Triangulation) triangulation = BRep_Tool::Triangulation(s, loc);
 
-  //if(triangulation.IsNull())
-  //  return false;
+  if(triangulation.IsNull())
+    return false;
 
   if(verticesUV && !triangulation->HasUVNodes())
     return false;
@@ -3738,18 +3738,18 @@ static bool makeSTL(TopoDS_Face s,
     return false;
 
   int start = 0;
-  //if(verticesUV) start = verticesUV->size();
-  //if(verticesXYZ) start = verticesXYZ->size();
+  if(verticesUV) start = verticesUV->size();
+  if(verticesXYZ) start = verticesXYZ->size();
   for(int i = 1; i <= triangulation->NbNodes(); i++){
     if(verticesUV){
       gp_Pnt2d p = (triangulation->UVNodes())(i);
-      printf("  ...adding uv vertex");
       verticesUV->push_back(SPoint2(p.X(), p.Y()));
     }
     if(verticesXYZ){
       gp_Pnt pp = (triangulation->Nodes())(i);
-      printf("  ...adding xyz vertex");
-      verticesXYZ->push_back(SPoint3(pp.X(), pp.Y(), pp.Z()));
+      double x = pp.X(), y = pp.Y(), z = pp.Z();
+      loc.Transformation().Transforms(x, y, z);
+      verticesXYZ->push_back(SPoint3(x, y, z));
     }
     if(normals){
       gp_Pnt2d p = (triangulation->UVNodes())(i);
@@ -3761,7 +3761,7 @@ static bool makeSTL(TopoDS_Face s,
       SVector3 t2(dv.X(), dv.Y(), dv.Z());
       SVector3 n(crossprod(t1, t2));
       n.normalize();
-      if(s.Orientation() == TopAbs_REVERSED) return n * (-1.);
+      if(s.Orientation() == TopAbs_REVERSED) n *= -1.;
       normals->push_back(n);
     }
   }
@@ -3785,7 +3785,6 @@ static bool makeSTL(TopoDS_Face s,
         reverse = true;
       }
     }
-    printf("  ...adding triangle");
     triangles.push_back(start + p1 - 1);
     if(!reverse){
       triangles.push_back(start + p2 - 1);

@@ -259,8 +259,8 @@ SOrientedBoundingBox GFace::getOBB()
       vertices = stl_vertices_xyz;
     }
     else {
-      // Fallback, if we can't make a STL triangulation of the
-      // surface, use its edges..
+      // Fallback, if we can't make a STL triangulation of the surface, use its
+      // edges..
       std::list<GEdge*> b_edges = edges();
       int N = 10;
       for (std::list<GEdge*>::iterator b_edge = b_edges.begin();
@@ -1247,18 +1247,12 @@ bool GFace::buildRepresentationCross(bool force)
 
 bool GFace::buildSTLTriangulation(bool force)
 {
-  if(stl_triangles.size()){
-    if(force){
-      stl_vertices_uv.clear();
-      stl_vertices_xyz.clear();
-      stl_triangles.clear();
-    }
-    else{
-      return true;
-    }
-  }
-  // Build a simple triangulation for surfaces which we know are not
-  // trimmed
+  if(stl_triangles.size() && !force) return true;
+  stl_vertices_uv.clear();
+  stl_vertices_xyz.clear();
+  stl_triangles.clear();
+
+  // Build a simple triangulation for surfaces which we know are not trimmed
   if(geomType() == ParametricSurface || geomType() == ProjectionFace){
     const int nu = 64, nv = 64;
     Range<double> ubounds = parBounds(0);
@@ -1287,8 +1281,6 @@ bool GFace::buildSTLTriangulation(bool force)
     return true;
   }
 
-  // build STL for general surfaces here
-
   return false;
 }
 
@@ -1307,8 +1299,9 @@ bool GFace::fillVertexArray(bool force)
   va_geom_triangles = new VertexArray(3, stl_triangles.size() / 3);
   unsigned int c = CTX::instance()->color.geom.surface;
   unsigned int col[4] = {c, c, c, c};
-  for (unsigned int i = 0; i < stl_triangles.size(); i += 3){
-    if(stl_vertices_xyz.size() && stl_normals.size()){
+  if(stl_vertices_xyz.size() &&
+     (stl_vertices_xyz.size() == stl_normals.size())){
+    for (unsigned int i = 0; i < stl_triangles.size(); i += 3){
       SPoint3 &p1(stl_vertices_xyz[stl_triangles[i]]);
       SPoint3 &p2(stl_vertices_xyz[stl_triangles[i + 1]]);
       SPoint3 &p3(stl_vertices_xyz[stl_triangles[i + 2]]);
@@ -1320,7 +1313,9 @@ bool GFace::fillVertexArray(bool force)
                        stl_normals[stl_triangles[i + 2]]};
       va_geom_triangles->add(x, y, z, n, col);
     }
-    else if(stl_vertices_uv.size()){
+  }
+  else if(stl_vertices_uv.size()){
+    for (unsigned int i = 0; i < stl_triangles.size(); i += 3){
       SPoint2 &p1(stl_vertices_uv[stl_triangles[i]]);
       SPoint2 &p2(stl_vertices_uv[stl_triangles[i + 1]]);
       SPoint2 &p3(stl_vertices_uv[stl_triangles[i + 2]]);

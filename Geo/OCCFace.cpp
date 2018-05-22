@@ -402,14 +402,10 @@ bool OCCFace::containsPoint(const SPoint3 &pt) const
 
 bool OCCFace::buildSTLTriangulation(bool force)
 {
-  printf("ask for stl %d (%d %d %d)\n", tag(), stl_triangles.size(),
-         stl_vertices_uv.size(), stl_vertices_xyz.size());
   if(stl_triangles.size() && !force) return true;
   stl_vertices_uv.clear();
   stl_vertices_xyz.clear();
   stl_triangles.clear();
-  printf(" -> generating for stl %d (%d %d %d)\n", tag(), stl_triangles.size(),
-         stl_vertices_uv.size(), stl_vertices_xyz.size());
   if(!model()->getOCCInternals()->makeFaceSTL(s, stl_vertices_uv, stl_vertices_xyz,
                                               stl_normals, stl_triangles)){
     Msg::Info("OpenCASCADE triangulation of surface %d failed", tag());
@@ -421,8 +417,6 @@ bool OCCFace::buildSTLTriangulation(bool force)
     stl_triangles.push_back(0);
     return false;
   }
-  printf(" -> done stl %d (%d %d %d)\n", tag(), stl_triangles.size(),
-         stl_vertices_uv.size(), stl_vertices_xyz.size());
   return true;
 }
 
