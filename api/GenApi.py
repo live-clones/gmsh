@@ -1086,7 +1086,7 @@ class API:
                    + ")\n")
             for a in args:
                 if a.julia_pre: f.write("    " + a.julia_pre + "\n")
-            f.write("    ierr = Vector{Cint}(1)\n    ")
+            f.write("    ierr = Ref{Cint}()\n    ")
             f.write("api__result__ = " if rtype is oint else "")
             c_name = c_mpath + name[0].upper() + name[1:]
             f.write("ccall((:" + c_name + ", " +
@@ -1099,8 +1099,8 @@ class API:
                         tuple(a.julia_arg for a in args) + ("ierr",)) + ")\n")
             for a in args:
                 if a.julia_post: f.write("    " + a.julia_post + "\n")
-            f.write('    ierr[1] != 0 && error("' + c_name +
-                    ' returned non-zero error code: " * string(ierr[1]))\n')
+            f.write('    ierr[] != 0 && error("' + c_name +
+                    ' returned non-zero error code: " * string(ierr[]))\n')
             r = (["api__result__"]) if rtype else []
             r += list((o.name for o in oargs))
             f.write("    return ")
