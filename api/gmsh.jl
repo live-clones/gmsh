@@ -727,15 +727,18 @@ length `dim` times `numNodes`).
 Return 'elementName', 'dim', 'order', 'numNodes', 'parametricCoord'.
 """
 function getElementProperties(elementType)
+    api_dim_ = Ref{Cint}()
+    api_order_ = Ref{Cint}()
+    api_numNodes_ = Ref{Cint}()
     api_parametricCoord_ = Vector{Ptr{Cdouble}}(1)
     api_parametricCoord_n_ = Vector{Csize_t}(1)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElementProperties, gmsh.clib), Void,
           (Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          elementType, elementName, dim, order, numNodes, api_parametricCoord_, api_parametricCoord_n_, ierr)
+          elementType, elementName, api_dim_, api_order_, api_numNodes_, api_parametricCoord_, api_parametricCoord_n_, ierr)
     parametricCoord = unsafe_wrap(Array, api_parametricCoord_[1], api_parametricCoord_n_[1], true)
     ierr[] != 0 && error("gmshModelMeshGetElementProperties returned non-zero error code: $(ierr[])")
-    return elementName, dim, order, numNodes, parametricCoord
+    return elementName, api_dim_[], api_order_[], api_numNodes_[], parametricCoord
 end
 
 """
@@ -766,13 +769,14 @@ function getIntegrationData(integrationType, functionSpaceType, dim = -1, tag = 
     api_integrationData_ = Vector{Ptr{Ptr{Cdouble}}}(1)
     api_integrationData_n_ = Vector{Ptr{Csize_t}}(1)
     api_integrationData_nn_ = Vector{Csize_t}(1)
+    api_functionSpaceNumComponents_ = Ref{Cint}()
     api_functionSpaceData_ = Vector{Ptr{Ptr{Cdouble}}}(1)
     api_functionSpaceData_n_ = Vector{Ptr{Csize_t}}(1)
     api_functionSpaceData_nn_ = Vector{Csize_t}(1)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetIntegrationData, gmsh.clib), Void,
           (Ptr{Cchar}, Ptr{Cchar}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          integrationType, functionSpaceType, api_integrationPoints_, api_integrationPoints_n_, api_integrationPoints_nn_, api_integrationData_, api_integrationData_n_, api_integrationData_nn_, functionSpaceNumComponents, api_functionSpaceData_, api_functionSpaceData_n_, api_functionSpaceData_nn_, dim, tag, ierr)
+          integrationType, functionSpaceType, api_integrationPoints_, api_integrationPoints_n_, api_integrationPoints_nn_, api_integrationData_, api_integrationData_n_, api_integrationData_nn_, api_functionSpaceNumComponents_, api_functionSpaceData_, api_functionSpaceData_n_, api_functionSpaceData_nn_, dim, tag, ierr)
     tmp_api_integrationPoints_ = unsafe_wrap(Array, api_integrationPoints_[1], api_integrationPoints_nn_[1], true)
     tmp_api_integrationPoints_n_ = unsafe_wrap(Array, api_integrationPoints_n_[1], api_integrationPoints_nn_[1], true)
     integrationPoints = [ unsafe_wrap(Array, tmp_api_integrationPoints_[i], tmp_api_integrationPoints_n_[i], true) for i in 1:api_integrationPoints_nn_[1] ]
@@ -783,7 +787,7 @@ function getIntegrationData(integrationType, functionSpaceType, dim = -1, tag = 
     tmp_api_functionSpaceData_n_ = unsafe_wrap(Array, api_functionSpaceData_n_[1], api_functionSpaceData_nn_[1], true)
     functionSpaceData = [ unsafe_wrap(Array, tmp_api_functionSpaceData_[i], tmp_api_functionSpaceData_n_[i], true) for i in 1:api_functionSpaceData_nn_[1] ]
     ierr[] != 0 && error("gmshModelMeshGetIntegrationData returned non-zero error code: $(ierr[])")
-    return integrationPoints, integrationData, functionSpaceNumComponents, functionSpaceData
+    return integrationPoints, integrationData, api_functionSpaceNumComponents_[], functionSpaceData
 end
 
 """
@@ -843,17 +847,18 @@ function getIntegrationDataByType(elementType, integrationType, functionSpaceTyp
     api_integrationPoints_n_ = Vector{Csize_t}(1)
     api_integrationData_ = Vector{Ptr{Cdouble}}(1)
     api_integrationData_n_ = Vector{Csize_t}(1)
+    api_functionSpaceNumComponents_ = Ref{Cint}()
     api_functionSpaceData_ = Vector{Ptr{Cdouble}}(1)
     api_functionSpaceData_n_ = Vector{Csize_t}(1)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetIntegrationDataByType, gmsh.clib), Void,
           (Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          elementType, integrationType, functionSpaceType, api_integrationPoints_, api_integrationPoints_n_, api_integrationData_, api_integrationData_n_, functionSpaceNumComponents, api_functionSpaceData_, api_functionSpaceData_n_, dim, tag, ierr)
+          elementType, integrationType, functionSpaceType, api_integrationPoints_, api_integrationPoints_n_, api_integrationData_, api_integrationData_n_, api_functionSpaceNumComponents_, api_functionSpaceData_, api_functionSpaceData_n_, dim, tag, ierr)
     integrationPoints = unsafe_wrap(Array, api_integrationPoints_[1], api_integrationPoints_n_[1], true)
     integrationData = unsafe_wrap(Array, api_integrationData_[1], api_integrationData_n_[1], true)
     functionSpaceData = unsafe_wrap(Array, api_functionSpaceData_[1], api_functionSpaceData_n_[1], true)
     ierr[] != 0 && error("gmshModelMeshGetIntegrationDataByType returned non-zero error code: $(ierr[])")
-    return integrationPoints, integrationData, functionSpaceNumComponents, functionSpaceData
+    return integrationPoints, integrationData, api_functionSpaceNumComponents_[], functionSpaceData
 end
 
 """
@@ -956,15 +961,16 @@ uses a map).
 Return 'elementType', 'nodeTags'.
 """
 function getElement(elementTag)
+    api_elementType_ = Ref{Cint}()
     api_nodeTags_ = Vector{Ptr{Cint}}(1)
     api_nodeTags_n_ = Vector{Csize_t}(1)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElement, gmsh.clib), Void,
           (Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          elementTag, elementType, api_nodeTags_, api_nodeTags_n_, ierr)
+          elementTag, api_elementType_, api_nodeTags_, api_nodeTags_n_, ierr)
     nodeTags = unsafe_wrap(Array, api_nodeTags_[1], api_nodeTags_n_[1], true)
     ierr[] != 0 && error("gmshModelMeshGetElement returned non-zero error code: $(ierr[])")
-    return elementType, nodeTags
+    return api_elementType_[], nodeTags
 end
 
 """
@@ -1140,6 +1146,7 @@ of dimension `dim` and tag `tag`.
 Return 'tagMaster', 'nodes', 'affineTransform'.
 """
 function getPeriodicNodes(dim, tag)
+    api_tagMaster_ = Ref{Cint}()
     api_nodes_ = Vector{Ptr{Cint}}(1)
     api_nodes_n_ = Vector{Csize_t}(1)
     api_affineTransform_ = Vector{Ptr{Cdouble}}(1)
@@ -1147,12 +1154,12 @@ function getPeriodicNodes(dim, tag)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetPeriodicNodes, gmsh.clib), Void,
           (Cint, Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          dim, tag, tagMaster, api_nodes_, api_nodes_n_, api_affineTransform_, api_affineTransform_n_, ierr)
+          dim, tag, api_tagMaster_, api_nodes_, api_nodes_n_, api_affineTransform_, api_affineTransform_n_, ierr)
     tmp_api_nodes_ = unsafe_wrap(Array, api_nodes_[1], api_nodes_n_[1], true)
     nodes = [ (tmp_api_nodes_[i], tmp_api_nodes_[i+1]) for i in 1:2:length(tmp_api_nodes_) ]
     affineTransform = unsafe_wrap(Array, api_affineTransform_[1], api_affineTransform_n_[1], true)
     ierr[] != 0 && error("gmshModelMeshGetPeriodicNodes returned non-zero error code: $(ierr[])")
-    return tagMaster, nodes, affineTransform
+    return api_tagMaster_[], nodes, affineTransform
 end
 
 """
@@ -2855,16 +2862,17 @@ function getModelData(tag, step)
     api_data_ = Vector{Ptr{Ptr{Cdouble}}}(1)
     api_data_n_ = Vector{Ptr{Csize_t}}(1)
     api_data_nn_ = Vector{Csize_t}(1)
+    api_numComponents_ = Ref{Cint}()
     ierr = Ref{Cint}()
     ccall((:gmshViewGetModelData, gmsh.clib), Void,
           (Cint, Cint, Ptr{Ptr{Cchar}}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cdouble}, Ptr{Cint}, Ptr{Cint}),
-          tag, step, dataType, api_tags_, api_tags_n_, api_data_, api_data_n_, api_data_nn_, time, numComponents, ierr)
+          tag, step, dataType, api_tags_, api_tags_n_, api_data_, api_data_n_, api_data_nn_, time, api_numComponents_, ierr)
     tags = unsafe_wrap(Array, api_tags_[1], api_tags_n_[1], true)
     tmp_api_data_ = unsafe_wrap(Array, api_data_[1], api_data_nn_[1], true)
     tmp_api_data_n_ = unsafe_wrap(Array, api_data_n_[1], api_data_nn_[1], true)
     data = [ unsafe_wrap(Array, tmp_api_data_[i], tmp_api_data_n_[i], true) for i in 1:api_data_nn_[1] ]
     ierr[] != 0 && error("gmshViewGetModelData returned non-zero error code: $(ierr[])")
-    return dataType, tags, data, time, numComponents
+    return dataType, tags, data, time, api_numComponents_[]
 end
 
 """
