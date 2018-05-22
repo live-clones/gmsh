@@ -142,12 +142,13 @@ Get the `value` of a numerical option.
 Return 'value'.
 """
 function getNumber(name)
+    api_value_ = Ref{Cdouble}()
     ierr = Ref{Cint}()
     ccall((:gmshOptionGetNumber, gmsh.clib), Void,
           (Ptr{Cchar}, Ptr{Cdouble}, Ptr{Cint}),
-          name, value, ierr)
+          name, api_value_, ierr)
     ierr[] != 0 && error("gmshOptionGetNumber returned non-zero error code: $(ierr[])")
-    return value
+    return api_value_[]
 end
 
 """
@@ -422,12 +423,18 @@ geometrical entity of dimension `dim` and tag `tag`.
 Return 'xmin', 'ymin', 'zmin', 'xmax', 'ymax', 'zmax'.
 """
 function getBoundingBox(dim, tag)
+    api_xmin_ = Ref{Cdouble}()
+    api_ymin_ = Ref{Cdouble}()
+    api_zmin_ = Ref{Cdouble}()
+    api_xmax_ = Ref{Cdouble}()
+    api_ymax_ = Ref{Cdouble}()
+    api_zmax_ = Ref{Cdouble}()
     ierr = Ref{Cint}()
     ccall((:gmshModelGetBoundingBox, gmsh.clib), Void,
           (Cint, Cint, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cint}),
-          dim, tag, xmin, ymin, zmin, xmax, ymax, zmax, ierr)
+          dim, tag, api_xmin_, api_ymin_, api_zmin_, api_xmax_, api_ymax_, api_zmax_, ierr)
     ierr[] != 0 && error("gmshModelGetBoundingBox returned non-zero error code: $(ierr[])")
-    return xmin, ymin, zmin, xmax, ymax, zmax
+    return api_xmin_[], api_ymin_[], api_zmin_[], api_xmax_[], api_ymax_[], api_zmax_[]
 end
 
 """
@@ -2862,17 +2869,18 @@ function getModelData(tag, step)
     api_data_ = Vector{Ptr{Ptr{Cdouble}}}(1)
     api_data_n_ = Vector{Ptr{Csize_t}}(1)
     api_data_nn_ = Vector{Csize_t}(1)
+    api_time_ = Ref{Cdouble}()
     api_numComponents_ = Ref{Cint}()
     ierr = Ref{Cint}()
     ccall((:gmshViewGetModelData, gmsh.clib), Void,
           (Cint, Cint, Ptr{Ptr{Cchar}}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cdouble}, Ptr{Cint}, Ptr{Cint}),
-          tag, step, dataType, api_tags_, api_tags_n_, api_data_, api_data_n_, api_data_nn_, time, api_numComponents_, ierr)
+          tag, step, dataType, api_tags_, api_tags_n_, api_data_, api_data_n_, api_data_nn_, api_time_, api_numComponents_, ierr)
     tags = unsafe_wrap(Array, api_tags_[1], api_tags_n_[1], true)
     tmp_api_data_ = unsafe_wrap(Array, api_data_[1], api_data_nn_[1], true)
     tmp_api_data_n_ = unsafe_wrap(Array, api_data_n_[1], api_data_nn_[1], true)
     data = [ unsafe_wrap(Array, tmp_api_data_[i], tmp_api_data_n_[i], true) for i in 1:api_data_nn_[1] ]
     ierr[] != 0 && error("gmshViewGetModelData returned non-zero error code: $(ierr[])")
-    return dataType, tags, data, time, api_numComponents_[]
+    return dataType, tags, data, api_time_[], api_numComponents_[]
 end
 
 """

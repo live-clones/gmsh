@@ -222,6 +222,9 @@ def odouble(name, value=None, python_value=None, julia_value=None):
     a.python_arg = "byref(" + api_name + ")"
     a.python_return = api_name + ".value"
     a.julia_ctype = "Ptr{Cdouble}"
+    a.julia_pre = api_name + " = Ref{Cdouble}()"
+    a.julia_arg = api_name
+    a.julia_return = api_name + "[]"
     return a
 
 def ostring(name, value=None, python_value=None, julia_value=None):
