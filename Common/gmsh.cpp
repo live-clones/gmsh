@@ -1339,7 +1339,7 @@ GMSH_API void gmsh::model::mesh::setPeriodic(const int dim,
 }
 
 GMSH_API void gmsh::model::mesh::getPeriodicNodes(const int dim, const int tag,
-                                                  int &tagSource,
+                                                  int &tagMaster,
                                                   gmsh::vectorpair &nodes,
                                                   std::vector<double> &affineTransform)
 {
@@ -1350,14 +1350,14 @@ GMSH_API void gmsh::model::mesh::getPeriodicNodes(const int dim, const int tag,
     throw 2;
   }
   if(ge->meshMaster() != ge){
-    tagSource = ge->meshMaster()->tag();
+    tagMaster = ge->meshMaster()->tag();
     for(std::map<MVertex*,MVertex*>::iterator it = ge->correspondingVertices.begin();
         it != ge->correspondingVertices.end(); ++it)
       nodes.push_back(std::pair<int, int>(it->first->getNum(), it->second->getNum()));
     affineTransform = ge->affineTransform;
   }
   else{
-    tagSource = tag;
+    tagMaster = tag;
     nodes.clear();
     affineTransform.clear();
   }
