@@ -1155,6 +1155,7 @@ function setOutwardOrientation(tag)
           (Cint, Ptr{Cint}),
           tag, ierr)
     ierr[1] != 0 && error("gmshModelMeshSetOutwardOrientation returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
