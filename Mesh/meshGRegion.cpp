@@ -902,9 +902,9 @@ void deMeshGRegion::operator() (GRegion *gr)
   gr->deleteMesh();
 }
 
-/// X_1 (1-u-v) + X_2 u + X_3 v = P_x + t N_x
-/// Y_1 (1-u-v) + Y_2 u + Y_3 v = P_y + t N_y
-/// Z_1 (1-u-v) + Z_2 u + Z_3 v = P_z + t N_z
+// X_1 (1-u-v) + X_2 u + X_3 v = P_x + t N_x
+// Y_1 (1-u-v) + Y_2 u + Y_3 v = P_y + t N_y
+// Z_1 (1-u-v) + Z_2 u + Z_3 v = P_z + t N_z
 
 int intersect_line_triangle(double X[3], double Y[3], double Z[3] ,
                             double P[3], double N[3], const double eps_prec)
@@ -981,10 +981,10 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
       double X[3] = {t->getVertex(0)->x(), t->getVertex(1)->x(), t->getVertex(2)->x()};
       double Y[3] = {t->getVertex(0)->y(), t->getVertex(1)->y(), t->getVertex(2)->y()};
       double Z[3] = {t->getVertex(0)->z(), t->getVertex(1)->z(), t->getVertex(2)->z()};
-      for(int i = 0; i < 3; i++){
-        X[i] /= scaling;
-        Y[i] /= scaling;
-        Z[i] /= scaling;
+      for(int j = 0; j < 3; j++){
+        X[j] /= scaling;
+        Y[j] /= scaling;
+        Z[j] /= scaling;
       }
 
       double P[3] = {(X[0] + X[1] + X[2]) / 3.,
@@ -1013,10 +1013,10 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
                              t_b->getVertex(2)->y()};
             double Z_b[3] = {t_b->getVertex(0)->z(), t_b->getVertex(1)->z(),
                              t_b->getVertex(2)->z()};
-            for(int i = 0; i < 3; i++){
-              X_b[i] /= scaling;
-              Y_b[i] /= scaling;
-              Z_b[i] /= scaling;
+            for(int j = 0; j < 3; j++){
+              X_b[j] /= scaling;
+              Y_b[j] /= scaling;
+              Z_b[j] /= scaling;
             }
             int inters = intersect_line_triangle(X_b, Y_b, Z_b, P, N, 1.e-9);
             nb_intersect += inters;

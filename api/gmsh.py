@@ -1304,6 +1304,23 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def setOutwardOrientation(tag):
+            """
+            Set meshing constraints on the bounding surfaces of the volume of tag `tag'
+            so that all surfaces are oriented with outward pointing normals. Currently
+            only available with the OpenCASCADE kernel, as it relies on the STL
+            triangulation.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshSetOutwardOrientation(
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshSetOutwardOrientation returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def embed(dim, tags, inDim, inTag):
             """
             Embed the geometrical entities of dimension `dim' and tags `tags' in the

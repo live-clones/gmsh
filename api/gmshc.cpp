@@ -764,6 +764,17 @@ GMSH_API void gmshModelMeshSetReverse(const int dim, const int tag, const int va
   }
 }
 
+GMSH_API void gmshModelMeshSetOutwardOrientation(const int tag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::setOutwardOrientation(tag);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshEmbed(const int dim, int * tags, size_t tags_n, const int inDim, const int inTag, int * ierr)
 {
   if(ierr) *ierr = 0;

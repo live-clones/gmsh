@@ -1216,6 +1216,17 @@ GMSH_API void gmsh::model::mesh::setReverse(const int dim,
   }
 }
 
+GMSH_API void gmsh::model::mesh::setOutwardOrientation(const int tag)
+{
+  if(!_isInitialized()){ throw -1; }
+  GRegion *gr = GModel::current()->getRegionByTag(tag);
+  if(!gr){
+    Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
+    throw 2;
+  }
+  gr->setOutwardOrientationMeshConstraint();
+}
+
 GMSH_API void gmsh::model::mesh::embed(const int dim,
                                        const std::vector<int> &tags,
                                        const int inDim,
