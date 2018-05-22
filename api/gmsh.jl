@@ -1143,6 +1143,22 @@ end
 
 """
 
+    gmsh.model.mesh.setOutwardOrientation(tag)
+
+Set meshing constraints on the bounding surfaces of the volume of tag 'tag' so
+that all surfaces are oriented with outward pointing normals. Currently only
+available with the OpenCASCADE kernel, as it relies on the STL triangulation.
+"""
+function setOutwardOrientation(tag)
+    ierr = Vector{Cint}(1)
+    ccall((:gmshModelMeshSetOutwardOrientation, gmsh.clib), Void,
+          (Cint, Ptr{Cint}),
+          tag, ierr)
+    ierr[1] != 0 && error("gmshModelMeshSetOutwardOrientation returned non-zero error code: " * string(ierr[1]))
+end
+
+"""
+
     gmsh.model.mesh.embed(dim, tags, inDim, inTag)
 
 Embed the geometrical entities of dimension 'dim' and tags 'tags' in the (inDim,

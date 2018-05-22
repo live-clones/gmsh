@@ -1069,34 +1069,17 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       else if(!strcmp(argv[i] + 1, "format") || !strcmp(argv[i] + 1, "f")) {
         i++;
         if(argv[i]) {
-          if(!strcmp(argv[i], "auto")){
-            CTX::instance()->mesh.fileFormat = FORMAT_AUTO;
-          }
-          else if(!strcmp(argv[i], "msh1")){
-            CTX::instance()->mesh.fileFormat = FORMAT_MSH;
-            CTX::instance()->mesh.mshFileVersion = 1.0;
-          }
-          else if(!strcmp(argv[i], "msh2")){
-            CTX::instance()->mesh.fileFormat = FORMAT_MSH;
-            CTX::instance()->mesh.mshFileVersion = 2.0;
-          }
-          else if(!strcmp(argv[i], "msh3")){
-            CTX::instance()->mesh.fileFormat = FORMAT_MSH;
-            CTX::instance()->mesh.mshFileVersion = 3.0;
-          }
-          else if(!strcmp(argv[i], "msh4")){
-            CTX::instance()->mesh.fileFormat = FORMAT_MSH;
-            CTX::instance()->mesh.mshFileVersion = 4.0;
+          double version = 0.;
+          int format = GetFileFormatFromExtension
+            (std::string(".") + argv[i], &version);
+          if(format < 0){
+            Msg::Error("Unknown mesh format '%s'", argv[i]);
+            if(exitOnError) Msg::Exit(1);
           }
           else{
-            int format = GetFileFormatFromExtension(std::string(".") + argv[i]);
-            if(format < 0){
-              Msg::Error("Unknown mesh format '%s'", argv[i]);
-              if(exitOnError) Msg::Exit(1);
-            }
-            else{
-              CTX::instance()->mesh.fileFormat = format;
-            }
+            CTX::instance()->mesh.fileFormat = format;
+            if(format == FORMAT_MSH && version > 0.)
+              CTX::instance()->mesh.mshFileVersion = version;
           }
           i++;
         }

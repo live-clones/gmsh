@@ -3734,19 +3734,25 @@ static bool makeSTL(TopoDS_Face s,
   if(verticesUV && !triangulation->HasUVNodes())
     return false;
 
+  if(normals && !triangulation->HasUVNodes())
+    return false;
+
   int start = 0;
   if(verticesUV) start = verticesUV->size();
   if(verticesXYZ) start = verticesXYZ->size();
   for(int i = 1; i <= triangulation->NbNodes(); i++){
-    gp_Pnt2d p = (triangulation->UVNodes())(i);
     if(verticesUV){
+      gp_Pnt2d p = (triangulation->UVNodes())(i);
       verticesUV->push_back(SPoint2(p.X(), p.Y()));
     }
     if(verticesXYZ){
       gp_Pnt pp = (triangulation->Nodes())(i);
-      verticesXYZ->push_back(SPoint3(pp.X(), pp.Y(), pp.Z()));
+      double x = pp.X(), y = pp.Y(), z = pp.Z();
+      loc.Transformation().Transforms(x, y, z);
+      verticesXYZ->push_back(SPoint3(x, y, z));
     }
     if(normals){
+      gp_Pnt2d p = (triangulation->UVNodes())(i);
       Handle(Geom_Surface) sur = BRep_Tool::Surface(s);
       gp_Pnt pnt;
       gp_Vec du, dv;
@@ -3755,25 +3761,55 @@ static bool makeSTL(TopoDS_Face s,
       SVector3 t2(dv.X(), dv.Y(), dv.Z());
       SVector3 n(crossprod(t1, t2));
       n.normalize();
-      if(s.Orientation() == TopAbs_REVERSED) return n * (-1.);
+      if(s.Orientation() == TopAbs_REVERSED) n *= -1.;
       normals->push_back(n);
     }
   }
+  bool reverse = false;
   for(int i = 1; i <= triangulation->NbTriangles(); i++){
     Poly_Triangle triangle = (triangulation->Triangles())(i);
     int p1, p2, p3;
     triangle.Get(p1, p2, p3);
+    if(i == 1 && normals){ // verify orientation
+      SVector3 nn = (*normals)[start + p1 - 1];
+      gp_Pnt pp1 = (triangulation->Nodes())(p1);
+      gp_Pnt pp2 = (triangulation->Nodes())(p2);
+      gp_Pnt pp3 = (triangulation->Nodes())(p3);
+      double n[3];
+      normal3points(pp1.X(), pp1.Y(), pp1.Z(),
+                    pp2.X(), pp2.Y(), pp2.Z(),
+                    pp3.X(), pp3.Y(), pp3.Z(), n);
+      SVector3 ne(n[0], n[1], n[2]);
+      if(dot(ne, nn) < 0){
+        Msg::Debug("Reversing orientation of STL mesh");
+        reverse = true;
+      }
+    }
     triangles.push_back(start + p1 - 1);
-    triangles.push_back(start + p2 - 1);
-    triangles.push_back(start + p3 - 1);
+    if(!reverse){
+      triangles.push_back(start + p2 - 1);
+      triangles.push_back(start + p3 - 1);
+    }
+    else{
+      triangles.push_back(start + p3 - 1);
+      triangles.push_back(start + p2 - 1);
+    }
   }
   return true;
 }
 
-bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint2> &vertices,
+bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint2> &vertices_uv,
                                 std::vector<int> &triangles)
 {
-  return makeSTL(s, &vertices, 0, 0, triangles);
+  return makeSTL(s, &vertices_uv, 0, 0, triangles);
+}
+
+bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint2> &vertices_uv,
+                                std::vector<SPoint3> &vertices,
+                                std::vector<SVector3> &normals,
+                                std::vector<int> &triangles)
+{
+  return makeSTL(s, &vertices_uv, &vertices, &normals, triangles);
 }
 
 bool OCC_Internals::makeFaceSTL(TopoDS_Face s, std::vector<SPoint3> &vertices,

@@ -31,14 +31,15 @@
 #include "gl2pgf.h"
 #endif
 
-int GetFileFormatFromExtension(const std::string &ext)
+int GetFileFormatFromExtension(const std::string &ext, double *version)
 {
   if(ext == ".geo_unrolled")  return FORMAT_GEO;
+  else if(ext == ".auto")     return FORMAT_AUTO;
   else if(ext == ".msh")      return FORMAT_MSH;
-  else if(ext == ".msh1")     return FORMAT_MSH;
-  else if(ext == ".msh2")     return FORMAT_MSH;
-  else if(ext == ".msh3")     return FORMAT_MSH;
-  else if(ext == ".msh4")     return FORMAT_MSH;
+  else if(ext == ".msh1")     { if(version) *version = 1.0; return FORMAT_MSH; }
+  else if(ext == ".msh2")     { if(version) *version = 2.2; return FORMAT_MSH; }
+  else if(ext == ".msh3")     { if(version) *version = 3.0; return FORMAT_MSH; }
+  else if(ext == ".msh4")     { if(version) *version = 4.0; return FORMAT_MSH; }
   else if(ext == ".x3d")      return FORMAT_X3D;
   else if(ext == ".pos")      return FORMAT_POS;
   else if(ext == ".pvtu")     return FORMAT_PVTU;
@@ -89,10 +90,10 @@ int GetFileFormatFromExtension(const std::string &ext)
   else                        return -1;
 }
 
-int GuessFileFormatFromFileName(const std::string &fileName)
+int GuessFileFormatFromFileName(const std::string &fileName, double *version)
 {
   std::string ext = SplitFileName(fileName)[2];
-  return GetFileFormatFromExtension(ext);
+  return GetFileFormatFromExtension(ext, version);
 }
 
 std::string GetDefaultFileExtension(int format, bool onlyMeshFormats)
@@ -281,7 +282,13 @@ void CreateOutputFile(const std::string &fileName, int format,
   switch (format) {
 
   case FORMAT_AUTO:
-    CreateOutputFile(name, GuessFileFormatFromFileName(name), false, false);
+    {
+      double version = 0.;
+      int format = GuessFileFormatFromFileName(name, &version);
+      if(format == FORMAT_MSH && version > 0.)
+        CTX::instance()->mesh.mshFileVersion = version;
+      CreateOutputFile(name, format, false, false);
+    }
     break;
 
   case FORMAT_OPT:
