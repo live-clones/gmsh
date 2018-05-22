@@ -703,7 +703,7 @@ static double _computeDeterminantAndRegularize(const MElement *ele, double *jac)
     case 3:
     {
     dJ = (jac[0] * jac[4] * jac[8] + jac[2] * jac[3] * jac[7] +
-          jac[1] * jac[5] * jac[7] - jac[3] * jac[4] * jac[6] -
+          jac[1] * jac[5] * jac[6] - jac[2] * jac[4] * jac[6] -
           jac[0] * jac[5] * jac[7] - jac[1] * jac[3] * jac[8]);
     break;
     }
