@@ -8,8 +8,8 @@
 
 #include <string>
 
-int GetFileFormatFromExtension(const std::string &fileName);
-int GuessFileFormatFromFileName(const std::string &fileName);
+int GetFileFormatFromExtension(const std::string &fileName, double *version = 0);
+int GuessFileFormatFromFileName(const std::string &fileName, double *version = 0);
 std::string GetDefaultFileExtension(int format, bool onlyMeshFormats = false);
 std::string GetDefaultFileName(int format);
 std::string GetKnownFileFormats(bool onlyMeshFormats = false);
