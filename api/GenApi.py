@@ -1072,9 +1072,9 @@ class API:
             (rtype, name, args, doc, rawc) = fun
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
-            f.write('\n"""\n\n    ')
+            f.write('\n"""\n    ')
             f.write(jl_mpath + name + "(" + ", ".join(parg(a) for a in args) + ")\n\n")
-            f.write("\n".join(textwrap.wrap(doc, 80)).replace("`", "'") + "\n")
+            f.write("\n".join(textwrap.wrap(doc, 80)).replace("'", "`") + "\n")
             if rtype or oargs:
                 f.write("\nReturn " + ", ".join(
                     (["an " + rtype.rtexi_type] if rtype else[])
@@ -1100,7 +1100,7 @@ class API:
             for a in args:
                 if a.julia_post: f.write("    " + a.julia_post + "\n")
             f.write('    ierr[] != 0 && error("' + c_name +
-                    ' returned non-zero error code: " * string(ierr[]))\n')
+                    ' returned non-zero error code: $(ierr[])")\n')
             r = (["api__result__"]) if rtype else []
             r += list((o.name for o in oargs))
             f.write("    return ")
@@ -1110,7 +1110,7 @@ class API:
                 f.write(", ".join(r))
             f.write("\nend\n")
         def write_module(f, m, c_mpath, jl_mpath, level):
-            f.write('\n"""\n\n    ')
+            f.write('\n"""\n    ')
             f.write("module " + jl_mpath + m.name + "\n\n")
             f.write("\n".join(textwrap.wrap(m.doc, 80)) + "\n")
             f.write('"""\n')
