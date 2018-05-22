@@ -496,7 +496,7 @@ class Module:
     # a raw C implementation of the function is available
     def add_rawc(self, name, doc, rtype, *args):
         self.fs.append((rtype, name, args, doc, True))
-        
+
     def add_module(self, name, doc):
         module = Module(name, doc)
         self.submodules.append(module)
@@ -651,13 +651,13 @@ cwrap_header="""// Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 // This file redefines the Gmsh C++ API in terms of the C API (v{0}).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
-// compiler ABI is not compatible with the ABI of the C++ compiler used to create 
+// compiler ABI is not compatible with the ABI of the C++ compiler used to create
 // the SDK (and who can thus not directly use the C++ API defined in `gmsh.h').
 //
 // To use this header file in your C++ code, simply rename it as `gmsh.h'.
 //
 // Note that using this header file will lead to (slightly) reduced performance
-// compared to using the native Gmsh C++ API from the original `gmsh.h', as it 
+// compared to using the native Gmsh C++ API from the original `gmsh.h', as it
 // entails additional data copies between this C++ wrapper, the C API and the
 // native C++ code.
 //
@@ -723,7 +723,7 @@ void vectorvector2ptrptr(const std::vector<std::vector<t> > &v, t ***p, size_t *
 
 cwrap_footer="""#endif
 """
-  
+
 python_header = """# Gmsh - Copyright (C) 1997-2018 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file for license information. Please report all
@@ -946,7 +946,7 @@ class API:
                     if rtype:
                         fc.write("result_api_ = ")
                     fc.write(cpp_namespace + name + "(" + ", ".join(
-                        list((a.c_arg for a in args))) + 
+                        list((a.c_arg for a in args))) +
                              ");\n")
                     fc.write("".join((a.c_post for a in args)))
                     fc.write("  }\n  catch(int api_ierr_){\n    " +
@@ -1103,9 +1103,12 @@ class API:
                     ' returned non-zero error code: " * string(ierr[1]))\n')
             r = (["api__result__"]) if rtype else []
             r += list((o.name for o in oargs))
-            if len(r) != 0:
-                f.write("    return " + ", ".join(r) + "\n")
-            f.write("end\n")
+            f.write("    return ")
+            if len(r) == 0:
+                f.write("nothing")
+            else:
+                f.write(", ".join(r))
+            f.write("\nend\n")
         def write_module(f, m, c_mpath, jl_mpath, level):
             f.write('\n"""\n\n    ')
             f.write("module " + jl_mpath + m.name + "\n\n")
@@ -1146,13 +1149,13 @@ class API:
                 f.write("@table @asis\n");
                 iargs = list(a for a in args if not a.out)
                 oargs = list(a for a in args if a.out)
-                f.write("@item " + "Input:\n" + 
+                f.write("@item " + "Input:\n" +
                         (", ".join(("@code{" + iarg.name + "}") for iarg in iargs)
                          if len(iargs) else "-") + "\n")
-                f.write("@item " + "Output:\n" + 
+                f.write("@item " + "Output:\n" +
                         (", ".join(("@code{" + oarg.name + "}") for oarg in oargs)
                          if len(oargs) else "-") + "\n")
-                f.write("@item " + "Return:\n" + 
+                f.write("@item " + "Return:\n" +
                         (rtype.rtexi_type if rtype else "-") + "\n")
                 f.write("@end table\n\n");
             f.write("@end ftable\n\n");

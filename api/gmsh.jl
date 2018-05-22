@@ -36,6 +36,7 @@ function initialize(argv = Vector{String}(), readConfigFiles = true)
           (Cint, Ptr{Ptr{Cchar}}, Cint, Ptr{Cint}),
           length(argv), argv, readConfigFiles, ierr)
     ierr[1] != 0 && error("gmshInitialize returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -50,6 +51,7 @@ function finalize()
           (Ptr{Cint},),
           ierr)
     ierr[1] != 0 && error("gmshFinalize returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -65,6 +67,7 @@ function open(fileName)
           (Ptr{Cchar}, Ptr{Cint}),
           fileName, ierr)
     ierr[1] != 0 && error("gmshOpen returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -80,6 +83,7 @@ function merge(fileName)
           (Ptr{Cchar}, Ptr{Cint}),
           fileName, ierr)
     ierr[1] != 0 && error("gmshMerge returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -94,6 +98,7 @@ function write(fileName)
           (Ptr{Cchar}, Ptr{Cint}),
           fileName, ierr)
     ierr[1] != 0 && error("gmshWrite returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -108,6 +113,7 @@ function clear()
           (Ptr{Cint},),
           ierr)
     ierr[1] != 0 && error("gmshClear returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -134,6 +140,7 @@ function setNumber(name, value)
           (Ptr{Cchar}, Cdouble, Ptr{Cint}),
           name, value, ierr)
     ierr[1] != 0 && error("gmshOptionSetNumber returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -165,6 +172,7 @@ function setString(name, value)
           (Ptr{Cchar}, Ptr{Cchar}, Ptr{Cint}),
           name, value, ierr)
     ierr[1] != 0 && error("gmshOptionSetString returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -208,6 +216,7 @@ function add(name)
           (Ptr{Cchar}, Ptr{Cint}),
           name, ierr)
     ierr[1] != 0 && error("gmshModelAdd returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -222,6 +231,7 @@ function remove()
           (Ptr{Cint},),
           ierr)
     ierr[1] != 0 && error("gmshModelRemove returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -258,6 +268,7 @@ function setCurrent(name)
           (Ptr{Cchar}, Ptr{Cint}),
           name, ierr)
     ierr[1] != 0 && error("gmshModelSetCurrent returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -358,6 +369,7 @@ function setPhysicalName(dim, tag, name)
           (Cint, Cint, Ptr{Cchar}, Ptr{Cint}),
           dim, tag, name, ierr)
     ierr[1] != 0 && error("gmshModelSetPhysicalName returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -478,6 +490,7 @@ function removeEntities(dimTags, recursive = false)
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
           convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), recursive, ierr)
     ierr[1] != 0 && error("gmshModelRemoveEntities returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -519,6 +532,7 @@ function generate(dim = 3)
           (Cint, Ptr{Cint}),
           dim, ierr)
     ierr[1] != 0 && error("gmshModelMeshGenerate returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -540,6 +554,7 @@ function homology(domainTags = [], subdomainTags = [], dims = [])
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
           convert(Vector{Cint}, domainTags), length(domainTags), convert(Vector{Cint}, subdomainTags), length(subdomainTags), convert(Vector{Cint}, dims), length(dims), ierr)
     ierr[1] != 0 && error("gmshModelMeshHomology returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -561,6 +576,7 @@ function cohomology(domainTags = [], subdomainTags = [], dims = [])
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
           convert(Vector{Cint}, domainTags), length(domainTags), convert(Vector{Cint}, subdomainTags), length(subdomainTags), convert(Vector{Cint}, dims), length(dims), ierr)
     ierr[1] != 0 && error("gmshModelMeshCohomology returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -575,6 +591,7 @@ function partition(numPart)
           (Cint, Ptr{Cint}),
           numPart, ierr)
     ierr[1] != 0 && error("gmshModelMeshPartition returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -589,6 +606,7 @@ function refine()
           (Ptr{Cint},),
           ierr)
     ierr[1] != 0 && error("gmshModelMeshRefine returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -603,6 +621,7 @@ function setOrder(order)
           (Cint, Ptr{Cint}),
           order, ierr)
     ierr[1] != 0 && error("gmshModelMeshSetOrder returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -617,6 +636,7 @@ function removeDuplicateNodes()
           (Ptr{Cint},),
           ierr)
     ierr[1] != 0 && error("gmshModelMeshRemoveDuplicateNodes returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -900,6 +920,7 @@ function setNodes(dim, tag, nodeTags, coord, parametricCoord = [])
           (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
           dim, tag, convert(Vector{Cint}, nodeTags), length(nodeTags), coord, length(coord), parametricCoord, length(parametricCoord), ierr)
     ierr[1] != 0 && error("gmshModelMeshSetNodes returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -923,6 +944,7 @@ function setElements(dim, tag, elementTypes, elementTags, nodeTags)
           (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
           dim, tag, convert(Vector{Cint}, elementTypes), length(elementTypes), convert(Vector{Vector{Cint}},elementTags), api_elementTags_n_, length(elementTags), convert(Vector{Vector{Cint}},nodeTags), api_nodeTags_n_, length(nodeTags), ierr)
     ierr[1] != 0 && error("gmshModelMeshSetElements returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -940,6 +962,7 @@ function reclassifyNodes()
           (Ptr{Cint},),
           ierr)
     ierr[1] != 0 && error("gmshModelMeshReclassifyNodes returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1008,6 +1031,7 @@ function setSize(dimTags, size)
           (Ptr{Cint}, Csize_t, Cdouble, Ptr{Cint}),
           convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), size, ierr)
     ierr[1] != 0 && error("gmshModelMeshSetSize returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1025,6 +1049,7 @@ function setTransfiniteCurve(tag, numNodes, meshType = "Progression", coef = 1.)
           (Cint, Cint, Ptr{Cchar}, Cdouble, Ptr{Cint}),
           tag, numNodes, meshType, coef, ierr)
     ierr[1] != 0 && error("gmshModelMeshSetTransfiniteCurve returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1044,6 +1069,7 @@ function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = [])
           (Cint, Ptr{Cchar}, Ptr{Cint}, Csize_t, Ptr{Cint}),
           tag, arrangement, convert(Vector{Cint}, cornerTags), length(cornerTags), ierr)
     ierr[1] != 0 && error("gmshModelMeshSetTransfiniteSurface returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1060,6 +1086,7 @@ function setTransfiniteVolume(tag, cornerTags = [])
           (Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
           tag, convert(Vector{Cint}, cornerTags), length(cornerTags), ierr)
     ierr[1] != 0 && error("gmshModelMeshSetTransfiniteVolume returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1076,6 +1103,7 @@ function setRecombine(dim, tag)
           (Cint, Cint, Ptr{Cint}),
           dim, tag, ierr)
     ierr[1] != 0 && error("gmshModelMeshSetRecombine returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1091,6 +1119,7 @@ function setSmoothing(dim, tag, val)
           (Cint, Cint, Cint, Ptr{Cint}),
           dim, tag, val, ierr)
     ierr[1] != 0 && error("gmshModelMeshSetSmoothing returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1109,6 +1138,7 @@ function setReverse(dim, tag, val = true)
           (Cint, Cint, Cint, Ptr{Cint}),
           dim, tag, val, ierr)
     ierr[1] != 0 && error("gmshModelMeshSetReverse returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1124,6 +1154,7 @@ function embed(dim, tags, inDim, inTag)
           (Cint, Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}),
           dim, convert(Vector{Cint}, tags), length(tags), inDim, inTag, ierr)
     ierr[1] != 0 && error("gmshModelMeshEmbed returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1141,6 +1172,7 @@ function setPeriodic(dim, tags, tagsMaster, affineTransformation)
           (Cint, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
           dim, convert(Vector{Cint}, tags), length(tags), convert(Vector{Cint}, tagsMaster), length(tagsMaster), affineTransformation, length(affineTransformation), ierr)
     ierr[1] != 0 && error("gmshModelMeshSetPeriodic returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1209,6 +1241,7 @@ function remove(tag)
           (Cint, Ptr{Cint}),
           tag, ierr)
     ierr[1] != 0 && error("gmshModelMeshFieldRemove returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1223,6 +1256,7 @@ function setNumber(tag, option, value)
           (Cint, Ptr{Cchar}, Cdouble, Ptr{Cint}),
           tag, option, value, ierr)
     ierr[1] != 0 && error("gmshModelMeshFieldSetNumber returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1237,6 +1271,7 @@ function setString(tag, option, value)
           (Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Cint}),
           tag, option, value, ierr)
     ierr[1] != 0 && error("gmshModelMeshFieldSetString returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1251,6 +1286,7 @@ function setNumbers(tag, option, value)
           (Cint, Ptr{Cchar}, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
           tag, option, value, length(value), ierr)
     ierr[1] != 0 && error("gmshModelMeshFieldSetNumbers returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1265,6 +1301,7 @@ function setAsBackgroundMesh(tag)
           (Cint, Ptr{Cint}),
           tag, ierr)
     ierr[1] != 0 && error("gmshModelMeshFieldSetAsBackgroundMesh returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1279,6 +1316,7 @@ function setAsBoundaryLayer(tag)
           (Cint, Ptr{Cint}),
           tag, ierr)
     ierr[1] != 0 && error("gmshModelMeshFieldSetAsBoundaryLayer returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 end # end of module field
@@ -1627,6 +1665,7 @@ function translate(dimTags, dx, dy, dz)
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
           convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, ierr)
     ierr[1] != 0 && error("gmshModelGeoTranslate returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1643,6 +1682,7 @@ function rotate(dimTags, x, y, z, ax, ay, az, angle)
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
           convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, ierr)
     ierr[1] != 0 && error("gmshModelGeoRotate returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1659,6 +1699,7 @@ function dilate(dimTags, x, y, z, a, b, c)
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
           convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, a, b, c, ierr)
     ierr[1] != 0 && error("gmshModelGeoDilate returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1674,6 +1715,7 @@ function symmetry(dimTags, a, b, c, d)
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
           convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), a, b, c, d, ierr)
     ierr[1] != 0 && error("gmshModelGeoSymmetry returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1710,6 +1752,7 @@ function remove(dimTags, recursive = false)
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
           convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), recursive, ierr)
     ierr[1] != 0 && error("gmshModelGeoRemove returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1725,6 +1768,7 @@ function removeAllDuplicates()
           (Ptr{Cint},),
           ierr)
     ierr[1] != 0 && error("gmshModelGeoRemoveAllDuplicates returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1741,6 +1785,7 @@ function synchronize()
           (Ptr{Cint},),
           ierr)
     ierr[1] != 0 && error("gmshModelGeoSynchronize returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1766,6 +1811,7 @@ function setSize(dimTags, size)
           (Ptr{Cint}, Csize_t, Cdouble, Ptr{Cint}),
           convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), size, ierr)
     ierr[1] != 0 && error("gmshModelGeoMeshSetSize returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1783,6 +1829,7 @@ function setTransfiniteCurve(tag, nPoints, meshType = "Progression", coef = 1.)
           (Cint, Cint, Ptr{Cchar}, Cdouble, Ptr{Cint}),
           tag, nPoints, meshType, coef, ierr)
     ierr[1] != 0 && error("gmshModelGeoMeshSetTransfiniteCurve returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1802,6 +1849,7 @@ function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = [])
           (Cint, Ptr{Cchar}, Ptr{Cint}, Csize_t, Ptr{Cint}),
           tag, arrangement, convert(Vector{Cint}, cornerTags), length(cornerTags), ierr)
     ierr[1] != 0 && error("gmshModelGeoMeshSetTransfiniteSurface returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1818,6 +1866,7 @@ function setTransfiniteVolume(tag, cornerTags = [])
           (Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
           tag, convert(Vector{Cint}, cornerTags), length(cornerTags), ierr)
     ierr[1] != 0 && error("gmshModelGeoMeshSetTransfiniteVolume returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1834,6 +1883,7 @@ function setRecombine(dim, tag, angle = 45.)
           (Cint, Cint, Cdouble, Ptr{Cint}),
           dim, tag, angle, ierr)
     ierr[1] != 0 && error("gmshModelGeoMeshSetRecombine returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1849,6 +1899,7 @@ function setSmoothing(dim, tag, val)
           (Cint, Cint, Cint, Ptr{Cint}),
           dim, tag, val, ierr)
     ierr[1] != 0 && error("gmshModelGeoMeshSetSmoothing returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -1867,6 +1918,7 @@ function setReverse(dim, tag, val = true)
           (Cint, Cint, Cint, Ptr{Cint}),
           dim, tag, val, ierr)
     ierr[1] != 0 && error("gmshModelGeoMeshSetReverse returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 end # end of module mesh
@@ -2643,6 +2695,7 @@ function translate(dimTags, dx, dy, dz)
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
           convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, ierr)
     ierr[1] != 0 && error("gmshModelOccTranslate returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -2659,6 +2712,7 @@ function rotate(dimTags, x, y, z, ax, ay, az, angle)
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
           convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, ierr)
     ierr[1] != 0 && error("gmshModelOccRotate returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -2675,6 +2729,7 @@ function dilate(dimTags, x, y, z, a, b, c)
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
           convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, a, b, c, ierr)
     ierr[1] != 0 && error("gmshModelOccDilate returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -2690,6 +2745,7 @@ function symmetry(dimTags, a, b, c, d)
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
           convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), a, b, c, d, ierr)
     ierr[1] != 0 && error("gmshModelOccSymmetry returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -2726,6 +2782,7 @@ function remove(dimTags, recursive = false)
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
           convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), recursive, ierr)
     ierr[1] != 0 && error("gmshModelOccRemove returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -2742,6 +2799,7 @@ function removeAllDuplicates()
           (Ptr{Cint},),
           ierr)
     ierr[1] != 0 && error("gmshModelOccRemoveAllDuplicates returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -2782,6 +2840,7 @@ function setMeshSize(dimTags, size)
           (Ptr{Cint}, Csize_t, Cdouble, Ptr{Cint}),
           convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), size, ierr)
     ierr[1] != 0 && error("gmshModelOccSetMeshSize returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -2799,6 +2858,7 @@ function synchronize()
           (Ptr{Cint},),
           ierr)
     ierr[1] != 0 && error("gmshModelOccSynchronize returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 end # end of module occ
@@ -2846,6 +2906,7 @@ function remove(tag)
           (Cint, Ptr{Cint}),
           tag, ierr)
     ierr[1] != 0 && error("gmshViewRemove returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -2911,6 +2972,7 @@ function addModelData(tag, step, modelName, dataType, tags, data, time = 0., num
           (Cint, Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Cint}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Csize_t, Cdouble, Cint, Cint, Ptr{Cint}),
           tag, step, modelName, dataType, convert(Vector{Cint}, tags), length(tags), convert(Vector{Vector{Cdouble}},data), api_data_n_, length(data), time, numComponents, partition, ierr)
     ierr[1] != 0 && error("gmshViewAddModelData returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -2956,6 +3018,7 @@ function addListData(tag, dataType, numEle, data)
           (Cint, Ptr{Cchar}, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
           tag, dataType, numEle, data, length(data), ierr)
     ierr[1] != 0 && error("gmshViewAddListData returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -3029,6 +3092,7 @@ function write(tag, fileName, append = false)
           (Cint, Ptr{Cchar}, Cint, Ptr{Cint}),
           tag, fileName, append, ierr)
     ierr[1] != 0 && error("gmshViewWrite returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 end # end of module view
@@ -3055,6 +3119,7 @@ function setNumber(name, option, value)
           (Ptr{Cchar}, Ptr{Cchar}, Cdouble, Ptr{Cint}),
           name, option, value, ierr)
     ierr[1] != 0 && error("gmshPluginSetNumber returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -3069,6 +3134,7 @@ function setString(name, option, value)
           (Ptr{Cchar}, Ptr{Cchar}, Ptr{Cchar}, Ptr{Cint}),
           name, option, value, ierr)
     ierr[1] != 0 && error("gmshPluginSetString returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -3083,6 +3149,7 @@ function run(name)
           (Ptr{Cchar}, Ptr{Cint}),
           name, ierr)
     ierr[1] != 0 && error("gmshPluginRun returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 end # end of module plugin
@@ -3109,6 +3176,7 @@ function draw()
           (Ptr{Cint},),
           ierr)
     ierr[1] != 0 && error("gmshGraphicsDraw returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 end # end of module graphics
@@ -3135,6 +3203,7 @@ function initialize()
           (Ptr{Cint},),
           ierr)
     ierr[1] != 0 && error("gmshFltkInitialize returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -3151,6 +3220,7 @@ function wait(time = -1.)
           (Cdouble, Ptr{Cint}),
           time, ierr)
     ierr[1] != 0 && error("gmshFltkWait returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -3167,6 +3237,7 @@ function run()
           (Ptr{Cint},),
           ierr)
     ierr[1] != 0 && error("gmshFltkRun returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 end # end of module fltk
@@ -3210,6 +3281,7 @@ function set(data, format = "json")
           (Ptr{Cchar}, Ptr{Cchar}, Ptr{Cint}),
           data, format, ierr)
     ierr[1] != 0 && error("gmshOnelabSet returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 """
@@ -3226,6 +3298,7 @@ function run(name = "", command = "")
           (Ptr{Cchar}, Ptr{Cchar}, Ptr{Cint}),
           name, command, ierr)
     ierr[1] != 0 && error("gmshOnelabRun returned non-zero error code: " * string(ierr[1]))
+    return nothing
 end
 
 end # end of module onelab
