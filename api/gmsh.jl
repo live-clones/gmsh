@@ -310,13 +310,13 @@ group of dimension `dim` and tag `tag`.
 Return 'tags'.
 """
 function getEntitiesForPhysicalGroup(dim, tag)
-    api_tags_ = Vector{Ptr{Cint}}(1)
-    api_tags_n_ = Vector{Csize_t}(1)
+    api_tags_ = Ref{Ptr{Cint}}()
+    api_tags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelGetEntitiesForPhysicalGroup, gmsh.clib), Void,
           (Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, api_tags_, api_tags_n_, ierr)
-    tags = unsafe_wrap(Array, api_tags_[1], api_tags_n_[1], true)
+    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], true)
     ierr[] != 0 && error("gmshModelGetEntitiesForPhysicalGroup returned non-zero error code: $(ierr[])")
     return tags
 end
@@ -645,13 +645,13 @@ populated by the new 3D meshing algorithms.
 Return 'nodeTags'.
 """
 function getLastNodeError()
-    api_nodeTags_ = Vector{Ptr{Cint}}(1)
-    api_nodeTags_n_ = Vector{Csize_t}(1)
+    api_nodeTags_ = Ref{Ptr{Cint}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetLastNodeError, gmsh.clib), Void,
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           api_nodeTags_, api_nodeTags_n_, ierr)
-    nodeTags = unsafe_wrap(Array, api_nodeTags_[1], api_nodeTags_n_[1], true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
     ierr[] != 0 && error("gmshModelMeshGetLastNodeError returned non-zero error code: $(ierr[])")
     return nodeTags
 end
@@ -671,8 +671,8 @@ parametric coordinates of the nodes, if available. The length of
 Return 'nodeTags', 'coord', 'parametricCoord'.
 """
 function getNodes(dim = -1, tag = -1)
-    api_nodeTags_ = Vector{Ptr{Cint}}(1)
-    api_nodeTags_n_ = Vector{Csize_t}(1)
+    api_nodeTags_ = Ref{Ptr{Cint}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
     api_coord_ = Vector{Ptr{Cdouble}}(1)
     api_coord_n_ = Vector{Csize_t}(1)
     api_parametricCoord_ = Vector{Ptr{Cdouble}}(1)
@@ -681,7 +681,7 @@ function getNodes(dim = -1, tag = -1)
     ccall((:gmshModelMeshGetNodes, gmsh.clib), Void,
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
           api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, dim, tag, ierr)
-    nodeTags = unsafe_wrap(Array, api_nodeTags_[1], api_nodeTags_n_[1], true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
     coord = unsafe_wrap(Array, api_coord_[1], api_coord_n_[1], true)
     parametricCoord = unsafe_wrap(Array, api_parametricCoord_[1], api_parametricCoord_n_[1], true)
     ierr[] != 0 && error("gmshModelMeshGetNodes returned non-zero error code: $(ierr[])")
@@ -706,8 +706,8 @@ of all the elements of the given type, concatenated.
 Return 'elementTypes', 'elementTags', 'nodeTags'.
 """
 function getElements(dim = -1, tag = -1)
-    api_elementTypes_ = Vector{Ptr{Cint}}(1)
-    api_elementTypes_n_ = Vector{Csize_t}(1)
+    api_elementTypes_ = Ref{Ptr{Cint}}()
+    api_elementTypes_n_ = Ref{Csize_t}()
     api_elementTags_ = Vector{Ptr{Ptr{Cint}}}(1)
     api_elementTags_n_ = Vector{Ptr{Csize_t}}(1)
     api_elementTags_nn_ = Vector{Csize_t}(1)
@@ -718,7 +718,7 @@ function getElements(dim = -1, tag = -1)
     ccall((:gmshModelMeshGetElements, gmsh.clib), Void,
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
           api_elementTypes_, api_elementTypes_n_, api_elementTags_, api_elementTags_n_, api_elementTags_nn_, api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_, dim, tag, ierr)
-    elementTypes = unsafe_wrap(Array, api_elementTypes_[1], api_elementTypes_n_[1], true)
+    elementTypes = unsafe_wrap(Array, api_elementTypes_[], api_elementTypes_n_[], true)
     tmp_api_elementTags_ = unsafe_wrap(Array, api_elementTags_[1], api_elementTags_nn_[1], true)
     tmp_api_elementTags_n_ = unsafe_wrap(Array, api_elementTags_n_[1], api_elementTags_nn_[1], true)
     elementTags = [ unsafe_wrap(Array, tmp_api_elementTags_[i], tmp_api_elementTags_n_[i], true) for i in 1:api_elementTags_nn_[1] ]
@@ -815,13 +815,13 @@ If `tag` < 0, get the types for all entities of dimension `dim`. If `dim` and
 Return 'elementTypes'.
 """
 function getElementTypes(dim = -1, tag = -1)
-    api_elementTypes_ = Vector{Ptr{Cint}}(1)
-    api_elementTypes_n_ = Vector{Csize_t}(1)
+    api_elementTypes_ = Ref{Ptr{Cint}}()
+    api_elementTypes_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElementTypes, gmsh.clib), Void,
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
           api_elementTypes_, api_elementTypes_n_, dim, tag, ierr)
-    elementTypes = unsafe_wrap(Array, api_elementTypes_[1], api_elementTypes_n_[1], true)
+    elementTypes = unsafe_wrap(Array, api_elementTypes_[], api_elementTypes_n_[], true)
     ierr[] != 0 && error("gmshModelMeshGetElementTypes returned non-zero error code: $(ierr[])")
     return elementTypes
 end
@@ -835,16 +835,16 @@ Get the mesh elements in the same way as `getElements`, but for a single
 Return 'elementTags', 'nodeTags'.
 """
 function getElementsByType(elementType, dim = -1, tag = -1)
-    api_elementTags_ = Vector{Ptr{Cint}}(1)
-    api_elementTags_n_ = Vector{Csize_t}(1)
-    api_nodeTags_ = Vector{Ptr{Cint}}(1)
-    api_nodeTags_n_ = Vector{Csize_t}(1)
+    api_elementTags_ = Ref{Ptr{Cint}}()
+    api_elementTags_n_ = Ref{Csize_t}()
+    api_nodeTags_ = Ref{Ptr{Cint}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElementsByType, gmsh.clib), Void,
           (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
           elementType, api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, dim, tag, ierr)
-    elementTags = unsafe_wrap(Array, api_elementTags_[1], api_elementTags_n_[1], true)
-    nodeTags = unsafe_wrap(Array, api_nodeTags_[1], api_nodeTags_n_[1], true)
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
     ierr[] != 0 && error("gmshModelMeshGetElementsByType returned non-zero error code: $(ierr[])")
     return elementTags, nodeTags
 end
@@ -977,13 +977,13 @@ Return 'elementType', 'nodeTags'.
 """
 function getElement(elementTag)
     api_elementType_ = Ref{Cint}()
-    api_nodeTags_ = Vector{Ptr{Cint}}(1)
-    api_nodeTags_n_ = Vector{Csize_t}(1)
+    api_nodeTags_ = Ref{Ptr{Cint}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElement, gmsh.clib), Void,
           (Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           elementTag, api_elementType_, api_nodeTags_, api_nodeTags_n_, ierr)
-    nodeTags = unsafe_wrap(Array, api_nodeTags_[1], api_nodeTags_n_[1], true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
     ierr[] != 0 && error("gmshModelMeshGetElement returned non-zero error code: $(ierr[])")
     return api_elementType_[], nodeTags
 end
@@ -2825,13 +2825,13 @@ Get the tags of all views.
 Return 'tags'.
 """
 function getTags()
-    api_tags_ = Vector{Ptr{Cint}}(1)
-    api_tags_n_ = Vector{Csize_t}(1)
+    api_tags_ = Ref{Ptr{Cint}}()
+    api_tags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshViewGetTags, gmsh.clib), Void,
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           api_tags_, api_tags_n_, ierr)
-    tags = unsafe_wrap(Array, api_tags_[1], api_tags_n_[1], true)
+    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], true)
     ierr[] != 0 && error("gmshViewGetTags returned non-zero error code: $(ierr[])")
     return tags
 end
@@ -2873,8 +2873,8 @@ Return 'dataType', 'tags', 'data', 'time', 'numComponents'.
 """
 function getModelData(tag, step)
     api_dataType_ = Ref{Ptr{Cchar}}()
-    api_tags_ = Vector{Ptr{Cint}}(1)
-    api_tags_n_ = Vector{Csize_t}(1)
+    api_tags_ = Ref{Ptr{Cint}}()
+    api_tags_n_ = Ref{Csize_t}()
     api_data_ = Vector{Ptr{Ptr{Cdouble}}}(1)
     api_data_n_ = Vector{Ptr{Csize_t}}(1)
     api_data_nn_ = Vector{Csize_t}(1)
@@ -2885,7 +2885,7 @@ function getModelData(tag, step)
           (Cint, Cint, Ptr{Ptr{Cchar}}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cdouble}, Ptr{Cint}, Ptr{Cint}),
           tag, step, api_dataType_, api_tags_, api_tags_n_, api_data_, api_data_n_, api_data_nn_, api_time_, api_numComponents_, ierr)
     dataType = unsafe_string(api_dataType_[])
-    tags = unsafe_wrap(Array, api_tags_[1], api_tags_n_[1], true)
+    tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], true)
     tmp_api_data_ = unsafe_wrap(Array, api_data_[1], api_data_nn_[1], true)
     tmp_api_data_n_ = unsafe_wrap(Array, api_data_n_[1], api_data_nn_[1], true)
     data = [ unsafe_wrap(Array, tmp_api_data_[i], tmp_api_data_n_[i], true) for i in 1:api_data_nn_[1] ]
@@ -2922,8 +2922,8 @@ Return 'dataType', 'numElements', 'data'.
 function getListData(tag)
     api_dataType_ = Vector{Ptr{Ptr{Cchar}}}(1)
     api_dataType_n_ = Vector{Csize_t}(1)
-    api_numElements_ = Vector{Ptr{Cint}}(1)
-    api_numElements_n_ = Vector{Csize_t}(1)
+    api_numElements_ = Ref{Ptr{Cint}}()
+    api_numElements_n_ = Ref{Csize_t}()
     api_data_ = Vector{Ptr{Ptr{Cdouble}}}(1)
     api_data_n_ = Vector{Ptr{Csize_t}}(1)
     api_data_nn_ = Vector{Csize_t}(1)
@@ -2933,7 +2933,7 @@ function getListData(tag)
           tag, api_dataType_, api_dataType_n_, api_numElements_, api_numElements_n_, api_data_, api_data_n_, api_data_nn_, ierr)
     tmp_api_dataType_ = unsafe_wrap(Array, api_dataType_[1], api_dataType_n_[1], true)
     dataType = [unsafe_string(tmp_api_dataType_[i]) for i in 1:length(tmp_api_dataType_) ]
-    numElements = unsafe_wrap(Array, api_numElements_[1], api_numElements_n_[1], true)
+    numElements = unsafe_wrap(Array, api_numElements_[], api_numElements_n_[], true)
     tmp_api_data_ = unsafe_wrap(Array, api_data_[1], api_data_nn_[1], true)
     tmp_api_data_n_ = unsafe_wrap(Array, api_data_n_[1], api_data_nn_[1], true)
     data = [ unsafe_wrap(Array, tmp_api_data_[i], tmp_api_data_n_[i], true) for i in 1:api_data_nn_[1] ]
