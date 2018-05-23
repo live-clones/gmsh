@@ -708,23 +708,23 @@ Return 'elementTypes', 'elementTags', 'nodeTags'.
 function getElements(dim = -1, tag = -1)
     api_elementTypes_ = Ref{Ptr{Cint}}()
     api_elementTypes_n_ = Ref{Csize_t}()
-    api_elementTags_ = Vector{Ptr{Ptr{Cint}}}(1)
-    api_elementTags_n_ = Vector{Ptr{Csize_t}}(1)
-    api_elementTags_nn_ = Vector{Csize_t}(1)
-    api_nodeTags_ = Vector{Ptr{Ptr{Cint}}}(1)
-    api_nodeTags_n_ = Vector{Ptr{Csize_t}}(1)
-    api_nodeTags_nn_ = Vector{Csize_t}(1)
+    api_elementTags_ = Ref{Ptr{Ptr{Cint}}}()
+    api_elementTags_n_ = Ref{Ptr{Csize_t}}()
+    api_elementTags_nn_ = Ref{Csize_t}()
+    api_nodeTags_ = Ref{Ptr{Ptr{Cint}}}()
+    api_nodeTags_n_ = Ref{Ptr{Csize_t}}()
+    api_nodeTags_nn_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElements, gmsh.clib), Void,
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
           api_elementTypes_, api_elementTypes_n_, api_elementTags_, api_elementTags_n_, api_elementTags_nn_, api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_, dim, tag, ierr)
     elementTypes = unsafe_wrap(Array, api_elementTypes_[], api_elementTypes_n_[], true)
-    tmp_api_elementTags_ = unsafe_wrap(Array, api_elementTags_[], api_elementTags_nn_[1], true)
-    tmp_api_elementTags_n_ = unsafe_wrap(Array, api_elementTags_n_[1], api_elementTags_nn_[1], true)
-    elementTags = [ unsafe_wrap(Array, tmp_api_elementTags_[i], tmp_api_elementTags_n_[i], true) for i in 1:api_elementTags_nn_[1] ]
-    tmp_api_nodeTags_ = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_nn_[1], true)
-    tmp_api_nodeTags_n_ = unsafe_wrap(Array, api_nodeTags_n_[1], api_nodeTags_nn_[1], true)
-    nodeTags = [ unsafe_wrap(Array, tmp_api_nodeTags_[i], tmp_api_nodeTags_n_[i], true) for i in 1:api_nodeTags_nn_[1] ]
+    tmp_api_elementTags_ = unsafe_wrap(Array, api_elementTags_[], api_elementTags_nn_[], true)
+    tmp_api_elementTags_n_ = unsafe_wrap(Array, api_elementTags_n_[], api_elementTags_nn_[], true)
+    elementTags = [ unsafe_wrap(Array, tmp_api_elementTags_[i], tmp_api_elementTags_n_[i], true) for i in 1:api_elementTags_nn_[] ]
+    tmp_api_nodeTags_ = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_nn_[], true)
+    tmp_api_nodeTags_n_ = unsafe_wrap(Array, api_nodeTags_n_[], api_nodeTags_nn_[], true)
+    nodeTags = [ unsafe_wrap(Array, tmp_api_nodeTags_[i], tmp_api_nodeTags_n_[i], true) for i in 1:api_nodeTags_nn_[] ]
     ierr[] != 0 && error("gmshModelMeshGetElements returned non-zero error code: $(ierr[])")
     return elementTypes, elementTags, nodeTags
 end
