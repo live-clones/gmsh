@@ -316,11 +316,11 @@ def ovectorstring(name, value=None, python_value=None, julia_value=None):
     a.python_arg = "byref(" + api_name + "), byref(" + api_name_n + ")"
     a.python_return = "_ovectorstring(" + api_name + ", " + api_name_n + ".value)"
     a.julia_ctype = "Ptr{Ptr{Cchar}}, Ptr{Csize_t}"
-    a.julia_pre = (api_name + " = Vector{Ptr{Ptr{Cchar}}}(1)\n    " +
-                   api_name_n + " = Vector{Csize_t}(1)")
+    a.julia_pre = (api_name + " = Ref{Ptr{Ptr{Cchar}}}()\n    " +
+                   api_name_n + " = Ref{Csize_t}()")
     a.julia_arg = api_name + ", " + api_name_n
-    a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[1], " +
-                    api_name_n + "[1], true)\n    " +
+    a.julia_post = ("tmp_" + api_name + " = unsafe_wrap(Array, " + api_name + "[], " +
+                    api_name_n + "[], true)\n    " +
                     name + " = [unsafe_string(tmp_" + api_name + "[i]) for i in 1:length(tmp_" +
                     api_name + ") ]")
     return a

@@ -230,13 +230,13 @@ List the names of all models.
 Return 'names'.
 """
 function list()
-    api_names_ = Vector{Ptr{Ptr{Cchar}}}(1)
-    api_names_n_ = Vector{Csize_t}(1)
+    api_names_ = Ref{Ptr{Ptr{Cchar}}}()
+    api_names_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelList, gmsh.clib), Void,
           (Ptr{Ptr{Cchar}}, Ptr{Csize_t}, Ptr{Cint}),
           api_names_, api_names_n_, ierr)
-    tmp_api_names_ = unsafe_wrap(Array, api_names_[1], api_names_n_[1], true)
+    tmp_api_names_ = unsafe_wrap(Array, api_names_[], api_names_n_[], true)
     names = [unsafe_string(tmp_api_names_[i]) for i in 1:length(tmp_api_names_) ]
     ierr[] != 0 && error("gmshModelList returned non-zero error code: $(ierr[])")
     return names
@@ -2920,8 +2920,8 @@ the `data` for each data type.
 Return 'dataType', 'numElements', 'data'.
 """
 function getListData(tag)
-    api_dataType_ = Vector{Ptr{Ptr{Cchar}}}(1)
-    api_dataType_n_ = Vector{Csize_t}(1)
+    api_dataType_ = Ref{Ptr{Ptr{Cchar}}}()
+    api_dataType_n_ = Ref{Csize_t}()
     api_numElements_ = Ref{Ptr{Cint}}()
     api_numElements_n_ = Ref{Csize_t}()
     api_data_ = Vector{Ptr{Ptr{Cdouble}}}(1)
@@ -2931,7 +2931,7 @@ function getListData(tag)
     ccall((:gmshViewGetListData, gmsh.clib), Void,
           (Cint, Ptr{Ptr{Cchar}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
           tag, api_dataType_, api_dataType_n_, api_numElements_, api_numElements_n_, api_data_, api_data_n_, api_data_nn_, ierr)
-    tmp_api_dataType_ = unsafe_wrap(Array, api_dataType_[1], api_dataType_n_[1], true)
+    tmp_api_dataType_ = unsafe_wrap(Array, api_dataType_[], api_dataType_n_[], true)
     dataType = [unsafe_string(tmp_api_dataType_[i]) for i in 1:length(tmp_api_dataType_) ]
     numElements = unsafe_wrap(Array, api_numElements_[], api_numElements_n_[], true)
     tmp_api_data_ = unsafe_wrap(Array, api_data_[1], api_data_nn_[1], true)
