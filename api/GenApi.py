@@ -32,6 +32,7 @@ class arg:
         self.julia_ctype = ""
         self.julia_pre = ""
         self.julia_post = ""
+        self.julia_return = name
 
 # input types
 
@@ -207,6 +208,9 @@ class oint(arg):
         self.python_arg = "byref(" + api_name + ")"
         self.python_return = api_name + ".value"
         self.julia_ctype = "Ptr{Cint}"
+        self.julia_pre = api_name + " = Ref{Cint}()"
+        self.julia_arg = api_name
+        self.julia_return = api_name + "[]"
 
 def odouble(name, value=None, python_value=None, julia_value=None):
     a = arg(name, value, python_value, julia_value,
@@ -218,6 +222,9 @@ def odouble(name, value=None, python_value=None, julia_value=None):
     a.python_arg = "byref(" + api_name + ")"
     a.python_return = api_name + ".value"
     a.julia_ctype = "Ptr{Cdouble}"
+    a.julia_pre = api_name + " = Ref{Cdouble}()"
+    a.julia_arg = api_name
+    a.julia_return = api_name + "[]"
     return a
 
 def ostring(name, value=None, python_value=None, julia_value=None):
@@ -235,6 +242,9 @@ def ostring(name, value=None, python_value=None, julia_value=None):
     a.python_arg = "byref(" + api_name + ")"
     a.python_return = "_ostring(" + api_name + ")"
     a.julia_ctype = "Ptr{Ptr{Cchar}}"
+    a.julia_pre = api_name + " = Ref{Ptr{Cchar}}()"
+    a.julia_arg = api_name
+    a.julia_post = name + " = unsafe_string(" + api_name + "[])"
     return a
 
 def ovectorint(name, value=None, python_value=None, julia_value=None):
@@ -1102,7 +1112,7 @@ class API:
             f.write('    ierr[] != 0 && error("' + c_name +
                     ' returned non-zero error code: $(ierr[])")\n')
             r = (["api__result__"]) if rtype else []
-            r += list((o.name for o in oargs))
+            r += list((o.julia_return for o in oargs))
             f.write("    return ")
             if len(r) == 0:
                 f.write("nothing")
