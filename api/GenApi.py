@@ -477,7 +477,7 @@ def ovectorvectorpair(name, value=None, python_value=None, julia_value=None):
                     api_name_nn + "[], true)\n    " +
                     "tmp_" + api_name_n + " = unsafe_wrap(Array, " + api_name_n + "[], " +
                     api_name_nn + "[], true)\n    " +
-                    name + " = []\n    " +
+                    name + " = Vector{Tuple{Cint,Cint}}[]\n    " +
                     "for i in 1:" + api_name_nn + "[]\n    " +
                     "    tmp = unsafe_wrap(Array, tmp_" + api_name + "[i], tmp_" +
                     api_name_n + "[i], true)\n    " +
