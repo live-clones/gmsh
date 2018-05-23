@@ -242,6 +242,9 @@ def ostring(name, value=None, python_value=None, julia_value=None):
     a.python_arg = "byref(" + api_name + ")"
     a.python_return = "_ostring(" + api_name + ")"
     a.julia_ctype = "Ptr{Ptr{Cchar}}"
+    a.julia_pre = api_name + " = Ref{Ptr{Cchar}}()"
+    a.julia_arg = api_name
+    a.julia_post = name + " = unsafe_string(" + api_name + "[])"
     return a
 
 def ovectorint(name, value=None, python_value=None, julia_value=None):

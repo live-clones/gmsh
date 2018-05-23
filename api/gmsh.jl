@@ -173,10 +173,12 @@ Get the `value` of a string option.
 Return 'value'.
 """
 function getString(name)
+    api_value_ = Ref{Ptr{Cchar}}()
     ierr = Ref{Cint}()
     ccall((:gmshOptionGetString, gmsh.clib), Void,
           (Ptr{Cchar}, Ptr{Ptr{Cchar}}, Ptr{Cint}),
-          name, value, ierr)
+          name, api_value_, ierr)
+    value = unsafe_string(api_value_[])
     ierr[] != 0 && error("gmshOptionGetString returned non-zero error code: $(ierr[])")
     return value
 end
@@ -359,10 +361,12 @@ Get the name of the physical group of dimension `dim` and tag `tag`.
 Return 'name'.
 """
 function getPhysicalName(dim, tag)
+    api_name_ = Ref{Ptr{Cchar}}()
     ierr = Ref{Cint}()
     ccall((:gmshModelGetPhysicalName, gmsh.clib), Void,
           (Cint, Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}),
-          dim, tag, name, ierr)
+          dim, tag, api_name_, ierr)
+    name = unsafe_string(api_name_[])
     ierr[] != 0 && error("gmshModelGetPhysicalName returned non-zero error code: $(ierr[])")
     return name
 end
@@ -480,10 +484,12 @@ Get the type of the entity of dimension `dim` and tag `tag`.
 Return 'entityType'.
 """
 function getType(dim, tag)
+    api_entityType_ = Ref{Ptr{Cchar}}()
     ierr = Ref{Cint}()
     ccall((:gmshModelGetType, gmsh.clib), Void,
           (Cint, Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}),
-          dim, tag, entityType, ierr)
+          dim, tag, api_entityType_, ierr)
+    entityType = unsafe_string(api_entityType_[])
     ierr[] != 0 && error("gmshModelGetType returned non-zero error code: $(ierr[])")
     return entityType
 end
@@ -734,6 +740,7 @@ length `dim` times `numNodes`).
 Return 'elementName', 'dim', 'order', 'numNodes', 'parametricCoord'.
 """
 function getElementProperties(elementType)
+    api_elementName_ = Ref{Ptr{Cchar}}()
     api_dim_ = Ref{Cint}()
     api_order_ = Ref{Cint}()
     api_numNodes_ = Ref{Cint}()
@@ -742,7 +749,8 @@ function getElementProperties(elementType)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElementProperties, gmsh.clib), Void,
           (Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          elementType, elementName, api_dim_, api_order_, api_numNodes_, api_parametricCoord_, api_parametricCoord_n_, ierr)
+          elementType, api_elementName_, api_dim_, api_order_, api_numNodes_, api_parametricCoord_, api_parametricCoord_n_, ierr)
+    elementName = unsafe_string(api_elementName_[])
     parametricCoord = unsafe_wrap(Array, api_parametricCoord_[1], api_parametricCoord_n_[1], true)
     ierr[] != 0 && error("gmshModelMeshGetElementProperties returned non-zero error code: $(ierr[])")
     return elementName, api_dim_[], api_order_[], api_numNodes_[], parametricCoord
@@ -2864,6 +2872,7 @@ Get model-based post-processing data from the view with tag `tag` at step
 Return 'dataType', 'tags', 'data', 'time', 'numComponents'.
 """
 function getModelData(tag, step)
+    api_dataType_ = Ref{Ptr{Cchar}}()
     api_tags_ = Vector{Ptr{Cint}}(1)
     api_tags_n_ = Vector{Csize_t}(1)
     api_data_ = Vector{Ptr{Ptr{Cdouble}}}(1)
@@ -2874,7 +2883,8 @@ function getModelData(tag, step)
     ierr = Ref{Cint}()
     ccall((:gmshViewGetModelData, gmsh.clib), Void,
           (Cint, Cint, Ptr{Ptr{Cchar}}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cdouble}, Ptr{Cint}, Ptr{Cint}),
-          tag, step, dataType, api_tags_, api_tags_n_, api_data_, api_data_n_, api_data_nn_, api_time_, api_numComponents_, ierr)
+          tag, step, api_dataType_, api_tags_, api_tags_n_, api_data_, api_data_n_, api_data_nn_, api_time_, api_numComponents_, ierr)
+    dataType = unsafe_string(api_dataType_[])
     tags = unsafe_wrap(Array, api_tags_[1], api_tags_n_[1], true)
     tmp_api_data_ = unsafe_wrap(Array, api_data_[1], api_data_nn_[1], true)
     tmp_api_data_n_ = unsafe_wrap(Array, api_data_n_[1], api_data_nn_[1], true)
@@ -3125,10 +3135,12 @@ Get `data` from the ONELAB server.
 Return 'data'.
 """
 function get(format = "json")
+    api_data_ = Ref{Ptr{Cchar}}()
     ierr = Ref{Cint}()
     ccall((:gmshOnelabGet, gmsh.clib), Void,
           (Ptr{Ptr{Cchar}}, Ptr{Cchar}, Ptr{Cint}),
-          data, format, ierr)
+          api_data_, format, ierr)
+    data = unsafe_string(api_data_[])
     ierr[] != 0 && error("gmshOnelabGet returned non-zero error code: $(ierr[])")
     return data
 end
