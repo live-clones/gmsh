@@ -778,29 +778,29 @@ points.
 Return 'integrationPoints', 'integrationData', 'functionSpaceNumComponents', 'functionSpaceData'.
 """
 function getIntegrationData(integrationType, functionSpaceType, dim = -1, tag = -1)
-    api_integrationPoints_ = Vector{Ptr{Ptr{Cdouble}}}(1)
-    api_integrationPoints_n_ = Vector{Ptr{Csize_t}}(1)
-    api_integrationPoints_nn_ = Vector{Csize_t}(1)
-    api_integrationData_ = Vector{Ptr{Ptr{Cdouble}}}(1)
-    api_integrationData_n_ = Vector{Ptr{Csize_t}}(1)
-    api_integrationData_nn_ = Vector{Csize_t}(1)
+    api_integrationPoints_ = Ref{Ptr{Ptr{Cdouble}}}()
+    api_integrationPoints_n_ = Ref{Ptr{Csize_t}}()
+    api_integrationPoints_nn_ = Ref{Csize_t}()
+    api_integrationData_ = Ref{Ptr{Ptr{Cdouble}}}()
+    api_integrationData_n_ = Ref{Ptr{Csize_t}}()
+    api_integrationData_nn_ = Ref{Csize_t}()
     api_functionSpaceNumComponents_ = Ref{Cint}()
-    api_functionSpaceData_ = Vector{Ptr{Ptr{Cdouble}}}(1)
-    api_functionSpaceData_n_ = Vector{Ptr{Csize_t}}(1)
-    api_functionSpaceData_nn_ = Vector{Csize_t}(1)
+    api_functionSpaceData_ = Ref{Ptr{Ptr{Cdouble}}}()
+    api_functionSpaceData_n_ = Ref{Ptr{Csize_t}}()
+    api_functionSpaceData_nn_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetIntegrationData, gmsh.clib), Void,
           (Ptr{Cchar}, Ptr{Cchar}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
           integrationType, functionSpaceType, api_integrationPoints_, api_integrationPoints_n_, api_integrationPoints_nn_, api_integrationData_, api_integrationData_n_, api_integrationData_nn_, api_functionSpaceNumComponents_, api_functionSpaceData_, api_functionSpaceData_n_, api_functionSpaceData_nn_, dim, tag, ierr)
-    tmp_api_integrationPoints_ = unsafe_wrap(Array, api_integrationPoints_[1], api_integrationPoints_nn_[1], true)
-    tmp_api_integrationPoints_n_ = unsafe_wrap(Array, api_integrationPoints_n_[1], api_integrationPoints_nn_[1], true)
-    integrationPoints = [ unsafe_wrap(Array, tmp_api_integrationPoints_[i], tmp_api_integrationPoints_n_[i], true) for i in 1:api_integrationPoints_nn_[1] ]
-    tmp_api_integrationData_ = unsafe_wrap(Array, api_integrationData_[1], api_integrationData_nn_[1], true)
-    tmp_api_integrationData_n_ = unsafe_wrap(Array, api_integrationData_n_[1], api_integrationData_nn_[1], true)
-    integrationData = [ unsafe_wrap(Array, tmp_api_integrationData_[i], tmp_api_integrationData_n_[i], true) for i in 1:api_integrationData_nn_[1] ]
-    tmp_api_functionSpaceData_ = unsafe_wrap(Array, api_functionSpaceData_[1], api_functionSpaceData_nn_[1], true)
-    tmp_api_functionSpaceData_n_ = unsafe_wrap(Array, api_functionSpaceData_n_[1], api_functionSpaceData_nn_[1], true)
-    functionSpaceData = [ unsafe_wrap(Array, tmp_api_functionSpaceData_[i], tmp_api_functionSpaceData_n_[i], true) for i in 1:api_functionSpaceData_nn_[1] ]
+    tmp_api_integrationPoints_ = unsafe_wrap(Array, api_integrationPoints_[], api_integrationPoints_nn_[], true)
+    tmp_api_integrationPoints_n_ = unsafe_wrap(Array, api_integrationPoints_n_[], api_integrationPoints_nn_[], true)
+    integrationPoints = [ unsafe_wrap(Array, tmp_api_integrationPoints_[i], tmp_api_integrationPoints_n_[i], true) for i in 1:api_integrationPoints_nn_[] ]
+    tmp_api_integrationData_ = unsafe_wrap(Array, api_integrationData_[], api_integrationData_nn_[], true)
+    tmp_api_integrationData_n_ = unsafe_wrap(Array, api_integrationData_n_[], api_integrationData_nn_[], true)
+    integrationData = [ unsafe_wrap(Array, tmp_api_integrationData_[i], tmp_api_integrationData_n_[i], true) for i in 1:api_integrationData_nn_[] ]
+    tmp_api_functionSpaceData_ = unsafe_wrap(Array, api_functionSpaceData_[], api_functionSpaceData_nn_[], true)
+    tmp_api_functionSpaceData_n_ = unsafe_wrap(Array, api_functionSpaceData_n_[], api_functionSpaceData_nn_[], true)
+    functionSpaceData = [ unsafe_wrap(Array, tmp_api_functionSpaceData_[i], tmp_api_functionSpaceData_n_[i], true) for i in 1:api_functionSpaceData_nn_[] ]
     ierr[] != 0 && error("gmshModelMeshGetIntegrationData returned non-zero error code: $(ierr[])")
     return integrationPoints, integrationData, api_functionSpaceNumComponents_[], functionSpaceData
 end
@@ -2875,9 +2875,9 @@ function getModelData(tag, step)
     api_dataType_ = Ref{Ptr{Cchar}}()
     api_tags_ = Ref{Ptr{Cint}}()
     api_tags_n_ = Ref{Csize_t}()
-    api_data_ = Vector{Ptr{Ptr{Cdouble}}}(1)
-    api_data_n_ = Vector{Ptr{Csize_t}}(1)
-    api_data_nn_ = Vector{Csize_t}(1)
+    api_data_ = Ref{Ptr{Ptr{Cdouble}}}()
+    api_data_n_ = Ref{Ptr{Csize_t}}()
+    api_data_nn_ = Ref{Csize_t}()
     api_time_ = Ref{Cdouble}()
     api_numComponents_ = Ref{Cint}()
     ierr = Ref{Cint}()
@@ -2886,9 +2886,9 @@ function getModelData(tag, step)
           tag, step, api_dataType_, api_tags_, api_tags_n_, api_data_, api_data_n_, api_data_nn_, api_time_, api_numComponents_, ierr)
     dataType = unsafe_string(api_dataType_[])
     tags = unsafe_wrap(Array, api_tags_[], api_tags_n_[], true)
-    tmp_api_data_ = unsafe_wrap(Array, api_data_[1], api_data_nn_[1], true)
-    tmp_api_data_n_ = unsafe_wrap(Array, api_data_n_[1], api_data_nn_[1], true)
-    data = [ unsafe_wrap(Array, tmp_api_data_[i], tmp_api_data_n_[i], true) for i in 1:api_data_nn_[1] ]
+    tmp_api_data_ = unsafe_wrap(Array, api_data_[], api_data_nn_[], true)
+    tmp_api_data_n_ = unsafe_wrap(Array, api_data_n_[], api_data_nn_[], true)
+    data = [ unsafe_wrap(Array, tmp_api_data_[i], tmp_api_data_n_[i], true) for i in 1:api_data_nn_[] ]
     ierr[] != 0 && error("gmshViewGetModelData returned non-zero error code: $(ierr[])")
     return dataType, tags, data, api_time_[], api_numComponents_[]
 end
@@ -2924,9 +2924,9 @@ function getListData(tag)
     api_dataType_n_ = Ref{Csize_t}()
     api_numElements_ = Ref{Ptr{Cint}}()
     api_numElements_n_ = Ref{Csize_t}()
-    api_data_ = Vector{Ptr{Ptr{Cdouble}}}(1)
-    api_data_n_ = Vector{Ptr{Csize_t}}(1)
-    api_data_nn_ = Vector{Csize_t}(1)
+    api_data_ = Ref{Ptr{Ptr{Cdouble}}}()
+    api_data_n_ = Ref{Ptr{Csize_t}}()
+    api_data_nn_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshViewGetListData, gmsh.clib), Void,
           (Cint, Ptr{Ptr{Cchar}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
@@ -2934,9 +2934,9 @@ function getListData(tag)
     tmp_api_dataType_ = unsafe_wrap(Array, api_dataType_[], api_dataType_n_[], true)
     dataType = [unsafe_string(tmp_api_dataType_[i]) for i in 1:length(tmp_api_dataType_) ]
     numElements = unsafe_wrap(Array, api_numElements_[], api_numElements_n_[], true)
-    tmp_api_data_ = unsafe_wrap(Array, api_data_[1], api_data_nn_[1], true)
-    tmp_api_data_n_ = unsafe_wrap(Array, api_data_n_[1], api_data_nn_[1], true)
-    data = [ unsafe_wrap(Array, tmp_api_data_[i], tmp_api_data_n_[i], true) for i in 1:api_data_nn_[1] ]
+    tmp_api_data_ = unsafe_wrap(Array, api_data_[], api_data_nn_[], true)
+    tmp_api_data_n_ = unsafe_wrap(Array, api_data_n_[], api_data_nn_[], true)
+    data = [ unsafe_wrap(Array, tmp_api_data_[i], tmp_api_data_n_[i], true) for i in 1:api_data_nn_[] ]
     ierr[] != 0 && error("gmshViewGetListData returned non-zero error code: $(ierr[])")
     return dataType, numElements, data
 end
