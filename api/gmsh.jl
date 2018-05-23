@@ -673,17 +673,17 @@ Return 'nodeTags', 'coord', 'parametricCoord'.
 function getNodes(dim = -1, tag = -1)
     api_nodeTags_ = Ref{Ptr{Cint}}()
     api_nodeTags_n_ = Ref{Csize_t}()
-    api_coord_ = Vector{Ptr{Cdouble}}(1)
-    api_coord_n_ = Vector{Csize_t}(1)
-    api_parametricCoord_ = Vector{Ptr{Cdouble}}(1)
-    api_parametricCoord_n_ = Vector{Csize_t}(1)
+    api_coord_ = Ref{Ptr{Cdouble}}()
+    api_coord_n_ = Ref{Csize_t}()
+    api_parametricCoord_ = Ref{Ptr{Cdouble}}()
+    api_parametricCoord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetNodes, gmsh.clib), Void,
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
           api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, dim, tag, ierr)
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
-    coord = unsafe_wrap(Array, api_coord_[1], api_coord_n_[1], true)
-    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[1], api_parametricCoord_n_[1], true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], true)
+    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], true)
     ierr[] != 0 && error("gmshModelMeshGetNodes returned non-zero error code: $(ierr[])")
     return nodeTags, coord, parametricCoord
 end
@@ -744,14 +744,14 @@ function getElementProperties(elementType)
     api_dim_ = Ref{Cint}()
     api_order_ = Ref{Cint}()
     api_numNodes_ = Ref{Cint}()
-    api_parametricCoord_ = Vector{Ptr{Cdouble}}(1)
-    api_parametricCoord_n_ = Vector{Csize_t}(1)
+    api_parametricCoord_ = Ref{Ptr{Cdouble}}()
+    api_parametricCoord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetElementProperties, gmsh.clib), Void,
           (Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           elementType, api_elementName_, api_dim_, api_order_, api_numNodes_, api_parametricCoord_, api_parametricCoord_n_, ierr)
     elementName = unsafe_string(api_elementName_[])
-    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[1], api_parametricCoord_n_[1], true)
+    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], true)
     ierr[] != 0 && error("gmshModelMeshGetElementProperties returned non-zero error code: $(ierr[])")
     return elementName, api_dim_[], api_order_[], api_numNodes_[], parametricCoord
 end
@@ -858,20 +858,20 @@ Get the integration data for mesh elements in the same way as
 Return 'integrationPoints', 'integrationData', 'functionSpaceNumComponents', 'functionSpaceData'.
 """
 function getIntegrationDataByType(elementType, integrationType, functionSpaceType, dim = -1, tag = -1)
-    api_integrationPoints_ = Vector{Ptr{Cdouble}}(1)
-    api_integrationPoints_n_ = Vector{Csize_t}(1)
-    api_integrationData_ = Vector{Ptr{Cdouble}}(1)
-    api_integrationData_n_ = Vector{Csize_t}(1)
+    api_integrationPoints_ = Ref{Ptr{Cdouble}}()
+    api_integrationPoints_n_ = Ref{Csize_t}()
+    api_integrationData_ = Ref{Ptr{Cdouble}}()
+    api_integrationData_n_ = Ref{Csize_t}()
     api_functionSpaceNumComponents_ = Ref{Cint}()
-    api_functionSpaceData_ = Vector{Ptr{Cdouble}}(1)
-    api_functionSpaceData_n_ = Vector{Csize_t}(1)
+    api_functionSpaceData_ = Ref{Ptr{Cdouble}}()
+    api_functionSpaceData_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetIntegrationDataByType, gmsh.clib), Void,
           (Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
           elementType, integrationType, functionSpaceType, api_integrationPoints_, api_integrationPoints_n_, api_integrationData_, api_integrationData_n_, api_functionSpaceNumComponents_, api_functionSpaceData_, api_functionSpaceData_n_, dim, tag, ierr)
-    integrationPoints = unsafe_wrap(Array, api_integrationPoints_[1], api_integrationPoints_n_[1], true)
-    integrationData = unsafe_wrap(Array, api_integrationData_[1], api_integrationData_n_[1], true)
-    functionSpaceData = unsafe_wrap(Array, api_functionSpaceData_[1], api_functionSpaceData_n_[1], true)
+    integrationPoints = unsafe_wrap(Array, api_integrationPoints_[], api_integrationPoints_n_[], true)
+    integrationData = unsafe_wrap(Array, api_integrationData_[], api_integrationData_n_[], true)
+    functionSpaceData = unsafe_wrap(Array, api_functionSpaceData_[], api_functionSpaceData_n_[], true)
     ierr[] != 0 && error("gmshModelMeshGetIntegrationDataByType returned non-zero error code: $(ierr[])")
     return integrationPoints, integrationData, api_functionSpaceNumComponents_[], functionSpaceData
 end
@@ -949,16 +949,16 @@ vector; otherwise it uses a map).
 Return 'coord', 'parametricCoord'.
 """
 function getNode(nodeTag)
-    api_coord_ = Vector{Ptr{Cdouble}}(1)
-    api_coord_n_ = Vector{Csize_t}(1)
-    api_parametricCoord_ = Vector{Ptr{Cdouble}}(1)
-    api_parametricCoord_n_ = Vector{Csize_t}(1)
+    api_coord_ = Ref{Ptr{Cdouble}}()
+    api_coord_n_ = Ref{Csize_t}()
+    api_parametricCoord_ = Ref{Ptr{Cdouble}}()
+    api_parametricCoord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetNode, gmsh.clib), Void,
           (Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           nodeTag, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, ierr)
-    coord = unsafe_wrap(Array, api_coord_[1], api_coord_n_[1], true)
-    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[1], api_parametricCoord_n_[1], true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], true)
+    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], true)
     ierr[] != 0 && error("gmshModelMeshGetNode returned non-zero error code: $(ierr[])")
     return coord, parametricCoord
 end
@@ -1164,15 +1164,15 @@ function getPeriodicNodes(dim, tag)
     api_tagMaster_ = Ref{Cint}()
     api_nodes_ = Vector{Ptr{Cint}}(1)
     api_nodes_n_ = Vector{Csize_t}(1)
-    api_affineTransform_ = Vector{Ptr{Cdouble}}(1)
-    api_affineTransform_n_ = Vector{Csize_t}(1)
+    api_affineTransform_ = Ref{Ptr{Cdouble}}()
+    api_affineTransform_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetPeriodicNodes, gmsh.clib), Void,
           (Cint, Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, api_tagMaster_, api_nodes_, api_nodes_n_, api_affineTransform_, api_affineTransform_n_, ierr)
     tmp_api_nodes_ = unsafe_wrap(Array, api_nodes_[1], api_nodes_n_[1], true)
     nodes = [ (tmp_api_nodes_[i], tmp_api_nodes_[i+1]) for i in 1:2:length(tmp_api_nodes_) ]
-    affineTransform = unsafe_wrap(Array, api_affineTransform_[1], api_affineTransform_n_[1], true)
+    affineTransform = unsafe_wrap(Array, api_affineTransform_[], api_affineTransform_n_[], true)
     ierr[] != 0 && error("gmshModelMeshGetPeriodicNodes returned non-zero error code: $(ierr[])")
     return api_tagMaster_[], nodes, affineTransform
 end
@@ -2955,13 +2955,13 @@ provided.
 Return 'value'.
 """
 function probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = [], yElemCoord = [], zElemCoord = [])
-    api_value_ = Vector{Ptr{Cdouble}}(1)
-    api_value_n_ = Vector{Csize_t}(1)
+    api_value_ = Ref{Ptr{Cdouble}}()
+    api_value_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshViewProbe, gmsh.clib), Void,
           (Cint, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Cint, Cdouble, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
           tag, x, y, z, api_value_, api_value_n_, step, numComp, gradient, tolerance, xElemCoord, length(xElemCoord), yElemCoord, length(yElemCoord), zElemCoord, length(zElemCoord), ierr)
-    value = unsafe_wrap(Array, api_value_[1], api_value_n_[1], true)
+    value = unsafe_wrap(Array, api_value_[], api_value_n_[], true)
     ierr[] != 0 && error("gmshViewProbe returned non-zero error code: $(ierr[])")
     return value
 end
