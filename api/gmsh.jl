@@ -2464,19 +2464,19 @@ Return 'outDimTags', 'outDimTagsMap'.
 function fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
-    api_outDimTagsMap_ = Vector{Ptr{Ptr{Cint}}}(1)
-    api_outDimTagsMap_n_ = Vector{Ptr{Csize_t}}(1)
-    api_outDimTagsMap_nn_ = Vector{Csize_t}(1)
+    api_outDimTagsMap_ = Ref{Ptr{Ptr{Cint}}}()
+    api_outDimTagsMap_n_ = Ref{Ptr{Csize_t}}()
+    api_outDimTagsMap_nn_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelOccFuse, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
           convert(Vector{Cint}, collect(Iterators.flatten(objectDimTags))), 2 * length(objectDimTags), convert(Vector{Cint}, collect(Iterators.flatten(toolDimTags))), 2 * length(toolDimTags), api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
-    tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[1], api_outDimTagsMap_nn_[1], true)
-    tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[1], api_outDimTagsMap_nn_[1], true)
+    tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[], api_outDimTagsMap_nn_[], true)
+    tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[], api_outDimTagsMap_nn_[], true)
     outDimTagsMap = []
-    for i in 1:api_outDimTagsMap_nn_[1]
+    for i in 1:api_outDimTagsMap_nn_[]
         tmp = unsafe_wrap(Array, tmp_api_outDimTagsMap_[i], tmp_api_outDimTagsMap_n_[i], true)
         push!(outDimTagsMap, [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)])
     end
@@ -2498,19 +2498,19 @@ Return 'outDimTags', 'outDimTagsMap'.
 function intersect(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
-    api_outDimTagsMap_ = Vector{Ptr{Ptr{Cint}}}(1)
-    api_outDimTagsMap_n_ = Vector{Ptr{Csize_t}}(1)
-    api_outDimTagsMap_nn_ = Vector{Csize_t}(1)
+    api_outDimTagsMap_ = Ref{Ptr{Ptr{Cint}}}()
+    api_outDimTagsMap_n_ = Ref{Ptr{Csize_t}}()
+    api_outDimTagsMap_nn_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelOccIntersect, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
           convert(Vector{Cint}, collect(Iterators.flatten(objectDimTags))), 2 * length(objectDimTags), convert(Vector{Cint}, collect(Iterators.flatten(toolDimTags))), 2 * length(toolDimTags), api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
-    tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[1], api_outDimTagsMap_nn_[1], true)
-    tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[1], api_outDimTagsMap_nn_[1], true)
+    tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[], api_outDimTagsMap_nn_[], true)
+    tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[], api_outDimTagsMap_nn_[], true)
     outDimTagsMap = []
-    for i in 1:api_outDimTagsMap_nn_[1]
+    for i in 1:api_outDimTagsMap_nn_[]
         tmp = unsafe_wrap(Array, tmp_api_outDimTagsMap_[i], tmp_api_outDimTagsMap_n_[i], true)
         push!(outDimTagsMap, [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)])
     end
@@ -2532,19 +2532,19 @@ Return 'outDimTags', 'outDimTagsMap'.
 function cut(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
-    api_outDimTagsMap_ = Vector{Ptr{Ptr{Cint}}}(1)
-    api_outDimTagsMap_n_ = Vector{Ptr{Csize_t}}(1)
-    api_outDimTagsMap_nn_ = Vector{Csize_t}(1)
+    api_outDimTagsMap_ = Ref{Ptr{Ptr{Cint}}}()
+    api_outDimTagsMap_n_ = Ref{Ptr{Csize_t}}()
+    api_outDimTagsMap_nn_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelOccCut, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
           convert(Vector{Cint}, collect(Iterators.flatten(objectDimTags))), 2 * length(objectDimTags), convert(Vector{Cint}, collect(Iterators.flatten(toolDimTags))), 2 * length(toolDimTags), api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
-    tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[1], api_outDimTagsMap_nn_[1], true)
-    tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[1], api_outDimTagsMap_nn_[1], true)
+    tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[], api_outDimTagsMap_nn_[], true)
+    tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[], api_outDimTagsMap_nn_[], true)
     outDimTagsMap = []
-    for i in 1:api_outDimTagsMap_nn_[1]
+    for i in 1:api_outDimTagsMap_nn_[]
         tmp = unsafe_wrap(Array, tmp_api_outDimTagsMap_[i], tmp_api_outDimTagsMap_n_[i], true)
         push!(outDimTagsMap, [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)])
     end
@@ -2566,19 +2566,19 @@ Return 'outDimTags', 'outDimTagsMap'.
 function fragment(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
-    api_outDimTagsMap_ = Vector{Ptr{Ptr{Cint}}}(1)
-    api_outDimTagsMap_n_ = Vector{Ptr{Csize_t}}(1)
-    api_outDimTagsMap_nn_ = Vector{Csize_t}(1)
+    api_outDimTagsMap_ = Ref{Ptr{Ptr{Cint}}}()
+    api_outDimTagsMap_n_ = Ref{Ptr{Csize_t}}()
+    api_outDimTagsMap_nn_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelOccFragment, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
           convert(Vector{Cint}, collect(Iterators.flatten(objectDimTags))), 2 * length(objectDimTags), convert(Vector{Cint}, collect(Iterators.flatten(toolDimTags))), 2 * length(toolDimTags), api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
-    tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[1], api_outDimTagsMap_nn_[1], true)
-    tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[1], api_outDimTagsMap_nn_[1], true)
+    tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[], api_outDimTagsMap_nn_[], true)
+    tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[], api_outDimTagsMap_nn_[], true)
     outDimTagsMap = []
-    for i in 1:api_outDimTagsMap_nn_[1]
+    for i in 1:api_outDimTagsMap_nn_[]
         tmp = unsafe_wrap(Array, tmp_api_outDimTagsMap_[i], tmp_api_outDimTagsMap_n_[i], true)
         push!(outDimTagsMap, [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)])
     end
