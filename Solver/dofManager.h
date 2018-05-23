@@ -159,7 +159,7 @@ class dofManager : public dofManagerBase{
   {
     fixDof(Dof(ent, type), value);
   }
-  inline void fixVertex(MVertex*v, int iComp, int iField, const dataVec &value)
+  void fixVertex(MVertex const* v, int iComp, int iField, const dataVec &value)
   {
     fixDof(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField), value);
   }
@@ -357,7 +357,7 @@ class dofManager : public dofManagerBase{
       insertInSparsityPatternLinConst(R, C);
     }
   }
-  
+
   virtual inline void sparsityDof(const std::vector<Dof> &keys){
     for (unsigned int itR=0; itR< keys.size(); itR++){
       for (unsigned int itC=0; itC<keys.size(); itC++){

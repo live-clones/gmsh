@@ -44,8 +44,8 @@ protected:
   std::vector<MTriangle*> tempTR;
   std::vector<MElement*> elements;
   std::vector<MVertex*> vertices;
-  std::map<MVertex*,MVertex*> _3Dto2D;
-  std::map<MVertex*,MVertex*> _2Dto3D;
+  std::map<MVertex const* const, MVertex*> _3Dto2D;
+  std::map<MVertex const* const, MVertex*> _2Dto3D;
 
 public:
   backgroundMesh2D(GFace *, bool erase_2D3D=true);

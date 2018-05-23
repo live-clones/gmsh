@@ -558,7 +558,7 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
   return true;
 }
 
-bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
+bool reparamMeshVertexOnFace(MVertex const* v, const GFace *gf, SPoint2 &param,
                              bool onSurface)
 {
   //#if defined(HAVE_ANN) && defined(HAVE_SOLVER)
@@ -597,7 +597,7 @@ bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
       param=gf->parFromPoint(SPoint3(v->x(),v->y(),v->z()));
       return true;
     }
-    
+
     GEdge *ge = (GEdge*)v->onWhat();
     double t;
     v->getParameter(0, t);
