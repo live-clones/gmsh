@@ -1107,10 +1107,10 @@ class API:
                     ("," if not len(args) else "") + "),\n" +
                     " " * 10 + ", ".join(
                         tuple(a.julia_arg for a in args) + ("ierr",)) + ")\n")
-            for a in args:
-                if a.julia_post: f.write("    " + a.julia_post + "\n")
             f.write('    ierr[] != 0 && error("' + c_name +
                     ' returned non-zero error code: $(ierr[])")\n')
+            for a in args:
+                if a.julia_post: f.write("    " + a.julia_post + "\n")
             r = (["api__result__"]) if rtype else []
             r += list((o.julia_return for o in oargs))
             f.write("    return ")
