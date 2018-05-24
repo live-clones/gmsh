@@ -312,10 +312,11 @@ class drawGFace {
     else
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
-    if(CTX::instance()->geom.surfaceType > 0)
+    if((CTX::instance()->geom.surfaces || f->getSelection() > 1) &&
+       CTX::instance()->geom.surfaceType > 0)
       f->fillVertexArray(f->geomType() == GEntity::ProjectionFace);
 
-    if(!CTX::instance()->geom.surfaceType || !f->va_geom_triangles ||
+    if(CTX::instance()->geom.surfaces || f->getSelection() > 1 ||
        CTX::instance()->geom.surfacesNum || CTX::instance()->geom.normals)
       f->buildRepresentationCross();
 

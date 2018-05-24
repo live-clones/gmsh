@@ -237,6 +237,9 @@ mesh.add('setSmoothing',doc,None,iint('dim'),iint('tag'),iint('val'))
 doc = '''Set a reverse meshing constraint on the geometrical entity of dimension `dim' and tag `tag'. If `val' is true, the mesh orientation will be reversed with respect to the natural mesh orientation (i.e. the orientation consistent with the orientation of the geometrical entity). If `val' is false, the mesh is left as-is.'''
 mesh.add('setReverse',doc,None,iint('dim'),iint('tag'),ibool('val','true','True'))
 
+doc = '''Set meshing constraints on the bounding surfaces of the volume of tag `tag' so that all surfaces are oriented with outward pointing normals. Currently only available with the OpenCASCADE kernel, as it relies on the STL triangulation.'''
+mesh.add('setOutwardOrientation',doc,None,iint('tag'))
+
 doc = '''Embed the geometrical entities of dimension `dim' and tags `tags' in the (inDim, inTag) geometrical entity. `inDim' must be strictly greater than `dim'.'''
 mesh.add('embed',doc,None,iint('dim'),ivectorint('tags'),iint('inDim'),iint('inTag'))
 
@@ -252,6 +255,8 @@ mesh.add('reorderedMeshElements',doc,None,iint('elementType'),iint('dim'),iint('
 doc = '''Set the meshes of the entities of dimension `dim' and tag `tags' as periodic copies of the meshes of entities `tagsSource', using the affine transformation specified in `affineTransformation' (16 entries of a 4x4 matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.'''
 mesh.add('setPeriodic',doc,None,iint('dim'),ivectorint('tags'),ivectorint('tagsSource'),ivectordouble('affineTransformation'))
 
+doc = '''Get the master entity, periodic node pairs and affine transform for the entity of dimension `dim' and tag `tag'.'''
+mesh.add('getPeriodicNodes',doc,None,iint('dim'),iint('tag'),oint('tagMaster'),ovectorpair('nodes'),ovectordouble('affineTransform'))
 
 ################################################################################
 

@@ -196,14 +196,14 @@ struct doubleXstring{
 %token tBox tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
 %token tRectangle tDisk tWire tGeoEntity
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
-%token tRelocateMesh tSetFactory tThruSections tWedge tFillet
+%token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet
 %token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic
 %token tUsing tPlugin tDegenerated tRecursive
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
 %token tBooleanFragments tThickSolid
 %token tRecombine tSmoother tSplit tDelete tCoherence
-%token tIntersect tMeshAlgorithm tReverse
+%token tIntersect tMeshAlgorithm tReverseMesh
 %token tLayers tScaleLast tHole tAlias tAliasWithOptions tCopyOptions
 %token tQuadTriAddVerts tQuadTriNoNewVerts
 %token tRecombLaterals tTransfQuadTri
@@ -4622,7 +4622,7 @@ Constraints :
       }
       List_Delete($3);
     }
-  | tReverse GeoEntity12 ListOfDoubleOrAll tEND
+  | tReverseMesh GeoEntity12 ListOfDoubleOrAll tEND
     {
       // reverse mesh constraints are stored in GEO internals in addition to
       // GModel, as they can be copied around during GEO operations
@@ -4672,6 +4672,11 @@ Constraints :
     }
   | tRelocateMesh GeoEntity02 ListOfDoubleOrAll tEND
     {
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
       if(!$3){
         switch ($2) {
         case 0:
@@ -4718,6 +4723,21 @@ Constraints :
         }
         List_Delete($3);
       }
+    }
+  | tReorientMesh tVolume ListOfDouble tEND
+    {
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      for(int i = 0; i < List_Nbr($3); i++){
+        double d;
+        List_Read($3, i, &d);
+        GRegion *gr = GModel::current()->getRegionByTag((int)d);
+        if(gr) gr->setOutwardOrientationMeshConstraint();
+      }
+      List_Delete($3);
     }
   | tDegenerated tCurve ListOfDouble tEND
     {

@@ -9,13 +9,13 @@
 // This file redefines the Gmsh C++ API in terms of the C API (v3.0).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
-// compiler ABI is not compatible with the ABI of the C++ compiler used to create 
+// compiler ABI is not compatible with the ABI of the C++ compiler used to create
 // the SDK (and who can thus not directly use the C++ API defined in `gmsh.h').
 //
 // To use this header file in your C++ code, simply rename it as `gmsh.h'.
 //
 // Note that using this header file will lead to (slightly) reduced performance
-// compared to using the native Gmsh C++ API from the original `gmsh.h', as it 
+// compared to using the native Gmsh C++ API from the original `gmsh.h', as it
 // entails additional data copies between this C++ wrapper, the C API and the
 // native C++ code.
 //
@@ -1045,6 +1045,17 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
       }
 
+      // Set meshing constraints on the bounding surfaces of the volume of tag
+      // `tag' so that all surfaces are oriented with outward pointing normals.
+      // Currently only available with the OpenCASCADE kernel, as it relies on the
+      // STL triangulation.
+      GMSH_API void setOutwardOrientation(const int tag)
+      {
+        int ierr = 0;
+        gmshModelMeshSetOutwardOrientation(tag, &ierr);
+        if(ierr) throw ierr;
+      }
+
       // Embed the geometrical entities of dimension `dim' and tags `tags' in the
       // (inDim, inTag) geometrical entity. `inDim' must be strictly greater than
       // `dim'.
@@ -1111,6 +1122,23 @@ namespace gmsh { // Top-level functions
         gmshFree(api_tags_);
         gmshFree(api_tagsSource_);
         gmshFree(api_affineTransformation_);
+      }
+
+      // Get the master entity, periodic node pairs and affine transform for the
+      // entity of dimension `dim' and tag `tag'.
+      GMSH_API void getPeriodicNodes(const int dim,
+                                     const int tag,
+                                     int & tagMaster,
+                                     gmsh::vectorpair & nodes,
+                                     std::vector<double> & affineTransform)
+      {
+        int ierr = 0;
+        int *api_nodes_; size_t api_nodes_n_;
+        double *api_affineTransform_; size_t api_affineTransform_n_;
+        gmshModelMeshGetPeriodicNodes(dim, tag, &tagMaster, &api_nodes_, &api_nodes_n_, &api_affineTransform_, &api_affineTransform_n_, &ierr);
+        if(ierr) throw ierr;
+        nodes.resize(api_nodes_n_ / 2); for(size_t i = 0; i < api_nodes_n_ / 2; ++i){ nodes[i].first = api_nodes_[i * 2 + 0]; nodes[i].second = api_nodes_[i * 2 + 1]; } gmshFree(api_nodes_);
+        affineTransform.assign(api_affineTransform_, api_affineTransform_ + api_affineTransform_n_); gmshFree(api_affineTransform_);
       }
 
       namespace field { // Per-model mesh size field functions

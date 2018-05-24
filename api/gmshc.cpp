@@ -915,6 +915,17 @@ GMSH_API void gmshModelMeshSetReverse(const int dim, const int tag, const int va
   }
 }
 
+GMSH_API void gmshModelMeshSetOutwardOrientation(const int tag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::setOutwardOrientation(tag);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshEmbed(const int dim, int * tags, size_t tags_n, const int inDim, const int inTag, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -971,6 +982,21 @@ GMSH_API void gmshModelMeshSetPeriodic(const int dim, int * tags, size_t tags_n,
     std::vector<int> api_tagsSource_(tagsSource, tagsSource + tagsSource_n);
     std::vector<double> api_affineTransformation_(affineTransformation, affineTransformation + affineTransformation_n);
     gmsh::model::mesh::setPeriodic(dim, api_tags_, api_tagsSource_, api_affineTransformation_);
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim, const int tag, int * tagMaster, int ** nodes, size_t * nodes_n, double ** affineTransform, size_t * affineTransform_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_nodes_;
+    std::vector<double> api_affineTransform_;
+    gmsh::model::mesh::getPeriodicNodes(dim, tag, *tagMaster, api_nodes_, api_affineTransform_);
+    vectorpair2intptr(api_nodes_, nodes, nodes_n);
+    vector2ptr(api_affineTransform_, affineTransform, affineTransform_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

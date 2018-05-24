@@ -160,6 +160,10 @@ class GRegion : public GEntity {
   
   // reordered the mesh elements given by elementType according to order
   virtual bool reordered(const int elementType, const std::vector<int> &order);
+
+  // set the reverseMesh constraint in the bounding surfaces so that the
+  // boundary mesh has outward pointing normals, based on the STL triangulation
+  bool setOutwardOrientationMeshConstraint();
 };
 
 #endif

@@ -9,7 +9,8 @@
 #include <string>
 #include "GmshMessage.h"
 
-int GmshInitialize(int argc = 0, char **argv = 0, bool readConfigFiles = false);
+int GmshInitialize(int argc = 0, char **argv = 0, bool readConfigFiles = false,
+                   bool exitOnCommandLineError = true);
 int GmshSetMessageHandler(GmshMessage *callback);
 GmshMessage *GmshGetMessageHandler();
 int GmshSetBoundingBox(double xmin, double xmax,

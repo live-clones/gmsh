@@ -26,7 +26,7 @@ static void oversample (std::vector<SPoint3> &s, double tol){
   s = t;
 }
 
-closestPointFinder :: closestPointFinder (GEntity *ge, double e) : _tolerance (e)
+closestPointFinder::closestPointFinder(GEntity *ge, double e) : _tolerance (e)
 {
 #if defined(HAVE_ANN)
   std::vector<SPoint3> pts;
@@ -53,11 +53,11 @@ closestPointFinder :: closestPointFinder (GEntity *ge, double e) : _tolerance (e
   }
   kdtree = new ANNkd_tree(zeronodes, pts.size(), 3);
 #else
-  Msg::Fatal("Gmsh should be compiled using ANN");
+  Msg::Error("Gmsh should be compiled with ANN to support closestPointFinder");
 #endif
 }
 
-closestPointFinder :: ~closestPointFinder ()
+closestPointFinder::~closestPointFinder ()
 {
 #if defined(HAVE_ANN)
   if(kdtree) delete kdtree;
@@ -67,7 +67,7 @@ closestPointFinder :: ~closestPointFinder ()
 #endif
 }
 
-SPoint3 closestPointFinder ::operator() (const SPoint3 &p)
+SPoint3 closestPointFinder::operator() (const SPoint3 &p)
 {
 #if defined(HAVE_ANN)
   double xyz[3] = {p.x(),p.y(),p.z()};
@@ -79,4 +79,3 @@ SPoint3 closestPointFinder ::operator() (const SPoint3 &p)
   return p;
 #endif
 }
-

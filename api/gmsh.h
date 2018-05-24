@@ -557,6 +557,12 @@ namespace gmsh { // Top-level functions
                                const int tag,
                                const bool val = true);
 
+      // Set meshing constraints on the bounding surfaces of the volume of tag
+      // `tag' so that all surfaces are oriented with outward pointing normals.
+      // Currently only available with the OpenCASCADE kernel, as it relies on the
+      // STL triangulation.
+      GMSH_API void setOutwardOrientation(const int tag);
+
       // Embed the geometrical entities of dimension `dim' and tags `tags' in the
       // (inDim, inTag) geometrical entity. `inDim' must be strictly greater than
       // `dim'.
@@ -588,6 +594,14 @@ namespace gmsh { // Top-level functions
                                 const std::vector<int> & tags,
                                 const std::vector<int> & tagsSource,
                                 const std::vector<double> & affineTransformation);
+
+      // Get the master entity, periodic node pairs and affine transform for the
+      // entity of dimension `dim' and tag `tag'.
+      GMSH_API void getPeriodicNodes(const int dim,
+                                     const int tag,
+                                     int & tagMaster,
+                                     gmsh::vectorpair & nodes,
+                                     std::vector<double> & affineTransform);
 
       namespace field { // Per-model mesh size field functions
 

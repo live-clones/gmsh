@@ -274,14 +274,11 @@ SOrientedBoundingBox GFace::getOBB()
       }
     }
     else if(buildSTLTriangulation()) {
-      for (unsigned int i = 0; i < stl_vertices.size(); i++){
-        GPoint p = point(stl_vertices[i]);
-        vertices.push_back(SPoint3(p.x(), p.y(), p.z()));
-      }
+      vertices = stl_vertices_xyz;
     }
     else {
-      // Fallback, if we can't make a STL triangulation of the
-      // surface, use its edges..
+      // Fallback, if we can't make a STL triangulation of the surface, use its
+      // edges..
       std::list<GEdge*> b_edges = edges();
       int N = 10;
       for (std::list<GEdge*>::iterator b_edge = b_edges.begin();
@@ -1268,17 +1265,12 @@ bool GFace::buildRepresentationCross(bool force)
 
 bool GFace::buildSTLTriangulation(bool force)
 {
-  if(stl_triangles.size()){
-    if(force){
-      stl_vertices.clear();
-      stl_triangles.clear();
-    }
-    else{
-      return true;
-    }
-  }
-  // Build a simple triangulation for surfaces which we know are not
-  // trimmed
+  if(stl_triangles.size() && !force) return true;
+  stl_vertices_uv.clear();
+  stl_vertices_xyz.clear();
+  stl_triangles.clear();
+
+  // Build a simple triangulation for surfaces which we know are not trimmed
   if(geomType() == ParametricSurface || geomType() == ProjectionFace){
     const int nu = 64, nv = 64;
     Range<double> ubounds = parBounds(0);
@@ -1289,7 +1281,9 @@ bool GFace::buildSTLTriangulation(bool force)
       for(int j = 0; j < nv; j++){
         double u = umin + (double)i / (double)(nu - 1) * (umax - umin);
         double v = vmin + (double)j / (double)(nv - 1) * (vmax - vmin);
-        stl_vertices.push_back(SPoint2(u, v));
+        stl_vertices_uv.push_back(SPoint2(u, v));
+        GPoint gp = point(u, v);
+        stl_vertices_xyz.push_back(SPoint3(gp.x(), gp.y(), gp.z()));
       }
     }
     for(int i = 0; i < nu - 1; i++){
@@ -1304,8 +1298,6 @@ bool GFace::buildSTLTriangulation(bool force)
     }
     return true;
   }
-
-  // build STL for general surfaces here
 
   return false;
 }
@@ -1325,18 +1317,35 @@ bool GFace::fillVertexArray(bool force)
   va_geom_triangles = new VertexArray(3, stl_triangles.size() / 3);
   unsigned int c = CTX::instance()->color.geom.surface;
   unsigned int col[4] = {c, c, c, c};
-  for (unsigned int i = 0; i < stl_triangles.size(); i += 3){
-    SPoint2 &p1(stl_vertices[stl_triangles[i]]);
-    SPoint2 &p2(stl_vertices[stl_triangles[i + 1]]);
-    SPoint2 &p3(stl_vertices[stl_triangles[i + 2]]);
-    GPoint gp1 = point(p1);
-    GPoint gp2 = point(p2);
-    GPoint gp3 = point(p3);
-    double x[3] = {gp1.x(), gp2.x(), gp3.x()};
-    double y[3] = {gp1.y(), gp2.y(), gp3.y()};
-    double z[3] = {gp1.z(), gp2.z(), gp3.z()};
-    SVector3 n[3] = {normal(p1), normal(p2), normal(p3)};
-    va_geom_triangles->add(x, y, z, n, col);
+  if(stl_vertices_xyz.size() &&
+     (stl_vertices_xyz.size() == stl_normals.size())){
+    for (unsigned int i = 0; i < stl_triangles.size(); i += 3){
+      SPoint3 &p1(stl_vertices_xyz[stl_triangles[i]]);
+      SPoint3 &p2(stl_vertices_xyz[stl_triangles[i + 1]]);
+      SPoint3 &p3(stl_vertices_xyz[stl_triangles[i + 2]]);
+      double x[3] = {p1.x(), p2.x(), p3.x()};
+      double y[3] = {p1.y(), p2.y(), p3.y()};
+      double z[3] = {p1.z(), p2.z(), p3.z()};
+      SVector3 n[3] = {stl_normals[stl_triangles[i]],
+                       stl_normals[stl_triangles[i + 1]],
+                       stl_normals[stl_triangles[i + 2]]};
+      va_geom_triangles->add(x, y, z, n, col);
+    }
+  }
+  else if(stl_vertices_uv.size()){
+    for (unsigned int i = 0; i < stl_triangles.size(); i += 3){
+      SPoint2 &p1(stl_vertices_uv[stl_triangles[i]]);
+      SPoint2 &p2(stl_vertices_uv[stl_triangles[i + 1]]);
+      SPoint2 &p3(stl_vertices_uv[stl_triangles[i + 2]]);
+      GPoint gp1 = point(p1);
+      GPoint gp2 = point(p2);
+      GPoint gp3 = point(p3);
+      double x[3] = {gp1.x(), gp2.x(), gp3.x()};
+      double y[3] = {gp1.y(), gp2.y(), gp3.y()};
+      double z[3] = {gp1.z(), gp2.z(), gp3.z()};
+      SVector3 n[3] = {normal(p1), normal(p2), normal(p3)};
+      va_geom_triangles->add(x, y, z, n, col);
+    }
   }
   va_geom_triangles->finalize();
   return true;
@@ -1365,12 +1374,11 @@ bool GFace::fillPointCloud(double maxDist,
 {
   if(!points) return false;
 
-  if (buildSTLTriangulation()){
+  if(buildSTLTriangulation() && stl_vertices_uv.size()){
     for(unsigned int i = 0; i < stl_triangles.size(); i += 3){
-      SPoint2 &p0(stl_vertices[stl_triangles[i]]);
-      SPoint2 &p1(stl_vertices[stl_triangles[i + 1]]);
-      SPoint2 &p2(stl_vertices[stl_triangles[i + 2]]);
-
+      SPoint2 &p0(stl_vertices_uv[stl_triangles[i]]);
+      SPoint2 &p1(stl_vertices_uv[stl_triangles[i + 1]]);
+      SPoint2 &p2(stl_vertices_uv[stl_triangles[i + 2]]);
       GPoint gp0 = point(p0);
       GPoint gp1 = point(p1);
       GPoint gp2 = point(p2);
@@ -1408,9 +1416,7 @@ bool GFace::fillPointCloud(double maxDist,
   return true;
 }
 
-
 #if defined(HAVE_MESH)
-
 
 static void meshCompound(GFace* gf, bool verbose)
 {

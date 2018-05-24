@@ -3039,8 +3039,13 @@ Forces the meshing algorithm per surface.
 Treats the given entities as a single entity when meshing, i.e. perform
 cross-patch meshing of the entities.
 
-@item Reverse Curve | Surface @{ @var{expression-list-or-all} @} ;
+@item ReverseMesh Curve | Surface @{ @var{expression-list-or-all} @} ;
 Reverses the mesh of the given curve(s) or surface(s).
+
+@item ReorientMesh Volume @{ @var{expression-list} @} ;
+Reorients the meshes of the bounding surfaces of the given volumes so
+that the normals point outward to the volumes. Currently only available
+with the OpenCASCADE kernel, as it relies on the STL triangulation.
 
 @item Save @var{char-expression};
 Saves the mesh in a file named @var{char-expression}, using the current

@@ -380,7 +380,7 @@ class GEntity {
   // transformation from master
   std::vector<double> affineTransform;
 
-  // corresponding principal vertices
+  // corresponding mesh vertices
   std::map<MVertex*,MVertex*> correspondingVertices;
 
   // corresponding high order control points

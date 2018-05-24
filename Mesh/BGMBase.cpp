@@ -137,10 +137,9 @@ void BGMBase::export_tensor_as_vectors(const std::string &filename,
 
   TensorStorageType::const_iterator it = _whatToPrint.begin();
   const char *s = "VP";
-  MVertex *v;
+
   for (;it!=_whatToPrint.end();it++){// for all vertices
-    v = it->first;
-    GPoint p = get_GPoint_from_MVertex(v);
+    GPoint p = get_GPoint_from_MVertex( it->first);
     for (int i=0;i<3;i++){
       fprintf(f,"%s(%g,%g,%g){%g,%g,%g};\n",s,p.x(),p.y(),p.z(),
               (it->second)(0,i),(it->second)(1,i),(it->second)(2,i));
@@ -174,14 +173,20 @@ std::vector<double> BGMBase::get_field_value(double u, double v, double w,
                                              const VectorStorageType &data)
 {
   MElement *e = const_cast<MElement*>(findElement(u, v, w ));
+
   if (!e) return std::vector<double>(3,-1000.);
+
   std::vector<std::vector<double> > val = get_nodal_values(e,data);
   std::vector<double> element_uvw = get_element_uvw_from_xyz(e,u,v,w);
 
   std::vector<double> res(3);
-  for (int j=0;j<3;j++){
+
+  for (int j=0;j<3;j++) {
     std::vector<double> values(e->getNumVertices());
-    for (int i=0;i<e->getNumVertices();i++) values[i]=val[i][j];
+
+    for (int i=0;i<e->getNumVertices();i++){
+        values[i]=val[i][j];
+    }
     res[j] = e->interpolate(&values[0], element_uvw[0], element_uvw[1],
                             element_uvw[2], 1, order);
   }
@@ -216,7 +221,7 @@ double BGMBase::size(const MVertex *v)
 std::vector<double> BGMBase::get_nodal_value(const MVertex *v,
                                              const VectorStorageType &data) const
 {
-  VectorStorageType::const_iterator itfind = data.find(const_cast<MVertex*>(v));
+  VectorStorageType::const_iterator itfind = data.find(v);
   if (itfind==data.end()){
     Msg::Error("Unknown vertex %d in BGMBase::get_nodal_value", v->getNum());
     return std::vector<double>(3,0.);
@@ -226,7 +231,7 @@ std::vector<double> BGMBase::get_nodal_value(const MVertex *v,
 
 double BGMBase::get_nodal_value(const MVertex *v,const DoubleStorageType &data) const
 {
-  DoubleStorageType::const_iterator itfind = data.find(const_cast<MVertex*>(v));
+  DoubleStorageType::const_iterator itfind = data.find(v);
   if (itfind==data.end()){
     Msg::Error("Unknown vertex %d in BGMBase::get_nodal_value", v->getNum());
     return 0.;
@@ -247,26 +252,25 @@ BGMBase::get_nodal_values(const MElement *e,const VectorStorageType &data) const
   return res;
 }
 
-std::vector<double> BGMBase::get_nodal_values(const MElement *e,
+std::vector<double> BGMBase::get_nodal_values(const MElement *element,
                                               const DoubleStorageType &data) const
 {
-  std::vector<double> res(e->getNumVertices(),0.);
+  std::vector<double> res(element->getNumVertices(),0.);
 
-  for (int i=0;i<e->getNumVertices();i++)
-    res[i] = (data.find(const_cast<MVertex*>(e->getVertex(i))))->second;
+  for (int i=0;i<element->getNumVertices();i++)
+    //res[i] = (data.find(const_cast<MVertex*>(e->getVertex(i))))->second;
+    res[i] = data.find(element->getVertex(i))->second;
   return res;
 }
 
 std::vector<double> BGMBase::get_element_uvw_from_xyz (const MElement *e, double x,
                                                        double y, double z) const
 {
-  double element_uvw[3];
+  std::vector<double> res(3);
+
   double xyz[3] = {x, y, z};
-  e->xyz2uvw(xyz, element_uvw);
-  std::vector<double> res(3,0.);
-  for (int i=0;i<3;i++) {
-    res[i] = element_uvw[i];
-  }
+  e->xyz2uvw(xyz, &res[0]);
+
   return res;
 }
 

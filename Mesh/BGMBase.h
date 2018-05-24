@@ -32,7 +32,7 @@ class GEntity;
 
 class BGMBase{
   public:
-    typedef MVertex* hash_key_ptr;
+    typedef MVertex const* const hash_key_ptr;
 //    typedef tr1::unordered_map<hash_key_ptr, STensor3 > TensorStorageType;
 //    typedef tr1::unordered_map<hash_key_ptr, double > DoubleStorageType;
 //    typedef tr1::unordered_map<hash_key_ptr, vector<double> > VectorStorageType;
@@ -43,8 +43,8 @@ class BGMBase{
   protected:
     mutable MElementOctree *octree;
     GEntity *gf;
-    
-    
+
+
     DoubleStorageType sizeField;  // an attached size field
 
 
@@ -53,7 +53,7 @@ class BGMBase{
     virtual void export_scalar(const std::string &filename, const DoubleStorageType&) const;
     virtual void export_vector(const std::string &filename, const VectorStorageType&) const;
     virtual void export_tensor_as_vectors(const std::string &filename, const TensorStorageType &_whatToPrint)const;
-    
+
     virtual void propagateValues(DoubleStorageType &dirichlet, simpleFunction<double> &eval_diffusivity, bool in_parametric_plane = false)=0;
     virtual void computeSizeField()=0;
     virtual GPoint get_GPoint_from_MVertex(const MVertex *) const=0;
@@ -67,15 +67,15 @@ class BGMBase{
     virtual double get_nodal_value(const MVertex *v,const DoubleStorageType &data)const;
 
     virtual std::vector<double> get_element_uvw_from_xyz (const MElement *e, double x, double y,double z) const;
-    
+
     virtual double get_field_value(double u, double v, double w, const DoubleStorageType &data);
     virtual std::vector<double> get_field_value(double u, double v, double w, const VectorStorageType &data);
 
-  
+
   public:
     BGMBase(int dim,GEntity *_gf);
     ~BGMBase();
-    
+
     virtual MElementOctree* getOctree()=0;
 
     virtual GEntity* getBackgroundGEntity();

@@ -1584,6 +1584,23 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def setOutwardOrientation(tag):
+            """
+            Set meshing constraints on the bounding surfaces of the volume of tag `tag'
+            so that all surfaces are oriented with outward pointing normals. Currently
+            only available with the OpenCASCADE kernel, as it relies on the STL
+            triangulation.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshSetOutwardOrientation(
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshSetOutwardOrientation returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def embed(dim, tags, inDim, inTag):
             """
             Embed the geometrical entities of dimension `dim' and tags `tags' in the
@@ -1677,6 +1694,34 @@ class model:
                 raise ValueError(
                     "gmshModelMeshSetPeriodic returned non-zero error code: ",
                     ierr.value)
+
+        @staticmethod
+        def getPeriodicNodes(dim, tag):
+            """
+            Get the master entity, periodic node pairs and affine transform for the
+            entity of dimension `dim' and tag `tag'.
+
+            Return `tagMaster', `nodes', `affineTransform'.
+            """
+            api_tagMaster_ = c_int()
+            api_nodes_, api_nodes_n_ = POINTER(c_int)(), c_size_t()
+            api_affineTransform_, api_affineTransform_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetPeriodicNodes(
+                c_int(dim),
+                c_int(tag),
+                byref(api_tagMaster_),
+                byref(api_nodes_), byref(api_nodes_n_),
+                byref(api_affineTransform_), byref(api_affineTransform_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetPeriodicNodes returned non-zero error code: ",
+                    ierr.value)
+            return (
+                api_tagMaster_.value,
+                _ovectorpair(api_nodes_, api_nodes_n_.value),
+                _ovectordouble(api_affineTransform_, api_affineTransform_n_.value))
 
 
         class field:

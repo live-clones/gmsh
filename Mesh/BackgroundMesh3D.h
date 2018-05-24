@@ -77,7 +77,7 @@ public:
   //    typedef tr1::unordered_map<MElement*, std::set<MVertex*> > elem2verttype;
   typedef std::map<hash_key_ptr, std::set<MElement*> > vert2elemtype;
   typedef std::map<MElement*, std::set<MVertex*> > elem2verttype;
-  typedef std::multimap<MVertex*, std::pair<int,MVertex*> > graphtype;
+  typedef std::multimap<MVertex const* const, std::pair<int,MVertex const*> > graphtype;
 
 protected:
   bool smooth_the_crossfield;
@@ -93,10 +93,21 @@ protected:
   void build_neighbors(const int &max_recursion_level);
 
   // function called only by "build_neighbors", recursively recovering vertices neighbors.
-  void get_recursive_neighbors(std::set<MVertex*> &start, std::set<MVertex*> &visited, std::set<MElement*> &visited_elements, std::multimap<int,MVertex*> &proximity, int max_level, int level=0);
+  void get_recursive_neighbors(std::set<MVertex const*> &start,
+                               std::set<MVertex const*> &visited,
+                               std::set<MElement const*> &visited_elements,
+                               std::multimap<int, MVertex const*> &proximity,
+                               int max_level,
+                               int level=0);
 
+  double compare_to_neighbors(SPoint3 current,
+                              STensor3 &ref,
+                              std::multimap<double, MVertex const*>::iterator itbegin,
+                              std::multimap<double, MVertex const*>::iterator itend,
+                              SVector3 &mean_axis,
+                              double &mean_angle,
+                              std::vector<double> &vectorial_smoothness);
 
-  double compare_to_neighbors(SPoint3 current, STensor3 &ref, std::multimap<double,MVertex*>::iterator itbegin, std::multimap<double,MVertex*>::iterator itend, SVector3 &mean_axis,double &mean_angle, std::vector<double> &vectorial_smoothness);
   STensor3 apply_rotation(const SVector3 &axis, const double &angle, const STensor3 &thecross);
   void get_rotation_matrix(const double &angle_to_go, const SVector3 &rotvec, double* rotmat);
   void get_min_rotation_matrix(const STensor3 &reference, const STensor3 &thecross, double &minimum_angle, SVector3 &rotation_axis, double threshold=-1., bool debugflag=false);

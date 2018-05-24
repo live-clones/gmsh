@@ -800,6 +800,20 @@ false, the mesh is left as-is.
 -
 @end table
 
+@item setOutwardOrientation
+Set meshing constraints on the bounding surfaces of the volume of tag @code{tag}
+so that all surfaces are oriented with outward pointing normals. Currently only
+available with the OpenCASCADE kernel, as it relies on the STL triangulation.
+
+@table @asis
+@item Input:
+@code{tag}
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item embed
 Embed the geometrical entities of dimension @code{dim} and tags @code{tags} in
 the (inDim, inTag) geometrical entity. @code{inDim} must be strictly greater
@@ -816,16 +830,29 @@ than @code{dim}.
 
 @item setPeriodic
 Set the meshes of the entities of dimension @code{dim} and tag @code{tags} as
-periodic copies of the meshes of entities @code{tagsSource}, using the affine
+periodic copies of the meshes of entities @code{tagsMaster}, using the affine
 transformation specified in @code{affineTransformation} (16 entries of a 4x4
 matrix, by row). Currently only available for @code{dim} == 1 and @code{dim} ==
 2.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tags}, @code{tagsSource}, @code{affineTransformation}
+@code{dim}, @code{tags}, @code{tagsMaster}, @code{affineTransformation}
 @item Output:
 -
+@item Return:
+-
+@end table
+
+@item getPeriodicNodes
+Get the master entity, periodic node pairs and affine transform for the entity
+of dimension @code{dim} and tag @code{tag}.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{tagMaster}, @code{nodes}, @code{affineTransform}
 @item Return:
 -
 @end table

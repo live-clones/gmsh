@@ -591,6 +591,13 @@ GMSH_API void gmshModelMeshSetReverse(const int dim,
                                       const int val,
                                       int * ierr);
 
+/* Set meshing constraints on the bounding surfaces of the volume of tag `tag'
+ * so that all surfaces are oriented with outward pointing normals. Currently
+ * only available with the OpenCASCADE kernel, as it relies on the STL
+ * triangulation. */
+GMSH_API void gmshModelMeshSetOutwardOrientation(const int tag,
+                                                 int * ierr);
+
 /* Embed the geometrical entities of dimension `dim' and tags `tags' in the
  * (inDim, inTag) geometrical entity. `inDim' must be strictly greater than
  * `dim'. */
@@ -627,6 +634,15 @@ GMSH_API void gmshModelMeshSetPeriodic(const int dim,
                                        int * tagsSource, size_t tagsSource_n,
                                        double * affineTransformation, size_t affineTransformation_n,
                                        int * ierr);
+
+/* Get the master entity, periodic node pairs and affine transform for the
+ * entity of dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim,
+                                            const int tag,
+                                            int * tagMaster,
+                                            int ** nodes, size_t * nodes_n,
+                                            double ** affineTransform, size_t * affineTransform_n,
+                                            int * ierr);
 
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explcitly; otherwise a new tag is assigned automatically. Return

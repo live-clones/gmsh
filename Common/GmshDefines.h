@@ -9,7 +9,6 @@
 // IO file formats (numbers should not be changed)
 #define FORMAT_MSH          1
 #define FORMAT_UNV          2
-#define FORMAT_GREF         3
 #define FORMAT_XPM          4
 #define FORMAT_PS           5
 #define FORMAT_BMP          6
@@ -19,8 +18,6 @@
 #define FORMAT_AUTO         10
 #define FORMAT_PPM          11
 #define FORMAT_YUV          12
-#define FORMAT_DMG          13
-#define FORMAT_SMS          14
 #define FORMAT_OPT          15
 #define FORMAT_VTK          16
 #define FORMAT_MPEG         17

@@ -374,7 +374,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
       bool ok = true;
       for(int k = 0; k < numNodPerEle; k++){
         int idx = conn[numNodPerEle * j + med2mshNodeIndex(type, k)] - 1;
-        if(idx < 0 || idx > conn.size() - 1){
+        if(idx < 0 || idx > verts.size() - 1){
           Msg::Error("Wrong node index %d in MED file", idx);
           ok = false;
         }
