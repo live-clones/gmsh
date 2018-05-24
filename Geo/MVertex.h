@@ -168,7 +168,7 @@ class MVertexLessThanNum{
 
 bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf,
                            SPoint2 &param1, SPoint2 &param2);
-bool reparamMeshVertexOnFace(MVertex *v, const GFace *gf, SPoint2 &param,
+bool reparamMeshVertexOnFace(MVertex const* v, const GFace *gf, SPoint2 &param,
                              bool onSurface=true);
 bool reparamMeshVertexOnEdge(MVertex *v, const GEdge *ge, double &param);
 

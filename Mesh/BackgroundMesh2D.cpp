@@ -115,7 +115,7 @@ void backgroundMesh2D::reset(bool erase_2D3D)
     computeSizeField();
   }
   else
-    for (std::map<MVertex*, MVertex*>::iterator itv2 = _2Dto3D.begin() ; itv2 != _2Dto3D.end(); ++itv2)
+    for (std::map<MVertex const* const, MVertex*>::iterator itv2 = _2Dto3D.begin() ; itv2 != _2Dto3D.end(); ++itv2)
       sizeField[itv2->first] = CTX::instance()->mesh.lcMax;
 
   // ensure that other criteria are fullfilled
@@ -149,7 +149,7 @@ void backgroundMesh2D::create_mesh_copy()
     MVertex *news[3];
     for (int j=0;j<3;j++){
       MVertex *v = e->getVertex(j);
-      std::map<MVertex*,MVertex*>::iterator it = _3Dto2D.find(v);
+      std::map<MVertex const* const, MVertex*>::iterator it = _3Dto2D.find(v);
       MVertex *newv =0;
       if (it == _3Dto2D.end()){
         SPoint2 p;
@@ -160,7 +160,9 @@ void backgroundMesh2D::create_mesh_copy()
         _2Dto3D[newv] = v;
         //if(v->onWhat()->dim()<2) myBCNodes.insert(p);
       }
-      else newv = it->second;
+      else {
+        newv = it->second;
+      }
       news[j] = newv;
     }
     elements.push_back(new MTriangle(news[0],news[1],news[2]));
@@ -219,8 +221,7 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet,
   dofManager<double> myAssembler(_lsys);
 
   // fix boundary conditions
-  DoubleStorageType::iterator itv = dirichlet.begin();
-  for ( ; itv != dirichlet.end(); ++itv){
+  for (DoubleStorageType::iterator itv = dirichlet.begin(); itv != dirichlet.end(); ++itv){
     myAssembler.fixVertex(itv->first, 0, 1, itv->second);
   }
 
@@ -315,9 +316,9 @@ void backgroundMesh2D::computeSizeField()
   simpleFunction<double> ONE(1.0);
   propagateValues(sizes,ONE);
 
-  std::map<MVertex*,MVertex*>::iterator itv2 = _2Dto3D.begin();
+  std::map<MVertex const* const, MVertex*>::iterator itv2 = _2Dto3D.begin();
   for ( ; itv2 != _2Dto3D.end(); ++itv2){
-    MVertex *v_2D = itv2->first;
+    MVertex const* const v_2D = itv2->first;
     MVertex *v_3D = itv2->second;
     sizeField[v_2D] = std::exp(sizes[v_3D]);
   }
@@ -336,7 +337,7 @@ void backgroundMesh2D::updateSizes()
   DoubleStorageType::iterator itv = sizeField.begin();
   for ( ; itv != sizeField.end(); ++itv){
     SPoint2 p;
-    MVertex *v = _2Dto3D[itv->first];
+    MVertex const* const v = _2Dto3D[itv->first];
     double lc;
     if (v->onWhat()->dim() == 0){
       lc = sizeFactor * BGM_MeshSize(v->onWhat(), 0,0,v->x(),v->y(),v->z());
@@ -517,9 +518,9 @@ void frameFieldBackgroundMesh2D::computeCrossField(simpleFunction<double> &eval_
   propagateValues(_cosines4,eval_diffusivity,false);
   propagateValues(_sines4,eval_diffusivity,false);
 
-  std::map<MVertex*,MVertex*>::iterator itv2 = _2Dto3D.begin();
+  std::map<MVertex const* const, MVertex*>::iterator itv2 = _2Dto3D.begin();
   for ( ; itv2 != _2Dto3D.end(); ++itv2){
-    MVertex *v_2D = itv2->first;
+    MVertex const* const v_2D = itv2->first;
     MVertex *v_3D = itv2->second;
     double angle = std::atan2(_sines4[v_3D],_cosines4[v_3D]) / 4.0;
     normalizeAngle (angle);
