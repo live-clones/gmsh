@@ -374,7 +374,7 @@ void frameFieldBackgroundMesh3D::computeCrossField()
   if (debug) exportCrossField("cf_initial.pos");
 
   // initiation
-  std::multimap<double, MVertex const* const> rank,rank_temp;
+  std::multimap<double, MVertex const*> rank,rank_temp;
   std::map<MVertex const* const, bool> vertex_is_still;
   std::map<MVertex const* const, double> vertex_movement;
 
