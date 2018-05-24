@@ -2477,9 +2477,10 @@ function fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeT
     tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[], api_outDimTagsMap_nn_[], true)
     tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[], api_outDimTagsMap_nn_[], true)
     outDimTagsMap = Vector{Tuple{Cint,Cint}}[]
+    resize!(outDimTagsMap, api_outDimTagsMap_nn_[])
     for i in 1:api_outDimTagsMap_nn_[]
         tmp = unsafe_wrap(Array, tmp_api_outDimTagsMap_[i], tmp_api_outDimTagsMap_n_[i], true)
-        push!(outDimTagsMap, [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)])
+        outDimTagsMap[i] = [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)]
     end
     return outDimTags, outDimTagsMap
 end
@@ -2511,9 +2512,10 @@ function intersect(objectDimTags, toolDimTags, tag = -1, removeObject = true, re
     tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[], api_outDimTagsMap_nn_[], true)
     tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[], api_outDimTagsMap_nn_[], true)
     outDimTagsMap = Vector{Tuple{Cint,Cint}}[]
+    resize!(outDimTagsMap, api_outDimTagsMap_nn_[])
     for i in 1:api_outDimTagsMap_nn_[]
         tmp = unsafe_wrap(Array, tmp_api_outDimTagsMap_[i], tmp_api_outDimTagsMap_n_[i], true)
-        push!(outDimTagsMap, [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)])
+        outDimTagsMap[i] = [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)]
     end
     return outDimTags, outDimTagsMap
 end
@@ -2545,9 +2547,10 @@ function cut(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTo
     tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[], api_outDimTagsMap_nn_[], true)
     tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[], api_outDimTagsMap_nn_[], true)
     outDimTagsMap = Vector{Tuple{Cint,Cint}}[]
+    resize!(outDimTagsMap, api_outDimTagsMap_nn_[])
     for i in 1:api_outDimTagsMap_nn_[]
         tmp = unsafe_wrap(Array, tmp_api_outDimTagsMap_[i], tmp_api_outDimTagsMap_n_[i], true)
-        push!(outDimTagsMap, [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)])
+        outDimTagsMap[i] = [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)]
     end
     return outDimTags, outDimTagsMap
 end
@@ -2579,9 +2582,10 @@ function fragment(objectDimTags, toolDimTags, tag = -1, removeObject = true, rem
     tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[], api_outDimTagsMap_nn_[], true)
     tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[], api_outDimTagsMap_nn_[], true)
     outDimTagsMap = Vector{Tuple{Cint,Cint}}[]
+    resize!(outDimTagsMap, api_outDimTagsMap_nn_[])
     for i in 1:api_outDimTagsMap_nn_[]
         tmp = unsafe_wrap(Array, tmp_api_outDimTagsMap_[i], tmp_api_outDimTagsMap_n_[i], true)
-        push!(outDimTagsMap, [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)])
+        outDimTagsMap[i] = [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)]
     end
     return outDimTags, outDimTagsMap
 end
