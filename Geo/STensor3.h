@@ -265,11 +265,22 @@ class STensor3 {
   }
   STensor3 invert() const
   {
-    fullMatrix<double> m(3, 3);
-    getMat(m);
-    m.invertInPlace();
+    double det = (*this).determinant();
+    double udet =0.;
     STensor3 ithis;
-    ithis.setMat(m);
+    if(det ==  0.)
+      Msg::Error("det=0 in STensor inversion");
+    else
+      udet = 1./det;
+    ithis(0,0) =  ((*this)(1,1) * (*this)(2,2) - (*this)(1,2) * (*this)(2,1))* udet;
+    ithis(1,0) = -((*this)(1,0) * (*this)(2,2) - (*this)(1,2) * (*this)(2,0))* udet;
+    ithis(2,0) =  ((*this)(1,0) * (*this)(2,1) - (*this)(1,1) * (*this)(2,0))* udet;
+    ithis(0,1) = -((*this)(0,1) * (*this)(2,2) - (*this)(0,2) * (*this)(2,1))* udet;
+    ithis(1,1) =  ((*this)(0,0) * (*this)(2,2) - (*this)(0,2) * (*this)(2,0))* udet;
+    ithis(2,1) = -((*this)(0,0) * (*this)(2,1) - (*this)(0,1) * (*this)(2,0))* udet;
+    ithis(0,2) =  ((*this)(0,1) * (*this)(1,2) - (*this)(0,2) * (*this)(1,1))* udet;
+    ithis(1,2) = -((*this)(0,0) * (*this)(1,2) - (*this)(0,2) * (*this)(1,0))* udet;
+    ithis(2,2) =  ((*this)(0,0) * (*this)(1,1) - (*this)(0,1) * (*this)(1,0))* udet;
     return ithis;
   }
   STensor3 transpose () const
@@ -304,11 +315,28 @@ class STensor3 {
   }
   STensor3& operator *= (const STensor3 &other)
   {
-    fullMatrix<double> m1(3, 3), m2(3, 3), m3(3, 3);
-    getMat(m1);
-    other.getMat(m2);
-    m1.mult(m2, m3);
-    setMat(m3);
+    double a00=0.,a01=0.,a02=0.,a10=0.,a11=0.,a12=0.,a20=0.,a21=0.,a22=0.;
+    for(int i=0;i<3;i++)
+    {
+      a00+=(*this)(0,i)*other(i,0);
+      a01+=(*this)(0,i)*other(i,1);
+      a02+=(*this)(0,i)*other(i,2);
+      a10+=(*this)(1,i)*other(i,0);
+      a11+=(*this)(1,i)*other(i,1);
+      a12+=(*this)(1,i)*other(i,2);
+      a20+=(*this)(2,i)*other(i,0);
+      a21+=(*this)(2,i)*other(i,1);
+      a22+=(*this)(2,i)*other(i,2);
+    }
+    (*this)(0,0)=a00;
+    (*this)(0,1)=a01;
+    (*this)(0,2)=a02;
+    (*this)(1,0)=a10;
+    (*this)(1,1)=a11;
+    (*this)(1,2)=a12;
+    (*this)(2,0)=a20;
+    (*this)(2,1)=a21;
+    (*this)(2,2)=a22;
     return *this;
   }
   void operator-= (const STensor3 &other)
@@ -335,9 +363,9 @@ class STensor3 {
   }
 
   double determinant() const{
-    fullMatrix<double> m(3,3);
-    getMat(m);
-    double det = m.determinant();
+    double det= ((*this)(0,0) * ((*this)(1,1) * (*this)(2,2) - (*this)(1,2) * (*this)(2,1)) -
+            (*this)(0,1) * ((*this)(1,0) * (*this)(2,2) - (*this)(1,2) * (*this)(2,0)) +
+            (*this)(0,2) * ((*this)(1,0) * (*this)(2,1) - (*this)(1,1) * (*this)(2,0)));
     return det;
   };
   void print(const char *) const;

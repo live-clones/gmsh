@@ -2052,11 +2052,6 @@ optionWindow::optionWindow(int deltaFontSize)
       geo.value[1]->when(FL_WHEN_RELEASE);
       geo.value[1]->callback(geometry_options_ok_cb);
 
-      geo.butt[17] = new Fl_Check_Button
-        (L + 2 * WB, 2 * WB + 7 * BH, BW, BH, "Hide entities making up coumpounds");
-      geo.butt[17]->type(FL_TOGGLE_BUTTON);
-      geo.butt[17]->callback(geometry_options_ok_cb);
-
       o->end();
     }
     {

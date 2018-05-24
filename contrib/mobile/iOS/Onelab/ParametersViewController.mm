@@ -85,31 +85,37 @@
   std::vector<onelab::number> number;
   onelab::server::instance()->get(number, [name UTF8String]);
   if(number.size() && !number[0].getReadOnly()){
-    NSLog(@"Manual edit of parameter '%s' with value '%g'", number[0].getName().c_str(),
-          number[0].getValue());
-    UIAlertView *alertView =
-      [[UIAlertView alloc] initWithTitle:[Utils getStringFromCString:number[0].getShortName().c_str()]
-                                 message:name delegate:self cancelButtonTitle:@"Cancel"
-                       otherButtonTitles:@"Ok", nil];
-    alertView.alertViewStyle = UIAlertViewStylePlainTextInput;
-    [alertView textFieldAtIndex:0].text = [NSString stringWithFormat:@"%g", number[0].getValue()];
-    [alertView show];
-  }
-}
-
--(void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
-{
-  NSLog(@"%@ -> %@", [alertView message], [alertView textFieldAtIndex:0].text);
-  std::vector<onelab::number> number;
-  onelab::server::instance()->get(number, [[alertView message] UTF8String]);
-  if(number.size()){
-    double value = [[alertView textFieldAtIndex:0].text doubleValue];
-    number[0].setValue(value);
-    onelab::server::instance()->set(number[0]);
-    if(onelab_cb("check") > 0){
-      [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
-      [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
-    }
+    UIAlertController * alertController =
+      [UIAlertController alertControllerWithTitle:@"Edit parameter"
+                                          message:[Utils getStringFromCString:number[0].getShortName().c_str()]
+                                   preferredStyle:UIAlertControllerStyleAlert];
+    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+        textField.text = name;
+        [textField setEnabled:FALSE];
+      }];
+    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+        textField.text = [NSString stringWithFormat:@"%g", number[0].getValue()];
+    }];
+    [alertController addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault
+                                                      handler:^(UIAlertAction *action) {
+          NSArray * textfields = alertController.textFields;
+          UITextField * namefield = textfields[0];
+          UITextField * valuefield = textfields[1];
+          std::vector<onelab::number> number;
+          onelab::server::instance()->get(number, [namefield.text UTF8String]);
+          if(number.size()){
+            double value = [valuefield.text doubleValue];
+            number[0].setValue(value);
+            onelab::server::instance()->set(number[0]);
+            if(onelab_cb("check") > 0){
+              [[NSNotificationCenter defaultCenter] postNotificationName:@"requestRender" object:nil];
+              [[NSNotificationCenter defaultCenter] postNotificationName:@"refreshParameters" object:nil];
+            }
+          }
+        }]];
+    [alertController addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleDefault
+                                                      handler:^(UIAlertAction *action) { }]];
+    [self presentViewController:alertController animated:YES completion:nil];
   }
 }
 
@@ -317,12 +323,17 @@ NSInteger compareParameter(id p1, id p2, void *context)
 - (void)resetParameters:(id)sender
 {
   if(((AppDelegate *)[UIApplication sharedApplication].delegate)->compute) {
-    UIAlertView *alert;
-    alert = [[UIAlertView alloc]
-              initWithTitle:@"Can't reset model parameters"
-                    message:@"The computation has to complete before you can reset the parameters."
-                   delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
-    [alert show];
+    UIAlertController *alert =
+      [UIAlertController
+        alertControllerWithTitle:@"Cannot reset model parameters"
+                         message:@"Computation has to complete before parameters can be reset"
+                  preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *dismissButton =
+      [UIAlertAction actionWithTitle:@"Dismiss"
+                               style:UIAlertActionStyleDefault
+                             handler:^(UIAlertAction * action) { }];
+    [alert addAction:dismissButton];
+    [self presentViewController:alert animated:YES completion:nil];
     return;
   }
   onelab_cb("reset");

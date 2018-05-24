@@ -854,7 +854,7 @@ StringXNumber GeometryOptions_Number[] = {
     "Display geometry curves?" },
   { F|O, "LineNumbers" , opt_geometry_curves_num , 0. ,
     "Display curve numbers?" },
-  { F|O, "LineSelectWidth" , opt_geometry_curve_sel_width , 2. ,
+  { F|O, "LineSelectWidth" , opt_geometry_curve_sel_width , 3. ,
     "Display width of selected curves (in pixels)" },
   { F|O, "LineType" , opt_geometry_curve_type , 0. ,
     "Display curves as solid color segments (0), 3D cylinders (1) or tapered "
@@ -867,12 +867,14 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "Normals" , opt_geometry_normals , 0. ,
     "Display size of normal vectors (in pixels)" },
-  { F|O, "NumSubEdges" , opt_geometry_num_sub_edges , 20. ,
+  { F|O, "NumSubEdges" , opt_geometry_num_sub_edges , 40. ,
     "Number of edge subdivisions between control points when displaying curves" },
 
   { F|O, "OCCAutoFix" , opt_geometry_occ_auto_fix , 1. ,
     "Automatically fix orientation of wires, faces, shells and volumes when creating"
     " new entities" },
+  { F|O, "OCCDisableSTL" , opt_geometry_occ_disable_stl , 0. ,
+    "Disable STL computation" },
   { F|O, "OCCFixDegenerated" , opt_geometry_occ_fix_degenerated , 0. ,
     "Fix degenerated edges/faces in STEP, IGES and BRep models" },
   { F|O, "OCCFixSmallEdges" , opt_geometry_occ_fix_small_edges , 0. ,
@@ -905,7 +907,7 @@ StringXNumber GeometryOptions_Number[] = {
     "Display geometry points?" },
   { F|O, "PointNumbers" , opt_geometry_points_num , 0. ,
     "Display points numbers?" },
-  { F|O, "PointSelectSize" , opt_geometry_point_sel_size , 5. ,
+  { F|O, "PointSelectSize" , opt_geometry_point_sel_size , 6. ,
     "Display size of selected points (in pixels)" },
   { F|O, "PointSize" , opt_geometry_point_size , 4. ,
     "Display size of points (in pixels)" },
@@ -1030,9 +1032,9 @@ StringXNumber MeshOptions_Number[] = {
     "Force inverse surface mapping algorithm (Newton-Raphson) to converge in real "
     "coordinates (experimental)" },
   { F|O, "Format" , opt_mesh_file_format , FORMAT_AUTO ,
-    "Mesh output format (1=msh, 2=unv, 10=automatic, 19=vrml, 26=pos statistics, 27=stl, "
-    "30=mesh, 31=bdf, 32=cgns, 33=med, 39=inp, 40=ply2)" },
-
+    "Mesh output format (1=msh, 2=unv, 10=auto, 16=vtk, 19=vrml, 21=mail, 26=pos stat, "
+    "27=stl, 28=p3d, 30=mesh, 31=bdf, 32=cgns, 33=med, 34=diff, 38=ir3, 39=inp, 40=ply2, "
+    "41=celum, 42=su2, 47=tochnog, 49=neu, 50=matlab)" },
   { F|O, "Hexahedra" , opt_mesh_hexahedra , 1. ,
     "Display mesh hexahedra?" },
   { F|0, "HighOrderNumLayers", opt_mesh_ho_nlayers, 6.,

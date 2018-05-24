@@ -1193,20 +1193,22 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
   { // leave this in a block so the map gets deallocated directly
     std::map<MVertex*, double,MVertexLessThanNum> vSizesMap;
     std::set<MVertex*,MVertexLessThanNum> bndVertices;
-    std::list<GEdge*> e = gr->embeddedEdges();
-    for (std::list<GEdge*>::iterator it = e.begin() ; it != e.end(); ++it){
-      for (unsigned int i = 0; i < (*it)->lines.size(); i++){
-	MVertex *vi = (*it)->lines[i]->getVertex(0);
-	MVertex *vj = (*it)->lines[i]->getVertex(1);
-	double dx = vi->x()-vj->x();
-	double dy = vi->y()-vj->y();
-	double dz = vi->z()-vj->z();
-	double l = sqrt(dx * dx + dy * dy + dz * dz);
-	std::map<MVertex*,double,MVertexLessThanNum>::iterator iti = vSizesMap.find(vi);
-	std::map<MVertex*,double,MVertexLessThanNum>::iterator itj = vSizesMap.find(vj);
-	// smallest tet edge
-	if (iti == vSizesMap.end() || iti->second > l) vSizesMap[vi] = l;
-	if (itj == vSizesMap.end() || itj->second > l) vSizesMap[vj] = l;
+    for (GModel::riter rit = gr->model()->firstRegion(); rit != gr->model()->lastRegion(); ++rit){
+      std::list<GEdge*> e = (*rit)->embeddedEdges();
+      for (std::list<GEdge*>::iterator it = e.begin() ; it != e.end(); ++it){
+        for (unsigned int i = 0; i < (*it)->lines.size(); i++){
+	  MVertex *vi = (*it)->lines[i]->getVertex(0);
+	  MVertex *vj = (*it)->lines[i]->getVertex(1);
+	  double dx = vi->x()-vj->x();
+	  double dy = vi->y()-vj->y();
+	  double dz = vi->z()-vj->z();
+	  double l = sqrt(dx * dx + dy * dy + dz * dz);
+	  std::map<MVertex*,double,MVertexLessThanNum>::iterator iti = vSizesMap.find(vi);
+	  std::map<MVertex*,double,MVertexLessThanNum>::iterator itj = vSizesMap.find(vj);
+	  // smallest tet edge
+	  if (iti == vSizesMap.end() || iti->second > l) vSizesMap[vi] = l;
+	  if (itj == vSizesMap.end() || itj->second > l) vSizesMap[vj] = l;
+        }
       }
     }
 
@@ -1289,9 +1291,11 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
   }
   // store all embedded faces
   std::set<MFace, Less_Face> allEmbeddedFaces;
-  createAllEmbeddedFaces (gr, allEmbeddedFaces);
   edgeContainerB allEmbeddedEdges;
-  createAllEmbeddedEdges (gr, allEmbeddedEdges);
+  for (GModel::riter it = gr->model()->firstRegion(); it != gr->model()->lastRegion(); ++it){
+    createAllEmbeddedFaces((*it), allEmbeddedFaces);
+    createAllEmbeddedEdges((*it), allEmbeddedEdges);
+  }
   connectTets(allTets.begin(), allTets.end(),&allEmbeddedFaces);
   Msg::Debug("All %d tets were connected", allTets.size());
 

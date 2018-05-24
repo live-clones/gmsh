@@ -224,8 +224,8 @@ language.  Interactive actions generate language bits in the input
 files, and vice versa. This makes it possible to automate all
 treatments, using loops, conditionals and external system calls. (A
 programming API is also available, for integrating Gmsh as a library in
-your own C++, C or Python code: @ref{Gmsh API}.) A brief description of
-the four modules is given hereafter.
+your own C++, C, Python or Julia code: @ref{Gmsh API}.) A brief
+description of the four modules is given hereafter.
 
 @menu
 * Geometry::
@@ -426,9 +426,9 @@ Gmsh's scripting language is quite limited, providing only very crude
 loop controls and user-defined macros, with no local variables. For more
 complex workflows, or for integrating Gmsh as a library directly in
 other software tools, a application programming interface is
-available. This allows to directly access Gmsh features from C++, C or
-Python. The C interface also makes other bulding addintional interfaces
-(to Javascript, Julia, etc.) relatively easy.
+available. This allows to directly access Gmsh features from C++, C,
+Python or Julia. The C interface makes it relatively easy to build
+interfaces to additional languages (e.g. Javascript, Java or Go).
 @end itemize
 
 If you have the skills and some free time, feel free to join the
@@ -510,8 +510,8 @@ built: check the `File->Export' menu for a list of available formats.
 
 Finally, to use Gmsh at the third level (i.e., to link the Gmsh library
 with your own code), you will need to learn the Gmsh Application
-Programming Interface (API). This API is available in C++, C and Python:
-see @ref{Gmsh API} for more information.
+Programming Interface (API). This API is available in C++, C, Python and
+Julia: see @ref{Gmsh API} for more information.
 
 @c -------------------------------------------------------------------------
 @c Syntactic rules used in the manual
@@ -3039,8 +3039,13 @@ Forces the meshing algorithm per surface.
 Treats the given entities as a single entity when meshing, i.e. perform
 cross-patch meshing of the entities.
 
-@item Reverse Curve | Surface @{ @var{expression-list-or-all} @} ;
+@item ReverseMesh Curve | Surface @{ @var{expression-list-or-all} @} ;
 Reverses the mesh of the given curve(s) or surface(s).
+
+@item ReorientMesh Volume @{ @var{expression-list} @} ;
+Reorients the meshes of the bounding surfaces of the given volumes so
+that the normals point outward to the volumes. Currently only available
+with the OpenCASCADE kernel, as it relies on the STL triangulation.
 
 @item Save @var{char-expression};
 Saves the mesh in a file named @var{char-expression}, using the current
@@ -3567,10 +3572,10 @@ cases.)
 The MSH4 file format contains one mandatory section giving information
 about the file (@code{$MeshFormat}), followed by several sections
 defining the physical group names (@code{$PhysicalName}, optional), the
-entities (@code{Entities}), the partitioned entities
-(@code{PartitionedEntities}, optional), nodes (@code{$Nodes}), elements
+entities (@code{$Entities}), the partitioned entities
+(@code{$PartitionedEntities}, optional), nodes (@code{$Nodes}), elements
 (@code{$Elements}), periodicity relations (@code{$Periodic}, optional),
-ghost elements (@code{GhostElements}, optional) and post-processing
+ghost elements (@code{$GhostElements}, optional) and post-processing
 datasets (@code{$NodeData}, @code{$ElementData},
 @code{$ElementNodeData}, all optional).
 
@@ -3580,7 +3585,7 @@ i.e., do not have to constitute a continuous list of indexes starting at
 degradation. For meshes, non-continuous indexing forces Gmsh to use a
 map instead of a vector to access nodes and elements. The performance
 hit is on speed. For post-processing datasets, which always use vectors
-to access data, the performance hit is on memory. A @code{NodeData} with
+to access data, the performance hit is on memory. A @code{$NodeData} with
 two nodes, tagged 1 and 1000000, will allocate a (mostly empty) vector
 of 1000000 elements.
 
@@ -3605,30 +3610,30 @@ $EndMeshFormat
 <$EndPhysicalNames>
 
 $Entities
-  numVertices(unsigned long) numEdges(unsigned long) 
-    numFaces(unsigned long) numRegions(unsigned long)
-  // vertices
+  numPoints(unsigned long) numCurves(unsigned long)
+    numSurfaces(unsigned long) numVolumes(unsigned long)
+  // points
   tag(int) boxMinX(double) boxMinY(double) boxMinZ(double) 
     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
     numPhysicals(unsigned long) phyisicalTag[...](int)
   ...
-  // edges
+  // curves
   tag(int) boxMinX(double) boxMinY(double) boxMinZ(double)
      boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
-     numPhysicals(unsigned long) physicalTag[...](int) 
+     numPhysicals(unsigned long) physicalTag[...](int)
      numBREPVert(unsigned long) tagBREPVert[...](int)
   ...
-  // faces
+  // surfaces
   tag(int) boxMinX(double) boxMinY(double) boxMinZ(double)
     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
     numPhysicals(unsigned long) physicalTag[...](int) 
-    numBREPEdge(unsigned long) tagBREPEdge[...](int)
+    numBREPCurve(unsigned long) tagBREPCurve[...](int)
   ...
-  // regions
+  // volumes
   tag(int) boxMinX(double) boxMinY(double) boxMinZ(double) 
     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
     numPhysicals(unsigned long) physicalTag[...](int) 
-    numBREPFaces(unsigned long) tagBREPFaces[...](int)
+    numBREPSurfaces(unsigned long) tagBREPSurfaces[...](int)
   ...
 $EndEntities
 
@@ -3637,34 +3642,34 @@ $EndEntities
   numGhostEntities(int)
   ghostTag(int) ghostPart(int)
   ...
-  numVertices(unsigned long) numEdges(unsigned long) 
-    numFaces(unsigned long) numRegions(unsigned long)
-  //vertices
+  numPoints(unsigned long) numCurves(unsigned long)
+    numSurfaces(unsigned long) numVolumes(unsigned long)
+  // points
   tag(int) parentTag(int) numPartitions(int) partitionTag[...](int)
     boxMinX(double) boxMinY(double) boxMinZ(double) 
     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
     numPhyiscals(unsigned long) physicalTag[...](int)
   ...
-  //edges
+  // curves
   tag(int) parentTag(int) numPartitions(int) partitionTag[...](int)
     boxMinX(double) boxMinY(double) boxMinZ(double) 
     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
     numPhysicals(unsigned long) physicalTag[...](int)
     numBREPVert(unsigned long) tagBREPVert[...](int)
   ...
-  //faces
+  // surfaces
   tag(int) parentTag(int) numPartitions(int) partitionTag[...](int) 
     boxMinX(double) boxMinY(double) boxMinZ(double) 
     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
     numPhysicals(unsigned long) physicalTag[...](int) 
-    numBREPEdge(unsigned long) tagBREPEdge[...](int)
+    numBREPCurve(unsigned long) tagBREPCurve[...](int)
   ...
-  //regions
+  // volumes
   tag(int) parentTag(int) numPartitions(int) partitionTag[...](int)
     boxMinX(double) boxMinY(double) boxMinZ(double) 
     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
     numPhysicals(unsigned long) physicalTag[...](int) 
-    numBREPFaces(unsigned long) tagBREPFaces[...](int)
+    numBREPSurfaces(unsigned long) tagBREPSurfaces[...](int)
   ...
 <$EndPartitionedEntities>
 
@@ -5056,12 +5061,13 @@ The Gmsh Application Programming Interface (API) allows you to integrate
 the Gmsh library in your own application. Examples on how to use the API
 are available in the
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/,demos/api}
-directory. In particular, this directory contains C++ and Python
-versions of several of the @code{.geo} tutorials from @ref{Tutorial}.
+directory. In particular, this directory contains C++, C Python and
+Julia versions of several of the @code{.geo} tutorials from
+@ref{Tutorial}.
 
 By design, the Gmsh API is purely functional, and only uses elementary
-types from the target language. Currently supported languages are C++, C
-and Python. The different versions of the API are generated
+types from the target language. Currently supported languages are C++,
+C, Python and Julia. The different versions of the API are generated
 automatically from the master API definition file
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gen.py,api/gen.py}:
 
@@ -5069,16 +5075,29 @@ automatically from the master API definition file
 @item C++ API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.h,gmsh.h}
 @item C API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmshc.h,gmshc.h}
 @item Python API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.py,gmsh.py}
+@item Julia API: @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.jl,gmsh.jl}
 @end itemize
+
+The additional
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/api/gmsh.h_cwrap,gmsh.h_cwrap}
+header redefines the C++ API in terms of the C API. This is provided as
+a convenience for users of the @url{http://gmsh.info/bin,binary Gmsh
+Software Development Kit (SDK)} whose C++ compiler Application Binary
+Interface (ABI) is not compatible with the ABI of the C++ compiler used
+to create the SDK. To use these C++ bindings of the C API instead of the
+native C++ API, simply rename @code{gmsh.h_cwrap} as @code{gmsh.h}. Note
+that this will lead to (slightly) reduced performance compared to using
+the native Gmsh C++ API, as it entails additional data copies between
+the C++ wrapper, the C API and the native C++ code.
 
 The functions available in the API are given below (see the relevant
 header/module file for the exact definition in each supported
 language@footnote{In C++ @code{/gmsh/model/geo/addPoint} will lead to a
 namespaced function @code{gmsh::model::geo::addPoint}, while in Python
-it will lead to @code{gmsh.model.geo.addPoint}, and in C to
+and Julia it will lead to @code{gmsh.model.geo.addPoint}, and in C to
 @code{gmshModelGeoAddPoint}. Output values are passed by reference in
 C++, as pointers in C and directly returned (after the return value, if
-any) in Python.}):
+any) in Python and Julia.}):
 
 @include api.texi
 
@@ -5391,7 +5410,7 @@ post-processing data sets, or to change parameters according to
 @code{Print.Parameter}. To create fully customized animations or to use
 different output formats (AVI, MP4, etc.) you should write a
 script. Have a look at @ref{t8.geo} or
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/anim.script,demos/anim.script}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/post_processing/anim.script,demos/post_processing/anim.script}
 for some examples.
 
 @item Can I change values in input fields with the mouse in the GUI?
@@ -5544,7 +5563,7 @@ panel. From the command line, you can also use @code{-order 2}.
 
 Yes, you can import a surface mesh in any one of the supported mesh file
 formats, define a volume, and mesh it. For an example see
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/sphere-discrete.geo,demos/sphere-discrete.geo}.
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/simple_geo/sphere-discrete.geo,demos/simple_geo/sphere-discrete.geo}.
 
 @item How do I define boundary conditions or material properties in Gmsh?
 
@@ -5705,7 +5724,7 @@ Evaluate plugin.
 You can save simple MPEG animations directly from the `File->Export'
 menu. For other formats you should write a script. Have a look at
 @ref{t8.geo} or
-@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/anim.script,demos/anim.script}
+@url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/post_processing/anim.script,demos/post_processing/anim.script}
 for some examples.
 
 @item Is there a way to visualize only certain components of vector/tensor fields?

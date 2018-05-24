@@ -115,7 +115,7 @@ void backgroundMesh2D::reset(bool erase_2D3D)
     computeSizeField();
   }
   else
-    for (std::map<MVertex*, MVertex*>::iterator itv2 = _2Dto3D.begin() ; itv2 != _2Dto3D.end(); ++itv2)
+    for (std::map<MVertex const* const, MVertex*>::iterator itv2 = _2Dto3D.begin() ; itv2 != _2Dto3D.end(); ++itv2)
       sizeField[itv2->first] = CTX::instance()->mesh.lcMax;
 
   // ensure that other criteria are fullfilled
@@ -149,7 +149,7 @@ void backgroundMesh2D::create_mesh_copy()
     MVertex *news[3];
     for (int j=0;j<3;j++){
       MVertex *v = e->getVertex(j);
-      std::map<MVertex*,MVertex*>::iterator it = _3Dto2D.find(v);
+      std::map<MVertex const* const, MVertex*>::iterator it = _3Dto2D.find(v);
       MVertex *newv =0;
       if (it == _3Dto2D.end()){
         SPoint2 p;
@@ -160,7 +160,9 @@ void backgroundMesh2D::create_mesh_copy()
         _2Dto3D[newv] = v;
         //if(v->onWhat()->dim()<2) myBCNodes.insert(p);
       }
-      else newv = it->second;
+      else {
+        newv = it->second;
+      }
       news[j] = newv;
     }
     elements.push_back(new MTriangle(news[0],news[1],news[2]));
@@ -219,8 +221,7 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet,
   dofManager<double> myAssembler(_lsys);
 
   // fix boundary conditions
-  DoubleStorageType::iterator itv = dirichlet.begin();
-  for ( ; itv != dirichlet.end(); ++itv){
+  for (DoubleStorageType::iterator itv = dirichlet.begin(); itv != dirichlet.end(); ++itv){
     myAssembler.fixVertex(itv->first, 0, 1, itv->second);
   }
 
@@ -286,8 +287,8 @@ void backgroundMesh2D::computeSizeField()
     return;
   }
 
-  list<GEdge*> e = face->edges();
-  list<GEdge*>::const_iterator it = e.begin();
+  std::list<GEdge*> e = face->edges();
+  std::list<GEdge*>::const_iterator it = e.begin();
   DoubleStorageType sizes;
 
   for( ; it != e.end(); ++it ){
@@ -296,16 +297,16 @@ void backgroundMesh2D::computeSizeField()
         MVertex *v1 = (*it)->lines[i]->getVertex(0);
         MVertex *v2 = (*it)->lines[i]->getVertex(1);
         if (v1 != v2){
-          double d = sqrt((v1->x() - v2->x()) * (v1->x() - v2->x()) +
+          double d = std::sqrt((v1->x() - v2->x()) * (v1->x() - v2->x()) +
               (v1->y() - v2->y()) * (v1->y() - v2->y()) +
               (v1->z() - v2->z()) * (v1->z()  -v2->z()));
           for (int k=0;k<2;k++){
             MVertex *v = (*it)->lines[i]->getVertex(k);
             DoubleStorageType::iterator itv = sizes.find(v);
             if (itv == sizes.end())
-              sizes[v] = log(d);
+              sizes[v] = std::log(d);
             else
-              itv->second = 0.5 * (itv->second + log(d));
+              itv->second = 0.5 * (itv->second + std::log(d));
           }
         }
       }
@@ -315,11 +316,11 @@ void backgroundMesh2D::computeSizeField()
   simpleFunction<double> ONE(1.0);
   propagateValues(sizes,ONE);
 
-  std::map<MVertex*,MVertex*>::iterator itv2 = _2Dto3D.begin();
+  std::map<MVertex const* const, MVertex*>::iterator itv2 = _2Dto3D.begin();
   for ( ; itv2 != _2Dto3D.end(); ++itv2){
-    MVertex *v_2D = itv2->first;
+    MVertex const* const v_2D = itv2->first;
     MVertex *v_3D = itv2->second;
-    sizeField[v_2D] = exp(sizes[v_3D]);
+    sizeField[v_2D] = std::exp(sizes[v_3D]);
   }
 }
 
@@ -327,7 +328,7 @@ void backgroundMesh2D::computeSizeField()
 inline double myAngle (const SVector3 &a, const SVector3 &b, const SVector3 &d){
   double cosTheta = dot(a,b);
   double sinTheta = dot(crossprod(a,b),d);
-  return atan2 (sinTheta,cosTheta);
+  return std::atan2(sinTheta,cosTheta);
 }
 
 
@@ -336,7 +337,7 @@ void backgroundMesh2D::updateSizes()
   DoubleStorageType::iterator itv = sizeField.begin();
   for ( ; itv != sizeField.end(); ++itv){
     SPoint2 p;
-    MVertex *v = _2Dto3D[itv->first];
+    MVertex const* const v = _2Dto3D[itv->first];
     double lc;
     if (v->onWhat()->dim() == 0){
       lc = sizeFactor * BGM_MeshSize(v->onWhat(), 0,0,v->x(),v->y(),v->z());
@@ -356,9 +357,9 @@ void backgroundMesh2D::updateSizes()
       lc = sizeFactor * BGM_MeshSize(face, p.x(), p.y(), v->x(), v->y(), v->z());
     }
     // printf("2D -- %g %g 3D -- %g %g\n",p.x(),p.y(),v->x(),v->y());
-    itv->second = min(lc,itv->second);
-    itv->second = max(itv->second,  sizeFactor * CTX::instance()->mesh.lcMin);
-    itv->second = min(itv->second,  sizeFactor * CTX::instance()->mesh.lcMax);
+    itv->second = std::min(lc,itv->second);
+    itv->second = std::max(itv->second,  sizeFactor * CTX::instance()->mesh.lcMin);
+    itv->second = std::min(itv->second,  sizeFactor * CTX::instance()->mesh.lcMax);
   }
   // do not allow large variations in the size field
   // (Int. J. Numer. Meth. Engng. 43, 1143-1165 (1998) MESH GRADATION
@@ -379,8 +380,8 @@ void backgroundMesh2D::updateSizes()
       MVertex *V1 = _2Dto3D[v1];
       DoubleStorageType::iterator s0 = sizeField.find(V0);
       DoubleStorageType::iterator s1 = sizeField.find(V1);
-      if (s0->second < s1->second)s1->second = min(s1->second,_beta*s0->second);
-      else s0->second = min(s0->second,_beta*s1->second);
+      if (s0->second < s1->second)s1->second = std::min(s1->second,_beta*s0->second);
+      else s0->second = std::min(s0->second,_beta*s1->second);
     }
   }
 }
@@ -456,12 +457,12 @@ double frameFieldBackgroundMesh2D::angle(double u, double v)
   std::vector<double> element_uvw = get_element_uvw_from_xyz(e,u,v,0.);
   std::vector<double> cosvalues(e->getNumVertices()), sinvalues(e->getNumVertices());
   for (int i=0;i<e->getNumVertices();i++){
-    cosvalues[i]=cos(4*val[i]);
-    sinvalues[i]=sin(4*val[i]);
+    cosvalues[i]=std::cos(4*val[i]);
+    sinvalues[i]=std::sin(4*val[i]);
   }
   double cos4 = e->interpolate(&cosvalues[0], element_uvw[0], element_uvw[1], element_uvw[2], 1, order);
   double sin4 = e->interpolate(&sinvalues[0], element_uvw[0], element_uvw[1], element_uvw[2], 1, order);
-  double a = atan2(sin4,cos4)/4.0;
+  double a = std::atan2(sin4,cos4)/4.0;
   normalizeAngle (a);
   return a;
 }
@@ -477,8 +478,8 @@ void frameFieldBackgroundMesh2D::computeCrossField(simpleFunction<double> &eval_
     Msg::Error("Entity is not a face in background mesh");
     return;
   }
-  list<GEdge*> e = face->edges();
-  list<GEdge*>::const_iterator it = e.begin();
+  std::list<GEdge*> e = face->edges();
+  std::list<GEdge*>::const_iterator it = e.begin();
 
   for( ; it != e.end(); ++it ){
     if (!(*it)->isSeam(face)){
@@ -502,12 +503,12 @@ void frameFieldBackgroundMesh2D::computeCrossField(simpleFunction<double> &eval_
           DoubleStorageType::iterator itc = _cosines4.find(v[i]);
           DoubleStorageType::iterator its = _sines4.find(v[i]);
           if (itc != _cosines4.end()){
-            itc->second  = 0.5*(itc->second + cos(4*_angle));
-            its->second  = 0.5*(its->second + sin(4*_angle));
+            itc->second  = 0.5*(itc->second + std::cos(4*_angle));
+            its->second  = 0.5*(its->second + std::sin(4*_angle));
           }
           else {
-            _cosines4[v[i]] = cos(4*_angle);
-            _sines4[v[i]] = sin(4*_angle);
+            _cosines4[v[i]] = std::cos(4*_angle);
+            _sines4[v[i]] = std::sin(4*_angle);
           }
         }
       }
@@ -517,11 +518,11 @@ void frameFieldBackgroundMesh2D::computeCrossField(simpleFunction<double> &eval_
   propagateValues(_cosines4,eval_diffusivity,false);
   propagateValues(_sines4,eval_diffusivity,false);
 
-  std::map<MVertex*,MVertex*>::iterator itv2 = _2Dto3D.begin();
+  std::map<MVertex const* const, MVertex*>::iterator itv2 = _2Dto3D.begin();
   for ( ; itv2 != _2Dto3D.end(); ++itv2){
-    MVertex *v_2D = itv2->first;
+    MVertex const* const v_2D = itv2->first;
     MVertex *v_3D = itv2->second;
-    double angle = atan2(_sines4[v_3D],_cosines4[v_3D]) / 4.0;
+    double angle = std::atan2(_sines4[v_3D],_cosines4[v_3D]) / 4.0;
     normalizeAngle (angle);
     angles[v_2D] = angle;
   }
@@ -583,7 +584,7 @@ void frameFieldBackgroundMesh2D::computeSmoothness()
       for (int j=0;j<e->getNumVertices();j++){
         if (i==j) continue;
         MVertex *neighbor = e->getVertex(j);
-        vertex2vertex.insert(make_pair(current,neighbor));
+        vertex2vertex.insert(std::make_pair(current,neighbor));
       }
     }
   }
@@ -602,9 +603,9 @@ void frameFieldBackgroundMesh2D::computeSmoothness()
       MVertex *v_nb = itneighbor->second;
       double angle_nb = angle(v_nb);
       // angle comparison...
-      minangle = std::min(minangle, fabs(angle_current-angle_nb));
-      minangle = std::min(minangle, fabs(angle_current-(angle_nb+M_PI/2.)));
-      minangle = std::min(minangle, fabs(angle_current-(angle_nb-M_PI/2.)));
+      minangle = std::min(minangle, std::abs(angle_current-angle_nb));
+      minangle = std::min(minangle, std::abs(angle_current-(angle_nb+M_PI/2.)));
+      minangle = std::min(minangle, std::abs(angle_current-(angle_nb-M_PI/2.)));
       totalangle += minangle;
     }
     totalangle /= N;
@@ -659,7 +660,7 @@ Pair<SVector3, SVector3> frameFieldBackgroundMesh2D::compute_crossfield_directio
   SVector3 basis_v = crossprod(n,basis_u);
 
   // normalize vector t1 that is tangent to gf at uv
-  SVector3 t1 = basis_u * cos(angle_current) + basis_v * sin(angle_current) ;
+  SVector3 t1 = basis_u * std::cos(angle_current) + basis_v * std::sin(angle_current) ;
   t1.normalize();
 
   // compute the second direction t2 and normalize (t1,t2,n) is the tangent frame
@@ -696,7 +697,7 @@ bool frameFieldBackgroundMesh2D::compute_RK_infos(double u,double v, double x, d
   SVector3 basis_u = s1; basis_u.normalize();
   SVector3 basis_v = crossprod(n,basis_u);
   // normalize vector t1 that is tangent to gf at uv
-  SVector3 t1 = basis_u * cos(angle_current) + basis_v * sin(angle_current) ;
+  SVector3 t1 = basis_u * std::cos(angle_current) + basis_v * std::sin(angle_current) ;
   t1.normalize();
   // compute the second direction t2 and normalize (t1,t2,n) is the tangent frame
   SVector3 t2 = crossprod(n,t1);
@@ -726,8 +727,8 @@ bool frameFieldBackgroundMesh2D::compute_RK_infos(double u,double v, double x, d
 
   // get sizes
 
-  double size_1 = sqrt(1. / dot(t1,infos.metricField,t1));
-  double size_2 = sqrt(1. / dot(t2,infos.metricField,t2));
+  double size_1 = std::sqrt(1. / dot(t1,infos.metricField,t1));
+  double size_2 = std::sqrt(1. / dot(t2,infos.metricField,t2));
 
   // compute covariant coordinates of t1 and t2 - cross field directions in parametric domain
   double covar1[2],covar2[2];
@@ -753,16 +754,16 @@ bool frameFieldBackgroundMesh2D::compute_RK_infos(double u,double v, double x, d
   // consider a vector v of size 1 in the parameter plane
   // its length is sqrt (v^T M v) --> if I want a real size
   // of size1 in direction v, it should be sqrt(v^T M v) * size1
-  double l1 = sqrt(covar1[0]*covar1[0]+covar1[1]*covar1[1]);
-  double l2 = sqrt(covar2[0]*covar2[0]+covar2[1]*covar2[1]);
+  double l1 = std::sqrt(covar1[0]*covar1[0]+covar1[1]*covar1[1]);
+  double l2 = std::sqrt(covar2[0]*covar2[0]+covar2[1]*covar2[1]);
 
   covar1[0] /= l1;covar1[1] /= l1;
   covar2[0] /= l2;covar2[1] /= l2;
 
-  double size_param_1  = size_1 / sqrt (  M*covar1[0]*covar1[0]+
+  double size_param_1  = size_1 / std::sqrt (  M*covar1[0]*covar1[0]+
       2*E*covar1[1]*covar1[0]+
       N*covar1[1]*covar1[1]);
-  double size_param_2  = size_2 / sqrt (  M*covar2[0]*covar2[0]+
+  double size_param_2  = size_2 / std::sqrt (  M*covar2[0]*covar2[0]+
       2*E*covar2[1]*covar2[0]+
       N*covar2[1]*covar2[1]);
   if (singular){

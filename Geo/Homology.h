@@ -132,8 +132,9 @@ class Homology
   // dim: only add dim-chains if dim != -1
   // post: create a post-processing view
   // physicalNumRequest: number the chains starting from this if available
-  void addChainsToModel(int dim=-1, bool post=true, int physicalNumRequest=-1) const;
-  void addCochainsToModel(int dim=-1, bool post=true, int physicalNumRequest=-1) const;
+  // returns physical group numbers
+  std::vector<int> addChainsToModel(int dim=-1, bool post=true, int physicalNumRequest=-1) const;
+  std::vector<int> addCochainsToModel(int dim=-1, bool post=true, int physicalNumRequest=-1) const;
 
   // get representative chains of a (co)homology space basis
   void getHomologyBasis(int dim, std::vector<Chain<int> >& hom);

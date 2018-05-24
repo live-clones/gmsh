@@ -21,7 +21,6 @@
 #include "Context.h"
 #include "MLine.h"
 #include "MQuadrangle.h"
-#include "Field.h"
 #include "GModel.h"
 #include "discreteFace.h"
 #include "intersectCurveSurface.h"
@@ -1187,17 +1186,8 @@ void bowyerWatson(GFace *gf, int MAXPNT,
   nbSwaps = edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
   //  printf("%12.5E %12.5E %12.5E %12.5E %12.5E\n",DT1,DT2,DT3,__DT1,__DT2);
   //  printf("%12.5E \n",__DT2);
-#if defined(HAVE_ANN)
-  if (!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine){
-    FieldManager *fields = gf->model()->getFields();
-    BoundaryLayerField *blf = 0;
-    if(fields->getBoundaryLayerField() > 0){
-      Field *bl_field = fields->get(fields->getBoundaryLayerField());
-      blf = dynamic_cast<BoundaryLayerField*> (bl_field);
-      if (blf && !blf->iRecombine) quadsToTriangles(gf,10000);
-    }
-  }
-#endif
+
+  splitElementsInBoundaryLayerIfNeeded(gf);
   transferDataStructure(gf, AllTris, DATA);
 }
 
@@ -1479,20 +1469,7 @@ void bowyerWatsonFrontal(GFace *gf,
   transferDataStructure(gf, AllTris, DATA);
   //  removeThreeTrianglesNodes(gf);
 
-  // in case of boundary layer meshing
-#if defined(HAVE_ANN)
-  if (!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine){
-    FieldManager *fields = gf->model()->getFields();
-    BoundaryLayerField *blf = 0;
-    if(fields->getBoundaryLayerField() > 0){
-      Field *bl_field = fields->get(fields->getBoundaryLayerField());
-      blf = dynamic_cast<BoundaryLayerField*> (bl_field);
-      if (blf && !blf->iRecombine){
-	quadsToTriangles(gf,10000);
-      }
-    }
-  }
-#endif
+  splitElementsInBoundaryLayerIfNeeded(gf);
 }
 
 void optimalPointFrontalQuad (GFace *gf,
@@ -1757,29 +1734,20 @@ void bowyerWatsonFrontalLayers(GFace *gf, bool quad,
     //	Msg::Info("%d active tris %d front edges %d not in front",
     //            ActiveTris.size(),_front.size(),ActiveTrisNotInFront.size());
     if (!ActiveTris.size()) break;
-    }
-
-    // char name[245];
-    // sprintf(name,"frontal%d-real.pos", gf->tag());
-    // _printTris (name, AllTris, Us, Vs,false);
-    // sprintf(name,"frontal%d-param.pos", gf->tag());
-    // _printTris (name, AllTris, Us, Vs,true);
-    transferDataStructure(gf, AllTris, DATA);
-    MTri3::radiusNorm = 2;
-    LIMIT_ = 0.5 * sqrt(2.0) * 1;
-
-    backgroundMesh::unset();
-#if defined(HAVE_ANN)
-  if (!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine){
-    FieldManager *fields = gf->model()->getFields();
-    BoundaryLayerField *blf = 0;
-    if(fields->getBoundaryLayerField() > 0){
-      Field *bl_field = fields->get(fields->getBoundaryLayerField());
-      blf = dynamic_cast<BoundaryLayerField*> (bl_field);
-      if (blf && !blf->iRecombine)quadsToTriangles(gf,10000);
-    }
   }
-#endif
+
+  // char name[245];
+  // sprintf(name,"frontal%d-real.pos", gf->tag());
+  // _printTris (name, AllTris, Us, Vs,false);
+  // sprintf(name,"frontal%d-param.pos", gf->tag());
+  // _printTris (name, AllTris, Us, Vs,true);
+  transferDataStructure(gf, AllTris, DATA);
+  MTri3::radiusNorm = 2;
+  LIMIT_ = 0.5 * sqrt(2.0) * 1;
+
+  backgroundMesh::unset();
+
+  splitElementsInBoundaryLayerIfNeeded(gf);
 }
 
 void bowyerWatsonParallelograms(GFace *gf,
@@ -1791,92 +1759,83 @@ void bowyerWatsonParallelograms(GFace *gf,
   std::vector<MVertex*> packed;
   std::vector<SMetric3> metrics;
 
-    //  printf("creating the points\n");
-    // PEB MODIF
-    if (old_algo_hexa())
-      packingOfParallelograms(gf, packed, metrics);
-    else{
-      Filler2D f;
-      f.pointInsertion2D(gf, packed, metrics);
-    }
-    // END PEB MODIF
-    //  printf("points created\n");
-
-    buildMeshGenerationDataStructures (gf, AllTris, DATA);
-
-    // delaunise the initial mesh
-    int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
-    Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
-
-    //std::sort(packed.begin(), packed.end(), MVertexLessThanLexicographic());
-    SortHilbert(packed);
-
-    //  printf("staring to insert points\n");
-    N_GLOBAL_SEARCH = 0;
-    N_SEARCH = 0;
-    DT_INSERT_VERTEX = 0;
-    double t1 = Cpu();
-    MTri3 *oneNewTriangle = 0;
-    for (unsigned int i=0;i<packed.size();){
-      MTri3 *worst = *AllTris.begin();
-      if (worst->isDeleted()){
-        delete worst->tri();
-        delete worst;
-        AllTris.erase(AllTris.begin());
-      }
-      else{
-        double newPoint[2] ;
-        packed[i]->getParameter(0,newPoint[0]);
-        packed[i]->getParameter(1,newPoint[1]);
-        delete packed[i];
-        double metric[3];
-        //      buildMetric(gf, newPoint, metrics[i], metric);
-        buildMetric(gf, newPoint, metric);
-
-        bool success = insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA,
-                                    AllTris, 0, oneNewTriangle, &oneNewTriangle);
-        if (!success) oneNewTriangle = 0;
-        // if (!success)printf("success %d %d\n",success,AllTris.size());
-        i++;
-      }
-
-      if(1.0* AllTris.size() > 2.5 * DATA.vSizes.size()){
-        //      int n1 = AllTris.size();
-        std::set<MTri3*,compareTri3Ptr>::iterator itd = AllTris.begin();
-        while(itd != AllTris.end()){
-          if((*itd)->isDeleted()){
-            delete  *itd;
-            AllTris.erase(itd++);
-          }
-          else
-            itd++;
-        }
-        // Msg::Info("cleaning up the memory %d -> %d", n1, AllTris.size());
-      }
-
-
-    }
-    //  printf("%d vertices \n",(int)packed.size());
-    double t2 = Cpu();
-    double DT = (double)(t2-t1);
-    if (packed.size())
-      printf("points inserted DT %12.5E points per minute : "
-             "%12.5E %d global searches %d searches per insertion\n",
-             DT,60.*packed.size()/DT,N_GLOBAL_SEARCH, (int)(N_SEARCH/packed.size()));
-    transferDataStructure(gf, AllTris, DATA);
-    backgroundMesh::unset();
-#if defined(HAVE_ANN)
-    if (!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine){
-      FieldManager *fields = gf->model()->getFields();
-      BoundaryLayerField *blf = 0;
-      if(fields->getBoundaryLayerField() > 0){
-        Field *bl_field = fields->get(fields->getBoundaryLayerField());
-        blf = dynamic_cast<BoundaryLayerField*> (bl_field);
-        if (blf && !blf->iRecombine)quadsToTriangles(gf,10000);
-      }
-    }
-#endif
+  //  printf("creating the points\n");
+  // PEB MODIF
+  if (old_algo_hexa())
+    packingOfParallelograms(gf, packed, metrics);
+  else{
+    Filler2D f;
+    f.pointInsertion2D(gf, packed, metrics);
   }
+  // END PEB MODIF
+  //  printf("points created\n");
+
+  buildMeshGenerationDataStructures (gf, AllTris, DATA);
+
+  // delaunise the initial mesh
+  int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
+  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
+
+  //std::sort(packed.begin(), packed.end(), MVertexLessThanLexicographic());
+  SortHilbert(packed);
+
+  //  printf("staring to insert points\n");
+  N_GLOBAL_SEARCH = 0;
+  N_SEARCH = 0;
+  DT_INSERT_VERTEX = 0;
+  double t1 = Cpu();
+  MTri3 *oneNewTriangle = 0;
+  for (unsigned int i=0;i<packed.size();){
+    MTri3 *worst = *AllTris.begin();
+    if (worst->isDeleted()){
+      delete worst->tri();
+      delete worst;
+      AllTris.erase(AllTris.begin());
+    }
+    else{
+      double newPoint[2] ;
+      packed[i]->getParameter(0,newPoint[0]);
+      packed[i]->getParameter(1,newPoint[1]);
+      delete packed[i];
+      double metric[3];
+      //      buildMetric(gf, newPoint, metrics[i], metric);
+      buildMetric(gf, newPoint, metric);
+
+      bool success = insertAPoint(gf, AllTris.begin(), newPoint, metric, DATA,
+                                  AllTris, 0, oneNewTriangle, &oneNewTriangle);
+      if (!success) oneNewTriangle = 0;
+      // if (!success)printf("success %d %d\n",success,AllTris.size());
+      i++;
+    }
+
+    if(1.0* AllTris.size() > 2.5 * DATA.vSizes.size()){
+      //      int n1 = AllTris.size();
+      std::set<MTri3*,compareTri3Ptr>::iterator itd = AllTris.begin();
+      while(itd != AllTris.end()){
+        if((*itd)->isDeleted()){
+          delete  *itd;
+          AllTris.erase(itd++);
+        }
+        else
+          itd++;
+      }
+      // Msg::Info("cleaning up the memory %d -> %d", n1, AllTris.size());
+    }
+
+
+  }
+  //  printf("%d vertices \n",(int)packed.size());
+  double t2 = Cpu();
+  double DT = t2-t1;
+  if (packed.size())
+    printf("points inserted DT %12.5E points per minute : "
+           "%12.5E %d global searches %d searches per insertion\n",
+           DT,60.*packed.size()/DT,N_GLOBAL_SEARCH, (int)(N_SEARCH/packed.size()));
+  transferDataStructure(gf, AllTris, DATA);
+  backgroundMesh::unset();
+
+  splitElementsInBoundaryLayerIfNeeded(gf);
+}
 
 void bowyerWatsonParallelogramsConstrained(GFace *gf,
                                            std::set<MVertex*> constr_vertices,
@@ -1976,17 +1935,8 @@ void bowyerWatsonParallelogramsConstrained(GFace *gf,
     std::cout<<"            point tested: para 1 "<<para0<<" and para 2 "<<para1<<std::endl;
   }
   backgroundMesh::unset();
-#if defined(HAVE_ANN)
-  if (!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine){
-    FieldManager *fields = gf->model()->getFields();
-    BoundaryLayerField *blf = 0;
-    if(fields->getBoundaryLayerField() > 0){
-      Field *bl_field = fields->get(fields->getBoundaryLayerField());
-      blf = dynamic_cast<BoundaryLayerField*> (bl_field);
-      if (blf && !blf->iRecombine)quadsToTriangles(gf,10000);
-    }
-  }
-#endif
+
+  splitElementsInBoundaryLayerIfNeeded(gf);
   std::cout<<"out of Everything"<<std::endl;
 }
 

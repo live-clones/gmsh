@@ -318,9 +318,9 @@ void frameFieldBackgroundMesh3D::computeSmoothnessOnlyFromBoundaries()
   // otherwise, the smoothness is computed on the fly while smoothing the cf !
 
   smoothness_threshold = 0.;
-  MVertex* current;
-  set<MVertex*> neighbors;
-  multimap<double,MVertex*> themap;
+
+  std::set<MVertex const*> neighbors;
+  std::multimap<double, MVertex const*> themap;
   SVector3 mean_axis(0.);
   double mean_angle=0.;
   vector<double> vectorial_smoothness(3);
@@ -329,24 +329,26 @@ void frameFieldBackgroundMesh3D::computeSmoothnessOnlyFromBoundaries()
        it_vertex!=vert2elem.end();it_vertex++){// for all vertices
     themap.clear();
     neighbors.clear();
-    current = it_vertex->first;
-    pair<graphtype::iterator,graphtype::iterator> range = graph.equal_range(current);
-    graphtype::iterator  itgraph = range.first;
+    MVertex const* current = it_vertex->first;
+    std::pair<graphtype::const_iterator, graphtype::iterator> range = graph.equal_range(current);
+    graphtype::const_iterator itgraph = range.first;
     for (;itgraph!=range.second;itgraph++){// for all neighbors
       neighbors.insert(itgraph->second.second);
     }
-    for (set<MVertex*>::iterator it= neighbors.begin();it!=neighbors.end();it++){
-      themap.insert(make_pair(1.,*it));
+    for (set<MVertex const*>::iterator it= neighbors.begin();it!=neighbors.end();it++){
+      themap.insert(std::make_pair(1.,*it));
     }
 
     TensorStorageType::iterator itcurrent = crossField.find(current);
     STensor3 &ref = itcurrent->second;
-    multimap<double,MVertex*>::iterator it_neighbors_begin = themap.begin();
 
-    crossFieldSmoothness[current] = compare_to_neighbors
-      (current->point(), ref, it_neighbors_begin, themap.end(), mean_axis,
-       mean_angle,vectorial_smoothness);
-    //    crossFieldVectorialSmoothness[current] = vectorial_smoothness;
+    crossFieldSmoothness[current] = compare_to_neighbors(current->point(),
+                                                         ref,
+                                                         themap.begin(),
+                                                         themap.end(),
+                                                         mean_axis,
+                                                         mean_angle,
+                                                         vectorial_smoothness);
   }
 }
 
@@ -372,13 +374,13 @@ void frameFieldBackgroundMesh3D::computeCrossField()
   if (debug) exportCrossField("cf_initial.pos");
 
   // initiation
-  multimap<double,MVertex*> rank,rank_temp;
-  map<MVertex*,bool> vertex_is_still;
-  map<MVertex*,double> vertex_movement;
-  MVertex *current;
+  std::multimap<double, MVertex const* > rank,rank_temp;
+  std::map<MVertex const* const, bool> vertex_is_still;
+  std::map<MVertex const* const, double> vertex_movement;
+
   for (vert2elemtype::iterator it_vertex=vert2elem.begin();
        it_vertex!=vert2elem.end();it_vertex++){
-    current = it_vertex->first;
+    MVertex const* const current = it_vertex->first;
     if (current->onWhat()->dim()<=2)
       vertex_is_still[current] = true;
     else
@@ -387,12 +389,12 @@ void frameFieldBackgroundMesh3D::computeCrossField()
   }
 
   // OLD - NEW COMPARISON
-  map<MVertex*,double> vertex_to_rank;
+  std::map<MVertex const*,double> vertex_to_rank;
   for (vert2elemtype::iterator it_vertex=vert2elem.begin();
        it_vertex!=vert2elem.end();it_vertex++){// for all vertices
     //vertex_to_rank[it_vertex->first] = 0.;
     vertex_to_rank[it_vertex->first] = 1.;
-    rank.insert(make_pair(0.,it_vertex->first));
+    rank.insert(std::make_pair(0.,it_vertex->first));
   }
   // END OLD - NEW COMPARISON
 
@@ -418,7 +420,8 @@ void frameFieldBackgroundMesh3D::computeCrossField()
       //    for (vert2elemtype::iterator
       //it_vertex=vert2elem.begin();it_vertex!=vert2elem.end();it_vertex++)//
       //for all vertices, i.e. all cavities MVertex *current = it_vertex->first;
-      current = (rank.begin())->second;
+
+      MVertex const* const current = rank.begin()->second;
       rank.erase((rank.begin()));
 
       // smooth 3D vertices only
@@ -459,16 +462,18 @@ void frameFieldBackgroundMesh3D::computeCrossField()
       }
 
       // OLD - NEW COMPARISON
-      multimap<double,MVertex*> neighbors_to_trust;
+      std::multimap<double, MVertex const*> neighbors_to_trust;
       itgraph = range.first;
       for (;itgraph!=range.second;itgraph++){// for all neighbors
-        neighbors_to_trust.insert(make_pair(vertex_to_rank[itgraph->second.second],
-                                            itgraph->second.second));
+        neighbors_to_trust.insert(std::make_pair(vertex_to_rank[itgraph->second.second],
+                                                 itgraph->second.second));
+
         //  if (vertex_to_rank[itgraph->second.second] <= 1. /180.*M_PI){
         //     neighbors_to_trust.insert(make_pair(vertex_to_rank[itgraph->second.second],
         //                                         itgraph->second.second));
         //  }
       }
+
       if (!neighbors_to_trust.size()){
         rank_temp.insert(make_pair(M_PI,current));
         vertex_to_rank[current] = M_PI;
@@ -483,11 +488,16 @@ void frameFieldBackgroundMesh3D::computeCrossField()
       int Nlocaliter=0;
       STensor3 ref_original(ref);
 
-      for (;Nlocaliter<20;Nlocaliter++){// iterations, convergence of the local cavity...
-        multimap<double,MVertex*>::iterator it_neighbors_to_trust = neighbors_to_trust.begin();
-        crossFieldSmoothness[current] = compare_to_neighbors
-          (current->point(), ref, it_neighbors_to_trust, neighbors_to_trust.end(),
-           mean_axis,mean_angle,vectorial_smoothness);
+      // iterations, convergence of the local cavity...
+      for (;Nlocaliter<20;Nlocaliter++) {
+        std::multimap<double, MVertex const*>::iterator it_neighbors_to_trust = neighbors_to_trust.begin();
+        crossFieldSmoothness[current] = compare_to_neighbors(current->point(),
+                                                             ref,
+                                                             it_neighbors_to_trust,
+                                                             neighbors_to_trust.end(),
+                                                             mean_axis,
+                                                             mean_angle,
+                                                             vectorial_smoothness);
         //  crossFieldVectorialSmoothness[current] = vectorial_smoothness;
 
         // rotating directions to align closest vectors...
@@ -495,7 +505,7 @@ void frameFieldBackgroundMesh3D::computeCrossField()
         ref = apply_rotation(mean_axis,angle_to_go,ref);
         // cout << " iter " << Nlocaliter << ": mean_angle = " << mean_angle <<
         //                endl;
-        if (fabs(mean_angle)<localangle_threshold/3.) break;
+        if (std::abs(mean_angle) < localangle_threshold / 3.0) break;
       }
       //  nb_local_iterations.push_back(Nlocaliter+1);
       if (verbose) cout << "iIter " << iIter << ", Nlocaliter = " << Nlocaliter << endl;
@@ -534,7 +544,7 @@ void frameFieldBackgroundMesh3D::computeCrossField()
     //               nb_local_iterations.end(),0))/nb_local_iterations.size() << endl;
 
     //if (debug){
-    double temp = log10(Niter);
+    double temp = std::log10(Niter);
     stringstream ss;
     ss << "cf_iter_" << setfill('0') << setw ((int)(ceil(temp))) << iIter << ".pos";
     exportCrossField(ss.str().c_str());
@@ -546,17 +556,17 @@ void frameFieldBackgroundMesh3D::computeCrossField()
   // also computes smoothness for boundary points
   for (vert2elemtype::iterator it_vertex=vert2elem.begin();
        it_vertex!=vert2elem.end();it_vertex++){
-    current = it_vertex->first;
+    MVertex const* const current = it_vertex->first;
     if (current->onWhat()->dim()<=2){
       TensorStorageType::iterator itcurrent = crossField.find(current);
       STensor3 &ref = itcurrent->second;
-      pair<graphtype::iterator,  graphtype::iterator> range = graph.equal_range(current);
+      std::pair<graphtype::iterator, graphtype::iterator> range = graph.equal_range(current);
       graphtype::iterator itgraph = range.first;
 
-      multimap<double,MVertex*> neighbors_to_trust;
+      std::multimap<double,MVertex const*> neighbors_to_trust;
       itgraph = range.first;
       for (;itgraph!=range.second;itgraph++){// for all neighbors
-        neighbors_to_trust.insert(make_pair(0.,itgraph->second.second));
+        neighbors_to_trust.insert(std::make_pair(0.,itgraph->second.second));
       }
       crossFieldSmoothness[current] = compare_to_neighbors
         (current->point(), ref, neighbors_to_trust.begin(),
@@ -795,14 +805,14 @@ unsigned int backgroundMesh3D::getNumMeshElements()const
 // indirect neighbors, depending on the "max_recursion_level".
 void frameFieldBackgroundMesh3D::build_neighbors(const int &max_recursion_level)
 {
-  set<MVertex*> visited,start;
-  set<MElement*> visited_elements;
-  multimap<int,MVertex*> proximity;
+  std::set<MVertex const*> visited, start;
+  std::set<MElement const*> visited_elements;
+  std::multimap<int, MVertex const*> proximity;
   //int counter=0;
 
   for (vert2elemtype::iterator it_vertex=vert2elem.begin();
        it_vertex!=vert2elem.end();it_vertex++){// for all vertices
-    MVertex *current_vertex = it_vertex->first;
+    MVertex const* const current_vertex = it_vertex->first;
     visited.clear();
     visited_elements.clear();
     visited.insert(current_vertex);
@@ -812,8 +822,8 @@ void frameFieldBackgroundMesh3D::build_neighbors(const int &max_recursion_level)
 
     get_recursive_neighbors(start, visited, visited_elements, proximity, max_recursion_level);
 
-    for (multimap<int,MVertex*>::iterator it1 = proximity.begin();it1!=proximity.end();it1++){
-      graph.insert(make_pair(current_vertex, make_pair(it1->first,it1->second)));
+    for (multimap<int, MVertex const*>::iterator it1 = proximity.begin();it1!=proximity.end();it1++){
+      graph.insert(std::make_pair(current_vertex, std::make_pair(it1->first, it1->second)));
     }
 
     //    if (debug){// check
@@ -835,36 +845,40 @@ void frameFieldBackgroundMesh3D::build_neighbors(const int &max_recursion_level)
   }
 }
 
-void frameFieldBackgroundMesh3D::get_recursive_neighbors
-   (set<MVertex*> &start, set<MVertex*> &visited, set<MElement*> &visited_elements,
-    multimap<int,MVertex*> &proximity, int max_level, int level)
+void frameFieldBackgroundMesh3D::get_recursive_neighbors(std::set<MVertex const*> &start,
+                                                         std::set<MVertex const*> &visited,
+                                                         std::set<MElement const*> &visited_elements,
+                                                         std::multimap<int,MVertex const*> &proximity,
+                                                         int max_level,
+                                                         int level)
 {
   level++;
   if (level>max_level) return;
 
-  set<MVertex*> new_vertices;
+  std::set<MVertex const*> new_vertices;
 
-  for (set<MVertex*>::iterator it_start=start.begin();
+  for (set<MVertex const*>::iterator it_start=start.begin();
        it_start!=start.end();it_start++){// for all initial vertices
-    MVertex *current = *it_start;
+    MVertex const* current = *it_start;
     //      cout << "get_recursive_neighbors : on vertex " << current->getNum()
     //      << " (" << current << ")" << endl;
     vert2elemtype::iterator itfind = vert2elem.find(current);
     if (itfind==vert2elem.end()) continue;
-    set<MElement*>::iterator it_elem = itfind->second.begin();
+
+    std::set<MElement*>::iterator it_elem = itfind->second.begin();
+
     for (;it_elem!=itfind->second.end();it_elem++){// for all connected elements
       MElement *current_elem = *it_elem;
-      //        cout << "    get_recursive_neighbors : on elem " << current_elem;
-      set<MElement*>::iterator itfindelem = visited_elements.find(current_elem);
-      if (itfindelem!=visited_elements.end()){// element already visited
-        //          cout << " ... already visited ! " << endl;
+
+      if (visited_elements.find(current_elem) != visited_elements.end()){
         continue;
       }
       //        cout << current_elem->getNum() << endl;
       for (int i=0;i<current_elem->getNumVertices();i++){
         MVertex *ver = current_elem->getVertex(i);
-        set<MVertex*>::iterator itfind_vertex = visited.find(ver);
-        if (itfind_vertex!=visited.end()) continue;// vertex already visited
+
+        if (visited.find(ver) != visited.end()) continue;
+
         proximity.insert(make_pair(level, ver));
         new_vertices.insert(ver);
         visited.insert(ver);
@@ -877,16 +891,20 @@ void frameFieldBackgroundMesh3D::get_recursive_neighbors
                           proximity, max_level, level);
 }
 
-double frameFieldBackgroundMesh3D::compare_to_neighbors
-  (SPoint3 current, STensor3 &ref, multimap<double,MVertex*>::iterator itbegin,
-   multimap<double,MVertex*>::iterator itend, SVector3 &mean_axis,
-   double &mean_angle, vector<double> &vectorial_smoothness)
+double frameFieldBackgroundMesh3D::compare_to_neighbors(SPoint3 current,
+                                                        STensor3 &ref,
+                                                        std::multimap<double, MVertex const*>::iterator itbegin,
+                                                        std::multimap<double, MVertex const*>::iterator itend,
+                                                        SVector3 &mean_axis,
+                                                        double &mean_angle,
+                                                        vector<double> &vectorial_smoothness)
 {
   for (int i=0;i<3;i++) mean_axis(i)=0.;
-  multimap<double,MVertex*>::iterator it = itbegin;
+
+  std::multimap<double, MVertex const*>::iterator it = itbegin;
   SVector3 rotation_axis;
   double minimum_angle;
-  MVertex *neighbor;
+
   vector<double>all_angle;
   vector<SVector3>all_axis;
   TensorStorageType::iterator itneighbor;
@@ -900,10 +918,10 @@ double frameFieldBackgroundMesh3D::compare_to_neighbors
 
   for (;it!=itend;it++){// for all trusted neighbors
     //neighbor = it->second.second;
-    neighbor = it->second;
+     MVertex const* neighbor = it->second;
     //ponderations_vec.push_back(1.);
-    ponderations_vec.push_back((fabs(it->first) >= smoothness_threshold) ? 1. : 1.e-3);
-    //ponderations_vec.push_back(((fabs(it->first) >= smoothness_threshold) ?
+    ponderations_vec.push_back((std::abs(it->first) >= smoothness_threshold) ? 1. : 1.e-3);
+    //ponderations_vec.push_back(((std::abs(it->first) >= smoothness_threshold) ?
     //1. : 1.e-3) / (current.distance(neighbor->point())));
     itneighbor = crossField.find(neighbor);
     STensor3 &neibcross = itneighbor->second;
@@ -911,7 +929,7 @@ double frameFieldBackgroundMesh3D::compare_to_neighbors
     get_min_rotation_matrix(neibcross, ref, minimum_angle, rotation_axis);
     all_axis.push_back(rotation_axis);
     all_angle.push_back(minimum_angle);
-    alternative.push_back(fabs(minimum_angle));
+    alternative.push_back(std::abs(minimum_angle));
 
     //    // now, computing vectorial smoothness
     //    for (int j=0;j<3;j++){// for every cross field vector
@@ -920,7 +938,7 @@ double frameFieldBackgroundMesh3D::compare_to_neighbors
     //        for (int k=0;k<3;k++){
     //          temp[ivec] += (neibcross(k,ivec)*ref(k,j));// scalar products
     //        }
-    //        temp[ivec] = fabs(temp[ivec]);
+    //        temp[ivec] = std::abs(temp[ivec]);
     //      }
     //      vectorial_smoothness[j] += acos(fmin(*std::max_element(temp.begin(),temp.end()),1.));
     //    }
@@ -1047,8 +1065,8 @@ STensor3 frameFieldBackgroundMesh3D::apply_rotation
 void frameFieldBackgroundMesh3D::get_rotation_matrix
   (const double &angle_to_go, const SVector3 &rotvec, double* rotmat)
 {
-  double c = cos(angle_to_go);
-  double s = sin(angle_to_go);
+  double c = std::cos(angle_to_go);
+  double s = std::sin(angle_to_go);
   double temp01 = rotvec[0]*rotvec[1]*(1.-c);
   double temp02 = rotvec[0]*rotvec[2]*(1.-c);
   double temp12 = rotvec[1]*rotvec[2]*(1.-c);
@@ -1080,7 +1098,7 @@ void frameFieldBackgroundMesh3D::get_min_rotation_matrix
       SVector3 v;
       get_rotation_angle_and_axis(reference,thecross,a,v,i_rotation_perm,permutation[iperm]);
       if (debugflag){
-        if (fabs(a)<M_PI/2.){
+        if (std::abs(a)<M_PI/2.){
           cout << "     temp parameters:  angle=" << a*180./M_PI
                << "pair=(" << iperm << "," << i_rotation_perm << ") axis=("
                << v(0) << "," << v(1) << "," << v(2) << ")" << endl;
@@ -1088,8 +1106,8 @@ void frameFieldBackgroundMesh3D::get_min_rotation_matrix
         else
           cout << "     temp parameters:  angle=" << a*180./M_PI << endl;
       }
-      if (fabs(a)<fabs(minimum_angle)){
-        p = make_pair(iperm,i_rotation_perm);
+      if (std::abs(a) < std::abs(minimum_angle)) {
+        p = std::make_pair(iperm,i_rotation_perm);
         minimum_angle = a;
         rotation_axis = v;
       }
@@ -1148,11 +1166,11 @@ void frameFieldBackgroundMesh3D::get_rotation_angle_and_axis
 
   //  cout << "minimum_angle=" << minimum_angle << " trace=" << trace << endl;
 
-  if (fabs(minimum_angle)>M_PI/2.) return;// no need to continue...
+  if (std::abs(minimum_angle)>M_PI/2.) return;// no need to continue...
 
   // computing rotation axis
   // computing the remaining terms, not on diagonal
-  if (fabs(minimum_angle)<1.e-6){
+  if (std::abs(minimum_angle)<1.e-6){
     rotation_axis(0)=0.;
     rotation_axis(1)=0.;
     rotation_axis(2)=1.;

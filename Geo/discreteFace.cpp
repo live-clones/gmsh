@@ -648,11 +648,11 @@ static void splitInternalEdges(std::vector<MEdge> &e, int ITH,
   fclose(f);
 }
 
-#ifdef HAVE_HXT
 GPoint discreteFace::intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
 					    const SVector3 &p, const double &R,
 					    double uv[2])
 {
+#ifdef HAVE_HXT
   MTriangle *t2d = (MTriangle*)_parametrizations[_current_parametrization].oct->find
     (uv[0], uv[1], 0.0);
   MTriangle *t3d = NULL;
@@ -758,11 +758,14 @@ GPoint discreteFace::intersectionWithCircle(const SVector3 &n1, const SVector3 &
       }
     }
   }
+#endif
   GPoint pp(0);
   pp.setNoSuccess();
   Msg::Debug("ARGG no success intersection circle");
   return pp;
 }
+
+#ifdef HAVE_HXT
 
 static void existingEdges (GFace *gf, std::map<MEdge, GEdge*, Less_Edge> &edges)
 {
@@ -1100,7 +1103,6 @@ HXTStatus discreteFace::reparametrize_through_hxt()
   HXT_CHECK(hxtEdgesCreate(m,&edges));
   HXT_CHECK(hxtCurvatureRusinkiewicz (m, &nodalCurvatures, &crossField, edges, true));
   HXT_CHECK(hxtEdgesDelete(&edges));
-  
   _parametrizations.resize(nc);
   std::vector<std::vector<MEdge> > boundaries (nc);
   std::vector<std::vector<MEdge> > internals (nc);

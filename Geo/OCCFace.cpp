@@ -124,8 +124,7 @@ void OCCFace::setup()
   ShapeAnalysis::GetFaceUVBounds(s, umin, umax, vmin, vmax);
   Msg::Debug("OCC Face %d with %d parameter bounds (%g,%g)(%g,%g)",
              tag(), l_edges.size(), umin, umax, vmin, vmax);
-  // we do that for the projections to converge on the borders of the
-  // surface
+  // we do that for the projections to converge on the borders of the surface
   const double du = umax - umin;
   const double dv = vmax - vmin;
   umin -= fabs(du) / 100.0;
@@ -134,7 +133,8 @@ void OCCFace::setup()
   vmax += fabs(dv) / 100.0;
   occface = BRep_Tool::Surface(s);
 
-  for(exp2.Init(s.Oriented(TopAbs_FORWARD), TopAbs_VERTEX, TopAbs_EDGE); exp2.More(); exp2.Next()){
+  for(exp2.Init(s.Oriented(TopAbs_FORWARD), TopAbs_VERTEX, TopAbs_EDGE);
+      exp2.More(); exp2.Next()){
     TopoDS_Vertex vertex = TopoDS::Vertex(exp2.Current());
     GVertex *v = 0;
     if(model()->getOCCInternals())
@@ -408,63 +408,30 @@ bool OCCFace::containsPoint(const SPoint3 &pt) const
 
 bool OCCFace::buildSTLTriangulation(bool force)
 {
-  if(stl_triangles.size()){
-    if(force){
-      stl_vertices.clear();
-      stl_triangles.clear();
-    }
-    else
-      return true;
-  }
-  if(!model()->getOCCInternals()->makeFaceSTL(s, stl_vertices, stl_triangles)){
-    Msg::Warning("OpenCASCADE triangulation of surface %d failed", tag());
+  if(stl_triangles.size() && !force) return true;
+  stl_vertices_uv.clear();
+  stl_vertices_xyz.clear();
+  stl_triangles.clear();
+  if(!model()->getOCCInternals()->makeFaceSTL(s, stl_vertices_uv, stl_vertices_xyz,
+                                              stl_normals, stl_triangles)){
+    Msg::Info("OpenCASCADE triangulation of surface %d failed", tag());
     // add a dummy triangle so that we won't try again
-    stl_vertices.push_back(SPoint2(0., 0.));
+    stl_vertices_uv.push_back(SPoint2(0., 0.));
+    stl_vertices_xyz.push_back(SPoint3(0., 0., 0.));
     stl_triangles.push_back(0);
     stl_triangles.push_back(0);
     stl_triangles.push_back(0);
     return false;
   }
-
-  bool reverse = false;
-  for(unsigned int i = 0; i < stl_triangles.size(); i += 3){
-    if(i == 0){
-      SPoint2 gp1 = stl_vertices[stl_triangles[i]];
-      SPoint2 gp2 = stl_vertices[stl_triangles[i + 1]];
-      SPoint2 gp3 = stl_vertices[stl_triangles[i + 2]];
-      SPoint2 b = gp1 + gp2 + gp2;
-      b *= 1. / 3.;
-      SVector3 nf = normal(b);
-      GPoint sp1 = point(gp1.x(), gp1.y());
-      GPoint sp2 = point(gp2.x(), gp2.y());
-      GPoint sp3 = point(gp3.x(), gp3.y());
-      double n[3];
-      normal3points(sp1.x(), sp1.y(), sp1.z(),
-                    sp2.x(), sp2.y(), sp2.z(),
-                    sp3.x(), sp3.y(), sp3.z(), n);
-      SVector3 ne(n[0], n[1], n[2]);
-      if(dot(ne, nf) < 0){
-        Msg::Debug("Reversing orientation of STL mesh in face %d", tag());
-        reverse = true;
-      }
-    }
-    if(reverse){
-      int tmp = stl_triangles[i + 1];
-      stl_triangles[i + 1] = stl_triangles[i + 2];
-      stl_triangles[i + 2] = tmp;
-    }
-  }
   return true;
 }
 
-bool OCCFace::isSphere (double &radius, SPoint3 &center) const
+bool OCCFace::isSphere(double &radius, SPoint3 &center) const
 {
   switch(geomType()){
   case GEntity::Sphere:
-    {
-      radius = _radius;
-      center = _center;
-    }
+    radius = _radius;
+    center = _center;
     return true;
   default:
     return false;
@@ -477,18 +444,15 @@ bool OCCFace::isSphere (double &radius, SPoint3 &center) const
 
 bool OCCFace::containsParam(const SPoint2 &pt)
 {
-  //  return GFace::containsParam(pt);
   if(!buildSTLTriangulation(false)){
-    Msg::Warning ("Inacurate computation in OCCFace::containsParam");
+    Msg::Info("Inacurate computation in OCCFace::containsParam");
     return GFace::containsParam(pt);
   }
   SPoint2 mine = pt;
-
   for(unsigned int i = 0; i < stl_triangles.size(); i += 3){
-    SPoint2 gp1 = stl_vertices[stl_triangles[i]];
-    SPoint2 gp2 = stl_vertices[stl_triangles[i + 1]];
-    SPoint2 gp3 = stl_vertices[stl_triangles[i + 2]];
-
+    SPoint2 gp1 = stl_vertices_uv[stl_triangles[i]];
+    SPoint2 gp2 = stl_vertices_uv[stl_triangles[i + 1]];
+    SPoint2 gp3 = stl_vertices_uv[stl_triangles[i + 2]];
     double s1 = robustPredicates::orient2d(gp1, gp2, mine);
     double s2 = robustPredicates::orient2d(gp2, gp3, mine);
     double s3 = robustPredicates::orient2d(gp3, gp1, mine);
@@ -497,7 +461,6 @@ bool OCCFace::containsParam(const SPoint2 &pt)
     if (s1<0 && s2<0 && s3<0)
       return true;
   }
-  //  printf("coucou %d\n",stl_triangles.size());
   return false;
 }
 

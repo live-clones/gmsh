@@ -186,10 +186,7 @@ SOrientedBoundingBox GRegion::getOBB()
         }
       }
       else if ((*b_face)->buildSTLTriangulation()) {
-        for (unsigned int i = 0; i < (*b_face)->stl_vertices.size(); i++){
-          GPoint p = (*b_face)->point((*b_face)->stl_vertices[i]);
-          vertices.push_back(SPoint3(p.x(), p.y(), p.z()));
-        }
+        vertices = (*b_face)->stl_vertices_xyz;
       }
       else {
         int N = 10;
@@ -265,24 +262,56 @@ std::string GRegion::getAdditionalInfoString(bool multline)
   std::ostringstream sstream;
   if(l_faces.size()){
     sstream << "Boundary surfaces: ";
-    for(std::list<GFace*>::iterator it = l_faces.begin(); it != l_faces.end(); ++it){
+    for(std::list<GFace*>::iterator it = l_faces.begin();
+        it != l_faces.end(); ++it){
       if(it != l_faces.begin()) sstream << ", ";
       sstream << (*it)->tag();
     }
+    if(multline) sstream << "\n";
+    else sstream << " ";
+  }
+  if(embedded_faces.size()){
+    sstream << "Embedded surfaces: ";
+    for(std::list<GFace*>::iterator it = embedded_faces.begin();
+        it != embedded_faces.end(); ++it){
+      if(it != embedded_faces.begin()) sstream << ", ";
+      sstream << (*it)->tag();
+    }
+    if(multline) sstream << "\n";
+    else sstream << " ";
+  }
+  if(embedded_edges.size()){
+    sstream << "Embedded curves: ";
+    for(std::list<GEdge*>::iterator it = embedded_edges.begin();
+        it != embedded_edges.end(); ++it){
+      if(it != embedded_edges.begin()) sstream << ", ";
+      sstream << (*it)->tag();
+    }
+    if(multline) sstream << "\n";
+    else sstream << " ";
+  }
+  if(embedded_vertices.size()){
+    sstream << "Embedded points: ";
+    for(std::list<GVertex*>::iterator it = embedded_vertices.begin();
+        it != embedded_vertices.end(); ++it){
+      if(it != embedded_vertices.begin()) sstream << ", ";
+      sstream << (*it)->tag();
+    }
+    if(multline) sstream << "\n";
+    else sstream << " ";
   }
 
   if(meshAttributes.method == MESH_TRANSFINITE || meshAttributes.extrude){
-    if(l_faces.size()){
-      if(multline) sstream << "\n";
-      else sstream << " ";
-    }
     sstream << "Mesh attributes:";
     if(meshAttributes.method == MESH_TRANSFINITE)
       sstream << " transfinite";
     if(meshAttributes.extrude)
       sstream << " extruded";
   }
-  return sstream.str();
+  std::string str = sstream.str();
+  if(str.size() && (str[str.size()-1] == '\n' || str[str.size()-1] == ' '))
+     str.resize(str.size() - 1);
+  return str;
 }
 
 void GRegion::writeGEO(FILE *fp)
@@ -533,4 +562,162 @@ void GRegion::removeElement(int type, MElement *e)
   default:
     Msg::Error("Trying to remove unsupported element in region");
   }
+}
+
+static void setRand(double r[6])
+{
+  for(int i = 0; i < 6; i++)
+    r[i] = 0.0001 * ((double)rand() / (double)RAND_MAX);
+}
+
+// X_1 (1-u-v) + X_2 u + X_3 v = P_x + t N_x
+// Y_1 (1-u-v) + Y_2 u + Y_3 v = P_y + t N_y
+// Z_1 (1-u-v) + Z_2 u + Z_3 v = P_z + t N_z
+
+static int intersectLineTriangle(double X[3], double Y[3], double Z[3] ,
+                                 double P[3], double N[3], const double eps_prec)
+{
+  double mat[3][3], det;
+  double b[3], res[3];
+
+  mat[0][0] = X[1] - X[0];
+  mat[0][1] = X[2] - X[0];
+  mat[0][2] = N[0];
+
+  mat[1][0] = Y[1] - Y[0];
+  mat[1][1] = Y[2] - Y[0];
+  mat[1][2] = N[1];
+
+  mat[2][0] = Z[1] - Z[0];
+  mat[2][1] = Z[2] - Z[0];
+  mat[2][2] = N[2];
+
+  b[0] = P[0] - X[0];
+  b[1] = P[1] - Y[0];
+  b[2] = P[2] - Z[0];
+
+  if(!sys3x3_with_tol(mat, b, res, &det)){
+    return 0;
+  }
+  //  printf("coucou %g %g %g\n",res[0],res[1],res[2]);
+  if(res[0] >= eps_prec && res[0] <= 1.0 - eps_prec &&
+     res[1] >= eps_prec && res[1] <= 1.0 - eps_prec &&
+     1 - res[0] - res[1] >= eps_prec && 1 - res[0] - res[1] <= 1.0 - eps_prec){
+    // the line clearly intersects the triangle
+    return (res[2] > 0) ? 1 : 0;
+  }
+  else if(res[0] < -eps_prec || res[0] > 1.0 + eps_prec ||
+          res[1] < -eps_prec || res[1] > 1.0 + eps_prec ||
+          1 - res[0] - res[1] < -eps_prec || 1 - res[0] - res[1] > 1.0 + eps_prec){
+    // the line clearly does NOT intersect the triangle
+    return 0;
+  }
+  else{
+    //printf("non robust stuff\n");
+    // the intersection is not robust, try another triangle
+    return -10000;
+  }
+}
+
+bool GRegion::setOutwardOrientationMeshConstraint()
+{
+  // perform intersection check in normalized coordinates
+  SBoundingBox3d bbox = bounds();
+  double scaling = norm(SVector3(bbox.max(), bbox.min()));
+  if(!scaling){
+    Msg::Warning("Bad scaling in GRegion::setOutwardOrientationMeshConstraint");
+    scaling = 1.;
+  }
+  double rrr[6];
+  setRand(rrr);
+
+  std::list<GFace*> f = faces();
+  std::list<GFace*>::iterator it = f.begin();
+  while(it != f.end()){
+    GFace *gf = (*it);
+    gf->buildSTLTriangulation();
+    if(gf->stl_triangles.size() < 3){
+      Msg::Error("No valid STL triangulation found for surface %d", gf->tag());
+      return false;
+    }
+    int nb_intersect = 0;
+    for(unsigned int i = 0; i < gf->stl_triangles.size(); i += 3){
+      SPoint3 p1 = gf->stl_vertices_xyz[gf->stl_triangles[i]];
+      SPoint3 p2 = gf->stl_vertices_xyz[gf->stl_triangles[i + 1]];
+      SPoint3 p3 = gf->stl_vertices_xyz[gf->stl_triangles[i + 2]];
+      double X[3] = {p1.x(), p2.x(), p3.x()};
+      double Y[3] = {p1.y(), p2.y(), p3.y()};
+      double Z[3] = {p1.z(), p2.z(), p3.z()};
+      for(int j = 0; j < 3; j++){
+        X[j] /= scaling;
+        Y[j] /= scaling;
+        Z[j] /= scaling;
+      }
+      double P[3] = {(X[0] + X[1] + X[2]) / 3.,
+                     (Y[0] + Y[1] + Y[2]) / 3.,
+                     (Z[0] + Z[1] + Z[2]) / 3.};
+      double v1[3] = {X[0] - X[1], Y[0] - Y[1], Z[0] - Z[1]};
+      double v2[3] = {X[2] - X[1], Y[2] - Y[1], Z[2] - Z[1]};
+      double N[3];
+      prodve(v1, v2, N);
+      norme(v1);
+      norme(v2);
+      norme(N);
+      N[0] += rrr[0] * v1[0] + rrr[1] * v2[0];
+      N[1] += rrr[2] * v1[1] + rrr[3] * v2[1];
+      N[2] += rrr[4] * v1[2] + rrr[5] * v2[2];
+      norme(N);
+      std::list<GFace*>::iterator it_b = f.begin();
+      while(it_b != f.end()){
+        GFace *gf_b = (*it_b);
+        gf_b->buildSTLTriangulation();
+        if(gf_b->stl_triangles.size() < 3){
+          Msg::Error("No valid STL triangulation found for surface %d", gf_b->tag());
+          return false;
+        }
+        for(unsigned int i_b = 0; i_b < gf_b->stl_triangles.size(); i_b += 3){
+          SPoint3 p1 = gf_b->stl_vertices_xyz[gf_b->stl_triangles[i_b]];
+          SPoint3 p2 = gf_b->stl_vertices_xyz[gf_b->stl_triangles[i_b + 1]];
+          SPoint3 p3 = gf_b->stl_vertices_xyz[gf_b->stl_triangles[i_b + 2]];
+          double X_b[3] = {p1.x(), p2.x(), p3.x()};
+          double Y_b[3] = {p1.y(), p2.y(), p3.y()};
+          double Z_b[3] = {p1.z(), p2.z(), p3.z()};
+          for(int j = 0; j < 3; j++){
+            X_b[j] /= scaling;
+            Y_b[j] /= scaling;
+            Z_b[j] /= scaling;
+          }
+          if(!(fabs(X[0] - X_b[0]) < 1e-12 &&
+               fabs(X[1] - X_b[1]) < 1e-12 &&
+               fabs(X[2] - X_b[2]) < 1e-12 &&
+               fabs(Y[0] - Y_b[0]) < 1e-12 &&
+               fabs(Y[1] - Y_b[1]) < 1e-12 &&
+               fabs(Y[2] - Y_b[2]) < 1e-12 &&
+               fabs(Z[0] - Z_b[0]) < 1e-12 &&
+               fabs(Z[1] - Z_b[1]) < 1e-12 &&
+               fabs(Z[2] - Z_b[2]) < 1e-12)){
+            int inters = intersectLineTriangle(X_b, Y_b, Z_b, P, N, 1.e-9);
+            nb_intersect += inters;
+          }
+        }
+        ++it_b;
+      }
+      Msg::Info("Region %d Face %d, %d intersect", tag(), gf->tag(), nb_intersect);
+      if(nb_intersect >= 0) break; // negative value means intersection is not "robust"
+    }
+
+    if(nb_intersect < 0){
+      setRand(rrr);
+    }
+    else{
+      if(nb_intersect % 2 == 1){
+        // odd nb of intersections: the normal points inside the region
+        gf->meshAttributes.reverseMesh = true;
+        Msg::Info("Setting reverse mesh attribute on surface %d", gf->tag());
+      }
+      ++it;
+    }
+  }
+
+  return true;
 }

@@ -310,12 +310,14 @@ class GFace : public GEntity {
     int nbGoodQuality, nbGoodLength;
   } meshStatistics;
 
-  // a crude graphical representation using a "cross" defined by pairs
-  // of start/end points
-  std::vector<SPoint3> cross;
+  // a crude graphical representation using a "cross" represented by points
+  // along u and v parameter lines
+  std::vector<std::vector<SPoint3> > cross[2];
 
   // the STL mesh
-  std::vector<SPoint2> stl_vertices;
+  std::vector<SPoint2> stl_vertices_uv;
+  std::vector<SPoint3> stl_vertices_xyz;
+  std::vector<SVector3> stl_normals;
   std::vector<int> stl_triangles;
 
   // a vertex array containing a geometrical representation of the

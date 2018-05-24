@@ -63,18 +63,22 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
 
   if(physicals.size()){
     if(multiline) sstream << "\n";
-    else sstream << ": ";
-    sstream << "Physical ";
-    switch(dim()){
-    case 0: sstream << "Point"; break;
-    case 1: sstream << "Curve"; break;
-    case 2: sstream << "Surface"; break;
-    case 3: sstream << "Volume"; break;
-    }
+    else sstream << " ";
     for(unsigned int i = 0; i < physicals.size(); i++){
+      sstream << "Physical ";
+      switch(dim()){
+      case 0: sstream << "Point"; break;
+      case 1: sstream << "Curve"; break;
+      case 2: sstream << "Surface"; break;
+      case 3: sstream << "Volume"; break;
+      }
       sstream << " " << physicals[i];
       std::string name = model()->getPhysicalName(dim(), physicals[i]);
-      if(name.size()) sstream << " " << "(" << name << ")";
+      if(name.size()){
+        if(multiline) sstream << "\n";
+        else sstream << ", ";
+        sstream << name;
+      }
     }
   }
 

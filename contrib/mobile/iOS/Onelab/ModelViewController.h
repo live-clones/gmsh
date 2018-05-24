@@ -1,18 +1,11 @@
 #import <UIKit/UIKit.h>
 #import "EAGLView.h"
 
-@interface UIErrorAlertView : UIAlertView
-
-@end
-
-@interface ModelViewController : UIViewController <UISplitViewControllerDelegate, UIAlertViewDelegate>
+@interface ModelViewController : UIViewController <UISplitViewControllerDelegate>
 {
   @private
   double scaleFactor;
   UIBarButtonItem *_runStopButton, *_playButton, *_stopButton;
-  UIAlertView *_loadingAlert;
-  UIErrorAlertView *_errorAlert;
-  UIBackgroundTaskIdentifier _computeBackgroundTaskIdentifier;
   NSTimer *_animation;
 }
 

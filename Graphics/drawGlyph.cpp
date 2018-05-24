@@ -59,7 +59,7 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
       }
     }
     // treat line number also for TeX
-    if(line_num) w[1] -= line_num * (1.25 * height);
+    if(line_num) w[1] -= line_num * (1.1 * height);
     viewport2World(w, x);
     glRasterPos3d(x[0], x[1], x[2]);
   }

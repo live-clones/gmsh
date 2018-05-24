@@ -119,7 +119,7 @@ class FieldFactory {
 class FieldManager : public std::map<int, Field*> {
  private:
   int _background_field;
-  int _boundaryLayer_field;
+  std::vector<int> _boundaryLayer_fields;
  public:
   std::map<std::string, FieldFactory*> map_type_name;
   void initialize();
@@ -136,9 +136,21 @@ class FieldManager : public std::map<int, Field*> {
   // set and get background field
   void setBackgroundField(Field* BGF);
   inline void setBackgroundFieldId(int id){_background_field = id;};
-  inline void setBoundaryLayerFieldId(int id){_boundaryLayer_field = id;};
+  inline void addBoundaryLayerFieldId(int id)
+  {
+    for (unsigned int i = 0; i < _boundaryLayer_fields.size(); ++i) {
+      if (_boundaryLayer_fields[i] == id) return;
+    }
+    _boundaryLayer_fields.push_back(id);
+  }
+  inline void addBoundaryLayerFieldId(std::vector<int> &tags)
+  {
+    for (unsigned int i = 0; i < tags.size(); ++i)
+      addBoundaryLayerFieldId(tags[i]);
+  }
   inline int getBackgroundField(){return _background_field;}
-  inline int getBoundaryLayerField(){return _boundaryLayer_field;}
+  inline int getNumBoundaryLayerFields() {return (int)_boundaryLayer_fields.size();}
+  inline int getBoundaryLayerField(int i) {return _boundaryLayer_fields[i];}
 };
 
 // Boundary Layer Field (used both for anisotropic meshing and BL

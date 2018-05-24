@@ -11,6 +11,8 @@ StringXNumber HarmonicToTimeOptions_Number[] = {
   {GMSH_FULLRC, "ImaginaryPart", NULL, 1.},
   {GMSH_FULLRC, "NumSteps", NULL, 20.},
   {GMSH_FULLRC, "TimeSign", NULL, -1.},
+  {GMSH_FULLRC, "Frequency", NULL, 1},
+  {GMSH_FULLRC, "NumPeriods", NULL, 1},
   {GMSH_FULLRC, "View", NULL, -1.}
 };
 
@@ -28,9 +30,11 @@ std::string GMSH_HarmonicToTimePlugin::getHelp() const
     "time steps `RealPart' and `ImaginaryPart' of "
     "the view `View', and creates a new view "
     "containing\n\n"
-    "`View'[`RealPart'] * cos(p) +- `View'[`ImaginaryPart'] * sin(p)\n\n"
-    "with p = 2*Pi*k/`NumSteps', k = 0, ..., `NumSteps'-1.\n"
-    "The + or - sign is controlled by `TimeSign'.\n\n"
+    "`View'[`RealPart'] * cos(p) +- `View'[`ImaginaryPart'] * sin(p)\n"
+    "with\n p = 2*Pi*k/`NumSteps', k = 0, ..., `NumSteps'-1\n"
+    "and 'NumSteps' the total number of time steps\n"
+    "over 'NumPeriods' periods at frequency 'Frequency' [Hz].\n"
+    "The '+' sign is used if `TimeSign'>0, the '-' sign otherwise.\n\n"
     "If `View' < 0, the plugin is run on the current view.\n\n"
     "Plugin(HarmonicToTime) creates one new view.";
 }
@@ -51,7 +55,9 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView * v)
   int iIndex = (int)HarmonicToTimeOptions_Number[1].def;
   int nSteps = (int)HarmonicToTimeOptions_Number[2].def;
   double tsign = HarmonicToTimeOptions_Number[3].def > 0 ? 1. : -1.;
-  int iView = (int)HarmonicToTimeOptions_Number[4].def;
+  double frequency = HarmonicToTimeOptions_Number[4].def;
+  int nPeriods = (int)HarmonicToTimeOptions_Number[5].def;
+  int iView = (int)HarmonicToTimeOptions_Number[6].def;
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;
@@ -59,6 +65,10 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView * v)
 
   if(data1->hasMultipleMeshes()){
     Msg::Error("HarmonicToTime plugin cannot be applied to multi-mesh views");
+    return v1;
+  }
+  if(frequency==0){
+    Msg::Error("HarmonicToTime plugin: null frequency is forbidden");
     return v1;
   }
 
@@ -95,8 +105,8 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView * v)
       for(int nod = 0; nod < numNodes; nod++) out->push_back(x[nod]);
       for(int nod = 0; nod < numNodes; nod++) out->push_back(y[nod]);
       for(int nod = 0; nod < numNodes; nod++) out->push_back(z[nod]);
-      for(int t = 0; t < nSteps; t++) {
-        double p = 2. * M_PI * t / nSteps;
+      for(int k = 0; k < nSteps; k++) {
+        double p = 2. * M_PI * nPeriods * k / nSteps;
         for(int nod = 0; nod < numNodes; nod++) {
           for(int comp = 0; comp < numComp; comp++) {
             double val =
@@ -109,9 +119,9 @@ PView *GMSH_HarmonicToTimePlugin::execute(PView * v)
     }
   }
 
-  for(int i = 0; i < nSteps; i++){
-    double p = 2. * M_PI * i / (double)nSteps;
-    data2->Time.push_back(p);
+  for(int k = 0; k < nSteps; k++){
+    double t = 2. * M_PI * nPeriods * k / frequency / (double)nSteps;
+    data2->Time.push_back(t);
   }
   data2->setName(data1->getName() + "_HarmonicToTime");
   data2->setFileName(data1->getName() + "_HarmonicToTime.pos");

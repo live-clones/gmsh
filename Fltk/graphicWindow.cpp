@@ -349,10 +349,8 @@ static int _save_view_med(const char *name){ return genericViewFileDialog
     (name, "MED Options", 6); }
 static int _save_view_txt(const char *name){ return genericViewFileDialog
     (name, "TXT Options", 4); }
-
-//static int _save_view_wrl(const char *name){ return genericViewFileDialog    (name, "X3D Options", 7); }
-static int _save_view_x3d(const char *name){ return x3dViewFileDialog    (name, "X3D Options", 7); }
-
+static int _save_view_x3d(const char *name){ return x3dViewFileDialog
+    (name, "X3D Options", 7); }
 
 static int _save_auto(const char *name)
 {

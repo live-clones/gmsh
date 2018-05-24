@@ -9,7 +9,8 @@
 #include <string>
 #include "GmshMessage.h"
 
-int GmshInitialize(int argc = 0, char **argv = 0, bool readConfigFiles = false);
+int GmshInitialize(int argc = 0, char **argv = 0, bool readConfigFiles = false,
+                   bool exitOnCommandLineError = true);
 int GmshSetMessageHandler(GmshMessage *callback);
 GmshMessage *GmshGetMessageHandler();
 int GmshSetBoundingBox(double xmin, double xmax,
@@ -47,7 +48,23 @@ int GmshMergePostProcessingFile(const std::string &fileName);
 int GmshWriteFile(const std::string &fileName);
 int GmshFinalize();
 int GmshBatch();
-int GmshBatch(int argc, char **argv);
 int GmshFLTK(int argc = 0, char **argv = 0);
+
+// these two functions are the only functions exported in addition to the
+// functions of the official stable API, so that we can also build the main Gmsh
+// binary directly from the DLL
+
+#if defined(GMSH_DLL)
+#if defined(GMSH_DLL_EXPORT)
+#define GMSH_API __declspec(dllexport)
+#else
+#define GMSH_API __declspec(dllimport)
+#endif
+#else
+#define GMSH_API
+#endif
+
+GMSH_API int GmshMainBatch(int argc, char **argv);
+GMSH_API int GmshMainFLTK(int argc, char **argv);
 
 #endif

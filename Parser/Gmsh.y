@@ -191,19 +191,19 @@ struct doubleXstring{
 %token tCreateTopology
 %token tDistanceFunction tDefineConstant tUndefineConstant
 %token tDefineNumber tDefineStruct tNameStruct tDimNameSpace tAppend
-%token tDefineString tSetNumber tSetString
+%token tDefineString tSetNumber tSetTag tSetString
 %token tPoint tCircle tEllipse tCurve tSphere tPolarSphere tSurface tSpline tVolume
 %token tBox tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
 %token tRectangle tDisk tWire tGeoEntity
 %token tCharacteristic tLength tParametric tElliptic tRefineMesh tAdaptMesh
-%token tRelocateMesh tSetFactory tThruSections tWedge tFillet
+%token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet
 %token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic
 %token tUsing tPlugin tDegenerated tRecursive
 %token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
 %token tBooleanFragments tThickSolid
 %token tRecombine tSmoother tSplit tDelete tCoherence
-%token tIntersect tMeshAlgorithm tReverse
+%token tIntersect tMeshAlgorithm tReverseMesh
 %token tLayers tScaleLast tHole tAlias tAliasWithOptions tCopyOptions
 %token tQuadTriAddVerts tQuadTriNoNewVerts
 %token tRecombLaterals tTransfQuadTri
@@ -1086,13 +1086,20 @@ Affectation :
 
   // Fields
 
-  | String__Index tField tAFFECT FExpr tEND
+  | String__Index tField tAFFECT ListOfDouble tEND
     {
 #if defined(HAVE_MESH)
-      if(!strcmp($1,"Background"))
-	GModel::current()->getFields()->setBackgroundFieldId((int)$4);
+      std::vector<int> tags; ListOfDouble2Vector($4, tags);
+      if(!strcmp($1,"Background")) {
+	if (tags.size() > 1)
+	  yymsg(0, "Only 1 field can be set as a background field.");
+	else if (tags.size() == 0)
+	  yymsg(1, "No field given (Background Field).");
+	else
+	  GModel::current()->getFields()->setBackgroundFieldId((int)tags[0]);
+	  }
       else if(!strcmp($1,"BoundaryLayer"))
-	GModel::current()->getFields()->setBoundaryLayerFieldId((int)$4);
+	GModel::current()->getFields()->addBoundaryLayerFieldId(tags);
       else
 	yymsg(0, "Unknown command '%s Field'", $1);
 #endif
@@ -4328,6 +4335,42 @@ Constraints :
         List_Delete($2);
       }
     }
+  | tSetTag tPoint '(' FExpr ',' FExpr ')' tEND
+    {
+      int tag = (int)$4;
+      GVertex *gf = GModel::current()->getVertexByTag(tag);
+      if(gf){
+	int new_tag = (int)$6;
+	gf->setTag(new_tag);
+      }
+    }
+  | tSetTag tCurve '(' FExpr ',' FExpr ')' tEND
+    {
+      int tag = (int)$4;
+      GEdge *gf = GModel::current()->getEdgeByTag(tag);
+      if(gf){
+	int new_tag = (int)$6;
+	gf->setTag(new_tag);
+      }
+    }
+  | tSetTag tSurface '(' FExpr ',' FExpr ')' tEND
+    {
+      int tag = (int)$4;
+      GFace *gf = GModel::current()->getFaceByTag(tag);
+      if(gf){
+	int new_tag = (int)$6;
+	gf->setTag(new_tag);
+      }
+    }
+  | tSetTag tVolume '(' FExpr ',' FExpr ')' tEND
+    {
+      int tag = (int)$4;
+      GRegion *gf = GModel::current()->getRegionByTag(tag);
+      if(gf){
+	int new_tag = (int)$6;
+	gf->setTag(new_tag);
+      }
+    }
   | tMeshAlgorithm tSurface '{' RecursiveListOfDouble '}' tAFFECT FExpr tEND
     {
       for(int i = 0; i < List_Nbr($4); i++){
@@ -4615,7 +4658,7 @@ Constraints :
       }
       List_Delete($3);
     }
-  | tReverse GeoEntity12 ListOfDoubleOrAll tEND
+  | tReverseMesh GeoEntity12 ListOfDoubleOrAll tEND
     {
       // reverse mesh constraints are stored in GEO internals in addition to
       // GModel, as they can be copied around during GEO operations
@@ -4665,6 +4708,11 @@ Constraints :
     }
   | tRelocateMesh GeoEntity02 ListOfDoubleOrAll tEND
     {
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
       if(!$3){
         switch ($2) {
         case 0:
@@ -4711,6 +4759,21 @@ Constraints :
         }
         List_Delete($3);
       }
+    }
+  | tReorientMesh tVolume ListOfDouble tEND
+    {
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      for(int i = 0; i < List_Nbr($3); i++){
+        double d;
+        List_Read($3, i, &d);
+        GRegion *gr = GModel::current()->getRegionByTag((int)d);
+        if(gr) gr->setOutwardOrientationMeshConstraint();
+      }
+      List_Delete($3);
     }
   | tDegenerated tCurve ListOfDouble tEND
     {

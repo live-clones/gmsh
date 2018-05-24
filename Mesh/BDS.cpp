@@ -371,11 +371,16 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
     if(!intersected.size() || ix > 100000){
       BDS_Edge *eee = find_edge(num1, num2);
       if(!eee){
-        outputScalarField(triangles, "debugp.pos", 1);
-        outputScalarField(triangles, "debugr.pos", 0);
-        Msg::Debug("edge %d %d cannot be recovered at all, look at debugp.pos "
-                   "and debugr.pos", num1, num2);
-	_fatal = true;
+        if (Msg::GetVerbosity() > 98) {
+          outputScalarField(triangles, "debugp.pos", 1);
+          outputScalarField(triangles, "debugr.pos", 0);
+          Msg::Debug("edge %d %d cannot be recovered at all, look at debugp.pos "
+                     "and debugr.pos", num1, num2);
+        }
+        else {
+          Msg::Debug("edge %d %d cannot be recovered at all", num1, num2);
+        }
+	    _fatal = true;
         return 0;
       }
       return eee;
