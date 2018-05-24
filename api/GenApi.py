@@ -67,6 +67,8 @@ def istring(name, value=None, python_value=None, julia_value=None):
     return a
 
 def ivectorint(name, value=None, python_value=None, julia_value=None):
+    if julia_value == "[]":
+        julia_value = "Cint[]"
     a = arg(name, value, python_value, julia_value,
             "const std::vector<int> &", "const int *", False)
     api_name = "api_" + name + "_"
@@ -86,6 +88,8 @@ def ivectorint(name, value=None, python_value=None, julia_value=None):
     return a
 
 def ivectordouble(name, value=None, python_value=None, julia_value=None):
+    if julia_value == "[]":
+        julia_value = "Cdouble[]"
     a = arg(name, value, python_value, julia_value,
             "const std::vector<double> &", "double **", False)
     api_name = "api_" + name + "_"
@@ -105,6 +109,8 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
     return a
 
 def ivectorpair(name, value=None, python_value=None, julia_value=None):
+    if julia_value == "[]":
+        julia_value = "Tuple{Cint,Cint}[]"
     a = arg(name, value, python_value, julia_value,
             "const gmsh::vectorpair &", "const int *", False)
     api_name = "api_" + name + "_"
@@ -129,6 +135,8 @@ def ivectorpair(name, value=None, python_value=None, julia_value=None):
     return a
 
 def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
+    if julia_value == "[]":
+        julia_value = "Vector{Cint}[]"
     a = arg(name, value, python_value, julia_value,
             "const std::vector<std::vector<int> > &", "const int **", False)
     api_name = "api_" + name + "_"
@@ -160,6 +168,8 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
     return a
 
 def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
+    if julia_value == "[]":
+        julia_value = "Vector{Cdouble}[]"
     a = arg(name, value, python_value, julia_value,
             "const std::vector<std::vector<double> > &", "const double**", False)
     api_name = "api_" + name + "_"

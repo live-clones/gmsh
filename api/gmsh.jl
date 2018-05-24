@@ -442,7 +442,7 @@ function getBoundingBox(dim, tag)
 end
 
 """
-    gmsh.model.addDiscreteEntity(dim, tag = -1, boundary = [])
+    gmsh.model.addDiscreteEntity(dim, tag = -1, boundary = Cint[])
 
 Add a discrete geometrical entity (defined by a mesh) of dimension `dim` in the
 current model. Return the tag of the new discrete entity, equal to `tag` if
@@ -452,7 +452,7 @@ the entities on the boundary of the discrete entity, if any. Specyfing
 
 Return an integer.
 """
-function addDiscreteEntity(dim, tag = -1, boundary = [])
+function addDiscreteEntity(dim, tag = -1, boundary = Cint[])
     ierr = Ref{Cint}()
     api__result__ = ccall((:gmshModelAddDiscreteEntity, gmsh.clib), Cint,
           (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
@@ -518,7 +518,7 @@ function generate(dim = 3)
 end
 
 """
-    gmsh.model.mesh.homology(domainTags = [], subdomainTags = [], dims = [])
+    gmsh.model.mesh.homology(domainTags = Cint[], subdomainTags = Cint[], dims = Cint[])
 
 Compute a basis representation for homology spaces after a mesh has been
 generated. The computation domain is given in a list of physical group tags
@@ -529,7 +529,7 @@ homology bases to be computed are given in the list `dim`; if empty, all bases
 are computed. Resulting basis representation chains are stored as physical
 groups in the mesh.
 """
-function homology(domainTags = [], subdomainTags = [], dims = [])
+function homology(domainTags = Cint[], subdomainTags = Cint[], dims = Cint[])
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshHomology, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
@@ -539,7 +539,7 @@ function homology(domainTags = [], subdomainTags = [], dims = [])
 end
 
 """
-    gmsh.model.mesh.cohomology(domainTags = [], subdomainTags = [], dims = [])
+    gmsh.model.mesh.cohomology(domainTags = Cint[], subdomainTags = Cint[], dims = Cint[])
 
 Compute a basis representation for cohomology spaces after a mesh has been
 generated. The computation domain is given in a list of physical group tags
@@ -550,7 +550,7 @@ homology bases to be computed are given in the list `dim`; if empty, all bases
 are computed. Resulting basis representation cochains are stored as physical
 groups in the mesh.
 """
-function cohomology(domainTags = [], subdomainTags = [], dims = [])
+function cohomology(domainTags = Cint[], subdomainTags = Cint[], dims = Cint[])
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshCohomology, gmsh.clib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
@@ -877,7 +877,7 @@ function getIntegrationDataByType(elementType, integrationType, functionSpaceTyp
 end
 
 """
-    gmsh.model.mesh.setNodes(dim, tag, nodeTags, coord, parametricCoord = [])
+    gmsh.model.mesh.setNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
 
 Set the mesh nodes in the geometrical entity of dimension `dim` and tag `tag`.
 `nodetags` contains the node tags (their unique, strictly positive
@@ -887,7 +887,7 @@ The optional `parametricCoord` vector contains the parametric coordinates of the
 nodes, if any. The length of `parametricCoord` can be 0 or `dim` times the
 length of `nodeTags`.
 """
-function setNodes(dim, tag, nodeTags, coord, parametricCoord = [])
+function setNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetNodes, gmsh.clib), Void,
           (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
@@ -1021,7 +1021,7 @@ function setTransfiniteCurve(tag, numNodes, meshType = "Progression", coef = 1.)
 end
 
 """
-    gmsh.model.mesh.setTransfiniteSurface(tag, arrangement = "Left", cornerTags = [])
+    gmsh.model.mesh.setTransfiniteSurface(tag, arrangement = "Left", cornerTags = Cint[])
 
 Set a transfinite meshing constraint on the surface `tag`. `arrangement`
 describes the arrangement of the triangles when the surface is not flagged as
@@ -1030,7 +1030,7 @@ recombined: currently supported values are "Left", "Right", "AlternateLeft" and
 the transfinite interpolation explicitly; specifying the corners explicitly is
 mandatory if the surface has more that 3 or 4 points on its boundary.
 """
-function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = [])
+function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = Cint[])
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetTransfiniteSurface, gmsh.clib), Void,
           (Cint, Ptr{Cchar}, Ptr{Cint}, Csize_t, Ptr{Cint}),
@@ -1040,13 +1040,13 @@ function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = [])
 end
 
 """
-    gmsh.model.mesh.setTransfiniteVolume(tag, cornerTags = [])
+    gmsh.model.mesh.setTransfiniteVolume(tag, cornerTags = Cint[])
 
 Set a transfinite meshing constraint on the surface `tag`. `cornerTags` can be
 used to specify the (6 or 8) corners of the transfinite interpolation
 explicitly.
 """
-function setTransfiniteVolume(tag, cornerTags = [])
+function setTransfiniteVolume(tag, cornerTags = Cint[])
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSetTransfiniteVolume, gmsh.clib), Void,
           (Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
@@ -1532,7 +1532,7 @@ function addVolume(shellTags, tag = -1)
 end
 
 """
-    gmsh.model.geo.extrude(dimTags, dx, dy, dz, outDimTags, numElements = [], heights = [], recombine = false)
+    gmsh.model.geo.extrude(dimTags, dx, dy, dz, outDimTags, numElements = Cint[], heights = Cdouble[], recombine = false)
 
 Extrude the geometrical entities `dimTags` by translation along (`dx`, `dy`,
 `dz`). Return extruded entities in `outDimTags`. If `numElements` is not empty,
@@ -1542,7 +1542,7 @@ the different layers, normalized to 1.
 
 Return 'outDimTags'.
 """
-function extrude(dimTags, dx, dy, dz, numElements = [], heights = [], recombine = false)
+function extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[], recombine = false)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
@@ -1556,7 +1556,7 @@ function extrude(dimTags, dx, dy, dz, numElements = [], heights = [], recombine 
 end
 
 """
-    gmsh.model.geo.revolve(dimTags, x, y, z, ax, ay, az, angle, outDimTags, numElements = [], heights = [], recombine = false)
+    gmsh.model.geo.revolve(dimTags, x, y, z, ax, ay, az, angle, outDimTags, numElements = Cint[], heights = Cdouble[], recombine = false)
 
 Extrude the geometrical entities `dimTags` by rotation of `angle` radians around
 the axis of revolution defined by the point (`x`, `y`, `z`) and the direction
@@ -1567,7 +1567,7 @@ number of elements in each layer. If `height` is not empty, it provides the
 
 Return 'outDimTags'.
 """
-function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = [], heights = [], recombine = false)
+function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
@@ -1581,7 +1581,7 @@ function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = [], heights 
 end
 
 """
-    gmsh.model.geo.twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, outDimTags, numElements = [], heights = [], recombine = false)
+    gmsh.model.geo.twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, outDimTags, numElements = Cint[], heights = Cdouble[], recombine = false)
 
 Extrude the geometrical entities `dimTags` by a combined translation and
 rotation of `angle` radians, along (`dx`, `dy`, `dz`) and around the axis of
@@ -1593,7 +1593,7 @@ the different layers, normalized to 1.
 
 Return 'outDimTags'.
 """
-function twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements = [], heights = [], recombine = false)
+function twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
@@ -1775,7 +1775,7 @@ function setTransfiniteCurve(tag, nPoints, meshType = "Progression", coef = 1.)
 end
 
 """
-    gmsh.model.geo.mesh.setTransfiniteSurface(tag, arrangement = "Left", cornerTags = [])
+    gmsh.model.geo.mesh.setTransfiniteSurface(tag, arrangement = "Left", cornerTags = Cint[])
 
 Set a transfinite meshing constraint on the surface `tag`. `arrangement`
 describes the arrangement of the triangles when the surface is not flagged as
@@ -1784,7 +1784,7 @@ recombined: currently supported values are "Left", "Right", "AlternateLeft" and
 the transfinite interpolation explicitly; specifying the corners explicitly is
 mandatory if the surface has more that 3 or 4 points on its boundary.
 """
-function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = [])
+function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = Cint[])
     ierr = Ref{Cint}()
     ccall((:gmshModelGeoMeshSetTransfiniteSurface, gmsh.clib), Void,
           (Cint, Ptr{Cchar}, Ptr{Cint}, Csize_t, Ptr{Cint}),
@@ -1794,13 +1794,13 @@ function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = [])
 end
 
 """
-    gmsh.model.geo.mesh.setTransfiniteVolume(tag, cornerTags = [])
+    gmsh.model.geo.mesh.setTransfiniteVolume(tag, cornerTags = Cint[])
 
 Set a transfinite meshing constraint on the surface `tag`. `cornerTags` can be
 used to specify the (6 or 8) corners of the transfinite interpolation
 explicitly.
 """
-function setTransfiniteVolume(tag, cornerTags = [])
+function setTransfiniteVolume(tag, cornerTags = Cint[])
     ierr = Ref{Cint}()
     ccall((:gmshModelGeoMeshSetTransfiniteVolume, gmsh.clib), Void,
           (Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
@@ -2004,7 +2004,7 @@ function addSpline(pointTags, tag = -1)
 end
 
 """
-    gmsh.model.occ.addBSpline(pointTags, tag = -1, degree = 3, weights = [], knots = [], multiplicities = [])
+    gmsh.model.occ.addBSpline(pointTags, tag = -1, degree = 3, weights = Cdouble[], knots = Cdouble[], multiplicities = Cint[])
 
 Add a b-spline curve of degree `degree` with `pointTags` control points. If
 `weights`, `knots` or `multiplicities` are not provided, default parameters are
@@ -2014,7 +2014,7 @@ last points are the same. Return the tag of the b-spline curve.
 
 Return an integer.
 """
-function addBSpline(pointTags, tag = -1, degree = 3, weights = [], knots = [], multiplicities = [])
+function addBSpline(pointTags, tag = -1, degree = 3, weights = Cdouble[], knots = Cdouble[], multiplicities = Cint[])
     ierr = Ref{Cint}()
     api__result__ = ccall((:gmshModelOccAddBSpline, gmsh.clib), Cint,
           (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
@@ -2359,7 +2359,7 @@ function addThickSolid(volumeTag, excludeSurfaceTags, offset, tag = -1)
 end
 
 """
-    gmsh.model.occ.extrude(dimTags, dx, dy, dz, outDimTags, numElements = [], heights = [], recombine = false)
+    gmsh.model.occ.extrude(dimTags, dx, dy, dz, outDimTags, numElements = Cint[], heights = Cdouble[], recombine = false)
 
 Extrude the geometrical entities `dimTags` by translation along (`dx`, `dy`,
 `dz`). Return extruded entities in `outDimTags`. If `numElements` is not empty,
@@ -2369,7 +2369,7 @@ the different layers, normalized to 1.
 
 Return 'outDimTags'.
 """
-function extrude(dimTags, dx, dy, dz, numElements = [], heights = [], recombine = false)
+function extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[], recombine = false)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
@@ -2383,7 +2383,7 @@ function extrude(dimTags, dx, dy, dz, numElements = [], heights = [], recombine 
 end
 
 """
-    gmsh.model.occ.revolve(dimTags, x, y, z, ax, ay, az, angle, outDimTags, numElements = [], heights = [], recombine = false)
+    gmsh.model.occ.revolve(dimTags, x, y, z, ax, ay, az, angle, outDimTags, numElements = Cint[], heights = Cdouble[], recombine = false)
 
 Extrude the geometrical entities `dimTags` by rotation of `angle` radians around
 the axis of revolution defined by the point (`x`, `y`, `z`) and the direction
@@ -2394,7 +2394,7 @@ number of elements in each layer. If `height` is not empty, it provides the
 
 Return 'outDimTags'.
 """
-function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = [], heights = [], recombine = false)
+function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
@@ -2942,7 +2942,7 @@ function getListData(tag)
 end
 
 """
-    gmsh.view.probe(tag, x, y, z, value, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = [], yElemCoord = [], zElemCoord = [])
+    gmsh.view.probe(tag, x, y, z, value, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[])
 
 Probe the view `tag` for its `value` at point (`x`, `y`, `z`). Return only the
 value at step `step` is `step` is positive. Return only values with `numComp` if
@@ -2954,7 +2954,7 @@ provided.
 
 Return 'value'.
 """
-function probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = [], yElemCoord = [], zElemCoord = [])
+function probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[])
     api_value_ = Ref{Ptr{Cdouble}}()
     api_value_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
