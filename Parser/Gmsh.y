@@ -191,7 +191,7 @@ struct doubleXstring{
 %token tCreateTopology
 %token tDistanceFunction tDefineConstant tUndefineConstant
 %token tDefineNumber tDefineStruct tNameStruct tDimNameSpace tAppend
-%token tDefineString tSetNumber tSetString
+%token tDefineString tSetNumber tSetTag tSetString
 %token tPoint tCircle tEllipse tCurve tSphere tPolarSphere tSurface tSpline tVolume
 %token tBox tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
 %token tRectangle tDisk tWire tGeoEntity
@@ -4333,6 +4333,54 @@ Constraints :
           if(gr) gr->meshAttributes.QuadTri = TRANSFINITE_QUADTRI_1;
         }
         List_Delete($2);
+      }
+    }
+  | tSetTag tPoint '(' FExpr ',' FExpr ')' tEND
+    {
+      int tag = (int)$4;
+      GVertex *gf = GModel::current()->getVertexByTag(tag);
+      if(gf){
+	int new_tag = (int)$6;
+	gf->setTag(new_tag);
+      }
+      else{
+	yymsg(0, "Unknown Model Vertex %d",tag);
+      }
+    }
+  | tSetTag tCurve '(' FExpr ',' FExpr ')' tEND
+    {
+      int tag = (int)$4;
+      GEdge *gf = GModel::current()->getEdgeByTag(tag);
+      if(gf){
+	int new_tag = (int)$6;
+	gf->setTag(new_tag);
+      }
+      else{
+	yymsg(0, "Unknown Model Edge %d",tag);
+      }
+    }
+  | tSetTag tSurface '(' FExpr ',' FExpr ')' tEND
+    {
+      int tag = (int)$4;
+      GFace *gf = GModel::current()->getFaceByTag(tag);
+      if(gf){
+	int new_tag = (int)$6;
+	gf->setTag(new_tag);
+      }
+      else{
+	yymsg(0, "Unknown Model Face %d",tag);
+      }
+    }
+  | tSetTag tVolume '(' FExpr ',' FExpr ')' tEND
+    {
+      int tag = (int)$4;
+      GRegion *gf = GModel::current()->getRegionByTag(tag);
+      if(gf){
+	int new_tag = (int)$6;
+	gf->setTag(new_tag);
+      }
+      else{
+	yymsg(0, "Unknown Model Region %d",tag);
       }
     }
   | tMeshAlgorithm tSurface '{' RecursiveListOfDouble '}' tAFFECT FExpr tEND
