@@ -182,28 +182,33 @@ struct edgeXface
   MVertex *v[2];
   MTri3 *t1;
   int i1;
-  edgeXface(MTri3 *_t, int iFac) : t1(_t), i1(iFac)
+  int ori;
+  edgeXface(MTri3 *_t, int iFac) : t1(_t), i1(iFac), ori(1)
   {
     v[0] = t1->tri()->getVertex(iFac == 0 ? 2 : iFac-1);
     v[1] = t1->tri()->getVertex(iFac);
     if (v[0]->getNum() > v[1]->getNum())
       {
+	ori = -1;
 	MVertex *tmp = v[0];
 	v[0] = v[1];
 	v[1] = tmp;
       }
   }
+  inline MVertex * _v (int i) const {
+    return v[i];
+  }
   inline bool operator < ( const edgeXface &other) const
-  {
-    if(v[0]->getNum() < other.v[0]->getNum()) return true;
-    if(v[0]->getNum() > other.v[0]->getNum()) return false;
-    if(v[1]->getNum() < other.v[1]->getNum()) return true;
+  {    
+    if(_v(0)->getNum() < other._v(0)->getNum()) return true;
+    if(_v(0)->getNum() > other._v(0)->getNum()) return false;
+    if(_v(1)->getNum() < other._v(1)->getNum()) return true;
     return false;
   }
   inline bool operator == ( const edgeXface &other) const
   {
-    if(v[0]->getNum() == other.v[0]->getNum() &&
-       v[1]->getNum() == other.v[1]->getNum())
+    if(_v(0)->getNum() == other._v(0)->getNum() &&
+       _v(1)->getNum() == other._v(1)->getNum())
       return true;
     return false;
   }

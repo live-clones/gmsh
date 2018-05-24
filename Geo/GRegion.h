@@ -97,7 +97,7 @@ class GRegion : public GEntity {
 				 std::vector<double> inertia);
 
   // return a type-specific additional information string
-  virtual std::string getAdditionalInfoString();
+  virtual std::string getAdditionalInfoString(bool multline = false);
 
   // export in GEO format
   virtual void writeGEO(FILE *fp);

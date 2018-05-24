@@ -2981,6 +2981,7 @@ bool OCC_Internals::importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
   return true;
 }
 
+
 bool OCC_Internals::exportShapes(const std::string &fileName,
                                  const std::string &format)
 {
@@ -3711,9 +3712,10 @@ static bool makeSTL(TopoDS_Face s,
   BRepBndLib::Add(s, aBox);
 
 #if (OCC_VERSION_MAJOR >= 7)
+  double fact = .3;
   BRepMesh_FastDiscret::Parameters parameters;
-  parameters.Deflection = 0.1;
-  parameters.Angle = 0.35;
+  parameters.Deflection = fact*0.1;
+  parameters.Angle = fact*0.35;
   // parameters.InternalVerticesMode = Standard_False;
   parameters.Relative = Standard_False;
   BRepMesh_FastDiscret aMesher(aBox, parameters);

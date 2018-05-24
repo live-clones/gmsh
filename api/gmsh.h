@@ -469,7 +469,7 @@ namespace gmsh { // Top-level functions
       // coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at
       // that point. If `tag' is positive, sets the tag explicitly; otherwise a new
       // tag is selected automatically. Returns the tag of the point. (Note that
-      // the point will be added in the current model only after synchronize() is
+      // the point will be added in the current model only after `synchronize' is
       // called. This behavior holds for all the entities added in the geo module.)
       GMSH_API int addPoint(const double x,
                             const double y,
@@ -752,7 +752,7 @@ namespace gmsh { // Top-level functions
       // at coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint
       // at that point. If `tag' is positive, sets the tag explicitly; otherwise a
       // new tag is selected automatically. Returns the tag of the point. (Note
-      // that the point will be added in the current model only after synchronize()
+      // that the point will be added in the current model only after `synchronize'
       // is called. This behavior holds for all the entities added in the occ
       // module.)
       GMSH_API int addPoint(const double x,
@@ -1327,7 +1327,7 @@ namespace gmsh { // Top-level functions
     GMSH_API void wait(const double time = -1.);
 
     // Runs the event loop of the Fltk graphical user interface, i.e. repeatedly
-    // calls `wait()'. First automatically creates the user interface if it has not
+    // calls `wait'. First automatically creates the user interface if it has not
     // yet been initialized.
     GMSH_API void run();
 

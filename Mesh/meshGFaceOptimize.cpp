@@ -116,8 +116,7 @@ void buildMeshGenerationDataStructures(GFace *gf,
     setLcsInit(gf->triangles[i], vSizesMap);
   std::map<MVertex*, double>::iterator itfind = vSizesMap.find(NULL);
   if (itfind!=vSizesMap.end()){
-    std::cout << "***************************************** NULL" << std::endl;
-    throw;
+    Msg::Error("some NULL points exist ?? in 2D meshing");
   }
 
   for(unsigned int i = 0;i < gf->triangles.size(); i++)
@@ -150,6 +149,26 @@ void buildMeshGenerationDataStructures(GFace *gf,
     }
   }
 
+  // take care of small edges in  order not to "pollute" the size field
+  {
+    std::list<GEdge*> _edges = gf->edges();
+    std::list<GEdge*>::iterator ite = _edges.begin();
+    while(ite != _edges.end()){
+      if(!(*ite)->isMeshDegenerated()){
+        for (unsigned int i = 0; i < (*ite)->lines.size(); i++){
+          double d = distance ((*ite)->lines[i]->getVertex(0), (*ite)->lines[i]->getVertex(1));
+	  double d0 = vSizesMap[(*ite)->lines[i]->getVertex(0)];
+	  double d1 = vSizesMap[(*ite)->lines[i]->getVertex(1)];
+	  if (d0 < .5*d) vSizesMap[(*ite)->lines[i]->getVertex(0)]=.5*d;
+	  if (d1 < .5*d) vSizesMap[(*ite)->lines[i]->getVertex(1)]=.5*d;
+	}
+      }
+      ++ite;
+    }
+  }
+
+
+  
   //  int NUM = 0;
   for(std::map<MVertex*, double>::iterator it = vSizesMap.begin();
        it != vSizesMap.end(); ++it){
@@ -967,6 +986,7 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
   MVertex *v3 = t1->tri()->getVertex((iLocalEdge + 1) % 3);
   MVertex *v4 = 0;
 
+  
   std::set<MEdge,Less_Edge>::iterator it = data.internalEdges.find(MEdge(v1,v2));
   if (it != data.internalEdges.end())return false;
 
@@ -975,11 +995,18 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
     if(t2->tri()->getVertex(i) != v1 && t2->tri()->getVertex(i) != v2)
       v4 = t2->tri()->getVertex(i);
 
+  if (!v4){
+    printf("%d %d %d\n",v1->getNum(),v2->getNum(),v3->getNum());
+    printf("%d %d %d\n",t2->tri()->getVertex(0)->getNum(),
+	   t2->tri()->getVertex(1)->getNum(),
+	   t2->tri()->getVertex(2)->getNum());
+  }
+
   swapquad sq (v1, v2, v3, v4);
   if(configs.find(sq) != configs.end()) return false;
   configs.insert(sq);
 
-  if (edgeSwapDelProj(v3,v4,v2,v1))return false;
+  //  if (edgeSwapDelProj(v3,v4,v2,v1))return false;
 
 
   MTriangle *t1b = new MTriangle(v2, v3, v4);
@@ -1001,6 +1028,30 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
       }
       break;
     }
+  case SWCR_SPH:
+    /*
+    {
+      double r;
+      SPoint3 c;
+      if (gf->isSphere(r,c)){
+	double p1 [3] = {v1->x(),v1->y(),v1->z()};
+	double p2 [3] = {v2->x(),v2->y(),v2->z()};
+	double p3 [3] = {v3->x(),v3->y(),v3->z()};
+	double p4 [3] = {v4->x(),v4->y(),v4->z()};
+	double a1 = robustPredicates::orient3d(p2, p3, p4, c);    
+	double a2 = robustPredicates::orient3d(p4, p3, p1, c);
+
+	double a3 = robustPredicates::orient3d(p2, p3, p4, p1);    
+	double a4 = robustPredicates::orient3d(p4, p3, p1, p2);
+	//	if (a1*a2 > 0)return  a3*a4 < 0 ;
+	//	if (
+	//	if (a1 < 0 )return a1*a2 < 0 ;
+      }  
+      
+      
+    }
+    break;
+    */
   case SWCR_DEL:
     {
       int index1 = data.getIndex(v1);
@@ -1090,6 +1141,7 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
 int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
 		 const swapCriterion &cr,bidimMeshData & data)
 {
+  return 0;
   typedef std::set<MTri3*, compareTri3Ptr> CONTAINER;
 
   int nbSwapTot = 0;
@@ -1097,7 +1149,9 @@ int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
 
   std::set<MTri3*, compareTri3Ptr> allTris2;
 
+  
   for(int iter = 0; iter < 10; iter++){
+    //    printf("coucou1 %d\n",iter);
     int nbSwap = 0;
     std::vector<MTri3*> newTris;
     CONTAINER::iterator it = allTris.begin();
@@ -1106,6 +1160,7 @@ int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
       if(!(*current)->isDeleted()){
 	for(int i = 0; i < 3; i++){
 	  if(edgeSwap(configs, *current, gf, i, newTris, cr, data)){
+	    //	    printf("swap\n");
 	    nbSwap++;
 	    break;
 	  }
@@ -1117,6 +1172,7 @@ int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
 	allTris.erase(current);
       }
     }
+    //    printf("coucou2\n");
 
     //    allTris = allTris2;
 

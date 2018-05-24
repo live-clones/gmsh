@@ -223,7 +223,7 @@ field.add('setAsBoundaryLayer',doc,None,iint('tag'))
 
 geo = model.add_module('geo','Internal per-model GEO CAD kernel functions')
 
-doc = '''Adds a geometrical point in the internal GEO CAD representation, at coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at that point. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the point. (Note that the point will be added in the current model only after synchronize() is called. This behavior holds for all the entities added in the geo module.)'''
+doc = '''Adds a geometrical point in the internal GEO CAD representation, at coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at that point. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the point. (Note that the point will be added in the current model only after `synchronize' is called. This behavior holds for all the entities added in the geo module.)'''
 geo.add('addPoint',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('meshSize','0.'),iint('tag','-1'))
 
 doc = '''Adds a straight line segment between the two points with tags `startTag' and `endTag'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the line.'''
@@ -321,7 +321,7 @@ mesh.add('setReverse',doc,None,iint('dim'),iint('tag'),ibool('val','true','True'
 
 occ = model.add_module('occ','Internal per-model OpenCASCADE CAD kernel functions')
 
-doc = '''Adds a geometrical point in the internal OpenCASCADE CAD representation, at coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at that point. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the point. (Note that the point will be added in the current model only after synchronize() is called. This behavior holds for all the entities added in the occ module.)'''
+doc = '''Adds a geometrical point in the internal OpenCASCADE CAD representation, at coordinates (x, y, z). If `meshSize' is > 0, adds a meshing constraint at that point. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the point. (Note that the point will be added in the current model only after `synchronize' is called. This behavior holds for all the entities added in the occ module.)'''
 occ.add('addPoint',doc,oint,idouble('x'),idouble('y'),idouble('z'),idouble('meshSize','0.'),iint('tag','-1'))
 
 doc = '''Adds a straight line segment between the two points with tags `startTag' and `endTag'. If `tag' is positive, sets the tag explicitly; otherwise a new tag is selected automatically. Returns the tag of the line.'''
@@ -517,7 +517,7 @@ fltk.add('initialize',doc,None)
 doc = '''Waits at most `time' seconds for user interface events and returns. If `time' < 0, waits indefinitely. First automatically creates the user interface if it has not yet been initialized.'''
 fltk.add('wait',doc,None,idouble('time', '-1.'))
 
-doc = '''Runs the event loop of the Fltk graphical user interface, i.e. repeatedly calls `wait()'. First automatically creates the user interface if it has not yet been initialized.'''
+doc = '''Runs the event loop of the Fltk graphical user interface, i.e. repeatedly calls `wait'. First automatically creates the user interface if it has not yet been initialized.'''
 fltk.add('run',doc,None)
 
 ################################################################################

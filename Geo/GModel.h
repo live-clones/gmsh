@@ -379,11 +379,11 @@ class GModel {
 
   // get the number of a given physical group of dimension
   // "dim" and name "name". return -1 if not found
-  int getPhysicalNumber(const int &dim, const std::string & name);
+  int getPhysicalNumber(const int &dim, const std::string &name);
 
   // get all tags of elementary entities associated with a given physical group
   // name
-  std::vector<int> getTagsForPhysicalName(int dim, const std::string name);
+  std::vector<int> getTagsForPhysicalName(int dim, const std::string &name);
   // deprecated
   std::vector<int> getEdgesByStringTag(const std::string name)
   {

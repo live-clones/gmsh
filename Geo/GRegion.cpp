@@ -244,7 +244,7 @@ int GRegion::delFace(GFace* face)
     pos++;
   }
   l_faces.erase(it);
-  
+
   std::list<int>::iterator itOri;
   int posOri = 0;
   int orientation = 0;
@@ -256,27 +256,32 @@ int GRegion::delFace(GFace* face)
     posOri++;
   }
   l_dirs.erase(itOri);
-  
+
   return orientation;
 }
 
-std::string GRegion::getAdditionalInfoString()
+std::string GRegion::getAdditionalInfoString(bool multline)
 {
   std::ostringstream sstream;
   if(l_faces.size()){
-    sstream << "{";
+    sstream << "Boundary surfaces: ";
     for(std::list<GFace*>::iterator it = l_faces.begin(); it != l_faces.end(); ++it){
-      if(it != l_faces.begin()) sstream << " ";
+      if(it != l_faces.begin()) sstream << ", ";
       sstream << (*it)->tag();
     }
-    sstream << "}";
   }
 
-  if(meshAttributes.method == MESH_TRANSFINITE)
-    sstream << " transfinite";
-  if(meshAttributes.extrude)
-    sstream << " extruded";
-
+  if(meshAttributes.method == MESH_TRANSFINITE || meshAttributes.extrude){
+    if(l_faces.size()){
+      if(multline) sstream << "\n";
+      else sstream << " ";
+    }
+    sstream << "Mesh attributes:";
+    if(meshAttributes.method == MESH_TRANSFINITE)
+      sstream << " transfinite";
+    if(meshAttributes.extrude)
+      sstream << " extruded";
+  }
   return sstream.str();
 }
 

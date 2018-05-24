@@ -15,7 +15,7 @@
 
 void drawContext::drawString(const std::string &s, double x, double y, double z,
                              const std::string &font_name, int font_enum,
-                             int font_size, int align)
+                             int font_size, int align, int line_num)
 {
   if(s.empty()) return;
   if(CTX::instance()->printing && !CTX::instance()->print.text) return;
@@ -30,9 +30,7 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
   glGetBooleanv(GL_CURRENT_RASTER_POSITION_VALID, &valid);
   if(valid == GL_FALSE) return; // the primitive is culled
 
-  // change the raster position only if not creating TeX files
-  if(align > 0 && (!CTX::instance()->printing ||
-                   CTX::instance()->print.fileFormat != FORMAT_TEX)){
+  if(align > 0 || line_num){
     GLdouble pos[4];
     glGetDoublev(GL_CURRENT_RASTER_POSITION, pos);
     double x[3], w[3] = {pos[0], pos[1], pos[2]};
@@ -45,17 +43,23 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
       width *= 2;
       height *= 2;
     }
-    switch(align){
-    case 1: w[0] -= width/2.;                    break; // bottom center
-    case 2: w[0] -= width;                       break; // bottom right
-    case 3:                   w[1] -= height;    break; // top left
-    case 4: w[0] -= width/2.; w[1] -= height;    break; // top center
-    case 5: w[0] -= width;    w[1] -= height;    break; // top right
-    case 6:                   w[1] -= height/2.; break; // center left
-    case 7: w[0] -= width/2.; w[1] -= height/2.; break; // center center
-    case 8: w[0] -= width;    w[1] -= height/2.; break; // center right
-    default: break;
+    // alignment for TeX is handled directly by gl2ps
+    if(!CTX::instance()->printing ||
+       CTX::instance()->print.fileFormat != FORMAT_TEX){
+      switch(align){
+      case 1: w[0] -= width/2.;                    break; // bottom center
+      case 2: w[0] -= width;                       break; // bottom right
+      case 3:                   w[1] -= height;    break; // top left
+      case 4: w[0] -= width/2.; w[1] -= height;    break; // top center
+      case 5: w[0] -= width;    w[1] -= height;    break; // top right
+      case 6:                   w[1] -= height/2.; break; // center left
+      case 7: w[0] -= width/2.; w[1] -= height/2.; break; // center center
+      case 8: w[0] -= width;    w[1] -= height/2.; break; // center right
+      default: break;
+      }
     }
+    // treat line number also for TeX
+    if(line_num) w[1] -= line_num * (1.25 * height);
     viewport2World(w, x);
     glRasterPos3d(x[0], x[1], x[2]);
   }
@@ -97,31 +101,34 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
   }
 }
 
-void drawContext::drawString(const std::string &s, double x, double y, double z)
+void drawContext::drawString(const std::string &s, double x, double y, double z,
+                             int line_num)
 {
   drawString(s, x, y, z, CTX::instance()->glFont, CTX::instance()->glFontEnum,
-             CTX::instance()->glFontSize, 0);
+             CTX::instance()->glFontSize, 0, line_num);
 }
 
-void drawContext::drawStringCenter(const std::string &s, double x, double y, double z)
+void drawContext::drawStringCenter(const std::string &s, double x, double y, double z,
+                                   int line_num)
 {
   drawString(s, x, y, z, CTX::instance()->glFont, CTX::instance()->glFontEnum,
-             CTX::instance()->glFontSize, 1);
+             CTX::instance()->glFontSize, 1, line_num);
 }
 
-void drawContext::drawStringRight(const std::string &s, double x, double y, double z)
+void drawContext::drawStringRight(const std::string &s, double x, double y, double z,
+                                  int line_num)
 {
   drawString(s, x, y, z, CTX::instance()->glFont, CTX::instance()->glFontEnum,
-             CTX::instance()->glFontSize, 2);
+             CTX::instance()->glFontSize, 2, line_num);
 }
 
 void drawContext::drawString(const std::string &s, double x, double y, double z,
-                             double style)
+                             double style, int line_num)
 {
   unsigned int bits = (unsigned int)style;
 
   if(!bits){ // use defaults
-    drawString(s, x, y, z);
+    drawString(s, x, y, z, line_num);
   }
   else{
     int size = (bits & 0xff);
@@ -130,7 +137,7 @@ void drawContext::drawString(const std::string &s, double x, double y, double z,
     int font_enum = drawContext::global()->getFontEnum(font);
     std::string font_name = drawContext::global()->getFontName(font);
     if(!size) size = CTX::instance()->glFontSize;
-    drawString(s, x, y, z, font_name, font_enum, size, align);
+    drawString(s, x, y, z, font_name, font_enum, size, align, line_num);
   }
 }
 
@@ -244,6 +251,76 @@ void drawContext::drawImage(const std::string &name, double x, double y, double 
     glMatrixMode(matrixMode);
   }
 }
+
+void drawContext::drawCube(double x, double y, double z, double val[9],
+			    int light)
+{
+  double d0[3] = {val[0],val[1],val[2]};
+  double d1[3] = {val[3],val[4],val[5]};
+  double d2[3] = {val[6],val[7],val[8]};
+
+  double x0[3] = {x + d1[0] + d1[0] + d2[0] , x + d0[1] + d1[1] + d2[1] , z + d0[2] + d1[2] + d2[2] };
+  double x1[3] = {x - d1[0] + d1[0] + d2[0] , x - d0[1] + d1[1] + d2[1] , z - d0[2] + d1[2] + d2[2] };
+  double x2[3] = {x - d1[0] - d1[0] + d2[0] , x - d0[1] - d1[1] + d2[1] , z - d0[2] - d1[2] + d2[2] };
+  double x3[3] = {x + d1[0] - d1[0] + d2[0] , x + d0[1] - d1[1] + d2[1] , z + d0[2] - d1[2] + d2[2] };
+
+  double x4[3] = {x + d1[0] + d1[0] - d2[0] , x + d0[1] + d1[1] - d2[1] , z + d0[2] + d1[2] - d2[2] };
+  double x5[3] = {x - d1[0] + d1[0] - d2[0] , x - d0[1] + d1[1] - d2[1] , z - d0[2] + d1[2] - d2[2] };
+  double x6[3] = {x - d1[0] - d1[0] - d2[0] , x - d0[1] - d1[1] - d2[1] , z - d0[2] - d1[2] - d2[2] };
+  double x7[3] = {x + d1[0] - d1[0] - d2[0] , x + d0[1] - d1[1] - d2[1] , z + d0[2] - d1[2] - d2[2] };
+  
+  if(light) glEnable(GL_LIGHTING);
+  glPushMatrix();
+
+  glBegin(GL_POLYGON);
+  glColor3f(   x0[0],  x0[1], x0[2]);
+  glColor3f(   x1[0],  x1[1], x1[2]);
+  glColor3f(   x2[0],  x2[1], x2[2]);
+  glColor3f(   x3[0],  x3[1], x3[2]);
+  glEnd();
+
+  glBegin(GL_POLYGON);
+  glColor3f(   x4[0],  x4[1], x4[2]);
+  glColor3f(   x7[0],  x7[1], x7[2]);
+  glColor3f(   x6[0],  x6[1], x6[2]);
+  glColor3f(   x5[0],  x5[1], x5[2]);
+  glEnd();
+
+  glBegin(GL_POLYGON);
+  glColor3f(   x0[0],  x0[1], x0[2]);
+  glColor3f(   x3[0],  x3[1], x3[2]);
+  glColor3f(   x7[0],  x7[1], x7[2]);
+  glColor3f(   x4[0],  x4[1], x4[2]);
+  glEnd();
+
+
+  glBegin(GL_POLYGON);
+  glColor3f(   x1[0],  x1[1], x1[2]);
+  glColor3f(   x5[0],  x5[1], x5[2]);
+  glColor3f(   x6[0],  x6[1], x6[2]);
+  glColor3f(   x2[0],  x2[1], x2[2]);
+  glEnd();
+
+
+  glBegin(GL_POLYGON);
+  glColor3f(   x0[0],  x0[1], x0[2]);
+  glColor3f(   x4[0],  x4[1], x4[2]);
+  glColor3f(   x5[0],  x5[1], x5[2]);
+  glColor3f(   x1[0],  x1[1], x1[2]);
+  glEnd();
+
+
+  glBegin(GL_POLYGON);
+  glColor3f(   x3[0],  x3[1], x3[2]);
+  glColor3f(   x2[0],  x2[1], x2[2]);
+  glColor3f(   x6[0],  x6[1], x6[2]);
+  glColor3f(   x7[0],  x7[1], x7[2]);
+  glEnd();
+
+  glPopMatrix();
+  glDisable(GL_LIGHTING);
+}
+
 
 void drawContext::drawSphere(double R, double x, double y, double z,
                              int n1, int n2, int light)

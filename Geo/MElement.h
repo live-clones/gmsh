@@ -274,7 +274,7 @@ class MElement
   int getValidity();
 
   // return an information string for the element
-  virtual std::string getInfoString();
+  virtual std::string getInfoString(bool multline);
 
   // get the function space for the element
   virtual const nodalBasis* getFunctionSpace(int order=-1, bool serendip=false) const;
