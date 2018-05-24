@@ -674,7 +674,7 @@ GMSH_API void gmshModelMeshGetElementsByType(const int elementType, int ** eleme
   }
 }
 
-GMSH_API void gmshModelMeshGetNodesByType(const int elementType, int ** nodeTags, size_t * nodeTags_n, const int dim, const int tag, const int myThread, const int nbrThreads, int * ierr)
+GMSH_API void gmshModelMeshGetNodesByType(const int elementType, int ** nodeTags, size_t * nodeTags_n, const int dim, const int tag, const size_t myThread, const size_t nbrThreads, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -704,7 +704,7 @@ GMSH_API void gmshModelMeshGetIntegrationDataByType(const int elementType, const
   }
 }
 
-GMSH_API void gmshModelMeshGetJacobianDataByType(const int elementType, const char * integrationType, int * nbrIntegrationPoints, double ** jacobian, size_t * jacobian_n, double ** determinant, size_t * determinant_n, const int dim, const int tag, const int myThread, const int nbrThreads, int * ierr)
+GMSH_API void gmshModelMeshGetJacobianDataByType(const int elementType, const char * integrationType, int * nbrIntegrationPoints, double ** jacobian, size_t * jacobian_n, double ** determinant, size_t * determinant_n, const int dim, const int tag, const size_t myThread, const size_t nbrThreads, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -818,7 +818,7 @@ GMSH_API void gmshModelMeshGetBarycenter(const int elementTag, const int fast, c
   }
 }
 
-GMSH_API void gmshModelMeshGetBarycenters(const int elementType, const int dim, const int tag, const int fast, const int primary, double ** barycenters, size_t * barycenters_n, const int myThread, const int nbrThreads, int * ierr)
+GMSH_API void gmshModelMeshGetBarycenters(const int elementType, const int dim, const int tag, const int fast, const int primary, double ** barycenters, size_t * barycenters_n, const size_t myThread, const size_t nbrThreads, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {

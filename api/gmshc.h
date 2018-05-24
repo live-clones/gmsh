@@ -411,8 +411,8 @@ GMSH_API void gmshModelMeshGetNodesByType(const int elementType,
                                           int ** nodeTags, size_t * nodeTags_n,
                                           const int dim,
                                           const int tag,
-                                          const int myThread,
-                                          const int nbrThreads,
+                                          const size_t myThread,
+                                          const size_t nbrThreads,
                                           int * ierr);
 
 /* Get the integration data for mesh elements in the same way as
@@ -437,8 +437,8 @@ GMSH_API void gmshModelMeshGetJacobianDataByType(const int elementType,
                                                  double ** determinant, size_t * determinant_n,
                                                  const int dim,
                                                  const int tag,
-                                                 const int myThread,
-                                                 const int nbrThreads,
+                                                 const size_t myThread,
+                                                 const size_t nbrThreads,
                                                  int * ierr);
 
 /* Get the function space data for mesh elements in the same way as
@@ -528,8 +528,8 @@ GMSH_API void gmshModelMeshGetBarycenters(const int elementType,
                                           const int fast,
                                           const int primary,
                                           double ** barycenters, size_t * barycenters_n,
-                                          const int myThread,
-                                          const int nbrThreads,
+                                          const size_t myThread,
+                                          const size_t nbrThreads,
                                           int * ierr);
 
 /* Set a mesh size constraint on the geometrical entities `dimTags'. Currently

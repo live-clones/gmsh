@@ -748,8 +748,8 @@ namespace gmsh { // Top-level functions
                                    std::vector<int> & nodeTags,
                                    const int dim = -1,
                                    const int tag = -1,
-                                   const int myThread = 0,
-                                   const int nbrThreads = 1)
+                                   const size_t myThread = 0,
+                                   const size_t nbrThreads = 1)
       {
         int ierr = 0;
         int *api_nodeTags_; size_t api_nodeTags_n_;
@@ -790,8 +790,8 @@ namespace gmsh { // Top-level functions
                                           std::vector<double> & determinant,
                                           const int dim = -1,
                                           const int tag = -1,
-                                          const int myThread = 0,
-                                          const int nbrThreads = 1)
+                                          const size_t myThread = 0,
+                                          const size_t nbrThreads = 1)
       {
         int ierr = 0;
         double *api_jacobian_; size_t api_jacobian_n_;
@@ -942,8 +942,8 @@ namespace gmsh { // Top-level functions
                                    const bool fast,
                                    const bool primary,
                                    std::vector<double> & barycenters,
-                                   const int myThread = 0,
-                                   const int nbrThreads = 1)
+                                   const size_t myThread = 0,
+                                   const size_t nbrThreads = 1)
       {
         int ierr = 0;
         double *api_barycenters_; size_t api_barycenters_n_;

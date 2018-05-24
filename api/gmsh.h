@@ -394,8 +394,8 @@ namespace gmsh { // Top-level functions
                                    std::vector<int> & nodeTags,
                                    const int dim = -1,
                                    const int tag = -1,
-                                   const int myThread = 0,
-                                   const int nbrThreads = 1);
+                                   const size_t myThread = 0,
+                                   const size_t nbrThreads = 1);
 
       // Get the integration data for mesh elements in the same way as
       // `getIntegrationData', but for a single `elementType'.
@@ -418,8 +418,8 @@ namespace gmsh { // Top-level functions
                                           std::vector<double> & determinant,
                                           const int dim = -1,
                                           const int tag = -1,
-                                          const int myThread = 0,
-                                          const int nbrThreads = 1);
+                                          const size_t myThread = 0,
+                                          const size_t nbrThreads = 1);
 
       // Get the function space data for mesh elements in the same way as
       // `getFunctionSpaceData', but for a single `elementType'.
@@ -502,8 +502,8 @@ namespace gmsh { // Top-level functions
                                    const bool fast,
                                    const bool primary,
                                    std::vector<double> & barycenters,
-                                   const int myThread = 0,
-                                   const int nbrThreads = 1);
+                                   const size_t myThread = 0,
+                                   const size_t nbrThreads = 1);
 
       // Set a mesh size constraint on the geometrical entities `dimTags'.
       // Currently only entities of dimension 0 (points) are handled.

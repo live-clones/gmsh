@@ -1005,7 +1005,7 @@ function getNodesByType(elementType, dim = -1, tag = -1, myThread = 0, nbrThread
     api_nodeTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetNodesByType, gmsh.clib), Void,
-          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Cint, Cint, Ptr{Cint}),
+          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
           elementType, api_nodeTags_, api_nodeTags_n_, dim, tag, myThread, nbrThreads, ierr)
     ierr[] != 0 && error("gmshModelMeshGetNodesByType returned non-zero error code: $(ierr[])")
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
@@ -1055,7 +1055,7 @@ function getJacobianDataByType(elementType, integrationType, dim = -1, tag = -1,
     api_determinant_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetJacobianDataByType, gmsh.clib), Void,
-          (Cint, Ptr{Cchar}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Cint, Cint, Ptr{Cint}),
+          (Cint, Ptr{Cchar}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
           elementType, integrationType, api_nbrIntegrationPoints_, api_jacobian_, api_jacobian_n_, api_determinant_, api_determinant_n_, dim, tag, myThread, nbrThreads, ierr)
     ierr[] != 0 && error("gmshModelMeshGetJacobianDataByType returned non-zero error code: $(ierr[])")
     jacobian = unsafe_wrap(Array, api_jacobian_[], api_jacobian_n_[], true)
@@ -1233,7 +1233,7 @@ function getBarycenters(elementType, dim, tag, fast, primary, myThread = 0, nbrT
     api_barycenters_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetBarycenters, gmsh.clib), Void,
-          (Cint, Cint, Cint, Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          (Cint, Cint, Cint, Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Csize_t, Csize_t, Ptr{Cint}),
           elementType, dim, tag, fast, primary, api_barycenters_, api_barycenters_n_, myThread, nbrThreads, ierr)
     ierr[] != 0 && error("gmshModelMeshGetBarycenters returned non-zero error code: $(ierr[])")
     barycenters = unsafe_wrap(Array, api_barycenters_[], api_barycenters_n_[], true)

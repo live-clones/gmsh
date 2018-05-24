@@ -529,7 +529,7 @@ void frameFieldBackgroundMesh3D::computeCrossField()
 
     }// end vertices loop
 
-    rank = rank_temp;
+    //rank = rank_temp;
     rank_temp.clear();
 
     norme = std::accumulate(angles.begin(),angles.end(),0.);

@@ -184,13 +184,13 @@ doc = '''Get the mesh elements in the same way as `getElements', but for a singl
 mesh.add('getElementsByType',doc,None,iint('elementType'),ovectorint('elementTags'),ovectorint('nodeTags'),iint('dim', '-1'),iint('tag', '-1'))
 
 doc = '''Get the mesh nodes in the same way as `getElementsByType'.'''
-mesh.add('getNodesByType',doc,None,iint('elementType'),ovectorint('nodeTags'),iint('dim', '-1'),iint('tag', '-1'),iint('myThread', '0'),iint('nbrThreads', '1'))
+mesh.add('getNodesByType',doc,None,iint('elementType'),ovectorint('nodeTags'),iint('dim', '-1'),iint('tag', '-1'),isize('myThread', '0'),isize('nbrThreads', '1'))
 
 doc = '''Get the integration data for mesh elements in the same way as `getIntegrationData', but for a single `elementType'.'''
 mesh.add('getIntegrationDataByType',doc,None,iint('elementType'),istring('integrationType'),istring('functionSpaceType'),ovectordouble('integrationPoints'),ovectordouble('integrationData'),oint('functionSpaceNumComponents'),ovectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))
 
 doc = '''Get the Jacobian data for mesh elements in the same way as `getJacobianData', but for a single `elementType'.'''
-mesh.add('getJacobianDataByType',doc,None,iint('elementType'),istring('integrationType'),oint('nbrIntegrationPoints'),ovectordouble('jacobian'),ovectordouble('determinant'),iint('dim', '-1'),iint('tag', '-1'),iint('myThread', '0'),iint('nbrThreads', '1'))
+mesh.add('getJacobianDataByType',doc,None,iint('elementType'),istring('integrationType'),oint('nbrIntegrationPoints'),ovectordouble('jacobian'),ovectordouble('determinant'),iint('dim', '-1'),iint('tag', '-1'),isize('myThread', '0'),isize('nbrThreads', '1'))
 
 doc = '''Get the function space data for mesh elements in the same way as `getFunctionSpaceData', but for a single `elementType'.'''
 mesh.add('getFunctionSpaceDataByType',doc,None,iint('elementType'),istring('integrationType'),istring('functionSpaceType'),ovectordouble('integrationPoints'),oint('functionSpaceNumComponents'),ovectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))
@@ -214,7 +214,7 @@ doc = '''Get barycenter of element with tag 'tag'. If 'fast' is true the barycen
 mesh.add('getBarycenter',doc,None,iint('elementTag'),ibool('fast'),ibool('primary'),ovectordouble('barycenter'))
 
 doc = '''Get barycenters of all elements corresponding to 'elementType' into entity of dimension `dim' and tag `tag'.'''
-mesh.add('getBarycenters',doc,None,iint('elementType'),iint('dim'),iint('tag'),ibool('fast'),ibool('primary'),ovectordouble('barycenters'),iint('myThread', '0'),iint('nbrThreads', '1'))
+mesh.add('getBarycenters',doc,None,iint('elementType'),iint('dim'),iint('tag'),ibool('fast'),ibool('primary'),ovectordouble('barycenters'),isize('myThread', '0'),isize('nbrThreads', '1'))
 
 doc = '''Set a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize',doc,None,ivectorpair('dimTags'),idouble('size'))

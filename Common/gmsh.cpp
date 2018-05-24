@@ -764,21 +764,21 @@ GMSH_API void gmsh::model::mesh::getElementsByType(const int elementType,
 GMSH_API void gmsh::model::mesh::getNodesByType(const int elementType,
                                                 std::vector<int> &nodeTags,
                                                 const int dim, const int tag,
-                                                const int myThread, const int nbrThreads)
+                                                const size_t myThread, const size_t nbrThreads)
 {
   if(!_isInitialized()){ throw -1; }
   std::map<int, std::vector<GEntity*> > typeMap;
   _getElementTypeMap(dim, tag, typeMap);
   const int nbrElements = getNumberElementByType(elementType, dim, tag);
   const int nbrNodes = ElementType::NumberOfVertices(elementType);
-  const int begin = (myThread*nbrElements)/nbrThreads;
-  const int end = ((myThread+1)*nbrElements)/nbrThreads;
+  const size_t begin = (myThread*nbrElements)/nbrThreads;
+  const size_t end = ((myThread+1)*nbrElements)/nbrThreads;
   if(nodeTags.size() < nbrElements*nbrNodes){
     Msg::Error("Vector size is too small");
     throw 4;
   }
-  int o = 0;
-  int idx = begin*nbrNodes;
+  size_t o = 0;
+  size_t idx = begin*nbrNodes;
   for(unsigned int i = 0; i < typeMap[elementType].size(); i++){
     int familyType = ElementType::ParentTypeFromTag(elementType);
     GEntity *ge = typeMap[elementType][i];
@@ -972,7 +972,7 @@ static void _getJacobianData(const int elementType,
                              int &nbrIntegrationPoints,
                              std::vector<double> &jacobian,
                              std::vector<double> &determinant,
-                             const int myThread, const int nbrThreads)
+                             const size_t myThread, const size_t nbrThreads)
 {
   std::string intName = "", fsName = "";
   int intOrder = 0;
@@ -998,8 +998,8 @@ static void _getJacobianData(const int elementType,
       GEntity *ge = entities[i];
       n += ge->getNumMeshElementsByType(familyType);
     }
-    const int begin = (myThread*n)/nbrThreads;
-    const int end = ((myThread+1)*n)/nbrThreads;
+    const size_t begin = (myThread*n)/nbrThreads;
+    const size_t end = ((myThread+1)*n)/nbrThreads;
     if(end*nbrIPoint > determinant.size()){
       Msg::Error("Vector 'determinant' is small (%d < %d)", determinant.size(), end*nbrIPoint);
       throw 4;
@@ -1009,8 +1009,8 @@ static void _getJacobianData(const int elementType,
       throw 4;
     }
     std::vector< std::vector<SVector3> > gsf;
-    int o = 0;
-    int idx = begin*nbrIPoint;
+    size_t o = 0;
+    size_t idx = begin*nbrIPoint;
     for(unsigned int i = 0; i < entities.size(); i++){
       GEntity *ge = entities[i];
       const unsigned int numMeshElements = ge->getNumMeshElementsByType(familyType);
@@ -1208,7 +1208,7 @@ GMSH_API void gmsh::model::mesh::getJacobianDataByType(const int elementType,
                                               std::vector<double> &jacobian,
                                               std::vector<double> &determinant,
                                               const int dim, const int tag,
-                                              const int myThread, const int nbrThreads)
+                                              const size_t myThread, const size_t nbrThreads)
 {
   if(!_isInitialized()){ throw -1; }
   nbrIntegrationPoints = 0;
@@ -1460,7 +1460,7 @@ GMSH_API void gmsh::model::mesh::getBarycenters(const int elementType,
                                                 const int dim, const int tag,
                                                 const bool fast, const bool primary,
                                                 std::vector<double> &barycenters,
-                                                const int myThread, const int nbrThreads)
+                                                const size_t myThread, const size_t nbrThreads)
 {
   if(!_isInitialized()){ throw -1; }
   std::map<int, std::vector<GEntity*> > typeMap;
@@ -1472,15 +1472,15 @@ GMSH_API void gmsh::model::mesh::getBarycenters(const int elementType,
     GEntity *ge = typeMap[elementType][i];
     n += ge->getNumMeshElementsByType(familyType);
   }
-  const int begin = (myThread*n)/nbrThreads;
-  const int end = ((myThread+1)*n)/nbrThreads;
+  const size_t begin = (myThread*n)/nbrThreads;
+  const size_t end = ((myThread+1)*n)/nbrThreads;
   if(3*end > barycenters.size()){
     Msg::Error("Vector barycenters is too small");
     throw 4;
   }
   
-  int o = 0;
-  int idx = 3*begin;
+  size_t o = 0;
+  size_t idx = 3*begin;
   if(fast){
     for(unsigned int i = 0; i < typeMap[elementType].size(); i++){
       GEntity *ge = typeMap[elementType][i];

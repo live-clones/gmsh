@@ -1168,8 +1168,8 @@ class model:
                 byref(api_nodeTags_), byref(api_nodeTags_n_),
                 c_int(dim),
                 c_int(tag),
-                c_int(myThread),
-                c_int(nbrThreads),
+                c_size_t(myThread),
+                c_size_t(nbrThreads),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -1231,8 +1231,8 @@ class model:
                 byref(api_determinant_), byref(api_determinant_n_),
                 c_int(dim),
                 c_int(tag),
-                c_int(myThread),
-                c_int(nbrThreads),
+                c_size_t(myThread),
+                c_size_t(nbrThreads),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -1442,8 +1442,8 @@ class model:
                 c_int(bool(fast)),
                 c_int(bool(primary)),
                 byref(api_barycenters_), byref(api_barycenters_n_),
-                c_int(myThread),
-                c_int(nbrThreads),
+                c_size_t(myThread),
+                c_size_t(nbrThreads),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
