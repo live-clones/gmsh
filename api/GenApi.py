@@ -67,6 +67,8 @@ def istring(name, value=None, python_value=None, julia_value=None):
     return a
 
 def ivectorint(name, value=None, python_value=None, julia_value=None):
+    if julia_value == "[]":
+        julia_value = "Cint[]"
     a = arg(name, value, python_value, julia_value,
             "const std::vector<int> &", "const int *", False)
     api_name = "api_" + name + "_"
@@ -86,6 +88,8 @@ def ivectorint(name, value=None, python_value=None, julia_value=None):
     return a
 
 def ivectordouble(name, value=None, python_value=None, julia_value=None):
+    if julia_value == "[]":
+        julia_value = "Cdouble[]"
     a = arg(name, value, python_value, julia_value,
             "const std::vector<double> &", "double **", False)
     api_name = "api_" + name + "_"
@@ -105,6 +109,8 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
     return a
 
 def ivectorpair(name, value=None, python_value=None, julia_value=None):
+    if julia_value == "[]":
+        julia_value = "Tuple{Cint,Cint}[]"
     a = arg(name, value, python_value, julia_value,
             "const gmsh::vectorpair &", "const int *", False)
     api_name = "api_" + name + "_"
@@ -124,11 +130,13 @@ def ivectorpair(name, value=None, python_value=None, julia_value=None):
     a.python_pre = api_name + ", " + api_name_n + " = _ivectorpair(" + name + ")"
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Cint}, Csize_t"
-    a.julia_arg = ("convert(Vector{Cint}, collect(Iterators.flatten(" + name + "))), " +
+    a.julia_arg = ("convert(Vector{Cint}, collect(Cint, Iterators.flatten(" + name + "))), " +
                    "2 * length(" + name + ")")
     return a
 
 def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
+    if julia_value == "[]":
+        julia_value = "Vector{Cint}[]"
     a = arg(name, value, python_value, julia_value,
             "const std::vector<std::vector<int> > &", "const int **", False)
     api_name = "api_" + name + "_"
@@ -160,6 +168,8 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
     return a
 
 def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
+    if julia_value == "[]":
+        julia_value = "Vector{Cdouble}[]"
     a = arg(name, value, python_value, julia_value,
             "const std::vector<std::vector<double> > &", "const double**", False)
     api_name = "api_" + name + "_"
@@ -467,11 +477,12 @@ def ovectorvectorpair(name, value=None, python_value=None, julia_value=None):
                     api_name_nn + "[], true)\n    " +
                     "tmp_" + api_name_n + " = unsafe_wrap(Array, " + api_name_n + "[], " +
                     api_name_nn + "[], true)\n    " +
-                    name + " = []\n    " +
+                    name + " = Vector{Tuple{Cint,Cint}}[]\n    " +
+                    "resize!(" + name + ", " + api_name_nn + "[])\n    " +
                     "for i in 1:" + api_name_nn + "[]\n    " +
                     "    tmp = unsafe_wrap(Array, tmp_" + api_name + "[i], tmp_" +
                     api_name_n + "[i], true)\n    " +
-                    "    push!(" + name + ", [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)])\n    " +
+                    "    " + name + "[i] = [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)]\n    " +
                     "end")
     return a
 
