@@ -2942,7 +2942,6 @@ FieldManager::FieldManager()
 #endif
   map_type_name["MaxEigenHessian"] = new FieldFactoryT<MaxEigenHessianField>();
   _background_field = -1;
-  _boundaryLayer_field = -1;
 }
 
 void FieldManager::initialize(){

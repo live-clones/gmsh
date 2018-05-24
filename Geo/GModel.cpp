@@ -920,8 +920,10 @@ void GModel::setAllVolumesPositiveTopology()
   }
   std::vector< std::pair <MElement *, bool > > queue;
   std::set<MElement*> queued;
-  if( (*regions.begin())->tetrahedra.size() == 0)
-    Msg::Fatal("setAllVolumePositiveTopology needs at least one tetrahedron to start");
+  if((*regions.begin())->tetrahedra.size() == 0){
+    Msg::Error("setAllVolumePositiveTopology needs at least one tetrahedron to start");
+    return;
+  }
   el = (*regions.begin())->tetrahedra[0];
   queue.push_back(std::make_pair(el, true));
   for(size_t i = 0; i < queue.size(); i++){
@@ -1951,8 +1953,23 @@ void GModel::checkMeshCoherence(double tolerance)
       vertices.insert(vertices.end(), entities[i]->mesh_vertices.begin(),
                       entities[i]->mesh_vertices.end());
     MVertexRTree pos(eps);
-    int num = pos.insert(vertices, true);
-    if(num) Msg::Error("%d duplicate vert%s", num, num > 1 ? "ices" : "ex");
+    std::set<MVertex*> duplicates;
+    int num = pos.insert(vertices, true, &duplicates);
+    if(num){
+      Msg::Error("%d duplicate vert%s: see `duplicate_vertices.pos'",
+                 num, num > 1 ? "ices" : "ex");
+      FILE *fp = Fopen("duplicate_vertices.pos", "w");
+      if(fp){
+        fprintf(fp, "View \"duplicate vertices\"{\n");
+        for(std::set<MVertex*>::iterator it = duplicates.begin();
+            it != duplicates.end(); it++){
+          MVertex *v = *it;
+          fprintf(fp, "SP(%.16g,%.16g,%.16g){%d};\n", v->x(), v->y(), v->z(), v->getNum());
+        }
+        fprintf(fp, "};\n");
+        fclose(fp);
+      }
+    }
   }
 
   // check for duplicate elements
@@ -2705,8 +2722,7 @@ void GModel::save(std::string fileName)
 {
   GModel *temp = GModel::current();
   GModel::setCurrent(this);
-  int guess = GuessFileFormatFromFileName(fileName);
-  CreateOutputFile(fileName, guess);
+  CreateOutputFile(fileName, FORMAT_AUTO);
   GModel::setCurrent(temp);
 }
 
@@ -3070,12 +3086,12 @@ void GModel::classifyFaces(std::set<GFace*> &_faces)
 }
 
 void GModel::addHomologyRequest(const std::string &type,
-                                std::vector<int> &domain,
-                                std::vector<int> &subdomain,
-                                std::vector<int> &dim)
+                                const std::vector<int> &domain,
+                                const std::vector<int> &subdomain,
+                                const std::vector<int> &dim)
 {
-  typedef std::pair<std::vector<int>, std::vector<int> > dpair;
-  typedef std::pair<std::string, std::vector<int> > tpair;
+  typedef std::pair<const std::vector<int>, const std::vector<int> > dpair;
+  typedef std::pair<const std::string, const std::vector<int> > tpair;
   dpair p(domain, subdomain);
   tpair p2(type, dim);
   _homologyRequests.insert(std::pair<dpair, tpair>(p, p2));
@@ -3089,8 +3105,8 @@ void GModel::computeHomology()
   double t1 = Cpu();
 
   // find unique domain/subdomain requests
-  typedef std::pair<std::vector<int>, std::vector<int> > dpair;
-  typedef std::pair<std::string, std::vector<int> > tpair;
+  typedef std::pair<const std::vector<int>, const std::vector<int> > dpair;
+  typedef std::pair<const std::string, const std::vector<int> > tpair;
   std::set<dpair> domains;
   for(std::multimap<dpair, tpair>::iterator it = _homologyRequests.begin();
       it != _homologyRequests.end(); it++)
@@ -3112,6 +3128,7 @@ void GModel::computeHomology()
         itt != itp.second; itt++){
       std::string type = itt->second.first;
       std::vector<int> dim0 = itt->second.second;
+      if(dim0.empty()) for(int i = 0; i < getDim(); i++) dim0.push_back(i);
       std::vector<int> dim;
 
       std::stringstream ss;
@@ -3132,7 +3149,10 @@ void GModel::computeHomology()
       if(type != "Homology" && type != "Cohomology" && type != "Betti") {
         Msg::Error("Unknown type of homology computation: %s", type.c_str());
       }
-      else if(dim.empty() || type == "Betti") {
+      else if(dim.empty()) {
+	Msg::Error("Invalid homology computation dimensions given");
+      }
+      else if(type == "Betti") {
         homology->findBettiNumbers();
       }
       else if(type == "Homology" && !homology->isHomologyComputed(dim)) {

@@ -371,13 +371,24 @@ int GModel::readMED(const std::string &name, int meshIndex)
     MElementFactory factory;
     for(int j = 0; j < numEle; j++){
       std::vector<MVertex*> v(numNodPerEle);
-      for(int k = 0; k < numNodPerEle; k++)
-        v[k] = verts[conn[numNodPerEle * j + med2mshNodeIndex(type, k)] - 1];
-      MElement *e = factory.create(mshType, v, eleTags.empty() ? 0 : eleTags[j]);
-      // according to the MED documentation, fam[j] should be negative; still,
-      // accept all family ids, even positive, as some code do not export valid
-      // MED files
-      if(e) elements[std::abs(fam[j])].push_back(e);
+      bool ok = true;
+      for(int k = 0; k < numNodPerEle; k++){
+        int idx = conn[numNodPerEle * j + med2mshNodeIndex(type, k)] - 1;
+        if(idx < 0 || idx > verts.size() - 1){
+          Msg::Error("Wrong node index %d in MED file", idx);
+          ok = false;
+        }
+        else{
+          v[k] = verts[idx];
+        }
+      }
+      if(ok){
+        MElement *e = factory.create(mshType, v, eleTags.empty() ? 0 : eleTags[j]);
+        // according to the MED documentation, fam[j] should be negative; still,
+        // accept all family ids, even positive, as some code do not export valid
+        // MED files
+        if(e) elements[std::abs(fam[j])].push_back(e);
+      }
     }
     _storeElementsInEntities(elements);
   }

@@ -40,7 +40,7 @@ factory.addLine(6,2, 13);  factory.addLine(2,1, 14)
 factory.addLine(1,3, 15);  factory.addLine(3,7, 16)
 factory.addLine(7,2, 17);  factory.addLine(3,4, 18)
 factory.addLine(5,1, 19);  factory.addLine(7,8, 20)
-factory.addLine(6,14, 21); 
+factory.addLine(6,14, 21) 
 
 factory.addCurveLoop([-11,-19,-15,-18], 22)
 factory.addPlaneSurface([22], 23)
@@ -114,14 +114,14 @@ def cheeseHole(x, y, z, r, lc, shells):
 
 x = 0; y = 0.75; z = 0; r = 0.09
 for t in range(1, 6):
-    x += 0.166 ;
-    z += 0.166 ;
-    v = cheeseHole(x, y, z, r, lcar3, shells);
-    model.addPhysicalGroup(3, [v], t);
+    x += 0.166
+    z += 0.166
+    v = cheeseHole(x, y, z, r, lcar3, shells)
+    model.addPhysicalGroup(3, [v], t)
 
-factory.addVolume(shells, 186);
+factory.addVolume(shells, 186)
       
-model.addPhysicalGroup(3, [186], 10);
+model.addPhysicalGroup(3, [186], 10)
 factory.synchronize()
 model.mesh.generate(3)
 gmsh.write("t5.msh")

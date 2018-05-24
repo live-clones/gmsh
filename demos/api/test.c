@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "gmshc.h"
 
 #define chk(ierr)                                               \
@@ -58,15 +59,15 @@ void printMesh() {
       printf("\n");
     }
 
-    free(types);
+    gmshFree(types);
     for (size_t i = 0; i < nnelementTags; ++i)
-      free(elementTags[i]);
+      gmshFree(elementTags[i]);
     for (size_t i = 0; i < nnvertexTags; ++i)
-      free(vertexTags[i]);
-    free(nelementTags);
-    free(nvertexTags);
+      gmshFree(vertexTags[i]);
+    gmshFree(nelementTags);
+    gmshFree(nvertexTags);
   }
-  free(dimTags);
+  gmshFree(dimTags);
 }
 
 void genError() {

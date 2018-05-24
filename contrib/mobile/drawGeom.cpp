@@ -40,7 +40,7 @@ void drawGeomEdge(GEdge *e)
   if(e->geomType() == GEntity::PartitionCurve) return;
   if(e->geomType() == GEntity::BoundaryLayerCurve) return;
 
-  unsigned int col = CTX::instance()->color.geom.line;
+  unsigned int col = CTX::instance()->color.geom.curve;
   glColor4ub((GLubyte)CTX::instance()->unpackRed(col),
              (GLubyte)CTX::instance()->unpackGreen(col),
              (GLubyte)CTX::instance()->unpackBlue(col),
@@ -58,7 +58,7 @@ void drawGeomEdge(GEdge *e)
     edge[i*3] = p.x(); edge[i*3+1] = p.y(); edge[i*3+2] = p.z();
   }
   // Then print the VA
-  glLineWidth((GLfloat)CTX::instance()->geom.lineWidth);
+  glLineWidth((GLfloat)CTX::instance()->geom.curveWidth);
   glVertexPointer(3, GL_FLOAT, 0, &edge[0]);
   glEnableClientState(GL_VERTEX_ARRAY);
   glEnable(GL_LINE_SMOOTH);
@@ -79,7 +79,7 @@ void drawContext::drawGeom()
     if(!m->getVisibility()) continue;
     if(CTX::instance()->geom.points || CTX::instance()->geom.pointsNum)
       std::for_each(m->firstVertex(), m->lastVertex(), drawGeomVertex);
-    if(CTX::instance()->geom.lines || CTX::instance()->geom.linesNum ||
+    if(CTX::instance()->geom.curves || CTX::instance()->geom.curvesNum ||
        CTX::instance()->geom.tangents)
       std::for_each(m->firstEdge(), m->lastEdge(), drawGeomEdge);
     if(CTX::instance()->geom.surfaces || CTX::instance()->geom.surfacesNum ||

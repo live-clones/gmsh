@@ -155,6 +155,14 @@ bool tetgenmesh::reconstructmesh(void *p)
 
   initializepools();
 
+  // Store all coordinates of the vertices as these will be pertubated
+  // in function delaunayTriangulation
+  std::map<MVertex *, SPoint3> originalCoordinates;
+  for (unsigned int i = 0; i < _vertices.size(); i++){
+    MVertex *v = _vertices[i];
+    originalCoordinates[v] = v->point();
+  }
+
   std::vector<MTetrahedron*> tets;
 
   delaunayMeshIn3D(_vertices, tets, false);
@@ -895,6 +903,15 @@ bool tetgenmesh::reconstructmesh(void *p)
   } // mesh output
 
   Msg::Info("Reconstruct time : %g sec", Cpu() - t_start);
+
+  // Put all coordinates back so they are not pertubated anymore (pertubation done 
+  // in delaunayTriangulation)
+  for (std::map<MVertex *, SPoint3>::iterator vIter = originalCoordinates.begin();
+    vIter != originalCoordinates.end(); ++vIter) {
+    const SPoint3 &coordinates = vIter->second;
+    vIter->first->setXYZ(coordinates.x(), coordinates.y(), coordinates.z());
+  }
+
   return true;
 }
 

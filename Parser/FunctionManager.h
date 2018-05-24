@@ -6,18 +6,18 @@
 #ifndef _FUNCTION_MANAGER_H_
 #define _FUNCTION_MANAGER_H_
 
-class mystack;
-class mymap;
-
 #include <string>
 #include "GmshIO.h"
 
 // Singleton, one function manager for all parsers.
 
+class FunctionManagerStack;
+class FunctionManagerMap;
+
 class FunctionManager
 {
-  mymap *functions;
-  mystack *calls;
+  FunctionManagerMap *functions;
+  FunctionManagerStack *calls;
   FunctionManager ();
   static FunctionManager *instance;
  public :

@@ -34,7 +34,8 @@ class MVertexRTree{
     _rtree->RemoveAll();
     delete _rtree;
   }
-  MVertex *insert(MVertex *v, bool warnIfExists=false)
+  MVertex *insert(MVertex *v, bool warnIfExists=false,
+                  std::set<MVertex*> *duplicates=0)
   {
     MVertex *out;
     double _min[3] = {v->x() - _tol, v->y() - _tol, v->z() - _tol};
@@ -44,18 +45,25 @@ class MVertexRTree{
       return 0;
     }
     else{
-      if(warnIfExists)
+      if(duplicates){
+        duplicates->insert(out);
+        duplicates->insert(v);
+      }
+      if(warnIfExists){
         Msg::Warning("Vertex %d (%.16g, %.16g, %.16g) already exists in the "
-                     "mesh with tolerance %g", v->getNum(),
-                     v->x(), v->y(), v->z(), _tol);
+                     "mesh with tolerance %g: Vertex %d (%.16g, %.16g, %.16g)",
+                     v->getNum(), v->x(), v->y(), v->z(), _tol,
+                     out->getNum(), out->x(), out->y(), out->z());
+      }
       return out;
     }
   }
-  int insert(std::vector<MVertex*> &v, bool warnIfExists=false)
+  int insert(std::vector<MVertex*> &v, bool warnIfExists=false,
+             std::set<MVertex*> *duplicates=0)
   {
     int num = 0;
     for(unsigned int i = 0; i < v.size(); i++)
-      num += (insert(v[i], warnIfExists) ? 1 : 0);
+      num += (insert(v[i], warnIfExists, duplicates) ? 1 : 0);
     return num; // number of vertices not inserted
   }
   MVertex *find(double x, double y, double z)

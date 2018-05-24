@@ -370,45 +370,28 @@ bool gmshFace::buildSTLTriangulation(bool force)
 {
   return false;
 
-  if(va_geom_triangles){
-    if(force)
-      delete va_geom_triangles;
-    else
-      return true;
-  }
-
-  stl_vertices.clear();
+  if(stl_triangles.size() && !force) return true;
+  stl_vertices_uv.clear();
+  stl_vertices_xyz.clear();
   stl_triangles.clear();
 
 #if defined(HAVE_MESH)
   if (!triangles.size()){
-    contextMeshOptions _temp = CTX::instance()->mesh;
-    FieldManager *fields = model()->getFields();
-    int BGM  = fields->getBackgroundField();
-    fields->setBackgroundField(0);
-    CTX::instance()->mesh.lcFromPoints = 0;
-    CTX::instance()->mesh.lcFromCurvature = 1;
-    CTX::instance()->mesh.lcExtendFromBoundary = 0;
-    CTX::instance()->mesh.scalingFactor = 1;
-    CTX::instance()->mesh.lcFactor = 1;
-    CTX::instance()->mesh.order = 1;
-    CTX::instance()->mesh.lcIntegrationPrecision = 1.e-3;
-    //  CTX::instance()->mesh.Algorithm = 5;
+    // FIXME: mesh only this surface...
     model()->mesh(2);
-    CTX::instance()->mesh = _temp;
-    fields->setBackgroundField(fields->get(BGM));
   }
 #endif
 
   std::map<MVertex*,int> _v;
-  int COUNT =0;
+  int COUNT = 0;
   for (unsigned int j = 0; j < triangles.size(); j++){
     for (int i = 0; i < 3; i++){
-      std::map<MVertex*,int>::iterator it =
-        _v.find(triangles[j]->getVertex(j));
-      if (it != _v.end()){
+      MVertex *v = triangles[j]->getVertex(i);
+      std::map<MVertex*,int>::iterator it = _v.find(v);
+      if (it == _v.end()){
+        _v[v] = COUNT;
         stl_triangles.push_back(COUNT);
-        _v[triangles[j]->getVertex(j)] = COUNT++;
+        COUNT++;
       }
       else stl_triangles.push_back(it->second);
     }
@@ -416,27 +399,11 @@ bool gmshFace::buildSTLTriangulation(bool force)
   std::map<MVertex*,int>::iterator itv = _v.begin();
   for ( ; itv != _v.end() ; ++itv){
     MVertex *v = itv->first;
+    stl_vertices_xyz.push_back(SPoint3(v->x(), v->y(), v->z()));
     SPoint2 param;
     reparamMeshVertexOnFace(v, this, param);
-    stl_vertices.push_back(param);
+    stl_vertices_uv.push_back(param);
   }
 
-  va_geom_triangles = new VertexArray(3, stl_triangles.size() / 3);
-  unsigned int c = CTX::instance()->color.geom.surface;
-  unsigned int col[4] = {c, c, c, c};
-  for (unsigned int i = 0; i < stl_triangles.size(); i += 3){
-    SPoint2 &p1(stl_vertices[stl_triangles[i]]);
-    SPoint2 &p2(stl_vertices[stl_triangles[i + 1]]);
-    SPoint2 &p3(stl_vertices[stl_triangles[i + 2]]);
-    GPoint gp1 = GFace::point(p1);
-    GPoint gp2 = GFace::point(p2);
-    GPoint gp3 = GFace::point(p3);
-    double x[3] = {gp1.x(), gp2.x(), gp3.x()};
-    double y[3] = {gp1.y(), gp2.y(), gp3.y()};
-    double z[3] = {gp1.z(), gp2.z(), gp3.z()};
-    SVector3 n[3] = {normal(p1), normal(p2), normal(p3)};
-    va_geom_triangles->add(x, y, z, n, col);
-  }
-  va_geom_triangles->finalize();
   return true;
 }

@@ -93,7 +93,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.LineSelectWidth
 Display width of selected curves (in pixels)@*
-Default value: @code{2}@*
+Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.LineType
@@ -208,7 +208,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.PointSelectSize
 Display size of selected points (in pixels)@*
-Default value: @code{5}@*
+Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.PointSize

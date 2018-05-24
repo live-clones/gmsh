@@ -5,29 +5,12 @@
 
 #include <stdlib.h>
 #include "GmshGlobal.h"
-#include "GModel.h"
-#include "CommandLine.h"
-#include "GmshMessage.h"
-#include "Context.h"
 
 int main(int argc, char *argv[])
 {
-  if(argc < 2){
-    CTX::instance()->terminal = 1;
-    PrintUsage(argv[0]);
-    exit(0);
-  }
-
-  new GModel();
-  GmshInitialize(argc, argv, true);
-
-  if(!Msg::GetGmshClient()) CTX::instance()->terminal = 1;
-  CTX::instance()->noPopup = 1;
-
-  GmshBatch();
-  GmshFinalize();
-
-  Msg::Exit(0);
-  return 1;
+#if defined(HAVE_FLTK)
+  return GmshMainFLTK(argc, argv);
+#else
+  return GmshMainBatch(argc, argv);
+#endif
 }
-

@@ -83,6 +83,8 @@ void recombineIntoQuads(GFace *gf,
 //used for meshGFaceRecombine development
 void quadsToTriangles(GFace *gf, double minqual);
 
+void splitElementsInBoundaryLayerIfNeeded(GFace *gf);
+
 struct swapquad{
   int v[4];
   bool operator < (const swapquad &o) const

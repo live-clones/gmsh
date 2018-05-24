@@ -17,8 +17,6 @@
 
 class MTriangle;
 
-using namespace std;
-
 /*
    The backgroundMesh2D creates a bunch of triangles on the parametric space of a GFace.
    Those triangles are local to the backgroundMesh2D so that
@@ -44,10 +42,10 @@ protected:
 
   double sizeFactor;
   std::vector<MTriangle*> tempTR;
-  vector<MElement*> elements;
-  vector<MVertex*> vertices;
-  map<MVertex*,MVertex*> _3Dto2D;
-  map<MVertex*,MVertex*> _2Dto3D;
+  std::vector<MElement*> elements;
+  std::vector<MVertex*> vertices;
+  std::map<MVertex const* const, MVertex*> _3Dto2D;
+  std::map<MVertex const* const, MVertex*> _2Dto3D;
 
 public:
   backgroundMesh2D(GFace *, bool erase_2D3D=true);
@@ -61,14 +59,14 @@ public:
   // not used !!!! TODO !!!
   void setSizeFactor (double s) {sizeFactor = s;}
 
-  virtual vector<MVertex*>::iterator beginvertices(){ return vertices.begin(); }
-  virtual vector<MVertex*>::iterator endvertices(){ return vertices.end(); }
-  virtual vector<MElement*>::iterator beginelements(){ return elements.begin(); }
-  virtual vector<MElement*>::iterator endelements(){ return elements.end(); }
-  virtual vector<MVertex*>::const_iterator beginvertices() const { return vertices.begin(); }
-  virtual vector<MVertex*>::const_iterator endvertices() const { return vertices.end(); }
-  virtual vector<MElement*>::const_iterator beginelements() const { return elements.begin(); }
-  virtual vector<MElement*>::const_iterator endelements() const { return elements.end(); }
+  virtual std::vector<MVertex*>::iterator beginvertices(){ return vertices.begin(); }
+  virtual std::vector<MVertex*>::iterator endvertices(){ return vertices.end(); }
+  virtual std::vector<MElement*>::iterator beginelements(){ return elements.begin(); }
+  virtual std::vector<MElement*>::iterator endelements(){ return elements.end(); }
+  virtual std::vector<MVertex*>::const_iterator beginvertices() const { return vertices.begin(); }
+  virtual std::vector<MVertex*>::const_iterator endvertices() const { return vertices.end(); }
+  virtual std::vector<MElement*>::const_iterator beginelements() const { return elements.begin(); }
+  virtual std::vector<MElement*>::const_iterator endelements() const { return elements.end(); }
 };
 
 class RK_form{ // informations for RK at one point
@@ -79,8 +77,8 @@ public:
   SMetric3 metricField;
   SVector3 t1, t2;// 3D cross field directions
   SVector3 normal;// 3D cross field directions
-  pair<double,double> h;// 3D sizes
-  pair<double,double> paramh;// sizes in parametric domain
+  std::pair<double,double> h;// 3D sizes
+  std::pair<double,double> paramh;// sizes in parametric domain
   SPoint2 paramt1, paramt2;
   double angle, localsize;
 };
@@ -108,12 +106,12 @@ public:
   void eval_crossfield(double u, double v, STensor3 &cf);
   void eval_crossfield(MVertex *vert, STensor3 &cf);
 
-  void exportCrossField(const string &filename);
+  void exportCrossField(const std::string &filename);
   Pair<SVector3, SVector3> compute_crossfield_directions(double u,double v,
                                                          double angle_current);
   bool compute_RK_infos(double u,double v, double x, double y, double z,RK_form &infos);
 
-  inline void exportSmoothness(const string &filename) const
+  void exportSmoothness(const std::string &filename) const
   {
     export_scalar(filename,smoothness);
   }

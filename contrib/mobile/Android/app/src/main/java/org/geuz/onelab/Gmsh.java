@@ -11,8 +11,8 @@ public class Gmsh implements Parcelable {
     System.loadLibrary("f2clapack");
     System.loadLibrary("petsc");
     System.loadLibrary("slepc");
-    System.loadLibrary("Gmsh");
-    System.loadLibrary("GetDP");
+    System.loadLibrary("gmsh");
+    System.loadLibrary("getdp");
     System.loadLibrary("Onelab");
   }
   // init Gmsh

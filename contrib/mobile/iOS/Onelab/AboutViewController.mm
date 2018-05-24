@@ -19,8 +19,11 @@
   return self;
 }
 
-// this allows to open links in Safari, instead of opening them in the AboutViewController
--(BOOL) webView:(UIWebView *)inWeb shouldStartLoadWithRequest:(NSURLRequest *)inRequest navigationType:(UIWebViewNavigationType)inType {
+// this allows to open links in Safari, instead of opening them in the
+// AboutViewController
+-(BOOL) webView:(UIWebView *)inWeb shouldStartLoadWithRequest:(NSURLRequest *)inRequest
+ navigationType:(UIWebViewNavigationType)inType
+{
   if ( inType == UIWebViewNavigationTypeLinkClicked ) {
     [[UIApplication sharedApplication] openURL:[inRequest URL]];
     return NO;
@@ -37,7 +40,10 @@
   self.aboutView.dataDetectorTypes = UIDataDetectorTypeNone;
   [self loadContent];
   if(![self.fileToEdit isEqual:@"About"] && ![self.fileToEdit isEqual:@"Help"]){
-    UIBarButtonItem *save = [[UIBarButtonItem alloc] initWithTitle:@"Save" style:UIBarButtonItemStylePlain target:self action:@selector(saveFile)];
+    UIBarButtonItem *save =
+      [[UIBarButtonItem alloc] initWithTitle:@"Save"
+                                       style:UIBarButtonItemStylePlain
+                                      target:self action:@selector(saveFile)];
     [self.navigationItem setRightBarButtonItems:[NSArray arrayWithObjects: save, nil]];
   }
 }
@@ -52,7 +58,7 @@
   NSString *css = [NSString stringWithFormat:@"body { background-color: #FFFFFF; color: #252525; margin: 35px 10px 35px 10px; padding: 0; font-family: helvetica-neue,sans-serif; font-size: 1em; }  b { font-weight: normal; color: rgb(%d,%d,%d); } a { color: rgb(%d,%d,%d); }", r, g, b, r, g, b];
 
   if([self.fileToEdit isEqual:@"About"]){
-    [self.aboutView loadHTMLString:[NSString stringWithFormat:@"<html><head><style type=\"text/css\">%@</style></head><body><center><p><!-- img width=32 src=\"icon_onelab.png\"--></p><h3>Onelab/Mobile</h3>Version %@<p>Copyright (C) 2014-2017 Christophe Geuzaine and Maxime Graulich, University of Li&egrave;ge</p><p>Visit <a href=\"http://onelab.info/\">http://onelab.info/</a> for more information</p><p style=\"padding-top: 35px;\">This version of Onelab/Mobile contains:</p><h3>Gmsh</h3>Version %s (<i>Build date:</i> %s)<p>Copyright (C) 1997-2017 Christophe Geuzaine and Jean-Fran&ccedil;ois Remacle</p><p><a href=\"http://geuz.org/gmsh/doc/CREDITS.txt\">Credits</a> and <a href=\"http://geuz.org/gmsh/doc/LICENSE.txt\">licensing information</a></p><p><i>Build options:</i> %s</p><p>Visit <a href=\"http://gmsh.info/\">http://gmsh.info</a> for more information</p><h3>GetDP</h3>Version %s (<i>Build date:</i> %s)<p>Copyright (C) 1997-2017 Patrick Dular and Christophe Geuzaine, University of Li&egrave;ge</p><p><a href=\"http://geuz.org/getdp/doc/CREDITS.txt\">Credits</a> and <a href=\"http://geuz.org/getdp/doc/LICENSE.txt\">licensing information</a></p><p><i>Build options:</i> %s</p><p>Visit <a href=\"http://getdp.info\">http://getdp.info</a> for more information</p></center></body></html>", css,
+    [self.aboutView loadHTMLString:[NSString stringWithFormat:@"<html><head><style type=\"text/css\">%@</style></head><body><center><p><!-- img width=32 src=\"icon_onelab.png\"--></p><h3>Onelab/Mobile</h3>Version %@<p>Copyright (C) 2014-2018 Christophe Geuzaine and Maxime Graulich, University of Li&egrave;ge</p><p>Visit <a href=\"http://onelab.info/\">http://onelab.info/</a> for more information</p><p style=\"padding-top: 35px;\">This version of Onelab/Mobile contains:</p><h3>Gmsh</h3>Version %s (<i>Build date:</i> %s)<p>Copyright (C) 1997-2018 Christophe Geuzaine and Jean-Fran&ccedil;ois Remacle</p><p><a href=\"http://geuz.org/gmsh/doc/CREDITS.txt\">Credits</a> and <a href=\"http://geuz.org/gmsh/doc/LICENSE.txt\">licensing information</a></p><p><i>Build options:</i> %s</p><p>Visit <a href=\"http://gmsh.info/\">http://gmsh.info</a> for more information</p><h3>GetDP</h3>Version %s (<i>Build date:</i> %s)<p>Copyright (C) 1997-2018 Patrick Dular and Christophe Geuzaine, University of Li&egrave;ge</p><p><a href=\"http://geuz.org/getdp/doc/CREDITS.txt\">Credits</a> and <a href=\"http://geuz.org/getdp/doc/LICENSE.txt\">licensing information</a></p><p><i>Build options:</i> %s</p><p>Visit <a href=\"http://getdp.info\">http://getdp.info</a> for more information</p></center></body></html>", css,
                                              [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"],
                                              GMSH_VERSION,
                                              GMSH_DATE,
@@ -81,7 +87,6 @@
     [self.aboutView loadHTMLString:[NSString stringWithFormat:@"<html><head><script>%s</script></head><body><pre contenteditable=\"true\" class=microlight>%@</pre></body></html>", js, aStr] baseURL:[[NSBundle mainBundle] bundleURL]];
   }
 }
-
 
 -(void)saveFile
 {

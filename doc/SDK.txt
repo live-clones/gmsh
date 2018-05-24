@@ -1,0 +1,40 @@
+This is the binary Software Development Kit (SDK) for Gmsh ${GMSH_VERSION}:
+
+  * Operating system: ${GMSH_OS} (${CMAKE_SYSTEM_NAME})
+  * C++ compiler: ${CMAKE_CXX_COMPILER}
+  * C++ compiler ID: ${CMAKE_CXX_COMPILER_ID}
+  * C++ compiler version: ${CXX_COMPILER_VERSION}
+  * C++ compiler flags:${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}
+  * Build options:${GMSH_CONFIG_OPTIONS}
+
+Gmsh is distributed under the terms of the GNU General Public License: see
+share/doc/gmsh/LICENSE.txt and share/doc/gmsh/CREDITS.txt. For additional Gmsh
+resources, see http://gmsh.info.
+
+SDK layout:
+
+  * lib/*gmsh*.{so,dll,dylib}: shared Gmsh library
+  * lib/gmsh.py: Python module
+  * lib/gmsh.jl: Julia module
+  * include/gmsh.h: C++ API header
+  * include/gmshc.h: C API header
+  * include/gmsh.h_cwrap: C++ wrapper of the C API (see the `Notes' below)
+  * bin/gmsh: gmsh executable (linked with the shared Gmsh library)
+  * share/doc/gmsh/demos/api : API examples in C++, Python and C
+
+Notes:
+
+  * The C API (and the Python bindings, which use the C API internally) should
+    work with most compilers.
+
+  * The C++ API will only work if your compiler has the same Application Binary
+    Interface (ABI) as the compiler used to build this SDK. (The SDKs compiled
+    with GNU g++ currently use g++ 4; you will need to specify
+    "-D_GLIBCXX_USE_CXX11_ABI=0" if you use g++ 5 or newer.)
+
+  * If your C++ compiler does not provide the same ABI as the C++ compiler used
+    to build the SDK, you can rename `gmsh.h_cwrap' as `gmsh.h': this
+    implementation redefines the C++ API in terms of the C API. Using this
+    header will lead to (slightly) reduced performance compared to using the
+    native Gmsh C++ API from the original `gmsh.h', as it entails additional
+    data copies between this C++ wrapper, the C API and the native C++ code.
