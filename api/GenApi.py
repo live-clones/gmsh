@@ -130,7 +130,7 @@ def ivectorpair(name, value=None, python_value=None, julia_value=None):
     a.python_pre = api_name + ", " + api_name_n + " = _ivectorpair(" + name + ")"
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Cint}, Csize_t"
-    a.julia_arg = ("convert(Vector{Cint}, collect(Iterators.flatten(" + name + "))), " +
+    a.julia_arg = ("convert(Vector{Cint}, collect(Cint, Iterators.flatten(" + name + "))), " +
                    "2 * length(" + name + ")")
     return a
 
