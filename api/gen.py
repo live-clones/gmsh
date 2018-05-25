@@ -162,23 +162,21 @@ mesh.add('getElements',doc,None,ovectorint('elementTypes'),ovectorvectorint('ele
 doc = '''Get the properties of an element of type `elementType': its name (`elementName'), dimension (`dim'), order (`order'), number of nodes (`numNodes') and parametric coordinates of nodes (`parametricCoord' vector, of length `dim' times `numNodes').'''
 mesh.add('getElementProperties',doc,None,iint('elementType'),ostring('elementName'),oint('dim'),oint('order'),oint('numNodes'),ovectordouble('parametricCoord'))
 
+
+### Could be remove
 doc = '''Get the integration data for mesh elements of the entity of dimension `dim' and `tag' tag. The data is returned by element type and by element, in the same order as the data returned by `getElements'. `integrationType' specifies the type of integration (e.g. \"Gauss4\") and `functionSpaceType' specifies the function space (e.g. \"IsoParametric\"). `integrationPoints' contains for each element type a vector (of length 4 times the number of integration points) containing the parametric coordinates (u, v, w) and the weight associated to the integration points. `integrationData' contains for each element type a vector (of size 13 times the number of integration points) containing the (x, y, z) coordinates of the integration point, the determinant of the Jacobian and the 9 entries (by row) of the 3x3 Jacobian matrix. If `functionSpaceType' is provided, `functionSpaceNumComponents' return the number of components returned by the evaluation of a basis function in the space and `functionSpaceData' contains for each element type the evaluation of the basis functions at the integration points.'''
 mesh.add('getIntegrationData',doc,None,istring('integrationType'),istring('functionSpaceType'),ovectorvectordouble('integrationPoints'),ovectorvectordouble('integrationData'),oint('functionSpaceNumComponents'),ovectorvectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))
 
+### Could be remove
 doc = '''Get the Jacobian data for mesh elements of the entity of dimension `dim' and `tag' tag. The data is returned by element type and by element, in the same order as the data returned by `getElements'. `integrationType' specifies the type of integration (e.g. \"Gauss4\"). `nbrIntegrationPoints' contains for each element type, the number of integration points that corresponds to `integrationType'. `jacobian' contains for each element type a vector (of size 9 times the number of integration points) containing the 9 entries (by row) of the 3x3 Jacobian matrix and `determinant' contains for each element type a vector containing the determinant of the Jacobian.'''
 mesh.add('getJacobianData',doc,None,istring('integrationType'),ovectorint('nbrIntegrationPoints'),ovectorvectordouble('jacobian'),ovectorvectordouble('determinant'),iint('dim', '-1'),iint('tag', '-1'))
 
+### Could be remove
 doc = '''Get the function space data for mesh elements of the entity of dimension `dim' and `tag' tag. The data is returned by element type and by element, in the same order as the data returned by `getElements'. `integrationType' specifies the type of integration (e.g. \"Gauss4\") and `functionSpaceType' specifies the function space (e.g. \"IsoParametric\"). `integrationPoints' contains for each element type a vector (of length 4 times the number of integration points) containing the parametric coordinates (u, v, w) and the weight associated to the integration points. If `functionSpaceType' is provided, `functionSpaceNumComponents' returns the number of components returned by the evaluation of a basis function in the space and `functionSpaceData' contains for each element type the evaluation of the basis functions at the integration points.'''
 mesh.add('getFunctionSpaceData',doc,None,istring('integrationType'),istring('functionSpaceType'),ovectorvectordouble('integrationPoints'),oint('functionSpaceNumComponents'),ovectorvectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))
 
 doc = '''Get the types of mesh elements in the entity of dimension `dim' and `tag' tag. If `tag' < 0, get the types for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the types in the mesh.'''
 mesh.add('getElementTypes',doc,None,ovectorint('elementTypes'),iint('dim', '-1'),iint('tag', '-1'))
-
-doc = '''Get the number of mesh elements in the entity of dimension `dim' and `tag' tag for a single `elementType'. If `tag' < 0, get the types for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the types in the mesh.'''
-mesh.add('getNumberElementByType',doc,oint,iint('elementType'),iint('dim', '-1'),iint('tag', '-1'))
-
-doc = '''Get the number of mesh nodes by element type (e.g. a triangle of order 1 has 3 nodes)'''
-mesh.add('getNumberNodeByElementType',doc,oint,iint('elementType'))
 
 doc = '''Get the mesh elements in the same way as `getElements', but for a single `elementType'.'''
 mesh.add('getElementsByType',doc,None,iint('elementType'),ovectorint('elementTags'),ovectorint('nodeTags'),iint('dim', '-1'),iint('tag', '-1'))
@@ -186,14 +184,24 @@ mesh.add('getElementsByType',doc,None,iint('elementType'),ovectorint('elementTag
 doc = '''Get the mesh nodes in the same way as `getElementsByType'.'''
 mesh.add('getNodesByType',doc,None,iint('elementType'),ovectorint('nodeTags'),iint('dim', '-1'),iint('tag', '-1'),isize('myThread', '0'),isize('nbrThreads', '1'))
 
+### Could be remove
 doc = '''Get the integration data for mesh elements in the same way as `getIntegrationData', but for a single `elementType'.'''
 mesh.add('getIntegrationDataByType',doc,None,iint('elementType'),istring('integrationType'),istring('functionSpaceType'),ovectordouble('integrationPoints'),ovectordouble('integrationData'),oint('functionSpaceNumComponents'),ovectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))
 
 doc = '''Get the Jacobian data for mesh elements in the same way as `getJacobianData', but for a single `elementType'.'''
-mesh.add('getJacobianDataByType',doc,None,iint('elementType'),istring('integrationType'),oint('nbrIntegrationPoints'),ovectordouble('jacobian'),ovectordouble('determinant'),iint('dim', '-1'),iint('tag', '-1'),isize('myThread', '0'),isize('nbrThreads', '1'))
+mesh.add('getJacobianDataByType',doc,None,iint('elementType'),istring('integrationType'),oint('nbrIntegrationPoints'),ovectordouble('jacobians'),ovectordouble('determinants'),iint('dim', '-1'),iint('tag', '-1'),isize('myThread', '0'),isize('nbrThreads', '1'))
 
 doc = '''Get the function space data for mesh elements in the same way as `getFunctionSpaceData', but for a single `elementType'.'''
 mesh.add('getFunctionSpaceDataByType',doc,None,iint('elementType'),istring('integrationType'),istring('functionSpaceType'),ovectordouble('integrationPoints'),oint('functionSpaceNumComponents'),ovectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))
+
+doc = '''Initialize the Jacobian data vector.'''
+mesh.add('initializeJacobianDataVector',doc,None,iint('elementType'),istring('integrationType'),ovectordouble('jacobians'),ovectordouble('determinants'),iint('dim', '-1'),iint('tag', '-1'))
+
+doc = '''Initialize the nodeTags vector.'''
+mesh.add('initializeNodeTagsVector',doc,None,iint('elementType'),ovectorint('nodeTags'),iint('dim', '-1'),iint('tag', '-1'))
+
+doc = '''Initialize the barycenters vector.'''
+mesh.add('initializeBarycentersVector',doc,None,iint('elementType'),ovectordouble('barycenters'),iint('dim', '-1'),iint('tag', '-1'))
 
 doc = '''Set the mesh nodes in the geometrical entity of dimension `dim' and tag `tag'. `nodetags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the (x, y, z) coordinates of the nodes, concatenated. The optional `parametricCoord' vector contains the parametric coordinates of the nodes, if any. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'.'''
 mesh.add('setNodes',doc,None,iint('dim'),iint('tag'),ivectorint('nodeTags'),ivectordouble('coord'),ivectordouble('parametricCoord','std::vector<double>()',"[]","[]"))

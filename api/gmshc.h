@@ -383,20 +383,6 @@ GMSH_API void gmshModelMeshGetElementTypes(int ** elementTypes, size_t * element
                                            const int tag,
                                            int * ierr);
 
-/* Get the number of mesh elements in the entity of dimension `dim' and `tag'
- * tag for a single `elementType'. If `tag' < 0, get the types for all
- * entities of dimension `dim'. If `dim' and `tag' are negative, get all the
- * types in the mesh. */
-GMSH_API int gmshModelMeshGetNumberElementByType(const int elementType,
-                                                 const int dim,
-                                                 const int tag,
-                                                 int * ierr);
-
-/* Get the number of mesh nodes by element type (e.g. a triangle of order 1
- * has 3 nodes) */
-GMSH_API int gmshModelMeshGetNumberNodeByElementType(const int elementType,
-                                                     int * ierr);
-
 /* Get the mesh elements in the same way as `getElements', but for a single
  * `elementType'. */
 GMSH_API void gmshModelMeshGetElementsByType(const int elementType,
@@ -433,8 +419,8 @@ GMSH_API void gmshModelMeshGetIntegrationDataByType(const int elementType,
 GMSH_API void gmshModelMeshGetJacobianDataByType(const int elementType,
                                                  const char * integrationType,
                                                  int * nbrIntegrationPoints,
-                                                 double ** jacobian, size_t * jacobian_n,
-                                                 double ** determinant, size_t * determinant_n,
+                                                 double ** jacobians, size_t * jacobians_n,
+                                                 double ** determinants, size_t * determinants_n,
                                                  const int dim,
                                                  const int tag,
                                                  const size_t myThread,
@@ -452,6 +438,29 @@ GMSH_API void gmshModelMeshGetFunctionSpaceDataByType(const int elementType,
                                                       const int dim,
                                                       const int tag,
                                                       int * ierr);
+
+/* Initialize the Jacobian data vector. */
+GMSH_API void gmshModelMeshInitializeJacobianDataVector(const int elementType,
+                                                        const char * integrationType,
+                                                        double ** jacobians, size_t * jacobians_n,
+                                                        double ** determinants, size_t * determinants_n,
+                                                        const int dim,
+                                                        const int tag,
+                                                        int * ierr);
+
+/* Initialize the nodeTags vector. */
+GMSH_API void gmshModelMeshInitializeNodeTagsVector(const int elementType,
+                                                    int ** nodeTags, size_t * nodeTags_n,
+                                                    const int dim,
+                                                    const int tag,
+                                                    int * ierr);
+
+/* Initialize the barycenters vector. */
+GMSH_API void gmshModelMeshInitializeBarycentersVector(const int elementType,
+                                                       double ** barycenters, size_t * barycenters_n,
+                                                       const int dim,
+                                                       const int tag,
+                                                       int * ierr);
 
 /* Set the mesh nodes in the geometrical entity of dimension `dim' and tag
  * `tag'. `nodetags' contains the node tags (their unique, strictly positive

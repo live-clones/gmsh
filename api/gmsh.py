@@ -1089,46 +1089,6 @@ class model:
             return _ovectorint(api_elementTypes_, api_elementTypes_n_.value)
 
         @staticmethod
-        def getNumberElementByType(elementType, dim=-1, tag=-1):
-            """
-            Get the number of mesh elements in the entity of dimension `dim' and `tag'
-            tag for a single `elementType'. If `tag' < 0, get the types for all
-            entities of dimension `dim'. If `dim' and `tag' are negative, get all the
-            types in the mesh.
-
-            Return an integer.
-            """
-            ierr = c_int()
-            api__result__ = lib.gmshModelMeshGetNumberElementByType(
-                c_int(elementType),
-                c_int(dim),
-                c_int(tag),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetNumberElementByType returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
-
-        @staticmethod
-        def getNumberNodeByElementType(elementType):
-            """
-            Get the number of mesh nodes by element type (e.g. a triangle of order 1
-            has 3 nodes)
-
-            Return an integer.
-            """
-            ierr = c_int()
-            api__result__ = lib.gmshModelMeshGetNumberNodeByElementType(
-                c_int(elementType),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetNumberNodeByElementType returned non-zero error code: ",
-                    ierr.value)
-            return api__result__
-
-        @staticmethod
         def getElementsByType(elementType, dim=-1, tag=-1):
             """
             Get the mesh elements in the same way as `getElements', but for a single
@@ -1217,18 +1177,18 @@ class model:
             Get the Jacobian data for mesh elements in the same way as
             `getJacobianData', but for a single `elementType'.
 
-            Return `nbrIntegrationPoints', `jacobian', `determinant'.
+            Return `nbrIntegrationPoints', `jacobians', `determinants'.
             """
             api_nbrIntegrationPoints_ = c_int()
-            api_jacobian_, api_jacobian_n_ = POINTER(c_double)(), c_size_t()
-            api_determinant_, api_determinant_n_ = POINTER(c_double)(), c_size_t()
+            api_jacobians_, api_jacobians_n_ = POINTER(c_double)(), c_size_t()
+            api_determinants_, api_determinants_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetJacobianDataByType(
                 c_int(elementType),
                 c_char_p(integrationType.encode()),
                 byref(api_nbrIntegrationPoints_),
-                byref(api_jacobian_), byref(api_jacobian_n_),
-                byref(api_determinant_), byref(api_determinant_n_),
+                byref(api_jacobians_), byref(api_jacobians_n_),
+                byref(api_determinants_), byref(api_determinants_n_),
                 c_int(dim),
                 c_int(tag),
                 c_size_t(myThread),
@@ -1240,8 +1200,8 @@ class model:
                     ierr.value)
             return (
                 api_nbrIntegrationPoints_.value,
-                _ovectordouble(api_jacobian_, api_jacobian_n_.value),
-                _ovectordouble(api_determinant_, api_determinant_n_.value))
+                _ovectordouble(api_jacobians_, api_jacobians_n_.value),
+                _ovectordouble(api_determinants_, api_determinants_n_.value))
 
         @staticmethod
         def getFunctionSpaceDataByType(elementType, integrationType, functionSpaceType, dim=-1, tag=-1):
@@ -1273,6 +1233,74 @@ class model:
                 _ovectordouble(api_integrationPoints_, api_integrationPoints_n_.value),
                 api_functionSpaceNumComponents_.value,
                 _ovectordouble(api_functionSpaceData_, api_functionSpaceData_n_.value))
+
+        @staticmethod
+        def initializeJacobianDataVector(elementType, integrationType, dim=-1, tag=-1):
+            """
+            Initialize the Jacobian data vector.
+
+            Return `jacobians', `determinants'.
+            """
+            api_jacobians_, api_jacobians_n_ = POINTER(c_double)(), c_size_t()
+            api_determinants_, api_determinants_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshInitializeJacobianDataVector(
+                c_int(elementType),
+                c_char_p(integrationType.encode()),
+                byref(api_jacobians_), byref(api_jacobians_n_),
+                byref(api_determinants_), byref(api_determinants_n_),
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshInitializeJacobianDataVector returned non-zero error code: ",
+                    ierr.value)
+            return (
+                _ovectordouble(api_jacobians_, api_jacobians_n_.value),
+                _ovectordouble(api_determinants_, api_determinants_n_.value))
+
+        @staticmethod
+        def initializeNodeTagsVector(elementType, dim=-1, tag=-1):
+            """
+            Initialize the nodeTags vector.
+
+            Return `nodeTags'.
+            """
+            api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshInitializeNodeTagsVector(
+                c_int(elementType),
+                byref(api_nodeTags_), byref(api_nodeTags_n_),
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshInitializeNodeTagsVector returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorint(api_nodeTags_, api_nodeTags_n_.value)
+
+        @staticmethod
+        def initializeBarycentersVector(elementType, dim=-1, tag=-1):
+            """
+            Initialize the barycenters vector.
+
+            Return `barycenters'.
+            """
+            api_barycenters_, api_barycenters_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshInitializeBarycentersVector(
+                c_int(elementType),
+                byref(api_barycenters_), byref(api_barycenters_n_),
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshInitializeBarycentersVector returned non-zero error code: ",
+                    ierr.value)
+            return _ovectordouble(api_barycenters_, api_barycenters_n_.value)
 
         @staticmethod
         def setNodes(dim, tag, nodeTags, coord, parametricCoord=[]):

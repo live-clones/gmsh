@@ -369,18 +369,6 @@ namespace gmsh { // Top-level functions
                                     const int dim = -1,
                                     const int tag = -1);
 
-      // Get the number of mesh elements in the entity of dimension `dim' and `tag'
-      // tag for a single `elementType'. If `tag' < 0, get the types for all
-      // entities of dimension `dim'. If `dim' and `tag' are negative, get all the
-      // types in the mesh.
-      GMSH_API int getNumberElementByType(const int elementType,
-                                          const int dim = -1,
-                                          const int tag = -1);
-
-      // Get the number of mesh nodes by element type (e.g. a triangle of order 1
-      // has 3 nodes)
-      GMSH_API int getNumberNodeByElementType(const int elementType);
-
       // Get the mesh elements in the same way as `getElements', but for a single
       // `elementType'.
       GMSH_API void getElementsByType(const int elementType,
@@ -414,8 +402,8 @@ namespace gmsh { // Top-level functions
       GMSH_API void getJacobianDataByType(const int elementType,
                                           const std::string & integrationType,
                                           int & nbrIntegrationPoints,
-                                          std::vector<double> & jacobian,
-                                          std::vector<double> & determinant,
+                                          std::vector<double> & jacobians,
+                                          std::vector<double> & determinants,
                                           const int dim = -1,
                                           const int tag = -1,
                                           const size_t myThread = 0,
@@ -431,6 +419,26 @@ namespace gmsh { // Top-level functions
                                                std::vector<double> & functionSpaceData,
                                                const int dim = -1,
                                                const int tag = -1);
+
+      // Initialize the Jacobian data vector.
+      GMSH_API void initializeJacobianDataVector(const int elementType,
+                                                 const std::string & integrationType,
+                                                 std::vector<double> & jacobians,
+                                                 std::vector<double> & determinants,
+                                                 const int dim = -1,
+                                                 const int tag = -1);
+
+      // Initialize the nodeTags vector.
+      GMSH_API void initializeNodeTagsVector(const int elementType,
+                                             std::vector<int> & nodeTags,
+                                             const int dim = -1,
+                                             const int tag = -1);
+
+      // Initialize the barycenters vector.
+      GMSH_API void initializeBarycentersVector(const int elementType,
+                                                std::vector<double> & barycenters,
+                                                const int dim = -1,
+                                                const int tag = -1);
 
       // Set the mesh nodes in the geometrical entity of dimension `dim' and tag
       // `tag'. `nodetags' contains the node tags (their unique, strictly positive

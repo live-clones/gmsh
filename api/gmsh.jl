@@ -936,41 +936,6 @@ function getElementTypes(dim = -1, tag = -1)
 end
 
 """
-    gmsh.model.mesh.getNumberElementByType(elementType, dim = -1, tag = -1)
-
-Get the number of mesh elements in the entity of dimension `dim` and `tag` tag
-for a single `elementType`. If `tag` < 0, get the types for all entities of
-dimension `dim`. If `dim` and `tag` are negative, get all the types in the mesh.
-
-Return an integer.
-"""
-function getNumberElementByType(elementType, dim = -1, tag = -1)
-    ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelMeshGetNumberElementByType, gmsh.clib), Cint,
-          (Cint, Cint, Cint, Ptr{Cint}),
-          elementType, dim, tag, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetNumberElementByType returned non-zero error code: $(ierr[])")
-    return api__result__
-end
-
-"""
-    gmsh.model.mesh.getNumberNodeByElementType(elementType)
-
-Get the number of mesh nodes by element type (e.g. a triangle of order 1 has 3
-nodes)
-
-Return an integer.
-"""
-function getNumberNodeByElementType(elementType)
-    ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelMeshGetNumberNodeByElementType, gmsh.clib), Cint,
-          (Cint, Ptr{Cint}),
-          elementType, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetNumberNodeByElementType returned non-zero error code: $(ierr[])")
-    return api__result__
-end
-
-"""
     gmsh.model.mesh.getElementsByType(elementType, elementTags, nodeTags, dim = -1, tag = -1)
 
 Get the mesh elements in the same way as `getElements`, but for a single
@@ -1040,27 +1005,27 @@ function getIntegrationDataByType(elementType, integrationType, functionSpaceTyp
 end
 
 """
-    gmsh.model.mesh.getJacobianDataByType(elementType, integrationType, nbrIntegrationPoints, jacobian, determinant, dim = -1, tag = -1, myThread = 0, nbrThreads = 1)
+    gmsh.model.mesh.getJacobianDataByType(elementType, integrationType, nbrIntegrationPoints, jacobians, determinants, dim = -1, tag = -1, myThread = 0, nbrThreads = 1)
 
 Get the Jacobian data for mesh elements in the same way as `getJacobianData`,
 but for a single `elementType`.
 
-Return 'nbrIntegrationPoints', 'jacobian', 'determinant'.
+Return 'nbrIntegrationPoints', 'jacobians', 'determinants'.
 """
 function getJacobianDataByType(elementType, integrationType, dim = -1, tag = -1, myThread = 0, nbrThreads = 1)
     api_nbrIntegrationPoints_ = Ref{Cint}()
-    api_jacobian_ = Ref{Ptr{Cdouble}}()
-    api_jacobian_n_ = Ref{Csize_t}()
-    api_determinant_ = Ref{Ptr{Cdouble}}()
-    api_determinant_n_ = Ref{Csize_t}()
+    api_jacobians_ = Ref{Ptr{Cdouble}}()
+    api_jacobians_n_ = Ref{Csize_t}()
+    api_determinants_ = Ref{Ptr{Cdouble}}()
+    api_determinants_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetJacobianDataByType, gmsh.clib), Void,
           (Cint, Ptr{Cchar}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
-          elementType, integrationType, api_nbrIntegrationPoints_, api_jacobian_, api_jacobian_n_, api_determinant_, api_determinant_n_, dim, tag, myThread, nbrThreads, ierr)
+          elementType, integrationType, api_nbrIntegrationPoints_, api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, dim, tag, myThread, nbrThreads, ierr)
     ierr[] != 0 && error("gmshModelMeshGetJacobianDataByType returned non-zero error code: $(ierr[])")
-    jacobian = unsafe_wrap(Array, api_jacobian_[], api_jacobian_n_[], true)
-    determinant = unsafe_wrap(Array, api_determinant_[], api_determinant_n_[], true)
-    return api_nbrIntegrationPoints_[], jacobian, determinant
+    jacobians = unsafe_wrap(Array, api_jacobians_[], api_jacobians_n_[], true)
+    determinants = unsafe_wrap(Array, api_determinants_[], api_determinants_n_[], true)
+    return api_nbrIntegrationPoints_[], jacobians, determinants
 end
 
 """
@@ -1085,6 +1050,66 @@ function getFunctionSpaceDataByType(elementType, integrationType, functionSpaceT
     integrationPoints = unsafe_wrap(Array, api_integrationPoints_[], api_integrationPoints_n_[], true)
     functionSpaceData = unsafe_wrap(Array, api_functionSpaceData_[], api_functionSpaceData_n_[], true)
     return integrationPoints, api_functionSpaceNumComponents_[], functionSpaceData
+end
+
+"""
+    gmsh.model.mesh.initializeJacobianDataVector(elementType, integrationType, jacobians, determinants, dim = -1, tag = -1)
+
+Initialize the Jacobian data vector.
+
+Return 'jacobians', 'determinants'.
+"""
+function initializeJacobianDataVector(elementType, integrationType, dim = -1, tag = -1)
+    api_jacobians_ = Ref{Ptr{Cdouble}}()
+    api_jacobians_n_ = Ref{Csize_t}()
+    api_determinants_ = Ref{Ptr{Cdouble}}()
+    api_determinants_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshInitializeJacobianDataVector, gmsh.clib), Void,
+          (Cint, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          elementType, integrationType, api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, dim, tag, ierr)
+    ierr[] != 0 && error("gmshModelMeshInitializeJacobianDataVector returned non-zero error code: $(ierr[])")
+    jacobians = unsafe_wrap(Array, api_jacobians_[], api_jacobians_n_[], true)
+    determinants = unsafe_wrap(Array, api_determinants_[], api_determinants_n_[], true)
+    return jacobians, determinants
+end
+
+"""
+    gmsh.model.mesh.initializeNodeTagsVector(elementType, nodeTags, dim = -1, tag = -1)
+
+Initialize the nodeTags vector.
+
+Return 'nodeTags'.
+"""
+function initializeNodeTagsVector(elementType, dim = -1, tag = -1)
+    api_nodeTags_ = Ref{Ptr{Cint}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshInitializeNodeTagsVector, gmsh.clib), Void,
+          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          elementType, api_nodeTags_, api_nodeTags_n_, dim, tag, ierr)
+    ierr[] != 0 && error("gmshModelMeshInitializeNodeTagsVector returned non-zero error code: $(ierr[])")
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
+    return nodeTags
+end
+
+"""
+    gmsh.model.mesh.initializeBarycentersVector(elementType, barycenters, dim = -1, tag = -1)
+
+Initialize the barycenters vector.
+
+Return 'barycenters'.
+"""
+function initializeBarycentersVector(elementType, dim = -1, tag = -1)
+    api_barycenters_ = Ref{Ptr{Cdouble}}()
+    api_barycenters_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshInitializeBarycentersVector, gmsh.clib), Void,
+          (Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          elementType, api_barycenters_, api_barycenters_n_, dim, tag, ierr)
+    ierr[] != 0 && error("gmshModelMeshInitializeBarycentersVector returned non-zero error code: $(ierr[])")
+    barycenters = unsafe_wrap(Array, api_barycenters_[], api_barycenters_n_[], true)
+    return barycenters
 end
 
 """

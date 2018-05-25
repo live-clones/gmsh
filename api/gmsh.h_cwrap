@@ -702,30 +702,6 @@ namespace gmsh { // Top-level functions
         elementTypes.assign(api_elementTypes_, api_elementTypes_ + api_elementTypes_n_); gmshFree(api_elementTypes_);
       }
 
-      // Get the number of mesh elements in the entity of dimension `dim' and `tag'
-      // tag for a single `elementType'. If `tag' < 0, get the types for all
-      // entities of dimension `dim'. If `dim' and `tag' are negative, get all the
-      // types in the mesh.
-      GMSH_API int getNumberElementByType(const int elementType,
-                                          const int dim = -1,
-                                          const int tag = -1)
-      {
-        int ierr = 0;
-        int result_api_ = gmshModelMeshGetNumberElementByType(elementType, dim, tag, &ierr);
-        if(ierr) throw ierr;
-        return result_api_;
-      }
-
-      // Get the number of mesh nodes by element type (e.g. a triangle of order 1
-      // has 3 nodes)
-      GMSH_API int getNumberNodeByElementType(const int elementType)
-      {
-        int ierr = 0;
-        int result_api_ = gmshModelMeshGetNumberNodeByElementType(elementType, &ierr);
-        if(ierr) throw ierr;
-        return result_api_;
-      }
-
       // Get the mesh elements in the same way as `getElements', but for a single
       // `elementType'.
       GMSH_API void getElementsByType(const int elementType,
@@ -786,20 +762,20 @@ namespace gmsh { // Top-level functions
       GMSH_API void getJacobianDataByType(const int elementType,
                                           const std::string & integrationType,
                                           int & nbrIntegrationPoints,
-                                          std::vector<double> & jacobian,
-                                          std::vector<double> & determinant,
+                                          std::vector<double> & jacobians,
+                                          std::vector<double> & determinants,
                                           const int dim = -1,
                                           const int tag = -1,
                                           const size_t myThread = 0,
                                           const size_t nbrThreads = 1)
       {
         int ierr = 0;
-        double *api_jacobian_; size_t api_jacobian_n_;
-        double *api_determinant_; size_t api_determinant_n_;
-        gmshModelMeshGetJacobianDataByType(elementType, integrationType.c_str(), &nbrIntegrationPoints, &api_jacobian_, &api_jacobian_n_, &api_determinant_, &api_determinant_n_, dim, tag, myThread, nbrThreads, &ierr);
+        double *api_jacobians_; size_t api_jacobians_n_;
+        double *api_determinants_; size_t api_determinants_n_;
+        gmshModelMeshGetJacobianDataByType(elementType, integrationType.c_str(), &nbrIntegrationPoints, &api_jacobians_, &api_jacobians_n_, &api_determinants_, &api_determinants_n_, dim, tag, myThread, nbrThreads, &ierr);
         if(ierr) throw ierr;
-        jacobian.assign(api_jacobian_, api_jacobian_ + api_jacobian_n_); gmshFree(api_jacobian_);
-        determinant.assign(api_determinant_, api_determinant_ + api_determinant_n_); gmshFree(api_determinant_);
+        jacobians.assign(api_jacobians_, api_jacobians_ + api_jacobians_n_); gmshFree(api_jacobians_);
+        determinants.assign(api_determinants_, api_determinants_ + api_determinants_n_); gmshFree(api_determinants_);
       }
 
       // Get the function space data for mesh elements in the same way as
@@ -820,6 +796,49 @@ namespace gmsh { // Top-level functions
         if(ierr) throw ierr;
         integrationPoints.assign(api_integrationPoints_, api_integrationPoints_ + api_integrationPoints_n_); gmshFree(api_integrationPoints_);
         functionSpaceData.assign(api_functionSpaceData_, api_functionSpaceData_ + api_functionSpaceData_n_); gmshFree(api_functionSpaceData_);
+      }
+
+      // Initialize the Jacobian data vector.
+      GMSH_API void initializeJacobianDataVector(const int elementType,
+                                                 const std::string & integrationType,
+                                                 std::vector<double> & jacobians,
+                                                 std::vector<double> & determinants,
+                                                 const int dim = -1,
+                                                 const int tag = -1)
+      {
+        int ierr = 0;
+        double *api_jacobians_; size_t api_jacobians_n_;
+        double *api_determinants_; size_t api_determinants_n_;
+        gmshModelMeshInitializeJacobianDataVector(elementType, integrationType.c_str(), &api_jacobians_, &api_jacobians_n_, &api_determinants_, &api_determinants_n_, dim, tag, &ierr);
+        if(ierr) throw ierr;
+        jacobians.assign(api_jacobians_, api_jacobians_ + api_jacobians_n_); gmshFree(api_jacobians_);
+        determinants.assign(api_determinants_, api_determinants_ + api_determinants_n_); gmshFree(api_determinants_);
+      }
+
+      // Initialize the nodeTags vector.
+      GMSH_API void initializeNodeTagsVector(const int elementType,
+                                             std::vector<int> & nodeTags,
+                                             const int dim = -1,
+                                             const int tag = -1)
+      {
+        int ierr = 0;
+        int *api_nodeTags_; size_t api_nodeTags_n_;
+        gmshModelMeshInitializeNodeTagsVector(elementType, &api_nodeTags_, &api_nodeTags_n_, dim, tag, &ierr);
+        if(ierr) throw ierr;
+        nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
+      }
+
+      // Initialize the barycenters vector.
+      GMSH_API void initializeBarycentersVector(const int elementType,
+                                                std::vector<double> & barycenters,
+                                                const int dim = -1,
+                                                const int tag = -1)
+      {
+        int ierr = 0;
+        double *api_barycenters_; size_t api_barycenters_n_;
+        gmshModelMeshInitializeBarycentersVector(elementType, &api_barycenters_, &api_barycenters_n_, dim, tag, &ierr);
+        if(ierr) throw ierr;
+        barycenters.assign(api_barycenters_, api_barycenters_ + api_barycenters_n_); gmshFree(api_barycenters_);
       }
 
       // Set the mesh nodes in the geometrical entity of dimension `dim' and tag

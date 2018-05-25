@@ -678,12 +678,23 @@ GMSH_API void gmsh::model::mesh::getElementTypes(std::vector<int> &elementTypes,
   }
 }
 
-GMSH_API int gmsh::model::mesh::getNumberElementByType(const int elementType,
-                                                       const int dim,
-                                                       const int tag)
+GMSH_API void gmsh::model::mesh::getElementsByType(const int elementType,
+                                                   std::vector<int> &elementTags,
+                                                   std::vector<int> &nodeTags,
+                                                   const int dim,
+                                                   const int tag)
 {
   if(!_isInitialized()){ throw -1; }
-  
+  elementTags.clear();
+  nodeTags.clear();
+  std::map<int, std::vector<GEntity*> > typeMap;
+  _getElementTypeMap(dim, tag, typeMap);
+  _getElementData(elementType, typeMap[elementType], elementTags, nodeTags);
+}
+
+static unsigned int _getNumberElementByType(const int elementType,
+                                            const int dim, const int tag)
+{
   std::vector<GEntity*> entities;
   if(dim >= 0 && tag >= 0){
     GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
@@ -696,7 +707,7 @@ GMSH_API int gmsh::model::mesh::getNumberElementByType(const int elementType,
   else{
     GModel::current()->getEntities(entities, dim);
   }
-  int numberElement = 0;
+  unsigned int numberElement = 0;
   for(unsigned int i = 0; i < entities.size(); i++){
     GEntity *ge = entities[i];
     switch(ge->dim()){
@@ -742,25 +753,6 @@ GMSH_API int gmsh::model::mesh::getNumberElementByType(const int elementType,
   return numberElement;
 }
 
-GMSH_API int gmsh::model::mesh::getNumberNodeByElementType(const int elementType)
-{
-  return ElementType::NumberOfVertices(elementType);
-}
-
-GMSH_API void gmsh::model::mesh::getElementsByType(const int elementType,
-                                                   std::vector<int> &elementTags,
-                                                   std::vector<int> &nodeTags,
-                                                   const int dim,
-                                                   const int tag)
-{
-  if(!_isInitialized()){ throw -1; }
-  elementTags.clear();
-  nodeTags.clear();
-  std::map<int, std::vector<GEntity*> > typeMap;
-  _getElementTypeMap(dim, tag, typeMap);
-  _getElementData(elementType, typeMap[elementType], elementTags, nodeTags);
-}
-
 GMSH_API void gmsh::model::mesh::getNodesByType(const int elementType,
                                                 std::vector<int> &nodeTags,
                                                 const int dim, const int tag,
@@ -769,7 +761,7 @@ GMSH_API void gmsh::model::mesh::getNodesByType(const int elementType,
   if(!_isInitialized()){ throw -1; }
   std::map<int, std::vector<GEntity*> > typeMap;
   _getElementTypeMap(dim, tag, typeMap);
-  const int nbrElements = getNumberElementByType(elementType, dim, tag);
+  const int nbrElements = _getNumberElementByType(elementType, dim, tag);
   const int nbrNodes = ElementType::NumberOfVertices(elementType);
   const size_t begin = (myThread*nbrElements)/nbrThreads;
   const size_t end = ((myThread+1)*nbrElements)/nbrThreads;
@@ -970,8 +962,8 @@ static void _getJacobianData(const int elementType,
                              const std::vector<GEntity*> &entities,
                              const std::string &intType,
                              int &nbrIntegrationPoints,
-                             std::vector<double> &jacobian,
-                             std::vector<double> &determinant,
+                             std::vector<double> &jacobians,
+                             std::vector<double> &determinants,
                              const size_t myThread, const size_t nbrThreads)
 {
   std::string intName = "", fsName = "";
@@ -1000,12 +992,12 @@ static void _getJacobianData(const int elementType,
     }
     const size_t begin = (myThread*n)/nbrThreads;
     const size_t end = ((myThread+1)*n)/nbrThreads;
-    if(end*nbrIPoint > determinant.size()){
-      Msg::Error("Vector 'determinant' is small (%d < %d)", determinant.size(), end*nbrIPoint);
+    if(end*nbrIPoint > determinants.size()){
+      Msg::Error("Vector 'determinants' is too small (%d < %d)", determinants.size(), end*nbrIPoint);
       throw 4;
     }
-    if(9*end*nbrIPoint > jacobian.size()){
-      Msg::Error("Vector 'jacobian' is small (%d < %d)", jacobian.size(), 9*end*nbrIPoint);
+    if(9*end*nbrIPoint > jacobians.size()){
+      Msg::Error("Vector 'jacobians' is too small (%d < %d)", jacobians.size(), 9*end*nbrIPoint);
       throw 4;
     }
     std::vector< std::vector<SVector3> > gsf;
@@ -1031,7 +1023,7 @@ static void _getJacobianData(const int elementType,
             }
           }
           for(int k = 0; k < nbrIPoint; k++){
-            determinant[idx] = e->getJacobian(gsf[k], &jacobian[idx*9]);
+            determinants[idx] = e->getJacobian(gsf[k], &jacobians[idx*9]);
             idx++;
           }
         }
@@ -1138,10 +1130,10 @@ GMSH_API void gmsh::model::mesh::getIntegrationData(const std::string &intType,
 }
 
 GMSH_API void gmsh::model::mesh::getJacobianData(const std::string &intType,
-                                        std::vector<int> &nbrIntegrationPoints,
-                                        std::vector<std::vector<double> > &jacobian,
-                                        std::vector<std::vector<double> > &determinant,
-                                        const int dim, const int tag)
+                                                 std::vector<int> &nbrIntegrationPoints,
+                                                 std::vector<std::vector<double> > &jacobian,
+                                                 std::vector<std::vector<double> > &determinant,
+                                                 const int dim, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   jacobian.clear();
@@ -1160,11 +1152,11 @@ GMSH_API void gmsh::model::mesh::getJacobianData(const std::string &intType,
 }
 
 GMSH_API void gmsh::model::mesh::getFunctionSpaceData(const std::string & intType,
-                                             const std::string & fsType,
-                                             std::vector<std::vector<double> > & intPoints,
-                                             int & fsNumComp,
-                                             std::vector<std::vector<double> > & fsData,
-                                             const int dim, const int tag)
+                                                      const std::string & fsType,
+                                                      std::vector<std::vector<double> > & intPoints,
+                                                      int & fsNumComp,
+                                                      std::vector<std::vector<double> > & fsData,
+                                                      const int dim, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   intPoints.clear();
@@ -1203,28 +1195,28 @@ GMSH_API void gmsh::model::mesh::getIntegrationDataByType(int elementType,
 }
 
 GMSH_API void gmsh::model::mesh::getJacobianDataByType(const int elementType,
-                                              const std::string &intType,
-                                              int &nbrIntegrationPoints,
-                                              std::vector<double> &jacobian,
-                                              std::vector<double> &determinant,
-                                              const int dim, const int tag,
-                                              const size_t myThread, const size_t nbrThreads)
+                                                       const std::string &intType,
+                                                       int &nbrIntegrationPoints,
+                                                       std::vector<double> &jacobians,
+                                                       std::vector<double> &determinants,
+                                                       const int dim, const int tag,
+                                                       const size_t myThread, const size_t nbrThreads)
 {
   if(!_isInitialized()){ throw -1; }
   nbrIntegrationPoints = 0;
   std::map<int, std::vector<GEntity*> > typeMap;
   _getElementTypeMap(dim, tag, typeMap);
   _getJacobianData(elementType, typeMap[elementType], intType, nbrIntegrationPoints,
-                   jacobian, determinant, myThread, nbrThreads);
+                   jacobians, determinants, myThread, nbrThreads);
 }
 
 GMSH_API void gmsh::model::mesh::getFunctionSpaceDataByType(const int elementType,
-                                                   const std::string &intType,
-                                                   const std::string &fsType,
-                                                   std::vector<double> &intPoints,
-                                                   int &fsNumComp,
-                                                   std::vector<double> &fsData,
-                                                   const int dim, const int tag)
+                                                            const std::string &intType,
+                                                            const std::string &fsType,
+                                                            std::vector<double> &intPoints,
+                                                            int &fsNumComp,
+                                                            std::vector<double> &fsData,
+                                                            const int dim, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
   intPoints.clear();
@@ -1234,6 +1226,42 @@ GMSH_API void gmsh::model::mesh::getFunctionSpaceDataByType(const int elementTyp
   _getElementTypeMap(dim, tag, typeMap);
   _getFunctionSpaceData(elementType, typeMap[elementType], intType, fsType, intPoints,
                         fsNumComp, fsData);
+}
+
+GMSH_API void gmsh::model::mesh::initializeJacobianDataVector(const int elementType,
+                                                              const std::string &intType,
+                                                              std::vector<double> &jacobians,
+                                                              std::vector<double> &determinants,
+                                                              const int dim, const int tag)
+{
+  if(!_isInitialized()){ throw -1; }
+  const unsigned int nbrElements = _getNumberElementByType(elementType, dim, tag);
+  const unsigned int nbrGauss = getNumberIntegrationPoints(elementType, intType);
+  jacobians.clear();
+  determinants.clear();
+  jacobians.resize(9*nbrElements*nbrGauss, 0.);
+  determinants.resize(nbrElements*nbrGauss, 0.);
+}
+
+GMSH_API void gmsh::model::mesh::initializeNodeTagsVector(const int elementType,
+                                                          std::vector<int> &nodeTags,
+                                                          const int dim, const int tag)
+{
+  if(!_isInitialized()){ throw -1; }
+  const unsigned int nbrElements = _getNumberElementByType(elementType, dim, tag);
+  const unsigned int nbrNodesByElements = ElementType::NumberOfVertices(elementType);
+  nodeTags.clear();
+  nodeTags.resize(nbrElements*nbrNodesByElements, 0);
+}
+
+GMSH_API void gmsh::model::mesh::initializeBarycentersVector(const int elementType,
+                                                             std::vector<double> &barycenters,
+                                                             const int dim, const int tag)
+{
+  if(!_isInitialized()){ throw -1; }
+  const unsigned int nbrElements = _getNumberElementByType(elementType, dim, tag);
+  barycenters.clear();
+  barycenters.resize(3*nbrElements, 0);
 }
 
 GMSH_API void gmsh::model::mesh::setNodes(const int dim,
