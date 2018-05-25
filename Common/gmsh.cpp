@@ -1078,7 +1078,7 @@ static void _getJacobianData(const int elementType,
     }
     const bool haveDeterminants = (determinants.size() != 0);
     const bool haveJacobians = (jacobians.size() != 0);
-    const bool havePoints = (jacobians.size() != 0);
+    const bool havePoints = (points.size() != 0);
   
     if(haveDeterminants && haveJacobians && havePoints){
       std::vector< std::vector<SVector3> > gsf;
