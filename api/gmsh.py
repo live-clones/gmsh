@@ -914,7 +914,7 @@ class model:
                 _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
 
         @staticmethod
-        def getNodesByType(elementType, dim=-1, tag=-1, myThread=0, nbrThreads=1):
+        def getNodesByType(elementType, dim=-1, tag=-1, taskID=0, nbrTasks=1):
             """
             Get the mesh nodes in the same way as `getNodes', but for a single
             `elementType'.
@@ -928,8 +928,8 @@ class model:
                 byref(api_nodeTags_), byref(api_nodeTags_n_),
                 c_int(dim),
                 c_int(tag),
-                c_size_t(myThread),
-                c_size_t(nbrThreads),
+                c_size_t(taskID),
+                c_size_t(nbrTasks),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -1116,10 +1116,18 @@ class model:
                 _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
 
         @staticmethod
-        def getJacobianData(elementType, integrationType, dim=-1, tag=-1, myThread=0, nbrThreads=1):
+        def getJacobianData(elementType, integrationType, dim=-1, tag=-1, taskID=0, nbrTasks=1):
             """
-            Get the Jacobian data for mesh elements in the same way as
-            `getJacobianData', but for a single `elementType'.
+            Get the Jacobian data of the entity of dimension `dim' and `tag' tag for a
+            single `elementType'. `integrationType' specifies the type of integration
+            (e.g. "Gauss4"). `nbrIntegrationPoints' contains the number of integration
+            points corresponding to `integrationType'. `jacobians' contains for each
+            element a vector (of size 9 times the number of integration points)
+            containing the 9 entries (by row) of the 3x3 Jacobian matrix and
+            `determinants' contains for each element a vector (of size equal to the
+            number of integration points) containing the determinant of the Jacobian.
+            If `tag' < 0, get the Jacobian data for all entities of dimension `dim'. If
+            `dim' and `tag' are negative, get all Jacobian data in the mesh.
 
             Return `nbrIntegrationPoints', `jacobians', `determinants'.
             """
@@ -1135,8 +1143,8 @@ class model:
                 byref(api_determinants_), byref(api_determinants_n_),
                 c_int(dim),
                 c_int(tag),
-                c_size_t(myThread),
-                c_size_t(nbrThreads),
+                c_size_t(taskID),
+                c_size_t(nbrTasks),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
@@ -1150,8 +1158,18 @@ class model:
         @staticmethod
         def getFunctionSpaceData(elementType, integrationType, functionSpaceType, dim=-1, tag=-1):
             """
-            Get the function space data for mesh elements in the same way as
-            `getFunctionSpaceData', but for a single `elementType'.
+            Get the function space data of the entity of dimension `dim' and `tag' tag
+            for a single `elementType'. `integrationType' specifies the type of
+            integration (e.g. "Gauss4") and `functionSpaceType' specifies the function
+            space (e.g. "IsoParametric"). integrationPoints' contains for each element
+            type a vector (of length 4 times the number of integration points)
+            containing the parametric coordinates (u, v, w) and the weight associated
+            to the integration points, `functionSpaceNumComponents' return the number
+            of components returned by the evaluation of a basis function in the space
+            and `functionSpaceData' contains for each element type the evaluation of
+            the basis functions at the integration points. If `tag' < 0, get the
+            function space data for all entities of dimension `dim'. If `dim' and `tag'
+            are negative, get all function space data in the mesh.
 
             Return `integrationPoints', `functionSpaceNumComponents', `functionSpaceData'.
             """
@@ -1181,9 +1199,10 @@ class model:
         @staticmethod
         def getBarycenter(elementTag, fast, primary):
             """
-            Get barycenter of element with tag 'tag'. If 'fast' is true the barycenter
-            compute is equal to the real barycenter multiplied by the number of nodes.
-            If 'primary' is true, only the primary nodes is taking into account.
+            Get barycenter of element with tag 'elementTag'. If 'primary' is true, only
+            the primary nodes is taking into account and if 'fast' is true the
+            barycenter computed is simply the sum of the nodes' coordinates (depending
+            on 'primary') without divided it by the number of nodes.
 
             Return `barycenter'.
             """
@@ -1202,7 +1221,7 @@ class model:
             return _ovectordouble(api_barycenter_, api_barycenter_n_.value)
 
         @staticmethod
-        def getBarycenters(elementType, dim, tag, fast, primary, myThread=0, nbrThreads=1):
+        def getBarycenters(elementType, dim, tag, fast, primary, taskID=0, nbrTasks=1):
             """
             Get barycenters of all elements corresponding to 'elementType' into entity
             of dimension `dim' and tag `tag'.
@@ -1218,8 +1237,8 @@ class model:
                 c_int(bool(fast)),
                 c_int(bool(primary)),
                 byref(api_barycenters_), byref(api_barycenters_n_),
-                c_size_t(myThread),
-                c_size_t(nbrThreads),
+                c_size_t(taskID),
+                c_size_t(nbrTasks),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

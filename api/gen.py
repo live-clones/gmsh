@@ -160,7 +160,7 @@ doc = '''Get the mesh nodes of the entity of dimension `dim' and `tag' tag. If `
 mesh.add('getNodes',doc,None,ovectorint('nodeTags'),ovectordouble('coord'),ovectordouble('parametricCoord'),iint('dim', '-1'),iint('tag', '-1'))
 
 doc = '''Get the mesh nodes in the same way as `getNodes', but for a single `elementType'.'''
-mesh.add('getNodesByType',doc,None,iint('elementType'),ovectorint('nodeTags'),iint('dim', '-1'),iint('tag', '-1'),isize('myThread', '0'),isize('nbrThreads', '1'))
+mesh.add('getNodesByType',doc,None,iint('elementType'),ovectorint('nodeTags'),iint('dim', '-1'),iint('tag', '-1'),isize('taskID', '0'),isize('nbrTasks', '1'))
 
 doc = '''Set the mesh elements of the entity of dimension `dim' and `tag' tag. `types' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh reference manual). `elementTags' is a vector of the same length as `types'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is also a vector of the same length as `types'; each entry is a vector of length equal to the number of elements of the give type times the number of nodes per element, that contains the node tags of all the elements of the given type, concatenated.'''
 mesh.add('setElements',doc,None,iint('dim'),iint('tag'),ivectorint('elementTypes'),ivectorvectorint('elementTags'),ivectorvectorint('nodeTags'))
@@ -180,17 +180,17 @@ mesh.add('getElementTypes',doc,None,ovectorint('elementTypes'),iint('dim', '-1')
 doc = '''Get the properties of an element of type `elementType': its name (`elementName'), dimension (`dim'), order (`order'), number of nodes (`numNodes') and parametric coordinates of nodes (`parametricCoord' vector, of length `dim' times `numNodes').'''
 mesh.add('getElementProperties',doc,None,iint('elementType'),ostring('elementName'),oint('dim'),oint('order'),oint('numNodes'),ovectordouble('parametricCoord'))
 
-doc = '''Get the Jacobian data for mesh elements in the same way as `getJacobianData', but for a single `elementType'.'''
-mesh.add('getJacobianData',doc,None,iint('elementType'),istring('integrationType'),oint('nbrIntegrationPoints'),ovectordouble('jacobians'),ovectordouble('determinants'),iint('dim', '-1'),iint('tag', '-1'),isize('myThread', '0'),isize('nbrThreads', '1'))
+doc = '''Get the Jacobian data of the entity of dimension `dim' and `tag' tag for a single `elementType'. `integrationType' specifies the type of integration (e.g. \"Gauss4\"). `nbrIntegrationPoints' contains the number of integration points corresponding to `integrationType'. `jacobians' contains for each element a vector (of size 9 times the number of integration points) containing the 9 entries (by row) of the 3x3 Jacobian matrix and `determinants' contains for each element a vector (of size equal to the number of integration points) containing the determinant of the Jacobian. If `tag' < 0, get the Jacobian data for all entities of dimension `dim'. If `dim' and `tag' are negative, get all Jacobian data in the mesh.'''
+mesh.add('getJacobianData',doc,None,iint('elementType'),istring('integrationType'),oint('nbrIntegrationPoints'),ovectordouble('jacobians'),ovectordouble('determinants'),iint('dim', '-1'),iint('tag', '-1'),isize('taskID', '0'),isize('nbrTasks', '1'))
 
-doc = '''Get the function space data for mesh elements in the same way as `getFunctionSpaceData', but for a single `elementType'.'''
+doc = '''Get the function space data of the entity of dimension `dim' and `tag' tag for a single `elementType'. `integrationType' specifies the type of integration (e.g. \"Gauss4\") and `functionSpaceType' specifies the function space (e.g. \"IsoParametric\"). integrationPoints' contains for each element type a vector (of length 4 times the number of integration points) containing the parametric coordinates (u, v, w) and the weight associated to the integration points, `functionSpaceNumComponents' return the number of components returned by the evaluation of a basis function in the space and `functionSpaceData' contains for each element type the evaluation of the basis functions at the integration points. If `tag' < 0, get the function space data for all entities of dimension `dim'. If `dim' and `tag' are negative, get all function space data in the mesh.'''
 mesh.add('getFunctionSpaceData',doc,None,iint('elementType'),istring('integrationType'),istring('functionSpaceType'),ovectordouble('integrationPoints'),oint('functionSpaceNumComponents'),ovectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))
 
-doc = '''Get barycenter of element with tag 'tag'. If 'fast' is true the barycenter compute is equal to the real barycenter multiplied by the number of nodes. If 'primary' is true, only the primary nodes is taking into account.'''
+doc = '''Get barycenter of element with tag 'elementTag'. If 'primary' is true, only the primary nodes is taking into account and if 'fast' is true the barycenter computed is simply the sum of the nodes' coordinates (depending on 'primary') without divided it by the number of nodes.'''
 mesh.add('getBarycenter',doc,None,iint('elementTag'),ibool('fast'),ibool('primary'),ovectordouble('barycenter'))
 
 doc = '''Get barycenters of all elements corresponding to 'elementType' into entity of dimension `dim' and tag `tag'.'''
-mesh.add('getBarycenters',doc,None,iint('elementType'),iint('dim'),iint('tag'),ibool('fast'),ibool('primary'),ovectordouble('barycenters'),isize('myThread', '0'),isize('nbrThreads', '1'))
+mesh.add('getBarycenters',doc,None,iint('elementType'),iint('dim'),iint('tag'),ibool('fast'),ibool('primary'),ovectordouble('barycenters'),isize('taskID', '0'),isize('nbrTasks', '1'))
 
 doc = '''Initialize the mesh node cache ONLY it has not already done.'''
 mesh.add('initializeNodeCache',doc,None)

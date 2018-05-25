@@ -309,8 +309,8 @@ GMSH_API void gmshModelMeshGetNodesByType(const int elementType,
                                           int ** nodeTags, size_t * nodeTags_n,
                                           const int dim,
                                           const int tag,
-                                          const size_t myThread,
-                                          const size_t nbrThreads,
+                                          const size_t taskID,
+                                          const size_t nbrTasks,
                                           int * ierr);
 
 /* Set the mesh elements of the entity of dimension `dim' and `tag' tag.
@@ -388,8 +388,16 @@ GMSH_API void gmshModelMeshGetElementProperties(const int elementType,
                                                 double ** parametricCoord, size_t * parametricCoord_n,
                                                 int * ierr);
 
-/* Get the Jacobian data for mesh elements in the same way as
- * `getJacobianData', but for a single `elementType'. */
+/* Get the Jacobian data of the entity of dimension `dim' and `tag' tag for a
+ * single `elementType'. `integrationType' specifies the type of integration
+ * (e.g. "Gauss4"). `nbrIntegrationPoints' contains the number of integration
+ * points corresponding to `integrationType'. `jacobians' contains for each
+ * element a vector (of size 9 times the number of integration points)
+ * containing the 9 entries (by row) of the 3x3 Jacobian matrix and
+ * `determinants' contains for each element a vector (of size equal to the
+ * number of integration points) containing the determinant of the Jacobian.
+ * If `tag' < 0, get the Jacobian data for all entities of dimension `dim'. If
+ * `dim' and `tag' are negative, get all Jacobian data in the mesh. */
 GMSH_API void gmshModelMeshGetJacobianData(const int elementType,
                                            const char * integrationType,
                                            int * nbrIntegrationPoints,
@@ -397,12 +405,22 @@ GMSH_API void gmshModelMeshGetJacobianData(const int elementType,
                                            double ** determinants, size_t * determinants_n,
                                            const int dim,
                                            const int tag,
-                                           const size_t myThread,
-                                           const size_t nbrThreads,
+                                           const size_t taskID,
+                                           const size_t nbrTasks,
                                            int * ierr);
 
-/* Get the function space data for mesh elements in the same way as
- * `getFunctionSpaceData', but for a single `elementType'. */
+/* Get the function space data of the entity of dimension `dim' and `tag' tag
+ * for a single `elementType'. `integrationType' specifies the type of
+ * integration (e.g. "Gauss4") and `functionSpaceType' specifies the function
+ * space (e.g. "IsoParametric"). integrationPoints' contains for each element
+ * type a vector (of length 4 times the number of integration points)
+ * containing the parametric coordinates (u, v, w) and the weight associated
+ * to the integration points, `functionSpaceNumComponents' return the number
+ * of components returned by the evaluation of a basis function in the space
+ * and `functionSpaceData' contains for each element type the evaluation of
+ * the basis functions at the integration points. If `tag' < 0, get the
+ * function space data for all entities of dimension `dim'. If `dim' and `tag'
+ * are negative, get all function space data in the mesh. */
 GMSH_API void gmshModelMeshGetFunctionSpaceData(const int elementType,
                                                 const char * integrationType,
                                                 const char * functionSpaceType,
@@ -413,9 +431,10 @@ GMSH_API void gmshModelMeshGetFunctionSpaceData(const int elementType,
                                                 const int tag,
                                                 int * ierr);
 
-/* Get barycenter of element with tag 'tag'. If 'fast' is true the barycenter
- * compute is equal to the real barycenter multiplied by the number of nodes.
- * If 'primary' is true, only the primary nodes is taking into account. */
+/* Get barycenter of element with tag 'elementTag'. If 'primary' is true, only
+ * the primary nodes is taking into account and if 'fast' is true the
+ * barycenter computed is simply the sum of the nodes' coordinates (depending
+ * on 'primary') without divided it by the number of nodes. */
 GMSH_API void gmshModelMeshGetBarycenter(const int elementTag,
                                          const int fast,
                                          const int primary,
@@ -430,8 +449,8 @@ GMSH_API void gmshModelMeshGetBarycenters(const int elementType,
                                           const int fast,
                                           const int primary,
                                           double ** barycenters, size_t * barycenters_n,
-                                          const size_t myThread,
-                                          const size_t nbrThreads,
+                                          const size_t taskID,
+                                          const size_t nbrTasks,
                                           int * ierr);
 
 /* Initialize the mesh node cache ONLY it has not already done. */

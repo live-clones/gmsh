@@ -557,12 +557,12 @@ GMSH_API void gmshModelMeshGetNodes(int ** nodeTags, size_t * nodeTags_n, double
   }
 }
 
-GMSH_API void gmshModelMeshGetNodesByType(const int elementType, int ** nodeTags, size_t * nodeTags_n, const int dim, const int tag, const size_t myThread, const size_t nbrThreads, int * ierr)
+GMSH_API void gmshModelMeshGetNodesByType(const int elementType, int ** nodeTags, size_t * nodeTags_n, const int dim, const int tag, const size_t taskID, const size_t nbrTasks, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_nodeTags_;
-    gmsh::model::mesh::getNodesByType(elementType, api_nodeTags_, dim, tag, myThread, nbrThreads);
+    gmsh::model::mesh::getNodesByType(elementType, api_nodeTags_, dim, tag, taskID, nbrTasks);
     vector2ptr(api_nodeTags_, nodeTags, nodeTags_n);
   }
   catch(int api_ierr_){
@@ -661,13 +661,13 @@ GMSH_API void gmshModelMeshGetElementProperties(const int elementType, char ** e
   }
 }
 
-GMSH_API void gmshModelMeshGetJacobianData(const int elementType, const char * integrationType, int * nbrIntegrationPoints, double ** jacobians, size_t * jacobians_n, double ** determinants, size_t * determinants_n, const int dim, const int tag, const size_t myThread, const size_t nbrThreads, int * ierr)
+GMSH_API void gmshModelMeshGetJacobianData(const int elementType, const char * integrationType, int * nbrIntegrationPoints, double ** jacobians, size_t * jacobians_n, double ** determinants, size_t * determinants_n, const int dim, const int tag, const size_t taskID, const size_t nbrTasks, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_jacobians_;
     std::vector<double> api_determinants_;
-    gmsh::model::mesh::getJacobianData(elementType, integrationType, *nbrIntegrationPoints, api_jacobians_, api_determinants_, dim, tag, myThread, nbrThreads);
+    gmsh::model::mesh::getJacobianData(elementType, integrationType, *nbrIntegrationPoints, api_jacobians_, api_determinants_, dim, tag, taskID, nbrTasks);
     vector2ptr(api_jacobians_, jacobians, jacobians_n);
     vector2ptr(api_determinants_, determinants, determinants_n);
   }
@@ -704,12 +704,12 @@ GMSH_API void gmshModelMeshGetBarycenter(const int elementTag, const int fast, c
   }
 }
 
-GMSH_API void gmshModelMeshGetBarycenters(const int elementType, const int dim, const int tag, const int fast, const int primary, double ** barycenters, size_t * barycenters_n, const size_t myThread, const size_t nbrThreads, int * ierr)
+GMSH_API void gmshModelMeshGetBarycenters(const int elementType, const int dim, const int tag, const int fast, const int primary, double ** barycenters, size_t * barycenters_n, const size_t taskID, const size_t nbrTasks, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_barycenters_;
-    gmsh::model::mesh::getBarycenters(elementType, dim, tag, fast, primary, api_barycenters_, myThread, nbrThreads);
+    gmsh::model::mesh::getBarycenters(elementType, dim, tag, fast, primary, api_barycenters_, taskID, nbrTasks);
     vector2ptr(api_barycenters_, barycenters, barycenters_n);
   }
   catch(int api_ierr_){

@@ -587,12 +587,12 @@ namespace gmsh { // Top-level functions
                                    std::vector<int> & nodeTags,
                                    const int dim = -1,
                                    const int tag = -1,
-                                   const size_t myThread = 0,
-                                   const size_t nbrThreads = 1)
+                                   const size_t taskID = 0,
+                                   const size_t nbrTasks = 1)
       {
         int ierr = 0;
         int *api_nodeTags_; size_t api_nodeTags_n_;
-        gmshModelMeshGetNodesByType(elementType, &api_nodeTags_, &api_nodeTags_n_, dim, tag, myThread, nbrThreads, &ierr);
+        gmshModelMeshGetNodesByType(elementType, &api_nodeTags_, &api_nodeTags_n_, dim, tag, taskID, nbrTasks, &ierr);
         if(ierr) throw ierr;
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
       }
@@ -720,8 +720,16 @@ namespace gmsh { // Top-level functions
         parametricCoord.assign(api_parametricCoord_, api_parametricCoord_ + api_parametricCoord_n_); gmshFree(api_parametricCoord_);
       }
 
-      // Get the Jacobian data for mesh elements in the same way as
-      // `getJacobianData', but for a single `elementType'.
+      // Get the Jacobian data of the entity of dimension `dim' and `tag' tag for a
+      // single `elementType'. `integrationType' specifies the type of integration
+      // (e.g. "Gauss4"). `nbrIntegrationPoints' contains the number of integration
+      // points corresponding to `integrationType'. `jacobians' contains for each
+      // element a vector (of size 9 times the number of integration points)
+      // containing the 9 entries (by row) of the 3x3 Jacobian matrix and
+      // `determinants' contains for each element a vector (of size equal to the
+      // number of integration points) containing the determinant of the Jacobian.
+      // If `tag' < 0, get the Jacobian data for all entities of dimension `dim'.
+      // If `dim' and `tag' are negative, get all Jacobian data in the mesh.
       GMSH_API void getJacobianData(const int elementType,
                                     const std::string & integrationType,
                                     int & nbrIntegrationPoints,
@@ -729,20 +737,30 @@ namespace gmsh { // Top-level functions
                                     std::vector<double> & determinants,
                                     const int dim = -1,
                                     const int tag = -1,
-                                    const size_t myThread = 0,
-                                    const size_t nbrThreads = 1)
+                                    const size_t taskID = 0,
+                                    const size_t nbrTasks = 1)
       {
         int ierr = 0;
         double *api_jacobians_; size_t api_jacobians_n_;
         double *api_determinants_; size_t api_determinants_n_;
-        gmshModelMeshGetJacobianData(elementType, integrationType.c_str(), &nbrIntegrationPoints, &api_jacobians_, &api_jacobians_n_, &api_determinants_, &api_determinants_n_, dim, tag, myThread, nbrThreads, &ierr);
+        gmshModelMeshGetJacobianData(elementType, integrationType.c_str(), &nbrIntegrationPoints, &api_jacobians_, &api_jacobians_n_, &api_determinants_, &api_determinants_n_, dim, tag, taskID, nbrTasks, &ierr);
         if(ierr) throw ierr;
         jacobians.assign(api_jacobians_, api_jacobians_ + api_jacobians_n_); gmshFree(api_jacobians_);
         determinants.assign(api_determinants_, api_determinants_ + api_determinants_n_); gmshFree(api_determinants_);
       }
 
-      // Get the function space data for mesh elements in the same way as
-      // `getFunctionSpaceData', but for a single `elementType'.
+      // Get the function space data of the entity of dimension `dim' and `tag' tag
+      // for a single `elementType'. `integrationType' specifies the type of
+      // integration (e.g. "Gauss4") and `functionSpaceType' specifies the function
+      // space (e.g. "IsoParametric"). integrationPoints' contains for each element
+      // type a vector (of length 4 times the number of integration points)
+      // containing the parametric coordinates (u, v, w) and the weight associated
+      // to the integration points, `functionSpaceNumComponents' return the number
+      // of components returned by the evaluation of a basis function in the space
+      // and `functionSpaceData' contains for each element type the evaluation of
+      // the basis functions at the integration points. If `tag' < 0, get the
+      // function space data for all entities of dimension `dim'. If `dim' and
+      // `tag' are negative, get all function space data in the mesh.
       GMSH_API void getFunctionSpaceData(const int elementType,
                                          const std::string & integrationType,
                                          const std::string & functionSpaceType,
@@ -761,9 +779,10 @@ namespace gmsh { // Top-level functions
         functionSpaceData.assign(api_functionSpaceData_, api_functionSpaceData_ + api_functionSpaceData_n_); gmshFree(api_functionSpaceData_);
       }
 
-      // Get barycenter of element with tag 'tag'. If 'fast' is true the barycenter
-      // compute is equal to the real barycenter multiplied by the number of nodes.
-      // If 'primary' is true, only the primary nodes is taking into account.
+      // Get barycenter of element with tag 'elementTag'. If 'primary' is true,
+      // only the primary nodes is taking into account and if 'fast' is true the
+      // barycenter computed is simply the sum of the nodes' coordinates (depending
+      // on 'primary') without divided it by the number of nodes.
       GMSH_API void getBarycenter(const int elementTag,
                                   const bool fast,
                                   const bool primary,
@@ -784,12 +803,12 @@ namespace gmsh { // Top-level functions
                                    const bool fast,
                                    const bool primary,
                                    std::vector<double> & barycenters,
-                                   const size_t myThread = 0,
-                                   const size_t nbrThreads = 1)
+                                   const size_t taskID = 0,
+                                   const size_t nbrTasks = 1)
       {
         int ierr = 0;
         double *api_barycenters_; size_t api_barycenters_n_;
-        gmshModelMeshGetBarycenters(elementType, dim, tag, (int)fast, (int)primary, &api_barycenters_, &api_barycenters_n_, myThread, nbrThreads, &ierr);
+        gmshModelMeshGetBarycenters(elementType, dim, tag, (int)fast, (int)primary, &api_barycenters_, &api_barycenters_n_, taskID, nbrTasks, &ierr);
         if(ierr) throw ierr;
         barycenters.assign(api_barycenters_, api_barycenters_ + api_barycenters_n_); gmshFree(api_barycenters_);
       }
