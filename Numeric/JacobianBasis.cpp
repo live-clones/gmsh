@@ -282,7 +282,7 @@ JacobianBasis::JacobianBasis(FuncSpaceData data)
   _gradBasis = BasisFactory::getGradientBasis(data);
 
   // Compute matrix for lifting from primary Jacobian basis to Jacobian basis
-  int primJacType = ElementType::getTag(parentType, primJacobianOrder, false);
+  int primJacType = ElementType::getType(parentType, primJacobianOrder, false);
   const nodalBasis *primJacBasis = BasisFactory::getNodalBasis(primJacType);
   numPrimJacNodes = primJacBasis->getNumShapeFunctions();
 
@@ -291,7 +291,7 @@ JacobianBasis::JacobianBasis(FuncSpaceData data)
 
   // Compute shape function gradients of primary mapping at barycenter, in order
   // to compute normal to straight element
-  const int primMapType = ElementType::getTag(parentType, 1, false);
+  const int primMapType = ElementType::getType(parentType, 1, false);
   const nodalBasis *primMapBasis = BasisFactory::getNodalBasis(primMapType);
   numPrimMapNodes = primMapBasis->getNumShapeFunctions();
 
@@ -856,8 +856,8 @@ void JacobianBasis::interpolate(const fullVector<double> &jacobian,
 
 int JacobianBasis::jacobianOrder(int tag)
 {
-  const int parentType = ElementType::ParentTypeFromTag(tag);
-  const int order = ElementType::OrderFromTag(tag);
+  const int parentType = ElementType::getParentType(tag);
+  const int order = ElementType::getOrder(tag);
   return jacobianOrder(parentType, order);
 }
 
@@ -905,5 +905,5 @@ FuncSpaceData JacobianBasis::jacobianMatrixSpace(int type, int order)
     Msg::Error("Unknown element type %d, return order 0", type);
     return 0;
   }
-  return FuncSpaceData(true, ElementType::getTag(type, order), jacOrder);
+  return FuncSpaceData(true, ElementType::getType(type, order), jacOrder);
 }

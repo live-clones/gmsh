@@ -68,12 +68,12 @@ class MElement
   // return true if the element can be considered as a serendipity element
   virtual bool getIsAssimilatedSerendipity() const
   {
-    return ElementType::SerendipityFromTag(getTypeForMSH()) > 0;
+    return ElementType::getSerendipity(getTypeForMSH()) > 0;
   }
   // return true if the element has to be considered as a serendipity element
   virtual bool getIsOnlySerendipity() const
   {
-    return ElementType::SerendipityFromTag(getTypeForMSH()) > 1;
+    return ElementType::getSerendipity(getTypeForMSH()) > 1;
   }
 
   // get/set the partition to which the element belongs
@@ -308,7 +308,7 @@ class MElement
   // To be compatible with _vgrads of functionSpace without having to put under
   // fullMatrix form
   virtual double getJacobian(const std::vector<SVector3> &gsf, double jac[3][3]) const;
-  // jac is an row-major order array 
+  // jac is an row-major order array
   virtual double getJacobian(const std::vector<SVector3> &gsf, double *jac) const;
   virtual double getJacobian(double u, double v, double w, double jac[3][3]) const;
   inline double getJacobian(double u, double v, double w, fullMatrix<double> &j) const{

@@ -177,11 +177,11 @@ namespace
   }
 
   void drawIdealCurve(const std::vector<MVertex *> &baseVert,
-                      BoundaryLayerCurver::Parameters2DCurve &parameters, 
+                      BoundaryLayerCurver::Parameters2DCurve &parameters,
                       SVector3 w, GEntity *entity, bool drawh = true,
                       bool drawn = false, bool drawt = false, int cnt = 100)
   {
-    int tagLine = ElementType::getTag(TYPE_LIN, baseVert.size() - 1);
+    int tagLine = ElementType::getType(TYPE_LIN, baseVert.size() - 1);
     const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
 
     MVertex *vh0 = NULL;
@@ -315,7 +315,7 @@ namespace BoundaryLayerCurver
       {
         fullMatrix<double> MM1(sz1+2, sz1+2, true);
         fullMatrix<double> &MM2 = Leg2Leg;
-        int tagLine = ElementType::getTag(TYPE_LIN, order);
+        int tagLine = ElementType::getType(TYPE_LIN, order);
         const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
         const fullMatrix<double> &refNodes = fs->getReferenceNodes();
         double *val = new double[sz1];
@@ -337,7 +337,7 @@ namespace BoundaryLayerCurver
 
       data->Leg2Lag.resize(sz1, sz1, true);
       {
-        int tagLine = ElementType::getTag(TYPE_LIN, order);
+        int tagLine = ElementType::getType(TYPE_LIN, order);
         const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
         const fullMatrix<double> &refNodes = fs->getReferenceNodes();
         double *val = new double[sz1];
@@ -354,7 +354,7 @@ namespace BoundaryLayerCurver
       /*{
         fullMatrix<double> Leg2Lag(sz1+2, sz1+2, true);
         {
-          int tagLine = ElementType::getTag(TYPE_LIN, order);
+          int tagLine = ElementType::getType(TYPE_LIN, order);
           const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
           const fullMatrix<double> &refNodes = fs->getReferenceNodes();
           double *val = new double[sz1];
@@ -371,7 +371,7 @@ namespace BoundaryLayerCurver
 
       data->Leg2p.resize(sz2, sz1, true);
       {
-        int tagLine = ElementType::getTag(TYPE_LIN, order);
+        int tagLine = ElementType::getType(TYPE_LIN, order);
         const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
         const fullMatrix<double> &refNodes = fs->getReferenceNodes();
         double *val = new double[sz1];
@@ -433,7 +433,7 @@ namespace BoundaryLayerCurver
                                     Parameters2DCurve &parameters,
                                     SVector3 w)
   {
-    int tagLine = ElementType::getTag(TYPE_LIN, baseVert.size() - 1);
+    int tagLine = ElementType::getType(TYPE_LIN, baseVert.size() - 1);
     const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
     double sf[100][3];
 
@@ -483,7 +483,7 @@ namespace BoundaryLayerCurver
                          fullMatrix<double> &xyz, GEntity *bndEnt,
                          int triDirection = 0)
   {
-    int tagLine = ElementType::getTag(TYPE_LIN, baseVert.size()-1);
+    int tagLine = ElementType::getType(TYPE_LIN, baseVert.size()-1);
     const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
 
 //    drawIdealCurve(baseVert, parameters, w, bndEnt);
@@ -637,11 +637,11 @@ namespace BoundaryLayerCurver
 
   InteriorPlacementData* constructInteriorPlacementData(int tag)
   {
-    const int order = ElementType::OrderFromTag(tag);
+    const int order = ElementType::getOrder(tag);
     const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
     InteriorPlacementData *data = new InteriorPlacementData;
 
-    int type = ElementType::ParentTypeFromTag(tag);
+    int type = ElementType::getParentType(tag);
 
     switch (type) {
       case TYPE_TRI:

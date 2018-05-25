@@ -591,7 +591,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_setInterpolationMatrices(PView *view)
     viewData->deleteInterpolationMatrices(type);
     const nodalBasis *fsE = BasisFactory::getNodalBasis(_type2tag[type]);
     const polynomialBasis *pfsE = dynamic_cast<const polynomialBasis *>(fsE);
-    const int hoTag = ElementType::getTag(type, _viewOrder);
+    const int hoTag = ElementType::getType(type, _viewOrder);
     const nodalBasis *fsV = BasisFactory::getNodalBasis(hoTag);
     const polynomialBasis *pfsV = dynamic_cast<const polynomialBasis *>(fsV);
     viewData->setInterpolationMatrices(type,

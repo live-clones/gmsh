@@ -558,8 +558,8 @@ std::string MElement::getInfoString(bool multline)
 const nodalBasis* MElement::getFunctionSpace(int order, bool serendip) const
 {
   if (order == -1) return BasisFactory::getNodalBasis(getTypeForMSH());
-  int tag = ElementType::getTag(getType(), order, serendip);
-  return tag ? BasisFactory::getNodalBasis(tag) : NULL;
+  int type = ElementType::getType(getType(), order, serendip);
+  return type ? BasisFactory::getNodalBasis(type) : NULL;
 }
 
 const JacobianBasis* MElement::getJacobianFuncSpace(int order) const
@@ -638,7 +638,7 @@ static double _computeDeterminantAndRegularize(const MElement *ele, double jac[3
 static double _computeDeterminantAndRegularize(const MElement *ele, double *jac)
 {
   double dJ = 0;
-  
+
   /**
    * 'jac' is a row-major order array :
    *
@@ -647,9 +647,9 @@ static double _computeDeterminantAndRegularize(const MElement *ele, double *jac)
    *  |6 7 8|
    *
    */
-  
+
   switch (ele->getDim()) {
-    
+
     case 0:
     {
     dJ = 1.0;
@@ -661,7 +661,7 @@ static double _computeDeterminantAndRegularize(const MElement *ele, double *jac)
     case 1:
     {
     dJ = sqrt(SQU(jac[0]) + SQU(jac[1]) + SQU(jac[2]));
-    
+
     // regularize matrix
     double a[3], b[3], c[3];
     a[0] = jac[0];
@@ -686,7 +686,7 @@ static double _computeDeterminantAndRegularize(const MElement *ele, double *jac)
     dJ = sqrt(SQU(jac[0] * jac[4] - jac[1] * jac[3]) +
               SQU(jac[2] * jac[3] - jac[0] * jac[5]) +
               SQU(jac[1] * jac[5] - jac[2] * jac[4]));
-    
+
     // regularize matrix
     double a[3], b[3], c[3];
     a[0] = jac[0];
@@ -774,7 +774,7 @@ double MElement::getJacobian(const std::vector<SVector3> &gsf, double *jac) cons
   for(unsigned int i = 0; i < 9; i++){
     jac[i] = 0.;
   }
-  
+
   const int numShapeFunctions = getNumVertices();
   for (int i = 0; i < numShapeFunctions; i++) {
     const MVertex *v = getShapeFunctionNode(i);
@@ -1112,7 +1112,7 @@ double MElement::integrateCirc(double val[], int edge, int pOrder, int order)
   std::vector<MVertex*> v;
   getEdgeVertices(edge, v);
   MElementFactory f;
-  int type = ElementType::getTag(TYPE_LIN, getPolynomialOrder());
+  int type = ElementType::getType(TYPE_LIN, getPolynomialOrder());
   MElement* ee = f.create(type, v);
 
   double intv[3];
@@ -1143,15 +1143,15 @@ double MElement::integrateFlux(double val[], int face, int pOrder, int order)
     case TYPE_TET :
     case TYPE_QUA :
     case TYPE_HEX :
-      type = ElementType::getTag(getType(), getPolynomialOrder());
+      type = ElementType::getType(getType(), getPolynomialOrder());
       break;
     case TYPE_PYR :
-      if(face < 4) type = ElementType::getTag(TYPE_TRI, getPolynomialOrder());
-      else type = ElementType::getTag(TYPE_QUA, getPolynomialOrder());
+      if(face < 4) type = ElementType::getType(TYPE_TRI, getPolynomialOrder());
+      else type = ElementType::getType(TYPE_QUA, getPolynomialOrder());
       break;
     case TYPE_PRI :
-      if(face < 2) type = ElementType::getTag(TYPE_TRI, getPolynomialOrder());
-      else type = ElementType::getTag(TYPE_QUA, getPolynomialOrder());
+      if(face < 2) type = ElementType::getType(TYPE_TRI, getPolynomialOrder());
+      else type = ElementType::getType(TYPE_QUA, getPolynomialOrder());
       break;
     default: type = 0; break;
   }
@@ -2103,8 +2103,9 @@ MElement *MElementFactory::create(int num, int type, const std::vector<int> &dat
 
   MElement *element = create(type, vertices, num, part, false, parent);
 
-  for(unsigned int j = 0; j < ghosts.size(); j++)
+  for(unsigned int j = 0; j < ghosts.size(); j++){
     //model->getGhostCells().insert(std::pair<MElement*, short>(element, ghosts[j]));
+  }
   if(part > model->getNumPartitions()) model->setNumPartitions(part);
 
   return element;
@@ -2113,11 +2114,11 @@ MElement *MElementFactory::create(int num, int type, const std::vector<int> &dat
 double MElement::skewness()
 {
   double minsk = 1.0;
-  for (int i=0;i<getNumFaces();i++){
+  for (int i = 0; i < getNumFaces(); i++){
     MFace f = getFace(i);
     if (f.getNumVertices() == 3){
-      //      MTriangle t (f.getVertex(0),f.getVertex(1),f.getVertex(2));
-      //      minsk = std::min(minsk, t.etaShapeMeasure ());
+      // MTriangle t (f.getVertex(0),f.getVertex(1),f.getVertex(2));
+      // minsk = std::min(minsk, t.etaShapeMeasure ());
     }
     else if (f.getNumVertices() == 4){
       MQuadrangle q (f.getVertex(0),f.getVertex(1),f.getVertex(2),f.getVertex(3));

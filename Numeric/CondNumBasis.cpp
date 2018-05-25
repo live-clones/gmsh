@@ -312,10 +312,10 @@ inline void calcGradInvCondNum3D(double dxdX, double dxdY, double dxdZ,
 
 
 CondNumBasis::CondNumBasis(int tag, int cnOrder) :
-    _tag(tag), _dim(ElementType::DimensionFromTag(tag)),
+    _tag(tag), _dim(ElementType::getDimension(tag)),
     _condNumOrder(cnOrder >= 0 ? cnOrder : condNumOrder(tag))
 {
-  if ( ElementType::ParentTypeFromTag(tag) == TYPE_TRIH){
+  if (ElementType::getParentType(tag) == TYPE_TRIH){
     _nCondNumNodes = 1;
     _nMapNodes = 4;
     _nPrimMapNodes = 4;
@@ -323,7 +323,7 @@ CondNumBasis::CondNumBasis(int tag, int cnOrder) :
   }
   const bool serendip = false;
 
-  FuncSpaceData data = (ElementType::ParentTypeFromTag(tag) == TYPE_PYR) ?
+  FuncSpaceData data = (ElementType::getParentType(tag) == TYPE_PYR) ?
       FuncSpaceData(true, tag, true, 1, _condNumOrder-1, &serendip) :
       FuncSpaceData(true, tag, _condNumOrder, &serendip);
 
@@ -337,8 +337,8 @@ CondNumBasis::CondNumBasis(int tag, int cnOrder) :
 
   // Compute shape function gradients of primary mapping at barycenter,
   // in order to compute normal to straight element
-  const int parentType = ElementType::ParentTypeFromTag(tag);
-  const int primMapType = ElementType::getTag(parentType, 1, false);
+  const int parentType = ElementType::getParentType(tag);
+  const int primMapType = ElementType::getType(parentType, 1, false);
   const nodalBasis *primMapBasis = BasisFactory::getNodalBasis(primMapType);
   _nPrimMapNodes = primMapBasis->getNumShapeFunctions();
 
@@ -372,8 +372,8 @@ CondNumBasis::CondNumBasis(int tag, int cnOrder) :
 
 int CondNumBasis::condNumOrder(int tag)
 {
-  const int parentType = ElementType::ParentTypeFromTag(tag);
-  const int order = ElementType::OrderFromTag(tag);
+  const int parentType = ElementType::getParentType(tag);
+  const int order = ElementType::getOrder(tag);
   return condNumOrder(parentType, order);
 }
 
@@ -435,7 +435,7 @@ inline void CondNumBasis::getInvCondNumGeneral(int nCondNumNodes,
     }
 
     case 3 : {
-      if (ElementType::ParentTypeFromTag(_tag) == TYPE_TRIH){
+      if (ElementType::getParentType(_tag) == TYPE_TRIH){
         for (int i = 0; i < nCondNumNodes; i++) condNum(i) = 1.;
         break;
       }
@@ -532,7 +532,7 @@ inline void CondNumBasis::getInvCondNumAndGradientsGeneral(int nCondNumNodes,
     }
 
     case 3 : {
-      if (ElementType::ParentTypeFromTag(_tag) == TYPE_TRIH){
+      if (ElementType::getParentType(_tag) == TYPE_TRIH){
         for (int i = 0; i < nCondNumNodes; i++) {
           for (int j = 0; j < _nMapNodes; j++) {
             IDI(i,j) = 0.;

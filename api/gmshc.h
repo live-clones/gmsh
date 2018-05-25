@@ -183,8 +183,8 @@ GMSH_API void gmshModelGetBoundingBox(const int dim,
                                       double * zmax,
                                       int * ierr);
 
-/* Get the dimension of the current model. */
-GMSH_API int gmshModelGetDim(int * ierr);
+/* Get the geometrical dimension of the current model. */
+GMSH_API int gmshModelGetDimension(int * ierr);
 
 /* Add a discrete geometrical entity (defined by a mesh) of dimension `dim' in
  * the current model. Return the tag of the new discrete entity, equal to
@@ -213,32 +213,6 @@ GMSH_API void gmshModelGetType(const int dim,
 GMSH_API void gmshModelMeshGenerate(const int dim,
                                     int * ierr);
 
-/* Compute a basis representation for homology spaces after a mesh has been
- * generated. The computation domain is given in a list of physical group tags
- * `domainTags'; if empty, the whole mesh is the domain. The computation
- * subdomain for relative homology computation is given in a list of physical
- * group tags `subdomainTags'; if empty, absolute homology is computed. The
- * dimensions homology bases to be computed are given in the list `dim'; if
- * empty, all bases are computed. Resulting basis representation chains are
- * stored as physical groups in the mesh. */
-GMSH_API void gmshModelMeshHomology(int * domainTags, size_t domainTags_n,
-                                    int * subdomainTags, size_t subdomainTags_n,
-                                    int * dims, size_t dims_n,
-                                    int * ierr);
-
-/* Compute a basis representation for cohomology spaces after a mesh has been
- * generated. The computation domain is given in a list of physical group tags
- * `domainTags'; if empty, the whole mesh is the domain. The computation
- * subdomain for relative cohomology computation is given in a list of
- * physical group tags `subdomainTags'; if empty, absolute cohomology is
- * computed. The dimensions homology bases to be computed are given in the
- * list `dim'; if empty, all bases are computed. Resulting basis
- * representation cochains are stored as physical groups in the mesh. */
-GMSH_API void gmshModelMeshCohomology(int * domainTags, size_t domainTags_n,
-                                      int * subdomainTags, size_t subdomainTags_n,
-                                      int * dims, size_t dims_n,
-                                      int * ierr);
-
 /* Partition the mesh of the current model into `numPart' partitions. */
 GMSH_API void gmshModelMeshPartition(const int numPart,
                                      int * ierr);
@@ -250,23 +224,51 @@ GMSH_API void gmshModelMeshRefine(int * ierr);
 GMSH_API void gmshModelMeshSetOrder(const int order,
                                     int * ierr);
 
-/* Remove duplicate mesh nodes in the mesh of the current model. */
-GMSH_API void gmshModelMeshRemoveDuplicateNodes(int * ierr);
-
 /* Get the last entities (if any) where a meshing error occurred. Currently
  * only populated by the new 3D meshing algorithms. */
 GMSH_API void gmshModelMeshGetLastEntityError(int ** dimTags, size_t * dimTags_n,
                                               int * ierr);
 
-/* Get the last mesh nodes (if any) where a meshing error occurred. Currently
- * only populated by the new 3D meshing algorithms. */
+/* Get the last nodes (if any) where a meshing error occurred. Currently only
+ * populated by the new 3D meshing algorithms. */
 GMSH_API void gmshModelMeshGetLastNodeError(int ** nodeTags, size_t * nodeTags_n,
                                             int * ierr);
 
-/* Set the mesh nodes in the geometrical entity of dimension `dim' and tag
- * `tag'. `nodetags' contains the node tags (their unique, strictly positive
- * identification numbers). `coord' is a vector of length 3 times the length
- * of `nodeTags' that contains the (x, y, z) coordinates of the nodes,
+/* Get the nodes classified on the entity of dimension `dim' and `tag' tag. If
+ * `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and
+ * `tag' are negative, get all the nodes in the mesh. `nodeTags' contains the
+ * node tags (their unique, strictly positive identification numbers). `coord'
+ * is a vector of length 3 times the length of `nodeTags' that contains the
+ * (x, y, z) coordinates of the nodes, concatenated. If `dim' >= 0,
+ * `parametricCoord' contains the parametric coordinates of the nodes, if
+ * available. The length of `parametricCoord' can be 0 or `dim' times the
+ * length of `nodeTags'. */
+GMSH_API void gmshModelMeshGetNodes(int ** nodeTags, size_t * nodeTags_n,
+                                    double ** coord, size_t * coord_n,
+                                    double ** parametricCoord, size_t * parametricCoord_n,
+                                    const int dim,
+                                    const int tag,
+                                    int * ierr);
+
+/* Get the coordinates and the parametric coordinates (if any) of the node
+ * with tag `tag'. This is a sometimes useful but inefficient way of accessing
+ * node data, as it relies on a cache stored in the model. For large meshes
+ * all the nodes in the model should be numbered in a continuous sequence of
+ * tags from 1 to N to maintain reasonnable performance (in this case the
+ * internal cache is based on a vector; otherwise it uses a map). */
+GMSH_API void gmshModelMeshGetNode(const int nodeTag,
+                                   double ** coord, size_t * coord_n,
+                                   double ** parametricCoord, size_t * parametricCoord_n,
+                                   int * ierr);
+
+/* Rebuild the node cache. */
+GMSH_API void gmshModelMeshRebuildNodeCache(const int onlyIfNecessary,
+                                            int * ierr);
+
+/* Set the nodes classified on the geometrical entity of dimension `dim' and
+ * tag `tag'. `nodeTags' contains the node tags (their unique, strictly
+ * positive identification numbers). `coord' is a vector of length 3 times the
+ * length of `nodeTags' that contains the (x, y, z) coordinates of the nodes,
  * concatenated. The optional `parametricCoord' vector contains the parametric
  * coordinates of the nodes, if any. The length of `parametricCoord' can be 0
  * or `dim' times the length of `nodeTags'. */
@@ -277,81 +279,24 @@ GMSH_API void gmshModelMeshSetNodes(const int dim,
                                     double * parametricCoord, size_t parametricCoord_n,
                                     int * ierr);
 
-/* Get the coordinates and the parametric coordinates (if any) of the mesh
- * node with tag `tag'. This is a useful by inefficient way of accessing mesh
- * node data, as it relies on a cache stored in the model. For large meshes
- * all the nodes in the model should be numbered in a continuous sequence of
- * tags from 1 to N to maintain reasonnable performance (in this case the
- * internal cache is based on a vector; otherwise it uses a map). */
-GMSH_API void gmshModelMeshGetNode(const int nodeTag,
-                                   double ** coord, size_t * coord_n,
-                                   double ** parametricCoord, size_t * parametricCoord_n,
-                                   int * ierr);
+/* Reclassify all nodes on their associated geometrical entity, based on the
+ * elements. Can be used when importing nodes in bulk (e.g. by associating
+ * them all to a single volume), to reclassify them correctly on model
+ * surfaces, curves, etc. after the elements have been set. */
+GMSH_API void gmshModelMeshReclassifyNodes(int * ierr);
 
-/* Get the mesh nodes of the entity of dimension `dim' and `tag' tag. If `tag'
- * < 0, get the nodes for all entities of dimension `dim'. If `dim' and `tag'
- * are negative, get all the nodes in the mesh. `nodeTags' contains the node
- * tags (their unique, strictly positive identification numbers). `coord' is a
- * vector of length 3 times the length of `nodeTags' that contains the (x, y,
- * z) coordinates of the nodes, concatenated. If `dim' >= 0, `parametricCoord'
- * contains the parametric coordinates of the nodes, if available. The length
- * of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'. */
-GMSH_API void gmshModelMeshGetNodes(int ** nodeTags, size_t * nodeTags_n,
-                                    double ** coord, size_t * coord_n,
-                                    double ** parametricCoord, size_t * parametricCoord_n,
-                                    const int dim,
-                                    const int tag,
-                                    int * ierr);
-
-/* Get the mesh nodes in the same way as `getNodes', but for a single
- * `elementType'. */
-GMSH_API void gmshModelMeshGetNodesByType(const int elementType,
-                                          int ** nodeTags, size_t * nodeTags_n,
-                                          const int dim,
-                                          const int tag,
-                                          const size_t taskID,
-                                          const size_t nbrTasks,
-                                          int * ierr);
-
-/* Set the mesh elements of the entity of dimension `dim' and `tag' tag.
- * `types' contains the MSH types of the elements (e.g. `2' for 3-node
- * triangles: see the Gmsh reference manual). `elementTags' is a vector of the
- * same length as `types'; each entry is a vector containing the tags (unique,
+/* Get the elements classified on the entity of dimension `dim' and `tag' tag.
+ * If `tag' < 0, get the elements for all entities of dimension `dim'. If
+ * `dim' and `tag' are negative, get all the elements in the mesh.
+ * `elementTypes' contains the MSH types of the elements (e.g. `2' for 3-node
+ * triangles: see `getElementProperties' to obtain the properties for a given
+ * element type). `elementTags' is a vector of the same length as
+ * `elementTypes'; each entry is a vector containing the tags (unique,
  * strictly positive identifiers) of the elements of the corresponding type.
- * `nodeTags' is also a vector of the same length as `types'; each entry is a
- * vector of length equal to the number of elements of the give type times the
- * number of nodes per element, that contains the node tags of all the
- * elements of the given type, concatenated. */
-GMSH_API void gmshModelMeshSetElements(const int dim,
-                                       const int tag,
-                                       int * elementTypes, size_t elementTypes_n,
-                                       const int ** elementTags, const size_t * elementTags_n, size_t elementTags_nn,
-                                       const int ** nodeTags, const size_t * nodeTags_n, size_t nodeTags_nn,
-                                       int * ierr);
-
-/* Get the type and node tags of the mesh element with tag `tag'. This is a
- * useful but inefficient way of accessing mesh element data, as it relies on
- * a cache stored in the model. For large meshes all the elements in the model
- * should be numbered in a continuous sequence of tags from 1 to N to maintain
- * reasonnable performance (in this case the internal cache is based on a
- * vector; otherwise it uses a map). */
-GMSH_API void gmshModelMeshGetElement(const int elementTag,
-                                      int * elementType,
-                                      int ** nodeTags, size_t * nodeTags_n,
-                                      int * ierr);
-
-/* Get the mesh elements of the entity of dimension `dim' and `tag' tag. If
- * `tag' < 0, get the elements for all entities of dimension `dim'. If `dim'
- * and `tag' are negative, get all the elements in the mesh. `elementTypes'
- * contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
- * `getElementProperties' to obtain the properties for a given element type).
- * `elementTags' is a vector of the same length as `elementTypes'; each entry
- * is a vector containing the tags (unique, strictly positive identifiers) of
- * the elements of the corresponding type. `nodeTags' is also a vector of the
- * same length as `elementTypes'; each entry is a vector of length equal to
- * the number of elements of the given type times the number of nodes for this
- * type of element, that contains the node tags of all the elements of the
- * given type, concatenated. */
+ * `nodeTags' is also a vector of the same length as `elementTypes'; each
+ * entry is a vector of length equal to the number of elements of the given
+ * type times the number of nodes for this type of element, that contains the
+ * node tags of all the elements of the given type, concatenated. */
 GMSH_API void gmshModelMeshGetElements(int ** elementTypes, size_t * elementTypes_n,
                                        int *** elementTags, size_t ** elementTags_n, size_t *elementTags_nn,
                                        int *** nodeTags, size_t ** nodeTags_n, size_t *nodeTags_nn,
@@ -359,18 +304,36 @@ GMSH_API void gmshModelMeshGetElements(int ** elementTypes, size_t * elementType
                                        const int tag,
                                        int * ierr);
 
-/* Get the mesh elements in the same way as `getElements', but for a single
- * `elementType'. */
-GMSH_API void gmshModelMeshGetElementsByType(const int elementType,
-                                             int ** elementTags, size_t * elementTags_n,
-                                             int ** nodeTags, size_t * nodeTags_n,
-                                             const int dim,
-                                             const int tag,
-                                             int * ierr);
+/* Get the type and node tags of the element with tag `tag'. This is a useful
+ * but inefficient way of accessing element data, as it relies on a cache
+ * stored in the model. For large meshes all the elements in the model should
+ * be numbered in a continuous sequence of tags from 1 to N to maintain
+ * reasonnable performance (in this case the internal cache is based on a
+ * vector; otherwise it uses a map). */
+GMSH_API void gmshModelMeshGetElement(const int elementTag,
+                                      int * elementType,
+                                      int ** nodeTags, size_t * nodeTags_n,
+                                      int * ierr);
 
-/* Get the types of mesh elements in the entity of dimension `dim' and `tag'
- * tag. If `tag' < 0, get the types for all entities of dimension `dim'. If
- * `dim' and `tag' are negative, get all the types in the mesh. */
+/* Set the elements of the entity of dimension `dim' and `tag' tag. `types'
+ * contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
+ * the Gmsh reference manual). `elementTags' is a vector of the same length as
+ * `types'; each entry is a vector containing the tags (unique, strictly
+ * positive identifiers) of the elements of the corresponding type. `nodeTags'
+ * is also a vector of the same length as `types'; each entry is a vector of
+ * length equal to the number of elements of the give type times the number of
+ * nodes per element, that contains the node tags of all the elements of the
+ * given type, concatenated. */
+GMSH_API void gmshModelMeshSetElements(const int dim,
+                                       const int tag,
+                                       int * elementTypes, size_t elementTypes_n,
+                                       const int ** elementTags, const size_t * elementTags_n, size_t elementTags_nn,
+                                       const int ** nodeTags, const size_t * nodeTags_n, size_t nodeTags_nn,
+                                       int * ierr);
+
+/* Get the types of elements in the entity of dimension `dim' and `tag' tag.
+ * If `tag' < 0, get the types for all entities of dimension `dim'. If `dim'
+ * and `tag' are negative, get all the types in the mesh. */
 GMSH_API void gmshModelMeshGetElementTypes(int ** elementTypes, size_t * elementTypes_n,
                                            const int dim,
                                            const int tag,
@@ -378,8 +341,8 @@ GMSH_API void gmshModelMeshGetElementTypes(int ** elementTypes, size_t * element
 
 /* Get the properties of an element of type `elementType': its name
  * (`elementName'), dimension (`dim'), order (`order'), number of nodes
- * (`numNodes') and parametric coordinates of nodes (`parametricCoord' vector,
- * of length `dim' times `numNodes'). */
+ * (`numNodes') and parametric node coordinates (`parametricCoord' vector, of
+ * length `dim' times `numNodes'). */
 GMSH_API void gmshModelMeshGetElementProperties(const int elementType,
                                                 char ** elementName,
                                                 int * dim,
@@ -388,110 +351,104 @@ GMSH_API void gmshModelMeshGetElementProperties(const int elementType,
                                                 double ** parametricCoord, size_t * parametricCoord_n,
                                                 int * ierr);
 
-/* Get the Jacobian data of the entity of dimension `dim' and `tag' tag for a
- * single `elementType'. `integrationType' specifies the type of integration
- * (e.g. "Gauss4"). `nbrIntegrationPoints' contains the number of integration
- * points corresponding to `integrationType'. `jacobians' contains for each
- * element a vector (of size 9 times the number of integration points)
- * containing the 9 entries (by row) of the 3x3 Jacobian matrix,
- * `determinants' contains for each element a vector (of size equal to the
- * number of integration points) containing the determinant of the Jacobian
- * and 'points' contains for each element a vector (of size 3 times the number
- * of integration points) containing the (x, y, z) coordinates of the
- * integration point. If `tag' < 0, get the Jacobian data for all entities of
- * dimension `dim'. If `dim' and `tag' are negative, get all Jacobian data in
- * the mesh. */
-GMSH_API void gmshModelMeshGetJacobianData(const int elementType,
-                                           const char * integrationType,
-                                           int * nbrIntegrationPoints,
-                                           double ** jacobians, size_t * jacobians_n,
-                                           double ** determinants, size_t * determinants_n,
-                                           double ** points, size_t * points_n,
-                                           const int dim,
-                                           const int tag,
-                                           const size_t taskID,
-                                           const size_t nbrTasks,
-                                           int * ierr);
+/* Get the elements of type `elementType' classified on the entity of of tag
+ * `tag'. If `tag' < 0, get the elements for all entities. `elementTags' is a
+ * vector containing the tags (unique, strictly positive identifiers) of the
+ * elements of the corresponding type. `nodeTags' is a vector of length equal
+ * to the number of elements of the given type times the number of nodes for
+ * this type of element, that contains the node tags of all the elements of
+ * the given type, concatenated. */
+GMSH_API void gmshModelMeshGetElementsByType(const int elementType,
+                                             int ** elementTags, size_t * elementTags_n,
+                                             int ** nodeTags, size_t * nodeTags_n,
+                                             const int tag,
+                                             const size_t task,
+                                             const size_t numTasks,
+                                             int * ierr);
 
-/* Get the function space data of the entity of dimension `dim' and `tag' tag
- * for a single `elementType'. `integrationType' specifies the type of
- * integration (e.g. "Gauss4") and `functionSpaceType' specifies the function
- * space (e.g. "IsoParametric"). integrationPoints' contains for each element
- * type a vector (of length 4 times the number of integration points)
- * containing the parametric coordinates (u, v, w) and the weight associated
- * to the integration points, `functionSpaceNumComponents' return the number
- * of components returned by the evaluation of a basis function in the space
- * and `functionSpaceData' contains for each element type the evaluation of
- * the basis functions at the integration points. If `tag' < 0, get the
- * function space data for all entities of dimension `dim'. If `dim' and `tag'
- * are negative, get all function space data in the mesh. */
-GMSH_API void gmshModelMeshGetFunctionSpaceData(const int elementType,
+/* Preallocate the data for `getElementsByType'. This is necessary only if
+ * `getElementsByType' is called with `numTasks' > 1. */
+GMSH_API void gmshModelMeshPreallocateElementsByType(const int elementType,
+                                                     int ** elementTags, size_t * elementTags_n,
+                                                     int ** nodeTags, size_t * nodeTags_n,
+                                                     const int tag,
+                                                     int * ierr);
+
+/* Get the Jacobians of all the elements of type `elementType' classified on
+ * the entity of dimension `dim' and `tag' tag, at the integration points
+ * required by the `integrationType' integration rule (e.g. "Gauss4"). Data is
+ * returned by element, in the same order as data returned by
+ * `getElementsByType'. `jacobians' contains for each element the 9 entries of
+ * a 3x3 Jacobian matrix (by row), for each integration point. `determinants'
+ * contains for each element the determinant of the Jacobian matrix for each
+ * integration point. `points' contains for each element the (x, y, z)
+ * coordinates of the integration points. If `tag' < 0, get the Jacobian data
+ * for all entities. */
+GMSH_API void gmshModelMeshGetJacobians(const int elementType,
+                                        const char * integrationType,
+                                        double ** jacobians, size_t * jacobians_n,
+                                        double ** determinants, size_t * determinants_n,
+                                        double ** points, size_t * points_n,
+                                        const int tag,
+                                        const size_t task,
+                                        const size_t numTasks,
+                                        int * ierr);
+
+/* Preallocate the data required by `getJacobians'. This is necessary only if
+ * `getJacobians' is called with `numTasks' > 1. */
+GMSH_API void gmshModelMeshPreallocateJacobians(const int elementType,
                                                 const char * integrationType,
-                                                const char * functionSpaceType,
-                                                double ** integrationPoints, size_t * integrationPoints_n,
-                                                int * functionSpaceNumComponents,
-                                                double ** functionSpaceData, size_t * functionSpaceData_n,
-                                                const int dim,
+                                                const int jacobian,
+                                                const int determinant,
+                                                const int point,
+                                                double ** jacobians, size_t * jacobians_n,
+                                                double ** determinants, size_t * determinants_n,
+                                                double ** points, size_t * points_n,
                                                 const int tag,
                                                 int * ierr);
 
-/* Get barycenter of element with tag 'elementTag'. If 'primary' is true, only
- * the primary nodes is taking into account and if 'fast' is true the
- * barycenter computed is simply the sum of the nodes' coordinates (depending
- * on 'primary') without divided it by the number of nodes. */
-GMSH_API void gmshModelMeshGetBarycenter(const int elementTag,
-                                         const int fast,
-                                         const int primary,
-                                         double ** barycenter, size_t * barycenter_n,
-                                         int * ierr);
+/* Get the basis functions of all the elements of type `elementType'
+ * classified on the entity of tag `tag', for the given `integrationType'
+ * integration rule (e.g. "Gauss4") and `functionSpaceType' function space
+ * (e.g. "IsoParametric"). `integrationPoints' contains the parametric
+ * coordinates (u, v, w) and the weight associated to the integration points.
+ * `functionSpaceNumComponents' return the number of components returned by
+ * the evaluation of a basis function in the space. `functionSpaceData'
+ * contains the evaluation of the basis functions at the integration points.
+ * If `tag' < 0, get the function space data for all entities. */
+GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
+                                             const char * integrationType,
+                                             const char * functionSpaceType,
+                                             double ** integrationPoints, size_t * integrationPoints_n,
+                                             int * functionSpaceNumComponents,
+                                             double ** functionSpaceData, size_t * functionSpaceData_n,
+                                             const int tag,
+                                             int * ierr);
 
-/* Get barycenters of all elements corresponding to 'elementType' into entity
- * of dimension `dim' and tag `tag'. */
+/* Precomputes the basis functions corresponding to `elementType'. */
+GMSH_API void gmshModelMeshPrecomputeBasisFunctions(const int elementType,
+                                                    int * ierr);
+
+/* Get the barycenters of all elements of type `elementType' classified on the
+ * entity of tag `tag'. If `primary' is set, only the primary nodes of the
+ * elements are taken into account for the barycenter calculation. If `fast'
+ * is set, the function returns the sum of the primary node coordinates
+ * (without normalizing by the number of nodes). */
 GMSH_API void gmshModelMeshGetBarycenters(const int elementType,
-                                          const int dim,
                                           const int tag,
                                           const int fast,
                                           const int primary,
                                           double ** barycenters, size_t * barycenters_n,
-                                          const size_t taskID,
-                                          const size_t nbrTasks,
+                                          const size_t task,
+                                          const size_t numTasks,
                                           int * ierr);
 
-/* Initialize the mesh node cache ONLY it has not already done. */
-GMSH_API void gmshModelMeshInitializeNodeCache(int * ierr);
-
-/* Initialize the Jacobian data vector. */
-GMSH_API void gmshModelMeshInitializeJacobianDataVector(const int elementType,
-                                                        const char * integrationType,
-                                                        const int jacobian,
-                                                        const int determinant,
-                                                        const int point,
-                                                        double ** jacobians, size_t * jacobians_n,
-                                                        double ** determinants, size_t * determinants_n,
-                                                        double ** points, size_t * points_n,
-                                                        const int dim,
-                                                        const int tag,
-                                                        int * ierr);
-
-/* Initialize the nodeTags vector. */
-GMSH_API void gmshModelMeshInitializeNodeTagsVector(const int elementType,
-                                                    int ** nodeTags, size_t * nodeTags_n,
-                                                    const int dim,
-                                                    const int tag,
-                                                    int * ierr);
-
-/* Initialize the barycenters vector. */
-GMSH_API void gmshModelMeshInitializeBarycentersVector(const int elementType,
-                                                       double ** barycenters, size_t * barycenters_n,
-                                                       const int dim,
-                                                       const int tag,
-                                                       int * ierr);
-
-/* Redistribute all mesh nodes on their associated geometrical entity, based
- * on the mesh elements. Can be used when importing mesh nodes in bulk (e.g.
- * by associating them all to a single volume), to reclassify them correctly
- * on model surfaces, curves, etc. */
-GMSH_API void gmshModelMeshReclassifyNodes(int * ierr);
+/* Preallocate the data required by `getBarycenters'. This is necessary only
+ * if `getBarycenters' is called with `numTasks' > 1. */
+GMSH_API void gmshModelMeshPreallocateBarycenters(const int elementType,
+                                                  double ** barycenters, size_t * barycenters_n,
+                                                  const int tag,
+                                                  int * ierr);
 
 /* Set a mesh size constraint on the geometrical entities `dimTags'. Currently
  * only entities of dimension 0 (points) are handled. */
@@ -500,9 +457,9 @@ GMSH_API void gmshModelMeshSetSize(int * dimTags, size_t dimTags_n,
                                    int * ierr);
 
 /* Set a transfinite meshing constraint on the curve `tag', with `numNodes'
- * mesh nodes distributed according to `meshType' and `coef'. Currently
- * supported types are "Progression" (geometrical progression with power
- * `coef') and "Bump" (refinement toward both extremities of the curve). */
+ * nodes distributed according to `meshType' and `coef'. Currently supported
+ * types are "Progression" (geometrical progression with power `coef') and
+ * "Bump" (refinement toward both extremities of the curve). */
 GMSH_API void gmshModelMeshSetTransfiniteCurve(const int tag,
                                                const int numNodes,
                                                const char * meshType,
@@ -568,23 +525,12 @@ GMSH_API void gmshModelMeshEmbed(const int dim,
                                  const int inTag,
                                  int * ierr);
 
-/* Get the number of intergation points corresponding to 'elementType' and
- * 'integrationType'. */
-GMSH_API int gmshModelMeshGetNumberIntegrationPoints(const int elementType,
-                                                     const char * integrationType,
-                                                     int * ierr);
-
-/* Precomputes the basic function corresponding to 'elementType'. */
-GMSH_API void gmshModelMeshPrecomputeBasicFunction(const int elementType,
-                                                   int * ierr);
-
-/* Reorders the mesh elements corresponding to 'elementType' of entity given
- * by 'dim' and 'tag' according to 'order'. */
-GMSH_API void gmshModelMeshReorderedMeshElements(const int elementType,
-                                                 const int dim,
-                                                 const int tag,
-                                                 int * order, size_t order_n,
-                                                 int * ierr);
+/* Reorder the elements of type `elementType' classified on the entity of tag
+ * `tag' according to `order'. */
+GMSH_API void gmshModelMeshReorderElements(const int elementType,
+                                           const int tag,
+                                           int * order, size_t order_n,
+                                           int * ierr);
 
 /* Set the meshes of the entities of dimension `dim' and tag `tags' as
  * periodic copies of the meshes of entities `tagsSource', using the affine
@@ -604,6 +550,35 @@ GMSH_API void gmshModelMeshGetPeriodicNodes(const int dim,
                                             int ** nodes, size_t * nodes_n,
                                             double ** affineTransform, size_t * affineTransform_n,
                                             int * ierr);
+
+/* Remove duplicate nodes in the mesh of the current model. */
+GMSH_API void gmshModelMeshRemoveDuplicateNodes(int * ierr);
+
+/* Compute a basis representation for homology spaces after a mesh has been
+ * generated. The computation domain is given in a list of physical group tags
+ * `domainTags'; if empty, the whole mesh is the domain. The computation
+ * subdomain for relative homology computation is given in a list of physical
+ * group tags `subdomainTags'; if empty, absolute homology is computed. The
+ * dimensions homology bases to be computed are given in the list `dim'; if
+ * empty, all bases are computed. Resulting basis representation chains are
+ * stored as physical groups in the mesh. */
+GMSH_API void gmshModelMeshHomology(int * domainTags, size_t domainTags_n,
+                                    int * subdomainTags, size_t subdomainTags_n,
+                                    int * dims, size_t dims_n,
+                                    int * ierr);
+
+/* Compute a basis representation for cohomology spaces after a mesh has been
+ * generated. The computation domain is given in a list of physical group tags
+ * `domainTags'; if empty, the whole mesh is the domain. The computation
+ * subdomain for relative cohomology computation is given in a list of
+ * physical group tags `subdomainTags'; if empty, absolute cohomology is
+ * computed. The dimensions homology bases to be computed are given in the
+ * list `dim'; if empty, all bases are computed. Resulting basis
+ * representation cochains are stored as physical groups in the mesh. */
+GMSH_API void gmshModelMeshCohomology(int * domainTags, size_t domainTags_n,
+                                      int * subdomainTags, size_t subdomainTags_n,
+                                      int * dims, size_t dims_n,
+                                      int * ierr);
 
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explcitly; otherwise a new tag is assigned automatically. Return
@@ -887,9 +862,9 @@ GMSH_API void gmshModelGeoMeshSetSize(int * dimTags, size_t dimTags_n,
                                       int * ierr);
 
 /* Set a transfinite meshing constraint on the curve `tag', with `numNodes'
- * mesh nodes distributed according to `meshType' and `coef'. Currently
- * supported types are "Progression" (geometrical progression with power
- * `coef') and "Bump" (refinement toward both extreminties of the curve). */
+ * nodes distributed according to `meshType' and `coef'. Currently supported
+ * types are "Progression" (geometrical progression with power `coef') and
+ * "Bump" (refinement toward both extreminties of the curve). */
 GMSH_API void gmshModelGeoMeshSetTransfiniteCurve(const int tag,
                                                   const int nPoints,
                                                   const char * meshType,

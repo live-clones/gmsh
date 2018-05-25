@@ -1020,8 +1020,8 @@ int GModel::readCGNS(const std::string &name)
   if (checkAllDim) {
 
     // determine the element types
-    int type_hex =  ElementType::getTag(TYPE_HEX,order);
-    int type_quad = ElementType::getTag(TYPE_QUA,order);
+    int type_hex =  ElementType::getType(TYPE_HEX,order);
+    int type_quad = ElementType::getType(TYPE_QUA,order);
 
     // for entity numbering
     int elementary_region = getNumRegions();
@@ -2266,7 +2266,7 @@ int write_CGNS_zones(GModel &model, const int zoneDefinition, const int numZone,
 
             std::vector<int> iZBV(numBoVert);
             for(int i = 0; i != numBoVert; ++i) iZBV[i] = i;
-            std::sort(iZBV.begin(),iZBV.end(),ZoneBoVecSort(zoneBoVec)); 
+            std::sort(iZBV.begin(),iZBV.end(),ZoneBoVecSort(zoneBoVec));
 
             dBuffer.reserve(1024);
             iBuffer1.reserve(1024);

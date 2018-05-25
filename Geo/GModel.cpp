@@ -873,7 +873,7 @@ static void checkConformity
    MFace face, MElement *el)
 {
   int connectivity = faceToElement.count(face);
-  if(ElementType::ParentTypeFromTag(el->getType()) == TYPE_TRIH){
+  if(ElementType::getParentType(el->getType()) == TYPE_TRIH){
     //Each face of a trihedron should exist twice (no face on the boundary)
     if(connectivity != 2)
       Msg::Error("Non conforming trihedron %i (nb connections for a face %i)",

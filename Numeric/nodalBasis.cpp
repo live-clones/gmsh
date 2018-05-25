@@ -98,7 +98,7 @@ namespace ClosureGen {
   {
     closure.clear();
     closure.resize((order + 1) * (order + 2) / 2);
-    closure.type = ElementType::getTag(TYPE_TRI, order, false);
+    closure.type = ElementType::getType(TYPE_TRI, order, false);
 
     switch(order){
     case 0:
@@ -193,7 +193,7 @@ namespace ClosureGen {
       if(serendip) break;
     }
     for(int r = 0; r < nNod*2 ; r++){
-      closure[r].type = ElementType::getTag(TYPE_LIN, order);
+      closure[r].type = ElementType::getType(TYPE_LIN, order);
       closureRef[r] = 0;
     }
   }
@@ -350,7 +350,7 @@ namespace ClosureGen {
   {
     closure.clear();
     const nodalBasis &fsFace = *BasisFactory::getNodalBasis
-      (ElementType::getTag(TYPE_QUA, order, serendip));
+      (ElementType::getType(TYPE_QUA, order, serendip));
     for(int iRotate = 0; iRotate < 4; iRotate++){
       for(int iSign = 1; iSign >= -1; iSign -= 2){
         for(int iFace = 0; iFace < 6; iFace++){
@@ -467,7 +467,7 @@ namespace ClosureGen {
     closure.clear();
     bool isTriangle = iFace<2;
     if(isTriangle && iRotate > 2) return;
-    closure.type = ElementType::getTag(isTriangle ? TYPE_TRI : TYPE_QUA, order);
+    closure.type = ElementType::getType(isTriangle ? TYPE_TRI : TYPE_QUA, order);
 
     int nNodes = isTriangle ? (order+1)*(order+2)/2 : (order+1)*(order+1);
     closure.resize(nNodes);
@@ -626,7 +626,7 @@ namespace ClosureGen {
         closure[j].push_back(nNod + (order-1)*j + i);
         closure[nNod+j].push_back(nNod + (order-1)*(j+1) -i -1);
       }
-      closure[j].type = closure[nNod+j].type = ElementType::getTag(TYPE_LIN, order);
+      closure[j].type = closure[nNod+j].type = ElementType::getType(TYPE_LIN, order);
     }
   }
 
@@ -645,10 +645,10 @@ nodalBasis::nodalBasis(int tag)
 {
   using namespace ClosureGen;
   type = tag;
-  parentType = ElementType::ParentTypeFromTag(tag);
-  order = ElementType::OrderFromTag(tag);
-  serendip = ElementType::SerendipityFromTag(tag) > 1;
-  dimension = ElementType::DimensionFromTag(tag);
+  parentType = ElementType::getParentType(tag);
+  order = ElementType::getOrder(tag);
+  serendip = ElementType::getSerendipity(tag) > 1;
+  dimension = ElementType::getDimension(tag);
 
   switch(parentType){
   case TYPE_PNT :
