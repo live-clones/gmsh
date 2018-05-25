@@ -730,14 +730,14 @@ GMSH_API void gmshModelMeshInitializeNodeCache(int * ierr)
   }
 }
 
-GMSH_API void gmshModelMeshInitializeJacobianDataVector(const int elementType, const char * integrationType, double ** jacobians, size_t * jacobians_n, double ** determinants, size_t * determinants_n, double ** points, size_t * points_n, const int dim, const int tag, int * ierr)
+GMSH_API void gmshModelMeshInitializeJacobianDataVector(const int elementType, const char * integrationType, const int jacobian, const int determinant, const int point, double ** jacobians, size_t * jacobians_n, double ** determinants, size_t * determinants_n, double ** points, size_t * points_n, const int dim, const int tag, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_jacobians_;
     std::vector<double> api_determinants_;
     std::vector<double> api_points_;
-    gmsh::model::mesh::initializeJacobianDataVector(elementType, integrationType, api_jacobians_, api_determinants_, api_points_, dim, tag);
+    gmsh::model::mesh::initializeJacobianDataVector(elementType, integrationType, jacobian, determinant, point, api_jacobians_, api_determinants_, api_points_, dim, tag);
     vector2ptr(api_jacobians_, jacobians, jacobians_n);
     vector2ptr(api_determinants_, determinants, determinants_n);
     vector2ptr(api_points_, points, points_n);

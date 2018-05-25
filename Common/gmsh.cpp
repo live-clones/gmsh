@@ -1057,52 +1057,162 @@ static void _getJacobianData(const int elementType,
   int nbrIPoint = weights.size();
   // get quadrature data
   {
-  int n = 0;
-  for(unsigned int i = 0; i < entities.size(); i++){
-    GEntity *ge = entities[i];
-    n += ge->getNumMeshElementsByType(familyType);
-  }
-  const size_t begin = (taskID*n)/nbrTasks;
-  const size_t end = ((taskID+1)*n)/nbrTasks;
-  if(end*nbrIPoint > determinants.size()){
-    Msg::Error("Vector 'determinants' is too small (%d < %d)", determinants.size(), end*nbrIPoint);
-    throw 4;
-  }
-  if(9*end*nbrIPoint > jacobians.size()){
-    Msg::Error("Vector 'jacobians' is too small (%d < %d)", jacobians.size(), 9*end*nbrIPoint);
-    throw 4;
-  }
-  std::vector< std::vector<SVector3> > gsf;
-  size_t o = 0;
-  size_t idx = begin*nbrIPoint;
-  for(unsigned int i = 0; i < entities.size(); i++){
-    GEntity *ge = entities[i];
-    const unsigned int numMeshElements = ge->getNumMeshElementsByType(familyType);
-    for(unsigned int j = 0; j < numMeshElements; j++){
-      if(o >= begin && o < end){
-        MElement *e = ge->getMeshElementByType(familyType, j);
-        if(gsf.size() == 0){
-          gsf.resize(nbrIPoint);
-          for(int k = 0; k < nbrIPoint; k++){
-            double value[1256][3];
-            e->getGradShapeFunctions(pts(k, 0), pts(k, 1), pts(k, 2), value);
-            gsf[k].resize(e->getNumShapeFunctions());
-            for(int l = 0; l < e->getNumShapeFunctions(); l++) {
-              gsf[k][l][0] = value[l][0];
-              gsf[k][l][1] = value[l][1];
-              gsf[k][l][2] = value[l][2];
+    int n = 0;
+    for(unsigned int i = 0; i < entities.size(); i++){
+      GEntity *ge = entities[i];
+      n += ge->getNumMeshElementsByType(familyType);
+    }
+    const size_t begin = (taskID*n)/nbrTasks;
+    const size_t end = ((taskID+1)*n)/nbrTasks;
+    if((end*nbrIPoint > determinants.size()) && (determinants.size() != 0)){
+      Msg::Error("Vector 'determinants' is too small (%d < %d)", determinants.size(), end*nbrIPoint);
+      throw 4;
+    }
+    if((9*end*nbrIPoint > jacobians.size()) && (jacobians.size() != 0)){
+      Msg::Error("Vector 'jacobians' is too small (%d < %d)", jacobians.size(), 9*end*nbrIPoint);
+      throw 4;
+    }
+    if((3*end*nbrIPoint > points.size()) && (points.size() != 0)){
+      Msg::Error("Vector 'points' is too small (%d < %d)", points.size(), 3*end*nbrIPoint);
+      throw 4;
+    }
+    const bool haveDeterminants = (determinants.size() != 0);
+    const bool haveJacobians = (jacobians.size() != 0);
+    const bool havePoints = (jacobians.size() != 0);
+  
+    if(haveDeterminants && haveJacobians && havePoints){
+      std::vector< std::vector<SVector3> > gsf;
+      size_t o = 0;
+      size_t idx = begin*nbrIPoint;
+      for(unsigned int i = 0; i < entities.size(); i++){
+        GEntity *ge = entities[i];
+        const unsigned int numMeshElements = ge->getNumMeshElementsByType(familyType);
+        for(unsigned int j = 0; j < numMeshElements; j++){
+          if(o >= begin && o < end){
+            MElement *e = ge->getMeshElementByType(familyType, j);
+            if(gsf.size() == 0){
+              gsf.resize(nbrIPoint);
+              for(int k = 0; k < nbrIPoint; k++){
+                double value[1256][3];
+                e->getGradShapeFunctions(pts(k, 0), pts(k, 1), pts(k, 2), value);
+                gsf[k].resize(e->getNumShapeFunctions());
+                for(int l = 0; l < e->getNumShapeFunctions(); l++) {
+                  gsf[k][l][0] = value[l][0];
+                  gsf[k][l][1] = value[l][1];
+                  gsf[k][l][2] = value[l][2];
+                }
+              }
+            }
+            for(int k = 0; k < nbrIPoint; k++){
+              e->pnt(pts(k, 0), pts(k, 1), pts(k, 2), &points[idx*3]);
+              determinants[idx] = e->getJacobian(gsf[k], &jacobians[idx*9]);
+              idx++;
             }
           }
-        }
-        for(int k = 0; k < nbrIPoint; k++){
-          e->pnt(pts(k, 0), pts(k, 1), pts(k, 2), &points[idx*3]);
-          determinants[idx] = e->getJacobian(gsf[k], &jacobians[idx*9]);
-          idx++;
+          o++;
         }
       }
-      o++;
     }
-  }
+    else if(haveDeterminants && haveJacobians && !havePoints){
+      std::vector< std::vector<SVector3> > gsf;
+      size_t o = 0;
+      size_t idx = begin*nbrIPoint;
+      for(unsigned int i = 0; i < entities.size(); i++){
+        GEntity *ge = entities[i];
+        const unsigned int numMeshElements = ge->getNumMeshElementsByType(familyType);
+        for(unsigned int j = 0; j < numMeshElements; j++){
+          if(o >= begin && o < end){
+            MElement *e = ge->getMeshElementByType(familyType, j);
+            if(gsf.size() == 0){
+              gsf.resize(nbrIPoint);
+              for(int k = 0; k < nbrIPoint; k++){
+                double value[1256][3];
+                e->getGradShapeFunctions(pts(k, 0), pts(k, 1), pts(k, 2), value);
+                gsf[k].resize(e->getNumShapeFunctions());
+                for(int l = 0; l < e->getNumShapeFunctions(); l++) {
+                  gsf[k][l][0] = value[l][0];
+                  gsf[k][l][1] = value[l][1];
+                  gsf[k][l][2] = value[l][2];
+                }
+              }
+            }
+            for(int k = 0; k < nbrIPoint; k++){
+              determinants[idx] = e->getJacobian(gsf[k], &jacobians[idx*9]);
+              idx++;
+            }
+          }
+          o++;
+        }
+      }
+    }
+    else if(haveDeterminants && !haveJacobians && havePoints){
+      std::vector<double> jac(9, 0.);
+      std::vector< std::vector<SVector3> > gsf;
+      size_t o = 0;
+      size_t idx = begin*nbrIPoint;
+      for(unsigned int i = 0; i < entities.size(); i++){
+        GEntity *ge = entities[i];
+        const unsigned int numMeshElements = ge->getNumMeshElementsByType(familyType);
+        for(unsigned int j = 0; j < numMeshElements; j++){
+          if(o >= begin && o < end){
+            MElement *e = ge->getMeshElementByType(familyType, j);
+            if(gsf.size() == 0){
+              gsf.resize(nbrIPoint);
+              for(int k = 0; k < nbrIPoint; k++){
+                double value[1256][3];
+                e->getGradShapeFunctions(pts(k, 0), pts(k, 1), pts(k, 2), value);
+                gsf[k].resize(e->getNumShapeFunctions());
+                for(int l = 0; l < e->getNumShapeFunctions(); l++) {
+                  gsf[k][l][0] = value[l][0];
+                  gsf[k][l][1] = value[l][1];
+                  gsf[k][l][2] = value[l][2];
+                }
+              }
+            }
+            for(int k = 0; k < nbrIPoint; k++){
+              e->pnt(pts(k, 0), pts(k, 1), pts(k, 2), &points[idx*3]);
+              determinants[idx] = e->getJacobian(gsf[k], &jac[0]);
+              idx++;
+            }
+          }
+          o++;
+        }
+      }
+    }
+    else if(haveDeterminants && !haveJacobians && !havePoints){
+      std::vector<double> jac(9, 0.);
+      std::vector< std::vector<SVector3> > gsf;
+      size_t o = 0;
+      size_t idx = begin*nbrIPoint;
+      for(unsigned int i = 0; i < entities.size(); i++){
+        GEntity *ge = entities[i];
+        const unsigned int numMeshElements = ge->getNumMeshElementsByType(familyType);
+        for(unsigned int j = 0; j < numMeshElements; j++){
+          if(o >= begin && o < end){
+            MElement *e = ge->getMeshElementByType(familyType, j);
+            if(gsf.size() == 0){
+              gsf.resize(nbrIPoint);
+              for(int k = 0; k < nbrIPoint; k++){
+                double value[1256][3];
+                e->getGradShapeFunctions(pts(k, 0), pts(k, 1), pts(k, 2), value);
+                gsf[k].resize(e->getNumShapeFunctions());
+                for(int l = 0; l < e->getNumShapeFunctions(); l++) {
+                  gsf[k][l][0] = value[l][0];
+                  gsf[k][l][1] = value[l][1];
+                  gsf[k][l][2] = value[l][2];
+                }
+              }
+            }
+            for(int k = 0; k < nbrIPoint; k++){
+              determinants[idx] = e->getJacobian(gsf[k], &jac[0]);
+              idx++;
+            }
+          }
+          o++;
+        }
+      }
+    }
+    // Add other combinaisons if necessary
   }
 }
 
@@ -1309,6 +1419,9 @@ GMSH_API void gmsh::model::mesh::initializeNodeCache()
 
 GMSH_API void gmsh::model::mesh::initializeJacobianDataVector(const int elementType,
                                                               const std::string &intType,
+                                                              const bool jacobian,
+                                                              const bool determinant,
+                                                              const bool point,
                                                               std::vector<double> &jacobians,
                                                               std::vector<double> &determinants,
                                                               std::vector<double> &points,
@@ -1317,12 +1430,20 @@ GMSH_API void gmsh::model::mesh::initializeJacobianDataVector(const int elementT
   if(!_isInitialized()){ throw -1; }
   const unsigned int nbrElements = _getNumberElementByType(elementType, dim, tag);
   const unsigned int nbrGauss = getNumberIntegrationPoints(elementType, intType);
-  jacobians.clear();
-  determinants.clear();
-  points.clear();
-  jacobians.resize(9*nbrElements*nbrGauss, 0.);
-  determinants.resize(nbrElements*nbrGauss, 0.);
-  points.resize(3*nbrElements*nbrGauss, 0.);
+  if(jacobian){
+    jacobians.clear();
+    jacobians.resize(9*nbrElements*nbrGauss, 0.);
+  }
+  
+  if(determinant){
+    determinants.clear();
+    determinants.resize(nbrElements*nbrGauss, 0.);
+  }
+  
+  if(point){
+    points.clear();
+    points.resize(3*nbrElements*nbrGauss, 0.);
+  }
 }
 
 GMSH_API void gmsh::model::mesh::initializeNodeTagsVector(const int elementType,

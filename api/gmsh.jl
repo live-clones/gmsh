@@ -1058,13 +1058,13 @@ function initializeNodeCache()
 end
 
 """
-    gmsh.model.mesh.initializeJacobianDataVector(elementType, integrationType, jacobians, determinants, points, dim = -1, tag = -1)
+    gmsh.model.mesh.initializeJacobianDataVector(elementType, integrationType, jacobian, determinant, point, jacobians, determinants, points, dim = -1, tag = -1)
 
 Initialize the Jacobian data vector.
 
 Return 'jacobians', 'determinants', 'points'.
 """
-function initializeJacobianDataVector(elementType, integrationType, dim = -1, tag = -1)
+function initializeJacobianDataVector(elementType, integrationType, jacobian, determinant, point, dim = -1, tag = -1)
     api_jacobians_ = Ref{Ptr{Cdouble}}()
     api_jacobians_n_ = Ref{Csize_t}()
     api_determinants_ = Ref{Ptr{Cdouble}}()
@@ -1073,8 +1073,8 @@ function initializeJacobianDataVector(elementType, integrationType, dim = -1, ta
     api_points_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshInitializeJacobianDataVector, gmsh.clib), Void,
-          (Cint, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          elementType, integrationType, api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, api_points_, api_points_n_, dim, tag, ierr)
+          (Cint, Ptr{Cchar}, Cint, Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          elementType, integrationType, jacobian, determinant, point, api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, api_points_, api_points_n_, dim, tag, ierr)
     ierr[] != 0 && error("gmshModelMeshInitializeJacobianDataVector returned non-zero error code: $(ierr[])")
     jacobians = unsafe_wrap(Array, api_jacobians_[], api_jacobians_n_[], true)
     determinants = unsafe_wrap(Array, api_determinants_[], api_determinants_n_[], true)

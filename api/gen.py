@@ -196,7 +196,7 @@ doc = '''Initialize the mesh node cache ONLY it has not already done.'''
 mesh.add('initializeNodeCache',doc,None)
 
 doc = '''Initialize the Jacobian data vector.'''
-mesh.add('initializeJacobianDataVector',doc,None,iint('elementType'),istring('integrationType'),ovectordouble('jacobians'),ovectordouble('determinants'),ovectordouble('points'),iint('dim', '-1'),iint('tag', '-1'))
+mesh.add('initializeJacobianDataVector',doc,None,iint('elementType'),istring('integrationType'),ibool('jacobian'),ibool('determinant'),ibool('point'),ovectordouble('jacobians'),ovectordouble('determinants'),ovectordouble('points'),iint('dim', '-1'),iint('tag', '-1'))
 
 doc = '''Initialize the nodeTags vector.'''
 mesh.add('initializeNodeTagsVector',doc,None,iint('elementType'),ovectorint('nodeTags'),iint('dim', '-1'),iint('tag', '-1'))

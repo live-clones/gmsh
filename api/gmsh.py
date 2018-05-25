@@ -1266,7 +1266,7 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def initializeJacobianDataVector(elementType, integrationType, dim=-1, tag=-1):
+        def initializeJacobianDataVector(elementType, integrationType, jacobian, determinant, point, dim=-1, tag=-1):
             """
             Initialize the Jacobian data vector.
 
@@ -1279,6 +1279,9 @@ class model:
             lib.gmshModelMeshInitializeJacobianDataVector(
                 c_int(elementType),
                 c_char_p(integrationType.encode()),
+                c_int(bool(jacobian)),
+                c_int(bool(determinant)),
+                c_int(bool(point)),
                 byref(api_jacobians_), byref(api_jacobians_n_),
                 byref(api_determinants_), byref(api_determinants_n_),
                 byref(api_points_), byref(api_points_n_),

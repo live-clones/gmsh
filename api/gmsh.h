@@ -440,6 +440,9 @@ namespace gmsh { // Top-level functions
       // Initialize the Jacobian data vector.
       GMSH_API void initializeJacobianDataVector(const int elementType,
                                                  const std::string & integrationType,
+                                                 const bool jacobian,
+                                                 const bool determinant,
+                                                 const bool point,
                                                  std::vector<double> & jacobians,
                                                  std::vector<double> & determinants,
                                                  std::vector<double> & points,

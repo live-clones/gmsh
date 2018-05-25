@@ -463,6 +463,9 @@ GMSH_API void gmshModelMeshInitializeNodeCache(int * ierr);
 /* Initialize the Jacobian data vector. */
 GMSH_API void gmshModelMeshInitializeJacobianDataVector(const int elementType,
                                                         const char * integrationType,
+                                                        const int jacobian,
+                                                        const int determinant,
+                                                        const int point,
                                                         double ** jacobians, size_t * jacobians_n,
                                                         double ** determinants, size_t * determinants_n,
                                                         double ** points, size_t * points_n,
