@@ -253,8 +253,28 @@ namespace gmsh { // Top-level functions
       // only populated by the new 3D meshing algorithms.
       GMSH_API void getLastNodeError(std::vector<int> & nodeTags);
 
-      // Initialize the mesh node cache ONLY it has not already done.
-      GMSH_API void initializeNodeCache();
+      // Set the mesh nodes in the geometrical entity of dimension `dim' and tag
+      // `tag'. `nodetags' contains the node tags (their unique, strictly positive
+      // identification numbers). `coord' is a vector of length 3 times the length
+      // of `nodeTags' that contains the (x, y, z) coordinates of the nodes,
+      // concatenated. The optional `parametricCoord' vector contains the
+      // parametric coordinates of the nodes, if any. The length of
+      // `parametricCoord' can be 0 or `dim' times the length of `nodeTags'.
+      GMSH_API void setNodes(const int dim,
+                             const int tag,
+                             const std::vector<int> & nodeTags,
+                             const std::vector<double> & coord,
+                             const std::vector<double> & parametricCoord = std::vector<double>());
+
+      // Get the coordinates and the parametric coordinates (if any) of the mesh
+      // node with tag `tag'. This is a useful by inefficient way of accessing mesh
+      // node data, as it relies on a cache stored in the model. For large meshes
+      // all the nodes in the model should be numbered in a continuous sequence of
+      // tags from 1 to N to maintain reasonnable performance (in this case the
+      // internal cache is based on a vector; otherwise it uses a map).
+      GMSH_API void getNode(const int nodeTag,
+                            std::vector<double> & coord,
+                            std::vector<double> & parametricCoord);
 
       // Get the mesh nodes of the entity of dimension `dim' and `tag' tag. If
       // `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and
@@ -270,6 +290,40 @@ namespace gmsh { // Top-level functions
                              std::vector<double> & parametricCoord,
                              const int dim = -1,
                              const int tag = -1);
+
+      // Get the mesh nodes in the same way as `getNodes', but for a single
+      // `elementType'.
+      GMSH_API void getNodesByType(const int elementType,
+                                   std::vector<int> & nodeTags,
+                                   const int dim = -1,
+                                   const int tag = -1,
+                                   const size_t myThread = 0,
+                                   const size_t nbrThreads = 1);
+
+      // Set the mesh elements of the entity of dimension `dim' and `tag' tag.
+      // `types' contains the MSH types of the elements (e.g. `2' for 3-node
+      // triangles: see the Gmsh reference manual). `elementTags' is a vector of
+      // the same length as `types'; each entry is a vector containing the tags
+      // (unique, strictly positive identifiers) of the elements of the
+      // corresponding type. `nodeTags' is also a vector of the same length as
+      // `types'; each entry is a vector of length equal to the number of elements
+      // of the give type times the number of nodes per element, that contains the
+      // node tags of all the elements of the given type, concatenated.
+      GMSH_API void setElements(const int dim,
+                                const int tag,
+                                const std::vector<int> & elementTypes,
+                                const std::vector<std::vector<int> > & elementTags,
+                                const std::vector<std::vector<int> > & nodeTags);
+
+      // Get the type and node tags of the mesh element with tag `tag'. This is a
+      // useful but inefficient way of accessing mesh element data, as it relies on
+      // a cache stored in the model. For large meshes all the elements in the
+      // model should be numbered in a continuous sequence of tags from 1 to N to
+      // maintain reasonnable performance (in this case the internal cache is based
+      // on a vector; otherwise it uses a map).
+      GMSH_API void getElement(const int elementTag,
+                               int & elementType,
+                               std::vector<int> & nodeTags);
 
       // Get the mesh elements of the entity of dimension `dim' and `tag' tag. If
       // `tag' < 0, get the elements for all entities of dimension `dim'. If `dim'
@@ -289,6 +343,21 @@ namespace gmsh { // Top-level functions
                                 const int dim = -1,
                                 const int tag = -1);
 
+      // Get the mesh elements in the same way as `getElements', but for a single
+      // `elementType'.
+      GMSH_API void getElementsByType(const int elementType,
+                                      std::vector<int> & elementTags,
+                                      std::vector<int> & nodeTags,
+                                      const int dim = -1,
+                                      const int tag = -1);
+
+      // Get the types of mesh elements in the entity of dimension `dim' and `tag'
+      // tag. If `tag' < 0, get the types for all entities of dimension `dim'. If
+      // `dim' and `tag' are negative, get all the types in the mesh.
+      GMSH_API void getElementTypes(std::vector<int> & elementTypes,
+                                    const int dim = -1,
+                                    const int tag = -1);
+
       // Get the properties of an element of type `elementType': its name
       // (`elementName'), dimension (`dim'), order (`order'), number of nodes
       // (`numNodes') and parametric coordinates of nodes (`parametricCoord'
@@ -300,125 +369,50 @@ namespace gmsh { // Top-level functions
                                          int & numNodes,
                                          std::vector<double> & parametricCoord);
 
-      // Get the integration data for mesh elements of the entity of dimension
-      // `dim' and `tag' tag. The data is returned by element type and by element,
-      // in the same order as the data returned by `getElements'. `integrationType'
-      // specifies the type of integration (e.g. "Gauss4") and `functionSpaceType'
-      // specifies the function space (e.g. "IsoParametric"). `integrationPoints'
-      // contains for each element type a vector (of length 4 times the number of
-      // integration points) containing the parametric coordinates (u, v, w) and
-      // the weight associated to the integration points. `integrationData'
-      // contains for each element type a vector (of size 13 times the number of
-      // integration points) containing the (x, y, z) coordinates of the
-      // integration point, the determinant of the Jacobian and the 9 entries (by
-      // row) of the 3x3 Jacobian matrix. If `functionSpaceType' is provided,
-      // `functionSpaceNumComponents' return the number of components returned by
-      // the evaluation of a basis function in the space and `functionSpaceData'
-      // contains for each element type the evaluation of the basis functions at
-      // the integration points.
-      GMSH_API void getIntegrationData(const std::string & integrationType,
-                                       const std::string & functionSpaceType,
-                                       std::vector<std::vector<double> > & integrationPoints,
-                                       std::vector<std::vector<double> > & integrationData,
-                                       int & functionSpaceNumComponents,
-                                       std::vector<std::vector<double> > & functionSpaceData,
-                                       const int dim = -1,
-                                       const int tag = -1);
-
-      // Get the Jacobian data for mesh elements of the entity of dimension `dim'
-      // and `tag' tag. The data is returned by element type and by element, in the
-      // same order as the data returned by `getElements'. `integrationType'
-      // specifies the type of integration (e.g. "Gauss4"). `nbrIntegrationPoints'
-      // contains for each element type, the number of integration points that
-      // corresponds to `integrationType'. `jacobian' contains for each element
-      // type a vector (of size 9 times the number of integration points)
-      // containing the 9 entries (by row) of the 3x3 Jacobian matrix and
-      // `determinant' contains for each element type a vector containing the
-      // determinant of the Jacobian.
-      GMSH_API void getJacobianData(const std::string & integrationType,
-                                    std::vector<int> & nbrIntegrationPoints,
-                                    std::vector<std::vector<double> > & jacobian,
-                                    std::vector<std::vector<double> > & determinant,
-                                    const int dim = -1,
-                                    const int tag = -1);
-
-      // Get the function space data for mesh elements of the entity of dimension
-      // `dim' and `tag' tag. The data is returned by element type and by element,
-      // in the same order as the data returned by `getElements'. `integrationType'
-      // specifies the type of integration (e.g. "Gauss4") and `functionSpaceType'
-      // specifies the function space (e.g. "IsoParametric"). `integrationPoints'
-      // contains for each element type a vector (of length 4 times the number of
-      // integration points) containing the parametric coordinates (u, v, w) and
-      // the weight associated to the integration points. If `functionSpaceType' is
-      // provided, `functionSpaceNumComponents' returns the number of components
-      // returned by the evaluation of a basis function in the space and
-      // `functionSpaceData' contains for each element type the evaluation of the
-      // basis functions at the integration points.
-      GMSH_API void getFunctionSpaceData(const std::string & integrationType,
-                                         const std::string & functionSpaceType,
-                                         std::vector<std::vector<double> > & integrationPoints,
-                                         int & functionSpaceNumComponents,
-                                         std::vector<std::vector<double> > & functionSpaceData,
-                                         const int dim = -1,
-                                         const int tag = -1);
-
-      // Get the types of mesh elements in the entity of dimension `dim' and `tag'
-      // tag. If `tag' < 0, get the types for all entities of dimension `dim'. If
-      // `dim' and `tag' are negative, get all the types in the mesh.
-      GMSH_API void getElementTypes(std::vector<int> & elementTypes,
-                                    const int dim = -1,
-                                    const int tag = -1);
-
-      // Get the mesh elements in the same way as `getElements', but for a single
-      // `elementType'.
-      GMSH_API void getElementsByType(const int elementType,
-                                      std::vector<int> & elementTags,
-                                      std::vector<int> & nodeTags,
-                                      const int dim = -1,
-                                      const int tag = -1);
-
-      // Get the mesh nodes in the same way as `getElementsByType'.
-      GMSH_API void getNodesByType(const int elementType,
-                                   std::vector<int> & nodeTags,
-                                   const int dim = -1,
-                                   const int tag = -1,
-                                   const size_t myThread = 0,
-                                   const size_t nbrThreads = 1);
-
-      // Get the integration data for mesh elements in the same way as
-      // `getIntegrationData', but for a single `elementType'.
-      GMSH_API void getIntegrationDataByType(const int elementType,
-                                             const std::string & integrationType,
-                                             const std::string & functionSpaceType,
-                                             std::vector<double> & integrationPoints,
-                                             std::vector<double> & integrationData,
-                                             int & functionSpaceNumComponents,
-                                             std::vector<double> & functionSpaceData,
-                                             const int dim = -1,
-                                             const int tag = -1);
-
       // Get the Jacobian data for mesh elements in the same way as
       // `getJacobianData', but for a single `elementType'.
-      GMSH_API void getJacobianDataByType(const int elementType,
-                                          const std::string & integrationType,
-                                          int & nbrIntegrationPoints,
-                                          std::vector<double> & jacobians,
-                                          std::vector<double> & determinants,
-                                          const int dim = -1,
-                                          const int tag = -1,
-                                          const size_t myThread = 0,
-                                          const size_t nbrThreads = 1);
+      GMSH_API void getJacobianData(const int elementType,
+                                    const std::string & integrationType,
+                                    int & nbrIntegrationPoints,
+                                    std::vector<double> & jacobians,
+                                    std::vector<double> & determinants,
+                                    const int dim = -1,
+                                    const int tag = -1,
+                                    const size_t myThread = 0,
+                                    const size_t nbrThreads = 1);
 
       // Get the function space data for mesh elements in the same way as
       // `getFunctionSpaceData', but for a single `elementType'.
-      GMSH_API void getFunctionSpaceDataByType(const int elementType,
-                                               const std::string & integrationType,
-                                               const std::string & functionSpaceType,
-                                               std::vector<double> & integrationPoints,
-                                               int & functionSpaceNumComponents,
-                                               std::vector<double> & functionSpaceData,
-                                               const int dim = -1,
-                                               const int tag = -1);
+      GMSH_API void getFunctionSpaceData(const int elementType,
+                                         const std::string & integrationType,
+                                         const std::string & functionSpaceType,
+                                         std::vector<double> & integrationPoints,
+                                         int & functionSpaceNumComponents,
+                                         std::vector<double> & functionSpaceData,
+                                         const int dim = -1,
+                                         const int tag = -1);
+
+      // Get barycenter of element with tag 'tag'. If 'fast' is true the barycenter
+      // compute is equal to the real barycenter multiplied by the number of nodes.
+      // If 'primary' is true, only the primary nodes is taking into account.
+      GMSH_API void getBarycenter(const int elementTag,
+                                  const bool fast,
+                                  const bool primary,
+                                  std::vector<double> & barycenter);
+
+      // Get barycenters of all elements corresponding to 'elementType' into entity
+      // of dimension `dim' and tag `tag'.
+      GMSH_API void getBarycenters(const int elementType,
+                                   const int dim,
+                                   const int tag,
+                                   const bool fast,
+                                   const bool primary,
+                                   std::vector<double> & barycenters,
+                                   const size_t myThread = 0,
+                                   const size_t nbrThreads = 1);
+
+      // Initialize the mesh node cache ONLY it has not already done.
+      GMSH_API void initializeNodeCache();
 
       // Initialize the Jacobian data vector.
       GMSH_API void initializeJacobianDataVector(const int elementType,
@@ -440,78 +434,11 @@ namespace gmsh { // Top-level functions
                                                 const int dim = -1,
                                                 const int tag = -1);
 
-      // Set the mesh nodes in the geometrical entity of dimension `dim' and tag
-      // `tag'. `nodetags' contains the node tags (their unique, strictly positive
-      // identification numbers). `coord' is a vector of length 3 times the length
-      // of `nodeTags' that contains the (x, y, z) coordinates of the nodes,
-      // concatenated. The optional `parametricCoord' vector contains the
-      // parametric coordinates of the nodes, if any. The length of
-      // `parametricCoord' can be 0 or `dim' times the length of `nodeTags'.
-      GMSH_API void setNodes(const int dim,
-                             const int tag,
-                             const std::vector<int> & nodeTags,
-                             const std::vector<double> & coord,
-                             const std::vector<double> & parametricCoord = std::vector<double>());
-
-      // Set the mesh elements of the entity of dimension `dim' and `tag' tag.
-      // `types' contains the MSH types of the elements (e.g. `2' for 3-node
-      // triangles: see the Gmsh reference manual). `elementTags' is a vector of
-      // the same length as `types'; each entry is a vector containing the tags
-      // (unique, strictly positive identifiers) of the elements of the
-      // corresponding type. `nodeTags' is also a vector of the same length as
-      // `types'; each entry is a vector of length equal to the number of elements
-      // of the give type times the number of nodes per element, that contains the
-      // node tags of all the elements of the given type, concatenated.
-      GMSH_API void setElements(const int dim,
-                                const int tag,
-                                const std::vector<int> & elementTypes,
-                                const std::vector<std::vector<int> > & elementTags,
-                                const std::vector<std::vector<int> > & nodeTags);
-
       // Redistribute all mesh nodes on their associated geometrical entity, based
       // on the mesh elements. Can be used when importing mesh nodes in bulk (e.g.
       // by associating them all to a single volume), to reclassify them correctly
       // on model surfaces, curves, etc.
       GMSH_API void reclassifyNodes();
-
-      // Get the coordinates and the parametric coordinates (if any) of the mesh
-      // node with tag `tag'. This is a useful by inefficient way of accessing mesh
-      // node data, as it relies on a cache stored in the model. For large meshes
-      // all the nodes in the model should be numbered in a continuous sequence of
-      // tags from 1 to N to maintain reasonnable performance (in this case the
-      // internal cache is based on a vector; otherwise it uses a map).
-      GMSH_API void getNode(const int nodeTag,
-                            std::vector<double> & coord,
-                            std::vector<double> & parametricCoord);
-
-      // Get the type and node tags of the mesh element with tag `tag'. This is a
-      // useful but inefficient way of accessing mesh element data, as it relies on
-      // a cache stored in the model. For large meshes all the elements in the
-      // model should be numbered in a continuous sequence of tags from 1 to N to
-      // maintain reasonnable performance (in this case the internal cache is based
-      // on a vector; otherwise it uses a map).
-      GMSH_API void getElement(const int elementTag,
-                               int & elementType,
-                               std::vector<int> & nodeTags);
-
-      // Get barycenter of element with tag 'tag'. If 'fast' is true the barycenter
-      // compute is equal to the real barycenter multiplied by the number of nodes.
-      // If 'primary' is true, only the primary nodes is taking into account.
-      GMSH_API void getBarycenter(const int elementTag,
-                                  const bool fast,
-                                  const bool primary,
-                                  std::vector<double> & barycenter);
-
-      // Get barycenters of all elements corresponding to 'elementType' into entity
-      // of dimension `dim' and tag `tag'.
-      GMSH_API void getBarycenters(const int elementType,
-                                   const int dim,
-                                   const int tag,
-                                   const bool fast,
-                                   const bool primary,
-                                   std::vector<double> & barycenters,
-                                   const size_t myThread = 0,
-                                   const size_t nbrThreads = 1);
 
       // Set a mesh size constraint on the geometrical entities `dimTags'.
       // Currently only entities of dimension 0 (points) are handled.

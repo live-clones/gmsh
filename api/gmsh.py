@@ -825,17 +825,59 @@ class model:
             return _ovectorint(api_nodeTags_, api_nodeTags_n_.value)
 
         @staticmethod
-        def initializeNodeCache():
+        def setNodes(dim, tag, nodeTags, coord, parametricCoord=[]):
             """
-            Initialize the mesh node cache ONLY it has not already done.
+            Set the mesh nodes in the geometrical entity of dimension `dim' and tag
+            `tag'. `nodetags' contains the node tags (their unique, strictly positive
+            identification numbers). `coord' is a vector of length 3 times the length
+            of `nodeTags' that contains the (x, y, z) coordinates of the nodes,
+            concatenated. The optional `parametricCoord' vector contains the parametric
+            coordinates of the nodes, if any. The length of `parametricCoord' can be 0
+            or `dim' times the length of `nodeTags'.
             """
+            api_nodeTags_, api_nodeTags_n_ = _ivectorint(nodeTags)
+            api_coord_, api_coord_n_ = _ivectordouble(coord)
+            api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
             ierr = c_int()
-            lib.gmshModelMeshInitializeNodeCache(
+            lib.gmshModelMeshSetNodes(
+                c_int(dim),
+                c_int(tag),
+                api_nodeTags_, api_nodeTags_n_,
+                api_coord_, api_coord_n_,
+                api_parametricCoord_, api_parametricCoord_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshInitializeNodeCache returned non-zero error code: ",
+                    "gmshModelMeshSetNodes returned non-zero error code: ",
                     ierr.value)
+
+        @staticmethod
+        def getNode(nodeTag):
+            """
+            Get the coordinates and the parametric coordinates (if any) of the mesh
+            node with tag `tag'. This is a useful by inefficient way of accessing mesh
+            node data, as it relies on a cache stored in the model. For large meshes
+            all the nodes in the model should be numbered in a continuous sequence of
+            tags from 1 to N to maintain reasonnable performance (in this case the
+            internal cache is based on a vector; otherwise it uses a map).
+
+            Return `coord', `parametricCoord'.
+            """
+            api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
+            api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetNode(
+                c_int(nodeTag),
+                byref(api_coord_), byref(api_coord_n_),
+                byref(api_parametricCoord_), byref(api_parametricCoord_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetNode returned non-zero error code: ",
+                    ierr.value)
+            return (
+                _ovectordouble(api_coord_, api_coord_n_.value),
+                _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
 
         @staticmethod
         def getNodes(dim=-1, tag=-1):
@@ -870,6 +912,87 @@ class model:
                 _ovectorint(api_nodeTags_, api_nodeTags_n_.value),
                 _ovectordouble(api_coord_, api_coord_n_.value),
                 _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
+
+        @staticmethod
+        def getNodesByType(elementType, dim=-1, tag=-1, myThread=0, nbrThreads=1):
+            """
+            Get the mesh nodes in the same way as `getNodes', but for a single
+            `elementType'.
+
+            Return `nodeTags'.
+            """
+            api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetNodesByType(
+                c_int(elementType),
+                byref(api_nodeTags_), byref(api_nodeTags_n_),
+                c_int(dim),
+                c_int(tag),
+                c_size_t(myThread),
+                c_size_t(nbrThreads),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetNodesByType returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorint(api_nodeTags_, api_nodeTags_n_.value)
+
+        @staticmethod
+        def setElements(dim, tag, elementTypes, elementTags, nodeTags):
+            """
+            Set the mesh elements of the entity of dimension `dim' and `tag' tag.
+            `types' contains the MSH types of the elements (e.g. `2' for 3-node
+            triangles: see the Gmsh reference manual). `elementTags' is a vector of the
+            same length as `types'; each entry is a vector containing the tags (unique,
+            strictly positive identifiers) of the elements of the corresponding type.
+            `nodeTags' is also a vector of the same length as `types'; each entry is a
+            vector of length equal to the number of elements of the give type times the
+            number of nodes per element, that contains the node tags of all the
+            elements of the given type, concatenated.
+            """
+            api_elementTypes_, api_elementTypes_n_ = _ivectorint(elementTypes)
+            api_elementTags_, api_elementTags_n_, api_elementTags_nn_ = _ivectorvectorint(elementTags)
+            api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_ = _ivectorvectorint(nodeTags)
+            ierr = c_int()
+            lib.gmshModelMeshSetElements(
+                c_int(dim),
+                c_int(tag),
+                api_elementTypes_, api_elementTypes_n_,
+                api_elementTags_, api_elementTags_n_, api_elementTags_nn_,
+                api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshSetElements returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def getElement(elementTag):
+            """
+            Get the type and node tags of the mesh element with tag `tag'. This is a
+            useful but inefficient way of accessing mesh element data, as it relies on
+            a cache stored in the model. For large meshes all the elements in the model
+            should be numbered in a continuous sequence of tags from 1 to N to maintain
+            reasonnable performance (in this case the internal cache is based on a
+            vector; otherwise it uses a map).
+
+            Return `elementType', `nodeTags'.
+            """
+            api_elementType_ = c_int()
+            api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetElement(
+                c_int(elementTag),
+                byref(api_elementType_),
+                byref(api_nodeTags_), byref(api_nodeTags_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetElement returned non-zero error code: ",
+                    ierr.value)
+            return (
+                api_elementType_.value,
+                _ovectorint(api_nodeTags_, api_nodeTags_n_.value))
 
         @staticmethod
         def getElements(dim=-1, tag=-1):
@@ -910,6 +1033,54 @@ class model:
                 _ovectorvectorint(api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_))
 
         @staticmethod
+        def getElementsByType(elementType, dim=-1, tag=-1):
+            """
+            Get the mesh elements in the same way as `getElements', but for a single
+            `elementType'.
+
+            Return `elementTags', `nodeTags'.
+            """
+            api_elementTags_, api_elementTags_n_ = POINTER(c_int)(), c_size_t()
+            api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetElementsByType(
+                c_int(elementType),
+                byref(api_elementTags_), byref(api_elementTags_n_),
+                byref(api_nodeTags_), byref(api_nodeTags_n_),
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetElementsByType returned non-zero error code: ",
+                    ierr.value)
+            return (
+                _ovectorint(api_elementTags_, api_elementTags_n_.value),
+                _ovectorint(api_nodeTags_, api_nodeTags_n_.value))
+
+        @staticmethod
+        def getElementTypes(dim=-1, tag=-1):
+            """
+            Get the types of mesh elements in the entity of dimension `dim' and `tag'
+            tag. If `tag' < 0, get the types for all entities of dimension `dim'. If
+            `dim' and `tag' are negative, get all the types in the mesh.
+
+            Return `elementTypes'.
+            """
+            api_elementTypes_, api_elementTypes_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetElementTypes(
+                byref(api_elementTypes_), byref(api_elementTypes_n_),
+                c_int(dim),
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetElementTypes returned non-zero error code: ",
+                    ierr.value)
+            return _ovectorint(api_elementTypes_, api_elementTypes_n_.value)
+
+        @staticmethod
         def getElementProperties(elementType):
             """
             Get the properties of an element of type `elementType': its name
@@ -945,234 +1116,7 @@ class model:
                 _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
 
         @staticmethod
-        def getIntegrationData(integrationType, functionSpaceType, dim=-1, tag=-1):
-            """
-            Get the integration data for mesh elements of the entity of dimension `dim'
-            and `tag' tag. The data is returned by element type and by element, in the
-            same order as the data returned by `getElements'. `integrationType'
-            specifies the type of integration (e.g. "Gauss4") and `functionSpaceType'
-            specifies the function space (e.g. "IsoParametric"). `integrationPoints'
-            contains for each element type a vector (of length 4 times the number of
-            integration points) containing the parametric coordinates (u, v, w) and the
-            weight associated to the integration points. `integrationData' contains for
-            each element type a vector (of size 13 times the number of integration
-            points) containing the (x, y, z) coordinates of the integration point, the
-            determinant of the Jacobian and the 9 entries (by row) of the 3x3 Jacobian
-            matrix. If `functionSpaceType' is provided, `functionSpaceNumComponents'
-            return the number of components returned by the evaluation of a basis
-            function in the space and `functionSpaceData' contains for each element
-            type the evaluation of the basis functions at the integration points.
-
-            Return `integrationPoints', `integrationData', `functionSpaceNumComponents', `functionSpaceData'.
-            """
-            api_integrationPoints_, api_integrationPoints_n_, api_integrationPoints_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
-            api_integrationData_, api_integrationData_n_, api_integrationData_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
-            api_functionSpaceNumComponents_ = c_int()
-            api_functionSpaceData_, api_functionSpaceData_n_, api_functionSpaceData_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetIntegrationData(
-                c_char_p(integrationType.encode()),
-                c_char_p(functionSpaceType.encode()),
-                byref(api_integrationPoints_), byref(api_integrationPoints_n_), byref(api_integrationPoints_nn_),
-                byref(api_integrationData_), byref(api_integrationData_n_), byref(api_integrationData_nn_),
-                byref(api_functionSpaceNumComponents_),
-                byref(api_functionSpaceData_), byref(api_functionSpaceData_n_), byref(api_functionSpaceData_nn_),
-                c_int(dim),
-                c_int(tag),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetIntegrationData returned non-zero error code: ",
-                    ierr.value)
-            return (
-                _ovectorvectordouble(api_integrationPoints_, api_integrationPoints_n_, api_integrationPoints_nn_),
-                _ovectorvectordouble(api_integrationData_, api_integrationData_n_, api_integrationData_nn_),
-                api_functionSpaceNumComponents_.value,
-                _ovectorvectordouble(api_functionSpaceData_, api_functionSpaceData_n_, api_functionSpaceData_nn_))
-
-        @staticmethod
-        def getJacobianData(integrationType, dim=-1, tag=-1):
-            """
-            Get the Jacobian data for mesh elements of the entity of dimension `dim'
-            and `tag' tag. The data is returned by element type and by element, in the
-            same order as the data returned by `getElements'. `integrationType'
-            specifies the type of integration (e.g. "Gauss4"). `nbrIntegrationPoints'
-            contains for each element type, the number of integration points that
-            corresponds to `integrationType'. `jacobian' contains for each element type
-            a vector (of size 9 times the number of integration points) containing the
-            9 entries (by row) of the 3x3 Jacobian matrix and `determinant' contains
-            for each element type a vector containing the determinant of the Jacobian.
-
-            Return `nbrIntegrationPoints', `jacobian', `determinant'.
-            """
-            api_nbrIntegrationPoints_, api_nbrIntegrationPoints_n_ = POINTER(c_int)(), c_size_t()
-            api_jacobian_, api_jacobian_n_, api_jacobian_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
-            api_determinant_, api_determinant_n_, api_determinant_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetJacobianData(
-                c_char_p(integrationType.encode()),
-                byref(api_nbrIntegrationPoints_), byref(api_nbrIntegrationPoints_n_),
-                byref(api_jacobian_), byref(api_jacobian_n_), byref(api_jacobian_nn_),
-                byref(api_determinant_), byref(api_determinant_n_), byref(api_determinant_nn_),
-                c_int(dim),
-                c_int(tag),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetJacobianData returned non-zero error code: ",
-                    ierr.value)
-            return (
-                _ovectorint(api_nbrIntegrationPoints_, api_nbrIntegrationPoints_n_.value),
-                _ovectorvectordouble(api_jacobian_, api_jacobian_n_, api_jacobian_nn_),
-                _ovectorvectordouble(api_determinant_, api_determinant_n_, api_determinant_nn_))
-
-        @staticmethod
-        def getFunctionSpaceData(integrationType, functionSpaceType, dim=-1, tag=-1):
-            """
-            Get the function space data for mesh elements of the entity of dimension
-            `dim' and `tag' tag. The data is returned by element type and by element,
-            in the same order as the data returned by `getElements'. `integrationType'
-            specifies the type of integration (e.g. "Gauss4") and `functionSpaceType'
-            specifies the function space (e.g. "IsoParametric"). `integrationPoints'
-            contains for each element type a vector (of length 4 times the number of
-            integration points) containing the parametric coordinates (u, v, w) and the
-            weight associated to the integration points. If `functionSpaceType' is
-            provided, `functionSpaceNumComponents' returns the number of components
-            returned by the evaluation of a basis function in the space and
-            `functionSpaceData' contains for each element type the evaluation of the
-            basis functions at the integration points.
-
-            Return `integrationPoints', `functionSpaceNumComponents', `functionSpaceData'.
-            """
-            api_integrationPoints_, api_integrationPoints_n_, api_integrationPoints_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
-            api_functionSpaceNumComponents_ = c_int()
-            api_functionSpaceData_, api_functionSpaceData_n_, api_functionSpaceData_nn_ = POINTER(POINTER(c_double))(), POINTER(c_size_t)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetFunctionSpaceData(
-                c_char_p(integrationType.encode()),
-                c_char_p(functionSpaceType.encode()),
-                byref(api_integrationPoints_), byref(api_integrationPoints_n_), byref(api_integrationPoints_nn_),
-                byref(api_functionSpaceNumComponents_),
-                byref(api_functionSpaceData_), byref(api_functionSpaceData_n_), byref(api_functionSpaceData_nn_),
-                c_int(dim),
-                c_int(tag),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetFunctionSpaceData returned non-zero error code: ",
-                    ierr.value)
-            return (
-                _ovectorvectordouble(api_integrationPoints_, api_integrationPoints_n_, api_integrationPoints_nn_),
-                api_functionSpaceNumComponents_.value,
-                _ovectorvectordouble(api_functionSpaceData_, api_functionSpaceData_n_, api_functionSpaceData_nn_))
-
-        @staticmethod
-        def getElementTypes(dim=-1, tag=-1):
-            """
-            Get the types of mesh elements in the entity of dimension `dim' and `tag'
-            tag. If `tag' < 0, get the types for all entities of dimension `dim'. If
-            `dim' and `tag' are negative, get all the types in the mesh.
-
-            Return `elementTypes'.
-            """
-            api_elementTypes_, api_elementTypes_n_ = POINTER(c_int)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetElementTypes(
-                byref(api_elementTypes_), byref(api_elementTypes_n_),
-                c_int(dim),
-                c_int(tag),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetElementTypes returned non-zero error code: ",
-                    ierr.value)
-            return _ovectorint(api_elementTypes_, api_elementTypes_n_.value)
-
-        @staticmethod
-        def getElementsByType(elementType, dim=-1, tag=-1):
-            """
-            Get the mesh elements in the same way as `getElements', but for a single
-            `elementType'.
-
-            Return `elementTags', `nodeTags'.
-            """
-            api_elementTags_, api_elementTags_n_ = POINTER(c_int)(), c_size_t()
-            api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetElementsByType(
-                c_int(elementType),
-                byref(api_elementTags_), byref(api_elementTags_n_),
-                byref(api_nodeTags_), byref(api_nodeTags_n_),
-                c_int(dim),
-                c_int(tag),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetElementsByType returned non-zero error code: ",
-                    ierr.value)
-            return (
-                _ovectorint(api_elementTags_, api_elementTags_n_.value),
-                _ovectorint(api_nodeTags_, api_nodeTags_n_.value))
-
-        @staticmethod
-        def getNodesByType(elementType, dim=-1, tag=-1, myThread=0, nbrThreads=1):
-            """
-            Get the mesh nodes in the same way as `getElementsByType'.
-
-            Return `nodeTags'.
-            """
-            api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetNodesByType(
-                c_int(elementType),
-                byref(api_nodeTags_), byref(api_nodeTags_n_),
-                c_int(dim),
-                c_int(tag),
-                c_size_t(myThread),
-                c_size_t(nbrThreads),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetNodesByType returned non-zero error code: ",
-                    ierr.value)
-            return _ovectorint(api_nodeTags_, api_nodeTags_n_.value)
-
-        @staticmethod
-        def getIntegrationDataByType(elementType, integrationType, functionSpaceType, dim=-1, tag=-1):
-            """
-            Get the integration data for mesh elements in the same way as
-            `getIntegrationData', but for a single `elementType'.
-
-            Return `integrationPoints', `integrationData', `functionSpaceNumComponents', `functionSpaceData'.
-            """
-            api_integrationPoints_, api_integrationPoints_n_ = POINTER(c_double)(), c_size_t()
-            api_integrationData_, api_integrationData_n_ = POINTER(c_double)(), c_size_t()
-            api_functionSpaceNumComponents_ = c_int()
-            api_functionSpaceData_, api_functionSpaceData_n_ = POINTER(c_double)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetIntegrationDataByType(
-                c_int(elementType),
-                c_char_p(integrationType.encode()),
-                c_char_p(functionSpaceType.encode()),
-                byref(api_integrationPoints_), byref(api_integrationPoints_n_),
-                byref(api_integrationData_), byref(api_integrationData_n_),
-                byref(api_functionSpaceNumComponents_),
-                byref(api_functionSpaceData_), byref(api_functionSpaceData_n_),
-                c_int(dim),
-                c_int(tag),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetIntegrationDataByType returned non-zero error code: ",
-                    ierr.value)
-            return (
-                _ovectordouble(api_integrationPoints_, api_integrationPoints_n_.value),
-                _ovectordouble(api_integrationData_, api_integrationData_n_.value),
-                api_functionSpaceNumComponents_.value,
-                _ovectordouble(api_functionSpaceData_, api_functionSpaceData_n_.value))
-
-        @staticmethod
-        def getJacobianDataByType(elementType, integrationType, dim=-1, tag=-1, myThread=0, nbrThreads=1):
+        def getJacobianData(elementType, integrationType, dim=-1, tag=-1, myThread=0, nbrThreads=1):
             """
             Get the Jacobian data for mesh elements in the same way as
             `getJacobianData', but for a single `elementType'.
@@ -1183,7 +1127,7 @@ class model:
             api_jacobians_, api_jacobians_n_ = POINTER(c_double)(), c_size_t()
             api_determinants_, api_determinants_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetJacobianDataByType(
+            lib.gmshModelMeshGetJacobianData(
                 c_int(elementType),
                 c_char_p(integrationType.encode()),
                 byref(api_nbrIntegrationPoints_),
@@ -1196,7 +1140,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetJacobianDataByType returned non-zero error code: ",
+                    "gmshModelMeshGetJacobianData returned non-zero error code: ",
                     ierr.value)
             return (
                 api_nbrIntegrationPoints_.value,
@@ -1204,7 +1148,7 @@ class model:
                 _ovectordouble(api_determinants_, api_determinants_n_.value))
 
         @staticmethod
-        def getFunctionSpaceDataByType(elementType, integrationType, functionSpaceType, dim=-1, tag=-1):
+        def getFunctionSpaceData(elementType, integrationType, functionSpaceType, dim=-1, tag=-1):
             """
             Get the function space data for mesh elements in the same way as
             `getFunctionSpaceData', but for a single `elementType'.
@@ -1215,7 +1159,7 @@ class model:
             api_functionSpaceNumComponents_ = c_int()
             api_functionSpaceData_, api_functionSpaceData_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetFunctionSpaceDataByType(
+            lib.gmshModelMeshGetFunctionSpaceData(
                 c_int(elementType),
                 c_char_p(integrationType.encode()),
                 c_char_p(functionSpaceType.encode()),
@@ -1227,12 +1171,74 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(
-                    "gmshModelMeshGetFunctionSpaceDataByType returned non-zero error code: ",
+                    "gmshModelMeshGetFunctionSpaceData returned non-zero error code: ",
                     ierr.value)
             return (
                 _ovectordouble(api_integrationPoints_, api_integrationPoints_n_.value),
                 api_functionSpaceNumComponents_.value,
                 _ovectordouble(api_functionSpaceData_, api_functionSpaceData_n_.value))
+
+        @staticmethod
+        def getBarycenter(elementTag, fast, primary):
+            """
+            Get barycenter of element with tag 'tag'. If 'fast' is true the barycenter
+            compute is equal to the real barycenter multiplied by the number of nodes.
+            If 'primary' is true, only the primary nodes is taking into account.
+
+            Return `barycenter'.
+            """
+            api_barycenter_, api_barycenter_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetBarycenter(
+                c_int(elementTag),
+                c_int(bool(fast)),
+                c_int(bool(primary)),
+                byref(api_barycenter_), byref(api_barycenter_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetBarycenter returned non-zero error code: ",
+                    ierr.value)
+            return _ovectordouble(api_barycenter_, api_barycenter_n_.value)
+
+        @staticmethod
+        def getBarycenters(elementType, dim, tag, fast, primary, myThread=0, nbrThreads=1):
+            """
+            Get barycenters of all elements corresponding to 'elementType' into entity
+            of dimension `dim' and tag `tag'.
+
+            Return `barycenters'.
+            """
+            api_barycenters_, api_barycenters_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetBarycenters(
+                c_int(elementType),
+                c_int(dim),
+                c_int(tag),
+                c_int(bool(fast)),
+                c_int(bool(primary)),
+                byref(api_barycenters_), byref(api_barycenters_n_),
+                c_size_t(myThread),
+                c_size_t(nbrThreads),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetBarycenters returned non-zero error code: ",
+                    ierr.value)
+            return _ovectordouble(api_barycenters_, api_barycenters_n_.value)
+
+        @staticmethod
+        def initializeNodeCache():
+            """
+            Initialize the mesh node cache ONLY it has not already done.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshInitializeNodeCache(
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshInitializeNodeCache returned non-zero error code: ",
+                    ierr.value)
 
         @staticmethod
         def initializeJacobianDataVector(elementType, integrationType, dim=-1, tag=-1):
@@ -1303,62 +1309,6 @@ class model:
             return _ovectordouble(api_barycenters_, api_barycenters_n_.value)
 
         @staticmethod
-        def setNodes(dim, tag, nodeTags, coord, parametricCoord=[]):
-            """
-            Set the mesh nodes in the geometrical entity of dimension `dim' and tag
-            `tag'. `nodetags' contains the node tags (their unique, strictly positive
-            identification numbers). `coord' is a vector of length 3 times the length
-            of `nodeTags' that contains the (x, y, z) coordinates of the nodes,
-            concatenated. The optional `parametricCoord' vector contains the parametric
-            coordinates of the nodes, if any. The length of `parametricCoord' can be 0
-            or `dim' times the length of `nodeTags'.
-            """
-            api_nodeTags_, api_nodeTags_n_ = _ivectorint(nodeTags)
-            api_coord_, api_coord_n_ = _ivectordouble(coord)
-            api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
-            ierr = c_int()
-            lib.gmshModelMeshSetNodes(
-                c_int(dim),
-                c_int(tag),
-                api_nodeTags_, api_nodeTags_n_,
-                api_coord_, api_coord_n_,
-                api_parametricCoord_, api_parametricCoord_n_,
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshSetNodes returned non-zero error code: ",
-                    ierr.value)
-
-        @staticmethod
-        def setElements(dim, tag, elementTypes, elementTags, nodeTags):
-            """
-            Set the mesh elements of the entity of dimension `dim' and `tag' tag.
-            `types' contains the MSH types of the elements (e.g. `2' for 3-node
-            triangles: see the Gmsh reference manual). `elementTags' is a vector of the
-            same length as `types'; each entry is a vector containing the tags (unique,
-            strictly positive identifiers) of the elements of the corresponding type.
-            `nodeTags' is also a vector of the same length as `types'; each entry is a
-            vector of length equal to the number of elements of the give type times the
-            number of nodes per element, that contains the node tags of all the
-            elements of the given type, concatenated.
-            """
-            api_elementTypes_, api_elementTypes_n_ = _ivectorint(elementTypes)
-            api_elementTags_, api_elementTags_n_, api_elementTags_nn_ = _ivectorvectorint(elementTags)
-            api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_ = _ivectorvectorint(nodeTags)
-            ierr = c_int()
-            lib.gmshModelMeshSetElements(
-                c_int(dim),
-                c_int(tag),
-                api_elementTypes_, api_elementTypes_n_,
-                api_elementTags_, api_elementTags_n_, api_elementTags_nn_,
-                api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_,
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshSetElements returned non-zero error code: ",
-                    ierr.value)
-
-        @staticmethod
         def reclassifyNodes():
             """
             Redistribute all mesh nodes on their associated geometrical entity, based
@@ -1373,111 +1323,6 @@ class model:
                 raise ValueError(
                     "gmshModelMeshReclassifyNodes returned non-zero error code: ",
                     ierr.value)
-
-        @staticmethod
-        def getNode(nodeTag):
-            """
-            Get the coordinates and the parametric coordinates (if any) of the mesh
-            node with tag `tag'. This is a useful by inefficient way of accessing mesh
-            node data, as it relies on a cache stored in the model. For large meshes
-            all the nodes in the model should be numbered in a continuous sequence of
-            tags from 1 to N to maintain reasonnable performance (in this case the
-            internal cache is based on a vector; otherwise it uses a map).
-
-            Return `coord', `parametricCoord'.
-            """
-            api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
-            api_parametricCoord_, api_parametricCoord_n_ = POINTER(c_double)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetNode(
-                c_int(nodeTag),
-                byref(api_coord_), byref(api_coord_n_),
-                byref(api_parametricCoord_), byref(api_parametricCoord_n_),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetNode returned non-zero error code: ",
-                    ierr.value)
-            return (
-                _ovectordouble(api_coord_, api_coord_n_.value),
-                _ovectordouble(api_parametricCoord_, api_parametricCoord_n_.value))
-
-        @staticmethod
-        def getElement(elementTag):
-            """
-            Get the type and node tags of the mesh element with tag `tag'. This is a
-            useful but inefficient way of accessing mesh element data, as it relies on
-            a cache stored in the model. For large meshes all the elements in the model
-            should be numbered in a continuous sequence of tags from 1 to N to maintain
-            reasonnable performance (in this case the internal cache is based on a
-            vector; otherwise it uses a map).
-
-            Return `elementType', `nodeTags'.
-            """
-            api_elementType_ = c_int()
-            api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetElement(
-                c_int(elementTag),
-                byref(api_elementType_),
-                byref(api_nodeTags_), byref(api_nodeTags_n_),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetElement returned non-zero error code: ",
-                    ierr.value)
-            return (
-                api_elementType_.value,
-                _ovectorint(api_nodeTags_, api_nodeTags_n_.value))
-
-        @staticmethod
-        def getBarycenter(elementTag, fast, primary):
-            """
-            Get barycenter of element with tag 'tag'. If 'fast' is true the barycenter
-            compute is equal to the real barycenter multiplied by the number of nodes.
-            If 'primary' is true, only the primary nodes is taking into account.
-
-            Return `barycenter'.
-            """
-            api_barycenter_, api_barycenter_n_ = POINTER(c_double)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetBarycenter(
-                c_int(elementTag),
-                c_int(bool(fast)),
-                c_int(bool(primary)),
-                byref(api_barycenter_), byref(api_barycenter_n_),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetBarycenter returned non-zero error code: ",
-                    ierr.value)
-            return _ovectordouble(api_barycenter_, api_barycenter_n_.value)
-
-        @staticmethod
-        def getBarycenters(elementType, dim, tag, fast, primary, myThread=0, nbrThreads=1):
-            """
-            Get barycenters of all elements corresponding to 'elementType' into entity
-            of dimension `dim' and tag `tag'.
-
-            Return `barycenters'.
-            """
-            api_barycenters_, api_barycenters_n_ = POINTER(c_double)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGetBarycenters(
-                c_int(elementType),
-                c_int(dim),
-                c_int(tag),
-                c_int(bool(fast)),
-                c_int(bool(primary)),
-                byref(api_barycenters_), byref(api_barycenters_n_),
-                c_size_t(myThread),
-                c_size_t(nbrThreads),
-                byref(ierr))
-            if ierr.value != 0:
-                raise ValueError(
-                    "gmshModelMeshGetBarycenters returned non-zero error code: ",
-                    ierr.value)
-            return _ovectordouble(api_barycenters_, api_barycenters_n_.value)
 
         @staticmethod
         def setSize(dimTags, size):

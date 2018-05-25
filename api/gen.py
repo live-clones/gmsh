@@ -150,48 +150,50 @@ mesh.add('getLastEntityError',doc,None,ovectorpair('dimTags'))
 doc = '''Get the last mesh nodes (if any) where a meshing error occurred. Currently only populated by the new 3D meshing algorithms.'''
 mesh.add('getLastNodeError',doc,None,ovectorint('nodeTags'))
 
-doc = '''Initialize the mesh node cache ONLY it has not already done.'''
-mesh.add('initializeNodeCache',doc,None)
+doc = '''Set the mesh nodes in the geometrical entity of dimension `dim' and tag `tag'. `nodetags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the (x, y, z) coordinates of the nodes, concatenated. The optional `parametricCoord' vector contains the parametric coordinates of the nodes, if any. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'.'''
+mesh.add('setNodes',doc,None,iint('dim'),iint('tag'),ivectorint('nodeTags'),ivectordouble('coord'),ivectordouble('parametricCoord','std::vector<double>()',"[]","[]"))
+
+doc = '''Get the coordinates and the parametric coordinates (if any) of the mesh node with tag `tag'. This is a useful by inefficient way of accessing mesh node data, as it relies on a cache stored in the model. For large meshes all the nodes in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
+mesh.add('getNode',doc,None,iint('nodeTag'),ovectordouble('coord'),ovectordouble('parametricCoord'))
 
 doc = '''Get the mesh nodes of the entity of dimension `dim' and `tag' tag. If `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the nodes in the mesh. `nodeTags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the (x, y, z) coordinates of the nodes, concatenated. If `dim' >= 0, `parametricCoord' contains the parametric coordinates of the nodes, if available. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'.'''
 mesh.add('getNodes',doc,None,ovectorint('nodeTags'),ovectordouble('coord'),ovectordouble('parametricCoord'),iint('dim', '-1'),iint('tag', '-1'))
 
+doc = '''Get the mesh nodes in the same way as `getNodes', but for a single `elementType'.'''
+mesh.add('getNodesByType',doc,None,iint('elementType'),ovectorint('nodeTags'),iint('dim', '-1'),iint('tag', '-1'),isize('myThread', '0'),isize('nbrThreads', '1'))
+
+doc = '''Set the mesh elements of the entity of dimension `dim' and `tag' tag. `types' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh reference manual). `elementTags' is a vector of the same length as `types'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is also a vector of the same length as `types'; each entry is a vector of length equal to the number of elements of the give type times the number of nodes per element, that contains the node tags of all the elements of the given type, concatenated.'''
+mesh.add('setElements',doc,None,iint('dim'),iint('tag'),ivectorint('elementTypes'),ivectorvectorint('elementTags'),ivectorvectorint('nodeTags'))
+
+doc = '''Get the type and node tags of the mesh element with tag `tag'. This is a useful but inefficient way of accessing mesh element data, as it relies on a cache stored in the model. For large meshes all the elements in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
+mesh.add('getElement',doc,None,iint('elementTag'),oint('elementType'),ovectorint('nodeTags'))
+
 doc = '''Get the mesh elements of the entity of dimension `dim' and `tag' tag. If `tag' < 0, get the elements for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the elements in the mesh. `elementTypes' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see `getElementProperties' to obtain the properties for a given element type). `elementTags' is a vector of the same length as `elementTypes'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is also a vector of the same length as `elementTypes'; each entry is a vector of length equal to the number of elements of the given type times the number of nodes for this type of element, that contains the node tags of all the elements of the given type, concatenated.'''
 mesh.add('getElements',doc,None,ovectorint('elementTypes'),ovectorvectorint('elementTags'),ovectorvectorint('nodeTags'),iint('dim', '-1'),iint('tag', '-1'))
-
-doc = '''Get the properties of an element of type `elementType': its name (`elementName'), dimension (`dim'), order (`order'), number of nodes (`numNodes') and parametric coordinates of nodes (`parametricCoord' vector, of length `dim' times `numNodes').'''
-mesh.add('getElementProperties',doc,None,iint('elementType'),ostring('elementName'),oint('dim'),oint('order'),oint('numNodes'),ovectordouble('parametricCoord'))
-
-### Could be remove
-doc = '''Get the integration data for mesh elements of the entity of dimension `dim' and `tag' tag. The data is returned by element type and by element, in the same order as the data returned by `getElements'. `integrationType' specifies the type of integration (e.g. \"Gauss4\") and `functionSpaceType' specifies the function space (e.g. \"IsoParametric\"). `integrationPoints' contains for each element type a vector (of length 4 times the number of integration points) containing the parametric coordinates (u, v, w) and the weight associated to the integration points. `integrationData' contains for each element type a vector (of size 13 times the number of integration points) containing the (x, y, z) coordinates of the integration point, the determinant of the Jacobian and the 9 entries (by row) of the 3x3 Jacobian matrix. If `functionSpaceType' is provided, `functionSpaceNumComponents' return the number of components returned by the evaluation of a basis function in the space and `functionSpaceData' contains for each element type the evaluation of the basis functions at the integration points.'''
-mesh.add('getIntegrationData',doc,None,istring('integrationType'),istring('functionSpaceType'),ovectorvectordouble('integrationPoints'),ovectorvectordouble('integrationData'),oint('functionSpaceNumComponents'),ovectorvectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))
-
-### Could be remove
-doc = '''Get the Jacobian data for mesh elements of the entity of dimension `dim' and `tag' tag. The data is returned by element type and by element, in the same order as the data returned by `getElements'. `integrationType' specifies the type of integration (e.g. \"Gauss4\"). `nbrIntegrationPoints' contains for each element type, the number of integration points that corresponds to `integrationType'. `jacobian' contains for each element type a vector (of size 9 times the number of integration points) containing the 9 entries (by row) of the 3x3 Jacobian matrix and `determinant' contains for each element type a vector containing the determinant of the Jacobian.'''
-mesh.add('getJacobianData',doc,None,istring('integrationType'),ovectorint('nbrIntegrationPoints'),ovectorvectordouble('jacobian'),ovectorvectordouble('determinant'),iint('dim', '-1'),iint('tag', '-1'))
-
-### Could be remove
-doc = '''Get the function space data for mesh elements of the entity of dimension `dim' and `tag' tag. The data is returned by element type and by element, in the same order as the data returned by `getElements'. `integrationType' specifies the type of integration (e.g. \"Gauss4\") and `functionSpaceType' specifies the function space (e.g. \"IsoParametric\"). `integrationPoints' contains for each element type a vector (of length 4 times the number of integration points) containing the parametric coordinates (u, v, w) and the weight associated to the integration points. If `functionSpaceType' is provided, `functionSpaceNumComponents' returns the number of components returned by the evaluation of a basis function in the space and `functionSpaceData' contains for each element type the evaluation of the basis functions at the integration points.'''
-mesh.add('getFunctionSpaceData',doc,None,istring('integrationType'),istring('functionSpaceType'),ovectorvectordouble('integrationPoints'),oint('functionSpaceNumComponents'),ovectorvectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))
-
-doc = '''Get the types of mesh elements in the entity of dimension `dim' and `tag' tag. If `tag' < 0, get the types for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the types in the mesh.'''
-mesh.add('getElementTypes',doc,None,ovectorint('elementTypes'),iint('dim', '-1'),iint('tag', '-1'))
 
 doc = '''Get the mesh elements in the same way as `getElements', but for a single `elementType'.'''
 mesh.add('getElementsByType',doc,None,iint('elementType'),ovectorint('elementTags'),ovectorint('nodeTags'),iint('dim', '-1'),iint('tag', '-1'))
 
-doc = '''Get the mesh nodes in the same way as `getElementsByType'.'''
-mesh.add('getNodesByType',doc,None,iint('elementType'),ovectorint('nodeTags'),iint('dim', '-1'),iint('tag', '-1'),isize('myThread', '0'),isize('nbrThreads', '1'))
+doc = '''Get the types of mesh elements in the entity of dimension `dim' and `tag' tag. If `tag' < 0, get the types for all entities of dimension `dim'. If `dim' and `tag' are negative, get all the types in the mesh.'''
+mesh.add('getElementTypes',doc,None,ovectorint('elementTypes'),iint('dim', '-1'),iint('tag', '-1'))
 
-### Could be remove
-doc = '''Get the integration data for mesh elements in the same way as `getIntegrationData', but for a single `elementType'.'''
-mesh.add('getIntegrationDataByType',doc,None,iint('elementType'),istring('integrationType'),istring('functionSpaceType'),ovectordouble('integrationPoints'),ovectordouble('integrationData'),oint('functionSpaceNumComponents'),ovectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))
+doc = '''Get the properties of an element of type `elementType': its name (`elementName'), dimension (`dim'), order (`order'), number of nodes (`numNodes') and parametric coordinates of nodes (`parametricCoord' vector, of length `dim' times `numNodes').'''
+mesh.add('getElementProperties',doc,None,iint('elementType'),ostring('elementName'),oint('dim'),oint('order'),oint('numNodes'),ovectordouble('parametricCoord'))
 
 doc = '''Get the Jacobian data for mesh elements in the same way as `getJacobianData', but for a single `elementType'.'''
-mesh.add('getJacobianDataByType',doc,None,iint('elementType'),istring('integrationType'),oint('nbrIntegrationPoints'),ovectordouble('jacobians'),ovectordouble('determinants'),iint('dim', '-1'),iint('tag', '-1'),isize('myThread', '0'),isize('nbrThreads', '1'))
+mesh.add('getJacobianData',doc,None,iint('elementType'),istring('integrationType'),oint('nbrIntegrationPoints'),ovectordouble('jacobians'),ovectordouble('determinants'),iint('dim', '-1'),iint('tag', '-1'),isize('myThread', '0'),isize('nbrThreads', '1'))
 
 doc = '''Get the function space data for mesh elements in the same way as `getFunctionSpaceData', but for a single `elementType'.'''
-mesh.add('getFunctionSpaceDataByType',doc,None,iint('elementType'),istring('integrationType'),istring('functionSpaceType'),ovectordouble('integrationPoints'),oint('functionSpaceNumComponents'),ovectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))
+mesh.add('getFunctionSpaceData',doc,None,iint('elementType'),istring('integrationType'),istring('functionSpaceType'),ovectordouble('integrationPoints'),oint('functionSpaceNumComponents'),ovectordouble('functionSpaceData'),iint('dim', '-1'),iint('tag', '-1'))
+
+doc = '''Get barycenter of element with tag 'tag'. If 'fast' is true the barycenter compute is equal to the real barycenter multiplied by the number of nodes. If 'primary' is true, only the primary nodes is taking into account.'''
+mesh.add('getBarycenter',doc,None,iint('elementTag'),ibool('fast'),ibool('primary'),ovectordouble('barycenter'))
+
+doc = '''Get barycenters of all elements corresponding to 'elementType' into entity of dimension `dim' and tag `tag'.'''
+mesh.add('getBarycenters',doc,None,iint('elementType'),iint('dim'),iint('tag'),ibool('fast'),ibool('primary'),ovectordouble('barycenters'),isize('myThread', '0'),isize('nbrThreads', '1'))
+
+doc = '''Initialize the mesh node cache ONLY it has not already done.'''
+mesh.add('initializeNodeCache',doc,None)
 
 doc = '''Initialize the Jacobian data vector.'''
 mesh.add('initializeJacobianDataVector',doc,None,iint('elementType'),istring('integrationType'),ovectordouble('jacobians'),ovectordouble('determinants'),iint('dim', '-1'),iint('tag', '-1'))
@@ -202,26 +204,8 @@ mesh.add('initializeNodeTagsVector',doc,None,iint('elementType'),ovectorint('nod
 doc = '''Initialize the barycenters vector.'''
 mesh.add('initializeBarycentersVector',doc,None,iint('elementType'),ovectordouble('barycenters'),iint('dim', '-1'),iint('tag', '-1'))
 
-doc = '''Set the mesh nodes in the geometrical entity of dimension `dim' and tag `tag'. `nodetags' contains the node tags (their unique, strictly positive identification numbers). `coord' is a vector of length 3 times the length of `nodeTags' that contains the (x, y, z) coordinates of the nodes, concatenated. The optional `parametricCoord' vector contains the parametric coordinates of the nodes, if any. The length of `parametricCoord' can be 0 or `dim' times the length of `nodeTags'.'''
-mesh.add('setNodes',doc,None,iint('dim'),iint('tag'),ivectorint('nodeTags'),ivectordouble('coord'),ivectordouble('parametricCoord','std::vector<double>()',"[]","[]"))
-
-doc = '''Set the mesh elements of the entity of dimension `dim' and `tag' tag. `types' contains the MSH types of the elements (e.g. `2' for 3-node triangles: see the Gmsh reference manual). `elementTags' is a vector of the same length as `types'; each entry is a vector containing the tags (unique, strictly positive identifiers) of the elements of the corresponding type. `nodeTags' is also a vector of the same length as `types'; each entry is a vector of length equal to the number of elements of the give type times the number of nodes per element, that contains the node tags of all the elements of the given type, concatenated.'''
-mesh.add('setElements',doc,None,iint('dim'),iint('tag'),ivectorint('elementTypes'),ivectorvectorint('elementTags'),ivectorvectorint('nodeTags'))
-
 doc = '''Redistribute all mesh nodes on their associated geometrical entity, based on the mesh elements. Can be used when importing mesh nodes in bulk (e.g. by associating them all to a single volume), to reclassify them correctly on model surfaces, curves, etc.'''
 mesh.add('reclassifyNodes',doc,None)
-
-doc = '''Get the coordinates and the parametric coordinates (if any) of the mesh node with tag `tag'. This is a useful by inefficient way of accessing mesh node data, as it relies on a cache stored in the model. For large meshes all the nodes in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
-mesh.add('getNode',doc,None,iint('nodeTag'),ovectordouble('coord'),ovectordouble('parametricCoord'))
-
-doc = '''Get the type and node tags of the mesh element with tag `tag'. This is a useful but inefficient way of accessing mesh element data, as it relies on a cache stored in the model. For large meshes all the elements in the model should be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable performance (in this case the internal cache is based on a vector; otherwise it uses a map).'''
-mesh.add('getElement',doc,None,iint('elementTag'),oint('elementType'),ovectorint('nodeTags'))
-
-doc = '''Get barycenter of element with tag 'tag'. If 'fast' is true the barycenter compute is equal to the real barycenter multiplied by the number of nodes. If 'primary' is true, only the primary nodes is taking into account.'''
-mesh.add('getBarycenter',doc,None,iint('elementTag'),ibool('fast'),ibool('primary'),ovectordouble('barycenter'))
-
-doc = '''Get barycenters of all elements corresponding to 'elementType' into entity of dimension `dim' and tag `tag'.'''
-mesh.add('getBarycenters',doc,None,iint('elementType'),iint('dim'),iint('tag'),ibool('fast'),ibool('primary'),ovectordouble('barycenters'),isize('myThread', '0'),isize('nbrThreads', '1'))
 
 doc = '''Set a mesh size constraint on the geometrical entities `dimTags'. Currently only entities of dimension 0 (points) are handled.'''
 mesh.add('setSize',doc,None,ivectorpair('dimTags'),idouble('size'))

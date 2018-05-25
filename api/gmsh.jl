@@ -673,17 +673,50 @@ function getLastNodeError()
 end
 
 """
-    gmsh.model.mesh.initializeNodeCache()
+    gmsh.model.mesh.setNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
 
-Initialize the mesh node cache ONLY it has not already done.
+Set the mesh nodes in the geometrical entity of dimension `dim` and tag `tag`.
+`nodetags` contains the node tags (their unique, strictly positive
+identification numbers). `coord` is a vector of length 3 times the length of
+`nodeTags` that contains the (x, y, z) coordinates of the nodes, concatenated.
+The optional `parametricCoord` vector contains the parametric coordinates of the
+nodes, if any. The length of `parametricCoord` can be 0 or `dim` times the
+length of `nodeTags`.
 """
-function initializeNodeCache()
+function setNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshInitializeNodeCache, gmsh.clib), Void,
-          (Ptr{Cint},),
-          ierr)
-    ierr[] != 0 && error("gmshModelMeshInitializeNodeCache returned non-zero error code: $(ierr[])")
+    ccall((:gmshModelMeshSetNodes, gmsh.clib), Void,
+          (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          dim, tag, convert(Vector{Cint}, nodeTags), length(nodeTags), coord, length(coord), parametricCoord, length(parametricCoord), ierr)
+    ierr[] != 0 && error("gmshModelMeshSetNodes returned non-zero error code: $(ierr[])")
     return nothing
+end
+
+"""
+    gmsh.model.mesh.getNode(nodeTag, coord, parametricCoord)
+
+Get the coordinates and the parametric coordinates (if any) of the mesh node
+with tag `tag`. This is a useful by inefficient way of accessing mesh node data,
+as it relies on a cache stored in the model. For large meshes all the nodes in
+the model should be numbered in a continuous sequence of tags from 1 to N to
+maintain reasonnable performance (in this case the internal cache is based on a
+vector; otherwise it uses a map).
+
+Return 'coord', 'parametricCoord'.
+"""
+function getNode(nodeTag)
+    api_coord_ = Ref{Ptr{Cdouble}}()
+    api_coord_n_ = Ref{Csize_t}()
+    api_parametricCoord_ = Ref{Ptr{Cdouble}}()
+    api_parametricCoord_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetNode, gmsh.clib), Void,
+          (Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          nodeTag, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetNode returned non-zero error code: $(ierr[])")
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], true)
+    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], true)
+    return coord, parametricCoord
 end
 
 """
@@ -716,6 +749,74 @@ function getNodes(dim = -1, tag = -1)
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], true)
     parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], true)
     return nodeTags, coord, parametricCoord
+end
+
+"""
+    gmsh.model.mesh.getNodesByType(elementType, nodeTags, dim = -1, tag = -1, myThread = 0, nbrThreads = 1)
+
+Get the mesh nodes in the same way as `getNodes`, but for a single
+`elementType`.
+
+Return 'nodeTags'.
+"""
+function getNodesByType(elementType, dim = -1, tag = -1, myThread = 0, nbrThreads = 1)
+    api_nodeTags_ = Ref{Ptr{Cint}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetNodesByType, gmsh.clib), Void,
+          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, api_nodeTags_, api_nodeTags_n_, dim, tag, myThread, nbrThreads, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetNodesByType returned non-zero error code: $(ierr[])")
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
+    return nodeTags
+end
+
+"""
+    gmsh.model.mesh.setElements(dim, tag, elementTypes, elementTags, nodeTags)
+
+Set the mesh elements of the entity of dimension `dim` and `tag` tag. `types`
+contains the MSH types of the elements (e.g. `2` for 3-node triangles: see the
+Gmsh reference manual). `elementTags` is a vector of the same length as `types`;
+each entry is a vector containing the tags (unique, strictly positive
+identifiers) of the elements of the corresponding type. `nodeTags` is also a
+vector of the same length as `types`; each entry is a vector of length equal to
+the number of elements of the give type times the number of nodes per element,
+that contains the node tags of all the elements of the given type, concatenated.
+"""
+function setElements(dim, tag, elementTypes, elementTags, nodeTags)
+    api_elementTags_n_ = [ length(elementTags[i]) for i in 1:length(elementTags) ]
+    api_nodeTags_n_ = [ length(nodeTags[i]) for i in 1:length(nodeTags) ]
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetElements, gmsh.clib), Void,
+          (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          dim, tag, convert(Vector{Cint}, elementTypes), length(elementTypes), convert(Vector{Vector{Cint}},elementTags), api_elementTags_n_, length(elementTags), convert(Vector{Vector{Cint}},nodeTags), api_nodeTags_n_, length(nodeTags), ierr)
+    ierr[] != 0 && error("gmshModelMeshSetElements returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.getElement(elementTag, elementType, nodeTags)
+
+Get the type and node tags of the mesh element with tag `tag`. This is a useful
+but inefficient way of accessing mesh element data, as it relies on a cache
+stored in the model. For large meshes all the elements in the model should be
+numbered in a continuous sequence of tags from 1 to N to maintain reasonnable
+performance (in this case the internal cache is based on a vector; otherwise it
+uses a map).
+
+Return 'elementType', 'nodeTags'.
+"""
+function getElement(elementTag)
+    api_elementType_ = Ref{Cint}()
+    api_nodeTags_ = Ref{Ptr{Cint}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetElement, gmsh.clib), Void,
+          (Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          elementTag, api_elementType_, api_nodeTags_, api_nodeTags_n_, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetElement returned non-zero error code: $(ierr[])")
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
+    return api_elementType_[], nodeTags
 end
 
 """
@@ -760,6 +861,50 @@ function getElements(dim = -1, tag = -1)
 end
 
 """
+    gmsh.model.mesh.getElementsByType(elementType, elementTags, nodeTags, dim = -1, tag = -1)
+
+Get the mesh elements in the same way as `getElements`, but for a single
+`elementType`.
+
+Return 'elementTags', 'nodeTags'.
+"""
+function getElementsByType(elementType, dim = -1, tag = -1)
+    api_elementTags_ = Ref{Ptr{Cint}}()
+    api_elementTags_n_ = Ref{Csize_t}()
+    api_nodeTags_ = Ref{Ptr{Cint}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetElementsByType, gmsh.clib), Void,
+          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          elementType, api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, dim, tag, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetElementsByType returned non-zero error code: $(ierr[])")
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
+    return elementTags, nodeTags
+end
+
+"""
+    gmsh.model.mesh.getElementTypes(elementTypes, dim = -1, tag = -1)
+
+Get the types of mesh elements in the entity of dimension `dim` and `tag` tag.
+If `tag` < 0, get the types for all entities of dimension `dim`. If `dim` and
+`tag` are negative, get all the types in the mesh.
+
+Return 'elementTypes'.
+"""
+function getElementTypes(dim = -1, tag = -1)
+    api_elementTypes_ = Ref{Ptr{Cint}}()
+    api_elementTypes_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetElementTypes, gmsh.clib), Void,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          api_elementTypes_, api_elementTypes_n_, dim, tag, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetElementTypes returned non-zero error code: $(ierr[])")
+    elementTypes = unsafe_wrap(Array, api_elementTypes_[], api_elementTypes_n_[], true)
+    return elementTypes
+end
+
+"""
     gmsh.model.mesh.getElementProperties(elementType, elementName, dim, order, numNodes, parametricCoord)
 
 Get the properties of an element of type `elementType`: its name
@@ -787,269 +932,106 @@ function getElementProperties(elementType)
 end
 
 """
-    gmsh.model.mesh.getIntegrationData(integrationType, functionSpaceType, integrationPoints, integrationData, functionSpaceNumComponents, functionSpaceData, dim = -1, tag = -1)
-
-Get the integration data for mesh elements of the entity of dimension `dim` and
-`tag` tag. The data is returned by element type and by element, in the same
-order as the data returned by `getElements`. `integrationType` specifies the
-type of integration (e.g. "Gauss4") and `functionSpaceType` specifies the
-function space (e.g. "IsoParametric"). `integrationPoints` contains for each
-element type a vector (of length 4 times the number of integration points)
-containing the parametric coordinates (u, v, w) and the weight associated to the
-integration points. `integrationData` contains for each element type a vector
-(of size 13 times the number of integration points) containing the (x, y, z)
-coordinates of the integration point, the determinant of the Jacobian and the 9
-entries (by row) of the 3x3 Jacobian matrix. If `functionSpaceType` is provided,
-`functionSpaceNumComponents` return the number of components returned by the
-evaluation of a basis function in the space and `functionSpaceData` contains for
-each element type the evaluation of the basis functions at the integration
-points.
-
-Return 'integrationPoints', 'integrationData', 'functionSpaceNumComponents', 'functionSpaceData'.
-"""
-function getIntegrationData(integrationType, functionSpaceType, dim = -1, tag = -1)
-    api_integrationPoints_ = Ref{Ptr{Ptr{Cdouble}}}()
-    api_integrationPoints_n_ = Ref{Ptr{Csize_t}}()
-    api_integrationPoints_nn_ = Ref{Csize_t}()
-    api_integrationData_ = Ref{Ptr{Ptr{Cdouble}}}()
-    api_integrationData_n_ = Ref{Ptr{Csize_t}}()
-    api_integrationData_nn_ = Ref{Csize_t}()
-    api_functionSpaceNumComponents_ = Ref{Cint}()
-    api_functionSpaceData_ = Ref{Ptr{Ptr{Cdouble}}}()
-    api_functionSpaceData_n_ = Ref{Ptr{Csize_t}}()
-    api_functionSpaceData_nn_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetIntegrationData, gmsh.clib), Void,
-          (Ptr{Cchar}, Ptr{Cchar}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          integrationType, functionSpaceType, api_integrationPoints_, api_integrationPoints_n_, api_integrationPoints_nn_, api_integrationData_, api_integrationData_n_, api_integrationData_nn_, api_functionSpaceNumComponents_, api_functionSpaceData_, api_functionSpaceData_n_, api_functionSpaceData_nn_, dim, tag, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetIntegrationData returned non-zero error code: $(ierr[])")
-    tmp_api_integrationPoints_ = unsafe_wrap(Array, api_integrationPoints_[], api_integrationPoints_nn_[], true)
-    tmp_api_integrationPoints_n_ = unsafe_wrap(Array, api_integrationPoints_n_[], api_integrationPoints_nn_[], true)
-    integrationPoints = [ unsafe_wrap(Array, tmp_api_integrationPoints_[i], tmp_api_integrationPoints_n_[i], true) for i in 1:api_integrationPoints_nn_[] ]
-    tmp_api_integrationData_ = unsafe_wrap(Array, api_integrationData_[], api_integrationData_nn_[], true)
-    tmp_api_integrationData_n_ = unsafe_wrap(Array, api_integrationData_n_[], api_integrationData_nn_[], true)
-    integrationData = [ unsafe_wrap(Array, tmp_api_integrationData_[i], tmp_api_integrationData_n_[i], true) for i in 1:api_integrationData_nn_[] ]
-    tmp_api_functionSpaceData_ = unsafe_wrap(Array, api_functionSpaceData_[], api_functionSpaceData_nn_[], true)
-    tmp_api_functionSpaceData_n_ = unsafe_wrap(Array, api_functionSpaceData_n_[], api_functionSpaceData_nn_[], true)
-    functionSpaceData = [ unsafe_wrap(Array, tmp_api_functionSpaceData_[i], tmp_api_functionSpaceData_n_[i], true) for i in 1:api_functionSpaceData_nn_[] ]
-    return integrationPoints, integrationData, api_functionSpaceNumComponents_[], functionSpaceData
-end
-
-"""
-    gmsh.model.mesh.getJacobianData(integrationType, nbrIntegrationPoints, jacobian, determinant, dim = -1, tag = -1)
-
-Get the Jacobian data for mesh elements of the entity of dimension `dim` and
-`tag` tag. The data is returned by element type and by element, in the same
-order as the data returned by `getElements`. `integrationType` specifies the
-type of integration (e.g. "Gauss4"). `nbrIntegrationPoints` contains for each
-element type, the number of integration points that corresponds to
-`integrationType`. `jacobian` contains for each element type a vector (of size 9
-times the number of integration points) containing the 9 entries (by row) of the
-3x3 Jacobian matrix and `determinant` contains for each element type a vector
-containing the determinant of the Jacobian.
-
-Return 'nbrIntegrationPoints', 'jacobian', 'determinant'.
-"""
-function getJacobianData(integrationType, dim = -1, tag = -1)
-    api_nbrIntegrationPoints_ = Ref{Ptr{Cint}}()
-    api_nbrIntegrationPoints_n_ = Ref{Csize_t}()
-    api_jacobian_ = Ref{Ptr{Ptr{Cdouble}}}()
-    api_jacobian_n_ = Ref{Ptr{Csize_t}}()
-    api_jacobian_nn_ = Ref{Csize_t}()
-    api_determinant_ = Ref{Ptr{Ptr{Cdouble}}}()
-    api_determinant_n_ = Ref{Ptr{Csize_t}}()
-    api_determinant_nn_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetJacobianData, gmsh.clib), Void,
-          (Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          integrationType, api_nbrIntegrationPoints_, api_nbrIntegrationPoints_n_, api_jacobian_, api_jacobian_n_, api_jacobian_nn_, api_determinant_, api_determinant_n_, api_determinant_nn_, dim, tag, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetJacobianData returned non-zero error code: $(ierr[])")
-    nbrIntegrationPoints = unsafe_wrap(Array, api_nbrIntegrationPoints_[], api_nbrIntegrationPoints_n_[], true)
-    tmp_api_jacobian_ = unsafe_wrap(Array, api_jacobian_[], api_jacobian_nn_[], true)
-    tmp_api_jacobian_n_ = unsafe_wrap(Array, api_jacobian_n_[], api_jacobian_nn_[], true)
-    jacobian = [ unsafe_wrap(Array, tmp_api_jacobian_[i], tmp_api_jacobian_n_[i], true) for i in 1:api_jacobian_nn_[] ]
-    tmp_api_determinant_ = unsafe_wrap(Array, api_determinant_[], api_determinant_nn_[], true)
-    tmp_api_determinant_n_ = unsafe_wrap(Array, api_determinant_n_[], api_determinant_nn_[], true)
-    determinant = [ unsafe_wrap(Array, tmp_api_determinant_[i], tmp_api_determinant_n_[i], true) for i in 1:api_determinant_nn_[] ]
-    return nbrIntegrationPoints, jacobian, determinant
-end
-
-"""
-    gmsh.model.mesh.getFunctionSpaceData(integrationType, functionSpaceType, integrationPoints, functionSpaceNumComponents, functionSpaceData, dim = -1, tag = -1)
-
-Get the function space data for mesh elements of the entity of dimension `dim`
-and `tag` tag. The data is returned by element type and by element, in the same
-order as the data returned by `getElements`. `integrationType` specifies the
-type of integration (e.g. "Gauss4") and `functionSpaceType` specifies the
-function space (e.g. "IsoParametric"). `integrationPoints` contains for each
-element type a vector (of length 4 times the number of integration points)
-containing the parametric coordinates (u, v, w) and the weight associated to the
-integration points. If `functionSpaceType` is provided,
-`functionSpaceNumComponents` returns the number of components returned by the
-evaluation of a basis function in the space and `functionSpaceData` contains for
-each element type the evaluation of the basis functions at the integration
-points.
-
-Return 'integrationPoints', 'functionSpaceNumComponents', 'functionSpaceData'.
-"""
-function getFunctionSpaceData(integrationType, functionSpaceType, dim = -1, tag = -1)
-    api_integrationPoints_ = Ref{Ptr{Ptr{Cdouble}}}()
-    api_integrationPoints_n_ = Ref{Ptr{Csize_t}}()
-    api_integrationPoints_nn_ = Ref{Csize_t}()
-    api_functionSpaceNumComponents_ = Ref{Cint}()
-    api_functionSpaceData_ = Ref{Ptr{Ptr{Cdouble}}}()
-    api_functionSpaceData_n_ = Ref{Ptr{Csize_t}}()
-    api_functionSpaceData_nn_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetFunctionSpaceData, gmsh.clib), Void,
-          (Ptr{Cchar}, Ptr{Cchar}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          integrationType, functionSpaceType, api_integrationPoints_, api_integrationPoints_n_, api_integrationPoints_nn_, api_functionSpaceNumComponents_, api_functionSpaceData_, api_functionSpaceData_n_, api_functionSpaceData_nn_, dim, tag, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetFunctionSpaceData returned non-zero error code: $(ierr[])")
-    tmp_api_integrationPoints_ = unsafe_wrap(Array, api_integrationPoints_[], api_integrationPoints_nn_[], true)
-    tmp_api_integrationPoints_n_ = unsafe_wrap(Array, api_integrationPoints_n_[], api_integrationPoints_nn_[], true)
-    integrationPoints = [ unsafe_wrap(Array, tmp_api_integrationPoints_[i], tmp_api_integrationPoints_n_[i], true) for i in 1:api_integrationPoints_nn_[] ]
-    tmp_api_functionSpaceData_ = unsafe_wrap(Array, api_functionSpaceData_[], api_functionSpaceData_nn_[], true)
-    tmp_api_functionSpaceData_n_ = unsafe_wrap(Array, api_functionSpaceData_n_[], api_functionSpaceData_nn_[], true)
-    functionSpaceData = [ unsafe_wrap(Array, tmp_api_functionSpaceData_[i], tmp_api_functionSpaceData_n_[i], true) for i in 1:api_functionSpaceData_nn_[] ]
-    return integrationPoints, api_functionSpaceNumComponents_[], functionSpaceData
-end
-
-"""
-    gmsh.model.mesh.getElementTypes(elementTypes, dim = -1, tag = -1)
-
-Get the types of mesh elements in the entity of dimension `dim` and `tag` tag.
-If `tag` < 0, get the types for all entities of dimension `dim`. If `dim` and
-`tag` are negative, get all the types in the mesh.
-
-Return 'elementTypes'.
-"""
-function getElementTypes(dim = -1, tag = -1)
-    api_elementTypes_ = Ref{Ptr{Cint}}()
-    api_elementTypes_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetElementTypes, gmsh.clib), Void,
-          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          api_elementTypes_, api_elementTypes_n_, dim, tag, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetElementTypes returned non-zero error code: $(ierr[])")
-    elementTypes = unsafe_wrap(Array, api_elementTypes_[], api_elementTypes_n_[], true)
-    return elementTypes
-end
-
-"""
-    gmsh.model.mesh.getElementsByType(elementType, elementTags, nodeTags, dim = -1, tag = -1)
-
-Get the mesh elements in the same way as `getElements`, but for a single
-`elementType`.
-
-Return 'elementTags', 'nodeTags'.
-"""
-function getElementsByType(elementType, dim = -1, tag = -1)
-    api_elementTags_ = Ref{Ptr{Cint}}()
-    api_elementTags_n_ = Ref{Csize_t}()
-    api_nodeTags_ = Ref{Ptr{Cint}}()
-    api_nodeTags_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetElementsByType, gmsh.clib), Void,
-          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          elementType, api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, dim, tag, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetElementsByType returned non-zero error code: $(ierr[])")
-    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], true)
-    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
-    return elementTags, nodeTags
-end
-
-"""
-    gmsh.model.mesh.getNodesByType(elementType, nodeTags, dim = -1, tag = -1, myThread = 0, nbrThreads = 1)
-
-Get the mesh nodes in the same way as `getElementsByType`.
-
-Return 'nodeTags'.
-"""
-function getNodesByType(elementType, dim = -1, tag = -1, myThread = 0, nbrThreads = 1)
-    api_nodeTags_ = Ref{Ptr{Cint}}()
-    api_nodeTags_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetNodesByType, gmsh.clib), Void,
-          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
-          elementType, api_nodeTags_, api_nodeTags_n_, dim, tag, myThread, nbrThreads, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetNodesByType returned non-zero error code: $(ierr[])")
-    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
-    return nodeTags
-end
-
-"""
-    gmsh.model.mesh.getIntegrationDataByType(elementType, integrationType, functionSpaceType, integrationPoints, integrationData, functionSpaceNumComponents, functionSpaceData, dim = -1, tag = -1)
-
-Get the integration data for mesh elements in the same way as
-`getIntegrationData`, but for a single `elementType`.
-
-Return 'integrationPoints', 'integrationData', 'functionSpaceNumComponents', 'functionSpaceData'.
-"""
-function getIntegrationDataByType(elementType, integrationType, functionSpaceType, dim = -1, tag = -1)
-    api_integrationPoints_ = Ref{Ptr{Cdouble}}()
-    api_integrationPoints_n_ = Ref{Csize_t}()
-    api_integrationData_ = Ref{Ptr{Cdouble}}()
-    api_integrationData_n_ = Ref{Csize_t}()
-    api_functionSpaceNumComponents_ = Ref{Cint}()
-    api_functionSpaceData_ = Ref{Ptr{Cdouble}}()
-    api_functionSpaceData_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetIntegrationDataByType, gmsh.clib), Void,
-          (Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          elementType, integrationType, functionSpaceType, api_integrationPoints_, api_integrationPoints_n_, api_integrationData_, api_integrationData_n_, api_functionSpaceNumComponents_, api_functionSpaceData_, api_functionSpaceData_n_, dim, tag, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetIntegrationDataByType returned non-zero error code: $(ierr[])")
-    integrationPoints = unsafe_wrap(Array, api_integrationPoints_[], api_integrationPoints_n_[], true)
-    integrationData = unsafe_wrap(Array, api_integrationData_[], api_integrationData_n_[], true)
-    functionSpaceData = unsafe_wrap(Array, api_functionSpaceData_[], api_functionSpaceData_n_[], true)
-    return integrationPoints, integrationData, api_functionSpaceNumComponents_[], functionSpaceData
-end
-
-"""
-    gmsh.model.mesh.getJacobianDataByType(elementType, integrationType, nbrIntegrationPoints, jacobians, determinants, dim = -1, tag = -1, myThread = 0, nbrThreads = 1)
+    gmsh.model.mesh.getJacobianData(elementType, integrationType, nbrIntegrationPoints, jacobians, determinants, dim = -1, tag = -1, myThread = 0, nbrThreads = 1)
 
 Get the Jacobian data for mesh elements in the same way as `getJacobianData`,
 but for a single `elementType`.
 
 Return 'nbrIntegrationPoints', 'jacobians', 'determinants'.
 """
-function getJacobianDataByType(elementType, integrationType, dim = -1, tag = -1, myThread = 0, nbrThreads = 1)
+function getJacobianData(elementType, integrationType, dim = -1, tag = -1, myThread = 0, nbrThreads = 1)
     api_nbrIntegrationPoints_ = Ref{Cint}()
     api_jacobians_ = Ref{Ptr{Cdouble}}()
     api_jacobians_n_ = Ref{Csize_t}()
     api_determinants_ = Ref{Ptr{Cdouble}}()
     api_determinants_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetJacobianDataByType, gmsh.clib), Void,
+    ccall((:gmshModelMeshGetJacobianData, gmsh.clib), Void,
           (Cint, Ptr{Cchar}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
           elementType, integrationType, api_nbrIntegrationPoints_, api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, dim, tag, myThread, nbrThreads, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetJacobianDataByType returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshModelMeshGetJacobianData returned non-zero error code: $(ierr[])")
     jacobians = unsafe_wrap(Array, api_jacobians_[], api_jacobians_n_[], true)
     determinants = unsafe_wrap(Array, api_determinants_[], api_determinants_n_[], true)
     return api_nbrIntegrationPoints_[], jacobians, determinants
 end
 
 """
-    gmsh.model.mesh.getFunctionSpaceDataByType(elementType, integrationType, functionSpaceType, integrationPoints, functionSpaceNumComponents, functionSpaceData, dim = -1, tag = -1)
+    gmsh.model.mesh.getFunctionSpaceData(elementType, integrationType, functionSpaceType, integrationPoints, functionSpaceNumComponents, functionSpaceData, dim = -1, tag = -1)
 
 Get the function space data for mesh elements in the same way as
 `getFunctionSpaceData`, but for a single `elementType`.
 
 Return 'integrationPoints', 'functionSpaceNumComponents', 'functionSpaceData'.
 """
-function getFunctionSpaceDataByType(elementType, integrationType, functionSpaceType, dim = -1, tag = -1)
+function getFunctionSpaceData(elementType, integrationType, functionSpaceType, dim = -1, tag = -1)
     api_integrationPoints_ = Ref{Ptr{Cdouble}}()
     api_integrationPoints_n_ = Ref{Csize_t}()
     api_functionSpaceNumComponents_ = Ref{Cint}()
     api_functionSpaceData_ = Ref{Ptr{Cdouble}}()
     api_functionSpaceData_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetFunctionSpaceDataByType, gmsh.clib), Void,
+    ccall((:gmshModelMeshGetFunctionSpaceData, gmsh.clib), Void,
           (Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
           elementType, integrationType, functionSpaceType, api_integrationPoints_, api_integrationPoints_n_, api_functionSpaceNumComponents_, api_functionSpaceData_, api_functionSpaceData_n_, dim, tag, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetFunctionSpaceDataByType returned non-zero error code: $(ierr[])")
+    ierr[] != 0 && error("gmshModelMeshGetFunctionSpaceData returned non-zero error code: $(ierr[])")
     integrationPoints = unsafe_wrap(Array, api_integrationPoints_[], api_integrationPoints_n_[], true)
     functionSpaceData = unsafe_wrap(Array, api_functionSpaceData_[], api_functionSpaceData_n_[], true)
     return integrationPoints, api_functionSpaceNumComponents_[], functionSpaceData
+end
+
+"""
+    gmsh.model.mesh.getBarycenter(elementTag, fast, primary, barycenter)
+
+Get barycenter of element with tag `tag`. If `fast` is true the barycenter
+compute is equal to the real barycenter multiplied by the number of nodes. If
+`primary` is true, only the primary nodes is taking into account.
+
+Return 'barycenter'.
+"""
+function getBarycenter(elementTag, fast, primary)
+    api_barycenter_ = Ref{Ptr{Cdouble}}()
+    api_barycenter_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetBarycenter, gmsh.clib), Void,
+          (Cint, Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          elementTag, fast, primary, api_barycenter_, api_barycenter_n_, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetBarycenter returned non-zero error code: $(ierr[])")
+    barycenter = unsafe_wrap(Array, api_barycenter_[], api_barycenter_n_[], true)
+    return barycenter
+end
+
+"""
+    gmsh.model.mesh.getBarycenters(elementType, dim, tag, fast, primary, barycenters, myThread = 0, nbrThreads = 1)
+
+Get barycenters of all elements corresponding to `elementType` into entity of
+dimension `dim` and tag `tag`.
+
+Return 'barycenters'.
+"""
+function getBarycenters(elementType, dim, tag, fast, primary, myThread = 0, nbrThreads = 1)
+    api_barycenters_ = Ref{Ptr{Cdouble}}()
+    api_barycenters_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetBarycenters, gmsh.clib), Void,
+          (Cint, Cint, Cint, Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, dim, tag, fast, primary, api_barycenters_, api_barycenters_n_, myThread, nbrThreads, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetBarycenters returned non-zero error code: $(ierr[])")
+    barycenters = unsafe_wrap(Array, api_barycenters_[], api_barycenters_n_[], true)
+    return barycenters
+end
+
+"""
+    gmsh.model.mesh.initializeNodeCache()
+
+Initialize the mesh node cache ONLY it has not already done.
+"""
+function initializeNodeCache()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshInitializeNodeCache, gmsh.clib), Void,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshModelMeshInitializeNodeCache returned non-zero error code: $(ierr[])")
+    return nothing
 end
 
 """
@@ -1113,49 +1095,6 @@ function initializeBarycentersVector(elementType, dim = -1, tag = -1)
 end
 
 """
-    gmsh.model.mesh.setNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
-
-Set the mesh nodes in the geometrical entity of dimension `dim` and tag `tag`.
-`nodetags` contains the node tags (their unique, strictly positive
-identification numbers). `coord` is a vector of length 3 times the length of
-`nodeTags` that contains the (x, y, z) coordinates of the nodes, concatenated.
-The optional `parametricCoord` vector contains the parametric coordinates of the
-nodes, if any. The length of `parametricCoord` can be 0 or `dim` times the
-length of `nodeTags`.
-"""
-function setNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetNodes, gmsh.clib), Void,
-          (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          dim, tag, convert(Vector{Cint}, nodeTags), length(nodeTags), coord, length(coord), parametricCoord, length(parametricCoord), ierr)
-    ierr[] != 0 && error("gmshModelMeshSetNodes returned non-zero error code: $(ierr[])")
-    return nothing
-end
-
-"""
-    gmsh.model.mesh.setElements(dim, tag, elementTypes, elementTags, nodeTags)
-
-Set the mesh elements of the entity of dimension `dim` and `tag` tag. `types`
-contains the MSH types of the elements (e.g. `2` for 3-node triangles: see the
-Gmsh reference manual). `elementTags` is a vector of the same length as `types`;
-each entry is a vector containing the tags (unique, strictly positive
-identifiers) of the elements of the corresponding type. `nodeTags` is also a
-vector of the same length as `types`; each entry is a vector of length equal to
-the number of elements of the give type times the number of nodes per element,
-that contains the node tags of all the elements of the given type, concatenated.
-"""
-function setElements(dim, tag, elementTypes, elementTags, nodeTags)
-    api_elementTags_n_ = [ length(elementTags[i]) for i in 1:length(elementTags) ]
-    api_nodeTags_n_ = [ length(nodeTags[i]) for i in 1:length(nodeTags) ]
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetElements, gmsh.clib), Void,
-          (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
-          dim, tag, convert(Vector{Cint}, elementTypes), length(elementTypes), convert(Vector{Vector{Cint}},elementTags), api_elementTags_n_, length(elementTags), convert(Vector{Vector{Cint}},nodeTags), api_nodeTags_n_, length(nodeTags), ierr)
-    ierr[] != 0 && error("gmshModelMeshSetElements returned non-zero error code: $(ierr[])")
-    return nothing
-end
-
-"""
     gmsh.model.mesh.reclassifyNodes()
 
 Redistribute all mesh nodes on their associated geometrical entity, based on the
@@ -1170,99 +1109,6 @@ function reclassifyNodes()
           ierr)
     ierr[] != 0 && error("gmshModelMeshReclassifyNodes returned non-zero error code: $(ierr[])")
     return nothing
-end
-
-"""
-    gmsh.model.mesh.getNode(nodeTag, coord, parametricCoord)
-
-Get the coordinates and the parametric coordinates (if any) of the mesh node
-with tag `tag`. This is a useful by inefficient way of accessing mesh node data,
-as it relies on a cache stored in the model. For large meshes all the nodes in
-the model should be numbered in a continuous sequence of tags from 1 to N to
-maintain reasonnable performance (in this case the internal cache is based on a
-vector; otherwise it uses a map).
-
-Return 'coord', 'parametricCoord'.
-"""
-function getNode(nodeTag)
-    api_coord_ = Ref{Ptr{Cdouble}}()
-    api_coord_n_ = Ref{Csize_t}()
-    api_parametricCoord_ = Ref{Ptr{Cdouble}}()
-    api_parametricCoord_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetNode, gmsh.clib), Void,
-          (Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          nodeTag, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetNode returned non-zero error code: $(ierr[])")
-    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], true)
-    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], true)
-    return coord, parametricCoord
-end
-
-"""
-    gmsh.model.mesh.getElement(elementTag, elementType, nodeTags)
-
-Get the type and node tags of the mesh element with tag `tag`. This is a useful
-but inefficient way of accessing mesh element data, as it relies on a cache
-stored in the model. For large meshes all the elements in the model should be
-numbered in a continuous sequence of tags from 1 to N to maintain reasonnable
-performance (in this case the internal cache is based on a vector; otherwise it
-uses a map).
-
-Return 'elementType', 'nodeTags'.
-"""
-function getElement(elementTag)
-    api_elementType_ = Ref{Cint}()
-    api_nodeTags_ = Ref{Ptr{Cint}}()
-    api_nodeTags_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetElement, gmsh.clib), Void,
-          (Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          elementTag, api_elementType_, api_nodeTags_, api_nodeTags_n_, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetElement returned non-zero error code: $(ierr[])")
-    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
-    return api_elementType_[], nodeTags
-end
-
-"""
-    gmsh.model.mesh.getBarycenter(elementTag, fast, primary, barycenter)
-
-Get barycenter of element with tag `tag`. If `fast` is true the barycenter
-compute is equal to the real barycenter multiplied by the number of nodes. If
-`primary` is true, only the primary nodes is taking into account.
-
-Return 'barycenter'.
-"""
-function getBarycenter(elementTag, fast, primary)
-    api_barycenter_ = Ref{Ptr{Cdouble}}()
-    api_barycenter_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetBarycenter, gmsh.clib), Void,
-          (Cint, Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          elementTag, fast, primary, api_barycenter_, api_barycenter_n_, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetBarycenter returned non-zero error code: $(ierr[])")
-    barycenter = unsafe_wrap(Array, api_barycenter_[], api_barycenter_n_[], true)
-    return barycenter
-end
-
-"""
-    gmsh.model.mesh.getBarycenters(elementType, dim, tag, fast, primary, barycenters, myThread = 0, nbrThreads = 1)
-
-Get barycenters of all elements corresponding to `elementType` into entity of
-dimension `dim` and tag `tag`.
-
-Return 'barycenters'.
-"""
-function getBarycenters(elementType, dim, tag, fast, primary, myThread = 0, nbrThreads = 1)
-    api_barycenters_ = Ref{Ptr{Cdouble}}()
-    api_barycenters_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetBarycenters, gmsh.clib), Void,
-          (Cint, Cint, Cint, Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Csize_t, Csize_t, Ptr{Cint}),
-          elementType, dim, tag, fast, primary, api_barycenters_, api_barycenters_n_, myThread, nbrThreads, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetBarycenters returned non-zero error code: $(ierr[])")
-    barycenters = unsafe_wrap(Array, api_barycenters_[], api_barycenters_n_[], true)
-    return barycenters
 end
 
 """
