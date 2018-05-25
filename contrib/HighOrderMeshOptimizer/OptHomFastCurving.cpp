@@ -83,6 +83,7 @@ void calcFace2Elements(GEntity *entity, MFaceVecMEltMap &face2el)
 {
   for (size_t iEl = 0; iEl < entity->getNumMeshElements(); iEl++) {
     MElement *elt = entity->getMeshElement(iEl);
+    elt->setVisibility(0); // fordebug
     if (elt->getDim() == 3)
       for (int iFace = 0; iFace < elt->getNumFaces(); iFace++)
         face2el[elt->getFace(iFace)].push_back(elt);
@@ -1226,7 +1227,11 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
   for (int iEnt = 0; iEnt < allGEnt.size(); ++iEnt) {
     // Retrieve entity
     GEntity* &gEnt = allGEnt[iEnt];
-    if (gEnt->dim() != p.dim) continue;
+    if (gEnt->dim() != p.dim) {
+      for (size_t iEl = 0; iEl < gEnt->getNumMeshElements(); iEl++)
+        gEnt->getMeshElement(iEl)->setVisibility(0); // fordebug
+      continue;
+    }
 
     // Compute normal if planar surface
     fullMatrix<double> *normals = NULL;
@@ -1292,16 +1297,19 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
           (blBndEnts.find(bndEnt) == blBndEnts.end())) continue;
       const GEntity::GeomType bndType = bndEnt->geomType();
       if ((bndType == GEntity::Line) || (bndType == GEntity::Plane)) continue;  // Skip if boundary is straight
-      Msg::Info("Curving elements in entity %d for boundary entity %d...",
-                gEnt->tag(), bndEnt->tag());
-      if (p.dim == 2 || !p.thickness)
+      if (p.dim == 2 || !p.thickness) {
+        Msg::Info("Curving elements in surface %d for boundary edge %d...",
+                  gEnt->tag(), bndEnt->tag());
         curveMeshFromBnd(ed2el, face2el, gEnt, bndEnt, p, normals);
+      }
       else
         gather3Dcolumns(face2el, gEnt, bndEnt, p, bndEl2column);
     }
 
-    if (p.thickness && p.dim == 3 && bndEnts.size())
-      curve3DBoundaryLayer(bndEl2column, (GFace*) bndEnts[0]);
+    if (p.thickness && p.dim == 3 && bndEnts.size()) {
+      Msg::Info("Curving elements in volume %d...", gEnt->tag());
+      curve3DBoundaryLayer(bndEl2column, (GFace *)bndEnts[0]);
+    }
   }
 
   double t2 = Cpu();

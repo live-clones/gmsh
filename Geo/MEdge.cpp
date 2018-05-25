@@ -131,6 +131,11 @@ MEdgeN::MEdgeN(const std::vector<MVertex*> &v)
     _v[i] = v[i];
 }
 
+MEdge MEdgeN::getEdge() const
+{
+  return MEdge(_v[0], _v[1]);
+}
+
 SPoint3 MEdgeN::pnt(double u) const
 {
   int tagLine = ElementType::getTag(TYPE_LIN, (int)_v.size() - 1);

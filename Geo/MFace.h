@@ -156,7 +156,7 @@ public:
   MFaceN() {}
   MFaceN(int type, int order, const std::vector<MVertex*> &v);
 
-  inline int getOrder() const {return _order;}
+  inline int getPolynomialOrder() const {return _order;}
   inline int getType() const {return _type;}
   inline bool isTriangular() const {return _type == TYPE_TRI;}
   inline int getNumVertices() const { return (int)_v.size(); }
