@@ -374,18 +374,18 @@ void frameFieldBackgroundMesh3D::computeCrossField()
   if (debug) exportCrossField("cf_initial.pos");
 
   // initiation
-  std::multimap<double, MVertex const* > rank,rank_temp;
+  std::multimap<double, MVertex const*> rank, rank_temp;
   std::map<MVertex const* const, bool> vertex_is_still;
   std::map<MVertex const* const, double> vertex_movement;
 
   for (vert2elemtype::iterator it_vertex=vert2elem.begin();
        it_vertex!=vert2elem.end();it_vertex++){
+
     MVertex const* const current = it_vertex->first;
-    if (current->onWhat()->dim()<=2)
-      vertex_is_still[current] = true;
-    else
-      vertex_is_still[current] = false;
-    rank.insert(make_pair(0.,current));
+
+    vertex_is_still[current] = current->onWhat()->dim() <= 2;
+
+    rank.insert(std::make_pair(0.,current));
   }
 
   // OLD - NEW COMPARISON
