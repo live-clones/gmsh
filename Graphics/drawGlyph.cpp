@@ -252,6 +252,76 @@ void drawContext::drawImage(const std::string &name, double x, double y, double 
   }
 }
 
+void drawContext::drawCube(double x, double y, double z, double val[9],
+			    int light)
+{
+  double d0[3] = {val[0],val[1],val[2]};
+  double d1[3] = {val[3],val[4],val[5]};
+  double d2[3] = {val[6],val[7],val[8]};
+
+  double x0[3] = {x + d1[0] + d1[0] + d2[0] , x + d0[1] + d1[1] + d2[1] , z + d0[2] + d1[2] + d2[2] };
+  double x1[3] = {x - d1[0] + d1[0] + d2[0] , x - d0[1] + d1[1] + d2[1] , z - d0[2] + d1[2] + d2[2] };
+  double x2[3] = {x - d1[0] - d1[0] + d2[0] , x - d0[1] - d1[1] + d2[1] , z - d0[2] - d1[2] + d2[2] };
+  double x3[3] = {x + d1[0] - d1[0] + d2[0] , x + d0[1] - d1[1] + d2[1] , z + d0[2] - d1[2] + d2[2] };
+
+  double x4[3] = {x + d1[0] + d1[0] - d2[0] , x + d0[1] + d1[1] - d2[1] , z + d0[2] + d1[2] - d2[2] };
+  double x5[3] = {x - d1[0] + d1[0] - d2[0] , x - d0[1] + d1[1] - d2[1] , z - d0[2] + d1[2] - d2[2] };
+  double x6[3] = {x - d1[0] - d1[0] - d2[0] , x - d0[1] - d1[1] - d2[1] , z - d0[2] - d1[2] - d2[2] };
+  double x7[3] = {x + d1[0] - d1[0] - d2[0] , x + d0[1] - d1[1] - d2[1] , z + d0[2] - d1[2] - d2[2] };
+  
+  if(light) glEnable(GL_LIGHTING);
+  glPushMatrix();
+
+  glBegin(GL_POLYGON);
+  glColor3f(   x0[0],  x0[1], x0[2]);
+  glColor3f(   x1[0],  x1[1], x1[2]);
+  glColor3f(   x2[0],  x2[1], x2[2]);
+  glColor3f(   x3[0],  x3[1], x3[2]);
+  glEnd();
+
+  glBegin(GL_POLYGON);
+  glColor3f(   x4[0],  x4[1], x4[2]);
+  glColor3f(   x7[0],  x7[1], x7[2]);
+  glColor3f(   x6[0],  x6[1], x6[2]);
+  glColor3f(   x5[0],  x5[1], x5[2]);
+  glEnd();
+
+  glBegin(GL_POLYGON);
+  glColor3f(   x0[0],  x0[1], x0[2]);
+  glColor3f(   x3[0],  x3[1], x3[2]);
+  glColor3f(   x7[0],  x7[1], x7[2]);
+  glColor3f(   x4[0],  x4[1], x4[2]);
+  glEnd();
+
+
+  glBegin(GL_POLYGON);
+  glColor3f(   x1[0],  x1[1], x1[2]);
+  glColor3f(   x5[0],  x5[1], x5[2]);
+  glColor3f(   x6[0],  x6[1], x6[2]);
+  glColor3f(   x2[0],  x2[1], x2[2]);
+  glEnd();
+
+
+  glBegin(GL_POLYGON);
+  glColor3f(   x0[0],  x0[1], x0[2]);
+  glColor3f(   x4[0],  x4[1], x4[2]);
+  glColor3f(   x5[0],  x5[1], x5[2]);
+  glColor3f(   x1[0],  x1[1], x1[2]);
+  glEnd();
+
+
+  glBegin(GL_POLYGON);
+  glColor3f(   x3[0],  x3[1], x3[2]);
+  glColor3f(   x2[0],  x2[1], x2[2]);
+  glColor3f(   x6[0],  x6[1], x6[2]);
+  glColor3f(   x7[0],  x7[1], x7[2]);
+  glEnd();
+
+  glPopMatrix();
+  glDisable(GL_LIGHTING);
+}
+
+
 void drawContext::drawSphere(double R, double x, double y, double z,
                              int n1, int n2, int light)
 {

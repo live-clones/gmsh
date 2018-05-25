@@ -295,6 +295,7 @@ S2N                     return tStringToName;
 ScaleLastLayer          return tScaleLast;
 SetChanged              return tSetChanged;
 SetFactory              return tSetFactory;
+SetTag                  return tSetTag;
 SetNumber               return tSetNumber;
 SetPartition            return tSetPartition;
 SetString               return tSetString;

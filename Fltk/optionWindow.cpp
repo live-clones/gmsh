@@ -3429,6 +3429,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Eigen vectors", 0, 0, 0},
         {"Ellipse (2d)", 0, 0, 0},
         {"Ellipsoid", 0, 0, 0},
+        {"Frame", 0, 0, 0},
         {0}
       };
       view.choice[4] = new Fl_Choice

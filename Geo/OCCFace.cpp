@@ -39,6 +39,7 @@
 #include <TopoDS.hxx>
 #include <gp_Pln.hxx>
 #include <gp_Sphere.hxx>
+#include <BRepTools.hxx>
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
 : GFace(m, num), s(_s),_radius(-1)
@@ -46,6 +47,11 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
   setup();
   if(model()->getOCCInternals())
     model()->getOCCInternals()->bind(s, num);
+  // TEST
+  if (tag() == 119){
+    writeBREP("s119.brep");
+  }
+
 }
 
 OCCFace::~OCCFace()
@@ -432,6 +438,10 @@ bool OCCFace::isSphere(double &radius, SPoint3 &center) const
   }
 }
 
+
+// Function containsparam should 
+
+
 bool OCCFace::containsParam(const SPoint2 &pt)
 {
   if(!buildSTLTriangulation(false)){
@@ -446,10 +456,24 @@ bool OCCFace::containsParam(const SPoint2 &pt)
     double s1 = robustPredicates::orient2d(gp1, gp2, mine);
     double s2 = robustPredicates::orient2d(gp2, gp3, mine);
     double s3 = robustPredicates::orient2d(gp3, gp1, mine);
-    if(s1*s2 >= 0 && s1*s3 >=0)
+    if (s1>=0 && s2>=0 && s3>=0)
+      return true;
+    if (s1<=0 && s2<=0 && s3<=0)
       return true;
   }
   return false;
 }
+
+void OCCFace::writeBREP (const char *filename){
+  BRep_Builder b;
+  TopoDS_Compound c;
+  b.MakeCompound(c);
+  b.Add(c, s);
+  BRepTools::Write(c, filename);
+}
+
+
+
+
 
 #endif

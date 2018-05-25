@@ -368,7 +368,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
     // }
     // printf("%d %d\n",intersected.size(),ix);
 
-    if(!intersected.size() || ix > 1000){
+    if(!intersected.size() || ix > 100000){
       BDS_Edge *eee = find_edge(num1, num2);
       if(!eee){
         if (Msg::GetVerbosity() > 98) {
@@ -386,6 +386,14 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
       return eee;
     }
 
+    //<<<<<<< HEAD
+    //    int ichoice = rand() /*ix++*/ % intersected.size();
+    //bool success =
+    //      swap_edge(intersected[ichoice], BDS_SwapEdgeTestQuality(false, false));
+    // printf("trying to swop %d %d = %d (%d %d)\n", intersected[ichoice]->p1->iD,
+    //        intersected[ichoice]->p2->iD, success, intersected[ichoice]->deleted,
+    //        intersected[ichoice]->numfaces());
+    //=======
     int ichoice = 0;
     bool success = false;
     while (!success && ichoice < intersected.size())
@@ -401,6 +409,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
     }
 
     ix++;
+    //>>>>>>> 893c52f188582cb45be9cafa612b5b949e2f9ef8
   }
   return 0;
 }

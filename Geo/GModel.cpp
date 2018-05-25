@@ -2839,7 +2839,7 @@ void recurClassifyEdges(MTri3 *t, std::map<MTriangle*, GFace*> &reverse,
       if(tn)
         gf2 = reverse[tn->tri()];
       edgeXface exf(t, i);
-      MLine ml(exf.v[0], exf.v[1]);
+      MLine ml(exf._v(0), exf._v(1));
       std::map<MLine*, GEdge*, compareMLinePtr>::iterator it = lines.find(&ml);
       if(it != lines.end()){
         if(touched.find(it->first) == touched.end()){
@@ -2866,7 +2866,7 @@ void recurClassify(MTri3 *t, GFace *gf,
       MTri3 *tn = t->getNeigh(i);
       if(tn){
         edgeXface exf(t, i);
-        MLine ml(exf.v[0], exf.v[1]);
+        MLine ml(exf._v(0), exf._v(1));
         std::map<MLine*, GEdge*, compareMLinePtr>::iterator it = lines.find(&ml);
         if(it == lines.end())
           recurClassify(tn, gf, lines, reverse);

@@ -51,6 +51,8 @@ class OCCFace : public GFace {
   virtual double period(int dim) const { return _period[dim]; }
   // true if the parameter value is interior to the face (taking into account boundaries)
   virtual bool containsParam(const SPoint2 &pt) ;
+  // save itself in BREP format (for debug e.g.)
+  void writeBREP (const char *filename);
 };
 
 #endif
