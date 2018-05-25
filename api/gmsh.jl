@@ -932,20 +932,22 @@ function getElementProperties(elementType)
 end
 
 """
-    gmsh.model.mesh.getJacobianData(elementType, integrationType, nbrIntegrationPoints, jacobians, determinants, dim = -1, tag = -1, taskID = 0, nbrTasks = 1)
+    gmsh.model.mesh.getJacobianData(elementType, integrationType, nbrIntegrationPoints, jacobians, determinants, points, dim = -1, tag = -1, taskID = 0, nbrTasks = 1)
 
 Get the Jacobian data of the entity of dimension `dim` and `tag` tag for a
 single `elementType`. `integrationType` specifies the type of integration (e.g.
 "Gauss4"). `nbrIntegrationPoints` contains the number of integration points
 corresponding to `integrationType`. `jacobians` contains for each element a
 vector (of size 9 times the number of integration points) containing the 9
-entries (by row) of the 3x3 Jacobian matrix and `determinants` contains for each
+entries (by row) of the 3x3 Jacobian matrix, `determinants` contains for each
 element a vector (of size equal to the number of integration points) containing
-the determinant of the Jacobian. If `tag` < 0, get the Jacobian data for all
-entities of dimension `dim`. If `dim` and `tag` are negative, get all Jacobian
-data in the mesh.
+the determinant of the Jacobian and `points` contains for each element a vector
+(of size 3 times the number of integration points) containing the (x, y, z)
+coordinates of the integration point. If `tag` < 0, get the Jacobian data for
+all entities of dimension `dim`. If `dim` and `tag` are negative, get all
+Jacobian data in the mesh.
 
-Return 'nbrIntegrationPoints', 'jacobians', 'determinants'.
+Return 'nbrIntegrationPoints', 'jacobians', 'determinants', 'points'.
 """
 function getJacobianData(elementType, integrationType, dim = -1, tag = -1, taskID = 0, nbrTasks = 1)
     api_nbrIntegrationPoints_ = Ref{Cint}()
@@ -953,14 +955,17 @@ function getJacobianData(elementType, integrationType, dim = -1, tag = -1, taskI
     api_jacobians_n_ = Ref{Csize_t}()
     api_determinants_ = Ref{Ptr{Cdouble}}()
     api_determinants_n_ = Ref{Csize_t}()
+    api_points_ = Ref{Ptr{Cdouble}}()
+    api_points_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetJacobianData, gmsh.clib), Void,
-          (Cint, Ptr{Cchar}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
-          elementType, integrationType, api_nbrIntegrationPoints_, api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, dim, tag, taskID, nbrTasks, ierr)
+          (Cint, Ptr{Cchar}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, integrationType, api_nbrIntegrationPoints_, api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, api_points_, api_points_n_, dim, tag, taskID, nbrTasks, ierr)
     ierr[] != 0 && error("gmshModelMeshGetJacobianData returned non-zero error code: $(ierr[])")
     jacobians = unsafe_wrap(Array, api_jacobians_[], api_jacobians_n_[], true)
     determinants = unsafe_wrap(Array, api_determinants_[], api_determinants_n_[], true)
-    return api_nbrIntegrationPoints_[], jacobians, determinants
+    points = unsafe_wrap(Array, api_points_[], api_points_n_[], true)
+    return api_nbrIntegrationPoints_[], jacobians, determinants, points
 end
 
 """
@@ -1053,25 +1058,28 @@ function initializeNodeCache()
 end
 
 """
-    gmsh.model.mesh.initializeJacobianDataVector(elementType, integrationType, jacobians, determinants, dim = -1, tag = -1)
+    gmsh.model.mesh.initializeJacobianDataVector(elementType, integrationType, jacobians, determinants, points, dim = -1, tag = -1)
 
 Initialize the Jacobian data vector.
 
-Return 'jacobians', 'determinants'.
+Return 'jacobians', 'determinants', 'points'.
 """
 function initializeJacobianDataVector(elementType, integrationType, dim = -1, tag = -1)
     api_jacobians_ = Ref{Ptr{Cdouble}}()
     api_jacobians_n_ = Ref{Csize_t}()
     api_determinants_ = Ref{Ptr{Cdouble}}()
     api_determinants_n_ = Ref{Csize_t}()
+    api_points_ = Ref{Ptr{Cdouble}}()
+    api_points_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshInitializeJacobianDataVector, gmsh.clib), Void,
-          (Cint, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          elementType, integrationType, api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, dim, tag, ierr)
+          (Cint, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          elementType, integrationType, api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, api_points_, api_points_n_, dim, tag, ierr)
     ierr[] != 0 && error("gmshModelMeshInitializeJacobianDataVector returned non-zero error code: $(ierr[])")
     jacobians = unsafe_wrap(Array, api_jacobians_[], api_jacobians_n_[], true)
     determinants = unsafe_wrap(Array, api_determinants_[], api_determinants_n_[], true)
-    return jacobians, determinants
+    points = unsafe_wrap(Array, api_points_[], api_points_n_[], true)
+    return jacobians, determinants, points
 end
 
 """

@@ -1035,6 +1035,7 @@ static void _getJacobianData(const int elementType,
                              int &nbrIntegrationPoints,
                              std::vector<double> &jacobians,
                              std::vector<double> &determinants,
+                             std::vector<double> &points,
                              const size_t taskID, const size_t nbrTasks)
 {
   std::string intName = "", fsName = "";
@@ -1094,6 +1095,7 @@ static void _getJacobianData(const int elementType,
           }
         }
         for(int k = 0; k < nbrIPoint; k++){
+          e->pnt(pts(k, 0), pts(k, 1), pts(k, 2), &points[idx*3]);
           determinants[idx] = e->getJacobian(gsf[k], &jacobians[idx*9]);
           idx++;
         }
@@ -1179,6 +1181,7 @@ GMSH_API void gmsh::model::mesh::getJacobianData(const int elementType,
                                                  int &nbrIntegrationPoints,
                                                  std::vector<double> &jacobians,
                                                  std::vector<double> &determinants,
+                                                 std::vector<double> &points,
                                                  const int dim, const int tag,
                                                  const size_t taskID, const size_t nbrTasks)
 {
@@ -1187,7 +1190,7 @@ GMSH_API void gmsh::model::mesh::getJacobianData(const int elementType,
   std::map<int, std::vector<GEntity*> > typeMap;
   _getElementTypeMap(dim, tag, typeMap);
   _getJacobianData(elementType, typeMap[elementType], intType, nbrIntegrationPoints,
-                   jacobians, determinants, taskID, nbrTasks);
+                   jacobians, determinants, points, taskID, nbrTasks);
 }
 
 GMSH_API void gmsh::model::mesh::getFunctionSpaceData(const int elementType,
@@ -1308,6 +1311,7 @@ GMSH_API void gmsh::model::mesh::initializeJacobianDataVector(const int elementT
                                                               const std::string &intType,
                                                               std::vector<double> &jacobians,
                                                               std::vector<double> &determinants,
+                                                              std::vector<double> &points,
                                                               const int dim, const int tag)
 {
   if(!_isInitialized()){ throw -1; }
@@ -1315,8 +1319,10 @@ GMSH_API void gmsh::model::mesh::initializeJacobianDataVector(const int elementT
   const unsigned int nbrGauss = getNumberIntegrationPoints(elementType, intType);
   jacobians.clear();
   determinants.clear();
+  points.clear();
   jacobians.resize(9*nbrElements*nbrGauss, 0.);
   determinants.resize(nbrElements*nbrGauss, 0.);
+  points.resize(3*nbrElements*nbrGauss, 0.);
 }
 
 GMSH_API void gmsh::model::mesh::initializeNodeTagsVector(const int elementType,

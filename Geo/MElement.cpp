@@ -896,6 +896,22 @@ void MElement::pnt(double u, double v, double w, SPoint3 &p) const
   p = SPoint3(x, y, z);
 }
 
+void MElement::pnt(double u, double v, double w, double *p) const
+{
+  double x = 0., y = 0., z = 0.;
+  double sf[1256];
+  getShapeFunctions(u, v, w, sf);
+  for (int j = 0; j < getNumShapeFunctions(); j++) {
+    const MVertex *v = getShapeFunctionNode(j);
+    x += sf[j] * v->x();
+    y += sf[j] * v->y();
+    z += sf[j] * v->z();
+  }
+  p[0] = x;
+  p[1] = y;
+  p[2] = z;
+}
+
 void MElement::pnt(const std::vector<double> &sf, SPoint3 &p) const
 {
   double x = 0., y = 0., z = 0.;

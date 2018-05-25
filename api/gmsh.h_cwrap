@@ -725,16 +725,20 @@ namespace gmsh { // Top-level functions
       // (e.g. "Gauss4"). `nbrIntegrationPoints' contains the number of integration
       // points corresponding to `integrationType'. `jacobians' contains for each
       // element a vector (of size 9 times the number of integration points)
-      // containing the 9 entries (by row) of the 3x3 Jacobian matrix and
+      // containing the 9 entries (by row) of the 3x3 Jacobian matrix,
       // `determinants' contains for each element a vector (of size equal to the
-      // number of integration points) containing the determinant of the Jacobian.
-      // If `tag' < 0, get the Jacobian data for all entities of dimension `dim'.
-      // If `dim' and `tag' are negative, get all Jacobian data in the mesh.
+      // number of integration points) containing the determinant of the Jacobian
+      // and 'points' contains for each element a vector (of size 3 times the
+      // number of integration points) containing the (x, y, z) coordinates of the
+      // integration point. If `tag' < 0, get the Jacobian data for all entities of
+      // dimension `dim'. If `dim' and `tag' are negative, get all Jacobian data in
+      // the mesh.
       GMSH_API void getJacobianData(const int elementType,
                                     const std::string & integrationType,
                                     int & nbrIntegrationPoints,
                                     std::vector<double> & jacobians,
                                     std::vector<double> & determinants,
+                                    std::vector<double> & points,
                                     const int dim = -1,
                                     const int tag = -1,
                                     const size_t taskID = 0,
@@ -743,10 +747,12 @@ namespace gmsh { // Top-level functions
         int ierr = 0;
         double *api_jacobians_; size_t api_jacobians_n_;
         double *api_determinants_; size_t api_determinants_n_;
-        gmshModelMeshGetJacobianData(elementType, integrationType.c_str(), &nbrIntegrationPoints, &api_jacobians_, &api_jacobians_n_, &api_determinants_, &api_determinants_n_, dim, tag, taskID, nbrTasks, &ierr);
+        double *api_points_; size_t api_points_n_;
+        gmshModelMeshGetJacobianData(elementType, integrationType.c_str(), &nbrIntegrationPoints, &api_jacobians_, &api_jacobians_n_, &api_determinants_, &api_determinants_n_, &api_points_, &api_points_n_, dim, tag, taskID, nbrTasks, &ierr);
         if(ierr) throw ierr;
         jacobians.assign(api_jacobians_, api_jacobians_ + api_jacobians_n_); gmshFree(api_jacobians_);
         determinants.assign(api_determinants_, api_determinants_ + api_determinants_n_); gmshFree(api_determinants_);
+        points.assign(api_points_, api_points_ + api_points_n_); gmshFree(api_points_);
       }
 
       // Get the function space data of the entity of dimension `dim' and `tag' tag
@@ -826,16 +832,19 @@ namespace gmsh { // Top-level functions
                                                  const std::string & integrationType,
                                                  std::vector<double> & jacobians,
                                                  std::vector<double> & determinants,
+                                                 std::vector<double> & points,
                                                  const int dim = -1,
                                                  const int tag = -1)
       {
         int ierr = 0;
         double *api_jacobians_; size_t api_jacobians_n_;
         double *api_determinants_; size_t api_determinants_n_;
-        gmshModelMeshInitializeJacobianDataVector(elementType, integrationType.c_str(), &api_jacobians_, &api_jacobians_n_, &api_determinants_, &api_determinants_n_, dim, tag, &ierr);
+        double *api_points_; size_t api_points_n_;
+        gmshModelMeshInitializeJacobianDataVector(elementType, integrationType.c_str(), &api_jacobians_, &api_jacobians_n_, &api_determinants_, &api_determinants_n_, &api_points_, &api_points_n_, dim, tag, &ierr);
         if(ierr) throw ierr;
         jacobians.assign(api_jacobians_, api_jacobians_ + api_jacobians_n_); gmshFree(api_jacobians_);
         determinants.assign(api_determinants_, api_determinants_ + api_determinants_n_); gmshFree(api_determinants_);
+        points.assign(api_points_, api_points_ + api_points_n_); gmshFree(api_points_);
       }
 
       // Initialize the nodeTags vector.

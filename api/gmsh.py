@@ -1123,17 +1123,21 @@ class model:
             (e.g. "Gauss4"). `nbrIntegrationPoints' contains the number of integration
             points corresponding to `integrationType'. `jacobians' contains for each
             element a vector (of size 9 times the number of integration points)
-            containing the 9 entries (by row) of the 3x3 Jacobian matrix and
+            containing the 9 entries (by row) of the 3x3 Jacobian matrix,
             `determinants' contains for each element a vector (of size equal to the
-            number of integration points) containing the determinant of the Jacobian.
-            If `tag' < 0, get the Jacobian data for all entities of dimension `dim'. If
-            `dim' and `tag' are negative, get all Jacobian data in the mesh.
+            number of integration points) containing the determinant of the Jacobian
+            and 'points' contains for each element a vector (of size 3 times the number
+            of integration points) containing the (x, y, z) coordinates of the
+            integration point. If `tag' < 0, get the Jacobian data for all entities of
+            dimension `dim'. If `dim' and `tag' are negative, get all Jacobian data in
+            the mesh.
 
-            Return `nbrIntegrationPoints', `jacobians', `determinants'.
+            Return `nbrIntegrationPoints', `jacobians', `determinants', `points'.
             """
             api_nbrIntegrationPoints_ = c_int()
             api_jacobians_, api_jacobians_n_ = POINTER(c_double)(), c_size_t()
             api_determinants_, api_determinants_n_ = POINTER(c_double)(), c_size_t()
+            api_points_, api_points_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshGetJacobianData(
                 c_int(elementType),
@@ -1141,6 +1145,7 @@ class model:
                 byref(api_nbrIntegrationPoints_),
                 byref(api_jacobians_), byref(api_jacobians_n_),
                 byref(api_determinants_), byref(api_determinants_n_),
+                byref(api_points_), byref(api_points_n_),
                 c_int(dim),
                 c_int(tag),
                 c_size_t(taskID),
@@ -1153,7 +1158,8 @@ class model:
             return (
                 api_nbrIntegrationPoints_.value,
                 _ovectordouble(api_jacobians_, api_jacobians_n_.value),
-                _ovectordouble(api_determinants_, api_determinants_n_.value))
+                _ovectordouble(api_determinants_, api_determinants_n_.value),
+                _ovectordouble(api_points_, api_points_n_.value))
 
         @staticmethod
         def getFunctionSpaceData(elementType, integrationType, functionSpaceType, dim=-1, tag=-1):
@@ -1264,16 +1270,18 @@ class model:
             """
             Initialize the Jacobian data vector.
 
-            Return `jacobians', `determinants'.
+            Return `jacobians', `determinants', `points'.
             """
             api_jacobians_, api_jacobians_n_ = POINTER(c_double)(), c_size_t()
             api_determinants_, api_determinants_n_ = POINTER(c_double)(), c_size_t()
+            api_points_, api_points_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshInitializeJacobianDataVector(
                 c_int(elementType),
                 c_char_p(integrationType.encode()),
                 byref(api_jacobians_), byref(api_jacobians_n_),
                 byref(api_determinants_), byref(api_determinants_n_),
+                byref(api_points_), byref(api_points_n_),
                 c_int(dim),
                 c_int(tag),
                 byref(ierr))
@@ -1283,7 +1291,8 @@ class model:
                     ierr.value)
             return (
                 _ovectordouble(api_jacobians_, api_jacobians_n_.value),
-                _ovectordouble(api_determinants_, api_determinants_n_.value))
+                _ovectordouble(api_determinants_, api_determinants_n_.value),
+                _ovectordouble(api_points_, api_points_n_.value))
 
         @staticmethod
         def initializeNodeTagsVector(elementType, dim=-1, tag=-1):

@@ -340,6 +340,7 @@ class MElement
   // get the point in cartesian coordinates corresponding to the point (u,v,w)
   // in parametric coordinates
   virtual void pnt(double u, double v, double w, SPoint3 &p) const;
+  virtual void pnt(double u, double v, double w, double *p) const;
   // To be compatible with functionSpace without changing form
   virtual void pnt(const std::vector<double> &sf,SPoint3 &p) const;
   virtual void primaryPnt(double u, double v, double w, SPoint3 &p);

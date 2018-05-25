@@ -374,16 +374,20 @@ namespace gmsh { // Top-level functions
       // (e.g. "Gauss4"). `nbrIntegrationPoints' contains the number of integration
       // points corresponding to `integrationType'. `jacobians' contains for each
       // element a vector (of size 9 times the number of integration points)
-      // containing the 9 entries (by row) of the 3x3 Jacobian matrix and
+      // containing the 9 entries (by row) of the 3x3 Jacobian matrix,
       // `determinants' contains for each element a vector (of size equal to the
-      // number of integration points) containing the determinant of the Jacobian.
-      // If `tag' < 0, get the Jacobian data for all entities of dimension `dim'.
-      // If `dim' and `tag' are negative, get all Jacobian data in the mesh.
+      // number of integration points) containing the determinant of the Jacobian
+      // and 'points' contains for each element a vector (of size 3 times the
+      // number of integration points) containing the (x, y, z) coordinates of the
+      // integration point. If `tag' < 0, get the Jacobian data for all entities of
+      // dimension `dim'. If `dim' and `tag' are negative, get all Jacobian data in
+      // the mesh.
       GMSH_API void getJacobianData(const int elementType,
                                     const std::string & integrationType,
                                     int & nbrIntegrationPoints,
                                     std::vector<double> & jacobians,
                                     std::vector<double> & determinants,
+                                    std::vector<double> & points,
                                     const int dim = -1,
                                     const int tag = -1,
                                     const size_t taskID = 0,
@@ -438,6 +442,7 @@ namespace gmsh { // Top-level functions
                                                  const std::string & integrationType,
                                                  std::vector<double> & jacobians,
                                                  std::vector<double> & determinants,
+                                                 std::vector<double> & points,
                                                  const int dim = -1,
                                                  const int tag = -1);
 

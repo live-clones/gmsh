@@ -393,16 +393,20 @@ GMSH_API void gmshModelMeshGetElementProperties(const int elementType,
  * (e.g. "Gauss4"). `nbrIntegrationPoints' contains the number of integration
  * points corresponding to `integrationType'. `jacobians' contains for each
  * element a vector (of size 9 times the number of integration points)
- * containing the 9 entries (by row) of the 3x3 Jacobian matrix and
+ * containing the 9 entries (by row) of the 3x3 Jacobian matrix,
  * `determinants' contains for each element a vector (of size equal to the
- * number of integration points) containing the determinant of the Jacobian.
- * If `tag' < 0, get the Jacobian data for all entities of dimension `dim'. If
- * `dim' and `tag' are negative, get all Jacobian data in the mesh. */
+ * number of integration points) containing the determinant of the Jacobian
+ * and 'points' contains for each element a vector (of size 3 times the number
+ * of integration points) containing the (x, y, z) coordinates of the
+ * integration point. If `tag' < 0, get the Jacobian data for all entities of
+ * dimension `dim'. If `dim' and `tag' are negative, get all Jacobian data in
+ * the mesh. */
 GMSH_API void gmshModelMeshGetJacobianData(const int elementType,
                                            const char * integrationType,
                                            int * nbrIntegrationPoints,
                                            double ** jacobians, size_t * jacobians_n,
                                            double ** determinants, size_t * determinants_n,
+                                           double ** points, size_t * points_n,
                                            const int dim,
                                            const int tag,
                                            const size_t taskID,
@@ -461,6 +465,7 @@ GMSH_API void gmshModelMeshInitializeJacobianDataVector(const int elementType,
                                                         const char * integrationType,
                                                         double ** jacobians, size_t * jacobians_n,
                                                         double ** determinants, size_t * determinants_n,
+                                                        double ** points, size_t * points_n,
                                                         const int dim,
                                                         const int tag,
                                                         int * ierr);
