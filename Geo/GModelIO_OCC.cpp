@@ -3710,11 +3710,13 @@ static bool makeSTL(TopoDS_Face s,
 {
   if(CTX::instance()->geom.occDisableSTL) return false;
 
+  //  printf("coucou\n");
+  
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
 
 #if (OCC_VERSION_MAJOR >= 7)
-  double fact = .3;
+  double fact = .5;
   BRepMesh_FastDiscret::Parameters parameters;
   parameters.Deflection = fact*0.1;
   parameters.Angle = fact*0.35;

@@ -4343,6 +4343,9 @@ Constraints :
 	int new_tag = (int)$6;
 	gf->setTag(new_tag);
       }
+      else{
+	yymsg(0, "Unknown Model Vertex %d",tag);
+      }
     }
   | tSetTag tCurve '(' FExpr ',' FExpr ')' tEND
     {
@@ -4351,6 +4354,9 @@ Constraints :
       if(gf){
 	int new_tag = (int)$6;
 	gf->setTag(new_tag);
+      }
+      else{
+	yymsg(0, "Unknown Model Edge %d",tag);
       }
     }
   | tSetTag tSurface '(' FExpr ',' FExpr ')' tEND
@@ -4361,6 +4367,9 @@ Constraints :
 	int new_tag = (int)$6;
 	gf->setTag(new_tag);
       }
+      else{
+	yymsg(0, "Unknown Model Face %d",tag);
+      }
     }
   | tSetTag tVolume '(' FExpr ',' FExpr ')' tEND
     {
@@ -4369,6 +4378,9 @@ Constraints :
       if(gf){
 	int new_tag = (int)$6;
 	gf->setTag(new_tag);
+      }
+      else{
+	yymsg(0, "Unknown Model Region %d",tag);
       }
     }
   | tMeshAlgorithm tSurface '{' RecursiveListOfDouble '}' tAFFECT FExpr tEND

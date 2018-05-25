@@ -48,9 +48,9 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
   if(model()->getOCCInternals())
     model()->getOCCInternals()->bind(s, num);
   // TEST
-  //  if (tag() == 476){
-  //    writeBREP("s476.brep");
-  //  }
+  if (tag() == 119){
+    writeBREP("s119.brep");
+  }
 
 }
 
@@ -456,9 +456,9 @@ bool OCCFace::containsParam(const SPoint2 &pt)
     double s1 = robustPredicates::orient2d(gp1, gp2, mine);
     double s2 = robustPredicates::orient2d(gp2, gp3, mine);
     double s3 = robustPredicates::orient2d(gp3, gp1, mine);
-    if (s1>0 && s2>0 && s3>0)
+    if (s1>=0 && s2>=0 && s3>=0)
       return true;
-    if (s1<0 && s2<0 && s3<0)
+    if (s1<=0 && s2<=0 && s3<=0)
       return true;
   }
   return false;

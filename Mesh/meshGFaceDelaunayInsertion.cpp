@@ -803,7 +803,7 @@ int insertVertexB (std::list<edgeXface> &shell,
     // avoid angles that are too obtuse
     double cosv = ((d1*d1+d2*d2-d3*d3)/(2.*d1*d2));
 
-    if ((d1 < LL * .45 || d2 < LL * .45 || d4 < LL * .45 || cosv < -.9999) && !force) {
+    if ((d1 < LL * .45 || d2 < LL * .45 || /*d4 < LL * .3 ||*/ cosv < -.9999) && !force) {
       onePointIsTooClose = true;
       // printf("%12.5E %12.5E %12.5E %12.5E \n",d1,d2,LL,cosv);
     }
