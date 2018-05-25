@@ -1435,15 +1435,15 @@ void bowyerWatsonFrontal(GFace *gf,
   int ITERATION = 0;
   while (1){
     ++ITERATION;
-    if(ITERATION % 1== 0 && CTX::instance()->mesh.saveAll){
-      char name[245];
-      sprintf(name,"delFrontal_GFace_%d_Layer_%d.pos",gf->tag(),ITERATION);
-      _printTris (name, AllTris.begin(), AllTris.end(), &DATA);
-      sprintf(name,"delFrontal_GFace_%d_Layer_Real%d.pos",gf->tag(),ITERATION);
-      _printTris (name, AllTris.begin(), AllTris.end(),NULL);
-      sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
-      _printTris (name, ActiveTris.begin(), ActiveTris.end(), &DATA);
-    }
+    //    if(ITERATION % 1== 0 && CTX::instance()->mesh.saveAll){
+    //      char name[245];
+    //      sprintf(name,"delFrontal_GFace_%d_Layer_%d.pos",gf->tag(),ITERATION);
+    //      _printTris (name, AllTris.begin(), AllTris.end(), &DATA);
+    //      sprintf(name,"delFrontal_GFace_%d_Layer_Real%d.pos",gf->tag(),ITERATION);
+    //      _printTris (name, AllTris.begin(), AllTris.end(),NULL);
+    //      sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
+    //      _printTris (name, ActiveTris.begin(), ActiveTris.end(), &DATA);
+    //    }
     
     //    printf("%d active tris \n",ActiveTris.size());
     if (!ActiveTris.size())break;
