@@ -71,11 +71,12 @@ struct edgeContainerB
 {
   std::vector<std::vector<MEdge> > _hash;
   size_t _size, _size_obj;
-  edgeContainerB(unsigned int N = 1000000)
+
+  edgeContainerB(unsigned int N = 1000000) :
+    _hash(N),
+    _size(0),
+    _size_obj(sizeof(MEdge))
   {
-    _size = 0;
-    _hash.resize(N);
-    _size_obj = sizeof(MEdge);
   }
 
   size_t H (const MEdge &e) const {
@@ -85,8 +86,7 @@ struct edgeContainerB
 
   bool find (const MEdge &e) const {
     const std::vector<MEdge> &v = _hash[H(e)];
-    for (unsigned int i=0; i< v.size();i++)if (e == v[i]) {return true;}
-    return false;
+    return std::find(v.begin(), v.end(), e) != v.end();
   }
 
   bool empty () const {return _size == 0;}
@@ -94,9 +94,12 @@ struct edgeContainerB
   bool addNewEdge (const MEdge &e)
   {
     std::vector<MEdge> &v = _hash[H(e)];
-    for (unsigned int i=0; i< v.size();i++)if (e == v[i]) {return false;}
+
+    if (std::find(v.begin(), v.end(), e) != v.end()) return false;
+
     v.push_back(e);
     _size++;
+
     return true;
   }
 };
