@@ -76,12 +76,12 @@ struct edgeContainerB
     _size_obj = sizeof(MEdge);
   }
 
-  inline size_t H (const MEdge &e) const {
+  size_t H (const MEdge &e) const {
     const size_t h = ((size_t)e.getSortedVertex(0)) ;
     return (h/_size_obj) %_hash.size();
   }
 
-  inline bool find (const MEdge &e) const {
+  bool find (const MEdge &e) const {
     const std::vector<MEdge> &v = _hash[H(e)];
     for (unsigned int i=0; i< v.size();i++)if (e == v[i]) {return true;}
     return false;
