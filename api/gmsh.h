@@ -340,7 +340,8 @@ namespace gmsh { // Top-level functions
       // elements of the corresponding type. `nodeTags' is a vector of length equal
       // to the number of elements of the given type times the number of nodes for
       // this type of element, that contains the node tags of all the elements of
-      // the given type, concatenated.
+      // the given type, concatenated. If `numTasks' > 1, only compute and return
+      // the part of the data indexed by `task'.
       GMSH_API void getElementsByType(const int elementType,
                                       std::vector<int> & elementTags,
                                       std::vector<int> & nodeTags,
@@ -366,7 +367,8 @@ namespace gmsh { // Top-level functions
       // `determinants' contains for each element the determinant of the Jacobian
       // matrix for each integration point. `points' contains for each element the
       // (x, y, z) coordinates of the integration points. If `tag' < 0, get the
-      // Jacobian data for all entities.
+      // Jacobian data for all entities. If `numTasks' > 1, only compute and return
+      // the part of the data indexed by `task'.
       GMSH_API void getJacobians(const int elementType,
                                  const std::string & integrationType,
                                  std::vector<double> & jacobians,
@@ -409,7 +411,8 @@ namespace gmsh { // Top-level functions
       // the entity of tag `tag'. If `primary' is set, only the primary nodes of
       // the elements are taken into account for the barycenter calculation. If
       // `fast' is set, the function returns the sum of the primary node
-      // coordinates (without normalizing by the number of nodes).
+      // coordinates (without normalizing by the number of nodes). If `numTasks' >
+      // 1, only compute and return the part of the data indexed by `task'.
       GMSH_API void getBarycenters(const int elementType,
                                    const int tag,
                                    const bool fast,

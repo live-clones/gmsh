@@ -357,7 +357,8 @@ GMSH_API void gmshModelMeshGetElementProperties(const int elementType,
  * elements of the corresponding type. `nodeTags' is a vector of length equal
  * to the number of elements of the given type times the number of nodes for
  * this type of element, that contains the node tags of all the elements of
- * the given type, concatenated. */
+ * the given type, concatenated. If `numTasks' > 1, only compute and return
+ * the part of the data indexed by `task'. */
 GMSH_API void gmshModelMeshGetElementsByType(const int elementType,
                                              int ** elementTags, size_t * elementTags_n,
                                              int ** nodeTags, size_t * nodeTags_n,
@@ -385,7 +386,8 @@ GMSH_API void gmshModelMeshPreallocateElementsByType(const int elementType,
  * contains for each element the determinant of the Jacobian matrix for each
  * integration point. `points' contains for each element the (x, y, z)
  * coordinates of the integration points. If `tag' < 0, get the Jacobian data
- * for all entities. */
+ * for all entities. If `numTasks' > 1, only compute and return the part of
+ * the data indexed by `task'. */
 GMSH_API void gmshModelMeshGetJacobians(const int elementType,
                                         const char * integrationType,
                                         double ** jacobians, size_t * jacobians_n,
@@ -432,7 +434,8 @@ GMSH_API void gmshModelMeshPrecomputeBasisFunctions(const int elementType,
  * entity of tag `tag'. If `primary' is set, only the primary nodes of the
  * elements are taken into account for the barycenter calculation. If `fast'
  * is set, the function returns the sum of the primary node coordinates
- * (without normalizing by the number of nodes). */
+ * (without normalizing by the number of nodes). If `numTasks' > 1, only
+ * compute and return the part of the data indexed by `task'. */
 GMSH_API void gmshModelMeshGetBarycenters(const int elementType,
                                           const int tag,
                                           const int fast,
