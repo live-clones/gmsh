@@ -424,15 +424,15 @@ void printTets (const char *fn, std::list<MTet4*> &cavity, bool force = false )
 }
 
 bool insertVertexB(std::list<faceXtet> &shell,
-        		   std::list<MTet4*> &cavity,
-        		   MVertex *v,
-        		   double lc1,
-        		   double lc2,
-        		   std::vector<double> &vSizes,
-        		   std::vector<double> &vSizesBGM,
-        		   MTet4 *t,
-        		   MTet4Factory &myFactory,
-        		   std::set<MTet4*,compareTet4Ptr> &allTets)
+                   std::list<MTet4*> &cavity,
+                   MVertex *v,
+                   double lc1,
+                   double lc2,
+                   std::vector<double> &vSizes,
+                   std::vector<double> &vSizesBGM,
+                   MTet4 *t,
+                   MTet4Factory &myFactory,
+                   std::set<MTet4*,compareTet4Ptr> &allTets)
 {
   std::vector<faceXtet> conn;
   std::vector<MTet4*> new_cavity;
