@@ -138,7 +138,7 @@ class MTet4
     const double dx = base->getVertex(0)->x() - center[0];
     const double dy = base->getVertex(0)->y() - center[1];
     const double dz = base->getVertex(0)->z() - center[2];
-    circum_radius = sqrt(dx * dx + dy * dy + dz * dz);
+    circum_radius = std::sqrt(dx * dx + dy * dy + dz * dz);
 
     /*
     if (base->getVertex(0)->getIndex() >= sizes.size() ||
@@ -201,7 +201,7 @@ class MTet4
     double pd[3] = {base->getVertex(3)->x(),
 		    base->getVertex(3)->y(),
 		    base->getVertex(3)->z()};
-    return fabs(robustPredicates::orient3d(pa, pb, pc, pd))/6.0;
+    return std::abs(robustPredicates::orient3d(pa, pb, pc, pd))/6.0;
   }
   inline void setDeleted(bool d)
   {

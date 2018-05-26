@@ -28,8 +28,10 @@ void TEST_IF_BOUNDARY_IS_RECOVERED (GRegion *gr)
 {
   std::list<GEdge*> e = gr->edges();
   std::list<GFace*> f = gr->faces();
+
   std::map<MEdge,GEdge*,Less_Edge> edges;
   std::map<MFace,GFace*,Less_Face> faces;
+
   std::list<GEdge*>::iterator it = e.begin();
   std::list<GFace*>::iterator itf = f.begin();
   for ( ; it != e.end() ; ++it){
@@ -153,60 +155,29 @@ int MTet4::inCircumSphere(const double *p) const
 
 static int faces[4][3] = {{0,1,2}, {0,2,3}, {0,3,1}, {1,3,2}};
 
-struct faceXtet{
-  MVertex *v[3],*unsorted[3];
+struct faceXtet {
+  MVertex *v[3], *unsorted[3];
   MTet4 *t1;
   int i1;
-  faceXtet(MTet4 *_t=0, int iFac=0) : t1(_t), i1(iFac)
-  {
-    MVertex *v0 = t1->tet()->getVertex(faces[iFac][0]);
-    MVertex *v1 = t1->tet()->getVertex(faces[iFac][1]);
-    MVertex *v2 = t1->tet()->getVertex(faces[iFac][2]);
 
-    unsorted[0] = v0;
-    unsorted[1] = v1;
-    unsorted[2] = v2;
+  faceXtet(MTet4 *_t = 0, int iFac = 0) : t1(_t), i1(iFac) {
+    unsorted[0] = v[0] = t1->tet()->getVertex(faces[iFac][0]);
+    unsorted[1] = v[1] = t1->tet()->getVertex(faces[iFac][1]);
+    unsorted[2] = v[2] = t1->tet()->getVertex(faces[iFac][2]);
 
-    if (v0->getNum() < v1->getNum() && v0->getNum() <  v2->getNum()) {
-      v[0] = v0;
-      if (v1->getNum() < v2->getNum()){
-	v[1] = v1;
-	v[2] = v2;
+    // sort using a custom function object
+    struct {
+      bool operator()(MVertex *const a, MVertex *const b) const {
+        return a->getNum() < b->getNum();
       }
-      else {
-	v[1] = v2;
-	v[2] = v1;
-      }
-    }
-    else if (v1->getNum() < v0->getNum() && v1->getNum() <  v2->getNum()) {
-      v[0] = v1;
-      if (v0->getNum() < v2->getNum()){
-	v[1] = v0;
-	v[2] = v2;
-      }
-      else {
-	v[1] = v2;
-	v[2] = v0;
-      }
-    }
-    else {
-      v[0] = v2;
-      if (v0->getNum() < v1->getNum()){
-	v[1] = v0;
-	v[2] = v1;
-      }
-      else {
-	v[1] = v1;
-	v[2] = v0;
-      }
-    }
-    //  std::sort(v, v + 3, lll);
+    } vertex_comparator;
+
+    std::sort(v, v + 3, vertex_comparator);
   }
 
-  inline MVertex * getVertex (int i) const { return unsorted[i];}
+  MVertex *getVertex(int i) const { return unsorted[i]; }
 
-  inline bool operator < (const faceXtet & other) const
-  {
+  bool operator<(const faceXtet &other) const {
     if (v[0]->getNum() < other.v[0]->getNum()) return true;
     if (v[0]->getNum() > other.v[0]->getNum()) return false;
     if (v[1]->getNum() < other.v[1]->getNum()) return true;
@@ -214,22 +185,24 @@ struct faceXtet{
     if (v[2]->getNum() < other.v[2]->getNum()) return true;
     return false;
   }
-  inline bool operator == (const faceXtet & other) const
-  {
+
+  bool operator==(const faceXtet &other) const {
     return (v[0]->getNum() == other.v[0]->getNum() &&
-	    v[1]->getNum() == other.v[1]->getNum() &&
-	    v[2]->getNum() == other.v[2]->getNum() );
+            v[1]->getNum() == other.v[1]->getNum() &&
+            v[2]->getNum() == other.v[2]->getNum());
   }
-  bool visible (MVertex *v){
-    MVertex* v0 = t1->tet()->getVertex(faces[i1][0]);
-    MVertex* v1 = t1->tet()->getVertex(faces[i1][1]);
-    MVertex* v2 = t1->tet()->getVertex(faces[i1][2]);
-    double a[3] = {v0->x(),v0->y(),v0->z()};
-    double b[3] = {v1->x(),v1->y(),v1->z()};
-    double c[3] = {v2->x(),v2->y(),v2->z()};
-    double d[3] = {v->x(),v->y(),v->z()};
-    double o = robustPredicates :: orient3d(a,b,c,d);
-    return o < 0;
+
+  bool visible(MVertex *v) {
+    MVertex const *const v0 = t1->tet()->getVertex(faces[i1][0]);
+    MVertex const *const v1 = t1->tet()->getVertex(faces[i1][1]);
+    MVertex const *const v2 = t1->tet()->getVertex(faces[i1][2]);
+
+    double a[3] = {v0->x(), v0->y(), v0->z()};
+    double b[3] = {v1->x(), v1->y(), v1->z()};
+    double c[3] = {v2->x(), v2->y(), v2->z()};
+    double d[3] = {v->x(), v->y(), v->z()};
+
+    return robustPredicates::orient3d(a, b, c, d) < 0.0;
   }
 };
 
@@ -406,26 +379,23 @@ int makeCavityStarShaped (std::list<faceXtet> & shell,
   return 1;
 }
 
-void findCavity(std::list<faceXtet> & shell,
-                std::list<MTet4*> & cavity,
-                MVertex *v,
-                MTet4 *t)
-{
+void findCavity(std::list<faceXtet> &shell, std::list<MTet4 *> &cavity,
+                MVertex *v, MTet4 *t) {
   t->setDeleted(true);
   cavity.push_back(t);
-  for (std::list<MTet4*>::iterator it = --cavity.end(); it != cavity.end(); ++it) {
+
+  for (std::list<MTet4 *>::iterator it = --cavity.end(); it != cavity.end();
+       ++it) {
     for (int i = 0; i < 4; i++) {
       MTet4 *neigh = (*it)->getNeigh(i);
       faceXtet fxt(*it, i);
-      if (!neigh)
+      if (!neigh) {
         shell.push_back(fxt);
-      else if (!neigh->isDeleted()) {
-        int circ = neigh->inCircumSphere(v);
-        if (circ && (neigh->onWhat() == (*it)->onWhat())) {
+      } else if (!neigh->isDeleted()) {
+        if (neigh->inCircumSphere(v) && (neigh->onWhat() == (*it)->onWhat())) {
           neigh->setDeleted(true);
           cavity.push_back(neigh);
-        }
-        else {
+        } else {
           shell.push_back(fxt);
         }
       }
@@ -454,15 +424,15 @@ void printTets (const char *fn, std::list<MTet4*> &cavity, bool force = false )
 }
 
 bool insertVertexB(std::list<faceXtet> &shell,
-		   std::list<MTet4*> &cavity,
-		   MVertex *v,
-		   double lc1,
-		   double lc2,
-		   std::vector<double> &vSizes,
-		   std::vector<double> &vSizesBGM,
-		   MTet4 *t,
-		   MTet4Factory &myFactory,
-		   std::set<MTet4*,compareTet4Ptr> &allTets)
+        		   std::list<MTet4*> &cavity,
+        		   MVertex *v,
+        		   double lc1,
+        		   double lc2,
+        		   std::vector<double> &vSizes,
+        		   std::vector<double> &vSizesBGM,
+        		   MTet4 *t,
+        		   MTet4Factory &myFactory,
+        		   std::set<MTet4*,compareTet4Ptr> &allTets)
 {
   std::vector<faceXtet> conn;
   std::vector<MTet4*> new_cavity;
@@ -526,7 +496,7 @@ static void setLcs(MTriangle *t, std::map<MVertex*, double, MVertexLessThanNum> 
     double dx = vi->x()-vj->x();
     double dy = vi->y()-vj->y();
     double dz = vi->z()-vj->z();
-    double l = sqrt(dx * dx + dy * dy + dz * dz);
+    double l = std::sqrt(dx * dx + dy * dy + dz * dz);
     std::map<MVertex*,double, MVertexLessThanNum>::iterator iti = vSizes.find(vi);
     std::map<MVertex*,double, MVertexLessThanNum>::iterator itj = vSizes.find(vj);
     // use largest edge length
@@ -570,7 +540,7 @@ static void setLcs(MTetrahedron *t, std::map<MVertex*, double,MVertexLessThanNum
       double dx = vi->x()-vj->x();
       double dy = vi->y()-vj->y();
       double dz = vi->z()-vj->z();
-      double l = sqrt(dx * dx + dy * dy + dz * dz);
+      double l = std::sqrt(dx * dx + dy * dy + dz * dz);
       std::map<MVertex*,double,MVertexLessThanNum>::iterator iti = vSizes.find(vi);
       std::map<MVertex*,double,MVertexLessThanNum>::iterator itj = vSizes.find(vj);
       std::set<MVertex*,MVertexLessThanNum>::iterator itvi = bndVertices.find(vi);
@@ -865,7 +835,6 @@ void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
 
   std::set<MFace, Less_Face> allEmbeddedFaces;
   createAllEmbeddedFaces (gr, allEmbeddedFaces);
-
 
   std::set<MEdge, Less_Edge> allEmbeddedEdges;
   createAllEmbeddedEdges (gr, allEmbeddedEdges);
@@ -1176,38 +1145,40 @@ int isCavityCompatibleWithEmbeddedEdges(std::list<MTet4*> &cavity,
   return 1;
 }
 
-void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
+void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify)
 {
   //  TEST_IF_BOUNDARY_IS_RECOVERED (gr);
 
   //printf("sizeof MTet4 = %d sizeof MTetrahedron %d sizeof(MVertex) %d\n",
   //       sizeof(MTet4), sizeof(MTetrahedron), sizeof(MVertex));
 
-  std::vector<double> vSizes;
-  std::vector<double> vSizesBGM;
+  std::vector<double> vSizes, vSizesBGM;
   MTet4Factory myFactory(1600000);
   std::set<MTet4*, compareTet4Ptr> &allTets = myFactory.getAllTets();
   int NUM = 0;
 
-
-  { // leave this in a block so the map gets deallocated directly
-    std::map<MVertex*, double,MVertexLessThanNum> vSizesMap;
+  // leave this in a block so the map gets deallocated directly
+  {
+    std::map<MVertex*, double, MVertexLessThanNum> vSizesMap;
     std::set<MVertex*,MVertexLessThanNum> bndVertices;
+
     for (GModel::riter rit = gr->model()->firstRegion(); rit != gr->model()->lastRegion(); ++rit){
       std::list<GEdge*> e = (*rit)->embeddedEdges();
       for (std::list<GEdge*>::iterator it = e.begin() ; it != e.end(); ++it){
         for (unsigned int i = 0; i < (*it)->lines.size(); i++){
-	  MVertex *vi = (*it)->lines[i]->getVertex(0);
-	  MVertex *vj = (*it)->lines[i]->getVertex(1);
-	  double dx = vi->x()-vj->x();
-	  double dy = vi->y()-vj->y();
-	  double dz = vi->z()-vj->z();
-	  double l = sqrt(dx * dx + dy * dy + dz * dz);
-	  std::map<MVertex*,double,MVertexLessThanNum>::iterator iti = vSizesMap.find(vi);
-	  std::map<MVertex*,double,MVertexLessThanNum>::iterator itj = vSizesMap.find(vj);
-	  // smallest tet edge
-	  if (iti == vSizesMap.end() || iti->second > l) vSizesMap[vi] = l;
-	  if (itj == vSizesMap.end() || itj->second > l) vSizesMap[vj] = l;
+    	  MVertex *vi = (*it)->lines[i]->getVertex(0);
+    	  MVertex *vj = (*it)->lines[i]->getVertex(1);
+    	  double dx = vi->x()-vj->x();
+    	  double dy = vi->y()-vj->y();
+    	  double dz = vi->z()-vj->z();
+    	  double l = std::sqrt(dx * dx + dy * dy + dz * dz);
+
+    	  std::map<MVertex*,double,MVertexLessThanNum>::iterator iti = vSizesMap.find(vi);
+    	  std::map<MVertex*,double,MVertexLessThanNum>::iterator itj = vSizesMap.find(vj);
+
+          // smallest tet edge
+    	  if (iti == vSizesMap.end() || iti->second > l) vSizesMap[vi] = l;
+    	  if (itj == vSizesMap.end() || itj->second > l) vSizesMap[vj] = l;
         }
       }
     }
@@ -1235,10 +1206,7 @@ void insertVerticesInRegion (GRegion *gr, int maxVert, bool _classify)
   }
 
   gr->tetrahedra.clear();
-  {
-    std::vector<faceXtet> conn;
-    //  connectTets_vector2_templ(allTets.size(), allTets.begin(), allTets.end() , conn);
-  }
+
   // SLOW
   connectTets(allTets.begin(), allTets.end());
 
