@@ -234,7 +234,7 @@ GMSH_API void gmshModelMeshGetLastEntityError(int ** dimTags, size_t * dimTags_n
 GMSH_API void gmshModelMeshGetLastNodeError(int ** nodeTags, size_t * nodeTags_n,
                                             int * ierr);
 
-/* Get the nodes classified on the entity of dimension `dim' and `tag' tag. If
+/* Get the nodes classified on the entity of dimension `dim' and tag `tag'. If
  * `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and
  * `tag' are negative, get all the nodes in the mesh. `nodeTags' contains the
  * node tags (their unique, strictly positive identification numbers). `coord'
@@ -285,7 +285,7 @@ GMSH_API void gmshModelMeshSetNodes(const int dim,
  * surfaces, curves, etc. after the elements have been set. */
 GMSH_API void gmshModelMeshReclassifyNodes(int * ierr);
 
-/* Get the elements classified on the entity of dimension `dim' and `tag' tag.
+/* Get the elements classified on the entity of dimension `dim' and tag `tag'.
  * If `tag' < 0, get the elements for all entities of dimension `dim'. If
  * `dim' and `tag' are negative, get all the elements in the mesh.
  * `elementTypes' contains the MSH types of the elements (e.g. `2' for 3-node
@@ -315,7 +315,7 @@ GMSH_API void gmshModelMeshGetElement(const int elementTag,
                                       int ** nodeTags, size_t * nodeTags_n,
                                       int * ierr);
 
-/* Set the elements of the entity of dimension `dim' and `tag' tag. `types'
+/* Set the elements of the entity of dimension `dim' and tag `tag'. `types'
  * contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
  * the Gmsh reference manual). `elementTags' is a vector of the same length as
  * `types'; each entry is a vector containing the tags (unique, strictly
@@ -331,7 +331,7 @@ GMSH_API void gmshModelMeshSetElements(const int dim,
                                        const int ** nodeTags, const size_t * nodeTags_n, size_t nodeTags_nn,
                                        int * ierr);
 
-/* Get the types of elements in the entity of dimension `dim' and `tag' tag.
+/* Get the types of elements in the entity of dimension `dim' and tag `tag'.
  * If `tag' < 0, get the types for all entities of dimension `dim'. If `dim'
  * and `tag' are negative, get all the types in the mesh. */
 GMSH_API void gmshModelMeshGetElementTypes(int ** elementTypes, size_t * elementTypes_n,
@@ -375,7 +375,7 @@ GMSH_API void gmshModelMeshPreallocateElementsByType(const int elementType,
                                                      int * ierr);
 
 /* Get the Jacobians of all the elements of type `elementType' classified on
- * the entity of dimension `dim' and `tag' tag, at the integration points
+ * the entity of dimension `dim' and tag `tag', at the integration points
  * required by the `integrationType' integration rule (e.g. "Gauss4"). Data is
  * returned by element, in the same order as data returned by
  * `getElementsByType'. `jacobians' contains for each element the 9 entries of
@@ -407,22 +407,19 @@ GMSH_API void gmshModelMeshPreallocateJacobians(const int elementType,
                                                 const int tag,
                                                 int * ierr);
 
-/* Get the basis functions of all the elements of type `elementType'
- * classified on the entity of tag `tag', for the given `integrationType'
- * integration rule (e.g. "Gauss4") and `functionSpaceType' function space
- * (e.g. "IsoParametric"). `integrationPoints' contains the parametric
- * coordinates (u, v, w) and the weight associated to the integration points.
- * `functionSpaceNumComponents' return the number of components returned by
- * the evaluation of a basis function in the space. `functionSpaceData'
- * contains the evaluation of the basis functions at the integration points.
- * If `tag' < 0, get the function space data for all entities. */
+/* Get the basis functions of the element of type `elementType' for the given
+ * `integrationType' integration rule (e.g. "Gauss4") and `functionSpaceType'
+ * function space (e.g. "IsoParametric"). `integrationPoints' contains the
+ * parametric coordinates (u, v, w) and the weight for each integeration
+ * point, concatenated. `numComponents' returns the number of components of a
+ * basis function. `basisFunctions' contains the evaluation of the basis
+ * functions at the integration points. */
 GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType,
                                              const char * integrationType,
                                              const char * functionSpaceType,
                                              double ** integrationPoints, size_t * integrationPoints_n,
-                                             int * functionSpaceNumComponents,
-                                             double ** functionSpaceData, size_t * functionSpaceData_n,
-                                             const int tag,
+                                             int * numComponents,
+                                             double ** basisFunctions, size_t * basisFunctions_n,
                                              int * ierr);
 
 /* Precomputes the basis functions corresponding to `elementType'. */

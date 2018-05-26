@@ -1017,7 +1017,7 @@ static bool _getFunctionSpaceInfo(const std::string &fsType,
 }
 
 GMSH_API void gmsh::model::mesh::getJacobians(const int elementType,
-                                              const std::string &intType,
+                                              const std::string &integrationType,
                                               std::vector<double> &jacobians,
                                               std::vector<double> &determinants,
                                               std::vector<double> &points,
@@ -1032,8 +1032,8 @@ GMSH_API void gmsh::model::mesh::getJacobians(const int elementType,
   const std::vector<GEntity*> &entities(typeMap[elementType]);
   std::string intName = "", fsName = "";
   int intOrder = 0;
-  if(!_getIntegrationInfo(intType, intName, intOrder)){
-    Msg::Error("Unknown quadrature type '%s'", intType.c_str());
+  if(!_getIntegrationInfo(integrationType, intName, intOrder)){
+    Msg::Error("Unknown quadrature type '%s'", integrationType.c_str());
     throw 2;
   }
   // get quadrature info
@@ -1055,7 +1055,7 @@ GMSH_API void gmsh::model::mesh::getJacobians(const int elementType,
       Msg::Error("Jacobians, determinants and points should be preallocated "
                  "if numTasks > 1");
     haveJacobians = haveDeterminants = havePoints = true;
-    preallocateJacobians(elementType, intType, haveJacobians,
+    preallocateJacobians(elementType, integrationType, haveJacobians,
                          haveDeterminants, havePoints, jacobians,
                          determinants, points, tag);
   }
@@ -1220,7 +1220,7 @@ GMSH_API void gmsh::model::mesh::getJacobians(const int elementType,
 }
 
 GMSH_API void gmsh::model::mesh::preallocateJacobians(const int elementType,
-                                                      const std::string &intType,
+                                                      const std::string &integrationType,
                                                       const bool jacobian,
                                                       const bool determinant,
                                                       const bool point,
@@ -1233,8 +1233,8 @@ GMSH_API void gmsh::model::mesh::preallocateJacobians(const int elementType,
   const unsigned int numElements = _getNumElementsByType(elementType, tag);
   std::string intName = "";
   int intOrder = 0;
-  if(!_getIntegrationInfo(intType, intName, intOrder)){
-    Msg::Error("Unknown quadrature type '%s'", intType.c_str());
+  if(!_getIntegrationInfo(integrationType, intName, intOrder)){
+    Msg::Error("Unknown quadrature type '%s'", integrationType.c_str());
     throw 2;
   }
   int familyType = ElementType::getParentType(elementType);
@@ -1257,25 +1257,24 @@ GMSH_API void gmsh::model::mesh::preallocateJacobians(const int elementType,
 }
 
 GMSH_API void gmsh::model::mesh::getBasisFunctions(const int elementType,
-                                                   const std::string &intType,
-                                                   const std::string &fsType,
-                                                   std::vector<double> &intPoints,
-                                                   int &fsNumComp,
-                                                   std::vector<double> &fsData,
-                                                   const int tag)
+                                                   const std::string &integrationType,
+                                                   const std::string &functionSpaceType,
+                                                   std::vector<double> &integrationPoints,
+                                                   int &numComponents,
+                                                   std::vector<double> &basisFunctions)
 {
   if(!_isInitialized()){ throw -1; }
-  intPoints.clear();
-  fsNumComp = 0;
-  fsData.clear();
+  integrationPoints.clear();
+  numComponents = 0;
+  basisFunctions.clear();
   std::string intName = "", fsName = "";
   int intOrder = 0, fsOrder = 0;
-  if(!_getIntegrationInfo(intType, intName, intOrder)){
-    Msg::Error("Unknown quadrature type '%s'", intType.c_str());
+  if(!_getIntegrationInfo(integrationType, intName, intOrder)){
+    Msg::Error("Unknown quadrature type '%s'", integrationType.c_str());
     throw 2;
   }
-  if(!_getFunctionSpaceInfo(fsType, fsName, fsOrder, fsNumComp)){
-    Msg::Error("Unknown function space type '%s'", fsType.c_str());
+  if(!_getFunctionSpaceInfo(functionSpaceType, fsName, fsOrder, numComponents)){
+    Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
     throw 2;
   }
   // get quadrature info
@@ -1288,14 +1287,14 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(const int elementType,
     throw 3;
   }
   for(int i = 0; i < pts.size1(); i++){
-    intPoints.push_back(pts(i, 0));
-    intPoints.push_back(pts(i, 1));
-    intPoints.push_back(pts(i, 2));
-    intPoints.push_back(weights(i));
+    integrationPoints.push_back(pts(i, 0));
+    integrationPoints.push_back(pts(i, 1));
+    integrationPoints.push_back(pts(i, 2));
+    integrationPoints.push_back(weights(i));
   }
   // get function space info
   const nodalBasis *basis = 0;
-  if(fsNumComp){
+  if(numComponents){
     if(fsOrder == -1){ // isoparametric
       basis = BasisFactory::getNodalBasis(elementType);
     }
@@ -1307,22 +1306,22 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(const int elementType,
   if(basis){
     int nq = weights.size();
     int n = basis->getNumShapeFunctions();
-    fsData.resize(n * fsNumComp * nq, 0.);
+    basisFunctions.resize(n * numComponents * nq, 0.);
     double s[1256], ds[1256][3];
     for(int i = 0; i < nq; i++){
       double u = pts(i, 0), v = pts(i, 1), w = pts(i, 2);
-      switch(fsNumComp){
+      switch(numComponents){
       case 1:
         basis->f(u, v, w, s);
         for(int j = 0; j < n; j++)
-          fsData[n * i + j] = s[j];
+          basisFunctions[n * i + j] = s[j];
         break;
       case 3:
         basis->df(u, v, w, ds);
         for(int j = 0; j < n; j++){
-          fsData[n * 3 * i + 3 * j] = ds[j][0];
-          fsData[n * 3 * i + 3 * j + 1] = ds[j][1];
-          fsData[n * 3 * i + 3 * j + 2] = ds[j][2];
+          basisFunctions[n * 3 * i + 3 * j] = ds[j][0];
+          basisFunctions[n * 3 * i + 3 * j + 1] = ds[j][1];
+          basisFunctions[n * 3 * i + 3 * j + 2] = ds[j][2];
         }
         break;
       }

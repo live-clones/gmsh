@@ -680,15 +680,15 @@ GMSH_API void gmshModelMeshPreallocateJacobians(const int elementType, const cha
   }
 }
 
-GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType, const char * integrationType, const char * functionSpaceType, double ** integrationPoints, size_t * integrationPoints_n, int * functionSpaceNumComponents, double ** functionSpaceData, size_t * functionSpaceData_n, const int tag, int * ierr)
+GMSH_API void gmshModelMeshGetBasisFunctions(const int elementType, const char * integrationType, const char * functionSpaceType, double ** integrationPoints, size_t * integrationPoints_n, int * numComponents, double ** basisFunctions, size_t * basisFunctions_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_integrationPoints_;
-    std::vector<double> api_functionSpaceData_;
-    gmsh::model::mesh::getBasisFunctions(elementType, integrationType, functionSpaceType, api_integrationPoints_, *functionSpaceNumComponents, api_functionSpaceData_, tag);
+    std::vector<double> api_basisFunctions_;
+    gmsh::model::mesh::getBasisFunctions(elementType, integrationType, functionSpaceType, api_integrationPoints_, *numComponents, api_basisFunctions_);
     vector2ptr(api_integrationPoints_, integrationPoints, integrationPoints_n);
-    vector2ptr(api_functionSpaceData_, functionSpaceData, functionSpaceData_n);
+    vector2ptr(api_basisFunctions_, basisFunctions, basisFunctions_n);
   }
   catch(int api_ierr_){
     if(ierr) *ierr = api_ierr_;

@@ -619,7 +619,7 @@ end
 """
     gmsh.model.mesh.getNodes(nodeTags, coord, parametricCoord, dim = -1, tag = -1)
 
-Get the nodes classified on the entity of dimension `dim` and `tag` tag. If
+Get the nodes classified on the entity of dimension `dim` and tag `tag`. If
 `tag` < 0, get the nodes for all entities of dimension `dim`. If `dim` and `tag`
 are negative, get all the nodes in the mesh. `nodeTags` contains the node tags
 (their unique, strictly positive identification numbers). `coord` is a vector of
@@ -729,7 +729,7 @@ end
 """
     gmsh.model.mesh.getElements(elementTypes, elementTags, nodeTags, dim = -1, tag = -1)
 
-Get the elements classified on the entity of dimension `dim` and `tag` tag. If
+Get the elements classified on the entity of dimension `dim` and tag `tag`. If
 `tag` < 0, get the elements for all entities of dimension `dim`. If `dim` and
 `tag` are negative, get all the elements in the mesh. `elementTypes` contains
 the MSH types of the elements (e.g. `2` for 3-node triangles: see
@@ -795,7 +795,7 @@ end
 """
     gmsh.model.mesh.setElements(dim, tag, elementTypes, elementTags, nodeTags)
 
-Set the elements of the entity of dimension `dim` and `tag` tag. `types`
+Set the elements of the entity of dimension `dim` and tag `tag`. `types`
 contains the MSH types of the elements (e.g. `2` for 3-node triangles: see the
 Gmsh reference manual). `elementTags` is a vector of the same length as `types`;
 each entry is a vector containing the tags (unique, strictly positive
@@ -818,7 +818,7 @@ end
 """
     gmsh.model.mesh.getElementTypes(elementTypes, dim = -1, tag = -1)
 
-Get the types of elements in the entity of dimension `dim` and `tag` tag. If
+Get the types of elements in the entity of dimension `dim` and tag `tag`. If
 `tag` < 0, get the types for all entities of dimension `dim`. If `dim` and `tag`
 are negative, get all the types in the mesh.
 
@@ -917,7 +917,7 @@ end
     gmsh.model.mesh.getJacobians(elementType, integrationType, jacobians, determinants, points, tag = -1, task = 0, numTasks = 1)
 
 Get the Jacobians of all the elements of type `elementType` classified on the
-entity of dimension `dim` and `tag` tag, at the integration points required by
+entity of dimension `dim` and tag `tag`, at the integration points required by
 the `integrationType` integration rule (e.g. "Gauss4"). Data is returned by
 element, in the same order as data returned by `getElementsByType`. `jacobians`
 contains for each element the 9 entries of a 3x3 Jacobian matrix (by row), for
@@ -973,33 +973,32 @@ function preallocateJacobians(elementType, integrationType, jacobian, determinan
 end
 
 """
-    gmsh.model.mesh.getBasisFunctions(elementType, integrationType, functionSpaceType, integrationPoints, functionSpaceNumComponents, functionSpaceData, tag = -1)
+    gmsh.model.mesh.getBasisFunctions(elementType, integrationType, functionSpaceType, integrationPoints, numComponents, basisFunctions)
 
-Get the basis functions of all the elements of type `elementType` classified on
-the entity of tag `tag`, for the given `integrationType` integration rule (e.g.
-"Gauss4") and `functionSpaceType` function space (e.g. "IsoParametric").
-`integrationPoints` contains the parametric coordinates (u, v, w) and the weight
-associated to the integration points. `functionSpaceNumComponents` return the
-number of components returned by the evaluation of a basis function in the
-space. `functionSpaceData` contains the evaluation of the basis functions at the
-integration points. If `tag` < 0, get the function space data for all entities.
+Get the basis functions of the element of type `elementType` for the given
+`integrationType` integration rule (e.g. "Gauss4") and `functionSpaceType`
+function space (e.g. "IsoParametric"). `integrationPoints` contains the
+parametric coordinates (u, v, w) and the weight for each integeration point,
+concatenated. `numComponents` returns the number of components of a basis
+function. `basisFunctions` contains the evaluation of the basis functions at the
+integration points.
 
-Return 'integrationPoints', 'functionSpaceNumComponents', 'functionSpaceData'.
+Return 'integrationPoints', 'numComponents', 'basisFunctions'.
 """
-function getBasisFunctions(elementType, integrationType, functionSpaceType, tag = -1)
+function getBasisFunctions(elementType, integrationType, functionSpaceType)
     api_integrationPoints_ = Ref{Ptr{Cdouble}}()
     api_integrationPoints_n_ = Ref{Csize_t}()
-    api_functionSpaceNumComponents_ = Ref{Cint}()
-    api_functionSpaceData_ = Ref{Ptr{Cdouble}}()
-    api_functionSpaceData_n_ = Ref{Csize_t}()
+    api_numComponents_ = Ref{Cint}()
+    api_basisFunctions_ = Ref{Ptr{Cdouble}}()
+    api_basisFunctions_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetBasisFunctions, gmsh.clib), Void,
-          (Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          elementType, integrationType, functionSpaceType, api_integrationPoints_, api_integrationPoints_n_, api_functionSpaceNumComponents_, api_functionSpaceData_, api_functionSpaceData_n_, tag, ierr)
+          (Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          elementType, integrationType, functionSpaceType, api_integrationPoints_, api_integrationPoints_n_, api_numComponents_, api_basisFunctions_, api_basisFunctions_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetBasisFunctions returned non-zero error code: $(ierr[])")
     integrationPoints = unsafe_wrap(Array, api_integrationPoints_[], api_integrationPoints_n_[], true)
-    functionSpaceData = unsafe_wrap(Array, api_functionSpaceData_[], api_functionSpaceData_n_[], true)
-    return integrationPoints, api_functionSpaceNumComponents_[], functionSpaceData
+    basisFunctions = unsafe_wrap(Array, api_basisFunctions_[], api_basisFunctions_n_[], true)
+    return integrationPoints, api_numComponents_[], basisFunctions
 end
 
 """

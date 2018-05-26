@@ -226,7 +226,7 @@ namespace gmsh { // Top-level functions
       // populated by the new 3D meshing algorithms.
       GMSH_API void getLastNodeError(std::vector<int> & nodeTags);
 
-      // Get the nodes classified on the entity of dimension `dim' and `tag' tag.
+      // Get the nodes classified on the entity of dimension `dim' and tag `tag'.
       // If `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim'
       // and `tag' are negative, get all the nodes in the mesh. `nodeTags' contains
       // the node tags (their unique, strictly positive identification numbers).
@@ -273,8 +273,8 @@ namespace gmsh { // Top-level functions
       // surfaces, curves, etc. after the elements have been set.
       GMSH_API void reclassifyNodes();
 
-      // Get the elements classified on the entity of dimension `dim' and `tag'
-      // tag. If `tag' < 0, get the elements for all entities of dimension `dim'.
+      // Get the elements classified on the entity of dimension `dim' and tag
+      // `tag'. If `tag' < 0, get the elements for all entities of dimension `dim'.
       // If `dim' and `tag' are negative, get all the elements in the mesh.
       // `elementTypes' contains the MSH types of the elements (e.g. `2' for 3-node
       // triangles: see `getElementProperties' to obtain the properties for a given
@@ -301,7 +301,7 @@ namespace gmsh { // Top-level functions
                                int & elementType,
                                std::vector<int> & nodeTags);
 
-      // Set the elements of the entity of dimension `dim' and `tag' tag. `types'
+      // Set the elements of the entity of dimension `dim' and tag `tag'. `types'
       // contains the MSH types of the elements (e.g. `2' for 3-node triangles: see
       // the Gmsh reference manual). `elementTags' is a vector of the same length
       // as `types'; each entry is a vector containing the tags (unique, strictly
@@ -316,7 +316,7 @@ namespace gmsh { // Top-level functions
                                 const std::vector<std::vector<int> > & elementTags,
                                 const std::vector<std::vector<int> > & nodeTags);
 
-      // Get the types of elements in the entity of dimension `dim' and `tag' tag.
+      // Get the types of elements in the entity of dimension `dim' and tag `tag'.
       // If `tag' < 0, get the types for all entities of dimension `dim'. If `dim'
       // and `tag' are negative, get all the types in the mesh.
       GMSH_API void getElementTypes(std::vector<int> & elementTypes,
@@ -356,7 +356,7 @@ namespace gmsh { // Top-level functions
                                               const int tag = -1);
 
       // Get the Jacobians of all the elements of type `elementType' classified on
-      // the entity of dimension `dim' and `tag' tag, at the integration points
+      // the entity of dimension `dim' and tag `tag', at the integration points
       // required by the `integrationType' integration rule (e.g. "Gauss4"). Data
       // is returned by element, in the same order as data returned by
       // `getElementsByType'. `jacobians' contains for each element the 9 entries
@@ -386,22 +386,19 @@ namespace gmsh { // Top-level functions
                                          std::vector<double> & points,
                                          const int tag = -1);
 
-      // Get the basis functions of all the elements of type `elementType'
-      // classified on the entity of tag `tag', for the given `integrationType'
-      // integration rule (e.g. "Gauss4") and `functionSpaceType' function space
-      // (e.g. "IsoParametric"). `integrationPoints' contains the parametric
-      // coordinates (u, v, w) and the weight associated to the integration points.
-      // `functionSpaceNumComponents' return the number of components returned by
-      // the evaluation of a basis function in the space. `functionSpaceData'
-      // contains the evaluation of the basis functions at the integration points.
-      // If `tag' < 0, get the function space data for all entities.
+      // Get the basis functions of the element of type `elementType' for the given
+      // `integrationType' integration rule (e.g. "Gauss4") and `functionSpaceType'
+      // function space (e.g. "IsoParametric"). `integrationPoints' contains the
+      // parametric coordinates (u, v, w) and the weight for each integeration
+      // point, concatenated. `numComponents' returns the number of components of a
+      // basis function. `basisFunctions' contains the evaluation of the basis
+      // functions at the integration points.
       GMSH_API void getBasisFunctions(const int elementType,
                                       const std::string & integrationType,
                                       const std::string & functionSpaceType,
                                       std::vector<double> & integrationPoints,
-                                      int & functionSpaceNumComponents,
-                                      std::vector<double> & functionSpaceData,
-                                      const int tag = -1);
+                                      int & numComponents,
+                                      std::vector<double> & basisFunctions);
 
       // Precomputes the basis functions corresponding to `elementType'.
       GMSH_API void precomputeBasisFunctions(const int elementType);
