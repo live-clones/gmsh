@@ -171,7 +171,7 @@ void OCC_Internals::bind(TopoDS_Vertex vertex, int tag, bool recursive)
       Msg::Info("Cannot bind existing OpenCASCADE point %d to second tag %d",
                 _vertexTag.Find(vertex), tag);
   }
-  else{
+  else if(!_tagVertex.IsBound(tag)){
     _vertexTag.Bind(vertex, tag);
     _tagVertex.Bind(tag, vertex);
     setMaxTag(0, tag);
@@ -188,7 +188,7 @@ void OCC_Internals::bind(TopoDS_Edge edge, int tag, bool recursive)
       Msg::Info("Cannot bind existing OpenCASCADE curve %d to second tag %d",
                 _edgeTag.Find(edge), tag);
   }
-  else{
+  else if(!_tagEdge.IsBound(tag)){
     _edgeTag.Bind(edge, tag);
     _tagEdge.Bind(tag, edge);
     setMaxTag(1, tag);
@@ -215,7 +215,7 @@ void OCC_Internals::bind(TopoDS_Wire wire, int tag, bool recursive)
       Msg::Info("Cannot bind existing OpenCASCADE wire %d to second tag %d",
                 _wireTag.Find(wire), tag);
   }
-  else{
+  else if(!_tagWire.IsBound(tag)){
     _wireTag.Bind(wire, tag);
     _tagWire.Bind(tag, wire);
     setMaxTag(-1, tag);
@@ -241,7 +241,7 @@ void OCC_Internals::bind(TopoDS_Face face, int tag, bool recursive)
       Msg::Info("Cannot bind existing OpenCASCADE surface %d to second tag %d",
                 _faceTag.Find(face), tag);
   }
-  else{
+  else if(!_tagFace.IsBound(tag)){
     _faceTag.Bind(face, tag);
     _tagFace.Bind(tag, face);
     setMaxTag(2, tag);
@@ -275,7 +275,7 @@ void OCC_Internals::bind(TopoDS_Shell shell, int tag, bool recursive)
       Msg::Info("Cannot bind existing OpenCASCADE shell %d to second tag %d",
                 _shellTag.Find(shell), tag);
   }
-  else{
+  else if(!_tagShell.IsBound(tag)){
     _shellTag.Bind(shell, tag);
     _tagShell.Bind(tag, shell);
     setMaxTag(-2, tag);
@@ -301,7 +301,7 @@ void OCC_Internals::bind(TopoDS_Solid solid, int tag, bool recursive)
       Msg::Info("Cannot bind existing OpenCASCADE volume %d to second tag %d",
                 _solidTag.Find(solid), tag);
   }
-  else{
+  else if(!_tagSolid.IsBound(tag)){
     _solidTag.Bind(solid, tag);
     _tagSolid.Bind(tag, solid);
     setMaxTag(3, tag);
