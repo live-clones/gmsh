@@ -763,7 +763,11 @@ void Msg::ProgressMeter(int n, int N, bool log, const char *fmt, ...)
   if(percent >= _progressMeterCurrent || n > N - 1){
     while(_progressMeterCurrent < percent)
       _progressMeterCurrent += _progressMeterStep;
-    char str[5000], str2[5000];
+
+    // TODO With C++11 use std::string (contiguous layout) and avoid all these C
+    // problems
+    // str2 needs to have at least 5018 bytes or buffer overflow will occur
+    char str[5000], str2[5018];
     va_list args;
     va_start(args, fmt);
     vsnprintf(str, sizeof(str), fmt, args);
