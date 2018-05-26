@@ -159,6 +159,13 @@ int MTet4::inCircumSphere(const double *p) const
 
 static int faces[4][3] = {{0,1,2}, {0,2,3}, {0,3,1}, {1,3,2}};
 
+/// vertex_comparison compares two MVertex types for sorting
+struct vertex_comparator {
+  bool operator()(MVertex *const a, MVertex *const b) const {
+    return a->getNum() < b->getNum();
+  }
+};
+
 struct faceXtet {
   MVertex *v[3], *unsorted[3];
   MTet4 *t1;
@@ -169,14 +176,7 @@ struct faceXtet {
     unsorted[1] = v[1] = t1->tet()->getVertex(faces[iFac][1]);
     unsorted[2] = v[2] = t1->tet()->getVertex(faces[iFac][2]);
 
-    // sort using a custom function object
-    struct vertex_comparator {
-      bool operator()(MVertex *const a, MVertex *const b) const {
-        return a->getNum() < b->getNum();
-      }
-    } comp;
-
-    std::sort(v, v + 3, comp);
+    std::sort(v, v + 3, vertex_compartor());
   }
 
   MVertex *getVertex(int i) const { return unsorted[i]; }
