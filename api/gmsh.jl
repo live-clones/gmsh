@@ -921,13 +921,14 @@ end
 Get the Jacobians of all the elements of type `elementType` classified on the
 entity of dimension `dim` and tag `tag`, at the integration points required by
 the `integrationType` integration rule (e.g. "Gauss4"). Data is returned by
-element, in the same order as data returned by `getElementsByType`. `jacobians`
-contains for each element the 9 entries of a 3x3 Jacobian matrix (by row), for
-each integration point. `determinants` contains for each element the determinant
-of the Jacobian matrix for each integration point. `points` contains for each
-element the (x, y, z) coordinates of the integration points. If `tag` < 0, get
-the Jacobian data for all entities. If `numTasks` > 1, only compute and return
-the part of the data indexed by `task`.
+element, with elements in the same order as in `getElements` and
+`getElementsByType`. `jacobians` contains for each element the 9 entries of a
+3x3 Jacobian matrix (by row), for each integration point. `determinants`
+contains for each element the determinant of the Jacobian matrix for each
+integration point. `points` contains for each element the (x, y, z) coordinates
+of the integration points. If `tag` < 0, get the Jacobian data for all entities.
+If `numTasks` > 1, only compute and return the part of the data indexed by
+`task`.
 
 Return 'jacobians', 'determinants', 'points'.
 """
@@ -1210,16 +1211,16 @@ function embed(dim, tags, inDim, inTag)
 end
 
 """
-    gmsh.model.mesh.reorderElements(elementType, tag, order)
+    gmsh.model.mesh.reorderElements(elementType, tag, ordering)
 
 Reorder the elements of type `elementType` classified on the entity of tag `tag`
-according to `order`.
+according to `ordering`.
 """
-function reorderElements(elementType, tag, order)
+function reorderElements(elementType, tag, ordering)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshReorderElements, gmsh.clib), Void,
           (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
-          elementType, tag, convert(Vector{Cint}, order), length(order), ierr)
+          elementType, tag, convert(Vector{Cint}, ordering), length(ordering), ierr)
     ierr[] != 0 && error("gmshModelMeshReorderElements returned non-zero error code: $(ierr[])")
     return nothing
 end

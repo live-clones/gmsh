@@ -380,14 +380,14 @@ GMSH_API void gmshModelMeshPreallocateElementsByType(const int elementType,
 /* Get the Jacobians of all the elements of type `elementType' classified on
  * the entity of dimension `dim' and tag `tag', at the integration points
  * required by the `integrationType' integration rule (e.g. "Gauss4"). Data is
- * returned by element, in the same order as data returned by
- * `getElementsByType'. `jacobians' contains for each element the 9 entries of
- * a 3x3 Jacobian matrix (by row), for each integration point. `determinants'
- * contains for each element the determinant of the Jacobian matrix for each
- * integration point. `points' contains for each element the (x, y, z)
- * coordinates of the integration points. If `tag' < 0, get the Jacobian data
- * for all entities. If `numTasks' > 1, only compute and return the part of
- * the data indexed by `task'. */
+ * returned by element, with elements in the same order as in `getElements'
+ * and `getElementsByType'. `jacobians' contains for each element the 9
+ * entries of a 3x3 Jacobian matrix (by row), for each integration point.
+ * `determinants' contains for each element the determinant of the Jacobian
+ * matrix for each integration point. `points' contains for each element the
+ * (x, y, z) coordinates of the integration points. If `tag' < 0, get the
+ * Jacobian data for all entities. If `numTasks' > 1, only compute and return
+ * the part of the data indexed by `task'. */
 GMSH_API void gmshModelMeshGetJacobians(const int elementType,
                                         const char * integrationType,
                                         double ** jacobians, size_t * jacobians_n,
@@ -528,10 +528,10 @@ GMSH_API void gmshModelMeshEmbed(const int dim,
                                  int * ierr);
 
 /* Reorder the elements of type `elementType' classified on the entity of tag
- * `tag' according to `order'. */
+ * `tag' according to `ordering'. */
 GMSH_API void gmshModelMeshReorderElements(const int elementType,
                                            const int tag,
-                                           int * order, size_t order_n,
+                                           int * ordering, size_t ordering_n,
                                            int * ierr);
 
 /* Set the meshes of the entities of dimension `dim' and tag `tags' as

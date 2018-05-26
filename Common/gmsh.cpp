@@ -1642,7 +1642,7 @@ GMSH_API void gmsh::model::mesh::embed(const int dim,
 
 GMSH_API void gmsh::model::mesh::reorderElements(const int elementType,
                                                  const int tag,
-                                                 const std::vector<int> &order)
+                                                 const std::vector<int> &ordering)
 {
   if(!_isInitialized()){ throw -1; }
   std::map<int, std::vector<GEntity*> > typeMap;
@@ -1652,7 +1652,7 @@ GMSH_API void gmsh::model::mesh::reorderElements(const int elementType,
     Msg::Error("No elements to reorder");
     throw 2;
   }
-  if(!typeMap[elementType][0]->reordered(elementType, order)){
+  if(!typeMap[elementType][0]->reorder(elementType, ordering)){
     Msg::Error("Could not reorder elements");
     throw 3;
   }

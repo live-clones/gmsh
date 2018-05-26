@@ -71,7 +71,7 @@ unsigned int GRegion::getNumMeshElementsByType(const int familyType) const
   else if(familyType == TYPE_PYR) return pyramids.size();
   else if(familyType == TYPE_TRIH) return trihedra.size();
   else if(familyType == TYPE_POLYH) return polyhedra.size();
-  
+
   return 0;
 }
 
@@ -150,7 +150,7 @@ MElement *GRegion::getMeshElementByType(const int familyType, const unsigned int
   else if(familyType == TYPE_PYR) return pyramids[index];
   else if(familyType == TYPE_TRIH) return trihedra[index];
   else if(familyType == TYPE_POLYH) return polyhedra[index];
-  
+
   return 0;
 }
 
@@ -588,128 +588,132 @@ void GRegion::removeElement(int type, MElement *e)
   }
 }
 
-bool GRegion::reordered(const int elementType, const std::vector<int> &order)
+bool GRegion::reorder(const int elementType, const std::vector<int> &ordering)
 {
   if(tetrahedra.front()->getTypeForMSH() == elementType){
-    if(order.size() != tetrahedra.size()) return false;
-    
-    for(std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it){
+    if(ordering.size() != tetrahedra.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin(); it != ordering.end(); ++it){
       if(*it < 0 || *it >= tetrahedra.size()) return false;
     }
-    
+
     std::vector<MTetrahedron*> newTetrahedraOrder(tetrahedra.size());
-    for(unsigned int i = 0; i < order.size(); i++){
-      newTetrahedraOrder[i] = tetrahedra[order[i]];
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newTetrahedraOrder[i] = tetrahedra[ordering[i]];
     }
 #if __cplusplus >= 201103L
     tetrahedra = std::move(newTetrahedraOrder);
 #else
     tetrahedra = newTetrahedraOrder;
 #endif
-    
+
     return true;
   }
-  
+
   if(hexahedra.front()->getTypeForMSH() == elementType){
-    if(order.size() != hexahedra.size()) return false;
-    
-    for(std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it){
+    if(ordering.size() != hexahedra.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin(); it != ordering.end(); ++it){
       if(*it < 0 || *it >= hexahedra.size()) return false;
     }
-    
+
     std::vector<MHexahedron*> newHexahedraOrder(hexahedra.size());
-    for(unsigned int i = 0; i < order.size(); i++){
-      newHexahedraOrder[i] = hexahedra[order[i]];
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newHexahedraOrder[i] = hexahedra[ordering[i]];
     }
 #if __cplusplus >= 201103L
     hexahedra = std::move(newHexahedraOrder);
 #else
     hexahedra = newHexahedraOrder;
 #endif
-    
+
     return true;
   }
-  
+
   if(prisms.front()->getTypeForMSH() == elementType){
-    if(order.size() != prisms.size()) return false;
-    
-    for(std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it){
+    if(ordering.size() != prisms.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin();
+        it != ordering.end(); ++it){
       if(*it < 0 || *it >= prisms.size()) return false;
     }
-    
+
     std::vector<MPrism*> newPrismsOrder(prisms.size());
-    for(unsigned int i = 0; i < order.size(); i++){
-      newPrismsOrder[i] = prisms[order[i]];
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newPrismsOrder[i] = prisms[ordering[i]];
     }
 #if __cplusplus >= 201103L
     prisms = std::move(newPrismsOrder);
 #else
     prisms = newPrismsOrder;
 #endif
-    
+
     return true;
   }
-  
+
   if(pyramids.front()->getTypeForMSH() == elementType){
-    if(order.size() != pyramids.size()) return false;
-    
-    for(std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it){
+    if(ordering.size() != pyramids.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin();
+        it != ordering.end(); ++it){
       if(*it < 0 || *it >= pyramids.size()) return false;
     }
-    
+
     std::vector<MPyramid*> newPyramidsOrder(pyramids.size());
-    for(unsigned int i = 0; i < order.size(); i++){
-      newPyramidsOrder[i] = pyramids[order[i]];
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newPyramidsOrder[i] = pyramids[ordering[i]];
     }
 #if __cplusplus >= 201103L
     pyramids = std::move(newPyramidsOrder);
 #else
     pyramids = newPyramidsOrder;
 #endif
-    
+
     return true;
   }
-  
+
   if(polyhedra.front()->getTypeForMSH() == elementType){
-    if(order.size() != polyhedra.size()) return false;
-    
-    for(std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it){
+    if(ordering.size() != polyhedra.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin();
+        it != ordering.end(); ++it){
       if(*it < 0 || *it >= polyhedra.size()) return false;
     }
-    
+
     std::vector<MPolyhedron*> newPolyhedraOrder(polyhedra.size());
-    for(unsigned int i = 0; i < order.size(); i++){
-      newPolyhedraOrder[i] = polyhedra[order[i]];
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newPolyhedraOrder[i] = polyhedra[ordering[i]];
     }
 #if __cplusplus >= 201103L
     polyhedra = std::move(newPolyhedraOrder);
 #else
     polyhedra = newPolyhedraOrder;
 #endif
-    
+
     return true;
   }
-  
+
   if(trihedra.front()->getTypeForMSH() == elementType){
-    if(order.size() != trihedra.size()) return false;
-    
-    for(std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it){
+    if(ordering.size() != trihedra.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin();
+        it != ordering.end(); ++it){
       if(*it < 0 || *it >= trihedra.size()) return false;
     }
-    
+
     std::vector<MTrihedron*> newTrihedraOrder(trihedra.size());
-    for(unsigned int i = 0; i < order.size(); i++){
-      newTrihedraOrder[i] = trihedra[order[i]];
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newTrihedraOrder[i] = trihedra[ordering[i]];
     }
 #if __cplusplus >= 201103L
     trihedra = std::move(newTrihedraOrder);
 #else
     trihedra = newTrihedraOrder;
 #endif
-    
+
     return true;
   }
-  
+
   return false;
 }
 
@@ -748,7 +752,6 @@ static int intersectLineTriangle(double X[3], double Y[3], double Z[3] ,
   if(!sys3x3_with_tol(mat, b, res, &det)){
     return 0;
   }
-  //  printf("coucou %g %g %g\n",res[0],res[1],res[2]);
   if(res[0] >= eps_prec && res[0] <= 1.0 - eps_prec &&
      res[1] >= eps_prec && res[1] <= 1.0 - eps_prec &&
      1 - res[0] - res[1] >= eps_prec && 1 - res[0] - res[1] <= 1.0 - eps_prec){
@@ -762,7 +765,6 @@ static int intersectLineTriangle(double X[3], double Y[3], double Z[3] ,
     return 0;
   }
   else{
-    //printf("non robust stuff\n");
     // the intersection is not robust, try another triangle
     return -10000;
   }

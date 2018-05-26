@@ -385,10 +385,13 @@ class GEntity {
 
   // corresponding high order control points
   std::map<MVertex*,MVertex*> correspondingHOPoints;
-  
-  // reordered the mesh elements given by elementType according to order
-  virtual bool reordered(const int elementType, const std::vector<int> &order) { return false; };
-  
+
+  // reorder the mesh elements of the given type, according to ordering
+  virtual bool reorder(const int elementType, const std::vector<int> &ordering)
+  {
+    return false;
+  }
+
 };
 
 class GEntityLessThan {

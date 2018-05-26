@@ -101,9 +101,8 @@ class GVertex : public GEntity
   void addPoint(MPoint *p){ points.push_back(p); }
   void addElement(int type, MElement *e);
   void removeElement(int type, MElement *e);
-  
-  // reordered the mesh elements given by elementType according to order
-  virtual bool reordered(const int elementType, const std::vector<int> &order);
+
+  virtual bool reorder(const int elementType, const std::vector<int> &ordering);
 };
 
 #endif

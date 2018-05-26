@@ -161,7 +161,7 @@ unsigned int GFace::getNumMeshElementsByType(const int familyType) const
   if(familyType == TYPE_TRI) return triangles.size();
   else if(familyType == TYPE_QUA) return quadrangles.size();
   else if(familyType == TYPE_POLYG) return polygons.size();
-  
+
   return 0;
 }
 
@@ -213,7 +213,7 @@ MElement *GFace::getMeshElementByType(const int familyType, const unsigned int i
   if(familyType == TYPE_TRI) return triangles[index];
   else if(familyType == TYPE_QUA) return quadrangles[index];
   else if(familyType == TYPE_POLYG) return polygons[index];
-  
+
   return 0;
 }
 
@@ -2031,67 +2031,70 @@ void GFace::removeElement(int type, MElement *e)
   }
 }
 
-bool GFace::reordered(const int elementType, const std::vector<int> &order)
+bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
 {
   if(triangles.front()->getTypeForMSH() == elementType){
-    if(order.size() != triangles.size()) return false;
-    
-    for(std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it){
+    if(ordering.size() != triangles.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin();
+        it != ordering.end(); ++it){
       if(*it < 0 || *it >= triangles.size()) return false;
     }
-    
+
     std::vector<MTriangle*> newTrianglesOrder(triangles.size());
-    for(unsigned int i = 0; i < order.size(); i++){
-      newTrianglesOrder[i] = triangles[order[i]];
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newTrianglesOrder[i] = triangles[ordering[i]];
     }
 #if __cplusplus >= 201103L
     triangles = std::move(newTrianglesOrder);
 #else
     triangles = newTrianglesOrder;
 #endif
-    
+
     return true;
   }
-  
+
   if(quadrangles.front()->getTypeForMSH() == elementType){
-    if(order.size() != quadrangles.size()) return false;
-    
-    for(std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it){
+    if(ordering.size() != quadrangles.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin();
+        it != ordering.end(); ++it){
       if(*it < 0 || *it >= quadrangles.size()) return false;
     }
-    
+
     std::vector<MQuadrangle*> newQuadranglesOrder(quadrangles.size());
-    for(unsigned int i = 0; i < order.size(); i++){
-      newQuadranglesOrder[i] = quadrangles[order[i]];
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newQuadranglesOrder[i] = quadrangles[ordering[i]];
     }
 #if __cplusplus >= 201103L
     quadrangles = std::move(newQuadranglesOrder);
 #else
     quadrangles = newQuadranglesOrder;
 #endif
-    
+
     return true;
   }
-  
+
   if(polygons.front()->getTypeForMSH() == elementType){
-    if(order.size() != polygons.size()) return false;
-    
-    for(std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it){
+    if(ordering.size() != polygons.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin();
+        it != ordering.end(); ++it){
       if(*it < 0 || *it >= polygons.size()) return false;
     }
-    
+
     std::vector<MPolygon*> newPolygonsOrder(polygons.size());
-    for(unsigned int i = 0; i < order.size(); i++){
-      newPolygonsOrder[i] = polygons[order[i]];
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newPolygonsOrder[i] = polygons[ordering[i]];
     }
 #if __cplusplus >= 201103L
     polygons = std::move(newPolygonsOrder);
 #else
     polygons = newPolygonsOrder;
 #endif
-    
+
     return true;
   }
-  
+
   return false;
 }

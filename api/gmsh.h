@@ -361,14 +361,15 @@ namespace gmsh { // Top-level functions
       // Get the Jacobians of all the elements of type `elementType' classified on
       // the entity of dimension `dim' and tag `tag', at the integration points
       // required by the `integrationType' integration rule (e.g. "Gauss4"). Data
-      // is returned by element, in the same order as data returned by
-      // `getElementsByType'. `jacobians' contains for each element the 9 entries
-      // of a 3x3 Jacobian matrix (by row), for each integration point.
-      // `determinants' contains for each element the determinant of the Jacobian
-      // matrix for each integration point. `points' contains for each element the
-      // (x, y, z) coordinates of the integration points. If `tag' < 0, get the
-      // Jacobian data for all entities. If `numTasks' > 1, only compute and return
-      // the part of the data indexed by `task'.
+      // is returned by element, with elements in the same order as in
+      // `getElements' and `getElementsByType'. `jacobians' contains for each
+      // element the 9 entries of a 3x3 Jacobian matrix (by row), for each
+      // integration point. `determinants' contains for each element the
+      // determinant of the Jacobian matrix for each integration point. `points'
+      // contains for each element the (x, y, z) coordinates of the integration
+      // points. If `tag' < 0, get the Jacobian data for all entities. If
+      // `numTasks' > 1, only compute and return the part of the data indexed by
+      // `task'.
       GMSH_API void getJacobians(const int elementType,
                                  const std::string & integrationType,
                                  std::vector<double> & jacobians,
@@ -494,10 +495,10 @@ namespace gmsh { // Top-level functions
                           const int inTag);
 
       // Reorder the elements of type `elementType' classified on the entity of tag
-      // `tag' according to `order'.
+      // `tag' according to `ordering'.
       GMSH_API void reorderElements(const int elementType,
                                     const int tag,
-                                    const std::vector<int> & order);
+                                    const std::vector<int> & ordering);
 
       // Set the meshes of the entities of dimension `dim' and tag `tags' as
       // periodic copies of the meshes of entities `tagsSource', using the affine

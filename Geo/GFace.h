@@ -354,9 +354,8 @@ class GFace : public GEntity {
   std::vector<SVector3> storage2; //sizes and directions storage
   std::vector<SVector3> storage3; //sizes and directions storage
   std::vector<double> storage4; //sizes and directions storage
-  
-  // reordered the mesh elements given by elementType according to order
-  virtual bool reordered(const int elementType, const std::vector<int> &order);
+
+  virtual bool reorder(const int elementType, const std::vector<int> &ordering);
 };
 
 #endif

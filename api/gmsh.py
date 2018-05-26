@@ -1097,14 +1097,14 @@ class model:
             Get the Jacobians of all the elements of type `elementType' classified on
             the entity of dimension `dim' and tag `tag', at the integration points
             required by the `integrationType' integration rule (e.g. "Gauss4"). Data is
-            returned by element, in the same order as data returned by
-            `getElementsByType'. `jacobians' contains for each element the 9 entries of
-            a 3x3 Jacobian matrix (by row), for each integration point. `determinants'
-            contains for each element the determinant of the Jacobian matrix for each
-            integration point. `points' contains for each element the (x, y, z)
-            coordinates of the integration points. If `tag' < 0, get the Jacobian data
-            for all entities. If `numTasks' > 1, only compute and return the part of
-            the data indexed by `task'.
+            returned by element, with elements in the same order as in `getElements'
+            and `getElementsByType'. `jacobians' contains for each element the 9
+            entries of a 3x3 Jacobian matrix (by row), for each integration point.
+            `determinants' contains for each element the determinant of the Jacobian
+            matrix for each integration point. `points' contains for each element the
+            (x, y, z) coordinates of the integration points. If `tag' < 0, get the
+            Jacobian data for all entities. If `numTasks' > 1, only compute and return
+            the part of the data indexed by `task'.
 
             Return `jacobians', `determinants', `points'.
             """
@@ -1431,17 +1431,17 @@ class model:
                     ierr.value)
 
         @staticmethod
-        def reorderElements(elementType, tag, order):
+        def reorderElements(elementType, tag, ordering):
             """
             Reorder the elements of type `elementType' classified on the entity of tag
-            `tag' according to `order'.
+            `tag' according to `ordering'.
             """
-            api_order_, api_order_n_ = _ivectorint(order)
+            api_ordering_, api_ordering_n_ = _ivectorint(ordering)
             ierr = c_int()
             lib.gmshModelMeshReorderElements(
                 c_int(elementType),
                 c_int(tag),
-                api_order_, api_order_n_,
+                api_ordering_, api_ordering_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

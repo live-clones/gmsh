@@ -150,7 +150,7 @@ unsigned int GEdge::getNumMeshElements() const
 unsigned int GEdge::getNumMeshElementsByType(const int familyType) const
 {
   if(familyType == TYPE_LIN) return lines.size();
-  
+
   return 0;
 }
 
@@ -184,7 +184,7 @@ MElement *GEdge::getMeshElement(unsigned int index) const
 MElement *GEdge::getMeshElementByType(const int familyType, const unsigned int index) const
 {
   if(familyType == TYPE_LIN) return lines[index];
-  
+
   return 0;
 }
 
@@ -732,27 +732,28 @@ void GEdge::mesh(bool verbose)
 #endif
 }
 
-bool GEdge::reordered(const int elementType, const std::vector<int> &order)
+bool GEdge::reorder(const int elementType, const std::vector<int> &ordering)
 {
   if(lines.front()->getTypeForMSH() == elementType){
-    if(order.size() != lines.size()) return false;
-    
-    for(std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it){
+    if(ordering.size() != lines.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin();
+        it != ordering.end(); ++it){
       if(*it < 0 || *it >= lines.size()) return false;
     }
-    
+
     std::vector<MLine*> newLinesOrder(lines.size());
-    for(unsigned int i = 0; i < order.size(); i++){
-      newLinesOrder[i] = lines[order[i]];
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newLinesOrder[i] = lines[ordering[i]];
     }
 #if __cplusplus >= 201103L
     lines = std::move(newLinesOrder);
 #else
     lines = newLinesOrder;
 #endif
-    
+
     return true;
   }
-  
+
   return false;
 }
