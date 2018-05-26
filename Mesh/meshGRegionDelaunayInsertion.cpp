@@ -169,13 +169,13 @@ struct faceXtet {
     unsorted[2] = v[2] = t1->tet()->getVertex(faces[iFac][2]);
 
     // sort using a custom function object
-    struct {
+    struct vertex_comparator {
       bool operator()(MVertex *const a, MVertex *const b) const {
         return a->getNum() < b->getNum();
       }
-    } vertex_comparator;
+  } comp;
 
-    std::sort(v, v + 3, vertex_comparator);
+    std::sort(v, v + 3, comp);
   }
 
   MVertex *getVertex(int i) const { return unsorted[i]; }
