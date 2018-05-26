@@ -176,7 +176,7 @@ struct faceXtet {
     unsorted[1] = v[1] = t1->tet()->getVertex(faces[iFac][1]);
     unsorted[2] = v[2] = t1->tet()->getVertex(faces[iFac][2]);
 
-    std::sort(v, v + 3, vertex_compartor());
+    std::sort(v, v + 3, vertex_comparator());
   }
 
   MVertex *getVertex(int i) const { return unsorted[i]; }
