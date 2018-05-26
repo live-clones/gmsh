@@ -27,9 +27,11 @@
 
 using namespace std;
 
-static int signof(int i)
+/// \return -1 if value is negative, +1 if positive and zero otherwise
+template <class T>
+int signof(T const value)
 {
-  return ((i < 0) ? -1 : 1);
+  return (T(0) < value) - (value < T(0));
 }
 
 // TODO: virer les trucs "vertextorank", mettre cette classe-ci :
