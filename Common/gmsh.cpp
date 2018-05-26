@@ -1030,7 +1030,7 @@ GMSH_API void gmsh::model::mesh::getJacobians(const int elementType,
   int dim = ElementType::getDimension(elementType);
   _getElementTypeMap(dim, tag, typeMap);
   const std::vector<GEntity*> &entities(typeMap[elementType]);
-  std::string intName = "", fsName = "";
+  std::string intName = "";
   int intOrder = 0;
   if(!_getIntegrationInfo(integrationType, intName, intOrder)){
     Msg::Error("Unknown quadrature type '%s'", integrationType.c_str());
@@ -1055,9 +1055,9 @@ GMSH_API void gmsh::model::mesh::getJacobians(const int elementType,
       Msg::Error("Jacobians, determinants and points should be preallocated "
                  "if numTasks > 1");
     haveJacobians = haveDeterminants = havePoints = true;
-    preallocateJacobians(elementType, integrationType, haveJacobians,
-                         haveDeterminants, havePoints, jacobians,
-                         determinants, points, tag);
+    preallocateJacobians(elementType, integrationType,
+                         haveJacobians, haveDeterminants, havePoints,
+                         jacobians, determinants, points, tag);
   }
   // get data
   {

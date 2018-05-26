@@ -82,7 +82,7 @@ class myMesh{
     for(unsigned int i = 0; i < etypes.size(); i++){
       std::vector<double> qdeter, qjacob, qpoints;
       gmsh::model::mesh::getJacobians(etypes[i], "Gauss2",
-                                      qdeter, qjacob, qpoints);
+                                      qjacob, qdeter, qpoints);
       std::vector<double> quvwo, fsdata;
       int fsnumcomp;
       gmsh::model::mesh::getBasisFunctions(etypes[i], "Gauss2", "None",
@@ -110,7 +110,6 @@ class myMesh{
           qdet.push_back(qdeter[k]);
         }
         for(unsigned int k = 9*nq*j; k < 9*nq*(j+1); k += 9){
-          printf("qjacob size %d (idx = %d)\n", qjacob.size(), k);
           for(int m = 0; m < 9; m++) qjac.push_back(qjacob[k + m]);
         }
         _elements[etags[i][j]] = new myElement
