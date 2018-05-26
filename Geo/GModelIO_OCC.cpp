@@ -166,9 +166,10 @@ void OCC_Internals::_recomputeMaxTag(int dim)
 void OCC_Internals::bind(TopoDS_Vertex vertex, int tag, bool recursive)
 {
   if(vertex.IsNull()) return;
-  if(_vertexTag.IsBound(vertex) && _vertexTag.Find(vertex) != tag){
-    Msg::Info("Cannot bind existing OpenCASCADE point %d to second tag %d",
-               _vertexTag.Find(vertex), tag);
+  if(_vertexTag.IsBound(vertex)){
+    if(_vertexTag.Find(vertex) != tag)
+      Msg::Info("Cannot bind existing OpenCASCADE point %d to second tag %d",
+                _vertexTag.Find(vertex), tag);
   }
   else{
     _vertexTag.Bind(vertex, tag);
@@ -182,9 +183,10 @@ void OCC_Internals::bind(TopoDS_Vertex vertex, int tag, bool recursive)
 void OCC_Internals::bind(TopoDS_Edge edge, int tag, bool recursive)
 {
   if(edge.IsNull()) return;
-  if(_edgeTag.IsBound(edge) && _edgeTag.Find(edge) != tag){
-    Msg::Info("Cannot bind existing OpenCASCADE curve %d to second tag %d",
-              _edgeTag.Find(edge), tag);
+  if(_edgeTag.IsBound(edge)){
+    if(_edgeTag.Find(edge) != tag)
+      Msg::Info("Cannot bind existing OpenCASCADE curve %d to second tag %d",
+                _edgeTag.Find(edge), tag);
   }
   else{
     _edgeTag.Bind(edge, tag);
@@ -208,9 +210,10 @@ void OCC_Internals::bind(TopoDS_Edge edge, int tag, bool recursive)
 void OCC_Internals::bind(TopoDS_Wire wire, int tag, bool recursive)
 {
   if(wire.IsNull()) return;
-  if(_wireTag.IsBound(wire) && _wireTag.Find(wire) != tag){
-    Msg::Info("Cannot bind existing OpenCASCADE wire %d to second tag %d",
-              _wireTag.Find(wire), tag);
+  if(_wireTag.IsBound(wire)){
+    if(_wireTag.Find(wire) != tag)
+      Msg::Info("Cannot bind existing OpenCASCADE wire %d to second tag %d",
+                _wireTag.Find(wire), tag);
   }
   else{
     _wireTag.Bind(wire, tag);
@@ -233,9 +236,10 @@ void OCC_Internals::bind(TopoDS_Wire wire, int tag, bool recursive)
 void OCC_Internals::bind(TopoDS_Face face, int tag, bool recursive)
 {
   if(face.IsNull()) return;
-  if(_faceTag.IsBound(face) && _faceTag.Find(face) != tag){
-    Msg::Info("Cannot bind existing OpenCASCADE surface %d to second tag %d",
-              _faceTag.Find(face), tag);
+  if(_faceTag.IsBound(face)){
+    if(_faceTag.Find(face) != tag)
+      Msg::Info("Cannot bind existing OpenCASCADE surface %d to second tag %d",
+                _faceTag.Find(face), tag);
   }
   else{
     _faceTag.Bind(face, tag);
@@ -266,9 +270,10 @@ void OCC_Internals::bind(TopoDS_Face face, int tag, bool recursive)
 void OCC_Internals::bind(TopoDS_Shell shell, int tag, bool recursive)
 {
   if(shell.IsNull()) return;
-  if(_shellTag.IsBound(shell) && _shellTag.Find(shell) != tag){
-    Msg::Info("Cannot bind existing OpenCASCADE shell %d to second tag %d",
-              _shellTag.Find(shell), tag);
+  if(_shellTag.IsBound(shell)){
+    if(_shellTag.Find(shell) != tag)
+      Msg::Info("Cannot bind existing OpenCASCADE shell %d to second tag %d",
+                _shellTag.Find(shell), tag);
   }
   else{
     _shellTag.Bind(shell, tag);
@@ -291,9 +296,10 @@ void OCC_Internals::bind(TopoDS_Shell shell, int tag, bool recursive)
 void OCC_Internals::bind(TopoDS_Solid solid, int tag, bool recursive)
 {
   if(solid.IsNull()) return;
-  if(_solidTag.IsBound(solid) && _solidTag.Find(solid) != tag){
-    Msg::Info("Cannot bind existing OpenCASCADE volume %d to second tag %d",
-              _solidTag.Find(solid), tag);
+  if(_solidTag.IsBound(solid)){
+    if(_solidTag.Find(solid) != tag)
+      Msg::Info("Cannot bind existing OpenCASCADE volume %d to second tag %d",
+                _solidTag.Find(solid), tag);
   }
   else{
     _solidTag.Bind(solid, tag);
