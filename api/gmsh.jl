@@ -891,22 +891,22 @@ function getElementsByType(elementType, tag = -1, task = 0, numTasks = 1)
 end
 
 """
-    gmsh.model.mesh.preallocateElementsByType(elementType, elementTags, nodeTags, tag = -1)
+    gmsh.model.mesh.preallocateElementsByType(elementType, elementTag, nodeTag, elementTags, nodeTags, tag = -1)
 
 Preallocate the data for `getElementsByType`. This is necessary only if
 `getElementsByType` is called with `numTasks` > 1.
 
 Return 'elementTags', 'nodeTags'.
 """
-function preallocateElementsByType(elementType, tag = -1)
+function preallocateElementsByType(elementType, elementTag, nodeTag, tag = -1)
     api_elementTags_ = Ref{Ptr{Cint}}()
     api_elementTags_n_ = Ref{Csize_t}()
     api_nodeTags_ = Ref{Ptr{Cint}}()
     api_nodeTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshPreallocateElementsByType, gmsh.clib), Void,
-          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
-          elementType, api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, tag, ierr)
+          (Cint, Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          elementType, elementTag, nodeTag, api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, tag, ierr)
     ierr[] != 0 && error("gmshModelMeshPreallocateElementsByType returned non-zero error code: $(ierr[])")
     elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], true)
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)

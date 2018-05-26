@@ -175,7 +175,7 @@ doc = '''Get the elements of type `elementType' classified on the entity of of t
 mesh.add('getElementsByType',doc,None,iint('elementType'),ovectorint('elementTags'),ovectorint('nodeTags'),iint('tag', '-1'),isize('task', '0'),isize('numTasks', '1'))
 
 doc = '''Preallocate the data for `getElementsByType'. This is necessary only if `getElementsByType' is called with `numTasks' > 1.'''
-mesh.add('preallocateElementsByType',doc,None,iint('elementType'),ovectorint('elementTags'),ovectorint('nodeTags'),iint('tag', '-1'))
+mesh.add('preallocateElementsByType',doc,None,iint('elementType'),ibool('elementTag'),ibool('nodeTag'),ovectorint('elementTags'),ovectorint('nodeTags'),iint('tag', '-1'))
 
 doc = '''Get the Jacobians of all the elements of type `elementType' classified on the entity of dimension `dim' and tag `tag', at the integration points required by the `integrationType' integration rule (e.g. \"Gauss4\"). Data is returned by element, in the same order as data returned by `getElementsByType'. `jacobians' contains for each element the 9 entries of a 3x3 Jacobian matrix (by row), for each integration point. `determinants' contains for each element the determinant of the Jacobian matrix for each integration point. `points' contains for each element the (x, y, z) coordinates of the integration points. If `tag' < 0, get the Jacobian data for all entities.'''
 mesh.add('getJacobians',doc,None,iint('elementType'),istring('integrationType'),ovectordouble('jacobians'),ovectordouble('determinants'),ovectordouble('points'),iint('tag', '-1'),isize('task', '0'),isize('numTasks', '1'))

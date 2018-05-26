@@ -1064,7 +1064,7 @@ class model:
                 _ovectorint(api_nodeTags_, api_nodeTags_n_.value))
 
         @staticmethod
-        def preallocateElementsByType(elementType, tag=-1):
+        def preallocateElementsByType(elementType, elementTag, nodeTag, tag=-1):
             """
             Preallocate the data for `getElementsByType'. This is necessary only if
             `getElementsByType' is called with `numTasks' > 1.
@@ -1076,6 +1076,8 @@ class model:
             ierr = c_int()
             lib.gmshModelMeshPreallocateElementsByType(
                 c_int(elementType),
+                c_int(bool(elementTag)),
+                c_int(bool(nodeTag)),
                 byref(api_elementTags_), byref(api_elementTags_n_),
                 byref(api_nodeTags_), byref(api_nodeTags_n_),
                 c_int(tag),

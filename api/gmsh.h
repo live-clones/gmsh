@@ -351,6 +351,8 @@ namespace gmsh { // Top-level functions
       // Preallocate the data for `getElementsByType'. This is necessary only if
       // `getElementsByType' is called with `numTasks' > 1.
       GMSH_API void preallocateElementsByType(const int elementType,
+                                              const bool elementTag,
+                                              const bool nodeTag,
                                               std::vector<int> & elementTags,
                                               std::vector<int> & nodeTags,
                                               const int tag = -1);

@@ -369,6 +369,8 @@ GMSH_API void gmshModelMeshGetElementsByType(const int elementType,
 /* Preallocate the data for `getElementsByType'. This is necessary only if
  * `getElementsByType' is called with `numTasks' > 1. */
 GMSH_API void gmshModelMeshPreallocateElementsByType(const int elementType,
+                                                     const int elementTag,
+                                                     const int nodeTag,
                                                      int ** elementTags, size_t * elementTags_n,
                                                      int ** nodeTags, size_t * nodeTags_n,
                                                      const int tag,

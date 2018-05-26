@@ -939,15 +939,26 @@ GMSH_API void gmsh::model::mesh::getElementsByType(const int elementType,
   const int numNodes = ElementType::getNumVertices(elementType);
   const size_t begin = (task * numElements) / numTasks;
   const size_t end = ((task + 1) * numElements) / numTasks;
-  if(elementTags.size() < numElements){
+  // check arrays
+  bool haveElementTags = elementTags.size();
+  bool haveNodeTags = nodeTags.size();
+  if(!haveElementTags && !haveNodeTags){
     if(numTasks > 1)
-      Msg::Error("elementTags should be preallocated if numTasks > 1");
-    elementTags.resize(numElements);
+    Msg::Error("ElementTags and nodeTags should be preallocated "
+               "if numTasks > 1");
+    haveElementTags = haveNodeTags = true;
+    preallocateElementsByType(elementType, haveElementTags, haveNodeTags,
+                              elementTags, nodeTags);
   }
-  if(nodeTags.size() < numElements * numNodes){
-    if(numTasks > 1)
-      Msg::Error("nodeTags should be preallocated if numTasks > 1");
-    nodeTags.resize(numElements * numNodes);
+  if(haveElementTags && (elementTags.size() < numElements)){
+    Msg::Error("Wrong size of elementTags array (%d < %d)",
+               elementTags.size(), numElements);
+    throw 4;
+  }
+  if(haveNodeTags && (nodeTags.size() < numElements * numNodes)){
+    Msg::Error("Wrong size of nodeTags array (%d < %d)",
+               nodeTags.size(), numElements * numNodes);
+    throw 4;
   }
   size_t o = 0;
   size_t idx = begin * numNodes;
@@ -957,9 +968,11 @@ GMSH_API void gmsh::model::mesh::getElementsByType(const int elementType,
     for(unsigned int j = 0; j < ge->getNumMeshElementsByType(familyType); j++){
       if(o >= begin && o < end){
         MElement *e = ge->getMeshElementByType(familyType, j);
-        elementTags[o] = e->getNum();
-        for(int k = 0; k < e->getNumVertices(); k++){
-          nodeTags[idx++] = e->getVertex(k)->getNum();
+        if(haveElementTags) elementTags[o] = e->getNum();
+        if(haveNodeTags){
+          for(int k = 0; k < e->getNumVertices(); k++){
+            nodeTags[idx++] = e->getVertex(k)->getNum();
+          }
         }
       }
       o++;
@@ -968,6 +981,8 @@ GMSH_API void gmsh::model::mesh::getElementsByType(const int elementType,
 }
 
 GMSH_API void gmsh::model::mesh::preallocateElementsByType(const int elementType,
+                                                           const bool elementTag,
+                                                           const bool nodeTag,
                                                            std::vector<int> &elementTags,
                                                            std::vector<int> &nodeTags,
                                                            const int tag)
@@ -975,10 +990,14 @@ GMSH_API void gmsh::model::mesh::preallocateElementsByType(const int elementType
   if(!_isInitialized()){ throw -1; }
   const unsigned int numElements = _getNumElementsByType(elementType, tag);
   const unsigned int numNodesByElements = ElementType::getNumVertices(elementType);
-  elementTags.clear();
-  elementTags.resize(numElements, 0);
-  nodeTags.clear();
-  nodeTags.resize(numElements * numNodesByElements, 0);
+  if(elementTag){
+    elementTags.clear();
+    elementTags.resize(numElements, 0);
+  }
+  if(nodeTag){
+    nodeTags.clear();
+    nodeTags.resize(numElements * numNodesByElements, 0);
+  }
 }
 
 static bool _getIntegrationInfo(const std::string &intType,
