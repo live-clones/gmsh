@@ -284,7 +284,7 @@ void connectTets_vector2(std::vector<MTet4*> &l,  std::vector<faceXtet> &conn)
 // We use the visibility criterion : the vertex should be visible
 // by all the facets of the cavity
 
-static void removeFromCavity (std::list<faceXtet> & shell,
+static void removeFromCavity (std::vector<faceXtet> & shell,
 			      std::list<MTet4*> & cavity,
 			      faceXtet &toRemove)
 {
@@ -293,7 +293,7 @@ static void removeFromCavity (std::list<faceXtet> & shell,
 			      std::bind2nd(std::equal_to<MTet4*>(), toRemove.t1)));
   for (int i=0;i<4;i++){
     faceXtet fxt2(toRemove.t1,i);
-    std::list<faceXtet>::iterator it = std::find(shell.begin(),shell.end(),fxt2);
+    std::vector<faceXtet>::iterator it = std::find(shell.begin(),shell.end(),fxt2);
     if (it == shell.end()){
       MTet4 *opposite = toRemove.t1->getNeigh(toRemove.i1);
       if (opposite){
@@ -309,7 +309,7 @@ static void removeFromCavity (std::list<faceXtet> & shell,
   }
 }
 
-static void extendCavity (std::list<faceXtet> & shell,
+static void extendCavity (std::vector<faceXtet> & shell,
 			  std::list<MTet4*> & cavity,
 			  faceXtet &toExtend)
 {
@@ -317,7 +317,7 @@ static void extendCavity (std::list<faceXtet> & shell,
   MTet4 *opposite = t->getNeigh(toExtend.i1);
   for (int i=0;i<4;i++){
     faceXtet fxt(opposite,i);
-    std::list<faceXtet>::iterator it = std::find(shell.begin(),shell.end(),fxt);
+    std::vector<faceXtet>::iterator it = std::find(shell.begin(),shell.end(),fxt);
     if (it == shell.end()) shell.push_back(fxt);
     else shell.erase(it);
   }
@@ -327,7 +327,7 @@ static void extendCavity (std::list<faceXtet> & shell,
 
 // if all faces of the tet that are not in the shell see v, then it is ok
 // either to add or to remove t from the shell
-static bool verifyShell (MVertex *v, MTet4*t, std::list<faceXtet> & shell){
+static bool verifyShell (MVertex *v, MTet4*t, std::vector<faceXtet> & shell){
   if (!t)return false;
   return 1;
   int NBAD_BEFORE=0,NBAD_AFTER=0;
@@ -335,7 +335,7 @@ static bool verifyShell (MVertex *v, MTet4*t, std::list<faceXtet> & shell){
     faceXtet fxt(t,i);
     bool starShaped = fxt.visible(v);
     if (!starShaped){
-      std::list<faceXtet>::iterator its = std::find(shell.begin(),shell.end(),fxt);
+      std::vector<faceXtet>::iterator its = std::find(shell.begin(),shell.end(),fxt);
       if (its == shell.end())NBAD_AFTER ++;
       else NBAD_BEFORE++;
     }
@@ -344,11 +344,11 @@ static bool verifyShell (MVertex *v, MTet4*t, std::list<faceXtet> & shell){
   return (NBAD_AFTER < NBAD_BEFORE);
 }
 
-int makeCavityStarShaped (std::list<faceXtet> & shell,
-			   std::list<MTet4*> & cavity,
-			   MVertex *v ){
-  std::list<faceXtet> wrong;
-  for (std::list<faceXtet>::iterator it = shell.begin(); it != shell.end() ;++it) {
+int makeCavityStarShaped(std::vector<faceXtet> & shell,
+                         std::list<MTet4*> & cavity,
+                         MVertex *v ){
+  std::vector<faceXtet> wrong;
+  for (std::vector<faceXtet>::iterator it = shell.begin(); it != shell.end() ;++it) {
     faceXtet &fxt = *it;
     bool starShaped = fxt.visible(v);
     if (!starShaped){
@@ -362,8 +362,7 @@ int makeCavityStarShaped (std::list<faceXtet> & shell,
   // bool doneNothing = true;
   while (!wrong.empty()){
     faceXtet &fxt = *(wrong.begin());
-    std::list<faceXtet>::iterator its = std::find(shell.begin(),shell.end(),fxt);
-    if (its != shell.end()){
+    if (std::find(shell.begin(),shell.end(),fxt) != shell.end()){
       if (fxt.t1->getNeigh(fxt.i1) && fxt.t1->getNeigh(fxt.i1)->onWhat() ==
           fxt.t1->onWhat() && verifyShell(v,fxt.t1->getNeigh(fxt.i1),shell)){
 	extendCavity (shell,cavity,fxt);
@@ -382,24 +381,23 @@ int makeCavityStarShaped (std::list<faceXtet> & shell,
   return 1;
 }
 
-void findCavity(std::list<faceXtet> &shell, std::list<MTet4 *> &cavity,
+void findCavity(std::vector<faceXtet> &shell, std::list<MTet4 *> &cavity,
                 MVertex *v, MTet4 *t) {
   t->setDeleted(true);
   cavity.push_back(t);
 
-  for (std::list<MTet4 *>::iterator it = --cavity.end(); it != cavity.end();
-       ++it) {
+  for (std::list<MTet4 *>::iterator it = --cavity.end(); it != cavity.end(); ++it) {
     for (int i = 0; i < 4; i++) {
       MTet4 *neigh = (*it)->getNeigh(i);
-      faceXtet fxt(*it, i);
+
       if (!neigh) {
-        shell.push_back(fxt);
+        shell.push_back(faceXtet(*it, i));
       } else if (!neigh->isDeleted()) {
         if (neigh->inCircumSphere(v) && (neigh->onWhat() == (*it)->onWhat())) {
           neigh->setDeleted(true);
           cavity.push_back(neigh);
         } else {
-          shell.push_back(fxt);
+          shell.push_back(faceXtet(*it, i));
         }
       }
     }
@@ -426,7 +424,7 @@ void printTets (const char *fn, std::list<MTet4*> &cavity, bool force = false )
   }
 }
 
-bool insertVertexB(std::list<faceXtet> &shell,
+bool insertVertexB(std::vector<faceXtet> &shell,
                    std::list<MTet4*> &cavity,
                    MVertex *v,
                    double lc1,
@@ -437,13 +435,13 @@ bool insertVertexB(std::list<faceXtet> &shell,
                    MTet4Factory &myFactory,
                    std::set<MTet4*,compareTet4Ptr> &allTets)
 {
-  std::vector<faceXtet> conn;
   std::vector<MTet4*> new_cavity;
+  new_cavity.reserve(shell.size());
 
-  MTet4** newTets = new MTet4*[shell.size()];
-  int k = 0;
+  std::vector<MTet4*> new_tets;
+  new_tets.reserve(shell.size());
 
-  std::list<faceXtet>::iterator it = shell.begin();
+  std::vector<faceXtet>::iterator it = shell.begin();
 
   bool onePointIsTooClose = false;
   while (it != shell.end()){
@@ -452,16 +450,14 @@ bool insertVertexB(std::list<faceXtet> &shell,
     MTet4 *t4 = myFactory.Create(tr, vSizes, vSizesBGM, lc1, lc2);
     t4->setOnWhat(t->onWhat());
 
-    double d1 = distance (it->v[0],v);
-    double d2 = distance (it->v[1],v);
-    double d3 = distance (it->v[2],v);
+    double const lc = Extend2dMeshIn3dVolumes() ? std::min(lc1, lc2) : lc2;
+    if (distance(it->v[0],v) < lc * .05 ||
+        distance(it->v[1],v) < lc * .05 ||
+        distance(it->v[2],v) < lc * .05) onePointIsTooClose = true;
 
-    double lc = Extend2dMeshIn3dVolumes() ? std::min(lc1, lc2) : lc2;
-    if (d1 < lc * .05 || d2 < lc * .05 || d3 < lc * .05) onePointIsTooClose = true;
-
-    newTets[k++] = t4;
-
+    new_tets.push_back(t4);
     new_cavity.push_back(t4);
+
     MTet4 *otherSide = it->t1->getNeigh(it->i1);
 
     if (otherSide)
@@ -469,14 +465,15 @@ bool insertVertexB(std::list<faceXtet> &shell,
     ++it;
   }
   if (!onePointIsTooClose){
+    std::vector<faceXtet> conn;
     connectTets_vector2(new_cavity,conn);
-    allTets.insert(newTets, newTets + shell.size());
-    delete [] newTets;
+
+    allTets.insert(new_tets.begin(), new_tets.end());
+
     return true;
   }
   else /* one point is too close */ {
-    for (unsigned int i = 0; i <shell.size(); i++) myFactory.Free(newTets[i]);
-    delete [] newTets;
+    for (unsigned int i = 0; i < shell.size(); i++) myFactory.Free(new_tets[i]);
     std::list<MTet4*>::iterator ittet = cavity.begin();
     std::list<MTet4*>::iterator ittete = cavity.end();
     while(ittet != ittete){
@@ -1105,11 +1102,11 @@ static void memoryCleanup(MTet4Factory &myFactory, std::set<MTet4*, compareTet4P
 }
 
 int isCavityCompatibleWithEmbeddedEdges(std::list<MTet4*> &cavity,
-					std::list<faceXtet> &shell,
+					std::vector<faceXtet> &shell,
 					edgeContainerB &allEmbeddedEdges)
 {
   std::vector<MEdge> ed;
-  for (std::list<faceXtet>::iterator it = shell.begin(); it != shell.end();it++){
+  for (std::vector<faceXtet>::iterator it = shell.begin(); it != shell.end();it++){
     ed.push_back(MEdge(it->v[0],it->v[1]));
     ed.push_back(MEdge(it->v[1],it->v[2]));
     ed.push_back(MEdge(it->v[2],it->v[0]));
@@ -1127,11 +1124,11 @@ int isCavityCompatibleWithEmbeddedEdges(std::list<MTet4*> &cavity,
 }
 
 int isCavityCompatibleWithEmbeddedEdges(std::list<MTet4*> &cavity,
-					std::list<faceXtet> &shell,
+					std::vector<faceXtet> &shell,
 					std::set<MEdge, Less_Edge> &allEmbeddedEdges)
 {
   std::set<MEdge,Less_Edge> ed;
-  for (std::list<faceXtet>::iterator it = shell.begin(); it != shell.end();it++){
+  for (std::vector<faceXtet>::iterator it = shell.begin(); it != shell.end();it++){
     ed.insert(MEdge(it->v[0],it->v[1]));
     ed.insert(MEdge(it->v[1],it->v[2]));
     ed.insert(MEdge(it->v[2],it->v[0]));
@@ -1322,7 +1319,7 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify)
 
 
       //// A TEST !!!
-      std::list<faceXtet> shell;
+      std::vector<faceXtet> shell;
       std::list<MTet4*> cavity;
       MVertex vv (center[0], center[1], center[2], worst->onWhat());
       findCavity(shell, cavity, &vv, worst);
