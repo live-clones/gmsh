@@ -28,13 +28,12 @@ def my_function(xyz):
 
 
 def compute_interpolation_error(nodes, triangles, f):
-    quvwo,qdata,fnum,sf = gmsh.model.mesh.getIntegrationDataByType(2,"Gauss2", "Lagrange")
-    weights = quvwo.reshape([-1,4])[:,3]
+    jac,det,pt = gmsh.model.mesh.getJacobians(2,"Gauss2")
+    uvwo,numcomp,sf = gmsh.model.mesh.getBasisFunctions(2,"Gauss2","Lagrange")
+    weights = uvwo.reshape([-1,4])[:,3]
     sf = sf.reshape((weights.shape[0],-1))
-    qd = qdata.reshape((triangles.shape[0],-1,13))
-    qx = qd[:,:,:3]
-    det = np.abs(qd[:,:,3])
-
+    qx = pt.reshape((triangles.shape[0],-1,3))
+    det = np.abs(det.reshape((triangles.shape[0],-1)))
     f_vert = f(nodes)
     f_fem = np.dot(f_vert[triangles],sf)
     err_tri = np.sum((f_fem-f(qx))**2*det*weights,1)

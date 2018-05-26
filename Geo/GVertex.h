@@ -82,10 +82,13 @@ class GVertex : public GEntity
 
   // get number of elements in the mesh
   unsigned int getNumMeshElements() const;
+  unsigned int getNumMeshElementsByType(const int familyType) const;
   void getNumMeshElements(unsigned *const c) const;
 
   // get the element at the given index
   MElement *getMeshElement(unsigned int index) const;
+  // get the element at the given index for a given familyType
+  MElement *getMeshElementByType(const int familyType, const unsigned int index) const;
 
   // return true if this vertex is on a seam of the given face
   bool isOnSeam(const GFace *gf) const;
@@ -98,6 +101,9 @@ class GVertex : public GEntity
   void addPoint(MPoint *p){ points.push_back(p); }
   void addElement(int type, MElement *e);
   void removeElement(int type, MElement *e);
+  
+  // reordered the mesh elements given by elementType according to order
+  virtual bool reordered(const int elementType, const std::vector<int> &order);
 };
 
 #endif

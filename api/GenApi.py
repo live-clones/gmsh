@@ -36,6 +36,13 @@ class arg:
 
 # input types
 
+def isize(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+          "const size_t", "const size_t", False)
+    a.python_arg = "c_size_t(" + name + ")"
+    a.julia_ctype = "Csize_t"
+    return a
+
 def ibool(name, value=None, python_value=None, julia_value=None):
     a = arg(name, value, python_value, julia_value,
             "const bool", "const int", False)

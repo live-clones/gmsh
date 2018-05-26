@@ -78,19 +78,19 @@ MetaEl::metaInfoType::metaInfoType(int type, int order)
   }
 
   // Get HO nodal base
-  const int tag = ElementType::getTag(type, order);                             // Get tag for complete element type
+  const int tag = ElementType::getType(type, order);                             // Get tag for complete element type
   if (!tag) return;
   const nodalBasis *basis = BasisFactory::getNodalBasis(tag);
   nbVert = basis->getNumShapeFunctions();
   points = basis->points;
 
   // Get nodal bases (HO and linear) on base face
-  const int baseFaceTag = ElementType::getTag(baseFaceType, order);                       // Get tag for base face basis
+  const int baseFaceTag = ElementType::getType(baseFaceType, order);                       // Get tag for base face basis
   if (!baseFaceTag) return;
   baseFaceBasis = BasisFactory::getNodalBasis(baseFaceTag);
   const int nbBaseVert = baseFaceBasis->getNumShapeFunctions();
   baseGradShapeFuncVal.resize(nbBaseVert, 3*nbBaseVert);
-  const int linBaseFaceTag = ElementType::getTag(baseFaceType, 1);                        // Get tag for base face linear basis
+  const int linBaseFaceTag = ElementType::getType(baseFaceType, 1);                        // Get tag for base face linear basis
   if (!linBaseFaceTag) return;
   linBaseFaceBasis = BasisFactory::getNodalBasis(linBaseFaceTag);
   const int nbLinBaseShapeFunc = linBaseFaceBasis->getNumShapeFunctions();

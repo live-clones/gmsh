@@ -68,12 +68,12 @@ class MElement
   // return true if the element can be considered as a serendipity element
   virtual bool getIsAssimilatedSerendipity() const
   {
-    return ElementType::SerendipityFromTag(getTypeForMSH()) > 0;
+    return ElementType::getSerendipity(getTypeForMSH()) > 0;
   }
   // return true if the element has to be considered as a serendipity element
   virtual bool getIsOnlySerendipity() const
   {
-    return ElementType::SerendipityFromTag(getTypeForMSH()) > 1;
+    return ElementType::getSerendipity(getTypeForMSH()) > 1;
   }
 
   // get/set the partition to which the element belongs
@@ -251,6 +251,8 @@ class MElement
 
   // compute the barycenter
   virtual SPoint3 barycenter(bool primary = false) const;
+  // compute the barycenter without divided by the number of nodes
+  virtual SPoint3 fastBarycenter(bool primary = false) const;
   virtual SPoint3 barycenterUVW() const;
   // compute the barycenter in infinity norm
   virtual SPoint3 barycenter_infty() const;
@@ -305,7 +307,9 @@ class MElement
   virtual double getJacobian(const fullMatrix<double> &gsf, double jac[3][3]) const;
   // To be compatible with _vgrads of functionSpace without having to put under
   // fullMatrix form
-  virtual double getJacobian(const std::vector<SVector3> &gsf, double jac[3][3])const ;
+  virtual double getJacobian(const std::vector<SVector3> &gsf, double jac[3][3]) const;
+  // jac is an row-major order array
+  virtual double getJacobian(const std::vector<SVector3> &gsf, double *jac) const;
   virtual double getJacobian(double u, double v, double w, double jac[3][3]) const;
   inline double getJacobian(double u, double v, double w, fullMatrix<double> &j) const{
     double JAC[3][3];
@@ -336,6 +340,7 @@ class MElement
   // get the point in cartesian coordinates corresponding to the point (u,v,w)
   // in parametric coordinates
   virtual void pnt(double u, double v, double w, SPoint3 &p) const;
+  virtual void pnt(double u, double v, double w, double *p) const;
   // To be compatible with functionSpace without changing form
   virtual void pnt(const std::vector<double> &sf,SPoint3 &p) const;
   virtual void primaryPnt(double u, double v, double w, SPoint3 &p);

@@ -161,6 +161,7 @@ class GEdge : public GEntity {
 
   // get total/by-type number of elements in the mesh
   unsigned int getNumMeshElements() const;
+  unsigned int getNumMeshElementsByType(const int familyType) const;
   unsigned int getNumMeshParentElements();
   void getNumMeshElements(unsigned *const c) const;
 
@@ -169,6 +170,8 @@ class GEdge : public GEntity {
 
   // get the element at the given index
   MElement *getMeshElement(unsigned int index) const;
+  // get the element at the given index for a given familyType
+  MElement *getMeshElementByType(const int familyType, const unsigned int index) const;
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
@@ -227,6 +230,9 @@ class GEdge : public GEntity {
   virtual void discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts);
   SPoint3 closestPoint (SPoint3 &p, double tolerance);
   virtual void mesh(bool verbose) ;
+  
+  // reordered the mesh elements given by elementType according to order
+  virtual bool reordered(const int elementType, const std::vector<int> &order);
 };
 
 #endif

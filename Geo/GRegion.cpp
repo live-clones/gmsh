@@ -63,6 +63,18 @@ unsigned int GRegion::getNumMeshElements() const
     trihedra.size() + polyhedra.size();
 }
 
+unsigned int GRegion::getNumMeshElementsByType(const int familyType) const
+{
+  if(familyType == TYPE_TET) return tetrahedra.size();
+  else if(familyType == TYPE_HEX) return hexahedra.size();
+  else if(familyType == TYPE_PRI) return prisms.size();
+  else if(familyType == TYPE_PYR) return pyramids.size();
+  else if(familyType == TYPE_TRIH) return trihedra.size();
+  else if(familyType == TYPE_POLYH) return polyhedra.size();
+  
+  return 0;
+}
+
 unsigned int GRegion::getNumMeshParentElements()
 {
   unsigned int n = 0;
@@ -127,6 +139,18 @@ MElement *GRegion::getMeshElement(unsigned int index) const
     return polyhedra[index - tetrahedra.size() - hexahedra.size() - prisms.size() -
                      pyramids.size() - trihedra.size()];
 
+  return 0;
+}
+
+MElement *GRegion::getMeshElementByType(const int familyType, const unsigned int index) const
+{
+  if(familyType == TYPE_TET) return tetrahedra[index];
+  else if(familyType == TYPE_HEX) return hexahedra[index];
+  else if(familyType == TYPE_PRI) return prisms[index];
+  else if(familyType == TYPE_PYR) return pyramids[index];
+  else if(familyType == TYPE_TRIH) return trihedra[index];
+  else if(familyType == TYPE_POLYH) return polyhedra[index];
+  
   return 0;
 }
 
@@ -562,6 +586,131 @@ void GRegion::removeElement(int type, MElement *e)
   default:
     Msg::Error("Trying to remove unsupported element in region");
   }
+}
+
+bool GRegion::reordered(const int elementType, const std::vector<int> &order)
+{
+  if(tetrahedra.front()->getTypeForMSH() == elementType){
+    if(order.size() != tetrahedra.size()) return false;
+    
+    for(std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it){
+      if(*it < 0 || *it >= tetrahedra.size()) return false;
+    }
+    
+    std::vector<MTetrahedron*> newTetrahedraOrder(tetrahedra.size());
+    for(unsigned int i = 0; i < order.size(); i++){
+      newTetrahedraOrder[i] = tetrahedra[order[i]];
+    }
+#if __cplusplus >= 201103L
+    tetrahedra = std::move(newTetrahedraOrder);
+#else
+    tetrahedra = newTetrahedraOrder;
+#endif
+    
+    return true;
+  }
+  
+  if(hexahedra.front()->getTypeForMSH() == elementType){
+    if(order.size() != hexahedra.size()) return false;
+    
+    for(std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it){
+      if(*it < 0 || *it >= hexahedra.size()) return false;
+    }
+    
+    std::vector<MHexahedron*> newHexahedraOrder(hexahedra.size());
+    for(unsigned int i = 0; i < order.size(); i++){
+      newHexahedraOrder[i] = hexahedra[order[i]];
+    }
+#if __cplusplus >= 201103L
+    hexahedra = std::move(newHexahedraOrder);
+#else
+    hexahedra = newHexahedraOrder;
+#endif
+    
+    return true;
+  }
+  
+  if(prisms.front()->getTypeForMSH() == elementType){
+    if(order.size() != prisms.size()) return false;
+    
+    for(std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it){
+      if(*it < 0 || *it >= prisms.size()) return false;
+    }
+    
+    std::vector<MPrism*> newPrismsOrder(prisms.size());
+    for(unsigned int i = 0; i < order.size(); i++){
+      newPrismsOrder[i] = prisms[order[i]];
+    }
+#if __cplusplus >= 201103L
+    prisms = std::move(newPrismsOrder);
+#else
+    prisms = newPrismsOrder;
+#endif
+    
+    return true;
+  }
+  
+  if(pyramids.front()->getTypeForMSH() == elementType){
+    if(order.size() != pyramids.size()) return false;
+    
+    for(std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it){
+      if(*it < 0 || *it >= pyramids.size()) return false;
+    }
+    
+    std::vector<MPyramid*> newPyramidsOrder(pyramids.size());
+    for(unsigned int i = 0; i < order.size(); i++){
+      newPyramidsOrder[i] = pyramids[order[i]];
+    }
+#if __cplusplus >= 201103L
+    pyramids = std::move(newPyramidsOrder);
+#else
+    pyramids = newPyramidsOrder;
+#endif
+    
+    return true;
+  }
+  
+  if(polyhedra.front()->getTypeForMSH() == elementType){
+    if(order.size() != polyhedra.size()) return false;
+    
+    for(std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it){
+      if(*it < 0 || *it >= polyhedra.size()) return false;
+    }
+    
+    std::vector<MPolyhedron*> newPolyhedraOrder(polyhedra.size());
+    for(unsigned int i = 0; i < order.size(); i++){
+      newPolyhedraOrder[i] = polyhedra[order[i]];
+    }
+#if __cplusplus >= 201103L
+    polyhedra = std::move(newPolyhedraOrder);
+#else
+    polyhedra = newPolyhedraOrder;
+#endif
+    
+    return true;
+  }
+  
+  if(trihedra.front()->getTypeForMSH() == elementType){
+    if(order.size() != trihedra.size()) return false;
+    
+    for(std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it){
+      if(*it < 0 || *it >= trihedra.size()) return false;
+    }
+    
+    std::vector<MTrihedron*> newTrihedraOrder(trihedra.size());
+    for(unsigned int i = 0; i < order.size(); i++){
+      newTrihedraOrder[i] = trihedra[order[i]];
+    }
+#if __cplusplus >= 201103L
+    trihedra = std::move(newTrihedraOrder);
+#else
+    trihedra = newTrihedraOrder;
+#endif
+    
+    return true;
+  }
+  
+  return false;
 }
 
 static void setRand(double r[6])

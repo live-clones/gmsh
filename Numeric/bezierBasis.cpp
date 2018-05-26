@@ -464,7 +464,7 @@ bezierBasis::~bezierBasis()
 
 void bezierBasis::f(double u, double v, double w, double *sf) const
 {
-  const int tag = ElementType::getTag(_data.elementType(), _data.spaceOrder());
+  const int tag = ElementType::getType(_data.elementType(), _data.spaceOrder());
   const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
   double p[1256];
   // TODO: change (u,v,w)

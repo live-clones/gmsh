@@ -356,12 +356,20 @@ GMSH_API void gmsh::model::getBoundingBox(const int dim,
                                           double &zmax)
 {
   if(!_isInitialized()){ throw -1; }
-  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
-  if(!ge){
-    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
-    throw 2;
+
+  SBoundingBox3d box;
+  if(dim < 0 && tag < 0){
+    box = GModel::current()->bounds();
+    if(box.empty()){ throw(3); }
   }
-  SBoundingBox3d box = ge->bounds();
+  else{
+    GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+    if(!ge){
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+      throw 2;
+    }
+    box = ge->bounds();
+  }
   if(box.empty()){ throw(3); }
   xmin = box.min().x();
   ymin = box.min().y();
@@ -369,6 +377,13 @@ GMSH_API void gmsh::model::getBoundingBox(const int dim,
   xmax = box.max().x();
   ymax = box.max().y();
   zmax = box.max().z();
+}
+
+GMSH_API int gmsh::model::getDimension()
+{
+  if(!_isInitialized()){ throw -1; }
+
+  return GModel::current()->getDim();
 }
 
 GMSH_API int gmsh::model::addDiscreteEntity(const int dim,
@@ -443,28 +458,6 @@ GMSH_API void gmsh::model::mesh::generate(const int dim)
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
-GMSH_API void gmsh::model::mesh::homology(const std::vector<int> &domainTags,
-					  const std::vector<int> &subdomainTags,
-					  const std::vector<int> &dims)
-{
-  if(!_isInitialized()){ throw -1; }
-  GModel::current()->addHomologyRequest("Homology",
-					domainTags,
-					subdomainTags,
-					dims);
-}
-
-GMSH_API void gmsh::model::mesh::cohomology(const std::vector<int> &domainTags,
-					    const std::vector<int> &subdomainTags,
-					    const std::vector<int> &dims)
-{
-  if(!_isInitialized()){ throw -1; }
-  GModel::current()->addHomologyRequest("Cohomology",
-					domainTags,
-					subdomainTags,
-					dims);
-}
-
 GMSH_API void gmsh::model::mesh::partition(const int numPart)
 {
   if(!_isInitialized()){ throw -1; }
@@ -485,13 +478,6 @@ GMSH_API void gmsh::model::mesh::setOrder(const int order)
   if(!_isInitialized()){ throw -1; }
   GModel::current()->setOrderN(order, CTX::instance()->mesh.secondOrderLinear,
                                CTX::instance()->mesh.secondOrderIncomplete);
-  CTX::instance()->mesh.changed = ENT_ALL;
-}
-
-GMSH_API void gmsh::model::mesh::removeDuplicateNodes()
-{
-  if(!_isInitialized()){ throw -1; }
-  GModel::current()->removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
@@ -553,6 +539,87 @@ GMSH_API void gmsh::model::mesh::getNodes(std::vector<int> &nodeTags,
   }
 }
 
+GMSH_API void gmsh::model::mesh::getNode(const int nodeTag,
+                                         std::vector<double> &coord,
+                                         std::vector<double> &parametricCoord)
+{
+  if(!_isInitialized()){ throw -1; }
+  MVertex *v = GModel::current()->getMeshVertexByTag(nodeTag);
+  if(!v){
+    Msg::Error("Unknown mesh node %d", nodeTag);
+    throw 2;
+  }
+  coord.resize(3);
+  coord[0] = v->x();
+  coord[1] = v->y();
+  coord[2] = v->z();
+  parametricCoord.reserve(2);
+  double u;
+  if(v->getParameter(0, u))
+  parametricCoord.push_back(u);
+  if(v->getParameter(1, u))
+  parametricCoord.push_back(u);
+}
+
+GMSH_API void gmsh::model::mesh::rebuildNodeCache(bool onlyIfNecessary)
+{
+  if(!_isInitialized()){ throw -1; }
+  GModel::current()->rebuildMeshVertexCache(onlyIfNecessary);
+}
+
+GMSH_API void gmsh::model::mesh::setNodes(const int dim,
+                                          const int tag,
+                                          const std::vector<int> &nodeTags,
+                                          const std::vector<double> &coord,
+                                          const std::vector<double> &parametricCoord)
+{
+  if(!_isInitialized()){ throw -1; }
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge){
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    throw 2;
+  }
+  if(coord.size() != 3 * nodeTags.size()){
+    Msg::Error("Wrong number of coordinates");
+    throw 2;
+  }
+  bool param = false;
+  if(parametricCoord.size()){
+    if(parametricCoord.size() != dim * nodeTags.size()){
+      Msg::Error("Wrong number of parametric coordinates");
+      throw 2;
+    }
+    param = true;
+  }
+  // delete nodes and elements; this will also delete the model mesh cache
+  ge->deleteMesh();
+  for(unsigned int i = 0; i < nodeTags.size(); i++){
+    int n = nodeTags[i];
+    double x = coord[3 * i];
+    double y = coord[3 * i + 1];
+    double z = coord[3 * i + 2];
+    MVertex *vv = 0;
+    if(param && dim == 1){
+      double u = parametricCoord[i];
+      vv = new MEdgeVertex(x, y, z, ge, u, n);
+    }
+    else if(param && dim == 2){
+      double u = parametricCoord[2 * i];
+      double v = parametricCoord[2 * i + 1];
+      vv = new MFaceVertex(x, y, z, ge, u, v, n);
+    }
+    else
+    vv = new MVertex(x, y, z, ge, n);
+    ge->mesh_vertices.push_back(vv);
+  }
+}
+
+GMSH_API void gmsh::model::mesh::reclassifyNodes()
+{
+  if(!_isInitialized()){ throw -1; }
+  GModel::current()->pruneMeshVertexAssociations();
+}
+
 static void _getElementTypeMap(int dim, int tag,
                                std::map<int, std::vector<GEntity*> > &typeMap)
 {
@@ -603,23 +670,66 @@ static void _getElementTypeMap(int dim, int tag,
   }
 }
 
-static void _getElementData(const int elementType,
-                            const std::vector<GEntity*> &entities,
-                            std::vector<int> &elementTags,
-                            std::vector<int> &nodeTags)
+static unsigned int _getNumElementsByType(const int elementType,
+                                          const int tag)
 {
+  int dim = ElementType::getDimension(elementType);
+  std::vector<GEntity*> entities;
+  if(tag >= 0){
+    GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+    if(!ge){
+      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+      throw 2;
+    }
+    entities.push_back(ge);
+  }
+  else{
+    GModel::current()->getEntities(entities, dim);
+  }
+  unsigned int numberElement = 0;
   for(unsigned int i = 0; i < entities.size(); i++){
     GEntity *ge = entities[i];
-    for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
-      MElement *e = ge->getMeshElement(j);
-      if(e->getTypeForMSH() == elementType){
-        elementTags.push_back(e->getNum());
-        for(int k = 0; k < e->getNumVertices(); k++){
-          nodeTags.push_back(e->getVertex(k)->getNum());
-        }
-      }
+    switch(ge->dim()){
+    case 0: {
+      GVertex *v = static_cast<GVertex*>(ge);
+      if(v->points.size())
+        if(v->points.front()->getTypeForMSH() == elementType)
+          numberElement += v->points.size();
+      break; }
+    case 1: {
+      GEdge *e = static_cast<GEdge*>(ge);
+      if(e->lines.size())
+        if(e->lines.front()->getTypeForMSH() == elementType)
+          numberElement += e->lines.size();
+      break; }
+    case 2: {
+      GFace *f = static_cast<GFace*>(ge);
+      if(f->triangles.size())
+        if(f->triangles.front()->getTypeForMSH() == elementType)
+          numberElement += f->triangles.size();
+      if(f->quadrangles.size())
+        if(f->quadrangles.front()->getTypeForMSH() == elementType)
+          numberElement += f->quadrangles.size();
+      break; }
+    case 3: {
+      GRegion *r = static_cast<GRegion*>(ge);
+      if(r->tetrahedra.size())
+        if(r->tetrahedra.front()->getTypeForMSH() == elementType)
+          numberElement += r->tetrahedra.size();
+      if(r->hexahedra.size())
+        if(r->hexahedra.front()->getTypeForMSH() == elementType)
+          numberElement += r->hexahedra.size();
+      if(r->prisms.size())
+        if(r->prisms.front()->getTypeForMSH() == elementType)
+          numberElement += r->prisms.size();
+      if(r->pyramids.size())
+        if(r->pyramids.front()->getTypeForMSH() == elementType)
+          numberElement += r->pyramids.size();
+      break; }
     }
   }
+
+  return numberElement;
 }
 
 GMSH_API void gmsh::model::mesh::getElements(std::vector<int> &elementTypes,
@@ -639,308 +749,42 @@ GMSH_API void gmsh::model::mesh::getElements(std::vector<int> &elementTypes,
     elementTypes.push_back(it->first);
     elementTags.push_back(std::vector<int>());
     nodeTags.push_back(std::vector<int>());
-    _getElementData(it->first, it->second, elementTags.back(), nodeTags.back());
-  }
-}
-
-GMSH_API void gmsh::model::mesh::getElementTypes(std::vector<int> &elementTypes,
-                                                 const int dim,
-                                                 const int tag)
-{
-  if(!_isInitialized()){ throw -1; }
-  elementTypes.clear();
-  std::map<int, std::vector<GEntity*> > typeMap;
-  _getElementTypeMap(dim, tag, typeMap);
-  for(std::map<int, std::vector<GEntity*> >::const_iterator it = typeMap.begin();
-      it != typeMap.end(); it++){
-    elementTypes.push_back(it->first);
-  }
-}
-
-GMSH_API void gmsh::model::mesh::getElementsByType(const int elementType,
-                                                   std::vector<int> &elementTags,
-                                                   std::vector<int> &nodeTags,
-                                                   const int dim,
-                                                   const int tag)
-{
-  if(!_isInitialized()){ throw -1; }
-  elementTags.clear();
-  nodeTags.clear();
-  std::map<int, std::vector<GEntity*> > typeMap;
-  _getElementTypeMap(dim, tag, typeMap);
-  _getElementData(elementType, typeMap[elementType], elementTags, nodeTags);
-}
-
-GMSH_API void gmsh::model::mesh::getElementProperties(const int elementType,
-                                                      std::string &name,
-                                                      int &dim,
-                                                      int &order,
-                                                      int &numNodes,
-                                                      std::vector<double> &parametricCoord)
-{
-  if(!_isInitialized()){ throw -1; }
-  const char *n;
-  numNodes = MElement::getInfoMSH(elementType, &n);
-  name = n;
-  int parentType = ElementType::ParentTypeFromTag(elementType);
-  nodalBasis *basis = 0;
-  if(parentType == TYPE_PYR)
-    basis = new pyramidalBasis(elementType);
-  else
-    basis = new polynomialBasis(elementType);
-  dim = basis->dimension;
-  order = basis->order;
-  numNodes = basis->points.size1();
-  for(int i = 0; i < basis->points.size1(); i++)
-    for(int j = 0; j < basis->points.size2(); j++)
-      parametricCoord.push_back(basis->points(i, j));
-  delete basis;
-}
-
-// TODO: give access to closures
-// GMSH_API void gmsh::model::mesh::getElementClosures(const int elementType, ...)
-// {
-// }
-
-static bool _getIntegrationInfo(const std::string &intType,
-                                std::string &intName, int &intOrder)
-{
-  if(intType.substr(0, 5) == "Gauss"){
-    intName = "Gauss";
-    intOrder = atoi(intType.substr(5).c_str());
-    return true;
-  }
-  return false;
-}
-
-static bool _getFunctionSpaceInfo(const std::string &fsType,
-                                  std::string &fsName, int &fsOrder, int &fsComp)
-{
-  if(fsType.empty() || fsType == "None"){
-    fsName = "";
-    fsOrder = 0;
-    fsComp = 0;
-    return true;
-  }
-  if(fsType == "IsoParametric" || fsType == "Lagrange"){
-    fsName = "Lagrange";
-    fsOrder = -1;
-    fsComp = 1;
-    return true;
-  }
-  if(fsType == "GradIsoParametric" || fsType == "GradLagrange"){
-    fsName = "GradLagrange";
-    fsOrder = -1;
-    fsComp = 3;
-    return true;
-  }
-  return false;
-}
-
-static void _getIntegrationData(const int elementType,
-                                const std::vector<GEntity*> &entities,
-                                const std::string &intType,
-                                const std::string &fsType,
-                                std::vector<double> &intPoints,
-                                std::vector<double> &intData,
-                                int &fsNumComp,
-                                std::vector<double> &fsData)
-{
-  std::string intName = "", fsName = "";
-  int intOrder = 0, fsOrder = 0;
-  if(!_getIntegrationInfo(intType, intName, intOrder)){
-    Msg::Error("Unknown quadrature type '%s'", intType.c_str());
-    throw 2;
-  }
-  if(!_getFunctionSpaceInfo(fsType, fsName, fsOrder, fsNumComp)){
-    Msg::Error("Unknown function space type '%s'", fsType.c_str());
-    throw 2;
-  }
-  // get quadrature info
-  int familyType = ElementType::ParentTypeFromTag(elementType);
-  fullMatrix<double> pts;
-  fullVector<double> weights;
-  gaussIntegration::get(familyType, intOrder, pts, weights);
-  if(pts.size1() != weights.size() || pts.size2() != 3){
-    Msg::Error("Wrong integration point format");
-    throw 3;
-  }
-  for(int i = 0; i < pts.size1(); i++){
-    intPoints.push_back(pts(i, 0));
-    intPoints.push_back(pts(i, 1));
-    intPoints.push_back(pts(i, 2));
-    intPoints.push_back(weights(i));
-  }
-  // get quadrature data
-  {
-    int n = 0;
-    for(unsigned int i = 0; i < entities.size(); i++){
-      GEntity *ge = entities[i];
-      for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
-        MElement *e = ge->getMeshElement(j);
-        if(e->getTypeForMSH() == elementType)
-          n++;
-      }
-    }
-    intData.resize(n * weights.size() * 13);
-    int idx = 0;
-    for(unsigned int i = 0; i < entities.size(); i++){
-      GEntity *ge = entities[i];
+    int elementType = it->first;
+    for(unsigned int i = 0; i < it->second.size(); i++){
+      GEntity *ge = it->second[i];
       for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
         MElement *e = ge->getMeshElement(j);
         if(e->getTypeForMSH() == elementType){
-          for(int k = 0; k < weights.size(); k++){
-            SPoint3 p;
-            e->pnt(pts(k, 0), pts(k, 1), pts(k, 2), p);
-            intData[idx++] = p.x();
-            intData[idx++] = p.y();
-            intData[idx++] = p.z();
-            double jac[3][3];
-            double det = e->getJacobian(pts(k, 0), pts(k, 1), pts(k, 2), jac);
-            intData[idx++] = det;
-            for(int m = 0; m < 3; m++)
-              for(int n = 0; n < 3; n++)
-                intData[idx++] = jac[m][n];
+          elementTags.back().push_back(e->getNum());
+          for(int k = 0; k < e->getNumVertices(); k++){
+            nodeTags.back().push_back(e->getVertex(k)->getNum());
           }
         }
       }
     }
   }
-  // get function space info
-  const nodalBasis *basis = 0;
-  if(fsNumComp){
-    if(fsOrder == -1){ // isoparametric
-      basis = BasisFactory::getNodalBasis(elementType);
-    }
-    else{
-      int newType = ElementType::getTag(familyType, fsOrder, false);
-      basis = BasisFactory::getNodalBasis(newType);
-    }
-  }
-  if(basis){
-    int nq = weights.size();
-    int n = basis->getNumShapeFunctions();
-    fsData.resize(n * fsNumComp * nq, 0.);
-    double s[1256], ds[1256][3];
-    for(int i = 0; i < nq; i++){
-      double u = pts(i, 0), v = pts(i, 1), w = pts(i, 2);
-      switch(fsNumComp){
-      case 1:
-        basis->f(u, v, w, s);
-        for(int j = 0; j < n; j++)
-          fsData[n * i + j] = s[j];
-        break;
-      case 3:
-        basis->df(u, v, w, ds);
-        for(int j = 0; j < n; j++){
-          fsData[n * 3 * i + 3 * j] = ds[j][0];
-          fsData[n * 3 * i + 3 * j + 1] = ds[j][1];
-          fsData[n * 3 * i + 3 * j + 2] = ds[j][2];
-        }
-        break;
-      }
-    }
-  }
 }
 
-GMSH_API void gmsh::model::mesh::getIntegrationData(const std::string &intType,
-                                                    const std::string &fsType,
-                                                    std::vector<std::vector<double> > &intPoints,
-                                                    std::vector<std::vector<double> > &intData,
-                                                    int &fsNumComp,
-                                                    std::vector<std::vector<double> > &fsData,
-                                                    const int dim,
-                                                    const int tag)
+GMSH_API void gmsh::model::mesh::getElement(const int elementTag,
+                                            int &elementType,
+                                            std::vector<int> &nodeTags)
 {
   if(!_isInitialized()){ throw -1; }
-  intPoints.clear();
-  intData.clear();
-  fsNumComp = 0;
-  fsData.clear();
-  std::map<int, std::vector<GEntity*> > typeMap;
-  _getElementTypeMap(dim, tag, typeMap);
-  for(std::map<int, std::vector<GEntity*> >::const_iterator it = typeMap.begin();
-      it != typeMap.end(); it++){
-    intPoints.push_back(std::vector<double>());
-    intData.push_back(std::vector<double>());
-    fsData.push_back(std::vector<double>());
-    _getIntegrationData(it->first, it->second, intType, fsType, intPoints.back(),
-                        intData.back(), fsNumComp, fsData.back());
-  }
-}
-
-GMSH_API void gmsh::model::mesh::getIntegrationDataByType(int elementType,
-                                                          const std::string &intType,
-                                                          const std::string &fsType,
-                                                          std::vector<double> &intPoints,
-                                                          std::vector<double> &intData,
-                                                          int &fsNumComp,
-                                                          std::vector<double> &fsData,
-                                                          const int dim,
-                                                          const int tag)
-{
-  if(!_isInitialized()){ throw -1; }
-  intPoints.clear();
-  intData.clear();
-  fsNumComp = 0;
-  fsData.clear();
-  std::map<int, std::vector<GEntity*> > typeMap;
-  _getElementTypeMap(dim, tag, typeMap);
-  _getIntegrationData(elementType, typeMap[elementType], intType, fsType, intPoints,
-                      intData, fsNumComp, fsData);
-}
-
-GMSH_API void gmsh::model::mesh::setNodes(const int dim,
-                                          const int tag,
-                                          const std::vector<int> &nodeTags,
-                                          const std::vector<double> &coord,
-                                          const std::vector<double> &parametricCoord)
-{
-  if(!_isInitialized()){ throw -1; }
-  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
-  if(!ge){
-    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+  MElement *e = GModel::current()->getMeshElementByTag(elementTag);
+  if(!e){
+    Msg::Error("Unknown mesh element %d", elementTag);
     throw 2;
   }
-  if(coord.size() != 3 * nodeTags.size()){
-    Msg::Error("Wrong number of coordinates");
-    throw 2;
-  }
-  bool param = false;
-  if(parametricCoord.size()){
-    if(parametricCoord.size() != dim * nodeTags.size()){
-      Msg::Error("Wrong number of parametric coordinates");
+  elementType = e->getTypeForMSH();
+  nodeTags.clear();
+  for(int i = 0; i < e->getNumVertices(); i++){
+    MVertex *v = e->getVertex(i);
+    if(!v){
+      Msg::Error("Unknown mesh node in element %d", elementTag);
       throw 2;
     }
-    param = true;
+    nodeTags.push_back(v->getNum());
   }
-  // delete nodes and elements; this will also delete the model mesh cache
-  ge->deleteMesh();
-  for(unsigned int i = 0; i < nodeTags.size(); i++){
-    int n = nodeTags[i];
-    double x = coord[3 * i];
-    double y = coord[3 * i + 1];
-    double z = coord[3 * i + 2];
-    MVertex *vv = 0;
-    if(param && dim == 1){
-      double u = parametricCoord[i];
-      vv = new MEdgeVertex(x, y, z, ge, u, n);
-    }
-    else if(param && dim == 2){
-      double u = parametricCoord[2 * i];
-      double v = parametricCoord[2 * i + 1];
-      vv = new MFaceVertex(x, y, z, ge, u, v, n);
-    }
-    else
-      vv = new MVertex(x, y, z, ge, n);
-    ge->mesh_vertices.push_back(vv);
-  }
-}
-
-GMSH_API void gmsh::model::mesh::reclassifyNodes()
-{
-  if(!_isInitialized()){ throw -1; }
-  GModel::current()->pruneMeshVertexAssociations();
 }
 
 template<class T>
@@ -948,7 +792,7 @@ static void _addElements(int dim, int tag, const std::vector<MElement*> &src,
                          std::vector<T*> &dst)
 {
   for(unsigned int i = 0; i < src.size(); i++)
-    dst.push_back(static_cast<T*>(src[i]));
+  dst.push_back(static_cast<T*>(src[i]));
 }
 
 GMSH_API void gmsh::model::mesh::setElements(const int dim,
@@ -1011,7 +855,7 @@ GMSH_API void gmsh::model::mesh::setElements(const int dim,
         _addElements(dim, tag, elements, static_cast<GEdge*>(ge)->lines);
       else
         ok = false;
-     break;
+      break;
     case 2:
       if(elements[0]->getType() == TYPE_TRI)
         _addElements(dim, tag, elements, static_cast<GFace*>(ge)->triangles);
@@ -1040,49 +884,552 @@ GMSH_API void gmsh::model::mesh::setElements(const int dim,
   }
 }
 
-GMSH_API void gmsh::model::mesh::getNode(const int nodeTag,
-                                         std::vector<double> &coord,
-                                         std::vector<double> &parametricCoord)
+GMSH_API void gmsh::model::mesh::getElementTypes(std::vector<int> &elementTypes,
+                                                 const int dim,
+                                                 const int tag)
 {
   if(!_isInitialized()){ throw -1; }
-  MVertex *v = GModel::current()->getMeshVertexByTag(nodeTag);
-  if(!v){
-    Msg::Error("Unknown mesh node %d", nodeTag);
-    throw 2;
+  elementTypes.clear();
+  std::map<int, std::vector<GEntity*> > typeMap;
+  _getElementTypeMap(dim, tag, typeMap);
+  for(std::map<int, std::vector<GEntity*> >::const_iterator it = typeMap.begin();
+      it != typeMap.end(); it++){
+    elementTypes.push_back(it->first);
   }
-  coord.clear();
-  coord.push_back(v->x());
-  coord.push_back(v->y());
-  coord.push_back(v->z());
-  parametricCoord.clear();
-  double u;
-  if(v->getParameter(0, u))
-    parametricCoord.push_back(u);
-  if(v->getParameter(1, u))
-    parametricCoord.push_back(u);
 }
 
-GMSH_API void gmsh::model::mesh::getElement(const int elementTag,
-                                            int &elementType,
-                                            std::vector<int> &nodeTags)
+GMSH_API void gmsh::model::mesh::getElementProperties(const int elementType,
+                                                      std::string &name,
+                                                      int &dim,
+                                                      int &order,
+                                                      int &numNodes,
+                                                      std::vector<double> &parametricCoord)
 {
   if(!_isInitialized()){ throw -1; }
-  MElement *e = GModel::current()->getMeshElementByTag(elementTag);
-  if(!e){
-    Msg::Error("Unknown mesh element %d", elementTag);
-    throw 2;
+  const char *n;
+  numNodes = MElement::getInfoMSH(elementType, &n);
+  name = n;
+  int parentType = ElementType::getParentType(elementType);
+  nodalBasis *basis = 0;
+  if(parentType == TYPE_PYR)
+    basis = new pyramidalBasis(elementType);
+  else
+    basis = new polynomialBasis(elementType);
+  dim = basis->dimension;
+  order = basis->order;
+  numNodes = basis->points.size1();
+  for(int i = 0; i < basis->points.size1(); i++)
+    for(int j = 0; j < basis->points.size2(); j++)
+      parametricCoord.push_back(basis->points(i, j));
+  delete basis;
+}
+
+GMSH_API void gmsh::model::mesh::getElementsByType(const int elementType,
+                                                   std::vector<int> &elementTags,
+                                                   std::vector<int> &nodeTags,
+                                                   const int tag,
+                                                   const size_t task,
+                                                   const size_t numTasks)
+{
+  if(!_isInitialized()){ throw -1; }
+  std::map<int, std::vector<GEntity*> > typeMap;
+  int dim = ElementType::getDimension(elementType);
+  _getElementTypeMap(dim, tag, typeMap);
+  const int numElements = _getNumElementsByType(elementType, tag);
+  const int numNodes = ElementType::getNumVertices(elementType);
+  const size_t begin = (task * numElements) / numTasks;
+  const size_t end = ((task + 1) * numElements) / numTasks;
+  // check arrays
+  bool haveElementTags = elementTags.size();
+  bool haveNodeTags = nodeTags.size();
+  if(!haveElementTags && !haveNodeTags){
+    if(numTasks > 1)
+    Msg::Error("ElementTags and nodeTags should be preallocated "
+               "if numTasks > 1");
+    haveElementTags = haveNodeTags = true;
+    preallocateElementsByType(elementType, haveElementTags, haveNodeTags,
+                              elementTags, nodeTags);
   }
-  elementType = e->getTypeForMSH();
-  nodeTags.clear();
-  for(int i = 0; i < e->getNumVertices(); i++){
-    MVertex *v = e->getVertex(i);
-    if(!v){
-      Msg::Error("Unknown mesh node in element %d", elementTag);
-      throw 2;
+  if(haveElementTags && (elementTags.size() < numElements)){
+    Msg::Error("Wrong size of elementTags array (%d < %d)",
+               elementTags.size(), numElements);
+    throw 4;
+  }
+  if(haveNodeTags && (nodeTags.size() < numElements * numNodes)){
+    Msg::Error("Wrong size of nodeTags array (%d < %d)",
+               nodeTags.size(), numElements * numNodes);
+    throw 4;
+  }
+  size_t o = 0;
+  size_t idx = begin * numNodes;
+  for(unsigned int i = 0; i < typeMap[elementType].size(); i++){
+    int familyType = ElementType::getParentType(elementType);
+    GEntity *ge = typeMap[elementType][i];
+    for(unsigned int j = 0; j < ge->getNumMeshElementsByType(familyType); j++){
+      if(o >= begin && o < end){
+        MElement *e = ge->getMeshElementByType(familyType, j);
+        if(haveElementTags) elementTags[o] = e->getNum();
+        if(haveNodeTags){
+          for(int k = 0; k < e->getNumVertices(); k++){
+            nodeTags[idx++] = e->getVertex(k)->getNum();
+          }
+        }
+      }
+      o++;
     }
-    nodeTags.push_back(v->getNum());
   }
 }
+
+GMSH_API void gmsh::model::mesh::preallocateElementsByType(const int elementType,
+                                                           const bool elementTag,
+                                                           const bool nodeTag,
+                                                           std::vector<int> &elementTags,
+                                                           std::vector<int> &nodeTags,
+                                                           const int tag)
+{
+  if(!_isInitialized()){ throw -1; }
+  const unsigned int numElements = _getNumElementsByType(elementType, tag);
+  const unsigned int numNodesByElements = ElementType::getNumVertices(elementType);
+  if(elementTag){
+    elementTags.clear();
+    elementTags.resize(numElements, 0);
+  }
+  if(nodeTag){
+    nodeTags.clear();
+    nodeTags.resize(numElements * numNodesByElements, 0);
+  }
+}
+
+static bool _getIntegrationInfo(const std::string &intType,
+                                std::string &intName, int &intOrder)
+{
+  if(intType.substr(0, 5) == "Gauss"){
+    intName = "Gauss";
+    intOrder = atoi(intType.substr(5).c_str());
+    return true;
+  }
+  return false;
+}
+
+static bool _getFunctionSpaceInfo(const std::string &fsType,
+                                  std::string &fsName, int &fsOrder, int &fsComp)
+{
+  if(fsType.empty() || fsType == "None"){
+    fsName = "";
+    fsOrder = 0;
+    fsComp = 0;
+    return true;
+  }
+  if(fsType == "IsoParametric" || fsType == "Lagrange"){
+    fsName = "Lagrange";
+    fsOrder = -1;
+    fsComp = 1;
+    return true;
+  }
+  if(fsType == "GradIsoParametric" || fsType == "GradLagrange"){
+    fsName = "GradLagrange";
+    fsOrder = -1;
+    fsComp = 3;
+    return true;
+  }
+  return false;
+}
+
+GMSH_API void gmsh::model::mesh::getJacobians(const int elementType,
+                                              const std::string &integrationType,
+                                              std::vector<double> &jacobians,
+                                              std::vector<double> &determinants,
+                                              std::vector<double> &points,
+                                              const int tag,
+                                              const size_t task,
+                                              const size_t numTasks)
+{
+  if(!_isInitialized()){ throw -1; }
+  std::map<int, std::vector<GEntity*> > typeMap;
+  int dim = ElementType::getDimension(elementType);
+  _getElementTypeMap(dim, tag, typeMap);
+  const std::vector<GEntity*> &entities(typeMap[elementType]);
+  std::string intName = "";
+  int intOrder = 0;
+  if(!_getIntegrationInfo(integrationType, intName, intOrder)){
+    Msg::Error("Unknown quadrature type '%s'", integrationType.c_str());
+    throw 2;
+  }
+  // get quadrature info
+  int familyType = ElementType::getParentType(elementType);
+  fullMatrix<double> pts;
+  fullVector<double> weights;
+  gaussIntegration::get(familyType, intOrder, pts, weights);
+  if(pts.size1() != weights.size() || pts.size2() != 3){
+    Msg::Error("Wrong integration point format");
+    throw 3;
+  }
+  int numIntPoints = weights.size();
+  // check arrays
+  bool haveJacobians = jacobians.size();
+  bool haveDeterminants = determinants.size();
+  bool havePoints = points.size();
+  if(!haveDeterminants && !haveJacobians && !havePoints){
+    if(numTasks > 1)
+      Msg::Error("Jacobians, determinants and points should be preallocated "
+                 "if numTasks > 1");
+    haveJacobians = haveDeterminants = havePoints = true;
+    preallocateJacobians(elementType, integrationType,
+                         haveJacobians, haveDeterminants, havePoints,
+                         jacobians, determinants, points, tag);
+  }
+  // get data
+  {
+    int n = 0;
+    for(unsigned int i = 0; i < entities.size(); i++){
+      GEntity *ge = entities[i];
+      n += ge->getNumMeshElementsByType(familyType);
+    }
+    const size_t begin = (task * n) / numTasks;
+    const size_t end = ((task + 1) * n) / numTasks;
+    if(haveDeterminants && (end * numIntPoints > determinants.size())){
+      Msg::Error("Wrong size of determinants array (%d < %d)",
+                 determinants.size(), end*numIntPoints);
+      throw 4;
+    }
+    if(haveJacobians && (9 * end * numIntPoints > jacobians.size())){
+      Msg::Error("Wrong size of jacobians array (%d < %d)",
+                 jacobians.size(), 9 * end * numIntPoints);
+      throw 4;
+    }
+    if(havePoints && (3 * end * numIntPoints > points.size())){
+      Msg::Error("Wrong size of points array (%d < %d)",
+                 points.size(), 3 * end * numIntPoints);
+      throw 4;
+    }
+    if(haveDeterminants && haveJacobians && havePoints){
+      std::vector< std::vector<SVector3> > gsf;
+      size_t o = 0;
+      size_t idx = begin * numIntPoints;
+      for(unsigned int i = 0; i < entities.size(); i++){
+        GEntity *ge = entities[i];
+        const unsigned int numMeshElements = ge->getNumMeshElementsByType(familyType);
+        for(unsigned int j = 0; j < numMeshElements; j++){
+          if(o >= begin && o < end){
+            MElement *e = ge->getMeshElementByType(familyType, j);
+            if(gsf.size() == 0){
+              gsf.resize(numIntPoints);
+              for(int k = 0; k < numIntPoints; k++){
+                double value[1256][3];
+                e->getGradShapeFunctions(pts(k, 0), pts(k, 1), pts(k, 2), value);
+                gsf[k].resize(e->getNumShapeFunctions());
+                for(int l = 0; l < e->getNumShapeFunctions(); l++) {
+                  gsf[k][l][0] = value[l][0];
+                  gsf[k][l][1] = value[l][1];
+                  gsf[k][l][2] = value[l][2];
+                }
+              }
+            }
+            for(int k = 0; k < numIntPoints; k++){
+              e->pnt(pts(k, 0), pts(k, 1), pts(k, 2), &points[idx*3]);
+              determinants[idx] = e->getJacobian(gsf[k], &jacobians[idx*9]);
+              idx++;
+            }
+          }
+          o++;
+        }
+      }
+    }
+    else if(haveDeterminants && haveJacobians && !havePoints){
+      std::vector< std::vector<SVector3> > gsf;
+      size_t o = 0;
+      size_t idx = begin * numIntPoints;
+      for(unsigned int i = 0; i < entities.size(); i++){
+        GEntity *ge = entities[i];
+        const unsigned int numMeshElements = ge->getNumMeshElementsByType(familyType);
+        for(unsigned int j = 0; j < numMeshElements; j++){
+          if(o >= begin && o < end){
+            MElement *e = ge->getMeshElementByType(familyType, j);
+            if(gsf.size() == 0){
+              gsf.resize(numIntPoints);
+              for(int k = 0; k < numIntPoints; k++){
+                double value[1256][3];
+                e->getGradShapeFunctions(pts(k, 0), pts(k, 1), pts(k, 2), value);
+                gsf[k].resize(e->getNumShapeFunctions());
+                for(int l = 0; l < e->getNumShapeFunctions(); l++) {
+                  gsf[k][l][0] = value[l][0];
+                  gsf[k][l][1] = value[l][1];
+                  gsf[k][l][2] = value[l][2];
+                }
+              }
+            }
+            for(int k = 0; k < numIntPoints; k++){
+              determinants[idx] = e->getJacobian(gsf[k], &jacobians[idx*9]);
+              idx++;
+            }
+          }
+          o++;
+        }
+      }
+    }
+    else if(haveDeterminants && !haveJacobians && havePoints){
+      std::vector<double> jac(9, 0.);
+      std::vector< std::vector<SVector3> > gsf;
+      size_t o = 0;
+      size_t idx = begin * numIntPoints;
+      for(unsigned int i = 0; i < entities.size(); i++){
+        GEntity *ge = entities[i];
+        const unsigned int numMeshElements = ge->getNumMeshElementsByType(familyType);
+        for(unsigned int j = 0; j < numMeshElements; j++){
+          if(o >= begin && o < end){
+            MElement *e = ge->getMeshElementByType(familyType, j);
+            if(gsf.size() == 0){
+              gsf.resize(numIntPoints);
+              for(int k = 0; k < numIntPoints; k++){
+                double value[1256][3];
+                e->getGradShapeFunctions(pts(k, 0), pts(k, 1), pts(k, 2), value);
+                gsf[k].resize(e->getNumShapeFunctions());
+                for(int l = 0; l < e->getNumShapeFunctions(); l++) {
+                  gsf[k][l][0] = value[l][0];
+                  gsf[k][l][1] = value[l][1];
+                  gsf[k][l][2] = value[l][2];
+                }
+              }
+            }
+            for(int k = 0; k < numIntPoints; k++){
+              e->pnt(pts(k, 0), pts(k, 1), pts(k, 2), &points[idx*3]);
+              determinants[idx] = e->getJacobian(gsf[k], &jac[0]);
+              idx++;
+            }
+          }
+          o++;
+        }
+      }
+    }
+    else if(haveDeterminants && !haveJacobians && !havePoints){
+      std::vector<double> jac(9, 0.);
+      std::vector< std::vector<SVector3> > gsf;
+      size_t o = 0;
+      size_t idx = begin*numIntPoints;
+      for(unsigned int i = 0; i < entities.size(); i++){
+        GEntity *ge = entities[i];
+        const unsigned int numMeshElements = ge->getNumMeshElementsByType(familyType);
+        for(unsigned int j = 0; j < numMeshElements; j++){
+          if(o >= begin && o < end){
+            MElement *e = ge->getMeshElementByType(familyType, j);
+            if(gsf.size() == 0){
+              gsf.resize(numIntPoints);
+              for(int k = 0; k < numIntPoints; k++){
+                double value[1256][3];
+                e->getGradShapeFunctions(pts(k, 0), pts(k, 1), pts(k, 2), value);
+                gsf[k].resize(e->getNumShapeFunctions());
+                for(int l = 0; l < e->getNumShapeFunctions(); l++) {
+                  gsf[k][l][0] = value[l][0];
+                  gsf[k][l][1] = value[l][1];
+                  gsf[k][l][2] = value[l][2];
+                }
+              }
+            }
+            for(int k = 0; k < numIntPoints; k++){
+              determinants[idx] = e->getJacobian(gsf[k], &jac[0]);
+              idx++;
+            }
+          }
+          o++;
+        }
+      }
+    }
+    // Add other combinaisons if necessary
+  }
+}
+
+GMSH_API void gmsh::model::mesh::preallocateJacobians(const int elementType,
+                                                      const std::string &integrationType,
+                                                      const bool jacobian,
+                                                      const bool determinant,
+                                                      const bool point,
+                                                      std::vector<double> &jacobians,
+                                                      std::vector<double> &determinants,
+                                                      std::vector<double> &points,
+                                                      const int tag)
+{
+  if(!_isInitialized()){ throw -1; }
+  const unsigned int numElements = _getNumElementsByType(elementType, tag);
+  std::string intName = "";
+  int intOrder = 0;
+  if(!_getIntegrationInfo(integrationType, intName, intOrder)){
+    Msg::Error("Unknown quadrature type '%s'", integrationType.c_str());
+    throw 2;
+  }
+  int familyType = ElementType::getParentType(elementType);
+  fullMatrix<double> pts;
+  fullVector<double> weights;
+  gaussIntegration::get(familyType, intOrder, pts, weights);
+  const unsigned int numIntPoints = weights.size();
+  if(jacobian){
+    jacobians.clear();
+    jacobians.resize(9 * numElements * numIntPoints, 0.);
+  }
+  if(determinant){
+    determinants.clear();
+    determinants.resize(numElements * numIntPoints, 0.);
+  }
+  if(point){
+    points.clear();
+    points.resize(3 * numElements * numIntPoints, 0.);
+  }
+}
+
+GMSH_API void gmsh::model::mesh::getBasisFunctions(const int elementType,
+                                                   const std::string &integrationType,
+                                                   const std::string &functionSpaceType,
+                                                   std::vector<double> &integrationPoints,
+                                                   int &numComponents,
+                                                   std::vector<double> &basisFunctions)
+{
+  if(!_isInitialized()){ throw -1; }
+  integrationPoints.clear();
+  numComponents = 0;
+  basisFunctions.clear();
+  std::string intName = "", fsName = "";
+  int intOrder = 0, fsOrder = 0;
+  if(!_getIntegrationInfo(integrationType, intName, intOrder)){
+    Msg::Error("Unknown quadrature type '%s'", integrationType.c_str());
+    throw 2;
+  }
+  if(!_getFunctionSpaceInfo(functionSpaceType, fsName, fsOrder, numComponents)){
+    Msg::Error("Unknown function space type '%s'", functionSpaceType.c_str());
+    throw 2;
+  }
+  // get quadrature info
+  int familyType = ElementType::getParentType(elementType);
+  fullMatrix<double> pts;
+  fullVector<double> weights;
+  gaussIntegration::get(familyType, intOrder, pts, weights);
+  if(pts.size1() != weights.size() || pts.size2() != 3){
+    Msg::Error("Wrong integration point format");
+    throw 3;
+  }
+  for(int i = 0; i < pts.size1(); i++){
+    integrationPoints.push_back(pts(i, 0));
+    integrationPoints.push_back(pts(i, 1));
+    integrationPoints.push_back(pts(i, 2));
+    integrationPoints.push_back(weights(i));
+  }
+  // get function space info
+  const nodalBasis *basis = 0;
+  if(numComponents){
+    if(fsOrder == -1){ // isoparametric
+      basis = BasisFactory::getNodalBasis(elementType);
+    }
+    else{
+      int newType = ElementType::getType(familyType, fsOrder, false);
+      basis = BasisFactory::getNodalBasis(newType);
+    }
+  }
+  if(basis){
+    int nq = weights.size();
+    int n = basis->getNumShapeFunctions();
+    basisFunctions.resize(n * numComponents * nq, 0.);
+    double s[1256], ds[1256][3];
+    for(int i = 0; i < nq; i++){
+      double u = pts(i, 0), v = pts(i, 1), w = pts(i, 2);
+      switch(numComponents){
+      case 1:
+        basis->f(u, v, w, s);
+        for(int j = 0; j < n; j++)
+          basisFunctions[n * i + j] = s[j];
+        break;
+      case 3:
+        basis->df(u, v, w, ds);
+        for(int j = 0; j < n; j++){
+          basisFunctions[n * 3 * i + 3 * j] = ds[j][0];
+          basisFunctions[n * 3 * i + 3 * j + 1] = ds[j][1];
+          basisFunctions[n * 3 * i + 3 * j + 2] = ds[j][2];
+        }
+        break;
+      }
+    }
+  }
+}
+
+GMSH_API void gmsh::model::mesh::precomputeBasisFunctions(const int elementType)
+{
+  if(!_isInitialized()){ throw -1; }
+  BasisFactory::getNodalBasis(elementType);
+}
+
+GMSH_API void gmsh::model::mesh::getBarycenters(const int elementType,
+                                                const int tag,
+                                                const bool fast,
+                                                const bool primary,
+                                                std::vector<double> &barycenters,
+                                                const size_t task,
+                                                const size_t numTasks)
+{
+  if(!_isInitialized()){ throw -1; }
+  int dim = ElementType::getDimension(elementType);
+  std::map<int, std::vector<GEntity*> > typeMap;
+  _getElementTypeMap(dim, tag, typeMap);
+
+  int familyType = ElementType::getParentType(elementType);
+  int n = 0;
+  for(unsigned int i = 0; i < typeMap[elementType].size(); i++){
+    GEntity *ge = typeMap[elementType][i];
+    n += ge->getNumMeshElementsByType(familyType);
+  }
+  const size_t begin = (task * n) / numTasks;
+  const size_t end = ((task + 1) * n) / numTasks;
+  if(3 * end > barycenters.size()){
+    if(numTasks > 1)
+      Msg::Error("Barycenters should be preallocated if numTasks > 1");
+    barycenters.resize(3 * n);
+  }
+  size_t o = 0;
+  size_t idx = 3 * begin;
+  if(fast){
+    for(unsigned int i = 0; i < typeMap[elementType].size(); i++){
+      GEntity *ge = typeMap[elementType][i];
+      const unsigned int numMeshElements = ge->getNumMeshElementsByType(familyType);
+      for(unsigned int j = 0; j < numMeshElements; j++){
+        if(o >= begin && o < end){
+          MElement *e = ge->getMeshElementByType(familyType, j);
+          SPoint3 p = e->fastBarycenter(primary);
+          barycenters[idx++] = p[0];
+          barycenters[idx++] = p[1];
+          barycenters[idx++] = p[2];
+        }
+        o++;
+      }
+    }
+  }
+  else{
+    for(unsigned int i = 0; i < typeMap[elementType].size(); i++){
+      GEntity *ge = typeMap[elementType][i];
+      const unsigned int numMeshElements = ge->getNumMeshElementsByType(familyType);
+      for(unsigned int j = 0; j < numMeshElements; j++){
+        if(o >= begin && o < end){
+          MElement *e = ge->getMeshElementByType(familyType, j);
+          SPoint3 p = e->barycenter(primary);
+          barycenters[idx++] = p[0];
+          barycenters[idx++] = p[1];
+          barycenters[idx++] = p[2];
+        }
+        o++;
+      }
+    }
+  }
+}
+
+GMSH_API void gmsh::model::mesh::preallocateBarycenters(const int elementType,
+                                                        std::vector<double> &barycenters,
+                                                        const int tag)
+{
+  if(!_isInitialized()){ throw -1; }
+  const unsigned int numElements = _getNumElementsByType(elementType, tag);
+  barycenters.clear();
+  barycenters.resize(3 * numElements, 0);
+}
+
+// TODO: give access to closures
+// GMSH_API void gmsh::model::mesh::getElementClosures(const int elementType, ...)
+// {
+// }
 
 GMSH_API void gmsh::model::mesh::setSize(const vectorpair &dimTags,
                                          const double size)
@@ -1293,6 +1640,24 @@ GMSH_API void gmsh::model::mesh::embed(const int dim,
   }
 }
 
+GMSH_API void gmsh::model::mesh::reorderElements(const int elementType,
+                                                 const int tag,
+                                                 const std::vector<int> &order)
+{
+  if(!_isInitialized()){ throw -1; }
+  std::map<int, std::vector<GEntity*> > typeMap;
+  int dim = ElementType::getDimension(elementType);
+  _getElementTypeMap(dim, tag, typeMap);
+  if(typeMap[elementType].size() == 0){
+    Msg::Error("No elements to reorder");
+    throw 2;
+  }
+  if(!typeMap[elementType][0]->reordered(elementType, order)){
+    Msg::Error("Could not reorder elements");
+    throw 3;
+  }
+}
+
 GMSH_API void gmsh::model::mesh::setPeriodic(const int dim,
                                              const std::vector<int> &tags,
                                              const std::vector<int> &tagsMaster,
@@ -1361,6 +1726,35 @@ GMSH_API void gmsh::model::mesh::getPeriodicNodes(const int dim, const int tag,
     nodes.clear();
     affineTransform.clear();
   }
+}
+
+GMSH_API void gmsh::model::mesh::removeDuplicateNodes()
+{
+  if(!_isInitialized()){ throw -1; }
+  GModel::current()->removeDuplicateMeshVertices(CTX::instance()->geom.tolerance);
+  CTX::instance()->mesh.changed = ENT_ALL;
+}
+
+GMSH_API void gmsh::model::mesh::homology(const std::vector<int> &domainTags,
+					  const std::vector<int> &subdomainTags,
+					  const std::vector<int> &dims)
+{
+  if(!_isInitialized()){ throw -1; }
+  GModel::current()->addHomologyRequest("Homology",
+					domainTags,
+					subdomainTags,
+					dims);
+}
+
+GMSH_API void gmsh::model::mesh::cohomology(const std::vector<int> &domainTags,
+					    const std::vector<int> &subdomainTags,
+					    const std::vector<int> &dims)
+{
+  if(!_isInitialized()){ throw -1; }
+  GModel::current()->addHomologyRequest("Cohomology",
+					domainTags,
+					subdomainTags,
+					dims);
 }
 
 // gmsh::model::mesh::field

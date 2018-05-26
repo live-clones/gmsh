@@ -75,35 +75,42 @@ class myMesh{
     std::vector<int> etypes;
     std::vector<std::vector<int> > etags, evtags;
     gmsh::model::mesh::getElements(etypes, etags, evtags);
-    std::vector<std::vector<double> > quvwo, qdata, fsdata;
-    int fscomp;
-    gmsh::model::mesh::getIntegrationData("Gauss2", "None", quvwo, qdata, fscomp, fsdata);
     for(unsigned int i = 0; i < vtags.size(); i++){
       _nodes[vtags[i]] = new myVertex
         (vtags[i], vxyz[3*i], vxyz[3*i+1], vxyz[3*i+2]);
     }
     for(unsigned int i = 0; i < etypes.size(); i++){
+      std::vector<double> qdeter, qjacob, qpoints;
+      gmsh::model::mesh::getJacobians(etypes[i], "Gauss2",
+                                      qjacob, qdeter, qpoints);
+      std::vector<double> quvwo, fsdata;
+      int fsnumcomp;
+      gmsh::model::mesh::getBasisFunctions(etypes[i], "Gauss2", "None",
+                                           quvwo, fsnumcomp, fsdata);
       int nev = evtags[i].size() / etags[i].size();
-      int nq = quvwo[i].size() / 4;
+      int nq = quvwo.size() / 4;
       std::vector<double> qu, qv, qw, qweight;
-      for(unsigned int j = 0; j < quvwo[i].size(); j+=4){
-        qu.push_back(quvwo[i][j]);
-        qv.push_back(quvwo[i][j+1]);
-        qw.push_back(quvwo[i][j+2]);
-        qweight.push_back(quvwo[i][j+3]);
+      for(unsigned int j = 0; j < quvwo.size(); j+=4){
+        qu.push_back(quvwo[j]);
+        qv.push_back(quvwo[j+1]);
+        qw.push_back(quvwo[j+2]);
+        qweight.push_back(quvwo[j+3]);
       }
       for(unsigned int j = 0; j < etags[i].size(); j++){
         std::vector<myVertex*> ev;
         for(unsigned int k = nev * j; k < nev * (j + 1); k++)
           ev.push_back(_nodes[evtags[i][k]]);
         std::vector<double> qx, qy, qz, qdet, qjac;
-        for(unsigned int k = 13*nq*j; k < 13*nq*(j+1); k += 13){
-          qx.push_back(qdata[i][k]);
-          qy.push_back(qdata[i][k+1]);
-          qz.push_back(qdata[i][k+2]);
-          qdet.push_back(qdata[i][k+3]);
-          for(unsigned int m = 0; m < 9; m++)
-            qjac.push_back(qdata[i][k+4+m]);
+        for(unsigned int k = 3*nq*j; k < 3*nq*(j+1); k += 3){
+          qx.push_back(qpoints[k]);
+          qy.push_back(qpoints[k+1]);
+          qz.push_back(qpoints[k+2]);
+        }
+        for(unsigned int k = 1*nq*j; k < 1*nq*(j+1); k += 1){
+          qdet.push_back(qdeter[k]);
+        }
+        for(unsigned int k = 9*nq*j; k < 9*nq*(j+1); k += 9){
+          for(int m = 0; m < 9; m++) qjac.push_back(qjacob[k + m]);
         }
         _elements[etags[i][j]] = new myElement
           (etags[i][j], ev, qu, qv, qw, qweight, qx, qy, qz, qdet, qjac);

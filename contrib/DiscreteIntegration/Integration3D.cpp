@@ -7,7 +7,7 @@
 #include "recurCut.h"
 #include "GaussIntegration.h"
 #include "polynomialBasis.h"
-#include "GmshDefines.h" 
+#include "GmshDefines.h"
 
 #define ZERO_LS_TOL  1.e-9
 #define EQUALITY_TOL 1.e-15
@@ -1044,7 +1044,7 @@ bool DI_ElementLessThan::operator()(const DI_Element *e1, const DI_Element *e2) 
 // DI_Line methods --------------------------------------------------------------------------------
 const nodalBasis* DI_Line::getFunctionSpace(int o) const{
   int order = (o == -1) ? getPolynomialOrder() : o;
-  int tag = ElementType::getTag(TYPE_LIN, order);
+  int tag = ElementType::getType(TYPE_LIN, order);
   return BasisFactory::getNodalBasis(tag);
 }
 
@@ -1065,7 +1065,7 @@ void DI_Line::computeIntegral() {
 const nodalBasis* DI_Triangle::getFunctionSpace(int o) const
 {
   int order = (o == -1) ? getPolynomialOrder() : o;
-  int tag = ElementType::getTag(TYPE_TRI, order);
+  int tag = ElementType::getType(TYPE_TRI, order);
   return BasisFactory::getNodalBasis(tag);
 }
 void DI_Triangle::computeIntegral() {
@@ -1089,7 +1089,7 @@ double DI_Triangle::quality() const {
 // DI_Quad methods --------------------------------------------------------------------------------
 const nodalBasis* DI_Quad::getFunctionSpace(int o) const{
  int order = (o == -1) ? getPolynomialOrder() : o;
-  int tag = ElementType::getTag(TYPE_QUA, order);
+  int tag = ElementType::getType(TYPE_QUA, order);
   return BasisFactory::getNodalBasis(tag);
 }
 
@@ -1113,7 +1113,7 @@ void DI_Quad::computeIntegral() {
 // DI_Tetra methods -------------------------------------------------------------------------------
 const nodalBasis* DI_Tetra::getFunctionSpace(int o) const{
  int order = (o == -1) ? getPolynomialOrder() : o;
-  int tag = ElementType::getTag(TYPE_TET, order);
+  int tag = ElementType::getType(TYPE_TET, order);
   return BasisFactory::getNodalBasis(tag);
 }
 
@@ -1128,7 +1128,7 @@ double DI_Tetra::quality() const {
 // Hexahedron methods -----------------------------------------------------------------------------
 const nodalBasis* DI_Hexa::getFunctionSpace(int o) const{
   int order = (o == -1) ? getPolynomialOrder() : o;
-  int tag = ElementType::getTag(TYPE_HEX, order);
+  int tag = ElementType::getType(TYPE_HEX, order);
   return BasisFactory::getNodalBasis(tag);
 }
 void DI_Hexa::computeIntegral() {

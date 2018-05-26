@@ -235,6 +235,7 @@ class GFace : public GEntity {
 
   // get total/by-type number of elements in the mesh
   unsigned int getNumMeshElements() const;
+  unsigned int getNumMeshElementsByType(const int familyType) const;
   unsigned int getNumMeshParentElements();
   void getNumMeshElements(unsigned *const c) const;
 
@@ -243,6 +244,8 @@ class GFace : public GEntity {
 
   // get the element at the given index
   MElement *getMeshElement(unsigned int index) const;
+  // get the element at the given index for a given familyType
+  MElement *getMeshElementByType(const int familyType, const unsigned int index) const;
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
@@ -351,6 +354,9 @@ class GFace : public GEntity {
   std::vector<SVector3> storage2; //sizes and directions storage
   std::vector<SVector3> storage3; //sizes and directions storage
   std::vector<double> storage4; //sizes and directions storage
+  
+  // reordered the mesh elements given by elementType according to order
+  virtual bool reordered(const int elementType, const std::vector<int> &order);
 };
 
 #endif

@@ -91,6 +91,13 @@ unsigned int GVertex::getNumMeshElements() const
   return points.size();
 }
 
+unsigned int GVertex::getNumMeshElementsByType(const int familyType) const
+{
+  if(familyType == TYPE_PNT) return points.size();
+  
+  return 0;
+}
+
 void GVertex::getNumMeshElements(unsigned *const c) const
 {
   c[0] += points.size();
@@ -100,6 +107,13 @@ MElement *GVertex::getMeshElement(unsigned int index) const
 {
   if(index < points.size())
     return points[index];
+  return 0;
+}
+
+MElement *GVertex::getMeshElementByType(const int familyType, const unsigned int index) const
+{
+  if(familyType == TYPE_PNT) return points[index];
+  
   return 0;
 }
 
@@ -175,4 +189,29 @@ void GVertex::removeElement(int type, MElement *e)
   default:
     Msg::Error("Trying to remove unsupported element in vertex");
   }
+}
+
+bool GVertex::reordered(const int elementType, const std::vector<int> &order)
+{
+  if(points.front()->getTypeForMSH() == elementType){
+    if(order.size() != points.size()) return false;
+    
+    for(std::vector<int>::const_iterator it = order.begin(); it != order.end(); ++it){
+      if(*it < 0 || *it >= points.size()) return false;
+    }
+    
+    std::vector<MPoint*> newPointsOrder(points.size());
+    for(unsigned int i = 0; i < order.size(); i++){
+      newPointsOrder[i] = points[order[i]];
+    }
+#if __cplusplus >= 201103L
+    points = std::move(newPointsOrder);
+#else
+    points = newPointsOrder;
+#endif
+    
+    return true;
+  }
+  
+  return false;
 }
