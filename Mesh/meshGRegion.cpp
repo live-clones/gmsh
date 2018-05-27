@@ -1168,8 +1168,6 @@ bool buildFaceSearchStructure(GModel *model, fs_cont &search)
     for(unsigned int i = 0; i < (*fit)->getNumMeshElements(); i++){
       MFace ff = (*fit)->getMeshElement(i)->getFace(0);
       search[ff] = *fit;
-      Msg::Info("Added face element %d-%d-%d of face %d to FaceSearchStructure\n", ff.getVertex(0)->getNum(),
-        ff.getVertex(1)->getNum(), ff.getVertex(2)->getNum(), (*fit)->tag());
     }
     ++fit;
   }
