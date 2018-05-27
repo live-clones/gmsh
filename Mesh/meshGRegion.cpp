@@ -705,7 +705,7 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
   std::list<GVertex*> oldEmbVertices = gr->embeddedVertices();
   gr->embeddedVertices() = allEmbVertices;
 
-  meshGRegionBoundaryRecovery(gr);
+  bool success = meshGRegionBoundaryRecovery(gr);
   /*
     FILE *fp = Fopen("debug.pos", "w");
     if(fp){
@@ -729,6 +729,8 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
   gr->set(faces);
   gr->embeddedEdges() = oldEmbEdges;
   gr->embeddedVertices() = oldEmbVertices;
+
+  if (!success) return;
 
   // now do insertion of points
 
