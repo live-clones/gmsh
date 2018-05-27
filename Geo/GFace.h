@@ -142,7 +142,7 @@ class GFace : public GEntity {
                double relax, bool onSurface=true) const;
 
   // get the bounding box
-  virtual SBoundingBox3d bounds() const;
+  virtual SBoundingBox3d bounds(bool fast = false) const;
 
   // get the oriented bounding box
   virtual SOrientedBoundingBox getOBB();

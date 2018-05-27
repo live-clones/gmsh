@@ -422,7 +422,7 @@ class drawGRegion {
 
     if(CTX::instance()->geom.volumes || CTX::instance()->geom.volumesNum ||
        r->getSelection() > 1){
-      SPoint3 p = r->bounds().center();
+      SPoint3 p = r->bounds(true).center(); // fast approx if mesh-based
       x = p.x();
       y = p.y();
       z = p.z();

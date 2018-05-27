@@ -84,7 +84,7 @@ class GRegion : public GEntity {
   virtual std::list<GVertex*> vertices() const;
 
   // get the bounding box
-  virtual SBoundingBox3d bounds() const;
+  virtual SBoundingBox3d bounds(bool fast = false) const;
 
   // get the oriented bounding box
   virtual SOrientedBoundingBox getOBB();

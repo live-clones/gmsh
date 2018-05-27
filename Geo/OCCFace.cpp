@@ -157,7 +157,7 @@ void OCCFace::setup()
   }
 }
 
-SBoundingBox3d OCCFace::bounds() const
+SBoundingBox3d OCCFace::bounds(bool fast) const
 {
   Bnd_Box b;
   try{
@@ -439,7 +439,7 @@ bool OCCFace::isSphere(double &radius, SPoint3 &center) const
 }
 
 
-// Function containsparam should 
+// Function containsparam should
 
 
 bool OCCFace::containsParam(const SPoint2 &pt)

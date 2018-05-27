@@ -212,10 +212,11 @@ void GEdge::delFace(GFace *f)
   if(it != l_faces.end()) l_faces.erase(it);
 }
 
-SBoundingBox3d GEdge::bounds() const
+SBoundingBox3d GEdge::bounds(bool fast) const
 {
   SBoundingBox3d bbox;
-  if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve && geomType() != PartitionCurve){
+  if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve &&
+     geomType() != PartitionCurve){
     Range<double> tr = parBounds(0);
     const int N = 10;
     for(int i = 0; i < N; i++){
@@ -225,7 +226,9 @@ SBoundingBox3d GEdge::bounds() const
     }
   }
   else{
-    for(unsigned int i = 0; i < getNumMeshElements(); i++)
+    int ipp = getNumMeshElements() / 20;
+    if(ipp < 1) ipp = 1;
+    for(unsigned int i = 0; i < getNumMeshElements(); i += ipp)
       for(unsigned int j = 0; j < getMeshElement(i)->getNumVertices(); j++)
         bbox += getMeshElement(i)->getVertex(j)->point();
   }

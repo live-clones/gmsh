@@ -162,16 +162,18 @@ void GRegion::resetMeshAttributes()
   meshAttributes.QuadTri = NO_QUADTRI;
 }
 
-SBoundingBox3d GRegion::bounds() const
+SBoundingBox3d GRegion::bounds(bool fast) const
 {
   SBoundingBox3d res;
   if(geomType() != DiscreteVolume && geomType() != PartitionVolume){
     std::list<GFace*>::const_iterator it = l_faces.begin();
     for(; it != l_faces.end(); it++)
-      res += (*it)->bounds();
+      res += (*it)->bounds(fast);
   }
   else{
-    for(unsigned int i = 0; i < getNumMeshElements(); i++)
+    int ipp = getNumMeshElements() / 20;
+    if(ipp < 1) ipp = 1;
+    for(unsigned int i = 0; i < getNumMeshElements(); i += ipp)
       for(unsigned int j = 0; j < getMeshElement(i)->getNumVertices(); j++)
         res += getMeshElement(i)->getVertex(j)->point();
   }

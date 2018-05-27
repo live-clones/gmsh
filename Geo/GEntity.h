@@ -293,10 +293,10 @@ class GEntity {
   // returns the master entity (for mesh)
   GEntity* meshMaster() const;
   void setMeshMaster(GEntity*);
-  void setMeshMaster(GEntity*,const std::vector<double>&);
+  void setMeshMaster(GEntity*, const std::vector<double>&);
 
   // get the bounding box
-  virtual SBoundingBox3d bounds() const { return SBoundingBox3d(); }
+  virtual SBoundingBox3d bounds(bool fast = false) const { return SBoundingBox3d(); }
 
   //  get the oriented bounding box
   virtual SOrientedBoundingBox getOBB() {return SOrientedBoundingBox(); }

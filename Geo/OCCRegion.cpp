@@ -94,7 +94,7 @@ void OCCRegion::setup()
   Msg::Debug("OCC Region %d with %d faces", tag(), l_faces.size());
 }
 
-SBoundingBox3d OCCRegion::bounds() const
+SBoundingBox3d OCCRegion::bounds(bool fast) const
 {
   Bnd_Box b;
   try{

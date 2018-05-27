@@ -229,16 +229,18 @@ void GFace::resetMeshAttributes()
   meshAttributes.meshSize = MAX_LC;
 }
 
-SBoundingBox3d GFace::bounds() const
+SBoundingBox3d GFace::bounds(bool fast) const
 {
   SBoundingBox3d res;
   if(geomType() != DiscreteSurface && geomType() != PartitionSurface){
     std::list<GEdge*>::const_iterator it = l_edges.begin();
     for(; it != l_edges.end(); it++)
-      res += (*it)->bounds();
+      res += (*it)->bounds(fast);
   }
   else{
-    for(unsigned int i = 0; i < getNumMeshElements(); i++)
+    int ipp = getNumMeshElements() / 20;
+    if(ipp < 1) ipp = 1;
+    for(unsigned int i = 0; i < getNumMeshElements(); i += ipp)
       for(unsigned int j = 0; j < getMeshElement(i)->getNumVertices(); j++)
         res += getMeshElement(i)->getVertex(j)->point();
   }
