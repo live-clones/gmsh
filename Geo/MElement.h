@@ -29,7 +29,8 @@ class MElement
 {
  private:
   // the id number of the element (this number is unique and is guaranteed never
-  // to change once a mesh has been generated)
+  // to change once a mesh has been generated, unless the mesh is explicitely
+  // renumbered)
   int _num;
   // the number of the mesh partition the element belongs to
   short _partition;
@@ -58,6 +59,10 @@ class MElement
 
   // return the tag of the element
   virtual int getNum() const { return _num; }
+
+  // force the immutable number (this should never be used, except when
+  // explicitly renumbering the mesh)
+  void forceNum(int num);
 
   // return the geometrical dimension of the element
   virtual int getDim() const = 0;

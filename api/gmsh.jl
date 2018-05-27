@@ -1226,6 +1226,34 @@ function reorderElements(elementType, tag, ordering)
 end
 
 """
+    gmsh.model.mesh.renumberNodes()
+
+Renumber the nodes tags in a contiunous sequence.
+"""
+function renumberNodes()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRenumberNodes, gmsh.clib), Void,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshModelMeshRenumberNodes returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.renumberElements()
+
+Renumber the elements tags in a contiunous sequence.
+"""
+function renumberElements()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRenumberElements, gmsh.clib), Void,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshModelMeshRenumberElements returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
     gmsh.model.mesh.setPeriodic(dim, tags, tagsSource, affineTransformation)
 
 Set the meshes of the entities of dimension `dim` and tag `tags` as periodic

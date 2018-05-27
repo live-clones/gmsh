@@ -462,10 +462,13 @@ static bool readMSH4Entities(GModel *const model, FILE* fp, bool partition,
 
 static std::pair<int, MVertex*> *readMSH4Nodes(GModel *const model, FILE* fp,
                                                bool binary, bool &dense,
-                                               unsigned long &nbrNodes, bool swap)
+                                               unsigned long &nbrNodes,
+                                               unsigned long &maxNodeNum,
+                                               bool swap)
 {
   unsigned long numBlock = 0;
   nbrNodes = 0;
+  maxNodeNum = 0;
   if(binary){
     unsigned long data[2];
     if(fread(data, sizeof(unsigned long), 2, fp) != 2){
@@ -482,7 +485,7 @@ static std::pair<int, MVertex*> *readMSH4Nodes(GModel *const model, FILE* fp,
   }
 
   unsigned long nodeRead = 0;
-  unsigned long minVertex = nbrNodes+1, maxVertex = 0;
+  unsigned long minNodeNum = nbrNodes + 1;
   std::pair<int, MVertex*> *vertexCache = new std::pair<int, MVertex*>[nbrNodes];
   Msg::Info("%lu vertices", nbrNodes);
   for(unsigned int i = 0; i < numBlock; i++){
@@ -648,8 +651,8 @@ static std::pair<int, MVertex*> *readMSH4Nodes(GModel *const model, FILE* fp,
       }
       entity->addMeshVertex(vertex);
       vertex->setEntity(entity);
-      minVertex = std::min(minVertex, (unsigned long)nodeTag);
-      maxVertex = std::max(maxVertex, (unsigned long)nodeTag);
+      minNodeNum = std::min(minNodeNum, (unsigned long)nodeTag);
+      maxNodeNum = std::max(maxNodeNum, (unsigned long)nodeTag);
 
       vertexCache[nodeRead] = std::pair<int, MVertex*>(nodeTag, vertex);
       nodeRead ++;
@@ -657,10 +660,14 @@ static std::pair<int, MVertex*> *readMSH4Nodes(GModel *const model, FILE* fp,
       if(nbrNodes > 100000) Msg::ProgressMeter(nodeRead, nbrNodes, true, "Reading nodes");
     }
   }
-  // if the vertex numbering is dense, we fill the vector cache, otherwise we
-  // fill the map cache
-  if(minVertex == 1 && maxVertex == nbrNodes){ // If dense
+  // if the vertex numbering is (fairly) dense, we fill the vector cache,
+  // otherwise we fill the map cache
+  if(minNodeNum == 1 && maxNodeNum == nbrNodes){
     Msg::Debug("Vertex numbering is dense");
+    dense = true;
+  }
+  else if(maxNodeNum < 10 * nbrNodes){ //
+    Msg::Debug("Vertex numbering is fairly dense - still caching with a vector");
     dense = true;
   }
   else{
@@ -673,11 +680,14 @@ static std::pair<int, MVertex*> *readMSH4Nodes(GModel *const model, FILE* fp,
 
 static std::pair<int, MElement*> *readMSH4Elements(GModel *const model, FILE* fp,
                                                    bool binary, bool &dense,
-                                                   unsigned long &nbrElements, bool swap)
+                                                   unsigned long &nbrElements,
+                                                   unsigned long &maxElementNum,
+                                                   bool swap)
 {
   char str[256];
   unsigned long numBlock = 0;
   nbrElements = 0;
+  maxElementNum = 0;
   if(binary){
     unsigned long data[2];
     if(fread(data, sizeof(unsigned long), 2, fp) != 2){
@@ -695,7 +705,7 @@ static std::pair<int, MElement*> *readMSH4Elements(GModel *const model, FILE* fp
   }
 
   unsigned long elementRead = 0;
-  unsigned long minElement = nbrElements+1, maxElement = 0;
+  unsigned long minElementNum = nbrElements + 1;
   std::pair<int, MElement*> *elementCache = new std::pair<int, MElement*>[nbrElements];
   Msg::Info("%lu elements", nbrElements);
   for(unsigned int i = 0; i < numBlock; i++){
@@ -771,8 +781,8 @@ static std::pair<int, MElement*> *readMSH4Elements(GModel *const model, FILE* fp
           entity->addElement(element->getType(), element);
         }
 
-        minElement = std::min(minElement, (unsigned long)data[j]);
-        maxElement = std::max(maxElement, (unsigned long)data[j]);
+        minElementNum = std::min(minElementNum, (unsigned long)data[j]);
+        maxElementNum = std::max(maxElementNum, (unsigned long)data[j]);
 
         elementCache[elementRead] = std::pair<int, MElement*>(data[j], element);
         elementRead ++;
@@ -822,8 +832,8 @@ static std::pair<int, MElement*> *readMSH4Elements(GModel *const model, FILE* fp
           entity->addElement(element->getType(), element);
         }
 
-        minElement = std::min(minElement, (unsigned long)elmTag);
-        maxElement = std::max(maxElement, (unsigned long)elmTag);
+        minElementNum = std::min(minElementNum, (unsigned long)elmTag);
+        maxElementNum = std::max(maxElementNum, (unsigned long)elmTag);
 
         elementCache[elementRead] = std::pair<int, MElement*>(elmTag, element);
         elementRead ++;
@@ -835,8 +845,12 @@ static std::pair<int, MElement*> *readMSH4Elements(GModel *const model, FILE* fp
   }
   // if the vertex numbering is dense, we fill the vector cache, otherwise we
   // fill the map cache
-  if(minElement == 1 && maxElement == nbrElements){ //If dense
+  if(minElementNum == 1 && maxElementNum == nbrElements){
     Msg::Debug("Element numbering is dense");
+    dense = true;
+  }
+  else if(maxElementNum <  10 * nbrElements){
+    Msg::Debug("Element numbering is fairly dense - still caching with a vector");
     dense = true;
   }
   else{
@@ -1195,18 +1209,16 @@ int GModel::_readMSH4(const std::string &name)
       _vertexMapCache.clear();
       Msg::ResetProgressMeter();
       bool dense = false;
-      unsigned long nbrNodes = 0;
+      unsigned long nbrNodes = 0, maxNodeNum;
       std::pair<int, MVertex*> *vertexCache = readMSH4Nodes
-        (this, fp, binary, dense, nbrNodes, swap);
+        (this, fp, binary, dense, nbrNodes, maxNodeNum, swap);
       if(!vertexCache){
         Msg::Error("Could not read vertices");
         fclose(fp);
         return false;
       }
       if(dense){
-        _vertexVectorCache.resize(nbrNodes+1, 0);
-        _vertexVectorCache[0] = 0;
-
+        _vertexVectorCache.resize(maxNodeNum + 1, 0);
         for(unsigned int i = 0; i < nbrNodes; i++){
           if(!_vertexVectorCache[vertexCache[i].first]){
             _vertexVectorCache[vertexCache[i].first] = vertexCache[i].second;
@@ -1231,17 +1243,16 @@ int GModel::_readMSH4(const std::string &name)
     else if(!strncmp(&str[1], "Elements", 8)){
       Msg::ResetProgressMeter();
       bool dense = false;
-      unsigned long nbrElements = 0;
+      unsigned long nbrElements = 0, maxElementNum = 0;
       std::pair<int, MElement*> *elementCache = readMSH4Elements
-        (this, fp, binary, dense, nbrElements, swap);
+        (this, fp, binary, dense, nbrElements, maxElementNum, swap);
       if(!elementCache){
         Msg::Error("Could not read elements");
         fclose(fp);
         return 0;
       }
       if(dense){
-        _elementVectorCache.resize(nbrElements+1, 0);
-        _elementVectorCache[0] = 0;
+        _elementVectorCache.resize(maxElementNum + 1, (MElement*)0);
         for(unsigned int i = 0; i < nbrElements; i++){
           if(!_elementVectorCache[elementCache[i].first]){
             _elementVectorCache[elementCache[i].first] = elementCache[i].second;

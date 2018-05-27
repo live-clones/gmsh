@@ -534,6 +534,12 @@ GMSH_API void gmshModelMeshReorderElements(const int elementType,
                                            int * ordering, size_t ordering_n,
                                            int * ierr);
 
+/* Renumber the nodes tags in a contiunous sequence. */
+GMSH_API void gmshModelMeshRenumberNodes(int * ierr);
+
+/* Renumber the elements tags in a contiunous sequence. */
+GMSH_API void gmshModelMeshRenumberElements(int * ierr);
+
 /* Set the meshes of the entities of dimension `dim' and tag `tags' as
  * periodic copies of the meshes of entities `tagsSource', using the affine
  * transformation specified in `affineTransformation' (16 entries of a 4x4

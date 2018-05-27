@@ -1449,6 +1449,32 @@ class model:
                     ierr.value)
 
         @staticmethod
+        def renumberNodes():
+            """
+            Renumber the nodes tags in a contiunous sequence.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRenumberNodes(
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshRenumberNodes returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
+        def renumberElements():
+            """
+            Renumber the elements tags in a contiunous sequence.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRenumberElements(
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshRenumberElements returned non-zero error code: ",
+                    ierr.value)
+
+        @staticmethod
         def setPeriodic(dim, tags, tagsSource, affineTransformation):
             """
             Set the meshes of the entities of dimension `dim' and tag `tags' as

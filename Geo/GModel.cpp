@@ -1167,7 +1167,7 @@ int GModel::getNumMeshVertices(int dim) const
   unsigned int n = 0;
   for(unsigned int i = 0; i < entities.size(); i++)
     if(entities[i]->dim() == dim || dim < 0)
-      n += entities[i]->mesh_vertices.size();
+      n += entities[i]->getNumMeshVertices();
   return n;
 }
 
@@ -1190,6 +1190,36 @@ int GModel::getNumMeshParentElements()
   for(unsigned int i = 0; i < entities.size(); i++)
     n += entities[i]->getNumMeshParentElements();
   return n;
+}
+
+void GModel::renumberMeshVertices()
+{
+  destroyMeshCaches();
+  setMaxVertexNumber(0);
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+  unsigned int n = 0;
+  for(unsigned int i = 0; i < entities.size(); i++){
+    GEntity *ge = entities[i];
+    for(unsigned int j = 0; j < ge->getNumMeshVertices(); j++){
+      ge->getMeshVertex(j)->forceNum(++n);
+    }
+  }
+}
+
+void GModel::renumberMeshElements()
+{
+  destroyMeshCaches();
+  setMaxElementNumber(0);
+  std::vector<GEntity*> entities;
+  getEntities(entities);
+  unsigned int n = 0;
+  for(unsigned int i = 0; i < entities.size(); i++){
+    GEntity *ge = entities[i];
+    for(unsigned int j = 0; j < ge->getNumMeshElements(); j++){
+      ge->getMeshElement(j)->forceNum(++n);
+    }
+  }
 }
 
 int GModel::getNumMeshElements(unsigned c[6])
@@ -1230,23 +1260,30 @@ void GModel::rebuildMeshVertexCache(bool onlyIfNecessary)
   if(!onlyIfNecessary || (_vertexVectorCache.empty() && _vertexMapCache.empty())){
     _vertexVectorCache.clear();
     _vertexMapCache.clear();
-    bool dense = (getNumMeshVertices() == _maxVertexNum);
+    bool dense = false;
+    if(_maxVertexNum == getNumMeshVertices()){
+      Msg::Debug("We have a dense vertex numbering in the cache");
+      dense = true;
+    }
+    else if(_maxVertexNum < 10 * getNumMeshVertices()){
+      Msg::Debug("We have a fairly dense vertex numbering - still using cache vector");
+      dense = true;
+    }
     std::vector<GEntity*> entities;
     getEntities(entities);
     if(dense){
-      Msg::Debug("Good: we have a dense vertex numbering in the cache");
       // numbering starts at 1
-      _vertexVectorCache.resize(_maxVertexNum + 1);
+      _vertexVectorCache.resize(_maxVertexNum + 1, (MVertex*)0);
       for(unsigned int i = 0; i < entities.size(); i++)
         for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
           _vertexVectorCache[entities[i]->mesh_vertices[j]->getNum()] =
-          entities[i]->mesh_vertices[j];
+            entities[i]->mesh_vertices[j];
     }
     else{
       for(unsigned int i = 0; i < entities.size(); i++)
         for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
           _vertexMapCache[entities[i]->mesh_vertices[j]->getNum()] =
-          entities[i]->mesh_vertices[j];
+            entities[i]->mesh_vertices[j];
     }
   }
 }
@@ -1295,13 +1332,20 @@ MElement *GModel::getMeshElementByTag(int n)
     Msg::Debug("Rebuilding mesh element cache");
     _elementVectorCache.clear();
     _elementMapCache.clear();
-    bool dense = (getNumMeshElements() == _maxElementNum);
+    bool dense = false;
+    if(_maxElementNum == getNumMeshElements()){
+      Msg::Debug("We have a dense element numbering in the cache");
+      dense = true;
+    }
+    else if(_maxElementNum < 10 * getNumMeshElements()){
+      Msg::Debug("We have a fairly dense element numbering - still using cache vector");
+      dense = true;
+    }
     std::vector<GEntity*> entities;
     getEntities(entities);
     if(dense){
-      Msg::Debug("Good: we have a dense element numbering in the cache");
       // numbering starts at 1
-      _elementVectorCache.resize(_maxElementNum + 1);
+      _elementVectorCache.resize(_maxElementNum + 1, (MElement*)0);
       for(unsigned int i = 0; i < entities.size(); i++)
         for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){
           MElement *e = entities[i]->getMeshElement(j);
@@ -1389,10 +1433,10 @@ int GModel::indexMeshVertices(bool all, int singlePartition, bool renumber)
     for(unsigned int j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->setIndex(-1);
 
-  // tag all mesh vertices belonging to elements that need to be saved
-  // with 0, or with -2 if they need to be taken into account in the
-  // numbering but need not to be saved (because we save a single
-  // partition and they are not used in that partition)
+  // tag all mesh vertices belonging to elements that need to be saved with 0,
+  // or with -2 if they need to be taken into account in the numbering but need
+  // not to be saved (because we save a single partition and they are not used
+  // in that partition)
   for(unsigned int i = 0; i < entities.size(); i++){
     if(all || entities[i]->physicals.size()){
       for(unsigned int j = 0; j < entities[i]->getNumMeshElements(); j++){

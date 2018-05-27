@@ -888,6 +888,30 @@ Reorder the elements of type @code{elementType} classified on the entity of tag
 -
 @end table
 
+@item renumberNodes
+Renumber the nodes tags in a contiunous sequence.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item renumberElements
+Renumber the elements tags in a contiunous sequence.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item setPeriodic
 Set the meshes of the entities of dimension @code{dim} and tag @code{tags} as
 periodic copies of the meshes of entities @code{tagsSource}, using the affine

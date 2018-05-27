@@ -946,6 +946,22 @@ namespace gmsh { // Top-level functions
         gmshFree(api_ordering_);
       }
 
+      // Renumber the nodes tags in a contiunous sequence.
+      GMSH_API void renumberNodes()
+      {
+        int ierr = 0;
+        gmshModelMeshRenumberNodes(&ierr);
+        if(ierr) throw ierr;
+      }
+
+      // Renumber the elements tags in a contiunous sequence.
+      GMSH_API void renumberElements()
+      {
+        int ierr = 0;
+        gmshModelMeshRenumberElements(&ierr);
+        if(ierr) throw ierr;
+      }
+
       // Set the meshes of the entities of dimension `dim' and tag `tags' as
       // periodic copies of the meshes of entities `tagsSource', using the affine
       // transformation specified in `affineTransformation' (16 entries of a 4x4

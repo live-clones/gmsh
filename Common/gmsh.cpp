@@ -1658,6 +1658,18 @@ GMSH_API void gmsh::model::mesh::reorderElements(const int elementType,
   }
 }
 
+GMSH_API void gmsh::model::mesh::renumberNodes()
+{
+  if(!_isInitialized()){ throw -1; }
+  GModel::current()->renumberMeshVertices();
+}
+
+GMSH_API void gmsh::model::mesh::renumberElements()
+{
+  if(!_isInitialized()){ throw -1; }
+  GModel::current()->renumberMeshElements();
+}
+
 GMSH_API void gmsh::model::mesh::setPeriodic(const int dim,
                                              const std::vector<int> &tags,
                                              const std::vector<int> &tagsMaster,

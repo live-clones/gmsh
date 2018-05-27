@@ -851,6 +851,28 @@ GMSH_API void gmshModelMeshReorderElements(const int elementType, const int tag,
   }
 }
 
+GMSH_API void gmshModelMeshRenumberNodes(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::renumberNodes();
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
+GMSH_API void gmshModelMeshRenumberElements(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::renumberElements();
+  }
+  catch(int api_ierr_){
+    if(ierr) *ierr = api_ierr_;
+  }
+}
+
 GMSH_API void gmshModelMeshSetPeriodic(const int dim, int * tags, size_t tags_n, int * tagsSource, size_t tagsSource_n, double * affineTransformation, size_t affineTransformation_n, int * ierr)
 {
   if(ierr) *ierr = 0;

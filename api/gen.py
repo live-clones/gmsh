@@ -225,6 +225,12 @@ mesh.add('embed',doc,None,iint('dim'),ivectorint('tags'),iint('inDim'),iint('inT
 doc = '''Reorder the elements of type `elementType' classified on the entity of tag `tag' according to `ordering'.'''
 mesh.add('reorderElements',doc,None,iint('elementType'),iint('tag'),ivectorint('ordering'))
 
+doc = '''Renumber the nodes tags in a contiunous sequence.'''
+mesh.add('renumberNodes',doc,None)
+
+doc = '''Renumber the elements tags in a contiunous sequence.'''
+mesh.add('renumberElements',doc,None)
+
 doc = '''Set the meshes of the entities of dimension `dim' and tag `tags' as periodic copies of the meshes of entities `tagsSource', using the affine transformation specified in `affineTransformation' (16 entries of a 4x4 matrix, by row). Currently only available for `dim' == 1 and `dim' == 2.'''
 mesh.add('setPeriodic',doc,None,iint('dim'),ivectorint('tags'),ivectorint('tagsSource'),ivectordouble('affineTransformation'))
 

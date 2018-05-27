@@ -35,7 +35,7 @@ double MElement::_isInsideTolerance = 1.e-6;
 MElement::MElement(int num, int part) : _visible(1)
 {
 #if defined(_OPENMP)
-  #pragma omp critical
+#pragma omp critical
 #endif
   {
     // we should make GModel a mandatory argument to the constructor
@@ -51,6 +51,19 @@ MElement::MElement(int num, int part) : _visible(1)
     _partition = (short)part;
   }
 }
+
+void MElement::forceNum(int num)
+{
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+  {
+    GModel *m = GModel::current();
+    _num = num;
+    m->setMaxElementNumber(std::max(m->getMaxElementNumber(), _num));
+  }
+}
+
 
 void MElement::setTolerance(const double tol)
 {
