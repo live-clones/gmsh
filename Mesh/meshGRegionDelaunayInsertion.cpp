@@ -271,11 +271,21 @@ void connectTets(ITER beg, ITER end, const std::set<MFace, Less_Face> *allEmbedd
 }
 
 
-void connectTets(std::list<MTet4*> &l, const std::set<MFace, Less_Face> *embeddedFaces) { connectTets(l.begin(), l.end(), embeddedFaces); }
-void connectTets(std::vector<MTet4*> &l, const std::set<MFace, Less_Face> *embeddedFaces) { connectTets(l.begin(), l.end(), embeddedFaces); }
-void connectTets_vector2(std::list<MTet4*> &l, std::vector<faceXtet> &conn)
-{ connectTets_vector2_templ(l.size(), l.begin(), l.end(), conn);
+void connectTets(std::list<MTet4*> &l, const std::set<MFace, Less_Face> *embeddedFaces)
+{
+  connectTets(l.begin(), l.end(), embeddedFaces);
 }
+
+void connectTets(std::vector<MTet4*> &l, const std::set<MFace, Less_Face> *embeddedFaces)
+{
+  connectTets(l.begin(), l.end(), embeddedFaces);
+}
+
+void connectTets_vector2(std::list<MTet4*> &l, std::vector<faceXtet> &conn)
+{
+  connectTets_vector2_templ(l.size(), l.begin(), l.end(), conn);
+}
+
 void connectTets_vector2(std::vector<MTet4*> &l,  std::vector<faceXtet> &conn)
 {
   connectTets_vector2_templ(l.size(), l.begin(), l.end(), conn);
@@ -286,11 +296,11 @@ void connectTets_vector2(std::vector<MTet4*> &l,  std::vector<faceXtet> &conn)
 // by all the facets of the cavity
 
 static void removeFromCavity(std::vector<faceXtet> &shell,
-                             std::vector<MTet4*> &cavity, faceXtet &toRemove) {
+                             std::vector<MTet4*> &cavity, faceXtet &toRemove)
+{
   toRemove.t1->setDeleted(false);
-  cavity.erase(
-      std::remove_if(cavity.begin(), cavity.end(),
-                     std::bind2nd(std::equal_to<MTet4 *>(), toRemove.t1)));
+  cavity.erase(std::remove_if(cavity.begin(), cavity.end(),
+                              std::bind2nd(std::equal_to<MTet4 *>(), toRemove.t1)));
 
   for (int i = 0; i < 4; i++) {
     faceXtet fxt2(toRemove.t1, i);
@@ -347,7 +357,8 @@ static bool verifyShell (MVertex *v, MTet4*t, std::vector<faceXtet> & shell){
 
 int makeCavityStarShaped(std::vector<faceXtet> & shell,
                          std::vector<MTet4*> & cavity,
-                         MVertex *v ){
+                         MVertex *v)
+{
   std::vector<faceXtet> wrong;
   for (std::vector<faceXtet>::iterator it = shell.begin(); it != shell.end() ;++it) {
     faceXtet &fxt = *it;
@@ -383,7 +394,8 @@ int makeCavityStarShaped(std::vector<faceXtet> & shell,
 }
 
 void findCavity(std::vector<faceXtet> &shell, std::vector<MTet4*> &cavity,
-                MVertex *v, MTet4 *t) {
+                MVertex *v, MTet4 *t)
+{
   t->setDeleted(true);
   cavity.push_back(t);
 
@@ -414,7 +426,7 @@ void findCavity(std::vector<faceXtet> &shell, std::vector<MTet4*> &cavity,
   }
 }
 
-void printTets (const char *fn, std::list<MTet4*> &cavity, bool force = false )
+void printTets (const char *fn, std::list<MTet4*> &cavity, bool force = false)
 {
   FILE *f = Fopen (fn,"w");
   if(f){
@@ -1096,7 +1108,8 @@ double tetcircumcenter(double a[3], double b[3], double c[3], double d[3],
   return xxx;
 }
 
-static void memoryCleanup(MTet4Factory &myFactory, std::set<MTet4*, compareTet4Ptr> &allTets)
+static void memoryCleanup(MTet4Factory &myFactory,
+                          std::set<MTet4*, compareTet4Ptr> &allTets)
 {
   //  int n1 = allTets.size();
   std::set<MTet4*,compareTet4Ptr>::iterator itd = allTets.begin();
@@ -1174,7 +1187,8 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify)
     std::map<MVertex*, double, MVertexLessThanNum> vSizesMap;
     std::set<MVertex*,MVertexLessThanNum> bndVertices;
 
-    for (GModel::riter rit = gr->model()->firstRegion(); rit != gr->model()->lastRegion(); ++rit){
+    for (GModel::riter rit = gr->model()->firstRegion();
+         rit != gr->model()->lastRegion(); ++rit){
       std::list<GEdge*> e = (*rit)->embeddedEdges();
       for (std::list<GEdge*>::iterator it = e.begin() ; it != e.end(); ++it){
         for (unsigned int i = 0; i < (*it)->lines.size(); i++){
@@ -1272,7 +1286,8 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify)
   // store all embedded faces
   std::set<MFace, Less_Face> allEmbeddedFaces;
   edgeContainerB allEmbeddedEdges;
-  for (GModel::riter it = gr->model()->firstRegion(); it != gr->model()->lastRegion(); ++it){
+  for (GModel::riter it = gr->model()->firstRegion();
+       it != gr->model()->lastRegion(); ++it){
     createAllEmbeddedFaces((*it), allEmbeddedFaces);
     createAllEmbeddedEdges((*it), allEmbeddedEdges);
   }
