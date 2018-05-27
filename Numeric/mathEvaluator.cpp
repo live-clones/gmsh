@@ -23,7 +23,7 @@ mathEvaluator::mathEvaluator(std::vector<std::string> &expressions,
       _expressions[i]->expression(expressions[i]);
       _expressions[i]->parse();
     }
-    catch(smlib::mathex::error e) {
+    catch(smlib::mathex::error& e) {
       if(e.what() + expressions[i] != lastError){
         lastError = e.what() + expressions[i];
         Msg::Error(e.what());
@@ -68,7 +68,7 @@ bool mathEvaluator::eval(const std::vector<double> &values, std::vector<double> 
     try {
       res[i] = _expressions[i]->eval();
     }
-    catch(smlib::mathex::error e) {
+    catch(smlib::mathex::error& e) {
       Msg::Error(e.what());
       double eps = 1.e-20;
       for(unsigned int j = 0; j < values.size(); j++)
@@ -76,7 +76,7 @@ bool mathEvaluator::eval(const std::vector<double> &values, std::vector<double> 
       try {
 	res[i] = _expressions[i]->eval();
       }
-      catch(smlib::mathex::error e2) {
+      catch(smlib::mathex::error& e2) {
 	  Msg::Error(e2.what());
 	  return false;
       }

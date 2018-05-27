@@ -101,7 +101,7 @@ class MTet4
     const double dx = base->getVertex(0)->x() - center[0];
     const double dy = base->getVertex(0)->y() - center[1];
     const double dz = base->getVertex(0)->z() - center[2];
-    circum_radius = sqrt(dx * dx + dy * dy + dz * dz);
+    circum_radius = std::sqrt(dx * dx + dy * dy + dz * dz);
     /*
     if (base->getVertex(0)->getIndex() >= sizes.size() ||
 	base->getVertex(1)->getIndex() >= sizes.size() ||
@@ -138,7 +138,7 @@ class MTet4
     const double dx = base->getVertex(0)->x() - center[0];
     const double dy = base->getVertex(0)->y() - center[1];
     const double dz = base->getVertex(0)->z() - center[2];
-    circum_radius = sqrt(dx * dx + dy * dy + dz * dz);
+    circum_radius = std::sqrt(dx * dx + dy * dy + dz * dz);
 
     /*
     if (base->getVertex(0)->getIndex() >= sizes.size() ||
@@ -165,29 +165,29 @@ class MTet4
     deleted = false;
   }
 
-  inline GRegion *onWhat() const { return gr; }
-  inline void setOnWhat(GRegion *g) { gr = g; }
-  inline bool isDeleted() const { return deleted; }
-  inline void forceRadius(double r){ circum_radius = r; }
-  inline double getRadius() const { return circum_radius; }
-  inline double getQuality() const { return circum_radius; }
-  inline void setQuality(const double &q){ circum_radius = q; }
-  inline MTetrahedron *tet() const { return base; }
-  inline MTetrahedron *&tet() { return base; }
-  inline void setTet(MTetrahedron *t) { base=t; }
-  inline void setNeigh(int iN, MTet4 *n) { neigh[iN] = n; }
-  inline MTet4 *getNeigh(int iN) const { return neigh[iN]; }
+  GRegion *onWhat() const { return gr; }
+  void setOnWhat(GRegion *g) { gr = g; }
+  bool isDeleted() const { return deleted; }
+  void forceRadius(double r){ circum_radius = r; }
+  double getRadius() const { return circum_radius; }
+  double getQuality() const { return circum_radius; }
+  void setQuality(const double &q){ circum_radius = q; }
+  MTetrahedron *tet() const { return base; }
+  MTetrahedron *&tet() { return base; }
+  void setTet(MTetrahedron *t) { base=t; }
+  void setNeigh(int iN, MTet4 *n) { neigh[iN] = n; }
+  MTet4 *getNeigh(int iN) const { return neigh[iN]; }
   int inCircumSphere(const double *p) const;
-  inline int inCircumSphere(double x, double y, double z) const
+  int inCircumSphere(double x, double y, double z) const
   {
     const double p[3] = {x, y, z};
     return inCircumSphere(p);
   }
-  inline int inCircumSphere(const MVertex *v) const
+  int inCircumSphere(const MVertex *v) const
   {
     return inCircumSphere(v->x(), v->y(), v->z());
   }
-  inline double getVolume() const {
+  double getVolume() const {
 
     double pa[3] = {base->getVertex(0)->x(),
 		    base->getVertex(0)->y(),
@@ -201,13 +201,13 @@ class MTet4
     double pd[3] = {base->getVertex(3)->x(),
 		    base->getVertex(3)->y(),
 		    base->getVertex(3)->z()};
-    return fabs(robustPredicates::orient3d(pa, pb, pc, pd))/6.0;
+    return std::abs(robustPredicates::orient3d(pa, pb, pc, pd))/6.0;
   }
-  inline void setDeleted(bool d)
+  void setDeleted(bool const d)
   {
     deleted = d;
   }
-  inline bool assertNeigh() const
+  bool assertNeigh() const
   {
     if (deleted) return true;
     for (int i = 0; i < 4; i++)
@@ -233,10 +233,9 @@ void bowyerWatsonFrontalLayers(GRegion *gr, bool hex);
 GRegion *getRegionFromBoundingFaces(GModel *model,
                                     std::set<GFace *> &faces_bound);
 
-class compareTet4Ptr
+struct compareTet4Ptr
 {
- public:
-  inline bool operator () (const MTet4 *a, const MTet4 *b)  const
+  bool operator()(MTet4 const* const a, MTet4 const* const b) const
   {
     if (a->getRadius() > b->getRadius()) return true;
     if (a->getRadius() < b->getRadius()) return false;
