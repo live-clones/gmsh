@@ -288,7 +288,7 @@ static int edgeSwapTest(GFace *gf, BDS_Edge *e)
 
   e->oppositeof (op);
 
-  if (!edgeSwapTestAngle(e, cos(CTX::instance()->mesh.allowSwapEdgeAngle * M_PI / 180.)))
+  if (!edgeSwapTestAngle(e, std::cos(CTX::instance()->mesh.allowSwapEdgeAngle * M_PI / 180.)))
     return -1;
 
   double qa1 = qmTriangle::gamma(e->p1, e->p2, op[0]);
