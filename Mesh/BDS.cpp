@@ -658,7 +658,7 @@ bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid)
      //  p1,op2,mid +
   */
 
-  
+
   BDS_Point *op[2];
   BDS_Point *p1 = e->p1;
   BDS_Point *p2 = e->p2;
@@ -670,7 +670,7 @@ bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid)
   //  double _op1[2] = {op[0]->u,op[0]->v};
   //  double _op2[2] = {op[1]->u,op[1]->v};
   //  double _mid[2] = {mid->u,mid->v};
-  
+
   //  double ori1 = robustPredicates::orient2d(_mid, _p1, _op2);
   //  double ori2 = robustPredicates::orient2d(_mid, _op2, _p2);
   //  double ori3 = robustPredicates::orient2d(_mid, _p2, _op1);
@@ -680,7 +680,7 @@ bool BDS_Mesh::split_edge(BDS_Edge *e, BDS_Point *mid)
     //    printf("oufti\n");
   //    return false;
   //  }
-  
+
   BDS_Point *pts1[4];
   e->faces(0)->getNodes(pts1);
 
@@ -1276,7 +1276,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
       //			(gp.y()-gp2.y())*(gp.y()-gp2.y())+
       //			(gp.z()-gp2.z())*(gp.z()-gp2.z()));
       //      if (dx > 1.e-8){
-      //	printf("ERROR %12.5E\n",dx);      
+      //	printf("ERROR %12.5E\n",dx);
       //	printf("%g %g %g vs. %g %g %g \n",gp2.x(),gp2.y(),gp2.z(),
       //	       gp.x(),gp.y(),gp.z());
       //      }
@@ -1289,15 +1289,15 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
     return false;
   }
   //    if (!gf->containsParam(SPoint2(U,V)))return false;
-  
+
   const double oldX = p->X;
   const double oldY = p->Y;
   const double oldZ = p->Z;
-  
+
   std::list<BDS_Face*>::iterator it = ts.begin();
   std::list<BDS_Face*>::iterator ite = ts.end();
   double s1 = 0, s2 = 0;
-  
+
   double newWorst = 1.0;
   double oldWorst = 1.0;
 
@@ -1315,7 +1315,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
     double sold = fabs(surface_triangle_param(n[0], n[1], n[2]));
     s2 += sold;
     if(snew < .1 * sold) return false;
-    
+
     p->X = gp.x();
     p->Y = gp.y();
     p->Z = gp.z();
@@ -1328,7 +1328,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
     normal_triangle(n[0], n[1], n[2], norm2);
     oldWorst = std::min(oldWorst, qmTriangle::gamma(*it));
     double ps;
-    if (gf->geomType() == GEntity::DiscreteSurface){    
+    if (gf->geomType() == GEntity::DiscreteSurface){
       prosca(norm1, normal, &ps);
       if (ps > 0)return false;
     }
@@ -1350,7 +1350,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
   }
   // printf("%22.15E %22.15E %22.15E\n",s1,s2,fabs(s2-s1));
   if(fabs(s2-s1) > 1.e-14 * (s2 + s1)) return false;
-  
+
   //  if(test_quality && newWorst < oldWorst){
   //    return false;
   //  }
