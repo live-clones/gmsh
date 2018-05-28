@@ -168,22 +168,12 @@ void BDS_Point::getTriangles(std::list<BDS_Face*> &t) const
 {
   t.clear();
   std::list<BDS_Edge*>::const_iterator it = edges.begin();
-  std::list<BDS_Edge*>::const_iterator ite = edges.end();
-  while(it != ite) {
-    int NF = (*it)->numfaces();
-    for(int i = 0; i < NF; ++i) {
+  while(it != edges.end()) {
+    int const number_of_faces = (*it)->numfaces();
+    for(int i = 0; i < number_of_faces; ++i) {
       BDS_Face *tt = (*it)->faces(i);
-      if(tt) {
-        std::list<BDS_Face*>::iterator tit = t.begin();
-        std::list<BDS_Face*>::iterator tite = t.end();
-        int found = 0;
-        while(tit != tite) {
-          if(tt == *tit)
-            found = 1;
-          ++tit;
-        }
-        if(!found)
-          t.push_back(tt);
+      if (tt && std::find(t.begin(), t.end(), tt) == t.end()) {
+        t.push_back(tt);
       }
     }
     ++it;
