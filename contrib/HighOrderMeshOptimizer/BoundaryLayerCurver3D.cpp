@@ -80,12 +80,16 @@ namespace
     MVertex *vn = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
     pnt = p + w * unitDimension;
     MVertex *vw = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
+    pnt = p + t * unitDimension;
+    MVertex *vt = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
     gFace->addMeshVertex(v);
     gFace->addMeshVertex(vn);
     gFace->addMeshVertex(vw);
     MLine *line = new MLine(v, vn);
     gFace->edges().front()->addLine(line);
     line = new MLine(v, vw);
+    gFace->edges().front()->addLine(line);
+    line = new MLine(v, vt);
     gFace->edges().front()->addLine(line);
   }
 
@@ -701,12 +705,12 @@ namespace BoundaryLayerCurver
     const int nVertices2 = surface2->getNumPrimaryVertices();
 
     // First normal
-    iNode = sign1 > 1 ? nEdge1 : (nEdge1 + 1) % nVertices1;
+    iNode = sign1 > 0 ? nEdge1 : (nEdge1 + 1) % nVertices1;
     surface1->getNode(iNode, u, v, w);
     surface1->getJacobian(u, v, w, gradients);
     ns1 = SVector3(gradients[2][0], gradients[2][1], gradients[2][2]);
 
-    iNode = sign1 > 1 ? (nEdge1 + 1) % nVertices1 : nEdge1;
+    iNode = sign2 > 0 ? nEdge2 : (nEdge2 + 1) % nVertices2;
     surface2->getNode(iNode, u, v, w);
     surface2->getJacobian(u, v, w, gradients);
     ns2 = SVector3(gradients[2][0], gradients[2][1], gradients[2][2]);
@@ -717,12 +721,12 @@ namespace BoundaryLayerCurver
     n1.normalize();
 
     // Second normal
-    iNode = sign2 > 1 ? nEdge2 : (nEdge2 + 1) % nVertices2;
+    iNode = sign1 > 0 ? (nEdge1 + 1) % nVertices1 : nEdge1;
     surface1->getNode(iNode, u, v, w);
     surface1->getJacobian(u, v, w, gradients);
     ns1 = SVector3(gradients[2][0], gradients[2][1], gradients[2][2]);
 
-    iNode = sign2 > 1 ? (nEdge2 + 1) % nVertices2 : nEdge2;
+    iNode = sign2 > 0 ? (nEdge2 + 1) % nVertices2 : nEdge2;
     surface2->getNode(iNode, u, v, w);
     surface2->getJacobian(u, v, w, gradients);
     ns2 = SVector3(gradients[2][0], gradients[2][1], gradients[2][2]);
