@@ -143,20 +143,15 @@ class BDS_Point
   // just a transition
   double &lcBGM() { return _lcBGM; }
   double &lc() { return _lcPTS; }
-  inline bool operator < (const BDS_Point & other) const
+  bool operator < (const BDS_Point & other) const
   {
     return iD < other.iD;
   }
-  inline void del(BDS_Edge *e)
+  void del(BDS_Edge *e)
   {
-    std::list<BDS_Edge*>::iterator it = edges.begin();
-    std::list<BDS_Edge*>::iterator ite = edges.end();
-    while(it != ite){
-      if(*it == e){
+    std::list<BDS_Edge*>::iterator it = std::find(edges.begin(), edges.end(), e);
+    if (it != edges.end()) {
         edges.erase(it);
-        break;
-      }
-      ++it;
     }
   }
   void getTriangles(std::list<BDS_Face *> &t) const;
