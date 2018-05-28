@@ -606,7 +606,7 @@ void BDS2GMSH(BDS_Mesh *m, GFace *gf,
     }
   }
   {
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       BDS_Face *t = *itt;
       if(!t->deleted){
@@ -1254,7 +1254,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   // look for a triangle that has a negative node and recursively tag all
   // exterior triangles
   {
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       (*itt)->g = 0;
       ++itt;
@@ -1290,7 +1290,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       }
       ++ite;
     }
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       if((*itt)->g == &CLASS_EXTERIOR) (*itt)->g = 0;
       ++itt;
@@ -1353,7 +1353,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
 
   // delete useless stuff
-  std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+  std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
   while(itt != m->triangles.end()){
     BDS_Face *t = *itt;
     if(!t->g) m->del_face(t);
@@ -1393,7 +1393,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
 
   if(1){
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       BDS_Face *t = *itt;
       if(!t->deleted){
@@ -2214,7 +2214,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   // look for a triangle that has a negative node and recursively tag all
   // exterior triangles
   {
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       (*itt)->g = 0;
       ++itt;
@@ -2250,7 +2250,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
       }
       ++ite;
     }
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       if((*itt)->g == &CLASS_EXTERIOR) (*itt)->g = 0;
       ++itt;
@@ -2259,7 +2259,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 
   // delete useless stuff
   {
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       BDS_Face *t = *itt;
       if(!t->g){
@@ -2397,7 +2397,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 
   std::map<MTriangle*, BDS_Face*> invert_map;
   {
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       BDS_Face *t = *itt;
       if(!t->deleted){

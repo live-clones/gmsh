@@ -406,7 +406,7 @@ class BDS_Mesh
   std::set<BDS_GeomEntity*, GeomLessThan> geom;
   std::set<BDS_Point*, PointLessThan> points;
   std::list<BDS_Edge*> edges;
-  std::list<BDS_Face*> triangles;
+  std::vector<BDS_Face*> triangles;
   // Points
   BDS_Point *add_point(int num, double x, double y, double z);
   BDS_Point *add_point(int num, double u, double v, GFace *gf);
@@ -450,7 +450,7 @@ void swap_config(BDS_Edge *e,
                  BDS_Point **p21, BDS_Point **p22, BDS_Point **p23,
                  BDS_Point **p31, BDS_Point **p32, BDS_Point **p33,
                  BDS_Point **p41, BDS_Point **p42, BDS_Point **p43);
-void outputScalarField(std::list<BDS_Face*> t, const char *fn, int param, GFace *gf=0);
+void outputScalarField(std::vector<BDS_Face*> t, const char *fn, int param, GFace *gf=0);
 void recur_tag(BDS_Face *t, BDS_GeomEntity *g);
 int Intersect_Edges_2d(double x1, double y1, double x2, double y2,
                        double x3, double y3, double x4, double y4,

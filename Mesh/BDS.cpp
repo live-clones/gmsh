@@ -16,7 +16,7 @@
 #include "meshGFaceDelaunayInsertion.h"
 #include "qualityMeasures.h"
 
-void outputScalarField(std::list<BDS_Face*> t, const char *iii, int param, GFace *gf)
+void outputScalarField(std::vector<BDS_Face*> t, const char *iii, int param, GFace *gf)
 {
 
   if (gf){
@@ -27,8 +27,8 @@ void outputScalarField(std::list<BDS_Face*> t, const char *iii, int param, GFace
     }
     fprintf(view_c,"View \"paramC\"{\n");
     std::set<MEdge,Less_Edge> all;
-    std::list<BDS_Face*>::iterator tit = t.begin();
-    std::list<BDS_Face*>::iterator tite = t.end();
+    std::vector<BDS_Face*>::iterator tit = t.begin();
+    std::vector<BDS_Face*>::iterator tite = t.end();
     while(tit != tite) {
       BDS_Point *pts[4];
       if (!(*tit)->deleted){
@@ -60,8 +60,8 @@ void outputScalarField(std::list<BDS_Face*> t, const char *iii, int param, GFace
     return;
   }
   fprintf(f, "View \"scalar\" {\n");
-  std::list<BDS_Face*>::iterator tit = t.begin();
-  std::list<BDS_Face*>::iterator tite = t.end();
+  std::vector<BDS_Face*>::iterator tit = t.begin();
+  std::vector<BDS_Face*>::iterator tite = t.end();
   while(tit != tite) {
     BDS_Point *pts[4];
     if (!(*tit)->deleted){
@@ -595,18 +595,23 @@ template <class IT> void DESTROOOY(IT beg, IT end)
   }
 }
 
+template <class T>
+bool is_not_deleted(T* const face) {
+    return !face->deleted;
+}
+
 void BDS_Mesh::cleanup()
 {
   {
-    std::list<BDS_Face*>::iterator it = triangles.begin();
+    std::vector<BDS_Face*>::iterator last = std::stable_partition(triangles.begin(),
+                                                                  triangles.end(),
+                                                                  is_not_deleted<BDS_Face>);
+    std::vector<BDS_Face*>::iterator it = last;
     while(it != triangles.end()){
-      if((*it)->deleted){
         delete *it;
-        it = triangles.erase(it);
-      }
-      else
-        it++;
+        ++it;
     }
+    triangles.erase(last, triangles.end());
   }
   {
     std::list<BDS_Edge*>::iterator it = edges.begin();
@@ -1339,7 +1344,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
     ++it;
   }
   // printf("%22.15E %22.15E %22.15E\n",s1,s2,fabs(s2-s1));
-  if(fabs(s2-s1) > 1.e-14 * (s2 + s1)) return false;
+  if(std::abs(s2-s1) > 1.e-14 * (s2 + s1)) return false;
 
   //  if(test_quality && newWorst < oldWorst){
   //    return false;
