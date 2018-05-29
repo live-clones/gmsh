@@ -398,15 +398,15 @@ static bool middlePoint2 (GFace *gf, BDS_Edge *e, double &u, double &v)
     double _op1[2] = {op[0]->u,op[0]->v};
     double _op2[2] = {op[1]->u,op[1]->v};
     double _mid[2] = {u,v};
-    
+
     double ori1 = robustPredicates::orient2d(_mid, _p1, _op2);
     double ori2 = robustPredicates::orient2d(_mid, _op2, _p2);
     double ori3 = robustPredicates::orient2d(_mid, _p2, _op1);
     double ori4 = robustPredicates::orient2d(_mid, _op1, _p1);
-    
+
     if (ori1 * ori2 < 0 || ori1 * ori3 < 0 || ori1 * ori4 < 0) {
       return false;
-    }        
+    }
   }
   return true;
 }
@@ -414,7 +414,7 @@ static bool middlePoint2 (GFace *gf, BDS_Edge *e, double &u, double &v)
 static bool middlePoint (GFace *gf, BDS_Edge *e, double &u, double &v)
 {
   // try that
-  
+
   double u1 = e->p1->u;
   double u2 = e->p2->u;
   double v1 = e->p1->v;
@@ -439,11 +439,11 @@ static bool middlePoint (GFace *gf, BDS_Edge *e, double &u, double &v)
     // 1 ------ p -- 2
     if (l1 > 1.2*l2){
       //      printf("1 %g 2 %g \n",l1,l2);
-      u2 = u; v2 = v;  
+      u2 = u; v2 = v;
     }
     else if (l2 > 1.2*l1){
       //      printf("1 %g 2 %g \n",l1,l2);
-      u1 = u; v1 = v;  
+      u1 = u; v1 = v;
     }
     else break;
     if (iter++ > 10){
@@ -451,7 +451,7 @@ static bool middlePoint (GFace *gf, BDS_Edge *e, double &u, double &v)
       v = 0.5*(e->p1->v+e->p2->v);
       return false;
     }
-  }  
+  }
   return true;
 }
 
@@ -476,7 +476,7 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
   //  bool isSphere = gf->isSphere (radius, center);
 
   bool faceDiscrete = gf->geomType() == GEntity::DiscreteSurface;
-  
+
   for (unsigned int i = 0; i < edges.size(); ++i){
     BDS_Edge *e = edges[i].second;
     if (!e->deleted){
@@ -491,10 +491,10 @@ void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split)
 	//	if (!middlePoint2 (gf, e, U, V))
 	middlePoint (gf, e, U, V);
       }
-      
+
       GPoint gpp = gf->point(U,V);
 
-      
+
       if ((!isPeriodic || gf->containsParam(SPoint2(U,V))) && gpp.succeeded()){
 	mid  = m.add_point(++m.MAXPOINTNUMBER, gpp.x(),gpp.y(),gpp.z());
         mid->u = U;
