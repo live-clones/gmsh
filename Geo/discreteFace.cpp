@@ -45,7 +45,7 @@ void discreteFace::setBoundEdges(const std::vector<int> &tagEdges,
     Msg::Error("Wrong number of edge signs in setBoundEdges");
     setBoundEdges(tagEdges);
   }
-  for (unsigned int i = 0; i != tagEdges.size(); i++){
+  for (std::vector<int>::size_type i = 0; i != tagEdges.size(); i++){
     GEdge *ge = model()->getEdgeByTag(tagEdges[i]);
     if(ge){
       l_edges.push_back(ge);
@@ -628,7 +628,7 @@ static void splitInternalEdges(std::vector<MEdge> &e, int ITH,
       //      std::vector<MVertex*> l2; l2.insert(l2.begin(),l.begin(),l.end());
     }
 
-    std::vector<MVertex*> l2; l2.insert(l2.begin(),l.begin(),l.end());
+    std::vector<MVertex*> l2(l.begin(), l.end());
     eds.push_back(l2);
 
 
@@ -636,7 +636,7 @@ static void splitInternalEdges(std::vector<MEdge> &e, int ITH,
     //    for (int i=0;i<l2.size();i++)printf("%d ",l2[i]->getNum());
     //    printf("\n");
 
-    for (int i=0;i<l2.size()-1;i++){
+    for (std::vector<MVertex*>::size_type i=0;i<l2.size()-1;i++){
       fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
 	      l2[i]->x(),l2[i]->y(),l2[i]->z(),
 	      l2[i+1]->x(),l2[i+1]->y(),l2[i+1]->z(),count,count,count);
