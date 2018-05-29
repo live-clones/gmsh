@@ -1198,6 +1198,8 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
     p->config_modified = true;
     return true;
   }
+
+  // TODO C++11 if (std::any_of() ) return false;
   std::vector<BDS_Edge*>::iterator eit = p->edges.begin();
   while(eit != p->edges.end()) {
     if((*eit)->numfaces() == 1) return false;
@@ -1218,30 +1220,34 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
   double oldV = p->v;
 
   std::vector<BDS_Face*> ts = p->getTriangles();
-  std::vector<BDS_Edge *>::iterator ited = p->edges.begin();
 
-  double sTot = 0;
-  const double fact = 1.0;
-  while(ited != p->edges.end()) {
-    BDS_Edge  *e = *ited;
-    BDS_Point *n = e->othervertex(p);
-    sTot += fact;
+  double const size_total = p->edges.size();
+
+  std::vector<BDS_Edge *>::iterator edge_iterator = p->edges.begin();
+  while(edge_iterator != p->edges.end()) {
+
+    BDS_Edge const* const edge = *edge_iterator;
+    BDS_Point const* const n = edge->othervertex(p);
+
+    double const fact = 1.0;
+
     U  += n->u * fact;
     V  += n->v * fact;
     XX += n->X;
     YY += n->Y;
     ZZ += n->Z;
     LC += n->lc() * fact;
-    ++ited;
+    ++edge_iterator;
   }
-  U /= (sTot);
-  V /= (sTot);
-  LC /= (sTot);
-  XX/= (sTot);
-  YY/= (sTot);
-  ZZ/= (sTot);
+  U /= size_total;
+  V /= size_total;
+  LC /= size_total;
+  XX /= size_total;
+  YY /= size_total;
+  ZZ /= size_total;
 
-  GPoint gp;double uv[2];
+  GPoint gp;
+  double uv[2];
   SVector3 normal;
   if (isSphere /*|| isBSplineSurface*/){
     gp = gf->closestPoint(SPoint3(XX, YY, ZZ), uv);
@@ -1282,11 +1288,9 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
 
   double s1 = 0, s2 = 0;
 
-  double newWorst = 1.0;
-  double oldWorst = 1.0;
+  double newWorst = 1.0, oldWorst = 1.0;
 
   std::vector<BDS_Face*>::const_iterator it = ts.begin();
-
   while(it != ts.end()) {
     BDS_Face *t = *it;
     BDS_Point *n[4];
@@ -1315,12 +1319,12 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
     double ps;
     if (gf->geomType() == GEntity::DiscreteSurface){
       prosca(norm1, normal, &ps);
-      if (ps > 0)return false;
+      if (ps > 0) return false;
     }
     if (isSphere){
-      double dx = center.x() - gp.x();
-      double dy = center.y() - gp.y();
-      double dz = center.z() - gp.z();
+      double const dx = center.x() - gp.x();
+      double const dy = center.y() - gp.y();
+      double const dz = center.z() - gp.z();
       ps = dx*norm1[0]+dy*norm1[1]+dz*norm1[2];
       if (ps < 0)return false;
     }
@@ -1354,27 +1358,25 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
   return true;
 }
 
-bool BDS_Mesh::smooth_point_parametric(BDS_Point *p, GFace *gf)
+bool BDS_Mesh::smooth_point_parametric(BDS_Point * const point, GFace * const gf)
 {
 
-  if(!p->config_modified)return false;
-  if(p->g && p->g->classif_degree <= 1)
-    return false;
+  if(!point->config_modified) return false;
 
-  double U = 0;
-  double V = 0;
+  if(point->g && point->g->classif_degree <= 1) return false;
+
+  double U = 0.0, V = 0.0;
   double tot_length = 0;
   double LC = 0;
 
+  std::vector<BDS_Face*> triangles = point->getTriangles();
+  std::vector<BDS_Face*>::iterator it = triangles.begin();
 
-  std::vector<BDS_Face*> ts = p->getTriangles();
-  std::vector<BDS_Face*>::iterator it = ts.begin();
-
-  while(it != ts.end()) {
+  while(it != triangles.end()) {
     BDS_Face *t = *it;
     BDS_Point *n[4];
     t->getNodes(n);
-    for (int i = 0; i<t->numEdges();i++){
+    for (int i = 0; i < t->numEdges(); i++){
       U += n[i]->u;
       V += n[i]->v;
       LC += n[i]->lc();
@@ -1384,13 +1386,13 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point *p, GFace *gf)
   }
   U /= tot_length;
   V /= tot_length;
-  LC /= p->edges.size();
+  LC /= point->edges.size();
 
-  it = ts.begin();
-  while(it != ts.end()) {
+  it = triangles.begin();
+  while(it != triangles.end()) {
     BDS_Face *t = *it;
-    if(!test_move_point_parametric_triangle(p, U, V, t)){
-      printf("coucou %g %g -> %g %g\n", p->u, p->v,U,V);
+    if(!test_move_point_parametric_triangle(point, U, V, t)){
+      printf("coucou %g %g -> %g %g\n", point->u, point->v,U,V);
       return false;
     }
     ++it;
@@ -1399,14 +1401,14 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point *p, GFace *gf)
   GPoint gp = gf->point(U, V);
   if (!gp.succeeded()) return false;
 
-  p->u = U;
-  p->v = V;
-  p->lc() = LC;
-  p->X = gp.x();
-  p->Y = gp.y();
-  p->Z = gp.z();
-  std::vector<BDS_Edge*>::iterator eit = p->edges.begin();
-  while(eit != p->edges.end()) {
+  point->u = U;
+  point->v = V;
+  point->lc() = LC;
+  point->X = gp.x();
+  point->Y = gp.y();
+  point->Z = gp.z();
+  std::vector<BDS_Edge*>::iterator eit = point->edges.begin();
+  while(eit != point->edges.end()) {
     (*eit)->update();
     ++eit;
   }

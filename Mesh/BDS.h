@@ -129,7 +129,7 @@ public:
 class BDS_Point
 {
   // the first size is the one dictated by the Background Mesh the
-  // second one is dictated by charecteristic lengths at points and is
+  // second one is dictated by characteristic lengths at points and is
   // propagated
   double _lcBGM, _lcPTS;
  public:
@@ -141,17 +141,19 @@ class BDS_Point
   std::vector<BDS_Edge*> edges;
   // just a transition
   double &lcBGM() { return _lcBGM; }
+
+  /// \return Point characteristic length
   double &lc() { return _lcPTS; }
+  /// \return Point characteristic length
+  double const& lc() const { return _lcPTS; }
+
   bool operator < (const BDS_Point & other) const
   {
     return iD < other.iD;
   }
   void del(BDS_Edge *e)
   {
-    std::vector<BDS_Edge*>::iterator it = std::find(edges.begin(), edges.end(), e);
-    if (it != edges.end()) {
-        edges.erase(it);
-    }
+    edges.erase(std::remove(edges.begin(), edges.end(), e), edges.end());
   }
   std::vector<BDS_Face*> getTriangles() const;
   BDS_Point(int id, double x=0, double y=0, double z=0)
@@ -437,7 +439,7 @@ class BDS_Mesh
   /// Can invalidate the iterators for \p edge
   bool swap_edge(BDS_Edge*, const BDS_SwapEdgeTest &theTest);
   bool collapse_edge_parametric(BDS_Edge*, BDS_Point*);
-  bool smooth_point_parametric(BDS_Point *p, GFace *gf);
+  bool smooth_point_parametric(BDS_Point * const p, GFace * const gf);
   bool smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality=false);
   bool split_edge(BDS_Edge *, BDS_Point *);
   bool edge_constraint(BDS_Point *p1, BDS_Point *p2);
