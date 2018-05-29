@@ -384,7 +384,7 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
     //        intersected[ichoice]->p2->iD, success, intersected[ichoice]->deleted,
     //        intersected[ichoice]->numfaces());
     //=======
-    int ichoice = 0;
+    std::vector<int>::size_type ichoice = 0;
     bool success = false;
     while (!success && ichoice < intersected.size())
     {
