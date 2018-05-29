@@ -1814,7 +1814,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   double du = rangeU.high() - rangeU.low();
   double dv = rangeV.high() - rangeV.low();
 
-  const double LC2D = sqrt(du * du + dv * dv);
+  const double LC2D = std::sqrt(du * du + dv * dv);
 
   // Buid a BDS_Mesh structure that is convenient for doing the actual meshing
   // procedure
