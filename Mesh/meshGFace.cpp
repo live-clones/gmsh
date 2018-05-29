@@ -913,7 +913,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   std::map<BDS_Point*, MVertex*,PointLessThan> recoverMap;
   std::map<MVertex*, BDS_Point*> recoverMapInv;
   std::list<GEdge*> edges = replacement_edges ? *replacement_edges : gf->edges();
-  std::list<int> dir = gf->edgeOrientations();
 
   // build a set with all points of the boundaries
   std::set<MVertex*, MVertexLessThanNum> all_vertices, boundary;
