@@ -121,12 +121,10 @@ void computeMeshSizeFieldAccuracy(GFace *gf, BDS_Mesh &m, double &avg,
   max_e = 0;
   nE = 0;
   GS = 0;
-  double oneoversqr2 = 1. / sqrt(2.);
-  double sqr2 = sqrt(2.);
   while (it != m.edges.end()){
     if (!(*it)->deleted){
       double lone = NewGetLc(*it, gf);
-      if (lone > oneoversqr2 && lone < sqr2) GS++;
+      if (lone > 1.0 / std::sqrt(2.0) && lone < std::sqrt(2.0)) GS++;
       avg += lone >1 ? (1. / lone) - 1. : lone - 1.;
       max_e = std::max(max_e, lone);
       min_e = std::min(min_e, lone);
@@ -134,7 +132,7 @@ void computeMeshSizeFieldAccuracy(GFace *gf, BDS_Mesh &m, double &avg,
     }
     ++it;
   }
-  avg = 100*exp(1./nE*avg);
+  avg = 100 * std::exp(1./nE*avg);
 }
 
 // SWAP TESTS i.e. tell if swap should be done
