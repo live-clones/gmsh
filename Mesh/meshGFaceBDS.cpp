@@ -535,11 +535,10 @@ double getMaxLcWhenCollapsingEdge(GFace *gf, BDS_Mesh &m, BDS_Edge *e, BDS_Point
 
 static bool revertTriangleSphere(SPoint3 &center, BDS_Point *p, BDS_Point *o)
 {
-  std::list<BDS_Face*> t;
-  p->getTriangles(t);
-  std::list<BDS_Face*>::iterator it = t.begin();
-  std::list<BDS_Face*>::iterator ite = t.end();
-  while(it != ite) {
+  std::vector<BDS_Face*> t = p->getTriangles();
+
+  std::vector<BDS_Face*>::const_iterator it = t.begin();
+  while(it != t.end()) {
     BDS_Face *t = *it;
     BDS_Point *pts[4];
     t->getNodes(pts);
