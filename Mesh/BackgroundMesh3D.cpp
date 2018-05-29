@@ -4,8 +4,9 @@
 // bugs and problems to the public mailing list <gmsh@onelab.info>.
 
 #include <fstream>
-#include <algorithm>
 #include <iostream>
+#include <iomanip>
+#include <algorithm>
 #include <string>
 #include <numeric>
 #include "BackgroundMesh3D.h"
