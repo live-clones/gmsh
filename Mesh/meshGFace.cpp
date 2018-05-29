@@ -1620,8 +1620,7 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
     it++;
   }
 
-  std::list<GEdgeSigned> unordered;
-  unordered.insert(unordered.begin(), gel.begin(), gel.end());
+  std::list<GEdgeSigned> unordered(gel.begin(), gel.end());
 
   GEdgeSigned found(0, 0);
   SPoint2 last_coord(0, 0);
