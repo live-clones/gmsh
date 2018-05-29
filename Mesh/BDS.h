@@ -16,7 +16,7 @@
 #include <algorithm>
 #include <functional>
 #include <list>
-#include <math.h>
+#include <cmath>
 #include "GmshMessage.h"
 
 class BDS_Edge;
