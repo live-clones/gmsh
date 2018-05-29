@@ -29,8 +29,7 @@ double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2)
   const double dx = p1->X - p2->X;
   const double dy = p1->Y - p2->Y;
   const double dz = p1->Z - p2->Z;
-  const double l = sqrt(dx * dx + dy * dy + dz * dz);
-  return l;
+  return std::sqrt(dx * dx + dy * dy + dz * dz);
 }
 
 extern double lengthInfniteNorm(const double p[2], const double q[2],
@@ -123,7 +122,7 @@ void computeMeshSizeFieldAccuracy(GFace *gf, BDS_Mesh &m, double &avg,
   GS = 0;
   while (it != m.edges.end()){
     if (!(*it)->deleted){
-      double lone = NewGetLc(*it, gf);
+      double const lone = NewGetLc(*it, gf);
       if (lone > 1.0 / std::sqrt(2.0) && lone < std::sqrt(2.0)) GS++;
       avg += lone >1 ? (1. / lone) - 1. : lone - 1.;
       max_e = std::max(max_e, lone);
@@ -132,7 +131,7 @@ void computeMeshSizeFieldAccuracy(GFace *gf, BDS_Mesh &m, double &avg,
     }
     ++it;
   }
-  avg = 100 * std::exp(1./nE*avg);
+  avg = 100 * std::exp(1.0 / nE * avg);
 }
 
 // SWAP TESTS i.e. tell if swap should be done
@@ -429,8 +428,8 @@ static bool middlePoint (GFace *gf, BDS_Edge *e, double &u, double &v)
     double X = gpp.x();
     double Y = gpp.y();
     double Z = gpp.z();
-    double l1 = sqrt((X-X1)*(X-X1)+(Y-Y1)*(Y-Y1)+(Z-Z1)*(Z-Z1));
-    double l2 = sqrt((X-X2)*(X-X2)+(Y-Y2)*(Y-Y2)+(Z-Z2)*(Z-Z2));
+    double l1 = std::sqrt((X-X1)*(X-X1)+(Y-Y1)*(Y-Y1)+(Z-Z1)*(Z-Z1));
+    double l2 = std::sqrt((X-X2)*(X-X2)+(Y-Y2)*(Y-Y2)+(Z-Z2)*(Z-Z2));
     // 1 ------ p -- 2
     if (l1 > 1.2*l2){
       //      printf("1 %g 2 %g \n",l1,l2);
