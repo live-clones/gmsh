@@ -357,7 +357,7 @@ MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric, bidimMeshData * data, GF
       const double dx = base->getVertex(0)->x() - center[0];
       const double dy = base->getVertex(0)->y() - center[1];
       const double dz = base->getVertex(0)->z() - center[2];
-      circum_radius = sqrt(dx * dx + dy * dy + dz * dz);
+      circum_radius = std::sqrt(dx * dx + dy * dy + dz * dz);
       circum_radius /= lc;
     }
     else {
