@@ -138,7 +138,7 @@ class BDS_Point
   bool config_modified;
   int iD;
   BDS_GeomEntity *g;
-  std::list<BDS_Edge*> edges;
+  std::vector<BDS_Edge*> edges;
   // just a transition
   double &lcBGM() { return _lcBGM; }
   double &lc() { return _lcPTS; }
@@ -148,12 +148,12 @@ class BDS_Point
   }
   void del(BDS_Edge *e)
   {
-    std::list<BDS_Edge*>::iterator it = std::find(edges.begin(), edges.end(), e);
+    std::vector<BDS_Edge*>::iterator it = std::find(edges.begin(), edges.end(), e);
     if (it != edges.end()) {
         edges.erase(it);
     }
   }
-  void getTriangles(std::list<BDS_Face *> &t) const;
+  std::vector<BDS_Face*> getTriangles() const;
   BDS_Point(int id, double x=0, double y=0, double z=0)
     : _lcBGM(1.e22), _lcPTS(1.e22), X(x), Y(y), Z(z), u(0), v(0),
       config_modified(true), iD(id), g(0) {}

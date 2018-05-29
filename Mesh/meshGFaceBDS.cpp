@@ -510,10 +510,9 @@ double getMaxLcWhenCollapsingEdge(GFace *gf, BDS_Mesh &m, BDS_Edge *e, BDS_Point
   BDS_Point *o = e->othervertex(p);
 
   double maxLc = 0.0;
-  std::list<BDS_Edge*> edges(p->edges);
-  std::list<BDS_Edge*>::iterator eit = edges.begin();
-  std::list<BDS_Edge*>::iterator eite = edges.end();
-  while (eit != eite) {
+  std::vector<BDS_Edge*> edges(p->edges);
+  std::vector<BDS_Edge*>::iterator eit = edges.begin();
+  while (eit != edges.end()) {
     BDS_Point *newP1 = 0, *newP2 = 0;
     if ((*eit)->p1 == p){
       newP1 = o;
@@ -666,8 +665,8 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   if (computeNodalSizeField){
     std::set<BDS_Point*,PointLessThan>::iterator itp = m.points.begin();
     while (itp != m.points.end()){
-      std::list<BDS_Edge*>::iterator it  = (*itp)->edges.begin();
-      std::list<BDS_Edge*>::iterator ite = (*itp)->edges.end();
+      std::vector<BDS_Edge*>::iterator it  = (*itp)->edges.begin();
+      std::vector<BDS_Edge*>::iterator ite = (*itp)->edges.end();
       double L = 0;
       int ne = 0;
       while(it != ite){

@@ -164,10 +164,12 @@ static double surface_triangle_param(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3
   return (0.5 * c);
 }
 
-void BDS_Point::getTriangles(std::list<BDS_Face*> &t) const
+std::vector<BDS_Face*> BDS_Point::getTriangles() const
 {
-  t.clear();
-  std::list<BDS_Edge*>::const_iterator it = edges.begin();
+  std::vector<BDS_Face*> t;
+  t.reserve(edges.size());
+
+  std::vector<BDS_Edge*>::const_iterator it = edges.begin();
   while(it != edges.end()) {
     int const number_of_faces = (*it)->numfaces();
     for(int i = 0; i < number_of_faces; ++i) {
@@ -178,6 +180,7 @@ void BDS_Point::getTriangles(std::list<BDS_Face*> &t) const
     }
     ++it;
   }
+  return t;
 }
 
 BDS_Point *BDS_Mesh::add_point(int num, double x, double y, double z)
@@ -211,7 +214,7 @@ BDS_Point *BDS_Mesh::find_point(int p)
 
 BDS_Edge *BDS_Mesh::find_edge(BDS_Point *p, int num2)
 {
-  std::list<BDS_Edge*>::iterator eit = p->edges.begin();
+  std::vector<BDS_Edge*>::iterator eit = p->edges.begin();
   while(eit != p->edges.end()) {
     if((*eit)->p1 == p && (*eit)->p2->iD == num2)
       return (*eit);
@@ -1135,13 +1138,13 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p)
         pt[1][nt] = (pts[1] == p) ? o : pts[1];
         pt[2][nt] = (pts[2] == p) ? o : pts[2];
 
-//      double qnew = qmTriangle::gamma(pt[0][nt], pt[1][nt], pt[2][nt]);
+        //      double qnew = qmTriangle::gamma(pt[0][nt], pt[1][nt], pt[2][nt]);
 //      double qold = qmTriangle::gamma(pts[0], pts[1], pts[2]);
 //      if(qold > 1.e-4 && qnew < 1.e-4) return false;
         nt++;
-//      pt[0][nt] = (pts[0] == p) ? o->iD : pts[0]->iD;
-//      pt[1][nt] = (pts[1] == p) ? o->iD : pts[1]->iD;
-//      pt[2][nt++] = (pts[2] == p) ? o->iD : pts[2]->iD;
+        //      pt[0][nt] = (pts[0] == p) ? o->iD : pts[0]->iD;
+        //      pt[1][nt] = (pts[1] == p) ? o->iD : pts[1]->iD;
+        //      pt[2][nt++] = (pts[2] == p) ? o->iD : pts[2]->iD;
       }
       ++it;
     }
@@ -1160,8 +1163,8 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p)
 
   int kk = 0;
   {
-    std::list<BDS_Edge*> edges(p->edges);
-    std::list<BDS_Edge*>::iterator eit = edges.begin();
+    std::vector<BDS_Edge*> edges(p->edges);
+    std::vector<BDS_Edge*>::iterator eit = edges.begin();
     while(eit != edges.end()) {
       (*eit)->p1->config_modified = (*eit)->p2->config_modified = true;
       ept[0][kk] = ((*eit)->p1 == p) ? o->iD : (*eit)->p1->iD;
@@ -1199,7 +1202,7 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
     p->config_modified = true;
     return true;
   }
-  std::list<BDS_Edge*>::iterator eit = p->edges.begin();
+  std::vector<BDS_Edge*>::iterator eit = p->edges.begin();
   while(eit != p->edges.end()) {
     if((*eit)->numfaces() == 1) return false;
     eit++;
@@ -1218,14 +1221,12 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
   double oldU = p->u;
   double oldV = p->v;
 
-  std::list<BDS_Face*> ts;
-  p->getTriangles(ts);
-  std::list<BDS_Edge *>::iterator ited = p->edges.begin();
-  std::list<BDS_Edge *>::iterator itede = p->edges.end();
+  std::vector<BDS_Face*> ts = p->getTriangles();
+  std::vector<BDS_Edge *>::iterator ited = p->edges.begin();
 
   double sTot = 0;
   const double fact = 1.0;
-  while(ited != itede) {
+  while(ited != p->edges.end()) {
     BDS_Edge  *e = *ited;
     BDS_Point *n = e->othervertex(p);
     sTot += fact;
@@ -1283,25 +1284,24 @@ bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality)
   const double oldY = p->Y;
   const double oldZ = p->Z;
 
-  std::list<BDS_Face*>::iterator it = ts.begin();
-  std::list<BDS_Face*>::iterator ite = ts.end();
   double s1 = 0, s2 = 0;
 
   double newWorst = 1.0;
   double oldWorst = 1.0;
 
+  std::vector<BDS_Face*>::const_iterator it = ts.begin();
 
-  while(it != ite) {
+  while(it != ts.end()) {
     BDS_Face *t = *it;
     BDS_Point *n[4];
     t->getNodes(n);
     p->u = U;
     p->v = V;
-    double snew = fabs(surface_triangle_param(n[0], n[1], n[2]));
+    double snew = std::abs(surface_triangle_param(n[0], n[1], n[2]));
     s1 += snew;
     p->u = oldU;
     p->v = oldV;
-    double sold = fabs(surface_triangle_param(n[0], n[1], n[2]));
+    double sold = std::abs(surface_triangle_param(n[0], n[1], n[2]));
     s2 += sold;
     if(snew < .1 * sold) return false;
 
@@ -1411,7 +1411,7 @@ bool BDS_Mesh::smooth_point_parametric(BDS_Point *p, GFace *gf)
   p->X = gp.x();
   p->Y = gp.y();
   p->Z = gp.z();
-  std::list<BDS_Edge*>::iterator eit = p->edges.begin();
+  std::vector<BDS_Edge*>::iterator eit = p->edges.begin();
   while(eit != p->edges.end()) {
     (*eit)->update();
     ++eit;
