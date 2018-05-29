@@ -1101,7 +1101,7 @@ class API:
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write('\n"""\n    ')
-            f.write(jl_mpath + name + "(" + ", ".join(parg(a) for a in args) + ")\n\n")
+            f.write(jl_mpath + name + "(" + ", ".join(parg(a) for a in iargs) + ")\n\n")
             f.write("\n".join(textwrap.wrap(doc, 80)).replace("'", "`") + "\n")
             if rtype or oargs:
                 f.write("\nReturn " + ", ".join(

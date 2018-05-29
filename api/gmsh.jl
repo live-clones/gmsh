@@ -135,7 +135,7 @@ function setNumber(name, value)
 end
 
 """
-    gmsh.option.getNumber(name, value)
+    gmsh.option.getNumber(name)
 
 Get the `value` of a numerical option.
 
@@ -166,7 +166,7 @@ function setString(name, value)
 end
 
 """
-    gmsh.option.getString(name, value)
+    gmsh.option.getString(name)
 
 Get the `value` of a string option.
 
@@ -223,7 +223,7 @@ function remove()
 end
 
 """
-    gmsh.model.list(names)
+    gmsh.model.list()
 
 List the names of all models.
 
@@ -258,7 +258,7 @@ function setCurrent(name)
 end
 
 """
-    gmsh.model.getEntities(dimTags, dim = -1)
+    gmsh.model.getEntities(dim = -1)
 
 Get all the (elementary) geometrical entities in the current model. If `dim` is
 >= 0, return only the entities of the specified dimension (e.g. points if `dim`
@@ -280,7 +280,7 @@ function getEntities(dim = -1)
 end
 
 """
-    gmsh.model.getPhysicalGroups(dimTags, dim = -1)
+    gmsh.model.getPhysicalGroups(dim = -1)
 
 Get all the physical groups in the current model. If `dim` is >= 0, return only
 the entities of the specified dimension (e.g. physical points if `dim` == 0).
@@ -302,7 +302,7 @@ function getPhysicalGroups(dim = -1)
 end
 
 """
-    gmsh.model.getEntitiesForPhysicalGroup(dim, tag, tags)
+    gmsh.model.getEntitiesForPhysicalGroup(dim, tag)
 
 Get the tags of all the (elementary) geometrical entities making up the physical
 group of dimension `dim` and tag `tag`.
@@ -354,7 +354,7 @@ function setPhysicalName(dim, tag, name)
 end
 
 """
-    gmsh.model.getPhysicalName(dim, tag, name)
+    gmsh.model.getPhysicalName(dim, tag)
 
 Get the name of the physical group of dimension `dim` and tag `tag`.
 
@@ -372,7 +372,7 @@ function getPhysicalName(dim, tag)
 end
 
 """
-    gmsh.model.getBoundary(dimTags, outDimTags, combined = true, oriented = true, recursive = false)
+    gmsh.model.getBoundary(dimTags, combined = true, oriented = true, recursive = false)
 
 Get the boundary of the geometrical entities `dimTags`. Return in `outDimTags`
 the boundary of the individual entities (if `combined` is false) or the boundary
@@ -397,7 +397,7 @@ function getBoundary(dimTags, combined = true, oriented = true, recursive = fals
 end
 
 """
-    gmsh.model.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, tags, dim = -1)
+    gmsh.model.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
 
 Get the (elementary) geometrical entities in the bounding box defined by the two
 points (`xmin`, `ymin`, `zmin`) and (`xmax`, `ymax`, `zmax`). If `dim` is >= 0,
@@ -419,7 +419,7 @@ function getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
 end
 
 """
-    gmsh.model.getBoundingBox(dim, tag, xmin, ymin, zmin, xmax, ymax, zmax)
+    gmsh.model.getBoundingBox(dim, tag)
 
 Get the bounding box (`xmin`, `ymin`, `zmin`), (`xmax`, `ymax`, `zmax`) of the
 geometrical entity of dimension `dim` and tag `tag`.
@@ -493,7 +493,7 @@ function removeEntities(dimTags, recursive = false)
 end
 
 """
-    gmsh.model.getType(dim, tag, entityType)
+    gmsh.model.getType(dim, tag)
 
 Get the type of the entity of dimension `dim` and tag `tag`.
 
@@ -576,7 +576,7 @@ function setOrder(order)
 end
 
 """
-    gmsh.model.mesh.getLastEntityError(dimTags)
+    gmsh.model.mesh.getLastEntityError()
 
 Get the last entities (if any) where a meshing error occurred. Currently only
 populated by the new 3D meshing algorithms.
@@ -597,7 +597,7 @@ function getLastEntityError()
 end
 
 """
-    gmsh.model.mesh.getLastNodeError(nodeTags)
+    gmsh.model.mesh.getLastNodeError()
 
 Get the last nodes (if any) where a meshing error occurred. Currently only
 populated by the new 3D meshing algorithms.
@@ -617,7 +617,7 @@ function getLastNodeError()
 end
 
 """
-    gmsh.model.mesh.getNodes(nodeTags, coord, parametricCoord, dim = -1, tag = -1)
+    gmsh.model.mesh.getNodes(dim = -1, tag = -1)
 
 Get the nodes classified on the entity of dimension `dim` and tag `tag`. If
 `tag` < 0, get the nodes for all entities of dimension `dim`. If `dim` and `tag`
@@ -649,7 +649,7 @@ function getNodes(dim = -1, tag = -1)
 end
 
 """
-    gmsh.model.mesh.getNode(nodeTag, coord, parametricCoord)
+    gmsh.model.mesh.getNode(nodeTag)
 
 Get the coordinates and the parametric coordinates (if any) of the node with tag
 `tag`. This is a sometimes useful but inefficient way of accessing node data, as
@@ -727,7 +727,7 @@ function reclassifyNodes()
 end
 
 """
-    gmsh.model.mesh.getElements(elementTypes, elementTags, nodeTags, dim = -1, tag = -1)
+    gmsh.model.mesh.getElements(dim = -1, tag = -1)
 
 Get the elements classified on the entity of dimension `dim` and tag `tag`. If
 `tag` < 0, get the elements for all entities of dimension `dim`. If `dim` and
@@ -769,7 +769,7 @@ function getElements(dim = -1, tag = -1)
 end
 
 """
-    gmsh.model.mesh.getElement(elementTag, elementType, nodeTags)
+    gmsh.model.mesh.getElement(elementTag)
 
 Get the type and node tags of the element with tag `tag`. This is a useful but
 inefficient way of accessing element data, as it relies on a cache stored in the
@@ -816,7 +816,7 @@ function setElements(dim, tag, elementTypes, elementTags, nodeTags)
 end
 
 """
-    gmsh.model.mesh.getElementTypes(elementTypes, dim = -1, tag = -1)
+    gmsh.model.mesh.getElementTypes(dim = -1, tag = -1)
 
 Get the types of elements in the entity of dimension `dim` and tag `tag`. If
 `tag` < 0, get the types for all entities of dimension `dim`. If `dim` and `tag`
@@ -837,7 +837,7 @@ function getElementTypes(dim = -1, tag = -1)
 end
 
 """
-    gmsh.model.mesh.getElementProperties(elementType, elementName, dim, order, numNodes, parametricCoord)
+    gmsh.model.mesh.getElementProperties(elementType)
 
 Get the properties of an element of type `elementType`: its name
 (`elementName`), dimension (`dim`), order (`order`), number of nodes
@@ -864,7 +864,7 @@ function getElementProperties(elementType)
 end
 
 """
-    gmsh.model.mesh.getElementsByType(elementType, elementTags, nodeTags, tag = -1, task = 0, numTasks = 1)
+    gmsh.model.mesh.getElementsByType(elementType, tag = -1, task = 0, numTasks = 1)
 
 Get the elements of type `elementType` classified on the entity of of tag `tag`.
 If `tag` < 0, get the elements for all entities. `elementTags` is a vector
@@ -893,7 +893,7 @@ function getElementsByType(elementType, tag = -1, task = 0, numTasks = 1)
 end
 
 """
-    gmsh.model.mesh.preallocateElementsByType(elementType, elementTag, nodeTag, elementTags, nodeTags, tag = -1)
+    gmsh.model.mesh.preallocateElementsByType(elementType, elementTag, nodeTag, tag = -1)
 
 Preallocate the data for `getElementsByType`. This is necessary only if
 `getElementsByType` is called with `numTasks` > 1.
@@ -916,7 +916,7 @@ function preallocateElementsByType(elementType, elementTag, nodeTag, tag = -1)
 end
 
 """
-    gmsh.model.mesh.getJacobians(elementType, integrationType, jacobians, determinants, points, tag = -1, task = 0, numTasks = 1)
+    gmsh.model.mesh.getJacobians(elementType, integrationType, tag = -1, task = 0, numTasks = 1)
 
 Get the Jacobians of all the elements of type `elementType` classified on the
 entity of dimension `dim` and tag `tag`, at the integration points required by
@@ -951,7 +951,7 @@ function getJacobians(elementType, integrationType, tag = -1, task = 0, numTasks
 end
 
 """
-    gmsh.model.mesh.preallocateJacobians(elementType, integrationType, jacobian, determinant, point, jacobians, determinants, points, tag = -1)
+    gmsh.model.mesh.preallocateJacobians(elementType, integrationType, jacobian, determinant, point, tag = -1)
 
 Preallocate the data required by `getJacobians`. This is necessary only if
 `getJacobians` is called with `numTasks` > 1.
@@ -977,7 +977,7 @@ function preallocateJacobians(elementType, integrationType, jacobian, determinan
 end
 
 """
-    gmsh.model.mesh.getBasisFunctions(elementType, integrationType, functionSpaceType, integrationPoints, numComponents, basisFunctions)
+    gmsh.model.mesh.getBasisFunctions(elementType, integrationType, functionSpaceType)
 
 Get the basis functions of the element of type `elementType` for the given
 `integrationType` integration rule (e.g. "Gauss4") and `functionSpaceType`
@@ -1020,7 +1020,7 @@ function precomputeBasisFunctions(elementType)
 end
 
 """
-    gmsh.model.mesh.getBarycenters(elementType, tag, fast, primary, barycenters, task = 0, numTasks = 1)
+    gmsh.model.mesh.getBarycenters(elementType, tag, fast, primary, task = 0, numTasks = 1)
 
 Get the barycenters of all elements of type `elementType` classified on the
 entity of tag `tag`. If `primary` is set, only the primary nodes of the elements
@@ -1044,7 +1044,7 @@ function getBarycenters(elementType, tag, fast, primary, task = 0, numTasks = 1)
 end
 
 """
-    gmsh.model.mesh.preallocateBarycenters(elementType, barycenters, tag = -1)
+    gmsh.model.mesh.preallocateBarycenters(elementType, tag = -1)
 
 Preallocate the data required by `getBarycenters`. This is necessary only if
 `getBarycenters` is called with `numTasks` > 1.
@@ -1271,7 +1271,7 @@ function setPeriodic(dim, tags, tagsSource, affineTransformation)
 end
 
 """
-    gmsh.model.mesh.getPeriodicNodes(dim, tag, tagMaster, nodes, affineTransform)
+    gmsh.model.mesh.getPeriodicNodes(dim, tag)
 
 Get the master entity, periodic node pairs and affine transform for the entity
 of dimension `dim` and tag `tag`.
@@ -1706,7 +1706,7 @@ function addVolume(shellTags, tag = -1)
 end
 
 """
-    gmsh.model.geo.extrude(dimTags, dx, dy, dz, outDimTags, numElements = Cint[], heights = Cdouble[], recombine = false)
+    gmsh.model.geo.extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[], recombine = false)
 
 Extrude the geometrical entities `dimTags` by translation along (`dx`, `dy`,
 `dz`). Return extruded entities in `outDimTags`. If `numElements` is not empty,
@@ -1730,7 +1730,7 @@ function extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[],
 end
 
 """
-    gmsh.model.geo.revolve(dimTags, x, y, z, ax, ay, az, angle, outDimTags, numElements = Cint[], heights = Cdouble[], recombine = false)
+    gmsh.model.geo.revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
 
 Extrude the geometrical entities `dimTags` by rotation of `angle` radians around
 the axis of revolution defined by the point (`x`, `y`, `z`) and the direction
@@ -1755,7 +1755,7 @@ function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heig
 end
 
 """
-    gmsh.model.geo.twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, outDimTags, numElements = Cint[], heights = Cdouble[], recombine = false)
+    gmsh.model.geo.twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
 
 Extrude the geometrical entities `dimTags` by a combined translation and
 rotation of `angle` radians, along (`dx`, `dy`, `dz`) and around the axis of
@@ -1842,7 +1842,7 @@ function symmetry(dimTags, a, b, c, d)
 end
 
 """
-    gmsh.model.geo.copy(dimTags, outDimTags)
+    gmsh.model.geo.copy(dimTags)
 
 Copy the entities `dimTags`; the new entities are returned in `outDimTags`.
 
@@ -2485,7 +2485,7 @@ function addTorus(x, y, z, r1, r2, tag = -1, angle = 2*pi)
 end
 
 """
-    gmsh.model.occ.addThruSections(wireTags, outDimTags, tag = -1, makeSolid = true, makeRuled = false)
+    gmsh.model.occ.addThruSections(wireTags, tag = -1, makeSolid = true, makeRuled = false)
 
 Add a volume (if the optional argument `makeSolid` is set) or surfaces defined
 through the open or closed wires `wireTags`. If `tag` is positive, set the tag
@@ -2509,7 +2509,7 @@ function addThruSections(wireTags, tag = -1, makeSolid = true, makeRuled = false
 end
 
 """
-    gmsh.model.occ.addThickSolid(volumeTag, excludeSurfaceTags, offset, outDimTags, tag = -1)
+    gmsh.model.occ.addThickSolid(volumeTag, excludeSurfaceTags, offset, tag = -1)
 
 Add a hollowed volume built from an initial volume `volumeTag` and a set of
 faces from this volume `excludeSurfaceTags`, which are to be removed. The
@@ -2533,7 +2533,7 @@ function addThickSolid(volumeTag, excludeSurfaceTags, offset, tag = -1)
 end
 
 """
-    gmsh.model.occ.extrude(dimTags, dx, dy, dz, outDimTags, numElements = Cint[], heights = Cdouble[], recombine = false)
+    gmsh.model.occ.extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[], recombine = false)
 
 Extrude the geometrical entities `dimTags` by translation along (`dx`, `dy`,
 `dz`). Return extruded entities in `outDimTags`. If `numElements` is not empty,
@@ -2557,7 +2557,7 @@ function extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[],
 end
 
 """
-    gmsh.model.occ.revolve(dimTags, x, y, z, ax, ay, az, angle, outDimTags, numElements = Cint[], heights = Cdouble[], recombine = false)
+    gmsh.model.occ.revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
 
 Extrude the geometrical entities `dimTags` by rotation of `angle` radians around
 the axis of revolution defined by the point (`x`, `y`, `z`) and the direction
@@ -2582,7 +2582,7 @@ function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heig
 end
 
 """
-    gmsh.model.occ.addPipe(dimTags, wireTag, outDimTags)
+    gmsh.model.occ.addPipe(dimTags, wireTag)
 
 Add a pipe by extruding the entities `dimTags` along the wire `wireTag`. Return
 the pipe in `outDimTags`.
@@ -2603,7 +2603,7 @@ function addPipe(dimTags, wireTag)
 end
 
 """
-    gmsh.model.occ.fillet(volumeTags, curveTags, radius, outDimTags, removeVolume = true)
+    gmsh.model.occ.fillet(volumeTags, curveTags, radius, removeVolume = true)
 
 Fillet the volumes `volumeTags` on the curves `curveTags` with radius `radius`.
 Return the filleted entities in `outDimTags`. Remove the original volume if
@@ -2625,7 +2625,7 @@ function fillet(volumeTags, curveTags, radius, removeVolume = true)
 end
 
 """
-    gmsh.model.occ.fuse(objectDimTags, toolDimTags, outDimTags, outDimTagsMap, tag = -1, removeObject = true, removeTool = true)
+    gmsh.model.occ.fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
 
 Compute the boolean union (the fusion) of the entities `objectDimTags` and
 `toolDimTags`. Return the resulting entities in `outDimTags`. If `tag` is
@@ -2660,7 +2660,7 @@ function fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeT
 end
 
 """
-    gmsh.model.occ.intersect(objectDimTags, toolDimTags, outDimTags, outDimTagsMap, tag = -1, removeObject = true, removeTool = true)
+    gmsh.model.occ.intersect(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
 
 Compute the boolean intersection (the common parts) of the entities
 `objectDimTags` and `toolDimTags`. Return the resulting entities in
@@ -2695,7 +2695,7 @@ function intersect(objectDimTags, toolDimTags, tag = -1, removeObject = true, re
 end
 
 """
-    gmsh.model.occ.cut(objectDimTags, toolDimTags, outDimTags, outDimTagsMap, tag = -1, removeObject = true, removeTool = true)
+    gmsh.model.occ.cut(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
 
 Compute the boolean difference between the entities `objectDimTags` and
 `toolDimTags`. Return the resulting entities in `outDimTags`. If `tag` is
@@ -2730,7 +2730,7 @@ function cut(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTo
 end
 
 """
-    gmsh.model.occ.fragment(objectDimTags, toolDimTags, outDimTags, outDimTagsMap, tag = -1, removeObject = true, removeTool = true)
+    gmsh.model.occ.fragment(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
 
 Compute the boolean fragments (general fuse) of the entities `objectDimTags` and
 `toolDimTags`. Return the resulting entities in `outDimTags`. If `tag` is
@@ -2826,7 +2826,7 @@ function symmetry(dimTags, a, b, c, d)
 end
 
 """
-    gmsh.model.occ.copy(dimTags, outDimTags)
+    gmsh.model.occ.copy(dimTags)
 
 Copy the entities `dimTags`; the new entities are returned in `outDimTags`.
 
@@ -2877,7 +2877,7 @@ function removeAllDuplicates()
 end
 
 """
-    gmsh.model.occ.importShapes(fileName, outDimTags, highestDimOnly = true, format = "")
+    gmsh.model.occ.importShapes(fileName, highestDimOnly = true, format = "")
 
 Import BREP, STEP or IGES shapes from the file `fileName`. The imported entities
 are returned in `outDimTags`. If the optional argument `highestDimOnly` is set,
@@ -2996,7 +2996,7 @@ function getIndex(tag)
 end
 
 """
-    gmsh.view.getTags(tags)
+    gmsh.view.getTags()
 
 Get the tags of all views.
 
@@ -3041,7 +3041,7 @@ function addModelData(tag, step, modelName, dataType, tags, data, time = 0., num
 end
 
 """
-    gmsh.view.getModelData(tag, step, dataType, tags, data, time, numComponents)
+    gmsh.view.getModelData(tag, step)
 
 Get model-based post-processing data from the view with tag `tag` at step
 `step`. Return the `data` associated to the nodes or the elements with tags
@@ -3089,7 +3089,7 @@ function addListData(tag, dataType, numEle, data)
 end
 
 """
-    gmsh.view.getListData(tag, dataType, numElements, data)
+    gmsh.view.getListData(tag)
 
 Get list-based post-processing data from the view with tag `tag`. Return the
 types `dataTypes`, the number of elements `numElements` for each data type and
@@ -3120,7 +3120,7 @@ function getListData(tag)
 end
 
 """
-    gmsh.view.probe(tag, x, y, z, value, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[])
+    gmsh.view.probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[])
 
 Probe the view `tag` for its `value` at point (`x`, `y`, `z`). Return only the
 value at step `step` is `step` is positive. Return only values with `numComp` if
@@ -3306,7 +3306,7 @@ module onelab
 import ..gmsh
 
 """
-    gmsh.onelab.get(data, format = "json")
+    gmsh.onelab.get(format = "json")
 
 Get `data` from the ONELAB server.
 
