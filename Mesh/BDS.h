@@ -433,6 +433,8 @@ class BDS_Mesh
   BDS_Edge *recover_edge(int p1, int p2, bool &_fatal, std::set<EdgeToRecover> *e2r=0,
                          std::set<EdgeToRecover> *not_recovered=0);
   BDS_Edge *recover_edge_fast(BDS_Point *p1, BDS_Point *p2);
+
+  /// Can invalidate the iterators for \p edge
   bool swap_edge(BDS_Edge*, const BDS_SwapEdgeTest &theTest);
   bool collapse_edge_parametric(BDS_Edge*, BDS_Point*);
   bool smooth_point_parametric(BDS_Point *p, GFace *gf);
