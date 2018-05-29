@@ -1274,7 +1274,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   // now find an edge that has belongs to one of the exterior triangles
   {
-    std::list<BDS_Edge*>::iterator ite = m->edges.begin();
+    std::vector<BDS_Edge*>::iterator ite = m->edges.begin();
     while(ite != m->edges.end()){
       BDS_Edge *e = *ite;
       if(e->g  && e->numfaces() == 2){
@@ -1297,7 +1297,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
 
   {
-    std::list<BDS_Edge*>::iterator ite = m->edges.begin();
+    std::vector<BDS_Edge*>::iterator ite = m->edges.begin();
     while(ite != m->edges.end()){
       BDS_Edge *e = *ite;
       if(e->g  && e->numfaces() == 2){
@@ -1361,7 +1361,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   m->cleanup();
 
   {
-    std::list<BDS_Edge*>::iterator ite = m->edges.begin();
+    std::vector<BDS_Edge*>::iterator ite = m->edges.begin();
     while(ite != m->edges.end()){
       BDS_Edge *e = *ite;
       if(e->numfaces() == 0)
@@ -2233,16 +2233,16 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 
   // now find an edge that has belongs to one of the exterior triangles
   {
-    std::list<BDS_Edge*>::iterator ite = m->edges.begin();
+    std::vector<BDS_Edge*>::const_iterator ite = m->edges.begin();
     while(ite != m->edges.end()){
-      BDS_Edge *e = *ite;
-      if(e->g  && e->numfaces() == 2){
-        if(e->faces(0)->g == &CLASS_EXTERIOR){
-          recur_tag(e->faces(1), &CLASS_F);
+      BDS_Edge *edge = *ite;
+      if(edge->g  && edge->numfaces() == 2){
+        if(edge->faces(0)->g == &CLASS_EXTERIOR){
+          recur_tag(edge->faces(1), &CLASS_F);
           break;
         }
-        else if(e->faces(1)->g == &CLASS_EXTERIOR){
-          recur_tag(e->faces(0), &CLASS_F);
+        else if(edge->faces(1)->g == &CLASS_EXTERIOR){
+          recur_tag(edge->faces(0), &CLASS_F);
           break;
         }
       }
@@ -2270,18 +2270,18 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   m->cleanup();
 
   {
-    std::list<BDS_Edge*>::iterator ite = m->edges.begin();
+    std::vector<BDS_Edge*>::const_iterator ite = m->edges.begin();
     while(ite != m->edges.end()){
-      BDS_Edge *e = *ite;
-      if(e->numfaces() == 0)
-        m->del_edge(e);
+      BDS_Edge *edge = *ite;
+      if(edge->numfaces() == 0)
+        m->del_edge(edge);
       else{
-        if(!e->g)
-          e->g = &CLASS_F;
-        if(!e->p1->g || e->p1->g->classif_degree > e->g->classif_degree)
-          e->p1->g = e->g;
-        if(!e->p2->g || e->p2->g->classif_degree > e->g->classif_degree)
-          e->p2->g = e->g;
+        if(!edge->g)
+          edge->g = &CLASS_F;
+        if(!edge->p1->g || edge->p1->g->classif_degree > edge->g->classif_degree)
+          edge->p1->g = edge->g;
+        if(!edge->p2->g || edge->p2->g->classif_degree > edge->g->classif_degree)
+          edge->p2->g = edge->g;
       }
       ++ite;
     }

@@ -404,7 +404,7 @@ class BDS_Mesh
   BDS_Mesh(const BDS_Mesh &other);
   std::set<BDS_GeomEntity*, GeomLessThan> geom;
   std::set<BDS_Point*, PointLessThan> points;
-  std::list<BDS_Edge*> edges;
+  std::vector<BDS_Edge*> edges;
   std::vector<BDS_Face*> triangles;
   // Points
   BDS_Point *add_point(int num, double x, double y, double z);

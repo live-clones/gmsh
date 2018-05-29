@@ -318,10 +318,10 @@ BDS_Edge *BDS_Mesh::recover_edge(int num1, int num2, bool &_fatal,
   double x[2];
   while(1){
     std::vector<BDS_Edge*> intersected;
-    std::list<BDS_Edge*>::iterator it = edges.begin();
 
     bool selfIntersection = false;
 
+    std::vector<BDS_Edge*>::const_iterator it = edges.begin();
     while(it != edges.end()){
       e = (*it);
       if(!e->deleted && e->p1 != p1 && e->p1 != p2 && e->p2 != p1 && e->p2 != p2)
@@ -603,26 +603,24 @@ bool is_not_deleted(T* const face) {
 void BDS_Mesh::cleanup()
 {
   {
-    std::vector<BDS_Face*>::iterator last = std::stable_partition(triangles.begin(),
-                                                                  triangles.end(),
-                                                                  is_not_deleted<BDS_Face>);
-    std::vector<BDS_Face*>::iterator it = last;
-    while(it != triangles.end()){
-        delete *it;
-        ++it;
+    std::vector<BDS_Face *>::iterator last = std::partition(
+      triangles.begin(), triangles.end(), is_not_deleted<BDS_Face>);
+    std::vector<BDS_Face *>::iterator it = last;
+    while(it != triangles.end()) {
+      delete *it;
+      ++it;
     }
     triangles.erase(last, triangles.end());
   }
   {
-    std::list<BDS_Edge*>::iterator it = edges.begin();
-    while(it != edges.end()){
-      if((*it)->deleted){
-        delete *it;
-        it = edges.erase(it);
-      }
-      else
-        it++;
+    std::vector<BDS_Edge *>::iterator last =
+      std::partition(edges.begin(), edges.end(), is_not_deleted<BDS_Edge>);
+    std::vector<BDS_Edge *>::iterator it = last;
+    while(it != edges.end()) {
+      delete *it;
+      ++it;
     }
+    edges.erase(last, edges.end());
   }
 }
 
@@ -969,23 +967,22 @@ bool BDS_Mesh::swap_edge(BDS_Edge *e, const BDS_SwapEdgeTest &theTest)
   }
   del_edge(e);
 
-  BDS_Edge *op1_op2 = new BDS_Edge(op[0], op[1]);
-  edges.push_back(op1_op2);
+  edges.push_back(new BDS_Edge(op[0], op[1]));
 
   BDS_Face *t1, *t2;
   if(orientation == 1) {
-    t1 = new BDS_Face(p1_op1, p1_op2, op1_op2);
-    t2 = new BDS_Face(op1_op2, op2_p2, op1_p2);
+    t1 = new BDS_Face(p1_op1, p1_op2, edges.back());
+    t2 = new BDS_Face(edges.back(), op2_p2, op1_p2);
   }
   else {
-    t1 = new BDS_Face(p1_op2, p1_op1, op1_op2);
-    t2 = new BDS_Face(op2_p2, op1_op2, op1_p2);
+    t1 = new BDS_Face(p1_op2, p1_op1, edges.back());
+    t2 = new BDS_Face(op2_p2, edges.back(), op1_p2);
   }
 
   t1->g = g1;
   t2->g = g2;
 
-  op1_op2->g = ge;
+  edges.back()->g = ge;
 
   triangles.push_back(t1);
   triangles.push_back(t2);
@@ -1152,9 +1149,7 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p)
 
   {
     std::list<BDS_Face*>::iterator it = t.begin();
-    std::list<BDS_Face*>::iterator ite = t.end();
-
-    while(it != ite) {
+    while(it != t.end()) {
       BDS_Face *t = *it;
       del_face(t);
       ++it;
@@ -1167,8 +1162,7 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p)
   {
     std::list<BDS_Edge*> edges(p->edges);
     std::list<BDS_Edge*>::iterator eit = edges.begin();
-    std::list<BDS_Edge*>::iterator eite = edges.end();
-    while(eit != eite) {
+    while(eit != edges.end()) {
       (*eit)->p1->config_modified = (*eit)->p2->config_modified = true;
       ept[0][kk] = ((*eit)->p1 == p) ? o->iD : (*eit)->p1->iD;
       ept[1][kk] = ((*eit)->p2 == p) ? o->iD : (*eit)->p2->iD;
