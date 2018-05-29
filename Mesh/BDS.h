@@ -109,9 +109,8 @@ public:
     c[1] = -a[0] * b[2] + a[2] * b[0];
     c[0] = a[1] * b[2] - a[2] * b[1];
     double cosa = a[0] * b[0] + a[1] * b[1] +a[2] * b[2];
-    double sina = sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
-    double ag = atan2(sina, cosa);
-    return ag;
+    double sina = std::sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
+    return std::atan2(sina, cosa);
   }
   double angle_deg(const BDS_Vector &v) const
   {
