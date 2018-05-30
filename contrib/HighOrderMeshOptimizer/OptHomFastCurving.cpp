@@ -69,6 +69,7 @@ void calcEdge2Elements(GEntity *entity, MEdgeVecMEltMap &ed2el)
 {
   for (size_t iEl = 0; iEl < entity->getNumMeshElements(); iEl++) {
     MElement *elt = entity->getMeshElement(iEl);
+    elt->setVisibility(0); // fordebug
     if (elt->getDim() == 2)
       for (int iEdge = 0; iEdge < elt->getNumEdges(); iEdge++) {
         ed2el[elt->getEdge(iEdge)].push_back(elt);
@@ -1091,7 +1092,11 @@ void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
   }
 
   for (unsigned int i = 0; i < bndEl2column.size(); ++i) {
-    bndEl2column[i].second.push_back(aboveElements[i]);
+    if (aboveElements[i])
+      bndEl2column[i].second.push_back(aboveElements[i]);
+    else if (bndEl2column[i].second.size() &&
+             bndEl2column[i].second[0]->getType() == TYPE_TRI)
+      bndEl2column[i].second.pop_back();
   }
 
   SVector3 normal;
@@ -1228,8 +1233,8 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
     // Retrieve entity
     GEntity* &gEnt = allGEnt[iEnt];
     if (gEnt->dim() != p.dim) {
-      for (size_t iEl = 0; iEl < gEnt->getNumMeshElements(); iEl++)
-        gEnt->getMeshElement(iEl)->setVisibility(0); // fordebug
+//      for (size_t iEl = 0; iEl < gEnt->getNumMeshElements(); iEl++)
+//        gEnt->getMeshElement(iEl)->setVisibility(0); // fordebug
       continue;
     }
 

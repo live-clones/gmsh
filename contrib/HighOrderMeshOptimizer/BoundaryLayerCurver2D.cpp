@@ -2722,6 +2722,15 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
 #endif
   std::map<int, std::vector<double> > data;
 
+  Msg::Info("number of 2D columns: %d", bndEl2column.size());
+  for (int i = 0; i < bndEl2column.size(); ++i) {
+    bndEl2column[i].first->setVisibility(1);
+    for (unsigned int j = 0; j < bndEl2column[i].second.size() - 1; ++j) {
+      bndEl2column[i].second[j]->setVisibility(1);
+    }
+  }
+
+//  return;
 
   for (int i = 0; i < bndEl2column.size(); ++i) {
     MElement *bottomEdge = bndEl2column[i].first;
