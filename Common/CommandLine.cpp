@@ -79,6 +79,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  GetKnownFileFormats(true) + ")"));
   s.push_back(mp("-bin", "Create binary files when possible"));
   s.push_back(mp("-refine", "Perform uniform mesh refinement, then exit"));
+  s.push_back(mp("-barycentric_refine", "Perform barycentric mesh refinement, then exit"));
   s.push_back(mp("-reclassify", "Reclassify mesh, then exit"));
   s.push_back(mp("-part int", "Partition after batch mesh generation"));
   s.push_back(mp("-part_weight tri|quad|tet|hex|pri|pyr|trih int",
@@ -402,6 +403,10 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
       }
       else if(!strcmp(argv[i] + 1, "reclassify")) {
         CTX::instance()->batch = 6;
+        i++;
+      }
+      else if(!strcmp(argv[i] + 1, "barycentric_refine")) {
+        CTX::instance()->batch = 7;
         i++;
       }
       else if(!strcmp(argv[i] + 1, "part")) {
