@@ -63,6 +63,28 @@ namespace ClosureGen {
     }
   }
 
+  void rotatePyr(int iFace, int iRot, int iSign, double uI, double vI,
+                 double &uO, double &vO, double &wO)
+  {
+    if(iSign < 0){
+      double tmp = uI;
+      uI = vI;
+      vI = tmp;
+    }
+    for(int i = 0; i < iRot; i++){
+      double tmp = uI;
+      uI = -vI;
+      vI = tmp;
+    }
+    switch(iFace){
+      case 0: uO =   uI; vO = vI-1; wO = vI; break;
+      case 1: uO = vI-1; vO =  -uI; wO = vI; break;
+      case 2: uO = 1-vI; vO =   uI; wO = vI; break;
+      case 3: uO =  -uI; vO = 1-vI; wO = vI; break;
+      case 4: uO =   vI; vO =   uI; wO =  0; break;
+    }
+  }
+
   void generate1dVertexClosure(nodalBasis::clCont &closure, int order)
   {
     closure.clear();
@@ -613,6 +635,47 @@ namespace ClosureGen {
 
   }
 
+  void generateFaceClosurePyr(nodalBasis::clCont &closure, int order,
+                              bool serendip, const fullMatrix<double> &points)
+  {
+    closure.clear();
+    const int typeTri = ElementType::getTag(TYPE_TRI, order, serendip);
+    const int typeQua = ElementType::getTag(TYPE_QUA, order, serendip);
+    const nodalBasis *fsFaceTri = BasisFactory::getNodalBasis(typeTri);
+    const nodalBasis *fsFaceQua = BasisFactory::getNodalBasis(typeQua);
+
+    for(int iRotate = 0; iRotate < 4; iRotate++){
+      for(int iSign = 1; iSign >= -1; iSign -= 2){
+        for(int iFace = 0; iFace < 5; iFace++){
+          const nodalBasis *fsFace;
+          if (iFace < 4)
+            fsFace = fsFaceTri;
+          else
+            fsFace = fsFaceQua;
+          nodalBasis::closure cl;
+          cl.type = fsFace->type;
+          cl.resize(fsFace->points.size1());
+          for(unsigned int iNode = 0; iNode < cl.size(); ++iNode){
+            double u,v,w;
+            rotatePyr(iFace, iRotate, iSign, fsFace->points(iNode, 0),
+                      fsFace->points(iNode, 1), u, v, w);
+            cl[iNode] = 0;
+            double D = std::numeric_limits<double>::max();
+            for(int jNode = 0; jNode < points.size1(); ++jNode){
+              double d = pow2(points(jNode, 0) - u) + pow2(points(jNode, 1) - v) +
+                         pow2(points(jNode, 2) - w);
+              if(d < D){
+                cl[iNode] = jNode;
+                D = d;
+              }
+            }
+          }
+          closure.push_back(cl);
+        }
+      }
+    }
+  }
+
   void generate2dEdgeClosure(nodalBasis::clCont &closure, int order, int nNod = 3)
   {
     closure.clear();
@@ -722,6 +785,7 @@ nodalBasis::nodalBasis(int tag)
   case TYPE_PYR :
     numFaces = 5;
     points = gmshGeneratePointsPyramid(order, serendip);
+    generateFaceClosurePyr(closures, order, serendip, points);
     break;
   }
 }
