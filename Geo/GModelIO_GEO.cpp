@@ -1163,28 +1163,31 @@ void GEO_Internals::synchronize(GModel *model)
   }
 
   // we might want to store physical groups directly in GModel; but this is OK
-  // for now. We always start from scratch in GModel, as physical groups are
-  // only stored in GEO internals anyway
-  model->removePhysicalGroups();
-  for(int i = 0; i < List_Nbr(PhysicalGroups); i++){
-    PhysicalGroup *p;
-    List_Read(PhysicalGroups, i, &p);
-    for(int j = 0; j < List_Nbr(p->Entities); j++){
-      int num;
-      List_Read(p->Entities, j, &num);
-      GEntity *ge = 0;
-      int tag = CTX::instance()->geom.orientedPhysicals ? abs(num) : num;
-      switch(p->Typ){
-      case MSH_PHYSICAL_POINT:   ge = model->getVertexByTag(tag); break;
-      case MSH_PHYSICAL_LINE:    ge = model->getEdgeByTag(tag); break;
-      case MSH_PHYSICAL_SURFACE: ge = model->getFaceByTag(tag); break;
-      case MSH_PHYSICAL_VOLUME:  ge = model->getRegionByTag(tag); break;
+  // for now. Note that we only sync physicals if there are some to sync, in
+  // order not to destroy groups that would have been stored directly in a
+  // GModel, e.g. by reading a mesh file
+  if(List_Nbr(PhysicalGroups)){
+    model->removePhysicalGroups();
+    for(int i = 0; i < List_Nbr(PhysicalGroups); i++){
+      PhysicalGroup *p;
+      List_Read(PhysicalGroups, i, &p);
+      for(int j = 0; j < List_Nbr(p->Entities); j++){
+        int num;
+        List_Read(p->Entities, j, &num);
+        GEntity *ge = 0;
+        int tag = CTX::instance()->geom.orientedPhysicals ? abs(num) : num;
+        switch(p->Typ){
+        case MSH_PHYSICAL_POINT:   ge = model->getVertexByTag(tag); break;
+        case MSH_PHYSICAL_LINE:    ge = model->getEdgeByTag(tag); break;
+        case MSH_PHYSICAL_SURFACE: ge = model->getFaceByTag(tag); break;
+        case MSH_PHYSICAL_VOLUME:  ge = model->getRegionByTag(tag); break;
+        }
+        int pnum = CTX::instance()->geom.orientedPhysicals ?
+          (gmsh_sign(num) * p->Num) : p->Num;
+        if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
+           ge->physicals.end())
+          ge->physicals.push_back(pnum);
       }
-      int pnum = CTX::instance()->geom.orientedPhysicals ?
-        (gmsh_sign(num) * p->Num) : p->Num;
-      if(ge && std::find(ge->physicals.begin(), ge->physicals.end(), pnum) ==
-         ge->physicals.end())
-        ge->physicals.push_back(pnum);
     }
   }
 
