@@ -53,7 +53,8 @@ static void setBLData(MVertex *v)
   }
 }
 
-// If all low-order nodes in are marked as BL, then mark high-order nodes as BL (only works in 2D)
+// If all low-order nodes in are marked as BL, then mark high-order nodes as BL
+// (only works in 2D)
 static bool setBLData(MElement *el)
 {
   // Check whether all low-order nodes are marked as BL nodes (only works in 2D)
@@ -487,39 +488,33 @@ void BarycentricRefineMesh(GModel *m)
   double t1 = Cpu();
 
   m->destroyMeshCaches();
-  int num = m->getMaxVertexNumber();
 
   // Only update triangles in 2D, only update tets in 3D
   if (m->getNumRegions() == 0) {
-      for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
-        GFace* gf = *it;
-        std::vector<MTriangle*> triangles2;
-
-        for(unsigned int i = 0; i < gf->triangles.size(); i++){
-          MTriangle *t = gf->triangles[i];
-          SPoint3 bary = t->barycenter();
-          MVertex* v = new MVertex(bary.x(), bary.y(), bary.z(), gf, ++num);
-
-          triangles2.push_back
-              (new MTriangle(t->getVertex(0), t->getVertex(1), v));
-          printf("Vertex numbers of new element: %d %d %d\n", t->getVertex(0)->getNum(), t->getVertex(1)->getNum(), v->getNum());
-          triangles2.push_back
-              (new MTriangle(t->getVertex(0), t->getVertex(2), v));
-          triangles2.push_back
-              (new MTriangle(t->getVertex(1), t->getVertex(2), v));
-          setBLData(t);
-          delete t;
-        }
-        gf->triangles = triangles2;
-        gf->deleteVertexArrays();
+    for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
+      GFace* gf = *it;
+      int numt = gf->triangles.size();
+      if(!numt) continue;
+      std::vector<MTriangle*> triangles2(3 * numt);
+      for(unsigned int i = 0; i < numt; i++){
+        MTriangle *t = gf->triangles[i];
+        SPoint3 bary = t->barycenter();
+        // FIXME: create an MFaceVertex (with correct parametric coordinates)?
+        MVertex* v = new MVertex(bary.x(), bary.y(), bary.z(), gf);
+        triangles2[3 * i] = new MTriangle(t->getVertex(0), t->getVertex(1), v);
+        triangles2[3 * i + 1] = new MTriangle(t->getVertex(1), t->getVertex(2), v);
+        triangles2[3 * i + 2] = new MTriangle(t->getVertex(2), t->getVertex(0), v);
+        delete t;
+        gf->mesh_vertices.push_back(v);
       }
+      gf->triangles = triangles2;
+      gf->deleteVertexArrays();
+    }
   }
   else {
     printf("Stub, not coded 3D barycentric refinement yet\n");
   }
 
-  m->setMaxVertexNumber(num);
-  m->setAllVolumesPositive();
   CTX::instance()->mesh.changed = ENT_ALL;
 
   double t2 = Cpu();
