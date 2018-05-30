@@ -171,9 +171,10 @@ std::vector<BDS_Face*> BDS_Point::getTriangles() const
 
   std::vector<BDS_Edge*>::const_iterator it = edges.begin();
   while(it != edges.end()) {
-    int const number_of_faces = (*it)->numfaces();
-    for(int i = 0; i < number_of_faces; ++i) {
-      BDS_Face *tt = (*it)->faces(i);
+    std::vector<BDS_Face*>::size_type const number_of_faces = (*it)->numfaces();
+
+    for(std::vector<BDS_Face*>::size_type i = 0; i < number_of_faces; ++i) {
+      BDS_Face* const tt = (*it)->faces(i);
       if (tt && std::find(t.begin(), t.end(), tt) == t.end()) {
         t.push_back(tt);
       }
@@ -597,16 +598,15 @@ template <class IT> void DESTROOOY(IT beg, IT end)
   }
 }
 
-template <class T>
-bool is_not_deleted(T* const face) {
-    return !face->deleted;
-}
+struct is_not_deleted {
+  template <class T> bool operator()(T *const face) { return !face->deleted; }
+};
 
 void BDS_Mesh::cleanup()
 {
   {
-    std::vector<BDS_Face *>::iterator last = std::partition(
-      triangles.begin(), triangles.end(), is_not_deleted<BDS_Face>);
+    std::vector<BDS_Face *>::iterator last =
+      std::partition(triangles.begin(), triangles.end(), is_not_deleted());
     std::vector<BDS_Face *>::iterator it = last;
     while(it != triangles.end()) {
       delete *it;
@@ -616,7 +616,7 @@ void BDS_Mesh::cleanup()
   }
   {
     std::vector<BDS_Edge *>::iterator last =
-      std::partition(edges.begin(), edges.end(), is_not_deleted<BDS_Edge>);
+      std::partition(edges.begin(), edges.end(), is_not_deleted());
     std::vector<BDS_Edge *>::iterator it = last;
     while(it != edges.end()) {
       delete *it;
