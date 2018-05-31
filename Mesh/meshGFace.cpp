@@ -606,7 +606,7 @@ void BDS2GMSH(BDS_Mesh *m, GFace *gf,
     }
   }
   {
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       BDS_Face *t = *itt;
       if(!t->deleted){
@@ -913,7 +913,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   std::map<BDS_Point*, MVertex*,PointLessThan> recoverMap;
   std::map<MVertex*, BDS_Point*> recoverMapInv;
   std::list<GEdge*> edges = replacement_edges ? *replacement_edges : gf->edges();
-  std::list<int> dir = gf->edgeOrientations();
 
   // build a set with all points of the boundaries
   std::set<MVertex*, MVertexLessThanNum> all_vertices, boundary;
@@ -1254,7 +1253,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   // look for a triangle that has a negative node and recursively tag all
   // exterior triangles
   {
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       (*itt)->g = 0;
       ++itt;
@@ -1275,7 +1274,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 
   // now find an edge that has belongs to one of the exterior triangles
   {
-    std::list<BDS_Edge*>::iterator ite = m->edges.begin();
+    std::vector<BDS_Edge*>::iterator ite = m->edges.begin();
     while(ite != m->edges.end()){
       BDS_Edge *e = *ite;
       if(e->g  && e->numfaces() == 2){
@@ -1290,7 +1289,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
       }
       ++ite;
     }
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       if((*itt)->g == &CLASS_EXTERIOR) (*itt)->g = 0;
       ++itt;
@@ -1298,7 +1297,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
 
   {
-    std::list<BDS_Edge*>::iterator ite = m->edges.begin();
+    std::vector<BDS_Edge*>::iterator ite = m->edges.begin();
     while(ite != m->edges.end()){
       BDS_Edge *e = *ite;
       if(e->g  && e->numfaces() == 2){
@@ -1353,7 +1352,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
 
   // delete useless stuff
-  std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+  std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
   while(itt != m->triangles.end()){
     BDS_Face *t = *itt;
     if(!t->g) m->del_face(t);
@@ -1362,7 +1361,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   m->cleanup();
 
   {
-    std::list<BDS_Edge*>::iterator ite = m->edges.begin();
+    std::vector<BDS_Edge*>::iterator ite = m->edges.begin();
     while(ite != m->edges.end()){
       BDS_Edge *e = *ite;
       if(e->numfaces() == 0)
@@ -1393,7 +1392,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
   }
 
   if(1){
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       BDS_Face *t = *itt;
       if(!t->deleted){
@@ -1621,8 +1620,7 @@ static bool buildConsecutiveListOfVertices(GFace *gf, GEdgeLoop &gel,
     it++;
   }
 
-  std::list<GEdgeSigned> unordered;
-  unordered.insert(unordered.begin(), gel.begin(), gel.end());
+  std::list<GEdgeSigned> unordered(gel.begin(), gel.end());
 
   GEdgeSigned found(0, 0);
   SPoint2 last_coord(0, 0);
@@ -1816,7 +1814,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   double du = rangeU.high() - rangeU.low();
   double dv = rangeV.high() - rangeV.low();
 
-  const double LC2D = sqrt(du * du + dv * dv);
+  const double LC2D = std::sqrt(du * du + dv * dv);
 
   // Buid a BDS_Mesh structure that is convenient for doing the actual meshing
   // procedure
@@ -2214,7 +2212,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   // look for a triangle that has a negative node and recursively tag all
   // exterior triangles
   {
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       (*itt)->g = 0;
       ++itt;
@@ -2235,22 +2233,22 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 
   // now find an edge that has belongs to one of the exterior triangles
   {
-    std::list<BDS_Edge*>::iterator ite = m->edges.begin();
+    std::vector<BDS_Edge*>::const_iterator ite = m->edges.begin();
     while(ite != m->edges.end()){
-      BDS_Edge *e = *ite;
-      if(e->g  && e->numfaces() == 2){
-        if(e->faces(0)->g == &CLASS_EXTERIOR){
-          recur_tag(e->faces(1), &CLASS_F);
+      BDS_Edge *edge = *ite;
+      if(edge->g  && edge->numfaces() == 2){
+        if(edge->faces(0)->g == &CLASS_EXTERIOR){
+          recur_tag(edge->faces(1), &CLASS_F);
           break;
         }
-        else if(e->faces(1)->g == &CLASS_EXTERIOR){
-          recur_tag(e->faces(0), &CLASS_F);
+        else if(edge->faces(1)->g == &CLASS_EXTERIOR){
+          recur_tag(edge->faces(0), &CLASS_F);
           break;
         }
       }
       ++ite;
     }
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       if((*itt)->g == &CLASS_EXTERIOR) (*itt)->g = 0;
       ++itt;
@@ -2259,7 +2257,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 
   // delete useless stuff
   {
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       BDS_Face *t = *itt;
       if(!t->g){
@@ -2272,18 +2270,18 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
   m->cleanup();
 
   {
-    std::list<BDS_Edge*>::iterator ite = m->edges.begin();
+    std::vector<BDS_Edge*>::const_iterator ite = m->edges.begin();
     while(ite != m->edges.end()){
-      BDS_Edge *e = *ite;
-      if(e->numfaces() == 0)
-        m->del_edge(e);
+      BDS_Edge *edge = *ite;
+      if(edge->numfaces() == 0)
+        m->del_edge(edge);
       else{
-        if(!e->g)
-          e->g = &CLASS_F;
-        if(!e->p1->g || e->p1->g->classif_degree > e->g->classif_degree)
-          e->p1->g = e->g;
-        if(!e->p2->g || e->p2->g->classif_degree > e->g->classif_degree)
-          e->p2->g = e->g;
+        if(!edge->g)
+          edge->g = &CLASS_F;
+        if(!edge->p1->g || edge->p1->g->classif_degree > edge->g->classif_degree)
+          edge->p1->g = edge->g;
+        if(!edge->p2->g || edge->p2->g->classif_degree > edge->g->classif_degree)
+          edge->p2->g = edge->g;
       }
       ++ite;
     }
@@ -2397,7 +2395,7 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
 
   std::map<MTriangle*, BDS_Face*> invert_map;
   {
-    std::list<BDS_Face*>::iterator itt = m->triangles.begin();
+    std::vector<BDS_Face*>::iterator itt = m->triangles.begin();
     while(itt != m->triangles.end()){
       BDS_Face *t = *itt;
       if(!t->deleted){

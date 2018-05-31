@@ -294,7 +294,7 @@ int inCircumCircleOsculatory(GFace *gf, MTriangle *base, const double *uv,   dou
   double pb [3] = {base->getVertex(1)->x(),base->getVertex(1)->y(),base->getVertex(1)->z()};
   double pc [3] = {base->getVertex(2)->x(),base->getVertex(2)->y(),base->getVertex(2)->z()};
   double pd [3] = {gp.x(),gp.y(),gp.z()};
-  double a1 = robustPredicates::orient3d(pa, pb, pc, c);    
+  double a1 = robustPredicates::orient3d(pa, pb, pc, c);
   double a2 = robustPredicates::orient3d(pa, pb, pc, pd);
   if (a1 < 0 )return a1*a2 < 0 ;
   return -1;
@@ -305,14 +305,14 @@ int inCircumCircleAniso(GFace *gf, MTriangle *base,
                         const double *uv, const double *metricb,
 			bidimMeshData & data)
 {
-  
+
   double r;
   SPoint3 c;
   if (gf->isSphere(r,c)){
     int res = inCircumCircleOsculatory(gf, base, uv, r, c);
     if (res >= 0)return res;
   }
-  
+
   double x[2], Radius2;
   double metric[3];
   if (!metricb){
@@ -357,7 +357,7 @@ MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric, bidimMeshData * data, GF
       const double dx = base->getVertex(0)->x() - center[0];
       const double dy = base->getVertex(0)->y() - center[1];
       const double dz = base->getVertex(0)->z() - center[2];
-      circum_radius = sqrt(dx * dx + dy * dy + dz * dz);
+      circum_radius = std::sqrt(dx * dx + dy * dy + dz * dz);
       circum_radius /= lc;
     }
     else {
@@ -743,7 +743,7 @@ int insertVertexB (std::list<edgeXface> &shell,
   if (shell.size() != cavity.size() + 2) return -2;
 
   double EPS = verifyStarShapeness ? 1.e-12 : 1.e12;
-  
+
   std::list<MTri3*> new_cavity;
   std::vector<edgeXface> conn;
 
@@ -773,7 +773,7 @@ int insertVertexB (std::list<edgeXface> &shell,
       v0 = it->_v(1);
       v1 = it->_v(0);
     }
-    if (v1 == v || v0 == v ) printf("OH NOOOO\n"); 
+    if (v1 == v || v0 == v ) printf("OH NOOOO\n");
     MTriangle *t = new MTriangle(v0, v1, v) ;
     int index0 = data.getIndex (t->getVertex(0));
     int index1 = data.getIndex (t->getVertex(1));
@@ -798,8 +798,7 @@ int insertVertexB (std::list<edgeXface> &shell,
     SVector3 v0v1 (v1->x()-v0->x(),v1->y()-v0->y(),v1->z()-v0->z());
     SVector3 v0v  (v->x()-v0->x(),v->y()-v0->y(),v->z()-v0->z());
     SVector3 pv = crossprod(v0v1,v0v);
-    double d4 = sqrt(2.25)*pv.norm() / d3;
-    
+
     // avoid angles that are too obtuse
     double cosv = ((d1*d1+d2*d2-d3*d3)/(2.*d1*d2));
 
@@ -1092,7 +1091,7 @@ static bool insertAPoint(GFace *gf,
 	Msg::Debug("Point %g %g cannot be inserted because it is too close to another point)", center[0], center[1]);
       if (result == -5)
 	Msg::Debug("Point %g %g cannot be inserted because it is out of the parametric domain)", center[0], center[1]);
-      
+
       AllTris.erase(it);
       worst->forceRadius(-1);
       AllTris.insert(worst);
@@ -1404,7 +1403,7 @@ void bowyerWatsonFrontal(GFace *gf,
 			 std::map<MVertex* , MVertex*>* equivalence,
 			 std::map<MVertex*, SPoint2> * parametricCoordinates)
 {
-  
+
   std::set<MTri3*,compareTri3Ptr> AllTris;
   std::set<MTri3*,compareTri3Ptr> ActiveTris;
   bidimMeshData DATA(equivalence,parametricCoordinates);
@@ -1412,14 +1411,14 @@ void bowyerWatsonFrontal(GFace *gf,
   double r;
   SPoint3 c;
   if (gf->isSphere(r,c)){
-    testStarShapeness = false;    
+    testStarShapeness = false;
   }
- 
-  
+
+
   buildMeshGenerationDataStructures(gf, AllTris, DATA);
 
   // delaunise the initial mesh
-  int nbSwaps = edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
+  edgeSwapPass(gf, AllTris, SWCR_DEL, DATA);
   //  Msg::Debug("Delaunization of the initial mesh done (%d swaps)", nbSwaps);
 
   int ITER = 0, active_edge;
@@ -1444,7 +1443,7 @@ void bowyerWatsonFrontal(GFace *gf,
     //      sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
     //      _printTris (name, ActiveTris.begin(), ActiveTris.end(), &DATA);
     //    }
-    
+
     //    printf("%d active tris \n",ActiveTris.size());
     if (!ActiveTris.size())break;
     MTri3 *worst = (*ActiveTris.begin());
@@ -1463,7 +1462,7 @@ void bowyerWatsonFrontal(GFace *gf,
       }
     }
   }
-  
+
   //  nbSwaps = edgeSwapPass(gf, AllTris, SWCR_QUAL, DATA);
 
   transferDataStructure(gf, AllTris, DATA);
