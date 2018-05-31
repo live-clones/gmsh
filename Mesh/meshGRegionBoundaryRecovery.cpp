@@ -904,7 +904,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 
   Msg::Info("Reconstruct time : %g sec", Cpu() - t_start);
 
-  // Put all coordinates back so they are not pertubated anymore (pertubation done 
+  // Put all coordinates back so they are not pertubated anymore (pertubation done
   // in delaunayTriangulation)
   for (std::map<MVertex *, SPoint3>::iterator vIter = originalCoordinates.begin();
     vIter != originalCoordinates.end(); ++vIter) {
