@@ -24,7 +24,6 @@
 
 #define k1 0.7 //k1*h is the minimal distance between two nodes
 #define k2 0.5 //k2*h is the minimal distance to the boundary
-#define sqrt3 1.73205081
 
 /*********definitions*********/
 
@@ -629,12 +628,12 @@ void Filler::compute_parameters(Node* node,GEntity* ge)
 
   node->set_size(h);
   node->set_metric(m);
-  node->min[0] = x - sqrt3*h;
-  node->min[1] = y - sqrt3*h;
-  node->min[2] = z - sqrt3*h;
-  node->max[0] = x + sqrt3*h;
-  node->max[1] = y + sqrt3*h;
-  node->max[2] = z + sqrt3*h;
+  node->min[0] = x - std::sqrt(3.0) * h;
+  node->min[1] = y - std::sqrt(3.0) * h;
+  node->min[2] = z - std::sqrt(3.0) * h;
+  node->max[0] = x + std::sqrt(3.0) * h;
+  node->max[1] = y + std::sqrt(3.0) * h;
+  node->max[2] = z + std::sqrt(3.0) * h;
 }
 
 void Filler::create_spawns(GEntity* ge,MElementOctree* octree,
