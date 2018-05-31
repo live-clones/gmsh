@@ -2728,6 +2728,8 @@ int GModel::writePartitionedTopology(std::string &name)
   std::multimap<unsigned int, GEntity*> omicronSigma;
   std::multimap<unsigned int, GEntity*> omicronTau;
 
+  Msg::Info("Writing '%s'", name.c_str());
+
   std::vector<GEntity*> entities;
   getEntities(entities);
   for(unsigned int i = 0; i < entities.size(); i++){
@@ -2860,12 +2862,15 @@ int GModel::writePartitionedTopology(std::string &name)
   const unsigned int npart = getNumPartitions();
   FILE *fp = Fopen(name.c_str(), "w");
 
-  if(!fp) return 1;
+  if(!fp){
+    Msg::Error("Could not open '%s'", name.c_str());
+    return 1;
+  }
 
   fprintf(fp, "Group{\n");
 
-  //Omega_i
-  for(unsigned int i = 0; i < npart; i++){
+  // Omega_i
+  for(unsigned int i = 1; i <= npart; i++){
     std::pair <std::multimap<unsigned int, GEntity*>::iterator,
                std::multimap<unsigned int, GEntity*>::iterator> range;
     range = omega.equal_range(i);
@@ -2876,7 +2881,7 @@ int GModel::writePartitionedTopology(std::string &name)
       physicalTags.insert(getTag(this, it->second));
     }
 
-    fprintf(fp, "\tOmega_%d = Region[{", i);
+    fprintf(fp, "  Omega_%d = Region[{", i);
     for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
       if(it != physicalTags.begin()) fprintf(fp, ", ");
       fprintf(fp, "%d", *it);
@@ -2885,8 +2890,8 @@ int GModel::writePartitionedTopology(std::string &name)
   }
   fprintf(fp, "\n");
 
-  //Sigma_i
-  for(unsigned int i = 0; i < npart; i++){
+  // Sigma_i
+  for(unsigned int i = 1; i <= npart; i++){
     std::pair <std::multimap<unsigned int, GEntity*>::iterator,
                std::multimap<unsigned int, GEntity*>::iterator> range;
     range = sigma.equal_range(i);
@@ -2897,7 +2902,7 @@ int GModel::writePartitionedTopology(std::string &name)
       physicalTags.insert(getTag(this, it->second));
     }
 
-    fprintf(fp, "\tSigma_%d = Region[{", i);
+    fprintf(fp, "  Sigma_%d = Region[{", i);
     for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
       if(it != physicalTags.begin()) fprintf(fp, ", ");
       fprintf(fp, "%d", *it);
@@ -2906,21 +2911,21 @@ int GModel::writePartitionedTopology(std::string &name)
   }
   fprintf(fp, "\n");
 
-  //Sigma_i_j
+  // Sigma_i_j
   for(std::multimap<unsigned int, GEntity*>::iterator it1 = sigma.begin();
       it1 != sigma.end(); ++it1){
     for(std::multimap<unsigned int, GEntity*>::iterator it2 = sigma.begin();
         it2 != sigma.end(); ++it2){
       if(it2->second == it1->second && *it2 != *it1){
-        fprintf(fp, "\tSigma_%d_%d = Region[{%d}];\n", it1->first, it2->first,
+        fprintf(fp, "  Sigma_%d_%d = Region[{%d}];\n", it1->first, it2->first,
                 getTag(this, it1->second));
       }
     }
   }
   fprintf(fp, "\n");
 
-  //Tau_i
-  for(unsigned int i = 0; i < npart; i++){
+  // Tau_i
+  for(unsigned int i = 1; i <= npart; i++){
     std::pair <std::multimap<unsigned int, GEntity*>::iterator,
                std::multimap<unsigned int, GEntity*>::iterator> range;
     range = tau.equal_range(i);
@@ -2931,7 +2936,7 @@ int GModel::writePartitionedTopology(std::string &name)
       physicalTags.insert(getTag(this, it->second));
     }
 
-    fprintf(fp, "\tTau_%d = Region[{", i);
+    fprintf(fp, "  Tau_%d = Region[{", i);
     for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
       if(it != physicalTags.begin()) fprintf(fp, ", ");
       fprintf(fp, "%d", *it);
@@ -2940,21 +2945,21 @@ int GModel::writePartitionedTopology(std::string &name)
   }
   fprintf(fp, "\n");
 
-  //Tau_i_j
+  // Tau_i_j
   for(std::multimap<unsigned int, GEntity*>::iterator it1 = tau.begin();
       it1 != tau.end(); ++it1){
     for(std::multimap<unsigned int, GEntity*>::iterator it2 = tau.begin();
         it2 != tau.end(); ++it2){
       if(it2->second == it1->second && it2 != it1){
-        fprintf(fp, "\tTau_%d_%d = Region[{%d}];\n", it1->first, it2->first,
+        fprintf(fp, "  Tau_%d_%d = Region[{%d}];\n", it1->first, it2->first,
                 getTag(this, it1->second));
       }
     }
   }
   fprintf(fp, "\n");
 
-  //Upsilon_i
-  for(unsigned int i = 0; i < npart; i++){
+  // Upsilon_i
+  for(unsigned int i = 1; i <= npart; i++){
     std::pair <std::multimap<unsigned int, GEntity*>::iterator,
                std::multimap<unsigned int, GEntity*>::iterator> range;
     range = upsilon.equal_range(i);
@@ -2965,7 +2970,7 @@ int GModel::writePartitionedTopology(std::string &name)
       physicalTags.insert(getTag(this, it->second));
     }
 
-    fprintf(fp, "\tUpsilon_%d = Region[{", i);
+    fprintf(fp, "  Upsilon_%d = Region[{", i);
     for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
       if(it != physicalTags.begin()) fprintf(fp, ", ");
       fprintf(fp, "%d", *it);
@@ -2974,13 +2979,13 @@ int GModel::writePartitionedTopology(std::string &name)
   }
   fprintf(fp, "\n");
 
-  //Upsilon_i_j
+  // Upsilon_i_j
   for(std::multimap<unsigned int, GEntity*>::iterator it1 = upsilon.begin();
       it1 != upsilon.end(); ++it1){
     for(std::multimap<unsigned int, GEntity*>::iterator it2 = upsilon.begin();
         it2 != upsilon.end(); ++it2){
       if(it2->second == it1->second && it2 != it1){
-        fprintf(fp, "\tUpsilon_%d_%d = Region[{%d}];\n", it1->first, it2->first,
+        fprintf(fp, "  Upsilon_%d_%d = Region[{%d}];\n", it1->first, it2->first,
                 getTag(this, it1->second));
       }
     }
@@ -2988,7 +2993,7 @@ int GModel::writePartitionedTopology(std::string &name)
   fprintf(fp, "\n");
 
   //Omicron_i
-  for(unsigned int i = 0; i < npart; i++){
+  for(unsigned int i = 1; i <= npart; i++){
     std::pair <std::multimap<unsigned int, GEntity*>::iterator,
                std::multimap<unsigned int, GEntity*>::iterator> range;
     range = omicron.equal_range(i);
@@ -2999,7 +3004,7 @@ int GModel::writePartitionedTopology(std::string &name)
       physicalTags.insert(getTag(this, it->second));
     }
 
-    fprintf(fp, "\tOmicron_%d = Region[{", i);
+    fprintf(fp, "  Omicron_%d = Region[{", i);
     for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
       if(it != physicalTags.begin()) fprintf(fp, ", ");
       fprintf(fp, "%d", *it);
@@ -3014,15 +3019,15 @@ int GModel::writePartitionedTopology(std::string &name)
     for(std::multimap<unsigned int, GEntity*>::iterator it2 = omicron.begin();
         it2 != omicron.end(); ++it2){
       if(it2->second == it1->second && it2 != it1){
-        fprintf(fp, "\tOmicron_%d_%d = Region[{%d}];\n", it1->first, it2->first,
+        fprintf(fp, "  Omicron_%d_%d = Region[{%d}];\n", it1->first, it2->first,
                 getTag(this, it1->second));
       }
     }
   }
   fprintf(fp, "\n");
 
-  //OmicronSigma_i
-  for(unsigned int i = 0; i < npart; i++){
+  // OmicronSigma_i
+  for(unsigned int i = 1; i <= npart; i++){
     std::pair <std::multimap<unsigned int, GEntity*>::iterator,
                std::multimap<unsigned int, GEntity*>::iterator> range;
     range = omicronSigma.equal_range(i);
@@ -3033,7 +3038,7 @@ int GModel::writePartitionedTopology(std::string &name)
       physicalTags.insert(getTag(this, it->second));
     }
 
-    fprintf(fp, "\tOmicronSigma_%d = Region[{", i);
+    fprintf(fp, "  OmicronSigma_%d = Region[{", i);
     for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
       if(it != physicalTags.begin()) fprintf(fp, ", ");
       fprintf(fp, "%d", *it);
@@ -3048,15 +3053,15 @@ int GModel::writePartitionedTopology(std::string &name)
     for(std::multimap<unsigned int, GEntity*>::iterator it2 = omicronSigma.begin();
         it2 != omicronSigma.end(); ++it2){
       if(it2->second == it1->second && it2 != it1){
-        fprintf(fp, "\tOmicronSigma_%d_%d = Region[{%d}];\n", it1->first, it2->first,
+        fprintf(fp, "  OmicronSigma_%d_%d = Region[{%d}];\n", it1->first, it2->first,
                 getTag(this, it1->second));
       }
     }
   }
   fprintf(fp, "\n");
 
-  //OmicronTau_i
-  for(unsigned int i = 0; i < npart; i++){
+  // OmicronTau_i
+  for(unsigned int i = 1; i <= npart; i++){
     std::pair <std::multimap<unsigned int, GEntity*>::iterator,
                std::multimap<unsigned int, GEntity*>::iterator> range;
     range = omicronTau.equal_range(i);
@@ -3067,7 +3072,7 @@ int GModel::writePartitionedTopology(std::string &name)
       physicalTags.insert(getTag(this, it->second));
     }
 
-    fprintf(fp, "\tOmicronTau_%d = Region[{", i);
+    fprintf(fp, "  OmicronTau_%d = Region[{", i);
     for(std::set<int>::iterator it = physicalTags.begin(); it != physicalTags.end(); ++it){
       if(it != physicalTags.begin()) fprintf(fp, ", ");
       fprintf(fp, "%d", *it);
@@ -3082,7 +3087,7 @@ int GModel::writePartitionedTopology(std::string &name)
     for(std::multimap<unsigned int, GEntity*>::iterator it2 = omicronTau.begin();
         it2 != omicronTau.end(); ++it2){
       if(it2->second == it1->second && it2 != it1){
-        fprintf(fp, "\tOmicronTau_%d_%d = Region[{%d}];\n", it1->first, it2->first,
+        fprintf(fp, "  OmicronTau_%d_%d = Region[{%d}];\n", it1->first, it2->first,
                 getTag(this, it1->second));
       }
     }
@@ -3090,9 +3095,9 @@ int GModel::writePartitionedTopology(std::string &name)
   fprintf(fp, "\n");
 
   //D
-  fprintf(fp, "\tD() = {");
-  for(unsigned int i = 0; i < npart; i++){
-    if(i != 0) fprintf(fp, ", ");
+  fprintf(fp, "  D() = {");
+  for(unsigned int i = 1; i <= npart; i++){
+    if(i != 1) fprintf(fp, ", ");
     fprintf(fp, "%d", i);
   }
   fprintf(fp, "};\n");
@@ -3124,12 +3129,12 @@ int GModel::writePartitionedTopology(std::string &name)
     }
   }
 
-  for(unsigned int i = 0; i < npart; i++){
+  for(unsigned int i = 1; i <= npart; i++){
     std::pair <std::multimap<unsigned int, unsigned int>::iterator,
                std::multimap<unsigned int, unsigned int>::iterator> range;
     range = neighbors.equal_range(i);
     std::vector<unsigned int> writeNeighbors;
-    fprintf(fp, "\tD_%d() = {", i);
+    fprintf(fp, "  D_%d() = {", i);
     int j = 0;
     for(std::multimap<unsigned int, unsigned int>::iterator it = range.first;
         it != range.second; ++it){
@@ -3147,6 +3152,8 @@ int GModel::writePartitionedTopology(std::string &name)
   fprintf(fp, "}\n\n");
 
   fclose(fp);
+
+  Msg::Info("Done writing '%s'", name.c_str());
 
   return 0;
 }

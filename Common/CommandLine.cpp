@@ -482,7 +482,7 @@ void GetOptions(int argc, char *argv[], bool readConfigFiles, bool exitOnError)
         opt_mesh_partition_create_topology(0, GMSH_SET, 0.);
         i++;
       }
-      else if(!strcmp(argv[i] + 1, "part_physcals")){
+      else if(!strcmp(argv[i] + 1, "part_physicals")){
         opt_mesh_partition_create_physicals(0, GMSH_SET, 1.);
         i++;
       }
