@@ -208,7 +208,7 @@ class GEntity {
   virtual std::list<GRegion*> regions() const { return std::list<GRegion*>(); }
 
   // faces that bound this entity or that this entity bounds.
-  virtual std::list<GFace*> faces() const { return std::list<GFace*>(); }
+  virtual std::vector<GFace*> faces() const { return std::vector<GFace*>(); }
 
   // edges that bound this entity or that this entity bounds.
   virtual std::list<GEdge*> edges() const { return std::list<GEdge*>(); }
@@ -225,8 +225,7 @@ class GEntity {
   }
   std::vector<GFace*> bindingsGetFaces()
   {
-    std::list<GFace*> f = faces();
-    return std::vector<GFace*> (f.begin(), f.end());
+    return faces();
   }
   std::vector<GEdge*> bindingsGetEdges()
   {

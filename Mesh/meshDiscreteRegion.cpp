@@ -74,7 +74,9 @@ GRegion * createDiscreteRegionFromRawData(GModel *gm, fullMatrix<double> &pts,
   GFace *gf = new discreteFace(gm, gm->getMaxElementaryNumber(2) + 1);
   gm->add(gr);
   gm->add(gf);
-  std::list<GFace*> faces; faces.push_back(gf); gr->set(faces);
+  std::vector<GFace*> faces;
+  faces.push_back(gf);
+  gr->set(faces);
   // get boundary nodes
   std::set<int> bnd;
   unsigned int nbTriangles = triangles.size1();

@@ -350,10 +350,10 @@ void Filler::treat_region(GRegion* gr)
   std::vector<Node*> garbage;
   std::vector<MVertex*> boundary_vertices;
   std::set<MVertex*> temp;
-  std::list<GFace*> faces;
+  std::vector<GFace*> faces;
   std::map<MVertex*,int> limits;
   std::set<MVertex*>::iterator it;
-  std::list<GFace*>::iterator it2;
+  std::vector<GFace*>::iterator it2;
   std::map<MVertex*,int>::iterator it3;
   RTree<Node*,double,3,double> rtree;
 

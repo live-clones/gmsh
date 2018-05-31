@@ -2481,9 +2481,9 @@ void BoundaryLayerField::setupFor2d(int iF)
       edges_id_saved.end();
     // this edge is a BL Edge
     if (found){
-      std::list<GFace*> fc = (*it)->faces();
+      std::vector<GFace*> fc = (*it)->faces();
       int numf = 0;
-      for(std::list<GFace*>::iterator it = fc.begin(); it != fc.end(); it++){
+      for(std::vector<GFace*>::iterator it = fc.begin(); it != fc.end(); it++){
         if((*it)->meshAttributes.extrude &&
            (*it)->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY){
           // ok

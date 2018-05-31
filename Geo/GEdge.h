@@ -34,7 +34,7 @@ class GEdge : public GEntity {
   // FIXME: normals need to be mutable at the moment, because thay can
   // be created in const member functions
   mutable std::map<MVertex*, SVector3, std::less<MVertex*> > _normals;
-  std::list<GFace *> l_faces;
+  std::vector<GFace *> l_faces;
  public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
   virtual ~GEdge();
@@ -93,7 +93,7 @@ class GEdge : public GEntity {
   virtual std::list<GRegion*> regions() const;
 
   // faces that this entity bounds
-  virtual std::list<GFace*> faces() const { return l_faces; }
+  virtual std::vector<GFace*> faces() const { return l_faces; }
 
   // get the point for the given parameter location
   virtual GPoint point(double p) const = 0;

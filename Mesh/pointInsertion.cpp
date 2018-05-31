@@ -519,8 +519,8 @@ bool Filler3D::treat_region(GRegion *gr)
   map<MVertex*,double> smoothness_forplot;
   MElement *element;
   MVertex *vertex;
-  list<GFace*> faces = gr->faces();
-  for(list<GFace*>::iterator it=faces.begin();it!=faces.end();it++){// for all faces
+  std::vector<GFace*> faces = gr->faces();
+  for(std::vector<GFace*>::iterator it=faces.begin();it!=faces.end();it++){
     GFace *gf = *it;
     // int limit = code_kesskessai(gf->tag());
     for(unsigned int i=0;i<gf->getNumMeshElements();i++){

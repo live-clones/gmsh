@@ -420,9 +420,9 @@ static void remeshUnrecoveredEdges(std::map<MVertex*, BDS_Point*> &recoverMapInv
 
   std::set<EdgeToRecover>::iterator itr = edgesNotRecovered.begin();
   for(; itr != edgesNotRecovered.end(); ++itr){
-    std::list<GFace*> l_faces = itr->ge->faces();
+    std::vector<GFace*> l_faces = itr->ge->faces();
     // un-mesh model faces adjacent to the model edge
-    for(std::list<GFace*>::iterator it = l_faces.begin(); it != l_faces.end(); ++it){
+    for(std::vector<GFace*>::iterator it = l_faces.begin(); it != l_faces.end(); ++it){
       if((*it)->triangles.size() || (*it)->quadrangles.size()){
         facesToRemesh.push_back(*it);
         dem(*it);

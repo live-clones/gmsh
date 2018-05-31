@@ -73,7 +73,7 @@ int IsInToroidalQuadToTri(GFace *face)
       GRegion *region = (*itreg);
 
       // does face belong to region and if so is it a structured extrusion?
-      std::list<GFace *> region_faces = std::list<GFace *>( region->faces() );
+      std::vector<GFace *> region_faces = region->faces();
       if( std::find( region_faces.begin(), region_faces.end(), root_face ) !=
 	    region_faces.end() && region->meshAttributes.extrude &&
 	  region->meshAttributes.extrude->mesh.ExtrudeMesh &&
@@ -625,9 +625,8 @@ int GetNeighborRegionsOfFace(GFace *face, std::vector<GRegion *> &neighbors)
   // pedantic search
   std::set<GRegion *, GEntityLessThan>::iterator itreg;
   for( itreg = model->firstRegion(); itreg != model->lastRegion(); itreg++ ){
-    std::list<GFace *> reg_faces = (*itreg)->faces();
-    if( std::find( reg_faces.begin(), reg_faces.end(), face ) !=
-        reg_faces.end() ){
+    std::vector<GFace *> reg_faces = (*itreg)->faces();
+    if(std::find(reg_faces.begin(), reg_faces.end(), face) != reg_faces.end()){
       regions_count++;
       face->addRegion( (*itreg) );
       neighbors.push_back( (*itreg) );
@@ -671,9 +670,8 @@ int IsSurfaceALateralForRegion(GRegion *region, GFace *face)
     return 0;
 
   // of course, the face has to belong to the region!
-  std::list<GFace *> region_faces = std::list<GFace *>( region->faces() );
-  if( std::find( region_faces.begin(), region_faces.end(), face) ==
-      region_faces.end() )
+  std::vector<GFace *> region_faces = region->faces();
+  if(std::find( region_faces.begin(), region_faces.end(), face) == region_faces.end())
     return 0;
 
   // if this face is a COPIED_ENTITY with source = region source face, this is the top.  Exit.
@@ -781,7 +779,7 @@ int IsSurfaceATopForRegion(GRegion *region, GFace *face)
     return 0;
 
   // of course, the face has to belong to the region!
-  std::list<GFace *> region_faces = std::list<GFace *>( region->faces() );
+  std::vector<GFace *> region_faces = region->faces();
   if( std::find( region_faces.begin(), region_faces.end(), face) ==
       region_faces.end() )
     return 0;

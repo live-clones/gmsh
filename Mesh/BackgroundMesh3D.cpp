@@ -66,11 +66,11 @@ void backgroundMesh3D::computeSizeField()
     Msg::Error("Entity is not a region in background mesh");
     return;
   }
-  std::list<GFace*> faces = region->faces();
+  std::vector<GFace*> faces = region->faces();
   MVertex *v;
   MElement *e;
 
-  for (std::list<GFace*>::iterator it=faces.begin();it!=faces.end();it++){// for all GFace
+  for (std::vector<GFace*>::iterator it=faces.begin();it!=faces.end();it++){// for all GFace
     GFace *face = *it;
     frameFieldBackgroundMesh2D *bgm2d = dynamic_cast<frameFieldBackgroundMesh2D*>(BGMManager::get(face));
     if(!bgm2d){
@@ -605,10 +605,10 @@ void frameFieldBackgroundMesh3D::initiate_crossfield()
     Msg::Error("Entity is not a region in background mesh");
     return;
   }
-  std::list<GFace*> faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
   // here, not using the gm2D since we are interested by the new 2D vertices,
   // not the old (now erased) ones... alternative would be to reset the 2DBGM...
-  for (std::list<GFace*>::iterator it=faces.begin();it!=faces.end();it++){// for all GFace
+  for (std::vector<GFace*>::iterator it=faces.begin();it!=faces.end();it++){// for all GFace
     GFace *face = *it;
     frameFieldBackgroundMesh2D *bgm2d =
       dynamic_cast<frameFieldBackgroundMesh2D*>(BGMManager::get(face));

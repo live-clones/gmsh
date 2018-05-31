@@ -518,11 +518,11 @@ void writeMSHEntities(FILE *fp, GModel *gm)  // also used in MSH2
     fprintf(fp, "\n");
   }
   for (GModel::riter it = gm->firstRegion(); it != gm->lastRegion(); ++it) {
-    std::list<GFace*> faces = (*it)->faces();
+    std::vector<GFace*> faces = (*it)->faces();
     std::list<int> ori = (*it)->faceOrientations();
     fprintf(fp, "%d %d ", (*it)->tag(), (int)faces.size());
     std::vector<int> tags, signs;
-    for(std::list<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++)
+    for(std::vector<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++)
       tags.push_back((*itf)->tag());
     for(std::list<int>::iterator itf = ori.begin(); itf != ori.end(); itf++)
       signs.push_back(*itf);

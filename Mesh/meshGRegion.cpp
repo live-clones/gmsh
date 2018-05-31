@@ -68,23 +68,23 @@ class splitQuadRecovery {
     double minQual     = 1;
     double minQualOpti = 1;
 
-    std::list<GFace*> faces = region->faces();
+    std::vector<GFace*> faces = region->faces();
 
     for (int iter=0; iter < niter+2;iter++){
-      for (std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); ++it){
+      for (std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); ++it){
 	for (std::multimap<GEntity*, std::pair<MVertex*,MFace> >::iterator it2 =
 	       _data.lower_bound(*it); it2 != _data.upper_bound(*it) ; ++it2){
 	  const MFace &f = it2->second.second;
 	  MVertex *v = it2->second.first;
 	  MPyramid p (f.getVertex(0), f.getVertex(1), f.getVertex(2), f.getVertex(3), v);
-	  minQual = std::min(minQual, fabs(p.minSICNShapeMeasure()));
+	  minQual = std::min(minQual, std::abs(p.minSICNShapeMeasure()));
 	  std::vector<MElement*> e = adj[v];
 	  e.push_back(&p);
 	  v->setEntity (region);
 	  double relax = std::min((double)(iter+1)/niter, 1.0);
 	  //	  printf("%g (%d) --> ",e.size(),p.minSICNShapeMeasure());
 	  _relocateVertexGolden( v, e, relax);
-	  minQualOpti = std::min(minQualOpti, fabs(p.minSICNShapeMeasure()));
+	  minQualOpti = std::min(minQualOpti, std::abs(p.minSICNShapeMeasure()));
 	  //	  printf("%g \n",p.minSICNShapeMeasure());
 	  v->setEntity (*it);
 	}
@@ -165,8 +165,8 @@ void getBoundingInfoAndSplitQuads(GRegion *gr,
   std::map<MFace, GEntity*, Less_Face> allBoundingFaces_temp;
 
   // Get all the faces that are on the boundary
-  std::list<GFace*> faces = gr->faces();
-  std::list<GFace*>::iterator it = faces.begin();
+  std::vector<GFace*> faces = gr->faces();
+  std::vector<GFace*>::iterator it = faces.begin();
   while (it != faces.end()){
     GFace *gf = (*it);
     for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){
@@ -672,16 +672,15 @@ bool CreateAnEmptyVolumeMesh(GRegion *gr)
 static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
 {
   GRegion *gr = regions[0];
-  std::list<GFace*> faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
   std::set<GFace*, GEntityLessThan> allFacesSet;
   for(unsigned int i = 0; i < regions.size(); i++){
-    std::list<GFace*> f = regions[i]->faces();
+    std::vector<GFace*> f = regions[i]->faces();
+    std::list<GFace*> f_e = regions[i]->embeddedFaces();
     allFacesSet.insert(f.begin(), f.end());
-    f = regions[i]->embeddedFaces();
-    allFacesSet.insert(f.begin(), f.end());
+    allFacesSet.insert(f_e.begin(), f_e.end());
   }
-  std::list<GFace*> allFaces;
-  allFaces.insert(allFaces.end(), allFacesSet.begin(), allFacesSet.end());
+  std::vector<GFace*> allFaces(allFacesSet.begin(), allFacesSet.end());
   gr->set(allFaces);
 
   std::set<GEdge*> allEmbEdgesSet;
@@ -718,10 +717,9 @@ static void MeshDelaunayVolumeNewCode(std::vector<GRegion*> &regions)
   */
 
   // sort triangles in all model faces in order to be able to search in vectors
-  std::list<GFace*>::iterator itf =  allFaces.begin();
+  std::vector<GFace*>::iterator itf = allFaces.begin();
   while(itf != allFaces.end()){
-    compareMTriangleLexicographic cmp;
-    std::sort((*itf)->triangles.begin(), (*itf)->triangles.end(), cmp);
+    std::sort((*itf)->triangles.begin(), (*itf)->triangles.end(), compareMTriangleLexicographic());
     ++itf;
   }
 
@@ -784,8 +782,8 @@ static void getAllBoundingVertices(GRegion *gr,
                                    std::set<MVertex*, MVertexLessThanNum>
                                    &allBoundingVertices)
 {
-  std::list<GFace*> faces = gr->faces();
-  std::list<GFace*>::iterator it = faces.begin();
+  std::vector<GFace*> faces = gr->faces();
+  std::vector<GFace*>::iterator it = faces.begin();
 
   while (it != faces.end()){
     GFace *gf = (*it);
@@ -831,8 +829,8 @@ Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
       Ng_AddPoint(ngmesh, tmp);
     }
   }
-  std::list<GFace*> faces = gr->faces();
-  std::list<GFace*>::iterator it = faces.begin();
+  std::vector<GFace*> faces = gr->faces();
+  std::vector<GFace*>::iterator it = faces.begin();
   while(it != faces.end()){
     GFace *gf = (*it);
     for(unsigned int i = 0; i< gf->triangles.size(); i++){
@@ -961,8 +959,8 @@ static void setRand(double r[6])
 
 void meshNormalsPointOutOfTheRegion(GRegion *gr)
 {
-  std::list<GFace*> faces = gr->faces();
-  std::list<GFace*>::iterator it = faces.begin();
+  std::vector<GFace*> faces = gr->faces();
+  std::vector<GFace*>::iterator it = faces.begin();
 
   // perform intersection check in normalized coordinates
   SBoundingBox3d bbox = gr->bounds();
@@ -1003,7 +1001,7 @@ void meshNormalsPointOutOfTheRegion(GRegion *gr)
       N[1] += rrr[2] * v1[1] + rrr[3] * v2[1];
       N[2] += rrr[4] * v1[2] + rrr[5] * v2[2];
       norme(N);
-      std::list<GFace*>::iterator it_b = faces.begin();
+      std::vector<GFace*>::iterator it_b = faces.begin();
       while(it_b != faces.end()){
         GFace *gf_b = (*it_b);
         for(unsigned int i_b = 0; i_b < gf_b->triangles.size(); i_b++){
@@ -1073,11 +1071,11 @@ void meshGRegion::operator() (GRegion *gr)
 
   if(MeshTransfiniteVolume(gr)) return;
 
-  std::list<GFace*> faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
 
   // sanity check for frontal algo
   if(CTX::instance()->mesh.algo3d == ALGO_3D_FRONTAL){
-    for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
+    for(std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
       if((*it)->quadrangles.size()){
         Msg::Error("Cannot use frontal 3D algorithm with quadrangles on boundary");
         return;
@@ -1158,7 +1156,7 @@ bool buildFaceSearchStructure(GModel *model, fs_cont &search)
   std::set<GFace*> faces_to_consider;
   GModel::riter rit = model->firstRegion();
   while(rit != model->lastRegion()){
-    std::list <GFace *> _faces = (*rit)->faces();
+    std::vector<GFace *> _faces = (*rit)->faces();
     faces_to_consider.insert( _faces.begin(),_faces.end());
     rit++;
   }

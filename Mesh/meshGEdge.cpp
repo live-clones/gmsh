@@ -661,8 +661,8 @@ void meshGEdge::operator() (GEdge *ge)
 	N = increaseN(N);
     }
     else{
-      std::list<GFace*> faces = ge->faces();
-      for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
+      std::vector<GFace*> faces = ge->faces();
+      for(std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
         if((*it)->meshAttributes.recombine){
 	  if (N % 2 == 0) N ++;
 	  if (CTX::instance()->mesh.algoRecombine == 2)

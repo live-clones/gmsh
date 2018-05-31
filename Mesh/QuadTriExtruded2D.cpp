@@ -252,7 +252,7 @@ int IsValidQuadToTriTop(GFace *face, int *quadToTri, bool *detectQuadToTriTop)
       GRegion *region = all_regions[i_reg];
 
       // does face belong to region?
-      std::list<GFace *> region_faces = std::list<GFace *>( region->faces() );
+      std::vector<GFace *> region_faces = region->faces();
       if( std::find( region_faces.begin(), region_faces.end(), face ) !=
 	    region_faces.end() ){
 	adjacent_regions.push_back(region);

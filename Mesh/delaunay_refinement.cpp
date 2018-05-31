@@ -466,7 +466,7 @@ void computeMeshSizes (GRegion *gr, std::map<MVertex*, double> &s){
     }
   }
   std::list<GFace*> f ;
-  std::list<GFace*> f1 = gr->faces();
+  std::vector<GFace*> f1 = gr->faces();
   std::list<GFace*> f2 = gr->embeddedFaces();
   f.insert(f.end(),f1.begin(), f1.end());
   f.insert(f.end(),f2.begin(), f2.end());
