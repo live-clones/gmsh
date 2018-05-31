@@ -2361,7 +2361,8 @@ static void assignToParent(std::set<MVertex*> &verts, partitionRegion *region,
                            ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it){
-    region->getParentEntity()->addElement((*it)->getType(), *it);
+    if(region->getParentEntity()->dim() == 3)
+      region->getParentEntity()->addElement((*it)->getType(), *it);
     (*it)->setPartition(0);
 
     for(int i = 0; i < (*it)->getNumVertices(); i++){
@@ -2379,7 +2380,8 @@ static void assignToParent(std::set<MVertex*> &verts, partitionFace *face,
                            ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it){
-    face->getParentEntity()->addElement((*it)->getType(), *it);
+    if(face->getParentEntity()->dim() == 2)
+      face->getParentEntity()->addElement((*it)->getType(), *it);
     (*it)->setPartition(0);
 
     for(int i = 0; i < (*it)->getNumVertices(); i++){
@@ -2397,7 +2399,8 @@ static void assignToParent(std::set<MVertex*> &verts, partitionEdge *edge,
                            ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it){
-    edge->getParentEntity()->addLine(reinterpret_cast<MLine*>(*it));
+    if(edge->getParentEntity()->dim() == 1)
+      edge->getParentEntity()->addElement((*it)->getType(), *it);
     (*it)->setPartition(0);
 
     for(int i = 0; i < (*it)->getNumVertices(); i++){
@@ -2416,7 +2419,8 @@ static void assignToParent(std::set<MVertex*> &verts, partitionVertex *vertex,
 {
   for(ITERATOR it = it_beg; it != it_end; ++it)
   {
-    vertex->getParentEntity()->addPoint(reinterpret_cast<MPoint*>(*it));
+    if(vertex->getParentEntity()->dim() == 0)
+      vertex->getParentEntity()->addElement((*it)->getType(), *it);
     (*it)->setPartition(0);
 
     for(int i = 0; i < (*it)->getNumVertices(); i++){

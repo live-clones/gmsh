@@ -3645,27 +3645,27 @@ $EndEntities
   numPoints(unsigned long) numCurves(unsigned long)
     numSurfaces(unsigned long) numVolumes(unsigned long)
   // points
-  tag(int) parentTag(int) numPartitions(int) partitionTag[...](int)
+  tag(int) parentDim(int) parentTag(int) numPartitions(int) partitionTag[...](int)
     boxMinX(double) boxMinY(double) boxMinZ(double) 
     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
     numPhyiscals(unsigned long) physicalTag[...](int)
   ...
   // curves
-  tag(int) parentTag(int) numPartitions(int) partitionTag[...](int)
+  tag(int) parentDim(int) parentTag(int) numPartitions(int) partitionTag[...](int)
     boxMinX(double) boxMinY(double) boxMinZ(double) 
     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
     numPhysicals(unsigned long) physicalTag[...](int)
     numBREPVert(unsigned long) tagBREPVert[...](int)
   ...
   // surfaces
-  tag(int) parentTag(int) numPartitions(int) partitionTag[...](int) 
+  tag(int) parentDim(int) parentTag(int) numPartitions(int) partitionTag[...](int) 
     boxMinX(double) boxMinY(double) boxMinZ(double) 
     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
     numPhysicals(unsigned long) physicalTag[...](int) 
     numBREPCurve(unsigned long) tagBREPCurve[...](int)
   ...
   // volumes
-  tag(int) parentTag(int) numPartitions(int) partitionTag[...](int)
+  tag(int) parentDim(int) parentTag(int) numPartitions(int) partitionTag[...](int)
     boxMinX(double) boxMinY(double) boxMinZ(double) 
     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
     numPhysicals(unsigned long) physicalTag[...](int) 

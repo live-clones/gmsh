@@ -59,7 +59,7 @@ class GVertex : public GEntity
   virtual int dim() const { return 0; }
 
   // returns the parent entity for partitioned entities
-  virtual GVertex* getParentEntity() { return 0; }
+  virtual GEntity* getParentEntity() { return 0; }
 
   // get the geometric type of the vertex
   virtual GeomType geomType() const { return Point; }

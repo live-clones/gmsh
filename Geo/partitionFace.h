@@ -12,7 +12,7 @@
 class partitionFace : public discreteFace {
 private:
   std::vector<unsigned int> _partitions;
-  GFace *_parentEntity;
+  GEntity *_parentEntity;
 public:
   partitionFace(GModel *model, int num, const std::vector<unsigned int> &partitions)
     : discreteFace(model, num), _partitions(partitions), _parentEntity(NULL) {}
@@ -20,8 +20,8 @@ public:
     : discreteFace(model, num), _partitions(), _parentEntity(NULL) {}
   virtual ~partitionFace() {}
   virtual GeomType geomType() const { return PartitionSurface; }
-  virtual void setParentEntity(GFace* f) { _parentEntity = f; }
-  virtual GFace* getParentEntity() { return _parentEntity; }
+  virtual void setParentEntity(GEntity* f) { _parentEntity = f; }
+  virtual GEntity* getParentEntity() { return _parentEntity; }
   virtual void setPartitions(std::vector<unsigned int> &partitions)
   {
     _partitions = partitions;

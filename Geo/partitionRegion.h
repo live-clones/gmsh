@@ -12,7 +12,7 @@
 class partitionRegion : public discreteRegion {
 private:
   std::vector<unsigned int> _partitions;
-  GRegion *_parentEntity;
+  GEntity *_parentEntity;
 public:
   partitionRegion(GModel *model, int num, const std::vector<unsigned int> &partitions) :
     discreteRegion(model, num), _partitions(partitions), _parentEntity(NULL) {}
@@ -20,8 +20,8 @@ public:
     : discreteRegion(model, num), _partitions(), _parentEntity(NULL) {}
   virtual ~partitionRegion() {}
   virtual GeomType geomType() const { return PartitionVolume; }
-  virtual void setParentEntity(GRegion* r) { _parentEntity = r; }
-  virtual GRegion* getParentEntity() { return _parentEntity; }
+  virtual void setParentEntity(GEntity* r) { _parentEntity = r; }
+  virtual GEntity* getParentEntity() { return _parentEntity; }
   virtual void setPartitions(std::vector<unsigned int> &partitions)
   {
     _partitions = partitions;
