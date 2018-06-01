@@ -26,7 +26,7 @@ GRegion::GRegion(GModel *model, int tag)
 
 GRegion::~GRegion()
 {
-  std::list<GFace*>::iterator it = l_faces.begin();
+  std::vector<GFace*>::iterator it = l_faces.begin();
   while(it != l_faces.end()){
     (*it)->delRegion(this);
     ++it;
@@ -166,7 +166,7 @@ SBoundingBox3d GRegion::bounds(bool fast) const
 {
   SBoundingBox3d res;
   if(geomType() != DiscreteVolume && geomType() != PartitionVolume){
-    std::list<GFace*>::const_iterator it = l_faces.begin();
+    std::vector<GFace*>::const_iterator it = l_faces.begin();
     for(; it != l_faces.end(); it++)
       res += (*it)->bounds(fast);
   }
@@ -184,8 +184,8 @@ SOrientedBoundingBox GRegion::getOBB()
 {
   if (!_obb) {
     std::vector<SPoint3> vertices;
-    std::list<GFace*> b_faces = faces();
-    for (std::list<GFace*>::iterator b_face = b_faces.begin();
+    std::vector<GFace*> b_faces = faces();
+    for (std::vector<GFace*>::iterator b_face = b_faces.begin();
          b_face != b_faces.end(); b_face++) {
       if((*b_face)->getNumMeshVertices() > 0) {
         int N = (*b_face)->getNumMeshVertices();
@@ -238,7 +238,7 @@ void GRegion::setVisibility(char val, bool recursive)
 {
   GEntity::setVisibility(val);
   if(recursive){
-    std::list<GFace*>::iterator it = l_faces.begin();
+    std::vector<GFace*>::iterator it = l_faces.begin();
     while(it != l_faces.end()){
       (*it)->setVisibility(val, recursive);
       ++it;
@@ -250,7 +250,7 @@ void GRegion::setColor(unsigned int val, bool recursive)
 {
   GEntity::setColor(val);
   if(recursive){
-    std::list<GFace*>::iterator it = l_faces.begin();
+    std::vector<GFace*>::iterator it = l_faces.begin();
     while(it != l_faces.end()){
       (*it)->setColor(val, recursive);
       ++it;
@@ -260,7 +260,7 @@ void GRegion::setColor(unsigned int val, bool recursive)
 
 int GRegion::delFace(GFace* face)
 {
-  std::list<GFace*>::iterator it;
+  std::vector<GFace*>::iterator it;
   int pos = 0;
   for(it = l_faces.begin(); it != l_faces.end(); ++it){
     if(*it == face) break;
@@ -269,8 +269,7 @@ int GRegion::delFace(GFace* face)
   l_faces.erase(it);
 
   std::list<int>::iterator itOri;
-  int posOri = 0;
-  int orientation = 0;
+  int posOri = 0, orientation = 0;
   for(itOri = l_dirs.begin(); itOri != l_dirs.end(); ++itOri){
     if(posOri == pos){
       orientation = *itOri;
@@ -288,7 +287,7 @@ std::string GRegion::getAdditionalInfoString(bool multline)
   std::ostringstream sstream;
   if(l_faces.size()){
     sstream << "Boundary surfaces: ";
-    for(std::list<GFace*>::iterator it = l_faces.begin();
+    for(std::vector<GFace*>::iterator it = l_faces.begin();
         it != l_faces.end(); ++it){
       if(it != l_faces.begin()) sstream << ", ";
       sstream << (*it)->tag();
@@ -346,7 +345,7 @@ void GRegion::writeGEO(FILE *fp)
 
   if(l_faces.size()){
     fprintf(fp, "Surface Loop(%d) = ", tag());
-    for(std::list<GFace*>::iterator it = l_faces.begin(); it != l_faces.end(); it++) {
+    for(std::vector<GFace*>::iterator it = l_faces.begin(); it != l_faces.end(); it++) {
       if(it != l_faces.begin())
         fprintf(fp, ", %d", (*it)->tag());
       else
@@ -388,7 +387,7 @@ void GRegion::writeGEO(FILE *fp)
 std::list<GEdge*> GRegion::edges() const
 {
   std::list<GEdge*> e;
-  std::list<GFace*>::const_iterator it = l_faces.begin();
+  std::vector<GFace*>::const_iterator it = l_faces.begin();
   while(it != l_faces.end()){
     std::list<GEdge*> e2;
 
@@ -422,7 +421,7 @@ bool GRegion::edgeConnected(GRegion *r) const
 double GRegion::computeSolidProperties(std::vector<double> cg,
                                        std::vector<double> inertia)
 {
-  std::list<GFace*>::iterator it = l_faces.begin();
+  std::vector<GFace*>::iterator it = l_faces.begin();
   std::list<int>::iterator itdir = l_dirs.begin();
   double volumex = 0;
   double volumey = 0;
@@ -504,7 +503,7 @@ double GRegion::computeSolidProperties(std::vector<double> cg,
 std::list<GVertex*> GRegion::vertices() const
 {
   std::set<GVertex*> v;
-  for (std::list<GFace*>::const_iterator it = l_faces.begin(); it != l_faces.end() ; ++it){
+  for (std::vector<GFace*>::const_iterator it = l_faces.begin(); it != l_faces.end() ; ++it){
     const GFace *gf = *it;
     std::list<GVertex*> vs = gf->vertices();
     v.insert(vs.begin(), vs.end());
@@ -784,8 +783,8 @@ bool GRegion::setOutwardOrientationMeshConstraint()
   double rrr[6];
   setRand(rrr);
 
-  std::list<GFace*> f = faces();
-  std::list<GFace*>::iterator it = f.begin();
+  std::vector<GFace*> f = faces();
+  std::vector<GFace*>::iterator it = f.begin();
   while(it != f.end()){
     GFace *gf = (*it);
     gf->buildSTLTriangulation();
@@ -820,7 +819,7 @@ bool GRegion::setOutwardOrientationMeshConstraint()
       N[1] += rrr[2] * v1[1] + rrr[3] * v2[1];
       N[2] += rrr[4] * v1[2] + rrr[5] * v2[2];
       norme(N);
-      std::list<GFace*>::iterator it_b = f.begin();
+      std::vector<GFace*>::iterator it_b = f.begin();
       while(it_b != f.end()){
         GFace *gf_b = (*it_b);
         gf_b->buildSTLTriangulation();
@@ -840,15 +839,15 @@ bool GRegion::setOutwardOrientationMeshConstraint()
             Y_b[j] /= scaling;
             Z_b[j] /= scaling;
           }
-          if(!(fabs(X[0] - X_b[0]) < 1e-12 &&
-               fabs(X[1] - X_b[1]) < 1e-12 &&
-               fabs(X[2] - X_b[2]) < 1e-12 &&
-               fabs(Y[0] - Y_b[0]) < 1e-12 &&
-               fabs(Y[1] - Y_b[1]) < 1e-12 &&
-               fabs(Y[2] - Y_b[2]) < 1e-12 &&
-               fabs(Z[0] - Z_b[0]) < 1e-12 &&
-               fabs(Z[1] - Z_b[1]) < 1e-12 &&
-               fabs(Z[2] - Z_b[2]) < 1e-12)){
+          if(!(std::abs(X[0] - X_b[0]) < 1e-12 &&
+               std::abs(X[1] - X_b[1]) < 1e-12 &&
+               std::abs(X[2] - X_b[2]) < 1e-12 &&
+               std::abs(Y[0] - Y_b[0]) < 1e-12 &&
+               std::abs(Y[1] - Y_b[1]) < 1e-12 &&
+               std::abs(Y[2] - Y_b[2]) < 1e-12 &&
+               std::abs(Z[0] - Z_b[0]) < 1e-12 &&
+               std::abs(Z[1] - Z_b[1]) < 1e-12 &&
+               std::abs(Z[2] - Z_b[2]) < 1e-12)){
             int inters = intersectLineTriangle(X_b, Y_b, Z_b, P, N, 1.e-9);
             nb_intersect += inters;
           }

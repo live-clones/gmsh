@@ -1573,7 +1573,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     }
 
     for(GModel::riter it = regions.begin(); it != regions.end(); ++it){
-      std::list<GFace*> faces = (*it)->faces();
+      std::vector<GFace*> faces = (*it)->faces();
       std::list<int> ori = (*it)->faceOrientations();
       unsigned long facesSize = faces.size();
       int entityTag = (*it)->tag();
@@ -1595,7 +1595,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       writeMSH4Physicals(fp, *it, binary);
       fwrite(&facesSize, sizeof(unsigned long), 1, fp);
       std::vector<int> tags, signs;
-      for(std::list<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++)
+      for(std::vector<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++)
         tags.push_back((*itf)->tag());
       for(std::list<int>::iterator itf = ori.begin(); itf != ori.end(); itf++)
         signs.push_back(*itf);
@@ -1740,7 +1740,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     }
 
     for(GModel::riter it = regions.begin(); it != regions.end(); ++it){
-      std::list<GFace*> faces = (*it)->faces();
+      std::vector<GFace*> faces = (*it)->faces();
       std::list<int> ori = (*it)->faceOrientations();
       fprintf(fp, "%d ", (*it)->tag());
       if(partition){
@@ -1760,7 +1760,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       writeMSH4Physicals(fp, *it, binary);
       fprintf(fp, "%lu ", faces.size());
       std::vector<int> tags, signs;
-      for(std::list<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++)
+      for(std::vector<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++)
         tags.push_back((*itf)->tag());
       for(std::list<int>::iterator itf = ori.begin(); itf != ori.end(); itf++)
         signs.push_back(*itf);

@@ -153,13 +153,16 @@ unsigned int GEdge::getNumMeshElementsByType(const int familyType) const
   return 0;
 }
 
+struct owns_parent
+{
+    // TODO C++11 use lambda instead
+    template <class T>
+    bool operator()(T const* const line) const {return line->ownsParent();}
+};
+
 unsigned int GEdge::getNumMeshParentElements()
 {
-  unsigned int n = 0;
-  for(unsigned int i = 0; i < lines.size(); i++)
-    if(lines[i]->ownsParent())
-      n++;
-  return n;
+  return std::count_if(lines.begin(), lines.end(), owns_parent());
 }
 
 void GEdge::getNumMeshElements(unsigned *const c) const
@@ -207,7 +210,7 @@ void GEdge::addFace(GFace *f)
 
 void GEdge::delFace(GFace *f)
 {
-  std::list<GFace*>::iterator it = std::find(l_faces.begin(), l_faces.end(), f);
+  std::vector<GFace*>::iterator it = std::find(l_faces.begin(), l_faces.end(), f);
   if(it != l_faces.end()) l_faces.erase(it);
 }
 
@@ -571,8 +574,8 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
 // regions that bound this entity or that this entity bounds.
 std::list<GRegion*> GEdge::regions() const
 {
-  std::list<GFace*> _faces = faces();
-  std::list<GFace*>::const_iterator it = _faces.begin();
+  std::vector<GFace*> _faces = faces();
+  std::vector<GFace*>::const_iterator it = _faces.begin();
   std::set<GRegion*> _r;
   for ( ; it != _faces.end() ; ++it){
     std::list<GRegion*> temp = (*it)->regions();

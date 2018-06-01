@@ -254,11 +254,10 @@ bool IsValidQuadToTriRegion(GRegion *region, bool *allNonGlobalSharedLaterals)
   bool foundTop = false, foundSource = false,
                   foundNoStruct = false, foundRoot = false;
 
-  std::list<GFace *> faces = region->faces();
-  std::list<GFace *>::iterator it = faces.begin();
+  std::vector<GFace *> faces = region->faces();
+  std::vector<GFace *>::iterator it = faces.begin();
 
   (*allNonGlobalSharedLaterals) = true;
-
 
   for( it = faces.begin(); it != faces.end(); it++ ){
     ExtrudeParams *face_tmp_ep = (*it)->meshAttributes.extrude;
@@ -2355,8 +2354,8 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
   bool foundSource = false, foundTop = false, foundRoot = false;
   GFace *reg_top = NULL;
   GFace *root_face = NULL;
-  std::list<GFace *> faces = gr->faces();
-  std::list<GFace *>::iterator it = faces.begin();
+  std::vector<GFace *> faces = gr->faces();
+  std::vector<GFace *>::iterator it = faces.begin();
 
   // top faces in toroidal quadtri need special treatment
   bool is_toroidal = IsInToroidalQuadToTri(reg_source);
@@ -3681,8 +3680,8 @@ int QuadToTriEdgeGenerator(GRegion *gr,  CategorizedSourceElements &cat_src_elem
   bool is_toroidal = IsInToroidalQuadToTri(reg_source);
 
 
-  std::list<GFace *> reg_faces = gr->faces();
-  std::list<GFace *>::iterator itf = reg_faces.begin();
+  std::vector<GFace *> reg_faces = gr->faces();
+  std::vector<GFace *>::iterator itf = reg_faces.begin();
 
   // find top surface of extrusion and first root dependency of source
   GFace *reg_top = NULL;
@@ -3872,8 +3871,8 @@ static bool QuadToTriLateralRemesh(GRegion *gr, std::set<std::pair<MVertex*,MVer
 
   bool foundTop = false, foundRoot = false;
   GFace *reg_top = NULL;
-  std::list<GFace *> faces = gr->faces();
-  std::list<GFace *>::iterator it = faces.begin();
+  std::vector<GFace *> faces = gr->faces();
+  std::vector<GFace *>::iterator it = faces.begin();
 
   for( it = faces.begin(); it != faces.end(); it++ ){
     ExtrudeParams *face_tmp_ep = (*it)->meshAttributes.extrude;

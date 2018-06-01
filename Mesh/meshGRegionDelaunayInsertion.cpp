@@ -28,13 +28,13 @@ int MTet4::radiusNorm = 2;
 void TEST_IF_BOUNDARY_IS_RECOVERED (GRegion *gr)
 {
   std::list<GEdge*> e = gr->edges();
-  std::list<GFace*> f = gr->faces();
+  std::vector<GFace*> f = gr->faces();
 
   std::map<MEdge,GEdge*,Less_Edge> edges;
   std::map<MFace,GFace*,Less_Face> faces;
 
   std::list<GEdge*>::iterator it = e.begin();
-  std::list<GFace*>::iterator itf = f.begin();
+  std::vector<GFace*>::iterator itf = f.begin();
   for ( ; it != e.end() ; ++it){
     for (unsigned int i=0;i<(*it)->lines.size(); ++i){
       if (distance ((*it)->lines[i]->getVertex(0),
@@ -588,10 +588,10 @@ GRegion *getRegionFromBoundingFaces(GModel *model,
       // extruded meshes or transfinite should be considered as "void"
     }
     else{
-      std::list <GFace *> _faces = (*git)->faces();
+      std::vector<GFace *> _faces = (*git)->faces();
       if(_faces.size() == faces_bound.size()){
         bool ok = true;
-        for (std::list<GFace *>::iterator it = _faces.begin(); it != _faces.end(); ++it){
+        for (std::vector<GFace *>::iterator it = _faces.begin(); it != _faces.end(); ++it){
           if(faces_bound.find (*it) == faces_bound.end()) ok = false;
         }
         if (ok) return *git;

@@ -50,10 +50,10 @@ class GVertex : public GEntity
   virtual std::list<GRegion*> regions() const;
 
   // get the edges that this vertex bounds
-  virtual std::list<GEdge*> edges() const{ return l_edges; }
+  virtual std::list<GEdge*> edges() const { return l_edges; }
 
   // faces that bound this entity or that this entity bounds.
-  virtual std::list<GFace*> faces() const;
+  virtual std::vector<GFace*> faces() const;
 
   // get the dimension of the vertex (0)
   virtual int dim() const { return 0; }

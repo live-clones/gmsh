@@ -621,9 +621,9 @@ void createTopologyFromMesh3D(GModel *gm, int &num)
   {
     std::map<GRegion*, std::set<GFace*> >::iterator it =  _topology.begin();
     for ( ; it != _topology.end() ; ++it){
-      std::list<GFace*> l ; l.insert (l.begin(), it->second.begin(), it->second.end());
+      std::vector<GFace*> l(it->second.begin(), it->second.end());
       it->first->set(l);
-      for (std::list<GFace*>::iterator it2 =  l.begin() ; it2 != l.end() ; ++it2)
+      for (std::vector<GFace*>::iterator it2 =  l.begin() ; it2 != l.end() ; ++it2)
         (*it2)->addRegion(it->first);
     }
   }

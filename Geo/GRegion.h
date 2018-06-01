@@ -26,7 +26,7 @@ class BoundaryLayerColumns;
 // A model region.
 class GRegion : public GEntity {
  protected:
-  std::list<GFace*> l_faces;
+  std::vector<GFace*> l_faces;
   std::list<GVertex *> embedded_vertices;
   std::list<GFace *> embedded_faces;
   std::list<GEdge *> embedded_edges;
@@ -59,11 +59,13 @@ class GRegion : public GEntity {
 
   // get/set faces that bound the region
   int delFace(GFace* face);
-  virtual std::list<GFace*> faces() const{ return l_faces; }
+
+  virtual std::vector<GFace*> faces() const { return l_faces; }
+
   virtual std::list<int> faceOrientations() const{ return l_dirs; }
-  inline void set(const std::list<GFace*> f) { l_faces = f; }
-  inline void setOrientations(const std::list<int> f) { l_dirs= f; }
-  void setFace(GFace* f, int orientation)
+  void set(std::vector<GFace*> const f) { l_faces = f; }
+  void setOrientations(const std::list<int> f) { l_dirs= f; }
+  void setFace(GFace* const f, int const orientation)
   {
     l_faces.push_back(f);
     l_dirs.push_back(orientation);

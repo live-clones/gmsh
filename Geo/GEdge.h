@@ -31,7 +31,7 @@ class GEdge : public GEntity {
   closestPointFinder *_cp;
  protected:
   GVertex *v0, *v1;
-  std::list<GFace *> l_faces;
+  std::vector<GFace *> l_faces;
  public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
   virtual ~GEdge();
@@ -90,7 +90,7 @@ class GEdge : public GEntity {
   virtual std::list<GRegion*> regions() const;
 
   // faces that this entity bounds
-  virtual std::list<GFace*> faces() const { return l_faces; }
+  virtual std::vector<GFace*> faces() const { return l_faces; }
 
   // get the point for the given parameter location
   virtual GPoint point(double p) const = 0;

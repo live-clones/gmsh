@@ -37,8 +37,8 @@ void Frame_field::init_region(GRegion* gr)
   // Fill in a ANN tree with the boundary cross field of region gr
   unsigned int i;
   GFace* gf;
-  std::list<GFace*> faces;
-  std::list<GFace*>::iterator it;
+  std::vector<GFace*> faces;
+  std::vector<GFace*>::iterator it;
 
   Nearest_point::init_region(gr);
 
@@ -597,8 +597,8 @@ void Frame_field::initFace(GFace* gf)
 
 void Frame_field::initRegion(GRegion* gr, int n)
 {
-  std::list<GFace*> faces = gr->faces();
-  for(std::list<GFace*>::const_iterator iter=faces.begin(); iter!=faces.end(); iter++){
+  std::vector<GFace*> faces = gr->faces();
+  for(std::vector<GFace*>::const_iterator iter=faces.begin(); iter!=faces.end(); iter++){
     initFace(*iter);
     // smoothing must be done immediately because crosses on the contour vertices
     // are now initialized with the normal to THIS face.
@@ -949,9 +949,9 @@ void Frame_field::continuousCrossField(GRegion *gr, GFace *gf)
   printf("continuous cross field \n");
 
   //start from a vertex of a face
-  std::list<GFace*> faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
   bool foundFace = false;
-  for(std::list<GFace*>::const_iterator iter=faces.begin(); iter!=faces.end(); iter++){
+  for(std::vector<GFace*>::const_iterator iter=faces.begin(); iter!=faces.end(); iter++){
     if (*iter == gf){
       foundFace = true;
       break;
@@ -1151,13 +1151,12 @@ void Size_field::init_region(GRegion* gr)
   MVertex* vertex;
   GFace* gf;
   GModel* model = GModel::current();
-  std::list<GFace*> faces;
-  std::list<GFace*>::iterator it;
   ANNpoint query;
   ANNidxArray indices;
   ANNdistArray distances;
 
-  faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
+  std::vector<GFace*>::iterator it;
 
   field.clear();
 
@@ -1463,9 +1462,8 @@ void Nearest_point::init_region(GRegion* gr)
   double x3,y3,z3;
   MElement* element;
   GFace* gf;
-  std::list<GFace*> faces;
   std::set<MVertex*> temp;
-  std::list<GFace*>::iterator it;
+  std::vector<GFace*>::iterator it;
   std::set<MVertex*>::iterator it2;
   fullMatrix<double> gauss_points;
   fullVector<double> gauss_weights;
@@ -1473,7 +1471,7 @@ void Nearest_point::init_region(GRegion* gr)
   gaussIntegration::getTriangle(8,gauss_points,gauss_weights);
   gauss_num = gauss_points.size1();
 
-  faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
 
   field.clear();
   vicinity.clear();

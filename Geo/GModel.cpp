@@ -352,8 +352,8 @@ void GModel::remove(int dim, int tag, bool recursive)
     if(gr){
       remove(gr);
       if(recursive){
-        std::list<GFace*> f = gr->faces();
-        for(std::list<GFace*>::iterator it = f.begin(); it != f.end(); it++)
+        std::vector<GFace*> f = gr->faces();
+        for(std::vector<GFace*>::iterator it = f.begin(); it != f.end(); it++)
           remove(2, (*it)->tag(), recursive);
       }
     }
@@ -504,10 +504,10 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
             outDimTags.push_back(std::pair<int, int>(0, (*it)->tag()));
         }
         else{
-          std::list<GFace*> faces(gr->faces());
+          std::vector<GFace*> faces(gr->faces());
           std::list<int> orientations(gr->faceOrientations());
           std::list<int>::iterator ito = orientations.begin();
-          for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
+          for(std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
             int t = (*it)->tag();
             if(oriented && ito != orientations.end()){
               t *= *ito;
@@ -2975,17 +2975,17 @@ void GModel::classifyFaces(std::set<GFace*> &_faces)
   // their faces by the new ones
 
   for(riter rit = firstRegion(); rit != lastRegion(); ++rit){
-    std::list<GFace *> _xfaces = (*rit)->faces();
+    std::vector<GFace *> _xfaces = (*rit)->faces();
     std::set<GFace *> _newFaces;
-    for(std::list<GFace *>::iterator itf = _xfaces.begin(); itf != _xfaces.end(); ++itf){
+    for(std::vector<GFace *>::iterator itf = _xfaces.begin(); itf != _xfaces.end(); ++itf){
+
       std::multimap<GFace*, GFace*>::iterator itLow = replacedBy.lower_bound(*itf);
       std::multimap<GFace*, GFace*>::iterator itUp = replacedBy.upper_bound(*itf);
+
       for(; itLow != itUp; ++itLow)
         _newFaces.insert(itLow->second);
     }
-    std::list<GFace *> _temp;
-    _temp.insert(_temp.begin(),_newFaces.begin(),_newFaces.end());
-    (*rit)->set(_temp);
+    (*rit)->set(std::vector<GFace *>(_newFaces.begin(),_newFaces.end()));
   }
 
   // color some lines

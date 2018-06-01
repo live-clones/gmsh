@@ -1047,10 +1047,9 @@ void Recombinator::build_tuples() {
   tuples.clear();
   triangles.clear();
 
-  std::list<GFace*> faces;
-  faces = current_region->faces();
+  std::vector<GFace*> faces = current_region->faces();
 
-  for (std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++) {
+  for (std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); it++) {
     GFace* gf = *it;
 
     for (unsigned int i = 0; i < gf->getNumMeshElements(); i++) {
@@ -1095,8 +1094,8 @@ void Recombinator::create_quads_on_boundary() {
 }
 
 void Recombinator::delete_quad_triangles_in_boundary() const {
-  std::list<GFace*> faces = current_region->faces();
-  for (std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++) {
+  std::vector<GFace*> faces = current_region->faces();
+  for (std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); it++) {
     GFace* gf = *it;
     std::vector<MElement*> triangles_to_keep;
     triangles_to_keep.reserve(gf->triangles.size());
@@ -1895,14 +1894,12 @@ void Supplementary::build_tuples(GRegion* gr) {
   MVertex *a, *b, *c;
   MElement* element;
   GFace* gf;
-  std::list<GFace*> faces;
-  std::list<GFace*>::iterator it;
 
   tuples.clear();
   triangles.clear();
-  faces.clear();
 
-  faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
+  std::vector<GFace*>::iterator it;
 
   for (it = faces.begin(); it != faces.end(); it++)
   {
@@ -1928,9 +1925,7 @@ void Supplementary::create_quads_on_boundary(GRegion* gr) {
   MVertex *d, *e, *f;
   MElement* element;
   GFace* gf;
-  std::list<GFace*> faces;
   std::vector<MElement*> opt;
-  std::list<GFace*>::iterator it;
   element_set_itr it2;
 
   for (i = 0; i < gr->getNumMeshElements(); i++) {
@@ -1950,7 +1945,8 @@ void Supplementary::create_quads_on_boundary(GRegion* gr) {
     }
   }
 
-  faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
+  std::vector<GFace*>::iterator it;
 
   for (it = faces.begin(); it != faces.end(); it++)
   {
@@ -4429,14 +4425,12 @@ void PostOp::build_tuples(GRegion* gr) {
   MVertex *a, *b, *c;
   MElement* element;
   GFace* gf;
-  std::list<GFace*> faces;
-  std::list<GFace*>::iterator it;
 
   tuples.clear();
   triangles.clear();
-  faces.clear();
 
-  faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
+  std::vector<GFace*>::iterator it;
 
   for (it = faces.begin(); it != faces.end(); it++)
   {
@@ -4461,9 +4455,7 @@ void PostOp::create_quads_on_boundary(GRegion* gr) {
   MVertex *a, *b, *c, *d;//,*e;
   MElement* element;
   GFace* gf;
-  std::list<GFace*> faces;
   std::vector<MElement*> opt;
-  std::list<GFace*>::iterator it;
   element_set_itr it2;
 
   for (i = 0; i < gr->getNumMeshElements(); i++) {
@@ -4480,7 +4472,8 @@ void PostOp::create_quads_on_boundary(GRegion* gr) {
     }
   }
 
-  faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
+  std::vector<GFace*>::iterator it;
 
   for (it = faces.begin(); it != faces.end(); it++)
   {
@@ -6122,14 +6115,14 @@ void Recombinator_Graph::createBlossomInfo(GRegion *gr) {
   throw;
 
   // remove quads, create triangles, and store blossom information (triangles pairs)
-  std::list<GFace*> faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
   GFace *gf;
   MElement *element;
   PETriangle *t11, *t12, *t21, *t22;
 
   cout << "recover blossom info" << endl;
 
-  for (std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++) {
+  for (std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); it++) {
     gf = *it;
 
     std::vector<MQuadrangle*>::iterator it_quad = gf->quadrangles.begin();

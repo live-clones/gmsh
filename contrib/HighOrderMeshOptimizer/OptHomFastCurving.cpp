@@ -1206,7 +1206,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
       }
     }
     else {
-      std::list<GFace*> gFaces = gEnt->faces();
+      std::vector<GFace*> gFaces = gEnt->faces();
       bndEnts = std::vector<GEntity*>(gFaces.begin(), gFaces.end());
     }
     if (requireBLInfo && blBndEnts.empty()) continue;                           // Skip if BL info is required but there is none

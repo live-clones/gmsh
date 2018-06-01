@@ -387,8 +387,8 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   std::vector<std::list<int> > vertexTags(numVertices);
   std::list<int> boundaryIndicators;
   for(riter it = firstRegion(); it != lastRegion(); it++){
-    std::list<GFace*> faces = (*it)->faces();
-    for(std::list<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++){
+    std::vector<GFace*> faces = (*it)->faces();
+    for(std::vector<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++){
       GFace *gf = *itf;
       boundaryIndicators.push_back(gf->tag());
       for(unsigned int i = 0; i < gf->getNumMeshElements(); i++){

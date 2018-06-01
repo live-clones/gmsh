@@ -1388,8 +1388,8 @@ static bool skipFace(GFace *gf)
 static bool skipEdge(GEdge *ge)
 {
   if(ge->physicals.size()) return false;
-  std::list<GFace*> faces(ge->faces());
-  for(std::list<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++){
+  std::vector<GFace*> faces(ge->faces());
+  for(std::vector<GFace*>::iterator itf = faces.begin(); itf != faces.end(); itf++){
     if(!skipFace(*itf)) return false;
   }
   return true;

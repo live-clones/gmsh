@@ -157,8 +157,8 @@ class drawGEdge {
     }
 
     if(CTX::instance()->geom.highlightOrphans){
-      std::list<GFace*> faces = e->faces();
-      if(faces.size() == 0)
+      std::vector<GFace*> faces = e->faces();
+      if(faces.empty())
         glColor4ubv((GLubyte *) & CTX::instance()->color.geom.highlight[0]);
       else if(faces.size() == 1)
         glColor4ubv((GLubyte *) & CTX::instance()->color.geom.highlight[1]);

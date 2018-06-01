@@ -124,8 +124,8 @@ bool tetgenmesh::reconstructmesh(void *p)
   // Get the set of vertices from GRegion.
   {
     std::set<MVertex*, MVertexLessThanNum> all;
-    std::list<GFace*> f = _gr->faces();
-    for(std::list<GFace*>::iterator it = f.begin(); it != f.end(); ++it){
+    std::vector<GFace*> f = _gr->faces();
+    for(std::vector<GFace*>::iterator it = f.begin(); it != f.end(); ++it){
       GFace *gf = *it;
       for(unsigned int i = 0; i < gf->triangles.size(); i++){
         all.insert(gf->triangles[i]->getVertex(0));
@@ -398,7 +398,7 @@ bool tetgenmesh::reconstructmesh(void *p)
     tets.clear(); // Release all memory in this vector.
   }
 
-  std::list<GFace*> f_list = _gr->faces();
+  std::vector<GFace*> f_list = _gr->faces();
   std::list<GEdge*> e_list = _gr->embeddedEdges();
 
   {
@@ -408,7 +408,7 @@ bool tetgenmesh::reconstructmesh(void *p)
     point p[4];
     int idx;
 
-    for(std::list<GFace*>::iterator it = f_list.begin(); it != f_list.end(); ++it){
+    for(std::vector<GFace*>::iterator it = f_list.begin(); it != f_list.end(); ++it){
       GFace *gf = *it;
       for(unsigned int i = 0; i < gf->triangles.size(); i++){
 	for(int j = 0; j < 3; j++){
@@ -677,7 +677,7 @@ bool tetgenmesh::reconstructmesh(void *p)
               if(ge == NULL){
                 // We treat this vertex a facet vertex.
                 int ftag = shellmark(parentsh);
-                for(std::list<GFace*>::iterator it = f_list.begin();
+                for(std::vector<GFace*>::iterator it = f_list.begin();
                      it != f_list.end(); ++it){
                   if((*it)->tag() == ftag){
                     gf = *it;
@@ -720,7 +720,7 @@ bool tetgenmesh::reconstructmesh(void *p)
             // Get the GFace containing this vertex.
             GFace *gf = NULL;
             int ftag = shellmark(parentsh);
-            for(std::list<GFace*>::iterator it = f_list.begin();
+            for(std::vector<GFace*>::iterator it = f_list.begin();
                  it != f_list.end(); ++it){
               if((*it)->tag() == ftag){
                 gf = *it;
@@ -815,7 +815,7 @@ bool tetgenmesh::reconstructmesh(void *p)
         // Find the GFace with tag = *it.
         GFace *gf = NULL;
         int ftag = *it;
-        for(std::list<GFace*>::iterator fit = f_list.begin();
+        for(std::vector<GFace*>::iterator fit = f_list.begin();
              fit != f_list.end(); ++fit){
           if((*fit)->tag() == ftag){
             gf = (*fit);
@@ -904,7 +904,7 @@ bool tetgenmesh::reconstructmesh(void *p)
 
   Msg::Info("Reconstruct time : %g sec", Cpu() - t_start);
 
-  // Put all coordinates back so they are not pertubated anymore (pertubation done 
+  // Put all coordinates back so they are not pertubated anymore (pertubation done
   // in delaunayTriangulation)
   for (std::map<MVertex *, SPoint3>::iterator vIter = originalCoordinates.begin();
     vIter != originalCoordinates.end(); ++vIter) {
@@ -1134,8 +1134,8 @@ bool meshGRegionBoundaryRecovery(GRegion *gr)
     }
     else if(err == 3){
       std::map<int, MVertex *> all;
-      std::list<GFace*> f = gr->faces();
-      for(std::list<GFace*>::iterator it = f.begin(); it != f.end(); ++it){
+      std::vector<GFace*> f = gr->faces();
+      for(std::vector<GFace*>::iterator it = f.begin(); it != f.end(); ++it){
         GFace *gf = *it;
         for(unsigned int i = 0; i < gf->triangles.size(); i++){
           for(int j = 0; j < 3; j++){

@@ -15,8 +15,8 @@
 static double max_surf_curvature(const GEdge *ge, double u)
 {
   double val = 0;
-  std::list<GFace *> faces = ge->faces();
-  std::list<GFace *>::iterator it = faces.begin();
+  std::vector<GFace *> faces = ge->faces();
+  std::vector<GFace *>::iterator it = faces.begin();
   while(it != faces.end()){
     SPoint2 par = ge->reparamOnFace((*it), u, 1);
     double cc = (*it)->curvature(par);
@@ -88,8 +88,8 @@ SMetric3 max_edge_curvature_metric(const GEdge *ge, double u)
 static SMetric3 metric_based_on_surface_curvature(const GEdge *ge, double u, bool iso_surf)
 {
   SMetric3 mesh_size(1.e-12);
-  std::list<GFace *> faces = ge->faces();
-  std::list<GFace *>::iterator it = faces.begin();
+  std::vector<GFace *> faces = ge->faces();
+  std::vector<GFace *>::iterator it = faces.begin();
   // we choose the metric eigenvectors to be the ones
   // related to the edge ...
   SMetric3 curvMetric = max_edge_curvature_metric(ge, u);

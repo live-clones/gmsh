@@ -263,8 +263,8 @@ static unsigned int FixErasedExtrScaleFlags(GModel *m,
     if(!r_ep || !r_ep->mesh.ExtrudeMesh || r_ep->geo.Mode != EXTRUDED_ENTITY
         || !r_ep->mesh.ScaleLast )
       continue;
-    std::list<GFace *> reg_faces = (*itreg)->faces();
-    std::list<GFace *>::iterator itface;
+    std::vector<GFace *> reg_faces = (*itreg)->faces();
+    std::vector<GFace *>::iterator itface;
     for( itface = reg_faces.begin(); itface != reg_faces.end(); itface++ ){
       if( m->getFaceByTag( std::abs(r_ep->geo.Source) ) != (*itface) ){
 	ExtrudeParams *f_ep = (*itface)->meshAttributes.extrude;

@@ -127,31 +127,33 @@ bool GVertex::isOnSeam(const GFace *gf) const
 }
 
 // faces that bound this entity or that this entity bounds.
-std::list<GFace*> GVertex::faces() const
+std::vector<GFace *> GVertex::faces() const
 {
-  std::list<GEdge*>::const_iterator it = l_edges.begin();
-  std::set<GFace*> _f;
-  for ( ; it != l_edges.end() ; ++it){
-    std::list<GFace*> temp = (*it)->faces();
-    _f.insert (temp.begin(), temp.end());
+  std::vector<GFace *> faces;
+
+  for(std::list<GEdge *>::const_iterator it = l_edges.begin();
+      it != l_edges.end(); ++it) {
+    std::vector<GFace *> const temp = (*it)->faces();
+    faces.insert(faces.end(), temp.begin(), temp.end());
   }
-  std::list<GFace*> ret;
-  ret.insert (ret.begin(), _f.begin(), _f.end());
-  return ret;
+  std::sort(faces.begin(), faces.end());
+  faces.erase(std::unique(faces.begin(), faces.end()), faces.end());
+
+  return faces;
 }
 
 // regions that bound this entity or that this entity bounds.
 std::list<GRegion*> GVertex::regions() const
 {
-  std::list<GFace*> _faces = faces();
-  std::list<GFace*>::const_iterator it = _faces.begin();
+  std::vector<GFace*> const _faces = faces();
+  std::vector<GFace*>::const_iterator it = _faces.begin();
   std::set<GRegion*> _r;
   for ( ; it != _faces.end() ; ++it){
     std::list<GRegion*> temp = (*it)->regions();
-    _r.insert (temp.begin(), temp.end());
+    _r.insert(temp.begin(), temp.end());
   }
   std::list<GRegion*> ret;
-  ret.insert (ret.begin(), _r.begin(), _r.end());
+  ret.insert(ret.begin(), _r.begin(), _r.end());
   return ret;
 }
 
