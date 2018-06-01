@@ -47,11 +47,6 @@ OCCFace::OCCFace(GModel *m, TopoDS_Face _s, int num)
   setup();
   if(model()->getOCCInternals())
     model()->getOCCInternals()->bind(s, num);
-  // TEST
-  if (tag() == 119){
-    writeBREP("s119.brep");
-  }
-
 }
 
 OCCFace::~OCCFace()
@@ -464,16 +459,13 @@ bool OCCFace::containsParam(const SPoint2 &pt)
   return false;
 }
 
-void OCCFace::writeBREP (const char *filename){
+void OCCFace::writeBREP(const char *filename)
+{
   BRep_Builder b;
   TopoDS_Compound c;
   b.MakeCompound(c);
   b.Add(c, s);
   BRepTools::Write(c, filename);
 }
-
-
-
-
 
 #endif
