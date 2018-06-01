@@ -1118,7 +1118,7 @@ class API:
             f.write("api__result__ = " if rtype is oint else "")
             c_name = c_mpath + name[0].upper() + name[1:]
             f.write("ccall((:" + c_name + ", " +
-                    ("" if c_mpath == "gmsh" else "gmsh.") + "clib), " +
+                    ("" if c_mpath == "gmsh" else "gmsh.") + "lib), " +
                     ("Void" if rtype is None else rtype.rjulia_type) + ",\n" +
                     " " * 10 + "(" + ", ".join(
                         (tuple(a.julia_ctype for a in args) + ("Ptr{Cint}",))) +
@@ -1145,8 +1145,9 @@ class API:
             f.write("module " + m.name + "\n\n")
             if level == 1:
                 f.write('const GMSH_API_VERSION = "' + self.api_version + '"\n')
-                f.write('const clib = is_windows() ? "gmsh-' + self.api_version +
-                        '" : "libgmsh"\n')
+                f.write('const libdir = dirname(@__FILE__)\n')
+                f.write('const lib = joinpath(libdir, is_windows() ? "gmsh-' + self.api_version +
+                        '" : "libgmsh")\n')
             else:
                 f.write("import " + ("." * level) + "gmsh\n")
             if c_mpath:
