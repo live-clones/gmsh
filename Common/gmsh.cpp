@@ -546,7 +546,7 @@ GMSH_API void gmsh::model::mesh::getNode(const int nodeTag,
   if(!_isInitialized()){ throw -1; }
   MVertex *v = GModel::current()->getMeshVertexByTag(nodeTag);
   if(!v){
-    Msg::Error("Unknown mesh node %d", nodeTag);
+    Msg::Error("Unknown node %d", nodeTag);
     throw 2;
   }
   coord.resize(3);
@@ -772,7 +772,7 @@ GMSH_API void gmsh::model::mesh::getElement(const int elementTag,
   if(!_isInitialized()){ throw -1; }
   MElement *e = GModel::current()->getMeshElementByTag(elementTag);
   if(!e){
-    Msg::Error("Unknown mesh element %d", elementTag);
+    Msg::Error("Unknown element %d", elementTag);
     throw 2;
   }
   elementType = e->getTypeForMSH();
@@ -780,7 +780,34 @@ GMSH_API void gmsh::model::mesh::getElement(const int elementTag,
   for(int i = 0; i < e->getNumVertices(); i++){
     MVertex *v = e->getVertex(i);
     if(!v){
-      Msg::Error("Unknown mesh node in element %d", elementTag);
+      Msg::Error("Unknown node in element %d", elementTag);
+      throw 2;
+    }
+    nodeTags.push_back(v->getNum());
+  }
+}
+
+GMSH_API void gmsh::model::mesh::getElementByCoordinates(const double x,
+                                                         const double y,
+                                                         const double z,
+                                                         int &elementTag,
+                                                         int &elementType,
+                                                         std::vector<int> &nodeTags)
+{
+  if(!_isInitialized()){ throw -1; }
+  SPoint3 p(x, y, z);
+  MElement *e = GModel::current()->getMeshElementByCoord(p);
+  if(!e){
+    Msg::Error("No element found at (%g, %g, %g)", x, y, z);
+    throw 2;
+  }
+  elementTag = e->getNum();
+  elementType = e->getTypeForMSH();
+  nodeTags.clear();
+  for(int i = 0; i < e->getNumVertices(); i++){
+    MVertex *v = e->getVertex(i);
+    if(!v){
+      Msg::Error("Unknown node in element %d", elementTag);
       throw 2;
     }
     nodeTags.push_back(v->getNum());
@@ -836,7 +863,7 @@ GMSH_API void gmsh::model::mesh::setElements(const int dim,
         // this will rebuild the node cache if necessary
         nodes[k] = GModel::current()->getMeshVertexByTag(vtag);
         if(!nodes[k]){
-          Msg::Error("Unknown mesh node %d", vtag);
+          Msg::Error("Unknown node %d", vtag);
           throw 2;
         }
       }

@@ -486,8 +486,8 @@ namespace gmsh { // Top-level functions
 
       // Get the coordinates and the parametric coordinates (if any) of the node
       // with tag `tag'. This is a sometimes useful but inefficient way of
-      // accessing node data, as it relies on a cache stored in the model. For
-      // large meshes all the nodes in the model should be numbered in a continuous
+      // accessing nodes, as it relies on a cache stored in the model. For large
+      // meshes all the nodes in the model should be numbered in a continuous
       // sequence of tags from 1 to N to maintain reasonnable performance (in this
       // case the internal cache is based on a vector; otherwise it uses a map).
       GMSH_API void getNode(const int nodeTag,
@@ -575,12 +575,12 @@ namespace gmsh { // Top-level functions
         nodeTags.resize(api_nodeTags_nn_); for(size_t i = 0; i < api_nodeTags_nn_; ++i){ nodeTags[i].assign(api_nodeTags_[i], api_nodeTags_[i] + api_nodeTags_n_[i]); gmshFree(api_nodeTags_[i]); } gmshFree(api_nodeTags_); gmshFree(api_nodeTags_n_);
       }
 
-      // Get the type and node tags of the element with tag `tag'. This is a useful
-      // but inefficient way of accessing element data, as it relies on a cache
-      // stored in the model. For large meshes all the elements in the model should
-      // be numbered in a continuous sequence of tags from 1 to N to maintain
-      // reasonnable performance (in this case the internal cache is based on a
-      // vector; otherwise it uses a map).
+      // Get the type and node tags of the element with tag `tag'. This is a
+      // sometimes useful but inefficient way of accessing elements, as it relies
+      // on a cache stored in the model. For large meshes all the elements in the
+      // model should be numbered in a continuous sequence of tags from 1 to N to
+      // maintain reasonnable performance (in this case the internal cache is based
+      // on a vector; otherwise it uses a map).
       GMSH_API void getElement(const int elementTag,
                                int & elementType,
                                std::vector<int> & nodeTags)
@@ -588,6 +588,23 @@ namespace gmsh { // Top-level functions
         int ierr = 0;
         int *api_nodeTags_; size_t api_nodeTags_n_;
         gmshModelMeshGetElement(elementTag, &elementType, &api_nodeTags_, &api_nodeTags_n_, &ierr);
+        if(ierr) throw ierr;
+        nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
+      }
+
+      // Get the tag, type and node tags of the element located at coordinates
+      // (`x', `y', `z'). This is a sometimes useful but inefficient way of
+      // accessing elements, as it relies on a search in a spatial octree.
+      GMSH_API void getElementByCoordinates(const double x,
+                                            const double y,
+                                            const double z,
+                                            int & elementTag,
+                                            int & elementType,
+                                            std::vector<int> & nodeTags)
+      {
+        int ierr = 0;
+        int *api_nodeTags_; size_t api_nodeTags_n_;
+        gmshModelMeshGetElementByCoordinates(x, y, z, &elementTag, &elementType, &api_nodeTags_, &api_nodeTags_n_, &ierr);
         if(ierr) throw ierr;
         nodeTags.assign(api_nodeTags_, api_nodeTags_ + api_nodeTags_n_); gmshFree(api_nodeTags_);
       }

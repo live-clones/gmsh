@@ -243,8 +243,8 @@ namespace gmsh { // Top-level functions
 
       // Get the coordinates and the parametric coordinates (if any) of the node
       // with tag `tag'. This is a sometimes useful but inefficient way of
-      // accessing node data, as it relies on a cache stored in the model. For
-      // large meshes all the nodes in the model should be numbered in a continuous
+      // accessing nodes, as it relies on a cache stored in the model. For large
+      // meshes all the nodes in the model should be numbered in a continuous
       // sequence of tags from 1 to N to maintain reasonnable performance (in this
       // case the internal cache is based on a vector; otherwise it uses a map).
       GMSH_API void getNode(const int nodeTag,
@@ -291,15 +291,25 @@ namespace gmsh { // Top-level functions
                                 const int dim = -1,
                                 const int tag = -1);
 
-      // Get the type and node tags of the element with tag `tag'. This is a useful
-      // but inefficient way of accessing element data, as it relies on a cache
-      // stored in the model. For large meshes all the elements in the model should
-      // be numbered in a continuous sequence of tags from 1 to N to maintain
-      // reasonnable performance (in this case the internal cache is based on a
-      // vector; otherwise it uses a map).
+      // Get the type and node tags of the element with tag `tag'. This is a
+      // sometimes useful but inefficient way of accessing elements, as it relies
+      // on a cache stored in the model. For large meshes all the elements in the
+      // model should be numbered in a continuous sequence of tags from 1 to N to
+      // maintain reasonnable performance (in this case the internal cache is based
+      // on a vector; otherwise it uses a map).
       GMSH_API void getElement(const int elementTag,
                                int & elementType,
                                std::vector<int> & nodeTags);
+
+      // Get the tag, type and node tags of the element located at coordinates
+      // (`x', `y', `z'). This is a sometimes useful but inefficient way of
+      // accessing elements, as it relies on a search in a spatial octree.
+      GMSH_API void getElementByCoordinates(const double x,
+                                            const double y,
+                                            const double z,
+                                            int & elementTag,
+                                            int & elementType,
+                                            std::vector<int> & nodeTags);
 
       // Set the elements of the entity of dimension `dim' and tag `tag'. `types'
       // contains the MSH types of the elements (e.g. `2' for 3-node triangles: see

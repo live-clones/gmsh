@@ -799,10 +799,10 @@ class model:
             """
             Get the coordinates and the parametric coordinates (if any) of the node
             with tag `tag'. This is a sometimes useful but inefficient way of accessing
-            node data, as it relies on a cache stored in the model. For large meshes
-            all the nodes in the model should be numbered in a continuous sequence of
-            tags from 1 to N to maintain reasonnable performance (in this case the
-            internal cache is based on a vector; otherwise it uses a map).
+            nodes, as it relies on a cache stored in the model. For large meshes all
+            the nodes in the model should be numbered in a continuous sequence of tags
+            from 1 to N to maintain reasonnable performance (in this case the internal
+            cache is based on a vector; otherwise it uses a map).
 
             Return `coord', `parametricCoord'.
             """
@@ -920,10 +920,10 @@ class model:
         @staticmethod
         def getElement(elementTag):
             """
-            Get the type and node tags of the element with tag `tag'. This is a useful
-            but inefficient way of accessing element data, as it relies on a cache
-            stored in the model. For large meshes all the elements in the model should
-            be numbered in a continuous sequence of tags from 1 to N to maintain
+            Get the type and node tags of the element with tag `tag'. This is a
+            sometimes useful but inefficient way of accessing elements, as it relies on
+            a cache stored in the model. For large meshes all the elements in the model
+            should be numbered in a continuous sequence of tags from 1 to N to maintain
             reasonnable performance (in this case the internal cache is based on a
             vector; otherwise it uses a map).
 
@@ -942,6 +942,36 @@ class model:
                     "gmshModelMeshGetElement returned non-zero error code: ",
                     ierr.value)
             return (
+                api_elementType_.value,
+                _ovectorint(api_nodeTags_, api_nodeTags_n_.value))
+
+        @staticmethod
+        def getElementByCoordinates(x, y, z):
+            """
+            Get the tag, type and node tags of the element located at coordinates (`x',
+            `y', `z'). This is a sometimes useful but inefficient way of accessing
+            elements, as it relies on a search in a spatial octree.
+
+            Return `elementTag', `elementType', `nodeTags'.
+            """
+            api_elementTag_ = c_int()
+            api_elementType_ = c_int()
+            api_nodeTags_, api_nodeTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetElementByCoordinates(
+                c_double(x),
+                c_double(y),
+                c_double(z),
+                byref(api_elementTag_),
+                byref(api_elementType_),
+                byref(api_nodeTags_), byref(api_nodeTags_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise ValueError(
+                    "gmshModelMeshGetElementByCoordinates returned non-zero error code: ",
+                    ierr.value)
+            return (
+                api_elementTag_.value,
                 api_elementType_.value,
                 _ovectorint(api_nodeTags_, api_nodeTags_n_.value))
 

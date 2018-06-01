@@ -252,10 +252,10 @@ GMSH_API void gmshModelMeshGetNodes(int ** nodeTags, size_t * nodeTags_n,
 
 /* Get the coordinates and the parametric coordinates (if any) of the node
  * with tag `tag'. This is a sometimes useful but inefficient way of accessing
- * node data, as it relies on a cache stored in the model. For large meshes
- * all the nodes in the model should be numbered in a continuous sequence of
- * tags from 1 to N to maintain reasonnable performance (in this case the
- * internal cache is based on a vector; otherwise it uses a map). */
+ * nodes, as it relies on a cache stored in the model. For large meshes all
+ * the nodes in the model should be numbered in a continuous sequence of tags
+ * from 1 to N to maintain reasonnable performance (in this case the internal
+ * cache is based on a vector; otherwise it uses a map). */
 GMSH_API void gmshModelMeshGetNode(const int nodeTag,
                                    double ** coord, size_t * coord_n,
                                    double ** parametricCoord, size_t * parametricCoord_n,
@@ -304,16 +304,27 @@ GMSH_API void gmshModelMeshGetElements(int ** elementTypes, size_t * elementType
                                        const int tag,
                                        int * ierr);
 
-/* Get the type and node tags of the element with tag `tag'. This is a useful
- * but inefficient way of accessing element data, as it relies on a cache
- * stored in the model. For large meshes all the elements in the model should
- * be numbered in a continuous sequence of tags from 1 to N to maintain
+/* Get the type and node tags of the element with tag `tag'. This is a
+ * sometimes useful but inefficient way of accessing elements, as it relies on
+ * a cache stored in the model. For large meshes all the elements in the model
+ * should be numbered in a continuous sequence of tags from 1 to N to maintain
  * reasonnable performance (in this case the internal cache is based on a
  * vector; otherwise it uses a map). */
 GMSH_API void gmshModelMeshGetElement(const int elementTag,
                                       int * elementType,
                                       int ** nodeTags, size_t * nodeTags_n,
                                       int * ierr);
+
+/* Get the tag, type and node tags of the element located at coordinates (`x',
+ * `y', `z'). This is a sometimes useful but inefficient way of accessing
+ * elements, as it relies on a search in a spatial octree. */
+GMSH_API void gmshModelMeshGetElementByCoordinates(const double x,
+                                                   const double y,
+                                                   const double z,
+                                                   int * elementTag,
+                                                   int * elementType,
+                                                   int ** nodeTags, size_t * nodeTags_n,
+                                                   int * ierr);
 
 /* Set the elements of the entity of dimension `dim' and tag `tag'. `types'
  * contains the MSH types of the elements (e.g. `2' for 3-node triangles: see

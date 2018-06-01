@@ -652,8 +652,8 @@ end
     gmsh.model.mesh.getNode(nodeTag)
 
 Get the coordinates and the parametric coordinates (if any) of the node with tag
-`tag`. This is a sometimes useful but inefficient way of accessing node data, as
-it relies on a cache stored in the model. For large meshes all the nodes in the
+`tag`. This is a sometimes useful but inefficient way of accessing nodes, as it
+relies on a cache stored in the model. For large meshes all the nodes in the
 model should be numbered in a continuous sequence of tags from 1 to N to
 maintain reasonnable performance (in this case the internal cache is based on a
 vector; otherwise it uses a map).
@@ -771,11 +771,11 @@ end
 """
     gmsh.model.mesh.getElement(elementTag)
 
-Get the type and node tags of the element with tag `tag`. This is a useful but
-inefficient way of accessing element data, as it relies on a cache stored in the
-model. For large meshes all the elements in the model should be numbered in a
-continuous sequence of tags from 1 to N to maintain reasonnable performance (in
-this case the internal cache is based on a vector; otherwise it uses a map).
+Get the type and node tags of the element with tag `tag`. This is a sometimes
+useful but inefficient way of accessing elements, as it relies on a cache stored
+in the model. For large meshes all the elements in the model should be numbered
+in a continuous sequence of tags from 1 to N to maintain reasonnable performance
+(in this case the internal cache is based on a vector; otherwise it uses a map).
 
 Return `elementType`, `nodeTags`.
 """
@@ -790,6 +790,29 @@ function getElement(elementTag)
     ierr[] != 0 && error("gmshModelMeshGetElement returned non-zero error code: $(ierr[])")
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
     return api_elementType_[], nodeTags
+end
+
+"""
+    gmsh.model.mesh.getElementByCoordinates(x, y, z)
+
+Get the tag, type and node tags of the element located at coordinates (`x`, `y`,
+`z`). This is a sometimes useful but inefficient way of accessing elements, as
+it relies on a search in a spatial octree.
+
+Return `elementTag`, `elementType`, `nodeTags`.
+"""
+function getElementByCoordinates(x, y, z)
+    api_elementTag_ = Ref{Cint}()
+    api_elementType_ = Ref{Cint}()
+    api_nodeTags_ = Ref{Ptr{Cint}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetElementByCoordinates, gmsh.clib), Void,
+          (Cdouble, Cdouble, Cdouble, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          x, y, z, api_elementTag_, api_elementType_, api_nodeTags_, api_nodeTags_n_, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetElementByCoordinates returned non-zero error code: $(ierr[])")
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
+    return api_elementTag_[], api_elementType_[], nodeTags
 end
 
 """
