@@ -1209,6 +1209,16 @@ void insertVerticesInRegion(GRegion *gr, int maxVert, bool _classify)
       }
     }
 
+    for (GModel::riter rit = gr->model()->firstRegion(); rit != gr->model()->lastRegion(); ++rit){
+      std::list<GVertex*> vertices = (*rit)->embeddedVertices();
+      for (std::list<GVertex*>::iterator it = vertices.begin(); it != vertices.end(); ++it){
+        MVertex *v = (*it)->getMeshVertex(0);
+        double l = (*it)->prescribedMeshSizeAtVertex();
+        std::map<MVertex*, double, MVertexLessThanNum>::iterator itv = vSizesMap.find(v);
+        if (itv == vSizesMap.end() || itv->second > l) vSizesMap[v] = l;
+      }
+    }
+
     for(GModel::fiter it = gr->model()->firstFace(); it != gr->model()->lastFace(); ++it){
       GFace *gf = *it;
       for(unsigned int i = 0; i < gf->triangles.size(); i++){
