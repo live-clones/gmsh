@@ -31,9 +31,6 @@ class GEdge : public GEntity {
   closestPointFinder *_cp;
  protected:
   GVertex *v0, *v1;
-  // FIXME: normals need to be mutable at the moment, because thay can
-  // be created in const member functions
-  mutable std::map<MVertex*, SVector3, std::less<MVertex*> > _normals;
   std::list<GFace *> l_faces;
  public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
@@ -178,8 +175,6 @@ class GEdge : public GEntity {
 
   // true if entity is periodic in the "dim" direction.
   virtual bool periodic(int dim) const { return v0 == v1; }
-
-  std::map<MVertex*, SVector3, std::less<MVertex*> > &getNormals() { return _normals; }
 
   // get bounds of parametric coordinate
   virtual Range<double> parBounds(int i) const = 0;
