@@ -493,7 +493,7 @@ void BarycentricRefineMesh(GModel *m)
   if (m->getNumRegions() == 0) {
     for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it){
       GFace* gf = *it;
-      int numt = gf->triangles.size();
+      unsigned int numt = gf->triangles.size();
       if(!numt) continue;
       std::vector<MTriangle*> triangles2(3 * numt);
       for(unsigned int i = 0; i < numt; i++){
@@ -512,7 +512,27 @@ void BarycentricRefineMesh(GModel *m)
     }
   }
   else {
-    printf("Stub, not coded 3D barycentric refinement yet\n");
+    for(GModel::riter it = m->firstRegion(); it != m->lastRegion(); ++it){
+      GRegion* gr = *it;
+      unsigned int numt = gr->tetrahedra.size();
+      if(!numt) continue;
+      std::vector<MTetrahedron*> tetrahedra2(4 * numt);
+      for(unsigned int i = 0; i < numt; i++){
+        MTetrahedron *t = gr->tetrahedra[i];
+        SPoint3 bary = t->barycenter();
+        // FIXME: create an MFaceVertex (with correct parametric coordinates)?
+        MVertex* v = new MVertex(bary.x(), bary.y(), bary.z(), gr);
+        tetrahedra2[4 * i] = new MTetrahedron(t->getVertex(0), t->getVertex(1), t->getVertex(2), v);
+        tetrahedra2[4 * i + 1] = new MTetrahedron(t->getVertex(1), t->getVertex(2), t->getVertex(3), v);
+        tetrahedra2[4 * i + 2] = new MTetrahedron(t->getVertex(2), t->getVertex(3), t->getVertex(0), v);
+        tetrahedra2[4 * i + 3] = new MTetrahedron(t->getVertex(3), t->getVertex(0), t->getVertex(1), v);
+        delete t;
+        gr->mesh_vertices.push_back(v);
+      }
+      gr->tetrahedra = tetrahedra2;
+      gr->deleteVertexArrays();
+    }
+    m->setAllVolumesPositive();
   }
 
   CTX::instance()->mesh.changed = ENT_ALL;
