@@ -6356,7 +6356,7 @@ double opt_mesh_nb_nodes(OPT_ARGS_NUM)
 {
   double s[50];
   GetStatistics(s);
-  return s[4] + s[5] + s[6];
+  return s[4];
 }
 
 double opt_mesh_nb_triangles(OPT_ARGS_NUM)
