@@ -377,9 +377,7 @@ void TransferTetgenMesh(GRegion *gr, tetgenio &in, tetgenio &out,
   // everything
 
   gr->model()->destroyMeshCaches();
-  std::list<GFace*> faces = gr->faces();
-  for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
-    GFace *gf = (*it);
+  for(auto gf : gr->faces()){
     for(unsigned int i = 0; i < gf->triangles.size(); i++)
       delete gf->triangles[i];
     for(unsigned int i = 0; i < gf->quadrangles.size(); i++)
@@ -534,19 +532,15 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
 
   // put all the faces in the region
   GRegion *gr = regions[0];
-  std::list<GFace*> faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
 
-  std::set<GFace*> allFacesSet;
+  std::vector<GFace*> allFacesSet;
   for(unsigned int i = 0; i < regions.size(); i++){
-    std::list<GFace*> f = regions[i]->faces();
-    allFacesSet.insert(f.begin(), f.end());
-    f = regions[i]->embeddedFaces();
-    allFacesSet.insert(f.begin(), f.end());
+    allFacesSet.insert(allFacesSet.end(), regions[i]->faces().begin(), regions[i]->faces().end());
+    const auto &f = regions[i]->embeddedFaces();
+    allFacesSet.insert(allFacesSet.end(), f.begin(), f.end());
   }
-  std::list<GFace*> allFaces;
-  for(std::set<GFace*>::iterator it = allFacesSet.begin(); it != allFacesSet.end(); it++){
-    allFaces.push_back(*it);
-  }
+  std::vector<GFace*> allFaces = allFacesSet;
   gr->set(allFaces);
 
   // put all embedded edges in the same region
@@ -624,7 +618,7 @@ void MeshDelaunayVolumeTetgen(std::vector<GRegion*> &regions)
 
 
   // sort triangles in all model faces in order to be able to search in vectors
-  std::list<GFace*>::iterator itf =  allFaces.begin();
+  auto itf =  allFaces.begin();
   while(itf != allFaces.end()){
     compareMTriangleLexicographic cmp;
     std::sort((*itf)->triangles.begin(), (*itf)->triangles.end(), cmp);
