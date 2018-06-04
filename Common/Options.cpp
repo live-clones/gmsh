@@ -6062,26 +6062,25 @@ double opt_mesh_algo3d(OPT_ARGS_NUM)
     if(!(action & GMSH_SET_DEFAULT) && (int)val != CTX::instance()->mesh.algo3d)
       Msg::SetOnelabChanged(2);
     CTX::instance()->mesh.algo3d = (int)val;
+    if(CTX::instance()->mesh.algo3d == 2) // "New Delaunay" is now simply "Delaunay"
+      CTX::instance()->mesh.algo3d = 1;
   }
 #if defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI)) {
     switch (CTX::instance()->mesh.algo3d) {
     case ALGO_3D_RTREE:
-      FlGui::instance()->options->mesh.choice[3]->value(6);
-      break;
-    case ALGO_3D_MMG3D:
       FlGui::instance()->options->mesh.choice[3]->value(5);
       break;
-    case ALGO_3D_FRONTAL_HEX:
+    case ALGO_3D_MMG3D:
       FlGui::instance()->options->mesh.choice[3]->value(4);
       break;
-    case ALGO_3D_FRONTAL_DEL:
+    case ALGO_3D_FRONTAL_HEX:
       FlGui::instance()->options->mesh.choice[3]->value(3);
       break;
-    case ALGO_3D_FRONTAL:
+    case ALGO_3D_FRONTAL_DEL:
       FlGui::instance()->options->mesh.choice[3]->value(2);
       break;
-    case ALGO_3D_DELAUNAY_NEW:
+    case ALGO_3D_FRONTAL:
       FlGui::instance()->options->mesh.choice[3]->value(1);
       break;
     case ALGO_3D_DELAUNAY:

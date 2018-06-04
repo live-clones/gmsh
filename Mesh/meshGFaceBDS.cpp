@@ -305,11 +305,7 @@ void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap)
 
   for(size_type index = 0; index < m.edges.size(); ++index) {
     if(!m.edges.at(index)->deleted) {
-      if(CTX::instance()->mesh.algo2d == ALGO_2D_MESHADAPT_OLD) {
-        if(m.swap_edge(m.edges.at(index), BDS_SwapEdgeTestQuality(true)))
-          nb_swap++;
-      }
-      else if(edgeSwapTestDelaunay(m.edges.at(index), gf)) {
+      if(edgeSwapTestDelaunay(m.edges.at(index), gf)) {
         int const result = edgeSwapTest(gf, m.edges.at(index));
         // result = -1 => forbid swap because too badly shaped elements
         // result = 0  => whatever

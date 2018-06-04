@@ -152,8 +152,6 @@ codes in the contrib/ directory, each governed by their own license:
 
 * contrib/Netgen copyright (C) 1994-2004 Joachim Sch"oberl;
 
-* contrib/Tetgen1.5 copyright (C) 2002-2007 Hang Si;
-
 * contrib/bamg from Freefem++ copyright (C) Frederic Hecht;
 
 * contrib/lbfgs (C) Sergey Bochkanov (ALGLIB project);

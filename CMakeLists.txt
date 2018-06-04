@@ -86,7 +86,6 @@ opt(REVOROPT "Enable Revoropt (used for CVT remeshing)" OFF)
 opt(SLEPC "Enable SLEPc eigensolvers (required for conformal compounds)" ${DEFAULT})
 opt(SOLVER "Enable built-in finite element solvers (required for compounds)" ${DEFAULT})
 opt(TCMALLOC "Enable libtcmalloc, a fast malloc implementation but that does not release memory" OFF)
-opt(TETGEN "Enable Tetgen 3D initial mesh generator" OFF)
 opt(VISUDEV "Enable additional visualization capabilities for development purpose" OFF)
 opt(VOROPP "Enable voro++ (for hex meshing, experimental)" ${DEFAULT})
 opt(WRAP_JAVA "Enable generation of Java wrappers for private API" OFF)
@@ -111,7 +110,7 @@ if(ENABLE_PRIVATE_API)
           "for redistribution (e.g. for a Linux distro), please DO NOT distribute the "
           "private API (i.e. all the internal header files), and ship the stable "
           "public API instead (i.e. gmsh.h).")
-  file(GLOB_RECURSE HEADERS Common/*.h Numeric/*.h Geo/*.h Mesh/*.h Solver/*.h 
+  file(GLOB_RECURSE HEADERS Common/*.h Numeric/*.h Geo/*.h Mesh/*.h Solver/*.h
     Post/*.h Graphics/*.h contrib/kbipack/*.h contrib/DiscreteIntegration/*.h
     contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
     contrib/MeshQualityOptimizer/*.h contrib/MathEx/*.h)
@@ -795,27 +794,6 @@ if(HAVE_MESH)
     endif(MMG3D_LIB AND MMG3D_INC)
     set_config_option(HAVE_MMG3D "Mmg3d")
   endif(ENABLE_MMG3D)
-
-  if(ENABLE_TETGEN AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Tetgen1.5/tetgen.h)
-    add_subdirectory(contrib/Tetgen1.5)
-    include_directories(contrib/Tetgen1.5)
-    set_config_option(HAVE_TETGEN "Tetgen1.5")
-    add_definitions(-DTETLIBRARY)
-  elseif(ENABLE_TETGEN)
-    find_library(TETGEN_LIB tet PATH_SUFFIXES lib)
-    find_path(TETGEN_INC "tetgen.h" PATH_SUFFIXES src include tetgen)
-    if(TETGEN_LIB AND TETGEN_INC)
-      list(APPEND EXTERNAL_LIBRARIES ${TETGEN_LIB})
-      list(APPEND EXTERNAL_INCLUDES ${TETGEN_INC})
-      set_config_option(HAVE_TETGEN "Tetgen")
-    endif(TETGEN_LIB AND TETGEN_INC)
-  endif(ENABLE_TETGEN AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Tetgen1.5/tetgen.h)
-  if(HAVE_TETGEN)
-    message(WARNING "Tetgen support is deprecated and will be removed in a future "
-            "release.")
-    message(STATUS "Note: By including Tetgen you have to comply with Tetgen's "
-            "special licensing requirements stated in contrib/Tetgen1.5/LICENSE.")
-    endif(HAVE_TETGEN)
 endif(HAVE_MESH)
 
 if(ENABLE_FOURIER_MODEL)
@@ -1338,12 +1316,10 @@ check_cxx_compiler_flag("-O0" NOOPT)
 if(NOOPT OR ENABLE_BUILD_IOS)
   if(ENABLE_BUILD_IOS) # optimized iOS 10 64 bits screws somewhere in Geo
     file(GLOB_RECURSE NOOPT_SRC Numeric/robustPredicates.cpp Geo/G*.cpp Mesh/BDS.cpp
-         Parser/Gmsh.tab.cpp contrib/Tetgen1.5/predicates.cxx contrib/blossom/*
-         Mesh/Background*)
+         Parser/Gmsh.tab.cpp contrib/blossom/* Mesh/Background*)
   else(ENABLE_BUILD_IOS)
     file(GLOB_RECURSE NOOPT_SRC Numeric/robustPredicates.cpp Mesh/BDS.cpp
-         Parser/Gmsh.tab.cpp contrib/Tetgen1.5/predicates.cxx contrib/blossom/*
-         contrib/bamg/* Mesh/Background*)
+         Parser/Gmsh.tab.cpp contrib/blossom/* contrib/bamg/* Mesh/Background*)
   endif(ENABLE_BUILD_IOS)
   set_compile_flags(NOOPT_SRC "-O0")
 endif(NOOPT OR ENABLE_BUILD_IOS)
@@ -1674,7 +1650,7 @@ endif(WIN32 OR CYGWIN)
 # FIXME: change this once we understand rpaths
 if(APPLE)
   if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
-    set_target_properties(shared PROPERTIES INSTALL_NAME_DIR 
+    set_target_properties(shared PROPERTIES INSTALL_NAME_DIR
                           ${CMAKE_INSTALL_PREFIX}/${GMSH_LIB})
   endif(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
 endif(APPLE)

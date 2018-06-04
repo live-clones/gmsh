@@ -2542,7 +2542,6 @@ void meshGFace::operator()(GFace *gf, bool print)
   case ALGO_2D_FRONTAL : algo = "Frontal"; break;
   case ALGO_2D_FRONTAL_QUAD : algo = "Frontal Quad"; break;
   case ALGO_2D_DELAUNAY : algo = "Delaunay"; break;
-  case ALGO_2D_MESHADAPT_OLD : algo = "MeshAdapt (old)"; break;
   case ALGO_2D_BAMG : algo = "Bamg"; break;
   case ALGO_2D_PACK_PRLGRMS : algo = "Square Packing"; break;
   case ALGO_2D_AUTO :
