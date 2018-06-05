@@ -40,7 +40,7 @@ petsc_lib="$frameworks_dir/petsc"
 slepc_lib="$frameworks_dir/slepc"
 occ_lib="$frameworks_dir/occt/lib"
 occ_inc="$frameworks_dir/occt/inc"
-android_ndk="${HOME}/Library/Android/sdk/ndk-bundle/" 
+android_ndk="${HOME}/Library/Android/sdk/ndk-bundle/"
 android_sdk="${HOME}/Library/Android/sdk/"
 
 if [ "$appname" != "Onelab" ] ; then
@@ -56,7 +56,7 @@ if [ $enable_simulator != 0 ]; then
   cmake_default="-DDEFAULT=0 -DENABLE_PRIVATE_API=1 -DCMAKE_TOOLCHAIN_FILE=${android_ndk}/build/cmake/android.toolchain.cmake -DANDROID_STL_FORCE_FEATURES=1 -DENABLE_BUILD_ANDROID=1 -DCMAKE_BUILD_TYPE=Release -DANDROID_ABI=x86_64"
 else
   cmake_default="-DDEFAULT=0 -DENABLE_PRIVATE_API=1 -DCMAKE_TOOLCHAIN_FILE=${android_ndk}/build/cmake/android.toolchain.cmake -DANDROID_STL_FORCE_FEATURES=1 -DENABLE_BUILD_ANDROID=1 -DCMAKE_BUILD_TYPE=Release"
-fi    
+fi
 
 cmake_thread=6
 
@@ -75,7 +75,7 @@ if [ ! -d "$gmsh_git/build_${android}" ] || [ ! -f "$gmsh_git/build_${android}/C
   mkdir $gmsh_git/build_${android}
 fi
 cd $gmsh_git/build_${android}
-cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_MATHEX=1 -DENABLE_MESH=1 -DENABLE_ONELAB=1 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_PLUGINS=1 -DENABLE_ANN=1 -DENABLE_TETGEN=1 -DENABLE_KBIPACK=1 -DENABLE_GMP=0 -DENABLE_ZIPPER=1 -DBLAS_LAPACK_LIBRARIES="$petsc_lib/libf2cblas.so;$petsc_lib/libf2clapack.so" -DENABLE_OCC=$enable_occ -DOCC_LIBS="${occ_lib}/libTKSTEP.a;${occ_lib}/libTKSTEP209.a;${occ_lib}/libTKSTEPAttr.a;${occ_lib}/libTKSTEPBase.a;${occ_lib}/libTKIGES.a;${occ_lib}/libTKXSBase.a;${occ_lib}/libTKOffset.a;${occ_lib}/libTKFeat.a;${occ_lib}/libTKFillet.a;${occ_lib}/libTKBool.a;${occ_lib}/libTKShHealing.a;${occ_lib}/libTKMesh.a;${occ_lib}/libTKHLR.a;${occ_lib}/libTKBO.a;${occ_lib}/libTKPrim.a;${occ_lib}/libTKTopAlgo.a;${occ_lib}/libTKGeomAlgo.a;${occ_lib}/libTKBRep.a;${occ_lib}/libTKGeomBase.a;${occ_lib}/libTKG3d.a;${occ_lib}/libTKG2d.a;${occ_lib}/libTKMath.a;${occ_lib}/libTKernel.a" -DOCC_INC=${occ_inc} ..
+cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_SHARED=1 -DENABLE_MATHEX=1 -DENABLE_MESH=1 -DENABLE_ONELAB=1 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_PLUGINS=1 -DENABLE_ANN=1 -DENABLE_KBIPACK=1 -DENABLE_GMP=0 -DENABLE_ZIPPER=1 -DBLAS_LAPACK_LIBRARIES="$petsc_lib/libf2cblas.so;$petsc_lib/libf2clapack.so" -DENABLE_OCC=$enable_occ -DOCC_LIBS="${occ_lib}/libTKSTEP.a;${occ_lib}/libTKSTEP209.a;${occ_lib}/libTKSTEPAttr.a;${occ_lib}/libTKSTEPBase.a;${occ_lib}/libTKIGES.a;${occ_lib}/libTKXSBase.a;${occ_lib}/libTKOffset.a;${occ_lib}/libTKFeat.a;${occ_lib}/libTKFillet.a;${occ_lib}/libTKBool.a;${occ_lib}/libTKShHealing.a;${occ_lib}/libTKMesh.a;${occ_lib}/libTKHLR.a;${occ_lib}/libTKBO.a;${occ_lib}/libTKPrim.a;${occ_lib}/libTKTopAlgo.a;${occ_lib}/libTKGeomAlgo.a;${occ_lib}/libTKBRep.a;${occ_lib}/libTKGeomBase.a;${occ_lib}/libTKG3d.a;${occ_lib}/libTKG2d.a;${occ_lib}/libTKMath.a;${occ_lib}/libTKernel.a" -DOCC_INC=${occ_inc} ..
 check
 make androidGmsh -j$cmake_thread
 check
