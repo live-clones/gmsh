@@ -6,6 +6,7 @@
 #ifndef _FUNCTION_MANAGER_H_
 #define _FUNCTION_MANAGER_H_
 
+#include <cstdio>
 #include <string>
 
 // Singleton, one function manager for all parsers.
