@@ -7,7 +7,7 @@
 #include <string.h>
 #include "GModel.h"
 #include "OS.h"
-#include "GmshIO.h"
+#include "GmshConfig.h"
 
 #include "MLine.h"
 #include "MTriangle.h"
@@ -16,6 +16,22 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "Context.h"
+
+//#define COMPRESSED_UNV
+#if defined(COMPRESSED_UNV) && defined(HAVE_LIBZ)
+#include <zlib.h>
+typedef gzFile gmshFILE;
+#define gmshopen gzopen
+#define gmshgets(a,b,c) gzgets((c),(a),(b))
+#define gmshclose gzclose
+#define gmsheof gzeof
+#else
+typedef FILE *gmshFILE;
+#define gmshopen Fopen
+#define gmshgets fgets
+#define gmshclose fclose
+#define gmsheof feof
+#endif
 
 int GModel::readUNV(const std::string &name)
 {

@@ -7,7 +7,6 @@
 #define _FUNCTION_MANAGER_H_
 
 #include <string>
-#include "GmshIO.h"
 
 // Singleton, one function manager for all parsers.
 
@@ -22,11 +21,11 @@ class FunctionManager
   static FunctionManager *instance;
  public :
   static FunctionManager* Instance();
-  int createFunction(const std::string &name, gmshFILE f,
+  int createFunction(const std::string &name, FILE *f,
                      const std::string &filename, int lineno);
-  int enterFunction(const std::string &name, gmshFILE *f,
+  int enterFunction(const std::string &name, FILE **f,
                     std::string &filename, int &lineno) const;
-  int leaveFunction(gmshFILE *f, std::string &filename, int &lineno);
+  int leaveFunction(FILE **f, std::string &filename, int &lineno);
   void clear();
 };
 
