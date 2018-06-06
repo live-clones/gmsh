@@ -467,11 +467,11 @@ be 0 or @code{dim} times the length of @code{nodeTags}.
 
 @item getNode
 Get the coordinates and the parametric coordinates (if any) of the node with tag
-@code{tag}. This is a sometimes useful but inefficient way of accessing node
-data, as it relies on a cache stored in the model. For large meshes all the
-nodes in the model should be numbered in a continuous sequence of tags from 1 to
-N to maintain reasonnable performance (in this case the internal cache is based
-on a vector; otherwise it uses a map).
+@code{tag}. This is a sometimes useful but inefficient way of accessing nodes,
+as it relies on a cache stored in the model. For large meshes all the nodes in
+the model should be numbered in a continuous sequence of tags from 1 to N to
+maintain reasonnable performance (in this case the internal cache is based on a
+vector; otherwise it uses a map).
 
 @table @asis
 @item Input:
@@ -551,17 +551,32 @@ that contains the node tags of all the elements of the given type, concatenated.
 @end table
 
 @item getElement
-Get the type and node tags of the element with tag @code{tag}. This is a useful
-but inefficient way of accessing element data, as it relies on a cache stored in
-the model. For large meshes all the elements in the model should be numbered in
-a continuous sequence of tags from 1 to N to maintain reasonnable performance
-(in this case the internal cache is based on a vector; otherwise it uses a map).
+Get the type and node tags of the element with tag @code{tag}. This is a
+sometimes useful but inefficient way of accessing elements, as it relies on a
+cache stored in the model. For large meshes all the elements in the model should
+be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable
+performance (in this case the internal cache is based on a vector; otherwise it
+uses a map).
 
 @table @asis
 @item Input:
 @code{elementTag}
 @item Output:
 @code{elementType}, @code{nodeTags}
+@item Return:
+-
+@end table
+
+@item getElementByCoordinates
+Get the tag, type and node tags of the element located at coordinates (@code{x},
+@code{y}, @code{z}). This is a sometimes useful but inefficient way of accessing
+elements, as it relies on a search in a spatial octree.
+
+@table @asis
+@item Input:
+@code{x}, @code{y}, @code{z}
+@item Output:
+@code{elementTag}, @code{elementType}, @code{nodeTags}
 @item Return:
 -
 @end table
