@@ -341,7 +341,7 @@ namespace BoundaryLayerCurver
   }
 
   void Parameters3DSurface::computeParameters(const MFaceN &baseFace,
-                                           const MFaceN &topFace)
+                                              const MFaceN &topFace)
   {
     _nCorner = baseFace.getNumCorners();
     _order = baseFace.getPolynomialOrder();
@@ -743,7 +743,7 @@ namespace BoundaryLayerCurver
                          const Parameters3DCurve &parameters,
                          int nbPoints, const IntPt *points,
                          fullMatrix<double> &xyz, int triDirection = 0,
-                         GFace *gFace = NULL)
+                         const GFace *gFace = NULL)
   {
 //  static int ITER = 0;
 //  ++ITER;
@@ -826,7 +826,7 @@ namespace BoundaryLayerCurver
                              const MEdgeN &baseEdge, MEdgeN &topEdge,
                              const Parameters3DCurve &parameters,
                              int triDirection, double dampingFactor,
-                             GFace *gFace)
+                             const GFace *gFace)
   {
     // Let (t, n, w) be the local reference frame on 'baseEdge'
     // where t(u) is the unit tangent of the 'baseEdge'
@@ -889,6 +889,9 @@ namespace BoundaryLayerCurver
     parameters.thickness[0] = dot(h, n1);
     parameters.coeffb[0] = dot(h, t);
     parameters.coeffc[0] = dot(h, w);
+//
+//    SPoint3 p1(vBase->x(), vBase->y(), vBase->z());
+//    draw3DFrame(p1, t, n1, w, .1, *GModel::current()->firstFace());
 
     vBase = baseEdge.getVertex(1);
     vTop = topEdge.getVertex(1);
@@ -901,6 +904,9 @@ namespace BoundaryLayerCurver
     parameters.thickness[1] = dot(h, n2);
     parameters.coeffb[1] = dot(h, t);
     parameters.coeffc[1] = dot(h, w);
+//
+//    SPoint3 p2(vBase->x(), vBase->y(), vBase->z());
+//    draw3DFrame(p2, t, n2, w, .1, *GModel::current()->firstFace());
   }
 
 
@@ -965,7 +971,7 @@ namespace BoundaryLayerCurver
   bool curveInterface(std::vector<MFaceN> &column,
                       const MElement *bottom1, const MElement *bottom2,
                       const MEdgeN &baseEdge, MEdgeN &topEdge,
-                      double dampingFactor, GFace *bndEnt,
+                      double dampingFactor, const GFace *bndEnt,
                       bool linear)
   {
     // inspired from curve2DQuadColumnTFI
@@ -982,7 +988,7 @@ namespace BoundaryLayerCurver
 // compute then curve interfaces between columns
   void curveInterfaces(VecPairMElemVecMElem &bndEl2column,
                        std::vector<std::pair<int, int> > &adjacencies,
-                       GFace *boundary)
+                       const GFace *boundary)
   {
     for (unsigned int i = 0; i < adjacencies.size(); ++i) {
       MEdgeN bottomEdge, topEdge;
@@ -1048,7 +1054,7 @@ namespace BoundaryLayerCurver
 
   void computePosition3DFace(const MFaceN &baseFace, MFaceN &topFace,
                              const Parameters3DSurface &parameters,
-                             GFace *gFace)
+                             const GFace *gFace)
   {
     // Let (t0, t1, n) be the local reference frame on 'baseFace'
     // We seek, for each component, the polynomial function that fit the best
@@ -1194,7 +1200,7 @@ namespace BoundaryLayerCurver
   }
 
   void curveColumns(VecPairMElemVecMElem &bndEl2column,
-                    GFace *boundary)
+                    const GFace *boundary)
   {
     Parameters3DSurface parameters;
     for (unsigned int i = 0; i < bndEl2column.size(); ++i) {
@@ -1215,7 +1221,7 @@ namespace BoundaryLayerCurver
 }
 
 
-void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, GFace *boundary)
+void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, const GFace *boundary)
 {
   std::vector<std::pair<int, int> > adjacencies;
   BoundaryLayerCurver::computeAdjacencies(bndEl2column, adjacencies);
