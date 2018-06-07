@@ -30,7 +30,7 @@ ACISFace::ACISFace(GModel *m, FACE *f, int num)
   edgeLoops.clear();
   l_edges.clear();
   l_dirs.clear();
-  
+
   LOOP *myLoop = _f->loop();
   do{
     std::list<GEdge*> l_wire;
@@ -39,7 +39,7 @@ ACISFace::ACISFace(GModel *m, FACE *f, int num)
     do {
       EDGE *e = _current->edge();
       GEdge *ge = getACISEdgeByNativePtr(m,e);
-      l_wire.push_back(ge);      
+      l_wire.push_back(ge);
       _current = _current->next();
     }while (_current && _current != start);
     GEdgeLoop el(l_wire);
@@ -47,15 +47,15 @@ ACISFace::ACISFace(GModel *m, FACE *f, int num)
       l_edges.push_back(it->ge);
       l_dirs.push_back(it->_sign);
       if (el.count() == 2){
-        it->ge->meshAttributes.minimumMeshSegments = 
+        it->ge->meshAttributes.minimumMeshSegments =
           std::max(it->ge->meshAttributes.minimumMeshSegments,2);
       }
       if (el.count() == 1){
-        it->ge->meshAttributes.minimumMeshSegments = 
+        it->ge->meshAttributes.minimumMeshSegments =
           std::max(it->ge->meshAttributes.minimumMeshSegments,3);
       }
     }
-    edgeLoops.push_back(el);   
+    edgeLoops.push_back(el);
   }while (myLoop = myLoop->next());
 
   SURFACE *Surf = _f->geometry();
@@ -87,7 +87,7 @@ ACISFace::ACISFace(GModel *m, FACE *f, int num)
 }
 
 Range<double> ACISFace::parBounds(int i) const
-{  
+{
   if(i == 0)
     return Range<double>(umin, umax);
   return Range<double>(vmin, vmax);
@@ -98,8 +98,8 @@ SVector3 ACISFace::normal(const SPoint2 &param) const
   SURFACE *Surf = _f->geometry();
   const surface &surf = Surf->equation();
 
-  const SPAunit_vector n = surf.eval_normal (SPApar_pos (param.x(),param.y()));  
-  return SVector3(n.component(0),n.component(1),n.component(2));  
+  const SPAunit_vector n = surf.eval_normal (SPApar_pos (param.x(),param.y()));
+  return SVector3(n.component(0),n.component(1),n.component(2));
 }
 
 Pair<SVector3,SVector3> ACISFace::firstDer(const SPoint2 &param) const
@@ -109,15 +109,15 @@ Pair<SVector3,SVector3> ACISFace::firstDer(const SPoint2 &param) const
   SPAposition pos;
   SPAvector first_derivs[2];
   surf.eval (SPApar_pos(param.x(),param.y()), pos,first_derivs);
-  return Pair<SVector3,SVector3> 
-    (SVector3(first_derivs[0].component(0), first_derivs[0].component(1), 
+  return Pair<SVector3,SVector3>
+    (SVector3(first_derivs[0].component(0), first_derivs[0].component(1),
               first_derivs[0].component(2)),
      SVector3(first_derivs[1].component(0), first_derivs[1].component(1),
               first_derivs[1].component(2)));
 }
 
 void ACISFace::secondDer(const SPoint2 &param,
-                        SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
+                        SVector3 &dudu, SVector3 &dvdv, SVector3 &dudv) const
 {
   SURFACE *Surf = _f->geometry();
   const surface &surf = Surf->equation();
@@ -130,7 +130,7 @@ GPoint ACISFace::point(double par1, double par2) const
   SPAposition pos;
   surf.eval (SPApar_pos(par1,par2), pos);
   double pp[2] = {par1,par2};
-  return GPoint(pos.coordinate(0),pos.coordinate(1),pos.coordinate(2),this,pp);    
+  return GPoint(pos.coordinate(0),pos.coordinate(1),pos.coordinate(2),this,pp);
 }
 
 GPoint ACISFace::closestPoint(const SPoint3 &qp, const double initialGuess[2]) const
@@ -141,7 +141,7 @@ GPoint ACISFace::closestPoint(const SPoint3 &qp, const double initialGuess[2]) c
   SURFACE *Surf = _f->geometry();
 
   Surf->equation().point_perp(pt,fpt,*(SPApar_pos *)NULL_REF,ppt);
-  SPoint2 pt2(ppt.u,ppt.v);	
+  SPoint2 pt2(ppt.u,ppt.v);
 
   return GPoint(fpt.x(),fpt.y(),fpt.z(),this,pt2);
 }
@@ -173,24 +173,24 @@ double ACISFace::curvatureMax(const SPoint2 &param) const
 }
 
 double ACISFace::curvatures(const SPoint2 &param,
-                           SVector3 *dirMax,
-                           SVector3 *dirMin,
-                           double *curvMax,
-                           double *curvMin) const
+                           SVector3 &dirMax,
+                           SVector3 &dirMin,
+                           double &curvMax,
+                           double &curvMin) const
 {
   return 1.e22;
 }
 
 bool ACISFace::containsPoint(const SPoint3 &pt) const
-{ 
+{
   SPAposition ps(pt.x(),pt.y(),pt.z());
   if (_f->geometry()->equation().test_point(ps))
     return 1;
-  else 
+  else
     return 0;
 }
 
-double ACISFace::period(int dir) const { 
+double ACISFace::period(int dir) const {
   if (dir == 0)
     return _f->geometry()->equation().param_period_u();
   else if (dir == 1)

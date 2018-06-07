@@ -49,12 +49,12 @@ public:
   virtual bool containsPoint(const SPoint3 &pt) const;
   virtual SVector3 normal(const SPoint2 &param) const;
   virtual Pair<SVector3,SVector3> firstDer(const SPoint2 &param) const;
-  virtual void secondDer(const SPoint2 &, SVector3 *, SVector3 *, SVector3 *) const;
+  virtual void secondDer(const SPoint2 &, SVector3 &, SVector3 &, SVector3 &) const;
   virtual GEntity::GeomType geomType() const;
   virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface=true) const;
   virtual double curvatureMax(const SPoint2 &param) const;
-  virtual double curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
-                            double *curvMax, double *curvMin) const;
+  virtual double curvatures(const SPoint2 &param, SVector3 &dirMax, SVector3 &dirMin,
+                            double &curvMax, double &curvMin) const;
   virtual bool periodic(int dir) const { return false;}//_periodic[dir]; }// TODO ?
   virtual double period(int dir) const{ return _period[dir]; };
 

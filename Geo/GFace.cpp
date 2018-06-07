@@ -817,7 +817,7 @@ double GFace::curvatureDiv(const SPoint2 &param) const
   SVector3 dudu = SVector3();
   SVector3 dvdv = SVector3();
   SVector3 dudv = SVector3();
-  secondDer(param, &dudu, &dvdv, &dudv);
+  secondDer(param, dudu, dvdv, dudv);
 
   double ddu = dot(dndu, du);
   double ddv = dot(dndv, dv);
@@ -835,37 +835,37 @@ double GFace::curvatureMax(const SPoint2 &param) const
   return fabs(eigVal[1]);
 }
 
-double GFace::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
-                         double *curvMax, double *curvMin) const
+double GFace::curvatures(const SPoint2 &param, SVector3 &dirMax, SVector3 &dirMin,
+                         double &curvMax, double &curvMin) const
 {
   Pair<SVector3, SVector3> D1 = firstDer(param);
 
   if(geomType() == Plane){
-    *dirMax = D1.first();
-    *dirMin = D1.second();
-    *curvMax = 0.;
-    *curvMin = 0.;
+    dirMax = D1.first();
+    dirMin = D1.second();
+    curvMax = 0.;
+    curvMin = 0.;
     return 0.;
   }
 
   if(geomType() == Sphere){
-    *dirMax = D1.first();
-    *dirMin = D1.second();
-    *curvMax = curvatureDiv(param);
-    *curvMin = *curvMax;
-    return *curvMax;
+    dirMax = D1.first();
+    dirMin = D1.second();
+    curvMax = curvatureDiv(param);
+    curvMin = curvMax;
+    return curvMax;
   }
 
   double eigVal[2], eigVec[8];
   getMetricEigenVectors(param, eigVal, eigVec);
 
   // curvatures and main directions
-  *curvMax = fabs(eigVal[1]);
-  *curvMin = fabs(eigVal[0]);
-  *dirMax = eigVec[1] * D1.first() + eigVec[3] * D1.second();
-  *dirMin = eigVec[0] * D1.first() + eigVec[2] * D1.second();
+  curvMax = fabs(eigVal[1]);
+  curvMin = fabs(eigVal[0]);
+  dirMax = eigVec[1] * D1.first() + eigVec[3] * D1.second();
+  dirMin = eigVec[0] * D1.first() + eigVec[2] * D1.second();
 
-  return *curvMax;
+  return curvMax;
 }
 
 double GFace::getMetricEigenvalue(const SPoint2 &)
@@ -890,7 +890,7 @@ void GFace::getMetricEigenVectors(const SPoint2 &param,
   SVector3 dudu = SVector3();
   SVector3 dvdv = SVector3();
   SVector3 dudv = SVector3();
-  secondDer(param, &dudu, &dvdv, &dudv);
+  secondDer(param, dudu, dvdv, dudv);
 
   // first form
   double form1[2][2];

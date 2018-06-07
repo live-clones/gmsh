@@ -2640,7 +2640,7 @@ void BoundaryLayerField::operator() (AttractorField *cc, double dist,
       double cmin, cmax;
       SVector3 dirMax, dirMin;
       cmax = gf->curvatures(SPoint2(pp.first.u, pp.first.v),
-                            &dirMax, &dirMin, &cmax, &cmin);
+                            dirMax, dirMin, cmax, cmin);
       const double b = lc_t;
       const double h = lc_n;
       double oneOverD2_min = .5/(b * b) *

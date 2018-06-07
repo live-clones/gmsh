@@ -97,8 +97,8 @@ int GModel::writeCELUM(const std::string &name, bool saveAll,
                          v->getNum(), f->tag());
           CelumInfo info;
           info.normal = f->normal(param);
-          f->curvatures(param, &info.dirMax, &info.dirMin,
-                        &info.curvMax, &info.curvMin);
+          f->curvatures(param, info.dirMax, info.dirMin,
+                        info.curvMax, info.curvMin);
           vmap[v] = info;
           vvec.push_back(v);
         }

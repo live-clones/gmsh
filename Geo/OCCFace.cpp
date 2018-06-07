@@ -203,15 +203,15 @@ Pair<SVector3,SVector3> OCCFace::firstDer(const SPoint2 &param) const
 }
 
 void OCCFace::secondDer(const SPoint2 &param,
-                        SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
+                        SVector3 &dudu, SVector3 &dvdv, SVector3 &dudv) const
 {
   gp_Pnt pnt;
   gp_Vec du, dv, duu, dvv, duv;
   occface->D2(param.x(), param.y(), pnt, du, dv, duu, dvv, duv);
 
-  *dudu = SVector3(duu.X(), duu.Y(), duu.Z());
-  *dvdv = SVector3(dvv.X(), dvv.Y(), dvv.Z());
-  *dudv = SVector3(duv.X(), duv.Y(), duv.Z());
+  dudu = SVector3(duu.X(), duu.Y(), duu.Z());
+  dvdv = SVector3(dvv.X(), dvv.Y(), dvv.Z());
+  dudv = SVector3(duv.X(), duv.Y(), duv.Z());
 }
 
 GPoint OCCFace::point(double par1, double par2) const
@@ -326,35 +326,35 @@ double OCCFace::curvatureMax(const SPoint2 &param) const
 }
 
 double OCCFace::curvatures(const SPoint2 &param,
-                           SVector3 *dirMax,
-                           SVector3 *dirMin,
-                           double *curvMax,
-                           double *curvMin) const
+                           SVector3 &dirMax,
+                           SVector3 &dirMin,
+                           double &curvMax,
+                           double &curvMin) const
 {
   const double eps = 1.e-12;
   BRepAdaptor_Surface sf(s, Standard_True);
   BRepLProp_SLProps prop(sf, 2, eps);
-  prop.SetParameters (param.x(),param.y());
+  prop.SetParameters(param.x(), param.y());
 
   if (!prop.IsCurvatureDefined()){
     return -1.;
   }
 
-  *curvMax = prop.MaxCurvature();
-  *curvMin = prop.MinCurvature();
+  curvMax = prop.MaxCurvature();
+  curvMin = prop.MinCurvature();
 
   gp_Dir dMax = gp_Dir();
   gp_Dir dMin = gp_Dir();
-  prop.CurvatureDirections(dMax,dMin);
+  prop.CurvatureDirections(dMax, dMin);
 
-  (*dirMax)[0] = dMax.X();
-  (*dirMax)[1] = dMax.Y();
-  (*dirMax)[2] = dMax.Z();
-  (*dirMin)[0] = dMin.X();
-  (*dirMin)[1] = dMin.Y();
-  (*dirMin)[2] = dMin.Z();
+  dirMax[0] = dMax.X();
+  dirMax[1] = dMax.Y();
+  dirMax[2] = dMax.Z();
+  dirMin[0] = dMin.X();
+  dirMin[1] = dMin.Y();
+  dirMin[2] = dMin.Z();
 
-  return *curvMax;
+  return curvMax;
 }
 
 bool OCCFace::containsPoint(const SPoint3 &pt) const

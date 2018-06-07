@@ -296,8 +296,8 @@ double discreteFace::curvatureMax(const SPoint2 &param) const
   return false;
 }
 
-double discreteFace::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
-                                double *curvMax, double *curvMin) const
+double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax, SVector3 &dirMin,
+                                double &curvMax, double &curvMin) const
 {
   return false;
 }
@@ -355,7 +355,7 @@ Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 }
 
 void discreteFace::secondDer(const SPoint2 &param,
-                             SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
+                             SVector3 &dudu, SVector3 &dvdv, SVector3 &dudv) const
 {
   return;
 }

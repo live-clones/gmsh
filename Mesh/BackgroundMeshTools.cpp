@@ -335,11 +335,11 @@ SMetric3 metric_based_on_surface_curvature(const GFace *gf, double u, double v,
   if (gf->geomType() == GEntity::Plane)return SMetric3(1.e-12);
   double cmax, cmin;
   SVector3 dirMax,dirMin;
-  cmax = gf->curvatures(SPoint2(u, v),&dirMax, &dirMin, &cmax,&cmin);
-  if (cmin == 0)cmin =1.e-12;
-  if (cmax == 0)cmax =1.e-12;
-  double lambda1 =  ((2 * M_PI) /( fabs(cmin) *  CTX::instance()->mesh.minCircPoints ) );
-  double lambda2 =  ((2 * M_PI) /( fabs(cmax) *  CTX::instance()->mesh.minCircPoints ) );
+  cmax = gf->curvatures(SPoint2(u, v), dirMax, dirMin, cmax, cmin);
+  if (cmin == 0) cmin =1.e-12;
+  if (cmax == 0) cmax =1.e-12;
+  double lambda1 = ((2 * M_PI) /( fabs(cmin) *  CTX::instance()->mesh.minCircPoints ) );
+  double lambda2 = ((2 * M_PI) /( fabs(cmax) *  CTX::instance()->mesh.minCircPoints ) );
   SVector3 Z = crossprod(dirMax,dirMin);
   if (surface_isotropic)  lambda2 = lambda1 = std::min(lambda2,lambda1);
   dirMin.normalize();

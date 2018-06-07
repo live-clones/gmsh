@@ -175,7 +175,7 @@ class GFace : public GEntity {
   virtual bool containsParam(const SPoint2 &pt);
 
   // return the point on the face closest to the given point
-  virtual GPoint closestPoint(const SPoint3 & queryPoint,
+  virtual GPoint closestPoint(const SPoint3 &queryPoint,
                               const double initialGuess[2]) const;
 
   // return the normal to the face at the given parameter location
@@ -185,9 +185,8 @@ class GFace : public GEntity {
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const = 0;
 
   // compute the second derivates of the face at the parameter location
-  // the derivates have to be allocated before calling this function
   virtual void secondDer(const SPoint2 &param,
-                         SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const = 0;
+                         SVector3 &dudu, SVector3 &dvdv, SVector3 &dudv) const = 0;
 
   // return the curvature computed as the divergence of the normal
   inline double curvature(const SPoint2 &param) const { return curvatureMax(param); }
@@ -198,9 +197,8 @@ class GFace : public GEntity {
 
   // compute the min and max curvatures and the corresponding directions
   // return the max curvature
-  // outputs have to be allocated before calling this function
-  virtual double curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
-                            double *curvMax, double *curvMin) const;
+  virtual double curvatures(const SPoint2 &param, SVector3 &dirMax, SVector3 &dirMin,
+                            double &curvMax, double &curvMin) const;
 
   // return a type-specific additional information string
   virtual std::string getAdditionalInfoString(bool multline = false);
