@@ -512,6 +512,37 @@ namespace
     ent->addLine(line);
   }
 
+  void draw3DFrame(SPoint3 &p, SVector3 &t, SVector3 &n, SVector3 &w,
+                   double unitDimension, GFace *gFace = NULL)
+  {
+    if (!gFace)
+      gFace = *GModel::current()->firstFace();
+
+    MVertex *v = new MVertex(p.x(), p.y(), p.z(), gFace);
+
+    SPoint3 pnt = p + n * unitDimension;
+    MVertex *vn = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
+
+    pnt = p + w * unitDimension;
+    MVertex *vw = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
+
+    pnt = p + t * unitDimension;
+    MVertex *vt = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
+
+    gFace->addMeshVertex(v);
+    gFace->addMeshVertex(vn);
+    gFace->addMeshVertex(vw);
+
+    MLine *line = new MLine(v, vn);
+    gFace->edges().front()->addLine(line);
+
+    line = new MLine(v, vw);
+    gFace->edges().front()->addLine(line);
+
+    line = new MLine(v, vt);
+    gFace->edges().front()->addLine(line);
+  }
+
   /*             A
    *             *
    *           ,/ \
@@ -978,6 +1009,9 @@ namespace BoundaryLayerCurver
     parameters.thickness[0] = dot(h, n);
     parameters.coeffb[0] = dot(h, t);
 
+    SPoint3 p1(baseVert[0]->x(), baseVert[0]->y(), baseVert[0]->z());
+    draw3DFrame(p1, t, n, w, .01, *GModel::current()->firstFace());
+
     {
       double dx = 0, dy = 0, dz = 0;
       fs->df(1, 0, 0, sf);
@@ -996,6 +1030,9 @@ namespace BoundaryLayerCurver
     }
     parameters.thickness[1] = dot(h, n);
     parameters.coeffb[1] = dot(h, t);
+
+    SPoint3 p2(baseVert[1]->x(), baseVert[1]->y(), baseVert[1]->z());
+    draw3DFrame(p2, t, n, w, .01, *GModel::current()->firstFace());
   }
 
   void idealPositionEdge(const std::vector<MVertex *> &baseVert,
