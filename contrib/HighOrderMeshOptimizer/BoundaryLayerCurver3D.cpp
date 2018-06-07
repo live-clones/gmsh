@@ -460,6 +460,8 @@ namespace BoundaryLayerCurver
 
   bool areSameFaces(MFace &f1, MFace &f2)
   {
+    // NB: f1 == f2 will return true for "twisted" quad (having same vertices
+    // but the quads are different)
     int nVertices = f1.getNumVertices();
     if (f2.getNumVertices() != nVertices) return false;
 
@@ -493,7 +495,9 @@ namespace BoundaryLayerCurver
       f = e1->getFace(i);
       for (int j = 0; j < e2->getNumFaces(); ++j) {
         MFace f2 = e2->getFace(j);
-        if (areSameFaces(f, f2)) return true;
+        // if (areSameFaces(f, f2)) return true;
+        // If the mesh is conformal, f==f2 is sufficient
+        if (f == f2) return true;
       }
     }
     f = MFace();
@@ -501,12 +505,26 @@ namespace BoundaryLayerCurver
   }
 
 
-  bool faceContainsVertex(MFace &f, MVertex *v)
+  bool faceContainsVertex(const MFace &f, const MVertex *v)
   {
     for (int i = 0; i < f.getNumVertices(); ++i) {
       if (f.getVertex(i) == v) return true;
     }
     return false;
+  }
+
+
+  bool faceContainsEdge(const MFace &f, const MEdge &e)
+  {
+    MVertex *v0 = e.getMinVertex();
+    MVertex *v1 = e.getMaxVertex();
+    bool v0In = false;
+    bool v1In = false;
+    for (int i = 0; i < f.getNumVertices(); ++i) {
+      if (f.getVertex(i) == v0) v0In = true;
+      if (f.getVertex(i) == v1) v1In = true;
+    }
+    return v0In && v1In;
   }
 
 
@@ -533,15 +551,12 @@ namespace BoundaryLayerCurver
       // node with the corresponding top node
       for (int j = 0; j < currentElement->getNumEdges(); ++j) {
         MEdge edge = currentElement->getEdge(j);
-        bool v0InBottomFace = faceContainsVertex(bottomFace, edge.getVertex(0));
-        bool v1InBottomFace = faceContainsVertex(bottomFace, edge.getVertex(1));
-        bool v0InTopFace = faceContainsVertex(topFace, edge.getVertex(0));
-        bool v1InTopFace = faceContainsVertex(topFace, edge.getVertex(1));
-        if (   (v0InBottomFace && v1InBottomFace)
-               || (v0InTopFace && v1InTopFace)      ) continue;
+        if (faceContainsEdge(bottomFace, edge) ||
+            faceContainsEdge(topFace, edge))
+          continue;
 
         MVertex *vbot, *vtop;
-        if (v0InBottomFace) {
+        if (faceContainsVertex(bottomFace, edge.getMinVertex())) {
           vbot = edge.getVertex(0);
           vtop = edge.getVertex(1);
         }
