@@ -68,7 +68,7 @@ public:
   int mesh_dim;
   tetgenio()
   {
-    firstnumber = 0;
+    firstnumber = 1;
     numberofpointattributes = 0;
     numberoftetrahedronattributes = 0;
     numberofsegmentconstraints = 0;
@@ -155,8 +155,8 @@ bool tetgenmesh::reconstructmesh(void *p)
 
   initializepools();
 
-  // Store all coordinates of the vertices as these will be pertubated
-  // in function delaunayTriangulation
+  // Store all coordinates of the vertices as these will be pertubated in
+  // function delaunayTriangulation
   std::map<MVertex *, SPoint3> originalCoordinates;
   for (unsigned int i = 0; i < _vertices.size(); i++){
     MVertex *v = _vertices[i];
@@ -218,18 +218,15 @@ bool tetgenmesh::reconstructmesh(void *p)
   // Create a map from indices to vertices.
   makeindex2pointmap(idx2verlist);
   // 'idx2verlist' has length 'in->numberofpoints + 1'.
-  if(in->firstnumber == 1){
-    idx2verlist[0] = dummypoint; // Let 0th-entry be dummypoint.
+  idx2verlist[0] = dummypoint; // Let 0th-entry be dummypoint.
+  // Index the vertices, starting at 1 (vertex index 0 is used as special code
+  // in tetgenBR in case of failure)
+  for(unsigned int i = 0; i < _vertices.size(); i++){
+    _vertices[i]->setIndex(i + 1);
   }
 
   {
-    // Index the vertices.
-    for(unsigned int i = 0; i < _vertices.size(); i++){
-      _vertices[i]->setIndex(i);
-    }
-
     tetrahedron *ver2tetarray;
-    //point *idx2verlist;
     triface tetloop, checktet, prevchktet;
     triface hulltet, face1, face2;
     tetrahedron tptr;
@@ -242,9 +239,8 @@ bool tetgenmesh::reconstructmesh(void *p)
     Msg::Info("Reconstructing mesh ...");
 
     // Allocate an array that maps each vertex to its adjacent tets.
-    ver2tetarray = new tetrahedron[_vertices.size() + 1];
-    //for(i = 0; i < in->numberofpoints + 1; i++){
-    for(unsigned int i = in->firstnumber; i < _vertices.size() + in->firstnumber; i++){
+    ver2tetarray = new tetrahedron[_vertices.size() + in->firstnumber];
+    for(unsigned int i = 0; i < _vertices.size() + in->firstnumber; i++){
       setpointtype(idx2verlist[i], VOLVERTEX); // initial type.
       ver2tetarray[i] = NULL;
     }
@@ -273,7 +269,7 @@ bool tetgenmesh::reconstructmesh(void *p)
       for(tetloop.ver = 0; tetloop.ver < 4; tetloop.ver++){
 	p[3] = oppo(tetloop);
 	// Look for other tets having this vertex.
-	idx = pointmark(p[3]);
+	idx = pointmark(p[3]) - in->firstnumber;
 	tptr = ver2tetarray[idx];
 	// Link the current tet to the next one in the stack.
 	tetloop.tet[8 + tetloop.ver] = tptr;
@@ -670,7 +666,7 @@ bool tetgenmesh::reconstructmesh(void *p)
               }
               v->setIndex(pointmark(pointloop));
               _gr->mesh_vertices.push_back(v);
-	      _extras[pointmark(pointloop)] = v;
+	      _extras[pointmark(pointloop) - in->firstnumber] = v;
             }
             spivot(parentseg, parentsh);
             if(parentsh.sh != NULL){
@@ -694,7 +690,7 @@ bool tetgenmesh::reconstructmesh(void *p)
                   }
                   v->setIndex(pointmark(pointloop));
                   _gr->mesh_vertices.push_back(v);
-		  _extras[pointmark(pointloop)] = v;
+		  _extras[pointmark(pointloop) - in->firstnumber] = v;
                 }
               }
               // Record all the GFaces' tag at this segment.
@@ -709,7 +705,7 @@ bool tetgenmesh::reconstructmesh(void *p)
               // Create an interior mesh vertex.
               MVertex *v = new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
               v->setIndex(pointmark(pointloop));
-	      _extras[pointmark(pointloop)] = v;
+	      _extras[pointmark(pointloop) - in->firstnumber] = v;
 	      _gr->mesh_vertices.push_back(v);
             }
           }
@@ -737,21 +733,21 @@ bool tetgenmesh::reconstructmesh(void *p)
               }
               v->setIndex(pointmark(pointloop));
               _gr->mesh_vertices.push_back(v);
-	      _extras[pointmark(pointloop)] = v;
+	      _extras[pointmark(pointloop) - in->firstnumber] = v;
             }
             else{
               // Create a mesh vertex.
               MVertex *v = new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
               v->setIndex(pointmark(pointloop));
               _gr->mesh_vertices.push_back(v);
-	      _extras[pointmark(pointloop)] = v;
+	      _extras[pointmark(pointloop) - in->firstnumber] = v;
             }
           }
           else{
             MVertex *v = new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
             v->setIndex(pointmark(pointloop));
             _gr->mesh_vertices.push_back(v);
-	    _extras[pointmark(pointloop)] = v;
+	    _extras[pointmark(pointloop) - in->firstnumber] = v;
           }
         }
         pointloop = pointtraverse();
@@ -792,13 +788,10 @@ bool tetgenmesh::reconstructmesh(void *p)
           if(shellmark(segloop) == etag){
             p[0] = sorg(segloop);
             p[1] = sdest(segloop);
-            MVertex *v1 = pointmark(p[0]) >= (int)_vertices.size() ?
-              _extras[pointmark(p[0])] : _vertices[pointmark(p[0])];
-            MVertex *v2 = pointmark(p[1]) >= (int)_vertices.size() ?
-              _extras[pointmark(p[1])] : _vertices[pointmark(p[1])];
-	    // MVertex *v2 = _vertices[pointmark(p[1])];
-	    // printf("%d %d %d\n",pointmark(p[0]),pointmark(p[1]),_vertices.size());
-	    // printf("%g %g %g %g\n",v1->x(),v1->y(),v2->x(),v2->y());
+            int idx1 = pointmark(p[0]) - in->firstnumber;
+            MVertex *v1 = idx1 >= (int)_vertices.size() ? _extras[idx1] : _vertices[idx1];
+            int idx2 = pointmark(p[1]) - in->firstnumber;
+            MVertex *v2 = idx2 >= (int)_vertices.size() ? _extras[idx2] : _vertices[idx2];
             MLine *t = new MLine(v1, v2);
             ge->lines.push_back(t);
           }
@@ -815,8 +808,7 @@ bool tetgenmesh::reconstructmesh(void *p)
         // Find the GFace with tag = *it.
         GFace *gf = NULL;
         int ftag = *it;
-        for(std::vector<GFace*>::iterator fit = f_list.begin();
-             fit != f_list.end(); ++fit){
+        for(std::vector<GFace*>::iterator fit = f_list.begin(); fit != f_list.end(); ++fit){
           if((*fit)->tag() == ftag){
             gf = (*fit);
             break;
@@ -827,10 +819,7 @@ bool tetgenmesh::reconstructmesh(void *p)
         Msg::Info("Steiner points exist on GFace %d", gf->tag());
         for(unsigned int i = 0; i < gf->triangles.size(); i++)
           delete gf->triangles[i];
-        //for(i = 0; i < gf->quadrangles.size(); i++)
-        //  delete gf->quadrangles[i];
         gf->triangles.clear();
-        //gf->quadrangles.clear();
         gf->deleteVertexArrays();
         // Create the new triangles.
         subloop.shver = 0;
@@ -841,21 +830,12 @@ bool tetgenmesh::reconstructmesh(void *p)
             p[0] = sorg(subloop);
             p[1] = sdest(subloop);
             p[2] = sapex(subloop);
-            MVertex *v1 = pointmark(p[0]) >= (int)_vertices.size() ?
-              _extras[pointmark(p[0])] : _vertices[pointmark(p[0])];
-            MVertex *v2 = pointmark(p[1]) >= (int)_vertices.size() ?
-              _extras[pointmark(p[1])] : _vertices[pointmark(p[1])];
-            MVertex *v3 = pointmark(p[2]) >= (int)_vertices.size() ?
-              _extras[pointmark(p[2])] : _vertices[pointmark(p[2])];
-	    // if(pointmark(p[0]) >= _vertices.size())
-            //   printf("F %d %d\n",v1->getIndex(),pointmark(p[0]));
-	    // if(pointmark(p[1]) >= _vertices.size())
-            //   printf("F %d %d\n",v2->getIndex(),pointmark(p[1]));
-	    // if(pointmark(p[2]) >= _vertices.size())
-            //   printf("F %d %d\n",v3->getIndex(),pointmark(p[2]));
-	    // MVertex *v1 = _vertices[pointmark(p[0])];
-	    // MVertex *v2 = _vertices[pointmark(p[1])];
-	    // MVertex *v3 = _vertices[pointmark(p[2])];
+            int idx1 = pointmark(p[0]) - in->firstnumber;
+            MVertex *v1 = idx1 >= (int)_vertices.size() ? _extras[idx1] : _vertices[idx1];
+            int idx2 = pointmark(p[1]) - in->firstnumber;
+            MVertex *v2 = idx2 >= (int)_vertices.size() ? _extras[idx2] : _vertices[idx2];
+            int idx3 = pointmark(p[2]) - in->firstnumber;
+            MVertex *v3 = idx3 >= (int)_vertices.size() ? _extras[idx3] : _vertices[idx3];
             MTriangle *t = new MTriangle(v1, v2, v3);
             gf->triangles.push_back(t);
           }
@@ -876,26 +856,14 @@ bool tetgenmesh::reconstructmesh(void *p)
       p[2] = apex(tetloop);
       p[3] = oppo(tetloop);
 
-      MVertex *v1 = pointmark(p[0]) >= (int)_vertices.size() ?
-        _extras[pointmark(p[0])] : _vertices[pointmark(p[0])];
-      MVertex *v2 = pointmark(p[1]) >= (int)_vertices.size() ?
-        _extras[pointmark(p[1])] : _vertices[pointmark(p[1])];
-      MVertex *v3 = pointmark(p[2]) >= (int)_vertices.size() ?
-        _extras[pointmark(p[2])] : _vertices[pointmark(p[2])];
-      MVertex *v4 = pointmark(p[3]) >= (int)_vertices.size() ?
-        _extras[pointmark(p[3])] : _vertices[pointmark(p[3])];
-      // if(pointmark(p[0]) >= _vertices.size())
-      //   printf("%d %d\n",v1->getIndex(),pointmark(p[0]));
-      // if(pointmark(p[1]) >= _vertices.size())
-      //   printf("%d %d\n",v2->getIndex(),pointmark(p[1]));
-      // if(pointmark(p[2]) >= _vertices.size())
-      //   printf("%d %d\n",v3->getIndex(),pointmark(p[2]));
-      // if(pointmark(p[3]) >= _vertices.size())
-      ///   printf("%d %d\n",v4->getIndex(),pointmark(p[3]));
-      // MVertex *v1 = _vertices[pointmark(p[0])];
-      // MVertex *v2 = _vertices[pointmark(p[1])];
-      // MVertex *v3 = _vertices[pointmark(p[2])];
-      // MVertex *v4 = _vertices[pointmark(p[3])];
+      int idx1 = pointmark(p[0]) - in->firstnumber;
+      MVertex *v1 = idx1 >= (int)_vertices.size() ? _extras[idx1] : _vertices[idx1];
+      int idx2 = pointmark(p[1]) - in->firstnumber;
+      MVertex *v2 = idx2 >= (int)_vertices.size() ? _extras[idx2] : _vertices[idx2];
+      int idx3 = pointmark(p[2]) - in->firstnumber;
+      MVertex *v3 = idx3 >= (int)_vertices.size() ? _extras[idx3] : _vertices[idx3];
+      int idx4 = pointmark(p[3]) - in->firstnumber;
+      MVertex *v4 = idx4 >= (int)_vertices.size() ? _extras[idx4] : _vertices[idx4];
       MTetrahedron *t = new  MTetrahedron(v1, v2, v3, v4);
       _gr->tetrahedra.push_back(t);
       tetloop.tet = tetrahedrontraverse();
@@ -1211,7 +1179,7 @@ bool meshGRegionBoundaryRecovery(GRegion *gr)
             x.push_back(v->x());
             y.push_back(v->y());
             z.push_back(v->z());
-            val.push_back(f + 1.);
+            val.push_back(f);
           }
         }
       }
