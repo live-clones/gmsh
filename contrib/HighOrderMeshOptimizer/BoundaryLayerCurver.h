@@ -49,6 +49,62 @@ typedef std::vector<PairMElemVecMElem> VecPairMElemVecMElem;
 
 namespace BoundaryLayerCurver
 {
+  bool computeCommonEdge(MElement *el1, MElement *el2, MEdge &e);
+
+  // The boundary layer curver algorithm is seperated into different modules:
+  namespace EdgeCurver2D {}
+  namespace EdgeCurver3D {}
+  namespace FaceCurver {}
+  namespace InteriorEdgeCurver {}
+  namespace InteriorFaceCurver {}
+
+  namespace EdgeCurver2D
+  {
+    // A 2D edge can be on a 3D face or in a plane. The normal to the surface
+    // that contain the edge is needed. It is computed from the CAD if 'gface'
+    // and 'gedge' are provided. Otherwise, 'normal' is taken into account.
+    // At least 'gface' & 'gedge' or 'normal' have to be provided.
+    void curveEdge(const MEdgeN *baseEdge, MEdgeN *edge, const GFace *gface,
+                   const GEdge *gedge, const SVector3 &normal);
+
+    class _Frame {
+      bool _haveCAD;
+      SVector3 _normalToTheMesh;
+      const GFace *_gface;
+      const GEdge *_gedge;
+      const MEdgeN *_edgeOnBoundary;
+      double _paramVerticesOnGFace[40];
+      double _paramVerticesOnGEdge[20];
+
+    public:
+      _Frame(const MEdgeN *edge, const GFace *gface, const GEdge *gedge,
+            const SVector3 &normal)
+          : _normalToTheMesh(normal), _gface(gface), _gedge(gedge),
+            _edgeOnBoundary(edge)
+      {
+        if (!gface || !gedge) {
+          _haveCAD = false;
+          return;
+        }
+
+        _haveCAD = true;
+        for (unsigned int i = 0; i < edge->getNumVertices(); ++i) {
+          SPoint2 param = _paramOnGFace(gface, edge->getVertex(i));
+          _paramVerticesOnGFace[2*i+0] = param[0];
+          _paramVerticesOnGFace[2*i+1] = param[1];
+          _paramVerticesOnGEdge[i] = _paramOnGEdge(gedge, edge->getVertex(i));
+        }
+      }
+
+      void computeFrame(double paramEdge, SVector3 &t, SVector3 &n,
+                        SVector3 &w, bool atExtremity = false) const;
+
+    private:
+      SPoint2 _paramOnGFace(const GFace *gface, MVertex *v);
+      double _paramOnGEdge(const GEdge *gedge, MVertex *v);
+    };
+  }
+
   struct Parameters2DCurve {
     double thickness[2];
     double coeffb[2];
@@ -113,7 +169,7 @@ namespace BoundaryLayerCurver
     std::vector<double> _coeffb;
     std::vector<double> _coeffc;
     int _nCorner;
-    int _order;
+    int _order; // not necessary
     double _factorDegenerate[4];
     const nodalBasis *_fs, *_primaryFs;
 //    const MFaceN baseFace;
@@ -171,9 +227,14 @@ namespace BoundaryLayerCurver
 
 }
 
-void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
-                          SVector3 normal, GEntity *bndEnt);
+// BL in planar surface
+void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal);
 
-void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, GFace*);
+// BL in CAD surface
+void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, const GFace*,
+                          const GEdge*);
+
+// 3D BL
+void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, const GFace*);
 
 #endif

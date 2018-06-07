@@ -607,6 +607,189 @@ namespace
 
 namespace BoundaryLayerCurver
 {
+  namespace EdgeCurver2D
+  {
+    SPoint2 _Frame::_paramOnGFace(const GFace *gface, MVertex *v)
+    {
+      // FIXME: For now, just use parFromPoint and try better solution later
+      SPoint3 p(v->x(), v->y(), v->z());
+      return gface->parFromPoint(p);
+
+      GEntity *ent = v->onWhat();
+      if (ent->dim() == 1) {
+        // FIXME: Mvertex must be a MEdgeVertex to do this
+        GEdge *gedge = dynamic_cast<GEdge*>(ent);
+        double u;
+        v->getParameter(0, u);
+        return gedge->reparamOnFace(gface, u, 0);
+      }
+      else if (ent->dim() == 0) {
+        GVertex *gvert = dynamic_cast<GVertex*>(ent);
+        return gvert->reparamOnFace(gface, 0);
+      }
+
+      Msg::Error("entity with wrong dimension: %d", ent->dim());
+      return SPoint2();
+    }
+
+    double _Frame::_paramOnGEdge(const GEdge *gedge, MVertex *v)
+    {
+      // FIXME: For now, just use parFromPoint and try better solution later
+      SPoint3 p(v->x(), v->y(), v->z());
+      return gedge->parFromPoint(p);
+
+      GEntity *ent = v->onWhat();
+      double u;
+      if (ent->dim() == 1) {
+        // FIXME: Mvertex must be a MEdgeVertex to do this
+        if (gedge != ent) {
+          Msg::Error("vertex not on gedge");
+          return 0;
+        }
+        v->getParameter(0, u);
+        return u;
+      }
+      else if (ent->dim() == 0) {
+        gedge->XYZToU(v->x(), v->y(), v->z(), u);
+        return u;
+      }
+
+      Msg::Error("entity with wrong dimension: %d", ent->dim());
+      return 0;
+    }
+
+    void _Frame::computeFrame(double paramEdge, SVector3 &t, SVector3 &n,
+                              SVector3 &w, bool atExtremity) const
+    {
+      if (_haveCAD) {
+        double paramGeoEdge;
+        SPoint2 paramGFace;
+        if (atExtremity) {
+          if (paramEdge < 0) {
+            paramGeoEdge = _paramVerticesOnGEdge[0];
+            paramGFace = SPoint2(_paramVerticesOnGFace[0],
+                                 _paramVerticesOnGFace[1]);
+          }
+          else {
+            paramGeoEdge = _paramVerticesOnGEdge[1];
+            paramGFace = SPoint2(_paramVerticesOnGFace[2],
+                                 _paramVerticesOnGFace[3]);
+          }
+        }
+        else {
+          paramGeoEdge =
+              _edgeOnBoundary->interpolate(_paramVerticesOnGEdge, paramEdge);
+          paramGFace = SPoint2(
+              _edgeOnBoundary->interpolate(_paramVerticesOnGFace, paramEdge, 2),
+              _edgeOnBoundary->interpolate(_paramVerticesOnGFace+1, paramEdge, 2)
+          );
+        }
+        t = _gedge->firstDer(paramGeoEdge);
+        t.normalize();
+        w = _gface->normal(paramGFace);
+      }
+      else {
+        t = _edgeOnBoundary->tangent(paramEdge);
+        w = _normalToTheMesh;
+      }
+      n = crossprod(w, t);
+    }
+
+    void _computeParameters(const MEdgeN *baseEdge, const MEdgeN *otherEdge,
+                            const _Frame &frame, double coeffs[2][3])
+    {
+      SVector3 t, n, w, h;
+      MVertex *vb, *vt;
+
+      frame.computeFrame(-1, t, n, w, true);
+      vb = baseEdge->getVertex(0);
+      vt = otherEdge->getVertex(0);
+      h = SVector3(vt->x() - vb->x(),
+                   vt->y() - vb->y(),
+                   vt->z() - vb->z());
+      coeffs[0][0] = dot(h, n);
+      coeffs[0][1] = dot(h, t);
+      coeffs[0][2] = dot(h, w);
+
+//      SPoint3 p1(vb->x(), vb->y(), vb->z());
+//      draw3DFrame(p1, t, n, w, .005);
+
+      frame.computeFrame(1, t, n, w, true);
+      vb = baseEdge->getVertex(1);
+      vt = otherEdge->getVertex(1);
+      h = SVector3(vt->x() - vb->x(),
+                   vt->y() - vb->y(),
+                   vt->z() - vb->z());
+      coeffs[1][0] = dot(h, n);
+      coeffs[1][1] = dot(h, t);
+      coeffs[1][2] = dot(h, w);
+
+//      SPoint3 p2(vb->x(), vb->y(), vb->z());
+//      draw3DFrame(p2, t, n, w, .005);
+    }
+
+    void _idealPositionEdge(const MEdgeN *baseEdge, const _Frame &frame,
+                            double coeffs[2][3], int nbPoints,
+                            const IntPt *points, fullMatrix<double> &xyz)
+    {
+      for (int i = 0; i < nbPoints; ++i) {
+        double u = points[i].pt[0];
+        SPoint3 p = baseEdge->pnt(u);
+        SVector3 t, n, w;
+        frame.computeFrame(u, t, n, w);
+
+//        draw3DFrame(p, t, n, w, .0025);
+
+        double interpolatedCoeffs[3];
+        for (int j = 0; j < 3; ++j) {
+          interpolatedCoeffs[j] =   coeffs[0][j] * (1-u)/2
+                                  + coeffs[1][j] * (1+u)/2;
+        }
+        SVector3 h;
+        h =   interpolatedCoeffs[0] * n
+            + interpolatedCoeffs[1] * t
+            + interpolatedCoeffs[2] * w;
+        xyz(i, 0) = p.x() + 2*h.x();
+        xyz(i, 1) = p.y() + 2*h.y();
+        xyz(i, 2) = p.z() + 2*h.z();
+      }
+    }
+
+    void curveEdge(const MEdgeN *baseEdge, MEdgeN *edge, const GFace *gface,
+                   const GEdge *gedge, const SVector3 &normal)
+    {
+      _Frame frame(baseEdge, gface, gedge, normal);
+
+      double coeffs[2][3];
+      _computeParameters(baseEdge, edge, frame, coeffs);
+
+      const int orderCurve = baseEdge->getPolynomialOrder();
+      const int orderGauss = orderCurve * 2;
+      const int sizeSystem = getNGQLPts(orderGauss);
+      const IntPt *gaussPnts = getGQLPts(orderGauss);
+
+      // Least square projection
+      fullMatrix<double> xyz(sizeSystem + 2, 3);
+      _idealPositionEdge(baseEdge, frame, coeffs, sizeSystem, gaussPnts, xyz);
+      for (int i = 0; i < 2; ++i) {
+        xyz(sizeSystem + i, 0) = edge->getVertex(i)->x();
+        xyz(sizeSystem + i, 1) = edge->getVertex(i)->y();
+        xyz(sizeSystem + i, 2) = edge->getVertex(i)->z();
+      }
+
+      LeastSquareData *data = getLeastSquareData(TYPE_LIN, orderCurve,
+                                                 orderGauss);
+      fullMatrix<double> newxyz(orderCurve + 1, 3);
+      data->invA.mult(xyz, newxyz);
+
+      for (int i = 2; i < edge->getNumVertices(); ++i) {
+        edge->getVertex(i)->x() = newxyz(i, 0);
+        edge->getVertex(i)->y() = newxyz(i, 1);
+        edge->getVertex(i)->z() = newxyz(i, 2);
+      }
+    }
+  }
+
   static std::map<int, InteriorPlacementData*> interiorPlacementData;
   static std::map<std::pair<int, int>, TFIData*> tfiData;
 
@@ -2435,6 +2618,318 @@ namespace BoundaryLayerCurver
     return true;
   }
 
+  bool computeCommonEdge(MElement *el1, MElement *el2, MEdge &e)
+  {
+    for (int i = 0; i < el1->getNumEdges(); ++i) {
+      e = el1->getEdge(i);
+      for (int j = 0; j < el2->getNumEdges(); ++j) {
+        MEdge e2 = el2->getEdge(j);
+        if (e == e2) return true;
+      }
+    }
+    e = MEdge();
+    return false;
+  }
+
+  void compute2DstackPrimaryVertices(const PairMElemVecMElem &column,
+                                     std::vector<MVertex*> &stack)
+  {
+    MElement *bottomElement = column.first;
+    const std::vector<MElement *> &stackElements = column.second;
+    int numVertexPerLayer = 2;
+    unsigned long numLayers = stackElements.size();
+    stack.assign(numVertexPerLayer * numLayers, NULL);
+
+    int k = 0;
+    for (int i = 0; i < numVertexPerLayer; ++i) {
+      stack[k++] = bottomElement->getVertex(i);
+    }
+    MEdge bottomEdge = bottomElement->getEdge(0);
+    for (unsigned int i = 0; i < numLayers - 1; ++i) {
+      MElement *currentElement = stackElements[i];
+      MEdge topEdge;
+      if (!computeCommonEdge(currentElement, stackElements[i+1], topEdge)) {
+        Msg::Error("Did not find common edge");
+      }
+
+      // Eeach edge that is not the bottom edge nor the top edge links a bottom
+      // node with the corresponding top node
+      for (int j = 0; j < currentElement->getNumEdges(); ++j) {
+        MEdge edge = currentElement->getEdge(j);
+        if (edge == bottomEdge || edge == topEdge) continue;
+
+        MVertex *vbot, *vtop;
+        if (edge.getVertex(0) == bottomEdge.getVertex(0) ||
+            edge.getVertex(0) == bottomEdge.getVertex(1)) {
+          vbot = edge.getVertex(0);
+          vtop = edge.getVertex(1);
+        }
+        else {
+          vbot = edge.getVertex(1);
+          vtop = edge.getVertex(0);
+        }
+
+        for (int l = k-numVertexPerLayer; l < k; ++l) {
+          if (stack[l] == vbot) {
+            stack[l+numVertexPerLayer] = vtop;
+          }
+        }
+      }
+
+      // If there remains NULL values, it is because the vertex is the same
+      // on bottom face and top face.
+      for (int l = k; l < k+numVertexPerLayer; ++l) {
+        if (stack[l] == NULL) {
+          stack[l] = stack[l-numVertexPerLayer];
+        }
+      }
+
+      k += numVertexPerLayer;
+      bottomEdge = topEdge;
+    }
+  }
+
+  void computeStackHighOrderEdges(const PairMElemVecMElem &column,
+                                  std::vector<MEdgeN> &stack)
+  {
+    const std::vector<MElement *> &stackElements = column.second;
+    stack.resize(stackElements.size());
+
+    std::vector<MVertex*> allPrimaryVertices;
+    compute2DstackPrimaryVertices(column, allPrimaryVertices);
+
+    for (unsigned int j = 0; j < stack.size(); ++j) {
+      MEdge e(allPrimaryVertices[j*2+0], allPrimaryVertices[j*2+1]);
+      stack[j] = stackElements[j]->getHighOrderEdge(e);
+    }
+  }
+
+  bool edgesShareVertex(MEdgeN *e0, MEdgeN *e1)
+  {
+    MVertex *v = e0->getVertex(0);
+    MVertex *v0 = e1->getVertex(0);
+    if (v == v0) return true;
+    MVertex *v1 = e1->getVertex(1);
+    if (v == v1) return true;
+    v = e0->getVertex(1);
+    if (v == v0) return true;
+    if (v == v1) return true;
+    return false;
+  }
+
+  bool curve2Dcolumn(PairMElemVecMElem &column,
+                     const GFace *gface, const GEdge *gedge)
+  {
+    if (column.second.size() < 2) return true;
+
+    // First, go through the whole column, reorient and save last curve
+    MElement *bottomEdge = column.first;
+//    MEdge bottom(bottomEdge->getVertex(0), bottomEdge->getVertex(1));
+    MEdgeN bottomHO, topHO;
+
+    // Compute stack high order edges
+    std::vector<MEdgeN> stackEdges;
+    computeStackHighOrderEdges(column, stackEdges);
+
+    // Curve topEdge of first element and last edge
+    MEdgeN *baseEdge = &stackEdges[0];
+    MEdgeN *firstEdge = &stackEdges[1];
+    if (edgesShareVertex(baseEdge, firstEdge))
+      firstEdge = &stackEdges[2];
+    //MEdgeN *topEdge = stackEdges.rbegin()[1]; // last but one element
+    MEdgeN *topEdge = &*stackEdges.rbegin();
+
+    EdgeCurver2D::curveEdge(baseEdge, firstEdge, gface, gedge, SVector3());
+    EdgeCurver2D::curveEdge(baseEdge, topEdge, gface, gedge, SVector3());
+
+//    Parameters2DCurve parameters;
+//    parameters.computeParameters(baseEdge, topEdge, face, SVector3());
+//    parameters.computePosition(baseEdge, topEdge, parameters);
+//
+//    parameters.computeParameters(baseEdge, firstEdge, face, SVector3());
+////    computePosition2DEdge(baseFace, topFace, parameters, boundary);
+//
+//
+//    // Reposition interior nodes
+//
+//
+//    std::vector<MFaceN> &stack)
+//    {
+//      const std::vector<MElement*> &column = bndEl2column.second;
+//      stack.resize(column.size());
+//
+//      std::vector<MVertex *> allPrimaryVertices;
+//      computeStackPrimaryVertices(bndEl2column, allPrimaryVertices);
+//      // FIXME already calculated in computeInterfaces. Reuse them?
+//
+//      int nVertexPerLayer = bndEl2column.first->getNumPrimaryVertices();
+//      for (unsigned int j = 0; j < stack.size(); ++j) {
+//        MFace f;
+//        if (nVertexPerLayer == 3)
+//          f = MFace(allPrimaryVertices[j*3+0],
+//                    allPrimaryVertices[j*3+1],
+//                    allPrimaryVertices[j*3+2]);
+//        else
+//          f = MFace(allPrimaryVertices[j*4+0],
+//                    allPrimaryVertices[j*4+1],
+//                    allPrimaryVertices[j*4+2],
+//                    allPrimaryVertices[j*4+3]);
+//        stack[j] = column[j]->getHighOrderFace(f);
+//      }
+//
+//
+//    for (int i = 0; i < column.size() - 1; ++i) {
+//      MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
+//      int iBottom, sign;
+//      quad->getEdgeInfo(bottom, iBottom, sign);
+//      // Reorientation makes function repositionInteriorNodes() simpler
+//      if (iBottom != 0) quad->reorient(4 - iBottom, false);
+//      quad->getEdgeVertices(0, bottomVertices);
+//      quad->getEdgeVertices(2, topVertices);
+//      std::reverse(topVertices.begin(), topVertices.begin() + 2);
+//      std::reverse(topVertices.begin() + 2, topVertices.end());
+//
+//      if (i == 0) {
+//        globalBottomVertices = bottomVertices;
+//        allLayerVertices.push_back(bottomVertices);
+//      }
+//      allLayerVertices.push_back(topVertices);
+//      if (i == column.size() - 2) globalTopVertices = topVertices;
+//
+//      bottom = MEdge(topVertices[0], topVertices[1]);
+//    }
+//    // TODO
+//
+//
+//    std::vector<MVertex *> bottomVertices, topVertices;
+//    std::vector<MVertex *> globalBottomVertices, globalTopVertices;
+//    std::vector<std::vector<MVertex *> > allLayerVertices; // for general TFI
+//
+////    double lengthFirst = bottom.length();
+////    double distDamping = getDistDamping(bottomEdge->getNum()) * lengthFirst;
+//
+//    for (int i = 0; i < column.size() - 1; ++i) {
+//      MQuadrangle *quad = dynamic_cast<MQuadrangle *>(column[i]);
+//      int iBottom, sign;
+//      quad->getEdgeInfo(bottom, iBottom, sign);
+//      // Reorientation makes function repositionInteriorNodes() simpler
+//      if (iBottom != 0) quad->reorient(4 - iBottom, false);
+//      quad->getEdgeVertices(0, bottomVertices);
+//      quad->getEdgeVertices(2, topVertices);
+//      std::reverse(topVertices.begin(), topVertices.begin() + 2);
+//      std::reverse(topVertices.begin() + 2, topVertices.end());
+//
+//      if (i == 0) {
+//        globalBottomVertices = bottomVertices;
+//        allLayerVertices.push_back(bottomVertices);
+//      }
+//      allLayerVertices.push_back(topVertices);
+//      if (i == column.size() - 2) globalTopVertices = topVertices;
+//
+//      bottom = MEdge(topVertices[0], topVertices[1]);
+//    }
+//
+////    drawAngleChange(globalBottomVertices, bndEnt, w, 1e-2);
+//
+//    /*
+////    int deriv = 5;
+////    double scale = 1, dx = 2; // Strange
+////    double scale = 1, dx = 8; // Good
+//    int deriv = 6;
+//    double scale = 10, dx = 2; // Strange
+////    double scale = 1, dx = 2; // Good
+//    drawBezierControlPolygon(globalBottomVertices, bndEnt);
+//    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(0, -10, 0), &deriv, scale);
+//    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(-dx, -10, 0), &deriv, scale);
+//    damping3(globalBottomVertices, .3, 10000, bndEnt, true);
+//    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(dx, -10, 0), &deriv, scale);
+//    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(-dx, -10, 0), &deriv, scale);
+//    damping3(globalBottomVertices, .3, 10000, bndEnt, true);
+//    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(2*dx, -10, 0), &deriv, scale);
+//    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(-dx, -10, 0), &deriv, scale);
+//    damping3(globalBottomVertices, .3, 10000, bndEnt, true);
+//    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(3*dx, -10, 0), &deriv, scale);
+//    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(-dx, -10, 0), &deriv, scale);
+//    damping3(globalBottomVertices, .3, 10000, bndEnt, true);
+//    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(4*dx, -10, 0), &deriv, scale);
+//    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(-dx, -10, 0), &deriv, scale);
+//    damping3(globalBottomVertices, .3, 10000, bndEnt, true);
+//    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(5*dx, -10, 0), &deriv, scale);
+//    drawBezierDerivative(globalBottomVertices, bndEnt, SPoint3(-dx, -10, 0), &deriv, scale);
+//     */
+//
+//    // Curve last layer
+//    Parameters2DCurve parameters;
+//    computeExtremityCoefficients(globalBottomVertices, globalBottomVertices,
+//                                 globalTopVertices, parameters, w);
+//    computePositionEdgeVert(globalBottomVertices, globalBottomVertices,
+//                            globalTopVertices, parameters, w,
+//                            dampingFactor, bndEnt, -1, true);
+//
+//    // Check if outer element is of good quality:
+//    MElement *el = column.back();
+//    repositionInteriorNodes(el, true);
+//    fullMatrix<double> normal(1, 3);
+//    normal(0, 0) = w.x();
+//    normal(0, 1) = w.y();
+//    normal(0, 2) = w.z();
+//    double qual = jacobianBasedQuality::minIGEMeasure(el, false, true, &normal);
+//
+//    int nIter = 0;
+//    while (nIter < 100 && qual < .3) {
+//      reduceCurving(globalTopVertices);
+//      repositionInteriorNodes(el, true);
+//      qual = jacobianBasedQuality::minIGEMeasure(el, false, true, &normal);
+//      ++nIter;
+//    }
+//
+//
+////    Parameters2DCurve parameters2;
+////    computeExtremityCoefficients(globalTopVertices, globalTopVertices,
+////                                 globalBottomVertices, parameters2, w);
+////    drawIdealCurve(globalTopVertices, parameters2, w, bndEnt);
+////    optimizePositionEdgeVert(globalBottomVertices, globalTopVertices, w, bndEnt);
+////    computeExtremityCoefficients(globalTopVertices, globalTopVertices,
+////                                 globalBottomVertices, parameters2, w);
+////    drawIdealCurve(globalTopVertices, parameters2, w, bndEnt);
+//
+////    drawIdealCurve(globalBottomVertices, parameters, w, bndEnt, true, false, true);
+//
+////    double remainingDamping = distDamping;
+////    double delta = 1;
+////      std::cout << "remain:" << remainingDamping << std::endl;
+////    while (remainingDamping > 1e-12 && delta > 1e-4 * lengthFirst) {
+////      delta = damping3(globalTopVertices, .1, remainingDamping, bndEnt, false);
+////      remainingDamping -= delta;
+////    }
+//
+//    // Choose between linear and hermite
+//    if (linear) {
+//      linearTFI(column, globalBottomVertices, globalTopVertices);
+//    }
+//    else {
+//      computeExtremityCoefficients(globalBottomVertices, globalBottomVertices,
+//                                   allLayerVertices[1], parameters, w);
+//      computePositionEdgeVert(globalBottomVertices, globalBottomVertices,
+//                              allLayerVertices[1], parameters, w,
+//                              dampingFactor, bndEnt, -1, true);
+////      optimizePositionEdgeVert(globalBottomVertices, allLayerVertices[1], w, bndEnt);
+////      int N = 0;
+////      switch (bottomEdge->getNum()) {
+////        case 1102: N = 0; break;
+////      }
+////      for (int i = 0; i < N; ++i) {
+////        damping2(allLayerVertices[1], .1, bndEnt);
+////      }
+//
+//      hermiteTFI(allLayerVertices);
+//      for (int i = 0; i < (int)column.size(); ++i)
+//        repositionInteriorNodes(column[i]);
+//    }
+
+    return true;
+  }
+
   bool curve2DQuadColumnFirst(MElement *bottomEdge, std::vector<MElement *> &column,
                               SVector3 &w, double dampingFactor, GEntity *bndEnt)
   {
@@ -2751,9 +3246,9 @@ namespace BoundaryLayerCurver
 }
 
 
-void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
-                          SVector3 n, GEntity *bndEnt)
+void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 n)
 {
+  GEntity *bndEnt = *GModel::current()->firstFace();
 #ifdef _OPENMP
 #pragma omp for
 #endif
@@ -2832,4 +3327,27 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
   FlGui::instance()->updateViews(true, true);
 #endif
 #endif
+}
+
+
+void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
+                          const GFace *gface, const GEdge *gedge)
+{
+  GEntity *bndEnt = *GModel::current()->firstFace();
+  std::map<int, std::vector<double> > data;
+
+  for (int i = 0; i < bndEl2column.size(); ++i) {
+    bndEl2column[i].first->setVisibility(1);
+    for (unsigned int j = 0; j < bndEl2column[i].second.size(); ++j) {
+      bndEl2column[i].second[j]->setVisibility(1);
+    }
+  }
+
+  for (int i = 0; i < bndEl2column.size(); ++i) {
+//    if (i % 4) continue;
+//    if (bndEl2column[i].first->getNum() != 84) continue;
+//    MElement *bottomEdge = bndEl2column[i].first;
+//    std::vector<MElement *> &column = bndEl2column[i].second;
+    BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], gface, gedge);
+  }
 }

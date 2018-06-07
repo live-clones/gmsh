@@ -1100,12 +1100,18 @@ void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
       bndEl2column[i].second.pop_back();
   }
 
-  SVector3 normal;
-  if (normals)
-    normal = SVector3((*normals)(0, 0), (*normals)(0, 1), (*normals)(0, 2));
-  else
-    normal = SVector3(0, 0, 1);
-  if (p.dim == 2) curve2DBoundaryLayer(bndEl2column, normal, bndEnt);
+
+  if (p.dim == 2) {
+    if (normals) {
+      SVector3 normal;
+      normal = SVector3((*normals)(0, 0), (*normals)(0, 1), (*normals)(0, 2));
+      curve2DBoundaryLayer(bndEl2column, normal);
+    }
+    else {
+      curve2DBoundaryLayer(bndEl2column, dynamic_cast<GFace*>(ent),
+                           dynamic_cast<GEdge*>(bndEnt));
+    }
+  }
 //  else curve3DBoundaryLayer(bndEl2column);
 }
 

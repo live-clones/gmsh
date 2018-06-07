@@ -586,16 +586,18 @@ namespace BoundaryLayerCurver
   }
 
 
-  bool computeCommonEdge(MElement *el1, MElement *el2, MEdge &e)
-  {
-    for (int i = 0; i < el1->getNumEdges(); ++i) {
-      e = el1->getEdge(i);
-      for (int j = 0; j < el2->getNumEdges(); ++j) {
-        MEdge thisEdge = el2->getEdge(j);
-        if (thisEdge == e) return true;
-      }
-    }
-  }
+//  bool computeCommonEdge(MElement *el1, MElement *el2, MEdge &e)
+//  {
+//    for (int i = 0; i < el1->getNumEdges(); ++i) {
+//      e = el1->getEdge(i);
+//      for (int j = 0; j < el2->getNumEdges(); ++j) {
+//        MEdge thisEdge = el2->getEdge(j);
+//        if (thisEdge == e) return true;
+//      }
+//    }
+//    e = MEdge();
+//    return false;
+//  }
 
 
   void computeInterface(const PairMElemVecMElem &c1, const PairMElemVecMElem &c2,
@@ -1011,16 +1013,18 @@ namespace BoundaryLayerCurver
       PairMElemVecMElem &column1 = bndEl2column[adjacencies[i].first];
       PairMElemVecMElem &column2 = bndEl2column[adjacencies[i].second];
 //      bool doIt = true;
-//    if (column1.first->getNum() != 861 && column1.first->getNum() != 467)
-//      doIt = false;
-//    if (column2.first->getNum() != 861 && column2.first->getNum() != 467)
-//      doIt = false;
+//      if (column1.first->getNum() != 861 && column1.first->getNum() != 467)
+//        doIt = false;
+//      if (column2.first->getNum() != 861 && column2.first->getNum() != 467)
+//        doIt = false;
+
+//      if (column1.first->getNum() != 5184 || column2.first->getNum() != 4750) continue;
 
 //      if (doIt) {
         computeInterface(column1, column2, interface, bottomEdge, topEdge);
         curveInterface(interface, column1.first, column2.first, bottomEdge,
                        topEdge, 0, boundary, true);
-//      Msg::Error("RETURN"); return;
+//        Msg::Error("RETURN"); return;
 //      }
     }
   }
