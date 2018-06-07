@@ -345,8 +345,7 @@ void GModel::remove(GVertex *v)
 
 void GModel::remove(int dim, int tag, bool recursive)
 {
-  // we don't check dependencies when removing entities (we just erase them from
-  // the set), so we can go ahead with a brute force recursion
+  // TODO: we should also check dependencies in embedded entities
   if(dim == 3){
     GRegion *gr = getRegionByTag(tag);
     if(gr){
@@ -361,28 +360,58 @@ void GModel::remove(int dim, int tag, bool recursive)
   else if(dim == 2){
     GFace *gf = getFaceByTag(tag);
     if(gf){
-      remove(gf);
-      if(recursive){
-        std::list<GEdge*> e = gf->edges();
-        for(std::list<GEdge*>::iterator it = e.begin(); it != e.end(); it++)
-          remove(1, (*it)->tag(), recursive);
+      bool skip = false;
+      for(riter it = firstRegion(); it != lastRegion(); it++){
+        std::vector<GFace*> f = (*it)->faces();
+        if(std::find(f.begin(), f.end(), gf) != f.end()){
+          skip = true;
+          break;
+        }
+      }
+      if(!skip){
+        remove(gf);
+        if(recursive){
+          std::list<GEdge*> e = gf->edges();
+          for(std::list<GEdge*>::iterator it = e.begin(); it != e.end(); it++)
+            remove(1, (*it)->tag(), recursive);
+        }
       }
     }
   }
   else if(dim == 1){
     GEdge *ge = getEdgeByTag(tag);
     if(ge){
-      remove(ge);
-      if(recursive){
-        if(ge->getBeginVertex()) remove(ge->getBeginVertex());
-        if(ge->getEndVertex()) remove(ge->getEndVertex());
+      bool skip = false;
+      for(fiter it = firstFace(); it != lastFace(); it++){
+        std::list<GEdge*> e = (*it)->edges();
+        if(std::find(e.begin(), e.end(), ge) != e.end()){
+          skip = true;
+          break;
+        }
+      }
+      if(!skip){
+        remove(ge);
+        if(recursive){
+          if(ge->getBeginVertex()) remove(0, ge->getBeginVertex()->tag());
+          if(ge->getEndVertex()) remove(0, ge->getEndVertex()->tag());
+        }
       }
     }
   }
   else if(dim == 0){
     GVertex *gv = getVertexByTag(tag);
     if(gv){
-      remove(gv);
+      bool skip = false;
+      for(eiter it = firstEdge(); it != lastEdge(); it++){
+        GEdge *ge = *it;
+        if(ge->getBeginVertex() == gv || ge->getEndVertex() == gv){
+          skip = true;
+          break;
+        }
+      }
+      if(!skip){
+        remove(gv);
+      }
     }
   }
 }
