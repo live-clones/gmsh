@@ -137,12 +137,14 @@ public:
   inline int getNumVertices() const { return (int)_v.size(); }
   inline MVertex *getVertex(int i) const { return _v[i]; }
   inline const std::vector<MVertex*> &getVertices() const { return _v; }
-  int getPolynomialOrder() const {return getNumVertices() - 1;}
+  inline int getPolynomialOrder() const {return getNumVertices() - 1;}
 
   MEdge getEdge() const;
 
   SPoint3 pnt(double u) const;
   SVector3 tangent(double u) const;
+
+  double interpolate(const double val[], double u, int stride = 1) const;
 };
 
 #endif

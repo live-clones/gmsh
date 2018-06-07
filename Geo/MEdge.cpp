@@ -138,34 +138,49 @@ MEdge MEdgeN::getEdge() const
 
 SPoint3 MEdgeN::pnt(double u) const
 {
-  int tagLine = ElementType::getTag(TYPE_LIN, (int)_v.size() - 1);
+  int tagLine = ElementType::getTag(TYPE_LIN, getPolynomialOrder());
   const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
 
   double f[100];
   fs->f(u, 0, 0, f);
 
   double x = 0, y = 0, z = 0;
-  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
-    x += f[j] * _v[j]->x();
-    y += f[j] * _v[j]->y();
-    z += f[j] * _v[j]->z();
+  for (int i = 0; i < fs->getNumShapeFunctions(); i++) {
+    x += f[i] * _v[i]->x();
+    y += f[i] * _v[i]->y();
+    z += f[i] * _v[i]->z();
   }
   return SPoint3(x, y, z);
 }
 
 SVector3 MEdgeN::tangent(double u) const
 {
-  int tagLine = ElementType::getTag(TYPE_LIN, (int)_v.size() - 1);
+  int tagLine = ElementType::getTag(TYPE_LIN, getPolynomialOrder());
   const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
 
   double sf[100][3];
   fs->df(u, 0, 0, sf);
 
   double dx = 0, dy = 0, dz = 0;
-  for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
-    dx += sf[j][0] * _v[j]->x();
-    dy += sf[j][0] * _v[j]->y();
-    dz += sf[j][0] * _v[j]->z();
+  for (int i = 0; i < fs->getNumShapeFunctions(); i++) {
+    dx += sf[i][0] * _v[i]->x();
+    dy += sf[i][0] * _v[i]->y();
+    dz += sf[i][0] * _v[i]->z();
   }
   return SVector3(dx, dy, dz).unit();
+}
+
+double MEdgeN::interpolate(const double val[], double u, int stride) const
+{
+  int tagLine = ElementType::getTag(TYPE_LIN, getPolynomialOrder());
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
+
+  double f[100];
+  fs->f(u, 0, 0, f);
+
+  double sum = 0;
+  for (int i = 0, k = 0; i < fs->getNumShapeFunctions(); i++, k += stride) {
+    sum += f[i] * val[k];
+  }
+  return sum;
 }
