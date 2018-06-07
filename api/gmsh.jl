@@ -512,6 +512,27 @@ function getType(dim, tag)
 end
 
 """
+    gmsh.model.getNormals(tag, parametricCoord)
+
+Get the normals to the surface with tag `tag` at the parametric coordinates
+`parametricCoord`. `parametricCoords` are goven by pair, concatenated. `normals`
+are returned as triplets, concatenated.
+
+Return `normals`.
+"""
+function getNormals(tag, parametricCoord)
+    api_normals_ = Ref{Ptr{Cdouble}}()
+    api_normals_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetNormals, gmsh.lib), Void,
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, parametricCoord, length(parametricCoord), api_normals_, api_normals_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetNormals returned non-zero error code: $(ierr[])")
+    normals = unsafe_wrap(Array, api_normals_[], api_normals_n_[], true)
+    return normals
+end
+
+"""
     module gmsh.model.mesh
 
 Per-model meshing functions
@@ -618,7 +639,7 @@ function getLastNodeError()
 end
 
 """
-    gmsh.model.mesh.getNodes(dim = -1, tag = -1)
+    gmsh.model.mesh.getNodes(dim = -1, tag = -1, includeBoundary = false)
 
 Get the nodes classified on the entity of dimension `dim` and tag `tag`. If
 `tag` < 0, get the nodes for all entities of dimension `dim`. If `dim` and `tag`
@@ -627,11 +648,14 @@ are negative, get all the nodes in the mesh. `nodeTags` contains the node tags
 length 3 times the length of `nodeTags` that contains the (x, y, z) coordinates
 of the nodes, concatenated. If `dim` >= 0, `parametricCoord` contains the
 parametric coordinates of the nodes, if available. The length of
-`parametricCoord` can be 0 or `dim` times the length of `nodeTags`.
+`parametricCoord` can be 0 or `dim` times the length of `nodeTags`. If
+`includeBoundary` is set, also return the nodes classified on the boundary of
+the entity (wich will be reparametrized on the entity if `dim` >= 0 in order to
+compute their parametric coordinates).
 
 Return `nodeTags`, `coord`, `parametricCoord`.
 """
-function getNodes(dim = -1, tag = -1)
+function getNodes(dim = -1, tag = -1, includeBoundary = false)
     api_nodeTags_ = Ref{Ptr{Cint}}()
     api_nodeTags_n_ = Ref{Csize_t}()
     api_coord_ = Ref{Ptr{Cdouble}}()
@@ -640,8 +664,8 @@ function getNodes(dim = -1, tag = -1)
     api_parametricCoord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGetNodes, gmsh.lib), Void,
-          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, dim, tag, ierr)
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
+          api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, dim, tag, includeBoundary, ierr)
     ierr[] != 0 && error("gmshModelMeshGetNodes returned non-zero error code: $(ierr[])")
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], true)

@@ -209,6 +209,14 @@ GMSH_API void gmshModelGetType(const int dim,
                                char ** entityType,
                                int * ierr);
 
+/* Get the normals to the surface with tag `tag' at the parametric coordinates
+ * `parametricCoord'. `parametricCoords' are goven by pair, concatenated.
+ * `normals' are returned as triplets, concatenated. */
+GMSH_API void gmshModelGetNormals(const int tag,
+                                  double * parametricCoord, size_t parametricCoord_n,
+                                  double ** normals, size_t * normals_n,
+                                  int * ierr);
+
 /* Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3). */
 GMSH_API void gmshModelMeshGenerate(const int dim,
                                     int * ierr);
@@ -242,12 +250,15 @@ GMSH_API void gmshModelMeshGetLastNodeError(int ** nodeTags, size_t * nodeTags_n
  * (x, y, z) coordinates of the nodes, concatenated. If `dim' >= 0,
  * `parametricCoord' contains the parametric coordinates of the nodes, if
  * available. The length of `parametricCoord' can be 0 or `dim' times the
- * length of `nodeTags'. */
+ * length of `nodeTags'. If `includeBoundary' is set, also return the nodes
+ * classified on the boundary of the entity (wich will be reparametrized on
+ * the entity if `dim' >= 0 in order to compute their parametric coordinates). */
 GMSH_API void gmshModelMeshGetNodes(int ** nodeTags, size_t * nodeTags_n,
                                     double ** coord, size_t * coord_n,
                                     double ** parametricCoord, size_t * parametricCoord_n,
                                     const int dim,
                                     const int tag,
+                                    const int includeBoundary,
                                     int * ierr);
 
 /* Get the coordinates and the parametric coordinates (if any) of the node

@@ -19,6 +19,7 @@
 #include "discreteEdge.h"
 #include "discreteFace.h"
 #include "discreteRegion.h"
+#include "MVertex.h"
 #include "MPoint.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -449,6 +450,27 @@ GMSH_API void gmsh::model::getType(const int dim,
   entityType = ge->getTypeString();
 }
 
+GMSH_API void gmsh::model::getNormals(const int tag,
+                                      const std::vector<double> &parametricCoord,
+                                      std::vector<double> &normals)
+{
+  if(!_isInitialized()){ throw -1; }
+  GFace *gf = GModel::current()->getFaceByTag(tag);
+  if(!gf){
+    Msg::Error("%s does not exist", _getEntityName(2, tag).c_str());
+    throw 2;
+  }
+  normals.clear();
+  if(parametricCoord.size() < 2) return;
+  for(unsigned int i = 0; i < parametricCoord.size(); i += 2){
+    SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
+    SVector3 n = gf->normal(param);
+    normals.push_back(n.x());
+    normals.push_back(n.y());
+    normals.push_back(n.z());
+  }
+}
+
 // gmsh::model::mesh
 
 GMSH_API void gmsh::model::mesh::generate(const int dim)
@@ -499,11 +521,79 @@ GMSH_API void gmsh::model::mesh::getLastNodeError(std::vector<int> &nodeTags)
     nodeTags.push_back(v[i]->getNum());
 }
 
+static void _getAdditionalNodesOnBoundary(GEntity *entity,
+                                          std::vector<int> &nodeTags,
+                                          std::vector<double> &coord,
+                                          std::vector<double> &parametricCoord,
+                                          bool parametric)
+{
+  std::vector<GFace*> f;
+  std::list<GEdge*> e;
+  std::list<GVertex*> v;
+  if(entity->dim() > 2) f = entity->faces();
+  if(entity->dim() > 1) e = entity->edges();
+  if(entity->dim() > 0) v = entity->vertices();
+  for(std::vector<GFace*>::iterator it = f.begin(); it != f.end(); it++){
+    GFace *gf = *it;
+    for(unsigned int j = 0; j < gf->mesh_vertices.size(); j++){
+      MVertex *v = gf->mesh_vertices[j];
+      nodeTags.push_back(v->getNum());
+      coord.push_back(v->x());
+      coord.push_back(v->y());
+      coord.push_back(v->z());
+    }
+  }
+  for(std::list<GEdge*>::iterator it = e.begin(); it != e.end(); it++){
+    GEdge *ge = *it;
+    for(unsigned int j = 0; j < ge->mesh_vertices.size(); j++){
+      MVertex *v = ge->mesh_vertices[j];
+      nodeTags.push_back(v->getNum());
+      coord.push_back(v->x());
+      coord.push_back(v->y());
+      coord.push_back(v->z());
+      if(entity->dim() == 2 && parametric){
+        SPoint2 param;
+        if(!reparamMeshVertexOnFace(v, (GFace*)entity, param))
+          Msg::Warning("Failed to compute parameters of node %d on surface %d",
+                       v->getNum(), entity->tag());
+        parametricCoord.push_back(param.x());
+        parametricCoord.push_back(param.y());
+      }
+    }
+  }
+  for(std::list<GVertex*>::iterator it = v.begin(); it != v.end(); it++){
+    GVertex *gv = *it;
+    for(unsigned int j = 0; j < gv->mesh_vertices.size(); j++){
+      MVertex *v = gv->mesh_vertices[j];
+      nodeTags.push_back(v->getNum());
+      coord.push_back(v->x());
+      coord.push_back(v->y());
+      coord.push_back(v->z());
+      if(entity->dim() == 2 && parametric){
+        SPoint2 param;
+        if(!reparamMeshVertexOnFace(v, (GFace*)entity, param))
+          Msg::Warning("Failed to compute parameters of node %d on surface %d",
+                       v->getNum(), entity->tag());
+        parametricCoord.push_back(param.x());
+        parametricCoord.push_back(param.y());
+      }
+      else if(entity->dim() == 1 && parametric){
+        double param;
+        if(!reparamMeshVertexOnEdge(v, (GEdge*)entity, param))
+          Msg::Warning("Failed to compute parameters of node %d on edge %d",
+                       v->getNum(), entity->tag());
+        parametricCoord.push_back(param);
+      }
+    }
+  }
+}
+
 GMSH_API void gmsh::model::mesh::getNodes(std::vector<int> &nodeTags,
                                           std::vector<double> &coord,
                                           std::vector<double> &parametricCoord,
                                           const int dim,
-                                          const int tag)
+                                          const int tag,
+                                          const bool includeBoundary)
 {
   if(!_isInitialized()){ throw -1; }
   nodeTags.clear();
@@ -536,6 +626,8 @@ GMSH_API void gmsh::model::mesh::getNodes(std::vector<int> &nodeTags,
         }
       }
     }
+    if(includeBoundary)
+      _getAdditionalNodesOnBoundary(ge, nodeTags, coord, parametricCoord, dim > 0);
   }
 }
 

@@ -660,6 +660,29 @@ class model:
                 ierr.value)
         return _ostring(api_entityType_)
 
+    @staticmethod
+    def getNormals(tag, parametricCoord):
+        """
+        Get the normals to the surface with tag `tag' at the parametric coordinates
+        `parametricCoord'. `parametricCoords' are goven by pair, concatenated.
+        `normals' are returned as triplets, concatenated.
+
+        Return `normals'.
+        """
+        api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
+        api_normals_, api_normals_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetNormals(
+            c_int(tag),
+            api_parametricCoord_, api_parametricCoord_n_,
+            byref(api_normals_), byref(api_normals_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetNormals returned non-zero error code: ",
+                ierr.value)
+        return _ovectordouble(api_normals_, api_normals_n_.value)
+
 
     class mesh:
         """
@@ -760,7 +783,7 @@ class model:
             return _ovectorint(api_nodeTags_, api_nodeTags_n_.value)
 
         @staticmethod
-        def getNodes(dim=-1, tag=-1):
+        def getNodes(dim=-1, tag=-1, includeBoundary=False):
             """
             Get the nodes classified on the entity of dimension `dim' and tag `tag'. If
             `tag' < 0, get the nodes for all entities of dimension `dim'. If `dim' and
@@ -770,7 +793,9 @@ class model:
             (x, y, z) coordinates of the nodes, concatenated. If `dim' >= 0,
             `parametricCoord' contains the parametric coordinates of the nodes, if
             available. The length of `parametricCoord' can be 0 or `dim' times the
-            length of `nodeTags'.
+            length of `nodeTags'. If `includeBoundary' is set, also return the nodes
+            classified on the boundary of the entity (wich will be reparametrized on
+            the entity if `dim' >= 0 in order to compute their parametric coordinates).
 
             Return `nodeTags', `coord', `parametricCoord'.
             """
@@ -784,6 +809,7 @@ class model:
                 byref(api_parametricCoord_), byref(api_parametricCoord_n_),
                 c_int(dim),
                 c_int(tag),
+                c_int(bool(includeBoundary)),
                 byref(ierr))
             if ierr.value != 0:
                 raise ValueError(

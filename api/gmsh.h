@@ -203,6 +203,13 @@ namespace gmsh { // Top-level functions
                           const int tag,
                           std::string & entityType);
 
+    // Get the normals to the surface with tag `tag' at the parametric coordinates
+    // `parametricCoord'. `parametricCoords' are goven by pair, concatenated.
+    // `normals' are returned as triplets, concatenated.
+    GMSH_API void getNormals(const int tag,
+                             const std::vector<double> & parametricCoord,
+                             std::vector<double> & normals);
+
     namespace mesh { // Per-model meshing functions
 
       // Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or
@@ -234,12 +241,16 @@ namespace gmsh { // Top-level functions
       // contains the (x, y, z) coordinates of the nodes, concatenated. If `dim' >=
       // 0, `parametricCoord' contains the parametric coordinates of the nodes, if
       // available. The length of `parametricCoord' can be 0 or `dim' times the
-      // length of `nodeTags'.
+      // length of `nodeTags'. If `includeBoundary' is set, also return the nodes
+      // classified on the boundary of the entity (wich will be reparametrized on
+      // the entity if `dim' >= 0 in order to compute their parametric
+      // coordinates).
       GMSH_API void getNodes(std::vector<int> & nodeTags,
                              std::vector<double> & coord,
                              std::vector<double> & parametricCoord,
                              const int dim = -1,
-                             const int tag = -1);
+                             const int tag = -1,
+                             const bool includeBoundary = false);
 
       // Get the coordinates and the parametric coordinates (if any) of the node
       // with tag `tag'. This is a sometimes useful but inefficient way of
