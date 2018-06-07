@@ -3093,7 +3093,7 @@ bool OCC_Internals::getVertex(int tag, double &x, double &y, double &z)
   return false;
 }
 
-bool const sortByInverseDim(std::pair<int, int>& lhs, std::pair<int, int> const& rhs)
+bool const sortByInvDim(std::pair<int, int> const &lhs, std::pair<int, int> const &rhs)
 {
   return lhs.first > rhs.first;
 }
@@ -3109,7 +3109,7 @@ void OCC_Internals::synchronize(GModel *model)
   Msg::Debug("Sync is removing %d model entities", toRemove.size());
   // make sure to delete highest dimensional entities first (model->remove()
   // will not remove entities that are the boundary of others!)
-  std::sort(toRemove.begin(), toRemove.end(), sortByInverseDim);
+  std::sort(toRemove.begin(), toRemove.end(), sortByInvDim);
   model->remove(toRemove);
   _toRemove.clear();
 
