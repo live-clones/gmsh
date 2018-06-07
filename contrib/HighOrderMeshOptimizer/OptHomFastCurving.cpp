@@ -231,7 +231,7 @@ void getColumnQuad(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
     getOppositeEdgeQuad(el, elBaseEd, elTopEd, edLenMin, edLenMax);
 
     if (edLenMin > edLenMax*p.maxRho) break;
-    const double dp = dot(elBaseEd.normal(), elTopEd.normal());
+    const double dp = dot(elBaseEd.tangent(), elTopEd.tangent());
     if (std::abs(dp) < maxDP) break;
 
     blob.push_back(el);
@@ -260,9 +260,9 @@ void getColumnTri(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
     MEdge elTopEd0;
     double edLenMin0, edLenMax0;
     getOppositeEdgeTri(el0, elBaseEd, elTopEd0, edLenMin0, edLenMax0);
-    const SVector3 normBase = elBaseEd.normal();
-    const SVector3 normTop0 = elTopEd0.normal();
-    if (std::abs(dot(normBase, normTop0)) < maxDPIn) break;
+    const SVector3 tangentBase = elBaseEd.tangent();
+    const SVector3 tangentTop0 = elTopEd0.tangent();
+    if (std::abs(dot(tangentBase, tangentTop0)) < maxDPIn) break;
 
     // Get second element in layer
     std::vector<MElement*> newElts1 = ed2el[elTopEd0];
@@ -272,14 +272,14 @@ void getColumnTri(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
     MEdge elTopEd1;
     double edLenMin1, edLenMax1;
     getOppositeEdgeTri(el1, elTopEd0, elTopEd1, edLenMin1, edLenMax1);
-    const SVector3 normTop1 = elTopEd1.normal();
-    if (std::abs(dot(normTop0, normTop1)) < maxDPIn) break;
+    const SVector3 tangentTop1 = elTopEd1.tangent();
+    if (std::abs(dot(tangentTop0, tangentTop1)) < maxDPIn) break;
 
     // Check stop criteria
     const double edLenMin = std::min(edLenMin0, edLenMin1);
     const double edLenMax = std::max(edLenMax0, edLenMax1);
     if (edLenMin > edLenMax*p.maxRho) break;
-    if (std::abs(dot(normBase, normTop1)) < maxDP) break;
+    if (std::abs(dot(tangentBase, tangentTop1)) < maxDP) break;
 
     // Add elements to blob and pass top edge to next layer
     blob.push_back(el0);
@@ -1086,6 +1086,7 @@ void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
     }
     if (!foundCol || bndEl2column.back().second.empty()) {
       bndEl2column.pop_back();
+      aboveElements.pop_back();
     } // Skip bnd. el. if top vertices not found
 
     ++it;
