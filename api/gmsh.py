@@ -663,9 +663,10 @@ class model:
     @staticmethod
     def getNormals(tag, parametricCoord):
         """
-        Get the normals to the surface with tag `tag' at the parametric coordinates
-        `parametricCoord'. `parametricCoords' are goven by pair, concatenated.
-        `normals' are returned as triplets, concatenated.
+        Get the normal to the surface with tag `tag' at the parametric coordinates
+        `parametricCoord'. `parametricCoord' are given by pair of `u' and `v'
+        coordinates, concatenated. `normals' are returned as triplets of `x', `y'
+        and `z' coordinates, concatenated.
 
         Return `normals'.
         """
@@ -682,6 +683,62 @@ class model:
                 "gmshModelGetNormals returned non-zero error code: ",
                 ierr.value)
         return _ovectordouble(api_normals_, api_normals_n_.value)
+
+    @staticmethod
+    def getCurvatures(tag, parametricCoord):
+        """
+        Get the curvature of the curve with tag `tag' at the parametric coordinates
+        `parametricCoord'.
+
+        Return `curvatures'.
+        """
+        api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
+        api_curvatures_, api_curvatures_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetCurvatures(
+            c_int(tag),
+            api_parametricCoord_, api_parametricCoord_n_,
+            byref(api_curvatures_), byref(api_curvatures_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetCurvatures returned non-zero error code: ",
+                ierr.value)
+        return _ovectordouble(api_curvatures_, api_curvatures_n_.value)
+
+    @staticmethod
+    def getPrincipalCurvatures(tag, parametricCoord):
+        """
+        Get the principal curvatures of the surface with tag `tag' at the
+        parametric coordinates `parametricCoord', as well as their respective
+        directions. `parametricCoord' are given by pair of `u' and `v' coordinates,
+        concatenated.
+
+        Return `curvatureMax', `curvatureMin', `directionMax', `directionMin'.
+        """
+        api_parametricCoord_, api_parametricCoord_n_ = _ivectordouble(parametricCoord)
+        api_curvatureMax_, api_curvatureMax_n_ = POINTER(c_double)(), c_size_t()
+        api_curvatureMin_, api_curvatureMin_n_ = POINTER(c_double)(), c_size_t()
+        api_directionMax_, api_directionMax_n_ = POINTER(c_double)(), c_size_t()
+        api_directionMin_, api_directionMin_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetPrincipalCurvatures(
+            c_int(tag),
+            api_parametricCoord_, api_parametricCoord_n_,
+            byref(api_curvatureMax_), byref(api_curvatureMax_n_),
+            byref(api_curvatureMin_), byref(api_curvatureMin_n_),
+            byref(api_directionMax_), byref(api_directionMax_n_),
+            byref(api_directionMin_), byref(api_directionMin_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise ValueError(
+                "gmshModelGetPrincipalCurvatures returned non-zero error code: ",
+                ierr.value)
+        return (
+            _ovectordouble(api_curvatureMax_, api_curvatureMax_n_.value),
+            _ovectordouble(api_curvatureMin_, api_curvatureMin_n_.value),
+            _ovectordouble(api_directionMax_, api_directionMax_n_.value),
+            _ovectordouble(api_directionMin_, api_directionMin_n_.value))
 
 
     class mesh:

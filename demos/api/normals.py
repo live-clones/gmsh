@@ -8,7 +8,8 @@ gmsh.model.occ.addBox(2, 0, 0, 1, 1, 1)
 gmsh.model.occ.synchronize()
 gmsh.model.mesh.generate(2)
 
-vp = []
+nn = []
+cc = []
 
 # get all surfaces
 ent = gmsh.model.getEntities(2)
@@ -20,17 +21,29 @@ for e in ent:
     # reparametrized on surf in order to compute their parametric coordinates -
     # which will be different when reparametrized on another adjacent surface)
     tags, coord, param = gmsh.model.mesh.getNodes(2, surf, True)
+    # get surface normal on all nodes, i.e. including on the geometrical
+    # singularities (edges/points)
     normals = gmsh.model.getNormals(surf, param)
+    # get surface curvature
+    curvMax, curvMin, _, _ = gmsh.model.getPrincipalCurvatures(surf, param)
     for i in range(0,len(coord),3):
-        vp.append(coord[i])
-        vp.append(coord[i+1])
-        vp.append(coord[i+2])
-        vp.append(normals[i])
-        vp.append(normals[i+1])
-        vp.append(normals[i+2])
+        nn.append(coord[i])
+        nn.append(coord[i+1])
+        nn.append(coord[i+2])
+        nn.append(normals[i])
+        nn.append(normals[i+1])
+        nn.append(normals[i+2])
+        cc.append(coord[i])
+        cc.append(coord[i+1])
+        cc.append(coord[i+2])
+        cc.append(curvMax[i/3])
 
 t = gmsh.view.add("normals")
-gmsh.view.addListData(t, "VP", len(vp)/6, vp)
+gmsh.view.addListData(t, "VP", len(nn)/6, nn)
 gmsh.view.write(t, "normals.pos")
+
+t = gmsh.view.add("curvatures")
+gmsh.view.addListData(t, "SP", len(cc)/4, cc)
+gmsh.view.write(t, "curvatures.pos")
 
 gmsh.finalize()

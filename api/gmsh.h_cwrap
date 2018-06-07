@@ -401,9 +401,10 @@ namespace gmsh { // Top-level functions
       entityType = std::string(api_entityType_); gmshFree(api_entityType_);
     }
 
-    // Get the normals to the surface with tag `tag' at the parametric coordinates
-    // `parametricCoord'. `parametricCoords' are goven by pair, concatenated.
-    // `normals' are returned as triplets, concatenated.
+    // Get the normal to the surface with tag `tag' at the parametric coordinates
+    // `parametricCoord'. `parametricCoord' are given by pair of `u' and `v'
+    // coordinates, concatenated. `normals' are returned as triplets of `x', `y'
+    // and `z' coordinates, concatenated.
     GMSH_API void getNormals(const int tag,
                              const std::vector<double> & parametricCoord,
                              std::vector<double> & normals)
@@ -415,6 +416,47 @@ namespace gmsh { // Top-level functions
       if(ierr) throw ierr;
       gmshFree(api_parametricCoord_);
       normals.assign(api_normals_, api_normals_ + api_normals_n_); gmshFree(api_normals_);
+    }
+
+    // Get the curvature of the curve with tag `tag' at the parametric coordinates
+    // `parametricCoord'.
+    GMSH_API void getCurvatures(const int tag,
+                                const std::vector<double> & parametricCoord,
+                                std::vector<double> & curvatures)
+    {
+      int ierr = 0;
+      double *api_parametricCoord_; size_t api_parametricCoord_n_; vector2ptr(parametricCoord, &api_parametricCoord_, &api_parametricCoord_n_);
+      double *api_curvatures_; size_t api_curvatures_n_;
+      gmshModelGetCurvatures(tag, api_parametricCoord_, api_parametricCoord_n_, &api_curvatures_, &api_curvatures_n_, &ierr);
+      if(ierr) throw ierr;
+      gmshFree(api_parametricCoord_);
+      curvatures.assign(api_curvatures_, api_curvatures_ + api_curvatures_n_); gmshFree(api_curvatures_);
+    }
+
+    // Get the principal curvatures of the surface with tag `tag' at the parametric
+    // coordinates `parametricCoord', as well as their respective directions.
+    // `parametricCoord' are given by pair of `u' and `v' coordinates,
+    // concatenated.
+    GMSH_API void getPrincipalCurvatures(const int tag,
+                                         const std::vector<double> & parametricCoord,
+                                         std::vector<double> & curvatureMax,
+                                         std::vector<double> & curvatureMin,
+                                         std::vector<double> & directionMax,
+                                         std::vector<double> & directionMin)
+    {
+      int ierr = 0;
+      double *api_parametricCoord_; size_t api_parametricCoord_n_; vector2ptr(parametricCoord, &api_parametricCoord_, &api_parametricCoord_n_);
+      double *api_curvatureMax_; size_t api_curvatureMax_n_;
+      double *api_curvatureMin_; size_t api_curvatureMin_n_;
+      double *api_directionMax_; size_t api_directionMax_n_;
+      double *api_directionMin_; size_t api_directionMin_n_;
+      gmshModelGetPrincipalCurvatures(tag, api_parametricCoord_, api_parametricCoord_n_, &api_curvatureMax_, &api_curvatureMax_n_, &api_curvatureMin_, &api_curvatureMin_n_, &api_directionMax_, &api_directionMax_n_, &api_directionMin_, &api_directionMin_n_, &ierr);
+      if(ierr) throw ierr;
+      gmshFree(api_parametricCoord_);
+      curvatureMax.assign(api_curvatureMax_, api_curvatureMax_ + api_curvatureMax_n_); gmshFree(api_curvatureMax_);
+      curvatureMin.assign(api_curvatureMin_, api_curvatureMin_ + api_curvatureMin_n_); gmshFree(api_curvatureMin_);
+      directionMax.assign(api_directionMax_, api_directionMax_ + api_directionMax_n_); gmshFree(api_directionMax_);
+      directionMin.assign(api_directionMin_, api_directionMin_ + api_directionMin_n_); gmshFree(api_directionMin_);
     }
 
     namespace mesh { // Per-model meshing functions

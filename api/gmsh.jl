@@ -514,9 +514,10 @@ end
 """
     gmsh.model.getNormals(tag, parametricCoord)
 
-Get the normals to the surface with tag `tag` at the parametric coordinates
-`parametricCoord`. `parametricCoords` are goven by pair, concatenated. `normals`
-are returned as triplets, concatenated.
+Get the normal to the surface with tag `tag` at the parametric coordinates
+`parametricCoord`. `parametricCoord` are given by pair of `u` and `v`
+coordinates, concatenated. `normals` are returned as triplets of `x`, `y` and
+`z` coordinates, concatenated.
 
 Return `normals`.
 """
@@ -530,6 +531,56 @@ function getNormals(tag, parametricCoord)
     ierr[] != 0 && error("gmshModelGetNormals returned non-zero error code: $(ierr[])")
     normals = unsafe_wrap(Array, api_normals_[], api_normals_n_[], true)
     return normals
+end
+
+"""
+    gmsh.model.getCurvatures(tag, parametricCoord)
+
+Get the curvature of the curve with tag `tag` at the parametric coordinates
+`parametricCoord`.
+
+Return `curvatures`.
+"""
+function getCurvatures(tag, parametricCoord)
+    api_curvatures_ = Ref{Ptr{Cdouble}}()
+    api_curvatures_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetCurvatures, gmsh.lib), Void,
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, parametricCoord, length(parametricCoord), api_curvatures_, api_curvatures_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetCurvatures returned non-zero error code: $(ierr[])")
+    curvatures = unsafe_wrap(Array, api_curvatures_[], api_curvatures_n_[], true)
+    return curvatures
+end
+
+"""
+    gmsh.model.getPrincipalCurvatures(tag, parametricCoord)
+
+Get the principal curvatures of the surface with tag `tag` at the parametric
+coordinates `parametricCoord`, as well as their respective directions.
+`parametricCoord` are given by pair of `u` and `v` coordinates, concatenated.
+
+Return `curvatureMax`, `curvatureMin`, `directionMax`, `directionMin`.
+"""
+function getPrincipalCurvatures(tag, parametricCoord)
+    api_curvatureMax_ = Ref{Ptr{Cdouble}}()
+    api_curvatureMax_n_ = Ref{Csize_t}()
+    api_curvatureMin_ = Ref{Ptr{Cdouble}}()
+    api_curvatureMin_n_ = Ref{Csize_t}()
+    api_directionMax_ = Ref{Ptr{Cdouble}}()
+    api_directionMax_n_ = Ref{Csize_t}()
+    api_directionMin_ = Ref{Ptr{Cdouble}}()
+    api_directionMin_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetPrincipalCurvatures, gmsh.lib), Void,
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, parametricCoord, length(parametricCoord), api_curvatureMax_, api_curvatureMax_n_, api_curvatureMin_, api_curvatureMin_n_, api_directionMax_, api_directionMax_n_, api_directionMin_, api_directionMin_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetPrincipalCurvatures returned non-zero error code: $(ierr[])")
+    curvatureMax = unsafe_wrap(Array, api_curvatureMax_[], api_curvatureMax_n_[], true)
+    curvatureMin = unsafe_wrap(Array, api_curvatureMin_[], api_curvatureMin_n_[], true)
+    directionMax = unsafe_wrap(Array, api_directionMax_[], api_directionMax_n_[], true)
+    directionMin = unsafe_wrap(Array, api_directionMin_[], api_directionMin_n_[], true)
+    return curvatureMax, curvatureMin, directionMax, directionMin
 end
 
 """

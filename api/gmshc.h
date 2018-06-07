@@ -209,13 +209,33 @@ GMSH_API void gmshModelGetType(const int dim,
                                char ** entityType,
                                int * ierr);
 
-/* Get the normals to the surface with tag `tag' at the parametric coordinates
- * `parametricCoord'. `parametricCoords' are goven by pair, concatenated.
- * `normals' are returned as triplets, concatenated. */
+/* Get the normal to the surface with tag `tag' at the parametric coordinates
+ * `parametricCoord'. `parametricCoord' are given by pair of `u' and `v'
+ * coordinates, concatenated. `normals' are returned as triplets of `x', `y'
+ * and `z' coordinates, concatenated. */
 GMSH_API void gmshModelGetNormals(const int tag,
                                   double * parametricCoord, size_t parametricCoord_n,
                                   double ** normals, size_t * normals_n,
                                   int * ierr);
+
+/* Get the curvature of the curve with tag `tag' at the parametric coordinates
+ * `parametricCoord'. */
+GMSH_API void gmshModelGetCurvatures(const int tag,
+                                     double * parametricCoord, size_t parametricCoord_n,
+                                     double ** curvatures, size_t * curvatures_n,
+                                     int * ierr);
+
+/* Get the principal curvatures of the surface with tag `tag' at the
+ * parametric coordinates `parametricCoord', as well as their respective
+ * directions. `parametricCoord' are given by pair of `u' and `v' coordinates,
+ * concatenated. */
+GMSH_API void gmshModelGetPrincipalCurvatures(const int tag,
+                                              double * parametricCoord, size_t parametricCoord_n,
+                                              double ** curvatureMax, size_t * curvatureMax_n,
+                                              double ** curvatureMin, size_t * curvatureMin_n,
+                                              double ** directionMax, size_t * directionMax_n,
+                                              double ** directionMin, size_t * directionMin_n,
+                                              int * ierr);
 
 /* Generate a mesh of the current model, up to dimension `dim' (0, 1, 2 or 3). */
 GMSH_API void gmshModelMeshGenerate(const int dim,

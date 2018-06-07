@@ -471,6 +471,55 @@ GMSH_API void gmsh::model::getNormals(const int tag,
   }
 }
 
+GMSH_API void gmsh::model::getCurvatures(const int tag,
+                                         const std::vector<double> &parametricCoord,
+                                         std::vector<double> &curvatures)
+{
+  if(!_isInitialized()){ throw -1; }
+  GEdge *ge = GModel::current()->getEdgeByTag(tag);
+  if(!ge){
+    Msg::Error("%s does not exist", _getEntityName(1, tag).c_str());
+    throw 2;
+  }
+  curvatures.clear();
+  for(unsigned int i = 0; i < parametricCoord.size(); i++)
+    curvatures.push_back(ge->curvature(parametricCoord[i]));
+}
+
+GMSH_API void gmsh::model::getPrincipalCurvatures(const int tag,
+                                                  const std::vector<double> &parametricCoord,
+                                                  std::vector<double> &curvaturesMax,
+                                                  std::vector<double> &curvaturesMin,
+                                                  std::vector<double> &directionsMax,
+                                                  std::vector<double> &directionsMin)
+{
+  if(!_isInitialized()){ throw -1; }
+  GFace *gf = GModel::current()->getFaceByTag(tag);
+  if(!gf){
+    Msg::Error("%s does not exist", _getEntityName(2, tag).c_str());
+    throw 2;
+  }
+  curvaturesMax.clear();
+  curvaturesMin.clear();
+  directionsMax.clear();
+  directionsMin.clear();
+  if(parametricCoord.size() < 2) return;
+  for(unsigned int i = 0; i < parametricCoord.size(); i += 2){
+    SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
+    double cmin, cmax;
+    SVector3 dmin, dmax;
+    gf->curvatures(param, dmax, dmin, cmax, cmin);
+    curvaturesMax.push_back(cmax);
+    curvaturesMin.push_back(cmin);
+    directionsMax.push_back(dmax.x());
+    directionsMax.push_back(dmax.y());
+    directionsMax.push_back(dmax.z());
+    directionsMin.push_back(dmin.x());
+    directionsMin.push_back(dmin.y());
+    directionsMin.push_back(dmin.z());
+  }
+}
+
 // gmsh::model::mesh
 
 GMSH_API void gmsh::model::mesh::generate(const int dim)

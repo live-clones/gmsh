@@ -203,12 +203,30 @@ namespace gmsh { // Top-level functions
                           const int tag,
                           std::string & entityType);
 
-    // Get the normals to the surface with tag `tag' at the parametric coordinates
-    // `parametricCoord'. `parametricCoords' are goven by pair, concatenated.
-    // `normals' are returned as triplets, concatenated.
+    // Get the normal to the surface with tag `tag' at the parametric coordinates
+    // `parametricCoord'. `parametricCoord' are given by pair of `u' and `v'
+    // coordinates, concatenated. `normals' are returned as triplets of `x', `y'
+    // and `z' coordinates, concatenated.
     GMSH_API void getNormals(const int tag,
                              const std::vector<double> & parametricCoord,
                              std::vector<double> & normals);
+
+    // Get the curvature of the curve with tag `tag' at the parametric coordinates
+    // `parametricCoord'.
+    GMSH_API void getCurvatures(const int tag,
+                                const std::vector<double> & parametricCoord,
+                                std::vector<double> & curvatures);
+
+    // Get the principal curvatures of the surface with tag `tag' at the parametric
+    // coordinates `parametricCoord', as well as their respective directions.
+    // `parametricCoord' are given by pair of `u' and `v' coordinates,
+    // concatenated.
+    GMSH_API void getPrincipalCurvatures(const int tag,
+                                         const std::vector<double> & parametricCoord,
+                                         std::vector<double> & curvatureMax,
+                                         std::vector<double> & curvatureMin,
+                                         std::vector<double> & directionMax,
+                                         std::vector<double> & directionMin);
 
     namespace mesh { // Per-model meshing functions
 

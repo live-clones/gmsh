@@ -119,8 +119,14 @@ model.add('removeEntities',doc,None,ivectorpair('dimTags'),ibool('recursive','fa
 doc = '''Get the type of the entity of dimension `dim' and tag `tag'.'''
 model.add('getType',doc,None,iint('dim'),iint('tag'),ostring('entityType'))
 
-doc = '''Get the normals to the surface with tag `tag' at the parametric coordinates `parametricCoord'. `parametricCoords' are goven by pair, concatenated. `normals' are returned as triplets, concatenated.'''
+doc = '''Get the normal to the surface with tag `tag' at the parametric coordinates `parametricCoord'. `parametricCoord' are given by pair of `u' and `v' coordinates, concatenated. `normals' are returned as triplets of `x', `y' and `z' coordinates, concatenated.'''
 model.add('getNormals',doc,None,iint('tag'),ivectordouble('parametricCoord'),ovectordouble('normals'))
+
+doc = '''Get the curvature of the curve with tag `tag' at the parametric coordinates `parametricCoord'.'''
+model.add('getCurvatures',doc,None,iint('tag'),ivectordouble('parametricCoord'),ovectordouble('curvatures'))
+
+doc = '''Get the principal curvatures of the surface with tag `tag' at the parametric coordinates `parametricCoord', as well as their respective directions. `parametricCoord' are given by pair of `u' and `v' coordinates, concatenated.'''
+model.add('getPrincipalCurvatures',doc,None,iint('tag'),ivectordouble('parametricCoord'),ovectordouble('curvatureMax'),ovectordouble('curvatureMin'),ovectordouble('directionMax'),ovectordouble('directionMin'))
 
 ################################################################################
 
