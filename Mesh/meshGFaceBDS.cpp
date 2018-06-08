@@ -303,6 +303,7 @@ void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap)
 {
   typedef std::vector<BDS_Edge *>::size_type size_type;
 
+  std::set<BDS_Edge*, EdgeLessThan> whateverEdgeSwaps;
   for(size_type index = 0; index < m.edges.size(); ++index) {
     if(!m.edges.at(index)->deleted) {
       if(edgeSwapTestDelaunay(m.edges.at(index), gf)) {
@@ -312,6 +313,17 @@ void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap)
         // result = 1  => oblige to swap because the quality is greatly improved
         if(result >= 0) {
           if(m.swap_edge(m.edges.at(index), BDS_SwapEdgeTestQuality(false))) {
+            if (result == 0) {
+              if (whateverEdgeSwaps.find(m.edges.at(index)) != whateverEdgeSwaps.end())
+              {
+                return;
+              }
+
+              whateverEdgeSwaps.emplace(m.edges.at(index));
+            }
+            else if (result > 0) {
+              whateverEdgeSwaps.clear(); // Improvement has been made, not yet danger for infinite loop
+            }
             ++nb_swap;
           }
         }
