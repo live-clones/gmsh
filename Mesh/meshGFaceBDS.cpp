@@ -294,8 +294,9 @@ static int edgeSwapTest(GFace *gf, BDS_Edge *e)
   double qb2 = qmTriangle::gamma(e->p2, op[0], op[1]);
   double qa = std::min(qa1, qa2);
   double qb = std::min(qb1, qb2);
-  if(qb > qa) return 1;
-  if(qb < qa) return -1;
+  const double tolerance = 1e-12;
+  if(qb > qa + tolerance) return 1;
+  if(qb < qa - tolerance) return -1;
   return 0;
 }
 
