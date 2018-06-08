@@ -369,9 +369,9 @@ Get the type of the entity of dimension @code{dim} and tag @code{tag}.
 
 @item getNormals
 Get the normal to the surface with tag @code{tag} at the parametric coordinates
-@code{parametricCoord}. @code{parametricCoord} are given by pair of @code{u} and
-@code{v} coordinates, concatenated. @code{normals} are returned as triplets of
-@code{x}, @code{y} and @code{z} coordinates, concatenated.
+@code{parametricCoord}. @code{parametricCoord} are given by pair of u and v
+coordinates, concatenated. @code{normals} are returned as triplets of x, y and z
+components, concatenated.
 
 @table @asis
 @item Input:
@@ -398,8 +398,8 @@ Get the curvature of the curve with tag @code{tag} at the parametric coordinates
 @item getPrincipalCurvatures
 Get the principal curvatures of the surface with tag @code{tag} at the
 parametric coordinates @code{parametricCoord}, as well as their respective
-directions. @code{parametricCoord} are given by pair of @code{u} and @code{v}
-coordinates, concatenated.
+directions. @code{parametricCoord} are given by pair of u and v coordinates,
+concatenated.
 
 @table @asis
 @item Input:
@@ -496,11 +496,11 @@ mesh. @code{nodeTags} contains the node tags (their unique, strictly positive
 identification numbers). @code{coord} is a vector of length 3 times the length
 of @code{nodeTags} that contains the (x, y, z) coordinates of the nodes,
 concatenated. If @code{dim} >= 0, @code{parametricCoord} contains the parametric
-coordinates of the nodes, if available. The length of @code{parametricCoord} can
-be 0 or @code{dim} times the length of @code{nodeTags}. If
-@code{includeBoundary} is set, also return the nodes classified on the boundary
-of the entity (wich will be reparametrized on the entity if @code{dim} >= 0 in
-order to compute their parametric coordinates).
+coordinates u and/or v of the nodes, if available. The length of
+@code{parametricCoord} can be 0 or @code{dim} times the length of
+@code{nodeTags}. If @code{includeBoundary} is set, also return the nodes
+classified on the boundary of the entity (wich will be reparametrized on the
+entity if @code{dim} >= 0 in order to compute their parametric coordinates).
 
 @table @asis
 @item Input:

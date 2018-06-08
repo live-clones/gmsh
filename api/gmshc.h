@@ -210,9 +210,9 @@ GMSH_API void gmshModelGetType(const int dim,
                                int * ierr);
 
 /* Get the normal to the surface with tag `tag' at the parametric coordinates
- * `parametricCoord'. `parametricCoord' are given by pair of `u' and `v'
- * coordinates, concatenated. `normals' are returned as triplets of `x', `y'
- * and `z' coordinates, concatenated. */
+ * `parametricCoord'. `parametricCoord' are given by pair of u and v
+ * coordinates, concatenated. `normals' are returned as triplets of x, y and z
+ * components, concatenated. */
 GMSH_API void gmshModelGetNormals(const int tag,
                                   double * parametricCoord, size_t parametricCoord_n,
                                   double ** normals, size_t * normals_n,
@@ -227,7 +227,7 @@ GMSH_API void gmshModelGetCurvatures(const int tag,
 
 /* Get the principal curvatures of the surface with tag `tag' at the
  * parametric coordinates `parametricCoord', as well as their respective
- * directions. `parametricCoord' are given by pair of `u' and `v' coordinates,
+ * directions. `parametricCoord' are given by pair of u and v coordinates,
  * concatenated. */
 GMSH_API void gmshModelGetPrincipalCurvatures(const int tag,
                                               double * parametricCoord, size_t parametricCoord_n,
@@ -268,11 +268,12 @@ GMSH_API void gmshModelMeshGetLastNodeError(int ** nodeTags, size_t * nodeTags_n
  * node tags (their unique, strictly positive identification numbers). `coord'
  * is a vector of length 3 times the length of `nodeTags' that contains the
  * (x, y, z) coordinates of the nodes, concatenated. If `dim' >= 0,
- * `parametricCoord' contains the parametric coordinates of the nodes, if
- * available. The length of `parametricCoord' can be 0 or `dim' times the
- * length of `nodeTags'. If `includeBoundary' is set, also return the nodes
- * classified on the boundary of the entity (wich will be reparametrized on
- * the entity if `dim' >= 0 in order to compute their parametric coordinates). */
+ * `parametricCoord' contains the parametric coordinates u and/or v of the
+ * nodes, if available. The length of `parametricCoord' can be 0 or `dim'
+ * times the length of `nodeTags'. If `includeBoundary' is set, also return
+ * the nodes classified on the boundary of the entity (wich will be
+ * reparametrized on the entity if `dim' >= 0 in order to compute their
+ * parametric coordinates). */
 GMSH_API void gmshModelMeshGetNodes(int ** nodeTags, size_t * nodeTags_n,
                                     double ** coord, size_t * coord_n,
                                     double ** parametricCoord, size_t * parametricCoord_n,

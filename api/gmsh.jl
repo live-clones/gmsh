@@ -515,9 +515,9 @@ end
     gmsh.model.getNormals(tag, parametricCoord)
 
 Get the normal to the surface with tag `tag` at the parametric coordinates
-`parametricCoord`. `parametricCoord` are given by pair of `u` and `v`
-coordinates, concatenated. `normals` are returned as triplets of `x`, `y` and
-`z` coordinates, concatenated.
+`parametricCoord`. `parametricCoord` are given by pair of u and v coordinates,
+concatenated. `normals` are returned as triplets of x, y and z components,
+concatenated.
 
 Return `normals`.
 """
@@ -558,7 +558,7 @@ end
 
 Get the principal curvatures of the surface with tag `tag` at the parametric
 coordinates `parametricCoord`, as well as their respective directions.
-`parametricCoord` are given by pair of `u` and `v` coordinates, concatenated.
+`parametricCoord` are given by pair of u and v coordinates, concatenated.
 
 Return `curvatureMax`, `curvatureMin`, `directionMax`, `directionMin`.
 """
@@ -698,7 +698,7 @@ are negative, get all the nodes in the mesh. `nodeTags` contains the node tags
 (their unique, strictly positive identification numbers). `coord` is a vector of
 length 3 times the length of `nodeTags` that contains the (x, y, z) coordinates
 of the nodes, concatenated. If `dim` >= 0, `parametricCoord` contains the
-parametric coordinates of the nodes, if available. The length of
+parametric coordinates u and/or v of the nodes, if available. The length of
 `parametricCoord` can be 0 or `dim` times the length of `nodeTags`. If
 `includeBoundary` is set, also return the nodes classified on the boundary of
 the entity (wich will be reparametrized on the entity if `dim` >= 0 in order to
