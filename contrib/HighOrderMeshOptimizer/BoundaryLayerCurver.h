@@ -105,6 +105,11 @@ namespace BoundaryLayerCurver
     };
   }
 
+  namespace InteriorEdgeCurver
+  {
+    void curveEdges(std::vector<MEdgeN> &stack, int iFirst, int iLast);
+  }
+
   struct Parameters2DCurve {
     double thickness[2];
     double coeffb[2];

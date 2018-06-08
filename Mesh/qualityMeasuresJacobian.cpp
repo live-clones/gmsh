@@ -914,9 +914,9 @@ void _CoeffDataICN::_computeAtCorner(double &min, double &max) const
       p += pow_int(_coeffsJacMat(i, k), 2);
     }
     double qual;
-    if (_coeffsJacMat.size2() == 6)
+    if (_coeffsJacMat.size2() == 6) // if 2D
       qual = 2 * _coeffsJacDet(i) / p;
-    else
+    else // 3D
       qual = 3 * std::pow(_coeffsJacDet(i), 2/3.) / p;
     min = std::min(min, qual);
     max = std::max(max, qual);
