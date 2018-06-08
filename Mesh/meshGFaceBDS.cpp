@@ -305,7 +305,7 @@ void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap)
   typedef std::vector<BDS_Edge *>::size_type size_type;
 
   std::set<BDS_Edge*, EdgeLessThan> whateverEdgeSwaps;
-  const auto origSize = m.edges.size();
+  const size_type origSize = m.edges.size();
   for(size_type index = 0; index < m.edges.size() && index < 10*origSize; ++index) {
     if(!m.edges.at(index)->deleted) {
       if(edgeSwapTestDelaunay(m.edges.at(index), gf)) {
@@ -321,7 +321,7 @@ void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap)
                 return;
               }
 
-              whateverEdgeSwaps.emplace(m.edges.at(index));
+              whateverEdgeSwaps.insert(m.edges.at(index));
             }
             else if (result > 0) {
               whateverEdgeSwaps.clear(); // Improvement has been made, not yet danger for infinite loop
