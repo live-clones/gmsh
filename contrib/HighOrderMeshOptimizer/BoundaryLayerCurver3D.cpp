@@ -556,7 +556,7 @@ namespace BoundaryLayerCurver
           continue;
 
         MVertex *vbot, *vtop;
-        if (faceContainsVertex(bottomFace, edge.getMinVertex())) {
+        if (faceContainsVertex(bottomFace, edge.getVertex(0))) {
           vbot = edge.getVertex(0);
           vtop = edge.getVertex(1);
         }
@@ -568,6 +568,7 @@ namespace BoundaryLayerCurver
         for (int l = k-numVertexPerLayer; l < k; ++l) {
           if (stack[l] == vbot) {
             stack[l+numVertexPerLayer] = vtop;
+            break;
           }
         }
       }
@@ -575,9 +576,7 @@ namespace BoundaryLayerCurver
       // If there remains NULL values, it is because the vertex is the same
       // on bottom face and top face.
       for (int l = k; l < k+numVertexPerLayer; ++l) {
-        if (stack[l] == NULL) {
-          stack[l] = stack[l-numVertexPerLayer];
-        }
+        if (stack[l] == NULL) stack[l] = stack[l-numVertexPerLayer];
       }
 
       k += numVertexPerLayer;

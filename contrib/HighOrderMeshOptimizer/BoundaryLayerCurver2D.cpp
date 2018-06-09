@@ -1155,7 +1155,6 @@ namespace BoundaryLayerCurver
   }
 
   static std::map<int, InteriorPlacementData*> interiorPlacementData;
-  static std::map<std::pair<int, int>, TFIData*> tfiData;
 
   LeastSquareData* constructLeastSquareData(int typeElement, int order,
                                             int orderGauss)
@@ -3370,9 +3369,6 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 n)
 void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
                           const GFace *gface, const GEdge *gedge)
 {
-  GEntity *bndEnt = *GModel::current()->firstFace();
-  std::map<int, std::vector<double> > data;
-
   for (int i = 0; i < bndEl2column.size(); ++i) {
     bndEl2column[i].first->setVisibility(1);
     for (unsigned int j = 0; j < bndEl2column[i].second.size(); ++j) {
@@ -3380,11 +3376,6 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
     }
   }
 
-  for (int i = 0; i < bndEl2column.size(); ++i) {
-//    if (i % 4) continue;
-//    if (bndEl2column[i].first->getNum() != 84) continue;
-//    MElement *bottomEdge = bndEl2column[i].first;
-//    std::vector<MElement *> &column = bndEl2column[i].second;
+  for (int i = 0; i < bndEl2column.size(); ++i)
     BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], gface, gedge);
-  }
 }
