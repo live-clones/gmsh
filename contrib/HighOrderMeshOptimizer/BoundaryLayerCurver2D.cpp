@@ -813,43 +813,344 @@ namespace BoundaryLayerCurver
 
   namespace InteriorEdgeCurver
   {
+    static std::map<std::pair<int, int>, TFIData*> tfiData;
+
+    TFIData* _constructTFIData(int typeElement, int order)
+    {
+      TFIData *data = new TFIData;
+      int nbDof = order+1;
+
+      fullMatrix<double> Mh; // lag coeff p n -> lag coeff p (n+1)
+      fullMatrix<double> M0; // lag coeff p (n+1) c -> (1-xi) * c
+      fullMatrix<double> M1; // lag coeff p (n+1) c ->    xi  * c
+      fullMatrix<double> Ml; // lag coeff p (n+1) -> leg coeff p n
+      fullMatrix<double> Me; // leg coeff p n -> lag coeff p n
+
+      if (typeElement == TYPE_LIN) {
+        int tagLine = ElementType::getTag(TYPE_LIN, order);
+        const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
+        const fullMatrix<double> &refNodes = fs->getReferenceNodes();
+        int tagLineh = ElementType::getTag(TYPE_LIN, order+1);
+        // FIXME replace with BasisFactory::getNodalBasis(funcSpaceData);
+        const nodalBasis *fsh = BasisFactory::getNodalBasis(tagLineh);
+        const fullMatrix<double> &refNodesh = fsh->getReferenceNodes();
+
+        int nbDofh = refNodesh.size1();
+
+//      refNodesh.print("refNodesh");
+
+        Mh.resize(nbDofh, nbDof);
+        for (int i = 0; i < nbDofh; ++i) {
+          double sf[100];
+          fs->f(refNodesh(i, 0), refNodesh(i, 1), refNodesh(i, 2), sf);
+          for (int j = 0; j < nbDof; ++j) {
+            Mh(i, j) = sf[j];
+          }
+        }
+//      Mh.print("Mh");
+
+        M0.resize(nbDofh, nbDofh, true);
+        M1.resize(nbDofh, nbDofh, true);
+        for (int i = 0; i < nbDofh; ++i) {
+          M0(i, i) = .5 - refNodesh(i, 0) / 2;
+          M1(i, i) = .5 + refNodesh(i, 0) / 2;
+        }
+//      M0.print("M0");
+//      M1.print("M1");
+
+        Ml.resize(nbDof, nbDofh);
+        {
+          fullMatrix<double> vandermonde(nbDofh, nbDofh);
+
+          double *val = new double[nbDofh];
+          for (int i = 0; i < nbDofh; ++i) {
+            LegendrePolynomials::fc(order+1, refNodesh(i,0), val);
+            for (int j = 0; j < nbDofh; ++j) {
+              vandermonde(i, j) = val[j];
+            }
+          }
+          delete val;
+
+          fullMatrix<double> tmp;
+          vandermonde.invert(tmp);
+//        vandermonde.print("vandermonde");
+//        tmp.print("tmp");
+          Ml.copy(tmp, 0, nbDof, 0, nbDofh, 0, 0);
+        }
+//      Ml.print("Ml");
+
+        Me.resize(nbDof, nbDof);
+        {
+          double *val = new double[nbDof];
+          for (int i = 0; i < nbDof; ++i) {
+            LegendrePolynomials::fc(order, refNodes(i, 0), val);
+            for (int j = 0; j < nbDof; ++j) {
+              Me(i, j) = val[j];
+            }
+          }
+          delete val;
+        }
+//      Me.print("Me");
+
+        fullMatrix<double> tmp0(nbDofh, nbDof);
+        fullMatrix<double> tmp1(nbDofh, nbDof);
+        M0.mult(Mh, tmp0);
+        M1.mult(Mh, tmp1);
+        fullMatrix<double> tmp(nbDof, nbDofh);
+        Me.mult(Ml, tmp);
+//      tmp.print("tmp");
+        data->T0.resize(nbDof, nbDof);
+        data->T1.resize(nbDof, nbDof);
+        tmp.mult(tmp0, data->T0);
+        tmp.mult(tmp1, data->T1);
+
+//      data->T0.print("data->T0");
+//      data->T1.print("data->T1");
+      }
+
+//    fullVector<double> x(nbDof);
+//    x.setAll(1);
+//    fullVector<double> b1(nbDof);
+//    fullVector<double> b2(nbDof);
+//    data->T0.mult(x, b1);
+//    b1.print("b");
+//    data->T1.mult(x, b1);
+//    b1.print("b");
+//
+//    x(0) = 0;
+//    x(2) = 1/6.;
+//    x(3) = 2/6.;
+//    x(4) = 3/6.;
+//    x(5) = 4/6.;
+//    x(6) = 5/6.;
+//    x(1) = 1;
+//    data->T0.mult(x, b1);
+//    b1.print("b1");
+//    data->T1.mult(x, b2);
+//    b2.print("b2");
+//    b1.axpy(b2);
+//    b1.print("b");
+//
+//    x(0) = 0;
+//    x(2) = 0.000021433470508;
+//    x(3) = 0.001371742112483;
+//    x(4) = 0.015625000000000;
+//    x(5) = 0.087791495198903;
+//    x(6) = 0.334897976680384;
+//    x(1) = 1.000000000000000;
+//    data->T0.mult(x, b1);
+//    b1.print("b1");
+//    data->T1.mult(x, b2);
+//    b2.print("b2");
+//    b1.axpy(b2);
+//    b1.print("b");
+
+      return data;
+    }
+
+    TFIData* _getTFIData(int typeElement, int order)
+    {
+      std::pair<int, int> typeOrder(typeElement, order);
+      std::map<std::pair<int, int>, TFIData*>::iterator it;
+      it = tfiData.find(typeOrder);
+
+      if (it != tfiData.end()) return it->second;
+
+      TFIData *data = _constructTFIData(typeElement, order);
+
+      tfiData[typeOrder] = data;
+      return data;
+    }
+
+    void _linearize(const fullMatrix<double> &x, fullMatrix<double> &lin)
+    {
+      int n = x.size1();
+      lin.copy(x, 0, 2, 0, 3, 0, 0);
+      for (int i = 2; i < n; ++i) {
+        double fact = ((double)i-1)/(n-1);
+        for (int j = 0; j < 3; ++j)
+          lin(i, j) = (1-fact) * x(0, j) + fact * x(1, j);
+      }
+    }
+
+    void _computeEtas(const std::vector<MEdgeN> &stack,
+                      std::vector<std::pair<double, double> > &eta)
+    {
+      eta.resize(stack.size());
+      eta[0] = std::make_pair(0, 0);
+      MVertex *vb0 = stack[0].getVertex(0);
+      MVertex *vb1 = stack[0].getVertex(1);
+
+      for (unsigned int i = 1; i < stack.size(); ++i) {
+        MVertex *v0 = stack[i].getVertex(0);
+        MVertex *v1 = stack[i].getVertex(1);
+        eta[i].first = vb0->distance(v0);
+        eta[i].second = vb1->distance(v1);
+      }
+
+      for (int i = 1; i < eta.size(); ++i) {
+        eta[i].first /= eta.back().first;
+        eta[i].second /= eta.back().second;
+      }
+    }
+
+    void _computeDeltaForTFI(const std::vector<MEdgeN> &stack, int iFirst, int iLast,
+                             fullMatrix<double> &delta0,
+                             fullMatrix<double> &delta1,
+                             fullMatrix<double> &deltaN)
+    {
+      const int numVertices = stack[0].getNumVertices();
+
+      fullMatrix<double> x0(numVertices, 3);
+      fullMatrix<double> x1(numVertices, 3);
+      fullMatrix<double> xN(numVertices, 3);
+      for (int k = 0; k < numVertices; ++k) {
+        x0(k, 0) = stack[0].getVertex(k)->x();
+        x0(k, 1) = stack[0].getVertex(k)->y();
+        x0(k, 2) = stack[0].getVertex(k)->z();
+        x1(k, 0) = stack[iFirst].getVertex(k)->x();
+        x1(k, 1) = stack[iFirst].getVertex(k)->y();
+        x1(k, 2) = stack[iFirst].getVertex(k)->z();
+        xN(k, 0) = stack[iLast].getVertex(k)->x();
+        xN(k, 1) = stack[iLast].getVertex(k)->y();
+        xN(k, 2) = stack[iLast].getVertex(k)->z();
+      }
+
+      fullMatrix<double> x0linear(numVertices, 3);
+      fullMatrix<double> x1linear(numVertices, 3);
+      fullMatrix<double> xNlinear(numVertices, 3);
+      _linearize(x0, x0linear);
+      _linearize(x1, x1linear);
+      _linearize(xN, xNlinear);
+      delta0 = x0; delta0.add(x0linear, -1);
+      delta1 = x1; delta1.add(x1linear, -1);
+      deltaN = xN; deltaN.add(xNlinear, -1);
+    }
+
+    void _computeTerms(const fullMatrix<double> &delta0,
+                       const fullMatrix<double> &delta1,
+                       const fullMatrix<double> &deltaN, double eta1,
+                       fullMatrix<double> terms[8])
+    {
+      fullMatrix<double> &term0 = terms[0];
+      fullMatrix<double> &term1d10 = terms[1];
+      fullMatrix<double> &term1d11 = terms[2];
+      fullMatrix<double> &term1dN0 = terms[3];
+      fullMatrix<double> &term1dN1 = terms[4];
+      fullMatrix<double> &term20 = terms[5];
+      fullMatrix<double> &term21 = terms[6];
+      fullMatrix<double> &term22 = terms[7];
+
+      const int numVertices = delta0.size1();
+
+      fullMatrix<double> delta10 = delta1;
+      delta10.add(delta0, -1);
+      delta10.scale(1 / eta1);
+      fullMatrix<double> deltaN0 = deltaN;
+      deltaN0.add(delta0, -1);
+
+      term0.resize(numVertices, 3);
+      term1d10.resize(numVertices, 3);
+      term1d11.resize(numVertices, 3);
+      term1dN0.resize(numVertices, 3);
+      term1dN1.resize(numVertices, 3);
+      term20.resize(numVertices, 3);
+      term21.resize(numVertices, 3);
+      term22.resize(numVertices, 3);
+
+      TFIData *tfiData = _getTFIData(TYPE_LIN, numVertices-1);
+
+      term0.copy(delta0);
+      tfiData->T0.mult(delta10, term1d10);
+      tfiData->T1.mult(delta10, term1d11);
+      tfiData->T0.mult(deltaN0, term1dN0);
+      tfiData->T1.mult(deltaN0, term1dN1);
+      fullMatrix<double> diff(numVertices, 3);
+      fullMatrix<double> dum0(numVertices, 3);
+      fullMatrix<double> dum1(numVertices, 3);
+      diff.copy(deltaN0);
+      diff.add(delta10, -1);
+      tfiData->T0.mult(diff, dum0);
+      tfiData->T1.mult(diff, dum1);
+      tfiData->T0.mult(dum0, term20);
+      tfiData->T1.mult(dum0, term21);
+      tfiData->T1.mult(dum1, term22);
+    }
+
+    void _generalTFI(std::vector<MEdgeN> &stack, int iLast,
+                     const std::vector<std::pair<double, double> > &eta,
+                     const fullMatrix<double> terms[8],
+                     double coeffHermite, const GFace *gface = NULL)
+    {
+      // Let L() be the linear TFI transformation
+      // Let H() be the semi-Hermite TFI transformation
+      // This function return (1-coeffHermite) * L() + coeffHermite * H()
+
+      const fullMatrix<double> &term0 = terms[0];
+      const fullMatrix<double> &term1d10 = terms[1];
+      const fullMatrix<double> &term1d11 = terms[2];
+      const fullMatrix<double> &term1dN0 = terms[3];
+      const fullMatrix<double> &term1dN1 = terms[4];
+      const fullMatrix<double> &term20 = terms[5];
+      const fullMatrix<double> &term21 = terms[6];
+      const fullMatrix<double> &term22 = terms[7];
+
+      int numVertices = stack[0].getNumVertices();
+
+      for (unsigned int i = 1; i < stack.size(); ++i) {
+        if (i == iLast) continue;
+        // we want to change stack[iFirst] but not stack[iLast]
+
+        fullMatrix<double> x(numVertices, 3);
+        for (int j = 0; j < numVertices; ++j) {
+          MVertex *v = stack[i].getVertex(j);
+          x(j, 0) = v->x();
+          x(j, 1) = v->y();
+          x(j, 2) = v->z();
+        }
+        _linearize(x, x);
+
+        double &c = coeffHermite;
+        x.axpy(term0);
+        x.axpy(term1d10, c * eta[i].first);
+        x.axpy(term1d11, c * eta[i].second);
+        x.axpy(term1dN0, (1-c) * eta[i].first);
+        x.axpy(term1dN1, (1-c) * eta[i].second);
+        x.axpy(term20, c * eta[i].first * eta[i].first);
+        x.axpy(term21, c * 2*eta[i].first * eta[i].second);
+        x.axpy(term22, c * eta[i].second * eta[i].second);
+
+        for (int j = 2; j < numVertices; ++j) {
+          MVertex *v = stack[i].getVertex(j);
+          v->x() = x(j, 0);
+          v->y() = x(j, 1);
+          v->z() = x(j, 2);
+        }
+        if (gface) projectVerticesIntoGFace(&stack[i], gface, false);
+      }
+    }
+
     void curveEdges(std::vector<MEdgeN> &stack, int iFirst, int iLast,
                     const GFace *gface = NULL)
     {
-      // FIXME this is linear TFI
-      MEdgeN *e0 = &stack[0];
-      MEdgeN *e1 = &stack[iFirst];
-      MEdgeN *eN = &stack[iLast];
+      // Compute eta_i^k, k=0,1
+      std::vector<std::pair<double, double> > eta;
+      _computeEtas(stack, eta);
 
-      MVertex *v0[2] = {e0->getVertex(0), e0->getVertex(1)};
-      MVertex *v1[2] = {e1->getVertex(0), e1->getVertex(1)};
-      MVertex *vN[2] = {eN->getVertex(0), eN->getVertex(1)};
+      // Precompute Delta(x_i), i=0,1,n
+      fullMatrix<double> delta0, delta1, deltaN;
+      _computeDeltaForTFI(stack, iFirst, iLast, delta0, delta1, deltaN);
 
-      double distanceLeft = v0[0]->distance(vN[0]);
-      double distanceRight = v0[1]->distance(vN[1]);
-      int numVertices = e0->getNumVertices();
+      // Compute terms
+      double eta1 = .5 * (eta[iFirst].first + eta[iFirst].second);
+      fullMatrix<double> terms[8];
+      _computeTerms(delta0, delta1, deltaN, eta1, terms);
 
-      for (unsigned int i = 1; i < stack.size() - 1; ++i) {
-        MEdgeN *e = &stack[i];
-        MVertex *vc[2] = {e->getVertex(0), e->getVertex(1)};
-        double dLeft = v0[0]->distance(vc[0]);
-        double dRight = v0[1]->distance(vc[1]);
-        double factorLeft = dLeft / distanceLeft;
-        double factorRight = dRight / distanceRight;
+      // Choose coeffHermite and curve
+      double coeffHermite = 1;
+      _generalTFI(stack, iLast, eta, terms, coeffHermite, gface);
 
-        for (int j = 2; j < numVertices; ++j) {
-          double u = (j-1) / (numVertices-1);
-          double factor = factorLeft * (1-u) + factorRight * u;
-          MVertex *v = e->getVertex(j);
-          MVertex *vbot = e0->getVertex(j);
-          MVertex *vtop = eN->getVertex(j);
-          v->x() = (1 - factor) * vbot->x() + factor * vtop->x();
-          v->y() = (1 - factor) * vbot->y() + factor * vtop->y();
-          v->z() = (1 - factor) * vbot->z() + factor * vtop->z();
-        }
-
-        if (gface) projectVerticesIntoGFace(e, gface, false);
-      }
+      return;
     }
   }
 
@@ -1075,153 +1376,6 @@ namespace BoundaryLayerCurver
     LeastSquareData *data = constructLeastSquareData(typeElement, order,
                                                      orderGauss);
     leastSquareData[typeOrder] = data;
-    return data;
-  }
-
-  TFIData* constructTFIData(int typeElement, int order)
-  {
-    TFIData *data = new TFIData;
-    int nbDof = order+1;
-
-    fullMatrix<double> Mh; // lag coeff p n -> lag coeff p (n+1)
-    fullMatrix<double> M0; // lag coeff p (n+1) c -> (1-xi) * c
-    fullMatrix<double> M1; // lag coeff p (n+1) c ->    xi  * c
-    fullMatrix<double> Ml; // lag coeff p (n+1) -> leg coeff p n
-    fullMatrix<double> Me; // leg coeff p n -> lag coeff p n
-
-    if (typeElement == TYPE_LIN) {
-      int tagLine = ElementType::getTag(TYPE_LIN, order);
-      const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
-      const fullMatrix<double> &refNodes = fs->getReferenceNodes();
-      int tagLineh = ElementType::getTag(TYPE_LIN, order+1);
-      // FIXME replace with BasisFactory::getNodalBasis(funcSpaceData);
-      const nodalBasis *fsh = BasisFactory::getNodalBasis(tagLineh);
-      const fullMatrix<double> &refNodesh = fsh->getReferenceNodes();
-
-      int nbDofh = refNodesh.size1();
-
-//      refNodesh.print("refNodesh");
-
-      Mh.resize(nbDofh, nbDof);
-      for (int i = 0; i < nbDofh; ++i) {
-        double sf[100];
-        fs->f(refNodesh(i, 0), refNodesh(i, 1), refNodesh(i, 2), sf);
-        for (int j = 0; j < nbDof; ++j) {
-          Mh(i, j) = sf[j];
-        }
-      }
-//      Mh.print("Mh");
-
-      M0.resize(nbDofh, nbDofh, true);
-      M1.resize(nbDofh, nbDofh, true);
-      for (int i = 0; i < nbDofh; ++i) {
-        M0(i, i) = .5 - refNodesh(i, 0) / 2;
-        M1(i, i) = .5 + refNodesh(i, 0) / 2;
-      }
-//      M0.print("M0");
-//      M1.print("M1");
-
-      Ml.resize(nbDof, nbDofh);
-      {
-        fullMatrix<double> vandermonde(nbDofh, nbDofh);
-
-        double *val = new double[nbDofh];
-        for (int i = 0; i < nbDofh; ++i) {
-          LegendrePolynomials::fc(order+1, refNodesh(i,0), val);
-          for (int j = 0; j < nbDofh; ++j) {
-            vandermonde(i, j) = val[j];
-          }
-        }
-        delete val;
-
-        fullMatrix<double> tmp;
-        vandermonde.invert(tmp);
-//        vandermonde.print("vandermonde");
-//        tmp.print("tmp");
-        Ml.copy(tmp, 0, nbDof, 0, nbDofh, 0, 0);
-      }
-//      Ml.print("Ml");
-
-      Me.resize(nbDof, nbDof);
-      {
-        double *val = new double[nbDof];
-        for (int i = 0; i < nbDof; ++i) {
-          LegendrePolynomials::fc(order, refNodes(i, 0), val);
-          for (int j = 0; j < nbDof; ++j) {
-            Me(i, j) = val[j];
-          }
-        }
-        delete val;
-      }
-//      Me.print("Me");
-
-      fullMatrix<double> tmp0(nbDofh, nbDof);
-      fullMatrix<double> tmp1(nbDofh, nbDof);
-      M0.mult(Mh, tmp0);
-      M1.mult(Mh, tmp1);
-      fullMatrix<double> tmp(nbDof, nbDofh);
-      Me.mult(Ml, tmp);
-//      tmp.print("tmp");
-      data->T0.resize(nbDof, nbDof);
-      data->T1.resize(nbDof, nbDof);
-      tmp.mult(tmp0, data->T0);
-      tmp.mult(tmp1, data->T1);
-
-//      data->T0.print("data->T0");
-//      data->T1.print("data->T1");
-    }
-
-//    fullVector<double> x(nbDof);
-//    x.setAll(1);
-//    fullVector<double> b1(nbDof);
-//    fullVector<double> b2(nbDof);
-//    data->T0.mult(x, b1);
-//    b1.print("b");
-//    data->T1.mult(x, b1);
-//    b1.print("b");
-//
-//    x(0) = 0;
-//    x(2) = 1/6.;
-//    x(3) = 2/6.;
-//    x(4) = 3/6.;
-//    x(5) = 4/6.;
-//    x(6) = 5/6.;
-//    x(1) = 1;
-//    data->T0.mult(x, b1);
-//    b1.print("b1");
-//    data->T1.mult(x, b2);
-//    b2.print("b2");
-//    b1.axpy(b2);
-//    b1.print("b");
-//
-//    x(0) = 0;
-//    x(2) = 0.000021433470508;
-//    x(3) = 0.001371742112483;
-//    x(4) = 0.015625000000000;
-//    x(5) = 0.087791495198903;
-//    x(6) = 0.334897976680384;
-//    x(1) = 1.000000000000000;
-//    data->T0.mult(x, b1);
-//    b1.print("b1");
-//    data->T1.mult(x, b2);
-//    b2.print("b2");
-//    b1.axpy(b2);
-//    b1.print("b");
-
-    return data;
-  }
-
-  TFIData* getTFIData(int typeElement, int order)
-  {
-    std::pair<int, int> typeOrder(typeElement, order);
-    std::map<std::pair<int, int>, TFIData*>::iterator it;
-    it = tfiData.find(typeOrder);
-
-    if (it != tfiData.end()) return it->second;
-
-    TFIData *data = constructTFIData(typeElement, order);
-
-    tfiData[typeOrder] = data;
     return data;
   }
 
@@ -2481,7 +2635,8 @@ namespace BoundaryLayerCurver
     }
 
     // Go through each layer
-    TFIData *tfiData = getTFIData(TYPE_LIN, (int)layerVertices[0].size()-1);
+    TFIData *tfiData = InteriorEdgeCurver::_getTFIData(TYPE_LIN,
+        (int)layerVertices[0].size()-1);
 
     fullMatrix<double> term0(numVerticesToCompute, 3);
     fullMatrix<double> term10(numVerticesToCompute, 3);
