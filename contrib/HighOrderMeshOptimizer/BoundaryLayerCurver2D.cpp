@@ -2906,19 +2906,36 @@ namespace BoundaryLayerCurver
     }
   }
 
-  void computeStackHighOrderEdges(const PairMElemVecMElem &column,
-                                  std::vector<MEdgeN> &stack)
+  void computeStackHOEdgesFaces(const PairMElemVecMElem &column,
+                                std::vector<MEdgeN> &stackEdges,
+                                std::vector<MFaceN> &stackFaces)
   {
     const std::vector<MElement *> &stackElements = column.second;
-    stack.resize(stackElements.size());
+    const int numElements =  stackElements.size();
+    stackEdges.resize(numElements);
+    stackFaces.resize(numElements);
 
-    std::vector<MVertex*> allPrimaryVertices;
-    compute2DstackPrimaryVertices(column, allPrimaryVertices);
+    std::vector<MVertex*> primVert;
+    compute2DstackPrimaryVertices(column, primVert);
 
-    for (unsigned int j = 0; j < stack.size(); ++j) {
-      MEdge e(allPrimaryVertices[j*2+0], allPrimaryVertices[j*2+1]);
-      stack[j] = stackElements[j]->getHighOrderEdge(e);
+    for (unsigned int i = 0; i < numElements; ++i) {
+      MEdge e(primVert[2*i+0], primVert[2*i+1]);
+      stackEdges[i] = stackElements[i]->getHighOrderEdge(e);
     }
+    for (unsigned int i = 0; i < numElements - 1; ++i) {
+      MFace face;
+      if (primVert[2*i+0] == primVert[2*i+2])
+        face = MFace(primVert[2*i+1], primVert[2*i+0], primVert[2*i+3]);
+      else if (primVert[2*i+1] == primVert[2*i+3])
+        face = MFace(primVert[2*i+0], primVert[2*i+1], primVert[2*i+2]);
+      else
+        face = MFace(primVert[2*i+0], primVert[2*i+1], primVert[2*i+3],
+                   primVert[2*i+2]);
+      stackFaces[i] = stackElements[i]->getHighOrderFace(face);
+    }
+    // We don't care about the orientation of the last element
+    stackFaces[numElements-1] =
+        stackElements.rbegin()[numElements-1]->getHighOrderFace(0, 0, 0);
   }
 
   bool edgesShareVertex(MEdgeN *e0, MEdgeN *e1)
@@ -2935,16 +2952,20 @@ namespace BoundaryLayerCurver
   }
 
   bool curve2Dcolumn(PairMElemVecMElem &column, const GFace *gface,
-                     const GEdge *gedge)
+                     const GEdge *gedge, const SVector3 &normal)
   {
+    // Here, either gface and gedge are defined and not normal, or the normal
+    // is defined and not gface and gedge!
+
     if (column.second.size() < 2) return true;
 
-    // Compute stack high order edges
+    // Compute stack high order edges and faces
     std::vector<MEdgeN> stackEdges;
-    computeStackHighOrderEdges(column, stackEdges);
+    std::vector<MFaceN> stackFaces;
+    computeStackHOEdgesFaces(column, stackEdges, stackFaces);
 
     // Curve topEdge of first element and last edge
-    int iFirst = 1, iLast = stackEdges.size() - 1;
+    int iFirst = 1, iLast = (int)stackEdges.size() - 1;
     MEdgeN *baseEdge = &stackEdges[0];
     MEdgeN *firstEdge = &stackEdges[iFirst];
     if (edgesShareVertex(baseEdge, firstEdge)) {
@@ -2953,13 +2974,15 @@ namespace BoundaryLayerCurver
     }
     MEdgeN *topEdge = &stackEdges[iLast];
 
-    EdgeCurver2D::curveEdge(baseEdge, firstEdge, gface, gedge, SVector3());
-    EdgeCurver2D::curveEdge(baseEdge, topEdge, gface, gedge, SVector3());
+    EdgeCurver2D::curveEdge(baseEdge, firstEdge, gface, gedge, normal);
+    EdgeCurver2D::curveEdge(baseEdge, topEdge, gface, gedge, normal);
 
     // Curve interior edges
     InteriorEdgeCurver::curveEdges(stackEdges, iFirst, iLast, gface);
 
     // Curve interior of elements
+//    _repositionInteriorNodes(colum);
+//    -> compute stack primary vertices so that to create MFaceN
     // TODO
 
     return true;
@@ -3369,6 +3392,11 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 n)
 void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
                           const GFace *gface, const GEdge *gedge)
 {
+  if (!gface || !gedge) {
+    Msg::Error("both gface and gedge are needed for boundary layer curving "
+               "(%d, %d)", gface, gedge);
+  }
+
   for (int i = 0; i < bndEl2column.size(); ++i) {
     bndEl2column[i].first->setVisibility(1);
     for (unsigned int j = 0; j < bndEl2column[i].second.size(); ++j) {
@@ -3377,5 +3405,6 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
   }
 
   for (int i = 0; i < bndEl2column.size(); ++i)
-    BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], gface, gedge);
+    BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], gface, gedge,
+                                       SVector3());
 }

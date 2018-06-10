@@ -134,6 +134,16 @@ void MQuadrangle9::getEdgeRep(bool curved, int num,
   else MQuadrangle::getEdgeRep(false, num, x, y, z, n);
 }
 
+bool MQuadrangle::getFaceInfo(const MFace & face, int &ithFace, int &sign,
+                              int &rot) const
+{
+  ithFace = 0;
+  if (_getFaceInfo(MFace(_v[0], _v[1], _v[2], _v[3]), face, sign, rot))
+    return true;
+  Msg::Error("Could not get face information for quadrangle %d", getNum());
+  return false;
+}
+
 int MQuadrangle::getNumFacesRep(bool curved)
 {
 #if defined(HAVE_VISUDEV)

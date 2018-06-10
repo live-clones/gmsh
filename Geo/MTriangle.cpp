@@ -225,6 +225,16 @@ void MTriangle6::getEdgeRep(bool curved, int num,
   else MTriangle::getEdgeRep(false, num, x, y, z, n);
 }
 
+bool MTriangle::getFaceInfo(const MFace & face, int &ithFace, int &sign,
+                            int &rot) const
+{
+  ithFace = 0;
+  if (_getFaceInfo(MFace(_v[0], _v[1], _v[2]), face, sign, rot))
+    return true;
+  Msg::Error("Could not get face information for triangle %d", getNum());
+  return false;
+}
+
 int MTriangle6::getNumFacesRep(bool curved)
 {
   return curved ? SQU(CTX::instance()->mesh.numSubEdges) : 1;

@@ -1038,7 +1038,7 @@ void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
                                      GEntity *ent, GEntity *bndEnt,
                                      std::list<MElement*> &bndElts,
                                      const FastCurvingParameters &p,
-                                     fullMatrix<double> *normals)
+                                     SVector3 normal)
 {
   // inspired from curveMeshFromBndElt
 
@@ -1102,9 +1102,7 @@ void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
 
 
   if (p.dim == 2) {
-    if (normals) {
-      SVector3 normal;
-      normal = SVector3((*normals)(0, 0), (*normals)(0, 1), (*normals)(0, 2));
+    if (normal.norm() > .5) {
       curve2DBoundaryLayer(bndEl2column, normal);
     }
     else {
@@ -1119,7 +1117,7 @@ void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
 void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
                       GEntity *ent, GEntity *bndEnt,
                       const FastCurvingParameters &p,
-                      fullMatrix<double> *normals)
+                      SVector3 normal)
 {
   // Build list of bnd. elements to consider
   std::list<MElement*> bndEl;
@@ -1145,7 +1143,7 @@ void curveMeshFromBnd(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
 
   if (p.thickness) {
     getColumnsAndcurveBoundaryLayer(ed2el, face2el, ent,
-                                    bndEnt, bndEl, p, normals);
+                                    bndEnt, bndEl, p, normal);
     return;
   }
 
@@ -1246,27 +1244,20 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
     }
 
     // Compute normal if planar surface
-    fullMatrix<double> *normals = NULL;
+    SVector3 normal;
     if (p.dim == 2) {
-      if (gEnt->geomType() == GEntity::Plane &&
-              gEnt->haveParametrization()) {
+      if (gEnt->geomType() == GEntity::Plane && gEnt->haveParametrization()) {
         double u = gEnt->parBounds(0).low();
         double v = gEnt->parBounds(1).low();
-        SVector3 n = dynamic_cast<GFace*>(gEnt)->normal(SPoint2(u, v));
-        normals = new fullMatrix<double>(1, 3);
-        normals->set(0, 0, n[0]);
-        normals->set(0, 1, n[1]);
-        normals->set(0, 2, n[2]);
+        normal = dynamic_cast<GFace*>(gEnt)->normal(SPoint2(u, v));
       }
       else if (gEnt->geomType() == GEntity::DiscreteSurface) {
         SBoundingBox3d bb = gEnt->bounds();
         // If we don't have the CAD, check if the mesh is 2D:
         if (!bb.empty() && bb.max().z() - bb.min().z() == .0) {
-          normals = new fullMatrix<double>(1, 3);
-          normals->set(0, 0, 0);
-          normals->set(0, 1, 0);
-          normals->set(0, 2, 1);
+          normal = SVector3(0, 0, 1);
         }
+        // TODO: Check if the mesh is in a general plane?
       }
     }
 
@@ -1312,7 +1303,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
       if (p.dim == 2 || !p.thickness) {
         Msg::Info("Curving elements in surface %d for boundary edge %d...",
                   gEnt->tag(), bndEnt->tag());
-        curveMeshFromBnd(ed2el, face2el, gEnt, bndEnt, p, normals);
+        curveMeshFromBnd(ed2el, face2el, gEnt, bndEnt, p, normal);
       }
       else
         gather3Dcolumns(face2el, gEnt, bndEnt, p, bndEl2column);
