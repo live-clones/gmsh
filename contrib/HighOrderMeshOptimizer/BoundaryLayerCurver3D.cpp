@@ -977,7 +977,7 @@ namespace BoundaryLayerCurver
         placement = InnerVertPlacementMatrices::quadrangle(f.getPolynomialOrder(),
                                                            true);
       }
-      f.repositionInteriorNodes(placement);
+      f.repositionInnerVertices(placement);
     }
   }
 

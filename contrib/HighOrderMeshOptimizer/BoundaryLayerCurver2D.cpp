@@ -2332,7 +2332,7 @@ namespace BoundaryLayerCurver
       }
       // FIXME dirty code (creation of MFaceN to reposition interior vertices)
       MFaceN f = el->getHighOrderFace(0, 0, 0);
-      f.repositionInteriorNodes(placement);
+      f.repositionInnerVertices(placement);
       return;
     }
 
@@ -2951,10 +2951,32 @@ namespace BoundaryLayerCurver
     return false;
   }
 
-//  void repositionInnerVertices(const std::vector<MFaceN> &stackFaces)
-//  {
-//
-//  }
+  void repositionInnerVertices(const std::vector<MFaceN> &stackFaces)
+  {
+    if (stackFaces.empty()) return;
+
+    int order = stackFaces[0].getPolynomialOrder();
+    const fullMatrix<double> *placementTri, *placementQua, *placement;
+
+    placementTri = InnerVertPlacementMatrices::triangle(order, true);
+    placementQua = InnerVertPlacementMatrices::quadrangle(order, true);
+
+    for (unsigned int i = 0; i < stackFaces.size() - 1; ++i) {
+      const MFaceN &face = stackFaces[i];
+      if (face.getType() == TYPE_QUA)
+        face.repositionInnerVertices(placementQua);
+      else
+        face.repositionInnerVertices(placementTri);
+    }
+
+    if (stackFaces.back().getType() == TYPE_QUA) {
+      placement = InnerVertPlacementMatrices::quadrangle(order, false);
+    }
+    else {
+      placement = InnerVertPlacementMatrices::triangle(order, false);
+    }
+    stackFaces.back().repositionInnerVertices(placement);
+  }
 
   bool curve2Dcolumn(PairMElemVecMElem &column, const GFace *gface,
                      const GEdge *gedge, const SVector3 &normal)
@@ -2986,7 +3008,7 @@ namespace BoundaryLayerCurver
     InteriorEdgeCurver::curveEdges(stackEdges, iFirst, iLast, gface);
 
     // Curve interior of elements
-//    repositionInnerVertices(stackFaces);
+    repositionInnerVertices(stackFaces);
     // TODO
 
     return true;

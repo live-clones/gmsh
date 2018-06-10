@@ -176,7 +176,7 @@ public:
   void frame(double u, double v,
              SPoint3 &p, SVector3 &t0, SVector3 &t1, SVector3 &n) const;
 
-  void repositionInteriorNodes(const fullMatrix<double>*);
+  void repositionInnerVertices(const fullMatrix<double> *) const;
 };
 
 #endif

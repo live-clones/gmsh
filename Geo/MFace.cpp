@@ -251,7 +251,7 @@ void MFaceN::frame(double u, double v, SPoint3 &p,
   n =  crossprod(t0, t1);
 }
 
-void MFaceN::repositionInteriorNodes(const fullMatrix<double> *placement)
+void MFaceN::repositionInnerVertices(const fullMatrix<double> *placement) const
 {
   int nCorner = getNumCorners();
   int start = nCorner + (_order - 1) * nCorner;
