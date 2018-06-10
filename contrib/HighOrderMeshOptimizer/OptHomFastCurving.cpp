@@ -1103,7 +1103,7 @@ void getColumnsAndcurveBoundaryLayer(MEdgeVecMEltMap &ed2el,
 
   if (p.dim == 2) {
     if (normal.norm() > .5) {
-      curve2DBoundaryLayer(bndEl2column, normal);
+      curve2DBoundaryLayer(bndEl2column, normal, dynamic_cast<GEdge*>(bndEnt));
     }
     else {
       curve2DBoundaryLayer(bndEl2column, dynamic_cast<GFace*>(ent),

@@ -68,7 +68,6 @@ namespace BoundaryLayerCurver
                    const GEdge *gedge, const SVector3 &normal);
 
     class _Frame {
-      bool _haveCAD;
       SVector3 _normalToTheMesh;
       const GFace *_gface;
       const GEdge *_gedge;
@@ -82,17 +81,18 @@ namespace BoundaryLayerCurver
           : _normalToTheMesh(normal), _gface(gface), _gedge(gedge),
             _edgeOnBoundary(edge)
       {
-        if (!gface || !gedge) {
-          _haveCAD = false;
-          return;
+        if (gface) {
+          for (unsigned int i = 0; i < edge->getNumVertices(); ++i) {
+            SPoint2 param = _paramOnGFace(gface, edge->getVertex(i));
+            _paramVerticesOnGFace[2*i+0] = param[0];
+            _paramVerticesOnGFace[2*i+1] = param[1];
+          }
         }
 
-        _haveCAD = true;
-        for (unsigned int i = 0; i < edge->getNumVertices(); ++i) {
-          SPoint2 param = _paramOnGFace(gface, edge->getVertex(i));
-          _paramVerticesOnGFace[2*i+0] = param[0];
-          _paramVerticesOnGFace[2*i+1] = param[1];
-          _paramVerticesOnGEdge[i] = _paramOnGEdge(gedge, edge->getVertex(i));
+        if (gedge) {
+          for (unsigned int i = 0; i < edge->getNumVertices(); ++i) {
+            _paramVerticesOnGEdge[i] = _paramOnGEdge(gedge, edge->getVertex(i));
+          }
         }
       }
 
@@ -233,7 +233,8 @@ namespace BoundaryLayerCurver
 }
 
 // BL in planar surface (always prefer this one if possible)
-void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal);
+void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
+                          const GEdge *edge = NULL);
 
 // BL on CAD surface
 void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, const GFace*,

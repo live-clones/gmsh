@@ -692,36 +692,43 @@ namespace BoundaryLayerCurver
     void _Frame::computeFrame(double paramEdge, SVector3 &t, SVector3 &n,
                               SVector3 &w, bool atExtremity) const
     {
-      if (_haveCAD) {
+      if (_gedge) {
         double paramGeoEdge;
+        if (atExtremity) {
+          if (paramEdge < 0) paramGeoEdge = _paramVerticesOnGEdge[0];
+          else               paramGeoEdge = _paramVerticesOnGEdge[1];
+        }
+        else paramGeoEdge =
+            _edgeOnBoundary->interpolate(_paramVerticesOnGEdge, paramEdge);
+
+        t = _gedge->firstDer(paramGeoEdge);
+        t.normalize();
+      }
+      if (!_gedge || t.norm() == 0) {
+        t = _edgeOnBoundary->tangent(paramEdge);
+      }
+
+      if (_gface) {
         SPoint2 paramGFace;
         if (atExtremity) {
-          if (paramEdge < 0) {
-            paramGeoEdge = _paramVerticesOnGEdge[0];
-            paramGFace = SPoint2(_paramVerticesOnGFace[0],
-                                 _paramVerticesOnGFace[1]);
-          }
-          else {
-            paramGeoEdge = _paramVerticesOnGEdge[1];
-            paramGFace = SPoint2(_paramVerticesOnGFace[2],
-                                 _paramVerticesOnGFace[3]);
-          }
+          if (paramEdge < 0) paramGFace = SPoint2(_paramVerticesOnGFace[0],
+                                                  _paramVerticesOnGFace[1]);
+          else               paramGFace = SPoint2(_paramVerticesOnGFace[2],
+                                                  _paramVerticesOnGFace[3]);
         }
         else {
-          paramGeoEdge =
-              _edgeOnBoundary->interpolate(_paramVerticesOnGEdge, paramEdge);
           paramGFace = SPoint2(
               _edgeOnBoundary->interpolate(_paramVerticesOnGFace, paramEdge, 2),
               _edgeOnBoundary->interpolate(_paramVerticesOnGFace+1, paramEdge, 2)
           );
         }
-        t = _gedge->firstDer(paramGeoEdge);
-        t.normalize();
         w = _gface->normal(paramGFace);
       }
       else {
-        t = _edgeOnBoundary->tangent(paramEdge);
         w = _normalToTheMesh;
+      }
+      if (w.norm() == 0) {
+        Msg::Error("normal to the CAD or 2Dmesh is nul. BL curving will fail.");
       }
       n = crossprod(w, t);
     }
@@ -2995,8 +3002,8 @@ namespace BoundaryLayerCurver
   bool curve2Dcolumn(PairMElemVecMElem &column, const GFace *gface,
                      const GEdge *gedge, const SVector3 &normal)
   {
-    // Here, either gface and gedge are defined and not normal, or the normal
-    // is defined and not gface and gedge!
+    // Here, either gface is defined and not normal, or the normal
+    // is defined and not gface!
 
     if (column.second.size() < 2) return true;
 
@@ -3418,7 +3425,8 @@ namespace BoundaryLayerCurver
 //}
 
 
-void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal)
+void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
+                          const GEdge *gedge)
 {
   double length = normal.normalize();
   if (length == 0) {
@@ -3434,16 +3442,16 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal)
   }
 
   for (int i = 0; i < bndEl2column.size(); ++i) {
-//    if (bottomEdge->getNum() != 1079) continue; // Good
-//    if (bottomEdge->getNum() != 1078) continue; // Next to good
-//    if (bottomEdge->getNum() != 1102) continue; // Bad HO
-//    if (bottomEdge->getNum() != 1136) continue; // Bad linear
-//    if (bottomEdge->getNum() != 1149) continue; // shorter
-//    if (bottomEdge->getNum() != 1150) continue; // concave
-//    if (bottomEdge->getNum() != 1151) continue; // symetric of concave
-//    if (bottomEdge->getNum() != 1156) continue; // Strange
-//    if (bottomEdge->getNum() != 1157) continue; // next to Strange
-    BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], NULL, NULL, normal);
+//    if (bndEl2column[i].first != 1079) continue; // Good
+//    if (bndEl2column[i].first != 1078) continue; // Next to good
+//    if (bndEl2column[i].first != 1102) continue; // Bad HO
+//    if (bndEl2column[i].first->getNum() != 1136) continue; // Bad linear
+//    if (bndEl2column[i].first != 1149) continue; // shorter
+//    if (bndEl2column[i].first != 1150) continue; // concave
+//    if (bndEl2column[i].first != 1151) continue; // symetric of concave
+//    if (bndEl2column[i].first != 1156) continue; // Strange
+//    if (bndEl2column[i].first != 1157) continue; // next to Strange
+    BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], NULL, gedge, normal);
   }
 }
 
