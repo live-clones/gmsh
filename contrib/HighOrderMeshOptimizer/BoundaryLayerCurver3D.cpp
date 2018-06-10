@@ -46,7 +46,7 @@
 #endif
 #include "Options.h"
 #include "AnalyseCurvedMesh.h"
-#include "InteriorNodePlacement.h"
+#include "InnerVertexPlacement.h"
 
 namespace
 {
@@ -165,7 +165,7 @@ namespace
 
 namespace BoundaryLayerCurver
 {
-  namespace InteriorNodePlacementMatrices {
+  namespace InnerVertPlacementMatrices {
     fullMatrix<double>* _triangle[10] = {NULL, NULL, NULL, NULL, NULL,
                                          NULL, NULL, NULL, NULL, NULL};
     fullMatrix<double>* _quadrangle[10] = {NULL, NULL, NULL, NULL, NULL,
@@ -214,7 +214,7 @@ namespace BoundaryLayerCurver
       if (!linear) {
         if (!_triangle[order]) {
           _triangle[order] = new fullMatrix<double>();
-          *_triangle[order] = gmshGenerateInteriorNodePlacementTriangle(order);
+          *_triangle[order] = gmshGenerateInnerVertexPlacementTriangle(order);
         }
         return _triangle[order];
       }
@@ -222,7 +222,7 @@ namespace BoundaryLayerCurver
         if (!_linearTriangle0[order]) {
           _linearTriangle0[order] = new fullMatrix<double>();
           *_linearTriangle0[order] =
-              gmshGenerateInteriorNodePlacementTriangleLinear(order, 0);
+              gmshGenerateInnerVertexPlacementTriangleLinear(order, 0);
         }
         return _linearTriangle0[order];
       }
@@ -230,7 +230,7 @@ namespace BoundaryLayerCurver
         if (!_linearTriangle2[order]) {
           _linearTriangle2[order] = new fullMatrix<double>();
           *_linearTriangle2[order] =
-              gmshGenerateInteriorNodePlacementTriangleLinear(order, 2);
+              gmshGenerateInnerVertexPlacementTriangleLinear(order, 2);
         }
         return _linearTriangle2[order];
       }
@@ -241,7 +241,7 @@ namespace BoundaryLayerCurver
       if (!linear) {
         if (!_quadrangle[order]) {
           _quadrangle[order] = new fullMatrix<double>();
-          *_quadrangle[order] = gmshGenerateInteriorNodePlacementQuadrangle(order);
+          *_quadrangle[order] = gmshGenerateInnerVertexPlacementQuadrangle(order);
         }
         return _quadrangle[order];
       }
@@ -249,7 +249,7 @@ namespace BoundaryLayerCurver
         if (!_linearQuadrangle[order]) {
           _linearQuadrangle[order] = new fullMatrix<double>();
           *_linearQuadrangle[order] =
-              gmshGenerateInteriorNodePlacementQuadrangleLinear(order);
+              gmshGenerateInnerVertexPlacementQuadrangleLinear(order);
         }
         return _linearQuadrangle[order];
       }
@@ -261,7 +261,7 @@ namespace BoundaryLayerCurver
       if (!linear) {
         if (!_tetrahedron[order]) {
           _tetrahedron[order] = new fullMatrix<double>();
-          *_tetrahedron[order] = gmshGenerateInteriorNodePlacementTetrahedron(order);
+          *_tetrahedron[order] = gmshGenerateInnerVertexPlacementTetrahedron(order);
         }
         return _tetrahedron[order];
       }
@@ -280,7 +280,7 @@ namespace BoundaryLayerCurver
         if (!_linearTet[dir][order]) {
           _linearTet[dir][order] = new fullMatrix<double>();
           *_linearTet[dir][order] =
-              gmshGenerateInteriorNodePlacementTetrahedronLinear(order, dir);
+              gmshGenerateInnerVertexPlacementTetrahedronLinear(order, dir);
         }
         return _linearTet[dir][order];
       }
@@ -291,7 +291,7 @@ namespace BoundaryLayerCurver
       if (!linear) {
         if (!_hexahedron[order]) {
           _hexahedron[order] = new fullMatrix<double>();
-          *_hexahedron[order] = gmshGenerateInteriorNodePlacementHexahedron(order);
+          *_hexahedron[order] = gmshGenerateInnerVertexPlacementHexahedron(order);
         }
         return _hexahedron[order];
       }
@@ -306,7 +306,7 @@ namespace BoundaryLayerCurver
         if (!_linearHexahedron[dir][order]) {
           _linearHexahedron[dir][order] = new fullMatrix<double>();
           *_linearHexahedron[dir][order] =
-              gmshGenerateInteriorNodePlacementHexahedronLinear(order, dir);
+              gmshGenerateInnerVertexPlacementHexahedronLinear(order, dir);
         }
         return _linearHexahedron[dir][order];
       }
@@ -317,7 +317,7 @@ namespace BoundaryLayerCurver
       if (!linear) {
         if (!_prism[order]) {
           _prism[order] = new fullMatrix<double>();
-          *_prism[order] = gmshGenerateInteriorNodePlacementPrism(order);
+          *_prism[order] = gmshGenerateInnerVertexPlacementPrism(order);
         }
         return _prism[order];
       }
@@ -333,7 +333,7 @@ namespace BoundaryLayerCurver
         if (!_linearPrism[dir][order]) {
           _linearPrism[dir][order] = new fullMatrix<double>();
           *_linearPrism[dir][order] =
-              gmshGenerateInteriorNodePlacementPrismLinear(order, dir);
+              gmshGenerateInnerVertexPlacementPrismLinear(order, dir);
         }
         return _linearPrism[dir][order];
       }
@@ -386,7 +386,7 @@ namespace BoundaryLayerCurver
     // polynomial space to interpolate on triangles)
     if (_nCorner == 3) {
       const fullMatrix<double> *interpolator;
-      interpolator = InteriorNodePlacementMatrices::triangle(_order, false);
+      interpolator = InnerVertPlacementMatrices::triangle(_order, false);
       for (int i = nVerticesOnBoundary; i < sizeParameters; ++i) {
         for (int j = 0; j < interpolator->size2(); ++j) {
           const double coeff = (*interpolator)(i - nVerticesOnBoundary, j);
@@ -974,9 +974,8 @@ namespace BoundaryLayerCurver
         // TODO Determine if edge 0 or 2
       }
       else {
-        placement =
-            InteriorNodePlacementMatrices::quadrangle(f.getPolynomialOrder(),
-                                                      true);
+        placement = InnerVertPlacementMatrices::quadrangle(f.getPolynomialOrder(),
+                                                           true);
       }
       f.repositionInteriorNodes(placement);
     }
@@ -1187,13 +1186,13 @@ namespace BoundaryLayerCurver
         case TYPE_TET:
           el->getFaceInfo(stackFaces[i].getFace(), nFace, sign, rot);
           el->getFaceInfo(stackFaces[i+1].getFace(), nOtherFace, sign, rot);
-          placement = InteriorNodePlacementMatrices::tetrahedron(order, true,
-                                                                 nFace, nOtherFace);
+          placement = InnerVertPlacementMatrices::tetrahedron(order, true,
+                                                              nFace, nOtherFace);
           break;
         case TYPE_HEX:
           el->getFaceInfo(stackFaces[i].getFace(), nFace, sign, rot);
-          placement = InteriorNodePlacementMatrices::hexahedron(order, true,
-                                                                nFace);
+          placement = InnerVertPlacementMatrices::hexahedron(order, true,
+                                                             nFace);
           break;
         case TYPE_PRI:
           el->getFaceInfo(stackFaces[i].getFace(), nFace, sign, rot);
@@ -1206,7 +1205,7 @@ namespace BoundaryLayerCurver
             else
               nFace = 4;
           }
-          placement = InteriorNodePlacementMatrices::prism(order, true, nFace);
+          placement = InnerVertPlacementMatrices::prism(order, true, nFace);
           break;
       }
       if (placement)

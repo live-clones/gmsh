@@ -47,7 +47,7 @@
 #endif
 #include "Options.h"
 #include "AnalyseCurvedMesh.h"
-#include "InteriorNodePlacement.h"
+#include "InnerVertexPlacement.h"
 #include "pointsGenerators.h"
 #include "qualityMeasuresJacobian.h"
 
@@ -2325,10 +2325,10 @@ namespace BoundaryLayerCurver
       int type = el->getType();
       int order = el->getPolynomialOrder();
       if (type == TYPE_QUA) {
-        placement = InteriorNodePlacementMatrices::quadrangle(order, false);
+        placement = InnerVertPlacementMatrices::quadrangle(order, false);
       }
       else {
-        placement = InteriorNodePlacementMatrices::triangle(order, false);
+        placement = InnerVertPlacementMatrices::triangle(order, false);
       }
       // FIXME dirty code (creation of MFaceN to reposition interior vertices)
       MFaceN f = el->getHighOrderFace(0, 0, 0);
@@ -2951,6 +2951,11 @@ namespace BoundaryLayerCurver
     return false;
   }
 
+//  void repositionInnerVertices(const std::vector<MFaceN> &stackFaces)
+//  {
+//
+//  }
+
   bool curve2Dcolumn(PairMElemVecMElem &column, const GFace *gface,
                      const GEdge *gedge, const SVector3 &normal)
   {
@@ -2981,8 +2986,7 @@ namespace BoundaryLayerCurver
     InteriorEdgeCurver::curveEdges(stackEdges, iFirst, iLast, gface);
 
     // Curve interior of elements
-//    _repositionInteriorNodes(colum);
-//    -> compute stack primary vertices so that to create MFaceN
+//    repositionInnerVertices(stackFaces);
     // TODO
 
     return true;

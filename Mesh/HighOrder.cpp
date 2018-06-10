@@ -22,7 +22,7 @@
 #include "OS.h"
 #include "fullMatrix.h"
 #include "BasisFactory.h"
-#include "InteriorNodePlacement.h"
+#include "InnerVertexPlacement.h"
 
 #if defined(HAVE_OPTHOM)
 #include "OptHomFastCurving.h"
@@ -703,7 +703,7 @@ static void getFaceVertices(GFace *gf, MElement *ele,
                             newVertices.begin(), newVertices.end());
   }
   int type = ele->getType();
-  fullMatrix<double> *coefficients = getInteriorNodePlacement(type, nPts+1);
+  fullMatrix<double> *coefficients = getInnerVertexPlacement(type, nPts+1);
   std::vector<MVertex*> vFace;
   if (!linear) {// Get vertices on geometry if asked...
     getFaceVerticesOnGeo(gf, *coefficients, boundaryVertices, vFace);
@@ -814,7 +814,7 @@ static void getFaceVertices(GRegion *gr, MElement *ele,
       int type = retrieveFaceBoundaryVertices(i, ele->getType(), nPts,
                                               vCorner, newVertices,
                                               faceBoundaryVertices);
-      fullMatrix<double> *coefficients = getInteriorNodePlacement(type, nPts+1);
+      fullMatrix<double> *coefficients = getInnerVertexPlacement(type, nPts+1);
       interpVerticesInExistingFace(gr, *coefficients, faceBoundaryVertices, vFace);
       newHOVert.insert(newHOVert.end(), vFace.begin(), vFace.end());
       faceVertices[face].insert(faceVertices[face].end(), vFace.begin(), vFace.end());
@@ -839,7 +839,7 @@ static void getVolumeVertices(GRegion *gr, MElement *ele,
                             newVertices.begin(), newVertices.end());
   }
   int type = ele->getType();
-  fullMatrix<double> &coefficients = *getInteriorNodePlacement(type, nPts + 1);
+  fullMatrix<double> &coefficients = *getInnerVertexPlacement(type, nPts + 1);
 
   for (int k = 0; k < coefficients.size1(); k++) {
     double x(0), y(0), z(0);

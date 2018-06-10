@@ -20,7 +20,7 @@ set(SRC
     JacobianBasis.cpp
     CondNumBasis.cpp
     pointsGenerators.cpp
-    InteriorNodePlacement.cpp
+    InnerVertexPlacement.cpp
   ElementType.cpp
   GaussIntegration.cpp
     GaussQuadratureLin.cpp

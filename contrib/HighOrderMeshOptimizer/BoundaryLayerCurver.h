@@ -221,7 +221,7 @@ namespace BoundaryLayerCurver
   LeastSquareData* constructLeastSquareData(int typeElement, int order,
                                             int orderGauss);
 
-  namespace InteriorNodePlacementMatrices {
+  namespace InnerVertPlacementMatrices {
     const fullMatrix<double> *triangle(int order, bool linear, int edge = 2);
     const fullMatrix<double> *quadrangle(int order, bool linear);
     const fullMatrix<double>* tetrahedron(int order, bool linear, int face = 0,

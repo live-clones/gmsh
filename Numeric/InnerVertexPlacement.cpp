@@ -2,7 +2,7 @@
 // Created by Amaury Johnen on 13/02/18.
 //
 
-#include "InteriorNodePlacement.h"
+#include "InnerVertexPlacement.h"
 #include "pointsGenerators.h"
 
 
@@ -28,7 +28,7 @@ namespace {
 }
 
 
-fullMatrix<double>* getInteriorNodePlacement(int type, int order)
+fullMatrix<double>* getInnerVertexPlacement(int type, int order)
 {
   if (type < 3 || type > 8)
     return NULL;
@@ -41,22 +41,22 @@ fullMatrix<double>* getInteriorNodePlacement(int type, int order)
     fullMatrix<double> *matrix = new fullMatrix<double>();
     switch (type) {
       case TYPE_TRI:
-        *matrix = gmshGenerateInteriorNodePlacementTriangle(order);
+        *matrix = gmshGenerateInnerVertexPlacementTriangle(order);
         break;
       case TYPE_QUA:
-        *matrix = gmshGenerateInteriorNodePlacementQuadrangle(order);
+        *matrix = gmshGenerateInnerVertexPlacementQuadrangle(order);
         break;
       case TYPE_TET:
-        *matrix = gmshGenerateInteriorNodePlacementTetrahedron(order);
+        *matrix = gmshGenerateInnerVertexPlacementTetrahedron(order);
         break;
       case TYPE_PRI:
-        *matrix = gmshGenerateInteriorNodePlacementPrism(order);
+        *matrix = gmshGenerateInnerVertexPlacementPrism(order);
         break;
       case TYPE_HEX:
-        *matrix = gmshGenerateInteriorNodePlacementHexahedron(order);
+        *matrix = gmshGenerateInnerVertexPlacementHexahedron(order);
         break;
       case TYPE_PYR:
-        *matrix = gmshGenerateInteriorNodePlacementPyramid(order);
+        *matrix = gmshGenerateInnerVertexPlacementPyramid(order);
         break;
     }
     storedMatrices[type-3][order] = matrix;
@@ -65,7 +65,7 @@ fullMatrix<double>* getInteriorNodePlacement(int type, int order)
 }
 
 
-fullMatrix<double> gmshGenerateInteriorNodePlacementTriangle(int order)
+fullMatrix<double> gmshGenerateInnerVertexPlacementTriangle(int order)
 {
   if (order < 3) return fullMatrix<double>(0, 0);
 
@@ -107,7 +107,7 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementTriangle(int order)
   return M;
 }
 
-fullMatrix<double> gmshGenerateInteriorNodePlacementQuadrangle(int order)
+fullMatrix<double> gmshGenerateInnerVertexPlacementQuadrangle(int order)
 {
   if (order < 2) return fullMatrix<double>(0, 0);
 
@@ -146,7 +146,7 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementQuadrangle(int order)
   return M;
 }
 
-fullMatrix<double> gmshGenerateInteriorNodePlacementTetrahedron(int order)
+fullMatrix<double> gmshGenerateInnerVertexPlacementTetrahedron(int order)
 {
   if (order < 4) return fullMatrix<double>(0, 0);
 
@@ -212,7 +212,7 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementTetrahedron(int order)
   return M;
 }
 
-fullMatrix<double> gmshGenerateInteriorNodePlacementHexahedron(int order)
+fullMatrix<double> gmshGenerateInnerVertexPlacementHexahedron(int order)
 {
   if (order < 2) return fullMatrix<double>(0, 0);
 
@@ -274,7 +274,7 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementHexahedron(int order)
   return M;
 }
 
-fullMatrix<double> gmshGenerateInteriorNodePlacementPrism(int order)
+fullMatrix<double> gmshGenerateInnerVertexPlacementPrism(int order)
 {
   if (order < 3) return fullMatrix<double>(0, 0);
 
@@ -341,7 +341,7 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementPrism(int order)
   return M;
 }
 
-fullMatrix<double> gmshGenerateInteriorNodePlacementPyramid(int order)
+fullMatrix<double> gmshGenerateInnerVertexPlacementPyramid(int order)
 {
   if (order < 3) return fullMatrix<double>(0, 0);
 
@@ -410,8 +410,8 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementPyramid(int order)
 }
 
 
-fullMatrix<double> gmshGenerateInteriorNodePlacementTriangleLinear(int order,
-                                                                   int dir)
+fullMatrix<double> gmshGenerateInnerVertexPlacementTriangleLinear(int order,
+                                                                  int dir)
 {
   if (order < 3) return fullMatrix<double>(0, 0);
 
@@ -460,7 +460,7 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementTriangleLinear(int order,
   return M;
 }
 
-fullMatrix<double> gmshGenerateInteriorNodePlacementQuadrangleLinear(int order)
+fullMatrix<double> gmshGenerateInnerVertexPlacementQuadrangleLinear(int order)
 {
   if (order < 2) return fullMatrix<double>(0, 0);
 
@@ -492,8 +492,8 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementQuadrangleLinear(int order)
   return M;
 }
 
-fullMatrix<double> gmshGenerateInteriorNodePlacementTetrahedronLinear(int order,
-                                                                      int dir)
+fullMatrix<double> gmshGenerateInnerVertexPlacementTetrahedronLinear(int order,
+                                                                     int dir)
 {
   // 'dir' corresponds to the number of edge
   if (order < 4) return fullMatrix<double>(0, 0);
@@ -559,8 +559,8 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementTetrahedronLinear(int order,
   return M;
 }
 
-fullMatrix<double> gmshGenerateInteriorNodePlacementHexahedronLinear(int order,
-                                                                     int dir)
+fullMatrix<double> gmshGenerateInnerVertexPlacementHexahedronLinear(int order,
+                                                                    int dir)
 {
   if (order < 2) return fullMatrix<double>(0, 0);
 
@@ -610,7 +610,7 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementHexahedronLinear(int order,
   return M;
 }
 
-fullMatrix<double> gmshGenerateInteriorNodePlacementPrismLinear(int order, int dir)
+fullMatrix<double> gmshGenerateInnerVertexPlacementPrismLinear(int order, int dir)
 {
   if (order < 3) return fullMatrix<double>(0, 0);
 
