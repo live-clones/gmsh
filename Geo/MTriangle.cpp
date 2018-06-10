@@ -430,3 +430,57 @@ void MTriangleN::reorient(int rot, bool swap)
     _vs[i] = oldv[indices[3+i]];
   }
 }
+
+MFaceN MTriangle::getHighOrderFace(int num, int sign, int rot)
+{
+  const bool swap = sign == -1;
+  std::vector<MVertex*> vertices(getNumVertices());
+
+  if (swap) for (int i=0;i<3;i++) vertices[i] = _v[(3-i+rot)%3];
+  else      for (int i=0;i<3;i++) vertices[i] = _v[(3+i-rot)%3];
+
+  return MFaceN(TYPE_TRI, 1, vertices);
+}
+
+MFaceN MTriangle6::getHighOrderFace(int num, int sign, int rot)
+{
+  const bool swap = sign == -1;
+  std::vector<MVertex*> vertices(getNumVertices());
+
+  if (swap) {
+    for (int i=0;i<3;i++) {
+      vertices[i] = _v[(3-i+rot)%3];
+      vertices[3+i] = _vs[(5-i+rot)%3];
+    }
+  }
+  else {
+    for (int i=0;i<3;i++) {
+      vertices[i] = _v[(3+i-rot)%3];
+      vertices[3+i] = _vs[(3+i-rot)%3];
+    }
+  }
+  return MFaceN(TYPE_TRI, 2, vertices);
+}
+
+MFaceN MTriangleN::getHighOrderFace(int num, int sign, int rot)
+{
+  const bool swap = sign == -1;
+
+  TupleReorientation mytuple(TYPE_TRI, std::make_pair(rot, swap));
+  std::map<TupleReorientation, IndicesReoriented>::iterator it;
+  it = _tuple2indicesReoriented.find(mytuple);
+  if (it == _tuple2indicesReoriented.end()) {
+    IndicesReoriented indices;
+    _getIndicesReorientedTri(_order, rot, swap, indices);
+    _tuple2indicesReoriented[mytuple] = indices;
+    it = _tuple2indicesReoriented.find(mytuple);
+  }
+
+  IndicesReoriented &indices = it->second;
+
+  std::vector<MVertex*> vertices(getNumVertices());
+  for (int i = 0; i < getNumVertices(); ++i) {
+    vertices[i] = getVertex(indices[i]);
+  }
+  return MFaceN(TYPE_TRI, _order, vertices);
+}

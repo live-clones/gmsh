@@ -89,6 +89,7 @@ class MTriangle : public MElement {
     return MFace(_v[0], _v[1], _v[2]);
   }
   virtual bool getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
+  virtual MFaceN getHighOrderFace(int num, int sign, int rot);
   virtual int getNumFacesRep(bool curved){ return 1; }
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
@@ -204,6 +205,7 @@ class MTriangle6 : public MTriangle {
     MTriangle::_getEdgeVertices(num, v);
     v[2] = _vs[num];
   }
+  virtual MFaceN getHighOrderFace(int num, int sign, int rot);
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
@@ -301,6 +303,7 @@ class MTriangleN : public MTriangle {
     const int ie = (num + 1) * (_order - 1);
     for(int i = num * (_order-1); i != ie; ++i) v[j++] = _vs[i];
   }
+  virtual MFaceN getHighOrderFace(int num, int sign, int rot);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {

@@ -176,7 +176,7 @@ class MElement
     int num, sign, rot;
     if (!getFaceInfo(face, num, sign, rot))
       return MFaceN();
-    return getHighOrderFace(num, sign, rot);
+    return this->getHighOrderFace(num, sign, rot);
   }
 
   // give an MFace as input and get its local number, sign and rotation
