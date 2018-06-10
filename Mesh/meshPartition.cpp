@@ -2518,7 +2518,7 @@ int UnpartitionMesh(GModel *const model)
       pface->quadrangles.clear();
       pface->mesh_vertices.clear();
       pface->set(std::list<GEdge*>());
-      pface->setOrientations(std::list<int>());
+      pface->setOrientations(std::vector<int>());
 
       model->remove(pface);
       delete pface;

@@ -33,7 +33,7 @@ class GFace : public GEntity {
   // edge loops might replace what follows (list of all the edges of
   // the face + directions)
   std::list<GEdge *> l_edges;
-  std::list<int> l_dirs;
+  std::vector<int> l_dirs;
   GRegion *r1, *r2;
   mean_plane meanPlane;
   std::list<GEdge *> embedded_edges;
@@ -94,20 +94,22 @@ class GFace : public GEntity {
   void delFreeEdge(GEdge *e);
 
   // edge orientations
-  virtual std::list<int> orientations() const { return l_dirs; }
+  virtual std::vector<int> const& orientations() const { return l_dirs; }
 
   // edges that bound the face
   int delEdge(GEdge* edge);
   virtual std::list<GEdge*> edges() const { return l_edges; }
-  inline void set(const std::list<GEdge*> f) { l_edges = f; }
-  inline void setOrientations(const std::list<int> f) { l_dirs = f; }
+  void set(const std::list<GEdge*> f) { l_edges = f; }
+  void setOrientations(std::vector<int> f) { l_dirs = f; }
   void setEdge(GEdge* f, int orientation)
   {
     l_edges.push_back(f);
     l_dirs.push_back(orientation);
   }
-  virtual std::list<int> edgeOrientations() const { return l_dirs; }
-  inline bool containsEdge (int iEdge) const
+
+  virtual std::vector<int> const& edgeOrientations() const { return l_dirs; }
+
+  bool containsEdge (int iEdge) const
   {
     for (std::list<GEdge*>::const_iterator it = l_edges.begin(); it !=l_edges.end(); ++it)
       if ((*it)->tag() == iEdge) return true;

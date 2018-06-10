@@ -561,8 +561,8 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
         }
         else{
           std::list<GEdge*> edges(gf->edges());
-          std::list<int> orientations(gf->edgeOrientations());
-          std::list<int>::iterator ito = orientations.begin();
+          std::vector<int> orientations(gf->edgeOrientations());
+          std::vector<int>::iterator ito = orientations.begin();
           for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
             int t = (*it)->tag();
             if(oriented && ito != orientations.end()){
