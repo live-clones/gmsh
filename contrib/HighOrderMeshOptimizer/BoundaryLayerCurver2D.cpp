@@ -607,20 +607,32 @@ namespace
 
 namespace BoundaryLayerCurver
 {
+  void projectVertexIntoGFace(MVertex *v, const GFace *gface)
+  {
+    SPoint3 p = v->point();
+    SPoint2 param = gface->parFromPoint(p);
+    GPoint projected = gface->point(param);
+    v->x() = projected.x();
+    v->y() = projected.y();
+    v->z() = projected.z();
+  }
+
   void projectVerticesIntoGFace(const MEdgeN *edge, const GFace *gface,
                                 bool alsoExtremity = true)
   {
     int i = alsoExtremity ? 0 : 2;
 
-    for (; i < edge->getNumVertices(); ++i) {
-      MVertex *v = edge->getVertex(i);
-      SPoint3 p = v->point();
-      SPoint2 param = gface->parFromPoint(p);
-      GPoint projected = gface->point(param);
-      v->x() = projected.x();
-      v->y() = projected.y();
-      v->z() = projected.z();
-    }
+    for (; i < edge->getNumVertices(); ++i)
+      projectVertexIntoGFace(edge->getVertex(i), gface);
+  }
+
+  void projectVerticesIntoGFace(const MFaceN *face, const GFace *gface,
+                                bool alsoBoundary = true)
+  {
+    int i = alsoBoundary ? 0 : face->getNumVerticesOnBoundary();
+
+    for (; i < face->getNumVertices(); ++i)
+      projectVertexIntoGFace(face->getVertex(i), gface);
   }
 
   namespace EdgeCurver2D
@@ -2951,7 +2963,8 @@ namespace BoundaryLayerCurver
     return false;
   }
 
-  void repositionInnerVertices(const std::vector<MFaceN> &stackFaces)
+  void repositionInnerVertices(const std::vector<MFaceN> &stackFaces,
+                               const GFace *gface)
   {
     if (stackFaces.empty()) return;
 
@@ -2967,6 +2980,7 @@ namespace BoundaryLayerCurver
         face.repositionInnerVertices(placementQua);
       else
         face.repositionInnerVertices(placementTri);
+      projectVerticesIntoGFace(&face, gface, false);
     }
 
     if (stackFaces.back().getType() == TYPE_QUA) {
@@ -2976,6 +2990,7 @@ namespace BoundaryLayerCurver
       placement = InnerVertPlacementMatrices::triangle(order, false);
     }
     stackFaces.back().repositionInnerVertices(placement);
+    projectVerticesIntoGFace(&stackFaces.back(), gface, false);
   }
 
   bool curve2Dcolumn(PairMElemVecMElem &column, const GFace *gface,
@@ -3008,7 +3023,7 @@ namespace BoundaryLayerCurver
     InteriorEdgeCurver::curveEdges(stackEdges, iFirst, iLast, gface);
 
     // Curve interior of elements
-    repositionInnerVertices(stackFaces);
+    repositionInnerVertices(stackFaces, gface);
     // TODO
 
     return true;
