@@ -53,6 +53,79 @@
 
 namespace
 {
+  void drawBezierControlPolygon(const fullMatrix<double> &controlPoints,
+                                GEntity *entity)
+  {
+    const int nVert = controlPoints.size1();
+    std::vector<int> idx(nVert);
+    idx[0] = 0;
+    for (int i = 1; i < nVert-1; ++i) idx[i] = i+1;
+    idx[nVert-1] = 1;
+
+    MVertex *previous = NULL;
+    for (int i = 0; i < nVert; ++i) {
+      MVertex *v = new MVertex(controlPoints(idx[i], 0), controlPoints(idx[i], 1),
+                               controlPoints(idx[i], 2), entity);
+      if (previous) {
+        MLine *line = new MLine(v, previous);
+        ((GEdge *) entity)->addLine(line);
+      }
+      ((GEdge *) entity)->addMeshVertex(v);
+      previous = v;
+    }
+  }
+
+  void drawBezierControlPolygon(const std::vector<MVertex *> &vertices,
+                                GEntity *entity)
+  {
+    const int nVert = (int)vertices.size();
+    const bezierBasis *fs = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 1);
+
+    fullMatrix<double> xyz(nVert, 3);
+    for (int i = 0; i < nVert; ++i) {
+      xyz(i, 0) = vertices[i]->x();
+      xyz(i, 1) = vertices[i]->y();
+      xyz(i, 2) = vertices[i]->z();
+    }
+    fullMatrix<double> controlPoints(nVert, 3);
+    fs->lag2Bez(xyz, controlPoints);
+
+    bool subdivide = true;
+    bool subdivide2 = true;
+    if (subdivide) {
+      fullMatrix<double> allSubs(2*nVert, 3);
+      fs->subdivideBezCoeff(controlPoints, allSubs);
+      fullMatrix<double> sub(nVert, 3);
+      sub.copy(allSubs, 0, nVert, 0, 3, 0, 0);
+      if (subdivide2) {
+        fullMatrix<double> allSubs2(2*nVert, 3);
+        fs->subdivideBezCoeff(sub, allSubs2);
+        fullMatrix<double> sub2(nVert, 3);
+        sub2.copy(allSubs2, 0, nVert, 0, 3, 0, 0);
+        drawBezierControlPolygon(sub2, entity);
+        sub2.copy(allSubs2, nVert, nVert, 0, 3, 0, 0);
+        drawBezierControlPolygon(sub2, entity);
+      }
+      else
+        drawBezierControlPolygon(sub, entity);
+      sub.copy(allSubs, nVert, nVert, 0, 3, 0, 0);
+      if (subdivide2) {
+        fullMatrix<double> allSubs2(2*nVert, 3);
+        fs->subdivideBezCoeff(sub, allSubs2);
+        fullMatrix<double> sub2(nVert, 3);
+        sub2.copy(allSubs2, 0, nVert, 0, 3, 0, 0);
+        drawBezierControlPolygon(sub2, entity);
+        sub2.copy(allSubs2, nVert, nVert, 0, 3, 0, 0);
+        drawBezierControlPolygon(sub2, entity);
+      }
+      else
+        drawBezierControlPolygon(sub, entity);
+    }
+    else {
+      drawBezierControlPolygon(controlPoints, entity);
+    }
+  }
+
   void draw3DFrame(SPoint3 &p, SVector3 &t, SVector3 &n, SVector3 &w,
                    double unitDimension, GFace *gFace = NULL)
   {
