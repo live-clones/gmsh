@@ -2923,7 +2923,7 @@ namespace BoundaryLayerCurver
                                 std::vector<MFaceN> &stackFaces)
   {
     const std::vector<MElement *> &stackElements = column.second;
-    const int numElements =  stackElements.size();
+    const int numElements = (int)stackElements.size();
     stackEdges.resize(numElements);
     stackFaces.resize(numElements);
 
@@ -2946,8 +2946,7 @@ namespace BoundaryLayerCurver
       stackFaces[i] = stackElements[i]->getHighOrderFace(face);
     }
     // We don't care about the orientation of the last element
-    stackFaces[numElements-1] =
-        stackElements.rbegin()[numElements-1]->getHighOrderFace(0, 0, 0);
+    stackFaces.back() = stackElements.back()->getHighOrderFace(0, 0, 0);
   }
 
   bool edgesShareVertex(MEdgeN *e0, MEdgeN *e1)
@@ -2980,7 +2979,7 @@ namespace BoundaryLayerCurver
         face.repositionInnerVertices(placementQua);
       else
         face.repositionInnerVertices(placementTri);
-      projectVerticesIntoGFace(&face, gface, false);
+      if (gface) projectVerticesIntoGFace(&face, gface, false);
     }
 
     if (stackFaces.back().getType() == TYPE_QUA) {
@@ -2990,7 +2989,7 @@ namespace BoundaryLayerCurver
       placement = InnerVertPlacementMatrices::triangle(order, false);
     }
     stackFaces.back().repositionInnerVertices(placement);
-    projectVerticesIntoGFace(&stackFaces.back(), gface, false);
+    if (gface) projectVerticesIntoGFace(&stackFaces.back(), gface, false);
   }
 
   bool curve2Dcolumn(PairMElemVecMElem &column, const GFace *gface,
@@ -3024,7 +3023,6 @@ namespace BoundaryLayerCurver
 
     // Curve interior of elements
     repositionInnerVertices(stackFaces, gface);
-    // TODO
 
     return true;
   }
@@ -3341,31 +3339,101 @@ namespace BoundaryLayerCurver
       }
     }
   }
-
 }
 
 
-void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 n)
-{
-  GEntity *bndEnt = *GModel::current()->firstFace();
-#ifdef _OPENMP
-#pragma omp for
-#endif
-  std::map<int, std::vector<double> > data;
+//void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 n)
+//{
+//  GEntity *bndEnt = *GModel::current()->firstFace();
+//#ifdef _OPENMP
+//#pragma omp for
+//#endif
+//  std::map<int, std::vector<double> > data;
+//
+//  Msg::Info("number of 2D columns: %d", bndEl2column.size());
+//  for (int i = 0; i < bndEl2column.size(); ++i) {
+//    bndEl2column[i].first->setVisibility(1);
+//    for (unsigned int j = 0; j < bndEl2column[i].second.size() - 1; ++j) {
+//      bndEl2column[i].second[j]->setVisibility(1);
+//    }
+//  }
+//
+////  return;
+//
+//  for (int i = 0; i < bndEl2column.size(); ++i) {
+////    if (i % 4) continue;
+//    MElement *bottomEdge = bndEl2column[i].first;
+//    std::vector<MElement*> &column = bndEl2column[i].second;
+////    std::cout << bottomEdge->getNum();
+//    double dampingFactor = 0;
+//    bool success = false;
+//    if (!success && dampingFactor < 1000) {
+//      if (column[0]->getType() == TYPE_TRI)
+//        success = BoundaryLayerCurver::curve2DTriColumn(bottomEdge,
+//                                                        column, n,
+//                                                        dampingFactor, bndEnt);
+//      else
+////        success = BoundaryLayerCurver::curve2DQuadColumn(bottomEdge, column,
+////                                                         n, dampingFactor,
+////                                                         bndEnt);
+////        success = BoundaryLayerCurver::curve2DQuadColumnFirst(bottomEdge, column,
+////                                                              n, dampingFactor,
+////                                                              bndEnt);
+//        success = BoundaryLayerCurver::curve2DQuadColumnTFI(bottomEdge, column,
+//                                                            n, dampingFactor,
+//                                                            bndEnt, true);
+////      success = BoundaryLayerCurver::curve2DQuadColumnFeedback(bottomEdge, column,
+////                                                               n, bndEnt);
+//      if (dampingFactor == 0) dampingFactor = .01;
+//      else dampingFactor *= 2;
+//    }
+//    if (success) {
+////      for (int j = 0; j < column.size(); ++j) {
+////        column[j]->setVisibility(false);
+////      }
+//    }
+//    for (int j = 0; j < column.size(); ++j) {
+//      BoundaryLayerCurver::computeThicknessPView(column[j], n, data);
+//    }
+//  }
+//
+//#if defined(HAVE_POST)
+////  new PView("Thickness quality", "ElementNodeData", GModel::current(), data, 0, 1);
+//  std::map<int, std::vector<double> > data2;
+//  std::map<int, std::vector<double> >::iterator it;
+//  for (it = data.begin(); it != data.end(); ++it) {
+//    double min = 1;
+//    for (int i = 0; i < (int)it->second.size(); ++i) {
+//      min = std::min(min, it->second[i]);
+//    }
+//    data2[it->first].push_back(min);
+//  }
+////  new PView("Thickness quality", "ElementData", GModel::current(), data2, 0, 1);
+////  static int aaa = 0;
+////  if (++aaa == 7) GMSH_AnalyseCurvedMeshPlugin().execute(NULL);
+//#if defined(HAVE_FLTK)
+//  FlGui::instance()->updateViews(true, true);
+//#endif
+//#endif
+//}
 
-  Msg::Info("number of 2D columns: %d", bndEl2column.size());
+
+void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal)
+{
+  double length = normal.normalize();
+  if (length == 0) {
+    Msg::Error("normal must be non-zero for boundary layer curving");
+    return;
+  }
+
   for (int i = 0; i < bndEl2column.size(); ++i) {
     bndEl2column[i].first->setVisibility(1);
-    for (unsigned int j = 0; j < bndEl2column[i].second.size() - 1; ++j) {
+    for (unsigned int j = 0; j < bndEl2column[i].second.size(); ++j) {
       bndEl2column[i].second[j]->setVisibility(1);
     }
   }
 
-//  return;
-
   for (int i = 0; i < bndEl2column.size(); ++i) {
-//    if (i % 4) continue;
-    MElement *bottomEdge = bndEl2column[i].first;
 //    if (bottomEdge->getNum() != 1079) continue; // Good
 //    if (bottomEdge->getNum() != 1078) continue; // Next to good
 //    if (bottomEdge->getNum() != 1102) continue; // Bad HO
@@ -3375,58 +3443,8 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 n)
 //    if (bottomEdge->getNum() != 1151) continue; // symetric of concave
 //    if (bottomEdge->getNum() != 1156) continue; // Strange
 //    if (bottomEdge->getNum() != 1157) continue; // next to Strange
-    std::vector<MElement*> &column = bndEl2column[i].second;
-//    std::cout << bottomEdge->getNum();
-    double dampingFactor = 0;
-    bool success = false;
-    if (!success && dampingFactor < 1000) {
-      if (column[0]->getType() == TYPE_TRI)
-        success = BoundaryLayerCurver::curve2DTriColumn(bottomEdge,
-                                                        column, n,
-                                                        dampingFactor, bndEnt);
-      else
-//        success = BoundaryLayerCurver::curve2DQuadColumn(bottomEdge, column,
-//                                                         n, dampingFactor,
-//                                                         bndEnt);
-//        success = BoundaryLayerCurver::curve2DQuadColumnFirst(bottomEdge, column,
-//                                                              n, dampingFactor,
-//                                                              bndEnt);
-        success = BoundaryLayerCurver::curve2DQuadColumnTFI(bottomEdge, column,
-                                                            n, dampingFactor,
-                                                            bndEnt, true);
-//      success = BoundaryLayerCurver::curve2DQuadColumnFeedback(bottomEdge, column,
-//                                                               n, bndEnt);
-      if (dampingFactor == 0) dampingFactor = .01;
-      else dampingFactor *= 2;
-    }
-    if (success) {
-//      for (int j = 0; j < column.size(); ++j) {
-//        column[j]->setVisibility(false);
-//      }
-    }
-    for (int j = 0; j < column.size(); ++j) {
-      BoundaryLayerCurver::computeThicknessPView(column[j], n, data);
-    }
+    BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], NULL, NULL, normal);
   }
-
-#if defined(HAVE_POST)
-//  new PView("Thickness quality", "ElementNodeData", GModel::current(), data, 0, 1);
-  std::map<int, std::vector<double> > data2;
-  std::map<int, std::vector<double> >::iterator it;
-  for (it = data.begin(); it != data.end(); ++it) {
-    double min = 1;
-    for (int i = 0; i < (int)it->second.size(); ++i) {
-      min = std::min(min, it->second[i]);
-    }
-    data2[it->first].push_back(min);
-  }
-//  new PView("Thickness quality", "ElementData", GModel::current(), data2, 0, 1);
-//  static int aaa = 0;
-//  if (++aaa == 7) GMSH_AnalyseCurvedMeshPlugin().execute(NULL);
-#if defined(HAVE_FLTK)
-  FlGui::instance()->updateViews(true, true);
-#endif
-#endif
 }
 
 
@@ -3436,6 +3454,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
   if (!gface || !gedge) {
     Msg::Error("both gface and gedge are needed for boundary layer curving "
                "(%d, %d)", gface, gedge);
+    return;
   }
 
   for (int i = 0; i < bndEl2column.size(); ++i) {
