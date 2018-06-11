@@ -982,7 +982,7 @@ namespace BoundaryLayerCurver
   }
 
 
-  bool curveInterface(std::vector<MFaceN> &column,
+  void curveInterface(std::vector<MFaceN> &column,
                       const MElement *bottom1, const MElement *bottom2,
                       const MEdgeN &baseEdge, MEdgeN &topEdge,
                       double dampingFactor, const GFace *bndEnt,
