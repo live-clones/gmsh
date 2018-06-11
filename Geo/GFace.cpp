@@ -315,9 +315,7 @@ std::vector<MVertex*> GFace::getEmbeddedMeshVertices() const
       it != embedded_vertices.end(); it++){
     tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
   }
-  std::vector<MVertex*> res;
-  res.insert(res.end(), tmp.begin(), tmp.end());
-  return res;
+  return std::vector<MVertex*>(tmp.begin(), tmp.end());
 }
 
 std::list<GVertex*> GFace::vertices() const
