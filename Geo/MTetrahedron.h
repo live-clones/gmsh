@@ -67,6 +67,10 @@ class MTetrahedron : public MElement {
   {
     return MEdge(_v[edges_tetra(num, 0)], _v[edges_tetra(num, 1)]);
   }
+  virtual int numEdge2numVertex(int numEdge, int numVert) const
+  {
+    return edges_tetra(numEdge, numVert);
+  }
   virtual int getNumEdgesRep(bool curved){ return 6; }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
@@ -75,13 +79,13 @@ class MTetrahedron : public MElement {
     _getEdgeVertices(num, v);
   }
   virtual int getNumFaces(){ return 4; }
-  virtual MFace getFace(int num)
+  virtual MFace getFace(int num) const
   {
     return MFace(_v[faces_tetra(num, 0)],
                  _v[faces_tetra(num, 1)],
                  _v[faces_tetra(num, 2)]);
   }
-  virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
+  virtual bool getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
   virtual int getNumFacesRep(bool curved){ return 4; }
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n)
   {
@@ -310,10 +314,10 @@ class MTetrahedron10 : public MTetrahedron {
  *
  */
 
-typedef std::vector<int> indicesReversed;
+typedef std::vector<int> IndicesReversed;
 
 class MTetrahedronN : public MTetrahedron {
-  static std::map<int, indicesReversed> _order2indicesReversedTet;
+  static std::map<int, IndicesReversed> _order2indicesReversedTet;
 
  protected:
   std::vector<MVertex *> _vs;

@@ -80,7 +80,7 @@ class MTrihedron : public MElement {
     _getEdgeVertices(num, v);
   }
   virtual int getNumFaces(){ return 3; }
-  virtual MFace getFace(int num)
+  virtual MFace getFace(int num) const
   {
     if(num > 0)
       return MFace(_v[faces_trihedron(num, 0)],

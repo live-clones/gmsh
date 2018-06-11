@@ -19,10 +19,12 @@ void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
                                const fullMatrix<double> *normals = NULL);
 double minIGEMeasure(MElement *el,
                      bool knownValid = false,
-                     bool reversedOk = false);
+                     bool reversedOk = false,
+                     const fullMatrix<double> *normals = NULL);
 double minICNMeasure(MElement *el,
                      bool knownValid = false,
-                     bool reversedOk = false);
+                     bool reversedOk = false,
+                     const fullMatrix<double> *normals = NULL);
 void sampleIGEMeasure(MElement *el, int order, double &min, double &max);
 void sampleJacobian(MElement *el, int order, fullVector<double> &jac,
                     const fullMatrix<double> *normals = NULL);
@@ -99,7 +101,6 @@ public:
 private:
   void _computeAtCorner(double &min, double &max) const;
   double _computeLowerBound() const;
-  void _getCoeffLengthVectors(fullMatrix<double> &, bool corners = false) const;
 };
 
 class _CoeffDataICN: public _CoeffData
@@ -131,6 +132,7 @@ double _computeBoundRational(const fullVector<double> &numerator,
                              bool lower, bool positiveDenom = true);
 
 void _subdivideDomains(std::vector<_CoeffData*> &domains);
+double _getMinAndDeleteDomains(std::vector<_CoeffData*> &domains);
 
 }
 

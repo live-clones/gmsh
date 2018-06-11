@@ -22,7 +22,7 @@
 #include "OS.h"
 #include "fullMatrix.h"
 #include "BasisFactory.h"
-#include "InteriorNodePlacement.h"
+#include "InnerVertexPlacement.h"
 
 #if defined(HAVE_OPTHOM)
 #include "OptHomFastCurving.h"
@@ -38,11 +38,16 @@ static double mylength(GEdge *ge, int i, double *u)
   return ge->length(u[i], u[i+1], 10);
 }
 
-static void myresid(int N, GEdge *ge, double *u, fullVector<double> &r)
+static void myresid(int N, GEdge *ge, double *u, fullVector<double> &r,
+                    double *weight = NULL)
 {
   double L[100];
   for (int i = 0; i < N - 1; i++) L[i] = mylength(ge, i, u);
-  for (int i = 0; i < N - 2; i++) r(i) = L[i + 1] - L[i];
+  if (weight)
+    for (int i = 0; i < N - 2; i++) r(i) = L[i+1]/weight[i+1] - L[i]/weight[i];
+  else
+    for (int i = 0; i < N - 2; i++) r(i) = L[i+1] - L[i];
+
 }
 
 static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N,
@@ -107,6 +112,80 @@ static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N,
   return false;
 }
 
+static bool computeGLLParametersP6(GEdge *ge, double u0, double uN, int N,
+                                   double *u, double underRelax)
+{
+  static const double GLLQL[7] = {-1.000000000000000,
+                                  -0.830223896278567,
+                                  -0.468848793470714,
+                                  0,
+                                  0.468848793470714,
+                                  0.830223896278567,
+                                  1.000000000000000};
+  double weight[6];
+  for (int i = 0; i < 6; ++i) {
+    weight[i] = GLLQL[i+1] - GLLQL[i];
+  }
+
+  const double PRECISION = 1.e-6;
+  const int MAX_ITER = 50;
+  const double eps = (uN - u0) * 1.e-5;
+
+  // newton algorithm
+  // N is the total number of points (3 for quadratic, 4 for cubic ...)
+  // u[0] = u0;
+  // u[N-1] = uN;
+  // initialize as equidistant in parameter space
+  u[0] = u0;
+  u[N-1] = uN;
+  double uMiddle = .5 * (u0 + uN);
+  double du = .5 * (uN - u0);
+  for (int i = 1; i < N-1; i++){
+    u[i] = uMiddle + GLLQL[i] * du;
+  }
+
+  // create the tangent matrix
+  const int M = N - 2;
+  fullMatrix<double> J(M, M);
+  fullVector<double> DU(M);
+  fullVector<double> R(M);
+  fullVector<double> Rp(M);
+
+  int iter = 1;
+
+  while (iter < MAX_ITER){
+    iter++;
+    myresid(N, ge, u, R, weight);
+
+    for (int i = 0; i < M; i++){
+      u[i + 1] += eps;
+      myresid(N, ge, u, Rp, weight);
+      for (int j = 0; j < M; j++){
+        J(i, j) = (Rp(j) - R(j)) / eps;
+      }
+      u[i+1] -= eps;
+    }
+
+    if (M == 1)
+      DU(0) = R(0) / J(0, 0);
+    else
+      J.luSolve(R, DU);
+
+    for (int i = 0; i < M; i++){
+      u[i+1] -= underRelax*DU(i);
+    }
+
+    if (u[1] < u0) break;
+    if (u[N - 2] > uN) break;
+
+    double newt_norm = DU.norm();
+    if (newt_norm < PRECISION) {
+      return true;
+    }
+  }
+  return false;
+}
+
 static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
                                          double v0, double vN, SPoint3 &p0,
                                          SPoint3 &pN, int N, bool geodesic,
@@ -133,11 +212,57 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
   return true;
 }
 
+
+
+static fullMatrix<double> *lob2lagP6 = NULL;
+
+void createMatLob2LagP6()
+{
+  const double lobPt[7] = {-1.000000000000000,
+                           -0.830223896278567,
+                           -0.468848793470714,
+                           0,
+                           0.468848793470714,
+                           0.830223896278567,
+                           1.000000000000000};
+  const double lagPt[7] = {-1.000000000000000,
+                           -0.666666666666666,
+                           -0.333333333333333,
+                           0,
+                           0.333333333333333,
+                           0.666666666666666,
+                           1.000000000000000};
+  const int ndofs = 7;
+
+  const double monomial[7] = {0, 1, 2, 3, 4, 5, 6};
+
+  fullMatrix<double> Vandermonde(ndofs, ndofs);
+  for (int i = 0; i < ndofs; i++) {
+    for (int j = 0; j < ndofs; j++) {
+      Vandermonde(i, j) = pow_int(lobPt[i], monomial[j]);
+    }
+  }
+
+  fullMatrix<double> coefficient(ndofs, ndofs);
+  Vandermonde.invert(coefficient);
+
+  lob2lagP6 = new fullMatrix<double>(ndofs, ndofs);
+
+  for (int i = 0; i < ndofs; i++) {
+    for (int j = 0; j < ndofs; j++) {
+      Vandermonde(i, j) = pow_int(lagPt[i], monomial[j]);
+    }
+  }
+
+  Vandermonde.mult(coefficient,(*lob2lagP6));
+}
+
 // --------- Creation of high-order edge vertices -----------
 
 static bool getEdgeVerticesOnGeo(GEdge *ge, MVertex *v0, MVertex *v1,
                                  std::vector<MVertex*> &ve, int nPts = 1)
 {
+  static bool GLLquad = false;
   static const double relaxFail = 1e-2;
   double u0 = 0., u1 = 0., US[100];
   bool reparamOK = reparamMeshVertexOnEdge(v0, ge, u0);
@@ -153,7 +278,10 @@ static bool getEdgeVerticesOnGeo(GEdge *ge, MVertex *v0, MVertex *v1,
     bool failed = true;
     double relax = 1.;
     while (failed && (relax > relaxFail)) {
-      failed = !computeEquidistantParameters(ge, uMin, uMax, nPts + 2, US, relax);
+      if (GLLquad)
+        failed = !computeGLLParametersP6(ge, uMin, uMax, nPts + 2, US, relax);
+      else
+        failed = !computeEquidistantParameters(ge, uMin, uMax, nPts + 2, US, relax);
       relax *= 0.5;
     }
     if (failed) {
@@ -170,15 +298,46 @@ static bool getEdgeVerticesOnGeo(GEdge *ge, MVertex *v0, MVertex *v1,
     Msg::Error("Cannot reparam a mesh Vertex in high order meshing");
   if (!reparamOK) return false;
 
-  for(int j = 0; j < nPts; j++) {
-    MVertex *v;
-    int count = u0<u1? j + 1 : nPts + 1  - (j + 1);
-    GPoint pc = ge->point(US[count]);
-    v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, US[count]);
-    // this destroys the ordering of the mesh vertices on the edge
-    ve.push_back(v);
+  if (GLLquad) {
+    fullMatrix<double> M(7, 3);
+    M(0, 0) = u0<u1 ? v0->x() : v1->x();
+    M(0, 1) = u0<u1 ? v0->y() : v1->y();
+    M(0, 2) = u0<u1 ? v0->z() : v1->z();
+    M(6, 0) = u0<u1 ? v1->x() : v0->x();
+    M(6, 1) = u0<u1 ? v1->y() : v0->y();
+    M(6, 2) = u0<u1 ? v1->z() : v0->z();
+    for(int j = 0; j < nPts; j++) {
+      int count = u0<u1? j + 1 : nPts + 1  - (j + 1);
+      GPoint pc = ge->point(US[count]);
+      M(j+1, 0) = pc.x();
+      M(j+1, 1) = pc.y();
+      M(j+1, 2) = pc.z();
+    }
+    fullMatrix<double> Mlag(7, 3);
+    if (!lob2lagP6) createMatLob2LagP6();
+    lob2lagP6->mult(M, Mlag);
+
+    for(int j = 0; j < nPts; j++) {
+      MVertex *v;
+      int count = u0<u1? j + 1 : nPts + 1  - (j + 1);
+      // FIXME US[count] false!!!
+      v = new MEdgeVertex(Mlag(count, 0), Mlag(count, 1), Mlag(count, 2), ge, US[count]);
+      // this destroys the ordering of the mesh vertices on the edge
+      ve.push_back(v);
+    }
+  }
+  else {
+    for(int j = 0; j < nPts; j++) {
+      MVertex *v;
+      int count = u0<u1? j + 1 : nPts + 1  - (j + 1);
+      GPoint pc = ge->point(US[count]);
+      v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, US[count]);
+      // this destroys the ordering of the mesh vertices on the edge
+      ve.push_back(v);
+    }
   }
 
+//  GLLquad = false;
   return true;
 }
 
@@ -544,7 +703,7 @@ static void getFaceVertices(GFace *gf, MElement *ele,
                             newVertices.begin(), newVertices.end());
   }
   int type = ele->getType();
-  fullMatrix<double> *coefficients = getInteriorNodePlacement(type, nPts+1);
+  fullMatrix<double> *coefficients = getInnerVertexPlacement(type, nPts+1);
   std::vector<MVertex*> vFace;
   if (!linear) {// Get vertices on geometry if asked...
     getFaceVerticesOnGeo(gf, *coefficients, boundaryVertices, vFace);
@@ -655,7 +814,7 @@ static void getFaceVertices(GRegion *gr, MElement *ele,
       int type = retrieveFaceBoundaryVertices(i, ele->getType(), nPts,
                                               vCorner, newVertices,
                                               faceBoundaryVertices);
-      fullMatrix<double> *coefficients = getInteriorNodePlacement(type, nPts+1);
+      fullMatrix<double> *coefficients = getInnerVertexPlacement(type, nPts+1);
       interpVerticesInExistingFace(gr, *coefficients, faceBoundaryVertices, vFace);
       newHOVert.insert(newHOVert.end(), vFace.begin(), vFace.end());
       faceVertices[face].insert(faceVertices[face].end(), vFace.begin(), vFace.end());
@@ -680,7 +839,7 @@ static void getVolumeVertices(GRegion *gr, MElement *ele,
                             newVertices.begin(), newVertices.end());
   }
   int type = ele->getType();
-  fullMatrix<double> &coefficients = *getInteriorNodePlacement(type, nPts + 1);
+  fullMatrix<double> &coefficients = *getInnerVertexPlacement(type, nPts + 1);
 
   for (int k = 0; k < coefficients.size1(); k++) {
     double x(0), y(0), z(0);

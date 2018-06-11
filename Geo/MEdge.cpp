@@ -6,6 +6,10 @@
 #include <algorithm>
 #include "MEdge.h"
 #include "Numeric.h"
+#include "GmshDefines.h"
+#include "ElementType.h"
+#include "nodalBasis.h"
+#include "BasisFactory.h"
 
 // FIXME
 // remove that when MElementCut is removed
@@ -64,6 +68,7 @@ bool MEdge::isInside(MVertex *v) const
   return true;
 }
 
+
 bool SortEdgeConsecutive(const std::vector<MEdge> &e,
                          std::vector<std::vector<MVertex*> >&vs)
 {
@@ -87,10 +92,10 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
       std::map<MVertex*, std::pair<MVertex*,MVertex*> >::iterator it = c.begin();
       start = it->first;
       for (; it != c.end(); ++it) {
-	if (it->second.second == NULL){
-	  start = it->first;
-	  break;
-	}
+        if (it->second.second == NULL){
+          start = it->first;
+          break;
+        }
       }
     }
     std::map<MVertex*, std::pair<MVertex*,MVertex*> >::iterator it = c.find(start);
@@ -106,15 +111,76 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
       if (v1 == prev)current = v2;
       else if (v2 == prev)current = v1;
       else {
-	break;
+        break;
       }
       prev = temp;
       if (current == start) {
-	v.push_back(current);
+        v.push_back(current);
       }
     } while (current != start && current != NULL);
     vs.push_back(v);
   }
 
   return true;
+}
+
+MEdgeN::MEdgeN(const std::vector<MVertex*> &v)
+{
+  _v.resize(v.size());
+  for(unsigned int i = 0; i < v.size(); i++)
+    _v[i] = v[i];
+}
+
+MEdge MEdgeN::getEdge() const
+{
+  return MEdge(_v[0], _v[1]);
+}
+
+SPoint3 MEdgeN::pnt(double u) const
+{
+  int tagLine = ElementType::getType(TYPE_LIN, getPolynomialOrder());
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
+
+  double f[100];
+  fs->f(u, 0, 0, f);
+
+  double x = 0, y = 0, z = 0;
+  for (int i = 0; i < fs->getNumShapeFunctions(); i++) {
+    x += f[i] * _v[i]->x();
+    y += f[i] * _v[i]->y();
+    z += f[i] * _v[i]->z();
+  }
+  return SPoint3(x, y, z);
+}
+
+SVector3 MEdgeN::tangent(double u) const
+{
+  int tagLine = ElementType::getType(TYPE_LIN, getPolynomialOrder());
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
+
+  double sf[100][3];
+  fs->df(u, 0, 0, sf);
+
+  double dx = 0, dy = 0, dz = 0;
+  for (int i = 0; i < fs->getNumShapeFunctions(); i++) {
+    dx += sf[i][0] * _v[i]->x();
+    dy += sf[i][0] * _v[i]->y();
+    dz += sf[i][0] * _v[i]->z();
+  }
+  return SVector3(dx, dy, dz).unit();
+}
+
+double MEdgeN::interpolate(const double val[], double u, int stride) const
+{
+  int tagLine = ElementType::getType(TYPE_LIN, getPolynomialOrder());
+  const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
+
+  double f[100];
+  fs->f(u, 0, 0, f);
+
+  double sum = 0;
+  for (int i = 0, k = 0; i < fs->getNumShapeFunctions(); i++, k += stride) {
+    sum += f[i] * val[k];
+  }
+  return sum;
 }

@@ -2,7 +2,7 @@
 // Created by Amaury Johnen on 13/02/18.
 //
 
-#include "InteriorNodePlacement.h"
+#include "InnerVertexPlacement.h"
 #include "pointsGenerators.h"
 
 
@@ -28,7 +28,7 @@ namespace {
 }
 
 
-fullMatrix<double>* getInteriorNodePlacement(int type, int order)
+fullMatrix<double>* getInnerVertexPlacement(int type, int order)
 {
   if (type < 3 || type > 8)
     return NULL;
@@ -41,22 +41,22 @@ fullMatrix<double>* getInteriorNodePlacement(int type, int order)
     fullMatrix<double> *matrix = new fullMatrix<double>();
     switch (type) {
       case TYPE_TRI:
-        *matrix = gmshGenerateInteriorNodePlacementTriangle(order);
+        *matrix = gmshGenerateInnerVertexPlacementTriangle(order);
         break;
       case TYPE_QUA:
-        *matrix = gmshGenerateInteriorNodePlacementQuadrangle(order);
+        *matrix = gmshGenerateInnerVertexPlacementQuadrangle(order);
         break;
       case TYPE_TET:
-        *matrix = gmshGenerateInteriorNodePlacementTetrahedron(order);
+        *matrix = gmshGenerateInnerVertexPlacementTetrahedron(order);
         break;
       case TYPE_PRI:
-        *matrix = gmshGenerateInteriorNodePlacementPrism(order);
+        *matrix = gmshGenerateInnerVertexPlacementPrism(order);
         break;
       case TYPE_HEX:
-        *matrix = gmshGenerateInteriorNodePlacementHexahedron(order);
+        *matrix = gmshGenerateInnerVertexPlacementHexahedron(order);
         break;
       case TYPE_PYR:
-        *matrix = gmshGenerateInteriorNodePlacementPyramid(order);
+        *matrix = gmshGenerateInnerVertexPlacementPyramid(order);
         break;
     }
     storedMatrices[type-3][order] = matrix;
@@ -65,18 +65,13 @@ fullMatrix<double>* getInteriorNodePlacement(int type, int order)
 }
 
 
-fullMatrix<double> gmshGenerateInteriorNodePlacementTriangle(int order)
+fullMatrix<double> gmshGenerateInnerVertexPlacementTriangle(int order)
 {
-  fullMatrix<double> M;
+  if (order < 3) return fullMatrix<double>(0, 0);
 
-  if (order < 3) {
-    M.resize(0, 0);
-    return M;
-  }
-
-  int szInc = 3 * order;
-  int szComp = (order + 1) * (order + 2) / 2;
-  M.resize(szComp-szInc, szInc, true);
+  const int szInc = 3 * order;
+  const int szComp = (order + 1) * (order + 2) / 2;
+  const int szInt = szComp - szInc;
 
   fullMatrix<double> monomials = gmshGenerateMonomialsTriangle(order, false);
   fullMatrix<int> coordinates;
@@ -90,7 +85,8 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementTriangle(int order)
   }
 
   int &n = order;
-  for (int i = 0; i < szComp-szInc; ++i) {
+  fullMatrix<double> M(szInt, szInc, true);
+  for (int i = 0; i < szInt; ++i) {
     int u = coordinates(szInc + i, 0);
     int v = coordinates(szInc + i, 1);
     int q = n-u-v;
@@ -111,18 +107,13 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementTriangle(int order)
   return M;
 }
 
-fullMatrix<double> gmshGenerateInteriorNodePlacementQuadrangle(int order)
+fullMatrix<double> gmshGenerateInnerVertexPlacementQuadrangle(int order)
 {
-  fullMatrix<double> M;
+  if (order < 2) return fullMatrix<double>(0, 0);
 
-  if (order < 2) {
-    M.resize(0, 0);
-    return M;
-  }
-
-  int szInc = 4 * order;
-  int szComp = (order + 1) * (order + 1);
-  M.resize(szComp-szInc, szInc, true);
+  const int szInc = 4 * order;
+  const int szComp = (order + 1) * (order + 1);
+  const int szInt = szComp - szInc;
 
   fullMatrix<double> monomials = gmshGenerateMonomialsQuadrangle(order, false);
   fullMatrix<int> coordinates;
@@ -136,7 +127,8 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementQuadrangle(int order)
   }
 
   int &n = order;
-  for (int i = 0; i < szComp-szInc; ++i) {
+  fullMatrix<double> M(szInt, szInc, true);
+  for (int i = 0; i < szInt; ++i) {
     int u = coordinates(szInc + i, 0);
     int v = coordinates(szInc + i, 1);
     double xi = (double)u / n;
@@ -154,18 +146,13 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementQuadrangle(int order)
   return M;
 }
 
-fullMatrix<double> gmshGenerateInteriorNodePlacementTetrahedron(int order)
+fullMatrix<double> gmshGenerateInnerVertexPlacementTetrahedron(int order)
 {
-  fullMatrix<double> M;
+  if (order < 4) return fullMatrix<double>(0, 0);
 
-  if (order < 4) {
-    M.resize(0, 0);
-    return M;
-  }
-
-  int szInc = 4 + 6 * (order - 1) + 4 * (order - 2) * (order - 1) / 2;
-  int szComp = (order + 1) * (order + 2) * (order + 3) / 6;
-  M.resize(szComp-szInc, szInc, true);
+  const int szInt = (order - 3) * (order - 2) * (order - 1) / 6;
+  const int szComp = (order + 1) * (order + 2) * (order + 3) / 6;
+  const int szInc = szComp - szInt;
 
   fullMatrix<double> monomials = gmshGenerateMonomialsTetrahedron(order, false);
   fullMatrix<int> coordinates;
@@ -180,7 +167,8 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementTetrahedron(int order)
   }
 
   int &n = order;
-  for (int i = 0; i < szComp-szInc; ++i) {
+  fullMatrix<double> M(szInt, szInc, true);
+  for (int i = 0; i < szInt; ++i) {
     int u = coordinates(szInc + i, 0);
     int v = coordinates(szInc + i, 1);
     int w = coordinates(szInc + i, 2);
@@ -224,18 +212,13 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementTetrahedron(int order)
   return M;
 }
 
-fullMatrix<double> gmshGenerateInteriorNodePlacementHexahedron(int order)
+fullMatrix<double> gmshGenerateInnerVertexPlacementHexahedron(int order)
 {
-  fullMatrix<double> M;
+  if (order < 2) return fullMatrix<double>(0, 0);
 
-  if (order < 2) {
-    M.resize(0, 0);
-    return M;
-  }
-
-  int szInc = 8 + 12 * (order - 1) + 6 * (order - 1) * (order - 1);
-  int szComp = (order + 1) * (order + 1) * (order + 1);
-  M.resize(szComp-szInc, szInc, true);
+  const int szInt = (order - 1) * (order - 1) * (order - 1);
+  const int szComp = (order + 1) * (order + 1) * (order + 1);
+  const int szInc = szComp - szInt;
 
   fullMatrix<double> monomials = gmshGenerateMonomialsHexahedron(order, false);
   fullMatrix<int> coordinates;
@@ -250,7 +233,8 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementHexahedron(int order)
   }
 
   int &n = order;
-  for (int i = 0; i < szComp-szInc; ++i) {
+  fullMatrix<double> M(szInt, szInc, true);
+  for (int i = 0; i < szInt; ++i) {
     int u = coordinates(szInc + i, 0);
     int v = coordinates(szInc + i, 1);
     int w = coordinates(szInc + i, 2);
@@ -290,19 +274,13 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementHexahedron(int order)
   return M;
 }
 
-fullMatrix<double> gmshGenerateInteriorNodePlacementPrism(int order)
+fullMatrix<double> gmshGenerateInnerVertexPlacementPrism(int order)
 {
-  fullMatrix<double> M;
+  if (order < 3) return fullMatrix<double>(0, 0);
 
-  if (order < 3) {
-    M.resize(0, 0);
-    return M;
-  }
-
-  int szInc = 6 + 9 * (order - 1) + 3 * (order - 1) * (order - 1)
-              + 2 * (order - 2) * (order - 1) / 2;
-  int szComp = (order + 1) * (order + 1) * (order + 2) / 2;
-  M.resize(szComp-szInc, szInc, true);
+  const int szInt = (order - 1) * (order - 2) * (order - 1) / 2;
+  const int szComp = (order + 1) * (order + 1) * (order + 2) / 2;
+  const int szInc = szComp - szInt;
 
   fullMatrix<double> monomials = gmshGenerateMonomialsPrism(order, false);
   fullMatrix<int> coordinates;
@@ -317,7 +295,8 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementPrism(int order)
   }
 
   int &n = order;
-  for (int i = 0; i < szComp-szInc; ++i) {
+  fullMatrix<double> M(szInt, szInc, true);
+  for (int i = 0; i < szInt; ++i) {
     int u = coordinates(szInc + i, 0);
     int v = coordinates(szInc + i, 1);
     int w = coordinates(szInc + i, 2);
@@ -362,19 +341,13 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementPrism(int order)
   return M;
 }
 
-fullMatrix<double> gmshGenerateInteriorNodePlacementPyramid(int order)
+fullMatrix<double> gmshGenerateInnerVertexPlacementPyramid(int order)
 {
-  fullMatrix<double> M;
+  if (order < 3) return fullMatrix<double>(0, 0);
 
-  if (order < 3) {
-    M.resize(0, 0);
-    return M;
-  }
-
-  int szInc = 5 + 8 * (order - 1) + 1 * (order - 1) * (order - 1)
-              + 4 * (order - 2) * (order - 1) / 2;
-  int szComp = (order+1) * ((order+1)+1) * (2*(order+1)+1) / 6;
-  M.resize(szComp-szInc, szInc, true);
+  const int szInt = (order-2) * ((order-2)+1) * (2*(order-2)+1) / 6;
+  const int szComp = (order+1) * ((order+1)+1) * (2*(order+1)+1) / 6;
+  const int szInc = szComp - szInt;
 
   fullMatrix<double> monomials = gmshGenerateMonomialsPyramid(order, false);
   fullMatrix<int> coordinates;
@@ -389,7 +362,8 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementPyramid(int order)
   }
 
   int &n = order;
-  for (int i = 0; i < szComp-szInc; ++i) {
+  fullMatrix<double> M(szInt, szInc, true);
+  for (int i = 0; i < szInt; ++i) {
     int u = coordinates(szInc + i, 0);
     int v = coordinates(szInc + i, 1);
     int w = order - coordinates(szInc + i, 2);
@@ -431,6 +405,262 @@ fullMatrix<double> gmshGenerateInteriorNodePlacementPyramid(int order)
     M(i, coord2idx[make_mytuple(n, 0, 0)]) += xi * tau;
     M(i, coord2idx[make_mytuple(n, n, 0)]) += xi * eta;
     M(i, coord2idx[make_mytuple(0, n, 0)]) += rho * eta;
+  }
+  return M;
+}
+
+
+fullMatrix<double> gmshGenerateInnerVertexPlacementTriangleLinear(int order,
+                                                                  int dir)
+{
+  if (order < 3) return fullMatrix<double>(0, 0);
+
+  const int szInc = 3 * order;
+  const int szComp = (order + 1) * (order + 2) / 2;
+  const int szInt = szComp - szInc;
+
+  fullMatrix<double> monomials = gmshGenerateMonomialsTriangle(order, false);
+  fullMatrix<int> coordinates;
+  double2int(monomials, coordinates);
+
+  std::map<std::pair<int, int>, int> coord2idx;
+  for (int i = 0; i < szInc; ++i) {
+    int u = coordinates(i, 0);
+    int v = coordinates(i, 1);
+    coord2idx[std::make_pair(u, v)] = i;
+  }
+
+  int &n = order;
+  fullMatrix<double> M(szInt, szInc, true);
+  for (int i = 0; i < szInt; ++i) {
+    int u = coordinates(szInc + i, 0);
+    int v = coordinates(szInc + i, 1);
+    double mu;
+
+    switch (dir) {
+      case 0:
+        mu = (double)u / (n-v);
+        M(i, coord2idx[std::make_pair(  0, v)]) += 1-mu;
+        M(i, coord2idx[std::make_pair(n-v, v)]) += mu;
+        break;
+      case 1:
+        mu = (double)v / (u+v);
+        M(i, coord2idx[std::make_pair(u+v,   0)]) += 1-mu;
+        M(i, coord2idx[std::make_pair(  0, u+v)]) += mu;
+        break;
+      default:
+      case 2:
+        mu = (double)v / (n-u);
+        M(i, coord2idx[std::make_pair(u,   0)]) += 1-mu;
+        M(i, coord2idx[std::make_pair(u, n-u)]) += mu;
+        break;
+    }
+  }
+
+  return M;
+}
+
+fullMatrix<double> gmshGenerateInnerVertexPlacementQuadrangleLinear(int order)
+{
+  if (order < 2) return fullMatrix<double>(0, 0);
+
+  const int szInc = 4 * order;
+  const int szComp = (order + 1) * (order + 1);
+  const int szInt = szComp - szInc;
+
+  fullMatrix<double> monomials = gmshGenerateMonomialsQuadrangle(order, false);
+  fullMatrix<int> coordinates;
+  double2int(monomials, coordinates);
+
+  std::map<std::pair<int, int>, int> coord2idx;
+  for (int i = 0; i < szInc; ++i) {
+    int u = coordinates(i, 0);
+    int v = coordinates(i, 1);
+    coord2idx[std::make_pair(u, v)] = i;
+  }
+
+  int &n = order;
+  fullMatrix<double> M(szInt, szInc, true);
+  for (int i = 0; i < szInt; ++i) {
+    int u = coordinates(szInc + i, 0);
+    int v = coordinates(szInc + i, 1);
+    double eta = (double)v / n;
+
+    M(i, coord2idx[std::make_pair(u, 0)]) += 1-eta;
+    M(i, coord2idx[std::make_pair(u, n)]) += eta;
+  }
+  return M;
+}
+
+fullMatrix<double> gmshGenerateInnerVertexPlacementTetrahedronLinear(int order,
+                                                                     int dir)
+{
+  // 'dir' corresponds to the number of edge
+  if (order < 4) return fullMatrix<double>(0, 0);
+
+  const int szInt = (order - 3) * (order - 2) * (order - 1) / 6;
+  const int szComp = (order + 1) * (order + 2) * (order + 3) / 6;
+  const int szInc = szComp - szInt;
+
+  fullMatrix<double> monomials = gmshGenerateMonomialsTetrahedron(order, false);
+  fullMatrix<int> coordinates;
+  double2int(monomials, coordinates);
+
+  std::map<mytuple, int> coord2idx;
+  for (int i = 0; i < szInc; ++i) {
+    int u = coordinates(i, 0);
+    int v = coordinates(i, 1);
+    int w = coordinates(i, 2);
+    coord2idx[make_mytuple(u, v, w)] = i;
+  }
+
+  int &n = order;
+  fullMatrix<double> M(szInt, szInc, true);
+  for (int i = 0; i < szInt; ++i) {
+    int u = coordinates(szInc + i, 0);
+    int v = coordinates(szInc + i, 1);
+    int w = coordinates(szInc + i, 2);
+    double mu;
+
+    switch (dir) {
+      case 0:
+        mu = (double)u / (n-v-w);
+        M(i, coord2idx[make_mytuple(    0, v, w)]) += 1-mu;
+        M(i, coord2idx[make_mytuple(n-v-w, v, w)]) += mu;
+        break;
+      case 2:
+        mu = (double)v / (n-u-w);
+        M(i, coord2idx[make_mytuple(u,     0, w)]) += 1-mu;
+        M(i, coord2idx[make_mytuple(u, n-u-w, w)]) += mu;
+        break;
+      default:
+      case 3:
+        mu = (double)w / (n-u-v);
+        M(i, coord2idx[make_mytuple(u, v,     0)]) += 1-mu;
+        M(i, coord2idx[make_mytuple(u, v, n-u-v)]) += mu;
+        break;
+      case 1:
+        mu = (double)v / (u+v);
+        M(i, coord2idx[make_mytuple(u+v,   0, w)]) += 1-mu;
+        M(i, coord2idx[make_mytuple(  0, u+v, w)]) += mu;
+        break;
+      case 4:
+        mu = (double)w / (v+w);
+        M(i, coord2idx[make_mytuple(u, v+w,   0)]) += 1-mu;
+        M(i, coord2idx[make_mytuple(u,   0, v+w)]) += mu;
+        break;
+      case 5:
+        mu = (double)w / (u+w);
+        M(i, coord2idx[make_mytuple(u+w, v,   0)]) += 1-mu;
+        M(i, coord2idx[make_mytuple(  0, v, u+w)]) += mu;
+        break;
+    }
+  }
+  return M;
+}
+
+fullMatrix<double> gmshGenerateInnerVertexPlacementHexahedronLinear(int order,
+                                                                    int dir)
+{
+  if (order < 2) return fullMatrix<double>(0, 0);
+
+  const int szInt = (order - 1) * (order - 1) * (order - 1);
+  const int szComp = (order + 1) * (order + 1) * (order + 1);
+  const int szInc = szComp - szInt;
+
+  fullMatrix<double> monomials = gmshGenerateMonomialsHexahedron(order, false);
+  fullMatrix<int> coordinates;
+  double2int(monomials, coordinates);
+
+  std::map<mytuple, int> coord2idx;
+  for (int i = 0; i < szInc; ++i) {
+    int u = coordinates(i, 0);
+    int v = coordinates(i, 1);
+    int w = coordinates(i, 2);
+    coord2idx[make_mytuple(u, v, w)] = i;
+  }
+
+  int &n = order;
+  fullMatrix<double> M(szInt, szInc, true);
+  for (int i = 0; i < szInt; ++i) {
+    int u = coordinates(szInc + i, 0);
+    int v = coordinates(szInc + i, 1);
+    int w = coordinates(szInc + i, 2);
+    double eta;
+
+    switch (dir) {
+      case 0:
+        eta = (double)u / n;
+        M(i, coord2idx[make_mytuple(0, v, w)]) += 1-eta;
+        M(i, coord2idx[make_mytuple(n, v, w)]) += eta;
+        break;
+      case 1:
+        eta = (double)v / n;
+        M(i, coord2idx[make_mytuple(u, 0, w)]) += 1-eta;
+        M(i, coord2idx[make_mytuple(u, n, w)]) += eta;
+        break;
+      default:
+      case 2:
+        eta = (double)w / n;
+        M(i, coord2idx[make_mytuple(u, v, 0)]) += 1-eta;
+        M(i, coord2idx[make_mytuple(u, v, n)]) += eta;
+        break;
+    }
+  }
+  return M;
+}
+
+fullMatrix<double> gmshGenerateInnerVertexPlacementPrismLinear(int order, int dir)
+{
+  if (order < 3) return fullMatrix<double>(0, 0);
+
+  const int szInt = (order - 1) * (order - 2) * (order - 1) / 2;
+  const int szComp = (order + 1) * (order + 1) * (order + 2) / 2;
+  const int szInc = szComp - szInt;
+
+  fullMatrix<double> monomials = gmshGenerateMonomialsPrism(order, false);
+  fullMatrix<int> coordinates;
+  double2int(monomials, coordinates);
+
+  std::map<mytuple, int> coord2idx;
+  for (int i = 0; i < szInc; ++i) {
+    int u = coordinates(i, 0);
+    int v = coordinates(i, 1);
+    int w = coordinates(i, 2);
+    coord2idx[make_mytuple(u, v, w)] = i;
+  }
+
+  int &n = order;
+  fullMatrix<double> M(szInt, szInc, true);
+  for (int i = 0; i < szInt; ++i) {
+    int u = coordinates(szInc + i, 0);
+    int v = coordinates(szInc + i, 1);
+    int w = coordinates(szInc + i, 2);
+    double eta, mu;
+    
+    switch (dir) {
+      case 0:
+        mu = (double)u / (n-v);
+        M(i, coord2idx[make_mytuple(  0, v, w)]) += 1-mu;
+        M(i, coord2idx[make_mytuple(n-v, v, w)]) += mu;
+        break;
+      case 1:
+        mu = (double)v / (u+v);
+        M(i, coord2idx[make_mytuple(u+v,   0, w)]) += 1-mu;
+        M(i, coord2idx[make_mytuple(  0, u+v, w)]) += mu;
+        break;
+      case 2:
+        mu = (double)v / (n-u);
+        M(i, coord2idx[make_mytuple(u,   0, w)]) += 1-mu;
+        M(i, coord2idx[make_mytuple(u, n-u, w)]) += mu;
+        break;
+      default:
+      case 3:
+        eta = (double)w / n;
+        M(i, coord2idx[make_mytuple(u, v, 0)]) += 1-eta;
+        M(i, coord2idx[make_mytuple(u, v, n)]) += eta;
+        break;
+    }
   }
   return M;
 }

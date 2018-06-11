@@ -12,6 +12,10 @@
 #include "MEdge.h"
 #include "SVector3.h"
 #include "GmshMessage.h"
+#include "GmshDefines.h"
+
+template <class t> class fullMatrix;
+
 
 // A mesh face.
 class MFace {
@@ -22,7 +26,7 @@ class MFace {
  public:
   MFace() {}
   MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3=0);
-  MFace(const std::vector<MVertex*> v);
+  MFace(const std::vector<MVertex*> &v);
   inline int getNumVertices() const { return (int)_v.size(); }
   inline MVertex *getVertex(const int i) const { return _v[i]; }
   inline MVertex *getSortedVertex(const int i) const { return _v[int(_si[i])]; }
@@ -142,5 +146,37 @@ struct Less_Face : public std::binary_function<MFace, MFace, bool> {
   }
 };
 
+class MFaceN {
+private:
+  int _type;
+  int _order;
+  std::vector<MVertex *> _v;
+
+public:
+  MFaceN() {}
+  MFaceN(int type, int order, const std::vector<MVertex*> &v);
+
+  inline int getPolynomialOrder() const {return _order;}
+  inline int getType() const {return _type;}
+  inline bool isTriangular() const {return _type == TYPE_TRI;}
+  inline int getNumVertices() const { return (int)_v.size(); }
+  inline int getNumCorners() const { return isTriangular() ? 3 : 4; }
+  inline int getNumVerticesOnBoundary() const { return getNumCorners() * _order; }
+
+  inline MVertex *getVertex(int i) const { return _v[i]; }
+  inline const std::vector<MVertex*> &getVertices() const { return _v; }
+
+  MEdgeN getHighOrderEdge(int num, int sign) const;
+  MFace getFace() const;
+
+  SPoint3 pnt(double u, double v) const;
+  SVector3 tangent(double u, double v, int num) const;
+  SVector3 normal(double u, double v) const;
+  void frame(double u, double v, SVector3 &t0, SVector3 &t1, SVector3 &n) const;
+  void frame(double u, double v,
+             SPoint3 &p, SVector3 &t0, SVector3 &t1, SVector3 &n) const;
+
+  void repositionInnerVertices(const fullMatrix<double> *) const;
+};
 
 #endif

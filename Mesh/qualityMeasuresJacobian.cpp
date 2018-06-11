@@ -9,6 +9,7 @@
 #include "BasisFactory.h"
 #include "bezierBasis.h"
 #include "JacobianBasis.h"
+#include "Numeric.h"
 
 // For debugging
 #include <sstream>
@@ -18,7 +19,7 @@
 
 static const double cTri = 2/std::sqrt(3);
 static const double cTet = std::sqrt(2);
-static const double cPyr = std::sqrt(2);
+static const double cPyr = 4*std::sqrt(2);
 
 static inline void computeCoeffLengthVectors_(const fullMatrix<double> &mat,
                                               fullMatrix<double> &coeff,
@@ -204,14 +205,15 @@ void minMaxJacobianDeterminant(MElement *el, double &min, double &max,
   }
 }
 
-double minIGEMeasure(MElement *el, bool knownValid, bool reversedOk)
+double minIGEMeasure(MElement *el, bool knownValid, bool reversedOk,
+                     const fullMatrix<double> *normals)
 {
   bool isReversed = false;
   if (!knownValid) {
     // Computation of the measure should never
     // be performed to invalid elements (for which the measure is 0).
     double jmin, jmax;
-    minMaxJacobianDeterminant(el, jmin, jmax);
+    minMaxJacobianDeterminant(el, jmin, jmax, normals);
     if (jmax < 0) {
       if (!reversedOk) return 0;
       isReversed = true;
@@ -261,7 +263,7 @@ double minIGEMeasure(MElement *el, bool knownValid, bool reversedOk)
   fullVector<double> coeffDetBez;
   {
     fullVector<double> coeffDetLag(jacBasis->getNumJacNodes());
-    jacBasis->getSignedJacobian(nodesXYZ, coeffDetLag);
+    jacBasis->getSignedJacobian(nodesXYZ, coeffDetLag, normals);
 
     coeffDetBez.resize(jacBasis->getNumJacNodes());
     jacBasis->lag2Bez(coeffDetLag, coeffDetBez);
@@ -286,33 +288,23 @@ double minIGEMeasure(MElement *el, bool knownValid, bool reversedOk)
   );
 
   _subdivideDomains(domains);
+//  if (domains.size()/7 > 500) {//fordebug
+//    Msg::Info("S too much subdivision: %d (el %d, type %d, tag %d)",
+//        domains.size()/7, el->getNum(), el->getType(), el->getTypeForMSH());
+//  }
 
-//  Msg::Info("element %d, type %d, numSub %d", el->getNum(), el->getType(),
-//      domains.size()/7);
-  if (domains.size()/7 > 500) {//fordebug
-    Msg::Info("S too much subdivision: %d (el %d, type %d, tag %d)",
-        domains.size()/7, el->getNum(), el->getType(), el->getTypeForMSH());
-  }
-
-  double min = domains[0]->minB();
-  delete domains[0];
-  for (unsigned int i = 1; i < domains.size(); ++i) {
-    min = std::min(min, domains[i]->minB());
-    delete domains[i];
-  }
-  return min;
+  return _getMinAndDeleteDomains(domains);
 }
 
-double minICNMeasure(MElement *el,
-                     bool knownValid,
-                     bool reversedOk)
+double minICNMeasure(MElement *el, bool knownValid, bool reversedOk,
+                     const fullMatrix<double> *normals)
 {
   bool isReversed = false;
   if (!knownValid) {
     // Computation of the measure should never
     // be performed to invalid elements (for which the measure is 0).
     double jmin, jmax;
-    minMaxJacobianDeterminant(el, jmin, jmax);
+    minMaxJacobianDeterminant(el, jmin, jmax, normals);
     if (jmax < 0) {
       if (!reversedOk) return 0;
       isReversed = true;
@@ -362,7 +354,7 @@ double minICNMeasure(MElement *el,
   fullVector<double> coeffDetBez;
   {
     fullVector<double> coeffDetLag(jacBasis->getNumJacNodes());
-    jacBasis->getSignedIdealJacobian(nodesXYZ, coeffDetLag);
+    jacBasis->getSignedIdealJacobian(nodesXYZ, coeffDetLag, normals);
 
     coeffDetBez.resize(jacBasis->getNumJacNodes());
     jacBasis->lag2Bez(coeffDetLag, coeffDetBez);
@@ -387,19 +379,12 @@ double minICNMeasure(MElement *el,
   );
 
   _subdivideDomains(domains);
-  if (domains.size()/7 > 500) {//fordebug
-    Msg::Info("I too much subdivision: %d (el %d, type %d, tag %d)",
-               domains.size()/7, el->getNum(), el->getType(), el->getTypeForMSH());
-  }
+//  if (domains.size()/7 > 500) {//fordebug
+//    Msg::Info("I too much subdivision: %d (el %d, type %d, tag %d)",
+//               domains.size()/7, el->getNum(), el->getType(), el->getTypeForMSH());
+//  }
 
-
-  double min = domains[0]->minB();
-  delete domains[0];
-  for (unsigned int i = 1; i < domains.size(); ++i) {
-    min = std::min(min, domains[i]->minB());
-    delete domains[i];
-  }
-  return min;
+  return _getMinAndDeleteDomains(domains);
 }
 
 void sampleIGEMeasure(MElement *el, int deg, double &min, double &max)
@@ -682,16 +667,18 @@ _CoeffDataIGE::_CoeffDataIGE(fullVector<double> &det,
   const_cast<fullMatrix<double>&>(_coeffsJacMat).setOwnData(true);
 
   _computeAtCorner(_minL, _maxL);
-  _minB = _computeLowerBound();
-//  Msg::Info("%g %g %g", _minB, _minL, _maxL);//fordebug
-//  _coeffsJacDet.print("_coeffsJacDet");
-//  _coeffsJacMat.print("_coeffsJacMat");
+
+  _minB = 0;
+  if (boundsOk(_minL, _maxL)) return;
+  else _minB = _computeLowerBound();
   // computation of _maxB not implemented for now
 }
 
 bool _CoeffDataIGE::boundsOk(double minL, double maxL) const
 {
-  static double tol = 1e-3;
+  static const double tolmin = 1e-3;
+  static const double tolmax = 1e-2;
+  const double tol = tolmin + (tolmax-tolmin) * std::max(_minB, .0);
   return minL - _minB < tol;
 }
 
@@ -855,93 +842,6 @@ double _CoeffDataIGE::_computeLowerBound() const
   }
 }
 
-void _CoeffDataIGE::_getCoeffLengthVectors(fullMatrix<double> &coeff,
-                                                 bool corners) const
-{
-  int sz1 = corners ? _bfsDet->getNumLagCoeff() : _coeffsJacMat.size1();
-
-  switch (_type) {
-    case TYPE_QUA: coeff.resize(sz1, 2); break;
-    case TYPE_TRI: coeff.resize(sz1, 3); break;
-    case TYPE_HEX: coeff.resize(sz1, 3); break;
-    case TYPE_PRI: coeff.resize(sz1, 4); break;
-    case TYPE_TET: coeff.resize(sz1, 6); break;
-    case TYPE_PYR: coeff.resize(sz1, 6); break;
-    default:
-      Msg::Error("Unkown type for IGE computation");
-      coeff.resize(0, 0);
-      return;
-  }
-
-  const fullMatrix<double> &mat = _coeffsJacMat;
-
-  if (_type != TYPE_PYR) {
-    for (int i = 0; i < sz1; i++) {
-      coeff(i, 0) = std::sqrt(pow_int(mat(i, 0), 2) +
-                              pow_int(mat(i, 1), 2) +
-                              pow_int(mat(i, 2), 2)  );
-      coeff(i, 1) = std::sqrt(pow_int(mat(i, 3), 2) +
-                              pow_int(mat(i, 4), 2) +
-                              pow_int(mat(i, 5), 2)  );
-    }
-    if (mat.size2() > 6) {
-      for (int i = 0; i < sz1; i++) {
-        coeff(i, 2) = std::sqrt(pow_int(mat(i, 6), 2) +
-                                pow_int(mat(i, 7), 2) +
-                                pow_int(mat(i, 8), 2)  );
-      }
-    }
-    else if (_type == TYPE_TRI) {
-      for (int i = 0; i < sz1; i++) {
-        coeff(i, 2) = std::sqrt(pow_int(mat(i, 3) - mat(i, 0), 2) +
-                                pow_int(mat(i, 4) - mat(i, 1), 2) +
-                                pow_int(mat(i, 5) - mat(i, 2), 2)  );
-      }
-    }
-    switch (_type) {
-    case TYPE_TET:
-    case TYPE_PRI:
-      for (int i = 0; i < sz1; i++) {
-        coeff(i, 3) = std::sqrt(pow_int(mat(i, 3) - mat(i, 0), 2) +
-                                pow_int(mat(i, 4) - mat(i, 1), 2) +
-                                pow_int(mat(i, 5) - mat(i, 2), 2)  );
-      }
-    }
-    if (_type == TYPE_TET) {
-      for (int i = 0; i < sz1; i++) {
-        coeff(i, 4) = std::sqrt(pow_int(mat(i, 6) - mat(i, 0), 2) +
-                                pow_int(mat(i, 7) - mat(i, 1), 2) +
-                                pow_int(mat(i, 8) - mat(i, 2), 2)  );
-        coeff(i, 5) = std::sqrt(pow_int(mat(i, 6) - mat(i, 3), 2) +
-                                pow_int(mat(i, 7) - mat(i, 4), 2) +
-                                pow_int(mat(i, 8) - mat(i, 5), 2)  );
-      }
-    }
-  }
-  else {
-    for (int i = 0; i < sz1; i++) {
-      coeff(i, 0) = std::sqrt(pow_int(2*mat(i, 0), 2) +
-                              pow_int(2*mat(i, 1), 2) +
-                              pow_int(2*mat(i, 2), 2)  );
-      coeff(i, 1) = std::sqrt(pow_int(2*mat(i, 3), 2) +
-                              pow_int(2*mat(i, 4), 2) +
-                              pow_int(2*mat(i, 5), 2)  );
-      coeff(i, 2) = std::sqrt(pow_int(mat(i, 6) + mat(i, 0) + mat(i, 3), 2) +
-                              pow_int(mat(i, 7) + mat(i, 1) + mat(i, 4), 2) +
-                              pow_int(mat(i, 8) + mat(i, 2) + mat(i, 5), 2)  );
-      coeff(i, 3) = std::sqrt(pow_int(mat(i, 6) - mat(i, 0) + mat(i, 3), 2) +
-                              pow_int(mat(i, 7) - mat(i, 1) + mat(i, 4), 2) +
-                              pow_int(mat(i, 8) - mat(i, 2) + mat(i, 5), 2)  );
-      coeff(i, 4) = std::sqrt(pow_int(mat(i, 6) - mat(i, 0) - mat(i, 3), 2) +
-                              pow_int(mat(i, 7) - mat(i, 1) - mat(i, 4), 2) +
-                              pow_int(mat(i, 8) - mat(i, 2) - mat(i, 5), 2)  );
-      coeff(i, 5) = std::sqrt(pow_int(mat(i, 6) + mat(i, 0) - mat(i, 3), 2) +
-                              pow_int(mat(i, 7) + mat(i, 1) - mat(i, 4), 2) +
-                              pow_int(mat(i, 8) + mat(i, 2) - mat(i, 5), 2)  );
-    }
-  }
-}
-
 // ICN measure (Inverse Condition Number)
 _CoeffDataICN::_CoeffDataICN(fullVector<double> &det,
                                        fullMatrix<double> &mat,
@@ -969,17 +869,15 @@ _CoeffDataICN::_CoeffDataICN(fullVector<double> &det,
   _minB = 0;
   if (boundsOk(_minL, _maxL)) return;
   else _minB = _computeLowerBound();
-//  Msg::Info("%g %g %g ", _minB, _minL, _maxL);
-//  _coeffsJacDet.print("_coeffsJacDet");
-//  _coeffsJacMat.print("_coeffsJacMat");
-
   // _maxB not used for now
 }
 
 bool _CoeffDataICN::boundsOk(double minL, double maxL) const
 {
-  static double tol = 1e-3;
-  return minL < tol*1e-3 || (_minB > minL-tol && _minB > minL*(1-100*tol));
+  static const double tolmin = 1e-3;
+  static const double tolmax = 1e-2;
+  const double tol = tolmin + (tolmax-tolmin) * std::max(_minB, .0);
+  return minL - _minB < tol;
 }
 
 void _CoeffDataICN::getSubCoeff(std::vector<_CoeffData*> &v) const
@@ -1016,9 +914,9 @@ void _CoeffDataICN::_computeAtCorner(double &min, double &max) const
       p += pow_int(_coeffsJacMat(i, k), 2);
     }
     double qual;
-    if (_coeffsJacMat.size2() == 6)
+    if (_coeffsJacMat.size2() == 6) // if 2D
       qual = 2 * _coeffsJacDet(i) / p;
-    else
+    else // 3D
       qual = 3 * std::pow(_coeffsJacDet(i), 2/3.) / p;
     min = std::min(min, qual);
     max = std::max(max, qual);
@@ -1067,33 +965,10 @@ double _CoeffDataICN::_computeLowerBound() const
     _bfsMat->getRaiser()->computeCoeff(P, P, P, coeffDenominator);
   }
 
-  return 3*std::pow(_computeBoundRational(_coeffsJacDet,
-                                          coeffDenominator, true), 2/3.);
+  const double boundFraction =
+      _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
 
-//  // 3D element OLD
-//  fullVector<double> coeffNumerator;
-//  _bfsDet->getRaiser()->computeCoeff(_coeffsJacDet, _coeffsJacDet, coeffNumerator);
-//
-//  fullVector<double> coeffDenominator;
-//  {
-//    fullVector<double> coeffDenCbrt;
-//    bezierBasisRaiser *raiser = _bfsMat->getRaiser();
-//
-//    fullVector<double> prox;
-//    for (int k = 0; k < _coeffsJacMat.size2(); ++k) {
-//      prox.setAsProxy(_coeffsJacMat, k);
-//      fullVector<double> tmp;
-//      raiser->computeCoeff(prox, prox, tmp);
-//      if (k == 0) coeffDenCbrt.resize(tmp.size());
-//      coeffDenCbrt.axpy(tmp, 1);
-//    }
-//
-//    bezierBasisRaiser *raiser2 = raiser->getRaisedBezierBasis(2)->getRaiser();
-//    raiser2->computeCoeff(coeffDenCbrt, coeffDenCbrt, coeffDenCbrt, coeffDenominator);
-//  }
-//
-//  return 3*std::pow(_computeBoundRational(coeffNumerator,
-//                                          coeffDenominator, true), 1/3.);
+  return 3*std::pow(boundFraction * boundFraction, 1./3);
 }
 
 // Miscellaneous
@@ -1105,7 +980,8 @@ void _subdivideDomainsMinOrMax(std::vector<_CoeffData*> &domains,
   std::vector<_CoeffData*> subs;
   make_heap(domains.begin(), domains.end(), Comp());
   int k = 0;
-  while (!domains[0]->boundsOk(minL, maxL) && k++ < 1000) {
+  const int max_subdivision = 1000;
+  while (!domains[0]->boundsOk(minL, maxL) && k++ < max_subdivision) {
     _CoeffData *cd = domains[0];
     pop_heap(domains.begin(), domains.end(), Comp());
     domains.pop_back();
@@ -1119,8 +995,8 @@ void _subdivideDomainsMinOrMax(std::vector<_CoeffData*> &domains,
       push_heap(domains.begin(), domains.end(), Comp());
     }
   }
-  if (k > 1000) {
-    Msg::Error("Max subdivision (1000) (size %d)", domains.size());
+  if (k > max_subdivision) {
+    Msg::Error("Max subdivision (%d) (size %d)", max_subdivision, domains.size());
   }
 }
 
@@ -1139,6 +1015,20 @@ void _subdivideDomains(std::vector<_CoeffData*> &domains)
 
   _subdivideDomainsMinOrMax<_lessMinB>(domains, minL, maxL);
   _subdivideDomainsMinOrMax<_lessMaxB>(domains, minL, maxL);
+}
+
+double _getMinAndDeleteDomains(std::vector<_CoeffData*> &domains)
+{
+  double minB = domains[0]->minB();
+  double minL = domains[0]->minL();
+  delete domains[0];
+  for (unsigned int i = 1; i < domains.size(); ++i) {
+    minB = std::min(minB, domains[i]->minB());
+    minL = std::min(minL, domains[i]->minL());
+    delete domains[i];
+  }
+  double fact = .5 * (minB + minL);
+  return fact * minL + (1-fact) * minB;
 }
 
 double _computeBoundRational(const fullVector<double> &numerator,

@@ -68,19 +68,9 @@ class MQuadrangle : public MElement {
   {
     return MEdge(_v[edges_quad(num, 0)], _v[edges_quad(num, 1)]);
   }
-  virtual void getEdgeInfo (const MEdge &edge, int &ithEdge, int &sign) const
+  virtual int numEdge2numVertex(int numEdge, int numVert) const
   {
-    for (ithEdge = 0; ithEdge < 4; ithEdge++){
-      const MVertex *v0 = _v[edges_quad(ithEdge, 0)];
-      const MVertex *v1 = _v[edges_quad(ithEdge, 1)];
-      if (v0 == edge.getVertex(0) && v1 == edge.getVertex(1)){
-        sign = 1; return;
-      }
-      if (v1 == edge.getVertex(0) && v0 == edge.getVertex(1)){
-        sign = -1; return;
-      }
-    }
-    Msg::Error("Could not get edge information for quadranglee %d", getNum());
+    return edges_quad(numEdge, numVert);
   }
   virtual int getNumEdgesRep(bool curved){ return 4; }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
@@ -90,7 +80,9 @@ class MQuadrangle : public MElement {
     _getEdgeVertices(num, v);
   }
   virtual int getNumFaces(){ return 1; }
-  virtual MFace getFace(int num){ return MFace(_v[0], _v[1], _v[2], _v[3]); }
+  virtual MFace getFace(int num) const { return MFace(_v[0], _v[1], _v[2], _v[3]); }
+  virtual MFaceN getHighOrderFace(int num, int sign, int rot);
+  virtual bool getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
@@ -215,6 +207,7 @@ class MQuadrangle8 : public MQuadrangle {
     MQuadrangle::_getEdgeVertices(num, v);
     v[2] = _vs[num];
   }
+  virtual MFaceN getHighOrderFace(int num, int sign, int rot);
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
@@ -305,6 +298,7 @@ class MQuadrangle9 : public MQuadrangle {
     MQuadrangle::_getEdgeVertices(num, v);
     v[2] = _vs[num];
   }
+  virtual MFaceN getHighOrderFace(int num, int sign, int rot);
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
@@ -408,6 +402,7 @@ class MQuadrangleN : public MQuadrangle {
     for(int i = num * (_order-1); i != ie; ++i)
       v[j++] = _vs[i];
   }
+  virtual MFaceN getHighOrderFace(int num, int sign, int rot);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getFaceVertices(const int num, std::vector<MVertex*> &v) const
   {

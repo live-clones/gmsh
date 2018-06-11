@@ -6,6 +6,7 @@
 #include <cmath>
 #include "BergotBasis.h"
 #include "MElement.h"
+#include "orthogonalBasis.h"
 
 
 
@@ -16,8 +17,6 @@ BergotBasis::BergotBasis(int p,bool incpl): order(p),incomplete(incpl)
     Msg::Error("Incomplete pyramids of order %i not yet implemented",order);
   }
 }
-
-
 
 BergotBasis::~BergotBasis()
 {
@@ -38,18 +37,15 @@ bool BergotBasis::validIJ(int i,int j) const {
 // and (uhat,vhat,what) = (u/(1-w),v/(1-w),2*w-1) reduced coordinates in the unit cube [-1,1]^3
 void BergotBasis::f(double u, double v, double w, double* val) const
 {
-
-  LegendrePolynomials legendre(order);
-
   // Compute Legendre polynomials at uhat
   double uhat = (w == 1.) ? 0. : u/(1.-w);
   std::vector<double> uFcts(order+1);
-  legendre.f(uhat,&(uFcts[0]));
+  LegendrePolynomials::f(order, uhat,&(uFcts[0]));
 
   // Compute Legendre polynomials at vhat
   double vhat = (w == 1.) ? 0. : v/(1.-w);
   std::vector<double> vFcts(order+1);
-  legendre.f(vhat,&(vFcts[0]));
+  LegendrePolynomials::f(order, vhat,&(vFcts[0]));
 
   // Compute Jacobi polynomials at what
   double what = 2.*w - 1.;
@@ -58,8 +54,7 @@ void BergotBasis::f(double u, double v, double w, double* val) const
     int kMax = order-mIJ;
     std::vector<double> &wf = wFcts[mIJ];
     wf.resize(kMax+1);
-    JacobiPolynomials jacobi(2.*mIJ+2.,0.,kMax);
-    jacobi.f(what,&(wf[0]));
+    JacobiPolynomials::f(kMax, 2.*mIJ+2., 0., what, &(wf[0]));
   }
 
   // Recombine to find shape function values
@@ -88,19 +83,17 @@ void BergotBasis::f(double u, double v, double w, double* val) const
 void BergotBasis::df(double u, double v, double w, double grads[][3]) const
 {
 
-  LegendrePolynomials legendre(order);
-
   // Compute Legendre polynomials and derivatives at uhat
   double uhat = (w == 1.) ? 0. : u/(1.-w);
   std::vector<double> uFcts(order+1), uGrads(order+1);
-  legendre.f(uhat,&(uFcts[0]));
-  legendre.df(uhat,&(uGrads[0]));
+  LegendrePolynomials::f(order, uhat,&(uFcts[0]));
+  LegendrePolynomials::df(order, uhat,&(uGrads[0]));
 
   // Compute Legendre polynomials and derivatives at vhat
   double vhat = (w == 1.) ? 0. : v/(1.-w);
   std::vector<double> vFcts(order+1), vGrads(order+1);
-  legendre.f(vhat,&(vFcts[0]));
-  legendre.df(vhat,&(vGrads[0]));
+  LegendrePolynomials::f(order, vhat,&(vFcts[0]));
+  LegendrePolynomials::df(order, vhat,&(vGrads[0]));
 
   // Compute Jacobi polynomials and derivatives at what
   double what = 2.*w - 1.;
@@ -110,9 +103,8 @@ void BergotBasis::df(double u, double v, double w, double grads[][3]) const
     std::vector<double> &wf = wFcts[mIJ], &wg = wGrads[mIJ];
     wf.resize(kMax+1);
     wg.resize(kMax+1);
-    JacobiPolynomials jacobi(2.*mIJ+2.,0.,kMax);
-    jacobi.f(what,&(wf[0]));
-    jacobi.df(what,&(wg[0]));
+    JacobiPolynomials::f(kMax, 2.*mIJ+2., 0., what, &(wf[0]));
+    JacobiPolynomials::df(kMax, 2.*mIJ+2., 0., what, &(wg[0]));
   }
 
   // Recombine to find the shape function gradients

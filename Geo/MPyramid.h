@@ -74,6 +74,10 @@ class MPyramid : public MElement {
   {
     return MEdge(_v[edges_pyramid(num, 0)], _v[edges_pyramid(num, 1)]);
   }
+  virtual int numEdge2numVertex(int numEdge, int numVert) const
+  {
+    return edges_pyramid(numEdge, numVert);
+  }
   virtual int getNumEdgesRep(bool curved){ return 8; }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n)
@@ -88,7 +92,7 @@ class MPyramid : public MElement {
     _getEdgeVertices(num, v);
   }
   virtual int getNumFaces(){ return 5; }
-  virtual MFace getFace(int num)
+  virtual MFace getFace(int num) const
   {
     if(num < 4)
       return MFace(_v[faces_pyramid(num, 0)],
@@ -105,6 +109,7 @@ class MPyramid : public MElement {
     v.resize((num < 4) ? 3 : 4);
     _getFaceVertices(num, v);
   }
+  virtual bool getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
   virtual int getType() const { return TYPE_PYR; }
   virtual int getTypeForMSH() const { return MSH_PYR_5; }
   virtual int getTypeForVTK() const { return 14; }
@@ -222,10 +227,10 @@ class MPyramid : public MElement {
 
 //------------------------------------------------------------------------------
 
-typedef std::vector<int> indicesReversed;
+typedef std::vector<int> IndicesReversed;
 
 class MPyramidN : public MPyramid {
-  static std::map<int, indicesReversed> _order2indicesReversedPyr;
+  static std::map<int, IndicesReversed> _order2indicesReversedPyr;
 
  protected:
   std::vector<MVertex*> _vs;
@@ -278,7 +283,7 @@ class MPyramidN : public MPyramid {
                : v.resize((_order+1) * (_order+2) / 2);
     }
 
-    // FIXME continue fix serendipity
+    // FIXME Amaury continue fix serendipity
 
     int j = 3;
     if (num == 4) {

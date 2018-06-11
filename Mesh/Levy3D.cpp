@@ -10,7 +10,6 @@
 #include <time.h>
 #include "GmshConfig.h"
 #include "Levy3D.h"
-#include "polynomialBasis.h"
 #include "GModel.h"
 #include "MElement.h"
 #include "MElementOctree.h"

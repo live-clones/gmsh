@@ -122,9 +122,18 @@ inline SVector3 crossprod(const SVector3 &a, const SVector3 &b)
                   -(a.x() * b.z() - b.x() * a.z()),
                   a.x() * b.y() - b.x() * a.y()); }
 
-inline double angle (const SVector3 &a, const SVector3 &b){
+inline double angle (const SVector3 &a, const SVector3 &b)
+{
   double cosTheta = dot(a,b);
   double sinTheta = norm(crossprod(a,b));
+  return atan2 (sinTheta,cosTheta);
+}
+
+inline double signedAngle(const SVector3 &a, const SVector3 &b,
+                          const SVector3 &n)
+{
+  double cosTheta = dot(a,b);
+  double sinTheta = dot(crossprod(a,b), n);
   return atan2 (sinTheta,cosTheta);
 }
 
@@ -141,8 +150,14 @@ inline SVector3 operator*(const SVector3 &v1, const SVector3 &v2)
 inline SVector3 operator+(const SVector3 &a,const SVector3 &b)
 { return SVector3(a[0] + b[0], a[1] + b[1], a[2] + b[2]); }
 
+inline SPoint3 operator+(const SPoint3 &a,const SVector3 &b)
+{ return SPoint3(a[0] + b[0], a[1] + b[1], a[2] + b[2]); }
+
 inline SVector3 operator-(const SVector3 &a,const SVector3 &b)
 { return SVector3(a[0] - b[0], a[1] - b[1], a[2] - b[2]); }
+
+inline SPoint3 operator-(const SPoint3 &a,const SVector3 &b)
+{ return SPoint3(a[0] - b[0], a[1] - b[1], a[2] - b[2]); }
 
 inline SVector3 operator-(const SVector3 &a)
 { return SVector3(-a[0], -a[1], -a[2]); }
