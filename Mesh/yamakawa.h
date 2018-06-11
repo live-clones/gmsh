@@ -209,59 +209,70 @@ class Diagonal{
 
 class Tuple {
 private:
-  MVertex *v1, *v2, *v3;
+  MVertex *vertex1, *vertex2, *vertex3;
   MElement *element;
   GFace *gf;
   unsigned long long hash;
 
 public:
   Tuple()
-    : v1(NULL)
-    , v2(NULL)
-    , v3(NULL)
+    : vertex1(NULL)
+    , vertex2(NULL)
+    , vertex3(NULL)
     , element(NULL)
     , gf(NULL)
-    , hash(0.)
+    , hash(0)
   {
   }
-  Tuple(MVertex *a, MVertex *b, MVertex *c, MElement *element2, GFace *gf2)
+
+  Tuple(MVertex *const a, MVertex *const b, MVertex *const c,
+        MElement *const element2, GFace *const gf2)
+    : vertex1(NULL)
+    , vertex2(NULL)
+    , vertex3(NULL)
+    , element(element2)
+    , gf(gf2)
+    , hash(a->getNum() + b->getNum() + c->getNum())
   {
     MVertex *tmp[3] = {a, b, c};
     std::sort(tmp, tmp + 3);
-    v1 = tmp[0];
-    v2 = tmp[1];
-    v2 = tmp[2];
-    hash = a->getNum() + b->getNum() + c->getNum();
-    element = element2;
-    gf = gf2;
+    vertex1 = tmp[0];
+    vertex2 = tmp[1];
+    vertex2 = tmp[2];
   }
-  Tuple(MVertex *a, MVertex *b, MVertex *c)
-    : element(NULL)
+
+  Tuple(MVertex *const a, MVertex *const b, MVertex *const c)
+    : vertex1(NULL)
+    , vertex2(NULL)
+    , vertex3(NULL)
+    , element(NULL)
     , gf(NULL)
+    , hash(a->getNum() + b->getNum() + c->getNum())
   {
     MVertex *tmp[3] = {a, b, c};
     std::sort(tmp, tmp + 3);
-    v1 = tmp[0];
-    v2 = tmp[1];
-    v2 = tmp[2];
-    hash = a->getNum() + b->getNum() + c->getNum();
+    vertex1 = tmp[0];
+    vertex2 = tmp[1];
+    vertex2 = tmp[2];
   }
-  ~Tuple(){};
-  MVertex *get_v1() const { return v1; }
-  MVertex *get_v2() const { return v2; }
-  MVertex *get_v3() const { return v3; }
+
+  ~Tuple() {}
+
+  MVertex *get_v1() const { return vertex1; }
+  MVertex *get_v2() const { return vertex2; }
+  MVertex *get_v3() const { return vertex3; }
+
   MElement *get_element() const { return element; }
+
   GFace *get_gf() const { return gf; }
+
   bool same_vertices(const Tuple &rhs) const
   {
-    if(v1 == rhs.get_v1() && v2 == rhs.get_v2() && v3 == rhs.get_v3()) {
-      return true;
-    }
-    else {
-      return false;
-    }
+    return (vertex1 == rhs.get_v1() && vertex2 == rhs.get_v2() &&
+            vertex3 == rhs.get_v3());
   }
   unsigned long long get_hash() const { return hash; }
+
   bool operator<(const Tuple &rhs) const { return hash < rhs.get_hash(); }
 };
 
