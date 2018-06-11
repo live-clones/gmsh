@@ -438,7 +438,7 @@ namespace BoundaryLayerCurver
         vertices[i]->z() = newxyzLow(i, 2);
       }
 
-      const int tagLine = ElementType::getTag(TYPE_LIN, orderCurve);
+      const int tagLine = ElementType::getType(TYPE_LIN, orderCurve);
       const nodalBasis *nb = BasisFactory::getNodalBasis(tagLine);
       const fullMatrix<double> &refpnts = nb->getReferenceNodes();
 
@@ -528,10 +528,10 @@ namespace BoundaryLayerCurver
       fullMatrix<double> Me; // leg coeff p n -> lag coeff p n
 
       if (typeElement == TYPE_LIN) {
-        int tagLine = ElementType::getTag(TYPE_LIN, order);
+        int tagLine = ElementType::getType(TYPE_LIN, order);
         const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
         const fullMatrix<double> &refNodes = fs->getReferenceNodes();
-        int tagLineh = ElementType::getTag(TYPE_LIN, order+1);
+        int tagLineh = ElementType::getType(TYPE_LIN, order+1);
         // FIXME replace with BasisFactory::getNodalBasis(funcSpaceData);
         const nodalBasis *fsh = BasisFactory::getNodalBasis(tagLineh);
         const fullMatrix<double> &refNodesh = fsh->getReferenceNodes();
@@ -898,7 +898,7 @@ namespace BoundaryLayerCurver
 
   MElement* createPrimaryElement(MElement *el)
   {
-    int tagLinear = ElementType::getTag(el->getType(), 1);
+    int tagLinear = ElementType::getType(el->getType(), 1);
     std::vector<MVertex *> vertices;
     el->getVertices(vertices);
     MElementFactory f;
@@ -962,7 +962,7 @@ namespace BoundaryLayerCurver
 
       fullMatrix<double> Leg2Lag(szSpace, szSpace, true);
       {
-        int tagLine = ElementType::getTag(TYPE_LIN, order);
+        int tagLine = ElementType::getType(TYPE_LIN, order);
         const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
         const fullMatrix<double> &refNodes = fs->getReferenceNodes();
         for (int i = 0; i < szSpace; ++i) {
@@ -1313,7 +1313,7 @@ namespace BoundaryLayerCurver
                                SVector3 &w)
   {
     int nVertices = (int)bottomVertices.size();
-    int tagLine = ElementType::getTag(TYPE_LIN, nVertices-1);
+    int tagLine = ElementType::getType(TYPE_LIN, nVertices-1);
     const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
 
     for (int i = 0; i < nVertices; ++i) {

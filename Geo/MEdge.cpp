@@ -138,7 +138,7 @@ MEdge MEdgeN::getEdge() const
 
 SPoint3 MEdgeN::pnt(double u) const
 {
-  int tagLine = ElementType::getTag(TYPE_LIN, getPolynomialOrder());
+  int tagLine = ElementType::getType(TYPE_LIN, getPolynomialOrder());
   const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
 
   double f[100];
@@ -155,7 +155,7 @@ SPoint3 MEdgeN::pnt(double u) const
 
 SVector3 MEdgeN::tangent(double u) const
 {
-  int tagLine = ElementType::getTag(TYPE_LIN, getPolynomialOrder());
+  int tagLine = ElementType::getType(TYPE_LIN, getPolynomialOrder());
   const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
 
   double sf[100][3];
@@ -172,7 +172,7 @@ SVector3 MEdgeN::tangent(double u) const
 
 double MEdgeN::interpolate(const double val[], double u, int stride) const
 {
-  int tagLine = ElementType::getTag(TYPE_LIN, getPolynomialOrder());
+  int tagLine = ElementType::getType(TYPE_LIN, getPolynomialOrder());
   const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
 
   double f[100];

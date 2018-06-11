@@ -53,11 +53,11 @@ void incompleteBasis::_computeCoefficientsTriangle()
 
 incompleteBasis::incompleteBasis(int tag)
 // If the element is complete, compute the incomplete basis anyway
-    : nodalBasis(ElementType::getTag(ElementType::ParentTypeFromTag(tag),
-                                     ElementType::OrderFromTag(tag), true)),
+    : nodalBasis(ElementType::getType(ElementType::getParentType(tag),
+                                     ElementType::getOrder(tag), true)),
       polyBasis(NULL), completeBasis(NULL)
 {
-  int tagComplete = ElementType::getTag(parentType, order, false);
+  int tagComplete = ElementType::getType(parentType, order, false);
   switch (parentType) {
     case TYPE_LIN:
     case TYPE_PNT:

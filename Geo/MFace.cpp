@@ -141,7 +141,7 @@ MFace MFaceN::getFace() const
 
 SPoint3 MFaceN::pnt(double u, double v) const
 {
-  int tag = ElementType::getTag(_type, _order);
+  int tag = ElementType::getType(_type, _order);
   const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
 
   double f[100];
@@ -160,7 +160,7 @@ SVector3 MFaceN::tangent(double u, double v, int num) const
 {
   if (num != 0 && num != 1) num = 0;
 
-  int tag = ElementType::getTag(_type, _order);
+  int tag = ElementType::getType(_type, _order);
   const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
 
   double sf[100][3];
@@ -177,7 +177,7 @@ SVector3 MFaceN::tangent(double u, double v, int num) const
 
 SVector3 MFaceN::normal(double u, double v) const
 {
-  int tag = ElementType::getTag(_type, _order);
+  int tag = ElementType::getType(_type, _order);
   const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
 
   double sf[100][3];
@@ -201,7 +201,7 @@ SVector3 MFaceN::normal(double u, double v) const
 void MFaceN::frame(double u, double v,
                    SVector3 &t0, SVector3 &t1, SVector3 &n) const
 {
-  int tag = ElementType::getTag(_type, _order);
+  int tag = ElementType::getType(_type, _order);
   const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
 
   double sf[100][3];
@@ -224,7 +224,7 @@ void MFaceN::frame(double u, double v,
 void MFaceN::frame(double u, double v, SPoint3 &p,
                    SVector3 &t0, SVector3 &t1, SVector3 &n) const
 {
-  int tag = ElementType::getTag(_type, _order);
+  int tag = ElementType::getType(_type, _order);
   const nodalBasis *fs = BasisFactory::getNodalBasis(tag);
 
   double f[100];

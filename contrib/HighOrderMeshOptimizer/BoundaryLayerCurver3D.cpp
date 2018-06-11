@@ -358,10 +358,10 @@ namespace BoundaryLayerCurver
     _coeffb.assign(sizeParameters, 0);
     _coeffc.assign(sizeParameters, 0);
 
-    int tagPrimary = ElementType::getTag(_nCorner == 4 ? TYPE_QUA : TYPE_TRI, 1);
+    int tagPrimary = ElementType::getType(_nCorner == 4 ? TYPE_QUA : TYPE_TRI, 1);
     _primaryFs = BasisFactory::getNodalBasis(tagPrimary);
 
-    int tag = ElementType::getTag(_nCorner == 4 ? TYPE_QUA : TYPE_TRI, _order,
+    int tag = ElementType::getType(_nCorner == 4 ? TYPE_QUA : TYPE_TRI, _order,
                                   incomplete);
     _fs = BasisFactory::getNodalBasis(tag);
     const fullMatrix<double> &refPoints = _fs->getReferenceNodes();

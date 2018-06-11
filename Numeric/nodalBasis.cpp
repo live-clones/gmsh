@@ -639,8 +639,8 @@ namespace ClosureGen {
                               bool serendip, const fullMatrix<double> &points)
   {
     closure.clear();
-    const int typeTri = ElementType::getTag(TYPE_TRI, order, serendip);
-    const int typeQua = ElementType::getTag(TYPE_QUA, order, serendip);
+    const int typeTri = ElementType::getType(TYPE_TRI, order, serendip);
+    const int typeQua = ElementType::getType(TYPE_QUA, order, serendip);
     const nodalBasis *fsFaceTri = BasisFactory::getNodalBasis(typeTri);
     const nodalBasis *fsFaceQua = BasisFactory::getNodalBasis(typeQua);
 

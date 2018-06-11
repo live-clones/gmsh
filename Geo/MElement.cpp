@@ -682,7 +682,7 @@ const nodalBasis* MElement::getFunctionSpace(int order, bool serendip) const
 const JacobianBasis* MElement::getJacobianFuncSpace(int order) const
 {
   if (order == -1) return BasisFactory::getJacobianBasis(getTypeForMSH());
-  int tag = ElementType::getTag(getType(), order);
+  int tag = ElementType::getType(getType(), order);
   return BasisFactory::getJacobianBasis(tag);
 }
 
