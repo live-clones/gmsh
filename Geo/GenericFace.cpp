@@ -242,7 +242,7 @@ void GenericFace::createLoops()
     std::pair<std::multimap<int, std::pair<GEdge*,int> >::iterator,
               std::multimap<int, std::pair<GEdge*,int> >::iterator>
       range = bnd.equal_range(*it_loop);
-    std::list<GEdge*> l_wire;
+    std::vector<GEdge*> l_wire;    
     for (std::multimap<int, std::pair<GEdge*,int> >::iterator it = range.first;
          it!=range.second;it++){// for all edges
       l_wire.push_back(it->second.first);

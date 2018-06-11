@@ -22,7 +22,7 @@ class MPoint;
 class GVertex : public GEntity
 {
  protected:
-  std::list<GEdge*> l_edges;
+  std::vector<GEdge*> l_edges;
   double meshSize;
  public:
   GVertex(GModel *m, int tag, double ms = MAX_LC);
@@ -50,7 +50,7 @@ class GVertex : public GEntity
   virtual std::list<GRegion*> regions() const;
 
   // get the edges that this vertex bounds
-  virtual std::list<GEdge*> edges() const { return l_edges; }
+  virtual std::vector<GEdge*> edges() const { return l_edges; }
 
   // faces that bound this entity or that this entity bounds.
   virtual std::vector<GFace*> faces() const;

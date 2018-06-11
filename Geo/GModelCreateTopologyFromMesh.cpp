@@ -396,12 +396,12 @@ void createTopologyFromMesh2D(GModel *gm, int &num)
     std::map<GFace*, std::set<GEdge*> >::iterator it =  _topology.begin();
     for ( ; it != _topology.end() ; ++it){
       if (it->first){
-	std::list<GEdge*> l ;
+	std::vector<GEdge*> l;
 	for (std::set<GEdge*>::iterator it2 = it->second.begin();
              it2 != it->second.end() ; ++it2)
 	  l.insert (l.begin(), _parts[*it2].begin(),  _parts[*it2].end());
 	it->first->set(l);
-	for (std::list<GEdge*>::iterator it2 =  l.begin() ; it2 != l.end(); ++it2)
+	for (std::vector<GEdge*>::iterator it2 = l.begin() ; it2 != l.end(); ++it2)
           (*it2)->addFace(it->first);
       }
     }

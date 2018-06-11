@@ -65,7 +65,7 @@ void OCCFace::setup()
   for(exp2.Init(s.Oriented(TopAbs_FORWARD), TopAbs_WIRE); exp2.More(); exp2.Next()){
     TopoDS_Wire wire = TopoDS::Wire(exp2.Current());
     Msg::Debug("OCC Face %d - New Wire", tag());
-    std::list<GEdge*> l_wire;
+    std::vector<GEdge*> l_wire;
     for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()){
       TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
       GEdge *e = 0;
@@ -368,7 +368,7 @@ bool OCCFace::containsPoint(const SPoint3 &pt) const
     double v[3] = {pt.x(), pt.y(), pt.z()};
 
     std::vector<int>::const_iterator ito = l_dirs.begin();
-    for(std::list<GEdge*>::const_iterator it = l_edges.begin(); it != l_edges.end(); it++){
+    for(std::vector<GEdge*>::const_iterator it = l_edges.begin(); it != l_edges.end(); it++){
       GEdge *c = *it;
       int ori = 1;
       if(ito != l_dirs.end()){

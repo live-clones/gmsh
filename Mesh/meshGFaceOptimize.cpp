@@ -111,7 +111,7 @@ void buildMeshGenerationDataStructures(GFace *gf,
                                        bidimMeshData & data)
 {
   std::map<MVertex*, double> vSizesMap;
-  std::list<GEdge*> edges = gf->edges();
+  std::vector<GEdge*> const& edges = gf->edges();
 
   for(unsigned int i = 0;i < gf->triangles.size(); i++)
     setLcsInit(gf->triangles[i], vSizesMap);
@@ -138,8 +138,8 @@ void buildMeshGenerationDataStructures(GFace *gf,
 
   // take good care of embedded edges
   {
-    std::list<GEdge*> embedded_edges = gf->embeddedEdges();
-    std::list<GEdge*>::iterator ite = embedded_edges.begin();
+    std::vector<GEdge*> const& embedded_edges = gf->embeddedEdges();
+    std::vector<GEdge*>::const_iterator ite = embedded_edges.begin();
     while(ite != embedded_edges.end()){
       if(!(*ite)->isMeshDegenerated()){
         for (unsigned int i = 0; i < (*ite)->lines.size(); i++)
@@ -152,8 +152,8 @@ void buildMeshGenerationDataStructures(GFace *gf,
 
   // take care of small edges in  order not to "pollute" the size field
   {
-    std::list<GEdge*> _edges = gf->edges();
-    std::list<GEdge*>::iterator ite = _edges.begin();
+    std::vector<GEdge*> _edges = gf->edges();
+    std::vector<GEdge*>::const_iterator ite = _edges.begin();
     while(ite != _edges.end()){
       if(!(*ite)->isMeshDegenerated()){
         for (unsigned int i = 0; i < (*ite)->lines.size(); i++){
@@ -169,7 +169,7 @@ void buildMeshGenerationDataStructures(GFace *gf,
   }
 
 
-  
+
   //  int NUM = 0;
   for(std::map<MVertex*, double>::iterator it = vSizesMap.begin();
        it != vSizesMap.end(); ++it){
@@ -987,7 +987,7 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
   MVertex *v3 = t1->tri()->getVertex((iLocalEdge + 1) % 3);
   MVertex *v4 = 0;
 
-  
+
   std::set<MEdge,Less_Edge>::iterator it = data.internalEdges.find(MEdge(v1,v2));
   if (it != data.internalEdges.end())return false;
 
@@ -1039,17 +1039,17 @@ bool edgeSwap(std::set<swapquad> &configs, MTri3 *t1, GFace *gf, int iLocalEdge,
 	double p2 [3] = {v2->x(),v2->y(),v2->z()};
 	double p3 [3] = {v3->x(),v3->y(),v3->z()};
 	double p4 [3] = {v4->x(),v4->y(),v4->z()};
-	double a1 = robustPredicates::orient3d(p2, p3, p4, c);    
+	double a1 = robustPredicates::orient3d(p2, p3, p4, c);
 	double a2 = robustPredicates::orient3d(p4, p3, p1, c);
 
-	double a3 = robustPredicates::orient3d(p2, p3, p4, p1);    
+	double a3 = robustPredicates::orient3d(p2, p3, p4, p1);
 	double a4 = robustPredicates::orient3d(p4, p3, p1, p2);
 	//	if (a1*a2 > 0)return  a3*a4 < 0 ;
 	//	if (
 	//	if (a1 < 0 )return a1*a2 < 0 ;
-      }  
-      
-      
+      }
+
+
     }
     break;
     */
@@ -1150,7 +1150,7 @@ int edgeSwapPass(GFace *gf, std::set<MTri3*, compareTri3Ptr> &allTris,
 
   std::set<MTri3*, compareTri3Ptr> allTris2;
 
-  
+
   for(int iter = 0; iter < 10; iter++){
     //    printf("coucou1 %d\n",iter);
     int nbSwap = 0;
@@ -1237,8 +1237,8 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
 
   std::set<MVertex*> emb_edgeverts;
   {
-    std::list<GEdge*> emb_edges = gf->embeddedEdges();
-    std::list<GEdge*>::iterator ite = emb_edges.begin();
+    std::vector<GEdge*> const& emb_edges = gf->embeddedEdges();
+    std::vector<GEdge*>::const_iterator ite = emb_edges.begin();
     while(ite != emb_edges.end()){
       if(!(*ite)->isMeshDegenerated()){
         emb_edgeverts.insert((*ite)->mesh_vertices.begin(),
@@ -1253,8 +1253,8 @@ static int _recombineIntoQuads(GFace *gf, double minqual, bool cubicGraph = 1)
   }
 
   {
-    std::list<GEdge*> _edges = gf->edges();
-    std::list<GEdge*>::iterator ite = _edges.begin();
+    std::vector<GEdge*> const& _edges = gf->edges();
+    std::vector<GEdge*>::const_iterator ite = _edges.begin();
     while(ite != _edges.end()){
       if(!(*ite)->isMeshDegenerated()){
         if ((*ite)->isSeam(gf)){

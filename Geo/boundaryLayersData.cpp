@@ -279,12 +279,12 @@ static void getEdgesData(GFace *gf,
                          std::multimap<MVertex*,MVertex*> &tangents)
 {
   // get all model edges
-  std::list<GEdge*> edges = gf->edges();
-  std::list<GEdge*> embedded_edges = gf->embeddedEdges();
+  std::vector<GEdge*> edges = gf->edges();
+  std::vector<GEdge*> const& embedded_edges = gf->embeddedEdges();
   edges.insert(edges.begin(), embedded_edges.begin(),embedded_edges.end());
 
   // iterate on model edges
-  std::list<GEdge*>::iterator ite = edges.begin();
+  std::vector<GEdge*>::iterator ite = edges.begin();
   while(ite != edges.end()){
     // check if this edge generates a boundary layer
     if(isEdgeOfFaceBL(gf,*ite,blf)){

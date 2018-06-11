@@ -29,8 +29,8 @@ static double max_surf_curvature(const GEdge *ge, double u)
 static double max_edge_curvature(const GVertex *gv)
 {
   double val = 0;
-  std::list<GEdge*> l_edges = gv->edges();
-  for (std::list<GEdge*>::const_iterator ite = l_edges.begin();
+  std::vector<GEdge*> const& l_edges = gv->edges();
+  for (std::vector<GEdge*>::const_iterator ite = l_edges.begin();
        ite != l_edges.end(); ++ite){
     GEdge *_myGEdge = *ite;
     Range<double> range = _myGEdge->parBounds(0);
@@ -300,8 +300,8 @@ bool Extend2dMeshIn3dVolumes()
 SMetric3 max_edge_curvature_metric(const GVertex *gv)
 {
   SMetric3 val (1.e-12);
-  std::list<GEdge*> l_edges = gv->edges();
-  for (std::list<GEdge*>::const_iterator ite = l_edges.begin();
+  std::vector<GEdge*> const& l_edges = gv->edges();
+  for (std::vector<GEdge*>::const_iterator ite = l_edges.begin();
        ite != l_edges.end(); ++ite){
     GEdge *_myGEdge = *ite;
     Range<double> range = _myGEdge->parBounds(0);

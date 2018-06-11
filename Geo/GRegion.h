@@ -80,7 +80,7 @@ class GRegion : public GEntity {
   virtual std::list<GFace*> embeddedFaces() const { return embedded_faces; }
 
   // edges that bound the region
-  virtual std::list<GEdge*> edges() const;
+  virtual std::vector<GEdge*> edges() const;
 
   // vertices that bound the region
   virtual std::list<GVertex*> vertices() const;

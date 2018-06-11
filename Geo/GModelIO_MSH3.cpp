@@ -500,11 +500,11 @@ void writeMSHEntities(FILE *fp, GModel *gm)  // also used in MSH2
     fprintf(fp, "\n");
   }
   for (GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
-    std::list<GEdge*> edges = (*it)->edges();
+    std::vector<GEdge*> const& edges = (*it)->edges();
     std::vector<int> const& ori = (*it)->edgeOrientations();
     fprintf(fp, "%d %d ", (*it)->tag(), (int)edges.size());
     std::vector<int> tags;
-    for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++)
+    for(std::vector<GEdge*>::const_iterator ite = edges.begin(); ite != edges.end(); ite++)
       tags.push_back((*ite)->tag());
 
     std::vector<int> signs(ori.begin(), ori.end());

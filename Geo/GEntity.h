@@ -211,7 +211,7 @@ class GEntity {
   virtual std::vector<GFace*> faces() const { return std::vector<GFace*>(); }
 
   // edges that bound this entity or that this entity bounds.
-  virtual std::list<GEdge*> edges() const { return std::list<GEdge*>(); }
+  virtual std::vector<GEdge*> edges() const { return std::vector<GEdge*>(); }
 
   // vertices that bound this entity.
   virtual std::list<GVertex*> vertices() const { return std::list<GVertex*>(); }
@@ -227,10 +227,9 @@ class GEntity {
   {
     return faces();
   }
-  std::vector<GEdge*> bindingsGetEdges()
+  std::vector<GEdge*> bindingsGetEdges() const
   {
-    std::list<GEdge*> e = edges();
-    return std::vector<GEdge*> (e.begin(), e.end());
+    return edges();
   }
   std::vector<GVertex*> bindingsGetVertices()
   {

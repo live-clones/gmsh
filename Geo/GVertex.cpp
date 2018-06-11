@@ -48,9 +48,9 @@ void GVertex::addEdge(GEdge *e)
     l_edges.push_back(e);
 }
 
-void GVertex::delEdge(GEdge *e)
+void GVertex::delEdge(GEdge *const e)
 {
-  std::list<GEdge*>::iterator it = std::find(l_edges.begin(), l_edges.end(), e);
+  std::vector<GEdge*>::iterator it = std::find(l_edges.begin(), l_edges.end(), e);
   if(it != l_edges.end()) l_edges.erase(it);
 }
 
@@ -119,7 +119,8 @@ MElement *GVertex::getMeshElementByType(const int familyType, const unsigned int
 
 bool GVertex::isOnSeam(const GFace *gf) const
 {
-  std::list<GEdge*>::const_iterator eIter = l_edges.begin();
+  // TODO C++11 std::find_if
+  std::vector<GEdge*>::const_iterator eIter = l_edges.begin();
   for (; eIter != l_edges.end(); eIter++) {
     if ( (*eIter)->isSeam(gf) ) return true;
   }
@@ -131,9 +132,9 @@ std::vector<GFace *> GVertex::faces() const
 {
   std::vector<GFace *> faces;
 
-  for(std::list<GEdge *>::const_iterator it = l_edges.begin();
+  for(std::vector<GEdge *>::const_iterator it = l_edges.begin();
       it != l_edges.end(); ++it) {
-    std::vector<GFace *> const temp = (*it)->faces();
+    std::vector<GFace *> const& temp = (*it)->faces();
     faces.insert(faces.end(), temp.begin(), temp.end());
   }
   std::sort(faces.begin(), faces.end());

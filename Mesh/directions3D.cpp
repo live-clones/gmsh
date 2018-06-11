@@ -509,9 +509,9 @@ void Frame_field::initFace(GFace* gf)
   std::cout << "Nodes in face = " << vertex_to_elements.size() << std::endl;
 
   // compute cumulative cross-data "vertices x elements" for the whole contour of gf
-  std::list<GEdge*> edges = gf->edges();
+  std::vector<GEdge*> const& edges = gf->edges();
   vertex_to_elements.clear();
-  for( std::list<GEdge*>::const_iterator it=edges.begin(); it!=edges.end(); it++){
+  for( std::vector<GEdge*>::const_iterator it=edges.begin(); it!=edges.end(); it++){
     build_vertex_to_elements(*it,false);
   }
 

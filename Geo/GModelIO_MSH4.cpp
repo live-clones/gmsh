@@ -1536,7 +1536,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     }
 
     for(GModel::fiter it = faces.begin(); it != faces.end(); ++it){
-      std::list<GEdge*> edges = (*it)->edges();
+      std::vector<GEdge*> const& edges = (*it)->edges();
       std::vector<int> const& ori = (*it)->edgeOrientations();
       unsigned long edgesSize = edges.size();
       int entityTag = (*it)->tag();
@@ -1558,7 +1558,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       writeMSH4Physicals(fp, *it, binary);
       fwrite(&edgesSize, sizeof(unsigned long), 1, fp);
       std::vector<int> tags, signs;
-      for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++)
+      for(std::vector<GEdge*>::const_iterator ite = edges.begin(); ite != edges.end(); ite++)
         tags.push_back((*ite)->tag());
 
       signs.insert(signs.end(), ori.begin(), ori.end());
@@ -1707,7 +1707,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     }
 
     for(GModel::fiter it = faces.begin(); it != faces.end(); ++it){
-      std::list<GEdge*> edges = (*it)->edges();
+      std::vector<GEdge*> const& edges = (*it)->edges();
       std::vector<int> const& ori = (*it)->edgeOrientations();
       fprintf(fp, "%d ", (*it)->tag());
       if(partition){
@@ -1727,7 +1727,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       writeMSH4Physicals(fp, *it, binary);
       fprintf(fp, "%lu ", edges.size());
       std::vector<int> tags, signs;
-      for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++)
+      for(std::vector<GEdge*>::const_iterator ite = edges.begin(); ite != edges.end(); ite++)
         tags.push_back((*ite)->tag());
       for(std::vector<int>::const_iterator ite = ori.begin(); ite != ori.end(); ite++)
         signs.push_back(*ite);

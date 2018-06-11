@@ -154,7 +154,7 @@ GeomMeshMatcher::matchEdges(GModel* m1, GModel* m2,
     GVertex* v2 = e1->getEndVertex();
 
     std::vector<GEdge*> common_edges;
-    std::vector<std::list<GEdge*> > lists;
+    std::vector<std::vector<GEdge*> > lists;
 
     if (v1 == v2) {
       Msg::Debug("Found a closed curve");
@@ -242,9 +242,9 @@ GeomMeshMatcher:: matchFaces(GModel* m1, GModel* m2,
 
     std::vector<std::vector<GFace*> > lists;
 
-    std::list<GEdge*> boundary_edges = f1->edges();
+    std::vector<GEdge*> boundary_edges = f1->edges();
 
-    for (std::list<GEdge*>::iterator boundary_edge = boundary_edges.begin();
+    for (std::vector<GEdge*>::iterator boundary_edge = boundary_edges.begin();
          boundary_edge != boundary_edges.end(); boundary_edge++) {
 
       if (!(*boundary_edge)->isSeam(f1))
@@ -363,7 +363,7 @@ GeomMeshMatcher::matchRegions(GModel* m1, GModel* m2,
 /*
    This is made in a backward fashion compared to the other entities...
 */
-      std::list<GEdge*> boundaries = ((GRegion*) *entity1)->edges();
+      std::vector<GEdge*> const& boundaries = ((GRegion*) *entity1)->edges();
 
       // Then, compute the minimal bounding box
       SOrientedBoundingBox geo_obb = ((GRegion*) *entity1)->getOBB();

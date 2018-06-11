@@ -78,8 +78,8 @@ class quadMeshRemoveHalfOfOneDMesh
     if((CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine) &&
        CTX::instance()->mesh.algoRecombine == 2){
       // printf("GFace %d removing half of the points in the 1D mesh\n",gf->tag());
-      std::list<GEdge*> edges = gf->edges();
-      std::list<GEdge*>::iterator ite = edges.begin();
+      std::vector<GEdge*> const& edges = gf->edges();
+      std::vector<GEdge*>::const_iterator ite = edges.begin();
       while(ite != edges.end()){
         if(!(*ite)->isMeshDegenerated()){
           std::vector<MLine*> temp;
@@ -219,8 +219,8 @@ class quadMeshRemoveHalfOfOneDMesh
   }
   void restore()
   {
-    std::list<GEdge*> edges = _gf->edges();
-    std::list<GEdge*>::iterator ite = edges.begin();
+    std::vector<GEdge*> const& edges = _gf->edges();
+    std::vector<GEdge*>::const_iterator ite = edges.begin();
     while(ite != edges.end()){
       for(unsigned int i = 0; i < (*ite)->lines.size(); i++){
         delete (*ite)->lines[i];
@@ -280,13 +280,13 @@ static void copyMesh(GFace *source, GFace *target)
 
   // add corresponding edge nodes assuming edges were correctly meshed already
 
-  std::list<GEdge*> s_edges = source->edges();
-  std::list<GEdge*> t_edges = target->edges();
+  std::vector<GEdge*> s_edges = source->edges();
+  std::vector<GEdge*> t_edges = target->edges();
 
   std::set<GEdge*> checkEdges;
   checkEdges.insert(s_edges.begin(),s_edges.end());
 
-  for(std::list<GEdge*>::iterator te_iter = t_edges.begin();
+  for(std::vector<GEdge*>::iterator te_iter = t_edges.begin();
        te_iter != t_edges.end(); ++te_iter) {
 
     GEdge* get = *te_iter;
@@ -400,8 +400,8 @@ void fourthPoint(double *p1, double *p2, double *p3, double *p4)
 
 static bool noSeam(GFace *gf)
 {
-  std::list<GEdge*> edges = gf->edges();
-  std::list<GEdge*>::iterator it = edges.begin();
+  std::vector<GEdge*> const& edges = gf->edges();
+  std::vector<GEdge*>::const_iterator it = edges.begin();
   while(it != edges.end()){
     GEdge *ge = *it ;
     bool seam = ge->isSeam(gf);
@@ -656,10 +656,10 @@ static void modifyInitialMeshForBoundaryLayers(GFace *gf,
   std::set<MEdge,Less_Edge> bedges;
   std::set<MEdge,Less_Edge> removed;
 
-  std::list<GEdge*> edges = gf->edges();
-  std::list<GEdge*> embedded_edges = gf->embeddedEdges();
-  edges.insert(edges.begin(), embedded_edges.begin(),embedded_edges.end());
-  std::list<GEdge*>::iterator ite = edges.begin();
+  std::vector<GEdge*> edges = gf->edges();
+  std::vector<GEdge*> const& embedded_edges = gf->embeddedEdges();
+  edges.insert(edges.begin(), embedded_edges.begin(), embedded_edges.end());
+  std::vector<GEdge*>::iterator ite = edges.begin();
 
   FILE *ff2 = 0;
   if(debug) ff2 = Fopen("tato.pos","w");
@@ -806,7 +806,7 @@ static void modifyInitialMeshForBoundaryLayers(GFace *gf,
 
   discreteEdge ne(gf->model(), 444444,0,
                   (*edges.begin())->getEndVertex());
-  std::list<GEdge*> hop;
+  std::vector<GEdge*> hop;
   std::set<MEdge,Less_Edge>::iterator it =  bedges.begin();
 
   FILE *ff = 0;
@@ -905,18 +905,18 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
                    bool repairSelfIntersecting1dMesh,
                    bool onlyInitialMesh,
                    bool debug,
-                   std::list<GEdge*> *replacement_edges)
+                   std::vector<GEdge*> *replacement_edges)
 {
   // onlyInitialMesh=true;
   BDS_GeomEntity CLASS_F(1, 2);
   BDS_GeomEntity CLASS_EXTERIOR(1, 3);
   std::map<BDS_Point*, MVertex*,PointLessThan> recoverMap;
   std::map<MVertex*, BDS_Point*> recoverMapInv;
-  std::list<GEdge*> edges = replacement_edges ? *replacement_edges : gf->edges();
+  std::vector<GEdge*> edges = replacement_edges ? *replacement_edges : gf->edges();
 
   // build a set with all points of the boundaries
   std::set<MVertex*, MVertexLessThanNum> all_vertices, boundary;
-  std::list<GEdge*>::iterator ite = edges.begin();
+  std::vector<GEdge*>::const_iterator ite = edges.begin();
 
   FILE *fdeb = NULL;
   if(debug && RECUR_ITER == 0){
@@ -966,7 +966,7 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
     return false;
   }
 
-  std::list<GEdge*> emb_edges = gf->embeddedEdges();
+  std::vector<GEdge*> const& emb_edges = gf->embeddedEdges();
   ite = emb_edges.begin();
   while(ite != emb_edges.end()){
     if(!(*ite)->isMeshDegenerated()){
@@ -1905,8 +1905,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     int pNum = m->MAXPOINTNUMBER;
     nbPointsTotal +=  emb_vertx.size();
     {
-      std::list<GEdge*> emb_edges = gf->embeddedEdges();
-      std::list<GEdge*>::iterator ite =  emb_edges.begin();
+      std::vector<GEdge*> const& emb_edges = gf->embeddedEdges();
+      std::vector<GEdge*>::const_iterator ite =  emb_edges.begin();
       std::set<MVertex*> vs;
       while(ite != emb_edges.end()){
 	for(unsigned int i = 0; i< (*ite)->lines.size(); i++){
@@ -1947,8 +1947,8 @@ static bool meshGeneratorPeriodic(GFace *gf, bool debug = true)
     }
     //    nbPointsTotal += count;
 
-    std::list<GEdge*> emb_edges = gf->embeddedEdges();
-    std::list<GEdge*>::iterator ite =  emb_edges.begin();
+    std::vector<GEdge*> const& emb_edges = gf->embeddedEdges();
+    std::vector<GEdge*>::const_iterator ite = emb_edges.begin();
     std::set<MVertex*> vs;
     std::map<MVertex *, BDS_Point *> facile;
     while(ite != emb_edges.end()){

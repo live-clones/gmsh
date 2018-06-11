@@ -2470,11 +2470,11 @@ void BoundaryLayerField::setupFor2d(int iF)
   // OR (better) CHANGE THE PHILOSOPHY
 
   GFace *gf = GModel::current()->getFaceByTag(iF);
-  std::list<GEdge*> ed = gf->edges();
-  std::list<GEdge*> embedded_edges = gf->embeddedEdges();
+  std::vector<GEdge*> ed = gf->edges();
+  std::vector<GEdge*> const& embedded_edges = gf->embeddedEdges();
   ed.insert(ed.begin(), embedded_edges.begin(), embedded_edges.end());
 
-  for (std::list<GEdge*>::iterator it = ed.begin(); it != ed.end() ; ++it){
+  for (std::vector<GEdge*>::iterator it = ed.begin(); it != ed.end() ; ++it){
     bool isIn = false;
     int iE = (*it)->tag();
     bool found = std::find(edges_id_saved.begin(), edges_id_saved.end(), iE) !=
