@@ -80,14 +80,14 @@ void GFace::setMeshingAlgo(int algo)
   CTX::instance()->mesh.algo2dPerFace[tag()] = algo;
 }
 
-void GFace::delFreeEdge(GEdge *e)
+void GFace::delFreeEdge(GEdge *edge)
 {
   // delete the edge from the edge list and the orientation list
   std::list<GEdge*>::iterator ite = l_edges.begin();
-  std::list<int>::iterator itd = l_dirs.begin();
+  std::vector<int>::iterator itd = l_dirs.begin();
   while(ite != l_edges.end()){
-    if(e == *ite){
-      Msg::Debug("Erasing edge %d from edge list in face %d", e->tag(), tag());
+    if(edge == *ite){
+      Msg::Debug("Erasing edge %d from edge list in face %d", edge->tag(), tag());
       l_edges.erase(ite);
       if(itd != l_dirs.end()) l_dirs.erase(itd);
       break;
@@ -100,8 +100,8 @@ void GFace::delFreeEdge(GEdge *e)
   for(std::list<GEdgeLoop>::iterator it = edgeLoops.begin();
       it != edgeLoops.end(); it++){
     for(GEdgeLoop::iter it2 = it->begin(); it2 != it->end(); it2++){
-      if(e == it2->ge){
-        Msg::Debug("Erasing edge %d from edge loop in face %d", e->tag(), tag());
+      if(edge == it2->ge){
+        Msg::Debug("Erasing edge %d from edge loop in face %d", edge->tag(), tag());
         it->erase(it2);
         break;
       }
@@ -119,9 +119,8 @@ int GFace::delEdge(GEdge* edge)
   }
   l_edges.erase(it);
 
-  std::list<int>::iterator itOri;
-  int posOri = 0;
-  int orientation = 0;
+  std::vector<int>::iterator itOri;
+  int posOri = 0, orientation = 0;
   for(itOri = l_dirs.begin(); itOri != l_dirs.end(); ++itOri){
     if(posOri == pos){
       orientation = *itOri;
@@ -418,12 +417,12 @@ void GFace::writeGEO(FILE *fp)
   if(geomType() == DiscreteSurface) return;
 
   std::list<GEdge*> edg = edges();
-  std::list<int> dir = orientations();
+  std::vector<int> const& dir = orientations();
   if(edg.size() && dir.size() == edg.size()){
     std::vector<int> num, ori;
     for(std::list<GEdge*>::iterator it = edg.begin(); it != edg.end(); it++)
       num.push_back((*it)->tag());
-    for(std::list<int>::iterator it = dir.begin(); it != dir.end(); it++)
+    for(std::vector<int>::const_iterator it = dir.begin(); it != dir.end(); it++)
       ori.push_back((*it) > 0 ? 1 : -1);
     fprintf(fp, "Line Loop(%d) = ", tag());
     for(unsigned int i = 0; i < num.size(); i++){
@@ -1530,8 +1529,11 @@ void GFace::replaceEdges(std::list<GEdge*> &new_edges)
 {
   std::list<GEdge*>::iterator it  = l_edges.begin();
   std::list<GEdge*>::iterator it2 = new_edges.begin();
-  std::list<int>::iterator it3 = l_dirs.begin();
-  std::list<int> newdirs;
+  std::vector<int>::iterator it3 = l_dirs.begin();
+
+  std::vector<int> newdirs;
+  newdirs.reserve(l_edges.size());
+
   for ( ; it != l_edges.end(); ++it, ++it2, ++it3){
     (*it)->delFace(this);
     (*it2)->addFace(this);
@@ -1746,9 +1748,9 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
 
 inline double myAngle(const SVector3 &a, const SVector3 &b, const SVector3 &d)
 {
-  double cosTheta = dot(a, b);
-  double sinTheta = dot(crossprod(a, b), d);
-  return atan2(sinTheta, cosTheta);
+  double const cosTheta = dot(a, b);
+  double const sinTheta = dot(crossprod(a, b), d);
+  return std::atan2(sinTheta, cosTheta);
 }
 
 struct myPlane {

@@ -367,7 +367,7 @@ bool OCCFace::containsPoint(const SPoint3 &pt) const
     double angle = 0.;
     double v[3] = {pt.x(), pt.y(), pt.z()};
 
-    std::list<int>::const_iterator ito = l_dirs.begin();
+    std::vector<int>::const_iterator ito = l_dirs.begin();
     for(std::list<GEdge*>::const_iterator it = l_edges.begin(); it != l_edges.end(); it++){
       GEdge *c = *it;
       int ori = 1;
@@ -392,9 +392,7 @@ bool OCCFace::containsPoint(const SPoint3 &pt) const
       }
     }
     // we're inside if angle equals 2 * pi
-    if(fabs(angle) > 2 * M_PI - 0.5 && fabs(angle) < 2 * M_PI + 0.5)
-      return true;
-    return false;
+    return std::abs(angle) > 2 * M_PI - 0.5 && std::abs(angle) < 2 * M_PI + 0.5;
   }
   else
     Msg::Error("Not Done Yet ...");

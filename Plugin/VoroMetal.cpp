@@ -527,8 +527,8 @@ void voroMetal3D::correspondance(double e, double xMax, double yMax, double zMax
   std::list<GVertex*> vertices;
   std::list<GEdge*> edges1;
   std::list<GEdge*> edges2;
-  std::list<int> orientations1;
-  std::list<int> orientations2;
+  std::vector<int> orientations1;
+  std::vector<int> orientations2;
   std::map<GFace*,SPoint3> centers;
   std::map<GFace*,bool> markings;
   std::list<GVertex*>::iterator it2;
@@ -538,8 +538,8 @@ void voroMetal3D::correspondance(double e, double xMax, double yMax, double zMax
   std::map<GFace*,bool>::iterator it6;
   std::list<GEdge*>::iterator it7;
   std::list<GEdge*>::iterator it8;
-  std::list<int>::iterator it9;
-  std::list<int>::iterator it10;
+  std::vector<int>::iterator it9;
+  std::vector<int>::iterator it10;
   std::list<GEdge*>::iterator mem;
 
   faces.clear();
