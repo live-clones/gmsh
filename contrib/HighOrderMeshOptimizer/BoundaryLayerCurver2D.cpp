@@ -192,62 +192,6 @@ namespace BoundaryLayerCurver
       projectVertexIntoGFace(face->getVertex(i), gface);
   }
 
-  void reduceOrderCurve(MEdgeN *edge, int order, const GFace *gface)
-  {
-    const int orderCurve = edge->getPolynomialOrder();
-    const int orderGauss = order * 2;
-    const int sizeSystem = getNGQLPts(orderGauss);
-    const IntPt *gaussPnts = getGQLPts(orderGauss);
-
-    // Least square projection
-    fullMatrix<double> xyz(sizeSystem + 2, 3);
-    for (int i = 0; i < sizeSystem; ++i) {
-      SPoint3 p = edge->pnt(gaussPnts[i].pt[0]);
-      xyz(i, 0) = p.x();
-      xyz(i, 1) = p.y();
-      xyz(i, 2) = p.z();
-    }
-    for (int i = 0; i < 2; ++i) {
-      xyz(sizeSystem + i, 0) = edge->getVertex(i)->x();
-      xyz(sizeSystem + i, 1) = edge->getVertex(i)->y();
-      xyz(sizeSystem + i, 2) = edge->getVertex(i)->z();
-    }
-
-    LeastSquareData *data = getLeastSquareData(TYPE_LIN, order, orderGauss);
-    fullMatrix<double> newxyzLow(order + 1, 3);
-    data->invA.mult(xyz, newxyzLow);
-
-    std::vector<MVertex *> vertices = edge->getVertices();
-    vertices.resize((unsigned int) order + 1);
-    MEdgeN lowOrderEdge(vertices);
-
-    for (unsigned int i = 2; i < vertices.size(); ++i) {
-      vertices[i]->x() = newxyzLow(i, 0);
-      vertices[i]->y() = newxyzLow(i, 1);
-      vertices[i]->z() = newxyzLow(i, 2);
-    }
-
-    const int tagLine = ElementType::getTag(TYPE_LIN, orderCurve);
-    const nodalBasis *nb = BasisFactory::getNodalBasis(tagLine);
-    const fullMatrix<double> &refpnts = nb->getReferenceNodes();
-
-    fullMatrix<double> newxyz(edge->getNumVertices(), 3);
-    for (unsigned int i = 2; i < edge->getNumVertices(); ++i) {
-      SPoint3 p = lowOrderEdge.pnt(refpnts(i, 0));
-      newxyz(i, 0) = p.x();
-      newxyz(i, 1) = p.y();
-      newxyz(i, 2) = p.z();
-    }
-
-    for (int i = 2; i < edge->getNumVertices(); ++i) {
-      edge->getVertex(i)->x() = newxyz(i, 0);
-      edge->getVertex(i)->y() = newxyz(i, 1);
-      edge->getVertex(i)->z() = newxyz(i, 2);
-    }
-
-    if (gface) projectVerticesIntoGFace(edge, gface, false);
-  }
-
   namespace EdgeCurver2D
   {
     // TODO: smooth normals if CAD not available
@@ -440,6 +384,124 @@ namespace BoundaryLayerCurver
       }
 
       if (gface) projectVerticesIntoGFace(edge, gface, false);
+    }
+
+    void _reduceCurving(MEdgeN *edge, double factor, const GFace *gface)
+    {
+      int order = edge->getPolynomialOrder();
+
+      MVertex *v0 = edge->getVertex(0);
+      MVertex *v1 = edge->getVertex(1);
+
+      for (int i = 2; i < order + 1; ++i) {
+        double f = (double)(i-1) / order;
+        MVertex *v = edge->getVertex(i);
+        v->x() = (1-factor) * v->x() + factor * ((1-f) * v0->x() + f * v1->x());
+        v->y() = (1-factor) * v->y() + factor * ((1-f) * v0->y() + f * v1->y());
+        v->z() = (1-factor) * v->z() + factor * ((1-f) * v0->z() + f * v1->z());
+      }
+      if (gface) projectVerticesIntoGFace(edge, gface, false);
+    }
+
+    void _reduceOrderCurve(MEdgeN *edge, int order, const GFace *gface)
+    {
+      const int orderCurve = edge->getPolynomialOrder();
+      const int orderGauss = order * 2;
+      const int sizeSystem = getNGQLPts(orderGauss);
+      const IntPt *gaussPnts = getGQLPts(orderGauss);
+
+      // Least square projection
+      fullMatrix<double> xyz(sizeSystem + 2, 3);
+      for (int i = 0; i < sizeSystem; ++i) {
+        SPoint3 p = edge->pnt(gaussPnts[i].pt[0]);
+        xyz(i, 0) = p.x();
+        xyz(i, 1) = p.y();
+        xyz(i, 2) = p.z();
+      }
+      for (int i = 0; i < 2; ++i) {
+        xyz(sizeSystem + i, 0) = edge->getVertex(i)->x();
+        xyz(sizeSystem + i, 1) = edge->getVertex(i)->y();
+        xyz(sizeSystem + i, 2) = edge->getVertex(i)->z();
+      }
+
+      LeastSquareData *data = getLeastSquareData(TYPE_LIN, order, orderGauss);
+      fullMatrix<double> newxyzLow(order + 1, 3);
+      data->invA.mult(xyz, newxyzLow);
+
+      std::vector<MVertex *> vertices = edge->getVertices();
+      vertices.resize((unsigned int) order + 1);
+      MEdgeN lowOrderEdge(vertices);
+
+      for (unsigned int i = 2; i < vertices.size(); ++i) {
+        vertices[i]->x() = newxyzLow(i, 0);
+        vertices[i]->y() = newxyzLow(i, 1);
+        vertices[i]->z() = newxyzLow(i, 2);
+      }
+
+      const int tagLine = ElementType::getTag(TYPE_LIN, orderCurve);
+      const nodalBasis *nb = BasisFactory::getNodalBasis(tagLine);
+      const fullMatrix<double> &refpnts = nb->getReferenceNodes();
+
+      fullMatrix<double> newxyz(edge->getNumVertices(), 3);
+      for (unsigned int i = 2; i < edge->getNumVertices(); ++i) {
+        SPoint3 p = lowOrderEdge.pnt(refpnts(i, 0));
+        newxyz(i, 0) = p.x();
+        newxyz(i, 1) = p.y();
+        newxyz(i, 2) = p.z();
+      }
+
+      for (int i = 2; i < edge->getNumVertices(); ++i) {
+        edge->getVertex(i)->x() = newxyz(i, 0);
+        edge->getVertex(i)->y() = newxyz(i, 1);
+        edge->getVertex(i)->z() = newxyz(i, 2);
+      }
+
+      if (gface) projectVerticesIntoGFace(edge, gface, false);
+    }
+
+    void recoverQualityElements(std::vector<MEdgeN> &stackEdges,
+                                std::vector<MFaceN> &stackFaces,
+                                std::vector<MElement*> &stackElements,
+                                int iFirst, int iLast, const GFace *gface)
+    {
+      std::vector<MEdgeN> subsetEdges(4);
+      subsetEdges[0] = stackEdges[0];
+      subsetEdges[1] = stackEdges[iFirst];
+      subsetEdges[2] = stackEdges[iLast-1];
+      subsetEdges[3] = stackEdges[iLast];
+      MEdgeN *lastEdge = &stackEdges[iLast];
+
+      // First get sure that last element of the BL is of good quality
+      std::vector<MFaceN> subsetFaces(1);
+      subsetFaces[0] = stackFaces[iLast-1];
+      MElement *lastElementBL = stackElements[iLast-1];
+
+      InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, gface);
+      repositionInnerVertices(subsetFaces, gface);
+      double qual = jacobianBasedQuality::minIGEMeasure(lastElementBL);
+      int currentOrder = lastEdge->getPolynomialOrder();
+      while (qual < .5 && currentOrder > 1) {
+        std::cout << "reducing to order " << currentOrder-1 << std::endl;
+        _reduceOrderCurve(lastEdge, --currentOrder, gface);
+        InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, gface);
+        repositionInnerVertices(subsetFaces, gface);
+        qual = jacobianBasedQuality::minICNMeasure(lastElementBL);
+      }
+
+      // Now, get sure the exterior element is of good quality
+      subsetFaces[0] = stackFaces[iLast];
+      MElement *lastElement = stackElements[iLast];
+      qual = jacobianBasedQuality::minIGEMeasure(lastElement);
+      int iter = 0;
+      while (qual < .5 && iter++ < 15) {
+        _reduceCurving(lastEdge, .25, gface);
+        InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, gface);
+        repositionInnerVertices(subsetFaces, gface);
+        qual = jacobianBasedQuality::minICNMeasure(lastElementBL);
+      }
+      std::cout << "number of reducing curving " << iter << std::endl;
+      if (qual < .5)
+        _reduceCurving(lastEdge, 1, gface);
     }
   }
 
@@ -712,7 +774,7 @@ namespace BoundaryLayerCurver
     void _generalTFI(std::vector<MEdgeN> &stack, int iLast,
                      const std::vector<std::pair<double, double> > &eta,
                      const fullMatrix<double> terms[8],
-                     double coeffHermite, const GFace *gface = NULL)
+                     double coeffHermite, const GFace *gface)
     {
       // Let L() be the linear TFI transformation
       // Let H() be the semi-Hermite TFI transformation
@@ -763,7 +825,7 @@ namespace BoundaryLayerCurver
     }
 
     void curveEdges(std::vector<MEdgeN> &stack, int iFirst, int iLast,
-                    const GFace *gface = NULL)
+                    const GFace *gface)
     {
       // Compute eta_i^k, k=0,1
       std::vector<std::pair<double, double> > eta;
@@ -1179,13 +1241,14 @@ namespace BoundaryLayerCurver
 //    drawBezierControlPolygon(baseEdge->getVertices(), const_cast<GEdge*>(gedge));
     EdgeCurver2D::curveEdge(baseEdge, firstEdge, gface, gedge, normal);
     EdgeCurver2D::curveEdge(baseEdge, topEdge, gface, gedge, normal);
-
-    // TODO: check qualtiy exterior element and reduceOrder topEdge if necessary
-//    reduceOrderCurve(topEdge, 1, gface);
+    // TODO compare quality with wuality linear element
+    EdgeCurver2D::recoverQualityElements(stackEdges, stackFaces, column.second,
+                                         iFirst, iLast, gface);
 
 //    drawBezierControlPolygon(topEdge->getVertices(), const_cast<GEdge*>(gedge));
 
     // Curve interior edges
+    // TODO check if elements are of good quality
     InteriorEdgeCurver::curveEdges(stackEdges, iFirst, iLast, gface);
 
     // Curve interior of elements
@@ -1328,6 +1391,12 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
   }
 
   for (int i = 0; i < bndEl2column.size(); ++i) {
+//    if (   bndEl2column[i].first->getNum() != 1156
+//        && bndEl2column[i].first->getNum() != 1079
+//        && bndEl2column[i].first->getNum() != 1102
+//        && bndEl2column[i].first->getNum() != 1119) continue;
+//    std::cout << std::endl;
+//    std::cout << "column " << bndEl2column[i].first->getNum() << std::endl;
 //    if (bndEl2column[i].first->getNum() != 1079) continue; // Good
 //    if (bndEl2column[i].first->getNum() != 1078) continue; // Next to good
 //    if (bndEl2column[i].first->getNum() != 1102) continue; // Bad HO

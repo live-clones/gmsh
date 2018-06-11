@@ -51,6 +51,9 @@ namespace BoundaryLayerCurver
 {
   bool computeCommonEdge(MElement *el1, MElement *el2, MEdge &e);
 
+  void repositionInnerVertices(const std::vector<MFaceN> &stackFaces,
+                               const GFace *gface);
+
   // The boundary layer curver algorithm is seperated into different modules:
   namespace EdgeCurver2D {}
   namespace EdgeCurver3D {}
@@ -66,6 +69,11 @@ namespace BoundaryLayerCurver
     // At least 'gface' & 'gedge' or 'normal' have to be provided.
     void curveEdge(const MEdgeN *baseEdge, MEdgeN *edge, const GFace *gface,
                    const GEdge *gedge, const SVector3 &normal);
+
+    void recoverQualityElements(std::vector<MEdgeN> &stackEdges,
+                                std::vector<MFaceN> &stackFaces,
+                                std::vector<MElement*> &stackElements,
+                                int iFirst, int iLast, const GFace *gface);
 
     class _Frame {
       SVector3 _normalToTheMesh;
@@ -107,7 +115,8 @@ namespace BoundaryLayerCurver
 
   namespace InteriorEdgeCurver
   {
-    void curveEdges(std::vector<MEdgeN> &stack, int iFirst, int iLast);
+    void curveEdges(std::vector<MEdgeN> &stack, int iFirst, int iLast,
+                    const GFace *gface);
   }
 
   struct Parameters3DCurve {
