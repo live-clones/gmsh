@@ -1433,12 +1433,12 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
     return;
   }
 
-  for (int i = 0; i < bndEl2column.size(); ++i) {
-    bndEl2column[i].first->setVisibility(1);
-    for (unsigned int j = 0; j < bndEl2column[i].second.size(); ++j) {
-      bndEl2column[i].second[j]->setVisibility(1);
-    }
-  }
+//  for (int i = 0; i < bndEl2column.size(); ++i) {
+//    bndEl2column[i].first->setVisibility(1);
+//    for (unsigned int j = 0; j < bndEl2column[i].second.size(); ++j) {
+//      bndEl2column[i].second[j]->setVisibility(1);
+//    }
+//  }
 
   for (int i = 0; i < bndEl2column.size(); ++i) {
 //    if (   bndEl2column[i].first->getNum() != 1156
@@ -1470,12 +1470,12 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
     return;
   }
 
-  for (int i = 0; i < bndEl2column.size(); ++i) {
-    bndEl2column[i].first->setVisibility(1);
-    for (unsigned int j = 0; j < bndEl2column[i].second.size(); ++j) {
-      bndEl2column[i].second[j]->setVisibility(1);
-    }
-  }
+//  for (int i = 0; i < bndEl2column.size(); ++i) {
+//    bndEl2column[i].first->setVisibility(1);
+//    for (unsigned int j = 0; j < bndEl2column[i].second.size(); ++j) {
+//      bndEl2column[i].second[j]->setVisibility(1);
+//    }
+//  }
 
   for (int i = 0; i < bndEl2column.size(); ++i)
     BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], gface, gedge,
