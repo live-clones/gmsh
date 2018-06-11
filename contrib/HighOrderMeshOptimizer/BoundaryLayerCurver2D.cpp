@@ -1301,8 +1301,6 @@ namespace BoundaryLayerCurver
                                          iFirst, iLast, gface);
 
     // Curve interior edges and inner vertices
-//    InteriorEdgeCurver::curveEdges(stackEdges, iFirst, iLast, gface);
-//    repositionInnerVertices(stackFaces, gface);
     InteriorEdgeCurver::curveEdgesAndPreserveQuality(stackEdges, stackFaces,
                                                      column.second, iFirst,
                                                      iLast, gface);

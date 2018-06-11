@@ -337,7 +337,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
     {"Optimization", 0, 0, 0},
     {"Elastic Analogy", 0, 0, 0},
     {"Fast Curving", 0, 0, 0},
-    {"Fast Curving 2 (experimental)", 0, 0, 0},
+    {"Curve boundary layers (3D is experimental)", 0, 0, 0},
     {0}
   };
   choice[2] = new Fl_Choice
