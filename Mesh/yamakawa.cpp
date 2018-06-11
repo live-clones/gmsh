@@ -2611,20 +2611,19 @@ bool Supplementary::faces_statuquo(Prism prism) {
 }
 
 bool Supplementary::faces_statuquo(MVertex* a, MVertex* b, MVertex* c, MVertex* d) {
-  bool ok;
+
   bool flag1, flag2;
   GFace *gf1, *gf2;
-  Tuple tuple1, tuple2;
   std::multiset<Tuple>::iterator it1;
   std::multiset<Tuple>::iterator it2;
 
-  ok = 1;
+  bool ok = 1;
 
   gf1 = NULL;
   gf2 = NULL;
 
-  tuple1 = Tuple(a, b, c);
-  tuple2 = Tuple(c, d, a);
+  Tuple tuple1(a, b, c);
+  Tuple tuple2(c, d, a);
 
   it1 = tuples.find(tuple1);
   it2 = tuples.find(tuple2);
