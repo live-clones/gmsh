@@ -459,6 +459,15 @@ namespace BoundaryLayerCurver
       if (gface) projectVerticesIntoGFace(edge, gface, false);
     }
 
+    MElement* _createLinearElement(MElement *el)
+    {
+      int tagLinear = ElementType::getTag(el->getType(), 1);
+      std::vector<MVertex *> vertices;
+      el->getVertices(vertices);
+      MElementFactory f;
+      return f.create(tagLinear, vertices, -1);
+    }
+
     void recoverQualityElements(std::vector<MEdgeN> &stackEdges,
                                 std::vector<MFaceN> &stackFaces,
                                 std::vector<MElement*> &stackElements,
@@ -470,37 +479,44 @@ namespace BoundaryLayerCurver
       subsetEdges[2] = stackEdges[iLast-1];
       subsetEdges[3] = stackEdges[iLast];
       MEdgeN *lastEdge = &stackEdges[iLast];
+      std::vector<MFaceN> subsetFaces;
+      subsetFaces.push_back(stackFaces[iLast-1]);
+      subsetFaces.push_back(stackFaces[iLast]);
+      // Warning: subsetFaces should contain 2 faces since
+      // repositionInnerVertices() need a column of BL faces + the exterior face
 
       // First get sure that last element of the BL is of good quality
-      std::vector<MFaceN> subsetFaces(1);
-      subsetFaces[0] = stackFaces[iLast-1];
       MElement *lastElementBL = stackElements[iLast-1];
+      MElement *linear = _createLinearElement(lastElementBL);
+      double qualLinear = jacobianBasedQuality::minIGEMeasure(linear);
+      delete linear;
 
       InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, gface);
       repositionInnerVertices(subsetFaces, gface);
       double qual = jacobianBasedQuality::minIGEMeasure(lastElementBL);
       int currentOrder = lastEdge->getPolynomialOrder();
-      while (qual < .5 && currentOrder > 1) {
-        std::cout << "reducing to order " << currentOrder-1 << std::endl;
+      while (qual < .5 && qual < .8*qualLinear && currentOrder > 1) {
         _reduceOrderCurve(lastEdge, --currentOrder, gface);
         InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, gface);
         repositionInnerVertices(subsetFaces, gface);
-        qual = jacobianBasedQuality::minICNMeasure(lastElementBL);
+        qual = jacobianBasedQuality::minIGEMeasure(lastElementBL);
       }
 
       // Now, get sure the exterior element is of good quality
-      subsetFaces[0] = stackFaces[iLast];
       MElement *lastElement = stackElements[iLast];
+      linear = _createLinearElement(lastElement);
+      qualLinear = jacobianBasedQuality::minIGEMeasure(linear);
+      delete linear;
+
       qual = jacobianBasedQuality::minIGEMeasure(lastElement);
       int iter = 0;
-      while (qual < .5 && iter++ < 15) {
+      const int maxIter = 15;
+      while (qual < .5 && qual < .8*qualLinear && ++iter < maxIter) {
         _reduceCurving(lastEdge, .25, gface);
-        InteriorEdgeCurver::curveEdges(subsetEdges, 1, 3, gface);
         repositionInnerVertices(subsetFaces, gface);
-        qual = jacobianBasedQuality::minICNMeasure(lastElementBL);
+        qual = jacobianBasedQuality::minIGEMeasure(lastElement);
       }
-      std::cout << "number of reducing curving " << iter << std::endl;
-      if (qual < .5)
+      if (iter == maxIter)
         _reduceCurving(lastEdge, 1, gface);
     }
   }
@@ -1241,7 +1257,6 @@ namespace BoundaryLayerCurver
 //    drawBezierControlPolygon(baseEdge->getVertices(), const_cast<GEdge*>(gedge));
     EdgeCurver2D::curveEdge(baseEdge, firstEdge, gface, gedge, normal);
     EdgeCurver2D::curveEdge(baseEdge, topEdge, gface, gedge, normal);
-    // TODO compare quality with wuality linear element
     EdgeCurver2D::recoverQualityElements(stackEdges, stackFaces, column.second,
                                          iFirst, iLast, gface);
 
@@ -1397,7 +1412,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
 //        && bndEl2column[i].first->getNum() != 1119) continue;
 //    std::cout << std::endl;
 //    std::cout << "column " << bndEl2column[i].first->getNum() << std::endl;
-//    if (bndEl2column[i].first->getNum() != 1079) continue; // Good
+    if (bndEl2column[i].first->getNum() != 1079) continue; // Good
 //    if (bndEl2column[i].first->getNum() != 1078) continue; // Next to good
 //    if (bndEl2column[i].first->getNum() != 1102) continue; // Bad HO
 //    if (bndEl2column[i].first->getNum() != 1136) continue; // Bad linear
