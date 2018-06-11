@@ -54,7 +54,7 @@
 namespace
 {
   void drawBezierControlPolygon(const fullMatrix<double> &controlPoints,
-                                GEntity *entity)
+                                GEdge *gedge)
   {
     const int nVert = controlPoints.size1();
     std::vector<int> idx(nVert);
@@ -65,19 +65,23 @@ namespace
     MVertex *previous = NULL;
     for (int i = 0; i < nVert; ++i) {
       MVertex *v = new MVertex(controlPoints(idx[i], 0), controlPoints(idx[i], 1),
-                               controlPoints(idx[i], 2), entity);
+                               controlPoints(idx[i], 2), gedge);
       if (previous) {
         MLine *line = new MLine(v, previous);
-        ((GEdge *) entity)->addLine(line);
+        gedge->addLine(line);
       }
-      ((GEdge *) entity)->addMeshVertex(v);
+      gedge->addMeshVertex(v);
       previous = v;
     }
   }
 
   void drawBezierControlPolygon(const std::vector<MVertex *> &vertices,
-                                GEntity *entity)
+                                GEdge *gedge = NULL)
   {
+    if (!gedge) {
+      gedge = *GModel::current()->firstEdge();
+    }
+
     const int nVert = (int)vertices.size();
     const bezierBasis *fs = BasisFactory::getBezierBasis(TYPE_LIN, nVert - 1);
 
@@ -90,8 +94,8 @@ namespace
     fullMatrix<double> controlPoints(nVert, 3);
     fs->lag2Bez(xyz, controlPoints);
 
-    bool subdivide = true;
-    bool subdivide2 = true;
+    bool subdivide = false;
+    bool subdivide2 = false;
     if (subdivide) {
       fullMatrix<double> allSubs(2*nVert, 3);
       fs->subdivideBezCoeff(controlPoints, allSubs);
@@ -102,27 +106,27 @@ namespace
         fs->subdivideBezCoeff(sub, allSubs2);
         fullMatrix<double> sub2(nVert, 3);
         sub2.copy(allSubs2, 0, nVert, 0, 3, 0, 0);
-        drawBezierControlPolygon(sub2, entity);
+        drawBezierControlPolygon(sub2, gedge);
         sub2.copy(allSubs2, nVert, nVert, 0, 3, 0, 0);
-        drawBezierControlPolygon(sub2, entity);
+        drawBezierControlPolygon(sub2, gedge);
       }
       else
-        drawBezierControlPolygon(sub, entity);
+        drawBezierControlPolygon(sub, gedge);
       sub.copy(allSubs, nVert, nVert, 0, 3, 0, 0);
       if (subdivide2) {
         fullMatrix<double> allSubs2(2*nVert, 3);
         fs->subdivideBezCoeff(sub, allSubs2);
         fullMatrix<double> sub2(nVert, 3);
         sub2.copy(allSubs2, 0, nVert, 0, 3, 0, 0);
-        drawBezierControlPolygon(sub2, entity);
+        drawBezierControlPolygon(sub2, gedge);
         sub2.copy(allSubs2, nVert, nVert, 0, 3, 0, 0);
-        drawBezierControlPolygon(sub2, entity);
+        drawBezierControlPolygon(sub2, gedge);
       }
       else
-        drawBezierControlPolygon(sub, entity);
+        drawBezierControlPolygon(sub, gedge);
     }
     else {
-      drawBezierControlPolygon(controlPoints, entity);
+      drawBezierControlPolygon(controlPoints, gedge);
     }
   }
 
@@ -186,6 +190,62 @@ namespace BoundaryLayerCurver
 
     for (; i < face->getNumVertices(); ++i)
       projectVertexIntoGFace(face->getVertex(i), gface);
+  }
+
+  void reduceOrderCurve(MEdgeN *edge, int order, const GFace *gface)
+  {
+    const int orderCurve = edge->getPolynomialOrder();
+    const int orderGauss = order * 2;
+    const int sizeSystem = getNGQLPts(orderGauss);
+    const IntPt *gaussPnts = getGQLPts(orderGauss);
+
+    // Least square projection
+    fullMatrix<double> xyz(sizeSystem + 2, 3);
+    for (int i = 0; i < sizeSystem; ++i) {
+      SPoint3 p = edge->pnt(gaussPnts[i].pt[0]);
+      xyz(i, 0) = p.x();
+      xyz(i, 1) = p.y();
+      xyz(i, 2) = p.z();
+    }
+    for (int i = 0; i < 2; ++i) {
+      xyz(sizeSystem + i, 0) = edge->getVertex(i)->x();
+      xyz(sizeSystem + i, 1) = edge->getVertex(i)->y();
+      xyz(sizeSystem + i, 2) = edge->getVertex(i)->z();
+    }
+
+    LeastSquareData *data = getLeastSquareData(TYPE_LIN, order, orderGauss);
+    fullMatrix<double> newxyzLow(order + 1, 3);
+    data->invA.mult(xyz, newxyzLow);
+
+    std::vector<MVertex *> vertices = edge->getVertices();
+    vertices.resize((unsigned int) order + 1);
+    MEdgeN lowOrderEdge(vertices);
+
+    for (unsigned int i = 2; i < vertices.size(); ++i) {
+      vertices[i]->x() = newxyzLow(i, 0);
+      vertices[i]->y() = newxyzLow(i, 1);
+      vertices[i]->z() = newxyzLow(i, 2);
+    }
+
+    const int tagLine = ElementType::getTag(TYPE_LIN, orderCurve);
+    const nodalBasis *nb = BasisFactory::getNodalBasis(tagLine);
+    const fullMatrix<double> &refpnts = nb->getReferenceNodes();
+
+    fullMatrix<double> newxyz(edge->getNumVertices(), 3);
+    for (unsigned int i = 2; i < edge->getNumVertices(); ++i) {
+      SPoint3 p = lowOrderEdge.pnt(refpnts(i, 0));
+      newxyz(i, 0) = p.x();
+      newxyz(i, 1) = p.y();
+      newxyz(i, 2) = p.z();
+    }
+
+    for (int i = 2; i < edge->getNumVertices(); ++i) {
+      edge->getVertex(i)->x() = newxyz(i, 0);
+      edge->getVertex(i)->y() = newxyz(i, 1);
+      edge->getVertex(i)->z() = newxyz(i, 2);
+    }
+
+    if (gface) projectVerticesIntoGFace(edge, gface, false);
   }
 
   namespace EdgeCurver2D
@@ -1116,8 +1176,14 @@ namespace BoundaryLayerCurver
     }
     MEdgeN *topEdge = &stackEdges[iLast];
 
+//    drawBezierControlPolygon(baseEdge->getVertices(), const_cast<GEdge*>(gedge));
     EdgeCurver2D::curveEdge(baseEdge, firstEdge, gface, gedge, normal);
     EdgeCurver2D::curveEdge(baseEdge, topEdge, gface, gedge, normal);
+
+    // TODO: check qualtiy exterior element and reduceOrder topEdge if necessary
+//    reduceOrderCurve(topEdge, 1, gface);
+
+//    drawBezierControlPolygon(topEdge->getVertices(), const_cast<GEdge*>(gedge));
 
     // Curve interior edges
     InteriorEdgeCurver::curveEdges(stackEdges, iFirst, iLast, gface);
@@ -1128,64 +1194,64 @@ namespace BoundaryLayerCurver
     return true;
   }
 
-//  void computeThicknessQuality(std::vector<MVertex *> &bottomVertices,
-//                               std::vector<MVertex *> &topVertices,
-//                               std::vector<double> &thickness,
-//                               SVector3 &w)
-//  {
-//    int nVertices = (int)bottomVertices.size();
-//    int tagLine = ElementType::getTag(TYPE_LIN, nVertices-1);
-//    const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
-//
-//    for (int i = 0; i < nVertices; ++i) {
-//      const MVertex *v0 = bottomVertices[i];
-//      const MVertex *v1 = topVertices[i];
-//      SVector3 t, n, h;
-//      h = SVector3(v1->x()-v0->x(), v1->y()-v0->y(), v1->z()-v0->z());
-//
-//      double xi = fs->points(i, 0);
-//      double xc = 0, yc = 0, zc = 0;
-//      double dx = 0, dy = 0, dz = 0;
-//      {
-//        double f[100];
-//        double sf[100][3];
-//        fs->f(xi, 0, 0, f);
-//        fs->df(xi, 0, 0, sf);
-//        for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
-//          const MVertex *v = bottomVertices[j];
-//          xc += f[j] * v->x();
-//          yc += f[j] * v->y();
-//          zc += f[j] * v->z();
-//          dx += sf[j][0] * v->x();
-//          dy += sf[j][0] * v->y();
-//          dz += sf[j][0] * v->z();
-//        }
-//      }
-//      t = SVector3(dx, dy, dz).unit();
-//      n = crossprod(w, t);
-//      thickness.push_back(dot(h, n));
-//    }
-//
-//    double t0 = thickness[0];
-//    double t1 = thickness[1];
-//    thickness[0] = 1;
-//    thickness[1] = 1;
-//    for (int j = 2; j < nVertices; ++j) {
-//      double fact = ((double)j-1)/(nVertices-1);
-//      double idealThickness = (1-fact) * t0 + fact * t1;
-//      int sign = gmsh_sign(idealThickness);
-//      if (sign * thickness[j] < 0)
-//        thickness[j] = 0;
-//      else if (sign*thickness[j] < sign*idealThickness)
-//        thickness[j] = thickness[j] / idealThickness;
-//      else
-//        thickness[j] = idealThickness / thickness[j];
-//    }
-//  }
+  void computeThicknessQuality(std::vector<MVertex *> &bottomVertices,
+                               std::vector<MVertex *> &topVertices,
+                               std::vector<double> &thickness,
+                               SVector3 &w)
+  {
+    int nVertices = (int)bottomVertices.size();
+    int tagLine = ElementType::getTag(TYPE_LIN, nVertices-1);
+    const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
 
-//  void computeThicknessPView(MElement *el, SVector3 &w,
-//                             std::map<int, std::vector<double> > &data)
-//  {
+    for (int i = 0; i < nVertices; ++i) {
+      const MVertex *v0 = bottomVertices[i];
+      const MVertex *v1 = topVertices[i];
+      SVector3 t, n, h;
+      h = SVector3(v1->x()-v0->x(), v1->y()-v0->y(), v1->z()-v0->z());
+
+      double xi = fs->points(i, 0);
+      double xc = 0, yc = 0, zc = 0;
+      double dx = 0, dy = 0, dz = 0;
+      {
+        double f[100];
+        double sf[100][3];
+        fs->f(xi, 0, 0, f);
+        fs->df(xi, 0, 0, sf);
+        for (int j = 0; j < fs->getNumShapeFunctions(); j++) {
+          const MVertex *v = bottomVertices[j];
+          xc += f[j] * v->x();
+          yc += f[j] * v->y();
+          zc += f[j] * v->z();
+          dx += sf[j][0] * v->x();
+          dy += sf[j][0] * v->y();
+          dz += sf[j][0] * v->z();
+        }
+      }
+      t = SVector3(dx, dy, dz).unit();
+      n = crossprod(w, t);
+      thickness.push_back(dot(h, n));
+    }
+
+    double t0 = thickness[0];
+    double t1 = thickness[1];
+    thickness[0] = 1;
+    thickness[1] = 1;
+    for (int j = 2; j < nVertices; ++j) {
+      double fact = ((double)j-1)/(nVertices-1);
+      double idealThickness = (1-fact) * t0 + fact * t1;
+      int sign = gmsh_sign(idealThickness);
+      if (sign * thickness[j] < 0)
+        thickness[j] = 0;
+      else if (sign*thickness[j] < sign*idealThickness)
+        thickness[j] = thickness[j] / idealThickness;
+      else
+        thickness[j] = idealThickness / thickness[j];
+    }
+  }
+
+  void computeThicknessPView(MElement *el, SVector3 &w,
+                             std::map<int, std::vector<double> > &data)
+  {
 //    if (el->getType() == TYPE_QUA) {
 //      std::vector<MVertex *> bottomVertices, topVertices;
 //
@@ -1241,7 +1307,7 @@ namespace BoundaryLayerCurver
 //        vData.push_back(it2->second);
 //      }
 //    }
-//  }
+  }
 }
 
 
@@ -1262,15 +1328,15 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
   }
 
   for (int i = 0; i < bndEl2column.size(); ++i) {
-//    if (bndEl2column[i].first != 1079) continue; // Good
-//    if (bndEl2column[i].first != 1078) continue; // Next to good
-//    if (bndEl2column[i].first != 1102) continue; // Bad HO
+//    if (bndEl2column[i].first->getNum() != 1079) continue; // Good
+//    if (bndEl2column[i].first->getNum() != 1078) continue; // Next to good
+//    if (bndEl2column[i].first->getNum() != 1102) continue; // Bad HO
 //    if (bndEl2column[i].first->getNum() != 1136) continue; // Bad linear
-//    if (bndEl2column[i].first != 1149) continue; // shorter
-//    if (bndEl2column[i].first != 1150) continue; // concave
-//    if (bndEl2column[i].first != 1151) continue; // symetric of concave
-//    if (bndEl2column[i].first != 1156) continue; // Strange
-//    if (bndEl2column[i].first != 1157) continue; // next to Strange
+//    if (bndEl2column[i].first->getNum() != 1149) continue; // shorter
+//    if (bndEl2column[i].first->getNum() != 1150) continue; // concave
+//    if (bndEl2column[i].first->getNum() != 1151) continue; // symetric of concave
+//    if (bndEl2column[i].first->getNum() != 1156) continue; // Strange
+//    if (bndEl2column[i].first->getNum() != 1157) continue; // next to Strange
     BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], NULL, gedge, normal);
   }
 }
