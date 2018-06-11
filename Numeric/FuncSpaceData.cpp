@@ -45,32 +45,32 @@ FuncSpaceData::FuncSpaceData(const MElement *el, bool pyr, int nij, int nk,
 }
 
 FuncSpaceData::FuncSpaceData(int tag, const bool *serendip) :
-  _tag(tag), _spaceOrder(ElementType::OrderFromTag(tag)),
-  _serendipity(serendip ? *serendip : ElementType::SerendipityFromTag(_tag) > 1),
+  _tag(tag), _spaceOrder(ElementType::getOrder(tag)),
+  _serendipity(serendip ? *serendip : ElementType::getSerendipity(_tag) > 1),
   _nij(0), _nk(_spaceOrder),
-  _pyramidalSpace(ElementType::ParentTypeFromTag(tag) == TYPE_PYR)
+  _pyramidalSpace(ElementType::getParentType(tag) == TYPE_PYR)
 {}
 
 FuncSpaceData::FuncSpaceData(bool isTag, int tagOrType, int order,
                              const bool *serendip, bool elemIsSerendip) :
-  _tag(isTag ? tagOrType : ElementType::getTag(tagOrType, order, elemIsSerendip)),
+  _tag(isTag ? tagOrType : ElementType::getType(tagOrType, order, elemIsSerendip)),
   _spaceOrder(order),
-  _serendipity(serendip ? *serendip : ElementType::SerendipityFromTag(_tag) > 1),
+  _serendipity(serendip ? *serendip : ElementType::getSerendipity(_tag) > 1),
   _nij(0), _nk(_spaceOrder),
   _pyramidalSpace(isTag ?
-      ElementType::ParentTypeFromTag(tagOrType) == TYPE_PYR :
-      tagOrType == TYPE_PYR)
+                  ElementType::getParentType(tagOrType) == TYPE_PYR :
+                  tagOrType == TYPE_PYR)
 {}
 
 FuncSpaceData::FuncSpaceData(bool isTag, int tagOrType, bool pyr, int nij,
                              int nk, const bool *serendip, bool elemIsSerendip) :
   _tag(isTag ? tagOrType :
-       ElementType::getTag(tagOrType, pyr ? nij+nk : std::max(nij, nk), elemIsSerendip)),
+       ElementType::getType(tagOrType, pyr ? nij+nk : std::max(nij, nk), elemIsSerendip)),
   _spaceOrder(pyr ? nij+nk : std::max(nij, nk)),
-  _serendipity(serendip ? *serendip : ElementType::SerendipityFromTag(_tag) > 1),
+  _serendipity(serendip ? *serendip : ElementType::getSerendipity(_tag) > 1),
   _nij(nij), _nk(nk), _pyramidalSpace(pyr)
 {
-  if (ElementType::ParentTypeFromTag(_tag) != TYPE_PYR)
+  if (ElementType::getParentType(_tag) != TYPE_PYR)
     Msg::Error("Creation of pyramidal space data for a non-pyramid element!");
 }
 
@@ -98,7 +98,7 @@ void FuncSpaceData::getOrderForBezier(int order[3], int exponentZ) const
 FuncSpaceData FuncSpaceData::getForPrimaryElement() const
 {
   int type = elementType();
-  int primTag = ElementType::getTag(type, 1, elementIsOnlySerendipity());
+  int primTag = ElementType::getType(type, 1, elementIsOnlySerendipity());
 
   if (primTag == _tag) return *this;
 

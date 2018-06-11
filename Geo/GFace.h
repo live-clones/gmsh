@@ -33,7 +33,7 @@ class GFace : public GEntity {
   // edge loops might replace what follows (list of all the edges of
   // the face + directions)
   std::list<GEdge *> l_edges;
-  std::list<int> l_dirs;
+  std::vector<int> l_dirs;
   GRegion *r1, *r2;
   mean_plane meanPlane;
   std::list<GEdge *> embedded_edges;
@@ -94,20 +94,22 @@ class GFace : public GEntity {
   void delFreeEdge(GEdge *e);
 
   // edge orientations
-  virtual std::list<int> orientations() const { return l_dirs; }
+  virtual std::vector<int> const& orientations() const { return l_dirs; }
 
   // edges that bound the face
   int delEdge(GEdge* edge);
   virtual std::list<GEdge*> edges() const { return l_edges; }
-  inline void set(const std::list<GEdge*> f) { l_edges = f; }
-  inline void setOrientations(const std::list<int> f) { l_dirs = f; }
+  void set(const std::list<GEdge*> f) { l_edges = f; }
+  void setOrientations(std::vector<int> f) { l_dirs = f; }
   void setEdge(GEdge* f, int orientation)
   {
     l_edges.push_back(f);
     l_dirs.push_back(orientation);
   }
-  virtual std::list<int> edgeOrientations() const { return l_dirs; }
-  inline bool containsEdge (int iEdge) const
+
+  virtual std::vector<int> const& edgeOrientations() const { return l_dirs; }
+
+  bool containsEdge (int iEdge) const
   {
     for (std::list<GEdge*>::const_iterator it = l_edges.begin(); it !=l_edges.end(); ++it)
       if ((*it)->tag() == iEdge) return true;
@@ -129,7 +131,7 @@ class GFace : public GEntity {
   virtual int dim() const { return 2; }
 
   // returns the parent entity for partitioned entities
-  virtual GFace* getParentEntity() { return 0; }
+  virtual GEntity* getParentEntity() { return 0; }
 
   // set visibility flag
   virtual void setVisibility(char val, bool recursive=false);
@@ -142,7 +144,7 @@ class GFace : public GEntity {
                double relax, bool onSurface=true) const;
 
   // get the bounding box
-  virtual SBoundingBox3d bounds() const;
+  virtual SBoundingBox3d bounds(bool fast = false) const;
 
   // get the oriented bounding box
   virtual SOrientedBoundingBox getOBB();
@@ -175,7 +177,7 @@ class GFace : public GEntity {
   virtual bool containsParam(const SPoint2 &pt);
 
   // return the point on the face closest to the given point
-  virtual GPoint closestPoint(const SPoint3 & queryPoint,
+  virtual GPoint closestPoint(const SPoint3 &queryPoint,
                               const double initialGuess[2]) const;
 
   // return the normal to the face at the given parameter location
@@ -185,9 +187,8 @@ class GFace : public GEntity {
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const = 0;
 
   // compute the second derivates of the face at the parameter location
-  // the derivates have to be allocated before calling this function
   virtual void secondDer(const SPoint2 &param,
-                         SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const = 0;
+                         SVector3 &dudu, SVector3 &dvdv, SVector3 &dudv) const = 0;
 
   // return the curvature computed as the divergence of the normal
   inline double curvature(const SPoint2 &param) const { return curvatureMax(param); }
@@ -198,9 +199,8 @@ class GFace : public GEntity {
 
   // compute the min and max curvatures and the corresponding directions
   // return the max curvature
-  // outputs have to be allocated before calling this function
-  virtual double curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
-                            double *curvMax, double *curvMin) const;
+  virtual double curvatures(const SPoint2 &param, SVector3 &dirMax, SVector3 &dirMin,
+                            double &curvMax, double &curvMin) const;
 
   // return a type-specific additional information string
   virtual std::string getAdditionalInfoString(bool multline = false);
@@ -235,6 +235,7 @@ class GFace : public GEntity {
 
   // get total/by-type number of elements in the mesh
   unsigned int getNumMeshElements() const;
+  unsigned int getNumMeshElementsByType(const int familyType) const;
   unsigned int getNumMeshParentElements();
   void getNumMeshElements(unsigned *const c) const;
 
@@ -243,6 +244,8 @@ class GFace : public GEntity {
 
   // get the element at the given index
   MElement *getMeshElement(unsigned int index) const;
+  // get the element at the given index for a given familyType
+  MElement *getMeshElementByType(const int familyType, const unsigned int index) const;
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
@@ -351,6 +354,8 @@ class GFace : public GEntity {
   std::vector<SVector3> storage2; //sizes and directions storage
   std::vector<SVector3> storage3; //sizes and directions storage
   std::vector<double> storage4; //sizes and directions storage
+
+  virtual bool reorder(const int elementType, const std::vector<int> &ordering);
 };
 
 #endif

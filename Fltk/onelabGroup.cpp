@@ -25,7 +25,6 @@ typedef unsigned long intptr_t;
 #include <FL/fl_ask.H>
 #include "inputRange.h"
 #include "outputRange.h"
-#include "inputRegion.h"
 #include "solverButton.h"
 #include "viewButton.h"
 #include "paletteWindow.h"

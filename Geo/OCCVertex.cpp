@@ -49,8 +49,8 @@ void OCCVertex::setPosition(GPoint &p)
 double max_surf_curvature(const GVertex *gv, double x, double y, double z,
                           const GEdge *_myGEdge)
 {
-  std::list<GFace *> faces = _myGEdge->faces();
-  std::list<GFace *>::iterator it = faces.begin();
+  std::vector<GFace *> faces = _myGEdge->faces();
+  std::vector<GFace *>::iterator it = faces.begin();
   double curv = 1.e-22;
   while(it != faces.end()){
     SPoint2 par = gv->reparamOnFace((*it), 1);

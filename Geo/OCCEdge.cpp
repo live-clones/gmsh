@@ -58,7 +58,7 @@ OCCEdge::~OCCEdge()
     model()->getOCCInternals()->unbind(c, tag()); // potentially slow
 }
 
-SBoundingBox3d OCCEdge::bounds() const
+SBoundingBox3d OCCEdge::bounds(bool fast) const
 {
   Bnd_Box b;
   try{

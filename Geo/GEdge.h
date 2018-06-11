@@ -31,10 +31,7 @@ class GEdge : public GEntity {
   closestPointFinder *_cp;
  protected:
   GVertex *v0, *v1;
-  // FIXME: normals need to be mutable at the moment, because thay can
-  // be created in const member functions
-  mutable std::map<MVertex*, SVector3, std::less<MVertex*> > _normals;
-  std::list<GFace *> l_faces;
+  std::vector<GFace *> l_faces;
  public:
   GEdge(GModel *model, int tag, GVertex *_v0, GVertex *_v1);
   virtual ~GEdge();
@@ -72,7 +69,7 @@ class GEdge : public GEntity {
   virtual int dim() const { return 1; }
 
   // returns the parent entity for partitioned entities
-  virtual GEdge* getParentEntity() { return 0; }
+  virtual GEntity* getParentEntity() { return 0; }
 
   // set the visibility flag
   virtual void setVisibility(char val, bool recursive = false);
@@ -84,7 +81,7 @@ class GEdge : public GEntity {
   virtual bool isSeam(const GFace *face) const { return false; }
 
   // get the bounding box
-  virtual SBoundingBox3d bounds() const;
+  virtual SBoundingBox3d bounds(bool fast = false) const;
 
   // get the oriented bounding box
   virtual SOrientedBoundingBox getOBB();
@@ -93,7 +90,7 @@ class GEdge : public GEntity {
   virtual std::list<GRegion*> regions() const;
 
   // faces that this entity bounds
-  virtual std::list<GFace*> faces() const { return l_faces; }
+  virtual std::vector<GFace*> faces() const { return l_faces; }
 
   // get the point for the given parameter location
   virtual GPoint point(double p) const = 0;
@@ -161,6 +158,7 @@ class GEdge : public GEntity {
 
   // get total/by-type number of elements in the mesh
   unsigned int getNumMeshElements() const;
+  unsigned int getNumMeshElementsByType(const int familyType) const;
   unsigned int getNumMeshParentElements();
   void getNumMeshElements(unsigned *const c) const;
 
@@ -169,14 +167,14 @@ class GEdge : public GEntity {
 
   // get the element at the given index
   MElement *getMeshElement(unsigned int index) const;
+  // get the element at the given index for a given familyType
+  MElement *getMeshElementByType(const int familyType, const unsigned int index) const;
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
 
   // true if entity is periodic in the "dim" direction.
   virtual bool periodic(int dim) const { return v0 == v1; }
-
-  std::map<MVertex*, SVector3, std::less<MVertex*> > &getNormals() { return _normals; }
 
   // get bounds of parametric coordinate
   virtual Range<double> parBounds(int i) const = 0;
@@ -227,6 +225,8 @@ class GEdge : public GEntity {
   virtual void discretize(double tol, std::vector<SPoint3> &dpts, std::vector<double> &ts);
   SPoint3 closestPoint (SPoint3 &p, double tolerance);
   virtual void mesh(bool verbose) ;
+
+  virtual bool reorder(const int elementType, const std::vector<int> &ordering);
 };
 
 #endif

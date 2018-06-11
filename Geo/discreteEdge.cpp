@@ -138,13 +138,6 @@ double discreteEdge::curvature(double par) const
   return 0.;
 }
 
-double discreteEdge::curvatures(const double par, SVector3 *dirMax, SVector3 *dirMin,
-                                double *curvMax, double *curvMin) const
-{
-  Msg::Error("Cannot evaluate curvatures and curvature directions on discrete edge");
-  return false;
-}
-
 Range<double> discreteEdge::parBounds(int i) const
 {
   return Range<double>(0, (double)discrete_lines.size());

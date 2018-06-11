@@ -1079,6 +1079,35 @@ static void addVectorElement(PView *p, int ient, int iele, int numNodes,
   delete [] val2;
 }
 
+static void addTriangle (PView *p, PViewOptions *opt, double *x0, double *x1, double *x2,SPoint3 &xx, double val){
+
+  unsigned int color = opt->getColor
+    (val, opt->tmpMin, opt->tmpMax, false,
+     (opt->intervalsType == PViewOptions::Discrete) ?  opt->nbIso : -1);
+  
+  SVector3 a (x1[0]-x0[0],x1[1]-x0[1],x1[2]-x0[2]);
+  SVector3 b (x2[0]-x0[0],x2[1]-x0[1],x2[2]-x0[2]);
+  SVector3 c (xx.x()-x0[0],xx.y()-x0[1],xx.z()-x0[2]);
+  SVector3 N = crossprod (a,b);
+  unsigned int col[3] = {color, color, color};	
+  N.normalize();
+  if (dot(c,N) > 0){
+    double XX[3] = {x0[0],x1[0],x2[0]};
+    double YY[3] = {x0[1],x1[1],x2[1]};
+    double ZZ[3] = {x0[2],x1[2],x2[2]};
+    SVector3 NN[3] = {N,N,N};    
+    p->va_triangles->add(XX,YY,ZZ, NN, col, 0, false);
+  }
+  else {
+    double XX[3] = {x1[0],x0[0],x2[0]};
+    double YY[3] = {x1[1],x0[1],x2[1]};
+    double ZZ[3] = {x1[2],x0[2],x2[2]};
+    SVector3 NN[3] = {-N,-N,-N};    
+    p->va_triangles->add(XX,YY,ZZ, NN, col, 0, false);
+  }
+}
+
+
 static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int type,
                              double **xyz, double **val,
                              bool pre)
@@ -1093,6 +1122,56 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes, int typ
     for(int i = 0; i < numNodes; i++)
       val[i][0] = ComputeVonMises(val[i]);
     addScalarElement(p, type, xyz, val, pre, numNodes);
+  }
+
+  else if (opt->tensorType == PViewOptions::Frame) {
+    if(opt->glyphLocation == PViewOptions::Vertex){
+      for(int i = 0; i < numNodes; i++){
+	double d0[3],d1[3],d2[3];
+	double nrm = sqrt (val [i][0]*val [i][0]+
+			   val [i][1]*val [i][1]+
+			   val [i][2]*val [i][2]);
+
+	for (int j = 0; j < 3; j++) {
+	  d0[j] = opt->displacementFactor* val [i][j+0*3]/nrm;
+	  d1[j] = opt->displacementFactor* val [i][j+1*3]/nrm;
+	  d2[j] = opt->displacementFactor* val [i][j+2*3]/nrm;
+	}
+	double x = xyz[i][0];
+	double y = xyz[i][1];
+	double z = xyz[i][2];
+
+
+	SPoint3 xx (x,y,z);
+	
+	//	printf("%g %g %g %g %g %g %g %g %g\n",n0.x(),n0.y(),n0.z(),n1.x(),n1.y(),n1.z(),n2.x(),n2.y(),n2.z());
+	
+	double x0[3] = {x + d0[0] + d1[0] + d2[0] , y + d0[1] + d1[1] + d2[1] , z + d0[2] + d1[2] + d2[2] };
+	double x1[3] = {x - d0[0] + d1[0] + d2[0] , y - d0[1] + d1[1] + d2[1] , z - d0[2] + d1[2] + d2[2] };
+	double x2[3] = {x - d0[0] - d1[0] + d2[0] , y - d0[1] - d1[1] + d2[1] , z - d0[2] - d1[2] + d2[2] };
+	double x3[3] = {x + d0[0] - d1[0] + d2[0] , y + d0[1] - d1[1] + d2[1] , z + d0[2] - d1[2] + d2[2] };
+	
+	double x4[3] = {x + d0[0] + d1[0] - d2[0] , y + d0[1] + d1[1] - d2[1] , z + d0[2] + d1[2] - d2[2] };
+	double x5[3] = {x - d0[0] + d1[0] - d2[0] , y - d0[1] + d1[1] - d2[1] , z - d0[2] + d1[2] - d2[2] };
+	double x6[3] = {x - d0[0] - d1[0] - d2[0] , y - d0[1] - d1[1] - d2[1] , z - d0[2] - d1[2] - d2[2] };
+	double x7[3] = {x + d0[0] - d1[0] - d2[0] , y + d0[1] - d1[1] - d2[1] , z + d0[2] - d1[2] - d2[2] };
+
+	if ((nrm > opt->tmpMin && opt->tmpMax) || opt->saturateValues){   
+	  addTriangle (p, opt,x0,x1,x2,xx,nrm);
+	  addTriangle (p, opt,x2,x3,x0,xx,nrm);
+	  addTriangle (p, opt,x4,x7,x6,xx,nrm);
+	  addTriangle (p, opt,x6,x5,x4,xx,nrm);
+	  addTriangle (p, opt,x0,x3,x7,xx,nrm);
+	  addTriangle (p, opt,x7,x4,x0,xx,nrm);       
+	  addTriangle (p, opt,x1,x5,x6,xx,nrm);
+	  addTriangle (p, opt,x6,x2,x1,xx,nrm);
+	  addTriangle (p, opt,x0,x4,x5,xx,nrm);
+	  addTriangle (p, opt,x5,x1,x0,xx,nrm);
+	  addTriangle (p, opt,x3,x2,x6,xx,nrm);
+	  addTriangle (p, opt,x6,x7,x3,xx,nrm);
+	}
+      }
+    }
   }
   else if (opt->tensorType == PViewOptions::Ellipse ||
            opt->tensorType == PViewOptions::Ellipsoid) {
@@ -1446,7 +1525,7 @@ class initPView {
 
     Msg::Debug("%d vertices in vertex arrays (%g Mb)", p->va_points->getNumVertices() +
                p->va_lines->getNumVertices() + p->va_triangles->getNumVertices() +
-               p->va_vectors->getNumVertices() + p->va_ellipses->getNumVertices(),
+               p->va_vectors->getNumVertices() + p->va_ellipses->getNumVertices(), 
                p->va_points->getMemoryInMb() +
                p->va_lines->getMemoryInMb() + p->va_triangles->getMemoryInMb() +
                p->va_vectors->getMemoryInMb() + p->va_ellipses->getMemoryInMb());

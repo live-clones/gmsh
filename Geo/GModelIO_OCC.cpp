@@ -166,11 +166,17 @@ void OCC_Internals::_recomputeMaxTag(int dim)
 void OCC_Internals::bind(TopoDS_Vertex vertex, int tag, bool recursive)
 {
   if(vertex.IsNull()) return;
-  if(_vertexTag.IsBound(vertex) && _vertexTag.Find(vertex) != tag){
-    Msg::Info("Cannot bind existing OpenCASCADE point %d to second tag %d",
-               _vertexTag.Find(vertex), tag);
+  if(_vertexTag.IsBound(vertex)){
+    if(_vertexTag.Find(vertex) != tag){
+      Msg::Info("Cannot bind existing OpenCASCADE point %d to second tag %d",
+                _vertexTag.Find(vertex), tag);
+    }
   }
   else{
+    if(_tagVertex.IsBound(tag)){
+      // this leaves the old vertex bound in _vertexTag, but we cannot remove it
+      Msg::Info("Rebinding OpenCASCADE point %d", tag);
+    }
     _vertexTag.Bind(vertex, tag);
     _tagVertex.Bind(tag, vertex);
     setMaxTag(0, tag);
@@ -182,11 +188,17 @@ void OCC_Internals::bind(TopoDS_Vertex vertex, int tag, bool recursive)
 void OCC_Internals::bind(TopoDS_Edge edge, int tag, bool recursive)
 {
   if(edge.IsNull()) return;
-  if(_edgeTag.IsBound(edge) && _edgeTag.Find(edge) != tag){
-    Msg::Info("Cannot bind existing OpenCASCADE curve %d to second tag %d",
-              _edgeTag.Find(edge), tag);
+  if(_edgeTag.IsBound(edge)){
+    if(_edgeTag.Find(edge) != tag){
+      Msg::Info("Cannot bind existing OpenCASCADE curve %d to second tag %d",
+                _edgeTag.Find(edge), tag);
+    }
   }
   else{
+    if(_tagEdge.IsBound(tag)){
+      // this leaves the old edge bound in _edgeTag, but we cannot remove it
+      Msg::Info("Rebinding OpenCASCADE curve %d", tag);
+    }
     _edgeTag.Bind(edge, tag);
     _tagEdge.Bind(tag, edge);
     setMaxTag(1, tag);
@@ -208,11 +220,17 @@ void OCC_Internals::bind(TopoDS_Edge edge, int tag, bool recursive)
 void OCC_Internals::bind(TopoDS_Wire wire, int tag, bool recursive)
 {
   if(wire.IsNull()) return;
-  if(_wireTag.IsBound(wire) && _wireTag.Find(wire) != tag){
-    Msg::Info("Cannot bind existing OpenCASCADE wire %d to second tag %d",
-              _wireTag.Find(wire), tag);
+  if(_wireTag.IsBound(wire)){
+    if(_wireTag.Find(wire) != tag){
+      Msg::Info("Cannot bind existing OpenCASCADE wire %d to second tag %d",
+                _wireTag.Find(wire), tag);
+    }
   }
   else{
+    if(_tagWire.IsBound(tag)){
+      // this leaves the old wire bound in _wireTag, but we cannot remove it
+      Msg::Info("Rebinding OpenCASCADE wire %d", tag);
+    }
     _wireTag.Bind(wire, tag);
     _tagWire.Bind(tag, wire);
     setMaxTag(-1, tag);
@@ -233,11 +251,17 @@ void OCC_Internals::bind(TopoDS_Wire wire, int tag, bool recursive)
 void OCC_Internals::bind(TopoDS_Face face, int tag, bool recursive)
 {
   if(face.IsNull()) return;
-  if(_faceTag.IsBound(face) && _faceTag.Find(face) != tag){
-    Msg::Info("Cannot bind existing OpenCASCADE surface %d to second tag %d",
-              _faceTag.Find(face), tag);
+  if(_faceTag.IsBound(face)){
+    if(_faceTag.Find(face) != tag){
+      Msg::Info("Cannot bind existing OpenCASCADE surface %d to second tag %d",
+                _faceTag.Find(face), tag);
+    }
   }
   else{
+    if(_tagFace.IsBound(tag)){
+      // this leaves the old face bound in _faceTag, but we cannot remove it
+      Msg::Info("Rebinding OpenCASCADE surface %d", tag);
+    }
     _faceTag.Bind(face, tag);
     _tagFace.Bind(tag, face);
     setMaxTag(2, tag);
@@ -266,11 +290,17 @@ void OCC_Internals::bind(TopoDS_Face face, int tag, bool recursive)
 void OCC_Internals::bind(TopoDS_Shell shell, int tag, bool recursive)
 {
   if(shell.IsNull()) return;
-  if(_shellTag.IsBound(shell) && _shellTag.Find(shell) != tag){
-    Msg::Info("Cannot bind existing OpenCASCADE shell %d to second tag %d",
-              _shellTag.Find(shell), tag);
+  if(_shellTag.IsBound(shell)){
+    if(_shellTag.Find(shell) != tag){
+      Msg::Info("Cannot bind existing OpenCASCADE shell %d to second tag %d",
+                _shellTag.Find(shell), tag);
+    }
   }
   else{
+    if(_tagShell.IsBound(tag)){
+      // this leaves the old shell bound in _faceTag, but we cannot remove it
+      Msg::Info("Rebinding OpenCASCADE shell %d", tag);
+    }
     _shellTag.Bind(shell, tag);
     _tagShell.Bind(tag, shell);
     setMaxTag(-2, tag);
@@ -291,11 +321,17 @@ void OCC_Internals::bind(TopoDS_Shell shell, int tag, bool recursive)
 void OCC_Internals::bind(TopoDS_Solid solid, int tag, bool recursive)
 {
   if(solid.IsNull()) return;
-  if(_solidTag.IsBound(solid) && _solidTag.Find(solid) != tag){
-    Msg::Info("Cannot bind existing OpenCASCADE volume %d to second tag %d",
-              _solidTag.Find(solid), tag);
+  if(_solidTag.IsBound(solid)){
+    if(_solidTag.Find(solid) != tag){
+      Msg::Info("Cannot bind existing OpenCASCADE volume %d to second tag %d",
+                _solidTag.Find(solid), tag);
+    }
   }
   else{
+    if(_tagSolid.IsBound(tag)){
+      // this leaves the old solid bound in _faceTag, but we cannot remove it
+      Msg::Info("Rebinding OpenCASCADE volume %d", tag);
+    }
     _solidTag.Bind(solid, tag);
     _tagSolid.Bind(tag, solid);
     setMaxTag(3, tag);
@@ -2981,6 +3017,7 @@ bool OCC_Internals::importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
   return true;
 }
 
+
 bool OCC_Internals::exportShapes(const std::string &fileName,
                                  const std::string &format)
 {
@@ -3056,6 +3093,11 @@ bool OCC_Internals::getVertex(int tag, double &x, double &y, double &z)
   return false;
 }
 
+bool const sortByInvDim(std::pair<int, int> const &lhs, std::pair<int, int> const &rhs)
+{
+  return lhs.first > rhs.first;
+}
+
 void OCC_Internals::synchronize(GModel *model)
 {
   Msg::Debug("Syncing OCC_Internals with GModel");
@@ -3065,6 +3107,9 @@ void OCC_Internals::synchronize(GModel *model)
   std::vector<std::pair<int, int> > toRemove;
   toRemove.insert(toRemove.end(), _toRemove.begin(), _toRemove.end());
   Msg::Debug("Sync is removing %d model entities", toRemove.size());
+  // make sure to delete highest dimensional entities first (model->remove()
+  // will not remove entities that are the boundary of others!)
+  std::sort(toRemove.begin(), toRemove.end(), sortByInvDim);
   model->remove(toRemove);
   _toRemove.clear();
 
@@ -3709,13 +3754,16 @@ static bool makeSTL(TopoDS_Face s,
 {
   if(CTX::instance()->geom.occDisableSTL) return false;
 
+  //  printf("coucou\n");
+
   Bnd_Box aBox;
   BRepBndLib::Add(s, aBox);
 
 #if (OCC_VERSION_MAJOR >= 7)
+  double fact = 1;
   BRepMesh_FastDiscret::Parameters parameters;
-  parameters.Deflection = 0.1;
-  parameters.Angle = 0.35;
+  parameters.Deflection = fact*0.1;
+  parameters.Angle = fact*0.35;
   // parameters.InternalVerticesMode = Standard_False;
   parameters.Relative = Standard_False;
   BRepMesh_FastDiscret aMesher(aBox, parameters);

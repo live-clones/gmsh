@@ -26,7 +26,7 @@ class BoundaryLayerColumns;
 // A model region.
 class GRegion : public GEntity {
  protected:
-  std::list<GFace*> l_faces;
+  std::vector<GFace*> l_faces;
   std::list<GVertex *> embedded_vertices;
   std::list<GFace *> embedded_faces;
   std::list<GEdge *> embedded_edges;
@@ -44,7 +44,7 @@ class GRegion : public GEntity {
   virtual int dim() const { return 3; }
 
   // returns the parent entity for partitioned entities
-  virtual GRegion* getParentEntity() { return 0; }
+  virtual GEntity* getParentEntity() { return 0; }
 
   // set the visibility flag
   virtual void setVisibility(char val, bool recursive=false);
@@ -59,11 +59,13 @@ class GRegion : public GEntity {
 
   // get/set faces that bound the region
   int delFace(GFace* face);
-  virtual std::list<GFace*> faces() const{ return l_faces; }
+
+  virtual std::vector<GFace*> faces() const { return l_faces; }
+
   virtual std::list<int> faceOrientations() const{ return l_dirs; }
-  inline void set(const std::list<GFace*> f) { l_faces = f; }
-  inline void setOrientations(const std::list<int> f) { l_dirs= f; }
-  void setFace(GFace* f, int orientation)
+  void set(std::vector<GFace*> const f) { l_faces = f; }
+  void setOrientations(const std::list<int> f) { l_dirs= f; }
+  void setFace(GFace* const f, int const orientation)
   {
     l_faces.push_back(f);
     l_dirs.push_back(orientation);
@@ -84,7 +86,7 @@ class GRegion : public GEntity {
   virtual std::list<GVertex*> vertices() const;
 
   // get the bounding box
-  virtual SBoundingBox3d bounds() const;
+  virtual SBoundingBox3d bounds(bool fast = false) const;
 
   // get the oriented bounding box
   virtual SOrientedBoundingBox getOBB();
@@ -107,6 +109,7 @@ class GRegion : public GEntity {
 
   // get total/by-type number of elements in the mesh
   unsigned int getNumMeshElements() const;
+  unsigned int getNumMeshElementsByType(const int familyType) const;
   unsigned int getNumMeshParentElements();
   void getNumMeshElements(unsigned *const c) const;
 
@@ -115,6 +118,8 @@ class GRegion : public GEntity {
 
   // get the element at the given index
   MElement *getMeshElement(unsigned int index) const;
+  // get the element at the given index for a given familyType
+  MElement *getMeshElementByType(const int familyType, const unsigned int index) const;
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
@@ -154,6 +159,8 @@ class GRegion : public GEntity {
 
   // get the boundary layer columns
   BoundaryLayerColumns *getColumns () { return &_columns; }
+
+  virtual bool reorder(const int elementType, const std::vector<int> &ordering);
 
   // set the reverseMesh constraint in the bounding surfaces so that the
   // boundary mesh has outward pointing normals, based on the STL triangulation

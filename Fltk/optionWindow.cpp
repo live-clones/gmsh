@@ -533,12 +533,11 @@ static void mesh_options_ok_cb(Fl_Widget *w, void *data)
                   (o->mesh.choice[2]->value() == 5) ? ALGO_2D_PACK_PRLGRMS :
                   ALGO_2D_AUTO);
   opt_mesh_algo3d(0, GMSH_SET,
-                  (o->mesh.choice[3]->value() == 1) ? ALGO_3D_DELAUNAY_NEW :
-                  (o->mesh.choice[3]->value() == 2) ? ALGO_3D_FRONTAL :
-                  (o->mesh.choice[3]->value() == 3) ? ALGO_3D_FRONTAL_DEL :
-                  (o->mesh.choice[3]->value() == 4) ? ALGO_3D_FRONTAL_HEX :
-                  (o->mesh.choice[3]->value() == 5) ? ALGO_3D_MMG3D :
-                  (o->mesh.choice[3]->value() == 6) ? ALGO_3D_RTREE :
+                  (o->mesh.choice[3]->value() == 1) ? ALGO_3D_FRONTAL :
+                  (o->mesh.choice[3]->value() == 2) ? ALGO_3D_FRONTAL_DEL :
+                  (o->mesh.choice[3]->value() == 3) ? ALGO_3D_FRONTAL_HEX :
+                  (o->mesh.choice[3]->value() == 4) ? ALGO_3D_MMG3D :
+                  (o->mesh.choice[3]->value() == 5) ? ALGO_3D_RTREE :
                   ALGO_3D_DELAUNAY);
   opt_mesh_algo_recombine(0, GMSH_SET, o->mesh.choice[1]->value());
   opt_mesh_algo_subdivide(0, GMSH_SET, o->mesh.choice[5]->value());
@@ -2234,7 +2233,6 @@ optionWindow::optionWindow(int deltaFontSize)
       };
       static Fl_Menu_Item menu_3d_algo[] = {
         {"Delaunay", 0, 0, 0},
-        {"New Delaunay", 0, 0, 0},
         {"Frontal", 0, 0, 0},
         {"Frontal Delaunay (experimental)", 0, 0, 0},
         {"Frontal Hex (experimental)", 0, 0, 0},
@@ -3429,6 +3427,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Eigen vectors", 0, 0, 0},
         {"Ellipse (2d)", 0, 0, 0},
         {"Ellipsoid", 0, 0, 0},
+        {"Frame", 0, 0, 0},
         {0}
       };
       view.choice[4] = new Fl_Choice

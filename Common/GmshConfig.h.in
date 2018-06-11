@@ -14,7 +14,6 @@
 #cmakedefine HAVE_BLAS
 #cmakedefine HAVE_BLOSSOM
 #cmakedefine HAVE_CAIRO
-#cmakedefine HAVE_COMPRESSED_IO
 #cmakedefine HAVE_DLOPEN
 #cmakedefine HAVE_DINTEGRATION
 #cmakedefine HAVE_FLTK

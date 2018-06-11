@@ -36,6 +36,13 @@ class arg:
 
 # input types
 
+def isize(name, value=None, python_value=None, julia_value=None):
+    a = arg(name, value, python_value, julia_value,
+          "const size_t", "const size_t", False)
+    a.python_arg = "c_size_t(" + name + ")"
+    a.julia_ctype = "Csize_t"
+    return a
+
 def ibool(name, value=None, python_value=None, julia_value=None):
     a = arg(name, value, python_value, julia_value,
             "const bool", "const int", False)
@@ -67,6 +74,8 @@ def istring(name, value=None, python_value=None, julia_value=None):
     return a
 
 def ivectorint(name, value=None, python_value=None, julia_value=None):
+    if julia_value == "[]":
+        julia_value = "Cint[]"
     a = arg(name, value, python_value, julia_value,
             "const std::vector<int> &", "const int *", False)
     api_name = "api_" + name + "_"
@@ -86,6 +95,8 @@ def ivectorint(name, value=None, python_value=None, julia_value=None):
     return a
 
 def ivectordouble(name, value=None, python_value=None, julia_value=None):
+    if julia_value == "[]":
+        julia_value = "Cdouble[]"
     a = arg(name, value, python_value, julia_value,
             "const std::vector<double> &", "double **", False)
     api_name = "api_" + name + "_"
@@ -105,6 +116,8 @@ def ivectordouble(name, value=None, python_value=None, julia_value=None):
     return a
 
 def ivectorpair(name, value=None, python_value=None, julia_value=None):
+    if julia_value == "[]":
+        julia_value = "Tuple{Cint,Cint}[]"
     a = arg(name, value, python_value, julia_value,
             "const gmsh::vectorpair &", "const int *", False)
     api_name = "api_" + name + "_"
@@ -124,11 +137,13 @@ def ivectorpair(name, value=None, python_value=None, julia_value=None):
     a.python_pre = api_name + ", " + api_name_n + " = _ivectorpair(" + name + ")"
     a.python_arg = api_name + ", " + api_name_n
     a.julia_ctype = "Ptr{Cint}, Csize_t"
-    a.julia_arg = ("convert(Vector{Cint}, collect(Iterators.flatten(" + name + "))), " +
+    a.julia_arg = ("convert(Vector{Cint}, collect(Cint, Iterators.flatten(" + name + "))), " +
                    "2 * length(" + name + ")")
     return a
 
 def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
+    if julia_value == "[]":
+        julia_value = "Vector{Cint}[]"
     a = arg(name, value, python_value, julia_value,
             "const std::vector<std::vector<int> > &", "const int **", False)
     api_name = "api_" + name + "_"
@@ -160,6 +175,8 @@ def ivectorvectorint(name, value=None, python_value=None, julia_value=None):
     return a
 
 def ivectorvectordouble(name, value=None, python_value=None, julia_value=None):
+    if julia_value == "[]":
+        julia_value = "Vector{Cdouble}[]"
     a = arg(name, value, python_value, julia_value,
             "const std::vector<std::vector<double> > &", "const double**", False)
     api_name = "api_" + name + "_"
@@ -467,11 +484,12 @@ def ovectorvectorpair(name, value=None, python_value=None, julia_value=None):
                     api_name_nn + "[], true)\n    " +
                     "tmp_" + api_name_n + " = unsafe_wrap(Array, " + api_name_n + "[], " +
                     api_name_nn + "[], true)\n    " +
-                    name + " = []\n    " +
+                    name + " = Vector{Tuple{Cint,Cint}}[]\n    " +
+                    "resize!(" + name + ", " + api_name_nn + "[])\n    " +
                     "for i in 1:" + api_name_nn + "[]\n    " +
                     "    tmp = unsafe_wrap(Array, tmp_" + api_name + "[i], tmp_" +
                     api_name_n + "[i], true)\n    " +
-                    "    push!(" + name + ", [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)])\n    " +
+                    "    " + name + "[i] = [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)]\n    " +
                     "end")
     return a
 
@@ -1083,12 +1101,12 @@ class API:
             iargs = list(a for a in args if not a.out)
             oargs = list(a for a in args if a.out)
             f.write('\n"""\n    ')
-            f.write(jl_mpath + name + "(" + ", ".join(parg(a) for a in args) + ")\n\n")
+            f.write(jl_mpath + name + "(" + ", ".join(parg(a) for a in iargs) + ")\n\n")
             f.write("\n".join(textwrap.wrap(doc, 80)).replace("'", "`") + "\n")
             if rtype or oargs:
                 f.write("\nReturn " + ", ".join(
                     (["an " + rtype.rtexi_type] if rtype else[])
-                   + [("'" + a.name + "'") for a in oargs])
+                   + [("`" + a.name + "`") for a in oargs])
                + ".\n")
             f.write('"""\n')
             f.write("function " + name + "("
@@ -1100,7 +1118,7 @@ class API:
             f.write("api__result__ = " if rtype is oint else "")
             c_name = c_mpath + name[0].upper() + name[1:]
             f.write("ccall((:" + c_name + ", " +
-                    ("" if c_mpath == "gmsh" else "gmsh.") + "clib), " +
+                    ("" if c_mpath == "gmsh" else "gmsh.") + "lib), " +
                     ("Void" if rtype is None else rtype.rjulia_type) + ",\n" +
                     " " * 10 + "(" + ", ".join(
                         (tuple(a.julia_ctype for a in args) + ("Ptr{Cint}",))) +
@@ -1127,8 +1145,9 @@ class API:
             f.write("module " + m.name + "\n\n")
             if level == 1:
                 f.write('const GMSH_API_VERSION = "' + self.api_version + '"\n')
-                f.write('const clib = is_windows() ? "gmsh-' + self.api_version +
-                        '" : "libgmsh"\n')
+                f.write('const libdir = dirname(@__FILE__)\n')
+                f.write('const lib = joinpath(libdir, is_windows() ? "gmsh-' + self.api_version +
+                        '" : "libgmsh")\n')
             else:
                 f.write("import " + ("." * level) + "gmsh\n")
             if c_mpath:

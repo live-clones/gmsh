@@ -50,16 +50,16 @@ class GVertex : public GEntity
   virtual std::list<GRegion*> regions() const;
 
   // get the edges that this vertex bounds
-  virtual std::list<GEdge*> edges() const{ return l_edges; }
+  virtual std::list<GEdge*> edges() const { return l_edges; }
 
   // faces that bound this entity or that this entity bounds.
-  virtual std::list<GFace*> faces() const;
+  virtual std::vector<GFace*> faces() const;
 
   // get the dimension of the vertex (0)
   virtual int dim() const { return 0; }
 
   // returns the parent entity for partitioned entities
-  virtual GVertex* getParentEntity() { return 0; }
+  virtual GEntity* getParentEntity() { return 0; }
 
   // get the geometric type of the vertex
   virtual GeomType geomType() const { return Point; }
@@ -69,7 +69,10 @@ class GVertex : public GEntity
   virtual void setPrescribedMeshSizeAtVertex(double l) { meshSize = l; }
 
   // get the bounding box
-  virtual SBoundingBox3d bounds() const { return SBoundingBox3d(SPoint3(x(), y(), z())); }
+  virtual SBoundingBox3d bounds(bool fast = false) const
+  {
+    return SBoundingBox3d(SPoint3(x(), y(), z()));
+  }
 
   // reparmaterize the point onto the given face
   virtual SPoint2 reparamOnFace(const GFace *gf, int) const;
@@ -82,10 +85,13 @@ class GVertex : public GEntity
 
   // get number of elements in the mesh
   unsigned int getNumMeshElements() const;
+  unsigned int getNumMeshElementsByType(const int familyType) const;
   void getNumMeshElements(unsigned *const c) const;
 
   // get the element at the given index
   MElement *getMeshElement(unsigned int index) const;
+  // get the element at the given index for a given familyType
+  MElement *getMeshElementByType(const int familyType, const unsigned int index) const;
 
   // return true if this vertex is on a seam of the given face
   bool isOnSeam(const GFace *gf) const;
@@ -98,6 +104,8 @@ class GVertex : public GEntity
   void addPoint(MPoint *p){ points.push_back(p); }
   void addElement(int type, MElement *e);
   void removeElement(int type, MElement *e);
+
+  virtual bool reorder(const int elementType, const std::vector<int> &ordering);
 };
 
 #endif

@@ -12,7 +12,7 @@
 class partitionVertex : public discreteVertex{
 private:
   std::vector<unsigned int> _partitions;
-  GVertex *_parentEntity;
+  GEntity *_parentEntity;
 public:
   partitionVertex(GModel *model, int num, const std::vector<unsigned int> &partitions)
     : discreteVertex(model, num), _partitions(partitions), _parentEntity(NULL) {}
@@ -20,8 +20,8 @@ public:
     : discreteVertex(model, num), _partitions(), _parentEntity(NULL) {}
   virtual ~partitionVertex() {}
   virtual GeomType geomType() const { return PartitionVertex; }
-  virtual void setParentEntity(GVertex* v) { _parentEntity = v; }
-  virtual GVertex* getParentEntity() { return _parentEntity; }
+  virtual void setParentEntity(GEntity* v) { _parentEntity = v; }
+  virtual GEntity* getParentEntity() { return _parentEntity; }
   virtual void setPartitions(std::vector<unsigned int> &partitions)
   {
     _partitions = partitions;

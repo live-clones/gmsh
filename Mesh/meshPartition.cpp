@@ -18,6 +18,7 @@
 #include "GmshMessage.h"
 #include "GModel.h"
 
+// TODO C++11 remove this nasty stuff
 #if __cplusplus >= 201103L
 #include <unordered_map>
 #define hashmap std::unordered_map
@@ -1065,10 +1066,13 @@ static bool dividedNonConnectedEntities(GModel *const model, int dim,
 
         if(connectedElements.size() > 1){
           ret = true;
-          std::list<GFace*> BRepFaces = edge->faces();
+          std::vector<GFace*> BRepFaces = edge->faces();
+
           std::vector<int> oldOrientations;
-          if(BRepFaces.size() > 0){
-            for(std::list<GFace*>::iterator itBRep = BRepFaces.begin();
+          oldOrientations.reserve(BRepFaces.size());
+
+          if(!BRepFaces.empty()){
+            for(std::vector<GFace*>::iterator itBRep = BRepFaces.begin();
                 itBRep !=  BRepFaces.end(); ++itBRep){
               oldOrientations.push_back((*itBRep)->delEdge(edge));
             }
@@ -1094,7 +1098,7 @@ static bool dividedNonConnectedEntities(GModel *const model, int dim,
             // Move B-Rep
             if(BRepFaces.size() > 0){
               int i = 0;
-              for(std::list<GFace*>::iterator itBRep = BRepFaces.begin();
+              for(std::vector<GFace*>::iterator itBRep = BRepFaces.begin();
                   itBRep !=  BRepFaces.end(); ++itBRep){
                 (*itBRep)->setEdge(pedge, oldOrientations[i]);
                 pedge->addFace(*itBRep);
@@ -2239,8 +2243,8 @@ static void AssignPhysicalName(GModel *model)
       addPhysical(model, 0, *it, nameToNumber, iterators, numPhysical);
       levels.insert(std::pair<GEntity*, int>(*it, 0));
 
-      std::list<GFace*> listFace = (*it)->faces();
-      for(std::list<GFace*>::iterator itF = listFace.begin(); itF != listFace.end(); ++itF){
+      std::vector<GFace*> listFace = (*it)->faces();
+      for(std::vector<GFace*>::iterator itF = listFace.begin(); itF != listFace.end(); ++itF){
         if(levels.find(*itF) == levels.end()){
           const int level = levels[*it]+1;
           addPhysical(model, level, *itF, nameToNumber, iterators, numPhysical);
@@ -2361,7 +2365,8 @@ static void assignToParent(std::set<MVertex*> &verts, partitionRegion *region,
                            ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it){
-    region->getParentEntity()->addElement((*it)->getType(), *it);
+    if(region->getParentEntity()->dim() == 3)
+      region->getParentEntity()->addElement((*it)->getType(), *it);
     (*it)->setPartition(0);
 
     for(int i = 0; i < (*it)->getNumVertices(); i++){
@@ -2379,7 +2384,8 @@ static void assignToParent(std::set<MVertex*> &verts, partitionFace *face,
                            ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it){
-    face->getParentEntity()->addElement((*it)->getType(), *it);
+    if(face->getParentEntity()->dim() == 2)
+      face->getParentEntity()->addElement((*it)->getType(), *it);
     (*it)->setPartition(0);
 
     for(int i = 0; i < (*it)->getNumVertices(); i++){
@@ -2397,7 +2403,8 @@ static void assignToParent(std::set<MVertex*> &verts, partitionEdge *edge,
                            ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it){
-    edge->getParentEntity()->addLine(reinterpret_cast<MLine*>(*it));
+    if(edge->getParentEntity()->dim() == 1)
+      edge->getParentEntity()->addElement((*it)->getType(), *it);
     (*it)->setPartition(0);
 
     for(int i = 0; i < (*it)->getNumVertices(); i++){
@@ -2416,7 +2423,8 @@ static void assignToParent(std::set<MVertex*> &verts, partitionVertex *vertex,
 {
   for(ITERATOR it = it_beg; it != it_end; ++it)
   {
-    vertex->getParentEntity()->addPoint(reinterpret_cast<MPoint*>(*it));
+    if(vertex->getParentEntity()->dim() == 0)
+      vertex->getParentEntity()->addElement((*it)->getType(), *it);
     (*it)->setPartition(0);
 
     for(int i = 0; i < (*it)->getNumVertices(); i++){
@@ -2510,7 +2518,7 @@ int UnpartitionMesh(GModel *const model)
       pface->quadrangles.clear();
       pface->mesh_vertices.clear();
       pface->set(std::list<GEdge*>());
-      pface->setOrientations(std::list<int>());
+      pface->setOrientations(std::vector<int>());
 
       model->remove(pface);
       delete pface;
@@ -2556,7 +2564,7 @@ int UnpartitionMesh(GModel *const model)
       pregion->pyramids.clear();
       pregion->trihedra.clear();
       pregion->mesh_vertices.clear();
-      pregion->set(std::list<GFace*>());
+      pregion->set(std::vector<GFace*>());
       pregion->setOrientations(std::list<int>());
 
       model->remove(pregion);

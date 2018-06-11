@@ -46,7 +46,6 @@ void GEdge::deleteMesh(bool onlyDeleteElements)
   }
   for(unsigned int i = 0; i < lines.size(); i++) delete lines[i];
   lines.clear();
-  _normals.clear();
   deleteVertexArrays();
   model()->destroyMeshCaches();
 }
@@ -147,13 +146,23 @@ unsigned int GEdge::getNumMeshElements() const
   return lines.size();
 }
 
+unsigned int GEdge::getNumMeshElementsByType(const int familyType) const
+{
+  if(familyType == TYPE_LIN) return lines.size();
+
+  return 0;
+}
+
+struct owns_parent
+{
+    // TODO C++11 use lambda instead
+    template <class T>
+    bool operator()(T const* const line) const {return line->ownsParent();}
+};
+
 unsigned int GEdge::getNumMeshParentElements()
 {
-  unsigned int n = 0;
-  for(unsigned int i = 0; i < lines.size(); i++)
-    if(lines[i]->ownsParent())
-      n++;
-  return n;
+  return std::count_if(lines.begin(), lines.end(), owns_parent());
 }
 
 void GEdge::getNumMeshElements(unsigned *const c) const
@@ -171,6 +180,13 @@ MElement *GEdge::getMeshElement(unsigned int index) const
 {
   if(index < lines.size())
     return lines[index];
+  return 0;
+}
+
+MElement *GEdge::getMeshElementByType(const int familyType, const unsigned int index) const
+{
+  if(familyType == TYPE_LIN) return lines[index];
+
   return 0;
 }
 
@@ -194,14 +210,15 @@ void GEdge::addFace(GFace *f)
 
 void GEdge::delFace(GFace *f)
 {
-  std::list<GFace*>::iterator it = std::find(l_faces.begin(), l_faces.end(), f);
+  std::vector<GFace*>::iterator it = std::find(l_faces.begin(), l_faces.end(), f);
   if(it != l_faces.end()) l_faces.erase(it);
 }
 
-SBoundingBox3d GEdge::bounds() const
+SBoundingBox3d GEdge::bounds(bool fast) const
 {
   SBoundingBox3d bbox;
-  if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve && geomType() != PartitionCurve){
+  if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve &&
+     geomType() != PartitionCurve){
     Range<double> tr = parBounds(0);
     const int N = 10;
     for(int i = 0; i < N; i++){
@@ -211,7 +228,9 @@ SBoundingBox3d GEdge::bounds() const
     }
   }
   else{
-    for(unsigned int i = 0; i < getNumMeshElements(); i++)
+    int ipp = getNumMeshElements() / 20;
+    if(ipp < 1) ipp = 1;
+    for(unsigned int i = 0; i < getNumMeshElements(); i += ipp)
       for(unsigned int j = 0; j < getMeshElement(i)->getNumVertices(); j++)
         bbox += getMeshElement(i)->getVertex(j)->point();
   }
@@ -555,8 +574,8 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z,
 // regions that bound this entity or that this entity bounds.
 std::list<GRegion*> GEdge::regions() const
 {
-  std::list<GFace*> _faces = faces();
-  std::list<GFace*>::const_iterator it = _faces.begin();
+  std::vector<GFace*> _faces = faces();
+  std::vector<GFace*>::const_iterator it = _faces.begin();
   std::set<GRegion*> _r;
   for ( ; it != _faces.end() ; ++it){
     std::list<GRegion*> temp = (*it)->regions();
@@ -716,4 +735,30 @@ void GEdge::mesh(bool verbose)
     }
   }
 #endif
+}
+
+bool GEdge::reorder(const int elementType, const std::vector<int> &ordering)
+{
+  if(lines.front()->getTypeForMSH() == elementType){
+    if(ordering.size() != lines.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin();
+        it != ordering.end(); ++it){
+      if(*it < 0 || *it >= lines.size()) return false;
+    }
+
+    std::vector<MLine*> newLinesOrder(lines.size());
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newLinesOrder[i] = lines[ordering[i]];
+    }
+#if __cplusplus >= 201103L
+    lines = std::move(newLinesOrder);
+#else
+    lines = newLinesOrder;
+#endif
+
+    return true;
+  }
+
+  return false;
 }

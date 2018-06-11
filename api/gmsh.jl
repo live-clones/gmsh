@@ -18,7 +18,8 @@ Top-level functions
 module gmsh
 
 const GMSH_API_VERSION = "3.0"
-const clib = is_windows() ? "gmsh-3.0" : "libgmsh"
+const libdir = dirname(@__FILE__)
+const lib = joinpath(libdir, is_windows() ? "gmsh-3.0" : "libgmsh")
 
 """
     gmsh.initialize(argv = Vector{String}(), readConfigFiles = true)
@@ -30,7 +31,7 @@ system Gmsh configuration files (gmshrc and gmsh-options).
 """
 function initialize(argv = Vector{String}(), readConfigFiles = true)
     ierr = Ref{Cint}()
-    ccall((:gmshInitialize, clib), Void,
+    ccall((:gmshInitialize, lib), Void,
           (Cint, Ptr{Ptr{Cchar}}, Cint, Ptr{Cint}),
           length(argv), argv, readConfigFiles, ierr)
     ierr[] != 0 && error("gmshInitialize returned non-zero error code: $(ierr[])")
@@ -44,7 +45,7 @@ Finalize Gmsh. This must be called when you are done using the Gmsh API.
 """
 function finalize()
     ierr = Ref{Cint}()
-    ccall((:gmshFinalize, clib), Void,
+    ccall((:gmshFinalize, lib), Void,
           (Ptr{Cint},),
           ierr)
     ierr[] != 0 && error("gmshFinalize returned non-zero error code: $(ierr[])")
@@ -59,7 +60,7 @@ the file depends on its extension and/or its contents.
 """
 function open(fileName)
     ierr = Ref{Cint}()
-    ccall((:gmshOpen, clib), Void,
+    ccall((:gmshOpen, lib), Void,
           (Ptr{Cchar}, Ptr{Cint}),
           fileName, ierr)
     ierr[] != 0 && error("gmshOpen returned non-zero error code: $(ierr[])")
@@ -74,7 +75,7 @@ the file depends on its extension and/or its contents.
 """
 function merge(fileName)
     ierr = Ref{Cint}()
-    ccall((:gmshMerge, clib), Void,
+    ccall((:gmshMerge, lib), Void,
           (Ptr{Cchar}, Ptr{Cint}),
           fileName, ierr)
     ierr[] != 0 && error("gmshMerge returned non-zero error code: $(ierr[])")
@@ -88,7 +89,7 @@ Write a file. The export format is determined by the file extension.
 """
 function write(fileName)
     ierr = Ref{Cint}()
-    ccall((:gmshWrite, clib), Void,
+    ccall((:gmshWrite, lib), Void,
           (Ptr{Cchar}, Ptr{Cint}),
           fileName, ierr)
     ierr[] != 0 && error("gmshWrite returned non-zero error code: $(ierr[])")
@@ -102,7 +103,7 @@ Clear all loaded models and post-processing data, and add a new empty model.
 """
 function clear()
     ierr = Ref{Cint}()
-    ccall((:gmshClear, clib), Void,
+    ccall((:gmshClear, lib), Void,
           (Ptr{Cint},),
           ierr)
     ierr[] != 0 && error("gmshClear returned non-zero error code: $(ierr[])")
@@ -127,7 +128,7 @@ reference manual.
 """
 function setNumber(name, value)
     ierr = Ref{Cint}()
-    ccall((:gmshOptionSetNumber, gmsh.clib), Void,
+    ccall((:gmshOptionSetNumber, gmsh.lib), Void,
           (Ptr{Cchar}, Cdouble, Ptr{Cint}),
           name, value, ierr)
     ierr[] != 0 && error("gmshOptionSetNumber returned non-zero error code: $(ierr[])")
@@ -135,16 +136,16 @@ function setNumber(name, value)
 end
 
 """
-    gmsh.option.getNumber(name, value)
+    gmsh.option.getNumber(name)
 
 Get the `value` of a numerical option.
 
-Return 'value'.
+Return `value`.
 """
 function getNumber(name)
     api_value_ = Ref{Cdouble}()
     ierr = Ref{Cint}()
-    ccall((:gmshOptionGetNumber, gmsh.clib), Void,
+    ccall((:gmshOptionGetNumber, gmsh.lib), Void,
           (Ptr{Cchar}, Ptr{Cdouble}, Ptr{Cint}),
           name, api_value_, ierr)
     ierr[] != 0 && error("gmshOptionGetNumber returned non-zero error code: $(ierr[])")
@@ -158,7 +159,7 @@ Set a string option to `value`.
 """
 function setString(name, value)
     ierr = Ref{Cint}()
-    ccall((:gmshOptionSetString, gmsh.clib), Void,
+    ccall((:gmshOptionSetString, gmsh.lib), Void,
           (Ptr{Cchar}, Ptr{Cchar}, Ptr{Cint}),
           name, value, ierr)
     ierr[] != 0 && error("gmshOptionSetString returned non-zero error code: $(ierr[])")
@@ -166,16 +167,16 @@ function setString(name, value)
 end
 
 """
-    gmsh.option.getString(name, value)
+    gmsh.option.getString(name)
 
 Get the `value` of a string option.
 
-Return 'value'.
+Return `value`.
 """
 function getString(name)
     api_value_ = Ref{Ptr{Cchar}}()
     ierr = Ref{Cint}()
-    ccall((:gmshOptionGetString, gmsh.clib), Void,
+    ccall((:gmshOptionGetString, gmsh.lib), Void,
           (Ptr{Cchar}, Ptr{Ptr{Cchar}}, Ptr{Cint}),
           name, api_value_, ierr)
     ierr[] != 0 && error("gmshOptionGetString returned non-zero error code: $(ierr[])")
@@ -201,7 +202,7 @@ Add a new model, with name `name`, and set it as the current model.
 """
 function add(name)
     ierr = Ref{Cint}()
-    ccall((:gmshModelAdd, gmsh.clib), Void,
+    ccall((:gmshModelAdd, gmsh.lib), Void,
           (Ptr{Cchar}, Ptr{Cint}),
           name, ierr)
     ierr[] != 0 && error("gmshModelAdd returned non-zero error code: $(ierr[])")
@@ -215,7 +216,7 @@ Remove the current model.
 """
 function remove()
     ierr = Ref{Cint}()
-    ccall((:gmshModelRemove, gmsh.clib), Void,
+    ccall((:gmshModelRemove, gmsh.lib), Void,
           (Ptr{Cint},),
           ierr)
     ierr[] != 0 && error("gmshModelRemove returned non-zero error code: $(ierr[])")
@@ -223,17 +224,17 @@ function remove()
 end
 
 """
-    gmsh.model.list(names)
+    gmsh.model.list()
 
 List the names of all models.
 
-Return 'names'.
+Return `names`.
 """
 function list()
     api_names_ = Ref{Ptr{Ptr{Cchar}}}()
     api_names_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelList, gmsh.clib), Void,
+    ccall((:gmshModelList, gmsh.lib), Void,
           (Ptr{Ptr{Cchar}}, Ptr{Csize_t}, Ptr{Cint}),
           api_names_, api_names_n_, ierr)
     ierr[] != 0 && error("gmshModelList returned non-zero error code: $(ierr[])")
@@ -250,7 +251,7 @@ same name, select the one that was added first.
 """
 function setCurrent(name)
     ierr = Ref{Cint}()
-    ccall((:gmshModelSetCurrent, gmsh.clib), Void,
+    ccall((:gmshModelSetCurrent, gmsh.lib), Void,
           (Ptr{Cchar}, Ptr{Cint}),
           name, ierr)
     ierr[] != 0 && error("gmshModelSetCurrent returned non-zero error code: $(ierr[])")
@@ -258,19 +259,19 @@ function setCurrent(name)
 end
 
 """
-    gmsh.model.getEntities(dimTags, dim = -1)
+    gmsh.model.getEntities(dim = -1)
 
 Get all the (elementary) geometrical entities in the current model. If `dim` is
 >= 0, return only the entities of the specified dimension (e.g. points if `dim`
 == 0). The entities are returned as a vector of (dim, tag) integer pairs.
 
-Return 'dimTags'.
+Return `dimTags`.
 """
 function getEntities(dim = -1)
     api_dimTags_ = Ref{Ptr{Cint}}()
     api_dimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelGetEntities, gmsh.clib), Void,
+    ccall((:gmshModelGetEntities, gmsh.lib), Void,
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, dim, ierr)
     ierr[] != 0 && error("gmshModelGetEntities returned non-zero error code: $(ierr[])")
@@ -280,19 +281,19 @@ function getEntities(dim = -1)
 end
 
 """
-    gmsh.model.getPhysicalGroups(dimTags, dim = -1)
+    gmsh.model.getPhysicalGroups(dim = -1)
 
 Get all the physical groups in the current model. If `dim` is >= 0, return only
 the entities of the specified dimension (e.g. physical points if `dim` == 0).
 The entities are returned as a vector of (dim, tag) integer pairs.
 
-Return 'dimTags'.
+Return `dimTags`.
 """
 function getPhysicalGroups(dim = -1)
     api_dimTags_ = Ref{Ptr{Cint}}()
     api_dimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelGetPhysicalGroups, gmsh.clib), Void,
+    ccall((:gmshModelGetPhysicalGroups, gmsh.lib), Void,
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, dim, ierr)
     ierr[] != 0 && error("gmshModelGetPhysicalGroups returned non-zero error code: $(ierr[])")
@@ -302,18 +303,18 @@ function getPhysicalGroups(dim = -1)
 end
 
 """
-    gmsh.model.getEntitiesForPhysicalGroup(dim, tag, tags)
+    gmsh.model.getEntitiesForPhysicalGroup(dim, tag)
 
 Get the tags of all the (elementary) geometrical entities making up the physical
 group of dimension `dim` and tag `tag`.
 
-Return 'tags'.
+Return `tags`.
 """
 function getEntitiesForPhysicalGroup(dim, tag)
     api_tags_ = Ref{Ptr{Cint}}()
     api_tags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelGetEntitiesForPhysicalGroup, gmsh.clib), Void,
+    ccall((:gmshModelGetEntitiesForPhysicalGroup, gmsh.lib), Void,
           (Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, api_tags_, api_tags_n_, ierr)
     ierr[] != 0 && error("gmshModelGetEntitiesForPhysicalGroup returned non-zero error code: $(ierr[])")
@@ -332,7 +333,7 @@ Return an integer.
 """
 function addPhysicalGroup(dim, tags, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelAddPhysicalGroup, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelAddPhysicalGroup, gmsh.lib), Cint,
           (Cint, Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
           dim, convert(Vector{Cint}, tags), length(tags), tag, ierr)
     ierr[] != 0 && error("gmshModelAddPhysicalGroup returned non-zero error code: $(ierr[])")
@@ -346,7 +347,7 @@ Set the name of the physical group of dimension `dim` and tag `tag`.
 """
 function setPhysicalName(dim, tag, name)
     ierr = Ref{Cint}()
-    ccall((:gmshModelSetPhysicalName, gmsh.clib), Void,
+    ccall((:gmshModelSetPhysicalName, gmsh.lib), Void,
           (Cint, Cint, Ptr{Cchar}, Ptr{Cint}),
           dim, tag, name, ierr)
     ierr[] != 0 && error("gmshModelSetPhysicalName returned non-zero error code: $(ierr[])")
@@ -354,16 +355,16 @@ function setPhysicalName(dim, tag, name)
 end
 
 """
-    gmsh.model.getPhysicalName(dim, tag, name)
+    gmsh.model.getPhysicalName(dim, tag)
 
 Get the name of the physical group of dimension `dim` and tag `tag`.
 
-Return 'name'.
+Return `name`.
 """
 function getPhysicalName(dim, tag)
     api_name_ = Ref{Ptr{Cchar}}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelGetPhysicalName, gmsh.clib), Void,
+    ccall((:gmshModelGetPhysicalName, gmsh.lib), Void,
           (Cint, Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}),
           dim, tag, api_name_, ierr)
     ierr[] != 0 && error("gmshModelGetPhysicalName returned non-zero error code: $(ierr[])")
@@ -372,7 +373,7 @@ function getPhysicalName(dim, tag)
 end
 
 """
-    gmsh.model.getBoundary(dimTags, outDimTags, combined = true, oriented = true, recursive = false)
+    gmsh.model.getBoundary(dimTags, combined = true, oriented = true, recursive = false)
 
 Get the boundary of the geometrical entities `dimTags`. Return in `outDimTags`
 the boundary of the individual entities (if `combined` is false) or the boundary
@@ -381,15 +382,15 @@ true). Return tags multiplied by the sign of the boundary entity if `oriented`
 is true. Apply the boundary operator recursively down to dimension 0 (i.e. to
 points) if `recursive` is true.
 
-Return 'outDimTags'.
+Return `outDimTags`.
 """
 function getBoundary(dimTags, combined = true, oriented = true, recursive = false)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelGetBoundary, gmsh.clib), Void,
+    ccall((:gmshModelGetBoundary, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), api_outDimTags_, api_outDimTags_n_, combined, oriented, recursive, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), api_outDimTags_, api_outDimTags_n_, combined, oriented, recursive, ierr)
     ierr[] != 0 && error("gmshModelGetBoundary returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -397,19 +398,19 @@ function getBoundary(dimTags, combined = true, oriented = true, recursive = fals
 end
 
 """
-    gmsh.model.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, tags, dim = -1)
+    gmsh.model.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
 
 Get the (elementary) geometrical entities in the bounding box defined by the two
 points (`xmin`, `ymin`, `zmin`) and (`xmax`, `ymax`, `zmax`). If `dim` is >= 0,
 return only the entities of the specified dimension (e.g. points if `dim` == 0).
 
-Return 'tags'.
+Return `tags`.
 """
 function getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
     api_tags_ = Ref{Ptr{Cint}}()
     api_tags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelGetEntitiesInBoundingBox, gmsh.clib), Void,
+    ccall((:gmshModelGetEntitiesInBoundingBox, gmsh.lib), Void,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
           xmin, ymin, zmin, xmax, ymax, zmax, api_tags_, api_tags_n_, dim, ierr)
     ierr[] != 0 && error("gmshModelGetEntitiesInBoundingBox returned non-zero error code: $(ierr[])")
@@ -419,12 +420,12 @@ function getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
 end
 
 """
-    gmsh.model.getBoundingBox(dim, tag, xmin, ymin, zmin, xmax, ymax, zmax)
+    gmsh.model.getBoundingBox(dim, tag)
 
 Get the bounding box (`xmin`, `ymin`, `zmin`), (`xmax`, `ymax`, `zmax`) of the
 geometrical entity of dimension `dim` and tag `tag`.
 
-Return 'xmin', 'ymin', 'zmin', 'xmax', 'ymax', 'zmax'.
+Return `xmin`, `ymin`, `zmin`, `xmax`, `ymax`, `zmax`.
 """
 function getBoundingBox(dim, tag)
     api_xmin_ = Ref{Cdouble}()
@@ -434,7 +435,7 @@ function getBoundingBox(dim, tag)
     api_ymax_ = Ref{Cdouble}()
     api_zmax_ = Ref{Cdouble}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelGetBoundingBox, gmsh.clib), Void,
+    ccall((:gmshModelGetBoundingBox, gmsh.lib), Void,
           (Cint, Cint, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cint}),
           dim, tag, api_xmin_, api_ymin_, api_zmin_, api_xmax_, api_ymax_, api_zmax_, ierr)
     ierr[] != 0 && error("gmshModelGetBoundingBox returned non-zero error code: $(ierr[])")
@@ -442,7 +443,23 @@ function getBoundingBox(dim, tag)
 end
 
 """
-    gmsh.model.addDiscreteEntity(dim, tag = -1, boundary = [])
+    gmsh.model.getDimension()
+
+Get the geometrical dimension of the current model.
+
+Return an integer.
+"""
+function getDimension()
+    ierr = Ref{Cint}()
+    api__result__ = ccall((:gmshModelGetDimension, gmsh.lib), Cint,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshModelGetDimension returned non-zero error code: $(ierr[])")
+    return api__result__
+end
+
+"""
+    gmsh.model.addDiscreteEntity(dim, tag = -1, boundary = Cint[])
 
 Add a discrete geometrical entity (defined by a mesh) of dimension `dim` in the
 current model. Return the tag of the new discrete entity, equal to `tag` if
@@ -452,9 +469,9 @@ the entities on the boundary of the discrete entity, if any. Specyfing
 
 Return an integer.
 """
-function addDiscreteEntity(dim, tag = -1, boundary = [])
+function addDiscreteEntity(dim, tag = -1, boundary = Cint[])
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelAddDiscreteEntity, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelAddDiscreteEntity, gmsh.lib), Cint,
           (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
           dim, tag, convert(Vector{Cint}, boundary), length(boundary), ierr)
     ierr[] != 0 && error("gmshModelAddDiscreteEntity returned non-zero error code: $(ierr[])")
@@ -469,29 +486,101 @@ remove all the entities on their boundaries, down to dimension 0.
 """
 function removeEntities(dimTags, recursive = false)
     ierr = Ref{Cint}()
-    ccall((:gmshModelRemoveEntities, gmsh.clib), Void,
+    ccall((:gmshModelRemoveEntities, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), recursive, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), recursive, ierr)
     ierr[] != 0 && error("gmshModelRemoveEntities returned non-zero error code: $(ierr[])")
     return nothing
 end
 
 """
-    gmsh.model.getType(dim, tag, entityType)
+    gmsh.model.getType(dim, tag)
 
 Get the type of the entity of dimension `dim` and tag `tag`.
 
-Return 'entityType'.
+Return `entityType`.
 """
 function getType(dim, tag)
     api_entityType_ = Ref{Ptr{Cchar}}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelGetType, gmsh.clib), Void,
+    ccall((:gmshModelGetType, gmsh.lib), Void,
           (Cint, Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}),
           dim, tag, api_entityType_, ierr)
     ierr[] != 0 && error("gmshModelGetType returned non-zero error code: $(ierr[])")
     entityType = unsafe_string(api_entityType_[])
     return entityType
+end
+
+"""
+    gmsh.model.getNormals(tag, parametricCoord)
+
+Get the normal to the surface with tag `tag` at the parametric coordinates
+`parametricCoord`. `parametricCoord` are given by pair of u and v coordinates,
+concatenated. `normals` are returned as triplets of x, y and z components,
+concatenated.
+
+Return `normals`.
+"""
+function getNormals(tag, parametricCoord)
+    api_normals_ = Ref{Ptr{Cdouble}}()
+    api_normals_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetNormals, gmsh.lib), Void,
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, parametricCoord, length(parametricCoord), api_normals_, api_normals_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetNormals returned non-zero error code: $(ierr[])")
+    normals = unsafe_wrap(Array, api_normals_[], api_normals_n_[], true)
+    return normals
+end
+
+"""
+    gmsh.model.getCurvatures(tag, parametricCoord)
+
+Get the curvature of the curve with tag `tag` at the parametric coordinates
+`parametricCoord`.
+
+Return `curvatures`.
+"""
+function getCurvatures(tag, parametricCoord)
+    api_curvatures_ = Ref{Ptr{Cdouble}}()
+    api_curvatures_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetCurvatures, gmsh.lib), Void,
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, parametricCoord, length(parametricCoord), api_curvatures_, api_curvatures_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetCurvatures returned non-zero error code: $(ierr[])")
+    curvatures = unsafe_wrap(Array, api_curvatures_[], api_curvatures_n_[], true)
+    return curvatures
+end
+
+"""
+    gmsh.model.getPrincipalCurvatures(tag, parametricCoord)
+
+Get the principal curvatures of the surface with tag `tag` at the parametric
+coordinates `parametricCoord`, as well as their respective directions.
+`parametricCoord` are given by pair of u and v coordinates, concatenated.
+
+Return `curvatureMax`, `curvatureMin`, `directionMax`, `directionMin`.
+"""
+function getPrincipalCurvatures(tag, parametricCoord)
+    api_curvatureMax_ = Ref{Ptr{Cdouble}}()
+    api_curvatureMax_n_ = Ref{Csize_t}()
+    api_curvatureMin_ = Ref{Ptr{Cdouble}}()
+    api_curvatureMin_n_ = Ref{Csize_t}()
+    api_directionMax_ = Ref{Ptr{Cdouble}}()
+    api_directionMax_n_ = Ref{Csize_t}()
+    api_directionMin_ = Ref{Ptr{Cdouble}}()
+    api_directionMin_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetPrincipalCurvatures, gmsh.lib), Void,
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, parametricCoord, length(parametricCoord), api_curvatureMax_, api_curvatureMax_n_, api_curvatureMin_, api_curvatureMin_n_, api_directionMax_, api_directionMax_n_, api_directionMin_, api_directionMin_n_, ierr)
+    ierr[] != 0 && error("gmshModelGetPrincipalCurvatures returned non-zero error code: $(ierr[])")
+    curvatureMax = unsafe_wrap(Array, api_curvatureMax_[], api_curvatureMax_n_[], true)
+    curvatureMin = unsafe_wrap(Array, api_curvatureMin_[], api_curvatureMin_n_[], true)
+    directionMax = unsafe_wrap(Array, api_directionMax_[], api_directionMax_n_[], true)
+    directionMin = unsafe_wrap(Array, api_directionMin_[], api_directionMin_n_[], true)
+    return curvatureMax, curvatureMin, directionMax, directionMin
 end
 
 """
@@ -510,52 +599,10 @@ Generate a mesh of the current model, up to dimension `dim` (0, 1, 2 or 3).
 """
 function generate(dim = 3)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGenerate, gmsh.clib), Void,
+    ccall((:gmshModelMeshGenerate, gmsh.lib), Void,
           (Cint, Ptr{Cint}),
           dim, ierr)
     ierr[] != 0 && error("gmshModelMeshGenerate returned non-zero error code: $(ierr[])")
-    return nothing
-end
-
-"""
-    gmsh.model.mesh.homology(domainTags = [], subdomainTags = [], dims = [])
-
-Compute a basis representation for homology spaces after a mesh has been
-generated. The computation domain is given in a list of physical group tags
-`domainTags`; if empty, the whole mesh is the domain. The computation subdomain
-for relative homology computation is given in a list of physical group tags
-`subdomainTags`; if empty, absolute homology is computed. The dimensions
-homology bases to be computed are given in the list `dim`; if empty, all bases
-are computed. Resulting basis representation chains are stored as physical
-groups in the mesh.
-"""
-function homology(domainTags = [], subdomainTags = [], dims = [])
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshHomology, gmsh.clib), Void,
-          (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
-          convert(Vector{Cint}, domainTags), length(domainTags), convert(Vector{Cint}, subdomainTags), length(subdomainTags), convert(Vector{Cint}, dims), length(dims), ierr)
-    ierr[] != 0 && error("gmshModelMeshHomology returned non-zero error code: $(ierr[])")
-    return nothing
-end
-
-"""
-    gmsh.model.mesh.cohomology(domainTags = [], subdomainTags = [], dims = [])
-
-Compute a basis representation for cohomology spaces after a mesh has been
-generated. The computation domain is given in a list of physical group tags
-`domainTags`; if empty, the whole mesh is the domain. The computation subdomain
-for relative cohomology computation is given in a list of physical group tags
-`subdomainTags`; if empty, absolute cohomology is computed. The dimensions
-homology bases to be computed are given in the list `dim`; if empty, all bases
-are computed. Resulting basis representation cochains are stored as physical
-groups in the mesh.
-"""
-function cohomology(domainTags = [], subdomainTags = [], dims = [])
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshCohomology, gmsh.clib), Void,
-          (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
-          convert(Vector{Cint}, domainTags), length(domainTags), convert(Vector{Cint}, subdomainTags), length(subdomainTags), convert(Vector{Cint}, dims), length(dims), ierr)
-    ierr[] != 0 && error("gmshModelMeshCohomology returned non-zero error code: $(ierr[])")
     return nothing
 end
 
@@ -566,7 +613,7 @@ Partition the mesh of the current model into `numPart` partitions.
 """
 function partition(numPart)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshPartition, gmsh.clib), Void,
+    ccall((:gmshModelMeshPartition, gmsh.lib), Void,
           (Cint, Ptr{Cint}),
           numPart, ierr)
     ierr[] != 0 && error("gmshModelMeshPartition returned non-zero error code: $(ierr[])")
@@ -580,7 +627,7 @@ Refine the mesh of the current model by uniformly splitting the elements.
 """
 function refine()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshRefine, gmsh.clib), Void,
+    ccall((:gmshModelMeshRefine, gmsh.lib), Void,
           (Ptr{Cint},),
           ierr)
     ierr[] != 0 && error("gmshModelMeshRefine returned non-zero error code: $(ierr[])")
@@ -594,7 +641,7 @@ Set the order of the elements in the mesh of the current model to `order`.
 """
 function setOrder(order)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetOrder, gmsh.clib), Void,
+    ccall((:gmshModelMeshSetOrder, gmsh.lib), Void,
           (Cint, Ptr{Cint}),
           order, ierr)
     ierr[] != 0 && error("gmshModelMeshSetOrder returned non-zero error code: $(ierr[])")
@@ -602,32 +649,18 @@ function setOrder(order)
 end
 
 """
-    gmsh.model.mesh.removeDuplicateNodes()
-
-Remove duplicate mesh nodes in the mesh of the current model.
-"""
-function removeDuplicateNodes()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshRemoveDuplicateNodes, gmsh.clib), Void,
-          (Ptr{Cint},),
-          ierr)
-    ierr[] != 0 && error("gmshModelMeshRemoveDuplicateNodes returned non-zero error code: $(ierr[])")
-    return nothing
-end
-
-"""
-    gmsh.model.mesh.getLastEntityError(dimTags)
+    gmsh.model.mesh.getLastEntityError()
 
 Get the last entities (if any) where a meshing error occurred. Currently only
 populated by the new 3D meshing algorithms.
 
-Return 'dimTags'.
+Return `dimTags`.
 """
 function getLastEntityError()
     api_dimTags_ = Ref{Ptr{Cint}}()
     api_dimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetLastEntityError, gmsh.clib), Void,
+    ccall((:gmshModelMeshGetLastEntityError, gmsh.lib), Void,
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           api_dimTags_, api_dimTags_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetLastEntityError returned non-zero error code: $(ierr[])")
@@ -637,18 +670,18 @@ function getLastEntityError()
 end
 
 """
-    gmsh.model.mesh.getLastNodeError(nodeTags)
+    gmsh.model.mesh.getLastNodeError()
 
-Get the last mesh nodes (if any) where a meshing error occurred. Currently only
+Get the last nodes (if any) where a meshing error occurred. Currently only
 populated by the new 3D meshing algorithms.
 
-Return 'nodeTags'.
+Return `nodeTags`.
 """
 function getLastNodeError()
     api_nodeTags_ = Ref{Ptr{Cint}}()
     api_nodeTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetLastNodeError, gmsh.clib), Void,
+    ccall((:gmshModelMeshGetLastNodeError, gmsh.lib), Void,
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           api_nodeTags_, api_nodeTags_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetLastNodeError returned non-zero error code: $(ierr[])")
@@ -657,20 +690,23 @@ function getLastNodeError()
 end
 
 """
-    gmsh.model.mesh.getNodes(nodeTags, coord, parametricCoord, dim = -1, tag = -1)
+    gmsh.model.mesh.getNodes(dim = -1, tag = -1, includeBoundary = false)
 
-Get the mesh nodes of the entity of dimension `dim` and `tag` tag. If `tag` < 0,
-get the nodes for all entities of dimension `dim`. If `dim` and `tag` are
-negative, get all the nodes in the mesh. `nodeTags` contains the node tags
+Get the nodes classified on the entity of dimension `dim` and tag `tag`. If
+`tag` < 0, get the nodes for all entities of dimension `dim`. If `dim` and `tag`
+are negative, get all the nodes in the mesh. `nodeTags` contains the node tags
 (their unique, strictly positive identification numbers). `coord` is a vector of
 length 3 times the length of `nodeTags` that contains the (x, y, z) coordinates
 of the nodes, concatenated. If `dim` >= 0, `parametricCoord` contains the
-parametric coordinates of the nodes, if available. The length of
-`parametricCoord` can be 0 or `dim` times the length of `nodeTags`.
+parametric coordinates u and/or v of the nodes, if available. The length of
+`parametricCoord` can be 0 or `dim` times the length of `nodeTags`. If
+`includeBoundary` is set, also return the nodes classified on the boundary of
+the entity (wich will be reparametrized on the entity if `dim` >= 0 in order to
+compute their parametric coordinates).
 
-Return 'nodeTags', 'coord', 'parametricCoord'.
+Return `nodeTags`, `coord`, `parametricCoord`.
 """
-function getNodes(dim = -1, tag = -1)
+function getNodes(dim = -1, tag = -1, includeBoundary = false)
     api_nodeTags_ = Ref{Ptr{Cint}}()
     api_nodeTags_n_ = Ref{Csize_t}()
     api_coord_ = Ref{Ptr{Cdouble}}()
@@ -678,9 +714,9 @@ function getNodes(dim = -1, tag = -1)
     api_parametricCoord_ = Ref{Ptr{Cdouble}}()
     api_parametricCoord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetNodes, gmsh.clib), Void,
-          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, dim, tag, ierr)
+    ccall((:gmshModelMeshGetNodes, gmsh.lib), Void,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
+          api_nodeTags_, api_nodeTags_n_, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, dim, tag, includeBoundary, ierr)
     ierr[] != 0 && error("gmshModelMeshGetNodes returned non-zero error code: $(ierr[])")
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
     coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], true)
@@ -689,21 +725,100 @@ function getNodes(dim = -1, tag = -1)
 end
 
 """
-    gmsh.model.mesh.getElements(elementTypes, elementTags, nodeTags, dim = -1, tag = -1)
+    gmsh.model.mesh.getNode(nodeTag)
 
-Get the mesh elements of the entity of dimension `dim` and `tag` tag. If `tag` <
-0, get the elements for all entities of dimension `dim`. If `dim` and `tag` are
-negative, get all the elements in the mesh. `elementTypes` contains the MSH
-types of the elements (e.g. `2` for 3-node triangles: see `getElementProperties`
-to obtain the properties for a given element type). `elementTags` is a vector of
-the same length as `elementTypes`; each entry is a vector containing the tags
-(unique, strictly positive identifiers) of the elements of the corresponding
-type. `nodeTags` is also a vector of the same length as `elementTypes`; each
-entry is a vector of length equal to the number of elements of the given type
-times the number of nodes for this type of element, that contains the node tags
-of all the elements of the given type, concatenated.
+Get the coordinates and the parametric coordinates (if any) of the node with tag
+`tag`. This is a sometimes useful but inefficient way of accessing nodes, as it
+relies on a cache stored in the model. For large meshes all the nodes in the
+model should be numbered in a continuous sequence of tags from 1 to N to
+maintain reasonnable performance (in this case the internal cache is based on a
+vector; otherwise it uses a map).
 
-Return 'elementTypes', 'elementTags', 'nodeTags'.
+Return `coord`, `parametricCoord`.
+"""
+function getNode(nodeTag)
+    api_coord_ = Ref{Ptr{Cdouble}}()
+    api_coord_n_ = Ref{Csize_t}()
+    api_parametricCoord_ = Ref{Ptr{Cdouble}}()
+    api_parametricCoord_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetNode, gmsh.lib), Void,
+          (Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          nodeTag, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetNode returned non-zero error code: $(ierr[])")
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], true)
+    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], true)
+    return coord, parametricCoord
+end
+
+"""
+    gmsh.model.mesh.rebuildNodeCache(onlyIfNecessary = true)
+
+Rebuild the node cache.
+"""
+function rebuildNodeCache(onlyIfNecessary = true)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRebuildNodeCache, gmsh.lib), Void,
+          (Cint, Ptr{Cint}),
+          onlyIfNecessary, ierr)
+    ierr[] != 0 && error("gmshModelMeshRebuildNodeCache returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.setNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
+
+Set the nodes classified on the geometrical entity of dimension `dim` and tag
+`tag`. `nodeTags` contains the node tags (their unique, strictly positive
+identification numbers). `coord` is a vector of length 3 times the length of
+`nodeTags` that contains the (x, y, z) coordinates of the nodes, concatenated.
+The optional `parametricCoord` vector contains the parametric coordinates of the
+nodes, if any. The length of `parametricCoord` can be 0 or `dim` times the
+length of `nodeTags`.
+"""
+function setNodes(dim, tag, nodeTags, coord, parametricCoord = Cdouble[])
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSetNodes, gmsh.lib), Void,
+          (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          dim, tag, convert(Vector{Cint}, nodeTags), length(nodeTags), coord, length(coord), parametricCoord, length(parametricCoord), ierr)
+    ierr[] != 0 && error("gmshModelMeshSetNodes returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.reclassifyNodes()
+
+Reclassify all nodes on their associated geometrical entity, based on the
+elements. Can be used when importing nodes in bulk (e.g. by associating them all
+to a single volume), to reclassify them correctly on model surfaces, curves,
+etc. after the elements have been set.
+"""
+function reclassifyNodes()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshReclassifyNodes, gmsh.lib), Void,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshModelMeshReclassifyNodes returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.getElements(dim = -1, tag = -1)
+
+Get the elements classified on the entity of dimension `dim` and tag `tag`. If
+`tag` < 0, get the elements for all entities of dimension `dim`. If `dim` and
+`tag` are negative, get all the elements in the mesh. `elementTypes` contains
+the MSH types of the elements (e.g. `2` for 3-node triangles: see
+`getElementProperties` to obtain the properties for a given element type).
+`elementTags` is a vector of the same length as `elementTypes`; each entry is a
+vector containing the tags (unique, strictly positive identifiers) of the
+elements of the corresponding type. `nodeTags` is also a vector of the same
+length as `elementTypes`; each entry is a vector of length equal to the number
+of elements of the given type times the number of nodes for this type of
+element, that contains the node tags of all the elements of the given type,
+concatenated.
+
+Return `elementTypes`, `elementTags`, `nodeTags`.
 """
 function getElements(dim = -1, tag = -1)
     api_elementTypes_ = Ref{Ptr{Cint}}()
@@ -715,7 +830,7 @@ function getElements(dim = -1, tag = -1)
     api_nodeTags_n_ = Ref{Ptr{Csize_t}}()
     api_nodeTags_nn_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetElements, gmsh.clib), Void,
+    ccall((:gmshModelMeshGetElements, gmsh.lib), Void,
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
           api_elementTypes_, api_elementTypes_n_, api_elementTags_, api_elementTags_n_, api_elementTags_nn_, api_nodeTags_, api_nodeTags_n_, api_nodeTags_nn_, dim, tag, ierr)
     ierr[] != 0 && error("gmshModelMeshGetElements returned non-zero error code: $(ierr[])")
@@ -730,176 +845,56 @@ function getElements(dim = -1, tag = -1)
 end
 
 """
-    gmsh.model.mesh.getElementProperties(elementType, elementName, dim, order, numNodes, parametricCoord)
+    gmsh.model.mesh.getElement(elementTag)
 
-Get the properties of an element of type `elementType`: its name
-(`elementName`), dimension (`dim`), order (`order`), number of nodes
-(`numNodes`) and parametric coordinates of nodes (`parametricCoord` vector, of
-length `dim` times `numNodes`).
+Get the type and node tags of the element with tag `tag`. This is a sometimes
+useful but inefficient way of accessing elements, as it relies on a cache stored
+in the model. For large meshes all the elements in the model should be numbered
+in a continuous sequence of tags from 1 to N to maintain reasonnable performance
+(in this case the internal cache is based on a vector; otherwise it uses a map).
 
-Return 'elementName', 'dim', 'order', 'numNodes', 'parametricCoord'.
+Return `elementType`, `nodeTags`.
 """
-function getElementProperties(elementType)
-    api_elementName_ = Ref{Ptr{Cchar}}()
-    api_dim_ = Ref{Cint}()
-    api_order_ = Ref{Cint}()
-    api_numNodes_ = Ref{Cint}()
-    api_parametricCoord_ = Ref{Ptr{Cdouble}}()
-    api_parametricCoord_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetElementProperties, gmsh.clib), Void,
-          (Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          elementType, api_elementName_, api_dim_, api_order_, api_numNodes_, api_parametricCoord_, api_parametricCoord_n_, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetElementProperties returned non-zero error code: $(ierr[])")
-    elementName = unsafe_string(api_elementName_[])
-    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], true)
-    return elementName, api_dim_[], api_order_[], api_numNodes_[], parametricCoord
-end
-
-"""
-    gmsh.model.mesh.getIntegrationData(integrationType, functionSpaceType, integrationPoints, integrationData, functionSpaceNumComponents, functionSpaceData, dim = -1, tag = -1)
-
-Get the integration data for mesh elements of the entity of dimension `dim` and
-`tag` tag. The data is returned by element type and by element, in the same
-order as the data returned by `getElements`. `integrationType` specifies the
-type of integration (e.g. "Gauss4") and `functionSpaceType` specifies the
-function space (e.g. "IsoParametric"). `integrationPoints` contains for each
-element type a vector (of length 4 times the number of integration points)
-containing the parametric coordinates (u, v, w) and the weight associated to the
-integration points. `integrationData` contains for each element type a vector
-(of size 13 times the number of integration points) containing the (x, y, z)
-coordinates of the integration point, the determinant of the Jacobian and the 9
-entries (by row) of the 3x3 Jacobian matrix. If `functionSpaceType` is provided,
-`functionSpaceNumComponents` return the number of components returned by the
-evaluation of a basis function in the space and `functionSpaceData` contains for
-each element type the evaluation of the basis functions at the integration
-points.
-
-Return 'integrationPoints', 'integrationData', 'functionSpaceNumComponents', 'functionSpaceData'.
-"""
-function getIntegrationData(integrationType, functionSpaceType, dim = -1, tag = -1)
-    api_integrationPoints_ = Ref{Ptr{Ptr{Cdouble}}}()
-    api_integrationPoints_n_ = Ref{Ptr{Csize_t}}()
-    api_integrationPoints_nn_ = Ref{Csize_t}()
-    api_integrationData_ = Ref{Ptr{Ptr{Cdouble}}}()
-    api_integrationData_n_ = Ref{Ptr{Csize_t}}()
-    api_integrationData_nn_ = Ref{Csize_t}()
-    api_functionSpaceNumComponents_ = Ref{Cint}()
-    api_functionSpaceData_ = Ref{Ptr{Ptr{Cdouble}}}()
-    api_functionSpaceData_n_ = Ref{Ptr{Csize_t}}()
-    api_functionSpaceData_nn_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetIntegrationData, gmsh.clib), Void,
-          (Ptr{Cchar}, Ptr{Cchar}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          integrationType, functionSpaceType, api_integrationPoints_, api_integrationPoints_n_, api_integrationPoints_nn_, api_integrationData_, api_integrationData_n_, api_integrationData_nn_, api_functionSpaceNumComponents_, api_functionSpaceData_, api_functionSpaceData_n_, api_functionSpaceData_nn_, dim, tag, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetIntegrationData returned non-zero error code: $(ierr[])")
-    tmp_api_integrationPoints_ = unsafe_wrap(Array, api_integrationPoints_[], api_integrationPoints_nn_[], true)
-    tmp_api_integrationPoints_n_ = unsafe_wrap(Array, api_integrationPoints_n_[], api_integrationPoints_nn_[], true)
-    integrationPoints = [ unsafe_wrap(Array, tmp_api_integrationPoints_[i], tmp_api_integrationPoints_n_[i], true) for i in 1:api_integrationPoints_nn_[] ]
-    tmp_api_integrationData_ = unsafe_wrap(Array, api_integrationData_[], api_integrationData_nn_[], true)
-    tmp_api_integrationData_n_ = unsafe_wrap(Array, api_integrationData_n_[], api_integrationData_nn_[], true)
-    integrationData = [ unsafe_wrap(Array, tmp_api_integrationData_[i], tmp_api_integrationData_n_[i], true) for i in 1:api_integrationData_nn_[] ]
-    tmp_api_functionSpaceData_ = unsafe_wrap(Array, api_functionSpaceData_[], api_functionSpaceData_nn_[], true)
-    tmp_api_functionSpaceData_n_ = unsafe_wrap(Array, api_functionSpaceData_n_[], api_functionSpaceData_nn_[], true)
-    functionSpaceData = [ unsafe_wrap(Array, tmp_api_functionSpaceData_[i], tmp_api_functionSpaceData_n_[i], true) for i in 1:api_functionSpaceData_nn_[] ]
-    return integrationPoints, integrationData, api_functionSpaceNumComponents_[], functionSpaceData
-end
-
-"""
-    gmsh.model.mesh.getElementTypes(elementTypes, dim = -1, tag = -1)
-
-Get the types of mesh elements in the entity of dimension `dim` and `tag` tag.
-If `tag` < 0, get the types for all entities of dimension `dim`. If `dim` and
-`tag` are negative, get all the types in the mesh.
-
-Return 'elementTypes'.
-"""
-function getElementTypes(dim = -1, tag = -1)
-    api_elementTypes_ = Ref{Ptr{Cint}}()
-    api_elementTypes_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetElementTypes, gmsh.clib), Void,
-          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          api_elementTypes_, api_elementTypes_n_, dim, tag, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetElementTypes returned non-zero error code: $(ierr[])")
-    elementTypes = unsafe_wrap(Array, api_elementTypes_[], api_elementTypes_n_[], true)
-    return elementTypes
-end
-
-"""
-    gmsh.model.mesh.getElementsByType(elementType, elementTags, nodeTags, dim = -1, tag = -1)
-
-Get the mesh elements in the same way as `getElements`, but for a single
-`elementType`.
-
-Return 'elementTags', 'nodeTags'.
-"""
-function getElementsByType(elementType, dim = -1, tag = -1)
-    api_elementTags_ = Ref{Ptr{Cint}}()
-    api_elementTags_n_ = Ref{Csize_t}()
+function getElement(elementTag)
+    api_elementType_ = Ref{Cint}()
     api_nodeTags_ = Ref{Ptr{Cint}}()
     api_nodeTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetElementsByType, gmsh.clib), Void,
-          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          elementType, api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, dim, tag, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetElementsByType returned non-zero error code: $(ierr[])")
-    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], true)
+    ccall((:gmshModelMeshGetElement, gmsh.lib), Void,
+          (Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          elementTag, api_elementType_, api_nodeTags_, api_nodeTags_n_, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetElement returned non-zero error code: $(ierr[])")
     nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
-    return elementTags, nodeTags
+    return api_elementType_[], nodeTags
 end
 
 """
-    gmsh.model.mesh.getIntegrationDataByType(elementType, integrationType, functionSpaceType, integrationPoints, integrationData, functionSpaceNumComponents, functionSpaceData, dim = -1, tag = -1)
+    gmsh.model.mesh.getElementByCoordinates(x, y, z)
 
-Get the integration data for mesh elements in the same way as
-`getIntegrationData`, but for a single `elementType`.
+Get the tag, type and node tags of the element located at coordinates (`x`, `y`,
+`z`). This is a sometimes useful but inefficient way of accessing elements, as
+it relies on a search in a spatial octree.
 
-Return 'integrationPoints', 'integrationData', 'functionSpaceNumComponents', 'functionSpaceData'.
+Return `elementTag`, `elementType`, `nodeTags`.
 """
-function getIntegrationDataByType(elementType, integrationType, functionSpaceType, dim = -1, tag = -1)
-    api_integrationPoints_ = Ref{Ptr{Cdouble}}()
-    api_integrationPoints_n_ = Ref{Csize_t}()
-    api_integrationData_ = Ref{Ptr{Cdouble}}()
-    api_integrationData_n_ = Ref{Csize_t}()
-    api_functionSpaceNumComponents_ = Ref{Cint}()
-    api_functionSpaceData_ = Ref{Ptr{Cdouble}}()
-    api_functionSpaceData_n_ = Ref{Csize_t}()
+function getElementByCoordinates(x, y, z)
+    api_elementTag_ = Ref{Cint}()
+    api_elementType_ = Ref{Cint}()
+    api_nodeTags_ = Ref{Ptr{Cint}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetIntegrationDataByType, gmsh.clib), Void,
-          (Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
-          elementType, integrationType, functionSpaceType, api_integrationPoints_, api_integrationPoints_n_, api_integrationData_, api_integrationData_n_, api_functionSpaceNumComponents_, api_functionSpaceData_, api_functionSpaceData_n_, dim, tag, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetIntegrationDataByType returned non-zero error code: $(ierr[])")
-    integrationPoints = unsafe_wrap(Array, api_integrationPoints_[], api_integrationPoints_n_[], true)
-    integrationData = unsafe_wrap(Array, api_integrationData_[], api_integrationData_n_[], true)
-    functionSpaceData = unsafe_wrap(Array, api_functionSpaceData_[], api_functionSpaceData_n_[], true)
-    return integrationPoints, integrationData, api_functionSpaceNumComponents_[], functionSpaceData
-end
-
-"""
-    gmsh.model.mesh.setNodes(dim, tag, nodeTags, coord, parametricCoord = [])
-
-Set the mesh nodes in the geometrical entity of dimension `dim` and tag `tag`.
-`nodetags` contains the node tags (their unique, strictly positive
-identification numbers). `coord` is a vector of length 3 times the length of
-`nodeTags` that contains the (x, y, z) coordinates of the nodes, concatenated.
-The optional `parametricCoord` vector contains the parametric coordinates of the
-nodes, if any. The length of `parametricCoord` can be 0 or `dim` times the
-length of `nodeTags`.
-"""
-function setNodes(dim, tag, nodeTags, coord, parametricCoord = [])
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetNodes, gmsh.clib), Void,
-          (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          dim, tag, convert(Vector{Cint}, nodeTags), length(nodeTags), coord, length(coord), parametricCoord, length(parametricCoord), ierr)
-    ierr[] != 0 && error("gmshModelMeshSetNodes returned non-zero error code: $(ierr[])")
-    return nothing
+    ccall((:gmshModelMeshGetElementByCoordinates, gmsh.lib), Void,
+          (Cdouble, Cdouble, Cdouble, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          x, y, z, api_elementTag_, api_elementType_, api_nodeTags_, api_nodeTags_n_, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetElementByCoordinates returned non-zero error code: $(ierr[])")
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
+    return api_elementTag_[], api_elementType_[], nodeTags
 end
 
 """
     gmsh.model.mesh.setElements(dim, tag, elementTypes, elementTags, nodeTags)
 
-Set the mesh elements of the entity of dimension `dim` and `tag` tag. `types`
+Set the elements of the entity of dimension `dim` and tag `tag`. `types`
 contains the MSH types of the elements (e.g. `2` for 3-node triangles: see the
 Gmsh reference manual). `elementTags` is a vector of the same length as `types`;
 each entry is a vector containing the tags (unique, strictly positive
@@ -912,7 +907,7 @@ function setElements(dim, tag, elementTypes, elementTags, nodeTags)
     api_elementTags_n_ = [ length(elementTags[i]) for i in 1:length(elementTags) ]
     api_nodeTags_n_ = [ length(nodeTags[i]) for i in 1:length(nodeTags) ]
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetElements, gmsh.clib), Void,
+    ccall((:gmshModelMeshSetElements, gmsh.lib), Void,
           (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
           dim, tag, convert(Vector{Cint}, elementTypes), length(elementTypes), convert(Vector{Vector{Cint}},elementTags), api_elementTags_n_, length(elementTags), convert(Vector{Vector{Cint}},nodeTags), api_nodeTags_n_, length(nodeTags), ierr)
     ierr[] != 0 && error("gmshModelMeshSetElements returned non-zero error code: $(ierr[])")
@@ -920,72 +915,251 @@ function setElements(dim, tag, elementTypes, elementTags, nodeTags)
 end
 
 """
-    gmsh.model.mesh.reclassifyNodes()
+    gmsh.model.mesh.getElementTypes(dim = -1, tag = -1)
 
-Redistribute all mesh nodes on their associated geometrical entity, based on the
-mesh elements. Can be used when importing mesh nodes in bulk (e.g. by
-associating them all to a single volume), to reclassify them correctly on model
-surfaces, curves, etc.
+Get the types of elements in the entity of dimension `dim` and tag `tag`. If
+`tag` < 0, get the types for all entities of dimension `dim`. If `dim` and `tag`
+are negative, get all the types in the mesh.
+
+Return `elementTypes`.
 """
-function reclassifyNodes()
+function getElementTypes(dim = -1, tag = -1)
+    api_elementTypes_ = Ref{Ptr{Cint}}()
+    api_elementTypes_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshReclassifyNodes, gmsh.clib), Void,
-          (Ptr{Cint},),
-          ierr)
-    ierr[] != 0 && error("gmshModelMeshReclassifyNodes returned non-zero error code: $(ierr[])")
+    ccall((:gmshModelMeshGetElementTypes, gmsh.lib), Void,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          api_elementTypes_, api_elementTypes_n_, dim, tag, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetElementTypes returned non-zero error code: $(ierr[])")
+    elementTypes = unsafe_wrap(Array, api_elementTypes_[], api_elementTypes_n_[], true)
+    return elementTypes
+end
+
+"""
+    gmsh.model.mesh.getElementProperties(elementType)
+
+Get the properties of an element of type `elementType`: its name
+(`elementName`), dimension (`dim`), order (`order`), number of nodes
+(`numNodes`) and parametric node coordinates (`parametricCoord` vector, of
+length `dim` times `numNodes`).
+
+Return `elementName`, `dim`, `order`, `numNodes`, `parametricCoord`.
+"""
+function getElementProperties(elementType)
+    api_elementName_ = Ref{Ptr{Cchar}}()
+    api_dim_ = Ref{Cint}()
+    api_order_ = Ref{Cint}()
+    api_numNodes_ = Ref{Cint}()
+    api_parametricCoord_ = Ref{Ptr{Cdouble}}()
+    api_parametricCoord_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetElementProperties, gmsh.lib), Void,
+          (Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}, Ptr{Cint}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          elementType, api_elementName_, api_dim_, api_order_, api_numNodes_, api_parametricCoord_, api_parametricCoord_n_, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetElementProperties returned non-zero error code: $(ierr[])")
+    elementName = unsafe_string(api_elementName_[])
+    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], true)
+    return elementName, api_dim_[], api_order_[], api_numNodes_[], parametricCoord
+end
+
+"""
+    gmsh.model.mesh.getElementsByType(elementType, tag = -1, task = 0, numTasks = 1)
+
+Get the elements of type `elementType` classified on the entity of of tag `tag`.
+If `tag` < 0, get the elements for all entities. `elementTags` is a vector
+containing the tags (unique, strictly positive identifiers) of the elements of
+the corresponding type. `nodeTags` is a vector of length equal to the number of
+elements of the given type times the number of nodes for this type of element,
+that contains the node tags of all the elements of the given type, concatenated.
+If `numTasks` > 1, only compute and return the part of the data indexed by
+`task`.
+
+Return `elementTags`, `nodeTags`.
+"""
+function getElementsByType(elementType, tag = -1, task = 0, numTasks = 1)
+    api_elementTags_ = Ref{Ptr{Cint}}()
+    api_elementTags_n_ = Ref{Csize_t}()
+    api_nodeTags_ = Ref{Ptr{Cint}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetElementsByType, gmsh.lib), Void,
+          (Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, tag, task, numTasks, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetElementsByType returned non-zero error code: $(ierr[])")
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
+    return elementTags, nodeTags
+end
+
+"""
+    gmsh.model.mesh.preallocateElementsByType(elementType, elementTag, nodeTag, tag = -1)
+
+Preallocate the data for `getElementsByType`. This is necessary only if
+`getElementsByType` is called with `numTasks` > 1.
+
+Return `elementTags`, `nodeTags`.
+"""
+function preallocateElementsByType(elementType, elementTag, nodeTag, tag = -1)
+    api_elementTags_ = Ref{Ptr{Cint}}()
+    api_elementTags_n_ = Ref{Csize_t}()
+    api_nodeTags_ = Ref{Ptr{Cint}}()
+    api_nodeTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshPreallocateElementsByType, gmsh.lib), Void,
+          (Cint, Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          elementType, elementTag, nodeTag, api_elementTags_, api_elementTags_n_, api_nodeTags_, api_nodeTags_n_, tag, ierr)
+    ierr[] != 0 && error("gmshModelMeshPreallocateElementsByType returned non-zero error code: $(ierr[])")
+    elementTags = unsafe_wrap(Array, api_elementTags_[], api_elementTags_n_[], true)
+    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
+    return elementTags, nodeTags
+end
+
+"""
+    gmsh.model.mesh.getJacobians(elementType, integrationType, tag = -1, task = 0, numTasks = 1)
+
+Get the Jacobians of all the elements of type `elementType` classified on the
+entity of dimension `dim` and tag `tag`, at the integration points required by
+the `integrationType` integration rule (e.g. "Gauss4"). Data is returned by
+element, with elements in the same order as in `getElements` and
+`getElementsByType`. `jacobians` contains for each element the 9 entries of a
+3x3 Jacobian matrix (by row), for each integration point. `determinants`
+contains for each element the determinant of the Jacobian matrix for each
+integration point. `points` contains for each element the (x, y, z) coordinates
+of the integration points. If `tag` < 0, get the Jacobian data for all entities.
+If `numTasks` > 1, only compute and return the part of the data indexed by
+`task`.
+
+Return `jacobians`, `determinants`, `points`.
+"""
+function getJacobians(elementType, integrationType, tag = -1, task = 0, numTasks = 1)
+    api_jacobians_ = Ref{Ptr{Cdouble}}()
+    api_jacobians_n_ = Ref{Csize_t}()
+    api_determinants_ = Ref{Ptr{Cdouble}}()
+    api_determinants_n_ = Ref{Csize_t}()
+    api_points_ = Ref{Ptr{Cdouble}}()
+    api_points_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetJacobians, gmsh.lib), Void,
+          (Cint, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, integrationType, api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, api_points_, api_points_n_, tag, task, numTasks, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetJacobians returned non-zero error code: $(ierr[])")
+    jacobians = unsafe_wrap(Array, api_jacobians_[], api_jacobians_n_[], true)
+    determinants = unsafe_wrap(Array, api_determinants_[], api_determinants_n_[], true)
+    points = unsafe_wrap(Array, api_points_[], api_points_n_[], true)
+    return jacobians, determinants, points
+end
+
+"""
+    gmsh.model.mesh.preallocateJacobians(elementType, integrationType, jacobian, determinant, point, tag = -1)
+
+Preallocate the data required by `getJacobians`. This is necessary only if
+`getJacobians` is called with `numTasks` > 1.
+
+Return `jacobians`, `determinants`, `points`.
+"""
+function preallocateJacobians(elementType, integrationType, jacobian, determinant, point, tag = -1)
+    api_jacobians_ = Ref{Ptr{Cdouble}}()
+    api_jacobians_n_ = Ref{Csize_t}()
+    api_determinants_ = Ref{Ptr{Cdouble}}()
+    api_determinants_n_ = Ref{Csize_t}()
+    api_points_ = Ref{Ptr{Cdouble}}()
+    api_points_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshPreallocateJacobians, gmsh.lib), Void,
+          (Cint, Ptr{Cchar}, Cint, Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          elementType, integrationType, jacobian, determinant, point, api_jacobians_, api_jacobians_n_, api_determinants_, api_determinants_n_, api_points_, api_points_n_, tag, ierr)
+    ierr[] != 0 && error("gmshModelMeshPreallocateJacobians returned non-zero error code: $(ierr[])")
+    jacobians = unsafe_wrap(Array, api_jacobians_[], api_jacobians_n_[], true)
+    determinants = unsafe_wrap(Array, api_determinants_[], api_determinants_n_[], true)
+    points = unsafe_wrap(Array, api_points_[], api_points_n_[], true)
+    return jacobians, determinants, points
+end
+
+"""
+    gmsh.model.mesh.getBasisFunctions(elementType, integrationType, functionSpaceType)
+
+Get the basis functions of the element of type `elementType` for the given
+`integrationType` integration rule (e.g. "Gauss4") and `functionSpaceType`
+function space (e.g. "IsoParametric"). `integrationPoints` contains the
+parametric coordinates (u, v, w) and the weight for each integeration point,
+concatenated. `numComponents` returns the number of components of a basis
+function. `basisFunctions` contains the evaluation of the basis functions at the
+integration points.
+
+Return `integrationPoints`, `numComponents`, `basisFunctions`.
+"""
+function getBasisFunctions(elementType, integrationType, functionSpaceType)
+    api_integrationPoints_ = Ref{Ptr{Cdouble}}()
+    api_integrationPoints_n_ = Ref{Csize_t}()
+    api_numComponents_ = Ref{Cint}()
+    api_basisFunctions_ = Ref{Ptr{Cdouble}}()
+    api_basisFunctions_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGetBasisFunctions, gmsh.lib), Void,
+          (Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          elementType, integrationType, functionSpaceType, api_integrationPoints_, api_integrationPoints_n_, api_numComponents_, api_basisFunctions_, api_basisFunctions_n_, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetBasisFunctions returned non-zero error code: $(ierr[])")
+    integrationPoints = unsafe_wrap(Array, api_integrationPoints_[], api_integrationPoints_n_[], true)
+    basisFunctions = unsafe_wrap(Array, api_basisFunctions_[], api_basisFunctions_n_[], true)
+    return integrationPoints, api_numComponents_[], basisFunctions
+end
+
+"""
+    gmsh.model.mesh.precomputeBasisFunctions(elementType)
+
+Precomputes the basis functions corresponding to `elementType`.
+"""
+function precomputeBasisFunctions(elementType)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshPrecomputeBasisFunctions, gmsh.lib), Void,
+          (Cint, Ptr{Cint}),
+          elementType, ierr)
+    ierr[] != 0 && error("gmshModelMeshPrecomputeBasisFunctions returned non-zero error code: $(ierr[])")
     return nothing
 end
 
 """
-    gmsh.model.mesh.getNode(nodeTag, coord, parametricCoord)
+    gmsh.model.mesh.getBarycenters(elementType, tag, fast, primary, task = 0, numTasks = 1)
 
-Get the coordinates and the parametric coordinates (if any) of the mesh node
-with tag `tag`. This is a useful by inefficient way of accessing mesh node data,
-as it relies on a cache stored in the model. For large meshes all the nodes in
-the model should be numbered in a continuous sequence of tags from 1 to N to
-maintain reasonnable performance (in this case the internal cache is based on a
-vector; otherwise it uses a map).
+Get the barycenters of all elements of type `elementType` classified on the
+entity of tag `tag`. If `primary` is set, only the primary nodes of the elements
+are taken into account for the barycenter calculation. If `fast` is set, the
+function returns the sum of the primary node coordinates (without normalizing by
+the number of nodes). If `numTasks` > 1, only compute and return the part of the
+data indexed by `task`.
 
-Return 'coord', 'parametricCoord'.
+Return `barycenters`.
 """
-function getNode(nodeTag)
-    api_coord_ = Ref{Ptr{Cdouble}}()
-    api_coord_n_ = Ref{Csize_t}()
-    api_parametricCoord_ = Ref{Ptr{Cdouble}}()
-    api_parametricCoord_n_ = Ref{Csize_t}()
+function getBarycenters(elementType, tag, fast, primary, task = 0, numTasks = 1)
+    api_barycenters_ = Ref{Ptr{Cdouble}}()
+    api_barycenters_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetNode, gmsh.clib), Void,
-          (Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          nodeTag, api_coord_, api_coord_n_, api_parametricCoord_, api_parametricCoord_n_, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetNode returned non-zero error code: $(ierr[])")
-    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], true)
-    parametricCoord = unsafe_wrap(Array, api_parametricCoord_[], api_parametricCoord_n_[], true)
-    return coord, parametricCoord
+    ccall((:gmshModelMeshGetBarycenters, gmsh.lib), Void,
+          (Cint, Cint, Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Csize_t, Csize_t, Ptr{Cint}),
+          elementType, tag, fast, primary, api_barycenters_, api_barycenters_n_, task, numTasks, ierr)
+    ierr[] != 0 && error("gmshModelMeshGetBarycenters returned non-zero error code: $(ierr[])")
+    barycenters = unsafe_wrap(Array, api_barycenters_[], api_barycenters_n_[], true)
+    return barycenters
 end
 
 """
-    gmsh.model.mesh.getElement(elementTag, elementType, nodeTags)
+    gmsh.model.mesh.preallocateBarycenters(elementType, tag = -1)
 
-Get the type and node tags of the mesh element with tag `tag`. This is a useful
-but inefficient way of accessing mesh element data, as it relies on a cache
-stored in the model. For large meshes all the elements in the model should be
-numbered in a continuous sequence of tags from 1 to N to maintain reasonnable
-performance (in this case the internal cache is based on a vector; otherwise it
-uses a map).
+Preallocate the data required by `getBarycenters`. This is necessary only if
+`getBarycenters` is called with `numTasks` > 1.
 
-Return 'elementType', 'nodeTags'.
+Return `barycenters`.
 """
-function getElement(elementTag)
-    api_elementType_ = Ref{Cint}()
-    api_nodeTags_ = Ref{Ptr{Cint}}()
-    api_nodeTags_n_ = Ref{Csize_t}()
+function preallocateBarycenters(elementType, tag = -1)
+    api_barycenters_ = Ref{Ptr{Cdouble}}()
+    api_barycenters_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetElement, gmsh.clib), Void,
-          (Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          elementTag, api_elementType_, api_nodeTags_, api_nodeTags_n_, ierr)
-    ierr[] != 0 && error("gmshModelMeshGetElement returned non-zero error code: $(ierr[])")
-    nodeTags = unsafe_wrap(Array, api_nodeTags_[], api_nodeTags_n_[], true)
-    return api_elementType_[], nodeTags
+    ccall((:gmshModelMeshPreallocateBarycenters, gmsh.lib), Void,
+          (Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          elementType, api_barycenters_, api_barycenters_n_, tag, ierr)
+    ierr[] != 0 && error("gmshModelMeshPreallocateBarycenters returned non-zero error code: $(ierr[])")
+    barycenters = unsafe_wrap(Array, api_barycenters_[], api_barycenters_n_[], true)
+    return barycenters
 end
 
 """
@@ -996,9 +1170,9 @@ entities of dimension 0 (points) are handled.
 """
 function setSize(dimTags, size)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetSize, gmsh.clib), Void,
+    ccall((:gmshModelMeshSetSize, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), size, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), size, ierr)
     ierr[] != 0 && error("gmshModelMeshSetSize returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -1006,14 +1180,14 @@ end
 """
     gmsh.model.mesh.setTransfiniteCurve(tag, numNodes, meshType = "Progression", coef = 1.)
 
-Set a transfinite meshing constraint on the curve `tag`, with `numNodes` mesh
-nodes distributed according to `meshType` and `coef`. Currently supported types
-are "Progression" (geometrical progression with power `coef`) and "Bump"
-(refinement toward both extremities of the curve).
+Set a transfinite meshing constraint on the curve `tag`, with `numNodes` nodes
+distributed according to `meshType` and `coef`. Currently supported types are
+"Progression" (geometrical progression with power `coef`) and "Bump" (refinement
+toward both extremities of the curve).
 """
 function setTransfiniteCurve(tag, numNodes, meshType = "Progression", coef = 1.)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetTransfiniteCurve, gmsh.clib), Void,
+    ccall((:gmshModelMeshSetTransfiniteCurve, gmsh.lib), Void,
           (Cint, Cint, Ptr{Cchar}, Cdouble, Ptr{Cint}),
           tag, numNodes, meshType, coef, ierr)
     ierr[] != 0 && error("gmshModelMeshSetTransfiniteCurve returned non-zero error code: $(ierr[])")
@@ -1021,7 +1195,7 @@ function setTransfiniteCurve(tag, numNodes, meshType = "Progression", coef = 1.)
 end
 
 """
-    gmsh.model.mesh.setTransfiniteSurface(tag, arrangement = "Left", cornerTags = [])
+    gmsh.model.mesh.setTransfiniteSurface(tag, arrangement = "Left", cornerTags = Cint[])
 
 Set a transfinite meshing constraint on the surface `tag`. `arrangement`
 describes the arrangement of the triangles when the surface is not flagged as
@@ -1030,9 +1204,9 @@ recombined: currently supported values are "Left", "Right", "AlternateLeft" and
 the transfinite interpolation explicitly; specifying the corners explicitly is
 mandatory if the surface has more that 3 or 4 points on its boundary.
 """
-function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = [])
+function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = Cint[])
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetTransfiniteSurface, gmsh.clib), Void,
+    ccall((:gmshModelMeshSetTransfiniteSurface, gmsh.lib), Void,
           (Cint, Ptr{Cchar}, Ptr{Cint}, Csize_t, Ptr{Cint}),
           tag, arrangement, convert(Vector{Cint}, cornerTags), length(cornerTags), ierr)
     ierr[] != 0 && error("gmshModelMeshSetTransfiniteSurface returned non-zero error code: $(ierr[])")
@@ -1040,15 +1214,15 @@ function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = [])
 end
 
 """
-    gmsh.model.mesh.setTransfiniteVolume(tag, cornerTags = [])
+    gmsh.model.mesh.setTransfiniteVolume(tag, cornerTags = Cint[])
 
 Set a transfinite meshing constraint on the surface `tag`. `cornerTags` can be
 used to specify the (6 or 8) corners of the transfinite interpolation
 explicitly.
 """
-function setTransfiniteVolume(tag, cornerTags = [])
+function setTransfiniteVolume(tag, cornerTags = Cint[])
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetTransfiniteVolume, gmsh.clib), Void,
+    ccall((:gmshModelMeshSetTransfiniteVolume, gmsh.lib), Void,
           (Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
           tag, convert(Vector{Cint}, cornerTags), length(cornerTags), ierr)
     ierr[] != 0 && error("gmshModelMeshSetTransfiniteVolume returned non-zero error code: $(ierr[])")
@@ -1064,7 +1238,7 @@ triangles into quadrangles) are supported.
 """
 function setRecombine(dim, tag)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetRecombine, gmsh.clib), Void,
+    ccall((:gmshModelMeshSetRecombine, gmsh.lib), Void,
           (Cint, Cint, Ptr{Cint}),
           dim, tag, ierr)
     ierr[] != 0 && error("gmshModelMeshSetRecombine returned non-zero error code: $(ierr[])")
@@ -1079,7 +1253,7 @@ and tag `tag`. `val` iterations of a Laplace smoother are applied.
 """
 function setSmoothing(dim, tag, val)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetSmoothing, gmsh.clib), Void,
+    ccall((:gmshModelMeshSetSmoothing, gmsh.lib), Void,
           (Cint, Cint, Cint, Ptr{Cint}),
           dim, tag, val, ierr)
     ierr[] != 0 && error("gmshModelMeshSetSmoothing returned non-zero error code: $(ierr[])")
@@ -1097,7 +1271,7 @@ as-is.
 """
 function setReverse(dim, tag, val = true)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetReverse, gmsh.clib), Void,
+    ccall((:gmshModelMeshSetReverse, gmsh.lib), Void,
           (Cint, Cint, Cint, Ptr{Cint}),
           dim, tag, val, ierr)
     ierr[] != 0 && error("gmshModelMeshSetReverse returned non-zero error code: $(ierr[])")
@@ -1113,7 +1287,7 @@ available with the OpenCASCADE kernel, as it relies on the STL triangulation.
 """
 function setOutwardOrientation(tag)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetOutwardOrientation, gmsh.clib), Void,
+    ccall((:gmshModelMeshSetOutwardOrientation, gmsh.lib), Void,
           (Cint, Ptr{Cint}),
           tag, ierr)
     ierr[] != 0 && error("gmshModelMeshSetOutwardOrientation returned non-zero error code: $(ierr[])")
@@ -1128,7 +1302,7 @@ inTag) geometrical entity. `inDim` must be strictly greater than `dim`.
 """
 function embed(dim, tags, inDim, inTag)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshEmbed, gmsh.clib), Void,
+    ccall((:gmshModelMeshEmbed, gmsh.lib), Void,
           (Cint, Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}),
           dim, convert(Vector{Cint}, tags), length(tags), inDim, inTag, ierr)
     ierr[] != 0 && error("gmshModelMeshEmbed returned non-zero error code: $(ierr[])")
@@ -1136,29 +1310,72 @@ function embed(dim, tags, inDim, inTag)
 end
 
 """
-    gmsh.model.mesh.setPeriodic(dim, tags, tagsMaster, affineTransformation)
+    gmsh.model.mesh.reorderElements(elementType, tag, ordering)
+
+Reorder the elements of type `elementType` classified on the entity of tag `tag`
+according to `ordering`.
+"""
+function reorderElements(elementType, tag, ordering)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshReorderElements, gmsh.lib), Void,
+          (Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          elementType, tag, convert(Vector{Cint}, ordering), length(ordering), ierr)
+    ierr[] != 0 && error("gmshModelMeshReorderElements returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.renumberNodes()
+
+Renumber the nodes tags in a contiunous sequence.
+"""
+function renumberNodes()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRenumberNodes, gmsh.lib), Void,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshModelMeshRenumberNodes returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.renumberElements()
+
+Renumber the elements tags in a contiunous sequence.
+"""
+function renumberElements()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRenumberElements, gmsh.lib), Void,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshModelMeshRenumberElements returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.setPeriodic(dim, tags, tagsSource, affineTransformation)
 
 Set the meshes of the entities of dimension `dim` and tag `tags` as periodic
-copies of the meshes of entities `tagsMaster`, using the affine transformation
+copies of the meshes of entities `tagsSource`, using the affine transformation
 specified in `affineTransformation` (16 entries of a 4x4 matrix, by row).
 Currently only available for `dim` == 1 and `dim` == 2.
 """
-function setPeriodic(dim, tags, tagsMaster, affineTransformation)
+function setPeriodic(dim, tags, tagsSource, affineTransformation)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshSetPeriodic, gmsh.clib), Void,
+    ccall((:gmshModelMeshSetPeriodic, gmsh.lib), Void,
           (Cint, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          dim, convert(Vector{Cint}, tags), length(tags), convert(Vector{Cint}, tagsMaster), length(tagsMaster), affineTransformation, length(affineTransformation), ierr)
+          dim, convert(Vector{Cint}, tags), length(tags), convert(Vector{Cint}, tagsSource), length(tagsSource), affineTransformation, length(affineTransformation), ierr)
     ierr[] != 0 && error("gmshModelMeshSetPeriodic returned non-zero error code: $(ierr[])")
     return nothing
 end
 
 """
-    gmsh.model.mesh.getPeriodicNodes(dim, tag, tagMaster, nodes, affineTransform)
+    gmsh.model.mesh.getPeriodicNodes(dim, tag)
 
 Get the master entity, periodic node pairs and affine transform for the entity
 of dimension `dim` and tag `tag`.
 
-Return 'tagMaster', 'nodes', 'affineTransform'.
+Return `tagMaster`, `nodes`, `affineTransform`.
 """
 function getPeriodicNodes(dim, tag)
     api_tagMaster_ = Ref{Cint}()
@@ -1167,7 +1384,7 @@ function getPeriodicNodes(dim, tag)
     api_affineTransform_ = Ref{Ptr{Cdouble}}()
     api_affineTransform_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGetPeriodicNodes, gmsh.clib), Void,
+    ccall((:gmshModelMeshGetPeriodicNodes, gmsh.lib), Void,
           (Cint, Cint, Ptr{Cint}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
           dim, tag, api_tagMaster_, api_nodes_, api_nodes_n_, api_affineTransform_, api_affineTransform_n_, ierr)
     ierr[] != 0 && error("gmshModelMeshGetPeriodicNodes returned non-zero error code: $(ierr[])")
@@ -1175,6 +1392,62 @@ function getPeriodicNodes(dim, tag)
     nodes = [ (tmp_api_nodes_[i], tmp_api_nodes_[i+1]) for i in 1:2:length(tmp_api_nodes_) ]
     affineTransform = unsafe_wrap(Array, api_affineTransform_[], api_affineTransform_n_[], true)
     return api_tagMaster_[], nodes, affineTransform
+end
+
+"""
+    gmsh.model.mesh.removeDuplicateNodes()
+
+Remove duplicate nodes in the mesh of the current model.
+"""
+function removeDuplicateNodes()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRemoveDuplicateNodes, gmsh.lib), Void,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error("gmshModelMeshRemoveDuplicateNodes returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.homology(domainTags = Cint[], subdomainTags = Cint[], dims = Cint[])
+
+Compute a basis representation for homology spaces after a mesh has been
+generated. The computation domain is given in a list of physical group tags
+`domainTags`; if empty, the whole mesh is the domain. The computation subdomain
+for relative homology computation is given in a list of physical group tags
+`subdomainTags`; if empty, absolute homology is computed. The dimensions
+homology bases to be computed are given in the list `dim`; if empty, all bases
+are computed. Resulting basis representation chains are stored as physical
+groups in the mesh.
+"""
+function homology(domainTags = Cint[], subdomainTags = Cint[], dims = Cint[])
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshHomology, gmsh.lib), Void,
+          (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          convert(Vector{Cint}, domainTags), length(domainTags), convert(Vector{Cint}, subdomainTags), length(subdomainTags), convert(Vector{Cint}, dims), length(dims), ierr)
+    ierr[] != 0 && error("gmshModelMeshHomology returned non-zero error code: $(ierr[])")
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.cohomology(domainTags = Cint[], subdomainTags = Cint[], dims = Cint[])
+
+Compute a basis representation for cohomology spaces after a mesh has been
+generated. The computation domain is given in a list of physical group tags
+`domainTags`; if empty, the whole mesh is the domain. The computation subdomain
+for relative cohomology computation is given in a list of physical group tags
+`subdomainTags`; if empty, absolute cohomology is computed. The dimensions
+homology bases to be computed are given in the list `dim`; if empty, all bases
+are computed. Resulting basis representation cochains are stored as physical
+groups in the mesh.
+"""
+function cohomology(domainTags = Cint[], subdomainTags = Cint[], dims = Cint[])
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshCohomology, gmsh.lib), Void,
+          (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          convert(Vector{Cint}, domainTags), length(domainTags), convert(Vector{Cint}, subdomainTags), length(subdomainTags), convert(Vector{Cint}, dims), length(dims), ierr)
+    ierr[] != 0 && error("gmshModelMeshCohomology returned non-zero error code: $(ierr[])")
+    return nothing
 end
 
 """
@@ -1197,7 +1470,7 @@ Return an integer.
 """
 function add(fieldType, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelMeshFieldAdd, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelMeshFieldAdd, gmsh.lib), Cint,
           (Ptr{Cchar}, Cint, Ptr{Cint}),
           fieldType, tag, ierr)
     ierr[] != 0 && error("gmshModelMeshFieldAdd returned non-zero error code: $(ierr[])")
@@ -1211,7 +1484,7 @@ Remove the field with tag `tag`.
 """
 function remove(tag)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshFieldRemove, gmsh.clib), Void,
+    ccall((:gmshModelMeshFieldRemove, gmsh.lib), Void,
           (Cint, Ptr{Cint}),
           tag, ierr)
     ierr[] != 0 && error("gmshModelMeshFieldRemove returned non-zero error code: $(ierr[])")
@@ -1225,7 +1498,7 @@ Set the numerical option `option` to value `value` for field `tag`.
 """
 function setNumber(tag, option, value)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshFieldSetNumber, gmsh.clib), Void,
+    ccall((:gmshModelMeshFieldSetNumber, gmsh.lib), Void,
           (Cint, Ptr{Cchar}, Cdouble, Ptr{Cint}),
           tag, option, value, ierr)
     ierr[] != 0 && error("gmshModelMeshFieldSetNumber returned non-zero error code: $(ierr[])")
@@ -1239,7 +1512,7 @@ Set the string option `option` to value `value` for field `tag`.
 """
 function setString(tag, option, value)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshFieldSetString, gmsh.clib), Void,
+    ccall((:gmshModelMeshFieldSetString, gmsh.lib), Void,
           (Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Cint}),
           tag, option, value, ierr)
     ierr[] != 0 && error("gmshModelMeshFieldSetString returned non-zero error code: $(ierr[])")
@@ -1253,7 +1526,7 @@ Set the numerical list option `option` to value `value` for field `tag`.
 """
 function setNumbers(tag, option, value)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshFieldSetNumbers, gmsh.clib), Void,
+    ccall((:gmshModelMeshFieldSetNumbers, gmsh.lib), Void,
           (Cint, Ptr{Cchar}, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
           tag, option, value, length(value), ierr)
     ierr[] != 0 && error("gmshModelMeshFieldSetNumbers returned non-zero error code: $(ierr[])")
@@ -1267,7 +1540,7 @@ Set the field `tag` as the background mesh size field.
 """
 function setAsBackgroundMesh(tag)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshFieldSetAsBackgroundMesh, gmsh.clib), Void,
+    ccall((:gmshModelMeshFieldSetAsBackgroundMesh, gmsh.lib), Void,
           (Cint, Ptr{Cint}),
           tag, ierr)
     ierr[] != 0 && error("gmshModelMeshFieldSetAsBackgroundMesh returned non-zero error code: $(ierr[])")
@@ -1281,7 +1554,7 @@ Set the field `tag` as a boundary layer size field.
 """
 function setAsBoundaryLayer(tag)
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshFieldSetAsBoundaryLayer, gmsh.clib), Void,
+    ccall((:gmshModelMeshFieldSetAsBoundaryLayer, gmsh.lib), Void,
           (Cint, Ptr{Cint}),
           tag, ierr)
     ierr[] != 0 && error("gmshModelMeshFieldSetAsBoundaryLayer returned non-zero error code: $(ierr[])")
@@ -1315,7 +1588,7 @@ Return an integer.
 """
 function addPoint(x, y, z, meshSize = 0., tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelGeoAddPoint, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelGeoAddPoint, gmsh.lib), Cint,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cint, Ptr{Cint}),
           x, y, z, meshSize, tag, ierr)
     ierr[] != 0 && error("gmshModelGeoAddPoint returned non-zero error code: $(ierr[])")
@@ -1333,7 +1606,7 @@ Return an integer.
 """
 function addLine(startTag, endTag, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelGeoAddLine, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelGeoAddLine, gmsh.lib), Cint,
           (Cint, Cint, Cint, Ptr{Cint}),
           startTag, endTag, tag, ierr)
     ierr[] != 0 && error("gmshModelGeoAddLine returned non-zero error code: $(ierr[])")
@@ -1353,7 +1626,7 @@ Return an integer.
 """
 function addCircleArc(startTag, centerTag, endTag, tag = -1, nx = 0., ny = 0., nz = 0.)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelGeoAddCircleArc, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelGeoAddCircleArc, gmsh.lib), Cint,
           (Cint, Cint, Cint, Cint, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
           startTag, centerTag, endTag, tag, nx, ny, nz, ierr)
     ierr[] != 0 && error("gmshModelGeoAddCircleArc returned non-zero error code: $(ierr[])")
@@ -1373,7 +1646,7 @@ Return an integer.
 """
 function addEllipseArc(startTag, centerTag, majorTag, endTag, tag = -1, nx = 0., ny = 0., nz = 0.)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelGeoAddEllipseArc, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelGeoAddEllipseArc, gmsh.lib), Cint,
           (Cint, Cint, Cint, Cint, Cint, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
           startTag, centerTag, majorTag, endTag, tag, nx, ny, nz, ierr)
     ierr[] != 0 && error("gmshModelGeoAddEllipseArc returned non-zero error code: $(ierr[])")
@@ -1392,7 +1665,7 @@ Return an integer.
 """
 function addSpline(pointTags, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelGeoAddSpline, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelGeoAddSpline, gmsh.lib), Cint,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
           convert(Vector{Cint}, pointTags), length(pointTags), tag, ierr)
     ierr[] != 0 && error("gmshModelGeoAddSpline returned non-zero error code: $(ierr[])")
@@ -1402,16 +1675,16 @@ end
 """
     gmsh.model.geo.addBSpline(pointTags, tag = -1)
 
-Adds a cubic b-spline curve with `pointTags` control points. If `tag` is
-positive, sets the tag explicitly; otherwise a new tag is selected
-automatically. Creates a periodic curve if the first and last points are the
-same. Return the tag of the b-spline curve.
+Add a cubic b-spline curve with `pointTags` control points. If `tag` is
+positive, set the tag explicitly; otherwise a new tag is selected automatically.
+Creates a periodic curve if the first and last points are the same. Return the
+tag of the b-spline curve.
 
 Return an integer.
 """
 function addBSpline(pointTags, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelGeoAddBSpline, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelGeoAddBSpline, gmsh.lib), Cint,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
           convert(Vector{Cint}, pointTags), length(pointTags), tag, ierr)
     ierr[] != 0 && error("gmshModelGeoAddBSpline returned non-zero error code: $(ierr[])")
@@ -1429,7 +1702,7 @@ Return an integer.
 """
 function addBezier(pointTags, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelGeoAddBezier, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelGeoAddBezier, gmsh.lib), Cint,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
           convert(Vector{Cint}, pointTags), length(pointTags), tag, ierr)
     ierr[] != 0 && error("gmshModelGeoAddBezier returned non-zero error code: $(ierr[])")
@@ -1449,7 +1722,7 @@ Return an integer.
 """
 function addCurveLoop(curveTags, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelGeoAddCurveLoop, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelGeoAddCurveLoop, gmsh.lib), Cint,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
           convert(Vector{Cint}, curveTags), length(curveTags), tag, ierr)
     ierr[] != 0 && error("gmshModelGeoAddCurveLoop returned non-zero error code: $(ierr[])")
@@ -1468,7 +1741,7 @@ Return an integer.
 """
 function addPlaneSurface(wireTags, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelGeoAddPlaneSurface, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelGeoAddPlaneSurface, gmsh.lib), Cint,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
           convert(Vector{Cint}, wireTags), length(wireTags), tag, ierr)
     ierr[] != 0 && error("gmshModelGeoAddPlaneSurface returned non-zero error code: $(ierr[])")
@@ -1487,7 +1760,7 @@ Return an integer.
 """
 function addSurfaceFilling(wireTags, tag = -1, sphereCenterTag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelGeoAddSurfaceFilling, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelGeoAddSurfaceFilling, gmsh.lib), Cint,
           (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}),
           convert(Vector{Cint}, wireTags), length(wireTags), tag, sphereCenterTag, ierr)
     ierr[] != 0 && error("gmshModelGeoAddSurfaceFilling returned non-zero error code: $(ierr[])")
@@ -1505,7 +1778,7 @@ Return an integer.
 """
 function addSurfaceLoop(surfaceTags, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelGeoAddSurfaceLoop, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelGeoAddSurfaceLoop, gmsh.lib), Cint,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
           convert(Vector{Cint}, surfaceTags), length(surfaceTags), tag, ierr)
     ierr[] != 0 && error("gmshModelGeoAddSurfaceLoop returned non-zero error code: $(ierr[])")
@@ -1524,7 +1797,7 @@ Return an integer.
 """
 function addVolume(shellTags, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelGeoAddVolume, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelGeoAddVolume, gmsh.lib), Cint,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
           convert(Vector{Cint}, shellTags), length(shellTags), tag, ierr)
     ierr[] != 0 && error("gmshModelGeoAddVolume returned non-zero error code: $(ierr[])")
@@ -1532,7 +1805,7 @@ function addVolume(shellTags, tag = -1)
 end
 
 """
-    gmsh.model.geo.extrude(dimTags, dx, dy, dz, outDimTags, numElements = [], heights = [], recombine = false)
+    gmsh.model.geo.extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[], recombine = false)
 
 Extrude the geometrical entities `dimTags` by translation along (`dx`, `dy`,
 `dz`). Return extruded entities in `outDimTags`. If `numElements` is not empty,
@@ -1540,15 +1813,15 @@ also extrude the mesh: the entries in `numElements` give the number of elements
 in each layer. If `height` is not empty, it provides the (cummulative) height of
 the different layers, normalized to 1.
 
-Return 'outDimTags'.
+Return `outDimTags`.
 """
-function extrude(dimTags, dx, dy, dz, numElements = [], heights = [], recombine = false)
+function extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[], recombine = false)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelGeoExtrude, gmsh.clib), Void,
+    ccall((:gmshModelGeoExtrude, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
     ierr[] != 0 && error("gmshModelGeoExtrude returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -1556,7 +1829,7 @@ function extrude(dimTags, dx, dy, dz, numElements = [], heights = [], recombine 
 end
 
 """
-    gmsh.model.geo.revolve(dimTags, x, y, z, ax, ay, az, angle, outDimTags, numElements = [], heights = [], recombine = false)
+    gmsh.model.geo.revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
 
 Extrude the geometrical entities `dimTags` by rotation of `angle` radians around
 the axis of revolution defined by the point (`x`, `y`, `z`) and the direction
@@ -1565,15 +1838,15 @@ is not empty, also extrude the mesh: the entries in `numElements` give the
 number of elements in each layer. If `height` is not empty, it provides the
 (cummulative) height of the different layers, normalized to 1.
 
-Return 'outDimTags'.
+Return `outDimTags`.
 """
-function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = [], heights = [], recombine = false)
+function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelGeoRevolve, gmsh.clib), Void,
+    ccall((:gmshModelGeoRevolve, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
     ierr[] != 0 && error("gmshModelGeoRevolve returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -1581,7 +1854,7 @@ function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = [], heights 
 end
 
 """
-    gmsh.model.geo.twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, outDimTags, numElements = [], heights = [], recombine = false)
+    gmsh.model.geo.twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
 
 Extrude the geometrical entities `dimTags` by a combined translation and
 rotation of `angle` radians, along (`dx`, `dy`, `dz`) and around the axis of
@@ -1591,15 +1864,15 @@ also extrude the mesh: the entries in `numElements` give the number of elements
 in each layer. If `height` is not empty, it provides the (cummulative) height of
 the different layers, normalized to 1.
 
-Return 'outDimTags'.
+Return `outDimTags`.
 """
-function twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements = [], heights = [], recombine = false)
+function twist(dimTags, x, y, z, dx, dy, dz, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelGeoTwist, gmsh.clib), Void,
+    ccall((:gmshModelGeoTwist, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, dx, dy, dz, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, dx, dy, dz, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
     ierr[] != 0 && error("gmshModelGeoTwist returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -1613,9 +1886,9 @@ Translate the geometrical entities `dimTags` along (`dx`, `dy`, `dz`).
 """
 function translate(dimTags, dx, dy, dz)
     ierr = Ref{Cint}()
-    ccall((:gmshModelGeoTranslate, gmsh.clib), Void,
+    ccall((:gmshModelGeoTranslate, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, ierr)
     ierr[] != 0 && error("gmshModelGeoTranslate returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -1629,9 +1902,9 @@ revolution defined by the point (`x`, `y`, `z`) and the direction (`ax`, `ay`,
 """
 function rotate(dimTags, x, y, z, ax, ay, az, angle)
     ierr = Ref{Cint}()
-    ccall((:gmshModelGeoRotate, gmsh.clib), Void,
+    ccall((:gmshModelGeoRotate, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, ierr)
     ierr[] != 0 && error("gmshModelGeoRotate returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -1645,9 +1918,9 @@ transformation.
 """
 function dilate(dimTags, x, y, z, a, b, c)
     ierr = Ref{Cint}()
-    ccall((:gmshModelGeoDilate, gmsh.clib), Void,
+    ccall((:gmshModelGeoDilate, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, a, b, c, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, a, b, c, ierr)
     ierr[] != 0 && error("gmshModelGeoDilate returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -1660,27 +1933,27 @@ respect to the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0.
 """
 function symmetry(dimTags, a, b, c, d)
     ierr = Ref{Cint}()
-    ccall((:gmshModelGeoSymmetry, gmsh.clib), Void,
+    ccall((:gmshModelGeoSymmetry, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), a, b, c, d, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), a, b, c, d, ierr)
     ierr[] != 0 && error("gmshModelGeoSymmetry returned non-zero error code: $(ierr[])")
     return nothing
 end
 
 """
-    gmsh.model.geo.copy(dimTags, outDimTags)
+    gmsh.model.geo.copy(dimTags)
 
 Copy the entities `dimTags`; the new entities are returned in `outDimTags`.
 
-Return 'outDimTags'.
+Return `outDimTags`.
 """
 function copy(dimTags)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelGeoCopy, gmsh.clib), Void,
+    ccall((:gmshModelGeoCopy, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), api_outDimTags_, api_outDimTags_n_, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), api_outDimTags_, api_outDimTags_n_, ierr)
     ierr[] != 0 && error("gmshModelGeoCopy returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -1695,9 +1968,9 @@ on their boundaries, down to dimension 0.
 """
 function remove(dimTags, recursive = false)
     ierr = Ref{Cint}()
-    ccall((:gmshModelGeoRemove, gmsh.clib), Void,
+    ccall((:gmshModelGeoRemove, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), recursive, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), recursive, ierr)
     ierr[] != 0 && error("gmshModelGeoRemove returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -1710,7 +1983,7 @@ location).
 """
 function removeAllDuplicates()
     ierr = Ref{Cint}()
-    ccall((:gmshModelGeoRemoveAllDuplicates, gmsh.clib), Void,
+    ccall((:gmshModelGeoRemoveAllDuplicates, gmsh.lib), Void,
           (Ptr{Cint},),
           ierr)
     ierr[] != 0 && error("gmshModelGeoRemoveAllDuplicates returned non-zero error code: $(ierr[])")
@@ -1726,7 +1999,7 @@ processing, the number of synchronization points should normally be minimized.
 """
 function synchronize()
     ierr = Ref{Cint}()
-    ccall((:gmshModelGeoSynchronize, gmsh.clib), Void,
+    ccall((:gmshModelGeoSynchronize, gmsh.lib), Void,
           (Ptr{Cint},),
           ierr)
     ierr[] != 0 && error("gmshModelGeoSynchronize returned non-zero error code: $(ierr[])")
@@ -1750,9 +2023,9 @@ entities of dimension 0 (points) are handled.
 """
 function setSize(dimTags, size)
     ierr = Ref{Cint}()
-    ccall((:gmshModelGeoMeshSetSize, gmsh.clib), Void,
+    ccall((:gmshModelGeoMeshSetSize, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), size, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), size, ierr)
     ierr[] != 0 && error("gmshModelGeoMeshSetSize returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -1760,14 +2033,14 @@ end
 """
     gmsh.model.geo.mesh.setTransfiniteCurve(tag, nPoints, meshType = "Progression", coef = 1.)
 
-Set a transfinite meshing constraint on the curve `tag`, with `numNodes` mesh
-nodes distributed according to `meshType` and `coef`. Currently supported types
-are "Progression" (geometrical progression with power `coef`) and "Bump"
-(refinement toward both extreminties of the curve).
+Set a transfinite meshing constraint on the curve `tag`, with `numNodes` nodes
+distributed according to `meshType` and `coef`. Currently supported types are
+"Progression" (geometrical progression with power `coef`) and "Bump" (refinement
+toward both extreminties of the curve).
 """
 function setTransfiniteCurve(tag, nPoints, meshType = "Progression", coef = 1.)
     ierr = Ref{Cint}()
-    ccall((:gmshModelGeoMeshSetTransfiniteCurve, gmsh.clib), Void,
+    ccall((:gmshModelGeoMeshSetTransfiniteCurve, gmsh.lib), Void,
           (Cint, Cint, Ptr{Cchar}, Cdouble, Ptr{Cint}),
           tag, nPoints, meshType, coef, ierr)
     ierr[] != 0 && error("gmshModelGeoMeshSetTransfiniteCurve returned non-zero error code: $(ierr[])")
@@ -1775,7 +2048,7 @@ function setTransfiniteCurve(tag, nPoints, meshType = "Progression", coef = 1.)
 end
 
 """
-    gmsh.model.geo.mesh.setTransfiniteSurface(tag, arrangement = "Left", cornerTags = [])
+    gmsh.model.geo.mesh.setTransfiniteSurface(tag, arrangement = "Left", cornerTags = Cint[])
 
 Set a transfinite meshing constraint on the surface `tag`. `arrangement`
 describes the arrangement of the triangles when the surface is not flagged as
@@ -1784,9 +2057,9 @@ recombined: currently supported values are "Left", "Right", "AlternateLeft" and
 the transfinite interpolation explicitly; specifying the corners explicitly is
 mandatory if the surface has more that 3 or 4 points on its boundary.
 """
-function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = [])
+function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = Cint[])
     ierr = Ref{Cint}()
-    ccall((:gmshModelGeoMeshSetTransfiniteSurface, gmsh.clib), Void,
+    ccall((:gmshModelGeoMeshSetTransfiniteSurface, gmsh.lib), Void,
           (Cint, Ptr{Cchar}, Ptr{Cint}, Csize_t, Ptr{Cint}),
           tag, arrangement, convert(Vector{Cint}, cornerTags), length(cornerTags), ierr)
     ierr[] != 0 && error("gmshModelGeoMeshSetTransfiniteSurface returned non-zero error code: $(ierr[])")
@@ -1794,15 +2067,15 @@ function setTransfiniteSurface(tag, arrangement = "Left", cornerTags = [])
 end
 
 """
-    gmsh.model.geo.mesh.setTransfiniteVolume(tag, cornerTags = [])
+    gmsh.model.geo.mesh.setTransfiniteVolume(tag, cornerTags = Cint[])
 
 Set a transfinite meshing constraint on the surface `tag`. `cornerTags` can be
 used to specify the (6 or 8) corners of the transfinite interpolation
 explicitly.
 """
-function setTransfiniteVolume(tag, cornerTags = [])
+function setTransfiniteVolume(tag, cornerTags = Cint[])
     ierr = Ref{Cint}()
-    ccall((:gmshModelGeoMeshSetTransfiniteVolume, gmsh.clib), Void,
+    ccall((:gmshModelGeoMeshSetTransfiniteVolume, gmsh.lib), Void,
           (Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
           tag, convert(Vector{Cint}, cornerTags), length(cornerTags), ierr)
     ierr[] != 0 && error("gmshModelGeoMeshSetTransfiniteVolume returned non-zero error code: $(ierr[])")
@@ -1818,7 +2091,7 @@ triangles into quadrangles) are supported.
 """
 function setRecombine(dim, tag, angle = 45.)
     ierr = Ref{Cint}()
-    ccall((:gmshModelGeoMeshSetRecombine, gmsh.clib), Void,
+    ccall((:gmshModelGeoMeshSetRecombine, gmsh.lib), Void,
           (Cint, Cint, Cdouble, Ptr{Cint}),
           dim, tag, angle, ierr)
     ierr[] != 0 && error("gmshModelGeoMeshSetRecombine returned non-zero error code: $(ierr[])")
@@ -1833,7 +2106,7 @@ and tag `tag`. `val` iterations of a Laplace smoother are applied.
 """
 function setSmoothing(dim, tag, val)
     ierr = Ref{Cint}()
-    ccall((:gmshModelGeoMeshSetSmoothing, gmsh.clib), Void,
+    ccall((:gmshModelGeoMeshSetSmoothing, gmsh.lib), Void,
           (Cint, Cint, Cint, Ptr{Cint}),
           dim, tag, val, ierr)
     ierr[] != 0 && error("gmshModelGeoMeshSetSmoothing returned non-zero error code: $(ierr[])")
@@ -1851,7 +2124,7 @@ as-is.
 """
 function setReverse(dim, tag, val = true)
     ierr = Ref{Cint}()
-    ccall((:gmshModelGeoMeshSetReverse, gmsh.clib), Void,
+    ccall((:gmshModelGeoMeshSetReverse, gmsh.lib), Void,
           (Cint, Cint, Cint, Ptr{Cint}),
           dim, tag, val, ierr)
     ierr[] != 0 && error("gmshModelGeoMeshSetReverse returned non-zero error code: $(ierr[])")
@@ -1885,7 +2158,7 @@ Return an integer.
 """
 function addPoint(x, y, z, meshSize = 0., tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddPoint, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddPoint, gmsh.lib), Cint,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cint, Ptr{Cint}),
           x, y, z, meshSize, tag, ierr)
     ierr[] != 0 && error("gmshModelOccAddPoint returned non-zero error code: $(ierr[])")
@@ -1903,7 +2176,7 @@ Return an integer.
 """
 function addLine(startTag, endTag, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddLine, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddLine, gmsh.lib), Cint,
           (Cint, Cint, Cint, Ptr{Cint}),
           startTag, endTag, tag, ierr)
     ierr[] != 0 && error("gmshModelOccAddLine returned non-zero error code: $(ierr[])")
@@ -1921,7 +2194,7 @@ Return an integer.
 """
 function addCircleArc(startTag, centerTag, endTag, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddCircleArc, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddCircleArc, gmsh.lib), Cint,
           (Cint, Cint, Cint, Cint, Ptr{Cint}),
           startTag, centerTag, endTag, tag, ierr)
     ierr[] != 0 && error("gmshModelOccAddCircleArc returned non-zero error code: $(ierr[])")
@@ -1940,7 +2213,7 @@ Return an integer.
 """
 function addCircle(x, y, z, r, tag = -1, angle1 = 0., angle2 = 2*pi)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddCircle, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddCircle, gmsh.lib), Cint,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Cdouble, Ptr{Cint}),
           x, y, z, r, tag, angle1, angle2, ierr)
     ierr[] != 0 && error("gmshModelOccAddCircle returned non-zero error code: $(ierr[])")
@@ -1958,7 +2231,7 @@ Return an integer.
 """
 function addEllipseArc(startTag, centerTag, endTag, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddEllipseArc, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddEllipseArc, gmsh.lib), Cint,
           (Cint, Cint, Cint, Cint, Ptr{Cint}),
           startTag, centerTag, endTag, tag, ierr)
     ierr[] != 0 && error("gmshModelOccAddEllipseArc returned non-zero error code: $(ierr[])")
@@ -1977,7 +2250,7 @@ Return an integer.
 """
 function addEllipse(x, y, z, r1, r2, tag = -1, angle1 = 0., angle2 = 2*pi)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddEllipse, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddEllipse, gmsh.lib), Cint,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Cdouble, Ptr{Cint}),
           x, y, z, r1, r2, tag, angle1, angle2, ierr)
     ierr[] != 0 && error("gmshModelOccAddEllipse returned non-zero error code: $(ierr[])")
@@ -1996,7 +2269,7 @@ Return an integer.
 """
 function addSpline(pointTags, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddSpline, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddSpline, gmsh.lib), Cint,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
           convert(Vector{Cint}, pointTags), length(pointTags), tag, ierr)
     ierr[] != 0 && error("gmshModelOccAddSpline returned non-zero error code: $(ierr[])")
@@ -2004,7 +2277,7 @@ function addSpline(pointTags, tag = -1)
 end
 
 """
-    gmsh.model.occ.addBSpline(pointTags, tag = -1, degree = 3, weights = [], knots = [], multiplicities = [])
+    gmsh.model.occ.addBSpline(pointTags, tag = -1, degree = 3, weights = Cdouble[], knots = Cdouble[], multiplicities = Cint[])
 
 Add a b-spline curve of degree `degree` with `pointTags` control points. If
 `weights`, `knots` or `multiplicities` are not provided, default parameters are
@@ -2014,9 +2287,9 @@ last points are the same. Return the tag of the b-spline curve.
 
 Return an integer.
 """
-function addBSpline(pointTags, tag = -1, degree = 3, weights = [], knots = [], multiplicities = [])
+function addBSpline(pointTags, tag = -1, degree = 3, weights = Cdouble[], knots = Cdouble[], multiplicities = Cint[])
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddBSpline, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddBSpline, gmsh.lib), Cint,
           (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
           convert(Vector{Cint}, pointTags), length(pointTags), tag, degree, weights, length(weights), knots, length(knots), convert(Vector{Cint}, multiplicities), length(multiplicities), ierr)
     ierr[] != 0 && error("gmshModelOccAddBSpline returned non-zero error code: $(ierr[])")
@@ -2034,7 +2307,7 @@ Return an integer.
 """
 function addBezier(pointTags, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddBezier, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddBezier, gmsh.lib), Cint,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
           convert(Vector{Cint}, pointTags), length(pointTags), tag, ierr)
     ierr[] != 0 && error("gmshModelOccAddBezier returned non-zero error code: $(ierr[])")
@@ -2054,7 +2327,7 @@ Return an integer.
 """
 function addWire(curveTags, tag = -1, checkClosed = false)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddWire, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddWire, gmsh.lib), Cint,
           (Ptr{Cint}, Csize_t, Cint, Cint, Ptr{Cint}),
           convert(Vector{Cint}, curveTags), length(curveTags), tag, checkClosed, ierr)
     ierr[] != 0 && error("gmshModelOccAddWire returned non-zero error code: $(ierr[])")
@@ -2074,7 +2347,7 @@ Return an integer.
 """
 function addCurveLoop(curveTags, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddCurveLoop, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddCurveLoop, gmsh.lib), Cint,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
           convert(Vector{Cint}, curveTags), length(curveTags), tag, ierr)
     ierr[] != 0 && error("gmshModelOccAddCurveLoop returned non-zero error code: $(ierr[])")
@@ -2093,7 +2366,7 @@ Return an integer.
 """
 function addRectangle(x, y, z, dx, dy, tag = -1, roundedRadius = 0.)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddRectangle, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddRectangle, gmsh.lib), Cint,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Ptr{Cint}),
           x, y, z, dx, dy, tag, roundedRadius, ierr)
     ierr[] != 0 && error("gmshModelOccAddRectangle returned non-zero error code: $(ierr[])")
@@ -2111,7 +2384,7 @@ Return an integer.
 """
 function addDisk(xc, yc, zc, rx, ry, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddDisk, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddDisk, gmsh.lib), Cint,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Ptr{Cint}),
           xc, yc, zc, rx, ry, tag, ierr)
     ierr[] != 0 && error("gmshModelOccAddDisk returned non-zero error code: $(ierr[])")
@@ -2130,7 +2403,7 @@ Return an integer.
 """
 function addPlaneSurface(wireTags, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddPlaneSurface, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddPlaneSurface, gmsh.lib), Cint,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
           convert(Vector{Cint}, wireTags), length(wireTags), tag, ierr)
     ierr[] != 0 && error("gmshModelOccAddPlaneSurface returned non-zero error code: $(ierr[])")
@@ -2148,7 +2421,7 @@ Return an integer.
 """
 function addSurfaceFilling(wireTag, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddSurfaceFilling, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddSurfaceFilling, gmsh.lib), Cint,
           (Cint, Cint, Ptr{Cint}),
           wireTag, tag, ierr)
     ierr[] != 0 && error("gmshModelOccAddSurfaceFilling returned non-zero error code: $(ierr[])")
@@ -2166,7 +2439,7 @@ Return an integer.
 """
 function addSurfaceLoop(surfaceTags, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddSurfaceLoop, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddSurfaceLoop, gmsh.lib), Cint,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
           convert(Vector{Cint}, surfaceTags), length(surfaceTags), tag, ierr)
     ierr[] != 0 && error("gmshModelOccAddSurfaceLoop returned non-zero error code: $(ierr[])")
@@ -2185,7 +2458,7 @@ Return an integer.
 """
 function addVolume(shellTags, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddVolume, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddVolume, gmsh.lib), Cint,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
           convert(Vector{Cint}, shellTags), length(shellTags), tag, ierr)
     ierr[] != 0 && error("gmshModelOccAddVolume returned non-zero error code: $(ierr[])")
@@ -2205,7 +2478,7 @@ Return an integer.
 """
 function addSphere(xc, yc, zc, radius, tag = -1, angle1 = -pi/2, angle2 = pi/2, angle3 = 2*pi)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddSphere, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddSphere, gmsh.lib), Cint,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
           xc, yc, zc, radius, tag, angle1, angle2, angle3, ierr)
     ierr[] != 0 && error("gmshModelOccAddSphere returned non-zero error code: $(ierr[])")
@@ -2223,7 +2496,7 @@ Return an integer.
 """
 function addBox(x, y, z, dx, dy, dz, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddBox, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddBox, gmsh.lib), Cint,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Ptr{Cint}),
           x, y, z, dx, dy, dz, tag, ierr)
     ierr[] != 0 && error("gmshModelOccAddBox returned non-zero error code: $(ierr[])")
@@ -2243,7 +2516,7 @@ Return an integer.
 """
 function addCylinder(x, y, z, dx, dy, dz, r, tag = -1, angle = 2*pi)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddCylinder, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddCylinder, gmsh.lib), Cint,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Ptr{Cint}),
           x, y, z, dx, dy, dz, r, tag, angle, ierr)
     ierr[] != 0 && error("gmshModelOccAddCylinder returned non-zero error code: $(ierr[])")
@@ -2264,7 +2537,7 @@ Return an integer.
 """
 function addCone(x, y, z, dx, dy, dz, r1, r2, tag = -1, angle = 2*pi)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddCone, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddCone, gmsh.lib), Cint,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Ptr{Cint}),
           x, y, z, dx, dy, dz, r1, r2, tag, angle, ierr)
     ierr[] != 0 && error("gmshModelOccAddCone returned non-zero error code: $(ierr[])")
@@ -2284,7 +2557,7 @@ Return an integer.
 """
 function addWedge(x, y, z, dx, dy, dz, tag = -1, ltx = 0.)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddWedge, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddWedge, gmsh.lib), Cint,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Ptr{Cint}),
           x, y, z, dx, dy, dz, tag, ltx, ierr)
     ierr[] != 0 && error("gmshModelOccAddWedge returned non-zero error code: $(ierr[])")
@@ -2295,7 +2568,7 @@ end
     gmsh.model.occ.addTorus(x, y, z, r1, r2, tag = -1, angle = 2*pi)
 
 Add a torus, defined by its center (`x`, `y`, `z`) and its 2 radii `r` and `r2`.
-If `tag` is positive, sets the tag explicitly; otherwise a new tag is selected
+If `tag` is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. The optional argument `angle` defines the angular opening (from 0
 to 2*Pi). Return the tag of the wedge.
 
@@ -2303,7 +2576,7 @@ Return an integer.
 """
 function addTorus(x, y, z, r1, r2, tag = -1, angle = 2*pi)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshModelOccAddTorus, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshModelOccAddTorus, gmsh.lib), Cint,
           (Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cint, Cdouble, Ptr{Cint}),
           x, y, z, r1, r2, tag, angle, ierr)
     ierr[] != 0 && error("gmshModelOccAddTorus returned non-zero error code: $(ierr[])")
@@ -2311,7 +2584,7 @@ function addTorus(x, y, z, r1, r2, tag = -1, angle = 2*pi)
 end
 
 """
-    gmsh.model.occ.addThruSections(wireTags, outDimTags, tag = -1, makeSolid = true, makeRuled = false)
+    gmsh.model.occ.addThruSections(wireTags, tag = -1, makeSolid = true, makeRuled = false)
 
 Add a volume (if the optional argument `makeSolid` is set) or surfaces defined
 through the open or closed wires `wireTags`. If `tag` is positive, set the tag
@@ -2319,13 +2592,13 @@ explicitly; otherwise a new tag is selected automatically. The new entities are
 returned in `outDimTags`. If the optional argument `makeRuled` is set, the
 surfaces created on the boundary are forced to be ruled surfaces.
 
-Return 'outDimTags'.
+Return `outDimTags`.
 """
 function addThruSections(wireTags, tag = -1, makeSolid = true, makeRuled = false)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccAddThruSections, gmsh.clib), Void,
+    ccall((:gmshModelOccAddThruSections, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
           convert(Vector{Cint}, wireTags), length(wireTags), api_outDimTags_, api_outDimTags_n_, tag, makeSolid, makeRuled, ierr)
     ierr[] != 0 && error("gmshModelOccAddThruSections returned non-zero error code: $(ierr[])")
@@ -2335,7 +2608,7 @@ function addThruSections(wireTags, tag = -1, makeSolid = true, makeRuled = false
 end
 
 """
-    gmsh.model.occ.addThickSolid(volumeTag, excludeSurfaceTags, offset, outDimTags, tag = -1)
+    gmsh.model.occ.addThickSolid(volumeTag, excludeSurfaceTags, offset, tag = -1)
 
 Add a hollowed volume built from an initial volume `volumeTag` and a set of
 faces from this volume `excludeSurfaceTags`, which are to be removed. The
@@ -2343,13 +2616,13 @@ remaining faces of the volume become the walls of the hollowed solid, with
 thickness `offset`. If `tag` is positive, set the tag explicitly; otherwise a
 new tag is selected automatically.
 
-Return 'outDimTags'.
+Return `outDimTags`.
 """
 function addThickSolid(volumeTag, excludeSurfaceTags, offset, tag = -1)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccAddThickSolid, gmsh.clib), Void,
+    ccall((:gmshModelOccAddThickSolid, gmsh.lib), Void,
           (Cint, Ptr{Cint}, Csize_t, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
           volumeTag, convert(Vector{Cint}, excludeSurfaceTags), length(excludeSurfaceTags), offset, api_outDimTags_, api_outDimTags_n_, tag, ierr)
     ierr[] != 0 && error("gmshModelOccAddThickSolid returned non-zero error code: $(ierr[])")
@@ -2359,7 +2632,7 @@ function addThickSolid(volumeTag, excludeSurfaceTags, offset, tag = -1)
 end
 
 """
-    gmsh.model.occ.extrude(dimTags, dx, dy, dz, outDimTags, numElements = [], heights = [], recombine = false)
+    gmsh.model.occ.extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[], recombine = false)
 
 Extrude the geometrical entities `dimTags` by translation along (`dx`, `dy`,
 `dz`). Return extruded entities in `outDimTags`. If `numElements` is not empty,
@@ -2367,15 +2640,15 @@ also extrude the mesh: the entries in `numElements` give the number of elements
 in each layer. If `height` is not empty, it provides the (cummulative) height of
 the different layers, normalized to 1.
 
-Return 'outDimTags'.
+Return `outDimTags`.
 """
-function extrude(dimTags, dx, dy, dz, numElements = [], heights = [], recombine = false)
+function extrude(dimTags, dx, dy, dz, numElements = Cint[], heights = Cdouble[], recombine = false)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccExtrude, gmsh.clib), Void,
+    ccall((:gmshModelOccExtrude, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
     ierr[] != 0 && error("gmshModelOccExtrude returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -2383,7 +2656,7 @@ function extrude(dimTags, dx, dy, dz, numElements = [], heights = [], recombine 
 end
 
 """
-    gmsh.model.occ.revolve(dimTags, x, y, z, ax, ay, az, angle, outDimTags, numElements = [], heights = [], recombine = false)
+    gmsh.model.occ.revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
 
 Extrude the geometrical entities `dimTags` by rotation of `angle` radians around
 the axis of revolution defined by the point (`x`, `y`, `z`) and the direction
@@ -2392,15 +2665,15 @@ is not empty, also extrude the mesh: the entries in `numElements` give the
 number of elements in each layer. If `height` is not empty, it provides the
 (cummulative) height of the different layers, normalized to 1.
 
-Return 'outDimTags'.
+Return `outDimTags`.
 """
-function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = [], heights = [], recombine = false)
+function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = Cint[], heights = Cdouble[], recombine = false)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccRevolve, gmsh.clib), Void,
+    ccall((:gmshModelOccRevolve, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, api_outDimTags_, api_outDimTags_n_, convert(Vector{Cint}, numElements), length(numElements), heights, length(heights), recombine, ierr)
     ierr[] != 0 && error("gmshModelOccRevolve returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -2408,20 +2681,20 @@ function revolve(dimTags, x, y, z, ax, ay, az, angle, numElements = [], heights 
 end
 
 """
-    gmsh.model.occ.addPipe(dimTags, wireTag, outDimTags)
+    gmsh.model.occ.addPipe(dimTags, wireTag)
 
 Add a pipe by extruding the entities `dimTags` along the wire `wireTag`. Return
 the pipe in `outDimTags`.
 
-Return 'outDimTags'.
+Return `outDimTags`.
 """
 function addPipe(dimTags, wireTag)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccAddPipe, gmsh.clib), Void,
+    ccall((:gmshModelOccAddPipe, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), wireTag, api_outDimTags_, api_outDimTags_n_, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), wireTag, api_outDimTags_, api_outDimTags_n_, ierr)
     ierr[] != 0 && error("gmshModelOccAddPipe returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -2429,19 +2702,19 @@ function addPipe(dimTags, wireTag)
 end
 
 """
-    gmsh.model.occ.fillet(volumeTags, curveTags, radius, outDimTags, removeVolume = true)
+    gmsh.model.occ.fillet(volumeTags, curveTags, radius, removeVolume = true)
 
 Fillet the volumes `volumeTags` on the curves `curveTags` with radius `radius`.
 Return the filleted entities in `outDimTags`. Remove the original volume if
 `removeVolume` is set.
 
-Return 'outDimTags'.
+Return `outDimTags`.
 """
 function fillet(volumeTags, curveTags, radius, removeVolume = true)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccFillet, gmsh.clib), Void,
+    ccall((:gmshModelOccFillet, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
           convert(Vector{Cint}, volumeTags), length(volumeTags), convert(Vector{Cint}, curveTags), length(curveTags), radius, api_outDimTags_, api_outDimTags_n_, removeVolume, ierr)
     ierr[] != 0 && error("gmshModelOccFillet returned non-zero error code: $(ierr[])")
@@ -2451,7 +2724,7 @@ function fillet(volumeTags, curveTags, radius, removeVolume = true)
 end
 
 """
-    gmsh.model.occ.fuse(objectDimTags, toolDimTags, outDimTags, outDimTagsMap, tag = -1, removeObject = true, removeTool = true)
+    gmsh.model.occ.fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
 
 Compute the boolean union (the fusion) of the entities `objectDimTags` and
 `toolDimTags`. Return the resulting entities in `outDimTags`. If `tag` is
@@ -2459,7 +2732,7 @@ positive, try to set the tag explicitly (ony valid if the boolean operation
 results in a single entity). Remove the object if `removeObject` is set. Remove
 the tool if `removeTool` is set.
 
-Return 'outDimTags', 'outDimTagsMap'.
+Return `outDimTags`, `outDimTagsMap`.
 """
 function fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
     api_outDimTags_ = Ref{Ptr{Cint}}()
@@ -2468,24 +2741,25 @@ function fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeT
     api_outDimTagsMap_n_ = Ref{Ptr{Csize_t}}()
     api_outDimTagsMap_nn_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccFuse, gmsh.clib), Void,
+    ccall((:gmshModelOccFuse, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(objectDimTags))), 2 * length(objectDimTags), convert(Vector{Cint}, collect(Iterators.flatten(toolDimTags))), 2 * length(toolDimTags), api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(objectDimTags))), 2 * length(objectDimTags), convert(Vector{Cint}, collect(Cint, Iterators.flatten(toolDimTags))), 2 * length(toolDimTags), api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
     ierr[] != 0 && error("gmshModelOccFuse returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[], api_outDimTagsMap_nn_[], true)
     tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[], api_outDimTagsMap_nn_[], true)
-    outDimTagsMap = []
+    outDimTagsMap = Vector{Tuple{Cint,Cint}}[]
+    resize!(outDimTagsMap, api_outDimTagsMap_nn_[])
     for i in 1:api_outDimTagsMap_nn_[]
         tmp = unsafe_wrap(Array, tmp_api_outDimTagsMap_[i], tmp_api_outDimTagsMap_n_[i], true)
-        push!(outDimTagsMap, [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)])
+        outDimTagsMap[i] = [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)]
     end
     return outDimTags, outDimTagsMap
 end
 
 """
-    gmsh.model.occ.intersect(objectDimTags, toolDimTags, outDimTags, outDimTagsMap, tag = -1, removeObject = true, removeTool = true)
+    gmsh.model.occ.intersect(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
 
 Compute the boolean intersection (the common parts) of the entities
 `objectDimTags` and `toolDimTags`. Return the resulting entities in
@@ -2493,7 +2767,7 @@ Compute the boolean intersection (the common parts) of the entities
 the boolean operation results in a single entity). Remove the object if
 `removeObject` is set. Remove the tool if `removeTool` is set.
 
-Return 'outDimTags', 'outDimTagsMap'.
+Return `outDimTags`, `outDimTagsMap`.
 """
 function intersect(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
     api_outDimTags_ = Ref{Ptr{Cint}}()
@@ -2502,24 +2776,25 @@ function intersect(objectDimTags, toolDimTags, tag = -1, removeObject = true, re
     api_outDimTagsMap_n_ = Ref{Ptr{Csize_t}}()
     api_outDimTagsMap_nn_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccIntersect, gmsh.clib), Void,
+    ccall((:gmshModelOccIntersect, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(objectDimTags))), 2 * length(objectDimTags), convert(Vector{Cint}, collect(Iterators.flatten(toolDimTags))), 2 * length(toolDimTags), api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(objectDimTags))), 2 * length(objectDimTags), convert(Vector{Cint}, collect(Cint, Iterators.flatten(toolDimTags))), 2 * length(toolDimTags), api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
     ierr[] != 0 && error("gmshModelOccIntersect returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[], api_outDimTagsMap_nn_[], true)
     tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[], api_outDimTagsMap_nn_[], true)
-    outDimTagsMap = []
+    outDimTagsMap = Vector{Tuple{Cint,Cint}}[]
+    resize!(outDimTagsMap, api_outDimTagsMap_nn_[])
     for i in 1:api_outDimTagsMap_nn_[]
         tmp = unsafe_wrap(Array, tmp_api_outDimTagsMap_[i], tmp_api_outDimTagsMap_n_[i], true)
-        push!(outDimTagsMap, [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)])
+        outDimTagsMap[i] = [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)]
     end
     return outDimTags, outDimTagsMap
 end
 
 """
-    gmsh.model.occ.cut(objectDimTags, toolDimTags, outDimTags, outDimTagsMap, tag = -1, removeObject = true, removeTool = true)
+    gmsh.model.occ.cut(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
 
 Compute the boolean difference between the entities `objectDimTags` and
 `toolDimTags`. Return the resulting entities in `outDimTags`. If `tag` is
@@ -2527,7 +2802,7 @@ positive, try to set the tag explicitly (ony valid if the boolean operation
 results in a single entity). Remove the object if `removeObject` is set. Remove
 the tool if `removeTool` is set.
 
-Return 'outDimTags', 'outDimTagsMap'.
+Return `outDimTags`, `outDimTagsMap`.
 """
 function cut(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
     api_outDimTags_ = Ref{Ptr{Cint}}()
@@ -2536,24 +2811,25 @@ function cut(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTo
     api_outDimTagsMap_n_ = Ref{Ptr{Csize_t}}()
     api_outDimTagsMap_nn_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccCut, gmsh.clib), Void,
+    ccall((:gmshModelOccCut, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(objectDimTags))), 2 * length(objectDimTags), convert(Vector{Cint}, collect(Iterators.flatten(toolDimTags))), 2 * length(toolDimTags), api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(objectDimTags))), 2 * length(objectDimTags), convert(Vector{Cint}, collect(Cint, Iterators.flatten(toolDimTags))), 2 * length(toolDimTags), api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
     ierr[] != 0 && error("gmshModelOccCut returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[], api_outDimTagsMap_nn_[], true)
     tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[], api_outDimTagsMap_nn_[], true)
-    outDimTagsMap = []
+    outDimTagsMap = Vector{Tuple{Cint,Cint}}[]
+    resize!(outDimTagsMap, api_outDimTagsMap_nn_[])
     for i in 1:api_outDimTagsMap_nn_[]
         tmp = unsafe_wrap(Array, tmp_api_outDimTagsMap_[i], tmp_api_outDimTagsMap_n_[i], true)
-        push!(outDimTagsMap, [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)])
+        outDimTagsMap[i] = [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)]
     end
     return outDimTags, outDimTagsMap
 end
 
 """
-    gmsh.model.occ.fragment(objectDimTags, toolDimTags, outDimTags, outDimTagsMap, tag = -1, removeObject = true, removeTool = true)
+    gmsh.model.occ.fragment(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
 
 Compute the boolean fragments (general fuse) of the entities `objectDimTags` and
 `toolDimTags`. Return the resulting entities in `outDimTags`. If `tag` is
@@ -2561,7 +2837,7 @@ positive, try to set the tag explicitly (ony valid if the boolean operation
 results in a single entity). Remove the object if `removeObject` is set. Remove
 the tool if `removeTool` is set.
 
-Return 'outDimTags', 'outDimTagsMap'.
+Return `outDimTags`, `outDimTagsMap`.
 """
 function fragment(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
     api_outDimTags_ = Ref{Ptr{Cint}}()
@@ -2570,18 +2846,19 @@ function fragment(objectDimTags, toolDimTags, tag = -1, removeObject = true, rem
     api_outDimTagsMap_n_ = Ref{Ptr{Csize_t}}()
     api_outDimTagsMap_nn_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccFragment, gmsh.clib), Void,
+    ccall((:gmshModelOccFragment, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(objectDimTags))), 2 * length(objectDimTags), convert(Vector{Cint}, collect(Iterators.flatten(toolDimTags))), 2 * length(toolDimTags), api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(objectDimTags))), 2 * length(objectDimTags), convert(Vector{Cint}, collect(Cint, Iterators.flatten(toolDimTags))), 2 * length(toolDimTags), api_outDimTags_, api_outDimTags_n_, api_outDimTagsMap_, api_outDimTagsMap_n_, api_outDimTagsMap_nn_, tag, removeObject, removeTool, ierr)
     ierr[] != 0 && error("gmshModelOccFragment returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
     tmp_api_outDimTagsMap_ = unsafe_wrap(Array, api_outDimTagsMap_[], api_outDimTagsMap_nn_[], true)
     tmp_api_outDimTagsMap_n_ = unsafe_wrap(Array, api_outDimTagsMap_n_[], api_outDimTagsMap_nn_[], true)
-    outDimTagsMap = []
+    outDimTagsMap = Vector{Tuple{Cint,Cint}}[]
+    resize!(outDimTagsMap, api_outDimTagsMap_nn_[])
     for i in 1:api_outDimTagsMap_nn_[]
         tmp = unsafe_wrap(Array, tmp_api_outDimTagsMap_[i], tmp_api_outDimTagsMap_n_[i], true)
-        push!(outDimTagsMap, [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)])
+        outDimTagsMap[i] = [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)]
     end
     return outDimTags, outDimTagsMap
 end
@@ -2593,9 +2870,9 @@ Translate the geometrical entities `dimTags` along (`dx`, `dy`, `dz`).
 """
 function translate(dimTags, dx, dy, dz)
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccTranslate, gmsh.clib), Void,
+    ccall((:gmshModelOccTranslate, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), dx, dy, dz, ierr)
     ierr[] != 0 && error("gmshModelOccTranslate returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -2609,9 +2886,9 @@ revolution defined by the point (`x`, `y`, `z`) and the direction (`ax`, `ay`,
 """
 function rotate(dimTags, x, y, z, ax, ay, az, angle)
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccRotate, gmsh.clib), Void,
+    ccall((:gmshModelOccRotate, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, ax, ay, az, angle, ierr)
     ierr[] != 0 && error("gmshModelOccRotate returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -2625,9 +2902,9 @@ transformation.
 """
 function dilate(dimTags, x, y, z, a, b, c)
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccDilate, gmsh.clib), Void,
+    ccall((:gmshModelOccDilate, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, a, b, c, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), x, y, z, a, b, c, ierr)
     ierr[] != 0 && error("gmshModelOccDilate returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -2640,27 +2917,27 @@ respect to the plane of equation `a` * x + `b` * y + `c` * z + `d` = 0.
 """
 function symmetry(dimTags, a, b, c, d)
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccSymmetry, gmsh.clib), Void,
+    ccall((:gmshModelOccSymmetry, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), a, b, c, d, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), a, b, c, d, ierr)
     ierr[] != 0 && error("gmshModelOccSymmetry returned non-zero error code: $(ierr[])")
     return nothing
 end
 
 """
-    gmsh.model.occ.copy(dimTags, outDimTags)
+    gmsh.model.occ.copy(dimTags)
 
 Copy the entities `dimTags`; the new entities are returned in `outDimTags`.
 
-Return 'outDimTags'.
+Return `outDimTags`.
 """
 function copy(dimTags)
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccCopy, gmsh.clib), Void,
+    ccall((:gmshModelOccCopy, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), api_outDimTags_, api_outDimTags_n_, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), api_outDimTags_, api_outDimTags_n_, ierr)
     ierr[] != 0 && error("gmshModelOccCopy returned non-zero error code: $(ierr[])")
     tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], true)
     outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
@@ -2675,9 +2952,9 @@ on their boundaries, down to dimension 0.
 """
 function remove(dimTags, recursive = false)
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccRemove, gmsh.clib), Void,
+    ccall((:gmshModelOccRemove, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), recursive, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), recursive, ierr)
     ierr[] != 0 && error("gmshModelOccRemove returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -2691,7 +2968,7 @@ entities.
 """
 function removeAllDuplicates()
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccRemoveAllDuplicates, gmsh.clib), Void,
+    ccall((:gmshModelOccRemoveAllDuplicates, gmsh.lib), Void,
           (Ptr{Cint},),
           ierr)
     ierr[] != 0 && error("gmshModelOccRemoveAllDuplicates returned non-zero error code: $(ierr[])")
@@ -2699,7 +2976,7 @@ function removeAllDuplicates()
 end
 
 """
-    gmsh.model.occ.importShapes(fileName, outDimTags, highestDimOnly = true, format = "")
+    gmsh.model.occ.importShapes(fileName, highestDimOnly = true, format = "")
 
 Import BREP, STEP or IGES shapes from the file `fileName`. The imported entities
 are returned in `outDimTags`. If the optional argument `highestDimOnly` is set,
@@ -2707,13 +2984,13 @@ only import the highest dimensional entities in the file. The optional argument
 `format` can be used to force the format of the file (currently "brep", "step"
 or "iges").
 
-Return 'outDimTags'.
+Return `outDimTags`.
 """
 function importShapes(fileName, highestDimOnly = true, format = "")
     api_outDimTags_ = Ref{Ptr{Cint}}()
     api_outDimTags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccImportShapes, gmsh.clib), Void,
+    ccall((:gmshModelOccImportShapes, gmsh.lib), Void,
           (Ptr{Cchar}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cchar}, Ptr{Cint}),
           fileName, api_outDimTags_, api_outDimTags_n_, highestDimOnly, format, ierr)
     ierr[] != 0 && error("gmshModelOccImportShapes returned non-zero error code: $(ierr[])")
@@ -2730,9 +3007,9 @@ entities of dimension 0 (points) are handled.
 """
 function setMeshSize(dimTags, size)
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccSetMeshSize, gmsh.clib), Void,
+    ccall((:gmshModelOccSetMeshSize, gmsh.lib), Void,
           (Ptr{Cint}, Csize_t, Cdouble, Ptr{Cint}),
-          convert(Vector{Cint}, collect(Iterators.flatten(dimTags))), 2 * length(dimTags), size, ierr)
+          convert(Vector{Cint}, collect(Cint, Iterators.flatten(dimTags))), 2 * length(dimTags), size, ierr)
     ierr[] != 0 && error("gmshModelOccSetMeshSize returned non-zero error code: $(ierr[])")
     return nothing
 end
@@ -2747,7 +3024,7 @@ minimized.
 """
 function synchronize()
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccSynchronize, gmsh.clib), Void,
+    ccall((:gmshModelOccSynchronize, gmsh.lib), Void,
           (Ptr{Cint},),
           ierr)
     ierr[] != 0 && error("gmshModelOccSynchronize returned non-zero error code: $(ierr[])")
@@ -2778,7 +3055,7 @@ Return an integer.
 """
 function add(name, tag = -1)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshViewAdd, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshViewAdd, gmsh.lib), Cint,
           (Ptr{Cchar}, Cint, Ptr{Cint}),
           name, tag, ierr)
     ierr[] != 0 && error("gmshViewAdd returned non-zero error code: $(ierr[])")
@@ -2792,7 +3069,7 @@ Remove the view with tag `tag`.
 """
 function remove(tag)
     ierr = Ref{Cint}()
-    ccall((:gmshViewRemove, gmsh.clib), Void,
+    ccall((:gmshViewRemove, gmsh.lib), Void,
           (Cint, Ptr{Cint}),
           tag, ierr)
     ierr[] != 0 && error("gmshViewRemove returned non-zero error code: $(ierr[])")
@@ -2810,7 +3087,7 @@ Return an integer.
 """
 function getIndex(tag)
     ierr = Ref{Cint}()
-    api__result__ = ccall((:gmshViewGetIndex, gmsh.clib), Cint,
+    api__result__ = ccall((:gmshViewGetIndex, gmsh.lib), Cint,
           (Cint, Ptr{Cint}),
           tag, ierr)
     ierr[] != 0 && error("gmshViewGetIndex returned non-zero error code: $(ierr[])")
@@ -2818,17 +3095,17 @@ function getIndex(tag)
 end
 
 """
-    gmsh.view.getTags(tags)
+    gmsh.view.getTags()
 
 Get the tags of all views.
 
-Return 'tags'.
+Return `tags`.
 """
 function getTags()
     api_tags_ = Ref{Ptr{Cint}}()
     api_tags_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshViewGetTags, gmsh.clib), Void,
+    ccall((:gmshViewGetTags, gmsh.lib), Void,
           (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
           api_tags_, api_tags_n_, ierr)
     ierr[] != 0 && error("gmshViewGetTags returned non-zero error code: $(ierr[])")
@@ -2855,7 +3132,7 @@ sub-sets.
 function addModelData(tag, step, modelName, dataType, tags, data, time = 0., numComponents = -1, partition = 0)
     api_data_n_ = [ length(data[i]) for i in 1:length(data) ]
     ierr = Ref{Cint}()
-    ccall((:gmshViewAddModelData, gmsh.clib), Void,
+    ccall((:gmshViewAddModelData, gmsh.lib), Void,
           (Cint, Cint, Ptr{Cchar}, Ptr{Cchar}, Ptr{Cint}, Csize_t, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Csize_t, Cdouble, Cint, Cint, Ptr{Cint}),
           tag, step, modelName, dataType, convert(Vector{Cint}, tags), length(tags), convert(Vector{Vector{Cdouble}},data), api_data_n_, length(data), time, numComponents, partition, ierr)
     ierr[] != 0 && error("gmshViewAddModelData returned non-zero error code: $(ierr[])")
@@ -2863,13 +3140,13 @@ function addModelData(tag, step, modelName, dataType, tags, data, time = 0., num
 end
 
 """
-    gmsh.view.getModelData(tag, step, dataType, tags, data, time, numComponents)
+    gmsh.view.getModelData(tag, step)
 
 Get model-based post-processing data from the view with tag `tag` at step
 `step`. Return the `data` associated to the nodes or the elements with tags
 `tags`, as well as the `dataType` and the number of components `numComponents`.
 
-Return 'dataType', 'tags', 'data', 'time', 'numComponents'.
+Return `dataType`, `tags`, `data`, `time`, `numComponents`.
 """
 function getModelData(tag, step)
     api_dataType_ = Ref{Ptr{Cchar}}()
@@ -2881,7 +3158,7 @@ function getModelData(tag, step)
     api_time_ = Ref{Cdouble}()
     api_numComponents_ = Ref{Cint}()
     ierr = Ref{Cint}()
-    ccall((:gmshViewGetModelData, gmsh.clib), Void,
+    ccall((:gmshViewGetModelData, gmsh.lib), Void,
           (Cint, Cint, Ptr{Ptr{Cchar}}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cdouble}, Ptr{Cint}, Ptr{Cint}),
           tag, step, api_dataType_, api_tags_, api_tags_n_, api_data_, api_data_n_, api_data_nn_, api_time_, api_numComponents_, ierr)
     ierr[] != 0 && error("gmshViewGetModelData returned non-zero error code: $(ierr[])")
@@ -2903,7 +3180,7 @@ the `numEle` elements.
 """
 function addListData(tag, dataType, numEle, data)
     ierr = Ref{Cint}()
-    ccall((:gmshViewAddListData, gmsh.clib), Void,
+    ccall((:gmshViewAddListData, gmsh.lib), Void,
           (Cint, Ptr{Cchar}, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
           tag, dataType, numEle, data, length(data), ierr)
     ierr[] != 0 && error("gmshViewAddListData returned non-zero error code: $(ierr[])")
@@ -2911,13 +3188,13 @@ function addListData(tag, dataType, numEle, data)
 end
 
 """
-    gmsh.view.getListData(tag, dataType, numElements, data)
+    gmsh.view.getListData(tag)
 
 Get list-based post-processing data from the view with tag `tag`. Return the
 types `dataTypes`, the number of elements `numElements` for each data type and
 the `data` for each data type.
 
-Return 'dataType', 'numElements', 'data'.
+Return `dataType`, `numElements`, `data`.
 """
 function getListData(tag)
     api_dataType_ = Ref{Ptr{Ptr{Cchar}}}()
@@ -2928,7 +3205,7 @@ function getListData(tag)
     api_data_n_ = Ref{Ptr{Csize_t}}()
     api_data_nn_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshViewGetListData, gmsh.clib), Void,
+    ccall((:gmshViewGetListData, gmsh.lib), Void,
           (Cint, Ptr{Ptr{Cchar}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cdouble}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
           tag, api_dataType_, api_dataType_n_, api_numElements_, api_numElements_n_, api_data_, api_data_n_, api_data_nn_, ierr)
     ierr[] != 0 && error("gmshViewGetListData returned non-zero error code: $(ierr[])")
@@ -2942,7 +3219,7 @@ function getListData(tag)
 end
 
 """
-    gmsh.view.probe(tag, x, y, z, value, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = [], yElemCoord = [], zElemCoord = [])
+    gmsh.view.probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[])
 
 Probe the view `tag` for its `value` at point (`x`, `y`, `z`). Return only the
 value at step `step` is `step` is positive. Return only values with `numComp` if
@@ -2952,13 +3229,13 @@ if `tolerance` is not zero. Return the result from the element described by its
 coordinates if `xElementCoord`, `yElementCoord` and `zElementCoord` are
 provided.
 
-Return 'value'.
+Return `value`.
 """
-function probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = [], yElemCoord = [], zElemCoord = [])
+function probe(tag, x, y, z, step = -1, numComp = -1, gradient = false, tolerance = 0., xElemCoord = Cdouble[], yElemCoord = Cdouble[], zElemCoord = Cdouble[])
     api_value_ = Ref{Ptr{Cdouble}}()
     api_value_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshViewProbe, gmsh.clib), Void,
+    ccall((:gmshViewProbe, gmsh.lib), Void,
           (Cint, Cdouble, Cdouble, Cdouble, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cint, Cint, Cdouble, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
           tag, x, y, z, api_value_, api_value_n_, step, numComp, gradient, tolerance, xElemCoord, length(xElemCoord), yElemCoord, length(yElemCoord), zElemCoord, length(zElemCoord), ierr)
     ierr[] != 0 && error("gmshViewProbe returned non-zero error code: $(ierr[])")
@@ -2974,7 +3251,7 @@ extension. Append to the file if `append` is set.
 """
 function write(tag, fileName, append = false)
     ierr = Ref{Cint}()
-    ccall((:gmshViewWrite, gmsh.clib), Void,
+    ccall((:gmshViewWrite, gmsh.lib), Void,
           (Cint, Ptr{Cchar}, Cint, Ptr{Cint}),
           tag, fileName, append, ierr)
     ierr[] != 0 && error("gmshViewWrite returned non-zero error code: $(ierr[])")
@@ -2999,7 +3276,7 @@ Set the numerical option `option` to the value `value` for plugin `name`.
 """
 function setNumber(name, option, value)
     ierr = Ref{Cint}()
-    ccall((:gmshPluginSetNumber, gmsh.clib), Void,
+    ccall((:gmshPluginSetNumber, gmsh.lib), Void,
           (Ptr{Cchar}, Ptr{Cchar}, Cdouble, Ptr{Cint}),
           name, option, value, ierr)
     ierr[] != 0 && error("gmshPluginSetNumber returned non-zero error code: $(ierr[])")
@@ -3013,7 +3290,7 @@ Set the string option `option` to the value `value` for plugin `name`.
 """
 function setString(name, option, value)
     ierr = Ref{Cint}()
-    ccall((:gmshPluginSetString, gmsh.clib), Void,
+    ccall((:gmshPluginSetString, gmsh.lib), Void,
           (Ptr{Cchar}, Ptr{Cchar}, Ptr{Cchar}, Ptr{Cint}),
           name, option, value, ierr)
     ierr[] != 0 && error("gmshPluginSetString returned non-zero error code: $(ierr[])")
@@ -3027,7 +3304,7 @@ Run the plugin `name`.
 """
 function run(name)
     ierr = Ref{Cint}()
-    ccall((:gmshPluginRun, gmsh.clib), Void,
+    ccall((:gmshPluginRun, gmsh.lib), Void,
           (Ptr{Cchar}, Ptr{Cint}),
           name, ierr)
     ierr[] != 0 && error("gmshPluginRun returned non-zero error code: $(ierr[])")
@@ -3052,7 +3329,7 @@ Draw all the OpenGL scenes.
 """
 function draw()
     ierr = Ref{Cint}()
-    ccall((:gmshGraphicsDraw, gmsh.clib), Void,
+    ccall((:gmshGraphicsDraw, gmsh.lib), Void,
           (Ptr{Cint},),
           ierr)
     ierr[] != 0 && error("gmshGraphicsDraw returned non-zero error code: $(ierr[])")
@@ -3077,7 +3354,7 @@ Create the Fltk graphical user interface.
 """
 function initialize()
     ierr = Ref{Cint}()
-    ccall((:gmshFltkInitialize, gmsh.clib), Void,
+    ccall((:gmshFltkInitialize, gmsh.lib), Void,
           (Ptr{Cint},),
           ierr)
     ierr[] != 0 && error("gmshFltkInitialize returned non-zero error code: $(ierr[])")
@@ -3093,7 +3370,7 @@ yet been initialized.
 """
 function wait(time = -1.)
     ierr = Ref{Cint}()
-    ccall((:gmshFltkWait, gmsh.clib), Void,
+    ccall((:gmshFltkWait, gmsh.lib), Void,
           (Cdouble, Ptr{Cint}),
           time, ierr)
     ierr[] != 0 && error("gmshFltkWait returned non-zero error code: $(ierr[])")
@@ -3109,7 +3386,7 @@ initialized.
 """
 function run()
     ierr = Ref{Cint}()
-    ccall((:gmshFltkRun, gmsh.clib), Void,
+    ccall((:gmshFltkRun, gmsh.lib), Void,
           (Ptr{Cint},),
           ierr)
     ierr[] != 0 && error("gmshFltkRun returned non-zero error code: $(ierr[])")
@@ -3128,16 +3405,16 @@ module onelab
 import ..gmsh
 
 """
-    gmsh.onelab.get(data, format = "json")
+    gmsh.onelab.get(format = "json")
 
 Get `data` from the ONELAB server.
 
-Return 'data'.
+Return `data`.
 """
 function get(format = "json")
     api_data_ = Ref{Ptr{Cchar}}()
     ierr = Ref{Cint}()
-    ccall((:gmshOnelabGet, gmsh.clib), Void,
+    ccall((:gmshOnelabGet, gmsh.lib), Void,
           (Ptr{Ptr{Cchar}}, Ptr{Cchar}, Ptr{Cint}),
           api_data_, format, ierr)
     ierr[] != 0 && error("gmshOnelabGet returned non-zero error code: $(ierr[])")
@@ -3152,7 +3429,7 @@ Set `data` in the ONELAB server.
 """
 function set(data, format = "json")
     ierr = Ref{Cint}()
-    ccall((:gmshOnelabSet, gmsh.clib), Void,
+    ccall((:gmshOnelabSet, gmsh.lib), Void,
           (Ptr{Cchar}, Ptr{Cchar}, Ptr{Cint}),
           data, format, ierr)
     ierr[] != 0 && error("gmshOnelabSet returned non-zero error code: $(ierr[])")
@@ -3168,7 +3445,7 @@ to the processed input files.
 """
 function run(name = "", command = "")
     ierr = Ref{Cint}()
-    ccall((:gmshOnelabRun, gmsh.clib), Void,
+    ccall((:gmshOnelabRun, gmsh.lib), Void,
           (Ptr{Cchar}, Ptr{Cchar}, Ptr{Cint}),
           name, command, ierr)
     ierr[] != 0 && error("gmshOnelabRun returned non-zero error code: $(ierr[])")

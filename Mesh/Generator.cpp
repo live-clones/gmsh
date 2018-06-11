@@ -510,8 +510,8 @@ static void FindConnectedRegions(const std::vector<GRegion*> &del,
       r = _stack.top();
       _stack.pop();
       oneDomain.insert(r);
-      std::list<GFace*> faces = r->faces();
-      for (std::list<GFace*>::iterator it = faces.begin(); it != faces.end() ; ++it){
+      std::vector<GFace*> faces = r->faces();
+      for (std::vector<GFace*>::iterator it = faces.begin(); it != faces.end() ; ++it){
         GFace *gf = *it;
         GRegion *other = (gf->getRegion(0) == r) ? gf->getRegion(1) : gf->getRegion(0);
         if(other != 0 && oneDomain.find(other) == oneDomain.end())
@@ -817,8 +817,8 @@ static void Mesh3D(GModel *m)
     for(unsigned j = 0; j < connected[i].size(); j++){
       GRegion *gr = connected[i][j];
       if(CTX::instance()->mesh.recombine3DAll || gr->meshAttributes.recombine3D){
-        std::list<GFace*> f = gr->faces();
-        for(std::list<GFace*>::iterator it = f.begin(); it != f.end() ; ++it)
+        std::vector<GFace*> f = gr->faces();
+        for(std::vector<GFace*>::iterator it = f.begin(); it != f.end() ; ++it)
           quadsToTriangles(*it, 1000000);
       }
     }

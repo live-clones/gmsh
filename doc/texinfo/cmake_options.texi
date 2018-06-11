@@ -28,8 +28,6 @@ Enable iOS library target (experimental) (default: OFF)
 Enable CGNS mesh export (experimental) (default: OFF)
 @item ENABLE_CAIRO
 Enable Cairo to render fonts (experimental) (default: ON)
-@item ENABLE_COMPRESSED_IO
-Enable compressed (gzip) input/output using zlib (default: OFF)
 @item ENABLE_CXX11
 Enable C++11 (default: ON)
 @item ENABLE_C99
@@ -114,8 +112,6 @@ Enable SLEPc eigensolvers (required for conformal compounds) (default: ON)
 Enable built-in finite element solvers (required for compounds) (default: ON)
 @item ENABLE_TCMALLOC
 Enable libtcmalloc, a fast malloc implementation but that does not release memory (default: OFF)
-@item ENABLE_TETGEN
-Enable Tetgen 3D initial mesh generator (default: OFF)
 @item ENABLE_VISUDEV
 Enable additional visualization capabilities for development purpose (default: OFF)
 @item ENABLE_VOROPP

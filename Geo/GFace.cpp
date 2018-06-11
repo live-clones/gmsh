@@ -80,14 +80,14 @@ void GFace::setMeshingAlgo(int algo)
   CTX::instance()->mesh.algo2dPerFace[tag()] = algo;
 }
 
-void GFace::delFreeEdge(GEdge *e)
+void GFace::delFreeEdge(GEdge *edge)
 {
   // delete the edge from the edge list and the orientation list
   std::list<GEdge*>::iterator ite = l_edges.begin();
-  std::list<int>::iterator itd = l_dirs.begin();
+  std::vector<int>::iterator itd = l_dirs.begin();
   while(ite != l_edges.end()){
-    if(e == *ite){
-      Msg::Debug("Erasing edge %d from edge list in face %d", e->tag(), tag());
+    if(edge == *ite){
+      Msg::Debug("Erasing edge %d from edge list in face %d", edge->tag(), tag());
       l_edges.erase(ite);
       if(itd != l_dirs.end()) l_dirs.erase(itd);
       break;
@@ -100,8 +100,8 @@ void GFace::delFreeEdge(GEdge *e)
   for(std::list<GEdgeLoop>::iterator it = edgeLoops.begin();
       it != edgeLoops.end(); it++){
     for(GEdgeLoop::iter it2 = it->begin(); it2 != it->end(); it2++){
-      if(e == it2->ge){
-        Msg::Debug("Erasing edge %d from edge loop in face %d", e->tag(), tag());
+      if(edge == it2->ge){
+        Msg::Debug("Erasing edge %d from edge loop in face %d", edge->tag(), tag());
         it->erase(it2);
         break;
       }
@@ -119,9 +119,8 @@ int GFace::delEdge(GEdge* edge)
   }
   l_edges.erase(it);
 
-  std::list<int>::iterator itOri;
-  int posOri = 0;
-  int orientation = 0;
+  std::vector<int>::iterator itOri;
+  int posOri = 0, orientation = 0;
   for(itOri = l_dirs.begin(); itOri != l_dirs.end(); ++itOri){
     if(posOri == pos){
       orientation = *itOri;
@@ -154,6 +153,15 @@ void GFace::deleteMesh(bool onlyDeleteElements)
 unsigned int GFace::getNumMeshElements() const
 {
   return triangles.size() + quadrangles.size() + polygons.size();
+}
+
+unsigned int GFace::getNumMeshElementsByType(const int familyType) const
+{
+  if(familyType == TYPE_TRI) return triangles.size();
+  else if(familyType == TYPE_QUA) return quadrangles.size();
+  else if(familyType == TYPE_POLYG) return polygons.size();
+
+  return 0;
 }
 
 unsigned int GFace::getNumMeshParentElements()
@@ -199,6 +207,15 @@ MElement *GFace::getMeshElement(unsigned int index) const
   return 0;
 }
 
+MElement *GFace::getMeshElementByType(const int familyType, const unsigned int index) const
+{
+  if(familyType == TYPE_TRI) return triangles[index];
+  else if(familyType == TYPE_QUA) return quadrangles[index];
+  else if(familyType == TYPE_POLYG) return polygons[index];
+
+  return 0;
+}
+
 void GFace::resetMeshAttributes()
 {
   meshAttributes.recombine = 0;
@@ -211,16 +228,18 @@ void GFace::resetMeshAttributes()
   meshAttributes.meshSize = MAX_LC;
 }
 
-SBoundingBox3d GFace::bounds() const
+SBoundingBox3d GFace::bounds(bool fast) const
 {
   SBoundingBox3d res;
   if(geomType() != DiscreteSurface && geomType() != PartitionSurface){
     std::list<GEdge*>::const_iterator it = l_edges.begin();
     for(; it != l_edges.end(); it++)
-      res += (*it)->bounds();
+      res += (*it)->bounds(fast);
   }
   else{
-    for(unsigned int i = 0; i < getNumMeshElements(); i++)
+    int ipp = getNumMeshElements() / 20;
+    if(ipp < 1) ipp = 1;
+    for(unsigned int i = 0; i < getNumMeshElements(); i += ipp)
       for(unsigned int j = 0; j < getMeshElement(i)->getNumVertices(); j++)
         res += getMeshElement(i)->getVertex(j)->point();
   }
@@ -398,12 +417,12 @@ void GFace::writeGEO(FILE *fp)
   if(geomType() == DiscreteSurface) return;
 
   std::list<GEdge*> edg = edges();
-  std::list<int> dir = orientations();
+  std::vector<int> const& dir = orientations();
   if(edg.size() && dir.size() == edg.size()){
     std::vector<int> num, ori;
     for(std::list<GEdge*>::iterator it = edg.begin(); it != edg.end(); it++)
       num.push_back((*it)->tag());
-    for(std::list<int>::iterator it = dir.begin(); it != dir.end(); it++)
+    for(std::vector<int>::const_iterator it = dir.begin(); it != dir.end(); it++)
       ori.push_back((*it) > 0 ? 1 : -1);
     fprintf(fp, "Line Loop(%d) = ", tag());
     for(unsigned int i = 0; i < num.size(); i++){
@@ -797,7 +816,7 @@ double GFace::curvatureDiv(const SPoint2 &param) const
   SVector3 dudu = SVector3();
   SVector3 dvdv = SVector3();
   SVector3 dudv = SVector3();
-  secondDer(param, &dudu, &dvdv, &dudv);
+  secondDer(param, dudu, dvdv, dudv);
 
   double ddu = dot(dndu, du);
   double ddv = dot(dndv, dv);
@@ -815,37 +834,37 @@ double GFace::curvatureMax(const SPoint2 &param) const
   return fabs(eigVal[1]);
 }
 
-double GFace::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
-                         double *curvMax, double *curvMin) const
+double GFace::curvatures(const SPoint2 &param, SVector3 &dirMax, SVector3 &dirMin,
+                         double &curvMax, double &curvMin) const
 {
   Pair<SVector3, SVector3> D1 = firstDer(param);
 
   if(geomType() == Plane){
-    *dirMax = D1.first();
-    *dirMin = D1.second();
-    *curvMax = 0.;
-    *curvMin = 0.;
+    dirMax = D1.first();
+    dirMin = D1.second();
+    curvMax = 0.;
+    curvMin = 0.;
     return 0.;
   }
 
   if(geomType() == Sphere){
-    *dirMax = D1.first();
-    *dirMin = D1.second();
-    *curvMax = curvatureDiv(param);
-    *curvMin = *curvMax;
-    return *curvMax;
+    dirMax = D1.first();
+    dirMin = D1.second();
+    curvMax = curvatureDiv(param);
+    curvMin = curvMax;
+    return curvMax;
   }
 
   double eigVal[2], eigVec[8];
   getMetricEigenVectors(param, eigVal, eigVec);
 
   // curvatures and main directions
-  *curvMax = fabs(eigVal[1]);
-  *curvMin = fabs(eigVal[0]);
-  *dirMax = eigVec[1] * D1.first() + eigVec[3] * D1.second();
-  *dirMin = eigVec[0] * D1.first() + eigVec[2] * D1.second();
+  curvMax = fabs(eigVal[1]);
+  curvMin = fabs(eigVal[0]);
+  dirMax = eigVec[1] * D1.first() + eigVec[3] * D1.second();
+  dirMin = eigVec[0] * D1.first() + eigVec[2] * D1.second();
 
-  return *curvMax;
+  return curvMax;
 }
 
 double GFace::getMetricEigenvalue(const SPoint2 &)
@@ -870,7 +889,7 @@ void GFace::getMetricEigenVectors(const SPoint2 &param,
   SVector3 dudu = SVector3();
   SVector3 dvdv = SVector3();
   SVector3 dudv = SVector3();
-  secondDer(param, &dudu, &dvdv, &dudv);
+  secondDer(param, dudu, dvdv, dudv);
 
   // first form
   double form1[2][2];
@@ -1510,8 +1529,11 @@ void GFace::replaceEdges(std::list<GEdge*> &new_edges)
 {
   std::list<GEdge*>::iterator it  = l_edges.begin();
   std::list<GEdge*>::iterator it2 = new_edges.begin();
-  std::list<int>::iterator it3 = l_dirs.begin();
-  std::list<int> newdirs;
+  std::vector<int>::iterator it3 = l_dirs.begin();
+
+  std::vector<int> newdirs;
+  newdirs.reserve(l_edges.size());
+
   for ( ; it != l_edges.end(); ++it, ++it2, ++it3){
     (*it)->delFace(this);
     (*it2)->addFace(this);
@@ -1726,9 +1748,9 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
 
 inline double myAngle(const SVector3 &a, const SVector3 &b, const SVector3 &d)
 {
-  double cosTheta = dot(a, b);
-  double sinTheta = dot(crossprod(a, b), d);
-  return atan2(sinTheta, cosTheta);
+  double const cosTheta = dot(a, b);
+  double const sinTheta = dot(crossprod(a, b), d);
+  return std::atan2(sinTheta, cosTheta);
 }
 
 struct myPlane {
@@ -2011,4 +2033,72 @@ void GFace::removeElement(int type, MElement *e)
   default:
     Msg::Error("Trying to remove unsupported element in face");
   }
+}
+
+bool GFace::reorder(const int elementType, const std::vector<int> &ordering)
+{
+  if(triangles.front()->getTypeForMSH() == elementType){
+    if(ordering.size() != triangles.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin();
+        it != ordering.end(); ++it){
+      if(*it < 0 || *it >= triangles.size()) return false;
+    }
+
+    std::vector<MTriangle*> newTrianglesOrder(triangles.size());
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newTrianglesOrder[i] = triangles[ordering[i]];
+    }
+#if __cplusplus >= 201103L
+    triangles = std::move(newTrianglesOrder);
+#else
+    triangles = newTrianglesOrder;
+#endif
+
+    return true;
+  }
+
+  if(quadrangles.front()->getTypeForMSH() == elementType){
+    if(ordering.size() != quadrangles.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin();
+        it != ordering.end(); ++it){
+      if(*it < 0 || *it >= quadrangles.size()) return false;
+    }
+
+    std::vector<MQuadrangle*> newQuadranglesOrder(quadrangles.size());
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newQuadranglesOrder[i] = quadrangles[ordering[i]];
+    }
+#if __cplusplus >= 201103L
+    quadrangles = std::move(newQuadranglesOrder);
+#else
+    quadrangles = newQuadranglesOrder;
+#endif
+
+    return true;
+  }
+
+  if(polygons.front()->getTypeForMSH() == elementType){
+    if(ordering.size() != polygons.size()) return false;
+
+    for(std::vector<int>::const_iterator it = ordering.begin();
+        it != ordering.end(); ++it){
+      if(*it < 0 || *it >= polygons.size()) return false;
+    }
+
+    std::vector<MPolygon*> newPolygonsOrder(polygons.size());
+    for(unsigned int i = 0; i < ordering.size(); i++){
+      newPolygonsOrder[i] = polygons[ordering[i]];
+    }
+#if __cplusplus >= 201103L
+    polygons = std::move(newPolygonsOrder);
+#else
+    polygons = newPolygonsOrder;
+#endif
+
+    return true;
+  }
+
+  return false;
 }

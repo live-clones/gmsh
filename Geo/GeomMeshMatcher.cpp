@@ -31,31 +31,34 @@
 
 GeomMeshMatcher *GeomMeshMatcher::_gmm_instance = 0;
 
-template <class T> void getIntersection(std::vector<T>& res,
-                                        std::vector<std::list<T> >& lists)
+template <class T, class container>
+void getIntersection(std::vector<T> &res, std::vector<container> &lists)
 {
   res.clear();
 
-  std::list<T> first_list = lists[0];
+  container const& first_list = lists[0];
   bool allsame = true;
-  for (typename std::list<T>::iterator item = first_list.begin();
-       item != first_list.end(); item++) {
+  for(typename container::const_iterator item = first_list.begin();
+      item != first_list.end(); item++) {
     bool found = true;
-    for (typename std::vector<std::list<T> >::iterator list_iter = lists.begin();
-         list_iter != lists.end(); list_iter++) {
-      if (*(list_iter)!=first_list) {
-	allsame = false;
-	if (find((*list_iter).begin(), (*list_iter).end(), (*item)) == (*list_iter).end()) {
-	  found = false;
-	} else { found = true; break;}
+
+    for(typename std::vector<container>::iterator list_iter = lists.begin();
+        list_iter != lists.end(); list_iter++) {
+      if(*(list_iter) != first_list) {
+        allsame = false;
+        if(std::find((*list_iter).begin(), (*list_iter).end(), (*item)) ==
+           (*list_iter).end()) {
+          found = false;
+        }
+        else {
+          found = true;
+          break;
+        }
       }
     }
-    if (found || allsame ) {
-      res.push_back(*item);
-    }
+    if(found || allsame) { res.push_back(*item); }
   }
 }
-
 
 template <class T> T findMatching(std::vector<Pair<T,T> >& matching, T& entity)
 {
@@ -237,14 +240,13 @@ GeomMeshMatcher:: matchFaces(GModel* m1, GModel* m2,
     GFace* f1 = (GFace*) *fit;
     num_total_faces++;
 
-    std::vector<std::list<GFace*> > lists;
+    std::vector<std::vector<GFace*> > lists;
 
     std::list<GEdge*> boundary_edges = f1->edges();
 
     for (std::list<GEdge*>::iterator boundary_edge = boundary_edges.begin();
          boundary_edge != boundary_edges.end(); boundary_edge++) {
 
-      //      if (boundary_edge->getBeginVertex() == boundary_edge->getEndVertex() &&
       if (!(*boundary_edge)->isSeam(f1))
         lists.push_back(findMatching<GEdge*>(*coresp_e,*boundary_edge)->faces());
     }
@@ -326,11 +328,11 @@ GeomMeshMatcher::matchRegions(GModel* m1, GModel* m2,
     num_total_regions++;
 
     //std::vector<list<GRegion*> > lists;
-    std::list<GFace*> boundary_faces = ((GFace*)(*entity1))->faces();
-    std::list<GFace*> coresp_bound_faces;
+    std::vector<GFace*> boundary_faces = ((GFace*)(*entity1))->faces();
+    std::vector<GFace*> coresp_bound_faces;
     std::vector<GRegion*> common_regions;
 
-    for (std::list<GFace*>::iterator boundary_face = boundary_faces.begin();
+    for (std::vector<GFace*>::iterator boundary_face = boundary_faces.begin();
          boundary_face != boundary_faces.end(); boundary_face++) {
       coresp_bound_faces.push_back(findMatching<GFace*>(*coresp_f,*boundary_face));
     }
@@ -339,7 +341,7 @@ GeomMeshMatcher::matchRegions(GModel* m1, GModel* m2,
          entity2++)
     {
       if((*entity2)->dim() != 3) continue;
-      std::vector<std::list<GFace*> > lists;
+      std::vector<std::vector<GFace*> > lists;
       lists.push_back(coresp_bound_faces);
       lists.push_back(((GRegion*)*entity2)->faces());
       std::vector<GFace*> common_faces;

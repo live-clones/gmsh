@@ -12,8 +12,8 @@ class File_Position
 {
  public:
   int lineno;
-  gmshfpos_t position;
-  gmshFILE file;
+  fpos_t position;
+  FILE *file;
   std::string filename;
 };
 
@@ -50,7 +50,7 @@ void FunctionManager::clear()
   functions->m.clear();
 }
 
-int FunctionManager::enterFunction(const std::string &name, gmshFILE * f,
+int FunctionManager::enterFunction(const std::string &name, FILE **f,
                                    std::string &filename, int &lno) const
 {
   if(functions->m.find(name) == functions->m.end())
@@ -59,31 +59,31 @@ int FunctionManager::enterFunction(const std::string &name, gmshFILE * f,
   fpold.lineno = lno;
   fpold.filename = filename;
   fpold.file = *f;
-  gmshgetpos(fpold.file, &fpold.position);
+  fgetpos(fpold.file, &fpold.position);
   calls->s.push(fpold);
   File_Position fp = (functions->m)[name];
-  gmshsetpos(fp.file, &fp.position);
+  fsetpos(fp.file, &fp.position);
   *f = fp.file;
   filename = fp.filename;
   lno = fp.lineno;
   return 1;
 }
 
-int FunctionManager::leaveFunction(gmshFILE * f, std::string &filename, int &lno)
+int FunctionManager::leaveFunction(FILE **f, std::string &filename, int &lno)
 {
   if(!calls->s.size())
     return 0;
   File_Position fp;
   fp = calls->s.top();
   calls->s.pop();
-  gmshsetpos(fp.file, &fp.position);
+  fsetpos(fp.file, &fp.position);
   *f = fp.file;
   filename = fp.filename;
   lno = fp.lineno;
   return 1;
 }
 
-int FunctionManager::createFunction(const std::string &name, gmshFILE f,
+int FunctionManager::createFunction(const std::string &name, FILE *f,
                                     const std::string &filename, int lno)
 {
   if(functions->m.find(name) != functions->m.end())
@@ -92,7 +92,7 @@ int FunctionManager::createFunction(const std::string &name, gmshFILE f,
   fp.file = f;
   fp.filename = filename;
   fp.lineno = lno;
-  gmshgetpos(fp.file, &fp.position);
+  fgetpos(fp.file, &fp.position);
   (functions->m)[name] = fp;
   return 1;
 }

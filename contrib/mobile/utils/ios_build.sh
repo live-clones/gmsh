@@ -77,7 +77,7 @@ function check {
 cd $gmsh_git && git pull
 mkdir -p $gmsh_git/build_${ios}
 cd $gmsh_git/build_${ios}
-cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_MATHEX=1 -DENABLE_MESH=1 -DENABLE_ONELAB=1 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_PLUGINS=1 -DENABLE_ANN=1 -DENABLE_TETGEN=1 -DENABLE_KBIPACK=1 -DENABLE_GMP=0 -DENABLE_ZIPPER=1 -DENABLE_OCC=$enable_occ -DOCC_LIBS="$occt_framework/occt" -DOCC_INC="$occt_framework/Headers/" ..
+cmake $cmake_default -DENABLE_BLAS_LAPACK=1 -DENABLE_BUILD_LIB=1 -DENABLE_MATHEX=1 -DENABLE_MESH=1 -DENABLE_ONELAB=1 -DENABLE_PARSER=1 -DENABLE_POST=1 -DENABLE_PLUGINS=1 -DENABLE_ANN=1 -DENABLE_KBIPACK=1 -DENABLE_GMP=0 -DENABLE_ZIPPER=1 -DENABLE_OCC=$enable_occ -DOCC_LIBS="$occt_framework/occt" -DOCC_INC="$occt_framework/Headers/" ..
 check
 $build_cmd OTHER_CFLAGS="-m${iphoneos_version}-min=8.0 -fembed-bitcode" OTHER_CPLUSPLUSFLAGS="-m${iphoneos_version}-min=8.0 -fembed-bitcode -std=c++11"
 check

@@ -313,6 +313,18 @@ tag @code{tag}.
 -
 @end table
 
+@item getDimension
+Get the geometrical dimension of the current model.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+integer
+@end table
+
 @item addDiscreteEntity
 Add a discrete geometrical entity (defined by a mesh) of dimension @code{dim} in
 the current model. Return the tag of the new discrete entity, equal to
@@ -355,6 +367,49 @@ Get the type of the entity of dimension @code{dim} and tag @code{tag}.
 -
 @end table
 
+@item getNormals
+Get the normal to the surface with tag @code{tag} at the parametric coordinates
+@code{parametricCoord}. @code{parametricCoord} are given by pair of u and v
+coordinates, concatenated. @code{normals} are returned as triplets of x, y and z
+components, concatenated.
+
+@table @asis
+@item Input:
+@code{tag}, @code{parametricCoord}
+@item Output:
+@code{normals}
+@item Return:
+-
+@end table
+
+@item getCurvatures
+Get the curvature of the curve with tag @code{tag} at the parametric coordinates
+@code{parametricCoord}.
+
+@table @asis
+@item Input:
+@code{tag}, @code{parametricCoord}
+@item Output:
+@code{curvatures}
+@item Return:
+-
+@end table
+
+@item getPrincipalCurvatures
+Get the principal curvatures of the surface with tag @code{tag} at the
+parametric coordinates @code{parametricCoord}, as well as their respective
+directions. @code{parametricCoord} are given by pair of u and v coordinates,
+concatenated.
+
+@table @asis
+@item Input:
+@code{tag}, @code{parametricCoord}
+@item Output:
+@code{curvatureMax}, @code{curvatureMin}, @code{directionMax}, @code{directionMin}
+@item Return:
+-
+@end table
+
 @end ftable
 
 @heading Module @code{/gmsh/model/mesh}
@@ -365,44 +420,6 @@ Generate a mesh of the current model, up to dimension @code{dim} (0, 1, 2 or 3).
 @table @asis
 @item Input:
 @code{dim}
-@item Output:
--
-@item Return:
--
-@end table
-
-@item homology
-Compute a basis representation for homology spaces after a mesh has been
-generated. The computation domain is given in a list of physical group tags
-@code{domainTags}; if empty, the whole mesh is the domain. The computation
-subdomain for relative homology computation is given in a list of physical group
-tags @code{subdomainTags}; if empty, absolute homology is computed. The
-dimensions homology bases to be computed are given in the list @code{dim}; if
-empty, all bases are computed. Resulting basis representation chains are stored
-as physical groups in the mesh.
-
-@table @asis
-@item Input:
-@code{domainTags}, @code{subdomainTags}, @code{dims}
-@item Output:
--
-@item Return:
--
-@end table
-
-@item cohomology
-Compute a basis representation for cohomology spaces after a mesh has been
-generated. The computation domain is given in a list of physical group tags
-@code{domainTags}; if empty, the whole mesh is the domain. The computation
-subdomain for relative cohomology computation is given in a list of physical
-group tags @code{subdomainTags}; if empty, absolute cohomology is computed. The
-dimensions homology bases to be computed are given in the list @code{dim}; if
-empty, all bases are computed. Resulting basis representation cochains are
-stored as physical groups in the mesh.
-
-@table @asis
-@item Input:
-@code{domainTags}, @code{subdomainTags}, @code{dims}
 @item Output:
 -
 @item Return:
@@ -445,18 +462,6 @@ Set the order of the elements in the mesh of the current model to @code{order}.
 -
 @end table
 
-@item removeDuplicateNodes
-Remove duplicate mesh nodes in the mesh of the current model.
-
-@table @asis
-@item Input:
--
-@item Output:
--
-@item Return:
--
-@end table
-
 @item getLastEntityError
 Get the last entities (if any) where a meshing error occurred. Currently only
 populated by the new 3D meshing algorithms.
@@ -471,7 +476,7 @@ populated by the new 3D meshing algorithms.
 @end table
 
 @item getLastNodeError
-Get the last mesh nodes (if any) where a meshing error occurred. Currently only
+Get the last nodes (if any) where a meshing error occurred. Currently only
 populated by the new 3D meshing algorithms.
 
 @table @asis
@@ -484,133 +489,60 @@ populated by the new 3D meshing algorithms.
 @end table
 
 @item getNodes
-Get the mesh nodes of the entity of dimension @code{dim} and @code{tag} tag. If
-@code{tag} < 0, get the nodes for all entities of dimension @code{dim}. If
-@code{dim} and @code{tag} are negative, get all the nodes in the mesh.
-@code{nodeTags} contains the node tags (their unique, strictly positive
+Get the nodes classified on the entity of dimension @code{dim} and tag
+@code{tag}. If @code{tag} < 0, get the nodes for all entities of dimension
+@code{dim}. If @code{dim} and @code{tag} are negative, get all the nodes in the
+mesh. @code{nodeTags} contains the node tags (their unique, strictly positive
 identification numbers). @code{coord} is a vector of length 3 times the length
 of @code{nodeTags} that contains the (x, y, z) coordinates of the nodes,
 concatenated. If @code{dim} >= 0, @code{parametricCoord} contains the parametric
-coordinates of the nodes, if available. The length of @code{parametricCoord} can
-be 0 or @code{dim} times the length of @code{nodeTags}.
+coordinates u and/or v of the nodes, if available. The length of
+@code{parametricCoord} can be 0 or @code{dim} times the length of
+@code{nodeTags}. If @code{includeBoundary} is set, also return the nodes
+classified on the boundary of the entity (wich will be reparametrized on the
+entity if @code{dim} >= 0 in order to compute their parametric coordinates).
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}
+@code{dim}, @code{tag}, @code{includeBoundary}
 @item Output:
 @code{nodeTags}, @code{coord}, @code{parametricCoord}
 @item Return:
 -
 @end table
 
-@item getElements
-Get the mesh elements of the entity of dimension @code{dim} and @code{tag} tag.
-If @code{tag} < 0, get the elements for all entities of dimension @code{dim}. If
-@code{dim} and @code{tag} are negative, get all the elements in the mesh.
-@code{elementTypes} contains the MSH types of the elements (e.g. @code{2} for
-3-node triangles: see @code{getElementProperties} to obtain the properties for a
-given element type). @code{elementTags} is a vector of the same length as
-@code{elementTypes}; each entry is a vector containing the tags (unique,
-strictly positive identifiers) of the elements of the corresponding type.
-@code{nodeTags} is also a vector of the same length as @code{elementTypes}; each
-entry is a vector of length equal to the number of elements of the given type
-times the number of nodes for this type of element, that contains the node tags
-of all the elements of the given type, concatenated.
+@item getNode
+Get the coordinates and the parametric coordinates (if any) of the node with tag
+@code{tag}. This is a sometimes useful but inefficient way of accessing nodes,
+as it relies on a cache stored in the model. For large meshes all the nodes in
+the model should be numbered in a continuous sequence of tags from 1 to N to
+maintain reasonnable performance (in this case the internal cache is based on a
+vector; otherwise it uses a map).
 
 @table @asis
 @item Input:
-@code{dim}, @code{tag}
+@code{nodeTag}
 @item Output:
-@code{elementTypes}, @code{elementTags}, @code{nodeTags}
+@code{coord}, @code{parametricCoord}
 @item Return:
 -
 @end table
 
-@item getElementProperties
-Get the properties of an element of type @code{elementType}: its name
-(@code{elementName}), dimension (@code{dim}), order (@code{order}), number of
-nodes (@code{numNodes}) and parametric coordinates of nodes
-(@code{parametricCoord} vector, of length @code{dim} times @code{numNodes}).
+@item rebuildNodeCache
+Rebuild the node cache.
 
 @table @asis
 @item Input:
-@code{elementType}
+@code{onlyIfNecessary}
 @item Output:
-@code{elementName}, @code{dim}, @code{order}, @code{numNodes}, @code{parametricCoord}
-@item Return:
 -
-@end table
-
-@item getIntegrationData
-Get the integration data for mesh elements of the entity of dimension @code{dim}
-and @code{tag} tag. The data is returned by element type and by element, in the
-same order as the data returned by @code{getElements}. @code{integrationType}
-specifies the type of integration (e.g. "Gauss4") and @code{functionSpaceType}
-specifies the function space (e.g. "IsoParametric"). @code{integrationPoints}
-contains for each element type a vector (of length 4 times the number of
-integration points) containing the parametric coordinates (u, v, w) and the
-weight associated to the integration points. @code{integrationData} contains for
-each element type a vector (of size 13 times the number of integration points)
-containing the (x, y, z) coordinates of the integration point, the determinant
-of the Jacobian and the 9 entries (by row) of the 3x3 Jacobian matrix. If
-@code{functionSpaceType} is provided, @code{functionSpaceNumComponents} return
-the number of components returned by the evaluation of a basis function in the
-space and @code{functionSpaceData} contains for each element type the evaluation
-of the basis functions at the integration points.
-
-@table @asis
-@item Input:
-@code{integrationType}, @code{functionSpaceType}, @code{dim}, @code{tag}
-@item Output:
-@code{integrationPoints}, @code{integrationData}, @code{functionSpaceNumComponents}, @code{functionSpaceData}
-@item Return:
--
-@end table
-
-@item getElementTypes
-Get the types of mesh elements in the entity of dimension @code{dim} and
-@code{tag} tag. If @code{tag} < 0, get the types for all entities of dimension
-@code{dim}. If @code{dim} and @code{tag} are negative, get all the types in the
-mesh.
-
-@table @asis
-@item Input:
-@code{dim}, @code{tag}
-@item Output:
-@code{elementTypes}
-@item Return:
--
-@end table
-
-@item getElementsByType
-Get the mesh elements in the same way as @code{getElements}, but for a single
-@code{elementType}.
-
-@table @asis
-@item Input:
-@code{elementType}, @code{dim}, @code{tag}
-@item Output:
-@code{elementTags}, @code{nodeTags}
-@item Return:
--
-@end table
-
-@item getIntegrationDataByType
-Get the integration data for mesh elements in the same way as
-@code{getIntegrationData}, but for a single @code{elementType}.
-
-@table @asis
-@item Input:
-@code{elementType}, @code{integrationType}, @code{functionSpaceType}, @code{dim}, @code{tag}
-@item Output:
-@code{integrationPoints}, @code{integrationData}, @code{functionSpaceNumComponents}, @code{functionSpaceData}
 @item Return:
 -
 @end table
 
 @item setNodes
-Set the mesh nodes in the geometrical entity of dimension @code{dim} and tag
-@code{tag}. @code{nodetags} contains the node tags (their unique, strictly
+Set the nodes classified on the geometrical entity of dimension @code{dim} and
+tag @code{tag}. @code{nodeTags} contains the node tags (their unique, strictly
 positive identification numbers). @code{coord} is a vector of length 3 times the
 length of @code{nodeTags} that contains the (x, y, z) coordinates of the nodes,
 concatenated. The optional @code{parametricCoord} vector contains the parametric
@@ -626,8 +558,77 @@ or @code{dim} times the length of @code{nodeTags}.
 -
 @end table
 
+@item reclassifyNodes
+Reclassify all nodes on their associated geometrical entity, based on the
+elements. Can be used when importing nodes in bulk (e.g. by associating them all
+to a single volume), to reclassify them correctly on model surfaces, curves,
+etc. after the elements have been set.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item getElements
+Get the elements classified on the entity of dimension @code{dim} and tag
+@code{tag}. If @code{tag} < 0, get the elements for all entities of dimension
+@code{dim}. If @code{dim} and @code{tag} are negative, get all the elements in
+the mesh. @code{elementTypes} contains the MSH types of the elements (e.g.
+@code{2} for 3-node triangles: see @code{getElementProperties} to obtain the
+properties for a given element type). @code{elementTags} is a vector of the same
+length as @code{elementTypes}; each entry is a vector containing the tags
+(unique, strictly positive identifiers) of the elements of the corresponding
+type. @code{nodeTags} is also a vector of the same length as
+@code{elementTypes}; each entry is a vector of length equal to the number of
+elements of the given type times the number of nodes for this type of element,
+that contains the node tags of all the elements of the given type, concatenated.
+
+@table @asis
+@item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{elementTypes}, @code{elementTags}, @code{nodeTags}
+@item Return:
+-
+@end table
+
+@item getElement
+Get the type and node tags of the element with tag @code{tag}. This is a
+sometimes useful but inefficient way of accessing elements, as it relies on a
+cache stored in the model. For large meshes all the elements in the model should
+be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable
+performance (in this case the internal cache is based on a vector; otherwise it
+uses a map).
+
+@table @asis
+@item Input:
+@code{elementTag}
+@item Output:
+@code{elementType}, @code{nodeTags}
+@item Return:
+-
+@end table
+
+@item getElementByCoordinates
+Get the tag, type and node tags of the element located at coordinates (@code{x},
+@code{y}, @code{z}). This is a sometimes useful but inefficient way of accessing
+elements, as it relies on a search in a spatial octree.
+
+@table @asis
+@item Input:
+@code{x}, @code{y}, @code{z}
+@item Output:
+@code{elementTag}, @code{elementType}, @code{nodeTags}
+@item Return:
+-
+@end table
+
 @item setElements
-Set the mesh elements of the entity of dimension @code{dim} and @code{tag} tag.
+Set the elements of the entity of dimension @code{dim} and tag @code{tag}.
 @code{types} contains the MSH types of the elements (e.g. @code{2} for 3-node
 triangles: see the Gmsh reference manual). @code{elementTags} is a vector of the
 same length as @code{types}; each entry is a vector containing the tags (unique,
@@ -646,51 +647,159 @@ the given type, concatenated.
 -
 @end table
 
-@item reclassifyNodes
-Redistribute all mesh nodes on their associated geometrical entity, based on the
-mesh elements. Can be used when importing mesh nodes in bulk (e.g. by
-associating them all to a single volume), to reclassify them correctly on model
-surfaces, curves, etc.
+@item getElementTypes
+Get the types of elements in the entity of dimension @code{dim} and tag
+@code{tag}. If @code{tag} < 0, get the types for all entities of dimension
+@code{dim}. If @code{dim} and @code{tag} are negative, get all the types in the
+mesh.
 
 @table @asis
 @item Input:
+@code{dim}, @code{tag}
+@item Output:
+@code{elementTypes}
+@item Return:
 -
+@end table
+
+@item getElementProperties
+Get the properties of an element of type @code{elementType}: its name
+(@code{elementName}), dimension (@code{dim}), order (@code{order}), number of
+nodes (@code{numNodes}) and parametric node coordinates (@code{parametricCoord}
+vector, of length @code{dim} times @code{numNodes}).
+
+@table @asis
+@item Input:
+@code{elementType}
+@item Output:
+@code{elementName}, @code{dim}, @code{order}, @code{numNodes}, @code{parametricCoord}
+@item Return:
+-
+@end table
+
+@item getElementsByType
+Get the elements of type @code{elementType} classified on the entity of of tag
+@code{tag}. If @code{tag} < 0, get the elements for all entities.
+@code{elementTags} is a vector containing the tags (unique, strictly positive
+identifiers) of the elements of the corresponding type. @code{nodeTags} is a
+vector of length equal to the number of elements of the given type times the
+number of nodes for this type of element, that contains the node tags of all the
+elements of the given type, concatenated. If @code{numTasks} > 1, only compute
+and return the part of the data indexed by @code{task}.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{tag}, @code{task}, @code{numTasks}
+@item Output:
+@code{elementTags}, @code{nodeTags}
+@item Return:
+-
+@end table
+
+@item preallocateElementsByType
+Preallocate the data for @code{getElementsByType}. This is necessary only if
+@code{getElementsByType} is called with @code{numTasks} > 1.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{elementTag}, @code{nodeTag}, @code{tag}
+@item Output:
+@code{elementTags}, @code{nodeTags}
+@item Return:
+-
+@end table
+
+@item getJacobians
+Get the Jacobians of all the elements of type @code{elementType} classified on
+the entity of dimension @code{dim} and tag @code{tag}, at the integration points
+required by the @code{integrationType} integration rule (e.g. "Gauss4"). Data is
+returned by element, with elements in the same order as in @code{getElements}
+and @code{getElementsByType}. @code{jacobians} contains for each element the 9
+entries of a 3x3 Jacobian matrix (by row), for each integration point.
+@code{determinants} contains for each element the determinant of the Jacobian
+matrix for each integration point. @code{points} contains for each element the
+(x, y, z) coordinates of the integration points. If @code{tag} < 0, get the
+Jacobian data for all entities. If @code{numTasks} > 1, only compute and return
+the part of the data indexed by @code{task}.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{integrationType}, @code{tag}, @code{task}, @code{numTasks}
+@item Output:
+@code{jacobians}, @code{determinants}, @code{points}
+@item Return:
+-
+@end table
+
+@item preallocateJacobians
+Preallocate the data required by @code{getJacobians}. This is necessary only if
+@code{getJacobians} is called with @code{numTasks} > 1.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{integrationType}, @code{jacobian}, @code{determinant}, @code{point}, @code{tag}
+@item Output:
+@code{jacobians}, @code{determinants}, @code{points}
+@item Return:
+-
+@end table
+
+@item getBasisFunctions
+Get the basis functions of the element of type @code{elementType} for the given
+@code{integrationType} integration rule (e.g. "Gauss4") and
+@code{functionSpaceType} function space (e.g. "IsoParametric").
+@code{integrationPoints} contains the parametric coordinates (u, v, w) and the
+weight for each integeration point, concatenated. @code{numComponents} returns
+the number of components of a basis function. @code{basisFunctions} contains the
+evaluation of the basis functions at the integration points.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{integrationType}, @code{functionSpaceType}
+@item Output:
+@code{integrationPoints}, @code{numComponents}, @code{basisFunctions}
+@item Return:
+-
+@end table
+
+@item precomputeBasisFunctions
+Precomputes the basis functions corresponding to @code{elementType}.
+
+@table @asis
+@item Input:
+@code{elementType}
 @item Output:
 -
 @item Return:
 -
 @end table
 
-@item getNode
-Get the coordinates and the parametric coordinates (if any) of the mesh node
-with tag @code{tag}. This is a useful by inefficient way of accessing mesh node
-data, as it relies on a cache stored in the model. For large meshes all the
-nodes in the model should be numbered in a continuous sequence of tags from 1 to
-N to maintain reasonnable performance (in this case the internal cache is based
-on a vector; otherwise it uses a map).
+@item getBarycenters
+Get the barycenters of all elements of type @code{elementType} classified on the
+entity of tag @code{tag}. If @code{primary} is set, only the primary nodes of
+the elements are taken into account for the barycenter calculation. If
+@code{fast} is set, the function returns the sum of the primary node coordinates
+(without normalizing by the number of nodes). If @code{numTasks} > 1, only
+compute and return the part of the data indexed by @code{task}.
 
 @table @asis
 @item Input:
-@code{nodeTag}
+@code{elementType}, @code{tag}, @code{fast}, @code{primary}, @code{task}, @code{numTasks}
 @item Output:
-@code{coord}, @code{parametricCoord}
+@code{barycenters}
 @item Return:
 -
 @end table
 
-@item getElement
-Get the type and node tags of the mesh element with tag @code{tag}. This is a
-useful but inefficient way of accessing mesh element data, as it relies on a
-cache stored in the model. For large meshes all the elements in the model should
-be numbered in a continuous sequence of tags from 1 to N to maintain reasonnable
-performance (in this case the internal cache is based on a vector; otherwise it
-uses a map).
+@item preallocateBarycenters
+Preallocate the data required by @code{getBarycenters}. This is necessary only
+if @code{getBarycenters} is called with @code{numTasks} > 1.
 
 @table @asis
 @item Input:
-@code{elementTag}
+@code{elementType}, @code{tag}
 @item Output:
-@code{elementType}, @code{nodeTags}
+@code{barycenters}
 @item Return:
 -
 @end table
@@ -710,10 +819,9 @@ only entities of dimension 0 (points) are handled.
 
 @item setTransfiniteCurve
 Set a transfinite meshing constraint on the curve @code{tag}, with
-@code{numNodes} mesh nodes distributed according to @code{meshType} and
-@code{coef}. Currently supported types are "Progression" (geometrical
-progression with power @code{coef}) and "Bump" (refinement toward both
-extremities of the curve).
+@code{numNodes} nodes distributed according to @code{meshType} and @code{coef}.
+Currently supported types are "Progression" (geometrical progression with power
+@code{coef}) and "Bump" (refinement toward both extremities of the curve).
 
 @table @asis
 @item Input:
@@ -828,16 +936,53 @@ than @code{dim}.
 -
 @end table
 
+@item reorderElements
+Reorder the elements of type @code{elementType} classified on the entity of tag
+@code{tag} according to @code{ordering}.
+
+@table @asis
+@item Input:
+@code{elementType}, @code{tag}, @code{ordering}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item renumberNodes
+Renumber the nodes tags in a contiunous sequence.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item renumberElements
+Renumber the elements tags in a contiunous sequence.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
 @item setPeriodic
 Set the meshes of the entities of dimension @code{dim} and tag @code{tags} as
-periodic copies of the meshes of entities @code{tagsMaster}, using the affine
+periodic copies of the meshes of entities @code{tagsSource}, using the affine
 transformation specified in @code{affineTransformation} (16 entries of a 4x4
 matrix, by row). Currently only available for @code{dim} == 1 and @code{dim} ==
 2.
 
 @table @asis
 @item Input:
-@code{dim}, @code{tags}, @code{tagsMaster}, @code{affineTransformation}
+@code{dim}, @code{tags}, @code{tagsSource}, @code{affineTransformation}
 @item Output:
 -
 @item Return:
@@ -853,6 +998,56 @@ of dimension @code{dim} and tag @code{tag}.
 @code{dim}, @code{tag}
 @item Output:
 @code{tagMaster}, @code{nodes}, @code{affineTransform}
+@item Return:
+-
+@end table
+
+@item removeDuplicateNodes
+Remove duplicate nodes in the mesh of the current model.
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item homology
+Compute a basis representation for homology spaces after a mesh has been
+generated. The computation domain is given in a list of physical group tags
+@code{domainTags}; if empty, the whole mesh is the domain. The computation
+subdomain for relative homology computation is given in a list of physical group
+tags @code{subdomainTags}; if empty, absolute homology is computed. The
+dimensions homology bases to be computed are given in the list @code{dim}; if
+empty, all bases are computed. Resulting basis representation chains are stored
+as physical groups in the mesh.
+
+@table @asis
+@item Input:
+@code{domainTags}, @code{subdomainTags}, @code{dims}
+@item Output:
+-
+@item Return:
+-
+@end table
+
+@item cohomology
+Compute a basis representation for cohomology spaces after a mesh has been
+generated. The computation domain is given in a list of physical group tags
+@code{domainTags}; if empty, the whole mesh is the domain. The computation
+subdomain for relative cohomology computation is given in a list of physical
+group tags @code{subdomainTags}; if empty, absolute cohomology is computed. The
+dimensions homology bases to be computed are given in the list @code{dim}; if
+empty, all bases are computed. Resulting basis representation cochains are
+stored as physical groups in the mesh.
+
+@table @asis
+@item Input:
+@code{domainTags}, @code{subdomainTags}, @code{dims}
+@item Output:
+-
 @item Return:
 -
 @end table
@@ -1033,8 +1228,8 @@ integer
 @end table
 
 @item addBSpline
-Adds a cubic b-spline curve with @code{pointTags} control points. If @code{tag}
-is positive, sets the tag explicitly; otherwise a new tag is selected
+Add a cubic b-spline curve with @code{pointTags} control points. If @code{tag}
+is positive, set the tag explicitly; otherwise a new tag is selected
 automatically. Creates a periodic curve if the first and last points are the
 same. Return the tag of the b-spline curve.
 
@@ -1318,10 +1513,9 @@ only entities of dimension 0 (points) are handled.
 
 @item setTransfiniteCurve
 Set a transfinite meshing constraint on the curve @code{tag}, with
-@code{numNodes} mesh nodes distributed according to @code{meshType} and
-@code{coef}. Currently supported types are "Progression" (geometrical
-progression with power @code{coef}) and "Bump" (refinement toward both
-extreminties of the curve).
+@code{numNodes} nodes distributed according to @code{meshType} and @code{coef}.
+Currently supported types are "Progression" (geometrical progression with power
+@code{coef}) and "Bump" (refinement toward both extreminties of the curve).
 
 @table @asis
 @item Input:
@@ -1755,8 +1949,8 @@ integer
 
 @item addTorus
 Add a torus, defined by its center (@code{x}, @code{y}, @code{z}) and its 2
-radii @code{r} and @code{r2}. If @code{tag} is positive, sets the tag
-explicitly; otherwise a new tag is selected automatically. The optional argument
+radii @code{r} and @code{r2}. If @code{tag} is positive, set the tag explicitly;
+otherwise a new tag is selected automatically. The optional argument
 @code{angle} defines the angular opening (from 0 to 2*Pi). Return the tag of the
 wedge.
 

@@ -75,12 +75,12 @@ class discreteFace : public GFace {
   GPoint closestPoint(const SPoint3 &queryPoint, const double initialGuess[2]) const;
   SVector3 normal(const SPoint2 &param) const;
   double curvatureMax(const SPoint2 &param) const;
-  double curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
-                                  double *curvMax, double *curvMin) const;
+  double curvatures(const SPoint2 &param, SVector3 &dirMax, SVector3 &dirMin,
+                    double &curvMax, double &curvMin) const;
   GEntity::GeomType geomType() const { return DiscreteSurface; }
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &param,
-                         SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const;
+                         SVector3 &dudu, SVector3 &dvdv, SVector3 &dudv) const;
   void writeGEO(FILE *fp);
   void createGeometry();
   virtual void mesh(bool verbose);

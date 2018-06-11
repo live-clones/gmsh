@@ -9,10 +9,6 @@
 #include <set>
 #include <vector>
 #include <map>
-#include <fstream>
-#include <sstream>
-#include <iostream>
-#include <iomanip>
 #include <numeric>
 #include "BGMBase.h"
 #include "pointInsertion.h"

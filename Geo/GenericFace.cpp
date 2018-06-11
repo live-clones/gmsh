@@ -73,20 +73,19 @@ Pair<SVector3,SVector3> GenericFace::firstDer(const SPoint2 &param) const
                                  SVector3(derv[0],derv[1],derv[2]));
 }
 
-void GenericFace::secondDer(const SPoint2 &param,SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
+void GenericFace::secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv, SVector3 &dudv) const
 {
   std::vector<double> deruu(3,0.);
   std::vector<double> dervv(3,0.);
   std::vector<double> deruv(3,0.);
   std::vector<double> par(2,0.);
-  for (int i = 0; i < 2; i++) par[i] = param[i];
+  for(int i = 0; i < 2; i++) par[i] = param[i];
   if (!FaceSecondDer) Msg::Fatal("Genericface::ERROR: Callback FaceSecondDer not set");
-  bool ok = FaceSecondDer(id,par,deruu,dervv,deruv);
-  if (!ok) Msg::Error("GenericFace::ERROR from FaceSecondDer ! " );
-  *dudu = SVector3(deruu[0],deruu[1],deruu[2]);
-  *dvdv = SVector3(dervv[0],dervv[1],dervv[2]);
-  *dudv = SVector3(deruv[0],deruv[1],deruv[2]);
-  return;
+  bool ok = FaceSecondDer(id, par, deruu, dervv, deruv);
+  if(!ok) Msg::Error("GenericFace::ERROR from FaceSecondDer ! " );
+  dudu = SVector3(deruu[0],deruu[1],deruu[2]);
+  dvdv = SVector3(dervv[0],dervv[1],dervv[2]);
+  dudv = SVector3(deruv[0],deruv[1],deruv[2]);
 }
 
 GPoint GenericFace::point(double par1, double par2) const
@@ -197,8 +196,8 @@ double GenericFace::curvatureMax(const SPoint2 &param) const
   return std::max(fabs(curvMax), fabs(curvMin));
 }
 
-double GenericFace::curvatures(const SPoint2 &_param,SVector3 *_dirMax,SVector3 *_dirMin,
-                               double *curvMax,double *curvMin) const
+double GenericFace::curvatures(const SPoint2 &_param, SVector3 &_dirMax, SVector3 &_dirMin,
+                               double &curvMax, double &curvMin) const
 {
   std::vector<double> param(2,0.);
   for (int i = 0; i < 2; i++) param[i] = _param[i];
@@ -206,12 +205,12 @@ double GenericFace::curvatures(const SPoint2 &_param,SVector3 *_dirMax,SVector3 
   std::vector<double> dirMin(3,0.);
 
   if (!FaceCurvatures) Msg::Fatal("Genericface::ERROR: Callback FaceCurvatures not set");
-  bool ok = FaceCurvatures(id,param,dirMax,dirMin,*curvMax,*curvMin);
+  bool ok = FaceCurvatures(id,param,dirMax,dirMin,curvMax,curvMin);
   if (!ok) Msg::Error("GenericFace::ERROR from FaceCurvatures ! " );
 
-  *_dirMax = SVector3(dirMax[0],dirMax[1],dirMax[2]);
-  *_dirMin = SVector3(dirMin[0],dirMin[1],dirMin[2]);
-  return *curvMax;
+  _dirMax = SVector3(dirMax[0],dirMax[1],dirMax[2]);
+  _dirMin = SVector3(dirMin[0],dirMin[1],dirMin[2]);
+  return curvMax;
 }
 
 bool GenericFace::containsPoint(const SPoint3 &pt) const

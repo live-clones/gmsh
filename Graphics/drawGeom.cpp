@@ -157,8 +157,8 @@ class drawGEdge {
     }
 
     if(CTX::instance()->geom.highlightOrphans){
-      std::list<GFace*> faces = e->faces();
-      if(faces.size() == 0)
+      std::vector<GFace*> faces = e->faces();
+      if(faces.empty())
         glColor4ubv((GLubyte *) & CTX::instance()->color.geom.highlight[0]);
       else if(faces.size() == 1)
         glColor4ubv((GLubyte *) & CTX::instance()->color.geom.highlight[1]);
@@ -417,11 +417,17 @@ class drawGRegion {
     else
       glColor4ubv((GLubyte *) & CTX::instance()->color.geom.volume);
 
-    SPoint3 p = r->bounds().center();
     const double size = 8.;
+    double x = 0., y = 0., z = 0.;
 
-    double x = p.x(), y = p.y(), z = p.z();
-    _ctx->transform(x, y, z);
+    if(CTX::instance()->geom.volumes || CTX::instance()->geom.volumesNum ||
+       r->getSelection() > 1){
+      SPoint3 p = r->bounds(true).center(); // fast approx if mesh-based
+      x = p.x();
+      y = p.y();
+      z = p.z();
+      _ctx->transform(x, y, z);
+    }
 
     if(CTX::instance()->geom.volumes || r->getSelection() > 1)
       _ctx->drawSphere(size, x, y, z, CTX::instance()->geom.light);

@@ -16,7 +16,7 @@
 #include <algorithm>
 #include <functional>
 #include <list>
-#include <math.h>
+#include <cmath>
 #include "GmshMessage.h"
 
 class BDS_Edge;
@@ -109,9 +109,8 @@ public:
     c[1] = -a[0] * b[2] + a[2] * b[0];
     c[0] = a[1] * b[2] - a[2] * b[1];
     double cosa = a[0] * b[0] + a[1] * b[1] +a[2] * b[2];
-    double sina = sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
-    double ag = atan2(sina, cosa);
-    return ag;
+    double sina = std::sqrt(c[0] * c[0] + c[1] * c[1] + c[2] * c[2]);
+    return std::atan2(sina, cosa);
   }
   double angle_deg(const BDS_Vector &v) const
   {
@@ -130,7 +129,7 @@ public:
 class BDS_Point
 {
   // the first size is the one dictated by the Background Mesh the
-  // second one is dictated by charecteristic lengths at points and is
+  // second one is dictated by characteristic lengths at points and is
   // propagated
   double _lcBGM, _lcPTS;
  public:
@@ -139,27 +138,24 @@ class BDS_Point
   bool config_modified;
   int iD;
   BDS_GeomEntity *g;
-  std::list<BDS_Edge*> edges;
+  std::vector<BDS_Edge*> edges;
   // just a transition
   double &lcBGM() { return _lcBGM; }
+
+  /// \return Point characteristic length
   double &lc() { return _lcPTS; }
-  inline bool operator < (const BDS_Point & other) const
+  /// \return Point characteristic length
+  double const& lc() const { return _lcPTS; }
+
+  bool operator < (const BDS_Point & other) const
   {
     return iD < other.iD;
   }
-  inline void del(BDS_Edge *e)
+  void del(BDS_Edge *e)
   {
-    std::list<BDS_Edge*>::iterator it = edges.begin();
-    std::list<BDS_Edge*>::iterator ite = edges.end();
-    while(it != ite){
-      if(*it == e){
-        edges.erase(it);
-        break;
-      }
-      ++it;
-    }
+    edges.erase(std::remove(edges.begin(), edges.end(), e), edges.end());
   }
-  void getTriangles(std::list<BDS_Face *> &t) const;
+  std::vector<BDS_Face*> getTriangles() const;
   BDS_Point(int id, double x=0, double y=0, double z=0)
     : _lcBGM(1.e22), _lcPTS(1.e22), X(x), Y(y), Z(z), u(0), v(0),
       config_modified(true), iD(id), g(0) {}
@@ -410,8 +406,8 @@ class BDS_Mesh
   BDS_Mesh(const BDS_Mesh &other);
   std::set<BDS_GeomEntity*, GeomLessThan> geom;
   std::set<BDS_Point*, PointLessThan> points;
-  std::list<BDS_Edge*> edges;
-  std::list<BDS_Face*> triangles;
+  std::vector<BDS_Edge*> edges;
+  std::vector<BDS_Face*> triangles;
   // Points
   BDS_Point *add_point(int num, double x, double y, double z);
   BDS_Point *add_point(int num, double u, double v, GFace *gf);
@@ -439,9 +435,11 @@ class BDS_Mesh
   BDS_Edge *recover_edge(int p1, int p2, bool &_fatal, std::set<EdgeToRecover> *e2r=0,
                          std::set<EdgeToRecover> *not_recovered=0);
   BDS_Edge *recover_edge_fast(BDS_Point *p1, BDS_Point *p2);
+
+  /// Can invalidate the iterators for \p edge
   bool swap_edge(BDS_Edge*, const BDS_SwapEdgeTest &theTest);
   bool collapse_edge_parametric(BDS_Edge*, BDS_Point*);
-  bool smooth_point_parametric(BDS_Point *p, GFace *gf);
+  bool smooth_point_parametric(BDS_Point * const p, GFace * const gf);
   bool smooth_point_centroid(BDS_Point *p, GFace *gf, bool test_quality=false);
   bool split_edge(BDS_Edge *, BDS_Point *);
   bool edge_constraint(BDS_Point *p1, BDS_Point *p2);
@@ -455,7 +453,7 @@ void swap_config(BDS_Edge *e,
                  BDS_Point **p21, BDS_Point **p22, BDS_Point **p23,
                  BDS_Point **p31, BDS_Point **p32, BDS_Point **p33,
                  BDS_Point **p41, BDS_Point **p42, BDS_Point **p43);
-void outputScalarField(std::list<BDS_Face*> t, const char *fn, int param, GFace *gf=0);
+void outputScalarField(std::vector<BDS_Face*> t, const char *fn, int param, GFace *gf=0);
 void recur_tag(BDS_Face *t, BDS_GeomEntity *g);
 int Intersect_Edges_2d(double x1, double y1, double x2, double y2,
                        double x3, double y3, double x4, double y4,

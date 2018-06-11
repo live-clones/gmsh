@@ -45,7 +45,7 @@ void discreteFace::setBoundEdges(const std::vector<int> &tagEdges,
     Msg::Error("Wrong number of edge signs in setBoundEdges");
     setBoundEdges(tagEdges);
   }
-  for (unsigned int i = 0; i != tagEdges.size(); i++){
+  for (std::vector<int>::size_type i = 0; i != tagEdges.size(); i++){
     GEdge *ge = model()->getEdgeByTag(tagEdges[i]);
     if(ge){
       l_edges.push_back(ge);
@@ -296,8 +296,8 @@ double discreteFace::curvatureMax(const SPoint2 &param) const
   return false;
 }
 
-double discreteFace::curvatures(const SPoint2 &param, SVector3 *dirMax, SVector3 *dirMin,
-                                double *curvMax, double *curvMin) const
+double discreteFace::curvatures(const SPoint2 &param, SVector3 &dirMax, SVector3 &dirMin,
+                                double &curvMax, double &curvMin) const
 {
   return false;
 }
@@ -355,7 +355,7 @@ Pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
 }
 
 void discreteFace::secondDer(const SPoint2 &param,
-                             SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
+                             SVector3 &dudu, SVector3 &dvdv, SVector3 &dudv) const
 {
   return;
 }
@@ -628,7 +628,7 @@ static void splitInternalEdges(std::vector<MEdge> &e, int ITH,
       //      std::vector<MVertex*> l2; l2.insert(l2.begin(),l.begin(),l.end());
     }
 
-    std::vector<MVertex*> l2; l2.insert(l2.begin(),l.begin(),l.end());
+    std::vector<MVertex*> l2(l.begin(), l.end());
     eds.push_back(l2);
 
 
@@ -636,7 +636,7 @@ static void splitInternalEdges(std::vector<MEdge> &e, int ITH,
     //    for (int i=0;i<l2.size();i++)printf("%d ",l2[i]->getNum());
     //    printf("\n");
 
-    for (int i=0;i<l2.size()-1;i++){
+    for (std::vector<MVertex*>::size_type i=0;i<l2.size()-1;i++){
       fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
 	      l2[i]->x(),l2[i]->y(),l2[i]->z(),
 	      l2[i+1]->x(),l2[i+1]->y(),l2[i+1]->z(),count,count,count);
@@ -1102,7 +1102,7 @@ HXTStatus discreteFace::reparametrize_through_hxt()
   double *crossField,*nodalCurvatures;
   HXT_CHECK(hxtEdgesCreate(m,&edges));
   HXT_CHECK(hxtCurvatureRusinkiewicz (m, &nodalCurvatures, &crossField, edges, true));
-
+  HXT_CHECK(hxtEdgesDelete(&edges));
   _parametrizations.resize(nc);
   std::vector<std::vector<MEdge> > boundaries (nc);
   std::vector<std::vector<MEdge> > internals (nc);

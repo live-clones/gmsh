@@ -86,7 +86,7 @@ void add_infile(const std::string &text, const std::string &fileNameOrEmpty)
 
 #if defined(HAVE_PARSER)
   std::string tmpFileName = CTX::instance()->homeDir + CTX::instance()->tmpFileName;
-  gmshFILE gmsh_yyin_old = gmsh_yyin;
+  FILE *gmsh_yyin_old = gmsh_yyin;
   FILE *tmp_file;
   if(!(tmp_file = Fopen(tmpFileName.c_str(), "w"))) {
     Msg::Error("Unable to open temporary file '%s'", tmpFileName.c_str());
@@ -94,11 +94,11 @@ void add_infile(const std::string &text, const std::string &fileNameOrEmpty)
   }
   fprintf(tmp_file, "%s\n", text.c_str());
   fclose(tmp_file);
-  gmsh_yyin = gmshopen(tmpFileName.c_str(), "r");
-  while(!gmsheof(gmsh_yyin)) {
+  gmsh_yyin = Fopen(tmpFileName.c_str(), "r");
+  while(!feof(gmsh_yyin)) {
     gmsh_yyparse();
   }
-  gmshclose(gmsh_yyin);
+  fclose(gmsh_yyin);
   gmsh_yyin = gmsh_yyin_old;
 
   GModel::current()->getGEOInternals()->synchronize(GModel::current());
@@ -107,28 +107,6 @@ void add_infile(const std::string &text, const std::string &fileNameOrEmpty)
   GModel::current()->setName(split[1]);
   CTX::instance()->mesh.changed = ENT_ALL;
 
-  // here we have to be explicit otherwise we append compressed stuff to ascii
-  // file!
-#if defined(HAVE_COMPRESSED_IO) && defined(HAVE_LIBZ)
-  if(compressed){
-    gmshFILE fp = gmshopen(fileName.c_str(), "a");
-    if(!fp) {
-      Msg::Error("Unable to open file '%s'", fileName.c_str());
-      return;
-    }
-    gmshprintf(fp, "//+\n%s\n", text.c_str());
-    gmshclose(fp);
-  }
-  else{
-    FILE *fp = Fopen(fileName.c_str(), "a");
-    if(!fp) {
-      Msg::Error("Unable to open file '%s'", fileName.c_str());
-      return;
-    }
-    fprintf(fp, "//+\n%s\n", text.c_str());
-    fclose(fp);
-  }
-#else
   FILE *fp = Fopen(fileName.c_str(), "a");
   if(!fp) {
     Msg::Error("Unable to open file '%s'", fileName.c_str());
@@ -136,8 +114,6 @@ void add_infile(const std::string &text, const std::string &fileNameOrEmpty)
   }
   fprintf(fp, "//+\n%s\n", text.c_str());
   fclose(fp);
-#endif
-
 #else
   Msg::Error("GEO file creation not available without Gmsh parser");
 #endif

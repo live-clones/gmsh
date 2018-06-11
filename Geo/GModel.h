@@ -209,6 +209,11 @@ class GModel {
     maxe = _checkPointedMaxElementNum;
   }
 
+  // renumber mesh vertices and elements in a continuous sequence (this
+  // invalidates the mesh caches)
+  void renumberMeshVertices();
+  void renumberMeshElements();
+
   // delete all the mesh-related caches (this must be called when the
   // mesh is changed)
   void destroyMeshCaches();
@@ -433,6 +438,10 @@ class GModel {
 
   // return the total number of vertices in the mesh
   int getNumMeshVertices(int dim = -1) const;
+
+  // recompute _vertexVectorCache if there is a dense vertex numbering or
+  // _vertexMapCache if not.
+  void rebuildMeshVertexCache(bool onlyIfNecessary = false);
 
   // access a mesh vertex by tag, using the vertex cache
   MVertex *getMeshVertexByTag(int n);

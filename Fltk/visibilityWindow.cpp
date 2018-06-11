@@ -503,8 +503,8 @@ static void _add_region(GRegion *gr, Fl_Tree *tree, std::string path)
   if(gr->getVisibility()) n->select(1);
   n->user_data((void*)gr);
   n->close();
-  std::list<GFace*> faces = gr->faces();
-  for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++)
+  std::vector<GFace*> faces = gr->faces();
+  for(std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); it++)
     _add_face(*it, tree, region.str());
 }
 

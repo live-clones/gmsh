@@ -9,7 +9,6 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "GmshIO.h"
 
 int gmsh_yyparse();
 int gmsh_yylex();
@@ -441,7 +440,7 @@ public:
 
 
 // global parser variables that need to be exported
-extern gmshFILE gmsh_yyin;
+extern FILE *gmsh_yyin;
 extern int gmsh_yylineno;
 extern char *gmsh_yytext;
 extern int gmsh_yyviewindex;

@@ -46,10 +46,15 @@ MVertex::MVertex(double x, double y, double z, GEntity *ge, int num)
 
 void MVertex::deleteLast()
 {
-  GModel *m = GModel::current();
-  if(_num == m->getMaxVertexNumber())
-    m->setMaxVertexNumber(m->getMaxVertexNumber() - 1);
-  delete this;
+#if defined(_OPENMP)
+#pragma omp critical
+#endif
+  {
+    GModel *m = GModel::current();
+    if(_num == m->getMaxVertexNumber())
+      m->setMaxVertexNumber(m->getMaxVertexNumber() - 1);
+    delete this;
+  }
 }
 
 void MVertex::forceNum(int num)
@@ -58,9 +63,9 @@ void MVertex::forceNum(int num)
 #pragma omp critical
 #endif
   {
+    GModel *m = GModel::current();
     _num = num;
-    GModel::current()->setMaxVertexNumber
-      (std::max(GModel::current()->getMaxVertexNumber(), _num));
+    m->setMaxVertexNumber(std::max(m->getMaxVertexNumber(), _num));
   }
 }
 

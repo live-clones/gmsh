@@ -2481,9 +2481,9 @@ void BoundaryLayerField::setupFor2d(int iF)
       edges_id_saved.end();
     // this edge is a BL Edge
     if (found){
-      std::list<GFace*> fc = (*it)->faces();
+      std::vector<GFace*> fc = (*it)->faces();
       int numf = 0;
-      for(std::list<GFace*>::iterator it = fc.begin(); it != fc.end(); it++){
+      for(std::vector<GFace*>::iterator it = fc.begin(); it != fc.end(); it++){
         if((*it)->meshAttributes.extrude &&
            (*it)->meshAttributes.extrude->geo.Mode == EXTRUDED_ENTITY){
           // ok
@@ -2640,7 +2640,7 @@ void BoundaryLayerField::operator() (AttractorField *cc, double dist,
       double cmin, cmax;
       SVector3 dirMax, dirMin;
       cmax = gf->curvatures(SPoint2(pp.first.u, pp.first.v),
-                            &dirMax, &dirMin, &cmax, &cmin);
+                            dirMax, dirMin, cmax, cmin);
       const double b = lc_t;
       const double h = lc_n;
       double oneOverD2_min = .5/(b * b) *

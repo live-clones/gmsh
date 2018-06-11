@@ -268,7 +268,7 @@ void findTransfiniteCorners(GRegion *gr, std::vector<MVertex*> &corners)
   }
   else{
     // try to find the corners automatically
-    std::list<GFace*> faces = gr->faces();
+    std::vector<GFace*> faces = gr->faces();
     GFace *gf = 0;
     if(faces.size() == 6){
       // any face will do as a starting face
@@ -276,7 +276,7 @@ void findTransfiniteCorners(GRegion *gr, std::vector<MVertex*> &corners)
     }
     else if(faces.size() == 5){
       // we need to start with a triangular face
-      for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
+      for(std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); it++){
         if((*it)->edges().size() == 3 || (*it)->meshAttributes.corners.size() == 3){
           gf = *it;
           break;
@@ -312,7 +312,7 @@ int MeshTransfiniteVolume(GRegion *gr)
 
   Msg::Info("Meshing volume %d (transfinite)", gr->tag());
 
-  std::list<GFace*> faces = gr->faces();
+  std::vector<GFace*> faces = gr->faces();
   if(faces.size() != 5 && faces.size() != 6){
     Msg::Error("Transfinite algorithm only available for 5- and 6-face volumes");
     return 0;
@@ -327,7 +327,7 @@ int MeshTransfiniteVolume(GRegion *gr)
   }
 
   std::vector<GOrientedTransfiniteFace> orientedFaces(6);
-  for(std::list<GFace*>::iterator it = faces.begin(); it != faces.end(); ++it){
+  for(std::vector<GFace*>::iterator it = faces.begin(); it != faces.end(); ++it){
     GOrientedTransfiniteFace f(*it, corners);
     if(f.index() < 0){
       Msg::Error("Incompatible surface %d in transfinite volume %d",

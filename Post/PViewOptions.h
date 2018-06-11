@@ -40,7 +40,8 @@ class PViewOptions {
     MinEigenValue = 3,
     EigenVectors = 4,
     Ellipse = 5,
-    Ellipsoid = 6
+    Ellipsoid = 6,
+    Frame = 7
   };
   enum GlyphLocation {
     COG = 1,

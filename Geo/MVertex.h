@@ -22,13 +22,14 @@ class MVertex;
 // A mesh vertex.
 class MVertex{
  protected:
-  // the immutable id number of the vertex (this number is unique and
-  // is guaranteed never to change once a vertex has been created)
+  // the immutable id number of the vertex (this number is unique and is
+  // guaranteed never to change once a vertex has been created, unless the mesh
+  // is explicitely renumbered)
   int _num;
-  // a vertex index, used for example during mesh generation or when
-  // saving a mesh (this index is not necessarily unique, can change
-  // after mesh renumbering, etc.). By convention, vertices with
-  // negative indices are not saved
+  // a vertex index, used for example during mesh generation or when saving a
+  // mesh (this index is not necessarily unique, can change after mesh
+  // renumbering, etc.). By convention, vertices with negative indices are not
+  // saved
   int _index;
   // a visibility and polynomial order flags
   char _visible, _order;
@@ -68,7 +69,8 @@ class MVertex{
   // get the immutab vertex number
   inline int getNum() const { return _num; }
 
-  // force the immutable number (this should normally never be used)
+  // force the immutable number (this should never be used, except when
+  // explicitly renumbering the mesh)
   void forceNum(int num);
 
   // get/set the index

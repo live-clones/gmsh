@@ -222,20 +222,20 @@ Pair<SVector3, SVector3> gmshFace::firstDer(const SPoint2 &param) const
 }
 
 void gmshFace::secondDer(const SPoint2 &param,
-                         SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const
+                         SVector3 &dudu, SVector3 &dvdv, SVector3 &dudv) const
 {
   if(s->Typ == MSH_SURF_PLAN && !s->geometry){
-    *dudu = SVector3(0., 0., 0.);
-    *dvdv = SVector3(0., 0., 0.);
-    *dudv = SVector3(0., 0., 0.);
+    dudu = SVector3(0., 0., 0.);
+    dvdv = SVector3(0., 0., 0.);
+    dudv = SVector3(0., 0., 0.);
   }
   else{
     Vertex vuu = InterpolateSurface(s, param[0], param[1], 2, 1);
     Vertex vvv = InterpolateSurface(s, param[0], param[1], 2, 2);
     Vertex vuv = InterpolateSurface(s, param[0], param[1], 2, 3);
-    *dudu = SVector3(vuu.Pos.X,vuu.Pos.Y,vuu.Pos.Z);
-    *dvdv = SVector3(vvv.Pos.X,vvv.Pos.Y,vvv.Pos.Z);
-    *dudv = SVector3(vuv.Pos.X,vuv.Pos.Y,vuv.Pos.Z);
+    dudu = SVector3(vuu.Pos.X,vuu.Pos.Y,vuu.Pos.Z);
+    dvdv = SVector3(vvv.Pos.X,vvv.Pos.Y,vvv.Pos.Z);
+    dudv = SVector3(vuv.Pos.X,vuv.Pos.Y,vuv.Pos.Z);
   }
 }
 

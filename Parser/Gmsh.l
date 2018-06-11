@@ -14,7 +14,6 @@
 #include "GModelIO_GEO.h"
 #include "Parser.h"
 #include "Gmsh.tab.hpp"
-#include "GmshIO.h"
 #include "Geo.h" // for NEWPOINT(), etc.
 
 void   parsestring(char endchar);
@@ -373,7 +372,7 @@ void skipcomments(void)
 
   while (1) {
     while ((c = yyinput()) != '*'){
-      // Test on YY_END_OF_BUFFER_CHAR (0), not on gmsheof(yyin) because whole line in buffer
+      // Test on YY_END_OF_BUFFER_CHAR (0), not on feof(yyin) because whole line in buffer
       if(c=='\0'){
 	Msg::Error("End of file in commented region");
         return;
@@ -394,7 +393,7 @@ void parsestring(char endchar)
   // etc.) "as is" in the output string: see yyinput() above
   int i = 0;
   while ((c = yyinput()) != endchar) {
-    // Test on YY_END_OF_BUFFER_CHAR (0), not on gmsheof(yyin) because whole line in buffer
+    // Test on YY_END_OF_BUFFER_CHAR (0), not on feof(yyin) because whole line in buffer
     if(c=='\0'){
       Msg::Error("End of file in string");
       break;
@@ -448,7 +447,7 @@ void skip(const char *skip, const char *until)
     while (1){
       chars[0] = yyinput();
       // TOFIX: do another test
-      if(gmsheof(yyin)){
+      if(feof(yyin)){
 	Msg::Error("Unexpected end of file");
 	return;
       }
@@ -469,7 +468,7 @@ void skip(const char *skip, const char *until)
 
     for(i=1; i<l; i++){
       chars[i] = yyinput();
-      if(gmsheof(yyin)){
+      if(feof(yyin)){
 	l = i;
 	break;
       }
@@ -527,7 +526,7 @@ void skipTest(const char *skip, const char *until,
   while(1){
     while (1){
       chars[0] = yyinput();
-      if(gmsheof(yyin)){
+      if(feof(yyin)){
 	Msg::Error("Unexpected end of file");
 	return;
       }
@@ -555,7 +554,7 @@ void skipTest(const char *skip, const char *until,
         unput(chars[i]); chars[i] = 0; l = i; flag_EOL_EOF = 1;
         break;
       }
-      if(gmsheof(yyin)){
+      if(feof(yyin)){
 	l = i; flag_EOL_EOF = 1;
 	break;
       }

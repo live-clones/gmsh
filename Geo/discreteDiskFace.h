@@ -198,7 +198,7 @@ class triangulation {
     fprintf(f,"};\n");
     fclose(f);
   }
-  
+
   triangulation() : gf(0) {}
   triangulation(int id, const  std::vector<MElement*> &input, GFace* gface)
     : idNum(id), tri(input), gf(gface){ assign(); }
@@ -231,7 +231,6 @@ class discreteDiskFace : public GFace {
   SPoint2 parFromVertex(MVertex *v) const;
   SVector3 normal(const SPoint2&) const;
   double curvatureMax(const SPoint2&) const;
-  double curvatures(const SPoint2&,SVector3*,SVector3*,double*,double*) const;
   virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &param,
 			 SVector3 *dudu, SVector3 *dvdv, SVector3 *dudv) const;
@@ -245,7 +244,7 @@ class discreteDiskFace : public GFace {
   void printAtlasMesh () ;
   void printParamMesh () ;
   void putOnView(int iFace, int iMap, bool,bool);
-  
+
   std::vector<MElement*> discrete_triangles;
  protected:
   // a copy of the mesh that should not be destroyed

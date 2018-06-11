@@ -40,7 +40,7 @@ enum {
 
 class BCPatchIndex
 {
-  struct PatchData 
+  struct PatchData
   {
     int index;
     std::vector<int> eTagVec;
@@ -157,7 +157,7 @@ class BCPatchIndex
  *                            vertex
  *   patch              - (O) record BC patch index for an entity
  *   warnNormFromElem   - (I) whether a warning about obtaining normals from
- *                            elements has already been given. 
+ *                            elements has already been given.
  *                        (O) set to true if warning given in this call
  *
  * Notes
@@ -535,8 +535,8 @@ void updateBoVec<3, MFace>
             std::list<GFace*> gFaceList;
             for(std::list<GEdge*>::const_iterator gEIt = gEdgeList.begin();
                 gEIt != gEdgeList.end(); ++gEIt) {
-              std::list<GFace*> alist = (*gEIt)->faces();
-              gFaceList.splice(gFaceList.end(), alist);
+              std::vector<GFace*> alist = (*gEIt)->faces();
+              gFaceList.insert(gFaceList.end(), alist.begin(), alist.end());
             }
             // Remove duplicates
             gFaceList.sort();
@@ -544,7 +544,10 @@ void updateBoVec<3, MFace>
           }
           break;
         case 1:
-          gFaceList = ent->faces();
+          {
+            std::vector<GFace*> fac = ent->faces();
+            gFaceList.insert(gFaceList.end(), fac.begin(), fac.end());
+          }
           break;
         }
 
@@ -818,7 +821,7 @@ int MZoneBoundary<DIM>::interiorBoundaryVertices
       for(int iFace = 0; iFace != nFace; ++iFace) {
 
 #if (0)
-        // NBN: changing the member object for a pointer means 
+        // NBN: changing the member object for a pointer means
         // we need to do the following in two steps (see below)
 
         globalVertData.faces.push_back
@@ -826,24 +829,24 @@ int MZoneBoundary<DIM>::interiorBoundaryVertices
            (newZoneIndex, zoneVertData.faces[iFace]));
 
 #else
-        // Using FaceAllocator<T> with face2Pool, the std constructors 
+        // Using FaceAllocator<T> with face2Pool, the std constructors
         // are not called, so FaceDataB std members are incomplete.
 
-        // By replacing the FaceT member with FaceT* we fix the issue of 
-        // auto-deleting "un-constructed" containers.  Here, the simple 
+        // By replacing the FaceT member with FaceT* we fix the issue of
+        // auto-deleting "un-constructed" containers.  Here, the simple
         // data type (pointer) member is allocated in the ctor, then we
-        // create and store its FaceT object once the FaceDataB object 
+        // create and store its FaceT object once the FaceDataB object
         // is safely in the container.
         //
         // Note: we must now make sure to delete these pointers.
         // See adjusted version of MZoneBoundary::clear();
 
         // Step 1: append new FaceDataB<> object
-        typename GlobalVertexData<FaceT>::FaceDataB& tFDB = 
+        typename GlobalVertexData<FaceT>::FaceDataB& tFDB =
           globalVertData.faces.push_back
               (typename GlobalVertexData<FaceT>::FaceDataB
               (newZoneIndex, zoneVertData.faces[iFace]) );
-        
+
         // Step 2: construct its internal face object
         tFDB.face = new FaceT(zoneVertData.faces[iFace]->first);
 
@@ -901,10 +904,10 @@ int MZoneBoundary<DIM>::interiorBoundaryVertices
         &zoneVertData.faces[0];
       for(int nZFace = zoneVertData.faces.size(); nZFace--;) {
         bool foundMatch = false;
-        for(unsigned int iGFace = 0; iGFace != nGFace; ++iGFace) 
+        for(unsigned int iGFace = 0; iGFace != nGFace; ++iGFace)
         {
           // NBN: face is now a pointer, so need to de-reference
-        //if((*zFace)->first ==  globalVertData.faces[iGFace].face ) 
+        //if((*zFace)->first ==  globalVertData.faces[iGFace].face )
             if(globalVertData.faces[iGFace].face){
                 if((*zFace)->first == *(globalVertData.faces[iGFace].face)) {
                     foundMatch = true;
@@ -1048,7 +1051,7 @@ int MZoneBoundary<DIM>::exteriorBoundaryVertices
 template<>
 template<>
 MZoneBoundary<2>::GlobalVertexData<MEdge>::FaceDataB::FaceDataB()
-  : 
+  :
   //face(0, 0),         // NBN: replaced this MEdge object
     face(NULL),         // NBN: with a pointer to MEdge
     parentElement(0),   // NBN: also, init members
@@ -1060,7 +1063,7 @@ MZoneBoundary<2>::GlobalVertexData<MEdge>::FaceDataB::FaceDataB()
 template<>
 template<>
 MZoneBoundary<3>::GlobalVertexData<MFace>::FaceDataB::FaceDataB()
-   : 
+   :
   //face(0, 0, 0),      // NBN: replaced this MFace object
     face(NULL),         // NBN: with a pointer to MFace
     parentElement(0),   // NBN: also, init members

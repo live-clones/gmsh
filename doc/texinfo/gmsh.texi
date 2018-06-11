@@ -8,7 +8,7 @@
 @c
 @c This is the Gmsh documentation texinfo source file
 @c
-@c Things to do -> "Ctrl+s todo:" 
+@c Things to do -> "Ctrl+s todo:"
 @c
 @c Indexing:
 @c
@@ -17,7 +17,7 @@
 @c
 @c Before release, run C-u C-c C-u C-a in GNU Emacs. This updates all node
 @c pointers and menus.
-@c 
+@c
 @c =========================================================================
 @c %**starts of header
 @setfilename gmsh.info
@@ -62,7 +62,7 @@ Copyright @value{COPYRIGHT}
 
 @subtitle The documentation for Gmsh @value{GMSH-VERSION}
 @subtitle A finite element mesh generator with built-in pre- and post-processing facilities
-@subtitle 
+@subtitle
 @subtitle @today{}
 
 @author Christophe Geuzaine
@@ -154,7 +154,7 @@ post-processing facilities}. International Journal for Numerical Methods
 in Engineering, Volume 79, Issue 11, pages 1309-1331, 2009''.  A
 preprint of that paper as well as other references and the latest news
 about Gmsh development are available on
-@uref{http://gmsh.info}. 
+@uref{http://gmsh.info}.
 
 @c =========================================================================
 @c Copying Conditions
@@ -475,7 +475,7 @@ Gmsh can be used at three levels:
 @item
 as a stand-alone graphical program, driven by an interactive graphical
 user interface (GUI);
-@item 
+@item
 as a stand-alone script-driven program;
 @item
 as a library.
@@ -534,19 +534,19 @@ throughout the manual (and not only in the sections where the
 definitions appear).
 
 @enumerate
-@item 
+@item
 Keywords and literal symbols are printed like @code{this}.
-@item 
+@item
 Metasyntactic variables (i.e., text bits that are not part of the syntax,
 but stand for other text bits) are printed like @var{this}.
-@item 
+@item
 A colon (@code{:}) after a metasyntactic variable separates the variable
 from its definition.
-@item 
+@item
 Optional rules are enclosed in @code{<} @code{>} pairs.
-@item 
+@item
 Multiple choices are separated by @code{|}.
-@item 
+@item
 Three dots (@dots{}) indicate a possible (multiple) repetition of the
 preceding rule.
 @end enumerate
@@ -802,7 +802,7 @@ characters) is ignored inside all expressions.
 @c -------------------------------------------------------------------------
 
 @node Expressions, Operators, Comments, General tools
-@section Expressions 
+@section Expressions
 
 @cindex Expressions, definition
 @cindex Constants
@@ -931,7 +931,7 @@ List of expressions are also widely used, and are defined as:
   @var{expression} |
   @var{expression} : @var{expression} |
   @var{expression} : @var{expression} : @var{expression} |
-  @var{string} [ ] |  @var{string} ( ) | 
+  @var{string} [ ] |  @var{string} ( ) |
   List [ @var{string} ] |
   List [ @var{expression-list-item} ] |
   List [ @{ @var{expression-list} @} ] |
@@ -940,7 +940,7 @@ List of expressions are also widely used, and are defined as:
   ListFromFile [ @var{expression-char} ] |
   LinSpace[ @var{expression}, @var{expression}, @var{expression} ] |
   LogSpace[ @var{expression}, @var{expression}, @var{expression} ] |
-  @var{string} [ @{ @var{expression-list} @} ] | 
+  @var{string} [ @{ @var{expression-list} @} ] |
   Point @{ @var{expression} @} |
   @var{transform} |
   @var{extrude} |
@@ -1015,7 +1015,7 @@ Character expressions are defined as:
 @var{char-expression}:
   "@var{string}" |
   @var{string} | @var{string}[ @var{expression} ] |
-  Today | OnelabAction | GmshExecutableName | 
+  Today | OnelabAction | GmshExecutableName |
   CurrentDirectory | CurrentDir
   StrPrefix ( @var{char-expression} ) |
   StrRelative ( @var{char-expression} ) |
@@ -1032,8 +1032,8 @@ Character expressions are defined as:
   Sprintf ( @var{char-option} ) |
   GetEnv ( @var{char-expression} ) |
   GetString ( @var{char-expression} <,@var{char-expression}>) |
-  GetStringValue ( @var{char-expression} , @var{char-expression} ) | 
-  StrReplace ( @var{char-expression} , @var{char-expression} , @var{char-expression} ) 
+  GetStringValue ( @var{char-expression} , @var{char-expression} ) |
+  StrReplace ( @var{char-expression} , @var{char-expression} , @var{char-expression} )
   NameToString ( @var{string} ) | N2S ( @var{string} ) |
   DefineString(@var{char-expression}, @var{onelab-options})
 @end example
@@ -1083,7 +1083,7 @@ input/output file names. See @ref{t8.geo}, for an interesting usage of
 List of character expressions are defined as:
 
 @example
-@var{char-expression-list}: 
+@var{char-expression-list}:
   @var{char-expression} <,@dots{}>
 @end example
 
@@ -1169,7 +1169,7 @@ Post-decrementation.
 @item ^
 Exponentiation.
 @item *
-Multiplication. 
+Multiplication.
 @item /
 Division.
 @item %
@@ -1262,7 +1262,7 @@ functions currently implemented:
 @ftable @code
 @item Acos ( @var{expression} )
 Arc cosine (inverse cosine) of an @var{expression} in [-1,1]. Returns a value
-in [0,Pi]. 
+in [0,Pi].
 
 @item Asin ( @var{expression} )
 Arc sine (inverse sine) of an @var{expression} in [-1,1]. Returns a value in
@@ -1414,17 +1414,17 @@ Ends a matching @code{For} command.
 
 @item If ( @var{expression} )
 The body enclosed between `@code{If ( @var{expression} )}' and the matching
-@code{ElseIf}, @code{Else} or @code{EndIf}, is evaluated if @var{expression} 
+@code{ElseIf}, @code{Else} or @code{EndIf}, is evaluated if @var{expression}
 is non-zero.
 
 @item ElseIf ( @var{expression} )
-The body enclosed between `@code{ElseIf ( @var{expression} )}' and the next 
-matching @code{ElseIf}, @code{Else} or @code{EndIf}, is evaluated if 
-@var{expression} is non-zero and none of the @var{expression} of the 
+The body enclosed between `@code{ElseIf ( @var{expression} )}' and the next
+matching @code{ElseIf}, @code{Else} or @code{EndIf}, is evaluated if
+@var{expression} is non-zero and none of the @var{expression} of the
 previous matching codes @code{If} and @code{ElseIf} were non-zero.
 
 @item Else
-The body enclosed between @code{Else} and the matching @code{EndIf} is evaluated 
+The body enclosed between @code{Else} and the matching @code{EndIf} is evaluated
 if none of the @var{expression} of the previous matching codes
 @code{If} and @code{ElseIf} were non-zero.
 
@@ -1799,7 +1799,7 @@ command: see below), then curves (using @code{Line}, @code{Circle},
 (using for example the @code{Plane Surface} or @code{Surface} commands,
 or by extruding curves), and finally volumes (using the @code{Volume}
 command or by extruding surfaces). The OpenCASCADE CAD kernel
-(@code{SetFactory("OpenCASCADE")}) uses the open source OpenCASCADE 
+(@code{SetFactory("OpenCASCADE")}) uses the open source OpenCASCADE
 
 These geometrical entities are called ``elementary'' in Gmsh's jargon,
 and are assigned tags (stricly positive identification numbers) when
@@ -1918,7 +1918,7 @@ points of the segment.
 
 @item Bezier ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a Bezier curve. The @var{expression-list} contains the
-tags of the control points. 
+tags of the control points.
 
 @item BSpline ( @var{expression} ) = @{ @var{expression-list} @};
 Creates a cubic BSpline. The @var{expression-list} contains the tags of
@@ -2207,7 +2207,7 @@ kernel.
 @noindent with
 
 @example
-@var{extrude-list}: 
+@var{extrude-list}:
   <Physical> Point | Curve | Surface @{ @var{expression-list-or-all} @}; @dots{}
 @end example
 
@@ -2267,13 +2267,13 @@ entities in the object and in the tool, and makes all interfaces unique.
 with
 
 @example
-@var{boolean-list}: 
+@var{boolean-list}:
   <Physical> Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} |
   Delete ;
 @end example
 
 If @code{Delete} is specified in the @var{boolean-list}, the tool and/or
-the object is deleted.  
+the object is deleted.
 
 As explained in @ref{Floating point expressions}, @var{boolean} can be
 used in an expression, in which case it returns the list of
@@ -2382,7 +2382,7 @@ complex part.
 @noindent with
 
 @example
-@var{transform-list}: 
+@var{transform-list}:
   <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} |
   Duplicata @{ <Physical> Point | Curve | Surface | Volume @{ @var{expression-list-or-all} @}; @dots{} @} |
   @var{transform}
@@ -2517,7 +2517,7 @@ pp. 101--109, 1990.}. After this initial step three different algorithms
 can be applied to generate the final mesh:
 
 @enumerate
-@item 
+@item
 The ``MeshAdapt'' algorithm@footnote{C. Geuzaine and J.-F. Remacle,
 @emph{Gmsh: a three-dimensional finite element mesh generator with
 built-in pre- and post-processing facilities}, International Journal for
@@ -2560,7 +2560,7 @@ automatically for each surface in the model. As of Gmsh 2.8, the
 In 3D two unstructured algorithms are available:
 
 @enumerate
-@item 
+@item
 The ``Delaunay'' algorithm is split into two separate steps. First, an
 initial mesh of the union of all the volumes in the model is performed
 using H. Si's Tetgen algorithm@footnote{H. Si, @emph{Tetgen: a quality
@@ -2604,7 +2604,7 @@ inconvenient:
 @itemize @bullet
 @item
 mesh elements cannot be duplicated;
-@item 
+@item
 the orientation of the mesh elements (the ordering of their nodes) is
 determined  by the orientation of their ``parent'' elementary
 entities;
@@ -2698,7 +2698,7 @@ of the geometrical entities.
 Finally, you can specify general mesh size ``fields''. Various fields
 exist:
 @itemize @bullet
-@item 
+@item
 A @code{PostView} field specifies an explicit background mesh in the
 form of a scalar post-processing view (see @ref{Post-processing
 commands}, and @ref{File formats}) in which the nodal values are the
@@ -2714,20 +2714,20 @@ the meshing process).
 line using the @code{-bgm} option (@pxref{Command-line options}), or in
 the GUI by selecting `Apply as background mesh' in the post-processing
 view option menu.)
-@item 
+@item
 A @code{Box} field specifies the size of the elements inside and outside
 of a parallelepipedic region.
-@item 
+@item
 A @code{Threshold} field specifies the size of the mesh according to the
 distance to some geometrical entities. These entities can for example be
 geometry points and curves specified by an @code{Attractor} field.
-@item 
+@item
 A @code{MathEval} field specifies the size of the mesh using an explicit
 mathematical function.
-@item 
+@item
 A @code{Min} field specifies the size as the minimum of the sizes
 computed using other fields
-@item 
+@item
 @dots{}
 @end itemize
 
@@ -2736,7 +2736,7 @@ Netgen. The list of available fields with their options is given below.
 @end enumerate
 
 The three aforementioned methods can be used simultaneously, in which
-case the smallest element size is selected at any given point. 
+case the smallest element size is selected at any given point.
 
 All element sizes are further constrained by the
 @code{Mesh.CharacteristicLengthMin}, @code{Mesh.CharacteristicLengthMax}
@@ -2787,10 +2787,10 @@ extruded and has the following syntax:
 @example
 @var{layers}:
 @group
-  Layers @{ @var{expression} @} | 
-  Layers @{ @{ @var{expression-list} @}, @{ @var{expression-list} @} @} | 
+  Layers @{ @var{expression} @} |
+  Layers @{ @{ @var{expression-list} @}, @{ @var{expression-list} @} @} |
   Recombine < @var{expression} >; @dots{}
-  QuadTriNoNewVerts <RecombLaterals>; | 
+  QuadTriNoNewVerts <RecombLaterals>; |
   QuadTriAddVerts <RecombLaterals>; ...
 @end group
 @end example
@@ -2992,7 +2992,7 @@ algorithm.
 
 @item Periodic Curve @{ @var{expression-list} @} = @{ @var{expression-list} @} ;
 Force mesh of curves on the left-hand side (slaves) to match the mesh of
-the curves on the right-hand side (masters). 
+the curves on the right-hand side (masters).
 
 @item Periodic Surface @var{expression} @{ @var{expression-list} @} = @var{expression} @{ @var{expression-list} @} ;
 Force mesh of the surface on the left-hand side (slave, with boundary
@@ -3232,7 +3232,7 @@ files). The ``parsed'' format is defined in the next section (cf. the
 
 @ftable @code
 @item Alias View[@var{expression}];
-Creates an alias of the @var{expression}-th post-processing view. 
+Creates an alias of the @var{expression}-th post-processing view.
 
 Note that @code{Alias} creates a logical duplicate of the view without
 actually duplicating the data in memory. This is very useful when you want
@@ -3375,10 +3375,10 @@ The coordinates are given `by node', i.e.,
 @itemize @bullet
 @item
 @code{(@var{coord1}, @var{coord2}, @var{coord3})} for a point,
-@item 
-@code{(@var{coord1-node1}, @var{coord2-node1}, @var{coord3-node1},}@* 
+@item
+@code{(@var{coord1-node1}, @var{coord2-node1}, @var{coord3-node1},}@*
 @code{ @var{coord1-node2}, @var{coord2-node2}, @var{coord3-node2})} for a line,
-@item 
+@item
 @code{(@var{coord1-node1}, @var{coord2-node1}, @var{coord3-node1},}@*
 @code{ @var{coord1-node2}, @var{coord2-node2}, @var{coord3-node2},}@*
 @code{ @var{coord1-node3}, @var{coord2-node3}, @var{coord3-node3})} for a triangle,
@@ -3463,14 +3463,14 @@ Sum(@var{j}=0, ..., @var{m}-1) @var{G}[@var{i}][@var{j}]
 Here are for example the interpolation matrices for a first order
 quadrangle:
 @smallexample
-INTERPOLATION_SCHEME 
+INTERPOLATION_SCHEME
 @{
   @{1/4,-1/4, 1/4,-1/4@},
   @{1/4, 1/4,-1/4,-1/4@},
   @{1/4, 1/4, 1/4, 1/4@},
   @{1/4,-1/4,-1/4, 1/4@}
 @}
-@{ 
+@{
   @{0, 0, 0@},
   @{1, 0, 0@},
   @{0, 1, 0@},
@@ -3613,26 +3613,26 @@ $Entities
   numPoints(unsigned long) numCurves(unsigned long)
     numSurfaces(unsigned long) numVolumes(unsigned long)
   // points
-  tag(int) boxMinX(double) boxMinY(double) boxMinZ(double) 
-    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
+  tag(int) boxMinX(double) boxMinY(double) boxMinZ(double)
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double)
     numPhysicals(unsigned long) phyisicalTag[...](int)
   ...
   // curves
   tag(int) boxMinX(double) boxMinY(double) boxMinZ(double)
-     boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
+     boxMaxX(double) boxMaxY(double) boxMaxZ(double)
      numPhysicals(unsigned long) physicalTag[...](int)
      numBREPVert(unsigned long) tagBREPVert[...](int)
   ...
   // surfaces
   tag(int) boxMinX(double) boxMinY(double) boxMinZ(double)
-    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
-    numPhysicals(unsigned long) physicalTag[...](int) 
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double)
+    numPhysicals(unsigned long) physicalTag[...](int)
     numBREPCurve(unsigned long) tagBREPCurve[...](int)
   ...
   // volumes
-  tag(int) boxMinX(double) boxMinY(double) boxMinZ(double) 
-    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
-    numPhysicals(unsigned long) physicalTag[...](int) 
+  tag(int) boxMinX(double) boxMinY(double) boxMinZ(double)
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double)
+    numPhysicals(unsigned long) physicalTag[...](int)
     numBREPSurfaces(unsigned long) tagBREPSurfaces[...](int)
   ...
 $EndEntities
@@ -3645,30 +3645,30 @@ $EndEntities
   numPoints(unsigned long) numCurves(unsigned long)
     numSurfaces(unsigned long) numVolumes(unsigned long)
   // points
-  tag(int) parentTag(int) numPartitions(int) partitionTag[...](int)
-    boxMinX(double) boxMinY(double) boxMinZ(double) 
-    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
+  tag(int) parentDim(int) parentTag(int) numPartitions(int) partitionTag[...](int)
+    boxMinX(double) boxMinY(double) boxMinZ(double)
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double)
     numPhyiscals(unsigned long) physicalTag[...](int)
   ...
   // curves
-  tag(int) parentTag(int) numPartitions(int) partitionTag[...](int)
-    boxMinX(double) boxMinY(double) boxMinZ(double) 
-    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
+  tag(int) parentDim(int) parentTag(int) numPartitions(int) partitionTag[...](int)
+    boxMinX(double) boxMinY(double) boxMinZ(double)
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double)
     numPhysicals(unsigned long) physicalTag[...](int)
     numBREPVert(unsigned long) tagBREPVert[...](int)
   ...
   // surfaces
-  tag(int) parentTag(int) numPartitions(int) partitionTag[...](int) 
-    boxMinX(double) boxMinY(double) boxMinZ(double) 
-    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
-    numPhysicals(unsigned long) physicalTag[...](int) 
+  tag(int) parentDim(int) parentTag(int) numPartitions(int) partitionTag[...](int)
+    boxMinX(double) boxMinY(double) boxMinZ(double)
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double)
+    numPhysicals(unsigned long) physicalTag[...](int)
     numBREPCurve(unsigned long) tagBREPCurve[...](int)
   ...
   // volumes
-  tag(int) parentTag(int) numPartitions(int) partitionTag[...](int)
-    boxMinX(double) boxMinY(double) boxMinZ(double) 
-    boxMaxX(double) boxMaxY(double) boxMaxZ(double) 
-    numPhysicals(unsigned long) physicalTag[...](int) 
+  tag(int) parentDim(int) parentTag(int) numPartitions(int) partitionTag[...](int)
+    boxMinX(double) boxMinY(double) boxMinZ(double)
+    boxMaxX(double) boxMaxY(double) boxMaxZ(double)
+    numPhysicals(unsigned long) physicalTag[...](int)
     numBREPSurfaces(unsigned long) tagBREPSurfaces[...](int)
   ...
 <$EndPartitionedEntities>
@@ -3676,7 +3676,7 @@ $EndEntities
 $Nodes
   numEntityBlocks(unsigned long) numNodes(unsigned long)
   tagEntity(int) dimEntity(int) typeNode(int) numNodes(unsigned long)
-    tag(int) x(double) y(double) z(double) 
+    tag(int) x(double) y(double) z(double)
     ...
   ...
 $EndNodes
@@ -3800,13 +3800,13 @@ with the edges)
 @item 21
 10-node third order triangle (3 nodes associated with the vertices, 6
 with the edges, 1 with the face)
-@item 22 
+@item 22
 12-node fourth order incomplete triangle (3 nodes associated with the vertices, 9
 with the edges)
-@item 23 
+@item 23
 15-node fourth order triangle (3 nodes associated with the vertices, 9
 with the edges, 3 with the face)
-@item 24 
+@item 24
 15-node fifth order incomplete triangle (3 nodes associated with the vertices, 12
 with the edges)
 @item 25
@@ -3833,7 +3833,7 @@ internal to the edge)
 @item 92
 64-node third order hexahedron (8 nodes associated with the vertices, 24
 with the edges, 24 with the faces, 8 in the volume)
-@item 93 
+@item 93
 125-node fourth order hexahedron (8 nodes associated with the vertices, 36
 with the edges, 54 with the faces, 27 in the volume)
 @end table
@@ -3855,7 +3855,7 @@ Historically, Gmsh developers have started by implementing linear elements (line
 triangles, quads, tets, prisms and hexes). Then, second and sometimes third
 order elements have been hardcoded. We here distinguish ``low order elements'' that
 have been hardcoded initially and ``high order elements'' that have been coded in
-a general fashion, theoretically valid for any order.  
+a general fashion, theoretically valid for any order.
 
 @subsection Low order elements
 
@@ -3864,8 +3864,8 @@ are defined as follows.
 
 @smallexample
 @group
-Line:                   Line3:           Line4:    
-                                                
+Line:                   Line3:           Line4:
+
 0----------1 --> u      0-----2----1     0----2----3----1
 
 @end group
@@ -3875,13 +3875,13 @@ Line:                   Line3:           Line4:
 @group
 Triangle:               Triangle6:          Triangle9/10:          Triangle12/15:
 
-v                                                              
-^                                                                   2 
-|                                                                   | \ 
+v
+^                                                                   2
+|                                                                   | \
 2                       2                    2                      9   8
-|`\                     |`\                  | \                    |     \ 
+|`\                     |`\                  | \                    |     \
 |  `\                   |  `\                7   6                 10 (14)  7
-|    `\                 5    `4              |     \                |         \ 
+|    `\                 5    `4              |     \                |         \
 |      `\               |      `\            8  (9)  5             11 (12) (13) 6
 |        `\             |        `\          |         \            |             \
 0----------1 --> u      0-----3----1         0---3---4---1          0---3---4---5---1
@@ -3896,13 +3896,13 @@ Quadrangle:            Quadrangle8:            Quadrangle9:
       v
       ^
       |
-3-----------2          3-----6-----2           3-----6-----2 
-|     |     |          |           |           |           | 
-|     |     |          |           |           |           | 
-|     +---- | --> u    7           5           7     8     5 
-|           |          |           |           |           | 
-|           |          |           |           |           | 
-0-----------1          0-----4-----1           0-----4-----1 
+3-----------2          3-----6-----2           3-----6-----2
+|     |     |          |           |           |           |
+|     |     |          |           |           |           |
+|     +---- | --> u    7           5           7     8     5
+|           |          |           |           |           |
+|           |          |           |           |           |
+0-----------1          0-----4-----1           0-----4-----1
 
 @end group
 @end smallexample
@@ -3915,18 +3915,18 @@ Tetrahedron:                          Tetrahedron10:
                  .
                ,/
               /
-           2                                     2                              
-         ,/|`\                                 ,/|`\                          
-       ,/  |  `\                             ,/  |  `\       
-     ,/    '.   `\                         ,6    '.   `5     
-   ,/       |     `\                     ,/       8     `\   
- ,/         |       `\                 ,/         |       `\ 
+           2                                     2
+         ,/|`\                                 ,/|`\
+       ,/  |  `\                             ,/  |  `\
+     ,/    '.   `\                         ,6    '.   `5
+   ,/       |     `\                     ,/       8     `\
+ ,/         |       `\                 ,/         |       `\
 0-----------'.--------1 --> u         0--------4--'.--------1
- `\.         |      ,/                 `\.         |      ,/ 
-    `\.      |    ,/                      `\.      |    ,9   
-       `\.   '. ,/                           `7.   '. ,/     
-          `\. |/                                `\. |/       
-             `3                                    `3        
+ `\.         |      ,/                 `\.         |      ,/
+    `\.      |    ,/                      `\.      |    ,9
+       `\.   '. ,/                           `7.   '. ,/
+          `\. |/                                `\. |/
+             `3                                    `3
                 `\.
                    ` w
 @end group
@@ -3937,17 +3937,17 @@ Tetrahedron:                          Tetrahedron10:
 Hexahedron:             Hexahedron20:          Hexahedron27:
 
        v
-3----------2            3----13----2           3----13----2     
-|\     ^   |\           |\         |\          |\         |\    
-| \    |   | \          | 15       | 14        |15    24  | 14  
-|  \   |   |  \         9  \       11 \        9  \ 20    11 \  
-|   7------+---6        |   7----19+---6       |   7----19+---6 
-|   |  +-- |-- | -> u   |   |      |   |       |22 |  26  | 23| 
-0---+---\--1   |        0---+-8----1   |       0---+-8----1   | 
+3----------2            3----13----2           3----13----2
+|\     ^   |\           |\         |\          |\         |\
+| \    |   | \          | 15       | 14        |15    24  | 14
+|  \   |   |  \         9  \       11 \        9  \ 20    11 \
+|   7------+---6        |   7----19+---6       |   7----19+---6
+|   |  +-- |-- | -> u   |   |      |   |       |22 |  26  | 23|
+0---+---\--1   |        0---+-8----1   |       0---+-8----1   |
  \  |    \  \  |         \  17      \  18       \ 17    25 \  18
-  \ |     \  \ |         10 |        12|        10 |  21    12| 
-   \|      w  \|           \|         \|          \|         \| 
-    4----------5            4----16----5           4----16----5 
+  \ |     \  \ |         10 |        12|        10 |  21    12|
+   \|      w  \|           \|         \|          \|         \|
+    4----------5            4----16----5           4----16----5
 
 @end group
 @end smallexample
@@ -3959,21 +3959,21 @@ Prism:                      Prism15:               Prism18:
            w
            ^
            |
-           3                       3                      3        
-         ,/|`\                   ,/|`\                  ,/|`\      
-       ,/  |  `\               12  |  13              12  |  13    
-     ,/    |    `\           ,/    |    `\          ,/    |    `\  
-    4------+------5         4------14-----5        4------14-----5 
-    |      |      |         |      8      |        |      8      | 
-    |    ,/|`\    |         |      |      |        |    ,/|`\    | 
-    |  ,/  |  `\  |         |      |      |        |  15  |  16  | 
-    |,/    |    `\|         |      |      |        |,/    |    `\| 
+           3                       3                      3
+         ,/|`\                   ,/|`\                  ,/|`\
+       ,/  |  `\               12  |  13              12  |  13
+     ,/    |    `\           ,/    |    `\          ,/    |    `\
+    4------+------5         4------14-----5        4------14-----5
+    |      |      |         |      8      |        |      8      |
+    |    ,/|`\    |         |      |      |        |    ,/|`\    |
+    |  ,/  |  `\  |         |      |      |        |  15  |  16  |
+    |,/    |    `\|         |      |      |        |,/    |    `\|
    ,|      |      |\        10     |      11       10-----17-----11
- ,/ |      0      | `\      |      0      |        |      0      | 
-u   |    ,/ `\    |    v    |    ,/ `\    |        |    ,/ `\    | 
-    |  ,/     `\  |         |  ,6     `7  |        |  ,6     `7  | 
-    |,/         `\|         |,/         `\|        |,/         `\| 
-    1-------------2         1------9------2        1------9------2 
+ ,/ |      0      | `\      |      0      |        |      0      |
+u   |    ,/ `\    |    v    |    ,/ `\    |        |    ,/ `\    |
+    |  ,/     `\  |         |  ,6     `7  |        |  ,6     `7  |
+    |,/         `\|         |,/         `\|        |,/         `\|
+    1-------------2         1------9------2        1------9------2
 
 @end group
 @end smallexample
@@ -3993,8 +3993,8 @@ Pyramid:                     Pyramid13:                   Pyramid14:
 0----------.'--|-3    `.     0--------6-.'----3    `.     0--------6-.'----3    `.
  `\        |   |  `\    \      `\        |      `\    \     `\        |      `\    \
    `\     .'   +----`\ - \ -> v  `5     .'        10   \      `5     .' 13     10   \
-     `\   |    `\     `\  \        `\   |           `\  \       `\   |           `\  \ 
-       `\.'      `\     `\`          `\.'             `\`         `\.'             `\` 
+     `\   |    `\     `\  \        `\   |           `\  \       `\   |           `\  \
+       `\.'      `\     `\`          `\.'             `\`         `\.'             `\`
           1----------------2            1--------8-------2           1--------8-------2
                     `\
                        u
@@ -4186,7 +4186,7 @@ gives the number of string tags that follow. By default the first
 @var{string-tag} is interpreted as the name of the post-processing view
 and the second as the name of the interpolation scheme. The
 interpolation scheme is provided in the @code{$InterpolationScheme}
-section (see below). 
+section (see below).
 
 @item @var{number-of-real-tags}
 gives the number of real number tags that follow. By default the first
@@ -4221,7 +4221,7 @@ is the id tag of a given element topology: 1 for points, 2 for lines, 3
 for triangles, 4 for quadrangles, 5 for tetrahedra, 6 for pyramids, 7
 for prisms, 8 for hexahedra, 9 for polygons and 10 for polyhedra.
 
-@item @var{number-of-interpolation-matrices} 
+@item @var{number-of-interpolation-matrices}
 is the number of interpolation matrices provided for the element
 topology @var{elm-topology}. Currently you should provide 2 matrices,
 i.e., the matrices that specify how to interpolate the data (they have
@@ -4252,7 +4252,7 @@ $Elements
 2                      @emph{two elements:}
 1 3 2 99 2 1 2 3 4     @emph{  quad #1: type 3, physical 99, elementary 2, nodes 1 2 3 4}
 2 3 2 99 2 2 5 6 3     @emph{  quad #2: type 3, physical 99, elementary 2, nodes 2 5 6 3}
-$EndElements 
+$EndElements
 $NodeData
 1                      @emph{one string tag:}
 "A scalar view"        @emph{  the name of the view ("A scalar view")}
@@ -4268,7 +4268,7 @@ $NodeData
 4 0.0
 5 0.2
 6 0.4
-$EndNodeData 
+$EndNodeData
 @end smallexample
 
 The binary file format is similar to the ASCII format described above:
@@ -4367,7 +4367,7 @@ Here is a pseudo C code to write @var{elements-binary} for triangles
 with the 2 standard tags (the physical and elementary regions):
 @example
 for(i = 0; i < number_of_triangles; i++)@{
-  int data[6] = @{num_i, physical, elementary, 
+  int data[6] = @{num_i, physical, elementary,
                  node_i_1, node_i_2, node_i_3@};
   fwrite(data, sizeof(int), 6, file);
 @}
@@ -4531,9 +4531,9 @@ $View
 @var{nb-scalar-pyramids2} @var{nb-vector-pyramids2} @var{nb-tensor-pyramids2}
 @var{nb-text2d} @var{nb-text2d-chars} @var{nb-text3d} @var{nb-text3d-chars}
 @var{time-step-values}
-< @var{scalar-point-value} > @dots{} < @var{vector-point-value} > @dots{} 
+< @var{scalar-point-value} > @dots{} < @var{vector-point-value} > @dots{}
     < @var{tensor-point-value} > @dots{}
-< @var{scalar-line-value} > @dots{} < @var{vector-line-value} > @dots{} 
+< @var{scalar-line-value} > @dots{} < @var{vector-line-value} > @dots{}
     < @var{tensor-line-value} > @dots{}
 < @var{scalar-triangle-value} > @dots{} < @var{vector-triangle-value} > @dots{}
     < @var{tensor-triangle-value} > @dots{}
@@ -4591,7 +4591,7 @@ the view.
 @item @var{nb-text2d}
 @item @var{nb-text3d}
 are integers giving the number of 2D and 3D text strings in the
-view. 
+view.
 
 @item @var{nb-text2d-chars}
 @item @var{nb-text3d-chars}
@@ -4677,7 +4677,7 @@ described in @ref{POS ASCII file format}, except that:
 @enumerate
 @item
 @var{file-type} equals 1.
-@item 
+@item
 all lists of floating point numbers and characters are written in binary
 format
 @item
@@ -4702,7 +4702,7 @@ fprintf(file, "%s %d "
   "%d %d %d %d %d %d %d %d %d "
   "%d %d %d %d %d %d %d %d %d "
   "%d %d %d %d %d %d %d %d %d "
-  "%d %d %d %d\n", 
+  "%d %d %d %d\n",
   view-name, nb-time-steps,
   nb-scalar-points, nb-vector-points, nb-tensor-points,
   nb-scalar-lines, nb-vector-lines, nb-tensor-lines,
@@ -5061,7 +5061,7 @@ The Gmsh Application Programming Interface (API) allows you to integrate
 the Gmsh library in your own application. Examples on how to use the API
 are available in the
 @url{https://gitlab.onelab.info/gmsh/gmsh/tree/master/demos/api/,demos/api}
-directory. In particular, this directory contains C++, C Python and
+directory. In particular, this directory contains C++, C, Python and
 Julia versions of several of the @code{.geo} tutorials from
 @ref{Tutorial}.
 
@@ -5200,7 +5200,7 @@ GMALLOC on Mac OS X:
 @example
 (gdb) set env DYLD_INSERT_LIBRARIES /usr/lib/libgmalloc.dylib
 @end example
-@item 
+@item
 LIBNJAMD:
 @example
 export LD_PRELOAD=libnjamd.so
@@ -5215,9 +5215,9 @@ Memprof
 @end itemize
 @item
 Always use the @code{Msg::} class to print information or errors
-@item 
+@item
 Indent your files (2 spaces) and convert all tabs to spaces.
-@item 
+@item
 Follow the style used in the existing code when adding something new
 (spaces after commas, opening braces for functions on a separate line,
 opening braces for loops and tests on the same line, etc.).
@@ -5443,12 +5443,12 @@ Yes, but only with the OpenCASCADE kernel.
 The default behavior of Gmsh is to check and suppress all duplicate
 entities (points, curves and surfaces) each time a transformation command
 is issued. This can slow down things a lot if many transformations are
-performed. There are two solutions to this problem: 
+performed. There are two solutions to this problem:
 @itemize
-@item 
+@item
 you may save the unrolled geometry in another file (e.g. with gmsh
 file.geo -0), and use this new file for subsequent computations;
-@item 
+@item
 or you may set the @code{Geometry.AutoCoherence} option to 0. This will
 prevent any automatic duplicate check/replacement. If you still need to
 remove the duplicates entities, simply add @code{Coherence;} at strategic
@@ -5529,7 +5529,7 @@ duplicates, try to change the geometrical tolerance and sew the faces
 
 @item The quality of the elements generated by the 3D algorithm is very bad.
 
-Use `Optimize quality' in the mesh menu. 
+Use `Optimize quality' in the mesh menu.
 
 @item Non-recombined 3D extruded meshes sometimes fail.
 
@@ -5690,7 +5690,7 @@ selected as the data source.
 
 @item Can I visualize a field on a deformed mesh?
 
-Yes, there are several ways to do that. 
+Yes, there are several ways to do that.
 
 The easiest is to load two views: the first one containing a
 displacement field (a vector view that will be used to deform the
@@ -5741,18 +5741,18 @@ Yes, with the Evaluate plugin.
 
 There can be several reasons:
 @itemize
-@item 
+@item
 the plugin might be written for specific element types only (for
 example, only for scalar triangles or tetrahedra). In that case, you
 should transform your view before running the plugin (you can use
 @code{Plugin(DecomposeinSimplex)} to transform all quads, hexas, prisms
 and pyramids into triangles and tetrahedra).
-@item 
+@item
 the plugin might expect a mesh while all you provide is a point
 cloud. In 2D, you can use @code{Plugin(Triangulate)} to transform a
 point cloud into a triangulated surface. In 3D you can use
 @code{Plugin(Tetrahedralize)}.
-@item 
+@item
 the input parameters are out of range.
 @end itemize
 
@@ -5803,7 +5803,7 @@ If your dataset is constant per element make sure you don't use the
 @cindex Copyright
 @cindex Acknowledgments
 @cindex Contributors, list
-@cindex Credits 
+@cindex Credits
 
 @verbatiminclude ../../CREDITS.txt
 

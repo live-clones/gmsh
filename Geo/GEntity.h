@@ -208,7 +208,7 @@ class GEntity {
   virtual std::list<GRegion*> regions() const { return std::list<GRegion*>(); }
 
   // faces that bound this entity or that this entity bounds.
-  virtual std::list<GFace*> faces() const { return std::list<GFace*>(); }
+  virtual std::vector<GFace*> faces() const { return std::vector<GFace*>(); }
 
   // edges that bound this entity or that this entity bounds.
   virtual std::list<GEdge*> edges() const { return std::list<GEdge*>(); }
@@ -225,8 +225,7 @@ class GEntity {
   }
   std::vector<GFace*> bindingsGetFaces()
   {
-    std::list<GFace*> f = faces();
-    return std::vector<GFace*> (f.begin(), f.end());
+    return faces();
   }
   std::vector<GEdge*> bindingsGetEdges()
   {
@@ -293,10 +292,10 @@ class GEntity {
   // returns the master entity (for mesh)
   GEntity* meshMaster() const;
   void setMeshMaster(GEntity*);
-  void setMeshMaster(GEntity*,const std::vector<double>&);
+  void setMeshMaster(GEntity*, const std::vector<double>&);
 
   // get the bounding box
-  virtual SBoundingBox3d bounds() const { return SBoundingBox3d(); }
+  virtual SBoundingBox3d bounds(bool fast = false) const { return SBoundingBox3d(); }
 
   //  get the oriented bounding box
   virtual SOrientedBoundingBox getOBB() {return SOrientedBoundingBox(); }
@@ -333,6 +332,7 @@ class GEntity {
 
   // get the number of mesh elements (total and by type) in the entity
   virtual unsigned int getNumMeshElements() const { return 0; }
+  virtual unsigned int getNumMeshElementsByType(const int familyType) const { return 0; }
   virtual unsigned int getNumMeshParentElements() { return 0; }
   virtual void getNumMeshElements(unsigned *const c) const { }
 
@@ -341,6 +341,8 @@ class GEntity {
 
   // get the element at the given index
   virtual MElement *getMeshElement(unsigned int index) const { return 0; }
+  // get the element at the given index for a given familyType
+  virtual MElement *getMeshElementByType(const int familyType, const unsigned int index) const { return 0; }
 
   // get/set all mesh element visibility flag
   bool getAllElementsVisible(){ return _allElementsVisible ? true : false; }
@@ -382,6 +384,13 @@ class GEntity {
 
   // corresponding high order control points
   std::map<MVertex*,MVertex*> correspondingHOPoints;
+
+  // reorder the mesh elements of the given type, according to ordering
+  virtual bool reorder(const int elementType, const std::vector<int> &ordering)
+  {
+    return false;
+  }
+
 };
 
 class GEntityLessThan {

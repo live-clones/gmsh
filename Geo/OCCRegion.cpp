@@ -61,7 +61,7 @@ void OCCRegion::setup()
     }
   }
 
-  for (exp3.Init(s, TopAbs_EDGE); exp3.More(); exp3.Next()){
+  for (exp3.Init(s, TopAbs_EDGE, TopAbs_FACE); exp3.More(); exp3.Next()){
     TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
     GEdge *e = 0;
     if(model()->getOCCInternals())
@@ -77,7 +77,7 @@ void OCCRegion::setup()
     }
   }
 
-  for (exp3.Init(s, TopAbs_VERTEX); exp3.More(); exp3.Next()){
+  for (exp3.Init(s, TopAbs_VERTEX, TopAbs_FACE); exp3.More(); exp3.Next()){
     TopoDS_Vertex vertex = TopoDS::Vertex(exp3.Current());
     GVertex *v = 0;
     if(model()->getOCCInternals())
@@ -94,7 +94,7 @@ void OCCRegion::setup()
   Msg::Debug("OCC Region %d with %d faces", tag(), l_faces.size());
 }
 
-SBoundingBox3d OCCRegion::bounds() const
+SBoundingBox3d OCCRegion::bounds(bool fast) const
 {
   Bnd_Box b;
   try{

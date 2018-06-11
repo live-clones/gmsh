@@ -24,23 +24,21 @@
 
 //#include "google/profiler.h"
 
-using namespace std;
-
 bool old_algo_hexa(){
   return true;
 }
 
 template<typename T>
-void print_nodal_info(string filename, map<MVertex*, T> &mapp)
+void print_nodal_info(std::string filename, std::map<MVertex*, T> const &map)
 {
-  ofstream out(filename.c_str());
+  std::ofstream out(filename.c_str());
 
-  out << "View \"\"{" << endl;
-  for (typename map<MVertex*, T>::iterator it = mapp.begin();it!=mapp.end();it++){
+  out << "View \"\"{" << std::endl;
+  for (typename std::map<MVertex*, T>::const_iterator it = map.begin();it!=map.end();it++){
     MVertex *v = it->first;
-    out << "SP( " << v->x() << "," << v->y() << "," << v->z() << "){" << it->second << "};" << endl;;
+    out << "SP( " << v->x() << "," << v->y() << "," << v->z() << "){" << it->second << "};" << std::endl;
   }
-  out << "};" << endl;
+  out << "};" << std::endl;
 
   out.close();
 }
@@ -52,8 +50,8 @@ bool shoot(const SPoint2 &start, const SPoint2 &dir,
 
   if (RK==1){
     res = start + (dir*h);
-    //    cout << "(" << start[0] << "," <<start[1] << ") -> (" << res[0] << ","
-    //    <<res[1] << ") " << endl;
+    //    std::cout << "(" << start[0] << "," <<start[1] << ") -> (" << res[0] << ","
+    //    <<res[1] << ") " << std::endl;
     return true;
   }
 
@@ -108,8 +106,8 @@ bool computeFourNeighbors (frameFieldBackgroundMesh2D *bgm,
       break;
     }
     shoot(midpoint,param_vec,h,newP[i][0]);
-    //    cout << "(" << midpoint[0] << "," <<midpoint[1] << ") -> (" <<
-    //    newP[i][0][0] << "," << newP[i][0][1] << ") " << endl;
+    //    std::cout << "(" << midpoint[0] << "," <<midpoint[1] << ") -> (" <<
+    //    newP[i][0][0] << "," << newP[i][0][1] << ") " << std::endl;
   }
 
   // the following comes from surfaceFiller.cpp...
@@ -193,7 +191,7 @@ bool computeFourNeighbors (frameFieldBackgroundMesh2D *bgm,
 }
 
 void computeTwoNeighbors(frameFieldBackgroundMesh3D *bgm, MVertex *parent,
-                         vector<MVertex*> &spawns, SVector3 dir, double h)
+                         std::vector<MVertex*> &spawns, SVector3 dir, double h)
 {
   // using approximate size, RK1...
   double x = parent->x();
@@ -214,7 +212,7 @@ void computeTwoNeighbors(frameFieldBackgroundMesh3D *bgm, MVertex *parent,
 }
 
 void computeSixNeighbors(frameFieldBackgroundMesh3D *bgm, MVertex *parent,
-                         vector<MVertex*> &spawns, STensor3 dir, double h)
+                         std::vector<MVertex*> &spawns, STensor3 dir, double h)
 {
   // using approximate size, RK1...
   double x = parent->x();
@@ -243,21 +241,21 @@ Filler2D::Filler2D(){}
 
 Filler2D::~Filler2D()
 {
-  cout << "FILLER2D timing:" << endl;
-  cout << "  ------- CUMULATIVE TIME2D bgm & smoothing  : "
-       << time_bgm_and_smoothing << " s." << endl;
-  cout << "  ------- CUMULATIVE TIME2D inserting points : "
-       << time_insertion << " s." << endl;
-  cout << "  ------- TOTAL 2D TIME (new)   : "
-       << time_bgm_and_smoothing+time_insertion << " s." << endl;
+  std::cout << "FILLER2D timing:" << std::endl;
+  std::cout << "  ------- CUMULATIVE TIME2D bgm & smoothing  : "
+       << time_bgm_and_smoothing << " s." << std::endl;
+  std::cout << "  ------- CUMULATIVE TIME2D inserting points : "
+       << time_insertion << " s." << std::endl;
+  std::cout << "  ------- TOTAL 2D TIME (new)   : "
+       << time_bgm_and_smoothing+time_insertion << " s." << std::endl;
 }
 
-void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed,
-                                vector<SMetric3> &metrics)
+void Filler2D::pointInsertion2D(GFace* gf,  std::vector<MVertex*> &packed,
+                                std::vector<SMetric3> &metrics)
 {
   // NB/ do not use the mesh in GFace, use the one in backgroundMesh2D!
 
-  //  if(debug) cout << " ------------------   OLD -------------------" << endl;
+  //  if(debug) std::cout << " ------------------   OLD -------------------" << std::endl;
   //  stringstream ssa;
   ////  ssa << "oldbgm_angles_" << gf->tag() << ".pos";
   ////  backgroundMesh::current()->print(ssa.str(),gf,1);
@@ -267,7 +265,7 @@ void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed,
   //
   //
   //
-  //  if(debug) cout << " ------------------   NEW -------------------" << endl;
+  //  if(debug) std::cout << " ------------------   NEW -------------------" << std::endl;
   //  backgroundMesh2D *bgm2 = dynamic_cast<backgroundMesh2D*>(BGMManager::get(gf));
   //  stringstream ss2;
   //  ss2 << "basebg_sizefield_" << gf->tag() << ".pos";
@@ -284,12 +282,12 @@ void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed,
   const bool debug=false;
   const bool export_stuff=true;
 
-  if (debug) cout << "ENTERING POINTINSERTION2D" << endl;
+  if (debug) std::cout << "ENTERING POINTINSERTION2D" << std::endl;
 
   double a;
 
   // acquire background mesh
-  if(debug) cout << "pointInsertion2D: recover BGM" << endl;
+  if(debug) std::cout << "pointInsertion2D: recover BGM" << std::endl;
   a=Cpu();
   frameFieldBackgroundMesh2D *bgm =
     dynamic_cast<frameFieldBackgroundMesh2D*>(BGMManager::get(gf));
@@ -302,18 +300,18 @@ void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed,
 
   // export BGM size field
   if(export_stuff){
-    cout << "pointInsertion2D: export size field " << endl;
-    stringstream ss;
+    std::cout << "pointInsertion2D: export size field " << std::endl;
+    std::stringstream ss;
     ss << "bg2D_sizefield_" << gf->tag() << ".pos";
     bgm->exportSizeField(ss.str());
 
-    cout << "pointInsertion2D : export crossfield " << endl;
-    stringstream sscf;
+    std::cout << "pointInsertion2D : export crossfield " << std::endl;
+    std::stringstream sscf;
     sscf << "bg2D_crossfield_" << gf->tag() << ".pos";
     bgm->exportCrossField(sscf.str());
 
-    cout << "pointInsertion2D : export smoothness " << endl;
-    stringstream sss;
+    std::cout << "pointInsertion2D : export smoothness " << std::endl;
+    std::stringstream sss;
     sss << "bg2D_smoothness_" << gf->tag() << ".pos";
     bgm->exportSmoothness(sss.str());
   }
@@ -325,22 +323,22 @@ void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed,
 
   // for debug check...
   int priority_counter=0;
-  map<MVertex*,int> vert_priority;
+  std::map<MVertex*,int> vert_priority;
 
   // get all the boundary vertices
-  if(debug) cout << "pointInsertion2D : get bnd vertices " << endl;
-  set<MVertex*> bnd_vertices = bgm->get_vertices_of_maximum_dim(1);
+  if(debug) std::cout << "pointInsertion2D : get bnd vertices " << std::endl;
+  std::set<MVertex*> bnd_vertices = bgm->get_vertices_of_maximum_dim(1);
 
   // put boundary vertices in a fifo queue
-  set<smoothness_point_pair, compareSurfacePointWithExclusionRegionPtr_Smoothness> fifo;
-  vector<surfacePointWithExclusionRegion*> vertices;
+  std::set<smoothness_point_pair, compareSurfacePointWithExclusionRegionPtr_Smoothness> fifo;
+  std::vector<surfacePointWithExclusionRegion*> vertices;
 
   // initiate the rtree
-  if(debug) cout << "pointInsertion2D : initiate RTree " << endl;
+  if(debug) std::cout << "pointInsertion2D : initiate RTree " << std::endl;
   RTree<surfacePointWithExclusionRegion*,double,2,double> rtree;
   SMetric3 metricField(1.0);
   SPoint2 newp[4][NUMDIR];
-  set<MVertex*>::iterator it = bnd_vertices.begin() ;
+  std::set<MVertex*>::iterator it = bnd_vertices.begin() ;
 
   for (; it !=  bnd_vertices.end() ; ++it){
     SPoint2 midpoint;
@@ -361,7 +359,7 @@ void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed,
 
   // ---------- main loop -----------------
   while(!fifo.empty()){
-    if(debug) cout << " -------- fifo.size() = " << fifo.size() << endl;
+    if(debug) std::cout << " -------- fifo.size() = " << fifo.size() << std::endl;
     int count_nbaddedpt = 0;
 
     surfacePointWithExclusionRegion * parent = (*fifo.begin()).ptr;
@@ -388,21 +386,21 @@ void Filler2D::pointInsertion2D(GFace* gf,  vector<MVertex*> &packed,
           rtree.Insert(_min,_max,sp);
 
           if (debug){
-            cout << "  adding node (" << sp->_v->x() << "," << sp->_v->y()
-                 << "," << sp->_v->z() << ")" << endl;
-            cout << "    ----------------------------- sub --- fifo.size() = "
-                 << fifo.size() << endl;
+            std::cout << "  adding node (" << sp->_v->x() << "," << sp->_v->y()
+                 << "," << sp->_v->z() << ")" << std::endl;
+            std::cout << "    ----------------------------- sub --- fifo.size() = "
+                 << fifo.size() << std::endl;
           }
           count_nbaddedpt++;
         }
       }
     }
-    if(debug) cout << "////////// nbre of added point: " << count_nbaddedpt << endl;
+    if(debug) std::cout << "////////// nbre of added point: " << count_nbaddedpt << std::endl;
   }
   time_insertion += (Cpu() - a);
 
   if (debug){
-    stringstream ss;
+    std::stringstream ss;
     ss << "priority_" << gf->tag() << ".pos";
     print_nodal_info(ss.str().c_str(),vert_priority);
     ss.clear();
@@ -435,7 +433,7 @@ bool Filler3D::treat_region(GRegion *gr)
 
   bool use_vectorial_smoothness;
   bool use_fifo;
-  string algo;
+  std::string algo;
 
   // readValue("param.dat","SMOOTHNESSALGO",algo);
   algo.assign("SCALAR");
@@ -449,7 +447,7 @@ bool Filler3D::treat_region(GRegion *gr)
     use_fifo = true;
   }
   else{
-    cout << "unknown SMOOTHNESSALGO !" << endl;
+    std::cout << "unknown SMOOTHNESSALGO !" << std::endl;
     throw;
   }
 
@@ -457,47 +455,47 @@ bool Filler3D::treat_region(GRegion *gr)
   const bool export_stuff=true;
   double a;
 
-  cout << "ENTERING POINTINSERTION3D" << endl;
+  std::cout << "ENTERING POINTINSERTION3D" << std::endl;
 
   // acquire background mesh
-  cout << "pointInsertion3D: recover BGM" << endl;
+  std::cout << "pointInsertion3D: recover BGM" << std::endl;
   a = Cpu();
   frameFieldBackgroundMesh3D *bgm =
     dynamic_cast<frameFieldBackgroundMesh3D*>(BGMManager::get(gr));
   time_smoothing += (Cpu() - a);
 
   if (!bgm){
-    cout << "pointInsertion3D:: BGM dynamic cast failed ! " << endl;
+    std::cout << "pointInsertion3D:: BGM dynamic cast failed ! " << std::endl;
     throw;
   }
 
   // export BGM fields
   if(export_stuff){
-    cout << "pointInsertion3D: export size field " << endl;
-    stringstream ss;
+    std::cout << "pointInsertion3D: export size field " << std::endl;
+    std::stringstream ss;
     ss << "bg3D_sizefield_" << gr->tag() << ".pos";
     bgm->exportSizeField(ss.str());
 
-    cout << "pointInsertion3D : export crossfield " << endl;
-    stringstream sscf;
+    std::cout << "pointInsertion3D : export crossfield " << std::endl;
+    std::stringstream sscf;
     sscf << "bg3D_crossfield_" << gr->tag() << ".pos";
     bgm->exportCrossField(sscf.str());
 
-    cout << "pointInsertion3D : export smoothness " << endl;
-    stringstream sss;
+    std::cout << "pointInsertion3D : export smoothness " << std::endl;
+    std::stringstream sss;
     sss << "bg3D_smoothness_" << gr->tag() << ".pos";
     bgm->exportSmoothness(sss.str());
 
     if (use_vectorial_smoothness){
-      cout << "pointInsertion3D : export vectorial smoothness " << endl;
-      stringstream ssvs;
+      std::cout << "pointInsertion3D : export vectorial smoothness " << std::endl;
+      std::stringstream ssvs;
       ssvs << "bg3D_vectorial_smoothness_" << gr->tag() << ".pos";
       bgm->exportVectorialSmoothness(ssvs.str());
     }
   }
 
   // ---------------- START FILLING NEW POINTS ----------------
-  cout << "pointInsertion3D : inserting points in region " << gr->tag()  << endl;
+  std::cout << "pointInsertion3D : inserting points in region " << gr->tag()  << std::endl;
 
   //ProfilerStart("/home/bernard/profile");
   a = Cpu();
@@ -513,14 +511,14 @@ bool Filler3D::treat_region(GRegion *gr)
   else
     fifo = new listOfPointsScalarSmoothness();
 
-  set<MVertex*> temp;
-  vector<MVertex*> boundary_vertices;
-  map<MVertex*,int> vert_priority;
-  map<MVertex*,double> smoothness_forplot;
+  std::set<MVertex*> temp;
+  std::vector<MVertex*> boundary_vertices;
+  std::map<MVertex*,int> vert_priority;
+  std::map<MVertex*,double> smoothness_forplot;
   MElement *element;
   MVertex *vertex;
-  list<GFace*> faces = gr->faces();
-  for(list<GFace*>::iterator it=faces.begin();it!=faces.end();it++){// for all faces
+  std::vector<GFace*> faces = gr->faces();
+  for(std::vector<GFace*>::iterator it=faces.begin();it!=faces.end();it++){
     GFace *gf = *it;
     // int limit = code_kesskessai(gf->tag());
     for(unsigned int i=0;i<gf->getNumMeshElements();i++){
@@ -534,7 +532,7 @@ bool Filler3D::treat_region(GRegion *gr)
   }
 
   int geodim;
-  for(set<MVertex*>::iterator it=temp.begin();it!=temp.end();it++){
+  for(std::set<MVertex*>::iterator it=temp.begin();it!=temp.end();it++){
     geodim = (*it)->onWhat()->dim();
     if ((geodim==0) || (geodim==1) || (geodim==2)) boundary_vertices.push_back(*it);
   }
@@ -581,9 +579,9 @@ bool Filler3D::treat_region(GRegion *gr)
         svp->cf = temp;
         for (int k=0;k<3;k++) svp->direction(k) = temp(k,idir);
 
-        // cout << "fifo size=" << fifo->size() << " inserting   "  ;
+        // std::cout << "fifo size=" << fifo->size() << " inserting   "  ;
         fifo->insert(svp);
-        // cout << " ->  fifo size=" << fifo->size() << endl;
+        // std::cout << " ->  fifo size=" << fifo->size() << std::endl;
       }
     }
   }
@@ -608,7 +606,7 @@ bool Filler3D::treat_region(GRegion *gr)
     //      continue;
     //    }
 
-    vector<MVertex*> spawns;
+    std::vector<MVertex*> spawns;
     if (!use_vectorial_smoothness){
       spawns.resize(6);
       computeSixNeighbors(bgm,parent,spawns,fifo->get_first_crossfield(),
@@ -621,9 +619,9 @@ bool Filler3D::treat_region(GRegion *gr)
     }
     fifo->erase_first();
 
-    //    cout << "while, fifo->size()=" << fifo->size() << " parent=(" <<
+    //    std::cout << "while, fifo->size()=" << fifo->size() << " parent=(" <<
     //    parent->x() << "," << parent->y() << "," << parent->z() << ")" <<
-    //    endl;
+    //    std::endl;
 
     for(unsigned int i=0;i<spawns.size();i++){
       spawn_created = false;
@@ -631,17 +629,17 @@ bool Filler3D::treat_region(GRegion *gr)
       x = individual->x();
       y = individual->y();
       z = individual->z();
-      //      cout << " working on candidate " << "(" << individual->x() << ","
-      //      << individual->y() << "," << individual->z() << ")" << endl;
+      //      std::cout << " working on candidate " << "(" << individual->x() << ","
+      //      << individual->y() << "," << individual->z() << ")" << std::endl;
 
       if(bgm->inDomain(x,y,z)){
-        //        cout << "   spawn " << i << " in domain" << endl;
+        //        std::cout << "   spawn " << i << " in domain" << std::endl;
 
         MVertex *closest = bgm->get_nearest_neighbor(individual);
         h = bgm->size(closest);// get approximate size, closest vertex, faster ?!
 
         if(far_from_boundary_3D(bgm,individual,h)){
-          //        cout << "   spawn " << i << " far from bnd" << endl;
+          //        std::cout << "   spawn " << i << " far from bnd" << std::endl;
           bgm->eval_approximate_crossfield(closest, crossfield);
           wrapper.set_ok(true);
           wrapper.set_individual(individual);
@@ -654,7 +652,7 @@ bool Filler3D::treat_region(GRegion *gr)
           rtree.Search(min,max,rtree_callback_3D,&wrapper);
 
           if(wrapper.get_ok()){
-            //        cout << "   spawn " << i << " wrapper OK" << endl;
+            //        std::cout << "   spawn " << i << " wrapper OK" << std::endl;
 
             if (!use_vectorial_smoothness){
               smoothness_vertex_pair *svp = new smoothness_vertex_pair();
@@ -705,20 +703,20 @@ bool Filler3D::treat_region(GRegion *gr)
 
   // --- output ---
   if (debug){
-    stringstream ss;
+    std::stringstream ss;
     ss << "priority_3D_" << gr->tag() << ".pos";
     print_nodal_info(ss.str().c_str(),vert_priority);
     ss.clear();
 
-    stringstream sss;
+    std::stringstream sss;
     sss << "smoothness_3D_" << gr->tag() << ".pos";
     print_nodal_info(sss.str().c_str(),smoothness_forplot);
     sss.clear();
   }
 
   // ------- meshing using new points
-  cout << "tets in gr before= " << gr->tetrahedra.size() << endl;
-  cout << "nb new vertices= " << new_vertices.size() << endl;
+  std::cout << "tets in gr before= " << gr->tetrahedra.size() << std::endl;
+  std::cout << "nb new vertices= " << new_vertices.size() << std::endl;
   a=Cpu();
 
   int option = CTX::instance()->mesh.algo3d;
@@ -733,8 +731,8 @@ bool Filler3D::treat_region(GRegion *gr)
   MeshDelaunayVolume(regions);
   time_meshing += (Cpu() - a);
 
-  cout << "tets in gr after= " << gr->tetrahedra.size() << endl;
-  cout << "gr tag=" << gr->tag() << endl;
+  std::cout << "tets in gr after= " << gr->tetrahedra.size() << std::endl;
+  std::cout << "gr tag=" << gr->tag() << std::endl;
 
   CTX::instance()->mesh.algo3d = option;
 
@@ -760,15 +758,15 @@ Filler3D::Filler3D(){}
 
 Filler3D::~Filler3D()
 {
-  cout << "FILLER3D timing:" << endl;
-  cout << "  ------- CUMULATIVE TIME3D bgm & smoothing  : "
-       << time_smoothing << " s." << endl;
-  cout << "  ------- CUMULATIVE TIME3D inserting points : "
-       << time_insert_points << " s." << endl;
-  cout << "  ------- CUMULATIVE TIME3D meshing region   : "
-       << time_meshing << " s." << endl;
-  cout << "  ------- CUMULATIVE TOTAL 3D TIME (new)   : "
-       << time_meshing+time_smoothing+time_insert_points << " s." << endl;
+  std::cout << "FILLER3D timing:" << std::endl;
+  std::cout << "  ------- CUMULATIVE TIME3D bgm & smoothing  : "
+            << time_smoothing << " s." << std::endl;
+  std::cout << "  ------- CUMULATIVE TIME3D inserting points : "
+            << time_insert_points << " s." << std::endl;
+  std::cout << "  ------- CUMULATIVE TIME3D meshing region   : "
+            << time_meshing << " s." << std::endl;
+  std::cout << "  ------- CUMULATIVE TOTAL 3D TIME (new)   : "
+            << time_meshing+time_smoothing+time_insert_points << " s." << std::endl;
 }
 
 std::vector<MVertex*> Filler3D::new_vertices;
