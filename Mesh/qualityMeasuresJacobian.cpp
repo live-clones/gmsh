@@ -968,7 +968,7 @@ double _CoeffDataICN::_computeLowerBound() const
   const double boundFraction =
       _computeBoundRational(_coeffsJacDet, coeffDenominator, true);
 
-  return 3*std::cbrt(boundFraction * boundFraction);
+  return 3*cbrt(boundFraction * boundFraction);
 }
 
 // Miscellaneous
