@@ -459,15 +459,6 @@ namespace BoundaryLayerCurver
       if (gface) projectVerticesIntoGFace(edge, gface, false);
     }
 
-    MElement* _createLinearElement(MElement *el)
-    {
-      int tagLinear = ElementType::getTag(el->getType(), 1);
-      std::vector<MVertex *> vertices;
-      el->getVertices(vertices);
-      MElementFactory f;
-      return f.create(tagLinear, vertices, -1);
-    }
-
     void recoverQualityElements(std::vector<MEdgeN> &stackEdges,
                                 std::vector<MFaceN> &stackFaces,
                                 std::vector<MElement*> &stackElements,
@@ -487,7 +478,7 @@ namespace BoundaryLayerCurver
 
       // First get sure that last element of the BL is of good quality
       MElement *lastElementBL = stackElements[iLast-1];
-      MElement *linear = _createLinearElement(lastElementBL);
+      MElement *linear = createPrimaryElement(lastElementBL);
       double qualLinear = jacobianBasedQuality::minIGEMeasure(linear);
       delete linear;
 
@@ -504,7 +495,7 @@ namespace BoundaryLayerCurver
 
       // Now, get sure the exterior element is of good quality
       MElement *lastElement = stackElements[iLast];
-      linear = _createLinearElement(lastElement);
+      linear = createPrimaryElement(lastElement);
       qualLinear = jacobianBasedQuality::minIGEMeasure(linear);
       delete linear;
 
@@ -840,11 +831,11 @@ namespace BoundaryLayerCurver
       }
     }
 
-    void curveEdges(std::vector<MEdgeN> &stack, int iFirst, int iLast,
-                    const GFace *gface)
+    void _computeEtaAndTerms(std::vector<MEdgeN> &stack, int iFirst, int iLast,
+                             std::vector<std::pair<double, double> > &eta,
+                             fullMatrix<double> terms[8])
     {
       // Compute eta_i^k, k=0,1
-      std::vector<std::pair<double, double> > eta;
       _computeEtas(stack, eta);
 
       // Precompute Delta(x_i), i=0,1,n
@@ -853,15 +844,65 @@ namespace BoundaryLayerCurver
 
       // Compute terms
       double eta1 = .5 * (eta[iFirst].first + eta[iFirst].second);
-      fullMatrix<double> terms[8];
       _computeTerms(delta0, delta1, deltaN, eta1, terms);
-
-      // Choose coeffHermite and curve
-      double coeffHermite = 1;
-      _generalTFI(stack, iLast, eta, terms, coeffHermite, gface);
-
-      return;
     }
+
+    void curveEdges(std::vector<MEdgeN> &stack, int iFirst, int iLast,
+                    const GFace *gface)
+    {
+      std::vector<std::pair<double, double> > eta;
+      fullMatrix<double> terms[8];
+      _computeEtaAndTerms(stack, iFirst, iLast, eta, terms);
+
+      _generalTFI(stack, iLast, eta, terms, 1, gface);
+    }
+
+    void curveEdgesAndPreserveQuality(std::vector<MEdgeN> &stackEdges,
+                                      std::vector<MFaceN> &stackFaces,
+                                      std::vector<MElement*> &stackElements,
+                                      int iFirst, int iLast, const GFace *gface)
+    {
+      std::vector<std::pair<double, double> > eta;
+      fullMatrix<double> terms[8];
+      _computeEtaAndTerms(stackEdges, iFirst, iLast, eta, terms);
+
+      // Compute quality of primary elements
+      unsigned long numElements = stackElements.size() - 1;
+      std::vector<double> qualitiesLinear(numElements);
+      for (unsigned int i = 0; i < numElements; ++i) {
+        MElement *linear = createPrimaryElement(stackElements[i]);
+        qualitiesLinear[i] = jacobianBasedQuality::minIGEMeasure(linear);
+        delete linear;
+      }
+
+      static double coeffHermite[11] = {1, .9, .8, .7, .6, .5, .4, .3, .2, .1, 0};
+      for (int i = 0; i < 11; ++i) {
+        _generalTFI(stackEdges, iLast, eta, terms, coeffHermite[i], gface);
+        repositionInnerVertices(stackFaces, gface);
+
+        bool allOk = true;
+        if (coeffHermite[i]) {
+          for (unsigned int i = 0; i < numElements; ++i) {
+            double qual = jacobianBasedQuality::minIGEMeasure(stackElements[i]);
+            if (qual < .5 && qual < .8 * qualitiesLinear[i]) {
+              allOk = false;
+              break;
+            }
+          }
+        }
+
+        if (allOk) return;
+      }
+    }
+  }
+
+  MElement* createPrimaryElement(MElement *el)
+  {
+    int tagLinear = ElementType::getTag(el->getType(), 1);
+    std::vector<MVertex *> vertices;
+    el->getVertices(vertices);
+    MElementFactory f;
+    return f.create(tagLinear, vertices, -1);
   }
 
   LeastSquareData* constructLeastSquareData(int typeElement, int order,
@@ -1254,21 +1295,17 @@ namespace BoundaryLayerCurver
     }
     MEdgeN *topEdge = &stackEdges[iLast];
 
-//    drawBezierControlPolygon(baseEdge->getVertices(), const_cast<GEdge*>(gedge));
     EdgeCurver2D::curveEdge(baseEdge, firstEdge, gface, gedge, normal);
     EdgeCurver2D::curveEdge(baseEdge, topEdge, gface, gedge, normal);
     EdgeCurver2D::recoverQualityElements(stackEdges, stackFaces, column.second,
                                          iFirst, iLast, gface);
 
-//    drawBezierControlPolygon(topEdge->getVertices(), const_cast<GEdge*>(gedge));
-
-    // Curve interior edges
-    // TODO check if elements are of good quality
-    InteriorEdgeCurver::curveEdges(stackEdges, iFirst, iLast, gface);
-
-    // Curve interior of elements
-    repositionInnerVertices(stackFaces, gface);
-
+    // Curve interior edges and inner vertices
+//    InteriorEdgeCurver::curveEdges(stackEdges, iFirst, iLast, gface);
+//    repositionInnerVertices(stackFaces, gface);
+    InteriorEdgeCurver::curveEdgesAndPreserveQuality(stackEdges, stackFaces,
+                                                     column.second, iFirst,
+                                                     iLast, gface);
     return true;
   }
 
@@ -1412,7 +1449,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
 //        && bndEl2column[i].first->getNum() != 1119) continue;
 //    std::cout << std::endl;
 //    std::cout << "column " << bndEl2column[i].first->getNum() << std::endl;
-    if (bndEl2column[i].first->getNum() != 1079) continue; // Good
+//    if (bndEl2column[i].first->getNum() != 1079) continue; // Good
 //    if (bndEl2column[i].first->getNum() != 1078) continue; // Next to good
 //    if (bndEl2column[i].first->getNum() != 1102) continue; // Bad HO
 //    if (bndEl2column[i].first->getNum() != 1136) continue; // Bad linear

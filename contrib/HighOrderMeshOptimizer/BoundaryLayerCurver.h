@@ -54,6 +54,8 @@ namespace BoundaryLayerCurver
   void repositionInnerVertices(const std::vector<MFaceN> &stackFaces,
                                const GFace *gface);
 
+  MElement* createPrimaryElement(MElement *el);
+
   // The boundary layer curver algorithm is seperated into different modules:
   namespace EdgeCurver2D {}
   namespace EdgeCurver3D {}
@@ -117,6 +119,11 @@ namespace BoundaryLayerCurver
   {
     void curveEdges(std::vector<MEdgeN> &stack, int iFirst, int iLast,
                     const GFace *gface);
+
+    void curveEdgesAndPreserveQuality(std::vector<MEdgeN> &stackEdges,
+                                      std::vector<MFaceN> &stackFaces,
+                                      std::vector<MElement*> &stackElements,
+                                      int iFirst, int iLast, const GFace *gface);
   }
 
   struct Parameters3DCurve {
