@@ -750,11 +750,14 @@ int insertVertexB (std::list<edgeXface> &shell,
   // check that volume is conserved
   double newVolume = 0;
   double oldVolume = 0;
+  double newMinQuality = 2.0;
+  double oldMinQuality = 2.0;
 
   std::list<MTri3*>::iterator ittet = cavity.begin();
   std::list<MTri3*>::iterator ittete = cavity.end();
   while(ittet != ittete){
     oldVolume += fabs(getSurfUV((*ittet)->tri(),data));
+    oldMinQuality = std::min(oldMinQuality, (*ittet)->tri()->gammaShapeMeasure());
     ++ittet;
   }
 
@@ -763,6 +766,11 @@ int insertVertexB (std::list<edgeXface> &shell,
   std::list<edgeXface>::iterator it = shell.begin();
 
   bool onePointIsTooClose = false;
+  double lcMin = std::numeric_limits<double>::infinity();
+  double lcBGMMin = std::numeric_limits<double>::infinity();
+  int vIndex = data.getIndex(v);
+  double lcVertex = data.vSizes[vIndex];
+  double lcBGMVertex = data.vSizesBGM[vIndex];
   while (it != shell.end()){
     MVertex *v0,*v1;
     if (it->ori > 0){
@@ -786,6 +794,9 @@ int insertVertexB (std::list<edgeXface> &shell,
                                 data.vSizesBGM[index1] +
                                 data.vSizesBGM[index2]);
     double LL = Extend1dMeshIn2dSurfaces() ? std::min(lc, lcBGM) : lcBGM;
+
+    lcMin = std::min(lcMin, std::min(data.vSizes[index0], data.vSizes[index1]));
+    lcBGMMin = std::min(lcBGMMin, std::min(data.vSizesBGM[index0], data.vSizesBGM[index1]));
 
     MTri3 *t4;
     t4 = new MTri3(t, LL,0,&data,gf);
@@ -818,10 +829,20 @@ int insertVertexB (std::list<edgeXface> &shell,
     double ss = fabs(getSurfUV(t4->tri(), data));
     if (ss < 1.e-25) ss = 1.e22;
     newVolume += ss;
+    newMinQuality = std::min(newMinQuality, t4->tri()->gammaShapeMeasure());
     ++it;
   }
 
-  if (fabs(oldVolume - newVolume) < EPS * oldVolume && !onePointIsTooClose){
+  double LLMin = Extend1dMeshIn2dSurfaces() ? std::min(lcMin, lcBGMMin) : lcBGMMin;
+  double LLVertex = Extend1dMeshIn2dSurfaces() ? std::min(lcVertex, lcBGMVertex) : lcBGMVertex;
+  bool refinementRequired = false;
+  if (LLVertex < 0.7 * LLMin)
+  {
+    refinementRequired = true;
+  }
+
+  if (fabs(oldVolume - newVolume) < EPS * oldVolume && !onePointIsTooClose &&
+    (cavity.size() > 2 || refinementRequired || newMinQuality > oldMinQuality + 1e-8)){
     connectTris(new_cavity.begin(), new_cavity.end(),conn);
     //    printf("%d %d\n",shell.size(),cavity.size());
     // 30 % of the time is spent here !!!
