@@ -294,8 +294,9 @@ static int edgeSwapTest(GFace *gf, BDS_Edge *e)
   double qb2 = qmTriangle::gamma(e->p2, op[0], op[1]);
   double qa = std::min(qa1, qa2);
   double qb = std::min(qb1, qb2);
-  if(qb > qa) return 1;
-  if(qb < qa) return -1;
+  const double tolerance = 1e-12;
+  if(qb > qa + tolerance) return 1;
+  if(qb < qa - tolerance) return -1;
   return 0;
 }
 
@@ -303,7 +304,9 @@ void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap)
 {
   typedef std::vector<BDS_Edge *>::size_type size_type;
 
-  for(size_type index = 0; index < m.edges.size(); ++index) {
+  std::set<BDS_Edge*, EdgeLessThan> whateverEdgeSwaps;
+  const size_type origSize = m.edges.size();
+  for(size_type index = 0; index < m.edges.size() && index < 10*origSize; ++index) {
     if(!m.edges.at(index)->deleted) {
       if(edgeSwapTestDelaunay(m.edges.at(index), gf)) {
         int const result = edgeSwapTest(gf, m.edges.at(index));
@@ -312,6 +315,17 @@ void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap)
         // result = 1  => oblige to swap because the quality is greatly improved
         if(result >= 0) {
           if(m.swap_edge(m.edges.at(index), BDS_SwapEdgeTestQuality(false))) {
+            if (result == 0) {
+              if (whateverEdgeSwaps.find(m.edges.at(index)) != whateverEdgeSwaps.end())
+              {
+                return;
+              }
+
+              whateverEdgeSwaps.insert(m.edges.at(index));
+            }
+            else if (result > 0) {
+              whateverEdgeSwaps.clear(); // Improvement has been made, not yet danger for infinite loop
+            }
             ++nb_swap;
           }
         }
