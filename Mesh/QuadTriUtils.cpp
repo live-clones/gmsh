@@ -255,8 +255,8 @@ void QuadToTriInsertSourceEdgeVertices(GRegion *gr, MVertexRTree &pos_src_edge)
 
   GFace *source_face = gr->model()->getFaceByTag(std::abs(ep->geo.Source));
 
-  std::list<GEdge*> edges = source_face->edges();
-  std::list<GEdge*>::iterator ite = edges.begin();
+  std::vector<GEdge*> const& edges = source_face->edges();
+  std::vector<GEdge*>::const_iterator ite = edges.begin();
   for(ite = edges.begin(); ite != edges.end(); ite++){
     pos_src_edge.insert((*ite)->mesh_vertices);
     pos_src_edge.insert((*ite)->getBeginVertex()->mesh_vertices);
@@ -268,8 +268,8 @@ void QuadToTriInsertSourceEdgeVertices(GRegion *gr, MVertexRTree &pos_src_edge)
 // Added 2010-01-18
 void QuadToTriInsertFaceEdgeVertices(GFace *face, MVertexRTree &pos_edges)
 {
-  std::list<GEdge*> edges = face->edges();
-  std::list<GEdge*>::iterator ite = edges.begin();
+  std::vector<GEdge*> const& edges = face->edges();
+  std::vector<GEdge*>::const_iterator ite = edges.begin();
   while(ite != edges.end()){
     pos_edges.insert((*ite)->mesh_vertices);
     pos_edges.insert((*ite)->getBeginVertex()->mesh_vertices);
@@ -689,9 +689,9 @@ int IsSurfaceALateralForRegion(GRegion *region, GFace *face)
  // THEN, IF they share an edge, extrude all of the source GVertex positions and
  // see if they are found in this face.  IF so, then it is a top and not a lateral.
 
-  std::list<GEdge*> region_source_edges = reg_source->edges();
-  std::list<GEdge*> face_edges = face->edges();
-  std::list<GEdge*>::iterator ite = face_edges.begin();
+  std::vector<GEdge*> region_source_edges = reg_source->edges();
+  std::vector<GEdge*> face_edges = face->edges();
+  std::vector<GEdge*>::iterator ite = face_edges.begin();
 
   bool edge_found = false;
   int common_count = 0;

@@ -285,8 +285,8 @@ static unsigned int FixErasedExtrScaleFlags(GModel *m,
     ExtrudeParams *f_ep = (*it)->meshAttributes.extrude;
     if(!f_ep || !f_ep->mesh.ExtrudeMesh || !f_ep->mesh.ScaleLast )
       continue;
-    std::list<GEdge *> f_edges = (*it)->edges();
-    std::list<GEdge *>::iterator itedge;
+    std::vector<GEdge *> f_edges = (*it)->edges();
+    std::vector<GEdge *>::iterator itedge;
     for(itedge = f_edges.begin(); itedge != f_edges.end(); itedge++){
       if(m->getEdgeByTag( std::abs(f_ep->geo.Source) ) != (*itedge)){
 	ExtrudeParams *e_ep = (*itedge)->meshAttributes.extrude;
@@ -373,9 +373,9 @@ int Mesh2DWithBoundaryLayers(GModel *m)
 	  faceSkipScaleCalc[from->tag()] = false;
 	  ExtrudeParams::calcLayerScaleFactor[ep->mesh.BoundaryLayerIndex] = true;
 	}
-        std::list<GEdge*> e = from->edges();
+        std::vector<GEdge*> const& e = from->edges();
         sourceEdges.insert(e.begin(), e.end());
-	for(std::list<GEdge*>::iterator ite = e.begin(); ite != e.end(); ite++){
+	for(std::vector<GEdge*>::const_iterator ite = e.begin(); ite != e.end(); ite++){
 	  if(edgeSkipScaleCalc.find( (*ite)->tag() ) == edgeSkipScaleCalc.end())
 	    edgeSkipScaleCalc[ (*ite)->tag() ] = true;  // a default
 	  if(ep->mesh.ScaleLast)
@@ -408,7 +408,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   Msg::Info("%d dependencies in mesh of source faces", sourceFacesDependencies.size());
   for(std::set<GFace*>::iterator it = sourceFacesDependencies.begin();
       it != sourceFacesDependencies.end(); it++){
-    std::list<GEdge*> e = (*it)->edges();
+    std::vector<GEdge*> const& e = (*it)->edges();
     sourceEdges.insert(e.begin(), e.end());
   }
 

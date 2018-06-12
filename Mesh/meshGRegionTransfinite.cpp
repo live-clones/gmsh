@@ -284,14 +284,15 @@ void findTransfiniteCorners(GRegion *gr, std::vector<MVertex*> &corners)
       }
     }
     if(gf){
-      std::list<GEdge*> fedges = gf->edges();
-      std::list<GEdge*> redges = gr->edges();
-      for(std::list<GEdge*>::iterator it = fedges.begin(); it != fedges.end(); it++)
+      std::vector<GEdge*> fedges = gf->edges();
+      std::vector<GEdge*> redges = gr->edges();
+      // TODO C++11 Fix the UB if *it doesn't exist in this container
+      for(std::vector<GEdge*>::const_iterator it = fedges.begin(); it != fedges.end(); it++)
         redges.erase(std::find(redges.begin(), redges.end(), *it));
       findTransfiniteCorners(gf, corners);
       unsigned int N = corners.size();
       for(unsigned int i = 0; i < N; i++){
-        for(std::list<GEdge*>::iterator it = redges.begin(); it != redges.end(); it++){
+        for(std::vector<GEdge*>::const_iterator it = redges.begin(); it != redges.end(); it++){
           if((*it)->getBeginVertex()->mesh_vertices[0] == corners[i]){
             corners.push_back((*it)->getEndVertex()->mesh_vertices[0]);
             break;

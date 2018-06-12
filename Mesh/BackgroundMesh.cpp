@@ -222,8 +222,8 @@ static void propagateValuesOnFace(GFace *_gf,
 
 void backgroundMesh::propagate1dMesh(GFace *_gf)
 {
-  std::list<GEdge*> e = _gf->edges();
-  std::list<GEdge*>::const_iterator it = e.begin();
+  std::vector<GEdge*> const& e = _gf->edges();
+  std::vector<GEdge*>::const_iterator it = e.begin();
   std::map<MVertex*,double> sizes;
 
   for( ; it != e.end(); ++it ){
@@ -276,8 +276,8 @@ crossField2d::crossField2d(MVertex* v, GEdge* ge)
 
 void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
 {
-  std::list<GEdge*> e = _gf->edges();
-  std::list<GEdge*>::const_iterator it = e.begin();
+  std::vector<GEdge*> const& e = _gf->edges();
+  std::vector<GEdge*>::const_iterator it = e.begin();
   std::map<MVertex*,double> _cosines4,_sines4;
   std::map<MVertex*,SPoint2> _param;
 
@@ -434,8 +434,8 @@ void backgroundMesh::propagateCrossFieldHJ(GFace *_gf)
 void backgroundMesh::propagateCrossField(GFace *_gf, simpleFunction<double> *ONE)
 {
   std::map<MVertex*,double> _cosines4,_sines4;
-  std::list<GEdge*> e = _gf->edges();
-  std::list<GEdge*>::const_iterator it = e.begin();
+  std::vector<GEdge*> const& e = _gf->edges();
+  std::vector<GEdge*>::const_iterator it = e.begin();
   for( ; it != e.end(); ++it ){
     if (!(*it)->isSeam(_gf)){
       for(unsigned int i = 0; i < (*it)->lines.size(); i++ ){

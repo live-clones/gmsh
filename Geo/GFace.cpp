@@ -32,6 +32,7 @@
 #include "optimization.h"
 #endif
 
+// TODO C++11 remove macro
 #define SQU(a)      ((a)*(a))
 
 GFace::GFace(GModel *model, int tag)
@@ -43,7 +44,7 @@ GFace::GFace(GModel *model, int tag)
 
 GFace::~GFace()
 {
-  std::list<GEdge*>::iterator it = l_edges.begin();
+  std::vector<GEdge*>::iterator it = l_edges.begin();
   while (it != l_edges.end()){
     (*it)->delFace(this);
     ++it;
@@ -83,7 +84,7 @@ void GFace::setMeshingAlgo(int algo)
 void GFace::delFreeEdge(GEdge *edge)
 {
   // delete the edge from the edge list and the orientation list
-  std::list<GEdge*>::iterator ite = l_edges.begin();
+  std::vector<GEdge*>::iterator ite = l_edges.begin();
   std::vector<int>::iterator itd = l_dirs.begin();
   while(ite != l_edges.end()){
     if(edge == *ite){
@@ -111,7 +112,9 @@ void GFace::delFreeEdge(GEdge *edge)
 
 int GFace::delEdge(GEdge* edge)
 {
-  std::list<GEdge*>::iterator it;
+  // BUG If the iterator is equal to end() then the erase will be ill-formed
+  // TODO C++11 fix this UB
+  std::vector<GEdge*>::iterator it;
   int pos = 0;
   for(it = l_edges.begin(); it != l_edges.end(); ++it){
     if(*it == edge) break;
@@ -232,7 +235,7 @@ SBoundingBox3d GFace::bounds(bool fast) const
 {
   SBoundingBox3d res;
   if(geomType() != DiscreteSurface && geomType() != PartitionSurface){
-    std::list<GEdge*>::const_iterator it = l_edges.begin();
+    std::vector<GEdge*>::const_iterator it = l_edges.begin();
     for(; it != l_edges.end(); it++)
       res += (*it)->bounds(fast);
   }
@@ -256,8 +259,8 @@ SOrientedBoundingBox GFace::getOBB()
         MVertex* mv = getMeshVertex(i);
         vertices.push_back(mv->point());
       }
-      std::list<GEdge*> eds = edges();
-      for(std::list<GEdge*>::iterator ed = eds.begin(); ed != eds.end(); ed++) {
+      std::vector<GEdge*> const& eds = edges();
+      for(std::vector<GEdge*>::const_iterator ed = eds.begin(); ed != eds.end(); ed++) {
         int N2 = (*ed)->getNumMeshVertices();
         for (int i = 0; i < N2; i++) {
           MVertex* mv = (*ed)->getMeshVertex(i);
@@ -280,9 +283,9 @@ SOrientedBoundingBox GFace::getOBB()
     else {
       // Fallback, if we can't make a STL triangulation of the surface, use its
       // edges..
-      std::list<GEdge*> b_edges = edges();
+      std::vector<GEdge*> const& b_edges = edges();
       int N = 10;
-      for (std::list<GEdge*>::iterator b_edge = b_edges.begin();
+      for (std::vector<GEdge*>::const_iterator b_edge = b_edges.begin();
            b_edge != b_edges.end(); b_edge++) {
         Range<double> tr = (*b_edge)->parBounds(0);
         for (int j = 0; j < N; j++) {
@@ -301,7 +304,7 @@ SOrientedBoundingBox GFace::getOBB()
 std::vector<MVertex*> GFace::getEmbeddedMeshVertices() const
 {
   std::set<MVertex*> tmp;
-  for(std::list<GEdge *>::const_iterator it = embedded_edges.begin();
+  for(std::vector<GEdge *>::const_iterator it = embedded_edges.begin();
       it != embedded_edges.end(); it++){
     tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
     if((*it)->getBeginVertex())
@@ -315,15 +318,13 @@ std::vector<MVertex*> GFace::getEmbeddedMeshVertices() const
       it != embedded_vertices.end(); it++){
     tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
   }
-  std::vector<MVertex*> res;
-  res.insert(res.end(), tmp.begin(), tmp.end());
-  return res;
+  return std::vector<MVertex*>(tmp.begin(), tmp.end());
 }
 
 std::list<GVertex*> GFace::vertices() const
 {
   std::set<GVertex*> v;
-  for(std::list<GEdge*>::const_iterator it = l_edges.begin();
+  for(std::vector<GEdge*>::const_iterator it = l_edges.begin();
       it != l_edges.end(); ++it){
     GVertex *v1 = (*it)->getBeginVertex();
     if(v1) v.insert(v1);
@@ -339,7 +340,7 @@ void GFace::setVisibility(char val, bool recursive)
 {
   GEntity::setVisibility(val);
   if(recursive){
-    for (std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it)
+    for (std::vector<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it)
       (*it)->setVisibility(val, recursive);
   }
 }
@@ -348,7 +349,7 @@ void GFace::setColor(unsigned int val, bool recursive)
 {
   GEntity::setColor(val);
   if(recursive){
-    for (std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it)
+    for (std::vector<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it)
       (*it)->setColor(val, recursive);
   }
 }
@@ -364,7 +365,7 @@ std::string GFace::getAdditionalInfoString(bool multline)
   }
   else if(l_edges.size()){
     sstream << "Boundary curves: ";
-    for(std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it){
+    for(std::vector<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it){
       if(it != l_edges.begin()) sstream << ", ";
       sstream << (*it)->tag();
     }
@@ -374,7 +375,7 @@ std::string GFace::getAdditionalInfoString(bool multline)
 
   if(embedded_edges.size()){
     sstream << "Embedded curves: ";
-    for(std::list<GEdge*>::iterator it = embedded_edges.begin();
+    for(std::vector<GEdge*>::iterator it = embedded_edges.begin();
         it != embedded_edges.end(); ++it){
       if(it != embedded_edges.begin()) sstream << ", ";
       sstream << (*it)->tag();
@@ -416,11 +417,11 @@ void GFace::writeGEO(FILE *fp)
 {
   if(geomType() == DiscreteSurface) return;
 
-  std::list<GEdge*> edg = edges();
+  std::vector<GEdge*> const& edg = edges();
   std::vector<int> const& dir = orientations();
   if(edg.size() && dir.size() == edg.size()){
     std::vector<int> num, ori;
-    for(std::list<GEdge*>::iterator it = edg.begin(); it != edg.end(); it++)
+    for(std::vector<GEdge*>::const_iterator it = edg.begin(); it != edg.end(); it++)
       num.push_back((*it)->tag());
     for(std::vector<int>::const_iterator it = dir.begin(); it != dir.end(); it++)
       ori.push_back((*it) > 0 ? 1 : -1);
@@ -443,7 +444,7 @@ void GFace::writeGEO(FILE *fp)
     }
   }
 
-  for(std::list<GEdge*>::iterator it = embedded_edges.begin();
+  for(std::vector<GEdge*>::iterator it = embedded_edges.begin();
       it != embedded_edges.end(); it++)
     fprintf(fp, "Line {%d} In Surface {%d};\n", (*it)->tag(), tag());
 
@@ -482,8 +483,8 @@ void GFace::computeMeanPlane()
     // and GFace::relocateMeshVertices(): after perturbation of the boundary, we
     // want a parametrization of the surface that is "close" to the original
     // one. If this fails, we fallback to the classical (SVD-based) algorithm.
-    std::list<GEdge*> edg = edges();
-    for(std::list<GEdge*>::const_iterator ite = edg.begin(); ite != edg.end(); ite++){
+    std::vector<GEdge*> const& edg = edges();
+    for(std::vector<GEdge*>::const_iterator ite = edg.begin(); ite != edg.end(); ite++){
       const GEdge *e = *ite;
       if(e->geomType() == GEntity::DiscreteCurve ||
          e->geomType() == GEntity::BoundaryLayerCurve){
@@ -548,8 +549,8 @@ void GFace::computeMeanPlane()
 
   if(colinear){
     Msg::Debug("Adding edge points (%d) to compute mean plane of face %d", pts.size(), tag());
-    std::list<GEdge*> edg = edges();
-    for(std::list<GEdge*>::const_iterator ite = edg.begin(); ite != edg.end(); ite++){
+    std::vector<GEdge*> const& edg = edges();
+    for(std::vector<GEdge*>::const_iterator ite = edg.begin(); ite != edg.end(); ite++){
       const GEdge *e = *ite;
       if(e->mesh_vertices.size() > 1){
         for(unsigned int i = 0; i < e->mesh_vertices.size(); i++)
@@ -1195,8 +1196,8 @@ bool GFace::buildRepresentationCross(bool force)
   // try to compute something better for Gmsh surfaces
   if(getNativeType() == GmshModel && geomType() == Plane){
     SBoundingBox3d bb;
-    std::list<GEdge*> ed = edges();
-    for(std::list<GEdge*>::iterator it = ed.begin(); it != ed.end(); it++){
+    std::vector<GEdge*> ed = edges();
+    for(std::vector<GEdge*>::const_iterator it = ed.begin(); it != ed.end(); it++){
       GEdge *ge = *it;
       if(ge->geomType() != DiscreteCurve &&
          ge->geomType() != BoundaryLayerCurve){
@@ -1356,7 +1357,7 @@ int GFace::genusGeom() const
 {
   int nSeams = 0;
   std::set<GEdge*> single_seams;
-  for (std::list<GEdge*>::const_iterator it = l_edges.begin();
+  for (std::vector<GEdge*>::const_iterator it = l_edges.begin();
        it != l_edges.end(); ++it){
     if ((*it)->isSeam(this)){
       nSeams++;
@@ -1525,10 +1526,10 @@ void GFace::lloyd(int nbiter, int infn)
 #endif
 }
 
-void GFace::replaceEdges(std::list<GEdge*> &new_edges)
+void GFace::replaceEdges(std::vector<GEdge*> &new_edges)
 {
-  std::list<GEdge*>::iterator it  = l_edges.begin();
-  std::list<GEdge*>::iterator it2 = new_edges.begin();
+  std::vector<GEdge*>::iterator it  = l_edges.begin();
+  std::vector<GEdge*>::iterator it2 = new_edges.begin();
   std::vector<int>::iterator it3 = l_dirs.begin();
 
   std::vector<int> newdirs;
@@ -1580,7 +1581,7 @@ void GFace::relocateMeshVertices()
 
 void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
 {
-  std::list<GEdge*>::iterator eIter;
+  std::vector<GEdge*>::const_iterator eIter;
   std::list<GVertex*>::iterator vIter;
 
   Msg::Info("Setting mesh master using transformation ");
@@ -1610,7 +1611,7 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
 
   // list all vertices and vertex to edge correspondence for remote edge
 
-  std::list<GEdge*> m_edges = master->edges();
+  std::vector<GEdge*> const& m_edges = master->edges();
   std::set<GVertex*> m_vertices;
   std::map<std::pair<GVertex*,GVertex*>,GEdge* > m_vtxToEdge;
   for (eIter=m_edges.begin();eIter!=m_edges.end(); ++eIter) {
@@ -1621,7 +1622,7 @@ void GFace::setMeshMaster(GFace* master, const std::vector<double>& tfo)
     m_vtxToEdge[std::make_pair(v0,v1)] = (*eIter);
   }
 
-  std::list<GEdge*> m_embedded_edges = master->embeddedEdges();
+  std::vector<GEdge*> const& m_embedded_edges = master->embeddedEdges();
 
   for (eIter = m_embedded_edges.begin(); eIter != m_embedded_edges.end(); eIter++) {
     GVertex* v0 = (*eIter)->getBeginVertex();
@@ -1820,7 +1821,7 @@ void GFace::setMeshMaster(GFace* master,const std::map<int,int>& edgeCopies)
 {
   std::map<GVertex*,GVertex*> vs2vt;
 
-  for (std::list<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it){
+  for (std::vector<GEdge*>::iterator it = l_edges.begin(); it != l_edges.end(); ++it){
     // slave edge
     GEdge* le = *it;
 

@@ -287,8 +287,8 @@ void backgroundMesh2D::computeSizeField()
     return;
   }
 
-  std::list<GEdge*> e = face->edges();
-  std::list<GEdge*>::const_iterator it = e.begin();
+  std::vector<GEdge*> const& e = face->edges();
+  std::vector<GEdge*>::const_iterator it = e.begin();
   DoubleStorageType sizes;
 
   for( ; it != e.end(); ++it ){
@@ -478,8 +478,8 @@ void frameFieldBackgroundMesh2D::computeCrossField(simpleFunction<double> &eval_
     Msg::Error("Entity is not a face in background mesh");
     return;
   }
-  std::list<GEdge*> e = face->edges();
-  std::list<GEdge*>::const_iterator it = e.begin();
+  std::vector<GEdge*> const& e = face->edges();
+  std::vector<GEdge*>::const_iterator it = e.begin();
 
   for( ; it != e.end(); ++it ){
     if (!(*it)->isSeam(face)){

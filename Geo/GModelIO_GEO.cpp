@@ -1398,8 +1398,8 @@ static bool skipEdge(GEdge *ge)
 static bool skipVertex(GVertex *gv)
 {
   if(gv->physicals.size()) return false;
-  std::list<GEdge*> edges(gv->edges());
-  for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++){
+  std::vector<GEdge*> const& edges = gv->edges();
+  for(std::vector<GEdge*>::const_iterator ite = edges.begin(); ite != edges.end(); ite++){
     if(!skipEdge(*ite)) return false;
   }
   return true;
@@ -1513,11 +1513,11 @@ int GModel::exportDiscreteGEOInternals()
   for(fiter it = firstFace(); it != lastFace(); it++){
     if((*it)->geomType() == GEntity::DiscreteSurface){
       Surface *s = CreateSurface((*it)->tag(), MSH_SURF_DISCRETE);
-      std::list<GEdge*> edges = (*it)->edges();
+      std::vector<GEdge*> const& edges = (*it)->edges();
       s->Generatrices = List_Create(edges.size(), 1, sizeof(Curve *));
       List_T *curves = Tree2List(_geo_internals->Curves);
       Curve *c;
-      for(std::list<GEdge*>::iterator ite = edges.begin(); ite != edges.end(); ite++){
+      for(std::vector<GEdge*>::const_iterator ite = edges.begin(); ite != edges.end(); ite++){
         for(int i = 0; i < List_Nbr(curves); i++) {
           List_Read(curves, i, &c);
           if (c->Num == (*ite)->tag()) {

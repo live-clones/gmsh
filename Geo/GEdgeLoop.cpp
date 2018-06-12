@@ -131,7 +131,7 @@ static void loopTheLoop(std::list<GEdge*> &wire,
 }
 
 
-GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
+GEdgeLoop::GEdgeLoop(const std::vector<GEdge*> &cwire)
 {
   // Sometimes OCC puts a nasty degenerated edge in the middle of the
   // wire ...  pushing it to front fixes the problem as it concerns
@@ -139,7 +139,7 @@ GEdgeLoop::GEdgeLoop(const std::list<GEdge*> &cwire)
   std::list<GEdge*> wire;
   std::vector<GEdge*> degenerated;
   GEdge *degeneratedToInsert = 0;
-  for (std::list<GEdge*>::const_iterator it = cwire.begin(); it != cwire.end(); ++it){
+  for (std::vector<GEdge*>::const_iterator it = cwire.begin(); it != cwire.end(); ++it){
     GEdge *ed = *it;
     if (ed->degenerate(0)) degenerated.push_back(ed);
     else wire.push_back(ed);

@@ -27,13 +27,13 @@ int MTet4::radiusNorm = 2;
 
 void TEST_IF_BOUNDARY_IS_RECOVERED (GRegion *gr)
 {
-  std::list<GEdge*> e = gr->edges();
+  std::vector<GEdge*> const& e = gr->edges();
   std::vector<GFace*> f = gr->faces();
 
   std::map<MEdge,GEdge*,Less_Edge> edges;
   std::map<MFace,GFace*,Less_Face> faces;
 
-  std::list<GEdge*>::iterator it = e.begin();
+  std::vector<GEdge*>::const_iterator it = e.begin();
   std::vector<GFace*>::iterator itf = f.begin();
   for ( ; it != e.end() ; ++it){
     for (unsigned int i=0;i<(*it)->lines.size(); ++i){

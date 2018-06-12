@@ -13,7 +13,6 @@
 #include "MLine.h"
 #include "GmshConfig.h"
 #include "Context.h"
-#include <list>
 #include <map>
 #include "BackgroundMeshTools.h"
 #include "meshGFaceDelaunayInsertion.h"
@@ -70,9 +69,9 @@ static void computeMeshMetricsForBamg(GFace *gf, int numV,
 
 void meshGFaceBamg(GFace *gf)
 {
-  std::list<GEdge*> edges = gf->edges();
+  std::vector<GEdge*> const& edges = gf->edges();
   std::set<MVertex*> bcVertex;
-  for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
+  for (std::vector<GEdge*>::const_iterator it = edges.begin(); it != edges.end(); it++){
     for (unsigned int i = 0; i < (*it)->lines.size(); i++){
       bcVertex.insert((*it)->lines[i]->getVertex(0));
       bcVertex.insert((*it)->lines[i]->getVertex(1));
@@ -137,14 +136,15 @@ void meshGFaceBamg(GFace *gf)
     bamgTriangles[i].init(bamgVertices, nodes, gf->tag());
   }
 
+  // TODO C++11 std::accumulate
   int numEdges = 0;
-  for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); ++it){
+  for (std::vector<GEdge*>::const_iterator it = edges.begin(); it != edges.end(); ++it){
       numEdges += (*it)->lines.size();
   }
 
   Seg *bamgBoundary = new Seg[numEdges];
   int count = 0;
-  for (std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); ++it){
+  for (std::vector<GEdge*>::const_iterator it = edges.begin(); it != edges.end(); ++it){
     for (unsigned int i = 0; i < (*it)->lines.size(); ++i){
       int nodes [2] = {(*it)->lines[i]->getVertex(0)->getIndex(),
    		       (*it)->lines[i]->getVertex(1)->getIndex()};

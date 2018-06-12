@@ -193,8 +193,8 @@ SOrientedBoundingBox GRegion::getOBB()
           MVertex* mv = (*b_face)->getMeshVertex(i);
           vertices.push_back(mv->point());
         }
-        std::list<GEdge*> eds = (*b_face)->edges();
-        for(std::list<GEdge*>::iterator ed = eds.begin(); ed != eds.end(); ed++) {
+        std::vector<GEdge*> eds = (*b_face)->edges();
+        for(std::vector<GEdge*>::iterator ed = eds.begin(); ed != eds.end(); ed++) {
           int N2 = (*ed)->getNumMeshVertices();
           for (int i = 0; i < N2; i++) {
             MVertex* mv = (*ed)->getMeshVertex(i);
@@ -216,8 +216,8 @@ SOrientedBoundingBox GRegion::getOBB()
       }
       else {
         int N = 10;
-        std::list<GEdge*> b_edges = (*b_face)->edges();
-        for (std::list<GEdge*>::iterator b_edge = b_edges.begin();
+        std::vector<GEdge*> b_edges = (*b_face)->edges();
+        for (std::vector<GEdge*>::iterator b_edge = b_edges.begin();
              b_edge != b_edges.end(); b_edge++) {
           Range<double> tr = (*b_edge)->parBounds(0);
           for (int j = 0; j < N; j++) {
@@ -384,15 +384,13 @@ void GRegion::writeGEO(FILE *fp)
   }
 }
 
-std::list<GEdge*> GRegion::edges() const
+std::vector<GEdge*> GRegion::edges() const
 {
-  std::list<GEdge*> e;
+  std::vector<GEdge*> e;
   std::vector<GFace*>::const_iterator it = l_faces.begin();
   while(it != l_faces.end()){
-    std::list<GEdge*> e2;
-
-    e2 = (*it)->edges();
-    std::list<GEdge*>::const_iterator it2 = e2.begin();
+    std::vector<GEdge*> e2 = (*it)->edges();
+    std::vector<GEdge*>::const_iterator it2 = e2.begin();
     while (it2 != e2.end()){
       GEdge *edge = *it2;
       if(std::find(e.begin(), e.end(), edge) == e.end())
@@ -406,10 +404,9 @@ std::list<GEdge*> GRegion::edges() const
 
 bool GRegion::edgeConnected(GRegion *r) const
 {
-  std::list<GEdge*> e = edges();
-  std::list<GEdge*> e2 = r->edges();
+  std::vector<GEdge*> e = edges(), e2 = r->edges();
 
-  std::list<GEdge*>::const_iterator it = e.begin();
+  std::vector<GEdge*>::const_iterator it = e.begin();
   while(it != e.end()){
     if(std::find(e2.begin(), e2.end(), *it) != e2.end())
       return true;

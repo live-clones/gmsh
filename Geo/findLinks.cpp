@@ -225,11 +225,11 @@ static void recurFindLinkedFaces(int fac, List_T *faces, Tree_T *edges,
     return;
   }
 
-  std::list<GEdge*> l = gf->edges();
-  for(std::list<GEdge*>::iterator it = l.begin(); it != l.end(); it++) {
+  std::vector<GEdge*> const& l = gf->edges();
+  for(std::vector<GEdge*>::const_iterator it = l.begin(); it != l.end(); it++) {
     GEdge *ge = *it;
     lnk lk;
-    lk.n = abs(ge->tag());
+    lk.n = std::abs(ge->tag());
     if(!Tree_Search(edges, &lk.n))
       Tree_Add(edges, &lk.n);
     else
@@ -258,11 +258,11 @@ static void createFaceLinks(Tree_T *links)
     if(gf->tag() > 0){
       nxa na;
       na.a = gf->tag();
-      std::list<GEdge*> l = gf->edges();
-      for(std::list<GEdge*>::iterator ite = l.begin(); ite != l.end(); ite++) {
+      std::vector<GEdge*> const& l = gf->edges();
+      for(std::vector<GEdge*>::const_iterator ite = l.begin(); ite != l.end(); ite++) {
         GEdge *ge = *ite;
         lnk li, *pli;
-        li.n = abs(ge->tag());
+        li.n = std::abs(ge->tag());
         if((pli = (lnk*)Tree_PQuery(links, &li))) {
           List_Add(pli->l, &na);
         }
@@ -294,10 +294,10 @@ int allFacesLinked(int fac, List_T *faces)
       Tree_Delete(edges);
       return 0;
     }
-    std::list<GEdge*> l = gf->edges();
-    for(std::list<GEdge*>::iterator it = l.begin(); it != l.end(); it++) {
+    std::vector<GEdge*> const& l = gf->edges();
+    for(std::vector<GEdge*>::const_iterator it = l.begin(); it != l.end(); it++) {
       GEdge *ge = *it;
-      int ic = abs(ge->tag());
+      int ic = std::abs(ge->tag());
       if(!Tree_Search(edges, &ic))
         Tree_Add(edges, &ic);
       else

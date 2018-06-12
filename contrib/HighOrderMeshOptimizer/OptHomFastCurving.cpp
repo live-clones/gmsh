@@ -1265,7 +1265,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
     std::vector<GEntity*> bndEnts;
     std::set<GEntity*> blBndEnts;
     if (p.dim == 2) {
-      std::list<GEdge*> gEds = gEnt->edges();
+      std::vector<GEdge*> const& gEds = gEnt->edges();
       bndEnts = std::vector<GEntity*>(gEds.begin(), gEds.end());
       for (int iBndEnt = 0; iBndEnt < bndEnts.size(); iBndEnt++) {
         GEntity* &bndEnt = bndEnts[iBndEnt];

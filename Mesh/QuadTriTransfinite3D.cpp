@@ -130,7 +130,7 @@ int getTransfiniteBoundaryDiags( GRegion *gr, std::set< std::pair<MVertex*,
     // For this face, loop through all sets of 4 vertices that could form a quadrangle
     // if not subdivided.  Find which of the 4 vertices are on the diagonal that subdivides
     // the four vertices.
-    std::list<GEdge*> edges = (*itf)->edges();
+    std::vector<GEdge*> const& edges = (*itf)->edges();
     int index_guess = 0;
     int i_low = 0;
     if( edges.size() == 3 ){

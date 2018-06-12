@@ -995,9 +995,9 @@ static bool dividedNonConnectedEntities(GModel *const model, int dim,
             pvertex->addElement(vertex->getMeshElement(i)->getType(),
                                 vertex->getMeshElement(i));
             // Move B-Rep
-            std::list<GEdge*> BRepEdges = vertex->edges();
-            if(BRepEdges.size() > 0){
-              for(std::list<GEdge*>::iterator itBRep = BRepEdges.begin();
+            std::vector<GEdge*> BRepEdges = vertex->edges();
+            if(!BRepEdges.empty()){
+              for(std::vector<GEdge*>::iterator itBRep = BRepEdges.begin();
                   itBRep != BRepEdges.end(); ++itBRep){
                 if(vertex == (*itBRep)->getBeginVertex()){
                   (*itBRep)->setVertex(pvertex, 1);
@@ -2262,8 +2262,8 @@ static void AssignPhysicalName(GModel *model)
         levels.insert(std::pair<GEntity*, int>(*it, 0));
       }
 
-      std::list<GEdge*> listEdge = (*it)->edges();
-      for(std::list<GEdge*>::iterator itE = listEdge.begin(); itE != listEdge.end(); ++itE){
+      std::vector<GEdge*> const& listEdge = (*it)->edges();
+      for(std::vector<GEdge*>::const_iterator itE = listEdge.begin(); itE != listEdge.end(); ++itE){
         if(levels.find(*itE) == levels.end()){
           const int level = levels[*it]+1;
           addPhysical(model, level, *itE, nameToNumber, iterators, numPhysical);
@@ -2517,7 +2517,7 @@ int UnpartitionMesh(GModel *const model)
       pface->triangles.clear();
       pface->quadrangles.clear();
       pface->mesh_vertices.clear();
-      pface->set(std::list<GEdge*>());
+      pface->set(std::vector<GEdge*>());
       pface->setOrientations(std::vector<int>());
 
       model->remove(pface);

@@ -30,10 +30,10 @@ gmshFace::gmshFace(GModel *m, Surface *face)
 // a face is degenerate if
 bool gmshFace::degenerate(int dim) const
 {
-  std::list<GEdge*> eds = edges();
+  std::vector<GEdge*> const& eds = edges();
   int numNonDegenerate = 0;
   std::set<GEdge*> t;
-  for(std::list<GEdge*>::iterator it = eds.begin(); it != eds.end(); ++it){
+  for(std::vector<GEdge*>::const_iterator it = eds.begin(); it != eds.end(); ++it){
     GEdge *e = *it;
     GVertex *start = e->getBeginVertex();
     GVertex *next  = e->getEndVertex();
@@ -78,7 +78,9 @@ void gmshFace::resetNativePtr(Surface *face)
       Msg::Error("Unknown curve %d", j);
   }
 
-  std::list<GEdge*> l_wire;
+  std::vector<GEdge*> l_wire;
+  l_wire.reserve(eds.size());
+  
   GVertex *first = 0;
   for(unsigned int i = 0; i < eds.size(); i++){
     GEdge *e = eds[i];

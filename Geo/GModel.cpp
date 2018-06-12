@@ -371,8 +371,8 @@ void GModel::remove(int dim, int tag, bool recursive)
       if(!skip){
         remove(gf);
         if(recursive){
-          std::list<GEdge*> e = gf->edges();
-          for(std::list<GEdge*>::iterator it = e.begin(); it != e.end(); it++)
+          std::vector<GEdge*> const& e = gf->edges();
+          for(std::vector<GEdge*>::const_iterator it = e.begin(); it != e.end(); it++)
             remove(1, (*it)->tag(), recursive);
         }
       }
@@ -383,7 +383,7 @@ void GModel::remove(int dim, int tag, bool recursive)
     if(ge){
       bool skip = false;
       for(fiter it = firstFace(); it != lastFace(); it++){
-        std::list<GEdge*> e = (*it)->edges();
+        std::vector<GEdge*> const& e = (*it)->edges();
         if(std::find(e.begin(), e.end(), ge) != e.end()){
           skip = true;
           break;
@@ -437,8 +437,8 @@ void GModel::snapVertices()
   double tol = CTX::instance()->geom.tolerance;
 
   while(vit != lastVertex()){
-    std::list<GEdge*> edges = (*vit)->edges();
-    for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); ++it){
+    std::vector<GEdge*> const& edges = (*vit)->edges();
+    for(std::vector<GEdge*>::const_iterator it = edges.begin(); it != edges.end(); ++it){
       Range<double> parb = (*it)->parBounds(0);
       double t;
       if((*it)->getBeginVertex() == *vit){
@@ -560,10 +560,10 @@ bool GModel::getBoundaryTags(const std::vector<std::pair<int, int> > &inDimTags,
             outDimTags.push_back(std::pair<int, int>(0, (*it)->tag()));
         }
         else{
-          std::list<GEdge*> edges(gf->edges());
+          std::vector<GEdge*> const& edges = gf->edges();
           std::vector<int> orientations(gf->edgeOrientations());
           std::vector<int>::iterator ito = orientations.begin();
-          for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++){
+          for(std::vector<GEdge*>::const_iterator it = edges.begin(); it != edges.end(); it++){
             int t = (*it)->tag();
             if(oriented && ito != orientations.end()){
               t *= *ito;

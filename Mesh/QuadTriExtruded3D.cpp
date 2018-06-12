@@ -2476,15 +2476,17 @@ static bool QuadToTriGetRegionDiags(GRegion *gr,
       // even if the original lateral for the region is replaced by another structured
       // surface.
       // (first find common edge between source and this lateral)
-      std::list<GEdge*> source_edges = reg_source->edges();
-      std::list<GEdge*> face_edges = (*it)->edges();
-      std::list<GEdge*>::iterator itse;
+      std::vector<GEdge*> const& source_edges = reg_source->edges();
+      std::vector<GEdge*> const& face_edges = (*it)->edges();
+      std::vector<GEdge*>::const_iterator itse;
       GEdge *common = NULL;
       int common_count = 0;
       for( itse = source_edges.begin(); itse != source_edges.end(); itse++ ){
         if( std::find( face_edges.begin(), face_edges.end(), (*itse) ) !=
             face_edges.end() ){
-          common = (*itse); common_count++; }
+          common = (*itse);
+          common_count++;
+        }
       }
       if( !common || common_count != 1 )
         Msg::Error("In QuadToTriGetRegionDiags(), lateral surface and "

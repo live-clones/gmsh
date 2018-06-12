@@ -60,6 +60,6 @@ bool meshGenerator(GFace *gf, int RECUR_ITER,
 		   bool repairSelfIntersecting1dMesh,
 		   bool onlyInitialMesh,
 		   bool debug = true,
-		   std::list<GEdge*> *replacement_edges = 0);
+		   std::vector<GEdge*> *replacement_edges = 0);
 
 #endif

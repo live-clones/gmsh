@@ -525,8 +525,8 @@ void voroMetal3D::correspondance(double e, double xMax, double yMax, double zMax
   std::vector<int> indices2;
   std::vector<int> indices3;
   std::list<GVertex*> vertices;
-  std::list<GEdge*> edges1;
-  std::list<GEdge*> edges2;
+  std::vector<GEdge*> edges1;
+  std::vector<GEdge*> edges2;
   std::vector<int> orientations1;
   std::vector<int> orientations2;
   std::map<GFace*,SPoint3> centers;
@@ -536,11 +536,11 @@ void voroMetal3D::correspondance(double e, double xMax, double yMax, double zMax
   std::map<GFace*,SPoint3>::iterator it4;
   std::map<GFace*,bool>::iterator it5;
   std::map<GFace*,bool>::iterator it6;
-  std::list<GEdge*>::iterator it7;
-  std::list<GEdge*>::iterator it8;
+  std::vector<GEdge*>::iterator it7;
+  std::vector<GEdge*>::iterator it8;
   std::vector<int>::iterator it9;
   std::vector<int>::iterator it10;
-  std::list<GEdge*>::iterator mem;
+  std::vector<GEdge*>::iterator mem;
 
   faces.clear();
 
@@ -597,9 +597,9 @@ void voroMetal3D::correspondance(double e, double xMax, double yMax, double zMax
       it4 = centers.find(faces[j]);
       p1 = it3->second;
       p2 = it4->second;
-      delta_x = fabs(p2.x()-p1.x());
-      delta_y = fabs(p2.y()-p1.y());
-      delta_z = fabs(p2.z()-p1.z());
+      delta_x = std::abs(p2.x()-p1.x());
+      delta_y = std::abs(p2.y()-p1.y());
+      delta_z = std::abs(p2.z()-p1.z());
       flag = correspondance(delta_x,delta_y,delta_z,e,val,xMax,yMax,zMax);
       if(flag){
         it5 = markings.find(faces[i]);
@@ -610,128 +610,128 @@ void voroMetal3D::correspondance(double e, double xMax, double yMax, double zMax
           pairs.push_back(std::pair<GFace*,GFace*>(faces[i],faces[j]));
           categories.push_back(val);
           print_segment(p1,p2,file);
-          if (fabs((p2.x()-p1.x()-1.0)) < 0.0001){
-            if (fabs((p2.y()-p1.y())) < 0.0001){
-              if (fabs((p2.z()-p1.z())) < 0.0001){
+          if (std::abs((p2.x()-p1.x()-1.0)) < 0.0001){
+            if (std::abs((p2.y()-p1.y())) < 0.0001){
+              if (std::abs((p2.z()-p1.z())) < 0.0001){
                 file2 << "NSET\tFRONT = FRONT + SURFACE"<<faces[j]->tag()<<"\n";
                 file2 << "NSET\tBACK = BACK + SURFACE"<<faces[i]->tag()<<"\n";
               }
-              else if(fabs((p2.z()-p1.z()-1.0))<0.0001){
+              else if(std::abs((p2.z()-p1.z()-1.0))<0.0001){
                 file2 << "NSET\tFRONTTOP = FRONTTOP + SURFACE"<<faces[j]->tag()<<"\n";
                 file2 << "NSET\tBACKBOTTOM = BACKBOTTOM + SURFACE"<<faces[i]->tag()<<"\n";
               }
-              else if (fabs((p1.z()-p2.z()-1.0))<0.0001){
+              else if (std::abs((p1.z()-p2.z()-1.0))<0.0001){
                 file2 << "NSET\tFRONTBOTTOM = FRONTBOTTOM + SURFACE"<<faces[j]->tag()<<"\n";
                 file2 << "NSET\tBACKTOP = BACKTOP + SURFACE"<<faces[i]->tag()<<"\n";
               }
             }
-            else if (fabs((p2.y()-p1.y()-1.0))<0.0001){
-              if (fabs((p2.z()-p1.z()))<0.0001){
+            else if (std::abs((p2.y()-p1.y()-1.0))<0.0001){
+              if (std::abs((p2.z()-p1.z()))<0.0001){
                 file2 << "NSET\tFRONTRIGHT = FRONTRIGHT + SURFACE"<<faces[j]->tag()<<"\n";
                 file2 << "NSET\tBACKLEFT = BACKLEFT + SURFACE"<<faces[i]->tag()<<"\n";
               }
-              else if (fabs((p2.z()-p1.z()-1.0))<0.0001){
+              else if (std::abs((p2.z()-p1.z()-1.0))<0.0001){
                 file2 << "NSET\tFRONTRIGHTTOP = FRONTRIGHTTOP + SURFACE"<<faces[j]->tag()<<"\n";
                 file2 << "NSET\tBACKLEFTBOTTOM = BACKLEFTBOTTOM + SURFACE"<<faces[i]->tag()<<"\n";
-              }else if (fabs((p1.z()-p2.z()-1.0))<0.0001){
+            }else if (std::abs((p1.z()-p2.z()-1.0))<0.0001){
                 file2 << "NSET\tFRONTRIGHTBOTTOM = FRONTRIGHTBOTTOM + SURFACE"<<faces[j]->tag()<<"\n";
                 file2 << "NSET\tBACKLEFTTOP = BACKLEFTTOP + SURFACE"<<faces[i]->tag()<<"\n";
               }
             }
-            else if (fabs((p1.y()-p2.y()-1.0))<0.0001){
-              if (fabs((p2.z()-p1.z()))<0.0001){
+            else if (std::abs((p1.y()-p2.y()-1.0))<0.0001){
+              if (std::abs((p2.z()-p1.z()))<0.0001){
                 file2 << "NSET\tFRONTLEFT = FRONTLEFT + SURFACE"<<faces[j]->tag()<<"\n";
                 file2 << "NSET\tBACKRIGHT = BACKRIGHT + SURFACE"<<faces[i]->tag()<<"\n";
               }
-              else if (fabs((p2.z()-p1.z()-1.0))<0.0001){
+              else if (std::abs((p2.z()-p1.z()-1.0))<0.0001){
                 file2 << "NSET\tFRONTLEFTTOP = FRONTLEFTTOP + SURFACE"<<faces[j]->tag()<<"\n";
                 file2 << "NSET\tBACKRIGHTBOTTOM = BACKRIGHTBOTTOM + SURFACE"<<faces[i]->tag()<<"\n";
               }
-              else if (fabs((p1.z()-p2.z()-1.0))<0.0001){
+              else if (std::abs((p1.z()-p2.z()-1.0))<0.0001){
                 file2 << "NSET\tFRONTLEFTBOTTOM = FRONTLEFTBOTTOM + SURFACE"<<faces[j]->tag()<<"\n";
                 file2 << "NSET\tBACKRIGHTTOP = BACKRIGHTTOP + SURFACE"<<faces[i]->tag()<<"\n";
               }
             }
           }
-          else if (fabs((p1.x()-p2.x()-1.0))<0.0001){
-            if (fabs((p2.y()-p1.y()))<0.0001){
-              if (fabs((p2.z()-p1.z()))<0.0001){
+          else if (std::abs((p1.x()-p2.x()-1.0))<0.0001){
+            if (std::abs((p2.y()-p1.y()))<0.0001){
+              if (std::abs((p2.z()-p1.z()))<0.0001){
                 file2 << "NSET\tFRONT = FRONT + SURFACE"<<faces[i]->tag()<<"\n";
                 file2 << "NSET\tBACK = BACK + SURFACE"<<faces[j]->tag()<<"\n";
               }
-              else if(fabs((p2.z()-p1.z()-1.0))<0.0001){
+              else if(std::abs((p2.z()-p1.z()-1.0))<0.0001){
                 file2 << "NSET\tFRONTBOTTOM = FRONTBOTTOM + SURFACE"<<faces[i]->tag()<<"\n";
                 file2 << "NSET\tBACKTOP = BACKTOP + SURFACE"<<faces[j]->tag()<<"\n";
               }
-              else if (fabs((p1.z()-p2.z()-1.0))<0.0001){
+              else if (std::abs((p1.z()-p2.z()-1.0))<0.0001){
                 file2 << "NSET\tFRONTTOP = FRONTTOP + SURFACE"<<faces[i]->tag()<<"\n";
                 file2 << "NSET\tBACKBOTTOM = BACKBOTTOM + SURFACE"<<faces[j]->tag()<<"\n";
               }
             }
-            else if (fabs((p2.y()-p1.y()-1.0))<0.0001){
-              if (fabs((p2.z()-p1.z()))<0.0001){
+            else if (std::abs((p2.y()-p1.y()-1.0))<0.0001){
+              if (std::abs((p2.z()-p1.z()))<0.0001){
                 file2 << "NSET\tFRONTLEFT = FRONTLEFT + SURFACE"<<faces[i]->tag()<<"\n";
                 file2 << "NSET\tBACKRIGHT = BACKRIGHT + SURFACE"<<faces[j]->tag()<<"\n";
               }
-              else if (fabs((p2.z()-p1.z()-1.0))<0.0001){
+              else if (std::abs((p2.z()-p1.z()-1.0))<0.0001){
                 file2 << "NSET\tFRONTLEFTBOTTOM = FRONTLEFTBOTTOM + SURFACE"<<faces[i]->tag()<<"\n";
                 file2 << "NSET\tBACKRIGHTTOP = BACKRIGHTTOP + SURFACE"<<faces[j]->tag()<<"\n";
               }
-              else if (fabs((p1.z()-p2.z()-1.0))<0.0001){
+              else if (std::abs((p1.z()-p2.z()-1.0))<0.0001){
                 file2 << "NSET\tFRONTLEFTTOP = FRONTLEFTTOP + SURFACE"<<faces[i]->tag()<<"\n";
                 file2 << "NSET\tBACKRIGHTBOTTOM = BACKRIGHTBOTTOM + SURFACE"<<faces[j]->tag()<<"\n";
               }
             }
-            else if (fabs((p1.y()-p2.y()-1.0))<0.0001){
-              if (fabs((p2.z()-p1.z()))<0.0001){
+            else if (std::abs((p1.y()-p2.y()-1.0))<0.0001){
+              if (std::abs((p2.z()-p1.z()))<0.0001){
                 file2 << "NSET\tFRONTRIGHT = FRONTRIGHT + SURFACE"<<faces[i]->tag()<<"\n";
                 file2 << "NSET\tBACKLEFT = BACKLEFT + SURFACE"<<faces[j]->tag()<<"\n";
               }
-              else if (fabs((p2.z()-p1.z()-1.0))<0.0001){
+              else if (std::abs((p2.z()-p1.z()-1.0))<0.0001){
                 file2 << "NSET\tFRONTRIGHTBOTTOM = FRONTRIGHTBOTTOM + SURFACE"<<faces[i]->tag()<<"\n";
                 file2 << "NSET\tBACKLEFTTOP = BACKLEFTTOP + SURFACE"<<faces[j]->tag()<<"\n";
               }
-              else if (fabs((p1.z()-p2.z()-1.0))<0.0001){
+              else if (std::abs((p1.z()-p2.z()-1.0))<0.0001){
                 file2 << "NSET\tFRONTRIGHTTOP = FRONTRIGHTTOP + SURFACE"<<faces[i]->tag()<<"\n";
                 file2 << "NSET\tBACKLEFTBOTTOM = BACKLEFTBOTTOM + SURFACE"<<faces[j]->tag()<<"\n";
               }
             }
           }
-          else if (fabs((p1.x()-p2.x()))<0.0001){
-            if (fabs((p2.y()-p1.y()-1.0))<0.0001){
-              if (fabs((p2.z()-p1.z()))<0.0001){
+          else if (std::abs((p1.x()-p2.x()))<0.0001){
+            if (std::abs((p2.y()-p1.y()-1.0))<0.0001){
+              if (std::abs((p2.z()-p1.z()))<0.0001){
                 file2 << "NSET\tRIGHT = RIGHT + SURFACE"<<faces[j]->tag()<<"\n";
                 file2 << "NSET\tLEFT = LEFT + SURFACE"<<faces[i]->tag()<<"\n";
               }
-              else if (fabs((p2.z()-p1.z()-1.0))<0.0001){
+              else if (std::abs((p2.z()-p1.z()-1.0))<0.0001){
                 file2 << "NSET\tRIGHTTOP = RIGHTTOP + SURFACE"<<faces[j]->tag()<<"\n";
                 file2 << "NSET\tLEFTBOTTOM = LEFTBOTTOM + SURFACE"<<faces[i]->tag()<<"\n";
               }
-              else if (fabs((p1.z()-p2.z()-1.0))<0.0001){
+              else if (std::abs((p1.z()-p2.z()-1.0))<0.0001){
                 file2 << "NSET\tRIGHTBOTTOM = RIGHTBOTTOM + SURFACE"<<faces[j]->tag()<<"\n";
                 file2 << "NSET\tLEFTTOP = LEFTTOP + SURFACE"<<faces[i]->tag()<<"\n";
               }
             }
-            else if (fabs((p1.y()-p2.y()-1.0))<0.0001){
-              if (fabs((p2.z()-p1.z()))<0.0001){
+            else if (std::abs((p1.y()-p2.y()-1.0))<0.0001){
+              if (std::abs((p2.z()-p1.z()))<0.0001){
                 file2 << "NSET\tRIGHT = RIGHT + SURFACE"<<faces[i]->tag()<<"\n";
                 file2 << "NSET\tLEFT = LEFT + SURFACE"<<faces[j]->tag()<<"\n";
               }
-              else if (fabs((p2.z()-p1.z()-1.0))<0.0001){
+              else if (std::abs((p2.z()-p1.z()-1.0))<0.0001){
                 file2 << "NSET\tRIGHTBOTTOM = RIGHTBOTTOM + SURFACE"<<faces[i]->tag()<<"\n";
                 file2 << "NSET\tLEFTTOP = LEFTTOP + SURFACE"<<faces[j]->tag()<<"\n";
               }
-              else if (fabs((p1.z()-p2.z()-1.0))<0.0001){
+              else if (std::abs((p1.z()-p2.z()-1.0))<0.0001){
                 file2 << "NSET\tRIGHTTOP = RIGHTTOP + SURFACE"<<faces[i]->tag()<<"\n";
                 file2 << "NSET\tLEFTBOTTOM = LEFTBOTTOM + SURFACE"<<faces[j]->tag()<<"\n";
               }
             }
-            else if (fabs((p1.y()-p2.y()))<0.0001){
-              if (fabs((p2.z()-p1.z()-1.0))<0.0001){
+            else if (std::abs((p1.y()-p2.y()))<0.0001){
+              if (std::abs((p2.z()-p1.z()-1.0))<0.0001){
                 file2 << "NSET\tTOP = TOP + SURFACE"<<faces[j]->tag()<<"\n";
                 file2 << "NSET\tBOTTOM = BOTTOM + SURFACE"<<faces[i]->tag()<<"\n";
               }
-              else if (fabs((p1.z()-p2.z()-1.0))<0.0001){
+              else if (std::abs((p1.z()-p2.z()-1.0))<0.0001){
                 file2 << "NSET\tTOP = TOP + SURFACE"<<faces[i]->tag()<<"\n";
                 file2 << "NSET\tBOTTOM = BOTTOM + SURFACE"<<faces[j]->tag()<<"\n";
               }

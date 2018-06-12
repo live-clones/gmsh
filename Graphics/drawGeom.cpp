@@ -83,7 +83,7 @@ class drawGVertex {
     }
 
     if(CTX::instance()->geom.highlightOrphans){
-      std::list<GEdge*> edges = v->edges();
+      std::vector<GEdge*> const& edges = v->edges();
       if(edges.size() == 0)
         glColor4ubv((GLubyte *) & CTX::instance()->color.geom.highlight[0]);
       else if(edges.size() == 1)

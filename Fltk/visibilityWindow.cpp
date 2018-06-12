@@ -489,8 +489,8 @@ static void _add_face(GFace *gf, Fl_Tree *tree, std::string path)
   if(gf->getVisibility()) n->select(1);
   n->user_data((void*)gf);
   n->close();
-  std::list<GEdge*> edges = gf->edges();
-  for(std::list<GEdge*>::iterator it = edges.begin(); it != edges.end(); it++)
+  std::vector<GEdge*> const& edges = gf->edges();
+  for(std::vector<GEdge*>::const_iterator it = edges.begin(); it != edges.end(); it++)
     _add_edge(*it, tree, face.str());
 }
 

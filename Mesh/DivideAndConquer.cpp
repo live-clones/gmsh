@@ -972,12 +972,11 @@ void DocRecord::concave(double x,double y,GFace* gf)
   MElement* element;
   MVertex* vertex1;
   MVertex* vertex2;
-  std::list<GEdge*> list;
-  std::list<GEdge*>::iterator it1;
   std::set<int> set;
   std::set<int>::iterator it2;
 
-  list = gf->edges();
+  std::vector<GEdge*> list = gf->edges();
+  std::vector<GEdge*>::const_iterator it1;
 
   for(it1 = list.begin(); it1 != list.end(); it1++){
     edge = *it1;
@@ -1111,9 +1110,9 @@ void DocRecord::clear_edges()
 
 bool DocRecord::delaunay_conformity(GFace* gf)
 {
-  std::list<GEdge*> list = gf->edges();
+  std::vector<GEdge*> const& list = gf->edges();
 
-  for(std::list<GEdge*>::iterator it = list.begin(); it!= list.end(); it++){
+  for(std::vector<GEdge*>::const_iterator it = list.begin(); it!= list.end(); it++){
     GEdge *edge = *it;
     for(unsigned int i = 0; i < edge->getNumMeshElements(); i++){
       MElement *element = edge->getMeshElement(i);

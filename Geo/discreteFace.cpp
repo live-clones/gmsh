@@ -94,7 +94,7 @@ void discreteFace::writeGEO(FILE *fp)
 {
   fprintf(fp, "Discrete Face(%d) = {",tag());
   int count = 0;
-  for (std::list<GEdge*>::iterator it = l_edges.begin();
+  for (std::vector<GEdge*>::const_iterator it = l_edges.begin();
        it != l_edges.end() ;++it){
     if (count == 0) fprintf(fp, "%d", (*it)->tag());
     else fprintf(fp, ",%d", (*it)->tag());
@@ -467,7 +467,7 @@ void discreteFace::mesh(bool verbose)
 
   std::vector<MTriangle*> _t;
   std::vector<MVertex*> _v;
-  std::list<GEdge*> tmp = l_edges;
+  std::vector<GEdge*> const tmp = l_edges;
   int _tagtemp = tag();
   for (size_t i = 0; i < _parametrizations.size () ; i++){
     setTag(i);
@@ -769,8 +769,8 @@ GPoint discreteFace::intersectionWithCircle(const SVector3 &n1, const SVector3 &
 
 static void existingEdges (GFace *gf, std::map<MEdge, GEdge*, Less_Edge> &edges)
 {
-  std::list<GEdge*> e = gf->edges();
-  for (std::list<GEdge*>::iterator it = e.begin(); it != e.end(); ++it){
+  std::vector<GEdge*> const& e = gf->edges();
+  for (std::vector<GEdge*>::const_iterator it = e.begin(); it != e.end(); ++it){
     for (unsigned int i = 0;i<(*it)->lines.size(); i++){
       MLine *ml = (*it)->lines[i];
       edges.insert (std::make_pair(MEdge(ml->getVertex(0),ml->getVertex(1)),*it));

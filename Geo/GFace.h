@@ -32,11 +32,11 @@ class GFace : public GEntity {
  protected:
   // edge loops might replace what follows (list of all the edges of
   // the face + directions)
-  std::list<GEdge *> l_edges;
+  std::vector<GEdge *> l_edges;
   std::vector<int> l_dirs;
   GRegion *r1, *r2;
   mean_plane meanPlane;
-  std::list<GEdge *> embedded_edges;
+  std::vector<GEdge *> embedded_edges;
   std::list<GVertex *> embedded_vertices;
 
   BoundaryLayerColumns _columns;
@@ -98,10 +98,10 @@ class GFace : public GEntity {
 
   // edges that bound the face
   int delEdge(GEdge* edge);
-  virtual std::list<GEdge*> edges() const { return l_edges; }
-  void set(const std::list<GEdge*> f) { l_edges = f; }
+  virtual std::vector<GEdge*> edges() const { return l_edges; }
+  void set(std::vector<GEdge*> f) { l_edges = f; }
   void setOrientations(std::vector<int> f) { l_dirs = f; }
-  void setEdge(GEdge* f, int orientation)
+  void setEdge(GEdge* const f, int const orientation)
   {
     l_edges.push_back(f);
     l_dirs.push_back(orientation);
@@ -109,15 +109,15 @@ class GFace : public GEntity {
 
   virtual std::vector<int> const& edgeOrientations() const { return l_dirs; }
 
-  bool containsEdge (int iEdge) const
+  bool containsEdge (int const iEdge) const
   {
-    for (std::list<GEdge*>::const_iterator it = l_edges.begin(); it !=l_edges.end(); ++it)
+    for (std::vector<GEdge*>::const_iterator it = l_edges.begin(); it !=l_edges.end(); ++it)
       if ((*it)->tag() == iEdge) return true;
     return false;
   }
 
   // edges that are embedded in the face
-  virtual std::list<GEdge*> embeddedEdges() const { return embedded_edges; }
+  virtual std::vector<GEdge*> embeddedEdges() const { return embedded_edges; }
 
   // edges that are embedded in the face
   virtual std::list<GVertex*> embeddedVertices() const { return embedded_vertices; }
@@ -268,8 +268,8 @@ class GFace : public GEntity {
   // apply Lloyd's algorithm to the mesh
   void lloyd(int nIter, int infNorm = 0);
 
-  // replace edges (gor gluing)
-  void replaceEdges(std::list<GEdge*> &);
+  // replace edges (for gluing)
+  void replaceEdges(std::vector<GEdge*> &);
 
   // tells if it's a sphere, and if it is, returns parameters
   virtual bool isSphere(double &radius, SPoint3 &center) const { return false; }
