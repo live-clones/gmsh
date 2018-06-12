@@ -382,14 +382,14 @@ namespace
       double u = ref(i, 0);
       double v = ref(i, 1);
       double tmp;
-      switch (rot) {
-        case 1: tmp = u; u = order - u - v; v = tmp; break;
-        case 2: tmp = v; v = order - u - v; u = tmp; break;
-      }
       if (swap) {
         tmp = u;
         u = v;
         v = tmp;
+      }
+      switch (rot) {
+        case 1: tmp = u; u = order - u - v; v = tmp; break;
+        case 2: tmp = v; v = order - u - v; u = tmp; break;
       }
       for (int j = 0; j < ref.size1(); ++j) {
         if (u == ref(j, 0) && v == ref(j, 1)) {

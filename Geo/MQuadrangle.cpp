@@ -473,15 +473,15 @@ namespace
       double u = ref(i, 0);
       double v = ref(i, 1);
       double tmp = u;
-      switch (rot) {
-        case 1: u =  v; v = -tmp; break;
-        case 2: u = -u; v =   -v; break;
-        case 3: u = -v; v =  tmp; break;
-      }
       if (swap) {
         tmp = u;
         u = v;
         v = tmp;
+      }
+      switch (rot) {
+        case 1: u =  v; v = -tmp; break;
+        case 2: u = -u; v =   -v; break;
+        case 3: u = -v; v =  tmp; break;
       }
       for (int j = 0; j < ref.size1(); ++j) {
         if (u == ref(j, 0) && v == ref(j, 1)) {
