@@ -221,8 +221,12 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
   case 3: {                                                   // Fast curving 2
     FastCurvingParameters p;
     p.onlyVisible = onlyVisible;
-    p.dim = dim;
     p.thickness = true;
+    if (dim == 3) {
+      p.dim = 2;
+      HighOrderMeshFastCurving(GModel::current(), p);
+    }
+    p.dim = dim;
     HighOrderMeshFastCurving(GModel::current(), p);
     break;
   }
@@ -333,7 +337,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
     {"Optimization", 0, 0, 0},
     {"Elastic Analogy", 0, 0, 0},
     {"Fast Curving", 0, 0, 0},
-    {"Fast Curving 2 (experimental)", 0, 0, 0},
+    {"Curve boundary layers (3D is experimental)", 0, 0, 0},
     {0}
   };
   choice[2] = new Fl_Choice

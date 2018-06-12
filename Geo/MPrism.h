@@ -71,6 +71,10 @@ class MPrism : public MElement {
   {
     return MEdge(_v[edges_prism(num, 0)], _v[edges_prism(num, 1)]);
   }
+  virtual int numEdge2numVertex(int numEdge, int numVert) const
+  {
+    return edges_prism(numEdge, numVert);
+  }
   virtual int getNumEdgesRep(bool curved){ return 9; }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z, SVector3 *n);
   virtual void getEdgeVertices(const int num, std::vector<MVertex*> &v) const
@@ -79,8 +83,8 @@ class MPrism : public MElement {
     _getEdgeVertices(num, v);
   }
   virtual int getNumFaces(){ return 5; }
-  virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
-  virtual MFace getFace(int num)
+  virtual bool getFaceInfo(const MFace & face, int &ithFace, int &sign, int &rot) const;
+  virtual MFace getFace(int num) const
   {
     if(num < 2)
       return MFace(_v[faces_prism(num, 0)],
@@ -402,10 +406,10 @@ class MPrism18 : public MPrism {
  * MPrismN
  */
 
-typedef std::vector<int> indicesReversed;
+typedef std::vector<int> IndicesReversed;
 
 class MPrismN : public MPrism {
-  static std::map<int, indicesReversed> _order2indicesReversedPri;
+  static std::map<int, IndicesReversed> _order2indicesReversedPri;
 
  protected:
   std::vector<MVertex *> _vs;

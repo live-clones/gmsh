@@ -26,7 +26,6 @@
 #include "alglibmisc.h"
 #include "linalg.h"
 #include "optimization.h"
-#include "polynomialBasis.h"
 #include "MElementOctree.h"
 #include "GModel.h"
 #include "meshGFaceOptimize.h"

@@ -8,8 +8,6 @@
 
 #include "nodalBasis.h"
 #include "polynomialBasis.h"
-#include "jacobiPolynomials.h"
-#include "legendrePolynomials.h"
 
 
 // Basis functios for pyramidal elements: cf. M. Bergot, G. Cohen, M. Durufle,

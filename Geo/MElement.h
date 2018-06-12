@@ -49,6 +49,10 @@ class MElement
   void _getFaceRepQuad(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
                        double *x, double *y, double *z, SVector3 *n);
 #endif
+
+  static bool _getFaceInfo(const MFace &face, const MFace &other,
+                           int &sign, int &rot);
+
  public :
   MElement(int num=0, int part=0);
   virtual ~MElement(){}
@@ -147,11 +151,20 @@ class MElement
   // get the edges
   virtual int getNumEdges() const = 0;
   virtual MEdge getEdge(int num) const= 0;
+  virtual MEdgeN getHighOrderEdge(int num, int sign);
+  virtual MEdgeN getHighOrderEdge(const MEdge &edge)
+  {
+    int num, sign;
+    if (!getEdgeInfo(edge, num, sign)) return MEdgeN();
+    return getHighOrderEdge(num, sign);
+  }
 
   // give an MEdge as input and get its local number and sign
-  virtual void getEdgeInfo(const MEdge & edge, int &ithEdge, int &sign) const
+  virtual bool getEdgeInfo(const MEdge & edge, int &ithEdge, int &sign) const;
+  virtual int numEdge2numVertex(int numEdge, int numVert) const
   {
     Msg::Error("Edge information not available for this element");
+    return -1;
   }
 
   // get an edge representation for drawing
@@ -161,13 +174,22 @@ class MElement
 
   // get the faces
   virtual int getNumFaces() = 0;
-  virtual MFace getFace(int num) = 0;
+  virtual MFace getFace(int num) const = 0;
+  virtual MFaceN getHighOrderFace(int num, int sign, int rot);
+  virtual MFaceN getHighOrderFace(const MFace &face)
+  {
+    int num, sign, rot;
+    if (!getFaceInfo(face, num, sign, rot))
+      return MFaceN();
+    return this->getHighOrderFace(num, sign, rot);
+  }
 
   // give an MFace as input and get its local number, sign and rotation
-  virtual void getFaceInfo(const MFace & face, int &ithFace, int &sign,
+  virtual bool getFaceInfo(const MFace & face, int &ithFace, int &sign,
                            int &rot) const
   {
     Msg::Error("Face information not available for this element");
+    return false;
   }
 
   // get a face representation for drawing
