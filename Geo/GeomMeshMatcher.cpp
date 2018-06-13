@@ -239,7 +239,7 @@ GeomMeshMatcher:: matchFaces(GModel* m1, GModel* m2,
 
     GFace* f1 = (GFace*) *fit;
 
-    std::vector<std::list<GFace*> > lists;
+    std::vector<std::vector<GFace*> > lists;
 
     std::vector<GEdge*> boundary_edges = f1->edges();
 
@@ -334,11 +334,11 @@ GeomMeshMatcher::matchRegions(GModel* m1, GModel* m2,
       num_total_regions++;
 
       //std::vector<list<GRegion*> > lists;
-      std::list<GFace*> boundary_faces = ((GFace*)(*entity1))->faces();
-      std::list<GFace*> coresp_bound_faces;
+      std::vector<GFace*> boundary_faces = ((GFace*)(*entity1))->faces();
+      std::vector<GFace*> coresp_bound_faces;
       std::vector<GRegion*> common_regions;
 
-      for (std::list<GFace*>::iterator boundary_face = boundary_faces.begin();
+      for (std::vector<GFace*>::iterator boundary_face = boundary_faces.begin();
            boundary_face != boundary_faces.end(); boundary_face++) {
         coresp_bound_faces.push_back(findMatching<GFace*>(*coresp_f,*boundary_face));
       }
@@ -347,7 +347,7 @@ GeomMeshMatcher::matchRegions(GModel* m1, GModel* m2,
            entity2++)
         {
           if((*entity2)->dim() != 3) continue;
-          std::vector<std::list<GFace*> > lists;
+          std::vector<std::vector<GFace*> > lists;
           lists.push_back(coresp_bound_faces);
           lists.push_back(((GRegion*)*entity2)->faces());
           std::vector<GFace*> common_faces;
@@ -369,7 +369,7 @@ GeomMeshMatcher::matchRegions(GModel* m1, GModel* m2,
         /*
           This is made in a backward fashion compared to the other entities...
         */
-        std::list<GEdge*> boundaries = ((GRegion*) *entity1)->edges();
+        std::vector<GEdge*> boundaries = ((GRegion*) *entity1)->edges();
 
         // Then, compute the minimal bounding box
         SOrientedBoundingBox geo_obb = ((GRegion*) *entity1)->getOBB();

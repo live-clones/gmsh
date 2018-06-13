@@ -904,8 +904,8 @@ public: // transformation operations
 
 // --- definition of a set for storing periodic connections --------------------
 
-struct CGNSStruPeriodicLess {
-
+class CGNSStruPeriodicLess {
+public:
   bool operator() (const CGNSStruPeriodic& f,const CGNSStruPeriodic& d) {
     int s = f.srcName.compare(d.srcName);
     if (s != 0) return (s < 0);
@@ -1096,8 +1096,8 @@ bool matchGEntities(GModel* model,int dim) {
 
 // -----------------------------------------------------------------------------
 
-struct CGNSUnstPeriodicLess {
-
+class CGNSUnstPeriodicLess {
+ public:
   bool operator() (const CGNSUnstPeriodic& f,const CGNSUnstPeriodic& d) {
 
     if (f.nbPoints() == d.nbPoints()) {
@@ -1300,6 +1300,7 @@ bool readCGNSPeriodicConnections(int fileIndex,
 
     if (connType != Abutting1to1) {
       Msg::Error("Non-conformal connection not supported");
+      return false;
     }
 
     cgsize_t* tgtPts = new cgsize_t[tgtSize];
@@ -1654,7 +1655,7 @@ int GModel::readCGNSUnstructured(const std::string& fileName)
 
 
         int eltType = tagFromCGNSType(myType);
-        int eltSize = ElementType::NbNodesFromTag(eltType);
+        int eltSize = ElementType::getNumVertices(eltType);
 
         int* renum = NULL;
 
@@ -1800,7 +1801,7 @@ int GModel::readCGNSStructured(const std::string &name)
 
     Msg::Debug("Reading zone to compute MG level %i.", index_zone);
 
-    CG_ZoneType_t zoneType;
+    ZoneType_t zoneType;
     cg_zone_type(index_file, index_base, index_zone, &zoneType);
     if ( zoneType == Unstructured ) {
       Msg::Info("Unstructured zone detected");
@@ -1893,9 +1894,9 @@ int GModel::readCGNSStructured(const std::string &name)
 
       int offset = vnum;
 
-      CG_ZoneType_t zoneType;
+      ZoneType_t zoneType;
       cg_zone_type(index_file, index_base, index_zone, &zoneType);
-      if ( zoneType == CG_Unstructured ) {
+      if ( zoneType == Unstructured ) {
         Msg::Debug("Unstructured zone detected, skipping.");
         continue;
       }
@@ -1930,7 +1931,7 @@ int GModel::readCGNSStructured(const std::string &name)
       int nCoords;
       cg_ncoords(index_file, index_base, index_zone, &nCoords);
 
-      CG_DataType_t dataType;
+      DataType_t dataType;
       char coordName[35];
       void* coord;
       double nodes[nnodesZone][nCoords];
@@ -1946,7 +1947,7 @@ int GModel::readCGNSStructured(const std::string &name)
         Msg::Debug("Reading coordinate %i : %s.", iCoord+1, coordName);
 
         switch(dataType) {
-        case CG_RealSingle:
+        case RealSingle:
           Msg::Debug("        [Type is float]");
           coord = new float[nnodesZone];
           if ( cg_coord_read(index_file, index_base, index_zone,
@@ -1960,7 +1961,7 @@ int GModel::readCGNSStructured(const std::string &name)
           }
           delete [] (float*)coord;
           break;
-        case CG_RealDouble:
+        case RealDouble:
           Msg::Debug("        [Type is double]");
           coord = new double[nnodesZone];
           if ( cg_coord_read(index_file, index_base, index_zone,

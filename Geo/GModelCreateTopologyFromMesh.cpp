@@ -465,7 +465,7 @@ void createTopologyFromMesh2D(GModel *gm, int &num)
       int order = parent->getPolynomialOrder();
       bool serendipity = parent->getIsOnlySerendipity();
 
-      int tag = ElementType::getTag(type,order,serendipity);
+      int tag = ElementType::getType(type,order,serendipity);
 
       MLine* edge = dynamic_cast<MLine*> (eltFactory.create(tag,vtcs));
 
@@ -504,7 +504,7 @@ void createTopologyFromMesh2D(GModel *gm, int &num)
     GFace* gf = gfToge->first;
     std::set<GEdge*>& gEdgeSet = gfToge->second;
 
-    std::list<GEdge*> gEdges;
+    std::vector<GEdge*> gEdges;
     gEdges.insert(gEdges.begin(),gEdgeSet.begin(),gEdgeSet.end());
 
     gf->set(gEdges);
@@ -665,7 +665,7 @@ void createTopologyFromMesh3D(GModel *gm, int &num)
       int type         = tf.getType();
       int order        = parent->getPolynomialOrder();
       bool serendipity = parent->getIsOnlySerendipity();
-      int tag = ElementType::getTag(type,order,serendipity);
+      int tag = ElementType::getType(type,order,serendipity);
 
       MElement* face = eltFactory.create(tag,vtcs);
 
@@ -681,10 +681,10 @@ void createTopologyFromMesh3D(GModel *gm, int &num)
   GRegionToGFacesMap::iterator itTo = gRegionToGFaces.begin();
   for (;itTo !=gRegionToGFaces.end();++itTo) {
     GRegion* gr = itTo->first;
-    std::list<GFace*> faces;
+    std::vector<GFace*> faces;
     faces.insert (faces.begin(), itTo->second.begin(), itTo->second.end());
     gr->set(faces);
-    for (std::list<GFace*>::iterator it3 =  faces.begin() ; it3 != faces.end() ; ++it3)
+    for (std::vector<GFace*>::iterator it3 =  faces.begin() ; it3 != faces.end() ; ++it3)
       (*it3)->addRegion(itTo->first);
   }
 }

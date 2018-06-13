@@ -1,21 +1,24 @@
-/* A Bison parser, made by GNU Bison 2.7.  */
+/* A Bison parser, made by GNU Bison 2.3.  */
 
-/* Bison interface for Yacc-like parsers in C
-   
-      Copyright (C) 1984, 1989-1990, 2000-2012 Free Software Foundation, Inc.
-   
-   This program is free software: you can redistribute it and/or modify
+/* Skeleton interface for Bison's Yacc-like parsers in C
+
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Free Software Foundation, Inc.
+
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-   
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -26,19 +29,9 @@
    special exception, which will cause the skeleton and the resulting
    Bison output files to be licensed under the GNU General Public
    License without this special exception.
-   
+
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
-
-#ifndef YY_GMSH_YY_GMSH_TAB_HPP_INCLUDED
-# define YY_GMSH_YY_GMSH_TAB_HPP_INCLUDED
-/* Enabling traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-#if YYDEBUG
-extern int gmsh_yydebug;
-#endif
 
 /* Tokens.  */
 #ifndef YYTOKENTYPE
@@ -272,7 +265,6 @@ extern int gmsh_yydebug;
      tPLUSPLUS = 481
    };
 #endif
-<<<<<<< HEAD
 /* Tokens.  */
 #define tDOUBLE 258
 #define tSTRING 259
@@ -500,20 +492,12 @@ extern int gmsh_yydebug;
 #define tPLUSPLUS 481
 
 
-=======
->>>>>>> origin/cgnsUnstructured
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-<<<<<<< HEAD
 #line 165 "Gmsh.y"
-=======
->>>>>>> origin/cgnsUnstructured
 {
-/* Line 2058 of yacc.c  */
-#line 164 "Gmsh.y"
-
   char *c;
   int i;
   unsigned int u;
@@ -522,30 +506,14 @@ typedef union YYSTYPE
   Shape s;
   List_T *l;
   struct TwoChar c2;
-
-
-/* Line 2058 of yacc.c  */
-#line 295 "Gmsh.tab.hpp"
-} YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
+}
+/* Line 1529 of yacc.c.  */
+#line 512 "Gmsh.tab.hpp"
+	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
+# define YYSTYPE_IS_TRIVIAL 1
 #endif
 
 extern YYSTYPE gmsh_yylval;
 
-#ifdef YYPARSE_PARAM
-#if defined __STDC__ || defined __cplusplus
-int gmsh_yyparse (void *YYPARSE_PARAM);
-#else
-int gmsh_yyparse ();
-#endif
-#else /* ! YYPARSE_PARAM */
-#if defined __STDC__ || defined __cplusplus
-int gmsh_yyparse (void);
-#else
-int gmsh_yyparse ();
-#endif
-#endif /* ! YYPARSE_PARAM */
-
-#endif /* !YY_GMSH_YY_GMSH_TAB_HPP_INCLUDED  */

@@ -192,15 +192,15 @@ void GEntity::addVerticesInSet(std::set<MVertex*>&vtcs,bool closure) const
     switch (dim()) {
     case 3:
       {
-        std::list<GFace*> clos = faces();
-        std::list<GFace*>::iterator cIter = clos.begin();
+        std::vector<GFace*> clos = faces();
+        std::vector<GFace*>::iterator cIter = clos.begin();
         for (;cIter!=clos.end();++cIter) (*cIter)->addVerticesInSet(vtcs,true);
         break;
       }
     case 2:
       {
-        std::list<GEdge*> clos = edges();
-        std::list<GEdge*>::iterator cIter = clos.begin();
+        std::vector<GEdge*> clos = edges();
+        std::vector<GEdge*>::iterator cIter = clos.begin();
         for (;cIter!=clos.end();++cIter) (*cIter)->addVerticesInSet(vtcs,true);
         break;
       }
@@ -215,7 +215,8 @@ void GEntity::addVerticesInSet(std::set<MVertex*>&vtcs,bool closure) const
   }
 }
 
-void GEntity::updateCorrespondingVertices() {
+void GEntity::updateCorrespondingVertices()
+{
 
   if (_meshMaster != this && affineTransform.size() == 16) {
 
@@ -262,8 +263,8 @@ void GEntity::updateCorrespondingVertices() {
   }
 }
 
-
-void GEntity::copyMasterCoordinates() {
+void GEntity::copyMasterCoordinates()
+{
 
   if (_meshMaster != this && affineTransform.size() == 16) {
 
@@ -308,5 +309,5 @@ void GEntity::copyMasterCoordinates() {
     }
 
   }
->>>>>>> origin/cgnsUnstructured
+
 }
