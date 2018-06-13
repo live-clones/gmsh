@@ -43,12 +43,12 @@ void MElementBB(void *a, double *min, double *max)
     min[1] = max[1] = bezNodes(0, 1);
     min[2] = max[2] = bezNodes(0, 2);
     for(int i = 1; i < e->getNumVertices(); i++) {
-      min[0] = std::min(min[0], bezNodes(0, 0));
-      max[0] = std::max(max[0], bezNodes(0, 0));
-      min[1] = std::min(min[1], bezNodes(0, 1));
-      max[1] = std::max(max[1], bezNodes(0, 1));
-      min[2] = std::min(min[2], bezNodes(0, 2));
-      max[2] = std::max(max[2], bezNodes(0, 2));
+      min[0] = std::min(min[0], bezNodes(i, 0));
+      max[0] = std::max(max[0], bezNodes(i, 0));
+      min[1] = std::min(min[1], bezNodes(i, 1));
+      max[1] = std::max(max[1], bezNodes(i, 1));
+      min[2] = std::min(min[2], bezNodes(i, 2));
+      max[2] = std::max(max[2], bezNodes(i, 2));
     }
   }
   // make bounding boxes larger up to (absolute) geometrical tolerance
