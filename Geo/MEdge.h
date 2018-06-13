@@ -134,10 +134,10 @@ private:
 public:
   MEdgeN() {}
   MEdgeN(const std::vector<MVertex*> &v);
-  inline int getNumVertices() const { return (int)_v.size(); }
-  inline MVertex *getVertex(int i) const { return _v[i]; }
-  inline const std::vector<MVertex*> &getVertices() const { return _v; }
-  inline int getPolynomialOrder() const {return getNumVertices() - 1;}
+  int getNumVertices() const { return (int)_v.size(); }
+  MVertex *getVertex(int i) const { return _v[i]; }
+  const std::vector<MVertex*> &getVertices() const { return _v; }
+  int getPolynomialOrder() const {return getNumVertices() - 1;}
 
   MEdge getEdge() const;
 

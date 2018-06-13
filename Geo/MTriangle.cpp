@@ -14,9 +14,8 @@
 #include "qualityMeasures.h"
 #endif
 
+#include <cmath>
 #include <cstring>
-
-#define SQU(a)      ((a)*(a))
 
 void MTriangle::getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                            SVector3 *n)
@@ -72,20 +71,20 @@ double MTriangle::getInnerRadius()
     dist[i] = e.getVertex(0)->distance(e.getVertex(1));
     k += 0.5 * dist[i];
   }
-  double area = sqrt(k*(k-dist[0])*(k-dist[1])*(k-dist[2]));
+  double const area = std::sqrt(k*(k-dist[0])*(k-dist[1])*(k-dist[2]));
   return area/k;
 }
 
 double MTriangle::getOuterRadius()
 {
   // radius of circle circumscribing a triangle
-  double dist[3], k = 0.;
+  double dist[3], k = 0.0;
   for (int i = 0; i < 3; i++){
     MEdge e = getEdge(i);
     dist[i] = e.getVertex(0)->distance(e.getVertex(1));
     k += 0.5 * dist[i];
   }
-  double area = sqrt(k*(k-dist[0])*(k-dist[1])*(k-dist[2]));
+  double const area = std::sqrt(k*(k-dist[0])*(k-dist[1])*(k-dist[2]));
   return dist[0]*dist[1]*dist[2]/(4*area);
 }
 
@@ -132,20 +131,21 @@ void MTriangle::xyz2uvw(double xyz[3], double uvw[3]) const
   R[1] = (xyz[1] - p0.y());
   sys2x2(M, R, uvw);
   return;*/
-
-
   const double O[3] = {_v[0]->x(), _v[0]->y(), _v[0]->z()};
+
   const double d[3] = {xyz[0] - O[0], xyz[1] - O[1], xyz[2] - O[2]};
   const double d1[3] = {_v[1]->x() - O[0], _v[1]->y() - O[1], _v[1]->z() - O[2]};
   const double d2[3] = {_v[2]->x() - O[0], _v[2]->y() - O[1], _v[2]->z() - O[2]};
+
   const double Jxy = d1[0] * d2[1] - d1[1] * d2[0];
   const double Jxz = d1[0] * d2[2] - d1[2] * d2[0];
   const double Jyz = d1[1] * d2[2] - d1[2] * d2[1];
-  if ((fabs(Jxy) > fabs(Jxz)) && (fabs(Jxy) > fabs(Jyz))){
+
+  if ((std::abs(Jxy) > std::abs(Jxz)) && (std::abs(Jxy) > std::abs(Jyz))){
     uvw[0] = (d[0] * d2[1] - d[1] * d2[0]) / Jxy;
     uvw[1] = (d[1] * d1[0] - d[0] * d1[1]) / Jxy;
   }
-  else if (fabs(Jxz) > fabs(Jyz)){
+  else if (std::abs(Jxz) > std::abs(Jyz)){
     uvw[0] = (d[0] * d2[2] - d[2] * d2[0]) / Jxz;
     uvw[1] = (d[2] * d1[0] - d[0] * d1[2]) / Jxz;
   }
@@ -153,7 +153,7 @@ void MTriangle::xyz2uvw(double xyz[3], double uvw[3]) const
     uvw[0] = (d[1] * d2[2] - d[2] * d2[1]) / Jyz;
     uvw[1] = (d[2] * d1[1] - d[1] * d1[2]) / Jyz;
   }
-  uvw[2] = 0.;
+  uvw[2] = 0.0;
 }
 
 int MTriangle::numCommonNodesInDualGraph(const MElement *const other) const
@@ -237,11 +237,11 @@ bool MTriangle::getFaceInfo(const MFace & face, int &ithFace, int &sign,
 
 int MTriangle6::getNumFacesRep(bool curved)
 {
-  return curved ? SQU(CTX::instance()->mesh.numSubEdges) : 1;
+  return curved ? std::pow(CTX::instance()->mesh.numSubEdges, 2) : 1;
 }
 int MTriangleN::getNumFacesRep(bool curved)
 {
-  return curved ? SQU(CTX::instance()->mesh.numSubEdges) : 1;
+  return curved ? std::pow(CTX::instance()->mesh.numSubEdges, 2) : 1;
 }
 
 static void _myGetFaceRep(MTriangle *t, int num, double *x, double *y, double *z,
